@@ -8,12 +8,9 @@ use WooCommerce\PayPalCommerce\Settings\Service\Migration\SettingsMigration;
 use WooCommerce\PayPalCommerce\Tests\Integration\TestCase;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PartnersEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\SellerStatus;
-use WooCommerce\PayPalCommerce\ApiClient\Entity\SellerStatusCapability;
 use WooCommerce\PayPalCommerce\Settings\Service\Migration\SettingsTabMigration;
 use WooCommerce\PayPalCommerce\Settings\Service\Migration\StylingSettingsMigration;
 use WooCommerce\PayPalCommerce\Settings\Service\Migration\PaymentSettingsMigration;
-use WooCommerce\PayPalCommerce\Compat\Settings\SettingsMapHelper;
-use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 
 abstract class AbstractMigrationManager extends TestCase {
 
@@ -68,7 +65,7 @@ abstract class AbstractMigrationManager extends TestCase {
 	}
 
 	protected function createMigrationManager( $container ): MigrationManager {
-		$old_settings = $this->createOldSettingsInstance( $container );
+		$old_settings = get_option( self::OLD_SETTINGS_OPTION, array() );
 
 		return new MigrationManager(
 			$this->createSettingsMigration( $container, $old_settings ),
@@ -117,20 +114,6 @@ abstract class AbstractMigrationManager extends TestCase {
 		);
 	}
 
-	protected function createOldSettingsInstance( $container ) {
-		$settings_map_helper = $this->createMock( SettingsMapHelper::class );
-		$settings_map_helper->method( 'has_mapped_key' )->willReturn( false );
-		$settings_map_helper->method( 'mapped_value' )->willReturn( null );
-
-		return new Settings(
-			[],
-			'',
-			[],
-			[],
-			$settings_map_helper
-		);
-	}
-
 	abstract protected function getLegacyOnboardedMerchantSettings(): array;
 
 	abstract protected function createSellerStatusMock(): SellerStatus;
@@ -142,5 +125,147 @@ abstract class AbstractMigrationManager extends TestCase {
 	abstract protected function assertNewStylingSettings(): void;
 
 	abstract protected function assertNewPaymentSettings(): void;
+
+	protected function getBaseLegacyOnboardedMerchantSettings(): array {
+		return array(
+			'title'                                    => 'PayPal',
+			'description'                              => 'Pay via PayPal.',
+			'smart_button_locations'                   => array(
+				'product',
+				'cart',
+				'checkout',
+				'checkout-block-express',
+				'cart-block',
+			),
+			'smart_button_enable_styling_per_location' => false,
+			'pay_later_messaging_enabled'              => true,
+			'pay_later_button_enabled'                 => true,
+			'pay_later_button_locations'               => array(
+				'product',
+				'cart',
+				'checkout',
+				'checkout-block-express',
+				'cart-block',
+			),
+			'pay_later_messaging_locations'            => array(
+				'product',
+				'cart',
+				'checkout',
+				'shop',
+			),
+			'brand_name'                               => 'WooCommerce PayPal Payments',
+			'dcc_gateway_title'                        => 'Debit &amp; Credit Cards',
+			'dcc_gateway_description'                  => 'Pay with your credit card.',
+			'allow_local_apm_gateways'                 => true,
+			'sandbox_on'                               => true,
+			'client_secret_sandbox'                    => 'XYZ789',
+			'client_id_sandbox'                        => 'ABC123',
+			'client_secret'                            => 'XYZ789',
+			'client_id'                                => 'ABC123',
+			'disable_funding'                          => array(),
+			'merchant_id'                              => 'SOME_MERCHANT_ID',
+			'merchant_email'                           => 'example@business.example.com',
+			'merchant_id_sandbox'                      => 'SOME_MERCHANT_ID',
+			'merchant_email_sandbox'                   => 'example@business.example.com',
+			'intent'                                   => 'capture',
+			'landing_page'                             => 'LOGIN',
+			'card_billing_data_mode'                   => 'use_wc',
+			'subscriptions_mode'                       => 'vaulting_api',
+			'blocks_final_review_enabled'              => true,
+			'smart_button_language'                    => '',
+			'button_general_layout'                    => 'vertical',
+			'button_general_tagline'                   => '',
+			'button_general_label'                     => 'paypal',
+			'button_general_color'                     => 'gold',
+			'button_general_shape'                     => 'rect',
+			'button_layout'                            => 'vertical',
+			'button_tagline'                           => '',
+			'button_label'                             => 'paypal',
+			'button_color'                             => 'gold',
+			'button_shape'                             => 'rect',
+			'button_product_layout'                    => 'horizontal',
+			'button_product_tagline'                   => '',
+			'button_product_label'                     => 'paypal',
+			'button_product_color'                     => 'gold',
+			'button_product_shape'                     => 'rect',
+			'button_cart_layout'                       => 'horizontal',
+			'button_cart_tagline'                      => '',
+			'button_cart_label'                        => 'paypal',
+			'button_cart_color'                        => 'gold',
+			'button_cart_shape'                        => 'rect',
+			'button_mini-cart_layout'                  => 'vertical',
+			'button_mini-cart_tagline'                 => '',
+			'button_mini-cart_label'                   => 'paypal',
+			'button_mini-cart_color'                   => 'gold',
+			'button_mini-cart_shape'                   => 'rect',
+			'button_mini-cart_height'                  => 35,
+			'button_checkout-block-express_label'      => 'paypal',
+			'button_checkout-block-express_color'      => 'gold',
+			'button_checkout-block-express_shape'      => 'rect',
+			'button_checkout-block-express_height'     => 48,
+			'button_cart-block_label'                  => 'paypal',
+			'button_cart-block_color'                  => 'gold',
+			'button_cart-block_shape'                  => 'rect',
+			'button_cart-block_height'                 => 48,
+			'enabled'                                  => true,
+		);
+	}
+
+	protected function assertBaseGeneralSettings(): void {
+		$settings = get_option( self::NEW_GENERAL_SETTINGS_OPTION );
+
+		$this->assertIsArray( $settings );
+		$this->assertTrue( $settings['sandbox_merchant'] );
+		$this->assertTrue( $settings['merchant_connected'] );
+		$this->assertEquals( 'SOME_MERCHANT_ID', $settings['merchant_id'] );
+		$this->assertEquals( 'example@business.example.com', $settings['merchant_email'] );
+		$this->assertEquals( 'ABC123', $settings['client_id'] );
+		$this->assertEquals( 'XYZ789', $settings['client_secret'] );
+	}
+
+	protected function assertBaseDataSettings(): void {
+		$settings = get_option( self::NEW_DATA_SETTINGS_OPTION );
+
+		$this->assertIsArray( $settings );
+		$this->assertEquals( 'WooCommerce PayPal Payments', $settings['brand_name'] );
+		$this->assertEquals( 'login', $settings['landing_page'] );
+		$this->assertEquals( 'no-3d-secure', $settings['three_d_secure'] );
+	}
+
+	protected function assertBaseStylingSettings(): void {
+		$settings = get_option( self::NEW_STYLING_OPTION );
+
+		$this->assertIsArray( $settings );
+
+		$this->assertArrayHasKey( 'cart', $settings );
+		$this->assertTrue( $settings['cart']->enabled );
+		$this->assertContains( 'ppcp-gateway', $settings['cart']->methods );
+		$this->assertContains( 'pay-later', $settings['cart']->methods );
+		$this->assertEquals( 'rect', $settings['cart']->shape );
+		$this->assertEquals( 'paypal', $settings['cart']->label );
+		$this->assertEquals( 'gold', $settings['cart']->color );
+		$this->assertEquals( 'vertical', $settings['cart']->layout );
+
+		$this->assertArrayHasKey( 'product', $settings );
+		$this->assertTrue( $settings['product']->enabled );
+		$this->assertContains( 'ppcp-gateway', $settings['product']->methods );
+		$this->assertContains( 'pay-later', $settings['product']->methods );
+
+		$this->assertArrayHasKey( 'classic_checkout', $settings );
+		$this->assertTrue( $settings['classic_checkout']->enabled );
+
+		$this->assertArrayHasKey( 'express_checkout', $settings );
+		$this->assertTrue( $settings['express_checkout']->enabled );
+
+		$this->assertArrayHasKey( 'mini_cart', $settings );
+	}
+
+	protected function assertBasePaymentSettings(): void {
+		$settings = get_option( self::NEW_PAYMENT_OPTION );
+
+		$this->assertIsArray( $settings );
+		$this->assertTrue( $settings['venmo_enabled'] );
+		$this->assertTrue( $settings['paylater_enabled'] );
+	}
 
 }

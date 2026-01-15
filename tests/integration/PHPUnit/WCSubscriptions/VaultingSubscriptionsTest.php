@@ -23,10 +23,12 @@ class VaultingSubscriptionsTest extends IntegrationMockedTestCase {
 	public static function setUpBeforeClass(): void {
 		parent::setUpBeforeClass();
 
-		// Disable the new settings module to ensure tests use the legacy settings structure.
-		// The subscriptions_mode setting is computed differently in the new structure:
-		// it derives its value from save_paypal_and_venmo instead of being directly stored.
-		// These tests need to work with the direct subscriptions_mode setting.
+		/*
+		 * Disable the new settings module to ensure tests use the legacy settings structure.
+		 * The subscriptions_mode setting is computed differently in the new structure:
+		 * it derives its value from save_paypal_and_venmo instead of being directly stored.
+		 * These tests need to work with the direct subscriptions_mode setting.
+		 */
 		add_filter( 'woocommerce.feature-flags.woocommerce_paypal_payments.settings_enabled', '__return_false' );
 	}
 
@@ -178,6 +180,8 @@ class VaultingSubscriptionsTest extends IntegrationMockedTestCase {
 			'Subscription mode should be updatable' );
 		$this->assertFalse( $settings->get( 'vault_enabled' ),
 			'Vault enabled should be updatable' );
+
+		delete_option( 'woocommerce-ppcp-settings' );
 	}
 
 	/**
