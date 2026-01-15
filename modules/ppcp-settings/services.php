@@ -85,7 +85,7 @@ use WooCommerce\PayPalCommerce\WcGateway\Helper\ConnectionState;
 use WooCommerce\PayPalCommerce\Settings\Service\InternalRestService;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\MerchantDetails;
 
-$services = array(
+return array(
 	'settings.asset_getter'                               => static function ( ContainerInterface $container ): AssetGetter {
 		$factory = $container->get( 'assets.asset_getter_factory' );
 		assert( $factory instanceof AssetGetterFactory );
@@ -163,6 +163,15 @@ $services = array(
 			'read' => $pay_later_config,
 			'save' => $save_config,
 		);
+	},
+	'settings.connection-state'                           => static function ( ContainerInterface $container ): ConnectionState {
+		$data = $container->get( 'settings.data.general' );
+		assert( $data instanceof GeneralSettings );
+
+		$is_connected = $data->is_merchant_connected();
+		$environment  = new Environment( $data->is_sandbox_merchant() );
+
+		return new ConnectionState( $is_connected, $environment );
 	},
 	/**
 	 * Returns details about the connected environment (production/sandbox).
@@ -769,22 +778,3 @@ $services = array(
 		return static fn(): bool => (bool) get_option( PaymentSettingsMigration::OPTION_NAME_BCDC_MIGRATION_OVERRIDE );
 	},
 );
-
-if ( ! SettingsModule::should_use_the_old_ui() ) {
-	/**
-	 * Merchant connection details, which includes the connection status
-	 * (onboarding/connected) and connection-aware environment checks.
-	 * This is the preferred solution to check environment and connection state.
-	 */
-	$services['settings.connection-state'] = static function ( ContainerInterface $container ): ConnectionState {
-		$data = $container->get( 'settings.data.general' );
-		assert( $data instanceof GeneralSettings );
-
-		$is_connected = $data->is_merchant_connected();
-		$environment  = new Environment( $data->is_sandbox_merchant() );
-
-		return new ConnectionState( $is_connected, $environment );
-	};
-}
-
-return $services;
