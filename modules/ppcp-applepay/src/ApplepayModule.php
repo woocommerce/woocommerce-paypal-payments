@@ -26,7 +26,8 @@ use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExtendingModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ModuleClassNameIdTrait;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ServiceModule;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
-use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
+use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
+use WooCommerce\PayPalCommerce\Settings\Data\PaymentSettings;
 
 /**
  * Class ApplepayModule
@@ -57,10 +58,10 @@ class ApplepayModule implements ServiceModule, ExtendingModule, ExecutableModule
 		// Clears product status when appropriate.
 		add_action(
 			'woocommerce_paypal_payments_clear_apm_product_status',
-			function ( ?Settings $settings = null ) use ( $c ): void {
+			function () use ( $c ): void {
 				$apm_status = $c->get( 'applepay.apple-product-status' );
 				assert( $apm_status instanceof AppleProductStatus );
-				$apm_status->clear( $settings );
+				$apm_status->clear();
 			}
 		);
 
@@ -143,10 +144,10 @@ class ApplepayModule implements ServiceModule, ExtendingModule, ExecutableModule
 					return $methods;
 				}
 
-				$settings = $c->get( 'wcgateway.settings' );
-				assert( $settings instanceof Settings );
+				$settings = $c->get( 'settings.settings-provider' );
+				assert( $settings instanceof SettingsProvider );
 
-				if ( $settings->has( 'applepay_button_enabled' ) && $settings->get( 'applepay_button_enabled' ) ) {
+				if ( $settings->applepay_button_enabled() ) {
 					$applepay_gateway = $c->get( 'applepay.wc-gateway' );
 					assert( $applepay_gateway instanceof WC_Payment_Gateway );
 

@@ -22,19 +22,22 @@ class SettingsProvider {
 	private PaymentSettings $payment_settings;
 	private SettingsModel $settings_model;
 	private StylingSettings $styling_settings;
+	private FastlaneSettings $fastlane_settings;
 
 	public function __construct(
 		GeneralSettings $general_settings,
 		OnboardingProfile $onboarding_profile,
 		PaymentSettings $payment_settings,
 		SettingsModel $settings_model,
-		StylingSettings $styling_settings
+		StylingSettings $styling_settings,
+		FastlaneSettings $fastlane_settings
 	) {
 		$this->general_settings   = $general_settings;
 		$this->onboarding_profile = $onboarding_profile;
 		$this->payment_settings   = $payment_settings;
 		$this->settings_model     = $settings_model;
 		$this->styling_settings   = $styling_settings;
+		$this->fastlane_settings  = $fastlane_settings;
 	}
 
 	/**
@@ -439,6 +442,14 @@ class SettingsProvider {
 		return $this->settings_model->get_disabled_cards();
 	}
 
+	/**
+	 * Gets the card icons.
+	 *
+	 * @return array The array of card icons.
+	 */
+	public function card_icons(): array {
+		return $this->settings_model->get_card_icons();
+	}
 
 	/**
 	 * Gets the Stay Updated setting.
@@ -492,5 +503,154 @@ class SettingsProvider {
 	 */
 	public function styling_product(): LocationStylingDTO {
 		return $this->styling_settings->get_product();
+	}
+
+	/**
+	 * Get Fastlane name on card setting.
+	 *
+	 * @return string
+	 */
+	public function fastlane_name_on_card(): string {
+		return $this->fastlane_settings->get_name_on_card();
+	}
+
+	/**
+	 * Get Fastlane root styles.
+	 *
+	 * @return array
+	 */
+	public function fastlane_root_styles(): array {
+		return $this->fastlane_settings->get_root_styles();
+	}
+
+	/**
+	 * Get Fastlane input styles.
+	 *
+	 * @return array
+	 */
+	public function fastlane_input_styles(): array {
+		return $this->fastlane_settings->get_input_styles();
+	}
+
+	/**
+	 * Checks if the provided payment method is enabled.
+	 *
+	 * @param string $method_id ID of the payment method.
+	 * @return bool True if the method is enabled, false otherwise.
+	 */
+	public function is_method_enabled( string $method_id ): bool {
+		return $this->payment_settings->is_method_enabled( $method_id );
+	}
+
+	/**
+	 * Get if Apple Pay button is enabled.
+	 *
+	 * @return bool
+	 */
+	public function applepay_button_enabled(): bool {
+		return $this->payment_settings->get_applepay_button_enabled();
+	}
+
+	/**
+	 * Get if Apple Pay is validated.
+	 *
+	 * @return bool
+	 */
+	public function applepay_validated(): bool {
+		return $this->payment_settings->get_applepay_validated();
+	}
+
+	/**
+	 * Get Apple Pay button type.
+	 *
+	 * @return string
+	 */
+	public function applepay_button_type(): string {
+		return $this->payment_settings->get_applepay_button_type();
+	}
+
+	/**
+	 * Get Apple Pay button color.
+	 *
+	 * @return string
+	 */
+	public function applepay_button_color(): string {
+		return $this->payment_settings->get_applepay_button_color();
+	}
+
+	/**
+	 * Get Apple Pay button language.
+	 *
+	 * @return string
+	 */
+	public function applepay_button_language(): string {
+		return $this->payment_settings->get_applepay_button_language();
+	}
+
+	/**
+	 * Get Apple Pay checkout data mode.
+	 *
+	 * @return string
+	 */
+	public function applepay_checkout_data_mode(): string {
+		return $this->payment_settings->get_applepay_checkout_data_mode();
+	}
+
+	/**
+	 * Get PPCP onboarding Apple flag.
+	 *
+	 * @return string
+	 */
+	public function applepay_onboarding(): string {
+		return $this->payment_settings->get_ppcp_onboarding_apple();
+	}
+
+	/**
+	 * Whether Pay Later messaging styling should be customized per location.
+	 *
+	 * @return bool
+	 */
+	public function pay_later_styling_per_location(): bool {
+		return $this->styling_settings->get_pay_later_styling_per_location();
+	}
+
+	/**
+	 * Whether the given gateway is enabled.
+	 *
+	 * @param string $method_id ID of the payment method.
+	 * @return bool
+	 */
+	public function gateway_enabled( string $method_id ): bool {
+		return $this->payment_settings->is_method_enabled( $method_id );
+	}
+
+	/**
+	 * Gets the payment intent (authorize or capture).
+	 *
+	 * @return string The payment intent ('authorize' or 'capture').
+	 */
+	public function payment_intent(): string {
+		return $this->authorize_only() ? 'authorize' : 'capture';
+	}
+
+	/**
+	 * Gets Pay Later messaging style settings for a given location.
+	 *
+	 * @param string $location The location (general, cart, checkout, product, etc.).
+	 * @return array The messaging style settings.
+	 */
+	public function pay_later_messaging_style( string $location ): array {
+		$settings = (array) get_option( 'woocommerce-ppcp-settings', array() );
+		$prefix   = "pay_later_{$location}_message";
+
+		return array(
+			'layout'        => $settings[ "{$prefix}_layout" ] ?? 'text',
+			'logo_type'     => $settings[ "{$prefix}_logo" ] ?? 'primary',
+			'logo_position' => $settings[ "{$prefix}_position" ] ?? 'left',
+			'text_color'    => $settings[ "{$prefix}_color" ] ?? 'black',
+			'flex_color'    => $settings[ "{$prefix}_flex_color" ] ?? 'blue',
+			'ratio'         => $settings[ "{$prefix}_flex_ratio" ] ?? '1x1',
+			'text_size'     => $settings[ "{$prefix}_text_size" ] ?? '12',
+		);
 	}
 }

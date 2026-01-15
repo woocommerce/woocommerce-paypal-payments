@@ -47,14 +47,13 @@ use WooCommerce\PayPalCommerce\SavePaymentMethods\Endpoint\CreatePaymentTokenFor
 use WooCommerce\PayPalCommerce\SavePaymentMethods\Endpoint\CreateSetupToken;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
 use WooCommerce\PayPalCommerce\Vaulting\PaymentTokenRepository;
-use WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CardButtonGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\CardPaymentsConfiguration;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\SettingsStatus;
-use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
+use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
 use WooCommerce\PayPalCommerce\WcSubscriptions\FreeTrialHandlerTrait;
 use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
 
@@ -88,12 +87,7 @@ class SmartButton implements SmartButtonInterface {
 	 */
 	private $version;
 
-	/**
-	 * The settings.
-	 *
-	 * @var Settings
-	 */
-	private $settings;
+	private SettingsProvider $settings_provider;
 
 	/**
 	 * The Payer Factory.
@@ -129,6 +123,9 @@ class SmartButton implements SmartButtonInterface {
 	 * @var SubscriptionHelper
 	 */
 	private $subscription_helper;
+
+	/** @var callable */
+	private $get_subscriptions_mode;
 
 	/**
 	 * The Messages apply helper.
@@ -265,45 +262,48 @@ class SmartButton implements SmartButtonInterface {
 	private bool $final_review_enabled;
 
 	/**
-	 * @param AssetGetter               $asset_getter
-	 * @param string                    $version                           The assets version.
-	 * @param SessionHandler            $session_handler                   The Session handler.
-	 * @param Settings                  $settings                          The Settings.
-	 * @param PayerFactory              $payer_factory                     The Payer factory.
-	 * @param string                    $client_id                         The client ID.
-	 * @param RequestData               $request_data                      The Request Data helper.
-	 * @param DccApplies                $dcc_applies                       The DCC applies helper.
-	 * @param SubscriptionHelper        $subscription_helper               The subscription helper.
-	 * @param MessagesApply             $messages_apply                    The Messages apply helper.
-	 * @param Environment               $environment                       The environment object.
-	 * @param PaymentTokenRepository    $payment_token_repository          The payment token repository.
-	 * @param SettingsStatus            $settings_status                   The Settings status helper.
-	 * @param CurrencyGetter            $currency                          The getter of the 3-letter currency code of the shop.
-	 * @param bool                      $basic_checkout_validation_enabled Whether the basic JS validation of the form iss enabled.
-	 * @param bool                      $early_validation_enabled          Whether to execute WC validation of the checkout form.
-	 * @param array                     $pay_now_contexts                  The contexts that should have the Pay Now button.
-	 * @param string[]                  $funding_sources_without_redirect  The sources that do not cause issues about redirecting (on mobile, ...) and sometimes not returning back.
-	 * @param bool                      $vault_v3_enabled                  Whether Vault v3 module is enabled.
-	 * @param PaymentTokensEndpoint     $payment_tokens_endpoint           Payment tokens endpoint.
-	 * @param LoggerInterface           $logger                            The logger.
-	 * @param bool                      $should_handle_shipping_in_paypal  Whether the shipping should be handled in PayPal.
-	 * @param bool                      $server_side_shipping_callback_enabled Whether the server-side shipping callback is enabled (feature flag).
-	 * @param bool                      $appswitch_enabled                 Whether the AppSwitch is enabled (feature flag).
-	 * @param DisabledFundingSources    $disabled_funding_sources          List of funding sources to be disabled.
-	 * @param CardPaymentsConfiguration $dcc_configuration                 The DCC Gateway Configuration.
-	 * @param PartnerAttribution        $partner_attribution The PayPal Partner Attribution Helper.
-	 * @param bool                      $final_review_enabled              Whether the final review is enabled in blocks settings.
+	 * @param AssetGetter               $asset_getter                          The asset getter.
+	 * @param string                    $version                               The assets version.
+	 * @param SessionHandler            $session_handler                       The Session handler.
+	 * @param SettingsProvider          $settings_provider                     The Settings provider.
+	 * @param PayerFactory              $payer_factory                         The Payer factory.
+	 * @param string                    $client_id                             The client ID.
+	 * @param RequestData               $request_data                          The Request Data helper.
+	 * @param DccApplies                $dcc_applies                           The DCC applies helper.
+	 * @param SubscriptionHelper        $subscription_helper                   The subscription helper.
+	 * @param callable                  $get_subscriptions_mode                The subscriptions mode getter.
+	 * @param MessagesApply             $messages_apply                        The Messages apply helper.
+	 * @param Environment               $environment                           The environment object.
+	 * @param PaymentTokenRepository    $payment_token_repository              The payment token repository.
+	 * @param SettingsStatus            $settings_status                       The Settings status helper.
+	 * @param CurrencyGetter            $currency                              The getter of the 3-letter currency code of the shop.
+	 * @param bool                      $basic_checkout_validation_enabled     Whether the basic JS validation of the form is enabled.
+	 * @param bool                      $early_validation_enabled              Whether to execute WC validation of the checkout form.
+	 * @param array                     $pay_now_contexts                      The contexts that should have the Pay Now button.
+	 * @param string[]                  $funding_sources_without_redirect      The sources that do not cause issues about redirecting.
+	 * @param bool                      $vault_v3_enabled                      Whether Vault v3 module is enabled.
+	 * @param PaymentTokensEndpoint     $payment_tokens_endpoint               Payment tokens endpoint.
+	 * @param LoggerInterface           $logger                                The logger.
+	 * @param bool                      $should_handle_shipping_in_paypal      Whether the shipping should be handled in PayPal.
+	 * @param bool                      $server_side_shipping_callback_enabled Whether the server-side shipping callback is enabled.
+	 * @param bool                      $appswitch_enabled                     Whether the AppSwitch is enabled.
+	 * @param DisabledFundingSources    $disabled_funding_sources              List of funding sources to be disabled.
+	 * @param CardPaymentsConfiguration $dcc_configuration                     The DCC Gateway Configuration.
+	 * @param PartnerAttribution        $partner_attribution                   The PayPal Partner Attribution Helper.
+	 * @param bool                      $final_review_enabled                  Whether the final review is enabled in blocks settings.
+	 * @param Context                   $context                               The context helper.
 	 */
 	public function __construct(
 		AssetGetter $asset_getter,
 		string $version,
 		SessionHandler $session_handler,
-		Settings $settings,
+		SettingsProvider $settings_provider,
 		PayerFactory $payer_factory,
 		string $client_id,
 		RequestData $request_data,
 		DccApplies $dcc_applies,
 		SubscriptionHelper $subscription_helper,
+		callable $get_subscriptions_mode,
 		MessagesApply $messages_apply,
 		Environment $environment,
 		PaymentTokenRepository $payment_token_repository,
@@ -328,12 +328,13 @@ class SmartButton implements SmartButtonInterface {
 		$this->asset_getter                          = $asset_getter;
 		$this->version                               = $version;
 		$this->session_handler                       = $session_handler;
-		$this->settings                              = $settings;
+		$this->settings_provider                     = $settings_provider;
 		$this->payer_factory                         = $payer_factory;
 		$this->client_id                             = $client_id;
 		$this->request_data                          = $request_data;
 		$this->dcc_applies                           = $dcc_applies;
 		$this->subscription_helper                   = $subscription_helper;
+		$this->get_subscriptions_mode                = $get_subscriptions_mode;
 		$this->messages_apply                        = $messages_apply;
 		$this->environment                           = $environment;
 		$this->payment_token_repository              = $payment_token_repository;
@@ -364,7 +365,7 @@ class SmartButton implements SmartButtonInterface {
 	public function render_wrapper(): bool {
 		$this->context->init_context();
 
-		if ( $this->settings->has( 'enabled' ) && $this->settings->get( 'enabled' ) ) {
+		if ( $this->settings_provider->gateway_enabled( PayPalGateway::ID ) ) {
 			$this->render_button_wrapper_registrar();
 			$this->render_message_wrapper_registrar();
 		}
@@ -405,8 +406,7 @@ class SmartButton implements SmartButtonInterface {
 				if (
 					CreditCardGateway::ID === $id
 					&& is_user_logged_in()
-					&& $this->settings->has( 'vault_enabled_dcc' )
-					&& $this->settings->get( 'vault_enabled_dcc' )
+					&& $this->settings_provider->save_card_details()
 					&& apply_filters( 'woocommerce_paypal_payments_should_render_card_custom_fields', true )
 				) {
 
@@ -561,7 +561,6 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
 	 * Registers the hooks where to render the button HTML according to the settings.
 	 *
 	 * @return bool
-	 * @throws NotFoundException When a setting was not found.
 	 */
 	private function render_button_wrapper_registrar(): bool {
 
@@ -652,8 +651,7 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
 	 * Whether any of our scripts (for DCC or product, mini-cart, non-block cart/checkout) should be loaded.
 	 */
 	public function should_load_ppcp_script(): bool {
-		$pcp_gateway_enabled = $this->settings->has( 'enabled' ) && $this->settings->get( 'enabled' );
-		if ( ! $pcp_gateway_enabled ) {
+		if ( ! $this->settings_provider->gateway_enabled( PayPalGateway::ID ) ) {
 			return false;
 		}
 
@@ -664,8 +662,7 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
 	 * Determines whether the button component should be loaded.
 	 */
 	public function should_load_buttons(): bool {
-		$pcp_gateway_enabled = $this->settings->has( 'enabled' ) && $this->settings->get( 'enabled' );
-		if ( ! $pcp_gateway_enabled ) {
+		if ( ! $this->settings_provider->gateway_enabled( PayPalGateway::ID ) ) {
 			return false;
 		}
 
@@ -690,8 +687,7 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
 	 * Determines whether the Pay Later messages component should be loaded.
 	 */
 	public function should_load_messages(): bool {
-		$pcp_gateway_enabled = $this->settings->has( 'enabled' ) && $this->settings->get( 'enabled' );
-		if ( ! $pcp_gateway_enabled ) {
+		if ( ! $this->settings_provider->gateway_enabled( PayPalGateway::ID ) ) {
 			return false;
 		}
 
@@ -941,7 +937,7 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
 			$amount = WC()->cart->get_total( 'raw' );
 		}
 
-		$styling_per_location = $this->settings->has( 'pay_later_enable_styling_per_messaging_location' ) && $this->settings->get( 'pay_later_enable_styling_per_messaging_location' );
+		$styling_per_location = $this->settings_provider->pay_later_styling_per_location();
 		$location             = $styling_per_location ? $location : 'general';
 
 		// Map checkout-block and cart-block message options to checkout and cart options.
@@ -956,15 +952,7 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
 				break;
 		}
 
-		$setting_name_prefix = "pay_later_{$location}_message";
-
-		$layout        = $this->settings->has( "{$setting_name_prefix}_layout" ) ? $this->settings->get( "{$setting_name_prefix}_layout" ) : 'text';
-		$logo_type     = $this->settings->has( "{$setting_name_prefix}_logo" ) ? $this->settings->get( "{$setting_name_prefix}_logo" ) : 'primary';
-		$logo_position = $this->settings->has( "{$setting_name_prefix}_position" ) ? $this->settings->get( "{$setting_name_prefix}_position" ) : 'left';
-		$text_color    = $this->settings->has( "{$setting_name_prefix}_color" ) ? $this->settings->get( "{$setting_name_prefix}_color" ) : 'black';
-		$style_color   = $this->settings->has( "{$setting_name_prefix}_flex_color" ) ? $this->settings->get( "{$setting_name_prefix}_flex_color" ) : 'blue';
-		$ratio         = $this->settings->has( "{$setting_name_prefix}_flex_ratio" ) ? $this->settings->get( "{$setting_name_prefix}_flex_ratio" ) : '1x1';
-		$text_size     = $this->settings->has( "{$setting_name_prefix}_text_size" ) ? $this->settings->get( "{$setting_name_prefix}_text_size" ) : '12';
+		$messaging_style = $this->settings_provider->pay_later_messaging_style( $location );
 
 		return array(
 			'wrapper'   => '.ppcp-messages',
@@ -975,17 +963,17 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
 			'amount'    => $amount,
 			'placement' => $placement,
 			'style'     => array(
-				'layout' => $layout,
+				'layout' => $messaging_style['layout'],
 				'logo'   => array(
-					'type'     => $logo_type,
-					'position' => $logo_position,
+					'type'     => $messaging_style['logo_type'],
+					'position' => $messaging_style['logo_position'],
 				),
 				'text'   => array(
-					'color' => $text_color,
-					'size'  => $text_size,
+					'color' => $messaging_style['text_color'],
+					'size'  => $messaging_style['text_size'],
 				),
-				'color'  => $style_color,
-				'ratio'  => $ratio,
+				'color'  => $messaging_style['flex_color'],
+				'ratio'  => $messaging_style['ratio'],
 			),
 		);
 	}
@@ -1022,12 +1010,12 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
 	 * @return bool
 	 */
 	public function can_save_vault_token(): bool {
-
-		if ( ! $this->settings->has( 'client_id' ) || ! $this->settings->get( 'client_id' ) ) {
+		$merchant_data = $this->settings_provider->merchant_data();
+		if ( ! $merchant_data->client_id ) {
 			return false;
 		}
 
-		if ( ! $this->settings->has( 'vault_enabled' ) || ! $this->settings->get( 'vault_enabled' ) ) {
+		if ( ! $this->settings_provider->save_paypal_and_venmo() ) {
 			return false;
 		}
 
@@ -1065,13 +1053,7 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
 	 * @return bool
 	 */
 	private function paypal_subscriptions_enabled(): bool {
-		try {
-			$subscriptions_mode = $this->settings->get( 'subscriptions_mode' );
-		} catch ( NotFoundException $exception ) {
-			return false;
-		}
-
-		return $subscriptions_mode === 'subscriptions_api';
+		return ( $this->get_subscriptions_mode )() === 'subscriptions_api';
 	}
 
 	/**
@@ -1080,14 +1062,9 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
 	 * @return string
 	 */
 	private function get_3ds_contingency(): string {
-		if ( $this->settings->has( '3d_secure_contingency' ) ) {
-			$value = $this->settings->get( '3d_secure_contingency' );
-			if ( $value ) {
-				return $this->return_3ds_contingency( $value );
-			}
-		}
-
-		return $this->return_3ds_contingency( 'SCA_WHEN_REQUIRED' );
+		return $this->return_3ds_contingency(
+			$this->settings_provider->three_d_secure_enum()
+		);
 	}
 
 	/**
@@ -1340,7 +1317,7 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
 				'enabled' => $this->appswitch_enabled,
 			),
 			'needShipping'                            => $this->need_shipping(),
-			'vaultingEnabled'                         => $this->settings->has( 'vault_enabled' ) && $this->settings->get( 'vault_enabled' ),
+			'vaultingEnabled'                         => $this->settings_provider->save_paypal_and_venmo(),
 			'productType'                             => null,
 			'manualRenewalEnabled'                    => $this->subscription_helper->accept_manual_renewals(),
 			'final_review_enabled'                    => $this->final_review_enabled,
@@ -1417,15 +1394,11 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
 	 * @return array
 	 */
 	private function url_params(): array {
-		$current_context = $this->context->context();
-		try {
-			$intent = $this->intent();
-		} catch ( NotFoundException $exception ) {
-			$intent = 'capture';
-		}
+		$current_context   = $this->context->context();
+		$intent            = $this->intent();
+		$subscription_mode = ( $this->get_subscriptions_mode )();
 
-		$subscription_mode = $this->settings->has( 'subscriptions_mode' ) ? $this->settings->get( 'subscriptions_mode' ) : '';
-		$params            = array(
+		$params = array(
 			'client-id'        => $this->client_id,
 			'currency'         => $this->currency->get(),
 			'integration-date' => PAYPAL_INTEGRATION_DATE,
@@ -1440,8 +1413,7 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
 		}
 
 		if (
-			$this->settings->has( 'subscriptions_mode' )
-			&& $this->settings->get( 'subscriptions_mode' ) === 'vaulting_api'
+			$subscription_mode === 'vaulting_api'
 			&& apply_filters( 'woocommerce_paypal_payments_save_payment_methods_eligible', false )
 		) {
 			// Remove vault parameter to allow for Venmo with Save Payment Methods (Vault V3).
@@ -1492,7 +1464,7 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
 			$params['enable-funding'] = implode( ',', array_unique( $enable_funding ) );
 		}
 
-		$locale = $this->settings->has( 'smart_button_language' ) ? $this->settings->get( 'smart_button_language' ) : '';
+		$locale = $this->settings_provider->button_language();
 		$locale = (string) apply_filters( 'woocommerce_paypal_payments_smart_buttons_locale', $locale );
 
 		if ( $locale ) {
@@ -1639,11 +1611,6 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
 			'tagline' => true,
 		);
 
-		$enable_styling_per_location = $this->settings->has( 'smart_button_enable_styling_per_location' ) && $this->settings->get( 'smart_button_enable_styling_per_location' );
-		if ( ! $enable_styling_per_location ) {
-			$context = 'general';
-		}
-
 		return $this->get_style_value( "button_{$context}_{$style}" )
 			?? $this->get_style_value( "button_{$style}" )
 			?? ( $default ? $this->normalize_style_value( $default ) : null )
@@ -1672,10 +1639,81 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
 	 * @return string|int|null
 	 */
 	private function get_style_value( string $key ) {
-		if ( ! $this->settings->has( $key ) ) {
+		if ( substr( $key, 0, 7 ) !== 'button_' ) {
 			return null;
 		}
-		return $this->normalize_style_value( $this->settings->get( $key ) );
+
+		$key_without_prefix = (string) substr( $key, strlen( 'button_' ) );
+
+		$property = $this->extract_style_property( $key_without_prefix );
+		if ( ! $property ) {
+			return null;
+		}
+
+		$context = substr( $key_without_prefix, 0, -strlen( "_{$property}" ) );
+		if ( empty( $context ) ) {
+			return null;
+		}
+
+		$location_styling = $this->get_location_styling_for_context( $context );
+		if ( ! $location_styling ) {
+			return null;
+		}
+
+		$value = $location_styling->$property ?? null;
+
+		return $value !== null ? $this->normalize_style_value( $value ) : null;
+	}
+
+	/**
+	 * Extracts the style property from the key suffix.
+	 *
+	 * @param string $key_without_prefix The key without the 'button_' prefix.
+	 * @return string|null The property name or null if not found.
+	 */
+	private function extract_style_property( string $key_without_prefix ): ?string {
+		$valid_properties = array( 'shape', 'label', 'color', 'layout', 'tagline' );
+
+		foreach ( $valid_properties as $property ) {
+			$suffix = "_{$property}";
+			if ( substr( $key_without_prefix, -strlen( $suffix ) ) === $suffix ) {
+				return $property;
+			}
+		}
+
+		return null;
+	}
+
+	/**
+	 * Gets the LocationStylingDTO for a given context.
+	 *
+	 * @param string $context The context name.
+	 * @return \WooCommerce\PayPalCommerce\Settings\DTO\LocationStylingDTO|null
+	 */
+	private function get_location_styling_for_context( string $context ) {
+		switch ( $context ) {
+			case 'cart':
+			case 'cart-block':
+				return $this->settings_provider->styling_cart();
+
+			case 'product':
+				return $this->settings_provider->styling_product();
+
+			case 'checkout':
+			case 'general':
+				return $this->settings_provider->styling_classic_checkout();
+
+			case 'checkout-block-express':
+			case 'express':
+				return $this->settings_provider->styling_express_checkout();
+
+			case 'mini-cart':
+			case 'minicart':
+				return $this->settings_provider->styling_mini_cart();
+
+			default:
+				return null;
+		}
 	}
 
 	/**
@@ -2046,15 +2084,14 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
 	 * Returns the intent.
 	 *
 	 * @return string
-	 * @throws NotFoundException If intent is not found.
 	 */
 	private function intent(): string {
-		$subscription_mode = $this->settings->has( 'subscriptions_mode' ) ? $this->settings->get( 'subscriptions_mode' ) : '';
+		$subscription_mode = ( $this->get_subscriptions_mode )();
 		if ( $this->subscription_helper->need_subscription_intent( $subscription_mode ) ) {
 			return 'subscription';
 		}
 
-		$intent = $this->settings->has( 'intent' ) ? $this->settings->get( 'intent' ) : 'capture';
+		$intent = $this->settings_provider->payment_intent();
 
 		return strtolower( apply_filters( 'woocommerce_paypal_payments_order_intent', $intent ) );
 	}
