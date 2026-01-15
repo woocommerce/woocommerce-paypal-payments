@@ -36,6 +36,7 @@ use WooCommerce\PayPalCommerce\Settings\Data\PaymentSettings;
 use WooCommerce\PayPalCommerce\Settings\Data\SettingsModel;
 use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
 use WooCommerce\PayPalCommerce\Settings\Data\StylingSettings;
+use WooCommerce\PayPalCommerce\Settings\Data\FastlaneSettings;
 use WooCommerce\PayPalCommerce\Settings\Data\TodosModel;
 use WooCommerce\PayPalCommerce\Settings\Data\Definition\TodosDefinition;
 use WooCommerce\PayPalCommerce\Settings\Endpoint\AuthenticationRestEndpoint;
@@ -63,6 +64,7 @@ use WooCommerce\PayPalCommerce\Settings\Service\Migration\MigrationManager;
 use WooCommerce\PayPalCommerce\Settings\Service\Migration\PaymentSettingsMigration;
 use WooCommerce\PayPalCommerce\Settings\Service\Migration\SettingsTabMigration;
 use WooCommerce\PayPalCommerce\Settings\Service\Migration\StylingSettingsMigration;
+use WooCommerce\PayPalCommerce\Settings\Service\Migration\FastlaneSettingsMigration;
 use WooCommerce\PayPalCommerce\Settings\Service\OnboardingUrlManager;
 use WooCommerce\PayPalCommerce\Settings\Service\PaymentMethodsEligibilityService;
 use WooCommerce\PayPalCommerce\Settings\Service\ScriptDataHandler;
@@ -99,6 +101,7 @@ $services = array(
 			$container->get( 'settings.data.payment' ),
 			$container->get( 'settings.data.settings' ),
 			$container->get( 'settings.data.styling' ),
+			$container->get( 'settings.data.fastlane' )
 		);
 	},
 	'settings.data.onboarding'                            => static function ( ContainerInterface $container ): OnboardingProfile {
@@ -135,6 +138,9 @@ $services = array(
 	},
 	'settings.data.payment'                               => static function ( ContainerInterface $container ): PaymentSettings {
 		return new PaymentSettings();
+	},
+	'settings.data.fastlane'                              => static function (): FastlaneSettings {
+		return new FastlaneSettings();
 	},
 	'settings.data.settings'                              => static function ( ContainerInterface $container ): SettingsModel {
 		$environment = $container->get( 'settings.environment' );
@@ -388,6 +394,7 @@ $services = array(
 		$c->get( 'settings.service.data-migration.settings-tab' ),
 		$c->get( 'settings.service.data-migration.styling' ),
 		$c->get( 'settings.service.data-migration.payment-settings' ),
+		$c->get( 'settings.service.data-migration.fastlane' ),
 	),
 	'settings.service.data-migration.settings-tab'        => static fn( ContainerInterface $c ): SettingsTabMigration => new SettingsTabMigration(
 		(array) get_option( 'woocommerce-ppcp-settings', array() ),
@@ -410,6 +417,10 @@ $services = array(
 		(array) get_option( 'woocommerce-ppcp-settings', array() ),
 		$c->get( 'settings.data.general' ),
 		$c->get( 'api.endpoint.partners' ),
+	),
+	'settings.service.data-migration.fastlane'            => static fn( ContainerInterface $c ): FastlaneSettingsMigration => new FastlaneSettingsMigration(
+		(array) get_option( 'woocommerce-ppcp-settings', array() ),
+		$c->get( 'settings.data.fastlane' ),
 	),
 	'settings.ajax.switch_ui'                             => static fn( ContainerInterface $c ): SwitchSettingsUiEndpoint => new SwitchSettingsUiEndpoint(
 		$c->get( 'woocommerce.logger.woocommerce' ),
