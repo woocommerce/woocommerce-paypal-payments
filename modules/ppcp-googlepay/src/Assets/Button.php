@@ -176,7 +176,7 @@ class Button implements ButtonInterface {
 	 * Returns if Google Pay button is enabled
 	 */
 	public function is_enabled(): bool {
-		$this->settings->googlepay_enabled();
+		return $this->settings->googlepay_enabled();
 	}
 
 	/**
