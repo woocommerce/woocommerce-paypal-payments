@@ -54,6 +54,7 @@ class SettingsTabMapHelper {
 			'vault_enabled'               => FeaturesDefinition::FEATURE_SAVE_PAYPAL_AND_VENMO,
 			'3d_secure_contingency'       => 'three_d_secure',
 			'stay_updated'                => 'stay_updated',
+			'card_icons'                  => 'card_icons',
 		);
 	}
 

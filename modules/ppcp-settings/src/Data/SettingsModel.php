@@ -109,6 +109,7 @@ class SettingsModel extends AbstractDataModel {
 
 			// Array of string values.
 			'disabled_cards'              => array(),
+			'card_icons'             => array(),
 
 			// Cache values for product status checks.
 			'products_local_apms_enabled' => '',
@@ -444,6 +445,27 @@ class SettingsModel extends AbstractDataModel {
 		$this->data['disabled_cards'] = array_map(
 			array( $this->sanitizer, 'sanitize_text' ),
 			$cards
+		);
+	}
+
+	/**
+	 * Gets the card icons.
+	 *
+	 * @return array The array of card icons.
+	 */
+	public function get_card_icons(): array {
+		return $this->data['card_icons'];
+	}
+
+	/**
+	 * Sets the card icons.
+	 *
+	 * @param array $icons The array of card icons.
+	 */
+	public function set_card_icons( array $icons ): void {
+		$this->data['card_icons'] = array_map(
+			array( $this->sanitizer, 'sanitize_text' ),
+			$icons
 		);
 	}
 

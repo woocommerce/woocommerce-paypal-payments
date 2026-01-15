@@ -58,10 +58,10 @@ class ApplepayModule implements ServiceModule, ExtendingModule, ExecutableModule
 		// Clears product status when appropriate.
 		add_action(
 			'woocommerce_paypal_payments_clear_apm_product_status',
-			function ( ?Settings $settings = null ) use ( $c ): void {
+			function () use ( $c ): void {
 				$apm_status = $c->get( 'applepay.apple-product-status' );
 				assert( $apm_status instanceof AppleProductStatus );
-				$apm_status->clear( $settings );
+				$apm_status->clear();
 			}
 		);
 

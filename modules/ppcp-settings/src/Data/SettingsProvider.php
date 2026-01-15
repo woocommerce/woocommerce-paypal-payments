@@ -22,19 +22,22 @@ class SettingsProvider {
 	private PaymentSettings $payment_settings;
 	private SettingsModel $settings_model;
 	private StylingSettings $styling_settings;
+	private FastlaneSettings $fastlane_settings;
 
 	public function __construct(
 		GeneralSettings $general_settings,
 		OnboardingProfile $onboarding_profile,
 		PaymentSettings $payment_settings,
 		SettingsModel $settings_model,
-		StylingSettings $styling_settings
+		StylingSettings $styling_settings,
+		FastlaneSettings $fastlane_settings
 	) {
 		$this->general_settings   = $general_settings;
 		$this->onboarding_profile = $onboarding_profile;
 		$this->payment_settings   = $payment_settings;
 		$this->settings_model     = $settings_model;
 		$this->styling_settings   = $styling_settings;
+		$this->fastlane_settings  = $fastlane_settings;
 	}
 
 	/**
@@ -439,6 +442,14 @@ class SettingsProvider {
 		return $this->settings_model->get_disabled_cards();
 	}
 
+	/**
+	 * Gets the card icons.
+	 *
+	 * @return array The array of card icons.
+	 */
+	public function card_icons(): array {
+		return $this->settings_model->get_card_icons();
+	}
 
 	/**
 	 * Gets the Stay Updated setting.
@@ -492,6 +503,43 @@ class SettingsProvider {
 	 */
 	public function styling_product(): LocationStylingDTO {
 		return $this->styling_settings->get_product();
+	}
+
+	/**
+	 * Get Fastlane name on card setting.
+	 *
+	 * @return string
+	 */
+	public function fastlane_name_on_card(): string {
+		return $this->fastlane_settings->get_name_on_card();
+	}
+
+	/**
+	 * Get Fastlane root styles.
+	 *
+	 * @return array
+	 */
+	public function fastlane_root_styles(): array {
+		return $this->fastlane_settings->get_root_styles();
+	}
+
+	/**
+	 * Get Fastlane input styles.
+	 *
+	 * @return array
+	 */
+	public function fastlane_input_styles(): array {
+		return $this->fastlane_settings->get_input_styles();
+	}
+
+	/**
+	 * Checks if the provided payment method is enabled.
+	 *
+	 * @param string $method_id ID of the payment method.
+	 * @return bool True if the method is enabled, false otherwise.
+	 */
+	public function is_method_enabled( string $method_id ): bool {
+		return $this->payment_settings->is_method_enabled( $method_id );
 	}
 
 	/**
