@@ -60,8 +60,6 @@ return array(
 	},
 
 	'applepay.availability_notice'             => static function ( ContainerInterface $container ): AvailabilityNotice {
-		$settings = $container->get( 'wcgateway.settings' );
-
 		return new AvailabilityNotice(
 			$container->get( 'applepay.apple-product-status' ),
 			$container->get( 'wcgateway.is-wc-gateways-list-page' ),
@@ -74,13 +72,14 @@ return array(
 	},
 
 	'applepay.has_validated'                   => static function ( ContainerInterface $container ): bool {
-		$settings = $container->get( 'wcgateway.settings' );
-		return $settings->has( 'applepay_validated' );
+		$cache = $container->get( 'applepay.status-cache' );
+		assert( $cache instanceof Cache );
+		return $cache->has( AppleProductStatus::KEY );
 	},
 
 	'applepay.is_validated'                    => static function ( ContainerInterface $container ): bool {
-		$settings = $container->get( 'wcgateway.settings' );
-		return $settings->has( 'applepay_validated' ) ? $settings->get( 'applepay_validated' ) === true : false;
+		$settings = $container->get( 'settings.settings-provider' );
+		return $settings->applepay_validated();
 	},
 
 	'applepay.apple-product-status'            => SingletonDecorator::make(
@@ -147,11 +146,12 @@ return array(
 		return 'https://applepay.cdn-apple.com/jsapi/v1/apple-pay-sdk.js';
 	},
 	'applepay.data_to_scripts'                 => static function ( ContainerInterface $container ): DataToAppleButtonScripts {
-		return new DataToAppleButtonScripts( $container->get( 'applepay.sdk_script_url' ), $container->get( 'wcgateway.settings' ) );
+		return new DataToAppleButtonScripts( $container->get( 'applepay.sdk_script_url' ), $container->get( 'settings.settings-provider' ) );
 	},
 	'applepay.button'                          => static function ( ContainerInterface $container ): ApplePayButton {
 		return new ApplePayButton(
-			$container->get( 'wcgateway.settings' ),
+			$container->get( 'settings.settings-provider' ),
+			$container->get( 'settings.data.payment' ),
 			$container->get( 'woocommerce.logger.woocommerce' ),
 			$container->get( 'wcgateway.order-processor' ),
 			$container->get( 'applepay.asset_getter' ),
