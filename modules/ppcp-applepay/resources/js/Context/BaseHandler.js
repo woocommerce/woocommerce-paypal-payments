@@ -1,5 +1,5 @@
-import ErrorHandler from '../../../../ppcp-button/resources/js/modules/ErrorHandler';
-import CartActionHandler from '../../../../ppcp-button/resources/js/modules/ActionHandler/CartActionHandler';
+import ErrorHandler from '@ppcp-button/ErrorHandler';
+import CartActionHandler from '@ppcp-button/ActionHandler/CartActionHandler';
 
 class BaseHandler {
 	constructor( buttonConfig, ppcpConfig ) {

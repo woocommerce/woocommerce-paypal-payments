@@ -23,6 +23,7 @@ $finders = array(
 				'.idea',
 				'.psalm',
 				'tests',
+				'node_modules',
 			)
 		)
 		->in( '.' ),

@@ -10,6 +10,8 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\Googlepay;
 
 use Automattic\WooCommerce\Blocks\Payments\PaymentMethodTypeInterface;
+use WooCommerce\PayPalCommerce\Assets\AssetGetter;
+use WooCommerce\PayPalCommerce\Assets\AssetGetterFactory;
 use WooCommerce\PayPalCommerce\Button\Assets\ButtonInterface;
 use WooCommerce\PayPalCommerce\Common\Pattern\SingletonDecorator;
 use WooCommerce\PayPalCommerce\Googlepay\Assets\BlocksPaymentMethod;
@@ -42,7 +44,7 @@ return array(
 			$container->get( 'googlepay.supported-countries' ),
 			$container->get( 'googlepay.supported-currencies' ),
 			$container->get( 'api.shop.currency.getter' ),
-			$container->get( 'api.shop.country' )
+			$container->get( 'api.merchant.country' )
 		);
 	},
 
@@ -182,7 +184,7 @@ return array(
 
 	'googlepay.button'                          => static function ( ContainerInterface $container ): ButtonInterface {
 		return new Button(
-			$container->get( 'googlepay.url' ),
+			$container->get( 'googlepay.asset_getter' ),
 			$container->get( 'googlepay.sdk_url' ),
 			$container->get( 'ppcp.asset-version' ),
 			$container->get( 'wc-subscriptions.helper' ),
@@ -198,15 +200,18 @@ return array(
 	'googlepay.blocks-payment-method'           => static function ( ContainerInterface $container ): PaymentMethodTypeInterface {
 		return new BlocksPaymentMethod(
 			'ppcp-googlepay',
-			$container->get( 'googlepay.url' ),
+			$container->get( 'googlepay.asset_getter' ),
 			$container->get( 'ppcp.asset-version' ),
 			$container->get( 'googlepay.button' ),
 			$container->get( 'blocks.method' )
 		);
 	},
 
-	'googlepay.url'                             => static function ( ContainerInterface $container ): string {
-		return plugins_url( '/modules/ppcp-googlepay/', $container->get( 'ppcp.path-to-plugin-main-file' ) );
+	'googlepay.asset_getter'                    => static function ( ContainerInterface $container ): AssetGetter {
+		$factory = $container->get( 'assets.asset_getter_factory' );
+		assert( $factory instanceof AssetGetterFactory );
+
+		return $factory->for_module( 'ppcp-googlepay' );
 	},
 
 	'googlepay.sdk_url'                         => static function ( ContainerInterface $container ): string {
@@ -273,7 +278,7 @@ return array(
 			$container->get( 'wcgateway.processor.refunds' ),
 			$container->get( 'wcgateway.transaction-url-provider' ),
 			$container->get( 'session.handler' ),
-			$container->get( 'googlepay.url' ),
+			$container->get( 'googlepay.asset_getter' ),
 			$container->get( 'woocommerce.logger.woocommerce' )
 		);
 	},

@@ -4,12 +4,12 @@ import { Button, Icon } from '@wordpress/components';
 import { useDispatch } from '@wordpress/data';
 import { reusableBlock } from '@wordpress/icons';
 import { store as noticesStore } from '@wordpress/notices';
-import { TodoSettingsBlock } from '../../../../../ReusableComponents/SettingsBlocks';
-import SettingsCard from '../../../../../ReusableComponents/SettingsCard';
-import { useTodos } from '../../../../../../data/todos/hooks';
-import { STORE_NAME as COMMON_STORE_NAME } from '../../../../../../data/common';
-import { STORE_NAME as TODOS_STORE_NAME } from '../../../../../../data/todos';
-import { NOTIFICATION_SUCCESS } from '../../../../../ReusableComponents/Icons';
+import { TodoSettingsBlock } from '@ppcp-settings/Components/ReusableComponents/SettingsBlocks';
+import SettingsCard from '@ppcp-settings/Components/ReusableComponents/SettingsCard';
+import { useTodos } from '@ppcp-settings/data/todos/hooks';
+import { STORE_NAME as COMMON_STORE_NAME } from '@ppcp-settings/data/common';
+import { STORE_NAME as TODOS_STORE_NAME } from '@ppcp-settings/data/todos';
+import { NOTIFICATION_SUCCESS } from '@ppcp-settings/Components/ReusableComponents/Icons';
 
 const Todos = () => {
 	const [ isResetting, setIsResetting ] = useState( false );

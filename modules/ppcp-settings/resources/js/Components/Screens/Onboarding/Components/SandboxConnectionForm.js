@@ -1,8 +1,8 @@
 import { __ } from '@wordpress/i18n';
 
-import BusyStateWrapper from '../../../ReusableComponents/BusyStateWrapper';
-import SettingsToggleBlock from '../../../ReusableComponents/SettingsToggleBlock';
-import { useSandboxConnection } from '../../../../hooks/useHandleConnections';
+import BusyStateWrapper from '@ppcp-settings/Components/ReusableComponents/BusyStateWrapper';
+import SettingsToggleBlock from '@ppcp-settings/Components/ReusableComponents/SettingsToggleBlock';
+import { useSandboxConnection } from '@ppcp-settings/hooks/useHandleConnections';
 import ConnectionButton from './ConnectionButton';
 
 const SandboxConnectionForm = () => {

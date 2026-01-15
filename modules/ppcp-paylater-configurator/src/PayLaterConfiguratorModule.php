@@ -10,6 +10,7 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\PayLaterConfigurator;
 
 use WooCommerce\PayPalCommerce\ApiClient\Helper\PartnerAttribution;
+use WooCommerce\PayPalCommerce\Assets\AssetGetter;
 use WooCommerce\PayPalCommerce\PayLaterConfigurator\Endpoint\GetConfig;
 use WooCommerce\PayPalCommerce\PayLaterConfigurator\Endpoint\SaveConfig;
 use WooCommerce\PayPalCommerce\PayLaterConfigurator\Factory\ConfigFactory;
@@ -109,9 +110,12 @@ class PayLaterConfiguratorModule implements ServiceModule, ExtendingModule, Exec
 					true
 				);
 
+				$asset_getter = $c->get( 'paylater-configurator.asset_getter' );
+				assert( $asset_getter instanceof AssetGetter );
+
 				wp_enqueue_script(
 					'ppcp-paylater-configurator',
-					$c->get( 'paylater-configurator.url' ) . '/assets/js/paylater-configurator.js',
+					$asset_getter->get_asset_url( 'paylater-configurator.js' ),
 					array(),
 					$c->get( 'ppcp.asset-version' ),
 					true
@@ -119,7 +123,7 @@ class PayLaterConfiguratorModule implements ServiceModule, ExtendingModule, Exec
 
 				wp_enqueue_style(
 					'ppcp-paylater-configurator-style',
-					$c->get( 'paylater-configurator.url' ) . '/assets/css/paylater-configurator.css',
+					$asset_getter->get_asset_url( 'paylater-configurator.css' ),
 					array(),
 					$c->get( 'ppcp.asset-version' )
 				);

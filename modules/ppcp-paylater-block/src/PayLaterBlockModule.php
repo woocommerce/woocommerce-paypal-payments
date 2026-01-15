@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\PayLaterBlock;
 
+use WooCommerce\PayPalCommerce\Assets\AssetGetter;
 use WooCommerce\PayPalCommerce\Button\Endpoint\CartScriptParamsEndpoint;
 use WooCommerce\PayPalCommerce\Button\Helper\MessagesApply;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExecutableModule;
@@ -77,10 +78,13 @@ class PayLaterBlockModule implements ServiceModule, ExtendingModule, ExecutableM
 				$settings = $c->get( 'wcgateway.settings' );
 				assert( $settings instanceof Settings );
 
+				$asset_getter = $c->get( 'paylater-block.asset_getter' );
+				assert( $asset_getter instanceof AssetGetter );
+
 				$script_handle = 'ppcp-paylater-block';
 				wp_register_script(
 					$script_handle,
-					$c->get( 'paylater-block.url' ) . '/assets/js/paylater-block.js',
+					$asset_getter->get_asset_url( 'paylater-block.js' ),
 					array(),
 					$c->get( 'ppcp.asset-version' ),
 					true
@@ -99,6 +103,13 @@ class PayLaterBlockModule implements ServiceModule, ExtendingModule, ExecutableM
 						'placementEnabled'    => self::is_block_enabled( $c->get( 'wcgateway.settings.status' ) ),
 						'payLaterSettingsUrl' => admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway&ppcp-tab=ppcp-pay-later' ),
 					)
+				);
+
+				wp_register_style(
+					'ppcp-paylater-block-style',
+					$asset_getter->get_asset_url( 'edit.css' ),
+					array(),
+					$c->get( 'ppcp.asset-version' )
 				);
 
 				register_block_type(

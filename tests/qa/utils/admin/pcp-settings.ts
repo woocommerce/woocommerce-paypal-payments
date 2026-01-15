@@ -16,12 +16,13 @@ export class PcpSettings extends PcpAdminPage {
 	modalCancelButton = () =>
 		this.modalContainer().getByRole( 'button', { name: 'Cancel' } );
 	modalStartOverToggle = () => this.page.getByLabel( 'Start over' );
-
-	merchantIdText = () =>
+	connectionDetailsContainer = () =>
+		this.page.locator( '.ppcp-connection-details' );
+	merchantIdValue = () =>
 		this.settingBlock( 'Merchant ID' ).locator( '.ppcp--static-value' );
-	merchantEmailAddressText = () =>
+	merchantEmailAddressValue = () =>
 		this.settingBlock( 'Email address' ).locator( '.ppcp--static-value' );
-	merchantClientIdText = () =>
+	merchantClientIdValue = () =>
 		this.settingBlock( 'Client ID' ).locator( '.ppcp--static-value' );
 
 	// Actions

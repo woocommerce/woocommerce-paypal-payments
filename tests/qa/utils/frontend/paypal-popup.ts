@@ -64,6 +64,13 @@ export class PayPalPopup {
 	cancelLink = () => this.page.locator( '#cancelLink' );
 	loadSpinnerContainer = () => this.page.locator( '#preloaderSpinner' );
 	tryAgainLink = () => this.page.getByRole( 'link', { name: 'Try again' } );
+	payLaterIframe = () =>
+		this.page.locator( 'iframe[title="CAP"]' ).contentFrame();
+	loanAgreementCheckbox = () =>
+		this.payLaterIframe().getByText(
+			'You have read and agree to the Loan Agreement'
+		);
+	agreeAndApplyButton = () => this.payLaterIframe().getByTestId( 'apply' );
 
 	// Actions
 
@@ -186,17 +193,11 @@ export class PayPalPopup {
 	 *
 	 * @param payPalAccount = { "email": "...", "password": "..." }
 	 */
-	completePayLaterPayment = async ( payPalAccount: PayPalAccount ) => {
+	completePayLaterPayment = async ( payPalAccount ) => {
 		await this.login( payPalAccount.email, payPalAccount.password );
-		await expect( this.payLaterSwitcher() ).toHaveAttribute(
-			'aria-selected',
-			'true'
-		);
-		await expect( this.submitPaymentButton() ).toBeVisible();
-		await expect( this.payLaterRadio() ).toBeVisible();
-		await expect( this.payLaterSwitcher() ).toBeEnabled();
-		await this.payLaterRadio().check();
 		await this.submitPaymentButton().click();
+		await this.loanAgreementCheckbox().click();
+		await this.agreeAndApplyButton().click();
 		await this.completePayment();
 	};
 

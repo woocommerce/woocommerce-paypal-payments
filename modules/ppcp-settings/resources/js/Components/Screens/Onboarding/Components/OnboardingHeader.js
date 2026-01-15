@@ -1,6 +1,6 @@
 import { Icon } from '@wordpress/components';
 
-import { LogoPayPal } from '../../../ReusableComponents/Icons';
+import { LogoPayPal } from '@ppcp-settings/Components/ReusableComponents/Icons';
 
 const OnboardingHeader = ( props ) => {
 	return (

@@ -21,10 +21,15 @@ import {
 	venmoClassicProductUsa,
 } from './_test-data/venmo';
 import {
-	payPalClassicCheckoutExcludingTax,
 	payPalClassicCheckout,
+	payPalClassicCheckoutExcludingTax,
 	payPalClassicCheckoutIntentAuthorized,
 } from './_test-data/paypal';
+import {
+	payLaterClassicCheckout,
+	payLaterClassicCheckoutExcludingTax,
+	payLaterClassicCheckoutIntentAuthorized,
+} from './_test-data/pay-later';
 import {
 	acdcClassicCheckout,
 	acdcClassicCheckoutIntentAuthorized,
@@ -33,7 +38,7 @@ import {
 } from './_test-data/acdc';
 import { fastlaneClassicCheckout } from './_test-data/fastlane';
 
-const { payPal, venmo, acdc, fastlane } = gateways;
+const { payPal, payLater, venmo, acdc, fastlane } = gateways;
 
 test.beforeAll( async ( { utils, pcpApi } ) => {
 	await utils.configureStore( {
@@ -49,6 +54,7 @@ test.beforeAll( async ( { utils, pcpApi } ) => {
 	);
 	await pcpApi.updatePcpPaymentMethods( {
 		[ payPal.id ]: { id: payPal.id, enabled: true },
+		[ payLater.id ]: { id: payLater.id, enabled: true },
 		[ venmo.id ]: { id: venmo.id, enabled: true },
 		[ acdc.id ]: { id: acdc.id, enabled: true },
 		[ fastlane.id ]: { id: fastlane.id, enabled: false },
@@ -60,6 +66,10 @@ test.afterAll( async ( { wooCommerceApi } ) => {
 } );
 
 for ( const testOrder of payPalClassicCheckout ) {
+	transactionsOnClassicCheckout( testOrder );
+}
+
+for ( const testOrder of payLaterClassicCheckout ) {
 	transactionsOnClassicCheckout( testOrder );
 }
 
@@ -93,6 +103,10 @@ test.describe( () => {
 		transactionsOnClassicCheckout( testOrder );
 	}
 
+	for ( const testOrder of payLaterClassicCheckoutExcludingTax ) {
+		transactionsOnClassicCheckout( testOrder );
+	}
+
 	for ( const testOrder of acdcClassicCheckoutExcludingTax ) {
 		transactionsOnClassicCheckout( testOrder );
 	}
@@ -109,6 +123,10 @@ test.describe( () => {
 	} );
 
 	for ( const testOrder of payPalClassicCheckoutIntentAuthorized ) {
+		transactionsOnClassicCheckout( testOrder );
+	}
+
+	for ( const testOrder of payLaterClassicCheckoutIntentAuthorized ) {
 		transactionsOnClassicCheckout( testOrder );
 	}
 

@@ -8,16 +8,21 @@ use WC_Order;
 use WooCommerce\PayPalCommerce\FraudProtection\Recaptcha\Recaptcha;
 use WooCommerce\PayPalCommerce\FraudProtection\Recaptcha\RecaptchaIntegration;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExecutableModule;
+use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExtendingModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ModuleClassNameIdTrait;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ServiceModule;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WP_Error;
 
-class FraudProtectionModule implements ServiceModule, ExecutableModule {
+class FraudProtectionModule implements ServiceModule, ExtendingModule, ExecutableModule {
 	use ModuleClassNameIdTrait;
 
 	public function services(): array {
 		return require __DIR__ . '/../services.php';
+	}
+
+	public function extensions(): array {
+		return require __DIR__ . '/../extensions.php';
 	}
 
 	public function run( ContainerInterface $container ): bool {
@@ -111,17 +116,15 @@ class FraudProtectionModule implements ServiceModule, ExecutableModule {
 			}
 		);
 
-		foreach ( array( 'woocommerce_checkout_process', 'woocommerce_before_pay_action' ) as $hook ) {
-			add_action(
-				$hook,
-				static function () use ( $container ): void {
-					$recaptcha = $container->get( 'fraud-protection.recaptcha' );
-					assert( $recaptcha instanceof Recaptcha );
+		add_action(
+			'woocommerce_checkout_process',
+			static function () use ( $container ): void {
+				$recaptcha = $container->get( 'fraud-protection.recaptcha' );
+				assert( $recaptcha instanceof Recaptcha );
 
-					$recaptcha->validate_classic_checkout();
-				}
-			);
-		}
+				$recaptcha->validate_classic_checkout();
+			}
+		);
 
 		add_action(
 			'woocommerce_blocks_loaded',

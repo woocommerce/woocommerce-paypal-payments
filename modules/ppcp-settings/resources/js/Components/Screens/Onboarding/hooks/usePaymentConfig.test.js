@@ -2,7 +2,7 @@
 import { renderHook } from '@testing-library/react';
 import { usePaymentConfig } from './usePaymentConfig';
 
-jest.mock( '../../../../data', () => ( {
+jest.mock( '@ppcp-settings/data/index', () => ( {
 	initStores: jest.fn(),
 } ) );
 

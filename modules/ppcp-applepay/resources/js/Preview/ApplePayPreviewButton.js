@@ -1,5 +1,5 @@
-import ApplepayButton from '../ApplepayButton';
-import PreviewButton from '../../../../ppcp-button/resources/js/modules/Preview/PreviewButton';
+import ApplepayButton from '@ppcp-applepay/ApplepayButton';
+import PreviewButton from '@ppcp-button/Preview/PreviewButton';
 
 /**
  * A single Apple Pay preview button instance.

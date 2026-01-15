@@ -41,7 +41,7 @@ export function getCustomerStorageStateName(
 	customer: WooCommerce.CreateCustomer
 ) {
 	// check is tested customer is guest (has empty username)
-	if ( ! customer.username ) {
+	if ( ! customer?.username ) {
 		return 'guest';
 	}
 	// for registered customers

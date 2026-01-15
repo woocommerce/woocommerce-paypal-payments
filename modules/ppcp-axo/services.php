@@ -9,6 +9,8 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\Axo;
 
+use WooCommerce\PayPalCommerce\Assets\AssetGetter;
+use WooCommerce\PayPalCommerce\Assets\AssetGetterFactory;
 use WooCommerce\PayPalCommerce\Axo\Assets\AxoManager;
 use WooCommerce\PayPalCommerce\Axo\Endpoint\AxoScriptAttributes;
 use WooCommerce\PayPalCommerce\Axo\Endpoint\FrontendLogger;
@@ -62,13 +64,16 @@ return array(
 		return $settings->has( 'axo_enabled' ) && $settings->get( 'axo_enabled' );
 	},
 
-	'axo.url'                                => static function ( ContainerInterface $container ): string {
-		return plugins_url( '/modules/ppcp-axo/', $container->get( 'ppcp.path-to-plugin-main-file' ) );
+	'axo.asset_getter'                       => static function ( ContainerInterface $container ): AssetGetter {
+		$factory = $container->get( 'assets.asset_getter_factory' );
+		assert( $factory instanceof AssetGetterFactory );
+
+		return $factory->for_module( 'ppcp-axo' );
 	},
 
 	'axo.manager'                            => static function ( ContainerInterface $container ): AxoManager {
 		return new AxoManager(
-			$container->get( 'axo.url' ),
+			$container->get( 'axo.asset_getter' ),
 			$container->get( 'ppcp.asset-version' ),
 			$container->get( 'session.handler' ),
 			$container->get( 'wcgateway.settings' ),
@@ -77,7 +82,7 @@ return array(
 			$container->get( 'wcgateway.settings.status' ),
 			$container->get( 'api.shop.currency.getter' ),
 			$container->get( 'woocommerce.logger.woocommerce' ),
-			$container->get( 'wcgateway.url' ),
+			$container->get( 'wcgateway.asset_getter' ),
 			$container->get( 'axo.supported-country-card-type-matrix' )
 		);
 	},
@@ -87,7 +92,6 @@ return array(
 			$container->get( 'wcgateway.settings.render' ),
 			$container->get( 'wcgateway.settings' ),
 			$container->get( 'wcgateway.configuration.card-configuration' ),
-			$container->get( 'wcgateway.url' ),
 			$container->get( 'session.handler' ),
 			$container->get( 'wcgateway.order-processor' ),
 			$container->get( 'wcgateway.credit-card-icons' ),

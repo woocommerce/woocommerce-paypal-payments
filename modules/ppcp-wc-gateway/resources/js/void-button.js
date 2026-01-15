@@ -1,7 +1,7 @@
 import {
 	hide,
 	show,
-} from '../../../ppcp-button/resources/js/modules/Helper/Hiding';
+} from '@ppcp-button/Helper/Hiding';
 
 document.addEventListener( 'DOMContentLoaded', function () {
 	const refundButton = document.querySelector( 'button.refund-items' );
