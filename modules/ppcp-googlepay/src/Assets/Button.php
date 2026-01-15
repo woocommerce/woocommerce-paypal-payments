@@ -496,17 +496,15 @@ class Button implements ButtonInterface {
 	}
 
 	/**
-	 * Check if new settings model exist and if so check enable pay now setting,
-	 * if none of the above is true, check legacy settings for shipping enabled.
+	 * Check if the "Pay Now" setting is enabled.
 	 *
-	 * @return bool Whether shipping should be used or not.
-	 * @throws NotFoundException If the settings are not found.
+	 * When enabled, we enable the shipping callback, to capture the shipping
+	 * address inside the GooglePay sheet, rather than expecting the buyer to
+	 * provide that address on the checkout page.
+	 *
+	 * @return bool Whether the shipping callback should be used.
 	 */
 	private function should_use_shipping(): bool {
-		if ( ! is_null( $this->new_settings ) && $this->new_settings->get_enable_pay_now() === true ) {
-			return true;
-		}
-
-		return $this->settings->has( 'googlepay_button_shipping_enabled' ) && $this->settings->get( 'googlepay_button_shipping_enabled' );
+		return $this->settings->enable_pay_now();
 	}
 }

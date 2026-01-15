@@ -417,27 +417,21 @@ class SettingsProvider {
 	}
 
 	/**
-	 * Gets the enable Pay Now setting.
-	 *
-	 * @return bool True if Pay Now is enabled, false otherwise.
+	 * Whether the "Pay Now" setting is enabled.
 	 */
 	public function enable_pay_now(): bool {
 		return $this->settings_model->get_enable_pay_now();
 	}
 
 	/**
-	 * Gets the enable logging setting.
-	 *
-	 * @return bool True if logging is enabled, false otherwise.
+	 * Whether logging is enabled for the plugin.
 	 */
 	public function enable_logging(): bool {
 		return $this->settings_model->get_enable_logging();
 	}
 
 	/**
-	 * Gets the disabled cards.
-	 *
-	 * @return array The array of disabled cards.
+	 * Returns a string-list of disabled card providers.
 	 */
 	public function disabled_cards(): array {
 		return $this->settings_model->get_disabled_cards();
