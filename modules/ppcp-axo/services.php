@@ -125,7 +125,7 @@ return array(
 
 		return array(
 			'enabled'                     => defined( 'WP_DEBUG' ) && WP_DEBUG,
-			'client_id'                   => $settings_provider->merchant_data()->client_id ?: null,
+			'client_id'                   => $settings_provider->merchant_data()->client_id,
 			'session_id'                  => $session_id,
 			'amount'                      => array(
 				'currency_code' => $currency->get(),

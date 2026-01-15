@@ -19,6 +19,7 @@ use WooCommerce\PayPalCommerce\Button\Assets\SmartButtonInterface;
 use WooCommerce\PayPalCommerce\Button\Helper\Context;
 use WooCommerce\PayPalCommerce\Onboarding\Render\OnboardingOptionsRenderer;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
+use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExecutableModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExtendingModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ModuleClassNameIdTrait;
@@ -186,10 +187,10 @@ class AxoModule implements ServiceModule, ExtendingModule, ExecutableModule {
 			function () use ( $c ) {
 				$this->session_handler = $c->get( 'session.handler' );
 
-				$payment_settings = $c->get( 'settings.data.payment' );
-				assert( $payment_settings instanceof PaymentSettings );
+				$settings_provider = $c->get( 'wcgateway.settings.provider.payment' );
+				assert( $settings_provider instanceof SettingsProvider );
 
-				$is_paypal_enabled = $payment_settings->is_method_enabled( PayPalGateway::ID );
+				$is_paypal_enabled = $settings_provider->is_method_enabled( PayPalGateway::ID );
 
 				$subscription_helper = $c->get( 'wc-subscriptions.helper' );
 				assert( $subscription_helper instanceof SubscriptionHelper );
