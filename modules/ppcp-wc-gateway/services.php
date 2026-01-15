@@ -558,8 +558,8 @@ return array(
 			$container->get( 'api.paypal-bearer-cache' ),
 			$container->get( 'api.bearer' ),
 			$container->get( 'wcgateway.current-ppcp-settings-page-id' ),
-			$container->get( 'onboarding.signup-link-cache' ),
-			$container->get( 'onboarding.signup-link-ids' ),
+			$container->get( 'settings.service.signup-link-cache' ),
+			array(), // todo: #legacy-ui code cleanup - legacy service already removed.
 			$container->get( 'http.redirector' ),
 			$container->get( 'api.partner_merchant_id-production' ),
 			$container->get( 'api.partner_merchant_id-sandbox' ),
@@ -708,9 +708,6 @@ return array(
 
 		$dcc_applies = $container->get( 'api.helpers.dccapplies' );
 		assert( $dcc_applies instanceof DccApplies );
-
-		$onboarding_options_renderer = $container->get( 'onboarding.render-options' );
-		assert( $onboarding_options_renderer instanceof OnboardingOptionsRenderer );
 
 		$subscription_helper = $container->get( 'wc-subscriptions.helper' );
 		assert( $subscription_helper instanceof SubscriptionHelper );

@@ -35,26 +35,17 @@ return function ( ContainerInterface $container, array $fields ): array {
 	$dcc_applies = $container->get( 'api.helpers.dccapplies' );
 	assert( $dcc_applies instanceof DccApplies );
 
-	$is_shop_supports_dcc = $dcc_applies->for_country_currency() || $dcc_applies->for_wc_payments();
-
-	$onboarding_options_renderer = $container->get( 'onboarding.render-options' );
-	assert( $onboarding_options_renderer instanceof OnboardingOptionsRenderer );
-
 	$asset_getter = $container->get( 'wcgateway.asset_getter' );
 	assert( $asset_getter instanceof AssetGetter );
 
 	$display_manager = $container->get( 'wcgateway.display-manager' );
 	assert( $display_manager instanceof DisplayManager );
 
-	$onboarding_send_only_notice_renderer = $container->get( 'onboarding.render-send-only-notice' );
-	assert( $onboarding_send_only_notice_renderer instanceof OnboardingSendOnlyNoticeRenderer );
-
 	$environment = $container->get( 'settings.environment' );
 	assert( $environment instanceof Environment );
 
 	$is_send_only_country           = $container->get( 'wcgateway.is-send-only-country' );
 	$onboarding_elements_class      = $is_send_only_country ? 'hide' : 'ppcp-onboarding-element';
-	$send_only_country_notice_class = $is_send_only_country ? 'ppcp-onboarding-element' : 'hide';
 
 	$connection_fields = array(
 		'ppcp_onboarading_header'            => array(
@@ -114,25 +105,10 @@ return function ( ContainerInterface $container, array $fields ): array {
 			'gateway'      => Settings::CONNECTION_TAB_ID,
 			'description'  => __( 'Your account is connected to sandbox, no real charging takes place. To accept live payments, turn off sandbox mode and connect your live PayPal account.', 'woocommerce-paypal-payments' ),
 		),
-		'ppcp_send_only_countries_notice'    => array(
-			'type'         => 'ppcp-text',
-			'classes'      => array( $send_only_country_notice_class ),
-			'text'         => $onboarding_send_only_notice_renderer->render(),
-			'raw'          => true,
-			'screens'      => array(
-				0,
-				8,
-			),
-			'requirements' => array(),
-			'gateway'      => Settings::CONNECTION_TAB_ID,
-		),
 		'ppcp_onboarading_options'           => array(
 			'type'         => 'ppcp-text',
 			'classes'      => array( $onboarding_elements_class ),
-			'text'         => $onboarding_options_renderer->render(
-				$is_shop_supports_dcc,
-				$container->get( 'api.shop.country' ) === 'CN'
-			),
+			'text'         => '-', // todo: #legacy-ui code cleanup - already removed a legacy onboarding notice.
 			'raw'          => true,
 			'screens'      => array(
 				0,
