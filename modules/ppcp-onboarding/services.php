@@ -46,24 +46,17 @@ return array(
 		}
 		return $container->get( 'api.paypal-website-url-production' );
 	},
-	'onboarding.state'                   => function ( ContainerInterface $container ): State {
-		$settings    = $container->get( 'wcgateway.settings' );
-		return new State( $settings );
-	},
 	/**
 	 * Merchant connection details, which includes the connection status
 	 * (onboarding/connected) and connection-aware environment checks.
 	 * This is the preferred solution to check environment and connection state.
 	 */
 	'settings.connection-state'          => static function ( ContainerInterface $container ): ConnectionState {
-		$state = $container->get( 'onboarding.state' );
-		assert( $state instanceof State );
-
 		$settings = $container->get( 'wcgateway.settings' );
 		assert( $settings instanceof Settings );
 
 		$is_sandbox   = $settings->has( 'sandbox_on' ) && $settings->get( 'sandbox_on' );
-		$is_connected = $state->current_state() >= State::STATE_ONBOARDED;
+		$is_connected = $state->current_state() >=8;
 		$environment  = new Environment( $is_sandbox );
 
 		return new ConnectionState( $is_connected, $environment );
@@ -110,12 +103,10 @@ return array(
 		return new MerchantDetails( $woo_country, $woo_country, $eligibility_checks );
 	},
 	'onboarding.assets'                  => function ( ContainerInterface $container ): OnboardingAssets {
-		$state                 = $container->get( 'onboarding.state' );
 		$login_seller_endpoint = $container->get( 'onboarding.endpoint.login-seller' );
 		return new OnboardingAssets(
 			$container->get( 'onboarding.asset_getter' ),
 			$container->get( 'ppcp.asset-version' ),
-			$state,
 			$container->get( 'settings.environment' ),
 			$login_seller_endpoint,
 			$container->get( 'wcgateway.current-ppcp-settings-page-id' )

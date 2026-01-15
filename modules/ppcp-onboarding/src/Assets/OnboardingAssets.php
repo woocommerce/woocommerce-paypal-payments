@@ -13,7 +13,6 @@ use WooCommerce\PayPalCommerce\Assets\AssetGetter;
 use WooCommerce\PayPalCommerce\Onboarding\Endpoint\LoginSellerEndpoint;
 use WooCommerce\PayPalCommerce\Onboarding\Endpoint\UpdateSignupLinksEndpoint;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
-use WooCommerce\PayPalCommerce\Onboarding\State;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 
 /**
@@ -28,13 +27,6 @@ class OnboardingAssets {
 	 * @var string
 	 */
 	private $version;
-
-	/**
-	 * The State.
-	 *
-	 * @var State
-	 */
-	private $state;
 
 	/**
 	 * The Environment.
@@ -60,7 +52,6 @@ class OnboardingAssets {
 	/**
 	 * @param AssetGetter         $asset_getter
 	 * @param string              $version                            The assets version.
-	 * @param State               $state                               The State object.
 	 * @param Environment         $environment  The Environment.
 	 * @param LoginSellerEndpoint $login_seller_endpoint The LoginSeller endpoint.
 	 * @param string              $page_id ID of the current PPCP gateway settings page, or empty if it is not such page.
@@ -68,7 +59,6 @@ class OnboardingAssets {
 	public function __construct(
 		AssetGetter $asset_getter,
 		string $version,
-		State $state,
 		Environment $environment,
 		LoginSellerEndpoint $login_seller_endpoint,
 		string $page_id
@@ -76,7 +66,6 @@ class OnboardingAssets {
 
 		$this->asset_getter          = $asset_getter;
 		$this->version               = $version;
-		$this->state                 = $state;
 		$this->environment           = $environment;
 		$this->login_seller_endpoint = $login_seller_endpoint;
 		$this->page_id               = $page_id;
@@ -142,9 +131,9 @@ class OnboardingAssets {
 			'endpoint'                     => \WC_AJAX::get_endpoint( LoginSellerEndpoint::ENDPOINT ),
 			'nonce'                        => wp_create_nonce( $this->login_seller_endpoint::nonce() ),
 			'paypal_js_url'                => 'https://www.paypal.com/webapps/merchantboarding/js/lib/lightbox/partner.js',
-			'sandbox_state'                => State::get_state_name( $this->state->sandbox_state() ),
-			'production_state'             => State::get_state_name( $this->state->production_state() ),
-			'current_state'                => State::get_state_name( $this->state->current_state() ),
+			'sandbox_state'                => 'onboarded',
+			'production_state'             => 'onboarded',
+			'current_state'                => 'onboarded',
 			'current_env'                  => $this->environment->current_environment(),
 			'error_messages'               => array(
 				'no_credentials' => __( 'API credentials must be entered to save the settings.', 'woocommerce-paypal-payments' ),

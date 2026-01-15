@@ -5,13 +5,12 @@
  * @package WooCommerce\PayPalCommerce\Googlepay
  */
 
-declare(strict_types=1);
+declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\Googlepay;
 
 use WooCommerce\PayPalCommerce\Assets\AssetGetter;
 use WooCommerce\PayPalCommerce\Googlepay\Helper\PropertiesDictionary;
-use WooCommerce\PayPalCommerce\Onboarding\State;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\DisplayManager;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
@@ -33,9 +32,9 @@ return array(
 		$is_referral  = $container->get( 'googlepay.is_referral' );
 
 		$insert_after = function ( array $array, string $key, array $new ): array {
-			$keys = array_keys( $array );
+			$keys  = array_keys( $array );
 			$index = array_search( $key, $keys, true );
-			$pos = false === $index ? count( $array ) : $index + 1;
+			$pos   = false === $index ? count( $array ) : $index + 1;
 
 			return array_merge( array_slice( $array, 0, $pos ), $new, array_slice( $array, $pos ) );
 		};
@@ -55,9 +54,7 @@ return array(
 					'title'        => __( 'Google Pay Payments', 'woocommerce-paypal-payments' ),
 					'type'         => 'ppcp-text',
 					'text'         => $container->get( 'googlepay.settings.connection.status-text' ),
-					'screens'      => array(
-						State::STATE_ONBOARDED,
-					),
+					'screens'      => array( 8 ),
 					'requirements' => array(),
 					'gateway'      => Settings::CONNECTION_TAB_ID,
 				),
@@ -65,8 +62,9 @@ return array(
 		);
 
 		if ( ! $is_available && $is_referral ) {
-			$connection_url = admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway&ppcp-tab=ppcp-connection#field-credentials_feature_onboarding_heading' );
+			$connection_url  = admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway&ppcp-tab=ppcp-connection#field-credentials_feature_onboarding_heading' );
 			$connection_link = '<a href="' . $connection_url . '" style="pointer-events: auto">';
+
 			return $insert_after(
 				$fields,
 				'digital_wallet_heading',
@@ -91,7 +89,7 @@ return array(
 							)
 							. '</p>',
 						'default'           => 'yes',
-						'screens'           => array( State::STATE_ONBOARDED ),
+						'screens'           => array( 8 ),
 						'gateway'           => 'dcc',
 						'requirements'      => array(),
 						'custom_attributes' => array(
@@ -105,7 +103,10 @@ return array(
 								)
 							),
 						),
-						'classes'           => array( 'ppcp-valign-label-middle', 'ppcp-align-label-center' ),
+						'classes'           => array(
+							'ppcp-valign-label-middle',
+							'ppcp-align-label-center',
+						),
 					),
 				)
 			);
@@ -127,14 +128,14 @@ return array(
 					'label'             => __( 'Enable Google Pay button', 'woocommerce-paypal-payments' )
 						. '<p class="description">'
 						. sprintf(
-							// translators: %1$s and %2$s are the opening and closing of HTML <a> tag.
+						// translators: %1$s and %2$s are the opening and closing of HTML <a> tag.
 							__( 'Buyers can use %1$sGoogle Pay%2$s to make payments on the web using a web browser.', 'woocommerce-paypal-payments' ),
 							'<a href="https://woocommerce.com/document/woocommerce-paypal-payments/#google-pay" target="_blank">',
 							'</a>'
 						)
 						. '</p>',
 					'default'           => 'yes',
-					'screens'           => array( State::STATE_ONBOARDED ),
+					'screens'           => array( 8 ),
 					'gateway'           => 'dcc',
 					'requirements'      => array(),
 					'custom_attributes' => array(
@@ -155,7 +156,10 @@ return array(
 						'data-ppcp-apm-name'   => $apm_name,
 						'data-ppcp-field-name' => 'is_enabled',
 					),
-					'classes'           => array( 'ppcp-valign-label-middle', 'ppcp-align-label-center' ),
+					'classes'           => array(
+						'ppcp-valign-label-middle',
+						'ppcp-align-label-center',
+					),
 				),
 				'googlepay_button_type'             => array(
 					'title'             => __( 'Button Label', 'woocommerce-paypal-payments' ),
@@ -170,7 +174,7 @@ return array(
 					'input_class'       => array( 'wc-enhanced-select' ),
 					'default'           => 'plain',
 					'options'           => PropertiesDictionary::button_types(),
-					'screens'           => array( State::STATE_ONBOARDED ),
+					'screens'           => array( 8 ),
 					'gateway'           => 'dcc',
 					'requirements'      => array(),
 					'custom_attributes' => array(
@@ -192,7 +196,7 @@ return array(
 					'class'             => array(),
 					'default'           => 'black',
 					'options'           => PropertiesDictionary::button_colors(),
-					'screens'           => array( State::STATE_ONBOARDED ),
+					'screens'           => array( 8 ),
 					'gateway'           => 'dcc',
 					'requirements'      => array(),
 					'custom_attributes' => array(
@@ -213,7 +217,7 @@ return array(
 					'input_class'       => array( 'wc-enhanced-select' ),
 					'default'           => 'en',
 					'options'           => PropertiesDictionary::button_languages(),
-					'screens'           => array( State::STATE_ONBOARDED ),
+					'screens'           => array( 8 ),
 					'gateway'           => 'dcc',
 					'requirements'      => array(),
 					'custom_attributes' => array(
@@ -232,7 +236,7 @@ return array(
 					'classes'      => array( 'ppcp-field-indent ppcp' ),
 					'label'        => __( 'Enable Google Pay shipping callback', 'woocommerce-paypal-payments' ),
 					'default'      => 'no',
-					'screens'      => array( State::STATE_ONBOARDED ),
+					'screens'      => array( 8 ),
 					'gateway'      => 'dcc',
 					'requirements' => array(),
 				),
@@ -245,9 +249,7 @@ return array(
 						'apm'     => $apm_name,
 						'single'  => true,
 					),
-					'screens'      => array(
-						State::STATE_ONBOARDED,
-					),
+					'screens'      => array( 8 ),
 					'requirements' => array(),
 					'gateway'      => 'dcc',
 				),

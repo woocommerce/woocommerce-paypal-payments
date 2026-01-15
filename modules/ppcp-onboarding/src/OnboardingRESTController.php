@@ -138,21 +138,18 @@ class OnboardingRESTController {
 	 */
 	public function get_status( $request ) {
 		$environment = $this->container->get( 'settings.environment' );
-		$state       = $this->container->get( 'onboarding.state' );
-
-		// Legacy onboarding module; using `State::STATE_ONBOARDED` checks is valid here.
 
 		return array(
 			'environment' => $environment->current_environment(),
-			'onboarded'   => ( $state->current_state() >= State::STATE_ONBOARDED ),
-			'state'       => State::get_state_name( $state->current_state() ),
+			'onboarded'   => true, // #legacy-ui code cleanup
+			'state'       => 'onboarded', // or 'start' #legacy-ui code cleanup
 			'sandbox'     => array(
-				'state'     => State::get_state_name( $state->sandbox_state() ),
-				'onboarded' => ( $state->sandbox_state() >= State::STATE_ONBOARDED ),
+				'state'     => 'onboarded', // or 'start' #legacy-ui code cleanup
+				'onboarded' => true, // #legacy-ui code cleanup
 			),
 			'production'  => array(
-				'state'     => State::get_state_name( $state->production_state() ),
-				'onboarded' => ( $state->production_state() >= State::STATE_ONBOARDED ),
+				'state'     => 'onboarded', // or 'start' #legacy-ui code cleanup
+				'onboarded' => true, // #legacy-ui code cleanup
 			),
 		);
 	}
