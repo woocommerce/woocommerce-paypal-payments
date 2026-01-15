@@ -370,7 +370,7 @@ class LocalAlternativePaymentMethodsModule implements ServiceModule, ExtendingMo
 			return $this->is_rest_request();
 		}
 
-		$settings_provider = $container->get( 'settings.provider.payment' );
+		$settings_provider = $container->get( 'settings.settings-provider' );
 		assert( $settings_provider instanceof SettingsProvider );
 
 		return $settings_provider->is_method_enabled( PayPalGateway::ID );
