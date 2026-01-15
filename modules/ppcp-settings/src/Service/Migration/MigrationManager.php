@@ -49,11 +49,6 @@ class MigrationManager implements SettingsMigrationInterface {
 	}
 
 	public function migrate(): void {
-		$this->general_settings_migration->migrate();
-		$this->settings_tab_migration->migrate();
-		$this->styling_settings_migration->migrate();
-		$this->payment_settings_migration->migrate();
-		$this->fastlane_settings_migration->migrate();
 		try {
 			/**
 			 * Clean up legacy UI toggle options that are no longer needed.
