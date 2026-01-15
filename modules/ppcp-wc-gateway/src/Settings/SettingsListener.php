@@ -515,12 +515,12 @@ class SettingsListener {
 			$this->client_credentials_cache->delete( SdkClientToken::CACHE_KEY );
 		}
 
-		if ( $this->pui_status_cache->has( PayUponInvoiceProductStatus::PUI_STATUS_CACHE_KEY ) ) {
-			$this->pui_status_cache->delete( PayUponInvoiceProductStatus::PUI_STATUS_CACHE_KEY );
+		if ( $this->pui_status_cache->has( PayUponInvoiceProductStatus::KEY ) ) {
+			$this->pui_status_cache->delete( PayUponInvoiceProductStatus::KEY );
 		}
 
-		if ( $this->dcc_status_cache->has( DCCProductStatus::DCC_STATUS_CACHE_KEY ) ) {
-			$this->dcc_status_cache->delete( DCCProductStatus::DCC_STATUS_CACHE_KEY );
+		if ( $this->dcc_status_cache->has( DCCProductStatus::KEY ) ) {
+			$this->dcc_status_cache->delete( DCCProductStatus::KEY );
 		}
 
 		/**

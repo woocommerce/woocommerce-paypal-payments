@@ -23,6 +23,7 @@ use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExtendingModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ModuleClassNameIdTrait;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ServiceModule;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
+use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 
 /**
@@ -53,10 +54,10 @@ class GooglepayModule implements ServiceModule, ExtendingModule, ExecutableModul
 		// Clears product status when appropriate.
 		add_action(
 			'woocommerce_paypal_payments_clear_apm_product_status',
-			function ( ?Settings $settings = null ) use ( $c ): void {
+			function () use ( $c ): void {
 				$apm_status = $c->get( 'googlepay.helpers.apm-product-status' );
 				assert( $apm_status instanceof ApmProductStatus );
-				$apm_status->clear( $settings );
+				$apm_status->clear();
 			}
 		);
 

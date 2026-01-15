@@ -13,9 +13,15 @@ use WooCommerce\PayPalCommerce\ApiClient\Authentication\Bearer;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\ReferenceTransactionStatus;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\DccApplies;
+use WooCommerce\PayPalCommerce\Applepay\ApplePayGateway;
+use WooCommerce\PayPalCommerce\Axo\Gateway\AxoGateway;
 use WooCommerce\PayPalCommerce\Button\Helper\MessagesApply;
 use WooCommerce\PayPalCommerce\Compat\PPEC\PPECHelper;
+use WooCommerce\PayPalCommerce\Googlepay\GooglePayGateway;
 use WooCommerce\PayPalCommerce\Settings\Data\GeneralSettings;
+use WooCommerce\PayPalCommerce\Settings\Data\PaymentSettings;
+use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
+use WooCommerce\PayPalCommerce\Settings\SettingsModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExecutableModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExtendingModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ModuleClassNameIdTrait;
@@ -53,8 +59,8 @@ class StatusReportModule implements ServiceModule, ExtendingModule, ExecutableMo
 		add_action(
 			'woocommerce_system_status_report',
 			function () use ( $c ) {
-				$settings = $c->get( 'wcgateway.settings' );
-				assert( $settings instanceof ContainerInterface );
+				$settings_provider = $c->get( 'settings.data.provider' );
+				assert( $settings_provider instanceof SettingsProvider );
 
 				$subscriptions_mode_settings = $c->get( 'wcgateway.settings.fields.subscriptions_mode' ) ?: array();
 
@@ -147,7 +153,7 @@ class StatusReportModule implements ServiceModule, ExtendingModule, ExecutableMo
 						'exported_label' => 'PayPal Vault enabled',
 						'description'    => esc_html__( 'Whether vaulting option is enabled on Standard Payments settings or not.', 'woocommerce-paypal-payments' ),
 						'value'          => $this->bool_to_html(
-							$settings->has( 'vault_enabled' ) && $settings->get( 'vault_enabled' )
+							$settings_provider->save_paypal_and_venmo()
 						),
 					),
 					array(
@@ -155,7 +161,7 @@ class StatusReportModule implements ServiceModule, ExtendingModule, ExecutableMo
 						'exported_label' => 'ACDC Vault enabled',
 						'description'    => esc_html__( 'Whether vaulting option is enabled on Advanced Card Processing settings or not.', 'woocommerce-paypal-payments' ),
 						'value'          => $this->bool_to_html(
-							$settings->has( 'vault_enabled_dcc' ) && $settings->get( 'vault_enabled_dcc' )
+							$settings_provider->save_card_details()
 						),
 					),
 					array(
@@ -163,7 +169,7 @@ class StatusReportModule implements ServiceModule, ExtendingModule, ExecutableMo
 						'exported_label' => 'Logging enabled',
 						'description'    => esc_html__( 'Whether logging of plugin events and errors is enabled.', 'woocommerce-paypal-payments' ),
 						'value'          => $this->bool_to_html(
-							$settings->has( 'logging_enabled' ) && $settings->get( 'logging_enabled' )
+							$settings_provider->enable_logging()
 						),
 					),
 					array(
@@ -188,7 +194,7 @@ class StatusReportModule implements ServiceModule, ExtendingModule, ExecutableMo
 						'description'    => esc_html__( 'Whether subscriptions are active and their mode.', 'woocommerce-paypal-payments' ),
 						'value'          => $this->subscriptions_mode_text(
 							$subscription_helper->plugin_is_active(),
-							$settings->has( 'subscriptions_mode' ) ? (string) $subscription_mode_options[ $settings->get( 'subscriptions_mode' ) ] : '',
+							(string) $subscription_mode_options[ $settings_provider->save_paypal_and_venmo() ? 'vaulting_api' : 'subscriptions_api' ],
 							$subscriptions_mode_settings
 						),
 					),
@@ -197,7 +203,7 @@ class StatusReportModule implements ServiceModule, ExtendingModule, ExecutableMo
 						'exported_label' => 'PayPal Shipping Callback',
 						'description'    => esc_html__( 'Whether the "Require final confirmation on checkout" setting is disabled.', 'woocommerce-paypal-payments' ),
 						'value'          => $this->bool_to_html(
-							$settings->has( 'blocks_final_review_enabled' ) && ! $settings->get( 'blocks_final_review_enabled' )
+							$settings_provider->enable_pay_now()
 						),
 					),
 					array(
@@ -205,7 +211,7 @@ class StatusReportModule implements ServiceModule, ExtendingModule, ExecutableMo
 						'exported_label' => 'Apple Pay',
 						'description'    => esc_html__( 'Whether Apple Pay is enabled.', 'woocommerce-paypal-payments' ),
 						'value'          => $this->bool_to_html(
-							$settings->has( 'applepay_button_enabled' ) && $settings->get( 'applepay_button_enabled' )
+							$settings_provider->is_method_enabled( ApplePayGateway::ID )
 						),
 					),
 					array(
@@ -213,7 +219,7 @@ class StatusReportModule implements ServiceModule, ExtendingModule, ExecutableMo
 						'exported_label' => 'Google Pay',
 						'description'    => esc_html__( 'Whether Google Pay is enabled.', 'woocommerce-paypal-payments' ),
 						'value'          => $this->bool_to_html(
-							$settings->has( 'googlepay_button_enabled' ) && $settings->get( 'googlepay_button_enabled' )
+							$settings_provider->is_method_enabled( GooglePayGateway::ID )
 						),
 					),
 					array(
@@ -221,7 +227,7 @@ class StatusReportModule implements ServiceModule, ExtendingModule, ExecutableMo
 						'exported_label' => 'Fastlane',
 						'description'    => esc_html__( 'Whether Fastlane is enabled.', 'woocommerce-paypal-payments' ),
 						'value'          => $this->bool_to_html(
-							$settings->has( 'axo_enabled' ) && $settings->get( 'axo_enabled' )
+							$settings_provider->is_method_enabled( AxoGateway::ID )
 						),
 					),
 				);

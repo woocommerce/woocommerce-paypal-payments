@@ -26,6 +26,7 @@ class MigrationManager implements SettingsMigrationInterface {
 	protected SettingsTabMigration $settings_tab_migration;
 	protected StylingSettingsMigration $styling_settings_migration;
 	protected PaymentSettingsMigration $payment_settings_migration;
+	protected FastlaneSettingsMigration $fastlane_settings_migration;
 	protected OnboardingProfile $onboarding_profile;
 	protected LoggerInterface $logger;
 
@@ -34,18 +35,25 @@ class MigrationManager implements SettingsMigrationInterface {
 		SettingsTabMigration $settings_tab_migration,
 		StylingSettingsMigration $styling_settings_migration,
 		PaymentSettingsMigration $payment_settings_migration,
+		FastlaneSettingsMigration $fastlane_settings_migration,
 		OnboardingProfile $onboarding_profile,
 		LoggerInterface $logger
 	) {
-		$this->general_settings_migration = $general_settings_migration;
-		$this->settings_tab_migration     = $settings_tab_migration;
-		$this->styling_settings_migration = $styling_settings_migration;
-		$this->payment_settings_migration = $payment_settings_migration;
-		$this->onboarding_profile         = $onboarding_profile;
-		$this->logger                     = $logger;
+		$this->general_settings_migration  = $general_settings_migration;
+		$this->settings_tab_migration      = $settings_tab_migration;
+		$this->styling_settings_migration  = $styling_settings_migration;
+		$this->payment_settings_migration  = $payment_settings_migration;
+		$this->fastlane_settings_migration = $fastlane_settings_migration;
+		$this->onboarding_profile          = $onboarding_profile;
+		$this->logger                      = $logger;
 	}
 
 	public function migrate(): void {
+		$this->general_settings_migration->migrate();
+		$this->settings_tab_migration->migrate();
+		$this->styling_settings_migration->migrate();
+		$this->payment_settings_migration->migrate();
+		$this->fastlane_settings_migration->migrate();
 		try {
 			/**
 			 * Clean up legacy UI toggle options that are no longer needed.
@@ -69,6 +77,7 @@ class MigrationManager implements SettingsMigrationInterface {
 			$this->settings_tab_migration->migrate();
 			$this->styling_settings_migration->migrate();
 			$this->payment_settings_migration->migrate();
+			$this->fastlane_settings_migration->migrate();
 
 			update_option( self::OPTION_NAME_MIGRATION_IS_DONE, true );
 		} catch ( Exception $error ) {

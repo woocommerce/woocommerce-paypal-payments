@@ -35,6 +35,7 @@ use WooCommerce\PayPalCommerce\Settings\Data\PaymentSettings;
 use WooCommerce\PayPalCommerce\Settings\Data\SettingsModel;
 use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
 use WooCommerce\PayPalCommerce\Settings\Data\StylingSettings;
+use WooCommerce\PayPalCommerce\Settings\Data\FastlaneSettings;
 use WooCommerce\PayPalCommerce\Settings\Data\TodosModel;
 use WooCommerce\PayPalCommerce\Settings\Data\Definition\TodosDefinition;
 use WooCommerce\PayPalCommerce\Settings\Endpoint\AuthenticationRestEndpoint;
@@ -62,6 +63,7 @@ use WooCommerce\PayPalCommerce\Settings\Service\Migration\MigrationManager;
 use WooCommerce\PayPalCommerce\Settings\Service\Migration\PaymentSettingsMigration;
 use WooCommerce\PayPalCommerce\Settings\Service\Migration\SettingsTabMigration;
 use WooCommerce\PayPalCommerce\Settings\Service\Migration\StylingSettingsMigration;
+use WooCommerce\PayPalCommerce\Settings\Service\Migration\FastlaneSettingsMigration;
 use WooCommerce\PayPalCommerce\Settings\Service\OnboardingUrlManager;
 use WooCommerce\PayPalCommerce\Settings\Service\PaymentMethodsEligibilityService;
 use WooCommerce\PayPalCommerce\Settings\Service\ScriptDataHandler;
@@ -98,6 +100,7 @@ return array(
 			$container->get( 'settings.data.payment' ),
 			$container->get( 'settings.data.settings' ),
 			$container->get( 'settings.data.styling' ),
+			$container->get( 'settings.data.fastlane' )
 		);
 	},
 	'settings.data.onboarding'                            => static function ( ContainerInterface $container ): OnboardingProfile {
@@ -107,7 +110,7 @@ return array(
 		$can_use_subscriptions       = $container->has( 'wc-subscriptions.helper' ) && $container->get( 'wc-subscriptions.helper' )
 																								->plugin_is_active();
 		$should_skip_payment_methods = class_exists( '\WC_Payments' );
-		$can_use_fastlane            = $container->get( 'axo.eligible' );
+		$can_use_fastlane            = $container->get( 'axo.eligibility.check' );
 		$can_use_pay_later           = $container->get( 'button.helper.messages-apply' );
 
 		return new OnboardingProfile(
@@ -134,6 +137,9 @@ return array(
 	},
 	'settings.data.payment'                               => static function ( ContainerInterface $container ): PaymentSettings {
 		return new PaymentSettings();
+	},
+	'settings.data.fastlane'                              => static function (): FastlaneSettings {
+		return new FastlaneSettings();
 	},
 	'settings.data.settings'                              => static function ( ContainerInterface $container ): SettingsModel {
 		$environment = $container->get( 'settings.environment' );
@@ -387,6 +393,7 @@ return array(
 		$c->get( 'settings.service.data-migration.settings-tab' ),
 		$c->get( 'settings.service.data-migration.styling' ),
 		$c->get( 'settings.service.data-migration.payment-settings' ),
+		$c->get( 'settings.service.data-migration.fastlane' ),
 		$c->get( 'settings.data.onboarding' ),
 		$c->get( 'woocommerce.logger.woocommerce' )
 	),
@@ -411,6 +418,10 @@ return array(
 		(array) get_option( 'woocommerce-ppcp-settings', array() ),
 		$c->get( 'settings.data.general' ),
 		$c->get( 'api.endpoint.partners' ),
+	),
+	'settings.service.data-migration.fastlane'            => static fn( ContainerInterface $c ): FastlaneSettingsMigration => new FastlaneSettingsMigration(
+		(array) get_option( 'woocommerce-ppcp-settings', array() ),
+		$c->get( 'settings.data.fastlane' ),
 	),
 	'settings.rest.todos'                                 => static function ( ContainerInterface $container ): TodosRestEndpoint {
 		return new TodosRestEndpoint(

@@ -9,7 +9,6 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\PayPalSubscriptions;
 
-use ActionScheduler_Store;
 use WC_Order;
 use WC_Product;
 use WC_Product_Subscription_Variation;
@@ -25,9 +24,8 @@ use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExtendingModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ModuleClassNameIdTrait;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ServiceModule;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
-use WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException;
+use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
-use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
 use WP_Post;
 
@@ -164,12 +162,8 @@ class PayPalSubscriptionsModule implements ServiceModule, ExtendingModule, Execu
 			 * @psalm-suppress MissingClosureParamType
 			 */
 			function ( $product_id ) use ( $c ) {
-				$settings = $c->get( 'wcgateway.settings' );
-				assert( $settings instanceof Settings );
-
-				try {
-					$subscriptions_mode = $settings->get( 'subscriptions_mode' );
-				} catch ( NotFoundException $exception ) {
+				$subscriptions_mode = $this->get_subscriptions_mode( $c );
+				if ( empty( $subscriptions_mode ) ) {
 					return;
 				}
 
@@ -202,7 +196,11 @@ class PayPalSubscriptionsModule implements ServiceModule, ExtendingModule, Execu
 			 *
 			 * @psalm-suppress MissingClosureParamType
 			 */
-			static function ( $passed_validation, $product_id ) use ( $c ) {
+			function ( $passed_validation, $product_id ) use ( $c ) {
+				if ( ! WC()->cart ) {
+					return $passed_validation;
+				}
+
 				if ( WC()->cart->is_empty() || wcs_is_manual_renewal_enabled() ) {
 					return $passed_validation;
 				}
@@ -214,10 +212,7 @@ class PayPalSubscriptionsModule implements ServiceModule, ExtendingModule, Execu
 					return false;
 				}
 
-				$settings = $c->get( 'wcgateway.settings' );
-				assert( $settings instanceof Settings );
-
-				$subscriptions_mode     = $settings->has( 'subscriptions_mode' ) ? $settings->get( 'subscriptions_mode' ) : '';
+				$subscriptions_mode     = $this->get_subscriptions_mode( $c );
 				$is_paypal_subscription = static function ( $product ) use ( $subscriptions_mode ): bool {
 					return $product &&
 						in_array( $product->get_type(), array( 'subscription', 'variable-subscription' ), true ) &&
@@ -435,31 +430,24 @@ class PayPalSubscriptionsModule implements ServiceModule, ExtendingModule, Execu
 				if ( wcs_is_manual_renewal_enabled() ) {
 					return;
 				}
-				$settings = $c->get( 'wcgateway.settings' );
-				assert( $settings instanceof Settings );
 
-				try {
-					$subscriptions_mode = $settings->get( 'subscriptions_mode' );
-					if ( $subscriptions_mode === 'subscriptions_api' ) {
-						/**
-						 * Needed for getting global post object.
-						 *
-						 * @psalm-suppress InvalidGlobal
-						 */
-						global $post;
-						$product = wc_get_product( $post->ID );
-						if ( ! is_a( $product, WC_Product::class ) ) {
-							return;
-						}
-
-						$environment = $c->get( 'settings.environment' );
-						echo '<div class="options_group subscription_pricing show_if_subscription hidden">';
-						$this->render_paypal_subscription_fields( $product, $environment );
-						echo '</div>';
-
+				$subscriptions_mode = $this->get_subscriptions_mode( $c );
+				if ( $subscriptions_mode === 'subscriptions_api' ) {
+					/**
+					 * Needed for getting global post object.
+					 *
+					 * @psalm-suppress InvalidGlobal
+					 */
+					global $post;
+					$product = wc_get_product( $post->ID );
+					if ( ! is_a( $product, WC_Product::class ) ) {
+						return;
 					}
-				} catch ( NotFoundException $exception ) {
-					return;
+
+					$environment = $c->get( 'settings.environment' );
+					echo '<div class="options_group subscription_pricing show_if_subscription hidden">';
+					$this->render_paypal_subscription_fields( $product, $environment );
+					echo '</div>';
 				}
 			}
 		);
@@ -475,23 +463,16 @@ class PayPalSubscriptionsModule implements ServiceModule, ExtendingModule, Execu
 				if ( wcs_is_manual_renewal_enabled() ) {
 					return;
 				}
-				$settings = $c->get( 'wcgateway.settings' );
-				assert( $settings instanceof Settings );
 
-				try {
-					$subscriptions_mode = $settings->get( 'subscriptions_mode' );
-					if ( $subscriptions_mode === 'subscriptions_api' ) {
-						$product = wc_get_product( $variation->ID );
-						if ( ! is_a( $product, WC_Product_Subscription_Variation::class ) ) {
-							return;
-						}
-
-						$environment = $c->get( 'settings.environment' );
-						$this->render_paypal_subscription_fields( $product, $environment );
-
+				$subscriptions_mode = $this->get_subscriptions_mode( $c );
+				if ( $subscriptions_mode === 'subscriptions_api' ) {
+					$product = wc_get_product( $variation->ID );
+					if ( ! is_a( $product, WC_Product_Subscription_Variation::class ) ) {
+						return;
 					}
-				} catch ( NotFoundException $exception ) {
-					return;
+
+					$environment = $c->get( 'settings.environment' );
+					$this->render_paypal_subscription_fields( $product, $environment );
 				}
 			},
 			10,
@@ -510,8 +491,7 @@ class PayPalSubscriptionsModule implements ServiceModule, ExtendingModule, Execu
 					return;
 				}
 
-				$settings          = $c->get( 'wcgateway.settings' );
-				$subscription_mode = $settings->has( 'subscriptions_mode' ) ? $settings->get( 'subscriptions_mode' ) : '';
+				$subscription_mode = $this->get_subscriptions_mode( $c );
 				if ( ! in_array( $hook, array( 'post.php', 'post-new.php' ), true ) || $subscription_mode !== 'subscriptions_api' ) {
 					return;
 				}
@@ -750,5 +730,30 @@ class PayPalSubscriptionsModule implements ServiceModule, ExtendingModule, Execu
 				'</label><input type="text" class="short ppcp_subscription_plan_name" id="ppcp_subscription_plan_name-' . esc_attr( (string) $product->get_id() ) . '" name="_ppcp_subscription_plan_name" value="' . esc_attr( $subscription_plan_name ) . '"></p>'
 			);
 		}
+	}
+
+	/**
+	 * Gets the PayPal Subscriptions mode.
+	 *
+	 * @param ContainerInterface $container The service container.
+	 * @return string The subscriptions mode: 'vaulting_api', 'subscriptions_api', 'disable_paypal_subscriptions', or empty string if WC Subscriptions is not active.
+	 */
+	private function get_subscriptions_mode( ContainerInterface $container ): string {
+		$subscription_helper = $container->get( 'wc-subscriptions.helper' );
+		assert( $subscription_helper instanceof SubscriptionHelper );
+
+		if ( ! $subscription_helper->plugin_is_active() ) {
+			return '';
+		}
+
+		$settings_provider = $container->get( 'settings.settings-provider' );
+		assert( $settings_provider instanceof SettingsProvider );
+
+		$vaulting                = $settings_provider->save_paypal_and_venmo();
+		$subscription_mode_value = $vaulting ? 'vaulting_api' : 'subscriptions_api';
+
+		$subscription_mode_disabled = (bool) apply_filters( 'woocommerce_paypal_payments_subscription_mode_disabled', false );
+
+		return $subscription_mode_disabled ? 'disable_paypal_subscriptions' : $subscription_mode_value;
 	}
 }

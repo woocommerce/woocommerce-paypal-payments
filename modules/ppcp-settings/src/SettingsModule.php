@@ -68,7 +68,7 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 		assert( $loading_screen_service instanceof LoadingScreenService );
 		$loading_screen_service->register();
 
-		$this->apply_branded_only_limitations( $container );
+		add_action( 'init', fn() => $this->apply_branded_only_limitations( $container ), 1 );
 
 		add_action(
 			'woocommerce_paypal_payments_gateway_migrate_on_update',

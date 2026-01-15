@@ -71,6 +71,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Helper\OrderTransient;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\PartnerAttribution;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\PurchaseUnitSanitizer;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\ReferenceTransactionStatus;
+use WooCommerce\PayPalCommerce\ApiClient\Helper\ProductStatusResultCache;
 use WooCommerce\PayPalCommerce\ApiClient\Repository\CustomerRepository;
 use WooCommerce\PayPalCommerce\ApiClient\Repository\OrderRepository;
 use WooCommerce\PayPalCommerce\ApiClient\Repository\PartnerReferralsData;
@@ -79,11 +80,12 @@ use WooCommerce\PayPalCommerce\ApiClient\VaultV2\PaymentTokenEndpoint;
 use WooCommerce\PayPalCommerce\Common\Pattern\SingletonDecorator;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
 use WooCommerce\PayPalCommerce\Settings\Data\SettingsModel;
+use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
 use WooCommerce\PayPalCommerce\Settings\Enum\InstallationPathEnum;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\EnvironmentConfig;
-use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
+use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
 
 return array(
 	'api.host'                                       => static function ( ContainerInterface $container ): string {
@@ -139,7 +141,7 @@ return array(
 			$container->get( 'api.key' ),
 			$container->get( 'api.secret' ),
 			$container->get( 'woocommerce.logger.woocommerce' ),
-			$container->get( 'wcgateway.settings' )
+			$container->get( 'settings.settings-provider' )
 		);
 	},
 	'api.endpoint.partners'                          => static function ( ContainerInterface $container ): PartnersEndpoint {
@@ -209,14 +211,15 @@ return array(
 	},
 	'api.endpoint.identity-token'                    => static function ( ContainerInterface $container ): IdentityToken {
 		$logger = $container->get( 'woocommerce.logger.woocommerce' );
-		$settings = $container->get( 'wcgateway.settings' );
+		$settings = $container->get( 'settings.settings-provider' );
 		$customer_repository = $container->get( 'api.repository.customer' );
 		return new IdentityToken(
 			$container->get( 'api.host' ),
 			$container->get( 'api.bearer' ),
 			$logger,
 			$settings,
-			$customer_repository
+			$customer_repository,
+			$container->get( 'api.subscription_mode' )
 		);
 	},
 	'api.endpoint.payments'                          => static function ( ContainerInterface $container ): PaymentsEndpoint {
@@ -250,17 +253,16 @@ return array(
 		assert( $session_handler instanceof SessionHandler );
 		$bn_code         = $session_handler->bn_code();
 
-		$settings = $container->get( 'wcgateway.settings' );
-		assert( $settings instanceof Settings );
+		$settings = $container->get( 'settings.settings-provider' );
+		assert( $settings instanceof SettingsProvider );
 
-		$intent                         = $settings->has( 'intent' ) && strtoupper( (string) $settings->get( 'intent' ) ) === 'AUTHORIZE' ? 'AUTHORIZE' : 'CAPTURE';
 		$subscription_helper = $container->get( 'wc-subscriptions.helper' );
 		return new OrderEndpoint(
 			$container->get( 'api.host' ),
 			$container->get( 'api.bearer' ),
 			$order_factory,
 			$patch_collection_factory,
-			$intent,
+			$settings->authorize_only() ? 'AUTHORIZE' : 'CAPTURE',
 			$logger,
 			$subscription_helper,
 			$container->get( 'wcgateway.is-fraudnet-enabled' ),
@@ -855,17 +857,19 @@ return array(
 	},
 	'api.helper.purchase-unit-sanitizer'             => SingletonDecorator::make(
 		static function ( ContainerInterface $container ): PurchaseUnitSanitizer {
-			$settings  = $container->get( 'wcgateway.settings' );
-			assert( $settings instanceof Settings );
+			$settings  = $container->get( 'settings.settings-provider' );
+			assert( $settings instanceof SettingsProvider );
 
-			$behavior  = $settings->has( 'subtotal_mismatch_behavior' ) ? $settings->get( 'subtotal_mismatch_behavior' ) : null;
-			$line_name = $settings->has( 'subtotal_mismatch_line_name' ) ? $settings->get( 'subtotal_mismatch_line_name' ) : null;
-			return new PurchaseUnitSanitizer( $behavior, $line_name );
+			$subtotal_adjustment  = $settings->subtotal_adjustment();
+			return new PurchaseUnitSanitizer( $subtotal_adjustment );
 		}
 	),
+	'api.helper.product-status-result-cache'         => static function (): ProductStatusResultCache {
+		return new ProductStatusResultCache();
+	},
 	'api.client-credentials'                         => static function ( ContainerInterface $container ): ClientCredentials {
 		return new ClientCredentials(
-			$container->get( 'wcgateway.settings' )
+			$container->get( 'settings.settings-provider' )
 		);
 	},
 	'api.paypal-bearer-cache'                        => static function ( ContainerInterface $container ): Cache {
@@ -1000,5 +1004,27 @@ return array(
 		return $container->get( 'settings.flag.is-connected' )
 			? $container->get( 'settings.data.general' )->get_merchant_country()
 			: $container->get( 'api.shop.country' );
+	},
+	'api.subscription_mode'                          => static function ( ContainerInterface $container ): string {
+		$subscription_helper = $container->get( 'wc-subscriptions.helper' );
+		assert( $subscription_helper instanceof SubscriptionHelper );
+
+		$settings_provider = $container->get( 'settings.settings-provider' );
+		assert( $settings_provider instanceof SettingsProvider );
+
+		if ( ! $subscription_helper->plugin_is_active() ) {
+			return SubscriptionHelper::SUBSCRIPTION_MODE_VALUE_DISABLED;
+		}
+
+		$vaulting                = $settings_provider->save_paypal_and_venmo();
+		$subscription_mode_value = $vaulting ? SubscriptionHelper::SUBSCRIPTION_MODE_VALUE_VAULTING : SubscriptionHelper::SUBSCRIPTION_MODE_VALUE_SUBSCRIPTIONS;
+
+		/**
+		 * Allows disabling the subscription mode when using the new settings UI.
+		 *
+		 * @returns bool true if the subscription mode should be disabled, false otherwise (default is false).
+		 */
+		$subscription_mode_disabled = (bool) apply_filters( 'woocommerce_paypal_payments_subscription_mode_disabled', false );
+		return $subscription_mode_disabled ? SubscriptionHelper::SUBSCRIPTION_MODE_VALUE_DISABLED : $subscription_mode_value;
 	},
 );
