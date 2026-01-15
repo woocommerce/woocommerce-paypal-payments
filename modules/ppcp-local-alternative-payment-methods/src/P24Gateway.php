@@ -153,7 +153,7 @@ class P24Gateway extends WC_Payment_Gateway {
 					'experience_context' => $this->experience_context_builder
 						->with_order_return_urls( $wc_order )
 						->build()
-						->with_locale( 'en-PL' )
+						->with_locale( 'pl-PL' )
 						->to_array(),
 				),
 			),
