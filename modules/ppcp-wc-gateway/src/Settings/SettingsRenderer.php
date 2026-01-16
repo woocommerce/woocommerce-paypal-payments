@@ -465,7 +465,12 @@ $data_rows_html
 		endforeach;
 		if ( $is_dcc ) {
 			if ( $this->dcc_applies->for_country_currency() ) {
-				if ( ! $this->dcc_product_status->is_active() ) {
+				// todo: #legacy-ui code cleanup. Replaced real state check with dummy value until this file is deleted.
+				/** @var bool $is_onboarded */
+				$is_onboarded = true;
+				if ( ! $is_onboarded ) {
+					$this->render_dcc_onboarding_info();
+				} elseif ( ! $this->dcc_product_status->is_active() ) {
 					$this->render_dcc_not_active_yet();
 				}
 			} else {

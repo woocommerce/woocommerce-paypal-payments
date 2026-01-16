@@ -26,6 +26,12 @@ return function ( ContainerInterface $container, array $fields ): array {
 		return $fields;
 	}
 
+	// todo: #legacy-ui code cleanup. Replaced Onboarding/State with hardcoded dummy values for now. File will be deleted soon.
+	/** @var bool $onboarded_in_production */
+	$onboarded_in_production = false;
+	/** @var bool $onboarded_in_sandbox */
+	$onboarded_in_sandbox    = false;
+
 	$dcc_applies = $container->get( 'api.helpers.dccapplies' );
 	assert( $dcc_applies instanceof DccApplies );
 
@@ -243,7 +249,7 @@ return function ( ContainerInterface $container, array $fields ): array {
 		'merchant_email_production'  => array(
 			'title'        => __( 'Live Email address', 'woocommerce-paypal-payments' ),
 			'classes'      => array(
-				'',
+				$onboarded_in_production ? 'onboarded' : '',
 				'ppcp-always-shown-element',
 			),
 			'type'         => 'email',
@@ -261,7 +267,7 @@ return function ( ContainerInterface $container, array $fields ): array {
 		'merchant_id_production'     => array(
 			'title'             => __( 'Live Merchant Id', 'woocommerce-paypal-payments' ),
 			'classes'           => array(
-				'',
+				$onboarded_in_production ? 'onboarded' : '',
 				'ppcp-always-shown-element',
 			),
 			'type'              => 'text',
@@ -283,7 +289,7 @@ return function ( ContainerInterface $container, array $fields ): array {
 		'client_id_production'       => array(
 			'title'             => __( 'Live Client Id', 'woocommerce-paypal-payments' ),
 			'classes'           => array(
-				'',
+				$onboarded_in_production ? 'onboarded' : '',
 				'ppcp-always-shown-element',
 			),
 			'type'              => 'text',
@@ -303,7 +309,7 @@ return function ( ContainerInterface $container, array $fields ): array {
 		'client_secret_production'   => array(
 			'title'        => __( 'Live Secret Key', 'woocommerce-paypal-payments' ),
 			'classes'      => array(
-				'',
+				$onboarded_in_production ? 'onboarded' : '',
 				'ppcp-always-shown-element',
 			),
 			'type'         => 'ppcp-password',
@@ -321,7 +327,7 @@ return function ( ContainerInterface $container, array $fields ): array {
 		'merchant_email_sandbox' => array(
 			'title'        => __( 'Sandbox Email address', 'woocommerce-paypal-payments' ),
 			'classes'      => array(
-				'',
+				$onboarded_in_sandbox ? 'onboarded' : '',
 				'ppcp-always-shown-element',
 			),
 			'type'         => 'email',
@@ -339,7 +345,7 @@ return function ( ContainerInterface $container, array $fields ): array {
 		'merchant_id_sandbox'    => array(
 			'title'             => __( 'Sandbox Merchant Id', 'woocommerce-paypal-payments' ),
 			'classes'           => array(
-				'',
+				$onboarded_in_sandbox ? 'onboarded' : '',
 				'ppcp-always-shown-element',
 			),
 			'type'              => 'text',
@@ -361,7 +367,7 @@ return function ( ContainerInterface $container, array $fields ): array {
 		'client_id_sandbox'      => array(
 			'title'             => __( 'Sandbox Client Id', 'woocommerce-paypal-payments' ),
 			'classes'           => array(
-				'',
+				$onboarded_in_sandbox ? 'onboarded' : '',
 				'ppcp-always-shown-element',
 			),
 			'type'              => 'text',
@@ -381,7 +387,7 @@ return function ( ContainerInterface $container, array $fields ): array {
 		'client_secret_sandbox'  => array(
 			'title'        => __( 'Sandbox Secret Key', 'woocommerce-paypal-payments' ),
 			'classes'      => array(
-				'',
+				$onboarded_in_sandbox ? 'onboarded' : '',
 				'ppcp-always-shown-element',
 			),
 			'type'         => 'ppcp-password',

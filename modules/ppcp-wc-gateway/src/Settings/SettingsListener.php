@@ -2,7 +2,8 @@
 /**
  * Listens to requests and updates the settings if necessary.
  *
- * todo: #legacy-ui code cleanup. Remove this file.
+ * @todo #legacy-ui code cleanup. Remove this file.
+ *
  * @package WooCommerce\PayPalCommerce\WcGateway\Settings
  */
 
@@ -696,6 +697,13 @@ class SettingsListener {
 	 * @throws RuntimeException When API request fails.
 	 */
 	public function listen_for_tracking_enabled(): void {
+		// todo: #legacy-ui code cleanup. Replaced onboarding state check with hardcoded dummy until this file is deleted.
+		/** @var bool $is_onboarded */
+		$is_onboarded = true;
+		if ( ! $is_onboarded ) {
+			return;
+		}
+
 		try {
 			$token = $this->bearer->bearer();
 			if ( ! $token->is_tracking_available() ) {
