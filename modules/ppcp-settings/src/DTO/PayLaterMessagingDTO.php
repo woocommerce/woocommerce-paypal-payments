@@ -1,10 +1,4 @@
 <?php
-/**
- * Data transfer object. Stores Pay Later messaging details for a single location.
- *
- * @package WooCommerce\PayPalCommerce\Settings\DTO;
- */
-
 declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\Settings\DTO;

@@ -1,10 +1,4 @@
 <?php
-/**
- * Pay Later Messaging Settings class
- *
- * @package WooCommerce\PayPalCommerce\Settings\Data
- */
-
 declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\Settings\Data;
@@ -13,11 +7,6 @@ use RuntimeException;
 use WooCommerce\PayPalCommerce\Settings\DTO\PayLaterMessagingDTO;
 use WooCommerce\PayPalCommerce\Settings\Service\DataSanitizer;
 
-/**
- * Class PayLaterMessagingSettings
- *
- * Stores and manages the Pay Later messaging settings for different locations.
- */
 class PayLaterMessagingSettings extends AbstractDataModel {
 
 	protected const OPTION_KEY = 'woocommerce-ppcp-data-paylater-messaging';
