@@ -36,6 +36,7 @@ use WooCommerce\PayPalCommerce\Settings\Data\SettingsModel;
 use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
 use WooCommerce\PayPalCommerce\Settings\Data\StylingSettings;
 use WooCommerce\PayPalCommerce\Settings\Data\FastlaneSettings;
+use WooCommerce\PayPalCommerce\Settings\Data\PayLaterMessagingSettings;
 use WooCommerce\PayPalCommerce\Settings\Data\TodosModel;
 use WooCommerce\PayPalCommerce\Settings\Data\Definition\TodosDefinition;
 use WooCommerce\PayPalCommerce\Settings\Endpoint\AuthenticationRestEndpoint;
@@ -100,7 +101,8 @@ return array(
 			$container->get( 'settings.data.payment' ),
 			$container->get( 'settings.data.settings' ),
 			$container->get( 'settings.data.styling' ),
-			$container->get( 'settings.data.fastlane' )
+			$container->get( 'settings.data.fastlane' ),
+			$container->get( 'settings.data.paylater-messaging-settings' )
 		);
 	},
 	'settings.data.onboarding'                            => static function ( ContainerInterface $container ): OnboardingProfile {
@@ -141,6 +143,11 @@ return array(
 	'settings.data.fastlane'                              => static function (): FastlaneSettings {
 		return new FastlaneSettings();
 	},
+	'settings.data.paylater-messaging-settings'           => static function ( ContainerInterface $container ): PayLaterMessagingSettings {
+		return new PayLaterMessagingSettings(
+			$container->get( 'settings.service.sanitizer' )
+		);
+	},
 	'settings.data.settings'                              => static function ( ContainerInterface $container ): SettingsModel {
 		$environment = $container->get( 'settings.environment' );
 		assert( $environment instanceof Environment );
@@ -151,18 +158,16 @@ return array(
 		);
 	},
 	'settings.data.paylater-messaging'                    => static function ( ContainerInterface $container ): array {
-		// TODO: Create an AbstractDataModel wrapper for this configuration!
-
-		$config_factors = $container->get( 'paylater-configurator.factory.config' );
-		assert( $config_factors instanceof ConfigFactory );
+		$config_factory = $container->get( 'paylater-configurator.factory.config' );
+		assert( $config_factory instanceof ConfigFactory );
 
 		$save_config = $container->get( 'paylater-configurator.endpoint.save-config' );
 		assert( $save_config instanceof SaveConfig );
 
-		$settings = $container->get( 'wcgateway.settings' );
-		assert( $settings instanceof Settings );
+		$paylater_settings = $container->get( 'settings.data.paylater-messaging-settings' );
+		assert( $paylater_settings instanceof PayLaterMessagingSettings );
 
-		$pay_later_config = $config_factors->from_settings( $settings );
+		$pay_later_config = $config_factory->from_settings( $paylater_settings );
 
 		return array(
 			'read' => $pay_later_config,

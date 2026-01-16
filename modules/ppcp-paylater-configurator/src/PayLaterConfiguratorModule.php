@@ -20,6 +20,8 @@ use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ModuleClassNameI
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ServiceModule;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
+use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
+use WooCommerce\PayPalCommerce\Settings\Data\PayLaterMessagingSettings;
 use WooCommerce\PayPalCommerce\AdminNotices\Repository\Repository;
 use WooCommerce\PayPalCommerce\AdminNotices\Entity\PersistentMessage;
 
@@ -77,8 +79,11 @@ class PayLaterConfiguratorModule implements ServiceModule, ExtendingModule, Exec
 					$current_page_id
 				);
 
-				$settings = $c->get( 'wcgateway.settings' );
-				assert( $settings instanceof Settings );
+				$settings_provider = $c->get( 'settings.settings-provider' );
+				assert( $settings_provider instanceof SettingsProvider );
+
+				$paylater_settings = $c->get( 'settings.data.paylater-messaging-settings' );
+				assert( $paylater_settings instanceof PayLaterMessagingSettings );
 
 				add_action(
 					'wc_ajax_' . SaveConfig::ENDPOINT,
@@ -148,8 +153,8 @@ class PayLaterConfiguratorModule implements ServiceModule, ExtendingModule, Exec
 								'nonce'    => wp_create_nonce( GetConfig::nonce() ),
 							),
 						),
-						'config'                 => $config_factory->from_settings( $settings ),
-						'merchantClientId'       => $settings->get( 'client_id' ),
+						'config'                 => $config_factory->from_settings( $paylater_settings ),
+						'merchantClientId'       => $settings_provider->merchant_data()->client_id,
 						'partnerClientId'        => $c->get( 'api.partner_merchant_id' ),
 						'bnCode'                 => $partner_attribution->get_bn_code(),
 						'publishButtonClassName' => 'ppcp-paylater-configurator-publishButton',
