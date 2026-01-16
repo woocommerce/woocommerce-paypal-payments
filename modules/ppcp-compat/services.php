@@ -12,7 +12,6 @@ namespace WooCommerce\PayPalCommerce\Compat;
 use WooCommerce\PayPalCommerce\Assets\AssetGetter;
 use WooCommerce\PayPalCommerce\Assets\AssetGetterFactory;
 use WooCommerce\PayPalCommerce\Compat\Assets\CompatAssets;
-use WooCommerce\PayPalCommerce\Compat\Settings\SettingsTabMapHelper;
 use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 
@@ -39,9 +38,11 @@ return array(
 	},
 
 	'compat.ppec.settings_importer'                  => static function ( ContainerInterface $container ): PPEC\SettingsImporter {
-		$settings = $container->get( 'wcgateway.settings' );
-
-		return new PPEC\SettingsImporter( $settings );
+		return new PPEC\SettingsImporter(
+			$container->get( 'settings.data.settings' ),
+			$container->get( 'settings.data.payment' ),
+			$container->get( 'settings.data.styling' )
+		);
 	},
 
 	'compat.plugin-script-names'                     => static function ( ContainerInterface $container ): array {

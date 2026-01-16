@@ -27,7 +27,7 @@ class SettingsModel extends AbstractDataModel {
 	 *
 	 * @var string
 	 */
-	protected const OPTION_KEY = 'woocommerce-ppcp-data-settings';
+	public const OPTION_KEY = 'woocommerce-ppcp-data-settings';
 
 	/**
 	 * Valid options for subtotal adjustment.
