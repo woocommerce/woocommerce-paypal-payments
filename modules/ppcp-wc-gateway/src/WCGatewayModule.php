@@ -350,7 +350,8 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
 				$pui_status = $c->get( 'wcgateway.pay-upon-invoice-product-status' );
 				assert( $pui_status instanceof PayUponInvoiceProductStatus );
 				$pui_status->is_active();
-			}
+			},
+			20
 		);
 
 		add_action(

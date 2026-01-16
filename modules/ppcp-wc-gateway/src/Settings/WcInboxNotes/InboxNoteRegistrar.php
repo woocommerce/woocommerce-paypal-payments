@@ -52,15 +52,15 @@ class InboxNoteRegistrar {
 			$note->set_source( $this->plugin->getBaseName() );
 			$note->set_status( $inbox_note->status() );
 
-			$inbox_note_action = $inbox_note->action();
-
-			$note->add_action(
-				$inbox_note_action->name(),
-				$inbox_note_action->label(),
-				$inbox_note_action->url(),
-				$inbox_note_action->status(),
-				$inbox_note_action->is_primary()
-			);
+			foreach ( $inbox_note->actions() as $inbox_note_action ) {
+				$note->add_action(
+					$inbox_note_action->name(),
+					$inbox_note_action->label(),
+					$inbox_note_action->url(),
+					$inbox_note_action->status(),
+					$inbox_note_action->is_primary()
+				);
+			}
 
 			$note->save();
 		}
