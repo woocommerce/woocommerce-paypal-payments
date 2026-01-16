@@ -27,8 +27,10 @@ return function ( ContainerInterface $container, array $fields ): array {
 	}
 
 	// todo: #legacy-ui code cleanup. Replaced Onboarding/State with hardcoded dummy values for now. File will be deleted soon.
+	/** @var bool $onboarded_in_production */
 	$onboarded_in_production = false;
-	$onboarded_in_sandbox    = false;
+	/** @var bool $onboarded_in_sandbox */
+	$onboarded_in_sandbox = false;
 
 	$dcc_applies = $container->get( 'api.helpers.dccapplies' );
 	assert( $dcc_applies instanceof DccApplies );
@@ -42,11 +44,11 @@ return function ( ContainerInterface $container, array $fields ): array {
 	$environment = $container->get( 'settings.environment' );
 	assert( $environment instanceof Environment );
 
-	$is_send_only_country           = $container->get( 'wcgateway.is-send-only-country' );
-	$onboarding_elements_class      = $is_send_only_country ? 'hide' : 'ppcp-onboarding-element';
+	$is_send_only_country      = $container->get( 'wcgateway.is-send-only-country' );
+	$onboarding_elements_class = $is_send_only_country ? 'hide' : 'ppcp-onboarding-element';
 
 	$connection_fields = array(
-		'ppcp_onboarading_header'            => array(
+		'ppcp_onboarading_header'                       => array(
 			'type'         => 'ppcp-text',
 			'classes'      => array( 'ppcp-onboarding-element' ),
 			'text'         => '
@@ -82,7 +84,7 @@ return function ( ContainerInterface $container, array $fields ): array {
 			'requirements' => array(),
 			'gateway'      => Settings::CONNECTION_TAB_ID,
 		),
-		'credentials_production_heading'     => array(
+		'credentials_production_heading'                => array(
 			'heading'      => __( 'API Credentials', 'woocommerce-paypal-payments' ),
 			'type'         => 'ppcp-heading',
 			'screens'      => array(
@@ -92,7 +94,7 @@ return function ( ContainerInterface $container, array $fields ): array {
 			'requirements' => array(),
 			'gateway'      => Settings::CONNECTION_TAB_ID,
 		),
-		'credentials_sandbox_heading'        => array(
+		'credentials_sandbox_heading'                   => array(
 			'heading'      => __( 'Sandbox API Credentials', 'woocommerce-paypal-payments' ),
 			'type'         => 'ppcp-heading',
 			'screens'      => array(
@@ -103,7 +105,7 @@ return function ( ContainerInterface $container, array $fields ): array {
 			'gateway'      => Settings::CONNECTION_TAB_ID,
 			'description'  => __( 'Your account is connected to sandbox, no real charging takes place. To accept live payments, turn off sandbox mode and connect your live PayPal account.', 'woocommerce-paypal-payments' ),
 		),
-		'ppcp_onboarading_options'           => array(
+		'ppcp_onboarading_options'                      => array(
 			'type'         => 'ppcp-text',
 			'classes'      => array( $onboarding_elements_class ),
 			'text'         => '-', // todo: #legacy-ui code cleanup - already removed a legacy onboarding notice.
@@ -119,7 +121,7 @@ return function ( ContainerInterface $container, array $fields ): array {
 		// We need to have a button for each option (ppcp, express)
 		// because currently the only documented way to use the PayPal onboarding JS library
 		// is to have the buttons before loading the script.
-		'ppcp_onboarding_production_ppcp'    => array(
+		'ppcp_onboarding_production_ppcp'               => array(
 			'type'         => 'ppcp_onboarding',
 			'classes'      => array( $onboarding_elements_class ),
 			'screens'      => array(
@@ -131,7 +133,7 @@ return function ( ContainerInterface $container, array $fields ): array {
 			'requirements' => array(),
 			'gateway'      => Settings::CONNECTION_TAB_ID,
 		),
-		'ppcp_onboarding_production_express' => array(
+		'ppcp_onboarding_production_express'            => array(
 			'type'         => 'ppcp_onboarding',
 			'classes'      => array( $onboarding_elements_class ),
 			'screens'      => array(
@@ -143,7 +145,7 @@ return function ( ContainerInterface $container, array $fields ): array {
 			'requirements' => array(),
 			'gateway'      => Settings::CONNECTION_TAB_ID,
 		),
-		'ppcp_onboarding_sandbox_ppcp'       => array(
+		'ppcp_onboarding_sandbox_ppcp'                  => array(
 			'type'         => 'ppcp_onboarding',
 			'classes'      => array( $onboarding_elements_class ),
 			'screens'      => array(
@@ -156,7 +158,7 @@ return function ( ContainerInterface $container, array $fields ): array {
 			'gateway'      => Settings::CONNECTION_TAB_ID,
 			'description'  => __( 'Prior to accepting live payments, you can test payments on your WooCommerce platform in a safe PayPal sandbox environment.', 'woocommerce-paypal-payments' ),
 		),
-		'ppcp_onboarding_sandbox_express'    => array(
+		'ppcp_onboarding_sandbox_express'               => array(
 			'type'         => 'ppcp_onboarding',
 			'classes'      => array( $onboarding_elements_class ),
 			'screens'      => array(
@@ -170,7 +172,7 @@ return function ( ContainerInterface $container, array $fields ): array {
 			'description'  => __( 'Prior to accepting live payments, you can test payments on your WooCommerce platform in a safe PayPal sandbox environment.', 'woocommerce-paypal-payments' ),
 		),
 
-		'ppcp_disconnect_production' => array(
+		'ppcp_disconnect_production'                    => array(
 			'title'        => __( 'Disconnect from PayPal', 'woocommerce-paypal-payments' ),
 			'type'         => 'ppcp-text',
 			'text'         => sprintf(
@@ -187,7 +189,7 @@ return function ( ContainerInterface $container, array $fields ): array {
 			'gateway'      => Settings::CONNECTION_TAB_ID,
 			'description'  => __( 'Click to reset current credentials and use another account.', 'woocommerce-paypal-payments' ),
 		),
-		'ppcp_disconnect_sandbox'    => array(
+		'ppcp_disconnect_sandbox'                       => array(
 			'title'        => __( 'Disconnect from PayPal Sandbox', 'woocommerce-paypal-payments' ),
 			'type'         => 'ppcp-text',
 			'text'         => sprintf(
@@ -204,7 +206,7 @@ return function ( ContainerInterface $container, array $fields ): array {
 			'gateway'      => Settings::CONNECTION_TAB_ID,
 			'description'  => __( 'Click to reset current credentials and use another account.', 'woocommerce-paypal-payments' ),
 		),
-		'toggle_manual_input'        => array(
+		'toggle_manual_input'                           => array(
 			'type'         => 'ppcp-text',
 			'text'         => '<button type="button" id="ppcp[toggle_manual_input]">' . __( 'Toggle to manual credential input', 'woocommerce-paypal-payments' ) . '</button>',
 			'description'  => sprintf(
@@ -220,7 +222,7 @@ return function ( ContainerInterface $container, array $fields ): array {
 			'requirements' => array(),
 			'gateway'      => Settings::CONNECTION_TAB_ID,
 		),
-		'error_label'                => array(
+		'error_label'                                   => array(
 			'type'         => 'ppcp-text',
 			'text'         => '<label class="error" id="ppcp-form-errors-label"></label>',
 			'classes'      => array( 'hide', 'ppcp-always-shown-element' ),
@@ -231,7 +233,7 @@ return function ( ContainerInterface $container, array $fields ): array {
 			'requirements' => array(),
 			'gateway'      => Settings::CONNECTION_TAB_ID,
 		),
-		'sandbox_on'                 => array(
+		'sandbox_on'                                    => array(
 			'title'        => __( 'Sandbox', 'woocommerce-paypal-payments' ),
 			'classes'      => array( 'ppcp-onboarding-element', 'ppcp-always-shown-element' ),
 			'type'         => 'checkbox',
@@ -244,7 +246,7 @@ return function ( ContainerInterface $container, array $fields ): array {
 			'requirements' => array(),
 			'gateway'      => Settings::CONNECTION_TAB_ID,
 		),
-		'merchant_email_production'  => array(
+		'merchant_email_production'                     => array(
 			'title'        => __( 'Live Email address', 'woocommerce-paypal-payments' ),
 			'classes'      => array(
 				$onboarded_in_production ? 'onboarded' : '',
@@ -262,7 +264,7 @@ return function ( ContainerInterface $container, array $fields ): array {
 			'requirements' => array(),
 			'gateway'      => Settings::CONNECTION_TAB_ID,
 		),
-		'merchant_id_production'     => array(
+		'merchant_id_production'                        => array(
 			'title'             => __( 'Live Merchant Id', 'woocommerce-paypal-payments' ),
 			'classes'           => array(
 				$onboarded_in_production ? 'onboarded' : '',
@@ -284,7 +286,7 @@ return function ( ContainerInterface $container, array $fields ): array {
 			'requirements'      => array(),
 			'gateway'           => Settings::CONNECTION_TAB_ID,
 		),
-		'client_id_production'       => array(
+		'client_id_production'                          => array(
 			'title'             => __( 'Live Client Id', 'woocommerce-paypal-payments' ),
 			'classes'           => array(
 				$onboarded_in_production ? 'onboarded' : '',
@@ -304,7 +306,7 @@ return function ( ContainerInterface $container, array $fields ): array {
 			'requirements'      => array(),
 			'gateway'           => Settings::CONNECTION_TAB_ID,
 		),
-		'client_secret_production'   => array(
+		'client_secret_production'                      => array(
 			'title'        => __( 'Live Secret Key', 'woocommerce-paypal-payments' ),
 			'classes'      => array(
 				$onboarded_in_production ? 'onboarded' : '',
@@ -322,7 +324,7 @@ return function ( ContainerInterface $container, array $fields ): array {
 			'gateway'      => Settings::CONNECTION_TAB_ID,
 		),
 
-		'merchant_email_sandbox' => array(
+		'merchant_email_sandbox'                        => array(
 			'title'        => __( 'Sandbox Email address', 'woocommerce-paypal-payments' ),
 			'classes'      => array(
 				$onboarded_in_sandbox ? 'onboarded' : '',
@@ -340,7 +342,7 @@ return function ( ContainerInterface $container, array $fields ): array {
 			'requirements' => array(),
 			'gateway'      => Settings::CONNECTION_TAB_ID,
 		),
-		'merchant_id_sandbox'    => array(
+		'merchant_id_sandbox'                           => array(
 			'title'             => __( 'Sandbox Merchant Id', 'woocommerce-paypal-payments' ),
 			'classes'           => array(
 				$onboarded_in_sandbox ? 'onboarded' : '',
@@ -362,7 +364,7 @@ return function ( ContainerInterface $container, array $fields ): array {
 			'requirements'      => array(),
 			'gateway'           => Settings::CONNECTION_TAB_ID,
 		),
-		'client_id_sandbox'      => array(
+		'client_id_sandbox'                             => array(
 			'title'             => __( 'Sandbox Client Id', 'woocommerce-paypal-payments' ),
 			'classes'           => array(
 				$onboarded_in_sandbox ? 'onboarded' : '',
@@ -382,7 +384,7 @@ return function ( ContainerInterface $container, array $fields ): array {
 			'requirements'      => array(),
 			'gateway'           => Settings::CONNECTION_TAB_ID,
 		),
-		'client_secret_sandbox'  => array(
+		'client_secret_sandbox'                         => array(
 			'title'        => __( 'Sandbox Secret Key', 'woocommerce-paypal-payments' ),
 			'classes'      => array(
 				$onboarded_in_sandbox ? 'onboarded' : '',

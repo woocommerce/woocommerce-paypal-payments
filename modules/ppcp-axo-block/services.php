@@ -31,7 +31,7 @@ return array(
 			$container->get( 'ppcp.asset-version' ),
 			$container->get( 'axo.gateway' ),
 			fn(): SmartButtonInterface => $container->get( 'button.smart-button' ),
-			$container->get( 'wcgateway.settings' ),
+			$container->get( 'settings.settings-provider' ),
 			$container->get( 'wcgateway.configuration.card-configuration' ),
 			$container->get( 'settings.environment' ),
 			$container->get( 'wcgateway.asset_getter' ),

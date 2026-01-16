@@ -2,7 +2,8 @@
 /**
  * Listens to requests and updates the settings if necessary.
  *
- * todo: #legacy-ui code cleanup. Remove this file.
+ * @todo #legacy-ui code cleanup. Remove this file.
+ *
  * @package WooCommerce\PayPalCommerce\WcGateway\Settings
  */
 
@@ -251,7 +252,7 @@ class SettingsListener {
 					sleep( $this->onboarding_retry_delay );
 				}
 
-				++ $retry_count;
+				++$retry_count;
 				$this->logger->info( 'Retrying onboarding return URL, retry nr: ' . ( (string) $retry_count ) );
 				$redirect_url = add_query_arg( 'ppcpRetry', $retry_count );
 				$this->redirector->redirect( $redirect_url );
@@ -697,6 +698,7 @@ class SettingsListener {
 	 */
 	public function listen_for_tracking_enabled(): void {
 		// todo: #legacy-ui code cleanup. Replaced onboarding state check with hardcoded dummy until this file is deleted.
+		/** @var bool $is_onboarded */
 		$is_onboarded = true;
 		if ( ! $is_onboarded ) {
 			return;

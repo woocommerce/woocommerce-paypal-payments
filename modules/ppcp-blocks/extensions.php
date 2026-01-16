@@ -28,7 +28,7 @@ return array(
 		return $locations;
 	},
 
-	'wcgateway.settings.fields' => function ( array $fields, ContainerInterface $container ): array {
+	'wcgateway.settings.fields'                        => function ( array $fields, ContainerInterface $container ): array {
 		$insert_after = function ( array $array, string $key, array $new ): array {
 			$keys  = array_keys( $array );
 			$index = array_search( $key, $keys, true );
@@ -78,7 +78,7 @@ return array(
 		);
 	},
 
-	'button.pay-now-contexts' => function ( array $contexts, ContainerInterface $container ): array {
+	'button.pay-now-contexts'                          => function ( array $contexts, ContainerInterface $container ): array {
 		if ( ! $container->get( 'blocks.settings.final_review_enabled' ) ) {
 			$contexts[] = 'checkout-block';
 			$contexts[] = 'cart-block';
@@ -87,7 +87,7 @@ return array(
 		return $contexts;
 	},
 
-	'button.handle-shipping-in-paypal' => function ( bool $previous, ContainerInterface $container ): bool {
+	'button.handle-shipping-in-paypal'                 => function ( bool $previous, ContainerInterface $container ): bool {
 		return ! $container->get( 'blocks.settings.final_review_enabled' );
 	},
 );
