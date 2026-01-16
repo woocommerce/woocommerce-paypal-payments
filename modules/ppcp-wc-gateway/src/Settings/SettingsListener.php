@@ -696,12 +696,6 @@ class SettingsListener {
 	 * @throws RuntimeException When API request fails.
 	 */
 	public function listen_for_tracking_enabled(): void {
-		// todo: #legacy-ui code cleanup. Replaced onboarding state check with hardcoded dummy until this file is deleted.
-		$is_onboarded = true;
-		if ( ! $is_onboarded ) {
-			return;
-		}
-
 		try {
 			$token = $this->bearer->bearer();
 			if ( ! $token->is_tracking_available() ) {
