@@ -291,9 +291,6 @@ class FeaturesDefinition {
 						'class' => 'small-button',
 					),
 				),
-				'notes'       => array(
-					__( '¹PayPal Q2 Earnings-2021.', 'woocommerce-paypal-payments' ),
-				),
 			),
 			self::FEATURE_APPLE_PAY                       => array(
 				'title'       => __( 'Apple Pay', 'woocommerce-paypal-payments' ),
@@ -364,6 +361,9 @@ class FeaturesDefinition {
 						'url'   => "https://www.paypal.com/$paylater_docs_country_location/business/accept-payments/checkout/installments",
 						'class' => 'small-button',
 					),
+				),
+				'notes'       => array(
+					__( '¹PayPal Q2 Earnings-2021.', 'woocommerce-paypal-payments' ),
 				),
 			),
 			self::FEATURE_INSTALLMENTS                    => array(
