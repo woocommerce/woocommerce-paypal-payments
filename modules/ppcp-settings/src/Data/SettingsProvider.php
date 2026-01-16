@@ -679,8 +679,4 @@ class SettingsProvider {
 	public function pay_later_messaging_locations(): array {
 		return $this->paylater_messaging_settings->get_messaging_locations();
 	}
-
-	public function pay_later_messaging_settings(): PayLaterMessagingSettings {
-		return $this->paylater_messaging_settings;
-	}
 }
