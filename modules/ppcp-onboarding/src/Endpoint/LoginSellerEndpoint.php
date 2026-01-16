@@ -143,10 +143,17 @@ class LoginSellerEndpoint implements EndpointInterface {
 			$data       = $this->request_data->read_request( $this->nonce() );
 			$is_sandbox = isset( $data['env'] ) && 'sandbox' === $data['env'];
 			$this->settings->set( 'sandbox_on', $is_sandbox );
-			$this->settings->set( 'products_dcc_enabled', null );
-			$this->settings->set( 'products_pui_enabled', null );
 			$this->settings->persist();
-			do_action( 'woocommerce_paypal_payments_clear_apm_product_status', $this->settings );
+
+			/**
+			 * TODO: #legacy-ui code cleanup:
+			 * - Removed PayUponInvoiceProductStatus::clear() logic without replacement
+			 * - Removed DCCProductStatus::clear() logic without replacement
+			 *
+			 * This class is not migrated and will be dropped soon.
+			 */
+
+			do_action( 'woocommerce_paypal_payments_clear_apm_product_status' );
 
 			$endpoint    = $is_sandbox ? $this->login_seller_sandbox : $this->login_seller_production;
 			$credentials = $endpoint->credentials_for(

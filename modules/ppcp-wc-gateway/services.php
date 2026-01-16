@@ -562,8 +562,6 @@ return array(
 			$container->get( 'wcgateway.current-ppcp-settings-page-id' ),
 			$container->get( 'onboarding.signup-link-cache' ),
 			$container->get( 'onboarding.signup-link-ids' ),
-			$container->get( 'pui.status-cache' ),
-			$container->get( 'dcc.status-cache' ),
 			$container->get( 'http.redirector' ),
 			$container->get( 'api.partner_merchant_id-production' ),
 			$container->get( 'api.partner_merchant_id-sandbox' ),
@@ -1866,17 +1864,8 @@ return array(
 			esc_html( $pui_button_text )
 		);
 	},
-	'pui.status-cache'                                     => static function ( ContainerInterface $container ): Cache {
-		return new Cache( 'ppcp-paypal-pui-status-cache' );
-	},
 	'installments.status-cache'                            => static function ( ContainerInterface $container ): Cache {
 		return new Cache( 'ppcp-paypal-installments-status-cache' );
-	},
-	'pwc.status-cache'                                     => static function ( ContainerInterface $container ): Cache {
-		return new Cache( 'ppcp-paypal-pwc-status-cache' );
-	},
-	'dcc.status-cache'                                     => static function ( ContainerInterface $container ): Cache {
-		return new Cache( 'ppcp-paypal-dcc-status-cache' );
 	},
 	'wcgateway.button.locations'                           => static function ( ContainerInterface $container ): array {
 		return array(

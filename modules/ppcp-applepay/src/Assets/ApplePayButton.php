@@ -180,20 +180,22 @@ class ApplePayButton implements ButtonInterface {
 	}
 
 	/**
-	 * Method to validate the merchant in the db flag
-	 * On fail triggers and option that shows an admin notice showing the error
-	 * On success removes such flag
+	 * Handles a validation notice from the front-end, which indicates that Apple Pay was
+	 * loaded. This notification verifies, that the domain verification was successful and
+	 * Apple Pay can be fully used.
 	 */
 	public function validate(): void {
 		$applepay_request_data_object = $this->applepay_data_object_http();
 		if ( ! $this->is_nonce_valid() ) {
 			return;
 		}
+
 		$applepay_request_data_object->validation_data();
 		$this->payment_settings->set_applepay_validated( $applepay_request_data_object->validated_flag() );
 		$this->payment_settings->save();
 		wp_send_json_success();
 	}
+
 	/**
 	 * Method to validate and update the shipping contact of the user
 	 * It updates the amount paying information if needed

@@ -103,20 +103,6 @@ class SettingsListener {
 	protected $signup_link_ids;
 
 	/**
-	 * The PUI status cache.
-	 *
-	 * @var Cache
-	 */
-	protected $pui_status_cache;
-
-	/**
-	 * The DCC status cache.
-	 *
-	 * @var Cache
-	 */
-	protected $dcc_status_cache;
-
-	/**
 	 * The HTTP redirector.
 	 *
 	 * @var RedirectorInterface
@@ -181,8 +167,6 @@ class SettingsListener {
 	 * @param string                     $page_id ID of the current PPCP gateway settings page, or empty if it is not such page.
 	 * @param Cache                      $signup_link_cache The signup link cache.
 	 * @param array                      $signup_link_ids Signup link ids.
-	 * @param Cache                      $pui_status_cache The PUI status cache.
-	 * @param Cache                      $dcc_status_cache The DCC status cache.
 	 * @param RedirectorInterface        $redirector The HTTP redirector.
 	 * @param string                     $partner_merchant_id_production Partner merchant ID production.
 	 * @param string                     $partner_merchant_id_sandbox Partner merchant ID sandbox.
@@ -201,8 +185,6 @@ class SettingsListener {
 		string $page_id,
 		Cache $signup_link_cache,
 		array $signup_link_ids,
-		Cache $pui_status_cache,
-		Cache $dcc_status_cache,
 		RedirectorInterface $redirector,
 		string $partner_merchant_id_production,
 		string $partner_merchant_id_sandbox,
@@ -223,8 +205,6 @@ class SettingsListener {
 		$this->page_id                            = $page_id;
 		$this->signup_link_cache                  = $signup_link_cache;
 		$this->signup_link_ids                    = $signup_link_ids;
-		$this->pui_status_cache                   = $pui_status_cache;
-		$this->dcc_status_cache                   = $dcc_status_cache;
 		$this->redirector                         = $redirector;
 		$this->partner_merchant_id_production     = $partner_merchant_id_production;
 		$this->partner_merchant_id_sandbox        = $partner_merchant_id_sandbox;
@@ -485,9 +465,15 @@ class SettingsListener {
 		// phpcs:enable phpcs:disable WordPress.Security.NonceVerification.Missing
 		if ( $credentials_change_status ) {
 			if ( self::CREDENTIALS_UNCHANGED !== $credentials_change_status ) {
-				$this->settings->set( 'products_dcc_enabled', null );
-				$this->settings->set( 'products_pui_enabled', null );
-				do_action( 'woocommerce_paypal_payments_clear_apm_product_status', $this->settings );
+				/**
+				 * TODO: #legacy-ui code cleanup:
+				 * - Removed PayUponInvoiceProductStatus::clear() logic without replacement
+				 * - Removed DCCProductStatus::clear() logic without replacement
+				 *
+				 * This class is not migrated and will be dropped soon.
+				 */
+
+				do_action( 'woocommerce_paypal_payments_clear_apm_product_status' );
 			}
 
 			if ( in_array(
@@ -515,13 +501,13 @@ class SettingsListener {
 			$this->client_credentials_cache->delete( SdkClientToken::CACHE_KEY );
 		}
 
-		if ( $this->pui_status_cache->has( PayUponInvoiceProductStatus::KEY ) ) {
-			$this->pui_status_cache->delete( PayUponInvoiceProductStatus::KEY );
-		}
-
-		if ( $this->dcc_status_cache->has( DCCProductStatus::KEY ) ) {
-			$this->dcc_status_cache->delete( DCCProductStatus::KEY );
-		}
+		/**
+		 * TODO: #legacy-ui code cleanup:
+		 * - Removed PayUponInvoiceProductStatus::clear() logic without replacement
+		 * - Removed DCCProductStatus::clear() logic without replacement
+		 *
+		 * This class is not migrated and will be dropped soon.
+		 */
 
 		/**
 		 * The hook fired during listening the request so a module can remove also the cache or other logic.

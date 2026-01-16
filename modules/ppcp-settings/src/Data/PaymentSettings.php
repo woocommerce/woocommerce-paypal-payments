@@ -320,19 +320,14 @@ class PaymentSettings extends AbstractDataModel {
 	}
 
 	/**
-	 * Get Apple Pay validated.
-	 *
-	 * @return bool
+	 * Whether the domain verification for ApplePay completed successfully.
 	 */
 	public function get_applepay_validated(): bool {
 		return (bool) $this->data['applepay_validated'];
 	}
 
 	/**
-	 * Set Apple Pay validated.
-	 *
-	 * @param bool $value The value.
-	 * @return void
+	 * Whether the domain verification for ApplePay completed successfully.
 	 */
 	public function set_applepay_validated( bool $value ): void {
 		$this->data['applepay_validated'] = $value;

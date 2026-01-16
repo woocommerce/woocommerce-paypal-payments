@@ -52,11 +52,22 @@ return array(
 
 		// Domain validation.
 		$domain_validation_text = __( 'Status: Domain validation failed ❌', 'woocommerce-paypal-payments' );
+		/**
+		 *  TODO: #legacy-ui code cleanup:
+		 *  - Removed validation-text logic without replacement
+		 *
+		 *  This file is not migrated and will be dropped soon.
+		 */
+
+		/*
+		 * phpcs:disable Squiz.Commenting.BlockComment.NoCapital
 		if ( ! $container->get( 'applepay.has_validated' ) ) {
 			$domain_validation_text = __( 'The domain has not yet been validated. Use the Apple Pay button to validate the domain ❌', 'woocommerce-paypal-payments' );
 		} elseif ( $container->get( 'applepay.is_validated' ) ) {
 			$domain_validation_text = __( 'Status: Domain successfully validated ✔️', 'woocommerce-paypal-payments' );
 		}
+		phpcs:enable Squiz.Commenting.BlockComment.NoCapital
+		*/
 
 		// Device eligibility.
 		$device_eligibility_text = __( 'Status: Your current browser/device does not seem to support Apple Pay ❌', 'woocommerce-paypal-payments' );

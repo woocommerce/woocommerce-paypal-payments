@@ -15,6 +15,10 @@ use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
 use WooCommerce\PayPalCommerce\Webhooks\WebhookRegistrar;
 use function Brain\Monkey\Functions\when;
 
+/**
+ * TODO: #legacy-ui code cleanup
+ * This test can be dropped as the covered class will be deleted
+ */
 class SettingsListenerTest extends ModularTestCase
 {
 	public function setUp(): void
@@ -41,8 +45,6 @@ class SettingsListenerTest extends ModularTestCase
 		$bearer = Mockery::mock(Bearer::class);
 		$signup_link_cache = Mockery::mock(Cache::class);
 		$signup_link_ids = array();
-        $pui_status_cache = Mockery::mock(Cache::class);
-        $dcc_status_cache = Mockery::mock(Cache::class);
 		$reference_transaction_status = Mockery::mock(ReferenceTransactionStatus::class);
 		$subscription_helper = Mockery::mock(SubscriptionHelper::class);
 		$logger = Mockery::mock(LoggerInterface::class);
@@ -59,8 +61,6 @@ class SettingsListenerTest extends ModularTestCase
 			PayPalGateway::ID,
 			$signup_link_cache,
 			$signup_link_ids,
-            $pui_status_cache,
-            $dcc_status_cache,
 			new RedirectorStub(),
 			'',
 			'',
@@ -97,10 +97,6 @@ class SettingsListenerTest extends ModularTestCase
 			->andReturn(false);
 		$signup_link_cache->shouldReceive('has')
 			->andReturn(false);
-        $pui_status_cache->shouldReceive('has')
-            ->andReturn(false);
-        $dcc_status_cache->shouldReceive('has')
-            ->andReturn(false);
 		$reference_transaction_status_cache->shouldReceive('has')
 			->andReturn(false);
 		$client_credentials_cache->shouldReceive('has')->andReturn(true);
