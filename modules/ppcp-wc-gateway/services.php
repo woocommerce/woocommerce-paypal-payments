@@ -27,8 +27,6 @@ use WooCommerce\PayPalCommerce\Button\Helper\MessagesApply;
 use WooCommerce\PayPalCommerce\Button\Helper\MessagesDisclaimers;
 use WooCommerce\PayPalCommerce\Common\Pattern\SingletonDecorator;
 use WooCommerce\PayPalCommerce\Googlepay\GooglePayGateway;
-use WooCommerce\PayPalCommerce\Onboarding\Render\OnboardingOptionsRenderer;
-use WooCommerce\PayPalCommerce\Onboarding\State;
 use WooCommerce\PayPalCommerce\Settings\Data\Definition\FeaturesDefinition;
 use WooCommerce\PayPalCommerce\Settings\Data\SettingsModel;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
@@ -540,7 +538,6 @@ return array(
 	'wcgateway.settings.render'                            => static function ( ContainerInterface $container ): SettingsRenderer {
 		return new SettingsRenderer(
 			$container->get( 'wcgateway.settings' ),
-			$container->get( 'onboarding.state' ), // Correct.
 			$container->get( 'wcgateway.settings.fields' ),
 			$container->get( 'api.helpers.dccapplies' ),
 			$container->get( 'button.helper.messages-apply' ),
@@ -557,11 +554,10 @@ return array(
 			$container->get( 'wcgateway.settings.fields' ),
 			$container->get( 'webhook.registrar' ),
 			$container->get( 'api.paypal-bearer-cache' ),
-			$container->get( 'onboarding.state' ), // Correct.
 			$container->get( 'api.bearer' ),
 			$container->get( 'wcgateway.current-ppcp-settings-page-id' ),
-			$container->get( 'onboarding.signup-link-cache' ),
-			$container->get( 'onboarding.signup-link-ids' ),
+			$container->get( 'settings.service.signup-link-cache' ),
+			array(), // todo: #legacy-ui code cleanup - legacy service already removed.
 			$container->get( 'http.redirector' ),
 			$container->get( 'api.partner_merchant_id-production' ),
 			$container->get( 'api.partner_merchant_id-sandbox' ),
@@ -693,7 +689,7 @@ return array(
 			'default'      => array_key_first( $subscription_mode_options ),
 			'options'      => $subscription_mode_options,
 			'screens'      => array(
-				State::STATE_ONBOARDED,
+				8,
 			),
 			'requirements' => array(),
 			'gateway'      => 'paypal',
@@ -701,23 +697,15 @@ return array(
 	},
 
 	'wcgateway.settings.fields'                            => static function ( ContainerInterface $container ): array {
-
+		// todo: #legacy-ui code cleanup. This service can be removed with the legacy settings UI.
 		$should_render_settings = $container->get( 'wcgateway.settings.should-render-settings' );
 
 		if ( ! $should_render_settings ) {
 			return array();
 		}
 
-		// Legacy settings service, correct use of `State` class.
-
-		$state = $container->get( 'onboarding.state' );
-		assert( $state instanceof State );
-
 		$dcc_applies = $container->get( 'api.helpers.dccapplies' );
 		assert( $dcc_applies instanceof DccApplies );
-
-		$onboarding_options_renderer = $container->get( 'onboarding.render-options' );
-		assert( $onboarding_options_renderer instanceof OnboardingOptionsRenderer );
 
 		$subscription_helper = $container->get( 'wc-subscriptions.helper' );
 		assert( $subscription_helper instanceof SubscriptionHelper );
@@ -730,8 +718,8 @@ return array(
 				'heading'      => __( 'Standard Payments Settings', 'woocommerce-paypal-payments' ),
 				'type'         => 'ppcp-heading',
 				'screens'      => array(
-					State::STATE_START,
-					State::STATE_ONBOARDED,
+					0,
+					8,
 				),
 				'requirements' => array(),
 				'gateway'      => 'paypal',
@@ -746,8 +734,8 @@ return array(
 				'default'      => __( 'PayPal', 'woocommerce-paypal-payments' ),
 				'desc_tip'     => true,
 				'screens'      => array(
-					State::STATE_START,
-					State::STATE_ONBOARDED,
+					0,
+					8,
 				),
 				'requirements' => array(),
 				'gateway'      => 'paypal',
@@ -758,7 +746,7 @@ return array(
 				'type'         => 'ppcp-html',
 				'classes'      => array(),
 				'screens'      => array(
-					State::STATE_ONBOARDED,
+					8,
 				),
 				'requirements' => array( 'dcc' ),
 				'gateway'      => 'dcc',
@@ -775,7 +763,7 @@ return array(
 					'dcc',
 				),
 				'screens'      => array(
-					State::STATE_ONBOARDED,
+					8,
 				),
 			),
 			'dcc_gateway_title'               => array(
@@ -788,7 +776,7 @@ return array(
 				'default'      => $container->get( 'wcgateway.settings.dcc-gateway-title.default' ),
 				'desc_tip'     => true,
 				'screens'      => array(
-					State::STATE_ONBOARDED,
+					8,
 				),
 				'requirements' => array(
 					'dcc',
@@ -808,8 +796,8 @@ return array(
 					'woocommerce-paypal-payments'
 				),
 				'screens'      => array(
-					State::STATE_START,
-					State::STATE_ONBOARDED,
+					0,
+					8,
 				),
 				'requirements' => array(),
 				'gateway'      => 'paypal',
@@ -830,8 +818,8 @@ return array(
 					'authorize' => __( 'Authorize', 'woocommerce-paypal-payments' ),
 				),
 				'screens'      => array(
-					State::STATE_START,
-					State::STATE_ONBOARDED,
+					0,
+					8,
 				),
 				'requirements' => array(),
 				'gateway'      => 'paypal',
@@ -847,8 +835,8 @@ return array(
 				),
 				'label'        => __( 'Capture On Status Change', 'woocommerce-paypal-payments' ),
 				'screens'      => array(
-					State::STATE_START,
-					State::STATE_ONBOARDED,
+					0,
+					8,
 				),
 				'requirements' => array(),
 				'gateway'      => 'paypal',
@@ -864,8 +852,8 @@ return array(
 				),
 				'label'        => __( 'Capture Virtual-Only Orders', 'woocommerce-paypal-payments' ),
 				'screens'      => array(
-					State::STATE_START,
-					State::STATE_ONBOARDED,
+					0,
+					8,
 				),
 				'requirements' => array(),
 				'gateway'      => 'paypal',
@@ -881,8 +869,8 @@ return array(
 				),
 				'label'        => __( 'Require Instant Payment', 'woocommerce-paypal-payments' ),
 				'screens'      => array(
-					State::STATE_START,
-					State::STATE_ONBOARDED,
+					0,
+					8,
 				),
 				'requirements' => array(),
 				'gateway'      => 'paypal',
@@ -897,8 +885,8 @@ return array(
 					'woocommerce-paypal-payments'
 				),
 				'screens'      => array(
-					State::STATE_START,
-					State::STATE_ONBOARDED,
+					0,
+					8,
 				),
 				'requirements' => array(),
 				'gateway'      => 'paypal',
@@ -919,8 +907,8 @@ return array(
 					ExperienceContext::LANDING_PAGE_GUEST_CHECKOUT => __( 'Billing (Non-PayPal account)', 'woocommerce-paypal-payments' ),
 				),
 				'screens'      => array(
-					State::STATE_START,
-					State::STATE_ONBOARDED,
+					0,
+					8,
 				),
 				'requirements' => array(),
 				'gateway'      => 'paypal',
@@ -935,8 +923,8 @@ return array(
 				),
 				'type'         => 'ppcp-heading',
 				'screens'      => array(
-					State::STATE_START,
-					State::STATE_ONBOARDED,
+					0,
+					8,
 				),
 				'requirements' => array(),
 				'gateway'      => 'paypal',
@@ -959,8 +947,8 @@ return array(
 				),
 				'options'      => $container->get( 'wcgateway.settings.funding-sources' ),
 				'screens'      => array(
-					State::STATE_START,
-					State::STATE_ONBOARDED,
+					0,
+					8,
 				),
 				'requirements' => array(),
 				'gateway'      => 'paypal',
@@ -979,8 +967,8 @@ return array(
 					CardBillingMode::NO_WC         => __( 'Do not use WC checkout form data (request all address fields)', 'woocommerce-paypal-payments' ),
 				),
 				'screens'      => array(
-					State::STATE_START,
-					State::STATE_ONBOARDED,
+					0,
+					8,
 				),
 				'requirements' => array(),
 				'gateway'      => array( 'paypal', CardButtonGateway::ID ),
@@ -993,8 +981,8 @@ return array(
 				'description'  => __( 'By default, the Debit or Credit Card button is displayed in the Standard Payments payment gateway. This setting creates a second gateway for the Card button.', 'woocommerce-paypal-payments' ),
 				'default'      => $container->get( 'wcgateway.settings.allow_card_button_gateway.default' ),
 				'screens'      => array(
-					State::STATE_START,
-					State::STATE_ONBOARDED,
+					0,
+					8,
 				),
 				'requirements' => array(),
 				'gateway'      => 'paypal',
@@ -1007,8 +995,8 @@ return array(
 				'description'  => __( 'By default, alternative payment methods are displayed in the Standard Payments payment gateway. This setting creates a gateway for each alternative payment method.', 'woocommerce-paypal-payments' ),
 				'default'      => false,
 				'screens'      => array(
-					State::STATE_START,
-					State::STATE_ONBOARDED,
+					0,
+					8,
 				),
 				'requirements' => array(),
 				'gateway'      => 'paypal',
@@ -1034,7 +1022,7 @@ return array(
 					'hiper'      => _x( 'Hiper', 'Name of credit card', 'woocommerce-paypal-payments' ),
 				),
 				'screens'      => array(
-					State::STATE_ONBOARDED,
+					8,
 				),
 				'requirements' => array(
 					'dcc',
@@ -1073,7 +1061,7 @@ return array(
 					'unionpay-light'   => _x( 'UnionPay (light)', 'Name of credit card', 'woocommerce-paypal-payments' ),
 				),
 				'screens'      => array(
-					State::STATE_ONBOARDED,
+					8,
 				),
 				'requirements' => array(
 					'dcc',
@@ -1090,7 +1078,7 @@ return array(
 				'input_class'  => array( 'wc-enhanced-select' ),
 				'desc_tip'     => true,
 				'description'  => __( 'This setting will control whether or not the cardholder name is displayed in the card field\'s UI.', 'woocommerce-paypal-payments' ),
-				'screens'      => array( State::STATE_ONBOARDED ),
+				'screens'      => array( 8 ),
 				'gateway'      => array( 'dcc', 'axo' ),
 				'requirements' => array( 'axo' ),
 			),
@@ -1115,7 +1103,7 @@ return array(
 					)
 				),
 				'screens'      => array(
-					State::STATE_ONBOARDED,
+					8,
 				),
 				'requirements' => array(
 					'dcc',
@@ -1143,7 +1131,7 @@ return array(
 					'SCA_ALWAYS'        => __( 'Always trigger 3D Secure', 'woocommerce-paypal-payments' ),
 				),
 				'screens'      => array(
-					State::STATE_ONBOARDED,
+					8,
 				),
 				'requirements' => array(
 					'dcc',
@@ -1170,7 +1158,7 @@ return array(
 					)
 				),
 				'screens'      => array(
-					State::STATE_ONBOARDED,
+					8,
 				),
 				'requirements' => array(
 					'dcc',
@@ -1190,7 +1178,7 @@ return array(
 				'description'  => __( 'Allow registered buyers to save Credit Card payments.', 'woocommerce-paypal-payments' ),
 				'default'      => false,
 				'screens'      => array(
-					State::STATE_ONBOARDED,
+					8,
 				),
 				'requirements' => array(),
 				'gateway'      => 'dcc',
@@ -1200,7 +1188,7 @@ return array(
 				'heading'      => __( 'Installments', 'woocommerce-paypal-payments' ),
 				'type'         => 'ppcp-heading',
 				'screens'      => array(
-					State::STATE_ONBOARDED,
+					8,
 				),
 				'requirements' => array(),
 				'gateway'      => 'paypal',
@@ -1222,7 +1210,7 @@ return array(
 				'type'         => 'ppcp-text',
 				'text'         => '<a href="https://www.paypal.com/businessmanage/preferences/installmentplan" target="_blank" class="button ppcp-refresh-feature-status">' . esc_html__( 'Enable Installments', 'woocommerce-paypal-payments' ) . '</a>',
 				'screens'      => array(
-					State::STATE_ONBOARDED,
+					8,
 				),
 				'requirements' => array(),
 				'gateway'      => 'paypal',
@@ -1239,8 +1227,8 @@ return array(
 				),
 				'type'         => 'ppcp-heading',
 				'screens'      => array(
-					State::STATE_START,
-					State::STATE_ONBOARDED,
+					0,
+					8,
 				),
 				'requirements' => array(),
 				'gateway'      => 'paypal',
@@ -1259,7 +1247,7 @@ return array(
 				'description'  => __( 'Allow registered buyers to save PayPal payments.', 'woocommerce-paypal-payments' ),
 				'default'      => false,
 				'screens'      => array(
-					State::STATE_ONBOARDED,
+					8,
 				),
 				'requirements' => array(),
 				'gateway'      => 'paypal',
@@ -1284,7 +1272,7 @@ return array(
 					)
 				),
 				'screens'      => array(
-					State::STATE_ONBOARDED,
+					8,
 				),
 				'requirements' => array(
 					'dcc',

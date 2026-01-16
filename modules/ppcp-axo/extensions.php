@@ -5,12 +5,11 @@
  * @package WooCommerce\PayPalCommerce\Axo
  */
 
-declare(strict_types=1);
+declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\Axo;
 
 use WooCommerce\PayPalCommerce\Assets\AssetGetter;
-use WooCommerce\PayPalCommerce\Onboarding\State;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\DisplayManager;
 
@@ -19,9 +18,9 @@ return array(
 	'wcgateway.settings.fields' => function ( array $fields, ContainerInterface $container ): array {
 
 		$insert_after = function ( array $array, string $key, array $new ): array {
-			$keys = array_keys( $array );
+			$keys  = array_keys( $array );
 			$index = array_search( $key, $keys, true );
-			$pos = false === $index ? count( $array ) : $index + 1;
+			$pos   = false === $index ? count( $array ) : $index + 1;
 
 			return array_merge( array_slice( $array, 0, $pos ), $new, array_slice( $array, $pos ) );
 		};
@@ -37,7 +36,7 @@ return array(
 			$fields,
 			'vault_enabled_dcc',
 			array(
-				'axo_heading'                        => array(
+				'axo_heading'       => array(
 					'heading'      => __( 'Fastlane', 'woocommerce-paypal-payments' ),
 					'type'         => 'ppcp-heading',
 					'description'  => wp_kses_post(
@@ -54,13 +53,11 @@ return array(
 							'</a>'
 						)
 					),
-					'screens'      => array(
-						State::STATE_ONBOARDED,
-					),
+					'screens'      => array( 8 ),
 					'requirements' => array( 'dcc', 'axo' ),
 					'gateway'      => array( 'dcc', 'axo' ),
 				),
-				'axo_enabled'                        => array(
+				'axo_enabled'       => array(
 					'title'             => __( 'Fastlane', 'woocommerce-paypal-payments' ),
 					'title_html'        => sprintf(
 						'<img src="%s" alt="%s" style="max-width: 150px; max-height: 45px;" />',
@@ -71,14 +68,14 @@ return array(
 					'label'             => __( 'Enable Fastlane by PayPal', 'woocommerce-paypal-payments' )
 						. '<p class="description">'
 						. sprintf(
-							// translators: %1$s and %2$s are the opening and closing of HTML <a> tag.
+						// translators: %1$s and %2$s are the opening and closing of HTML <a> tag.
 							__( 'Help accelerate the checkout process for guests with PayPal\'s autofill solution. When enabled, Fastlane is presented as the default payment method for guests. See the %1$sFastlane setup guide%2$s for more details on the Fastlane configuration.', 'woocommerce-paypal-payments' ),
 							'<a href="https://woocommerce.com/document/woocommerce-paypal-payments/#fastlane" target="_blank">',
 							'</a>'
 						)
 						. '</p>',
 					'default'           => 'yes',
-					'screens'           => array( State::STATE_ONBOARDED ),
+					'screens'           => array( 8 ),
 					'gateway'           => array( 'dcc', 'axo' ),
 					'requirements'      => array( 'axo' ),
 					'custom_attributes' => array(
@@ -114,9 +111,12 @@ return array(
 							)
 						),
 					),
-					'classes'           => array( 'ppcp-valign-label-middle', 'ppcp-align-label-center' ),
+					'classes'           => array(
+						'ppcp-valign-label-middle',
+						'ppcp-align-label-center',
+					),
 				),
-				'axo_main_notice'                    => array(
+				'axo_main_notice'   => array(
 					'heading'      => '',
 					'html'         => implode(
 						'',
@@ -129,13 +129,11 @@ return array(
 					'type'         => 'ppcp-html',
 					'classes'      => array( 'ppcp-field-indent' ),
 					'class'        => array(),
-					'screens'      => array(
-						State::STATE_ONBOARDED,
-					),
+					'screens'      => array( 8 ),
 					'requirements' => array( 'dcc', 'axo' ),
 					'gateway'      => array( 'dcc', 'axo' ),
 				),
-				'axo_style_heading'                  => array(
+				'axo_style_heading' => array(
 					'heading'      => __( 'Advanced Style Settings (optional)', 'woocommerce-paypal-payments' ),
 					'heading_html' => sprintf(
 					// translators: %1$s and %2$s are the opening and closing of HTML <a> tag.
@@ -162,9 +160,7 @@ return array(
 					),
 					'classes'      => array( 'ppcp-field-indent' ),
 					'class'        => array(),
-					'screens'      => array(
-						State::STATE_ONBOARDED,
-					),
+					'screens'      => array( 8 ),
 					'requirements' => array( 'dcc', 'axo' ),
 					'gateway'      => array( 'dcc', 'axo' ),
 				),
@@ -177,7 +173,7 @@ return array(
 						'woocommerce-paypal-payments'
 					),
 					'classes'      => array( 'ppcp-field-indent' ),
-					'screens'      => array( State::STATE_ONBOARDED ),
+					'screens'      => array( 8 ),
 					'requirements' => array( 'dcc', 'axo' ),
 					'gateway'      => array( 'dcc', 'axo' ),
 				),
@@ -187,9 +183,7 @@ return array(
 					'placeholder'  => '#ffffff',
 					'classes'      => array( 'ppcp-field-indent' ),
 					'default'      => '',
-					'screens'      => array(
-						State::STATE_ONBOARDED,
-					),
+					'screens'      => array( 8 ),
 					'requirements' => array( 'axo' ),
 					'gateway'      => array( 'dcc', 'axo' ),
 				),
@@ -199,9 +193,7 @@ return array(
 					'placeholder'  => '#D9360B',
 					'classes'      => array( 'ppcp-field-indent' ),
 					'default'      => '',
-					'screens'      => array(
-						State::STATE_ONBOARDED,
-					),
+					'screens'      => array( 8 ),
 					'requirements' => array( 'axo' ),
 					'gateway'      => array( 'dcc', 'axo' ),
 				),
@@ -211,9 +203,7 @@ return array(
 					'placeholder'  => 'PayPal-Open',
 					'classes'      => array( 'ppcp-field-indent' ),
 					'default'      => '',
-					'screens'      => array(
-						State::STATE_ONBOARDED,
-					),
+					'screens'      => array( 8 ),
 					'requirements' => array( 'axo' ),
 					'gateway'      => array( 'dcc', 'axo' ),
 				),
@@ -223,9 +213,7 @@ return array(
 					'placeholder'  => '#010B0D',
 					'classes'      => array( 'ppcp-field-indent' ),
 					'default'      => '',
-					'screens'      => array(
-						State::STATE_ONBOARDED,
-					),
+					'screens'      => array( 8 ),
 					'requirements' => array( 'axo' ),
 					'gateway'      => array( 'dcc', 'axo' ),
 				),
@@ -235,9 +223,7 @@ return array(
 					'placeholder'  => '16px',
 					'classes'      => array( 'ppcp-field-indent' ),
 					'default'      => '',
-					'screens'      => array(
-						State::STATE_ONBOARDED,
-					),
+					'screens'      => array( 8 ),
 					'requirements' => array( 'axo' ),
 					'gateway'      => array( 'dcc', 'axo' ),
 				),
@@ -247,9 +233,7 @@ return array(
 					'placeholder'  => '4px',
 					'classes'      => array( 'ppcp-field-indent' ),
 					'default'      => '',
-					'screens'      => array(
-						State::STATE_ONBOARDED,
-					),
+					'screens'      => array( 8 ),
 					'requirements' => array( 'axo' ),
 					'gateway'      => array( 'dcc', 'axo' ),
 				),
@@ -259,9 +243,7 @@ return array(
 					'placeholder'  => '#0057FF',
 					'classes'      => array( 'ppcp-field-indent' ),
 					'default'      => '',
-					'screens'      => array(
-						State::STATE_ONBOARDED,
-					),
+					'screens'      => array( 8 ),
 					'requirements' => array( 'axo' ),
 					'gateway'      => array( 'dcc', 'axo' ),
 				),
@@ -273,7 +255,7 @@ return array(
 						'woocommerce-paypal-payments'
 					),
 					'classes'      => array( 'ppcp-field-indent' ),
-					'screens'      => array( State::STATE_ONBOARDED ),
+					'screens'      => array( 8 ),
 					'requirements' => array( 'dcc', 'axo' ),
 					'gateway'      => array( 'dcc', 'axo' ),
 				),
@@ -283,9 +265,7 @@ return array(
 					'placeholder'  => '#ffffff',
 					'classes'      => array( 'ppcp-field-indent' ),
 					'default'      => '',
-					'screens'      => array(
-						State::STATE_ONBOARDED,
-					),
+					'screens'      => array( 8 ),
 					'requirements' => array( 'axo' ),
 					'gateway'      => array( 'dcc', 'axo' ),
 				),
@@ -295,9 +275,7 @@ return array(
 					'placeholder'  => '0.25em',
 					'classes'      => array( 'ppcp-field-indent' ),
 					'default'      => '',
-					'screens'      => array(
-						State::STATE_ONBOARDED,
-					),
+					'screens'      => array( 8 ),
 					'requirements' => array( 'axo' ),
 					'gateway'      => array( 'dcc', 'axo' ),
 				),
@@ -307,9 +285,7 @@ return array(
 					'placeholder'  => '#DADDDD',
 					'classes'      => array( 'ppcp-field-indent' ),
 					'default'      => '',
-					'screens'      => array(
-						State::STATE_ONBOARDED,
-					),
+					'screens'      => array( 8 ),
 					'requirements' => array( 'axo' ),
 					'gateway'      => array( 'dcc', 'axo' ),
 				),
@@ -319,9 +295,7 @@ return array(
 					'placeholder'  => '1px',
 					'classes'      => array( 'ppcp-field-indent' ),
 					'default'      => '',
-					'screens'      => array(
-						State::STATE_ONBOARDED,
-					),
+					'screens'      => array( 8 ),
 					'requirements' => array( 'axo' ),
 					'gateway'      => array( 'dcc', 'axo' ),
 				),
@@ -331,9 +305,7 @@ return array(
 					'placeholder'  => '#010B0D',
 					'classes'      => array( 'ppcp-field-indent' ),
 					'default'      => '',
-					'screens'      => array(
-						State::STATE_ONBOARDED,
-					),
+					'screens'      => array( 8 ),
 					'requirements' => array( 'axo' ),
 					'gateway'      => array( 'dcc', 'axo' ),
 				),
@@ -343,9 +315,7 @@ return array(
 					'placeholder'  => '#0057FF',
 					'classes'      => array( 'ppcp-field-indent' ),
 					'default'      => '',
-					'screens'      => array(
-						State::STATE_ONBOARDED,
-					),
+					'screens'      => array( 8 ),
 					'requirements' => array( 'axo' ),
 					'gateway'      => array( 'dcc', 'axo' ),
 				),

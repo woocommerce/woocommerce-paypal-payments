@@ -9,7 +9,6 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\WcGateway\Settings;
 
-use WooCommerce\PayPalCommerce\Onboarding\State;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CardButtonGateway;
 
@@ -36,8 +35,8 @@ return function ( ContainerInterface $container, array $fields ): array {
 			),
 			'type'         => 'ppcp-heading',
 			'screens'      => array(
-				State::STATE_START,
-				State::STATE_ONBOARDED,
+				0,
+				8,
 			),
 			'requirements' => array(),
 			'gateway'      => CardButtonGateway::ID,
@@ -53,8 +52,8 @@ return function ( ContainerInterface $container, array $fields ): array {
 				'woocommerce-paypal-payments'
 			),
 			'screens'      => array(
-				State::STATE_START,
-				State::STATE_ONBOARDED,
+				0,
+				8,
 			),
 			'requirements' => array(),
 			'gateway'      => CardButtonGateway::ID,
@@ -75,8 +74,8 @@ return function ( ContainerInterface $container, array $fields ): array {
 				'white' => __( 'White', 'woocommerce-paypal-payments' ),
 			),
 			'screens'      => array(
-				State::STATE_START,
-				State::STATE_ONBOARDED,
+				0,
+				8,
 			),
 			'requirements' => array(),
 			'gateway'      => CardButtonGateway::ID,
@@ -97,8 +96,8 @@ return function ( ContainerInterface $container, array $fields ): array {
 				'rect' => __( 'Rectangle', 'woocommerce-paypal-payments' ),
 			),
 			'screens'      => array(
-				State::STATE_START,
-				State::STATE_ONBOARDED,
+				0,
+				8,
 			),
 			'requirements' => array(),
 			'gateway'      => CardButtonGateway::ID,
@@ -111,7 +110,7 @@ return function ( ContainerInterface $container, array $fields ): array {
 				'message' => __( 'Standard Card Button Styling Preview', 'woocommerce-paypal-payments' ),
 			),
 			'screens'      => array(
-				State::STATE_ONBOARDED,
+				8,
 			),
 			'requirements' => array(),
 			'gateway'      => CardButtonGateway::ID,

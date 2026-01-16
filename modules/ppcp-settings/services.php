@@ -169,6 +169,15 @@ return array(
 			'save' => $save_config,
 		);
 	},
+	'settings.connection-state'                           => static function ( ContainerInterface $container ): ConnectionState {
+		$data = $container->get( 'settings.data.general' );
+		assert( $data instanceof GeneralSettings );
+
+		$is_connected = $data->is_merchant_connected();
+		$environment  = new Environment( $data->is_sandbox_merchant() );
+
+		return new ConnectionState( $is_connected, $environment );
+	},
 	/**
 	 * Returns details about the connected environment (production/sandbox).
 	 *

@@ -5,11 +5,10 @@
  * @package WooCommerce\PayPalCommerce\Webhooks
  */
 
-declare(strict_types=1);
+declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\Webhooks;
 
-use WooCommerce\PayPalCommerce\Onboarding\State;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 
@@ -19,9 +18,7 @@ return array(
 			'webhook_status_heading' => array(
 				'heading'      => __( 'Webhook Status', 'woocommerce-paypal-payments' ),
 				'type'         => 'ppcp-heading',
-				'screens'      => array(
-					State::STATE_ONBOARDED,
-				),
+				'screens'      => array( 8 ),
 				'requirements' => array(),
 				'gateway'      => Settings::CONNECTION_TAB_ID,
 				'description'  => sprintf(
@@ -34,9 +31,7 @@ return array(
 			'webhooks_list'          => array(
 				'title'        => __( 'Subscribed webhooks', 'woocommerce-paypal-payments' ),
 				'type'         => 'ppcp-table',
-				'screens'      => array(
-					State::STATE_ONBOARDED,
-				),
+				'screens'      => array( 8 ),
 				'requirements' => array(),
 				'gateway'      => Settings::CONNECTION_TAB_ID,
 				'classes'      => array( 'ppcp-webhooks-table' ),
@@ -48,9 +43,7 @@ return array(
 				'title'        => __( 'Resubscribe webhooks', 'woocommerce-paypal-payments' ),
 				'type'         => 'ppcp-text',
 				'text'         => '<button type="button" class="button ppcp-webhooks-resubscribe">' . esc_html__( 'Resubscribe', 'woocommerce-paypal-payments' ) . '</button>',
-				'screens'      => array(
-					State::STATE_ONBOARDED,
-				),
+				'screens'      => array( 8 ),
 				'requirements' => array(),
 				'gateway'      => Settings::CONNECTION_TAB_ID,
 				'description'  => __( 'Click to remove the current webhook subscription and subscribe again, for example, if the website domain or URL structure changed.', 'woocommerce-paypal-payments' ),
@@ -66,9 +59,7 @@ return array(
 						'title'        => __( 'Webhook simulation', 'woocommerce-paypal-payments' ),
 						'type'         => 'ppcp-text',
 						'text'         => '<button type="button" class="button ppcp-webhooks-simulate">' . esc_html__( 'Simulate', 'woocommerce-paypal-payments' ) . '</button>',
-						'screens'      => array(
-							State::STATE_ONBOARDED,
-						),
+						'screens'      => array( 8 ),
 						'requirements' => array(),
 						'gateway'      => Settings::CONNECTION_TAB_ID,
 						'description'  => __( 'Click to request a sample webhook payload from PayPal, allowing to check that your server can successfully receive webhooks.', 'woocommerce-paypal-payments' ),

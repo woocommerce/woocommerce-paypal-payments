@@ -1,90 +1,59 @@
 <?php
 /**
- * Manages an Onboarding Url / Token to preserve /v2/customer/partner-referrals action_url integrity.
+ * Manages an Onboarding Url / Token to preserve /v2/customer/partner-referrals action_url
+ * integrity.
  *
- * @package WooCommerce\PayPalCommerce\Onboarding\Helper
+ * @package WooCommerce\PayPalCommerce\Settings\Service
  */
 
-declare(strict_types=1);
+declare( strict_types = 1 );
 
-namespace WooCommerce\PayPalCommerce\Onboarding\Helper;
+namespace WooCommerce\PayPalCommerce\Settings\Service;
 
 use WooCommerce\PayPalCommerce\ApiClient\Helper\Cache;
-use RuntimeException;
+use Throwable;
 
-/**
- * Class OnboardingUrl
- */
 class OnboardingUrl {
 
 	/**
 	 * The user ID to associate with the cache key
-	 *
-	 * @var int
 	 */
-	private $user_id;
+	private int $user_id;
 
 	/**
 	 * The cryptographically secure secret
-	 *
-	 * @var ?string
 	 */
-	private $secret = null;
+	private ?string $secret = null;
 
 	/**
 	 * Unix Timestamp when token was generated
-	 *
-	 * @var ?int
 	 */
-	private $time = null;
+	private ?int $time = null;
 
 	/**
 	 * The "action_url" from /v2/customer/partner-referrals
-	 *
-	 * @var ?string
 	 */
-	private $url = null;
+	private ?string $url = null;
 
-	/**
-	 * The cache object
-	 *
-	 * @var Cache
-	 */
-	private $cache;
+	private Cache $cache;
 
-	/**
-	 * The prefix for the cache key
-	 *
-	 * @var string
-	 */
-	private $cache_key_prefix;
+	private string $cache_key_prefix;
 
-	/**
-	 * The TTL for the cache.
-	 *
-	 * @var int
-	 */
-	private $cache_ttl = MONTH_IN_SECONDS;
+	private int $cache_ttl = MONTH_IN_SECONDS;
 
 	/**
 	 * The TTL for the previous token cache.
-	 *
-	 * @var int
 	 */
-	private $previous_cache_ttl = 60;
+	private int $previous_cache_ttl = 60;
 
 	/**
 	 * The constructor
 	 *
-	 * @param Cache  $cache The cache object to store the URL.
+	 * @param Cache  $cache            The cache object to store the URL.
 	 * @param string $cache_key_prefix The prefix for the cache entry.
-	 * @param int    $user_id User ID to associate the link with.
+	 * @param int    $user_id          User ID to associate the link with.
 	 */
-	public function __construct(
-		Cache $cache,
-		string $cache_key_prefix,
-		int $user_id
-	) {
+	public function __construct( Cache $cache, string $cache_key_prefix, int $user_id ) {
 		$this->cache            = $cache;
 		$this->cache_key_prefix = $cache_key_prefix;
 		$this->user_id          = $user_id;
@@ -93,8 +62,8 @@ class OnboardingUrl {
 	/**
 	 * Instances the object with a $token.
 	 *
-	 * @param Cache  $cache The cache object where the URL is stored.
-	 * @param string $token The token to validate.
+	 * @param Cache  $cache   The cache object where the URL is stored.
+	 * @param string $token   The token to validate.
 	 * @param int    $user_id User ID to associate the link with.
 	 * @return false|self
 	 */
@@ -103,13 +72,18 @@ class OnboardingUrl {
 			return false;
 		}
 
-		$token_data = json_decode( UrlHelper::url_safe_base64_decode( $token ) ?: '', true );
+		try {
+			$json_string = self::url_safe_base64_decode( $token ) ?: '';
+			$token_data  = json_decode( $json_string, true, 512, JSON_THROW_ON_ERROR );
+		} catch ( Throwable $exception ) {
+			return false;
+		}
 
 		if ( ! $token_data ) {
 			return false;
 		}
 
-		if ( ! isset( $token_data['u'] ) || ! isset( $token_data['k'] ) ) {
+		if ( ! isset( $token_data['u'], $token_data['k'] ) ) {
 			return false;
 		}
 
@@ -124,8 +98,8 @@ class OnboardingUrl {
 	 * Validates the token, if it's valid then delete it.
 	 * If it's invalid don't delete it, to prevent malicious requests from invalidating the token.
 	 *
-	 * @param Cache  $cache The cache object where the URL is stored.
-	 * @param string $token The token to validate.
+	 * @param Cache  $cache   The cache object where the URL is stored.
+	 * @param string $token   The token to validate.
 	 * @param int    $user_id User ID to associate the link with.
 	 * @return bool
 	 */
@@ -140,12 +114,14 @@ class OnboardingUrl {
 			return false;
 		}
 
-		if ( ( $onboarding_url->token() ?: '' ) !== $token ) {
+		$expected_token = $onboarding_url->onboarding_token();
+		if ( ! $expected_token || $expected_token !== $token ) {
 			return false;
 		}
 
 		$onboarding_url->replace_previous_token( $token );
 		$onboarding_url->delete();
+
 		return true;
 	}
 
@@ -153,8 +129,8 @@ class OnboardingUrl {
 	 * Validates the token against the previous token.
 	 * Useful to don't throw errors on burst calls to endpoints.
 	 *
-	 * @param Cache  $cache The cache object where the URL is stored.
-	 * @param string $token The token to validate.
+	 * @param Cache  $cache   The cache object where the URL is stored.
+	 * @param string $token   The token to validate.
 	 * @param int    $user_id User ID to associate the link with.
 	 * @return bool
 	 */
@@ -165,7 +141,7 @@ class OnboardingUrl {
 			return false;
 		}
 
-		return $onboarding_url->check_previous_token( $token );
+		return $onboarding_url->matches_previous_token( $token );
 	}
 
 	/**
@@ -174,13 +150,15 @@ class OnboardingUrl {
 	 * @return bool
 	 */
 	public function load(): bool {
-		if ( ! $this->cache->has( $this->cache_key() ) ) {
+		$key = $this->cache_key();
+
+		if ( ! $this->cache->has( $key ) ) {
 			return false;
 		}
 
-		$cached_data = $this->cache->get( $this->cache_key() );
+		$cached_data = $this->cache->get( $key );
 
-		if ( ! $this->validate_cache_data( $cached_data ) ) {
+		if ( ! is_array( $cached_data ) || ! $this->validate_cache_data( $cached_data ) ) {
 			return false;
 		}
 
@@ -191,15 +169,10 @@ class OnboardingUrl {
 		return true;
 	}
 
-	/**
-	 * Initializes the object
-	 *
-	 * @return void
-	 */
 	public function init(): void {
 		try {
 			$this->secret = bin2hex( random_bytes( 16 ) );
-		} catch ( \Exception $e ) {
+		} catch ( Throwable $e ) {
 			$this->secret = wp_generate_password( 16 );
 		}
 
@@ -207,17 +180,7 @@ class OnboardingUrl {
 		$this->url  = null;
 	}
 
-	/**
-	 * Validates data from cache
-	 *
-	 * @param array $cache_data The data retrieved from the cache.
-	 * @return bool
-	 */
-	private function validate_cache_data( $cache_data ): bool {
-		if ( ! is_array( $cache_data ) ) {
-			return false;
-		}
-
+	private function validate_cache_data( array $cache_data ): bool {
 		if (
 			! ( $cache_data['user_id'] ?? false )
 			|| ! ( $cache_data['hash_check'] ?? false )
@@ -237,37 +200,17 @@ class OnboardingUrl {
 			return false;
 		}
 
-		// If we want we can also validate time for expiration eventually.
-
 		return true;
-	}
-
-	/**
-	 * Returns the URL
-	 *
-	 * @return string
-	 * @throws RuntimeException Throws in case the URL isn't initialized.
-	 */
-	public function get(): string {
-		if ( null === $this->url ) {
-			throw new RuntimeException( 'Object not initialized.' );
-		}
-		return $this->url;
 	}
 
 	/**
 	 * Returns the Token
 	 *
-	 * @return string
-	 * @throws RuntimeException Throws in case the object isn't initialized.
+	 * @return string Empty string on failure, otherwise a base64 encoded payload.
 	 */
-	public function token(): string {
-		if (
-			null === $this->secret
-			|| null === $this->time
-			|| null === $this->user_id
-		) {
-			throw new RuntimeException( 'Object not initialized.' );
+	public function onboarding_token(): string {
+		if ( null === $this->secret || null === $this->time ) {
+			return '';
 		}
 
 		// Trim the hash to make sure the token isn't too long.
@@ -296,19 +239,17 @@ class OnboardingUrl {
 		);
 
 		if ( ! $token ) {
-			throw new RuntimeException( 'Unable to generate token.' );
+			return '';
 		}
 
-		return UrlHelper::url_safe_base64_encode( $token );
+		return self::url_safe_base64_encode( $token );
 	}
 
-	/**
-	 * Sets the URL
-	 *
-	 * @param string $url The URL to store in the cache.
-	 * @return void
-	 */
-	public function set( string $url ): void {
+	public function get_onboarding_url(): string {
+		return $this->url ?? '';
+	}
+
+	public function set_onboarding_url( string $url ): void {
 		$this->url = $url;
 	}
 
@@ -318,12 +259,7 @@ class OnboardingUrl {
 	 * @return void
 	 */
 	public function persist(): void {
-		if (
-			null === $this->secret
-			|| null === $this->time
-			|| null === $this->user_id
-			|| null === $this->url
-		) {
+		if ( null === $this->secret || null === $this->time || null === $this->url ) {
 			return;
 		}
 
@@ -349,31 +285,15 @@ class OnboardingUrl {
 		$this->cache->delete( $this->cache_key() );
 	}
 
-	/**
-	 * Returns the compiled cache key
-	 *
-	 * @return string
-	 */
 	private function cache_key(): string {
 		return implode( '_', array( $this->cache_key_prefix, $this->user_id ) );
 	}
 
-	/**
-	 * Returns the compiled cache key of the previous token
-	 *
-	 * @return string
-	 */
 	private function previous_cache_key(): string {
 		return $this->cache_key() . '_previous';
 	}
 
-	/**
-	 * Checks it the previous token matches the token provided.
-	 *
-	 * @param string $previous_token The previous token.
-	 * @return bool
-	 */
-	private function check_previous_token( string $previous_token ): bool {
+	private function matches_previous_token( string $previous_token ): bool {
 		if ( ! $this->cache->has( $this->previous_cache_key() ) ) {
 			return false;
 		}
@@ -383,17 +303,27 @@ class OnboardingUrl {
 		return $cached_token === $previous_token;
 	}
 
-	/**
-	 * Replaces the previous token.
-	 *
-	 * @param string $previous_token The previous token.
-	 * @return void
-	 */
 	private function replace_previous_token( string $previous_token ): void {
 		$this->cache->set(
 			$this->previous_cache_key(),
 			$previous_token,
 			$this->previous_cache_ttl
 		);
+	}
+
+	private static function url_safe_base64_encode( string $string ): string {
+		//phpcs:disable WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode
+		$encoded_string  = base64_encode( $string );
+		$url_safe_string = str_replace( array( '+', '/' ), array( '-', '_' ), $encoded_string );
+
+		return rtrim( $url_safe_string, '=' );
+	}
+
+	private static function url_safe_base64_decode( string $url_safe_string ) {
+		$padded_string  = str_pad( $url_safe_string, strlen( $url_safe_string ) % 4, '=', STR_PAD_RIGHT );
+		$encoded_string = str_replace( array( '-', '_' ), array( '+', '/' ), $padded_string );
+
+		//phpcs:disable WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_decode
+		return base64_decode( $encoded_string );
 	}
 }

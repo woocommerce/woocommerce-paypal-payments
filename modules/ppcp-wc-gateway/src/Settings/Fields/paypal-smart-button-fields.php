@@ -11,7 +11,6 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\WcGateway\Settings;
 
-use WooCommerce\PayPalCommerce\Onboarding\State;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 
@@ -37,8 +36,8 @@ return function ( ContainerInterface $container, array $fields ): array {
 			'heading'      => __( 'PayPal Smart Buttons', 'woocommerce-paypal-payments' ),
 			'type'         => 'ppcp-heading',
 			'screens'      => array(
-				State::STATE_START,
-				State::STATE_ONBOARDED,
+				0,
+				8,
 			),
 			'requirements' => array(),
 			'gateway'      => 'paypal',
@@ -63,7 +62,7 @@ return function ( ContainerInterface $container, array $fields ): array {
 			'default'      => $container->get( 'wcgateway.button.default-locations' ),
 			'description'  => __( 'Select where the PayPal smart buttons should be displayed.', 'woocommerce-paypal-payments' ) . $axo_smart_button_location_notice,
 			'options'      => $container->get( 'wcgateway.button.locations' ),
-			'screens'      => array( State::STATE_START, State::STATE_ONBOARDED ),
+			'screens'      => array( 0,8 ),
 			'requirements' => array(),
 			'gateway'      => 'paypal',
 		),
@@ -79,7 +78,7 @@ return function ( ContainerInterface $container, array $fields ): array {
 			'input_class'  => array( 'wc-enhanced-select' ),
 			'default'      => 'en',
 			'options'      => $container->get( 'wcgateway.wp-paypal-locales-map' ),
-			'screens'      => array( State::STATE_ONBOARDED ),
+			'screens'      => array( 8 ),
 			'gateway'      => 'paypal',
 			'requirements' => array(),
 		),
@@ -89,7 +88,7 @@ return function ( ContainerInterface $container, array $fields ): array {
 			'label'        => __( 'Customize smart button style per location', 'woocommerce-paypal-payments' ),
 			'default'      => false,
 			'description'  => $container->has( 'wcgateway.button.recommended-styling-notice' ) ? $container->get( 'wcgateway.button.recommended-styling-notice' ) : '',
-			'screens'      => array( State::STATE_START, State::STATE_ONBOARDED ),
+			'screens'      => array( 0,8 ),
 			'requirements' => array(),
 			'gateway'      => 'paypal',
 		),
@@ -110,8 +109,8 @@ return function ( ContainerInterface $container, array $fields ): array {
 				'horizontal' => __( 'Horizontal', 'woocommerce-paypal-payments' ),
 			),
 			'screens'      => array(
-				State::STATE_START,
-				State::STATE_ONBOARDED,
+				0,
+				8,
 			),
 			'requirements' => array(),
 			'gateway'      => 'paypal',
@@ -127,8 +126,8 @@ return function ( ContainerInterface $container, array $fields ): array {
 				'woocommerce-paypal-payments'
 			),
 			'screens'      => array(
-				State::STATE_START,
-				State::STATE_ONBOARDED,
+				0,
+				8,
 			),
 			'requirements' => array(),
 			'gateway'      => 'paypal',
@@ -154,8 +153,8 @@ return function ( ContainerInterface $container, array $fields ): array {
 				'pay'      => __( 'Pay with PayPal', 'woocommerce-paypal-payments' ),
 			),
 			'screens'      => array(
-				State::STATE_START,
-				State::STATE_ONBOARDED,
+				0,
+				8,
 			),
 			'requirements' => array(),
 			'gateway'      => 'paypal',
@@ -179,8 +178,8 @@ return function ( ContainerInterface $container, array $fields ): array {
 				'white'  => __( 'White', 'woocommerce-paypal-payments' ),
 			),
 			'screens'      => array(
-				State::STATE_START,
-				State::STATE_ONBOARDED,
+				0,
+				8,
 			),
 			'requirements' => array(),
 			'gateway'      => 'paypal',
@@ -201,8 +200,8 @@ return function ( ContainerInterface $container, array $fields ): array {
 				'rect' => __( 'Rectangle', 'woocommerce-paypal-payments' ),
 			),
 			'screens'      => array(
-				State::STATE_START,
-				State::STATE_ONBOARDED,
+				0,
+				8,
 			),
 			'requirements' => array(),
 			'gateway'      => 'paypal',
@@ -215,7 +214,7 @@ return function ( ContainerInterface $container, array $fields ): array {
 				'message' => $preview_message,
 			),
 			'screens'      => array(
-				State::STATE_ONBOARDED,
+				8,
 			),
 			'requirements' => array(),
 			'gateway'      => 'paypal',
@@ -235,8 +234,8 @@ return function ( ContainerInterface $container, array $fields ): array {
 			),
 			'type'         => 'ppcp-heading',
 			'screens'      => array(
-				State::STATE_START,
-				State::STATE_ONBOARDED,
+				0,
+				8,
 			),
 			'requirements' => array(),
 			'gateway'      => 'paypal',
@@ -257,8 +256,8 @@ return function ( ContainerInterface $container, array $fields ): array {
 				'horizontal' => __( 'Horizontal', 'woocommerce-paypal-payments' ),
 			),
 			'screens'      => array(
-				State::STATE_START,
-				State::STATE_ONBOARDED,
+				0,
+				8,
 			),
 			'requirements' => array(),
 			'gateway'      => 'paypal',
@@ -274,8 +273,8 @@ return function ( ContainerInterface $container, array $fields ): array {
 				'woocommerce-paypal-payments'
 			),
 			'screens'      => array(
-				State::STATE_START,
-				State::STATE_ONBOARDED,
+				0,
+				8,
 			),
 			'requirements' => array(),
 			'gateway'      => 'paypal',
@@ -301,8 +300,8 @@ return function ( ContainerInterface $container, array $fields ): array {
 				'pay'      => __( 'Pay with PayPal', 'woocommerce-paypal-payments' ),
 			),
 			'screens'      => array(
-				State::STATE_START,
-				State::STATE_ONBOARDED,
+				0,
+				8,
 			),
 			'requirements' => array(),
 			'gateway'      => 'paypal',
@@ -326,8 +325,8 @@ return function ( ContainerInterface $container, array $fields ): array {
 				'white'  => __( 'White', 'woocommerce-paypal-payments' ),
 			),
 			'screens'      => array(
-				State::STATE_START,
-				State::STATE_ONBOARDED,
+				0,
+				8,
 			),
 			'requirements' => array(),
 			'gateway'      => 'paypal',
@@ -348,8 +347,8 @@ return function ( ContainerInterface $container, array $fields ): array {
 				'rect' => __( 'Rectangle', 'woocommerce-paypal-payments' ),
 			),
 			'screens'      => array(
-				State::STATE_START,
-				State::STATE_ONBOARDED,
+				0,
+				8,
 			),
 			'requirements' => array(),
 			'gateway'      => 'paypal',
@@ -362,7 +361,7 @@ return function ( ContainerInterface $container, array $fields ): array {
 				'message' => $preview_message,
 			),
 			'screens'      => array(
-				State::STATE_ONBOARDED,
+				8,
 			),
 			'requirements' => array(),
 			'gateway'      => 'paypal',
@@ -381,7 +380,7 @@ return function ( ContainerInterface $container, array $fields ): array {
 				'</a>'
 			),
 			'type'         => 'ppcp-heading',
-			'screens'      => array( State::STATE_START, State::STATE_ONBOARDED ),
+			'screens'      => array( 0,8 ),
 			'requirements' => array(),
 			'gateway'      => 'paypal',
 		),
@@ -401,8 +400,8 @@ return function ( ContainerInterface $container, array $fields ): array {
 				'horizontal' => __( 'Horizontal', 'woocommerce-paypal-payments' ),
 			),
 			'screens'      => array(
-				State::STATE_START,
-				State::STATE_ONBOARDED,
+				0,
+				8,
 			),
 			'requirements' => array(),
 			'gateway'      => 'paypal',
@@ -418,8 +417,8 @@ return function ( ContainerInterface $container, array $fields ): array {
 				'woocommerce-paypal-payments'
 			),
 			'screens'      => array(
-				State::STATE_START,
-				State::STATE_ONBOARDED,
+				0,
+				8,
 			),
 			'requirements' => array(),
 			'gateway'      => 'paypal',
@@ -445,8 +444,8 @@ return function ( ContainerInterface $container, array $fields ): array {
 				'pay'      => __( 'Pay with PayPal', 'woocommerce-paypal-payments' ),
 			),
 			'screens'      => array(
-				State::STATE_START,
-				State::STATE_ONBOARDED,
+				0,
+				8,
 			),
 			'requirements' => array(),
 			'gateway'      => 'paypal',
@@ -470,8 +469,8 @@ return function ( ContainerInterface $container, array $fields ): array {
 				'white'  => __( 'White', 'woocommerce-paypal-payments' ),
 			),
 			'screens'      => array(
-				State::STATE_START,
-				State::STATE_ONBOARDED,
+				0,
+				8,
 			),
 			'requirements' => array(),
 			'gateway'      => 'paypal',
@@ -492,8 +491,8 @@ return function ( ContainerInterface $container, array $fields ): array {
 				'rect' => __( 'Rectangle', 'woocommerce-paypal-payments' ),
 			),
 			'screens'      => array(
-				State::STATE_START,
-				State::STATE_ONBOARDED,
+				0,
+				8,
 			),
 			'requirements' => array(),
 			'gateway'      => 'paypal',
@@ -506,7 +505,7 @@ return function ( ContainerInterface $container, array $fields ): array {
 				'message' => $preview_message,
 			),
 			'screens'      => array(
-				State::STATE_ONBOARDED,
+				8,
 			),
 			'requirements' => array(),
 			'gateway'      => 'paypal',
@@ -525,7 +524,7 @@ return function ( ContainerInterface $container, array $fields ): array {
 				'</a>'
 			),
 			'type'         => 'ppcp-heading',
-			'screens'      => array( State::STATE_START, State::STATE_ONBOARDED ),
+			'screens'      => array( 0,8 ),
 			'requirements' => array(),
 			'gateway'      => 'paypal',
 		),
@@ -545,8 +544,8 @@ return function ( ContainerInterface $container, array $fields ): array {
 				'horizontal' => __( 'Horizontal', 'woocommerce-paypal-payments' ),
 			),
 			'screens'      => array(
-				State::STATE_START,
-				State::STATE_ONBOARDED,
+				0,
+				8,
 			),
 			'requirements' => array(),
 			'gateway'      => 'paypal',
@@ -562,8 +561,8 @@ return function ( ContainerInterface $container, array $fields ): array {
 				'woocommerce-paypal-payments'
 			),
 			'screens'      => array(
-				State::STATE_START,
-				State::STATE_ONBOARDED,
+				0,
+				8,
 			),
 			'requirements' => array(),
 			'gateway'      => 'paypal',
@@ -589,8 +588,8 @@ return function ( ContainerInterface $container, array $fields ): array {
 				'pay'      => __( 'Pay with PayPal', 'woocommerce-paypal-payments' ),
 			),
 			'screens'      => array(
-				State::STATE_START,
-				State::STATE_ONBOARDED,
+				0,
+				8,
 			),
 			'requirements' => array(),
 			'gateway'      => 'paypal',
@@ -614,8 +613,8 @@ return function ( ContainerInterface $container, array $fields ): array {
 				'white'  => __( 'White', 'woocommerce-paypal-payments' ),
 			),
 			'screens'      => array(
-				State::STATE_START,
-				State::STATE_ONBOARDED,
+				0,
+				8,
 			),
 			'requirements' => array(),
 			'gateway'      => 'paypal',
@@ -636,8 +635,8 @@ return function ( ContainerInterface $container, array $fields ): array {
 				'rect' => __( 'Rectangle', 'woocommerce-paypal-payments' ),
 			),
 			'screens'      => array(
-				State::STATE_START,
-				State::STATE_ONBOARDED,
+				0,
+				8,
 			),
 			'requirements' => array(),
 			'gateway'      => 'paypal',
@@ -650,7 +649,7 @@ return function ( ContainerInterface $container, array $fields ): array {
 				'message' => $preview_message,
 			),
 			'screens'      => array(
-				State::STATE_ONBOARDED,
+				8,
 			),
 			'requirements' => array(),
 			'gateway'      => 'paypal',
@@ -669,7 +668,7 @@ return function ( ContainerInterface $container, array $fields ): array {
 				'</a>'
 			),
 			'type'         => 'ppcp-heading',
-			'screens'      => array( State::STATE_START, State::STATE_ONBOARDED ),
+			'screens'      => array( 0,8 ),
 			'requirements' => array(),
 			'gateway'      => 'paypal',
 		),
@@ -689,8 +688,8 @@ return function ( ContainerInterface $container, array $fields ): array {
 				'horizontal' => __( 'Horizontal', 'woocommerce-paypal-payments' ),
 			),
 			'screens'      => array(
-				State::STATE_START,
-				State::STATE_ONBOARDED,
+				0,
+				8,
 			),
 			'requirements' => array(),
 			'gateway'      => 'paypal',
@@ -706,8 +705,8 @@ return function ( ContainerInterface $container, array $fields ): array {
 				'woocommerce-paypal-payments'
 			),
 			'screens'      => array(
-				State::STATE_START,
-				State::STATE_ONBOARDED,
+				0,
+				8,
 			),
 			'requirements' => array(),
 			'gateway'      => 'paypal',
@@ -733,8 +732,8 @@ return function ( ContainerInterface $container, array $fields ): array {
 				'pay'      => __( 'Pay with PayPal', 'woocommerce-paypal-payments' ),
 			),
 			'screens'      => array(
-				State::STATE_START,
-				State::STATE_ONBOARDED,
+				0,
+				8,
 			),
 			'requirements' => array(),
 			'gateway'      => 'paypal',
@@ -758,8 +757,8 @@ return function ( ContainerInterface $container, array $fields ): array {
 				'white'  => __( 'White', 'woocommerce-paypal-payments' ),
 			),
 			'screens'      => array(
-				State::STATE_START,
-				State::STATE_ONBOARDED,
+				0,
+				8,
 			),
 			'requirements' => array(),
 			'gateway'      => 'paypal',
@@ -780,8 +779,8 @@ return function ( ContainerInterface $container, array $fields ): array {
 				'rect' => __( 'Rectangle', 'woocommerce-paypal-payments' ),
 			),
 			'screens'      => array(
-				State::STATE_START,
-				State::STATE_ONBOARDED,
+				0,
+				8,
 			),
 			'requirements' => array(),
 			'gateway'      => 'paypal',
@@ -797,8 +796,8 @@ return function ( ContainerInterface $container, array $fields ): array {
 			'desc_tip'          => true,
 			'description'       => __( 'Add a value from 25 to 55.', 'woocommerce-paypal-payments' ),
 			'screens'           => array(
-				State::STATE_START,
-				State::STATE_ONBOARDED,
+				0,
+				8,
 			),
 			'requirements'      => array(),
 			'gateway'           => 'paypal',
@@ -811,7 +810,7 @@ return function ( ContainerInterface $container, array $fields ): array {
 				'message' => $preview_message,
 			),
 			'screens'      => array(
-				State::STATE_ONBOARDED,
+				8,
 			),
 			'requirements' => array(),
 			'gateway'      => 'paypal',
@@ -830,7 +829,7 @@ return function ( ContainerInterface $container, array $fields ): array {
 				'</a>'
 			),
 			'type'         => 'ppcp-heading',
-			'screens'      => array( State::STATE_START, State::STATE_ONBOARDED ),
+			'screens'      => array( 0,8 ),
 			'requirements' => array(),
 			'gateway'      => 'paypal',
 		),
@@ -855,8 +854,8 @@ return function ( ContainerInterface $container, array $fields ): array {
 				'pay'      => __( 'Pay with PayPal', 'woocommerce-paypal-payments' ),
 			),
 			'screens'      => array(
-				State::STATE_START,
-				State::STATE_ONBOARDED,
+				0,
+				8,
 			),
 			'requirements' => array(),
 			'gateway'      => 'paypal',
@@ -880,8 +879,8 @@ return function ( ContainerInterface $container, array $fields ): array {
 				'white'  => __( 'White', 'woocommerce-paypal-payments' ),
 			),
 			'screens'      => array(
-				State::STATE_START,
-				State::STATE_ONBOARDED,
+				0,
+				8,
 			),
 			'requirements' => array(),
 			'gateway'      => 'paypal',
@@ -902,8 +901,8 @@ return function ( ContainerInterface $container, array $fields ): array {
 				'rect' => __( 'Rectangle', 'woocommerce-paypal-payments' ),
 			),
 			'screens'      => array(
-				State::STATE_START,
-				State::STATE_ONBOARDED,
+				0,
+				8,
 			),
 			'requirements' => array(),
 			'gateway'      => 'paypal',
@@ -919,8 +918,8 @@ return function ( ContainerInterface $container, array $fields ): array {
 			'desc_tip'          => true,
 			'description'       => __( 'Set a value from 40 to 55.', 'woocommerce-paypal-payments' ),
 			'screens'           => array(
-				State::STATE_START,
-				State::STATE_ONBOARDED,
+				0,
+				8,
 			),
 			'requirements'      => array(),
 			'gateway'           => 'paypal',
@@ -933,7 +932,7 @@ return function ( ContainerInterface $container, array $fields ): array {
 				'message' => $preview_message,
 			),
 			'screens'      => array(
-				State::STATE_ONBOARDED,
+				8,
 			),
 			'requirements' => array(),
 			'gateway'      => 'paypal',
@@ -952,7 +951,7 @@ return function ( ContainerInterface $container, array $fields ): array {
 				'</a>'
 			),
 			'type'         => 'ppcp-heading',
-			'screens'      => array( State::STATE_START, State::STATE_ONBOARDED ),
+			'screens'      => array( 0,8 ),
 			'requirements' => array(),
 			'gateway'      => 'paypal',
 		),
@@ -977,8 +976,8 @@ return function ( ContainerInterface $container, array $fields ): array {
 				'pay'      => __( 'Pay with PayPal', 'woocommerce-paypal-payments' ),
 			),
 			'screens'      => array(
-				State::STATE_START,
-				State::STATE_ONBOARDED,
+				0,
+				8,
 			),
 			'requirements' => array(),
 			'gateway'      => 'paypal',
@@ -1002,8 +1001,8 @@ return function ( ContainerInterface $container, array $fields ): array {
 				'white'  => __( 'White', 'woocommerce-paypal-payments' ),
 			),
 			'screens'      => array(
-				State::STATE_START,
-				State::STATE_ONBOARDED,
+				0,
+				8,
 			),
 			'requirements' => array(),
 			'gateway'      => 'paypal',
@@ -1024,8 +1023,8 @@ return function ( ContainerInterface $container, array $fields ): array {
 				'rect' => __( 'Rectangle', 'woocommerce-paypal-payments' ),
 			),
 			'screens'      => array(
-				State::STATE_START,
-				State::STATE_ONBOARDED,
+				0,
+				8,
 			),
 			'requirements' => array(),
 			'gateway'      => 'paypal',
@@ -1041,8 +1040,8 @@ return function ( ContainerInterface $container, array $fields ): array {
 			'desc_tip'          => true,
 			'description'       => __( 'Set a value from 40 to 55.', 'woocommerce-paypal-payments' ),
 			'screens'           => array(
-				State::STATE_START,
-				State::STATE_ONBOARDED,
+				0,
+				8,
 			),
 			'requirements'      => array(),
 			'gateway'           => 'paypal',
@@ -1055,7 +1054,7 @@ return function ( ContainerInterface $container, array $fields ): array {
 				'message' => $preview_message,
 			),
 			'screens'      => array(
-				State::STATE_ONBOARDED,
+				8,
 			),
 			'requirements' => array(),
 			'gateway'      => 'paypal',
