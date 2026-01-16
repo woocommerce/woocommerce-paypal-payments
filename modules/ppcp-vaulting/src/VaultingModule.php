@@ -118,6 +118,7 @@ class VaultingModule implements ServiceModule, ExecutableModule {
 					return $tokens;
 				}
 
+				//phpcs:ignore WordPress.Security.NonceVerification.Recommended
 				if ( isset( $_GET['change_payment_method'] ) && is_wc_endpoint_url( 'order-pay' ) ) {
 					return $tokens;
 				}
