@@ -19,17 +19,19 @@ use WooCommerce\PayPalCommerce\Compat\Settings\SettingsMapHelper;
 use WooCommerce\PayPalCommerce\Compat\Settings\SettingsTabMapHelper;
 use WooCommerce\PayPalCommerce\Compat\Settings\StylingSettingsMapHelper;
 use WooCommerce\PayPalCommerce\Compat\Settings\SubscriptionSettingsMapHelper;
+use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 
 return array(
 
 	'compat.ppec.mock-gateway'                       => static function ( $container ) {
-		$settings = $container->get( 'wcgateway.settings' );
-		$title    = $settings->has( 'title' ) ? $settings->get( 'title' ) : __( 'PayPal', 'woocommerce-paypal-payments' );
+		$settings = $container->get( 'settings.settings-provider' );
+		assert( $settings instanceof SettingsProvider );
+
 		$title    = sprintf(
 			/* Translators: placeholder is the gateway name. */
 			__( '%s (Legacy)', 'woocommerce-paypal-payments' ),
-			$title
+			$settings->paypal_gateway_title()
 		);
 
 		return new PPEC\MockGateway( $title );
