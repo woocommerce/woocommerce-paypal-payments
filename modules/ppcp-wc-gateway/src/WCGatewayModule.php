@@ -62,7 +62,6 @@ use WooCommerce\PayPalCommerce\WcGateway\Processor\CreditCardOrderInfoHandlingTr
 use WooCommerce\PayPalCommerce\WcGateway\Settings\HeaderRenderer;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\SectionsRenderer;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
-use WooCommerce\PayPalCommerce\WcGateway\Settings\SettingsRenderer;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\WcInboxNotes\InboxNoteRegistrar;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\WcTasks\Registrar\TaskRegistrarInterface;
 
@@ -226,6 +225,7 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
 			}
 		);
 
+		// todo: remove this with #legacy-ui code?
 		add_filter(
 			Repository::NOTICES_FILTER,
 			static function ( $notices ) use ( $c ): array {
@@ -267,11 +267,6 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
 				if ( $authorized_message ) {
 					$notices[] = $authorized_message;
 				}
-
-				$settings_renderer = $c->get( 'wcgateway.settings.render' );
-				assert( $settings_renderer instanceof SettingsRenderer );
-				$messages = $settings_renderer->messages();
-				$notices  = array_merge( $notices, $messages );
 
 				return $notices;
 			}
@@ -707,33 +702,12 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
 		);
 
 		add_filter(
-			'woocommerce_form_field',
-			static function ( $field, $key, $args, $value ) use ( $container ) {
-				$renderer = $container->get( 'wcgateway.settings.render' );
-				/**
-				 * The Settings Renderer object.
-				 *
-				 * @var SettingsRenderer $renderer
-				 */
-				$field = $renderer->render_multiselect( $field, $key, $args, $value );
-				$field = $renderer->render_password( $field, $key, $args, $value );
-				$field = $renderer->render_heading( $field, $key, $args, $value );
-				$field = $renderer->render_table( $field, $key, $args, $value );
-				$field = $renderer->render_html( $field, $key, $args, $value );
-
-				return $field;
-			},
-			10,
-			4
-		);
-
-		add_filter(
 			'woocommerce_available_payment_gateways',
 			static function ( $methods ) use ( $container ): array {
 				$disabler = $container->get( 'wcgateway.disabler' );
 
 				/**
-				 * The Gateay disabler.
+				 * The Gateway disabler.
 				 *
 				 * @var DisableGateways $disabler
 				 */

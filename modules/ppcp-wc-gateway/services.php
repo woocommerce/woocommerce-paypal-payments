@@ -84,7 +84,6 @@ use WooCommerce\PayPalCommerce\WcGateway\Processor\RefundProcessor;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\HeaderRenderer;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\SectionsRenderer;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
-use WooCommerce\PayPalCommerce\WcGateway\Settings\SettingsRenderer;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\WcInboxNotes\InboxNoteAction;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\WcInboxNotes\InboxNoteFactory;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\WcInboxNotes\InboxNoteInterface;
@@ -499,18 +498,6 @@ return array(
 		$settings = $container->get( 'wcgateway.settings' );
 
 		return new SettingsStatus( $settings );
-	},
-	'wcgateway.settings.render'                            => static function ( ContainerInterface $container ): SettingsRenderer {
-		return new SettingsRenderer(
-			$container->get( 'wcgateway.settings' ),
-			$container->get( 'api.helpers.dccapplies' ),
-			$container->get( 'button.helper.messages-apply' ),
-			$container->get( 'wcgateway.helper.dcc-product-status' ),
-			$container->get( 'wcgateway.settings.status' ),
-			$container->get( 'wcgateway.current-ppcp-settings-page-id' ),
-			$container->get( 'api.shop.country' ),
-			$container->get( 'axo.eligibility.check' )
-		);
 	},
 	'wcgateway.order-processor'                            => static function ( ContainerInterface $container ): OrderProcessor {
 
