@@ -27,7 +27,6 @@ use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\MyBankGateway;
 use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\P24Gateway;
 use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\PWCGateway;
 use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\TrustlyGateway;
-use WooCommerce\PayPalCommerce\Settings\Ajax\SwitchSettingsUiEndpoint;
 use WooCommerce\PayPalCommerce\Settings\Data\Definition\FeaturesDefinition;
 use WooCommerce\PayPalCommerce\Settings\Data\Definition\PaymentMethodsDependenciesDefinition;
 use WooCommerce\PayPalCommerce\Settings\Data\GeneralSettings;
@@ -36,6 +35,7 @@ use WooCommerce\PayPalCommerce\Settings\Data\PaymentSettings;
 use WooCommerce\PayPalCommerce\Settings\Data\SettingsModel;
 use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
 use WooCommerce\PayPalCommerce\Settings\Data\StylingSettings;
+use WooCommerce\PayPalCommerce\Settings\Data\FastlaneSettings;
 use WooCommerce\PayPalCommerce\Settings\Data\TodosModel;
 use WooCommerce\PayPalCommerce\Settings\Data\Definition\TodosDefinition;
 use WooCommerce\PayPalCommerce\Settings\Endpoint\AuthenticationRestEndpoint;
@@ -63,6 +63,7 @@ use WooCommerce\PayPalCommerce\Settings\Service\Migration\MigrationManager;
 use WooCommerce\PayPalCommerce\Settings\Service\Migration\PaymentSettingsMigration;
 use WooCommerce\PayPalCommerce\Settings\Service\Migration\SettingsTabMigration;
 use WooCommerce\PayPalCommerce\Settings\Service\Migration\StylingSettingsMigration;
+use WooCommerce\PayPalCommerce\Settings\Service\Migration\FastlaneSettingsMigration;
 use WooCommerce\PayPalCommerce\Settings\Service\OnboardingUrlManager;
 use WooCommerce\PayPalCommerce\Settings\Service\PaymentMethodsEligibilityService;
 use WooCommerce\PayPalCommerce\Settings\Service\ScriptDataHandler;
@@ -99,6 +100,7 @@ return array(
 			$container->get( 'settings.data.payment' ),
 			$container->get( 'settings.data.settings' ),
 			$container->get( 'settings.data.styling' ),
+			$container->get( 'settings.data.fastlane' )
 		);
 	},
 	'settings.data.onboarding'                            => static function ( ContainerInterface $container ): OnboardingProfile {
@@ -135,6 +137,9 @@ return array(
 	},
 	'settings.data.payment'                               => static function ( ContainerInterface $container ): PaymentSettings {
 		return new PaymentSettings();
+	},
+	'settings.data.fastlane'                              => static function (): FastlaneSettings {
+		return new FastlaneSettings();
 	},
 	'settings.data.settings'                              => static function ( ContainerInterface $container ): SettingsModel {
 		$environment = $container->get( 'settings.environment' );
@@ -397,6 +402,9 @@ return array(
 		$c->get( 'settings.service.data-migration.settings-tab' ),
 		$c->get( 'settings.service.data-migration.styling' ),
 		$c->get( 'settings.service.data-migration.payment-settings' ),
+		$c->get( 'settings.service.data-migration.fastlane' ),
+		$c->get( 'settings.data.onboarding' ),
+		$c->get( 'woocommerce.logger.woocommerce' )
 	),
 	'settings.service.data-migration.settings-tab'        => static fn( ContainerInterface $c ): SettingsTabMigration => new SettingsTabMigration(
 		(array) get_option( 'woocommerce-ppcp-settings', array() ),
@@ -420,12 +428,9 @@ return array(
 		$c->get( 'settings.data.general' ),
 		$c->get( 'api.endpoint.partners' ),
 	),
-	'settings.ajax.switch_ui'                             => static fn( ContainerInterface $c ): SwitchSettingsUiEndpoint => new SwitchSettingsUiEndpoint(
-		$c->get( 'woocommerce.logger.woocommerce' ),
-		$c->get( 'button.request-data' ),
-		$c->get( 'settings.data.onboarding' ),
-		$c->get( 'settings.service.data-migration' ),
-		$c->get( 'api.merchant_id' ) !== ''
+	'settings.service.data-migration.fastlane'            => static fn( ContainerInterface $c ): FastlaneSettingsMigration => new FastlaneSettingsMigration(
+		(array) get_option( 'woocommerce-ppcp-settings', array() ),
+		$c->get( 'settings.data.fastlane' ),
 	),
 	'settings.rest.todos'                                 => static function ( ContainerInterface $container ): TodosRestEndpoint {
 		return new TodosRestEndpoint(
@@ -776,5 +781,19 @@ return array(
 	},
 	'settings.migration.bcdc-override-check'              => static function (): callable {
 		return static fn(): bool => (bool) get_option( PaymentSettingsMigration::OPTION_NAME_BCDC_MIGRATION_OVERRIDE );
+	},
+	/**
+	 * Merchant connection details, which includes the connection status
+	 * (onboarding/connected) and connection-aware environment checks.
+	 * This is the preferred solution to check environment and connection state.
+	 */
+	'settings.connection-state'                           => static function ( ContainerInterface $container ): ConnectionState {
+		$data = $container->get( 'settings.data.general' );
+		assert( $data instanceof GeneralSettings );
+
+		$is_connected = $data->is_merchant_connected();
+		$environment  = new Environment( $data->is_sandbox_merchant() );
+
+		return new ConnectionState( $is_connected, $environment );
 	},
 );

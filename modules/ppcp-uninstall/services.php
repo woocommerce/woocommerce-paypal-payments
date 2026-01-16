@@ -12,7 +12,7 @@ namespace WooCommerce\PayPalCommerce\Uninstall;
 use WooCommerce\PayPalCommerce\Assets\AssetGetter;
 use WooCommerce\PayPalCommerce\Assets\AssetGetterFactory;
 use WooCommerce\PayPalCommerce\FraudProtection\Recaptcha\Recaptcha;
-use WooCommerce\PayPalCommerce\Settings\Ajax\SwitchSettingsUiEndpoint;
+use WooCommerce\PayPalCommerce\Settings\Service\Migration\MigrationManager;
 use WooCommerce\PayPalCommerce\Settings\Service\Migration\PaymentSettingsMigration;
 use WooCommerce\PayPalCommerce\Uninstall\Assets\ClearDatabaseAssets;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
@@ -38,8 +38,7 @@ return array(
 			WebhookSimulation::OPTION_ID,
 			WebhookRegistrar::KEY,
 			'ppcp_payment_tokens_migration_initialized',
-			SwitchSettingsUiEndpoint::OPTION_NAME_SHOULD_USE_OLD_UI,
-			SwitchSettingsUiEndpoint::OPTION_NAME_MIGRATION_IS_DONE,
+			MigrationManager::OPTION_NAME_MIGRATION_IS_DONE,
 			PaymentSettingsMigration::OPTION_NAME_BCDC_MIGRATION_OVERRIDE,
 			Recaptcha::REJECTION_COUNTER_OPTION,
 		);
