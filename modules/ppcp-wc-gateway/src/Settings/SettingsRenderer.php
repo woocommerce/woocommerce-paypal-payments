@@ -370,7 +370,7 @@ $data_rows_html
 		<?php
 
 		// todo: #legacy-ui code cleanup. Replaced onboarding state check with dummy value until this file is deleted.
-		$is_onboarded  = true;
+		$is_onboarded = true;
 		foreach ( $this->fields as $field => $config ) :
 			if ( ! in_array( $is_onboarded, $config['screens'], true ) ) {
 				continue;

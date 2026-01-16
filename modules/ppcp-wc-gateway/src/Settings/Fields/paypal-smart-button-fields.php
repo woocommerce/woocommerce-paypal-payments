@@ -62,7 +62,7 @@ return function ( ContainerInterface $container, array $fields ): array {
 			'default'      => $container->get( 'wcgateway.button.default-locations' ),
 			'description'  => __( 'Select where the PayPal smart buttons should be displayed.', 'woocommerce-paypal-payments' ) . $axo_smart_button_location_notice,
 			'options'      => $container->get( 'wcgateway.button.locations' ),
-			'screens'      => array( 0,8 ),
+			'screens'      => array( 0, 8 ),
 			'requirements' => array(),
 			'gateway'      => 'paypal',
 		),
@@ -88,7 +88,7 @@ return function ( ContainerInterface $container, array $fields ): array {
 			'label'        => __( 'Customize smart button style per location', 'woocommerce-paypal-payments' ),
 			'default'      => false,
 			'description'  => $container->has( 'wcgateway.button.recommended-styling-notice' ) ? $container->get( 'wcgateway.button.recommended-styling-notice' ) : '',
-			'screens'      => array( 0,8 ),
+			'screens'      => array( 0, 8 ),
 			'requirements' => array(),
 			'gateway'      => 'paypal',
 		),
@@ -380,7 +380,7 @@ return function ( ContainerInterface $container, array $fields ): array {
 				'</a>'
 			),
 			'type'         => 'ppcp-heading',
-			'screens'      => array( 0,8 ),
+			'screens'      => array( 0, 8 ),
 			'requirements' => array(),
 			'gateway'      => 'paypal',
 		),
@@ -524,7 +524,7 @@ return function ( ContainerInterface $container, array $fields ): array {
 				'</a>'
 			),
 			'type'         => 'ppcp-heading',
-			'screens'      => array( 0,8 ),
+			'screens'      => array( 0, 8 ),
 			'requirements' => array(),
 			'gateway'      => 'paypal',
 		),
@@ -668,7 +668,7 @@ return function ( ContainerInterface $container, array $fields ): array {
 				'</a>'
 			),
 			'type'         => 'ppcp-heading',
-			'screens'      => array( 0,8 ),
+			'screens'      => array( 0, 8 ),
 			'requirements' => array(),
 			'gateway'      => 'paypal',
 		),
@@ -829,7 +829,7 @@ return function ( ContainerInterface $container, array $fields ): array {
 				'</a>'
 			),
 			'type'         => 'ppcp-heading',
-			'screens'      => array( 0,8 ),
+			'screens'      => array( 0, 8 ),
 			'requirements' => array(),
 			'gateway'      => 'paypal',
 		),
@@ -951,7 +951,7 @@ return function ( ContainerInterface $container, array $fields ): array {
 				'</a>'
 			),
 			'type'         => 'ppcp-heading',
-			'screens'      => array( 0,8 ),
+			'screens'      => array( 0, 8 ),
 			'requirements' => array(),
 			'gateway'      => 'paypal',
 		),
