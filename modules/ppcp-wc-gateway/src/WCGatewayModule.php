@@ -59,8 +59,6 @@ use WooCommerce\PayPalCommerce\WcGateway\Notice\SendOnlyCountryNotice;
 use WooCommerce\PayPalCommerce\WcGateway\Notice\UnsupportedCurrencyAdminNotice;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\AuthorizedPaymentsProcessor;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\CreditCardOrderInfoHandlingTrait;
-use WooCommerce\PayPalCommerce\WcGateway\Settings\HeaderRenderer;
-use WooCommerce\PayPalCommerce\WcGateway\Settings\SectionsRenderer;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\WcInboxNotes\InboxNoteRegistrar;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\WcTasks\Registrar\TaskRegistrarInterface;
@@ -99,23 +97,6 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
 		$this->register_wc_tasks( $c );
 		$this->register_woo_inbox_notes( $c );
 		$this->register_void_button( $c );
-
-		if ( ! $c->get( 'wcgateway.settings.admin-settings-enabled' ) ) {
-			add_action(
-				'woocommerce_sections_checkout',
-				function () use ( $c ) {
-					$header_renderer = $c->get( 'wcgateway.settings.header-renderer' );
-					assert( $header_renderer instanceof HeaderRenderer );
-
-					$section_renderer = $c->get( 'wcgateway.settings.sections-renderer' );
-					assert( $section_renderer instanceof SectionsRenderer );
-
-					// phpcs:ignore WordPress.Security.EscapeOutput
-					echo $header_renderer->render() . $section_renderer->render();
-				},
-				20
-			);
-		}
 
 		add_action(
 			'woocommerce_paypal_payments_order_captured',

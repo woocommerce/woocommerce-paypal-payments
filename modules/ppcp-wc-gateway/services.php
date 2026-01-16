@@ -81,8 +81,6 @@ use WooCommerce\PayPalCommerce\WcGateway\Notice\UnsupportedCurrencyAdminNotice;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\AuthorizedPaymentsProcessor;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\OrderProcessor;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\RefundProcessor;
-use WooCommerce\PayPalCommerce\WcGateway\Settings\HeaderRenderer;
-use WooCommerce\PayPalCommerce\WcGateway\Settings\SectionsRenderer;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\WcInboxNotes\InboxNoteAction;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\WcInboxNotes\InboxNoteFactory;
@@ -303,20 +301,8 @@ return array(
 	},
 
 	'wcgateway.current-ppcp-settings-page-id'              => static function ( ContainerInterface $container ): string {
-		if ( ! $container->get( 'wcgateway.is-ppcp-settings-page' ) ) {
-			return '';
-		}
-
-		$section  = isset( $_GET['section'] ) ? sanitize_text_field( wp_unslash( $_GET['section'] ) ) : '';
-		$ppcp_tab = isset( $_GET[ SectionsRenderer::KEY ] ) ? sanitize_text_field( wp_unslash( $_GET[ SectionsRenderer::KEY ] ) ) : '';
-
-		$is_connected = $container->get( 'settings.flag.is-connected' );
-
-		if ( ! $ppcp_tab && PayPalGateway::ID === $section && ! $is_connected ) {
-			return Settings::CONNECTION_TAB_ID;
-		}
-
-		return $ppcp_tab ? $ppcp_tab : $section;
+		// todo: not used after removing #legacy-ui code. Refactor dependencies.
+		return '';
 	},
 
 	'wcgateway.settings'                                   => SingletonDecorator::make(
@@ -478,22 +464,6 @@ return array(
 			return new AuthorizeOrderActionNotice();
 		},
 
-	'wcgateway.settings.sections-renderer'                 => static function ( ContainerInterface $container ): SectionsRenderer {
-		return new SectionsRenderer(
-			$container->get( 'wcgateway.current-ppcp-settings-page-id' ),
-			$container->get( 'settings.flag.is-connected' ),
-			$container->get( 'wcgateway.helper.dcc-product-status' ),
-			$container->get( 'api.helpers.dccapplies' ),
-			$container->get( 'button.helper.messages-apply' ),
-			$container->get( 'wcgateway.pay-upon-invoice-product-status' )
-		);
-	},
-	'wcgateway.settings.header-renderer'                   => static function ( ContainerInterface $container ): HeaderRenderer {
-		return new HeaderRenderer(
-			$container->get( 'wcgateway.current-ppcp-settings-page-id' ),
-			$container->get( 'wcgateway.asset_getter' )
-		);
-	},
 	'wcgateway.settings.status'                            => static function ( ContainerInterface $container ): SettingsStatus {
 		$settings = $container->get( 'wcgateway.settings' );
 
