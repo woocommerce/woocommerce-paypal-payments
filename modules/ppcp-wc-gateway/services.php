@@ -106,7 +106,6 @@ use WooCommerce\PayPalCommerce\Webhooks\WebhookEventStorage;
 return array(
 	'wcgateway.paypal-gateway'                             => static function ( ContainerInterface $container ): PayPalGateway {
 		return new PayPalGateway(
-			$container->get( 'wcgateway.settings.render' ),
 			$container->get( 'wcgateway.funding-source.renderer' ),
 			$container->get( 'wcgateway.order-processor' ),
 			$container->get( 'wcgateway.settings' ),
@@ -132,7 +131,6 @@ return array(
 	},
 	'wcgateway.credit-card-gateway'                        => static function ( ContainerInterface $container ): CreditCardGateway {
 		return new CreditCardGateway(
-			$container->get( 'wcgateway.settings.render' ),
 			$container->get( 'wcgateway.order-processor' ),
 			$container->get( 'wcgateway.settings' ),
 			$container->get( 'wcgateway.configuration.card-configuration' ),
@@ -218,7 +216,6 @@ return array(
 	},
 	'wcgateway.card-button-gateway'                        => static function ( ContainerInterface $container ): CardButtonGateway {
 		return new CardButtonGateway(
-			$container->get( 'wcgateway.settings.render' ),
 			$container->get( 'wcgateway.order-processor' ),
 			$container->get( 'wcgateway.settings' ),
 			$container->get( 'session.handler' ),
