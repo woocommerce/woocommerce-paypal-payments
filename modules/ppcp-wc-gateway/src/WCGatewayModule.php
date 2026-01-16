@@ -206,6 +206,7 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
 				$dcc_configuration = $c->get( 'wcgateway.configuration.card-configuration' );
 				assert( $dcc_configuration instanceof CardPaymentsConfiguration );
 
+				// todo: #legacy-ui assets that can be removed.
 				$assets = new SettingsPageAssets(
 					$c->get( 'wcgateway.asset_getter' ),
 					$c->get( 'ppcp.asset-version' ),
@@ -216,7 +217,7 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
 					$c->get( 'settings.environment' ),
 					$settings_status->is_pay_later_button_enabled(),
 					$settings->has( 'disable_funding' ) ? $settings->get( 'disable_funding' ) : array(),
-					$c->get( 'wcgateway.settings.funding-sources' ),
+					array(),
 					$c->get( 'wcgateway.is-ppcp-settings-page' ),
 					$dcc_configuration->is_enabled(),
 					$c->get( 'api.reference-transaction-status' ),
