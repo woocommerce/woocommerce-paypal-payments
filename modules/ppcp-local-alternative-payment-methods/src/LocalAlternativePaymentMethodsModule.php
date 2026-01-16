@@ -15,18 +15,16 @@ use WooCommerce\PayPalCommerce\Assets\AssetGetter;
 use WooCommerce\PayPalCommerce\Settings\Data\Definition\FeaturesDefinition;
 use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExecutableModule;
-use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExtendingModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ModuleClassNameIdTrait;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ServiceModule;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
-use WooCommerce\PayPalCommerce\Settings\Data\PaymentSettings;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\FeesUpdater;
 
 /**
  * Class LocalAlternativePaymentMethodsModule
  */
-class LocalAlternativePaymentMethodsModule implements ServiceModule, ExtendingModule, ExecutableModule {
+class LocalAlternativePaymentMethodsModule implements ServiceModule, ExecutableModule {
 	use ModuleClassNameIdTrait;
 
 	/**
@@ -41,13 +39,6 @@ class LocalAlternativePaymentMethodsModule implements ServiceModule, ExtendingMo
 	 */
 	public function services(): array {
 		return require __DIR__ . '/../services.php';
-	}
-
-	/**
-	 * {@inheritDoc}
-	 */
-	public function extensions(): array {
-		return require __DIR__ . '/../extensions.php';
 	}
 
 	/**

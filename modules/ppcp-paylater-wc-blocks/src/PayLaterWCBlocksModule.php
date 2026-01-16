@@ -13,7 +13,6 @@ use WooCommerce\PayPalCommerce\Assets\AssetGetter;
 use WooCommerce\PayPalCommerce\Button\Endpoint\CartScriptParamsEndpoint;
 use WooCommerce\PayPalCommerce\PayLaterConfigurator\Factory\ConfigFactory;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExecutableModule;
-use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExtendingModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ModuleClassNameIdTrait;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ServiceModule;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
@@ -24,7 +23,7 @@ use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 /**
  * Class PayLaterWCBlocksModule
  */
-class PayLaterWCBlocksModule implements ServiceModule, ExtendingModule, ExecutableModule {
+class PayLaterWCBlocksModule implements ServiceModule, ExecutableModule {
 	use ModuleClassNameIdTrait;
 
 	/**
@@ -32,13 +31,6 @@ class PayLaterWCBlocksModule implements ServiceModule, ExtendingModule, Executab
 	 */
 	public function services(): array {
 		return require __DIR__ . '/../services.php';
-	}
-
-	/**
-	 * {@inheritDoc}
-	 */
-	public function extensions(): array {
-		return require __DIR__ . '/../extensions.php';
 	}
 
 	/**

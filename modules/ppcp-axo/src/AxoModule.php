@@ -20,7 +20,6 @@ use WooCommerce\PayPalCommerce\Button\Helper\Context;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
 use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExecutableModule;
-use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExtendingModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ModuleClassNameIdTrait;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ServiceModule;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
@@ -35,7 +34,7 @@ use WooCommerce\PayPalCommerce\WcGateway\Helper\CardPaymentsConfiguration;
  *
  * @psalm-suppress MissingConstructor
  */
-class AxoModule implements ServiceModule, ExtendingModule, ExecutableModule {
+class AxoModule implements ServiceModule, ExecutableModule {
 	use ModuleClassNameIdTrait;
 
 	/**
@@ -50,13 +49,6 @@ class AxoModule implements ServiceModule, ExtendingModule, ExecutableModule {
 	 */
 	public function services(): array {
 		return require __DIR__ . '/../services.php';
-	}
-
-	/**
-	 * {@inheritDoc}
-	 */
-	public function extensions(): array {
-		return require __DIR__ . '/../extensions.php';
 	}
 
 	/**

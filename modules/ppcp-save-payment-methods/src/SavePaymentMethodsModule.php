@@ -23,10 +23,8 @@ use WooCommerce\PayPalCommerce\Button\Helper\Context;
 use WooCommerce\PayPalCommerce\SavePaymentMethods\Endpoint\CreatePaymentToken;
 use WooCommerce\PayPalCommerce\SavePaymentMethods\Endpoint\CreatePaymentTokenForGuest;
 use WooCommerce\PayPalCommerce\SavePaymentMethods\Endpoint\CreateSetupToken;
-use WooCommerce\PayPalCommerce\SavePaymentMethods\Service\PaymentMethodTokensChecker;
 use WooCommerce\PayPalCommerce\Vaulting\WooCommercePaymentTokens;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExecutableModule;
-use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExtendingModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ModuleClassNameIdTrait;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ServiceModule;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
@@ -40,7 +38,7 @@ use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
 /**
  * Class SavePaymentMethodsModule
  */
-class SavePaymentMethodsModule implements ServiceModule, ExtendingModule, ExecutableModule {
+class SavePaymentMethodsModule implements ServiceModule, ExecutableModule {
 	use ModuleClassNameIdTrait;
 
 	/**
@@ -48,13 +46,6 @@ class SavePaymentMethodsModule implements ServiceModule, ExtendingModule, Execut
 	 */
 	public function services(): array {
 		return require __DIR__ . '/../services.php';
-	}
-
-	/**
-	 * {@inheritDoc}
-	 */
-	public function extensions(): array {
-		return require __DIR__ . '/../extensions.php';
 	}
 
 	/**
