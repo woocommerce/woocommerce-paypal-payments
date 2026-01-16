@@ -162,7 +162,7 @@ class PayLaterMessagingSettings extends AbstractDataModel {
 	 * Updates a location's settings from configurator config array.
 	 *
 	 * @param string $location The location name.
-	 * @param array  $config   The configurator config.
+	 * @param array  $config The configurator config.
 	 */
 	public function set_location_from_config( string $location, array $config ): void {
 		$method = "get_{$location}";
@@ -201,7 +201,7 @@ class PayLaterMessagingSettings extends AbstractDataModel {
 	/**
 	 * Sanitizes Pay Later messaging data.
 	 *
-	 * @param mixed   $data     The messaging data to sanitize.
+	 * @param mixed   $data The messaging data to sanitize.
 	 * @param ?string $location Name of the location.
 	 * @return PayLaterMessagingDTO Sanitized messaging data.
 	 */
