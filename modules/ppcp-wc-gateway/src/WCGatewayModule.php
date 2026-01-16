@@ -62,7 +62,6 @@ use WooCommerce\PayPalCommerce\WcGateway\Processor\CreditCardOrderInfoHandlingTr
 use WooCommerce\PayPalCommerce\WcGateway\Settings\HeaderRenderer;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\SectionsRenderer;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
-use WooCommerce\PayPalCommerce\WcGateway\Settings\SettingsListener;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\SettingsRenderer;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\WcInboxNotes\InboxNoteRegistrar;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\WcTasks\Registrar\TaskRegistrarInterface;
@@ -453,16 +452,6 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
 			3
 		);
 
-		add_action(
-			'woocommerce_paypal_payments_uninstall',
-			static function () use ( $c ) {
-				$listener = $c->get( 'wcgateway.settings.listener' );
-				assert( $listener instanceof SettingsListener );
-
-				$listener->listen_for_uninstall();
-			}
-		);
-
 		if ( defined( 'WP_CLI' ) && WP_CLI ) {
 			add_action(
 				'init',
@@ -714,52 +703,6 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
 				}
 
 				return (array) $methods;
-			}
-		);
-
-		add_action(
-			'woocommerce_settings_save_checkout',
-			static function () use ( $container ) {
-				$listener = $container->get( 'wcgateway.settings.listener' );
-
-				/**
-				 * The settings listener.
-				 *
-				 * @var SettingsListener $listener
-				 */
-				$listener->listen();
-			}
-		);
-		add_action(
-			'admin_init',
-			static function () use ( $container ) {
-				$listener = $container->get( 'wcgateway.settings.listener' );
-				assert( $listener instanceof SettingsListener );
-
-				$use_new_ui = $container->get( 'wcgateway.settings.admin-settings-enabled' );
-				if ( ! $use_new_ui ) {
-					$listener->listen_for_merchant_id();
-				}
-
-				try {
-					$listener->listen_for_vaulting_enabled();
-				} catch ( RuntimeException $exception ) {
-					add_action(
-						'admin_notices',
-						function () use ( $exception ) {
-							printf(
-								'<div class="notice notice-error"><p>%1$s</p><p>%2$s</p></div>',
-								esc_html__( 'Authentication with PayPal failed: ', 'woocommerce-paypal-payments' ) . esc_attr( $exception->getMessage() ),
-								wp_kses_post(
-									__(
-										'Please verify your API Credentials and try again to connect your PayPal business account. Visit the <a href="https://docs.woocommerce.com/document/woocommerce-paypal-payments/" target="_blank">plugin documentation</a> for more information about the setup.',
-										'woocommerce-paypal-payments'
-									)
-								)
-							);
-						}
-					);
-				}
 			}
 		);
 

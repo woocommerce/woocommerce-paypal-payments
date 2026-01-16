@@ -26,8 +26,6 @@ use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ServiceModule;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
-use WooCommerce\PayPalCommerce\WcGateway\Settings\SettingsListener;
-use WooCommerce\PayPalCommerce\Settings\Data\PaymentSettings;
 use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
 use WC_Payment_Gateways;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\CardPaymentsConfiguration;
@@ -157,27 +155,6 @@ class AxoModule implements ServiceModule, ExtendingModule, ExecutableModule {
 						break;
 					}
 				}
-			}
-		);
-
-		// Force 'cart-block' and 'cart' Smart Button locations in the settings.
-		add_action(
-			'admin_init',
-			static function () use ( $c ) {
-				$listener = $c->get( 'wcgateway.settings.listener' );
-				assert( $listener instanceof SettingsListener );
-
-				$dcc_configuration = $c->get( 'wcgateway.configuration.card-configuration' );
-				assert( $dcc_configuration instanceof CardPaymentsConfiguration );
-
-				$listener->filter_settings(
-					$dcc_configuration->use_fastlane(),
-					'smart_button_locations',
-					function ( array $existing_setting_value ) {
-						$axo_forced_locations = array( 'cart-block', 'cart' );
-						return array_unique( array_merge( $existing_setting_value, $axo_forced_locations ) );
-					}
-				);
 			}
 		);
 
