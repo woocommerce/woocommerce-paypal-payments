@@ -548,25 +548,6 @@ return array(
 			$container->get( 'axo.eligibility.check' )
 		);
 	},
-	'wcgateway.settings.listener'                          => static function ( ContainerInterface $container ): SettingsListener {
-		return new SettingsListener(
-			$container->get( 'wcgateway.settings' ),
-			$container->get( 'wcgateway.settings.fields' ),
-			$container->get( 'webhook.registrar' ),
-			$container->get( 'api.paypal-bearer-cache' ),
-			$container->get( 'api.bearer' ),
-			$container->get( 'wcgateway.current-ppcp-settings-page-id' ),
-			$container->get( 'settings.service.signup-link-cache' ),
-			array(), // todo: #legacy-ui code cleanup - legacy service already removed.
-			$container->get( 'http.redirector' ),
-			$container->get( 'api.partner_merchant_id-production' ),
-			$container->get( 'api.partner_merchant_id-sandbox' ),
-			$container->get( 'api.reference-transaction-status' ),
-			$container->get( 'woocommerce.logger.woocommerce' ),
-			new Cache( 'ppcp-client-credentials-cache' ),
-			$container->get( 'api.reference-transaction-status-cache' )
-		);
-	},
 	'wcgateway.order-processor'                            => static function ( ContainerInterface $container ): OrderProcessor {
 
 		$session_handler               = $container->get( 'session.handler' );
