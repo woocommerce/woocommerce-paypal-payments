@@ -330,8 +330,7 @@ return array(
 				$container->get( 'wcgateway.button.default-locations' ),
 				$container->get( 'wcgateway.settings.dcc-gateway-title.default' ),
 				$container->get( 'wcgateway.settings.pay-later.default-button-locations' ),
-				$container->get( 'wcgateway.settings.pay-later.default-messaging-locations' ),
-				$container->get( 'compat.settings.settings_map_helper' )
+				$container->get( 'wcgateway.settings.pay-later.default-messaging-locations' )
 			);
 		}
 	),
