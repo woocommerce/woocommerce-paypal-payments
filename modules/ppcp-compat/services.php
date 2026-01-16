@@ -115,7 +115,4 @@ return array(
 			$container->get( 'api.bearer' )
 		);
 	},
-	'compat.settings.settings_tab_map_helper'        => static function (): SettingsTabMapHelper {
-		return new SettingsTabMapHelper();
-	},
 );

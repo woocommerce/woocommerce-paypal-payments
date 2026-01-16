@@ -409,7 +409,6 @@ return array(
 	'settings.service.data-migration.settings-tab'        => static fn( ContainerInterface $c ): SettingsTabMigration => new SettingsTabMigration(
 		(array) get_option( 'woocommerce-ppcp-settings', array() ),
 		$c->get( 'settings.data.settings' ),
-		$c->get( 'compat.settings.settings_tab_map_helper' ),
 	),
 	'settings.service.data-migration.styling'             => static fn( ContainerInterface $c ): StylingSettingsMigration => new StylingSettingsMigration(
 		(array) get_option( 'woocommerce-ppcp-settings', array() ),
