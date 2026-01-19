@@ -194,7 +194,6 @@ class GatewayWithoutPayPalAdminNotice {
 		}
 
 		$is_dcc_enabled = $this->dcc_configuration->is_enabled();
-
 		if ( $is_dcc_enabled ) {
 			return self::NOTICE_DISABLED_CARD_BUTTON;
 		}

@@ -121,7 +121,7 @@ class SettingsStatus {
 	/**
 	 * Checks whether the location is in the list.
 	 *
-	 * @param array  $locations The list of enabled locations.
+	 * @param array $locations The list of enabled locations.
 	 * @param string $location The location to check.
 	 * @return bool
 	 */
