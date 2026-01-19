@@ -681,11 +681,6 @@ class SettingsProvider {
 		return $this->paylater_messaging_settings->get_messaging_locations();
 	}
 
-	/**
-	 * Gets the PayPal gateway description as configured in WooCommerce settings.
-	 *
-	 * @return string The gateway description.
-	 */
 	public function paypal_gateway_description(): string {
 		return $this->payment_settings->get_method_description(
 			PayPalGateway::ID,
@@ -693,11 +688,6 @@ class SettingsProvider {
 		);
 	}
 
-	/**
-	 * Gets the ACDC (Advanced Credit and Debit Card) gateway title as configured in WooCommerce settings.
-	 *
-	 * @return string The gateway title, defaults to 'Credit Cards' if not set.
-	 */
 	public function acdc_gateway_title(): string {
 		return $this->payment_settings->get_method_title(
 			CreditCardGateway::ID,
@@ -705,11 +695,6 @@ class SettingsProvider {
 		);
 	}
 
-	/**
-	 * Gets the ACDC (Advanced Credit and Debit Card) gateway description as configured in WooCommerce settings.
-	 *
-	 * @return string The gateway description.
-	 */
 	public function acdc_gateway_description(): string {
 		return $this->payment_settings->get_method_description(
 			CreditCardGateway::ID,
@@ -717,38 +702,18 @@ class SettingsProvider {
 		);
 	}
 
-	/**
-	 * Gets the enabled smart button locations.
-	 *
-	 * @return array Array of location names where buttons are enabled.
-	 */
 	public function smart_button_locations(): array {
 		return $this->styling_settings->get_smart_button_locations();
 	}
 
-	/**
-	 * Gets the enabled Pay Later button locations.
-	 *
-	 * @return array Array of location names where Pay Later buttons are enabled.
-	 */
 	public function pay_later_button_locations(): array {
 		return $this->styling_settings->get_pay_later_button_locations();
 	}
 
-	/**
-	 * Gets if Pay Later button is enabled.
-	 *
-	 * @return bool True if Pay Later button is enabled, false otherwise.
-	 */
 	public function pay_later_button_enabled(): bool {
 		return $this->payment_settings->get_paylater_enabled();
 	}
 
-	/**
-	 * Gets if Pay Later messaging is enabled.
-	 *
-	 * @return bool True if Pay Later messaging is enabled, false otherwise.
-	 */
 	public function pay_later_messaging_enabled(): bool {
 		return $this->paylater_messaging_settings->get_messaging_enabled();
 	}

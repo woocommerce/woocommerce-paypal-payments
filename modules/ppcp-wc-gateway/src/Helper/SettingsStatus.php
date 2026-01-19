@@ -15,19 +15,8 @@ use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
  * Class SettingsStatus
  */
 class SettingsStatus {
-
-	/**
-	 * The Settings Provider.
-	 *
-	 * @var SettingsProvider
-	 */
 	protected SettingsProvider $settings_provider;
 
-	/**
-	 * SettingsStatus constructor.
-	 *
-	 * @param SettingsProvider $settings_provider The Settings Provider.
-	 */
 	public function __construct( SettingsProvider $settings_provider ) {
 		$this->settings_provider = $settings_provider;
 	}

@@ -80,11 +80,6 @@ class CaptureCardPayment {
 	 */
 	private $real_time_account_updater_helper;
 
-	/**
-	 * The Settings Provider.
-	 *
-	 * @var SettingsProvider
-	 */
 	private SettingsProvider $settings_provider;
 
 	/**
@@ -94,19 +89,6 @@ class CaptureCardPayment {
 	 */
 	private $logger;
 
-	/**
-	 * CaptureCardPayment constructor.
-	 *
-	 * @param string                       $host The host.
-	 * @param Bearer                       $bearer The bearer.
-	 * @param OrderFactory                 $order_factory The order factory.
-	 * @param PurchaseUnitFactory          $purchase_unit_factory The purchase unit factory.
-	 * @param OrderEndpoint                $order_endpoint The order endpoint.
-	 * @param SessionHandler               $session_handler The session handler.
-	 * @param RealTimeAccountUpdaterHelper $real_time_account_updater_helper Real Time Account Updater helper.
-	 * @param SettingsProvider             $settings_provider The Settings Provider.
-	 * @param LoggerInterface              $logger The logger.
-	 */
 	public function __construct(
 		string $host,
 		Bearer $bearer,

@@ -51,11 +51,6 @@ class CardPaymentsConfiguration {
 	 */
 	private ConnectionState $connection_state;
 
-	/**
-	 * The Settings Provider.
-	 *
-	 * @var SettingsProvider
-	 */
 	private SettingsProvider $settings_provider;
 
 	/**
@@ -137,15 +132,6 @@ class CardPaymentsConfiguration {
 	 */
 	private bool $hide_fastlane_watermark = false;
 
-	/**
-	 * Initializes the gateway details based on the provided Settings instance.
-	 *
-	 * @param ConnectionState  $connection_state Connection state instance.
-	 * @param SettingsProvider $settings_provider The Settings Provider.
-	 * @param DccApplies       $dcc_applies      DCC eligibility helper.
-	 * @param DCCProductStatus $dcc_status       Manages the Seller status.
-	 * @param string           $store_country    The shop's country code.
-	 */
 	public function __construct(
 		ConnectionState $connection_state,
 		SettingsProvider $settings_provider,

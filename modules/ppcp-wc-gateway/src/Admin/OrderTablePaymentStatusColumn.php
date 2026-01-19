@@ -23,18 +23,8 @@ class OrderTablePaymentStatusColumn {
 	const INTENT           = 'authorize';
 	const AFTER_COLUMN_KEY = 'order_status';
 
-	/**
-	 * The Settings Provider.
-	 *
-	 * @var SettingsProvider
-	 */
 	private SettingsProvider $settings_provider;
 
-	/**
-	 * OrderTablePaymentStatusColumn constructor.
-	 *
-	 * @param SettingsProvider $settings_provider The Settings Provider.
-	 */
 	public function __construct( SettingsProvider $settings_provider ) {
 		$this->settings_provider = $settings_provider;
 	}

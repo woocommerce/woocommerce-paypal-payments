@@ -39,11 +39,6 @@ class GatewayWithoutPayPalAdminNotice {
 	 */
 	private bool $is_connected;
 
-	/**
-	 * The Settings Provider.
-	 *
-	 * @var SettingsProvider
-	 */
 	private SettingsProvider $settings_provider;
 
 	/**
@@ -74,17 +69,6 @@ class GatewayWithoutPayPalAdminNotice {
 	 */
 	private CardPaymentsConfiguration $dcc_configuration;
 
-	/**
-	 * GatewayWithoutPayPalAdminNotice constructor.
-	 *
-	 * @param string                    $id                    The gateway ID.
-	 * @param bool                      $is_connected          Whether onboarding was completed.
-	 * @param SettingsProvider          $settings_provider     The Settings Provider.
-	 * @param bool                      $is_payments_page      Whether the current page is the WC payment page.
-	 * @param bool                      $is_ppcp_settings_page Whether the current page is the PPCP settings page.
-	 * @param CardPaymentsConfiguration $dcc_configuration     DCC gateway configuration.
-	 * @param SettingsStatus|null       $settings_status       The Settings status helper.
-	 */
 	public function __construct(
 		string $id,
 		bool $is_connected,

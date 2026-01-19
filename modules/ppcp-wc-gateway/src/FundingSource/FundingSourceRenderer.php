@@ -15,11 +15,6 @@ use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
  * Class FundingSourceRenderer
  */
 class FundingSourceRenderer {
-	/**
-	 * The Settings Provider.
-	 *
-	 * @var SettingsProvider
-	 */
 	protected SettingsProvider $settings_provider;
 
 	/**
@@ -37,9 +32,6 @@ class FundingSourceRenderer {
 	protected $own_funding_sources = array( 'venmo', 'paylater', 'paypal' );
 
 	/**
-	 * FundingSourceRenderer constructor.
-	 *
-	 * @param SettingsProvider      $settings_provider The Settings Provider.
 	 * @param array<string, string> $funding_sources Map funding source ID -> human-readable name.
 	 */
 	public function __construct(

@@ -27,11 +27,6 @@ class DisableGateways {
 	 */
 	private Context $context;
 
-	/**
-	 * The Settings Provider.
-	 *
-	 * @var SettingsProvider
-	 */
 	private SettingsProvider $settings_provider;
 
 	/**
@@ -48,14 +43,6 @@ class DisableGateways {
 	 */
 	private $subscription_helper;
 
-	/**
-	 * DisableGateways constructor.
-	 *
-	 * @param SettingsProvider   $settings_provider The Settings Provider.
-	 * @param SettingsStatus     $settings_status The Settings status helper.
-	 * @param SubscriptionHelper $subscription_helper The subscription helper.
-	 * @param Context            $context The context.
-	 */
 	public function __construct(
 		SettingsProvider $settings_provider,
 		SettingsStatus $settings_status,

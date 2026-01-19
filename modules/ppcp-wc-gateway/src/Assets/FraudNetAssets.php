@@ -46,11 +46,6 @@ class FraudNetAssets {
 	 */
 	protected $environment;
 
-	/**
-	 * The Settings Provider.
-	 *
-	 * @var SettingsProvider
-	 */
 	protected SettingsProvider $settings_provider;
 
 	/**
@@ -83,17 +78,6 @@ class FraudNetAssets {
 
 	protected Context $context;
 
-	/**
-	 * @param AssetGetter       $asset_getter
-	 * @param string            $version The assets version.
-	 * @param FraudNet          $fraud_net The FraudNet entity.
-	 * @param Environment       $environment The environment.
-	 * @param SettingsProvider  $settings_provider The Settings Provider.
-	 * @param GatewayRepository $gateway_repository The GatewayRepository.
-	 * @param SessionHandler    $session_handler The session handler.
-	 * @param bool              $is_fraudnet_enabled true if FraudNet support is enabled in settings, otherwise false.
-	 * @param Context           $context The context.
-	 */
 	public function __construct(
 		AssetGetter $asset_getter,
 		string $version,

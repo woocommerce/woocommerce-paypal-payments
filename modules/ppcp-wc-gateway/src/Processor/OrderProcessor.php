@@ -92,11 +92,6 @@ class OrderProcessor {
 	 */
 	private $authorized_payments_processor;
 
-	/**
-	 * The Settings Provider.
-	 *
-	 * @var SettingsProvider
-	 */
 	private SettingsProvider $settings_provider;
 
 	/**
@@ -153,24 +148,6 @@ class OrderProcessor {
 	 */
 	private ExperienceContextBuilder $experience_context_builder;
 
-	/**
-	 * OrderProcessor constructor.
-	 *
-	 * @param SessionHandler              $session_handler The Session Handler.
-	 * @param OrderEndpoint               $order_endpoint The Order Endpoint.
-	 * @param OrderFactory                $order_factory The Order Factory.
-	 * @param ThreeDSecure                $three_d_secure The ThreeDSecure Helper.
-	 * @param AuthorizedPaymentsProcessor $authorized_payments_processor The Authorized Payments Processor.
-	 * @param SettingsProvider            $settings_provider The Settings Provider.
-	 * @param LoggerInterface             $logger A logger service.
-	 * @param Environment                 $environment The environment.
-	 * @param SubscriptionHelper          $subscription_helper The subscription helper.
-	 * @param OrderHelper                 $order_helper The order helper.
-	 * @param PurchaseUnitFactory         $purchase_unit_factory The PurchaseUnit factory.
-	 * @param PayerFactory                $payer_factory The payer factory.
-	 * @param ShippingPreferenceFactory   $shipping_preference_factory The shipping_preference factory.
-	 * @param ExperienceContextBuilder    $experience_context_builder The ExperienceContextBuilder.
-	 */
 	public function __construct(
 		SessionHandler $session_handler,
 		OrderEndpoint $order_endpoint,

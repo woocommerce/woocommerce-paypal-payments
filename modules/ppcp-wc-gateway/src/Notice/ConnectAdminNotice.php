@@ -31,12 +31,6 @@ class ConnectAdminNotice {
 	 */
 	private bool $is_current_country_send_only;
 
-	/**
-	 * ConnectAdminNotice constructor.
-	 *
-	 * @param bool $is_connected Whether onboarding was completed.
-	 * @param bool $is_current_country_send_only Whether the current store's country is classified as a send-only country.
-	 */
 	public function __construct(
 		bool $is_connected,
 		bool $is_current_country_send_only
