@@ -248,8 +248,8 @@ class GooglepayModule implements ServiceModule, ExecutableModule {
 					return $data;
 				}
 
-				$settings = $c->get( 'wcgateway.settings' );
-				assert( $settings instanceof Settings );
+				$settings = $c->get( 'settings.settings-provider' );
+				assert( $settings instanceof SettingsProvider );
 
 				$experience_context_builder = $c->get( 'wcgateway.builder.experience-context' );
 				assert( $experience_context_builder instanceof ExperienceContextBuilder );
@@ -261,8 +261,8 @@ class GooglepayModule implements ServiceModule, ExecutableModule {
 				);
 
 				$three_d_secure_contingency =
-					$settings->has( '3d_secure_contingency' )
-						? apply_filters( 'woocommerce_paypal_payments_three_d_secure_contingency', $settings->get( '3d_secure_contingency' ) )
+					$settings->three_d_secure_enum()
+						? apply_filters( 'woocommerce_paypal_payments_three_d_secure_contingency', $settings->three_d_secure_enum() )
 						: '';
 
 				if (
