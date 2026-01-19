@@ -68,7 +68,6 @@ class ApplepayModule implements ServiceModule, ExecutableModule {
 				$apple_payment_method = $c->get( 'applepay.button' );
 				// add onboarding and referrals hooks.
 				assert( $apple_payment_method instanceof ApplepayButton );
-				$apple_payment_method->initialize();
 
 				// Show notice if there are product availability issues.
 				$availability_notice = $c->get( 'applepay.availability_notice' );

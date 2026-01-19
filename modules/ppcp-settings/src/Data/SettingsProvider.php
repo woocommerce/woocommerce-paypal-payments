@@ -587,10 +587,6 @@ class SettingsProvider {
 		return $this->payment_settings->get_applepay_checkout_data_mode();
 	}
 
-	public function applepay_onboarding(): string {
-		return $this->payment_settings->get_ppcp_onboarding_apple();
-	}
-
 	// ----- GOOGLE PAY -----
 
 	/**

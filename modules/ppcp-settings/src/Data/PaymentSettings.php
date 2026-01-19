@@ -43,11 +43,7 @@ class PaymentSettings extends AbstractDataModel {
 			'venmo_enabled'               => false,
 			'paylater_enabled'            => false,
 			'applepay_validated'          => false,
-			'applepay_button_type'        => 'plain',
-			'applepay_button_color'       => 'black',
-			'applepay_button_language'    => '',
 			'applepay_checkout_data_mode' => 'use_wc',
-			'ppcp_onboarding_apple'       => '',
 		);
 	}
 
@@ -277,48 +273,6 @@ class PaymentSettings extends AbstractDataModel {
 	}
 
 	/**
-	 * Get Apple Pay button type.
-	 */
-	public function get_applepay_button_type(): string {
-		return (string) $this->data['applepay_button_type'];
-	}
-
-	/**
-	 * @see self::get_applepay_button_type()
-	 */
-	public function set_applepay_button_type( string $value ): void {
-		$this->data['applepay_button_type'] = $value;
-	}
-
-	/**
-	 * Get Apple Pay button color.
-	 */
-	public function get_applepay_button_color(): string {
-		return (string) $this->data['applepay_button_color'];
-	}
-
-	/**
-	 * @see self::get_applepay_button_color()
-	 */
-	public function set_applepay_button_color( string $value ): void {
-		$this->data['applepay_button_color'] = $value;
-	}
-
-	/**
-	 * Get Apple Pay button language.
-	 */
-	public function get_applepay_button_language(): string {
-		return (string) $this->data['applepay_button_language'];
-	}
-
-	/**
-	 * @see self::get_applepay_button_language()
-	 */
-	public function set_applepay_button_language( string $value ): void {
-		$this->data['applepay_button_language'] = $value;
-	}
-
-	/**
 	 * Get Apple Pay checkout data mode.
 	 */
 	public function get_applepay_checkout_data_mode(): string {
@@ -326,24 +280,11 @@ class PaymentSettings extends AbstractDataModel {
 	}
 
 	/**
+	 * Todo: This setter is not used anywhere/no UI option.
+	 *
 	 * @see self::get_applepay_checkout_data_mode()
 	 */
 	public function set_applepay_checkout_data_mode( string $value ): void {
 		$this->data['applepay_checkout_data_mode'] = $value;
-	}
-
-	/**
-	 * Get PPCP onboarding Apple.
-	 * todo: #legacy-ui flag that most likely can be removed without replacement.
-	 */
-	public function get_ppcp_onboarding_apple(): string {
-		return (string) $this->data['ppcp_onboarding_apple'];
-	}
-
-	/**
-	 * @see self::get_ppcp_onboarding_apple()
-	 */
-	public function set_ppcp_onboarding_apple( string $value ): void {
-		$this->data['ppcp_onboarding_apple'] = $value;
 	}
 }

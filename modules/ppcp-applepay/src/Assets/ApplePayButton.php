@@ -83,62 +83,7 @@ class ApplePayButton implements ButtonInterface {
 		$this->cart_products      = $cart_products;
 	}
 
-	/**
-	 * Initializes the class hooks.
-	 */
 	public function initialize(): void {
-		add_filter( 'ppcp_onboarding_options', array( $this, 'add_apple_onboarding_option' ), 10, 1 );
-		add_filter(
-			'ppcp_partner_referrals_option',
-			function ( array $option ): array {
-				if ( $option['valid'] ) {
-					return $option;
-				}
-				if ( $option['field'] === 'ppcp-onboarding-apple' ) {
-					$option['valid'] = true;
-					$option['value'] = ( $option['value'] ? '1' : '' );
-				}
-				return $option;
-			}
-		);
-		add_filter(
-			'ppcp_partner_referrals_data',
-			function ( array $data ): array {
-				$onboard_with_apple = $this->settings_provider->applepay_onboarding();
-				if ( $onboard_with_apple !== '1' ) {
-					return $data;
-				}
-
-				if ( in_array( 'PPCP', $data['products'], true ) ) {
-					$data['products'][] = 'PAYMENT_METHODS';
-				} elseif ( in_array( 'EXPRESS_CHECKOUT', $data['products'], true ) ) {
-					$data['products'][0] = 'PAYMENT_METHODS';
-				}
-				$data['capabilities'][] = 'APPLE_PAY';
-
-				return $data;
-			}
-		);
-	}
-
-	/**
-	 * Adds the ApplePay onboarding option.
-	 *
-	 * @param string $options The options.
-	 *
-	 * @return string
-	 */
-	public function add_apple_onboarding_option( $options ): string {
-		if ( ! apply_filters( 'woocommerce_paypal_payments_apple_pay_onboarding_option', false ) ) {
-			return $options;
-		}
-
-		$onboard_with_apple = $this->settings_provider->applepay_onboarding();
-		$checked            = ( $onboard_with_apple === '1' ) ? 'checked' : '';
-
-		return $options . '<li><label><input type="checkbox" id="ppcp-onboarding-apple" ' . $checked . ' data-onboarding-option="ppcp-onboarding-apple"> ' .
-			__( 'Onboard with ApplePay', 'woocommerce-paypal-payments' ) . '
-		</label></li>';
 	}
 
 	/**
