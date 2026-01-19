@@ -173,6 +173,23 @@ class PaymentSettings extends AbstractDataModel {
 	}
 
 	/**
+	 * Gets the payment method description.
+	 *
+	 * @param string $method_id ID of the payment method.
+	 * @param string $default_description Default description to return if method not found.
+	 * @return string The method description, or an empty string if not found.
+	 */
+	public function get_method_description( string $method_id, string $default_description = '' ): string {
+		$gateway = $this->get_gateway( $method_id );
+
+		if ( $gateway ) {
+			return $gateway->description;
+		}
+
+		return $default_description;
+	}
+
+	/**
 	 * Get PayPal show logo.
 	 *
 	 * @return bool

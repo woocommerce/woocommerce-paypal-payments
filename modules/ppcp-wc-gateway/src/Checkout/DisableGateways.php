@@ -10,12 +10,11 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\WcGateway\Checkout;
 
 use WooCommerce\PayPalCommerce\Button\Helper\Context;
-use WooCommerce\PayPalCommerce\Session\SessionHandler;
+use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
 use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CardButtonGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
-use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\SettingsStatus;
 
 /**
@@ -29,11 +28,11 @@ class DisableGateways {
 	private Context $context;
 
 	/**
-	 * The Settings.
+	 * The Settings Provider.
 	 *
-	 * @var ContainerInterface
+	 * @var SettingsProvider
 	 */
-	private $settings;
+	private SettingsProvider $settings_provider;
 
 	/**
 	 * The Settings status helper.
@@ -52,18 +51,18 @@ class DisableGateways {
 	/**
 	 * DisableGateways constructor.
 	 *
-	 * @param ContainerInterface $settings The Settings.
+	 * @param SettingsProvider   $settings_provider The Settings Provider.
 	 * @param SettingsStatus     $settings_status The Settings status helper.
 	 * @param SubscriptionHelper $subscription_helper The subscription helper.
+	 * @param Context            $context The context.
 	 */
 	public function __construct(
-		ContainerInterface $settings,
+		SettingsProvider $settings_provider,
 		SettingsStatus $settings_status,
 		SubscriptionHelper $subscription_helper,
 		Context $context
 	) {
-
-		$this->settings            = $settings;
+		$this->settings_provider   = $settings_provider;
 		$this->settings_status     = $settings_status;
 		$this->subscription_helper = $subscription_helper;
 		$this->context             = $context;
@@ -87,7 +86,8 @@ class DisableGateways {
 			return $methods;
 		}
 
-		if ( ! $this->settings->has( 'client_id' ) || empty( $this->settings->get( 'client_id' ) ) ) {
+		$client_id = $this->settings_provider->merchant_data()->client_id;
+		if ( empty( $client_id ) ) {
 			unset( $methods[ CreditCardGateway::ID ] );
 		}
 
@@ -127,7 +127,8 @@ class DisableGateways {
 			}
 		}
 
-		if ( ! $this->settings->has( 'merchant_email' ) || ! is_email( $this->settings->get( 'merchant_email' ) ) ) {
+		$merchant_email = $this->settings_provider->merchant_email();
+		if ( empty( $merchant_email ) || ! is_email( $merchant_email ) ) {
 			return true;
 		}
 

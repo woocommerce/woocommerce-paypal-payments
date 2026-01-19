@@ -11,14 +11,13 @@ namespace WooCommerce\PayPalCommerce\WcGateway\Assets;
 
 use WooCommerce\PayPalCommerce\Assets\AssetGetter;
 use WooCommerce\PayPalCommerce\Button\Helper\Context;
+use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
-use WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException;
 use WooCommerce\PayPalCommerce\WcGateway\FraudNet\FraudNet;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\GatewayRepository;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayUponInvoice\PayUponInvoiceGateway;
-use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 
 /**
  * Class FraudNetAssets
@@ -48,11 +47,11 @@ class FraudNetAssets {
 	protected $environment;
 
 	/**
-	 * The Settings.
+	 * The Settings Provider.
 	 *
-	 * @var Settings
+	 * @var SettingsProvider
 	 */
-	protected $settings;
+	protected SettingsProvider $settings_provider;
 
 	/**
 	 * The list of enabled PayPal gateways.
@@ -89,17 +88,18 @@ class FraudNetAssets {
 	 * @param string            $version The assets version.
 	 * @param FraudNet          $fraud_net The FraudNet entity.
 	 * @param Environment       $environment The environment.
-	 * @param Settings          $settings The Settings.
+	 * @param SettingsProvider  $settings_provider The Settings Provider.
 	 * @param GatewayRepository $gateway_repository The GatewayRepository.
 	 * @param SessionHandler    $session_handler The session handler.
 	 * @param bool              $is_fraudnet_enabled true if FraudNet support is enabled in settings, otherwise false.
+	 * @param Context           $context The context.
 	 */
 	public function __construct(
 		AssetGetter $asset_getter,
 		string $version,
 		FraudNet $fraud_net,
 		Environment $environment,
-		Settings $settings,
+		SettingsProvider $settings_provider,
 		GatewayRepository $gateway_repository,
 		SessionHandler $session_handler,
 		bool $is_fraudnet_enabled,
@@ -109,7 +109,7 @@ class FraudNetAssets {
 		$this->version             = $version;
 		$this->fraud_net           = $fraud_net;
 		$this->environment         = $environment;
-		$this->settings            = $settings;
+		$this->settings_provider   = $settings_provider;
 		$this->gateway_repository  = $gateway_repository;
 		$this->session_handler     = $session_handler;
 		$this->is_fraudnet_enabled = $is_fraudnet_enabled;
@@ -175,9 +175,10 @@ class FraudNetAssets {
 		if ( ! in_array( PayPalGateway::ID, $this->enabled_ppcp_gateways(), true ) ) {
 			return false;
 		}
-		try {
-			$button_locations = $this->settings->get( 'smart_button_locations' );
-		} catch ( NotFoundException $exception ) {
+
+		$button_locations = $this->settings_provider->smart_button_locations();
+
+		if ( empty( $button_locations ) ) {
 			return false;
 		}
 

@@ -679,4 +679,107 @@ class SettingsProvider {
 	public function pay_later_messaging_locations(): array {
 		return $this->paylater_messaging_settings->get_messaging_locations();
 	}
+
+	/**
+	 * Gets the PayPal gateway description as configured in WooCommerce settings.
+	 *
+	 * @return string The gateway description.
+	 */
+	public function paypal_gateway_description(): string {
+		return $this->payment_settings->get_method_description(
+			PayPalGateway::ID,
+			__( 'Pay via PayPal.', 'woocommerce-paypal-payments' )
+		);
+	}
+
+	/**
+	 * Gets the DCC (Credit Card) gateway title as configured in WooCommerce settings.
+	 *
+	 * @return string The gateway title, defaults to 'Credit Cards' if not set.
+	 */
+	public function dcc_gateway_title(): string {
+		return $this->payment_settings->get_method_title(
+			'ppcp-credit-card-gateway',
+			__( 'Credit Cards', 'woocommerce-paypal-payments' )
+		);
+	}
+
+	/**
+	 * Gets the DCC (Credit Card) gateway description as configured in WooCommerce settings.
+	 *
+	 * @return string The gateway description.
+	 */
+	public function dcc_gateway_description(): string {
+		return $this->payment_settings->get_method_description(
+			'ppcp-credit-card-gateway',
+			__( 'Pay with your credit card.', 'woocommerce-paypal-payments' )
+		);
+	}
+
+	/**
+	 * Gets the enabled smart button locations.
+	 *
+	 * @return array Array of location names where buttons are enabled.
+	 */
+	public function smart_button_locations(): array {
+		return $this->styling_settings->get_smart_button_locations();
+	}
+
+	/**
+	 * Gets the enabled Pay Later button locations.
+	 *
+	 * @return array Array of location names where Pay Later buttons are enabled.
+	 */
+	public function pay_later_button_locations(): array {
+		return $this->styling_settings->get_pay_later_button_locations();
+	}
+
+	/**
+	 * Gets if Pay Later button is enabled.
+	 *
+	 * @return bool True if Pay Later button is enabled, false otherwise.
+	 */
+	public function pay_later_button_enabled(): bool {
+		return $this->payment_settings->get_paylater_enabled();
+	}
+
+	/**
+	 * Gets if Pay Later messaging is enabled.
+	 *
+	 * @return bool True if Pay Later messaging is enabled, false otherwise.
+	 */
+	public function pay_later_messaging_enabled(): bool {
+		return $this->paylater_messaging_settings->get_messaging_enabled();
+	}
+
+	/**
+	 * Gets if DCC (Advanced Card Processing) is enabled.
+	 *
+	 * @return bool True if DCC is enabled, false otherwise.
+	 */
+	public function dcc_enabled(): bool {
+		return $this->payment_settings->is_method_enabled( 'ppcp-credit-card-gateway' );
+	}
+
+	/**
+	 * Gets if AXO (Fastlane) is enabled.
+	 *
+	 * @return bool True if AXO/Fastlane is enabled, false otherwise.
+	 */
+	public function axo_enabled(): bool {
+		return $this->payment_settings->is_method_enabled( 'ppcp-axo-gateway' );
+	}
+
+	/**
+	 * Gets the name on card setting for DCC gateway.
+	 *
+	 * @return string The name on card setting ('yes', 'no', or empty).
+	 */
+	public function dcc_name_on_card(): string {
+		$name_on_card = $this->fastlane_settings->get_name_on_card();
+		if ( ! empty( $name_on_card ) ) {
+			return $name_on_card;
+		}
+		return $this->payment_settings->get_cardholder_name() ? 'yes' : 'no';
+	}
 }
