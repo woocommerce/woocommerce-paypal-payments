@@ -693,11 +693,11 @@ class SettingsProvider {
 	}
 
 	/**
-	 * Gets the DCC (Credit Card) gateway title as configured in WooCommerce settings.
+	 * Gets the ACDC (Advanced Credit and Debit Card) gateway title as configured in WooCommerce settings.
 	 *
 	 * @return string The gateway title, defaults to 'Credit Cards' if not set.
 	 */
-	public function dcc_gateway_title(): string {
+	public function acdc_gateway_title(): string {
 		return $this->payment_settings->get_method_title(
 			'ppcp-credit-card-gateway',
 			__( 'Credit Cards', 'woocommerce-paypal-payments' )
@@ -705,11 +705,11 @@ class SettingsProvider {
 	}
 
 	/**
-	 * Gets the DCC (Credit Card) gateway description as configured in WooCommerce settings.
+	 * Gets the ACDC (Advanced Credit and Debit Card) gateway description as configured in WooCommerce settings.
 	 *
 	 * @return string The gateway description.
 	 */
-	public function dcc_gateway_description(): string {
+	public function acdc_gateway_description(): string {
 		return $this->payment_settings->get_method_description(
 			'ppcp-credit-card-gateway',
 			__( 'Pay with your credit card.', 'woocommerce-paypal-payments' )
@@ -753,11 +753,11 @@ class SettingsProvider {
 	}
 
 	/**
-	 * Gets the name on card setting for DCC gateway.
+	 * Gets the name on card setting for ACDC (Advanced Credit and Debit Card) gateway.
 	 *
 	 * @return string The name on card setting ('yes', 'no', or empty).
 	 */
-	public function dcc_name_on_card(): string {
+	public function acdc_name_on_card(): string {
 		$name_on_card = $this->fastlane_settings->get_name_on_card();
 		if ( ! empty( $name_on_card ) ) {
 			return $name_on_card;
