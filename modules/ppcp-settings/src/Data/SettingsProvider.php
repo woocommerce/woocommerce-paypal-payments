@@ -719,11 +719,11 @@ class SettingsProvider {
 	}
 
 	/**
-	 * Gets the name on card setting for ACDC (Advanced Credit and Debit Card) gateway.
+	 * Whether to show the cardholder name field in the ACDC (Advanced Card Processing) payment form.
 	 *
-	 * @return string The name on card setting ('yes', 'no', or empty).
+	 * @return string 'yes' to show the field, 'no' to hide it.
 	 */
-	public function acdc_name_on_card(): string {
+	public function acdc_show_name_on_card(): string {
 		$name_on_card = $this->fastlane_settings->get_name_on_card();
 		if ( ! empty( $name_on_card ) ) {
 			return $name_on_card;

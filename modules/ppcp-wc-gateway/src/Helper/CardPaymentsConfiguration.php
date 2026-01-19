@@ -217,7 +217,7 @@ class CardPaymentsConfiguration {
 		$this->gateway_title       = $this->settings_provider->acdc_gateway_title();
 		$this->gateway_description = $this->settings_provider->acdc_gateway_description();
 
-		$show_on_card_value = $this->settings_provider->acdc_name_on_card();
+		$show_on_card_value = $this->settings_provider->acdc_show_name_on_card();
 
 		if ( in_array( $show_on_card_value, $show_on_card_options, true ) ) {
 			$this->show_name_on_card = $show_on_card_value;

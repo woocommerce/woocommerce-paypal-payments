@@ -46,7 +46,7 @@ class SettingsStatus {
 	public function is_pay_later_messaging_enabled_for_location( string $location ): bool {
 		return $this->is_pay_later_messaging_enabled() &&
 			$this->has_pay_later_messaging_locations() &&
-			$this->is_location_in_list( $this->settings_provider->pay_later_messaging_locations(), $location );
+			$this->is_location_enabled( $this->settings_provider->pay_later_messaging_locations(), $location );
 	}
 
 	/**
@@ -71,8 +71,8 @@ class SettingsStatus {
 		$locations = $this->settings_provider->pay_later_button_locations();
 
 		return $this->is_pay_later_button_enabled() &&
-			( $this->is_location_in_list( $locations, $location ) ||
-				( 'product' === $location && $this->is_location_in_list( $locations, 'mini-cart' ) ) );
+			( $this->is_location_enabled( $locations, $location ) ||
+				( 'product' === $location && $this->is_location_enabled( $locations, 'mini-cart' ) ) );
 	}
 
 	/**
@@ -88,7 +88,7 @@ class SettingsStatus {
 
 		$locations = $this->settings_provider->smart_button_locations();
 
-		return $this->is_location_in_list( $locations, $location );
+		return $this->is_location_enabled( $locations, $location );
 	}
 
 	/**
@@ -110,11 +110,11 @@ class SettingsStatus {
 	/**
 	 * Checks whether the location is in the list.
 	 *
-	 * @param array $locations The list of enabled locations.
+	 * @param array  $locations The list of enabled locations.
 	 * @param string $location The location to check.
 	 * @return bool
 	 */
-	protected function is_location_in_list( array $locations, string $location ): bool {
+	protected function is_location_enabled( array $locations, string $location ): bool {
 		$location = $this->normalize_location( $location );
 
 		$selected_locations = apply_filters(
