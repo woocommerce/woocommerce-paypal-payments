@@ -11,7 +11,6 @@ namespace WooCommerce\PayPalCommerce\Webhooks;
 
 use Exception;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExecutableModule;
-use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExtendingModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\FactoryModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ModuleClassNameIdTrait;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ServiceModule;
@@ -25,7 +24,7 @@ use WooCommerce\PayPalCommerce\Webhooks\Status\Assets\WebhooksStatusPageAssets;
 /**
  * Class WebhookModule
  */
-class WebhookModule implements ServiceModule, FactoryModule, ExtendingModule, ExecutableModule {
+class WebhookModule implements ServiceModule, FactoryModule, ExecutableModule {
 	use ModuleClassNameIdTrait;
 
 	/**
@@ -40,13 +39,6 @@ class WebhookModule implements ServiceModule, FactoryModule, ExtendingModule, Ex
 	 */
 	public function factories(): array {
 		return require __DIR__ . '/../factories.php';
-	}
-
-	/**
-	 * {@inheritDoc}
-	 */
-	public function extensions(): array {
-		return require __DIR__ . '/../extensions.php';
 	}
 
 	/**

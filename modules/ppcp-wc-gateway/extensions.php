@@ -60,28 +60,4 @@ return array(
 			$source
 		);
 	},
-	'wcgateway.settings.fields'      => function ( array $fields, ContainerInterface $container ): array {
-		$files = array(
-			'paypal-smart-button-fields.php',
-			'connection-tab-fields.php',
-			'pay-later-tab-fields.php',
-			'card-button-fields.php',
-		);
-
-		return array_merge(
-			...array_map(
-				function ( string $file ) use ( $container, $fields ): array {
-					$path_to_settings_fields = __DIR__ . '/src/Settings/Fields/';
-					/**
-					 * Skip path check.
-					 *
-					 * @psalm-suppress UnresolvableInclude
-					 */
-					$get_fields = require $path_to_settings_fields . $file;
-					return $get_fields( $container, $fields ) ?? array();
-				},
-				$files
-			)
-		);
-	},
 );

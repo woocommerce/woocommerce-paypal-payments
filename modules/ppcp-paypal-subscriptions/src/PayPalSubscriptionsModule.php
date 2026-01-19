@@ -20,7 +20,6 @@ use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\Assets\AssetGetter;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExecutableModule;
-use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExtendingModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ModuleClassNameIdTrait;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ServiceModule;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
@@ -32,7 +31,7 @@ use WP_Post;
 /**
  * Class SavedPaymentCheckerModule
  */
-class PayPalSubscriptionsModule implements ServiceModule, ExtendingModule, ExecutableModule {
+class PayPalSubscriptionsModule implements ServiceModule, ExecutableModule {
 	use ModuleClassNameIdTrait;
 
 	/**
@@ -40,13 +39,6 @@ class PayPalSubscriptionsModule implements ServiceModule, ExtendingModule, Execu
 	 */
 	public function services(): array {
 		return require __DIR__ . '/../services.php';
-	}
-
-	/**
-	 * {@inheritDoc}
-	 */
-	public function extensions(): array {
-		return require __DIR__ . '/../extensions.php';
 	}
 
 	/**

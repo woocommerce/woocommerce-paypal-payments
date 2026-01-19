@@ -18,7 +18,6 @@ use WooCommerce\PayPalCommerce\AdminNotices\Repository\Repository;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Authorization;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Capture;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\OrderStatus;
-use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\ReferenceTransactionStatus;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\Cache;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\DccApplies;
@@ -59,11 +58,7 @@ use WooCommerce\PayPalCommerce\WcGateway\Notice\SendOnlyCountryNotice;
 use WooCommerce\PayPalCommerce\WcGateway\Notice\UnsupportedCurrencyAdminNotice;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\AuthorizedPaymentsProcessor;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\CreditCardOrderInfoHandlingTrait;
-use WooCommerce\PayPalCommerce\WcGateway\Settings\HeaderRenderer;
-use WooCommerce\PayPalCommerce\WcGateway\Settings\SectionsRenderer;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
-use WooCommerce\PayPalCommerce\WcGateway\Settings\SettingsListener;
-use WooCommerce\PayPalCommerce\WcGateway\Settings\SettingsRenderer;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\WcInboxNotes\InboxNoteRegistrar;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\WcTasks\Registrar\TaskRegistrarInterface;
 
@@ -101,23 +96,6 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
 		$this->register_wc_tasks( $c );
 		$this->register_woo_inbox_notes( $c );
 		$this->register_void_button( $c );
-
-		if ( ! $c->get( 'wcgateway.settings.admin-settings-enabled' ) ) {
-			add_action(
-				'woocommerce_sections_checkout',
-				function () use ( $c ) {
-					$header_renderer = $c->get( 'wcgateway.settings.header-renderer' );
-					assert( $header_renderer instanceof HeaderRenderer );
-
-					$section_renderer = $c->get( 'wcgateway.settings.sections-renderer' );
-					assert( $section_renderer instanceof SectionsRenderer );
-
-					// phpcs:ignore WordPress.Security.EscapeOutput
-					echo $header_renderer->render() . $section_renderer->render();
-				},
-				20
-			);
-		}
 
 		add_action(
 			'woocommerce_paypal_payments_order_captured',
@@ -206,6 +184,7 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
 				$dcc_configuration = $c->get( 'wcgateway.configuration.card-configuration' );
 				assert( $dcc_configuration instanceof CardPaymentsConfiguration );
 
+				// todo: #legacy-ui assets that can be removed.
 				$assets = new SettingsPageAssets(
 					$c->get( 'wcgateway.asset_getter' ),
 					$c->get( 'ppcp.asset-version' ),
@@ -216,7 +195,7 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
 					$c->get( 'settings.environment' ),
 					$settings_status->is_pay_later_button_enabled(),
 					$settings->has( 'disable_funding' ) ? $settings->get( 'disable_funding' ) : array(),
-					$c->get( 'wcgateway.settings.funding-sources' ),
+					array(),
 					$c->get( 'wcgateway.is-ppcp-settings-page' ),
 					$dcc_configuration->is_enabled(),
 					$c->get( 'api.reference-transaction-status' ),
@@ -226,6 +205,7 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
 			}
 		);
 
+		// todo: remove this with #legacy-ui code?
 		add_filter(
 			Repository::NOTICES_FILTER,
 			static function ( $notices ) use ( $c ): array {
@@ -267,11 +247,6 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
 				if ( $authorized_message ) {
 					$notices[] = $authorized_message;
 				}
-
-				$settings_renderer = $c->get( 'wcgateway.settings.render' );
-				assert( $settings_renderer instanceof SettingsRenderer );
-				$messages = $settings_renderer->messages();
-				$notices  = array_merge( $notices, $messages );
 
 				return $notices;
 			}
@@ -450,16 +425,6 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
 			},
 			10,
 			3
-		);
-
-		add_action(
-			'woocommerce_paypal_payments_uninstall',
-			static function () use ( $c ) {
-				$listener = $c->get( 'wcgateway.settings.listener' );
-				assert( $listener instanceof SettingsListener );
-
-				$listener->listen_for_uninstall();
-			}
 		);
 
 		if ( defined( 'WP_CLI' ) && WP_CLI ) {
@@ -716,80 +681,13 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
 			}
 		);
 
-		add_action(
-			'woocommerce_settings_save_checkout',
-			static function () use ( $container ) {
-				$listener = $container->get( 'wcgateway.settings.listener' );
-
-				/**
-				 * The settings listener.
-				 *
-				 * @var SettingsListener $listener
-				 */
-				$listener->listen();
-			}
-		);
-		add_action(
-			'admin_init',
-			static function () use ( $container ) {
-				$listener = $container->get( 'wcgateway.settings.listener' );
-				assert( $listener instanceof SettingsListener );
-
-				$use_new_ui = $container->get( 'wcgateway.settings.admin-settings-enabled' );
-				if ( ! $use_new_ui ) {
-					$listener->listen_for_merchant_id();
-				}
-
-				try {
-					$listener->listen_for_vaulting_enabled();
-				} catch ( RuntimeException $exception ) {
-					add_action(
-						'admin_notices',
-						function () use ( $exception ) {
-							printf(
-								'<div class="notice notice-error"><p>%1$s</p><p>%2$s</p></div>',
-								esc_html__( 'Authentication with PayPal failed: ', 'woocommerce-paypal-payments' ) . esc_attr( $exception->getMessage() ),
-								wp_kses_post(
-									__(
-										'Please verify your API Credentials and try again to connect your PayPal business account. Visit the <a href="https://docs.woocommerce.com/document/woocommerce-paypal-payments/" target="_blank">plugin documentation</a> for more information about the setup.',
-										'woocommerce-paypal-payments'
-									)
-								)
-							);
-						}
-					);
-				}
-			}
-		);
-
-		add_filter(
-			'woocommerce_form_field',
-			static function ( $field, $key, $args, $value ) use ( $container ) {
-				$renderer = $container->get( 'wcgateway.settings.render' );
-				/**
-				 * The Settings Renderer object.
-				 *
-				 * @var SettingsRenderer $renderer
-				 */
-				$field = $renderer->render_multiselect( $field, $key, $args, $value );
-				$field = $renderer->render_password( $field, $key, $args, $value );
-				$field = $renderer->render_heading( $field, $key, $args, $value );
-				$field = $renderer->render_table( $field, $key, $args, $value );
-				$field = $renderer->render_html( $field, $key, $args, $value );
-
-				return $field;
-			},
-			10,
-			4
-		);
-
 		add_filter(
 			'woocommerce_available_payment_gateways',
 			static function ( $methods ) use ( $container ): array {
 				$disabler = $container->get( 'wcgateway.disabler' );
 
 				/**
-				 * The Gateay disabler.
+				 * The Gateway disabler.
 				 *
 				 * @var DisableGateways $disabler
 				 */
