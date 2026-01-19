@@ -367,24 +367,13 @@ class GooglePayButton implements ButtonInterface {
 	 * @return array
 	 */
 	private function button_styles_for_context( string $context ): array {
-		// Use the cart/checkout styles for blocks.
-		$context = str_replace( '-block', '', $context );
+		$styles = $this->settings->googlepay_styles( $context );
 
-		$values = array(
-			'color'    => 'black',
-			'type'     => 'pay',
-			'language' => 'en',
+		return array(
+			'color'    => $styles->color,
+			'type'     => $styles->label,
+			'language' => $this->settings->googlepay_button_language(),
 		);
-
-		foreach ( $values as $style => $value ) {
-			if ( $this->settings->has( 'googlepay_button_' . $context . '_' . $style ) ) {
-				$values[ $style ] = $this->settings->get( 'googlepay_button_' . $context . '_' . $style );
-			} elseif ( $this->settings->has( 'googlepay_button_' . $style ) ) {
-				$values[ $style ] = $this->settings->get( 'googlepay_button_' . $style );
-			}
-		}
-
-		return $values;
 	}
 
 	/**

@@ -462,9 +462,36 @@ class SettingsProvider {
 	}
 
 	/**
+	 * Returns the styling options for a specified location. The location name recognizes
+	 * legacy and modern naming.
+	 */
+	public function button_styling( string $location ): LocationStylingDTO {
+		switch ( $location ) {
+			case 'product':
+				return $this->styling_product();
+
+			case 'cart':
+			case 'cart-block':
+				return $this->styling_cart();
+
+			case 'mini-cart':
+			case 'mini_cart':
+				return $this->styling_mini_cart();
+
+			case 'checkout-block':
+			case 'express_checkout':
+				return $this->styling_express_checkout();
+
+			case 'checkout':
+			case 'classic_checkout':
+			case 'pay-now':
+			default:
+				return $this->styling_classic_checkout();
+		}
+	}
+
+	/**
 	 * Get styling details for Cart and Block Cart.
-	 *
-	 * @return LocationStylingDTO
 	 */
 	public function styling_cart(): LocationStylingDTO {
 		return $this->styling_settings->get_cart();
@@ -472,8 +499,6 @@ class SettingsProvider {
 
 	/**
 	 * Get styling details for Classic Checkout.
-	 *
-	 * @return LocationStylingDTO
 	 */
 	public function styling_classic_checkout(): LocationStylingDTO {
 		return $this->styling_settings->get_classic_checkout();
@@ -481,8 +506,6 @@ class SettingsProvider {
 
 	/**
 	 * Get styling details for Express Checkout.
-	 *
-	 * @return LocationStylingDTO
 	 */
 	public function styling_express_checkout(): LocationStylingDTO {
 		return $this->styling_settings->get_express_checkout();
@@ -490,8 +513,6 @@ class SettingsProvider {
 
 	/**
 	 * Get styling details for Mini Cart
-	 *
-	 * @return LocationStylingDTO
 	 */
 	public function styling_mini_cart(): LocationStylingDTO {
 		return $this->styling_settings->get_mini_cart();
@@ -499,8 +520,6 @@ class SettingsProvider {
 
 	/**
 	 * Get styling details for Product Page.
-	 *
-	 * @return LocationStylingDTO
 	 */
 	public function styling_product(): LocationStylingDTO {
 		return $this->styling_settings->get_product();
@@ -508,8 +527,6 @@ class SettingsProvider {
 
 	/**
 	 * Get Fastlane name on card setting.
-	 *
-	 * @return string
 	 */
 	public function fastlane_name_on_card(): string {
 		return $this->fastlane_settings->get_name_on_card();
@@ -517,8 +534,6 @@ class SettingsProvider {
 
 	/**
 	 * Get Fastlane root styles.
-	 *
-	 * @return array
 	 */
 	public function fastlane_root_styles(): array {
 		return $this->fastlane_settings->get_root_styles();
@@ -526,8 +541,6 @@ class SettingsProvider {
 
 	/**
 	 * Get Fastlane input styles.
-	 *
-	 * @return array
 	 */
 	public function fastlane_input_styles(): array {
 		return $this->fastlane_settings->get_input_styles();
@@ -559,23 +572,14 @@ class SettingsProvider {
 		return $this->payment_settings->get_applepay_validated();
 	}
 
-	/**
-	 * Get Apple Pay button type.
-	 */
 	public function applepay_button_type(): string {
 		return $this->payment_settings->get_applepay_button_type();
 	}
 
-	/**
-	 * Get Apple Pay button color.
-	 */
 	public function applepay_button_color(): string {
 		return $this->payment_settings->get_applepay_button_color();
 	}
 
-	/**
-	 * Get Apple Pay button language.
-	 */
 	public function applepay_button_language(): string {
 		return $this->payment_settings->get_applepay_button_language();
 	}
@@ -587,9 +591,6 @@ class SettingsProvider {
 		return $this->payment_settings->get_applepay_checkout_data_mode();
 	}
 
-	/**
-	 * Get PPCP onboarding Apple flag.
-	 */
 	public function applepay_onboarding(): string {
 		return $this->payment_settings->get_ppcp_onboarding_apple();
 	}
@@ -603,12 +604,18 @@ class SettingsProvider {
 		return $this->payment_settings->is_method_enabled( GooglePayGateway::ID );
 	}
 
+	public function googlepay_styles( string $location = 'checkout' ): LocationStylingDTO {
+		return apply_filters( 'woocommerce_paypal_payments_googlepay_button_styles', $this->button_styling( $location ) );
+	}
+
+	public function googlepay_button_language(): string {
+		return apply_filters( 'woocommerce_paypal_payments_googlepay_button_language', $this->button_language() );
+	}
+
 	// ----- PAY LATER -----
 
 	/**
 	 * Whether Pay Later messaging styling should be customized per location.
-	 *
-	 * @return bool
 	 */
 	public function pay_later_styling_per_location(): bool {
 		return $this->styling_settings->get_pay_later_styling_per_location();
@@ -616,18 +623,15 @@ class SettingsProvider {
 
 	/**
 	 * Whether the given gateway is enabled.
-	 *
-	 * @param string $method_id ID of the payment method.
-	 * @return bool
 	 */
 	public function gateway_enabled( string $method_id ): bool {
 		return $this->payment_settings->is_method_enabled( $method_id );
 	}
 
 	/**
-	 * Gets the payment intent (authorize or capture).
+	 * The default payment intent.
 	 *
-	 * @return string The payment intent ('authorize' or 'capture').
+	 * @return string ['authorize'|'capture']
 	 */
 	public function payment_intent(): string {
 		return $this->authorize_only() ? 'authorize' : 'capture';
