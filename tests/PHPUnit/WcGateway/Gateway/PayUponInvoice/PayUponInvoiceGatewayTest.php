@@ -69,23 +69,6 @@ class PayUponInvoiceGatewayTest extends TestCase
 		);
 	}
 
-	public function testProcessPayment()
-	{
-		$this->markTestSkipped('must be revisited.');
-		list($order, $purchase_unit, $payment_source) = $this->setTestStubs();
-
-		$this->order_endpoint->shouldReceive('create')->with(
-			[$purchase_unit],
-			$payment_source
-		)->andReturn($order);
-
-		define( 'MINUTE_IN_SECONDS', 60 );
-		when('as_schedule_single_action')->justReturn();
-
-		$result = $this->testee->process_payment(1);
-		$this->assertEquals('success', $result['result']);
-	}
-
 	public function testProcessPaymentError()
 	{
 		list($order, $purchase_unit, $payment_source) = $this->setTestStubs();

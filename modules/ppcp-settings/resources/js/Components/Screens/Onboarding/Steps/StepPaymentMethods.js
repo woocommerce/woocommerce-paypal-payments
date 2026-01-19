@@ -79,7 +79,10 @@ const PaymentStepTitle = ( ownBrandOnly ) => {
 			'woocommerce-paypal-payments'
 		);
 	}
-	return __( 'Add Credit and Debit Cards', 'woocommerce-paypal-payments' );
+	return __(
+		'Add Expanded Checkout for more ways to pay',
+		'woocommerce-paypal-payments'
+	);
 };
 
 const OptionalMethodDescription = () => {
