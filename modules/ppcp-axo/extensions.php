@@ -36,7 +36,7 @@ return array(
 			$fields,
 			'vault_enabled_dcc',
 			array(
-				'axo_heading'       => array(
+				'axo_heading'                        => array(
 					'heading'      => __( 'Fastlane', 'woocommerce-paypal-payments' ),
 					'type'         => 'ppcp-heading',
 					'description'  => wp_kses_post(
@@ -57,7 +57,7 @@ return array(
 					'requirements' => array( 'dcc', 'axo' ),
 					'gateway'      => array( 'dcc', 'axo' ),
 				),
-				'axo_enabled'       => array(
+				'axo_enabled'                        => array(
 					'title'             => __( 'Fastlane', 'woocommerce-paypal-payments' ),
 					'title_html'        => sprintf(
 						'<img src="%s" alt="%s" style="max-width: 150px; max-height: 45px;" />',
@@ -116,7 +116,7 @@ return array(
 						'ppcp-align-label-center',
 					),
 				),
-				'axo_main_notice'   => array(
+				'axo_main_notice'                    => array(
 					'heading'      => '',
 					'html'         => implode(
 						'',
@@ -133,7 +133,7 @@ return array(
 					'requirements' => array( 'dcc', 'axo' ),
 					'gateway'      => array( 'dcc', 'axo' ),
 				),
-				'axo_style_heading' => array(
+				'axo_style_heading'                  => array(
 					'heading'      => __( 'Advanced Style Settings (optional)', 'woocommerce-paypal-payments' ),
 					'heading_html' => sprintf(
 					// translators: %1$s and %2$s are the opening and closing of HTML <a> tag.

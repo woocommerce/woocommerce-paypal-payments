@@ -52,11 +52,6 @@ const modulesAssets = {
 		'js/pwc-payment-method.js',
 		'css/gateway.scss',
 	],
-	'ppcp-onboarding': [
-		'js/settings.js',
-		'js/onboarding.js',
-		'css/onboarding.scss',
-	],
 	'ppcp-order-tracking': [
 		'js/order-edit-page.js',
 		'css/order-edit-page.scss',

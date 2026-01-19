@@ -109,7 +109,7 @@ class SettingsModel extends AbstractDataModel {
 
 			// Array of string values.
 			'disabled_cards'              => array(),
-			'card_icons'             => array(),
+			'card_icons'                  => array(),
 
 			// Cache values for product status checks.
 			'products_local_apms_enabled' => '',
