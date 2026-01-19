@@ -110,10 +110,11 @@ class PaymentSettings extends AbstractDataModel {
 				return $this->get_paylater_enabled();
 
 			default:
-				$gateway = $this->get_gateway( $method_id );
+				$option_key = 'woocommerce_' . $method_id . '_settings';
+				$settings   = get_option( $option_key, array() );
 
-				if ( $gateway ) {
-					return wc_string_to_bool( $gateway->enabled );
+				if ( ! empty( $settings ) && isset( $settings['enabled'] ) ) {
+					return wc_string_to_bool( $settings['enabled'] );
 				}
 
 				return false;
