@@ -164,10 +164,11 @@ class PaymentSettings extends AbstractDataModel {
 	 * @return string The method title, or an empty string if not found.
 	 */
 	public function get_method_title( string $method_id, string $default_title = '' ): string {
-		$gateway = $this->get_gateway( $method_id );
+		$option_key = 'woocommerce_' . $method_id . '_settings';
+		$settings   = get_option( $option_key, array() );
 
-		if ( $gateway ) {
-			return $gateway->title;
+		if ( ! empty( $settings ) && isset( $settings['title'] ) ) {
+			return (string) $settings['title'];
 		}
 
 		return $default_title;
@@ -181,10 +182,11 @@ class PaymentSettings extends AbstractDataModel {
 	 * @return string The method description, or an empty string if not found.
 	 */
 	public function get_method_description( string $method_id, string $default_description = '' ): string {
-		$gateway = $this->get_gateway( $method_id );
+		$option_key = 'woocommerce_' . $method_id . '_settings';
+		$settings   = get_option( $option_key, array() );
 
-		if ( $gateway ) {
-			return $gateway->description;
+		if ( ! empty( $settings ) && isset( $settings['description'] ) ) {
+			return (string) $settings['description'];
 		}
 
 		return $default_description;
