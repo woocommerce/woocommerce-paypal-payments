@@ -572,16 +572,12 @@ class SettingsProvider {
 		return $this->payment_settings->get_applepay_validated();
 	}
 
-	public function applepay_button_type(): string {
-		return $this->payment_settings->get_applepay_button_type();
-	}
-
-	public function applepay_button_color(): string {
-		return $this->payment_settings->get_applepay_button_color();
+	public function applepay_styles( string $location = 'checkout' ): LocationStylingDTO {
+		return apply_filters( 'woocommerce_paypal_payments_applepay_button_styles', $this->button_styling( $location ) );
 	}
 
 	public function applepay_button_language(): string {
-		return $this->payment_settings->get_applepay_button_language();
+		return apply_filters( 'woocommerce_paypal_payments_applepay_button_language', $this->button_language() );
 	}
 
 	/**
