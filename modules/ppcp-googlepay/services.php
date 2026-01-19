@@ -18,7 +18,7 @@ use WooCommerce\PayPalCommerce\Googlepay\Assets\BlocksPaymentMethod;
 use WooCommerce\PayPalCommerce\Googlepay\Assets\Button;
 use WooCommerce\PayPalCommerce\Googlepay\Endpoint\UpdatePaymentDataEndpoint;
 use WooCommerce\PayPalCommerce\Googlepay\Helper\ApmApplies;
-use WooCommerce\PayPalCommerce\Googlepay\Helper\ApmProductStatus;
+use WooCommerce\PayPalCommerce\Googlepay\Helper\GoogleProductStatus;
 use WooCommerce\PayPalCommerce\Googlepay\Helper\AvailabilityNotice;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
@@ -52,7 +52,7 @@ return array(
 	'googlepay.available'                       => static function ( ContainerInterface $container ): bool {
 		if ( apply_filters( 'woocommerce_paypal_payments_googlepay_validate_product_status', true ) ) {
 			$status = $container->get( 'googlepay.helpers.apm-product-status' );
-			assert( $status instanceof ApmProductStatus );
+			assert( $status instanceof GoogleProductStatus );
 			/**
 			 * If merchant isn't onboarded via /v1/customer/partner-referrals this returns false as the API call fails.
 			 */
@@ -64,7 +64,7 @@ return array(
 	// We assume it's a referral if we can check product status without API request failures.
 	'googlepay.is_referral'                     => static function ( ContainerInterface $container ): bool {
 		$status = $container->get( 'googlepay.helpers.apm-product-status' );
-		assert( $status instanceof ApmProductStatus );
+		assert( $status instanceof GoogleProductStatus );
 
 		return ! $status->has_request_failure();
 	},
@@ -78,8 +78,8 @@ return array(
 	},
 
 	'googlepay.helpers.apm-product-status'      => SingletonDecorator::make(
-		static function ( ContainerInterface $container ): ApmProductStatus {
-			return new ApmProductStatus(
+		static function ( ContainerInterface $container ): GoogleProductStatus {
+			return new GoogleProductStatus(
 				$container->get( 'settings.flag.is-connected' ),
 				$container->get( 'api.endpoint.partners' ),
 				$container->get( 'api.helper.failure-registry' ),
@@ -240,7 +240,7 @@ return array(
 		}
 
 		$product_status = $container->get( 'googlepay.helpers.apm-product-status' );
-		assert( $product_status instanceof ApmProductStatus );
+		assert( $product_status instanceof GoogleProductStatus );
 
 		$environment = $container->get( 'settings.environment' );
 		assert( $environment instanceof Environment );

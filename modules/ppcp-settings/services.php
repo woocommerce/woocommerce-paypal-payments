@@ -17,7 +17,7 @@ use WooCommerce\PayPalCommerce\Assets\AssetGetterFactory;
 use WooCommerce\PayPalCommerce\Axo\Gateway\AxoGateway;
 use WooCommerce\PayPalCommerce\Button\Helper\MessagesApply;
 use WooCommerce\PayPalCommerce\Googlepay\GooglePayGateway;
-use WooCommerce\PayPalCommerce\Googlepay\Helper\ApmProductStatus;
+use WooCommerce\PayPalCommerce\Googlepay\Helper\GoogleProductStatus;
 use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\BancontactGateway;
 use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\BlikGateway;
 use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\EPSGateway;
@@ -714,7 +714,7 @@ return array(
 		assert( $applepay_product_status instanceof AppleProductStatus );
 
 		$googlepay_product_status = $container->get( 'googlepay.helpers.apm-product-status' );
-		assert( $googlepay_product_status instanceof ApmProductStatus );
+		assert( $googlepay_product_status instanceof GoogleProductStatus );
 
 		return new PaymentMethodsEligibilityService(
 			$container->get( 'api.merchant.country' ),

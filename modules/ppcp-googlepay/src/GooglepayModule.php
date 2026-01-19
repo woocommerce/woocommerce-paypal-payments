@@ -15,7 +15,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Factory\ExperienceContextBuilder;
 use WooCommerce\PayPalCommerce\Button\Assets\ButtonInterface;
 use WooCommerce\PayPalCommerce\Button\Assets\SmartButtonInterface;
 use WooCommerce\PayPalCommerce\Googlepay\Endpoint\UpdatePaymentDataEndpoint;
-use WooCommerce\PayPalCommerce\Googlepay\Helper\ApmProductStatus;
+use WooCommerce\PayPalCommerce\Googlepay\Helper\GoogleProductStatus;
 use WooCommerce\PayPalCommerce\Googlepay\Helper\AvailabilityNotice;
 use WooCommerce\PayPalCommerce\Settings\Data\Definition\FeaturesDefinition;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExecutableModule;
@@ -55,7 +55,7 @@ class GooglepayModule implements ServiceModule, ExtendingModule, ExecutableModul
 			'woocommerce_paypal_payments_clear_apm_product_status',
 			static function () use ( $c ): void {
 				$apm_status = $c->get( 'googlepay.helpers.apm-product-status' );
-				assert( $apm_status instanceof ApmProductStatus );
+				assert( $apm_status instanceof GoogleProductStatus );
 				$apm_status->clear();
 			}
 		);
@@ -235,7 +235,7 @@ class GooglepayModule implements ServiceModule, ExtendingModule, ExecutableModul
 			'woocommerce_paypal_payments_rest_common_merchant_features',
 			function ( array $features ) use ( $c ): array {
 				$product_status = $c->get( 'googlepay.helpers.apm-product-status' );
-				assert( $product_status instanceof ApmProductStatus );
+				assert( $product_status instanceof GoogleProductStatus );
 
 				$google_pay_enabled = $product_status->is_active();
 

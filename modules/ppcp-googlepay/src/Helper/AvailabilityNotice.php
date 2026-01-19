@@ -17,7 +17,7 @@ use WooCommerce\PayPalCommerce\AdminNotices\Repository\Repository;
  */
 class AvailabilityNotice {
 
-	private ApmProductStatus $product_status;
+	private GoogleProductStatus $product_status;
 
 	/**
 	 * Indicates if we're on the WooCommerce gateways list page.
@@ -30,7 +30,7 @@ class AvailabilityNotice {
 	private bool $is_ppcp_settings_page;
 
 	public function __construct(
-		ApmProductStatus $product_status,
+		GoogleProductStatus $product_status,
 		bool $is_wc_gateways_list_page,
 		bool $is_ppcp_settings_page
 	) {
