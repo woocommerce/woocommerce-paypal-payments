@@ -197,7 +197,7 @@ class StylingSettingsMapHelper {
 		$locations         = array_flip( $this->locations_map() );
 
 		foreach ( $styling_models as $model ) {
-			if ( ! $model->enabled ) {
+			if ( ! $model instanceof LocationStylingDTO || ! $model->enabled ) {
 				continue;
 			}
 
@@ -220,7 +220,7 @@ class StylingSettingsMapHelper {
 		$enabled_locations = array();
 		$locations         = array_flip( $this->locations_map() );
 		foreach ( $styling_models as $model ) {
-			if ( ! $model->enabled || ! in_array( 'pay-later', $model->methods, true ) ) {
+			if ( ! $model instanceof LocationStylingDTO || ! $model->enabled || ! in_array( 'pay-later', $model->methods, true ) ) {
 				continue;
 			}
 
@@ -251,6 +251,9 @@ class StylingSettingsMapHelper {
 		assert( $payment_settings instanceof PaymentSettings );
 
 		foreach ( $styling_models as $model ) {
+			if ( ! $model instanceof LocationStylingDTO ) {
+				continue;
+			}
 			if ( $model->location === $current_context ) {
 				if ( ! in_array( 'venmo', $model->methods, true ) || ! $payment_settings->get_venmo_enabled() ) {
 					$disabled_funding[] = 'venmo';
@@ -278,6 +281,9 @@ class StylingSettingsMapHelper {
 		$current_context          = $locations_to_context_map[ ( $this->context_provider )() ] ?? '';
 
 		foreach ( $styling_models as $model ) {
+			if ( ! $model instanceof LocationStylingDTO ) {
+				continue;
+			}
 			if ( $model->enabled && $model->location === $current_context ) {
 				if ( in_array( 'pay-later', $model->methods, true ) && $payment_settings->get_paylater_enabled() ) {
 					return 1;
@@ -305,6 +311,9 @@ class StylingSettingsMapHelper {
 		$current_context          = $locations_to_context_map[ ( $this->context_provider )() ] ?? '';
 
 		foreach ( $styling_models as $model ) {
+			if ( ! $model instanceof LocationStylingDTO ) {
+				continue;
+			}
 			if ( $model->enabled && $model->location === $current_context ) {
 				if ( in_array( $button_name, $model->methods, true ) && $this->is_gateway_enabled( $button_name ) ) {
 					return 1;

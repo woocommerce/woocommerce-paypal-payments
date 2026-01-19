@@ -5,9 +5,11 @@ declare( strict_types=1 );
 namespace PHPUnit\Settings\Data;
 
 use Mockery;
+use WooCommerce\PayPalCommerce\Settings\Data\FastlaneSettings;
 use WooCommerce\PayPalCommerce\Settings\Data\GeneralSettings;
 use WooCommerce\PayPalCommerce\Settings\Data\OnboardingProfile;
 use WooCommerce\PayPalCommerce\Settings\Data\PaymentSettings;
+use WooCommerce\PayPalCommerce\Settings\Data\PayLaterMessagingSettings;
 use WooCommerce\PayPalCommerce\Settings\Data\SettingsModel;
 use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
 use WooCommerce\PayPalCommerce\Settings\Data\StylingSettings;
@@ -27,21 +29,26 @@ class SettingsProviderTest extends TestCase {
 	private PaymentSettings $payment_settings;
 	private SettingsModel $settings_model;
 	private StylingSettings $styling_settings;
+	private FastlaneSettings $fastlane_settings;
+	private PayLaterMessagingSettings $paylater_messaging_settings;
 
 	public function setUp(): void {
-		// Mock Models
-		$this->general_settings   = Mockery::mock( GeneralSettings::class );
-		$this->onboarding_profile = Mockery::mock( OnboardingProfile::class );
-		$this->payment_settings   = Mockery::mock( PaymentSettings::class );
-		$this->settings_model     = Mockery::mock( SettingsModel::class );
-		$this->styling_settings   = Mockery::mock( StylingSettings::class );
+		$this->general_settings            = Mockery::mock( GeneralSettings::class );
+		$this->onboarding_profile          = Mockery::mock( OnboardingProfile::class );
+		$this->payment_settings            = Mockery::mock( PaymentSettings::class );
+		$this->settings_model              = Mockery::mock( SettingsModel::class );
+		$this->styling_settings            = Mockery::mock( StylingSettings::class );
+		$this->fastlane_settings           = Mockery::mock( FastlaneSettings::class );
+		$this->paylater_messaging_settings = Mockery::mock( PayLaterMessagingSettings::class );
 
 		$this->provider = new SettingsProvider(
 			$this->general_settings,
 			$this->onboarding_profile,
 			$this->payment_settings,
 			$this->settings_model,
-			$this->styling_settings
+			$this->styling_settings,
+			$this->fastlane_settings,
+			$this->paylater_messaging_settings
 		);
 	}
 
@@ -83,6 +90,8 @@ class SettingsProviderTest extends TestCase {
 			$this->get_model_data( $this->get_payment_settings_data(), 'payment_settings' ),
 			$this->get_model_data( $this->get_settings_model_data(), 'settings_model' ),
 			$this->get_model_data( $this->get_styling_settings_data(), 'styling_settings' ),
+			$this->get_model_data( $this->get_fastlane_settings_data(), 'fastlane_settings' ),
+			$this->get_model_data( $this->get_paylater_messaging_settings_data(), 'paylater_messaging_settings' ),
 		);
 	}
 
@@ -393,6 +402,46 @@ class SettingsProviderTest extends TestCase {
 				'provider_method' => 'styling_product',
 				'model_method'    => 'get_product',
 				'expected_value'  => $styling_dto,
+			),
+		);
+	}
+
+	/**
+	 * Test data for the FastlaneSettings model.
+	 * @return array
+	 * @see FastlaneSettings
+	 */
+	private function get_fastlane_settings_data(): array {
+		return array(
+			array(
+				'provider_method' => 'fastlane_name_on_card',
+				'model_method'    => 'get_name_on_card',
+				'expected_value'  => self::EXPECTED_VALUE_STRING,
+			),
+			array(
+				'provider_method' => 'fastlane_root_styles',
+				'model_method'    => 'get_root_styles',
+				'expected_value'  => self::EXPECTED_VALUE_ARRAY,
+			),
+			array(
+				'provider_method' => 'fastlane_input_styles',
+				'model_method'    => 'get_input_styles',
+				'expected_value'  => self::EXPECTED_VALUE_ARRAY,
+			),
+		);
+	}
+
+	/**
+	 * Test data for the PayLaterMessagingSettings model.
+	 * @return array
+	 * @see PayLaterMessagingSettings
+	 */
+	private function get_paylater_messaging_settings_data(): array {
+		return array(
+			array(
+				'provider_method' => 'pay_later_messaging_locations',
+				'model_method'    => 'get_messaging_locations',
+				'expected_value'  => self::EXPECTED_VALUE_ARRAY,
 			),
 		);
 	}

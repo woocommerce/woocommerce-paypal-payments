@@ -5,11 +5,10 @@
  * @package WooCommerce\PayPalCommerce\Blocks
  */
 
-declare(strict_types=1);
+declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\Blocks;
 
-use WooCommerce\PayPalCommerce\Onboarding\State;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 
 return array(
@@ -25,14 +24,15 @@ return array(
 	'wcgateway.settings.pay-later.messaging-locations' => function ( array $locations, ContainerInterface $container ): array {
 		unset( $locations['checkout-block-express'] );
 		unset( $locations['cart-block'] );
+
 		return $locations;
 	},
 
 	'wcgateway.settings.fields'                        => function ( array $fields, ContainerInterface $container ): array {
 		$insert_after = function ( array $array, string $key, array $new ): array {
-			$keys = array_keys( $array );
+			$keys  = array_keys( $array );
 			$index = array_search( $key, $keys, true );
-			$pos = false === $index ? count( $array ) : $index + 1;
+			$pos   = false === $index ? count( $array ) : $index + 1;
 
 			return array_merge( array_slice( $array, 0, $pos ), $new, array_slice( $array, $pos ) );
 		};
@@ -68,7 +68,7 @@ return array(
 					'type'         => 'checkbox',
 					'label'        => $label,
 					'default'      => true,
-					'screens'      => array( State::STATE_START, State::STATE_ONBOARDED ),
+					'screens'      => array( 0, 8 ),
 					'requirements' => array(),
 					'gateway'      => 'paypal',
 					'class'        => array( 'ppcp-grayed-out-text' ),

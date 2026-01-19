@@ -27,7 +27,6 @@ use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\MyBankGateway;
 use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\P24Gateway;
 use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\PWCGateway;
 use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\TrustlyGateway;
-use WooCommerce\PayPalCommerce\Settings\Ajax\SwitchSettingsUiEndpoint;
 use WooCommerce\PayPalCommerce\Settings\Data\Definition\FeaturesDefinition;
 use WooCommerce\PayPalCommerce\Settings\Data\Definition\PaymentMethodsDependenciesDefinition;
 use WooCommerce\PayPalCommerce\Settings\Data\GeneralSettings;
@@ -36,6 +35,8 @@ use WooCommerce\PayPalCommerce\Settings\Data\PaymentSettings;
 use WooCommerce\PayPalCommerce\Settings\Data\SettingsModel;
 use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
 use WooCommerce\PayPalCommerce\Settings\Data\StylingSettings;
+use WooCommerce\PayPalCommerce\Settings\Data\FastlaneSettings;
+use WooCommerce\PayPalCommerce\Settings\Data\PayLaterMessagingSettings;
 use WooCommerce\PayPalCommerce\Settings\Data\TodosModel;
 use WooCommerce\PayPalCommerce\Settings\Data\Definition\TodosDefinition;
 use WooCommerce\PayPalCommerce\Settings\Endpoint\AuthenticationRestEndpoint;
@@ -63,6 +64,7 @@ use WooCommerce\PayPalCommerce\Settings\Service\Migration\MigrationManager;
 use WooCommerce\PayPalCommerce\Settings\Service\Migration\PaymentSettingsMigration;
 use WooCommerce\PayPalCommerce\Settings\Service\Migration\SettingsTabMigration;
 use WooCommerce\PayPalCommerce\Settings\Service\Migration\StylingSettingsMigration;
+use WooCommerce\PayPalCommerce\Settings\Service\Migration\FastlaneSettingsMigration;
 use WooCommerce\PayPalCommerce\Settings\Service\OnboardingUrlManager;
 use WooCommerce\PayPalCommerce\Settings\Service\PaymentMethodsEligibilityService;
 use WooCommerce\PayPalCommerce\Settings\Service\ScriptDataHandler;
@@ -85,7 +87,7 @@ use WooCommerce\PayPalCommerce\WcGateway\Helper\ConnectionState;
 use WooCommerce\PayPalCommerce\Settings\Service\InternalRestService;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\MerchantDetails;
 
-$services = array(
+return array(
 	'settings.asset_getter'                               => static function ( ContainerInterface $container ): AssetGetter {
 		$factory = $container->get( 'assets.asset_getter_factory' );
 		assert( $factory instanceof AssetGetterFactory );
@@ -99,6 +101,8 @@ $services = array(
 			$container->get( 'settings.data.payment' ),
 			$container->get( 'settings.data.settings' ),
 			$container->get( 'settings.data.styling' ),
+			$container->get( 'settings.data.fastlane' ),
+			$container->get( 'settings.data.paylater-messaging-settings' )
 		);
 	},
 	'settings.data.onboarding'                            => static function ( ContainerInterface $container ): OnboardingProfile {
@@ -136,6 +140,14 @@ $services = array(
 	'settings.data.payment'                               => static function ( ContainerInterface $container ): PaymentSettings {
 		return new PaymentSettings();
 	},
+	'settings.data.fastlane'                              => static function (): FastlaneSettings {
+		return new FastlaneSettings();
+	},
+	'settings.data.paylater-messaging-settings'           => static function ( ContainerInterface $container ): PayLaterMessagingSettings {
+		return new PayLaterMessagingSettings(
+			$container->get( 'settings.service.sanitizer' )
+		);
+	},
 	'settings.data.settings'                              => static function ( ContainerInterface $container ): SettingsModel {
 		$environment = $container->get( 'settings.environment' );
 		assert( $environment instanceof Environment );
@@ -146,23 +158,30 @@ $services = array(
 		);
 	},
 	'settings.data.paylater-messaging'                    => static function ( ContainerInterface $container ): array {
-		// TODO: Create an AbstractDataModel wrapper for this configuration!
-
-		$config_factors = $container->get( 'paylater-configurator.factory.config' );
-		assert( $config_factors instanceof ConfigFactory );
+		$config_factory = $container->get( 'paylater-configurator.factory.config' );
+		assert( $config_factory instanceof ConfigFactory );
 
 		$save_config = $container->get( 'paylater-configurator.endpoint.save-config' );
 		assert( $save_config instanceof SaveConfig );
 
-		$settings = $container->get( 'wcgateway.settings' );
-		assert( $settings instanceof Settings );
+		$paylater_settings = $container->get( 'settings.data.paylater-messaging-settings' );
+		assert( $paylater_settings instanceof PayLaterMessagingSettings );
 
-		$pay_later_config = $config_factors->from_settings( $settings );
+		$pay_later_config = $config_factory->from_settings( $paylater_settings );
 
 		return array(
 			'read' => $pay_later_config,
 			'save' => $save_config,
 		);
+	},
+	'settings.connection-state'                           => static function ( ContainerInterface $container ): ConnectionState {
+		$data = $container->get( 'settings.data.general' );
+		assert( $data instanceof GeneralSettings );
+
+		$is_connected = $data->is_merchant_connected();
+		$environment  = new Environment( $data->is_sandbox_merchant() );
+
+		return new ConnectionState( $is_connected, $environment );
 	},
 	/**
 	 * Returns details about the connected environment (production/sandbox).
@@ -388,6 +407,9 @@ $services = array(
 		$c->get( 'settings.service.data-migration.settings-tab' ),
 		$c->get( 'settings.service.data-migration.styling' ),
 		$c->get( 'settings.service.data-migration.payment-settings' ),
+		$c->get( 'settings.service.data-migration.fastlane' ),
+		$c->get( 'settings.data.onboarding' ),
+		$c->get( 'woocommerce.logger.woocommerce' )
 	),
 	'settings.service.data-migration.settings-tab'        => static fn( ContainerInterface $c ): SettingsTabMigration => new SettingsTabMigration(
 		(array) get_option( 'woocommerce-ppcp-settings', array() ),
@@ -411,12 +433,9 @@ $services = array(
 		$c->get( 'settings.data.general' ),
 		$c->get( 'api.endpoint.partners' ),
 	),
-	'settings.ajax.switch_ui'                             => static fn( ContainerInterface $c ): SwitchSettingsUiEndpoint => new SwitchSettingsUiEndpoint(
-		$c->get( 'woocommerce.logger.woocommerce' ),
-		$c->get( 'button.request-data' ),
-		$c->get( 'settings.data.onboarding' ),
-		$c->get( 'settings.service.data-migration' ),
-		$c->get( 'api.merchant_id' ) !== ''
+	'settings.service.data-migration.fastlane'            => static fn( ContainerInterface $c ): FastlaneSettingsMigration => new FastlaneSettingsMigration(
+		(array) get_option( 'woocommerce-ppcp-settings', array() ),
+		$c->get( 'settings.data.fastlane' ),
 	),
 	'settings.rest.todos'                                 => static function ( ContainerInterface $container ): TodosRestEndpoint {
 		return new TodosRestEndpoint(
@@ -769,22 +788,3 @@ $services = array(
 		return static fn(): bool => (bool) get_option( PaymentSettingsMigration::OPTION_NAME_BCDC_MIGRATION_OVERRIDE );
 	},
 );
-
-if ( ! SettingsModule::should_use_the_old_ui() ) {
-	/**
-	 * Merchant connection details, which includes the connection status
-	 * (onboarding/connected) and connection-aware environment checks.
-	 * This is the preferred solution to check environment and connection state.
-	 */
-	$services['settings.connection-state'] = static function ( ContainerInterface $container ): ConnectionState {
-		$data = $container->get( 'settings.data.general' );
-		assert( $data instanceof GeneralSettings );
-
-		$is_connected = $data->is_merchant_connected();
-		$environment  = new Environment( $data->is_sandbox_merchant() );
-
-		return new ConnectionState( $is_connected, $environment );
-	};
-}
-
-return $services;

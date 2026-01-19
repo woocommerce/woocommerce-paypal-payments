@@ -5,14 +5,13 @@
  * @package WooCommerce\PayPalCommerce\Applepay
  */
 
-declare(strict_types=1);
+declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\Applepay;
 
 use WooCommerce\PayPalCommerce\Applepay\Assets\PropertiesDictionary;
 use WooCommerce\PayPalCommerce\Assets\AssetGetter;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
-use WooCommerce\PayPalCommerce\Onboarding\State;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\DisplayManager;
 
@@ -31,10 +30,10 @@ return array(
 		$is_available = $container->get( 'applepay.available' );
 		$is_referral  = $container->get( 'applepay.is_referral' );
 
-		$insert_after = function ( array $array, string $key, array $new ): array {
-			$keys = array_keys( $array );
+		$insert_after    = function ( array $array, string $key, array $new ): array {
+			$keys  = array_keys( $array );
 			$index = array_search( $key, $keys, true );
-			$pos = false === $index ? count( $array ) : $index + 1;
+			$pos   = false === $index ? count( $array ) : $index + 1;
 
 			return array_merge( array_slice( $array, 0, $pos ), $new, array_slice( $array, $pos ) );
 		};
@@ -57,16 +56,20 @@ return array(
 		 *  - Removed validation-text logic without replacement
 		 *
 		 *  This file is not migrated and will be dropped soon.
-		 *//*
+		 */
+
+		/*
+		 * phpcs:disable Squiz.Commenting.BlockComment.NoCapital
 		if ( ! $container->get( 'applepay.has_validated' ) ) {
 			$domain_validation_text = __( 'The domain has not yet been validated. Use the Apple Pay button to validate the domain ❌', 'woocommerce-paypal-payments' );
 		} elseif ( $container->get( 'applepay.is_validated' ) ) {
 			$domain_validation_text = __( 'Status: Domain successfully validated ✔️', 'woocommerce-paypal-payments' );
 		}
+		phpcs:enable Squiz.Commenting.BlockComment.NoCapital
 		*/
 
 		// Device eligibility.
-		$device_eligibility_text = __( 'Status: Your current browser/device does not seem to support Apple Pay ❌', 'woocommerce-paypal-payments' );
+		$device_eligibility_text  = __( 'Status: Your current browser/device does not seem to support Apple Pay ❌', 'woocommerce-paypal-payments' );
 		$device_eligibility_notes = sprintf(
 		// translators: %1$s and %2$s are the opening and closing of HTML <a> tag.
 			__( 'Though the button may display in previews, it won\'t appear in the shop. For details, refer to the %1$sApple Pay requirements%2$s.', 'woocommerce-paypal-payments' ),
@@ -74,7 +77,7 @@ return array(
 			'</a>'
 		);
 		if ( $container->get( 'applepay.is_browser_supported' ) ) {
-			$device_eligibility_text = __( 'Status: Your current browser/device seems to support Apple Pay ✔️', 'woocommerce-paypal-payments' );
+			$device_eligibility_text  = __( 'Status: Your current browser/device seems to support Apple Pay ✔️', 'woocommerce-paypal-payments' );
 			$device_eligibility_notes = __( 'The Apple Pay button will be visible both in previews and below the PayPal buttons in the shop.', 'woocommerce-paypal-payments' );
 		}
 
@@ -90,9 +93,7 @@ return array(
 					'title'        => __( 'Apple Pay Payments', 'woocommerce-paypal-payments' ),
 					'type'         => 'ppcp-text',
 					'text'         => $container->get( 'applepay.settings.connection.status-text' ),
-					'screens'      => array(
-						State::STATE_ONBOARDED,
-					),
+					'screens'      => array( 8 ),
 					'requirements' => array(),
 					'gateway'      => 'ppcp-connection',
 				),
@@ -100,8 +101,9 @@ return array(
 		);
 
 		if ( ! $is_available && $is_referral ) {
-			$connection_url = admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway&ppcp-tab=ppcp-connection#field-credentials_feature_onboarding_heading' );
+			$connection_url  = admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway&ppcp-tab=ppcp-connection#field-credentials_feature_onboarding_heading' );
 			$connection_link = '<a href="' . $connection_url . '" style="pointer-events: auto">';
+
 			return $insert_after(
 				$fields,
 				'digital_wallet_heading',
@@ -126,7 +128,7 @@ return array(
 							)
 							. '</p>',
 						'default'           => 'yes',
-						'screens'           => array( State::STATE_ONBOARDED ),
+						'screens'           => array( 8 ),
 						'gateway'           => 'dcc',
 						'requirements'      => array(),
 						'custom_attributes' => array(
@@ -140,7 +142,10 @@ return array(
 								)
 							),
 						),
-						'classes'           => array( 'ppcp-valign-label-middle', 'ppcp-align-label-center' ),
+						'classes'           => array(
+							'ppcp-valign-label-middle',
+							'ppcp-align-label-center',
+						),
 					),
 				)
 			);
@@ -156,7 +161,7 @@ return array(
 					'text'         => '',
 					'class'        => array(),
 					'classes'      => array( 'ppcp-active-spacer' ),
-					'screens'      => array( State::STATE_ONBOARDED ),
+					'screens'      => array( 8 ),
 					'gateway'      => 'dcc',
 					'requirements' => array(),
 				),
@@ -178,7 +183,7 @@ return array(
 						)
 						. '</p>',
 					'default'           => 'yes',
-					'screens'           => array( State::STATE_ONBOARDED ),
+					'screens'           => array( 8 ),
 					'gateway'           => 'dcc',
 					'requirements'      => array(),
 					'custom_attributes' => array(
@@ -202,7 +207,10 @@ return array(
 						'data-ppcp-apm-name'   => $apm_name,
 						'data-ppcp-field-name' => 'is_enabled',
 					),
-					'classes'           => array( 'ppcp-valign-label-middle', 'ppcp-align-label-center' ),
+					'classes'           => array(
+						'ppcp-valign-label-middle',
+						'ppcp-align-label-center',
+					),
 				),
 				'applepay_button_domain_registration' => array(
 					'title'        => __( 'Domain Registration', 'woocommerce-paypal-payments' ),
@@ -221,7 +229,7 @@ return array(
 					),
 					'classes'      => array( 'ppcp-field-indent' ),
 					'class'        => array(),
-					'screens'      => array( State::STATE_ONBOARDED ),
+					'screens'      => array( 8 ),
 					'gateway'      => 'dcc',
 					'requirements' => array(),
 				),
@@ -244,7 +252,7 @@ return array(
 					),
 					'classes'      => array( 'ppcp-field-indent' ),
 					'class'        => array(),
-					'screens'      => array( State::STATE_ONBOARDED ),
+					'screens'      => array( 8 ),
 					'gateway'      => 'dcc',
 					'requirements' => array(),
 				),
@@ -262,7 +270,7 @@ return array(
 					),
 					'classes'      => array( 'ppcp-field-indent' ),
 					'class'        => array(),
-					'screens'      => array( State::STATE_ONBOARDED ),
+					'screens'      => array( 8 ),
 					'gateway'      => 'dcc',
 					'requirements' => array(),
 				),
@@ -279,7 +287,7 @@ return array(
 					'input_class'       => array( 'wc-enhanced-select' ),
 					'default'           => 'plain',
 					'options'           => PropertiesDictionary::button_types(),
-					'screens'           => array( State::STATE_ONBOARDED ),
+					'screens'           => array( 8 ),
 					'gateway'           => 'dcc',
 					'requirements'      => array(),
 					'custom_attributes' => array(
@@ -301,7 +309,7 @@ return array(
 					'class'             => array(),
 					'default'           => 'black',
 					'options'           => PropertiesDictionary::button_colors(),
-					'screens'           => array( State::STATE_ONBOARDED ),
+					'screens'           => array( 8 ),
 					'gateway'           => 'dcc',
 					'requirements'      => array(),
 					'custom_attributes' => array(
@@ -322,7 +330,7 @@ return array(
 					'input_class'       => array( 'wc-enhanced-select' ),
 					'default'           => 'en',
 					'options'           => PropertiesDictionary::button_languages(),
-					'screens'           => array( State::STATE_ONBOARDED ),
+					'screens'           => array( 8 ),
 					'gateway'           => 'dcc',
 					'requirements'      => array(),
 					'custom_attributes' => array(
@@ -340,7 +348,7 @@ return array(
 					'description'  => __( 'Using the WC form data increases convenience for the customers, but can cause issues if Apple Pay details do not match the billing and shipping data in the checkout form.', 'woocommerce-paypal-payments' ),
 					'default'      => PropertiesDictionary::BILLING_DATA_MODE_DEFAULT,
 					'options'      => PropertiesDictionary::billing_data_modes(),
-					'screens'      => array( State::STATE_ONBOARDED ),
+					'screens'      => array( 8 ),
 					'gateway'      => 'dcc',
 					'requirements' => array(),
 				),
@@ -353,9 +361,7 @@ return array(
 						'apm'     => $apm_name,
 						'single'  => true,
 					),
-					'screens'      => array(
-						State::STATE_ONBOARDED,
-					),
+					'screens'      => array( 8 ),
 					'requirements' => array(),
 					'gateway'      => 'dcc',
 				),

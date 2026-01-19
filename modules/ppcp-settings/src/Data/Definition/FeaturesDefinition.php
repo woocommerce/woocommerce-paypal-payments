@@ -291,9 +291,6 @@ class FeaturesDefinition {
 						'class' => 'small-button',
 					),
 				),
-				'notes'       => array(
-					__( '¹PayPal Q2 Earnings-2021.', 'woocommerce-paypal-payments' ),
-				),
 			),
 			self::FEATURE_APPLE_PAY                       => array(
 				'title'       => __( 'Apple Pay', 'woocommerce-paypal-payments' ),
@@ -343,7 +340,7 @@ class FeaturesDefinition {
 			self::FEATURE_PAY_LATER_MESSAGING             => array(
 				'title'       => __( 'Pay Later Messaging', 'woocommerce-paypal-payments' ),
 				'description' => __(
-					'Let customers know they can buy now and pay later with PayPal. Adding this messaging can boost conversion rates and increase cart sizes by 39%¹, with no extra cost to you—plus, you get paid up front.',
+					'Help grow sales with Pay Later messaging. Let customers know they have flexible payment options as they browse, shop, and check out.',
 					'woocommerce-paypal-payments'
 				),
 				'enabled'     => $this->merchant_capabilities[ self::FEATURE_PAY_LATER_MESSAGING ] && ! $save_paypal_and_venmo,

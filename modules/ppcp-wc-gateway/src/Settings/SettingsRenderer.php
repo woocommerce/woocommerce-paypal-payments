@@ -12,7 +12,6 @@ namespace WooCommerce\PayPalCommerce\WcGateway\Settings;
 use WooCommerce\PayPalCommerce\AdminNotices\Entity\Message;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\DccApplies;
 use WooCommerce\PayPalCommerce\Button\Helper\MessagesApply;
-use WooCommerce\PayPalCommerce\Onboarding\State;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\DCCProductStatus;
@@ -46,13 +45,6 @@ class SettingsRenderer {
 	 * @var ContainerInterface
 	 */
 	private $settings;
-
-	/**
-	 * The current onboarding state.
-	 *
-	 * @var State
-	 */
-	private $state;
 
 	/**
 	 * The setting fields.
@@ -100,7 +92,6 @@ class SettingsRenderer {
 	 * SettingsRenderer constructor.
 	 *
 	 * @param ContainerInterface $settings The Settings.
-	 * @param State              $state The current state.
 	 * @param array              $fields The setting fields.
 	 * @param DccApplies         $dcc_applies Whether DCC gateway can be shown.
 	 * @param MessagesApply      $messages_apply Whether messages can be shown.
@@ -111,7 +102,6 @@ class SettingsRenderer {
 	 */
 	public function __construct(
 		ContainerInterface $settings,
-		State $state,
 		array $fields,
 		DccApplies $dcc_applies,
 		MessagesApply $messages_apply,
@@ -125,7 +115,6 @@ class SettingsRenderer {
 		// This is a legacy settings class, it's correctly relying on the `Status` class.
 
 		$this->settings              = $settings;
-		$this->state                 = $state;
 		$this->fields                = $fields;
 		$this->dcc_applies           = $dcc_applies;
 		$this->messages_apply        = $messages_apply;
@@ -380,8 +369,10 @@ $data_rows_html
 		</tr>
 		<?php
 
+		// todo: #legacy-ui code cleanup. Replaced onboarding state check with dummy value until this file is deleted.
+		$is_onboarded = true;
 		foreach ( $this->fields as $field => $config ) :
-			if ( ! in_array( $this->state->environment_state( $config['state_from'] ?? null ), $config['screens'], true ) ) {
+			if ( ! in_array( $is_onboarded, $config['screens'], true ) ) {
 				continue;
 			}
 			if ( ! $this->field_matches_page( $config, $this->page_id ) ) {
@@ -474,7 +465,10 @@ $data_rows_html
 		endforeach;
 		if ( $is_dcc ) {
 			if ( $this->dcc_applies->for_country_currency() ) {
-				if ( State::STATE_ONBOARDED > $this->state->current_state() ) {
+				// todo: #legacy-ui code cleanup. Replaced real state check with dummy value until this file is deleted.
+				/** @var bool $is_onboarded */
+				$is_onboarded = true;
+				if ( ! $is_onboarded ) {
 					$this->render_dcc_onboarding_info();
 				} elseif ( ! $this->dcc_product_status->is_active() ) {
 					$this->render_dcc_not_active_yet();
@@ -625,4 +619,3 @@ $data_rows_html
 		<?php
 	}
 }
-

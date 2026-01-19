@@ -2,10 +2,12 @@
 /**
  * Listens to requests and updates the settings if necessary.
  *
+ * @todo #legacy-ui code cleanup. Remove this file.
+ *
  * @package WooCommerce\PayPalCommerce\WcGateway\Settings
  */
 
-declare(strict_types=1);
+declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\WcGateway\Settings;
 
@@ -17,11 +19,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\ReferenceTransactionStatus;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\Cache;
 use WooCommerce\PayPalCommerce\Http\RedirectorInterface;
-use WooCommerce\PayPalCommerce\Onboarding\Helper\OnboardingUrl;
-use WooCommerce\PayPalCommerce\Onboarding\State;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
-use WooCommerce\PayPalCommerce\WcGateway\Helper\DCCProductStatus;
-use WooCommerce\PayPalCommerce\WcGateway\Helper\PayUponInvoiceProductStatus;
 use WooCommerce\PayPalCommerce\Webhooks\WebhookRegistrar;
 use WooCommerce\WooCommerce\Logging\Logger\NullLogger;
 
@@ -66,13 +64,6 @@ class SettingsListener {
 	 * @var Cache
 	 */
 	private $cache;
-
-	/**
-	 * The State.
-	 *
-	 * @var State
-	 */
-	private $state;
 
 	/**
 	 * The Bearer.
@@ -158,29 +149,34 @@ class SettingsListener {
 	/**
 	 * SettingsListener constructor.
 	 *
-	 * @param Settings                   $settings The settings.
-	 * @param array                      $setting_fields The setting fields.
-	 * @param WebhookRegistrar           $webhook_registrar The Webhook Registrar.
-	 * @param Cache                      $cache The Cache.
-	 * @param State                      $state The state.
-	 * @param Bearer                     $bearer The bearer.
-	 * @param string                     $page_id ID of the current PPCP gateway settings page, or empty if it is not such page.
-	 * @param Cache                      $signup_link_cache The signup link cache.
-	 * @param array                      $signup_link_ids Signup link ids.
-	 * @param RedirectorInterface        $redirector The HTTP redirector.
-	 * @param string                     $partner_merchant_id_production Partner merchant ID production.
-	 * @param string                     $partner_merchant_id_sandbox Partner merchant ID sandbox.
+	 * @param Settings                   $settings                           The settings.
+	 * @param array                      $setting_fields                     The setting fields.
+	 * @param WebhookRegistrar           $webhook_registrar                  The Webhook Registrar.
+	 * @param Cache                      $cache                              The Cache.
+	 * @param Bearer                     $bearer                             The bearer.
+	 * @param string                     $page_id                            ID of the current PPCP
+	 *                                                                       gateway settings page,
+	 *                                                                       or empty if it is not
+	 *                                                                       such page.
+	 * @param Cache                      $signup_link_cache                  The signup link cache.
+	 * @param array                      $signup_link_ids                    Signup link ids.
+	 * @param RedirectorInterface        $redirector                         The HTTP redirector.
+	 * @param string                     $partner_merchant_id_production     Partner merchant ID
+	 *                                                                       production.
+	 * @param string                     $partner_merchant_id_sandbox        Partner merchant ID
+	 *                                                                       sandbox.
 	 * @param ReferenceTransactionStatus $reference_transaction_status
-	 * @param ?LoggerInterface           $logger The logger.
-	 * @param Cache                      $client_credentials_cache The client credentials cache.
-	 * @param Cache                      $reference_transaction_status_cache The client credentials cache.
+	 * @param ?LoggerInterface           $logger                             The logger.
+	 * @param Cache                      $client_credentials_cache           The client credentials
+	 *                                                                       cache.
+	 * @param Cache                      $reference_transaction_status_cache The client credentials
+	 *                                                                       cache.
 	 */
 	public function __construct(
 		Settings $settings,
 		array $setting_fields,
 		WebhookRegistrar $webhook_registrar,
 		Cache $cache,
-		State $state,
 		Bearer $bearer,
 		string $page_id,
 		Cache $signup_link_cache,
@@ -200,7 +196,6 @@ class SettingsListener {
 		$this->setting_fields                     = $setting_fields;
 		$this->webhook_registrar                  = $webhook_registrar;
 		$this->cache                              = $cache;
-		$this->state                              = $state;
 		$this->bearer                             = $bearer;
 		$this->page_id                            = $page_id;
 		$this->signup_link_cache                  = $signup_link_cache;
@@ -264,22 +259,7 @@ class SettingsListener {
 			}
 		}
 
-		// Process token validation.
-		$onboarding_token_sample = ( (string) substr( $onboarding_token, 0, 2 ) ) . '...' . ( (string) substr( $onboarding_token, -6 ) );
-		$this->logger->debug( 'Validating onboarding ppcpToken: ' . $onboarding_token_sample );
-
-		if ( ! OnboardingUrl::validate_token_and_delete( $this->signup_link_cache, $onboarding_token, get_current_user_id() ) ) {
-			if ( OnboardingUrl::validate_previous_token( $this->signup_link_cache, $onboarding_token, get_current_user_id() ) ) {
-				// It's a valid token used previously, don't do anything but silently redirect.
-				$this->logger->info( 'Validated previous token, silently redirecting: ' . $onboarding_token_sample );
-				$this->onboarding_redirect();
-			} else {
-				$this->logger->error( 'Failed to validate onboarding ppcpToken: ' . $onboarding_token_sample );
-				$this->onboarding_redirect( false );
-			}
-		}
-
-		$this->logger->info( 'Validated onboarding ppcpToken: ' . $onboarding_token_sample );
+		// todo: #legacy-ui code cleanup. Removed legacy onboarding logic without replacement.
 
 		// Save the merchant data.
 		$is_sandbox = $this->settings->has( 'sandbox_on' ) && $this->settings->get( 'sandbox_on' );
@@ -342,7 +322,8 @@ class SettingsListener {
 	 * @throws RuntimeException When API request fails.
 	 */
 	public function listen_for_vaulting_enabled(): void {
-		if ( ! $this->is_valid_site_request() || State::STATE_ONBOARDED !== $this->state->current_state() ) {
+		// todo: #legacy-ui code cleanup. removed onboarding state check ("and is-onboarded").
+		if ( ! $this->is_valid_site_request() ) {
 			return;
 		}
 
@@ -354,6 +335,7 @@ class SettingsListener {
 				$this->settings->set( 'vault_enabled', false );
 				$this->settings->set( 'vault_enabled_dcc', false );
 				$this->settings->persist();
+
 				return;
 			}
 		} catch ( RuntimeException $exception ) {
@@ -422,7 +404,8 @@ class SettingsListener {
 	/**
 	 * Listens to the request.
 	 *
-	 * @throws \WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException When a setting was not found.
+	 * @throws \WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException When a setting was
+	 *                                                                           not found.
 	 */
 	public function listen(): void {
 
@@ -474,18 +457,6 @@ class SettingsListener {
 				 */
 
 				do_action( 'woocommerce_paypal_payments_clear_apm_product_status' );
-			}
-
-			if ( in_array(
-				$credentials_change_status,
-				array( self::CREDENTIALS_REMOVED, self::CREDENTIALS_CHANGED ),
-				true
-			) ) {
-				$this->webhook_registrar->unregister();
-
-				foreach ( $this->signup_link_ids as $key ) {
-					( new OnboardingUrl( $this->signup_link_cache, $key, get_current_user_id() ) )->delete();
-				}
 			}
 		}
 
@@ -548,8 +519,8 @@ class SettingsListener {
 	}
 
 	/**
-	 * The actual used client credentials are stored in 'client_secret', 'client_id', 'merchant_id' and 'merchant_email'.
-	 * This method populates those fields depending on the sandbox status.
+	 * The actual used client credentials are stored in 'client_secret', 'client_id', 'merchant_id'
+	 * and 'merchant_email'. This method populates those fields depending on the sandbox status.
 	 *
 	 * @param array $settings The settings array.
 	 *
@@ -572,6 +543,7 @@ class SettingsListener {
 		$settings['merchant_id'] = $is_sandbox ? $settings['merchant_id_sandbox'] : $settings['merchant_id_production'];
 
 		$settings['merchant_email'] = $is_sandbox ? $settings['merchant_email_sandbox'] : $settings['merchant_email_production'];
+
 		return $settings;
 	}
 
@@ -605,6 +577,7 @@ class SettingsListener {
 				return self::CREDENTIALS_CHANGED;
 			}
 		}
+
 		return self::CREDENTIALS_UNCHANGED;
 	}
 
@@ -624,8 +597,11 @@ class SettingsListener {
 			return array();
 		}
 		$settings = array();
+
+		// todo: #legacy-ui code cleanup. replaced onboarding state check with hardcoded value, until this file is deleted.
+		$current_state = 8;
 		foreach ( $this->setting_fields as $key => $config ) {
-			if ( ! in_array( $this->state->current_state(), $config['screens'], true ) ) {
+			if ( ! in_array( $current_state, $config['screens'], true ) ) {
 				continue;
 			}
 			if ( ! $this->field_matches_page( $config, $this->page_id ) ) {
@@ -691,6 +667,7 @@ class SettingsListener {
 		) {
 			return false;
 		}
+
 		return true;
 	}
 
@@ -708,6 +685,7 @@ class SettingsListener {
 		if ( ! current_user_can( 'manage_woocommerce' ) ) {
 			return false;
 		}
+
 		return true;
 	}
 
@@ -719,7 +697,10 @@ class SettingsListener {
 	 * @throws RuntimeException When API request fails.
 	 */
 	public function listen_for_tracking_enabled(): void {
-		if ( State::STATE_ONBOARDED !== $this->state->current_state() ) {
+		// todo: #legacy-ui code cleanup. Replaced onboarding state check with hardcoded dummy until this file is deleted.
+		/** @var bool $is_onboarded */
+		$is_onboarded = true;
+		if ( ! $is_onboarded ) {
 			return;
 		}
 
@@ -728,6 +709,7 @@ class SettingsListener {
 			if ( ! $token->is_tracking_available() ) {
 				$this->settings->set( 'tracking_enabled', false );
 				$this->settings->persist();
+
 				return;
 			}
 		} catch ( RuntimeException $exception ) {
@@ -742,10 +724,6 @@ class SettingsListener {
 	 * Handles onboarding URLs deletion
 	 */
 	public function listen_for_uninstall(): void {
-		// Clear onboarding links from cache.
-		foreach ( $this->signup_link_ids as $key ) {
-			( new OnboardingUrl( $this->signup_link_cache, $key, get_current_user_id() ) )->delete();
-		}
 	}
 
 	/**
@@ -757,7 +735,8 @@ class SettingsListener {
 	 * @param bool     $persist         Whether to persist the settings.
 	 */
 	public function filter_settings( bool $condition, string $setting_slug, callable $filter_function, bool $persist = true ): void {
-		if ( ! $this->is_valid_site_request() || State::STATE_ONBOARDED !== $this->state->current_state() ) {
+		// todo: #legacy-ui code cleanup. Removed onboard state check from condition ("and not onboarded") until this file is deleted.
+		if ( ! $this->is_valid_site_request() ) {
 			return;
 		}
 

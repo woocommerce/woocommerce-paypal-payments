@@ -193,7 +193,7 @@ class ApproveOrderEndpoint implements EndpointInterface {
 			if ( $payment_source && $payment_source->name() === 'card' ) {
 				$disabled_cards = $this->settings_provider->disabled_cards();
 				if ( ! empty( $disabled_cards ) ) {
-					$card           = strtolower( $payment_source->properties()->brand ?? '' );
+					$card = strtolower( $payment_source->properties()->brand ?? '' );
 					if ( 'master_card' === $card ) {
 						$card = 'mastercard';
 					}

@@ -9,7 +9,6 @@ use WooCommerce\PayPalCommerce\ApiClient\Helper\ReferenceTransactionStatus;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\Cache;
 use WooCommerce\PayPalCommerce\Helper\RedirectorStub;
 use WooCommerce\PayPalCommerce\ModularTestCase;
-use WooCommerce\PayPalCommerce\Onboarding\State;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
 use WooCommerce\PayPalCommerce\Webhooks\WebhookRegistrar;
@@ -40,8 +39,6 @@ class SettingsListenerTest extends ModularTestCase
 		$webhook_registrar->shouldReceive('unregister')->andReturnTrue();
 		$webhook_registrar->shouldReceive('register')->andReturnTrue();
 		$cache = Mockery::mock(Cache::class);
-		$state = Mockery::mock(State::class);
-		$state->shouldReceive('current_state')->andReturn(State::STATE_ONBOARDED);
 		$bearer = Mockery::mock(Bearer::class);
 		$signup_link_cache = Mockery::mock(Cache::class);
 		$signup_link_ids = array();
@@ -56,7 +53,6 @@ class SettingsListenerTest extends ModularTestCase
 			$setting_fields,
 			$webhook_registrar,
 			$cache,
-			$state,
 			$bearer,
 			PayPalGateway::ID,
 			$signup_link_cache,

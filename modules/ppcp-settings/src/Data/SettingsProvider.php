@@ -25,19 +25,25 @@ class SettingsProvider {
 	private PaymentSettings $payment_settings;
 	private SettingsModel $settings_model;
 	private StylingSettings $styling_settings;
+	private FastlaneSettings $fastlane_settings;
+	private PayLaterMessagingSettings $paylater_messaging_settings;
 
 	public function __construct(
 		GeneralSettings $general_settings,
 		OnboardingProfile $onboarding_profile,
 		PaymentSettings $payment_settings,
 		SettingsModel $settings_model,
-		StylingSettings $styling_settings
+		StylingSettings $styling_settings,
+		FastlaneSettings $fastlane_settings,
+		PayLaterMessagingSettings $paylater_messaging_settings
 	) {
-		$this->general_settings   = $general_settings;
-		$this->onboarding_profile = $onboarding_profile;
-		$this->payment_settings   = $payment_settings;
-		$this->settings_model     = $settings_model;
-		$this->styling_settings   = $styling_settings;
+		$this->general_settings            = $general_settings;
+		$this->onboarding_profile          = $onboarding_profile;
+		$this->payment_settings            = $payment_settings;
+		$this->settings_model              = $settings_model;
+		$this->styling_settings            = $styling_settings;
+		$this->fastlane_settings           = $fastlane_settings;
+		$this->paylater_messaging_settings = $paylater_messaging_settings;
 	}
 
 	/**
@@ -501,12 +507,30 @@ class SettingsProvider {
 	}
 
 	/**
-	 * Gets the payment intent (authorize or capture).
+	 * Get Fastlane name on card setting.
 	 *
-	 * @return string The payment intent ('authorize' or 'capture').
+	 * @return string
 	 */
-	public function payment_intent(): string {
-		return $this->authorize_only() ? 'authorize' : 'capture';
+	public function fastlane_name_on_card(): string {
+		return $this->fastlane_settings->get_name_on_card();
+	}
+
+	/**
+	 * Get Fastlane root styles.
+	 *
+	 * @return array
+	 */
+	public function fastlane_root_styles(): array {
+		return $this->fastlane_settings->get_root_styles();
+	}
+
+	/**
+	 * Get Fastlane input styles.
+	 *
+	 * @return array
+	 */
+	public function fastlane_input_styles(): array {
+		return $this->fastlane_settings->get_input_styles();
 	}
 
 	/**
@@ -516,16 +540,6 @@ class SettingsProvider {
 	 * @return bool True if the method is enabled, false otherwise.
 	 */
 	public function is_method_enabled( string $method_id ): bool {
-		return $this->payment_settings->is_method_enabled( $method_id );
-	}
-
-	/**
-	 * Whether the given gateway is enabled.
-	 *
-	 * @param string $method_id ID of the payment method.
-	 * @return bool
-	 */
-	public function gateway_enabled( string $method_id ): bool {
 		return $this->payment_settings->is_method_enabled( $method_id );
 	}
 
@@ -574,7 +588,7 @@ class SettingsProvider {
 	}
 
 	/**
-	 * Get onboarding flag for Apple Pay.
+	 * Get PPCP onboarding Apple flag.
 	 */
 	public function applepay_onboarding(): string {
 		return $this->payment_settings->get_ppcp_onboarding_apple();
@@ -589,14 +603,34 @@ class SettingsProvider {
 		return $this->payment_settings->is_method_enabled( GooglePayGateway::ID );
 	}
 
-
 	// ----- PAY LATER -----
 
 	/**
 	 * Whether Pay Later messaging styling should be customized per location.
+	 *
+	 * @return bool
 	 */
 	public function pay_later_styling_per_location(): bool {
 		return $this->styling_settings->get_pay_later_styling_per_location();
+	}
+
+	/**
+	 * Whether the given gateway is enabled.
+	 *
+	 * @param string $method_id ID of the payment method.
+	 * @return bool
+	 */
+	public function gateway_enabled( string $method_id ): bool {
+		return $this->payment_settings->is_method_enabled( $method_id );
+	}
+
+	/**
+	 * Gets the payment intent (authorize or capture).
+	 *
+	 * @return string The payment intent ('authorize' or 'capture').
+	 */
+	public function payment_intent(): string {
+		return $this->authorize_only() ? 'authorize' : 'capture';
 	}
 
 	/**
@@ -606,17 +640,42 @@ class SettingsProvider {
 	 * @return array The messaging style settings.
 	 */
 	public function pay_later_messaging_style( string $location ): array {
-		$settings = (array) get_option( 'woocommerce-ppcp-settings', array() );
-		$prefix   = "pay_later_{$location}_message";
+		$method_map = array(
+			'cart'             => 'get_cart',
+			'checkout'         => 'get_checkout',
+			'product'          => 'get_product',
+			'shop'             => 'get_shop',
+			'home'             => 'get_home',
+			'custom_placement' => 'get_custom_placement',
+		);
+
+		if ( isset( $method_map[ $location ] ) ) {
+			$method = $method_map[ $location ];
+			$dto    = $this->paylater_messaging_settings->$method();
+
+			return array(
+				'layout'        => $dto->layout,
+				'logo_type'     => $dto->logo_type,
+				'logo_position' => $dto->logo_position,
+				'text_color'    => $dto->text_color,
+				'flex_color'    => $dto->flex_color,
+				'ratio'         => $dto->flex_ratio,
+				'text_size'     => $dto->text_size,
+			);
+		}
 
 		return array(
-			'layout'        => $settings[ "{$prefix}_layout" ] ?? 'text',
-			'logo_type'     => $settings[ "{$prefix}_logo" ] ?? 'primary',
-			'logo_position' => $settings[ "{$prefix}_position" ] ?? 'left',
-			'text_color'    => $settings[ "{$prefix}_color" ] ?? 'black',
-			'flex_color'    => $settings[ "{$prefix}_flex_color" ] ?? 'blue',
-			'ratio'         => $settings[ "{$prefix}_flex_ratio" ] ?? '1x1',
-			'text_size'     => $settings[ "{$prefix}_text_size" ] ?? '12',
+			'layout'        => 'text',
+			'logo_type'     => 'primary',
+			'logo_position' => 'left',
+			'text_color'    => 'black',
+			'flex_color'    => 'blue',
+			'ratio'         => '1x1',
+			'text_size'     => '12',
 		);
+	}
+
+	public function pay_later_messaging_locations(): array {
+		return $this->paylater_messaging_settings->get_messaging_locations();
 	}
 }
