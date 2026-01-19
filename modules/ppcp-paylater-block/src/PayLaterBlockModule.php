@@ -17,7 +17,7 @@ use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ModuleClassNameI
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ServiceModule;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\SettingsStatus;
-use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
+use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
 
 /**
  * Class PayLaterBlockModule
@@ -67,8 +67,8 @@ class PayLaterBlockModule implements ServiceModule, ExecutableModule {
 		add_action(
 			'init',
 			function () use ( $c ): void {
-				$settings = $c->get( 'wcgateway.settings' );
-				assert( $settings instanceof Settings );
+				$settings_provider = $c->get( 'settings.settings-provider' );
+				assert( $settings_provider instanceof SettingsProvider );
 
 				$asset_getter = $c->get( 'paylater-block.asset_getter' );
 				assert( $asset_getter instanceof AssetGetter );
@@ -91,7 +91,7 @@ class PayLaterBlockModule implements ServiceModule, ExecutableModule {
 							),
 						),
 						'settingsUrl'         => admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway' ),
-						'vaultingEnabled'     => $settings->has( 'vault_enabled' ) && $settings->get( 'vault_enabled' ),
+						'vaultingEnabled'     => $settings_provider->save_paypal_and_venmo(),
 						'placementEnabled'    => self::is_block_enabled( $c->get( 'wcgateway.settings.status' ) ),
 						'payLaterSettingsUrl' => admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway&ppcp-tab=ppcp-pay-later' ),
 					)

@@ -12,13 +12,14 @@ namespace WooCommerce\PayPalCommerce\PayLaterWCBlocks;
 use WooCommerce\PayPalCommerce\Assets\AssetGetter;
 use WooCommerce\PayPalCommerce\Button\Endpoint\CartScriptParamsEndpoint;
 use WooCommerce\PayPalCommerce\PayLaterConfigurator\Factory\ConfigFactory;
+use WooCommerce\PayPalCommerce\Settings\Data\PayLaterMessagingSettings;
+use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExecutableModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ModuleClassNameIdTrait;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ServiceModule;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\Button\Helper\MessagesApply;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\SettingsStatus;
-use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 
 /**
  * Class PayLaterWCBlocksModule
@@ -95,8 +96,12 @@ class PayLaterWCBlocksModule implements ServiceModule, ExecutableModule {
 		add_action(
 			'init',
 			function () use ( $c ): void {
-				$settings = $c->get( 'wcgateway.settings' );
-				assert( $settings instanceof Settings );
+				$paylater_settings = $c->get( 'settings.data.paylater-messaging-settings' );
+				assert( $paylater_settings instanceof PayLaterMessagingSettings );
+
+				$settings_provider = $c->get( 'settings.settings-provider' );
+				assert( $settings_provider instanceof SettingsProvider );
+
 				$config_factory = $c->get( 'paylater-configurator.factory.config' );
 				assert( $config_factory instanceof ConfigFactory );
 
@@ -122,9 +127,9 @@ class PayLaterWCBlocksModule implements ServiceModule, ExecutableModule {
 								'endpoint' => \WC_AJAX::get_endpoint( CartScriptParamsEndpoint::ENDPOINT ),
 							),
 						),
-						'config'                      => $config_factory->from_settings( $settings ),
+						'config'                      => $config_factory->from_settings( $paylater_settings ),
 						'settingsUrl'                 => admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway' ),
-						'vaultingEnabled'             => $settings->has( 'vault_enabled' ) && $settings->get( 'vault_enabled' ),
+						'vaultingEnabled'             => $settings_provider->save_paypal_and_venmo(),
 						'placementEnabled'            => self::is_placement_enabled( $c->get( 'wcgateway.settings.status' ), 'cart' ),
 						'payLaterSettingsUrl'         => admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway&ppcp-tab=ppcp-pay-later' ),
 						'underTotalsPlacementEnabled' => self::is_under_cart_totals_placement_enabled(),
@@ -150,9 +155,9 @@ class PayLaterWCBlocksModule implements ServiceModule, ExecutableModule {
 								'endpoint' => \WC_AJAX::get_endpoint( CartScriptParamsEndpoint::ENDPOINT ),
 							),
 						),
-						'config'              => $config_factory->from_settings( $settings ),
+						'config'              => $config_factory->from_settings( $paylater_settings ),
 						'settingsUrl'         => admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway' ),
-						'vaultingEnabled'     => $settings->has( 'vault_enabled' ) && $settings->get( 'vault_enabled' ),
+						'vaultingEnabled'     => $settings_provider->save_paypal_and_venmo(),
 						'placementEnabled'    => self::is_placement_enabled( $c->get( 'wcgateway.settings.status' ), 'checkout' ),
 						'payLaterSettingsUrl' => admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway&ppcp-tab=ppcp-pay-later' ),
 					)
