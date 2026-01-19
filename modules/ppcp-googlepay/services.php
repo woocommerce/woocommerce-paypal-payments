@@ -15,12 +15,11 @@ use WooCommerce\PayPalCommerce\Assets\AssetGetterFactory;
 use WooCommerce\PayPalCommerce\Button\Assets\ButtonInterface;
 use WooCommerce\PayPalCommerce\Common\Pattern\SingletonDecorator;
 use WooCommerce\PayPalCommerce\Googlepay\Assets\BlocksPaymentMethod;
-use WooCommerce\PayPalCommerce\Googlepay\Assets\Button;
+use WooCommerce\PayPalCommerce\Googlepay\Assets\GooglePayButton;
 use WooCommerce\PayPalCommerce\Googlepay\Endpoint\UpdatePaymentDataEndpoint;
 use WooCommerce\PayPalCommerce\Googlepay\Helper\ApmApplies;
 use WooCommerce\PayPalCommerce\Googlepay\Helper\GoogleProductStatus;
 use WooCommerce\PayPalCommerce\Googlepay\Helper\AvailabilityNotice;
-use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 
 return array(
@@ -183,7 +182,7 @@ return array(
 	},
 
 	'googlepay.button'                       => static function ( ContainerInterface $container ): ButtonInterface {
-		return new Button(
+		return new GooglePayButton(
 			$container->get( 'googlepay.asset_getter' ),
 			$container->get( 'googlepay.sdk_url' ),
 			$container->get( 'ppcp.asset-version' ),

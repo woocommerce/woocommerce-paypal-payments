@@ -27,7 +27,7 @@ use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
 /**
  * Class Button
  */
-class Button implements ButtonInterface {
+class GooglePayButton implements ButtonInterface {
 
 	private Context $context;
 
