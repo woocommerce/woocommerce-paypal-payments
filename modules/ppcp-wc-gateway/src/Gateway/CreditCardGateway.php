@@ -9,7 +9,6 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\WcGateway\Gateway;
 
-use DomainException;
 use Exception;
 use Psr\Log\LoggerInterface;
 use WC_Order;
@@ -32,7 +31,6 @@ use WooCommerce\PayPalCommerce\WcGateway\Processor\OrderProcessor;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\PaymentsStatusHandlingTrait;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\RefundProcessor;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\TransactionIdHandlingTrait;
-use WooCommerce\PayPalCommerce\WcGateway\Settings\SettingsRenderer;
 use WooCommerce\PayPalCommerce\WcSubscriptions\FreeTrialHandlerTrait;
 use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\CardPaymentsConfiguration;
@@ -43,19 +41,11 @@ use WooCommerce\PayPalCommerce\WcGateway\Helper\CardPaymentsConfiguration;
 class CreditCardGateway extends \WC_Payment_Gateway_CC {
 
 	use ProcessPaymentTrait;
-	use GatewaySettingsRendererTrait;
 	use TransactionIdHandlingTrait;
 	use PaymentsStatusHandlingTrait;
 	use FreeTrialHandlerTrait;
 
 	const ID = 'ppcp-credit-card-gateway';
-
-	/**
-	 * The Settings Renderer.
-	 *
-	 * @var SettingsRenderer
-	 */
-	protected $settings_renderer;
 
 	/**
 	 * The processor for orders.
@@ -240,7 +230,6 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 	public $enabled = 'yes';
 
 	/**
-	 * @param SettingsRenderer          $settings_renderer           The Settings Renderer.
 	 * @param OrderProcessor            $order_processor             The Order processor.
 	 * @param ContainerInterface        $config                      The settings.
 	 * @param CardPaymentsConfiguration $dcc_configuration           The DCC Gateway Configuration.
@@ -260,7 +249,6 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 	 * @param LoggerInterface           $logger                      The logger.
 	 */
 	public function __construct(
-		SettingsRenderer $settings_renderer,
 		OrderProcessor $order_processor,
 		ContainerInterface $config,
 		CardPaymentsConfiguration $dcc_configuration,
@@ -280,7 +268,6 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 		LoggerInterface $logger
 	) {
 		$this->id                          = self::ID;
-		$this->settings_renderer           = $settings_renderer;
 		$this->order_processor             = $order_processor;
 		$this->config                      = $config;
 		$this->dcc_configuration           = $dcc_configuration;
@@ -703,15 +690,6 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 	 */
 	private function is_enabled(): bool {
 		return $this->dcc_configuration->is_enabled();
-	}
-
-	/**
-	 * Returns the settings renderer.
-	 *
-	 * @return SettingsRenderer
-	 */
-	protected function settings_renderer(): SettingsRenderer {
-		return $this->settings_renderer;
 	}
 
 	/**

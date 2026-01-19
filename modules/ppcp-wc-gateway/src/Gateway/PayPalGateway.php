@@ -35,7 +35,6 @@ use WooCommerce\PayPalCommerce\WcGateway\Processor\PaymentsStatusHandlingTrait;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\RefundProcessor;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\TransactionIdHandlingTrait;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
-use WooCommerce\PayPalCommerce\WcGateway\Settings\SettingsRenderer;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 
 /**
@@ -45,7 +44,6 @@ class PayPalGateway extends \WC_Payment_Gateway {
 
 	use ProcessPaymentTrait;
 	use FreeTrialHandlerTrait;
-	use GatewaySettingsRendererTrait;
 	use OrderMetaTrait;
 	use TransactionIdHandlingTrait;
 	use PaymentsStatusHandlingTrait;
@@ -76,13 +74,6 @@ class PayPalGateway extends \WC_Payment_Gateway {
 	 * List of payment sources for which we are expected to store the payer email in the WC Order metadata.
 	 */
 	const PAYMENT_SOURCES_WITH_PAYER_EMAIL = array( 'paypal', 'paylater', 'venmo' );
-
-	/**
-	 * The Settings Renderer.
-	 *
-	 * @var SettingsRenderer
-	 */
-	protected $settings_renderer;
 
 	/**
 	 * The funding source renderer.
@@ -281,7 +272,6 @@ class PayPalGateway extends \WC_Payment_Gateway {
 	public $order_button_text;
 
 	/**
-	 * @param SettingsRenderer         $settings_renderer The Settings Renderer.
 	 * @param FundingSourceRenderer    $funding_source_renderer The funding source renderer.
 	 * @param OrderProcessor           $order_processor The Order Processor.
 	 * @param ContainerInterface       $config The settings.
@@ -305,7 +295,6 @@ class PayPalGateway extends \WC_Payment_Gateway {
 	 * @param bool                     $admin_settings_enabled Whether settings module is enabled.
 	 */
 	public function __construct(
-		SettingsRenderer $settings_renderer,
 		FundingSourceRenderer $funding_source_renderer,
 		OrderProcessor $order_processor,
 		ContainerInterface $config,
@@ -329,7 +318,6 @@ class PayPalGateway extends \WC_Payment_Gateway {
 		bool $admin_settings_enabled
 	) {
 		$this->id                          = self::ID;
-		$this->settings_renderer           = $settings_renderer;
 		$this->funding_source_renderer     = $funding_source_renderer;
 		$this->order_processor             = $order_processor;
 		$this->config                      = $config;
@@ -815,14 +803,5 @@ class PayPalGateway extends \WC_Payment_Gateway {
 		}
 
 		do_action( 'woocommerce_paypal_payments_gateway_admin_options_wrapper', $this );
-	}
-
-	/**
-	 * Returns the settings renderer.
-	 *
-	 * @return SettingsRenderer
-	 */
-	protected function settings_renderer(): SettingsRenderer {
-		return $this->settings_renderer;
 	}
 }
