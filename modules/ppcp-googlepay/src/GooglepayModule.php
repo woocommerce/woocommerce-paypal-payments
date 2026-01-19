@@ -64,7 +64,6 @@ class GooglepayModule implements ServiceModule, ExecutableModule {
 				// Load the button handler.
 				$button = $c->get( 'googlepay.button' );
 				assert( $button instanceof ButtonInterface );
-				$button->initialize();
 
 				// Show notice if there are product availability issues.
 				$availability_notice = $c->get( 'googlepay.availability_notice' );
@@ -80,7 +79,7 @@ class GooglepayModule implements ServiceModule, ExecutableModule {
 				// Initializes button rendering.
 				add_action(
 					'wp',
-					static function () use ( $c, $button ) {
+					static function () use ( $button ) {
 						if ( is_admin() ) {
 							return;
 						}
