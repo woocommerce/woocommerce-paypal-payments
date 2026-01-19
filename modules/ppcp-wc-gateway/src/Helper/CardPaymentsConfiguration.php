@@ -13,7 +13,9 @@ declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\WcGateway\Helper;
 
+use WooCommerce\PayPalCommerce\Axo\Gateway\AxoGateway;
 use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
+use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\Axo\Helper\PropertiesDictionary;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\DccApplies;
@@ -223,8 +225,8 @@ class CardPaymentsConfiguration {
 			return;
 		}
 
-		$is_dcc_enabled     = $this->settings_provider->dcc_enabled();
-		$this->use_fastlane = $this->settings_provider->axo_enabled();
+		$is_dcc_enabled     = $this->settings_provider->is_method_enabled( CreditCardGateway::ID );
+		$this->use_fastlane = $this->settings_provider->is_method_enabled( AxoGateway::ID );
 
 		$this->gateway_title       = $this->settings_provider->dcc_gateway_title();
 		$this->gateway_description = $this->settings_provider->dcc_gateway_description();

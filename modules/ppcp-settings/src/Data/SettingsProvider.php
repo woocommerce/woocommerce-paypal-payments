@@ -753,24 +753,6 @@ class SettingsProvider {
 	}
 
 	/**
-	 * Gets if DCC (Advanced Card Processing) is enabled.
-	 *
-	 * @return bool True if DCC is enabled, false otherwise.
-	 */
-	public function dcc_enabled(): bool {
-		return $this->payment_settings->is_method_enabled( 'ppcp-credit-card-gateway' );
-	}
-
-	/**
-	 * Gets if AXO (Fastlane) is enabled.
-	 *
-	 * @return bool True if AXO/Fastlane is enabled, false otherwise.
-	 */
-	public function axo_enabled(): bool {
-		return $this->payment_settings->is_method_enabled( 'ppcp-axo-gateway' );
-	}
-
-	/**
 	 * Gets the name on card setting for DCC gateway.
 	 *
 	 * @return string The name on card setting ('yes', 'no', or empty).
