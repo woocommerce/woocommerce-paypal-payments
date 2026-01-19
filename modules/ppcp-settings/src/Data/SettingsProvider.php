@@ -14,6 +14,7 @@ namespace WooCommerce\PayPalCommerce\Settings\Data;
 
 use WooCommerce\PayPalCommerce\Settings\DTO\LocationStylingDTO;
 use WooCommerce\PayPalCommerce\Settings\DTO\MerchantConnectionDTO;
+use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 
 class SettingsProvider {
@@ -699,7 +700,7 @@ class SettingsProvider {
 	 */
 	public function acdc_gateway_title(): string {
 		return $this->payment_settings->get_method_title(
-			'ppcp-credit-card-gateway',
+			CreditCardGateway::ID,
 			__( 'Credit Cards', 'woocommerce-paypal-payments' )
 		);
 	}
@@ -711,7 +712,7 @@ class SettingsProvider {
 	 */
 	public function acdc_gateway_description(): string {
 		return $this->payment_settings->get_method_description(
-			'ppcp-credit-card-gateway',
+			CreditCardGateway::ID,
 			__( 'Pay with your credit card.', 'woocommerce-paypal-payments' )
 		);
 	}
@@ -762,6 +763,7 @@ class SettingsProvider {
 		if ( ! empty( $name_on_card ) ) {
 			return $name_on_card;
 		}
+
 		return $this->payment_settings->get_cardholder_name() ? 'yes' : 'no';
 	}
 }
