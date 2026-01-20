@@ -62,7 +62,6 @@ use WooCommerce\PayPalCommerce\WcGateway\Helper\CartCheckoutDetector;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\CheckoutHelper;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\ConnectionState;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\DCCProductStatus;
-use WooCommerce\PayPalCommerce\WcGateway\Helper\DisplayManager;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\FeesUpdater;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\InstallmentsProductStatus;
@@ -81,15 +80,15 @@ use WooCommerce\PayPalCommerce\WcGateway\Processor\AuthorizedPaymentsProcessor;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\OrderProcessor;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\RefundProcessor;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
-use WooCommerce\PayPalCommerce\WcGateway\Settings\WcInboxNotes\InboxNoteAction;
-use WooCommerce\PayPalCommerce\WcGateway\Settings\WcInboxNotes\InboxNoteFactory;
-use WooCommerce\PayPalCommerce\WcGateway\Settings\WcInboxNotes\InboxNoteInterface;
-use WooCommerce\PayPalCommerce\WcGateway\Settings\WcInboxNotes\InboxNoteRegistrar;
-use WooCommerce\PayPalCommerce\WcGateway\Settings\WcTasks\Factory\SimpleRedirectTaskFactory;
-use WooCommerce\PayPalCommerce\WcGateway\Settings\WcTasks\Factory\SimpleRedirectTaskFactoryInterface;
-use WooCommerce\PayPalCommerce\WcGateway\Settings\WcTasks\Registrar\TaskRegistrar;
-use WooCommerce\PayPalCommerce\WcGateway\Settings\WcTasks\Registrar\TaskRegistrarInterface;
-use WooCommerce\PayPalCommerce\WcGateway\Settings\WcTasks\Tasks\SimpleRedirectTask;
+use WooCommerce\PayPalCommerce\WcGateway\WcInboxNotes\InboxNoteAction;
+use WooCommerce\PayPalCommerce\WcGateway\WcInboxNotes\InboxNoteFactory;
+use WooCommerce\PayPalCommerce\WcGateway\WcInboxNotes\InboxNoteInterface;
+use WooCommerce\PayPalCommerce\WcGateway\WcInboxNotes\InboxNoteRegistrar;
+use WooCommerce\PayPalCommerce\WcGateway\WcTasks\Factory\SimpleRedirectTaskFactory;
+use WooCommerce\PayPalCommerce\WcGateway\WcTasks\Factory\SimpleRedirectTaskFactoryInterface;
+use WooCommerce\PayPalCommerce\WcGateway\WcTasks\Registrar\TaskRegistrar;
+use WooCommerce\PayPalCommerce\WcGateway\WcTasks\Registrar\TaskRegistrarInterface;
+use WooCommerce\PayPalCommerce\WcGateway\WcTasks\Tasks\SimpleRedirectTask;
 use WooCommerce\PayPalCommerce\WcGateway\Shipping\ShippingCallbackUrlFactory;
 use WooCommerce\PayPalCommerce\WcGateway\StoreApi\Endpoint\CartEndpoint;
 use WooCommerce\PayPalCommerce\WcGateway\StoreApi\Factory\CartFactory;
@@ -1148,13 +1147,6 @@ return array(
 			$container->get( 'button.helper.context' )
 		);
 	},
-	'wcgateway.display-manager'                            => SingletonDecorator::make(
-		static function ( ContainerInterface $container ): DisplayManager {
-			$settings = $container->get( 'wcgateway.settings' );
-
-			return new DisplayManager( $settings );
-		}
-	),
 	'wcgateway.wp-paypal-locales-map'                      => static function ( ContainerInterface $container ): array {
 		return apply_filters(
 			'woocommerce_paypal_payments_button_locales',

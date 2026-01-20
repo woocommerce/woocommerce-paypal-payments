@@ -2,12 +2,12 @@
 /**
  * Represents the Task for simple redirection. See "Things to do next" WC section.
  *
- * @package WooCommerce\PayPalCommerce\WcGateway\Settings
+ * @package WooCommerce\PayPalCommerce\WcGateway\WcTasks\Tasks
  */
 
 declare( strict_types=1 );
 
-namespace WooCommerce\PayPalCommerce\WcGateway\Settings\WcTasks\Tasks;
+namespace WooCommerce\PayPalCommerce\WcGateway\WcTasks\Tasks;
 
 use Automattic\WooCommerce\Admin\Features\OnboardingTasks\Task;
 

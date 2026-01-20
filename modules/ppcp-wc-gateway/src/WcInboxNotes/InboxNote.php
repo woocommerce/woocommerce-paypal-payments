@@ -1,11 +1,11 @@
 <?php
 /**
- * @package WooCommerce\PayPalCommerce\WcGateway\Settings
+ * @package WooCommerce\PayPalCommerce\WcGateway\WcInboxNotes
  */
 
 declare( strict_types=1 );
 
-namespace WooCommerce\PayPalCommerce\WcGateway\Settings\WcInboxNotes;
+namespace WooCommerce\PayPalCommerce\WcGateway\WcInboxNotes;
 
 /**
  * A note that can be displayed in the WooCommerce inbox section.

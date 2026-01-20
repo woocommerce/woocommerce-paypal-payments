@@ -59,8 +59,8 @@ use WooCommerce\PayPalCommerce\WcGateway\Notice\UnsupportedCurrencyAdminNotice;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\AuthorizedPaymentsProcessor;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\CreditCardOrderInfoHandlingTrait;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
-use WooCommerce\PayPalCommerce\WcGateway\Settings\WcInboxNotes\InboxNoteRegistrar;
-use WooCommerce\PayPalCommerce\WcGateway\Settings\WcTasks\Registrar\TaskRegistrarInterface;
+use WooCommerce\PayPalCommerce\WcGateway\WcInboxNotes\InboxNoteRegistrar;
+use WooCommerce\PayPalCommerce\WcGateway\WcTasks\Registrar\TaskRegistrarInterface;
 
 /**
  * Class WcGatewayModule
