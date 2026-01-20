@@ -1,8 +1,15 @@
 import { __ } from '@wordpress/i18n';
 import { useCallback } from '@wordpress/element';
 
-import { CommonHooks, OnboardingHooks, PaymentHooks } from '@ppcp-settings/data';
-import { useActiveModal, useWooSettings } from '@ppcp-settings/data/common/hooks';
+import {
+	CommonHooks,
+	OnboardingHooks,
+	PaymentHooks,
+} from '@ppcp-settings/data';
+import {
+	useActiveModal,
+	useWooSettings,
+} from '@ppcp-settings/data/common/hooks';
 import Modal from '../Components/Payment/Modal';
 import PaymentMethodCard from '../Components/Payment/PaymentMethodCard';
 import { useFeatures } from '@ppcp-settings/data/features/hooks';
@@ -38,7 +45,6 @@ const TabPaymentMethods = () => {
 				'paypalShowLogo',
 				'threeDSecure',
 				'cardholderName',
-				'paymentLevelProcessing',
 				'fastlaneDisplayWatermark',
 			];
 
