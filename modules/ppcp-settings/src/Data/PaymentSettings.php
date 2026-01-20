@@ -42,13 +42,8 @@ class PaymentSettings extends AbstractDataModel {
 			'fastlane_display_watermark'  => false,
 			'venmo_enabled'               => false,
 			'paylater_enabled'            => false,
-			'applepay_button_enabled'     => false,
 			'applepay_validated'          => false,
-			'applepay_button_type'        => 'plain',
-			'applepay_button_color'       => 'black',
-			'applepay_button_language'    => '',
 			'applepay_checkout_data_mode' => 'use_wc',
-			'ppcp_onboarding_apple'       => '',
 		);
 	}
 
@@ -111,10 +106,11 @@ class PaymentSettings extends AbstractDataModel {
 				return $this->get_paylater_enabled();
 
 			default:
-				$gateway = $this->get_gateway( $method_id );
+				$option_key = 'woocommerce_' . $method_id . '_settings';
+				$settings   = get_option( $option_key, array() );
 
-				if ( $gateway ) {
-					return wc_string_to_bool( $gateway->enabled );
+				if ( ! empty( $settings ) && isset( $settings['enabled'] ) ) {
+					return wc_string_to_bool( $settings['enabled'] );
 				}
 
 				return false;
@@ -123,10 +119,6 @@ class PaymentSettings extends AbstractDataModel {
 
 	/**
 	 * Updates the payment method title.
-	 *
-	 * @param string $method_id ID of the payment method.
-	 * @param string $title     The new title.
-	 * @return void
 	 */
 	public function set_method_title( string $method_id, string $title ): void {
 		$gateway = $this->get_gateway( $method_id );
@@ -140,10 +132,6 @@ class PaymentSettings extends AbstractDataModel {
 
 	/**
 	 * Updates the payment method description.
-	 *
-	 * @param string $method_id   ID of the payment method.
-	 * @param string $description The new description.
-	 * @return void
 	 */
 	public function set_method_description( string $method_id, string $description ): void {
 		$gateway = $this->get_gateway( $method_id );
@@ -158,7 +146,7 @@ class PaymentSettings extends AbstractDataModel {
 	/**
 	 * Gets the payment method title.
 	 *
-	 * @param string $method_id ID of the payment method.
+	 * @param string $method_id     ID of the payment method.
 	 * @param string $default_title Default title to return if method not found.
 	 * @return string The method title, or an empty string if not found.
 	 */
@@ -173,18 +161,15 @@ class PaymentSettings extends AbstractDataModel {
 	}
 
 	/**
-	 * Get PayPal show logo.
-	 *
-	 * @return bool
+	 * Whether to display the PayPal logo on the checkout page as an additional trust sign.
 	 */
 	public function get_paypal_show_logo(): bool {
 		return (bool) $this->data['paypal_show_logo'];
 	}
 
 	/**
-	 * Get cardholder name.
-	 *
-	 * @return bool
+	 * Whether to ask for the card-holder name during checkout.
+	 * If true, a new field is displayed during checkout when paying with CC.
 	 */
 	public function get_cardholder_name(): bool {
 		return (bool) $this->data['cardholder_name'];
@@ -192,8 +177,6 @@ class PaymentSettings extends AbstractDataModel {
 
 	/**
 	 * Get Fastlane display watermark.
-	 *
-	 * @return bool
 	 */
 	public function get_fastlane_display_watermark(): bool {
 		return (bool) $this->data['fastlane_display_watermark'];
@@ -201,8 +184,6 @@ class PaymentSettings extends AbstractDataModel {
 
 	/**
 	 * Get Venmo enabled.
-	 *
-	 * @return bool
 	 */
 	public function get_venmo_enabled(): bool {
 		return (bool) $this->data['venmo_enabled'];
@@ -210,28 +191,20 @@ class PaymentSettings extends AbstractDataModel {
 
 	/**
 	 * Get Pay Later enabled.
-	 *
-	 * @return bool
 	 */
 	public function get_paylater_enabled(): bool {
 		return (bool) $this->data['paylater_enabled'];
 	}
 
 	/**
-	 * Set PayPal show logo.
-	 *
-	 * @param bool $value The value.
-	 * @return void
+	 * @see self::get_paypal_show_logo()
 	 */
 	public function set_paypal_show_logo( bool $value ): void {
 		$this->data['paypal_show_logo'] = $value;
 	}
 
 	/**
-	 * Set cardholder name.
-	 *
-	 * @param bool $value The value.
-	 * @return void
+	 * @see self::get_cardholder_name()
 	 */
 	public function set_cardholder_name( bool $value ): void {
 		$this->data['cardholder_name'] = $value;
@@ -239,9 +212,6 @@ class PaymentSettings extends AbstractDataModel {
 
 	/**
 	 * Set Fastlane display watermark.
-	 *
-	 * @param bool $value The value.
-	 * @return void
 	 */
 	public function set_fastlane_display_watermark( bool $value ): void {
 		$this->data['fastlane_display_watermark'] = $value;
@@ -249,9 +219,6 @@ class PaymentSettings extends AbstractDataModel {
 
 	/**
 	 * Set Venmo enabled.
-	 *
-	 * @param bool $value The value.
-	 * @return void
 	 */
 	public function set_venmo_enabled( bool $value ): void {
 		$this->data['venmo_enabled'] = $value;
@@ -259,9 +226,6 @@ class PaymentSettings extends AbstractDataModel {
 
 	/**
 	 * Set Pay Later enabled.
-	 *
-	 * @param bool $value The value.
-	 * @return void
 	 */
 	public function set_paylater_enabled( bool $value ): void {
 		$this->data['paylater_enabled'] = $value;
@@ -269,9 +233,6 @@ class PaymentSettings extends AbstractDataModel {
 
 	/**
 	 * Get the gateway object for the given method ID.
-	 *
-	 * @param string $method_id ID of the payment method.
-	 * @return WC_Payment_Gateway|null
 	 */
 	private function get_gateway( string $method_id ): ?WC_Payment_Gateway {
 		if ( isset( $this->unsaved_gateways[ $method_id ] ) ) {
@@ -292,31 +253,9 @@ class PaymentSettings extends AbstractDataModel {
 
 	/**
 	 * Store the gateway object for later saving.
-	 *
-	 * @param WC_Payment_Gateway $gateway The gateway object.
-	 * @return void
 	 */
 	private function modified_gateway( WC_Payment_Gateway $gateway ): void {
 		$this->unsaved_gateways[ $gateway->id ] = $gateway;
-	}
-
-	/**
-	 * Get Apple Pay button enabled.
-	 *
-	 * @return bool
-	 */
-	public function get_applepay_button_enabled(): bool {
-		return (bool) $this->data['applepay_button_enabled'];
-	}
-
-	/**
-	 * Set Apple Pay button enabled.
-	 *
-	 * @param bool $value The value.
-	 * @return void
-	 */
-	public function set_applepay_button_enabled( bool $value ): void {
-		$this->data['applepay_button_enabled'] = $value;
 	}
 
 	/**
@@ -327,104 +266,25 @@ class PaymentSettings extends AbstractDataModel {
 	}
 
 	/**
-	 * Whether the domain verification for ApplePay completed successfully.
+	 * @see self::get_applepay_validated()
 	 */
 	public function set_applepay_validated( bool $value ): void {
 		$this->data['applepay_validated'] = $value;
 	}
 
 	/**
-	 * Get Apple Pay button type.
-	 *
-	 * @return string
-	 */
-	public function get_applepay_button_type(): string {
-		return (string) $this->data['applepay_button_type'];
-	}
-
-	/**
-	 * Set Apple Pay button type.
-	 *
-	 * @param string $value The value.
-	 * @return void
-	 */
-	public function set_applepay_button_type( string $value ): void {
-		$this->data['applepay_button_type'] = $value;
-	}
-
-	/**
-	 * Get Apple Pay button color.
-	 *
-	 * @return string
-	 */
-	public function get_applepay_button_color(): string {
-		return (string) $this->data['applepay_button_color'];
-	}
-
-	/**
-	 * Set Apple Pay button color.
-	 *
-	 * @param string $value The value.
-	 * @return void
-	 */
-	public function set_applepay_button_color( string $value ): void {
-		$this->data['applepay_button_color'] = $value;
-	}
-
-	/**
-	 * Get Apple Pay button language.
-	 *
-	 * @return string
-	 */
-	public function get_applepay_button_language(): string {
-		return (string) $this->data['applepay_button_language'];
-	}
-
-	/**
-	 * Set Apple Pay button language.
-	 *
-	 * @param string $value The value.
-	 * @return void
-	 */
-	public function set_applepay_button_language( string $value ): void {
-		$this->data['applepay_button_language'] = $value;
-	}
-
-	/**
 	 * Get Apple Pay checkout data mode.
-	 *
-	 * @return string
 	 */
 	public function get_applepay_checkout_data_mode(): string {
 		return (string) $this->data['applepay_checkout_data_mode'];
 	}
 
 	/**
-	 * Set Apple Pay checkout data mode.
+	 * Todo: This setter is not used anywhere/no UI option.
 	 *
-	 * @param string $value The value.
-	 * @return void
+	 * @see self::get_applepay_checkout_data_mode()
 	 */
 	public function set_applepay_checkout_data_mode( string $value ): void {
 		$this->data['applepay_checkout_data_mode'] = $value;
-	}
-
-	/**
-	 * Get PPCP onboarding Apple.
-	 *
-	 * @return string
-	 */
-	public function get_ppcp_onboarding_apple(): string {
-		return (string) $this->data['ppcp_onboarding_apple'];
-	}
-
-	/**
-	 * Set PPCP onboarding Apple.
-	 *
-	 * @param string $value The value.
-	 * @return void
-	 */
-	public function set_ppcp_onboarding_apple( string $value ): void {
-		$this->data['ppcp_onboarding_apple'] = $value;
 	}
 }

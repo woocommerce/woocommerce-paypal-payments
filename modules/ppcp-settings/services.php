@@ -17,7 +17,7 @@ use WooCommerce\PayPalCommerce\Assets\AssetGetterFactory;
 use WooCommerce\PayPalCommerce\Axo\Gateway\AxoGateway;
 use WooCommerce\PayPalCommerce\Button\Helper\MessagesApply;
 use WooCommerce\PayPalCommerce\Googlepay\GooglePayGateway;
-use WooCommerce\PayPalCommerce\Googlepay\Helper\ApmProductStatus;
+use WooCommerce\PayPalCommerce\Googlepay\Helper\GoogleProductStatus;
 use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\BancontactGateway;
 use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\BlikGateway;
 use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\EPSGateway;
@@ -116,12 +116,12 @@ return array(
 		$can_use_pay_later           = $container->get( 'button.helper.messages-apply' );
 
 		return new OnboardingProfile(
+			$can_use_fastlane,
 			$can_use_casual_selling,
 			$can_use_vaulting,
 			$can_use_card_payments,
 			$can_use_subscriptions,
 			$should_skip_payment_methods,
-			$can_use_fastlane,
 			$can_use_pay_later->for_country()
 		);
 	},
@@ -267,7 +267,7 @@ return array(
 	},
 	'settings.rest.pay_later_messaging'                   => static function ( ContainerInterface $container ): PayLaterMessagingEndpoint {
 		return new PayLaterMessagingEndpoint(
-			$container->get( 'wcgateway.settings' ),
+			$container->get( 'settings.data.paylater-messaging-settings' ),
 			$container->get( 'paylater-configurator.endpoint.save-config' )
 		);
 	},
@@ -713,7 +713,7 @@ return array(
 		assert( $applepay_product_status instanceof AppleProductStatus );
 
 		$googlepay_product_status = $container->get( 'googlepay.helpers.apm-product-status' );
-		assert( $googlepay_product_status instanceof ApmProductStatus );
+		assert( $googlepay_product_status instanceof GoogleProductStatus );
 
 		return new PaymentMethodsEligibilityService(
 			$container->get( 'api.merchant.country' ),

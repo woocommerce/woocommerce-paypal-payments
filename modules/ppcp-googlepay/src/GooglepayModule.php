@@ -15,20 +15,19 @@ use WooCommerce\PayPalCommerce\ApiClient\Factory\ExperienceContextBuilder;
 use WooCommerce\PayPalCommerce\Button\Assets\ButtonInterface;
 use WooCommerce\PayPalCommerce\Button\Assets\SmartButtonInterface;
 use WooCommerce\PayPalCommerce\Googlepay\Endpoint\UpdatePaymentDataEndpoint;
-use WooCommerce\PayPalCommerce\Googlepay\Helper\ApmProductStatus;
+use WooCommerce\PayPalCommerce\Googlepay\Helper\GoogleProductStatus;
 use WooCommerce\PayPalCommerce\Googlepay\Helper\AvailabilityNotice;
 use WooCommerce\PayPalCommerce\Settings\Data\Definition\FeaturesDefinition;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExecutableModule;
-use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExtendingModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ModuleClassNameIdTrait;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ServiceModule;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
-use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
+use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
 
 /**
  * Class GooglepayModule
  */
-class GooglepayModule implements ServiceModule, ExtendingModule, ExecutableModule {
+class GooglepayModule implements ServiceModule, ExecutableModule {
 	use ModuleClassNameIdTrait;
 
 	/**
@@ -41,13 +40,6 @@ class GooglepayModule implements ServiceModule, ExtendingModule, ExecutableModul
 	/**
 	 * {@inheritDoc}
 	 */
-	public function extensions(): array {
-		return require __DIR__ . '/../extensions.php';
-	}
-
-	/**
-	 * {@inheritDoc}
-	 */
 	public function run( ContainerInterface $c ): bool {
 
 		// Clears product status when appropriate.
@@ -55,7 +47,7 @@ class GooglepayModule implements ServiceModule, ExtendingModule, ExecutableModul
 			'woocommerce_paypal_payments_clear_apm_product_status',
 			static function () use ( $c ): void {
 				$apm_status = $c->get( 'googlepay.helpers.apm-product-status' );
-				assert( $apm_status instanceof ApmProductStatus );
+				assert( $apm_status instanceof GoogleProductStatus );
 				$apm_status->clear();
 			}
 		);
@@ -72,7 +64,6 @@ class GooglepayModule implements ServiceModule, ExtendingModule, ExecutableModul
 				// Load the button handler.
 				$button = $c->get( 'googlepay.button' );
 				assert( $button instanceof ButtonInterface );
-				$button->initialize();
 
 				// Show notice if there are product availability issues.
 				$availability_notice = $c->get( 'googlepay.availability_notice' );
@@ -88,7 +79,7 @@ class GooglepayModule implements ServiceModule, ExtendingModule, ExecutableModul
 				// Initializes button rendering.
 				add_action(
 					'wp',
-					static function () use ( $c, $button ) {
+					static function () use ( $button ) {
 						if ( is_admin() ) {
 							return;
 						}
@@ -189,10 +180,10 @@ class GooglepayModule implements ServiceModule, ExtendingModule, ExecutableModul
 					return $methods;
 				}
 
-				$settings = $c->get( 'wcgateway.settings' );
-				assert( $settings instanceof Settings );
+				$settings = $c->get( 'settings.settings-provider' );
+				assert( $settings instanceof SettingsProvider );
 
-				if ( $settings->has( 'googlepay_button_enabled' ) && $settings->get( 'googlepay_button_enabled' ) ) {
+				if ( $settings->googlepay_enabled() ) {
 					$googlepay_gateway = $c->get( 'googlepay.wc-gateway' );
 					assert( $googlepay_gateway instanceof WC_Payment_Gateway );
 
@@ -235,7 +226,7 @@ class GooglepayModule implements ServiceModule, ExtendingModule, ExecutableModul
 			'woocommerce_paypal_payments_rest_common_merchant_features',
 			function ( array $features ) use ( $c ): array {
 				$product_status = $c->get( 'googlepay.helpers.apm-product-status' );
-				assert( $product_status instanceof ApmProductStatus );
+				assert( $product_status instanceof GoogleProductStatus );
 
 				$google_pay_enabled = $product_status->is_active();
 
@@ -256,8 +247,8 @@ class GooglepayModule implements ServiceModule, ExtendingModule, ExecutableModul
 					return $data;
 				}
 
-				$settings = $c->get( 'wcgateway.settings' );
-				assert( $settings instanceof Settings );
+				$settings = $c->get( 'settings.settings-provider' );
+				assert( $settings instanceof SettingsProvider );
 
 				$experience_context_builder = $c->get( 'wcgateway.builder.experience-context' );
 				assert( $experience_context_builder instanceof ExperienceContextBuilder );
@@ -269,8 +260,8 @@ class GooglepayModule implements ServiceModule, ExtendingModule, ExecutableModul
 				);
 
 				$three_d_secure_contingency =
-					$settings->has( '3d_secure_contingency' )
-						? apply_filters( 'woocommerce_paypal_payments_three_d_secure_contingency', $settings->get( '3d_secure_contingency' ) )
+					$settings->three_d_secure_enum()
+						? apply_filters( 'woocommerce_paypal_payments_three_d_secure_contingency', $settings->three_d_secure_enum() )
 						: '';
 
 				if (

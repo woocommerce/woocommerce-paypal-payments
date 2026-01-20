@@ -13,7 +13,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Entity\SellerStatusCapability;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\ProductStatus;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\SellerStatus;
 
-class ApmProductStatus extends ProductStatus {
+class GoogleProductStatus extends ProductStatus {
 	public const KEY             = 'products_googlepay_enabled';
 	public const CAPABILITY_NAME = 'GOOGLE_PAY';
 
