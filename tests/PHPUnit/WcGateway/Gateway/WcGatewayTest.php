@@ -22,7 +22,6 @@ use WooCommerce\PayPalCommerce\WcGateway\Processor\AuthorizedPaymentsProcessor;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\OrderProcessor;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\RefundProcessor;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
-use WooCommerce\PayPalCommerce\WcGateway\Settings\SettingsRenderer;
 use Mockery;
 use function Brain\Monkey\Functions\expect;
 use function Brain\Monkey\Functions\when;
@@ -33,7 +32,6 @@ class WcGatewayTest extends TestCase
 	private $sessionHandler;
 	private $fundingSource = null;
 
-	private $settingsRenderer;
 	private $funding_source_renderer;
 	private $orderProcessor;
 	private $settings;
@@ -59,7 +57,6 @@ class WcGatewayTest extends TestCase
 		});
 		when('wc_clean')->returnArg();
 
-		$this->settingsRenderer = Mockery::mock(SettingsRenderer::class);
 		$this->orderProcessor = Mockery::mock(OrderProcessor::class);
 		$this->settings = Mockery::mock(Settings::class);
 		$this->sessionHandler = Mockery::mock(SessionHandler::class);
@@ -102,7 +99,6 @@ class WcGatewayTest extends TestCase
 	private function createGateway()
 	{
 		return new PayPalGateway(
-			$this->settingsRenderer,
 			$this->funding_source_renderer,
 			$this->orderProcessor,
 			$this->settings,
