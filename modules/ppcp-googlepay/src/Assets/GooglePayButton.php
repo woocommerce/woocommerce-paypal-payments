@@ -1,120 +1,69 @@
 <?php
 /**
- * Registers and configures the necessary Javascript for the button, credit messaging and DCC fields.
+ * Registers and configures the necessary Javascript for the button, credit messaging and DCC
+ * fields.
  *
  * @package WooCommerce\PayPalCommerce\Googlepay\Assets
  */
 
-declare(strict_types=1);
+declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\Googlepay\Assets;
 
-use Exception;
 use Psr\Log\LoggerInterface;
 use WC_Countries;
+use WC_AJAX;
 use WooCommerce\PayPalCommerce\Assets\AssetGetter;
 use WooCommerce\PayPalCommerce\Button\Assets\ButtonInterface;
 use WooCommerce\PayPalCommerce\Button\Helper\Context;
 use WooCommerce\PayPalCommerce\Googlepay\Endpoint\UpdatePaymentDataEndpoint;
 use WooCommerce\PayPalCommerce\Googlepay\GooglePayGateway;
-use WooCommerce\PayPalCommerce\Settings\Data\SettingsModel;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
 use WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\SettingsStatus;
-use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
+use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
 
 /**
  * Class Button
  */
-class Button implements ButtonInterface {
+class GooglePayButton implements ButtonInterface {
 
-	/**
-	 * Context data provider.
-	 *
-	 * @var Context $context
-	 */
 	private Context $context;
 
 	private AssetGetter $asset_getter;
 
-	/**
-	 * The URL to the SDK.
-	 *
-	 * @var string
-	 */
-	private $sdk_url;
+	private string $sdk_url;
 
-	/**
-	 * The assets version.
-	 *
-	 * @var string
-	 */
-	private $version;
+	private string $version;
 
-	/**
-	 * The settings.
-	 *
-	 * @var Settings
-	 */
-	private $settings;
+	private SettingsProvider $settings;
 
-	/**
-	 * The environment object.
-	 *
-	 * @var Environment
-	 */
-	private $environment;
+	private Environment $environment;
 
-	/**
-	 * The Settings status helper.
-	 *
-	 * @var SettingsStatus
-	 */
-	private $settings_status;
+	private SettingsStatus $settings_status;
 
-	/**
-	 * The logger.
-	 *
-	 * @var LoggerInterface
-	 */
-	private $logger;
-
-	/**
-	 * The Subscription Helper.
-	 *
-	 * @var SubscriptionHelper
-	 */
-	private $subscription_helper;
-
-	/**
-	 * @var SettingsModel|null New settings UI model.
-	 */
-	private ?SettingsModel $new_settings;
+	private SubscriptionHelper $subscription_helper;
 
 	/**
 	 * @param AssetGetter        $asset_getter
-	 * @param string             $sdk_url The URL to the SDK.
-	 * @param string             $version The assets version.
+	 * @param string             $sdk_url             The URL to the SDK.
+	 * @param string             $version             The assets version.
 	 * @param SubscriptionHelper $subscription_helper The subscription helper.
-	 * @param Settings           $settings The legacy settings.
-	 * @param Environment        $environment The environment object.
-	 * @param SettingsStatus     $settings_status The Settings status helper.
-	 * @param LoggerInterface    $logger The logger.
-	 * @param Context            $context Context data provider.
-	 * @param SettingsModel|null $new_settings The new settings model.
+	 * @param SettingsProvider   $settings            The legacy settings.
+	 * @param Environment        $environment         The environment object.
+	 * @param SettingsStatus     $settings_status     The Settings status helper.
+	 * @param Context            $context             Context data provider.
 	 */
 	public function __construct(
 		AssetGetter $asset_getter,
 		string $sdk_url,
 		string $version,
 		SubscriptionHelper $subscription_helper,
-		Settings $settings,
+		SettingsProvider $settings,
 		Environment $environment,
 		SettingsStatus $settings_status,
-		LoggerInterface $logger,
-		Context $context,
-		SettingsModel $new_settings = null
+		Context $context
 	) {
 		$this->asset_getter        = $asset_getter;
 		$this->sdk_url             = $sdk_url;
@@ -123,106 +72,17 @@ class Button implements ButtonInterface {
 		$this->settings            = $settings;
 		$this->environment         = $environment;
 		$this->settings_status     = $settings_status;
-		$this->logger              = $logger;
-		$this->new_settings        = $new_settings;
 		$this->context             = $context;
 	}
 
-	/**
-	 * Initializes the button.
-	 */
 	public function initialize(): void {
-		add_filter( 'ppcp_onboarding_options', array( $this, 'add_onboarding_options' ), 10, 1 );
-		add_filter( 'ppcp_partner_referrals_option', array( $this, 'filter_partner_referrals_option' ), 10, 1 );
-		add_filter( 'ppcp_partner_referrals_data', array( $this, 'add_partner_referrals_data' ), 10, 1 );
-	}
-
-	/**
-	 * Adds the GooglePay onboarding option.
-	 *
-	 * @param string $options The options.
-	 * @return string
-	 *
-	 * @psalm-suppress MissingClosureParamType
-	 */
-	public function add_onboarding_options( $options ): string {
-		if ( ! apply_filters( 'woocommerce_paypal_payments_google_pay_onboarding_option', false ) ) {
-			return $options;
-		}
-
-		$checked = '';
-		try {
-			$onboard_with_google = $this->settings->get( 'ppcp-onboarding-google' );
-			if ( $onboard_with_google === '1' ) {
-				$checked = 'checked';
-			}
-		} catch ( NotFoundException $exception ) {
-			$checked = '';
-		}
-
-		return $options
-			. '<li><label><input type="checkbox" id="ppcp-onboarding-google" ' . $checked . ' data-onboarding-option="ppcp-onboarding-google"> '
-			. __( 'Onboard with GooglePay', 'woocommerce-paypal-payments' )
-			. '</label></li>';
-	}
-
-	/**
-	 * Filters a partner referrals option.
-	 *
-	 * @param array $option The option data.
-	 * @return array
-	 */
-	public function filter_partner_referrals_option( array $option ): array {
-		if ( $option['valid'] ) {
-			return $option;
-		}
-		if ( $option['field'] === 'ppcp-onboarding-google' ) {
-			$option['valid'] = true;
-			$option['value'] = ( $option['value'] ? '1' : '' );
-		}
-		return $option;
-	}
-
-	/**
-	 * Adds to partner referrals data.
-	 *
-	 * @param array $data The referrals data.
-	 * @return array
-	 */
-	public function add_partner_referrals_data( array $data ): array {
-		try {
-			$onboard_with_google = $this->settings->get( 'ppcp-onboarding-google' );
-			if ( ! wc_string_to_bool( $onboard_with_google ) ) {
-				return $data;
-			}
-		} catch ( NotFoundException $exception ) {
-			return $data;
-		}
-
-		if ( ! in_array( 'PAYMENT_METHODS', $data['products'], true ) ) {
-			if ( in_array( 'PPCP', $data['products'], true ) ) {
-				$data['products'][] = 'PAYMENT_METHODS';
-			} elseif ( in_array( 'EXPRESS_CHECKOUT', $data['products'], true ) ) { // A bit sketchy, maybe replace on the EXPRESS_CHECKOUT index.
-				$data['products'][0] = 'PAYMENT_METHODS';
-			}
-		}
-
-		$data['capabilities'][] = 'GOOGLE_PAY';
-
-		return $data;
 	}
 
 	/**
 	 * Returns if Google Pay button is enabled
-	 *
-	 * @return bool
 	 */
 	public function is_enabled(): bool {
-		try {
-			return $this->settings->has( 'googlepay_button_enabled' ) && $this->settings->get( 'googlepay_button_enabled' );
-		} catch ( Exception $e ) {
-			return false;
-		}
+		return $this->settings->googlepay_enabled();
 	}
 
 	/**
@@ -239,8 +99,8 @@ class Button implements ButtonInterface {
 
 		$button_enabled_product  = $this->settings_status->is_smart_button_enabled_for_location( 'product' );
 		$button_enabled_cart     = $this->settings_status->is_smart_button_enabled_for_location( 'cart' );
-		$button_enabled_checkout = true;
-		$button_enabled_payorder = true;
+		$button_enabled_checkout = true; // todo - why is this hardcoded as true?
+		$button_enabled_payorder = true; // todo - why is this hardcoded as true?
 		$button_enabled_minicart = $this->settings_status->is_smart_button_enabled_for_location( 'mini-cart' );
 
 		if (
@@ -267,6 +127,7 @@ class Button implements ButtonInterface {
 			'woocommerce_paypal_payments_sdk_components_hook',
 			function ( $components ) {
 				$components[] = 'googlepay';
+
 				return $components;
 			}
 		);
@@ -472,27 +333,26 @@ class Button implements ButtonInterface {
 			$shipping['countries'] = array_keys( $this->wc_countries()->get_shipping_countries() );
 		}
 
-		$is_enabled = $this->settings->has( 'googlepay_button_enabled' ) && $this->settings->get( 'googlepay_button_enabled' );
-
 		$available_gateways    = WC()->payment_gateways->get_available_payment_gateways();
 		$is_wc_gateway_enabled = isset( $available_gateways[ GooglePayGateway::ID ] );
 
 		return array(
 			'environment'           => $this->environment->current_environment_is( Environment::SANDBOX ) ? 'TEST' : 'PRODUCTION',
 			'is_debug'              => defined( 'WP_DEBUG' ) && WP_DEBUG,
-			'is_enabled'            => $is_enabled,
+			'is_enabled'            => $this->is_enabled(),
 			'is_wc_gateway_enabled' => $is_wc_gateway_enabled,
 			'sdk_url'               => $this->sdk_url,
 			'button'                => array(
 				'wrapper'           => '#ppc-button-googlepay-container',
-				'style'             => $this->button_styles_for_context( 'cart' ), // For now use cart. Pass the context if necessary.
+				// style: For now we use cart. Pass the context if necessary.
+				'style'             => $this->button_styles_for_context( 'cart' ),
 				'mini_cart_wrapper' => '#ppc-button-googlepay-container-minicart',
 				'mini_cart_style'   => $this->button_styles_for_context( 'mini-cart' ),
 			),
 			'shipping'              => $shipping,
 			'ajax'                  => array(
 				'update_payment_data' => array(
-					'endpoint' => \WC_AJAX::get_endpoint( UpdatePaymentDataEndpoint::ENDPOINT ),
+					'endpoint' => WC_AJAX::get_endpoint( UpdatePaymentDataEndpoint::ENDPOINT ),
 					'nonce'    => wp_create_nonce( UpdatePaymentDataEndpoint::nonce() ),
 				),
 			),
@@ -507,24 +367,13 @@ class Button implements ButtonInterface {
 	 * @return array
 	 */
 	private function button_styles_for_context( string $context ): array {
-		// Use the cart/checkout styles for blocks.
-		$context = str_replace( '-block', '', $context );
+		$styles = $this->settings->googlepay_styles( $context );
 
-		$values = array(
-			'color'    => 'black',
-			'type'     => 'pay',
-			'language' => 'en',
+		return array(
+			'color'    => $styles->color,
+			'type'     => $styles->label,
+			'language' => $this->settings->googlepay_button_language(),
 		);
-
-		foreach ( $values as $style => $value ) {
-			if ( $this->settings->has( 'googlepay_button_' . $context . '_' . $style ) ) {
-				$values[ $style ] = $this->settings->get( 'googlepay_button_' . $context . '_' . $style );
-			} elseif ( $this->settings->has( 'googlepay_button_' . $style ) ) {
-				$values[ $style ] = $this->settings->get( 'googlepay_button_' . $style );
-			}
-		}
-
-		return $values;
 	}
 
 	/**
@@ -537,17 +386,15 @@ class Button implements ButtonInterface {
 	}
 
 	/**
-	 * Check if new settings model exist and if so check enable pay now setting,
-	 * if none of the above is true, check legacy settings for shipping enabled.
+	 * Check if the "Pay Now" setting is enabled.
 	 *
-	 * @return bool Whether shipping should be used or not.
-	 * @throws NotFoundException If the settings are not found.
+	 * When enabled, we enable the shipping callback, to capture the shipping
+	 * address inside the GooglePay sheet, rather than expecting the buyer to
+	 * provide that address on the checkout page.
+	 *
+	 * @return bool Whether the shipping callback should be used.
 	 */
 	private function should_use_shipping(): bool {
-		if ( ! is_null( $this->new_settings ) && $this->new_settings->get_enable_pay_now() === true ) {
-			return true;
-		}
-
-		return $this->settings->has( 'googlepay_button_shipping_enabled' ) && $this->settings->get( 'googlepay_button_shipping_enabled' );
+		return $this->settings->enable_pay_now();
 	}
 }
