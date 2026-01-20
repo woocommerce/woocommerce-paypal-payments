@@ -234,7 +234,7 @@ class ScriptDataHandler {
 			);
 			$script_data['PcpPayLaterConfigurator'] = array(
 				'config'           => array(),
-				'merchantClientId' => $this->settings->get( 'client_id' ),
+				'merchantClientId' => $this->settings->has( 'client_id' ) ? $this->settings->get( 'client_id' ) : '',
 				'partnerClientId'  => $this->merchant_id,
 				'bnCode'           => $this->partner_attribution->get_bn_code(),
 			);
