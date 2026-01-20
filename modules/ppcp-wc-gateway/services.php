@@ -1149,11 +1149,6 @@ return array(
 			$container->get( 'button.helper.context' )
 		);
 	},
-	'wcgateway.cli.settings.command'                       => function ( ContainerInterface $container ): SettingsCommand {
-		return new SettingsCommand(
-			$container->get( 'wcgateway.settings' )
-		);
-	},
 	'wcgateway.display-manager'                            => SingletonDecorator::make(
 		static function ( ContainerInterface $container ): DisplayManager {
 			$settings = $container->get( 'wcgateway.settings' );
