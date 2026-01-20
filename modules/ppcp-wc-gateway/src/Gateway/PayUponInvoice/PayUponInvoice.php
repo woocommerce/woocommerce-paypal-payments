@@ -21,8 +21,6 @@ use WooCommerce\PayPalCommerce\WcGateway\Helper\CheckoutHelper;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\PayUponInvoiceHelper;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\PayUponInvoiceProductStatus;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\TransactionIdHandlingTrait;
-use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
-use WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException;
 use WP_Error;
 
 /**
@@ -45,13 +43,6 @@ class PayUponInvoice {
 	 * @var LoggerInterface
 	 */
 	protected $logger;
-
-	/**
-	 * The settings.
-	 *
-	 * @var Settings
-	 */
-	protected $settings;
 
 	/**
 	 * The PUI helper.
@@ -100,7 +91,6 @@ class PayUponInvoice {
 	 *
 	 * @param PayUponInvoiceOrderEndpoint $pui_order_endpoint The PUI order endpoint.
 	 * @param LoggerInterface             $logger The logger.
-	 * @param Settings                    $settings The settings.
 	 * @param bool                        $is_connected Whether onboarding was completed.
 	 * @param string                      $current_ppcp_settings_page_id Current PayPal settings page id.
 	 * @param PayUponInvoiceProductStatus $pui_product_status The PUI product status.
@@ -111,7 +101,6 @@ class PayUponInvoice {
 	public function __construct(
 		PayUponInvoiceOrderEndpoint $pui_order_endpoint,
 		LoggerInterface $logger,
-		Settings $settings,
 		bool $is_connected,
 		string $current_ppcp_settings_page_id,
 		PayUponInvoiceProductStatus $pui_product_status,
@@ -121,7 +110,6 @@ class PayUponInvoice {
 	) {
 		$this->pui_order_endpoint            = $pui_order_endpoint;
 		$this->logger                        = $logger;
-		$this->settings                      = $settings;
 		$this->is_connected                  = $is_connected;
 		$this->current_ppcp_settings_page_id = $current_ppcp_settings_page_id;
 		$this->pui_product_status            = $pui_product_status;
@@ -132,67 +120,8 @@ class PayUponInvoice {
 
 	/**
 	 * Initializes PUI integration.
-	 *
-	 * @throws NotFoundException When setting is not found.
 	 */
 	public function init(): void {
-		if ( $this->pui_helper->is_pui_gateway_enabled() ) {
-			$this->settings->set( 'fraudnet_enabled', true );
-			$this->settings->persist();
-		}
-
-		add_filter(
-			'ppcp_partner_referrals_option',
-			function ( array $option ): array {
-				if ( $option['valid'] ) {
-					return $option;
-				}
-				if ( $option['field'] === 'ppcp-onboarding-pui' ) {
-					$option['valid'] = true;
-					$option['value'] = ( $option['value'] ? '1' : '' );
-				}
-				return $option;
-			}
-		);
-
-		add_filter(
-			'ppcp_partner_referrals_data',
-			function ( array $data ): array {
-				try {
-					$onboard_with_pui = $this->settings->get( 'ppcp-onboarding-pui' );
-					if ( $onboard_with_pui !== '1' ) {
-						return $data;
-					}
-				} catch ( NotFoundException $exception ) {
-					return $data;
-				}
-
-				$data['business_entity'] = array(
-					'business_type' => array(
-						'type' => 'PRIVATE_CORPORATION',
-					),
-					'addresses'     => array(
-						array(
-							'address_line_1' => WC()->countries->get_base_address(),
-							'admin_area_1'   => WC()->countries->get_base_city(),
-							'postal_code'    => WC()->countries->get_base_postcode(),
-							'country_code'   => WC()->countries->get_base_country(),
-							'type'           => 'WORK',
-						),
-					),
-				);
-
-				if ( in_array( 'PPCP', $data['products'], true ) ) {
-					$data['products'][] = 'PAYMENT_METHODS';
-				} elseif ( in_array( 'EXPRESS_CHECKOUT', $data['products'], true ) ) {
-					$data['products'][0] = 'PAYMENT_METHODS';
-				}
-				$data['capabilities'][] = 'PAY_UPON_INVOICE';
-
-				return $data;
-			}
-		);
-
 		add_action(
 			'woocommerce_paypal_payments_payment_capture_completed_webhook_handler',
 			function ( WC_Order $wc_order, string $order_id ) {
