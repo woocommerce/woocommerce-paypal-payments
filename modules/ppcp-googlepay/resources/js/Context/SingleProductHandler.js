@@ -55,6 +55,12 @@ class SingleProductHandler extends BaseHandler {
 		} );
 	}
 
+	validateForm() {
+		return this.actionHandler().updateCart( {
+			keepShipping: true,
+		} );
+	}
+
 	createOrder() {
 		return this.actionHandler()
 			.configuration()
