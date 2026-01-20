@@ -21,8 +21,6 @@ declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce;
 
-use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
-
 define( 'PAYPAL_API_URL', 'https://api-m.paypal.com' );
 define( 'PAYPAL_URL', 'https://www.paypal.com' );
 define( 'PAYPAL_SANDBOX_API_URL', 'https://api-m.sandbox.paypal.com' );
@@ -218,7 +216,7 @@ define( 'PPCP_PAYPAL_BN_CODE', 'Woo_PPCP' );
 				$links,
 				sprintf(
 					'<a href="%1$s">%2$s</a>',
-					admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway&ppcp-tab=' . Settings::CONNECTION_TAB_ID ),
+					admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway&ppcp-tab=ppcp-connection' ),
 					__( 'Settings', 'woocommerce-paypal-payments' )
 				)
 			);
