@@ -16,6 +16,7 @@ use WooCommerce\PayPalCommerce\Vaulting\WooCommercePaymentTokens;
 use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
 use WooCommerce\PayPalCommerce\TestCase;
 use WooCommerce\PayPalCommerce\Vaulting\PaymentTokenRepository;
+use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
 use WooCommerce\PayPalCommerce\WcGateway\FundingSource\FundingSourceRenderer;
 use WooCommerce\PayPalCommerce\WcGateway\Notice\AuthorizeOrderActionNotice;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\AuthorizedPaymentsProcessor;
@@ -35,6 +36,7 @@ class WcGatewayTest extends TestCase
 	private $funding_source_renderer;
 	private $orderProcessor;
 	private $settings;
+	private $settingsProvider;
 	private $refundProcessor;
 	private $isConnected;
 	private $transactionUrlProvider;
@@ -59,6 +61,7 @@ class WcGatewayTest extends TestCase
 
 		$this->orderProcessor = Mockery::mock(OrderProcessor::class);
 		$this->settings = Mockery::mock(Settings::class);
+		$this->settingsProvider = Mockery::mock(SettingsProvider::class);
 		$this->sessionHandler = Mockery::mock(SessionHandler::class);
 		$this->refundProcessor = Mockery::mock(RefundProcessor::class);
 		$this->isConnected = true;
@@ -67,8 +70,10 @@ class WcGatewayTest extends TestCase
 		$this->environment = Mockery::mock(Environment::class);
 		$this->paymentTokenRepository = Mockery::mock(PaymentTokenRepository::class);
 		$this->logger = Mockery::mock(LoggerInterface::class);
+		$this->settingsProvider->shouldReceive('paypal_gateway_title')->andReturn('PayPal');
+		$this->settingsProvider->shouldReceive('paypal_gateway_description')->andReturn('Pay via PayPal.');
 		$this->funding_source_renderer = new FundingSourceRenderer(
-			$this->settings,
+			$this->settingsProvider,
 			['venmo' => 'Venmo', 'paylater' => 'Pay Later', 'blik' => 'BLIK']
 		);
 		$this->apiShopCountry = 'DE';

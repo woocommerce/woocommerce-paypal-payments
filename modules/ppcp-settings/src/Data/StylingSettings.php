@@ -164,4 +164,57 @@ class StylingSettings extends AbstractDataModel {
 	public function set_pay_later_styling_per_location( bool $enabled ): void {
 		$this->data['pay_later_styling_per_location'] = $enabled;
 	}
+
+	/**
+	 * Gets an array of enabled smart button location names.
+	 *
+	 * @return array Array of location names where buttons are enabled.
+	 */
+	public function get_smart_button_locations(): array {
+		$locations = array();
+
+		$location_map = array(
+			'cart'             => 'cart',
+			'classic_checkout' => 'checkout',
+			'express_checkout' => 'checkout-block-express',
+			'mini_cart'        => 'mini-cart',
+			'product'          => 'product',
+		);
+
+		foreach ( $location_map as $key => $location_name ) {
+			if ( isset( $this->data[ $key ] ) && $this->data[ $key ] instanceof LocationStylingDTO && $this->data[ $key ]->enabled ) {
+				$locations[] = $location_name;
+			}
+		}
+
+		return $locations;
+	}
+
+	/**
+	 * Gets an array of enabled Pay Later button location names.
+	 *
+	 * @return array Array of location names where Pay Later buttons are enabled.
+	 */
+	public function get_pay_later_button_locations(): array {
+		$locations = array();
+
+		$location_map = array(
+			'cart'             => 'cart',
+			'classic_checkout' => 'checkout',
+			'express_checkout' => 'checkout-block-express',
+			'mini_cart'        => 'mini-cart',
+			'product'          => 'product',
+		);
+
+		foreach ( $location_map as $key => $location_name ) {
+			if ( isset( $this->data[ $key ] ) && $this->data[ $key ] instanceof LocationStylingDTO ) {
+				$dto = $this->data[ $key ];
+				if ( $dto->enabled && in_array( 'paylater', $dto->methods, true ) ) {
+					$locations[] = $location_name;
+				}
+			}
+		}
+
+		return $locations;
+	}
 }

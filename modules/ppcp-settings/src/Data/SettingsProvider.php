@@ -15,6 +15,7 @@ namespace WooCommerce\PayPalCommerce\Settings\Data;
 
 use WooCommerce\PayPalCommerce\Settings\DTO\LocationStylingDTO;
 use WooCommerce\PayPalCommerce\Settings\DTO\MerchantConnectionDTO;
+use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\Googlepay\GooglePayGateway;
 use WooCommerce\PayPalCommerce\Applepay\ApplePayGateway;
@@ -673,5 +674,56 @@ class SettingsProvider {
 
 	public function pay_later_messaging_locations(): array {
 		return $this->paylater_messaging_settings->get_messaging_locations();
+	}
+
+	public function paypal_gateway_description(): string {
+		return $this->payment_settings->get_method_description(
+			PayPalGateway::ID,
+			__( 'Pay via PayPal.', 'woocommerce-paypal-payments' )
+		);
+	}
+
+	public function acdc_gateway_title(): string {
+		return $this->payment_settings->get_method_title(
+			CreditCardGateway::ID,
+			__( 'Credit Cards', 'woocommerce-paypal-payments' )
+		);
+	}
+
+	public function acdc_gateway_description(): string {
+		return $this->payment_settings->get_method_description(
+			CreditCardGateway::ID,
+			__( 'Pay with your credit card.', 'woocommerce-paypal-payments' )
+		);
+	}
+
+	public function smart_button_locations(): array {
+		return $this->styling_settings->get_smart_button_locations();
+	}
+
+	public function pay_later_button_locations(): array {
+		return $this->styling_settings->get_pay_later_button_locations();
+	}
+
+	public function pay_later_button_enabled(): bool {
+		return $this->payment_settings->get_paylater_enabled();
+	}
+
+	public function pay_later_messaging_enabled(): bool {
+		return $this->paylater_messaging_settings->get_messaging_enabled();
+	}
+
+	/**
+	 * Whether to show the cardholder name field in the ACDC (Advanced Card Processing) payment form.
+	 *
+	 * @return string 'yes' to show the field, 'no' to hide it.
+	 */
+	public function acdc_show_name_on_card(): string {
+		$name_on_card = $this->fastlane_settings->get_name_on_card();
+		if ( ! empty( $name_on_card ) ) {
+			return $name_on_card;
+		}
+
+		return $this->payment_settings->get_cardholder_name() ? 'yes' : 'no';
 	}
 }

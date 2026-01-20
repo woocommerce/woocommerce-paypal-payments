@@ -229,12 +229,12 @@ return array(
 		);
 	},
 	'wcgateway.disabler'                                   => static function ( ContainerInterface $container ): DisableGateways {
-		$settings            = $container->get( 'wcgateway.settings' );
+		$settings_provider   = $container->get( 'settings.settings-provider' );
 		$settings_status     = $container->get( 'wcgateway.settings.status' );
 		$subscription_helper = $container->get( 'wc-subscriptions.helper' );
 		$context             = $container->get( 'button.helper.context' );
 
-		return new DisableGateways( $settings, $settings_status, $subscription_helper, $context );
+		return new DisableGateways( $settings_provider, $settings_status, $subscription_helper, $context );
 	},
 
 	'wcgateway.is-wc-settings-page'                        => static function ( ContainerInterface $container ): bool {
@@ -318,7 +318,6 @@ return array(
 	'wcgateway.notice.connect'                             => static function ( ContainerInterface $container ): ConnectAdminNotice {
 		return new ConnectAdminNotice(
 			$container->get( 'settings.flag.is-connected' ),
-			$container->get( 'wcgateway.settings' ),
 			$container->get( 'wcgateway.is-send-only-country' )
 		);
 	},
@@ -335,7 +334,7 @@ return array(
 		return new GatewayWithoutPayPalAdminNotice(
 			CreditCardGateway::ID,
 			$container->get( 'settings.flag.is-connected' ),
-			$container->get( 'wcgateway.settings' ),
+			$container->get( 'settings.settings-provider' ),
 			$container->get( 'wcgateway.is-wc-payments-page' ),
 			$container->get( 'wcgateway.is-ppcp-settings-page' ),
 			$container->get( 'wcgateway.configuration.card-configuration' )
@@ -345,7 +344,7 @@ return array(
 		return new GatewayWithoutPayPalAdminNotice(
 			CardButtonGateway::ID,
 			$container->get( 'settings.flag.is-connected' ),
-			$container->get( 'wcgateway.settings' ),
+			$container->get( 'settings.settings-provider' ),
 			$container->get( 'wcgateway.is-wc-payments-page' ),
 			$container->get( 'wcgateway.is-ppcp-settings-page' ),
 			$container->get( 'wcgateway.configuration.card-configuration' ),
@@ -464,9 +463,9 @@ return array(
 		},
 
 	'wcgateway.settings.status'                            => static function ( ContainerInterface $container ): SettingsStatus {
-		$settings = $container->get( 'wcgateway.settings' );
+		$settings_provider = $container->get( 'settings.settings-provider' );
 
-		return new SettingsStatus( $settings );
+		return new SettingsStatus( $settings_provider );
 	},
 	'wcgateway.order-processor'                            => static function ( ContainerInterface $container ): OrderProcessor {
 
@@ -475,7 +474,7 @@ return array(
 		$order_factory                 = $container->get( 'api.factory.order' );
 		$threed_secure                 = $container->get( 'button.helper.three-d-secure' );
 		$authorized_payments_processor = $container->get( 'wcgateway.processor.authorized-payments' );
-		$settings                      = $container->get( 'wcgateway.settings' );
+		$settings_provider             = $container->get( 'settings.settings-provider' );
 		$environment                   = $container->get( 'settings.environment' );
 		$logger                        = $container->get( 'woocommerce.logger.woocommerce' );
 		$subscription_helper           = $container->get( 'wc-subscriptions.helper' );
@@ -487,7 +486,7 @@ return array(
 			$order_factory,
 			$threed_secure,
 			$authorized_payments_processor,
-			$settings,
+			$settings_provider,
 			$logger,
 			$environment,
 			$subscription_helper,
@@ -542,9 +541,9 @@ return array(
 		return new PaymentStatusOrderDetail( $column );
 	},
 	'wcgateway.admin.orders-payment-status-column'         => static function ( ContainerInterface $container ): OrderTablePaymentStatusColumn {
-		$settings = $container->get( 'wcgateway.settings' );
-
-		return new OrderTablePaymentStatusColumn( $settings );
+		return new OrderTablePaymentStatusColumn(
+			$container->get( 'settings.settings-provider' )
+		);
 	},
 	'wcgateway.admin.fees-renderer'                        => static function ( ContainerInterface $container ): FeesRenderer {
 		return new FeesRenderer();
@@ -673,7 +672,7 @@ return array(
 	'wcgateway.configuration.card-configuration'           => static function ( ContainerInterface $container ): CardPaymentsConfiguration {
 		return new CardPaymentsConfiguration(
 			$container->get( 'settings.connection-state' ),
-			$container->get( 'wcgateway.settings' ),
+			$container->get( 'settings.settings-provider' ),
 			$container->get( 'api.helpers.dccapplies' ),
 			$container->get( 'wcgateway.helper.dcc-product-status' ),
 			$container->get( 'api.shop.country' )
@@ -712,7 +711,7 @@ return array(
 
 	'wcgateway.funding-source.renderer'                    => function ( ContainerInterface $container ): FundingSourceRenderer {
 		return new FundingSourceRenderer(
-			$container->get( 'wcgateway.settings' ),
+			$container->get( 'settings.settings-provider' ),
 			array_merge(
 				$container->get( 'wcgateway.all-funding-sources' ),
 				$container->get( 'wcgateway.extra-funding-sources' )
@@ -1150,11 +1149,11 @@ return array(
 			$container->get( 'ppcp.asset-version' ),
 			$container->get( 'wcgateway.fraudnet' ),
 			$container->get( 'settings.environment' ),
-			$container->get( 'wcgateway.settings' ),
+			$container->get( 'settings.settings-provider' ),
 			$container->get( 'wcgateway.gateway-repository' ),
 			$container->get( 'session.handler' ),
 			$container->get( 'wcgateway.is-fraudnet-enabled' ),
-			$container->get( 'button.helper.context' ),
+			$container->get( 'button.helper.context' )
 		);
 	},
 	'wcgateway.cli.settings.command'                       => function ( ContainerInterface $container ): SettingsCommand {
@@ -1226,7 +1225,7 @@ return array(
 			$container->get( 'api.endpoint.order' ),
 			$container->get( 'session.handler' ),
 			$container->get( 'wc-subscriptions.helpers.real-time-account-updater' ),
-			$container->get( 'wcgateway.settings' ),
+			$container->get( 'settings.settings-provider' ),
 			$container->get( 'woocommerce.logger.woocommerce' )
 		);
 	},

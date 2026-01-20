@@ -20,7 +20,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Entity\PurchaseUnit;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\OrderFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PurchaseUnitFactory;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
-use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
+use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
 use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\RealTimeAccountUpdaterHelper;
 use WP_Error;
 
@@ -80,12 +80,7 @@ class CaptureCardPayment {
 	 */
 	private $real_time_account_updater_helper;
 
-	/**
-	 * The settings.
-	 *
-	 * @var Settings
-	 */
-	private $settings;
+	private SettingsProvider $settings_provider;
 
 	/**
 	 * The logger.
@@ -94,19 +89,6 @@ class CaptureCardPayment {
 	 */
 	private $logger;
 
-	/**
-	 * CaptureCardPayment constructor.
-	 *
-	 * @param string                       $host The host.
-	 * @param Bearer                       $bearer The bearer.
-	 * @param OrderFactory                 $order_factory The order factory.
-	 * @param PurchaseUnitFactory          $purchase_unit_factory The purchase unit factory.
-	 * @param OrderEndpoint                $order_endpoint The order endpoint.
-	 * @param SessionHandler               $session_handler The session handler.
-	 * @param RealTimeAccountUpdaterHelper $real_time_account_updater_helper Real Time Account Updater helper.
-	 * @param Settings                     $settings The settings.
-	 * @param LoggerInterface              $logger The logger.
-	 */
 	public function __construct(
 		string $host,
 		Bearer $bearer,
@@ -115,7 +97,7 @@ class CaptureCardPayment {
 		OrderEndpoint $order_endpoint,
 		SessionHandler $session_handler,
 		RealTimeAccountUpdaterHelper $real_time_account_updater_helper,
-		Settings $settings,
+		SettingsProvider $settings_provider,
 		LoggerInterface $logger
 	) {
 		$this->host                             = $host;
@@ -125,7 +107,7 @@ class CaptureCardPayment {
 		$this->order_endpoint                   = $order_endpoint;
 		$this->session_handler                  = $session_handler;
 		$this->real_time_account_updater_helper = $real_time_account_updater_helper;
-		$this->settings                         = $settings;
+		$this->settings_provider                = $settings_provider;
 		$this->logger                           = $logger;
 	}
 
@@ -140,7 +122,7 @@ class CaptureCardPayment {
 	 * @throws RuntimeException When request fails.
 	 */
 	public function create_order( string $vault_id, string $custom_id, string $invoice_id, WC_Order $wc_order ): stdClass {
-		$intent = $this->settings->has( 'intent' ) && strtoupper( (string) $this->settings->get( 'intent' ) ) === 'AUTHORIZE' ? 'AUTHORIZE' : 'CAPTURE';
+		$intent = strtoupper( $this->settings_provider->payment_intent() ) === 'AUTHORIZE' ? 'AUTHORIZE' : 'CAPTURE';
 		$items  = array( $this->purchase_unit_factory->from_wc_cart() );
 
 		// phpcs:disable WordPress.Security.NonceVerification

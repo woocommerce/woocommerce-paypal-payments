@@ -12,8 +12,6 @@ namespace WooCommerce\PayPalCommerce\WcGateway\Helper;
 use WC_Customer;
 use WC_Order;
 use WC_Order_Item_Product;
-use WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException;
-use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 
 /**
  * Class PayUponInvoiceHelper
