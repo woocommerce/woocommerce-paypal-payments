@@ -311,8 +311,7 @@ return array(
 				$container->get( 'wcgateway.button.default-locations' ),
 				__( 'Debit & Credit Cards', 'woocommerce-paypal-payments' ),
 				$container->get( 'wcgateway.settings.pay-later.default-button-locations' ),
-				$container->get( 'wcgateway.settings.pay-later.default-messaging-locations' ),
-				$container->get( 'compat.settings.settings_map_helper' )
+				$container->get( 'wcgateway.settings.pay-later.default-messaging-locations' )
 			);
 		}
 	),
