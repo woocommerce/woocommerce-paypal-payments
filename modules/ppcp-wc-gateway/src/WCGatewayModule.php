@@ -427,18 +427,6 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
 			3
 		);
 
-		if ( defined( 'WP_CLI' ) && WP_CLI ) {
-			add_action(
-				'init',
-				function () use ( $c ) {
-					\WP_CLI::add_command(
-						'pcp settings',
-						$c->get( 'wcgateway.cli.settings.command' )
-					);
-				}
-			);
-		}
-
 		// Clears product status when appropriate.
 		add_action(
 			'woocommerce_paypal_payments_clear_apm_product_status',
