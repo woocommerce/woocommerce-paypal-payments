@@ -15,7 +15,6 @@ use RuntimeException;
 use WooCommerce\PayPalCommerce\Settings\Service\AuthenticationManager;
 use WooCommerce\PayPalCommerce\Settings\Service\OnboardingUrlManager;
 use WooCommerce\WooCommerce\Logging\Logger\NullLogger;
-use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 use WooCommerce\PayPalCommerce\Http\RedirectorInterface;
 use WooCommerce\PayPalCommerce\Settings\Enum\SellerTypeEnum;
 
@@ -427,7 +426,7 @@ class ConnectionListener {
 		 */
 		return apply_filters(
 			'woocommerce_paypal_payments_onboarding_redirect_url',
-			admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway&ppcp-tab=' . Settings::CONNECTION_TAB_ID )
+			admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway' )
 		);
 	}
 }
