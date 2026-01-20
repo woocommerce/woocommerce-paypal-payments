@@ -1,10 +1,10 @@
 import { __ } from '@wordpress/i18n';
 import { useDispatch } from '@wordpress/data';
 import { useState, useEffect, useCallback, useRef } from '@wordpress/element';
-import { store as noticesStore } from '@wordpress/notices';
 
 import { CommonHooks, OnboardingHooks } from '@ppcp-settings/data';
 import { useStoreManager } from './useStoreManager';
+import useNotices from './useNotices';
 
 const PAYPAL_PARTNER_SDK_URL =
 	'https://www.paypal.com/webapps/merchantboarding/js/lib/lightbox/partner.js';
@@ -158,8 +158,7 @@ export const useHandleOnboardingButton = ( isSandbox ) => {
 // Base connection is only used for API login (manual connection).
 const useConnectionBase = () => {
 	const { setCompleted } = OnboardingHooks.useSteps();
-	const { createSuccessNotice, createErrorNotice } =
-		useDispatch( noticesStore );
+	const { createSuccessNotice, createErrorNotice } = useNotices();
 	const { verifyLoginStatus } = CommonHooks.useMerchantInfo();
 	const { withActivity } = CommonHooks.useBusyState();
 	const { refreshAll } = useStoreManager();

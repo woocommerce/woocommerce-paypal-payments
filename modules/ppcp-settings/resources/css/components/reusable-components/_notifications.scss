@@ -30,8 +30,7 @@
 		bottom: 12px;
 		pointer-events: auto;
 	}
-
-	// Use higher specificity to override WordPress defaults
+	
 	.components-snackbar.components-snackbar {
 		backdrop-filter: blur(16px) saturate(180%);
 		background: #000000d9;

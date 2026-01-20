@@ -1,19 +1,14 @@
 import { __ } from '@wordpress/i18n';
 import { useDispatch } from '@wordpress/data';
 import { useState } from '@wordpress/element';
-import { store as noticesStore } from '@wordpress/notices';
 
 import { STORE_NAME } from '@ppcp-settings/data/common';
 import { ControlButton } from '@ppcp-settings/Components/ReusableComponents/Controls';
-import {
-	NOTIFICATION_ERROR,
-	NOTIFICATION_SUCCESS,
-} from '@ppcp-settings/Components/ReusableComponents/Icons';
 import SettingsBlock from '@ppcp-settings/Components/ReusableComponents/SettingsBlock';
+import useNotices from '@ppcp-settings/hooks/useNotices';
 
 const ResubscribeBlock = () => {
-	const { createSuccessNotice, createErrorNotice } =
-		useDispatch( noticesStore );
+	const { createSuccessNotice, createErrorNotice } = useNotices();
 	const [ resubscribing, setResubscribing ] = useState( false );
 
 	const { resubscribeWebhooks } = useDispatch( STORE_NAME );
@@ -28,10 +23,7 @@ const ResubscribeBlock = () => {
 				__(
 					'Operation failed. Check WooCommerce logs for more details.',
 					'woocommerce-paypal-payments'
-				),
-				{
-					icon: NOTIFICATION_ERROR,
-				}
+				)
 			);
 			return;
 		}
@@ -41,10 +33,7 @@ const ResubscribeBlock = () => {
 			__(
 				'Webhooks were successfully re-subscribed.',
 				'woocommerce-paypal-payments'
-			),
-			{
-				icon: NOTIFICATION_SUCCESS,
-			}
+			)
 		);
 	};
 
