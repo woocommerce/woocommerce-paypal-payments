@@ -449,17 +449,17 @@ class Button implements ButtonInterface {
 	public function script_data(): array {
 		$use_shipping_form = $this->should_use_shipping();
 
-		// On the product page, only show the shipping form for physical products.
 		$context = $this->context->context();
-		if ( $use_shipping_form && 'product' === $context ) {
-			$product = wc_get_product();
+		if ( 'product' === $context ) {
+			// On the product page, only show the shipping form for physical products.
+			if ( $use_shipping_form ) {
+				$product = wc_get_product();
 
-			if ( ! $product || $product->is_downloadable() || $product->is_virtual() ) {
-				$use_shipping_form = false;
+				if ( ! $product || $product->is_downloadable() || $product->is_virtual() ) {
+					$use_shipping_form = false;
+				}
 			}
-		}
-
-		if ( ! is_null( WC()->cart ) && ! WC()->cart->needs_shipping() ) {
+		} elseif ( ! is_null( WC()->cart ) && ! WC()->cart->needs_shipping() ) {
 			$use_shipping_form = false;
 		}
 
