@@ -254,7 +254,7 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
 		add_action(
 			'woocommerce_paypal_commerce_gateway_deactivate',
 			static function () use ( $c ) {
-				delete_option( Settings::KEY );
+				delete_option( 'woocommerce-ppcp-settings' );
 				delete_option( 'woocommerce_' . PayPalGateway::ID . '_settings' );
 				delete_option( 'woocommerce_' . CreditCardGateway::ID . '_settings' );
 			}

@@ -144,6 +144,24 @@ class SettingsProvider {
 	}
 
 	/**
+	 * Gets the client ID for the connected PayPal account.
+	 *
+	 * @return string
+	 */
+	public function client_id(): string {
+		return $this->merchant_data()->client_id;
+	}
+
+	/**
+	 * Gets the client secret for the connected PayPal account.
+	 *
+	 * @return string
+	 */
+	public function client_secret(): string {
+		return $this->merchant_data()->client_secret;
+	}
+
+	/**
 	 * Whether the plugin is in the branded-experience mode and shows/enables only
 	 * payment methods that are PayPal's own brand.
 	 *

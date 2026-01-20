@@ -653,13 +653,8 @@ return array(
 	},
 
 	'wcgateway.soft-descriptor'                            => static function ( ContainerInterface $container ): string {
-		$settings = $container->get( 'wcgateway.settings' );
-		assert( $settings instanceof Settings );
-		if ( $settings->has( 'soft_descriptor' ) ) {
-			return $settings->get( 'soft_descriptor' );
-		}
-
-		return '';
+		$settings_provider = $container->get( 'settings.settings-provider' );
+		return $settings_provider->soft_descriptor();
 	},
 
 	'wcgateway.transaction-url-provider'                   => static function ( ContainerInterface $container ): TransactionUrlProvider {
@@ -825,12 +820,10 @@ return array(
 		);
 	},
 	'wcgateway.logging.is-enabled'                         => static function ( ContainerInterface $container ): bool {
-		$settings = $container->get( 'wcgateway.settings' );
+		$settings_provider = $container->get( 'settings.settings-provider' );
 
-		// Check if logging was enabled in plugin settings.
-		$is_enabled = $settings->has( 'logging_enabled' ) && $settings->get( 'logging_enabled' );
+		$is_enabled = $settings_provider->enable_logging();
 
-		// If not enabled, check if plugin is in onboarding mode.
 		if ( ! $is_enabled ) {
 			$state = $container->get( 'settings.connection-state' );
 			assert( $state instanceof ConnectionState );

@@ -15,13 +15,14 @@ use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExecutableModule
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ModuleClassNameIdTrait;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ServiceModule;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
-use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 
 /**
  * Class UninstallModule
  */
 class UninstallModule implements ServiceModule, ExecutableModule {
 	use ModuleClassNameIdTrait;
+
+	private const CONNECTION_TAB_ID = 'ppcp-connection';
 
 	/**
 	 * {@inheritDoc}
@@ -38,7 +39,7 @@ class UninstallModule implements ServiceModule, ExecutableModule {
 			'init',
 			static function () use ( $container ) {
 				$page_id = $container->get( 'wcgateway.current-ppcp-settings-page-id' );
-				if ( Settings::CONNECTION_TAB_ID === $page_id ) {
+				if ( self::CONNECTION_TAB_ID === $page_id ) {
 					$container->get( 'uninstall.clear-db-assets' )->register();
 					add_action( 'admin_enqueue_scripts', array( $container->get( 'uninstall.clear-db-assets' ), 'enqueue' ) );
 				}

@@ -80,7 +80,6 @@ use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\OXXO\OXXO;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayUponInvoice\PayUponInvoiceGateway;
-use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 use WooCommerce\PayPalCommerce\PayLaterConfigurator\Endpoint\SaveConfig;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\ConnectionState;
@@ -392,16 +391,15 @@ return array(
 		);
 	},
 	'settings.service.script-data-handler'                => static function ( ContainerInterface $container ): ScriptDataHandler {
-		$settings                     = $container->get( 'wcgateway.settings' );
-		$asset_getter                 = $container->get( 'settings.asset_getter' );
-		$paylater_is_available        = $container->get( 'paylater-configurator.is-available' );
-		$store_country                = $container->get( 'wcgateway.store-country' );
-		$merchant_id                  = $container->get( 'api.partner_merchant_id' );
-		$button_language_choices      = $container->get( 'wcgateway.wp-paypal-locales-map' );
-		$partner_attribution          = $container->get( 'api.helper.partner-attribution' );
-		$settings_provider            = $container->get( 'settings.settings-provider' );
-
-		return new ScriptDataHandler( $settings, $asset_getter, $paylater_is_available, $store_country, $merchant_id, $button_language_choices, $partner_attribution, $settings_provider );
+		return new ScriptDataHandler(
+			$container->get( 'settings.asset_getter' ),
+			$container->get( 'paylater-configurator.is-available' ),
+			$container->get( 'wcgateway.store-country' ),
+			$container->get( 'api.partner_merchant_id' ),
+			$container->get( 'wcgateway.wp-paypal-locales-map' ),
+			$container->get( 'api.helper.partner-attribution' ),
+			$container->get( 'settings.settings-provider' )
+		);
 	},
 	'settings.service.data-migration'                     => static fn( ContainerInterface $c ): MigrationManager => new MigrationManager(
 		$c->get( 'settings.service.data-migration.general-settings' ),
@@ -474,7 +472,7 @@ return array(
 		);
 	},
 	'settings.data.definition.method_dependencies'        => static function ( ContainerInterface $container ): PaymentMethodsDependenciesDefinition {
-		return new PaymentMethodsDependenciesDefinition( $container->get( 'wcgateway.settings' ) );
+		return new PaymentMethodsDependenciesDefinition();
 	},
 	'settings.service.pay_later_status'                   => static function ( ContainerInterface $container ): array {
 		$pay_later_endpoint = $container->get( 'settings.rest.pay_later_messaging' );
@@ -558,9 +556,6 @@ return array(
 
 		// TODO: This "merchant_capabilities" service is only used here. Could it be merged to make the code cleaner and less segmented?
 		$capabilities = $container->get( 'settings.service.merchant_capabilities' );
-
-		$settings = $container->get( 'wcgateway.settings' );
-		assert( $settings instanceof Settings );
 
 		$settings_model = $container->get( 'settings.data.settings' );
 		assert( $settings_model instanceof SettingsModel );

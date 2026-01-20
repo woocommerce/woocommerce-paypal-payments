@@ -15,7 +15,6 @@ use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\FactoryModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ModuleClassNameIdTrait;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ServiceModule;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
-use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 use WooCommerce\PayPalCommerce\Webhooks\Endpoint\ResubscribeEndpoint;
 use WooCommerce\PayPalCommerce\Webhooks\Endpoint\SimulateEndpoint;
 use WooCommerce\PayPalCommerce\Webhooks\Endpoint\SimulationStateEndpoint;
@@ -26,6 +25,8 @@ use WooCommerce\PayPalCommerce\Webhooks\Status\Assets\WebhooksStatusPageAssets;
  */
 class WebhookModule implements ServiceModule, FactoryModule, ExecutableModule {
 	use ModuleClassNameIdTrait;
+
+	private const CONNECTION_TAB_ID = 'ppcp-connection';
 
 	/**
 	 * {@inheritDoc}
@@ -118,7 +119,7 @@ class WebhookModule implements ServiceModule, FactoryModule, ExecutableModule {
 			'init',
 			function () use ( $container ) {
 				$page_id = $container->get( 'wcgateway.current-ppcp-settings-page-id' );
-				if ( Settings::CONNECTION_TAB_ID !== $page_id ) {
+				if ( self::CONNECTION_TAB_ID !== $page_id ) {
 					return;
 				}
 

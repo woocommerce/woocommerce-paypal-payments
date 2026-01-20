@@ -34,7 +34,6 @@ use WooCommerce\PayPalCommerce\WcGateway\Processor\OrderProcessor;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\PaymentsStatusHandlingTrait;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\RefundProcessor;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\TransactionIdHandlingTrait;
-use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 
 /**
@@ -49,6 +48,8 @@ class PayPalGateway extends \WC_Payment_Gateway {
 	use PaymentsStatusHandlingTrait;
 
 	public const ID                            = 'ppcp-gateway';
+	private const CONNECTION_TAB_ID            = 'ppcp-connection';
+	private const PAY_LATER_TAB_ID             = 'ppcp-pay-later';
 	public const INTENT_META_KEY               = '_ppcp_paypal_intent';
 	public const ORDER_ID_META_KEY             = '_ppcp_paypal_order_id';
 	public const ORDER_PAYMENT_MODE_META_KEY   = '_ppcp_paypal_payment_mode';
@@ -547,7 +548,7 @@ class PayPalGateway extends \WC_Payment_Gateway {
 	 */
 	protected function is_connection_tab(): bool {
 		return is_admin()
-			&& Settings::CONNECTION_TAB_ID === $this->page_id;
+			&& self::CONNECTION_TAB_ID === $this->page_id;
 	}
 
 	/**
@@ -557,7 +558,7 @@ class PayPalGateway extends \WC_Payment_Gateway {
 	 */
 	protected function is_pay_later_tab(): bool {
 		return is_admin()
-			&& Settings::PAY_LATER_TAB_ID === $this->page_id;
+			&& self::PAY_LATER_TAB_ID === $this->page_id;
 	}
 
 	/**

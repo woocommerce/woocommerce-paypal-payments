@@ -10,20 +10,12 @@ namespace WooCommerce\PayPalCommerce\Settings\Service;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\PartnerAttribution;
 use WooCommerce\PayPalCommerce\Assets\AssetGetter;
 use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
-use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 
 /**
  * Class ScriptDataHandler
  * This class is responsible for localizing the scripts and styles for the settings page.
  */
 class ScriptDataHandler {
-
-	/**
-	 * The settings object.
-	 *
-	 * @var Settings
-	 */
-	protected Settings $settings;
 
 	private AssetGetter $asset_getter;
 
@@ -61,8 +53,7 @@ class ScriptDataHandler {
 	protected SettingsProvider $settings_provider;
 
 	/**
-	 * @param Settings           $settings The settings object.
-	 * @param AssetGetter        $asset_getter
+	 * @param AssetGetter        $asset_getter Asset getter.
 	 * @param bool               $paylater_is_available Whether the pay later configurator is available.
 	 * @param string             $store_country The store country.
 	 * @param string             $merchant_id The merchant ID.
@@ -71,7 +62,6 @@ class ScriptDataHandler {
 	 * @param SettingsProvider   $settings_provider The settings provider.
 	 */
 	public function __construct(
-		Settings $settings,
 		AssetGetter $asset_getter,
 		bool $paylater_is_available,
 		string $store_country,
@@ -80,7 +70,6 @@ class ScriptDataHandler {
 		PartnerAttribution $partner_attribution,
 		SettingsProvider $settings_provider
 	) {
-		$this->settings                = $settings;
 		$this->asset_getter            = $asset_getter;
 		$this->paylater_is_available   = $paylater_is_available;
 		$this->store_country           = $store_country;

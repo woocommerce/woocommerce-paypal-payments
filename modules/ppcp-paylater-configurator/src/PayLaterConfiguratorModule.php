@@ -18,7 +18,6 @@ use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExecutableModule
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ModuleClassNameIdTrait;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ServiceModule;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
-use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
 use WooCommerce\PayPalCommerce\Settings\Data\PayLaterMessagingSettings;
 use WooCommerce\PayPalCommerce\AdminNotices\Repository\Repository;
@@ -29,6 +28,8 @@ use WooCommerce\PayPalCommerce\AdminNotices\Entity\PersistentMessage;
  */
 class PayLaterConfiguratorModule implements ServiceModule, ExecutableModule {
 	use ModuleClassNameIdTrait;
+
+	private const PAY_LATER_TAB_ID = 'ppcp-pay-later';
 
 	/**
 	 * Returns whether the module should be loaded.
@@ -95,7 +96,7 @@ class PayLaterConfiguratorModule implements ServiceModule, ExecutableModule {
 					}
 				);
 
-				if ( $current_page_id !== Settings::PAY_LATER_TAB_ID ) {
+				if ( $current_page_id !== self::PAY_LATER_TAB_ID ) {
 					return;
 				}
 
@@ -174,7 +175,7 @@ class PayLaterConfiguratorModule implements ServiceModule, ExecutableModule {
 	 */
 	private static function add_paylater_update_notice( array $message_locations, bool $is_settings_page, string $current_page_id ): void {
 		// The message must be registered on any WC-Settings page, except for the Pay Later page.
-		if ( ! $is_settings_page || Settings::PAY_LATER_TAB_ID === $current_page_id ) {
+		if ( ! $is_settings_page || self::PAY_LATER_TAB_ID === $current_page_id ) {
 			return;
 		}
 
