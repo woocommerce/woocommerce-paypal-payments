@@ -68,7 +68,6 @@ class ApplepayModule implements ServiceModule, ExecutableModule {
 				$apple_payment_method = $c->get( 'applepay.button' );
 				// add onboarding and referrals hooks.
 				assert( $apple_payment_method instanceof ApplepayButton );
-				$apple_payment_method->initialize();
 
 				// Show notice if there are product availability issues.
 				$availability_notice = $c->get( 'applepay.availability_notice' );
@@ -132,7 +131,7 @@ class ApplepayModule implements ServiceModule, ExecutableModule {
 				$settings = $c->get( 'settings.settings-provider' );
 				assert( $settings instanceof SettingsProvider );
 
-				if ( $settings->applepay_button_enabled() ) {
+				if ( $settings->applepay_enabled() ) {
 					$applepay_gateway = $c->get( 'applepay.wc-gateway' );
 					assert( $applepay_gateway instanceof WC_Payment_Gateway );
 

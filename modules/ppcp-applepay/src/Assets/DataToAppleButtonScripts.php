@@ -73,11 +73,11 @@ class DataToAppleButtonScripts {
 		$total_label       = get_bloginfo( 'name' );
 
 		// Button layout (label, color, language).
-		$type       = $this->settings->applepay_button_type();
-		$color      = $this->settings->applepay_button_color();
+		$styles     = $this->settings->applepay_styles(); // todo: verify how applepay defines the location/context.
+		$type       = $styles->label;
+		$color      = $styles->color;
 		$lang       = $this->settings->applepay_button_language();
-		$lang       = apply_filters( 'woocommerce_paypal_payments_applepay_button_language', $lang );
-		$is_enabled = $this->settings->applepay_button_enabled();
+		$is_enabled = $this->settings->applepay_enabled();
 
 		return array(
 			'sdk_url'               => $this->sdk_url,

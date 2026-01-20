@@ -9,6 +9,7 @@ namespace WooCommerce\PayPalCommerce\Settings\Service;
 
 use WooCommerce\PayPalCommerce\ApiClient\Helper\PartnerAttribution;
 use WooCommerce\PayPalCommerce\Assets\AssetGetter;
+use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 
 /**
@@ -57,6 +58,8 @@ class ScriptDataHandler {
 	 */
 	protected PartnerAttribution $partner_attribution;
 
+	protected SettingsProvider $settings_provider;
+
 	/**
 	 * @param Settings           $settings The settings object.
 	 * @param AssetGetter        $asset_getter
@@ -65,6 +68,7 @@ class ScriptDataHandler {
 	 * @param string             $merchant_id The merchant ID.
 	 * @param array              $button_language_choices The button language choices.
 	 * @param PartnerAttribution $partner_attribution The partner attribution object.
+	 * @param SettingsProvider   $settings_provider The settings provider.
 	 */
 	public function __construct(
 		Settings $settings,
@@ -73,7 +77,8 @@ class ScriptDataHandler {
 		string $store_country,
 		string $merchant_id,
 		array $button_language_choices,
-		PartnerAttribution $partner_attribution
+		PartnerAttribution $partner_attribution,
+		SettingsProvider $settings_provider
 	) {
 		$this->settings                = $settings;
 		$this->asset_getter            = $asset_getter;
@@ -82,6 +87,7 @@ class ScriptDataHandler {
 		$this->merchant_id             = $merchant_id;
 		$this->button_language_choices = $button_language_choices;
 		$this->partner_attribution     = $partner_attribution;
+		$this->settings_provider       = $settings_provider;
 	}
 
 	/**
@@ -234,7 +240,7 @@ class ScriptDataHandler {
 			);
 			$script_data['PcpPayLaterConfigurator'] = array(
 				'config'           => array(),
-				'merchantClientId' => $this->settings->get( 'client_id' ),
+				'merchantClientId' => $this->settings_provider->merchant_data()->client_id,
 				'partnerClientId'  => $this->merchant_id,
 				'bnCode'           => $this->partner_attribution->get_bn_code(),
 			);

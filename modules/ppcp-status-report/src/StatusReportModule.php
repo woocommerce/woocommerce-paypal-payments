@@ -49,7 +49,7 @@ class StatusReportModule implements ServiceModule, ExecutableModule {
 		add_action(
 			'woocommerce_system_status_report',
 			function () use ( $c ) {
-				$settings_provider = $c->get( 'settings.data.provider' );
+				$settings_provider = $c->get( 'settings.settings-provider' );
 				assert( $settings_provider instanceof SettingsProvider );
 
 				$subscriptions_mode_settings = $c->get( 'wcgateway.settings.fields.subscriptions_mode' ) ?: array();

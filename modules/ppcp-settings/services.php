@@ -17,7 +17,7 @@ use WooCommerce\PayPalCommerce\Assets\AssetGetterFactory;
 use WooCommerce\PayPalCommerce\Axo\Gateway\AxoGateway;
 use WooCommerce\PayPalCommerce\Button\Helper\MessagesApply;
 use WooCommerce\PayPalCommerce\Googlepay\GooglePayGateway;
-use WooCommerce\PayPalCommerce\Googlepay\Helper\ApmProductStatus;
+use WooCommerce\PayPalCommerce\Googlepay\Helper\GoogleProductStatus;
 use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\BancontactGateway;
 use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\BlikGateway;
 use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\EPSGateway;
@@ -399,8 +399,9 @@ return array(
 		$merchant_id                  = $container->get( 'api.partner_merchant_id' );
 		$button_language_choices      = $container->get( 'wcgateway.wp-paypal-locales-map' );
 		$partner_attribution          = $container->get( 'api.helper.partner-attribution' );
+		$settings_provider            = $container->get( 'settings.settings-provider' );
 
-		return new ScriptDataHandler( $settings, $asset_getter, $paylater_is_available, $store_country, $merchant_id, $button_language_choices, $partner_attribution );
+		return new ScriptDataHandler( $settings, $asset_getter, $paylater_is_available, $store_country, $merchant_id, $button_language_choices, $partner_attribution, $settings_provider );
 	},
 	'settings.service.data-migration'                     => static fn( ContainerInterface $c ): MigrationManager => new MigrationManager(
 		$c->get( 'settings.service.data-migration.general-settings' ),
@@ -414,7 +415,6 @@ return array(
 	'settings.service.data-migration.settings-tab'        => static fn( ContainerInterface $c ): SettingsTabMigration => new SettingsTabMigration(
 		(array) get_option( 'woocommerce-ppcp-settings', array() ),
 		$c->get( 'settings.data.settings' ),
-		$c->get( 'compat.settings.settings_tab_map_helper' ),
 	),
 	'settings.service.data-migration.styling'             => static fn( ContainerInterface $c ): StylingSettingsMigration => new StylingSettingsMigration(
 		(array) get_option( 'woocommerce-ppcp-settings', array() ),
@@ -714,7 +714,7 @@ return array(
 		assert( $applepay_product_status instanceof AppleProductStatus );
 
 		$googlepay_product_status = $container->get( 'googlepay.helpers.apm-product-status' );
-		assert( $googlepay_product_status instanceof ApmProductStatus );
+		assert( $googlepay_product_status instanceof GoogleProductStatus );
 
 		return new PaymentMethodsEligibilityService(
 			$container->get( 'api.merchant.country' ),
