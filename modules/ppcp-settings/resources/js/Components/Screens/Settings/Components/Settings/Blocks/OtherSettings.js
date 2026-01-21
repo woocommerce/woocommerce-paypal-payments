@@ -26,6 +26,8 @@ const OtherSettings = () => {
 	const disabledCardChoices = window.ppcpSettings.disabledCardsChoices;
 	const threeDSecureOptions = window.ppcpSettings.threeDSecureOptions;
 	const storePostcode = window.ppcpSettings.storePostcode;
+	const isEligibleForPaymentLevelProcessing =
+		window.ppcpSettings.isEligibleForPaymentLevelProcessing;
 
 	return (
 		<Accordion
@@ -76,47 +78,49 @@ const OtherSettings = () => {
 				/>
 			</SettingsBlock>
 
-			<SettingsBlock
-				title={ __(
-					'Level 2/Level 3 Payment Processing',
-					'woocommerce-paypal-payments'
-				) }
-				description={ __(
-					'Reduce transaction fees on business card purchases by automatically sending detailed order data to PayPal. This helps you qualify for lower interchange rates. Available for US merchants processing USD with Visa and Mastercard.',
-					'woocommerce-paypal-payments'
-				) }
-			>
-				<SettingsBlock>
-					<ControlToggleButton
-						id="ppcp-payment-processing"
-						label={ __(
-							'Enable Level 2/Level 3 Processing',
-							'woocommerce-paypal-payments'
-						) }
-						onChange={ setPaymentLevelProcessing }
-						value={ paymentLevelProcessing }
-					/>
-				</SettingsBlock>
+			{ isEligibleForPaymentLevelProcessing && (
 				<SettingsBlock
 					title={ __(
-						'Shipping Origin ZIP Code',
+						'Level 2/Level 3 Payment Processing',
 						'woocommerce-paypal-payments'
 					) }
 					description={ __(
-						'Enter the ZIP code where you ship orders from. Use your warehouse or fulfillment center location if different from your business address.',
+						'Reduce transaction fees on business card purchases by automatically sending detailed order data to PayPal. This helps you qualify for lower interchange rates. Available for US merchants processing USD with Visa and Mastercard.',
 						'woocommerce-paypal-payments'
 					) }
 				>
-					<ControlTextInput
-						value={ shipsFromPostalCode }
-						onChange={ setShipsFromPostalCode }
-						placeholder={
-							storePostcode ||
-							__( 'ZIP code', 'woocommerce-paypal-payments' )
-						}
-					/>
+					<SettingsBlock>
+						<ControlToggleButton
+							id="ppcp-payment-processing"
+							label={ __(
+								'Enable Level 2/Level 3 Processing',
+								'woocommerce-paypal-payments'
+							) }
+							onChange={ setPaymentLevelProcessing }
+							value={ paymentLevelProcessing }
+						/>
+					</SettingsBlock>
+					<SettingsBlock
+						title={ __(
+							'Shipping Origin ZIP Code',
+							'woocommerce-paypal-payments'
+						) }
+						description={ __(
+							'Enter the ZIP code where you ship orders from. Use your warehouse or fulfillment center location if different from your business address.',
+							'woocommerce-paypal-payments'
+						) }
+					>
+						<ControlTextInput
+							value={ shipsFromPostalCode }
+							onChange={ setShipsFromPostalCode }
+							placeholder={
+								storePostcode ||
+								__( 'ZIP code', 'woocommerce-paypal-payments' )
+							}
+						/>
+					</SettingsBlock>
 				</SettingsBlock>
-			</SettingsBlock>
+			) }
 		</Accordion>
 	);
 };

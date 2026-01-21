@@ -9,6 +9,8 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\ApiClient\Helper;
 
+use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
+
 class PaymentLevelEligibility {
 
 	protected string $country;
@@ -85,7 +87,7 @@ class PaymentLevelEligibility {
 		 */
 		$allowed_methods = apply_filters(
 			'woocommerce_paypal_payments_level_processing_payment_methods',
-			array( 'ppcp-credit-card-gateway' )
+			array( CreditCardGateway::ID )
 		);
 
 		return in_array( $payment_method, $allowed_methods, true );
