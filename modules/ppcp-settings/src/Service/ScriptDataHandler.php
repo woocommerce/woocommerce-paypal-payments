@@ -12,7 +12,6 @@ use WooCommerce\PayPalCommerce\Assets\AssetGetter;
 use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
 
 /**
- * Class ScriptDataHandler
  * This class is responsible for localizing the scripts and styles for the settings page.
  */
 class ScriptDataHandler {
@@ -21,32 +20,26 @@ class ScriptDataHandler {
 
 	/**
 	 * Whether the pay later configurator is available.
-	 *
-	 * @var bool
 	 */
 	protected bool $paylater_is_available;
+
 	/**
 	 * The store country.
-	 *
-	 * @var string
 	 */
 	protected string $store_country;
+
 	/**
 	 * The merchant ID.
-	 *
-	 * @var string
 	 */
 	protected string $merchant_id;
+
 	/**
 	 * The button language choices.
-	 *
-	 * @var array
 	 */
 	protected array $button_language_choices;
+
 	/**
 	 * The partner attribution object.
-	 *
-	 * @var PartnerAttribution
 	 */
 	protected PartnerAttribution $partner_attribution;
 

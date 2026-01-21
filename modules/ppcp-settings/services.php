@@ -241,7 +241,6 @@ return array(
 	},
 	'settings.rest.refresh_feature_status'                => static function ( ContainerInterface $container ): RefreshFeatureStatusEndpoint {
 		return new RefreshFeatureStatusEndpoint(
-			$container->get( 'wcgateway.settings' ),
 			new Cache( 'ppcp-timeout' ),
 			$container->get( 'woocommerce.logger.woocommerce' )
 		);

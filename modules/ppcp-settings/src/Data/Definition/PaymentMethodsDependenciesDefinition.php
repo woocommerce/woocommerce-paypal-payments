@@ -28,8 +28,6 @@ use WooCommerce\PayPalCommerce\WcGateway\Gateway\OXXO\OXXO;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayUponInvoice\PayUponInvoiceGateway;
 
 /**
- * Class PaymentMethodsDependenciesDefinition
- *
  * Defines dependency relationships between payment methods and settings.
  */
 class PaymentMethodsDependenciesDefinition {
