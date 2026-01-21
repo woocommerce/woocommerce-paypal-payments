@@ -330,7 +330,7 @@ class PaymentLevelHelper {
 			if ( $item->product_id() ) {
 				$product = wc_get_product( $item->product_id() );
 				if ( $product ) {
-					$gtin = $product->get_meta( '_wc_gtin' );
+					$gtin = $product->get_global_unique_id();
 				}
 			}
 
