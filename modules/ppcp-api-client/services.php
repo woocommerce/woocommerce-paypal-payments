@@ -393,6 +393,7 @@ return array(
 			$payments_factory,
 			$container->get( 'api.helpers.paymentLevelHelper' ),
 			$container->get( 'api.helpers.paymentLevelEligibility' ),
+			$container->get( 'settings.settings-provider' ),
 			$prefix,
 			$soft_descriptor,
 			$sanitizer
@@ -1010,7 +1011,6 @@ return array(
 	},
 	'api.helpers.paymentLevelEligibility'            => static function ( ContainerInterface $container ): PaymentLevelEligibility {
 		return new PaymentLevelEligibility(
-			$container->get( 'settings.settings-provider' ),
 			$container->get( 'api.merchant.country' ),
 			$container->get( 'api.shop.currency.getter' )
 		);

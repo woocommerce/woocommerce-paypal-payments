@@ -16,6 +16,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\PaymentLevelEligibility;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\PaymentLevelHelper;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\PurchaseUnitSanitizer;
+use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
 use WooCommerce\PayPalCommerce\Webhooks\CustomIds;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Address;
 
@@ -52,9 +53,11 @@ class PurchaseUnitFactory {
 	 */
 	private $payments_factory;
 
-	private PaymentLevelHelper $payment_level_helper;
+	protected PaymentLevelHelper $payment_level_helper;
 
-	private PaymentLevelEligibility $payment_level_eligibility;
+	protected PaymentLevelEligibility $payment_level_eligibility;
+
+	protected SettingsProvider $settings;
 
 	/**
 	 * The Prefix.
@@ -84,6 +87,7 @@ class PurchaseUnitFactory {
 		PaymentsFactory $payments_factory,
 		PaymentLevelHelper $payment_level_helper,
 		PaymentLevelEligibility $payment_level_eligibility,
+		SettingsProvider $settings,
 		string $prefix = 'WC-',
 		string $soft_descriptor = '',
 		?PurchaseUnitSanitizer $sanitizer = null
@@ -95,6 +99,7 @@ class PurchaseUnitFactory {
 		$this->payments_factory          = $payments_factory;
 		$this->payment_level_helper      = $payment_level_helper;
 		$this->payment_level_eligibility = $payment_level_eligibility;
+		$this->settings                  = $settings;
 		$this->prefix                    = $prefix;
 		$this->soft_descriptor           = $soft_descriptor;
 		$this->sanitizer                 = $sanitizer;
@@ -129,7 +134,7 @@ class PurchaseUnitFactory {
 		$soft_descriptor = $this->sanitize_soft_descriptor( $this->soft_descriptor );
 		$payment_level   = null;
 
-		if ( $this->payment_level_eligibility->is_eligible( $order->get_payment_method() ) ) {
+		if ( $this->payment_level_eligibility->is_eligible( $order->get_payment_method() ) && $this->settings->payment_level_processing() ) {
 			$payment_level = $this->payment_level_helper->build( $amount, $items, $shipping );
 		}
 
@@ -209,7 +214,7 @@ class PurchaseUnitFactory {
 		$soft_descriptor = $this->sanitize_soft_descriptor( $this->soft_descriptor );
 		$payment_level   = null;
 
-		if ( $this->payment_level_eligibility->is_eligible( $payment_method ) ) {
+		if ( $this->payment_level_eligibility->is_eligible( $payment_method ) && $this->settings->payment_level_processing() ) {
 			$payment_level = $this->payment_level_helper->build( $amount, $items, $shipping );
 		}
 
