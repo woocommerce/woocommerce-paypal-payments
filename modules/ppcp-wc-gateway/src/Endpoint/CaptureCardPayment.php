@@ -191,9 +191,6 @@ class CaptureCardPayment {
 		}
 
 		$decoded_response = json_decode( $response['body'] );
-		if ( ! isset( $decoded_response->invoice_id ) ) {
-			$decoded_response->invoice_id = $invoice_id;
-		}
 
 		return $decoded_response;
 	}
