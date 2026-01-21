@@ -25,7 +25,7 @@ class PaymentLevelEligibilityTest extends TestCase {
 	 * Test eligibility when all conditions are met.
 	 */
 	public function test_is_eligible_when_all_conditions_met(): void {
-		$this->settings->expects('payment_level_processing')->once()->andReturn(true);
+		$this->settings->expects('is_payment_level_processing_enabled')->once()->andReturn(true);
 		$this->currency_getter->expects('get')->once()->andReturn('USD');
 
 		Functions\expect('apply_filters')
@@ -63,7 +63,7 @@ class PaymentLevelEligibilityTest extends TestCase {
 	 * Test eligibility fails when feature setting is disabled.
 	 */
 	public function test_is_not_eligible_when_feature_disabled(): void {
-		$this->settings->expects('payment_level_processing')->once()->andReturn(false);
+		$this->settings->expects('is_payment_level_processing_enabled')->once()->andReturn(false);
 
 		$this->testee = new PaymentLevelEligibility(
 			$this->settings,
@@ -80,7 +80,7 @@ class PaymentLevelEligibilityTest extends TestCase {
 	 * Test eligibility fails with invalid country.
 	 */
 	public function test_is_not_eligible_with_invalid_country(): void {
-		$this->settings->expects('payment_level_processing')->once()->andReturn(true);
+		$this->settings->expects('is_payment_level_processing_enabled')->once()->andReturn(true);
 
 		Functions\expect('apply_filters')
 			->once()
@@ -102,7 +102,7 @@ class PaymentLevelEligibilityTest extends TestCase {
 	 * Test eligibility fails with invalid currency.
 	 */
 	public function test_is_not_eligible_with_invalid_currency(): void {
-		$this->settings->expects('payment_level_processing')->once()->andReturn(true);
+		$this->settings->expects('is_payment_level_processing_enabled')->once()->andReturn(true);
 		$this->currency_getter->expects('get')->once()->andReturn('EUR');
 
 		Functions\expect('apply_filters')
@@ -130,7 +130,7 @@ class PaymentLevelEligibilityTest extends TestCase {
 	 * Test eligibility fails with invalid payment method.
 	 */
 	public function test_is_not_eligible_with_invalid_payment_method(): void {
-		$this->settings->expects('payment_level_processing')->once()->andReturn(true);
+		$this->settings->expects('is_payment_level_processing_enabled')->once()->andReturn(true);
 		$this->currency_getter->expects('get')->once()->andReturn('USD');
 
 		Functions\expect('apply_filters')

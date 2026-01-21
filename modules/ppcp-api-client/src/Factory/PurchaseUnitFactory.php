@@ -134,7 +134,7 @@ class PurchaseUnitFactory {
 		$soft_descriptor = $this->sanitize_soft_descriptor( $this->soft_descriptor );
 		$payment_level   = null;
 
-		if ( $this->payment_level_eligibility->is_eligible( $order->get_payment_method() ) && $this->settings->payment_level_processing() ) {
+		if ( $this->payment_level_eligibility->is_eligible( $order->get_payment_method() ) && $this->settings->is_payment_level_processing_enabled() ) {
 			$payment_level = $this->payment_level_helper->build( $amount, $items, $shipping );
 		}
 
@@ -214,7 +214,7 @@ class PurchaseUnitFactory {
 		$soft_descriptor = $this->sanitize_soft_descriptor( $this->soft_descriptor );
 		$payment_level   = null;
 
-		if ( $this->payment_level_eligibility->is_eligible( $payment_method ) && $this->settings->payment_level_processing() ) {
+		if ( $this->payment_level_eligibility->is_eligible( $payment_method ) && $this->settings->is_payment_level_processing_enabled() ) {
 			$payment_level = $this->payment_level_helper->build( $amount, $items, $shipping );
 		}
 
