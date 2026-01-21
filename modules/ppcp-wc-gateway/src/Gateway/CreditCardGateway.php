@@ -28,6 +28,7 @@ use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\WcGateway\Endpoint\CaptureCardPayment;
 use WooCommerce\PayPalCommerce\WcGateway\Exception\GatewayGenericException;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\AuthorizedPaymentsProcessor;
+use WooCommerce\PayPalCommerce\WcGateway\Processor\OrderMetaTrait;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\OrderProcessor;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\PaymentsStatusHandlingTrait;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\RefundProcessor;
@@ -47,6 +48,7 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 	use TransactionIdHandlingTrait;
 	use PaymentsStatusHandlingTrait;
 	use FreeTrialHandlerTrait;
+	use OrderMetaTrait;
 
 	const ID = 'ppcp-credit-card-gateway';
 
@@ -518,7 +520,7 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 					}
 
 					$order = $this->order_endpoint->order( $created_order->id() );
-					$wc_order->update_meta_data( PayPalGateway::INTENT_META_KEY, $order->intent() );
+					$this->add_paypal_meta( $wc_order, $created_order, $this->environment );
 					$wc_order->add_payment_token( $token );
 
 					if ( $order->intent() === 'AUTHORIZE' ) {
