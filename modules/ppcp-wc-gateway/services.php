@@ -187,7 +187,7 @@ return array(
 	},
 	'wcgateway.credit-card-icons'                          => static function ( ContainerInterface $container ): array {
 		$settings_provider = $container->get( 'settings.settings-provider' );
-		assert($settings_provider instanceof SettingsProvider);
+		assert( $settings_provider instanceof SettingsProvider );
 
 		$icons  = $settings_provider->card_icons();
 		$labels = $container->get( 'wcgateway.credit-card-labels' );
@@ -1104,7 +1104,7 @@ return array(
 	},
 	'wcgateway.settings.pay-later.button-locations'        => static function ( ContainerInterface $container ): array {
 		$settings_provider = $container->get( 'settings.settings-provider' );
-		assert($settings_provider instanceof SettingsProvider);
+		assert( $settings_provider instanceof SettingsProvider );
 
 		$button_locations = $container->get( 'wcgateway.button.locations' );
 
@@ -1253,7 +1253,7 @@ return array(
 
 	'wcgateway.settings.wc-tasks.working-capital-config'   => static function ( ContainerInterface $container ): array {
 		$settings_provider = $container->get( 'settings.settings-provider' );
-		assert($settings_provider instanceof SettingsProvider);
+		assert( $settings_provider instanceof SettingsProvider );
 
 		$is_working_capital_feature_flag_enabled = apply_filters(
 		// phpcs:ignore WordPress.NamingConventions.ValidHookName.UseUnderscores -- feature flags use this convention
