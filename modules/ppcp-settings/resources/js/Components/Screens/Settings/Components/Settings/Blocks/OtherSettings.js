@@ -5,6 +5,7 @@ import {
 	ControlSelect,
 	ControlRadioGroup,
 	ControlTextInput,
+	ControlToggleButton,
 } from '@ppcp-settings/Components/ReusableComponents/Controls';
 import { SettingsHooks } from '@ppcp-settings/data';
 import { useMerchantInfo } from '@ppcp-settings/data/common/hooks';
@@ -15,6 +16,8 @@ const OtherSettings = () => {
 		setDisabledCards,
 		threeDSecure,
 		setThreeDSecure,
+		paymentLevelProcessing,
+		setPaymentLevelProcessing,
 		shipsFromPostalCode,
 		setShipsFromPostalCode,
 	} = SettingsHooks.useSettings();
@@ -79,17 +82,28 @@ const OtherSettings = () => {
 					'woocommerce-paypal-payments'
 				) }
 				description={ __(
-					'Qualify for lower interchange rates on corporate and purchase card transactions by sending additional transaction details to PayPal. Level 2/3 processing is available for US merchants processing USD transactions with Visa and Mastercard.',
+					'Reduce transaction fees on business card purchases by automatically sending detailed order data to PayPal. This helps you qualify for lower interchange rates. Available for US merchants processing USD with Visa and Mastercard.',
 					'woocommerce-paypal-payments'
 				) }
 			>
+				<SettingsBlock>
+					<ControlToggleButton
+						id="ppcp-payment-processing"
+						label={ __(
+							'Enable Level 2/Level 3 Processing',
+							'woocommerce-paypal-payments'
+						) }
+						onChange={ setPaymentLevelProcessing }
+						value={ paymentLevelProcessing }
+					/>
+				</SettingsBlock>
 				<SettingsBlock
 					title={ __(
-						'Ship-from ZIP code',
+						'Shipping Origin ZIP Code',
 						'woocommerce-paypal-payments'
 					) }
 					description={ __(
-						'Enter the postal code of the location where you ship products from. This is required for Level 3 processing and may differ from your store address if you use a warehouse or fulfillment center.',
+						'Enter the ZIP code where you ship orders from. Use your warehouse or fulfillment center location if different from your business address.',
 						'woocommerce-paypal-payments'
 					) }
 				>
@@ -98,10 +112,7 @@ const OtherSettings = () => {
 						onChange={ setShipsFromPostalCode }
 						placeholder={
 							storePostcode ||
-							__(
-								'Ship-from ZIP code',
-								'woocommerce-paypal-payments'
-							)
+							__( 'ZIP code', 'woocommerce-paypal-payments' )
 						}
 					/>
 				</SettingsBlock>
