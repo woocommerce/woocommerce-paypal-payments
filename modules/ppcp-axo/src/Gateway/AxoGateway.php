@@ -23,7 +23,6 @@ use WooCommerce\PayPalCommerce\ApiClient\Factory\ExperienceContextBuilder;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
 use WooCommerce\PayPalCommerce\WcGateway\Endpoint\ReturnUrlEndpoint;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
-use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\TransactionUrlProvider;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\OrderMetaTrait;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\OrderProcessor;
@@ -42,13 +41,6 @@ class AxoGateway extends WC_Payment_Gateway {
 	use ProcessPaymentTrait;
 
 	const ID = 'ppcp-axo-gateway';
-
-	/**
-	 * The settings.
-	 *
-	 * @var ContainerInterface
-	 */
-	protected $ppcp_settings;
 
 	/**
 	 * Gateway configuration object, providing relevant settings.
@@ -135,7 +127,6 @@ class AxoGateway extends WC_Payment_Gateway {
 	protected $settings_model;
 
 	/**
-	 * @param ContainerInterface        $ppcp_settings               The settings.
 	 * @param CardPaymentsConfiguration $dcc_configuration           The DCC Gateway configuration.
 	 * @param SessionHandler            $session_handler             The Session Handler.
 	 * @param OrderProcessor            $order_processor             The Order processor.
@@ -150,7 +141,6 @@ class AxoGateway extends WC_Payment_Gateway {
 	 * @param SettingsModel             $settings_model              The settings model.
 	 */
 	public function __construct(
-		ContainerInterface $ppcp_settings,
 		CardPaymentsConfiguration $dcc_configuration,
 		SessionHandler $session_handler,
 		OrderProcessor $order_processor,
@@ -166,7 +156,6 @@ class AxoGateway extends WC_Payment_Gateway {
 	) {
 		$this->id = self::ID;
 
-		$this->ppcp_settings              = $ppcp_settings;
 		$this->dcc_configuration          = $dcc_configuration;
 		$this->session_handler            = $session_handler;
 		$this->order_processor            = $order_processor;

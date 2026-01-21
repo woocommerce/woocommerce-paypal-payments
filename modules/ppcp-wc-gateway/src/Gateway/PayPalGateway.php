@@ -12,7 +12,6 @@ namespace WooCommerce\PayPalCommerce\WcGateway\Gateway;
 use Exception;
 use Psr\Log\LoggerInterface;
 use WC_Order;
-use WC_Payment_Tokens;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PaymentTokensEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\OrderStatus;
@@ -34,7 +33,7 @@ use WooCommerce\PayPalCommerce\WcGateway\Processor\OrderProcessor;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\PaymentsStatusHandlingTrait;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\RefundProcessor;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\TransactionIdHandlingTrait;
-use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
+use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
 
 /**
  * Class PayPalGateway
@@ -90,12 +89,7 @@ class PayPalGateway extends \WC_Payment_Gateway {
 	 */
 	protected $order_processor;
 
-	/**
-	 * The settings.
-	 *
-	 * @var ContainerInterface
-	 */
-	protected $config;
+	protected SettingsProvider $settings_provider;
 
 	/**
 	 * The Session Handler.
@@ -275,7 +269,7 @@ class PayPalGateway extends \WC_Payment_Gateway {
 	/**
 	 * @param FundingSourceRenderer    $funding_source_renderer The funding source renderer.
 	 * @param OrderProcessor           $order_processor The Order Processor.
-	 * @param ContainerInterface       $config The settings.
+	 * @param SettingsProvider         $config The settings.
 	 * @param SessionHandler           $session_handler The Session Handler.
 	 * @param RefundProcessor          $refund_processor The Refund Processor.
 	 * @param bool                     $is_connected Whether onboarding was completed.
@@ -298,7 +292,7 @@ class PayPalGateway extends \WC_Payment_Gateway {
 	public function __construct(
 		FundingSourceRenderer $funding_source_renderer,
 		OrderProcessor $order_processor,
-		ContainerInterface $config,
+		SettingsProvider $config,
 		SessionHandler $session_handler,
 		RefundProcessor $refund_processor,
 		bool $is_connected,
@@ -321,7 +315,7 @@ class PayPalGateway extends \WC_Payment_Gateway {
 		$this->id                          = self::ID;
 		$this->funding_source_renderer     = $funding_source_renderer;
 		$this->order_processor             = $order_processor;
-		$this->config                      = $config;
+		$this->settings_provider                      = $config;
 		$this->session_handler             = $session_handler;
 		$this->refund_processor            = $refund_processor;
 		$this->transaction_url_provider    = $transaction_url_provider;
@@ -355,8 +349,8 @@ class PayPalGateway extends \WC_Payment_Gateway {
 
 		$this->method_title       = $this->define_method_title();
 		$this->method_description = $this->define_method_description();
-		$this->title              = apply_filters( 'woocommerce_paypal_payments_gateway_title', $this->config->has( 'title' ) ? $this->config->get( 'title' ) : $this->method_title, $this );
-		$this->description        = apply_filters( 'woocommerce_paypal_payments_gateway_description', $this->config->has( 'description' ) ? $this->config->get( 'description' ) : $this->method_description, $this );
+		$this->title              = apply_filters( 'woocommerce_paypal_payments_gateway_title', $this->settings_provider->paypal_gateway_title(), $this );
+		$this->description        = apply_filters( 'woocommerce_paypal_payments_gateway_description', $this->settings_provider->paypal_gateway_description(), $this );
 
 		$funding_source = $this->session_handler->funding_source();
 		if ( $funding_source ) {
@@ -451,7 +445,7 @@ class PayPalGateway extends \WC_Payment_Gateway {
 			),
 		);
 
-		$should_show_enabled_checkbox = $this->is_paypal_tab() && ( $this->config->has( 'merchant_email' ) && $this->config->get( 'merchant_email' ) );
+		$should_show_enabled_checkbox = $this->is_paypal_tab() && $this->settings_provider->merchant_email();
 		if ( ! $should_show_enabled_checkbox ) {
 			unset( $this->form_fields['enabled'] );
 		}
@@ -773,26 +767,6 @@ class PayPalGateway extends \WC_Payment_Gateway {
 		$this->view_transaction_url = $this->transaction_url_provider->get_transaction_url_base( $order );
 
 		return parent::get_transaction_url( $order );
-	}
-
-	/**
-	 * Updates WooCommerce gateway option.
-	 *
-	 * @param string $key The option key.
-	 * @param string $value The option value.
-	 * @return bool was anything saved?
-	 */
-	public function update_option( $key, $value = '' ) {
-		$ret = parent::update_option( $key, $value );
-
-		if ( 'enabled' === $key ) {
-			$this->config->set( 'enabled', 'yes' === $value );
-			$this->config->persist();
-
-			return true;
-		}
-
-		return $ret;
 	}
 
 	/**

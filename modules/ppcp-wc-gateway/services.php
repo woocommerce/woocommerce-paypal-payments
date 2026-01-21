@@ -29,6 +29,7 @@ use WooCommerce\PayPalCommerce\Common\Pattern\SingletonDecorator;
 use WooCommerce\PayPalCommerce\Googlepay\GooglePayGateway;
 use WooCommerce\PayPalCommerce\Settings\Data\Definition\FeaturesDefinition;
 use WooCommerce\PayPalCommerce\Settings\Data\SettingsModel;
+use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\WcGateway\Admin\FeesRenderer;
 use WooCommerce\PayPalCommerce\WcGateway\Admin\OrderTablePaymentStatusColumn;
@@ -103,7 +104,7 @@ return array(
 		return new PayPalGateway(
 			$container->get( 'wcgateway.funding-source.renderer' ),
 			$container->get( 'wcgateway.order-processor' ),
-			$container->get( 'wcgateway.settings' ),
+			$container->get( 'settings.settings-provider' ),
 			$container->get( 'session.handler' ),
 			$container->get( 'wcgateway.processor.refunds' ),
 			$container->get( 'settings.flag.is-connected' ),
@@ -185,10 +186,10 @@ return array(
 		);
 	},
 	'wcgateway.credit-card-icons'                          => static function ( ContainerInterface $container ): array {
-		$settings = $container->get( 'wcgateway.settings' );
-		assert( $settings instanceof Settings );
+		$settings_provider = $container->get( 'settings.settings-provider' );
+		assert($settings_provider instanceof SettingsProvider);
 
-		$icons  = $settings->has( 'card_icons' ) ? (array) $settings->get( 'card_icons' ) : array();
+		$icons  = $settings_provider->card_icons();
 		$labels = $container->get( 'wcgateway.credit-card-labels' );
 
 		$asset_getter = $container->get( 'wcgateway.asset_getter' );
@@ -212,7 +213,6 @@ return array(
 	'wcgateway.card-button-gateway'                        => static function ( ContainerInterface $container ): CardButtonGateway {
 		return new CardButtonGateway(
 			$container->get( 'wcgateway.order-processor' ),
-			$container->get( 'wcgateway.settings' ),
 			$container->get( 'session.handler' ),
 			$container->get( 'wcgateway.processor.refunds' ),
 			$container->get( 'settings.flag.is-connected' ),
@@ -1103,12 +1103,12 @@ return array(
 		return array_keys( $locations );
 	},
 	'wcgateway.settings.pay-later.button-locations'        => static function ( ContainerInterface $container ): array {
-		$settings = $container->get( 'wcgateway.settings' );
-		assert( $settings instanceof Settings );
+		$settings_provider = $container->get( 'settings.settings-provider' );
+		assert($settings_provider instanceof SettingsProvider);
 
 		$button_locations = $container->get( 'wcgateway.button.locations' );
 
-		$smart_button_selected_locations = $settings->has( 'smart_button_locations' ) ? $settings->get( 'smart_button_locations' ) : array();
+		$smart_button_selected_locations = $settings_provider->smart_button_locations();
 
 		return array_intersect_key( $button_locations, array_flip( $smart_button_selected_locations ) );
 	},
@@ -1252,8 +1252,8 @@ return array(
 	},
 
 	'wcgateway.settings.wc-tasks.working-capital-config'   => static function ( ContainerInterface $container ): array {
-		$settings = $container->get( 'wcgateway.settings' );
-		assert( $settings instanceof Settings );
+		$settings_provider = $container->get( 'settings.settings-provider' );
+		assert($settings_provider instanceof SettingsProvider);
 
 		$is_working_capital_feature_flag_enabled = apply_filters(
 		// phpcs:ignore WordPress.NamingConventions.ValidHookName.UseUnderscores -- feature flags use this convention
@@ -1261,7 +1261,7 @@ return array(
 			getenv( 'PCP_WORKING_CAPITAL_ENABLED' ) === '1'
 		);
 
-		$is_working_capital_eligible = $container->get( 'api.shop.country' ) === 'US' && $settings->has( 'stay_updated' ) && $settings->get( 'stay_updated' );
+		$is_working_capital_eligible = $container->get( 'api.shop.country' ) === 'US' && $settings_provider->stay_updated();
 
 		if ( ! $is_working_capital_feature_flag_enabled || ! $is_working_capital_eligible ) {
 			return array();
