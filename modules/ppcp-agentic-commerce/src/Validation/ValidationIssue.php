@@ -45,6 +45,11 @@ abstract class ValidationIssue {
 	private string $field;
 
 	/**
+	 * Reference to the cart item that triggered the issue.
+	 */
+	private string $item_id;
+
+	/**
 	 * Context information about the validation issue.
 	 */
 	private array $context;
@@ -57,16 +62,25 @@ abstract class ValidationIssue {
 	/**
 	 * Defines the validation issue contents.
 	 *
-	 * @param string $message           Technical error description.
-	 * @param string $user_message      Optional. Customer friendly error message.
-	 * @param string $field             Optional. Identifies the field that triggered the issue.
-	 * @param array  $context           Optional. Context information.
+	 * @param string $message            Technical error description.
+	 * @param string $user_message       Optional. Customer friendly error message.
+	 * @param string $field              Optional. Identifies the field that triggered the issue.
+	 * @param string $item_id            Optional. Identifies the cart item that triggered the issue.
+	 * @param array  $context            Optional. Context information.
 	 * @param array  $resolution_options Optional. Available resolution options.
 	 */
-	public function __construct( string $message, string $user_message = '', string $field = '', array $context = array(), array $resolution_options = array() ) {
+	public function __construct(
+		string $message,
+		string $user_message = '',
+		string $field = '',
+		string $item_id = '',
+		array $context = array(),
+		array $resolution_options = array()
+	) {
 		$this->message            = $message ?: 'Validation error occurred';
 		$this->user_message       = $user_message;
 		$this->field              = $field;
+		$this->item_id            = $item_id;
 		$this->context            = $context;
 		$this->resolution_options = $resolution_options;
 	}
@@ -99,6 +113,9 @@ abstract class ValidationIssue {
 		}
 		if ( $this->field ) {
 			$data['field'] = $this->field;
+		}
+		if ( $this->item_id ) {
+			$data['item_id'] = $this->item_id;
 		}
 		if ( ! empty( $this->context ) ) {
 			$data['context'] = $this->context;
