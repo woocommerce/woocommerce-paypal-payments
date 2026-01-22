@@ -141,7 +141,7 @@ class CaptureCardPayment {
 	 */
 	public function create_order( string $vault_id, string $custom_id, string $invoice_id, WC_Order $wc_order ): stdClass {
 		$intent = $this->settings->has( 'intent' ) && strtoupper( (string) $this->settings->get( 'intent' ) ) === 'AUTHORIZE' ? 'AUTHORIZE' : 'CAPTURE';
-		$items  = array( $this->purchase_unit_factory->from_wc_cart() );
+		$items  = array( $this->purchase_unit_factory->from_wc_cart( null, false, $wc_order->get_payment_method() ) );
 
 		// phpcs:disable WordPress.Security.NonceVerification
 		$pay_for_order = wc_clean( wp_unslash( $_GET['pay_for_order'] ?? '' ) );

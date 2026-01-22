@@ -354,10 +354,15 @@ class PaymentLevelHelper {
 				$gtin
 			);
 			if ( is_array( $upc ) && isset( $upc['type'], $upc['code'] ) && $upc['code'] ) {
-				$line_item['upc'] = array(
-					'type' => (string) substr( $upc['type'], 0, 5 ),
-					'code' => (string) substr( $upc['code'], 0, 17 ),
-				);
+				// Strip non-alphanumeric characters (PayPal only accepts letters and numbers).
+				$sanitized_code = preg_replace( '/[^A-Za-z0-9]/', '', $upc['code'] );
+
+				if ( $sanitized_code ) {
+					$line_item['upc'] = array(
+						'type' => (string) substr( $upc['type'], 0, 5 ),
+						'code' => (string) substr( $sanitized_code, 0, 17 ),
+					);
+				}
 			}
 
 			$tax = $item->tax();
