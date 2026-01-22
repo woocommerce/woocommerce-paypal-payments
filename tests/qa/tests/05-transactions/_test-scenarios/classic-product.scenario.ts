@@ -36,8 +36,8 @@ export const transactionsOnClassicProduct = ( testOrder: ShopOrder ) => {
 			);
 			const pcpData = { transactionId, payPalFee, payPalPayout };
 
+			await wooCommerceOrderEdit.visit( orderId );
 			await wooCommerceOrderEdit.assertOrderDetails(
-				orderId,
 				testOrder,
 				pcpData
 			);

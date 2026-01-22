@@ -132,7 +132,6 @@ export class WooCommerceOrderEdit extends WooCommerceOrderEditBase {
 	 * @param pcpData.currency
 	 */
 	assertOrderDetails = async (
-		orderId: number,
 		orderData: WooCommerce.ShopOrder,
 		pcpData?: {
 			transactionId?: string;
@@ -147,7 +146,7 @@ export class WooCommerceOrderEdit extends WooCommerceOrderEditBase {
 			currency?: string;
 		}
 	) => {
-		await super.assertOrderDetails( orderId, orderData );
+		await super.assertOrderDetails( orderData );
 
 		if ( ! pcpData || Object.keys( pcpData ).length === 0 ) {
 			return;

@@ -89,8 +89,8 @@ export const testSubscriptionRenewal = ( testOrder: ShopOrder ) => {
 					};
 				}
 
+				await wooCommerceOrderEdit.visit( orderId );
 				await wooCommerceOrderEdit.assertOrderDetails(
-					orderId,
 					testOrder,
 					pcpData
 				);
@@ -114,12 +114,12 @@ export const testSubscriptionRenewal = ( testOrder: ShopOrder ) => {
 						subscriptionId
 					);
 				} else {
-					await pcpApi.triggerVaultingSubscriptionRenewal(
+					await wooCommerceSubscriptionEdit.triggerSubscriptionRenewal(
 						subscriptionId
 					);
 				}
 				const renewalOrderIds =
-					await pcpApi.getSubscriptionRenewalOrderIds(
+					await wooCommerceApi.getSubscriptionRenewalOrderIds(
 						subscriptionId
 					);
 				await expect( renewalOrderIds ).toHaveLength( 1 );
@@ -203,8 +203,8 @@ export const testFreeTrialSubscriptionRenewal = ( testOrder: ShopOrder ) => {
 
 				const freeTrialTotal = await countTotals( testOrder );
 				// Assert free-trial test order with 0 price and shipping
+				await wooCommerceOrderEdit.visit( orderId );
 				await wooCommerceOrderEdit.assertOrderDetails(
-					orderId,
 					testOrder
 				);
 
@@ -249,12 +249,12 @@ export const testFreeTrialSubscriptionRenewal = ( testOrder: ShopOrder ) => {
 						subscriptionId
 					);
 				} else {
-					await pcpApi.triggerVaultingSubscriptionRenewal(
+					await wooCommerceSubscriptionEdit.triggerSubscriptionRenewal(
 						subscriptionId
 					);
 				}
 				const renewalOrderIds =
-					await pcpApi.getSubscriptionRenewalOrderIds(
+					await wooCommerceApi.getSubscriptionRenewalOrderIds(
 						subscriptionId
 					);
 				await expect( renewalOrderIds ).toHaveLength( 1 );
