@@ -30,6 +30,11 @@ abstract class ValidationIssue {
 	protected const ISSUE_TYPE = '';
 
 	/**
+	 * Maximum number of resolution options allowed.
+	 */
+	private const MAX_RESOLUTION_OPTIONS = 5;
+
+	/**
 	 * Technical error message, mainly for AI.
 	 */
 	private string $message;
@@ -82,7 +87,7 @@ abstract class ValidationIssue {
 		$this->field              = $field;
 		$this->item_id            = $item_id;
 		$this->context            = $context;
-		$this->resolution_options = $resolution_options;
+		$this->resolution_options = array_slice( $resolution_options, 0, self::MAX_RESOLUTION_OPTIONS );
 	}
 
 	/**
@@ -110,6 +115,38 @@ abstract class ValidationIssue {
 	 */
 	public function add_context( string $key, $value ): static {
 		$this->context[ $key ] = $value;
+		return $this;
+	}
+
+	/**
+	 * Adds a resolution option to the validation issue.
+	 *
+	 * Resolution options suggest possible actions to resolve the issue.
+	 * Maximum of 5 resolution options are allowed.
+	 *
+	 * @param string $action   The action identifier (e.g., 'REMOVE_ITEM', 'SUGGEST_ALTERNATIVE').
+	 * @param string $label    Human-readable action description.
+	 * @param string $url      Optional. URL for redirect actions.
+	 * @param array  $metadata Optional. Additional metadata (e.g., priority, cost_impact).
+	 * @return static
+	 */
+	public function add_resolution( string $action, string $label, string $url = '', array $metadata = array() ): static {
+		if ( count( $this->resolution_options ) < self::MAX_RESOLUTION_OPTIONS ) {
+			$resolution = array(
+				'action' => $action,
+				'label'  => $label,
+			);
+
+			if ( $url ) {
+				$resolution['url'] = $url;
+			}
+
+			if ( ! empty( $metadata ) ) {
+				$resolution['metadata'] = $metadata;
+			}
+
+			$this->resolution_options[] = $resolution;
+		}
 		return $this;
 	}
 
