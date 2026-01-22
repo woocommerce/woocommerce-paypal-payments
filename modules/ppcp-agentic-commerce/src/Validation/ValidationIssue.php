@@ -132,7 +132,7 @@ abstract class ValidationIssue {
 	 * @param mixed  $value The context value.
 	 * @return static
 	 */
-	public function add_context( string $key, $value ): self {
+	public function add_context( string $key, $value ): static {
 		$this->context[ $key ] = $value;
 		return $this;
 	}
@@ -145,11 +145,11 @@ abstract class ValidationIssue {
 	 *
 	 * @param string $action   The action identifier (e.g., 'REMOVE_ITEM', 'SUGGEST_ALTERNATIVE').
 	 * @param string $label    Human-readable action description.
-	 * @param string $url      Optional. URL for redirect actions.
+	 * @param string $url      Optional. URL for redirect actions. Must be a valid URL on the merchant's site.
 	 * @param array  $metadata Optional. Additional metadata (e.g., priority, cost_impact).
 	 * @return static
 	 */
-	public function add_resolution( string $action, string $label, string $url = '', array $metadata = array() ): self {
+	public function add_resolution( string $action, string $label, string $url = '', array $metadata = array() ): static {
 		if ( count( $this->resolution_options ) < self::MAX_RESOLUTION_OPTIONS ) {
 			$resolution = array(
 				'action' => $action,
@@ -157,7 +157,10 @@ abstract class ValidationIssue {
 			);
 
 			if ( $url ) {
-				$resolution['url'] = $url;
+				$validated_url = \wp_validate_redirect( $url, '' );
+				if ( $validated_url ) {
+					$resolution['url'] = $validated_url;
+				}
 			}
 
 			if ( ! empty( $metadata ) ) {
