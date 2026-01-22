@@ -330,6 +330,7 @@ class PaymentLevelHelper {
 			if ( $item->product_id() ) {
 				$product = wc_get_product( $item->product_id() );
 				if ( $product ) {
+					/** @psalm-suppress UndefinedMethod - get_global_unique_id exists since WC 9.1.0 */
 					$gtin = $product->get_global_unique_id();
 				}
 			}
