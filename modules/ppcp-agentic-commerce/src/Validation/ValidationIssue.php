@@ -9,6 +9,8 @@ declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\AgenticCommerce\Validation;
 
+use RuntimeException;
+
 /**
  * Implements the ValidationIssue schema.
  *
@@ -18,14 +20,14 @@ abstract class ValidationIssue {
 	/**
 	 * Main error category.
 	 *
-	 * Child classes must define this constant.
+	 * Child classes must override this constant.
 	 */
 	protected const ISSUE_CODE = '';
 
 	/**
 	 * Classifies the issue.
 	 *
-	 * Child classes must define this constant.
+	 * Child classes must override this constant.
 	 */
 	protected const ISSUE_TYPE = '';
 
@@ -73,6 +75,7 @@ abstract class ValidationIssue {
 	 * @param string $item_id            Optional. Identifies the cart item that triggered the issue.
 	 * @param array  $context            Optional. Context information.
 	 * @param array  $resolution_options Optional. Available resolution options.
+	 * @throws RuntimeException If child class does not define ISSUE_CODE or ISSUE_TYPE constants.
 	 */
 	public function __construct(
 		string $message,
@@ -82,6 +85,12 @@ abstract class ValidationIssue {
 		array $context = array(),
 		array $resolution_options = array()
 	) {
+		if ( static::ISSUE_CODE === '' || static::ISSUE_TYPE === '' ) {
+			throw new RuntimeException(
+				sprintf( '%s must define ISSUE_CODE and ISSUE_TYPE constants.', static::class )
+			);
+		}
+
 		$this->message            = $message ?: 'Validation error occurred';
 		$this->user_message       = $user_message;
 		$this->field              = $field;
