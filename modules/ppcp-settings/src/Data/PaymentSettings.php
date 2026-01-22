@@ -33,7 +33,7 @@ class PaymentSettings extends \WooCommerce\PayPalCommerce\Settings\Data\Abstract
      */
     protected function get_defaults(): array
     {
-        return array('paypal_show_logo' => \false, 'cardholder_name' => \false, 'payment_level_processing' => \false, 'fastlane_display_watermark' => \false, 'venmo_enabled' => \false, 'paylater_enabled' => \false);
+        return array('paypal_show_logo' => \false, 'cardholder_name' => \false, 'fastlane_display_watermark' => \false, 'venmo_enabled' => \false, 'paylater_enabled' => \false);
     }
     /**
      * Saves the model data to WordPress options.
@@ -142,15 +142,6 @@ class PaymentSettings extends \WooCommerce\PayPalCommerce\Settings\Data\Abstract
         return (bool) $this->data['cardholder_name'];
     }
     /**
-     * Get payment level processing.
-     *
-     * @return bool
-     */
-    public function get_payment_level_processing(): bool
-    {
-        return (bool) $this->data['payment_level_processing'];
-    }
-    /**
      * Get Fastlane display watermark.
      *
      * @return bool
@@ -196,16 +187,6 @@ class PaymentSettings extends \WooCommerce\PayPalCommerce\Settings\Data\Abstract
     public function set_cardholder_name(bool $value): void
     {
         $this->data['cardholder_name'] = $value;
-    }
-    /**
-     * Set payment level processing.
-     *
-     * @param bool $value The value.
-     * @return void
-     */
-    public function set_payment_level_processing(bool $value): void
-    {
-        $this->data['payment_level_processing'] = $value;
     }
     /**
      * Set Fastlane display watermark.

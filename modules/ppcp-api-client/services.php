@@ -255,7 +255,7 @@ return array(
         $prefix = $container->get('api.prefix');
         $soft_descriptor = $container->get('wcgateway.soft-descriptor');
         $sanitizer = $container->get('api.helper.purchase-unit-sanitizer');
-        return new PurchaseUnitFactory($amount_factory, $item_factory, $shipping_factory, $payments_factory, $container->get('api.helpers.paymentLevelHelper'), $container->get('api.helpers.paymentLevelEligibility'), $prefix, $soft_descriptor, $sanitizer);
+        return new PurchaseUnitFactory($amount_factory, $item_factory, $shipping_factory, $payments_factory, $container->get('api.helpers.paymentLevelHelper'), $container->get('api.helpers.paymentLevelEligibility'), $container->get('settings.settings-provider'), $prefix, $soft_descriptor, $sanitizer);
     },
     'api.factory.patch-collection-factory' => static function (ContainerInterface $container): PatchCollectionFactory {
         return new PatchCollectionFactory();
@@ -556,6 +556,6 @@ return array(
         return new PaymentLevelHelper($container->get('settings.settings-provider'));
     },
     'api.helpers.paymentLevelEligibility' => static function (ContainerInterface $container): PaymentLevelEligibility {
-        return new PaymentLevelEligibility($container->get('settings.settings-provider'), $container->get('api.merchant.country'), $container->get('api.shop.currency.getter'));
+        return new PaymentLevelEligibility($container->get('api.merchant.country'), $container->get('api.shop.currency.getter'));
     },
 );

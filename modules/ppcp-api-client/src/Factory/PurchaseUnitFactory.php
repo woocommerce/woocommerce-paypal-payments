@@ -15,6 +15,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\PaymentLevelEligibility;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\PaymentLevelHelper;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\PurchaseUnitSanitizer;
+use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
 use WooCommerce\PayPalCommerce\Webhooks\CustomIds;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Address;
 /**
@@ -46,8 +47,9 @@ class PurchaseUnitFactory
      * @var PaymentsFactory
      */
     private $payments_factory;
-    private PaymentLevelHelper $payment_level_helper;
-    private PaymentLevelEligibility $payment_level_eligibility;
+    protected PaymentLevelHelper $payment_level_helper;
+    protected PaymentLevelEligibility $payment_level_eligibility;
+    protected SettingsProvider $settings;
     /**
      * The Prefix.
      *
@@ -66,7 +68,7 @@ class PurchaseUnitFactory
      * @var PurchaseUnitSanitizer|null
      */
     private $sanitizer;
-    public function __construct(\WooCommerce\PayPalCommerce\ApiClient\Factory\AmountFactory $amount_factory, \WooCommerce\PayPalCommerce\ApiClient\Factory\ItemFactory $item_factory, \WooCommerce\PayPalCommerce\ApiClient\Factory\ShippingFactory $shipping_factory, \WooCommerce\PayPalCommerce\ApiClient\Factory\PaymentsFactory $payments_factory, PaymentLevelHelper $payment_level_helper, PaymentLevelEligibility $payment_level_eligibility, string $prefix = 'WC-', string $soft_descriptor = '', ?PurchaseUnitSanitizer $sanitizer = null)
+    public function __construct(\WooCommerce\PayPalCommerce\ApiClient\Factory\AmountFactory $amount_factory, \WooCommerce\PayPalCommerce\ApiClient\Factory\ItemFactory $item_factory, \WooCommerce\PayPalCommerce\ApiClient\Factory\ShippingFactory $shipping_factory, \WooCommerce\PayPalCommerce\ApiClient\Factory\PaymentsFactory $payments_factory, PaymentLevelHelper $payment_level_helper, PaymentLevelEligibility $payment_level_eligibility, SettingsProvider $settings, string $prefix = 'WC-', string $soft_descriptor = '', ?PurchaseUnitSanitizer $sanitizer = null)
     {
         $this->amount_factory = $amount_factory;
         $this->item_factory = $item_factory;
@@ -74,6 +76,7 @@ class PurchaseUnitFactory
         $this->payments_factory = $payments_factory;
         $this->payment_level_helper = $payment_level_helper;
         $this->payment_level_eligibility = $payment_level_eligibility;
+        $this->settings = $settings;
         $this->prefix = $prefix;
         $this->soft_descriptor = $soft_descriptor;
         $this->sanitizer = $sanitizer;
@@ -102,7 +105,7 @@ class PurchaseUnitFactory
         $invoice_id = $this->prefix . $order->get_order_number();
         $soft_descriptor = $this->sanitize_soft_descriptor($this->soft_descriptor);
         $payment_level = null;
-        if ($this->payment_level_eligibility->is_eligible($order->get_payment_method())) {
+        if ($this->payment_level_eligibility->is_eligible($order->get_payment_method()) && $this->settings->is_payment_level_processing_enabled()) {
             $payment_level = $this->payment_level_helper->build($amount, $items, $shipping);
         }
         $purchase_unit = new PurchaseUnit($amount, $items, $shipping, $reference_id, $description, $custom_id, $invoice_id, $soft_descriptor, null, $payment_level['supplementary_data'] ?? null);
@@ -152,7 +155,7 @@ class PurchaseUnitFactory
         $invoice_id = '';
         $soft_descriptor = $this->sanitize_soft_descriptor($this->soft_descriptor);
         $payment_level = null;
-        if ($this->payment_level_eligibility->is_eligible($payment_method)) {
+        if ($this->payment_level_eligibility->is_eligible($payment_method) && $this->settings->is_payment_level_processing_enabled()) {
             $payment_level = $this->payment_level_helper->build($amount, $items, $shipping);
         }
         $purchase_unit = new PurchaseUnit($amount, $items, $shipping, $reference_id, $description, $custom_id, $invoice_id, $soft_descriptor, null, $payment_level['supplementary_data'] ?? null);

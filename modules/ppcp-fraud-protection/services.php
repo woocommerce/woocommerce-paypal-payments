@@ -28,5 +28,5 @@ return array('fraud-protection.asset_getter' => static function (ContainerInterf
     if (isset($recaptcha_settings['enabled']) && 'yes' === $recaptcha_settings['enabled']) {
         return array();
     }
-    return array(array('id' => 'ppcp-recaptcha-protection-task', 'title' => __('Activate PayPal fraud management', 'woocommerce-paypal-payments'), 'description' => __('PayPal detected increased suspicious card activity in market. Please enable fraud protection in your PayPal Payment settings by enabling CAPTCHA for PayPal Payments.', 'woocommerce-paypal-payments'), 'redirect_url' => admin_url('admin.php?page=wc-settings&tab=integration&section=ppcp-recaptcha')));
+    return array(array('id' => 'ppcp-recaptcha-protection-task', 'title' => __('Enable required fraud protection for PayPal Payments', 'woocommerce-paypal-payments'), 'description' => __('Help protect your store and maintain compliance.', 'woocommerce-paypal-payments'), 'redirect_url' => admin_url('admin.php?page=wc-settings&tab=integration&section=ppcp-recaptcha')));
 });

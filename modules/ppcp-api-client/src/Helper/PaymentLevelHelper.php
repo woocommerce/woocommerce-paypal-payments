@@ -269,7 +269,8 @@ class PaymentLevelHelper
             if ($item->product_id()) {
                 $product = wc_get_product($item->product_id());
                 if ($product) {
-                    $gtin = $product->get_meta('_wc_gtin');
+                    /** @psalm-suppress UndefinedMethod - get_global_unique_id exists since WC 9.1.0 */
+                    $gtin = $product->get_global_unique_id();
                 }
             }
             /**
@@ -284,7 +285,11 @@ class PaymentLevelHelper
              */
             $upc = apply_filters('woocommerce_paypal_payments_level3_upc', $gtin ? array('type' => 'UPC-A', 'code' => $gtin) : null, $item, $gtin);
             if (is_array($upc) && isset($upc['type'], $upc['code']) && $upc['code']) {
-                $line_item['upc'] = array('type' => (string) substr($upc['type'], 0, 5), 'code' => (string) substr($upc['code'], 0, 17));
+                // Strip non-alphanumeric characters (PayPal only accepts letters and numbers).
+                $sanitized_code = preg_replace('/[^A-Za-z0-9]/', '', $upc['code']);
+                if ($sanitized_code) {
+                    $line_item['upc'] = array('type' => (string) substr($upc['type'], 0, 5), 'code' => (string) substr($sanitized_code, 0, 17));
+                }
             }
             $tax = $item->tax();
             if ($tax) {

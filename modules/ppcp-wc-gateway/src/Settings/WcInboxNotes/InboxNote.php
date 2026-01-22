@@ -17,8 +17,11 @@ class InboxNote implements \WooCommerce\PayPalCommerce\WcGateway\Settings\WcInbo
     protected string $name;
     protected string $status;
     protected bool $is_enabled;
-    protected \WooCommerce\PayPalCommerce\WcGateway\Settings\WcInboxNotes\InboxNoteActionInterface $action;
-    public function __construct(string $title, string $content, string $type, string $name, string $status, bool $is_enabled, \WooCommerce\PayPalCommerce\WcGateway\Settings\WcInboxNotes\InboxNoteActionInterface $action)
+    /**
+     * @var InboxNoteActionInterface[]
+     */
+    protected array $actions;
+    public function __construct(string $title, string $content, string $type, string $name, string $status, bool $is_enabled, \WooCommerce\PayPalCommerce\WcGateway\Settings\WcInboxNotes\InboxNoteActionInterface ...$actions)
     {
         $this->title = $title;
         $this->content = $content;
@@ -26,7 +29,7 @@ class InboxNote implements \WooCommerce\PayPalCommerce\WcGateway\Settings\WcInbo
         $this->name = $name;
         $this->status = $status;
         $this->is_enabled = $is_enabled;
-        $this->action = $action;
+        $this->actions = $actions;
     }
     public function title(): string
     {
@@ -52,8 +55,11 @@ class InboxNote implements \WooCommerce\PayPalCommerce\WcGateway\Settings\WcInbo
     {
         return $this->is_enabled;
     }
-    public function action(): \WooCommerce\PayPalCommerce\WcGateway\Settings\WcInboxNotes\InboxNoteActionInterface
+    /**
+     * @return InboxNoteActionInterface[]
+     */
+    public function actions(): array
     {
-        return $this->action;
+        return $this->actions;
     }
 }

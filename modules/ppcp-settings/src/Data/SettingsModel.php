@@ -100,6 +100,7 @@ class SettingsModel extends \WooCommerce\PayPalCommerce\Settings\Data\AbstractDa
             'enable_pay_now' => \false,
             'enable_logging' => \false,
             'stay_updated' => \true,
+            'payment_level_processing' => \false,
             // Array of string values.
             'disabled_cards' => array(),
             'ships_from_postal_code' => '',
@@ -445,5 +446,24 @@ class SettingsModel extends \WooCommerce\PayPalCommerce\Settings\Data\AbstractDa
     public function set_stay_updated(bool $save): void
     {
         $this->data['stay_updated'] = $this->sanitizer->sanitize_bool($save);
+    }
+    /**
+     * Get payment level processing.
+     *
+     * @return bool
+     */
+    public function get_payment_level_processing(): bool
+    {
+        return (bool) $this->data['payment_level_processing'];
+    }
+    /**
+     * Set payment level processing.
+     *
+     * @param bool $save Whether to save the payment level processing.
+     * @return void
+     */
+    public function set_payment_level_processing(bool $save): void
+    {
+        $this->data['payment_level_processing'] = $this->sanitizer->sanitize_bool($save);
     }
 }

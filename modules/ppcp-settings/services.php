@@ -230,7 +230,8 @@ $services = array(
         $merchant_id = $container->get('api.partner_merchant_id');
         $button_language_choices = $container->get('wcgateway.wp-paypal-locales-map');
         $partner_attribution = $container->get('api.helper.partner-attribution');
-        return new ScriptDataHandler($settings, $asset_getter, $paylater_is_available, $store_country, $merchant_id, $button_language_choices, $partner_attribution);
+        $payment_level_eligibility = $container->get('api.helpers.paymentLevelEligibility');
+        return new ScriptDataHandler($settings, $asset_getter, $paylater_is_available, $store_country, $merchant_id, $button_language_choices, $partner_attribution, $payment_level_eligibility);
     },
     'settings.service.data-migration' => static fn(ContainerInterface $c): MigrationManager => new MigrationManager($c->get('settings.service.data-migration.general-settings'), $c->get('settings.service.data-migration.settings-tab'), $c->get('settings.service.data-migration.styling'), $c->get('settings.service.data-migration.payment-settings')),
     'settings.service.data-migration.settings-tab' => static fn(ContainerInterface $c): SettingsTabMigration => new SettingsTabMigration((array) get_option('woocommerce-ppcp-settings', array()), $c->get('settings.data.settings'), $c->get('compat.settings.settings_tab_map_helper')),

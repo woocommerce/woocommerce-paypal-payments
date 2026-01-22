@@ -16,5 +16,8 @@ interface InboxNoteInterface
     public function name(): string;
     public function status(): string;
     public function is_enabled(): bool;
-    public function action(): \WooCommerce\PayPalCommerce\WcGateway\Settings\WcInboxNotes\InboxNoteActionInterface;
+    /**
+     * @return InboxNoteActionInterface[]
+     */
+    public function actions(): array;
 }

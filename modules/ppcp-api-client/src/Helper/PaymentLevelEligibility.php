@@ -8,15 +8,13 @@
 declare (strict_types=1);
 namespace WooCommerce\PayPalCommerce\ApiClient\Helper;
 
-use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
+use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 class PaymentLevelEligibility
 {
-    protected SettingsProvider $settings;
     protected string $country;
     protected \WooCommerce\PayPalCommerce\ApiClient\Helper\CurrencyGetter $shop_currency;
-    public function __construct(SettingsProvider $settings, string $country, \WooCommerce\PayPalCommerce\ApiClient\Helper\CurrencyGetter $shop_currency)
+    public function __construct(string $country, \WooCommerce\PayPalCommerce\ApiClient\Helper\CurrencyGetter $shop_currency)
     {
-        $this->settings = $settings;
         $this->country = $country;
         $this->shop_currency = $shop_currency;
     }
@@ -28,9 +26,6 @@ class PaymentLevelEligibility
      */
     public function is_eligible(string $payment_method): bool
     {
-        if (!$this->settings->payment_level_processing()) {
-            return \false;
-        }
         if (!$this->is_valid_country()) {
             return \false;
         }
@@ -74,7 +69,7 @@ class PaymentLevelEligibility
          *
          * @param array $methods Array of allowed payment method IDs.
          */
-        $allowed_methods = apply_filters('woocommerce_paypal_payments_level_processing_payment_methods', array('ppcp-credit-card-gateway'));
+        $allowed_methods = apply_filters('woocommerce_paypal_payments_level_processing_payment_methods', array(CreditCardGateway::ID));
         return in_array($payment_method, $allowed_methods, \true);
     }
 }
