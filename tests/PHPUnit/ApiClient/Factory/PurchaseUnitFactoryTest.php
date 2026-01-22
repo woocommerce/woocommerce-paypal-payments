@@ -12,6 +12,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Entity\PurchaseUnit;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Shipping;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\PaymentLevelEligibility;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\PaymentLevelHelper;
+use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
 use WooCommerce\PayPalCommerce\TestCase;
 use Mockery;
 
@@ -85,7 +86,8 @@ class PurchaseUnitFactoryTest extends TestCase
             $shippingFactory,
             $paymentsFacory,
 	        Mockery::mock(PaymentLevelHelper::class),
-	        $paymentLevelEligibility
+	        $paymentLevelEligibility,
+	        Mockery::mock(SettingsProvider::class)
         );
 
         $unit = $testee->from_wc_order($wcOrder);
@@ -154,7 +156,8 @@ class PurchaseUnitFactoryTest extends TestCase
 			$shippingFactory,
 			$paymentsFacory,
 			Mockery::mock(PaymentLevelHelper::class),
-			$paymentLevelEligibility
+			$paymentLevelEligibility,
+			Mockery::mock(SettingsProvider::class)
 		);
 
 		$unit = $testee->from_wc_order($wcOrder);
@@ -213,7 +216,8 @@ class PurchaseUnitFactoryTest extends TestCase
             $shippingFactory,
             $paymentsFacory,
 	        Mockery::mock(PaymentLevelHelper::class),
-	        $paymentLevelEligibility
+	        $paymentLevelEligibility,
+	        Mockery::mock(SettingsProvider::class)
         );
 
         $unit = $testee->from_wc_order($wcOrder);
@@ -265,7 +269,8 @@ class PurchaseUnitFactoryTest extends TestCase
             $shippingFactory,
             $paymentsFacory,
 	        Mockery::mock(PaymentLevelHelper::class),
-	        $paymentLevelEligibility
+	        $paymentLevelEligibility,
+	        Mockery::mock(SettingsProvider::class)
         );
 
         $unit = $testee->from_wc_order($wcOrder);
@@ -320,7 +325,8 @@ class PurchaseUnitFactoryTest extends TestCase
 			$shippingFactory,
 			$paymentsFacory,
 			Mockery::mock(PaymentLevelHelper::class),
-			$paymentLevelEligibility
+			$paymentLevelEligibility,
+			Mockery::mock(SettingsProvider::class)
 		);
 
 		$unit = $testee->from_wc_order($wcOrder);
@@ -378,7 +384,8 @@ class PurchaseUnitFactoryTest extends TestCase
             $shippingFactory,
             $paymentsFacory,
 	        Mockery::mock(PaymentLevelHelper::class),
-	        $paymentLevelEligibility
+	        $paymentLevelEligibility,
+	        Mockery::mock(SettingsProvider::class)
         );
 
         $unit = $testee->from_wc_cart($wcCart);
@@ -426,7 +433,8 @@ class PurchaseUnitFactoryTest extends TestCase
             $shippingFactory,
             $paymentsFacory,
 	        Mockery::mock(PaymentLevelHelper::class),
-	        $paymentLevelEligibility
+	        $paymentLevelEligibility,
+	        Mockery::mock(SettingsProvider::class)
         );
 
         $unit = $testee->from_wc_cart($wcCart);
@@ -477,7 +485,8 @@ class PurchaseUnitFactoryTest extends TestCase
             $shippingFactory,
             $paymentsFacory,
 	        Mockery::mock(PaymentLevelHelper::class),
-	        $paymentLevelEligibility
+	        $paymentLevelEligibility,
+	        Mockery::mock(SettingsProvider::class)
         );
 
         $unit = $testee->from_wc_cart($wcCart);
@@ -504,7 +513,8 @@ class PurchaseUnitFactoryTest extends TestCase
             $shippingFactory,
             $paymentsFacory,
 	        Mockery::mock(PaymentLevelHelper::class),
-	        Mockery::mock(PaymentLevelEligibility::class)
+	        Mockery::mock(PaymentLevelEligibility::class),
+	        Mockery::mock(SettingsProvider::class)
         );
 
         $response = (object) [
@@ -547,7 +557,8 @@ class PurchaseUnitFactoryTest extends TestCase
             $shippingFactory,
             $paymentsFacory,
 	        Mockery::mock(PaymentLevelHelper::class),
-	        Mockery::mock(PaymentLevelEligibility::class)
+	        Mockery::mock(PaymentLevelEligibility::class),
+	        Mockery::mock(SettingsProvider::class)
         );
 
         $response = (object) [
@@ -576,7 +587,8 @@ class PurchaseUnitFactoryTest extends TestCase
             $shippingFactory,
             $paymentsFacory,
 	        Mockery::mock(PaymentLevelHelper::class),
-	        Mockery::mock(PaymentLevelEligibility::class)
+	        Mockery::mock(PaymentLevelEligibility::class),
+	        Mockery::mock(SettingsProvider::class)
         );
 
         $response = (object) [
@@ -620,7 +632,8 @@ class PurchaseUnitFactoryTest extends TestCase
             $shippingFactory,
             $paymentsFactory,
 	        Mockery::mock(PaymentLevelHelper::class),
-	        Mockery::mock(PaymentLevelEligibility::class)
+	        Mockery::mock(PaymentLevelEligibility::class),
+	        Mockery::mock(SettingsProvider::class)
         );
 
         $response = (object)[
@@ -664,7 +677,8 @@ class PurchaseUnitFactoryTest extends TestCase
             $shippingFactory,
             $paymentsFactory,
 	        Mockery::mock(PaymentLevelHelper::class),
-	        Mockery::mock(PaymentLevelEligibility::class)
+	        Mockery::mock(PaymentLevelEligibility::class),
+	        Mockery::mock(SettingsProvider::class)
         );
 
         $response = (object)[
@@ -771,8 +785,13 @@ class PurchaseUnitFactoryTest extends TestCase
 		$paymentLevelHelper = Mockery::mock(PaymentLevelHelper::class);
 		$paymentLevelHelper
 			->shouldReceive('build')
-			->with($amount, [$item], $shipping)  // ✅ Fixed: match actual signature
+			->with($amount, [$item], $shipping)
 			->andReturn($level2Data);
+
+		$settings = Mockery::mock(SettingsProvider::class);
+		$settings
+			->shouldReceive('is_payment_level_processing_enabled')
+			->andReturn(true);
 
 		$testee = new PurchaseUnitFactory(
 			$amountFactory,
@@ -780,7 +799,8 @@ class PurchaseUnitFactoryTest extends TestCase
 			$shippingFactory,
 			$paymentsFactory,
 			$paymentLevelHelper,
-			$paymentLevelEligibility
+			$paymentLevelEligibility,
+			$settings
 		);
 
 		$unit = $testee->from_wc_order($wcOrder);
@@ -879,7 +899,8 @@ class PurchaseUnitFactoryTest extends TestCase
 			$shippingFactory,
 			$paymentsFactory,
 			$paymentLevelHelper,
-			$paymentLevelEligibility
+			$paymentLevelEligibility,
+			Mockery::mock(SettingsProvider::class)
 		);
 
 		$unit = $testee->from_wc_order($wcOrder);
@@ -1009,13 +1030,19 @@ class PurchaseUnitFactoryTest extends TestCase
 			->with($amount, [$item], $shipping)
 			->andReturn($level3Data);
 
+		$settings = Mockery::mock(SettingsProvider::class);
+		$settings
+			->shouldReceive('is_payment_level_processing_enabled')
+			->andReturn(true);
+
 		$testee = new PurchaseUnitFactory(
 			$amountFactory,
 			$itemFactory,
 			$shippingFactory,
 			$paymentsFactory,
 			$paymentLevelHelper,
-			$paymentLevelEligibility
+			$paymentLevelEligibility,
+			$settings
 		);
 
 		$unit = $testee->from_wc_order($wcOrder);
@@ -1182,13 +1209,19 @@ class PurchaseUnitFactoryTest extends TestCase
 			->with($amount, [$item], $shipping)
 			->andReturn($combinedData);
 
+		$settings = Mockery::mock(SettingsProvider::class);
+		$settings
+			->shouldReceive('is_payment_level_processing_enabled')
+			->andReturn(true);
+
 		$testee = new PurchaseUnitFactory(
 			$amountFactory,
 			$itemFactory,
 			$shippingFactory,
 			$paymentsFactory,
 			$paymentLevelHelper,
-			$paymentLevelEligibility
+			$paymentLevelEligibility,
+			$settings
 		);
 
 		$unit = $testee->from_wc_order($wcOrder);
@@ -1309,13 +1342,19 @@ class PurchaseUnitFactoryTest extends TestCase
 			->with($amount, [$item], $shipping)
 			->andReturn($level2Data);
 
+		$settings = Mockery::mock(SettingsProvider::class);
+		$settings
+			->shouldReceive('is_payment_level_processing_enabled')
+			->andReturn(true);
+
 		$testee = new PurchaseUnitFactory(
 			$amountFactory,
 			$itemFactory,
 			$shippingFactory,
 			$paymentsFactory,
 			$paymentLevelHelper,
-			$paymentLevelEligibility
+			$paymentLevelEligibility,
+			$settings
 		);
 
 		$unit = $testee->from_wc_cart($wcCart);
