@@ -132,7 +132,7 @@ abstract class ValidationIssue {
 	 * @param mixed  $value The context value.
 	 * @return static
 	 */
-	public function add_context( string $key, $value ): static {
+	public function add_context( string $key, $value ): self {
 		$this->context[ $key ] = $value;
 		return $this;
 	}
@@ -149,7 +149,7 @@ abstract class ValidationIssue {
 	 * @param array  $metadata Optional. Additional metadata (e.g., priority, cost_impact).
 	 * @return static
 	 */
-	public function add_resolution( string $action, string $label, string $url = '', array $metadata = array() ): static {
+	public function add_resolution( string $action, string $label, string $url = '', array $metadata = array() ): self {
 		if ( count( $this->resolution_options ) < self::MAX_RESOLUTION_OPTIONS ) {
 			$resolution = array(
 				'action' => $action,
