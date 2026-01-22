@@ -32,6 +32,16 @@ abstract class ValidationIssue {
 	protected const ISSUE_TYPE = '';
 
 	/**
+	 * Maximum length for the technical message field.
+	 */
+	private const MAX_MESSAGE_LENGTH = 255;
+
+	/**
+	 * Maximum length for the user-facing message field.
+	 */
+	private const MAX_USER_MESSAGE_LENGTH = 500;
+
+	/**
 	 * Maximum number of resolution options allowed.
 	 */
 	private const MAX_RESOLUTION_OPTIONS = 5;
@@ -163,11 +173,11 @@ abstract class ValidationIssue {
 		$data = array(
 			'code'    => $this->code(),
 			'type'    => $this->type(),
-			'message' => (string) substr( $this->message, 0, 255 ),
+			'message' => substr( $this->message, 0, self::MAX_MESSAGE_LENGTH ),
 		);
 
 		if ( $this->user_message ) {
-			$data['user_message'] = (string) substr( $this->user_message, 0, 500 );
+			$data['user_message'] = substr( $this->user_message, 0, self::MAX_USER_MESSAGE_LENGTH );
 		}
 		if ( $this->field ) {
 			$data['field'] = $this->field;
