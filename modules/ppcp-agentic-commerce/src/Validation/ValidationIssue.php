@@ -101,6 +101,18 @@ abstract class ValidationIssue {
 		return static::ISSUE_TYPE;
 	}
 
+	/**
+	 * Adds a context entry to the validation issue.
+	 *
+	 * @param string $key   The context key.
+	 * @param mixed  $value The context value.
+	 * @return static
+	 */
+	public function add_context( string $key, $value ): static {
+		$this->context[ $key ] = $value;
+		return $this;
+	}
+
 	public function to_array(): array {
 		$data = array(
 			'code'    => $this->code(),
