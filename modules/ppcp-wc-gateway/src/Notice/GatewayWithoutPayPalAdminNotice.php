@@ -120,7 +120,7 @@ class GatewayWithoutPayPalAdminNotice {
 					'woocommerce-paypal-payments'
 				);
 				$url1 = admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-card-button-gateway' );
-				$url2 = admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway&ppcp-tab=ppcp-credit-card-gateway' );
+				$url2 = admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway' );
 				break;
 			default:
 				return null;

@@ -264,9 +264,8 @@ return array(
 		if ( $dcc_configuration->use_fastlane() ) {
 			$fastlane_settings_url = admin_url(
 				sprintf(
-					'admin.php?page=wc-settings&tab=checkout&section=%1$s&ppcp-tab=%2$s#field-axo_heading',
-					PayPalGateway::ID,
-					CreditCardGateway::ID
+					'admin.php?page=wc-settings&tab=checkout&section=%1$s',
+					PayPalGateway::ID
 				)
 			);
 

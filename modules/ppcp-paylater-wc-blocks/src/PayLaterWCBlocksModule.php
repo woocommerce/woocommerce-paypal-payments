@@ -131,7 +131,7 @@ class PayLaterWCBlocksModule implements ServiceModule, ExecutableModule {
 						'settingsUrl'                 => admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway' ),
 						'vaultingEnabled'             => $settings_provider->save_paypal_and_venmo(),
 						'placementEnabled'            => self::is_placement_enabled( $c->get( 'wcgateway.settings.status' ), 'cart' ),
-						'payLaterSettingsUrl'         => admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway&ppcp-tab=ppcp-pay-later' ),
+						'payLaterSettingsUrl'         => admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway' ),
 						'underTotalsPlacementEnabled' => self::is_under_cart_totals_placement_enabled(),
 					)
 				);
@@ -159,7 +159,7 @@ class PayLaterWCBlocksModule implements ServiceModule, ExecutableModule {
 						'settingsUrl'         => admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway' ),
 						'vaultingEnabled'     => $settings_provider->save_paypal_and_venmo(),
 						'placementEnabled'    => self::is_placement_enabled( $c->get( 'wcgateway.settings.status' ), 'checkout' ),
-						'payLaterSettingsUrl' => admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway&ppcp-tab=ppcp-pay-later' ),
+						'payLaterSettingsUrl' => admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway' ),
 					)
 				);
 			},

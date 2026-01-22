@@ -216,7 +216,7 @@ define( 'PPCP_PAYPAL_BN_CODE', 'Woo_PPCP' );
 				$links,
 				sprintf(
 					'<a href="%1$s">%2$s</a>',
-					admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway&ppcp-tab=ppcp-connection' ),
+					admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway' ),
 					__( 'Settings', 'woocommerce-paypal-payments' )
 				)
 			);

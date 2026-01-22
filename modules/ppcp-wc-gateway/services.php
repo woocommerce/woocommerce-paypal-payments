@@ -966,7 +966,7 @@ return array(
 			: $container->get( 'wcgateway.enable-dcc-url-sandbox' );
 
 		$dcc_button_url = $dcc_enabled
-			? admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway&ppcp-tab=ppcp-credit-card-gateway' )
+			? admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway' )
 			: $enable_dcc_url;
 
 		return sprintf(
@@ -1217,7 +1217,6 @@ return array(
 
 	'wcgateway.settings.wc-tasks.pay-later-task-config'    => static function ( ContainerInterface $container ): array {
 		$section_id       = PayPalGateway::ID;
-		$pay_later_tab_id = Settings::PAY_LATER_TAB_ID;
 
 		if ( $container->has( 'paylater-configurator.is-available' ) && $container->get( 'paylater-configurator.is-available' ) ) {
 			return array(
@@ -1225,7 +1224,7 @@ return array(
 					'id'           => 'pay-later-messaging-task',
 					'title'        => __( 'Configure PayPal Pay Later messaging', 'woocommerce-paypal-payments' ),
 					'description'  => __( 'Decide where you want dynamic Pay Later messaging to show up and how you want it to look on your site.', 'woocommerce-paypal-payments' ),
-					'redirect_url' => admin_url( "admin.php?page=wc-settings&tab=checkout&section={$section_id}&ppcp-tab={$pay_later_tab_id}" ),
+					'redirect_url' => admin_url( "admin.php?page=wc-settings&tab=checkout&section={$section_id}" ),
 				),
 			);
 		}
@@ -1243,7 +1242,7 @@ return array(
 					'id'           => 'connect-to-paypal-task',
 					'title'        => __( 'Connect PayPal to complete setup', 'woocommerce-paypal-payments' ),
 					'description'  => __( 'PayPal Payments is almost ready. To get started, connect your account with the Activate PayPal Payments button.', 'woocommerce-paypal-payments' ),
-					'redirect_url' => admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway&ppcp-tab=' . Settings::CONNECTION_TAB_ID ),
+					'redirect_url' => admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway' ),
 				),
 			);
 		}

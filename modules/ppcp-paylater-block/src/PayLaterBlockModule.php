@@ -93,7 +93,7 @@ class PayLaterBlockModule implements ServiceModule, ExecutableModule {
 						'settingsUrl'         => admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway' ),
 						'vaultingEnabled'     => $settings_provider->save_paypal_and_venmo(),
 						'placementEnabled'    => self::is_block_enabled( $c->get( 'wcgateway.settings.status' ) ),
-						'payLaterSettingsUrl' => admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway&ppcp-tab=ppcp-pay-later' ),
+						'payLaterSettingsUrl' => admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway' ),
 					)
 				);
 
