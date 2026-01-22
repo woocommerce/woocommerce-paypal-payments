@@ -69,7 +69,6 @@ const modulesAssets = {
 	'ppcp-paypal-subscriptions': [ 'js/paypal-subscription.js' ],
 	'ppcp-save-payment-methods': [ 'js/add-payment-method.js' ],
 	'ppcp-settings': [ 'js/index.js', 'css/styles.scss' ],
-	'ppcp-uninstall': [ 'js/ppcp-clear-db.js' ],
 	'ppcp-wc-gateway': [
 		'js/common.js',
 		'js/gateway-settings.js',

@@ -56,7 +56,6 @@ return array(
 			'ppcp-tracking',
 			'ppcp-fraudnet',
 			'ppcp-tracking-compat',
-			'ppcp-clear-db',
 		);
 	},
 
@@ -68,7 +67,6 @@ return array(
 			'order-edit-page.js',
 			'fraudnet.js',
 			'tracking-compat.js',
-			'ppcp-clear-db.js',
 		);
 	},
 
