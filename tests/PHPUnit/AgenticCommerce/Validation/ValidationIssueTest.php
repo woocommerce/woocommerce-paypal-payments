@@ -63,6 +63,120 @@ class ValidationIssueTest extends TestCase {
 		$this->assertSame( 'field_name', $data['field'] );
 	}
 
+	/**
+	 * @dataProvider validation_issue_provider
+	 */
+	public function test_validation_issue_with_item_id( string $class_name ): void {
+		$issue = new $class_name( 'Test message', 'User message', 'field_name', 'item_123' );
+		$data  = $issue->to_array();
+
+		$this->assertSame( 'item_123', $data['item_id'] );
+	}
+
+	/**
+	 * @dataProvider validation_issue_provider
+	 */
+	public function test_add_context_method( string $class_name ): void {
+		$issue = new $class_name( 'Test message' );
+		$issue->add_context( 'available_quantity', 5 )
+			->add_context( 'requested_quantity', 10 );
+
+		$data = $issue->to_array();
+
+		$this->assertArrayHasKey( 'context', $data );
+		$this->assertSame( 5, $data['context']['available_quantity'] );
+		$this->assertSame( 10, $data['context']['requested_quantity'] );
+	}
+
+	/**
+	 * @dataProvider validation_issue_provider
+	 */
+	public function test_add_resolution_method( string $class_name ): void {
+		$issue = new $class_name( 'Test message' );
+		$issue->add_resolution( 'REMOVE_ITEM', 'Remove this item from cart' )
+			->add_resolution( 'REDUCE_QUANTITY', 'Reduce quantity to available stock' );
+
+		$data = $issue->to_array();
+
+		$this->assertArrayHasKey( 'resolution_options', $data );
+		$this->assertCount( 2, $data['resolution_options'] );
+		$this->assertSame( 'REMOVE_ITEM', $data['resolution_options'][0]['action'] );
+		$this->assertSame( 'Remove this item from cart', $data['resolution_options'][0]['label'] );
+		$this->assertSame( 'REDUCE_QUANTITY', $data['resolution_options'][1]['action'] );
+	}
+
+	/**
+	 * @dataProvider validation_issue_provider
+	 */
+	public function test_add_resolution_with_url_and_metadata( string $class_name ): void {
+		$issue = new $class_name( 'Test message' );
+		$issue->add_resolution(
+			'SUGGEST_ALTERNATIVE',
+			'View similar products',
+			'https://store.com/alternatives',
+			array( 'priority' => 'HIGH', 'cost_impact' => '$0.00' )
+		);
+
+		$data = $issue->to_array();
+
+		$this->assertArrayHasKey( 'resolution_options', $data );
+		$this->assertCount( 1, $data['resolution_options'] );
+
+		$resolution = $data['resolution_options'][0];
+		$this->assertSame( 'SUGGEST_ALTERNATIVE', $resolution['action'] );
+		$this->assertSame( 'View similar products', $resolution['label'] );
+		$this->assertSame( 'https://store.com/alternatives', $resolution['url'] );
+		$this->assertSame( 'HIGH', $resolution['metadata']['priority'] );
+		$this->assertSame( '$0.00', $resolution['metadata']['cost_impact'] );
+	}
+
+	/**
+	 * @dataProvider validation_issue_provider
+	 */
+	public function test_add_resolution_omits_empty_url_and_metadata( string $class_name ): void {
+		$issue = new $class_name( 'Test message' );
+		$issue->add_resolution( 'REMOVE_ITEM', 'Remove item' );
+
+		$data       = $issue->to_array();
+		$resolution = $data['resolution_options'][0];
+
+		$this->assertArrayHasKey( 'action', $resolution );
+		$this->assertArrayHasKey( 'label', $resolution );
+		$this->assertArrayNotHasKey( 'url', $resolution );
+		$this->assertArrayNotHasKey( 'metadata', $resolution );
+	}
+
+	/**
+	 * @dataProvider validation_issue_provider
+	 */
+	public function test_add_resolution_respects_max_limit( string $class_name ): void {
+		$issue = new $class_name( 'Test message' );
+
+		// Add 7 resolutions, only 5 should be kept.
+		for ( $i = 1; $i <= 7; $i++ ) {
+			$issue->add_resolution( "ACTION_$i", "Label $i" );
+		}
+
+		$data = $issue->to_array();
+
+		$this->assertCount( 5, $data['resolution_options'] );
+		$this->assertSame( 'ACTION_5', $data['resolution_options'][4]['action'] );
+	}
+
+	/**
+	 * @dataProvider validation_issue_provider
+	 */
+	public function test_fluent_interface_returns_same_instance( string $class_name ): void {
+		$issue  = new $class_name( 'Test message' );
+		$result = $issue->add_context( 'key', 'value' );
+
+		$this->assertSame( $issue, $result );
+
+		$result = $issue->add_resolution( 'ACTION', 'Label' );
+
+		$this->assertSame( $issue, $result );
+	}
+
 	public function validation_issue_provider(): array {
 		return array(
 			'MissingField'         => array( MissingField::class ),
