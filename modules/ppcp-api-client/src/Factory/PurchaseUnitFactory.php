@@ -13,6 +13,8 @@ use WC_Session_Handler;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Item;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PurchaseUnit;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
+use WooCommerce\PayPalCommerce\ApiClient\Helper\PaymentLevelEligibility;
+use WooCommerce\PayPalCommerce\ApiClient\Helper\PaymentLevelHelper;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\PurchaseUnitSanitizer;
 use WooCommerce\PayPalCommerce\Webhooks\CustomIds;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Address;
@@ -50,6 +52,10 @@ class PurchaseUnitFactory {
 	 */
 	private $payments_factory;
 
+	private PaymentLevelHelper $payment_level_helper;
+
+	private PaymentLevelEligibility $payment_level_eligibility;
+
 	/**
 	 * The Prefix.
 	 *
@@ -71,34 +77,27 @@ class PurchaseUnitFactory {
 	 */
 	private $sanitizer;
 
-	/**
-	 * PurchaseUnitFactory constructor.
-	 *
-	 * @param AmountFactory          $amount_factory The amount factory.
-	 * @param ItemFactory            $item_factory The item factory.
-	 * @param ShippingFactory        $shipping_factory The shipping factory.
-	 * @param PaymentsFactory        $payments_factory The payments factory.
-	 * @param string                 $prefix The prefix.
-	 * @param string                 $soft_descriptor The soft descriptor.
-	 * @param ?PurchaseUnitSanitizer $sanitizer The purchase unit to_array sanitizer.
-	 */
 	public function __construct(
 		AmountFactory $amount_factory,
 		ItemFactory $item_factory,
 		ShippingFactory $shipping_factory,
 		PaymentsFactory $payments_factory,
+		PaymentLevelHelper $payment_level_helper,
+		PaymentLevelEligibility $payment_level_eligibility,
 		string $prefix = 'WC-',
 		string $soft_descriptor = '',
 		?PurchaseUnitSanitizer $sanitizer = null
 	) {
 
-		$this->amount_factory   = $amount_factory;
-		$this->item_factory     = $item_factory;
-		$this->shipping_factory = $shipping_factory;
-		$this->payments_factory = $payments_factory;
-		$this->prefix           = $prefix;
-		$this->soft_descriptor  = $soft_descriptor;
-		$this->sanitizer        = $sanitizer;
+		$this->amount_factory            = $amount_factory;
+		$this->item_factory              = $item_factory;
+		$this->shipping_factory          = $shipping_factory;
+		$this->payments_factory          = $payments_factory;
+		$this->payment_level_helper      = $payment_level_helper;
+		$this->payment_level_eligibility = $payment_level_eligibility;
+		$this->prefix                    = $prefix;
+		$this->soft_descriptor           = $soft_descriptor;
+		$this->sanitizer                 = $sanitizer;
 	}
 
 	/**
@@ -128,6 +127,11 @@ class PurchaseUnitFactory {
 		$custom_id       = (string) $order->get_id();
 		$invoice_id      = $this->prefix . $order->get_order_number();
 		$soft_descriptor = $this->sanitize_soft_descriptor( $this->soft_descriptor );
+		$payment_level   = null;
+
+		if ( $this->payment_level_eligibility->is_eligible( $order->get_payment_method() ) ) {
+			$payment_level = $this->payment_level_helper->build( $amount, 'level_2' );
+		}
 
 		$purchase_unit = new PurchaseUnit(
 			$amount,
@@ -137,7 +141,9 @@ class PurchaseUnitFactory {
 			$description,
 			$custom_id,
 			$invoice_id,
-			$soft_descriptor
+			$soft_descriptor,
+			null,
+			$payment_level['supplementary_data'] ?? null
 		);
 
 		$this->init_purchase_unit( $purchase_unit );
@@ -160,7 +166,7 @@ class PurchaseUnitFactory {
 	 *
 	 * @return PurchaseUnit
 	 */
-	public function from_wc_cart( ?\WC_Cart $cart = null, bool $with_shipping_options = false ): PurchaseUnit {
+	public function from_wc_cart( ?\WC_Cart $cart = null, bool $with_shipping_options = false, string $payment_method = '' ): PurchaseUnit {
 		if ( ! $cart ) {
 			$cart = WC()->cart ?? new \WC_Cart();
 		}
@@ -201,7 +207,13 @@ class PurchaseUnitFactory {
 		}
 		$invoice_id      = '';
 		$soft_descriptor = $this->sanitize_soft_descriptor( $this->soft_descriptor );
-		$purchase_unit   = new PurchaseUnit(
+		$payment_level   = null;
+
+		if ( $this->payment_level_eligibility->is_eligible( $payment_method ) ) {
+			$payment_level = $this->payment_level_helper->build( $amount, 'level_2' );
+		}
+
+		$purchase_unit = new PurchaseUnit(
 			$amount,
 			$items,
 			$shipping,
@@ -209,7 +221,9 @@ class PurchaseUnitFactory {
 			$description,
 			$custom_id,
 			$invoice_id,
-			$soft_descriptor
+			$soft_descriptor,
+			null,
+			$payment_level['supplementary_data'] ?? null
 		);
 
 		$this->init_purchase_unit( $purchase_unit );

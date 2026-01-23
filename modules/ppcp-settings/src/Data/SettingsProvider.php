@@ -241,6 +241,15 @@ class SettingsProvider {
 	}
 
 	/**
+	 * If payment level processing is enabled.
+	 *
+	 * @return bool
+	 */
+	public function payment_level_processing(): bool {
+		return $this->payment_settings->get_payment_level_processing();
+	}
+
+	/**
 	 * Get if Fastlane should display watermark.
 	 *
 	 * @return bool
