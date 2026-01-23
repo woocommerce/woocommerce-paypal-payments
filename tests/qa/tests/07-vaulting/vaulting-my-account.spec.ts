@@ -18,7 +18,7 @@ const acdc2 = { ...acdc, card: cards.visa2 };
 test.beforeAll( async ( { utils, pcpApi } ) => {
 	await utils.configureStore( {
 		...storeConfigUsa,
-		classicPages: true,
+		enableClassicPages: true,
 	} );
 	await utils.installAndActivatePcp();
 	await pcpApi.resetDb();

@@ -21,7 +21,7 @@ const {
 test.beforeAll( async ( { utils, pcpApi } ) => {
 	await utils.configureStore( {
 		...storeConfigUsa,
-		classicPages: false,
+		enableClassicPages: false,
 	} );
 	await utils.installAndActivatePcp();
 	await pcpApi.resetDb();

@@ -28,7 +28,7 @@ const testOrder: WooCommerce.ShopOrder = {
 test.beforeAll( async ( { utils, pcpApi, wooCommerceApi } ) => {
 	await utils.configureStore( {
 		...storeConfigUsa,
-		classicPages: true,
+		enableClassicPages: true,
 		products: [ testProduct ],
 	} );
 	// Restore stock_quantity before each test

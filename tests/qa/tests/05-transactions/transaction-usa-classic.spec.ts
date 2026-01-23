@@ -43,7 +43,7 @@ const { payPal, payLater, venmo, acdc, fastlane } = gateways;
 test.beforeAll( async ( { utils, pcpApi } ) => {
 	await utils.configureStore( {
 		...storeConfigUsa,
-		classicPages: true,
+		enableClassicPages: true,
 		customer: customers.usa,
 	} );
 	await utils.installAndActivatePcp();
