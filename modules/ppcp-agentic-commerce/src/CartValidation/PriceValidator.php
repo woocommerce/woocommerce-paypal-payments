@@ -91,6 +91,7 @@ class PriceValidator implements ValidatorInterface {
 				CartHelper::format_price( $store_price )
 			),
 			$field,
+			'',
 			$context,
 			$resolution_options
 		);
