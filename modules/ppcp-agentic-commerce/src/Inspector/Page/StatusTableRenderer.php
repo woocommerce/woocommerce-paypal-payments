@@ -112,19 +112,24 @@ trait StatusTableRenderer {
 				<?php $this->render_help( $help ); ?>
 			</td>
 			<td>
-				<div style="display: flex; align-items: center; gap: 12px;">
-					<?php
-					if ( is_callable( $value ) ) {
-						$value = $value();
-					}
+				<?php
+				if ( is_callable( $value ) ) {
+					$value = $value();
+				}
 
-					if ( is_string( $value ) && $value ) {
-						echo wp_kses_post( $value );
-					}
-					?>
-				</div>
+				if ( is_string( $value ) && $value ) {
+					echo wp_kses_post( $value );
+				}
+				?>
 			</td>
 		</tr>
 		<?php
+	}
+
+	protected function render_note( string $note ): string {
+		return sprintf(
+			'<div class="ppcp-notice notice notice-warning below-h2" style="margin:0"><p style="margin:0.5em 0">%s</p></div>',
+			wp_kses_post( $note )
+		);
 	}
 }

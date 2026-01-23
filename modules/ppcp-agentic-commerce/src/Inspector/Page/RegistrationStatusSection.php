@@ -16,6 +16,8 @@ use WooCommerce\PayPalCommerce\Settings\Data\GeneralSettings;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Auth\AuthServiceProvider;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Registration\RegistrationEligibility;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Registration\RegistrationService;
+use WooCommerce\PayPalCommerce\AgenticCommerce\Auth\SandboxAuthService;
+use WooCommerce\PayPalCommerce\AgenticCommerce\Endpoint\CreateCartEndpoint;
 
 /**
  * Class RegistrationStatusSection
@@ -48,10 +50,11 @@ class RegistrationStatusSection {
 	 * Render the registration status section.
 	 */
 	public function render(): void {
-		$use_auto_register = $this->use_auto_register();
-		$is_eligible       = $this->eligibility_check->is_eligible();
-		$is_registered     = $this->registration_service->is_registered();
-		$auth_service      = $this->auth_provider->auth_service();
+		$use_auto_register  = $this->use_auto_register();
+		$is_eligible        = $this->eligibility_check->is_eligible();
+		$is_registered      = $this->registration_service->is_registered();
+		$auth_service       = $this->auth_provider->auth_service();
+		$auth_service_class = get_class( $auth_service );
 
 		?>
 		<div class="wrap">
@@ -81,28 +84,55 @@ class RegistrationStatusSection {
 						'help'  => __( 'Whether this store can use agentic commerce features', 'woocommerce-paypal-payments' ),
 					),
 					array(
-						'label' => __( 'JWK Auth Service', 'woocommerce-paypal-payments' ),
-						'value' => sprintf( '<code>%s</code>', get_class( $auth_service ) ),
+						'label' => __( 'Auth Service', 'woocommerce-paypal-payments' ),
+						'value' => sprintf( '<code>%s</code>', $auth_service_class ),
 						'help'  => __( 'Which implementation verifies the JWK token?', 'woocommerce-paypal-payments' ),
 					),
-					array(
-						'label' => __( 'Status', 'woocommerce-paypal-payments' ),
-						'value' => $this->render_boolean_badge(
-							$is_registered,
-							__( 'Registered', 'woocommerce-paypal-payments' ),
-							__( 'Not registered', 'woocommerce-paypal-payments' )
+				);
+
+				if ( SandboxAuthService::class === $auth_service_class ) {
+					$status_rows[] = array(
+						'label' => '',
+						'value' => $this->render_note(
+							sprintf(
+							// translators: The placeholder contains a code snippet for defining a constant.
+								__( 'To test real authentication: Add %s to wp-config.php', 'woocommerce-paypal-payments' ),
+								'<code>define( "PPCP_AGENTIC_FULL_AUTH", true );</code>'
+							)
 						),
-						'help'  => __( 'Is the store registered with the joinhoney service?', 'woocommerce-paypal-payments' ),
+					);
+				} elseif ( defined( 'PPCP_AGENTIC_FULL_AUTH' ) ) {
+					$status_rows[] = array(
+						'label' => '',
+						'value' => $this->render_note(
+							sprintf(
+							// translators: The placeholder contains a code snippet for defining a constant.
+								__( 'To use sandbox authentication: Remove %s from wp-config.php', 'woocommerce-paypal-payments' ),
+								'<code>define( "PPCP_AGENTIC_FULL_AUTH", true );</code>'
+							)
+						),
+					);
+				}
+
+				$status_rows[] = array(
+					'label' => __( 'Status', 'woocommerce-paypal-payments' ),
+					'value' => $this->render_boolean_badge(
+						$is_registered,
+						__( 'Registered', 'woocommerce-paypal-payments' ),
+						__( 'Not registered', 'woocommerce-paypal-payments' )
 					),
+					'help'  => __( 'Is the store registered with the joinhoney service?', 'woocommerce-paypal-payments' ),
 				);
 
 				if ( $use_auto_register ) {
 					$status_rows[] = array(
 						'label' => '',
-						'value' => sprintf(
-						// translators: The placeholder contains a code snippet for defining a constant.
-							__( 'Auto-registration is enabled, disable by adding %s to wp-config.php', 'woocommerce-paypal-payments' ),
-							'<code>define( "PPCP_AGENTIC_AUTO_REGISTER", false );</code>'
+						'value' => $this->render_note(
+							sprintf(
+							// translators: The placeholder contains a code snippet for defining a constant.
+								__( 'To disable auto-registration: Add %s to wp-config.php', 'woocommerce-paypal-payments' ),
+								'<code>define( "PPCP_AGENTIC_AUTO_REGISTER", false );</code>'
+							)
 						),
 					);
 				} else {
@@ -137,6 +167,7 @@ class RegistrationStatusSection {
 
 		$wc_config          = $this->general_settings->get_woo_settings();
 		$onboarded_merchant = $this->general_settings->get_merchant_id();
+		$rest_endpoint_url  = CreateCartEndpoint::endpoint_url();
 		$store_identifier   = $metadata['wooSydeCommerceId'] ?? '?';
 		$merchant_id        = $metadata['paypalMerchantId'] ?? '?';
 		$store_country      = $metadata['country'] ?? '?';
@@ -148,6 +179,10 @@ class RegistrationStatusSection {
 				'label' => __( 'Store URL', 'woocommerce-paypal-payments' ),
 				'value' => $store_identifier,
 				'help'  => __( 'This store is identified using that URL. It should not change!', 'woocommerce-paypal-payments' ),
+			),
+			array(
+				'label' => __( 'Agentic Endpoint URL', 'woocommerce-paypal-payments' ),
+				'value' => $rest_endpoint_url,
 			),
 			array(
 				'label' => __( 'Merchant ID', 'woocommerce-paypal-payments' ),
