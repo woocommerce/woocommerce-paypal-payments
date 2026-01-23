@@ -7,22 +7,18 @@
 
 // phpcs:disable WordPress.Security.NonceVerification.Recommended
 
-declare( strict_types=1 );
+declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\WcGateway;
 
 use Automattic\WooCommerce\Admin\Notes\Note;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PayUponInvoiceOrderEndpoint;
-use WooCommerce\PayPalCommerce\ApiClient\Entity\ExperienceContext;
-use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\ReferenceTransactionStatus;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\Cache;
-use WooCommerce\PayPalCommerce\ApiClient\Helper\DccApplies;
 use WooCommerce\PayPalCommerce\Applepay\ApplePayGateway;
 use WooCommerce\PayPalCommerce\Assets\AssetGetter;
 use WooCommerce\PayPalCommerce\Assets\AssetGetterFactory;
 use WooCommerce\PayPalCommerce\Axo\Gateway\AxoGateway;
-use WooCommerce\PayPalCommerce\Axo\Helper\PropertiesDictionary;
 use WooCommerce\PayPalCommerce\Button\Helper\MessagesApply;
 use WooCommerce\PayPalCommerce\Button\Helper\MessagesDisclaimers;
 use WooCommerce\PayPalCommerce\Common\Pattern\SingletonDecorator;
@@ -96,7 +92,6 @@ use WooCommerce\PayPalCommerce\WcGateway\StoreApi\Factory\CartFactory;
 use WooCommerce\PayPalCommerce\WcGateway\StoreApi\Factory\CartTotalsFactory;
 use WooCommerce\PayPalCommerce\WcGateway\StoreApi\Factory\MoneyFactory;
 use WooCommerce\PayPalCommerce\WcGateway\StoreApi\Factory\ShippingRatesFactory;
-use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
 use WooCommerce\PayPalCommerce\Webhooks\WebhookEventStorage;
 
 return array(
@@ -250,6 +245,7 @@ return array(
 	},
 
 	'wcgateway.is-ppcp-settings-page'                      => static function ( ContainerInterface $container ): bool {
+		// todo: #legacy-ui logic, needs migration.
 		if ( ! $container->get( 'wcgateway.is-wc-payments-page' ) ) {
 			return false;
 		}
@@ -259,13 +255,11 @@ return array(
 		return in_array(
 			$section,
 			array(
-				Settings::CONNECTION_TAB_ID,
 				PayPalGateway::ID,
 				CreditCardGateway::ID,
 				PayUponInvoiceGateway::ID,
 				CardButtonGateway::ID,
 				OXXOGateway::ID,
-				Settings::PAY_LATER_TAB_ID,
 				AxoGateway::ID,
 				GooglePayGateway::ID,
 				ApplePayGateway::ID,
@@ -274,8 +268,9 @@ return array(
 		);
 	},
 
-	// Checks, if the current admin page contains settings for this plugin's payment methods.
+	// Checks if the current admin page contains settings for this plugin's payment methods.
 	'wcgateway.is-ppcp-settings-payment-methods-page'      => static function ( ContainerInterface $container ): bool {
+		// todo: #legacy-ui logic, needs migration.
 		if ( ! $container->get( 'wcgateway.is-ppcp-settings-page' ) ) {
 			return false;
 		}
@@ -288,8 +283,6 @@ return array(
 				PayPalGateway::ID,
 				CreditCardGateway::ID,
 				CardButtonGateway::ID,
-				Settings::PAY_LATER_TAB_ID,
-				Settings::CONNECTION_TAB_ID,
 				GooglePayGateway::ID,
 				ApplePayGateway::ID,
 			),

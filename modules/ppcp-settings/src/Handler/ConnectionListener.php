@@ -11,6 +11,7 @@ declare( strict_types = 1 );
 namespace WooCommerce\PayPalCommerce\Settings\Handler;
 
 use Psr\Log\LoggerInterface;
+use Exception;
 use RuntimeException;
 use WooCommerce\PayPalCommerce\Settings\Service\AuthenticationManager;
 use WooCommerce\PayPalCommerce\Settings\Service\OnboardingUrlManager;
@@ -39,54 +40,39 @@ class ConnectionListener {
 	private const TOKEN_STATE_TRANSIENT = 'ppcp_auth_token_state';
 
 	/**
-	 * ID of the current settings page; empty if not on a PayPal settings page.
-	 *
-	 * @var string
+	 * Whether the current request renders the plugin's settings page.
 	 */
 	private bool $is_settings_page;
 
 	/**
 	 * Access to the onboarding URL manager.
-	 *
-	 * @var OnboardingUrlManager
 	 */
 	private OnboardingUrlManager $url_manager;
 
 	/**
 	 * Authentication manager service, responsible to update connection details.
-	 *
-	 * @var AuthenticationManager
 	 */
 	private AuthenticationManager $authentication_manager;
 
 	/**
 	 * A redirector-instance to redirect the merchant after authentication.
-	 * ™
-	 *
-	 * @var RedirectorInterface
 	 */
 	private RedirectorInterface $redirector;
 
 	/**
 	 * Logger instance, mainly used for debugging purposes.
-	 *
-	 * @var LoggerInterface
 	 */
 	private LoggerInterface $logger;
 
 	/**
 	 * ID of the current user, set by the process() method.
 	 *
-	 * Default value is 0 (guest), until the real ID is provided to process().
-	 *
-	 * @var int
+	 * The default value is 0 (guest), until the real ID is provided to process().
 	 */
 	private int $user_id = 0;
 
 	/**
 	 * The request details (usually the GET data) which were provided.
-	 *
-	 * @var array
 	 */
 	private array $request_data = array();
 
@@ -114,7 +100,7 @@ class ConnectionListener {
 	}
 
 	/**
-	 * Process the request data, and extract connection details, if present.
+	 * Process the request data and extract connection details, if present.
 	 *
 	 * @param int   $user_id The current user ID.
 	 * @param array $request Request details to process.
@@ -197,7 +183,7 @@ class ConnectionListener {
 			$this->set_token_state( $token, self::TOKEN_STATE_PROCESSING );
 
 			$this->authentication_manager->handle_oauth_authentication( $data );
-		} catch ( \Exception $e ) {
+		} catch ( Exception $e ) {
 			$this->logger->error( 'Failed to complete authentication: ' . $e->getMessage() );
 		}
 
@@ -205,7 +191,7 @@ class ConnectionListener {
 	}
 
 	/**
-	 * Determine, if the request details contain connection data that should be
+	 * Determine if the request details contain connection data that should be
 	 * extracted and stored.
 	 *
 	 * @return bool True, if the request contains valid connection details.
