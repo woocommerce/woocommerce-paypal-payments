@@ -30,61 +30,21 @@ class PayUponInvoice {
 
 	use TransactionIdHandlingTrait;
 
-	/**
-	 * The pui order endpoint.
-	 *
-	 * @var PayUponInvoiceOrderEndpoint
-	 */
-	protected $pui_order_endpoint;
+	protected PayUponInvoiceOrderEndpoint $pui_order_endpoint;
 
-	/**
-	 * The logger.
-	 *
-	 * @var LoggerInterface
-	 */
-	protected $logger;
+	protected LoggerInterface $logger;
 
-	/**
-	 * The PUI helper.
-	 *
-	 * @var PayUponInvoiceHelper
-	 */
-	protected $pui_helper;
+	protected PayUponInvoiceHelper $pui_helper;
 
-	/**
-	 * Whether onboarding was completed and the merchant is connected to PayPal.
-	 *
-	 * @var bool
-	 */
 	protected bool $is_connected;
 
-	/**
-	 * Current PayPal settings page id.
-	 *
-	 * @var string
-	 */
-	protected $current_ppcp_settings_page_id;
+	protected bool $is_settings_page;
 
-	/**
-	 * PUI seller product status.
-	 *
-	 * @var PayUponInvoiceProductStatus
-	 */
-	protected $pui_product_status;
+	protected PayUponInvoiceProductStatus $pui_product_status;
 
-	/**
-	 * The checkout helper.
-	 *
-	 * @var CheckoutHelper
-	 */
-	protected $checkout_helper;
+	protected CheckoutHelper $checkout_helper;
 
-	/**
-	 * The capture factory.
-	 *
-	 * @var CaptureFactory
-	 */
-	protected $capture_factory;
+	protected CaptureFactory $capture_factory;
 
 	/**
 	 * PayUponInvoice constructor.
@@ -92,7 +52,7 @@ class PayUponInvoice {
 	 * @param PayUponInvoiceOrderEndpoint $pui_order_endpoint The PUI order endpoint.
 	 * @param LoggerInterface             $logger The logger.
 	 * @param bool                        $is_connected Whether onboarding was completed.
-	 * @param string                      $current_ppcp_settings_page_id Current PayPal settings page id.
+	 * @param bool                        $is_settings_page Whether current page is the settings page.
 	 * @param PayUponInvoiceProductStatus $pui_product_status The PUI product status.
 	 * @param PayUponInvoiceHelper        $pui_helper The PUI helper.
 	 * @param CheckoutHelper              $checkout_helper The checkout helper.
@@ -102,20 +62,20 @@ class PayUponInvoice {
 		PayUponInvoiceOrderEndpoint $pui_order_endpoint,
 		LoggerInterface $logger,
 		bool $is_connected,
-		string $current_ppcp_settings_page_id,
+		bool $is_settings_page,
 		PayUponInvoiceProductStatus $pui_product_status,
 		PayUponInvoiceHelper $pui_helper,
 		CheckoutHelper $checkout_helper,
 		CaptureFactory $capture_factory
 	) {
-		$this->pui_order_endpoint            = $pui_order_endpoint;
-		$this->logger                        = $logger;
-		$this->is_connected                  = $is_connected;
-		$this->current_ppcp_settings_page_id = $current_ppcp_settings_page_id;
-		$this->pui_product_status            = $pui_product_status;
-		$this->pui_helper                    = $pui_helper;
-		$this->checkout_helper               = $checkout_helper;
-		$this->capture_factory               = $capture_factory;
+		$this->pui_order_endpoint = $pui_order_endpoint;
+		$this->logger             = $logger;
+		$this->is_connected       = $is_connected;
+		$this->is_settings_page   = $is_settings_page;
+		$this->pui_product_status = $pui_product_status;
+		$this->pui_helper         = $pui_helper;
+		$this->checkout_helper    = $checkout_helper;
+		$this->capture_factory    = $capture_factory;
 	}
 
 	/**
@@ -404,38 +364,13 @@ class PayUponInvoice {
 		add_action(
 			'woocommerce_settings_checkout',
 			function () {
-				if (
-				PayUponInvoiceGateway::ID === $this->current_ppcp_settings_page_id
-				&& $this->pui_product_status->is_active()
-				) {
-					$error_messages = array();
-					$pui_gateway    = WC()->payment_gateways->payment_gateways()[ PayUponInvoiceGateway::ID ];
-					if ( $pui_gateway->get_option( 'brand_name' ) === '' ) {
-						$error_messages[] = esc_html__( 'Could not enable gateway because "Brand name" field is empty.', 'woocommerce-paypal-payments' );
-					}
-					if ( $pui_gateway->get_option( 'logo_url' ) === '' ) {
-						$error_messages[] = esc_html__( 'Could not enable gateway because "Logo URL" field is empty.', 'woocommerce-paypal-payments' );
-					}
-					if ( $pui_gateway->get_option( 'customer_service_instructions' ) === '' ) {
-						$error_messages[] = esc_html__( 'Could not enable gateway because "Customer service instructions" field is empty.', 'woocommerce-paypal-payments' );
-					}
-					if ( count( $error_messages ) > 0 ) {
-						$pui_gateway->update_option( 'enabled', 'no' );
-						?>
-						<div class="notice notice-error">
-							<?php
-							array_map(
-								static function ( $message ) {
-									// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
-									echo '<p>' . $message . '</p>';
-								},
-								$error_messages
-							)
-							?>
-						</div>
-						<?php
-					}
-				} elseif ( PayUponInvoiceGateway::ID === $this->current_ppcp_settings_page_id ) {
+				// Todo: Possibly needs to be optimized or migrated for the #react-ui.
+
+				if ( ! $this->is_settings_page ) {
+					return;
+				}
+
+				if ( ! $this->pui_product_status->is_active() ) {
 					$pui_gateway = WC()->payment_gateways->payment_gateways()[ PayUponInvoiceGateway::ID ];
 					if ( 'yes' === $pui_gateway->get_option( 'enabled' ) ) {
 						$pui_gateway->update_option( 'enabled', 'no' );
@@ -448,6 +383,36 @@ class PayUponInvoice {
 						'<div class="notice notice-error"><p>%1$s</p></div>',
 						esc_html__( 'Could not enable gateway because the connected PayPal account is not activated for Pay upon Invoice. Reconnect your account while Onboard with Pay upon Invoice is selected to try again.', 'woocommerce-paypal-payments' )
 					);
+
+					return;
+				}
+
+				$error_messages = array();
+				$pui_gateway    = WC()->payment_gateways->payment_gateways()[ PayUponInvoiceGateway::ID ];
+				if ( $pui_gateway->get_option( 'brand_name' ) === '' ) {
+					$error_messages[] = esc_html__( 'Could not enable gateway because "Brand name" field is empty.', 'woocommerce-paypal-payments' );
+				}
+				if ( $pui_gateway->get_option( 'logo_url' ) === '' ) {
+					$error_messages[] = esc_html__( 'Could not enable gateway because "Logo URL" field is empty.', 'woocommerce-paypal-payments' );
+				}
+				if ( $pui_gateway->get_option( 'customer_service_instructions' ) === '' ) {
+					$error_messages[] = esc_html__( 'Could not enable gateway because "Customer service instructions" field is empty.', 'woocommerce-paypal-payments' );
+				}
+				if ( count( $error_messages ) > 0 ) {
+					$pui_gateway->update_option( 'enabled', 'no' );
+					?>
+					<div class="notice notice-error">
+						<?php
+						array_map(
+							static function ( $message ) {
+								// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+								echo '<p>' . $message . '</p>';
+							},
+							$error_messages
+						)
+						?>
+					</div>
+					<?php
 				}
 			}
 		);

@@ -196,10 +196,10 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
 					$settings_status->is_pay_later_button_enabled(),
 					$settings->has( 'disable_funding' ) ? $settings->get( 'disable_funding' ) : array(),
 					array(),
-					$c->get( 'wcgateway.is-ppcp-settings-page' ),
+					$c->get( 'wcgateway.is-plugin-settings-page' ),
 					$dcc_configuration->is_enabled(),
 					$c->get( 'api.reference-transaction-status' ),
-					$c->get( 'wcgateway.is-ppcp-settings-payment-methods-page' )
+					$c->get( 'wcgateway.is-plugin-settings-page' )
 				);
 				$assets->register_assets();
 			}
@@ -607,7 +607,7 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
 				$settings = $container->get( 'wcgateway.settings' );
 				assert( $settings instanceof ContainerInterface );
 
-				$is_our_page           = $container->get( 'wcgateway.is-ppcp-settings-page' );
+				$is_our_page           = $container->get( 'wcgateway.is-plugin-settings-page' );
 				$is_gateways_list_page = $container->get( 'wcgateway.is-wc-gateways-list-page' );
 				$is_connected          = $container->get( 'settings.flag.is-connected' );
 

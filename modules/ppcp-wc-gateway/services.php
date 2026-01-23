@@ -105,7 +105,6 @@ return array(
 			$container->get( 'settings.flag.is-connected' ),
 			$container->get( 'wcgateway.transaction-url-provider' ),
 			$container->get( 'wc-subscriptions.helper' ),
-			$container->get( 'wcgateway.current-ppcp-settings-page-id' ),
 			$container->get( 'settings.environment' ),
 			$container->get( 'vaulting.repository.payment-token' ),
 			$container->get( 'woocommerce.logger.woocommerce' ),
@@ -244,57 +243,6 @@ return array(
 		return $container->get( 'wcgateway.is-wc-payments-page' ) && ! isset( $_GET['section'] );
 	},
 
-	'wcgateway.is-ppcp-settings-page'                      => static function ( ContainerInterface $container ): bool {
-		// todo: #legacy-ui logic, needs migration.
-		if ( ! $container->get( 'wcgateway.is-wc-payments-page' ) ) {
-			return false;
-		}
-
-		$section = isset( $_GET['section'] ) ? sanitize_text_field( wp_unslash( $_GET['section'] ) ) : '';
-
-		return in_array(
-			$section,
-			array(
-				PayPalGateway::ID,
-				CreditCardGateway::ID,
-				PayUponInvoiceGateway::ID,
-				CardButtonGateway::ID,
-				OXXOGateway::ID,
-				AxoGateway::ID,
-				GooglePayGateway::ID,
-				ApplePayGateway::ID,
-			),
-			true
-		);
-	},
-
-	// Checks if the current admin page contains settings for this plugin's payment methods.
-	'wcgateway.is-ppcp-settings-payment-methods-page'      => static function ( ContainerInterface $container ): bool {
-		// todo: #legacy-ui logic, needs migration.
-		if ( ! $container->get( 'wcgateway.is-ppcp-settings-page' ) ) {
-			return false;
-		}
-
-		$active_tab = $container->get( 'wcgateway.current-ppcp-settings-page-id' );
-
-		return in_array(
-			$active_tab,
-			array(
-				PayPalGateway::ID,
-				CreditCardGateway::ID,
-				CardButtonGateway::ID,
-				GooglePayGateway::ID,
-				ApplePayGateway::ID,
-			),
-			true
-		);
-	},
-
-	'wcgateway.current-ppcp-settings-page-id'              => static function ( ContainerInterface $container ): string {
-		// todo: not used after removing #legacy-ui code. Refactor dependencies.
-		return '';
-	},
-
 	/**
 	 * Whether the current request renders the PayPal Payments settings page.
 	 */
@@ -337,7 +285,7 @@ return array(
 			$container->get( 'api.shop.currency.getter' ),
 			$container->get( 'api.supported-currencies' ),
 			$container->get( 'wcgateway.is-wc-gateways-list-page' ),
-			$container->get( 'wcgateway.is-ppcp-settings-page' )
+			$container->get( 'wcgateway.is-plugin-settings-page' )
 		);
 	},
 	'wcgateway.notice.dcc-without-paypal'                  => static function ( ContainerInterface $container ): GatewayWithoutPayPalAdminNotice {
@@ -346,7 +294,7 @@ return array(
 			$container->get( 'settings.flag.is-connected' ),
 			$container->get( 'settings.settings-provider' ),
 			$container->get( 'wcgateway.is-wc-payments-page' ),
-			$container->get( 'wcgateway.is-ppcp-settings-page' ),
+			$container->get( 'wcgateway.is-plugin-settings-page' ),
 			$container->get( 'wcgateway.configuration.card-configuration' )
 		);
 	},
@@ -356,7 +304,7 @@ return array(
 			$container->get( 'settings.flag.is-connected' ),
 			$container->get( 'settings.settings-provider' ),
 			$container->get( 'wcgateway.is-wc-payments-page' ),
-			$container->get( 'wcgateway.is-ppcp-settings-page' ),
+			$container->get( 'wcgateway.is-plugin-settings-page' ),
 			$container->get( 'wcgateway.configuration.card-configuration' ),
 			$container->get( 'wcgateway.settings.status' )
 		);
@@ -461,7 +409,7 @@ return array(
 		return new SendOnlyCountryNotice(
 			$container->get( 'wcgateway.send-only-message' ),
 			$container->get( 'wcgateway.is-send-only-country' ),
-			$container->get( 'wcgateway.is-ppcp-settings-page' ),
+			$container->get( 'wcgateway.is-plugin-settings-page' ),
 			$container->get( 'wcgateway.is-wc-gateways-list-page' ),
 			$container->get( 'settings.flag.is-connected' )
 		);
@@ -799,7 +747,7 @@ return array(
 			$container->get( 'wcgateway.pay-upon-invoice-order-endpoint' ),
 			$container->get( 'woocommerce.logger.woocommerce' ),
 			$container->get( 'settings.flag.is-connected' ),
-			$container->get( 'wcgateway.current-ppcp-settings-page-id' ),
+			$container->get( 'wcgateway.is-plugin-settings-page' ),
 			$container->get( 'wcgateway.pay-upon-invoice-product-status' ),
 			$container->get( 'wcgateway.pay-upon-invoice-helper' ),
 			$container->get( 'wcgateway.checkout-helper' ),

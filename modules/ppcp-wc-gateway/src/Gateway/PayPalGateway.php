@@ -90,17 +90,11 @@ class PayPalGateway extends \WC_Payment_Gateway {
 
 	private bool $onboarded;
 
-	/**
-	 * ID of the current PPCP gateway settings page, or empty if it is not such page.
-	 */
-	protected string $page_id;
-
 	protected Environment $environment;
 
 	private LoggerInterface $logger;
 
 	protected string $api_shop_country;
-
 
 	/**
 	 * The function return the PayPal checkout URL for the given order ID.
@@ -189,7 +183,6 @@ class PayPalGateway extends \WC_Payment_Gateway {
 	 * @param bool                     $is_connected Whether onboarding was completed.
 	 * @param TransactionUrlProvider   $transaction_url_provider Service providing transaction view URL based on order.
 	 * @param SubscriptionHelper       $subscription_helper The subscription helper.
-	 * @param string                   $page_id ID of the current PPCP gateway settings page, or empty if it is not such page.
 	 * @param Environment              $environment The environment.
 	 * @param PaymentTokenRepository   $payment_token_repository The payment token repository.
 	 * @param LoggerInterface          $logger The logger.
@@ -211,7 +204,6 @@ class PayPalGateway extends \WC_Payment_Gateway {
 		bool $is_connected,
 		TransactionUrlProvider $transaction_url_provider,
 		SubscriptionHelper $subscription_helper,
-		string $page_id,
 		Environment $environment,
 		PaymentTokenRepository $payment_token_repository,
 		LoggerInterface $logger,
@@ -232,7 +224,6 @@ class PayPalGateway extends \WC_Payment_Gateway {
 		$this->refund_processor            = $refund_processor;
 		$this->transaction_url_provider    = $transaction_url_provider;
 		$this->subscription_helper         = $subscription_helper;
-		$this->page_id                     = $page_id;
 		$this->environment                 = $environment;
 		$this->onboarded                   = $is_connected;
 		$this->payment_token_repository    = $payment_token_repository;

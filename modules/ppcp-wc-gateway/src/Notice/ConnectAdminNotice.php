@@ -43,7 +43,7 @@ class ConnectAdminNotice {
 	 *
 	 * @return Message|null
 	 */
-	public function connect_message() {
+	public function connect_message(): ?Message {
 		if ( ! $this->should_display() ) {
 			return null;
 		}

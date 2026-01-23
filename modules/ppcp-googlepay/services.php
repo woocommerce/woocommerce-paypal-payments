@@ -72,7 +72,7 @@ return array(
 		return new AvailabilityNotice(
 			$container->get( 'googlepay.helpers.apm-product-status' ),
 			$container->get( 'wcgateway.is-wc-gateways-list-page' ),
-			$container->get( 'wcgateway.is-ppcp-settings-page' )
+			$container->get( 'wcgateway.is-plugin-settings-page' )
 		);
 	},
 
