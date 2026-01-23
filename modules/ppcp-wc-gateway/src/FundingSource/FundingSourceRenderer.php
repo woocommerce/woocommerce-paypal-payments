@@ -32,7 +32,8 @@ class FundingSourceRenderer {
 	protected $own_funding_sources = array( 'venmo', 'paylater', 'paypal' );
 
 	/**
-	 * @param array<string, string> $funding_sources Map funding source ID -> human-readable name.
+	 * @param SettingsProvider      $settings_provider Settings provider.
+	 * @param array<string, string> $funding_sources   Map funding source ID -> human-readable name.
 	 */
 	public function __construct(
 		SettingsProvider $settings_provider,

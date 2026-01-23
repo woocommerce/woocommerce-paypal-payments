@@ -2,14 +2,14 @@
 /**
  * Responsible for creating the simple redirect task.
  *
- * @package WooCommerce\PayPalCommerce\WcGateway\Settings
+ * @package WooCommerce\PayPalCommerce\WcGateway\WcTasks\Factory
  */
 
 declare( strict_types=1 );
 
-namespace WooCommerce\PayPalCommerce\WcGateway\Settings\WcTasks\Factory;
+namespace WooCommerce\PayPalCommerce\WcGateway\WcTasks\Factory;
 
-use WooCommerce\PayPalCommerce\WcGateway\Settings\WcTasks\Tasks\SimpleRedirectTask;
+use WooCommerce\PayPalCommerce\WcGateway\WcTasks\Tasks\SimpleRedirectTask;
 
 interface SimpleRedirectTaskFactoryInterface {
 

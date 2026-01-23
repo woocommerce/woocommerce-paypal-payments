@@ -331,10 +331,8 @@ return array(
 		return in_array( $country, $eligible_countries, true );
 	},
 	'settings.handler.connection-listener'                => static function ( ContainerInterface $container ): ConnectionListener {
-		$page_id = $container->has( 'wcgateway.current-ppcp-settings-page-id' ) ? $container->get( 'wcgateway.current-ppcp-settings-page-id' ) : '';
-
 		return new ConnectionListener(
-			$page_id,
+			$container->get( 'wcgateway.is-plugin-settings-page' ),
 			$container->get( 'settings.service.onboarding-url-manager' ),
 			$container->get( 'settings.service.authentication_manager' ),
 			$container->get( 'http.redirector' ),
@@ -397,7 +395,7 @@ return array(
 			$container->get( 'api.partner_merchant_id' ),
 			$container->get( 'wcgateway.wp-paypal-locales-map' ),
 			$container->get( 'api.helper.partner-attribution' ),
-			$container->get( 'settings.settings-provider' ),
+			$container->get( 'settings.settings-provider' )
 		);
 	},
 	'settings.service.data-migration'                     => static fn( ContainerInterface $c ): MigrationManager => new MigrationManager(

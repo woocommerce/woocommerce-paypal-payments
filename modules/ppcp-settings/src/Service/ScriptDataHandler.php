@@ -46,7 +46,7 @@ class ScriptDataHandler {
 	protected SettingsProvider $settings_provider;
 
 	/**
-	 * @param AssetGetter        $asset_getter
+	 * @param AssetGetter        $asset_getter Asset getter.
 	 * @param bool               $paylater_is_available Whether the pay later configurator is available.
 	 * @param string             $store_country The store country.
 	 * @param string             $merchant_id The merchant ID.

@@ -59,8 +59,8 @@ use WooCommerce\PayPalCommerce\WcGateway\Notice\UnsupportedCurrencyAdminNotice;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\AuthorizedPaymentsProcessor;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\CreditCardOrderInfoHandlingTrait;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
-use WooCommerce\PayPalCommerce\WcGateway\Settings\WcInboxNotes\InboxNoteRegistrar;
-use WooCommerce\PayPalCommerce\WcGateway\Settings\WcTasks\Registrar\TaskRegistrarInterface;
+use WooCommerce\PayPalCommerce\WcGateway\WcInboxNotes\InboxNoteRegistrar;
+use WooCommerce\PayPalCommerce\WcGateway\WcTasks\Registrar\TaskRegistrarInterface;
 
 /**
  * Class WcGatewayModule
@@ -196,10 +196,10 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
 					$settings_status->is_pay_later_button_enabled(),
 					$settings->has( 'disable_funding' ) ? $settings->get( 'disable_funding' ) : array(),
 					array(),
-					$c->get( 'wcgateway.is-ppcp-settings-page' ),
+					$c->get( 'wcgateway.is-plugin-settings-page' ),
 					$dcc_configuration->is_enabled(),
 					$c->get( 'api.reference-transaction-status' ),
-					$c->get( 'wcgateway.is-ppcp-settings-payment-methods-page' )
+					$c->get( 'wcgateway.is-plugin-settings-page' )
 				);
 				$assets->register_assets();
 			}
@@ -249,14 +249,6 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
 				}
 
 				return $notices;
-			}
-		);
-		add_action(
-			'woocommerce_paypal_commerce_gateway_deactivate',
-			static function () use ( $c ) {
-				delete_option( Settings::KEY );
-				delete_option( 'woocommerce_' . PayPalGateway::ID . '_settings' );
-				delete_option( 'woocommerce_' . CreditCardGateway::ID . '_settings' );
 			}
 		);
 
@@ -426,18 +418,6 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
 			10,
 			3
 		);
-
-		if ( defined( 'WP_CLI' ) && WP_CLI ) {
-			add_action(
-				'init',
-				function () use ( $c ) {
-					\WP_CLI::add_command(
-						'pcp settings',
-						$c->get( 'wcgateway.cli.settings.command' )
-					);
-				}
-			);
-		}
 
 		// Clears product status when appropriate.
 		add_action(
@@ -619,7 +599,7 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
 				$settings = $container->get( 'wcgateway.settings' );
 				assert( $settings instanceof ContainerInterface );
 
-				$is_our_page           = $container->get( 'wcgateway.is-ppcp-settings-page' );
+				$is_our_page           = $container->get( 'wcgateway.is-plugin-settings-page' );
 				$is_gateways_list_page = $container->get( 'wcgateway.is-wc-gateways-list-page' );
 				$is_connected          = $container->get( 'settings.flag.is-connected' );
 

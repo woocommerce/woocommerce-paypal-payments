@@ -2,10 +2,10 @@
 /**
  * Registers the tasks inside the "Things to do next" WC section.
  *
- * @package WooCommerce\PayPalCommerce\WcGateway\Settings
+ * @package WooCommerce\PayPalCommerce\WcGateway\WcTasks\Registrar
  */
 
-namespace WooCommerce\PayPalCommerce\WcGateway\Settings\WcTasks\Registrar;
+namespace WooCommerce\PayPalCommerce\WcGateway\WcTasks\Registrar;
 
 use Automattic\WooCommerce\Admin\Features\OnboardingTasks\TaskLists;
 use RuntimeException;

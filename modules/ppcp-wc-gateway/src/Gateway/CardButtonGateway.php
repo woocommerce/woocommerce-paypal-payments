@@ -22,7 +22,6 @@ use WooCommerce\PayPalCommerce\WcGateway\Exception\GatewayGenericException;
 use WooCommerce\PayPalCommerce\WcGateway\Exception\PayPalOrderMissingException;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\OrderProcessor;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\RefundProcessor;
-use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 
 /**
  * Class CardButtonGateway
@@ -41,13 +40,6 @@ class CardButtonGateway extends \WC_Payment_Gateway {
 	 * @var OrderProcessor
 	 */
 	protected $order_processor;
-
-	/**
-	 * The settings.
-	 *
-	 * @var ContainerInterface
-	 */
-	protected $config;
 
 	/**
 	 * The Session Handler.
@@ -123,7 +115,6 @@ class CardButtonGateway extends \WC_Payment_Gateway {
 	 * CardButtonGateway constructor.
 	 *
 	 * @param OrderProcessor          $order_processor The Order Processor.
-	 * @param ContainerInterface      $config The settings.
 	 * @param SessionHandler          $session_handler The Session Handler.
 	 * @param RefundProcessor         $refund_processor The Refund Processor.
 	 * @param bool                    $is_connected Whether onboarding was completed.
@@ -138,7 +129,6 @@ class CardButtonGateway extends \WC_Payment_Gateway {
 	 */
 	public function __construct(
 		OrderProcessor $order_processor,
-		ContainerInterface $config,
 		SessionHandler $session_handler,
 		RefundProcessor $refund_processor,
 		bool $is_connected,
@@ -153,7 +143,6 @@ class CardButtonGateway extends \WC_Payment_Gateway {
 	) {
 		$this->id                          = self::ID;
 		$this->order_processor             = $order_processor;
-		$this->config                      = $config;
 		$this->session_handler             = $session_handler;
 		$this->refund_processor            = $refund_processor;
 		$this->transaction_url_provider    = $transaction_url_provider;

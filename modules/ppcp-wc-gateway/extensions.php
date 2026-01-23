@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\WcGateway;
 
+use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
 use WooCommerce\WooCommerce\Logging\Logger\NullLogger;
 use WooCommerce\WooCommerce\Logging\Logger\WooCommerceLogger;
@@ -18,12 +19,14 @@ use Psr\Log\LoggerInterface;
 return array(
 
 	'api.merchant_email'             => static function ( string $previous, ContainerInterface $container ): string {
-		$settings = $container->get( 'wcgateway.settings' );
-		return $settings->has( 'merchant_email' ) ? (string) $settings->get( 'merchant_email' ) : '';
+		$settings_provider = $container->get( 'settings.settings-provider' );
+		assert( $settings_provider instanceof SettingsProvider );
+		return $settings_provider->merchant_email();
 	},
 	'api.merchant_id'                => static function ( string $previous, ContainerInterface $container ): string {
-		$settings = $container->get( 'wcgateway.settings' );
-		return $settings->has( 'merchant_id' ) ? (string) $settings->get( 'merchant_id' ) : '';
+		$settings_provider = $container->get( 'settings.settings-provider' );
+		assert( $settings_provider instanceof SettingsProvider );
+		return $settings_provider->merchant_id();
 	},
 	'api.partner_merchant_id'        => static function ( string $previous, ContainerInterface $container ): string {
 		$environment = $container->get( 'settings.environment' );
@@ -37,17 +40,20 @@ return array(
 			(string) $container->get( 'api.partner_merchant_id-sandbox' ) : (string) $container->get( 'api.partner_merchant_id-production' );
 	},
 	'api.key'                        => static function ( string $previous, ContainerInterface $container ): string {
-		$settings = $container->get( 'wcgateway.settings' );
-		$key      = $settings->has( 'client_id' ) ? (string) $settings->get( 'client_id' ) : '';
-		return $key;
+		$settings_provider = $container->get( 'settings.settings-provider' );
+		assert( $settings_provider instanceof SettingsProvider );
+		return $settings_provider->client_id();
 	},
 	'api.secret'                     => static function ( string $previous, ContainerInterface $container ): string {
-		$settings = $container->get( 'wcgateway.settings' );
-		return $settings->has( 'client_secret' ) ? (string) $settings->get( 'client_secret' ) : '';
+		$settings_provider = $container->get( 'settings.settings-provider' );
+		assert( $settings_provider instanceof SettingsProvider );
+		return $settings_provider->client_secret();
 	},
 	'api.prefix'                     => static function ( string $previous, ContainerInterface $container ): string {
-		$settings = $container->get( 'wcgateway.settings' );
-		return $settings->has( 'prefix' ) ? (string) $settings->get( 'prefix' ) : 'WC-';
+		$settings_provider = $container->get( 'settings.settings-provider' );
+		assert( $settings_provider instanceof SettingsProvider );
+		$prefix = $settings_provider->invoice_prefix();
+		return $prefix ? $prefix : 'WC-';
 	},
 	'woocommerce.logger.woocommerce' => function ( LoggerInterface $previous, ContainerInterface $container ): LoggerInterface {
 		if ( ! function_exists( 'wc_get_logger' ) || ! $container->get( 'wcgateway.logging.is-enabled' ) ) {

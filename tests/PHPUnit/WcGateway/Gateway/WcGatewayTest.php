@@ -72,6 +72,7 @@ class WcGatewayTest extends TestCase
 		$this->logger = Mockery::mock(LoggerInterface::class);
 		$this->settingsProvider->shouldReceive('paypal_gateway_title')->andReturn('PayPal');
 		$this->settingsProvider->shouldReceive('paypal_gateway_description')->andReturn('Pay via PayPal.');
+		$this->settingsProvider->shouldReceive('merchant_email')->andReturn('');
 		$this->funding_source_renderer = new FundingSourceRenderer(
 			$this->settingsProvider,
 			['venmo' => 'Venmo', 'paylater' => 'Pay Later', 'blik' => 'BLIK']
@@ -106,21 +107,17 @@ class WcGatewayTest extends TestCase
 		return new PayPalGateway(
 			$this->funding_source_renderer,
 			$this->orderProcessor,
-			$this->settings,
+			$this->settingsProvider,
 			$this->sessionHandler,
 			$this->refundProcessor,
 			$this->isConnected,
 			$this->transactionUrlProvider,
 			$this->subscriptionHelper,
-			PayPalGateway::ID,
 			$this->environment,
 			$this->paymentTokenRepository,
 			$this->logger,
 			$this->apiShopCountry,
-			$this->orderEndpoint,
-			function ($id) {
-				return 'checkoutnow=' . $id;
-			},
+			static fn ($id) => 'checkoutnow=' . $id,
 			'Pay via PayPal',
 			$this->paymentTokensEndpoint,
 			$this->vaultV3Enabled,
