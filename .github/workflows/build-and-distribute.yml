@@ -17,7 +17,7 @@ on:
       - 'package*'
       - 'readme.txt'
       - 'webpack.config.js'
-      - './*.php'
+      - '*.php'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
