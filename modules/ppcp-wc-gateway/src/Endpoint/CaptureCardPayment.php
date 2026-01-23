@@ -115,7 +115,7 @@ class CaptureCardPayment {
 	}
 
 	/**
-	 * Creates PayPal order from the given card vault id.
+	 * Creates PayPal order from the given card vault id.TEST.
 	 *
 	 * @throws RuntimeException When request fails.
 	 */
