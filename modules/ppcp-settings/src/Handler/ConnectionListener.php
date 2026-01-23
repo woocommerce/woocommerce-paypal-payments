@@ -43,7 +43,7 @@ class ConnectionListener {
 	 *
 	 * @var string
 	 */
-	private string $settings_page_id;
+	private bool $is_settings_page;
 
 	/**
 	 * Access to the onboarding URL manager.
@@ -93,20 +93,20 @@ class ConnectionListener {
 	/**
 	 * Prepare the instance.
 	 *
-	 * @param string                $settings_page_id       Current plugin settings page ID.
+	 * @param bool                  $is_settings_page       Whether this is the settings page.
 	 * @param OnboardingUrlManager  $url_manager            Get OnboardingURL instances.
 	 * @param AuthenticationManager $authentication_manager Authentication manager service.
 	 * @param RedirectorInterface   $redirector             Redirect-handler.
 	 * @param ?LoggerInterface      $logger                 The logger, for debugging purposes.
 	 */
 	public function __construct(
-		string $settings_page_id,
+		bool $is_settings_page,
 		OnboardingUrlManager $url_manager,
 		AuthenticationManager $authentication_manager,
 		RedirectorInterface $redirector,
 		?LoggerInterface $logger = null
 	) {
-		$this->settings_page_id       = $settings_page_id;
+		$this->is_settings_page       = $is_settings_page;
 		$this->url_manager            = $url_manager;
 		$this->authentication_manager = $authentication_manager;
 		$this->redirector             = $redirector;
@@ -211,7 +211,7 @@ class ConnectionListener {
 	 * @return bool True, if the request contains valid connection details.
 	 */
 	private function is_valid_request(): bool {
-		if ( $this->user_id < 1 || ! $this->settings_page_id ) {
+		if ( $this->user_id < 1 || ! $this->is_settings_page ) {
 			return false;
 		}
 

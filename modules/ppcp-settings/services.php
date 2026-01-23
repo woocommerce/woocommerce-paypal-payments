@@ -331,10 +331,8 @@ return array(
 		return in_array( $country, $eligible_countries, true );
 	},
 	'settings.handler.connection-listener'                => static function ( ContainerInterface $container ): ConnectionListener {
-		$page_id = $container->has( 'wcgateway.current-ppcp-settings-page-id' ) ? $container->get( 'wcgateway.current-ppcp-settings-page-id' ) : '';
-
 		return new ConnectionListener(
-			$page_id,
+			$container->get( 'wcgateway.is-plugin-settings-page' ),
 			$container->get( 'settings.service.onboarding-url-manager' ),
 			$container->get( 'settings.service.authentication_manager' ),
 			$container->get( 'http.redirector' ),

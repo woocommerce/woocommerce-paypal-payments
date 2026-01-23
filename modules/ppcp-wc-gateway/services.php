@@ -302,6 +302,26 @@ return array(
 		return '';
 	},
 
+	/**
+	 * Whether the current request renders the PayPal Payments settings page.
+	 */
+	'wcgateway.is-plugin-settings-page'                    => static function (): bool {
+		if ( defined( 'DOING_AJAX' ) && DOING_AJAX ) {
+			return false;
+		}
+		if ( ! is_admin() ) {
+			return false;
+		}
+
+		// phpcs:disable WordPress.Security.NonceVerification
+		$is_wc_settings     = isset( $_GET['page'] ) && 'wc-settings' === $_GET['page'];
+		$is_plugin_settings = isset( $_GET['section'] ) && PayPalGateway::ID === $_GET['section'];
+
+		// phpcs:enable WordPress.Security.NonceVerification
+
+		return $is_wc_settings && $is_plugin_settings;
+	},
+
 	'wcgateway.settings'                                   => SingletonDecorator::make(
 		static function ( ContainerInterface $container ): Settings {
 			return new Settings(
