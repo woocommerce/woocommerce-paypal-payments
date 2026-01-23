@@ -19,7 +19,7 @@ use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\PayPalCart;
 /**
  * Builds context data for coupon validation issues.
  */
-class ContextBuilder {
+class CouponContextBuilder {
 
 	/**
 	 * Product manager for resolving cart items.
@@ -65,13 +65,44 @@ class ContextBuilder {
 		);
 
 		foreach ( $builders as $builder ) {
-			$method = "build_{$builder}";
-			if ( method_exists( $this, $method ) ) {
-				$context = array_merge( $context, $this->$method( $code, $cart, $wc_coupon, array_merge( $context, $extra ) ) );
-			}
+			$builder_context = $this->call_builder( $builder, $code, $cart, $wc_coupon, array_merge( $context, $extra ) );
+			$context         = array_merge( $context, $builder_context );
 		}
 
 		return array_merge( $context, $extra );
+	}
+
+	/**
+	 * Dispatches to the appropriate builder method.
+	 *
+	 * @param string         $builder The builder name.
+	 * @param string         $code The coupon code.
+	 * @param PayPalCart     $cart The cart context.
+	 * @param WC_Coupon|null $wc_coupon The WC coupon object.
+	 * @param array          $extra Extra context data.
+	 * @return array The context data from the builder.
+	 */
+	private function call_builder( string $builder, string $code, PayPalCart $cart, ?WC_Coupon $wc_coupon, array $extra ): array {
+		switch ( $builder ) {
+			case 'alternatives':
+				return $this->build_alternatives( $code, $cart, $wc_coupon, $extra );
+			case 'expiration':
+				return $this->build_expiration( $code, $cart, $wc_coupon, $extra );
+			case 'usage_limits':
+				return $this->build_usage_limits( $code, $cart, $wc_coupon, $extra );
+			case 'minimum_spend':
+				return $this->build_minimum_spend( $code, $cart, $wc_coupon, $extra );
+			case 'maximum_spend':
+				return $this->build_maximum_spend( $code, $cart, $wc_coupon, $extra );
+			case 'eligible_items':
+				return $this->build_eligible_items( $code, $cart, $wc_coupon, $extra );
+			case 'stacking':
+				return $this->build_stacking( $code, $cart, $wc_coupon, $extra );
+			case 'email_restriction':
+				return $this->build_email_restriction( $code, $cart, $wc_coupon, $extra );
+			default:
+				return array();
+		}
 	}
 
 	/**

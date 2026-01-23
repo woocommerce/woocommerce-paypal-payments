@@ -18,7 +18,7 @@ use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\PayPalCart;
 /**
  * Builds resolution options for coupon validation issues.
  */
-class ResolutionBuilder {
+class CouponResolutionBuilder {
 
 	/**
 	 * Resolution templates.
