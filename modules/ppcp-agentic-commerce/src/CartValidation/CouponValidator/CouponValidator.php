@@ -3,9 +3,8 @@
  * Coupon Validator for Agentic Commerce.
  *
  * Validates coupon codes using WooCommerce's WC_Discounts validation.
- * Uses a two-tier error mapping approach:
- * 1. Numeric error codes from WP_Error data (when available)
- * 2. Message pattern matching as fallback
+ * Captures numeric error codes via the woocommerce_coupon_error filter
+ * for reliable error type mapping regardless of localization.
  *
  * @package WooCommerce\PayPalCommerce\AgenticCommerce\CartValidation\CouponValidator
  */
@@ -16,7 +15,6 @@ namespace WooCommerce\PayPalCommerce\AgenticCommerce\CartValidation\CouponValida
 
 use WC_Coupon;
 use WC_Discounts;
-use WP_Error;
 use WooCommerce\PayPalCommerce\AgenticCommerce\CartValidation\ValidatorInterface;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Helper\CartHelper;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\Coupon;
@@ -31,9 +29,9 @@ class CouponValidator implements ValidatorInterface {
 	/**
 	 * Context builder for building validation context data.
 	 *
-	 * @var ContextBuilder
+	 * @var CouponContextBuilder
 	 */
-	private ContextBuilder $context_builder;
+	private CouponContextBuilder $context_builder;
 
 	/**
 	 * Discount calculator for coupon discount amounts.
@@ -45,9 +43,9 @@ class CouponValidator implements ValidatorInterface {
 	/**
 	 * Resolution builder for building resolution options.
 	 *
-	 * @var ResolutionBuilder
+	 * @var CouponResolutionBuilder
 	 */
-	private ResolutionBuilder $resolution_builder;
+	private CouponResolutionBuilder $resolution_builder;
 
 	/**
 	 * Issue configuration.
@@ -130,14 +128,14 @@ class CouponValidator implements ValidatorInterface {
 	/**
 	 * Constructor.
 	 *
-	 * @param ContextBuilder     $context_builder Context builder instance.
-	 * @param DiscountCalculator $discount_calculator Discount calculator instance.
-	 * @param ResolutionBuilder  $resolution_builder Resolution builder instance.
+	 * @param CouponContextBuilder    $context_builder Context builder instance.
+	 * @param DiscountCalculator      $discount_calculator Discount calculator instance.
+	 * @param CouponResolutionBuilder $resolution_builder Resolution builder instance.
 	 */
 	public function __construct(
-		ContextBuilder $context_builder,
+		CouponContextBuilder $context_builder,
 		DiscountCalculator $discount_calculator,
-		ResolutionBuilder $resolution_builder
+		CouponResolutionBuilder $resolution_builder
 	) {
 		$this->context_builder     = $context_builder;
 		$this->discount_calculator = $discount_calculator;
@@ -296,11 +294,19 @@ class CouponValidator implements ValidatorInterface {
 			return $this->create_issue( 'COUPON_NOT_EXIST', $code, $field, $cart, null );
 		}
 
-		// Run WC validation via WC_Discounts.
+		// Capture error code via filter instead of relying on localized messages.
+		$error_code    = 0;
+		$capture_error = static function ( $error_message, $code ) use ( &$error_code ) {
+			$error_code = $code;
+			return $error_message;
+		};
+
+		add_filter( 'woocommerce_coupon_error', $capture_error, 10, 2 );
 		$result = $discounts->is_coupon_valid( $wc_coupon );
+		remove_filter( 'woocommerce_coupon_error', $capture_error, 10 );
 
 		if ( is_wp_error( $result ) ) {
-			$issue_type = $this->map_wc_error_to_issue_type( $result, $wc_coupon );
+			$issue_type = $this->map_error_code_to_issue_type( $error_code );
 			return $this->create_issue( $issue_type, $code, $field, $cart, $wc_coupon );
 		}
 
@@ -308,19 +314,17 @@ class CouponValidator implements ValidatorInterface {
 	}
 
 	/**
-	 * Maps WC_Error to issue type using WC_Coupon error constants.
+	 * Maps WC_Coupon error code to issue type.
 	 *
-	 * WooCommerce throws exceptions with numeric error codes (100-114) that are
-	 * caught and converted to WP_Error objects.
+	 * Error codes are captured via the woocommerce_coupon_error filter
+	 * and mapped to our issue types.
 	 *
-	 * @param WP_Error  $error The WP_Error from WC validation.
-	 * @param WC_Coupon $wc_coupon The WC coupon object for accessing error constants.
+	 * @see WC_Coupon for error code constants (E_WC_COUPON_*).
+	 *
+	 * @param int $error_code The numeric error code from WC_Coupon.
 	 * @return string The mapped issue type.
 	 */
-	private function map_wc_error_to_issue_type( WP_Error $error, WC_Coupon $wc_coupon ): string {
-		$error_data = $error->get_error_data();
-
-		// WC_Coupon error constants mapping.
+	private function map_error_code_to_issue_type( int $error_code ): string {
 		$error_code_map = array(
 			100 => 'COUPON_INVALID',              // E_WC_COUPON_INVALID_FILTERED.
 			101 => 'COUPON_INVALID',              // E_WC_COUPON_INVALID_REMOVED.
@@ -340,36 +344,7 @@ class CouponValidator implements ValidatorInterface {
 			116 => 'USAGE_LIMIT_EXCEEDED',        // E_WC_COUPON_USAGE_LIMIT_COUPON_STUCK_GUEST.
 		);
 
-		// Extract numeric error code from WP_Error data.
-		$numeric_code = $this->extract_numeric_error_code( $error_data );
-
-		if ( $numeric_code && isset( $error_code_map[ $numeric_code ] ) ) {
-			return $error_code_map[ $numeric_code ];
-		}
-
-		// Default fallback for unrecognized or missing error codes.
-		return 'COUPON_INVALID';
-	}
-
-	/**
-	 * Extracts numeric error code from WP_Error data.
-	 *
-	 * @param mixed $error_data The error data from WP_Error.
-	 * @return int|null The numeric error code or null if not found.
-	 */
-	private function extract_numeric_error_code( $error_data ): ?int {
-		if ( ! is_array( $error_data ) || ! isset( $error_data['details'] ) ) {
-			return null;
-		}
-
-		if ( ! is_array( $error_data['details'] ) || empty( $error_data['details'] ) ) {
-			return null;
-		}
-
-		$numeric_codes = array_keys( $error_data['details'] );
-		$first_code    = reset( $numeric_codes );
-
-		return is_numeric( $first_code ) ? (int) $first_code : null;
+		return $error_code_map[ $error_code ] ?? 'COUPON_INVALID';
 	}
 
 	/**
@@ -441,7 +416,7 @@ class CouponValidator implements ValidatorInterface {
 			$context
 		);
 
-		return new CouponInvalid( $config['message'], $user_message, $field, $context, $resolutions );
+		return new CouponInvalid( $config['message'], $user_message, $field, '', $context, $resolutions );
 	}
 
 	/**
