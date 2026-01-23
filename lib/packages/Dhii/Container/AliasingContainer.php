@@ -1,15 +1,12 @@
 <?php
 
-declare(strict_types=1);
-
+declare (strict_types=1);
 namespace WooCommerce\PayPalCommerce\Vendor\Dhii\Container;
 
 use WooCommerce\PayPalCommerce\Vendor\Dhii\Collection\ContainerInterface;
 use WooCommerce\PayPalCommerce\Vendor\Dhii\Container\Util\StringTranslatingTrait;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface as PsrContainerInterface;
-
 use function array_key_exists;
-
 /**
  * A container implementation that wraps around an inner container to alias its keys, so consumers can use the aliases
  * to fetch data from the inner container.
@@ -18,21 +15,18 @@ class AliasingContainer implements ContainerInterface
 {
     /* @since [*next-version*] */
     use StringTranslatingTrait;
-
     /**
      * @since [*next-version*]
      *
      * @var PsrContainerInterface
      */
     protected $inner;
-
     /**
      * @since [*next-version*]
      *
      * @var array<array-key, string>
      */
     protected $aliases;
-
     /**
      * Constructor.
      *
@@ -46,7 +40,6 @@ class AliasingContainer implements ContainerInterface
         $this->inner = $inner;
         $this->aliases = $aliases;
     }
-
     /**
      * @inheritdoc
      *
@@ -56,7 +49,6 @@ class AliasingContainer implements ContainerInterface
     {
         return $this->inner->get($this->getInnerKey($key));
     }
-
     /**
      * @inheritdoc
      *
@@ -65,10 +57,8 @@ class AliasingContainer implements ContainerInterface
     public function has($key)
     {
         $key = (string) $key;
-
         return $this->inner->has($this->getInnerKey($key));
     }
-
     /**
      * Retrieves the key to use for the inner container.
      *
@@ -83,7 +73,6 @@ class AliasingContainer implements ContainerInterface
         if (array_key_exists($key, $this->aliases)) {
             return $this->aliases[$key];
         }
-
         return $key;
     }
 }

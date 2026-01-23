@@ -1,17 +1,15 @@
 <?php
 
-declare(strict_types=1);
-
+declare (strict_types=1);
 namespace WooCommerce\PayPalCommerce\Vendor\Dhii\Collection;
 
 use Exception;
-
 /**
  * A set that can have items added.
  *
  * @psalm-suppress UnusedClass
  */
-interface WritableSetInterface extends SetInterface
+interface WritableSetInterface extends \WooCommerce\PayPalCommerce\Vendor\Dhii\Collection\SetInterface
 {
     /**
      * Creates a new instance with the given items only.
@@ -25,7 +23,6 @@ interface WritableSetInterface extends SetInterface
      * @psalm-suppress PossiblyUnusedMethod
      */
     public function withItems(array $items);
-
     /**
      * Creates a new instance with the given items added to existing ones.
      *
@@ -37,8 +34,7 @@ interface WritableSetInterface extends SetInterface
      *
      * @psalm-suppress PossiblyUnusedMethod
      */
-    public function withAddedItems(array $items): WritableSetInterface;
-
+    public function withAddedItems(array $items): \WooCommerce\PayPalCommerce\Vendor\Dhii\Collection\WritableSetInterface;
     /**
      * Creates a new instance with the given items not present.
      *
@@ -50,5 +46,5 @@ interface WritableSetInterface extends SetInterface
      *
      * @psalm-suppress PossiblyUnusedMethod
      */
-    public function withoutItems(array $items): WritableSetInterface;
+    public function withoutItems(array $items): \WooCommerce\PayPalCommerce\Vendor\Dhii\Collection\WritableSetInterface;
 }
