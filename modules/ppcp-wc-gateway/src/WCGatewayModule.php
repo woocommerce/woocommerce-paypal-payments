@@ -251,14 +251,6 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
 				return $notices;
 			}
 		);
-		add_action(
-			'woocommerce_paypal_commerce_gateway_deactivate',
-			static function () use ( $c ) {
-				delete_option( 'woocommerce-ppcp-settings' );
-				delete_option( 'woocommerce_' . PayPalGateway::ID . '_settings' );
-				delete_option( 'woocommerce_' . CreditCardGateway::ID . '_settings' );
-			}
-		);
 
 		add_action(
 			'wc_ajax_' . ReturnUrlEndpoint::ENDPOINT,
