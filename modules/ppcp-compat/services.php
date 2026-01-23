@@ -63,7 +63,6 @@ return array(
 		return array(
 			'button.js',
 			'gateway-settings.js',
-			'status-page.js',
 			'order-edit-page.js',
 			'fraudnet.js',
 			'tracking-compat.js',

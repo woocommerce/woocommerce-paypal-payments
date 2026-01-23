@@ -78,7 +78,6 @@ const modulesAssets = {
 		'css/gateway-settings.scss',
 		'css/common.scss',
 	],
-	'ppcp-webhooks': [ 'js/status-page.js', 'css/status-page.scss' ],
 };
 
 const entries = {};

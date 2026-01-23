@@ -33,7 +33,6 @@ use WooCommerce\PayPalCommerce\Webhooks\Handler\PaymentCaptureReversed;
 use WooCommerce\PayPalCommerce\Webhooks\Handler\PaymentSaleCompleted;
 use WooCommerce\PayPalCommerce\Webhooks\Handler\PaymentSaleRefunded;
 use WooCommerce\PayPalCommerce\Webhooks\Handler\VaultPaymentTokenDeleted;
-use WooCommerce\PayPalCommerce\Webhooks\Status\Assets\WebhooksStatusPageAssets;
 use WooCommerce\PayPalCommerce\Webhooks\Status\WebhookSimulation;
 use WooCommerce\PayPalCommerce\Webhooks\VaultV2\VaultPaymentTokenCreated;
 
@@ -185,14 +184,6 @@ return array(
 			$webhook,
 			'CHECKOUT.ORDER.APPROVED',
 			'2.0'
-		);
-	},
-
-	'webhook.status.assets'                   => function ( ContainerInterface $container ): WebhooksStatusPageAssets {
-		return new WebhooksStatusPageAssets(
-			$container->get( 'webhook.asset_getter' ),
-			$container->get( 'ppcp.asset-version' ),
-			$container->get( 'settings.environment' )
 		);
 	},
 
