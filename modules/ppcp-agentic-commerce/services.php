@@ -43,9 +43,9 @@ use WooCommerce\PayPalCommerce\AgenticCommerce\CartValidation\InventoryValidator
 use WooCommerce\PayPalCommerce\AgenticCommerce\CartValidation\CurrencyValidator;
 use WooCommerce\PayPalCommerce\AgenticCommerce\CartValidation\ShippingValidator;
 use WooCommerce\PayPalCommerce\AgenticCommerce\CartValidation\CouponValidator\CouponValidator;
-use WooCommerce\PayPalCommerce\AgenticCommerce\CartValidation\CouponValidator\ContextBuilder;
+use WooCommerce\PayPalCommerce\AgenticCommerce\CartValidation\CouponValidator\CouponContextBuilder;
 use WooCommerce\PayPalCommerce\AgenticCommerce\CartValidation\CouponValidator\DiscountCalculator;
-use WooCommerce\PayPalCommerce\AgenticCommerce\CartValidation\CouponValidator\ResolutionBuilder;
+use WooCommerce\PayPalCommerce\AgenticCommerce\CartValidation\CouponValidator\CouponResolutionBuilder;
 use WooCommerce\PayPalCommerce\AgenticCommerce\CartValidation\CouponValidator\AppliedCouponsBuilder;
 use WooCommerce\PayPalCommerce\AgenticCommerce\CartValidation\CartValidationProcessor;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Inspector\InspectionSessionData;
@@ -186,14 +186,14 @@ return array(
 			$c->get( 'agentic.helper.product-manager' )
 		);
 	},
-	'agentic.validator.coupon.context-builder'     => static function ( ContainerInterface $c ): ContextBuilder {
-		return new ContextBuilder(
+	'agentic.validator.coupon.context-builder'     => static function ( ContainerInterface $c ): CouponContextBuilder {
+		return new CouponContextBuilder(
 			$c->get( 'agentic.helper.product-manager' ),
 			$c->get( 'agentic.validator.coupon.discount-calculator' )
 		);
 	},
-	'agentic.validator.coupon.resolution-builder'  => static function (): ResolutionBuilder {
-		return new ResolutionBuilder();
+	'agentic.validator.coupon.resolution-builder'  => static function (): CouponResolutionBuilder {
+		return new CouponResolutionBuilder();
 	},
 	'agentic.validator.coupon'                     => static function ( ContainerInterface $c ): CouponValidator {
 		return new CouponValidator(
