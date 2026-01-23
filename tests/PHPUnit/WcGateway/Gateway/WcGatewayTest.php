@@ -113,15 +113,11 @@ class WcGatewayTest extends TestCase
 			$this->isConnected,
 			$this->transactionUrlProvider,
 			$this->subscriptionHelper,
-			PayPalGateway::ID,
 			$this->environment,
 			$this->paymentTokenRepository,
 			$this->logger,
 			$this->apiShopCountry,
-			$this->orderEndpoint,
-			function ($id) {
-				return 'checkoutnow=' . $id;
-			},
+			static fn ($id) => 'checkoutnow=' . $id,
 			'Pay via PayPal',
 			$this->paymentTokensEndpoint,
 			$this->vaultV3Enabled,
