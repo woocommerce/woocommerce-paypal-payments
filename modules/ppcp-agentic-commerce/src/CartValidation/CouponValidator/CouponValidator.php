@@ -296,7 +296,7 @@ class CouponValidator implements ValidatorInterface {
 
 		// Capture error code via filter instead of relying on localized messages.
 		$error_code    = 0;
-		$capture_error = static function ( $error_message, $code ) use ( &$error_code ) {
+		$capture_error = static function ( string $error_message, int $code ) use ( &$error_code ): string {
 			$error_code = $code;
 			return $error_message;
 		};
