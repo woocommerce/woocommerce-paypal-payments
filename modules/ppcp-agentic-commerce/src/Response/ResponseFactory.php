@@ -53,21 +53,7 @@ class ResponseFactory {
 	public function new_cart( PayPalCart $cart, string $cart_id, string $token ): NewCartResponse {
 		$wc_cart         = $this->build_wc_cart_or_null( $cart );
 		$applied_coupons = $this->build_applied_coupons( $cart );
-		return new NewCartResponse( $cart, $cart_id, $token, 'CREATED', $applied_coupons, $wc_cart );
-	}
-
-	/**
-	 * Create an active cart response (status: ACTIVE).
-	 *
-	 * @param PayPalCart $cart The cart object.
-	 * @param string     $cart_id The cart ID.
-	 * @param string     $token The payment token.
-	 * @return NewCartResponse The response object.
-	 */
-	public function active_cart( PayPalCart $cart, string $cart_id, string $token ): NewCartResponse {
-		$wc_cart         = $this->build_wc_cart_or_null( $cart );
-		$applied_coupons = $this->build_applied_coupons( $cart );
-		return new NewCartResponse( $cart, $cart_id, $token, 'ACTIVE', $applied_coupons, $wc_cart );
+		return new NewCartResponse( $cart, $cart_id, $token, $applied_coupons, $wc_cart );
 	}
 
 	/**

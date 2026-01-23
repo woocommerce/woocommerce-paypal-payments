@@ -23,6 +23,13 @@ class PaidCartResponse extends CartResponse {
 	protected ?WC_Order $wc_order = null;
 
 	/**
+	 * Cart status for paid carts.
+	 *
+	 * @var string
+	 */
+	protected string $status = 'COMPLETED';
+
+	/**
 	 * Constructor.
 	 *
 	 * @param PayPalCart   $cart The PayPal cart.
@@ -40,7 +47,6 @@ class PaidCartResponse extends CartResponse {
 	) {
 		parent::__construct( $cart, $applied_coupons, $cart_id, $wc_cart );
 		$this->wc_order = $wc_order;
-		$this->status   = 'COMPLETED';
 	}
 
 	/**
