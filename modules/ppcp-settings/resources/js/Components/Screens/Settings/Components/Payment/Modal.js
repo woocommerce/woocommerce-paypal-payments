@@ -12,7 +12,7 @@ import { PaymentHooks } from '@ppcp-settings/data';
 
 const Modal = ( { method, setModalIsVisible, onSave } ) => {
 	const { all: paymentMethods } = PaymentHooks.usePaymentMethods();
-	const { paypalShowLogo, cardholderName, paymentLevelProcessing, fastlaneDisplayWatermark } =
+	const { paypalShowLogo, cardholderName, fastlaneDisplayWatermark } =
 		PaymentHooks.usePaymentMethodsModal();
 
 	const [ settings, setSettings ] = useState( () => {
@@ -41,7 +41,6 @@ const Modal = ( { method, setModalIsVisible, onSave } ) => {
 
 		initialSettings.paypalShowLogo = paypalShowLogo;
 		initialSettings.cardholderName = cardholderName;
-		initialSettings.paymentLevelProcessing = paymentLevelProcessing;
 		initialSettings.fastlaneDisplayWatermark = fastlaneDisplayWatermark;
 
 		return initialSettings;
