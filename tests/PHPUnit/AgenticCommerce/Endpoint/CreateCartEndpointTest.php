@@ -48,7 +48,6 @@ class CreateCartEndpointTest extends AgenticEndpointTestCase {
 				$cart,
 				$cart_id,
 				$ec_token,
-				'CREATED',
 				array(),
 				null
 			) );

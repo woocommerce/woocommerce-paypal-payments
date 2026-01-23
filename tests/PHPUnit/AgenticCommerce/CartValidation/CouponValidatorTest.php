@@ -8,9 +8,9 @@ use WooCommerce\PayPalCommerce\AgenticCommerce\Helper\ProductManager;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\PayPalCart;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Validation\CouponInvalid;
 use WooCommerce\PayPalCommerce\AgenticCommerce\CartValidation\CouponValidator\CouponValidator;
-use WooCommerce\PayPalCommerce\AgenticCommerce\CartValidation\CouponValidator\ContextBuilder;
+use WooCommerce\PayPalCommerce\AgenticCommerce\CartValidation\CouponValidator\CouponContextBuilder;
 use WooCommerce\PayPalCommerce\AgenticCommerce\CartValidation\CouponValidator\DiscountCalculator;
-use WooCommerce\PayPalCommerce\AgenticCommerce\CartValidation\CouponValidator\ResolutionBuilder;
+use WooCommerce\PayPalCommerce\AgenticCommerce\CartValidation\CouponValidator\CouponResolutionBuilder;
 use WooCommerce\PayPalCommerce\TestCase;
 
 /**
@@ -32,8 +32,8 @@ class CouponValidatorTest extends TestCase
 		// Note: wc_coupons_enabled() is stubbed per-test as needed
 		$this->product_manager = Mockery::mock(ProductManager::class);
 		$this->discount_calculator = new DiscountCalculator($this->product_manager);
-		$this->context_builder = new ContextBuilder($this->product_manager, $this->discount_calculator);
-		$this->resolution_builder = new ResolutionBuilder();
+		$this->context_builder = new CouponContextBuilder($this->product_manager, $this->discount_calculator);
+		$this->resolution_builder = new CouponResolutionBuilder();
 		$this->validator = new CouponValidator(
 			$this->context_builder,
 			$this->discount_calculator,
@@ -115,7 +115,8 @@ class CouponValidatorTest extends TestCase
 		$issue = new CouponInvalid(
 			'Test message',
 			'Test user message',
-			'coupons[0]'
+			'coupons[0]',
+			''
 		);
 
 		$data = $issue->to_array();
@@ -143,6 +144,7 @@ class CouponValidatorTest extends TestCase
 			'Coupon does not exist',
 			'The coupon is not valid.',
 			'coupons[0]',
+			'',
 			$context,
 			$resolution_options
 		);
@@ -163,7 +165,8 @@ class CouponValidatorTest extends TestCase
 		$issue = new CouponInvalid(
 			$long_message,
 			$long_user_message,
-			'coupons[0]'
+			'coupons[0]',
+			''
 		);
 
 		$data = $issue->to_array();
