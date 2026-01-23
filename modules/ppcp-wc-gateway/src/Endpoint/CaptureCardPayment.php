@@ -93,7 +93,7 @@ class CaptureCardPayment
         $this->logger = $logger;
     }
     /**
-     * Creates PayPal order from the given card vault id.TEST.
+     * Creates PayPal order from the given card vault id.
      *
      * @throws RuntimeException When request fails.
      */
