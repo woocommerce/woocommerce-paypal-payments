@@ -312,6 +312,22 @@ export class PayPalUiClassic extends PayPalUi {
 	// Actions
 
 	/**
+	 * Clicks PayPal button to open popup
+	 */
+	async openPayPalPopup(): Promise<PayPalPopup> {
+		await this.payPalGateway().click();
+		return await super.openPayPalPopup();
+	}
+
+	/**
+	 * Clicks Pay Later button to open popup
+	 */
+	async openPayLaterPopup(): Promise< PayPalPopup > {
+		await this.payPalGateway().click();
+		return await super.openPayLaterPopup();
+	};
+
+	/**
 	 * Completes payment with ACDC
 	 *
 	 * @param payment
