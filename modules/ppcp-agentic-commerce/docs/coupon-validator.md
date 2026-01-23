@@ -29,7 +29,7 @@ Validates WooCommerce coupons and provides enhanced context to PayPal's Agentic 
 3. Check if coupons are enabled in WooCommerce via `wc_coupons_enabled()`
 4. Check for coupon stacking conflicts (individual_use coupons)
 5. Validate each coupon via WooCommerce's `WC_Discounts::is_coupon_valid()`
-6. Map WC errors to PayPal issue types using message pattern matching
+6. Capture numeric error codes via `woocommerce_coupon_error` filter and map to PayPal issue types
 7. Build enhanced context via declarative `context_builders` configuration
 8. Apply filters to enrich data
 
@@ -61,9 +61,9 @@ Validates WooCommerce coupons and provides enhanced context to PayPal's Agentic 
 
 **Error Mapping:**
 
-The validator maps WooCommerce errors to PayPal issue types using numeric error constants (100-116) from `WC_Coupon`. WooCommerce's `WC_Discounts` throws exceptions with these numeric codes, which are then caught and converted to `WP_Error` objects.
+The validator maps WooCommerce errors to PayPal issue types using numeric error constants (100-116) from `WC_Coupon`. We use the `woocommerce_coupon_error` filter to capture the numeric error code when `WC_Discounts::is_coupon_valid()` fails.
 
-Since WooCommerce error messages are localized (`esc_html__`), we cannot rely on pattern matching - instead we extract the numeric error code from the `WP_Error` data structure, making the validation work correctly for all languages.
+Since WooCommerce error messages are localized (`esc_html__`), we cannot rely on pattern matching - instead we capture the numeric error code via the filter, making the validation work correctly for all languages.
 
 ## Enhanced Context Fields
 
@@ -378,9 +378,9 @@ Split into focused, single-responsibility classes:
 | Class | Responsibility |
 |-------|---------------|
 | **CouponValidator** | Orchestrates validation flow, checks stacking conflicts, delegates to specialists |
-| **ContextBuilder** | Builds enriched context data using declarative pattern, uses WC native methods |
+| **CouponContextBuilder** | Builds enriched context data using declarative pattern, uses WC native methods |
 | **DiscountCalculator** | Handles discount calculation via `WC_Discounts`, uses `wc_format_decimal()` |
-| **ResolutionBuilder** | Builds resolution options from templates, handles stacking-specific resolutions |
+| **CouponResolutionBuilder** | Builds resolution options from templates, handles stacking-specific resolutions |
 | **AppliedCouponsBuilder** | Builds `applied_coupons` response data for successfully validated coupons |
 
 **Declarative Configuration:**
@@ -396,7 +396,7 @@ Each issue type declares what it needs via `ISSUE_CONFIG`:
 ),
 ```
 
-Context builders are small focused methods in `ContextBuilder`:
+Context builders are small focused methods in `CouponContextBuilder`:
 - `build_expiration()` - Adds expiration date
 - `build_usage_limits()` - Adds usage limit/count
 - `build_minimum_spend()` - Adds minimum required, current subtotal, shortage amount
