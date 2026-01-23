@@ -49,6 +49,14 @@ class AppliedCouponsBuilder {
 	 * @return array Array of applied coupon data.
 	 */
 	public function build_applied_coupons_array( PayPalCart $cart, string $validation_status ): array {
+		if ( $validation_status !== 'VALID' ) {
+			return array();
+		}
+
+		if ( ! class_exists( 'WC_Coupon' ) ) {
+			return array();
+		}
+
 		$coupons = $cart->coupons();
 
 		if ( ! $coupons ) {
@@ -62,16 +70,6 @@ class AppliedCouponsBuilder {
 		);
 
 		if ( empty( $apply_coupons ) ) {
-			return array();
-		}
-
-		// Only show applied coupons if validation passed.
-		if ( $validation_status !== 'VALID' ) {
-			return array();
-		}
-
-		// WooCommerce not available - can't build coupon data.
-		if ( ! class_exists( 'WC_Coupon' ) ) {
 			return array();
 		}
 
