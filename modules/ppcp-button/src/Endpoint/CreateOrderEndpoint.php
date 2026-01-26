@@ -311,10 +311,9 @@ class CreateOrderEndpoint implements EndpointInterface {
 					);
 				}
 
-				//phpcs:ignore WordPress.Security.NonceVerification.Recommended
-				$order_key_from_url = isset( $_GET['key'] ) ? wc_clean( wp_unslash( $_GET['key'] ) ) : '';
+				$order_key = $data['order_key'] ?? '';
 				//phpcs:ignore WordPress.WP.Capabilities.Unknown
-				if ( $wc_order->get_order_key() !== $order_key_from_url || ! current_user_can( 'view_order', $data['order_id'] ) ) {
+				if ( ! $wc_order->key_is_valid( $order_key ) || ! current_user_can( 'view_order', $data['order_id'] ) ) {
 					wp_send_json_error(
 						array(
 							'name'    => 'invalid-request',
