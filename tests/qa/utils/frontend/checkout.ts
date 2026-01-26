@@ -55,7 +55,7 @@ export class Checkout extends CheckoutBase {
 	) => {
 		await expect( this.payPalUi.fastlaneEmailInput() ).toBeVisible();
 		await this.payPalUi.fastlaneEmailInput().fill( customer.email );
-		
+
 		await expect( this.payPalUi.fastlaneContinueButton() ).toBeVisible();
 		await expect( this.payPalUi.fastlaneContinueButton() ).toBeEnabled();
 		await this.payPalUi.fastlaneContinueButton().click();

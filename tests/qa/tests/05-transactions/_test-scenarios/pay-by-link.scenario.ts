@@ -40,10 +40,7 @@ export const transactionsOnPayByLink = ( testOrder: ShopOrder ) => {
 			const pcpData = { transactionId, payPalFee, payPalPayout };
 
 			await wooCommerceOrderEdit.visit( order.id );
-			await wooCommerceOrderEdit.assertOrderDetails(
-				testOrder,
-				pcpData
-			);
+			await wooCommerceOrderEdit.assertOrderDetails( testOrder, pcpData );
 		}
 	);
 };

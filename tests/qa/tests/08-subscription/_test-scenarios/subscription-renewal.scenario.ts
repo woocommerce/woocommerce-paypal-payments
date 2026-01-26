@@ -200,9 +200,7 @@ export const testFreeTrialSubscriptionRenewal = ( testOrder: ShopOrder ) => {
 				const freeTrialTotal = await countTotals( testOrder );
 				// Assert free-trial test order with 0 price and shipping
 				await wooCommerceOrderEdit.visit( orderId );
-				await wooCommerceOrderEdit.assertOrderDetails(
-					testOrder
-				);
+				await wooCommerceOrderEdit.assertOrderDetails( testOrder );
 
 				// For free-trial subscription product set trial length = 0 so for renewal order it's not counted as 0 price
 				testOrder.products[ 0 ] = await setSubscriptionTrialLength(

@@ -14,8 +14,13 @@ test( 'PCP-4362 | Settings - Onboarding - See advanced options - Manually connec
 	pcpOnboarding,
 	pcpOverview,
 	pcpSettings,
-}, testInfo ) => {
-	const { account_id, client_id, client_secret, email } = merchants.usa;
+} ) => {
+	const {
+		account_id: accountId,
+		client_id: clientId,
+		client_secret: clientSecret,
+		email,
+	} = merchants.usa;
 
 	await pcpOnboarding.visit();
 	await pcpOnboarding.gotoInitialOnboardingPage();
@@ -30,17 +35,17 @@ test( 'PCP-4362 | Settings - Onboarding - See advanced options - Manually connec
 
 	await pcpOnboarding.enableOptionalPaymentMethodsRadio().click();
 	await pcpOnboarding.gotoInitialOnboardingPage();
-	
+
 	await pcpOnboarding.openAdvancedOptions();
 	await pcpOnboarding.toggleSandboxMode( true );
 	await pcpOnboarding.toggleManuallyConnect( true );
-	
+
 	await expect( pcpOnboarding.sandboxClientIdInput() ).toBeVisible();
-	await pcpOnboarding.sandboxClientIdInput().fill( client_id );
+	await pcpOnboarding.sandboxClientIdInput().fill( clientId );
 	await pcpOnboarding.page.waitForTimeout( 1000 );
 
 	await expect( pcpOnboarding.sandboxSecretKeyInput() ).toBeVisible();
-	await pcpOnboarding.sandboxSecretKeyInput().fill( client_secret );
+	await pcpOnboarding.sandboxSecretKeyInput().fill( clientSecret );
 	await pcpOnboarding.page.waitForTimeout( 1000 );
 
 	await expect( pcpOnboarding.connectAccountButton() ).toBeVisible();
@@ -48,11 +53,17 @@ test( 'PCP-4362 | Settings - Onboarding - See advanced options - Manually connec
 
 	await expect( pcpOverview.overviewTab() ).toBeVisible();
 	await expect( pcpOverview.settingsTab() ).toBeVisible();
-	
+
 	await pcpOverview.settingsTab().click();
-	
+
 	await expect( pcpSettings.connectionDetailsContainer() ).toBeVisible();
-	await expect( pcpSettings.connectionDetailsContainer() ).toContainText( account_id );
-	await expect( pcpSettings.connectionDetailsContainer() ).toContainText( email );
-	await expect( pcpSettings.connectionDetailsContainer() ).toContainText( client_id );
+	await expect( pcpSettings.connectionDetailsContainer() ).toContainText(
+		accountId
+	);
+	await expect( pcpSettings.connectionDetailsContainer() ).toContainText(
+		email
+	);
+	await expect( pcpSettings.connectionDetailsContainer() ).toContainText(
+		clientId
+	);
 } );

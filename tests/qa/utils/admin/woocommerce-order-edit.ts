@@ -117,7 +117,6 @@ export class WooCommerceOrderEdit extends WooCommerceOrderEditBase {
 	/**
 	 * Asserts order edit page including PayPal related fields
 	 *
-	 * @param orderId
 	 * @param orderData
 	 * @param pcpData
 	 * @param pcpData.transactionId

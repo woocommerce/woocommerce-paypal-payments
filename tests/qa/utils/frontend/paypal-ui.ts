@@ -193,7 +193,7 @@ export class PayPalUi {
 		const popup = await popupPromise;
 		await popup.waitForLoadState();
 		return new PayPalPopup( popup );
-	};
+	}
 
 	/**
 	 * Clicks Pay Later button to open popup
@@ -208,7 +208,7 @@ export class PayPalUi {
 		const popup = await popupPromise;
 		await popup.waitForLoadState();
 		return new PayPalPopup( popup );
-	};
+	}
 
 	/**
 	 * Clicks Venmo button to open popup
