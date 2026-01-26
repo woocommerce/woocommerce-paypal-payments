@@ -80,8 +80,8 @@ export class WooCommerceOrderEdit extends WooCommerceOrderEditBase {
 
 		await this.firstRefundTotalInput().fill( amount );
 		await this.page.on( 'dialog', ( dialog ) => dialog.accept() );
-		// await this.page.on('dialog', dialog => dialog.accept());
 		await this.refundViaButton( 'PayPal' ).click();
+		await this.page.waitForLoadState( 'networkidle' );
 	};
 
 	// Assertions
