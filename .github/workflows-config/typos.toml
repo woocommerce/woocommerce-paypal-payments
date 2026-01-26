@@ -36,6 +36,8 @@ extend-ignore-re = [
 [default.extend-identifiers]
 Automattic = "Automattic"
 automattic = "automattic"
+PayPal = "PayPal"
+paypal = "paypal"
 # Typos
 Github = "GitHub"
 Wordpress = "WordPress"
