@@ -24,9 +24,9 @@ const {
 test.beforeAll( async ( { utils, pcpApi, wooCommerceApi } ) => {
 	await utils.configureStore( {
 		...storeConfigUsa,
-		wpDebugging: false,
-		classicPages: false,
-		subscription: true,
+		enableWpDebugging: false,
+		enableClassicPages: false,
+		enableSubscriptionsPlugin: true,
 		products: [ products.subscription100, products.subscriptionFreeTrial ],
 	} );
 	await utils.installAndActivatePcp();

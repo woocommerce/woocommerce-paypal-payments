@@ -22,6 +22,7 @@ import {
 	wpDebuggingPlugin,
 	pcpPlugin,
 	ShopOrder,
+	ShopConfig,
 } from '../resources';
 import { getCustomerStorageStateName } from './helpers';
 import urls from './urls';
@@ -235,52 +236,41 @@ export class Utils {
 	 * @param          data.customer
 	 * @param          data.products
 	 */
-	configureStore = async ( data: {
-		wpDebugging?: boolean; // Is WP Debugging plugin activated
-		subscription?: boolean; // Is WC Subscriptions plugin activated
-		classicPages?: boolean; // Are classic cart and checkout pages set in WC > Settings > Advanced
-		settings?: WooCommerce.Settings; // WooCommerce settings by tabs (general, advanced, etc.)
-		taxes?: {
-			options: WooCommerce.Settings; // Tax settings in WC > Settings > General tab
-			rates: WooCommerce.CreateTax[]; // Tax rates to be active in WC > Settings > Taxes > Tax rates tab
-		};
-		customer?: WooCommerce.CreateCustomer; // Registered customer to be created
-		products?: WooCommerce.CreateProduct[]; // Products to be created if not existing
-	} ) => {
+	configureStore = async ( data: ShopConfig ) => {
 		const {
-			wpDebugging,
-			subscription,
-			classicPages,
+			enableWpDebugging,
+			enableSubscriptionsPlugin,
+			enableClassicPages,
 			settings,
 			taxes,
 			customer,
 			products,
-		} = data;
+		}: ShopConfig = data;
 
-		if ( subscription === true ) {
+		if ( enableSubscriptionsPlugin === true ) {
 			await this.requestUtils.activatePlugin( subscriptionsPlugin.slug );
 		}
 
-		if ( subscription === false ) {
+		if ( enableSubscriptionsPlugin === false ) {
 			await this.requestUtils.deactivatePlugin(
 				subscriptionsPlugin.slug
 			);
 		}
 
-		if ( wpDebugging === true ) {
+		if ( enableWpDebugging === true ) {
 			await this.requestUtils.activatePlugin( wpDebuggingPlugin.slug );
 		}
 
-		if ( wpDebugging === false ) {
+		if ( enableWpDebugging === false ) {
 			await this.requestUtils.deactivatePlugin( wpDebuggingPlugin.slug );
 		}
 
-		if ( classicPages === true ) {
+		if ( enableClassicPages === true ) {
 			await this.wooCommerceUtils.activateClassicCartPage();
 			await this.wooCommerceUtils.activateClassicCheckoutPage();
 		}
 
-		if ( classicPages === false ) {
+		if ( enableClassicPages === false ) {
 			await this.wooCommerceUtils.activateBlockCartPage();
 			await this.wooCommerceUtils.activateBlockCheckoutPage();
 		}

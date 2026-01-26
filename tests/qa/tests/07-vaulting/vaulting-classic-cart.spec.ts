@@ -14,7 +14,7 @@ const { testSavePaymentMethod, testVaultedPaymentMethod } =
 test.beforeAll( async ( { utils, pcpApi, wooCommerceApi } ) => {
 	await utils.configureStore( {
 		...storeConfigUsa,
-		classicPages: true,
+		enableClassicPages: true,
 	} );
 	await utils.installAndActivatePcp();
 	await pcpApi.resetDb();

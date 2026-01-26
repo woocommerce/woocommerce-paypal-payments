@@ -15,8 +15,8 @@ const { testSubscriptionOrderGuest, testSubscriptionOrderCustomer } =
 test.beforeAll( async ( { utils, pcpApi, wooCommerceApi } ) => {
 	await utils.configureStore( {
 		...storeConfigUsa,
-		classicPages: true,
-		subscription: true,
+		enableClassicPages: true,
+		enableSubscriptionsPlugin: true,
 		products: [ products.subscription100, products.subscriptionFreeTrial ],
 	} );
 	await utils.installAndActivatePcp();
