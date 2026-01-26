@@ -16,8 +16,6 @@ export const testSubscriptionRenewal = ( testOrder: ShopOrder ) => {
 		// Restore customer and his storage state to remove vaulted payment methods.
 		// Placed in beforeAll for each test to be able to use storate state in a test.
 		test.beforeAll( async ( { utils, wooCommerceApi } ) => {
-			await wooCommerceApi.deleteAllSubscriptions();
-			await wooCommerceApi.deleteAllOrders();
 			await utils.restoreCustomer( customer );
 		} );
 
@@ -165,8 +163,6 @@ export const testFreeTrialSubscriptionRenewal = ( testOrder: ShopOrder ) => {
 		// Restore customer and his storage state to remove vaulted payment methods.
 		// Placed in beforeAll for each test to be able to use storate state in a test.
 		test.beforeAll( async ( { utils, wooCommerceApi } ) => {
-			await wooCommerceApi.deleteAllSubscriptions();
-			await wooCommerceApi.deleteAllOrders();
 			await utils.restoreCustomer( customer );
 		} );
 

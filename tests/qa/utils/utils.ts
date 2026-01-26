@@ -67,14 +67,6 @@ export class Utils {
 	 */
 	restoreCustomer = async ( customer: WooCommerce.CreateCustomer ) => {
 		await this.wooCommerceUtils.deleteCustomer( customer );
-		if ( customer.username ) {
-			const user = await this.requestUtils.getUserByName(
-				customer.username
-			);
-			if ( user.length ) {
-				await this.requestUtils.deleteUser( user[ 0 ].id );
-			}
-		}
 		await this.wooCommerceUtils.createCustomer( customer );
 		const storageStateName = getCustomerStorageStateName( customer );
 		const storageStatePath = `${ process.env.STORAGE_STATE_PATH }/${ storageStateName }.json`;
