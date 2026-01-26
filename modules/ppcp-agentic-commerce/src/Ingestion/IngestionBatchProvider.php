@@ -74,7 +74,7 @@ class IngestionBatchProvider {
 		);
 		assert( is_array( $dirty_products ) );
 		// Merge into batch.
-		$batch = array_unique(array_merge( $batch, $dirty_products ));
+		$batch = array_unique( array_merge( $batch, $dirty_products ) );
 
 		// If we're now at the limit, return.
 		if ( count( $batch ) >= $batch_size ) {
@@ -108,6 +108,6 @@ class IngestionBatchProvider {
 		// phpcs:enable WordPress.DB.SlowDBQuery
 
 		// Merge and return.
-		return array_unique(array_merge( $batch, $stale_products ));
+		return array_unique( array_merge( $batch, $stale_products ) );
 	}
 }
