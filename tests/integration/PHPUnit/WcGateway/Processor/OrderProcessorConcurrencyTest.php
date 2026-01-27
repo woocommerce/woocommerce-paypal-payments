@@ -169,8 +169,10 @@ class OrderProcessorConcurrencyTest extends IntegrationMockedTestCase
 		$this->assertEquals(0, $captureCallCount, 'PayPal capture should not be called for completed orders');
 	}
 
-	public function testProcessingFlagPreventsSecondCall(): void
+	public function testMySQLLockPreventsSecondCall(): void
 	{
+		global $wpdb;
+
 		$captureCallCount = 0;
 
 		$mockOrderEndpoint = $this->mockOrderEndpoint('CAPTURE', false, true);
@@ -196,14 +198,26 @@ class OrderProcessorConcurrencyTest extends IntegrationMockedTestCase
 			false
 		);
 
-		$wcOrder->update_meta_data('_ppcp_processing', 'yes');
-		$wcOrder->save();
+		$lock_name = 'ppcp_order_' . $wcOrder->get_id();
+
+		// Open a separate MySQL connection to simulate a concurrent process holding the lock.
+		$separate_conn = new \mysqli( DB_HOST, DB_USER, DB_PASSWORD, DB_NAME );
+		$stmt = $separate_conn->prepare( 'SELECT GET_LOCK(?, 0)' );
+		$stmt->bind_param( 's', $lock_name );
+		$stmt->execute();
+		$stmt->close();
 
 		$orderProcessor = $container->get('wcgateway.order-processor');
 
 		$orderProcessor->process($wcOrder);
 
-		$this->assertEquals(0, $captureCallCount, 'PayPal capture should not be called when processing flag is set');
+		$this->assertEquals(0, $captureCallCount, 'PayPal capture should not be called when MySQL lock is held by another connection');
+
+		$release_stmt = $separate_conn->prepare( 'SELECT RELEASE_LOCK(?)' );
+		$release_stmt->bind_param( 's', $lock_name );
+		$release_stmt->execute();
+		$release_stmt->close();
+		$separate_conn->close();
 	}
 
 	public function testCompletedOrderSkipsProcessingMultipleTimes(): void

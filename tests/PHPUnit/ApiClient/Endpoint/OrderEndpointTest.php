@@ -208,7 +208,7 @@ class OrderEndpointTest extends TestCase
         $orderToCaptureStatus->expects('is')->with('COMPLETED')->andReturn(false);
         $orderToCapture = Mockery::mock(Order::class);
         $orderToCapture->expects('status')->andReturn($orderToCaptureStatus);
-        $orderToCapture->expects('id')->andReturn($orderId);
+        $orderToCapture->shouldReceive('id')->andReturn($orderId);
 		$headers = Mockery::mock(Requests_Utility_CaseInsensitiveDictionary::class);
 		$headers->shouldReceive('getAll');
         $rawResponse = [
@@ -335,7 +335,7 @@ class OrderEndpointTest extends TestCase
         $orderToCaptureStatus->expects('is')->with('COMPLETED')->andReturn(false);
         $orderToCapture = Mockery::mock(Order::class);
         $orderToCapture->expects('status')->andReturn($orderToCaptureStatus);
-        $orderToCapture->expects('id')->andReturn($orderId);
+        $orderToCapture->shouldReceive('id')->andReturn($orderId);
 
         $host = 'https://example.com/';
         $token = Mockery::mock(Token::class);
@@ -385,7 +385,7 @@ class OrderEndpointTest extends TestCase
         $orderToCaptureStatus->expects('is')->with('COMPLETED')->andReturn(false);
         $orderToCapture = Mockery::mock(Order::class);
         $orderToCapture->expects('status')->andReturn($orderToCaptureStatus);
-        $orderToCapture->expects('id')->andReturn($orderId);
+        $orderToCapture->shouldReceive('id')->andReturn($orderId);
 
         $host = 'https://example.com/';
         $token = Mockery::mock(Token::class);

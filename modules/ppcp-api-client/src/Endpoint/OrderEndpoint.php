@@ -292,9 +292,10 @@ class OrderEndpoint {
 		$args   = array(
 			'method'  => 'POST',
 			'headers' => array(
-				'Authorization' => 'Bearer ' . $bearer->token(),
-				'Content-Type'  => 'application/json',
-				'Prefer'        => 'return=representation',
+				'Authorization'    => 'Bearer ' . $bearer->token(),
+				'Content-Type'     => 'application/json',
+				'Prefer'           => 'return=representation',
+				'PayPal-Request-Id' => 'capture-' . $order->id(),
 			),
 		);
 		if ( $this->bn_code ) {

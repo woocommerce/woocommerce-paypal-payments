@@ -32,7 +32,6 @@ use WooCommerce\PayPalCommerce\Vaulting\PaymentTokenRepository;
 use WooCommerce\PayPalCommerce\WcGateway\Exception\PayPalOrderMissingException;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
-use Automattic\WooCommerce\Utilities\OrderUtil;
 
 /**
  * Class OrderProcessor
@@ -420,13 +419,11 @@ class OrderProcessor {
 	}
 
 	/**
-	 * Atomically acquires a processing lock for the order.
+	 * Atomically acquires a processing lock for the order using MySQL named locks.
 	 *
-	 * Uses direct SQL to ensure atomic lock acquisition, preventing race conditions
-	 * where two concurrent processes could both acquire the lock.
-	 * Stores an expiration timestamp instead of a simple flag, allowing stale locks
-	 * from crashed processes to automatically expire.
-	 * Supports both HPOS (wc_orders_meta) and legacy (postmeta) storage.
+	 * Uses GET_LOCK() which is guaranteed atomic by MySQL - only one connection
+	 * can hold a given named lock at a time. The lock is automatically released
+	 * when the connection closes, preventing stale locks from crashed processes.
 	 *
 	 * @param WC_Order $wc_order The WooCommerce order.
 	 * @return bool True if lock was acquired, false if already locked.
@@ -434,68 +431,28 @@ class OrderProcessor {
 	private function acquire_processing_lock( WC_Order $wc_order ): bool {
 		global $wpdb;
 
-		$order_id     = $wc_order->get_id();
-		$current_time = time();
-		$expiration   = $current_time + 5 * MINUTE_IN_SECONDS;
+		$lock_name = 'ppcp_order_' . $wc_order->get_id();
 
-		if ( class_exists( OrderUtil::class ) && OrderUtil::custom_orders_table_usage_is_enabled() ) {
-			$table     = $wpdb->prefix . 'wc_orders_meta';
-			$id_column = 'order_id';
-		} else {
-			$table     = $wpdb->postmeta;
-			$id_column = 'post_id';
-		}
-
-		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$rows_updated = $wpdb->query(
-			$wpdb->prepare(
-				"UPDATE {$table}
-				SET meta_value = %d
-				WHERE {$id_column} = %d
-				AND meta_key = '_ppcp_processing'
-				AND meta_value < %d",
-				$expiration,
-				$order_id,
-				$current_time
-			)
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$result = $wpdb->get_var(
+			$wpdb->prepare( 'SELECT GET_LOCK(%s, 0)', $lock_name )
 		);
 
-		if ( $rows_updated > 0 ) {
-			return true;
+		if ( $result !== '1' ) {
+			$this->logger->warning(
+				sprintf(
+					'Order #%d is already being processed (lock active), skipping payment processing.',
+					$wc_order->get_id()
+				)
+			);
+			return false;
 		}
 
-		$rows_inserted = $wpdb->query(
-			$wpdb->prepare(
-				"INSERT INTO {$table} ({$id_column}, meta_key, meta_value)
-				SELECT %d, '_ppcp_processing', %d
-				FROM (SELECT 1) AS dummy
-				WHERE NOT EXISTS (
-					SELECT 1 FROM {$table} AS t WHERE t.{$id_column} = %d AND t.meta_key = '_ppcp_processing'
-				)",
-				$order_id,
-				$expiration,
-				$order_id
-			)
-		);
-		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-
-		if ( $rows_inserted > 0 ) {
-			return true;
-		}
-
-		$this->logger->warning(
-			sprintf(
-				'Order #%d is already being processed (lock active), skipping payment processing.',
-				$order_id
-			)
-		);
-		return false;
+		return true;
 	}
 
 	/**
 	 * Releases the processing lock for the order.
-	 *
-	 * Supports both HPOS (wc_orders_meta) and legacy (postmeta) storage.
 	 *
 	 * @param WC_Order $wc_order The WooCommerce order.
 	 * @return void
@@ -503,22 +460,11 @@ class OrderProcessor {
 	private function release_processing_lock( WC_Order $wc_order ): void {
 		global $wpdb;
 
-		if ( class_exists( OrderUtil::class ) && OrderUtil::custom_orders_table_usage_is_enabled() ) {
-			$table     = $wpdb->prefix . 'wc_orders_meta';
-			$id_column = 'order_id';
-		} else {
-			$table     = $wpdb->postmeta;
-			$id_column = 'post_id';
-		}
+		$lock_name = 'ppcp_order_' . $wc_order->get_id();
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$wpdb->delete(
-			$table,
-			array(
-				$id_column => $wc_order->get_id(),
-				'meta_key' => '_ppcp_processing', // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key
-			),
-			array( '%d', '%s' )
+		$wpdb->query(
+			$wpdb->prepare( 'SELECT RELEASE_LOCK(%s)', $lock_name )
 		);
 	}
 
