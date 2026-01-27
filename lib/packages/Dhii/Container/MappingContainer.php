@@ -1,13 +1,11 @@
 <?php
 
-declare(strict_types=1);
-
+declare (strict_types=1);
 namespace WooCommerce\PayPalCommerce\Vendor\Dhii\Container;
 
 use WooCommerce\PayPalCommerce\Vendor\Dhii\Collection\ContainerInterface;
 use WooCommerce\PayPalCommerce\Vendor\Dhii\Container\Util\StringTranslatingTrait;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface as PsrContainerInterface;
-
 /**
  * A container implementation that can map results from another container using a callback.
  *
@@ -36,21 +34,18 @@ class MappingContainer implements ContainerInterface
 {
     /* @since [*next-version*] */
     use StringTranslatingTrait;
-
     /**
      * @since [*next-version*]
      *
      * @var callable
      */
     protected $callback;
-
     /**
      * @since [*next-version*]
      *
      * @var PsrContainerInterface
      */
     protected $inner;
-
     /**
      * Constructor.
      *
@@ -67,7 +62,6 @@ class MappingContainer implements ContainerInterface
         $this->callback = $callback;
         $this->inner = $inner;
     }
-
     /**
      * @inheritdoc
      *
@@ -77,7 +71,6 @@ class MappingContainer implements ContainerInterface
     {
         return ($this->callback)($this->inner->get($key), $key, $this);
     }
-
     /**
      * @inheritdoc
      *
@@ -86,7 +79,6 @@ class MappingContainer implements ContainerInterface
     public function has($key)
     {
         $key = (string) $key;
-
         return $this->inner->has($key);
     }
 }
