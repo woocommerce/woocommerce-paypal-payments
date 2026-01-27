@@ -366,7 +366,7 @@ document.addEventListener( 'DOMContentLoaded', () => {
 			) ||
 			isChangePaymentPage() ||
 			( PayPalCommerceGateway.is_free_trial_cart &&
-				PayPalCommerceGateway.vaulted_paypal_email !== '' )
+				!! PayPalCommerceGateway.vaulted_paypal_email )
 		) {
 			return;
 		}
