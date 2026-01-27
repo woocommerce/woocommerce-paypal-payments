@@ -319,10 +319,7 @@ class WcSubscriptionsModule implements ServiceModule, ExtendingModule, Executabl
          * Vault v2 Free trial subscription, adds vaulted PayPal email to localized script data.
          */
         add_filter('woocommerce_paypal_payments_localized_script_data', function (array $localized_script_data) use ($c) {
-            // When Vault v3 is enabled, set empty vaulted_paypal_email to prevent
-            // undefined JS property from affecting button visibility logic.
             if ($c->has('save-payment-methods.eligible') && $c->get('save-payment-methods.eligible')) {
-                $localized_script_data['vaulted_paypal_email'] = '';
                 return $localized_script_data;
             }
             $vaulted_paypal_email = $c->get('wc-subscriptions.vault-v2.vaulted-paypal-email');
