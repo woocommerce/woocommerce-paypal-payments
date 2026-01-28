@@ -32,6 +32,7 @@ use WooCommerce\PayPalCommerce\Vaulting\PaymentTokenRepository;
 use WooCommerce\PayPalCommerce\WcGateway\Exception\PayPalOrderMissingException;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
+use Automattic\WooCommerce\Utilities\OrderUtil;
 
 /**
  * Class OrderProcessor
@@ -212,84 +213,96 @@ class OrderProcessor {
 	 * @throws Exception If processing fails.
 	 */
 	public function process( WC_Order $wc_order ): void {
-		$order = $this->session_handler->order();
-		if ( ! $order ) {
-			// phpcs:ignore WordPress.Security.NonceVerification
-			$order_id = $wc_order->get_meta( PayPalGateway::ORDER_ID_META_KEY ) ?: wc_clean( wp_unslash( $_POST['paypal_order_id'] ?? '' ) );
-			if ( is_string( $order_id ) && $order_id ) {
-				try {
-					$order = $this->order_endpoint->order( $order_id );
-				} catch ( RuntimeException $exception ) {
-					throw new Exception( __( 'Could not retrieve PayPal order.', 'woocommerce-paypal-payments' ) );
-				}
-			} else {
-				$is_paypal_return = isset( $_GET['wc-ajax'] ) && wc_clean( wp_unslash( $_GET['wc-ajax'] ) ) === 'ppc-return-url'; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		if ( ! $this->verify_order_can_be_processed( $wc_order ) ) {
+			return;
+		}
 
-				if ( $is_paypal_return ) {
-					$this->logger->warning(
-						sprintf(
-							'No PayPal order ID found for WooCommerce order #%d.',
-							$wc_order->get_id()
+		if ( ! $this->acquire_processing_lock( $wc_order ) ) {
+			return;
+		}
+
+		try {
+			$order = $this->session_handler->order();
+			if ( ! $order ) {
+				// phpcs:ignore WordPress.Security.NonceVerification
+				$order_id = $wc_order->get_meta( PayPalGateway::ORDER_ID_META_KEY ) ?: wc_clean( wp_unslash( $_POST['paypal_order_id'] ?? '' ) );
+				if ( is_string( $order_id ) && $order_id ) {
+					try {
+						$order = $this->order_endpoint->order( $order_id );
+					} catch ( RuntimeException $exception ) {
+						throw new Exception( __( 'Could not retrieve PayPal order.', 'woocommerce-paypal-payments' ) );
+					}
+				} else {
+					$is_paypal_return = isset( $_GET['wc-ajax'] ) && wc_clean( wp_unslash( $_GET['wc-ajax'] ) ) === 'ppc-return-url'; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+
+					if ( $is_paypal_return ) {
+						$this->logger->warning(
+							sprintf(
+								'No PayPal order ID found for WooCommerce order #%d.',
+								$wc_order->get_id()
+							)
+						);
+					}
+
+					throw new PayPalOrderMissingException(
+						esc_attr__(
+							'There was an error processing your order. Please check for any charges in your payment method and review your order history before placing the order again.',
+							'woocommerce-paypal-payments'
 						)
 					);
 				}
+			}
 
-				throw new PayPalOrderMissingException(
-					esc_attr__(
-						'There was an error processing your order. Please check for any charges in your payment method and review your order history before placing the order again.',
+			// Do not continue if PayPal order status is completed.
+			$order = $this->order_endpoint->order( $order->id() );
+			if ( $order->status()->is( OrderStatus::COMPLETED ) ) {
+				$this->logger->warning( 'Could not process PayPal completed order #' . $order->id() . ', Status: ' . $order->status()->name() );
+				return;
+			}
+
+			$this->add_paypal_meta( $wc_order, $order, $this->environment );
+
+			if ( $this->order_helper->contains_physical_goods( $order ) && ! $this->order_is_ready_for_process( $order ) ) {
+				throw new Exception(
+					__(
+						'The payment is not ready for processing yet.',
 						'woocommerce-paypal-payments'
 					)
 				);
 			}
-		}
 
-		// Do not continue if PayPal order status is completed.
-		$order = $this->order_endpoint->order( $order->id() );
-		if ( $order->status()->is( OrderStatus::COMPLETED ) ) {
-			$this->logger->warning( 'Could not process PayPal completed order #' . $order->id() . ', Status: ' . $order->status()->name() );
-			return;
-		}
+			$order = $this->patch_order( $wc_order, $order );
 
-		$this->add_paypal_meta( $wc_order, $order, $this->environment );
-
-		if ( $this->order_helper->contains_physical_goods( $order ) && ! $this->order_is_ready_for_process( $order ) ) {
-			throw new Exception(
-				__(
-					'The payment is not ready for processing yet.',
-					'woocommerce-paypal-payments'
-				)
-			);
-		}
-
-		$order = $this->patch_order( $wc_order, $order );
-
-		if ( $order->intent() === 'CAPTURE' ) {
-			$order = $this->order_endpoint->capture( $order );
-		}
-
-		if ( $order->intent() === 'AUTHORIZE' ) {
-			$order = $this->order_endpoint->authorize( $order );
-
-			$wc_order->update_meta_data( AuthorizedPaymentsProcessor::CAPTURED_META_KEY, 'false' );
-
-			if ( $this->subscription_helper->has_subscription( $wc_order->get_id() ) ) {
-				$wc_order->update_meta_data( '_ppcp_captured_vault_webhook', 'false' );
+			if ( $order->intent() === 'CAPTURE' ) {
+				$order = $this->order_endpoint->capture( $order );
 			}
+
+			if ( $order->intent() === 'AUTHORIZE' ) {
+				$order = $this->order_endpoint->authorize( $order );
+
+				$wc_order->update_meta_data( AuthorizedPaymentsProcessor::CAPTURED_META_KEY, 'false' );
+
+				if ( $this->subscription_helper->has_subscription( $wc_order->get_id() ) ) {
+					$wc_order->update_meta_data( '_ppcp_captured_vault_webhook', 'false' );
+				}
+			}
+
+			$transaction_id = $this->get_paypal_order_transaction_id( $order );
+
+			if ( $transaction_id ) {
+				$this->update_transaction_id( $transaction_id, $wc_order );
+			}
+
+			$this->handle_new_order_status( $order, $wc_order );
+
+			if ( $this->capture_authorized_downloads( $order ) ) {
+				$this->authorized_payments_processor->capture_authorized_payment( $wc_order );
+			}
+
+			do_action( 'woocommerce_paypal_payments_after_order_processor', $wc_order, $order );
+		} finally {
+			$this->release_processing_lock( $wc_order );
 		}
-
-		$transaction_id = $this->get_paypal_order_transaction_id( $order );
-
-		if ( $transaction_id ) {
-			$this->update_transaction_id( $transaction_id, $wc_order );
-		}
-
-		$this->handle_new_order_status( $order, $wc_order );
-
-		if ( $this->capture_authorized_downloads( $order ) ) {
-			$this->authorized_payments_processor->capture_authorized_payment( $wc_order );
-		}
-
-		do_action( 'woocommerce_paypal_payments_after_order_processor', $wc_order, $order );
 	}
 
 	/**
@@ -356,6 +369,160 @@ class OrderProcessor {
 	}
 
 	/**
+	 * Patches a given PayPal order with a WooCommerce order.
+	 *
+	 * @param WC_Order $wc_order The WooCommerce order.
+	 * @param Order    $order The PayPal order.
+	 *
+	 * @return Order
+	 */
+	public function patch_order( WC_Order $wc_order, Order $order ): Order {
+		$this->apply_outbound_order_filters( $wc_order );
+		$updated_order = $this->order_factory->from_wc_order( $wc_order, $order );
+		$this->restore_order_from_filters( $wc_order );
+
+		$order = $this->order_endpoint->patch_order_with( $order, $updated_order );
+
+		return $order;
+	}
+
+	/**
+	 * Verifies whether the order can be processed.
+	 *
+	 * @param WC_Order $wc_order The WooCommerce order.
+	 * @return bool
+	 */
+	private function verify_order_can_be_processed( WC_Order $wc_order ): bool {
+		if ( ! in_array( $wc_order->get_status(), array( 'pending', 'on-hold' ), true ) ) {
+			$this->logger->info(
+				sprintf(
+					'Order #%d has status "%s", skipping payment processing.',
+					$wc_order->get_id(),
+					$wc_order->get_status()
+				)
+			);
+
+			return false;
+		}
+
+		if ( $wc_order->get_transaction_id() ) {
+			$this->logger->info(
+				sprintf(
+					'Order #%d already has transaction ID "%s", skipping payment processing.',
+					$wc_order->get_id(),
+					$wc_order->get_transaction_id()
+				)
+			);
+
+			return false;
+		}
+		return true;
+	}
+
+	/**
+	 * Atomically acquires a processing lock for the order.
+	 *
+	 * Uses direct SQL to ensure atomic lock acquisition, preventing race conditions
+	 * where two concurrent processes could both acquire the lock.
+	 * Stores an expiration timestamp instead of a simple flag, allowing stale locks
+	 * from crashed processes to automatically expire.
+	 * Supports both HPOS (wc_orders_meta) and legacy (postmeta) storage.
+	 *
+	 * @param WC_Order $wc_order The WooCommerce order.
+	 * @return bool True if lock was acquired, false if already locked.
+	 */
+	private function acquire_processing_lock( WC_Order $wc_order ): bool {
+		global $wpdb;
+
+		$order_id     = $wc_order->get_id();
+		$current_time = time();
+		$expiration   = $current_time + 5 * MINUTE_IN_SECONDS;
+
+		if ( class_exists( OrderUtil::class ) && OrderUtil::custom_orders_table_usage_is_enabled() ) {
+			$table     = $wpdb->prefix . 'wc_orders_meta';
+			$id_column = 'order_id';
+		} else {
+			$table     = $wpdb->postmeta;
+			$id_column = 'post_id';
+		}
+
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$rows_updated = $wpdb->query(
+			$wpdb->prepare(
+				"UPDATE {$table}
+				SET meta_value = %d
+				WHERE {$id_column} = %d
+				AND meta_key = '_ppcp_processing'
+				AND meta_value < %d",
+				$expiration,
+				$order_id,
+				$current_time
+			)
+		);
+
+		if ( $rows_updated > 0 ) {
+			return true;
+		}
+
+		$rows_inserted = $wpdb->query(
+			$wpdb->prepare(
+				"INSERT INTO {$table} ({$id_column}, meta_key, meta_value)
+				SELECT %d, '_ppcp_processing', %d
+				FROM (SELECT 1) AS dummy
+				WHERE NOT EXISTS (
+					SELECT 1 FROM {$table} AS t WHERE t.{$id_column} = %d AND t.meta_key = '_ppcp_processing'
+				)",
+				$order_id,
+				$expiration,
+				$order_id
+			)
+		);
+		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+
+		if ( $rows_inserted > 0 ) {
+			return true;
+		}
+
+		$this->logger->warning(
+			sprintf(
+				'Order #%d is already being processed (lock active), skipping payment processing.',
+				$order_id
+			)
+		);
+		return false;
+	}
+
+	/**
+	 * Releases the processing lock for the order.
+	 *
+	 * Supports both HPOS (wc_orders_meta) and legacy (postmeta) storage.
+	 *
+	 * @param WC_Order $wc_order The WooCommerce order.
+	 * @return void
+	 */
+	private function release_processing_lock( WC_Order $wc_order ): void {
+		global $wpdb;
+
+		if ( class_exists( OrderUtil::class ) && OrderUtil::custom_orders_table_usage_is_enabled() ) {
+			$table     = $wpdb->prefix . 'wc_orders_meta';
+			$id_column = 'order_id';
+		} else {
+			$table     = $wpdb->postmeta;
+			$id_column = 'post_id';
+		}
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$wpdb->delete(
+			$table,
+			array(
+				$id_column => $wc_order->get_id(),
+				'meta_key' => '_ppcp_processing', // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key
+			),
+			array( '%d', '%s' )
+		);
+	}
+
+	/**
 	 * Returns if an order should be captured immediately.
 	 *
 	 * @param Order $order The PayPal order.
@@ -387,24 +554,6 @@ class OrderProcessor {
 			}
 		}
 		return true;
-	}
-
-	/**
-	 * Patches a given PayPal order with a WooCommerce order.
-	 *
-	 * @param WC_Order $wc_order The WooCommerce order.
-	 * @param Order    $order The PayPal order.
-	 *
-	 * @return Order
-	 */
-	public function patch_order( WC_Order $wc_order, Order $order ): Order {
-		$this->apply_outbound_order_filters( $wc_order );
-		$updated_order = $this->order_factory->from_wc_order( $wc_order, $order );
-		$this->restore_order_from_filters( $wc_order );
-
-		$order = $this->order_endpoint->patch_order_with( $order, $updated_order );
-
-		return $order;
 	}
 
 	/**

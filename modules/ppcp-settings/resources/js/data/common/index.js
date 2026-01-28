@@ -8,8 +8,8 @@ import * as thunkActions from './actions-thunk';
 import * as hooks from './hooks';
 import * as resolvers from './resolvers';
 
-import { addStoreToFunnel } from '../../services/tracking';
-import { ONBOARDING_FUNNEL_ID } from '../../services/tracking/init';
+import { addStoreToFunnel } from '@ppcp-settings/services/tracking';
+import { ONBOARDING_FUNNEL_ID } from '@ppcp-settings/services/tracking/init';
 
 /**
  * Initializes and registers the settings store with WordPress data layer.

@@ -1,4 +1,4 @@
-import { scrollAndHighlight } from '../utils/scrollAndHighlight';
+import { scrollAndHighlight } from '@ppcp-settings/utils/scrollAndHighlight';
 
 /**
  * Navigate to the WooCommerce "Payments" settings tab, i.e. exit the settings app.

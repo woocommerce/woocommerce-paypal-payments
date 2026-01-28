@@ -9,7 +9,7 @@
 
 import { useSelect, useDispatch } from '@wordpress/data';
 
-import { createHooksForStore } from '../utils';
+import { createHooksForStore } from '@ppcp-settings/data/utils';
 import { PRODUCT_TYPES } from './configuration';
 import { STORE_NAME } from './constants';
 

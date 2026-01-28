@@ -24,70 +24,71 @@ export class Checkout extends CheckoutBase {
 
 	// Actions
 
-	applyCouponIfNeeded = async ( coupons? ) => {
-		if ( coupons ) {
-			for ( const coupon of coupons ) {
-				await super.applyCoupon( coupon.code );
-			}
-		}
-	};
-
-	makeOrder = async ( data: WooCommerce.ShopOrder ) => {
-		const { payment, coupons, shipping, customer, merchant } = data;
+	completeCheckoutDetails = async ( data: WooCommerce.ShopOrder ) => {
+		const { payment, coupons, shipping, customer } = data;
 		const isFastlane = payment.gateway.shortcut === 'fastlane';
-		await this.visit();
 
 		// Add coupons if needed
-		await this.applyCouponIfNeeded( coupons );
-
-		if ( isFastlane ) {
-			await this.payPalUi.provideFastlaneEmail( customer.email );
+		for ( const coupon of coupons ?? [] ) {
+			await this.applyCoupon( coupon.code );
 		}
 
-		if ( isFastlane && payment.fastlaneFlow === 'ryan' ) {
-			// For "Ryan's flow" the OTP is required
-			await this.payPalUi.provideFastlaneOtp();
-			// Checkout form and payment card is already prefilled
-			await this.assertBillingAddressIsPopulated( customer.billing );
+		if ( isFastlane ) {
+			await this.fillFastlaneDetails( customer, payment.fastlaneFlow );
 		} else {
 			// Fill billing details
 			await this.fillCheckoutForm( customer );
 		}
 
 		// Select shipping or initial + monthly shipment (for subscriptions) option:
-		const shippingRadio = this.shippingMethodRadio(
+		const shippingRadios = await this.shippingMethodRadio(
 			shipping.settings.title
-		);
-		const shippingRadioCount = await shippingRadio.count();
-		if ( shippingRadioCount ) {
-			for ( let i = 0; i < shippingRadioCount; i++ ) {
-				await shippingRadio.nth( i ).click();
-			}
+		).all();
+		for ( const radio of shippingRadios ) {
+			await radio.click();
 		}
+	};
 
-		// Make payment with tested method
-		await this.payPalUi.makePayment( {
-			merchant,
-			payment,
-		} );
+	fillFastlaneDetails = async (
+		customer: WooCommerce.CreateCustomer,
+		fastlaneFlow: 'gary' | 'ryan'
+	) => {
+		await expect( this.payPalUi.fastlaneEmailInput() ).toBeVisible();
+		await this.payPalUi.fastlaneEmailInput().fill( customer.email );
+		
+		await expect( this.payPalUi.fastlaneContinueButton() ).toBeVisible();
+		await expect( this.payPalUi.fastlaneContinueButton() ).toBeEnabled();
+		await this.payPalUi.fastlaneContinueButton().click();
+
+		if ( fastlaneFlow === 'ryan' ) {
+			// For "Ryan's flow" the OTP is required
+			await this.payPalUi.provideFastlaneOtp();
+			// Checkout form and payment card is already prefilled
+			await this.assertBillingAddressIsPopulated( customer.billing );
+		} else {
+			await this.fillCheckoutForm( customer );
+		}
 	};
 
 	completeOrderFromProduct = async ( data: WooCommerce.ShopOrder ) => {
+		const { payment, coupons, shipping, customer } = data;
 		await this.assertUrl();
 		await expect(
 			this.page.getByText(
-				`You are currently paying with ${ data.payment.gatewayName }.`
+				`You are currently paying with ${ payment.gatewayName }.`
 			)
 		).toBeVisible();
 
 		// Add coupons if needed
-		await this.applyCouponIfNeeded( data.coupons );
+		for ( const coupon of coupons ?? [] ) {
+			await this.applyCoupon( coupon.code );
+		}
 
 		// Fill billing details
-		await this.fillCheckoutForm( data.customer );
+		await this.fillCheckoutForm( customer );
 
 		// Select shipping or initial shipment (for subscriptions) option:
-		await this.selectShippingMethod( data.shipping.settings.title );
+		await this.selectShippingMethod( shipping.settings.title );
 
 		// Make payment with tested method
 		await this.placeOrder();

@@ -1,14 +1,14 @@
 import { __ } from '@wordpress/i18n';
 
-import SettingsCard from '../../../../ReusableComponents/SettingsCard';
+import SettingsCard from '@ppcp-settings/Components/ReusableComponents/SettingsCard';
 import OrderIntent from './Blocks/OrderIntent';
 import SavePaymentMethods from './Blocks/SavePaymentMethods';
 import InvoicePrefix from './Blocks/InvoicePrefix';
 import PayNowExperience from './Blocks/PayNowExperience';
 import StayUpdated from './Blocks/StayUpdated';
-import { useRegisteredSettings, SLOTS } from '@settings/extensions';
+import { useRegisteredSettings, SLOTS } from '@ppcp-settings/extensions';
 
-const CommonSettings = ( { ownBradOnly } ) => {
+const CommonSettings = ( { ownBrandOnly } ) => {
 	// Get registered settings for common settings
 	const footerSettings = useRegisteredSettings( SLOTS.COMMON_SETTINGS_END );
 
@@ -24,7 +24,7 @@ const CommonSettings = ( { ownBradOnly } ) => {
 		>
 			<InvoicePrefix />
 			<OrderIntent />
-			<SavePaymentMethods ownBradOnly={ ownBradOnly } />
+			<SavePaymentMethods ownBradOnly={ ownBrandOnly } />
 			<PayNowExperience />
 			<StayUpdated />
 

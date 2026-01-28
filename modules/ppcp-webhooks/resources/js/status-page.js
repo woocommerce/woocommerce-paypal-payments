@@ -1,4 +1,4 @@
-import { setVisibleByClass } from '../../../ppcp-button/resources/js/modules/Helper/Hiding';
+import { setVisibleByClass } from '@ppcp-button/Helper/Hiding';
 
 document.addEventListener( 'DOMContentLoaded', () => {
 	const resubscribeBtn = jQuery(

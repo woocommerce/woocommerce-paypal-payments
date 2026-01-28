@@ -1,8 +1,8 @@
-import { GooglePayStorage } from '../Helper/GooglePayStorage';
+import { GooglePayStorage } from '@ppcp-googlepay/Helper/GooglePayStorage';
 import {
 	getWooCommerceCustomerDetails,
 	setPayerData,
-} from '../../../../ppcp-button/resources/js/modules/Helper/PayerData';
+} from '@ppcp-button/Helper/PayerData';
 
 const CHECKOUT_FORM_SELECTOR = 'form.woocommerce-checkout';
 

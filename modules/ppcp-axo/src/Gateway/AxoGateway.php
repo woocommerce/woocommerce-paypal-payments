@@ -68,13 +68,6 @@ class AxoGateway extends WC_Payment_Gateway {
 	protected CardPaymentsConfiguration $dcc_configuration;
 
 	/**
-	 * The WcGateway module URL.
-	 *
-	 * @var string
-	 */
-	protected $wcgateway_module_url;
-
-	/**
 	 * The processor for orders.
 	 *
 	 * @var OrderProcessor
@@ -152,12 +145,9 @@ class AxoGateway extends WC_Payment_Gateway {
 	protected $settings_model;
 
 	/**
-	 * AXOGateway constructor.
-	 *
 	 * @param SettingsRenderer          $settings_renderer           The settings renderer.
 	 * @param ContainerInterface        $ppcp_settings               The settings.
 	 * @param CardPaymentsConfiguration $dcc_configuration           The DCC Gateway configuration.
-	 * @param string                    $wcgateway_module_url        The WcGateway module URL.
 	 * @param SessionHandler            $session_handler             The Session Handler.
 	 * @param OrderProcessor            $order_processor             The Order processor.
 	 * @param array                     $card_icons                  The card icons.
@@ -174,7 +164,6 @@ class AxoGateway extends WC_Payment_Gateway {
 		SettingsRenderer $settings_renderer,
 		ContainerInterface $ppcp_settings,
 		CardPaymentsConfiguration $dcc_configuration,
-		string $wcgateway_module_url,
 		SessionHandler $session_handler,
 		OrderProcessor $order_processor,
 		array $card_icons,
@@ -192,7 +181,6 @@ class AxoGateway extends WC_Payment_Gateway {
 		$this->settings_renderer          = $settings_renderer;
 		$this->ppcp_settings              = $ppcp_settings;
 		$this->dcc_configuration          = $dcc_configuration;
-		$this->wcgateway_module_url       = $wcgateway_module_url;
 		$this->session_handler            = $session_handler;
 		$this->order_processor            = $order_processor;
 		$this->card_icons                 = $card_icons;

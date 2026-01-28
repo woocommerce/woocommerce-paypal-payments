@@ -46,8 +46,8 @@ if [ $? -eq 0 ]; then
 
     echo "⏭️ Next steps:"
     echo "1. Copy the array from carriers_data.php into your PayPal Payments plugin in \`modules/ppcp-order-tracking/carriers.php\`"
-    echo "2. Run \`yarn run ddev:fix-lint modules/ppcp-order-tracking/carriers.php\` to format the file."
-    echo "3. Run \`yarn run ddev:unit-tests\` to be sure nothing is broken :)"
+    echo "2. Run \`npm run ddev:fix-lint modules/ppcp-order-tracking/carriers.php\` to format the file."
+    echo "3. Run \`npm run ddev:unit-tests\` to be sure nothing is broken :)"
     echo "3. Remove the temporary carries_data.php from the root of the project"
     echo "4. Review and commit your changes"
 

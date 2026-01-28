@@ -2,7 +2,7 @@
 import '@testing-library/jest-dom';
 
 jest.mock(
-	'../../../ppcp-button/resources/js/modules/Helper/CheckoutMethodState',
+	'@ppcp-button/Helper/CheckoutMethodState',
 	() => ( {
 		getCurrentPaymentMethod: jest.fn(),
 		PaymentMethods: {
@@ -17,12 +17,11 @@ import {
 	cardFieldsConfiguration,
 	addPaymentMethodConfiguration,
 } from './configuration';
-import { getCurrentPaymentMethod } from '../../../ppcp-button/resources/js/modules/Helper/CheckoutMethodState';
+import { getCurrentPaymentMethod } from '@ppcp-button/Helper/CheckoutMethodState';
 
 describe( 'Configuration', () => {
 	let mockErrorHandler;
 	let originalFetch;
-	let originalLocation;
 	let mockConfig;
 
 	beforeEach( () => {
@@ -67,11 +66,6 @@ describe( 'Configuration', () => {
 		originalFetch = global.fetch;
 		global.fetch = jest.fn();
 
-		// Mock window.location
-		originalLocation = window.location;
-		delete window.location;
-		window.location = { href: '' };
-
 		// Mock getCurrentPaymentMethod
 		getCurrentPaymentMethod.mockReturnValue( 'ppcp-gateway' );
 
@@ -81,12 +75,11 @@ describe( 'Configuration', () => {
 
 	afterEach( () => {
 		global.fetch = originalFetch;
-		window.location = originalLocation;
 		document.body.innerHTML = '';
 	} );
 
 	describe( 'buttonConfiguration', () => {
-		test( 'should redirect to subscription page after successful payment change', async () => {
+		test( 'should make correct API calls for subscription payment change', async () => {
 			const config = {
 				...mockConfig,
 				is_subscription_change_payment_page: true,
@@ -118,15 +111,33 @@ describe( 'Configuration', () => {
 				config,
 				mockErrorHandler
 			);
+
 			const vaultToken = await buttonConfig.createVaultSetupToken();
+			expect( vaultToken ).toBe( 'vault-token-123' );
+			expect( global.fetch.mock.calls.length ).toBe( 1 );
+
 			await buttonConfig.onApprove( { vaultSetupToken: vaultToken } );
 
-			expect( window.location.href ).toBe(
-				'https://example.com/my-account/subscriptions/789'
+			// Verify all 3 API calls were made
+			expect( global.fetch.mock.calls.length ).toBe( 3 );
+
+			// Verify subscription change endpoint was called with correct data
+			const subscriptionChangeCall = global.fetch.mock.calls[ 2 ];
+			expect( subscriptionChangeCall[ 0 ] ).toBe(
+				'/api/subscription-change'
 			);
+			const subscriptionChangeBody = JSON.parse(
+				subscriptionChangeCall[ 1 ].body
+			);
+			expect( subscriptionChangeBody.subscription_id ).toBe( '789' );
+			expect( subscriptionChangeBody.wc_payment_token_id ).toBe(
+				'wc-token-456'
+			);
+			// jsdom doesn't support navigation, so it logs an error
+			expect( console ).toHaveErrored();
 		} );
 
-		test( 'should not redirect when subscription update fails', async () => {
+		test( 'should not call subscription change API when update fails', async () => {
 			const config = {
 				...mockConfig,
 				is_subscription_change_payment_page: true,
@@ -148,21 +159,20 @@ describe( 'Configuration', () => {
 				json: async () => ( { success: false } ),
 			} );
 
-			// Suppress expected console.error
-			jest.spyOn( console, 'error' ).mockImplementation( () => {} );
-
 			const buttonConfig = buttonConfiguration(
 				config,
 				mockErrorHandler
 			);
-			await buttonConfig.onApprove( { vaultSetupToken: 'vault-token' } );
+			const result = await buttonConfig.onApprove( {
+				vaultSetupToken: 'vault-token',
+			} );
 
-			expect( window.location.href ).not.toContain( 'subscriptions' );
-
-			console.error.mockRestore();
+			// Verify 2 API calls were made
+			expect( global.fetch.mock.calls.length ).toBe( 2 );
+			expect( result ).toBeUndefined();
 		} );
 
-		test( 'should redirect to payment methods page after success', async () => {
+		test( 'should call payment token API for non-subscription flow', async () => {
 			const config = {
 				...mockConfig,
 				is_subscription_change_payment_page: false,
@@ -183,17 +193,19 @@ describe( 'Configuration', () => {
 			);
 			await buttonConfig.onApprove( { vaultSetupToken: 'vault-token' } );
 
-			expect( window.location.href ).toBe(
-				'https://example.com/my-account/payment-methods'
+			// Verify payment token API was called
+			expect( global.fetch.mock.calls.length ).toBe( 1 );
+			const requestBody = JSON.parse(
+				global.fetch.mock.calls[ 0 ][ 1 ].body
 			);
+			expect( requestBody.vault_setup_token ).toBe( 'vault-token' );
+			// jsdom doesn't support navigation, so it logs an error
+			expect( console ).toHaveErrored();
 		} );
 
 		test( 'should display error when vault token creation fails', async () => {
 			// Mock API failure
 			global.fetch.mockRejectedValueOnce( new Error( 'Network error' ) );
-
-			// Suppress expected console.error
-			jest.spyOn( console, 'error' ).mockImplementation( () => {} );
 
 			const buttonConfig = buttonConfiguration(
 				mockConfig,
@@ -205,8 +217,7 @@ describe( 'Configuration', () => {
 			expect( mockErrorHandler.message ).toHaveBeenCalledWith(
 				'Payment failed. Please try again.'
 			);
-
-			console.error.mockRestore();
+			expect( console ).toHaveErrored();
 		} );
 
 		test( 'should handle HTTP error responses', async () => {
@@ -216,9 +227,6 @@ describe( 'Configuration', () => {
 				status: 500,
 			} );
 
-			// Suppress expected console.error
-			jest.spyOn( console, 'error' ).mockImplementation( () => {} );
-
 			const buttonConfig = buttonConfiguration(
 				mockConfig,
 				mockErrorHandler
@@ -227,14 +235,10 @@ describe( 'Configuration', () => {
 
 			expect( result ).toBeUndefined();
 			expect( mockErrorHandler.message ).toHaveBeenCalled();
-
-			console.error.mockRestore();
+			expect( console ).toHaveErrored();
 		} );
 
 		test( 'onError should call error handler with message', () => {
-			// Suppress expected console.error
-			jest.spyOn( console, 'error' ).mockImplementation( () => {} );
-
 			const buttonConfig = buttonConfiguration(
 				mockConfig,
 				mockErrorHandler
@@ -244,8 +248,7 @@ describe( 'Configuration', () => {
 			expect( mockErrorHandler.message ).toHaveBeenCalledWith(
 				'Payment failed. Please try again.'
 			);
-
-			console.error.mockRestore();
+			expect( console ).toHaveErrored();
 		} );
 
 		test( 'createVaultSetupToken returns token ID on success', async () => {
@@ -293,7 +296,6 @@ describe( 'Configuration', () => {
 			await cardConfig.onApprove( { vaultSetupToken: 'vault-token' } );
 
 			expect( clickSpy ).toHaveBeenCalled();
-			expect( window.location.href ).not.toContain( 'payment-methods' );
 		} );
 
 		test( 'should include is_free_trial_cart flag in API request', async () => {
@@ -320,6 +322,8 @@ describe( 'Configuration', () => {
 				global.fetch.mock.calls[ 0 ][ 1 ].body
 			);
 			expect( requestBody.is_free_trial_cart ).toBe( true );
+			// jsdom doesn't support navigation, so it logs an error
+			expect( console ).toHaveErrored();
 		} );
 
 		test( 'should include verification_method in request', async () => {

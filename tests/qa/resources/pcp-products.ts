@@ -51,10 +51,29 @@ const subscriptionPayPalFreeTrial: WooCommerce.CreateProduct = {
 	],
 };
 
+const simpleWithStock: WooCommerce.CreateProduct = {
+	name: 'Simple Product With Stock',
+	slug: 'simple-product-with-stock',
+	type: 'simple',
+	regular_price: '100.00',
+	description:
+		'Our clothes are juicy, sweet, and ideal for a healthy snack or enhancing your favorite recipes.',
+	short_description: 'Fresh, crisp clothes perfect for snacks and desserts.',
+	images: [
+		{
+			src: 'https://woocommercecore.mystagingwebsite.com/wp-content/uploads/2017/12/long-sleeve-tee-2.jpg',
+		},
+	],
+	stock_status: 'instock',
+	manage_stock: true,
+	stock_quantity: 1000,
+};
+
 export const products: {
 	[ key: string ]: WooCommerce.CreateProduct;
 } = {
 	...baseProducts,
 	subscriptionPayPal,
 	subscriptionPayPalFreeTrial,
+	simpleWithStock,
 };

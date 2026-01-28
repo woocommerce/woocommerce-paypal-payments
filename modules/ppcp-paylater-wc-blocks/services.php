@@ -9,11 +9,16 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\PayLaterWCBlocks;
 
+use WooCommerce\PayPalCommerce\Assets\AssetGetter;
+use WooCommerce\PayPalCommerce\Assets\AssetGetterFactory;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 
 return array(
-	'paylater-wc-blocks.url'               => static function ( ContainerInterface $container ): string {
-		return plugins_url( '/modules/ppcp-paylater-wc-blocks/', $container->get( 'ppcp.path-to-plugin-main-file' ) );
+	'paylater-wc-blocks.asset_getter'      => static function ( ContainerInterface $container ): AssetGetter {
+		$factory = $container->get( 'assets.asset_getter_factory' );
+		assert( $factory instanceof AssetGetterFactory );
+
+		return $factory->for_module( 'ppcp-paylater-wc-blocks' );
 	},
 
 	'paylater-wc-blocks.cart-renderer'     => static function ( ContainerInterface $container ): PayLaterWCBlocksRenderer {

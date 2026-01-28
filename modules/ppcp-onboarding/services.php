@@ -9,6 +9,8 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\Onboarding;
 
+use WooCommerce\PayPalCommerce\Assets\AssetGetter;
+use WooCommerce\PayPalCommerce\Assets\AssetGetterFactory;
 use WooCommerce\PayPalCommerce\Onboarding\Render\OnboardingOptionsRenderer;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\Cache;
@@ -111,7 +113,7 @@ return array(
 		$state                 = $container->get( 'onboarding.state' );
 		$login_seller_endpoint = $container->get( 'onboarding.endpoint.login-seller' );
 		return new OnboardingAssets(
-			$container->get( 'onboarding.url' ),
+			$container->get( 'onboarding.asset_getter' ),
 			$container->get( 'ppcp.asset-version' ),
 			$state,
 			$container->get( 'settings.environment' ),
@@ -119,9 +121,11 @@ return array(
 			$container->get( 'wcgateway.current-ppcp-settings-page-id' )
 		);
 	},
+	'onboarding.asset_getter'            => static function ( ContainerInterface $container ): AssetGetter {
+		$factory = $container->get( 'assets.asset_getter_factory' );
+		assert( $factory instanceof AssetGetterFactory );
 
-	'onboarding.url'                     => static function ( ContainerInterface $container ): string {
-		return plugins_url( '/modules/ppcp-onboarding/', $container->get( 'ppcp.path-to-plugin-main-file' ) );
+		return $factory->for_module( 'ppcp-onboarding' );
 	},
 
 	'onboarding.endpoint.login-seller'   => static function ( ContainerInterface $container ): LoginSellerEndpoint {
@@ -188,7 +192,7 @@ return array(
 	},
 	'onboarding.render-options'          => static function ( ContainerInterface $container ): OnboardingOptionsRenderer {
 		return new OnboardingOptionsRenderer(
-			$container->get( 'onboarding.url' ),
+			$container->get( 'onboarding.asset_getter' ),
 			$container->get( 'api.shop.country' ),
 			$container->get( 'wcgateway.settings' )
 		);

@@ -8,8 +8,10 @@ use Automattic\WooCommerce\Utilities\OrderUtil;
 use Psr\Log\LoggerInterface;
 use WC_Order;
 use WC_Product;
+use WooCommerce\PayPalCommerce\Assets\AssetGetter;
 use WooCommerce\PayPalCommerce\FraudProtection\PersistentCounter;
 use WP_Error;
+use WP_Post;
 
 class Recaptcha {
 	private const V2_CONTAINER_ID                = 'ppcp-recaptcha-v2-container';
@@ -30,7 +32,7 @@ class Recaptcha {
 	 */
 	private array $payment_methods;
 
-	private string $module_url;
+	private AssetGetter $asset_getter;
 
 	private string $asset_version;
 
@@ -43,7 +45,7 @@ class Recaptcha {
 	/**
 	 * @param RecaptchaIntegration $integration
 	 * @param string[]             $payment_methods The methods that require captcha.
-	 * @param string               $module_url
+	 * @param AssetGetter          $asset_getter
 	 * @param string               $asset_version
 	 * @param LoggerInterface      $logger
 	 * @param PersistentCounter    $rejection_counter
@@ -51,7 +53,7 @@ class Recaptcha {
 	public function __construct(
 		RecaptchaIntegration $integration,
 		array $payment_methods,
-		string $module_url,
+		AssetGetter $asset_getter,
 		string $asset_version,
 		LoggerInterface $logger,
 		PersistentCounter $rejection_counter
@@ -59,7 +61,7 @@ class Recaptcha {
 
 		$this->integration       = $integration;
 		$this->payment_methods   = $payment_methods;
-		$this->module_url        = $module_url;
+		$this->asset_getter      = $asset_getter;
 		$this->asset_version     = $asset_version;
 		$this->logger            = $logger;
 		$this->rejection_counter = $rejection_counter;
@@ -124,7 +126,7 @@ class Recaptcha {
 
 		wp_enqueue_script(
 			'ppcp-recaptcha-handler',
-			untrailingslashit( $this->module_url ) . '/assets/recaptcha-handler.js',
+			$this->asset_getter->get_asset_url( 'recaptcha-handler.js' ),
 			$dependencies,
 			$this->asset_version,
 			true
@@ -400,7 +402,16 @@ class Recaptcha {
 		add_meta_box(
 			'ppcp_recaptcha_status',
 			__( 'reCAPTCHA Status', 'woocommerce-paypal-payments' ),
-			function ( WC_Order $order ): void {
+			/**
+			 * @param $order WC_Order|WP_Post
+			 * @psalm-suppress MissingClosureParamType
+			 */
+			function ( $order ): void {
+				$order = $order instanceof WC_Order ? $order : wc_get_order( $order );
+				if ( ! $order instanceof WC_Order ) {
+					return;
+				}
+
 				// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 				echo $this->render_metabox( $order );
 			},

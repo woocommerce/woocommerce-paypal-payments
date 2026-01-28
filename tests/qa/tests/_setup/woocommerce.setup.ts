@@ -27,7 +27,7 @@ setup( 'Setup Permalinks', async ( { requestUtils } ) => {
 } );
 
 setup(
-	'Setup Disable Nonce plugin (inactive)',
+	'Setup Disable Nonce plugin (active)',
 	async ( { requestUtils, plugins } ) => {
 		if (
 			! ( await requestUtils.isPluginInstalled(
@@ -42,20 +42,13 @@ setup(
 	}
 );
 
-setup( 'Setup WP Debugging plugin (active)', async ( { requestUtils } ) => {
+setup( 'Setup WP Debugging plugin (inactive)', async ( { requestUtils } ) => {
 	if (
 		! ( await requestUtils.isPluginInstalled( wpDebuggingPlugin.slug ) )
 	) {
 		await requestUtils.installPlugin( wpDebuggingPlugin.slug );
 	}
 	await requestUtils.deactivatePlugin( wpDebuggingPlugin.slug );
-} );
-
-setup( 'Setup Disable new UI plugin (inactive)', async ( { requestUtils } ) => {
-	const pluginSlug = 'disable-new-ui';
-	if ( await requestUtils.isPluginInstalled( pluginSlug ) ) {
-		await requestUtils.deactivatePlugin( pluginSlug );
-	}
 } );
 
 setup(

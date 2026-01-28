@@ -5,17 +5,15 @@ import {
 	ControlToggleButton,
 	ControlTextInput,
 	ControlSelect,
-} from '../../../../../ReusableComponents/Controls';
-import SettingsBlock from '../../../../../ReusableComponents/SettingsBlock';
-import Accordion from '../../../../../ReusableComponents/AccordionSection';
-import { SettingsHooks } from '../../../../../../data';
-import SoftDescriptorInput from '../../../../../ReusableComponents/Controls/SoftdescriptorInput';
-import { useRegisteredSettings, SLOTS } from '@settings/extensions';
+} from '@ppcp-settings/Components/ReusableComponents/Controls';
+import SettingsBlock from '@ppcp-settings/Components/ReusableComponents/SettingsBlock';
+import Accordion from '@ppcp-settings/Components/ReusableComponents/AccordionSection';
+import { SettingsHooks } from '@ppcp-settings/data';
+import SoftDescriptorInput from '@ppcp-settings/Components/ReusableComponents/Controls/SoftdescriptorInput';
+import { useRegisteredSettings, SLOTS } from '@ppcp-settings/extensions';
 
 const PaypalSettings = ( { hasContactModule } ) => {
 	const {
-		savePaypalAndVenmo,
-		setSavePaypalAndVenmo,
 		contactModule,
 		setContactModule,
 		subtotalAdjustment,

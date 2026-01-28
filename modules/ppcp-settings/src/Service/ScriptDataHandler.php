@@ -8,6 +8,7 @@
 namespace WooCommerce\PayPalCommerce\Settings\Service;
 
 use WooCommerce\PayPalCommerce\ApiClient\Helper\PartnerAttribution;
+use WooCommerce\PayPalCommerce\Assets\AssetGetter;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 
 /**
@@ -22,12 +23,9 @@ class ScriptDataHandler {
 	 * @var Settings
 	 */
 	protected Settings $settings;
-	/**
-	 * The settings URL.
-	 *
-	 * @var string
-	 */
-	protected string $settings_url;
+
+	private AssetGetter $asset_getter;
+
 	/**
 	 * Whether the pay later configurator is available.
 	 *
@@ -59,38 +57,31 @@ class ScriptDataHandler {
 	 */
 	protected PartnerAttribution $partner_attribution;
 
-	protected string $path_to_module_assets_folder;
-
 	/**
-	 * ScriptDataHandler constructor.
-	 *
 	 * @param Settings           $settings The settings object.
-	 * @param string             $settings_url The settings URL.
+	 * @param AssetGetter        $asset_getter
 	 * @param bool               $paylater_is_available Whether the pay later configurator is available.
 	 * @param string             $store_country The store country.
 	 * @param string             $merchant_id The merchant ID.
 	 * @param array              $button_language_choices The button language choices.
 	 * @param PartnerAttribution $partner_attribution The partner attribution object.
-	 * @param string             $path_to_module_assets_folder The path to mpdule assets folder.
 	 */
 	public function __construct(
 		Settings $settings,
-		string $settings_url,
+		AssetGetter $asset_getter,
 		bool $paylater_is_available,
 		string $store_country,
 		string $merchant_id,
 		array $button_language_choices,
-		PartnerAttribution $partner_attribution,
-		string $path_to_module_assets_folder
+		PartnerAttribution $partner_attribution
 	) {
-		$this->settings                     = $settings;
-		$this->settings_url                 = $settings_url;
-		$this->paylater_is_available        = $paylater_is_available;
-		$this->store_country                = $store_country;
-		$this->merchant_id                  = $merchant_id;
-		$this->button_language_choices      = $button_language_choices;
-		$this->partner_attribution          = $partner_attribution;
-		$this->path_to_module_assets_folder = $path_to_module_assets_folder;
+		$this->settings                = $settings;
+		$this->asset_getter            = $asset_getter;
+		$this->paylater_is_available   = $paylater_is_available;
+		$this->store_country           = $store_country;
+		$this->merchant_id             = $merchant_id;
+		$this->button_language_choices = $button_language_choices;
+		$this->partner_attribution     = $partner_attribution;
 	}
 
 	/**
@@ -114,13 +105,11 @@ class ScriptDataHandler {
 		 *
 		 * @psalm-suppress UnresolvableInclude
 		 */
-		$script_asset_file = require $this->path_to_module_assets_folder . '/index.asset.php';
-
-		$module_url = $this->settings_url;
+		$script_asset_file = require $this->asset_getter->get_asset_php_path( 'index.js' );
 
 		wp_register_script(
 			'ppcp-admin-settings',
-			$module_url . '/assets/index.js',
+			$this->asset_getter->get_asset_url( 'index.js' ),
 			$script_asset_file['dependencies'],
 			$script_asset_file['version'],
 			true
@@ -133,11 +122,11 @@ class ScriptDataHandler {
 		);
 
 		/** @psalm-suppress UnresolvableInclude */
-		$style_asset_file = require $this->path_to_module_assets_folder . '/style.asset.php';
+		$style_asset_file = require $this->asset_getter->get_asset_php_path( 'styles.css' );
 
 		wp_register_style(
 			'ppcp-admin-settings',
-			$module_url . '/assets/style-style.css',
+			$this->asset_getter->get_asset_url( 'styles.css' ),
 			$style_asset_file['dependencies'],
 			$style_asset_file['version']
 		);
@@ -218,7 +207,7 @@ class ScriptDataHandler {
 
 		$script_data = array(
 			'assets'                          => array(
-				'imagesUrl' => $module_url . '/images/',
+				'imagesUrl' => $this->asset_getter->get_static_asset_url( 'images/' ),
 			),
 			'wcPaymentsTabUrl'                => admin_url( 'admin.php?page=wc-settings&tab=checkout' ),
 			'pluginSettingsUrl'               => admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway' ),

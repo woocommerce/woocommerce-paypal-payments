@@ -232,6 +232,183 @@ if ( $container->has( 'optional.service' ) ) {
 }
 ```
 
+### Plugin Feature Definition
+
+The plugin has different features that can be enabled or disabled depending on assertions such as:
+
+```php
+// WooCommerce country location. 
+$container->get( 'api.shop.country' );
+
+// PayPal merchant country location (notice this will fallback to WooCommerce country location if the user is not onboarded. 
+$container->get( 'api.merchant.country' );
+
+// Currency
+$currency = $container->get( 'api.shop.currency.getter' );
+$currency->get(); // USD
+
+// PayPal API Feature flags 
+$product_status = $container->get( 'applepay.apple-product-status' );
+assert( $product_status instanceof AppleProductStatus );
+$apple_pay_enabled = $product_status->is_active();
+
+// Any other feature dependency. For instance, checking if own_brand_only is no enabled.
+$is_enabled => $feature_is_enabled && ! $general_settings->own_brand_only(),
+```
+
+The `FeaturesDefinition.php` file is used to define these features so they can be used in other services.
+
+For instance, they are used in places as:
+
+- Endpoint serving the UI to know which features to show under the Features section under the Overview tab
+- Define the TODO list in the UI Overview tab 
+
+The features should be defined as public constants for easy access an prefixed as `FEATURE_`
+
+```php
+// Defining Pay with Crypto feature
+public const FEATURE_PAY_WITH_CRYPTO = 'pwc';
+```
+
+The features have different fields and a status field (enabled/disabled)
+```php
+self::FEATURE_PAY_WITH_CRYPTO                 => array(
+				'title'       => __( 'Pay with Crypto', 'woocommerce-paypal-payments' ),
+				'description' => __( 'Enable customers to pay with cryptocurrency, and receive payments in USD in your PayPal balance.', 'woocommerce-paypal-payments' ),
+				'enabled'     => $this->merchant_capabilities[ self::FEATURE_PAY_WITH_CRYPTO ],
+				'buttons'     => array(
+					array(
+						'type'     => 'secondary',
+						'text'     => __( 'Configure', 'woocommerce-paypal-payments' ),
+						'action'   => array(
+							'type'    => 'tab',
+							'tab'     => 'payment_methods',
+							'section' => 'ppcp-pay-with-crypto',
+						),
+						'showWhen' => 'enabled',
+						'class'    => 'small-button',
+					),
+					array(
+						'type'     => 'secondary',
+						'text'     => __( 'Sign up', 'woocommerce-paypal-payments' ),
+						'urls'     => array(
+							'sandbox' => 'https://www.sandbox.paypal.com/bizsignup/add-product?product=CRYPTO_PYMTS',
+							'live'    => 'https://www.paypal.com/bizsignup/add-product?product=CRYPTO_PYMTS',
+						),
+						'showWhen' => 'disabled',
+						'class'    => 'small-button',
+					),
+					array(
+						'type'  => 'tertiary',
+						'text'  => __( 'Learn more', 'woocommerce-paypal-payments' ),
+						'url'   => 'https://www.paypal.com/us/digital-wallet/manage-money/crypto',
+						'class' => 'small-button',
+					),
+				),
+			),
+```
+
+There is a hook named `woocommerce_paypal_payments_rest_common_merchant_features` 
+allowing to define which features are enabled or disabled:
+
+```php
+// Enable Google Pay Feature
+add_filter(
+			'woocommerce_paypal_payments_rest_common_merchant_features',
+			function ( array $features ) use ( $container ): array {
+				$product_status = $container->get( 'googlepay.helpers.apm-product-status' );
+				assert( $product_status instanceof ApmProductStatus );
+				$google_pay_enabled = $product_status->is_active();
+
+				$features[ FeaturesDefinition::FEATURE_GOOGLE_PAY ] = array(
+					'enabled' => $google_pay_enabled,
+				);
+
+				return $features;
+			}
+		);
+```
+
+The FeaturesDefinition class is initialized in ```settings.data.definition.features```
+
+Another important part of the Features is the `FeaturesEligibilityService.php`
+
+This service defines different callbacks to check if a feature is eligible for the merchant 
+in runtime.
+
+When using `FeaturesDefinition::get()` the plugin will run the registered eligibility callbacks
+checks for each Feature. The plugin will unset those Features without check or returning false in the eligibility check. 
+
+
+### Payment Method Definition
+
+Besides PayPal itself, we have different Payment methods such as Apple Pay, Pay with Crypto...etc.
+
+These methods are defined in `PaymentMethodsDefinition.php` and they are divided in several groups:
+
+**PayPal methods**
+
+- PayPal
+- Venmo
+- PayPal PayLater. 
+- CardButtonGateway. Only in Own Brand Mode. It allows the user to pay with card  even if the customer doesn't have a PayPal account.
+
+Filterable via `woocommerce_paypal_payments_gateway_group_paypal` hook.
+
+**Card Methods**
+
+- Advanced Credit and Debit Card Payments
+- Fastlane by PayPal
+- Apple Pay
+- Google Pay
+
+Filterable via `woocommerce_paypal_payments_gateway_group_cards` hook.
+
+**Alternative Payment Methods**
+
+- Pay with Crypto
+- Bancontact
+- Blik
+- EPS
+- iDeal
+- MyBank
+- Przelewy24
+- Trustly
+- Multibanco
+- Pay upon Invoice
+- OXXO
+
+Filterable via `woocommerce_paypal_payments_gateway_group_apm` hook.
+
+As in FeaturesDefinition, Payment Methods has also an eligibility service. 
+This service is defined in `PaymentMethodsEligibilityService.php` 
+
+It creates different callbacks that unset the Payment methods based on the eligibility checks:
+
+```php
+public function get_eligibility_checks(): array {
+		return array(
+			BancontactGateway::ID     => fn() => ! $this->is_mexico_merchant() && $this->is_apm_eligible,
+			BlikGateway::ID           => fn() => ! $this->is_mexico_merchant() && $this->is_apm_eligible,
+			EPSGateway::ID            => fn() => ! $this->is_mexico_merchant() && $this->is_apm_eligible,
+			IDealGateway::ID          => fn() => ! $this->is_mexico_merchant() && $this->is_apm_eligible,
+			MyBankGateway::ID         => fn() => ! $this->is_mexico_merchant() && $this->is_apm_eligible,
+			P24Gateway::ID            => fn() => ! $this->is_mexico_merchant() && $this->is_apm_eligible,
+			TrustlyGateway::ID        => fn() => ! $this->is_mexico_merchant() && $this->is_apm_eligible,
+			MultibancoGateway::ID     => fn() => ! $this->is_mexico_merchant() && $this->is_apm_eligible,
+			OXXO::ID                  => fn() => $this->is_mexico_merchant() && $this->is_apm_eligible,
+			PWCGateway::ID            => fn() => $this->has_pwc_capability() && $this->is_apm_eligible,
+			PayUponInvoiceGateway::ID => fn() => $this->merchant_country === 'DE',
+			CreditCardGateway::ID     => fn() => $this->is_mexico_merchant() || $this->is_card_fields_supported(),
+			CardButtonGateway::ID     => fn() => $this->is_mexico_merchant() || ! $this->is_card_fields_supported(),
+			GooglePayGateway::ID      => fn() => $this->google_pay_available,
+			ApplePayGateway::ID       => fn() => $this->apple_pay_available,
+			AxoGateway::ID            => fn() => $this->dcc_product_status->is_active() && call_user_func( $this->axo_eligible ),
+			'venmo'                   => fn() => $this->merchant_country === 'US',
+		);
+	}
+```
+
 ## Asset Management
 
 ### Webpack Configuration
@@ -258,9 +435,9 @@ module.exports = {
 
 Assets are built using the shared configuration:
 
-- **Individual builds**: `yarn run build:modules:ppcp-{module-name}`
-- **Watch mode**: `yarn run watch:modules:ppcp-{module-name}`
-- **All modules**: `yarn run build:modules` (parallel builds)
+- **Individual builds**: `npm run build:modules:ppcp-{module-name}`
+- **Watch mode**: `npm run watch:modules:ppcp-{module-name}` or `npm run watch:modules` (all modules)
+- **All modules**: `npm run build:modules` (parallel builds)
 
 ### Asset Registration
 
