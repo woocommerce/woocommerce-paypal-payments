@@ -330,6 +330,14 @@ class SettingsProvider {
 		return $this->settings_model->get_three_d_secure();
 	}
 
+	public function is_payment_level_processing_enabled(): bool {
+		return $this->settings_model->get_payment_level_processing();
+	}
+
+	public function ships_from_postal_code(): string {
+		return $this->settings_model->get_ships_from_postal_code();
+	}
+
 	/**
 	 * Gets the authorize only setting.
 	 *

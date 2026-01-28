@@ -8,9 +8,9 @@ import FormHelper from '../Helper/FormHelper';
 import ResumeFlowHelper from '../Helper/ResumeFlowHelper';
 
 class SingleProductActionHandler {
-	constructor( config, updateCart, formElement, errorHandler ) {
+	constructor( config, cartUpdater, formElement, errorHandler ) {
 		this.config = config;
-		this.updateCart = updateCart;
+		this.cartUpdater = cartUpdater;
 		this.formElement = formElement;
 		this.errorHandler = errorHandler;
 		this.cartHelper = null;
@@ -207,12 +207,20 @@ class SingleProductActionHandler {
 					} );
 			};
 
-			return this.updateCart.update(
+			return this.cartUpdater.update(
 				onResolve,
 				this.getProducts(),
 				options.updateCartOptions || {}
 			);
 		};
+	}
+
+	updateCart( updateCartOptions ) {
+		return this.cartUpdater.update(
+			( data ) => data,
+			this.getProducts(),
+			updateCartOptions
+		);
 	}
 
 	variations() {

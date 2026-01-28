@@ -12,6 +12,7 @@ namespace WooCommerce\PayPalCommerce\Googlepay\Assets;
 use Exception;
 use Psr\Log\LoggerInterface;
 use WC_Countries;
+use WC_Product;
 use WooCommerce\PayPalCommerce\Assets\AssetGetter;
 use WooCommerce\PayPalCommerce\Button\Assets\ButtonInterface;
 use WooCommerce\PayPalCommerce\Button\Helper\Context;
@@ -114,7 +115,7 @@ class Button implements ButtonInterface {
 		SettingsStatus $settings_status,
 		LoggerInterface $logger,
 		Context $context,
-		SettingsModel $new_settings = null
+		?SettingsModel $new_settings = null
 	) {
 		$this->asset_getter        = $asset_getter;
 		$this->sdk_url             = $sdk_url;
@@ -449,20 +450,6 @@ class Button implements ButtonInterface {
 	public function script_data(): array {
 		$use_shipping_form = $this->should_use_shipping();
 
-		// On the product page, only show the shipping form for physical products.
-		$context = $this->context->context();
-		if ( $use_shipping_form && 'product' === $context ) {
-			$product = wc_get_product();
-
-			if ( ! $product || $product->is_downloadable() || $product->is_virtual() ) {
-				$use_shipping_form = false;
-			}
-		}
-
-		if ( ! is_null( WC()->cart ) && ! WC()->cart->needs_shipping() ) {
-			$use_shipping_form = false;
-		}
-
 		$shipping = array(
 			'enabled'    => $use_shipping_form,
 			'configured' => wc_shipping_enabled() && wc_get_shipping_method_count( false, true ) > 0,
@@ -536,18 +523,25 @@ class Button implements ButtonInterface {
 		return new WC_Countries();
 	}
 
-	/**
-	 * Check if new settings model exist and if so check enable pay now setting,
-	 * if none of the above is true, check legacy settings for shipping enabled.
-	 *
-	 * @return bool Whether shipping should be used or not.
-	 * @throws NotFoundException If the settings are not found.
-	 */
 	private function should_use_shipping(): bool {
-		if ( ! is_null( $this->new_settings ) && $this->new_settings->get_enable_pay_now() === true ) {
-			return true;
+		// Check if Pay Now is enabled in the new setting model, or if no new model, then check the legacy settings.
+		if ( is_null( $this->new_settings ) ) {
+			if ( ! $this->settings->has( 'googlepay_button_shipping_enabled' ) || ! $this->settings->get( 'googlepay_button_shipping_enabled' ) ) {
+				return false;
+			}
+		} elseif ( ! $this->new_settings->get_enable_pay_now() ) {
+			return false;
 		}
 
-		return $this->settings->has( 'googlepay_button_shipping_enabled' ) && $this->settings->get( 'googlepay_button_shipping_enabled' );
+		$context = $this->context->context();
+		// On the product page, only show shipping if a physical product.
+		if ( 'product' === $context ) {
+			$product = wc_get_product();
+
+			return $product instanceof WC_Product && ! $product->is_downloadable() && ! $product->is_virtual();
+		}
+
+		// On other pages, just check the cart.
+		return ! is_null( WC()->cart ) && WC()->cart->needs_shipping();
 	}
 }

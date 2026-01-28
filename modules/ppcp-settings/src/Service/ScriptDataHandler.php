@@ -8,7 +8,9 @@
 namespace WooCommerce\PayPalCommerce\Settings\Service;
 
 use WooCommerce\PayPalCommerce\ApiClient\Helper\PartnerAttribution;
+use WooCommerce\PayPalCommerce\ApiClient\Helper\PaymentLevelEligibility;
 use WooCommerce\PayPalCommerce\Assets\AssetGetter;
+use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 
 /**
@@ -57,15 +59,8 @@ class ScriptDataHandler {
 	 */
 	protected PartnerAttribution $partner_attribution;
 
-	/**
-	 * @param Settings           $settings The settings object.
-	 * @param AssetGetter        $asset_getter
-	 * @param bool               $paylater_is_available Whether the pay later configurator is available.
-	 * @param string             $store_country The store country.
-	 * @param string             $merchant_id The merchant ID.
-	 * @param array              $button_language_choices The button language choices.
-	 * @param PartnerAttribution $partner_attribution The partner attribution object.
-	 */
+	protected PaymentLevelEligibility $payment_level_eligibility;
+
 	public function __construct(
 		Settings $settings,
 		AssetGetter $asset_getter,
@@ -73,15 +68,17 @@ class ScriptDataHandler {
 		string $store_country,
 		string $merchant_id,
 		array $button_language_choices,
-		PartnerAttribution $partner_attribution
+		PartnerAttribution $partner_attribution,
+		PaymentLevelEligibility $payment_level_eligibility
 	) {
-		$this->settings                = $settings;
-		$this->asset_getter            = $asset_getter;
-		$this->paylater_is_available   = $paylater_is_available;
-		$this->store_country           = $store_country;
-		$this->merchant_id             = $merchant_id;
-		$this->button_language_choices = $button_language_choices;
-		$this->partner_attribution     = $partner_attribution;
+		$this->settings                  = $settings;
+		$this->asset_getter              = $asset_getter;
+		$this->paylater_is_available     = $paylater_is_available;
+		$this->store_country             = $store_country;
+		$this->merchant_id               = $merchant_id;
+		$this->button_language_choices   = $button_language_choices;
+		$this->partner_attribution       = $partner_attribution;
+		$this->payment_level_eligibility = $payment_level_eligibility;
 	}
 
 	/**
@@ -206,17 +203,19 @@ class ScriptDataHandler {
 		);
 
 		$script_data = array(
-			'assets'                          => array(
+			'assets'                              => array(
 				'imagesUrl' => $this->asset_getter->get_static_asset_url( 'images/' ),
 			),
-			'wcPaymentsTabUrl'                => admin_url( 'admin.php?page=wc-settings&tab=checkout' ),
-			'pluginSettingsUrl'               => admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway' ),
-			'debug'                           => defined( 'WP_DEBUG' ) && WP_DEBUG,
-			'isPayLaterConfiguratorAvailable' => $is_pay_later_configurator_available,
-			'storeCountry'                    => $this->store_country,
-			'buttonLanguageChoices'           => $transformed_button_choices,
-			'disabledCardsChoices'            => $disabled_cards_choices,
-			'threeDSecureOptions'             => $three_d_secure_options,
+			'wcPaymentsTabUrl'                    => admin_url( 'admin.php?page=wc-settings&tab=checkout' ),
+			'pluginSettingsUrl'                   => admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway' ),
+			'debug'                               => defined( 'WP_DEBUG' ) && WP_DEBUG,
+			'isPayLaterConfiguratorAvailable'     => $is_pay_later_configurator_available,
+			'storeCountry'                        => $this->store_country,
+			'storePostcode'                       => get_option( 'woocommerce_store_postcode', '' ),
+			'buttonLanguageChoices'               => $transformed_button_choices,
+			'disabledCardsChoices'                => $disabled_cards_choices,
+			'threeDSecureOptions'                 => $three_d_secure_options,
+			'isEligibleForPaymentLevelProcessing' => $this->payment_level_eligibility->is_eligible( CreditCardGateway::ID ),
 		);
 
 		if ( $is_pay_later_configurator_available ) {

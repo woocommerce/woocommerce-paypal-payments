@@ -15,8 +15,8 @@ const { testSubscriptionOrderGuest, testSubscriptionOrderCustomer } =
 test.beforeAll( async ( { utils, pcpApi } ) => {
 	await utils.configureStore( {
 		...storeConfigUsa,
-		classicPages: false,
-		subscription: true,
+		enableClassicPages: false,
+		enableSubscriptionsPlugin: true,
 		products: [ products.subscription100, products.subscriptionFreeTrial ],
 	} );
 	await utils.installAndActivatePcp();
