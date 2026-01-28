@@ -661,11 +661,11 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
         add_action('admin_init', static function () use ($container): void {
             $logger = $container->get('woocommerce.logger.woocommerce');
             assert($logger instanceof LoggerInterface);
-            $inbox_note_registrar = $container->get('wcgateway.settings.inbox-note-registrar');
-            assert($inbox_note_registrar instanceof InboxNoteRegistrar);
             try {
+                $inbox_note_registrar = $container->get('wcgateway.settings.inbox-note-registrar');
+                assert($inbox_note_registrar instanceof InboxNoteRegistrar);
                 $inbox_note_registrar->register();
-            } catch (Exception $exception) {
+            } catch (\Throwable $exception) {
                 $logger->error('Failed to add note to the WooCommerce inbox section. ' . $exception->getMessage());
             }
         });
