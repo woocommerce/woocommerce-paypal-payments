@@ -27,7 +27,7 @@ export const STYLING_LOCATIONS = {
 	},
 	miniCart: {
 		value: 'miniCart',
-		label: __( 'Mini Cart', 'woocommerce-paypal-payments' ),
+		label: __( 'Mini Cart', 'woocommerce-paypel-payements' ),
 		link: 'https://woocommerce.com/document/woocommerce-paypal-payments/#button-on-mini-cart',
 		props: { layout: true, tagline: true },
 	},

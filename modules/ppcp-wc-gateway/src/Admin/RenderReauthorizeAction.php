@@ -53,7 +53,7 @@ class RenderReauthorizeAction {
 	/**
 	 * Whether the action should be rendered for a certain WooCommerce order.
 	 *
-	 * @param \WC_Order $order The WooCommerce order.
+	 * @param \WC_Order $order The Woocommerce order.
 	 *
 	 * @return bool
 	 */

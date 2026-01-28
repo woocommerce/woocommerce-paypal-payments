@@ -899,7 +899,7 @@ If you encounter issues with the PayPal buttons not appearing after an update, p
 * Fix - Error while syncing tracking data to PayPal -> Sync GZD Tracking #1020
 * Fix - Fix product price retrieval for variable product buttons #1000
 * Fix - All tabs hidden on OXXO tab visit #1048
-* Fix - WooCommerce Germanized Invoice bug #1017
+* Fix - Woocommerce Germanized Invoice bug #1017
 * Fix - Fix shipping address validation #1047
 * Fix - Trigger WC JS validation on button click to highlight empty fields #1004
 * Fix - Fix PHP 8.1 deprecated error #1009
