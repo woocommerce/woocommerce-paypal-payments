@@ -28,86 +28,88 @@ class IngestionBatchProvider {
 	 * @return array An array of product IDs that need to be synced.
 	 */
 	public function get_batch(): array {
-		$product_types    = $this->configuration->get_supported_product_types();
 		$batch_size       = $this->configuration->get_sync_batch_size();
 		$resync_timestamp = $this->configuration->get_expired_product_timestamp();
+		$stale_date       = gmdate( 'Y-m-d H:i:s', $resync_timestamp );
+
+		// Define meta queries for different product states.
+		$meta_fresh = array(
+			'key'     => '_ppcp_agentic_last_sync',
+			'compare' => 'NOT EXISTS',
+		);
+
+		$meta_dirty = array(
+			'key'     => '_ppcp_agentic_needs_sync',
+			'compare' => 'EXISTS',
+		);
+
+		$meta_stale = array(
+			'key'     => '_ppcp_agentic_last_sync',
+			'value'   => $stale_date,
+			'compare' => '<',
+			'type'    => 'DATETIME',
+		);
+
+		// Get products that have never been synced.
+		$batch = $this->get_products( $meta_fresh, array(), $batch_size );
+
+		if ( count( $batch ) >= $batch_size ) {
+			return $batch;
+		}
+
+		// Get products that have been updated since the last sync.
+		$dirty = $this->get_products( $meta_dirty, $batch, $batch_size - count( $batch ) );
+		$batch = array_merge( $batch, $dirty );
+
+		if ( count( $batch ) >= $batch_size ) {
+			return $batch;
+		}
+
+		// Get products that are about to get stale.
+		$stale = $this->get_products( $meta_stale, $batch, $batch_size - count( $batch ), true );
+
+		return array_merge( $batch, $stale );
+	}
+
+	/**
+	 * Get products matching the given meta query criteria.
+	 *
+	 * @param array $meta_query The meta query criteria.
+	 * @param array $exclude    Product IDs to exclude from the query.
+	 * @param int   $limit      Maximum number of products to retrieve.
+	 * @param bool  $order_by_meta Whether to order results by meta value (for stale products).
+	 * @return array Array of product IDs.
+	 */
+	private function get_products( array $meta_query, array $exclude = array(), int $limit = 0, bool $order_by_meta = false ): array {
+		$product_types = $this->configuration->get_supported_product_types();
+
+		$args = array(
+			'status'       => ProductStatus::PUBLISH,
+			'type'         => $product_types,
+			'downloadable' => false,
+			'limit'        => $limit > 0 ? $limit : $this->configuration->get_sync_batch_size(),
+			'return'       => 'ids',
+			'meta_query'   => array( $meta_query ),
+		);
+
+		// Add exclusions if provided.
+		if ( ! empty( $exclude ) ) {
+			$args['exclude'] = $exclude;
+		}
+
+		// Add ordering for stale products (oldest first).
+		if ( $order_by_meta ) {
+			$args['orderby']  = 'meta_value';
+			$args['order']    = 'ASC';
+			$args['meta_key'] = '_ppcp_agentic_last_sync';
+		}
 
 		// phpcs:disable WordPress.DB.SlowDBQuery
-		// First, get products that have never been synced.
-		$batch = wc_get_products(
-			array(
-				'status'       => ProductStatus::PUBLISH,
-				'type'         => $product_types,
-				'downloadable' => false,
-				'limit'        => $batch_size,
-				'return'       => 'ids',
-				'meta_query'   => array(
-					array(
-						'key'     => '_ppcp_agentic_last_sync',
-						'compare' => 'NOT EXISTS',
-					),
-				),
-			)
-		);
-		assert( is_array( $batch ) );
-
-		// If we're already at the limit, return early.
-		if ( count( $batch ) >= $batch_size ) {
-			return $batch;
-		}
-
-		// If we need more, get products that have been updated since the last sync.
-		$dirty_products = wc_get_products(
-			array(
-				'status'       => 'publish',
-				'type'         => $product_types,
-				'downloadable' => false,
-				'limit'        => $batch_size - count( $batch ),
-				'return'       => 'ids',
-				'meta_query'   => array(
-					array(
-						'key'     => '_ppcp_agentic_needs_sync',
-						'compare' => 'EXISTS',
-					),
-				),
-			)
-		);
-		assert( is_array( $dirty_products ) );
-		// Merge into batch.
-		$batch = array_unique( array_merge( $batch, $dirty_products ) );
-
-		// If we're now at the limit, return.
-		if ( count( $batch ) >= $batch_size ) {
-			return $batch;
-		}
-
-		// If we need even more, include products that are about to get stale.
-		$stale_date = gmdate( 'Y-m-d H:i:s', $resync_timestamp );
-
-		$stale_products = wc_get_products(
-			array(
-				'status'       => 'publish',
-				'type'         => $product_types,
-				'downloadable' => false,
-				'limit'        => $batch_size - count( $batch ),
-				'return'       => 'ids',
-				'meta_query'   => array(
-					array(
-						'key'     => '_ppcp_agentic_last_sync',
-						'value'   => $stale_date,
-						'compare' => '<',
-						'type'    => 'DATETIME',
-					),
-				),
-				'orderby'      => 'meta_value',
-				'order'        => 'ASC',
-				'meta_key'     => '_ppcp_agentic_last_sync',
-			)
-		);
-		assert( is_array( $stale_products ) );
+		$products = wc_get_products( $args );
 		// phpcs:enable WordPress.DB.SlowDBQuery
 
-		// Merge and return.
-		return array_unique( array_merge( $batch, $stale_products ) );
+		assert( is_array( $products ) );
+
+		return $products;
 	}
 }
