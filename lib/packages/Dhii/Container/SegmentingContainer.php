@@ -1,15 +1,12 @@
 <?php
 
-declare(strict_types=1);
-
+declare (strict_types=1);
 namespace WooCommerce\PayPalCommerce\Vendor\Dhii\Container;
 
 use WooCommerce\PayPalCommerce\Vendor\Dhii\Collection\ContainerInterface;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface as PsrContainerInterface;
-
 use function array_filter;
 use function ltrim;
-
 /**
  * This container implementation decorates another to provide nested container access even when the decorated
  * container's internal data is flat.
@@ -59,17 +56,14 @@ class SegmentingContainer implements ContainerInterface
      * @var PsrContainerInterface
      */
     protected $inner;
-
     /**
      * @var string
      */
     protected $root;
-
     /**
      * @var string
      */
     protected $delimiter;
-
     /**
      * Constructor.
      *
@@ -84,7 +78,6 @@ class SegmentingContainer implements ContainerInterface
         $this->root = '';
         $this->delimiter = $delimiter;
     }
-
     /**
      * @inheritdoc
      *
@@ -96,17 +89,13 @@ class SegmentingContainer implements ContainerInterface
         $tRoot = rtrim($this->root, $this->delimiter);
         // Implode to glue together the key and root, and array_filter to ignore them if they're empty
         $fullKey = implode($this->delimiter, array_filter([$tRoot, $tKey]));
-
         if ($this->inner->has($fullKey)) {
             return $this->inner->get($fullKey);
         }
-
         $instance = clone $this;
         $instance->root = $fullKey;
-
         return $instance;
     }
-
     /**
      * @inheritdoc
      *
@@ -115,7 +104,6 @@ class SegmentingContainer implements ContainerInterface
     public function has($key)
     {
         $key = (string) $key;
-
         return $this->inner->has($key);
     }
 }
