@@ -35,6 +35,7 @@ const defaultPersistent = Object.freeze( {
 	landingPage: 'any', // [any|login|guest_checkout] PayPal checkout landing page
 	buttonLanguage: '', // Language for PayPal buttons
 	threeDSecure: 'only-required-3d-secure', // [no-3d-secure|only-required-3d-secure|always-3d-secure] 3D Secure settings
+	shipsFromPostalCode: '',
 
 	// Boolean flags.
 	authorizeOnly: false, // Whether to only authorize payments initially
@@ -46,6 +47,7 @@ const defaultPersistent = Object.freeze( {
 	enablePayNow: false, // Enable Pay Now experience
 	enableLogging: false, // Enable debug logging
 	stayUpdated: false, // Enable to get the latest PayPal features
+	paymentLevelProcessing: false,
 
 	// String arrays.
 	disabledCards: [], // Disabled credit card types

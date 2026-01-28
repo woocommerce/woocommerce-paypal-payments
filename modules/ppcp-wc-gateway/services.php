@@ -1217,7 +1217,7 @@ return array(
 		$is_working_capital_feature_flag_enabled = apply_filters(
 		// phpcs:ignore WordPress.NamingConventions.ValidHookName.UseUnderscores -- feature flags use this convention
 			'woocommerce.feature-flags.woocommerce_paypal_payments.working_capital_enabled',
-			getenv( 'PCP_WORKING_CAPITAL_ENABLED' ) === '1'
+			true
 		);
 
 		$is_working_capital_eligible = $container->get( 'api.shop.country' ) === 'US' && $settings_provider->stay_updated();
@@ -1320,7 +1320,7 @@ return array(
 		$is_working_capital_feature_flag_enabled = apply_filters(
 		// phpcs:ignore WordPress.NamingConventions.ValidHookName.UseUnderscores -- feature flags use this convention
 			'woocommerce.feature-flags.woocommerce_paypal_payments.working_capital_enabled',
-			getenv( 'PCP_WORKING_CAPITAL_ENABLED' ) === '1'
+			true
 		);
 
 		return array(

@@ -10,9 +10,9 @@ declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\Googlepay\Assets;
 
-use Psr\Log\LoggerInterface;
 use WC_Countries;
 use WC_AJAX;
+use WC_Product;
 use WooCommerce\PayPalCommerce\Assets\AssetGetter;
 use WooCommerce\PayPalCommerce\Button\Assets\ButtonInterface;
 use WooCommerce\PayPalCommerce\Button\Helper\Context;
@@ -385,16 +385,21 @@ class GooglePayButton implements ButtonInterface {
 		return new WC_Countries();
 	}
 
-	/**
-	 * Check if the "Pay Now" setting is enabled.
-	 *
-	 * When enabled, we enable the shipping callback, to capture the shipping
-	 * address inside the GooglePay sheet, rather than expecting the buyer to
-	 * provide that address on the checkout page.
-	 *
-	 * @return bool Whether the shipping callback should be used.
-	 */
 	private function should_use_shipping(): bool {
-		return $this->settings->enable_pay_now();
+		if ( ! $this->settings->enable_pay_now() ) {
+			return false;
+		}
+
+		$context = $this->context->context();
+
+		// On the product page, only show shipping if a physical product.
+		if ( 'product' === $context ) {
+			$product = wc_get_product();
+
+			return $product instanceof WC_Product && ! $product->is_downloadable() && ! $product->is_virtual();
+		}
+
+		// On other pages, just check the cart.
+		return ! is_null( WC()->cart ) && WC()->cart->needs_shipping();
 	}
 }

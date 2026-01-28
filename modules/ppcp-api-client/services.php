@@ -69,6 +69,8 @@ use WooCommerce\PayPalCommerce\ApiClient\Helper\FailureRegistry;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\OrderHelper;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\OrderTransient;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\PartnerAttribution;
+use WooCommerce\PayPalCommerce\ApiClient\Helper\PaymentLevelEligibility;
+use WooCommerce\PayPalCommerce\ApiClient\Helper\PaymentLevelHelper;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\PurchaseUnitSanitizer;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\ReferenceTransactionStatus;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\ProductStatusResultCache;
@@ -391,6 +393,9 @@ return array(
 			$item_factory,
 			$shipping_factory,
 			$payments_factory,
+			$container->get( 'api.helpers.paymentLevelHelper' ),
+			$container->get( 'api.helpers.paymentLevelEligibility' ),
+			$container->get( 'settings.settings-provider' ),
 			$prefix,
 			$soft_descriptor,
 			$sanitizer
@@ -821,7 +826,7 @@ return array(
 			$settings  = $container->get( 'settings.settings-provider' );
 			assert( $settings instanceof SettingsProvider );
 
-			$subtotal_adjustment  = $settings->subtotal_adjustment();
+			$subtotal_adjustment = $settings->subtotal_adjustment();
 			return new PurchaseUnitSanitizer( $subtotal_adjustment );
 		}
 	),
@@ -987,5 +992,14 @@ return array(
 		 */
 		$subscription_mode_disabled = (bool) apply_filters( 'woocommerce_paypal_payments_subscription_mode_disabled', false );
 		return $subscription_mode_disabled ? SubscriptionHelper::SUBSCRIPTION_MODE_VALUE_DISABLED : $subscription_mode_value;
+	},
+	'api.helpers.paymentLevelHelper'                 => static function ( ContainerInterface $container ): PaymentLevelHelper {
+		return new PaymentLevelHelper( $container->get( 'settings.settings-provider' ) );
+	},
+	'api.helpers.paymentLevelEligibility'            => static function ( ContainerInterface $container ): PaymentLevelEligibility {
+		return new PaymentLevelEligibility(
+			$container->get( 'api.merchant.country' ),
+			$container->get( 'api.shop.currency.getter' )
+		);
 	},
 );

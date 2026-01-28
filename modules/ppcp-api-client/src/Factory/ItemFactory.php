@@ -49,14 +49,14 @@ class ItemFactory {
 	public function from_wc_cart( \WC_Cart $cart ): array {
 		$items = array_map(
 			function ( array $item ): Item {
-				$product       = $item['data'];
-				$cart_item_key = $item['key'] ?? null;
-
 				/**
 				 * The WooCommerce product.
 				 *
 				 * @var \WC_Product $product
 				 */
+				$product       = $item['data'];
+				$cart_item_key = $item['key'] ?? null;
+
 				$quantity = (int) $item['quantity'];
 				$image    = wp_get_attachment_image_src( (int) $product->get_image_id(), 'full' );
 
@@ -72,7 +72,12 @@ class ItemFactory {
 					$product->get_permalink(),
 					$image[0] ?? '',
 					0,
-					$cart_item_key
+					$cart_item_key,
+					$product->get_id(),
+					new Money(
+						(float) $item['line_subtotal'] - (float) $item['line_total'],
+						get_woocommerce_currency()
+					)
 				);
 			},
 			$cart->get_cart_contents()
@@ -147,7 +152,14 @@ class ItemFactory {
 			$product instanceof WC_Product ? $this->prepare_sku( $product->get_sku() ) : '',
 			( $product instanceof WC_Product && $product->is_virtual() ) ? Item::DIGITAL_GOODS : Item::PHYSICAL_GOODS,
 			$product instanceof WC_Product ? $product->get_permalink() : '',
-			$image[0] ?? ''
+			$image[0] ?? '',
+			0,
+			null,
+			$product instanceof WC_Product ? $product->get_id() : null,
+			new Money(
+				(float) $item->get_subtotal() - (float) $item->get_total(),
+				$order->get_currency()
+			)
 		);
 	}
 

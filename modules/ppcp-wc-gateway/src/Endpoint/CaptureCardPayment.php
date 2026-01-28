@@ -11,11 +11,11 @@ namespace WooCommerce\PayPalCommerce\WcGateway\Endpoint;
 
 use Psr\Log\LoggerInterface;
 use RuntimeException;
-use stdClass;
 use WC_Order;
 use WooCommerce\PayPalCommerce\ApiClient\Authentication\Bearer;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\RequestTrait;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PurchaseUnit;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\OrderFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PurchaseUnitFactory;
@@ -24,9 +24,6 @@ use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
 use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\RealTimeAccountUpdaterHelper;
 use WP_Error;
 
-/**
- * Class CaptureCardPayment
- */
 class CaptureCardPayment {
 
 	use RequestTrait;
@@ -114,16 +111,11 @@ class CaptureCardPayment {
 	/**
 	 * Creates PayPal order from the given card vault id.
 	 *
-	 * @param string   $vault_id Vault id.
-	 * @param string   $custom_id Custom id.
-	 * @param string   $invoice_id Invoice id.
-	 * @param WC_Order $wc_order The WC order.
-	 * @return stdClass
 	 * @throws RuntimeException When request fails.
 	 */
-	public function create_order( string $vault_id, string $custom_id, string $invoice_id, WC_Order $wc_order ): stdClass {
+	public function create_order( string $vault_id, string $custom_id, string $invoice_id, WC_Order $wc_order ): Order {
 		$intent = strtoupper( $this->settings_provider->payment_intent() ) === 'AUTHORIZE' ? 'AUTHORIZE' : 'CAPTURE';
-		$items  = array( $this->purchase_unit_factory->from_wc_cart() );
+		$items  = array( $this->purchase_unit_factory->from_wc_cart( null, false, $wc_order->get_payment_method() ) );
 
 		// phpcs:disable WordPress.Security.NonceVerification
 		$pay_for_order = wc_clean( wp_unslash( $_GET['pay_for_order'] ?? '' ) );
@@ -173,10 +165,7 @@ class CaptureCardPayment {
 		}
 
 		$decoded_response = json_decode( $response['body'] );
-		if ( ! isset( $decoded_response->invoice_id ) ) {
-			$decoded_response->invoice_id = $invoice_id;
-		}
 
-		return $decoded_response;
+		return $this->order_factory->from_paypal_response( $decoded_response );
 	}
 }

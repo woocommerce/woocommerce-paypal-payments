@@ -395,7 +395,8 @@ return array(
 			$container->get( 'api.partner_merchant_id' ),
 			$container->get( 'wcgateway.wp-paypal-locales-map' ),
 			$container->get( 'api.helper.partner-attribution' ),
-			$container->get( 'settings.settings-provider' )
+			$container->get( 'settings.settings-provider' ),
+			$container->get( 'api.helpers.paymentLevelEligibility' )
 		);
 	},
 	'settings.service.data-migration'                     => static fn( ContainerInterface $c ): MigrationManager => new MigrationManager(
@@ -563,7 +564,7 @@ return array(
 		$is_working_capital_feature_flag_enabled = apply_filters(
 		// phpcs:ignore WordPress.NamingConventions.ValidHookName.UseUnderscores -- feature flags use this convention
 			'woocommerce.feature-flags.woocommerce_paypal_payments.working_capital_enabled',
-			getenv( 'PCP_WORKING_CAPITAL_ENABLED' ) === '1'
+			true
 		);
 
 		$is_working_capital_eligible = $container->get( 'settings.data.general' )->get_merchant_country() === 'US' && $settings_model->get_stay_updated();

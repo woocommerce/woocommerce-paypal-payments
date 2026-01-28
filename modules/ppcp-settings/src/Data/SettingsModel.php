@@ -86,33 +86,32 @@ class SettingsModel extends AbstractDataModel {
 	protected function get_defaults(): array {
 		return array(
 			// Free-form string values.
-			'invoice_prefix'              => $this->invoice_prefix,
-			'brand_name'                  => '',
-			'soft_descriptor'             => '',
+			'invoice_prefix'           => $this->invoice_prefix,
+			'brand_name'               => '',
+			'soft_descriptor'          => '',
+			'ships_from_postal_code'   => '',
 
 			// Enum-type string values.
-			'subtotal_adjustment'         => 'correction', // Options: [correction|no_details].
-			'landing_page'                => 'any',          // Options: [any|login|guest_checkout].
-			'button_language'             => '',             // empty or a language locale code.
-			'three_d_secure'              => 'no-3d-secure', // Options: [no-3d-secure|only-required-3d-secure|always-3d-secure].
+			'subtotal_adjustment'      => 'correction', // Options: [correction|no_details].
+			'landing_page'             => 'any',          // Options: [any|login|guest_checkout].
+			'button_language'          => '',             // empty or a language locale code.
+			'three_d_secure'           => 'no-3d-secure', // Options: [no-3d-secure|only-required-3d-secure|always-3d-secure].
 
 			// Boolean flags.
-			'authorize_only'              => false,
-			'capture_virtual_orders'      => false,
+			'authorize_only'           => false,
+			'capture_virtual_orders'   => false,
 			FeaturesDefinition::FEATURE_SAVE_PAYPAL_AND_VENMO => false,
-			'instant_payments_only'       => false,
-			'enable_contact_module'       => true,
-			'save_card_details'           => false,
-			'enable_pay_now'              => false,
-			'enable_logging'              => false,
-			'stay_updated'                => true,
+			'instant_payments_only'    => false,
+			'enable_contact_module'    => true,
+			'save_card_details'        => false,
+			'enable_pay_now'           => false,
+			'enable_logging'           => false,
+			'stay_updated'             => true,
+			'payment_level_processing' => false,
 
 			// Array of string values.
-			'disabled_cards'              => array(),
-			'card_icons'                  => array(),
-
-			// Cache values for product status checks.
-			'products_local_apms_enabled' => '',
+			'disabled_cards'           => array(),
+			'card_icons'               => array(), // todo: not implemented.
 		);
 	}
 
@@ -281,6 +280,24 @@ class SettingsModel extends AbstractDataModel {
 	 */
 	public function set_three_d_secure( string $setting ): void {
 		$this->data['three_d_secure'] = $this->sanitizer->sanitize_enum( $setting, self::THREE_D_SECURE_OPTIONS );
+	}
+
+	/**
+	 * Gets the Ship-from ZIP code.
+	 *
+	 * @return string The Ship-from ZIP code.
+	 */
+	public function get_ships_from_postal_code(): string {
+		return ! empty( $this->data['ships_from_postal_code'] ) ? $this->data['ships_from_postal_code'] : get_option( 'woocommerce_store_postcode', '' );
+	}
+
+	/**
+	 * Sets the Ship-from ZIP code.
+	 *
+	 * @param string $zip_code The Ship-from ZIP code to set.
+	 */
+	public function set_ships_from_postal_code( string $zip_code ): void {
+		$this->data['ships_from_postal_code'] = $this->sanitizer->sanitize_text( $zip_code );
 	}
 
 	/**
@@ -488,20 +505,21 @@ class SettingsModel extends AbstractDataModel {
 	}
 
 	/**
-	 * Gets the local APMs enabled cache value.
+	 * Get payment level processing.
 	 *
-	 * @return string The cached status ('yes', 'no', or '' if undefined).
+	 * @return bool
 	 */
-	public function get_local_apms_enabled(): string {
-		return $this->data['products_local_apms_enabled'] ?? '';
+	public function get_payment_level_processing(): bool {
+		return (bool) $this->data['payment_level_processing'];
 	}
 
 	/**
-	 * Sets the local APMs enabled cache value.
+	 * Set payment level processing.
 	 *
-	 * @param string $value The status to cache ('yes', 'no', or '').
+	 * @param bool $save Whether to save the payment level processing.
+	 * @return void
 	 */
-	public function set_local_apms_enabled( string $value ): void {
-		$this->data['products_local_apms_enabled'] = $this->sanitizer->sanitize_text( $value );
+	public function set_payment_level_processing( bool $save ): void {
+		$this->data['payment_level_processing'] = $this->sanitizer->sanitize_bool( $save );
 	}
 }
