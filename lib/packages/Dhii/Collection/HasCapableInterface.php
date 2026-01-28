@@ -1,11 +1,9 @@
 <?php
 
-declare(strict_types=1);
-
+declare (strict_types=1);
 namespace WooCommerce\PayPalCommerce\Vendor\Dhii\Collection;
 
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerExceptionInterface;
-
 /**
  * Something that can determine the existence of a key.
  */

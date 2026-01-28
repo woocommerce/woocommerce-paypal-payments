@@ -1,7 +1,6 @@
 <?php
 
-declare(strict_types=1);
-
+declare (strict_types=1);
 namespace WooCommerce\PayPalCommerce\Vendor\Dhii\Container;
 
 use WooCommerce\PayPalCommerce\Vendor\Dhii\Collection\ContainerInterface;
@@ -11,7 +10,6 @@ use Exception;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface as PsrContainerInterface;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\NotFoundExceptionInterface;
 use RuntimeException;
-
 /**
  * A container implementation that wraps around an inner container and prefixes its keys, requiring consumers to
  * include them when fetching or looking up data.
@@ -26,21 +24,18 @@ class PrefixingContainer implements ContainerInterface
      * @var PsrContainerInterface
      */
     protected $inner;
-
     /**
      * @since [*next-version*]
      *
      * @var string
      */
     protected $prefix;
-
     /**
      * @since [*next-version*]
      *
      * @var bool
      */
     protected $strict;
-
     /**
      * Constructor.
      *
@@ -51,13 +46,12 @@ class PrefixingContainer implements ContainerInterface
      * @param bool                  $strict    Whether or not to fallback to un-prefixed keys if a prefixed key does not
      *                                         exist in the inner container.
      */
-    public function __construct(PsrContainerInterface $container, string $prefix, bool $strict = true)
+    public function __construct(PsrContainerInterface $container, string $prefix, bool $strict = \true)
     {
         $this->inner = $container;
         $this->prefix = $prefix;
         $this->strict = $strict;
     }
-
     /**
      * @inheritdoc
      *
@@ -68,7 +62,6 @@ class PrefixingContainer implements ContainerInterface
         if (!$this->isPrefixed($key) && $this->strict) {
             throw new NotFoundException(sprintf('Key "%s" does not exist', $key));
         }
-
         /**
          * @psalm-suppress InvalidCatch
          * The base interface does not extend Throwable, but in fact everything that is possible
@@ -81,10 +74,8 @@ class PrefixingContainer implements ContainerInterface
                 throw $nfException;
             }
         }
-
         return $this->inner->get($key);
     }
-
     /**
      * @inheritdoc
      *
@@ -94,18 +85,15 @@ class PrefixingContainer implements ContainerInterface
     {
         $key = (string) $key;
         if (!$this->isPrefixed($key) && $this->strict) {
-            return false;
+            return \false;
         }
-
         try {
             $realKey = $this->unprefix($key);
         } catch (Exception $e) {
             throw new ContainerException(sprintf('Could not unprefix key "%1$s"', $key), 0, $e);
         }
-
-        return $this->inner->has($realKey) || (!$this->strict && $this->inner->has($key));
+        return $this->inner->has($realKey) || !$this->strict && $this->inner->has($key);
     }
-
     /**
      * Retrieves the key to use for the inner container.
      *
@@ -117,11 +105,8 @@ class PrefixingContainer implements ContainerInterface
      */
     protected function unprefix(string $key): string
     {
-        return $this->isPrefixed($key)
-            ? $this->substring($key, strlen($this->prefix))
-            : $key;
+        return $this->isPrefixed($key) ? $this->substring($key, strlen($this->prefix)) : $key;
     }
-
     /**
      * Checks if the key is prefixed.
      *
@@ -135,7 +120,6 @@ class PrefixingContainer implements ContainerInterface
     {
         return strlen($this->prefix) > 0 && strpos($key, $this->prefix) === 0;
     }
-
     /**
      * Extracts a substring from the specified string.
      *
@@ -153,17 +137,9 @@ class PrefixingContainer implements ContainerInterface
     {
         $length = $length ?? strlen($string) - $offset;
         $substring = substr($string, $offset, $length);
-        if ($substring === false) {
-            throw new RuntimeException(
-                sprintf(
-                    'Could not extract substring starting at %1$d of length %2$s from string "%3$s"',
-                    $offset,
-                    $length ?: 'null',
-                    $string
-                )
-            );
+        if ($substring === \false) {
+            throw new RuntimeException(sprintf('Could not extract substring starting at %1$d of length %2$s from string "%3$s"', $offset, $length ?: 'null', $string));
         }
-
         return $substring;
     }
 }

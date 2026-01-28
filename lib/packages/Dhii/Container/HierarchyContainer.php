@@ -1,13 +1,11 @@
 <?php
 
-declare(strict_types=1);
-
+declare (strict_types=1);
 namespace WooCommerce\PayPalCommerce\Vendor\Dhii\Container;
 
 use WooCommerce\PayPalCommerce\Vendor\Dhii\Collection\ContainerInterface;
 use WooCommerce\PayPalCommerce\Vendor\Dhii\Container\Exception\NotFoundException;
 use stdClass;
-
 /**
  * A container implementation that provides access to hierarchical data in the form a container tree.
  *
@@ -44,7 +42,6 @@ class HierarchyContainer implements ContainerInterface
      * @var mixed[]
      */
     protected $data;
-
     /**
      * Constructor.
      *
@@ -56,7 +53,6 @@ class HierarchyContainer implements ContainerInterface
     {
         $this->data = $data;
     }
-
     /**
      * @inheritDoc
      *
@@ -67,20 +63,15 @@ class HierarchyContainer implements ContainerInterface
         if (!array_key_exists($key, $this->data)) {
             throw new NotFoundException("Key '{$key}' does not exist", 0, null);
         }
-
         $value = $this->data[$key];
-
         if ($value instanceof stdClass) {
             $value = get_object_vars($value);
         }
-
         if (is_array($value)) {
             $value = $this->data[$key] = new self($value);
         }
-
         return $value;
     }
-
     /**
      * @inheritDoc
      *
@@ -89,7 +80,6 @@ class HierarchyContainer implements ContainerInterface
     public function has($key)
     {
         $key = (string) $key;
-
         return array_key_exists($key, $this->data);
     }
 }
