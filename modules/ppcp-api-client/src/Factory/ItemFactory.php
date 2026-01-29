@@ -139,7 +139,7 @@ class ItemFactory {
 		$price_without_tax         = (float) $order->get_item_subtotal( $item, false );
 		$price_without_tax_rounded = round( $price_without_tax, 2 );
 		$image                     = $product instanceof WC_Product ? wp_get_attachment_image_src( (int) $product->get_image_id(), 'full' ) : '';
-		$line_tax                  = $item->get_total_tax() ? (float) $item->get_total_tax() : null;
+		$line_tax                  = (float) $item->get_total_tax();
 
 		return new Item(
 			$this->prepare_item_string( $item->get_name() ),
