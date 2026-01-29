@@ -1,18 +1,16 @@
 <?php
 
-declare(strict_types=1);
-
+declare (strict_types=1);
 namespace WooCommerce\PayPalCommerce\Vendor\Dhii\Collection;
 
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerExceptionInterface;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\NotFoundExceptionInterface;
-
 /**
  * A container that can have mappings added and removed.
  *
  * @psalm-suppress UnusedClass
  */
-interface MutableContainerInterface extends ContainerInterface
+interface MutableContainerInterface extends \WooCommerce\PayPalCommerce\Vendor\Dhii\Collection\ContainerInterface
 {
     /**
      * Maps the given value to the specified key.
@@ -26,7 +24,6 @@ interface MutableContainerInterface extends ContainerInterface
      * @psalm-suppress InvalidThrow
      */
     public function set(string $key, $value): void;
-
     /**
      * Unmaps the value from the specified key.
      *
