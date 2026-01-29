@@ -1,10 +1,7 @@
 /**
  * External dependencies
  */
-import {
-	WooCommerceSubscriptionEdit as WooCommerceSubscriptionEditBase,
-	expect,
-} from '@inpsyde/playwright-utils/build';
+import { WooCommerceSubscriptionEdit as WooCommerceSubscriptionEditBase } from '@inpsyde/playwright-utils/build';
 
 export class WooCommerceSubscriptionEdit extends WooCommerceSubscriptionEditBase {
 	// Locators
