@@ -98,7 +98,7 @@ class ItemFactory
         $price_without_tax = (float) $order->get_item_subtotal($item, \false);
         $price_without_tax_rounded = round($price_without_tax, 2);
         $image = $product instanceof WC_Product ? wp_get_attachment_image_src((int) $product->get_image_id(), 'full') : '';
-        $line_tax = $item->get_total_tax() ? (float) $item->get_total_tax() : null;
+        $line_tax = (float) $item->get_total_tax();
         return new Item($this->prepare_item_string($item->get_name()), new Money($price_without_tax_rounded, $currency), $quantity, $product instanceof WC_Product ? $this->prepare_item_string($product->get_description()) : '', $line_tax ? new Money($line_tax, $currency) : null, $product instanceof WC_Product ? $this->prepare_sku($product->get_sku()) : '', $product instanceof WC_Product && $product->is_virtual() ? Item::DIGITAL_GOODS : Item::PHYSICAL_GOODS, $product instanceof WC_Product ? $product->get_permalink() : '', $image[0] ?? '', 0, null, $product instanceof WC_Product ? $product->get_id() : null, new Money((float) $item->get_subtotal() - (float) $item->get_total(), $currency));
     }
     /**
