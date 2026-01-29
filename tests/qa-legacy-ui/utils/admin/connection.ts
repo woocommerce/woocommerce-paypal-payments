@@ -129,7 +129,9 @@ export class Connection extends PcpSettingsPage {
 
 		const sandboxCheckbox = this.sandboxCheckbox();
 		await expect( sandboxCheckbox ).toBeVisible();
-		await sandboxCheckbox.check( { force: true } );
+		if ( await sandboxCheckbox.isChecked() ) {
+			await sandboxCheckbox.click( { force: true } );
+		}
 		await expect( this.sandboxCheckbox() ).toBeChecked();
 
 		const sandboxEmailAddressInput = this.sandboxEmailAddressInput();
