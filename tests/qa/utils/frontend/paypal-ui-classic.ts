@@ -312,18 +312,26 @@ export class PayPalUiClassic extends PayPalUi {
 	// Actions
 
 	/**
-	 * Clicks PayPal button to open popup
+	 * Clicks PayPal gateway and PayPal button to open popup
+	 * Actual on Pay for Order and classic checkout pages
 	 */
 	async openPayPalPopup(): Promise< PayPalPopup > {
-		await this.payPalGateway().click();
+		// Select gateway if not on classic-cart page
+		if ( ! this.page.url().includes( 'classic-cart' ) ) {
+			await this.payPalGateway().click();
+		}
 		return await super.openPayPalPopup();
 	}
 
 	/**
-	 * Clicks Pay Later button to open popup
+	 * Clicks PayPal gateway and Pay Later button to open popup
+	 * Actual on Pay for Order and classic checkout pages
 	 */
 	async openPayLaterPopup(): Promise< PayPalPopup > {
-		await this.payPalGateway().click();
+		// Select gateway if not on classic-cart page
+		if ( ! this.page.url().includes( 'classic-cart' ) ) {
+			await this.payPalGateway().click();
+		}
 		return await super.openPayLaterPopup();
 	}
 
