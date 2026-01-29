@@ -4,7 +4,7 @@
 import { test, expect } from '../../utils';
 import { pcpConfigDefault, storeConfigDefault } from '../../resources';
 
-test.describe( 'Сonnection', () => {
+test.describe( 'Connection', () => {
 	test.beforeAll( async ( { utils } ) => {
 		await utils.configureStore( storeConfigDefault );
 		await utils.configurePcp( pcpConfigDefault );
