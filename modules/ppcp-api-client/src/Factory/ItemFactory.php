@@ -60,13 +60,16 @@ class ItemFactory {
 				$quantity = (int) $item['quantity'];
 				$image    = wp_get_attachment_image_src( (int) $product->get_image_id(), 'full' );
 
-				$price = (float) $item['line_subtotal'] / (float) $item['quantity'];
+				$price    = (float) $item['line_subtotal'] / (float) $item['quantity'];
+				$line_tax = isset( $item['line_tax'] ) ? (float) $item['line_tax'] : 0.0;
+				$unit_tax = $quantity > 0 ? $line_tax / $quantity : 0.0;
+
 				return new Item(
 					$this->prepare_item_string( $product->get_name() ),
 					new Money( $price, $this->currency->get() ),
 					$quantity,
 					$this->prepare_item_string( $product->get_description() ),
-					isset( $item['line_tax'] ) ? new Money( (float) $item['line_tax'], $this->currency->get() ) : null,
+					$unit_tax ? new Money( $unit_tax, $this->currency->get() ) : null,
 					$this->prepare_sku( $product->get_sku() ),
 					( $product->is_virtual() ) ? Item::DIGITAL_GOODS : Item::PHYSICAL_GOODS,
 					$product->get_permalink(),
@@ -140,13 +143,14 @@ class ItemFactory {
 		$price_without_tax_rounded = round( $price_without_tax, 2 );
 		$image                     = $product instanceof WC_Product ? wp_get_attachment_image_src( (int) $product->get_image_id(), 'full' ) : '';
 		$line_tax                  = (float) $item->get_total_tax();
+		$unit_tax                  = $quantity > 0 ? $line_tax / $quantity : 0.0;
 
 		return new Item(
 			$this->prepare_item_string( $item->get_name() ),
 			new Money( $price_without_tax_rounded, $currency ),
 			$quantity,
 			$product instanceof WC_Product ? $this->prepare_item_string( $product->get_description() ) : '',
-			$line_tax ? new Money( $line_tax, $currency ) : null,
+			$unit_tax ? new Money( $unit_tax, $currency ) : null,
 			$product instanceof WC_Product ? $this->prepare_sku( $product->get_sku() ) : '',
 			( $product instanceof WC_Product && $product->is_virtual() ) ? Item::DIGITAL_GOODS : Item::PHYSICAL_GOODS,
 			$product instanceof WC_Product ? $product->get_permalink() : '',
