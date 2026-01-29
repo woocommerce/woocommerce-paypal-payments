@@ -43,8 +43,8 @@ export const transactionsOnCart = ( tests ) => {
 
 				await ppapi.assertOrder( orderJson, tested );
 				await ppapi.assertPayment( orderJson.transaction_id, tested );
+				await wooCommerceOrderEdit.visit( orderId );
 				await wooCommerceOrderEdit.assertOrderDetails(
-					orderId,
 					tested,
 					pcpData
 				);

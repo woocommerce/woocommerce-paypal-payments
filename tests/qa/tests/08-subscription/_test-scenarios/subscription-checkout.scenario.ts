@@ -8,10 +8,7 @@ const testSubscriptionOrderGuest = ( testOrder: ShopOrder ) => {
 	const { title, payment, products, customer: guest, merchant } = testOrder;
 
 	test.describe( () => {
-		test.beforeAll( async ( { wooCommerceApi, wooCommerceUtils } ) => {
-			// Remove any stored subscriptions data related to tested guest and payPalAccount
-			await wooCommerceApi.deleteAllSubscriptions();
-			await wooCommerceApi.deleteAllOrders();
+		test.beforeAll( async ( { wooCommerceUtils } ) => {
 			const previousEmails = [
 				guest.email,
 				payment.payPalAccount?.email,
@@ -80,9 +77,7 @@ const testSubscriptionOrderCustomer = ( testOrder: ShopOrder ) => {
 	test.describe( () => {
 		// Restore customer and his storage state to remove vaulted payment methods.
 		// Placed in beforeAll for each test to be able to use storate state in a test.
-		test.beforeAll( async ( { utils, wooCommerceApi } ) => {
-			await wooCommerceApi.deleteAllSubscriptions();
-			await wooCommerceApi.deleteAllOrders();
+		test.beforeAll( async ( { utils } ) => {
 			await utils.restoreCustomer( customer );
 		} );
 

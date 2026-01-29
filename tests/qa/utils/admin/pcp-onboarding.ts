@@ -4,6 +4,9 @@
 import { Pcp } from '../../resources';
 import { PcpAdminPage } from './pcp-admin-page';
 import urls from '../urls';
+/**
+ * External dependencies
+ */
 import { expect, Locator } from 'playwright/test';
 
 export class PcpOnboarding extends PcpAdminPage {

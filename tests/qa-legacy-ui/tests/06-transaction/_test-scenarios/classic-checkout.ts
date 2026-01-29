@@ -39,8 +39,8 @@ export const transactionsOnClassicCheckout = ( tests ) => {
 
 				await ppapi.assertOrder( orderJson, tested );
 				await ppapi.assertPayment( orderJson.transaction_id, tested );
+				await wooCommerceOrderEdit.visit( orderId );
 				await wooCommerceOrderEdit.assertOrderDetails(
-					orderId,
 					tested,
 					pcpData
 				);
@@ -86,8 +86,8 @@ export const transactionsOnClassicCheckoutOxxo = ( tests ) => {
 
 				await ppapi.assertOrder( orderJson, tested );
 				await ppapi.assertPayment( oxxoPaymentId, tested );
+				await wooCommerceOrderEdit.visit( orderId );
 				await wooCommerceOrderEdit.assertOrderDetails(
-					orderId,
 					tested
 				);
 			}

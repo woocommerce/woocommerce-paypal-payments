@@ -37,7 +37,10 @@ export class PcpAdminPage extends WpPage {
 	stylingTab = () =>
 		this.page.getByRole( 'tab', { name: 'Styling', exact: true } );
 	payLaterMessagingTab = () =>
-		this.page.getByRole( 'tab', { name: 'Pay Later Messaging', exact: true } );
+		this.page.getByRole( 'tab', {
+			name: 'Pay Later Messaging',
+			exact: true,
+		} );
 
 	// Actions
 

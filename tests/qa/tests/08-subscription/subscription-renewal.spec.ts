@@ -40,10 +40,6 @@ test.beforeAll( async ( { utils, pcpApi, wooCommerceApi } ) => {
 			products: [ 'physical', 'virtual', 'subscriptions' ],
 		}
 	);
-} );
-
-test.afterAll( async ( { wooCommerceApi } ) => {
-	await wooCommerceApi.deleteAllSubscriptions();
 	await wooCommerceApi.deleteAllOrders();
 } );
 
