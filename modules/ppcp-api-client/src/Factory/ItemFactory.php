@@ -62,7 +62,7 @@ class ItemFactory {
 
 				$price    = (float) $item['line_subtotal'] / (float) $item['quantity'];
 				$line_tax = isset( $item['line_tax'] ) ? (float) $item['line_tax'] : 0.0;
-				$unit_tax = $quantity > 0 ? $line_tax / $quantity : 0.0;
+				$unit_tax = $quantity > 0 ? $line_tax / (float) $quantity : 0.0;
 
 				return new Item(
 					$this->prepare_item_string( $product->get_name() ),
@@ -143,7 +143,7 @@ class ItemFactory {
 		$price_without_tax_rounded = round( $price_without_tax, 2 );
 		$image                     = $product instanceof WC_Product ? wp_get_attachment_image_src( (int) $product->get_image_id(), 'full' ) : '';
 		$line_tax                  = (float) $item->get_total_tax();
-		$unit_tax                  = $quantity > 0 ? $line_tax / $quantity : 0.0;
+		$unit_tax                  = $quantity > 0 ? $line_tax / (float) $quantity : 0.0;
 
 		return new Item(
 			$this->prepare_item_string( $item->get_name() ),
