@@ -15,7 +15,7 @@ export const testSubscriptionRenewal = ( testOrder: ShopOrder ) => {
 	test.describe( () => {
 		// Restore customer and his storage state to remove vaulted payment methods.
 		// Placed in beforeAll for each test to be able to use storate state in a test.
-		test.beforeAll( async ( { utils, wooCommerceApi } ) => {
+		test.beforeAll( async ( { utils } ) => {
 			await utils.restoreCustomer( customer );
 		} );
 
@@ -33,7 +33,7 @@ export const testSubscriptionRenewal = ( testOrder: ShopOrder ) => {
 				wooCommerceOrderEdit,
 				wooCommerceSubscriptionEdit,
 			} ) => {
-				test.setTimeout( 2 * 60 * 1000 );
+				test.setTimeout( 2 * 60_000 );
 				// Precondition: purchase test subscription
 				await utils.fillVisitorsCart( products );
 				await classicCheckout.visit();
@@ -162,7 +162,7 @@ export const testFreeTrialSubscriptionRenewal = ( testOrder: ShopOrder ) => {
 	test.describe( () => {
 		// Restore customer and his storage state to remove vaulted payment methods.
 		// Placed in beforeAll for each test to be able to use storate state in a test.
-		test.beforeAll( async ( { utils, wooCommerceApi } ) => {
+		test.beforeAll( async ( { utils } ) => {
 			await utils.restoreCustomer( customer );
 		} );
 
@@ -179,15 +179,22 @@ export const testFreeTrialSubscriptionRenewal = ( testOrder: ShopOrder ) => {
 				wooCommerceOrderEdit,
 				wooCommerceSubscriptionEdit,
 			} ) => {
-				test.setTimeout( 2 * 60 * 1000 );
+				test.setTimeout( 2 * 60_000 );
 				// Precondition: purchase test subscription
 				await utils.fillVisitorsCart( products );
 				await classicCheckout.visit();
 				await classicCheckout.completeCheckoutDetails( testOrder );
-				await classicCheckout.payPalUi.makePayment( {
-					merchant,
-					payment,
-				} );
+
+				// Add excepton for PayPal
+				if ( payment.gateway.title === 'PayPal' ) {
+					// In case of free product "Proceed to PayPal" black button is displayed instead of PayPal yellow button
+					await classicCheckout.proceedToPayPalButton().click();
+				} else {
+					await classicCheckout.payPalUi.makePayment( {
+						merchant,
+						payment,
+					} );
+				}
 				await orderReceived.assertOrderDetails( testOrder );
 
 				const orderId = await orderReceived.getOrderNumber();
