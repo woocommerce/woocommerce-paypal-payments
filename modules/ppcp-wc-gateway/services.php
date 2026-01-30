@@ -2273,7 +2273,7 @@ return array(
 		return new VoidButtonAssets(
 			$container->get( 'wcgateway.asset_getter' ),
 			$container->get( 'ppcp.asset-version' ),
-			$container->get( 'api.endpoint.order' ),
+			$container->get( 'api.endpoint.order.cached' ),
 			$container->get( 'wcgateway.processor.refunds' )
 		);
 	},
