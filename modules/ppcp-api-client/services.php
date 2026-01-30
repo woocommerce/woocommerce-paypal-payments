@@ -244,10 +244,6 @@ return array(
 		);
 	},
 	'api.endpoint.order'                             => static function ( ContainerInterface $container ): OrderEndpoint {
-		$order_factory            = $container->get( 'api.factory.order' );
-		$patch_collection_factory = $container->get( 'api.factory.patch-collection-factory' );
-		$logger                   = $container->get( 'woocommerce.logger.woocommerce' );
-
 		$session_handler = $container->get( 'session.handler' );
 		assert( $session_handler instanceof SessionHandler );
 		$bn_code         = $session_handler->bn_code();
