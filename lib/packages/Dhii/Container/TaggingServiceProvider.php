@@ -1,7 +1,6 @@
 <?php
 
-declare(strict_types=1);
-
+declare (strict_types=1);
 namespace WooCommerce\PayPalCommerce\Vendor\Dhii\Container;
 
 use WooCommerce\PayPalCommerce\Vendor\Interop\Container\ServiceProviderInterface;
@@ -9,7 +8,6 @@ use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use ReflectionException;
 use ReflectionFunction;
 use ReflectionObject;
-
 /**
  * A service provider that detects tags in factory docBlocks, and exposes them as services.
  *
@@ -34,14 +32,12 @@ class TaggingServiceProvider implements ServiceProviderInterface
     protected array $factories;
     /** @var array<Extension> */
     protected array $extensions;
-
     public function __construct(ServiceProviderInterface $inner)
     {
         $this->factories = $inner->getFactories();
         $this->extensions = $inner->getExtensions();
         $this->indexTags();
     }
-
     /**
      * @inheritDoc
      */
@@ -49,7 +45,6 @@ class TaggingServiceProvider implements ServiceProviderInterface
     {
         return $this->factories;
     }
-
     /**
      * @inheritDoc
      */
@@ -57,7 +52,6 @@ class TaggingServiceProvider implements ServiceProviderInterface
     {
         return $this->extensions;
     }
-
     /**
      * Indexes tagged factories, and creates factories and extensions for tags.
      *
@@ -66,22 +60,16 @@ class TaggingServiceProvider implements ServiceProviderInterface
     protected function indexTags(): void
     {
         $tags = [];
-
         foreach ($this->factories as $serviceName => $factory) {
             if (is_string($factory)) {
                 continue;
             }
-
-            $reflection = is_object($factory) && get_class($factory) === 'Closure'
-                ? new ReflectionFunction($factory)
-                : new ReflectionObject($factory);
+            $reflection = is_object($factory) && get_class($factory) === 'Closure' ? new ReflectionFunction($factory) : new ReflectionObject($factory);
             $docBlock = $reflection->getDocComment();
-
             // No docblock
-            if ($docBlock === false) {
+            if ($docBlock === \false) {
                 continue;
             }
-
             $factoryTags = $this->getTagsFromDocBlock($docBlock);
             foreach ($factoryTags as $tag) {
                 if (!isset($tags[$tag]) || !is_array($tags[$tag])) {
@@ -90,18 +78,13 @@ class TaggingServiceProvider implements ServiceProviderInterface
                 $tags[$tag][] = $serviceName;
             }
         }
-
         foreach ($tags as $tag => $taggedServiceNames) {
-            $this->factories[$tag] = fn (): array => [];
+            $this->factories[$tag] = fn(): array => [];
             $this->extensions[$tag] = function (ContainerInterface $c, array $prev) use ($taggedServiceNames): array {
-                return array_merge(
-                    $prev,
-                    array_map(fn (string $serviceName) => $c->get($serviceName), $taggedServiceNames)
-                );
+                return array_merge($prev, array_map(fn(string $serviceName) => $c->get($serviceName), $taggedServiceNames));
             };
         }
     }
-
     /**
      * Retrieves tags names that are part of a docBlock.
      *
@@ -115,7 +98,6 @@ class TaggingServiceProvider implements ServiceProviderInterface
     {
         $regex = '#^\s*/?\**\s*(@tag\s*(?P<tags>[^\s]+))#m';
         preg_match_all($regex, $docBlock, $matches);
-
         return $matches['tags'];
     }
 }
