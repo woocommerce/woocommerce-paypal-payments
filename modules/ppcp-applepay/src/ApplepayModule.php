@@ -221,14 +221,16 @@ class ApplepayModule implements ServiceModule, ExecutableModule {
 				$styles->label = PropertiesDictionary::map_type( $styles->label );
 
 				return $styles;
-			}
+			},
+			9999
 		);
 
 		add_filter(
 			'woocommerce_paypal_payments_applepay_button_language',
 			static function ( string $language ): string {
 				return PropertiesDictionary::map_language( $language );
-			}
+			},
+			9999
 		);
 
 		return true;
