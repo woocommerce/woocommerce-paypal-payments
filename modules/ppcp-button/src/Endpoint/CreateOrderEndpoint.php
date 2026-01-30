@@ -250,7 +250,7 @@ class CreateOrderEndpoint implements \WooCommerce\PayPalCommerce\Button\Endpoint
                 if (!is_a($wc_order, WC_Order::class)) {
                     wp_send_json_error(array('name' => 'order-not-found', 'message' => __('Order not found', 'woocommerce-paypal-payments'), 'code' => 0, 'details' => array()));
                 }
-                $this->purchase_unit = $this->purchase_unit_factory->from_wc_order($wc_order);
+                $this->purchase_unit = $this->purchase_unit_factory->from_wc_order($wc_order, $payment_method);
             } else {
                 $this->purchase_unit = $this->purchase_unit_factory->from_wc_cart(null, $this->should_handle_shipping_in_paypal($funding_source), $payment_method);
                 // Do not allow completion by webhooks when started via non-checkout buttons,
