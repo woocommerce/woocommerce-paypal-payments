@@ -98,9 +98,7 @@ class PropertiesDictionary
      */
     public static function map_language(string $language): string
     {
-        if (strlen($language) > 2) {
-            $language = substr($language, 0, 2);
-        }
+        $language = str_replace('_', '-', $language);
         if (in_array($language, self::VALID_LANGUAGES, \true)) {
             return $language;
         }
