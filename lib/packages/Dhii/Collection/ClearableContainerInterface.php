@@ -1,12 +1,10 @@
 <?php
 
-declare(strict_types=1);
-
+declare (strict_types=1);
 namespace WooCommerce\PayPalCommerce\Vendor\Dhii\Collection;
 
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerExceptionInterface;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface as PsrContainerInterface;
-
 interface ClearableContainerInterface extends PsrContainerInterface
 {
     /**

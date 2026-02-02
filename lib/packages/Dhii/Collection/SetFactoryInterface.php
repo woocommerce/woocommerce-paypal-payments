@@ -1,11 +1,9 @@
 <?php
 
-declare(strict_types=1);
-
+declare (strict_types=1);
 namespace WooCommerce\PayPalCommerce\Vendor\Dhii\Collection;
 
 use Exception;
-
 /**
  * A factory that can create sets.
  *
@@ -26,5 +24,5 @@ interface SetFactoryInterface
      *
      * @psalm-suppress PossiblyUnusedMethod
      */
-    public function createSetFromList(array $list): SetInterface;
+    public function createSetFromList(array $list): \WooCommerce\PayPalCommerce\Vendor\Dhii\Collection\SetInterface;
 }
