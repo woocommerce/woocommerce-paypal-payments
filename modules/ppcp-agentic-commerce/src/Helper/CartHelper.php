@@ -83,7 +83,7 @@ class CartHelper {
 	 * @param float $value The price value to format.
 	 * @return string The formatted price (e.g., "123.45").
 	 */
-	public static function format_price( float $value ): string {
+	public static function format_decimal( float $value ): string {
 		return number_format( $value, 2, '.', '' );
 	}
 
