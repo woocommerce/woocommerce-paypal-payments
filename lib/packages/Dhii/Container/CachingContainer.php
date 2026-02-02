@@ -1,7 +1,6 @@
 <?php
 
-declare(strict_types=1);
-
+declare (strict_types=1);
 namespace WooCommerce\PayPalCommerce\Vendor\Dhii\Container;
 
 use WooCommerce\PayPalCommerce\Vendor\Dhii\Collection\ContainerInterface;
@@ -11,7 +10,6 @@ use WooCommerce\PayPalCommerce\Vendor\Dhii\Container\Util\StringTranslatingTrait
 use Exception;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface as PsrContainerInterface;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\NotFoundExceptionInterface;
-
 /**
  * Caches entries from an internal container.
  *
@@ -20,13 +18,10 @@ use WooCommerce\PayPalCommerce\Vendor\Psr\Container\NotFoundExceptionInterface;
 class CachingContainer implements ContainerInterface
 {
     use StringTranslatingTrait;
-
     /** @var array<array-key, mixed> */
     protected $cache;
-
     /** @var PsrContainerInterface */
     protected $container;
-
     /**
      * @param PsrContainerInterface $container The container to cache entries from.
      */
@@ -35,7 +30,6 @@ class CachingContainer implements ContainerInterface
         $this->container = $container;
         $this->cache = [];
     }
-
     /**
      * {@inheritDoc}
      */
@@ -46,7 +40,6 @@ class CachingContainer implements ContainerInterface
          * Will remove when switching to PHP 7.2 and new PSR-11 interfaces
          */
         $key = (string) $key;
-
         /**
          * @psalm-suppress InvalidCatch
          * The base interface does not extend Throwable, but in fact everything that is possible
@@ -63,16 +56,10 @@ class CachingContainer implements ContainerInterface
         } catch (NotFoundExceptionInterface $e) {
             throw new NotFoundException($this->__('Key "%1$s" not found in inner container', [$key]), 0, $e);
         } catch (Exception $e) {
-            throw new ContainerException(
-                $this->__('Could not retrieve value for key "%1$s" from inner container', [$key]),
-                0,
-                $e
-            );
+            throw new ContainerException($this->__('Could not retrieve value for key "%1$s" from inner container', [$key]), 0, $e);
         }
-
         return $value;
     }
-
     /**
      * {@inheritDoc}
      */
@@ -82,7 +69,6 @@ class CachingContainer implements ContainerInterface
          * Will remove when switching to PHP 7.2 and new PSR-11 interfaces
          */
         $key = (string) $key;
-
         /**
          * @psalm-suppress InvalidCatch
          * The base interface does not extend Throwable, but in fact everything that is possible
@@ -90,27 +76,20 @@ class CachingContainer implements ContainerInterface
          */
         try {
             if ($this->hasCached($key)) {
-                return true;
+                return \true;
             }
         } catch (Exception $e) {
             throw new ContainerException($this->__('Could not check cache for key "%1$s"', [$key]), 0, $e);
         }
-
         try {
             if ($this->container->has($key)) {
-                return true;
+                return \true;
             }
         } catch (Exception $e) {
-            throw new ContainerException(
-                $this->__('Could not check inner container for key "%1$s"', [$key]),
-                0,
-                $e
-            );
+            throw new ContainerException($this->__('Could not check inner container for key "%1$s"', [$key]), 0, $e);
         }
-
-        return false;
+        return \false;
     }
-
     /**
      * Retrieves a value by key from cache, creating it if it does not exist.
      *
@@ -128,10 +107,8 @@ class CachingContainer implements ContainerInterface
             $value = $this->invokeGenerator($generator);
             $this->cache[$key] = $value;
         }
-
         return $this->cache[$key];
     }
-
     /**
      * Checks the cache for the specified key.
      *
@@ -145,7 +122,6 @@ class CachingContainer implements ContainerInterface
     {
         return array_key_exists($key, $this->cache);
     }
-
     /**
      * Generates a value by invoking the generator.
      *

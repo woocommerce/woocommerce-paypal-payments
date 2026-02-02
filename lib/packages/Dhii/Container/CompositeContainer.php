@@ -1,7 +1,6 @@
 <?php
 
-declare(strict_types=1);
-
+declare (strict_types=1);
 namespace WooCommerce\PayPalCommerce\Vendor\Dhii\Container;
 
 use WooCommerce\PayPalCommerce\Vendor\Dhii\Collection\ContainerInterface;
@@ -13,16 +12,13 @@ use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface as PsrCon
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\NotFoundExceptionInterface;
 use Traversable;
 use UnexpectedValueException;
-
 class CompositeContainer implements ContainerInterface
 {
     use StringTranslatingTrait;
-
     /**
      * @var iterable<PsrContainerInterface>
      */
     protected $containers;
-
     /**
      * @param iterable<PsrContainerInterface> $containers The list of containers.
      */
@@ -30,7 +26,6 @@ class CompositeContainer implements ContainerInterface
     {
         $this->containers = $containers;
     }
-
     /**
      * {@inheritDoc}
      */
@@ -41,7 +36,6 @@ class CompositeContainer implements ContainerInterface
          * Will remove when switching to PHP 7.2 and new PSR-11 interfaces
          */
         $key = (string) $key;
-
         foreach ($this->containers as $index => $container) {
             /**
              * @psalm-suppress InvalidCatch
@@ -53,27 +47,13 @@ class CompositeContainer implements ContainerInterface
                     return $container->get($key);
                 }
             } catch (NotFoundExceptionInterface $e) {
-                throw new NotFoundException(
-                    $this->__('Failed to retrieve value for key "%1$s" from container at index "%2$s"', [$key, $index]),
-                    0,
-                    $e
-                );
+                throw new NotFoundException($this->__('Failed to retrieve value for key "%1$s" from container at index "%2$s"', [$key, $index]), 0, $e);
             } catch (Exception $e) {
-                throw new ContainerException(
-                    $this->__('Failed check for key "%1$s" on container at index "%2$s"', [$key, $index]),
-                    0,
-                    $e
-                );
+                throw new ContainerException($this->__('Failed check for key "%1$s" on container at index "%2$s"', [$key, $index]), 0, $e);
             }
         }
-
-        throw new NotFoundException(
-            $this->__('Key "%1$s" not found in any of the containers', [$key]),
-            0,
-            null
-        );
+        throw new NotFoundException($this->__('Key "%1$s" not found in any of the containers', [$key]), 0, null);
     }
-
     /**
      * {@inheritDoc}
      */
@@ -83,21 +63,15 @@ class CompositeContainer implements ContainerInterface
          * Will remove when switching to PHP 7.2 and new PSR-11 interfaces
          */
         $key = (string) $key;
-
         foreach ($this->containers as $index => $container) {
             try {
                 if ($container->has($key)) {
-                    return true;
+                    return \true;
                 }
             } catch (Exception $e) {
-                throw new ContainerException(
-                    $this->__('Failed check for key "%1$s" on container at index "%2$s"', [$key, $index]),
-                    0,
-                    $e
-                );
+                throw new ContainerException($this->__('Failed check for key "%1$s" on container at index "%2$s"', [$key, $index]), 0, $e);
             }
         }
-
-        return false;
+        return \false;
     }
 }
