@@ -35,22 +35,10 @@ const testSubscriptionOrderGuest = ( testOrder: ShopOrder ) => {
 				await classicCheckout.completeCheckoutDetails( testOrder );
 
 				// Add excepton for free trial subscription paid with PayPal
-				if (
-					products[ 0 ].slug.includes( 'free-trial' ) &&
-					payment.gateway.title === 'PayPal'
-				) {
-					// In case of free product "Proceed to PayPal" black button is displayed instead of PayPal yellow button
-					await expect(
-						classicCheckout.proceedToPayPalButton(),
-						'Assert Proceed to PayPal button is visible'
-					).toBeVisible();
-					await classicCheckout.proceedToPayPalButton().click();
-				} else {
-					await classicCheckout.payPalUi.makePayment( {
-						merchant,
-						payment,
-					} );
-				}
+				await classicCheckout.payPalUi.makePayment( {
+					merchant,
+					payment,
+				} );
 				await orderReceived.assertOrderDetails( testOrder );
 
 				const subscriptionId =
@@ -124,22 +112,22 @@ const testSubscriptionOrderCustomer = ( testOrder: ShopOrder ) => {
 				await classicCheckout.completeCheckoutDetails( testOrder );
 
 				// Add excepton for free trial subscription paid with PayPal
-				if (
-					products[ 0 ].slug.includes( 'free-trial' ) &&
-					payment.gateway.title === 'PayPal'
-				) {
-					// In case of free product "Proceed to PayPal" black button is displayed instead of PayPal yellow button
-					await expect(
-						classicCheckout.proceedToPayPalButton(),
-						'Assert Proceed to PayPal button is visible'
-					).toBeVisible();
-					await classicCheckout.proceedToPayPalButton().click();
-				} else {
+				// if (
+				// 	products[ 0 ].slug.includes( 'free-trial' ) &&
+				// 	payment.gateway.title === 'PayPal'
+				// ) {
+				// 	// In case of free product "Proceed to PayPal" black button is displayed instead of PayPal yellow button
+				// 	await expect(
+				// 		classicCheckout.proceedToPayPalButton(),
+				// 		'Assert Proceed to PayPal button is visible'
+				// 	).toBeVisible();
+				// 	await classicCheckout.proceedToPayPalButton().click();
+				// } else {
 					await classicCheckout.payPalUi.makePayment( {
 						merchant,
 						payment,
 					} );
-				}
+				// }
 				await orderReceived.assertOrderDetails( testOrder );
 
 				const subscriptionId =

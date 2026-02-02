@@ -19,8 +19,6 @@ export class ClassicCheckout extends ClassicCheckoutBase {
 	}
 
 	// Locators
-	proceedToPayPalButton = () =>
-		this.page.getByRole( 'button', { name: 'Proceed to PayPal' } );
 	fastlaneShippingAddressContainer = () =>
 		this.page.locator( '#ppcp-axo-shipping-address-container' );
 	fastlaneBillingAddressContainer = () =>

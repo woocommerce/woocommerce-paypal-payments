@@ -184,17 +184,10 @@ export const testFreeTrialSubscriptionRenewal = ( testOrder: ShopOrder ) => {
 				await utils.fillVisitorsCart( products );
 				await classicCheckout.visit();
 				await classicCheckout.completeCheckoutDetails( testOrder );
-
-				// Add excepton for PayPal
-				if ( payment.gateway.title === 'PayPal' ) {
-					// In case of free product "Proceed to PayPal" black button is displayed instead of PayPal yellow button
-					await classicCheckout.proceedToPayPalButton().click();
-				} else {
-					await classicCheckout.payPalUi.makePayment( {
-						merchant,
-						payment,
-					} );
-				}
+				await classicCheckout.payPalUi.makePayment( {
+					merchant,
+					payment,
+				} );
 				await orderReceived.assertOrderDetails( testOrder );
 
 				const orderId = await orderReceived.getOrderNumber();
