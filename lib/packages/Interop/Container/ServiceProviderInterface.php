@@ -19,7 +19,6 @@ interface ServiceProviderInterface
      * @return callable[]
      */
     public function getFactories();
-
     /**
      * Returns a list of all container entries extended by this service provider.
      *
