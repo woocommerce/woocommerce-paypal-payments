@@ -24,6 +24,7 @@ use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ModuleClassNameI
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ServiceModule;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
+use WooCommerce\PayPalCommerce\Settings\DTO\LocationStylingDTO;
 /**
  * Class ApplepayModule
  */
@@ -89,7 +90,7 @@ class ApplepayModule implements ServiceModule, ExecutableModule
              *
              * @psalm-suppress MissingClosureParamType
              */
-            function ($uid, $action) {
+            static function ($uid, $action) {
                 if ($action === PropertiesDictionary::NONCE_ACTION) {
                     return 0;
                 }
@@ -150,6 +151,14 @@ class ApplepayModule implements ServiceModule, ExecutableModule
             $data['payment_source'] = array('apple_pay' => array('experience_context' => $experience_context_builder->with_endpoint_return_urls()->build()->to_array()));
             return $data;
         }, 10, 3);
+        add_filter('woocommerce_paypal_payments_applepay_button_styles', static function (LocationStylingDTO $styles): LocationStylingDTO {
+            $styles->color = PropertiesDictionary::map_color($styles->color);
+            $styles->label = PropertiesDictionary::map_type($styles->label);
+            return $styles;
+        }, 9999);
+        add_filter('woocommerce_paypal_payments_applepay_button_language', static function (string $language): string {
+            return PropertiesDictionary::map_language($language);
+        }, 9999);
         return \true;
     }
     /**
