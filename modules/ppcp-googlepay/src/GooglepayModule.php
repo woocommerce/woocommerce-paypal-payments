@@ -5,7 +5,7 @@
  * @package WooCommerce\PayPalCommerce\Googlepay
  */
 
-declare(strict_types=1);
+declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\Googlepay;
 
@@ -23,6 +23,8 @@ use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ModuleClassNameI
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ServiceModule;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
+use WooCommerce\PayPalCommerce\Settings\DTO\LocationStylingDTO;
+use WooCommerce\PayPalCommerce\Googlepay\Helper\PropertiesDictionary;
 
 /**
  * Class GooglepayModule
@@ -281,6 +283,25 @@ class GooglepayModule implements ServiceModule, ExecutableModule {
 			},
 			10,
 			3
+		);
+
+		add_filter(
+			'woocommerce_paypal_payments_googlepay_button_styles',
+			static function ( LocationStylingDTO $styles ): LocationStylingDTO {
+				$styles->color = PropertiesDictionary::map_color( $styles->color );
+				$styles->label = PropertiesDictionary::map_type( $styles->label );
+
+				return $styles;
+			},
+			9999
+		);
+
+		add_filter(
+			'woocommerce_paypal_payments_googlepay_button_language',
+			static function ( string $language ): string {
+				return PropertiesDictionary::map_language( $language );
+			},
+			9999
 		);
 
 		return true;
