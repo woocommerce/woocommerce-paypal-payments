@@ -2119,7 +2119,7 @@ return array(
 			true
 		);
 
-		$is_working_capital_eligible = $container->get( 'api.shop.country' ) === 'US' && $settings->has( 'stay_updated' ) && $settings->get( 'stay_updated' );
+		$is_working_capital_eligible = $container->get( 'api.merchant.country' ) === 'US' && $settings->has( 'stay_updated' ) && $settings->get( 'stay_updated' );
 
 		if ( ! $is_working_capital_feature_flag_enabled || ! $is_working_capital_eligible ) {
 			return array();
