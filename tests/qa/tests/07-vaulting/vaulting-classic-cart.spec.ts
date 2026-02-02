@@ -14,7 +14,7 @@ const { testSavePaymentMethod, testVaultedPaymentMethod } =
 test.beforeAll( async ( { utils, pcpApi } ) => {
 	await utils.configureStore( {
 		...storeConfigUsa,
-		classicPages: true,
+		enableClassicPages: true,
 	} );
 	await utils.installAndActivatePcp();
 	await pcpApi.resetDb();
@@ -36,10 +36,10 @@ test.afterAll( async ( { wooCommerceApi } ) => {
 	await wooCommerceApi.deleteAllOrders();
 } );
 
-for ( const testData of savePaymentMethodData ) {
-	testSavePaymentMethod( testData );
+for ( const testOrder of savePaymentMethodData ) {
+	testSavePaymentMethod( testOrder );
 }
 
-for ( const testData of vaultedPaymentMethodData ) {
-	testVaultedPaymentMethod( testData );
+for ( const testOrder of vaultedPaymentMethodData ) {
+	testVaultedPaymentMethod( testOrder );
 }

@@ -14,6 +14,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\ExperienceContextBuilder;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PurchaseUnitFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\ShippingPreferenceFactory;
+use WooCommerce\PayPalCommerce\Assets\AssetGetter;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
 use WooCommerce\PayPalCommerce\TestCase;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\TransactionUrlProvider;
@@ -29,6 +30,7 @@ private $environment;
 private $logger;
 private $wcOrder;
 private $transactionUrlProvider;
+private $assetGetter;
 private $testee;
 
 	public function setUp(): void
@@ -42,6 +44,7 @@ private $testee;
 		$this->transactionUrlProvider = Mockery::mock(TransactionUrlProvider::class);
 		$this->environment = Mockery::mock(Environment::class);
 		$this->logger = Mockery::mock(LoggerInterface::class);
+		$this->assetGetter = new AssetGetter('http://example.com', '/plugin/', 'module');
 
 		$this->wcOrder = Mockery::mock(WC_Order::class);
 		when('wc_get_order')->justReturn($this->wcOrder);
@@ -55,7 +58,7 @@ private $testee;
 			$this->purchaseUnitFactory,
 			$this->shippingPreferenceFactory,
 			$this->experienceContextBuilder,
-			'oxxo.svg',
+			$this->assetGetter,
 			$this->transactionUrlProvider,
 			$this->environment,
 			$this->logger

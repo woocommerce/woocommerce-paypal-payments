@@ -1,7 +1,7 @@
 import { loadCustomScript } from '@paypal/paypal-js';
-import { loadPayPalScript } from '../../../ppcp-button/resources/js/modules/Helper/PayPalScriptLoading';
+import { loadPayPalScript } from '@ppcp-button/Helper/PayPalScriptLoading';
 import ApplePayManager from './ApplepayManager';
-import { setupButtonEvents } from '../../../ppcp-button/resources/js/modules/Helper/ButtonRefreshHelper';
+import { setupButtonEvents } from '@ppcp-button/Helper/ButtonRefreshHelper';
 
 ( function ( { buttonConfig, ppcpConfig } ) {
 	const namespace = 'ppcpPaypalApplepay';

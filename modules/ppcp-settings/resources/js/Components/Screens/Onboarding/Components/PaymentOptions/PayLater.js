@@ -1,7 +1,7 @@
 import { __ } from '@wordpress/i18n';
 
-import BadgeBox from '../../../../ReusableComponents/BadgeBox';
-import PricingTitleBadge from '../../../../ReusableComponents/PricingTitleBadge';
+import BadgeBox from '@ppcp-settings/Components/ReusableComponents/BadgeBox';
+import PricingTitleBadge from '@ppcp-settings/Components/ReusableComponents/PricingTitleBadge';
 
 const PayLater = ( { learnMore = '' } ) => {
 	return (

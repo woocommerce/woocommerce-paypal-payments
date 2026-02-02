@@ -1,9 +1,9 @@
-import SingleProductActionHandler from '../../../../ppcp-button/resources/js/modules/ActionHandler/SingleProductActionHandler';
-import SimulateCart from '../../../../ppcp-button/resources/js/modules/Helper/SimulateCart';
-import ErrorHandler from '../../../../ppcp-button/resources/js/modules/ErrorHandler';
-import UpdateCart from '../../../../ppcp-button/resources/js/modules/Helper/UpdateCart';
+import SingleProductActionHandler from '@ppcp-button/ActionHandler/SingleProductActionHandler';
+import SimulateCart from '@ppcp-button/Helper/SimulateCart';
+import ErrorHandler from '@ppcp-button/ErrorHandler';
+import UpdateCart from '@ppcp-button/Helper/UpdateCart';
 import BaseHandler from './BaseHandler';
-import TransactionInfo from '../Helper/TransactionInfo';
+import TransactionInfo from '@ppcp-googlepay/Helper/TransactionInfo';
 
 class SingleProductHandler extends BaseHandler {
 	validateContext() {
@@ -52,6 +52,12 @@ class SingleProductHandler extends BaseHandler {
 
 				resolve( transaction );
 			}, products );
+		} );
+	}
+
+	validateForm() {
+		return this.actionHandler().updateCart( {
+			keepShipping: true,
 		} );
 	}
 

@@ -69,6 +69,8 @@ use WooCommerce\PayPalCommerce\ApiClient\Helper\FailureRegistry;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\OrderHelper;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\OrderTransient;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\PartnerAttribution;
+use WooCommerce\PayPalCommerce\ApiClient\Helper\PaymentLevelEligibility;
+use WooCommerce\PayPalCommerce\ApiClient\Helper\PaymentLevelHelper;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\PurchaseUnitSanitizer;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\ReferenceTransactionStatus;
 use WooCommerce\PayPalCommerce\ApiClient\Repository\CustomerRepository;
@@ -389,6 +391,9 @@ return array(
 			$item_factory,
 			$shipping_factory,
 			$payments_factory,
+			$container->get( 'api.helpers.paymentLevelHelper' ),
+			$container->get( 'api.helpers.paymentLevelEligibility' ),
+			$container->get( 'settings.settings-provider' ),
 			$prefix,
 			$soft_descriptor,
 			$sanitizer
@@ -508,7 +513,7 @@ return array(
 			$container->get( 'api.dcc-supported-country-currency-matrix' ),
 			$container->get( 'api.dcc-supported-country-card-matrix' ),
 			$container->get( 'api.shop.currency.getter' ),
-			$container->get( 'api.shop.country' )
+			$container->get( 'api.merchant.country' )
 		);
 	},
 
@@ -825,14 +830,6 @@ return array(
 			'SE',
 		);
 	},
-	'api.paylater.is-canada-released'                => static function ( ContainerInterface $container ): bool {
-		// Check if current date is after November 12th, 2025 (Expected PayPal release date).
-		// @todo Remove this logic after the next release.
-		$release_date = '2025-11-12';
-		$current_date = gmdate( 'Y-m-d' );
-
-		return $current_date >= $release_date;
-	},
 	'api.paylater-countries'                         => static function ( ContainerInterface $container ): array {
 		$default_countries = array(
 			'US',
@@ -842,14 +839,8 @@ return array(
 			'AU',
 			'IT',
 			'ES',
+			'CA',
 		);
-
-		// @todo Remove this logic after the next release.
-		// Instead add CA as a default country directly.
-		if ( $container->get( 'api.paylater.is-canada-released' ) ) {
-			$default_countries[] = 'CA';
-		}
-
 		return apply_filters(
 			'woocommerce_paypal_payments_supported_paylater_countries',
 			$default_countries
@@ -1004,6 +995,24 @@ return array(
 				InstallationPathEnum::PAYMENT_SETTINGS => 'WooPPCP_Ecom_PS_CoreProfiler',
 			),
 			PPCP_PAYPAL_BN_CODE
+		);
+	},
+	/**
+	 * If connected, return the PayPal Onboarded merchant country.
+	 * Fallback to WooCommerce Store Country otherwise.
+	 */
+	'api.merchant.country'                           => static function ( ContainerInterface $container ): string {
+		return $container->get( 'settings.flag.is-connected' )
+			? $container->get( 'settings.data.general' )->get_merchant_country()
+			: $container->get( 'api.shop.country' );
+	},
+	'api.helpers.paymentLevelHelper'                 => static function ( ContainerInterface $container ): PaymentLevelHelper {
+		return new PaymentLevelHelper( $container->get( 'settings.settings-provider' ) );
+	},
+	'api.helpers.paymentLevelEligibility'            => static function ( ContainerInterface $container ): PaymentLevelEligibility {
+		return new PaymentLevelEligibility(
+			$container->get( 'api.merchant.country' ),
+			$container->get( 'api.shop.currency.getter' )
 		);
 	},
 );

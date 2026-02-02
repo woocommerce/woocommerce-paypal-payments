@@ -1,3 +1,16 @@
+export type ShopConfig = {
+	enableWpDebugging?: boolean; // Is WP Debugging plugin activated
+	enableSubscriptionsPlugin?: boolean; // Is WC Subscriptions plugin activated
+	enableClassicPages?: boolean; // Are classic cart and checkout pages set in WC > Settings > Advanced
+	settings?: WooCommerce.Settings; // WooCommerce settings by tabs (general, advanced, etc.)
+	taxes?: {
+		options: WooCommerce.Settings; // Tax settings in WC > Settings > General tab
+		rates: WooCommerce.CreateTax[]; // Tax rates to be active in WC > Settings > Taxes > Tax rates tab
+	};
+	customer?: WooCommerce.CreateCustomer; // Registered customer to be created
+	products?: WooCommerce.CreateProduct[]; // Products to be created if not existing
+};
+
 export type PayPalAccount = {
 	email: string;
 	password: string;

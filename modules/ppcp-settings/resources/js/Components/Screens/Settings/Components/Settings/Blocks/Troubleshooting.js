@@ -1,13 +1,13 @@
 import { __, sprintf } from '@wordpress/i18n';
 
-import { ControlToggleButton } from '../../../../../ReusableComponents/Controls';
-import SettingsBlock from '../../../../../ReusableComponents/SettingsBlock';
-import Accordion from '../../../../../ReusableComponents/AccordionSection';
+import { ControlToggleButton } from '@ppcp-settings/Components/ReusableComponents/Controls';
+import SettingsBlock from '@ppcp-settings/Components/ReusableComponents/SettingsBlock';
+import Accordion from '@ppcp-settings/Components/ReusableComponents/AccordionSection';
 
 import SimulationBlock from './SimulationBlock';
 import ResubscribeBlock from './ResubscribeBlock';
 import HooksListBlock from './HooksListBlock';
-import { SettingsHooks } from '../../../../../../data';
+import { SettingsHooks } from '@ppcp-settings/data';
 
 const Troubleshooting = () => {
 	const { logging, setLogging } = SettingsHooks.useSettings();

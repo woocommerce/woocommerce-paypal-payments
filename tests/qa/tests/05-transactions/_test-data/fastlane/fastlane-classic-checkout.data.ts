@@ -7,13 +7,13 @@ const { fastlaneGary, fastlaneRyan } = payments;
 
 export const fastlaneClassicCheckout: ShopOrder[] = [
 	{
-		title: 'PCP-4596 | Transaction - Classic checkout - Fastlane - Gary - Default order',
+		title: 'PCP-4596 | Transaction - Classic checkout - Fastlane - Gary - Default order @Critical',
 		...orders.default,
 		payment: fastlaneGary,
 		customer: guests.usaFastlaneGary,
 	},
 	{
-		title: 'PCP-3079 | Transaction - Classic checkout - Fastlane - Ryan - Default order',
+		title: 'PCP-3079 | Transaction - Classic checkout - Fastlane - Ryan - Default order @Critical',
 		...orders.default,
 		payment: fastlaneRyan,
 		customer: guests.usaFastlaneRyan,

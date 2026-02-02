@@ -39,6 +39,7 @@ use WooCommerce\PayPalCommerce\AgenticCommerce\Helper\PayPalOrderManager;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Helper\AgenticCartBuilder;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Helper\ProductManager;
 use WooCommerce\PayPalCommerce\AgenticCommerce\CartValidation\ProductValidator;
+use WooCommerce\PayPalCommerce\AgenticCommerce\CartValidation\PriceValidator;
 use WooCommerce\PayPalCommerce\AgenticCommerce\CartValidation\InventoryValidator;
 use WooCommerce\PayPalCommerce\AgenticCommerce\CartValidation\CurrencyValidator;
 use WooCommerce\PayPalCommerce\AgenticCommerce\CartValidation\ShippingValidator;
@@ -165,6 +166,11 @@ return array(
 	},
 	'agentic.validator.product'                    => static function ( ContainerInterface $c ): ProductValidator {
 		return new ProductValidator(
+			$c->get( 'agentic.helper.product-manager' )
+		);
+	},
+	'agentic.validator.price'                      => static function ( ContainerInterface $c ): PriceValidator {
+		return new PriceValidator(
 			$c->get( 'agentic.helper.product-manager' )
 		);
 	},

@@ -3,7 +3,7 @@ import { cog } from '@wordpress/icons';
 
 import SettingsBlock from '../SettingsBlock';
 import PaymentMethodIcon from '../PaymentMethodIcon';
-import WarningMessages from '../../../Components/Screens/Settings/Components/Payment/WarningMessages';
+import WarningMessages from '@ppcp-settings/Components/Screens/Settings/Components/Payment/WarningMessages';
 
 const PaymentMethodItemBlock = ( {
 	paymentMethod,

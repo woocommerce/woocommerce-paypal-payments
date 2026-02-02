@@ -8,6 +8,8 @@ import { PayForOrder as PayForOrderBase } from '@inpsyde/playwright-utils/build'
 import { PayPalUiClassic } from './paypal-ui-classic';
 
 export class PayForOrder extends PayForOrderBase {
+	// UI is the same as when classic pages are enabled
+	// Only difference is in page URL: contains /checkout/ instead of /classic-checkout/
 	payPalUi: PayPalUiClassic;
 
 	constructor( { page, payPalUi } ) {
@@ -18,17 +20,6 @@ export class PayForOrder extends PayForOrderBase {
 	// Locators
 
 	// Actions
-
-	makeOrder = async (
-		data: WooCommerce.ShopOrder,
-		order: WooCommerce.Order
-	) => {
-		await this.visit( order.id, order.order_key );
-		await this.payPalUi.makePayment( {
-			merchant: data.merchant,
-			payment: data.payment,
-		} );
-	};
 
 	// Assertions
 }

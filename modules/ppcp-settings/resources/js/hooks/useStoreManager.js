@@ -7,7 +7,7 @@ import {
 	SettingsHooks,
 	StylingHooks,
 	TodosHooks,
-} from '../data';
+} from '@ppcp-settings/data';
 import { useExtensionStores } from '../extensions';
 
 export const useStoreManager = () => {

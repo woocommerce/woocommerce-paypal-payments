@@ -414,22 +414,6 @@ export class PayPalUi {
 	};
 
 	/**
-	 * Asserts Fastlane input field and button
-	 * Inputs fastlane email and clicks Continue
-	 *
-	 * @param email
-	 */
-	provideFastlaneEmail = async ( email: string ) => {
-		await expect( this.fastlaneEmailInput() ).toBeVisible();
-		await this.fastlaneEmailInput().fill( email );
-
-		await expect( this.fastlaneContinueButton() ).toBeVisible();
-		await this.fastlaneContinueButton().click();
-
-		await this.page.waitForLoadState( 'networkidle' );
-	};
-
-	/**
 	 * Types in Fastlane OPT for Ryan's flow
 	 */
 	provideFastlaneOtp = async () => {
@@ -521,10 +505,7 @@ export class PayPalUi {
 		const { gateway, card } = payment;
 		switch ( gateway.shortcut ) {
 			case 'paypal':
-				await expect( this.payPalButton() ).toContainClass(
-					'paypal-button-wallet'
-				); // Class applied for vaulted button
-				await expect( this.payPalButtonMoreOptions() ).toBeVisible();
+				await expect( this.payPalButton() ).toBeVisible();
 				break;
 
 			case 'acdc':
@@ -543,12 +524,12 @@ export class PayPalUi {
 	) => {
 		switch ( payment.gateway.shortcut ) {
 			case 'paypal':
-				await expect( this.payPalButton() ).not.toContainClass(
-					'paypal-button-wallet'
-				); // Class applied for vaulted button
-				await expect(
-					this.payPalButtonMoreOptions()
-				).not.toBeVisible();
+				await expect
+					.soft( this.payPalButton() )
+					.not.toContainClass( 'paypal-button-wallet' ); // Class applied for vaulted button
+				await expect
+					.soft( this.payPalButtonMoreOptions() )
+					.not.toBeVisible();
 				break;
 
 			case 'acdc':

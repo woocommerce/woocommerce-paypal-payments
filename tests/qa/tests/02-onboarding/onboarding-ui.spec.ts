@@ -146,10 +146,10 @@ test( 'PCP-4318 | Settings - US - Onboarding - Connect with business account, al
 
 		`${ testInfo.title } - Choose checkout options`
 	);
-	await pcpOnboarding.disableOptionalPaymentMethodsRadio().click();
+	await pcpOnboarding.enableOptionalPaymentMethodsRadio().click();
 	await pcpOnboarding.snapshotLocator(
 		pcpOnboarding.onboardingContentContainer(),
-		`${ testInfo.title } - Choose checkout options - Card payments disabled`,
+		`${ testInfo.title } - Choose checkout options - Card payments enabled`,
 		{ timeout: 3000 }
 	);
 } );

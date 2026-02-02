@@ -1,6 +1,6 @@
 import { createInterpolateElement } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
-import { scrollAndHighlight } from '../../../../../utils/scrollAndHighlight';
+import { scrollAndHighlight } from '@ppcp-settings/utils/scrollAndHighlight';
 
 /**
  * Component to display a payment method value dependency message

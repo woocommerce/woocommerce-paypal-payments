@@ -27,6 +27,18 @@ export class PcpAdminPage extends WpPage {
 			has: this.settingLabel( labelText ),
 		} );
 
+	// PCP Settings tabs when merchant is connected
+	overviewTab = () =>
+		this.page.getByRole( 'tab', { name: 'Overview', exact: true } );
+	paymentMethodsTab = () =>
+		this.page.getByRole( 'tab', { name: 'Payment Methods', exact: true } );
+	settingsTab = () =>
+		this.page.getByRole( 'tab', { name: 'Settings', exact: true } );
+	stylingTab = () =>
+		this.page.getByRole( 'tab', { name: 'Styling', exact: true } );
+	payLaterMessagingTab = () =>
+		this.page.getByRole( 'tab', { name: 'Pay Later Messaging', exact: true } );
+
 	// Actions
 
 	/**

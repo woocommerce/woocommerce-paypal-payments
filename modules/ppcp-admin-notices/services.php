@@ -9,6 +9,8 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\AdminNotices;
 
+use WooCommerce\PayPalCommerce\Assets\AssetGetter;
+use WooCommerce\PayPalCommerce\Assets\AssetGetterFactory;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\AdminNotices\Renderer\Renderer;
 use WooCommerce\PayPalCommerce\AdminNotices\Renderer\RendererInterface;
@@ -17,13 +19,16 @@ use WooCommerce\PayPalCommerce\AdminNotices\Repository\RepositoryInterface;
 use WooCommerce\PayPalCommerce\AdminNotices\Endpoint\MuteMessageEndpoint;
 
 return array(
-	'admin-notices.url'                   => static function ( ContainerInterface $container ): string {
-		return plugins_url( '/modules/ppcp-admin-notices/', $container->get( 'ppcp.path-to-plugin-main-file' ) );
+	'admin-notices.asset_getter'          => static function ( ContainerInterface $container ): AssetGetter {
+		$factory = $container->get( 'assets.asset_getter_factory' );
+		assert( $factory instanceof AssetGetterFactory );
+
+		return $factory->for_module( 'ppcp-admin-notices' );
 	},
 	'admin-notices.renderer'              => static function ( ContainerInterface $container ): RendererInterface {
 		return new Renderer(
 			$container->get( 'admin-notices.repository' ),
-			$container->get( 'admin-notices.url' ),
+			$container->get( 'admin-notices.asset_getter' ),
 			$container->get( 'ppcp.asset-version' )
 		);
 	},

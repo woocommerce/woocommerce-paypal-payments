@@ -1,8 +1,8 @@
 import { useEffect, useRef, useCallback } from '@wordpress/element';
 import { useSelect, useDispatch } from '@wordpress/data';
-import { log } from '../../../../ppcp-axo/resources/js/Helper/Debug';
-import { debounce } from '../../../../ppcp-blocks/resources/js/Helper/debounce';
-import { STORE_NAME } from '../stores/axoStore';
+import { log } from '@ppcp-axo/Helper/Debug';
+import { debounce } from '@ppcp-blocks/Helper/debounce';
+import { STORE_NAME } from '@ppcp-axo-block/stores/axoStore';
 import useCustomerData from './useCustomerData';
 
 const PHONE_DEBOUNCE_DELAY = 250;
