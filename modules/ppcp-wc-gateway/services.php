@@ -2242,7 +2242,7 @@ return array(
 				Note::E_WC_ADMIN_NOTE_INFORMATIONAL,
 				'ppcp-working-capital-inbox-note',
 				Note::E_WC_ADMIN_NOTE_UNACTIONED,
-				$is_working_capital_feature_flag_enabled && $container->get( 'api.shop.country' ) === 'US' && $stay_updated,
+				$is_working_capital_feature_flag_enabled && $container->get( 'api.merchant.country' ) === 'US' && $stay_updated,
 				new InboxNoteAction(
 					'learn_more',
 					__( 'Learn More', 'woocommerce-paypal-payments' ),
