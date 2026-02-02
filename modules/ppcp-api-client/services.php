@@ -181,7 +181,7 @@ return array(
         $intent = $settings->has('intent') && strtoupper((string) $settings->get('intent')) === 'AUTHORIZE' ? 'AUTHORIZE' : 'CAPTURE';
         return new OrderEndpoint($container->get('api.host'), $container->get('api.bearer'), $container->get('api.factory.order'), $container->get('api.factory.patch-collection-factory'), $intent, $container->get('woocommerce.logger.woocommerce'), $container->get('wc-subscriptions.helper'), $container->get('wcgateway.is-fraudnet-enabled'), $container->get('wcgateway.fraudnet'), $bn_code);
     },
-    'api.endpoint.order.cached' => static function (ContainerInterface $container): OrderEndpoint {
+    'api.endpoint.order.cached' => static function (ContainerInterface $container): OrderEndpointCached {
         $session_handler = $container->get('session.handler');
         assert($session_handler instanceof SessionHandler);
         $bn_code = $session_handler->bn_code();
