@@ -458,7 +458,7 @@ class ApplePayButton implements ButtonInterface
                 WC()->session->set('chosen_shipping_methods', array($shipping_method_id));
             }
         }
-        $selected_shipping_method = $shipping_methods_array[0];
+        $selected_shipping_method = $shipping_methods_array[0] ?? array();
         if ($shipping_method) {
             $selected_shipping_method = $shipping_method;
         }
