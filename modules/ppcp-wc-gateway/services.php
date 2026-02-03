@@ -652,7 +652,7 @@ return array(
         return $vaulting_label;
     },
     'wcgateway.settings.dcc-gateway-title.default' => static function (ContainerInterface $container): string {
-        return __('Debit & Credit Cards', 'woocommerce-paypal-payments');
+        return did_action('init') ? __('Debit & Credit Cards', 'woocommerce-paypal-payments') : 'Debit & Credit Cards';
     },
     'wcgateway.settings.card_billing_data_mode.default' => static function (ContainerInterface $container): string {
         return $container->get('api.shop.is-latin-america') ? \WooCommerce\PayPalCommerce\WcGateway\CardBillingMode::MINIMAL_INPUT : \WooCommerce\PayPalCommerce\WcGateway\CardBillingMode::USE_WC;
@@ -799,7 +799,7 @@ return array(
     'wcgateway.settings.pay-later.messaging-locations' => static function (ContainerInterface $container): array {
         $button_locations = $container->get('wcgateway.button.locations');
         unset($button_locations['mini-cart']);
-        return array_merge($button_locations, array('shop' => __('Shop', 'woocommerce-paypal-payments'), 'home' => __('Home', 'woocommerce-paypal-payments')));
+        return array_merge($button_locations, array('shop' => did_action('init') ? __('Shop', 'woocommerce-paypal-payments') : 'Shop', 'home' => did_action('init') ? __('Home', 'woocommerce-paypal-payments') : 'Home'));
     },
     'wcgateway.settings.pay-later.default-messaging-locations' => static function (ContainerInterface $container): array {
         $locations = $container->get('wcgateway.settings.pay-later.messaging-locations');
