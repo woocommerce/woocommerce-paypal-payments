@@ -305,6 +305,10 @@ class ApplePayButton implements ButtonInterface
             return;
         }
         $applepay_request_data_object->order_data($context);
+        if ($applepay_request_data_object->has_errors()) {
+            $this->response_templates->response_with_data_errors($applepay_request_data_object->errors());
+            return;
+        }
         $this->update_posted_data($applepay_request_data_object);
         if ($context === 'product') {
             $cart_item_key = $this->prepare_cart($applepay_request_data_object);
