@@ -705,7 +705,7 @@ class ApplePayButton implements ButtonInterface {
 				'amount' => $cart->needs_shipping()
 					? $cart->get_shipping_total() : null,
 				'label'  => $cart->needs_shipping()
-					? $selected_shipping_method['label'] : null,
+					? ( $selected_shipping_method['label'] ?? null ) : null,
 			),
 			'shippingMethods' => $cart->needs_shipping()
 				? $shipping_methods_array : null,
