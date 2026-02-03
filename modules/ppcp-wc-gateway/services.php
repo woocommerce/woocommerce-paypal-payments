@@ -31,6 +31,7 @@ use WooCommerce\PayPalCommerce\Onboarding\Render\OnboardingOptionsRenderer;
 use WooCommerce\PayPalCommerce\Onboarding\State;
 use WooCommerce\PayPalCommerce\Settings\Data\Definition\FeaturesDefinition;
 use WooCommerce\PayPalCommerce\Settings\Data\SettingsModel;
+use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
 use WooCommerce\PayPalCommerce\Settings\SettingsModule;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\WcGateway\Admin\FeesRenderer;
@@ -2113,8 +2114,8 @@ return array(
 		$settings = $container->get( 'wcgateway.settings' );
 		assert( $settings instanceof Settings );
 
-		$state = $container->get( 'settings.connection-state' );
-		assert( $state instanceof ConnectionState );
+		$settings_provider = $container->get( 'settings.settings-provider' );
+		assert( $settings_provider instanceof SettingsProvider );
 
 		$is_working_capital_feature_flag_enabled = apply_filters(
 		// phpcs:ignore WordPress.NamingConventions.ValidHookName.UseUnderscores -- feature flags use this convention
@@ -2124,7 +2125,7 @@ return array(
 
 		$is_working_capital_eligible = $container->get( 'api.merchant.country' ) === 'US' && $settings->has( 'stay_updated' ) && $settings->get( 'stay_updated' );
 
-		if ( ! $state->is_connected() || ! $is_working_capital_feature_flag_enabled || ! $is_working_capital_eligible ) {
+		if ( ! $settings_provider->merchant_connected() || ! $is_working_capital_feature_flag_enabled || ! $is_working_capital_eligible ) {
 			return array();
 		}
 
@@ -2219,8 +2220,8 @@ return array(
 		$messages_apply = $container->get( 'button.helper.messages-apply' );
 		assert( $messages_apply instanceof MessagesApply );
 
-		$state = $container->get( 'settings.connection-state' );
-		assert( $state instanceof ConnectionState );
+		$settings_provider = $container->get( 'settings.settings-provider' );
+		assert( $settings_provider instanceof SettingsProvider );
 
 		$is_working_capital_feature_flag_enabled = apply_filters(
 		// phpcs:ignore WordPress.NamingConventions.ValidHookName.UseUnderscores -- feature flags use this convention
@@ -2250,7 +2251,7 @@ return array(
 				Note::E_WC_ADMIN_NOTE_INFORMATIONAL,
 				'ppcp-working-capital-inbox-note',
 				Note::E_WC_ADMIN_NOTE_UNACTIONED,
-				$state->is_connected() && $is_working_capital_feature_flag_enabled && $is_working_capital_eligible,
+				$settings_provider->merchant_connected() && $is_working_capital_feature_flag_enabled && $is_working_capital_eligible,
 				new InboxNoteAction(
 					'learn_more',
 					__( 'Learn More', 'woocommerce-paypal-payments' ),
