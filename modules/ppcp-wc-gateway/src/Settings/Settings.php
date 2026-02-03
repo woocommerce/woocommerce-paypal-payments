@@ -173,7 +173,9 @@ class Settings implements ContainerInterface {
 		if ( $this->settings !== null ) {
 			return false;
 		}
+
 		$this->settings = (array) get_option( self::KEY, array() );
+
 		return true;
 	}
 
