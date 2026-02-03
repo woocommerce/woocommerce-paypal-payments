@@ -2219,6 +2219,9 @@ return array(
 		$messages_apply = $container->get( 'button.helper.messages-apply' );
 		assert( $messages_apply instanceof MessagesApply );
 
+		$state = $container->get( 'settings.connection-state' );
+		assert( $state instanceof ConnectionState );
+
 		$is_working_capital_feature_flag_enabled = apply_filters(
 		// phpcs:ignore WordPress.NamingConventions.ValidHookName.UseUnderscores -- feature flags use this convention
 			'woocommerce.feature-flags.woocommerce_paypal_payments.working_capital_enabled',
@@ -2228,6 +2231,8 @@ return array(
 		$stay_updated = SettingsModule::should_use_the_old_ui()
 			? $settings->has( 'stay_updated' ) && $settings->get( 'stay_updated' )
 			: $settings_model->get_stay_updated();
+
+		$is_working_capital_eligible = $container->get( 'api.merchant.country' ) === 'US' && $stay_updated;
 
 		$message = sprintf(
 		// translators: %1$s is the URL for the startup guide.
@@ -2245,7 +2250,7 @@ return array(
 				Note::E_WC_ADMIN_NOTE_INFORMATIONAL,
 				'ppcp-working-capital-inbox-note',
 				Note::E_WC_ADMIN_NOTE_UNACTIONED,
-				$is_working_capital_feature_flag_enabled && $container->get( 'api.merchant.country' ) === 'US' && $stay_updated,
+				$state->is_connected() && $is_working_capital_feature_flag_enabled && $is_working_capital_eligible,
 				new InboxNoteAction(
 					'learn_more',
 					__( 'Learn More', 'woocommerce-paypal-payments' ),
