@@ -647,7 +647,7 @@ class ApplePayButton implements ButtonInterface {
 			}
 		}
 
-		$selected_shipping_method = $shipping_methods_array[0];
+		$selected_shipping_method = $shipping_methods_array[0] ?? array();
 		if ( $shipping_method ) {
 			$selected_shipping_method = $shipping_method;
 		}
