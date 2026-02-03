@@ -499,7 +499,7 @@ class ApplePayButton implements ButtonInterface
         $total = (float) $cart->get_total('edit');
         $total = round($total, 2);
         $discount_total = (float) $cart->get_discount_total();
-        return array('subtotal' => $cart->get_subtotal(), 'discount' => $discount_total > 0 ? array('amount' => $discount_total, 'label' => __('Discount', 'woocommerce-paypal-payments')) : null, 'shipping' => array('amount' => $cart->needs_shipping() ? $cart->get_shipping_total() : null, 'label' => $cart->needs_shipping() ? $selected_shipping_method['label'] : null), 'shippingMethods' => $cart->needs_shipping() ? $shipping_methods_array : null, 'taxes' => $cart->get_total_tax(), 'total' => $total);
+        return array('subtotal' => $cart->get_subtotal(), 'discount' => $discount_total > 0 ? array('amount' => $discount_total, 'label' => __('Discount', 'woocommerce-paypal-payments')) : null, 'shipping' => array('amount' => $cart->needs_shipping() ? $cart->get_shipping_total() : null, 'label' => $cart->needs_shipping() ? $selected_shipping_method['label'] ?? null : null), 'shippingMethods' => $cart->needs_shipping() ? $shipping_methods_array : null, 'taxes' => $cart->get_total_tax(), 'total' => $total);
     }
     /**
      * Calculates totals for the cart page with the given information
