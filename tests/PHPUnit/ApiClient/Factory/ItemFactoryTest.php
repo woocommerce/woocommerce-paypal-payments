@@ -185,7 +185,7 @@ class ItemFactoryTest extends TestCase
         $order = Mockery::mock(\WC_Order::class);
 	    $order
 		    ->shouldReceive('get_currency')
-		    ->twice()
+		    ->once()
 		    ->andReturn($this->currency->get());
         $order
             ->expects('get_items')
@@ -200,6 +200,7 @@ class ItemFactoryTest extends TestCase
 	    $product->shouldReceive('get_id')->andReturn(123);
 	    $item->shouldReceive('get_subtotal')->andReturn(50.00);
 	    $item->shouldReceive('get_total')->andReturn(40.00);
+	    $item->shouldReceive('get_total_tax')->andReturn(1.00);
 
         $result = $testee->from_wc_order($order);
         $this->assertCount(1, $result);
@@ -247,7 +248,7 @@ class ItemFactoryTest extends TestCase
         $order = Mockery::mock(\WC_Order::class);
 	    $order
 		    ->shouldReceive('get_currency')
-		    ->twice()
+		    ->once()
 		    ->andReturn($this->currency->get());
         $order
             ->expects('get_items')
@@ -271,6 +272,7 @@ class ItemFactoryTest extends TestCase
 	    $product->shouldReceive('get_id')->andReturn(123);
 	    $item->shouldReceive('get_subtotal')->andReturn(50.00);
 	    $item->shouldReceive('get_total')->andReturn(40.00);
+	    $item->shouldReceive('get_total_tax')->andReturn(1.00);
 
 	    $result = $testee->from_wc_order($order);
         $item = current($result);
@@ -314,7 +316,7 @@ class ItemFactoryTest extends TestCase
         $order = Mockery::mock(\WC_Order::class);
 	    $order
 		    ->shouldReceive('get_currency')
-		    ->twice()
+		    ->once()
 		    ->andReturn('EUR');
         $order
             ->expects('get_items')
@@ -338,6 +340,7 @@ class ItemFactoryTest extends TestCase
 	    $product->shouldReceive('get_id')->andReturn(123);
 	    $item->shouldReceive('get_subtotal')->andReturn(50.00);
 	    $item->shouldReceive('get_total')->andReturn(40.00);
+	    $item->shouldReceive('get_total_tax')->andReturn(1.00);
 
 	    $result = $testee->from_wc_order($order);
         $item = current($result);

@@ -173,8 +173,14 @@ const test = base.extend< BaseExtend >( {
 	wooCommerceOrderEdit: async ( { page }, use ) => {
 		await use( new WooCommerceOrderEdit( { page } ) );
 	},
-	wooCommerceSubscriptionEdit: async ( { page }, use ) => {
-		await use( new WooCommerceSubscriptionEdit( { page } ) );
+	wooCommerceSubscriptionEdit: async ( { page, requestUtils }, use ) => {
+		await use(
+			new WooCommerceSubscriptionEdit( {
+				page,
+				requestUtils,
+				sitePrefix: () => '',
+			} )
+		);
 	},
 
 	// WooCommerce front end

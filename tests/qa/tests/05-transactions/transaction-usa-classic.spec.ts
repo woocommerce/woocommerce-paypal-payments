@@ -40,7 +40,7 @@ import { fastlaneClassicCheckout } from './_test-data/fastlane';
 
 const { payPal, payLater, venmo, acdc, fastlane } = gateways;
 
-test.beforeAll( async ( { utils, pcpApi } ) => {
+test.beforeAll( async ( { utils, pcpApi, wooCommerceApi } ) => {
 	await utils.configureStore( {
 		...storeConfigUsa,
 		enableClassicPages: true,
@@ -59,9 +59,6 @@ test.beforeAll( async ( { utils, pcpApi } ) => {
 		[ acdc.id ]: { id: acdc.id, enabled: true },
 		[ fastlane.id ]: { id: fastlane.id, enabled: false },
 	} );
-} );
-
-test.afterAll( async ( { wooCommerceApi } ) => {
 	await wooCommerceApi.deleteAllOrders();
 } );
 

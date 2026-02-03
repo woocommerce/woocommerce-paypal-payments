@@ -310,7 +310,7 @@ class CreateOrderEndpoint implements EndpointInterface {
 						)
 					);
 				}
-				$this->purchase_unit = $this->purchase_unit_factory->from_wc_order( $wc_order );
+				$this->purchase_unit = $this->purchase_unit_factory->from_wc_order( $wc_order, $payment_method );
 			} else {
 				$this->purchase_unit = $this->purchase_unit_factory->from_wc_cart( null, $this->should_handle_shipping_in_paypal( $funding_source ), $payment_method );
 
