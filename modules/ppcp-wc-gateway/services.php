@@ -31,6 +31,7 @@ use WooCommerce\PayPalCommerce\Onboarding\Render\OnboardingOptionsRenderer;
 use WooCommerce\PayPalCommerce\Onboarding\State;
 use WooCommerce\PayPalCommerce\Settings\Data\Definition\FeaturesDefinition;
 use WooCommerce\PayPalCommerce\Settings\Data\SettingsModel;
+use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
 use WooCommerce\PayPalCommerce\Settings\SettingsModule;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\WcGateway\Admin\FeesRenderer;
@@ -2113,6 +2114,9 @@ return array(
 		$settings = $container->get( 'wcgateway.settings' );
 		assert( $settings instanceof Settings );
 
+		$settings_provider = $container->get( 'settings.settings-provider' );
+		assert( $settings_provider instanceof SettingsProvider );
+
 		$is_working_capital_feature_flag_enabled = apply_filters(
 		// phpcs:ignore WordPress.NamingConventions.ValidHookName.UseUnderscores -- feature flags use this convention
 			'woocommerce.feature-flags.woocommerce_paypal_payments.working_capital_enabled',
@@ -2121,7 +2125,7 @@ return array(
 
 		$is_working_capital_eligible = $container->get( 'api.merchant.country' ) === 'US' && $settings->has( 'stay_updated' ) && $settings->get( 'stay_updated' );
 
-		if ( ! $is_working_capital_feature_flag_enabled || ! $is_working_capital_eligible ) {
+		if ( ! $settings_provider->merchant_connected() || ! $is_working_capital_feature_flag_enabled || ! $is_working_capital_eligible ) {
 			return array();
 		}
 
@@ -2216,6 +2220,9 @@ return array(
 		$messages_apply = $container->get( 'button.helper.messages-apply' );
 		assert( $messages_apply instanceof MessagesApply );
 
+		$settings_provider = $container->get( 'settings.settings-provider' );
+		assert( $settings_provider instanceof SettingsProvider );
+
 		$is_working_capital_feature_flag_enabled = apply_filters(
 		// phpcs:ignore WordPress.NamingConventions.ValidHookName.UseUnderscores -- feature flags use this convention
 			'woocommerce.feature-flags.woocommerce_paypal_payments.working_capital_enabled',
@@ -2225,6 +2232,8 @@ return array(
 		$stay_updated = SettingsModule::should_use_the_old_ui()
 			? $settings->has( 'stay_updated' ) && $settings->get( 'stay_updated' )
 			: $settings_model->get_stay_updated();
+
+		$is_working_capital_eligible = $container->get( 'api.merchant.country' ) === 'US' && $stay_updated;
 
 		$message = sprintf(
 		// translators: %1$s is the URL for the startup guide.
@@ -2242,7 +2251,7 @@ return array(
 				Note::E_WC_ADMIN_NOTE_INFORMATIONAL,
 				'ppcp-working-capital-inbox-note',
 				Note::E_WC_ADMIN_NOTE_UNACTIONED,
-				$is_working_capital_feature_flag_enabled && $container->get( 'api.merchant.country' ) === 'US' && $stay_updated,
+				$settings_provider->merchant_connected() && $is_working_capital_feature_flag_enabled && $is_working_capital_eligible,
 				new InboxNoteAction(
 					'learn_more',
 					__( 'Learn More', 'woocommerce-paypal-payments' ),
