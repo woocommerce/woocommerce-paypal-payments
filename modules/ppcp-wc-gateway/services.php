@@ -2113,6 +2113,9 @@ return array(
 		$settings = $container->get( 'wcgateway.settings' );
 		assert( $settings instanceof Settings );
 
+		$state = $container->get( 'settings.connection-state' );
+		assert( $state instanceof ConnectionState );
+
 		$is_working_capital_feature_flag_enabled = apply_filters(
 		// phpcs:ignore WordPress.NamingConventions.ValidHookName.UseUnderscores -- feature flags use this convention
 			'woocommerce.feature-flags.woocommerce_paypal_payments.working_capital_enabled',
@@ -2121,7 +2124,7 @@ return array(
 
 		$is_working_capital_eligible = $container->get( 'api.merchant.country' ) === 'US' && $settings->has( 'stay_updated' ) && $settings->get( 'stay_updated' );
 
-		if ( ! $is_working_capital_feature_flag_enabled || ! $is_working_capital_eligible ) {
+		if ( ! $state->is_connected() || ! $is_working_capital_feature_flag_enabled || ! $is_working_capital_eligible ) {
 			return array();
 		}
 
