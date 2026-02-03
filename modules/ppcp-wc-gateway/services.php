@@ -29,6 +29,7 @@ use WooCommerce\PayPalCommerce\Onboarding\Render\OnboardingOptionsRenderer;
 use WooCommerce\PayPalCommerce\Onboarding\State;
 use WooCommerce\PayPalCommerce\Settings\Data\Definition\FeaturesDefinition;
 use WooCommerce\PayPalCommerce\Settings\Data\SettingsModel;
+use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
 use WooCommerce\PayPalCommerce\Settings\SettingsModule;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\WcGateway\Admin\FeesRenderer;
@@ -875,13 +876,15 @@ return array(
     'wcgateway.settings.wc-tasks.working-capital-config' => static function (ContainerInterface $container): array {
         $settings = $container->get('wcgateway.settings');
         assert($settings instanceof Settings);
+        $settings_provider = $container->get('settings.settings-provider');
+        assert($settings_provider instanceof SettingsProvider);
         $is_working_capital_feature_flag_enabled = apply_filters(
             // phpcs:ignore WordPress.NamingConventions.ValidHookName.UseUnderscores -- feature flags use this convention
             'woocommerce.feature-flags.woocommerce_paypal_payments.working_capital_enabled',
             \true
         );
         $is_working_capital_eligible = $container->get('api.merchant.country') === 'US' && $settings->has('stay_updated') && $settings->get('stay_updated');
-        if (!$is_working_capital_feature_flag_enabled || !$is_working_capital_eligible) {
+        if (!$settings_provider->merchant_connected() || !$is_working_capital_feature_flag_enabled || !$is_working_capital_eligible) {
             return array();
         }
         return array(array('id' => 'ppcp-working-capital-task', 'title' => __('Fuel your business growth with a PayPal Working Capital loan. Check eligibility', 'woocommerce-paypal-payments'), 'description' => '', 'redirect_url' => 'https://www.paypal.com/us/business/financial-services/working-capital?partner_camp_id=woocommerce_ppwc'));
@@ -949,18 +952,21 @@ return array(
         assert($settings_model instanceof SettingsModel);
         $messages_apply = $container->get('button.helper.messages-apply');
         assert($messages_apply instanceof MessagesApply);
+        $settings_provider = $container->get('settings.settings-provider');
+        assert($settings_provider instanceof SettingsProvider);
         $is_working_capital_feature_flag_enabled = apply_filters(
             // phpcs:ignore WordPress.NamingConventions.ValidHookName.UseUnderscores -- feature flags use this convention
             'woocommerce.feature-flags.woocommerce_paypal_payments.working_capital_enabled',
             \true
         );
         $stay_updated = SettingsModule::should_use_the_old_ui() ? $settings->has('stay_updated') && $settings->get('stay_updated') : $settings_model->get_stay_updated();
+        $is_working_capital_eligible = $container->get('api.merchant.country') === 'US' && $stay_updated;
         $message = sprintf(
             // translators: %1$s is the URL for the startup guide.
             __('We\'ve redesigned the settings for better performance and usability. Starting late January, this improved design will be the default for all WooCommerce installations to enjoy faster navigation, cleaner organization, and improved performance. Check out the <a href="%1$s" target="_blank">Startup Guide</a>, then click <a href="#" name="settings-switch-ui"><strong>Switch to New Settings</strong></a> to activate it.', 'woocommerce-paypal-payments'),
             'https://woocommerce.com/document/woocommerce-paypal-payments/paypal-payments-startup-guide/'
         );
-        return array($inbox_note_factory->create_note(__('PayPal Working Capital', 'woocommerce-paypal-payments'), __('Business loans from $1k to $230k for first-time borrowers. Looking to fuel your business growth? With a PayPal Working Capital loan, approved loans are funded in minutes and repaid as a share of your sales. Minimum payment required every 90 days. The lender for PayPal Working Capital is WebBank.', 'woocommerce-paypal-payments'), Note::E_WC_ADMIN_NOTE_INFORMATIONAL, 'ppcp-working-capital-inbox-note', Note::E_WC_ADMIN_NOTE_UNACTIONED, $is_working_capital_feature_flag_enabled && $container->get('api.merchant.country') === 'US' && $stay_updated, new InboxNoteAction('learn_more', __('Learn More', 'woocommerce-paypal-payments'), 'https://www.paypal.com/us/business/financial-services/working-capital?partner_camp_id=woocommerce_ppwc', Note::E_WC_ADMIN_NOTE_UNACTIONED, \true)), $inbox_note_factory->create_note(__('📢 Important: New PayPal Payments settings UI becoming default in January!', 'woocommerce-paypal-payments'), $message, Note::E_WC_ADMIN_NOTE_INFORMATIONAL, 'ppcp-settings-migration-inbox-note', Note::E_WC_ADMIN_NOTE_UNACTIONED, SettingsModule::should_use_the_old_ui(), new InboxNoteAction('switch_to_new_settings', __('Switch to New Settings', 'woocommerce-paypal-payments'), admin_url('admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway'), Note::E_WC_ADMIN_NOTE_UNACTIONED, \true)));
+        return array($inbox_note_factory->create_note(__('PayPal Working Capital', 'woocommerce-paypal-payments'), __('Business loans from $1k to $230k for first-time borrowers. Looking to fuel your business growth? With a PayPal Working Capital loan, approved loans are funded in minutes and repaid as a share of your sales. Minimum payment required every 90 days. The lender for PayPal Working Capital is WebBank.', 'woocommerce-paypal-payments'), Note::E_WC_ADMIN_NOTE_INFORMATIONAL, 'ppcp-working-capital-inbox-note', Note::E_WC_ADMIN_NOTE_UNACTIONED, $settings_provider->merchant_connected() && $is_working_capital_feature_flag_enabled && $is_working_capital_eligible, new InboxNoteAction('learn_more', __('Learn More', 'woocommerce-paypal-payments'), 'https://www.paypal.com/us/business/financial-services/working-capital?partner_camp_id=woocommerce_ppwc', Note::E_WC_ADMIN_NOTE_UNACTIONED, \true)), $inbox_note_factory->create_note(__('📢 Important: New PayPal Payments settings UI becoming default in January!', 'woocommerce-paypal-payments'), $message, Note::E_WC_ADMIN_NOTE_INFORMATIONAL, 'ppcp-settings-migration-inbox-note', Note::E_WC_ADMIN_NOTE_UNACTIONED, SettingsModule::should_use_the_old_ui(), new InboxNoteAction('switch_to_new_settings', __('Switch to New Settings', 'woocommerce-paypal-payments'), admin_url('admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway'), Note::E_WC_ADMIN_NOTE_UNACTIONED, \true)));
     },
     'wcgateway.void-button.assets' => function (ContainerInterface $container): VoidButtonAssets {
         return new VoidButtonAssets($container->get('wcgateway.asset_getter'), $container->get('ppcp.asset-version'), $container->get('api.endpoint.order'), $container->get('wcgateway.processor.refunds'));
