@@ -37,7 +37,7 @@ for ( const country of defaultUiTestData ) {
 	} );
 }
 
-test( 'PCP-4312 | Settings - Onboarding initial page - See advanced options - Default UI', async ( {
+test( 'PCP-4312 | Settings - Onboarding initial page - See advanced options - Default UI @Critical', async ( {
 	pcpOnboarding,
 } ) => {
 	await pcpOnboarding.visit();
@@ -49,7 +49,7 @@ test( 'PCP-4312 | Settings - Onboarding initial page - See advanced options - De
 	).toBeVisible();
 } );
 
-test( 'PCP-4313 | Settings - Onboarding - Enable Sandbox mode - Default UI', async ( {
+test( 'PCP-4313 | Settings - Onboarding - Enable Sandbox mode - Default UI @Critical', async ( {
 	pcpOnboarding,
 } ) => {
 	await pcpOnboarding.visit();
@@ -62,7 +62,7 @@ test( 'PCP-4313 | Settings - Onboarding - Enable Sandbox mode - Default UI', asy
 	).toBeVisible();
 } );
 
-test( 'PCP-4314 | Settings - Onboarding - See advanced options - Manually Connect by clicking on label - Default UI', async ( {
+test( 'PCP-4314 | Settings - Onboarding - See advanced options - Manually Connect by clicking on label - Default UI @Critical', async ( {
 	pcpOnboarding,
 } ) => {
 	await pcpOnboarding.visit();
@@ -76,7 +76,7 @@ test( 'PCP-4314 | Settings - Onboarding - See advanced options - Manually Connec
 	).toBeVisible();
 } );
 
-test( 'PCP-4315 | Settings - Onboarding - See advanced options - Sandbox mode NOT enabled - Default UI', async ( {
+test( 'PCP-4315 | Settings - Onboarding - See advanced options - Sandbox mode NOT enabled - Default UI @Critical', async ( {
 	pcpOnboarding,
 } ) => {
 	await pcpOnboarding.visit();
@@ -90,7 +90,7 @@ test( 'PCP-4315 | Settings - Onboarding - See advanced options - Sandbox mode NO
 	).toBeVisible();
 } );
 
-test( 'PCP-4316 | Settings - Onboarding - See advanced options - Enable/disable Sandbox mode in Manually connect section - Default UI', async ( {
+test( 'PCP-4316 | Settings - Onboarding - See advanced options - Enable/disable Sandbox mode in Manually connect section - Default UI @Critical', async ( {
 	pcpOnboarding,
 } ) => {
 	await pcpOnboarding.visit();
@@ -105,7 +105,7 @@ test( 'PCP-4316 | Settings - Onboarding - See advanced options - Enable/disable 
 	).toBeVisible();
 } );
 
-test( 'PCP-4318 | Settings - US - Onboarding - Connect with business account, all product types, card payments enabled', async ( {
+test( 'PCP-4318 | Settings - US - Onboarding - Connect with business account, all product types, card payments enabled @Critical', async ( {
 	pcpOnboarding,
 } ) => {
 	await pcpOnboarding.visit();
@@ -189,7 +189,7 @@ test.describe( () => {
 		await plugins.deletePlugin( 'woopayments' );
 	} );
 
-	test( 'PCP-4382 | WooPayments - Settings - Onboarding - Default UI (bcdc, paylater)', async ( {
+	test( 'PCP-4382 | WooPayments - Settings - Onboarding - Default UI (bcdc, paylater) @Critical', async ( {
 		pcpOnboarding,
 	} ) => {
 		await pcpOnboarding.visit();
@@ -210,7 +210,7 @@ test.describe( () => {
 		).toBeVisible();
 	} );
 
-	test( 'PCP-4400 | WooPayments - Settings - Onboarding - No cards by default - Serbia', async ( {
+	test( 'PCP-4400 | WooPayments - Settings - Onboarding - No cards by default - Serbia @Critical', async ( {
 		wooCommerceApi,
 		pcpOnboarding,
 	} ) => {
@@ -228,7 +228,7 @@ test.describe( () => {
 	} );
 } );
 
-test( 'PCP-4403 | Settings - Zimbabwe - Onboarding  - Country not eligible for PayPal payments', async ( {
+test( 'PCP-4403 | Settings - Zimbabwe - Onboarding  - Country not eligible for PayPal payments @Critical', async ( {
 	wooCommerceApi,
 	pcpOnboarding,
 } ) => {

@@ -25,7 +25,7 @@ test.describe( () => {
 		await requestUtils.deactivatePlugin( subscriptionsPlugin.slug );
 	} );
 
-	test( 'PCP-4356 | Subscription - Settings - US - Onboarding - Connect with personal account - Subscription type of product not allowed', async ( {
+	test( 'PCP-4356 | Subscription - Settings - US - Onboarding - Connect with personal account - Subscription type of product not allowed @Critical', async ( {
 		pcpOnboarding,
 	}, testInfo ) => {
 		await pcpOnboarding.visit();
