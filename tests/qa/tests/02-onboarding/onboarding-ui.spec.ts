@@ -111,8 +111,8 @@ test( 'PCP-4318 | Settings - US - Onboarding - Connect with business account, al
 	await pcpOnboarding.visit();
 	await pcpOnboarding.gotoInitialOnboardingPage();
 	await pcpOnboarding.activatePayPalPaymentsButton().click();
-	await pcpOnboarding
-		.page.getByRole( 'heading', { name: 'Choose your account type' } )
+	await pcpOnboarding.page
+		.getByRole( 'heading', { name: 'Choose your account type' } )
 		.waitFor( { state: 'visible' } );
 	await expect(
 		pcpOnboarding.businessRadio(),

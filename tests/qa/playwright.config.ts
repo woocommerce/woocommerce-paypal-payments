@@ -97,7 +97,7 @@ export default defineConfig< BaseExtend >( {
 			: {
 					mode: 'retain-on-failure', //'on',//
 					size: viewportSize,
-			},
+			  },
 
 		recordVideoOptions: {
 			mode: 'retain-on-failure',

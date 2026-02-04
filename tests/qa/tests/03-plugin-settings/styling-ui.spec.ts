@@ -14,19 +14,17 @@ test.beforeAll( async ( { utils, pcpApi } ) => {
 	);
 } );
 
-	test.fixme(
-		'PCP-0000 | Settings - Styling - Default UI',
-		async (
-			{
-				utils,
-				pcpStyling,
-				product,
-				cart,
-				classicCart,
-				checkout,
-				classicCheckout,
-			}
-		) => {
+test.fixme(
+	'PCP-0000 | Settings - Styling - Default UI',
+	async ( {
+		utils,
+		pcpStyling,
+		product,
+		cart,
+		classicCart,
+		checkout,
+		classicCheckout,
+	} ) => {
 		const locations: Pcp.Admin.Styling.Location[] = [
 			'Cart',
 			'Classic Checkout',
