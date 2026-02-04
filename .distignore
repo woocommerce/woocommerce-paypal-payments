@@ -23,6 +23,7 @@ ngrok.yml
 composer.json
 package.json
 package-lock.json
+phpstan*
 .composer_compiled_assets
 assets-compiler.json
 patchwork.json
