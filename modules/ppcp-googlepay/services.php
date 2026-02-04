@@ -247,7 +247,7 @@ return array(
         $enabled_status_text = esc_html__('Status: Available', 'woocommerce-paypal-payments');
         $disabled_status_text = esc_html__('Status: Not yet enabled', 'woocommerce-paypal-payments');
         $button_text = $enabled ? esc_html__('Settings', 'woocommerce-paypal-payments') : esc_html__('Enable Google Pay', 'woocommerce-paypal-payments');
-        $enable_url = $environment->current_environment_is(Environment::PRODUCTION) ? $container->get('googlepay.enable-url-live') : $container->get('googlepay.enable-url-sandbox');
+        $enable_url = $environment->is_production() ? $container->get('googlepay.enable-url-live') : $container->get('googlepay.enable-url-sandbox');
         $button_url = $enabled ? admin_url('admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway&ppcp-tab=ppcp-credit-card-gateway#ppcp-googlepay_button_enabled') : $enable_url;
         return sprintf('<p>%1$s %2$s</p><p><a target="%3$s" href="%4$s" class="button">%5$s</a></p>', $enabled ? $enabled_status_text : $disabled_status_text, $enabled ? '<span class="dashicons dashicons-yes"></span>' : '<span class="dashicons dashicons-no"></span>', $enabled ? '_self' : '_blank', esc_url($button_url), esc_html($button_text));
     },

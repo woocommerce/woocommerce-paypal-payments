@@ -730,7 +730,7 @@ return array(
         $enabled_status_text = esc_html__('Status: Available', 'woocommerce-paypal-payments');
         $disabled_status_text = esc_html__('Status: Not yet enabled', 'woocommerce-paypal-payments');
         $dcc_button_text = $dcc_enabled ? esc_html__('Settings', 'woocommerce-paypal-payments') : esc_html__('Enable Advanced Card Payments', 'woocommerce-paypal-payments');
-        $enable_dcc_url = $environment->current_environment_is(Environment::PRODUCTION) ? $container->get('wcgateway.enable-dcc-url-live') : $container->get('wcgateway.enable-dcc-url-sandbox');
+        $enable_dcc_url = $environment->is_production() ? $container->get('wcgateway.enable-dcc-url-live') : $container->get('wcgateway.enable-dcc-url-sandbox');
         $dcc_button_url = $dcc_enabled ? admin_url('admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway&ppcp-tab=ppcp-credit-card-gateway') : $enable_dcc_url;
         return sprintf('<p>%1$s %2$s</p><p><a target="%3$s" href="%4$s" class="button">%5$s</a></p>', $dcc_enabled ? $enabled_status_text : $disabled_status_text, $dcc_enabled ? '<span class="dashicons dashicons-yes"></span>' : '<span class="dashicons dashicons-no"></span>', $dcc_enabled ? '_self' : '_blank', esc_url($dcc_button_url), esc_html($dcc_button_text));
     },
@@ -743,7 +743,7 @@ return array(
         $enabled_status_text = esc_html__('Status: Available', 'woocommerce-paypal-payments');
         $disabled_status_text = esc_html__('Status: Not yet enabled', 'woocommerce-paypal-payments');
         $button_text = $enabled ? esc_html__('Settings', 'woocommerce-paypal-payments') : esc_html__('Enable saving PayPal & Venmo', 'woocommerce-paypal-payments');
-        $enable_url = $environment->current_environment_is(Environment::PRODUCTION) ? $container->get('wcgateway.enable-reference-transactions-url-live') : $container->get('wcgateway.enable-reference-transactions-url-sandbox');
+        $enable_url = $environment->is_production() ? $container->get('wcgateway.enable-reference-transactions-url-live') : $container->get('wcgateway.enable-reference-transactions-url-sandbox');
         $button_url = $enabled ? admin_url('admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway#field-paypal_saved_payments') : $enable_url;
         return sprintf('<p>%1$s %2$s</p><p><a target="%3$s" href="%4$s" class="button">%5$s</a></p>', $enabled ? $enabled_status_text : $disabled_status_text, $enabled ? '<span class="dashicons dashicons-yes"></span>' : '<span class="dashicons dashicons-no"></span>', $enabled ? '_self' : '_blank', esc_url($button_url), esc_html($button_text));
     },
@@ -759,7 +759,7 @@ return array(
         $pui_enabled = $pui_product_status->is_active();
         $enabled_status_text = esc_html__('Status: Available', 'woocommerce-paypal-payments');
         $disabled_status_text = esc_html__('Status: Not yet enabled', 'woocommerce-paypal-payments');
-        $enable_pui_url = $environment->current_environment_is(Environment::PRODUCTION) ? $container->get('wcgateway.enable-pui-url-live') : $container->get('wcgateway.enable-pui-url-sandbox');
+        $enable_pui_url = $environment->is_production() ? $container->get('wcgateway.enable-pui-url-live') : $container->get('wcgateway.enable-pui-url-sandbox');
         $pui_button_url = $pui_enabled ? admin_url('admin.php?page=wc-settings&tab=checkout&section=ppcp-pay-upon-invoice-gateway') : $enable_pui_url;
         $pui_button_text = $pui_enabled ? esc_html__('Settings', 'woocommerce-paypal-payments') : esc_html__('Enable Pay upon Invoice', 'woocommerce-paypal-payments');
         return sprintf('<p>%1$s %2$s</p><p><a target="%3$s" href="%4$s" class="button">%5$s</a></p>', $pui_enabled ? $enabled_status_text : $disabled_status_text, $pui_enabled ? '<span class="dashicons dashicons-yes"></span>' : '<span class="dashicons dashicons-no"></span>', $pui_enabled ? '_self' : '_blank', esc_url($pui_button_url), esc_html($pui_button_text));

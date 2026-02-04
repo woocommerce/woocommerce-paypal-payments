@@ -911,7 +911,7 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
             // Remove vault parameter to allow for Venmo with Save Payment Methods (Vault V3).
             unset($params['vault']);
         }
-        if ($this->environment->current_environment_is(Environment::SANDBOX) && defined('WP_DEBUG') && \WP_DEBUG && WC()->customer instanceof \WC_Customer && WC()->customer->get_billing_country() && 2 === strlen(WC()->customer->get_billing_country())) {
+        if ($this->environment->is_sandbox() && defined('WP_DEBUG') && \WP_DEBUG && WC()->customer instanceof \WC_Customer && WC()->customer->get_billing_country() && 2 === strlen(WC()->customer->get_billing_country())) {
             $params['buyer-country'] = WC()->customer->get_billing_country();
         }
         if ('pay-now' === $current_context) {

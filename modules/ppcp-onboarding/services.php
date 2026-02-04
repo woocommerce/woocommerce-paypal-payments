@@ -31,7 +31,7 @@ return array(
          *
          * @var Environment $environment
          */
-        if ($environment->current_environment_is(Environment::SANDBOX)) {
+        if ($environment->is_sandbox()) {
             return $container->get('api.paypal-host-sandbox');
         }
         return $container->get('api.paypal-host-production');
@@ -39,7 +39,7 @@ return array(
     'api.paypal-website-url' => function (ContainerInterface $container): string {
         $environment = $container->get('settings.environment');
         assert($environment instanceof Environment);
-        if ($environment->current_environment_is(Environment::SANDBOX)) {
+        if ($environment->is_sandbox()) {
             return $container->get('api.paypal-website-url-sandbox');
         }
         return $container->get('api.paypal-website-url-production');

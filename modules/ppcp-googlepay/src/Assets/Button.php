@@ -360,7 +360,7 @@ class Button implements ButtonInterface
         $is_enabled = $this->settings->has('googlepay_button_enabled') && $this->settings->get('googlepay_button_enabled');
         $available_gateways = WC()->payment_gateways->get_available_payment_gateways();
         $is_wc_gateway_enabled = isset($available_gateways[GooglePayGateway::ID]);
-        return array('environment' => $this->environment->current_environment_is(Environment::SANDBOX) ? 'TEST' : 'PRODUCTION', 'is_debug' => defined('WP_DEBUG') && WP_DEBUG, 'is_enabled' => $is_enabled, 'is_wc_gateway_enabled' => $is_wc_gateway_enabled, 'sdk_url' => $this->sdk_url, 'button' => array(
+        return array('environment' => $this->environment->is_sandbox() ? 'TEST' : 'PRODUCTION', 'is_debug' => defined('WP_DEBUG') && WP_DEBUG, 'is_enabled' => $is_enabled, 'is_wc_gateway_enabled' => $is_wc_gateway_enabled, 'sdk_url' => $this->sdk_url, 'button' => array(
             'wrapper' => '#ppc-button-googlepay-container',
             'style' => $this->button_styles_for_context('cart'),
             // For now use cart. Pass the context if necessary.
