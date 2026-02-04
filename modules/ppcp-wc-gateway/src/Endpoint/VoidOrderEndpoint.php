@@ -122,12 +122,12 @@ class VoidOrderEndpoint {
 
 			$this->make_refunded( $wc_order );
 		} catch ( Exception $exception ) {
+			$this->logger->error( 'Void failed. ' . $exception->getMessage() );
 			wp_send_json_error(
 				array(
 					'message' => 'Void failed. ' . $exception->getMessage(),
 				)
 			);
-			$this->logger->error( 'Void failed. ' . $exception->getMessage() );
 		}
 
 		wp_send_json_success();
