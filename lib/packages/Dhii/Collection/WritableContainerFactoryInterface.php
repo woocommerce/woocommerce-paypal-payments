@@ -1,15 +1,13 @@
 <?php
 
-declare(strict_types=1);
-
+declare (strict_types=1);
 namespace WooCommerce\PayPalCommerce\Vendor\Dhii\Collection;
 
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
-
 /**
  * A map that can create a writable container.
  */
-interface WritableContainerFactoryInterface extends ContainerFactoryInterface
+interface WritableContainerFactoryInterface extends \WooCommerce\PayPalCommerce\Vendor\Dhii\Collection\ContainerFactoryInterface
 {
     /**
      * @inheritDoc

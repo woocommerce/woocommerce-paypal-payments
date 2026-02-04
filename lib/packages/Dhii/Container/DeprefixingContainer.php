@@ -1,13 +1,11 @@
 <?php
 
-declare(strict_types=1);
-
+declare (strict_types=1);
 namespace WooCommerce\PayPalCommerce\Vendor\Dhii\Container;
 
 use WooCommerce\PayPalCommerce\Vendor\Dhii\Collection\ContainerInterface;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface as PsrContainerInterface;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\NotFoundExceptionInterface;
-
 /**
  * A container implementation that wraps around an inner container to automatically add prefixes to keys during
  * fetching and look up, allowing consumers to omit them.
@@ -22,21 +20,18 @@ class DeprefixingContainer implements ContainerInterface
      * @var PsrContainerInterface
      */
     protected $inner;
-
     /**
      * @since [*next-version*]
      *
      * @var string
      */
     protected $prefix;
-
     /**
      * @since [*next-version*]
      *
      * @var bool
      */
     protected $strict;
-
     /**
      * Constructor.
      *
@@ -47,13 +42,12 @@ class DeprefixingContainer implements ContainerInterface
      * @param bool                  $strict    Whether or not to fallback to prefixed keys if an un-prefixed key does
      *                                         not exist in the inner container.
      */
-    public function __construct(PsrContainerInterface $container, string $prefix, bool $strict = true)
+    public function __construct(PsrContainerInterface $container, string $prefix, bool $strict = \true)
     {
         $this->inner = $container;
         $this->prefix = $prefix;
         $this->strict = $strict;
     }
-
     /**
      * @inheritdoc
      *
@@ -73,10 +67,8 @@ class DeprefixingContainer implements ContainerInterface
                 throw $nfException;
             }
         }
-
         return $this->inner->get($key);
     }
-
     /**
      * @inheritdoc
      *
@@ -86,10 +78,8 @@ class DeprefixingContainer implements ContainerInterface
     {
         $key = (string) $key;
         $realKey = $this->getInnerKey($key);
-
-        return $this->inner->has($realKey) || (!$this->strict && $this->inner->has($key));
+        return $this->inner->has($realKey) || !$this->strict && $this->inner->has($key);
     }
-
     /**
      * Retrieves the key to use for the inner container.
      *
