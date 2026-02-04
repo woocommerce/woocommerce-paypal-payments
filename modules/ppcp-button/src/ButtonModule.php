@@ -339,7 +339,7 @@ class ButtonModule implements ServiceModule, ExtendingModule, ExecutableModule {
 		 */
 		add_action(
 			'template_redirect',
-			function () use ( $container ) {
+			function () {
 				// phpcs:ignore WordPress.Security.NonceVerification
 				if ( ! isset( $_GET[ ReturnUrlFactory::PCP_QUERY_ARG ] ) ) {
 					return;

@@ -368,7 +368,7 @@ class SavePaymentMethodsModule implements ServiceModule, ExtendingModule, Execut
 				 */
 				add_action(
 					'woocommerce_add_payment_method_form_bottom',
-					function () use ( $c ) {
+					function () {
 						if ( ! is_user_logged_in() || ! is_add_payment_method_page() ) {
 							return;
 						}

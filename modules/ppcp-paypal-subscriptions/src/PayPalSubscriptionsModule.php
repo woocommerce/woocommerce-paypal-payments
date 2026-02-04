@@ -91,7 +91,7 @@ class PayPalSubscriptionsModule implements ServiceModule, ExtendingModule, Execu
 
 		add_filter(
 			'woocommerce_can_subscription_be_updated_to_active',
-			function ( bool $can_be_updated, \WC_Subscription $subscription ) use ( $c ) {
+			function ( bool $can_be_updated, \WC_Subscription $subscription ) {
 				$subscription_id = $subscription->get_meta( 'ppcp_subscription' ) ?? '';
 				if ( $subscription_id && $subscription->get_status() === 'pending-cancel' ) {
 					return true;
@@ -104,7 +104,7 @@ class PayPalSubscriptionsModule implements ServiceModule, ExtendingModule, Execu
 
 		add_filter(
 			'woocommerce_can_subscription_be_updated_to_new-payment-method',
-			function ( bool $can_be_updated, \WC_Subscription $subscription ) use ( $c ) {
+			function ( bool $can_be_updated, \WC_Subscription $subscription ) {
 				$subscription_id = $subscription->get_meta( 'ppcp_subscription' ) ?? '';
 				if ( $subscription_id ) {
 					return false;

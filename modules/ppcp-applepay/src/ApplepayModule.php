@@ -285,7 +285,7 @@ class ApplepayModule implements ServiceModule, ExtendingModule, ExecutableModule
 		);
 		add_action(
 			'enqueue_block_editor_assets',
-			function () use ( $c, $button ) {
+			function () use ( $button ) {
 				if ( ! $button->is_enabled() ) {
 					return;
 				}
@@ -330,7 +330,7 @@ class ApplepayModule implements ServiceModule, ExtendingModule, ExecutableModule
 		// Adds ApplePay component to the backend button preview settings.
 		add_action(
 			'woocommerce_paypal_payments_admin_gateway_settings',
-			function ( array $settings ) use ( $c ): array {
+			function ( array $settings ): array {
 				if ( is_array( $settings['components'] ) ) {
 					$settings['components'][] = 'applepay';
 				}
@@ -350,7 +350,7 @@ class ApplepayModule implements ServiceModule, ExtendingModule, ExecutableModule
 		// Enqueue backend scripts.
 		add_action(
 			'enqueue_block_editor_assets',
-			static function () use ( $c, $button ) {
+			static function () use ( $button ) {
 				/**
 				 * Should add this to the ButtonInterface.
 				 *

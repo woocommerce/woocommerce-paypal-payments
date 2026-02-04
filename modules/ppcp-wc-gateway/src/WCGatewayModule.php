@@ -278,7 +278,7 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
 		);
 		add_action(
 			'woocommerce_paypal_commerce_gateway_deactivate',
-			static function () use ( $c ) {
+			static function () {
 				delete_option( Settings::KEY );
 				delete_option( 'woocommerce_' . PayPalGateway::ID . '_settings' );
 				delete_option( 'woocommerce_' . CreditCardGateway::ID . '_settings' );
@@ -621,7 +621,7 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
 		// Add processing instruction request data for OXXO payment.
 		add_filter(
 			'ppcp_create_order_request_body_data',
-			static function ( array $data, string $payment_method, array $request ) use ( $c ): array {
+			static function ( array $data, string $payment_method, array $request ): array {
 				if ( $payment_method !== OXXOGateway::ID ) {
 					return $data;
 				}

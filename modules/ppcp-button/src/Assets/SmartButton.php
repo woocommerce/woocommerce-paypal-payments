@@ -883,7 +883,7 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
 			 *
 			 * @psalm-suppress MissingClosureParamType
 			 */
-			function ( $block_content, $block_params ) use ( $name, $content, $priority ) {
+			function ( $block_content, $block_params ) use ( $name, $content ) {
 				if (
 					is_array( $block_params )
 					&& ( $block_params['blockName'] ?? null ) === $name
