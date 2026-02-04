@@ -40,30 +40,51 @@ test( 'PCP-4362 | Settings - Onboarding - See advanced options - Manually connec
 	await pcpOnboarding.toggleSandboxMode( true );
 	await pcpOnboarding.toggleManuallyConnect( true );
 
-	await expect( pcpOnboarding.sandboxClientIdInput() ).toBeVisible();
+	await expect(
+		pcpOnboarding.sandboxClientIdInput(),
+		'Assert sandbox client ID input is visible'
+	).toBeVisible();
 	await pcpOnboarding.sandboxClientIdInput().fill( clientId );
 	await pcpOnboarding.page.waitForTimeout( 1000 );
 
-	await expect( pcpOnboarding.sandboxSecretKeyInput() ).toBeVisible();
+	await expect(
+		pcpOnboarding.sandboxSecretKeyInput(),
+		'Assert sandbox secret key input is visible'
+	).toBeVisible();
 	await pcpOnboarding.sandboxSecretKeyInput().fill( clientSecret );
 	await pcpOnboarding.page.waitForTimeout( 1000 );
 
-	await expect( pcpOnboarding.connectAccountButton() ).toBeVisible();
+	await expect(
+		pcpOnboarding.connectAccountButton(),
+		'Assert connect account button is visible'
+	).toBeVisible();
 	await pcpOnboarding.connectAccountButton().click();
 
-	await expect( pcpOverview.overviewTab() ).toBeVisible();
-	await expect( pcpOverview.settingsTab() ).toBeVisible();
+	await expect(
+		pcpOverview.overviewTab(),
+		'Assert overview tab is visible after connect'
+	).toBeVisible();
+	await expect(
+		pcpOverview.settingsTab(),
+		'Assert settings tab is visible'
+	).toBeVisible();
 
 	await pcpOverview.settingsTab().click();
 
-	await expect( pcpSettings.connectionDetailsContainer() ).toBeVisible();
-	await expect( pcpSettings.connectionDetailsContainer() ).toContainText(
-		accountId
-	);
-	await expect( pcpSettings.connectionDetailsContainer() ).toContainText(
-		email
-	);
-	await expect( pcpSettings.connectionDetailsContainer() ).toContainText(
-		clientId
-	);
+	await expect(
+		pcpSettings.connectionDetailsContainer(),
+		'Assert connection details container is visible'
+	).toBeVisible();
+	await expect(
+		pcpSettings.connectionDetailsContainer(),
+		`Assert connection details contain account ID ${ accountId }`
+	).toContainText( accountId );
+	await expect(
+		pcpSettings.connectionDetailsContainer(),
+		`Assert connection details contain email ${ email }`
+	).toContainText( email );
+	await expect(
+		pcpSettings.connectionDetailsContainer(),
+		'Assert connection details contain client ID'
+	).toContainText( clientId );
 } );

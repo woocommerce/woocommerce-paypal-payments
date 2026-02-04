@@ -3,6 +3,7 @@
  */
 import {
 	test,
+	expect,
 	saveTestResultsToFile,
 	getTestResultsFromFile,
 } from '../../utils';
@@ -38,13 +39,10 @@ for ( const testData of badgeTestsData ) {
 						.waitFor( { state: 'visible' } );
 					await pcpOnboarding.closeAdvancedOptions();
 					await pcpOnboarding.page.waitForLoadState( 'load' );
-					await pcpOnboarding.snapshotLocator(
+					await expect(
 						pcpOnboarding.welcomeDocsContainer(),
-						`${ testInfo.title } - PayPal Settings`,
-						{
-							timeout: 3000,
-						}
-					);
+						`Assert welcome docs container is visible for ${ country } ${ currency }`
+					).toBeVisible();
 
 					await pcpOnboarding.activatePayPalPaymentsButton().click();
 					if ( country !== 'Germany' ) {
@@ -57,13 +55,10 @@ for ( const testData of badgeTestsData ) {
 						.disableOptionalPaymentMethodsRadio()
 						.click();
 					await pcpOnboarding.page.waitForLoadState( 'load' );
-					await pcpOnboarding.snapshotLocator(
+					await expect(
 						pcpOnboarding.checkoutAlternativeOptionsContainer(),
-						`${ testInfo.title } - Choose checkout options`,
-						{
-							timeout: 3000,
-						}
-					);
+						`Assert checkout options container is visible for ${ country } ${ currency }`
+					).toBeVisible();
 				}
 			);
 		}

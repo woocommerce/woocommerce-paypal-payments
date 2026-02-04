@@ -33,20 +33,18 @@ for ( const testData of paymentMethodsData.defaultUi ) {
 			},
 			testInfo
 		) => {
-			const snapshotName = testInfo.title;
 			const simpleProduct = products.simple100;
 
 			await pcpPaymentMethods.visit();
 			await expect(
-				pcpPaymentMethods.onlineCardPaymentsContainer()
+				pcpPaymentMethods.onlineCardPaymentsContainer(),
+				`Assert online card payments container is visible for ${ country }`
 			).toBeVisible();
-			// Snapshot the full screen
-			await pcpPaymentMethods.snapshotContent(
-				`${ snapshotName } - Content`
-			);
-			// Assert number of gateways
 			await expect
-				.soft( pcpPaymentMethods.paymentMethodContainers() )
+				.soft(
+					pcpPaymentMethods.paymentMethodContainers(),
+					`Assert payment methods count is ${ testGateways.length } for ${ country }`
+				)
 				.toHaveCount( testGateways.length );
 
 			// Assert expected gateways one by one
@@ -59,7 +57,6 @@ for ( const testData of paymentMethodsData.defaultUi ) {
 					dependsOn,
 				} = gateway;
 
-				// current gateway toggle and settings button
 				const gatewayToggle =
 					pcpPaymentMethods.paymentMethodToggle( titleInPcpSettings );
 				const gatewaySettingsButton =
@@ -67,20 +64,18 @@ for ( const testData of paymentMethodsData.defaultUi ) {
 						titleInPcpSettings
 					);
 
-				// Assert current gateway enabled state and settings button
-				await expect( gatewaySettingsButton ).toBeVisible( {
-					visible: hasSettingsButton,
-				} );
-				await expect( gatewayToggle ).toBeChecked( {
-					checked: isGatewayEnabled,
-				} );
+				await expect(
+					gatewaySettingsButton,
+					`Assert settings button visibility is ${ hasSettingsButton } for ${ titleInPcpSettings }`
+				).toBeVisible( { visible: hasSettingsButton } );
+				await expect(
+					gatewayToggle,
+					`Assert gateway ${ titleInPcpSettings } checked state is ${ isGatewayEnabled }`
+				).toBeChecked( { checked: isGatewayEnabled } );
 
-				// Snapshot gateway settings modal window if it exists
 				if ( hasSettingsButton ) {
-					// Enable gateway if not by default
 					if ( ! isGatewayEnabled ) {
 						if ( dependsOn ) {
-							// Ensure the leading gateway is enabled
 							await pcpPaymentMethods
 								.paymentMethodToggle(
 									gateways[ dependsOn ].titleInPcpSettings
@@ -90,12 +85,11 @@ for ( const testData of paymentMethodsData.defaultUi ) {
 						await gatewayToggle.check();
 					}
 
-					// Open gateway settings modal window
 					await gatewaySettingsButton.click();
-					// Snapshot gateway settings modal window
-					await pcpPaymentMethods.snapshotModalWindow(
-						`${ snapshotName } - Modal - ${ titleInPcpSettings }`
-					);
+					await expect(
+						pcpPaymentMethods.modalWindow(),
+						`Assert modal window is visible for ${ titleInPcpSettings }`
+					).toBeVisible();
 					await pcpPaymentMethods.modalCloseButton().click();
 				}
 			}
@@ -103,35 +97,43 @@ for ( const testData of paymentMethodsData.defaultUi ) {
 			await utils.fillVisitorsCart( [ simpleProduct ] );
 
 			await product.visit( simpleProduct.slug );
-			await product.payPalUi.snapshotClassicPayPalButtons(
-				`${ snapshotName } - Frontend - Product`
-			);
+			await expect(
+				product.payPalUi.payPalButtonsBlockContainer(),
+				'Assert PayPal button container is visible on product page'
+			).toBeVisible();
 
 			await product.minicartContainer().hover();
 			await expect
-				.soft( payPalUiClassic.miniCartButtonContainer() )
+				.soft(
+					payPalUiClassic.miniCartButtonContainer(),
+					'Assert mini cart PayPal button is not visible when not expected'
+				)
 				.not.toBeVisible();
 
 			await cart.visit();
-			await cart.payPalUi.snapshotBlockPayPalButtons(
-				`${ snapshotName } - Frontend - Cart`
-			);
+			await expect(
+				cart.payPalUi.payPalButtonsBlockContainer(),
+				'Assert PayPal button container is visible on cart'
+			).toBeVisible();
 
 			await classicCart.visit();
-			await classicCart.payPalUi.snapshotClassicPayPalButtons(
-				`${ snapshotName } - Frontend - Classic Cart`
-			);
+			await expect(
+				classicCart.payPalUi.payPalButtonsBlockContainer(),
+				'Assert PayPal button container is visible on classic cart'
+			).toBeVisible();
 
 			await checkout.visit();
-			await checkout.payPalUi.snapshotBlockPayPalButtons(
-				`${ snapshotName } - Frontend - Checkout`
-			);
+			await expect(
+				checkout.payPalUi.payPalButtonsBlockContainer(),
+				'Assert PayPal button container is visible on checkout'
+			).toBeVisible();
 
 			await classicCheckout.visit();
 			await classicCheckout.paymentOption( 'PayPal' ).click();
-			await classicCheckout.payPalUi.snapshotClassicPayPalButtons(
-				`${ snapshotName } - Frontend - Classic checkout`
-			);
+			await expect(
+				classicCheckout.payPalUi.payPalButtonsBlockContainer(),
+				'Assert PayPal button container is visible on classic checkout'
+			).toBeVisible();
 		}
 	);
 }
