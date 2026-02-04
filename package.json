@@ -22,7 +22,7 @@
     "lint": "npm run phpcs && npm run psalm",
     "phpcs": "vendor/bin/phpcs --parallel=8 -s --runtime-set ignore_warnings_on_exit 1",
     "psalm": "vendor/bin/psalm --show-info=false --threads=8 --diff",
-    "phpstan": "vendor/bin/phpstan",
+    "phpstan": "vendor/bin/phpstan analyze --memory-limit=2G",
     "fix-lint": "vendor/bin/phpcbf",
     "build": "wp-scripts build",
     "watch-js": "wp-scripts start"
