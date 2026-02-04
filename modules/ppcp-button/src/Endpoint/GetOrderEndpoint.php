@@ -40,7 +40,7 @@ class GetOrderEndpoint implements EndpointInterface {
 	public static function nonce(): string {
 		return self::ENDPOINT;
 	}
-	public function handle_request(): bool {
+	public function handle_request(): void {
 		try {
 			$data     = $this->request_data->read_request( $this->nonce() );
 			$order_id = $data['order_id'] ?? '';
@@ -51,13 +51,11 @@ class GetOrderEndpoint implements EndpointInterface {
 						'message' => __( 'Order ID is required', 'woocommerce-paypal-payments' ),
 					)
 				);
-				return false;
 			}
 
 			$order = $this->api_endpoint->order( $order_id );
 
 			wp_send_json_success( $order->to_array() );
-			return true;
 		} catch ( RuntimeException $error ) {
 			$this->logger->error( 'Get order failed: ' . $error->getMessage() );
 
@@ -78,7 +76,5 @@ class GetOrderEndpoint implements EndpointInterface {
 				)
 			);
 		}
-
-		return false;
 	}
 }

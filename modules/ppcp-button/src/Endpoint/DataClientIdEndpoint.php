@@ -73,10 +73,8 @@ class DataClientIdEndpoint implements EndpointInterface {
 
 	/**
 	 * Handles the request.
-	 *
-	 * @return bool
 	 */
-	public function handle_request(): bool {
+	public function handle_request(): void {
 		try {
 			$this->request_data->read_request( $this->nonce() );
 			$user_id = get_current_user_id();
@@ -88,7 +86,6 @@ class DataClientIdEndpoint implements EndpointInterface {
 					'user'       => $user_id,
 				)
 			);
-			return true;
 		} catch ( Exception $error ) {
 			$this->logger->error( 'Client ID retrieval failed: ' . $error->getMessage() );
 
@@ -100,7 +97,6 @@ class DataClientIdEndpoint implements EndpointInterface {
 					'details' => is_a( $error, PayPalApiException::class ) ? $error->details() : array(),
 				)
 			);
-			return false;
 		}
 	}
 }

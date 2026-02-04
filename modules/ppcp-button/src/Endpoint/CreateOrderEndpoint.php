@@ -285,10 +285,9 @@ class CreateOrderEndpoint implements EndpointInterface {
 	/**
 	 * Handles the request.
 	 *
-	 * @return bool
 	 * @throws Exception On Error.
 	 */
-	public function handle_request(): bool {
+	public function handle_request(): void {
 		try {
 			$data                      = $this->request_data->read_request( $this->nonce() );
 			$this->parsed_request_data = $data;
@@ -401,7 +400,6 @@ class CreateOrderEndpoint implements EndpointInterface {
 			}
 
 			wp_send_json_success( $this->make_response( $order ) );
-			return true;
 
 		} catch ( ValidationException $error ) {
 			$response = array(
@@ -429,8 +427,6 @@ class CreateOrderEndpoint implements EndpointInterface {
 
 			wc_add_notice( $exception->getMessage(), 'error' );
 		}
-
-		return false;
 	}
 
 	/**

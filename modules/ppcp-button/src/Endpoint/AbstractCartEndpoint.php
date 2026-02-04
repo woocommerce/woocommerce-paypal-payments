@@ -65,12 +65,10 @@ abstract class AbstractCartEndpoint implements EndpointInterface {
 
 	/**
 	 * Handles the request.
-	 *
-	 * @return bool
 	 */
-	public function handle_request(): bool {
+	public function handle_request(): void {
 		try {
-			return $this->handle_data();
+			$this->handle_data();
 		} catch ( Exception $error ) {
 			$this->logger->error( 'Cart ' . $this->logger_tag . ' failed: ' . $error->getMessage() );
 
@@ -82,7 +80,6 @@ abstract class AbstractCartEndpoint implements EndpointInterface {
 					'details' => is_a( $error, PayPalApiException::class ) ? $error->details() : array(),
 				)
 			);
-			return false;
 		}
 	}
 

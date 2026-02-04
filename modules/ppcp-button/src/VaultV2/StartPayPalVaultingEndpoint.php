@@ -72,10 +72,8 @@ class StartPayPalVaultingEndpoint implements EndpointInterface {
 
 	/**
 	 * Handles the request.
-	 *
-	 * @return bool
 	 */
-	public function handle_request(): bool {
+	public function handle_request(): void {
 		try {
 			$data = $this->request_data->read_request( $this->nonce() );
 
@@ -95,8 +93,6 @@ class StartPayPalVaultingEndpoint implements EndpointInterface {
 					'approve_link' => $links->approve_link(),
 				)
 			);
-
-			return true;
 		} catch ( Exception $error ) {
 			$this->logger->error( 'Failed to start PayPal vaulting: ' . $error->getMessage() );
 
@@ -106,7 +102,6 @@ class StartPayPalVaultingEndpoint implements EndpointInterface {
 					'message' => $error->getMessage(),
 				)
 			);
-			return false;
 		}
 	}
 }
