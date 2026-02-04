@@ -15,7 +15,7 @@ for ( const country of defaultUiTestData ) {
 	test( `${ country.testSummary }`, async ( {
 		pcpOnboarding,
 		wooCommerceApi,
-	}, testInfo ) => {
+	} ) => {
 		await wooCommerceApi.updateGeneralSettings(
 			country.wooCommerceGeneralSettings
 		);
@@ -25,133 +25,119 @@ for ( const country of defaultUiTestData ) {
 		await pcpOnboarding.page.waitForLoadState();
 
 		const noWarnings = await pcpOnboarding.assertNoBadgeBoxUtilsWarnings();
-		expect( noWarnings ).toBeTruthy();
+		expect(
+			noWarnings,
+			`Assert no badgeBoxUtils console warnings for ${ country.testSummary }`
+		).toBeTruthy();
 
-		await pcpOnboarding.snapshotLocator(
+		await expect(
 			pcpOnboarding.onboardingContentContainer(),
-			`${ testInfo.title } - ${ country }`,
-			{ timeout: 3000 }
-		);
+			`Assert onboarding content container is visible for ${ country.testSummary }`
+		).toBeVisible();
 	} );
 }
 
 test( 'PCP-4312 | Settings - Onboarding initial page - See advanced options - Default UI', async ( {
 	pcpOnboarding,
-}, testInfo ) => {
+} ) => {
 	await pcpOnboarding.visit();
 	await pcpOnboarding.gotoInitialOnboardingPage();
 	await pcpOnboarding.openAdvancedOptions();
-	await pcpOnboarding.snapshotLocator(
-		pcpOnboarding.onboardingContentContainer(),
-		testInfo.title,
-		{ timeout: 3000 }
-	);
+	await expect(
+		pcpOnboarding.advancedOptionsContent(),
+		'Assert advanced options section is visible'
+	).toBeVisible();
 } );
 
 test( 'PCP-4313 | Settings - Onboarding - Enable Sandbox mode - Default UI', async ( {
 	pcpOnboarding,
-}, testInfo ) => {
+} ) => {
 	await pcpOnboarding.visit();
 	await pcpOnboarding.gotoInitialOnboardingPage();
 	await pcpOnboarding.openAdvancedOptions();
 	await pcpOnboarding.toggleSandboxMode( true );
-	await pcpOnboarding.snapshotLocator(
-		pcpOnboarding.onboardingContentContainer(),
-		testInfo.title,
-		{ timeout: 3000 }
-	);
+	await expect(
+		pcpOnboarding.enableSandboxModeToggle(),
+		'Assert Sandbox mode toggle is visible'
+	).toBeVisible();
 } );
 
 test( 'PCP-4314 | Settings - Onboarding - See advanced options - Manually Connect by clicking on label - Default UI', async ( {
 	pcpOnboarding,
-}, testInfo ) => {
+} ) => {
 	await pcpOnboarding.visit();
 	await pcpOnboarding.gotoInitialOnboardingPage();
 	await pcpOnboarding.openAdvancedOptions();
 	await pcpOnboarding.toggleSandboxMode( true );
 	await pcpOnboarding.toggleManuallyConnect( true );
-	await pcpOnboarding.snapshotLocator(
-		pcpOnboarding.onboardingContentContainer(),
-		testInfo.title,
-		{ timeout: 3000 }
-	);
+	await expect(
+		pcpOnboarding.sandboxClientIdInput(),
+		'Assert manual connect sandbox client ID input is visible'
+	).toBeVisible();
 } );
 
 test( 'PCP-4315 | Settings - Onboarding - See advanced options - Sandbox mode NOT enabled - Default UI', async ( {
 	pcpOnboarding,
-}, testInfo ) => {
+} ) => {
 	await pcpOnboarding.visit();
 	await pcpOnboarding.gotoInitialOnboardingPage();
 	await pcpOnboarding.openAdvancedOptions();
 	await pcpOnboarding.toggleSandboxMode( false );
 	await pcpOnboarding.toggleManuallyConnect( true );
-	await pcpOnboarding.snapshotLocator(
-		pcpOnboarding.onboardingContentContainer(),
-		testInfo.title,
-		{ timeout: 3000 }
-	);
+	await expect(
+		pcpOnboarding.enableManuallyConnectToggle(),
+		'Assert manually connect toggle is visible when sandbox is off'
+	).toBeVisible();
 } );
 
 test( 'PCP-4316 | Settings - Onboarding - See advanced options - Enable/disable Sandbox mode in Manually connect section - Default UI', async ( {
 	pcpOnboarding,
-}, testInfo ) => {
+} ) => {
 	await pcpOnboarding.visit();
 	await pcpOnboarding.gotoInitialOnboardingPage();
 	await pcpOnboarding.openAdvancedOptions();
 	await pcpOnboarding.toggleSandboxMode( false );
 	await pcpOnboarding.toggleManuallyConnect( false );
 	await pcpOnboarding.enableManuallyConnectToggle().click();
-	await pcpOnboarding.snapshotLocator(
+	await expect(
 		pcpOnboarding.onboardingContentContainer(),
-		testInfo.title,
-		{ timeout: 3000 }
-	);
+		'Assert onboarding content is visible after opening manually connect'
+	).toBeVisible();
 } );
 
 test( 'PCP-4318 | Settings - US - Onboarding - Connect with business account, all product types, card payments enabled', async ( {
 	pcpOnboarding,
-}, testInfo ) => {
+} ) => {
 	await pcpOnboarding.visit();
 	await pcpOnboarding.gotoInitialOnboardingPage();
 	await pcpOnboarding.activatePayPalPaymentsButton().click();
-	await pcpOnboarding.snapshotLocator(
-		pcpOnboarding.onboardingContentContainer(),
-		testInfo.title,
-		{ timeout: 3000 }
-	);
+	await pcpOnboarding
+		.page.getByRole( 'heading', { name: 'Choose your account type' } )
+		.waitFor( { state: 'visible' } );
+	await expect(
+		pcpOnboarding.businessRadio(),
+		'Assert store type step shows business radio'
+	).toBeVisible();
 
 	await pcpOnboarding.businessRadio().click();
-	await pcpOnboarding.snapshotLocator(
-		pcpOnboarding.onboardingContentContainer(),
-
-		`${ testInfo.title } - Set up store type`
-	);
 	await pcpOnboarding.continueButton().click();
-	await pcpOnboarding.snapshotLocator(
-		pcpOnboarding.onboardingContentContainer(),
-		`${ testInfo.title } - Select product types - No option selected`,
-		{ timeout: 3000 }
-	);
+	await expect(
+		pcpOnboarding.physicalGoodsCheckbox(),
+		'Assert product types step shows physical goods checkbox'
+	).toBeVisible();
 
 	await pcpOnboarding.physicalGoodsCheckbox().check();
 	await pcpOnboarding.virtualCheckbox().check();
-	await pcpOnboarding.snapshotLocator(
-		pcpOnboarding.onboardingContentContainer(),
-		`${ testInfo.title } - Select product types - Products selected`,
-		{ timeout: 3000 }
-	);
 	await pcpOnboarding.continueButton().click();
-	await pcpOnboarding.snapshotLocator(
-		pcpOnboarding.onboardingContentContainer(),
-
-		`${ testInfo.title } - Choose checkout options`
-	);
+	await expect(
+		pcpOnboarding.enableOptionalPaymentMethodsRadio(),
+		'Assert checkout options step shows optional payment methods'
+	).toBeVisible();
 	await pcpOnboarding.enableOptionalPaymentMethodsRadio().click();
-	await pcpOnboarding.snapshotLocator(
-		pcpOnboarding.onboardingContentContainer(),
-		`${ testInfo.title } - Choose checkout options - Card payments enabled`,
-		{ timeout: 3000 }
-	);
+	await expect(
+		pcpOnboarding.continueButton(),
+		'Assert continue button is visible after enabling card payments'
+	).toBeVisible();
 } );
 
 test.describe( () => {
@@ -160,7 +146,7 @@ test.describe( () => {
 		test( `${ testKey } | Settings - ${ country } - Onboarding - Compare initial onboarding page (right part) with expanded checkout screen`, async ( {
 			pcpOnboarding,
 			wooCommerceApi,
-		}, testInfo ) => {
+		} ) => {
 			await wooCommerceApi.updateGeneralSettings(
 				wooCommerceGeneralSettings
 			);
@@ -168,11 +154,10 @@ test.describe( () => {
 			await pcpOnboarding.visit();
 			await pcpOnboarding.gotoInitialOnboardingPage();
 			await pcpOnboarding.page.waitForLoadState();
-			await pcpOnboarding.snapshotLocator(
+			await expect(
 				pcpOnboarding.onboardingContentContainer(),
-				`${ testKey } - Initial Page`,
-				{ timeout: 3000 }
-			);
+				`Assert onboarding initial page is visible for ${ testKey }`
+			).toBeVisible();
 
 			await pcpOnboarding.activatePayPalPaymentsButton().click();
 			if ( country !== 'Germany' ) {
@@ -181,11 +166,10 @@ test.describe( () => {
 			}
 			await pcpOnboarding.physicalGoodsCheckbox().check();
 			await pcpOnboarding.continueButton().click();
-			await pcpOnboarding.snapshotLocator(
+			await expect(
 				pcpOnboarding.onboardingContentContainer(),
-				`${ testKey } - Checkout Page`,
-				{ timeout: 3000 }
-			);
+				`Assert onboarding checkout step is visible for ${ testKey }`
+			).toBeVisible();
 		} );
 	}
 } );
@@ -207,31 +191,29 @@ test.describe( () => {
 
 	test( 'PCP-4382 | WooPayments - Settings - Onboarding - Default UI (bcdc, paylater)', async ( {
 		pcpOnboarding,
-	}, testInfo ) => {
+	} ) => {
 		await pcpOnboarding.visit();
 		await pcpOnboarding.gotoInitialOnboardingPage();
-		await pcpOnboarding.snapshotLocator(
+		await expect(
 			pcpOnboarding.onboardingContentContainer(),
-			`${ testInfo.title } - Initial Page`,
-			{ timeout: 3000 }
-		);
+			'Assert onboarding initial page is visible with WooPayments'
+		).toBeVisible();
 
 		await pcpOnboarding.activatePayPalPaymentsButton().click();
 		await pcpOnboarding.businessRadio().click();
 		await pcpOnboarding.continueButton().click();
 		await pcpOnboarding.physicalGoodsCheckbox().check();
 		await pcpOnboarding.continueButton().click();
-		await pcpOnboarding.snapshotLocator(
+		await expect(
 			pcpOnboarding.onboardingContentContainer(),
-			`${ testInfo.title } - Product types`,
-			{ timeout: 3000 }
-		);
+			'Assert onboarding product types step is visible'
+		).toBeVisible();
 	} );
 
 	test( 'PCP-4400 | WooPayments - Settings - Onboarding - No cards by default - Serbia', async ( {
 		wooCommerceApi,
 		pcpOnboarding,
-	}, testInfo ) => {
+	} ) => {
 		wooCommerceApi.updateGeneralSettings( {
 			woocommerce_default_country: 'RS:RS00',
 			woocommerce_currency: 'EUR',
@@ -239,23 +221,24 @@ test.describe( () => {
 
 		await pcpOnboarding.visit();
 		await pcpOnboarding.gotoInitialOnboardingPage();
-		await pcpOnboarding.snapshotLocator(
+		await expect(
 			pcpOnboarding.onboardingContentContainer(),
-			testInfo.title,
-			{ timeout: 3000 }
-		);
+			'Assert onboarding content is visible for Serbia (no cards)'
+		).toBeVisible();
 	} );
 } );
 
 test( 'PCP-4403 | Settings - Zimbabwe - Onboarding  - Country not eligible for PayPal payments', async ( {
 	wooCommerceApi,
 	pcpOnboarding,
-}, testInfo ) => {
+} ) => {
 	await wooCommerceApi.updateGeneralSettings( {
 		woocommerce_default_country: 'ZW',
 		woocommerce_currency: 'USD',
 	} );
 	await pcpOnboarding.visit();
-	await pcpOnboarding.gotoInitialOnboardingPage();
-	await pcpOnboarding.snapshotContent( testInfo.title, 3000 );
+	await expect(
+		pcpOnboarding.sendOnlyMessageHeading(),
+		'Assert send-only country message is visible for Zimbabwe (not eligible)'
+	).toBeVisible();
 } );

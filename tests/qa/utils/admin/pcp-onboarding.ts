@@ -22,6 +22,8 @@ export class PcpOnboarding extends PcpAdminPage {
 		this.page.locator(
 			'.ppcp-r-container.ppcp-r-container--card.ppcp-r-container--onboarding'
 		);
+	sendOnlyMessageHeading = () =>
+		this.page.getByRole( 'heading', { name: '"Send-only" Country' } );
 	activatePayPalPaymentsButton = () =>
 		this.page.getByRole( 'button', { name: 'Activate PayPal Payments' } );
 
@@ -31,7 +33,7 @@ export class PcpOnboarding extends PcpAdminPage {
 			name: 'See advanced options',
 		} );
 	advancedOptionsContent = () =>
-		this.advancedOptionsSection().locator( '.ppcp-r-accordion__content' );
+		this.advancedOptionsSection().locator( '.ppcp--accordion-content' );
 
 	selectBoxContentContainer = () => this.page.locator( '.ppcp--box-content' );
 	selectBoxContentDetail = () =>
@@ -110,6 +112,7 @@ export class PcpOnboarding extends PcpAdminPage {
 		await expect( this.seeAdvancedOptionsButton() ).toBeVisible();
 		if ( ! ( await this.advancedOptionsContent().isVisible() ) ) {
 			await this.seeAdvancedOptionsButton().click();
+			await this.advancedOptionsContent().waitFor( { state: 'visible' } );
 		}
 	};
 
