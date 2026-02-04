@@ -59,7 +59,7 @@ return array(
 		 * @var Environment $env
 		 */
 
-		return $env->current_environment_is( Environment::SANDBOX ) ?
+		return $env->is_sandbox() ?
 			CONNECT_WOO_SANDBOX_CLIENT_ID : CONNECT_WOO_CLIENT_ID;
 	},
 	'button.client_id_for_admin'                  => static function ( ContainerInterface $container ): string {

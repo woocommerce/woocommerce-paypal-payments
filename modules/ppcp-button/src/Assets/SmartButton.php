@@ -1449,7 +1449,7 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
 		}
 
 		if (
-			$this->environment->current_environment_is( Environment::SANDBOX )
+			$this->environment->is_sandbox()
 			&& defined( 'WP_DEBUG' ) && \WP_DEBUG
 			&& WC()->customer instanceof \WC_Customer && WC()->customer->get_billing_country()
 			&& 2 === strlen( WC()->customer->get_billing_country() )

@@ -138,7 +138,7 @@ class FraudNetAssets {
 						array(
 							'f'       => $this->fraud_net->session_id(),
 							's'       => $this->fraud_net->source_website_id(),
-							'sandbox' => $this->environment->current_environment_is( Environment::SANDBOX ),
+							'sandbox' => $this->environment->is_sandbox(),
 						)
 					);
 				}

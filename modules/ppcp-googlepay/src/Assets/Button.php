@@ -465,7 +465,7 @@ class Button implements ButtonInterface {
 		$is_wc_gateway_enabled = isset( $available_gateways[ GooglePayGateway::ID ] );
 
 		return array(
-			'environment'           => $this->environment->current_environment_is( Environment::SANDBOX ) ? 'TEST' : 'PRODUCTION',
+			'environment'           => $this->environment->is_sandbox() ? 'TEST' : 'PRODUCTION',
 			'is_debug'              => defined( 'WP_DEBUG' ) && WP_DEBUG,
 			'is_enabled'            => $is_enabled,
 			'is_wc_gateway_enabled' => $is_wc_gateway_enabled,

@@ -254,7 +254,7 @@ return array(
 			? esc_html__( 'Settings', 'woocommerce-paypal-payments' )
 			: esc_html__( 'Enable Google Pay', 'woocommerce-paypal-payments' );
 
-		$enable_url = $environment->current_environment_is( Environment::PRODUCTION )
+		$enable_url = $environment->is_production()
 			? $container->get( 'googlepay.enable-url-live' )
 			: $container->get( 'googlepay.enable-url-sandbox' );
 

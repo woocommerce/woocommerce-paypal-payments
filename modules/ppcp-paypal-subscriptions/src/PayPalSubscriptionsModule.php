@@ -343,7 +343,7 @@ class PayPalSubscriptionsModule implements ServiceModule, ExtendingModule, Execu
 				$subscription_id = $subscription->get_meta( 'ppcp_subscription' ) ?? '';
 				if ( $subscription_id ) {
 					$environment = $c->get( 'settings.environment' );
-					$host        = $environment->current_environment_is( Environment::SANDBOX ) ? 'https://www.sandbox.paypal.com' : 'https://www.paypal.com';
+					$host        = $environment->is_sandbox() ? 'https://www.sandbox.paypal.com' : 'https://www.paypal.com';
 					?>
 					<tr>
 						<td><?php esc_html_e( 'PayPal Subscription', 'woocommerce-paypal-payments' ); ?></td>
@@ -725,7 +725,7 @@ class PayPalSubscriptionsModule implements ServiceModule, ExtendingModule, Execu
 				'</p>'
 			);
 
-			$host = $environment->current_environment_is( Environment::SANDBOX ) ? 'https://www.sandbox.paypal.com' : 'https://www.paypal.com';
+			$host = $environment->is_sandbox() ? 'https://www.sandbox.paypal.com' : 'https://www.paypal.com';
 			if ( $subscription_product ) {
 				echo sprintf(
 				// translators: %1$s and %2$s are wrapper html tags.
