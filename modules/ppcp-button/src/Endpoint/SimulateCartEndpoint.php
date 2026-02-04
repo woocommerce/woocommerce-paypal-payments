@@ -65,19 +65,17 @@ class SimulateCartEndpoint extends AbstractCartEndpoint {
 	/**
 	 * Handles the request data.
 	 *
-	 * @return bool
 	 * @throws Exception On error.
 	 */
-	protected function handle_data(): bool {
+	protected function handle_data(): void {
 		if ( ! $this->smart_button instanceof SmartButton ) {
 			wp_send_json_error();
-			return false;
 		}
 
 		$products = $this->products_from_request();
 
 		if ( ! $products ) {
-			return false;
+			return;
 		}
 
 		$this->replace_real_cart();
@@ -130,7 +128,6 @@ class SimulateCartEndpoint extends AbstractCartEndpoint {
 				),
 			)
 		);
-		return true;
 	}
 
 	/**

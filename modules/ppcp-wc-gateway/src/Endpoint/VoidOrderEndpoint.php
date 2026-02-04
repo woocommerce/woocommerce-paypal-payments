@@ -94,7 +94,6 @@ class VoidOrderEndpoint {
 					'message' => 'Invalid request.',
 				)
 			);
-			return;
 		}
 
 		$wc_order_id = (int) $request['wc_order_id'];
@@ -106,7 +105,6 @@ class VoidOrderEndpoint {
 					'message' => 'WC order not found.',
 				)
 			);
-			return;
 		}
 		$order_id = $wc_order->get_meta( PayPalGateway::ORDER_ID_META_KEY );
 		if ( ! $order_id ) {
@@ -115,7 +113,6 @@ class VoidOrderEndpoint {
 					'message' => 'PayPal order ID not found in meta.',
 				)
 			);
-			return;
 		}
 
 		try {
@@ -131,7 +128,6 @@ class VoidOrderEndpoint {
 				)
 			);
 			$this->logger->error( 'Void failed. ' . $exception->getMessage() );
-			return;
 		}
 
 		wp_send_json_success();

@@ -62,10 +62,9 @@ class UpdatePaymentDataEndpoint {
 	/**
 	 * Handles the request.
 	 *
-	 * @return bool
 	 * @throws RuntimeException When a validation fails.
 	 */
-	public function handle_request(): bool {
+	public function handle_request(): void {
 		try {
 			$data = $this->request_data->read_request( $this->nonce() );
 
@@ -107,13 +106,10 @@ class UpdatePaymentDataEndpoint {
 					'shipping_options' => $this->get_shipping_options(),
 				)
 			);
-
-			return true;
 		} catch ( Throwable $error ) {
 			$this->logger->error( "UpdatePaymentDataEndpoint execution failed. {$error->getMessage()} {$error->getFile()}:{$error->getLine()}" );
 
 			wp_send_json_error();
-			return false;
 		}
 	}
 

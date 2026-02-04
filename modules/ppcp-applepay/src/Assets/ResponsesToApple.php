@@ -51,9 +51,8 @@ class ResponsesToApple {
 	 * Returns an error response to be handled by the script
 	 *
 	 * @param array $error_list [['errorCode'=>required, 'contactField'=>'']].
-	 * @return void
 	 */
-	public function response_with_data_errors( $error_list ) {
+	public function response_with_data_errors( $error_list ): void {
 		$response             = array();
 		$response['errors']   = $this->apple_pay_error( $error_list );
 		$response['newTotal'] = $this->apple_new_total_response(

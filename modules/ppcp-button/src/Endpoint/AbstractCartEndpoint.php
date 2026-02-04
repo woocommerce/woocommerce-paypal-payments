@@ -86,10 +86,9 @@ abstract class AbstractCartEndpoint implements EndpointInterface {
 	/**
 	 * Handles the request data.
 	 *
-	 * @return bool
 	 * @throws Exception On error.
 	 */
-	abstract protected function handle_data(): bool;
+	abstract protected function handle_data(): void;
 
 	/**
 	 * Adds products to cart.
@@ -166,7 +165,6 @@ abstract class AbstractCartEndpoint implements EndpointInterface {
 					'details' => array(),
 				)
 			);
-			return false;
 		}
 
 		return $products;

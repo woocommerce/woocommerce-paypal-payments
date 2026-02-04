@@ -68,10 +68,9 @@ class SaveConfig {
 	/**
 	 * Handles the request.
 	 */
-	public function handle_request(): bool {
+	public function handle_request(): void {
 		if ( ! current_user_can( 'manage_woocommerce' ) ) {
 			wp_send_json_error( 'Not admin.', 403 );
-			return false;
 		}
 
 		try {
@@ -80,12 +79,10 @@ class SaveConfig {
 			$this->save_config( $data['config']['config'] );
 
 			wp_send_json_success();
-			return true;
 		} catch ( Throwable $error ) {
 			$this->logger->error( "SaveConfig execution failed. {$error->getMessage()} {$error->getFile()}:{$error->getLine()}" );
 
 			wp_send_json_error();
-			return false;
 		}
 	}
 
