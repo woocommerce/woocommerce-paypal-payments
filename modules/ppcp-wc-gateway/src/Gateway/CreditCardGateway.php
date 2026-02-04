@@ -517,6 +517,7 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 						$created_order = $this->capture_card_payment->create_order( $token->get_token(), $custom_id, $invoice_id, $wc_order );
 					} catch ( RuntimeException $exception ) {
 						$this->logger->error( $exception->getMessage() );
+						return $this->handle_payment_failure( $wc_order, $exception );
 					}
 
 					$order = $this->order_endpoint->order( $created_order->id() );
