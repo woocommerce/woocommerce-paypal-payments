@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "61c5454683fb890413a95af72b0b5c5e",
+    "content-hash": "c8d9272cf316689c22477c34a28fe4fe",
     "packages": [
         {
             "name": "container-interop/service-provider",
@@ -1708,6 +1708,16 @@
                 "source": "https://github.com/inpsyde/modularity/tree/1.12.0"
             },
             "time": "2025-05-09T12:13:17+00:00"
+        },
+        {
+            "name": "inpsyde/wp-stubs-versions",
+            "version": "dev-latest",
+            "dist": {
+                "type": "file",
+                "url": "https://raw.githubusercontent.com/inpsyde/wp-stubs/66228ab34637d6e7091978b82c495474f18bdb0d/stubs/latest.php",
+                "reference": "66228ab34637d6e7091978b82c495474f18bdb0d"
+            },
+            "type": "library"
         },
         {
             "name": "league/flysystem",
@@ -6085,6 +6095,7 @@
     "aliases": [],
     "minimum-stability": "dev",
     "stability-flags": {
+        "inpsyde/wp-stubs-versions": 20,
         "php-stubs/woocommerce-stubs": 0,
         "php-stubs/wordpress-stubs": 0
     },

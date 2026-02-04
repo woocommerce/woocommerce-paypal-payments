@@ -10,7 +10,7 @@ parameters:
         - .psalm/gzd.php
         - .psalm/wc-bookings.php
         - .psalm/wpcli.php
-        - vendor/php-stubs/wordpress-stubs/wordpress-stubs.php
+        - vendor/inpsyde/wp-stubs-versions/latest.php
         - vendor/php-stubs/woocommerce-stubs/woocommerce-stubs.php
     paths:
         - api/
