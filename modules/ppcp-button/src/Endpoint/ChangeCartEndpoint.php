@@ -53,25 +53,23 @@ class ChangeCartEndpoint extends \WooCommerce\PayPalCommerce\Button\Endpoint\Abs
     /**
      * Handles the request data.
      *
-     * @return bool
      * @throws Exception On error.
      */
-    protected function handle_data(): bool
+    protected function handle_data(): void
     {
         $data = $this->request_data->read_request($this->nonce());
         $this->cart_products->set_cart($this->cart);
         $products = $this->products_from_request();
         if (!$products) {
-            return \false;
+            return;
         }
         if (!($data['keepShipping'] ?? \false)) {
             $this->shipping->reset_shipping();
         }
         if (!$this->add_products($products)) {
-            return \false;
+            return;
         }
         wp_send_json_success($this->generate_purchase_units());
-        return \true;
     }
     /**
      * Based on the cart contents, the purchase units are created.

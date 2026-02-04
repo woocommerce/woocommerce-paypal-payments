@@ -233,10 +233,9 @@ class CreateOrderEndpoint implements \WooCommerce\PayPalCommerce\Button\Endpoint
     /**
      * Handles the request.
      *
-     * @return bool
      * @throws Exception On Error.
      */
-    public function handle_request(): bool
+    public function handle_request(): void
     {
         try {
             $data = $this->request_data->read_request($this->nonce());
@@ -305,7 +304,6 @@ class CreateOrderEndpoint implements \WooCommerce\PayPalCommerce\Button\Endpoint
                 do_action('woocommerce_paypal_payments_woocommerce_order_created', $wc_order, $order);
             }
             wp_send_json_success($this->make_response($order));
-            return \true;
         } catch (ValidationException $error) {
             $response = array('message' => $error->getMessage(), 'errors' => $error->errors(), 'refresh' => isset(WC()->session->refresh_totals));
             unset(WC()->session->refresh_totals);
@@ -317,7 +315,6 @@ class CreateOrderEndpoint implements \WooCommerce\PayPalCommerce\Button\Endpoint
             $this->logger->error('Order creation failed: ' . $exception->getMessage());
             wc_add_notice($exception->getMessage(), 'error');
         }
-        return \false;
     }
     /**
      * Creates the order in the PayPal, uses data from WC order if provided.

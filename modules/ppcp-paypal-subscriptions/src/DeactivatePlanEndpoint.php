@@ -51,7 +51,6 @@ class DeactivatePlanEndpoint
     {
         if (!current_user_can('manage_woocommerce')) {
             wp_send_json_error('Not admin.', 403);
-            return;
         }
         try {
             $data = $this->request_data->read_request(self::ENDPOINT);

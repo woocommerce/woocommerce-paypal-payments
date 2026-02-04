@@ -74,7 +74,6 @@ class UninstallModule implements ServiceModule, ExtendingModule, ExecutableModul
             try {
                 if (!current_user_can('manage_woocommerce')) {
                     wp_send_json_error('Not admin.', 403);
-                    return \false;
                 }
                 // Validate nonce.
                 $request_data->read_request($nonce);
@@ -83,10 +82,8 @@ class UninstallModule implements ServiceModule, ExtendingModule, ExecutableModul
                 $clear_db->clear_actions($action_names);
                 update_option('woocommerce-ppcp-is-new-merchant', '1');
                 wp_send_json_success();
-                return \true;
             } catch (Exception $error) {
                 wp_send_json_error($error->getMessage(), 403);
-                return \false;
             }
         });
     }

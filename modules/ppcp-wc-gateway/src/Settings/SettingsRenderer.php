@@ -152,7 +152,7 @@ class SettingsRenderer
      * @param string $field The current field HTML.
      * @param string $key   The current key.
      * @param array  $config The configuration array.
-     * @param string $value The current value.
+     * @param array  $value The current selected values.
      *
      * @return string
      */

@@ -8,6 +8,7 @@
 declare (strict_types=1);
 namespace WooCommerce\PayPalCommerce\Button\Helper;
 
+use RuntimeException;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
@@ -93,20 +94,17 @@ class EarlyOrderHandler
      * Registers the necessary checkout actions for a given order.
      *
      * @param Order $order The PayPal order.
-     *
-     * @return bool
      */
-    public function register_for_order(Order $order): bool
+    public function register_for_order(Order $order): void
     {
-        $success = (bool) add_action('woocommerce_checkout_order_processed', function ($order_id) use ($order) {
+        add_action('woocommerce_checkout_order_processed', function ($order_id) use ($order) {
             try {
                 $order = $this->configure_session_and_order((int) $order_id, $order);
                 wp_send_json_success($order->to_array());
-            } catch (\RuntimeException $error) {
+            } catch (RuntimeException $error) {
                 wp_send_json_error(array('name' => is_a($error, PayPalApiException::class) ? $error->name() : '', 'message' => $error->getMessage(), 'code' => $error->getCode(), 'details' => is_a($error, PayPalApiException::class) ? $error->details() : array()));
             }
         });
-        return $success;
     }
     /**
      * Configures the session, so we can pick up the order, once we pass through the checkout.
