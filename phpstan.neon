@@ -1,0 +1,28 @@
+includes:
+    - vendor/phpstan/phpstan-deprecation-rules/rules.neon
+    - vendor/swissspidy/phpstan-no-private/rules.neon
+parameters:
+    level: 5
+    scanFiles:
+        - .psalm/stubs.php
+        - .psalm/wcblocks.php
+        - .psalm/wcs.php
+        - .psalm/gzd.php
+        - .psalm/wc-bookings.php
+        - .psalm/wpcli.php
+        - vendor/php-stubs/wordpress-stubs/wordpress-stubs.php
+        - vendor/php-stubs/woocommerce-stubs/woocommerce-stubs.php
+    paths:
+        - api/
+        - src/
+        - modules/
+        - bootstrap.php
+        - modules.php
+        - uninstall.php
+        - woocommerce-paypal-payments.php
+    excludePaths:
+        - modules/*/tests/*
+        - modules/*/vendor/*
+        - modules/*/assets/*
+        - modules/*/resources/*
+    treatPhpDocTypesAsCertain: false
