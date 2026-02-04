@@ -822,11 +822,7 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
 				$render_reauthorize = $container->get( 'wcgateway.admin.render-reauthorize-action' );
 				$render_authorize   = $container->get( 'wcgateway.admin.render-authorize-action' );
 
-				/**
-				 * Renders the authorize action in the select field.
-				 *
-				 * @var RenderAuthorizeAction $render
-				 */
+				// Renders the authorize action in the select field.
 				return $render_reauthorize->render(
 					$render_authorize->render( $order_actions, $theorder ),
 					$theorder
