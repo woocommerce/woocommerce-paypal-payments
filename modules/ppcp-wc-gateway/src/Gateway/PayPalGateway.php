@@ -276,7 +276,8 @@ class PayPalGateway extends \WC_Payment_Gateway {
 	/**
 	 * Set if the place order button should be renamed on selection.
 	 *
-	 * @var string
+	 * @var string|null
+	 * @phpstan-ignore property.phpDocType
 	 */
 	public $order_button_text;
 
