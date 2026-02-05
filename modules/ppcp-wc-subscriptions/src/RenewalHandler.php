@@ -135,13 +135,6 @@ class RenewalHandler {
 	private $subscription_helper;
 
 	/**
-	 * Payment tokens endpoint
-	 *
-	 * @var PaymentTokensEndpoint
-	 */
-	private $payment_tokens_endpoint;
-
-	/**
 	 * WooCommerce payments tokens factory.
 	 *
 	 * @var WooCommercePaymentTokens
@@ -154,8 +147,6 @@ class RenewalHandler {
 	private ExperienceContextBuilder $experience_context_builder;
 
 	/**
-	 * RenewalHandler constructor.
-	 *
 	 * @param LoggerInterface              $logger The logger.
 	 * @param PaymentTokenRepository       $repository The payment token repository.
 	 * @param OrderEndpoint                $order_endpoint The order endpoint.
@@ -168,7 +159,6 @@ class RenewalHandler {
 	 * @param FundingSourceRenderer        $funding_source_renderer The funding source renderer.
 	 * @param RealTimeAccountUpdaterHelper $real_time_account_updater_helper Real Time Account Updater helper.
 	 * @param SubscriptionHelper           $subscription_helper Subscription helper.
-	 * @param PaymentTokensEndpoint        $payment_tokens_endpoint Payment tokens endpoint.
 	 * @param WooCommercePaymentTokens     $wc_payment_tokens WooCommerce payments tokens factory.
 	 * @param ExperienceContextBuilder     $experience_context_builder The ExperienceContextBuilder.
 	 */
@@ -185,7 +175,6 @@ class RenewalHandler {
 		FundingSourceRenderer $funding_source_renderer,
 		RealTimeAccountUpdaterHelper $real_time_account_updater_helper,
 		SubscriptionHelper $subscription_helper,
-		PaymentTokensEndpoint $payment_tokens_endpoint,
 		WooCommercePaymentTokens $wc_payment_tokens,
 		ExperienceContextBuilder $experience_context_builder
 	) {
@@ -202,7 +191,6 @@ class RenewalHandler {
 		$this->funding_source_renderer          = $funding_source_renderer;
 		$this->real_time_account_updater_helper = $real_time_account_updater_helper;
 		$this->subscription_helper              = $subscription_helper;
-		$this->payment_tokens_endpoint          = $payment_tokens_endpoint;
 		$this->wc_payment_tokens                = $wc_payment_tokens;
 		$this->experience_context_builder       = $experience_context_builder;
 	}
