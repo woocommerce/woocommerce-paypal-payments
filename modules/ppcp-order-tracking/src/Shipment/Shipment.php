@@ -158,7 +158,7 @@ class Shipment implements ShipmentInterface {
 			}
 
 			$product = $item->get_product();
-			if ( ! is_a( $product, WC_Product::class ) ) {
+			if ( ! ( $product instanceof WC_Product ) ) {
 				continue;
 			}
 

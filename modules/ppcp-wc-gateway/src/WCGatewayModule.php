@@ -381,7 +381,7 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
 				$logger->info( "Checking payment captured webhook for WC order #{$wc_order_id}, PayPal order status: " . $order_status->name() );
 
 				$wc_order = wc_get_order( $wc_order_id );
-				if ( ! is_a( $wc_order, WC_Order::class ) || $wc_order->get_status() !== 'on-hold' ) {
+				if ( ! ( $wc_order instanceof WC_Order ) || $wc_order->get_status() !== 'on-hold' ) {
 					return;
 				}
 
@@ -815,7 +815,7 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
 			static function ( $order_actions ) use ( $container ): array {
 				global $theorder;
 
-				if ( ! is_a( $theorder, WC_Order::class ) ) {
+				if ( ! ( $theorder instanceof WC_Order ) ) {
 					return $order_actions;
 				}
 

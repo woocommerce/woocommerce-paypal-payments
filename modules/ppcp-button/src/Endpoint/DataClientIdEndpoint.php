@@ -91,10 +91,10 @@ class DataClientIdEndpoint implements EndpointInterface {
 
 			wp_send_json_error(
 				array(
-					'name'    => is_a( $error, PayPalApiException::class ) ? $error->name() : '',
+					'name'    => $error instanceof PayPalApiException ? $error->name() : '',
 					'message' => $error->getMessage(),
 					'code'    => $error->getCode(),
-					'details' => is_a( $error, PayPalApiException::class ) ? $error->details() : array(),
+					'details' => $error instanceof PayPalApiException ? $error->details() : array(),
 				)
 			);
 		}

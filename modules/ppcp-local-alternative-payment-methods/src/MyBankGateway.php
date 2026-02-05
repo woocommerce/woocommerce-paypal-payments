@@ -217,7 +217,7 @@ class MyBankGateway extends WC_Payment_Gateway {
 	 */
 	public function process_refund( $order_id, $amount = null, $reason = '' ) {
 		$order = wc_get_order( $order_id );
-		if ( ! is_a( $order, \WC_Order::class ) ) {
+		if ( ! ( $order instanceof \WC_Order ) ) {
 			return false;
 		}
 		return $this->refund_processor->process( $order, (float) $amount, (string) $reason );

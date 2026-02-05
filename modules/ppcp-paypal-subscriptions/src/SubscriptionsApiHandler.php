@@ -99,7 +99,7 @@ class SubscriptionsApiHandler {
 			$product->save();
 		} catch ( RuntimeException $exception ) {
 			$error = $exception->getMessage();
-			if ( is_a( $exception, PayPalApiException::class ) ) {
+			if ( $exception instanceof PayPalApiException ) {
 				$error = $exception->get_details( $error );
 			}
 
@@ -127,7 +127,7 @@ class SubscriptionsApiHandler {
 			$product->save();
 		} catch ( RuntimeException $exception ) {
 			$error = $exception->getMessage();
-			if ( is_a( $exception, PayPalApiException::class ) ) {
+			if ( $exception instanceof PayPalApiException ) {
 				$error = $exception->get_details( $error );
 			}
 
@@ -173,7 +173,7 @@ class SubscriptionsApiHandler {
 			}
 		} catch ( RuntimeException $exception ) {
 			$error = $exception->getMessage();
-			if ( is_a( $exception, PayPalApiException::class ) ) {
+			if ( $exception instanceof PayPalApiException ) {
 				$error = $exception->get_details( $error );
 			}
 
@@ -203,7 +203,7 @@ class SubscriptionsApiHandler {
 			}
 		} catch ( RuntimeException $exception ) {
 			$error = $exception->getMessage();
-			if ( is_a( $exception, PayPalApiException::class ) ) {
+			if ( $exception instanceof PayPalApiException ) {
 				$error = $exception->get_details( $error );
 			}
 

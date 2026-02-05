@@ -145,7 +145,7 @@ class PWCGateway extends WC_Payment_Gateway {
 	 */
 	public function process_payment( $order_id ): array {
 		$wc_order = wc_get_order( $order_id );
-		if ( ! is_a( $wc_order, \WC_Order::class ) ) {
+		if ( ! ( $wc_order instanceof \WC_Order ) ) {
 			wc_add_notice( __( 'Order not found.', 'woocommerce-paypal-payments' ), 'error' );
 			return array(
 				'result'   => 'failure',
@@ -246,7 +246,7 @@ class PWCGateway extends WC_Payment_Gateway {
 	 */
 	public function process_refund( $order_id, $amount = null, $reason = '' ): bool {
 		$order = wc_get_order( $order_id );
-		if ( ! is_a( $order, \WC_Order::class ) ) {
+		if ( ! ( $order instanceof \WC_Order ) ) {
 			return false;
 		}
 		return $this->refund_processor->process( $order, (float) $amount, (string) $reason );

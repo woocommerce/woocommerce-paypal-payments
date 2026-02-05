@@ -550,7 +550,7 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
 					$product = wc_get_product();
 
 					if (
-						is_a( $product, WC_Product::class )
+						$product instanceof WC_Product
 						&& ! $this->product_supports_payment( $product )
 					) {
 
@@ -801,7 +801,7 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
 		$location_hook = $this->location_to_hook( $location );
 
 		if (
-			$location === 'product' && is_a( $product, WC_Product::class )
+			$location === 'product' && $product instanceof WC_Product
 			/**
 			 * The filter returning true if PayPal buttons can be rendered, or false otherwise.
 			 */
@@ -906,7 +906,7 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
 
 		$product = wc_get_product();
 		$amount  = 0;
-		if ( is_a( $product, WC_Product::class ) ) {
+		if ( $product instanceof WC_Product ) {
 			$amount = wc_get_price_including_tax( $product );
 		} elseif ( isset( WC()->cart ) ) {
 			$amount = WC()->cart->get_total( 'raw' );
@@ -1319,7 +1319,7 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
 
 		if ( is_product() ) {
 			$product = wc_get_product( get_the_ID() );
-			if ( is_a( $product, \WC_Product::class ) ) {
+			if ( $product instanceof \WC_Product ) {
 				$localize['productType'] = $product->get_type();
 			}
 		}

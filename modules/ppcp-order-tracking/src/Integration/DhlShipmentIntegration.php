@@ -72,7 +72,7 @@ class DhlShipmentIntegration implements Integration {
 			function ( int $order_id, array $tracking_details ) {
 				try {
 					$wc_order = wc_get_order( $order_id );
-					if ( ! is_a( $wc_order, WC_Order::class ) ) {
+					if ( ! ( $wc_order instanceof WC_Order ) ) {
 						return;
 					}
 

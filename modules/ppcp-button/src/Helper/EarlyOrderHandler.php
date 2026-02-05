@@ -120,11 +120,11 @@ class EarlyOrderHandler {
 				} catch ( RuntimeException $error ) {
 					wp_send_json_error(
 						array(
-							'name'    => is_a( $error, PayPalApiException::class ) ?
+							'name'    => $error instanceof PayPalApiException ?
 								$error->name() : '',
 							'message' => $error->getMessage(),
 							'code'    => $error->getCode(),
-							'details' => is_a( $error, PayPalApiException::class ) ?
+							'details' => $error instanceof PayPalApiException ?
 								$error->details() : array(),
 
 						)

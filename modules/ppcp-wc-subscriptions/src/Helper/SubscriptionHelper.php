@@ -236,7 +236,7 @@ class SubscriptionHelper {
 		$variation_ids = $product->get_children();
 		foreach ( $variation_ids as $id ) {
 			$product = wc_get_product( $id );
-			if ( ! is_a( $product, WC_Product_Subscription_Variation::class ) ) {
+			if ( ! ( $product instanceof WC_Product_Subscription_Variation ) ) {
 				continue;
 			}
 
@@ -308,7 +308,7 @@ class SubscriptionHelper {
 		foreach ( $orders as $order_id ) {
 			$order = wc_get_order( $order_id );
 			if (
-				is_a( $order, WC_Order::class )
+				$order instanceof WC_Order
 				&& in_array( $order->get_status(), array( 'processing', 'completed' ), true )
 				&& $current_order->get_payment_method() === $order->get_payment_method()
 			) {

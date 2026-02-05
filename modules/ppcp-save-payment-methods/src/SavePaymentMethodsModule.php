@@ -351,7 +351,7 @@ class SavePaymentMethodsModule implements ServiceModule, ExtendingModule, Execut
 							assert( $logger instanceof LoggerInterface );
 
 							$error = $exception->getMessage();
-							if ( is_a( $exception, PayPalApiException::class ) ) {
+							if ( $exception instanceof PayPalApiException ) {
 								$error = $exception->get_details( $error );
 							}
 
@@ -417,7 +417,7 @@ class SavePaymentMethodsModule implements ServiceModule, ExtendingModule, Execut
 							assert( $logger instanceof LoggerInterface );
 
 							$error = $exception->getMessage();
-							if ( is_a( $exception, PayPalApiException::class ) ) {
+							if ( $exception instanceof PayPalApiException ) {
 								$error = $exception->get_details( $error );
 							}
 
@@ -484,7 +484,7 @@ class SavePaymentMethodsModule implements ServiceModule, ExtendingModule, Execut
 
 		} catch ( RuntimeException $exception ) {
 			$error = $exception->getMessage();
-			if ( is_a( $exception, PayPalApiException::class ) ) {
+			if ( $exception instanceof PayPalApiException ) {
 				$error = $exception->get_details( $error );
 			}
 

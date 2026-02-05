@@ -262,7 +262,7 @@ class OXXOGateway extends WC_Payment_Gateway {
 			}
 		} catch ( RuntimeException $exception ) {
 			$error = $exception->getMessage();
-			if ( is_a( $exception, PayPalApiException::class ) ) {
+			if ( $exception instanceof PayPalApiException ) {
 				$error = $exception->get_details( $error );
 			}
 
