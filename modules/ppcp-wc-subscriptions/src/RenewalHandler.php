@@ -426,7 +426,7 @@ class RenewalHandler {
 	 * @param \WC_Customer $customer The customer.
 	 * @param \WC_Order    $wc_order The current WooCommerce order we want to process.
 	 *
-	 * @return PaymentToken|null|false
+	 * @return PaymentToken|false
 	 */
 	private function get_token_for_customer( \WC_Customer $customer, \WC_Order $wc_order ) {
 		/**
