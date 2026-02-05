@@ -135,12 +135,8 @@ class PurchaseUnit {
 			array_filter(
 				$items,
 				function ( $item ): bool {
-					$is_item = is_a( $item, Item::class );
-					/**
-					 * The item.
-					 *
-					 * @var Item $item
-					 */
+					$is_item = is_a( $item, Item::class ); // @phpstan-ignore function.alreadyNarrowedType
+
 					if ( $is_item && Item::PHYSICAL_GOODS === $item->category() ) {
 						$this->contains_physical_goods = true;
 					}

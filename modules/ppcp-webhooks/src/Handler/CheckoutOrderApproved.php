@@ -208,6 +208,7 @@ class CheckoutOrderApproved implements RequestHandler {
 					 * Wrong type-hint.
 					 *
 					 * @psalm-suppress InvalidScalarArgument
+					 * @phpstan-ignore argument.type
 					 */
 					$session->delete_session( $customer_id );
 					$session->forget_session();
