@@ -1867,11 +1867,9 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
 		$in_stock = $product->is_in_stock();
 
 		if ( $product->is_type( 'variable' ) ) {
-			/**
-			 * The method is defined in WC_Product_Variable class.
-			 *
-			 * @psalm-suppress UndefinedMethod
-			 */
+			assert( $product instanceof WC_Product_Variable );
+
+			/** @var WC_Product_Variation[] $variations */
 			$variations = $product->get_available_variations( 'objects' );
 			$in_stock   = $this->has_in_stock_variation( $variations );
 		}

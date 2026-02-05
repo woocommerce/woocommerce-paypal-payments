@@ -14,6 +14,7 @@ namespace WooCommerce\PayPalCommerce\WcSubscriptions\Helper;
 use WC_Order;
 use WC_Product;
 use WC_Product_Subscription_Variation;
+use WC_Product_Variable;
 use WC_Subscription;
 use WC_Subscriptions;
 use WC_Subscriptions_Product;
@@ -199,13 +200,11 @@ class SubscriptionHelper {
 			}
 
 			if ( $product->get_type() === 'variable-subscription' ) {
-				/**
-				 * The method is defined in WC_Product_Variable class.
-				 *
-				 * @psalm-suppress UndefinedMethod
-				 */
+				assert( $product instanceof WC_Product_Variable );
+
 				$product_variations = $product->get_available_variations();
 				foreach ( $product_variations as $variation ) {
+					/** @psalm-suppress UndefinedMethod */
 					$variation_product = wc_get_product( $variation['variation_id'] ) ?? '';
 					if ( $variation_product && $variation_product->meta_exists( 'ppcp_subscription_plan' ) ) {
 						return $variation_product->get_meta( 'ppcp_subscription_plan' )['id'];
