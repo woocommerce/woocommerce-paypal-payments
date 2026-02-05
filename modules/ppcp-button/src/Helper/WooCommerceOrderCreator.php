@@ -56,7 +56,7 @@ class WooCommerceOrderCreator
      */
     protected $subscription_helper;
     protected CartDataFactory $cart_data_factory;
-    protected $shipping_factory;
+    protected ShippingFactory $shipping_factory;
     protected PayerFactory $payer_factory;
     public function __construct(FundingSourceRenderer $funding_source_renderer, SessionHandler $session_handler, SubscriptionHelper $subscription_helper, CartDataFactory $cart_data_factory, ShippingFactory $shipping_factory, PayerFactory $payer_factory)
     {
