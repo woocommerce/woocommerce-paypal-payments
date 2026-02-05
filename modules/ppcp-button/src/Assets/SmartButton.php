@@ -9,15 +9,13 @@ declare (strict_types=1);
 namespace WooCommerce\PayPalCommerce\Button\Assets;
 
 use Exception;
-use WooCommerce\PayPalCommerce\Vendor\Psr\Log\LoggerInterface;
 use WC_Cart;
 use WC_Order;
 use WC_Payment_Tokens;
 use WC_Product;
+use WC_Product_Variable;
 use WC_Product_Variation;
-use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PaymentTokensEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Money;
-use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentToken;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PayerFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\CurrencyGetter;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\DccApplies;
@@ -154,12 +152,6 @@ class SmartButton implements \WooCommerce\PayPalCommerce\Button\Assets\SmartButt
      */
     protected $early_validation_enabled;
     /**
-     * Cached payment tokens.
-     *
-     * @var PaymentToken[]|null
-     */
-    private $payment_tokens = null;
-    /**
      * The contexts that should have the Pay Now button.
      *
      * @var string[]
@@ -183,18 +175,6 @@ class SmartButton implements \WooCommerce\PayPalCommerce\Button\Assets\SmartButt
      * @var bool
      */
     private $vault_v3_enabled;
-    /**
-     * Payment tokens endpoint.
-     *
-     * @var PaymentTokensEndpoint
-     */
-    private $payment_tokens_endpoint;
-    /**
-     * The logger.
-     *
-     * @var LoggerInterface
-     */
-    private $logger;
     /**
      * Whether the shipping should be handled in PayPal.
      *
@@ -251,8 +231,6 @@ class SmartButton implements \WooCommerce\PayPalCommerce\Button\Assets\SmartButt
      * @param array                     $pay_now_contexts                  The contexts that should have the Pay Now button.
      * @param string[]                  $funding_sources_without_redirect  The sources that do not cause issues about redirecting (on mobile, ...) and sometimes not returning back.
      * @param bool                      $vault_v3_enabled                  Whether Vault v3 module is enabled.
-     * @param PaymentTokensEndpoint     $payment_tokens_endpoint           Payment tokens endpoint.
-     * @param LoggerInterface           $logger                            The logger.
      * @param bool                      $should_handle_shipping_in_paypal  Whether the shipping should be handled in PayPal.
      * @param bool                      $server_side_shipping_callback_enabled Whether the server-side shipping callback is enabled (feature flag).
      * @param bool                      $appswitch_enabled                 Whether the AppSwitch is enabled (feature flag).
@@ -261,7 +239,7 @@ class SmartButton implements \WooCommerce\PayPalCommerce\Button\Assets\SmartButt
      * @param PartnerAttribution        $partner_attribution The PayPal Partner Attribution Helper.
      * @param bool                      $final_review_enabled              Whether the final review is enabled in blocks settings.
      */
-    public function __construct(AssetGetter $asset_getter, string $version, SessionHandler $session_handler, Settings $settings, PayerFactory $payer_factory, string $client_id, RequestData $request_data, DccApplies $dcc_applies, SubscriptionHelper $subscription_helper, MessagesApply $messages_apply, Environment $environment, PaymentTokenRepository $payment_token_repository, SettingsStatus $settings_status, CurrencyGetter $currency, bool $basic_checkout_validation_enabled, bool $early_validation_enabled, array $pay_now_contexts, array $funding_sources_without_redirect, bool $vault_v3_enabled, PaymentTokensEndpoint $payment_tokens_endpoint, LoggerInterface $logger, bool $should_handle_shipping_in_paypal, bool $server_side_shipping_callback_enabled, bool $appswitch_enabled, DisabledFundingSources $disabled_funding_sources, CardPaymentsConfiguration $dcc_configuration, PartnerAttribution $partner_attribution, bool $final_review_enabled, Context $context)
+    public function __construct(AssetGetter $asset_getter, string $version, SessionHandler $session_handler, Settings $settings, PayerFactory $payer_factory, string $client_id, RequestData $request_data, DccApplies $dcc_applies, SubscriptionHelper $subscription_helper, MessagesApply $messages_apply, Environment $environment, PaymentTokenRepository $payment_token_repository, SettingsStatus $settings_status, CurrencyGetter $currency, bool $basic_checkout_validation_enabled, bool $early_validation_enabled, array $pay_now_contexts, array $funding_sources_without_redirect, bool $vault_v3_enabled, bool $should_handle_shipping_in_paypal, bool $server_side_shipping_callback_enabled, bool $appswitch_enabled, DisabledFundingSources $disabled_funding_sources, CardPaymentsConfiguration $dcc_configuration, PartnerAttribution $partner_attribution, bool $final_review_enabled, Context $context)
     {
         $this->asset_getter = $asset_getter;
         $this->version = $version;
@@ -282,8 +260,6 @@ class SmartButton implements \WooCommerce\PayPalCommerce\Button\Assets\SmartButt
         $this->pay_now_contexts = $pay_now_contexts;
         $this->funding_sources_without_redirect = $funding_sources_without_redirect;
         $this->vault_v3_enabled = $vault_v3_enabled;
-        $this->logger = $logger;
-        $this->payment_tokens_endpoint = $payment_tokens_endpoint;
         $this->should_handle_shipping_in_paypal = $should_handle_shipping_in_paypal;
         $this->server_side_shipping_callback_enabled = $server_side_shipping_callback_enabled;
         $this->appswitch_enabled = $appswitch_enabled;
@@ -1278,11 +1254,8 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
          */
         $in_stock = $product->is_in_stock();
         if ($product->is_type('variable')) {
-            /**
-             * The method is defined in WC_Product_Variable class.
-             *
-             * @psalm-suppress UndefinedMethod
-             */
+            assert($product instanceof WC_Product_Variable);
+            /** @var WC_Product_Variation[] $variations */
             $variations = $product->get_available_variations('objects');
             $in_stock = $this->has_in_stock_variation($variations);
         }

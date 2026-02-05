@@ -192,7 +192,7 @@ return array(
         return new CatalogProducts($container->get('api.host'), $container->get('api.bearer'), $container->get('api.factory.product'), $container->get('woocommerce.logger.woocommerce'));
     },
     'api.endpoint.billing-plans' => static function (ContainerInterface $container): BillingPlans {
-        return new BillingPlans($container->get('api.host'), $container->get('api.bearer'), $container->get('api.factory.billing-cycle'), $container->get('api.factory.plan'), $container->get('woocommerce.logger.woocommerce'));
+        return new BillingPlans($container->get('api.host'), $container->get('api.bearer'), $container->get('api.factory.plan'), $container->get('woocommerce.logger.woocommerce'));
     },
     'api.endpoint.billing-subscriptions' => static function (ContainerInterface $container): BillingSubscriptions {
         return new BillingSubscriptions($container->get('api.host'), $container->get('api.bearer'), $container->get('woocommerce.logger.woocommerce'));

@@ -1,10 +1,5 @@
 <?php
 
-/**
- * The subscription module.
- *
- * @package WooCommerce\PayPalCommerce\WcSubscriptions
- */
 declare (strict_types=1);
 namespace WooCommerce\PayPalCommerce\PayPalSubscriptions;
 
@@ -17,12 +12,8 @@ use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\BillingCycleFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PaymentPreferencesFactory;
-use WooCommerce\PayPalCommerce\ApiClient\Factory\ProductFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\CurrencyGetter;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\ItemTrait;
-/**
- * Class SubscriptionsApiHandler
- */
 class SubscriptionsApiHandler
 {
     use ItemTrait;
@@ -32,12 +23,6 @@ class SubscriptionsApiHandler
      * @var CatalogProducts
      */
     private $products_endpoint;
-    /**
-     * Product factory.
-     *
-     * @var ProductFactory
-     */
-    private $product_factory;
     /**
      * Billing plans.
      *
@@ -69,20 +54,16 @@ class SubscriptionsApiHandler
      */
     private $logger;
     /**
-     * SubscriptionsApiHandler constructor.
-     *
      * @param CatalogProducts           $products_endpoint Products endpoint.
-     * @param ProductFactory            $product_factory Product factory.
      * @param BillingPlans              $billing_plans_endpoint Billing plans endpoint.
      * @param BillingCycleFactory       $billing_cycle_factory Billing cycle factory.
      * @param PaymentPreferencesFactory $payment_preferences_factory Payment preferences factory.
      * @param CurrencyGetter            $currency The currency.
      * @param LoggerInterface           $logger The logger.
      */
-    public function __construct(CatalogProducts $products_endpoint, ProductFactory $product_factory, BillingPlans $billing_plans_endpoint, BillingCycleFactory $billing_cycle_factory, PaymentPreferencesFactory $payment_preferences_factory, CurrencyGetter $currency, LoggerInterface $logger)
+    public function __construct(CatalogProducts $products_endpoint, BillingPlans $billing_plans_endpoint, BillingCycleFactory $billing_cycle_factory, PaymentPreferencesFactory $payment_preferences_factory, CurrencyGetter $currency, LoggerInterface $logger)
     {
         $this->products_endpoint = $products_endpoint;
-        $this->product_factory = $product_factory;
         $this->billing_plans_endpoint = $billing_plans_endpoint;
         $this->billing_cycle_factory = $billing_cycle_factory;
         $this->payment_preferences_factory = $payment_preferences_factory;

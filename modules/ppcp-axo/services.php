@@ -53,7 +53,7 @@ return array(
         return $factory->for_module('ppcp-axo');
     },
     'axo.manager' => static function (ContainerInterface $container): AxoManager {
-        return new AxoManager($container->get('axo.asset_getter'), $container->get('ppcp.asset-version'), $container->get('session.handler'), $container->get('wcgateway.settings'), $container->get('settings.environment'), $container->get('axo.insights'), $container->get('wcgateway.settings.status'), $container->get('api.shop.currency.getter'), $container->get('woocommerce.logger.woocommerce'), $container->get('wcgateway.asset_getter'), $container->get('axo.supported-country-card-type-matrix'));
+        return new AxoManager($container->get('axo.asset_getter'), $container->get('ppcp.asset-version'), $container->get('wcgateway.settings'), $container->get('settings.environment'), $container->get('axo.insights'), $container->get('wcgateway.asset_getter'), $container->get('axo.supported-country-card-type-matrix'));
     },
     'axo.gateway' => static function (ContainerInterface $container): AxoGateway {
         return new AxoGateway($container->get('wcgateway.settings.render'), $container->get('wcgateway.settings'), $container->get('wcgateway.configuration.card-configuration'), $container->get('session.handler'), $container->get('wcgateway.order-processor'), $container->get('wcgateway.credit-card-icons'), $container->get('api.endpoint.order'), $container->get('api.factory.purchase-unit'), $container->get('api.factory.shipping-preference'), $container->get('wcgateway.transaction-url-provider'), $container->get('settings.environment'), $container->get('woocommerce.logger.woocommerce'), $container->get('wcgateway.builder.experience-context'), $container->get('settings.data.settings'));

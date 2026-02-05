@@ -212,7 +212,7 @@ return array(
         );
     },
     'googlepay.button' => static function (ContainerInterface $container): ButtonInterface {
-        return new Button($container->get('googlepay.asset_getter'), $container->get('googlepay.sdk_url'), $container->get('ppcp.asset-version'), $container->get('wc-subscriptions.helper'), $container->get('wcgateway.settings'), $container->get('settings.environment'), $container->get('wcgateway.settings.status'), $container->get('woocommerce.logger.woocommerce'), $container->get('button.helper.context'), $container->has('settings.data.settings') ? $container->get('settings.data.settings') : null);
+        return new Button($container->get('googlepay.asset_getter'), $container->get('googlepay.sdk_url'), $container->get('ppcp.asset-version'), $container->get('wc-subscriptions.helper'), $container->get('wcgateway.settings'), $container->get('settings.environment'), $container->get('wcgateway.settings.status'), $container->get('button.helper.context'), $container->has('settings.data.settings') ? $container->get('settings.data.settings') : null);
     },
     'googlepay.blocks-payment-method' => static function (ContainerInterface $container): PaymentMethodTypeInterface {
         return new BlocksPaymentMethod('ppcp-googlepay', $container->get('googlepay.asset_getter'), $container->get('ppcp.asset-version'), $container->get('googlepay.button'), $container->get('blocks.method'));

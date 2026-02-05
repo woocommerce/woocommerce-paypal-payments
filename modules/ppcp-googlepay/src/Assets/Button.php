@@ -9,7 +9,6 @@ declare (strict_types=1);
 namespace WooCommerce\PayPalCommerce\Googlepay\Assets;
 
 use Exception;
-use WooCommerce\PayPalCommerce\Vendor\Psr\Log\LoggerInterface;
 use WC_Countries;
 use WC_Product;
 use WooCommerce\PayPalCommerce\Assets\AssetGetter;
@@ -66,12 +65,6 @@ class Button implements ButtonInterface
      */
     private $settings_status;
     /**
-     * The logger.
-     *
-     * @var LoggerInterface
-     */
-    private $logger;
-    /**
      * The Subscription Helper.
      *
      * @var SubscriptionHelper
@@ -89,11 +82,10 @@ class Button implements ButtonInterface
      * @param Settings           $settings The legacy settings.
      * @param Environment        $environment The environment object.
      * @param SettingsStatus     $settings_status The Settings status helper.
-     * @param LoggerInterface    $logger The logger.
      * @param Context            $context Context data provider.
      * @param SettingsModel|null $new_settings The new settings model.
      */
-    public function __construct(AssetGetter $asset_getter, string $sdk_url, string $version, SubscriptionHelper $subscription_helper, Settings $settings, Environment $environment, SettingsStatus $settings_status, LoggerInterface $logger, Context $context, ?SettingsModel $new_settings = null)
+    public function __construct(AssetGetter $asset_getter, string $sdk_url, string $version, SubscriptionHelper $subscription_helper, Settings $settings, Environment $environment, SettingsStatus $settings_status, Context $context, ?SettingsModel $new_settings = null)
     {
         $this->asset_getter = $asset_getter;
         $this->sdk_url = $sdk_url;
@@ -102,7 +94,6 @@ class Button implements ButtonInterface
         $this->settings = $settings;
         $this->environment = $environment;
         $this->settings_status = $settings_status;
-        $this->logger = $logger;
         $this->new_settings = $new_settings;
         $this->context = $context;
     }
