@@ -26,3 +26,11 @@ parameters:
         - modules/*/assets/*
         - modules/*/resources/*
     treatPhpDocTypesAsCertain: false
+    ignoreErrors:
+        - '#Property WooCommerce\:\:\$cart \(WC_Cart\) on left side of \?\? is not nullable.#'
+        - '#Access to an undefined property WooCommerce\:\:\$payment_gateways.#'
+        - '#Access to an undefined property WooCommerce\:\:\$shipping.#'
+        - '#Access to an undefined property WC_Session\:\:\$applied_coupon.#'
+        - '#Access to an undefined property WC_Cart\:\:\$subtotal.#'
+        - '#Access to an undefined property WC_Cart\:\:\$total.#'
+        - '#Property WooCommerce\:\:\$session \(WC_Session\) .+ is not nullable.#'
