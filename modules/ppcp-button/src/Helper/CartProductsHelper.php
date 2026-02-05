@@ -241,12 +241,12 @@ class CartProductsHelper {
 			throw new Exception( 'Cart not set.' );
 		}
 
-		if ( ! is_callable( 'wc_bookings_get_posted_data' ) ) {
+		if ( ! is_callable( 'wc_bookings_get_posted_data' ) ) { // @phpstan-ignore function.impossibleType
 			return false;
 		}
 
 		$cart_item_data = array(
-			'booking' => wc_bookings_get_posted_data( $data, $product ),
+			'booking' => wc_bookings_get_posted_data( $data, $product ), // @phpstan-ignore function.notFound
 		);
 
 		$cart_item_key = $this->cart->add_to_cart( $product->get_id(), 1, 0, array(), $cart_item_data );

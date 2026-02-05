@@ -68,7 +68,7 @@ class CartScriptParamsEndpoint implements EndpointInterface {
 				wp_send_json_error();
 			}
 
-			if ( is_callable( 'wc_maybe_define_constant' ) ) {
+			if ( is_callable( 'wc_maybe_define_constant' ) ) { // @phpstan-ignore function.alreadyNarrowedType
 				wc_maybe_define_constant( 'WOOCOMMERCE_CART', true );
 			}
 

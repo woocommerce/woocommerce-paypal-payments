@@ -27,7 +27,7 @@ parameters:
         - modules/*/resources/*
     treatPhpDocTypesAsCertain: false
     ignoreErrors:
-        - '#Property WooCommerce\:\:\$cart \(WC_Cart\) on left side of \?\? is not nullable.#'
+        - '#Property WooCommerce\:\:\$cart \(WC_Cart\) .+ is not nullable.#'
         - '#Access to an undefined property WooCommerce\:\:\$payment_gateways.#'
         - '#Access to an undefined property WooCommerce\:\:\$shipping.#'
         - '#Access to an undefined property WC_Session\:\:\$applied_coupon.#'
