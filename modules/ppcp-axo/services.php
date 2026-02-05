@@ -124,14 +124,14 @@ return array(
 		}
 
 		return array(
-			'enabled'                     => defined( 'WP_DEBUG' ) && WP_DEBUG,
+			'enabled'                     => defined( 'WP_DEBUG' ) && WP_DEBUG, // @phpstan-ignore booleanAnd.rightAlwaysFalse
 			'client_id'                   => ( $settings->has( 'client_id' ) ? $settings->get( 'client_id' ) : null ),
 			'session_id'                  => $session_id,
 			'amount'                      => array(
 				'currency_code' => $currency->get(),
 			),
 			'payment_method_selected_map' => $container->get( 'axo.payment_method_selected_map' ),
-			'wp_debug'                    => defined( 'WP_DEBUG' ) && WP_DEBUG,
+			'wp_debug'                    => defined( 'WP_DEBUG' ) && WP_DEBUG, // @phpstan-ignore booleanAnd.rightAlwaysFalse
 		);
 	},
 

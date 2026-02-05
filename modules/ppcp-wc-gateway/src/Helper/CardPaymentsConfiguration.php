@@ -340,6 +340,7 @@ class CardPaymentsConfiguration {
 			return 'yes' === $enabled;
 		}
 
+		/** @phpstan-ignore booleanNot.alwaysFalse,booleanAnd.alwaysFalse */
 		return $this->is_enabled() && ! $this->use_acdc();
 	}
 
