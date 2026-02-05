@@ -615,7 +615,7 @@ class PayPalGateway extends \WC_Payment_Gateway {
 			&& ! $this->subscription_helper->paypal_subscription_id()
 		) {
 			$ppcp_guest_payment_for_free_trial = WC()->session->get( 'ppcp_guest_payment_for_free_trial' ) ?? null;
-			if ( $this->vault_v3_enabled && $ppcp_guest_payment_for_free_trial ) {
+			if ( $this->vault_v3_enabled && is_object( $ppcp_guest_payment_for_free_trial ) ) {
 				$customer_id = $ppcp_guest_payment_for_free_trial->customer->id ?? '';
 				if ( $customer_id ) {
 					update_user_meta( $wc_order->get_customer_id(), '_ppcp_target_customer_id', $customer_id );
@@ -798,6 +798,8 @@ class PayPalGateway extends \WC_Payment_Gateway {
 		$ret = parent::update_option( $key, $value );
 
 		if ( 'enabled' === $key ) {
+			assert( $this->config instanceof Settings );
+			
 			$this->config->set( 'enabled', 'yes' === $value );
 			$this->config->persist();
 
