@@ -327,7 +327,7 @@ class AxoGateway extends WC_Payment_Gateway
         // Build payment source with 3DS verification if needed.
         $payment_source_properties = $this->build_payment_source_properties($payment_token);
         $payment_source = new PaymentSource('card', $payment_source_properties);
-        return $this->order_endpoint->create(array($purchase_unit), $shipping_preference, null, self::ID, $this->build_order_data(), $payment_source, $wc_order);
+        return $this->order_endpoint->create(array($purchase_unit), $shipping_preference, null, self::ID, $this->build_order_data(), $payment_source);
     }
     /**
      * Build payment source properties.

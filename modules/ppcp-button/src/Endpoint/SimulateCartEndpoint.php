@@ -77,8 +77,11 @@ class SimulateCartEndpoint extends \WooCommerce\PayPalCommerce\Button\Endpoint\A
         foreach ($products as $product) {
             $context_data = array('product' => $product['product'], 'order_total' => $total);
             $pay_later_enabled = $pay_later_enabled && $this->smart_button->is_pay_later_button_enabled_for_location('product', $context_data);
+            // @phpstan-ignore method.notFound
             $pay_later_messaging_enabled = $pay_later_messaging_enabled && $this->smart_button->is_pay_later_messaging_enabled_for_location('product', $context_data);
+            // @phpstan-ignore method.notFound
             $button_enabled = $button_enabled && !$this->smart_button->is_button_disabled('product', $context_data);
+            // @phpstan-ignore method.notFound
         }
         // Shop settings.
         $base_location = wc_get_base_location();

@@ -342,7 +342,7 @@ class SettingsModule implements ServiceModule, ExecutableModule
              *
              * @psalm-suppress MissingClosureParamType
              */
-            static function ($methods): array {
+            static function ($methods) {
                 if (!is_array($methods)) {
                     return $methods;
                 }

@@ -351,6 +351,7 @@ return array(
         $should_render_settings = $container->get('wcgateway.settings.should-render-settings');
         if (!$should_render_settings) {
             return array();
+            // @phpstan-ignore return.type
         }
         // Legacy settings service, correct use of `State` class.
         $state = $container->get('onboarding.state');

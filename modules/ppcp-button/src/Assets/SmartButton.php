@@ -881,6 +881,7 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
         $subscription_mode = $this->settings->has('subscriptions_mode') ? $this->settings->get('subscriptions_mode') : '';
         $params = array('client-id' => $this->client_id, 'currency' => $this->currency->get(), 'integration-date' => PAYPAL_INTEGRATION_DATE, 'components' => implode(',', $this->components()), 'vault' => $this->can_save_vault_token() || $this->subscription_helper->need_subscription_intent($subscription_mode) ? 'true' : 'false', 'commit' => in_array($current_context, $this->pay_now_contexts, \true) ? 'true' : 'false', 'intent' => $intent);
         if (defined('WP_DEBUG') && WP_DEBUG) {
+            // @phpstan-ignore booleanAnd.rightAlwaysFalse
             $params['debug'] = \true;
         }
         if ($this->settings->has('subscriptions_mode') && $this->settings->get('subscriptions_mode') === 'vaulting_api' && apply_filters('woocommerce_paypal_payments_save_payment_methods_eligible', \false)) {

@@ -234,7 +234,6 @@ return array(
     'WooCommerce\\PayPalCommerce\\CardFields\\Service\\CardCaptureValidator' => $baseDir . '/modules/ppcp-card-fields/src/Service/CardCaptureValidator.php',
     'WooCommerce\\PayPalCommerce\\Common\\Pattern\\SingletonDecorator' => $baseDir . '/lib/common/Pattern/SingletonDecorator.php',
     'WooCommerce\\PayPalCommerce\\Common\\Pattern\\SingletonTrait' => $baseDir . '/lib/common/Pattern/SingletonTrait.php',
-    'WooCommerce\\PayPalCommerce\\Compat\\AdminContextTrait' => $baseDir . '/modules/ppcp-compat/src/AdminContextTrait.php',
     'WooCommerce\\PayPalCommerce\\Compat\\Assets\\CompatAssets' => $baseDir . '/modules/ppcp-compat/src/Assets/CompatAssets.php',
     'WooCommerce\\PayPalCommerce\\Compat\\CompatModule' => $baseDir . '/modules/ppcp-compat/src/CompatModule.php',
     'WooCommerce\\PayPalCommerce\\Compat\\Integration' => $baseDir . '/modules/ppcp-compat/src/Integration.php',

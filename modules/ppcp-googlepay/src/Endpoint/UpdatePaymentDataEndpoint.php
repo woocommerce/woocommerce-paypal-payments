@@ -67,6 +67,7 @@ class UpdatePaymentDataEndpoint
             $payment_data = $data['paymentData'];
             // Set context as cart.
             if (is_callable('wc_maybe_define_constant')) {
+                // @phpstan-ignore function.alreadyNarrowedType
                 wc_maybe_define_constant('WOOCOMMERCE_CART', \true);
             }
             $this->update_addresses($payment_data);

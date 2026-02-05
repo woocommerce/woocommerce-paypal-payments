@@ -32,6 +32,7 @@ class PartnerReferralsData
     public function __construct(DccApplies $dcc_applies)
     {
         $this->dcc_applies = $dcc_applies;
+        // @phpstan-ignore property.deprecated
     }
     /**
      * Returns a nonce.
@@ -55,6 +56,7 @@ class PartnerReferralsData
     public function data(array $products = array(), string $onboarding_token = '', ?bool $use_subscriptions = null, bool $use_card_payments = \true): array
     {
         $in_acdc_country = $this->dcc_applies->for_country_currency();
+        // @phpstan-ignore property.deprecated
         if (!$products) {
             $products = array($in_acdc_country ? 'PPCP' : 'EXPRESS_CHECKOUT');
         }

@@ -102,6 +102,7 @@ class GooglepayModule implements ServiceModule, ExtendingModule, ExecutableModul
                      * Should add this to the ButtonInterface.
                      *
                      * @psalm-suppress UndefinedInterfaceMethod
+                     * @phpstan-ignore method.notFound
                      */
                     $button->enqueue_styles();
                 }
@@ -115,6 +116,7 @@ class GooglepayModule implements ServiceModule, ExtendingModule, ExecutableModul
                  * Should add this to the ButtonInterface.
                  *
                  * @psalm-suppress UndefinedInterfaceMethod
+                 * @phpstan-ignore method.notFound
                  */
                 $button->enqueue_admin();
             });
@@ -146,7 +148,7 @@ class GooglepayModule implements ServiceModule, ExtendingModule, ExecutableModul
              *
              * @psalm-suppress MissingClosureParamType
              */
-            static function ($methods) use ($c): array {
+            static function ($methods) use ($c) {
                 if (!is_array($methods)) {
                     return $methods;
                 }

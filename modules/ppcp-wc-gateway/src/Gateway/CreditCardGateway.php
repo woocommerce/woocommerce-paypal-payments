@@ -32,6 +32,7 @@ use WooCommerce\PayPalCommerce\WcGateway\Processor\OrderProcessor;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\PaymentsStatusHandlingTrait;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\RefundProcessor;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\TransactionIdHandlingTrait;
+use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\SettingsRenderer;
 use WooCommerce\PayPalCommerce\WcSubscriptions\FreeTrialHandlerTrait;
 use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
@@ -344,7 +345,7 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC
         }
         $guest_card_payment_for_free_trial = WC()->session->get('ppcp_guest_payment_for_free_trial') ?? null;
         WC()->session->get('ppcp_guest_payment_for_free_trial', null);
-        if ($guest_card_payment_for_free_trial) {
+        if (is_object($guest_card_payment_for_free_trial)) {
             $customer_id = $guest_card_payment_for_free_trial->customer->id ?? '';
             if ($customer_id) {
                 update_user_meta($wc_order->get_customer_id(), '_ppcp_target_customer_id', $customer_id);
@@ -542,6 +543,7 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC
             return $ret;
         }
         if ('enabled' === $key) {
+            assert($this->config instanceof Settings);
             $this->config->set('dcc_enabled', 'yes' === $value);
             $this->config->persist();
             $this->dcc_configuration->refresh();

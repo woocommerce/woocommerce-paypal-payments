@@ -76,9 +76,13 @@ class ItemFactory
      */
     public function from_wc_order(\WC_Order $order): array
     {
-        $items = array_map(function (\WC_Order_Item_Product $item) use ($order): Item {
-            return $this->from_wc_order_line_item($item, $order);
-        }, $order->get_items('line_item'));
+        $items = array_map(
+            // @phpstan-ignore argument.type
+            function (\WC_Order_Item_Product $item) use ($order): Item {
+                return $this->from_wc_order_line_item($item, $order);
+            },
+            $order->get_items('line_item')
+        );
         $fees = array_map(function (\WC_Order_Item_Fee $item) use ($order): Item {
             return $this->from_wc_order_fee($item, $order);
         }, $order->get_fees());

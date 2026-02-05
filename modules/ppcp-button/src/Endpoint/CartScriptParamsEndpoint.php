@@ -61,6 +61,7 @@ class CartScriptParamsEndpoint implements \WooCommerce\PayPalCommerce\Button\End
                 wp_send_json_error();
             }
             if (is_callable('wc_maybe_define_constant')) {
+                // @phpstan-ignore function.alreadyNarrowedType
                 wc_maybe_define_constant('WOOCOMMERCE_CART', \true);
             }
             // phpcs:ignore WordPress.Security.NonceVerification.Recommended

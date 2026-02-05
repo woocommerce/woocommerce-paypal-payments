@@ -77,6 +77,7 @@ class DeactivateNote
             return;
         }
         $note_ids = $data_store->get_notes_with_name(self::NOTE_NAME);
+        // @phpstan-ignore method.notFound
         if (empty($note_ids)) {
             return;
         }

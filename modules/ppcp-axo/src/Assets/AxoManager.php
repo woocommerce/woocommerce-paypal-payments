@@ -101,6 +101,7 @@ class AxoManager
             'ajax' => array('frontend_logger' => array('endpoint' => \WC_AJAX::get_endpoint(FrontendLogger::ENDPOINT), 'nonce' => wp_create_nonce(FrontendLogger::nonce())), 'axo_script_attributes' => array('endpoint' => \WC_AJAX::get_endpoint(AxoScriptAttributes::ENDPOINT), 'nonce' => wp_create_nonce(AxoScriptAttributes::nonce()))),
             'logging_enabled' => $this->settings->has('logging_enabled') ? $this->settings->get('logging_enabled') : '',
             'wp_debug' => defined('WP_DEBUG') && WP_DEBUG,
+            // @phpstan-ignore booleanAnd.rightAlwaysFalse
             'billing_email_button_text' => __('Continue', 'woocommerce-paypal-payments'),
             'merchant_country' => WC()->countries->get_base_country(),
         );

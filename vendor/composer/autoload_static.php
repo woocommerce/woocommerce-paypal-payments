@@ -444,7 +444,6 @@ class ComposerStaticInitfe7561f47e1ab5a552545480b194ef3f
         'WooCommerce\\PayPalCommerce\\CardFields\\Service\\CardCaptureValidator' => __DIR__ . '/../..' . '/modules/ppcp-card-fields/src/Service/CardCaptureValidator.php',
         'WooCommerce\\PayPalCommerce\\Common\\Pattern\\SingletonDecorator' => __DIR__ . '/../..' . '/lib/common/Pattern/SingletonDecorator.php',
         'WooCommerce\\PayPalCommerce\\Common\\Pattern\\SingletonTrait' => __DIR__ . '/../..' . '/lib/common/Pattern/SingletonTrait.php',
-        'WooCommerce\\PayPalCommerce\\Compat\\AdminContextTrait' => __DIR__ . '/../..' . '/modules/ppcp-compat/src/AdminContextTrait.php',
         'WooCommerce\\PayPalCommerce\\Compat\\Assets\\CompatAssets' => __DIR__ . '/../..' . '/modules/ppcp-compat/src/Assets/CompatAssets.php',
         'WooCommerce\\PayPalCommerce\\Compat\\CompatModule' => __DIR__ . '/../..' . '/modules/ppcp-compat/src/CompatModule.php',
         'WooCommerce\\PayPalCommerce\\Compat\\Integration' => __DIR__ . '/../..' . '/modules/ppcp-compat/src/Integration.php',

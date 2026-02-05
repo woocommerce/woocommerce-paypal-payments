@@ -166,6 +166,7 @@ class CartProductsHelper
             }
             $variations[$value['name']] = $value['value'];
         }
+        // @phpstan-ignore method.notFound
         $variation_id = $this->product_data_store->find_matching_product_variation($product, $variations);
         // ToDo: Check stock status for variation.
         $cart_item_key = $this->cart->add_to_cart($product->get_id(), $quantity, $variation_id, $variations);
@@ -189,6 +190,7 @@ class CartProductsHelper
             throw new Exception('Cart not set.');
         }
         if (!is_callable('wc_bookings_get_posted_data')) {
+            // @phpstan-ignore function.impossibleType
             return \false;
         }
         $cart_item_data = array('booking' => wc_bookings_get_posted_data($data, $product));
