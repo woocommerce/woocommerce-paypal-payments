@@ -125,7 +125,6 @@ return array(
 			$container->get( 'vaulting.repository.payment-token' ),
 			$container->get( 'woocommerce.logger.woocommerce' ),
 			$container->get( 'api.shop.country' ),
-			$container->get( 'api.endpoint.order' ),
 			$container->get( 'api.factory.paypal-checkout-url' ),
 			$container->get( 'wcgateway.place-order-button-text' ),
 			$container->get( 'api.endpoint.payment-tokens' ),
@@ -152,7 +151,6 @@ return array(
 			$container->get( 'api.endpoint.order' ),
 			$container->get( 'wcgateway.endpoint.capture-card-payment' ),
 			$container->get( 'api.prefix' ),
-			$container->get( 'api.endpoint.payment-tokens' ),
 			$container->get( 'vaulting.wc-payment-tokens' ),
 			$container->get( 'woocommerce.logger.woocommerce' )
 		);

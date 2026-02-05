@@ -176,13 +176,6 @@ class PayPalGateway extends \WC_Payment_Gateway {
 	protected $api_shop_country;
 
 	/**
-	 * The order endpoint.
-	 *
-	 * @var OrderEndpoint
-	 */
-	private $order_endpoint;
-
-	/**
 	 * The function return the PayPal checkout URL for the given order ID.
 	 *
 	 * @var callable(string):string
@@ -296,7 +289,6 @@ class PayPalGateway extends \WC_Payment_Gateway {
 	 * @param PaymentTokenRepository   $payment_token_repository The payment token repository.
 	 * @param LoggerInterface          $logger The logger.
 	 * @param string                   $api_shop_country The api shop country.
-	 * @param OrderEndpoint            $order_endpoint The order endpoint.
 	 * @param callable(string):string  $paypal_checkout_url_factory The function return the PayPal checkout URL for the given order ID.
 	 * @param string                   $place_order_button_text The text for the standard "Place order" button.
 	 * @param PaymentTokensEndpoint    $payment_tokens_endpoint Payment tokens endpoint.
@@ -320,7 +312,6 @@ class PayPalGateway extends \WC_Payment_Gateway {
 		PaymentTokenRepository $payment_token_repository,
 		LoggerInterface $logger,
 		string $api_shop_country,
-		OrderEndpoint $order_endpoint,
 		callable $paypal_checkout_url_factory,
 		string $place_order_button_text,
 		PaymentTokensEndpoint $payment_tokens_endpoint,
@@ -346,7 +337,6 @@ class PayPalGateway extends \WC_Payment_Gateway {
 		$this->api_shop_country            = $api_shop_country;
 		$this->paypal_checkout_url_factory = $paypal_checkout_url_factory;
 		$this->order_button_text           = $place_order_button_text;
-		$this->order_endpoint              = $order_endpoint;
 		$this->payment_tokens_endpoint     = $payment_tokens_endpoint;
 		$this->vault_v3_enabled            = $vault_v3_enabled;
 		$this->wc_payment_tokens           = $wc_payment_tokens;
@@ -799,7 +789,7 @@ class PayPalGateway extends \WC_Payment_Gateway {
 
 		if ( 'enabled' === $key ) {
 			assert( $this->config instanceof Settings );
-			
+
 			$this->config->set( 'enabled', 'yes' === $value );
 			$this->config->persist();
 
