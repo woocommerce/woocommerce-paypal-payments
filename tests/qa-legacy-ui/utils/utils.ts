@@ -8,6 +8,7 @@ import {
 	WooCommerceUtils,
 	restLogin,
 	expect,
+	WpCli,
 } from '@inpsyde/playwright-utils/build';
 /**
  * Internal dependencies
@@ -31,13 +32,13 @@ import {
 } from './frontend';
 import {
 	subscriptionsPlugin,
-	wpDebuggingPlugin,
 	pcpPlugin,
 	PcpMerchant,
 	PcpConfig,
 } from '../resources';
 import { generateRandomString, getCustomerStorageStateName } from './helpers';
 import urls from './urls';
+import { PcpApi } from './pcp-api';
 
 export class Utils {
 	plugins: Plugins;
@@ -58,6 +59,8 @@ export class Utils {
 	orderReceived: OrderReceived;
 	customerAccount: CustomerAccount;
 	customerPaymentMethods: CustomerPaymentMethods;
+	cli: WpCli;
+	pcpApi: PcpApi;
 
 	constructor( {
 		plugins,
@@ -78,6 +81,8 @@ export class Utils {
 		customerAccount,
 		customerPaymentMethods,
 		visitorWooCommerceApi,
+		cli,
+		pcpApi,
 	} ) {
 		this.plugins = plugins;
 		this.wooCommerceUtils = wooCommerceUtils;
@@ -97,15 +102,9 @@ export class Utils {
 		this.customerAccount = customerAccount;
 		this.customerPaymentMethods = customerPaymentMethods;
 		this.visitorWooCommerceApi = visitorWooCommerceApi;
+		this.cli = cli;
+		this.pcpApi = pcpApi;
 	}
-
-	activateWpDebuggingPlugin = async () => {
-		await this.requestUtils.activatePlugin( wpDebuggingPlugin.slug );
-	};
-
-	deactivateWpDebuggingPlugin = async () => {
-		await this.requestUtils.deactivatePlugin( wpDebuggingPlugin.slug );
-	};
 
 	activateWcSubscriptionsPlugin = async () => {
 		await this.requestUtils.activatePlugin( subscriptionsPlugin.slug );
@@ -351,13 +350,13 @@ export class Utils {
 				break;
 
 			case 'PayLater':
-				await this.activateWpDebuggingPlugin();
+				await this.cli.setWpConst( { WP_DEBUG: true, SCRIPT_DEBUG: true, WP_DEBUG_DISPLAY: false, WP_DEBUG_LOG: true } );
 				await this.standardPayments.setup( { vaulting: false } );
 				await this.payLater.setup( { enableGateway: true } );
 				break;
 
 			case 'Venmo':
-				await this.activateWpDebuggingPlugin();
+				await this.cli.setWpConst( { WP_DEBUG: true, SCRIPT_DEBUG: true, WP_DEBUG_DISPLAY: false, WP_DEBUG_LOG: true } );
 				await this.standardPayments.setup( {
 					enableAlternativePaymentMethods: [ 'Venmo' ],
 				} );
@@ -420,11 +419,11 @@ export class Utils {
 	 */
 	configureStore = async ( data ) => {
 		if ( data.wpDebugging === true ) {
-			await this.activateWpDebuggingPlugin();
+			await this.cli.setWpConst( { WP_DEBUG: true, SCRIPT_DEBUG: true, WP_DEBUG_DISPLAY: false, WP_DEBUG_LOG: true } );
 		}
 
 		if ( data.wpDebugging === false ) {
-			await this.deactivateWpDebuggingPlugin();
+			await this.cli.setWpConst( { WP_DEBUG: false, SCRIPT_DEBUG: false } );
 		}
 
 		if ( data.subscription === true ) {

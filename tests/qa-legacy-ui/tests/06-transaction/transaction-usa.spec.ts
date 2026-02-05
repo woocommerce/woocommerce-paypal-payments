@@ -120,12 +120,12 @@ test.describe( 'Vertical buttons', () => {
 
 test.describe( 'WP Debugging', () => {
 	test.beforeAll(
-		async ( { utils } ) => await utils.activateWpDebuggingPlugin()
+		async ( { cli } ) => await cli.setWpConst( { WP_DEBUG: true, SCRIPT_DEBUG: true, WP_DEBUG_DISPLAY: false, WP_DEBUG_LOG: true } )
 	);
 
 	transactionsOnPayByLink( payPalPayByLinkDebugging );
 
 	test.beforeAll(
-		async ( { utils } ) => await utils.deactivateWpDebuggingPlugin()
+		async ( { cli } ) => await cli.setWpConst( { WP_DEBUG: false, SCRIPT_DEBUG: false } )
 	);
 } );
