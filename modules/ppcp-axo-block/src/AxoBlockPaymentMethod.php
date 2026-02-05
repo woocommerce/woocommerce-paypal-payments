@@ -28,6 +28,7 @@ class AxoBlockPaymentMethod extends AbstractPaymentMethodType {
 	 * The settings.
 	 *
 	 * @var Settings
+	 * @phpstan-ignore property.phpDocType
 	 */
 	protected $settings;
 
