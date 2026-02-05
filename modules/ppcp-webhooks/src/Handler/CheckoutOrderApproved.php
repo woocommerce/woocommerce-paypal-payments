@@ -157,8 +157,8 @@ class CheckoutOrderApproved implements \WooCommerce\PayPalCommerce\Webhooks\Hand
                 /**
                  * Wrong type-hint.
                  *
-                 * @phpstan-ignore argument.type
                  * @psalm-suppress InvalidScalarArgument
+                 * @phpstan-ignore argument.type
                  */
                 $session->delete_session($customer_id);
                 $session->forget_session();

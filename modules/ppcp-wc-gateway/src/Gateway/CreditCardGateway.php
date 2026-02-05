@@ -103,12 +103,6 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC
      */
     protected $transaction_url_provider;
     /**
-     * The payment token repository.
-     *
-     * @var PaymentTokenRepository
-     */
-    private $payment_token_repository;
-    /**
      * The subscription helper.
      *
      * @var SubscriptionHelper
@@ -144,12 +138,6 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC
      * @var string
      */
     private $prefix;
-    /**
-     * Payment tokens endpoint.
-     *
-     * @var PaymentTokensEndpoint
-     */
-    private $payment_tokens_endpoint;
     /**
      * WooCommerce payment tokens factory.
      *
@@ -226,11 +214,10 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC
      * @param OrderEndpoint             $order_endpoint              The order endpoint.
      * @param CaptureCardPayment        $capture_card_payment        Capture card payment.
      * @param string                    $prefix                      The prefix.
-     * @param PaymentTokensEndpoint     $payment_tokens_endpoint     Payment tokens endpoint.
      * @param WooCommercePaymentTokens  $wc_payment_tokens           WooCommerce payment tokens factory.
      * @param LoggerInterface           $logger                      The logger.
      */
-    public function __construct(SettingsRenderer $settings_renderer, OrderProcessor $order_processor, ContainerInterface $config, CardPaymentsConfiguration $dcc_configuration, array $card_icons, SessionHandler $session_handler, RefundProcessor $refund_processor, \WooCommerce\PayPalCommerce\WcGateway\Gateway\TransactionUrlProvider $transaction_url_provider, SubscriptionHelper $subscription_helper, PaymentsEndpoint $payments_endpoint, VaultedCreditCardHandler $vaulted_credit_card_handler, Environment $environment, OrderEndpoint $order_endpoint, CaptureCardPayment $capture_card_payment, string $prefix, PaymentTokensEndpoint $payment_tokens_endpoint, WooCommercePaymentTokens $wc_payment_tokens, LoggerInterface $logger)
+    public function __construct(SettingsRenderer $settings_renderer, OrderProcessor $order_processor, ContainerInterface $config, CardPaymentsConfiguration $dcc_configuration, array $card_icons, SessionHandler $session_handler, RefundProcessor $refund_processor, \WooCommerce\PayPalCommerce\WcGateway\Gateway\TransactionUrlProvider $transaction_url_provider, SubscriptionHelper $subscription_helper, PaymentsEndpoint $payments_endpoint, VaultedCreditCardHandler $vaulted_credit_card_handler, Environment $environment, OrderEndpoint $order_endpoint, CaptureCardPayment $capture_card_payment, string $prefix, WooCommercePaymentTokens $wc_payment_tokens, LoggerInterface $logger)
     {
         $this->id = self::ID;
         $this->settings_renderer = $settings_renderer;
@@ -247,7 +234,6 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC
         $this->order_endpoint = $order_endpoint;
         $this->capture_card_payment = $capture_card_payment;
         $this->prefix = $prefix;
-        $this->payment_tokens_endpoint = $payment_tokens_endpoint;
         $this->wc_payment_tokens = $wc_payment_tokens;
         $this->logger = $logger;
         $default_support = array('products', 'refunds');
