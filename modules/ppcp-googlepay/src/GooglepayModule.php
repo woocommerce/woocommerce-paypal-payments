@@ -190,7 +190,7 @@ class GooglepayModule implements ServiceModule, ExtendingModule, ExecutableModul
 			 *
 			 * @psalm-suppress MissingClosureParamType
 			 */
-			static function ( $methods ) use ( $c ): array {
+			static function ( $methods ) use ( $c ) {
 				if ( ! is_array( $methods ) ) {
 					return $methods;
 				}

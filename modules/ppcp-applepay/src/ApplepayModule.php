@@ -138,7 +138,7 @@ class ApplepayModule implements ServiceModule, ExtendingModule, ExecutableModule
 			 *
 			 * @psalm-suppress MissingClosureParamType
 			 */
-			static function ( $methods ) use ( $c ): array {
+			static function ( $methods ) use ( $c ) {
 				if ( ! is_array( $methods ) ) {
 					return $methods;
 				}

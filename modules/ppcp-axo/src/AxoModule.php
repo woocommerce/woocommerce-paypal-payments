@@ -72,7 +72,7 @@ class AxoModule implements ServiceModule, ExtendingModule, ExecutableModule {
 			 *
 			 * @psalm-suppress MissingClosureParamType
 			 */
-			function ( $methods ) use ( $c ): array {
+			function ( $methods ) use ( $c ) {
 				if ( ! is_array( $methods ) ) {
 					return $methods;
 				}
@@ -293,7 +293,7 @@ class AxoModule implements ServiceModule, ExtendingModule, ExecutableModule {
 					 *
 					 * @psalm-suppress MissingClosureParamType
 					 */
-					function ( $rows, $renderer ): array {
+					function ( $rows, $renderer ) {
 						if ( ! is_array( $rows ) ) {
 							return $rows;
 						}
