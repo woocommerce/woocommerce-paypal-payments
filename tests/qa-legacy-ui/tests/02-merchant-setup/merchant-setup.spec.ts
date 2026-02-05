@@ -17,8 +17,8 @@ test.describe( 'Merchant Setup', () => {
 		} );
 	} );
 
-	test.beforeEach( async ( { utils } ) => {
-		await utils.disconnectMerchant();
+	test.beforeEach( async ( { pcpApi } ) => {
+		await pcpApi.disconnectMerchant();
 	} );
 
 	test( 'PCP-2314 | Merchant Setup page UI @Critical', async ( {

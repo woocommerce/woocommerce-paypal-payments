@@ -24,8 +24,8 @@ test.describe( 'Connection', () => {
 	} );
 
 	test.describe( 'Connected merchant', () => {
-		test.beforeAll( async ( { utils } ) => {
-			await utils.connectMerchant( pcpConfigDefault.merchant );
+		test.beforeAll( async ( { pcpApi } ) => {
+			await pcpApi.connectMerchant( pcpConfigDefault.merchant );
 		} );
 
 		test( 'PCP-1019 | Advanced Credit and Debit Card Payments status is enabled button Settings is also enabled @Critical', async ( {

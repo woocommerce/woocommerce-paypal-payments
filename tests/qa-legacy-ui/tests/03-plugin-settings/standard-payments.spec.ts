@@ -468,9 +468,9 @@ test.describe( 'Standard Payments', () => {
 } );
 
 test.describe( 'Standard Payments > Clear DB', () => {
-	test.beforeEach( async ( { utils } ) => {
-		await utils.clearPcpDb( pcpConfigDefault.merchant );
-		await utils.connectMerchant( pcpConfigDefault.merchant );
+	test.beforeEach( async ( { pcpApi, utils } ) => {
+		await pcpApi.clearPcpDb();
+		await pcpApi.connectMerchant( pcpConfigDefault.merchant );
 		await utils.configurePcp( {
 			standardPayments: {
 				enableGateway: true,
