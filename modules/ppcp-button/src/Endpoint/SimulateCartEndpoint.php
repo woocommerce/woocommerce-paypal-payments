@@ -99,9 +99,9 @@ class SimulateCartEndpoint extends AbstractCartEndpoint {
 				'order_total' => $total,
 			);
 
-			$pay_later_enabled           = $pay_later_enabled && $this->smart_button->is_pay_later_button_enabled_for_location( 'product', $context_data );
-			$pay_later_messaging_enabled = $pay_later_messaging_enabled && $this->smart_button->is_pay_later_messaging_enabled_for_location( 'product', $context_data );
-			$button_enabled              = $button_enabled && ! $this->smart_button->is_button_disabled( 'product', $context_data );
+			$pay_later_enabled           = $pay_later_enabled && $this->smart_button->is_pay_later_button_enabled_for_location( 'product', $context_data ); // @phpstan-ignore method.notFound
+			$pay_later_messaging_enabled = $pay_later_messaging_enabled && $this->smart_button->is_pay_later_messaging_enabled_for_location( 'product', $context_data ); // @phpstan-ignore method.notFound
+			$button_enabled              = $button_enabled && ! $this->smart_button->is_button_disabled( 'product', $context_data ); // @phpstan-ignore method.notFound
 		}
 
 		// Shop settings.

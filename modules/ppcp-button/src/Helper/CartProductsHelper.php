@@ -208,6 +208,7 @@ class CartProductsHelper {
 			$variations[ $value['name'] ] = $value['value'];
 		}
 
+		// @phpstan-ignore method.notFound
 		$variation_id = $this->product_data_store->find_matching_product_variation( $product, $variations );
 
 		// ToDo: Check stock status for variation.
