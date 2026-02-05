@@ -34,10 +34,7 @@ export class Cart extends CartBase {
 		// await this.selectShippingMethod( tested.shipping.settings.title );
 
 		// Make payment with tested method
-		await this.ppui.makePayment( {
-			merchant: tested.merchant,
-			payment: tested.payment,
-		} );
+		await this.ppui.makePayment( tested );
 	};
 
 	// Assertions
