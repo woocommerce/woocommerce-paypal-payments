@@ -721,7 +721,7 @@ class PayPalGateway extends \WC_Payment_Gateway {
 
 				$wc_order->update_status(
 					'failed',
-					$retry_keys_messages[ $retry_error_key ] . ' ' . $error->details()[0]->description ?? ''
+					$retry_keys_messages[ $retry_error_key ] . ' ' . ( $error->details()[0]->description ?? '' )
 				);
 
 				$this->session_handler->increment_insufficient_funding_tries();
