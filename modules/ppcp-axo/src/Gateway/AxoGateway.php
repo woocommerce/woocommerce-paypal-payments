@@ -462,8 +462,7 @@ class AxoGateway extends WC_Payment_Gateway {
 			null,
 			self::ID,
 			$this->build_order_data(),
-			$payment_source,
-			$wc_order
+			$payment_source
 		);
 	}
 
