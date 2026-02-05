@@ -293,7 +293,6 @@ return array(
 		return new BillingPlans(
 			$container->get( 'api.host' ),
 			$container->get( 'api.bearer' ),
-			$container->get( 'api.factory.billing-cycle' ),
 			$container->get( 'api.factory.plan' ),
 			$container->get( 'woocommerce.logger.woocommerce' )
 		);

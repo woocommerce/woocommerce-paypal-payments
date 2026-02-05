@@ -342,7 +342,6 @@ return array(
 	'wcgateway.notice.connect'                             => static function ( ContainerInterface $container ): ConnectAdminNotice {
 		return new ConnectAdminNotice(
 			$container->get( 'settings.flag.is-connected' ),
-			$container->get( 'wcgateway.settings' ),
 			$container->get( 'wcgateway.is-send-only-country' )
 		);
 	},
@@ -2059,9 +2058,6 @@ return array(
 			$container->get( 'api.bearer' ),
 			$container->get( 'api.factory.order' ),
 			$container->get( 'api.factory.purchase-unit' ),
-			$container->get( 'api.endpoint.order' ),
-			$container->get( 'session.handler' ),
-			$container->get( 'wc-subscriptions.helpers.real-time-account-updater' ),
 			$container->get( 'wcgateway.settings' ),
 			$container->get( 'woocommerce.logger.woocommerce' )
 		);

@@ -10,15 +10,13 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\Button\Assets;
 
 use Exception;
-use Psr\Log\LoggerInterface;
 use WC_Cart;
 use WC_Order;
 use WC_Payment_Tokens;
 use WC_Product;
+use WC_Product_Variable;
 use WC_Product_Variation;
-use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PaymentTokensEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Money;
-use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentToken;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PayerFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\CurrencyGetter;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\DccApplies;
@@ -173,13 +171,6 @@ class SmartButton implements SmartButtonInterface {
 	protected $early_validation_enabled;
 
 	/**
-	 * Cached payment tokens.
-	 *
-	 * @var PaymentToken[]|null
-	 */
-	private $payment_tokens = null;
-
-	/**
 	 * The contexts that should have the Pay Now button.
 	 *
 	 * @var string[]
@@ -206,20 +197,6 @@ class SmartButton implements SmartButtonInterface {
 	 * @var bool
 	 */
 	private $vault_v3_enabled;
-
-	/**
-	 * Payment tokens endpoint.
-	 *
-	 * @var PaymentTokensEndpoint
-	 */
-	private $payment_tokens_endpoint;
-
-	/**
-	 * The logger.
-	 *
-	 * @var LoggerInterface
-	 */
-	private $logger;
 
 	/**
 	 * Whether the shipping should be handled in PayPal.
@@ -284,8 +261,6 @@ class SmartButton implements SmartButtonInterface {
 	 * @param array                     $pay_now_contexts                  The contexts that should have the Pay Now button.
 	 * @param string[]                  $funding_sources_without_redirect  The sources that do not cause issues about redirecting (on mobile, ...) and sometimes not returning back.
 	 * @param bool                      $vault_v3_enabled                  Whether Vault v3 module is enabled.
-	 * @param PaymentTokensEndpoint     $payment_tokens_endpoint           Payment tokens endpoint.
-	 * @param LoggerInterface           $logger                            The logger.
 	 * @param bool                      $should_handle_shipping_in_paypal  Whether the shipping should be handled in PayPal.
 	 * @param bool                      $server_side_shipping_callback_enabled Whether the server-side shipping callback is enabled (feature flag).
 	 * @param bool                      $appswitch_enabled                 Whether the AppSwitch is enabled (feature flag).
@@ -314,8 +289,6 @@ class SmartButton implements SmartButtonInterface {
 		array $pay_now_contexts,
 		array $funding_sources_without_redirect,
 		bool $vault_v3_enabled,
-		PaymentTokensEndpoint $payment_tokens_endpoint,
-		LoggerInterface $logger,
 		bool $should_handle_shipping_in_paypal,
 		bool $server_side_shipping_callback_enabled,
 		bool $appswitch_enabled,
@@ -344,8 +317,6 @@ class SmartButton implements SmartButtonInterface {
 		$this->pay_now_contexts                      = $pay_now_contexts;
 		$this->funding_sources_without_redirect      = $funding_sources_without_redirect;
 		$this->vault_v3_enabled                      = $vault_v3_enabled;
-		$this->logger                                = $logger;
-		$this->payment_tokens_endpoint               = $payment_tokens_endpoint;
 		$this->should_handle_shipping_in_paypal      = $should_handle_shipping_in_paypal;
 		$this->server_side_shipping_callback_enabled = $server_side_shipping_callback_enabled;
 		$this->appswitch_enabled                     = $appswitch_enabled;
