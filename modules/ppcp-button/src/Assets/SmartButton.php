@@ -1406,7 +1406,7 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
 			'intent'           => $intent,
 		);
 
-		if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+		if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) { // @phpstan-ignore booleanAnd.rightAlwaysFalse
 			$params['debug'] = true;
 		}
 
@@ -1420,8 +1420,8 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
 		}
 
 		if (
-			$this->environment->is_sandbox()
-			&& defined( 'WP_DEBUG' ) && \WP_DEBUG
+			$this->environment->is_sandbox() // @phpstan-ignore-line
+			&& defined( 'WP_DEBUG' ) && \WP_DEBUG // @phpstan-ignore booleanAnd.rightAlwaysFalse
 			&& WC()->customer instanceof \WC_Customer && WC()->customer->get_billing_country()
 			&& 2 === strlen( WC()->customer->get_billing_country() )
 		) {

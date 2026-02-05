@@ -168,7 +168,7 @@ class AxoManager {
 				),
 			),
 			'logging_enabled'            => $this->settings->has( 'logging_enabled' ) ? $this->settings->get( 'logging_enabled' ) : '',
-			'wp_debug'                   => defined( 'WP_DEBUG' ) && WP_DEBUG,
+			'wp_debug'                   => defined( 'WP_DEBUG' ) && WP_DEBUG, // @phpstan-ignore booleanAnd.rightAlwaysFalse
 			'billing_email_button_text'  => __( 'Continue', 'woocommerce-paypal-payments' ),
 			'merchant_country'           => WC()->countries->get_base_country(),
 		);
