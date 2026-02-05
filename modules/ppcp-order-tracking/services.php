@@ -79,7 +79,7 @@ return array(
 		$selected_country_carriers = $allowed_carriers[ $api_shop_country ] ?? array();
 
 		return array(
-			$api_shop_country => $selected_country_carriers ?? array(),
+			$api_shop_country => $selected_country_carriers ?? array(), // @phpstan-ignore nullCoalesce.variable
 			'global'          => $allowed_carriers['global'] ?? array(),
 			'other'           => array(
 				'name'  => 'Other',
