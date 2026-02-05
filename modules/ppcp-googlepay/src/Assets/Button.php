@@ -287,7 +287,7 @@ class Button implements ButtonInterface {
 			);
 		}
 
-		if ( $button_enabled_checkout ) {
+		if ( $button_enabled_checkout ) { // @phpstan-ignore if.alwaysTrue
 			$default_hook_name  = 'woocommerce_paypal_payments_checkout_button_render';
 			$render_placeholder = apply_filters( 'woocommerce_paypal_payments_googlepay_checkout_button_render_hook', $default_hook_name );
 			$render_placeholder = is_string( $render_placeholder ) ? $render_placeholder : $default_hook_name;
@@ -301,7 +301,7 @@ class Button implements ButtonInterface {
 			);
 		}
 
-		if ( $button_enabled_payorder ) {
+		if ( $button_enabled_payorder ) { // @phpstan-ignore if.alwaysTrue
 			$default_hook_name  = 'woocommerce_paypal_payments_payorder_button_render';
 			$render_placeholder = apply_filters( 'woocommerce_paypal_payments_googlepay_payorder_button_render_hook', $default_hook_name );
 			$render_placeholder = is_string( $render_placeholder ) ? $render_placeholder : $default_hook_name;
