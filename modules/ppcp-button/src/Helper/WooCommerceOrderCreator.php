@@ -62,7 +62,8 @@ class WooCommerceOrderCreator {
 
 	protected CartDataFactory $cart_data_factory;
 
-	protected $shipping_factory;
+	protected ShippingFactory $shipping_factory;
+
 	protected PayerFactory $payer_factory;
 
 	public function __construct(
