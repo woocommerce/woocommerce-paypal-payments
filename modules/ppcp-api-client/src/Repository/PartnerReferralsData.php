@@ -32,7 +32,7 @@ class PartnerReferralsData {
 	 * @param DccApplies $dcc_applies The DCC Applies helper.
 	 */
 	public function __construct( DccApplies $dcc_applies ) {
-		$this->dcc_applies = $dcc_applies;
+		$this->dcc_applies = $dcc_applies; // @phpstan-ignore property.deprecated
 	}
 
 	/**
@@ -60,7 +60,7 @@ class PartnerReferralsData {
 		?bool $use_subscriptions = null,
 		bool $use_card_payments = true
 	): array {
-		$in_acdc_country = $this->dcc_applies->for_country_currency();
+		$in_acdc_country = $this->dcc_applies->for_country_currency(); // @phpstan-ignore property.deprecated
 
 		if ( ! $products ) {
 			$products = array(
