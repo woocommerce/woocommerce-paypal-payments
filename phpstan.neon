@@ -1,8 +1,10 @@
 includes:
     - vendor/phpstan/phpstan-deprecation-rules/rules.neon
     - vendor/swissspidy/phpstan-no-private/rules.neon
+    - phpstan-baseline.neon
 parameters:
-    level: 5
+    level: 8
+    reportUnmatchedIgnoredErrors: false
     scanFiles:
         - .psalm/stubs.php
         - .psalm/wcblocks.php
