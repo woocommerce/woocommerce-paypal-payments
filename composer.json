@@ -32,7 +32,6 @@
         "brain/monkey": "^2.4",
         "php-stubs/wordpress-stubs": "^5.0@stable",
         "php-stubs/woocommerce-stubs": "^9.0@stable",
-        "vimeo/psalm": "^4.0",
         "vlucas/phpdotenv": "^5",
         "coenjacobs/mozart": "^0.7.1",
         "symfony/var-dumper": "^5.4",
