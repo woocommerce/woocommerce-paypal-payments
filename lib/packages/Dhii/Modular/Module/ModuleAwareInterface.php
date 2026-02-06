@@ -1,7 +1,6 @@
 <?php
 
-declare(strict_types=1);
-
+declare (strict_types=1);
 namespace WooCommerce\PayPalCommerce\Vendor\Dhii\Modular\Module;
 
 /**
@@ -18,5 +17,5 @@ interface ModuleAwareInterface
      *
      * @return ModuleInterface|null The module, if applicable; otherwise, null.
      */
-    public function getModule(): ?ModuleInterface;
+    public function getModule(): ?\WooCommerce\PayPalCommerce\Vendor\Dhii\Modular\Module\ModuleInterface;
 }
