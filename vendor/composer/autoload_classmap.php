@@ -6,18 +6,14 @@ $vendorDir = dirname(__DIR__);
 $baseDir = dirname($vendorDir);
 
 return array(
-    'Attribute' => $vendorDir . '/symfony/polyfill-php80/Resources/stubs/Attribute.php',
     'Composer\\InstalledVersions' => $vendorDir . '/composer/InstalledVersions.php',
     'Dhii\\Modular\\Module\\Exception\\ModuleExceptionInterface' => $vendorDir . '/dhii/module-interface/src/Exception/ModuleExceptionInterface.php',
     'Dhii\\Modular\\Module\\ModuleAwareInterface' => $vendorDir . '/dhii/module-interface/src/ModuleAwareInterface.php',
     'Dhii\\Modular\\Module\\ModuleInterface' => $vendorDir . '/dhii/module-interface/src/ModuleInterface.php',
     'Interop\\Container\\ServiceProviderInterface' => $vendorDir . '/container-interop/service-provider/src/ServiceProviderInterface.php',
-    'PhpToken' => $vendorDir . '/symfony/polyfill-php80/Resources/stubs/PhpToken.php',
     'Stringable' => $vendorDir . '/symfony/polyfill-php80/Resources/stubs/Stringable.php',
     'Symfony\\Polyfill\\Php80\\Php80' => $vendorDir . '/symfony/polyfill-php80/Php80.php',
     'Symfony\\Polyfill\\Php80\\PhpToken' => $vendorDir . '/symfony/polyfill-php80/PhpToken.php',
-    'UnhandledMatchError' => $vendorDir . '/symfony/polyfill-php80/Resources/stubs/UnhandledMatchError.php',
-    'ValueError' => $vendorDir . '/symfony/polyfill-php80/Resources/stubs/ValueError.php',
     'Wikimedia\\Composer\\Merge\\V2\\ExtraPackage' => $vendorDir . '/wikimedia/composer-merge-plugin/src/ExtraPackage.php',
     'Wikimedia\\Composer\\Merge\\V2\\Logger' => $vendorDir . '/wikimedia/composer-merge-plugin/src/Logger.php',
     'Wikimedia\\Composer\\Merge\\V2\\MergePlugin' => $vendorDir . '/wikimedia/composer-merge-plugin/src/MergePlugin.php',
