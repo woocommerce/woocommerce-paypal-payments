@@ -444,13 +444,15 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 				$applepay_gateway = $container->get( 'applepay.wc-gateway' );
 				assert( $applepay_gateway instanceof WC_Payment_Gateway );
 
-				$axo_gateway = $container->get( 'axo.gateway' );
-				assert( $axo_gateway instanceof WC_Payment_Gateway );
-
 				$methods[] = $card_button_gateway;
 				$methods[] = $googlepay_gateway;
 				$methods[] = $applepay_gateway;
-				$methods[] = $axo_gateway;
+
+				if ( $container->has( 'axo.eligible' ) && $container->get( 'axo.eligible' ) ) {
+					$axo_gateway = $container->get( 'axo.gateway' );
+					assert( $axo_gateway instanceof WC_Payment_Gateway );
+					$methods[] = $axo_gateway;
+				}
 
 				return $methods;
 			},
