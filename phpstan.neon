@@ -6,12 +6,12 @@ parameters:
     level: 8
     reportUnmatchedIgnoredErrors: false
     scanFiles:
-        - .psalm/stubs.php
-        - .psalm/wcblocks.php
-        - .psalm/wcs.php
-        - .psalm/gzd.php
-        - .psalm/wc-bookings.php
-        - .psalm/wpcli.php
+        - stubs/stubs.php
+        - stubs/wcblocks.php
+        - stubs/wcs.php
+        - stubs/gzd.php
+        - stubs/wc-bookings.php
+        - stubs/wpcli.php
         - vendor/inpsyde/wp-stubs-versions/latest.php
         - vendor/php-stubs/woocommerce-stubs/woocommerce-stubs.php
     paths:
