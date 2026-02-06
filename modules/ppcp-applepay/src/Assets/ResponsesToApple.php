@@ -162,6 +162,15 @@ class ResponsesToApple {
 			$type
 		);
 
+		$has_discount = $payment_details['discount']['amount'] ?? null;
+		if ( $has_discount ) {
+			$response[] = $this->apple_item_format(
+				$payment_details['discount']['label'] ?: __( 'Discount', 'woocommerce-paypal-payments' ),
+				-round( floatval( $payment_details['discount']['amount'] ), 2 ),
+				$type
+			);
+		}
+
 		if ( $payment_details['shipping']['amount'] ) {
 			$response[] = $this->apple_item_format(
 				$payment_details['shipping']['label'] ?: '',
