@@ -135,9 +135,9 @@ class PurchaseUnit {
 			array_filter(
 				$items,
 				function ( $item ): bool {
-					$is_item = $item instanceof Item; // @phpstan-ignore function.alreadyNarrowedType
+					$is_item = $item instanceof Item; // @phpstan-ignore instanceof.alwaysTrue
 
-					if ( $is_item && Item::PHYSICAL_GOODS === $item->category() ) {
+					if ( $is_item && Item::PHYSICAL_GOODS === $item->category() ) { // @phpstan-ignore booleanAnd.leftAlwaysTrue
 						$this->contains_physical_goods = true;
 					}
 
