@@ -29,7 +29,7 @@ if (!function_exists('humbug_phpscoper_expose_class')) {
         }
     }
 }
-humbug_phpscoper_expose_class('ComposerAutoloaderInit0168569ddefbf6681d4beedcc1b416d8', 'WooCommerce\PayPalCommerce\Vendor\ComposerAutoloaderInit0168569ddefbf6681d4beedcc1b416d8');
+humbug_phpscoper_expose_class('ComposerAutoloaderInit8f1360c3598043abaa942bfe9de529b6', 'WooCommerce\PayPalCommerce\Vendor\ComposerAutoloaderInit8f1360c3598043abaa942bfe9de529b6');
 
 // Function aliases. For more information see:
 // https://github.com/humbug/php-scoper/blob/master/docs/further-reading.md#function-aliases
