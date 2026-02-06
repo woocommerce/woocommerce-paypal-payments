@@ -339,7 +339,7 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC
     public function process_payment($order_id)
     {
         $wc_order = wc_get_order($order_id);
-        if (!is_a($wc_order, WC_Order::class)) {
+        if (!$wc_order instanceof WC_Order) {
             WC()->session->set('ppcp_card_payment_token_for_free_trial', null);
             return $this->handle_payment_failure(null, new GatewayGenericException(new Exception('WC order was not found.')));
         }
@@ -481,7 +481,7 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC
     public function process_refund($order_id, $amount = null, $reason = '')
     {
         $order = wc_get_order($order_id);
-        if (!is_a($order, \WC_Order::class)) {
+        if (!$order instanceof \WC_Order) {
             return \false;
         }
         return $this->refund_processor->process($order, (float) $amount, (string) $reason);

@@ -74,7 +74,7 @@ class StartPayPalVaultingEndpoint implements EndpointInterface
             wp_send_json_success(array('approve_link' => $links->approve_link()));
         } catch (Exception $error) {
             $this->logger->error('Failed to start PayPal vaulting: ' . $error->getMessage());
-            wp_send_json_error(array('name' => is_a($error, PayPalApiException::class) ? $error->name() : '', 'message' => $error->getMessage()));
+            wp_send_json_error(array('name' => $error instanceof PayPalApiException ? $error->name() : '', 'message' => $error->getMessage()));
         }
     }
 }

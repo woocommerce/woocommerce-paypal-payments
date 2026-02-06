@@ -84,7 +84,7 @@ class SubscriptionsApiHandler
             $product->save();
         } catch (RuntimeException $exception) {
             $error = $exception->getMessage();
-            if (is_a($exception, PayPalApiException::class)) {
+            if ($exception instanceof PayPalApiException) {
                 $error = $exception->get_details($error);
             }
             $this->logger->error('Could not create catalog product on PayPal. ' . $error);
@@ -105,7 +105,7 @@ class SubscriptionsApiHandler
             $product->save();
         } catch (RuntimeException $exception) {
             $error = $exception->getMessage();
-            if (is_a($exception, PayPalApiException::class)) {
+            if ($exception instanceof PayPalApiException) {
                 $error = $exception->get_details($error);
             }
             $this->logger->error('Could not create subscription plan on PayPal. ' . $error);
@@ -139,7 +139,7 @@ class SubscriptionsApiHandler
             }
         } catch (RuntimeException $exception) {
             $error = $exception->getMessage();
-            if (is_a($exception, PayPalApiException::class)) {
+            if ($exception instanceof PayPalApiException) {
                 $error = $exception->get_details($error);
             }
             $this->logger->error('Could not update catalog product on PayPal. ' . $error);
@@ -164,7 +164,7 @@ class SubscriptionsApiHandler
             }
         } catch (RuntimeException $exception) {
             $error = $exception->getMessage();
-            if (is_a($exception, PayPalApiException::class)) {
+            if ($exception instanceof PayPalApiException) {
                 $error = $exception->get_details($error);
             }
             $this->logger->error('Could not update subscription plan on PayPal. ' . $error);

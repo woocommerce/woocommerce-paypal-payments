@@ -107,7 +107,7 @@ class PurchaseUnit
         $this->description = $description;
         //phpcs:disable Inpsyde.CodeQuality.ArgumentTypeDeclaration.NoArgumentType
         $this->items = array_values(array_filter($items, function ($item): bool {
-            $is_item = is_a($item, \WooCommerce\PayPalCommerce\ApiClient\Entity\Item::class);
+            $is_item = $item instanceof \WooCommerce\PayPalCommerce\ApiClient\Entity\Item;
             // @phpstan-ignore function.alreadyNarrowedType
             if ($is_item && \WooCommerce\PayPalCommerce\ApiClient\Entity\Item::PHYSICAL_GOODS === $item->category()) {
                 $this->contains_physical_goods = \true;

@@ -277,7 +277,7 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
             $order_status = $order->status();
             $logger->info("Checking payment captured webhook for WC order #{$wc_order_id}, PayPal order status: " . $order_status->name());
             $wc_order = wc_get_order($wc_order_id);
-            if (!is_a($wc_order, WC_Order::class) || $wc_order->get_status() !== 'on-hold') {
+            if (!$wc_order instanceof WC_Order || $wc_order->get_status() !== 'on-hold') {
                 return;
             }
             if ($order_status->name() !== OrderStatus::COMPLETED) {
@@ -534,7 +534,7 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
     {
         add_filter('woocommerce_order_actions', static function ($order_actions) use ($container): array {
             global $theorder;
-            if (!is_a($theorder, WC_Order::class)) {
+            if (!$theorder instanceof WC_Order) {
                 return $order_actions;
             }
             $render_reauthorize = $container->get('wcgateway.admin.render-reauthorize-action');

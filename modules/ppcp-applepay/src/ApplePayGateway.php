@@ -113,7 +113,7 @@ class ApplePayGateway extends WC_Payment_Gateway
     public function process_payment($order_id): array
     {
         $wc_order = wc_get_order($order_id);
-        if (!is_a($wc_order, WC_Order::class)) {
+        if (!$wc_order instanceof WC_Order) {
             return $this->handle_payment_failure(null, new GatewayGenericException(new Exception('WC order was not found.')));
         }
         do_action_deprecated('woocommerce_paypal_payments_before_process_order', array($wc_order), '3.0.1', 'woocommerce_paypal_payments_before_order_process', __('Usage of this action is deprecated. Please use the filter woocommerce_paypal_payments_before_order_process instead.', 'woocommerce-paypal-payments'));
@@ -158,7 +158,7 @@ class ApplePayGateway extends WC_Payment_Gateway
     public function process_refund($order_id, $amount = null, $reason = ''): bool
     {
         $order = wc_get_order($order_id);
-        if (!is_a($order, WC_Order::class)) {
+        if (!$order instanceof WC_Order) {
             return \false;
         }
         return $this->refund_processor->process($order, (float) $amount, (string) $reason);

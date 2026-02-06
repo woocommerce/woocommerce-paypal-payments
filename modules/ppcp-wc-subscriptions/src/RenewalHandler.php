@@ -171,7 +171,7 @@ class RenewalHandler
     {
         try {
             $subscription = wcs_get_subscription($wc_order->get_id());
-            if (is_a($subscription, WC_Subscription::class)) {
+            if ($subscription instanceof WC_Subscription) {
                 $subscription_id = $subscription->get_meta('ppcp_subscription') ?? '';
                 if ($subscription_id) {
                     return;
@@ -180,7 +180,7 @@ class RenewalHandler
             $this->process_order($wc_order);
         } catch (\Exception $exception) {
             $error = $exception->getMessage();
-            if (is_a($exception, PayPalApiException::class)) {
+            if ($exception instanceof PayPalApiException) {
                 $error = $exception->get_details($error);
             }
             $wc_order->update_status('failed', $error);

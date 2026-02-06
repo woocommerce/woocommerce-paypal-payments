@@ -214,7 +214,7 @@ class SavePaymentMethodsModule implements ServiceModule, ExtendingModule, Execut
                     $logger = $c->get('woocommerce.logger.woocommerce');
                     assert($logger instanceof LoggerInterface);
                     $error = $exception->getMessage();
-                    if (is_a($exception, PayPalApiException::class)) {
+                    if ($exception instanceof PayPalApiException) {
                         $error = $exception->get_details($error);
                     }
                     $logger->error($error);
@@ -253,7 +253,7 @@ class SavePaymentMethodsModule implements ServiceModule, ExtendingModule, Execut
                     $logger = $c->get('woocommerce.logger.woocommerce');
                     assert($logger instanceof LoggerInterface);
                     $error = $exception->getMessage();
-                    if (is_a($exception, PayPalApiException::class)) {
+                    if ($exception instanceof PayPalApiException) {
                         $error = $exception->get_details($error);
                     }
                     $logger->error($error);
@@ -297,7 +297,7 @@ class SavePaymentMethodsModule implements ServiceModule, ExtendingModule, Execut
             $localized_script_data['data_client_id']['set_attribute'] = \false;
         } catch (RuntimeException $exception) {
             $error = $exception->getMessage();
-            if (is_a($exception, PayPalApiException::class)) {
+            if ($exception instanceof PayPalApiException) {
                 $error = $exception->get_details($error);
             }
             $logger->error($error);

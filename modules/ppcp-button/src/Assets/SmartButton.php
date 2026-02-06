@@ -391,7 +391,7 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
         if ((is_product() || wc_post_content_has_shortcode('product_page')) && $this->settings_status->is_smart_button_enabled_for_location('product') && !$this->is_free_trial_product() && !is_checkout()) {
             add_action($this->single_product_renderer_hook(), function () {
                 $product = wc_get_product();
-                if (is_a($product, WC_Product::class) && !$this->product_supports_payment($product)) {
+                if ($product instanceof WC_Product && !$this->product_supports_payment($product)) {
                     return;
                 }
                 $this->button_renderer(PayPalGateway::ID, 'woocommerce_paypal_payments_single_product_button_render');
@@ -562,7 +562,7 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
         $product = wc_get_product();
         $location = $this->context->location();
         $location_hook = $this->location_to_hook($location);
-        if ($location === 'product' && is_a($product, WC_Product::class) && !$this->product_supports_payment($product)) {
+        if ($location === 'product' && $product instanceof WC_Product && !$this->product_supports_payment($product)) {
             return;
         }
         /**
@@ -648,7 +648,7 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
         }
         $product = wc_get_product();
         $amount = 0;
-        if (is_a($product, WC_Product::class)) {
+        if ($product instanceof WC_Product) {
             $amount = wc_get_price_including_tax($product);
         } elseif (isset(WC()->cart)) {
             $amount = WC()->cart->get_total('raw');
@@ -819,7 +819,7 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
         ), 'simulate_cart' => array('enabled' => apply_filters('woocommerce_paypal_payments_simulate_cart_enabled', \true), 'throttling' => apply_filters('woocommerce_paypal_payments_simulate_cart_throttling', 5000)), 'order_id' => 'pay-now' === $current_context ? $this->get_order_pay_id() : 0, 'single_product_buttons_enabled' => $this->settings_status->is_smart_button_enabled_for_location('product'), 'mini_cart_buttons_enabled' => $this->settings_status->is_smart_button_enabled_for_location('mini-cart'), 'basic_checkout_validation_enabled' => $this->basic_checkout_validation_enabled, 'early_checkout_validation_enabled' => $this->early_validation_enabled, 'funding_sources_without_redirect' => $this->funding_sources_without_redirect, 'user' => array('is_logged' => is_user_logged_in(), 'has_wc_card_payment_tokens' => $this->user_has_wc_card_payment_tokens(get_current_user_id())), 'should_handle_shipping_in_paypal' => $this->should_handle_shipping_in_paypal && !$this->context->is_checkout(), 'server_side_shipping_callback' => array('enabled' => $this->server_side_shipping_callback_enabled), 'appswitch' => array('enabled' => $this->appswitch_enabled), 'needShipping' => $this->need_shipping(), 'vaultingEnabled' => $this->settings->has('vault_enabled') && $this->settings->get('vault_enabled'), 'productType' => null, 'manualRenewalEnabled' => $this->subscription_helper->accept_manual_renewals(), 'final_review_enabled' => $this->final_review_enabled);
         if (is_product()) {
             $product = wc_get_product(get_the_ID());
-            if (is_a($product, \WC_Product::class)) {
+            if ($product instanceof \WC_Product) {
                 $localize['productType'] = $product->get_type();
             }
         }

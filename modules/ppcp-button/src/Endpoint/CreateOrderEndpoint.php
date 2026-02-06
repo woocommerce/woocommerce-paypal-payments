@@ -246,7 +246,7 @@ class CreateOrderEndpoint implements \WooCommerce\PayPalCommerce\Button\Endpoint
             do_action('woocommerce_paypal_payments_create_order_request_started', $data);
             if ('pay-now' === $data['context']) {
                 $wc_order = wc_get_order((int) $data['order_id']);
-                if (!is_a($wc_order, WC_Order::class)) {
+                if (!$wc_order instanceof WC_Order) {
                     wp_send_json_error(array('name' => 'order-not-found', 'message' => __('Order not found', 'woocommerce-paypal-payments'), 'code' => 0, 'details' => array()));
                 }
                 $this->purchase_unit = $this->purchase_unit_factory->from_wc_order($wc_order, $payment_method);
@@ -288,7 +288,7 @@ class CreateOrderEndpoint implements \WooCommerce\PayPalCommerce\Button\Endpoint
                 }
                 $this->early_order_handler->register_for_order($order);
             }
-            if ('pay-now' === $data['context'] && is_a($wc_order, WC_Order::class)) {
+            if ('pay-now' === $data['context'] && $wc_order instanceof WC_Order) {
                 $wc_order->update_meta_data(PayPalGateway::ORDER_ID_META_KEY, $order->id());
                 $wc_order->update_meta_data(PayPalGateway::INTENT_META_KEY, $order->intent());
                 $payment_source = $order->payment_source();
@@ -310,7 +310,7 @@ class CreateOrderEndpoint implements \WooCommerce\PayPalCommerce\Button\Endpoint
             wp_send_json_error($response);
         } catch (\RuntimeException $error) {
             $this->logger->error('Order creation failed: ' . $error->getMessage());
-            wp_send_json_error(array('name' => is_a($error, PayPalApiException::class) ? $error->name() : '', 'message' => $error->getMessage(), 'code' => $error->getCode(), 'details' => is_a($error, PayPalApiException::class) ? $error->details() : array()));
+            wp_send_json_error(array('name' => $error instanceof PayPalApiException ? $error->name() : '', 'message' => $error->getMessage(), 'code' => $error->getCode(), 'details' => $error instanceof PayPalApiException ? $error->details() : array()));
         } catch (Exception $exception) {
             $this->logger->error('Order creation failed: ' . $exception->getMessage());
             wc_add_notice($exception->getMessage(), 'error');

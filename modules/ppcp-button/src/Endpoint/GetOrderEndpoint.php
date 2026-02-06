@@ -44,7 +44,7 @@ class GetOrderEndpoint implements \WooCommerce\PayPalCommerce\Button\Endpoint\En
             wp_send_json_success($order->to_array());
         } catch (RuntimeException $error) {
             $this->logger->error('Get order failed: ' . $error->getMessage());
-            wp_send_json_error(array('name' => is_a($error, PayPalApiException::class) ? $error->name() : '', 'message' => $error->getMessage(), 'code' => $error->getCode(), 'details' => is_a($error, PayPalApiException::class) ? $error->details() : array()));
+            wp_send_json_error(array('name' => $error instanceof PayPalApiException ? $error->name() : '', 'message' => $error->getMessage(), 'code' => $error->getCode(), 'details' => $error instanceof PayPalApiException ? $error->details() : array()));
         } catch (Exception $exception) {
             $this->logger->error('Get order failed: ' . $exception->getMessage());
             wp_send_json_error(array('message' => $exception->getMessage()));

@@ -71,7 +71,7 @@ class DataClientIdEndpoint implements \WooCommerce\PayPalCommerce\Button\Endpoin
             wp_send_json(array('token' => $token->token(), 'expiration' => $token->expiration_timestamp(), 'user' => $user_id));
         } catch (Exception $error) {
             $this->logger->error('Client ID retrieval failed: ' . $error->getMessage());
-            wp_send_json_error(array('name' => is_a($error, PayPalApiException::class) ? $error->name() : '', 'message' => $error->getMessage(), 'code' => $error->getCode(), 'details' => is_a($error, PayPalApiException::class) ? $error->details() : array()));
+            wp_send_json_error(array('name' => $error instanceof PayPalApiException ? $error->name() : '', 'message' => $error->getMessage(), 'code' => $error->getCode(), 'details' => $error instanceof PayPalApiException ? $error->details() : array()));
         }
     }
 }
