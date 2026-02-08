@@ -211,8 +211,8 @@ configureEnv( {
 setup( 'setup:pcp:usa:paypal:subscription;', async ( { utils, pcpApi } ) => {
 	await utils.configureStore( {
 		...storeConfigUsa,
-		classicPages: false,
-		subscription: true,
+		enableClassicPages: false,
+		enableSubscriptionsPlugin: true,
 	} );
 	await utils.installAndActivatePcp();
 	await pcpApi.resetDb();

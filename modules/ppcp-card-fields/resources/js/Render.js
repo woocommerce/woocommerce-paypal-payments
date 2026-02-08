@@ -1,5 +1,5 @@
 import { cardFieldStyles } from './CardFieldsHelper';
-import { hide } from '../../../ppcp-button/resources/js/modules/Helper/Hiding';
+import { hide } from '@ppcp-button/Helper/Hiding';
 
 function renderField( cardField, inputField ) {
 	if ( ! inputField || inputField.hidden || ! cardField ) {

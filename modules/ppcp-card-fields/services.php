@@ -31,7 +31,7 @@ return array(
 	'card-fields.helpers.save-payment-methods-applies' => static function ( ContainerInterface $container ): CardFieldsApplies {
 		return new CardFieldsApplies(
 			$container->get( 'card-fields.supported-country-matrix' ),
-			$container->get( 'api.shop.country' )
+			$container->get( 'api.merchant.country' )
 		);
 	},
 	'card-fields.supported-country-matrix'             => static function ( ContainerInterface $container ): array {

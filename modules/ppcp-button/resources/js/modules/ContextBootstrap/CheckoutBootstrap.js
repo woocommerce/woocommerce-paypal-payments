@@ -210,7 +210,7 @@ class CheckoutBootstrap {
 			! isApplePayMethod;
 		const isFreeTrial = PayPalCommerceGateway.is_free_trial_cart;
 		const hasVaultedPaypal =
-			PayPalCommerceGateway.vaulted_paypal_email !== '';
+			!! PayPalCommerceGateway.vaulted_paypal_email;
 		const useSmartButtons = this.renderer.useSmartButtons ?? true;
 
 		const paypalButtonWrappers = {

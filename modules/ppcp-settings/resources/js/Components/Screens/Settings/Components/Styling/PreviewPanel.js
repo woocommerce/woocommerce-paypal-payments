@@ -1,5 +1,5 @@
 import { PayPalButtons, PayPalScriptProvider } from '@paypal/react-paypal-js';
-import { STYLING_PAYMENT_METHODS, StylingHooks } from '../../../../../data';
+import { STYLING_PAYMENT_METHODS, StylingHooks } from '@ppcp-settings/data';
 import { useMemo } from '@wordpress/element';
 
 const PREVIEW_CLIENT_ID = 'test';

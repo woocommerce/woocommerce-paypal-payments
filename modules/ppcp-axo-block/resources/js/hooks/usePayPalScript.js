@@ -1,8 +1,8 @@
 import { useEffect } from '@wordpress/element';
 import { useDispatch, useSelect } from '@wordpress/data';
-import { log } from '../../../../ppcp-axo/resources/js/Helper/Debug';
-import { loadPayPalScript } from '../../../../ppcp-button/resources/js/modules/Helper/PayPalScriptLoading';
-import { STORE_NAME } from '../stores/axoStore';
+import { log } from '@ppcp-axo/Helper/Debug';
+import { loadPayPalScript } from '@ppcp-button/Helper/PayPalScriptLoading';
+import { STORE_NAME } from '@ppcp-axo-block/stores/axoStore';
 
 /**
  * Custom hook to load the PayPal script.

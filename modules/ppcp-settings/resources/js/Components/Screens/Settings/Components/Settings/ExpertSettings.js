@@ -1,13 +1,13 @@
 import { __ } from '@wordpress/i18n';
-import SettingsCard from '../../../../ReusableComponents/SettingsCard';
+import SettingsCard from '@ppcp-settings/Components/ReusableComponents/SettingsCard';
 import {
 	Content,
 	ContentWrapper,
-} from '../../../../ReusableComponents/Elements';
+} from '@ppcp-settings/Components/ReusableComponents/Elements';
 import Troubleshooting from './Blocks/Troubleshooting';
 import PaypalSettings from './Blocks/PaypalSettings';
 import OtherSettings from './Blocks/OtherSettings';
-import { useRegisteredSettings, SLOTS } from '@settings/extensions';
+import { useRegisteredSettings, SLOTS } from '@ppcp-settings/extensions';
 
 const ExpertSettings = ( { ownBradOnly, hasContactModule } ) => {
 	// Get registered settings for expert settings

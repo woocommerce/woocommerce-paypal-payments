@@ -1,7 +1,7 @@
 import { __ } from '@wordpress/i18n';
-import { useWooSettings } from '../../../../../data/common/hooks';
-import PricingTitleBadge from '../../../../ReusableComponents/PricingTitleBadge';
-import BadgeBox from '../../../../ReusableComponents/BadgeBox';
+import { useWooSettings } from '@ppcp-settings/data/common/hooks';
+import PricingTitleBadge from '@ppcp-settings/Components/ReusableComponents/PricingTitleBadge';
+import BadgeBox from '@ppcp-settings/Components/ReusableComponents/BadgeBox';
 
 const AlternativePaymentMethods = ( { learnMore = '' } ) => {
 	const { storeCountry } = useWooSettings();

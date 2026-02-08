@@ -49,9 +49,11 @@ class AgenticCommerceModule implements ServiceModule, ExecutableModule {
 	 */
 	private const CART_VALIDATION_SERVICES = array(
 		'agentic.validator.product',
+		'agentic.validator.price',
 		'agentic.validator.inventory',
 		'agentic.validator.shipping',
 		'agentic.validator.currency',
+		'agentic.validator.coupon',
 	);
 
 	public function services(): array {

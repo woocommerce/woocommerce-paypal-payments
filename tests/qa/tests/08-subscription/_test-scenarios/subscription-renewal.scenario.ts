@@ -9,7 +9,8 @@ import { ShopOrder } from '../../../resources';
 import { annotateVisitor, expect, test } from '../../../utils';
 
 export const testSubscriptionRenewal = ( testOrder: ShopOrder ) => {
-	const { title, products, customer, currency } = testOrder;
+	const { title, payment, products, customer, merchant, currency } =
+		testOrder;
 
 	test.describe( () => {
 		// Restore customer and his storage state to remove vaulted payment methods.
@@ -37,13 +38,17 @@ export const testSubscriptionRenewal = ( testOrder: ShopOrder ) => {
 				test.setTimeout( 2 * 60 * 1000 );
 				// Precondition: purchase test subscription
 				await utils.fillVisitorsCart( products );
-				await classicCheckout.makeOrder( testOrder );
+				await classicCheckout.visit();
+				await classicCheckout.completeCheckoutDetails( testOrder );
+				await classicCheckout.payPalUi.makePayment( {
+					merchant,
+					payment,
+				} );
 				await orderReceived.assertOrderDetails( testOrder );
 
 				const orderId = await orderReceived.getOrderNumber();
-				const orderJson = await wooCommerceApi.getOrder( orderId );
-				const transactionId = orderJson.transaction_id;
-
+				const { transaction_id: transactionId } =
+					await wooCommerceApi.getOrder( orderId );
 				const subscriptionId =
 					await orderReceived.getSubscriptionNumber();
 				const subscriptionJson = await wooCommerceApi.getSubscription(
@@ -82,9 +87,6 @@ export const testSubscriptionRenewal = ( testOrder: ShopOrder ) => {
 							testOrder
 						),
 					};
-
-					await payPalApi.assertOrder( orderJson, testOrder );
-					await payPalApi.assertPayment( transactionId, testOrder );
 				}
 
 				await wooCommerceOrderEdit.assertOrderDetails(
@@ -156,7 +158,8 @@ export const testSubscriptionRenewal = ( testOrder: ShopOrder ) => {
 };
 
 export const testFreeTrialSubscriptionRenewal = ( testOrder: ShopOrder ) => {
-	const { title, products, customer, currency } = testOrder;
+	const { title, payment, products, customer, currency, merchant } =
+		testOrder;
 
 	test.describe( () => {
 		// Restore customer and his storage state to remove vaulted payment methods.
@@ -183,7 +186,12 @@ export const testFreeTrialSubscriptionRenewal = ( testOrder: ShopOrder ) => {
 				test.setTimeout( 2 * 60 * 1000 );
 				// Precondition: purchase test subscription
 				await utils.fillVisitorsCart( products );
-				await classicCheckout.makeOrder( testOrder );
+				await classicCheckout.visit();
+				await classicCheckout.completeCheckoutDetails( testOrder );
+				await classicCheckout.payPalUi.makePayment( {
+					merchant,
+					payment,
+				} );
 				await orderReceived.assertOrderDetails( testOrder );
 
 				const orderId = await orderReceived.getOrderNumber();

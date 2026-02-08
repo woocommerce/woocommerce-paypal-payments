@@ -1,8 +1,8 @@
 import { __ } from '@wordpress/i18n';
 import { useMemo } from '@wordpress/element';
 
-import { CommonHooks, OnboardingHooks } from '../../../../data';
-import { OptionSelector } from '../../../ReusableComponents/Fields';
+import { CommonHooks, OnboardingHooks } from '@ppcp-settings/data';
+import { OptionSelector } from '@ppcp-settings/Components/ReusableComponents/Fields';
 import PricingDescription from '../Components/PricingDescription';
 import OnboardingHeader from '../Components/OnboardingHeader';
 import PaymentFlow from '../Components/PaymentFlow';
@@ -79,7 +79,10 @@ const PaymentStepTitle = ( ownBrandOnly ) => {
 			'woocommerce-paypal-payments'
 		);
 	}
-	return __( 'Add Credit and Debit Cards', 'woocommerce-paypal-payments' );
+	return __(
+		'Add Expanded Checkout for more ways to pay',
+		'woocommerce-paypal-payments'
+	);
 };
 
 const OptionalMethodDescription = () => {

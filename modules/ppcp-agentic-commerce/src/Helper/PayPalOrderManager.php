@@ -131,35 +131,59 @@ class PayPalOrderManager {
 	/**
 	 * Update an existing PayPal Order with new cart data via PATCH API.
 	 *
+	 * When cart items change, we need to update both the items array AND the amount breakdown.
+	 * PayPal validates that item_total equals sum(unit_amount * quantity) for all items.
+	 *
 	 * @param string     $order_id The PayPal Order ID.
 	 * @param PayPalCart $cart     The updated cart.
+	 * @param float      $discount The total discount amount from applied coupons.
 	 * @throws RuntimeException If the update fails.
 	 */
-	public function update_order( string $order_id, PayPalCart $cart ): void {
-		$totals = $this->calculate_cart_totals( $cart );
+	public function update_order( string $order_id, PayPalCart $cart, float $discount = 0.0 ): void {
+		$totals = $this->calculate_cart_totals( $cart, $discount );
+		$items  = $this->build_items_for_patch( $cart );
 
 		$this->logger->info(
 			'[ORDER] Updating PayPal Order',
 			array(
-				'order_id' => $order_id,
-				'totals'   => $totals,
+				'order_id'   => $order_id,
+				'discount'   => $discount,
+				'item_count' => count( $items ),
+				'totals'     => $totals,
 			)
 		);
 
-		// TODO - patch order does not update the cart items??
+		// Build the breakdown array.
+		$breakdown = array(
+			'item_total' => $totals['item_total'],
+			'shipping'   => $totals['shipping'],
+			'tax_total'  => $totals['tax_total'],
+		);
+
+		// Only include discount in breakdown if there's a discount.
+		if ( $discount > 0 ) {
+			$breakdown['discount'] = $totals['discount'];
+		}
+
 		$cart_amount = $totals['amount'];
-		$patch_data  = array(
+
+		// TODO - patch order does not update the cart items??
+		// Build patch operations - update both items and amount.
+		$patch_data = array(
+			// First, replace items to match the new cart.
+			array(
+				'op'    => 'replace',
+				'path'  => "/purchase_units/@reference_id=='default'/items",
+				'value' => $items,
+			),
+			// Then, update the amount with matching breakdown.
 			array(
 				'op'    => 'replace',
 				'path'  => "/purchase_units/@reference_id=='default'/amount",
 				'value' => array(
 					'currency_code' => $cart_amount['currency_code'],
 					'value'         => $cart_amount['value'],
-					'breakdown'     => array(
-						'item_total' => $totals['item_total'],
-						'shipping'   => $totals['shipping'],
-						'tax_total'  => $totals['tax_total'],
-					),
+					'breakdown'     => $breakdown,
 				),
 			),
 		);
@@ -170,8 +194,10 @@ class PayPalOrderManager {
 			$this->logger->info(
 				'[ORDER] PayPal Order updated successfully',
 				array(
-					'order_id' => $order_id,
-					'amount'   => $cart_amount['value'],
+					'order_id'   => $order_id,
+					'amount'     => $cart_amount['value'],
+					'discount'   => $discount,
+					'item_count' => count( $items ),
 				)
 			);
 		} catch ( RuntimeException $error ) {
@@ -186,6 +212,35 @@ class PayPalOrderManager {
 
 			throw $error;
 		}
+	}
+
+	/**
+	 * Build items array for PayPal Order PATCH operation.
+	 *
+	 * @param PayPalCart $cart The cart.
+	 * @return array Items formatted for PayPal API.
+	 */
+	private function build_items_for_patch( PayPalCart $cart ): array {
+		$items    = array();
+		$currency = CartHelper::currency( $cart );
+
+		foreach ( $cart->items() as $item ) {
+			$price = $item->price();
+			if ( ! $price ) {
+				continue;
+			}
+
+			$items[] = array(
+				'name'        => substr( $item->name() ?? 'Item', 0, 127 ),
+				'quantity'    => (string) $item->quantity(),
+				'unit_amount' => array(
+					'currency_code' => $currency,
+					'value'         => $this->format_money( (float) $price->value() ),
+				),
+			);
+		}
+
+		return $items;
 	}
 
 	/**
@@ -333,30 +388,66 @@ class PayPalOrderManager {
 	/**
 	 * Calculate cart totals from items.
 	 *
-	 * @param PayPalCart $cart The cart.
+	 * @param PayPalCart $cart     The cart.
+	 * @param float      $discount The total discount amount.
 	 * @return array The totals array with currency_code and value for each total.
 	 */
-	private function calculate_cart_totals( PayPalCart $cart ): array {
+	private function calculate_cart_totals( PayPalCart $cart, float $discount = 0.0 ): array {
 		$currency_code = CartHelper::currency( $cart );
 		$item_total    = CartHelper::cart_item_total( $cart );
 
-		return array(
+		// Cap discount to prevent order amount from reaching $0.
+		// PayPal requires order amount > 0, while WooCommerce allows $0 orders.
+		// TODO: Confirm how $0 orders should be handled in agentic context.
+		if ( $discount >= $item_total ) {
+			$discount = max( 0, $item_total - 0.01 );
+		}
+
+		// Calculate final amount: item_total - discount (+ shipping + tax when implemented).
+		// Ensure amount is at least $0.01 for PayPal.
+		/** @psalm-suppress InvalidOperand */
+		$net_total = $item_total - $discount;
+		$amount    = max( 0.01, $net_total );
+
+		$totals = array(
 			'item_total' => array(
 				'currency_code' => $currency_code,
-				'value'         => $item_total,
+				'value'         => $this->format_money( $item_total ),
 			),
 			'shipping'   => array(
 				'currency_code' => $currency_code,
-				'value'         => 0.00,
+				'value'         => $this->format_money( 0.00 ),
 			),
 			'tax_total'  => array(
 				'currency_code' => $currency_code,
-				'value'         => 0.00,
+				'value'         => $this->format_money( 0.00 ),
 			),
 			'amount'     => array(
 				'currency_code' => $currency_code,
-				'value'         => $item_total,
+				'value'         => $this->format_money( $amount ),
 			),
 		);
+
+		// Only include discount if there is one.
+		if ( $discount > 0 ) {
+			$totals['discount'] = array(
+				'currency_code' => $currency_code,
+				'value'         => $this->format_money( $discount ),
+			);
+		}
+
+		return $totals;
+	}
+
+	/**
+	 * Format a money value for PayPal API.
+	 *
+	 * PayPal requires money values as strings with 2 decimal places.
+	 *
+	 * @param float $value The money value.
+	 * @return string Formatted money value.
+	 */
+	private function format_money( float $value ): string {
+		return number_format( $value, 2, '.', '' );
 	}
 }

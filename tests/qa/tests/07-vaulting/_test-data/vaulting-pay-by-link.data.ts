@@ -8,7 +8,7 @@ const customer = customers.usa;
 const savePaymentMethodData: ShopOrder[] = [
 	{
 		// https://inpsyde.atlassian.net/browse/PCP-5390
-		title: 'PCP-5390 | Vaulting - Transaction - Pay by link - PayPal - Save payment method',
+		title: 'PCP-5390 | Vaulting - Transaction - Pay by link - PayPal - Save payment method @Critical',
 		...orders.default,
 		payment: {
 			...payments.payPal,
@@ -18,7 +18,7 @@ const savePaymentMethodData: ShopOrder[] = [
 	},
 	{
 		// https://inpsyde.atlassian.net/browse/PCP-5391
-		title: 'PCP-5391 | Vaulting - Transaction - Pay by link - ACDC - Save payment method',
+		title: 'PCP-5391 | Vaulting - Transaction - Pay by link - ACDC - Save payment method @Critical',
 		...orders.default,
 		payment: {
 			...payments.acdc,
@@ -64,7 +64,7 @@ const acdcAdditionalCardData: ShopOrder[] = [
 const vaultedPaymentMethodData: ShopOrder[] = [
 	{
 		// https://inpsyde.atlassian.net/browse/PCP-5395
-		title: 'PCP-5395 | Vaulting - Transaction - Pay by link - PayPal - Pay with vaulted account',
+		title: 'PCP-5395 | Vaulting - Transaction - Pay by link - PayPal - Pay with vaulted account @Critical',
 		...orders.default,
 		payment: {
 			...payments.payPal,
@@ -75,7 +75,7 @@ const vaultedPaymentMethodData: ShopOrder[] = [
 	{
 		// Fails due to: https://inpsyde.atlassian.net/browse/PCP-4788
 		// https://inpsyde.atlassian.net/browse/PCP-5396
-		title: 'PCP-5396 | Vaulting - Transaction - Pay by link - ACDC - Pay with saved card',
+		title: 'PCP-5396 | Vaulting - Transaction - Pay by link - ACDC - Pay with saved card @Critical',
 		...orders.default,
 		payment: {
 			...payments.acdc,

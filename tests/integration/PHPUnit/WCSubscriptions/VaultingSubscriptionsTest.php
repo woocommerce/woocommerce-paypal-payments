@@ -20,6 +20,23 @@ use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
  * @group subscription-vaulting
  */
 class VaultingSubscriptionsTest extends IntegrationMockedTestCase {
+	public static function setUpBeforeClass(): void {
+		parent::setUpBeforeClass();
+
+		/*
+		 * Disable the new settings module to ensure tests use the legacy settings structure.
+		 * The subscriptions_mode setting is computed differently in the new structure:
+		 * it derives its value from save_paypal_and_venmo instead of being directly stored.
+		 * These tests need to work with the direct subscriptions_mode setting.
+		 */
+		add_filter( 'woocommerce.feature-flags.woocommerce_paypal_payments.settings_enabled', '__return_false' );
+	}
+
+	public static function tearDownAfterClass(): void {
+		remove_filter( 'woocommerce.feature-flags.woocommerce_paypal_payments.settings_enabled', '__return_false' );
+		parent::tearDownAfterClass();
+	}
+
 	public function setUp(): void {
 		parent::setUp();
 
@@ -144,19 +161,27 @@ class VaultingSubscriptionsTest extends IntegrationMockedTestCase {
 		$c        = $this->bootstrapModule( [] );
 		$settings = $c->get( 'wcgateway.settings' );
 
-		// Test that we can access subscription mode setting
+		$settings->set( 'subscriptions_mode', 'vaulting_api' );
+		$settings->set( 'vault_enabled', true );
+		$settings->persist();
+
 		$current_mode = $settings->get( 'subscriptions_mode' );
-		$this->assertNotNull( $current_mode, 'Subscription mode should be accessible' );
+		$this->assertNotNull( $current_mode, 'Subscription mode should be accessible after being set' );
+		$this->assertEquals( 'vaulting_api', $current_mode, 'Subscription mode should match the set value' );
 
-		// Test that we can access vault enabled setting
 		$vault_enabled = $settings->get( 'vault_enabled' );
-		$this->assertNotNull( $vault_enabled, 'Vault enabled setting should be accessible' );
+		$this->assertNotNull( $vault_enabled, 'Vault enabled setting should be accessible after being set' );
+		$this->assertTrue( $vault_enabled, 'Vault enabled should be true as set' );
 
-		// The actual values don't matter as much as the ability to access them
-		$this->assertTrue( is_string( $current_mode ) || is_null( $current_mode ),
-			'Subscription mode should be a string or null' );
-		$this->assertTrue( is_bool( $vault_enabled ) || is_null( $vault_enabled ),
-			'Vault enabled should be a boolean or null' );
+		$settings->set( 'subscriptions_mode', 'subscriptions_api' );
+		$settings->set( 'vault_enabled', false );
+
+		$this->assertEquals( 'subscriptions_api', $settings->get( 'subscriptions_mode' ),
+			'Subscription mode should be updatable' );
+		$this->assertFalse( $settings->get( 'vault_enabled' ),
+			'Vault enabled should be updatable' );
+
+		delete_option( 'woocommerce-ppcp-settings' );
 	}
 
 	/**

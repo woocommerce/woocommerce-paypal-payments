@@ -54,7 +54,14 @@ const useGooglepayApiToGenerateButton = (
 		return () => {
 			setGooglepayButton( null );
 		};
-	}, [ namespace, buttonConfig, ppcpConfig, googlepayConfig, buttonStyles ] );
+	}, [
+		componentDocument,
+		namespace,
+		buttonConfig,
+		ppcpConfig,
+		googlepayConfig,
+		buttonStyles,
+	] );
 
 	// Return both the button and the styles needed for the container
 	return {

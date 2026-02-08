@@ -38,6 +38,28 @@ class CartHelper {
 	}
 
 	/**
+	 * Formats a price with the correct currency symbol and position.
+	 *
+	 * Uses WooCommerce's wc_price() and strips HTML tags for plain text.
+	 *
+	 * @param string     $amount The amount to format (e.g., "99.00").
+	 * @param PayPalCart $cart The cart for currency context.
+	 * @return string Formatted price with symbol (e.g., "$99.00", "99.00€", "$ 99.00").
+	 */
+	public static function format_price( string $amount, PayPalCart $cart ): string {
+		$currency_code = self::currency( $cart );
+
+		$args = array( 'decimals' => 2 );
+		if ( $currency_code ) {
+			$args['currency'] = $currency_code;
+		}
+
+		$formatted_html = wc_price( (float) $amount, $args );
+
+		return html_entity_decode( wp_strip_all_tags( $formatted_html ), ENT_QUOTES | ENT_HTML5, get_bloginfo( 'charset' ) );
+	}
+
+	/**
 	 * Sums (price * quantity) for each item. Items without a price are treated as 0.0.
 	 */
 	public static function cart_item_total( PayPalCart $cart ): float {
@@ -53,6 +75,16 @@ class CartHelper {
 			},
 			0.0
 		);
+	}
+
+	/**
+	 * Formats a price value to two decimal places.
+	 *
+	 * @param float $value The price value to format.
+	 * @return string The formatted price (e.g., "123.45").
+	 */
+	public static function format_decimal( float $value ): string {
+		return number_format( $value, 2, '.', '' );
 	}
 
 	public static function full_customer_name( PayPalCart $cart, string $default = '' ): string {

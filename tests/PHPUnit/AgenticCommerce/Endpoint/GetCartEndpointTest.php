@@ -41,6 +41,7 @@ class GetCartEndpointTest extends AgenticEndpointTestCase {
 		$response_factory->allows( 'from_cart' )
 			->andReturnUsing( fn( $cart, $cart_id ) => new CartResponse(
 				$cart,
+				array(),
 				$cart_id
 			) );
 

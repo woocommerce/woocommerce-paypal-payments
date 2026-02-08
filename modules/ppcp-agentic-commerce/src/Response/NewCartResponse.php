@@ -15,10 +15,30 @@ use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\PayPalCart;
 
 class NewCartResponse extends CartResponse {
 
+	/**
+	 * Cart status for new carts.
+	 *
+	 * @var string
+	 */
 	protected string $status = 'CREATED';
 
-	public function __construct( PayPalCart $cart, string $cart_id, ?WC_Cart $wc_cart, string $token ) {
-		parent::__construct( $cart, $cart_id, $wc_cart );
+	/**
+	 * Constructor.
+	 *
+	 * @param PayPalCart   $cart The PayPal cart.
+	 * @param string       $cart_id The cart ID.
+	 * @param string       $token The EC token.
+	 * @param array        $applied_coupons Applied coupons data.
+	 * @param WC_Cart|null $wc_cart The WooCommerce cart.
+	 */
+	public function __construct(
+		PayPalCart $cart,
+		string $cart_id,
+		string $token,
+		array $applied_coupons = array(),
+		?WC_Cart $wc_cart = null
+	) {
+		parent::__construct( $cart, $applied_coupons, $cart_id, $wc_cart );
 		$this->token = $token;
 	}
 

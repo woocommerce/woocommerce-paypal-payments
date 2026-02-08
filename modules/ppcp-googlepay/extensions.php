@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\Googlepay;
 
+use WooCommerce\PayPalCommerce\Assets\AssetGetter;
 use WooCommerce\PayPalCommerce\Googlepay\Helper\PropertiesDictionary;
 use WooCommerce\PayPalCommerce\Onboarding\State;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
@@ -42,7 +43,8 @@ return array(
 		$display_manager = $container->get( 'wcgateway.display-manager' );
 		assert( $display_manager instanceof DisplayManager );
 
-		$module_url = $container->get( 'googlepay.url' );
+		$asset_getter = $container->get( 'googlepay.asset_getter' );
+		assert( $asset_getter instanceof AssetGetter );
 
 		// Connection tab fields.
 		$fields = $insert_after(
@@ -72,8 +74,8 @@ return array(
 					'googlepay_button_enabled' => array(
 						'title'             => __( 'Google Pay Button', 'woocommerce-paypal-payments' ),
 						'title_html'        => sprintf(
-							'<img src="%sassets/images/googlepay.svg" alt="%s" style="max-width: 150px; max-height: 45px;" />',
-							$module_url,
+							'<img src="%s" alt="%s" style="max-width: 150px; max-height: 45px;" />',
+							$asset_getter->get_static_asset_url( 'images/googlepay.svg' ),
 							__( 'Google Pay', 'woocommerce-paypal-payments' )
 						),
 						'type'              => 'checkbox',
@@ -117,8 +119,8 @@ return array(
 				'googlepay_button_enabled'          => array(
 					'title'             => __( 'Google Pay Button', 'woocommerce-paypal-payments' ),
 					'title_html'        => sprintf(
-						'<img src="%sassets/images/googlepay.svg" alt="%s" style="max-width: 150px; max-height: 45px;" />',
-						$module_url,
+						'<img src="%s" alt="%s" style="max-width: 150px; max-height: 45px;" />',
+						$asset_getter->get_static_asset_url( 'images/googlepay.svg' ),
 						__( 'Google Pay', 'woocommerce-paypal-payments' )
 					),
 					'type'              => 'checkbox',

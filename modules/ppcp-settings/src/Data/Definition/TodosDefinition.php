@@ -266,6 +266,16 @@ class TodosDefinition {
 				),
 				'priority'    => 16,
 			),
+			'enable_recaptcha_protection'          => array(
+				'title'       => __( 'Enable required fraud protection for PayPal Payments', 'woocommerce-paypal-payments' ),
+				'description' => __( 'Help protect your store and maintain compliance. Enable reCAPTCHA →', 'woocommerce-paypal-payments' ),
+				'isEligible'  => $eligibility_checks['enable_recaptcha_protection'],
+				'action'      => array(
+					'type' => 'external',
+					'url'  => admin_url( 'admin.php?page=wc-settings&tab=integration&section=ppcp-recaptcha' ),
+				),
+				'priority'    => 2,
+			),
 		);
 
 		$todo_items['check_settings_after_migration'] = array(

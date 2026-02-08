@@ -75,26 +75,27 @@ test.describe( 'Сonnection', () => {
 			).not.toBeVisible();
 		} );
 
-		test( 'PCP-1030 | Connection - Simulate button @Critical', async ( {
-			connection,
-		} ) => {
-			await connection.visit();
-			await connection.resubscribeButton().click();
-			await connection.page.waitForLoadState( 'networkidle' );
+		// Feature removed in v3.3.1:
+		// test( 'PCP-1030 | Connection - Simulate button @Critical', async ( {
+		// 	connection,
+		// } ) => {
+		// 	await connection.visit();
+		// 	await connection.resubscribeButton().click();
+		// 	await connection.page.waitForLoadState( 'networkidle' );
 
-			await expect( connection.simulateButton() ).toBeEnabled();
-			await connection.simulateButton().click();
-			await expect(
-				connection.page.getByText(
-					'Waiting for the webhook to arrive...'
-				)
-			).toBeVisible( { timeout: 1 * 60 * 1000 } );
-			await expect(
-				connection.page.getByText(
-					'The webhook was received successfully.'
-				)
-			).toBeVisible( { timeout: 1 * 60 * 1000 } );
-		} );
+		// 	await expect( connection.simulateButton() ).toBeEnabled();
+		// 	await connection.simulateButton().click();
+		// 	await expect(
+		// 		connection.page.getByText(
+		// 			'Waiting for the webhook to arrive...'
+		// 		)
+		// 	).toBeVisible( { timeout: 1 * 60 * 1000 } );
+		// 	await expect(
+		// 		connection.page.getByText(
+		// 			'The webhook was received successfully.'
+		// 		)
+		// 	).toBeVisible( { timeout: 1 * 60 * 1000 } );
+		// } );
 
 		// //can't restore Advanced Credit and Debit Card Payments status to initial state('Status: Not yet enabled')
 		// test.fixme('PCP-1021 | Advanced Credit and Debit Card Payments status is not yet enabled button Settings is also not yet enabled', async ({ utils, connection, advancedCardProcessing, context, page }) => {

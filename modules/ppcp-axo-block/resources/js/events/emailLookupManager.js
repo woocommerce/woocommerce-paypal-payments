@@ -1,7 +1,7 @@
-import { log } from '../../../../ppcp-axo/resources/js/Helper/Debug';
-import { populateWooFields } from '../helpers/fieldHelpers';
-import { injectShippingChangeButton } from '../components/Shipping';
-import { setIsGuest, setIsEmailLookupCompleted } from '../stores/axoStore';
+import { log } from '@ppcp-axo/Helper/Debug';
+import { populateWooFields } from '@ppcp-axo-block/helpers/fieldHelpers';
+import { injectShippingChangeButton } from '@ppcp-axo-block/components/Shipping';
+import { setIsGuest, setIsEmailLookupCompleted } from '@ppcp-axo-block/stores/axoStore';
 
 /**
  * Creates an email lookup handler function for AXO checkout.

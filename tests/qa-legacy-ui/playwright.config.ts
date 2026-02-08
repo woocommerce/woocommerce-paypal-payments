@@ -2,9 +2,13 @@
  * External dependencies
  */
 import { defineConfig, devices } from '@playwright/test';
+/**
+ * Internal dependencies
+ */
+import { BaseExtend } from 'utils';
 require( 'dotenv' ).config();
 
-export default defineConfig( {
+export default defineConfig< BaseExtend >( {
 	testDir: 'tests',
 	expect: {
 		timeout: 20 * 1000,
@@ -15,7 +19,7 @@ export default defineConfig( {
 	/* Fail the build on CI if you accidentally left test.only in the source code. */
 	forbidOnly: !! process.env.CI,
 	/* Retry on CI only */
-	retries: process.env.CI ? 2 : 1,
+	retries: process.env.CI ? 2 : 0,
 	/* Opt out of parallel tests on CI. */
 	workers: process.env.CI ? 1 : 1,
 	/* Reporter to use. See https://playwright.dev/docs/test-reporters */
@@ -62,22 +66,30 @@ export default defineConfig( {
 			password: process.env.WP_BASIC_AUTH_PASS,
 		},
 
-		/* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
-		trace: 'on-first-retry',
-
-		// Capture screenshot after each test failure.
-		screenshot: 'only-on-failure', //'off', //
-
-		// Record video only when retrying a test for the first time.
-		video: 'retain-on-failure', //'on', //
-
 		...devices[ 'Desktop Chrome' ],
-
-		viewport: { width: 1280, height: 850 },
 
 		launchOptions: {
 			// Put your chromium-specific args here
 			args: [ '--disable-web-security' ],
+		},
+
+		viewport: { width: 1280, height: 850 },
+
+    	trace: process.env.CI ? 'off' : 'retain-on-failure',//'on-first-retry',//'on',//
+
+		screenshot: {
+			mode: 'only-on-failure',
+			fullPage: true, // Captures entire scrollable page
+		},
+
+		video: process.env.CI ? 'off' : {
+			mode: 'retain-on-failure', //'on',//
+			size: { width: 1280, height: 850 },
+		},
+
+		recordVideoOptions: process.env.CI ? undefined : {
+			mode: 'retain-on-failure',
+			size: { width: 1280, height: 850 },
 		},
 	},
 

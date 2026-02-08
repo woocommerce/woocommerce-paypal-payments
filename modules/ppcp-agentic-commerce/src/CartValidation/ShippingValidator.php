@@ -183,6 +183,7 @@ class ShippingValidator implements ValidatorInterface {
 				'PO Box delivery not available for this order',
 				'This order contains items requiring signature confirmation and cannot be delivered to a PO Box.',
 				'shipping_address',
+				'',
 				$context,
 				$resolution_options
 			);

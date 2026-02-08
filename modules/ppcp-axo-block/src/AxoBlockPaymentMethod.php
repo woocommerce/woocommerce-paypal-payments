@@ -11,6 +11,7 @@ namespace WooCommerce\PayPalCommerce\AxoBlock;
 
 use WC_Payment_Gateway;
 use Automattic\WooCommerce\Blocks\Payments\Integrations\AbstractPaymentMethodType;
+use WooCommerce\PayPalCommerce\Assets\AssetGetter;
 use WooCommerce\PayPalCommerce\Axo\Endpoint\AxoScriptAttributes;
 use WooCommerce\PayPalCommerce\Axo\Endpoint\FrontendLogger;
 use WooCommerce\PayPalCommerce\Button\Assets\SmartButtonInterface;
@@ -23,13 +24,7 @@ use WooCommerce\PayPalCommerce\WcGateway\Helper\CardPaymentsConfiguration;
  * Class AxoBlockPaymentMethod
  */
 class AxoBlockPaymentMethod extends AbstractPaymentMethodType {
-
-	/**
-	 * The URL of this module.
-	 *
-	 * @var string
-	 */
-	private $module_url;
+	private AssetGetter $asset_getter;
 
 	/**
 	 * The assets version.
@@ -80,12 +75,7 @@ class AxoBlockPaymentMethod extends AbstractPaymentMethodType {
 	 */
 	private array $payment_method_selected_map;
 
-	/**
-	 * The WcGateway module URL.
-	 *
-	 * @var string
-	 */
-	private $wcgateway_module_url;
+	private AssetGetter $wcgateway_module_asset_getter;
 
 	/**
 	 * The supported country card type matrix.
@@ -95,40 +85,38 @@ class AxoBlockPaymentMethod extends AbstractPaymentMethodType {
 	private $supported_country_card_type_matrix;
 
 	/**
-	 * AdvancedCardPaymentMethod constructor.
-	 *
-	 * @param string                        $module_url The URL of this module.
+	 * @param AssetGetter                   $asset_getter
 	 * @param string                        $version The assets version.
 	 * @param WC_Payment_Gateway            $gateway Credit card gateway.
 	 * @param SmartButtonInterface|callable $smart_button The smart button script loading handler.
 	 * @param Settings                      $settings The settings.
 	 * @param CardPaymentsConfiguration     $dcc_configuration The DCC gateway settings.
 	 * @param Environment                   $environment The environment object.
-	 * @param string                        $wcgateway_module_url The WcGateway module URL.
+	 * @param AssetGetter                   $wcgateway_module_asset_getter
 	 * @param array                         $payment_method_selected_map Mapping of payment methods to the PayPal Insights 'payment_method_selected' types.
 	 * @param array                         $supported_country_card_type_matrix The supported country card type matrix for Axo.
 	 */
 	public function __construct(
-		string $module_url,
+		AssetGetter $asset_getter,
 		string $version,
 		WC_Payment_Gateway $gateway,
 		$smart_button,
 		Settings $settings,
 		CardPaymentsConfiguration $dcc_configuration,
 		Environment $environment,
-		string $wcgateway_module_url,
+		AssetGetter $wcgateway_module_asset_getter,
 		array $payment_method_selected_map,
 		array $supported_country_card_type_matrix
 	) {
 		$this->name                               = AxoGateway::ID;
-		$this->module_url                         = $module_url;
+		$this->asset_getter                       = $asset_getter;
 		$this->version                            = $version;
 		$this->gateway                            = $gateway;
 		$this->smart_button                       = $smart_button;
 		$this->settings                           = $settings;
 		$this->dcc_configuration                  = $dcc_configuration;
 		$this->environment                        = $environment;
-		$this->wcgateway_module_url               = $wcgateway_module_url;
+		$this->wcgateway_module_asset_getter      = $wcgateway_module_asset_getter;
 		$this->payment_method_selected_map        = $payment_method_selected_map;
 		$this->supported_country_card_type_matrix = $supported_country_card_type_matrix;
 	}
@@ -149,15 +137,14 @@ class AxoBlockPaymentMethod extends AbstractPaymentMethodType {
 	 * {@inheritDoc}
 	 */
 	public function get_payment_method_script_handles(): array {
-		$script_path       = 'assets/js/index.js';
-		$script_asset_path = trailingslashit( $this->module_url ) . 'assets/js/index.asset.php';
+		$script_asset_path = $this->asset_getter->get_asset_php_path( 'index.js' );
 		$script_asset      = file_exists( $script_asset_path )
 			? require $script_asset_path
 			: array(
 				'dependencies' => array(),
 				'version'      => '1.0.0',
 			);
-		$script_url        = trailingslashit( $this->module_url ) . $script_path;
+		$script_url        = $this->asset_getter->get_asset_url( 'index.js' );
 
 		wp_register_script(
 			'ppcp-axo-block',
@@ -255,8 +242,7 @@ class AxoBlockPaymentMethod extends AbstractPaymentMethodType {
 					'CA' => WC()->countries->get_states( 'CA' ),
 				),
 			),
-			'icons_directory'            => esc_url( $this->wcgateway_module_url ) . 'assets/images/axo/',
-			'module_url'                 => untrailingslashit( $this->module_url ),
+			'icons_directory'            => $this->wcgateway_module_asset_getter->get_static_asset_url( 'images/axo/' ),
 			'ajax'                       => array(
 				'frontend_logger'       => array(
 					'endpoint' => \WC_AJAX::get_endpoint( FrontendLogger::ENDPOINT ),

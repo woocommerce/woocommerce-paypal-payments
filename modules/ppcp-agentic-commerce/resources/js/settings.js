@@ -3,9 +3,9 @@ import {
 	registerSetting,
 	createExtensionStore,
 	SLOTS,
-} from '@settings/extensions';
-import SettingsBlock from '@settings/Components/ReusableComponents/SettingsBlock';
-import { ControlToggleButton } from '@settings/Components/ReusableComponents/Controls/index.js';
+} from '@ppcp-settings/extensions';
+import SettingsBlock from '@ppcp-settings/Components/ReusableComponents/SettingsBlock';
+import { ControlToggleButton } from '@ppcp-settings/Components/ReusableComponents/Controls/index.js';
 
 const useSettings = createExtensionStore( {
 	name: 'agentic-settings',

@@ -16,6 +16,7 @@ use WC_Payment_Gateway;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PayUponInvoiceOrderEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PurchaseUnitFactory;
+use WooCommerce\PayPalCommerce\Assets\AssetGetter;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\TransactionUrlProvider;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\CheckoutHelper;
@@ -96,13 +97,6 @@ class PayUponInvoiceGateway extends WC_Payment_Gateway {
 	protected $refund_processor;
 
 	/**
-	 * The module URL
-	 *
-	 * @var string
-	 */
-	private $module_url;
-
-	/**
 	 * ID of the class extending the settings API. Used in option names.
 	 *
 	 * @var string
@@ -159,8 +153,6 @@ class PayUponInvoiceGateway extends WC_Payment_Gateway {
 	public $supports = array( 'products' );
 
 	/**
-	 * PayUponInvoiceGateway constructor.
-	 *
 	 * @param PayUponInvoiceOrderEndpoint $order_endpoint The order endpoint.
 	 * @param PurchaseUnitFactory         $purchase_unit_factory The purchase unit factory.
 	 * @param PaymentSourceFactory        $payment_source_factory The payment source factory.
@@ -171,7 +163,7 @@ class PayUponInvoiceGateway extends WC_Payment_Gateway {
 	 * @param CheckoutHelper              $checkout_helper The checkout helper.
 	 * @param bool                        $is_connected Whether the onboarding was completed.
 	 * @param RefundProcessor             $refund_processor The refund processor.
-	 * @param string                      $module_url The module URL.
+	 * @param AssetGetter                 $asset_getter
 	 */
 	public function __construct(
 		PayUponInvoiceOrderEndpoint $order_endpoint,
@@ -184,7 +176,7 @@ class PayUponInvoiceGateway extends WC_Payment_Gateway {
 		CheckoutHelper $checkout_helper,
 		bool $is_connected,
 		RefundProcessor $refund_processor,
-		string $module_url
+		AssetGetter $asset_getter
 	) {
 		$this->id = self::ID;
 
@@ -214,8 +206,10 @@ class PayUponInvoiceGateway extends WC_Payment_Gateway {
 		$this->transaction_url_provider = $transaction_url_provider;
 		$this->pui_helper               = $pui_helper;
 		$this->checkout_helper          = $checkout_helper;
-		$this->module_url               = $module_url;
-		$this->icon                     = apply_filters( 'woocommerce_paypal_payments_pay_upon_invoice_gateway_icon', esc_url( $this->module_url ) . 'assets/images/ratepay.svg' );
+		$this->icon                     = apply_filters(
+			'woocommerce_paypal_payments_pay_upon_invoice_gateway_icon',
+			$asset_getter->get_static_asset_url( 'images/ratepay.svg' )
+		);
 
 		if ( $is_connected ) {
 			$this->supports = array( 'refunds' );

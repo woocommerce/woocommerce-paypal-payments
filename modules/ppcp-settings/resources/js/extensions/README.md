@@ -5,7 +5,7 @@ Extend the settings UI from other modules.
 ## JavaScript
 
 ```javascript
-import { registerSetting, createExtensionStore, SLOTS } from '@settings/extensions';
+import { registerSetting, createExtensionStore, SLOTS } from '@ppcp-settings/extensions';
 
 const useSettings = createExtensionStore( {
     name: 'js-extension-store',

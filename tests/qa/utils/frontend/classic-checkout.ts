@@ -26,45 +26,44 @@ export class ClassicCheckout extends ClassicCheckoutBase {
 
 	// Actions
 
-	applyCouponIfNeeded = async ( coupons? ) => {
-		if ( coupons ) {
-			for ( const coupon of coupons ) {
-				await super.applyCoupon( coupon.code );
-			}
-		}
-	};
-
-	makeOrder = async ( data: WooCommerce.ShopOrder ) => {
-		const { payment, coupons, shipping, customer, merchant } = data;
+	completeCheckoutDetails = async ( data: WooCommerce.ShopOrder ) => {
+		const { payment, coupons, shipping, customer } = data;
 		const isFastlane = payment.gateway.shortcut === 'fastlane';
 
-		await this.visit();
-
 		// Add coupons if needed
-		await this.applyCouponIfNeeded( coupons );
+		for ( const coupon of coupons ?? [] ) {
+			await this.applyCoupon( coupon.code );
+		}
 
 		// Select shipping or initial shipment (for subscriptions) option:
 		await this.shippingMethodRadio( shipping.settings.title ).click();
 
 		if ( isFastlane ) {
-			await this.payPalUi.provideFastlaneEmail( customer.email );
+			await this.fillFastlaneDetails( customer, payment.fastlaneFlow );
+		} else {
+			// Fill billing details
+			await this.fillCheckoutForm( customer );
 		}
+	};
 
-		if ( isFastlane && payment.fastlaneFlow === 'ryan' ) {
+	fillFastlaneDetails = async (
+		customer: WooCommerce.CreateCustomer,
+		fastlaneFlow: 'gary' | 'ryan'
+	) => {
+		await expect( this.payPalUi.fastlaneEmailInput() ).toBeVisible();
+		await expect( this.payPalUi.fastlaneContinueButton() ).toBeVisible();
+		await this.payPalUi.fastlaneEmailInput().fill( customer.email );
+		// on classic checkout fastlane popup is triggered when valid email is filled and input loses focus
+		await this.payPalUi.fastlaneEmailInput().press( 'Tab' ); // to trigger make input lose focus
+
+		if ( fastlaneFlow === 'ryan' ) {
 			// For "Ryan's flow" the OTP is required
 			await this.payPalUi.provideFastlaneOtp();
 			// Checkout form and payment card is already prefilled
 			await this.assertShippingAddressIsPopulated( customer.shipping );
 		} else {
-			// Fill billing details
 			await this.fillCheckoutForm( customer );
 		}
-
-		// Make payment with tested method
-		await this.payPalUi.makePayment( {
-			merchant,
-			payment,
-		} );
 	};
 
 	/**
@@ -82,7 +81,9 @@ export class ClassicCheckout extends ClassicCheckoutBase {
 		).toBeVisible();
 
 		// Add coupons if needed
-		await this.applyCouponIfNeeded( coupons );
+		for ( const coupon of coupons ?? [] ) {
+			await this.applyCoupon( coupon.code );
+		}
 
 		// Select shipping or initial shipment (for subscriptions) option:
 		await this.shippingMethodRadio( shipping.settings.title ).click();
