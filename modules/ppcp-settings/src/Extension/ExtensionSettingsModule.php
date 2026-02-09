@@ -7,6 +7,8 @@ declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\Settings\Extension;
 
+use WooCommerce\PayPalCommerce\Assets\AssetGetter;
+
 abstract class ExtensionSettingsModule {
 
 	/**
@@ -26,16 +28,19 @@ abstract class ExtensionSettingsModule {
 	private string $absolute_plugin_path;
 	private string $plugin_main_file;
 	private ExtensionRestEndpoint $settings_endpoint;
+	private AssetGetter $asset_getter;
 
 	public function __construct(
 		string $absolute_plugin_path,
 		string $plugin_main_file,
-		ExtensionRestEndpoint $settings_endpoint
+		ExtensionRestEndpoint $settings_endpoint,
+		AssetGetter $asset_getter
 	) {
 
 		$this->absolute_plugin_path = $absolute_plugin_path;
 		$this->plugin_main_file     = $plugin_main_file;
 		$this->settings_endpoint    = $settings_endpoint;
+		$this->asset_getter         = $asset_getter;
 	}
 
 	/**
@@ -77,7 +82,7 @@ abstract class ExtensionSettingsModule {
 		}
 
 		$assets_path = trailingslashit( $this->absolute_plugin_path . static::ASSETS_DIR );
-		$assets_url  = trailingslashit( plugins_url( static::ASSETS_DIR, $this->plugin_main_file ) );
+		$assets_url  = $this->asset_getter->get_asset_url( 'settings.js' );// trailingslashit( plugins_url( static::ASSETS_DIR, $this->plugin_main_file ) );
 
 		/** @psalm-suppress UnresolvableInclude - webpack generates this file */
 		$script_asset_file = require $assets_path . 'settings.asset.php';

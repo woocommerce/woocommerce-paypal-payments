@@ -10,6 +10,8 @@ declare( strict_types = 1 );
 namespace WooCommerce\PayPalCommerce\AgenticCommerce;
 
 use Psr\Log\LoggerInterface;
+use WooCommerce\PayPalCommerce\Assets\AssetGetter;
+use WooCommerce\PayPalCommerce\Assets\AssetGetterFactory;
 use WooCommerce\WooCommerce\Logging\Logger\NullLogger;
 use WooCommerce\WooCommerce\Logging\Logger\WooCommerceLogger;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
@@ -300,7 +302,8 @@ return array(
 			$c->get( 'ppcp.path-to-plugin-folder' ),
 			$c->get( 'ppcp.path-to-plugin-main-file' ),
 			$c->get( 'agentic.settings.endpoint' ),
-			$c->get( 'agentic.registration.eligibility' )
+			$c->get( 'agentic.registration.eligibility' ),
+			$c->get( 'agentic.asset_getter' ),
 		);
 	},
 
@@ -334,5 +337,11 @@ return array(
 			$c->get( 'agentic.inspector.page.status' ),
 			$c->get( 'agentic.inspector.page.session' )
 		);
+	},
+	'agentic.asset_getter'                         => static function ( ContainerInterface $container ): AssetGetter {
+		$factory = $container->get( 'assets.asset_getter_factory' );
+		assert( $factory instanceof AssetGetterFactory );
+
+		return $factory->for_module( 'ppcp-agentic-commerce' );
 	},
 );
