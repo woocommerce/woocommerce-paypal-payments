@@ -350,13 +350,13 @@ export class Utils {
 				break;
 
 			case 'PayLater':
-				await this.cli.setWpConst( { WP_DEBUG: true, SCRIPT_DEBUG: true, WP_DEBUG_DISPLAY: false, WP_DEBUG_LOG: true } );
+				await this.cli.setWpConst( { WP_DEBUG: true, SCRIPT_DEBUG: true } );
 				await this.standardPayments.setup( { vaulting: false } );
 				await this.payLater.setup( { enableGateway: true } );
 				break;
 
 			case 'Venmo':
-				await this.cli.setWpConst( { WP_DEBUG: true, SCRIPT_DEBUG: true, WP_DEBUG_DISPLAY: false, WP_DEBUG_LOG: true } );
+				await this.cli.setWpConst( { WP_DEBUG: true, SCRIPT_DEBUG: true } );
 				await this.standardPayments.setup( {
 					enableAlternativePaymentMethods: [ 'Venmo' ],
 				} );
@@ -417,7 +417,7 @@ export class Utils {
 	 */
 	configureStore = async ( data ) => {
 		if ( data.wpDebugging === true ) {
-			await this.cli.setWpConst( { WP_DEBUG: true, SCRIPT_DEBUG: true, WP_DEBUG_DISPLAY: false, WP_DEBUG_LOG: true } );
+			await this.cli.setWpConst( { WP_DEBUG: true, SCRIPT_DEBUG: true } );
 		}
 
 		if ( data.wpDebugging === false ) {
