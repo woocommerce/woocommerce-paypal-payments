@@ -164,6 +164,9 @@ If you encounter issues with the PayPal buttons not appearing after an update, p
 * Enhancement - Restored woocommerce_gateway_description filter for gateway customization #3742
 * Enhancement - Updated Pay Later messaging descriptions and settings #4012
 * Enhancement - Improved onboarding step 4 title for ACDC regions #3998
+* Enhancement - Add pattern validation and improve error messages for client credentials #4073
+* Enhancement - Improve authentication error handling #4073
+* Enhancement - Ensure webhook verification on production (5890)#4074
 * Fix - Google Pay now correctly updates WooCommerce shipping address #3798
 * Fix - Google Pay no longer shows shipping selection for virtual products #3797
 * Fix - Google Pay shipping method now visible on product pages with empty cart #4030
