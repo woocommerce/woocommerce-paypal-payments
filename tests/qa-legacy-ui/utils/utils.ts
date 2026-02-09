@@ -382,14 +382,12 @@ export class Utils {
 				break;
 
 			case 'DebitOrCreditCard':
-				await this.standardPayments.visit();
-				await this.standardPayments.enableAlternativePaymentMethods( [
-					'Credit or debit cards',
-				] );
-				await this.standardPayments
-					.standardCardButtonCheckbox()
-					.uncheck();
-				await this.standardPayments.saveChanges();
+				await this.standardPayments.setup( {
+					enableAlternativePaymentMethods: [
+						'Credit or debit cards',
+					],
+					standardCardButton: false,
+				} );
 				await this.advancedCardProcessing.setup( {
 					enableGateway: false,
 				} );
