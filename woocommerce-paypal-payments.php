@@ -11,7 +11,7 @@
  * Requires Plugins: woocommerce
  * Requires at least: 6.5
  * WC requires at least: 9.6
- * WC tested up to: 10.4
+ * WC tested up to: 10.5
  * Text Domain: woocommerce-paypal-payments
  *
  * @package WooCommerce\PayPalCommerce

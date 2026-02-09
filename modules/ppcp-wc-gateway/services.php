@@ -2261,7 +2261,7 @@ return array(
 				)
 			),
 			$inbox_note_factory->create_note(
-				__( '📢 Important: New PayPal Payments settings UI becoming default in January!', 'woocommerce-paypal-payments' ),
+				__( '📢 Important: New PayPal Payments settings UI becoming default soon!', 'woocommerce-paypal-payments' ),
 				$message,
 				Note::E_WC_ADMIN_NOTE_INFORMATIONAL,
 				'ppcp-settings-migration-inbox-note',
