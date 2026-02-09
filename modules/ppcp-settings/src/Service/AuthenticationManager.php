@@ -159,8 +159,8 @@ class AuthenticationManager
         if (empty($client_secret)) {
             throw new RuntimeException('No client secret provided.');
         }
-        // Starts with "A", followed by 79 alphanumeric, underscore, or hyphen characters.
-        if (1 !== preg_match('/^A[\w-]{79}$/', $client_secret)) {
+        // Exactly 80 alphanumeric, underscore, or hyphen characters.
+        if (1 !== preg_match('/^[\w-]{80}$/', $client_secret)) {
             throw new RuntimeException('Invalid client secret provided.');
         }
     }
