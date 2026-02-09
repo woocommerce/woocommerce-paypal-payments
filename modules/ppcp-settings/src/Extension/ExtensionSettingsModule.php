@@ -81,11 +81,11 @@ abstract class ExtensionSettingsModule {
 			return;
 		}
 
-		$assets_path = trailingslashit( $this->absolute_plugin_path . static::ASSETS_DIR );
-		$assets_url  = $this->asset_getter->get_asset_url( 'settings.js' );// trailingslashit( plugins_url( static::ASSETS_DIR, $this->plugin_main_file ) );
+		$assets_path = $this->asset_getter->get_asset_php_path( 'settings.js' );
+		$assets_url  = $this->asset_getter->get_asset_url( 'settings.js' );
 
 		/** @psalm-suppress UnresolvableInclude - webpack generates this file */
-		$script_asset_file = require $assets_path . 'settings.asset.php';
+		$script_asset_file = require $assets_path;
 
 		wp_enqueue_script(
 			static::SCRIPT_HANDLE,
