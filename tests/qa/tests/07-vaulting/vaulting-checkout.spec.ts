@@ -18,10 +18,10 @@ const {
 	testVaultedPaymentMethod,
 } = testVaultingCheckout;
 
-test.beforeAll( async ( { utils, pcpApi } ) => {
+test.beforeAll( async ( { utils, pcpApi, wooCommerceApi } ) => {
 	await utils.configureStore( {
 		...storeConfigUsa,
-		classicPages: false,
+		enableClassicPages: false,
 	} );
 	await utils.installAndActivatePcp();
 	await pcpApi.resetDb();
@@ -37,20 +37,17 @@ test.beforeAll( async ( { utils, pcpApi } ) => {
 		savePaypalAndVenmo: true,
 		saveCardDetails: true,
 	} );
-} );
-
-test.afterAll( async ( { wooCommerceApi } ) => {
 	await wooCommerceApi.deleteAllOrders();
 } );
 
-for ( const testData of savePaymentMethodData ) {
-	testSavePaymentMethod( testData );
+for ( const testOrder of savePaymentMethodData ) {
+	testSavePaymentMethod( testOrder );
 }
 
-for ( const testData of acdcAdditionalCardData ) {
-	testAcdcAdditionalCard( testData );
+for ( const testOrder of acdcAdditionalCardData ) {
+	testAcdcAdditionalCard( testOrder );
 }
 
-for ( const testData of vaultedPaymentMethodData ) {
-	testVaultedPaymentMethod( testData );
+for ( const testOrder of vaultedPaymentMethodData ) {
+	testVaultedPaymentMethod( testOrder );
 }

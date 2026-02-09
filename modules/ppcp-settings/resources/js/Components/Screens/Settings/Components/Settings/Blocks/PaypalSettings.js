@@ -5,11 +5,11 @@ import {
 	ControlToggleButton,
 	ControlTextInput,
 	ControlSelect,
-} from '../../../../../ReusableComponents/Controls';
-import SettingsBlock from '../../../../../ReusableComponents/SettingsBlock';
-import Accordion from '../../../../../ReusableComponents/AccordionSection';
-import { SettingsHooks } from '../../../../../../data';
-import SoftDescriptorInput from '../../../../../ReusableComponents/Controls/SoftdescriptorInput';
+} from '@ppcp-settings/Components/ReusableComponents/Controls';
+import SettingsBlock from '@ppcp-settings/Components/ReusableComponents/SettingsBlock';
+import Accordion from '@ppcp-settings/Components/ReusableComponents/AccordionSection';
+import { SettingsHooks } from '@ppcp-settings/data';
+import SoftDescriptorInput from '@ppcp-settings/Components/ReusableComponents/Controls/SoftdescriptorInput';
 
 const PaypalSettings = ( { hasContactModule } ) => {
 	const {
@@ -19,6 +19,8 @@ const PaypalSettings = ( { hasContactModule } ) => {
 		setContactModule,
 		subtotalAdjustment,
 		setSubtotalAdjustment,
+		instantPaymentsOnly,
+		setInstantPaymentsOnly,
 		brandName,
 		setBrandName,
 		softDescriptor,
@@ -68,8 +70,8 @@ const PaypalSettings = ( { hasContactModule } ) => {
 						'If enabled, PayPal will not allow buyers to use funding sources that take additional time to complete, such as eChecks.',
 						'woocommerce-paypal-payments'
 					) }
-					value={ savePaypalAndVenmo }
-					onChange={ setSavePaypalAndVenmo }
+					value={ instantPaymentsOnly }
+					onChange={ setInstantPaymentsOnly }
 				/>
 			</SettingsBlock>
 

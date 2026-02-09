@@ -24,9 +24,9 @@ const {
 test.beforeAll( async ( { utils, pcpApi, wooCommerceApi } ) => {
 	await utils.configureStore( {
 		...storeConfigUsa,
-		wpDebugging: false,
-		classicPages: false,
-		subscription: true,
+		enableWpDebugging: false,
+		enableClassicPages: false,
+		enableSubscriptionsPlugin: true,
 		products: [ products.subscription100, products.subscriptionFreeTrial ],
 	} );
 	await utils.installAndActivatePcp();
@@ -40,19 +40,15 @@ test.beforeAll( async ( { utils, pcpApi, wooCommerceApi } ) => {
 			products: [ 'physical', 'virtual', 'subscriptions' ],
 		}
 	);
-} );
-
-test.afterAll( async ( { wooCommerceApi } ) => {
-	await wooCommerceApi.deleteAllSubscriptions();
 	await wooCommerceApi.deleteAllOrders();
 } );
 
-for ( const testData of vaultingRenewal ) {
-	testSubscriptionRenewal( testData );
+for ( const testOrder of vaultingRenewal ) {
+	testSubscriptionRenewal( testOrder );
 }
 
-for ( const testData of vaultingFreeTrialRenewal ) {
-	testFreeTrialSubscriptionRenewal( testData );
+for ( const testOrder of vaultingFreeTrialRenewal ) {
+	testFreeTrialSubscriptionRenewal( testOrder );
 }
 
 test.describe( 'PayPal Subscription', () => {
@@ -78,11 +74,11 @@ test.describe( 'PayPal Subscription', () => {
 		);
 	} );
 
-	for ( const testData of payPalRenewal ) {
-		testSubscriptionRenewal( testData );
+	for ( const testOrder of payPalRenewal ) {
+		testSubscriptionRenewal( testOrder );
 	}
 
-	for ( const testData of payPalFreeTrialRenewal ) {
-		testFreeTrialSubscriptionRenewal( testData );
+	for ( const testOrder of payPalFreeTrialRenewal ) {
+		testFreeTrialSubscriptionRenewal( testOrder );
 	}
 } );

@@ -205,6 +205,9 @@ class CartProductsHelper {
 
 		$variations = array();
 		foreach ( $post_variations as $key => $value ) {
+			if ( ! isset( $value['name'], $value['value'] ) ) {
+				continue;
+			}
 			$variations[ $value['name'] ] = $value['value'];
 		}
 

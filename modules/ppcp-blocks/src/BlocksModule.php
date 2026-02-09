@@ -10,6 +10,7 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\Blocks;
 
 use Automattic\WooCommerce\Blocks\Payments\PaymentMethodRegistry;
+use WooCommerce\PayPalCommerce\Assets\AssetGetter;
 use WooCommerce\PayPalCommerce\Blocks\Endpoint\UpdateShippingEndpoint;
 use WooCommerce\PayPalCommerce\Button\Assets\SmartButtonInterface;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExecutableModule;
@@ -111,12 +112,14 @@ class BlocksModule implements ServiceModule, ExtendingModule, ExecutableModule {
 					return;
 				}
 
-				$module_url    = $c->get( 'blocks.url' );
+				$asset_getter = $c->get( 'blocks.asset_getter' );
+				assert( $asset_getter instanceof AssetGetter );
+
 				$asset_version = $c->get( 'ppcp.asset-version' );
 
 				wp_register_style(
 					'wc-ppcp-blocks',
-					untrailingslashit( $module_url ) . '/assets/css/gateway.css',
+					$asset_getter->get_asset_url( 'gateway.css' ),
 					array(),
 					$asset_version
 				);
@@ -128,12 +131,14 @@ class BlocksModule implements ServiceModule, ExtendingModule, ExecutableModule {
 		add_action(
 			'enqueue_block_editor_assets',
 			static function () use ( $c ) {
-				$module_url    = $c->get( 'blocks.url' );
+				$asset_getter = $c->get( 'blocks.asset_getter' );
+				assert( $asset_getter instanceof AssetGetter );
+
 				$asset_version = $c->get( 'ppcp.asset-version' );
 
 				wp_register_style(
 					'wc-ppcp-blocks-editor',
-					untrailingslashit( $module_url ) . '/assets/css/gateway-editor.css',
+					$asset_getter->get_asset_url( 'gateway-editor.css' ),
 					array(),
 					$asset_version
 				);

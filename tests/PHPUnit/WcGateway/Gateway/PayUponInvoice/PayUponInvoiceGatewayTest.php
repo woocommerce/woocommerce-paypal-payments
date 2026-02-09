@@ -10,6 +10,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PayUponInvoiceOrderEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PurchaseUnit;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PurchaseUnitFactory;
+use WooCommerce\PayPalCommerce\Assets\AssetGetter;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
 use WooCommerce\PayPalCommerce\TestCase;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\TransactionUrlProvider;
@@ -31,6 +32,7 @@ class PayUponInvoiceGatewayTest extends TestCase
 	private $checkout_helper;
 	private $is_connected;
 	private $refund_processor;
+	private $assetGetter;
 
 	public function setUp(): void
 	{
@@ -47,6 +49,7 @@ class PayUponInvoiceGatewayTest extends TestCase
 		$this->is_connected = true;
 
 		$this->refund_processor = Mockery::mock(RefundProcessor::class);
+		$this->assetGetter = new AssetGetter('http://example.com', '/plugin/', 'module');
 
 		$this->setInitStubs();
 		when('wc_clean')->returnArg();
@@ -62,25 +65,8 @@ class PayUponInvoiceGatewayTest extends TestCase
 			$this->checkout_helper,
 			$this->is_connected,
 			$this->refund_processor,
-			''
+			$this->assetGetter
 		);
-	}
-
-	public function testProcessPayment()
-	{
-		$this->markTestSkipped('must be revisited.');
-		list($order, $purchase_unit, $payment_source) = $this->setTestStubs();
-
-		$this->order_endpoint->shouldReceive('create')->with(
-			[$purchase_unit],
-			$payment_source
-		)->andReturn($order);
-
-		define( 'MINUTE_IN_SECONDS', 60 );
-		when('as_schedule_single_action')->justReturn();
-
-		$result = $this->testee->process_payment(1);
-		$this->assertEquals('success', $result['result']);
 	}
 
 	public function testProcessPaymentError()

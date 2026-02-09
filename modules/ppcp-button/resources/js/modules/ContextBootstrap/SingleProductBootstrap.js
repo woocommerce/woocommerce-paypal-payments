@@ -1,14 +1,15 @@
-import UpdateCart from '../Helper/UpdateCart';
-import SingleProductActionHandler from '../ActionHandler/SingleProductActionHandler';
-import { hide, show } from '../Helper/Hiding';
-import BootstrapHelper from '../Helper/BootstrapHelper';
-import { loadPaypalJsScript } from '../Helper/ScriptLoading';
-import { getPlanIdFromVariation } from '../Helper/Subscriptions';
-import SimulateCart from '../Helper/SimulateCart';
-import { strRemoveWord, strAddWord, throttle } from '../Helper/Utils';
+import UpdateCart from '@ppcp-button/Helper/UpdateCart';
+import SingleProductActionHandler from '@ppcp-button/ActionHandler/SingleProductActionHandler';
+import { hide, show } from '@ppcp-button/Helper/Hiding';
+import BootstrapHelper from '@ppcp-button/Helper/BootstrapHelper';
+import { loadPaypalJsScript } from '@ppcp-button/Helper/ScriptLoading';
+import { getPlanIdFromVariation } from '@ppcp-button/Helper/Subscriptions';
+import SimulateCart from '@ppcp-button/Helper/SimulateCart';
+import { strRemoveWord, strAddWord, throttle } from '@ppcp-button/Helper/Utils';
 import merge from 'deepmerge';
-import { debounce } from '../../../../../ppcp-blocks/resources/js/Helper/debounce';
-import ResumeFlowHelper from '../Helper/ResumeFlowHelper';
+import ResumeFlowHelper from '@ppcp-button/Helper/ResumeFlowHelper';
+import { debounce } from '@ppcp-blocks/Helper/debounce';
+
 
 class SingleProductBootstrap {
 	constructor( gateway, renderer, errorHandler ) {

@@ -2,7 +2,7 @@ import { __ } from '@wordpress/i18n';
 import { Button } from '@wordpress/components';
 import { help } from '@wordpress/icons';
 
-import { StylingHooks } from '../../../../../../data';
+import { StylingHooks } from '@ppcp-settings/data';
 import {
 	SelectStylingSection,
 	StylingSection,

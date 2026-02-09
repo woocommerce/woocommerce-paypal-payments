@@ -17,7 +17,15 @@ import {
 	payPalCheckout,
 	payPalCheckoutExcludingTax,
 	payPalCheckoutIntentAuthorized,
+	payPalPayByLink,
+	payPalPayByLinkExcludingTax,
+	payPalPayByLinkIntentAuthorized,
 } from './_test-data/paypal';
+import {
+	payLaterCheckout,
+	payLaterCheckoutExcludingTax,
+	payLaterCheckoutIntentAuthorized,
+} from './_test-data/pay-later';
 import {
 	acdcCheckout,
 	acdcCheckoutExcludingTax,
@@ -30,9 +38,9 @@ import {
 } from './_test-data/acdc';
 import { fastlaneCheckout } from './_test-data/fastlane';
 
-const { payPal, venmo, acdc, fastlane } = gateways;
+const { payPal, payLater, venmo, acdc, fastlane } = gateways;
 
-test.beforeAll( async ( { utils, pcpApi } ) => {
+test.beforeAll( async ( { utils, pcpApi, wooCommerceApi } ) => {
 	await utils.configureStore( {
 		...storeConfigUsa,
 		customer: customers.usa,
@@ -45,19 +53,33 @@ test.beforeAll( async ( { utils, pcpApi } ) => {
 	);
 	await pcpApi.updatePcpPaymentMethods( {
 		[ payPal.id ]: { id: payPal.id, enabled: true },
+		[ payLater.id ]: { id: payLater.id, enabled: true },
 		[ venmo.id ]: { id: venmo.id, enabled: true },
 		[ acdc.id ]: { id: acdc.id, enabled: true },
 		[ fastlane.id ]: { id: fastlane.id, enabled: false },
 	} );
-} );
-
-test.afterAll( async ( { wooCommerceApi } ) => {
 	await wooCommerceApi.deleteAllOrders();
 } );
 
-transactionsOnCheckout( payPalCheckout );
-transactionsOnCheckout( acdcCheckout );
-transactionsOnPayByLink( acdcPayByLink );
+for ( const testOrder of payPalCheckout ) {
+	transactionsOnCheckout( testOrder );
+}
+
+for ( const testOrder of payLaterCheckout ) {
+	transactionsOnCheckout( testOrder );
+}
+
+for ( const testOrder of acdcCheckout ) {
+	transactionsOnCheckout( testOrder );
+}
+
+for ( const testOrder of payPalPayByLink ) {
+	transactionsOnPayByLink( testOrder );
+}
+
+for ( const testOrder of acdcPayByLink ) {
+	transactionsOnPayByLink( testOrder );
+}
 
 // Excluding Tax
 test.describe( () => {
@@ -65,9 +87,25 @@ test.describe( () => {
 		await wooCommerceUtils.setTaxes( taxSettings.excluding );
 	} );
 
-	transactionsOnCheckout( payPalCheckoutExcludingTax );
-	transactionsOnCheckout( acdcCheckoutExcludingTax );
-	transactionsOnPayByLink( acdcPayByLinkExcludingTax );
+	for ( const testOrder of payPalCheckoutExcludingTax ) {
+		transactionsOnCheckout( testOrder );
+	}
+
+	for ( const testOrder of payLaterCheckoutExcludingTax ) {
+		transactionsOnCheckout( testOrder );
+	}
+
+	for ( const testOrder of acdcCheckoutExcludingTax ) {
+		transactionsOnCheckout( testOrder );
+	}
+
+	for ( const testOrder of payPalPayByLinkExcludingTax ) {
+		transactionsOnPayByLink( testOrder );
+	}
+
+	for ( const testOrder of acdcPayByLinkExcludingTax ) {
+		transactionsOnPayByLink( testOrder );
+	}
 
 	test.afterAll( async ( { wooCommerceUtils } ) => {
 		await wooCommerceUtils.setTaxes( taxSettings.including );
@@ -80,9 +118,25 @@ test.describe( () => {
 		await pcpApi.updatePcpSettings( { authorizeOnly: true } );
 	} );
 
-	transactionsOnCheckout( payPalCheckoutIntentAuthorized );
-	transactionsOnCheckout( acdcCheckoutIntentAuthorized );
-	transactionsOnPayByLink( acdcPayByLinkIntentAuthorized );
+	for ( const testOrder of payPalCheckoutIntentAuthorized ) {
+		transactionsOnCheckout( testOrder );
+	}
+
+	for ( const testOrder of payLaterCheckoutIntentAuthorized ) {
+		transactionsOnCheckout( testOrder );
+	}
+
+	for ( const testOrder of acdcCheckoutIntentAuthorized ) {
+		transactionsOnCheckout( testOrder );
+	}
+
+	for ( const testOrder of payPalPayByLinkIntentAuthorized ) {
+		transactionsOnPayByLink( testOrder );
+	}
+
+	for ( const testOrder of acdcPayByLinkIntentAuthorized ) {
+		transactionsOnPayByLink( testOrder );
+	}
 
 	test.afterAll( async ( { pcpApi } ) => {
 		await pcpApi.updatePcpSettings( { authorizeOnly: false } );
@@ -97,8 +151,13 @@ test.describe( () => {
 		} );
 	} );
 
-	transactionsOnCheckout( acdcCheckout3ds );
-	transactionsOnPayByLink( acdcPayByLink3ds );
+	for ( const testOrder of acdcCheckout3ds ) {
+		transactionsOnCheckout( testOrder );
+	}
+
+	for ( const testOrder of acdcPayByLink3ds ) {
+		transactionsOnPayByLink( testOrder );
+	}
 
 	test.afterAll( async ( { pcpApi } ) => {
 		await pcpApi.updatePcpPaymentMethods( {
@@ -109,9 +168,6 @@ test.describe( () => {
 
 /**
  * Fastlane (only for USA)
- * NOT TESTABLE AT THE MOMENT BECAUSE OF BUGS:
- * https://inpsyde.atlassian.net/browse/PCP-4625
- * https://inpsyde.atlassian.net/browse/PCP-4623
  */
 
 test.describe( () => {
@@ -121,7 +177,9 @@ test.describe( () => {
 		} );
 	} );
 
-	transactionsOnCheckout( fastlaneCheckout );
+	for ( const testOrder of fastlaneCheckout ) {
+		transactionsOnCheckout( testOrder );
+	}
 
 	test.afterAll( async ( { pcpApi } ) => {
 		await pcpApi.updatePcpPaymentMethods( {

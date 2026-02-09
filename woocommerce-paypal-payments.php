@@ -3,7 +3,7 @@
  * Plugin Name: WooCommerce PayPal Payments
  * Plugin URI:  https://woocommerce.com/products/woocommerce-paypal-payments/
  * Description: PayPal's latest complete payments processing solution. Accept PayPal, Pay Later, credit/debit cards, alternative digital wallets local payment types and bank accounts. Turn on only PayPal options or process a full suite of payment methods. Enable global transaction with extensive currency and country coverage.
- * Version:     3.1.2
+ * Version:     3.3.2
  * Author:      PayPal
  * Author URI:  https://paypal.com/
  * License:     GPL-2.0
@@ -11,7 +11,7 @@
  * Requires Plugins: woocommerce
  * Requires at least: 6.5
  * WC requires at least: 9.6
- * WC tested up to: 10.1
+ * WC tested up to: 10.4
  * Text Domain: woocommerce-paypal-payments
  *
  * @package WooCommerce\PayPalCommerce
@@ -27,7 +27,7 @@ define( 'PAYPAL_API_URL', 'https://api-m.paypal.com' );
 define( 'PAYPAL_URL', 'https://www.paypal.com' );
 define( 'PAYPAL_SANDBOX_API_URL', 'https://api-m.sandbox.paypal.com' );
 define( 'PAYPAL_SANDBOX_URL', 'https://www.sandbox.paypal.com' );
-define( 'PAYPAL_INTEGRATION_DATE', '2025-09-30' );
+define( 'PAYPAL_INTEGRATION_DATE', '2026-01-05' );
 define( 'PPCP_PAYPAL_BN_CODE', 'Woo_PPCP' );
 
 ! defined( 'CONNECT_WOO_CLIENT_ID' ) && define( 'CONNECT_WOO_CLIENT_ID', 'AcCAsWta_JTL__OfpjspNyH7c1GGHH332fLwonA5CwX4Y10mhybRZmHLA0GdRbwKwjQIhpDQy0pluX_P' );
@@ -158,9 +158,11 @@ define( 'PPCP_PAYPAL_BN_CODE', 'Woo_PPCP' );
 			add_action(
 				'init',
 				function () {
-					$current_plugin_version   = (string) PPCP::container()->get( 'ppcp.plugin' )->getVersion();
+					$current_plugin_version   = PPCP::container()->get( 'ppcp.plugin-version' );
 					$installed_plugin_version = get_option( 'woocommerce-ppcp-version' );
 					if ( $installed_plugin_version !== $current_plugin_version ) {
+						update_option( 'woocommerce-ppcp-version', $current_plugin_version );
+
 						/**
 						 * The hook fired when the plugin is installed or updated.
 						 */
@@ -172,7 +174,6 @@ define( 'PPCP_PAYPAL_BN_CODE', 'Woo_PPCP' );
 							 */
 							do_action( 'woocommerce_paypal_payments_gateway_migrate_on_update' );
 						}
-						update_option( 'woocommerce-ppcp-version', $current_plugin_version );
 					}
 				},
 				-1

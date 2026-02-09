@@ -1,13 +1,15 @@
 /**
  * External dependencies
  */
-import { defineConfig, devices } from '@playwright/test';
+import { defineConfig, devices, ViewportSize } from '@playwright/test';
 require( 'dotenv' ).config();
 
 /**
  * Internal dependencies
  */
-import { BaseExtend } from '@inpsyde/playwright-utils/build';
+import { BaseExtend } from './utils';
+
+const viewportSize: ViewportSize = { width: 1280, height: 850 };
 
 export default defineConfig< BaseExtend >( {
 	testDir: 'tests',
@@ -20,7 +22,7 @@ export default defineConfig< BaseExtend >( {
 	/* Fail the build on CI if you accidentally left test.only in the source code. */
 	forbidOnly: !! process.env.CI,
 	/* Retry on CI only */
-	retries: process.env.CI ? 2 : 0,
+	retries: process.env.CI ? 2 : 1,
 	/* Opt out of parallel tests on CI. */
 	workers: process.env.CI ? 1 : 1,
 	/* The base directory, relative to the config file, for snapshot files created with toMatchSnapshot */
@@ -29,7 +31,7 @@ export default defineConfig< BaseExtend >( {
 	reporter: process.env.CI
 		? [
 				[ 'list' ],
-				// [ 'html', { outputFolder: 'playwright-report' } ],
+				[ 'html', { outputFolder: 'playwright-report' } ],
 				[
 					'@inpsyde/playwright-utils/build/integration/jira/xray-reporter.js',
 					{
@@ -74,15 +76,6 @@ export default defineConfig< BaseExtend >( {
 			password: process.env.WP_BASIC_AUTH_PASS,
 		},
 
-		/* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
-		trace: 'on-first-retry',
-
-		// Capture screenshot after each test failure.
-		screenshot: 'only-on-failure', //'off', //
-
-		// Record video only when retrying a test for the first time.
-		video: 'retain-on-failure', //'on', //
-
 		...devices[ 'Desktop Chrome' ],
 
 		launchOptions: {
@@ -90,15 +83,26 @@ export default defineConfig< BaseExtend >( {
 			args: [ '--disable-web-security' ],
 		},
 
-		/**
-		 * For Kinsta, to clear cache
-		 */
-		// sshConfig: {
-		// 	login: process.env.SSH_LOGIN,
-		// 	host: process.env.SSH_HOST,
-		// 	port: process.env.SSH_PORT,
-		// 	path: process.env.SSH_PATH,
-		// },
+		viewport: viewportSize,
+
+		trace: 'retain-on-failure', //process.env.CI ? 'off' : 'on-first-retry',//'on',//
+
+		screenshot: {
+			mode: 'only-on-failure',
+			fullPage: true, // Captures entire scrollable page
+		},
+
+		video: process.env.CI
+			? 'off'
+			: {
+					mode: 'retain-on-failure', //'on',//
+					size: viewportSize,
+			},
+
+		recordVideoOptions: {
+			mode: 'retain-on-failure',
+			size: viewportSize,
+		},
 	},
 
 	projects: [
@@ -115,6 +119,12 @@ export default defineConfig< BaseExtend >( {
 		{
 			name: 'all',
 			dependencies: [ 'setup-woocommerce' ],
+			testIgnore: /stress\.spec\.ts/,
+		},
+		{
+			name: 'stress',
+			dependencies: [ 'setup-woocommerce' ],
+			testMatch: /stress\.spec\.ts/,
 		},
 	],
 } );

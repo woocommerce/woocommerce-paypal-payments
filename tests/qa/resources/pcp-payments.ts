@@ -34,7 +34,7 @@ const venmo: Pcp.Payment = {
 
 const acdc: Pcp.Payment = {
 	gateway: gateways.acdc,
-	card: cards.visa,
+	card: cards.mastercard,
 };
 
 const acdc3ds: Pcp.Payment = {

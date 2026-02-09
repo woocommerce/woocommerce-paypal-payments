@@ -78,12 +78,19 @@ class WebhookSimulation {
 	 *
 	 * @throws Exception If failed to start simulation.
 	 */
-	public function start(): void {
-		if ( ! $this->webhook ) {
+	public function start( ?Webhook $webhook = null ): void {
+		// Disabled for 3.3.1 release.
+		return;
+
+		if ( ! $webhook ) {
+			$webhook = $this->webhook;
+		}
+
+		if ( ! $webhook ) {
 			throw new Exception( 'Webhooks not registered' );
 		}
 
-		$event = $this->webhook_endpoint->simulate( $this->webhook, $this->event_type, $this->resource_version );
+		$event = $this->webhook_endpoint->simulate( $webhook, $this->event_type, $this->resource_version );
 
 		$this->save(
 			array(

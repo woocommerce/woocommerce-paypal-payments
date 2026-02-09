@@ -9,6 +9,8 @@ declare( strict_types=1 );
 
 namespace WooCommerce\PayPalCommerce\WcGateway\Settings;
 
+use WooCommerce\PayPalCommerce\Assets\AssetGetter;
+
 /**
  * Class HeaderRenderer
  */
@@ -23,22 +25,15 @@ class HeaderRenderer {
 	 */
 	private $page_id;
 
-	/**
-	 * The URL to the module.
-	 *
-	 * @var string
-	 */
-	private $module_url;
+	private AssetGetter $asset_getter;
 
 	/**
-	 * HeaderRenderer constructor.
-	 *
-	 * @param string $page_id ID of the current PPCP gateway settings page, or empty if it is not such page.
-	 * @param string $module_url The URL to the module.
+	 * @param string      $page_id ID of the current PPCP gateway settings page, or empty if it is not such page.
+	 * @param AssetGetter $asset_getter
 	 */
-	public function __construct( string $page_id, string $module_url ) {
-		$this->page_id    = $page_id;
-		$this->module_url = $module_url;
+	public function __construct( string $page_id, AssetGetter $asset_getter ) {
+		$this->page_id      = $page_id;
+		$this->asset_getter = $asset_getter;
 	}
 
 	/**
@@ -60,7 +55,7 @@ class HeaderRenderer {
 
 		return '
 			<div class="ppcp-settings-page-header">
-				<img alt="PayPal" src="' . esc_url( $this->module_url ) . 'assets/images/paypal.png" style="max-height: 30px" />
+				<img alt="PayPal" src="' . $this->asset_getter->get_static_asset_url( 'images/paypal.png' ) . '" style="max-height: 30px" />
 				<h4> <span class="ppcp-inline-only">-</span> ' . __( 'The all-in-one checkout solution for WooCommerce', 'woocommerce-paypal-payments' ) . '</h4>
 				<a class="button" target="_blank" href="https://woocommerce.com/document/woocommerce-paypal-payments/">'
 					. __( 'Documentation', 'woocommerce-paypal-payments' ) .

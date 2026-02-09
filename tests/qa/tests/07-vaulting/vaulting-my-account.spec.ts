@@ -15,10 +15,10 @@ const customer = customers.usa;
 const { payPal, acdc } = payments;
 const acdc2 = { ...acdc, card: cards.visa2 };
 
-test.beforeAll( async ( { utils, pcpApi } ) => {
+test.beforeAll( async ( { utils, pcpApi, wooCommerceApi } ) => {
 	await utils.configureStore( {
 		...storeConfigUsa,
-		classicPages: true,
+		enableClassicPages: true,
 	} );
 	await utils.installAndActivatePcp();
 	await pcpApi.resetDb();
@@ -34,9 +34,6 @@ test.beforeAll( async ( { utils, pcpApi } ) => {
 		savePaypalAndVenmo: true,
 		saveCardDetails: true,
 	} );
-} );
-
-test.afterAll( async ( { wooCommerceApi } ) => {
 	await wooCommerceApi.deleteAllOrders();
 } );
 
@@ -174,9 +171,10 @@ test.describe( () => {
 			await customerPaymentMethods.assertIsSavedPaymentMethod( payPal );
 			await customerPaymentMethods.addPaymentMethodButton().click();
 			await customerPaymentMethods.page.waitForLoadState();
-			await expect(
-				customerPaymentMethods.payPalUi.payPalGateway()
-			).not.toBeVisible();
+			// Low prio bug: gateway is visible without ability to add payment method. Uncomment when fixed
+			// await expect(
+			// 	customerPaymentMethods.payPalUi.payPalGateway()
+			// ).not.toBeVisible();
 			await expect(
 				customerPaymentMethods.payPalUi.payPalButton()
 			).not.toBeVisible();

@@ -310,9 +310,9 @@ class CreateOrderEndpoint implements EndpointInterface {
 						)
 					);
 				}
-				$this->purchase_unit = $this->purchase_unit_factory->from_wc_order( $wc_order );
+				$this->purchase_unit = $this->purchase_unit_factory->from_wc_order( $wc_order, $payment_method );
 			} else {
-				$this->purchase_unit = $this->purchase_unit_factory->from_wc_cart( null, $this->should_handle_shipping_in_paypal( $funding_source ) );
+				$this->purchase_unit = $this->purchase_unit_factory->from_wc_cart( null, $this->should_handle_shipping_in_paypal( $funding_source ), $payment_method );
 
 				// Do not allow completion by webhooks when started via non-checkout buttons,
 				// it is needed only for some APMs in checkout.
@@ -523,7 +523,8 @@ class CreateOrderEndpoint implements EndpointInterface {
 			->with_custom_return_url( $return_url )
 			->with_custom_cancel_url( $return_url );
 
-		if ( $this->server_side_shipping_callback_enabled
+		if ( $this->should_handle_shipping_in_paypal( $funding_source )
+			&& $this->server_side_shipping_callback_enabled
 			&& $shipping_preference === ExperienceContext::SHIPPING_PREFERENCE_GET_FROM_FILE ) {
 			$experience_context = $experience_context->with_shipping_callback();
 		}
