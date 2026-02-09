@@ -61,7 +61,15 @@ class AuthenticationManagerValidationTest extends TestCase {
 
 	public function test_valid_credentials_pass(): void {
 		$valid_id     = str_repeat( 'a', 80 );
-		$valid_secret = 'A' . str_repeat( 'b', 79 );
+		$valid_secret = str_repeat( 'b', 80 );
+
+		$this->sut->validate_id_and_secret( $valid_id, $valid_secret );
+		$this->addToAssertionCount( 1 );
+	}
+
+	public function test_valid_credentials_not_starting_with_a_pass(): void {
+		$valid_id     = str_repeat( 'a', 80 );
+		$valid_secret = 'E' . str_repeat( 'b', 79 );
 
 		$this->sut->validate_id_and_secret( $valid_id, $valid_secret );
 		$this->addToAssertionCount( 1 );
