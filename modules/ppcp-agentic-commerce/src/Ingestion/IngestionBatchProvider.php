@@ -28,7 +28,6 @@ class IngestionBatchProvider {
 	 * @return array An array of product IDs that need to be synced.
 	 */
 	public function get_batch(): array {
-		$batch_size       = $this->configuration->get_sync_batch_size();
 		$resync_timestamp = $this->configuration->get_expired_product_timestamp();
 		$stale_date       = gmdate( 'Y-m-d H:i:s', $resync_timestamp );
 
@@ -38,11 +37,6 @@ class IngestionBatchProvider {
 			'compare' => 'NOT EXISTS',
 		);
 
-		$meta_dirty = array(
-			'key'     => '_ppcp_agentic_needs_sync',
-			'compare' => 'EXISTS',
-		);
-
 		$meta_stale = array(
 			'key'     => '_ppcp_agentic_last_sync',
 			'value'   => $stale_date,
@@ -50,58 +44,49 @@ class IngestionBatchProvider {
 			'type'    => 'DATETIME',
 		);
 
-		// Get products that have never been synced.
-		$batch = $this->get_products( $meta_fresh, array(), $batch_size );
+		// Fresh: Products have local changes that were not synced yet.
+		$fresh = $this->get_products( $meta_fresh );
 
-		if ( count( $batch ) >= $batch_size ) {
-			return $batch;
-		}
+		// Stale: Products in the catalog that were not re-synced for a long time.
+		$stale = $this->get_products( $meta_stale, $fresh, true );
 
-		// Get products that have been updated since the last sync.
-		$dirty = $this->get_products( $meta_dirty, $batch, $batch_size - count( $batch ) );
-		$batch = array_merge( $batch, $dirty );
-
-		if ( count( $batch ) >= $batch_size ) {
-			return $batch;
-		}
-
-		// Get products that are about to get stale.
-		$stale = $this->get_products( $meta_stale, $batch, $batch_size - count( $batch ), true );
-
-		return array_merge( $batch, $stale );
+		return array_merge( $fresh, $stale );
 	}
 
 	/**
 	 * Get products matching the given meta query criteria.
 	 *
-	 * @param array $meta_query The meta query criteria.
-	 * @param array $exclude    Product IDs to exclude from the query.
-	 * @param int   $limit      Maximum number of products to retrieve.
-	 * @param bool  $order_by_meta Whether to order results by meta value (for stale products).
+	 * @param array $meta_query    The meta query criteria.
+	 * @param array $current_batch Product IDs that are already in the batch.
+	 * @param bool  $order_by_meta Whether to order results by meta-value (for stale products).
 	 * @return array Array of product IDs.
 	 */
-	private function get_products( array $meta_query, array $exclude = array(), int $limit = 0, bool $order_by_meta = false ): array {
+	private function get_products( array $meta_query, array $current_batch = array(), bool $order_by_meta = false ): array {
+		$batch_size      = $this->configuration->get_sync_batch_size();
+		$items_in_batch  = count( $current_batch );
+		$remaining_items = $batch_size - $items_in_batch;
+
+		if ( $remaining_items <= 0 ) {
+			return array();
+		}
+
 		$product_types = $this->configuration->get_supported_product_types();
 
 		$args = array(
 			'status'       => ProductStatus::PUBLISH,
 			'type'         => $product_types,
 			'downloadable' => false,
-			'limit'        => $limit > 0 ? $limit : $this->configuration->get_sync_batch_size(),
+			'limit'        => $remaining_items,
 			'return'       => 'ids',
 			'meta_query'   => array( $meta_query ),
+			'exclude'      => $current_batch,
 		);
 
-		// Add exclusions if provided.
-		if ( ! empty( $exclude ) ) {
-			$args['exclude'] = $exclude;
-		}
-
 		// Add ordering for stale products (oldest first).
-		if ( $order_by_meta ) {
+		if ( $order_by_meta && isset( $meta_query['key'] ) ) {
 			$args['orderby']  = 'meta_value';
 			$args['order']    = 'ASC';
-			$args['meta_key'] = '_ppcp_agentic_last_sync';
+			$args['meta_key'] = $meta_query['key'];
 		}
 
 		// phpcs:disable WordPress.DB.SlowDBQuery

@@ -356,7 +356,6 @@ class SyncJob {
 
 		$timestamp = current_time( 'mysql' );
 		$product->update_meta_data( '_ppcp_agentic_last_sync', $timestamp );
-		$product->delete_meta_data( '_ppcp_agentic_needs_sync' );
 		$product->delete_meta_data( '_ppcp_agentic_sync_error' );
 		$product->save_meta_data();
 	}
@@ -380,7 +379,6 @@ class SyncJob {
 		$timestamp = current_time( 'mysql' );
 		$product->update_meta_data( '_ppcp_agentic_last_sync', $timestamp );
 		$product->update_meta_data( '_ppcp_agentic_sync_error', $error_message );
-		$product->delete_meta_data( '_ppcp_agentic_needs_sync' );
 		$product->save_meta_data();
 	}
 
