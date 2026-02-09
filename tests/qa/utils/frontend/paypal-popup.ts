@@ -29,7 +29,11 @@ export class PayPalPopup {
 			.or( this.usePasswordInsteadButton() )
 			.or( this.loginWithYourPasswordLink() );
 	tryAnotherWayLink = () =>
-		this.page.getByRole( 'link', { name: 'Try another way' } );
+		this.page
+			.getByRole( 'link', { name: 'Try another way' } )
+			.or( this.page
+				.getByRole( 'button', { name: 'Try another way' } )
+			);
 	loginInput = () => this.page.locator( '[name="login_email"]' );
 	passwordInput = () => this.page.locator( '[name="login_password"]' );
 	nextButton = () =>
@@ -71,6 +75,7 @@ export class PayPalPopup {
 			'You have read and agree to the Loan Agreement'
 		);
 	agreeAndApplyButton = () => this.payLaterIframe().getByTestId( 'apply' );
+	changeUserButton = () => this.page.locator( 'button[aria-label="Change user"]');
 
 	// Actions
 
@@ -86,10 +91,10 @@ export class PayPalPopup {
 		await this.loginInput().fill( email );
 
 		await this.tryClickNext();
-
 		await this.tryLoginWithPasswordInstead();
 
 		await this.tryAnotherWay();
+		await this.tryLoginWithPasswordInstead();
 
 		await this.passwordInput().fill( password );
 		await this.loginButton().click();
@@ -136,7 +141,7 @@ export class PayPalPopup {
 				timeout: 4000,
 			} );
 			await this.tryAnotherWayLink().click();
-			await this.loginWithYourPasswordLink().click();
+			await this.page.waitForLoadState();
 		} catch {}
 	};
 

@@ -291,7 +291,7 @@ export class PayPalUiClassic extends PayPalUi {
 	payPalMenuIframe = () =>
 		this.page.frameLocator( 'iframe[name^="__zoid__paypal_menu__"]' );
 	payWithDifferentAccountButton = () =>
-		this.payPalMenuIframe().getByText( 'pay with a different account' );
+		this.payPalMenuIframe().getByText( 'Pay with a different account' );
 
 	fastlaneContinueButton = () =>
 		this.page.locator( '#ppcp-axo-billing-email-submit-button' );
