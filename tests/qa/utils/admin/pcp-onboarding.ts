@@ -82,10 +82,11 @@ export class PcpOnboarding extends PcpAdminPage {
 	enableSandboxModeLabel = () => this.page.getByText( 'Enable Sandbox Mode' );
 	enableSandboxModeToggle = () =>
 		this.page.locator( '.components-form-toggle' ).first();
+	/** First pricing badge on the page (PayPal Checkout: checkout % + fixed fee from countryPriceInfo). */
 	badgeContainer = () =>
 		this.page
 			.locator( 'span.ppcp-r-title-badge.ppcp-r-title-badge--info' )
-			.last();
+			.first();
 	welcomeDocsContainer = () =>
 		this.page.locator( '.ppcp-r-welcome-docs__wrapper' ).last();
 	checkoutAlternativeOptionsContainer = () =>

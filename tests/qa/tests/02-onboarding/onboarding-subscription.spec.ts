@@ -27,8 +27,14 @@ test.describe( () => {
 
 	test( 'PCP-4356 | Subscription - Settings - US - Onboarding - Connect with personal account - Subscription type of product not allowed @Critical', async ( {
 		pcpOnboarding,
-	}, testInfo ) => {
+		wooCommerceApi,
+	} ) => {
+		await wooCommerceApi.updateGeneralSettings( {
+			woocommerce_default_country: 'US',
+			woocommerce_currency: 'USD',
+		} );
 		await pcpOnboarding.visit();
+		await pcpOnboarding.gotoInitialOnboardingPage();
 		await pcpOnboarding.activatePayPalPaymentsButton().click();
 
 		await expect(

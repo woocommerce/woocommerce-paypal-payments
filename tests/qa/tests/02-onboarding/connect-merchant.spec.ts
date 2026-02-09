@@ -25,6 +25,11 @@ test( 'PCP-4362 | Settings - Onboarding - See advanced options - Manually connec
 	await pcpOnboarding.visit();
 	await pcpOnboarding.gotoInitialOnboardingPage();
 	await pcpOnboarding.activatePayPalPaymentsButton().click();
+	// Wait for account-type step (can take a moment to render)
+	await expect(
+		pcpOnboarding.businessRadio(),
+		'Assert business radio is visible before selecting'
+	).toBeVisible();
 
 	await pcpOnboarding.businessRadio().click();
 	await pcpOnboarding.continueButton().click();

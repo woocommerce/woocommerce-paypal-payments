@@ -64,6 +64,20 @@ for ( const testData of paymentMethodsData.defaultUi ) {
 						titleInPcpSettings
 					);
 
+				// Assert gateway title is displayed correctly
+				const gatewayContainer = pcpPaymentMethods.paymentMethodContainer(
+					titleInPcpSettings
+				);
+				await expect(
+					gatewayContainer,
+					`Assert gateway container for ${ titleInPcpSettings } is visible for ${ country }`
+				).toBeVisible();
+				const gatewayTitle = await gatewayContainer.textContent();
+				expect(
+					gatewayTitle,
+					`Assert gateway ${ titleInPcpSettings } title is displayed for ${ country }`
+				).toContain( titleInPcpSettings );
+
 				await expect(
 					gatewaySettingsButton,
 					`Assert settings button visibility is ${ hasSettingsButton } for ${ titleInPcpSettings }`

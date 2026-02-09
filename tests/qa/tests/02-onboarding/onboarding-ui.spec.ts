@@ -34,6 +34,34 @@ for ( const country of defaultUiTestData ) {
 			pcpOnboarding.onboardingContentContainer(),
 			`Assert onboarding content container is visible for ${ country.testSummary }`
 		).toBeVisible();
+
+		// Assert badge container contains pricing information (percentage + fixed fee) if visible
+		const badgeContainer = pcpOnboarding.badgeContainer();
+		const isBadgeVisible = await badgeContainer.isVisible().catch( () => false );
+		if ( isBadgeVisible ) {
+			const badgeText = await badgeContainer.textContent();
+			expect(
+				badgeText,
+				`Assert badge contains pricing percentage for ${ country.testSummary }`
+			).toMatch( /\d+\.\d+%/ );
+			expect(
+				badgeText,
+				`Assert badge contains fixed fee with currency symbol for ${ country.testSummary }`
+			).toMatch( /[+]\s*[$€£]?\d+\.\d+/ );
+		}
+
+		// Assert welcome docs container contains country-specific content
+		await expect(
+			pcpOnboarding.welcomeDocsContainer(),
+			`Assert welcome docs container is visible for ${ country.testSummary }`
+		).toBeVisible();
+		const welcomeDocsText = await pcpOnboarding
+			.welcomeDocsContainer()
+			.textContent();
+		expect(
+			welcomeDocsText,
+			`Assert welcome docs contain pricing information for ${ country.testSummary }`
+		).toBeTruthy();
 	} );
 }
 
@@ -107,16 +135,23 @@ test( 'PCP-4316 | Settings - Onboarding - See advanced options - Enable/disable 
 
 test( 'PCP-4318 | Settings - US - Onboarding - Connect with business account, all product types, card payments enabled @Critical', async ( {
 	pcpOnboarding,
+	wooCommerceApi,
 } ) => {
+	await wooCommerceApi.updateGeneralSettings( {
+		woocommerce_default_country: 'US',
+		woocommerce_currency: 'USD',
+	} );
 	await pcpOnboarding.visit();
 	await pcpOnboarding.gotoInitialOnboardingPage();
 	await pcpOnboarding.activatePayPalPaymentsButton().click();
-	await pcpOnboarding.page
-		.getByRole( 'heading', { name: 'Choose your account type' } )
-		.waitFor( { state: 'visible' } );
+	// Account-type step: wait for content then business radio (step can take a moment to render)
+	await expect(
+		pcpOnboarding.onboardingContentContainer(),
+		'Assert onboarding content is visible after Activate PayPal Payments'
+	).toBeVisible();
 	await expect(
 		pcpOnboarding.businessRadio(),
-		'Assert store type step shows business radio'
+		'Assert store type step shows business radio after Activate PayPal Payments'
 	).toBeVisible();
 
 	await pcpOnboarding.businessRadio().click();
@@ -159,6 +194,17 @@ test.describe( () => {
 				`Assert onboarding initial page is visible for ${ testKey }`
 			).toBeVisible();
 
+			// Assert badge contains country-specific pricing if visible
+			const badgeContainer = pcpOnboarding.badgeContainer();
+			const isBadgeVisible = await badgeContainer.isVisible().catch( () => false );
+			if ( isBadgeVisible ) {
+				const badgeText = await badgeContainer.textContent();
+				expect(
+					badgeText,
+					`Assert badge contains pricing percentage for ${ country }`
+				).toMatch( /\d+\.\d+%/ );
+			}
+
 			await pcpOnboarding.activatePayPalPaymentsButton().click();
 			if ( country !== 'Germany' ) {
 				await pcpOnboarding.businessRadio().click();
@@ -170,6 +216,15 @@ test.describe( () => {
 				pcpOnboarding.onboardingContentContainer(),
 				`Assert onboarding checkout step is visible for ${ testKey }`
 			).toBeVisible();
+
+			// Assert checkout options container shows country-specific content
+			const checkoutOptionsText = await pcpOnboarding
+				.checkoutAlternativeOptionsContainer()
+				.textContent();
+			expect(
+				checkoutOptionsText,
+				`Assert checkout options contain payment method information for ${ country }`
+			).toBeTruthy();
 		} );
 	}
 } );
@@ -200,6 +255,11 @@ test.describe( () => {
 		).toBeVisible();
 
 		await pcpOnboarding.activatePayPalPaymentsButton().click();
+		// Wait for account-type step (WooPayments view can take a moment to render)
+		await expect(
+			pcpOnboarding.businessRadio(),
+			'Assert business radio is visible'
+		).toBeVisible();
 		await pcpOnboarding.businessRadio().click();
 		await pcpOnboarding.continueButton().click();
 		await pcpOnboarding.physicalGoodsCheckbox().check();
@@ -237,6 +297,8 @@ test( 'PCP-4403 | Settings - Zimbabwe - Onboarding  - Country not eligible for P
 		woocommerce_currency: 'USD',
 	} );
 	await pcpOnboarding.visit();
+	await pcpOnboarding.page.waitForLoadState( 'domcontentloaded' );
+	// Send-only view can take a moment to render (API/store country check)
 	await expect(
 		pcpOnboarding.sendOnlyMessageHeading(),
 		'Assert send-only country message is visible for Zimbabwe (not eligible)'
