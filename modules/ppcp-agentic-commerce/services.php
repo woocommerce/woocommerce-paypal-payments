@@ -53,6 +53,7 @@ use WooCommerce\PayPalCommerce\AgenticCommerce\Inspector\InspectionSessionData;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Inspector\Page\RegistrationStatusSection;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Inspector\Page\CartSessionSection;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Helper\AgenticSessionManager;
+use WooCommerce\PayPalCommerce\AgenticCommerce\TestAgent\TestAgentPage;
 
 /**
  * Using a different log-source for agentic commerce log entries makes it much easier to inspect
@@ -333,6 +334,18 @@ return array(
 			$c->get( 'agentic.inspector.form_handler' ),
 			$c->get( 'agentic.inspector.page.status' ),
 			$c->get( 'agentic.inspector.page.session' )
+		);
+	},
+
+	// Test Agent.
+	'agentic.module.url'                           => static function ( ContainerInterface $c ): string {
+		return trailingslashit( plugins_url( 'modules/ppcp-agentic-commerce', $c->get( 'ppcp.path-to-plugin-main-file' ) ) );
+	},
+	'agentic.test-agent.page'                      => static function ( ContainerInterface $c ): TestAgentPage {
+		return new TestAgentPage(
+			$c->get( 'agentic.module.url' ),
+			$c->get( 'ppcp.path-to-plugin-folder' ),
+			$c->get( 'settings.connection-state' )
 		);
 	},
 );

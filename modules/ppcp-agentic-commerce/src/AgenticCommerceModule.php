@@ -23,6 +23,7 @@ use WooCommerce\PayPalCommerce\AgenticCommerce\Setting\AgenticSettingsDataModel;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Inspector\InspectionStatusPage;
 use WooCommerce\PayPalCommerce\AgenticCommerce\CartValidation\CartValidationProcessor;
 use WooCommerce\PayPalCommerce\AgenticCommerce\CartValidation\ValidatorInterface;
+use WooCommerce\PayPalCommerce\AgenticCommerce\TestAgent\TestAgentPage;
 
 /**
  * Entry point that integrates agentic commerce logic with the plugin's DI system.
@@ -93,6 +94,11 @@ class AgenticCommerceModule implements ServiceModule, ExecutableModule {
 		$inspector = $container->get( 'agentic.inspector.page' );
 		assert( $inspector instanceof InspectionStatusPage );
 		$inspector->init();
+
+		// Initialize Test Agent tab (only in sandbox mode for testing).
+		$test_agent_page = $container->get( 'agentic.test-agent.page' );
+		assert( $test_agent_page instanceof TestAgentPage );
+		$test_agent_page->init();
 
 		// Early exit if features should not be initialized.
 		if ( ! $agentic_settings->should_initialize_features() ) {
