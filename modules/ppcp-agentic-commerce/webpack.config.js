@@ -19,6 +19,11 @@ module.exports = {
 				'resources/js',
 				'settings.js'
 			),
+			'dummy-agent': path.resolve(
+				process.cwd(),
+				'resources/js/dummy-agent',
+				'index.js'
+			),
 			style: path.resolve( process.cwd(), 'resources/css', 'style.scss' ),
 		},
 	},
