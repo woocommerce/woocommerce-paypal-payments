@@ -204,7 +204,8 @@ return array(
         $request_data = $container->get('button.request-data');
         $order_endpoint = $container->get('api.endpoint.order');
         $logger = $container->get('woocommerce.logger.woocommerce');
-        return new GetOrderEndpoint($request_data, $order_endpoint, $logger);
+        $cart_data_storage = $container->get('button.session.storage.card-data.transient');
+        return new GetOrderEndpoint($request_data, $order_endpoint, $logger, $cart_data_storage);
     },
     'button.helper.cart-products' => static function (ContainerInterface $container): CartProductsHelper {
         $data_store = \WC_Data_Store::load('product');

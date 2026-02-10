@@ -840,7 +840,7 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
             'billing_field' => _x('Billing %s', 'checkout-validation', 'woocommerce'),
             // phpcs:ignore WordPress.WP.I18n
             'shipping_field' => _x('Shipping %s', 'checkout-validation', 'woocommerce'),
-        ), 'simulate_cart' => array('enabled' => apply_filters('woocommerce_paypal_payments_simulate_cart_enabled', \true), 'throttling' => apply_filters('woocommerce_paypal_payments_simulate_cart_throttling', 5000)), 'order_id' => 'pay-now' === $current_context ? $this->get_order_pay_id() : 0, 'single_product_buttons_enabled' => $this->settings_status->is_smart_button_enabled_for_location('product'), 'mini_cart_buttons_enabled' => $this->settings_status->is_smart_button_enabled_for_location('mini-cart'), 'basic_checkout_validation_enabled' => $this->basic_checkout_validation_enabled, 'early_checkout_validation_enabled' => $this->early_validation_enabled, 'funding_sources_without_redirect' => $this->funding_sources_without_redirect, 'user' => array('is_logged' => is_user_logged_in(), 'has_wc_card_payment_tokens' => $this->user_has_wc_card_payment_tokens(get_current_user_id())), 'should_handle_shipping_in_paypal' => $this->should_handle_shipping_in_paypal && !$this->context->is_checkout(), 'server_side_shipping_callback' => array('enabled' => $this->server_side_shipping_callback_enabled), 'appswitch' => array('enabled' => $this->appswitch_enabled), 'needShipping' => $this->need_shipping(), 'vaultingEnabled' => $this->settings->has('vault_enabled') && $this->settings->get('vault_enabled'), 'productType' => null, 'manualRenewalEnabled' => $this->subscription_helper->accept_manual_renewals(), 'final_review_enabled' => $this->final_review_enabled);
+        ), 'simulate_cart' => array('enabled' => apply_filters('woocommerce_paypal_payments_simulate_cart_enabled', \true), 'throttling' => apply_filters('woocommerce_paypal_payments_simulate_cart_throttling', 5000)), 'order_id' => 'pay-now' === $current_context ? $this->get_order_pay_id() : 0, 'order_key' => 'pay-now' === $current_context ? $this->get_order_pay_key() : '', 'single_product_buttons_enabled' => $this->settings_status->is_smart_button_enabled_for_location('product'), 'mini_cart_buttons_enabled' => $this->settings_status->is_smart_button_enabled_for_location('mini-cart'), 'basic_checkout_validation_enabled' => $this->basic_checkout_validation_enabled, 'early_checkout_validation_enabled' => $this->early_validation_enabled, 'funding_sources_without_redirect' => $this->funding_sources_without_redirect, 'user' => array('is_logged' => is_user_logged_in(), 'has_wc_card_payment_tokens' => $this->user_has_wc_card_payment_tokens(get_current_user_id())), 'should_handle_shipping_in_paypal' => $this->should_handle_shipping_in_paypal && !$this->context->is_checkout(), 'server_side_shipping_callback' => array('enabled' => $this->server_side_shipping_callback_enabled), 'appswitch' => array('enabled' => $this->appswitch_enabled), 'needShipping' => $this->need_shipping(), 'vaultingEnabled' => $this->settings->has('vault_enabled') && $this->settings->get('vault_enabled'), 'productType' => null, 'manualRenewalEnabled' => $this->subscription_helper->accept_manual_renewals(), 'final_review_enabled' => $this->final_review_enabled);
         if (is_product()) {
             $product = wc_get_product(get_the_ID());
             if (is_a($product, \WC_Product::class)) {
@@ -1420,6 +1420,16 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
             return 0;
         }
         return absint($wp->query_vars['order-pay']);
+    }
+    /**
+     * Returns the order key from the pay-for-order page URL, or empty string.
+     *
+     * @return string
+     */
+    protected function get_order_pay_key(): string
+    {
+        //phpcs:ignore WordPress.Security.NonceVerification.Recommended
+        return isset($_GET['key']) ? wc_clean(wp_unslash($_GET['key'])) : '';
     }
     /**
      * Sanitize woocommerce filter on unexpected states.
