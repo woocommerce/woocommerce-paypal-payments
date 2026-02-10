@@ -7,7 +7,9 @@
         "build": "wp-scripts build --webpack-src-dir=resources/js --output-path=assets"
     },
     "devDependencies": {
+        "@wordpress/scripts": "^30.3.0"
     },
     "dependencies": {
+        "@mlc-ai/web-llm": "^0.2.0"
     }
 }
