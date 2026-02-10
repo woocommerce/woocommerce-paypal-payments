@@ -156,7 +156,7 @@ If you encounter issues with the PayPal buttons not appearing after an update, p
 
 == Changelog ==
 
-= 3.4.0 - YYYY-MM-DD =
+= 3.4.0 - 2026-02-10 =
 * New - Level 2 and Level 3 card processing support for Advanced Credit and Debit Cards #3970, #3999
 * Enhancement - PayPal Working Capital promotional messaging now available for eligible merchants #4048
 * Enhancement - Improved reCAPTCHA logging to help troubleshoot blocked requests #3835
