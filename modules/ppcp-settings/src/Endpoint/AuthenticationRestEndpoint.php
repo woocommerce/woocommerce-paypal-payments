@@ -45,14 +45,14 @@ class AuthenticationRestEndpoint extends \WooCommerce\PayPalCommerce\Settings\En
      * @var SettingsDataManager
      */
     private SettingsDataManager $data_manager;
-    private LoggerInterface $logger;
+    private ?LoggerInterface $logger;
     /**
      * Defines the JSON response format (when connection was successful).
      *
      * @var array
      */
     private array $response_map = array('merchant_id' => array('js_name' => 'merchantId'), 'merchant_email' => array('js_name' => 'email'));
-    public function __construct(AuthenticationManager $authentication_manager, SettingsDataManager $data_manager, LoggerInterface $logger)
+    public function __construct(AuthenticationManager $authentication_manager, SettingsDataManager $data_manager, ?LoggerInterface $logger = null)
     {
         $this->authentication_manager = $authentication_manager;
         $this->data_manager = $data_manager;
@@ -107,7 +107,9 @@ class AuthenticationRestEndpoint extends \WooCommerce\PayPalCommerce\Settings\En
         try {
             $this->authentication_manager->authenticate_via_direct_api($use_sandbox, $client_id, $client_secret);
         } catch (Exception $exception) {
-            $this->logger->error('Direct API authentication failed: ' . $exception->getMessage());
+            if ($this->logger) {
+                $this->logger->error('Direct API authentication failed: ' . $exception->getMessage());
+            }
             return $this->return_error(__('Could not connect to PayPal. Please verify your credentials and try again.', 'woocommerce-paypal-payments'));
         }
         $account = $this->authentication_manager->get_account_details();
