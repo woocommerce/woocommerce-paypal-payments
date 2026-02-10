@@ -2082,7 +2082,9 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
 	 */
 	protected function get_order_pay_key(): string {
 		//phpcs:ignore WordPress.Security.NonceVerification.Recommended
-		return isset( $_GET['key'] ) ? wc_clean( wp_unslash( $_GET['key'] ) ) : '';
+		$key = isset( $_GET['key'] ) ? wc_clean( wp_unslash( $_GET['key'] ) ) : '';
+
+		return is_string( $key ) ? $key : '';
 	}
 
 	/**
