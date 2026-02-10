@@ -131,6 +131,21 @@ export class PayPalPopup {
 	};
 
 	/**
+	 * Tries to click "Cahnge" link/button if displayed
+	 * Swallows the fail if no button appears
+	 */
+	tryChangeUser = async () => {
+		try {
+			await this.changeUserButton().waitFor( {
+				state: 'visible',
+				timeout: 4000,
+			} );
+			await this.changeUserButton().click();
+			await this.page.waitForLoadState();
+		} catch {}
+	};
+
+	/**
 	 * Tries to click "Try another way" and "Login with your password" buttons if displayed
 	 * Swallows the fail if no button appears
 	 */

@@ -209,12 +209,7 @@ test.describe( () => {
 				await popup.waitForLoadState();
 				const payPalPopup = new PayPalPopup( popup );
 
-				const changeButton = payPalPopup.changeUserButton();
-				await expect(
-					changeButton,
-					'Assert Change (user) button is visible'
-				).toBeVisible();
-				await changeButton.click();
+				await payPalPopup.tryChangeUser();
 				await payPalPopup.completePayPalPayment( secondPayPalAccount );
 				await customerPaymentMethods.assertUrl();
 				await customerPaymentMethods.assertIsSavedPaymentMethod( {
