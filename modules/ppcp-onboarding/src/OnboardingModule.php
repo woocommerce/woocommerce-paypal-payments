@@ -119,8 +119,18 @@ class OnboardingModule implements ServiceModule, ExtendingModule, ExecutableModu
 		);
 
 		// Initialize REST routes at the appropriate time.
-		$rest_controller = $c->get( 'onboarding.rest' );
-		add_action( 'rest_api_init', array( $rest_controller, 'register_routes' ) );
+		add_action(
+			'rest_api_init',
+			static function () use ( $c ): void {
+				global $pagenow;
+				if ( isset( $pagenow ) && 'update.php' === $pagenow ) {
+					return;
+				}
+
+				$rest_controller = $c->get( 'onboarding.rest' );
+				$rest_controller->register_routes();
+			}
+		);
 
 		return true;
 	}

@@ -317,6 +317,11 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 		add_action(
 			'rest_api_init',
 			static function () use ( $container ): void {
+				global $pagenow;
+				if ( isset( $pagenow ) && 'update.php' === $pagenow ) {
+					return;
+				}
+
 				$endpoints = array(
 					'onboarding'             => $container->get( 'settings.rest.onboarding' ),
 					'common'                 => $container->get( 'settings.rest.common' ),
