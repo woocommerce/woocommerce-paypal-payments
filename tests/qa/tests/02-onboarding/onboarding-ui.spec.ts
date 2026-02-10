@@ -37,8 +37,17 @@ for ( const country of defaultUiTestData ) {
 
 		// Assert badge container contains pricing information (percentage + fixed fee) if visible
 		const badgeContainer = pcpOnboarding.badgeContainer();
-		const isBadgeVisible = await badgeContainer.isVisible().catch( () => false );
-		if ( isBadgeVisible ) {
+		let badgeVisible = false;
+		try {
+			await expect(
+				badgeContainer,
+				`Assert badge container is visible for ${ country.testSummary }`
+			).toBeVisible();
+			badgeVisible = true;
+		} catch {
+			// Badge may not be visible in all scenarios
+		}
+		if ( badgeVisible ) {
 			const badgeText = await badgeContainer.textContent();
 			expect(
 				badgeText,
@@ -196,8 +205,17 @@ test.describe( () => {
 
 			// Assert badge contains country-specific pricing if visible
 			const badgeContainer = pcpOnboarding.badgeContainer();
-			const isBadgeVisible = await badgeContainer.isVisible().catch( () => false );
-			if ( isBadgeVisible ) {
+			let badgeVisible = false;
+			try {
+				await expect(
+					badgeContainer,
+					`Assert badge container is visible for ${ country }`
+				).toBeVisible();
+				badgeVisible = true;
+			} catch {
+				// Badge may not be visible in all scenarios
+			}
+			if ( badgeVisible ) {
 				const badgeText = await badgeContainer.textContent();
 				expect(
 					badgeText,
