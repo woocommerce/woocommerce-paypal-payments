@@ -1,0 +1,671 @@
+/**
+ * Dummy Agent Styles
+ */
+
+/* ============================================
+   Two-column layout
+   ============================================ */
+.ppcp-test-agent-wrapper {
+	display: flex;
+	gap: 20px;
+	margin-top: 20px;
+
+	.ppcp-test-actions,
+	.ppcp-test-state {
+		flex: 1;
+		background: #fff;
+		border: 1px solid #ccc;
+		border-radius: 4px;
+		box-shadow: 0 1px 3px rgba(0, 0, 0, .1);
+		padding: 20px;
+	}
+}
+
+/* Panel card headers — bleed past padding to span full card width */
+.ppcp-test-actions > h3,
+.ppcp-cart-state > h3 {
+	margin: -20px -20px 15px -20px;
+	padding: 14px 20px;
+	font-size: 15px;
+	font-weight: 600;
+	border-bottom: 1px solid #eee;
+	border-radius: 4px 4px 0 0;
+}
+
+/* ============================================
+   Search Section
+   ============================================ */
+.ppcp-search-section {
+	margin-bottom: 25px;
+
+	h3 {
+		margin-top: 0;
+		margin-bottom: 10px;
+		font-size: 14px;
+		font-weight: 600;
+		color: #333;
+	}
+
+	input[type="text"] {
+		width: calc(100% - 120px);
+		margin-right: 10px;
+	}
+
+	.button {
+		vertical-align: middle;
+	}
+}
+
+/* ============================================
+   Shared table helpers — used inside wc_status_table
+   ============================================ */
+.ppcp-price {
+	color: #2271b1;
+	font-weight: 600;
+	text-align: right;
+	white-space: nowrap;
+}
+
+.ppcp-controls-col {
+	text-align: right;
+	white-space: nowrap;
+	vertical-align: middle;
+	width: 1px; /* shrink-wrap to content */
+}
+
+/* Ensure all cells in our tables align middle */
+.ppcp-api-test-panel .wc_status_table td,
+.ppcp-cart-state .wc_status_table td {
+	vertical-align: middle;
+}
+
+/* Spacing between consecutive tables in the cart-state panel */
+.ppcp-cart-state .wc_status_table {
+	margin-bottom: 15px;
+}
+
+/* number input inside product rows */
+.ppcp-product-results input[type="number"] {
+	width: 55px;
+	padding: 4px 8px;
+	text-align: center;
+}
+
+/* ============================================
+   Product Results — uses wc_status_table widefat;
+   only spacing needed here
+   ============================================ */
+.ppcp-product-results {
+	margin-bottom: 25px;
+}
+
+/* ============================================
+   Selected Items
+   ============================================ */
+.ppcp-selected-items-section {
+	margin-bottom: 25px;
+
+	.ppcp-create-cart-btn {
+		margin-top: 12px;
+
+		.button {
+			display: block;
+			width: 100%;
+			text-align: center;
+		}
+	}
+}
+
+/* ============================================
+   Item details row (price / subtotal beneath product name)
+   ============================================ */
+.item-details {
+	display: flex;
+	gap: 15px;
+	font-size: 13px;
+	color: #666;
+	margin-top: 4px;
+}
+
+/* ============================================
+   Validation Test Scenarios (collapsible details/summary)
+   ============================================ */
+.ppcp-validation-test-section {
+	margin-bottom: 25px;
+
+	summary {
+		cursor: pointer;
+		font-size: 14px;
+		font-weight: 600;
+		color: #2271b1;
+		padding: 6px 0;
+		user-select: none;
+
+		&:hover {
+			color: #0073aa;
+		}
+	}
+
+	.wc_status_table {
+		margin-top: 8px;
+	}
+}
+
+/* ============================================
+   Cart Actions
+   ============================================ */
+.ppcp-cart-actions {
+	margin-bottom: 25px;
+
+	h4 {
+		margin-top: 0;
+		margin-bottom: 10px;
+		font-size: 14px;
+		font-weight: 600;
+		color: #333;
+	}
+
+	.action-group {
+		margin-bottom: 15px;
+
+		&:last-child {
+			margin-bottom: 0;
+		}
+
+		label {
+			display: block;
+			margin-bottom: 6px;
+			font-weight: 600;
+		}
+
+		input[type="text"] {
+			width: 100%;
+			margin-bottom: 8px;
+		}
+
+		.button {
+			margin-right: 8px;
+			margin-bottom: 4px;
+		}
+	}
+}
+
+/* ============================================
+   Coupon Section
+   ============================================ */
+.ppcp-coupon-section {
+	margin-bottom: 25px;
+
+	h4 {
+		margin-top: 0;
+		margin-bottom: 10px;
+		font-size: 14px;
+		font-weight: 600;
+		color: #333;
+	}
+
+	.ppcp-coupon-input-row {
+		display: flex;
+		gap: 8px;
+		align-items: center;
+
+		input[type="text"] {
+			flex: 1;
+		}
+	}
+}
+
+.ppcp-coupon-tags {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 6px;
+	margin-top: 10px;
+}
+
+.ppcp-coupon-tag {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+	background: #e7f7ff;
+	border: 1px solid #2271b1;
+	border-radius: 3px;
+	padding: 4px 8px;
+	font-size: 13px;
+	font-weight: 600;
+	color: #2271b1;
+
+	.ppcp-coupon-tag-remove {
+		background: none;
+		border: none;
+		color: #2271b1;
+		cursor: pointer;
+		padding: 0;
+		font-size: 14px;
+		line-height: 1;
+
+		&:hover {
+			color: #cc1100;
+		}
+	}
+}
+
+.ppcp-discount {
+	color: #155724 !important;
+}
+
+/* ============================================
+   Checkout Section
+   ============================================ */
+.ppcp-checkout-section {
+	margin-bottom: 25px;
+
+	h4 {
+		margin-top: 0;
+		margin-bottom: 10px;
+		font-size: 14px;
+		font-weight: 600;
+		color: #333;
+	}
+
+	.payer-id-input {
+		margin-bottom: 10px;
+
+		label {
+			display: block;
+			margin-bottom: 6px;
+			font-weight: 600;
+		}
+
+		input[type="text"] {
+			width: 100%;
+		}
+
+		.description {
+			margin-top: 6px;
+			font-size: 12px;
+			color: #666;
+		}
+	}
+}
+
+/* ============================================
+   Reset Section
+   ============================================ */
+.ppcp-reset-section {
+	padding-top: 15px;
+	border-top: 1px solid #ddd;
+
+	.button {
+		margin-right: 8px;
+	}
+}
+
+/* ============================================
+   Error Messages — WP notice pattern (left-border accent)
+   ============================================ */
+.ppcp-error {
+	background: #fff;
+	border: 1px solid #ccc;
+	border-left: 4px solid #cc1100;
+	padding: 10px 15px;
+	margin-bottom: 15px;
+	color: #721c24;
+	font-size: 13px;
+}
+
+/* ============================================
+   Cart State Display (right column)
+   ============================================ */
+.ppcp-cart-state {
+	code {
+		background: #f1f1f1;
+		padding: 2px 6px;
+		border-radius: 3px;
+		font-size: 12px;
+	}
+
+	.ppcp-no-cart {
+		color: #666;
+		font-style: italic;
+		margin-top: 10px;
+	}
+
+	.ppcp-cart-loading {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		padding: 40px 20px;
+		color: #666;
+
+		.spinner {
+			float: none;
+			margin: 0 0 15px 0;
+		}
+
+		p {
+			margin: 0;
+			font-style: italic;
+		}
+	}
+}
+
+/* ============================================
+   Status Badges
+   ============================================ */
+.ppcp-status-badge {
+	display: inline-block;
+	padding: 4px 10px;
+	border-radius: 3px;
+	font-size: 12px;
+	font-weight: 600;
+	text-transform: uppercase;
+}
+
+.status-created {
+	background: #e5f5fa;
+	color: #007cba;
+}
+
+.status-incomplete {
+	background: #fcf3cf;
+	color: #7c6c0b;
+}
+
+.status-completed {
+	background: #d4edda;
+	color: #155724;
+}
+
+.validation-valid {
+	background: #d4edda;
+	color: #155724;
+}
+
+.validation-invalid {
+	background: #f8d7da;
+	color: #721c24;
+}
+
+/* ============================================
+   Item Controls (qty +/- buttons in selected items)
+   ============================================ */
+.ppcp-item-controls {
+	display: flex;
+	gap: 6px;
+	align-items: center;
+
+	.quantity-label {
+		font-size: 13px;
+		color: #666;
+		font-weight: 600;
+		margin-right: 2px;
+	}
+
+	.button {
+		min-width: 28px;
+		padding: 4px 8px;
+		font-size: 13px;
+		line-height: 1;
+	}
+
+	.ppcp-item-qty {
+		font-weight: 600;
+		min-width: 24px;
+		text-align: center;
+	}
+}
+
+/* ============================================
+   Validation Issues — WP notice pattern with left-border accent.
+   Resolution options rendered as direct action buttons.
+   ============================================ */
+.ppcp-validation-issues {
+	margin-top: 15px;
+
+	.ppcp-validation-issue {
+		background: #fff;
+		border: 1px solid #ddd;
+		border-left: 4px solid #f6b728;
+		border-radius: 0 3px 3px 0;
+		padding: 12px 15px;
+		margin-bottom: 10px;
+
+		&:last-child {
+			margin-bottom: 0;
+		}
+
+		.issue-header {
+			display: flex;
+			gap: 12px;
+			align-items: center;
+			margin-bottom: 6px;
+
+			.issue-code {
+				font-weight: 600;
+				color: #7c6c0b;
+				font-size: 13px;
+				text-transform: uppercase;
+			}
+
+			.affected-item {
+				font-size: 12px;
+				color: #666;
+			}
+		}
+
+		.issue-description {
+			margin: 0 0 10px 0;
+			font-size: 13px;
+			color: #333;
+		}
+
+		.resolution-options {
+			display: flex;
+			gap: 8px;
+			flex-wrap: wrap;
+			margin-top: 10px;
+
+			.ppcp-resolution-btn {
+				flex: 1;
+				min-width: 100px;
+				text-align: center;
+				padding: 6px 12px;
+				font-size: 13px;
+			}
+
+			.ppcp-alternative-coupons {
+				display: flex;
+				flex-wrap: wrap;
+				gap: 6px;
+				align-items: center;
+				width: 100%;
+
+				.alternative-label {
+					font-size: 13px;
+					color: #666;
+					font-weight: 600;
+				}
+			}
+		}
+	}
+}
+
+/* ============================================
+   Approval Section
+   ============================================ */
+.ppcp-approval-section {
+	margin-top: 20px;
+	padding: 15px;
+	background: #e7f7ff;
+	border: 1px solid #2271b1;
+	border-radius: 3px;
+
+	h4 {
+		margin-top: 0;
+		color: #2271b1;
+	}
+
+	.button-primary {
+		margin-bottom: 10px;
+	}
+
+	.description {
+		margin: 10px 0 0 0;
+		font-size: 12px;
+		color: #666;
+	}
+}
+
+/* ============================================
+   Request Log
+   ============================================ */
+.ppcp-request-log {
+	margin-top: 30px;
+	padding-top: 20px;
+	border-top: 2px solid #ddd;
+
+	h3 {
+		margin-top: 0;
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+	}
+
+	.ppcp-log-entries {
+		max-height: 500px;
+		overflow-y: auto;
+		border: 1px solid #ddd;
+		border-radius: 3px;
+		background: #f9f9f9;
+	}
+
+	.ppcp-log-entry {
+		padding: 12px;
+		border-bottom: 1px solid #ddd;
+		font-family: monospace;
+		font-size: 12px;
+
+		&:last-child {
+			border-bottom: none;
+		}
+
+		&:not(.error) {
+			border-left: 4px solid #00a32a;
+			background: #f0faf2;
+		}
+
+		&.error {
+			background: #f8d7da;
+			border-left: 4px solid #d63638;
+		}
+
+		.log-header {
+			display: flex;
+			gap: 10px;
+			align-items: center;
+			margin-bottom: 8px;
+			font-weight: 600;
+			cursor: pointer;
+
+			&:hover {
+				color: #2271b1;
+			}
+
+			/* HTTP method colours */
+			.log-method-get    { color: #2271b1; }
+			.log-method-post   { color: #155724; }
+			.log-method-put    { color: #7c6c0b; }
+			.log-method-delete { color: #cc1100; }
+
+			.log-endpoint {
+				color: #666;
+				flex: 1;
+			}
+
+			.log-timestamp {
+				margin-left: auto;
+				color: #999;
+				font-size: 11px;
+			}
+		}
+
+		.log-details {
+			background: #fff;
+			padding: 8px;
+			border-radius: 3px;
+			border: 1px solid #ddd;
+			margin-top: 6px;
+
+			summary {
+				cursor: pointer;
+				font-weight: 600;
+				user-select: none;
+
+				&:hover {
+					color: #2271b1;
+				}
+			}
+
+			pre {
+				margin: 8px 0 0 0;
+				white-space: pre-wrap;
+				word-wrap: break-word;
+				font-size: 11px;
+				color: #333;
+				border-radius: 3px;
+				padding: 6px 8px;
+			}
+
+			pre.response-success {
+				background: #d4edda;
+				color: #155724;
+			}
+
+			pre.response-error {
+				background: #f8d7da;
+				color: #721c24;
+			}
+		}
+	}
+
+	.ppcp-no-logs {
+		padding: 20px;
+		text-align: center;
+		color: #666;
+		font-style: italic;
+	}
+}
+
+/* ============================================
+   Item Quantity Controls (cart state right panel)
+   ============================================ */
+.ppcp-item-qty-controls {
+	display: flex;
+	gap: 4px;
+	align-items: center;
+
+	.button {
+		min-width: 24px;
+		height: 24px;
+		padding: 0;
+		line-height: 1;
+		font-size: 14px;
+	}
+
+	.ppcp-item-qty {
+		min-width: 30px;
+		text-align: center;
+		font-size: 13px;
+	}
+
+	.button-link-delete {
+		color: #b32d2e;
+		border-color: #b32d2e;
+		background: transparent;
+
+		&:hover {
+			background: #b32d2e;
+			color: #fff;
+		}
+	}
+}
