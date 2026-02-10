@@ -141,13 +141,32 @@ export class PcpApi extends WooCommerceApiBase {
 
 		return subscriptionMeta.value;
 	};
+	
+	/**
+	 * Get number of Subscription renewals
+	 * 
+	 * @param subscriptionId
+	 */
+	getSubscriptionRenewalCount = async ( subscriptionId: number ) => {
+		const subscription = await this.getSubscription( subscriptionId );
+		const subscriptionMeta = subscription.meta_data.find(
+				meta => meta.key === '_subscription_renewal_order_ids_cache'
+			);
+		return subscriptionMeta?.value?.length ?? 0;
+	};
 
 	/**
-	 * Triggers PayPal Subscription Renewal process
+	 * Triggers PayPal Subscription Renewal process by mocking paypal webhook.
+	 * Sometimes it is required to send double request, so the retry
+	 * mechanism is implemented
 	 *
 	 * @param subscriptionId
 	 */
 	triggerPayPalSubscriptionRenewal = async ( subscriptionId: number ) => {
+		const initialRenewalCount = await this.getSubscriptionRenewalCount(
+			subscriptionId
+		);
+
 		const billingId = await this.getPayPalSubscriptionBillingId(
 			subscriptionId
 		);
@@ -161,19 +180,34 @@ export class PcpApi extends WooCommerceApiBase {
 			},
 		};
 
-		const response = await this.requestUtils.request.post(
-			urls.payPalWebhook,
-			{ data }
-		);
-		await expect( response.ok() ).toBeTruthy();
-		return response.ok();
+		let isRenewalTriggered = false;
+		let i = 0;
 
-		// const response2 = await this.requestUtils.request.post(
-		// 	urls.payPalWebhook,
-		// 	{ data }
-		// );
-		// await expect( response2.ok() ).toBeTruthy();
+		while ( ! isRenewalTriggered && i < 2 ) {
+			i++;
 
-		// return response.ok() && response2.ok();
+			const response = await this.requestUtils.request.post(
+				urls.payPalWebhook,
+				{ data }
+			);
+
+			expect.soft(
+				response.ok(),
+				`Assert PayPal Subscription Renewal request (${ i }) to be OK`
+			).toBeTruthy();
+
+			const renewalCount = await this.getSubscriptionRenewalCount(
+				subscriptionId
+			);
+
+			isRenewalTriggered = renewalCount === initialRenewalCount + 1;
+		}
+
+		expect.soft(
+			isRenewalTriggered,
+			'Assert PayPal Subscription Renewal is triggered'
+		).toBeTruthy();
+
+		return isRenewalTriggered;
 	};
 }
