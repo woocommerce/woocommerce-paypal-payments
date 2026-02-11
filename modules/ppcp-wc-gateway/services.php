@@ -24,6 +24,7 @@ use WooCommerce\PayPalCommerce\Googlepay\GooglePayGateway;
 use WooCommerce\PayPalCommerce\Settings\Data\Definition\FeaturesDefinition;
 use WooCommerce\PayPalCommerce\Settings\Data\SettingsModel;
 use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
+use WooCommerce\PayPalCommerce\Settings\SettingsModule;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\WcGateway\Admin\FeesRenderer;
 use WooCommerce\PayPalCommerce\WcGateway\Admin\OrderTablePaymentStatusColumn;
@@ -386,6 +387,48 @@ return array(
          */
         return apply_filters('woocommerce_paypal_payments_place_order_button_description', __('Clicking "Proceed to PayPal" will redirect you to PayPal to complete your purchase.', 'woocommerce-paypal-payments'));
     },
+    'wcgateway.helper.vaulting-scope' => static function (ContainerInterface $container): bool {
+        try {
+            $token = $container->get('api.bearer')->bearer();
+            return $token->vaulting_available();
+        } catch (\WooCommerce\PayPalCommerce\WcGateway\RuntimeException $exception) {
+            return \false;
+        }
+    },
+    'button.helper.vaulting-label' => static function (ContainerInterface $container): string {
+        $vaulting_label = '';
+        if (!$container->get('wcgateway.helper.vaulting-scope')) {
+            $vaulting_label .= sprintf(
+                // translators: %1$s and %2$s are the opening and closing of HTML <a> tag.
+                __(' To use vaulting features, you must %1$senable vaulting on your account%2$s.', 'woocommerce-paypal-payments'),
+                '<a
+					href="https://docs.woocommerce.com/document/woocommerce-paypal-payments/#enable-vaulting-on-your-live-account"
+					target="_blank"
+				>',
+                '</a>'
+            );
+        }
+        $vaulting_label .= '<p class="description">';
+        $vaulting_label .= sprintf(
+            // translators: %1$s, %2$s, %3$s and %4$s are the opening and closing of HTML <a> tag.
+            __('This will disable all %1$sPay Later%2$s features and %3$sAlternative Payment Methods%4$s on your site.', 'woocommerce-paypal-payments'),
+            '<a
+					href="https://woocommerce.com/document/woocommerce-paypal-payments/#pay-later"
+					target="_blank"
+				>',
+            '</a>',
+            '<a
+					href="https://woocommerce.com/document/woocommerce-paypal-payments/#alternative-payment-methods"
+					target="_blank"
+				>',
+            '</a>'
+        );
+        $vaulting_label .= '</p>';
+        return $vaulting_label;
+    },
+    'wcgateway.settings.dcc-gateway-title.default' => static function (ContainerInterface $container): string {
+        return did_action('init') ? __('Debit & Credit Cards', 'woocommerce-paypal-payments') : 'Debit & Credit Cards';
+    },
     'wcgateway.settings.card_billing_data_mode.default' => static function (ContainerInterface $container): string {
         return $container->get('api.shop.is-latin-america') ? \WooCommerce\PayPalCommerce\WcGateway\CardBillingMode::MINIMAL_INPUT : \WooCommerce\PayPalCommerce\WcGateway\CardBillingMode::USE_WC;
     },
@@ -522,7 +565,7 @@ return array(
     'wcgateway.settings.pay-later.messaging-locations' => static function (ContainerInterface $container): array {
         $button_locations = $container->get('wcgateway.button.locations');
         unset($button_locations['mini-cart']);
-        return array_merge($button_locations, array('shop' => __('Shop', 'woocommerce-paypal-payments'), 'home' => __('Home', 'woocommerce-paypal-payments')));
+        return array_merge($button_locations, array('shop' => did_action('init') ? __('Shop', 'woocommerce-paypal-payments') : 'Shop', 'home' => did_action('init') ? __('Home', 'woocommerce-paypal-payments') : 'Home'));
     },
     'wcgateway.settings.pay-later.default-messaging-locations' => static function (ContainerInterface $container): array {
         $locations = $container->get('wcgateway.settings.pay-later.messaging-locations');
@@ -581,13 +624,15 @@ return array(
     'wcgateway.settings.wc-tasks.working-capital-config' => static function (ContainerInterface $container): array {
         $settings_provider = $container->get('settings.settings-provider');
         assert($settings_provider instanceof SettingsProvider);
+        $settings_provider = $container->get('settings.settings-provider');
+        assert($settings_provider instanceof SettingsProvider);
         $is_working_capital_feature_flag_enabled = apply_filters(
             // phpcs:ignore WordPress.NamingConventions.ValidHookName.UseUnderscores -- feature flags use this convention
             'woocommerce.feature-flags.woocommerce_paypal_payments.working_capital_enabled',
             \true
         );
         $is_working_capital_eligible = $container->get('api.shop.country') === 'US' && $settings_provider->stay_updated();
-        if (!$is_working_capital_feature_flag_enabled || !$is_working_capital_eligible) {
+        if (!$settings_provider->merchant_connected() || !$is_working_capital_feature_flag_enabled || !$is_working_capital_eligible) {
             return array();
         }
         return array(array('id' => 'ppcp-working-capital-task', 'title' => __('Fuel your business growth with a PayPal Working Capital loan. Check eligibility', 'woocommerce-paypal-payments'), 'description' => '', 'redirect_url' => 'https://www.paypal.com/us/business/financial-services/working-capital?partner_camp_id=woocommerce_ppwc'));
@@ -655,6 +700,8 @@ return array(
         assert($settings_model instanceof SettingsModel);
         $messages_apply = $container->get('button.helper.messages-apply');
         assert($messages_apply instanceof MessagesApply);
+        $settings_provider = $container->get('settings.settings-provider');
+        assert($settings_provider instanceof SettingsProvider);
         $is_working_capital_feature_flag_enabled = apply_filters(
             // phpcs:ignore WordPress.NamingConventions.ValidHookName.UseUnderscores -- feature flags use this convention
             'woocommerce.feature-flags.woocommerce_paypal_payments.working_capital_enabled',
@@ -663,7 +710,7 @@ return array(
         return array($inbox_note_factory->create_note(__('PayPal Working Capital', 'woocommerce-paypal-payments'), __('Business loans from $1k to $230k for first-time borrowers. Looking to fuel your business growth? With a PayPal Working Capital loan, approved loans are funded in minutes and repaid as a share of your sales. Minimum payment required every 90 days. The lender for PayPal Working Capital is WebBank.', 'woocommerce-paypal-payments'), Note::E_WC_ADMIN_NOTE_INFORMATIONAL, 'ppcp-working-capital-inbox-note', Note::E_WC_ADMIN_NOTE_UNACTIONED, $is_working_capital_feature_flag_enabled && $container->get('api.shop.country') === 'US' && $settings_model->get_stay_updated(), new InboxNoteAction('learn_more', __('Learn More', 'woocommerce-paypal-payments'), 'https://www.paypal.com/us/business/financial-services/working-capital?partner_camp_id=woocommerce_ppwc', Note::E_WC_ADMIN_NOTE_UNACTIONED, \true)));
     },
     'wcgateway.void-button.assets' => function (ContainerInterface $container): VoidButtonAssets {
-        return new VoidButtonAssets($container->get('wcgateway.asset_getter'), $container->get('ppcp.asset-version'), $container->get('api.endpoint.order'), $container->get('wcgateway.processor.refunds'));
+        return new VoidButtonAssets($container->get('wcgateway.asset_getter'), $container->get('ppcp.asset-version'), $container->get('api.endpoint.order.cached'), $container->get('wcgateway.processor.refunds'));
     },
     'wcgateway.void-button.endpoint' => function (ContainerInterface $container): VoidOrderEndpoint {
         return new VoidOrderEndpoint($container->get('button.request-data'), $container->get('api.endpoint.order'), $container->get('wcgateway.processor.refunds'), $container->get('woocommerce.logger.woocommerce'));

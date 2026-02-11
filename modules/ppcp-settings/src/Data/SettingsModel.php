@@ -101,7 +101,7 @@ class SettingsModel extends \WooCommerce\PayPalCommerce\Settings\Data\AbstractDa
             'enable_pay_now' => \false,
             'enable_logging' => \false,
             'stay_updated' => \true,
-            'payment_level_processing' => \false,
+            'payment_level_processing' => \true,
             // Array of string values.
             'disabled_cards' => array(),
             'card_icons' => array(),

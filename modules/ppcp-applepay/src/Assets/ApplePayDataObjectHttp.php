@@ -290,13 +290,16 @@ class ApplePayDataObjectHttp
      */
     protected function assign_data_object_values(array $data): void
     {
+        $class_properties = array('nonce', 'simplified_contact', 'need_shipping', 'caller_page', 'product_id', 'product_quantity', 'product_variations', 'product_extra', 'product_booking', 'shipping_method', 'billing_contact', 'shipping_contact');
         foreach ($data as $key => $value) {
-            // Null values may give origin to type errors. If necessary replace this condition with a specialized field filter.
             if (null === $value) {
                 continue;
             }
             if ($key === 'woocommerce-process-checkout-nonce') {
                 $key = 'nonce';
+            }
+            if (!in_array($key, $class_properties, \true)) {
+                continue;
             }
             $this->{$key} = $value;
         }

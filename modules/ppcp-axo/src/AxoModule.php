@@ -347,7 +347,7 @@ class AxoModule implements ServiceModule, ExecutableModule
         $asset_version = $c->get('ppcp.asset-version');
         $insights_data = $c->get('axo.insights');
         wp_register_script('wc-ppcp-paypal-insights-end-checkout', $asset_getter->get_asset_url('Insights/EndCheckoutTracker.js'), array('wp-plugins', 'wp-data', 'wp-element', 'wc-blocks-registry'), $asset_version, \true);
-        wp_localize_script('wc-ppcp-paypal-insights-end-checkout', 'wc_ppcp_axo_insights_data', array_merge($insights_data, array('orderId' => $order_id, 'orderTotal' => (string) $order->get_total(), 'orderCurrency' => (string) $order->get_currency(), 'paymentMethod' => (string) $order->get_payment_method(), 'orderKey' => (string) $order->get_order_key())));
+        wp_localize_script('wc-ppcp-paypal-insights-end-checkout', 'wc_ppcp_axo_insights_data', array_merge($insights_data, array('orderId' => $order_id, 'orderTotal' => (string) $order->get_total(), 'orderCurrency' => (string) $order->get_currency(), 'paymentMethod' => (string) $order->get_payment_method())));
         wp_enqueue_script('wc-ppcp-paypal-insights-end-checkout');
     }
 }
