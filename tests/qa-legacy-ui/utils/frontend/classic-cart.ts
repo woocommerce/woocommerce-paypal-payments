@@ -30,10 +30,7 @@ export class ClassicCart extends ClassicCartBase {
 		// Select shipping or initial shipment (for subscriptions) option:
 		await this.selectShippingMethod( tested.shipping.settings.title );
 		// Make payment with tested method
-		await this.ppui.makeClassicPayment( {
-			merchant: tested.merchant,
-			payment: tested.payment,
-		} );
+		await this.ppui.makeClassicPayment( tested );
 	};
 
 	// Assertions

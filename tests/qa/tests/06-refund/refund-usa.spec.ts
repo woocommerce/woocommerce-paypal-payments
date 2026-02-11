@@ -6,7 +6,6 @@ import {
 	merchants,
 	storeConfigUsa,
 	gateways,
-	taxSettings,
 	customers,
 } from '../../resources';
 import { testRefund } from './_test-scenarios';
@@ -15,9 +14,9 @@ import {
 	refundPayPalFromPayByLink,
 } from './_test-data/paypal/refund-paypal.data';
 
-const { payPal, venmo, acdc, fastlane } = gateways;
+const { payPal } = gateways;
 
-test.beforeAll( async ( { utils, pcpApi } ) => {
+test.beforeAll( async ( { utils, pcpApi, wooCommerceApi } ) => {
 	await utils.configureStore( {
 		...storeConfigUsa,
 		customer: customers.usa,
@@ -30,13 +29,7 @@ test.beforeAll( async ( { utils, pcpApi } ) => {
 	);
 	await pcpApi.updatePcpPaymentMethods( {
 		[ payPal.id ]: { id: payPal.id, enabled: true },
-		[ venmo.id ]: { id: venmo.id, enabled: true },
-		[ acdc.id ]: { id: acdc.id, enabled: true },
-		[ fastlane.id ]: { id: fastlane.id, enabled: false },
 	} );
-} );
-
-test.afterAll( async ( { wooCommerceApi } ) => {
 	await wooCommerceApi.deleteAllOrders();
 } );
 

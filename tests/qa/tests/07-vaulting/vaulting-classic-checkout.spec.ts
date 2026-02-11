@@ -18,7 +18,7 @@ const {
 	testVaultedPaymentMethod,
 } = testVaultingClassicCheckout;
 
-test.beforeAll( async ( { utils, pcpApi } ) => {
+test.beforeAll( async ( { utils, pcpApi, wooCommerceApi } ) => {
 	await utils.configureStore( {
 		...storeConfigUsa,
 		enableClassicPages: true,
@@ -37,9 +37,6 @@ test.beforeAll( async ( { utils, pcpApi } ) => {
 		savePaypalAndVenmo: true,
 		saveCardDetails: true,
 	} );
-} );
-
-test.afterAll( async ( { wooCommerceApi } ) => {
 	await wooCommerceApi.deleteAllOrders();
 } );
 

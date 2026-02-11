@@ -22,9 +22,9 @@ class Settings implements ContainerInterface {
 	/**
 	 * The settings.
 	 *
-	 * @var array
+	 * @var array|null
 	 */
-	private array $settings = array();
+	private ?array $settings = null;
 
 	/**
 	 * The list of selected default button locations.
@@ -106,7 +106,11 @@ class Settings implements ContainerInterface {
 	public function has( string $id ) {
 		$this->load();
 
-		return array_key_exists( $id, $this->settings );
+		if ( isset( $this->settings[ $id ] ) ) {
+			return true;
+		}
+
+		return in_array( $id, $this->get_default_keys(), true );
 	}
 
 	/**
@@ -128,22 +132,50 @@ class Settings implements ContainerInterface {
 	}
 
 	/**
-	 * Loads the settings.
+	 * Loads the settings from the database.
 	 *
 	 * @return bool
 	 */
 	private function load(): bool {
-		if ( $this->settings ) {
+		if ( $this->settings !== null ) {
 			return false;
 		}
+
 		$this->settings = (array) get_option( self::KEY, array() );
 
-		$defaults = array(
+		return true;
+	}
+
+	/**
+	 * Returns the keys of settings that have default values.
+	 *
+	 * @return string[]
+	 */
+	private function get_default_keys(): array {
+		return array(
+			'title',
+			'description',
+			'smart_button_locations',
+			'smart_button_enable_styling_per_location',
+			'pay_later_messaging_enabled',
+			'pay_later_button_enabled',
+			'pay_later_button_locations',
+			'pay_later_messaging_locations',
+			'brand_name',
+			'dcc_gateway_title',
+			'dcc_gateway_description',
+		);
+	}
+
+	/**
+	 * Returns the default values for settings.
+	 *
+	 * @return array
+	 */
+	private function get_defaults(): array {
+		return array(
 			'title'                                    => __( 'PayPal', 'woocommerce-paypal-payments' ),
-			'description'                              => __(
-				'Pay via PayPal.',
-				'woocommerce-paypal-payments'
-			),
+			'description'                              => __( 'Pay via PayPal.', 'woocommerce-paypal-payments' ),
 			'smart_button_locations'                   => $this->default_button_locations,
 			'smart_button_enable_styling_per_location' => false,
 			'pay_later_messaging_enabled'              => true,
@@ -152,20 +184,7 @@ class Settings implements ContainerInterface {
 			'pay_later_messaging_locations'            => $this->default_pay_later_messaging_locations,
 			'brand_name'                               => get_bloginfo( 'name' ),
 			'dcc_gateway_title'                        => $this->default_dcc_gateway_title,
-			'dcc_gateway_description'                  => __(
-				'Pay with your credit card.',
-				'woocommerce-paypal-payments'
-			),
+			'dcc_gateway_description'                  => __( 'Pay with your credit card.', 'woocommerce-paypal-payments' ),
 		);
-
-		foreach ( $defaults as $key => $value ) {
-			if ( isset( $this->settings[ $key ] ) ) {
-				$this->settings[ $key ] = apply_filters( 'woocommerce_paypal_payments_settings_value', $this->settings[ $key ], $key );
-				continue;
-			}
-			$this->settings[ $key ] = $value;
-		}
-
-		return true;
 	}
 }

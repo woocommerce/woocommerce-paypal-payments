@@ -7,7 +7,7 @@
 
 // phpcs:disable WordPress.Security.NonceVerification.Recommended
 
-declare( strict_types = 1 );
+declare( strict_types=1 );
 
 namespace WooCommerce\PayPalCommerce\WcGateway;
 
@@ -26,6 +26,7 @@ use WooCommerce\PayPalCommerce\Googlepay\GooglePayGateway;
 use WooCommerce\PayPalCommerce\Settings\Data\Definition\FeaturesDefinition;
 use WooCommerce\PayPalCommerce\Settings\Data\SettingsModel;
 use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
+use WooCommerce\PayPalCommerce\Settings\SettingsModule;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\WcGateway\Admin\FeesRenderer;
 use WooCommerce\PayPalCommerce\WcGateway\Admin\OrderTablePaymentStatusColumn;
@@ -824,6 +825,54 @@ return array(
 		);
 	},
 
+	'wcgateway.helper.vaulting-scope'                      => static function ( ContainerInterface $container ): bool {
+		try {
+			$token = $container->get( 'api.bearer' )->bearer();
+
+			return $token->vaulting_available();
+		} catch ( RuntimeException $exception ) {
+			return false;
+		}
+	},
+
+	'button.helper.vaulting-label'                         => static function ( ContainerInterface $container ): string {
+		$vaulting_label = '';
+		if ( ! $container->get( 'wcgateway.helper.vaulting-scope' ) ) {
+			$vaulting_label .= sprintf(
+			// translators: %1$s and %2$s are the opening and closing of HTML <a> tag.
+				__( ' To use vaulting features, you must %1$senable vaulting on your account%2$s.', 'woocommerce-paypal-payments' ),
+				'<a
+					href="https://docs.woocommerce.com/document/woocommerce-paypal-payments/#enable-vaulting-on-your-live-account"
+					target="_blank"
+				>',
+				'</a>'
+			);
+		}
+
+		$vaulting_label .= '<p class="description">';
+		$vaulting_label .= sprintf(
+		// translators: %1$s, %2$s, %3$s and %4$s are the opening and closing of HTML <a> tag.
+			__( 'This will disable all %1$sPay Later%2$s features and %3$sAlternative Payment Methods%4$s on your site.', 'woocommerce-paypal-payments' ),
+			'<a
+					href="https://woocommerce.com/document/woocommerce-paypal-payments/#pay-later"
+					target="_blank"
+				>',
+			'</a>',
+			'<a
+					href="https://woocommerce.com/document/woocommerce-paypal-payments/#alternative-payment-methods"
+					target="_blank"
+				>',
+			'</a>'
+		);
+		$vaulting_label .= '</p>';
+
+		return $vaulting_label;
+	},
+
+	'wcgateway.settings.dcc-gateway-title.default'         => static function ( ContainerInterface $container ): string {
+		return did_action( 'init' ) ? __( 'Debit & Credit Cards', 'woocommerce-paypal-payments' ) : 'Debit & Credit Cards';
+	},
+
 	'wcgateway.settings.card_billing_data_mode.default'    => static function ( ContainerInterface $container ): string {
 		return $container->get( 'api.shop.is-latin-america' ) ? CardBillingMode::MINIMAL_INPUT : CardBillingMode::USE_WC;
 	},
@@ -1051,8 +1100,8 @@ return array(
 		return array_merge(
 			$button_locations,
 			array(
-				'shop' => __( 'Shop', 'woocommerce-paypal-payments' ),
-				'home' => __( 'Home', 'woocommerce-paypal-payments' ),
+				'shop' => did_action( 'init' ) ? __( 'Shop', 'woocommerce-paypal-payments' ) : 'Shop',
+				'home' => did_action( 'init' ) ? __( 'Home', 'woocommerce-paypal-payments' ) : 'Home',
 			)
 		);
 	},
@@ -1214,6 +1263,9 @@ return array(
 		$settings_provider = $container->get( 'settings.settings-provider' );
 		assert( $settings_provider instanceof SettingsProvider );
 
+		$settings_provider = $container->get( 'settings.settings-provider' );
+		assert( $settings_provider instanceof SettingsProvider );
+
 		$is_working_capital_feature_flag_enabled = apply_filters(
 		// phpcs:ignore WordPress.NamingConventions.ValidHookName.UseUnderscores -- feature flags use this convention
 			'woocommerce.feature-flags.woocommerce_paypal_payments.working_capital_enabled',
@@ -1222,7 +1274,7 @@ return array(
 
 		$is_working_capital_eligible = $container->get( 'api.shop.country' ) === 'US' && $settings_provider->stay_updated();
 
-		if ( ! $is_working_capital_feature_flag_enabled || ! $is_working_capital_eligible ) {
+		if ( ! $settings_provider->merchant_connected() || ! $is_working_capital_feature_flag_enabled || ! $is_working_capital_eligible ) {
 			return array();
 		}
 
@@ -1317,6 +1369,9 @@ return array(
 		$messages_apply = $container->get( 'button.helper.messages-apply' );
 		assert( $messages_apply instanceof MessagesApply );
 
+		$settings_provider = $container->get( 'settings.settings-provider' );
+		assert( $settings_provider instanceof SettingsProvider );
+
 		$is_working_capital_feature_flag_enabled = apply_filters(
 		// phpcs:ignore WordPress.NamingConventions.ValidHookName.UseUnderscores -- feature flags use this convention
 			'woocommerce.feature-flags.woocommerce_paypal_payments.working_capital_enabled',
@@ -1346,7 +1401,7 @@ return array(
 		return new VoidButtonAssets(
 			$container->get( 'wcgateway.asset_getter' ),
 			$container->get( 'ppcp.asset-version' ),
-			$container->get( 'api.endpoint.order' ),
+			$container->get( 'api.endpoint.order.cached' ),
 			$container->get( 'wcgateway.processor.refunds' )
 		);
 	},

@@ -45,10 +45,10 @@ export class Checkout extends CheckoutBase {
 		await this.selectShippingMethod( tested.shipping.settings.title );
 
 		// Make payment with tested method
-		await this.ppui.makePayment( {
-			merchant: tested.merchant,
-			payment: tested.payment,
-		} );
+		await this.ppui.makePayment( tested );
+		await expect( this.paymentOptionsContainer() ).toContainText(
+			`You are currently paying with ${ tested.payment.gatewayName }`
+		);
 		await this.placeOrder();
 	};
 

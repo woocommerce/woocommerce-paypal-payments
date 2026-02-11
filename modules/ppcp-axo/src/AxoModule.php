@@ -483,7 +483,6 @@ class AxoModule implements ServiceModule, ExecutableModule {
 					'orderTotal'    => (string) $order->get_total(),
 					'orderCurrency' => (string) $order->get_currency(),
 					'paymentMethod' => (string) $order->get_payment_method(),
-					'orderKey'      => (string) $order->get_order_key(),
 				)
 			)
 		);
