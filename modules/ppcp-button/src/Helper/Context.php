@@ -74,12 +74,12 @@ class Context {
 	 * @return array<string, mixed>|null
 	 */
 	protected function find_classic_shortcode_block(): ?array {
-		$post = get_the_content();
-		if ( ! $post ) {
+		$post = get_post();
+		if ( ! $post || empty( $post->post_content ) ) {
 			return null;
 		}
 
-		$blocks = parse_blocks( $post );
+		$blocks = parse_blocks( $post->post_content );
 		foreach ( $blocks as $block ) {
 			if ( $block['blockName'] === 'woocommerce/classic-shortcode' ) {
 				return $block;
