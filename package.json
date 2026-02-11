@@ -59,6 +59,7 @@
     "@wordpress/jest-preset-default": "^12.37.0",
     "@wordpress/scripts": "^31.2.0",
     "babel-plugin-explicit-exports-references": "^1.0.2",
+    "eslint-import-resolver-webpack": "^0.13.10",
     "jquery": "^3.7.1"
   }
 }
