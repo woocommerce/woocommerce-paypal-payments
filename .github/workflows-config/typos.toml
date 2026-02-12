@@ -11,6 +11,8 @@ extend-exclude = [
 	"vendor/",
 	"*.min.js",
 	"*.min.css",
+	".ddev/bin/"
+    "tests/"
 ]
 ignore-hidden = false
 
