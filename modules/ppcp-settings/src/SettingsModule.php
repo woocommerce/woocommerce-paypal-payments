@@ -543,9 +543,14 @@ class SettingsModule implements ServiceModule, ExecutableModule
          * from being added to the disabled funding sources list on checkout pages, ensuring
          * the BCDC button remains clickable and functional for merchants using branded-only mode.
          */
-        add_filter('woocommerce_paypal_payments_sdk_disabled_funding_hook', static function (array $disable_funding, array $flags): array {
+        add_filter('woocommerce_paypal_payments_sdk_disabled_funding_hook', static function (array $disable_funding, array $flags) use ($container) {
             $allowed_context = array('checkout-block', 'checkout');
             if (!in_array($flags['context'], $allowed_context, \true)) {
+                return $disable_funding;
+            }
+            $payment_settings = $container->get('settings.data.payment');
+            assert($payment_settings instanceof PaymentSettings);
+            if (!$payment_settings->is_method_enabled(CardButtonGateway::ID)) {
                 return $disable_funding;
             }
             return array_filter($disable_funding, static fn(string $funding_source) => $funding_source !== 'card');
