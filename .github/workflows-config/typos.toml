@@ -72,5 +72,6 @@ extend-exclude = [
 	"*.min.js",
 	"*.min.css",
 	"modules/ppcp-order-tracking/*",
+	"/stubs/**",
 	"/tests/*"
 ]
