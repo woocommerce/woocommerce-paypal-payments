@@ -2,6 +2,7 @@
  * External dependencies
  */
 import { defineConfig, devices, ViewportSize } from '@playwright/test';
+import { WpCliEnvType } from '@inpsyde/playwright-utils/build/@types/wp-cli';
 require( 'dotenv' ).config();
 
 /**
@@ -104,11 +105,15 @@ export default defineConfig< BaseExtend >( {
 			size: viewportSize,
 		},
 
-		sshConfig: {
-			login: process.env.SSH_LOGIN,
-			host: process.env.SSH_HOST,
-			port: process.env.SSH_PORT,
-			path: process.env.SSH_PATH,
+		cliConfig: {
+			envType: process.env.WPCLI_ENV_TYPE as WpCliEnvType,
+			path: process.env.WPCLI_PATH,
+			ssh: {
+				login: process.env.SSH_LOGIN,
+				host: process.env.SSH_HOST,
+				port: process.env.SSH_PORT,
+				path: process.env.SSH_PATH,
+			}
 		},
 	},
 
