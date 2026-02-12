@@ -33,6 +33,9 @@ class AxoBlockModule implements ServiceModule, ExecutableModule
      */
     public function run(ContainerInterface $c): bool
     {
+        if (!$c->has('axo.eligible') || !$c->get('axo.eligible')) {
+            return \true;
+        }
         if (!class_exists('Automattic\WooCommerce\Blocks\Payments\Integrations\AbstractPaymentMethodType') || !function_exists('woocommerce_store_api_register_payment_requirements')) {
             add_action('admin_notices', function () {
                 printf('<div class="notice notice-error"><p>%1$s</p></div>', wp_kses_post(__('Fastlane checkout block initialization failed, possibly old WooCommerce version or disabled WooCommerce Blocks plugin.', 'woocommerce-paypal-payments')));

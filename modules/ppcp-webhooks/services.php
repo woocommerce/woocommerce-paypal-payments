@@ -49,6 +49,11 @@ return array('webhook.registrar' => static function (ContainerInterface $contain
     $handler = $container->get('webhook.endpoint.handler');
     $logger = $container->get('woocommerce.logger.woocommerce');
     $verify_request = !defined('PAYPAL_WEBHOOK_REQUEST_VERIFICATION') || PAYPAL_WEBHOOK_REQUEST_VERIFICATION;
+    $environment = $container->get('settings.environment');
+    // Ensures webhook signature verification always enabled in production.
+    if (!$verify_request && $environment->is_production()) {
+        $verify_request = \true;
+    }
     $webhook_event_factory = $container->get('api.factory.webhook-event');
     $simulation = $container->get('webhook.status.simulation');
     $last_webhook_storage = $container->get('webhook.last-webhook-storage');
