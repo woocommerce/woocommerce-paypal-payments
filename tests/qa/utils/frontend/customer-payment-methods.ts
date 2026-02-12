@@ -77,8 +77,7 @@ export class CustomerPaymentMethods extends CustomerPaymentMethodsBase {
 
 		switch ( gateway.shortcut ) {
 			case 'paypal':
-				await this.payPalUi.payPalGateway().click();
-				const popup = await this.payPalUi.openPayPalPupup();
+				const popup = await this.payPalUi.openPayPalPopup();
 				await popup.completePayPalPayment( payPalAccount );
 				break;
 

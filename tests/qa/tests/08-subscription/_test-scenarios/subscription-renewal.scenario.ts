@@ -15,9 +15,7 @@ export const testSubscriptionRenewal = ( testOrder: ShopOrder ) => {
 	test.describe( () => {
 		// Restore customer and his storage state to remove vaulted payment methods.
 		// Placed in beforeAll for each test to be able to use storate state in a test.
-		test.beforeAll( async ( { utils, wooCommerceApi } ) => {
-			await wooCommerceApi.deleteAllSubscriptions();
-			await wooCommerceApi.deleteAllOrders();
+		test.beforeAll( async ( { utils } ) => {
 			await utils.restoreCustomer( customer );
 		} );
 
@@ -35,7 +33,7 @@ export const testSubscriptionRenewal = ( testOrder: ShopOrder ) => {
 				wooCommerceOrderEdit,
 				wooCommerceSubscriptionEdit,
 			} ) => {
-				test.setTimeout( 2 * 60 * 1000 );
+				test.setTimeout( 2 * 60_000 );
 				// Precondition: purchase test subscription
 				await utils.fillVisitorsCart( products );
 				await classicCheckout.visit();
@@ -89,8 +87,8 @@ export const testSubscriptionRenewal = ( testOrder: ShopOrder ) => {
 					};
 				}
 
+				await wooCommerceOrderEdit.visit( orderId );
 				await wooCommerceOrderEdit.assertOrderDetails(
-					orderId,
 					testOrder,
 					pcpData
 				);
@@ -114,12 +112,12 @@ export const testSubscriptionRenewal = ( testOrder: ShopOrder ) => {
 						subscriptionId
 					);
 				} else {
-					await pcpApi.triggerVaultingSubscriptionRenewal(
+					await wooCommerceSubscriptionEdit.triggerSubscriptionRenewal(
 						subscriptionId
 					);
 				}
 				const renewalOrderIds =
-					await pcpApi.getSubscriptionRenewalOrderIds(
+					await wooCommerceApi.getSubscriptionRenewalOrderIds(
 						subscriptionId
 					);
 				await expect( renewalOrderIds ).toHaveLength( 1 );
@@ -164,9 +162,7 @@ export const testFreeTrialSubscriptionRenewal = ( testOrder: ShopOrder ) => {
 	test.describe( () => {
 		// Restore customer and his storage state to remove vaulted payment methods.
 		// Placed in beforeAll for each test to be able to use storate state in a test.
-		test.beforeAll( async ( { utils, wooCommerceApi } ) => {
-			await wooCommerceApi.deleteAllSubscriptions();
-			await wooCommerceApi.deleteAllOrders();
+		test.beforeAll( async ( { utils } ) => {
 			await utils.restoreCustomer( customer );
 		} );
 
@@ -183,7 +179,7 @@ export const testFreeTrialSubscriptionRenewal = ( testOrder: ShopOrder ) => {
 				wooCommerceOrderEdit,
 				wooCommerceSubscriptionEdit,
 			} ) => {
-				test.setTimeout( 2 * 60 * 1000 );
+				test.setTimeout( 2 * 60_000 );
 				// Precondition: purchase test subscription
 				await utils.fillVisitorsCart( products );
 				await classicCheckout.visit();
@@ -203,10 +199,8 @@ export const testFreeTrialSubscriptionRenewal = ( testOrder: ShopOrder ) => {
 
 				const freeTrialTotal = await countTotals( testOrder );
 				// Assert free-trial test order with 0 price and shipping
-				await wooCommerceOrderEdit.assertOrderDetails(
-					orderId,
-					testOrder
-				);
+				await wooCommerceOrderEdit.visit( orderId );
+				await wooCommerceOrderEdit.assertOrderDetails( testOrder );
 
 				// For free-trial subscription product set trial length = 0 so for renewal order it's not counted as 0 price
 				testOrder.products[ 0 ] = await setSubscriptionTrialLength(
@@ -249,12 +243,12 @@ export const testFreeTrialSubscriptionRenewal = ( testOrder: ShopOrder ) => {
 						subscriptionId
 					);
 				} else {
-					await pcpApi.triggerVaultingSubscriptionRenewal(
+					await wooCommerceSubscriptionEdit.triggerSubscriptionRenewal(
 						subscriptionId
 					);
 				}
 				const renewalOrderIds =
-					await pcpApi.getSubscriptionRenewalOrderIds(
+					await wooCommerceApi.getSubscriptionRenewalOrderIds(
 						subscriptionId
 					);
 				await expect( renewalOrderIds ).toHaveLength( 1 );

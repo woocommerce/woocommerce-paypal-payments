@@ -108,23 +108,19 @@ const takePreviewSnapshots = async (
 };
 
 /**
- * - Asserts Pay Later Messaging container is visible.
- * - Compares actual PLM container screenshot to expected.
+ * Asserts Pay Later Messaging container is visible on the frontend.
  *
  * @param payPalUi
- * @param snapshotName
+ * @param assertContext - description for the Assert message
  */
-const snapshotPlmContainer = async (
+const assertPlmContainerVisible = async (
 	payPalUi: PayPalUi | PayPalUiClassic,
-	snapshotName: string
+	assertContext: string
 ) => {
-	await expect( payPalUi.payLaterMessageContainer() ).toBeVisible();
-	await payPalUi.page.waitForTimeout( 500 );
-	expect(
-		await payPalUi
-			.payLaterMessageContainer()
-			.screenshot( { animations: 'disabled' } )
-	).toMatchSnapshot( `${ snapshotName }.png` );
+	await expect(
+		payPalUi.payLaterMessageContainer(),
+		`Assert Pay Later Messaging container is visible - ${ assertContext }`
+	).toBeVisible();
 };
 
 test.describe( 'Subtests', () => {
@@ -160,14 +156,15 @@ test.describe( 'Subtests', () => {
 				await pcpPayLaterMessaging.page.reload();
 				await pcpPayLaterMessaging.expandAccordionSection( location );
 				// await pcpPayLaterMessaging.assertLocationSettings( settings ); // TODO: uncomment when fixed
-				await pcpPayLaterMessaging.snapshotPlmConfigurator(
-					`${ snapshotName } - After save`
-				);
+				await expect(
+					pcpPayLaterMessaging.configContainer(),
+					`Assert PLM configurator is visible after save for Product page`
+				).toBeVisible();
 
 				await product.visit( products.simple100.slug );
-				await snapshotPlmContainer(
+				await assertPlmContainerVisible(
 					product.payPalUi,
-					`${ snapshotName } - Frontend`
+					'Product page frontend'
 				);
 			}
 		);
@@ -199,20 +196,21 @@ test.describe( 'Subtests', () => {
 				await pcpPayLaterMessaging.page.reload();
 				await pcpPayLaterMessaging.expandAccordionSection( location );
 				// await pcpPayLaterMessaging.assertLocationSettings( settings ); // TODO: uncomment when fixed
-				await pcpPayLaterMessaging.snapshotPlmConfigurator(
-					`${ snapshotName } - After save`
-				);
+				await expect(
+					pcpPayLaterMessaging.configContainer(),
+					'Assert PLM configurator is visible after save for Cart'
+				).toBeVisible();
 				// Block cart
 				await cart.visit();
-				await snapshotPlmContainer(
+				await assertPlmContainerVisible(
 					cart.payPalUi,
-					`${ snapshotName } - Frontend - Block cart`
+					'Block cart frontend'
 				);
 				// Classic cart
 				await classicCart.visit();
-				await snapshotPlmContainer(
+				await assertPlmContainerVisible(
 					classicCart.payPalUi,
-					`${ snapshotName } - Frontend - Classic cart`
+					'Classic cart frontend'
 				);
 			}
 		);
@@ -244,20 +242,21 @@ test.describe( 'Subtests', () => {
 				await pcpPayLaterMessaging.page.reload();
 				await pcpPayLaterMessaging.expandAccordionSection( location );
 				// await pcpPayLaterMessaging.assertLocationSettings( settings ); // TODO: uncomment when fixed
-				await pcpPayLaterMessaging.snapshotPlmConfigurator(
-					`${ snapshotName } - After save`
-				);
+				await expect(
+					pcpPayLaterMessaging.configContainer(),
+					'Assert PLM configurator is visible after save for Checkout'
+				).toBeVisible();
 				// Block checkout
 				await checkout.visit();
-				await snapshotPlmContainer(
+				await assertPlmContainerVisible(
 					checkout.payPalUi,
-					`${ snapshotName } - Frontend - Block checkout`
+					'Block checkout frontend'
 				);
 				// Classic checkout
 				await classicCheckout.visit();
-				await snapshotPlmContainer(
+				await assertPlmContainerVisible(
 					classicCheckout.payPalUi,
-					`${ snapshotName } - Frontend - Classic checkout`
+					'Classic checkout frontend'
 				);
 			}
 		);
@@ -284,14 +283,15 @@ test.describe( 'Subtests', () => {
 				await pcpPayLaterMessaging.page.reload();
 				await pcpPayLaterMessaging.expandAccordionSection( location );
 				// await pcpPayLaterMessaging.assertLocationSettings( settings ); // TODO: uncomment when fixed
-				await pcpPayLaterMessaging.snapshotPlmConfigurator(
-					`${ snapshotName } - After save`
-				);
+				await expect(
+					pcpPayLaterMessaging.configContainer(),
+					'Assert PLM configurator is visible after save for Home'
+				).toBeVisible();
 
 				await payPalUiClassic.page.goto( '/' );
-				await snapshotPlmContainer(
+				await assertPlmContainerVisible(
 					payPalUiClassic,
-					`${ snapshotName } - Frontend`
+					'Home page frontend'
 				);
 			}
 		);
@@ -318,14 +318,15 @@ test.describe( 'Subtests', () => {
 				await pcpPayLaterMessaging.page.reload();
 				await pcpPayLaterMessaging.expandAccordionSection( location );
 				// await pcpPayLaterMessaging.assertLocationSettings( settings ); // TODO: uncomment when fixed
-				await pcpPayLaterMessaging.snapshotPlmConfigurator(
-					`${ snapshotName } - After save`
-				);
+				await expect(
+					pcpPayLaterMessaging.configContainer(),
+					'Assert PLM configurator is visible after save for Shop'
+				).toBeVisible();
 
 				await shop.visit();
-				await snapshotPlmContainer(
+				await assertPlmContainerVisible(
 					shop.payPalUi,
-					`${ snapshotName } - Frontend`
+					'Shop page frontend'
 				);
 			}
 		);

@@ -121,11 +121,10 @@ export class WooCommerceOrderEdit extends wooCommerceOrderEditBase {
 	 *                  }
 	 */
 	assertOrderDetails = async (
-		orderId: number,
 		orderData: WooCommerce.ShopOrder,
 		pcpData?
 	) => {
-		await super.assertOrderDetails( orderId, orderData );
+		await super.assertOrderDetails( orderData );
 
 		if ( ! pcpData ) {
 			return;

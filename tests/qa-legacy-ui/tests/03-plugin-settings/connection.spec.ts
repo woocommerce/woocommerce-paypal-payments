@@ -4,7 +4,7 @@
 import { test, expect } from '../../utils';
 import { pcpConfigDefault, storeConfigDefault } from '../../resources';
 
-test.describe( 'Сonnection', () => {
+test.describe( 'Connection', () => {
 	test.beforeAll( async ( { utils } ) => {
 		await utils.configureStore( storeConfigDefault );
 		await utils.configurePcp( pcpConfigDefault );
@@ -24,8 +24,8 @@ test.describe( 'Сonnection', () => {
 	} );
 
 	test.describe( 'Connected merchant', () => {
-		test.beforeAll( async ( { utils } ) => {
-			await utils.connectMerchant( pcpConfigDefault.merchant );
+		test.beforeAll( async ( { pcpApi } ) => {
+			await pcpApi.connectMerchant( pcpConfigDefault.merchant );
 		} );
 
 		test( 'PCP-1019 | Advanced Credit and Debit Card Payments status is enabled button Settings is also enabled @Critical', async ( {

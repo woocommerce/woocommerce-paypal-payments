@@ -16,13 +16,13 @@ export default defineConfig< BaseExtend >( {
 	expect: {
 		timeout: 20 * 1000,
 	},
-	timeout: 2 * 60 * 1000,
+	timeout: 2 * 60_000,
 	/* Run tests in files in parallel */
 	fullyParallel: false,
 	/* Fail the build on CI if you accidentally left test.only in the source code. */
 	forbidOnly: !! process.env.CI,
 	/* Retry on CI only */
-	retries: process.env.CI ? 2 : 1,
+	retries: process.env.CI ? 2 : 0,
 	/* Opt out of parallel tests on CI. */
 	workers: process.env.CI ? 1 : 1,
 	/* The base directory, relative to the config file, for snapshot files created with toMatchSnapshot */
@@ -97,11 +97,18 @@ export default defineConfig< BaseExtend >( {
 			: {
 					mode: 'retain-on-failure', //'on',//
 					size: viewportSize,
-			},
+			  },
 
 		recordVideoOptions: {
 			mode: 'retain-on-failure',
 			size: viewportSize,
+		},
+
+		sshConfig: {
+			login: process.env.SSH_LOGIN,
+			host: process.env.SSH_HOST,
+			port: process.env.SSH_PORT,
+			path: process.env.SSH_PATH,
 		},
 	},
 
