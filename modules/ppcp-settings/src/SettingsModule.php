@@ -804,9 +804,16 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 		 */
 		add_filter(
 			'woocommerce_paypal_payments_sdk_disabled_funding_hook',
-			static function ( array $disable_funding, array $flags ): array {
+			static function ( array $disable_funding, array $flags ) use ( $container ) {
 				$allowed_context = array( 'checkout-block', 'checkout' );
 				if ( ! in_array( $flags['context'], $allowed_context, true ) ) {
+					return $disable_funding;
+				}
+
+				$payment_settings = $container->get( 'settings.data.payment' );
+				assert( $payment_settings instanceof PaymentSettings );
+
+				if ( ! $payment_settings->is_method_enabled( CardButtonGateway::ID ) ) {
 					return $disable_funding;
 				}
 
