@@ -792,6 +792,24 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 			return;
 		}
 
+		$payment_settings = $container->get( 'settings.data.payment' );
+		assert( $payment_settings instanceof PaymentSettings );
+
+		if ( $payment_settings->is_method_enabled( CreditCardGateway::ID ) ) {
+			$payment_settings->toggle_method_state( CreditCardGateway::ID, false );
+			$payment_settings->save();
+		}
+
+		if ( $payment_settings->is_method_enabled( ApplePayGateway::ID ) ) {
+			$payment_settings->toggle_method_state( ApplePayGateway::ID, false );
+			$payment_settings->save();
+		}
+
+		if ( $payment_settings->is_method_enabled( GooglePayGateway::ID ) ) {
+			$payment_settings->toggle_method_state( GooglePayGateway::ID, false );
+			$payment_settings->save();
+		}
+
 		/**
 		 * In branded-only mode, we completely disable all white label features.
 		 */
