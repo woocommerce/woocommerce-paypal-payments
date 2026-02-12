@@ -1,7 +1,6 @@
 <?php
 
-declare(strict_types=1);
-
+declare (strict_types=1);
 namespace WooCommerce\PayPalCommerce\Vendor\Dhii\Container\Util;
 
 /**
@@ -32,7 +31,6 @@ trait StringTranslatingTrait
         array_unshift($args, $string);
         return call_user_func_array('sprintf', $args);
     }
-
     /**
      * Translates a string.
      *
