@@ -47,7 +47,7 @@ class RenderAuthorizeAction
     /**
      * Whether the action should be rendered for a certain WooCommerce order.
      *
-     * @param \WC_Order $order The Woocommerce order.
+     * @param \WC_Order $order The WooCommerce order.
      *
      * @return bool
      */
