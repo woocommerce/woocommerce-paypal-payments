@@ -52,7 +52,6 @@ class GetOrderEndpoint implements \WooCommerce\PayPalCommerce\Button\Endpoint\En
             if (!$this->cart_data_storage->get_by_paypal_order_id($order_id)) {
                 $this->logger->warning(sprintf('Unauthorized GetOrder attempt for PayPal order %s. No CartData found.', $order_id));
                 wp_send_json_error(array('message' => __('Invalid or expired order access', 'woocommerce-paypal-payments')));
-                return \false;
             }
             $order = $this->api_endpoint->order($order_id);
             wp_send_json_success($order->to_array());
