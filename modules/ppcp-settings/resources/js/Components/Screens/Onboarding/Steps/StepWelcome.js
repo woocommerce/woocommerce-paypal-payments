@@ -34,10 +34,6 @@ const StepWelcome = ( { onNext } ) => {
 					'woocommerce-paypal-payments'
 			  );
 
-	const handleActivatePayPal = () => {
-		onNext();
-	};
-
 	return (
 		<div className="ppcp-r-page-welcome">
 			<OnboardingHeader
@@ -60,7 +56,7 @@ const StepWelcome = ( { onNext } ) => {
 					<Button
 						className="ppcp-r-button-activate-paypal"
 						variant="primary"
-						onClick={ handleActivatePayPal }
+						onClick={ onNext }
 					>
 						{ __(
 							'Activate PayPal Payments',
