@@ -12,7 +12,7 @@ import WelcomeDocs from '../Components/WelcomeDocs';
 import AdvancedOptionsForm from '../Components/AdvancedOptionsForm';
 import { usePaymentConfig } from '../hooks/usePaymentConfig';
 
-const StepWelcome = ( { setStep, currentStep } ) => {
+const StepWelcome = ( { onNext } ) => {
 	const { storeCountry, ownBrandOnly } = CommonHooks.useWooSettings();
 	const { canUseCardPayments, canUseFastlane } = OnboardingHooks.useFlags();
 
@@ -35,8 +35,7 @@ const StepWelcome = ( { setStep, currentStep } ) => {
 			  );
 
 	const handleActivatePayPal = () => {
-		const nextStep = currentStep + 1;
-		setStep( nextStep, 'user' );
+		onNext();
 	};
 
 	return (
