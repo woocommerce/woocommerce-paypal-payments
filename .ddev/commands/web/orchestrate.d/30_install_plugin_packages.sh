@@ -3,4 +3,5 @@
 popd
 
 composer install
-yarn install
+npm ci
+npm run build

@@ -10,6 +10,7 @@ declare( strict_types = 1 );
 namespace WooCommerce\PayPalCommerce\Settings\Data;
 
 use RuntimeException;
+use WooCommerce\PayPalCommerce\Settings\Data\Definition\FeaturesDefinition;
 use WooCommerce\PayPalCommerce\Settings\Service\DataSanitizer;
 
 /**
@@ -85,29 +86,31 @@ class SettingsModel extends AbstractDataModel {
 	protected function get_defaults(): array {
 		return array(
 			// Free-form string values.
-			'invoice_prefix'         => $this->invoice_prefix,
-			'brand_name'             => '',
-			'soft_descriptor'        => '',
+			'invoice_prefix'           => $this->invoice_prefix,
+			'brand_name'               => '',
+			'soft_descriptor'          => '',
 
 			// Enum-type string values.
-			'subtotal_adjustment'    => 'correction', // Options: [correction|no_details].
-			'landing_page'           => 'any',          // Options: [any|login|guest_checkout].
-			'button_language'        => '',             // empty or a language locale code.
-			'three_d_secure'         => 'no-3d-secure', // Options: [no-3d-secure|only-required-3d-secure|always-3d-secure].
+			'subtotal_adjustment'      => 'correction', // Options: [correction|no_details].
+			'landing_page'             => 'any',          // Options: [any|login|guest_checkout].
+			'button_language'          => '',             // empty or a language locale code.
+			'three_d_secure'           => 'no-3d-secure', // Options: [no-3d-secure|only-required-3d-secure|always-3d-secure].
 
 			// Boolean flags.
-			'authorize_only'         => false,
-			'capture_virtual_orders' => false,
-			'save_paypal_and_venmo'  => false,
-			'instant_payments_only'  => false,
-			'enable_contact_module'  => true,
-			'save_card_details'      => false,
-			'enable_pay_now'         => false,
-			'enable_logging'         => false,
-			'stay_updated'           => true,
+			'authorize_only'           => false,
+			'capture_virtual_orders'   => false,
+			FeaturesDefinition::FEATURE_SAVE_PAYPAL_AND_VENMO => false,
+			'instant_payments_only'    => false,
+			'enable_contact_module'    => true,
+			'save_card_details'        => false,
+			'enable_pay_now'           => false,
+			'enable_logging'           => false,
+			'stay_updated'             => true,
+			'payment_level_processing' => true,
 
 			// Array of string values.
-			'disabled_cards'         => array(),
+			'disabled_cards'           => array(),
+			'ships_from_postal_code'   => '',
 		);
 	}
 
@@ -262,6 +265,24 @@ class SettingsModel extends AbstractDataModel {
 	}
 
 	/**
+	 * Gets the Ship-from ZIP code.
+	 *
+	 * @return string The Ship-from ZIP code.
+	 */
+	public function get_ships_from_postal_code(): string {
+		return ! empty( $this->data['ships_from_postal_code'] ) ? $this->data['ships_from_postal_code'] : get_option( 'woocommerce_store_postcode', '' );
+	}
+
+	/**
+	 * Sets the Ship-from ZIP code.
+	 *
+	 * @param string $zip_code The Ship-from ZIP code to set.
+	 */
+	public function set_ships_from_postal_code( string $zip_code ): void {
+		$this->data['ships_from_postal_code'] = $this->sanitizer->sanitize_text( $zip_code );
+	}
+
+	/**
 	 * Gets the authorize only setting.
 	 *
 	 * @return bool True if authorize only is enabled, false otherwise.
@@ -303,7 +324,7 @@ class SettingsModel extends AbstractDataModel {
 	 * @return bool True if saving PayPal and Venmo is enabled, false otherwise.
 	 */
 	public function get_save_paypal_and_venmo(): bool {
-		return $this->data['save_paypal_and_venmo'];
+		return $this->data[ FeaturesDefinition::FEATURE_SAVE_PAYPAL_AND_VENMO ];
 	}
 
 	/**
@@ -312,7 +333,7 @@ class SettingsModel extends AbstractDataModel {
 	 * @param bool $save Whether to save PayPal and Venmo.
 	 */
 	public function set_save_paypal_and_venmo( bool $save ): void {
-		$this->data['save_paypal_and_venmo'] = $this->sanitizer->sanitize_bool( $save );
+		$this->data[ FeaturesDefinition::FEATURE_SAVE_PAYPAL_AND_VENMO ] = $this->sanitizer->sanitize_bool( $save );
 	}
 
 	/**
@@ -442,5 +463,24 @@ class SettingsModel extends AbstractDataModel {
 	 */
 	public function set_stay_updated( bool $save ): void {
 		$this->data['stay_updated'] = $this->sanitizer->sanitize_bool( $save );
+	}
+
+	/**
+	 * Get payment level processing.
+	 *
+	 * @return bool
+	 */
+	public function get_payment_level_processing(): bool {
+		return (bool) $this->data['payment_level_processing'];
+	}
+
+	/**
+	 * Set payment level processing.
+	 *
+	 * @param bool $save Whether to save the payment level processing.
+	 * @return void
+	 */
+	public function set_payment_level_processing( bool $save ): void {
+		$this->data['payment_level_processing'] = $this->sanitizer->sanitize_bool( $save );
 	}
 }

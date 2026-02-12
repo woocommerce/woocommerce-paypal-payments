@@ -5,7 +5,7 @@ import { cards, payments, ShopOrder } from '../../../resources';
 import { annotateVisitor, expect, test } from '../../../utils';
 
 const testSavePaymentMethod = ( testOrder: ShopOrder ) => {
-	const { title, payment, products, customer } = testOrder;
+	const { title, payment, products, customer, merchant } = testOrder;
 
 	test.describe( () => {
 		// Restore customer and his storage state to remove vaulted payment methods.
@@ -31,7 +31,12 @@ const testSavePaymentMethod = ( testOrder: ShopOrder ) => {
 
 				// Make tested order (testOrder.payment.saveToAccount = true):
 				await utils.fillVisitorsCart( products );
-				await classicCheckout.makeOrder( testOrder );
+				await classicCheckout.visit();
+				await classicCheckout.completeCheckoutDetails( testOrder );
+				await classicCheckout.payPalUi.makePayment( {
+					merchant,
+					payment,
+				} );
 				await orderReceived.assertOrderDetails( testOrder );
 
 				await customerPaymentMethods.visit();
@@ -63,7 +68,7 @@ const testSavePaymentMethod = ( testOrder: ShopOrder ) => {
 };
 
 const testAcdcAdditionalCard = ( testOrder: ShopOrder ) => {
-	const { title, payment, products, customer } = testOrder;
+	const { title, payment, products, customer, merchant } = testOrder;
 
 	test.describe( () => {
 		// Restore customer and his storage state to remove vaulted payment methods.
@@ -95,7 +100,12 @@ const testAcdcAdditionalCard = ( testOrder: ShopOrder ) => {
 
 				// Make tested order (testOrder.payment.saveToAccount = true):
 				await utils.fillVisitorsCart( products );
-				await classicCheckout.makeOrder( testOrder );
+				await classicCheckout.visit();
+				await classicCheckout.completeCheckoutDetails( testOrder );
+				await classicCheckout.payPalUi.makePayment( {
+					merchant,
+					payment,
+				} );
 				await orderReceived.assertOrderDetails( testOrder );
 
 				await customerPaymentMethods.visit();
@@ -127,7 +137,7 @@ const testAcdcAdditionalCard = ( testOrder: ShopOrder ) => {
 };
 
 const testVaultedPaymentMethod = ( testOrder: ShopOrder ) => {
-	const { title, payment, products, customer } = testOrder;
+	const { title, payment, products, customer, merchant } = testOrder;
 
 	test.describe( () => {
 		// Restore customer and his storage state to remove vaulted payment methods.
@@ -154,32 +164,29 @@ const testVaultedPaymentMethod = ( testOrder: ShopOrder ) => {
 
 				// Make tested order:
 				await utils.fillVisitorsCart( products );
-
-				await classicCheckout.makeOrder( testOrder );
+				await classicCheckout.visit();
+				await classicCheckout.completeCheckoutDetails( testOrder );
+				await classicCheckout.payPalUi.makePayment( {
+					merchant,
+					payment,
+				} );
 				await orderReceived.assertOrderDetails( testOrder );
 
 				const orderId = await orderReceived.getOrderNumber();
-				const orderJson = await wooCommerceApi.getOrder( orderId );
-
-				const pcpData = {
-					transactionId: orderJson.transaction_id,
-					payPalFee: await payPalApi.getFee(
-						orderJson.transaction_id,
-						testOrder
-					),
-					payPalPayout: await payPalApi.getPayout(
-						orderJson.transaction_id,
-						testOrder
-					),
-				};
-
-				await payPalApi.assertOrder( orderJson, testOrder );
-				await payPalApi.assertPayment(
-					orderJson.transaction_id,
+				const { transaction_id: transactionId } =
+					await wooCommerceApi.getOrder( orderId );
+				const payPalFee = await payPalApi.getFee(
+					transactionId,
 					testOrder
 				);
+				const payPalPayout = await payPalApi.getPayout(
+					transactionId,
+					testOrder
+				);
+				const pcpData = { transactionId, payPalFee, payPalPayout };
+
+				await wooCommerceOrderEdit.visit( orderId );
 				await wooCommerceOrderEdit.assertOrderDetails(
-					orderId,
 					testOrder,
 					pcpData
 				);

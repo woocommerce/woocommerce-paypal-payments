@@ -18,6 +18,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentSource;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\ReferenceTransactionStatus;
+use WooCommerce\PayPalCommerce\Assets\AssetGetter;
 use WooCommerce\PayPalCommerce\Button\Helper\Context;
 use WooCommerce\PayPalCommerce\SavePaymentMethods\Endpoint\CreatePaymentToken;
 use WooCommerce\PayPalCommerce\SavePaymentMethods\Endpoint\CreatePaymentTokenForGuest;
@@ -198,45 +199,60 @@ class SavePaymentMethodsModule implements ServiceModule, ExtendingModule, Execut
 							$wc_payment_tokens = $c->get( 'vaulting.wc-payment-tokens' );
 							assert( $wc_payment_tokens instanceof WooCommercePaymentTokens );
 
-							if ( $wc_order->get_payment_method() === CreditCardGateway::ID ) {
-								$token = new \WC_Payment_Token_CC();
-								$token->set_token( $token_id );
-								$token->set_user_id( $wc_order->get_customer_id() );
-								$token->set_gateway_id( CreditCardGateway::ID );
+							try {
+								if ( $wc_order->get_payment_method() === CreditCardGateway::ID ) {
+									$token = new \WC_Payment_Token_CC();
+									$token->set_token( $token_id );
+									$token->set_user_id( $wc_order->get_customer_id() );
+									$token->set_gateway_id( CreditCardGateway::ID );
 
-								$token->set_last4( $payment_source->properties()->last_digits ?? '' );
-								$expiry = explode( '-', $payment_source->properties()->expiry ?? '' );
-								$token->set_expiry_year( $expiry[0] ?? '' );
-								$token->set_expiry_month( $expiry[1] ?? '' );
-								$token->set_card_type( $payment_source->properties()->brand ?? '' );
+									$token->set_last4( $payment_source->properties()->last_digits ?? '' );
+									$expiry = explode( '-', $payment_source->properties()->expiry ?? '' );
+									$token->set_expiry_year( $expiry[0] ?? '' );
+									$token->set_expiry_month( $expiry[1] ?? '' );
+									$token->set_card_type( $payment_source->properties()->brand ?? '' );
 
-								$token->save();
-							}
-
-							if ( $wc_order->get_payment_method() === PayPalGateway::ID ) {
-								switch ( $payment_source->name() ) {
-									case 'venmo':
-										$wc_payment_tokens->create_payment_token_venmo(
-											$wc_order->get_customer_id(),
-											$token_id,
-											$payment_source->properties()->email_address ?? ''
-										);
-										break;
-									case 'apple_pay':
-										$wc_payment_tokens->create_payment_token_applepay(
-											$wc_order->get_customer_id(),
-											$token_id
-										);
-										break;
-									case 'paypal':
-									default:
-										$wc_payment_tokens->create_payment_token_paypal(
-											$wc_order->get_customer_id(),
-											$token_id,
-											$payment_source->properties()->email_address ?? ''
-										);
-										break;
+									$token->save();
 								}
+
+								if ( $wc_order->get_payment_method() === PayPalGateway::ID ) {
+									switch ( $payment_source->name() ) {
+										case 'venmo':
+											$wc_payment_tokens->create_payment_token_venmo(
+												$wc_order->get_customer_id(),
+												$token_id,
+												$payment_source->properties()->email_address ?? ''
+											);
+											break;
+										case 'apple_pay':
+											$wc_payment_tokens->create_payment_token_applepay(
+												$wc_order->get_customer_id(),
+												$token_id
+											);
+											break;
+										case 'paypal':
+										default:
+											$wc_payment_tokens->create_payment_token_paypal(
+												$wc_order->get_customer_id(),
+												$token_id,
+												$payment_source->properties()->email_address ?? ''
+											);
+											break;
+									}
+								}
+							} catch ( \Exception $exception ) {
+								$logger = $c->get( 'woocommerce.logger.woocommerce' );
+								assert( $logger instanceof LoggerInterface );
+
+								$logger->warning(
+									'Failed to save payment token for order: ' . $exception->getMessage(),
+									array(
+										'order_id'    => $wc_order->get_id(),
+										'customer_id' => $customer_id,
+										'token_id'    => $token_id,
+										'exception'   => $exception,
+									)
+								);
 							}
 						}
 					},
@@ -256,10 +272,12 @@ class SavePaymentMethodsModule implements ServiceModule, ExtendingModule, Execut
 							return;
 						}
 
-						$module_url = $c->get( 'save-payment-methods.module.url' );
+						$asset_getter = $c->get( 'save-payment-methods.asset_getter' );
+						assert( $asset_getter instanceof AssetGetter );
+
 						wp_enqueue_script(
 							'ppcp-add-payment-method',
-							untrailingslashit( $module_url ) . '/assets/js/add-payment-method.js',
+							$asset_getter->get_asset_url( 'add-payment-method.js' ),
 							array( 'jquery' ),
 							$c->get( 'ppcp.asset-version' ),
 							true
@@ -345,18 +363,13 @@ class SavePaymentMethodsModule implements ServiceModule, ExtendingModule, Execut
 					}
 				);
 
-				// Do not display PayPal button if the user already has a PayPal payment token.
+				/**
+				 * Displays the PayPal button on the Add Payment Method page.
+				 */
 				add_action(
 					'woocommerce_add_payment_method_form_bottom',
 					function () use ( $c ) {
 						if ( ! is_user_logged_in() || ! is_add_payment_method_page() ) {
-							return;
-						}
-
-						$payment_method_tokens_checked = $c->get( 'save-payment-methods.service.payment-method-tokens-checker' );
-						assert( $payment_method_tokens_checked instanceof PaymentMethodTokensChecker );
-						$customer_id = get_user_meta( get_current_user_id(), '_ppcp_target_customer_id', true );
-						if ( $payment_method_tokens_checked->has_paypal_payment_token( $customer_id ) ) {
 							return;
 						}
 

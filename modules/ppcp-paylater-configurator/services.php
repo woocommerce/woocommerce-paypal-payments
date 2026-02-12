@@ -9,6 +9,8 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\PayLaterConfigurator;
 
+use WooCommerce\PayPalCommerce\Assets\AssetGetter;
+use WooCommerce\PayPalCommerce\Assets\AssetGetterFactory;
 use WooCommerce\PayPalCommerce\PayLaterConfigurator\Endpoint\SaveConfig;
 use WooCommerce\PayPalCommerce\PayLaterConfigurator\Endpoint\GetConfig;
 use WooCommerce\PayPalCommerce\PayLaterConfigurator\Factory\ConfigFactory;
@@ -18,8 +20,11 @@ use WooCommerce\PayPalCommerce\WcGateway\Helper\DCCProductStatus;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 
 return array(
-	'paylater-configurator.url'                  => static function ( ContainerInterface $container ): string {
-		return plugins_url( '/modules/ppcp-paylater-configurator', $container->get( 'ppcp.path-to-plugin-main-file' ) );
+	'paylater-configurator.asset_getter'         => static function ( ContainerInterface $container ): AssetGetter {
+		$factory = $container->get( 'assets.asset_getter_factory' );
+		assert( $factory instanceof AssetGetterFactory );
+
+		return $factory->for_module( 'ppcp-paylater-configurator' );
 	},
 	'paylater-configurator.factory.config'       => static function ( ContainerInterface $container ): ConfigFactory {
 		return new ConfigFactory();

@@ -1,10 +1,10 @@
-import SettingsBlock from '../../../../../ReusableComponents/SettingsBlock';
+import SettingsBlock from '@ppcp-settings/Components/ReusableComponents/SettingsBlock';
 import {
 	Description,
 	Header,
 	Title,
 	Content,
-} from '../../../../../ReusableComponents/Elements';
+} from '@ppcp-settings/Components/ReusableComponents/Elements';
 
 const StylingSection = ( {
 	title,

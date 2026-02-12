@@ -1,5 +1,39 @@
 *** Changelog ***
 
+= 3.4.0 - 2026-02-10 =
+* New - Level 2 and Level 3 card processing support for Advanced Credit and Debit Cards #3970, #3999
+* Enhancement - PayPal Working Capital promotional messaging now available for eligible merchants #4048
+* Enhancement - Improved reCAPTCHA logging to help troubleshoot blocked requests #3835
+* Enhancement - Added direct link to plugin logs in settings for easier debugging #3743
+* Enhancement - Restored woocommerce_gateway_description filter for gateway customization #3742
+* Enhancement - Updated Pay Later messaging descriptions and settings #4012
+* Enhancement - Improved onboarding step 4 title for ACDC regions #3998
+* Enhancement - Add pattern validation and improve error messages for client credentials #4073
+* Enhancement - Improve authentication error handling #4073
+* Enhancement - Ensure webhook verification on production #4074
+* Fix - Google Pay now correctly updates WooCommerce shipping address #3798
+* Fix - Google Pay no longer shows shipping selection for virtual products #3797
+* Fix - Google Pay shipping method now visible on product pages with empty cart #4030
+* Fix - Google Pay edge-case that prevented it from working on all pages when Pay Now is disabled #3860
+* Fix - Google Pay and Apple Pay buttons no longer disappear when changing the address in block checkout #3851
+* Fix - Apple Pay now shows applied coupons correctly in payment popup #3838
+* Fix - PayPal button in Mini Cart now works correctly on product pages #3745
+* Fix - Fastlane email lookup now works when email is pre-populated from session #3637
+* Fix - Fastlane no longer shown in settings for ineligible merchants #3872
+* Fix - Duplicate PayPal captures and double stock reductions should no longer occur #3885
+* Fix - Missing PayPal order ID meta data now saved for vaulted card transactions #4035
+* Fix - "Instant payments only" toggle now uses correct setting value #3767
+* Fix - Settings Overview tab now loads correctly for BCDC-only countries #3775
+* Fix - Alternative Payment Methods now show correctly based on merchant eligibility #3864
+* Fix - Payment method descriptions now display in block checkout for all gateways #3891
+* Fix - Payment gateway icon sizing in Classic Checkout #3894
+* Fix - "Disable Specific Credit Cards" option now hidden for BCDC countries #3653
+* Fix - PHP warning when adding variable products via PayPal button #3849
+* Fix - PHP 8.4 implicit nullable parameter deprecation warning #3996 (author @mondalaci)
+* Fix - Translation loading timing issue with currency checks #3978 (author @mondalaci)
+* Fix - Potential error when cart is accessed before initialization #3973
+* Fix - Improved error handling for token validation failures #3986
+
 = 3.3.2 - 2026-01-12 =
 * Enhancement - Improved reCAPTCHA configuration to help protect your store and maintain compliance #3980, #3984
 * Fix - Advanced Card Processing may temporarily become unavailable after updating the plugin #3983

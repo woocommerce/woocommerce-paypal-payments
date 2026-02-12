@@ -5,13 +5,10 @@ import { ShopOrder } from '../../../resources';
 import { annotateVisitor, expect, test } from '../../../utils';
 
 const testSubscriptionOrderGuest = ( testOrder: ShopOrder ) => {
-	const { title, payment, products, customer: guest } = testOrder;
+	const { title, payment, products, customer: guest, merchant } = testOrder;
 
 	test.describe( () => {
-		test.beforeAll( async ( { wooCommerceApi, wooCommerceUtils } ) => {
-			// Remove any stored subscriptions data related to tested guest and payPalAccount
-			await wooCommerceApi.deleteAllSubscriptions();
-			await wooCommerceApi.deleteAllOrders();
+		test.beforeAll( async ( { wooCommerceUtils } ) => {
 			const previousEmails = [
 				guest.email,
 				payment.payPalAccount?.email,
@@ -33,7 +30,9 @@ const testSubscriptionOrderGuest = ( testOrder: ShopOrder ) => {
 			} ) => {
 				test.setTimeout( 2 * 60 * 1000 );
 				await utils.fillVisitorsCart( products );
-				await checkout.makeOrder( testOrder );
+				await checkout.visit();
+				await checkout.completeCheckoutDetails( testOrder );
+				await checkout.payPalUi.makePayment( { merchant, payment } );
 				await orderReceived.assertOrderDetails( testOrder );
 
 				const subscriptionId =
@@ -73,14 +72,12 @@ const testSubscriptionOrderGuest = ( testOrder: ShopOrder ) => {
 };
 
 const testSubscriptionOrderCustomer = ( testOrder: ShopOrder ) => {
-	const { title, payment, products, customer } = testOrder;
+	const { title, payment, products, customer, merchant } = testOrder;
 
 	test.describe( () => {
 		// Restore customer and his storage state to remove vaulted payment methods.
 		// Placed in beforeAll for each test to be able to use storate state in a test.
-		test.beforeAll( async ( { utils, wooCommerceApi } ) => {
-			await wooCommerceApi.deleteAllSubscriptions();
-			await wooCommerceApi.deleteAllOrders();
+		test.beforeAll( async ( { utils } ) => {
 			await utils.restoreCustomer( customer );
 		} );
 
@@ -103,7 +100,9 @@ const testSubscriptionOrderCustomer = ( testOrder: ShopOrder ) => {
 
 				// Make tested order (testOrder.payment.saveToAccount = true):
 				await utils.fillVisitorsCart( products );
-				await checkout.makeOrder( testOrder );
+				await checkout.visit();
+				await checkout.completeCheckoutDetails( testOrder );
+				await checkout.payPalUi.makePayment( { merchant, payment } );
 				await orderReceived.assertOrderDetails( testOrder );
 
 				const subscriptionId =

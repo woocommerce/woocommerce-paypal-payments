@@ -3,7 +3,7 @@ import { useCallback, useEffect } from '@wordpress/element';
 // TODO: Migrate to Tabs (TabPanel v2) once its API is publicly available, as it provides programmatic tab switching support: https://github.com/WordPress/gutenberg/issues/52997
 import { TabPanel } from '@wordpress/components';
 
-import { updateQueryString } from '../../utils/navigation';
+import { updateQueryString } from '@ppcp-settings/utils/navigation';
 
 const TabBar = ( { tabs, activePanel, setActivePanel } ) => {
 	const isValidTab = ( tabsList, checkTab ) => {

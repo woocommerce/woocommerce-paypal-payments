@@ -1,7 +1,7 @@
 import { __ } from '@wordpress/i18n';
 import { useMemo } from '@wordpress/element';
 
-import { learnMoreLinks } from '../../../../utils/countryInfoLinks';
+import { learnMoreLinks } from '@ppcp-settings/utils/countryInfoLinks';
 import {
 	PayWithPayPal,
 	PayLater,

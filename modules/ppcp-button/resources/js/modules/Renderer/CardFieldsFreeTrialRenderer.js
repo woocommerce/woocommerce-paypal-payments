@@ -3,7 +3,7 @@ import { renderFields } from '../../../../../ppcp-card-fields/resources/js/Rende
 import {
 	addPaymentMethodConfiguration,
 	cardFieldsConfiguration,
-} from '../../../../../ppcp-save-payment-methods/resources/js/Configuration';
+} from '../../../../../ppcp-save-payment-methods/resources/js/configuration';
 
 class CardFieldsFreeTrialRenderer {
 	constructor( defaultConfig, errorHandler, spinner ) {
@@ -38,12 +38,15 @@ class CardFieldsFreeTrialRenderer {
 		if ( hideDccGateway ) {
 			hideDccGateway.parentNode.removeChild( hideDccGateway );
 		}
-        const dccGatewayLi = document.querySelector(
-            '.wc_payment_method.payment_method_ppcp-credit-card-gateway'
-        );
-        if (dccGatewayLi.style.display === 'none' || dccGatewayLi.style.display === '') {
-            dccGatewayLi.style.display = 'block';
-        }
+		const dccGatewayLi = document.querySelector(
+			'.wc_payment_method.payment_method_ppcp-credit-card-gateway'
+		);
+		if (
+			dccGatewayLi.style.display === 'none' ||
+			dccGatewayLi.style.display === ''
+		) {
+			dccGatewayLi.style.display = 'block';
+		}
 
 		this.errorHandler.clear();
 

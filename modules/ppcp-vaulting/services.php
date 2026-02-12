@@ -12,17 +12,14 @@ namespace WooCommerce\PayPalCommerce\Vaulting;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 
 return array(
-	'vaulting.module-url'                 => static function ( ContainerInterface $container ): string {
-		return plugins_url( '/modules/ppcp-vaulting/', $container->get( 'ppcp.path-to-plugin-main-file' ) );
-	},
 	'vaulting.repository.payment-token'   => static function ( ContainerInterface $container ): PaymentTokenRepository {
 		$factory  = $container->get( 'api.factory.payment-token' );
-		$endpoint = $container->get( 'api.endpoint.payment-token' );
+		$endpoint = $container->get( 'vault-v2.endpoint.payment-token' );
 		return new PaymentTokenRepository( $factory, $endpoint );
 	},
 	'vaulting.customer-approval-listener' => function ( ContainerInterface $container ): CustomerApprovalListener {
 		return new CustomerApprovalListener(
-			$container->get( 'api.endpoint.payment-token' ),
+			$container->get( 'vault-v2.endpoint.payment-token' ),
 			$container->get( 'woocommerce.logger.woocommerce' )
 		);
 	},

@@ -12,6 +12,7 @@ declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\Settings\Endpoint;
 
+use WooCommerce\PayPalCommerce\Settings\Data\Definition\FeaturesDefinition;
 use WP_REST_Request;
 use WP_REST_Response;
 use WP_REST_Server;
@@ -44,65 +45,73 @@ class SettingsRestEndpoint extends RestEndpoint {
 	 * @var array
 	 */
 	private array $field_map = array(
-		'invoice_prefix'         => array(
+		'invoice_prefix'                                  => array(
 			'js_name' => 'invoicePrefix',
 		),
-		'brand_name'             => array(
+		'brand_name'                                      => array(
 			'js_name' => 'brandName',
 		),
-		'soft_descriptor'        => array(
+		'soft_descriptor'                                 => array(
 			'js_name' => 'softDescriptor',
 		),
-		'subtotal_adjustment'    => array(
+		'subtotal_adjustment'                             => array(
 			'js_name' => 'subtotalAdjustment',
 		),
-		'instant_payments_only'  => array(
+		'instant_payments_only'                           => array(
 			'js_name'  => 'instantPaymentsOnly',
 			'sanitize' => 'to_boolean',
 		),
-		'landing_page'           => array(
+		'landing_page'                                    => array(
 			'js_name' => 'landingPage',
 		),
-		'button_language'        => array(
+		'button_language'                                 => array(
 			'js_name' => 'buttonLanguage',
 		),
-		'authorize_only'         => array(
+		'authorize_only'                                  => array(
 			'js_name'  => 'authorizeOnly',
 			'sanitize' => 'to_boolean',
 		),
-		'capture_virtual_orders' => array(
+		'capture_virtual_orders'                          => array(
 			'js_name'  => 'captureVirtualOrders',
 			'sanitize' => 'to_boolean',
 		),
-		'save_paypal_and_venmo'  => array(
+		FeaturesDefinition::FEATURE_SAVE_PAYPAL_AND_VENMO => array(
 			'js_name'  => 'savePaypalAndVenmo',
 			'sanitize' => 'to_boolean',
 		),
-		'enable_contact_module'  => array(
+		'enable_contact_module'                           => array(
 			'js_name'  => 'enableContactModule',
 			'sanitize' => 'to_boolean',
 		),
-		'save_card_details'      => array(
+		'save_card_details'                               => array(
 			'js_name'  => 'saveCardDetails',
 			'sanitize' => 'to_boolean',
 		),
-		'enable_pay_now'         => array(
+		'enable_pay_now'                                  => array(
 			'js_name'  => 'enablePayNow',
 			'sanitize' => 'to_boolean',
 		),
-		'enable_logging'         => array(
+		'enable_logging'                                  => array(
 			'js_name'  => 'enableLogging',
 			'sanitize' => 'to_boolean',
 		),
-		'stay_updated'           => array(
+		'stay_updated'                                    => array(
 			'js_name'  => 'stayUpdated',
 			'sanitize' => 'to_boolean',
 		),
-		'disabled_cards'         => array(
+		'disabled_cards'                                  => array(
 			'js_name' => 'disabledCards',
 		),
-		'three_d_secure'         => array(
+		'three_d_secure'                                  => array(
 			'js_name'  => 'threeDSecure',
+			'sanitize' => 'sanitize_text_field',
+		),
+		'payment_level_processing'                        => array(
+			'js_name'  => 'paymentLevelProcessing',
+			'sanitize' => 'to_boolean',
+		),
+		'ships_from_postal_code'                          => array(
+			'js_name'  => 'shipsFromPostalCode',
 			'sanitize' => 'sanitize_text_field',
 		),
 	);

@@ -5,7 +5,7 @@
  * @package WooCommerce\PayPalCommerce\WcGateway
  */
 
-declare(strict_types=1);
+declare( strict_types=1 );
 
 namespace WooCommerce\PayPalCommerce\WcGateway;
 
@@ -23,6 +23,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Helper\ReferenceTransactionStatus;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\Cache;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\DccApplies;
 use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\LocalApmProductStatus;
+use WooCommerce\PayPalCommerce\Settings\Data\Definition\FeaturesDefinition;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExecutableModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExtendingModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ModuleClassNameIdTrait;
@@ -193,7 +194,7 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
 				if ( ! is_admin() || wp_doing_ajax() ) {
 					return;
 				}
-				if ( ! $c->has( 'wcgateway.url' ) ) {
+				if ( ! $c->has( 'wcgateway.asset_getter' ) ) {
 					return;
 				}
 				$settings_status = $c->get( 'wcgateway.settings.status' );
@@ -206,7 +207,7 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
 				assert( $dcc_configuration instanceof CardPaymentsConfiguration );
 
 				$assets = new SettingsPageAssets(
-					$c->get( 'wcgateway.url' ),
+					$c->get( 'wcgateway.asset_getter' ),
 					$c->get( 'ppcp.asset-version' ),
 					$c->get( 'wc-subscriptions.helper' ),
 					$c->get( 'button.client_id_for_admin' ),
@@ -242,10 +243,11 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
 					$notices[] = $unsupported_currency_message;
 				}
 
-				foreach ( array(
-					$c->get( 'wcgateway.notice.dcc-without-paypal' ),
-					$c->get( 'wcgateway.notice.card-button-without-paypal' ),
-				) as $gateway_without_paypal_notice ) {
+				foreach (
+					array(
+						$c->get( 'wcgateway.notice.dcc-without-paypal' ),
+						$c->get( 'wcgateway.notice.card-button-without-paypal' ),
+					) as $gateway_without_paypal_notice ) {
 					assert( $gateway_without_paypal_notice instanceof GatewayWithoutPayPalAdminNotice );
 					$message = $gateway_without_paypal_notice->message();
 					if ( $message ) {
@@ -571,34 +573,34 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
 				$contact_module_check = $c->get( 'wcgateway.contact-module.eligibility.check' );
 				assert( is_callable( $contact_module_check ) );
 
-				$features['save_paypal_and_venmo'] = array(
-					'enabled' => $reference_transaction_status->reference_transaction_enabled(),
+				$save_payment_methods_check = $c->get( 'save-payment-methods.eligibility.check' );
+				assert( is_callable( $save_payment_methods_check ) );
+				$features[ FeaturesDefinition::FEATURE_SAVE_PAYPAL_AND_VENMO ] = array(
+					'enabled' => $reference_transaction_status->reference_transaction_enabled() && $save_payment_methods_check(),
 				);
 
-				$features['advanced_credit_and_debit_cards'] = array(
+				$features[ FeaturesDefinition::FEATURE_ADVANCED_CREDIT_AND_DEBIT_CARDS ] = array(
 					'enabled' => $dcc_product_status->is_active() && $dcc_applies->for_country_currency(),
 				);
 
-				$features['alternative_payment_methods'] = array(
+				$features[ FeaturesDefinition::FEATURE_ALTERNATIVE_PAYMENT_METHODS ] = array(
 					'enabled' => $apms_product_status->is_active(),
 				);
 
 				// When local APMs are available, then PayLater messaging is also available.
-				// @todo Remove this logic after the next release. If Store is Canada and PayLater for Canada is not released, then PayLater messaging is not available.
-				$is_paylater_canada_released     = $c->get( 'api.paylater.is-canada-released' );
-				$features['pay_later_messaging'] = array(
-					'enabled' => $features['alternative_payment_methods']['enabled'] && ( $c->get( 'api.shop.country' ) !== 'CA' || $is_paylater_canada_released ),
+				$features[ FeaturesDefinition::FEATURE_PAY_LATER_MESSAGING ] = array(
+					'enabled' => $features[ FeaturesDefinition::FEATURE_ALTERNATIVE_PAYMENT_METHODS ]['enabled'],
 				);
 
-				$features['installments'] = array(
+				$features[ FeaturesDefinition::FEATURE_INSTALLMENTS ] = array(
 					'enabled' => $installments_product_status->is_active(),
 				);
 
-				$features['pwc'] = array(
+				$features[ FeaturesDefinition::FEATURE_PAY_WITH_CRYPTO ] = array(
 					'enabled' => $pwc_product_status->is_active(),
 				);
 
-				$features['contact_module'] = array(
+				$features[ FeaturesDefinition::FEATURE_CONTACT_MODULE ] = array(
 					'enabled' => $contact_module_check(),
 				);
 
@@ -780,6 +782,7 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
 				$field = $renderer->render_heading( $field, $key, $args, $value );
 				$field = $renderer->render_table( $field, $key, $args, $value );
 				$field = $renderer->render_html( $field, $key, $args, $value );
+
 				return $field;
 			},
 			10,
@@ -790,6 +793,7 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
 			'woocommerce_available_payment_gateways',
 			static function ( $methods ) use ( $container ): array {
 				$disabler = $container->get( 'wcgateway.disabler' );
+
 				/**
 				 * The Gateay disabler.
 				 *
@@ -903,6 +907,7 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
 				 * @var OrderTablePaymentStatusColumn $payment_status_column
 				 */
 				$payment_status_column = $container->get( 'wcgateway.admin.orders-payment-status-column' );
+
 				return $payment_status_column->register( $columns );
 			}
 		);

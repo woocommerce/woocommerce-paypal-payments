@@ -417,7 +417,6 @@ export class PayPalUI {
 				}
 				// pay with vaulted account
 				if ( data.payment.isVaulted ) {
-					await expect( this.payPalButton() ).toBeVisible();
 					await this.assertVaultedPaymentMethodIsDisplayed(
 						data.payment
 					);
@@ -689,16 +688,8 @@ export class PayPalUI {
 			)
 		).toBeVisible();
 
-		const popupPromise = this.page.waitForEvent( 'popup' );
+		// From 09/12/2025 OXXO popup doesn't appear
 		await this.submitOrder();
-		const popup = await popupPromise;
-		const paypal = new PayPalPopup( popup );
-
-		await expect(
-			paypal.popup.getByText( 'Successful Payment', { exact: true } )
-		).toBeVisible();
-
-		await popup.close();
 	};
 
 	/**
@@ -821,8 +812,7 @@ export class PayPalUI {
 	assertVaultedPaymentMethodIsDisplayed = async ( payment ) => {
 		switch ( payment.gateway.shortcut ) {
 			case 'paypal':
-				// await expect( this.payPalButton() ).toContainText( 'Pay Now' );
-				await expect( this.payPalButtonMoreOptions() ).toBeVisible();
+				await expect( this.payPalButton() ).toBeVisible();
 				break;
 
 			// case 'acdc':

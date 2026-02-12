@@ -4,51 +4,41 @@
 import { ShopOrder } from '../../../resources';
 import { annotateVisitor, test } from '../../../utils';
 
-export const transactionsOnCheckout = ( testsData: ShopOrder[] ) => {
-	for ( const testData of testsData ) {
-		test(
-			testData.title,
-			annotateVisitor( testData.customer ),
-			async ( {
-				checkout,
-				wooCommerceApi,
-				orderReceived,
-				payPalApi,
-				wooCommerceOrderEdit,
-				utils,
-			} ) => {
-				await utils.fillVisitorsCart( testData.products );
+export const transactionsOnCheckout = ( testOrder: ShopOrder ) => {
+	const { title, payment, products, customer, merchant } = testOrder;
 
-				await checkout.makeOrder( testData );
-				// Expect Order Received page to be loaded
-				await orderReceived.assertOrderDetails( testData );
+	test(
+		title,
+		annotateVisitor( customer ),
+		async ( {
+			checkout,
+			wooCommerceApi,
+			orderReceived,
+			payPalApi,
+			wooCommerceOrderEdit,
+			utils,
+		} ) => {
+			await utils.fillVisitorsCart( products );
+			await checkout.visit();
+			await checkout.completeCheckoutDetails( testOrder );
+			await checkout.payPalUi.makePayment( { merchant, payment } );
+			await orderReceived.assertOrderDetails( testOrder );
 
-				const orderId = await orderReceived.getOrderNumber();
-				const orderJson = await wooCommerceApi.getOrder( orderId );
+			const orderId = await orderReceived.getOrderNumber();
+			const { transaction_id: transactionId } =
+				await wooCommerceApi.getOrder( orderId );
+			const payPalFee = await payPalApi.getFee(
+				transactionId,
+				testOrder
+			);
+			const payPalPayout = await payPalApi.getPayout(
+				transactionId,
+				testOrder
+			);
+			const pcpData = { transactionId, payPalFee, payPalPayout };
 
-				const pcpData = {
-					transactionId: orderJson.transaction_id,
-					payPalFee: await payPalApi.getFee(
-						orderJson.transaction_id,
-						testData
-					),
-					payPalPayout: await payPalApi.getPayout(
-						orderJson.transaction_id,
-						testData
-					),
-				};
-
-				await payPalApi.assertOrder( orderJson, testData );
-				await payPalApi.assertPayment(
-					orderJson.transaction_id,
-					testData
-				);
-				await wooCommerceOrderEdit.assertOrderDetails(
-					orderId,
-					testData,
-					pcpData
-				);
-			}
-		);
-	}
+			await wooCommerceOrderEdit.visit( orderId );
+			await wooCommerceOrderEdit.assertOrderDetails( testOrder, pcpData );
+		}
+	);
 };

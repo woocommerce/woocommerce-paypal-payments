@@ -1,5 +1,5 @@
 import AxoManager from './AxoManager';
-import { loadPayPalScript } from '../../../ppcp-button/resources/js/modules/Helper/PayPalScriptLoading';
+import { loadPayPalScript } from '@ppcp-button/Helper/PayPalScriptLoading';
 import { log } from './Helper/Debug';
 
 ( function ( { axoConfig, ppcpConfig } ) {

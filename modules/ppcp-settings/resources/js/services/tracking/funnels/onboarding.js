@@ -14,7 +14,7 @@ import {
 	createTransientFieldTrackingConfig,
 	createBooleanFieldTrackingConfig,
 	createArrayFieldTrackingConfig,
-} from '../utils/field-config-helpers';
+} from '@ppcp-settings/services/tracking/utils/field-config-helpers';
 
 export const FUNNEL_ID = 'ppcp_onboarding';
 

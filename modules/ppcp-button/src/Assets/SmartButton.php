@@ -11,6 +11,7 @@ namespace WooCommerce\PayPalCommerce\Button\Assets;
 
 use Exception;
 use Psr\Log\LoggerInterface;
+use WC_Cart;
 use WC_Order;
 use WC_Payment_Tokens;
 use WC_Product;
@@ -22,6 +23,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Factory\PayerFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\CurrencyGetter;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\DccApplies;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\PartnerAttribution;
+use WooCommerce\PayPalCommerce\Assets\AssetGetter;
 use WooCommerce\PayPalCommerce\Blocks\Endpoint\UpdateShippingEndpoint;
 use WooCommerce\PayPalCommerce\Button\Endpoint\ApproveOrderEndpoint;
 use WooCommerce\PayPalCommerce\Button\Endpoint\ApproveSubscriptionEndpoint;
@@ -33,29 +35,28 @@ use WooCommerce\PayPalCommerce\Button\Endpoint\GetOrderEndpoint;
 use WooCommerce\PayPalCommerce\Button\Endpoint\RequestData;
 use WooCommerce\PayPalCommerce\Button\Endpoint\SaveCheckoutFormEndpoint;
 use WooCommerce\PayPalCommerce\Button\Endpoint\SimulateCartEndpoint;
-use WooCommerce\PayPalCommerce\Button\Endpoint\StartPayPalVaultingEndpoint;
 use WooCommerce\PayPalCommerce\Button\Endpoint\ValidateCheckoutEndpoint;
 use WooCommerce\PayPalCommerce\Button\Helper\Context;
 use WooCommerce\PayPalCommerce\Button\Helper\DisabledFundingSources;
 use WooCommerce\PayPalCommerce\Button\Helper\MessagesApply;
-use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
+use WooCommerce\PayPalCommerce\Button\VaultV2\StartPayPalVaultingEndpoint;
 use WooCommerce\PayPalCommerce\PayLaterBlock\PayLaterBlockModule;
 use WooCommerce\PayPalCommerce\PayLaterWCBlocks\PayLaterWCBlocksModule;
 use WooCommerce\PayPalCommerce\SavePaymentMethods\Endpoint\CreatePaymentToken;
-use WooCommerce\PayPalCommerce\SavePaymentMethods\Endpoint\CreateSetupToken;
 use WooCommerce\PayPalCommerce\SavePaymentMethods\Endpoint\CreatePaymentTokenForGuest;
+use WooCommerce\PayPalCommerce\SavePaymentMethods\Endpoint\CreateSetupToken;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
-use WooCommerce\PayPalCommerce\WcSubscriptions\FreeTrialHandlerTrait;
-use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
 use WooCommerce\PayPalCommerce\Vaulting\PaymentTokenRepository;
 use WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CardButtonGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
+use WooCommerce\PayPalCommerce\WcGateway\Helper\CardPaymentsConfiguration;
+use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\SettingsStatus;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
-use WC_Cart;
-use WooCommerce\PayPalCommerce\WcGateway\Helper\CardPaymentsConfiguration;
+use WooCommerce\PayPalCommerce\WcSubscriptions\FreeTrialHandlerTrait;
+use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
 
 /**
  * Class SmartButton
@@ -78,12 +79,7 @@ class SmartButton implements SmartButtonInterface {
 	 */
 	protected Context $context;
 
-	/**
-	 * The URL to the module.
-	 *
-	 * @var string
-	 */
-	private $module_url;
+	private AssetGetter $asset_getter;
 
 	/**
 	 * The assets version.
@@ -269,9 +265,7 @@ class SmartButton implements SmartButtonInterface {
 	private bool $final_review_enabled;
 
 	/**
-	 * SmartButton constructor.
-	 *
-	 * @param string                    $module_url                        The URL to the module.
+	 * @param AssetGetter               $asset_getter
 	 * @param string                    $version                           The assets version.
 	 * @param SessionHandler            $session_handler                   The Session handler.
 	 * @param Settings                  $settings                          The Settings.
@@ -301,7 +295,7 @@ class SmartButton implements SmartButtonInterface {
 	 * @param bool                      $final_review_enabled              Whether the final review is enabled in blocks settings.
 	 */
 	public function __construct(
-		string $module_url,
+		AssetGetter $asset_getter,
 		string $version,
 		SessionHandler $session_handler,
 		Settings $settings,
@@ -331,7 +325,7 @@ class SmartButton implements SmartButtonInterface {
 		bool $final_review_enabled,
 		Context $context
 	) {
-		$this->module_url                            = $module_url;
+		$this->asset_getter                          = $asset_getter;
 		$this->version                               = $version;
 		$this->session_handler                       = $session_handler;
 		$this->settings                              = $settings;
@@ -379,36 +373,7 @@ class SmartButton implements SmartButtonInterface {
 			$this->render_dcc_wrapper();
 		}
 
-		if ( $this->is_free_trial_cart() ) {
-			add_action(
-				'woocommerce_review_order_after_submit',
-				function () {
-					$vaulted_email = $this->get_vaulted_paypal_email();
-					if ( ! $vaulted_email ) {
-						return;
-					}
-
-					?>
-					<div class="ppcp-vaulted-paypal-details">
-						<?php
-						echo wp_kses_post(
-							sprintf(
-							// translators: %1$s - email, %2$s, %3$s - HTML tags for a link.
-								esc_html__(
-									'Using %2$s%1$s%3$s PayPal.',
-									'woocommerce-paypal-payments'
-								),
-								$vaulted_email,
-								'<b>',
-								'</b>'
-							)
-						);
-						?>
-					</div>
-					<?php
-				}
-			);
-		}
+		do_action( 'woocommerce_paypal_payments_smart_button_render_wrapper' );
 
 		$this->sanitize_woocommerce_filters();
 
@@ -782,7 +747,7 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
 		if ( $this->can_render_dcc() ) {
 			wp_enqueue_style(
 				'ppcp-hosted-fields',
-				untrailingslashit( $this->module_url ) . '/assets/css/hosted-fields.css',
+				$this->asset_getter->get_asset_url( 'hosted-fields.css' ),
 				array(),
 				$this->version
 			);
@@ -790,14 +755,14 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
 
 		wp_enqueue_style(
 			'gateway',
-			untrailingslashit( $this->module_url ) . '/assets/css/gateway.css',
+			$this->asset_getter->get_asset_url( 'gateway.css' ),
 			array(),
 			$this->version
 		);
 
 		wp_enqueue_script(
 			'ppcp-smart-button',
-			untrailingslashit( $this->module_url ) . '/assets/js/button.js',
+			$this->asset_getter->get_asset_url( 'button.js' ),
 			array( 'jquery' ),
 			$this->version,
 			true
@@ -1258,7 +1223,6 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
 			'enforce_vault'                           => $this->has_subscriptions(),
 			'can_save_vault_token'                    => $this->can_save_vault_token(),
 			'is_free_trial_cart'                      => $is_free_trial_cart,
-			'vaulted_paypal_email'                    => ( is_checkout() && $is_free_trial_cart ) ? $this->get_vaulted_paypal_email() : '',
 			'bn_codes'                                => $this->bn_codes(),
 			'payer'                                   => $this->payerData(),
 			'button'                                  => array(
@@ -1359,6 +1323,7 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
 				'throttling' => apply_filters( 'woocommerce_paypal_payments_simulate_cart_throttling', 5000 ),
 			),
 			'order_id'                                => 'pay-now' === $current_context ? $this->get_order_pay_id() : 0,
+			'order_key'                               => 'pay-now' === $current_context ? $this->get_order_pay_key() : '',
 			'single_product_buttons_enabled'          => $this->settings_status->is_smart_button_enabled_for_location( 'product' ),
 			'mini_cart_buttons_enabled'               => $this->settings_status->is_smart_button_enabled_for_location( 'mini-cart' ),
 			'basic_checkout_validation_enabled'       => $this->basic_checkout_validation_enabled,
@@ -2063,50 +2028,6 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
 	}
 
 	/**
-	 * Retrieves all payment tokens for the user, via API or cached if already queried.
-	 *
-	 * @return PaymentToken[]
-	 */
-	private function get_payment_tokens(): array {
-		if ( null === $this->payment_tokens ) {
-			$this->payment_tokens = $this->payment_token_repository->all_for_user_id( get_current_user_id() );
-		}
-
-		return $this->payment_tokens;
-	}
-
-	/**
-	 * Returns the vaulted PayPal email or empty string.
-	 *
-	 * @return string
-	 */
-	private function get_vaulted_paypal_email(): string {
-		try {
-			$customer_id = get_user_meta( get_current_user_id(), '_ppcp_target_customer_id', true );
-			if ( $customer_id ) {
-				$customer_tokens = $this->payment_tokens_endpoint->payment_tokens_for_customer( $customer_id );
-				foreach ( $customer_tokens as $token ) {
-					$email_address = $token['payment_source']->properties()->email_address ?? '';
-					if ( $email_address ) {
-						return $email_address;
-					}
-				}
-			}
-
-			$tokens = $this->get_payment_tokens();
-			foreach ( $tokens as $token ) {
-				if ( isset( $token->source()->paypal ) ) {
-					return $token->source()->paypal->payer->email_address;
-				}
-			}
-		} catch ( Exception $exception ) {
-			$this->logger->error( 'Failed to get PayPal vaulted email. ' . $exception->getMessage() );
-		}
-
-		return '';
-	}
-
-	/**
 	 * Checks if variations contain any in stock variation.
 	 *
 	 * @param WC_Product_Variation[] $variations The list of variations.
@@ -2152,6 +2073,18 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
 		}
 
 		return absint( $wp->query_vars['order-pay'] );
+	}
+
+	/**
+	 * Returns the order key from the pay-for-order page URL, or empty string.
+	 *
+	 * @return string
+	 */
+	protected function get_order_pay_key(): string {
+		//phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		$key = isset( $_GET['key'] ) ? wc_clean( wp_unslash( $_GET['key'] ) ) : '';
+
+		return is_string( $key ) ? $key : '';
 	}
 
 	/**

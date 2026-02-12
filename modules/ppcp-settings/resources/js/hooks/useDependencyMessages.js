@@ -1,8 +1,8 @@
 // hooks/useDependencyMessages.js
 import { useMemo } from '@wordpress/element';
-import PaymentDependencyMessage from '../Components/Screens/Settings/Components/Payment/PaymentDependencyMessage';
-import PaymentMethodValueDependencyMessage from '../Components/Screens/Settings/Components/Payment/PaymentMethodValueDependencyMessage';
-import SettingDependencyMessage from '../Components/Screens/Settings/Components/Payment/SettingDependencyMessage';
+import PaymentDependencyMessage from '@ppcp-settings/Components/Screens/Settings/Components/Payment/PaymentDependencyMessage';
+import PaymentMethodValueDependencyMessage from '@ppcp-settings/Components/Screens/Settings/Components/Payment/PaymentMethodValueDependencyMessage';
+import SettingDependencyMessage from '@ppcp-settings/Components/Screens/Settings/Components/Payment/SettingDependencyMessage';
 
 /**
  * Hook to process dependency messages for all methods

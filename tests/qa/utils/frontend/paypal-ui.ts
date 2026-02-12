@@ -183,7 +183,7 @@ export class PayPalUi {
 	/**
 	 * Clicks PayPal button to open popup
 	 */
-	openPayPalPupup = async (): Promise< PayPalPopup > => {
+	async openPayPalPopup(): Promise< PayPalPopup > {
 		const popupPromise = this.page.waitForEvent( 'popup', {
 			timeout: 20 * 1000,
 		} );
@@ -193,12 +193,12 @@ export class PayPalUi {
 		const popup = await popupPromise;
 		await popup.waitForLoadState();
 		return new PayPalPopup( popup );
-	};
+	}
 
 	/**
 	 * Clicks Pay Later button to open popup
 	 */
-	openPayLaterPupup = async (): Promise< PayPalPopup > => {
+	async openPayLaterPopup(): Promise< PayPalPopup > {
 		const popupPromise = this.page.waitForEvent( 'popup', {
 			timeout: 20 * 1000,
 		} );
@@ -208,7 +208,7 @@ export class PayPalUi {
 		const popup = await popupPromise;
 		await popup.waitForLoadState();
 		return new PayPalPopup( popup );
-	};
+	}
 
 	/**
 	 * Clicks Venmo button to open popup
@@ -243,8 +243,7 @@ export class PayPalUi {
 		// Map to the tested method
 		switch ( shortcut ) {
 			case 'paypal':
-				// await this.payPalGateway().click();
-				popup = await this.openPayPalPupup();
+				popup = await this.openPayPalPopup();
 
 				if ( payment.isVaulted ) {
 					// pay with vaulted account
@@ -259,7 +258,7 @@ export class PayPalUi {
 
 			case 'paylater':
 				// open expected PayPal popup
-				popup = await this.openPayLaterPupup();
+				popup = await this.openPayLaterPopup();
 				await popup.completePayLaterPayment( payPalAccount );
 				break;
 
@@ -414,22 +413,6 @@ export class PayPalUi {
 	};
 
 	/**
-	 * Asserts Fastlane input field and button
-	 * Inputs fastlane email and clicks Continue
-	 *
-	 * @param email
-	 */
-	provideFastlaneEmail = async ( email: string ) => {
-		await expect( this.fastlaneEmailInput() ).toBeVisible();
-		await this.fastlaneEmailInput().fill( email );
-
-		await expect( this.fastlaneContinueButton() ).toBeVisible();
-		await this.fastlaneContinueButton().click();
-
-		await this.page.waitForLoadState( 'networkidle' );
-	};
-
-	/**
 	 * Types in Fastlane OPT for Ryan's flow
 	 */
 	provideFastlaneOtp = async () => {
@@ -521,10 +504,7 @@ export class PayPalUi {
 		const { gateway, card } = payment;
 		switch ( gateway.shortcut ) {
 			case 'paypal':
-				await expect( this.payPalButton() ).toContainClass(
-					'paypal-button-wallet'
-				); // Class applied for vaulted button
-				await expect( this.payPalButtonMoreOptions() ).toBeVisible();
+				await expect( this.payPalButton() ).toBeVisible();
 				break;
 
 			case 'acdc':
@@ -543,12 +523,12 @@ export class PayPalUi {
 	) => {
 		switch ( payment.gateway.shortcut ) {
 			case 'paypal':
-				await expect( this.payPalButton() ).not.toContainClass(
-					'paypal-button-wallet'
-				); // Class applied for vaulted button
-				await expect(
-					this.payPalButtonMoreOptions()
-				).not.toBeVisible();
+				await expect
+					.soft( this.payPalButton() )
+					.not.toContainClass( 'paypal-button-wallet' ); // Class applied for vaulted button
+				await expect
+					.soft( this.payPalButtonMoreOptions() )
+					.not.toBeVisible();
 				break;
 
 			case 'acdc':

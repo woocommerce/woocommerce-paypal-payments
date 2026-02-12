@@ -14,6 +14,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Endpoint\Orders;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\ExperienceContextBuilder;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PurchaseUnitFactory;
 use WooCommerce\PayPalCommerce\Button\Exception\RuntimeException;
+use WooCommerce\PayPalCommerce\Settings\Data\Definition\PaymentMethodsDefinition;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\TransactionUrlProvider;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\RefundProcessor;
@@ -81,16 +82,14 @@ class MultibancoGateway extends WC_Payment_Gateway {
 			'products',
 		);
 
-		$this->method_title       = __( 'Multibanco (via PayPal)', 'woocommerce-paypal-payments' );
-		$this->method_description = __( 'An online payment method in Portugal, enabling Portuguese buyers to make secure payments directly through their bank accounts. Transactions are processed in EUR.', 'woocommerce-paypal-payments' );
-
-		$this->title       = $this->get_option( 'title', __( 'Multibanco', 'woocommerce-paypal-payments' ) );
-		$this->description = $this->get_option( 'description', '' );
+		$this->init_apm_defaults();
 
 		$this->icon = esc_url( 'https://www.paypalobjects.com/images/checkout/alternative_payments/paypal_multibanco_color.svg' );
 
 		$this->init_form_fields();
 		$this->init_settings();
+
+		$this->init_apm_settings();
 
 		add_action( 'woocommerce_update_options_payment_gateways_' . $this->id, array( $this, 'process_admin_options' ) );
 
@@ -241,5 +240,25 @@ class MultibancoGateway extends WC_Payment_Gateway {
 		$this->view_transaction_url = $this->transaction_url_provider->get_transaction_url_base( $order );
 
 		return parent::get_transaction_url( $order );
+	}
+
+	/**
+	 * Initialize APM gateway defaults from centralized definition.
+	 */
+	private function init_apm_defaults(): void {
+		$defaults = PaymentMethodsDefinition::get_apm_defaults()[ self::ID ];
+
+		$this->method_title       = $defaults['method_title'];
+		$this->method_description = $defaults['method_description'];
+	}
+
+	/**
+	 * Load saved settings and override defaults.
+	 */
+	private function init_apm_settings(): void {
+		$defaults = PaymentMethodsDefinition::get_apm_defaults()[ self::ID ];
+
+		$this->title       = $this->get_option( 'title', $defaults['title'] );
+		$this->description = $this->get_option( 'description', $defaults['description'] );
 	}
 }

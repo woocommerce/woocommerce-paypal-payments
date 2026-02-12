@@ -12,11 +12,11 @@ const { vaultingGuest, vaultingCustomer, payPalGuest, payPalCustomer } =
 const { testSubscriptionOrderGuest, testSubscriptionOrderCustomer } =
 	testSubscriptionCheckout;
 
-test.beforeAll( async ( { utils, pcpApi } ) => {
+test.beforeAll( async ( { utils, pcpApi, wooCommerceApi } ) => {
 	await utils.configureStore( {
 		...storeConfigUsa,
-		classicPages: false,
-		subscription: true,
+		enableClassicPages: false,
+		enableSubscriptionsPlugin: true,
 		products: [ products.subscription100, products.subscriptionFreeTrial ],
 	} );
 	await utils.installAndActivatePcp();
@@ -30,19 +30,15 @@ test.beforeAll( async ( { utils, pcpApi } ) => {
 			products: [ 'physical', 'virtual', 'subscriptions' ],
 		}
 	);
-} );
-
-test.afterAll( async ( { wooCommerceApi } ) => {
-	await wooCommerceApi.deleteAllSubscriptions();
 	await wooCommerceApi.deleteAllOrders();
 } );
 
-for ( const testData of vaultingGuest ) {
-	testSubscriptionOrderGuest( testData );
+for ( const testOrder of vaultingGuest ) {
+	testSubscriptionOrderGuest( testOrder );
 }
 
-for ( const testData of vaultingCustomer ) {
-	testSubscriptionOrderCustomer( testData );
+for ( const testOrder of vaultingCustomer ) {
+	testSubscriptionOrderCustomer( testOrder );
 }
 
 test.describe( 'PayPal Subscription', () => {
@@ -59,11 +55,11 @@ test.describe( 'PayPal Subscription', () => {
 		} );
 	} );
 
-	for ( const testData of payPalGuest ) {
-		testSubscriptionOrderGuest( testData );
+	for ( const testOrder of payPalGuest ) {
+		testSubscriptionOrderGuest( testOrder );
 	}
 
-	for ( const testData of payPalCustomer ) {
-		testSubscriptionOrderCustomer( testData );
+	for ( const testOrder of payPalCustomer ) {
+		testSubscriptionOrderCustomer( testOrder );
 	}
 } );

@@ -9,37 +9,39 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\Button;
 
-use WooCommerce\PayPalCommerce\Button\Endpoint\ApproveSubscriptionEndpoint;
-use WooCommerce\PayPalCommerce\Button\Endpoint\CartScriptParamsEndpoint;
-use WooCommerce\PayPalCommerce\Button\Endpoint\SimulateCartEndpoint;
-use WooCommerce\PayPalCommerce\Button\Helper\CartProductsHelper;
-use WooCommerce\PayPalCommerce\Button\Helper\CheckoutFormSaver;
-use WooCommerce\PayPalCommerce\Button\Endpoint\SaveCheckoutFormEndpoint;
-use WooCommerce\PayPalCommerce\Button\Helper\Context;
-use WooCommerce\PayPalCommerce\Button\Helper\DisabledFundingSources;
-use WooCommerce\PayPalCommerce\Button\Helper\WooCommerceOrderCreator;
-use WooCommerce\PayPalCommerce\Button\Session\CartDataFactory;
-use WooCommerce\PayPalCommerce\Button\Session\CartDataTransientStorage;
-use WooCommerce\PayPalCommerce\Button\Validation\CheckoutFormValidator;
-use WooCommerce\PayPalCommerce\Button\Endpoint\ValidateCheckoutEndpoint;
-use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
+use WooCommerce\PayPalCommerce\Assets\AssetGetter;
+use WooCommerce\PayPalCommerce\Assets\AssetGetterFactory;
 use WooCommerce\PayPalCommerce\Button\Assets\DisabledSmartButton;
 use WooCommerce\PayPalCommerce\Button\Assets\SmartButton;
 use WooCommerce\PayPalCommerce\Button\Assets\SmartButtonInterface;
 use WooCommerce\PayPalCommerce\Button\Endpoint\ApproveOrderEndpoint;
+use WooCommerce\PayPalCommerce\Button\Endpoint\ApproveSubscriptionEndpoint;
+use WooCommerce\PayPalCommerce\Button\Endpoint\CartScriptParamsEndpoint;
 use WooCommerce\PayPalCommerce\Button\Endpoint\ChangeCartEndpoint;
 use WooCommerce\PayPalCommerce\Button\Endpoint\CreateOrderEndpoint;
 use WooCommerce\PayPalCommerce\Button\Endpoint\DataClientIdEndpoint;
 use WooCommerce\PayPalCommerce\Button\Endpoint\GetOrderEndpoint;
 use WooCommerce\PayPalCommerce\Button\Endpoint\RequestData;
-use WooCommerce\PayPalCommerce\Button\Endpoint\StartPayPalVaultingEndpoint;
+use WooCommerce\PayPalCommerce\Button\Endpoint\SaveCheckoutFormEndpoint;
+use WooCommerce\PayPalCommerce\Button\Endpoint\SimulateCartEndpoint;
+use WooCommerce\PayPalCommerce\Button\Endpoint\ValidateCheckoutEndpoint;
 use WooCommerce\PayPalCommerce\Button\Exception\RuntimeException;
+use WooCommerce\PayPalCommerce\Button\Helper\CartProductsHelper;
+use WooCommerce\PayPalCommerce\Button\Helper\CheckoutFormSaver;
+use WooCommerce\PayPalCommerce\Button\Helper\Context;
+use WooCommerce\PayPalCommerce\Button\Helper\DisabledFundingSources;
 use WooCommerce\PayPalCommerce\Button\Helper\EarlyOrderHandler;
 use WooCommerce\PayPalCommerce\Button\Helper\MessagesApply;
 use WooCommerce\PayPalCommerce\Button\Helper\ThreeDSecure;
+use WooCommerce\PayPalCommerce\Button\Helper\WooCommerceOrderCreator;
+use WooCommerce\PayPalCommerce\Button\Session\CartDataFactory;
+use WooCommerce\PayPalCommerce\Button\Session\CartDataTransientStorage;
+use WooCommerce\PayPalCommerce\Button\Validation\CheckoutFormValidator;
+use WooCommerce\PayPalCommerce\Button\VaultV2\StartPayPalVaultingEndpoint;
+use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
+use WooCommerce\PayPalCommerce\WcGateway\Helper\CardPaymentsConfiguration;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\SettingsStatus;
-use WooCommerce\PayPalCommerce\WcGateway\Helper\CardPaymentsConfiguration;
 
 return array(
 	'button.client_id'                            => static function ( ContainerInterface $container ): string {
@@ -123,7 +125,7 @@ return array(
 		$environment         = $container->get( 'settings.environment' );
 		$payment_token_repository = $container->get( 'vaulting.repository.payment-token' );
 		return new SmartButton(
-			$container->get( 'button.url' ),
+			$container->get( 'button.asset_getter' ),
 			$container->get( 'ppcp.asset-version' ),
 			$container->get( 'session.handler' ),
 			$settings,
@@ -154,8 +156,11 @@ return array(
 			$container->get( 'button.helper.context' ),
 		);
 	},
-	'button.url'                                  => static function ( ContainerInterface $container ): string {
-		return plugins_url( '/modules/ppcp-button/', $container->get( 'ppcp.path-to-plugin-main-file' ) );
+	'button.asset_getter'                         => static function ( ContainerInterface $container ): AssetGetter {
+		$factory = $container->get( 'assets.asset_getter_factory' );
+		assert( $factory instanceof AssetGetterFactory );
+
+		return $factory->for_module( 'ppcp-button' );
 	},
 	'button.pay-now-contexts'                     => static function ( ContainerInterface $container ): array {
 		$defaults = array( 'checkout', 'pay-now' );
@@ -301,10 +306,10 @@ return array(
 			$logger
 		);
 	},
-	'button.endpoint.vault-paypal'                => static function ( ContainerInterface $container ): StartPayPalVaultingEndpoint {
+	'button.vault-v2.endpoint.vault-paypal'       => static function ( ContainerInterface $container ): StartPayPalVaultingEndpoint {
 		return new StartPayPalVaultingEndpoint(
 			$container->get( 'button.request-data' ),
-			$container->get( 'api.endpoint.payment-token' ),
+			$container->get( 'vault-v2.endpoint.payment-token' ),
 			$container->get( 'woocommerce.logger.woocommerce' )
 		);
 	},
@@ -322,13 +327,15 @@ return array(
 		);
 	},
 	'button.endpoint.get-order'                   => static function ( ContainerInterface $container ): GetOrderEndpoint {
-		$request_data   = $container->get( 'button.request-data' );
-		$order_endpoint = $container->get( 'api.endpoint.order' );
-		$logger         = $container->get( 'woocommerce.logger.woocommerce' );
+		$request_data          = $container->get( 'button.request-data' );
+		$order_endpoint        = $container->get( 'api.endpoint.order' );
+		$logger                = $container->get( 'woocommerce.logger.woocommerce' );
+		$cart_data_storage     = $container->get( 'button.session.storage.card-data.transient' );
 		return new GetOrderEndpoint(
 			$request_data,
 			$order_endpoint,
-			$logger
+			$logger,
+			$cart_data_storage
 		);
 	},
 	'button.helper.cart-products'                 => static function ( ContainerInterface $container ): CartProductsHelper {
@@ -344,7 +351,7 @@ return array(
 	'button.helper.messages-apply'                => static function ( ContainerInterface $container ): MessagesApply {
 		return new MessagesApply(
 			$container->get( 'api.paylater-countries' ),
-			$container->get( 'api.shop.country' )
+			$container->get( 'api.merchant.country' )
 		);
 	},
 	'button.helper.disabled-funding-sources'      => static function ( ContainerInterface $container ): DisabledFundingSources {
@@ -399,7 +406,8 @@ return array(
 			$container->get( 'session.handler' ),
 			$container->get( 'wc-subscriptions.helper' ),
 			$container->get( 'button.session.factory.card-data' ),
-			$container->get( 'api.factory.shipping' )
+			$container->get( 'api.factory.shipping' ),
+			$container->get( 'api.factory.payer' )
 		);
 	},
 
