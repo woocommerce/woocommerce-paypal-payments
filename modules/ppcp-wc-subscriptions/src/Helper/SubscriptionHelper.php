@@ -262,7 +262,7 @@ class SubscriptionHelper
         if (!$orders || !$vault_token_id) {
             return '';
         }
-        // Sort orders by oder ID descending.
+        // Sort orders by order ID descending.
         rsort($orders);
         $current_order = wc_get_order(array_shift($orders));
         if (!$current_order instanceof WC_Order) {

@@ -254,6 +254,7 @@ class ComposerStaticInit8f1360c3598043abaa942bfe9de529b6
         'WooCommerce\\PayPalCommerce\\ApiClient\\Endpoint\\IdentityToken' => __DIR__ . '/../..' . '/modules/ppcp-api-client/src/Endpoint/IdentityToken.php',
         'WooCommerce\\PayPalCommerce\\ApiClient\\Endpoint\\LoginSeller' => __DIR__ . '/../..' . '/modules/ppcp-api-client/src/Endpoint/LoginSeller.php',
         'WooCommerce\\PayPalCommerce\\ApiClient\\Endpoint\\OrderEndpoint' => __DIR__ . '/../..' . '/modules/ppcp-api-client/src/Endpoint/OrderEndpoint.php',
+        'WooCommerce\\PayPalCommerce\\ApiClient\\Endpoint\\OrderEndpointCached' => __DIR__ . '/../..' . '/modules/ppcp-api-client/src/Endpoint/OrderEndpointCached.php',
         'WooCommerce\\PayPalCommerce\\ApiClient\\Endpoint\\Orders' => __DIR__ . '/../..' . '/modules/ppcp-api-client/src/Endpoint/Orders.php',
         'WooCommerce\\PayPalCommerce\\ApiClient\\Endpoint\\PartnerReferrals' => __DIR__ . '/../..' . '/modules/ppcp-api-client/src/Endpoint/PartnerReferrals.php',
         'WooCommerce\\PayPalCommerce\\ApiClient\\Endpoint\\PartnersEndpoint' => __DIR__ . '/../..' . '/modules/ppcp-api-client/src/Endpoint/PartnersEndpoint.php',

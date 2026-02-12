@@ -44,6 +44,7 @@ return array(
     'WooCommerce\\PayPalCommerce\\ApiClient\\Endpoint\\IdentityToken' => $baseDir . '/modules/ppcp-api-client/src/Endpoint/IdentityToken.php',
     'WooCommerce\\PayPalCommerce\\ApiClient\\Endpoint\\LoginSeller' => $baseDir . '/modules/ppcp-api-client/src/Endpoint/LoginSeller.php',
     'WooCommerce\\PayPalCommerce\\ApiClient\\Endpoint\\OrderEndpoint' => $baseDir . '/modules/ppcp-api-client/src/Endpoint/OrderEndpoint.php',
+    'WooCommerce\\PayPalCommerce\\ApiClient\\Endpoint\\OrderEndpointCached' => $baseDir . '/modules/ppcp-api-client/src/Endpoint/OrderEndpointCached.php',
     'WooCommerce\\PayPalCommerce\\ApiClient\\Endpoint\\Orders' => $baseDir . '/modules/ppcp-api-client/src/Endpoint/Orders.php',
     'WooCommerce\\PayPalCommerce\\ApiClient\\Endpoint\\PartnerReferrals' => $baseDir . '/modules/ppcp-api-client/src/Endpoint/PartnerReferrals.php',
     'WooCommerce\\PayPalCommerce\\ApiClient\\Endpoint\\PartnersEndpoint' => $baseDir . '/modules/ppcp-api-client/src/Endpoint/PartnersEndpoint.php',

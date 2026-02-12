@@ -89,7 +89,7 @@ class CartProductsHelper
         if (!$wc_product) {
             return null;
         }
-        return array('product' => $wc_product, 'quantity' => (int) $product['quantity'], 'variations' => $product['variations'] ?? null, 'booking' => $product['booking'] ?? null, 'extra' => $product['extra'] ?? null);
+        return array('product' => $wc_product, 'quantity' => (int) $product['quantity'], 'variations' => $product['variations'] ?? array(), 'booking' => $product['booking'] ?? null, 'extra' => $product['extra'] ?? null);
     }
     /**
      * Adds products to cart.
@@ -114,6 +114,9 @@ class CartProductsHelper
             if ($product['product']->is_type('booking')) {
                 $success = $success && $this->add_booking_product($product['product'], $product['booking']);
             } elseif ($product['product']->is_type('variable')) {
+                if (empty($product['variations']) || !is_array($product['variations'])) {
+                    $product['variations'] = array();
+                }
                 $success = $success && $this->add_variable_product($product['product'], $product['quantity'], $product['variations']);
             } else {
                 $success = $success && $this->add_product($product['product'], $product['quantity']);

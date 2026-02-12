@@ -29,7 +29,7 @@ return array(
         return new ShipmentFactory();
     },
     'order-tracking.endpoint.controller' => static function (ContainerInterface $container): OrderTrackingEndpoint {
-        return new OrderTrackingEndpoint($container->get('api.host'), $container->get('api.bearer'), $container->get('woocommerce.logger.woocommerce'), $container->get('button.request-data'), $container->get('order-tracking.shipment.factory'), $container->get('order-tracking.allowed-shipping-statuses'), $container->get('order-tracking.should-use-second-version-of-api'));
+        return new OrderTrackingEndpoint($container->get('api.host'), $container->get('api.bearer'), $container->get('woocommerce.logger.woocommerce'), $container->get('button.request-data'), $container->get('order-tracking.shipment.factory'), $container->get('order-tracking.allowed-shipping-statuses'), $container->get('order-tracking.should-use-second-version-of-api'), $container->get('api.endpoint.order.cached'));
     },
     'order-tracking.asset_getter' => static function (ContainerInterface $container): AssetGetter {
         $factory = $container->get('assets.asset_getter_factory');
