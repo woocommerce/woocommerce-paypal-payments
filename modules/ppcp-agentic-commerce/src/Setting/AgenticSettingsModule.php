@@ -3,6 +3,7 @@ declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\AgenticCommerce\Setting;
 
+use WooCommerce\PayPalCommerce\Assets\AssetGetter;
 use WooCommerce\PayPalCommerce\Settings\Extension\ExtensionSettingsModule;
 use WooCommerce\PayPalCommerce\Settings\Extension\ExtensionRestEndpoint;
 
@@ -20,10 +21,11 @@ class AgenticSettingsModule extends ExtensionSettingsModule {
 		string $absolute_plugin_path,
 		string $plugin_main_file,
 		ExtensionRestEndpoint $settings_endpoint,
-		RegistrationEligibility $eligibility_check
+		RegistrationEligibility $eligibility_check,
+		AssetGetter $asset_getter
 	) {
 
-		parent::__construct( $absolute_plugin_path, $plugin_main_file, $settings_endpoint );
+		parent::__construct( $absolute_plugin_path, $plugin_main_file, $settings_endpoint, $asset_getter );
 
 		$this->eligibility_check = $eligibility_check;
 	}

@@ -119,7 +119,7 @@ class IngestionManager {
 			return;
 		}
 
-		$product->update_meta_data( '_ppcp_agentic_needs_sync', '1' );
+		$product->delete_meta_data( '_ppcp_agentic_last_sync' );
 		$product->save_meta_data();
 	}
 

@@ -4,6 +4,7 @@ namespace WooCommerce\PayPalCommerce\AgenticCommerce\Ingestion;
 
 use RuntimeException;
 use Psr\Log\LoggerInterface;
+use JsonException;
 
 /**
  * Represents a sync job for sending product data to the agentic commerce API.
@@ -47,9 +48,10 @@ class SyncJob {
 	 * 1. Transforms products into the API payload format
 	 * 2. Sends the data to the agentic commerce API
 	 * 3. Handles successful responses by marking products as synced
-	 * 4. Handles errors by logging and re-throwing exceptions for retry
+	 * 4. Handles validation errors by marking only affected products with error details
+	 * 5. Handles API/network errors by logging and re-throwing exceptions for retry
 	 *
-	 * @throws RuntimeException When an error occurs during sync, handled by Action Scheduler.
+	 * @throws RuntimeException When a retryable error occurs during sync.
 	 */
 	public function execute(): void {
 		$this->logger->info(
@@ -68,6 +70,11 @@ class SyncJob {
 			return;
 		}
 
+		$body = array(
+			'merchant_url' => $this->merchant_store_url,
+			'products'     => $api_payload,
+		);
+
 		// Send payload to API.
 		$response = wp_remote_post(
 			$this->api_endpoint,
@@ -76,52 +83,152 @@ class SyncJob {
 				'headers' => array(
 					'Content-Type' => 'application/json',
 				),
-				'body'    => (string) wp_json_encode(
-					array(
-						'merchant_url' => $this->merchant_store_url,
-						'products'     => $api_payload,
-					)
-				),
+				'body'    => (string) wp_json_encode( $body ),
 			)
 		);
 
+		$this->logger->debug( "Start Sync {$this->batch_id}...", $body );
+
 		if ( is_wp_error( $response ) ) {
-			$this->handle_sync_error( $this->product_ids, $response->get_error_message() );
+			// Log the error message and throw an Exception.
+			$this->handle_api_error( $this->product_ids, $response->get_error_message() );
 		}
 
-		$status_code = wp_remote_retrieve_response_code( $response );
+		$status_code   = wp_remote_retrieve_response_code( $response );
+		$response_body = wp_remote_retrieve_body( $response );
 
-		if ( $status_code === 200 ) {
-			$this->mark_products_synced( $this->product_ids );
-			$this->log_sync_success( $this->product_ids, $this->batch_id );
-		} else {
-			$error_msg = "HTTP {$status_code}: " . wp_remote_retrieve_body( $response );
-			$this->handle_sync_error( $this->product_ids, $error_msg );
+		if ( $status_code >= 200 && $status_code < 422 ) {
+			$this->handle_successful_response( $response_body );
+
+			return;
+		}
+
+		// Log the error message and throw an Exception.
+		$this->handle_api_error( $this->product_ids, "HTTP {$status_code}: {$response_body}" );
+	}
+
+	/**
+	 * Handle successful API response.
+	 *
+	 * Parses the response to check for individual product validation errors,
+	 * marks products accordingly, and logs the result.
+	 *
+	 * @param string $response_body The API response body.
+	 */
+	private function handle_successful_response( string $response_body ): void {
+		// First, mark all products as synced to avoid re-syncing them in the next batch.
+		$this->mark_products_synced( $this->product_ids );
+
+		// Check for validation issues from the response and document them in product-meta fields.
+		try {
+			$response_data = json_decode( $response_body, true, 512, JSON_THROW_ON_ERROR );
+
+			$this->logger->info(
+				sprintf(
+					'Agentic Sync Job %s: Successfully synced %d products',
+					$this->batch_id,
+					count( $this->product_ids )
+				),
+				$response_data
+			);
+
+			$contains_errors = false === ( $response_data['success'] ?? false );
+			$error_message   = $response_data['message'] ?? '';
+		} catch ( JsonException $e ) {
+			// Do not process invalid JSON data.
+			$this->logger->error(
+				'Invalid JSON response',
+				array(
+					'response' => $response_body,
+					'error'    => $e->getMessage(),
+				)
+			);
+
+			return;
+		}
+
+		if ( $contains_errors && $error_message ) {
+			$validation_errors = $this->extract_product_errors( $error_message );
+
+			$this->mark_products_by_validation_result( $validation_errors );
 		}
 	}
 
 	/**
-	 * Handle sync error by logging and marking products with error.
+	 * Extract product IDs that failed validation from error message.
 	 *
-	 * This method logs the error and updates product metadata to indicate
-	 * that the product failed to sync. It then throws an exception to
-	 * trigger retry logic in Action Scheduler.
+	 * Parses error messages like "data/products/0/image_link must pass..." to
+	 * identify which products in the batch actually failed validation.
+	 *
+	 * @param string $error_message The error message to parse.
+	 * @return array Array of product IDs (keys) and the relevant validation error (values).
+	 */
+	private function extract_product_errors( string $error_message ): array {
+		$errors = array();
+
+		// Pattern: data/products/{index} followed by error text until comma or end.
+		preg_match_all(
+			'/data\/products\/(\d+)\s+([^,]+)/',
+			$error_message,
+			$matches,
+			PREG_SET_ORDER
+		);
+
+		foreach ( $matches as $match ) {
+			$index = (int) $match[1];
+			$id    = $this->product_ids[ $index ] ?? null;
+
+			if ( is_null( $id ) ) {
+				continue;
+			}
+			$errors[ $id ] = trim( $match[2] );
+		}
+
+		return $errors;
+	}
+
+	/**
+	 * Mark products based on validation results.
+	 *
+	 * Products that failed validation get error annotations.
+	 * Products that passed (or weren't mentioned) get marked as successfully synced.
+	 *
+	 * @param array $validation_errors Mapping of product-id to validation error.
+	 */
+	private function mark_products_by_validation_result( array $validation_errors ): void {
+		$this->logger->warning(
+			sprintf(
+				'Agentic Sync Job %s: Validation errors',
+				$this->batch_id
+			),
+			$validation_errors
+		);
+
+		foreach ( $validation_errors as $product_id => $error_message ) {
+			$this->mark_product_with_validation_error( $product_id, $error_message );
+		}
+	}
+
+	/**
+	 * Handle API or network errors by logging and throwing exception for retry.
+	 *
+	 * This method handles actual API failures (not validation errors) that should
+	 * trigger retry logic. Products are marked with error metadata, and an exception
+	 * is thrown to signal Action Scheduler to retry.
 	 *
 	 * @param array  $product_ids   Product IDs that failed to sync.
 	 * @param string $error_message The error message.
 	 * @throws RuntimeException When an error occurs during sync.
 	 */
-	private function handle_sync_error( array $product_ids, string $error_message ): void {
-		// Log the error.
+	private function handle_api_error( array $product_ids, string $error_message ): void {
 		$this->logger->warning(
-			sprintf( 'Agentic Sync Job %s: Error', $error_message ),
+			sprintf( 'Agentic Sync Job %s: API Error - %s', $this->batch_id, $error_message ),
 			array(
 				'product_count' => count( $product_ids ),
 				'product_ids'   => $product_ids,
 			)
 		);
 
-		// Mark products with error.
 		foreach ( $product_ids as $product_id ) {
 			$product = wc_get_product( $product_id );
 
@@ -133,57 +240,57 @@ class SyncJob {
 			$product->save_meta_data();
 		}
 
-		// Let Action Scheduler handle retries by throwing an exception.
 		throw new RuntimeException( sprintf( 'Agentic sync failed: %s', $error_message ) );
 	}
 
 	/**
-	 * Mark products as synced by updating their last sync timestamp.
+	 * Mark a single product as synced successfully.
 	 *
-	 * This method updates the '_ppcp_agentic_last_sync' meta-field for each
-	 * product with the current timestamp, indicating successful synchronization.
-	 * It also removes the '_ppcp_agentic_needs_sync' and '_ppcp_agentic_sync_error'
-	 * meta-fields to indicate that the product is no longer pending or in an error state.
+	 * @param int $product_id Product ID to mark as synced.
+	 */
+	private function mark_product_synced( int $product_id ): void {
+		$product = wc_get_product( $product_id );
+
+		if ( ! $product ) {
+			return;
+		}
+
+		$timestamp = current_time( 'mysql' );
+		$product->update_meta_data( '_ppcp_agentic_last_sync', $timestamp );
+		$product->delete_meta_data( '_ppcp_agentic_sync_error' );
+		$product->save_meta_data();
+	}
+
+	/**
+	 * Mark a single product with validation error.
+	 *
+	 * Products with validation errors are still considered "synced" (the sync
+	 * attempt was made), but store the validation error for merchant visibility.
+	 *
+	 * @param int    $product_id    Product ID.
+	 * @param string $error_message Validation error message.
+	 */
+	private function mark_product_with_validation_error( int $product_id, string $error_message ): void {
+		$product = wc_get_product( $product_id );
+
+		if ( ! $product ) {
+			return;
+		}
+
+		$timestamp = current_time( 'mysql' );
+		$product->update_meta_data( '_ppcp_agentic_last_sync', $timestamp );
+		$product->update_meta_data( '_ppcp_agentic_sync_error', $error_message );
+		$product->save_meta_data();
+	}
+
+	/**
+	 * Mark multiple products as synced by updating their last sync timestamp.
 	 *
 	 * @param array $product_ids Product IDs to mark as synced.
 	 */
 	private function mark_products_synced( array $product_ids ): void {
-		// Use WordPress's current_time function with 'mysql' format for consistency.
-		$timestamp = current_time( 'mysql' );
-
 		foreach ( $product_ids as $product_id ) {
-			$product = wc_get_product( $product_id );
-
-			if ( ! $product ) {
-				continue;
-			}
-
-			$product->update_meta_data( '_ppcp_agentic_last_sync', $timestamp );
-			$product->delete_meta_data( '_ppcp_agentic_needs_sync' );
-			$product->delete_meta_data( '_ppcp_agentic_sync_error' );
-			$product->save_meta_data();
+			$this->mark_product_synced( $product_id );
 		}
-	}
-
-	/**
-	 * Logs successful sync operation.
-	 *
-	 * This method logs information about a successful sync operation,
-	 * including the batch ID and the number of products successfully synced.
-	 *
-	 * @param array  $product_ids Product IDs that were successfully synced.
-	 * @param string $batch_id    The batch ID for logging.
-	 */
-	private function log_sync_success( array $product_ids, string $batch_id ): void {
-		$this->logger->info(
-			sprintf(
-				'Agentic Sync Job %s: Successfully synced %d products',
-				$batch_id,
-				count( $product_ids )
-			),
-			array(
-				'product_ids' => $product_ids,
-			)
-		);
 	}
 }
