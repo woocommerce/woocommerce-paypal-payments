@@ -131,7 +131,7 @@ class PurchaseUnit {
 		$this->reference_id = $reference_id;
 		$this->description  = $description;
         //phpcs:disable Inpsyde.CodeQuality.ArgumentTypeDeclaration.NoArgumentType
-		$this->items           = array_values(
+		$this->items              = array_values(
 			array_filter(
 				$items,
 				function ( $item ): bool {

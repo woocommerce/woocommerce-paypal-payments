@@ -76,7 +76,6 @@ class GetOrderEndpoint implements EndpointInterface {
 						'message' => __( 'Invalid or expired order access', 'woocommerce-paypal-payments' ),
 					)
 				);
-				return false;
 			}
 
 			$order = $this->api_endpoint->order( $order_id );
