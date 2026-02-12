@@ -37,6 +37,11 @@ export class PayUponInvoice extends PcpSettingsPage {
 	setup = async ( data? ) => {
 		data = data || {};
 		await this.visit();
+		
+		// restore checkbox to enable Save Changes button
+		const currentValue = await this.enableGatewayCheckbox().isChecked();
+		await this.enableGatewayCheckbox().setChecked( ! currentValue );
+		await this.enableGatewayCheckbox().setChecked( currentValue );
 
 		if ( data.enableGateway !== undefined ) {
 			await this.logoUrlInput().fill(

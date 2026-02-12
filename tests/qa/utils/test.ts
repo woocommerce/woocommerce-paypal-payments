@@ -12,6 +12,7 @@ import {
 	test as base,
 	expect,
 	WooCommerceApi,
+	BaseExtend as BaseExtendBase,
 } from '@inpsyde/playwright-utils/build';
 /**
  * Internal dependencies
@@ -48,7 +49,7 @@ import {
 	ClassicPayForOrder,
 } from './frontend';
 
-export type BaseExtend = {
+export type BaseExtend = BaseExtendBase & {
 	recordVideoOptions?: {
 		mode: VideoMode;
 		size?: ViewportSize;
@@ -175,11 +176,7 @@ const test = base.extend< BaseExtend >( {
 	},
 	wooCommerceSubscriptionEdit: async ( { page, requestUtils }, use ) => {
 		await use(
-			new WooCommerceSubscriptionEdit( {
-				page,
-				requestUtils,
-				sitePrefix: () => '',
-			} )
+			new WooCommerceSubscriptionEdit( { page, requestUtils } )
 		);
 	},
 
@@ -256,6 +253,7 @@ const test = base.extend< BaseExtend >( {
 			checkout,
 			classicCheckout,
 			orderReceived,
+			cli,
 		},
 		use
 	) => {
@@ -270,6 +268,7 @@ const test = base.extend< BaseExtend >( {
 				checkout,
 				classicCheckout,
 				orderReceived,
+				cli,
 			} )
 		);
 	},

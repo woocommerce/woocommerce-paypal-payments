@@ -32,9 +32,10 @@ export class AdvancedCardProcessing extends PcpSettingsPage {
 
 		await this.visit();
 
-		if ( data.enableGateway !== undefined ) {
-			await this.enableGatewayCheckbox().setChecked( data.enableGateway );
-		}
+		// restore checkbox to enable Save Changes button
+		const currentValue = await this.enableGatewayCheckbox().isChecked();
+		await this.enableGatewayCheckbox().setChecked( ! currentValue );
+		await this.enableGatewayCheckbox().setChecked( data.enableGateway ?? currentValue );
 
 		// Add other settings here
 		if ( data.vaulting !== undefined ) {

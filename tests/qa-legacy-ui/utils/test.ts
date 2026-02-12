@@ -7,12 +7,14 @@ import {
 	test as base,
 	expect,
 	WooCommerceApi,
+	BaseExtend as BaseExtendBase,
 } from '@inpsyde/playwright-utils/build';
 /**
  * Internal dependencies
  */
 import { PayPalAPI } from './paypal-api';
 import { PayPalUI } from './frontend/paypal-ui';
+import { PcpApi } from './pcp-api';
 import { Utils } from './utils';
 
 // PCP tabs
@@ -44,12 +46,13 @@ import {
 	ClassicPayForOrder,
 } from './frontend';
 
-export type BaseExtend = {
+export type BaseExtend = BaseExtendBase & {
 	recordVideoOptions?: {
 		mode: VideoMode;
 		size?: ViewportSize;
 	};
 	ppapi: PayPalAPI;
+	pcpApi: PcpApi
 	ppui: PayPalUI;
 	visitorPage: Page;
 	visitorRequest: APIRequestContext;
@@ -90,6 +93,9 @@ const test = base.extend< BaseExtend >( {
 	recordVideoOptions: [ null, { option: true } ],
 	ppapi: async ( { request }, use ) => {
 		await use( new PayPalAPI( { request } ) );
+	},
+	pcpApi: async ( { request, requestUtils }, use ) => {
+		await use( new PcpApi( { request, requestUtils } ) );
 	},
 	visitorPage: async ( { browser, recordVideoOptions }, use, testInfo ) => {
 		// check if visitor is specified in test otherwise use guest
@@ -165,8 +171,8 @@ const test = base.extend< BaseExtend >( {
 	wooCommerceOrderEdit: async ( { page }, use ) => {
 		await use( new WooCommerceOrderEdit( { page } ) );
 	},
-	wooCommerceSubscriptionEdit: async ( { page }, use ) => {
-		await use( new WooCommerceSubscriptionEdit( { page } ) );
+	wooCommerceSubscriptionEdit: async ( { page, requestUtils }, use ) => {
+		await use( new WooCommerceSubscriptionEdit( { page, requestUtils } ) );
 	},
 
 	// WooCommerce front end
@@ -228,6 +234,8 @@ const test = base.extend< BaseExtend >( {
 			customerAccount,
 			customerPaymentMethods,
 			visitorWooCommerceApi,
+			cli,
+			pcpApi,
 		},
 		use
 	) => {
@@ -251,6 +259,8 @@ const test = base.extend< BaseExtend >( {
 				customerAccount,
 				customerPaymentMethods,
 				visitorWooCommerceApi,
+				cli,
+				pcpApi,
 			} )
 		);
 	},

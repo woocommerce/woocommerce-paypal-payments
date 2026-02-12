@@ -1294,6 +1294,7 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
 				'throttling' => apply_filters( 'woocommerce_paypal_payments_simulate_cart_throttling', 5000 ),
 			),
 			'order_id'                                => 'pay-now' === $current_context ? $this->get_order_pay_id() : 0,
+			'order_key'                               => 'pay-now' === $current_context ? $this->get_order_pay_key() : '',
 			'single_product_buttons_enabled'          => $this->settings_status->is_smart_button_enabled_for_location( 'product' ),
 			'mini_cart_buttons_enabled'               => $this->settings_status->is_smart_button_enabled_for_location( 'mini-cart' ),
 			'basic_checkout_validation_enabled'       => $this->basic_checkout_validation_enabled,
@@ -2041,6 +2042,18 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
 		}
 
 		return absint( $wp->query_vars['order-pay'] );
+	}
+
+	/**
+	 * Returns the order key from the pay-for-order page URL, or empty string.
+	 *
+	 * @return string
+	 */
+	protected function get_order_pay_key(): string {
+		//phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		$key = isset( $_GET['key'] ) ? wc_clean( wp_unslash( $_GET['key'] ) ) : '';
+
+		return is_string( $key ) ? $key : '';
 	}
 
 	/**

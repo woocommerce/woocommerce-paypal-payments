@@ -41,7 +41,8 @@ return array(
 			$container->get( 'button.request-data' ),
 			$container->get( 'order-tracking.shipment.factory' ),
 			$container->get( 'order-tracking.allowed-shipping-statuses' ),
-			$container->get( 'order-tracking.should-use-second-version-of-api' )
+			$container->get( 'order-tracking.should-use-second-version-of-api' ),
+			$container->get( 'api.endpoint.order.cached' )
 		);
 	},
 	'order-tracking.asset_getter'                     => static function ( ContainerInterface $container ): AssetGetter {
