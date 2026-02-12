@@ -34,6 +34,10 @@ class AxoBlockModule implements ServiceModule, ExecutableModule {
 	 * {@inheritDoc}
 	 */
 	public function run( ContainerInterface $c ): bool {
+		if ( ! $c->has( 'axo.eligible' ) || ! $c->get( 'axo.eligible' ) ) {
+			return true;
+		}
+
 		if (
 			! class_exists( 'Automattic\WooCommerce\Blocks\Payments\Integrations\AbstractPaymentMethodType' )
 			|| ! function_exists( 'woocommerce_store_api_register_payment_requirements' )

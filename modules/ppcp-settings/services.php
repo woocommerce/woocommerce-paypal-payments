@@ -248,7 +248,8 @@ return array(
 	'settings.rest.authentication'                        => static function ( ContainerInterface $container ): AuthenticationRestEndpoint {
 		return new AuthenticationRestEndpoint(
 			$container->get( 'settings.service.authentication_manager' ),
-			$container->get( 'settings.service.data-manager' )
+			$container->get( 'settings.service.data-manager' ),
+			$container->get( 'woocommerce.logger.woocommerce' )
 		);
 	},
 	'settings.rest.login_link'                            => static function ( ContainerInterface $container ): LoginLinkRestEndpoint {

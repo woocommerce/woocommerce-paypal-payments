@@ -332,13 +332,15 @@ return array(
 		);
 	},
 	'button.endpoint.get-order'                   => static function ( ContainerInterface $container ): GetOrderEndpoint {
-		$request_data   = $container->get( 'button.request-data' );
-		$order_endpoint = $container->get( 'api.endpoint.order' );
-		$logger         = $container->get( 'woocommerce.logger.woocommerce' );
+		$request_data          = $container->get( 'button.request-data' );
+		$order_endpoint        = $container->get( 'api.endpoint.order' );
+		$logger                = $container->get( 'woocommerce.logger.woocommerce' );
+		$cart_data_storage     = $container->get( 'button.session.storage.card-data.transient' );
 		return new GetOrderEndpoint(
 			$request_data,
 			$order_endpoint,
-			$logger
+			$logger,
+			$cart_data_storage
 		);
 	},
 	'button.helper.cart-products'                 => static function ( ContainerInterface $container ): CartProductsHelper {
