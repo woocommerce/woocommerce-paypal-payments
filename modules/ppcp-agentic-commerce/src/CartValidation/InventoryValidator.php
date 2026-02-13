@@ -13,6 +13,7 @@ use WooCommerce\PayPalCommerce\AgenticCommerce\Enums\ErrorCode;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Helper\ProductManager;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\PayPalCart;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\CartItem;
+use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\ResolutionOption;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Validation\InsufficientQuantity;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Validation\ItemOutOfStock;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Validation\ValidationIssue;
@@ -56,7 +57,13 @@ class InventoryValidator implements ValidatorInterface {
 			return new ItemOutOfStock(
 				'Product is no longer available',
 				sprintf( '%s is currently out of stock.', $product->get_name() ),
-				$field
+				$field,
+				'',
+				array(),
+				array(
+					ResolutionOption::remove_item( 'HIGH' ),
+					ResolutionOption::wait_for_restock(),
+				)
 			);
 		}
 
@@ -71,7 +78,19 @@ class InventoryValidator implements ValidatorInterface {
 					$product->get_name(),
 					$item->quantity()
 				),
-				$field
+				$field,
+				'',
+				array(),
+				array(
+					ResolutionOption::modify_cart(
+						sprintf( 'Reduce quantity to %d', $stock_quantity ),
+						array(
+							'priority'     => 'HIGH',
+							'max_quantity' => $stock_quantity,
+						)
+					),
+					ResolutionOption::remove_item( 'LOW' ),
+				)
 			);
 		}
 
