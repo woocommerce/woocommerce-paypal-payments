@@ -33,15 +33,6 @@ use WooCommerce\PayPalCommerce\WcGateway\Processor\RefundProcessor;
  */
 function ppcp_get_paypal_order($paypal_id_or_wc_order): Order
 {
-    if ($paypal_id_or_wc_order instanceof WC_Order) {
-        $paypal_id_or_wc_order = $paypal_id_or_wc_order->get_meta(PayPalGateway::ORDER_ID_META_KEY);
-        if (!$paypal_id_or_wc_order) {
-            throw new InvalidArgumentException('PayPal order ID not found in meta.');
-        }
-    }
-    if (!is_string($paypal_id_or_wc_order)) {
-        throw new InvalidArgumentException('Invalid PayPal order ID, string expected.');
-    }
     $order_endpoint = PPCP::container()->get('api.endpoint.order');
     assert($order_endpoint instanceof OrderEndpoint);
     return $order_endpoint->order($paypal_id_or_wc_order);
