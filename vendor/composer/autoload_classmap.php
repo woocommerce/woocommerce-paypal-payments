@@ -76,6 +76,7 @@ return array(
     'WooCommerce\\PayPalCommerce\\AgenticCommerce\\Enums\\InventoryIssue' => $baseDir . '/modules/ppcp-agentic-commerce/src/Enums/InventoryIssue.php',
     'WooCommerce\\PayPalCommerce\\AgenticCommerce\\Enums\\PaymentIssue' => $baseDir . '/modules/ppcp-agentic-commerce/src/Enums/PaymentIssue.php',
     'WooCommerce\\PayPalCommerce\\AgenticCommerce\\Enums\\PricingIssue' => $baseDir . '/modules/ppcp-agentic-commerce/src/Enums/PricingIssue.php',
+    'WooCommerce\\PayPalCommerce\\AgenticCommerce\\Enums\\Priority' => $baseDir . '/modules/ppcp-agentic-commerce/src/Enums/Priority.php',
     'WooCommerce\\PayPalCommerce\\AgenticCommerce\\Enums\\ResolutionAction' => $baseDir . '/modules/ppcp-agentic-commerce/src/Enums/ResolutionAction.php',
     'WooCommerce\\PayPalCommerce\\AgenticCommerce\\Enums\\ShippingIssue' => $baseDir . '/modules/ppcp-agentic-commerce/src/Enums/ShippingIssue.php',
     'WooCommerce\\PayPalCommerce\\AgenticCommerce\\Errors\\AgenticError' => $baseDir . '/modules/ppcp-agentic-commerce/src/Errors/AgenticError.php',

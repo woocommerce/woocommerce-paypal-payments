@@ -9,6 +9,7 @@ declare (strict_types=1);
 namespace WooCommerce\PayPalCommerce\AgenticCommerce\CartValidation;
 
 use WooCommerce\PayPalCommerce\AgenticCommerce\Enums\ErrorCode;
+use WooCommerce\PayPalCommerce\AgenticCommerce\Enums\Priority;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Helper\ProductManager;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\PayPalCart;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\CartItem;
@@ -45,10 +46,10 @@ class ProductValidator implements \WooCommerce\PayPalCommerce\AgenticCommerce\Ca
         $field = "items[{$key}]";
         $product = $this->product_manager->find_product($item);
         if (!$product) {
-            return new InvalidProduct("Product '{$identifier}' not found in WooCommerce catalog", "'{$item->name()}' not found in WooCommerce catalog", $field, '', array(), array(ResolutionOption::remove_item('HIGH')));
+            return new InvalidProduct("Product '{$identifier}' not found in WooCommerce catalog", "'{$item->name()}' not found in WooCommerce catalog", $field, '', array(), array(ResolutionOption::remove_item(Priority::HIGH)));
         }
         if (!$product->is_purchasable()) {
-            return new InvalidProduct("Product '{$identifier}' is not available for purchase", "'{$item->name()}' cannot be purchased at this time", $field, '', array(), array(ResolutionOption::remove_item('HIGH'), ResolutionOption::suggest_alternative()));
+            return new InvalidProduct("Product '{$identifier}' is not available for purchase", "'{$item->name()}' cannot be purchased at this time", $field, '', array(), array(ResolutionOption::remove_item(Priority::HIGH), ResolutionOption::suggest_alternative()));
         }
         return null;
     }

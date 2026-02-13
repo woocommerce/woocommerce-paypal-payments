@@ -8,6 +8,7 @@
 declare (strict_types=1);
 namespace WooCommerce\PayPalCommerce\AgenticCommerce\CartValidation;
 
+use WooCommerce\PayPalCommerce\AgenticCommerce\Enums\Priority;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\PayPalCart;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\ResolutionOption;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Validation\CurrencyMismatch;
@@ -48,7 +49,7 @@ class CurrencyValidator implements \WooCommerce\PayPalCommerce\AgenticCommerce\C
         }
         $reference = $currencies[0];
         $mismatch = current(array_filter($currencies, fn($item) => $item['currency'] !== $reference['currency']));
-        return new CurrencyMismatch(sprintf('Mixed currencies detected: item %d has currency %s, expected %s', $mismatch['index'], $mismatch['currency'], $reference['currency']), 'All items in the cart must use the same currency.', "items[{$mismatch['index']}].price.currency_code", '', array(), array(ResolutionOption::use_different_currency(sprintf('Set all items to %s', $store_currency), $store_currency)->with(array('metadata' => array('priority' => 'HIGH', 'expected_currency' => $store_currency))), ResolutionOption::remove_item('LOW', array('item_index' => $mismatch['index']))));
+        return new CurrencyMismatch(sprintf('Mixed currencies detected: item %d has currency %s, expected %s', $mismatch['index'], $mismatch['currency'], $reference['currency']), 'All items in the cart must use the same currency.', "items[{$mismatch['index']}].price.currency_code", '', array(), array(ResolutionOption::use_different_currency(sprintf('Set all items to %s', $store_currency), $store_currency)->with(array('metadata' => array('priority' => Priority::HIGH, 'expected_currency' => $store_currency))), ResolutionOption::remove_item(Priority::LOW, array('item_index' => $mismatch['index']))));
     }
     private function validate_store_currency(string $cart_currency, int $item_index, string $store_currency): ?CurrencyMismatch
     {

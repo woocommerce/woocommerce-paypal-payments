@@ -299,6 +299,7 @@ class ComposerStaticInit77bdc3312427f0ebca69eac23bbd735b
         'WooCommerce\\PayPalCommerce\\AgenticCommerce\\Enums\\InventoryIssue' => __DIR__ . '/../..' . '/modules/ppcp-agentic-commerce/src/Enums/InventoryIssue.php',
         'WooCommerce\\PayPalCommerce\\AgenticCommerce\\Enums\\PaymentIssue' => __DIR__ . '/../..' . '/modules/ppcp-agentic-commerce/src/Enums/PaymentIssue.php',
         'WooCommerce\\PayPalCommerce\\AgenticCommerce\\Enums\\PricingIssue' => __DIR__ . '/../..' . '/modules/ppcp-agentic-commerce/src/Enums/PricingIssue.php',
+        'WooCommerce\\PayPalCommerce\\AgenticCommerce\\Enums\\Priority' => __DIR__ . '/../..' . '/modules/ppcp-agentic-commerce/src/Enums/Priority.php',
         'WooCommerce\\PayPalCommerce\\AgenticCommerce\\Enums\\ResolutionAction' => __DIR__ . '/../..' . '/modules/ppcp-agentic-commerce/src/Enums/ResolutionAction.php',
         'WooCommerce\\PayPalCommerce\\AgenticCommerce\\Enums\\ShippingIssue' => __DIR__ . '/../..' . '/modules/ppcp-agentic-commerce/src/Enums/ShippingIssue.php',
         'WooCommerce\\PayPalCommerce\\AgenticCommerce\\Errors\\AgenticError' => __DIR__ . '/../..' . '/modules/ppcp-agentic-commerce/src/Errors/AgenticError.php',

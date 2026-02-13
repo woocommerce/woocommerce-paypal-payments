@@ -11,6 +11,7 @@
 declare (strict_types=1);
 namespace WooCommerce\PayPalCommerce\AgenticCommerce\Schema;
 
+use WooCommerce\PayPalCommerce\AgenticCommerce\Enums\Priority;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Enums\ResolutionAction;
 /**
  * Immutable resolution option builder with factory methods.
@@ -73,11 +74,11 @@ class ResolutionOption
     /**
      * Factory: Remove item from cart.
      *
-     * @param string $priority Optional. Priority level (HIGH, MEDIUM, LOW).
+     * @param string $priority Optional. Priority level from Priority class constants.
      * @param array  $metadata Optional. Additional metadata.
      * @return self
      */
-    public static function remove_item(string $priority = 'MEDIUM', array $metadata = array()): self
+    public static function remove_item(string $priority = Priority::MEDIUM, array $metadata = array()): self
     {
         $metadata['priority'] = $priority;
         return new self(ResolutionAction::REMOVE_ITEM, 'Remove from cart', '', $metadata);
@@ -86,11 +87,11 @@ class ResolutionOption
      * Factory: Update shipping address.
      *
      * @param string $label    Optional. Custom label.
-     * @param string $priority Optional. Priority level (HIGH, MEDIUM, LOW).
+     * @param string $priority Optional. Priority level from Priority class constants.
      * @param array  $metadata Optional. Additional metadata.
      * @return self
      */
-    public static function update_address(string $label = 'Update shipping address', string $priority = 'MEDIUM', array $metadata = array()): self
+    public static function update_address(string $label = 'Update shipping address', string $priority = Priority::MEDIUM, array $metadata = array()): self
     {
         $metadata['priority'] = $priority;
         return new self(ResolutionAction::UPDATE_ADDRESS, $label, '', $metadata);
