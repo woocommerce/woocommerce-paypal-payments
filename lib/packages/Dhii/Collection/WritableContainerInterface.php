@@ -1,15 +1,13 @@
 <?php
 
-declare(strict_types=1);
-
+declare (strict_types=1);
 namespace WooCommerce\PayPalCommerce\Vendor\Dhii\Collection;
 
 use Exception;
-
 /**
  * A container that can be written to.
  */
-interface WritableContainerInterface extends ContainerInterface
+interface WritableContainerInterface extends \WooCommerce\PayPalCommerce\Vendor\Dhii\Collection\ContainerInterface
 {
     /**
      * Creates a new instance with the specified mappings.
@@ -24,8 +22,7 @@ interface WritableContainerInterface extends ContainerInterface
      *
      * @psalm-suppress PossiblyUnusedMethod
      */
-    public function withMappings(array $mappings): WritableContainerInterface;
-
+    public function withMappings(array $mappings): \WooCommerce\PayPalCommerce\Vendor\Dhii\Collection\WritableContainerInterface;
     /**
      * Creates a new instance with the specified mappings added to existing ones.
      *
@@ -39,8 +36,7 @@ interface WritableContainerInterface extends ContainerInterface
      *
      * @psalm-suppress PossiblyUnusedMethod
      */
-    public function withAddedMappings(array $mappings): WritableContainerInterface;
-
+    public function withAddedMappings(array $mappings): \WooCommerce\PayPalCommerce\Vendor\Dhii\Collection\WritableContainerInterface;
     /**
      * Creates a new instance with the specified keys not present.
      *
@@ -54,5 +50,5 @@ interface WritableContainerInterface extends ContainerInterface
      *
      * @psalm-suppress PossiblyUnusedMethod
      */
-    public function withoutKeys(array $keys): WritableContainerInterface;
+    public function withoutKeys(array $keys): \WooCommerce\PayPalCommerce\Vendor\Dhii\Collection\WritableContainerInterface;
 }
