@@ -13,6 +13,7 @@ use WooCommerce\PayPalCommerce\AgenticCommerce\Enums\ErrorCode;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Helper\ProductManager;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\PayPalCart;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\CartItem;
+use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\ResolutionOption;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Validation\InvalidProduct;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Validation\ValidationIssue;
 
@@ -54,7 +55,12 @@ class ProductValidator implements ValidatorInterface {
 			return new InvalidProduct(
 				"Product '{$identifier}' not found in WooCommerce catalog",
 				"'{$item->name()}' not found in WooCommerce catalog",
-				$field
+				$field,
+				'',
+				array(),
+				array(
+					ResolutionOption::remove_item( 'HIGH' ),
+				)
 			);
 		}
 
@@ -62,7 +68,13 @@ class ProductValidator implements ValidatorInterface {
 			return new InvalidProduct(
 				"Product '{$identifier}' is not available for purchase",
 				"'{$item->name()}' cannot be purchased at this time",
-				$field
+				$field,
+				'',
+				array(),
+				array(
+					ResolutionOption::remove_item( 'HIGH' ),
+					ResolutionOption::suggest_alternative(),
+				)
 			);
 		}
 
