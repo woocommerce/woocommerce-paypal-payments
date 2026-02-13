@@ -9,6 +9,7 @@ declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\AgenticCommerce\Schema;
 
+use WooCommerce\PayPalCommerce\AgenticCommerce\Enums\Priority;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\ResolutionOption;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Validation\MissingField;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Validation\InvalidData;
@@ -63,7 +64,7 @@ class CartItem extends AgenticSchema {
 							ResolutionOption::modify_cart(
 								'Set a valid quantity (1–999)',
 								array(
-									'priority'     => 'HIGH',
+									'priority'     => Priority::HIGH,
 									'min_quantity' => 1,
 									'max_quantity' => 999,
 								)

@@ -10,6 +10,7 @@ declare( strict_types = 1 );
 namespace WooCommerce\PayPalCommerce\AgenticCommerce\CartValidation;
 
 use WooCommerce\PayPalCommerce\AgenticCommerce\Enums\ErrorCode;
+use WooCommerce\PayPalCommerce\AgenticCommerce\Enums\Priority;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Helper\ProductManager;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\PayPalCart;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\CartItem;
@@ -59,7 +60,7 @@ class ProductValidator implements ValidatorInterface {
 				'',
 				array(),
 				array(
-					ResolutionOption::remove_item( 'HIGH' ),
+					ResolutionOption::remove_item( Priority::HIGH ),
 				)
 			);
 		}
@@ -72,7 +73,7 @@ class ProductValidator implements ValidatorInterface {
 				'',
 				array(),
 				array(
-					ResolutionOption::remove_item( 'HIGH' ),
+					ResolutionOption::remove_item( Priority::HIGH ),
 					ResolutionOption::suggest_alternative(),
 				)
 			);

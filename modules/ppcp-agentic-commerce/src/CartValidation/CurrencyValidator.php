@@ -9,6 +9,7 @@ declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\AgenticCommerce\CartValidation;
 
+use WooCommerce\PayPalCommerce\AgenticCommerce\Enums\Priority;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\PayPalCart;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\ResolutionOption;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Validation\CurrencyMismatch;
@@ -95,12 +96,12 @@ class CurrencyValidator implements ValidatorInterface {
 				)->with(
 					array(
 						'metadata' => array(
-							'priority'          => 'HIGH',
+							'priority'          => Priority::HIGH,
 							'expected_currency' => $store_currency,
 						),
 					)
 				),
-				ResolutionOption::remove_item( 'LOW', array( 'item_index' => $mismatch['index'] ) ),
+				ResolutionOption::remove_item( Priority::LOW, array( 'item_index' => $mismatch['index'] ) ),
 			)
 		);
 	}

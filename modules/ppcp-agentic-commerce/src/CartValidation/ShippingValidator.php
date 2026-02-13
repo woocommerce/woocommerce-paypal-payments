@@ -15,6 +15,7 @@ declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\AgenticCommerce\CartValidation;
 
+use WooCommerce\PayPalCommerce\AgenticCommerce\Enums\Priority;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Helper\ProductManager;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\PayPalCart;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\ResolutionOption;
@@ -77,7 +78,7 @@ class ShippingValidator implements ValidatorInterface {
 				array(),
 				array(
 					ResolutionOption::provide_missing_field( 'address_line_1', 'Provide street address' ),
-					ResolutionOption::update_address( 'Update shipping address', 'LOW' ),
+					ResolutionOption::update_address( 'Update shipping address', Priority::LOW ),
 				)
 			);
 		}
@@ -91,7 +92,7 @@ class ShippingValidator implements ValidatorInterface {
 				array(),
 				array(
 					ResolutionOption::provide_missing_field( 'admin_area_2', 'Provide city' ),
-					ResolutionOption::update_address( 'Update shipping address', 'LOW' ),
+					ResolutionOption::update_address( 'Update shipping address', Priority::LOW ),
 				)
 			);
 		}
@@ -106,7 +107,7 @@ class ShippingValidator implements ValidatorInterface {
 				array(),
 				array(
 					ResolutionOption::provide_missing_field( 'postal_code', 'Provide postal code' ),
-					ResolutionOption::update_address( 'Update shipping address', 'LOW' ),
+					ResolutionOption::update_address( 'Update shipping address', Priority::LOW ),
 				)
 			);
 		} else {
@@ -150,7 +151,7 @@ class ShippingValidator implements ValidatorInterface {
 				'',
 				array(),
 				array(
-					ResolutionOption::update_address( 'Correct the postal code', 'HIGH', array( 'field' => 'postal_code' ) ),
+					ResolutionOption::update_address( 'Correct the postal code', Priority::HIGH, array( 'field' => 'postal_code' ) ),
 				)
 			);
 		}
@@ -187,8 +188,8 @@ class ShippingValidator implements ValidatorInterface {
 			);
 
 			$resolution_options = array(
-				ResolutionOption::update_address( 'Use street address instead', 'HIGH' ),
-				ResolutionOption::remove_item( 'LOW' )->with(
+				ResolutionOption::update_address( 'Use street address instead', Priority::HIGH ),
+				ResolutionOption::remove_item( Priority::LOW )->with(
 					array(
 						'label' => 'Remove items requiring signature',
 					)
@@ -298,7 +299,7 @@ class ShippingValidator implements ValidatorInterface {
 				'',
 				array(),
 				array(
-					ResolutionOption::update_address( 'Use a different shipping country', 'HIGH' ),
+					ResolutionOption::update_address( 'Use a different shipping country', Priority::HIGH ),
 				)
 			);
 		}

@@ -10,6 +10,7 @@ declare( strict_types = 1 );
 namespace WooCommerce\PayPalCommerce\AgenticCommerce\CartValidation;
 
 use WooCommerce\PayPalCommerce\AgenticCommerce\Enums\ErrorCode;
+use WooCommerce\PayPalCommerce\AgenticCommerce\Enums\Priority;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Helper\CartHelper;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Helper\ProductManager;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\PayPalCart;
@@ -119,11 +120,11 @@ class PriceValidator implements ValidatorInterface {
 				sprintf( 'Continue with %s', CartHelper::format_price( (string) $store_price, $cart ) ),
 				array(
 					'cost_impact' => sprintf( '%s%s', $is_increase ? '+' : '-', CartHelper::format_price( (string) abs( $price_difference ), $cart ) ),
-					'priority'    => 'HIGH',
+					'priority'    => Priority::HIGH,
 				)
 			),
 			ResolutionOption::remove_item(
-				'MEDIUM',
+				Priority::MEDIUM,
 				array(
 					'cost_impact' => sprintf( '-%s', CartHelper::format_price( (string) $cart_price->value(), $cart ) ),
 				)

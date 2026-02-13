@@ -10,6 +10,7 @@ declare( strict_types = 1 );
 namespace WooCommerce\PayPalCommerce\AgenticCommerce\CartValidation;
 
 use WooCommerce\PayPalCommerce\AgenticCommerce\Enums\ErrorCode;
+use WooCommerce\PayPalCommerce\AgenticCommerce\Enums\Priority;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Helper\ProductManager;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\PayPalCart;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\CartItem;
@@ -61,7 +62,7 @@ class InventoryValidator implements ValidatorInterface {
 				'',
 				array(),
 				array(
-					ResolutionOption::remove_item( 'HIGH' ),
+					ResolutionOption::remove_item( Priority::HIGH ),
 					ResolutionOption::wait_for_restock(),
 				)
 			);
@@ -85,11 +86,11 @@ class InventoryValidator implements ValidatorInterface {
 					ResolutionOption::modify_cart(
 						sprintf( 'Reduce quantity to %d', $stock_quantity ),
 						array(
-							'priority'     => 'HIGH',
+							'priority'     => Priority::HIGH,
 							'max_quantity' => $stock_quantity,
 						)
 					),
-					ResolutionOption::remove_item( 'LOW' ),
+					ResolutionOption::remove_item( Priority::LOW ),
 				)
 			);
 		}
