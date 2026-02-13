@@ -31,10 +31,10 @@ if (!function_exists('humbug_phpscoper_expose_class')) {
 }
 humbug_phpscoper_expose_class('ComposerAutoloaderInita7bd3b1cdbdc420df68d5eeeaa8be8c8', 'WooCommerce\PayPalCommerce\Vendor\ComposerAutoloaderInita7bd3b1cdbdc420df68d5eeeaa8be8c8');
 humbug_phpscoper_expose_class('Attribute', 'WooCommerce\PayPalCommerce\Vendor\Attribute');
-humbug_phpscoper_expose_class('UnhandledMatchError', 'WooCommerce\PayPalCommerce\Vendor\UnhandledMatchError');
+humbug_phpscoper_expose_class('ValueError', 'WooCommerce\PayPalCommerce\Vendor\ValueError');
 humbug_phpscoper_expose_class('PhpToken', 'WooCommerce\PayPalCommerce\Vendor\PhpToken');
 humbug_phpscoper_expose_class('Stringable', 'WooCommerce\PayPalCommerce\Vendor\Stringable');
-humbug_phpscoper_expose_class('ValueError', 'WooCommerce\PayPalCommerce\Vendor\ValueError');
+humbug_phpscoper_expose_class('UnhandledMatchError', 'WooCommerce\PayPalCommerce\Vendor\UnhandledMatchError');
 
 // Function aliases. For more information see:
 // https://github.com/humbug/php-scoper/blob/master/docs/further-reading.md#function-aliases
