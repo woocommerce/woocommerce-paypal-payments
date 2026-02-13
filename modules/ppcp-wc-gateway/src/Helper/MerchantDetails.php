@@ -15,6 +15,11 @@ namespace WooCommerce\PayPalCommerce\WcGateway\Helper;
 class MerchantDetails {
 
 	/**
+	 * @deprecated Use FeaturesDefinition::FEATURE_SAVE_PAYPAL_AND_VENMO instead.
+	 */
+	public const FEATURE_SAVE_PAYPAL_VENMO = 'save_paypal_venmo';
+
+	/**
 	 * The merchant's country according to PayPal, which might be different from
 	 * the WooCommerce country.
 	 *
