@@ -14,6 +14,7 @@ use WooCommerce\PayPalCommerce\AgenticCommerce\Helper\CartHelper;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Helper\ProductManager;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\PayPalCart;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\CartItem;
+use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\ResolutionOption;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Validation\PriceMismatch;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Validation\ValidationIssue;
 
@@ -114,21 +115,18 @@ class PriceValidator implements ValidatorInterface {
 
 	private function build_resolution_options( $cart_price, float $store_price, float $price_difference, bool $is_increase, PayPalCart $cart ): array {
 		return array(
-			array(
-				'action'   => 'ACCEPT_NEW_PRICE',
-				'label'    => sprintf( 'Continue with %s', CartHelper::format_price( (string) $store_price, $cart ) ),
-				'metadata' => array(
+			ResolutionOption::accept_new_price(
+				sprintf( 'Continue with %s', CartHelper::format_price( (string) $store_price, $cart ) ),
+				array(
 					'cost_impact' => sprintf( '%s%s', $is_increase ? '+' : '-', CartHelper::format_price( (string) abs( $price_difference ), $cart ) ),
-					'priority'    => 'high',
-				),
+					'priority'    => 'HIGH',
+				)
 			),
-			array(
-				'action'   => 'REMOVE_ITEM',
-				'label'    => 'Remove from cart',
-				'metadata' => array(
+			ResolutionOption::remove_item(
+				'MEDIUM',
+				array(
 					'cost_impact' => sprintf( '-%s', CartHelper::format_price( (string) $cart_price->value(), $cart ) ),
-					'priority'    => 'medium',
-				),
+				)
 			),
 		);
 	}
