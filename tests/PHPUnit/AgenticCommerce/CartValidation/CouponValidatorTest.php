@@ -4,8 +4,10 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\AgenticCommerce\CartValidation;
 
 use Mockery;
+use WooCommerce\PayPalCommerce\AgenticCommerce\Enums\Priority;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Helper\ProductManager;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\PayPalCart;
+use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\ResolutionOption;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Validation\CouponInvalid;
 use WooCommerce\PayPalCommerce\AgenticCommerce\CartValidation\CouponValidator\CouponValidator;
 use WooCommerce\PayPalCommerce\AgenticCommerce\CartValidation\CouponValidator\CouponContextBuilder;
@@ -133,11 +135,7 @@ class CouponValidatorTest extends TestCase
 		);
 
 		$resolution_options = array(
-			array(
-				'action' => 'RETRY_REQUEST',
-				'label' => 'Try again',
-				'metadata' => array('priority' => 'high'),
-			),
+			ResolutionOption::apply_different_coupon( 'Try again', Priority::HIGH ),
 		);
 
 		$issue = new CouponInvalid(
@@ -154,7 +152,7 @@ class CouponValidatorTest extends TestCase
 		$this->assertArrayHasKey('context', $data);
 		$this->assertArrayHasKey('resolution_options', $data);
 		$this->assertSame('COUPON_NOT_EXIST', $data['context']['specific_issue']);
-		$this->assertSame('RETRY_REQUEST', $data['resolution_options'][0]['action']);
+		$this->assertSame('APPLY_DIFFERENT_COUPON', $data['resolution_options'][0]['action']);
 	}
 
 	public function test_coupon_invalid_truncates_long_messages(): void

@@ -271,4 +271,61 @@ class ResolutionOption {
 			$metadata
 		);
 	}
+
+	/**
+	 * Factory: Remove coupon from cart.
+	 *
+	 * @param string $label    Optional. Custom label.
+	 * @param string $priority Optional. Priority level from Priority class constants.
+	 * @param array  $metadata Optional. Additional metadata.
+	 * @return self
+	 */
+	public static function remove_coupon( string $label = 'Continue without coupon', string $priority = Priority::MEDIUM, array $metadata = array() ): self {
+		$metadata['priority'] = $priority;
+
+		return new self(
+			ResolutionAction::REMOVE_COUPON,
+			$label,
+			'',
+			$metadata
+		);
+	}
+
+	/**
+	 * Factory: Apply a different coupon.
+	 *
+	 * @param string $label    Action description.
+	 * @param string $priority Optional. Priority level from Priority class constants.
+	 * @param array  $metadata Optional. Additional metadata.
+	 * @return self
+	 */
+	public static function apply_different_coupon( string $label, string $priority = Priority::MEDIUM, array $metadata = array() ): self {
+		$metadata['priority'] = $priority;
+
+		return new self(
+			ResolutionAction::APPLY_DIFFERENT_COUPON,
+			$label,
+			'',
+			$metadata
+		);
+	}
+
+	/**
+	 * Factory: Keep current coupon (for stacking conflicts).
+	 *
+	 * @param string $label    Action description.
+	 * @param string $priority Optional. Priority level from Priority class constants.
+	 * @param array  $metadata Optional. Additional metadata.
+	 * @return self
+	 */
+	public static function keep_current_coupon( string $label, string $priority = Priority::HIGH, array $metadata = array() ): self {
+		$metadata['priority'] = $priority;
+
+		return new self(
+			ResolutionAction::KEEP_CURRENT_COUPON,
+			$label,
+			'',
+			$metadata
+		);
+	}
 }
