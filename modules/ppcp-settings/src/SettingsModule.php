@@ -227,10 +227,6 @@ class SettingsModule implements ServiceModule, ExecutableModule
             $this->render_content();
         });
         add_action('rest_api_init', static function () use ($container): void {
-            global $pagenow;
-            if (isset($pagenow) && 'update.php' === $pagenow) {
-                return;
-            }
             $endpoints = array('onboarding' => $container->get('settings.rest.onboarding'), 'common' => $container->get('settings.rest.common'), 'connect_manual' => $container->get('settings.rest.authentication'), 'login_link' => $container->get('settings.rest.login_link'), 'webhooks' => $container->get('settings.rest.webhooks'), 'refresh_feature_status' => $container->get('settings.rest.refresh_feature_status'), 'payment' => $container->get('settings.rest.payment'), 'settings' => $container->get('settings.rest.settings'), 'styling' => $container->get('settings.rest.styling'), 'todos' => $container->get('settings.rest.todos'), 'pay_later_messaging' => $container->get('settings.rest.pay_later_messaging'), 'features' => $container->get('settings.rest.features'));
             foreach ($endpoints as $endpoint) {
                 assert($endpoint instanceof RestEndpoint);

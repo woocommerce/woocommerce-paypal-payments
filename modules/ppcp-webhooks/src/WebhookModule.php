@@ -53,10 +53,6 @@ class WebhookModule implements ServiceModule, FactoryModule, ExtendingModule, Ex
     public function run(ContainerInterface $container): bool
     {
         add_action('rest_api_init', static function () use ($container) {
-            global $pagenow;
-            if (isset($pagenow) && 'update.php' === $pagenow) {
-                return;
-            }
             $endpoint = $container->get('webhook.endpoint.controller');
             /**
              * The Incoming Webhook Endpoint.

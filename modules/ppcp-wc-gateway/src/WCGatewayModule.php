@@ -412,10 +412,6 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
             return $features;
         });
         add_action('rest_api_init', static function () use ($c) {
-            global $pagenow;
-            if (isset($pagenow) && 'update.php' === $pagenow) {
-                return;
-            }
             $endpoint = $c->get('wcgateway.shipping.callback.endpoint');
             assert($endpoint instanceof ShippingCallbackEndpoint);
             $endpoint->register();
