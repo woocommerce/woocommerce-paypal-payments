@@ -1,150 +1,130 @@
 <?php
+
 /**
  * PayPal Cart, core (input) data.
  *
  * @package WooCommerce\PayPalCommerce\AgenticCommerce\Schema
  */
-
-declare( strict_types = 1 );
-
+declare (strict_types=1);
 namespace WooCommerce\PayPalCommerce\AgenticCommerce\Schema;
 
 use WooCommerce\PayPalCommerce\AgenticCommerce\Validation\MissingField;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Validation\InvalidData;
-
-class PayPalCart extends AgenticSchema {
-	/**
-	 * @var CartItem[] List of items in the cart.
-	 */
-	private array $items = array();
-
-	private ?PaymentMethod $payment_method = null;
-
-	private ?Customer $customer = null;
-
-	private ?Address $shipping_address = null;
-
-	private ?Address $billing_address = null;
-
-	private ?GeoCoordinates $geo_coordinates = null;
-
-	/**
-	 * @var CheckoutField[]|null
-	 */
-	private ?array $checkout_fields = null;
-
-	/**
-	 * @var Coupon[]|null
-	 */
-	private ?array $coupons = null;
-
-	protected function parse_fields( array $input, callable $add_issue ): void {
-		// Reset all fields.
-		$this->items            = array();
-		$this->payment_method   = null;
-		$this->customer         = null;
-		$this->shipping_address = null;
-		$this->billing_address  = null;
-		$this->geo_coordinates  = null;
-		$this->checkout_fields  = null;
-		$this->coupons          = null;
-
-		// Parse mandatory fields.
-		if ( ! empty( $input['items'] ) && is_array( $input['items'] ) ) {
-			$items = $input['items'];
-
-			if ( count( $items ) > 100 ) {
-				$add_issue( new InvalidData( 'Too many items', 'The cart cannot hold more than 100 items', 'items' ) );
-			} else {
-				foreach ( $items as $item ) {
-					if ( is_object( $item ) ) {
-						$item = (array) $item;
-					}
-					if ( ! is_array( $item ) ) {
-						continue;
-					}
-
-					$this->items[] = CartItem::from_array( $item, $add_issue );
-				}
-			}
-		} else {
-			$add_issue( new MissingField( 'Required field missing', 'Please provide a list of cart items.', 'items' ) );
-		}
-
-		if ( ! empty( $input['payment_method'] ) && is_array( $input['payment_method'] ) ) {
-			$this->payment_method = PaymentMethod::from_array( $input['payment_method'], $add_issue );
-		} else {
-			$add_issue( new MissingField( 'Required field missing', 'No payment_method defined.', 'payment_method' ) );
-		}
-
-		// Parse optional fields.
-		if ( ! empty( $input['customer'] ) && is_array( $input['customer'] ) ) {
-			$this->customer = Customer::from_array( $input['customer'], $add_issue );
-		}
-
-		if ( ! empty( $input['shipping_address'] ) && is_array( $input['shipping_address'] ) ) {
-			$this->shipping_address = Address::from_array( $input['shipping_address'], $add_issue );
-		}
-
-		if ( ! empty( $input['billing_address'] ) && is_array( $input['billing_address'] ) ) {
-			$this->billing_address = Address::from_array( $input['billing_address'], $add_issue );
-		}
-
-		if ( ! empty( $input['geo_coordinates'] ) && is_array( $input['geo_coordinates'] ) ) {
-			$this->geo_coordinates = GeoCoordinates::from_array( $input['geo_coordinates'], $add_issue );
-		}
-
-		if ( isset( $input['checkout_fields'] ) && is_array( $input['checkout_fields'] ) ) {
-			$checkout_fields       = $input['checkout_fields'];
-			$this->checkout_fields = array();
-
-			if ( count( $checkout_fields ) > 20 ) {
-				$add_issue( new InvalidData( 'Too many checkout fields', 'The cart cannot hold more than 20 checkout fields', 'checkout_fields' ) );
-			} else {
-				foreach ( $checkout_fields as $field ) {
-					$this->checkout_fields[] = CheckoutField::from_array( $field, $add_issue );
-				}
-			}
-		}
-
-		if ( isset( $input['coupons'] ) && is_array( $input['coupons'] ) ) {
-			$this->coupons = array();
-
-			foreach ( $input['coupons'] as $coupon ) {
-				$this->coupons[] = Coupon::from_array( $coupon, $add_issue );
-			}
-		}
-	}
-
-	public function items(): array {
-		return $this->items;
-	}
-
-	public function payment_method(): ?PaymentMethod {
-		return $this->payment_method;
-	}
-
-	public function customer(): ?Customer {
-		return $this->customer;
-	}
-
-	public function shipping_address(): ?Address {
-		return $this->shipping_address;
-	}
-
-	public function billing_address(): ?Address {
-		return $this->billing_address;
-	}
-
-	public function geo_coordinates(): ?GeoCoordinates {
-		return $this->geo_coordinates;
-	}
-
-	public function checkout_fields(): ?array {
-		return $this->checkout_fields;
-	}
-
-	public function coupons(): ?array {
-		return $this->coupons;
-	}
+class PayPalCart extends \WooCommerce\PayPalCommerce\AgenticCommerce\Schema\AgenticSchema
+{
+    /**
+     * @var CartItem[] List of items in the cart.
+     */
+    private array $items = array();
+    private ?\WooCommerce\PayPalCommerce\AgenticCommerce\Schema\PaymentMethod $payment_method = null;
+    private ?\WooCommerce\PayPalCommerce\AgenticCommerce\Schema\Customer $customer = null;
+    private ?\WooCommerce\PayPalCommerce\AgenticCommerce\Schema\Address $shipping_address = null;
+    private ?\WooCommerce\PayPalCommerce\AgenticCommerce\Schema\Address $billing_address = null;
+    private ?\WooCommerce\PayPalCommerce\AgenticCommerce\Schema\GeoCoordinates $geo_coordinates = null;
+    /**
+     * @var CheckoutField[]|null
+     */
+    private ?array $checkout_fields = null;
+    /**
+     * @var Coupon[]|null
+     */
+    private ?array $coupons = null;
+    protected function parse_fields(array $input, callable $add_issue): void
+    {
+        // Reset all fields.
+        $this->items = array();
+        $this->payment_method = null;
+        $this->customer = null;
+        $this->shipping_address = null;
+        $this->billing_address = null;
+        $this->geo_coordinates = null;
+        $this->checkout_fields = null;
+        $this->coupons = null;
+        // Parse mandatory fields.
+        if (!empty($input['items']) && is_array($input['items'])) {
+            $items = $input['items'];
+            if (count($items) > 100) {
+                $add_issue(new InvalidData('Too many items', 'The cart cannot hold more than 100 items', 'items'));
+            } else {
+                foreach ($items as $item) {
+                    if (is_object($item)) {
+                        $item = (array) $item;
+                    }
+                    if (!is_array($item)) {
+                        continue;
+                    }
+                    $this->items[] = \WooCommerce\PayPalCommerce\AgenticCommerce\Schema\CartItem::from_array($item, $add_issue);
+                }
+            }
+        } else {
+            $add_issue(new MissingField('Required field missing', 'Please provide a list of cart items.', 'items'));
+        }
+        if (!empty($input['payment_method']) && is_array($input['payment_method'])) {
+            $this->payment_method = \WooCommerce\PayPalCommerce\AgenticCommerce\Schema\PaymentMethod::from_array($input['payment_method'], $add_issue);
+        } else {
+            $add_issue(new MissingField('Required field missing', 'No payment_method defined.', 'payment_method'));
+        }
+        // Parse optional fields.
+        if (!empty($input['customer']) && is_array($input['customer'])) {
+            $this->customer = \WooCommerce\PayPalCommerce\AgenticCommerce\Schema\Customer::from_array($input['customer'], $add_issue);
+        }
+        if (!empty($input['shipping_address']) && is_array($input['shipping_address'])) {
+            $this->shipping_address = \WooCommerce\PayPalCommerce\AgenticCommerce\Schema\Address::from_array($input['shipping_address'], $add_issue);
+        }
+        if (!empty($input['billing_address']) && is_array($input['billing_address'])) {
+            $this->billing_address = \WooCommerce\PayPalCommerce\AgenticCommerce\Schema\Address::from_array($input['billing_address'], $add_issue);
+        }
+        if (!empty($input['geo_coordinates']) && is_array($input['geo_coordinates'])) {
+            $this->geo_coordinates = \WooCommerce\PayPalCommerce\AgenticCommerce\Schema\GeoCoordinates::from_array($input['geo_coordinates'], $add_issue);
+        }
+        if (isset($input['checkout_fields']) && is_array($input['checkout_fields'])) {
+            $checkout_fields = $input['checkout_fields'];
+            $this->checkout_fields = array();
+            if (count($checkout_fields) > 20) {
+                $add_issue(new InvalidData('Too many checkout fields', 'The cart cannot hold more than 20 checkout fields', 'checkout_fields'));
+            } else {
+                foreach ($checkout_fields as $field) {
+                    $this->checkout_fields[] = \WooCommerce\PayPalCommerce\AgenticCommerce\Schema\CheckoutField::from_array($field, $add_issue);
+                }
+            }
+        }
+        if (isset($input['coupons']) && is_array($input['coupons'])) {
+            $this->coupons = array();
+            foreach ($input['coupons'] as $coupon) {
+                $this->coupons[] = \WooCommerce\PayPalCommerce\AgenticCommerce\Schema\Coupon::from_array($coupon, $add_issue);
+            }
+        }
+    }
+    public function items(): array
+    {
+        return $this->items;
+    }
+    public function payment_method(): ?\WooCommerce\PayPalCommerce\AgenticCommerce\Schema\PaymentMethod
+    {
+        return $this->payment_method;
+    }
+    public function customer(): ?\WooCommerce\PayPalCommerce\AgenticCommerce\Schema\Customer
+    {
+        return $this->customer;
+    }
+    public function shipping_address(): ?\WooCommerce\PayPalCommerce\AgenticCommerce\Schema\Address
+    {
+        return $this->shipping_address;
+    }
+    public function billing_address(): ?\WooCommerce\PayPalCommerce\AgenticCommerce\Schema\Address
+    {
+        return $this->billing_address;
+    }
+    public function geo_coordinates(): ?\WooCommerce\PayPalCommerce\AgenticCommerce\Schema\GeoCoordinates
+    {
+        return $this->geo_coordinates;
+    }
+    public function checkout_fields(): ?array
+    {
+        return $this->checkout_fields;
+    }
+    public function coupons(): ?array
+    {
+        return $this->coupons;
+    }
 }
