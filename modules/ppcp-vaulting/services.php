@@ -13,9 +13,9 @@ use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 
 return array(
 	'vaulting.repository.payment-token'   => static function ( ContainerInterface $container ): PaymentTokenRepository {
-		$factory  = $container->get( 'api.factory.payment-token' );
-		$endpoint = $container->get( 'vault-v2.endpoint.payment-token' );
-		return new PaymentTokenRepository( $factory, $endpoint );
+		return new PaymentTokenRepository(
+			$container->get( 'vault-v2.endpoint.payment-token' )
+		);
 	},
 	'vaulting.customer-approval-listener' => function ( ContainerInterface $container ): CustomerApprovalListener {
 		return new CustomerApprovalListener(

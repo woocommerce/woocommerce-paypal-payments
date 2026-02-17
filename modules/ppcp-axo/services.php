@@ -75,13 +75,9 @@ return array(
 		return new AxoManager(
 			$container->get( 'axo.asset_getter' ),
 			$container->get( 'ppcp.asset-version' ),
-			$container->get( 'session.handler' ),
 			$container->get( 'settings.settings-provider' ),
 			$container->get( 'settings.environment' ),
 			$container->get( 'axo.insights' ),
-			$container->get( 'wcgateway.settings.status' ),
-			$container->get( 'api.shop.currency.getter' ),
-			$container->get( 'woocommerce.logger.woocommerce' ),
 			$container->get( 'wcgateway.asset_getter' ),
 			$container->get( 'axo.supported-country-card-type-matrix' )
 		);
@@ -129,7 +125,7 @@ return array(
 				'currency_code' => $currency->get(),
 			),
 			'payment_method_selected_map' => $container->get( 'axo.payment_method_selected_map' ),
-			'wp_debug'                    => defined( 'WP_DEBUG' ) && WP_DEBUG,
+			'wp_debug'                    => defined( 'WP_DEBUG' ) && WP_DEBUG, // @phpstan-ignore booleanAnd.rightAlwaysFalse
 		);
 	},
 

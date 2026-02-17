@@ -1,9 +1,4 @@
 <?php
-/**
- * The Capture Card Payment endpoint.
- *
- * @package WooCommerce\PayPalCommerce\ApiClient\Endpoint
- */
 
 declare(strict_types=1);
 
@@ -13,15 +8,12 @@ use Psr\Log\LoggerInterface;
 use RuntimeException;
 use WC_Order;
 use WooCommerce\PayPalCommerce\ApiClient\Authentication\Bearer;
-use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\RequestTrait;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PurchaseUnit;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\OrderFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PurchaseUnitFactory;
-use WooCommerce\PayPalCommerce\Session\SessionHandler;
 use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
-use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\RealTimeAccountUpdaterHelper;
 use WP_Error;
 
 class CaptureCardPayment {
@@ -56,27 +48,6 @@ class CaptureCardPayment {
 	 */
 	private $purchase_unit_factory;
 
-	/**
-	 * The order endpoint.
-	 *
-	 * @var OrderEndpoint
-	 */
-	private $order_endpoint;
-
-	/**
-	 * The session handler.
-	 *
-	 * @var SessionHandler
-	 */
-	private $session_handler;
-
-	/**
-	 * Real Time Account Updater helper.
-	 *
-	 * @var RealTimeAccountUpdaterHelper
-	 */
-	private $real_time_account_updater_helper;
-
 	private SettingsProvider $settings_provider;
 
 	/**
@@ -91,21 +62,15 @@ class CaptureCardPayment {
 		Bearer $bearer,
 		OrderFactory $order_factory,
 		PurchaseUnitFactory $purchase_unit_factory,
-		OrderEndpoint $order_endpoint,
-		SessionHandler $session_handler,
-		RealTimeAccountUpdaterHelper $real_time_account_updater_helper,
 		SettingsProvider $settings_provider,
 		LoggerInterface $logger
 	) {
-		$this->host                             = $host;
-		$this->bearer                           = $bearer;
-		$this->order_factory                    = $order_factory;
-		$this->purchase_unit_factory            = $purchase_unit_factory;
-		$this->order_endpoint                   = $order_endpoint;
-		$this->session_handler                  = $session_handler;
-		$this->real_time_account_updater_helper = $real_time_account_updater_helper;
+		$this->host                  = $host;
+		$this->bearer                = $bearer;
+		$this->order_factory         = $order_factory;
+		$this->purchase_unit_factory = $purchase_unit_factory;
 		$this->settings_provider                = $settings_provider;
-		$this->logger                           = $logger;
+		$this->logger                = $logger;
 	}
 
 	/**

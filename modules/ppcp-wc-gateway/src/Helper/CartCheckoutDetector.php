@@ -38,6 +38,7 @@ class CartCheckoutDetector {
 			$widgets_list = array();
 
 			foreach ( $output_array as $found ) {
+				/** @phpstan-ignore isset.offset */
 				if ( ! isset( $found[1] ) ) {
 					continue;
 				}

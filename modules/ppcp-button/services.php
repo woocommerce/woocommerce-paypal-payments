@@ -61,7 +61,7 @@ return array(
 		 * @var Environment $env
 		 */
 
-		return $env->current_environment_is( Environment::SANDBOX ) ?
+		return $env->is_sandbox() ?
 			CONNECT_WOO_SANDBOX_CLIENT_ID : CONNECT_WOO_CLIENT_ID;
 	},
 	'button.client_id_for_admin'                  => static function ( ContainerInterface $container ): string {
@@ -147,8 +147,6 @@ return array(
 			$container->get( 'button.pay-now-contexts' ),
 			$container->get( 'wcgateway.funding-sources-without-redirect' ),
 			$container->get( 'vaulting.vault-v3-enabled' ),
-			$container->get( 'api.endpoint.payment-tokens' ),
-			$container->get( 'woocommerce.logger.woocommerce' ),
 			$container->get( 'button.handle-shipping-in-paypal' ),
 			$container->get( 'wcgateway.server-side-shipping-callback-enabled' ),
 			$container->get( 'wcgateway.appswitch-enabled' ),

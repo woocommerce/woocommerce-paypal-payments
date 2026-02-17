@@ -115,6 +115,7 @@ class GooglepayModule implements ServiceModule, ExecutableModule {
 							 * Should add this to the ButtonInterface.
 							 *
 							 * @psalm-suppress UndefinedInterfaceMethod
+							 * @phpstan-ignore method.notFound
 							 */
 							$button->enqueue_styles();
 						}
@@ -133,6 +134,7 @@ class GooglepayModule implements ServiceModule, ExecutableModule {
 						 * Should add this to the ButtonInterface.
 						 *
 						 * @psalm-suppress UndefinedInterfaceMethod
+						 * @phpstan-ignore method.notFound
 						 */
 						$button->enqueue_admin();
 					}
@@ -149,7 +151,7 @@ class GooglepayModule implements ServiceModule, ExecutableModule {
 				// Adds GooglePay component to the backend button preview settings.
 				add_action(
 					'woocommerce_paypal_payments_admin_gateway_settings',
-					function ( array $settings ) use ( $c ): array {
+					function ( array $settings ): array {
 						if ( is_array( $settings['components'] ) ) {
 							$settings['components'][] = 'googlepay';
 						}
@@ -177,7 +179,7 @@ class GooglepayModule implements ServiceModule, ExecutableModule {
 			 *
 			 * @psalm-suppress MissingClosureParamType
 			 */
-			static function ( $methods ) use ( $c ): array {
+			static function ( $methods ) use ( $c ) {
 				if ( ! is_array( $methods ) ) {
 					return $methods;
 				}

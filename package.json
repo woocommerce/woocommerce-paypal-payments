@@ -19,9 +19,9 @@
     "test": "npm run unit-tests && npm run integration-tests",
     "tdd": "sh -c 'vendor/bin/phpunit --stop-on-failure -v ${1:+--filter $@}' --",
     "tdd:integration": "sh -c 'vendor/bin/phpunit -c tests/integration/phpunit.xml.dist --stop-on-failure -v ${1:+--filter $@}' --",
-    "lint": "npm run phpcs && npm run psalm",
+    "lint": "npm run phpcs && npm run phpstan",
     "phpcs": "vendor/bin/phpcs --parallel=8 -s --runtime-set ignore_warnings_on_exit 1",
-    "psalm": "vendor/bin/psalm --show-info=false --threads=8 --diff",
+    "phpstan": "vendor/bin/phpstan analyze --memory-limit=2G",
     "fix-lint": "vendor/bin/phpcbf",
     "build": "wp-scripts build",
     "watch-js": "wp-scripts start"

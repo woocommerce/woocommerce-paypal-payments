@@ -36,7 +36,7 @@ return array(
 		 *
 		 * @var Environment $environment
 		 */
-		return $environment->current_environment_is( Environment::SANDBOX ) ?
+		return $environment->is_sandbox() ?
 			(string) $container->get( 'api.partner_merchant_id-sandbox' ) : (string) $container->get( 'api.partner_merchant_id-production' );
 	},
 	'api.key'                        => static function ( string $previous, ContainerInterface $container ): string {

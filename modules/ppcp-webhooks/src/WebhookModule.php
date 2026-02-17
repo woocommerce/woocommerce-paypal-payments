@@ -60,11 +60,7 @@ class WebhookModule implements ServiceModule, FactoryModule, ExecutableModule {
 			WebhookRegistrar::EVENT_HOOK,
 			static function () use ( $container ) {
 				$registrar = $container->get( 'webhook.registrar' );
-				/**
-				 * The Webhook Registrar.
-				 *
-				 * @var WebhookRegistrar $endpoint
-				 */
+				assert( $registrar instanceof WebhookRegistrar );
 				$registrar->register();
 			}
 		);
@@ -73,11 +69,7 @@ class WebhookModule implements ServiceModule, FactoryModule, ExecutableModule {
 			'woocommerce_paypal_payments_gateway_deactivate',
 			static function () use ( $container ) {
 				$registrar = $container->get( 'webhook.registrar' );
-				/**
-				 * The Webhook Registrar.
-				 *
-				 * @var WebhookRegistrar $endpoint
-				 */
+				assert( $registrar instanceof WebhookRegistrar );
 				$registrar->unregister();
 			}
 		);

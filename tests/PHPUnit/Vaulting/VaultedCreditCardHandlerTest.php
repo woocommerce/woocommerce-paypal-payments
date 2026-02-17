@@ -124,6 +124,7 @@ class VaultedCreditCardHandlerTest extends TestCase
 			->with([$purchaseUnit], 'some_preference', $payer, '', array(), $requestPaymentSource)
 			->andReturn($order);
 
+		$this->environment->shouldReceive('is_sandbox')->andReturn(false);
 		$this->environment->shouldReceive('current_environment_is')->andReturn(true);
 
 		$this->settingsProvider->shouldReceive('authorize_only')->andReturn(false);

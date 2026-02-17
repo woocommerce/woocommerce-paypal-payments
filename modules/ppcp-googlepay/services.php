@@ -229,8 +229,7 @@ return array(
 	'googlepay.enable-url-live'              => static function ( ContainerInterface $container ): string {
 		return 'https://www.paypal.com/bizsignup/add-product?product=payment_methods&capabilities=GOOGLE_PAY';
 	},
-
-	'googlepay.wc-gateway'                   => static function ( ContainerInterface $container ): GooglePayGateway {
+	'googlepay.wc-gateway'                      => static function ( ContainerInterface $container ): GooglePayGateway {
 		return new GooglePayGateway(
 			$container->get( 'wcgateway.order-processor' ),
 			$container->get( 'api.factory.paypal-checkout-url' ),

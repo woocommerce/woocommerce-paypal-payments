@@ -99,7 +99,7 @@ class SettingsPageAssets {
 	 */
 	private $is_acdc_enabled;
 
-	private $reference_transaction_status;
+	private ReferenceTransactionStatus $reference_transaction_status;
 
 	/**
 	 * Whether we're on a settings page for our plugin's payment methods.

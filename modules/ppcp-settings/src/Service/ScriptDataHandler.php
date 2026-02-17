@@ -196,7 +196,7 @@ class ScriptDataHandler {
 			),
 			'wcPaymentsTabUrl'                    => admin_url( 'admin.php?page=wc-settings&tab=checkout' ),
 			'pluginSettingsUrl'                   => admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway' ),
-			'debug'                               => defined( 'WP_DEBUG' ) && WP_DEBUG,
+			'debug'                               => defined( 'WP_DEBUG' ) && WP_DEBUG, // @phpstan-ignore booleanAnd.rightAlwaysFalse
 			'isPayLaterConfiguratorAvailable'     => $is_pay_later_configurator_available,
 			'storeCountry'                        => $this->store_country,
 			'storePostcode'                       => get_option( 'woocommerce_store_postcode', '' ),

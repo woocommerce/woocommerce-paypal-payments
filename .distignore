@@ -8,7 +8,7 @@
 .phpstorm*
 .idea*
 *.env*
-.psalm*
+stubs/
 tests*
 *.xml*
 .phpunit.result.cache
@@ -23,6 +23,7 @@ ngrok.yml
 composer.json
 package.json
 package-lock.json
+phpstan*
 .composer_compiled_assets
 assets-compiler.json
 patchwork.json

@@ -124,7 +124,7 @@ class ApplepayModule implements ServiceModule, ExecutableModule {
 			 *
 			 * @psalm-suppress MissingClosureParamType
 			 */
-			static function ( $methods ) use ( $c ): array {
+			static function ( $methods ) use ( $c ) {
 				if ( ! is_array( $methods ) ) {
 					return $methods;
 				}
@@ -290,7 +290,7 @@ class ApplepayModule implements ServiceModule, ExecutableModule {
 		);
 		add_action(
 			'enqueue_block_editor_assets',
-			function () use ( $c, $button ) {
+			function () use ( $button ) {
 				if ( ! $button->is_enabled() ) {
 					return;
 				}
@@ -335,7 +335,7 @@ class ApplepayModule implements ServiceModule, ExecutableModule {
 		// Adds ApplePay component to the backend button preview settings.
 		add_action(
 			'woocommerce_paypal_payments_admin_gateway_settings',
-			function ( array $settings ) use ( $c ): array {
+			function ( array $settings ): array {
 				if ( is_array( $settings['components'] ) ) {
 					$settings['components'][] = 'applepay';
 				}
@@ -355,7 +355,7 @@ class ApplepayModule implements ServiceModule, ExecutableModule {
 		// Enqueue backend scripts.
 		add_action(
 			'enqueue_block_editor_assets',
-			static function () use ( $c, $button ) {
+			static function () use ( $button ) {
 				/**
 				 * Should add this to the ButtonInterface.
 				 *
@@ -408,7 +408,7 @@ class ApplepayModule implements ServiceModule, ExecutableModule {
 	public function handle_validation_file( ContainerInterface $c, ApplePayButton $button ): void {
 		$env = $c->get( 'settings.environment' );
 		assert( $env instanceof Environment );
-		$is_sandbox = $env->current_environment_is( Environment::SANDBOX );
+		$is_sandbox = $env->is_sandbox();
 		$this->load_domain_association_file( $is_sandbox );
 	}
 

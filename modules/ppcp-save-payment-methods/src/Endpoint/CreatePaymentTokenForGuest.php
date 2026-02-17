@@ -62,10 +62,9 @@ class CreatePaymentTokenForGuest implements EndpointInterface {
 	/**
 	 * Handles the request.
 	 *
-	 * @return bool
 	 * @throws Exception On Error.
 	 */
-	public function handle_request(): bool {
+	public function handle_request(): void {
 		$data = $this->request_data->read_request( $this->nonce() );
 
 		/**
@@ -85,6 +84,5 @@ class CreatePaymentTokenForGuest implements EndpointInterface {
 		WC()->session->set( 'ppcp_guest_payment_for_free_trial', $result );
 
 		wp_send_json_success();
-		return true;
 	}
 }

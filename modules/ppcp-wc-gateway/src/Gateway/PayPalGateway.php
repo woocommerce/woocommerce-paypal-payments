@@ -170,7 +170,8 @@ class PayPalGateway extends \WC_Payment_Gateway {
 	/**
 	 * Set if the place order button should be renamed on selection.
 	 *
-	 * @var string
+	 * @var string|null
+	 * @phpstan-ignore property.phpDocType
 	 */
 	public $order_button_text;
 
@@ -187,6 +188,7 @@ class PayPalGateway extends \WC_Payment_Gateway {
 	 * @param PaymentTokenRepository   $payment_token_repository The payment token repository.
 	 * @param LoggerInterface          $logger The logger.
 	 * @param string                   $api_shop_country The api shop country.
+	 * @param OrderEndpoint            $order_endpoint The order endpoint.
 	 * @param callable(string):string  $paypal_checkout_url_factory The function return the PayPal checkout URL for the given order ID.
 	 * @param string                   $place_order_button_text The text for the standard "Place order" button.
 	 * @param PaymentTokensEndpoint    $payment_tokens_endpoint Payment tokens endpoint.
@@ -208,6 +210,7 @@ class PayPalGateway extends \WC_Payment_Gateway {
 		PaymentTokenRepository $payment_token_repository,
 		LoggerInterface $logger,
 		string $api_shop_country,
+		OrderEndpoint $order_endpoint,
 		callable $paypal_checkout_url_factory,
 		string $place_order_button_text,
 		PaymentTokensEndpoint $payment_tokens_endpoint,
@@ -231,6 +234,7 @@ class PayPalGateway extends \WC_Payment_Gateway {
 		$this->api_shop_country            = $api_shop_country;
 		$this->paypal_checkout_url_factory = $paypal_checkout_url_factory;
 		$this->order_button_text           = $place_order_button_text;
+		$this->order_endpoint              = $order_endpoint;
 		$this->payment_tokens_endpoint     = $payment_tokens_endpoint;
 		$this->vault_v3_enabled            = $vault_v3_enabled;
 		$this->wc_payment_tokens           = $wc_payment_tokens;
@@ -385,7 +389,7 @@ class PayPalGateway extends \WC_Payment_Gateway {
 	 */
 	public function process_payment( $order_id ): array {
 		$wc_order = wc_get_order( $order_id );
-		if ( ! is_a( $wc_order, WC_Order::class ) ) {
+		if ( ! ( $wc_order instanceof WC_Order ) ) {
 			return $this->handle_payment_failure(
 				null,
 				new GatewayGenericException( new Exception( 'WC order was not found.' ) )
@@ -406,7 +410,7 @@ class PayPalGateway extends \WC_Payment_Gateway {
 			&& ! $this->subscription_helper->paypal_subscription_id()
 		) {
 			$ppcp_guest_payment_for_free_trial = WC()->session->get( 'ppcp_guest_payment_for_free_trial' ) ?? null;
-			if ( $this->vault_v3_enabled && $ppcp_guest_payment_for_free_trial ) {
+			if ( $this->vault_v3_enabled && is_object( $ppcp_guest_payment_for_free_trial ) ) {
 				$customer_id = $ppcp_guest_payment_for_free_trial->customer->id ?? '';
 				if ( $customer_id ) {
 					update_user_meta( $wc_order->get_customer_id(), '_ppcp_target_customer_id', $customer_id );
@@ -512,7 +516,7 @@ class PayPalGateway extends \WC_Payment_Gateway {
 
 				$wc_order->update_status(
 					'failed',
-					$retry_keys_messages[ $retry_error_key ] . ' ' . $error->details()[0]->description ?? ''
+					$retry_keys_messages[ $retry_error_key ] . ' ' . ( $error->details()[0]->description ?? '' )
 				);
 
 				$this->session_handler->increment_insufficient_funding_tries();
@@ -558,7 +562,7 @@ class PayPalGateway extends \WC_Payment_Gateway {
 	 */
 	public function process_refund( $order_id, $amount = null, $reason = '' ): bool {
 		$order = wc_get_order( $order_id );
-		if ( ! is_a( $order, \WC_Order::class ) ) {
+		if ( ! ( $order instanceof \WC_Order ) ) {
 			return false;
 		}
 		return $this->refund_processor->process( $order, (float) $amount, (string) $reason );
