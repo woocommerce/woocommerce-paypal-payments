@@ -456,8 +456,8 @@ $services = array(
 			$axo_notices
 		);
 	},
-	'settings.data.definition.method_dependencies'        => static function ( ContainerInterface $container ): PaymentMethodsDependenciesDefinition {
-		return new PaymentMethodsDependenciesDefinition( $container->get( 'wcgateway.settings' ) );
+	'settings.data.definition.method_dependencies'        => static function (): PaymentMethodsDependenciesDefinition {
+		return new PaymentMethodsDependenciesDefinition();
 	},
 	'settings.service.pay_later_status'                   => static function ( ContainerInterface $container ): array {
 		$pay_later_endpoint = $container->get( 'settings.rest.pay_later_messaging' );

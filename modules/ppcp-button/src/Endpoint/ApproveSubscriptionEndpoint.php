@@ -112,10 +112,9 @@ class ApproveSubscriptionEndpoint implements EndpointInterface {
 	/**
 	 * Handles the request.
 	 *
-	 * @return bool
 	 * @throws RuntimeException When order not found or handling failed.
 	 */
-	public function handle_request(): bool {
+	public function handle_request(): void {
 		$data = $this->request_data->read_request( $this->nonce() );
 		if ( ! isset( $data['order_id'] ) ) {
 			throw new RuntimeException( 'No order id given' );
@@ -138,6 +137,5 @@ class ApproveSubscriptionEndpoint implements EndpointInterface {
 		}
 
 		wp_send_json_success();
-		return true;
 	}
 }

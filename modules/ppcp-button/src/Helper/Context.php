@@ -56,7 +56,7 @@ class Context {
 		);
 
 		// Activate is_cart() on woocommerce/classic-shortcode cart blocks.
-		if ( ! is_cart() && is_callable( 'wc_maybe_define_constant' ) ) {
+		if ( ! is_cart() && is_callable( 'wc_maybe_define_constant' ) ) { // @phpstan-ignore function.alreadyNarrowedType
 			if ( has_block( 'woocommerce/classic-shortcode' ) ) {
 				$classic_block = $this->find_classic_shortcode_block();
 				$type          = $classic_block['attrs']['shortcode'] ?? '';

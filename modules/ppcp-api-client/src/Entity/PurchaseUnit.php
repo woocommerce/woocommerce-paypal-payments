@@ -131,17 +131,13 @@ class PurchaseUnit {
 		$this->reference_id = $reference_id;
 		$this->description  = $description;
         //phpcs:disable Inpsyde.CodeQuality.ArgumentTypeDeclaration.NoArgumentType
-		$this->items           = array_values(
+		$this->items              = array_values(
 			array_filter(
 				$items,
 				function ( $item ): bool {
-					$is_item = is_a( $item, Item::class );
-					/**
-					 * The item.
-					 *
-					 * @var Item $item
-					 */
-					if ( $is_item && Item::PHYSICAL_GOODS === $item->category() ) {
+					$is_item = $item instanceof Item; // @phpstan-ignore instanceof.alwaysTrue
+
+					if ( $is_item && Item::PHYSICAL_GOODS === $item->category() ) { // @phpstan-ignore booleanAnd.leftAlwaysTrue
 						$this->contains_physical_goods = true;
 					}
 

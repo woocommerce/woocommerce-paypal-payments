@@ -52,7 +52,7 @@ class RenewalHandler {
 				$subscription->update_status( 'on-hold' );
 
 				$renewal_order = wcs_create_renewal_order( $subscription );
-				if ( is_a( $renewal_order, WC_Order::class ) ) {
+				if ( $renewal_order instanceof WC_Order ) {
 					$this->logger->info(
 						sprintf(
 							'Processing renewal order #%s for subscription #%s',
@@ -69,7 +69,7 @@ class RenewalHandler {
 			}
 
 			$parent_order = wc_get_order( $subscription->get_parent() );
-			if ( is_a( $parent_order, WC_Order::class ) ) {
+			if ( $parent_order instanceof WC_Order ) {
 				$this->logger->info(
 					sprintf(
 						'Processing parent order #%s for subscription #%s',

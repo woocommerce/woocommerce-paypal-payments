@@ -31,7 +31,7 @@ trait TrackingAvailabilityTrait {
 		}
 
 		$order = wc_get_order( $post_id );
-		if ( ! is_a( $order, WC_Order::class ) ) {
+		if ( ! ( $order instanceof WC_Order ) ) {
 			return false;
 		}
 
