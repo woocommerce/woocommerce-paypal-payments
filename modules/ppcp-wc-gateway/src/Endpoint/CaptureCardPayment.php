@@ -69,7 +69,7 @@ class CaptureCardPayment {
 		$this->bearer                = $bearer;
 		$this->order_factory         = $order_factory;
 		$this->purchase_unit_factory = $purchase_unit_factory;
-		$this->settings_provider                = $settings_provider;
+		$this->settings_provider     = $settings_provider;
 		$this->logger                = $logger;
 	}
 

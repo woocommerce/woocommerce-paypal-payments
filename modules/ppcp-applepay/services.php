@@ -25,12 +25,12 @@ use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 
 return array(
 	// @deprecated - use `applepay.eligibility.check` instead.
-	'applepay.eligible'              => static function ( ContainerInterface $container ): bool {
+	'applepay.eligible'                        => static function ( ContainerInterface $container ): bool {
 		$eligibility_check = $container->get( 'applepay.eligibility.check' );
 
 		return $eligibility_check();
 	},
-	'applepay.eligibility.check'     => static function ( ContainerInterface $container ): callable {
+	'applepay.eligibility.check'               => static function ( ContainerInterface $container ): callable {
 		$apm_applies = $container->get( 'applepay.helpers.apm-applies' );
 		assert( $apm_applies instanceof ApmApplies );
 
@@ -38,7 +38,7 @@ return array(
 			return $apm_applies->for_country() && $apm_applies->for_currency() && $apm_applies->for_merchant();
 		};
 	},
-	'applepay.helpers.apm-applies'   => static function ( ContainerInterface $container ): ApmApplies {
+	'applepay.helpers.apm-applies'             => static function ( ContainerInterface $container ): ApmApplies {
 		return new ApmApplies(
 			$container->get( 'applepay.supported-countries' ),
 			$container->get( 'applepay.supported-currencies' ),
@@ -46,19 +46,19 @@ return array(
 			$container->get( 'api.merchant.country' )
 		);
 	},
-	'applepay.status-cache'          => static function ( ContainerInterface $container ): Cache {
+	'applepay.status-cache'                    => static function ( ContainerInterface $container ): Cache {
 		return new Cache( 'ppcp-paypal-apple-status-cache' );
 	},
 
 	// We assume it's a referral if we can check product status without API request failures.
-	'applepay.is_referral'           => static function ( ContainerInterface $container ): bool {
+	'applepay.is_referral'                     => static function ( ContainerInterface $container ): bool {
 		$status = $container->get( 'applepay.apple-product-status' );
 		assert( $status instanceof AppleProductStatus );
 
 		return ! $status->has_request_failure();
 	},
 
-	'applepay.availability_notice'   => static function ( ContainerInterface $container ): AvailabilityNotice {
+	'applepay.availability_notice'             => static function ( ContainerInterface $container ): AvailabilityNotice {
 		return new AvailabilityNotice(
 			$container->get( 'applepay.apple-product-status' ),
 			$container->get( 'wcgateway.is-wc-gateways-list-page' ),
@@ -70,18 +70,18 @@ return array(
 		);
 	},
 
-	'applepay.has_validated'         => static function ( ContainerInterface $container ): bool {
+	'applepay.has_validated'                   => static function ( ContainerInterface $container ): bool {
 		$cache = $container->get( 'applepay.status-cache' );
 		assert( $cache instanceof Cache );
 		return $cache->has( AppleProductStatus::KEY );
 	},
 
-	'applepay.is_validated'          => static function ( ContainerInterface $container ): bool {
+	'applepay.is_validated'                    => static function ( ContainerInterface $container ): bool {
 		$settings = $container->get( 'settings.settings-provider' );
 		return $settings->applepay_validated();
 	},
 
-	'applepay.apple-product-status'  => SingletonDecorator::make(
+	'applepay.apple-product-status'            => SingletonDecorator::make(
 		static function ( ContainerInterface $container ): AppleProductStatus {
 			return new AppleProductStatus(
 				$container->get( 'settings.flag.is-connected' ),
@@ -91,7 +91,7 @@ return array(
 			);
 		}
 	),
-	'applepay.available'             => static function ( ContainerInterface $container ): bool {
+	'applepay.available'                       => static function ( ContainerInterface $container ): bool {
 		if ( apply_filters( 'woocommerce_paypal_payments_applepay_validate_product_status', true ) ) {
 			$status = $container->get( 'applepay.apple-product-status' );
 			assert( $status instanceof AppleProductStatus );
@@ -102,10 +102,10 @@ return array(
 		}
 		return true;
 	},
-	'applepay.server_supported'      => static function ( ContainerInterface $container ): bool {
+	'applepay.server_supported'                => static function ( ContainerInterface $container ): bool {
 		return ! empty( $_SERVER['HTTPS'] ) && $_SERVER['HTTPS'] !== 'off';
 	},
-	'applepay.is_browser_supported'  => static function ( ContainerInterface $container ): bool {
+	'applepay.is_browser_supported'            => static function ( ContainerInterface $container ): bool {
 		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 		$user_agent = wp_unslash( $_SERVER['HTTP_USER_AGENT'] ?? '' );
 		if ( $user_agent ) {
@@ -135,19 +135,19 @@ return array(
 		}
 		return false;
 	},
-	'applepay.asset_getter'          => static function ( ContainerInterface $container ): AssetGetter {
+	'applepay.asset_getter'                    => static function ( ContainerInterface $container ): AssetGetter {
 		$factory = $container->get( 'assets.asset_getter_factory' );
 		assert( $factory instanceof AssetGetterFactory );
 
 		return $factory->for_module( 'ppcp-applepay' );
 	},
-	'applepay.sdk_script_url'        => static function ( ContainerInterface $container ): string {
+	'applepay.sdk_script_url'                  => static function ( ContainerInterface $container ): string {
 		return 'https://applepay.cdn-apple.com/jsapi/v1/apple-pay-sdk.js';
 	},
-	'applepay.data_to_scripts'       => static function ( ContainerInterface $container ): DataToAppleButtonScripts {
+	'applepay.data_to_scripts'                 => static function ( ContainerInterface $container ): DataToAppleButtonScripts {
 		return new DataToAppleButtonScripts( $container->get( 'applepay.sdk_script_url' ), $container->get( 'settings.settings-provider' ) );
 	},
-	'applepay.button'                => static function ( ContainerInterface $container ): ApplePayButton {
+	'applepay.button'                          => static function ( ContainerInterface $container ): ApplePayButton {
 		return new ApplePayButton(
 			$container->get( 'settings.settings-provider' ),
 			$container->get( 'settings.data.payment' ),
@@ -160,7 +160,7 @@ return array(
 			$container->get( 'button.helper.cart-products' )
 		);
 	},
-	'applepay.blocks-payment-method' => static function ( ContainerInterface $container ): PaymentMethodTypeInterface {
+	'applepay.blocks-payment-method'           => static function ( ContainerInterface $container ): PaymentMethodTypeInterface {
 		return new BlocksPaymentMethod(
 			'ppcp-applepay',
 			$container->get( 'applepay.asset_getter' ),
@@ -173,7 +173,7 @@ return array(
 	/**
 	 * The list of which countries can be used for ApplePay.
 	 */
-	'applepay.supported-countries'   => static function ( ContainerInterface $container ): array {
+	'applepay.supported-countries'             => static function ( ContainerInterface $container ): array {
 		/**
 		 * Returns which countries can be used for ApplePay.
 		 */
@@ -229,7 +229,7 @@ return array(
 	/**
 	 * The list of which currencies can be used for ApplePay.
 	 */
-	'applepay.supported-currencies'  => static function ( ContainerInterface $container ): array {
+	'applepay.supported-currencies'            => static function ( ContainerInterface $container ): array {
 		/**
 		 * Returns which currencies can be used for ApplePay.
 		 */
