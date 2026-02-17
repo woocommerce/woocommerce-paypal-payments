@@ -3,6 +3,7 @@
 namespace WooCommerce\PayPalCommerce\AgenticCommerce\Config;
 
 use Automattic\WooCommerce\Enums\ProductType;
+use Automattic\WooCommerce\Enums\ProductStatus;
 
 /**
  * Centralized configuration for the product ingestion.
@@ -56,11 +57,16 @@ class IngestionConfiguration {
 	}
 
 	/**
-	 * Defines the WooCommerce product types that are sent to the product catalog.
+	 * Single source of truth providing all filters to identify products which are compatible
+	 * with store-sync.
 	 *
-	 * @return string[]
+	 * @return array
 	 */
-	public function get_supported_product_types(): array {
-		return self::SUPPORTED_PRODUCT_TYPES;
+	public function get_valid_product_filters(): array {
+		return array(
+			'status'       => ProductStatus::PUBLISH,
+			'type'         => self::SUPPORTED_PRODUCT_TYPES,
+			'downloadable' => false,
+		);
 	}
 }
