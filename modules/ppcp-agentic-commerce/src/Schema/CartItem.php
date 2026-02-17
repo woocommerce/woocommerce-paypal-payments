@@ -9,6 +9,8 @@ declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\AgenticCommerce\Schema;
 
+use WooCommerce\PayPalCommerce\AgenticCommerce\Enums\Priority;
+use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\ResolutionOption;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Validation\MissingField;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Validation\InvalidData;
 
@@ -51,7 +53,25 @@ class CartItem extends AgenticSchema {
 			$quantity = (int) $input['quantity'];
 
 			if ( $quantity < 1 || $quantity > 999 ) {
-				$add_issue( new InvalidData( 'Quantity is invalid', 'Item quantity must be between 1 and 999', 'quantity' ) );
+				$add_issue(
+					new InvalidData(
+						'Quantity is invalid',
+						'Item quantity must be between 1 and 999',
+						'quantity',
+						'',
+						array(),
+						array(
+							ResolutionOption::modify_cart(
+								'Set a valid quantity (1–999)',
+								array(
+									'priority'     => Priority::HIGH,
+									'min_quantity' => 1,
+									'max_quantity' => 999,
+								)
+							),
+						)
+					)
+				);
 			} else {
 				$this->quantity = $quantity;
 			}

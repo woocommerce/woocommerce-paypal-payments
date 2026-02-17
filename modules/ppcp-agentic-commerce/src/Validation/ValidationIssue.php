@@ -10,6 +10,7 @@ declare( strict_types = 1 );
 namespace WooCommerce\PayPalCommerce\AgenticCommerce\Validation;
 
 use RuntimeException;
+use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\ResolutionOption;
 
 /**
  * Implements the ValidationIssue schema.
@@ -192,7 +193,10 @@ abstract class ValidationIssue {
 			$data['context'] = $this->context;
 		}
 		if ( ! empty( $this->resolution_options ) ) {
-			$data['resolution_options'] = $this->resolution_options;
+			$data['resolution_options'] = array_map(
+				static fn( ResolutionOption $option ) => $option->to_array(),
+				$this->resolution_options
+			);
 		}
 
 		return $data;
