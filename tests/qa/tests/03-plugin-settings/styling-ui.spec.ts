@@ -16,19 +16,15 @@ test.beforeAll( async ( { utils, pcpApi } ) => {
 
 test.fixme(
 	'PCP-0000 | Settings - Styling - Default UI',
-	async (
-		{
-			utils,
-			pcpStyling,
-			product,
-			cart,
-			classicCart,
-			checkout,
-			classicCheckout,
-		},
-		testInfo
-	) => {
-		const snapshotName = testInfo.title;
+	async ( {
+		utils,
+		pcpStyling,
+		product,
+		cart,
+		classicCart,
+		checkout,
+		classicCheckout,
+	} ) => {
 		const locations: Pcp.Admin.Styling.Location[] = [
 			'Cart',
 			'Classic Checkout',
@@ -39,47 +35,60 @@ test.fixme(
 		const simpleProduct = products.simple100;
 
 		await pcpStyling.visit();
-		await expect( pcpStyling.configContainer() ).toBeVisible();
-		await expect( pcpStyling.locationSelectbox() ).toBeVisible();
+		await expect(
+			pcpStyling.configContainer(),
+			'Assert styling config container is visible'
+		).toBeVisible();
+		await expect(
+			pcpStyling.locationSelectbox(),
+			'Assert styling location selectbox is visible'
+		).toBeVisible();
 
 		for ( const location of locations ) {
 			await pcpStyling.locationSelectbox().selectOption( location );
-			await pcpStyling.snapshotStylingConfigurator(
-				`${ snapshotName } - ${ location }`
-			);
+			await expect(
+				pcpStyling.configContainer(),
+				`Assert styling config is visible for location ${ location }`
+			).toBeVisible();
 		}
 
 		await utils.fillVisitorsCart( [ simpleProduct ] );
 
 		await product.visit( simpleProduct.slug );
-		await product.payPalUi.snapshotClassicPayPalButtons(
-			`${ snapshotName } - Frontend - Product`
-		);
+		await expect(
+			product.payPalUi.payPalButtonsBlockContainer(),
+			'Assert PayPal buttons are visible on product page'
+		).toBeVisible();
 
 		await product.minicartContainer().hover();
-		await product.payPalUi.snapshotMinicartPayPalButtons(
-			`${ snapshotName } - Frontend - Minicart`
-		);
+		await expect(
+			product.payPalUi.miniCartButtonContainer(),
+			'Assert PayPal minicart buttons are visible'
+		).toBeVisible();
 
 		await cart.visit();
-		await cart.payPalUi.snapshotBlockPayPalButtons(
-			`${ snapshotName } - Frontend - Cart`
-		);
+		await expect(
+			cart.payPalUi.payPalButtonsBlockContainer(),
+			'Assert PayPal buttons are visible on cart'
+		).toBeVisible();
 
 		await classicCart.visit();
-		await classicCart.payPalUi.snapshotClassicPayPalButtons(
-			`${ snapshotName } - Frontend - Classic Cart`
-		);
+		await expect(
+			classicCart.payPalUi.payPalButtonsBlockContainer(),
+			'Assert PayPal buttons are visible on classic cart'
+		).toBeVisible();
 
 		await checkout.visit();
-		await checkout.payPalUi.snapshotBlockPayPalButtons(
-			`${ snapshotName } - Frontend - Checkout`
-		);
+		await expect(
+			checkout.payPalUi.payPalButtonsBlockContainer(),
+			'Assert PayPal buttons are visible on checkout'
+		).toBeVisible();
 
 		await classicCheckout.visit();
 		await classicCheckout.paymentOption( 'PayPal' ).click();
-		await classicCheckout.payPalUi.snapshotClassicPayPalButtons(
-			`${ snapshotName } - Frontend - Classic checkout`
-		);
+		await expect(
+			classicCheckout.payPalUi.payPalButtonsBlockContainer(),
+			'Assert PayPal buttons are visible on classic checkout'
+		).toBeVisible();
 	}
 );

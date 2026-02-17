@@ -29,10 +29,7 @@ export class Product extends ProductBase {
 
 	makeOrder = async ( tested ) => {
 		await this.visit( tested.products[ 0 ].slug );
-		await this.ppui.makeClassicPayment( {
-			merchant: tested.merchant,
-			payment: tested.payment,
-		} );
+		await this.ppui.makeClassicPayment( tested );
 	};
 
 	// Assertions

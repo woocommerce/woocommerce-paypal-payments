@@ -41,8 +41,8 @@ export const transactionsOnPayByLink = ( tests ) => {
 
 				await ppapi.assertOrder( orderJson, tested );
 				await ppapi.assertPayment( orderJson.transaction_id, tested );
+				await wooCommerceOrderEdit.visit( order.id );
 				await wooCommerceOrderEdit.assertOrderDetails(
-					order.id,
 					tested,
 					pcpData
 				);

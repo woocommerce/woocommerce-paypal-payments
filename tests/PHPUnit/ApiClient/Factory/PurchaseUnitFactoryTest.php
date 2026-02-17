@@ -400,7 +400,7 @@ class PurchaseUnitFactoryTest extends TestCase
         $this->assertEquals($shipping, $unit->shipping());
     }
 
-    public function testWcCartShippingGetsDroppendWhenNoCustomer()
+    public function testWcCartShippingGetsDroppedWhenNoCustomer()
     {
         expect('WC')
             ->andReturn((object) ['customer' => null, 'session' => null]);
@@ -441,7 +441,7 @@ class PurchaseUnitFactoryTest extends TestCase
         $this->assertNull($unit->shipping());
     }
 
-    public function testWcCartShippingGetsDroppendWhenNoCountryCode()
+    public function testWcCartShippingGetsDroppedWhenNoCountryCode()
     {
         expect('WC')
             ->andReturn((object) ['customer' => Mockery::mock(\WC_Customer::class), 'session' => null]);

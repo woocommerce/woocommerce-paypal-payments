@@ -32,6 +32,7 @@ use WooCommerce\PayPalCommerce\Onboarding\Render\OnboardingOptionsRenderer;
 use WooCommerce\PayPalCommerce\Onboarding\State;
 use WooCommerce\PayPalCommerce\Settings\Data\Definition\FeaturesDefinition;
 use WooCommerce\PayPalCommerce\Settings\Data\SettingsModel;
+use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
 use WooCommerce\PayPalCommerce\Settings\SettingsModule;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\WcGateway\Admin\FeesRenderer;
@@ -1708,7 +1709,7 @@ return array(
 	},
 
 	'wcgateway.settings.dcc-gateway-title.default'         => static function ( ContainerInterface $container ): string {
-		return __( 'Debit & Credit Cards', 'woocommerce-paypal-payments' );
+		return did_action( 'init' ) ? __( 'Debit & Credit Cards', 'woocommerce-paypal-payments' ) : 'Debit & Credit Cards';
 	},
 
 	'wcgateway.settings.card_billing_data_mode.default'    => static function ( ContainerInterface $container ): string {
@@ -1947,8 +1948,8 @@ return array(
 		return array_merge(
 			$button_locations,
 			array(
-				'shop' => __( 'Shop', 'woocommerce-paypal-payments' ),
-				'home' => __( 'Home', 'woocommerce-paypal-payments' ),
+				'shop' => did_action( 'init' ) ? __( 'Shop', 'woocommerce-paypal-payments' ) : 'Shop',
+				'home' => did_action( 'init' ) ? __( 'Home', 'woocommerce-paypal-payments' ) : 'Home',
 			)
 		);
 	},
@@ -2134,15 +2135,18 @@ return array(
 		$settings = $container->get( 'wcgateway.settings' );
 		assert( $settings instanceof Settings );
 
+		$settings_provider = $container->get( 'settings.settings-provider' );
+		assert( $settings_provider instanceof SettingsProvider );
+
 		$is_working_capital_feature_flag_enabled = apply_filters(
 		// phpcs:ignore WordPress.NamingConventions.ValidHookName.UseUnderscores -- feature flags use this convention
 			'woocommerce.feature-flags.woocommerce_paypal_payments.working_capital_enabled',
 			true
 		);
 
-		$is_working_capital_eligible = $container->get( 'api.shop.country' ) === 'US' && $settings->has( 'stay_updated' ) && $settings->get( 'stay_updated' );
+		$is_working_capital_eligible = $container->get( 'api.merchant.country' ) === 'US' && $settings->has( 'stay_updated' ) && $settings->get( 'stay_updated' );
 
-		if ( ! $is_working_capital_feature_flag_enabled || ! $is_working_capital_eligible ) {
+		if ( ! $settings_provider->merchant_connected() || ! $is_working_capital_feature_flag_enabled || ! $is_working_capital_eligible ) {
 			return array();
 		}
 
@@ -2237,6 +2241,9 @@ return array(
 		$messages_apply = $container->get( 'button.helper.messages-apply' );
 		assert( $messages_apply instanceof MessagesApply );
 
+		$settings_provider = $container->get( 'settings.settings-provider' );
+		assert( $settings_provider instanceof SettingsProvider );
+
 		$is_working_capital_feature_flag_enabled = apply_filters(
 		// phpcs:ignore WordPress.NamingConventions.ValidHookName.UseUnderscores -- feature flags use this convention
 			'woocommerce.feature-flags.woocommerce_paypal_payments.working_capital_enabled',
@@ -2247,10 +2254,12 @@ return array(
 			? $settings->has( 'stay_updated' ) && $settings->get( 'stay_updated' )
 			: $settings_model->get_stay_updated();
 
+		$is_working_capital_eligible = $container->get( 'api.merchant.country' ) === 'US' && $stay_updated;
+
 		$message = sprintf(
 		// translators: %1$s is the URL for the startup guide.
 			__(
-				'We\'ve redesigned the settings for better performance and usability. Starting late January, this improved design will be the default for all WooCommerce installations to enjoy faster navigation, cleaner organization, and improved performance. Check out the <a href="%1$s" target="_blank">Startup Guide</a>, then click <a href="#" name="settings-switch-ui"><strong>Switch to New Settings</strong></a> to activate it.',
+				'We\'ve redesigned the settings for better performance and usability. This improved design will be the default for all WooCommerce installations to enjoy faster navigation, cleaner organization, and improved performance. Check out the <a href="%1$s" target="_blank">Startup Guide</a>, then click <a href="#" name="settings-switch-ui"><strong>Switch to New Settings</strong></a> to activate it.',
 				'woocommerce-paypal-payments'
 			),
 			'https://woocommerce.com/document/woocommerce-paypal-payments/paypal-payments-startup-guide/'
@@ -2263,7 +2272,7 @@ return array(
 				Note::E_WC_ADMIN_NOTE_INFORMATIONAL,
 				'ppcp-working-capital-inbox-note',
 				Note::E_WC_ADMIN_NOTE_UNACTIONED,
-				$is_working_capital_feature_flag_enabled && $container->get( 'api.shop.country' ) === 'US' && $stay_updated,
+				$settings_provider->merchant_connected() && $is_working_capital_feature_flag_enabled && $is_working_capital_eligible,
 				new InboxNoteAction(
 					'learn_more',
 					__( 'Learn More', 'woocommerce-paypal-payments' ),
@@ -2273,7 +2282,7 @@ return array(
 				)
 			),
 			$inbox_note_factory->create_note(
-				__( '📢 Important: New PayPal Payments settings UI becoming default in January!', 'woocommerce-paypal-payments' ),
+				__( '📢 Important: New PayPal Payments settings UI becoming default soon!', 'woocommerce-paypal-payments' ),
 				$message,
 				Note::E_WC_ADMIN_NOTE_INFORMATIONAL,
 				'ppcp-settings-migration-inbox-note',
@@ -2294,7 +2303,7 @@ return array(
 		return new VoidButtonAssets(
 			$container->get( 'wcgateway.asset_getter' ),
 			$container->get( 'ppcp.asset-version' ),
-			$container->get( 'api.endpoint.order' ),
+			$container->get( 'api.endpoint.order.cached' ),
 			$container->get( 'wcgateway.processor.refunds' )
 		);
 	},
