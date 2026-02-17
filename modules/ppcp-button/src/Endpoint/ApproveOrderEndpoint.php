@@ -144,10 +144,9 @@ class ApproveOrderEndpoint implements \WooCommerce\PayPalCommerce\Button\Endpoin
     /**
      * Handles the request.
      *
-     * @return bool
      * @throws RuntimeException When order not found or handling failed.
      */
-    public function handle_request(): bool
+    public function handle_request(): void
     {
         try {
             $data = $this->request_data->read_request(self::nonce());
@@ -200,11 +199,9 @@ class ApproveOrderEndpoint implements \WooCommerce\PayPalCommerce\Button\Endpoin
                 wp_send_json_success(array('order_received_url' => $order_received_url));
             }
             wp_send_json_success();
-            return \true;
         } catch (Exception $error) {
             $this->logger->error('Order approve failed: ' . $error->getMessage());
-            wp_send_json_error(array('name' => is_a($error, PayPalApiException::class) ? $error->name() : '', 'message' => $error->getMessage(), 'code' => $error->getCode(), 'details' => is_a($error, PayPalApiException::class) ? $error->details() : array()));
-            return \false;
+            wp_send_json_error(array('name' => $error instanceof PayPalApiException ? $error->name() : '', 'message' => $error->getMessage(), 'code' => $error->getCode(), 'details' => $error instanceof PayPalApiException ? $error->details() : array()));
         }
     }
     /**

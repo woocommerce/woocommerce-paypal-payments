@@ -69,7 +69,7 @@ class AxoModule implements ServiceModule, ExtendingModule, ExecutableModule
              *
              * @psalm-suppress MissingClosureParamType
              */
-            function ($methods) use ($c): array {
+            function ($methods) use ($c) {
                 if (!is_array($methods)) {
                     return $methods;
                 }
@@ -152,7 +152,7 @@ class AxoModule implements ServiceModule, ExtendingModule, ExecutableModule
             $this->session_handler = $c->get('session.handler');
             $settings = $c->get('wcgateway.settings');
             assert($settings instanceof Settings);
-            $is_paypal_enabled = $settings->has('enabled') && $settings->get('enabled') ?? \false;
+            $is_paypal_enabled = $settings->has('enabled') && ($settings->get('enabled') ?? \false);
             $subscription_helper = $c->get('wc-subscriptions.helper');
             assert($subscription_helper instanceof SubscriptionHelper);
             /**
@@ -222,7 +222,7 @@ class AxoModule implements ServiceModule, ExtendingModule, ExecutableModule
                  *
                  * @psalm-suppress MissingClosureParamType
                  */
-                function ($rows, $renderer): array {
+                function ($rows, $renderer) {
                     if (!is_array($rows)) {
                         return $rows;
                     }

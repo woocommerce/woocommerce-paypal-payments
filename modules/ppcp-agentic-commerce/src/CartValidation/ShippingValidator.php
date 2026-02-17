@@ -14,8 +14,10 @@
 declare (strict_types=1);
 namespace WooCommerce\PayPalCommerce\AgenticCommerce\CartValidation;
 
+use WooCommerce\PayPalCommerce\AgenticCommerce\Enums\Priority;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Helper\ProductManager;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\PayPalCart;
+use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\ResolutionOption;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Validation\InvalidAddress;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Validation\ShippingUnavailable;
 class ShippingValidator implements \WooCommerce\PayPalCommerce\AgenticCommerce\CartValidation\ValidatorInterface
@@ -59,14 +61,14 @@ class ShippingValidator implements \WooCommerce\PayPalCommerce\AgenticCommerce\C
     {
         $issues = array();
         if (!$address->address_line_1()) {
-            $issues[] = new InvalidAddress('Shipping address is missing street address', 'Please provide a complete street address.', 'shipping_address.address_line_1');
+            $issues[] = new InvalidAddress('Shipping address is missing street address', 'Please provide a complete street address.', 'shipping_address.address_line_1', '', array(), array(ResolutionOption::provide_missing_field('address_line_1', 'Provide street address'), ResolutionOption::update_address('Update shipping address', Priority::LOW)));
         }
         if (!$address->admin_area_2()) {
-            $issues[] = new InvalidAddress('Shipping address is missing city', 'Please provide a city.', 'shipping_address.admin_area_2');
+            $issues[] = new InvalidAddress('Shipping address is missing city', 'Please provide a city.', 'shipping_address.admin_area_2', '', array(), array(ResolutionOption::provide_missing_field('admin_area_2', 'Provide city'), ResolutionOption::update_address('Update shipping address', Priority::LOW)));
         }
         $postal_code = $address->postal_code();
         if (!$postal_code) {
-            $issues[] = new InvalidAddress('Shipping address is missing postal code', 'Please provide a postal code.', 'shipping_address.postal_code');
+            $issues[] = new InvalidAddress('Shipping address is missing postal code', 'Please provide a postal code.', 'shipping_address.postal_code', '', array(), array(ResolutionOption::provide_missing_field('postal_code', 'Provide postal code'), ResolutionOption::update_address('Update shipping address', Priority::LOW)));
         } else {
             $postal_validation = $this->validate_postal_code_format($postal_code, $address->country_code());
             if ($postal_validation) {
@@ -93,7 +95,7 @@ class ShippingValidator implements \WooCommerce\PayPalCommerce\AgenticCommerce\C
         }
         $is_valid = \WC_Validation::is_postcode($postal_code, $country_code);
         if (!$is_valid) {
-            return new InvalidAddress(sprintf('Invalid postal code format for %s: %s', $country_code, $postal_code), 'Please provide a valid postal code.', 'shipping_address.postal_code');
+            return new InvalidAddress(sprintf('Invalid postal code format for %s: %s', $country_code, $postal_code), 'Please provide a valid postal code.', 'shipping_address.postal_code', '', array(), array(ResolutionOption::update_address('Correct the postal code', Priority::HIGH, array('field' => 'postal_code'))));
         }
         return null;
     }
@@ -112,9 +114,9 @@ class ShippingValidator implements \WooCommerce\PayPalCommerce\AgenticCommerce\C
         }
         $signature_required_items = $this->find_signature_required_items($cart);
         if (!empty($signature_required_items)) {
-            $restricted_items = array_map(fn($item): string => $item->item_id(), $signature_required_items);
+            $restricted_items = array_map(fn($item): string => $item->item_id() ?? $item->variant_id() ?? '', $signature_required_items);
             $context = array('restricted_items' => $restricted_items, 'restriction_reason' => 'signature_required', 'po_box_detected' => \true);
-            $resolution_options = array(array('action' => 'UPDATE_ADDRESS', 'label' => 'Use street address instead', 'metadata' => array('priority' => 'high')), array('action' => 'REMOVE_ITEM', 'label' => 'Remove items requiring signature', 'metadata' => array('priority' => 'low')));
+            $resolution_options = array(ResolutionOption::update_address('Use street address instead', Priority::HIGH), ResolutionOption::remove_item(Priority::LOW)->with(array('label' => 'Remove items requiring signature')));
             return new ShippingUnavailable('PO Box delivery not available for this order', 'This order contains items requiring signature confirmation and cannot be delivered to a PO Box.', 'shipping_address', '', $context, $resolution_options);
         }
         return null;
@@ -184,7 +186,7 @@ class ShippingValidator implements \WooCommerce\PayPalCommerce\AgenticCommerce\C
             return null;
         }
         if (!$this->is_country_allowed($country_code)) {
-            return new ShippingUnavailable(sprintf('Shipping to %s is not available', $country_code), sprintf('We do not ship to %s.', $this->get_country_name($country_code)), 'shipping_address.country_code');
+            return new ShippingUnavailable(sprintf('Shipping to %s is not available', $country_code), sprintf('We do not ship to %s.', $this->get_country_name($country_code)), 'shipping_address.country_code', '', array(), array(ResolutionOption::update_address('Use a different shipping country', Priority::HIGH)));
         }
         return null;
     }

@@ -60,26 +60,21 @@ class ValidateCheckoutEndpoint implements \WooCommerce\PayPalCommerce\Button\End
     }
     /**
      * Handles the request.
-     *
-     * @return bool
      */
-    public function handle_request(): bool
+    public function handle_request(): void
     {
         try {
             $data = $this->request_data->read_request($this->nonce());
             $form_fields = $data['form'];
             $this->checkout_form_validator->validate($form_fields);
             wp_send_json_success();
-            return \true;
         } catch (ValidationException $exception) {
             $response = array('message' => $exception->getMessage(), 'errors' => $exception->errors(), 'refresh' => isset(WC()->session->refresh_totals));
             unset(WC()->session->refresh_totals);
             wp_send_json_error($response);
-            return \false;
         } catch (Throwable $error) {
             $this->logger->error("Form validation execution failed. {$error->getMessage()} {$error->getFile()}:{$error->getLine()}");
             wp_send_json_error(array('message' => $error->getMessage()));
-            return \false;
         }
     }
 }

@@ -14,19 +14,12 @@ use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\Cache;
 use WooCommerce\PayPalCommerce\ApiClient\Repository\PartnerReferralsData;
 use WooCommerce\PayPalCommerce\Onboarding\Helper\OnboardingUrl;
-use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 use WooCommerce\WooCommerce\Logging\Logger\NullLogger;
 /**
  * Class OnboardingRenderer
  */
 class OnboardingRenderer
 {
-    /**
-     * The settings.
-     *
-     * @var Settings
-     */
-    private $settings;
     /**
      * The partner referrals object for the production environment.
      *
@@ -60,16 +53,14 @@ class OnboardingRenderer
     /**
      * OnboardingRenderer constructor.
      *
-     * @param Settings             $settings The settings.
      * @param PartnerReferrals     $production_partner_referrals The PartnerReferrals for production.
      * @param PartnerReferrals     $sandbox_partner_referrals The PartnerReferrals for sandbox.
      * @param PartnerReferralsData $partner_referrals_data The default partner referrals data.
      * @param Cache                $cache The cache.
      * @param ?LoggerInterface     $logger The logger.
      */
-    public function __construct(Settings $settings, PartnerReferrals $production_partner_referrals, PartnerReferrals $sandbox_partner_referrals, PartnerReferralsData $partner_referrals_data, Cache $cache, ?LoggerInterface $logger = null)
+    public function __construct(PartnerReferrals $production_partner_referrals, PartnerReferrals $sandbox_partner_referrals, PartnerReferralsData $partner_referrals_data, Cache $cache, ?LoggerInterface $logger = null)
     {
-        $this->settings = $settings;
         $this->production_partner_referrals = $production_partner_referrals;
         $this->sandbox_partner_referrals = $sandbox_partner_referrals;
         $this->partner_referrals_data = $partner_referrals_data;

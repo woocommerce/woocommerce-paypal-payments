@@ -9,9 +9,11 @@ declare (strict_types=1);
 namespace WooCommerce\PayPalCommerce\AgenticCommerce\CartValidation;
 
 use WooCommerce\PayPalCommerce\AgenticCommerce\Enums\ErrorCode;
+use WooCommerce\PayPalCommerce\AgenticCommerce\Enums\Priority;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Helper\ProductManager;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\PayPalCart;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\CartItem;
+use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\ResolutionOption;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Validation\InsufficientQuantity;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Validation\ItemOutOfStock;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Validation\ValidationIssue;
@@ -45,11 +47,11 @@ class InventoryValidator implements \WooCommerce\PayPalCommerce\AgenticCommerce\
             return null;
         }
         if (!$this->product_manager->is_in_stock($product)) {
-            return new ItemOutOfStock('Product is no longer available', sprintf('%s is currently out of stock.', $product->get_name()), $field);
+            return new ItemOutOfStock('Product is no longer available', sprintf('%s is currently out of stock.', $product->get_name()), $field, '', array(), array(ResolutionOption::remove_item(Priority::HIGH), ResolutionOption::wait_for_restock()));
         }
         if (!$this->product_manager->is_in_stock($product, $item->quantity())) {
             $stock_quantity = $product->get_stock_quantity() ?? 0;
-            return new InsufficientQuantity('Insufficient inventory', sprintf('Only %d of %s available, but %d requested.', $stock_quantity, $product->get_name(), $item->quantity()), $field);
+            return new InsufficientQuantity('Insufficient inventory', sprintf('Only %d of %s available, but %d requested.', $stock_quantity, $product->get_name(), $item->quantity()), $field, '', array(), array(ResolutionOption::modify_cart(sprintf('Reduce quantity to %d', $stock_quantity), array('priority' => Priority::HIGH, 'max_quantity' => $stock_quantity)), ResolutionOption::remove_item(Priority::LOW)));
         }
         return null;
     }

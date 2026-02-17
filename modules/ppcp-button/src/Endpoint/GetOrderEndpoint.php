@@ -35,14 +35,13 @@ class GetOrderEndpoint implements \WooCommerce\PayPalCommerce\Button\Endpoint\En
     {
         return self::ENDPOINT;
     }
-    public function handle_request(): bool
+    public function handle_request(): void
     {
         try {
             $data = $this->request_data->read_request($this->nonce());
             $order_id = $data['order_id'] ?? '';
             if (empty($order_id)) {
                 wp_send_json_error(array('message' => __('Order ID is required', 'woocommerce-paypal-payments')));
-                return \false;
             }
             // Security: Verify that CartData transient exists for this PayPal order ID.
             // We cannot rely on session data (lost in cross-browser AppSwitch flows)
@@ -53,18 +52,15 @@ class GetOrderEndpoint implements \WooCommerce\PayPalCommerce\Button\Endpoint\En
             if (!$this->cart_data_storage->get_by_paypal_order_id($order_id)) {
                 $this->logger->warning(sprintf('Unauthorized GetOrder attempt for PayPal order %s. No CartData found.', $order_id));
                 wp_send_json_error(array('message' => __('Invalid or expired order access', 'woocommerce-paypal-payments')));
-                return \false;
             }
             $order = $this->api_endpoint->order($order_id);
             wp_send_json_success($order->to_array());
-            return \true;
         } catch (RuntimeException $error) {
             $this->logger->error('Get order failed: ' . $error->getMessage());
-            wp_send_json_error(array('name' => is_a($error, PayPalApiException::class) ? $error->name() : '', 'message' => $error->getMessage(), 'code' => $error->getCode(), 'details' => is_a($error, PayPalApiException::class) ? $error->details() : array()));
+            wp_send_json_error(array('name' => $error instanceof PayPalApiException ? $error->name() : '', 'message' => $error->getMessage(), 'code' => $error->getCode(), 'details' => $error instanceof PayPalApiException ? $error->details() : array()));
         } catch (Exception $exception) {
             $this->logger->error('Get order failed: ' . $exception->getMessage());
             wp_send_json_error(array('message' => $exception->getMessage()));
         }
-        return \false;
     }
 }

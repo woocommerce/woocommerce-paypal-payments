@@ -50,10 +50,12 @@ class ConnectionUrlGenerator
      *
      * Initializes the cache and logger properties of the class.
      *
-     * @param EnvironmentConfig    $partner_referrals PartnerReferrals for URL generation.
-     * @param PartnerReferralsData $referrals_data    Default partner referrals data.
-     * @param OnboardingUrlManager $url_manager       Manages access to OnboardingUrl instances.
-     * @param ?LoggerInterface     $logger            The logger object for logging messages.
+     * @param EnvironmentConfig<PartnerReferrals> $partner_referrals PartnerReferrals for URL generation.
+     * @param PartnerReferralsData                $referrals_data    Default partner referrals data.
+     * @param OnboardingUrlManager                $url_manager       Manages access to OnboardingUrl instances.
+     * @param ?LoggerInterface                    $logger            The logger object for logging messages.
+     *
+     *  phpcs:disable Squiz.Commenting.FunctionComment.IncorrectTypeHint
      */
     public function __construct(EnvironmentConfig $partner_referrals, PartnerReferralsData $referrals_data, \WooCommerce\PayPalCommerce\Settings\Service\OnboardingUrlManager $url_manager, ?LoggerInterface $logger = null)
     {

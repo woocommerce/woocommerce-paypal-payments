@@ -11,6 +11,7 @@ declare (strict_types=1);
 namespace WooCommerce\PayPalCommerce\AgenticCommerce\Helper;
 
 use RuntimeException;
+use WC_Cart;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\Orders;
@@ -91,13 +92,23 @@ class PayPalOrderManager
      */
     public function update_order(string $order_id, PayPalCart $cart, float $discount = 0.0): void
     {
-        $totals = $this->calculate_cart_totals($cart, $discount);
+        $wc_cart = $this->cart_builder->paypal_cart_to_wc_cart($cart);
+        if (is_wp_error($wc_cart)) {
+            $this->logger->warning('[ORDER] Cannot update PayPal Order: failed to build WC_Cart', array('order_id' => $order_id, 'error' => $wc_cart->get_error_message()));
+            return;
+        }
+        $currency_code = \WooCommerce\PayPalCommerce\AgenticCommerce\Helper\CartHelper::currency($cart);
+        $totals = \WooCommerce\PayPalCommerce\AgenticCommerce\Helper\CartHelper::calculate_totals($wc_cart, $currency_code);
         $items = $this->build_items_for_patch($cart);
+        if (!$totals) {
+            $this->logger->warning('[ORDER] Cannot update PayPal Order: totals not calculable', array('order_id' => $order_id));
+            return;
+        }
         $this->logger->info('[ORDER] Updating PayPal Order', array('order_id' => $order_id, 'discount' => $discount, 'item_count' => count($items), 'totals' => $totals));
         // Build the breakdown array.
         $breakdown = array('item_total' => $totals['item_total'], 'shipping' => $totals['shipping'], 'tax_total' => $totals['tax_total']);
         // Only include discount in breakdown if there's a discount.
-        if ($discount > 0) {
+        if (isset($totals['discount'])) {
             $breakdown['discount'] = $totals['discount'];
         }
         $cart_amount = $totals['amount'];
@@ -111,7 +122,7 @@ class PayPalOrderManager
         );
         try {
             $this->orders_api->patch_order($order_id, $patch_data);
-            $this->logger->info('[ORDER] PayPal Order updated successfully', array('order_id' => $order_id, 'amount' => $cart_amount['value'], 'discount' => $discount, 'item_count' => count($items)));
+            $this->logger->info('[ORDER] PayPal Order updated successfully', array('order_id' => $order_id, 'amount' => $cart_amount['value'], 'item_count' => count($items)));
         } catch (RuntimeException $error) {
             $this->logger->error('[ORDER] PayPal Order update failed', array('order_id' => $order_id, 'error' => $error->getMessage(), 'totals' => $totals));
             throw $error;
@@ -203,35 +214,6 @@ class PayPalOrderManager
             // Return null - payment can be handled manually or via webhook.
             return null;
         }
-    }
-    /**
-     * Calculate cart totals from items.
-     *
-     * @param PayPalCart $cart     The cart.
-     * @param float      $discount The total discount amount.
-     * @return array The totals array with currency_code and value for each total.
-     */
-    private function calculate_cart_totals(PayPalCart $cart, float $discount = 0.0): array
-    {
-        $currency_code = \WooCommerce\PayPalCommerce\AgenticCommerce\Helper\CartHelper::currency($cart);
-        $item_total = \WooCommerce\PayPalCommerce\AgenticCommerce\Helper\CartHelper::cart_item_total($cart);
-        // Cap discount to prevent order amount from reaching $0.
-        // PayPal requires order amount > 0, while WooCommerce allows $0 orders.
-        // TODO: Confirm how $0 orders should be handled in agentic context.
-        if ($discount >= $item_total) {
-            $discount = max(0, $item_total - 0.01);
-        }
-        // Calculate final amount: item_total - discount (+ shipping + tax when implemented).
-        // Ensure amount is at least $0.01 for PayPal.
-        /** @psalm-suppress InvalidOperand */
-        $net_total = $item_total - $discount;
-        $amount = max(0.01, $net_total);
-        $totals = array('item_total' => array('currency_code' => $currency_code, 'value' => $this->format_money($item_total)), 'shipping' => array('currency_code' => $currency_code, 'value' => $this->format_money(0.0)), 'tax_total' => array('currency_code' => $currency_code, 'value' => $this->format_money(0.0)), 'amount' => array('currency_code' => $currency_code, 'value' => $this->format_money($amount)));
-        // Only include discount if there is one.
-        if ($discount > 0) {
-            $totals['discount'] = array('currency_code' => $currency_code, 'value' => $this->format_money($discount));
-        }
-        return $totals;
     }
     /**
      * Format a money value for PayPal API.

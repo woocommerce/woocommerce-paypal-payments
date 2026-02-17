@@ -31,21 +31,18 @@ class AxoScriptAttributes implements EndpointInterface
     {
         return self::ENDPOINT;
     }
-    public function handle_request(): bool
+    public function handle_request(): void
     {
         $this->request_data->read_request($this->nonce());
         if (!$this->axo_eligible || is_user_logged_in() || $this->context->is_paypal_continuation()) {
             wp_send_json_error('Failed to load axo script attributes.');
-            return \false;
         }
         try {
             $token = $this->sdk_client_token->sdk_client_token();
         } catch (PayPalApiException $exception) {
             $this->logger->error($exception->getMessage());
             wp_send_json_error($exception->getMessage());
-            return \false;
         }
         wp_send_json_success(array('sdk_client_token' => $token));
-        return \true;
     }
 }

@@ -13,6 +13,7 @@ namespace WooCommerce\PayPalCommerce\WcSubscriptions\Helper;
 use WC_Order;
 use WC_Product;
 use WC_Product_Subscription_Variation;
+use WC_Product_Variable;
 use WC_Subscription;
 use WC_Subscriptions;
 use WC_Subscriptions_Product;
@@ -180,13 +181,10 @@ class SubscriptionHelper
                 return $product->get_meta('ppcp_subscription_plan')['id'];
             }
             if ($product->get_type() === 'variable-subscription') {
-                /**
-                 * The method is defined in WC_Product_Variable class.
-                 *
-                 * @psalm-suppress UndefinedMethod
-                 */
+                assert($product instanceof WC_Product_Variable);
                 $product_variations = $product->get_available_variations();
                 foreach ($product_variations as $variation) {
+                    /** @psalm-suppress UndefinedMethod */
                     $variation_product = wc_get_product($variation['variation_id']) ?? '';
                     if ($variation_product && $variation_product->meta_exists('ppcp_subscription_plan')) {
                         return $variation_product->get_meta('ppcp_subscription_plan')['id'];
@@ -215,7 +213,7 @@ class SubscriptionHelper
         $variation_ids = $product->get_children();
         foreach ($variation_ids as $id) {
             $product = wc_get_product($id);
-            if (!is_a($product, WC_Product_Subscription_Variation::class)) {
+            if (!$product instanceof WC_Product_Subscription_Variation) {
                 continue;
             }
             $subscription_plan = $product->get_meta('ppcp_subscription_plan') ?? array();
@@ -272,7 +270,7 @@ class SubscriptionHelper
         }
         foreach ($orders as $order_id) {
             $order = wc_get_order($order_id);
-            if (is_a($order, WC_Order::class) && in_array($order->get_status(), array('processing', 'completed'), \true) && $current_order->get_payment_method() === $order->get_payment_method()) {
+            if ($order instanceof WC_Order && in_array($order->get_status(), array('processing', 'completed'), \true) && $current_order->get_payment_method() === $order->get_payment_method()) {
                 $transaction_id = $order->get_transaction_id();
                 $tokens = $order->get_payment_tokens();
                 foreach ($tokens as $token) {

@@ -8,6 +8,7 @@
 declare (strict_types=1);
 namespace WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods;
 
+use WC_Order;
 use WC_Payment_Gateway;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\Orders;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\ExperienceContextBuilder;
@@ -92,6 +93,9 @@ class EPSGateway extends WC_Payment_Gateway
     public function process_payment($order_id)
     {
         $wc_order = wc_get_order($order_id);
+        if (!$wc_order instanceof WC_Order) {
+            return array('result' => 'failure', 'redirect' => wc_get_checkout_url());
+        }
         $wc_order->update_status('on-hold', __('Awaiting EPS to confirm the payment.', 'woocommerce-paypal-payments'));
         $purchase_unit = $this->purchase_unit_factory->from_wc_order($wc_order);
         $amount = $purchase_unit->amount()->to_array();
@@ -128,7 +132,7 @@ class EPSGateway extends WC_Payment_Gateway
     public function process_refund($order_id, $amount = null, $reason = '')
     {
         $order = wc_get_order($order_id);
-        if (!is_a($order, \WC_Order::class)) {
+        if (!$order instanceof WC_Order) {
             return \false;
         }
         return $this->refund_processor->process($order, (float) $amount, (string) $reason);
@@ -136,7 +140,7 @@ class EPSGateway extends WC_Payment_Gateway
     /**
      * Return transaction url for this gateway and given order.
      *
-     * @param \WC_Order $order WC order to get transaction url by.
+     * @param WC_Order $order WC order to get transaction url by.
      *
      * @return string
      */

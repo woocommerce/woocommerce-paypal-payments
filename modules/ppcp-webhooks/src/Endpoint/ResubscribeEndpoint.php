@@ -52,24 +52,20 @@ class ResubscribeEndpoint
     /**
      * Handles the incoming request.
      */
-    public function handle_request()
+    public function handle_request(): void
     {
         if (!current_user_can('manage_woocommerce')) {
             wp_send_json_error('Not admin.', 403);
-            return \false;
         }
         try {
             // Validate nonce.
             $this->request_data->read_request($this->nonce());
             if (!$this->registrar->register()) {
                 wp_send_json_error('Webhook subscription failed.', 500);
-                return \false;
             }
             wp_send_json_success();
-            return \true;
         } catch (Exception $error) {
             wp_send_json_error($error->getMessage(), 403);
-            return \false;
         }
     }
 }

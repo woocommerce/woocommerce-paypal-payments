@@ -15,6 +15,7 @@ use WP_Error;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Order as PayPalOrder;
 use WooCommerce\PayPalCommerce\Button\Session\CartData;
 use WooCommerce\PayPalCommerce\Button\Helper\WooCommerceOrderCreator;
+use WooCommerce\PayPalCommerce\AgenticCommerce\CartValidation\CouponValidator\AppliedCouponsBuilder;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\PayPalCart;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\PaymentMethod;
 /**
@@ -22,6 +23,7 @@ use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\PaymentMethod;
  *
  * This service coordinates the following steps:
  * - Fetches PayPal order
+ * - Syncs PayPal order with final cart totals
  * - Translates PayPalCart to CartData
  * - Creates WooCommerce order
  * - Links PayPal and WC orders
@@ -32,21 +34,24 @@ class AgenticCheckoutProcessor
     private \WooCommerce\PayPalCommerce\AgenticCommerce\Helper\PayPalOrderManager $order_manager;
     private WooCommerceOrderCreator $wc_order_creator;
     private \WooCommerce\PayPalCommerce\AgenticCommerce\Helper\AgenticCartBuilder $cart_builder;
-    public function __construct(\WooCommerce\PayPalCommerce\AgenticCommerce\Helper\PayPalOrderManager $order_manager, WooCommerceOrderCreator $wc_order_creator, \WooCommerce\PayPalCommerce\AgenticCommerce\Helper\AgenticCartBuilder $cart_builder)
+    private AppliedCouponsBuilder $applied_coupons_builder;
+    public function __construct(\WooCommerce\PayPalCommerce\AgenticCommerce\Helper\PayPalOrderManager $order_manager, WooCommerceOrderCreator $wc_order_creator, \WooCommerce\PayPalCommerce\AgenticCommerce\Helper\AgenticCartBuilder $cart_builder, AppliedCouponsBuilder $applied_coupons_builder)
     {
         $this->order_manager = $order_manager;
         $this->wc_order_creator = $wc_order_creator;
         $this->cart_builder = $cart_builder;
+        $this->applied_coupons_builder = $applied_coupons_builder;
     }
     /**
      * Process agentic checkout: translate cart, create order, capture payment.
      *
      * This orchestrates the complete checkout workflow:
      * 1. Fetches the PayPal Order using the token (order ID)
-     * 2. Translates PayPalCart to CartData
-     * 3. Creates WooCommerce order from PayPal Order and CartData
-     * 4. Links PayPal order with WC order ID
-     * 5. Captures the PayPal payment
+     * 2. Syncs PayPal order with final cart totals
+     * 3. Translates PayPalCart to CartData
+     * 4. Creates WooCommerce order from PayPal Order and CartData
+     * 5. Links PayPal order with WC order ID
+     * 6. Captures the PayPal payment
      *
      * @param PayPalCart    $cart            The PayPal cart data.
      * @param PaymentMethod $payment_method  The payment method data.
@@ -57,6 +62,8 @@ class AgenticCheckoutProcessor
     {
         try {
             $paypal_order = $this->order_manager->fetch_order($paypal_order_id);
+            $total_discount = $this->applied_coupons_builder->calculate_total_discount($cart);
+            $this->order_manager->update_order($paypal_order_id, $cart, $total_discount);
             $wc_cart = $this->cart_builder->paypal_cart_to_wc_cart($cart);
             if (is_wp_error($wc_cart)) {
                 return $wc_cart;

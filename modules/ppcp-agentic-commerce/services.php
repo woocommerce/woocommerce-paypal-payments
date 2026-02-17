@@ -108,7 +108,7 @@ return array(
         return new AgenticCartBuilder($c->get('woocommerce.core'), $c->get('agentic.helper.product-manager'), $c->get('button.session.factory.card-data'), $c->get('api.factory.purchase-unit'), $c->get('agentic.logger'));
     },
     'agentic.helper.checkout-processor' => static function (ContainerInterface $c): AgenticCheckoutProcessor {
-        return new AgenticCheckoutProcessor($c->get('agentic.helper.paypal-order-manager'), $c->get('button.helper.wc-order-creator'), $c->get('agentic.helper.cart-builder'));
+        return new AgenticCheckoutProcessor($c->get('agentic.helper.paypal-order-manager'), $c->get('button.helper.wc-order-creator'), $c->get('agentic.helper.cart-builder'), $c->get('agentic.response.applied-coupons-builder'));
     },
     'agentic.helper.paypal-order-manager' => static function (ContainerInterface $c): PayPalOrderManager {
         return new PayPalOrderManager($c->get('api.endpoint.order'), $c->get('api.endpoint.orders'), $c->get('agentic.helper.cart-builder'), $c->get('agentic.logger'));
@@ -159,7 +159,7 @@ return array(
         return new GetCartEndpoint($c->get('agentic.auth.provider'), $c->get('agentic.session.handler'), $c->get('agentic.helper.session-manager'), $c->get('agentic.response.factory'), $c->get('agentic.validation.processor'), $c->get('agentic.logger'), $c->get('agentic.helper.paypal-order-manager'));
     },
     'agentic.rest.replace_cart' => static function (ContainerInterface $c): ReplaceCartEndpoint {
-        return new ReplaceCartEndpoint($c->get('agentic.auth.provider'), $c->get('agentic.session.handler'), $c->get('agentic.helper.session-manager'), $c->get('agentic.response.factory'), $c->get('agentic.validation.processor'), $c->get('agentic.logger'), $c->get('agentic.helper.paypal-order-manager'), $c->get('agentic.response.applied-coupons-builder'));
+        return new ReplaceCartEndpoint($c->get('agentic.auth.provider'), $c->get('agentic.session.handler'), $c->get('agentic.helper.session-manager'), $c->get('agentic.response.factory'), $c->get('agentic.validation.processor'), $c->get('agentic.logger'), $c->get('agentic.helper.paypal-order-manager'));
     },
     'agentic.rest.checkout' => static function (ContainerInterface $c): CheckoutEndpoint {
         return new CheckoutEndpoint($c->get('agentic.auth.provider'), $c->get('agentic.session.handler'), $c->get('agentic.helper.session-manager'), $c->get('agentic.response.factory'), $c->get('agentic.validation.processor'), $c->get('agentic.logger'), $c->get('agentic.helper.paypal-order-manager'), $c->get('agentic.helper.checkout-processor'));

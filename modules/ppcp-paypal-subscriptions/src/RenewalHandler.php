@@ -48,7 +48,7 @@ class RenewalHandler
             if ($this->is_for_renewal_order($subscription)) {
                 $subscription->update_status('on-hold');
                 $renewal_order = wcs_create_renewal_order($subscription);
-                if (is_a($renewal_order, WC_Order::class)) {
+                if ($renewal_order instanceof WC_Order) {
                     $this->logger->info(sprintf('Processing renewal order #%s for subscription #%s', $renewal_order->get_id(), $subscription->get_id()));
                     $renewal_order->set_payment_method($subscription->get_payment_method());
                     $renewal_order->payment_complete();
@@ -57,7 +57,7 @@ class RenewalHandler
                 }
             }
             $parent_order = wc_get_order($subscription->get_parent());
-            if (is_a($parent_order, WC_Order::class)) {
+            if ($parent_order instanceof WC_Order) {
                 $this->logger->info(sprintf('Processing parent order #%s for subscription #%s', $parent_order->get_id(), $subscription->get_id()));
                 $subscription->update_meta_data('_ppcp_is_subscription_renewal', 'true');
                 $subscription->save_meta_data();

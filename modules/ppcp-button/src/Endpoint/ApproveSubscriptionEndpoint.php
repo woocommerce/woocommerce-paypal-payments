@@ -94,10 +94,9 @@ class ApproveSubscriptionEndpoint implements \WooCommerce\PayPalCommerce\Button\
     /**
      * Handles the request.
      *
-     * @return bool
      * @throws RuntimeException When order not found or handling failed.
      */
-    public function handle_request(): bool
+    public function handle_request(): void
     {
         $data = $this->request_data->read_request($this->nonce());
         if (!isset($data['order_id'])) {
@@ -116,6 +115,5 @@ class ApproveSubscriptionEndpoint implements \WooCommerce\PayPalCommerce\Button\
             wp_send_json_success(array('order_received_url' => $order_received_url));
         }
         wp_send_json_success();
-        return \true;
     }
 }
