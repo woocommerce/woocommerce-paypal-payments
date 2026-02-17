@@ -105,7 +105,7 @@ class CartProductsHelper {
 		return array(
 			'product'    => $wc_product,
 			'quantity'   => (int) $product['quantity'],
-			'variations' => $product['variations'] ?? null,
+			'variations' => $product['variations'] ?? array(),
 			'booking'    => $product['booking'] ?? null,
 			'extra'      => $product['extra'] ?? null,
 		);
@@ -139,6 +139,9 @@ class CartProductsHelper {
 					$product['booking']
 				);
 			} elseif ( $product['product']->is_type( 'variable' ) ) {
+				if ( empty( $product['variations'] ) || ! is_array( $product['variations'] ) ) {
+					$product['variations'] = array();
+				}
 				$success = $success && $this->add_variable_product(
 					$product['product'],
 					$product['quantity'],
