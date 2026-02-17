@@ -70,7 +70,7 @@ class ShipStationIntegration implements Integration
                     if (!apply_filters('woocommerce_paypal_payments_sync_ship_station_tracking', \true)) {
                         return;
                     }
-                    if (!is_a($wc_order, WC_Order::class)) {
+                    if (!$wc_order instanceof WC_Order) {
                         return;
                     }
                     $paypal_order = ppcp_get_paypal_order($wc_order);

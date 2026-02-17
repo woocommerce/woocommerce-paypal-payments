@@ -87,7 +87,7 @@ class FraudNetAssets
         add_action('wp_enqueue_scripts', function () {
             if ($this->should_load_fraudnet_script()) {
                 wp_enqueue_script('ppcp-fraudnet', $this->asset_getter->get_asset_url('fraudnet.js'), array(), $this->version, \true);
-                wp_localize_script('ppcp-fraudnet', 'FraudNetConfig', array('f' => $this->fraud_net->session_id(), 's' => $this->fraud_net->source_website_id(), 'sandbox' => $this->environment->current_environment_is(Environment::SANDBOX)));
+                wp_localize_script('ppcp-fraudnet', 'FraudNetConfig', array('f' => $this->fraud_net->session_id(), 's' => $this->fraud_net->source_website_id(), 'sandbox' => $this->environment->is_sandbox()));
             }
         });
     }

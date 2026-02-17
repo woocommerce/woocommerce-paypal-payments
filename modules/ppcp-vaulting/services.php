@@ -10,9 +10,7 @@ namespace WooCommerce\PayPalCommerce\Vaulting;
 
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 return array('vaulting.repository.payment-token' => static function (ContainerInterface $container): \WooCommerce\PayPalCommerce\Vaulting\PaymentTokenRepository {
-    $factory = $container->get('api.factory.payment-token');
-    $endpoint = $container->get('vault-v2.endpoint.payment-token');
-    return new \WooCommerce\PayPalCommerce\Vaulting\PaymentTokenRepository($factory, $endpoint);
+    return new \WooCommerce\PayPalCommerce\Vaulting\PaymentTokenRepository($container->get('vault-v2.endpoint.payment-token'));
 }, 'vaulting.customer-approval-listener' => function (ContainerInterface $container): \WooCommerce\PayPalCommerce\Vaulting\CustomerApprovalListener {
     return new \WooCommerce\PayPalCommerce\Vaulting\CustomerApprovalListener($container->get('vault-v2.endpoint.payment-token'), $container->get('woocommerce.logger.woocommerce'));
 }, 'vaulting.credit-card-handler' => function (ContainerInterface $container): \WooCommerce\PayPalCommerce\Vaulting\VaultedCreditCardHandler {

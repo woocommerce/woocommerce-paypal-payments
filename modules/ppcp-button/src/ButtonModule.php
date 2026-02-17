@@ -247,7 +247,7 @@ class ButtonModule implements ServiceModule, ExecutableModule
          * present, forces the chosen method back to PayPalGateway. This ensures the
          * resumed PayPal flow continues as expected.
          */
-        add_action('template_redirect', function () use ($container) {
+        add_action('template_redirect', function () {
             // phpcs:ignore WordPress.Security.NonceVerification
             if (!isset($_GET[ReturnUrlFactory::PCP_QUERY_ARG])) {
                 return;

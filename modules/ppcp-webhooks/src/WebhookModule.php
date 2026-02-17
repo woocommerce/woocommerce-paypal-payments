@@ -52,20 +52,12 @@ class WebhookModule implements ServiceModule, FactoryModule, ExecutableModule
         });
         add_action(\WooCommerce\PayPalCommerce\Webhooks\WebhookRegistrar::EVENT_HOOK, static function () use ($container) {
             $registrar = $container->get('webhook.registrar');
-            /**
-             * The Webhook Registrar.
-             *
-             * @var WebhookRegistrar $endpoint
-             */
+            assert($registrar instanceof \WooCommerce\PayPalCommerce\Webhooks\WebhookRegistrar);
             $registrar->register();
         });
         add_action('woocommerce_paypal_payments_gateway_deactivate', static function () use ($container) {
             $registrar = $container->get('webhook.registrar');
-            /**
-             * The Webhook Registrar.
-             *
-             * @var WebhookRegistrar $endpoint
-             */
+            assert($registrar instanceof \WooCommerce\PayPalCommerce\Webhooks\WebhookRegistrar);
             $registrar->unregister();
         });
         add_action('wc_ajax_' . ResubscribeEndpoint::ENDPOINT, static function () use ($container) {

@@ -1,10 +1,5 @@
 <?php
 
-/**
- * Axo block payment method.
- *
- * @package WooCommerce\PayPalCommerce\AxoBlock
- */
 declare (strict_types=1);
 namespace WooCommerce\PayPalCommerce\AxoBlock;
 
@@ -13,23 +8,13 @@ use Automattic\WooCommerce\Blocks\Payments\Integrations\AbstractPaymentMethodTyp
 use WooCommerce\PayPalCommerce\Assets\AssetGetter;
 use WooCommerce\PayPalCommerce\Axo\Endpoint\AxoScriptAttributes;
 use WooCommerce\PayPalCommerce\Axo\Endpoint\FrontendLogger;
-use WooCommerce\PayPalCommerce\Button\Assets\SmartButtonInterface;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
 use WooCommerce\PayPalCommerce\Axo\Gateway\AxoGateway;
 use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\CardPaymentsConfiguration;
-/**
- * Class AxoBlockPaymentMethod
- */
 class AxoBlockPaymentMethod extends AbstractPaymentMethodType
 {
     private AssetGetter $asset_getter;
-    /**
-     * The assets version.
-     *
-     * @var string
-     */
-    private $version;
     /**
      * Credit card gateway.
      *
@@ -70,7 +55,6 @@ class AxoBlockPaymentMethod extends AbstractPaymentMethodType
     private $supported_country_card_type_matrix;
     /**
      * @param AssetGetter                   $asset_getter
-     * @param string                        $version The assets version.
      * @param WC_Payment_Gateway            $gateway Credit card gateway.
      * @param SmartButtonInterface|callable $smart_button The smart button script loading handler.
      * @param SettingsProvider              $settings_provider The settings provider.
@@ -80,11 +64,10 @@ class AxoBlockPaymentMethod extends AbstractPaymentMethodType
      * @param array                         $payment_method_selected_map Mapping of payment methods to the PayPal Insights 'payment_method_selected' types.
      * @param array                         $supported_country_card_type_matrix The supported country card type matrix for Axo.
      */
-    public function __construct(AssetGetter $asset_getter, string $version, WC_Payment_Gateway $gateway, $smart_button, SettingsProvider $settings_provider, CardPaymentsConfiguration $dcc_configuration, Environment $environment, AssetGetter $wcgateway_module_asset_getter, array $payment_method_selected_map, array $supported_country_card_type_matrix)
+    public function __construct(AssetGetter $asset_getter, WC_Payment_Gateway $gateway, $smart_button, SettingsProvider $settings_provider, CardPaymentsConfiguration $dcc_configuration, Environment $environment, AssetGetter $wcgateway_module_asset_getter, array $payment_method_selected_map, array $supported_country_card_type_matrix)
     {
         $this->name = AxoGateway::ID;
         $this->asset_getter = $asset_getter;
-        $this->version = $version;
         $this->gateway = $gateway;
         $this->smart_button = $smart_button;
         $this->settings_provider = $settings_provider;

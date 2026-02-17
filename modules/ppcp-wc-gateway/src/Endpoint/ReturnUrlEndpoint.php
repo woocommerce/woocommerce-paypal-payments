@@ -112,7 +112,7 @@ class ReturnUrlEndpoint
             exit;
         }
         $wc_order = wc_get_order($wc_order_id);
-        if (!is_a($wc_order, \WC_Order::class)) {
+        if (!$wc_order instanceof \WC_Order) {
             $this->logger->warning("Return URL endpoint {$token}: WC order {$wc_order_id} not found.");
             wc_add_notice(__('Order not found. Please try placing your order again.', 'woocommerce-paypal-payments'), 'error');
             wp_safe_redirect($this->get_checkout_url_with_error());

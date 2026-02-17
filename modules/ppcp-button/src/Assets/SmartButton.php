@@ -9,15 +9,13 @@ declare (strict_types=1);
 namespace WooCommerce\PayPalCommerce\Button\Assets;
 
 use Exception;
-use WooCommerce\PayPalCommerce\Vendor\Psr\Log\LoggerInterface;
 use WC_Cart;
 use WC_Order;
 use WC_Payment_Tokens;
 use WC_Product;
+use WC_Product_Variable;
 use WC_Product_Variation;
-use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PaymentTokensEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Money;
-use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentToken;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PayerFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\CurrencyGetter;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\DccApplies;
@@ -150,12 +148,6 @@ class SmartButton implements \WooCommerce\PayPalCommerce\Button\Assets\SmartButt
      */
     protected $early_validation_enabled;
     /**
-     * Cached payment tokens.
-     *
-     * @var PaymentToken[]|null
-     */
-    private $payment_tokens = null;
-    /**
      * The contexts that should have the Pay Now button.
      *
      * @var string[]
@@ -179,18 +171,6 @@ class SmartButton implements \WooCommerce\PayPalCommerce\Button\Assets\SmartButt
      * @var bool
      */
     private $vault_v3_enabled;
-    /**
-     * Payment tokens endpoint.
-     *
-     * @var PaymentTokensEndpoint
-     */
-    private $payment_tokens_endpoint;
-    /**
-     * The logger.
-     *
-     * @var LoggerInterface
-     */
-    private $logger;
     /**
      * Whether the shipping should be handled in PayPal.
      *
@@ -259,7 +239,7 @@ class SmartButton implements \WooCommerce\PayPalCommerce\Button\Assets\SmartButt
      * @param bool                      $final_review_enabled                  Whether the final review is enabled in blocks settings.
      * @param Context                   $context                               The context helper.
      */
-    public function __construct(AssetGetter $asset_getter, string $version, SessionHandler $session_handler, SettingsProvider $settings_provider, PayerFactory $payer_factory, string $client_id, RequestData $request_data, DccApplies $dcc_applies, SubscriptionHelper $subscription_helper, callable $get_subscriptions_mode, MessagesApply $messages_apply, Environment $environment, PaymentTokenRepository $payment_token_repository, SettingsStatus $settings_status, CurrencyGetter $currency, bool $basic_checkout_validation_enabled, bool $early_validation_enabled, array $pay_now_contexts, array $funding_sources_without_redirect, bool $vault_v3_enabled, PaymentTokensEndpoint $payment_tokens_endpoint, LoggerInterface $logger, bool $should_handle_shipping_in_paypal, bool $server_side_shipping_callback_enabled, bool $appswitch_enabled, DisabledFundingSources $disabled_funding_sources, CardPaymentsConfiguration $dcc_configuration, PartnerAttribution $partner_attribution, bool $final_review_enabled, Context $context)
+    public function __construct(AssetGetter $asset_getter, string $version, SessionHandler $session_handler, SettingsProvider $settings_provider, PayerFactory $payer_factory, string $client_id, RequestData $request_data, DccApplies $dcc_applies, SubscriptionHelper $subscription_helper, callable $get_subscriptions_mode, MessagesApply $messages_apply, Environment $environment, PaymentTokenRepository $payment_token_repository, SettingsStatus $settings_status, CurrencyGetter $currency, bool $basic_checkout_validation_enabled, bool $early_validation_enabled, array $pay_now_contexts, array $funding_sources_without_redirect, bool $vault_v3_enabled, bool $should_handle_shipping_in_paypal, bool $server_side_shipping_callback_enabled, bool $appswitch_enabled, DisabledFundingSources $disabled_funding_sources, CardPaymentsConfiguration $dcc_configuration, PartnerAttribution $partner_attribution, bool $final_review_enabled, Context $context)
     {
         $this->asset_getter = $asset_getter;
         $this->version = $version;
@@ -281,8 +261,6 @@ class SmartButton implements \WooCommerce\PayPalCommerce\Button\Assets\SmartButt
         $this->pay_now_contexts = $pay_now_contexts;
         $this->funding_sources_without_redirect = $funding_sources_without_redirect;
         $this->vault_v3_enabled = $vault_v3_enabled;
-        $this->logger = $logger;
-        $this->payment_tokens_endpoint = $payment_tokens_endpoint;
         $this->should_handle_shipping_in_paypal = $should_handle_shipping_in_paypal;
         $this->server_side_shipping_callback_enabled = $server_side_shipping_callback_enabled;
         $this->appswitch_enabled = $appswitch_enabled;
@@ -413,7 +391,7 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
         if ((is_product() || wc_post_content_has_shortcode('product_page')) && $this->settings_status->is_smart_button_enabled_for_location('product') && !$this->is_free_trial_product() && !is_checkout()) {
             add_action($this->single_product_renderer_hook(), function () {
                 $product = wc_get_product();
-                if (is_a($product, WC_Product::class) && !$this->product_supports_payment($product)) {
+                if ($product instanceof WC_Product && !$this->product_supports_payment($product)) {
                     return;
                 }
                 $this->button_renderer(PayPalGateway::ID, 'woocommerce_paypal_payments_single_product_button_render');
@@ -581,7 +559,7 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
         $product = wc_get_product();
         $location = $this->context->location();
         $location_hook = $this->location_to_hook($location);
-        if ($location === 'product' && is_a($product, WC_Product::class) && !$this->product_supports_payment($product)) {
+        if ($location === 'product' && $product instanceof WC_Product && !$this->product_supports_payment($product)) {
             return;
         }
         /**
@@ -621,7 +599,7 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
              *
              * @psalm-suppress MissingClosureParamType
              */
-            function ($block_content, $block_params) use ($name, $content, $priority) {
+            function ($block_content, $block_params) use ($name, $content) {
                 if (is_array($block_params) && ($block_params['blockName'] ?? null) === $name) {
                     $block_content .= $content;
                 }
@@ -667,7 +645,7 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
         }
         $product = wc_get_product();
         $amount = 0;
-        if (is_a($product, WC_Product::class)) {
+        if ($product instanceof WC_Product) {
             $amount = wc_get_price_including_tax($product);
         } elseif (isset(WC()->cart)) {
             $amount = WC()->cart->get_total('raw');
@@ -821,7 +799,7 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
         ), 'simulate_cart' => array('enabled' => apply_filters('woocommerce_paypal_payments_simulate_cart_enabled', \true), 'throttling' => apply_filters('woocommerce_paypal_payments_simulate_cart_throttling', 5000)), 'order_id' => 'pay-now' === $current_context ? $this->get_order_pay_id() : 0, 'order_key' => 'pay-now' === $current_context ? $this->get_order_pay_key() : '', 'single_product_buttons_enabled' => $this->settings_status->is_smart_button_enabled_for_location('product'), 'mini_cart_buttons_enabled' => $this->settings_status->is_smart_button_enabled_for_location('mini-cart'), 'basic_checkout_validation_enabled' => $this->basic_checkout_validation_enabled, 'early_checkout_validation_enabled' => $this->early_validation_enabled, 'funding_sources_without_redirect' => $this->funding_sources_without_redirect, 'user' => array('is_logged' => is_user_logged_in(), 'has_wc_card_payment_tokens' => $this->user_has_wc_card_payment_tokens(get_current_user_id())), 'should_handle_shipping_in_paypal' => $this->should_handle_shipping_in_paypal && !$this->context->is_checkout(), 'server_side_shipping_callback' => array('enabled' => $this->server_side_shipping_callback_enabled), 'appswitch' => array('enabled' => $this->appswitch_enabled), 'needShipping' => $this->need_shipping(), 'vaultingEnabled' => $this->settings_provider->save_paypal_and_venmo(), 'productType' => null, 'manualRenewalEnabled' => $this->subscription_helper->accept_manual_renewals(), 'final_review_enabled' => $this->final_review_enabled);
         if (is_product()) {
             $product = wc_get_product(get_the_ID());
-            if (is_a($product, \WC_Product::class)) {
+            if ($product instanceof \WC_Product) {
                 $localize['productType'] = $product->get_type();
             }
         }
@@ -879,13 +857,14 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
         $subscription_mode = ($this->get_subscriptions_mode)();
         $params = array('client-id' => $this->client_id, 'currency' => $this->currency->get(), 'integration-date' => PAYPAL_INTEGRATION_DATE, 'components' => implode(',', $this->components()), 'vault' => $this->can_save_vault_token() || $this->subscription_helper->need_subscription_intent($subscription_mode) ? 'true' : 'false', 'commit' => in_array($current_context, $this->pay_now_contexts, \true) ? 'true' : 'false', 'intent' => $intent);
         if (defined('WP_DEBUG') && WP_DEBUG) {
+            // @phpstan-ignore booleanAnd.rightAlwaysFalse
             $params['debug'] = \true;
         }
         if ($subscription_mode === 'vaulting_api' && apply_filters('woocommerce_paypal_payments_save_payment_methods_eligible', \false)) {
             // Remove vault parameter to allow for Venmo with Save Payment Methods (Vault V3).
             unset($params['vault']);
         }
-        if ($this->environment->current_environment_is(Environment::SANDBOX) && defined('WP_DEBUG') && \WP_DEBUG && WC()->customer instanceof \WC_Customer && WC()->customer->get_billing_country() && 2 === strlen(WC()->customer->get_billing_country())) {
+        if ($this->environment->is_sandbox() && defined('WP_DEBUG') && \WP_DEBUG && WC()->customer instanceof \WC_Customer && WC()->customer->get_billing_country() && 2 === strlen(WC()->customer->get_billing_country())) {
             $params['buyer-country'] = WC()->customer->get_billing_country();
         }
         if ('pay-now' === $current_context) {
@@ -1306,11 +1285,8 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
          */
         $in_stock = $product->is_in_stock();
         if ($product->is_type('variable')) {
-            /**
-             * The method is defined in WC_Product_Variable class.
-             *
-             * @psalm-suppress UndefinedMethod
-             */
+            assert($product instanceof WC_Product_Variable);
+            /** @var WC_Product_Variation[] $variations */
             $variations = $product->get_available_variations('objects');
             $in_stock = $this->has_in_stock_variation($variations);
         }

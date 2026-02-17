@@ -1,14 +1,10 @@
 <?php
 
-/**
- * Payment Methods Dependencies Definition
- *
- * @package WooCommerce\PayPalCommerce\Settings\Data\Definition
- */
 declare (strict_types=1);
 namespace WooCommerce\PayPalCommerce\Settings\Data\Definition;
 
 use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\PWCGateway;
+use WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException;
 use WooCommerce\PayPalCommerce\Applepay\ApplePayGateway;
 use WooCommerce\PayPalCommerce\Axo\Gateway\AxoGateway;
 use WooCommerce\PayPalCommerce\Googlepay\GooglePayGateway;

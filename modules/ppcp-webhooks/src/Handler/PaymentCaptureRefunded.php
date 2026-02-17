@@ -84,7 +84,7 @@ class PaymentCaptureRefunded implements \WooCommerce\PayPalCommerce\Webhooks\Han
             return $this->failure_response($message);
         }
         $wc_order = wc_get_order($order_id);
-        if (!is_a($wc_order, WC_Order::class)) {
+        if (!$wc_order instanceof WC_Order) {
             $message = sprintf('Order for PayPal refund %s not found.', $refund_id);
             return $this->failure_response($message);
         }

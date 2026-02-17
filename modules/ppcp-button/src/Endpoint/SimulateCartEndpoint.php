@@ -53,18 +53,16 @@ class SimulateCartEndpoint extends \WooCommerce\PayPalCommerce\Button\Endpoint\A
     /**
      * Handles the request data.
      *
-     * @return bool
      * @throws Exception On error.
      */
-    protected function handle_data(): bool
+    protected function handle_data(): void
     {
         if (!$this->smart_button instanceof SmartButton) {
             wp_send_json_error();
-            return \false;
         }
         $products = $this->products_from_request();
         if (!$products) {
-            return \false;
+            return;
         }
         $this->replace_real_cart();
         $this->add_products($products);
@@ -79,15 +77,17 @@ class SimulateCartEndpoint extends \WooCommerce\PayPalCommerce\Button\Endpoint\A
         foreach ($products as $product) {
             $context_data = array('product' => $product['product'], 'order_total' => $total);
             $pay_later_enabled = $pay_later_enabled && $this->smart_button->is_pay_later_button_enabled_for_location('product', $context_data);
+            // @phpstan-ignore method.notFound
             $pay_later_messaging_enabled = $pay_later_messaging_enabled && $this->smart_button->is_pay_later_messaging_enabled_for_location('product', $context_data);
+            // @phpstan-ignore method.notFound
             $button_enabled = $button_enabled && !$this->smart_button->is_button_disabled('product', $context_data);
+            // @phpstan-ignore method.notFound
         }
         // Shop settings.
         $base_location = wc_get_base_location();
         $shop_country_code = $base_location['country'];
         $currency_code = get_woocommerce_currency();
         wp_send_json_success(array('total' => $total, 'shipping_fee' => $shipping_fee, 'currency_code' => $currency_code, 'country_code' => $shop_country_code, 'funding' => array('paylater' => array('enabled' => $pay_later_enabled)), 'button' => array('is_disabled' => !$button_enabled), 'messages' => array('is_hidden' => !$pay_later_messaging_enabled)));
-        return \true;
     }
     /**
      * Handles errors.

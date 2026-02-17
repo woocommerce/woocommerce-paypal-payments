@@ -73,7 +73,20 @@ class DataToAppleButtonScripts
         $color = $styles->color;
         $lang = $this->settings->applepay_button_language();
         $is_enabled = $this->settings->applepay_enabled();
-        return array('sdk_url' => $this->sdk_url, 'is_debug' => defined('WP_DEBUG') && WP_DEBUG, 'is_admin' => \false, 'is_enabled' => $is_enabled, 'is_wc_gateway_enabled' => $is_wc_gateway_enabled, 'preferences' => array('checkout_data_mode' => $checkout_data_mode), 'button' => array('wrapper' => 'ppc-button-applepay-container', 'mini_cart_wrapper' => 'ppc-button-applepay-container-minicart', 'type' => $type, 'color' => $color, 'lang' => $lang), 'product' => $product, 'shop' => array('countryCode' => $shop_country_code, 'currencyCode' => $currency_code, 'totalLabel' => $total_label), 'ajax_url' => admin_url('admin-ajax.php'), 'nonce' => wp_create_nonce('woocommerce-process_checkout'));
+        return array(
+            'sdk_url' => $this->sdk_url,
+            'is_debug' => defined('WP_DEBUG') && WP_DEBUG,
+            // @phpstan-ignore booleanAnd.rightAlwaysFalse
+            'is_admin' => \false,
+            'is_enabled' => $is_enabled,
+            'is_wc_gateway_enabled' => $is_wc_gateway_enabled,
+            'preferences' => array('checkout_data_mode' => $checkout_data_mode),
+            'button' => array('wrapper' => 'ppc-button-applepay-container', 'mini_cart_wrapper' => 'ppc-button-applepay-container-minicart', 'type' => $type, 'color' => $color, 'lang' => $lang),
+            'product' => $product,
+            'shop' => array('countryCode' => $shop_country_code, 'currencyCode' => $currency_code, 'totalLabel' => $total_label),
+            'ajax_url' => admin_url('admin-ajax.php'),
+            'nonce' => wp_create_nonce('woocommerce-process_checkout'),
+        );
     }
     /**
      * Check if the product needs shipping

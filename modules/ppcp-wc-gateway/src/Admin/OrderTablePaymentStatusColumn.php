@@ -57,7 +57,7 @@ class OrderTablePaymentStatusColumn
             return;
         }
         $wc_order = wc_get_order($wc_order_id);
-        if (!is_a($wc_order, \WC_Order::class) || !$this->should_render_for_order($wc_order)) {
+        if (!$wc_order instanceof \WC_Order || !$this->should_render_for_order($wc_order)) {
             return;
         }
         if ($this->is_captured($wc_order)) {

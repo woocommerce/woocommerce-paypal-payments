@@ -4,7 +4,7 @@
 
 namespace Composer\Autoload;
 
-class ComposerStaticInita7bd3b1cdbdc420df68d5eeeaa8be8c8
+class ComposerStaticInit8f1360c3598043abaa942bfe9de529b6
 {
     public static $files = array (
         '7b11c4dc42b3b3023073cb14e519683c' => __DIR__ . '/..' . '/ralouphie/getallheaders/src/getallheaders.php',
@@ -211,18 +211,14 @@ class ComposerStaticInita7bd3b1cdbdc420df68d5eeeaa8be8c8
     );
 
     public static $classMap = array (
-        'Attribute' => __DIR__ . '/..' . '/symfony/polyfill-php80/Resources/stubs/Attribute.php',
         'Composer\\InstalledVersions' => __DIR__ . '/..' . '/composer/InstalledVersions.php',
         'Dhii\\Modular\\Module\\Exception\\ModuleExceptionInterface' => __DIR__ . '/..' . '/dhii/module-interface/src/Exception/ModuleExceptionInterface.php',
         'Dhii\\Modular\\Module\\ModuleAwareInterface' => __DIR__ . '/..' . '/dhii/module-interface/src/ModuleAwareInterface.php',
         'Dhii\\Modular\\Module\\ModuleInterface' => __DIR__ . '/..' . '/dhii/module-interface/src/ModuleInterface.php',
         'Interop\\Container\\ServiceProviderInterface' => __DIR__ . '/..' . '/container-interop/service-provider/src/ServiceProviderInterface.php',
-        'PhpToken' => __DIR__ . '/..' . '/symfony/polyfill-php80/Resources/stubs/PhpToken.php',
         'Stringable' => __DIR__ . '/..' . '/symfony/polyfill-php80/Resources/stubs/Stringable.php',
         'Symfony\\Polyfill\\Php80\\Php80' => __DIR__ . '/..' . '/symfony/polyfill-php80/Php80.php',
         'Symfony\\Polyfill\\Php80\\PhpToken' => __DIR__ . '/..' . '/symfony/polyfill-php80/PhpToken.php',
-        'UnhandledMatchError' => __DIR__ . '/..' . '/symfony/polyfill-php80/Resources/stubs/UnhandledMatchError.php',
-        'ValueError' => __DIR__ . '/..' . '/symfony/polyfill-php80/Resources/stubs/ValueError.php',
         'Wikimedia\\Composer\\Merge\\V2\\ExtraPackage' => __DIR__ . '/..' . '/wikimedia/composer-merge-plugin/src/ExtraPackage.php',
         'Wikimedia\\Composer\\Merge\\V2\\Logger' => __DIR__ . '/..' . '/wikimedia/composer-merge-plugin/src/Logger.php',
         'Wikimedia\\Composer\\Merge\\V2\\MergePlugin' => __DIR__ . '/..' . '/wikimedia/composer-merge-plugin/src/MergePlugin.php',
@@ -441,7 +437,6 @@ class ComposerStaticInita7bd3b1cdbdc420df68d5eeeaa8be8c8
         'WooCommerce\\PayPalCommerce\\CardFields\\Service\\CardCaptureValidator' => __DIR__ . '/../..' . '/modules/ppcp-card-fields/src/Service/CardCaptureValidator.php',
         'WooCommerce\\PayPalCommerce\\Common\\Pattern\\SingletonDecorator' => __DIR__ . '/../..' . '/lib/common/Pattern/SingletonDecorator.php',
         'WooCommerce\\PayPalCommerce\\Common\\Pattern\\SingletonTrait' => __DIR__ . '/../..' . '/lib/common/Pattern/SingletonTrait.php',
-        'WooCommerce\\PayPalCommerce\\Compat\\AdminContextTrait' => __DIR__ . '/../..' . '/modules/ppcp-compat/src/AdminContextTrait.php',
         'WooCommerce\\PayPalCommerce\\Compat\\Assets\\CompatAssets' => __DIR__ . '/../..' . '/modules/ppcp-compat/src/Assets/CompatAssets.php',
         'WooCommerce\\PayPalCommerce\\Compat\\CompatModule' => __DIR__ . '/../..' . '/modules/ppcp-compat/src/CompatModule.php',
         'WooCommerce\\PayPalCommerce\\Compat\\Integration' => __DIR__ . '/../..' . '/modules/ppcp-compat/src/Integration.php',
@@ -816,9 +811,9 @@ class ComposerStaticInita7bd3b1cdbdc420df68d5eeeaa8be8c8
     public static function getInitializer(ClassLoader $loader)
     {
         return \Closure::bind(function () use ($loader) {
-            $loader->prefixLengthsPsr4 = ComposerStaticInita7bd3b1cdbdc420df68d5eeeaa8be8c8::$prefixLengthsPsr4;
-            $loader->prefixDirsPsr4 = ComposerStaticInita7bd3b1cdbdc420df68d5eeeaa8be8c8::$prefixDirsPsr4;
-            $loader->classMap = ComposerStaticInita7bd3b1cdbdc420df68d5eeeaa8be8c8::$classMap;
+            $loader->prefixLengthsPsr4 = ComposerStaticInit8f1360c3598043abaa942bfe9de529b6::$prefixLengthsPsr4;
+            $loader->prefixDirsPsr4 = ComposerStaticInit8f1360c3598043abaa942bfe9de529b6::$prefixDirsPsr4;
+            $loader->classMap = ComposerStaticInit8f1360c3598043abaa942bfe9de529b6::$classMap;
 
         }, null, ClassLoader::class);
     }

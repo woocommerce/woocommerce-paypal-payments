@@ -60,7 +60,7 @@ class AxoModule implements ServiceModule, ExecutableModule
              *
              * @psalm-suppress MissingClosureParamType
              */
-            function ($methods) use ($c): array {
+            function ($methods) use ($c) {
                 if (!is_array($methods)) {
                     return $methods;
                 }
@@ -195,6 +195,25 @@ class AxoModule implements ServiceModule, ExecutableModule
                     $this->add_feature_detection_tag(\false);
                 }
             });
+            add_filter(
+                'ppcp_onboarding_dcc_table_rows',
+                /**
+                 * Param types removed to avoid third-party issues.
+                 *
+                 * @psalm-suppress MissingClosureParamType
+                 */
+                function ($rows, $renderer) {
+                    if (!is_array($rows)) {
+                        return $rows;
+                    }
+                    if ($renderer instanceof \WooCommerce\PayPalCommerce\Axo\OnboardingOptionsRenderer) {
+                        $rows[] = $renderer->render_table_row(__('Fastlane by PayPal', 'woocommerce-paypal-payments'), __('Yes', 'woocommerce-paypal-payments'), __('Help accelerate guest checkout with PayPal\'s autofill solution.', 'woocommerce-paypal-payments'));
+                    }
+                    return $rows;
+                },
+                10,
+                2
+            );
             // Set Axo as the default payment method on checkout for guest customers.
             add_action('template_redirect', function () use ($c) {
                 $axo_applies = $c->get('axo.service.axo-applies');

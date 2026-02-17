@@ -1,15 +1,8 @@
 <?php
 
-/**
- * The AXO AxoManager
- *
- * @package WooCommerce\PayPalCommerce\WcGateway\Assets
- */
 declare (strict_types=1);
 namespace WooCommerce\PayPalCommerce\Axo\Assets;
 
-use WooCommerce\PayPalCommerce\Vendor\Psr\Log\LoggerInterface;
-use WooCommerce\PayPalCommerce\ApiClient\Helper\CurrencyGetter;
 use WooCommerce\PayPalCommerce\Assets\AssetGetter;
 use WooCommerce\PayPalCommerce\Axo\Endpoint\AxoScriptAttributes;
 use WooCommerce\PayPalCommerce\Axo\Endpoint\FrontendLogger;
@@ -17,11 +10,6 @@ use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\SettingsStatus;
 use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
-/**
- * Class AxoManager.
- *
- * @param string $module_url The URL to the module.
- */
 class AxoManager
 {
     private AssetGetter $asset_getter;
@@ -49,30 +37,6 @@ class AxoManager
      * @var array
      */
     private array $insights_data;
-    /**
-     * The Settings status helper.
-     *
-     * @var SettingsStatus
-     */
-    private $settings_status;
-    /**
-     * The getter of the 3-letter currency code of the shop.
-     *
-     * @var CurrencyGetter
-     */
-    private CurrencyGetter $currency;
-    /**
-     * The logger.
-     *
-     * @var LoggerInterface
-     */
-    private LoggerInterface $logger;
-    /**
-     * Session handler.
-     *
-     * @var SessionHandler
-     */
-    private SessionHandler $session_handler;
     private AssetGetter $wcgateway_module_asset_getter;
     /**
      * The supported country card type matrix.
@@ -81,29 +45,21 @@ class AxoManager
      */
     private array $supported_country_card_type_matrix;
     /**
-     * @param AssetGetter      $asset_getter
-     * @param string           $version The assets version.
-     * @param SessionHandler   $session_handler The Session handler.
+     * @param AssetGetter $asset_getter
+     * @param string      $version The assets version.
      * @param SettingsProvider $settings_provider The Settings provider.
-     * @param Environment      $environment The environment object.
-     * @param array            $insights_data Data needed for the PayPal Insights.
-     * @param SettingsStatus   $settings_status The Settings status helper.
-     * @param CurrencyGetter   $currency The getter of the 3-letter currency code of the shop.
-     * @param LoggerInterface  $logger The logger.
-     * @param AssetGetter      $wcgateway_module_asset_getter
-     * @param array            $supported_country_card_type_matrix The supported country card type matrix for Axo.
+     * @param Environment $environment The environment object.
+     * @param array       $insights_data Data needed for the PayPal Insights.
+     * @param AssetGetter $wcgateway_module_asset_getter
+     * @param array       $supported_country_card_type_matrix The supported country card type matrix for Axo.
      */
-    public function __construct(AssetGetter $asset_getter, string $version, SessionHandler $session_handler, SettingsProvider $settings_provider, Environment $environment, array $insights_data, SettingsStatus $settings_status, CurrencyGetter $currency, LoggerInterface $logger, AssetGetter $wcgateway_module_asset_getter, array $supported_country_card_type_matrix)
+    public function __construct(AssetGetter $asset_getter, string $version, SettingsProvider $settings_provider, Environment $environment, array $insights_data, AssetGetter $wcgateway_module_asset_getter, array $supported_country_card_type_matrix)
     {
         $this->asset_getter = $asset_getter;
         $this->version = $version;
-        $this->session_handler = $session_handler;
         $this->settings_provider = $settings_provider;
         $this->environment = $environment;
         $this->insights_data = $insights_data;
-        $this->settings_status = $settings_status;
-        $this->currency = $currency;
-        $this->logger = $logger;
         $this->wcgateway_module_asset_getter = $wcgateway_module_asset_getter;
         $this->supported_country_card_type_matrix = $supported_country_card_type_matrix;
     }

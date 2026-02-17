@@ -8,7 +8,8 @@
 declare (strict_types=1);
 namespace WooCommerce\PayPalCommerce;
 
-use WooCommerce\PayPalCommerce\Uninstall\ClearDatabase;
+use Throwable;
+use WooCommerce\PayPalCommerce\Uninstall\ClearDatabaseInterface;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\Settings\Data\GeneralSettings;
 if (!defined('WP_UNINSTALL_PLUGIN')) {
@@ -42,7 +43,7 @@ require $main_plugin_file;
     $should_reset_db = apply_filters('woocommerce_paypal_payments_uninstall_full_reset', \false);
     if ($should_reset_db) {
         $clear_db = $app_container->get('uninstall.clear-db');
-        assert($clear_db instanceof ClearDatabase);
+        assert($clear_db instanceof \WooCommerce\PayPalCommerce\ClearDatabase);
         $clear_db->clean_up();
     }
 })($root_dir);

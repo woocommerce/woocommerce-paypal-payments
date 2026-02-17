@@ -191,12 +191,9 @@ class SavePaymentMethodsModule implements ServiceModule, ExecutableModule
                 $api = $c->get('api.user-id-token');
                 assert($api instanceof UserIdToken);
                 try {
-                    $target_customer_id = '';
-                    if (is_user_logged_in()) {
-                        $target_customer_id = get_user_meta(get_current_user_id(), '_ppcp_target_customer_id', \true);
-                        if (!$target_customer_id) {
-                            $target_customer_id = get_user_meta(get_current_user_id(), 'ppcp_customer_id', \true);
-                        }
+                    $target_customer_id = get_user_meta(get_current_user_id(), '_ppcp_target_customer_id', \true);
+                    if (!$target_customer_id) {
+                        $target_customer_id = get_user_meta(get_current_user_id(), 'ppcp_customer_id', \true);
                     }
                     $id_token = $api->id_token($target_customer_id);
                     $settings_provider = $c->get('settings.settings-provider');
@@ -210,7 +207,7 @@ class SavePaymentMethodsModule implements ServiceModule, ExecutableModule
                     $logger = $c->get('woocommerce.logger.woocommerce');
                     assert($logger instanceof LoggerInterface);
                     $error = $exception->getMessage();
-                    if (is_a($exception, PayPalApiException::class)) {
+                    if ($exception instanceof PayPalApiException) {
                         $error = $exception->get_details($error);
                     }
                     $logger->error($error);
@@ -219,7 +216,7 @@ class SavePaymentMethodsModule implements ServiceModule, ExecutableModule
             /**
              * Displays the PayPal button on the Add Payment Method page.
              */
-            add_action('woocommerce_add_payment_method_form_bottom', function () use ($c) {
+            add_action('woocommerce_add_payment_method_form_bottom', function () {
                 if (!is_user_logged_in() || !is_add_payment_method_page()) {
                     return;
                 }
@@ -249,7 +246,7 @@ class SavePaymentMethodsModule implements ServiceModule, ExecutableModule
                     $logger = $c->get('woocommerce.logger.woocommerce');
                     assert($logger instanceof LoggerInterface);
                     $error = $exception->getMessage();
-                    if (is_a($exception, PayPalApiException::class)) {
+                    if ($exception instanceof PayPalApiException) {
                         $error = $exception->get_details($error);
                     }
                     $logger->error($error);
@@ -293,7 +290,7 @@ class SavePaymentMethodsModule implements ServiceModule, ExecutableModule
             $localized_script_data['data_client_id']['set_attribute'] = \false;
         } catch (RuntimeException $exception) {
             $error = $exception->getMessage();
-            if (is_a($exception, PayPalApiException::class)) {
+            if ($exception instanceof PayPalApiException) {
                 $error = $exception->get_details($error);
             }
             $logger->error($error);

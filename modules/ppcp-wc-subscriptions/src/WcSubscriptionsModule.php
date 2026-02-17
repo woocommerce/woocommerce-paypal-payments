@@ -180,7 +180,7 @@ class WcSubscriptionsModule implements ServiceModule, ExecutableModule
                 }
                 if (count($subscription->get_related_orders()) === 1) {
                     $parent_order = $subscription->get_parent();
-                    if (is_a($parent_order, WC_Order::class)) {
+                    if ($parent_order instanceof WC_Order) {
                         // Update the initial payment method title if not the same as the first order.
                         $payment_method_title = $parent_order->get_payment_method_title();
                         if ($payment_method_title && $subscription instanceof \WC_Subscription && $subscription->get_payment_method_title() !== $payment_method_title) {

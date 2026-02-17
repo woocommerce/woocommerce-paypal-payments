@@ -110,9 +110,9 @@ class PayUponInvoiceHelper
             if (isset($wp->query_vars['order-pay']) && absint($wp->query_vars['order-pay']) > 0) {
                 $order_id = absint($wp->query_vars['order-pay']);
                 $order = wc_get_order($order_id);
-                if (is_a($order, WC_Order::class)) {
+                if ($order instanceof WC_Order) {
                     foreach ($order->get_items() as $item_id => $item) {
-                        if (is_a($item, WC_Order_Item_Product::class)) {
+                        if ($item instanceof WC_Order_Item_Product) {
                             $product = wc_get_product($item->get_product_id());
                             if ($product && !$this->checkout_helper->is_physical_product($product)) {
                                 return \false;
@@ -142,7 +142,7 @@ class PayUponInvoiceHelper
             return \false;
         }
         $order = wc_get_order($order_id);
-        if (!is_a($order, WC_Order::class)) {
+        if (!$order instanceof WC_Order) {
             return \false;
         }
         $address = $order->get_address();
@@ -168,7 +168,7 @@ class PayUponInvoiceHelper
             return 'EUR' === get_woocommerce_currency();
         }
         $order = wc_get_order($order_id);
-        if (is_a($order, WC_Order::class)) {
+        if ($order instanceof WC_Order) {
             return 'EUR' === $order->get_currency();
         }
         return \false;

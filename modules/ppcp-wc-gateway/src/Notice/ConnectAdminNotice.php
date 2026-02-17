@@ -1,23 +1,16 @@
 <?php
 
-/**
- * Registers the admin message to "connect your account" if necessary.
- *
- * @package WooCommerce\PayPalCommerce\WcGateway\Notice
- */
 declare (strict_types=1);
 namespace WooCommerce\PayPalCommerce\WcGateway\Notice;
 
 use WooCommerce\PayPalCommerce\AdminNotices\Entity\Message;
 /**
- * Class ConnectAdminNotice
+ * Registers the admin message to "connect your account" if necessary.
  */
 class ConnectAdminNotice
 {
     /**
      * Whether the merchant completed the onboarding and is connected to PayPal.
-     *
-     * @var bool
      */
     private bool $is_connected;
     /**
@@ -26,6 +19,10 @@ class ConnectAdminNotice
      * @var bool
      */
     private bool $is_current_country_send_only;
+    /**
+     * @param bool $is_connected Whether onboarding was completed.
+     * @param bool $is_current_country_send_only Whether the current store's country is classified as a send-only country.
+     */
     public function __construct(bool $is_connected, bool $is_current_country_send_only)
     {
         $this->is_connected = $is_connected;

@@ -72,7 +72,11 @@ class ShippingPreferenceFactory
     }
     protected function wc_order_needs_shipping(WC_Order $wc_order): bool
     {
-        // WC 9.9.0+.
+        /**
+         * WC 9.9.0+.
+         *
+         * @phpstan-ignore function.alreadyNarrowedType
+         */
         if (method_exists($wc_order, 'needs_shipping')) {
             return $wc_order->needs_shipping();
         }

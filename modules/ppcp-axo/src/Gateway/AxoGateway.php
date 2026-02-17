@@ -170,7 +170,7 @@ class AxoGateway extends WC_Payment_Gateway
     public function process_payment($order_id)
     {
         $wc_order = wc_get_order($order_id);
-        if (!is_a($wc_order, WC_Order::class)) {
+        if (!$wc_order instanceof WC_Order) {
             return $this->handle_payment_failure(null, new GatewayGenericException(new Exception('WC order was not found.')));
         }
         // phpcs:disable WordPress.Security.NonceVerification
@@ -307,7 +307,7 @@ class AxoGateway extends WC_Payment_Gateway
         // Build payment source with 3DS verification if needed.
         $payment_source_properties = $this->build_payment_source_properties($payment_token);
         $payment_source = new PaymentSource('card', $payment_source_properties);
-        return $this->order_endpoint->create(array($purchase_unit), $shipping_preference, null, self::ID, $this->build_order_data(), $payment_source, $wc_order);
+        return $this->order_endpoint->create(array($purchase_unit), $shipping_preference, null, self::ID, $this->build_order_data(), $payment_source);
     }
     /**
      * Build payment source properties.

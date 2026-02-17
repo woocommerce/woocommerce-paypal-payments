@@ -4,7 +4,7 @@
  * Plugin Name: WooCommerce PayPal Payments
  * Plugin URI:  https://woocommerce.com/products/woocommerce-paypal-payments/
  * Description: PayPal's latest complete payments processing solution. Accept PayPal, Pay Later, credit/debit cards, alternative digital wallets local payment types and bank accounts. Turn on only PayPal options or process a full suite of payment methods. Enable global transaction with extensive currency and country coverage.
- * Version: 3.4.0+pcp-5413-remove-legacy-ui.065462f
+ * Version: 3.4.0-alpha20260217+pcp-5413-remove-legacy-ui.d9df1f4
  * Author:      PayPal
  * Author URI:  https://paypal.com/
  * License:     GPL-2.0
@@ -48,14 +48,9 @@ define('PPCP_PAYPAL_BN_CODE', 'Woo_PPCP');
      *                                  Should echo/print the notice markup directly.
      * @param bool     $auto_deactivate Optional. Whether to automatically deactivate the plugin
      *                                  after displaying the notice. Default true.
-     *
-     * @return void
      */
     function show_admin_notice_and_deactivate(callable $notice_callback, bool $auto_deactivate = \true): void
     {
-        if (!is_callable($notice_callback)) {
-            return;
-        }
         $admin_notice_hooks = array('admin_notices', 'network_admin_notices');
         foreach ($admin_notice_hooks as $hook) {
             add_action($hook, static function () use ($notice_callback, $auto_deactivate) {

@@ -399,7 +399,7 @@ class CompatModule implements ServiceModule, ExecutableModule
                         continue;
                     }
                     foreach ($wc_order->get_items() as $wc_order_item) {
-                        if (!is_a($wc_order_item, WC_Order_Item_Product::class)) {
+                        if (!$wc_order_item instanceof WC_Order_Item_Product) {
                             continue;
                         }
                         $product_id = $wc_order_item->get_variation_id() ?: $wc_order_item->get_product_id();
