@@ -116,45 +116,16 @@ class CartResponse {
 	/**
 	 * Calculate cart totals.
 	 *
-	 * @return array The cart-totals array, or null if not calculatable.
+	 * @return array|null The cart-totals array, or null if not calculable.
 	 */
 	private function calculate_totals(): ?array {
-		// Cart items have invalid prices or currency: do not calculate totals.
 		if ( ! $this->wc_cart || $this->cart->has_validation_issue( ErrorCode::PRICING_ERROR ) ) {
 			return null;
 		}
 
-		$currency_code  = CartHelper::currency( $this->cart );
-		$item_total     = (float) $this->wc_cart->get_cart_contents_total();
-		$discount_total = (float) $this->wc_cart->get_discount_total();
-		$shipping_total = $this->wc_cart->get_shipping_total();
-		$tax_total      = $this->wc_cart->get_total_tax();
-		$cart_total     = (float) $this->wc_cart->get_total( 'edit' );
+		$currency_code = CartHelper::currency( $this->cart );
 
-		// Cart has no items, no currency, no quantity: nothing to calculate.
-		if ( ! $currency_code || $item_total <= 0 || $cart_total <= 0 ) {
-			return null;
-		}
-
-		$totals = array(
-			'item_total' => $this->money( $currency_code, $item_total ),
-			'shipping'   => $this->money( $currency_code, (float) $shipping_total ),
-			'tax_total'  => $this->money( $currency_code, (float) $tax_total ),
-			'amount'     => $this->money( $currency_code, $cart_total ),
-		);
-
-		if ( $discount_total > 0 ) {
-			$totals['discount'] = $this->money( $currency_code, $discount_total );
-		}
-
-		return $totals;
-	}
-
-	private function money( string $currency_code, float $value ): array {
-		return array(
-			'currency_code' => $currency_code,
-			'value'         => number_format( $value, 2 ),
-		);
+		return CartHelper::calculate_totals( $this->wc_cart, $currency_code );
 	}
 
 	private function status(): string {
