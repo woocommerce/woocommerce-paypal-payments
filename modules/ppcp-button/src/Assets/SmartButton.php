@@ -207,38 +207,6 @@ class SmartButton implements \WooCommerce\PayPalCommerce\Button\Assets\SmartButt
      * Whether the final review is enabled in blocks settings.
      */
     private bool $final_review_enabled;
-    /**
-     * @param AssetGetter               $asset_getter                          The asset getter.
-     * @param string                    $version                               The assets version.
-     * @param SessionHandler            $session_handler                       The Session handler.
-     * @param SettingsProvider          $settings_provider                     The Settings provider.
-     * @param PayerFactory              $payer_factory                         The Payer factory.
-     * @param string                    $client_id                             The client ID.
-     * @param RequestData               $request_data                          The Request Data helper.
-     * @param DccApplies                $dcc_applies                           The DCC applies helper.
-     * @param SubscriptionHelper        $subscription_helper                   The subscription helper.
-     * @param callable                  $get_subscriptions_mode                The subscriptions mode getter.
-     * @param MessagesApply             $messages_apply                        The Messages apply helper.
-     * @param Environment               $environment                           The environment object.
-     * @param PaymentTokenRepository    $payment_token_repository              The payment token repository.
-     * @param SettingsStatus            $settings_status                       The Settings status helper.
-     * @param CurrencyGetter            $currency                              The getter of the 3-letter currency code of the shop.
-     * @param bool                      $basic_checkout_validation_enabled     Whether the basic JS validation of the form is enabled.
-     * @param bool                      $early_validation_enabled              Whether to execute WC validation of the checkout form.
-     * @param array                     $pay_now_contexts                      The contexts that should have the Pay Now button.
-     * @param string[]                  $funding_sources_without_redirect      The sources that do not cause issues about redirecting.
-     * @param bool                      $vault_v3_enabled                      Whether Vault v3 module is enabled.
-     * @param PaymentTokensEndpoint     $payment_tokens_endpoint               Payment tokens endpoint.
-     * @param LoggerInterface           $logger                                The logger.
-     * @param bool                      $should_handle_shipping_in_paypal      Whether the shipping should be handled in PayPal.
-     * @param bool                      $server_side_shipping_callback_enabled Whether the server-side shipping callback is enabled.
-     * @param bool                      $appswitch_enabled                     Whether the AppSwitch is enabled.
-     * @param DisabledFundingSources    $disabled_funding_sources              List of funding sources to be disabled.
-     * @param CardPaymentsConfiguration $dcc_configuration                     The DCC Gateway Configuration.
-     * @param PartnerAttribution        $partner_attribution                   The PayPal Partner Attribution Helper.
-     * @param bool                      $final_review_enabled                  Whether the final review is enabled in blocks settings.
-     * @param Context                   $context                               The context helper.
-     */
     public function __construct(AssetGetter $asset_getter, string $version, SessionHandler $session_handler, SettingsProvider $settings_provider, PayerFactory $payer_factory, string $client_id, RequestData $request_data, DccApplies $dcc_applies, SubscriptionHelper $subscription_helper, callable $get_subscriptions_mode, MessagesApply $messages_apply, Environment $environment, PaymentTokenRepository $payment_token_repository, SettingsStatus $settings_status, CurrencyGetter $currency, bool $basic_checkout_validation_enabled, bool $early_validation_enabled, array $pay_now_contexts, array $funding_sources_without_redirect, bool $vault_v3_enabled, bool $should_handle_shipping_in_paypal, bool $server_side_shipping_callback_enabled, bool $appswitch_enabled, DisabledFundingSources $disabled_funding_sources, CardPaymentsConfiguration $dcc_configuration, PartnerAttribution $partner_attribution, bool $final_review_enabled, Context $context)
     {
         $this->asset_getter = $asset_getter;
