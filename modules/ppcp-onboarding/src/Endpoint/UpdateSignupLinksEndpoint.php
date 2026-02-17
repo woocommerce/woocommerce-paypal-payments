@@ -106,13 +106,11 @@ class UpdateSignupLinksEndpoint implements EndpointInterface {
 	/**
 	 * Handles the request.
 	 *
-	 * @return bool
 	 * @throws NotFoundException When order not found or handling failed.
 	 */
-	public function handle_request(): bool {
+	public function handle_request(): void {
 		if ( ! current_user_can( 'manage_woocommerce' ) ) {
 			wp_send_json_error( 'Not admin.', 403 );
-			return false;
 		}
 
 		$signup_links = array();
@@ -157,7 +155,5 @@ class UpdateSignupLinksEndpoint implements EndpointInterface {
 				'signup_links'   => $signup_links,
 			)
 		);
-
-		return true;
 	}
 }

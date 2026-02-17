@@ -52,14 +52,10 @@ class GetConfig {
 		return self::ENDPOINT;
 	}
 
-	/**
-	 * Handles the request.
-	 */
-	public function handle_request(): bool {
+	public function handle_request(): void {
 		if ( ! current_user_can( 'manage_woocommerce' ) ) {
 			$this->logger->error( 'User does not have permission: manage_woocommerce' );
 			wp_send_json_error( 'Not admin.', 403 );
-			return false;
 		}
 
 		try {
@@ -68,7 +64,6 @@ class GetConfig {
 			if ( false === $input ) {
 				$this->logger->error( 'Failed to get input data.' );
 				wp_send_json_error( 'Failed to get input data.', 400 );
-				return false;
 			}
 
 			$data = json_decode( $input, true );
@@ -76,24 +71,20 @@ class GetConfig {
 			if ( json_last_error() !== JSON_ERROR_NONE ) {
 				$this->logger->error( 'Failed to decode JSON: ' . json_last_error_msg() );
 				wp_send_json_error( 'Failed to decode JSON.', 400 );
-				return false;
 			}
 
 			if ( ! isset( $data['nonce'] ) || ! wp_verify_nonce( $data['nonce'], self::ENDPOINT ) ) {
 				$this->logger->error( 'Invalid nonce' );
 				wp_send_json_error( 'Invalid nonce.', 403 );
-				return false;
 			}
 
 			$config_factory = new ConfigFactory();
 			$config         = $config_factory->from_settings( $this->settings );
 			wp_send_json_success( $config );
-			return true;
 		} catch ( Throwable $error ) {
 			$this->logger->error( "GetConfig execution failed. {$error->getMessage()} {$error->getFile()}:{$error->getLine()}" );
 
 			wp_send_json_error( 'An error occurred while fetching the configuration.' );
-			return false;
 		}
 	}
 }

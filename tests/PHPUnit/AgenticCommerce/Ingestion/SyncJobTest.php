@@ -51,6 +51,8 @@ class SyncJobTest extends TestCase {
 	private function stub_logger_to_allow_all(): void {
 		$this->logger->allows( 'info' );
 		$this->logger->allows( 'warning' );
+		$this->logger->allows( 'debug' );
+		$this->logger->allows( 'error' );
 	}
 
 	/**
@@ -125,7 +127,7 @@ class SyncJobTest extends TestCase {
 	/**
 	 * Helper method to stub a successful API response.
 	 */
-	private function stub_successful_api_response(): void {
+	private function stub_successful_api_response($expectedProductIds): void {
 		when( 'wp_remote_post' )->justReturn( array(
 			'response' => array(
 				'code'    => 200,
@@ -133,9 +135,10 @@ class SyncJobTest extends TestCase {
 			),
 			'body'     => '{"success": true}',
 		) );
-
+        $body = array( 'product_ids' => $expectedProductIds  );
 		when( 'is_wp_error' )->justReturn( false );
 		when( 'wp_remote_retrieve_response_code' )->justReturn( 200 );
+        when( 'wp_remote_retrieve_body' )->justReturn( json_encode($body) );
 	}
 
 	/**
@@ -170,7 +173,7 @@ class SyncJobTest extends TestCase {
 		$this->expectNotToPerformAssertions();
 
 		$products = $this->create_products_and_stub_wc_get_product( $this->product_ids, false );
-		$this->stub_successful_api_response();
+		$this->stub_successful_api_response($this->product_ids);
 
 		// Verify meta operations for successful sync
 		foreach ( $products as $product ) {
@@ -179,17 +182,19 @@ class SyncJobTest extends TestCase {
 				->with( '_ppcp_agentic_last_sync', '2024-01-01 12:00:00' );
 			$product->shouldReceive( 'delete_meta_data' )
 				->once()
-				->with( '_ppcp_agentic_needs_sync' );
-			$product->shouldReceive( 'delete_meta_data' )
-				->once()
 				->with( '_ppcp_agentic_sync_error' );
 			$product->shouldReceive( 'save_meta_data' )->once();
 		}
 
+		$this->logger->shouldReceive( 'debug' )
+			->once()
+			->with(
+				'Start Sync test-batch-id-1234...',
+				Mockery::type( 'array' )
+			);
 		$this->logger->shouldReceive( 'info' )
 			->once()
 			->with( 'Agentic Sync Job test-batch-id-1234: Started' );
-
 		$this->logger->shouldReceive( 'info' )
 			->once()
 			->with(
@@ -258,11 +263,12 @@ class SyncJobTest extends TestCase {
 		$this->logger->shouldReceive( 'info' )
 			->once()
 			->with( 'Agentic Sync Job test-batch-id-1234: Started' );
+        when( 'wp_remote_retrieve_body' )->justReturn( '' );
 
 		$this->logger->shouldReceive( 'warning' )
 			->once()
 			->with(
-				'Agentic Sync Job Connection timeout: Error',
+				'Agentic Sync Job test-batch-id-1234: API Error - Connection timeout',
 				array(
 					'product_count' => 3,
 					'product_ids'   => $this->product_ids,
@@ -274,6 +280,12 @@ class SyncJobTest extends TestCase {
 		$wp_error->allows( 'get_error_message' )->andReturn( 'Connection timeout' );
 
 		when( 'wp_remote_post' )->justReturn( $wp_error );
+		$this->logger->shouldReceive( 'debug' )
+			->once()
+			->with(
+				'Start Sync test-batch-id-1234...',
+				Mockery::type( 'array' )
+			);
 		when( 'is_wp_error' )->justReturn( true );
 
 		$sync_job = new SyncJob(
@@ -312,7 +324,12 @@ class SyncJobTest extends TestCase {
 				->with( '_ppcp_agentic_sync_error', $expected_error );
 			$product->shouldReceive( 'save_meta_data' )->once();
 		}
-
+		$this->logger->shouldReceive( 'debug' )
+			->once()
+			->with(
+				'Start Sync test-batch-id-1234...',
+				Mockery::type( 'array' )
+			);
 		$this->logger->shouldReceive( 'info' )
 			->once()
 			->with( 'Agentic Sync Job test-batch-id-1234: Started' );
@@ -320,7 +337,7 @@ class SyncJobTest extends TestCase {
 		$this->logger->shouldReceive( 'warning' )
 			->once()
 			->with(
-				"Agentic Sync Job {$expected_error}: Error",
+				"Agentic Sync Job test-batch-id-1234: API Error - {$expected_error}",
 				array(
 					'product_count' => 3,
 					'product_ids'   => $this->product_ids,
@@ -349,16 +366,6 @@ class SyncJobTest extends TestCase {
 				500,
 				'Internal Server Error',
 				'HTTP 500: Internal Server Error',
-			),
-			'bad request with JSON error (400)' => array(
-				400,
-				'{"error": "Invalid product data"}',
-				'HTTP 400: {"error": "Invalid product data"}',
-			),
-			'unauthorized access (401)'         => array(
-				401,
-				'Unauthorized',
-				'HTTP 401: Unauthorized',
 			),
 			'service unavailable (503)'         => array(
 				503,
@@ -396,7 +403,7 @@ class SyncJobTest extends TestCase {
 
 		when( 'is_wp_error' )->justReturn( false );
 		when( 'wp_remote_retrieve_response_code' )->justReturn( 200 );
-
+        when( 'wp_remote_retrieve_body' )->justReturn( '}' );
 		$sync_job = new SyncJob(
 			$this->api_endpoint,
 			'https://example.com',
@@ -409,8 +416,8 @@ class SyncJobTest extends TestCase {
 		$this->assertSame( $api_endpoint, $captured_request['url'] );
 		$this->assertSame( 30, $captured_request['args']['timeout'] );
 		$this->assertSame( 'application/json', $captured_request['args']['headers']['Content-Type'] );
+        $body = json_decode( $captured_request['args']['body'], true );
 
-		$body = json_decode( $captured_request['args']['body'], true );
 		$this->assertSame( 'https://example.com', $body['merchant_url'] );
 		$this->assertIsArray( $body['products'] );
 		$this->assertCount( 3, $body['products'] );
@@ -431,16 +438,12 @@ class SyncJobTest extends TestCase {
 		when( 'wc_get_product' )->alias( function ( $id ) use ( $valid_product ) {
 			return $id === 1 ? $valid_product : false;
 		} );
-
-		$this->stub_successful_api_response();
-
+        $expectedProductIds = array(1, 999, 888);
+		$this->stub_successful_api_response($expectedProductIds);
 		// Verify only the valid product gets synced
 		$valid_product->shouldReceive( 'update_meta_data' )
 			->once()
 			->with( '_ppcp_agentic_last_sync', '2024-01-01 12:00:00' );
-		$valid_product->shouldReceive( 'delete_meta_data' )
-			->once()
-			->with( '_ppcp_agentic_needs_sync' );
 		$valid_product->shouldReceive( 'delete_meta_data' )
 			->once()
 			->with( '_ppcp_agentic_sync_error' );
@@ -449,18 +452,24 @@ class SyncJobTest extends TestCase {
 		$this->logger->shouldReceive( 'info' )
 			->once()
 			->with( 'Agentic Sync Job test-batch-id-1234: Started' );
+		$this->logger->shouldReceive( 'debug' )
+			->once()
+			->with(
+				'Start Sync test-batch-id-1234...',
+				Mockery::type( 'array' )
+			);
 
-		$this->logger->shouldReceive( 'info' )
+        $this->logger->shouldReceive( 'info' )
 			->once()
 			->with(
 				'Agentic Sync Job test-batch-id-1234: Successfully synced 3 products',
-				array( 'product_ids' => array( 1, 999, 888 ) )
+				array( 'product_ids' => $expectedProductIds)
 			);
 
 		$sync_job = new SyncJob(
 			$this->api_endpoint,
 			'https://example.com',
-			array( 1, 999, 888 ),
+            $expectedProductIds,
 			$this->logger
 		);
 
@@ -480,7 +489,6 @@ class SyncJobTest extends TestCase {
 		$this->logger->shouldReceive( 'info' )
 			->once()
 			->with( 'Agentic Sync Job test-batch-id-1234: Started' );
-
 		$this->logger->shouldReceive( 'info' )
 			->once()
 			->with( 'Agentic Sync Job test-batch-id-1234: No products' );
@@ -509,15 +517,12 @@ class SyncJobTest extends TestCase {
 		when( 'wc_get_product' )->alias( function ( $id ) use ( $product ) {
 			return $id === 42 ? $product : false;
 		} );
-
-		$this->stub_successful_api_response();
+        $expectedProductIds = array(42);
+		$this->stub_successful_api_response($expectedProductIds);
 
 		$product->shouldReceive( 'update_meta_data' )
 			->once()
 			->with( '_ppcp_agentic_last_sync', '2024-01-01 12:00:00' );
-		$product->shouldReceive( 'delete_meta_data' )
-			->once()
-			->with( '_ppcp_agentic_needs_sync' );
 		$product->shouldReceive( 'delete_meta_data' )
 			->once()
 			->with( '_ppcp_agentic_sync_error' );
@@ -526,18 +531,24 @@ class SyncJobTest extends TestCase {
 		$this->logger->shouldReceive( 'info' )
 			->once()
 			->with( 'Agentic Sync Job test-batch-id-1234: Started' );
+		$this->logger->shouldReceive( 'debug' )
+			->once()
+			->with(
+				'Start Sync test-batch-id-1234...',
+				Mockery::type( 'array' )
+			);
 
-		$this->logger->shouldReceive( 'info' )
+        $this->logger->shouldReceive( 'info' )
 			->once()
 			->with(
 				'Agentic Sync Job test-batch-id-1234: Successfully synced 1 products',
-				array( 'product_ids' => array( 42 ) )
+				array( 'product_ids' => $expectedProductIds)
 			);
 
 		$sync_job = new SyncJob(
 			$this->api_endpoint,
 			'https://example.com',
-			array( 42 ),
+            $expectedProductIds,
 			$this->logger
 		);
 

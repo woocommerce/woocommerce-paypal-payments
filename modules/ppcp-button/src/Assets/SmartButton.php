@@ -10,15 +10,13 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\Button\Assets;
 
 use Exception;
-use Psr\Log\LoggerInterface;
 use WC_Cart;
 use WC_Order;
 use WC_Payment_Tokens;
 use WC_Product;
+use WC_Product_Variable;
 use WC_Product_Variation;
-use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PaymentTokensEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Money;
-use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentToken;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PayerFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\CurrencyGetter;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\DccApplies;
@@ -173,13 +171,6 @@ class SmartButton implements SmartButtonInterface {
 	protected $early_validation_enabled;
 
 	/**
-	 * Cached payment tokens.
-	 *
-	 * @var PaymentToken[]|null
-	 */
-	private $payment_tokens = null;
-
-	/**
 	 * The contexts that should have the Pay Now button.
 	 *
 	 * @var string[]
@@ -206,20 +197,6 @@ class SmartButton implements SmartButtonInterface {
 	 * @var bool
 	 */
 	private $vault_v3_enabled;
-
-	/**
-	 * Payment tokens endpoint.
-	 *
-	 * @var PaymentTokensEndpoint
-	 */
-	private $payment_tokens_endpoint;
-
-	/**
-	 * The logger.
-	 *
-	 * @var LoggerInterface
-	 */
-	private $logger;
 
 	/**
 	 * Whether the shipping should be handled in PayPal.
@@ -284,8 +261,6 @@ class SmartButton implements SmartButtonInterface {
 	 * @param array                     $pay_now_contexts                  The contexts that should have the Pay Now button.
 	 * @param string[]                  $funding_sources_without_redirect  The sources that do not cause issues about redirecting (on mobile, ...) and sometimes not returning back.
 	 * @param bool                      $vault_v3_enabled                  Whether Vault v3 module is enabled.
-	 * @param PaymentTokensEndpoint     $payment_tokens_endpoint           Payment tokens endpoint.
-	 * @param LoggerInterface           $logger                            The logger.
 	 * @param bool                      $should_handle_shipping_in_paypal  Whether the shipping should be handled in PayPal.
 	 * @param bool                      $server_side_shipping_callback_enabled Whether the server-side shipping callback is enabled (feature flag).
 	 * @param bool                      $appswitch_enabled                 Whether the AppSwitch is enabled (feature flag).
@@ -314,8 +289,6 @@ class SmartButton implements SmartButtonInterface {
 		array $pay_now_contexts,
 		array $funding_sources_without_redirect,
 		bool $vault_v3_enabled,
-		PaymentTokensEndpoint $payment_tokens_endpoint,
-		LoggerInterface $logger,
 		bool $should_handle_shipping_in_paypal,
 		bool $server_side_shipping_callback_enabled,
 		bool $appswitch_enabled,
@@ -344,8 +317,6 @@ class SmartButton implements SmartButtonInterface {
 		$this->pay_now_contexts                      = $pay_now_contexts;
 		$this->funding_sources_without_redirect      = $funding_sources_without_redirect;
 		$this->vault_v3_enabled                      = $vault_v3_enabled;
-		$this->logger                                = $logger;
-		$this->payment_tokens_endpoint               = $payment_tokens_endpoint;
 		$this->should_handle_shipping_in_paypal      = $should_handle_shipping_in_paypal;
 		$this->server_side_shipping_callback_enabled = $server_side_shipping_callback_enabled;
 		$this->appswitch_enabled                     = $appswitch_enabled;
@@ -579,7 +550,7 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
 					$product = wc_get_product();
 
 					if (
-						is_a( $product, WC_Product::class )
+						$product instanceof WC_Product
 						&& ! $this->product_supports_payment( $product )
 					) {
 
@@ -830,7 +801,7 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
 		$location_hook = $this->location_to_hook( $location );
 
 		if (
-			$location === 'product' && is_a( $product, WC_Product::class )
+			$location === 'product' && $product instanceof WC_Product
 			/**
 			 * The filter returning true if PayPal buttons can be rendered, or false otherwise.
 			 */
@@ -883,7 +854,7 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
 			 *
 			 * @psalm-suppress MissingClosureParamType
 			 */
-			function ( $block_content, $block_params ) use ( $name, $content, $priority ) {
+			function ( $block_content, $block_params ) use ( $name, $content ) {
 				if (
 					is_array( $block_params )
 					&& ( $block_params['blockName'] ?? null ) === $name
@@ -935,7 +906,7 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
 
 		$product = wc_get_product();
 		$amount  = 0;
-		if ( is_a( $product, WC_Product::class ) ) {
+		if ( $product instanceof WC_Product ) {
 			$amount = wc_get_price_including_tax( $product );
 		} elseif ( isset( WC()->cart ) ) {
 			$amount = WC()->cart->get_total( 'raw' );
@@ -1349,7 +1320,7 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
 
 		if ( is_product() ) {
 			$product = wc_get_product( get_the_ID() );
-			if ( is_a( $product, \WC_Product::class ) ) {
+			if ( $product instanceof \WC_Product ) {
 				$localize['productType'] = $product->get_type();
 			}
 		}
@@ -1436,7 +1407,7 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
 			'intent'           => $intent,
 		);
 
-		if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+		if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) { // @phpstan-ignore booleanAnd.rightAlwaysFalse
 			$params['debug'] = true;
 		}
 
@@ -1450,8 +1421,8 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
 		}
 
 		if (
-			$this->environment->current_environment_is( Environment::SANDBOX )
-			&& defined( 'WP_DEBUG' ) && \WP_DEBUG
+			$this->environment->is_sandbox() // @phpstan-ignore-line
+			&& defined( 'WP_DEBUG' ) && \WP_DEBUG // @phpstan-ignore booleanAnd.rightAlwaysFalse
 			&& WC()->customer instanceof \WC_Customer && WC()->customer->get_billing_country()
 			&& 2 === strlen( WC()->customer->get_billing_country() )
 		) {
@@ -1897,11 +1868,9 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
 		$in_stock = $product->is_in_stock();
 
 		if ( $product->is_type( 'variable' ) ) {
-			/**
-			 * The method is defined in WC_Product_Variable class.
-			 *
-			 * @psalm-suppress UndefinedMethod
-			 */
+			assert( $product instanceof WC_Product_Variable );
+
+			/** @var WC_Product_Variation[] $variations */
 			$variations = $product->get_available_variations( 'objects' );
 			$in_stock   = $this->has_in_stock_variation( $variations );
 		}

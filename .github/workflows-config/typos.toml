@@ -1,9 +1,10 @@
 [files]
 extend-exclude = [
 	".git/",
-	".psalm/stubs.php",
-	".psalm/wcs.php",
+	".ddev/bin/",
 	"modules/ppcp-order-tracking/carriers.php",
+	"stubs/",
+	"tests/",
 	# German
 	"modules/ppcp-wc-gateway/src/Gateway/PayUponInvoice/PayUponInvoice.php",
 	# Files outside the repository
@@ -11,8 +12,6 @@ extend-exclude = [
 	"vendor/",
 	"*.min.js",
 	"*.min.css",
-	".ddev/bin/",
-	"tests/",
 ]
 ignore-hidden = false
 

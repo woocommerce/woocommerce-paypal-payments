@@ -33,7 +33,7 @@ return array(
 		 *
 		 * @var Environment $environment
 		 */
-		if ( $environment->current_environment_is( Environment::SANDBOX ) ) {
+		if ( $environment->is_sandbox() ) {
 			return $container->get( 'api.paypal-host-sandbox' );
 		}
 		return $container->get( 'api.paypal-host-production' );
@@ -41,7 +41,7 @@ return array(
 	'api.paypal-website-url'             => function ( ContainerInterface $container ): string {
 		$environment = $container->get( 'settings.environment' );
 		assert( $environment instanceof Environment );
-		if ( $environment->current_environment_is( Environment::SANDBOX ) ) {
+		if ( $environment->is_sandbox() ) {
 			return $container->get( 'api.paypal-website-url-sandbox' );
 		}
 		return $container->get( 'api.paypal-website-url-production' );
@@ -178,11 +178,9 @@ return array(
 		$partner_referrals         = $container->get( 'api.endpoint.partner-referrals-production' );
 		$partner_referrals_sandbox = $container->get( 'api.endpoint.partner-referrals-sandbox' );
 		$partner_referrals_data    = $container->get( 'api.repository.partner-referrals-data' );
-		$settings                  = $container->get( 'wcgateway.settings' );
 		$signup_link_cache         = $container->get( 'onboarding.signup-link-cache' );
 		$logger                    = $container->get( 'woocommerce.logger.woocommerce' );
 		return new OnboardingRenderer(
-			$settings,
 			$partner_referrals,
 			$partner_referrals_sandbox,
 			$partner_referrals_data,

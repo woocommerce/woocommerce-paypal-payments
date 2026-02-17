@@ -147,7 +147,8 @@ return array(
 		return new AgenticCheckoutProcessor(
 			$c->get( 'agentic.helper.paypal-order-manager' ),
 			$c->get( 'button.helper.wc-order-creator' ),
-			$c->get( 'agentic.helper.cart-builder' )
+			$c->get( 'agentic.helper.cart-builder' ),
+			$c->get( 'agentic.response.applied-coupons-builder' )
 		);
 	},
 
@@ -256,8 +257,7 @@ return array(
 			$c->get( 'agentic.response.factory' ),
 			$c->get( 'agentic.validation.processor' ),
 			$c->get( 'agentic.logger' ),
-			$c->get( 'agentic.helper.paypal-order-manager' ),
-			$c->get( 'agentic.response.applied-coupons-builder' )
+			$c->get( 'agentic.helper.paypal-order-manager' )
 		);
 	},
 	'agentic.rest.checkout'                        => static function ( ContainerInterface $c ): CheckoutEndpoint {

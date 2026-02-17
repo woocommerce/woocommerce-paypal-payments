@@ -31,6 +31,7 @@ class ResolutionAction {
 	public const VERIFY_ACCOUNT           = 'VERIFY_ACCOUNT';
 	public const APPLY_DIFFERENT_COUPON   = 'APPLY_DIFFERENT_COUPON';
 	public const REMOVE_COUPON            = 'REMOVE_COUPON';
+	public const KEEP_CURRENT_COUPON      = 'KEEP_CURRENT_COUPON';
 	public const CHOOSE_DIFFERENT_VARIANT = 'CHOOSE_DIFFERENT_VARIANT';
 
 	public static function get_all(): array {
@@ -56,6 +57,7 @@ class ResolutionAction {
 			self::VERIFY_ACCOUNT,
 			self::APPLY_DIFFERENT_COUPON,
 			self::REMOVE_COUPON,
+			self::KEEP_CURRENT_COUPON,
 			self::CHOOSE_DIFFERENT_VARIANT,
 		);
 	}

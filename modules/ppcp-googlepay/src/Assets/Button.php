@@ -10,7 +10,6 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\Googlepay\Assets;
 
 use Exception;
-use Psr\Log\LoggerInterface;
 use WC_Countries;
 use WC_Product;
 use WooCommerce\PayPalCommerce\Assets\AssetGetter;
@@ -75,13 +74,6 @@ class Button implements ButtonInterface {
 	private $settings_status;
 
 	/**
-	 * The logger.
-	 *
-	 * @var LoggerInterface
-	 */
-	private $logger;
-
-	/**
 	 * The Subscription Helper.
 	 *
 	 * @var SubscriptionHelper
@@ -101,7 +93,6 @@ class Button implements ButtonInterface {
 	 * @param Settings           $settings The legacy settings.
 	 * @param Environment        $environment The environment object.
 	 * @param SettingsStatus     $settings_status The Settings status helper.
-	 * @param LoggerInterface    $logger The logger.
 	 * @param Context            $context Context data provider.
 	 * @param SettingsModel|null $new_settings The new settings model.
 	 */
@@ -113,7 +104,6 @@ class Button implements ButtonInterface {
 		Settings $settings,
 		Environment $environment,
 		SettingsStatus $settings_status,
-		LoggerInterface $logger,
 		Context $context,
 		?SettingsModel $new_settings = null
 	) {
@@ -124,7 +114,6 @@ class Button implements ButtonInterface {
 		$this->settings            = $settings;
 		$this->environment         = $environment;
 		$this->settings_status     = $settings_status;
-		$this->logger              = $logger;
 		$this->new_settings        = $new_settings;
 		$this->context             = $context;
 	}
@@ -298,7 +287,7 @@ class Button implements ButtonInterface {
 			);
 		}
 
-		if ( $button_enabled_checkout ) {
+		if ( $button_enabled_checkout ) { // @phpstan-ignore if.alwaysTrue
 			$default_hook_name  = 'woocommerce_paypal_payments_checkout_button_render';
 			$render_placeholder = apply_filters( 'woocommerce_paypal_payments_googlepay_checkout_button_render_hook', $default_hook_name );
 			$render_placeholder = is_string( $render_placeholder ) ? $render_placeholder : $default_hook_name;
@@ -312,7 +301,7 @@ class Button implements ButtonInterface {
 			);
 		}
 
-		if ( $button_enabled_payorder ) {
+		if ( $button_enabled_payorder ) { // @phpstan-ignore if.alwaysTrue
 			$default_hook_name  = 'woocommerce_paypal_payments_payorder_button_render';
 			$render_placeholder = apply_filters( 'woocommerce_paypal_payments_googlepay_payorder_button_render_hook', $default_hook_name );
 			$render_placeholder = is_string( $render_placeholder ) ? $render_placeholder : $default_hook_name;
@@ -465,8 +454,8 @@ class Button implements ButtonInterface {
 		$is_wc_gateway_enabled = isset( $available_gateways[ GooglePayGateway::ID ] );
 
 		return array(
-			'environment'           => $this->environment->current_environment_is( Environment::SANDBOX ) ? 'TEST' : 'PRODUCTION',
-			'is_debug'              => defined( 'WP_DEBUG' ) && WP_DEBUG,
+			'environment'           => $this->environment->is_sandbox() ? 'TEST' : 'PRODUCTION',
+			'is_debug'              => defined( 'WP_DEBUG' ) && WP_DEBUG, // @phpstan-ignore booleanAnd.rightAlwaysFalse
 			'is_enabled'            => $is_enabled,
 			'is_wc_gateway_enabled' => $is_wc_gateway_enabled,
 			'sdk_url'               => $this->sdk_url,

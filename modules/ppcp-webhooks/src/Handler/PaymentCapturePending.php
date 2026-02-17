@@ -84,7 +84,7 @@ class PaymentCapturePending implements RequestHandler {
 		}
 
 		$wc_order = wc_get_order( $order_id );
-		if ( ! is_a( $wc_order, \WC_Order::class ) ) {
+		if ( ! ( $wc_order instanceof \WC_Order ) ) {
 			$message = sprintf(
 				'WC order for PayPal ID %s not found.',
 				$request['resource'] !== null && isset( $request['resource']['id'] ) ? $request['resource']['id'] : ''

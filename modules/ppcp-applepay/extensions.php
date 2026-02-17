@@ -47,7 +47,7 @@ return array(
 		assert( $env instanceof Environment );
 
 		$domain_registration_url = 'https://www.paypal.com/uccservicing/apm/applepay';
-		if ( $env->current_environment_is( Environment::SANDBOX ) ) {
+		if ( $env->is_sandbox() ) {
 			$domain_registration_url = 'https://www.sandbox.paypal.com/uccservicing/apm/applepay';
 		}
 

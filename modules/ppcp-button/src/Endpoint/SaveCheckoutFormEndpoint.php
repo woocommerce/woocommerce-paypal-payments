@@ -69,17 +69,14 @@ class SaveCheckoutFormEndpoint implements EndpointInterface {
 
 	/**
 	 * Handles the request.
-	 *
-	 * @return bool
 	 */
-	public function handle_request(): bool {
+	public function handle_request(): void {
 		try {
 			$data = $this->request_data->read_request( $this->nonce() );
 
 			$this->checkout_form_saver->save( $data['form'] );
 
 			wp_send_json_success();
-			return true;
 		} catch ( Exception $error ) {
 			$this->logger->error( 'Checkout form saving failed: ' . $error->getMessage() );
 
@@ -88,7 +85,6 @@ class SaveCheckoutFormEndpoint implements EndpointInterface {
 					'message' => $error->getMessage(),
 				)
 			);
-			return false;
 		}
 	}
 }
