@@ -64,7 +64,7 @@ class GooglePayButton implements ButtonInterface {
 		SettingsProvider $settings,
 		Environment $environment,
 		SettingsStatus $settings_status,
-		Context $context,
+		Context $context
 	) {
 		$this->asset_getter        = $asset_getter;
 		$this->sdk_url             = $sdk_url;
