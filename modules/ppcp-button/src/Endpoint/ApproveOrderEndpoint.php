@@ -173,10 +173,9 @@ class ApproveOrderEndpoint implements EndpointInterface {
 	/**
 	 * Handles the request.
 	 *
-	 * @return bool
 	 * @throws RuntimeException When order not found or handling failed.
 	 */
-	public function handle_request(): bool {
+	public function handle_request(): void {
 		try {
 			$data = $this->request_data->read_request( self::nonce() );
 			if ( ! isset( $data['order_id'] ) ) {
@@ -253,20 +252,18 @@ class ApproveOrderEndpoint implements EndpointInterface {
 			}
 			wp_send_json_success();
 
-			return true;
 		} catch ( Exception $error ) {
 			$this->logger->error( 'Order approve failed: ' . $error->getMessage() );
 
 			wp_send_json_error(
 				array(
-					'name'    => is_a( $error, PayPalApiException::class ) ? $error->name() : '',
+					'name'    => $error instanceof PayPalApiException ? $error->name() : '',
 					'message' => $error->getMessage(),
 					'code'    => $error->getCode(),
-					'details' => is_a( $error, PayPalApiException::class ) ? $error->details() : array(),
+					'details' => $error instanceof PayPalApiException ? $error->details() : array(),
 				)
 			);
 
-			return false;
 		}
 	}
 

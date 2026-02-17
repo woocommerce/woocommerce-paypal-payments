@@ -65,34 +65,30 @@ abstract class AbstractCartEndpoint implements EndpointInterface {
 
 	/**
 	 * Handles the request.
-	 *
-	 * @return bool
 	 */
-	public function handle_request(): bool {
+	public function handle_request(): void {
 		try {
-			return $this->handle_data();
+			$this->handle_data();
 		} catch ( Exception $error ) {
 			$this->logger->error( 'Cart ' . $this->logger_tag . ' failed: ' . $error->getMessage() );
 
 			wp_send_json_error(
 				array(
-					'name'    => is_a( $error, PayPalApiException::class ) ? $error->name() : '',
+					'name'    => $error instanceof PayPalApiException ? $error->name() : '',
 					'message' => $error->getMessage(),
 					'code'    => $error->getCode(),
-					'details' => is_a( $error, PayPalApiException::class ) ? $error->details() : array(),
+					'details' => $error instanceof PayPalApiException ? $error->details() : array(),
 				)
 			);
-			return false;
 		}
 	}
 
 	/**
 	 * Handles the request data.
 	 *
-	 * @return bool
 	 * @throws Exception On error.
 	 */
-	abstract protected function handle_data(): bool;
+	abstract protected function handle_data(): void;
 
 	/**
 	 * Adds products to cart.
@@ -169,7 +165,6 @@ abstract class AbstractCartEndpoint implements EndpointInterface {
 					'details' => array(),
 				)
 			);
-			return false;
 		}
 
 		return $products;

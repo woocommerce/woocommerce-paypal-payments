@@ -191,7 +191,6 @@ return array(
 			$container->get( 'wcgateway.settings' ),
 			$container->get( 'settings.environment' ),
 			$container->get( 'wcgateway.settings.status' ),
-			$container->get( 'woocommerce.logger.woocommerce' ),
 			$container->get( 'button.helper.context' ),
 			$container->has( 'settings.data.settings' ) ? $container->get( 'settings.data.settings' ) : null
 		);
@@ -254,7 +253,7 @@ return array(
 			? esc_html__( 'Settings', 'woocommerce-paypal-payments' )
 			: esc_html__( 'Enable Google Pay', 'woocommerce-paypal-payments' );
 
-		$enable_url = $environment->current_environment_is( Environment::PRODUCTION )
+		$enable_url = $environment->is_production()
 			? $container->get( 'googlepay.enable-url-live' )
 			: $container->get( 'googlepay.enable-url-sandbox' );
 

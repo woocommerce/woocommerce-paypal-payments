@@ -66,15 +66,6 @@ class SettingsImporter {
 	}
 
 	/**
-	 * Determines whether PayPal Checkout is in use.
-	 *
-	 * @return boolean true if PayPal Checkout is available and correctly configured.
-	 */
-	private function is_ppec_active() {
-		return ! empty( $this->ppec_settings ) && is_callable( 'wc_gateway_ppec' ) && wc_gateway_ppec()->settings->get_active_api_credentials();
-	}
-
-	/**
 	 * Translates available PayPal Checkout settings to key/value pairs understood by PayPal Payments settings class.
 	 *
 	 * @return array An array of key => value pairs of PayPal Payments options.

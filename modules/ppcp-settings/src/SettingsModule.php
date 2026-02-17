@@ -498,7 +498,7 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 			 *
 			 * @psalm-suppress MissingClosureParamType
 			 */
-			static function ( $methods ) use ( $container ): array {
+			static function ( $methods ) {
 				if ( ! is_array( $methods ) ) {
 					return $methods;
 				}
@@ -790,6 +790,58 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 
 		if ( ! $settings->own_brand_only() ) {
 			return;
+		}
+
+		/**
+		 * Ensure BCDC remains functional in branded-only mode.
+		 *
+		 * In branded-only mode, white-label payment methods (ACDC, Apple Pay, Google Pay)
+		 * are disabled, but the PayPal-branded card button (BCDC) should remain functional.
+		 *
+		 * BCDC requires the 'card' funding source to be enabled. This filter prevents 'card'
+		 * from being added to the disabled funding sources list on checkout pages, ensuring
+		 * the BCDC button remains clickable and functional for merchants using branded-only mode.
+		 */
+		add_filter(
+			'woocommerce_paypal_payments_sdk_disabled_funding_hook',
+			static function ( array $disable_funding, array $flags ) use ( $container ) {
+				$allowed_context = array( 'checkout-block', 'checkout' );
+				if ( ! in_array( $flags['context'], $allowed_context, true ) ) {
+					return $disable_funding;
+				}
+
+				$payment_settings = $container->get( 'settings.data.payment' );
+				assert( $payment_settings instanceof PaymentSettings );
+
+				if ( ! $payment_settings->is_method_enabled( CardButtonGateway::ID ) ) {
+					return $disable_funding;
+				}
+
+				return array_filter(
+					$disable_funding,
+					static fn( string $funding_source ) => $funding_source !== 'card'
+				);
+			},
+			10,
+			2
+		);
+
+		$payment_settings = $container->get( 'settings.data.payment' );
+		assert( $payment_settings instanceof PaymentSettings );
+
+		if ( $payment_settings->is_method_enabled( CreditCardGateway::ID ) ) {
+			$payment_settings->toggle_method_state( CreditCardGateway::ID, false );
+			$payment_settings->save();
+		}
+
+		if ( $payment_settings->is_method_enabled( ApplePayGateway::ID ) ) {
+			$payment_settings->toggle_method_state( ApplePayGateway::ID, false );
+			$payment_settings->save();
+		}
+
+		if ( $payment_settings->is_method_enabled( GooglePayGateway::ID ) ) {
+			$payment_settings->toggle_method_state( GooglePayGateway::ID, false );
+			$payment_settings->save();
 		}
 
 		/**

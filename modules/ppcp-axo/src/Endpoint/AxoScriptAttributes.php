@@ -40,7 +40,7 @@ class AxoScriptAttributes implements EndpointInterface {
 		return self::ENDPOINT;
 	}
 
-	public function handle_request(): bool {
+	public function handle_request(): void {
 		$this->request_data->read_request( $this->nonce() );
 
 		if (
@@ -49,7 +49,6 @@ class AxoScriptAttributes implements EndpointInterface {
 			|| $this->context->is_paypal_continuation()
 		) {
 			wp_send_json_error( 'Failed to load axo script attributes.' );
-			return false;
 		}
 
 		try {
@@ -57,7 +56,6 @@ class AxoScriptAttributes implements EndpointInterface {
 		} catch ( PayPalApiException $exception ) {
 			$this->logger->error( $exception->getMessage() );
 			wp_send_json_error( $exception->getMessage() );
-			return false;
 		}
 
 		wp_send_json_success(
@@ -65,7 +63,5 @@ class AxoScriptAttributes implements EndpointInterface {
 				'sdk_client_token' => $token,
 			)
 		);
-
-		return true;
 	}
 }

@@ -129,15 +129,12 @@ class LoginSellerEndpoint implements EndpointInterface {
 
 	/**
 	 * Handles the incoming request.
-	 *
-	 * @return bool
 	 */
-	public function handle_request(): bool {
+	public function handle_request(): void {
 
 		try {
 			if ( ! current_user_can( 'manage_woocommerce' ) ) {
 				wp_send_json_error( 'Not admin.', 403 );
-				return false;
 			}
 
 			$data       = $this->request_data->read_request( $this->nonce() );
@@ -194,11 +191,9 @@ class LoginSellerEndpoint implements EndpointInterface {
 				WebhookRegistrar::EVENT_HOOK
 			);
 			wp_send_json_success();
-			return true;
 		} catch ( Exception $error ) {
 			$this->logger->error( 'Onboarding completion handling error: ' . $error->getMessage() );
 			wp_send_json_error( $error->getMessage() );
-			return false;
 		}
 	}
 }

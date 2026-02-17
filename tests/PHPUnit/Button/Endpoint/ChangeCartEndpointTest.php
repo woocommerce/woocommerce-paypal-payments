@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\Button\Endpoint;
 
 
+use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PurchaseUnit;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PurchaseUnitFactory;
 use WooCommerce\PayPalCommerce\Button\Helper\CartProductsHelper;
@@ -14,6 +15,7 @@ use function Brain\Monkey\Functions\expect;
 
 class ChangeCartEndpointTest extends TestCase
 {
+	use MockeryPHPUnitIntegration;
 
     /**
      * @dataProvider dataForTestProducts
@@ -119,8 +121,9 @@ class ChangeCartEndpointTest extends TestCase
         );
 
         expect('wp_send_json_success')
+            ->once()
             ->with($responseExpectation);
-        $this->assertTrue($testee->handle_request());
+        $testee->handle_request();
     }
 
     public function dataForTestProducts() : array {

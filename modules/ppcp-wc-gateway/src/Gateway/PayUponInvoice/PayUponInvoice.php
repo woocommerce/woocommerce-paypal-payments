@@ -253,7 +253,7 @@ class PayUponInvoice {
 					! $sent_to_admin
 					&& PayUponInvoiceGateway::ID === $order->get_payment_method()
 					&& $order->has_status( 'processing' )
-					&& is_a( $email, WC_Email::class ) && $email->id === 'customer_processing_order'
+					&& $email instanceof WC_Email && $email->id === 'customer_processing_order'
 				) {
 					$this->logger->info( "Adding Ratepay payment instructions to email for order #{$order->get_id()}." );
 
@@ -540,7 +540,7 @@ class PayUponInvoice {
 					// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 					$post_id = wc_clean( wp_unslash( $_GET['id'] ?? $_GET['post'] ?? '' ) );
 					$order   = wc_get_order( $post_id );
-					if ( is_a( $order, WC_Order::class ) && $order->get_payment_method() === PayUponInvoiceGateway::ID ) {
+					if ( $order instanceof WC_Order && $order->get_payment_method() === PayUponInvoiceGateway::ID ) {
 						$instructions = $order->get_meta( 'ppcp_ratepay_payment_instructions_payment_reference' );
 						if ( $instructions ) {
 							add_meta_box(

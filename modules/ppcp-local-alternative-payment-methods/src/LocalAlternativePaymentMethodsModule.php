@@ -137,6 +137,7 @@ class LocalAlternativePaymentMethodsModule implements ServiceModule, ExtendingMo
 			 * @psalm-suppress MissingClosureParamType
 			 */
 			function ( $methods ) use ( $c ) {
+				// @phpstan-ignore empty.property
 				if ( ! is_array( $methods ) || is_admin() || empty( WC()->customer ) ) {
 					// Don't restrict the gateway list on wp-admin or when no customer is known.
 					return $methods;

@@ -130,7 +130,6 @@ return array(
 			$container->get( 'vaulting.repository.payment-token' ),
 			$container->get( 'woocommerce.logger.woocommerce' ),
 			$container->get( 'api.shop.country' ),
-			$container->get( 'api.endpoint.order' ),
 			$container->get( 'api.factory.paypal-checkout-url' ),
 			$container->get( 'wcgateway.place-order-button-text' ),
 			$container->get( 'api.endpoint.payment-tokens' ),
@@ -157,7 +156,6 @@ return array(
 			$container->get( 'api.endpoint.order' ),
 			$container->get( 'wcgateway.endpoint.capture-card-payment' ),
 			$container->get( 'api.prefix' ),
-			$container->get( 'api.endpoint.payment-tokens' ),
 			$container->get( 'vaulting.wc-payment-tokens' ),
 			$container->get( 'woocommerce.logger.woocommerce' )
 		);
@@ -347,7 +345,6 @@ return array(
 	'wcgateway.notice.connect'                             => static function ( ContainerInterface $container ): ConnectAdminNotice {
 		return new ConnectAdminNotice(
 			$container->get( 'settings.flag.is-connected' ),
-			$container->get( 'wcgateway.settings' ),
 			$container->get( 'wcgateway.is-send-only-country' )
 		);
 	},
@@ -714,7 +711,7 @@ return array(
 		$should_render_settings = $container->get( 'wcgateway.settings.should-render-settings' );
 
 		if ( ! $should_render_settings ) {
-			return array();
+			return array(); // @phpstan-ignore return.type
 		}
 
 		// Legacy settings service, correct use of `State` class.
@@ -1809,7 +1806,7 @@ return array(
 			? esc_html__( 'Settings', 'woocommerce-paypal-payments' )
 			: esc_html__( 'Enable Advanced Card Payments', 'woocommerce-paypal-payments' );
 
-		$enable_dcc_url = $environment->current_environment_is( Environment::PRODUCTION )
+		$enable_dcc_url = $environment->is_production()
 			? $container->get( 'wcgateway.enable-dcc-url-live' )
 			: $container->get( 'wcgateway.enable-dcc-url-sandbox' );
 
@@ -1842,7 +1839,7 @@ return array(
 			? esc_html__( 'Settings', 'woocommerce-paypal-payments' )
 			: esc_html__( 'Enable saving PayPal & Venmo', 'woocommerce-paypal-payments' );
 
-		$enable_url = $environment->current_environment_is( Environment::PRODUCTION )
+		$enable_url = $environment->is_production()
 			? $container->get( 'wcgateway.enable-reference-transactions-url-live' )
 			: $container->get( 'wcgateway.enable-reference-transactions-url-sandbox' );
 
@@ -1876,7 +1873,7 @@ return array(
 		$enabled_status_text  = esc_html__( 'Status: Available', 'woocommerce-paypal-payments' );
 		$disabled_status_text = esc_html__( 'Status: Not yet enabled', 'woocommerce-paypal-payments' );
 
-		$enable_pui_url = $environment->current_environment_is( Environment::PRODUCTION )
+		$enable_pui_url = $environment->is_production()
 			? $container->get( 'wcgateway.enable-pui-url-live' )
 			: $container->get( 'wcgateway.enable-pui-url-sandbox' );
 
@@ -2080,9 +2077,6 @@ return array(
 			$container->get( 'api.bearer' ),
 			$container->get( 'api.factory.order' ),
 			$container->get( 'api.factory.purchase-unit' ),
-			$container->get( 'api.endpoint.order' ),
-			$container->get( 'session.handler' ),
-			$container->get( 'wc-subscriptions.helpers.real-time-account-updater' ),
 			$container->get( 'wcgateway.settings' ),
 			$container->get( 'woocommerce.logger.woocommerce' )
 		);

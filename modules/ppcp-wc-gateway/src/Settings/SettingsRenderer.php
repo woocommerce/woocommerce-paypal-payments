@@ -166,30 +166,12 @@ class SettingsRenderer {
 	}
 
 	/**
-	 * Check whether vaulting is enabled.
-	 *
-	 * @return bool
-	 */
-	private function paypal_vaulting_is_enabled(): bool {
-		return $this->settings->has( 'vault_enabled' ) && (bool) $this->settings->get( 'vault_enabled' );
-	}
-
-	/**
-	 * Check if current screen is Standard Payments settings screen.
-	 *
-	 * @return bool Whether is Standard Payments screen or not.
-	 */
-	private function is_paypal_checkout_screen(): bool {
-		return PayPalGateway::ID === $this->page_id;
-	}
-
-	/**
 	 * Renders the multiselect field.
 	 *
 	 * @param string $field The current field HTML.
 	 * @param string $key   The current key.
 	 * @param array  $config The configuration array.
-	 * @param string $value The current value.
+	 * @param array  $value The current selected values.
 	 *
 	 * @return string
 	 */

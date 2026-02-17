@@ -511,7 +511,7 @@ class CompatModule implements ServiceModule, ExtendingModule, ExecutableModule {
 						}
 
 						foreach ( $wc_order->get_items() as $wc_order_item ) {
-							if ( ! is_a( $wc_order_item, WC_Order_Item_Product::class ) ) {
+							if ( ! ( $wc_order_item instanceof WC_Order_Item_Product ) ) {
 								continue;
 							}
 

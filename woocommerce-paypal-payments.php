@@ -54,14 +54,8 @@ define( 'PPCP_PAYPAL_BN_CODE', 'Woo_PPCP' );
 	 *                                  Should echo/print the notice markup directly.
 	 * @param bool     $auto_deactivate Optional. Whether to automatically deactivate the plugin
 	 *                                  after displaying the notice. Default true.
-	 *
-	 * @return void
 	 */
 	function show_admin_notice_and_deactivate( callable $notice_callback, bool $auto_deactivate = true ): void {
-		if ( ! is_callable( $notice_callback ) ) {
-			return;
-		}
-
 		$admin_notice_hooks = array( 'admin_notices', 'network_admin_notices' );
 
 		foreach ( $admin_notice_hooks as $hook ) {
