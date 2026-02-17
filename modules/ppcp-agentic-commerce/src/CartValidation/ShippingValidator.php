@@ -15,10 +15,13 @@ declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\AgenticCommerce\CartValidation;
 
+use WC_Countries;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Helper\ProductManager;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\PayPalCart;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Validation\InvalidAddress;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Validation\ShippingUnavailable;
+use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\Address;
+use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\CartItem;
 
 class ShippingValidator implements ValidatorInterface {
 
@@ -61,10 +64,10 @@ class ShippingValidator implements ValidatorInterface {
 	/**
 	 * Scenario 1: Validates that the address has all required fields and proper formats.
 	 *
-	 * @param \WooCommerce\PayPalCommerce\AgenticCommerce\Schema\Address $address The address to validate.
+	 * @param Address $address The address to validate.
 	 * @return InvalidAddress[] Array of validation issues.
 	 */
-	private function validate_address_completeness( $address ): array {
+	private function validate_address_completeness( Address $address ): array {
 		$issues = array();
 
 		if ( ! $address->address_line_1() ) {
@@ -101,9 +104,9 @@ class ShippingValidator implements ValidatorInterface {
 	}
 
 	/**
-	 * Validates postal code format based on country using WooCommerce's native validation.
+	 * Validates a postal code format based on the country using WooCommerce's native validation.
 	 *
-	 * @param string      $postal_code The postal code to validate.
+	 * @param string      $postal_code  The postal code to validate.
 	 * @param string|null $country_code The country code.
 	 * @return InvalidAddress|null Validation issue if format is invalid.
 	 */
@@ -137,11 +140,11 @@ class ShippingValidator implements ValidatorInterface {
 	/**
 	 * Scenario 2: Validates PO Box restrictions for items requiring signature delivery.
 	 *
-	 * @param PayPalCart                                                 $cart The cart to validate.
-	 * @param \WooCommerce\PayPalCommerce\AgenticCommerce\Schema\Address $address The shipping address.
+	 * @param PayPalCart $cart    The cart to validate.
+	 * @param Address    $address The shipping address.
 	 * @return ShippingUnavailable|null Validation issue if PO Box restrictions apply.
 	 */
-	private function validate_po_box_restrictions( PayPalCart $cart, $address ): ?ShippingUnavailable {
+	private function validate_po_box_restrictions( PayPalCart $cart, Address $address ): ?ShippingUnavailable {
 		$address_line = $address->address_line_1();
 
 		if ( ! $address_line || ! $this->is_po_box( $address_line ) ) {
@@ -152,7 +155,7 @@ class ShippingValidator implements ValidatorInterface {
 
 		if ( ! empty( $signature_required_items ) ) {
 			$restricted_items = array_map(
-				fn( $item ): string => $item->item_id(),
+				static fn( $item ): string => $item->item_id(),
 				$signature_required_items
 			);
 
@@ -214,10 +217,10 @@ class ShippingValidator implements ValidatorInterface {
 	 * This method relies entirely on the filter hook for shipping plugins to indicate
 	 * signature requirements.
 	 *
-	 * @param \WooCommerce\PayPalCommerce\AgenticCommerce\Schema\CartItem $item The item to check.
+	 * @param CartItem $item The item to check.
 	 * @return bool True if signature is required.
 	 */
-	private function item_requires_signature( $item ): bool {
+	private function item_requires_signature( CartItem $item ): bool {
 		$product = $this->product_manager->find_product( $item );
 
 		if ( ! $product ) {
@@ -232,9 +235,9 @@ class ShippingValidator implements ValidatorInterface {
 		 *
 		 * @since 1.0.0
 		 *
-		 * @param bool       $requires_signature Whether signature is required (defaults to false).
-		 * @param \WC_Product $product           The WooCommerce product object.
-		 * @param \WooCommerce\PayPalCommerce\AgenticCommerce\Schema\CartItem $item The cart item.
+		 * @param bool        $requires_signature Whether signature is required (defaults to false).
+		 * @param \WC_Product $product            The WooCommerce product object.
+		 * @param CartItem    $item               The cart item.
 		 *
 		 * @return bool True if signature delivery is required.
 		 */
@@ -254,6 +257,7 @@ class ShippingValidator implements ValidatorInterface {
 	 */
 	private function is_po_box( string $address_line ): bool {
 		$normalized = strtolower( str_replace( array( ' ', '.', ',' ), '', $address_line ) );
+
 		return strpos( $normalized, 'pobox' ) !== false;
 	}
 
@@ -292,19 +296,15 @@ class ShippingValidator implements ValidatorInterface {
 	 * @return bool True if shipping is allowed to this country.
 	 */
 	private function is_country_allowed( string $country_code ): bool {
-		if ( ! function_exists( 'WC' ) ) {
+		$wc_countries = $this->get_wc_countries();
+		if ( ! $wc_countries ) {
 			return true;
 		}
 
-		$wc = WC();
-		if ( ! $wc || ! $wc->countries ) {
-			return true;
-		}
-
-		$allowed_countries = $wc->countries->get_shipping_countries();
+		$allowed_countries = $wc_countries->get_shipping_countries();
 
 		if ( empty( $allowed_countries ) ) {
-			$allowed_countries = $wc->countries->get_allowed_countries();
+			$allowed_countries = $wc_countries->get_allowed_countries();
 		}
 
 		return isset( $allowed_countries[ $country_code ] );
@@ -317,17 +317,22 @@ class ShippingValidator implements ValidatorInterface {
 	 * @return string The country name, or the country code if name not found.
 	 */
 	private function get_country_name( string $country_code ): string {
-		if ( ! function_exists( 'WC' ) ) {
+		$wc_countries = $this->get_wc_countries();
+		if ( ! $wc_countries ) {
 			return $country_code;
 		}
 
-		$wc = WC();
-		if ( ! $wc || ! $wc->countries ) {
-			return $country_code;
-		}
-
-		$countries = $wc->countries->get_countries();
+		$countries = $wc_countries->get_countries();
 
 		return $countries[ $country_code ] ?? $country_code;
+	}
+
+	private function get_wc_countries(): ?WC_Countries {
+		if ( ! function_exists( 'WC' ) ) {
+			return null;
+		}
+
+		// The only place in the class that has a `WC()` dependency.
+		return WC()->countries;
 	}
 }

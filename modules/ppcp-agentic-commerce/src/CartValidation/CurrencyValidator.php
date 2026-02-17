@@ -14,7 +14,7 @@ use WooCommerce\PayPalCommerce\AgenticCommerce\Validation\CurrencyMismatch;
 
 class CurrencyValidator implements ValidatorInterface {
 
-	public function validate( PayPalCart $cart ) {
+	public function validate( PayPalCart $cart ): array {
 		$cart_currencies = $this->extract_cart_currencies( $cart );
 
 		if ( empty( $cart_currencies ) ) {
@@ -31,7 +31,11 @@ class CurrencyValidator implements ValidatorInterface {
 			$cart_currencies[0]['index']
 		);
 
-		return array_filter( array( $store_issue ) );
+		if ( $store_issue ) {
+			return array( $store_issue );
+		}
+
+		return array();
 	}
 
 	/**

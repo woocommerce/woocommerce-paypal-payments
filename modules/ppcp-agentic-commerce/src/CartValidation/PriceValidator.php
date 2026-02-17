@@ -24,7 +24,7 @@ class PriceValidator implements ValidatorInterface {
 		$this->product_manager = $product_manager;
 	}
 
-	public function validate( PayPalCart $cart ) {
+	public function validate( PayPalCart $cart ): ?array {
 		// Skip validation if the cart contains an inventory issue.
 		if ( $cart->has_validation_issue( ErrorCode::INVENTORY_ISSUE ) ) {
 			return null;
