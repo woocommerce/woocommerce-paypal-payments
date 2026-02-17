@@ -56,7 +56,7 @@ class WooCommerceOrderCreator
      */
     protected $subscription_helper;
     protected CartDataFactory $cart_data_factory;
-    protected $shipping_factory;
+    protected ShippingFactory $shipping_factory;
     protected PayerFactory $payer_factory;
     public function __construct(FundingSourceRenderer $funding_source_renderer, SessionHandler $session_handler, SubscriptionHelper $subscription_helper, CartDataFactory $cart_data_factory, ShippingFactory $shipping_factory, PayerFactory $payer_factory)
     {
@@ -145,8 +145,8 @@ class WooCommerceOrderCreator
                 $subscription = $this->create_subscription($wc_order, $product_id);
                 $sign_up_fee = WC_Subscriptions_Product::get_sign_up_fee($product);
                 $subscription_total = (float) $subtotal + (float) $sign_up_fee;
-                $item->set_subtotal($subscription_total);
-                $item->set_total($subscription_total);
+                $item->set_subtotal((string) $subscription_total);
+                $item->set_total((string) $subscription_total);
                 $subscription->add_product($product);
                 $this->configure_addresses($subscription, $payer, $shipping, $cart_data->needs_shipping());
                 $this->configure_payment_source($subscription);
@@ -277,7 +277,7 @@ class WooCommerceOrderCreator
         $tax_rates = WC_Tax::get_rates($product->get_tax_class());
         $taxes = WC_Tax::calc_tax($subtotal, $tax_rates, \true);
         $item->set_tax_class($product->get_tax_class());
-        $item->set_total_tax((float) array_sum($taxes));
+        $item->set_total_tax((string) array_sum($taxes));
     }
     /**
      * Checks if the product with given ID is WC subscription.

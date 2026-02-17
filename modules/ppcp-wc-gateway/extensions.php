@@ -26,7 +26,7 @@ return array('api.merchant_email' => static function (string $previous, Containe
      *
      * @var Environment $environment
      */
-    return $environment->current_environment_is(Environment::SANDBOX) ? (string) $container->get('api.partner_merchant_id-sandbox') : (string) $container->get('api.partner_merchant_id-production');
+    return $environment->is_sandbox() ? (string) $container->get('api.partner_merchant_id-sandbox') : (string) $container->get('api.partner_merchant_id-production');
 }, 'api.key' => static function (string $previous, ContainerInterface $container): string {
     $settings = $container->get('wcgateway.settings');
     $key = $settings->has('client_id') ? (string) $settings->get('client_id') : '';

@@ -14,7 +14,7 @@ use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 return array('paypal-subscriptions.deactivate-plan-endpoint' => static function (ContainerInterface $container): \WooCommerce\PayPalCommerce\PayPalSubscriptions\DeactivatePlanEndpoint {
     return new \WooCommerce\PayPalCommerce\PayPalSubscriptions\DeactivatePlanEndpoint($container->get('button.request-data'), $container->get('api.endpoint.billing-plans'));
 }, 'paypal-subscriptions.api-handler' => static function (ContainerInterface $container): \WooCommerce\PayPalCommerce\PayPalSubscriptions\SubscriptionsApiHandler {
-    return new \WooCommerce\PayPalCommerce\PayPalSubscriptions\SubscriptionsApiHandler($container->get('api.endpoint.catalog-products'), $container->get('api.factory.product'), $container->get('api.endpoint.billing-plans'), $container->get('api.factory.billing-cycle'), $container->get('api.factory.payment-preferences'), $container->get('api.shop.currency.getter'), $container->get('woocommerce.logger.woocommerce'));
+    return new \WooCommerce\PayPalCommerce\PayPalSubscriptions\SubscriptionsApiHandler($container->get('api.endpoint.catalog-products'), $container->get('api.endpoint.billing-plans'), $container->get('api.factory.billing-cycle'), $container->get('api.factory.payment-preferences'), $container->get('api.shop.currency.getter'), $container->get('woocommerce.logger.woocommerce'));
 }, 'paypal-subscriptions.asset_getter' => static function (ContainerInterface $container): AssetGetter {
     $factory = $container->get('assets.asset_getter_factory');
     assert($factory instanceof AssetGetterFactory);

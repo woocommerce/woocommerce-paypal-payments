@@ -136,7 +136,7 @@ class PurchaseUnitFactory
         $shipping = null;
         $customer = \WC()->customer;
         /** @psalm-suppress RedundantConditionGivenDocblockType False positive. Ignored because $customer can be null as well. */
-        if ($this->shipping_needed(...array_values($items)) && is_a($customer, \WC_Customer::class)) {
+        if ($this->shipping_needed(...array_values($items)) && $customer instanceof \WC_Customer) {
             $shipping = $this->shipping_factory->from_wc_customer(\WC()->customer, $with_shipping_options);
             $shipping_address = $shipping->address();
             if (!$shipping_address || 2 !== strlen($shipping_address->country_code()) || !$shipping_address->postal_code() && !$this->country_without_postal_code($shipping_address->country_code())) {

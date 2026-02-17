@@ -123,7 +123,7 @@ class OXXO
              * @psalm-suppress MissingClosureParamType
              */
             function ($order, $sent_to_admin) {
-                if (!is_a($order, WC_Order::class) || !is_bool($sent_to_admin)) {
+                if (!$order instanceof WC_Order || !is_bool($sent_to_admin)) {
                     return;
                 }
                 if (!$sent_to_admin && $order->get_payment_method() === \WooCommerce\PayPalCommerce\WcGateway\Gateway\OXXO\OXXOGateway::ID && $order->has_status('on-hold')) {
@@ -154,7 +154,7 @@ class OXXO
                 // phpcs:ignore WordPress.Security.NonceVerification.Recommended
                 $post_id = wc_clean(wp_unslash($_GET['id'] ?? $_GET['post'] ?? ''));
                 $order = wc_get_order($post_id);
-                if (is_a($order, WC_Order::class) && $order->get_payment_method() === \WooCommerce\PayPalCommerce\WcGateway\Gateway\OXXO\OXXOGateway::ID) {
+                if ($order instanceof WC_Order && $order->get_payment_method() === \WooCommerce\PayPalCommerce\WcGateway\Gateway\OXXO\OXXOGateway::ID) {
                     $payer_action = $order->get_meta('ppcp_oxxo_payer_action');
                     if ($payer_action) {
                         add_meta_box('ppcp_oxxo_payer_action', __('OXXO Voucher/Ticket', 'woocommerce-paypal-payments'), function () use ($payer_action) {

@@ -45,7 +45,7 @@ class CheckoutHelper
             if (isset($wp->query_vars['order-pay']) && absint($wp->query_vars['order-pay']) > 0) {
                 $order_id = absint($wp->query_vars['order-pay']);
                 $order = wc_get_order($order_id);
-                if (is_a($order, WC_Order::class)) {
+                if ($order instanceof WC_Order) {
                     $order_total = (float) $order->get_total();
                     if ($order_total < $minimum || $order_total > $maximum) {
                         return \false;

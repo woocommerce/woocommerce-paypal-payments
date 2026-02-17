@@ -63,10 +63,9 @@ class CreatePaymentToken implements EndpointInterface
     /**
      * Handles the request.
      *
-     * @return bool
      * @throws Exception On Error.
      */
-    public function handle_request(): bool
+    public function handle_request(): void
     {
         try {
             $data = $this->request_data->read_request($this->nonce());
@@ -98,10 +97,8 @@ class CreatePaymentToken implements EndpointInterface
                 }
             }
             wp_send_json_success($wc_token_id);
-            return \true;
         } catch (Exception $exception) {
             wp_send_json_error();
-            return \false;
         }
     }
 }

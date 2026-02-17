@@ -73,10 +73,8 @@ class UpdateShippingEndpoint implements EndpointInterface
     }
     /**
      * Handles the request.
-     *
-     * @return bool
      */
-    public function handle_request(): bool
+    public function handle_request(): void
     {
         try {
             $data = $this->request_data->read_request($this->nonce());
@@ -90,10 +88,8 @@ class UpdateShippingEndpoint implements EndpointInterface
             $patches = new PatchCollection(new Patch('replace', "/purchase_units/@reference_id=='{$pu->reference_id()}'", $pu_data));
             $this->order_endpoint->patch($order_id, $patches);
             wp_send_json_success();
-            return \true;
         } catch (Exception $error) {
             wp_send_json_error(array('message' => $error->getMessage()));
-            return \false;
         }
     }
 }

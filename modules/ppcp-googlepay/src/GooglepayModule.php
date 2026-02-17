@@ -75,7 +75,7 @@ class GooglepayModule implements ServiceModule, ExtendingModule, ExecutableModul
                 return;
             }
             // Initializes button rendering.
-            add_action('wp', static function () use ($c, $button) {
+            add_action('wp', static function () use ($button) {
                 if (is_admin()) {
                     return;
                 }
@@ -102,6 +102,7 @@ class GooglepayModule implements ServiceModule, ExtendingModule, ExecutableModul
                      * Should add this to the ButtonInterface.
                      *
                      * @psalm-suppress UndefinedInterfaceMethod
+                     * @phpstan-ignore method.notFound
                      */
                     $button->enqueue_styles();
                 }
@@ -115,6 +116,7 @@ class GooglepayModule implements ServiceModule, ExtendingModule, ExecutableModul
                  * Should add this to the ButtonInterface.
                  *
                  * @psalm-suppress UndefinedInterfaceMethod
+                 * @phpstan-ignore method.notFound
                  */
                 $button->enqueue_admin();
             });
@@ -126,7 +128,7 @@ class GooglepayModule implements ServiceModule, ExtendingModule, ExecutableModul
                 $payment_method_registry->register($c->get('googlepay.blocks-payment-method'));
             });
             // Adds GooglePay component to the backend button preview settings.
-            add_action('woocommerce_paypal_payments_admin_gateway_settings', function (array $settings) use ($c): array {
+            add_action('woocommerce_paypal_payments_admin_gateway_settings', function (array $settings): array {
                 if (is_array($settings['components'])) {
                     $settings['components'][] = 'googlepay';
                 }
@@ -146,7 +148,7 @@ class GooglepayModule implements ServiceModule, ExtendingModule, ExecutableModul
              *
              * @psalm-suppress MissingClosureParamType
              */
-            static function ($methods) use ($c): array {
+            static function ($methods) use ($c) {
                 if (!is_array($methods)) {
                     return $methods;
                 }

@@ -181,7 +181,7 @@ class PayUponInvoice
              * @psalm-suppress MissingClosureParamType
              */
             function (WC_Order $order, bool $sent_to_admin, bool $plain_text, $email) {
-                if (!$sent_to_admin && \WooCommerce\PayPalCommerce\WcGateway\Gateway\PayUponInvoice\PayUponInvoiceGateway::ID === $order->get_payment_method() && $order->has_status('processing') && is_a($email, WC_Email::class) && $email->id === 'customer_processing_order') {
+                if (!$sent_to_admin && \WooCommerce\PayPalCommerce\WcGateway\Gateway\PayUponInvoice\PayUponInvoiceGateway::ID === $order->get_payment_method() && $order->has_status('processing') && $email instanceof WC_Email && $email->id === 'customer_processing_order') {
                     $this->logger->info("Adding Ratepay payment instructions to email for order #{$order->get_id()}.");
                     $instructions = $order->get_meta('ppcp_ratepay_payment_instructions_payment_reference');
                     $gateway_settings = get_option('woocommerce_ppcp-pay-upon-invoice-gateway_settings');
@@ -384,7 +384,7 @@ class PayUponInvoice
                 // phpcs:ignore WordPress.Security.NonceVerification.Recommended
                 $post_id = wc_clean(wp_unslash($_GET['id'] ?? $_GET['post'] ?? ''));
                 $order = wc_get_order($post_id);
-                if (is_a($order, WC_Order::class) && $order->get_payment_method() === \WooCommerce\PayPalCommerce\WcGateway\Gateway\PayUponInvoice\PayUponInvoiceGateway::ID) {
+                if ($order instanceof WC_Order && $order->get_payment_method() === \WooCommerce\PayPalCommerce\WcGateway\Gateway\PayUponInvoice\PayUponInvoiceGateway::ID) {
                     $instructions = $order->get_meta('ppcp_ratepay_payment_instructions_payment_reference');
                     if ($instructions) {
                         add_meta_box('ppcp_pui_ratepay_payment_instructions', __('RatePay payment instructions', 'woocommerce-paypal-payments'), function () use ($instructions) {

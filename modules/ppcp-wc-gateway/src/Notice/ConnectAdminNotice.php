@@ -1,50 +1,30 @@
 <?php
 
-/**
- * Registers the admin message to "connect your account" if necessary.
- *
- * @package WooCommerce\PayPalCommerce\WcGateway\Notice
- */
 declare (strict_types=1);
 namespace WooCommerce\PayPalCommerce\WcGateway\Notice;
 
 use WooCommerce\PayPalCommerce\AdminNotices\Entity\Message;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
-use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 /**
- * Class ConnectAdminNotice
+ * Registers the admin message to "connect your account" if necessary.
  */
 class ConnectAdminNotice
 {
     /**
      * Whether the merchant completed the onboarding and is connected to PayPal.
-     *
-     * @var bool
      */
     private bool $is_connected;
     /**
-     * The settings.
-     *
-     * @var ContainerInterface
-     */
-    private $settings;
-    /**
-     * Whether the current store's country is classified as a send-only country..
-     *
-     * @var bool
+     * Whether the current store's country is classified as a send-only country.
      */
     private bool $is_current_country_send_only;
     /**
-     * ConnectAdminNotice constructor.
-     *
-     * @param bool               $is_connected Whether onboarding was completed.
-     * @param ContainerInterface $settings The settings.
-     * @param bool               $is_current_country_send_only Whether the current store's country is classified as a send-only country.
+     * @param bool $is_connected Whether onboarding was completed.
+     * @param bool $is_current_country_send_only Whether the current store's country is classified as a send-only country.
      */
-    public function __construct(bool $is_connected, ContainerInterface $settings, bool $is_current_country_send_only)
+    public function __construct(bool $is_connected, bool $is_current_country_send_only)
     {
         $this->is_connected = $is_connected;
-        $this->settings = $settings;
         $this->is_current_country_send_only = $is_current_country_send_only;
     }
     /**
