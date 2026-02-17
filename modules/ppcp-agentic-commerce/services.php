@@ -339,7 +339,7 @@ return array(
 			$c->get( 'agentic.inspector.page.session' )
 		);
 	},
-'agentic.asset_getter'                         => static function ( ContainerInterface $container ): AssetGetter {
+	'agentic.asset_getter'                         => static function ( ContainerInterface $container ): AssetGetter {
 		$factory = $container->get( 'assets.asset_getter_factory' );
 		assert( $factory instanceof AssetGetterFactory );
 
