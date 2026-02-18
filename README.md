@@ -25,16 +25,16 @@
 
 PayPal's latest complete payments processing solution. Accept PayPal, Pay Later, credit/debit cards, alternative digital wallets local payment types and bank accounts. Turn on only PayPal options or process a full suite of payment methods. Enable global transaction with extensive currency and country coverage.
 
-## Features  
-  
-- **Multiple Payment Options**: PayPal, credit/debit cards, Pay Later, digital wallets (Apple Pay, Google Pay), and localized payment methods  
-- **Subscription Support**: Supports WooCommerce Subscriptions with PayPal Vaulting and PayPal Subscriptions  
-- **Customizable Experience**: Flexible button placement and styling options  
-- **Enhanced Security**: PCI compliance, 3D Secure, and fraud protection tools  
-- **Global Compliance**: Meets international standards (PSD2, SCA)  
-  
-## Documentation  
-  
+## Features
+
+- **Multiple Payment Options**: PayPal, credit/debit cards, Pay Later, digital wallets (Apple Pay, Google Pay), and localized payment methods
+- **Subscription Support**: Supports WooCommerce Subscriptions with PayPal Vaulting and PayPal Subscriptions
+- **Customizable Experience**: Flexible button placement and styling options
+- **Enhanced Security**: PCI compliance, 3D Secure, and fraud protection tools
+- **Global Compliance**: Meets international standards (PSD2, SCA)
+
+## Documentation
+
 Visit our [official documentation](https://woocommerce.com/document/woocommerce-paypal-payments/) for detailed guides and setup instructions.
 
 ## Dependencies
@@ -43,11 +43,11 @@ Visit our [official documentation](https://woocommerce.com/document/woocommerce-
 * WordPress >= 6.5
 * WooCommerce >= 9.6
 
-## Quick Installation  
-  
-1. Go to **Plugins > Add New** in your WordPress admin  
-2. Search for "WooCommerce PayPal Payments"  
-3. Click "Install Now" and then "Activate"  
+## Quick Installation
+
+1. Go to **Plugins > Add New** in your WordPress admin
+2. Search for "WooCommerce PayPal Payments"
+3. Click "Install Now" and then "Activate"
 4. Go to **WooCommerce > Settings > Payments** to configure PayPal Payments
 
 ## Development
@@ -59,9 +59,9 @@ You can install WooCommerce PayPal Payments locally using the dev environment of
 To set up the DDEV environment, follow these steps:
 
 0. Install Docker and [DDEV](https://ddev.readthedocs.io/en/stable/).
-1. Edit the [configuration](https://docs.ddev.com/en/stable/users/configuration/config/#managing-configuration) in the `.ddev/config.local.yml` file if needed. 
+1. Edit the [configuration](https://docs.ddev.com/en/stable/users/configuration/config/#managing-configuration) in the `.ddev/config.local.yml` file if needed.
 2. Run `$ ddev start && ddev orchestrate` to setup and orchestrate the plugin, WooCommerce and WordPress (you can also use `$ npm run ddev:setup`)
-3. Open https://woocommerce-paypal-payments.ddev.site 
+3. Open https://woocommerce-paypal-payments.ddev.site
 
 Use `$ ddev reset` for reinstallation (will destroy all site data).
 You may also need `$ ddev restart` to apply the config changes.
@@ -75,7 +75,7 @@ $ ddev config global --router-http-port=8080 --router-https-port=8443
 ```
 
 **Mutagen can't find `docker`** (`unable to identify 'docker' command`):
-Docker Desktop may not symlink the CLI to `/usr/local/bin`. Either enable "Install Docker CLI in system PATH" in Docker Desktop settings, or create the symlink manually:
+Docker Desktop may not symlink the CLI to `/usr/local/bin`. Either enable "Install Docker CLI in system PATH" in Docker Desktop settings, or create the symlink manually. Here's an example:
 ```
 $ sudo ln -s /Applications/Docker.app/Contents/Resources/bin/docker /usr/local/bin/docker
 ```
@@ -133,7 +133,7 @@ This command generates a full test coverage report, available at the URL https:/
 
 If you want to build a release package, use the **Build package (New)** in GitHub Actions.
 
-Currently, there is no script for building a proper release package locally, but you may try to run GHA locally via [nektos/act](https://github.com/nektos/act). 
+Currently, there is no script for building a proper release package locally, but you may try to run GHA locally via [nektos/act](https://github.com/nektos/act).
 
 ## Test account setup
 
