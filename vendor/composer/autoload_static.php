@@ -4,7 +4,7 @@
 
 namespace Composer\Autoload;
 
-class ComposerStaticInit8f1360c3598043abaa942bfe9de529b6
+class ComposerStaticInitc150d9c65a9adae03e63f2fc33ce87e9
 {
     public static $files = array (
         '7b11c4dc42b3b3023073cb14e519683c' => __DIR__ . '/..' . '/ralouphie/getallheaders/src/getallheaders.php',
@@ -58,6 +58,10 @@ class ComposerStaticInit8f1360c3598043abaa942bfe9de529b6
         'I' =>
         array (
             'Interop\\Container\\' => 18,
+        ),
+        'F' =>
+        array (
+            'Firebase\\JWT\\' => 13,
         ),
         'D' =>
         array (
@@ -214,6 +218,10 @@ class ComposerStaticInit8f1360c3598043abaa942bfe9de529b6
         array (
             0 => __DIR__ . '/..' . '/container-interop/service-provider/src',
         ),
+        'Firebase\\JWT\\' =>
+        array (
+            0 => __DIR__ . '/..' . '/firebase/php-jwt/src',
+        ),
         'Dhii\\Modular\\Module\\' =>
         array (
             0 => __DIR__ . '/..' . '/dhii/module-interface/src',
@@ -225,6 +233,14 @@ class ComposerStaticInit8f1360c3598043abaa942bfe9de529b6
         'Dhii\\Modular\\Module\\Exception\\ModuleExceptionInterface' => __DIR__ . '/..' . '/dhii/module-interface/src/Exception/ModuleExceptionInterface.php',
         'Dhii\\Modular\\Module\\ModuleAwareInterface' => __DIR__ . '/..' . '/dhii/module-interface/src/ModuleAwareInterface.php',
         'Dhii\\Modular\\Module\\ModuleInterface' => __DIR__ . '/..' . '/dhii/module-interface/src/ModuleInterface.php',
+        'Firebase\\JWT\\BeforeValidException' => __DIR__ . '/..' . '/firebase/php-jwt/src/BeforeValidException.php',
+        'Firebase\\JWT\\CachedKeySet' => __DIR__ . '/..' . '/firebase/php-jwt/src/CachedKeySet.php',
+        'Firebase\\JWT\\ExpiredException' => __DIR__ . '/..' . '/firebase/php-jwt/src/ExpiredException.php',
+        'Firebase\\JWT\\JWK' => __DIR__ . '/..' . '/firebase/php-jwt/src/JWK.php',
+        'Firebase\\JWT\\JWT' => __DIR__ . '/..' . '/firebase/php-jwt/src/JWT.php',
+        'Firebase\\JWT\\JWTExceptionWithPayloadInterface' => __DIR__ . '/..' . '/firebase/php-jwt/src/JWTExceptionWithPayloadInterface.php',
+        'Firebase\\JWT\\Key' => __DIR__ . '/..' . '/firebase/php-jwt/src/Key.php',
+        'Firebase\\JWT\\SignatureInvalidException' => __DIR__ . '/..' . '/firebase/php-jwt/src/SignatureInvalidException.php',
         'Interop\\Container\\ServiceProviderInterface' => __DIR__ . '/..' . '/container-interop/service-provider/src/ServiceProviderInterface.php',
         'Stringable' => __DIR__ . '/..' . '/symfony/polyfill-php80/Resources/stubs/Stringable.php',
         'Symfony\\Polyfill\\Php80\\Php80' => __DIR__ . '/..' . '/symfony/polyfill-php80/Php80.php',
@@ -949,9 +965,9 @@ class ComposerStaticInit8f1360c3598043abaa942bfe9de529b6
     public static function getInitializer(ClassLoader $loader)
     {
         return \Closure::bind(function () use ($loader) {
-            $loader->prefixLengthsPsr4 = ComposerStaticInit8f1360c3598043abaa942bfe9de529b6::$prefixLengthsPsr4;
-            $loader->prefixDirsPsr4 = ComposerStaticInit8f1360c3598043abaa942bfe9de529b6::$prefixDirsPsr4;
-            $loader->classMap = ComposerStaticInit8f1360c3598043abaa942bfe9de529b6::$classMap;
+            $loader->prefixLengthsPsr4 = ComposerStaticInitc150d9c65a9adae03e63f2fc33ce87e9::$prefixLengthsPsr4;
+            $loader->prefixDirsPsr4 = ComposerStaticInitc150d9c65a9adae03e63f2fc33ce87e9::$prefixDirsPsr4;
+            $loader->classMap = ComposerStaticInitc150d9c65a9adae03e63f2fc33ce87e9::$classMap;
 
         }, null, ClassLoader::class);
     }

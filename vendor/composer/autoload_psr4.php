@@ -43,5 +43,6 @@ return array(
     'Wikimedia\\Composer\\Merge\\V2\\' => array($vendorDir . '/wikimedia/composer-merge-plugin/src'),
     'Symfony\\Polyfill\\Php80\\' => array($vendorDir . '/symfony/polyfill-php80'),
     'Interop\\Container\\' => array($vendorDir . '/container-interop/service-provider/src'),
+    'Firebase\\JWT\\' => array($vendorDir . '/firebase/php-jwt/src'),
     'Dhii\\Modular\\Module\\' => array($vendorDir . '/dhii/module-interface/src'),
 );
