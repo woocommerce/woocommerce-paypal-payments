@@ -32,6 +32,7 @@ Minimal instructions for coding agents working in this repository.
 - Use `ddev describe` for active URLs/ports.
 - If `.ddev.site` routing fails, use the direct host mapping shown in `ddev describe` for `web:80` (for example `http://127.0.0.1:60792`).
 - Admin defaults: `admin` / `admin` at `/wp-admin`.
+- Common DDEV issues and fixes are documented in the README under "Troubleshooting DDEV setup" (vmnetd/port errors, Docker CLI path, SSL trust, Mutagen warnings).
 
 ### Build
 

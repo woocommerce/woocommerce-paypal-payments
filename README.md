@@ -66,6 +66,30 @@ To set up the DDEV environment, follow these steps:
 Use `$ ddev reset` for reinstallation (will destroy all site data).
 You may also need `$ ddev restart` to apply the config changes.
 
+#### Troubleshooting DDEV setup
+
+**`vmnetd` / port 443 error** (`failed to connect to /var/run/com.docker.vmnetd.sock`):
+Docker Desktop's privileged helper isn't running. Open **Docker Desktop > Settings > General** and toggle "Allow privileged port mapping", then restart Docker Desktop. Alternatively, use non-privileged ports:
+```
+$ ddev config global --router-http-port=8080 --router-https-port=8443
+```
+
+**Mutagen can't find `docker`** (`unable to identify 'docker' command`):
+Docker Desktop may not symlink the CLI to `/usr/local/bin`. Either enable "Install Docker CLI in system PATH" in Docker Desktop settings, or create the symlink manually:
+```
+$ sudo ln -s /Applications/Docker.app/Contents/Resources/bin/docker /usr/local/bin/docker
+```
+Then run `ddev mutagen reset && ddev restart`.
+
+**Untrusted SSL / "Not Secure" in browser**:
+Install mkcert's root CA so your system and browsers trust DDEV's certificates:
+```
+$ brew install mkcert nss
+$ mkcert -install
+$ ddev restart
+```
+After installing the CA, fully quit Chrome (Cmd+Q) and reopen it — Chrome caches certificate trust state and won't pick up the new CA until restarted.
+
 #### Running tests and other tasks in the DDEV environment
 
 Tests and code style:
