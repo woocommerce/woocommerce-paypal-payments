@@ -1,13 +1,11 @@
 <?php
 
-declare(strict_types=1);
-
+declare (strict_types=1);
 namespace WooCommerce\PayPalCommerce\Vendor\Dhii\Modular\Module;
 
 use WooCommerce\PayPalCommerce\Vendor\Dhii\Modular\Module\Exception\ModuleExceptionInterface;
 use WooCommerce\PayPalCommerce\Vendor\Interop\Container\ServiceProviderInterface;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
-
 /**
  * Something that represents an application module.
  *
@@ -34,7 +32,6 @@ interface ModuleInterface
      * @throws ModuleExceptionInterface If module setup failed and/or a service provider instance could not be returned.
      */
     public function setup(): ServiceProviderInterface;
-
     /**
      * Runs the module.
      *
