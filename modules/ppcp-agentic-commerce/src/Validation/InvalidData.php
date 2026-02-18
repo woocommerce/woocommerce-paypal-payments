@@ -1,13 +1,11 @@
 <?php
+
 // phpcs:disable Squiz.PHP.CommentedOutCode.Found
-
-declare( strict_types = 1 );
-
+declare (strict_types=1);
 namespace WooCommerce\PayPalCommerce\AgenticCommerce\Validation;
 
 use WooCommerce\PayPalCommerce\AgenticCommerce\Enums\ErrorCode;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Enums\ErrorType;
-
 /**
  * A generic invalid-data-issue, intended as a base class for
  * more specific issues or third party code.
@@ -16,7 +14,8 @@ use WooCommerce\PayPalCommerce\AgenticCommerce\Enums\ErrorType;
  * - Provided data is incorrect, e.g., malformed email.
  * - Unexpected data format, e.g., non-numeric price.
  */
-class InvalidData extends ValidationIssue {
-	protected const ISSUE_TYPE = ErrorType::INVALID_DATA;
-	protected const ISSUE_CODE = ErrorCode::DATA_ERROR;
+class InvalidData extends \WooCommerce\PayPalCommerce\AgenticCommerce\Validation\ValidationIssue
+{
+    protected const ISSUE_TYPE = ErrorType::INVALID_DATA;
+    protected const ISSUE_CODE = ErrorCode::DATA_ERROR;
 }

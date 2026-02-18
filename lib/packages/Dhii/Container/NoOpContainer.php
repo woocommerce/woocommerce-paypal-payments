@@ -1,7 +1,6 @@
 <?php
 
-declare(strict_types=1);
-
+declare (strict_types=1);
 namespace WooCommerce\PayPalCommerce\Vendor\Dhii\Container;
 
 use ArrayIterator;
@@ -13,18 +12,13 @@ use WooCommerce\PayPalCommerce\Vendor\Dhii\Container\Exception\ContainerExceptio
 use WooCommerce\PayPalCommerce\Vendor\Dhii\Container\Exception\NotFoundException;
 use IteratorAggregate;
 use Traversable;
-
 /**
  * A container that does nothing.
  *
  * This can be used if an actual implementation is not available,
  * without extra checks or nullables - just as if it was a real one.
  */
-class NoOpContainer implements
-    MutableContainerInterface,
-    IteratorAggregate,
-    WritableMapInterface,
-    ClearableContainerInterface
+class NoOpContainer implements MutableContainerInterface, IteratorAggregate, WritableMapInterface, ClearableContainerInterface
 {
     /**
      * @inheritDoc
@@ -33,15 +27,13 @@ class NoOpContainer implements
     {
         throw new NotFoundException('NoOp container cannot have values');
     }
-
     /**
      * @inheritDoc
      */
     public function has($id)
     {
-        return false;
+        return \false;
     }
-
     /**
      * @inheritDoc
      */
@@ -49,7 +41,6 @@ class NoOpContainer implements
     {
         // Do nothing
     }
-
     /**
      * @inheritDoc
      */
@@ -57,7 +48,6 @@ class NoOpContainer implements
     {
         throw new ContainerException('NoOp container cannot have values');
     }
-
     /**
      * @inheritDoc
      */
@@ -65,7 +55,6 @@ class NoOpContainer implements
     {
         // Do nothing
     }
-
     /**
      * @inheritDoc
      */
@@ -73,7 +62,6 @@ class NoOpContainer implements
     {
         return clone $this;
     }
-
     /**
      * @inheritDoc
      */
@@ -81,7 +69,6 @@ class NoOpContainer implements
     {
         return clone $this;
     }
-
     /**
      * @inheritDoc
      */
@@ -89,7 +76,6 @@ class NoOpContainer implements
     {
         return clone $this;
     }
-
     /**
      * @inheritDoc
      */
