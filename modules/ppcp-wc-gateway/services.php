@@ -75,6 +75,7 @@ use WooCommerce\PayPalCommerce\WcGateway\Helper\MerchantDetails;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\PayUponInvoiceHelper;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\PayUponInvoiceProductStatus;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\PWCProductStatus;
+use WooCommerce\PayPalCommerce\WcGateway\Helper\OrderStatusHelper;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\RefundFeesUpdater;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\SettingsStatus;
 use WooCommerce\PayPalCommerce\WcGateway\Notice\AuthorizeOrderActionNotice;
@@ -599,7 +600,8 @@ return array(
 			$container->get( 'api.factory.purchase-unit' ),
 			$container->get( 'api.factory.payer' ),
 			$container->get( 'api.factory.shipping-preference' ),
-			$container->get( 'wcgateway.builder.experience-context' )
+			$container->get( 'wcgateway.builder.experience-context' ),
+			$container->get( 'wcgateway.helper.order-status' )
 		);
 	},
 	'wcgateway.processor.refunds'                          => static function ( ContainerInterface $container ): RefundProcessor {
@@ -1391,7 +1393,8 @@ return array(
 			$gateway,
 			$endpoint,
 			$container->get( 'session.handler' ),
-			$container->get( 'woocommerce.logger.woocommerce' )
+			$container->get( 'woocommerce.logger.woocommerce' ),
+			$container->get( 'wcgateway.helper.order-status' )
 		);
 	},
 	'wcgateway.endpoint.refresh-feature-status'            => static function ( ContainerInterface $container ): RefreshFeatureStatusEndpoint {
@@ -1450,6 +1453,10 @@ return array(
 			$container->get( 'settings.flag.is-connected' ),
 			$container->get( 'api.helper.failure-registry' )
 		);
+	},
+
+	'wcgateway.helper.order-status'                        => static function ( ContainerInterface $container ): OrderStatusHelper {
+		return new OrderStatusHelper();
 	},
 
 	'wcgateway.helper.refund-fees-updater'                 => static function ( ContainerInterface $container ): RefundFeesUpdater {

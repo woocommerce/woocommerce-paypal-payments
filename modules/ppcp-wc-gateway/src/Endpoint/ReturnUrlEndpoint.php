@@ -18,6 +18,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Entity\OrderStatus;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\OXXO\OXXOGateway;
+use WooCommerce\PayPalCommerce\WcGateway\Helper\OrderStatusHelper;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 
 /**
@@ -55,6 +56,8 @@ class ReturnUrlEndpoint {
 	 */
 	protected $logger;
 
+	private OrderStatusHelper $order_status_helper;
+
 	/**
 	 * ReturnUrlEndpoint constructor.
 	 *
@@ -67,12 +70,14 @@ class ReturnUrlEndpoint {
 		PayPalGateway $gateway,
 		OrderEndpoint $order_endpoint,
 		SessionHandler $session_handler,
-		LoggerInterface $logger
+		LoggerInterface $logger,
+		OrderStatusHelper $order_status_helper
 	) {
-		$this->gateway         = $gateway;
-		$this->order_endpoint  = $order_endpoint;
-		$this->session_handler = $session_handler;
-		$this->logger          = $logger;
+		$this->gateway             = $gateway;
+		$this->order_endpoint      = $order_endpoint;
+		$this->session_handler     = $session_handler;
+		$this->logger              = $logger;
+		$this->order_status_helper = $order_status_helper;
 	}
 
 	/**
@@ -147,7 +152,7 @@ class ReturnUrlEndpoint {
 			exit();
 		}
 
-		if ( ! in_array( $wc_order->get_status(), array( 'pending', 'on-hold' ), true ) ) {
+		if ( ! $this->order_status_helper->is_awaiting_payment( $wc_order ) ) {
 			$payment_gateway = $this->get_payment_gateway( $wc_order->get_payment_method() );
 			if ( $payment_gateway ) {
 				$this->session_handler->destroy_session_data();
