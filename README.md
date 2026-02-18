@@ -96,7 +96,7 @@ Optionally, change the `PAYPAL_INTEGRATION_DATE` constant to `gmdate( 'Y-m-d' )`
 
 1. `$ ./vendor/bin/phpunit`
 2. `$ ./vendor/bin/phpcs`
-3. `$ ./vendor/bin/psalm`
+3. `$ ./vendor/bin/phpstan`
 4. `$ npm run lint-js`
 5. `$ npm run test:unit-js` - Ensure node version is `18` or above
 
