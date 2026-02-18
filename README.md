@@ -88,6 +88,7 @@ Check [this article](https://docs.ddev.com/en/stable/users/debugging-profiling/s
 
 - `$ composer install`
 - `$ npm ci`
+- `$ npm run build`
 
 Optionally, change the `PAYPAL_INTEGRATION_DATE` constant to `gmdate( 'Y-m-d' )` to run the latest PayPal JavaScript SDK
 
