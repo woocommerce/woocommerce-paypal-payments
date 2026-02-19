@@ -7,7 +7,7 @@ Minimal instructions for coding agents working in this repository.
 - CRITICAL: Keep `CLAUDE.md` as a pointer to this file (`@AGENTS.md`).
 - CRITICAL: Maintain PHP `7.4+` compatibility unless project requirements change.
 - CRITICAL: Do not edit WordPress core, `vendor/`, or `node_modules/`.
-- CRITICAL: For frontend work, edit `modules/*/resources/*`; do not hand-edit built files in `/assets`.
+- CRITICAL: For frontend work, edit `modules/*/resources/*`.
 - CRITICAL: Never revert unrelated local changes.
 - MUST: Run relevant lint/tests before claiming completion.
 
@@ -41,7 +41,8 @@ Minimal instructions for coding agents working in this repository.
 ### Quality
 
 - `npm run lint` (PHPCS + PHPStan)
-- `npm run lint-js`
+- `npm run lint-js` (currently unreliable for full-repo linting in this project)
+- `npx wp-scripts lint-js <file-or-dir>` (recommended; works for targeted JS/TS paths)
 - `npm run unit-tests`
 - `npm run test:unit-js`
 - `npm run integration-tests`
@@ -75,5 +76,5 @@ Minimal instructions for coding agents working in this repository.
 ## Verification Matrix
 
 - PHP-only change: `npm run unit-tests && npm run lint`
-- JS-only change: `npm run test:unit-js && npm run lint-js`
+- JS-only change: `npm run test:unit-js && npx wp-scripts lint-js <changed-js-files-or-dir>`
 - Checkout/payment/onboarding/webhook change: `npm run test`
