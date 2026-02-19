@@ -25,22 +25,13 @@ abstract class ExtensionSettingsModule {
 	 */
 	protected const SCRIPT_HANDLE = '';
 
-	private string $absolute_plugin_path;
-	private string $plugin_main_file;
 	private ExtensionRestEndpoint $settings_endpoint;
 	private AssetGetter $asset_getter;
 
-	public function __construct(
-		string $absolute_plugin_path,
-		string $plugin_main_file,
-		ExtensionRestEndpoint $settings_endpoint,
-		AssetGetter $asset_getter
-	) {
+	public function __construct( ExtensionRestEndpoint $settings_endpoint, AssetGetter $asset_getter ) {
 
-		$this->absolute_plugin_path = $absolute_plugin_path;
-		$this->plugin_main_file     = $plugin_main_file;
-		$this->settings_endpoint    = $settings_endpoint;
-		$this->asset_getter         = $asset_getter;
+		$this->settings_endpoint = $settings_endpoint;
+		$this->asset_getter      = $asset_getter;
 	}
 
 	/**

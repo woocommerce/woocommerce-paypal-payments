@@ -299,8 +299,6 @@ return array(
 	},
 	'agentic.settings.module'                      => static function ( ContainerInterface $c ): AgenticSettingsModule {
 		return new AgenticSettingsModule(
-			$c->get( 'ppcp.path-to-plugin-folder' ),
-			$c->get( 'ppcp.path-to-plugin-main-file' ),
 			$c->get( 'agentic.settings.endpoint' ),
 			$c->get( 'agentic.registration.eligibility' ),
 			$c->get( 'agentic.asset_getter' ),
