@@ -14,14 +14,14 @@ abstract class ExtensionSettingsModule {
 	/**
 	 * Relative path to the module's assets directory.
 	 *
-	 * Example: 'modules/ppcp-agentic-commerce/assets/'
+	 * Example: 'modules/ppcp-store-sync/assets/'
 	 */
 	protected const ASSETS_DIR = '';
 
 	/**
 	 * Script handle for wp_enqueue_script.
 	 *
-	 * Example: 'ppcp-agentic-commerce-settings'
+	 * Example: 'ppcp-store-sync-settings'
 	 */
 	protected const SCRIPT_HANDLE = '';
 

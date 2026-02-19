@@ -11,9 +11,9 @@ use WooCommerce\PayPalCommerce\AgenticCommerce\Registration\RegistrationEligibil
 
 class AgenticSettingsModule extends ExtensionSettingsModule {
 
-	protected const ASSETS_DIR = 'modules/ppcp-agentic-commerce/assets/';
+	protected const ASSETS_DIR = 'modules/ppcp-store-sync/assets/';
 
-	protected const SCRIPT_HANDLE = 'ppcp-agentic-commerce-settings';
+	protected const SCRIPT_HANDLE = 'ppcp-store-sync-settings';
 
 	private RegistrationEligibility $eligibility_check;
 

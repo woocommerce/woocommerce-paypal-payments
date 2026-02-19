@@ -340,6 +340,6 @@ return array(
 		$factory = $container->get( 'assets.asset_getter_factory' );
 		assert( $factory instanceof AssetGetterFactory );
 
-		return $factory->for_module( 'ppcp-agentic-commerce' );
+		return $factory->for_module( 'ppcp-store-sync' );
 	},
 );

@@ -93,7 +93,7 @@ return static function ( string $root_dir ): iterable {
 			getenv( 'PCP_AGENTIC_COMMERCE_ENABLED' ) === '1'
 		)
 	) {
-		$modules[] = ( require "$modules_dir/ppcp-agentic-commerce/module.php" )();
+		$modules[] = ( require "$modules_dir/ppcp-store-sync/module.php" )();
 	}
 
 	return $modules;
