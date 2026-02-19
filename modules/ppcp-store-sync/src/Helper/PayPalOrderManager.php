@@ -83,7 +83,7 @@ class PayPalOrderManager {
 		try {
 			add_filter( 'woocommerce_paypal_payments_order_intent', $set_order_intent );
 
-			// Create PayPal Order (application_context filter is registered in AgenticCommerceModule).
+			// Create PayPal Order (application_context filter is registered in StoreSyncModule).
 			$paypal_order = $this->order_endpoint->create(
 				array( $purchase_unit ),
 				ExperienceContext::SHIPPING_PREFERENCE_NO_SHIPPING,

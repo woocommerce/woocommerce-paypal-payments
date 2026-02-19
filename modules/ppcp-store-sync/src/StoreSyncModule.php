@@ -28,7 +28,7 @@ use WooCommerce\PayPalCommerce\StoreSync\CartValidation\ValidatorInterface;
  * Entry point that integrates agentic commerce logic with the plugin's DI system.
  * This module handles the initialization and execution of the agentic commerce functionality.
  */
-class AgenticCommerceModule implements ServiceModule, ExecutableModule {
+class StoreSyncModule implements ServiceModule, ExecutableModule {
 
 	use ModuleClassNameIdTrait;
 

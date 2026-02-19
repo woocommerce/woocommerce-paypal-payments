@@ -9,6 +9,6 @@ declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\StoreSync;
 
-return static function (): AgenticCommerceModule {
-	return new AgenticCommerceModule();
+return static function (): StoreSyncModule {
+	return new StoreSyncModule();
 };

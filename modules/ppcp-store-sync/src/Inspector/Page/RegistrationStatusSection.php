@@ -264,7 +264,7 @@ class RegistrationStatusSection {
 	}
 
 	/**
-	 * Mirrors the logic of AgenticCommerceModule::should_auto_register().
+	 * Mirrors the logic of StoreSyncModule::should_auto_register().
 	 */
 	private function use_auto_register(): bool {
 		return ! defined( 'PPCP_AGENTIC_AUTO_REGISTER' ) || PPCP_AGENTIC_AUTO_REGISTER;
