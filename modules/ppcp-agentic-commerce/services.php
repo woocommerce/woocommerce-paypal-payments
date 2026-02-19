@@ -118,7 +118,7 @@ return array(
         return new CartValidationProcessor($c->get('agentic.logger'));
     },
     'agentic.validator.product' => static function (ContainerInterface $c): ProductValidator {
-        return new ProductValidator($c->get('agentic.helper.product-manager'));
+        return new ProductValidator($c->get('agentic.helper.product-manager'), $c->get('agentic.config.ingestion'));
     },
     'agentic.validator.price' => static function (ContainerInterface $c): PriceValidator {
         return new PriceValidator($c->get('agentic.helper.product-manager'));
@@ -179,7 +179,7 @@ return array(
         return new AgenticSettingsEndpoint($c->get('agentic.settings.model'));
     },
     'agentic.settings.module' => static function (ContainerInterface $c): AgenticSettingsModule {
-        return new AgenticSettingsModule($c->get('ppcp.path-to-plugin-folder'), $c->get('ppcp.path-to-plugin-main-file'), $c->get('agentic.settings.endpoint'), $c->get('agentic.registration.eligibility'), $c->get('agentic.asset_getter'));
+        return new AgenticSettingsModule($c->get('agentic.settings.endpoint'), $c->get('agentic.registration.eligibility'), $c->get('agentic.asset_getter'));
     },
     // Inspector.
     'agentic.inspector.form_handler' => static function (ContainerInterface $c): InspectionFormHandler {

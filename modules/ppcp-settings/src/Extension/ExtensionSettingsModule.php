@@ -21,14 +21,10 @@ abstract class ExtensionSettingsModule
      * Example: 'ppcp-agentic-commerce-settings'
      */
     protected const SCRIPT_HANDLE = '';
-    private string $absolute_plugin_path;
-    private string $plugin_main_file;
     private \WooCommerce\PayPalCommerce\Settings\Extension\ExtensionRestEndpoint $settings_endpoint;
     private AssetGetter $asset_getter;
-    public function __construct(string $absolute_plugin_path, string $plugin_main_file, \WooCommerce\PayPalCommerce\Settings\Extension\ExtensionRestEndpoint $settings_endpoint, AssetGetter $asset_getter)
+    public function __construct(\WooCommerce\PayPalCommerce\Settings\Extension\ExtensionRestEndpoint $settings_endpoint, AssetGetter $asset_getter)
     {
-        $this->absolute_plugin_path = $absolute_plugin_path;
-        $this->plugin_main_file = $plugin_main_file;
         $this->settings_endpoint = $settings_endpoint;
         $this->asset_getter = $asset_getter;
     }

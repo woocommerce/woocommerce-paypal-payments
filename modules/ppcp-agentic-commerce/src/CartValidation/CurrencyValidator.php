@@ -14,7 +14,7 @@ use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\ResolutionOption;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Validation\CurrencyMismatch;
 class CurrencyValidator implements \WooCommerce\PayPalCommerce\AgenticCommerce\CartValidation\ValidatorInterface
 {
-    public function validate(PayPalCart $cart)
+    public function validate(PayPalCart $cart): array
     {
         $store_currency = get_woocommerce_currency();
         $cart_currencies = $this->extract_cart_currencies($cart);
@@ -26,7 +26,10 @@ class CurrencyValidator implements \WooCommerce\PayPalCommerce\AgenticCommerce\C
             return array($consistency_issue);
         }
         $store_issue = $this->validate_store_currency($cart_currencies[0]['currency'], $cart_currencies[0]['index'], $store_currency);
-        return array_filter(array($store_issue));
+        if ($store_issue) {
+            return array($store_issue);
+        }
+        return array();
     }
     private function extract_cart_currencies(PayPalCart $cart): array
     {
