@@ -3,7 +3,7 @@ declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\Tests\Integration\AgenticCommerce\Auth;
 
-use WooCommerce\PayPalCommerce\AgenticCommerce\Auth\PayPalJwkProvider;
+use WooCommerce\PayPalCommerce\StoreSync\Auth\PayPalJwkProvider;
 use WooCommerce\PayPalCommerce\Tests\Integration\TestCase;
 use Firebase\JWT\Key;
 
