@@ -1,7 +1,7 @@
 <?php
 declare( strict_types = 1 );
 
-namespace WooCommerce\PayPalCommerce\AgenticCommerce\Enums;
+namespace WooCommerce\PayPalCommerce\StoreSync\Enums;
 
 /**
  * Specific data validation issue codes.

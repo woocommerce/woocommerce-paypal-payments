@@ -2,11 +2,11 @@
 
 declare( strict_types = 1 );
 
-namespace WooCommerce\PayPalCommerce\AgenticCommerce\Auth;
+namespace WooCommerce\PayPalCommerce\StoreSync\Auth;
 
 use WooCommerce\PayPalCommerce\WcGateway\Helper\ConnectionState;
 
-use WooCommerce\PayPalCommerce\AgenticCommerce\Merchant\MerchantMetadataProvider;
+use WooCommerce\PayPalCommerce\StoreSync\Merchant\MerchantMetadataProvider;
 
 class AuthServiceProvider {
 

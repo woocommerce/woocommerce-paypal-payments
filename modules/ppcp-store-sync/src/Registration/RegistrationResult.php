@@ -1,7 +1,7 @@
 <?php
 declare( strict_types = 1 );
 
-namespace WooCommerce\PayPalCommerce\AgenticCommerce\Registration;
+namespace WooCommerce\PayPalCommerce\StoreSync\Registration;
 
 /**
  * DTO representing the result of a registration/deregistration webhook call.

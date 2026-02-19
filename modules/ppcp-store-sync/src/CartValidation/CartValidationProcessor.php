@@ -2,18 +2,18 @@
 /**
  * Main cart validation orchestrator.
  *
- * @package WooCommerce\PayPalCommerce\AgenticCommerce\CartValidation
+ * @package WooCommerce\PayPalCommerce\StoreSync\CartValidation
  */
 
 declare( strict_types = 1 );
 
-namespace WooCommerce\PayPalCommerce\AgenticCommerce\CartValidation;
+namespace WooCommerce\PayPalCommerce\StoreSync\CartValidation;
 
 use Throwable;
 use Psr\Log\LoggerInterface;
 
-use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\PayPalCart;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Validation\ValidationIssue;
+use WooCommerce\PayPalCommerce\StoreSync\Schema\PayPalCart;
+use WooCommerce\PayPalCommerce\StoreSync\Validation\ValidationIssue;
 
 class CartValidationProcessor {
 

@@ -4,16 +4,16 @@
  *
  * TODO: Is this class used or can it be deleted?
  *
- * @package WooCommerce\PayPalCommerce\AgenticCommerce\Errors\Http
+ * @package WooCommerce\PayPalCommerce\StoreSync\Errors\Http
  */
 
 declare( strict_types = 1 );
 
-namespace WooCommerce\PayPalCommerce\AgenticCommerce\Errors\Http;
+namespace WooCommerce\PayPalCommerce\StoreSync\Errors\Http;
 
-use WooCommerce\PayPalCommerce\AgenticCommerce\Errors\AgenticError;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Enums\HttpErrorName;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Validation\ValidationIssue;
+use WooCommerce\PayPalCommerce\StoreSync\Errors\AgenticError;
+use WooCommerce\PayPalCommerce\StoreSync\Enums\HttpErrorName;
+use WooCommerce\PayPalCommerce\StoreSync\Validation\ValidationIssue;
 
 /**
  * Use when business rules prevent cart operations.

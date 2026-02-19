@@ -2,17 +2,17 @@
 /**
  * Currency Validator for Agentic Commerce.
  *
- * @package WooCommerce\PayPalCommerce\AgenticCommerce\CartValidation
+ * @package WooCommerce\PayPalCommerce\StoreSync\CartValidation
  */
 
 declare( strict_types = 1 );
 
-namespace WooCommerce\PayPalCommerce\AgenticCommerce\CartValidation;
+namespace WooCommerce\PayPalCommerce\StoreSync\CartValidation;
 
-use WooCommerce\PayPalCommerce\AgenticCommerce\Enums\Priority;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\PayPalCart;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\ResolutionOption;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Validation\CurrencyMismatch;
+use WooCommerce\PayPalCommerce\StoreSync\Enums\Priority;
+use WooCommerce\PayPalCommerce\StoreSync\Schema\PayPalCart;
+use WooCommerce\PayPalCommerce\StoreSync\Schema\ResolutionOption;
+use WooCommerce\PayPalCommerce\StoreSync\Validation\CurrencyMismatch;
 
 class CurrencyValidator implements ValidatorInterface {
 

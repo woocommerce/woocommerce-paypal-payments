@@ -2,15 +2,15 @@
 /**
  * 500 Internal Server Error HTTP error.
  *
- * @package WooCommerce\PayPalCommerce\AgenticCommerce\Errors\Http
+ * @package WooCommerce\PayPalCommerce\StoreSync\Errors\Http
  */
 
 declare( strict_types = 1 );
 
-namespace WooCommerce\PayPalCommerce\AgenticCommerce\Errors\Http;
+namespace WooCommerce\PayPalCommerce\StoreSync\Errors\Http;
 
-use WooCommerce\PayPalCommerce\AgenticCommerce\Errors\AgenticError;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Enums\HttpErrorName;
+use WooCommerce\PayPalCommerce\StoreSync\Errors\AgenticError;
+use WooCommerce\PayPalCommerce\StoreSync\Enums\HttpErrorName;
 
 /**
  * Use for system errors, database failures, third-party service issues.

@@ -4,20 +4,20 @@
  *
  * Handles the display of PayPal Agentic Commerce registration status.
  *
- * @package WooCommerce\PayPalCommerce\AgenticCommerce\Inspector\Page
+ * @package WooCommerce\PayPalCommerce\StoreSync\Inspector\Page
  */
 
 declare( strict_types = 1 );
 
-namespace WooCommerce\PayPalCommerce\AgenticCommerce\Inspector\Page;
+namespace WooCommerce\PayPalCommerce\StoreSync\Inspector\Page;
 
 use WooCommerce\PayPalCommerce\Settings\Data\GeneralSettings;
 
-use WooCommerce\PayPalCommerce\AgenticCommerce\Auth\AuthServiceProvider;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Registration\RegistrationEligibility;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Registration\RegistrationService;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Auth\SandboxAuthService;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Endpoint\CreateCartEndpoint;
+use WooCommerce\PayPalCommerce\StoreSync\Auth\AuthServiceProvider;
+use WooCommerce\PayPalCommerce\StoreSync\Registration\RegistrationEligibility;
+use WooCommerce\PayPalCommerce\StoreSync\Registration\RegistrationService;
+use WooCommerce\PayPalCommerce\StoreSync\Auth\SandboxAuthService;
+use WooCommerce\PayPalCommerce\StoreSync\Endpoint\CreateCartEndpoint;
 
 /**
  * Class RegistrationStatusSection

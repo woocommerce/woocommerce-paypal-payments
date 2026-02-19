@@ -5,15 +5,15 @@
  * Inspector for monitoring and debugging agentic commerce sessions during development.
  * This class provides read-only access to session data for debugging purposes.
  *
- * @package WooCommerce\PayPalCommerce\AgenticCommerce\Inspector
+ * @package WooCommerce\PayPalCommerce\StoreSync\Inspector
  */
 
 declare( strict_types = 1 );
 
-namespace WooCommerce\PayPalCommerce\AgenticCommerce\Inspector;
+namespace WooCommerce\PayPalCommerce\StoreSync\Inspector;
 
-use WooCommerce\PayPalCommerce\AgenticCommerce\Session\AgenticWcSession;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\PayPalCart;
+use WooCommerce\PayPalCommerce\StoreSync\Session\AgenticWcSession;
+use WooCommerce\PayPalCommerce\StoreSync\Schema\PayPalCart;
 
 /**
  * Inspector for monitoring agentic commerce sessions.

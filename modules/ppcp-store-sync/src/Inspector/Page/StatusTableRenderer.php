@@ -4,12 +4,12 @@
  *
  * Provides shared UI rendering methods for status pages via trait composition.
  *
- * @package WooCommerce\PayPalCommerce\AgenticCommerce\Inspector\Renderer
+ * @package WooCommerce\PayPalCommerce\StoreSync\Inspector\Renderer
  */
 
 declare( strict_types = 1 );
 
-namespace WooCommerce\PayPalCommerce\AgenticCommerce\Inspector\Page;
+namespace WooCommerce\PayPalCommerce\StoreSync\Inspector\Page;
 
 /**
  * Trait StatusTableHelper

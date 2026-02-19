@@ -1,7 +1,7 @@
 <?php
 declare( strict_types = 1 );
 
-namespace WooCommerce\PayPalCommerce\AgenticCommerce\Enums;
+namespace WooCommerce\PayPalCommerce\StoreSync\Enums;
 
 /**
  * Resolution actions for error handling.

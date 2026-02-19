@@ -1,9 +1,9 @@
 <?php
 declare( strict_types = 1 );
 
-namespace WooCommerce\PayPalCommerce\AgenticCommerce\Registration;
+namespace WooCommerce\PayPalCommerce\StoreSync\Registration;
 
-use WooCommerce\PayPalCommerce\AgenticCommerce\Merchant\MerchantMetadataProvider;
+use WooCommerce\PayPalCommerce\StoreSync\Merchant\MerchantMetadataProvider;
 
 class RegistrationEligibility {
 

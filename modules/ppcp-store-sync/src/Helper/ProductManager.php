@@ -4,16 +4,16 @@
  *
  * Unified helper for WooCommerce product resolution and stock checking.
  *
- * @package WooCommerce\PayPalCommerce\AgenticCommerce\Helper
+ * @package WooCommerce\PayPalCommerce\StoreSync\Helper
  */
 
 declare( strict_types = 1 );
 
-namespace WooCommerce\PayPalCommerce\AgenticCommerce\Helper;
+namespace WooCommerce\PayPalCommerce\StoreSync\Helper;
 
 use WC_Product;
 
-use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\CartItem;
+use WooCommerce\PayPalCommerce\StoreSync\Schema\CartItem;
 
 class ProductManager {
 	protected static array $product_cache = array();

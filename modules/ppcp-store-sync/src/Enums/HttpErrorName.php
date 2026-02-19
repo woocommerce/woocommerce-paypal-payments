@@ -2,12 +2,12 @@
 /**
  * HTTP error names enum for agentic commerce errors.
  *
- * @package WooCommerce\PayPalCommerce\AgenticCommerce\Enums
+ * @package WooCommerce\PayPalCommerce\StoreSync\Enums
  */
 
 declare( strict_types = 1 );
 
-namespace WooCommerce\PayPalCommerce\AgenticCommerce\Enums;
+namespace WooCommerce\PayPalCommerce\StoreSync\Enums;
 
 /**
  * Standard HTTP error names from the PayPal Cart API specification.

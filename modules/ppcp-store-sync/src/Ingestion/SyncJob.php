@@ -1,6 +1,6 @@
 <?php
 
-namespace WooCommerce\PayPalCommerce\AgenticCommerce\Ingestion;
+namespace WooCommerce\PayPalCommerce\StoreSync\Ingestion;
 
 use RuntimeException;
 use Psr\Log\LoggerInterface;

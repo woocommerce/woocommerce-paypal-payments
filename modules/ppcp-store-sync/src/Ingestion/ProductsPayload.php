@@ -1,6 +1,6 @@
 <?php
 
-namespace WooCommerce\PayPalCommerce\AgenticCommerce\Ingestion;
+namespace WooCommerce\PayPalCommerce\StoreSync\Ingestion;
 
 use WC_Product;
 use WC_Product_Variation;

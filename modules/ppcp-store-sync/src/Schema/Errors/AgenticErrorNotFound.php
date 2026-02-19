@@ -2,7 +2,7 @@
 
 declare( strict_types = 1 );
 
-namespace WooCommerce\PayPalCommerce\AgenticCommerce\Schema\Errors;
+namespace WooCommerce\PayPalCommerce\StoreSync\Schema\Errors;
 
 class AgenticErrorNotFound extends AgenticError {
 	protected const ERROR_NAME  = 'NOT_FOUND';

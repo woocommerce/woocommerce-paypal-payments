@@ -2,19 +2,19 @@
 /**
  * PayPal Cart Response.
  *
- * @package WooCommerce\PayPalCommerce\AgenticCommerce\Response
+ * @package WooCommerce\PayPalCommerce\StoreSync\Response
  */
 
 declare( strict_types = 1 );
 
-namespace WooCommerce\PayPalCommerce\AgenticCommerce\Response;
+namespace WooCommerce\PayPalCommerce\StoreSync\Response;
 
 use WC_Cart;
 
-use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\PayPalCart;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Validation\ValidationIssue;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Helper\CartHelper;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Enums\ErrorCode;
+use WooCommerce\PayPalCommerce\StoreSync\Schema\PayPalCart;
+use WooCommerce\PayPalCommerce\StoreSync\Validation\ValidationIssue;
+use WooCommerce\PayPalCommerce\StoreSync\Helper\CartHelper;
+use WooCommerce\PayPalCommerce\StoreSync\Enums\ErrorCode;
 
 class CartResponse {
 	private const ALLOWED_STATUS = array(

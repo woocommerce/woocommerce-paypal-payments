@@ -2,17 +2,17 @@
 /**
  * Defines the gift option schema.
  *
- * @package WooCommerce\PayPalCommerce\AgenticCommerce\Schema
+ * @package WooCommerce\PayPalCommerce\StoreSync\Schema
  */
 
 declare( strict_types = 1 );
 
-namespace WooCommerce\PayPalCommerce\AgenticCommerce\Schema;
+namespace WooCommerce\PayPalCommerce\StoreSync\Schema;
 
 use DateTime;
 use DateTimeInterface;
 
-use WooCommerce\PayPalCommerce\AgenticCommerce\Validation\InvalidData;
+use WooCommerce\PayPalCommerce\StoreSync\Validation\InvalidData;
 
 /**
  * @see GiftOptionsTest - Unit tests for this class.

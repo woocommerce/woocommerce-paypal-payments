@@ -4,16 +4,16 @@
  *
  * Builds the applied_coupons array for successful cart responses.
  *
- * @package WooCommerce\PayPalCommerce\AgenticCommerce\CartValidation\CouponValidator
+ * @package WooCommerce\PayPalCommerce\StoreSync\CartValidation\CouponValidator
  */
 
 declare( strict_types = 1 );
 
-namespace WooCommerce\PayPalCommerce\AgenticCommerce\CartValidation\CouponValidator;
+namespace WooCommerce\PayPalCommerce\StoreSync\CartValidation\CouponValidator;
 
 use WC_Coupon;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Helper\CartHelper;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\PayPalCart;
+use WooCommerce\PayPalCommerce\StoreSync\Helper\CartHelper;
+use WooCommerce\PayPalCommerce\StoreSync\Schema\PayPalCart;
 
 /**
  * Builds applied coupons data for API responses.

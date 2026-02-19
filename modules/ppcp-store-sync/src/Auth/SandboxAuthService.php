@@ -2,7 +2,7 @@
 
 declare( strict_types = 1 );
 
-namespace WooCommerce\PayPalCommerce\AgenticCommerce\Auth;
+namespace WooCommerce\PayPalCommerce\StoreSync\Auth;
 
 use Exception;
 use WP_Error;

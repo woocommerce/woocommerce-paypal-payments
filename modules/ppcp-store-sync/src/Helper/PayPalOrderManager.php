@@ -4,12 +4,12 @@
  *
  * Unified interface for PayPal Order lifecycle management (create, update).
  *
- * @package WooCommerce\PayPalCommerce\AgenticCommerce\Helper
+ * @package WooCommerce\PayPalCommerce\StoreSync\Helper
  */
 
 declare( strict_types = 1 );
 
-namespace WooCommerce\PayPalCommerce\AgenticCommerce\Helper;
+namespace WooCommerce\PayPalCommerce\StoreSync\Helper;
 
 use RuntimeException;
 use WC_Cart;
@@ -19,7 +19,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Endpoint\Orders;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Order as WooOrder;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\ExperienceContext;
 
-use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\PayPalCart;
+use WooCommerce\PayPalCommerce\StoreSync\Schema\PayPalCart;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 
 class PayPalOrderManager {

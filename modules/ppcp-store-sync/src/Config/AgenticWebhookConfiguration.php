@@ -1,7 +1,7 @@
 <?php
 declare( strict_types = 1 );
 
-namespace WooCommerce\PayPalCommerce\AgenticCommerce\Config;
+namespace WooCommerce\PayPalCommerce\StoreSync\Config;
 
 use WooCommerce\PayPalCommerce\WcGateway\Helper\ConnectionState;
 

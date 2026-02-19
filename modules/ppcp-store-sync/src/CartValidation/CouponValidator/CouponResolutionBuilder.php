@@ -4,18 +4,18 @@
  *
  * Builds resolution options for coupon validation issues.
  *
- * @package WooCommerce\PayPalCommerce\AgenticCommerce\CartValidation\CouponValidator
+ * @package WooCommerce\PayPalCommerce\StoreSync\CartValidation\CouponValidator
  */
 
 declare( strict_types = 1 );
 
-namespace WooCommerce\PayPalCommerce\AgenticCommerce\CartValidation\CouponValidator;
+namespace WooCommerce\PayPalCommerce\StoreSync\CartValidation\CouponValidator;
 
 use WC_Coupon;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Enums\Priority;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Helper\CartHelper;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\PayPalCart;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\ResolutionOption;
+use WooCommerce\PayPalCommerce\StoreSync\Enums\Priority;
+use WooCommerce\PayPalCommerce\StoreSync\Helper\CartHelper;
+use WooCommerce\PayPalCommerce\StoreSync\Schema\PayPalCart;
+use WooCommerce\PayPalCommerce\StoreSync\Schema\ResolutionOption;
 
 /**
  * Builds resolution options for coupon validation issues.

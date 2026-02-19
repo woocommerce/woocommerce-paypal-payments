@@ -2,22 +2,22 @@
 /**
  * Price Validator for Agentic Commerce.
  *
- * @package WooCommerce\PayPalCommerce\AgenticCommerce\CartValidation
+ * @package WooCommerce\PayPalCommerce\StoreSync\CartValidation
  */
 
 declare( strict_types = 1 );
 
-namespace WooCommerce\PayPalCommerce\AgenticCommerce\CartValidation;
+namespace WooCommerce\PayPalCommerce\StoreSync\CartValidation;
 
-use WooCommerce\PayPalCommerce\AgenticCommerce\Enums\ErrorCode;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Enums\Priority;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Helper\CartHelper;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Helper\ProductManager;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\PayPalCart;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\CartItem;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\ResolutionOption;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Validation\PriceMismatch;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Validation\ValidationIssue;
+use WooCommerce\PayPalCommerce\StoreSync\Enums\ErrorCode;
+use WooCommerce\PayPalCommerce\StoreSync\Enums\Priority;
+use WooCommerce\PayPalCommerce\StoreSync\Helper\CartHelper;
+use WooCommerce\PayPalCommerce\StoreSync\Helper\ProductManager;
+use WooCommerce\PayPalCommerce\StoreSync\Schema\PayPalCart;
+use WooCommerce\PayPalCommerce\StoreSync\Schema\CartItem;
+use WooCommerce\PayPalCommerce\StoreSync\Schema\ResolutionOption;
+use WooCommerce\PayPalCommerce\StoreSync\Validation\PriceMismatch;
+use WooCommerce\PayPalCommerce\StoreSync\Validation\ValidationIssue;
 
 class PriceValidator implements ValidatorInterface {
 	private ProductManager $product_manager;

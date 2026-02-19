@@ -1,7 +1,7 @@
 <?php
 declare( strict_types = 1 );
 
-namespace WooCommerce\PayPalCommerce\AgenticCommerce\Setting;
+namespace WooCommerce\PayPalCommerce\StoreSync\Setting;
 
 use WooCommerce\PayPalCommerce\Settings\Extension\ExtensionDataModel;
 

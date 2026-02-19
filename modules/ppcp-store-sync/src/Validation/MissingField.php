@@ -3,10 +3,10 @@
 
 declare( strict_types = 1 );
 
-namespace WooCommerce\PayPalCommerce\AgenticCommerce\Validation;
+namespace WooCommerce\PayPalCommerce\StoreSync\Validation;
 
-use WooCommerce\PayPalCommerce\AgenticCommerce\Enums\ErrorCode;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Enums\ErrorType;
+use WooCommerce\PayPalCommerce\StoreSync\Enums\ErrorCode;
+use WooCommerce\PayPalCommerce\StoreSync\Enums\ErrorType;
 
 /**
  * When to use:

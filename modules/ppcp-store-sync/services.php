@@ -2,12 +2,12 @@
 /**
  * The agentic commerce services.
  *
- * @package WooCommerce\PayPalCommerce\AgenticCommerce
+ * @package WooCommerce\PayPalCommerce\StoreSync
  */
 
 declare( strict_types = 1 );
 
-namespace WooCommerce\PayPalCommerce\AgenticCommerce;
+namespace WooCommerce\PayPalCommerce\StoreSync;
 
 use Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\Assets\AssetGetter;
@@ -16,45 +16,45 @@ use WooCommerce\WooCommerce\Logging\Logger\NullLogger;
 use WooCommerce\WooCommerce\Logging\Logger\WooCommerceLogger;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 
-use WooCommerce\PayPalCommerce\AgenticCommerce\Config\AgenticWebhookConfiguration;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Config\IngestionConfiguration;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Auth\AuthServiceProvider;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Auth\PayPalJwkProvider;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Endpoint\CreateCartEndpoint;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Endpoint\GetCartEndpoint;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Endpoint\ReplaceCartEndpoint;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Endpoint\CheckoutEndpoint;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Ingestion\IngestionBatchProvider;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Ingestion\IngestionManager;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Response\ResponseFactory;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Session\AgenticSessionHandler;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Setting\AgenticSettingsEndpoint;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Setting\AgenticSettingsDataModel;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Setting\AgenticSettingsModule;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Merchant\MerchantMetadataProvider;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Registration\RegistrationService;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Registration\RegistrationEligibility;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Inspector\InspectionFormHandler;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Inspector\InspectionStatusPage;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Helper\AgenticCheckoutProcessor;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Helper\PayPalOrderManager;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Helper\AgenticCartBuilder;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Helper\ProductManager;
-use WooCommerce\PayPalCommerce\AgenticCommerce\CartValidation\ProductValidator;
-use WooCommerce\PayPalCommerce\AgenticCommerce\CartValidation\PriceValidator;
-use WooCommerce\PayPalCommerce\AgenticCommerce\CartValidation\InventoryValidator;
-use WooCommerce\PayPalCommerce\AgenticCommerce\CartValidation\CurrencyValidator;
-use WooCommerce\PayPalCommerce\AgenticCommerce\CartValidation\ShippingValidator;
-use WooCommerce\PayPalCommerce\AgenticCommerce\CartValidation\CouponValidator\CouponValidator;
-use WooCommerce\PayPalCommerce\AgenticCommerce\CartValidation\CouponValidator\CouponContextBuilder;
-use WooCommerce\PayPalCommerce\AgenticCommerce\CartValidation\CouponValidator\DiscountCalculator;
-use WooCommerce\PayPalCommerce\AgenticCommerce\CartValidation\CouponValidator\CouponResolutionBuilder;
-use WooCommerce\PayPalCommerce\AgenticCommerce\CartValidation\CouponValidator\AppliedCouponsBuilder;
-use WooCommerce\PayPalCommerce\AgenticCommerce\CartValidation\CartValidationProcessor;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Inspector\InspectionSessionData;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Inspector\Page\RegistrationStatusSection;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Inspector\Page\CartSessionSection;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Helper\AgenticSessionManager;
+use WooCommerce\PayPalCommerce\StoreSync\Config\AgenticWebhookConfiguration;
+use WooCommerce\PayPalCommerce\StoreSync\Config\IngestionConfiguration;
+use WooCommerce\PayPalCommerce\StoreSync\Auth\AuthServiceProvider;
+use WooCommerce\PayPalCommerce\StoreSync\Auth\PayPalJwkProvider;
+use WooCommerce\PayPalCommerce\StoreSync\Endpoint\CreateCartEndpoint;
+use WooCommerce\PayPalCommerce\StoreSync\Endpoint\GetCartEndpoint;
+use WooCommerce\PayPalCommerce\StoreSync\Endpoint\ReplaceCartEndpoint;
+use WooCommerce\PayPalCommerce\StoreSync\Endpoint\CheckoutEndpoint;
+use WooCommerce\PayPalCommerce\StoreSync\Ingestion\IngestionBatchProvider;
+use WooCommerce\PayPalCommerce\StoreSync\Ingestion\IngestionManager;
+use WooCommerce\PayPalCommerce\StoreSync\Response\ResponseFactory;
+use WooCommerce\PayPalCommerce\StoreSync\Session\AgenticSessionHandler;
+use WooCommerce\PayPalCommerce\StoreSync\Setting\AgenticSettingsEndpoint;
+use WooCommerce\PayPalCommerce\StoreSync\Setting\AgenticSettingsDataModel;
+use WooCommerce\PayPalCommerce\StoreSync\Setting\AgenticSettingsModule;
+use WooCommerce\PayPalCommerce\StoreSync\Merchant\MerchantMetadataProvider;
+use WooCommerce\PayPalCommerce\StoreSync\Registration\RegistrationService;
+use WooCommerce\PayPalCommerce\StoreSync\Registration\RegistrationEligibility;
+use WooCommerce\PayPalCommerce\StoreSync\Inspector\InspectionFormHandler;
+use WooCommerce\PayPalCommerce\StoreSync\Inspector\InspectionStatusPage;
+use WooCommerce\PayPalCommerce\StoreSync\Helper\AgenticCheckoutProcessor;
+use WooCommerce\PayPalCommerce\StoreSync\Helper\PayPalOrderManager;
+use WooCommerce\PayPalCommerce\StoreSync\Helper\AgenticCartBuilder;
+use WooCommerce\PayPalCommerce\StoreSync\Helper\ProductManager;
+use WooCommerce\PayPalCommerce\StoreSync\CartValidation\ProductValidator;
+use WooCommerce\PayPalCommerce\StoreSync\CartValidation\PriceValidator;
+use WooCommerce\PayPalCommerce\StoreSync\CartValidation\InventoryValidator;
+use WooCommerce\PayPalCommerce\StoreSync\CartValidation\CurrencyValidator;
+use WooCommerce\PayPalCommerce\StoreSync\CartValidation\ShippingValidator;
+use WooCommerce\PayPalCommerce\StoreSync\CartValidation\CouponValidator\CouponValidator;
+use WooCommerce\PayPalCommerce\StoreSync\CartValidation\CouponValidator\CouponContextBuilder;
+use WooCommerce\PayPalCommerce\StoreSync\CartValidation\CouponValidator\DiscountCalculator;
+use WooCommerce\PayPalCommerce\StoreSync\CartValidation\CouponValidator\CouponResolutionBuilder;
+use WooCommerce\PayPalCommerce\StoreSync\CartValidation\CouponValidator\AppliedCouponsBuilder;
+use WooCommerce\PayPalCommerce\StoreSync\CartValidation\CartValidationProcessor;
+use WooCommerce\PayPalCommerce\StoreSync\Inspector\InspectionSessionData;
+use WooCommerce\PayPalCommerce\StoreSync\Inspector\Page\RegistrationStatusSection;
+use WooCommerce\PayPalCommerce\StoreSync\Inspector\Page\CartSessionSection;
+use WooCommerce\PayPalCommerce\StoreSync\Helper\AgenticSessionManager;
 
 /**
  * Using a different log-source for agentic commerce log entries makes it much easier to inspect

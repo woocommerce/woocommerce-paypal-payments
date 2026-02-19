@@ -4,17 +4,17 @@
  *
  * Handles the display and inspection of agentic cart sessions.
  *
- * @package WooCommerce\PayPalCommerce\AgenticCommerce\Inspector\Page
+ * @package WooCommerce\PayPalCommerce\StoreSync\Inspector\Page
  */
 
 declare( strict_types = 1 );
 
-namespace WooCommerce\PayPalCommerce\AgenticCommerce\Inspector\Page;
+namespace WooCommerce\PayPalCommerce\StoreSync\Inspector\Page;
 
-use WooCommerce\PayPalCommerce\AgenticCommerce\Inspector\InspectionSessionData;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\PayPalCart;
-use WooCommerce\PayPalCommerce\AgenticCommerce\CartValidation\CartValidationProcessor;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Validation\ValidationIssue;
+use WooCommerce\PayPalCommerce\StoreSync\Inspector\InspectionSessionData;
+use WooCommerce\PayPalCommerce\StoreSync\Schema\PayPalCart;
+use WooCommerce\PayPalCommerce\StoreSync\CartValidation\CartValidationProcessor;
+use WooCommerce\PayPalCommerce\StoreSync\Validation\ValidationIssue;
 
 /**
  * Class CartSessionSection

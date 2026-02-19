@@ -2,12 +2,12 @@
 /**
  * Defines the applied coupon schema.
  *
- * @package WooCommerce\PayPalCommerce\AgenticCommerce\Schema
+ * @package WooCommerce\PayPalCommerce\StoreSync\Schema
  */
 
 declare( strict_types = 1 );
 
-namespace WooCommerce\PayPalCommerce\AgenticCommerce\Schema;
+namespace WooCommerce\PayPalCommerce\StoreSync\Schema;
 
 /**
  * @see AppliedCouponTest - Unit tests for this class.

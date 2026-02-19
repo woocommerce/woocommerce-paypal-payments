@@ -2,17 +2,17 @@
 /**
  * PayPal Cart Response (cart checkout confirmed).
  *
- * @package WooCommerce\PayPalCommerce\AgenticCommerce\Response
+ * @package WooCommerce\PayPalCommerce\StoreSync\Response
  */
 
 declare( strict_types = 1 );
 
-namespace WooCommerce\PayPalCommerce\AgenticCommerce\Response;
+namespace WooCommerce\PayPalCommerce\StoreSync\Response;
 
 use WC_Order;
 use WC_Cart;
 
-use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\PayPalCart;
+use WooCommerce\PayPalCommerce\StoreSync\Schema\PayPalCart;
 
 class PaidCartResponse extends CartResponse {
 	/**

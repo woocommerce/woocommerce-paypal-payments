@@ -1,13 +1,13 @@
 <?php
 declare( strict_types = 1 );
 
-namespace WooCommerce\PayPalCommerce\AgenticCommerce\Setting;
+namespace WooCommerce\PayPalCommerce\StoreSync\Setting;
 
 use WooCommerce\PayPalCommerce\Assets\AssetGetter;
 use WooCommerce\PayPalCommerce\Settings\Extension\ExtensionSettingsModule;
 use WooCommerce\PayPalCommerce\Settings\Extension\ExtensionRestEndpoint;
 
-use WooCommerce\PayPalCommerce\AgenticCommerce\Registration\RegistrationEligibility;
+use WooCommerce\PayPalCommerce\StoreSync\Registration\RegistrationEligibility;
 
 class AgenticSettingsModule extends ExtensionSettingsModule {
 

@@ -4,17 +4,17 @@
  *
  * Calculates coupon discount amounts using WooCommerce's native WC_Discounts.
  *
- * @package WooCommerce\PayPalCommerce\AgenticCommerce\CartValidation\CouponValidator
+ * @package WooCommerce\PayPalCommerce\StoreSync\CartValidation\CouponValidator
  */
 
 declare( strict_types = 1 );
 
-namespace WooCommerce\PayPalCommerce\AgenticCommerce\CartValidation\CouponValidator;
+namespace WooCommerce\PayPalCommerce\StoreSync\CartValidation\CouponValidator;
 
 use WC_Coupon;
 use WC_Discounts;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Helper\ProductManager;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\PayPalCart;
+use WooCommerce\PayPalCommerce\StoreSync\Helper\ProductManager;
+use WooCommerce\PayPalCommerce\StoreSync\Schema\PayPalCart;
 
 /**
  * Calculates discount amounts for coupons using WooCommerce's native discount calculation.

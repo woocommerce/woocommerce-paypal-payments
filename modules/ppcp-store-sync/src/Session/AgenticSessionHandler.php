@@ -4,14 +4,14 @@
  *
  * Uses a custom WC_Session_Handler subclass to manage cart sessions.
  *
- * @package WooCommerce\PayPalCommerce\AgenticCommerce\Session
+ * @package WooCommerce\PayPalCommerce\StoreSync\Session
  */
 
 declare(strict_types=1);
 
-namespace WooCommerce\PayPalCommerce\AgenticCommerce\Session;
+namespace WooCommerce\PayPalCommerce\StoreSync\Session;
 
-use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\PayPalCart;
+use WooCommerce\PayPalCommerce\StoreSync\Schema\PayPalCart;
 
 /**
  * Class AgenticSessionHandler

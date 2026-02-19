@@ -1,7 +1,7 @@
 <?php
 declare( strict_types = 1 );
 
-namespace WooCommerce\PayPalCommerce\AgenticCommerce\Merchant;
+namespace WooCommerce\PayPalCommerce\StoreSync\Merchant;
 
 use WooCommerce;
 

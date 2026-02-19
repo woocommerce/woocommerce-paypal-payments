@@ -2,17 +2,17 @@
 /**
  * Defines the shipping option schema.
  *
- * @package WooCommerce\PayPalCommerce\AgenticCommerce\Schema
+ * @package WooCommerce\PayPalCommerce\StoreSync\Schema
  */
 
 declare( strict_types = 1 );
 
-namespace WooCommerce\PayPalCommerce\AgenticCommerce\Schema;
+namespace WooCommerce\PayPalCommerce\StoreSync\Schema;
 
 use DateTime;
 
-use WooCommerce\PayPalCommerce\AgenticCommerce\Validation\InvalidData;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Validation\MissingField;
+use WooCommerce\PayPalCommerce\StoreSync\Validation\InvalidData;
+use WooCommerce\PayPalCommerce\StoreSync\Validation\MissingField;
 
 /**
  * @see ShippingOptionTest - Unit tests for this class.

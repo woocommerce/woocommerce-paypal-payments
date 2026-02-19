@@ -4,12 +4,12 @@
  *
  * Builds a new, session independent WC_Cart from an agentic cart.
  *
- * @package WooCommerce\PayPalCommerce\AgenticCommerce\Helper
+ * @package WooCommerce\PayPalCommerce\StoreSync\Helper
  */
 
 declare( strict_types = 1 );
 
-namespace WooCommerce\PayPalCommerce\AgenticCommerce\Helper;
+namespace WooCommerce\PayPalCommerce\StoreSync\Helper;
 
 use Throwable;
 use Psr\Log\LoggerInterface;
@@ -22,10 +22,10 @@ use WooCommerce\PayPalCommerce\Button\Session\CartData;
 
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PurchaseUnit;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PurchaseUnitFactory;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\PayPalCart;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\CartItem;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\Customer;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\Coupon;
+use WooCommerce\PayPalCommerce\StoreSync\Schema\PayPalCart;
+use WooCommerce\PayPalCommerce\StoreSync\Schema\CartItem;
+use WooCommerce\PayPalCommerce\StoreSync\Schema\Customer;
+use WooCommerce\PayPalCommerce\StoreSync\Schema\Coupon;
 
 class AgenticCartBuilder {
 	private WooCommerce $wc;

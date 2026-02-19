@@ -5,15 +5,15 @@
  * Provides factory methods to create standardized resolution options
  * that suggest actions to resolve validation issues.
  *
- * @package WooCommerce\PayPalCommerce\AgenticCommerce\Schema
+ * @package WooCommerce\PayPalCommerce\StoreSync\Schema
  */
 
 declare( strict_types = 1 );
 
-namespace WooCommerce\PayPalCommerce\AgenticCommerce\Schema;
+namespace WooCommerce\PayPalCommerce\StoreSync\Schema;
 
-use WooCommerce\PayPalCommerce\AgenticCommerce\Enums\Priority;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Enums\ResolutionAction;
+use WooCommerce\PayPalCommerce\StoreSync\Enums\Priority;
+use WooCommerce\PayPalCommerce\StoreSync\Enums\ResolutionAction;
 
 /**
  * Immutable resolution option builder with factory methods.

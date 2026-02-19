@@ -2,15 +2,15 @@
 /**
  * Base class for all business rule validations.
  *
- * @package WooCommerce\PayPalCommerce\AgenticCommerce\Validation
+ * @package WooCommerce\PayPalCommerce\StoreSync\Validation
  */
 
 declare( strict_types = 1 );
 
-namespace WooCommerce\PayPalCommerce\AgenticCommerce\Validation;
+namespace WooCommerce\PayPalCommerce\StoreSync\Validation;
 
 use RuntimeException;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\ResolutionOption;
+use WooCommerce\PayPalCommerce\StoreSync\Schema\ResolutionOption;
 
 /**
  * Implements the ValidationIssue schema.

@@ -4,18 +4,18 @@
  *
  * PUT /api/paypal/v1/merchant-cart/{cart_id}
  *
- * @package WooCommerce\PayPalCommerce\AgenticCommerce\Endpoint
+ * @package WooCommerce\PayPalCommerce\StoreSync\Endpoint
  */
 
 declare( strict_types = 1 );
 
-namespace WooCommerce\PayPalCommerce\AgenticCommerce\Endpoint;
+namespace WooCommerce\PayPalCommerce\StoreSync\Endpoint;
 
 use WP_REST_Request;
 use WP_REST_Response;
 
-use WooCommerce\PayPalCommerce\AgenticCommerce\Errors\Http\NotFoundError;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Errors\AgenticError;
+use WooCommerce\PayPalCommerce\StoreSync\Errors\Http\NotFoundError;
+use WooCommerce\PayPalCommerce\StoreSync\Errors\AgenticError;
 
 /**
  * Replace Cart REST endpoint.

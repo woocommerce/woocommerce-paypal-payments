@@ -1,15 +1,15 @@
 <?php
 declare( strict_types = 1 );
 
-namespace WooCommerce\PayPalCommerce\AgenticCommerce\Registration;
+namespace WooCommerce\PayPalCommerce\StoreSync\Registration;
 
 use Firebase\JWT\JWT;
 use Exception;
 use WP_Error;
 use Psr\Log\LoggerInterface;
 
-use WooCommerce\PayPalCommerce\AgenticCommerce\Merchant\MerchantMetadataProvider;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Config\AgenticWebhookConfiguration;
+use WooCommerce\PayPalCommerce\StoreSync\Merchant\MerchantMetadataProvider;
+use WooCommerce\PayPalCommerce\StoreSync\Config\AgenticWebhookConfiguration;
 
 class RegistrationService {
 

@@ -2,18 +2,18 @@
 /**
  * Factory service for the REST response objects.
  *
- * @package WooCommerce\PayPalCommerce\AgenticCommerce\Response
+ * @package WooCommerce\PayPalCommerce\StoreSync\Response
  */
 
 declare( strict_types = 1 );
 
-namespace WooCommerce\PayPalCommerce\AgenticCommerce\Response;
+namespace WooCommerce\PayPalCommerce\StoreSync\Response;
 
 use WC_Cart;
 use WC_Order;
-use WooCommerce\PayPalCommerce\AgenticCommerce\CartValidation\CouponValidator\AppliedCouponsBuilder;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\PayPalCart;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Helper\AgenticCartBuilder;
+use WooCommerce\PayPalCommerce\StoreSync\CartValidation\CouponValidator\AppliedCouponsBuilder;
+use WooCommerce\PayPalCommerce\StoreSync\Schema\PayPalCart;
+use WooCommerce\PayPalCommerce\StoreSync\Helper\AgenticCartBuilder;
 
 class ResponseFactory {
 

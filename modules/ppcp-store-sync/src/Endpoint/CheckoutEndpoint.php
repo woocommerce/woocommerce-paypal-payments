@@ -4,12 +4,12 @@
  *
  * POST /api/paypal/v1/merchant-cart/{cartId}/checkout
  *
- * @package WooCommerce\PayPalCommerce\AgenticCommerce\Endpoint
+ * @package WooCommerce\PayPalCommerce\StoreSync\Endpoint
  */
 
 declare( strict_types = 1 );
 
-namespace WooCommerce\PayPalCommerce\AgenticCommerce\Endpoint;
+namespace WooCommerce\PayPalCommerce\StoreSync\Endpoint;
 
 use WC_Order;
 use WP_Error;
@@ -17,17 +17,17 @@ use WP_REST_Request;
 use WP_REST_Response;
 use Psr\Log\LoggerInterface;
 
-use WooCommerce\PayPalCommerce\AgenticCommerce\Errors\AgenticError;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Errors\Http\InternalServerError;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\PaymentMethod;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Helper\AgenticSessionManager;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Helper\AgenticCheckoutProcessor;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Helper\PayPalOrderManager;
-use WooCommerce\PayPalCommerce\AgenticCommerce\CartValidation\CartValidationProcessor;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\PayPalCart;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Auth\AuthServiceProvider;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Session\AgenticSessionHandler;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Response\ResponseFactory;
+use WooCommerce\PayPalCommerce\StoreSync\Errors\AgenticError;
+use WooCommerce\PayPalCommerce\StoreSync\Errors\Http\InternalServerError;
+use WooCommerce\PayPalCommerce\StoreSync\Schema\PaymentMethod;
+use WooCommerce\PayPalCommerce\StoreSync\Helper\AgenticSessionManager;
+use WooCommerce\PayPalCommerce\StoreSync\Helper\AgenticCheckoutProcessor;
+use WooCommerce\PayPalCommerce\StoreSync\Helper\PayPalOrderManager;
+use WooCommerce\PayPalCommerce\StoreSync\CartValidation\CartValidationProcessor;
+use WooCommerce\PayPalCommerce\StoreSync\Schema\PayPalCart;
+use WooCommerce\PayPalCommerce\StoreSync\Auth\AuthServiceProvider;
+use WooCommerce\PayPalCommerce\StoreSync\Session\AgenticSessionHandler;
+use WooCommerce\PayPalCommerce\StoreSync\Response\ResponseFactory;
 
 /**
  * Checkout REST endpoint.

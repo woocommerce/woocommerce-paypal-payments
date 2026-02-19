@@ -2,27 +2,27 @@
 /**
  * The agentic commerce module.
  *
- * @package WooCommerce\PayPalCommerce\AgenticCommerce
+ * @package WooCommerce\PayPalCommerce\StoreSync
  */
 
 declare( strict_types = 1 );
 
-namespace WooCommerce\PayPalCommerce\AgenticCommerce;
+namespace WooCommerce\PayPalCommerce\StoreSync;
 
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExecutableModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ServiceModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ModuleClassNameIdTrait;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 
-use WooCommerce\PayPalCommerce\AgenticCommerce\Ingestion\IngestionManager;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Endpoint\AgenticRestEndpoint;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Setting\AgenticSettingsModule;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Registration\RegistrationService;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Registration\RegistrationEligibility;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Setting\AgenticSettingsDataModel;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Inspector\InspectionStatusPage;
-use WooCommerce\PayPalCommerce\AgenticCommerce\CartValidation\CartValidationProcessor;
-use WooCommerce\PayPalCommerce\AgenticCommerce\CartValidation\ValidatorInterface;
+use WooCommerce\PayPalCommerce\StoreSync\Ingestion\IngestionManager;
+use WooCommerce\PayPalCommerce\StoreSync\Endpoint\AgenticRestEndpoint;
+use WooCommerce\PayPalCommerce\StoreSync\Setting\AgenticSettingsModule;
+use WooCommerce\PayPalCommerce\StoreSync\Registration\RegistrationService;
+use WooCommerce\PayPalCommerce\StoreSync\Registration\RegistrationEligibility;
+use WooCommerce\PayPalCommerce\StoreSync\Setting\AgenticSettingsDataModel;
+use WooCommerce\PayPalCommerce\StoreSync\Inspector\InspectionStatusPage;
+use WooCommerce\PayPalCommerce\StoreSync\CartValidation\CartValidationProcessor;
+use WooCommerce\PayPalCommerce\StoreSync\CartValidation\ValidatorInterface;
 
 /**
  * Entry point that integrates agentic commerce logic with the plugin's DI system.

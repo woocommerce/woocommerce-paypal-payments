@@ -8,19 +8,19 @@
  * 2. PO Box Restriction (signature-required items)
  * 3. Region Restricted (country not allowed)
  *
- * @package WooCommerce\PayPalCommerce\AgenticCommerce\CartValidation
+ * @package WooCommerce\PayPalCommerce\StoreSync\CartValidation
  */
 
 declare( strict_types = 1 );
 
-namespace WooCommerce\PayPalCommerce\AgenticCommerce\CartValidation;
+namespace WooCommerce\PayPalCommerce\StoreSync\CartValidation;
 
-use WooCommerce\PayPalCommerce\AgenticCommerce\Enums\Priority;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Helper\ProductManager;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\PayPalCart;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\ResolutionOption;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Validation\InvalidAddress;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Validation\ShippingUnavailable;
+use WooCommerce\PayPalCommerce\StoreSync\Enums\Priority;
+use WooCommerce\PayPalCommerce\StoreSync\Helper\ProductManager;
+use WooCommerce\PayPalCommerce\StoreSync\Schema\PayPalCart;
+use WooCommerce\PayPalCommerce\StoreSync\Schema\ResolutionOption;
+use WooCommerce\PayPalCommerce\StoreSync\Validation\InvalidAddress;
+use WooCommerce\PayPalCommerce\StoreSync\Validation\ShippingUnavailable;
 
 class ShippingValidator implements ValidatorInterface {
 
@@ -63,7 +63,7 @@ class ShippingValidator implements ValidatorInterface {
 	/**
 	 * Scenario 1: Validates that the address has all required fields and proper formats.
 	 *
-	 * @param \WooCommerce\PayPalCommerce\AgenticCommerce\Schema\Address $address The address to validate.
+	 * @param \WooCommerce\PayPalCommerce\StoreSync\Schema\Address $address The address to validate.
 	 * @return InvalidAddress[] Array of validation issues.
 	 */
 	private function validate_address_completeness( $address ): array {
@@ -163,7 +163,7 @@ class ShippingValidator implements ValidatorInterface {
 	 * Scenario 2: Validates PO Box restrictions for items requiring signature delivery.
 	 *
 	 * @param PayPalCart                                                 $cart The cart to validate.
-	 * @param \WooCommerce\PayPalCommerce\AgenticCommerce\Schema\Address $address The shipping address.
+	 * @param \WooCommerce\PayPalCommerce\StoreSync\Schema\Address $address The shipping address.
 	 * @return ShippingUnavailable|null Validation issue if PO Box restrictions apply.
 	 */
 	private function validate_po_box_restrictions( PayPalCart $cart, $address ): ?ShippingUnavailable {
@@ -231,7 +231,7 @@ class ShippingValidator implements ValidatorInterface {
 	 * This method relies entirely on the filter hook for shipping plugins to indicate
 	 * signature requirements.
 	 *
-	 * @param \WooCommerce\PayPalCommerce\AgenticCommerce\Schema\CartItem $item The item to check.
+	 * @param \WooCommerce\PayPalCommerce\StoreSync\Schema\CartItem $item The item to check.
 	 * @return bool True if signature is required.
 	 */
 	private function item_requires_signature( $item ): bool {
@@ -251,7 +251,7 @@ class ShippingValidator implements ValidatorInterface {
 		 *
 		 * @param bool       $requires_signature Whether signature is required (defaults to false).
 		 * @param \WC_Product $product           The WooCommerce product object.
-		 * @param \WooCommerce\PayPalCommerce\AgenticCommerce\Schema\CartItem $item The cart item.
+		 * @param \WooCommerce\PayPalCommerce\StoreSync\Schema\CartItem $item The cart item.
 		 *
 		 * @return bool True if signature delivery is required.
 		 */

@@ -58,11 +58,11 @@ Minimum order validator with no dependencies:
 <?php
 declare( strict_types = 1 );
 
-namespace WooCommerce\PayPalCommerce\AgenticCommerce\CartValidation;
+namespace WooCommerce\PayPalCommerce\StoreSync\CartValidation;
 
-use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\PayPalCart;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Helper\CartHelper;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Validation\BusinessRuleViolation;
+use WooCommerce\PayPalCommerce\StoreSync\Schema\PayPalCart;
+use WooCommerce\PayPalCommerce\StoreSync\Helper\CartHelper;
+use WooCommerce\PayPalCommerce\StoreSync\Validation\BusinessRuleViolation;
 
 class MinimumOrderValidator implements ValidatorInterface {
     private const MIN_ORDER_AMOUNT = 15.00;
@@ -89,11 +89,11 @@ Product availability validator using `ProductManager`:
 <?php
 declare( strict_types = 1 );
 
-namespace WooCommerce\PayPalCommerce\AgenticCommerce\CartValidation;
+namespace WooCommerce\PayPalCommerce\StoreSync\CartValidation;
 
-use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\PayPalCart;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Helper\ProductManager;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Validation\InvalidData;
+use WooCommerce\PayPalCommerce\StoreSync\Schema\PayPalCart;
+use WooCommerce\PayPalCommerce\StoreSync\Helper\ProductManager;
+use WooCommerce\PayPalCommerce\StoreSync\Validation\InvalidData;
 
 class ProductAvailabilityValidator implements ValidatorInterface {
 
@@ -178,10 +178,10 @@ add_action(
  * Plugin Name: Custom Cart Validation
  */
  
-use WooCommerce\PayPalCommerce\AgenticCommerce\CartValidation\ValidatorInterface;
-use WooCommerce\PayPalCommerce\AgenticCommerce\CartValidation\CartValidationProcessor;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Validation\BusinessRuleViolation;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\PayPalCart;
+use WooCommerce\PayPalCommerce\StoreSync\CartValidation\ValidatorInterface;
+use WooCommerce\PayPalCommerce\StoreSync\CartValidation\CartValidationProcessor;
+use WooCommerce\PayPalCommerce\StoreSync\Validation\BusinessRuleViolation;
+use WooCommerce\PayPalCommerce\StoreSync\Schema\PayPalCart;
 
 class My_Custom_Validator implements ValidatorInterface {
     

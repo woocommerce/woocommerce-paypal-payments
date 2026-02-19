@@ -8,7 +8,7 @@
 
 declare( strict_types = 1 );
 
-namespace WooCommerce\PayPalCommerce\AgenticCommerce\Helper;
+namespace WooCommerce\PayPalCommerce\StoreSync\Helper;
 
 use WC_Session;
 use WooCommerce;

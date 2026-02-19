@@ -6,20 +6,20 @@
  * Captures numeric error codes via the woocommerce_coupon_error filter
  * for reliable error type mapping regardless of localization.
  *
- * @package WooCommerce\PayPalCommerce\AgenticCommerce\CartValidation\CouponValidator
+ * @package WooCommerce\PayPalCommerce\StoreSync\CartValidation\CouponValidator
  */
 
 declare(strict_types=1);
 
-namespace WooCommerce\PayPalCommerce\AgenticCommerce\CartValidation\CouponValidator;
+namespace WooCommerce\PayPalCommerce\StoreSync\CartValidation\CouponValidator;
 
 use WC_Coupon;
 use WC_Discounts;
-use WooCommerce\PayPalCommerce\AgenticCommerce\CartValidation\ValidatorInterface;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Helper\CartHelper;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\Coupon;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\PayPalCart;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Validation\CouponInvalid;
+use WooCommerce\PayPalCommerce\StoreSync\CartValidation\ValidatorInterface;
+use WooCommerce\PayPalCommerce\StoreSync\Helper\CartHelper;
+use WooCommerce\PayPalCommerce\StoreSync\Schema\Coupon;
+use WooCommerce\PayPalCommerce\StoreSync\Schema\PayPalCart;
+use WooCommerce\PayPalCommerce\StoreSync\Validation\CouponInvalid;
 
 /**
  * Validates coupons for Agentic Commerce using WooCommerce's native validation.

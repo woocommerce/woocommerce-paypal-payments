@@ -1,10 +1,10 @@
 <?php
 
-namespace WooCommerce\PayPalCommerce\AgenticCommerce\Ingestion;
+namespace WooCommerce\PayPalCommerce\StoreSync\Ingestion;
 
 use Automattic\WooCommerce\Enums\ProductStatus;
 
-use WooCommerce\PayPalCommerce\AgenticCommerce\Config\IngestionConfiguration;
+use WooCommerce\PayPalCommerce\StoreSync\Config\IngestionConfiguration;
 
 /**
  * Provides a batch of WC_Product IDs eligible for

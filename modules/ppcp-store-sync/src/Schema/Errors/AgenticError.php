@@ -2,12 +2,12 @@
 /**
  * Base class for all agentic commerce REST errors.
  *
- * @package WooCommerce\PayPalCommerce\AgenticCommerce\Schema\Errors
+ * @package WooCommerce\PayPalCommerce\StoreSync\Schema\Errors
  */
 
 declare( strict_types = 1 );
 
-namespace WooCommerce\PayPalCommerce\AgenticCommerce\Schema\Errors;
+namespace WooCommerce\PayPalCommerce\StoreSync\Schema\Errors;
 
 use RuntimeException;
 

@@ -2,15 +2,15 @@
 /**
  * PayPal Agentic Commerce Status Tab
  *
- * @package WooCommerce\PayPalCommerce\AgenticCommerce\Inspector
+ * @package WooCommerce\PayPalCommerce\StoreSync\Inspector
  */
 
 declare( strict_types = 1 );
 
-namespace WooCommerce\PayPalCommerce\AgenticCommerce\Inspector;
+namespace WooCommerce\PayPalCommerce\StoreSync\Inspector;
 
-use WooCommerce\PayPalCommerce\AgenticCommerce\Inspector\Page\CartSessionSection;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Inspector\Page\RegistrationStatusSection;
+use WooCommerce\PayPalCommerce\StoreSync\Inspector\Page\CartSessionSection;
+use WooCommerce\PayPalCommerce\StoreSync\Inspector\Page\RegistrationStatusSection;
 
 /**
  * Class InspectionStatusPage

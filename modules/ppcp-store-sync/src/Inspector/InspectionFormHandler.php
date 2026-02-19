@@ -2,16 +2,16 @@
 /**
  * PayPal Agentic Commerce Registration Toggle Handler
  *
- * @package WooCommerce\PayPalCommerce\AgenticCommerce\Inspector
+ * @package WooCommerce\PayPalCommerce\StoreSync\Inspector
  */
 
 declare( strict_types = 1 );
 
-namespace WooCommerce\PayPalCommerce\AgenticCommerce\Inspector;
+namespace WooCommerce\PayPalCommerce\StoreSync\Inspector;
 
 use Psr\Log\LoggerInterface;
 
-use WooCommerce\PayPalCommerce\AgenticCommerce\Registration\RegistrationService;
+use WooCommerce\PayPalCommerce\StoreSync\Registration\RegistrationService;
 
 /**
  * Class ToggleHandler

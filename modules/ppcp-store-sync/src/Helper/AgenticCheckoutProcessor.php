@@ -4,12 +4,12 @@
  *
  * Process the final checkout, turning an agentic cart into a paid WooCommerce order.
  *
- * @package WooCommerce\PayPalCommerce\AgenticCommerce\Helper
+ * @package WooCommerce\PayPalCommerce\StoreSync\Helper
  */
 
 declare( strict_types = 1 );
 
-namespace WooCommerce\PayPalCommerce\AgenticCommerce\Helper;
+namespace WooCommerce\PayPalCommerce\StoreSync\Helper;
 
 use WC_Order;
 use WP_Error;
@@ -17,9 +17,9 @@ use WooCommerce\PayPalCommerce\ApiClient\Entity\Order as PayPalOrder;
 use WooCommerce\PayPalCommerce\Button\Session\CartData;
 use WooCommerce\PayPalCommerce\Button\Helper\WooCommerceOrderCreator;
 
-use WooCommerce\PayPalCommerce\AgenticCommerce\CartValidation\CouponValidator\AppliedCouponsBuilder;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\PayPalCart;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\PaymentMethod;
+use WooCommerce\PayPalCommerce\StoreSync\CartValidation\CouponValidator\AppliedCouponsBuilder;
+use WooCommerce\PayPalCommerce\StoreSync\Schema\PayPalCart;
+use WooCommerce\PayPalCommerce\StoreSync\Schema\PaymentMethod;
 
 /**
  * Orchestrates the complete checkout workflow for Agentic Commerce.

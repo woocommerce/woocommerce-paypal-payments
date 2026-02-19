@@ -2,13 +2,13 @@
 
 declare( strict_types = 1 );
 
-namespace WooCommerce\PayPalCommerce\AgenticCommerce\Auth;
+namespace WooCommerce\PayPalCommerce\StoreSync\Auth;
 
 use Exception;
 use WP_Error;
 use Firebase\JWT\JWT;
 
-use WooCommerce\PayPalCommerce\AgenticCommerce\Merchant\MerchantMetadataProvider;
+use WooCommerce\PayPalCommerce\StoreSync\Merchant\MerchantMetadataProvider;
 
 class JwtAuthService {
 

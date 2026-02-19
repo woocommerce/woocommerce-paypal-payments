@@ -1,13 +1,13 @@
 <?php
 
-namespace WooCommerce\PayPalCommerce\AgenticCommerce\Ingestion;
+namespace WooCommerce\PayPalCommerce\StoreSync\Ingestion;
 
 use RuntimeException;
 use Psr\Log\LoggerInterface;
 
-use WooCommerce\PayPalCommerce\AgenticCommerce\Config\AgenticWebhookConfiguration;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Config\IngestionConfiguration;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Merchant\MerchantMetadataProvider;
+use WooCommerce\PayPalCommerce\StoreSync\Config\AgenticWebhookConfiguration;
+use WooCommerce\PayPalCommerce\StoreSync\Config\IngestionConfiguration;
+use WooCommerce\PayPalCommerce\StoreSync\Merchant\MerchantMetadataProvider;
 
 use function as_next_scheduled_action;
 use function as_schedule_recurring_action;

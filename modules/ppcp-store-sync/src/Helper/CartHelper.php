@@ -5,17 +5,17 @@
  * Provides convenience methods for accessing and calculating cart data.
  * Schema classes remain pure data structures; all convenience logic goes here.
  *
- * @package WooCommerce\PayPalCommerce\AgenticCommerce\Helper
+ * @package WooCommerce\PayPalCommerce\StoreSync\Helper
  */
 
 declare( strict_types = 1 );
 
-namespace WooCommerce\PayPalCommerce\AgenticCommerce\Helper;
+namespace WooCommerce\PayPalCommerce\StoreSync\Helper;
 
 use WC_Cart;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\PayPalCart;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\CartItem;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\Address;
+use WooCommerce\PayPalCommerce\StoreSync\Schema\PayPalCart;
+use WooCommerce\PayPalCommerce\StoreSync\Schema\CartItem;
+use WooCommerce\PayPalCommerce\StoreSync\Schema\Address;
 
 class CartHelper {
 	/**

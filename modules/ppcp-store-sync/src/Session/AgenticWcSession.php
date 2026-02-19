@@ -4,12 +4,12 @@
  *
  * A WC_Session_Handler subclass for loading sessions by arbitrary cart IDs.
  *
- * @package WooCommerce\PayPalCommerce\AgenticCommerce\Session
+ * @package WooCommerce\PayPalCommerce\StoreSync\Session
  */
 
 declare(strict_types=1);
 
-namespace WooCommerce\PayPalCommerce\AgenticCommerce\Session;
+namespace WooCommerce\PayPalCommerce\StoreSync\Session;
 
 use WC_Session_Handler;
 
