@@ -3,7 +3,8 @@
  * Shipping Validator for Agentic Commerce.
  *
  * Validates shipping addresses and restrictions according to WooCommerce settings.
- * Covers three main scenarios:
+ * Covers four main scenarios:
+ * 0. Missing Shipping Address (physical products, no address provided)
  * 1. Invalid Shipping Address (completeness, format)
  * 2. PO Box Restriction (signature-required items)
  * 3. Region Restricted (country not allowed)
@@ -17,11 +18,13 @@ namespace WooCommerce\PayPalCommerce\StoreSync\CartValidation;
 
 use WC_Countries;
 use WooCommerce\PayPalCommerce\StoreSync\Enums\Priority;
+use WooCommerce\PayPalCommerce\StoreSync\Enums\ShippingIssue;
 use WooCommerce\PayPalCommerce\StoreSync\Helper\ProductManager;
 use WooCommerce\PayPalCommerce\StoreSync\Schema\PayPalCart;
 use WooCommerce\PayPalCommerce\StoreSync\Schema\ResolutionOption;
 use WooCommerce\PayPalCommerce\StoreSync\Validation\InvalidAddress;
 use WooCommerce\PayPalCommerce\StoreSync\Validation\ShippingUnavailable;
+use WooCommerce\PayPalCommerce\StoreSync\Validation\MissingField;
 use WooCommerce\PayPalCommerce\StoreSync\Schema\Address;
 use WooCommerce\PayPalCommerce\StoreSync\Schema\CartItem;
 
@@ -37,6 +40,24 @@ class ShippingValidator implements ValidatorInterface {
 		$shipping_address = $cart->shipping_address();
 
 		if ( ! $shipping_address ) {
+			if ( $this->cart_needs_shipping( $cart ) ) {
+				return array(
+					new MissingField(
+						'Shipping address is required',
+						'Please provide a shipping address to continue.',
+						'shipping_address',
+						'',
+						array( 'specific_issue' => ShippingIssue::MISSING_SHIPPING_ADDRESS ),
+						array(
+							array(
+								'action'   => 'PROVIDE_SHIPPING_ADDRESS',
+								'label'    => 'Add shipping address',
+								'metadata' => array( 'priority' => 'HIGH' ),
+							),
+						)
+					),
+				);
+			}
 			return null;
 		}
 
@@ -61,6 +82,22 @@ class ShippingValidator implements ValidatorInterface {
 		}
 
 		return $issues ?: null;
+	}
+
+	/**
+	 * Checks if any item in the cart requires shipping.
+	 *
+	 * @param PayPalCart $cart The cart to check.
+	 * @return bool True if at least one item needs shipping.
+	 */
+	private function cart_needs_shipping( PayPalCart $cart ): bool {
+		foreach ( $cart->items() as $item ) {
+			$product = $this->product_manager->find_product( $item );
+			if ( $product && $product->needs_shipping() ) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	/**
