@@ -7,27 +7,28 @@ import {
 import SettingsBlock from '@ppcp-settings/Components/ReusableComponents/SettingsBlock';
 import { ControlToggleButton } from '@ppcp-settings/Components/ReusableComponents/Controls/index.js';
 
+const MODULE_ID = 'store-sync';
 const useSettings = createExtensionStore( {
-	name: 'agentic-settings',
+	name: MODULE_ID,
 	defaults: {
 		active: false,
 	},
 } );
 
-const AgenticSettings = () => {
+const StoreSyncSettings = () => {
 	const { active, setActive } = useSettings();
 
 	return (
 		<SettingsBlock
-			title={ __( 'Agentic Commerce', 'woocommerce-paypal-payments' ) }
+			title={ __( 'Store Sync', 'woocommerce-paypal-payments' ) }
 		>
 			<ControlToggleButton
 				label={ __(
-					'Agentic Features',
+					'Enable Store Sync',
 					'woocommerce-paypal-payments'
 				) }
 				description={ __(
-					'Allow the PayPal AI agent to shop on this store - payments are collected by this plugin, while the customer never visits your website.',
+					'Allow PayPal AI agents to shop on this store - payments are collected by this plugin, while the customer never visits this website.',
 					'woocommerce-paypal-payments'
 				) }
 				value={ active }
@@ -39,7 +40,7 @@ const AgenticSettings = () => {
 
 registerSetting(
 	SLOTS.PAYPAL_SETTINGS_END,
-	'agentic-settings',
-	AgenticSettings,
+	MODULE_ID,
+	StoreSyncSettings,
 	10
 );
