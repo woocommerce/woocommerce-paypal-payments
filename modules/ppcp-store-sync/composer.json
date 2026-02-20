@@ -1,5 +1,5 @@
 {
-    "name": "woocommerce/ppcp-agentic-commerce",
+    "name": "woocommerce/ppcp-store-sync",
     "type": "inpsyde-module",
     "description": "Agentic commerce module",
     "license": "GPL-2.0",
@@ -8,7 +8,7 @@
     },
     "autoload": {
         "psr-4": {
-            "WooCommerce\\PayPalCommerce\\AgenticCommerce\\": "src"
+            "WooCommerce\\PayPalCommerce\\StoreSync\\": "src"
         }
     },
     "minimum-stability": "dev",
