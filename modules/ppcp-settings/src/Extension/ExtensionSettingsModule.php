@@ -12,13 +12,6 @@ use WooCommerce\PayPalCommerce\Assets\AssetGetter;
 abstract class ExtensionSettingsModule {
 
 	/**
-	 * Relative path to the module's assets directory.
-	 *
-	 * Example: 'modules/ppcp-store-sync/assets/'
-	 */
-	protected const ASSETS_DIR = '';
-
-	/**
 	 * Script handle for wp_enqueue_script.
 	 *
 	 * Example: 'ppcp-store-sync-settings'
@@ -80,7 +73,7 @@ abstract class ExtensionSettingsModule {
 
 		wp_enqueue_script(
 			static::SCRIPT_HANDLE,
-			$assets_url . 'settings.js',
+			$assets_url,
 			$script_asset_file['dependencies'],
 			$script_asset_file['version'],
 			true

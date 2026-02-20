@@ -11,8 +11,6 @@ use WooCommerce\PayPalCommerce\StoreSync\Registration\RegistrationEligibility;
 
 class AgenticSettingsModule extends ExtensionSettingsModule {
 
-	protected const ASSETS_DIR = 'modules/ppcp-store-sync/assets/';
-
 	protected const SCRIPT_HANDLE = 'ppcp-store-sync-settings';
 
 	private RegistrationEligibility $eligibility_check;
