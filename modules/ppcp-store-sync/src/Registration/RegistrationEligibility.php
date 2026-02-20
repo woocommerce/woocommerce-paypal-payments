@@ -22,6 +22,7 @@ class RegistrationEligibility {
 
 		$store_country    = strtoupper( trim( $merchant->store_country ) );
 		$merchant_country = strtoupper( trim( $merchant->merchant_country ) );
+		// todo: shipping country must be US.
 
 		return 'US' === $store_country && 'US' === $merchant_country;
 	}
