@@ -11,7 +11,6 @@ return array(
     'WooCommerce\\PayPalCommerce\\WcSubscriptions\\' => array($baseDir . '/modules/ppcp-wc-subscriptions/src'),
     'WooCommerce\\PayPalCommerce\\WcGateway\\' => array($baseDir . '/modules/ppcp-wc-gateway/src'),
     'WooCommerce\\PayPalCommerce\\Vendor\\Psr\\Log\\' => array($vendorDir . '/psr/log/Psr/Log'),
-    'WooCommerce\\PayPalCommerce\\Vendor\\Psr\\Container\\' => array($vendorDir . '/psr/container/src'),
     'WooCommerce\\PayPalCommerce\\Vendor\\' => array($baseDir . '/lib/packages'),
     'WooCommerce\\PayPalCommerce\\Vaulting\\' => array($baseDir . '/modules/ppcp-vaulting/src'),
     'WooCommerce\\PayPalCommerce\\Uninstall\\' => array($baseDir . '/modules/ppcp-uninstall/src'),
@@ -40,6 +39,4 @@ return array(
     'WooCommerce\\PayPalCommerce\\' => array($baseDir . '/src'),
     'Wikimedia\\Composer\\Merge\\V2\\' => array($vendorDir . '/wikimedia/composer-merge-plugin/src'),
     'Symfony\\Polyfill\\Php80\\' => array($vendorDir . '/symfony/polyfill-php80'),
-    'Interop\\Container\\' => array($vendorDir . '/container-interop/service-provider/src'),
-    'Dhii\\Modular\\Module\\' => array($vendorDir . '/dhii/module-interface/src'),
 );
