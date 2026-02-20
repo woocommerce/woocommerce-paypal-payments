@@ -352,7 +352,7 @@ class PayPalSubscriptionsModule implements ServiceModule, ExecutableModule
                  */
                 global $post;
                 $product = wc_get_product($post->ID);
-                if (!is_a($product, WC_Product::class)) {
+                if (!$product instanceof WC_Product) {
                     return;
                 }
                 $environment = $c->get('settings.environment');
@@ -375,7 +375,7 @@ class PayPalSubscriptionsModule implements ServiceModule, ExecutableModule
                 $subscriptions_mode = $this->get_subscriptions_mode($c);
                 if ($subscriptions_mode === 'subscriptions_api') {
                     $product = wc_get_product($variation->ID);
-                    if (!is_a($product, WC_Product_Subscription_Variation::class)) {
+                    if (!$product instanceof WC_Product_Subscription_Variation) {
                         return;
                     }
                     $environment = $c->get('settings.environment');

@@ -21,6 +21,7 @@ use WooCommerce\PayPalCommerce\Assets\AssetGetter;
 use WooCommerce\PayPalCommerce\Assets\AssetGetterFactory;
 use WooCommerce\PayPalCommerce\Common\Pattern\SingletonDecorator;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
+use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
 return array(
     // @deprecated - use `applepay.eligibility.check` instead.
     'applepay.eligible' => static function (ContainerInterface $container): bool {
@@ -283,7 +284,7 @@ return array(
         $product_status = $container->get('applepay.apple-product-status');
         assert($product_status instanceof AppleProductStatus);
         $environment = $container->get('settings.environment');
-        assert($environment instanceof \WooCommerce\PayPalCommerce\Applepay\Environment);
+        assert($environment instanceof Environment);
         $enabled = $product_status->is_active();
         $enabled_status_text = esc_html__('Status: Available', 'woocommerce-paypal-payments');
         $disabled_status_text = esc_html__('Status: Not yet enabled', 'woocommerce-paypal-payments');

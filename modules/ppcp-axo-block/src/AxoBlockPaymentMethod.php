@@ -21,12 +21,6 @@ class AxoBlockPaymentMethod extends AbstractPaymentMethodType
      * @var WC_Payment_Gateway
      */
     private $gateway;
-    /**
-     * The smart button script loading handler.
-     *
-     * @var SmartButtonInterface|callable
-     */
-    private $smart_button;
     protected SettingsProvider $settings_provider;
     /**
      * The DCC gateway settings.
@@ -54,22 +48,20 @@ class AxoBlockPaymentMethod extends AbstractPaymentMethodType
      */
     private $supported_country_card_type_matrix;
     /**
-     * @param AssetGetter                   $asset_getter
-     * @param WC_Payment_Gateway            $gateway Credit card gateway.
-     * @param SmartButtonInterface|callable $smart_button The smart button script loading handler.
-     * @param SettingsProvider              $settings_provider The settings provider.
-     * @param CardPaymentsConfiguration     $dcc_configuration The DCC gateway settings.
-     * @param Environment                   $environment The environment object.
-     * @param AssetGetter                   $wcgateway_module_asset_getter
-     * @param array                         $payment_method_selected_map Mapping of payment methods to the PayPal Insights 'payment_method_selected' types.
-     * @param array                         $supported_country_card_type_matrix The supported country card type matrix for Axo.
+     * @param AssetGetter               $asset_getter
+     * @param WC_Payment_Gateway        $gateway Credit card gateway.
+     * @param SettingsProvider          $settings_provider The settings provider.
+     * @param CardPaymentsConfiguration $dcc_configuration The DCC gateway settings.
+     * @param Environment               $environment The environment object.
+     * @param AssetGetter               $wcgateway_module_asset_getter
+     * @param array                     $payment_method_selected_map Mapping of payment methods to the PayPal Insights 'payment_method_selected' types.
+     * @param array                     $supported_country_card_type_matrix The supported country card type matrix for Axo.
      */
-    public function __construct(AssetGetter $asset_getter, WC_Payment_Gateway $gateway, $smart_button, SettingsProvider $settings_provider, CardPaymentsConfiguration $dcc_configuration, Environment $environment, AssetGetter $wcgateway_module_asset_getter, array $payment_method_selected_map, array $supported_country_card_type_matrix)
+    public function __construct(AssetGetter $asset_getter, WC_Payment_Gateway $gateway, SettingsProvider $settings_provider, CardPaymentsConfiguration $dcc_configuration, Environment $environment, AssetGetter $wcgateway_module_asset_getter, array $payment_method_selected_map, array $supported_country_card_type_matrix)
     {
         $this->name = AxoGateway::ID;
         $this->asset_getter = $asset_getter;
         $this->gateway = $gateway;
-        $this->smart_button = $smart_button;
         $this->settings_provider = $settings_provider;
         $this->dcc_configuration = $dcc_configuration;
         $this->environment = $environment;
@@ -119,6 +111,30 @@ class AxoBlockPaymentMethod extends AbstractPaymentMethodType
         if (is_admin()) {
             return array();
         }
-        return array('environment' => array('is_sandbox' => $this->environment->current_environment() === 'sandbox'), 'widgets' => array('email' => 'render'), 'insights' => array('enabled' => defined('WP_DEBUG') && WP_DEBUG, 'client_id' => $this->settings_provider->merchant_data()->client_id ?: null, 'session_id' => WC()->session && method_exists(WC()->session, 'get_customer_unique_id') ? substr(md5(WC()->session->get_customer_unique_id()), 0, 16) : '', 'amount' => array('currency_code' => get_woocommerce_currency(), 'value' => WC()->cart && method_exists(WC()->cart, 'get_total') ? WC()->cart->get_total('numeric') : null), 'payment_method_selected_map' => $this->payment_method_selected_map), 'allowed_cards' => $this->supported_country_card_type_matrix, 'disable_cards' => $this->settings_provider->disabled_cards(), 'enabled_shipping_locations' => apply_filters('woocommerce_paypal_payments_axo_shipping_wc_enabled_locations', array()), 'style_options' => array('root' => $this->settings_provider->fastlane_root_styles(), 'input' => $this->settings_provider->fastlane_input_styles()), 'name_on_card' => $this->dcc_configuration->show_name_on_card(), 'woocommerce' => array('states' => array('US' => WC()->countries->get_states('US'), 'CA' => WC()->countries->get_states('CA'))), 'icons_directory' => $this->wcgateway_module_asset_getter->get_static_asset_url('images/axo/'), 'ajax' => array('frontend_logger' => array('endpoint' => \WC_AJAX::get_endpoint(FrontendLogger::ENDPOINT), 'nonce' => wp_create_nonce(FrontendLogger::nonce())), 'axo_script_attributes' => array('endpoint' => \WC_AJAX::get_endpoint(AxoScriptAttributes::ENDPOINT), 'nonce' => wp_create_nonce(AxoScriptAttributes::nonce()))), 'logging_enabled' => $this->settings_provider->enable_logging(), 'wp_debug' => defined('WP_DEBUG') && WP_DEBUG, 'card_icons' => $this->settings_provider->card_icons(), 'merchant_country' => WC()->countries->get_base_country());
+        return array(
+            'environment' => array('is_sandbox' => $this->environment->current_environment() === 'sandbox'),
+            'widgets' => array('email' => 'render'),
+            'insights' => array(
+                'enabled' => defined('WP_DEBUG') && WP_DEBUG,
+                // @phpstan-ignore booleanAnd.rightAlwaysFalse
+                'client_id' => $this->settings_provider->merchant_data()->client_id ?: null,
+                'session_id' => WC()->session && method_exists(WC()->session, 'get_customer_unique_id') ? substr(md5(WC()->session->get_customer_unique_id()), 0, 16) : '',
+                'amount' => array('currency_code' => get_woocommerce_currency(), 'value' => WC()->cart && method_exists(WC()->cart, 'get_total') ? WC()->cart->get_total('numeric') : null),
+                'payment_method_selected_map' => $this->payment_method_selected_map,
+            ),
+            'allowed_cards' => $this->supported_country_card_type_matrix,
+            'disable_cards' => $this->settings_provider->disabled_cards(),
+            'enabled_shipping_locations' => apply_filters('woocommerce_paypal_payments_axo_shipping_wc_enabled_locations', array()),
+            'style_options' => array('root' => $this->settings_provider->fastlane_root_styles(), 'input' => $this->settings_provider->fastlane_input_styles()),
+            'name_on_card' => $this->dcc_configuration->show_name_on_card(),
+            'woocommerce' => array('states' => array('US' => WC()->countries->get_states('US'), 'CA' => WC()->countries->get_states('CA'))),
+            'icons_directory' => $this->wcgateway_module_asset_getter->get_static_asset_url('images/axo/'),
+            'ajax' => array('frontend_logger' => array('endpoint' => \WC_AJAX::get_endpoint(FrontendLogger::ENDPOINT), 'nonce' => wp_create_nonce(FrontendLogger::nonce())), 'axo_script_attributes' => array('endpoint' => \WC_AJAX::get_endpoint(AxoScriptAttributes::ENDPOINT), 'nonce' => wp_create_nonce(AxoScriptAttributes::nonce()))),
+            'logging_enabled' => $this->settings_provider->enable_logging(),
+            'wp_debug' => defined('WP_DEBUG') && WP_DEBUG,
+            // @phpstan-ignore booleanAnd.rightAlwaysFalse
+            'card_icons' => $this->settings_provider->card_icons(),
+            'merchant_country' => WC()->countries->get_base_country(),
+        );
     }
 }

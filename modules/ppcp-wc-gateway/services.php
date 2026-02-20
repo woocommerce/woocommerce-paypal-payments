@@ -11,6 +11,7 @@ namespace WooCommerce\PayPalCommerce\WcGateway;
 
 use Automattic\WooCommerce\Admin\Notes\Note;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PayUponInvoiceOrderEndpoint;
+use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\ReferenceTransactionStatus;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\Cache;
 use WooCommerce\PayPalCommerce\Applepay\ApplePayGateway;
@@ -94,7 +95,7 @@ use WooCommerce\PayPalCommerce\WcGateway\StoreApi\Factory\ShippingRatesFactory;
 use WooCommerce\PayPalCommerce\Webhooks\WebhookEventStorage;
 return array(
     'wcgateway.paypal-gateway' => static function (ContainerInterface $container): PayPalGateway {
-        return new PayPalGateway($container->get('wcgateway.funding-source.renderer'), $container->get('wcgateway.order-processor'), $container->get('settings.settings-provider'), $container->get('session.handler'), $container->get('wcgateway.processor.refunds'), $container->get('settings.flag.is-connected'), $container->get('wcgateway.transaction-url-provider'), $container->get('wc-subscriptions.helper'), $container->get('settings.environment'), $container->get('vaulting.repository.payment-token'), $container->get('woocommerce.logger.woocommerce'), $container->get('api.shop.country'), $container->get('api.endpoint.order'), $container->get('api.factory.paypal-checkout-url'), $container->get('wcgateway.place-order-button-text'), $container->get('api.endpoint.payment-tokens'), $container->get('vaulting.vault-v3-enabled'), $container->get('vaulting.wc-payment-tokens'), $container->get('wcgateway.asset_getter'), $container->get('wcgateway.settings.admin-settings-enabled'));
+        return new PayPalGateway($container->get('wcgateway.funding-source.renderer'), $container->get('wcgateway.order-processor'), $container->get('settings.settings-provider'), $container->get('session.handler'), $container->get('wcgateway.processor.refunds'), $container->get('settings.flag.is-connected'), $container->get('wcgateway.transaction-url-provider'), $container->get('wc-subscriptions.helper'), $container->get('settings.environment'), $container->get('vaulting.repository.payment-token'), $container->get('woocommerce.logger.woocommerce'), $container->get('api.shop.country'), $container->get('api.factory.paypal-checkout-url'), $container->get('wcgateway.place-order-button-text'), $container->get('api.endpoint.payment-tokens'), $container->get('vaulting.vault-v3-enabled'), $container->get('vaulting.wc-payment-tokens'), $container->get('wcgateway.asset_getter'), $container->get('wcgateway.settings.admin-settings-enabled'));
     },
     'wcgateway.credit-card-gateway' => static function (ContainerInterface $container): CreditCardGateway {
         return new CreditCardGateway($container->get('wcgateway.order-processor'), $container->get('wcgateway.settings'), $container->get('wcgateway.configuration.card-configuration'), $container->get('wcgateway.credit-card-icons'), $container->get('session.handler'), $container->get('wcgateway.processor.refunds'), $container->get('wcgateway.transaction-url-provider'), $container->get('wc-subscriptions.helper'), $container->get('api.endpoint.payments'), $container->get('vaulting.credit-card-handler'), $container->get('settings.environment'), $container->get('api.endpoint.order'), $container->get('wcgateway.endpoint.capture-card-payment'), $container->get('api.prefix'), $container->get('vaulting.wc-payment-tokens'), $container->get('woocommerce.logger.woocommerce'));
@@ -144,6 +145,7 @@ return array(
      */
     'wcgateway.is-plugin-settings-page' => static function (): bool {
         if (defined('DOING_AJAX') && DOING_AJAX) {
+            // @phpstan-ignore booleanAnd.rightAlwaysTrue
             return \false;
         }
         if (!is_admin()) {
@@ -391,7 +393,7 @@ return array(
         try {
             $token = $container->get('api.bearer')->bearer();
             return $token->vaulting_available();
-        } catch (\WooCommerce\PayPalCommerce\WcGateway\RuntimeException $exception) {
+        } catch (RuntimeException $exception) {
             return \false;
         }
     },

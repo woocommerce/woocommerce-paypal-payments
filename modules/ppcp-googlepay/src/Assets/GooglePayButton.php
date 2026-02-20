@@ -245,13 +245,23 @@ class GooglePayButton implements ButtonInterface
         }
         $available_gateways = WC()->payment_gateways->get_available_payment_gateways();
         $is_wc_gateway_enabled = isset($available_gateways[GooglePayGateway::ID]);
-        return array('environment' => $this->environment->current_environment_is(Environment::SANDBOX) ? 'TEST' : 'PRODUCTION', 'is_debug' => defined('WP_DEBUG') && WP_DEBUG, 'is_enabled' => $this->is_enabled(), 'is_wc_gateway_enabled' => $is_wc_gateway_enabled, 'sdk_url' => $this->sdk_url, 'button' => array(
-            'wrapper' => '#ppc-button-googlepay-container',
-            // style: For now we use cart. Pass the context if necessary.
-            'style' => $this->button_styles_for_context('cart'),
-            'mini_cart_wrapper' => '#ppc-button-googlepay-container-minicart',
-            'mini_cart_style' => $this->button_styles_for_context('mini-cart'),
-        ), 'shipping' => $shipping, 'ajax' => array('update_payment_data' => array('endpoint' => WC_AJAX::get_endpoint(UpdatePaymentDataEndpoint::ENDPOINT), 'nonce' => wp_create_nonce(UpdatePaymentDataEndpoint::nonce()))));
+        return array(
+            'environment' => $this->environment->is_sandbox() ? 'TEST' : 'PRODUCTION',
+            'is_debug' => defined('WP_DEBUG') && WP_DEBUG,
+            // @phpstan-ignore booleanAnd.rightAlwaysFalse
+            'is_enabled' => $this->is_enabled(),
+            'is_wc_gateway_enabled' => $is_wc_gateway_enabled,
+            'sdk_url' => $this->sdk_url,
+            'button' => array(
+                'wrapper' => '#ppc-button-googlepay-container',
+                // style: For now we use cart. Pass the context if necessary.
+                'style' => $this->button_styles_for_context('cart'),
+                'mini_cart_wrapper' => '#ppc-button-googlepay-container-minicart',
+                'mini_cart_style' => $this->button_styles_for_context('mini-cart'),
+            ),
+            'shipping' => $shipping,
+            'ajax' => array('update_payment_data' => array('endpoint' => WC_AJAX::get_endpoint(UpdatePaymentDataEndpoint::ENDPOINT), 'nonce' => wp_create_nonce(UpdatePaymentDataEndpoint::nonce()))),
+        );
     }
     /**
      * Determines the style for a given indicator in a given context.

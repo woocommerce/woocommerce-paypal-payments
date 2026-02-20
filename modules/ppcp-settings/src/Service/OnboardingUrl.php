@@ -247,9 +247,7 @@ class OnboardingUrl
         $url_safe_string = str_replace(array('+', '/'), array('-', '_'), $encoded_string);
         return rtrim($url_safe_string, '=');
     }
-    /**
-     * @psalm-suppress MissingReturnType
-     */
+    /** @phpstan-ignore missingType.return */
     private static function url_safe_base64_decode(string $url_safe_string)
     {
         $padded_string = str_pad($url_safe_string, strlen($url_safe_string) % 4, '=', \STR_PAD_RIGHT);

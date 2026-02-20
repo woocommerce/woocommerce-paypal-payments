@@ -69,7 +69,15 @@ return array(
         if (isset(WC()->session) && method_exists(WC()->session, 'get_customer_unique_id')) {
             $session_id = substr(md5(WC()->session->get_customer_unique_id()), 0, 16);
         }
-        return array('enabled' => defined('WP_DEBUG') && WP_DEBUG, 'client_id' => $settings_provider->merchant_data()->client_id, 'session_id' => $session_id, 'amount' => array('currency_code' => $currency->get()), 'payment_method_selected_map' => $container->get('axo.payment_method_selected_map'), 'wp_debug' => defined('WP_DEBUG') && WP_DEBUG);
+        return array(
+            'enabled' => defined('WP_DEBUG') && WP_DEBUG,
+            // @phpstan-ignore booleanAnd.rightAlwaysFalse
+            'client_id' => $settings_provider->merchant_data()->client_id,
+            'session_id' => $session_id,
+            'amount' => array('currency_code' => $currency->get()),
+            'payment_method_selected_map' => $container->get('axo.payment_method_selected_map'),
+            'wp_debug' => defined('WP_DEBUG') && WP_DEBUG,
+        );
     },
     // The mapping of payment methods to the PayPal Insights 'payment_method_selected' types.
     'axo.payment_method_selected_map' => static function (ContainerInterface $container): array {
