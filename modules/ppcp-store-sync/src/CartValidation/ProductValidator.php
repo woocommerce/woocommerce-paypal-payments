@@ -17,15 +17,18 @@ use WooCommerce\PayPalCommerce\StoreSync\Schema\CartItem;
 use WooCommerce\PayPalCommerce\StoreSync\Schema\ResolutionOption;
 use WooCommerce\PayPalCommerce\StoreSync\Validation\InvalidProduct;
 use WooCommerce\PayPalCommerce\StoreSync\Validation\ValidationIssue;
+use WooCommerce\PayPalCommerce\StoreSync\Config\IngestionConfiguration;
 
 class ProductValidator implements ValidatorInterface {
 	private ProductManager $product_manager;
+	private IngestionConfiguration $configuration;
 
-	public function __construct( ProductManager $product_manager ) {
+	public function __construct( ProductManager $product_manager, IngestionConfiguration $configuration ) {
 		$this->product_manager = $product_manager;
+		$this->configuration   = $configuration;
 	}
 
-	public function validate( PayPalCart $cart ) {
+	public function validate( PayPalCart $cart ): ?array {
 		// Skip validation if the cart already annotates an inventory issue.
 		if ( $cart->has_validation_issue( ErrorCode::INVENTORY_ISSUE ) ) {
 			return null;
@@ -76,6 +79,34 @@ class ProductValidator implements ValidatorInterface {
 					ResolutionOption::remove_item( Priority::HIGH ),
 					ResolutionOption::suggest_alternative(),
 				)
+			);
+		}
+
+		$filter_args = $this->configuration->get_valid_product_filters();
+
+		$support_downloads = (bool) ( $filter_args['downloadable'] ?? false );
+		$valid_status      = (array) ( $filter_args['status'] ?? array() );
+		$valid_types       = (array) ( $filter_args['type'] ?? array() );
+
+		if ( ! $support_downloads && $product->is_downloadable() ) {
+			return new InvalidProduct(
+				"Downloadable product '{$identifier}' is not supported",
+				"'{$item->name()}' cannot be purchased at this time",
+				$field
+			);
+		}
+		if ( ! $product->is_type( $valid_types ) ) {
+			return new InvalidProduct(
+				"Product '{$identifier}' is not supported (unsupported product type)",
+				"'{$item->name()}' cannot be purchased at this time",
+				$field
+			);
+		}
+		if ( ! in_array( $product->get_status(), $valid_status, true ) ) {
+			return new InvalidProduct(
+				"Product '{$identifier}' is not supported (product has an unsupported status)",
+				"'{$item->name()}' cannot be purchased at this time",
+				$field
 			);
 		}
 
