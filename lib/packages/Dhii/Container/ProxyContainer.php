@@ -1,13 +1,11 @@
 <?php
 
-declare(strict_types=1);
-
+declare (strict_types=1);
 namespace WooCommerce\PayPalCommerce\Vendor\Dhii\Container;
 
 use WooCommerce\PayPalCommerce\Vendor\Dhii\Container\Exception\ContainerException;
 use WooCommerce\PayPalCommerce\Vendor\Dhii\Container\Util\StringTranslatingTrait;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface as BaseContainerInterface;
-
 /**
  * A proxy for another container, and nothing more.
  *
@@ -17,12 +15,10 @@ use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface as BaseCo
 class ProxyContainer implements BaseContainerInterface
 {
     use StringTranslatingTrait;
-
     /**
      * @var ?BaseContainerInterface
      */
     protected $innerContainer;
-
     /**
      * @param BaseContainerInterface|null $innerContainer The inner container, if any.
      *                                                    May also be set later with {@see setInnerContainer()}.
@@ -31,32 +27,27 @@ class ProxyContainer implements BaseContainerInterface
     {
         $this->innerContainer = $innerContainer;
     }
-
     /**
      * @inheritDoc
      */
     public function get($key)
     {
-        if (!($this->innerContainer instanceof BaseContainerInterface)) {
+        if (!$this->innerContainer instanceof BaseContainerInterface) {
             throw new ContainerException($this->__('Inner container not set'));
         }
-
         return $this->innerContainer->get($key);
     }
-
     /**
      * @inheritDoc
      */
     public function has($key)
     {
-        if (!($this->innerContainer instanceof BaseContainerInterface)) {
+        if (!$this->innerContainer instanceof BaseContainerInterface) {
             /** @psalm-suppress MissingThrowsDocblock The exception class implements declared thrown interface */
             throw new ContainerException($this->__('Inner container not set'));
         }
-
         return $this->innerContainer->has($key);
     }
-
     /**
      * Assigns an inner container tot his proxy.
      *
