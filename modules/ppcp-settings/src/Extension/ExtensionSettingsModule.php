@@ -11,13 +11,6 @@ use WooCommerce\PayPalCommerce\Assets\AssetGetter;
 
 abstract class ExtensionSettingsModule {
 
-	/**
-	 * Script handle for wp_enqueue_script.
-	 *
-	 * Example: 'ppcp-store-sync-settings'
-	 */
-	protected const SCRIPT_HANDLE = '';
-
 	private ExtensionRestEndpoint $settings_endpoint;
 	private AssetGetter $asset_getter;
 
@@ -66,14 +59,13 @@ abstract class ExtensionSettingsModule {
 		}
 
 		$assets_path = $this->asset_getter->get_asset_php_path( 'settings.js' );
-		$assets_url  = $this->asset_getter->get_asset_url( 'settings.js' );
 
 		/** @psalm-suppress UnresolvableInclude - webpack generates this file */
 		$script_asset_file = require $assets_path;
 
 		wp_enqueue_script(
-			static::SCRIPT_HANDLE,
-			$assets_url,
+			$this->asset_getter->get_asset_handle( 'settings' ),
+			$this->asset_getter->get_asset_url( 'settings.js' ),
 			$script_asset_file['dependencies'],
 			$script_asset_file['version'],
 			true
