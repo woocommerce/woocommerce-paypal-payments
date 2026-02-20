@@ -249,7 +249,7 @@ return array(
 	 * Whether the current request renders the PayPal Payments settings page.
 	 */
 	'wcgateway.is-plugin-settings-page'                    => static function (): bool {
-		if ( defined( 'DOING_AJAX' ) && DOING_AJAX ) {
+		if ( defined( 'DOING_AJAX' ) && DOING_AJAX ) { // @phpstan-ignore booleanAnd.rightAlwaysTrue
 			return false;
 		}
 		if ( ! is_admin() ) {

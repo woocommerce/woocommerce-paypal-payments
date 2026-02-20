@@ -175,7 +175,7 @@ class AxoBlockPaymentMethod extends AbstractPaymentMethodType {
 				'email' => 'render',
 			),
 			'insights'                   => array(
-				'enabled'                     => defined( 'WP_DEBUG' ) && WP_DEBUG,
+				'enabled'                     => defined( 'WP_DEBUG' ) && WP_DEBUG, // @phpstan-ignore booleanAnd.rightAlwaysFalse
 				'client_id'                   => $this->settings_provider->merchant_data()->client_id ?: null,
 				'session_id'                  =>
 					( WC()->session && method_exists( WC()->session, 'get_customer_unique_id' ) )
@@ -215,7 +215,7 @@ class AxoBlockPaymentMethod extends AbstractPaymentMethodType {
 				),
 			),
 			'logging_enabled'            => $this->settings_provider->enable_logging(),
-			'wp_debug'                   => defined( 'WP_DEBUG' ) && WP_DEBUG,
+			'wp_debug'                   => defined( 'WP_DEBUG' ) && WP_DEBUG, // @phpstan-ignore booleanAnd.rightAlwaysFalse
 			'card_icons'                 => $this->settings_provider->card_icons(),
 			'merchant_country'           => WC()->countries->get_base_country(),
 		);
