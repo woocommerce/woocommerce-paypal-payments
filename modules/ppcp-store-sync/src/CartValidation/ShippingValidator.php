@@ -259,7 +259,7 @@ class ShippingValidator implements ValidatorInterface {
 		 * @return bool True if signature delivery is required.
 		 */
 		return apply_filters(
-			'woocommerce_paypal_payments_agentic_commerce_item_requires_signature',
+			'woocommerce_paypal_payments_store_sync_item_requires_signature',
 			false,
 			$product,
 			$item

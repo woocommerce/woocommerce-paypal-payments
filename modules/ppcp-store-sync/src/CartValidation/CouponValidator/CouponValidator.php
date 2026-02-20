@@ -407,7 +407,7 @@ class CouponValidator implements ValidatorInterface {
 		 * @since 1.0.0
 		 */
 		$user_message = apply_filters(
-			'woocommerce_paypal_payments_agentic_commerce_coupon_validation_user_message',
+			'woocommerce_paypal_payments_store_sync_coupon_validation_user_message',
 			$user_message,
 			$issue_type,
 			$code,
@@ -485,7 +485,7 @@ class CouponValidator implements ValidatorInterface {
 		 * @since 1.0.0
 		 */
 		return apply_filters(
-			'woocommerce_paypal_payments_agentic_commerce_coupon_validation_resolutions',
+			'woocommerce_paypal_payments_store_sync_coupon_validation_resolutions',
 			$resolutions,
 			$issue_type,
 			$code,

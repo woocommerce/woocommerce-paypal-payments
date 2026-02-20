@@ -315,7 +315,7 @@ class CouponContextBuilder {
 	 */
 	private function get_alternative_coupons( string $failed_code, string $reason, PayPalCart $cart ): array {
 		return apply_filters(
-			'woocommerce_paypal_payments_agentic_commerce_suggested_alternative_coupons',
+			'woocommerce_paypal_payments_store_sync_suggested_alternative_coupons',
 			array(),
 			$failed_code,
 			$reason,

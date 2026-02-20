@@ -224,7 +224,7 @@ class ShippingValidatorTest extends TestCase {
 		$this->product_manager->shouldReceive( 'find_product' )
 			->andReturn( $product );
 
-		expectApplied( 'woocommerce_paypal_payments_agentic_commerce_item_requires_signature' )
+		expectApplied( 'woocommerce_paypal_payments_store_sync_item_requires_signature' )
 			->once()
 			->andReturn( true );
 
@@ -273,7 +273,7 @@ class ShippingValidatorTest extends TestCase {
 		$this->product_manager->shouldReceive( 'find_product' )
 			->andReturn( $product );
 
-		expectApplied( 'woocommerce_paypal_payments_agentic_commerce_item_requires_signature' )
+		expectApplied( 'woocommerce_paypal_payments_store_sync_item_requires_signature' )
 			->once()
 			->andReturn( false );
 
@@ -323,7 +323,7 @@ class ShippingValidatorTest extends TestCase {
 		$this->product_manager->shouldReceive( 'find_product' )
 			->andReturn( $product );
 
-		expectApplied( 'woocommerce_paypal_payments_agentic_commerce_item_requires_signature' )
+		expectApplied( 'woocommerce_paypal_payments_store_sync_item_requires_signature' )
 			->once()
 			->andReturn( true );
 

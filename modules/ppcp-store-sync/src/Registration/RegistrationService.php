@@ -66,7 +66,7 @@ class RegistrationService {
 		if ( $result->success ) {
 			$this->save_registration_token( $token );
 
-			do_action( 'woocommerce_paypal_payments_agentic_commerce_registered' );
+			do_action( 'woocommerce_paypal_payments_store_sync_registered' );
 		} else {
 			$this->delete_registration_token();
 			$this->logger->error(
@@ -132,7 +132,7 @@ class RegistrationService {
 
 		$this->delete_registration_token();
 
-		do_action( 'woocommerce_paypal_payments_agentic_commerce_deregistered' );
+		do_action( 'woocommerce_paypal_payments_store_sync_deregistered' );
 
 		return $result;
 	}
