@@ -286,7 +286,7 @@ class CouponValidator implements ValidatorInterface
          * @return string Modified user message.
          * @since 1.0.0
          */
-        $user_message = apply_filters('woocommerce_paypal_payments_agentic_commerce_coupon_validation_user_message', $user_message, $issue_type, $code, $wc_coupon, $cart, $context);
+        $user_message = apply_filters('woocommerce_paypal_payments_store_sync_coupon_validation_user_message', $user_message, $issue_type, $code, $wc_coupon, $cart, $context);
         return new CouponInvalid($config['message'], $user_message, $field, '', $context, $resolutions);
     }
     /**
@@ -342,6 +342,6 @@ class CouponValidator implements ValidatorInterface
          * @return array Modified resolution options array.
          * @since 1.0.0
          */
-        return apply_filters('woocommerce_paypal_payments_agentic_commerce_coupon_validation_resolutions', $resolutions, $issue_type, $code, $wc_coupon, $cart, $context);
+        return apply_filters('woocommerce_paypal_payments_store_sync_coupon_validation_resolutions', $resolutions, $issue_type, $code, $wc_coupon, $cart, $context);
     }
 }

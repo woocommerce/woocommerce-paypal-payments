@@ -93,7 +93,7 @@ class StoreSyncModule implements ServiceModule, ExecutableModule
                 $endpoint->register_routes();
             }
         });
-        add_action('woocommerce_paypal_payments_agentic_commerce_validators', static function (CartValidationProcessor $processor) use ($container) {
+        add_action('woocommerce_paypal_payments_store_sync_validators', static function (CartValidationProcessor $processor) use ($container) {
             foreach (self::CART_VALIDATION_SERVICES as $service_id) {
                 $validator = $container->get($service_id);
                 assert($validator instanceof ValidatorInterface);
@@ -144,7 +144,7 @@ class StoreSyncModule implements ServiceModule, ExecutableModule
     private function add_cleanup_actions(RegistrationService $registration_service, IngestionManager $ingestion_manager): void
     {
         // Handle plugin cleanup and remove scheduled task.
-        add_action('woocommerce_paypal_payments_agentic_commerce_deregistered', static fn() => $ingestion_manager->clear_recurring_schedule());
+        add_action('woocommerce_paypal_payments_store_sync_deregistered', static fn() => $ingestion_manager->clear_recurring_schedule());
         // Disconnect merchant via settings UI (change merchant ID).
         add_action('woocommerce_paypal_payments_merchant_disconnected', static fn() => $registration_service->deregister());
         // Plugin is deactivated.

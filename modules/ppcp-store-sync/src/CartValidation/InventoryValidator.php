@@ -24,7 +24,7 @@ class InventoryValidator implements \WooCommerce\PayPalCommerce\StoreSync\CartVa
     {
         $this->product_manager = $product_manager;
     }
-    public function validate(PayPalCart $cart)
+    public function validate(PayPalCart $cart): ?array
     {
         // Skip validation if the cart already annotates an inventory issue.
         if ($cart->has_validation_issue(ErrorCode::INVENTORY_ISSUE)) {

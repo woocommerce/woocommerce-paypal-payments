@@ -43,7 +43,7 @@ class RegistrationService
         }
         if ($result->success) {
             $this->save_registration_token($token);
-            do_action('woocommerce_paypal_payments_agentic_commerce_registered');
+            do_action('woocommerce_paypal_payments_store_sync_registered');
         } else {
             $this->delete_registration_token();
             $this->logger->error('Registration failed: Endpoint rejected registration', array('endpoint' => $this->webhook_urls->get_registration_install_url(), 'error' => $result->error ?? 'Registration failed', 'message' => $result->message, 'payload' => $this->metadata_provider->get_metadata()));
@@ -72,7 +72,7 @@ class RegistrationService
             return new WP_Error(self::ERROR_DEREGISTRATION_FAILED, $result->error ?? 'Deregistration failed');
         }
         $this->delete_registration_token();
-        do_action('woocommerce_paypal_payments_agentic_commerce_deregistered');
+        do_action('woocommerce_paypal_payments_store_sync_deregistered');
         return $result;
     }
     /**

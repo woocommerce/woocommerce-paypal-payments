@@ -118,7 +118,7 @@ return array(
         return new CartValidationProcessor($c->get('agentic.logger'));
     },
     'agentic.validator.product' => static function (ContainerInterface $c): ProductValidator {
-        return new ProductValidator($c->get('agentic.helper.product-manager'));
+        return new ProductValidator($c->get('agentic.helper.product-manager'), $c->get('agentic.config.ingestion'));
     },
     'agentic.validator.price' => static function (ContainerInterface $c): PriceValidator {
         return new PriceValidator($c->get('agentic.helper.product-manager'));

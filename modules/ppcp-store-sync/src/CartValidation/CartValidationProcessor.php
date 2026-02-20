@@ -68,7 +68,7 @@ class CartValidationProcessor
              *
              * @param CartValidationProcessor $processor The cart validation processor; exposes `register_validator()`.
              */
-            do_action('woocommerce_paypal_payments_agentic_commerce_validators', $this);
+            do_action('woocommerce_paypal_payments_store_sync_validators', $this);
         }
         return $this->validators;
     }

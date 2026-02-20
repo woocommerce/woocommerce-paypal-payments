@@ -14,12 +14,15 @@
 declare (strict_types=1);
 namespace WooCommerce\PayPalCommerce\StoreSync\CartValidation;
 
+use WC_Countries;
 use WooCommerce\PayPalCommerce\StoreSync\Enums\Priority;
 use WooCommerce\PayPalCommerce\StoreSync\Helper\ProductManager;
 use WooCommerce\PayPalCommerce\StoreSync\Schema\PayPalCart;
 use WooCommerce\PayPalCommerce\StoreSync\Schema\ResolutionOption;
 use WooCommerce\PayPalCommerce\StoreSync\Validation\InvalidAddress;
 use WooCommerce\PayPalCommerce\StoreSync\Validation\ShippingUnavailable;
+use WooCommerce\PayPalCommerce\StoreSync\Schema\Address;
+use WooCommerce\PayPalCommerce\StoreSync\Schema\CartItem;
 class ShippingValidator implements \WooCommerce\PayPalCommerce\StoreSync\CartValidation\ValidatorInterface
 {
     private ProductManager $product_manager;
@@ -54,10 +57,10 @@ class ShippingValidator implements \WooCommerce\PayPalCommerce\StoreSync\CartVal
     /**
      * Scenario 1: Validates that the address has all required fields and proper formats.
      *
-     * @param \WooCommerce\PayPalCommerce\StoreSync\Schema\Address $address The address to validate.
+     * @param Address $address The address to validate.
      * @return InvalidAddress[] Array of validation issues.
      */
-    private function validate_address_completeness($address): array
+    private function validate_address_completeness(Address $address): array
     {
         $issues = array();
         if (!$address->address_line_1()) {
@@ -78,9 +81,9 @@ class ShippingValidator implements \WooCommerce\PayPalCommerce\StoreSync\CartVal
         return $issues;
     }
     /**
-     * Validates postal code format based on country using WooCommerce's native validation.
+     * Validates a postal code format based on the country using WooCommerce's native validation.
      *
-     * @param string      $postal_code The postal code to validate.
+     * @param string      $postal_code  The postal code to validate.
      * @param string|null $country_code The country code.
      * @return InvalidAddress|null Validation issue if format is invalid.
      */
@@ -102,11 +105,11 @@ class ShippingValidator implements \WooCommerce\PayPalCommerce\StoreSync\CartVal
     /**
      * Scenario 2: Validates PO Box restrictions for items requiring signature delivery.
      *
-     * @param PayPalCart                                                 $cart The cart to validate.
-     * @param \WooCommerce\PayPalCommerce\StoreSync\Schema\Address $address The shipping address.
+     * @param PayPalCart $cart    The cart to validate.
+     * @param Address    $address The shipping address.
      * @return ShippingUnavailable|null Validation issue if PO Box restrictions apply.
      */
-    private function validate_po_box_restrictions(PayPalCart $cart, $address): ?ShippingUnavailable
+    private function validate_po_box_restrictions(PayPalCart $cart, Address $address): ?ShippingUnavailable
     {
         $address_line = $address->address_line_1();
         if (!$address_line || !$this->is_po_box($address_line)) {
@@ -114,7 +117,7 @@ class ShippingValidator implements \WooCommerce\PayPalCommerce\StoreSync\CartVal
         }
         $signature_required_items = $this->find_signature_required_items($cart);
         if (!empty($signature_required_items)) {
-            $restricted_items = array_map(fn($item): string => $item->item_id() ?? $item->variant_id() ?? '', $signature_required_items);
+            $restricted_items = array_map(static fn($item): string => $item->item_id() ?? $item->variant_id() ?? '', $signature_required_items);
             $context = array('restricted_items' => $restricted_items, 'restriction_reason' => 'signature_required', 'po_box_detected' => \true);
             $resolution_options = array(ResolutionOption::update_address('Use street address instead', Priority::HIGH), ResolutionOption::remove_item(Priority::LOW)->with(array('label' => 'Remove items requiring signature')));
             return new ShippingUnavailable('PO Box delivery not available for this order', 'This order contains items requiring signature confirmation and cannot be delivered to a PO Box.', 'shipping_address', '', $context, $resolution_options);
@@ -138,10 +141,10 @@ class ShippingValidator implements \WooCommerce\PayPalCommerce\StoreSync\CartVal
      * This method relies entirely on the filter hook for shipping plugins to indicate
      * signature requirements.
      *
-     * @param \WooCommerce\PayPalCommerce\StoreSync\Schema\CartItem $item The item to check.
+     * @param CartItem $item The item to check.
      * @return bool True if signature is required.
      */
-    private function item_requires_signature($item): bool
+    private function item_requires_signature(CartItem $item): bool
     {
         $product = $this->product_manager->find_product($item);
         if (!$product) {
@@ -155,13 +158,13 @@ class ShippingValidator implements \WooCommerce\PayPalCommerce\StoreSync\CartVal
          *
          * @since 1.0.0
          *
-         * @param bool       $requires_signature Whether signature is required (defaults to false).
-         * @param \WC_Product $product           The WooCommerce product object.
-         * @param \WooCommerce\PayPalCommerce\StoreSync\Schema\CartItem $item The cart item.
+         * @param bool        $requires_signature Whether signature is required (defaults to false).
+         * @param \WC_Product $product            The WooCommerce product object.
+         * @param CartItem    $item               The cart item.
          *
          * @return bool True if signature delivery is required.
          */
-        return apply_filters('woocommerce_paypal_payments_agentic_commerce_item_requires_signature', \false, $product, $item);
+        return apply_filters('woocommerce_paypal_payments_store_sync_item_requires_signature', \false, $product, $item);
     }
     /**
      * Checks if an address line represents a PO Box.
@@ -198,16 +201,13 @@ class ShippingValidator implements \WooCommerce\PayPalCommerce\StoreSync\CartVal
      */
     private function is_country_allowed(string $country_code): bool
     {
-        if (!function_exists('WC')) {
+        $wc_countries = $this->get_wc_countries();
+        if (!$wc_countries) {
             return \true;
         }
-        $wc = WC();
-        if (!$wc || !$wc->countries) {
-            return \true;
-        }
-        $allowed_countries = $wc->countries->get_shipping_countries();
+        $allowed_countries = $wc_countries->get_shipping_countries();
         if (empty($allowed_countries)) {
-            $allowed_countries = $wc->countries->get_allowed_countries();
+            $allowed_countries = $wc_countries->get_allowed_countries();
         }
         return isset($allowed_countries[$country_code]);
     }
@@ -219,14 +219,19 @@ class ShippingValidator implements \WooCommerce\PayPalCommerce\StoreSync\CartVal
      */
     private function get_country_name(string $country_code): string
     {
-        if (!function_exists('WC')) {
+        $wc_countries = $this->get_wc_countries();
+        if (!$wc_countries) {
             return $country_code;
         }
-        $wc = WC();
-        if (!$wc || !$wc->countries) {
-            return $country_code;
-        }
-        $countries = $wc->countries->get_countries();
+        $countries = $wc_countries->get_countries();
         return $countries[$country_code] ?? $country_code;
+    }
+    private function get_wc_countries(): ?WC_Countries
+    {
+        if (!function_exists('WC')) {
+            return null;
+        }
+        // The only place in the class that has a `WC()` dependency.
+        return WC()->countries;
     }
 }

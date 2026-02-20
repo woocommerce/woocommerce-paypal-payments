@@ -2,7 +2,6 @@
 
 namespace WooCommerce\PayPalCommerce\StoreSync\Ingestion;
 
-use Automattic\WooCommerce\Enums\ProductStatus;
 use WooCommerce\PayPalCommerce\StoreSync\Config\IngestionConfiguration;
 /**
  * Provides a batch of WC_Product IDs eligible for
@@ -54,15 +53,14 @@ class IngestionBatchProvider
         if ($remaining_items <= 0) {
             return array();
         }
-        $product_types = $this->configuration->get_supported_product_types();
-        $args = array('status' => ProductStatus::PUBLISH, 'type' => $product_types, 'downloadable' => \false, 'limit' => $remaining_items, 'return' => 'ids', 'meta_query' => array($meta_query), 'exclude' => $current_batch);
+        // phpcs:disable WordPress.DB.SlowDBQuery -- intentionally using the meta_query here.
+        $args = array_merge($this->configuration->get_valid_product_filters(), array('limit' => $remaining_items, 'return' => 'ids', 'meta_query' => array($meta_query), 'exclude' => $current_batch));
         // Add ordering for stale products (oldest first).
         if ($order_by_meta && isset($meta_query['key'])) {
             $args['orderby'] = 'meta_value';
             $args['order'] = 'ASC';
             $args['meta_key'] = $meta_query['key'];
         }
-        // phpcs:disable WordPress.DB.SlowDBQuery
         $products = wc_get_products($args);
         // phpcs:enable WordPress.DB.SlowDBQuery
         assert(is_array($products));
