@@ -338,8 +338,8 @@ class GooglePayButton implements ButtonInterface {
 		$is_wc_gateway_enabled = isset( $available_gateways[ GooglePayGateway::ID ] );
 
 		return array(
-			'environment'           => $this->environment->current_environment_is( Environment::SANDBOX ) ? 'TEST' : 'PRODUCTION',
-			'is_debug'              => defined( 'WP_DEBUG' ) && WP_DEBUG,
+			'environment'           => $this->environment->is_sandbox() ? 'TEST' : 'PRODUCTION',
+			'is_debug'              => defined( 'WP_DEBUG' ) && WP_DEBUG, // @phpstan-ignore booleanAnd.rightAlwaysFalse
 			'is_enabled'            => $this->is_enabled(),
 			'is_wc_gateway_enabled' => $is_wc_gateway_enabled,
 			'sdk_url'               => $this->sdk_url,

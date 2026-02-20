@@ -29,7 +29,6 @@ return array(
 		return new AxoBlockPaymentMethod(
 			$container->get( 'axoblock.asset_getter' ),
 			$container->get( 'axo.gateway' ),
-			fn(): SmartButtonInterface => $container->get( 'button.smart-button' ),
 			$container->get( 'settings.settings-provider' ),
 			$container->get( 'wcgateway.configuration.card-configuration' ),
 			$container->get( 'settings.environment' ),
