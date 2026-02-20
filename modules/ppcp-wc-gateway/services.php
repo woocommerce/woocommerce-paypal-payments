@@ -13,6 +13,7 @@ namespace WooCommerce\PayPalCommerce\WcGateway;
 
 use Automattic\WooCommerce\Admin\Notes\Note;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PayUponInvoiceOrderEndpoint;
+use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\ReferenceTransactionStatus;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\Cache;
 use WooCommerce\PayPalCommerce\Applepay\ApplePayGateway;
