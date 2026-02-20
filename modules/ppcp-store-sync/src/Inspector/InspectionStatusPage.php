@@ -53,7 +53,7 @@ class InspectionStatusPage {
 	 * @return array Modified tabs array with PayPal Agentic tab added.
 	 */
 	private function add_tab( array $tabs ): array {
-		$tabs['paypal-agentic'] = __( 'PayPal Agentic', 'woocommerce-paypal-payments' );
+		$tabs['paypal-agentic'] = __( 'Store Sync', 'woocommerce-paypal-payments' );
 
 		return $tabs;
 	}

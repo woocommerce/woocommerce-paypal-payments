@@ -58,7 +58,7 @@ class RegistrationStatusSection {
 
 		?>
 		<div class="wrap">
-			<h2><?php esc_html_e( 'PayPal Agentic Commerce', 'woocommerce-paypal-payments' ); ?></h2>
+			<h2><?php esc_html_e( 'Store Sync Status', 'woocommerce-paypal-payments' ); ?></h2>
 
 			<?php $this->render_notices(); ?>
 
@@ -246,8 +246,8 @@ class RegistrationStatusSection {
 		// phpcs:enable WordPress.Security.NonceVerification.Recommended
 
 		$messages = array(
-			'registered'   => __( 'Successfully registered with PayPal Agentic Commerce.', 'woocommerce-paypal-payments' ),
-			'unregistered' => __( 'Successfully unregistered from PayPal Agentic Commerce.', 'woocommerce-paypal-payments' ),
+			'registered'   => __( 'Successfully registered for PayPal\'s Store Sync.', 'woocommerce-paypal-payments' ),
+			'unregistered' => __( 'Successfully unregistered from PayPal\'s Store Sync.', 'woocommerce-paypal-payments' ),
 			'error'        => __( 'Failed to update registration status. Please try again.', 'woocommerce-paypal-payments' ),
 		);
 
