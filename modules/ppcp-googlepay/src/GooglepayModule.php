@@ -143,7 +143,7 @@ class GooglepayModule implements ServiceModule, ExecutableModule {
 				// Registers buttons on blocks pages.
 				add_action(
 					'woocommerce_blocks_payment_method_type_registration',
-					function ( PaymentMethodRegistry $payment_method_registry ) use ( $c, $button ): void {
+					function ( PaymentMethodRegistry $payment_method_registry ) use ( $c ): void {
 						$payment_method_registry->register( $c->get( 'googlepay.blocks-payment-method' ) );
 					}
 				);
