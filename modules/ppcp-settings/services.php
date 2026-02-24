@@ -532,6 +532,7 @@ return array(
 			FeaturesDefinition::FEATURE_PAY_LATER_MESSAGING => $features[ FeaturesDefinition::FEATURE_PAY_LATER_MESSAGING ]['enabled'] ?? false,
 			FeaturesDefinition::FEATURE_INSTALLMENTS    => $features[ FeaturesDefinition::FEATURE_INSTALLMENTS ]['enabled'] ?? false,
 			FeaturesDefinition::FEATURE_PAY_WITH_CRYPTO => $features[ FeaturesDefinition::FEATURE_PAY_WITH_CRYPTO ]['enabled'] ?? false,
+			FeaturesDefinition::FEATURE_PAY_UPON_INVOICE => $features[ FeaturesDefinition::FEATURE_PAY_UPON_INVOICE ]['enabled'] ?? false,
 		);
 	},
 
@@ -647,6 +648,7 @@ return array(
 			FeaturesDefinition::FEATURE_INSTALLMENTS    => $features[ FeaturesDefinition::FEATURE_INSTALLMENTS ]['enabled'] ?? false,
 			FeaturesDefinition::FEATURE_PAY_WITH_CRYPTO => $features[ FeaturesDefinition::FEATURE_PAY_WITH_CRYPTO ]['enabled'] ?? false,
 			FeaturesDefinition::FEATURE_PAY_LATER_MESSAGING => $features[ FeaturesDefinition::FEATURE_PAY_LATER_MESSAGING ]['enabled'] ?? false,
+			FeaturesDefinition::FEATURE_PAY_UPON_INVOICE => $features[ FeaturesDefinition::FEATURE_PAY_UPON_INVOICE ]['enabled'] ?? false,
 		);
 
 		$merchant_capabilities = array(
@@ -665,6 +667,7 @@ return array(
 			FeaturesDefinition::FEATURE_INSTALLMENTS    => $capabilities[ FeaturesDefinition::FEATURE_INSTALLMENTS ],
 			// Installments eligibility.
 			FeaturesDefinition::FEATURE_PAY_WITH_CRYPTO => $capabilities[ FeaturesDefinition::FEATURE_PAY_WITH_CRYPTO ], // Pay with Crypto eligibility.
+			FeaturesDefinition::FEATURE_PAY_UPON_INVOICE => $capabilities[ FeaturesDefinition::FEATURE_PAY_UPON_INVOICE ], // Pay Upon Invoice eligibility.
 		);
 
 		return new FeaturesDefinition(
@@ -690,7 +693,8 @@ return array(
 			$container->get( 'applepay.eligibility.check' ), // Apple Pay eligibility.
 			$pay_later_eligible, // Pay Later eligibility.
 			'MX' === $container->get( 'api.merchant.country' ), // Installments eligibility.
-			$container->get( 'ppcp-local-apms.pwc.eligibility.check' ) // Pay with Crypto eligibility.
+			$container->get( 'ppcp-local-apms.pwc.eligibility.check' ), // Pay with Crypto eligibility.
+			$container->get( 'ppcp-local-apms.pui.eligibility.check' ) // Pay Upon Invoice eligibility.
 		);
 	},
 	'settings.service.payment_methods_eligibilities'      => static function ( ContainerInterface $container ): PaymentMethodsEligibilityService {
