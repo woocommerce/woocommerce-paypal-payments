@@ -45,6 +45,9 @@ const defaultPersistent = Object.freeze( {
 	threeDSecure: 'no-3d-secure',
 	cardholderName: false,
 	fastlaneDisplayWatermark: false,
+	puiBrandName: '',
+	puiLogoUrl: '',
+	puiCustomerServiceInstructions: '',
 	__meta: false,
 } );
 
