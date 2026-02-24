@@ -30,7 +30,7 @@ const PreviewPanel = ( { location } ) => {
 			.filter( ( method ) => method.isFunding )
 			.filter( ( method ) => ! paymentMethods.includes( method.value ) )
 			.forEach( ( method ) => {
-				disabled.push( method.value );
+				disabled.push( method.fundingKey ?? method.value );
 			} );
 		return disabled;
 	}, [ paymentMethods ] );
