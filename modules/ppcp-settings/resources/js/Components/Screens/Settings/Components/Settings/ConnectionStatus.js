@@ -1,13 +1,13 @@
 import { __ } from '@wordpress/i18n';
 import classNames from 'classnames';
 
-import SettingsCard from '../../../../ReusableComponents/SettingsCard';
-import { CommonHooks } from '../../../../../data';
+import SettingsCard from '@ppcp-settings/Components/ReusableComponents/SettingsCard';
+import { CommonHooks } from '@ppcp-settings/data';
 import ConnectionStatusBadge from './Parts/ConnectionStatusBadge';
 import DisconnectButton from './Parts/DisconnectButton';
-import SettingsBlock from '../../../../ReusableComponents/SettingsBlock';
-import { ControlStaticValue } from '../../../../ReusableComponents/Controls';
-import { CardActions } from '../../../../ReusableComponents/Elements';
+import SettingsBlock from '@ppcp-settings/Components/ReusableComponents/SettingsBlock';
+import { ControlStaticValue } from '@ppcp-settings/Components/ReusableComponents/Controls';
+import { CardActions } from '@ppcp-settings/Components/ReusableComponents/Elements';
 
 const ConnectionStatus = () => {
 	const merchant = CommonHooks.useMerchant();

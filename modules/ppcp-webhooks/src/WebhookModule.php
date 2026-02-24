@@ -71,11 +71,7 @@ class WebhookModule implements ServiceModule, FactoryModule, ExtendingModule, Ex
 			WebhookRegistrar::EVENT_HOOK,
 			static function () use ( $container ) {
 				$registrar = $container->get( 'webhook.registrar' );
-				/**
-				 * The Webhook Registrar.
-				 *
-				 * @var WebhookRegistrar $endpoint
-				 */
+				assert( $registrar instanceof WebhookRegistrar );
 				$registrar->register();
 			}
 		);
@@ -84,11 +80,7 @@ class WebhookModule implements ServiceModule, FactoryModule, ExtendingModule, Ex
 			'woocommerce_paypal_payments_gateway_deactivate',
 			static function () use ( $container ) {
 				$registrar = $container->get( 'webhook.registrar' );
-				/**
-				 * The Webhook Registrar.
-				 *
-				 * @var WebhookRegistrar $endpoint
-				 */
+				assert( $registrar instanceof WebhookRegistrar );
 				$registrar->unregister();
 			}
 		);
@@ -155,7 +147,17 @@ class WebhookModule implements ServiceModule, FactoryModule, ExtendingModule, Ex
 
 		add_action(
 			'woocommerce_paypal_payments_gateway_migrate',
-			static function () use ( $container ) {
+			static function ( string $installed_plugin_version ) use ( $container ) {
+				// Skip on fresh installation.
+				if ( empty( $installed_plugin_version ) ) {
+					return;
+				}
+
+				// Disabled when upgrading from 3.0.0+.
+				if ( version_compare( $installed_plugin_version, '3.0.0', '>=' ) ) {
+					return;
+				}
+
 				$registrar = $container->get( 'webhook.registrar' );
 				assert( $registrar instanceof WebhookRegistrar );
 				add_action(

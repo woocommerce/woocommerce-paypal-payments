@@ -1,9 +1,9 @@
 import { useEffect, useCallback, useState } from '@wordpress/element';
 import { useSelect } from '@wordpress/data';
 import { __ } from '@wordpress/i18n';
-import { log } from '../../../../../ppcp-axo/resources/js/Helper/Debug';
-import { Card } from '../Card';
-import { STORE_NAME } from '../../stores/axoStore';
+import { log } from '@ppcp-axo/Helper/Debug';
+import { Card } from '@ppcp-axo-block/components/Card';
+import { STORE_NAME } from '@ppcp-axo-block/stores/axoStore';
 
 /**
  * Renders the payment component based on the user's state (guest or authenticated).
@@ -27,6 +27,8 @@ export const Payment = ( { fastlaneSdk, onPaymentLoad } ) => {
 		[]
 	);
 
+	const axoConfig = window.wc_ppcp_axo;
+
 	/**
 	 * Loads and renders the Fastlane card fields component when necessary.
 	 * This function is called for:
@@ -42,7 +44,13 @@ export const Payment = ( { fastlaneSdk, onPaymentLoad } ) => {
 		) {
 			try {
 				const paymentComponent =
-					await fastlaneSdk.FastlaneCardComponent( {} );
+					await fastlaneSdk.FastlaneCardComponent( {
+						fields: {
+							cardholderName: {
+								enabled: axoConfig.name_on_card === 'yes',
+							},
+						},
+					} );
 				// Check if the container exists before rendering
 				const cardContainer =
 					document.querySelector( '#fastlane-card' );
@@ -89,14 +97,12 @@ export const Payment = ( { fastlaneSdk, onPaymentLoad } ) => {
 	 * @return {JSX.Element} The appropriate component based on the current state
 	 */
 	const renderPaymentComponent = () => {
+		const axoConfig = wc.wcSettings.getSetting( 'ppcp-axo-gateway_data' );
 		// Case 1: Guest user without completed email lookup
 		if ( isGuest && ! isEmailLookupCompleted ) {
 			return (
 				<div id="ppcp-axo-block-radio-content">
-					{ __(
-						'Enter your email address above to continue.',
-						'woocommerce-paypal-payments'
-					) }
+					{ axoConfig.description }
 				</div>
 			);
 		}

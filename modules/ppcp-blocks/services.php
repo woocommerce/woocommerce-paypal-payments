@@ -9,19 +9,22 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\Blocks;
 
-use WooCommerce\PayPalCommerce\Blocks\Endpoint\GetPayPalOrderFromSession;
+use WooCommerce\PayPalCommerce\Assets\AssetGetter;
+use WooCommerce\PayPalCommerce\Assets\AssetGetterFactory;
 use WooCommerce\PayPalCommerce\Blocks\Endpoint\UpdateShippingEndpoint;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\Button\Assets\SmartButtonInterface;
-use WC_Cart;
 
 return array(
-	'blocks.url'                           => static function ( ContainerInterface $container ): string {
-		return plugins_url( '/modules/ppcp-blocks/', $container->get( 'ppcp.path-to-plugin-main-file' ) );
+	'blocks.asset_getter'                  => static function ( ContainerInterface $container ): AssetGetter {
+		$factory = $container->get( 'assets.asset_getter_factory' );
+		assert( $factory instanceof AssetGetterFactory );
+
+		return $factory->for_module( 'ppcp-blocks' );
 	},
 	'blocks.method'                        => static function ( ContainerInterface $container ): PayPalPaymentMethod {
 		return new PayPalPaymentMethod(
-			$container->get( 'blocks.url' ),
+			$container->get( 'blocks.asset_getter' ),
 			$container->get( 'ppcp.asset-version' ),
 			function () use ( $container ): SmartButtonInterface {
 				return $container->get( 'button.smart-button' );
@@ -42,13 +45,14 @@ return array(
 	},
 	'blocks.advanced-card-method'          => static function ( ContainerInterface $container ): AdvancedCardPaymentMethod {
 		return new AdvancedCardPaymentMethod(
-			$container->get( 'blocks.url' ),
+			$container->get( 'blocks.asset_getter' ),
 			$container->get( 'ppcp.asset-version' ),
 			$container->get( 'wcgateway.credit-card-gateway' ),
 			function () use ( $container ): SmartButtonInterface {
 				return $container->get( 'button.smart-button' );
 			},
-			$container->get( 'wcgateway.settings' )
+			$container->get( 'wcgateway.settings' ),
+			$container->get( 'wcgateway.configuration.card-configuration' )
 		);
 	},
 	'blocks.settings.final_review_enabled' => static function ( ContainerInterface $container ): bool {

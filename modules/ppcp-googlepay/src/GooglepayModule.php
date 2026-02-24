@@ -17,6 +17,7 @@ use WooCommerce\PayPalCommerce\Button\Assets\SmartButtonInterface;
 use WooCommerce\PayPalCommerce\Googlepay\Endpoint\UpdatePaymentDataEndpoint;
 use WooCommerce\PayPalCommerce\Googlepay\Helper\ApmProductStatus;
 use WooCommerce\PayPalCommerce\Googlepay\Helper\AvailabilityNotice;
+use WooCommerce\PayPalCommerce\Settings\Data\Definition\FeaturesDefinition;
 use WooCommerce\PayPalCommerce\Settings\SettingsModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExecutableModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExtendingModule;
@@ -89,7 +90,7 @@ class GooglepayModule implements ServiceModule, ExtendingModule, ExecutableModul
 				// Initializes button rendering.
 				add_action(
 					'wp',
-					static function () use ( $c, $button ) {
+					static function () use ( $button ) {
 						if ( is_admin() ) {
 							return;
 						}
@@ -123,6 +124,7 @@ class GooglepayModule implements ServiceModule, ExtendingModule, ExecutableModul
 							 * Should add this to the ButtonInterface.
 							 *
 							 * @psalm-suppress UndefinedInterfaceMethod
+							 * @phpstan-ignore method.notFound
 							 */
 							$button->enqueue_styles();
 						}
@@ -141,6 +143,7 @@ class GooglepayModule implements ServiceModule, ExtendingModule, ExecutableModul
 						 * Should add this to the ButtonInterface.
 						 *
 						 * @psalm-suppress UndefinedInterfaceMethod
+						 * @phpstan-ignore method.notFound
 						 */
 						$button->enqueue_admin();
 					}
@@ -161,7 +164,7 @@ class GooglepayModule implements ServiceModule, ExtendingModule, ExecutableModul
 				// Adds GooglePay component to the backend button preview settings.
 				add_action(
 					'woocommerce_paypal_payments_admin_gateway_settings',
-					function ( array $settings ) use ( $c ): array {
+					function ( array $settings ): array {
 						if ( is_array( $settings['components'] ) ) {
 							$settings['components'][] = 'googlepay';
 						}
@@ -189,7 +192,7 @@ class GooglepayModule implements ServiceModule, ExtendingModule, ExecutableModul
 			 *
 			 * @psalm-suppress MissingClosureParamType
 			 */
-			static function ( $methods ) use ( $c ): array {
+			static function ( $methods ) use ( $c ) {
 				if ( ! is_array( $methods ) ) {
 					return $methods;
 				}
@@ -244,7 +247,7 @@ class GooglepayModule implements ServiceModule, ExtendingModule, ExecutableModul
 
 				$google_pay_enabled = $product_status->is_active();
 
-				$features['google_pay'] = array(
+				$features[ FeaturesDefinition::FEATURE_GOOGLE_PAY ] = array(
 					'enabled' => $google_pay_enabled,
 				);
 

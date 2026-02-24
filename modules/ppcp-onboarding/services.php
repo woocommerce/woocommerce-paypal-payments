@@ -9,6 +9,8 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\Onboarding;
 
+use WooCommerce\PayPalCommerce\Assets\AssetGetter;
+use WooCommerce\PayPalCommerce\Assets\AssetGetterFactory;
 use WooCommerce\PayPalCommerce\Onboarding\Render\OnboardingOptionsRenderer;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\Cache;
@@ -31,7 +33,7 @@ return array(
 		 *
 		 * @var Environment $environment
 		 */
-		if ( $environment->current_environment_is( Environment::SANDBOX ) ) {
+		if ( $environment->is_sandbox() ) {
 			return $container->get( 'api.paypal-host-sandbox' );
 		}
 		return $container->get( 'api.paypal-host-production' );
@@ -39,7 +41,7 @@ return array(
 	'api.paypal-website-url'             => function ( ContainerInterface $container ): string {
 		$environment = $container->get( 'settings.environment' );
 		assert( $environment instanceof Environment );
-		if ( $environment->current_environment_is( Environment::SANDBOX ) ) {
+		if ( $environment->is_sandbox() ) {
 			return $container->get( 'api.paypal-website-url-sandbox' );
 		}
 		return $container->get( 'api.paypal-website-url-production' );
@@ -111,7 +113,7 @@ return array(
 		$state                 = $container->get( 'onboarding.state' );
 		$login_seller_endpoint = $container->get( 'onboarding.endpoint.login-seller' );
 		return new OnboardingAssets(
-			$container->get( 'onboarding.url' ),
+			$container->get( 'onboarding.asset_getter' ),
 			$container->get( 'ppcp.asset-version' ),
 			$state,
 			$container->get( 'settings.environment' ),
@@ -119,9 +121,11 @@ return array(
 			$container->get( 'wcgateway.current-ppcp-settings-page-id' )
 		);
 	},
+	'onboarding.asset_getter'            => static function ( ContainerInterface $container ): AssetGetter {
+		$factory = $container->get( 'assets.asset_getter_factory' );
+		assert( $factory instanceof AssetGetterFactory );
 
-	'onboarding.url'                     => static function ( ContainerInterface $container ): string {
-		return plugins_url( '/modules/ppcp-onboarding/', $container->get( 'ppcp.path-to-plugin-main-file' ) );
+		return $factory->for_module( 'ppcp-onboarding' );
 	},
 
 	'onboarding.endpoint.login-seller'   => static function ( ContainerInterface $container ): LoginSellerEndpoint {
@@ -174,11 +178,9 @@ return array(
 		$partner_referrals         = $container->get( 'api.endpoint.partner-referrals-production' );
 		$partner_referrals_sandbox = $container->get( 'api.endpoint.partner-referrals-sandbox' );
 		$partner_referrals_data    = $container->get( 'api.repository.partner-referrals-data' );
-		$settings                  = $container->get( 'wcgateway.settings' );
 		$signup_link_cache         = $container->get( 'onboarding.signup-link-cache' );
 		$logger                    = $container->get( 'woocommerce.logger.woocommerce' );
 		return new OnboardingRenderer(
-			$settings,
 			$partner_referrals,
 			$partner_referrals_sandbox,
 			$partner_referrals_data,
@@ -188,7 +190,7 @@ return array(
 	},
 	'onboarding.render-options'          => static function ( ContainerInterface $container ): OnboardingOptionsRenderer {
 		return new OnboardingOptionsRenderer(
-			$container->get( 'onboarding.url' ),
+			$container->get( 'onboarding.asset_getter' ),
 			$container->get( 'api.shop.country' ),
 			$container->get( 'wcgateway.settings' )
 		);

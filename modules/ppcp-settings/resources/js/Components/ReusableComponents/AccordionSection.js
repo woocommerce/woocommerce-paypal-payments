@@ -1,7 +1,7 @@
 import { Icon } from '@wordpress/components';
 import { chevronDown, chevronUp } from '@wordpress/icons';
 import classNames from 'classnames';
-import { useToggleState } from '../../hooks/useToggleState';
+import { useToggleState } from '@ppcp-settings/hooks/useToggleState';
 import {
 	Content,
 	Description,

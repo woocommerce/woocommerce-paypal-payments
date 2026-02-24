@@ -1,16 +1,11 @@
 <?php
-/**
- * Payment Methods Dependencies Definition
- *
- * @package WooCommerce\PayPalCommerce\Settings\Data\Definition
- */
 
 declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\Settings\Data\Definition;
 
+use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\PWCGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException;
-use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 use WooCommerce\PayPalCommerce\Applepay\ApplePayGateway;
 use WooCommerce\PayPalCommerce\Axo\Gateway\AxoGateway;
 use WooCommerce\PayPalCommerce\Googlepay\GooglePayGateway;
@@ -29,27 +24,9 @@ use WooCommerce\PayPalCommerce\WcGateway\Gateway\OXXO\OXXO;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayUponInvoice\PayUponInvoiceGateway;
 
 /**
- * Class PaymentMethodsDependenciesDefinition
- *
  * Defines dependency relationships between payment methods and settings.
  */
 class PaymentMethodsDependenciesDefinition {
-
-	/**
-	 * Current settings values
-	 *
-	 * @var Settings
-	 */
-	private Settings $settings;
-
-	/**
-	 * Constructor
-	 *
-	 * @param Settings $settings Settings instance.
-	 */
-	public function __construct( Settings $settings ) {
-		$this->settings = $settings;
-	}
 
 	/**
 	 * Get payment method to payment method dependencies
@@ -76,6 +53,7 @@ class PaymentMethodsDependenciesDefinition {
 			TrustlyGateway::ID        => array( PayPalGateway::ID ),
 			PayUponInvoiceGateway::ID => array( PayPalGateway::ID ),
 			OXXO::ID                  => array( PayPalGateway::ID ),
+			PWCGateway::ID            => array( PayPalGateway::ID ),
 			'venmo'                   => array( PayPalGateway::ID ),
 			'pay-later'               => array( PayPalGateway::ID ),
 		);

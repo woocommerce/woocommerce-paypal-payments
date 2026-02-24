@@ -9,10 +9,13 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\Onboarding;
 
+use WooCommerce\PayPalCommerce\Assets\AssetGetter;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\Webhooks\WebhookRegistrar;
+use WP_Error;
+use WP_REST_Request;
 
 /**
  * Exposes and handles REST routes related to onboarding.
@@ -117,8 +120,11 @@ class OnboardingRESTController {
 
 		$environment = ( isset( $params['environment'] ) && in_array( $params['environment'], array( 'production', 'sandbox' ), true ) ) ? $params['environment'] : 'sandbox';
 
+		$asset_getter = $this->container->get( 'onboarding.asset_getter' );
+		assert( $asset_getter instanceof AssetGetter );
+
 		return array(
-			'scriptURL'               => trailingslashit( $this->container->get( 'onboarding.url' ) ) . 'assets/js/onboarding.js',
+			'scriptURL'               => $asset_getter->get_asset_url( 'onboarding.js' ),
 			'scriptData'              => $this->container->get( 'onboarding.assets' )->get_script_data(),
 			'environment'             => $environment,
 			'onboardCompleteCallback' => 'ppcp_onboarding_' . $environment . 'Callback',
@@ -172,7 +178,7 @@ class OnboardingRESTController {
 
 		// Validate 'environment'.
 		if ( empty( $params['environment'] ) || ! in_array( $params['environment'], array( 'sandbox', 'production' ), true ) ) {
-			return new \WP_Error(
+			return new WP_Error(
 				'woocommerce_paypal_payments_invalid_environment',
 				sprintf(
 					/* translators: placeholder is an arbitrary string. */
@@ -186,7 +192,7 @@ class OnboardingRESTController {
 		// Validate the other fields.
 		$missing_keys = array_values( array_diff( $credential_keys, array_keys( $params ) ) );
 		if ( $missing_keys ) {
-			return new \WP_Error(
+			return new WP_Error(
 				'woocommerce_paypal_payments_credentials_incomplete',
 				sprintf(
 					/* translators: placeholder is a comma-separated list of fields. */
@@ -243,7 +249,7 @@ class OnboardingRESTController {
 		do_action( 'woocommerce_paypal_payments_clear_apm_product_status', $settings );
 
 		if ( ! $settings->persist() ) {
-			return new \WP_Error(
+			return new WP_Error(
 				'woocommerce_paypal_payments_credentials_not_saved',
 				__( 'An error occurred while saving the credentials.', 'woocommerce-paypal-payments' ),
 				array(

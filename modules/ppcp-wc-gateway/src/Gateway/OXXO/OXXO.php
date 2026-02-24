@@ -14,6 +14,7 @@ use Psr\Log\LoggerInterface;
 use WC_Order;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\CaptureFactory;
+use WooCommerce\PayPalCommerce\Assets\AssetGetter;
 use WooCommerce\PayPalCommerce\Button\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\CheckoutHelper;
@@ -31,12 +32,7 @@ class OXXO {
 	 */
 	protected $checkout_helper;
 
-	/**
-	 * The module URL.
-	 *
-	 * @var string
-	 */
-	protected $module_url;
+	private AssetGetter $asset_getter;
 
 	/**
 	 * The asset version.
@@ -67,10 +63,8 @@ class OXXO {
 	protected $capture_factory;
 
 	/**
-	 * OXXO constructor
-	 *
 	 * @param CheckoutHelper  $checkout_helper The checkout helper.
-	 * @param string          $module_url The module URL.
+	 * @param AssetGetter     $asset_getter
 	 * @param string          $asset_version The asset version.
 	 * @param OrderEndpoint   $order_endpoint The order endpoint.
 	 * @param LoggerInterface $logger The logger.
@@ -78,7 +72,7 @@ class OXXO {
 	 */
 	public function __construct(
 		CheckoutHelper $checkout_helper,
-		string $module_url,
+		AssetGetter $asset_getter,
 		string $asset_version,
 		OrderEndpoint $order_endpoint,
 		LoggerInterface $logger,
@@ -86,7 +80,7 @@ class OXXO {
 	) {
 
 		$this->checkout_helper = $checkout_helper;
-		$this->module_url      = $module_url;
+		$this->asset_getter    = $asset_getter;
 		$this->asset_version   = $asset_version;
 		$this->order_endpoint  = $order_endpoint;
 		$this->logger          = $logger;
@@ -156,7 +150,7 @@ class OXXO {
 			 * @psalm-suppress MissingClosureParamType
 			 */
 			function ( $order, $sent_to_admin ) {
-				if ( ! is_a( $order, WC_Order::class ) || ! is_bool( $sent_to_admin ) ) {
+				if ( ! ( $order instanceof WC_Order ) || ! is_bool( $sent_to_admin ) ) {
 					return;
 				}
 
@@ -205,7 +199,7 @@ class OXXO {
 					// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 					$post_id = wc_clean( wp_unslash( $_GET['id'] ?? $_GET['post'] ?? '' ) );
 					$order   = wc_get_order( $post_id );
-					if ( is_a( $order, WC_Order::class ) && $order->get_payment_method() === OXXOGateway::ID ) {
+					if ( $order instanceof WC_Order && $order->get_payment_method() === OXXOGateway::ID ) {
 						$payer_action = $order->get_meta( 'ppcp_oxxo_payer_action' );
 						if ( $payer_action ) {
 							add_meta_box(
@@ -309,7 +303,7 @@ class OXXO {
 		if ( $gateway_enabled === 'yes' && is_checkout() ) {
 			wp_enqueue_script(
 				'ppcp-oxxo',
-				trailingslashit( $this->module_url ) . 'assets/js/oxxo.js',
+				$this->asset_getter->get_asset_url( 'oxxo.js' ),
 				array(),
 				$this->asset_version,
 				true

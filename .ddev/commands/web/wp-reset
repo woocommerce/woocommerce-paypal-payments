@@ -1,0 +1,62 @@
+#!/bin/bash
+
+show-help() {
+	echo -e "\nReset the WordPress database and reinstall WordPress"
+	echo -e "\tExample: ddev wp-reset"
+	echo -e "\nRemove all plugins --clean-plugins"
+	echo -e "\tExample: ddev wp-reset --clean-plugins\n"
+}
+
+remove-plugins() {
+	echo "Deactivating all plugins..."
+	wp plugin deactivate --all --path=.ddev/wordpress
+
+	echo "Deleting all plugins..."
+	wp plugin delete --all --path=.ddev/wordpress
+}
+
+reset-database() {
+	echo "Resetting database..."
+	wp db reset --yes --path=.ddev/wordpress
+
+	if [ "$1" = "clean-plugins" ]; then
+		remove-plugins
+	fi
+
+	echo "Installing WordPress..."
+	wp core install \
+		--url="${DDEV_PRIMARY_URL}" \
+		--title="${WP_TITLE}" \
+		--admin_user="${ADMIN_USER}" \
+		--admin_password="${ADMIN_PASS}" \
+		--admin_email="${ADMIN_EMAIL}" \
+		--path=.ddev/wordpress
+
+	echo "Database reset and WordPress installation completed!"
+}
+
+clean_plugins=false
+
+while [[ $# -gt 0 ]]; do
+	case $1 in
+	--clean-plugins)
+		clean_plugins=true
+		shift
+		;;
+	-h|--help)
+		show-help
+		exit 0
+		;;
+	*)
+		echo "Unknown option: $1"
+		show-help
+		exit 1
+		;;
+	esac
+done
+
+if [ "$clean_plugins" = true ]; then
+	reset-database "clean-plugins"
+else
+	reset-database
+fi

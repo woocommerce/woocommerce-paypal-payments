@@ -13,6 +13,7 @@ use Exception;
 use WC_AJAX;
 use WC_Order;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
+use WooCommerce\PayPalCommerce\Assets\AssetGetter;
 use WooCommerce\PayPalCommerce\WcGateway\Endpoint\VoidOrderEndpoint;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\RefundProcessor;
@@ -22,13 +23,7 @@ use WP_Screen;
  * Class VoidButtonAssets
  */
 class VoidButtonAssets {
-
-	/**
-	 * The URL of this module.
-	 *
-	 * @var string
-	 */
-	private $module_url;
+	private AssetGetter $asset_getter;
 
 	/**
 	 * The assets version.
@@ -52,20 +47,18 @@ class VoidButtonAssets {
 	private $refund_processor;
 
 	/**
-	 * VoidButtonAssets constructor.
-	 *
-	 * @param string          $module_url The url of this module.
+	 * @param AssetGetter     $asset_getter
 	 * @param string          $version The assets version.
 	 * @param OrderEndpoint   $order_endpoint The order endpoint.
 	 * @param RefundProcessor $refund_processor The Refund Processor.
 	 */
 	public function __construct(
-		string $module_url,
+		AssetGetter $asset_getter,
 		string $version,
 		OrderEndpoint $order_endpoint,
 		RefundProcessor $refund_processor
 	) {
-		$this->module_url       = $module_url;
+		$this->asset_getter     = $asset_getter;
 		$this->version          = $version;
 		$this->order_endpoint   = $order_endpoint;
 		$this->refund_processor = $refund_processor;
@@ -103,13 +96,8 @@ class VoidButtonAssets {
 			return false;
 		}
 
-		$order_id = $theorder->get_meta( PayPalGateway::ORDER_ID_META_KEY );
-		if ( ! $order_id ) {
-			return false;
-		}
-
 		try {
-			$order = $this->order_endpoint->order( $order_id );
+			$order = $this->order_endpoint->order( $theorder );
 
 			if ( $this->refund_processor->determine_refund_mode( $order ) !== RefundProcessor::REFUND_MODE_VOID ) {
 				return false;
@@ -130,7 +118,7 @@ class VoidButtonAssets {
 
 		wp_enqueue_script(
 			'ppcp-void-button',
-			trailingslashit( $this->module_url ) . 'assets/js/void-button.js',
+			$this->asset_getter->get_asset_url( 'void-button.js' ),
 			array(),
 			$this->version,
 			true

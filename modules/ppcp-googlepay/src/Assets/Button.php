@@ -10,15 +10,15 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\Googlepay\Assets;
 
 use Exception;
-use Psr\Log\LoggerInterface;
 use WC_Countries;
+use WC_Product;
+use WooCommerce\PayPalCommerce\Assets\AssetGetter;
 use WooCommerce\PayPalCommerce\Button\Assets\ButtonInterface;
-use WooCommerce\PayPalCommerce\Button\Helper\ContextTrait;
+use WooCommerce\PayPalCommerce\Button\Helper\Context;
 use WooCommerce\PayPalCommerce\Googlepay\Endpoint\UpdatePaymentDataEndpoint;
 use WooCommerce\PayPalCommerce\Googlepay\GooglePayGateway;
 use WooCommerce\PayPalCommerce\Settings\Data\SettingsModel;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
-use WooCommerce\PayPalCommerce\Session\SessionHandler;
 use WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\SettingsStatus;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
@@ -29,14 +29,14 @@ use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
  */
 class Button implements ButtonInterface {
 
-	use ContextTrait;
-
 	/**
-	 * The URL to the module.
+	 * Context data provider.
 	 *
-	 * @var string
+	 * @var Context $context
 	 */
-	private $module_url;
+	private Context $context;
+
+	private AssetGetter $asset_getter;
 
 	/**
 	 * The URL to the SDK.
@@ -74,20 +74,6 @@ class Button implements ButtonInterface {
 	private $settings_status;
 
 	/**
-	 * The logger.
-	 *
-	 * @var LoggerInterface
-	 */
-	private $logger;
-
-	/**
-	 * Session handler.
-	 *
-	 * @var SessionHandler
-	 */
-	private $session_handler;
-
-	/**
 	 * The Subscription Helper.
 	 *
 	 * @var SubscriptionHelper
@@ -100,42 +86,36 @@ class Button implements ButtonInterface {
 	private ?SettingsModel $new_settings;
 
 	/**
-	 * SmartButton constructor.
-	 *
-	 * @param string             $module_url The URL to the module.
+	 * @param AssetGetter        $asset_getter
 	 * @param string             $sdk_url The URL to the SDK.
 	 * @param string             $version The assets version.
-	 * @param SessionHandler     $session_handler The Session handler.
 	 * @param SubscriptionHelper $subscription_helper The subscription helper.
 	 * @param Settings           $settings The legacy settings.
 	 * @param Environment        $environment The environment object.
 	 * @param SettingsStatus     $settings_status The Settings status helper.
-	 * @param LoggerInterface    $logger The logger.
+	 * @param Context            $context Context data provider.
 	 * @param SettingsModel|null $new_settings The new settings model.
 	 */
 	public function __construct(
-		string $module_url,
+		AssetGetter $asset_getter,
 		string $sdk_url,
 		string $version,
-		SessionHandler $session_handler,
 		SubscriptionHelper $subscription_helper,
 		Settings $settings,
 		Environment $environment,
 		SettingsStatus $settings_status,
-		LoggerInterface $logger,
-		SettingsModel $new_settings = null
+		Context $context,
+		?SettingsModel $new_settings = null
 	) {
-
-		$this->module_url          = $module_url;
+		$this->asset_getter        = $asset_getter;
 		$this->sdk_url             = $sdk_url;
 		$this->version             = $version;
-		$this->session_handler     = $session_handler;
 		$this->subscription_helper = $subscription_helper;
 		$this->settings            = $settings;
 		$this->environment         = $environment;
 		$this->settings_status     = $settings_status;
-		$this->logger              = $logger;
 		$this->new_settings        = $new_settings;
+		$this->context             = $context;
 	}
 
 	/**
@@ -307,7 +287,7 @@ class Button implements ButtonInterface {
 			);
 		}
 
-		if ( $button_enabled_checkout ) {
+		if ( $button_enabled_checkout ) { // @phpstan-ignore if.alwaysTrue
 			$default_hook_name  = 'woocommerce_paypal_payments_checkout_button_render';
 			$render_placeholder = apply_filters( 'woocommerce_paypal_payments_googlepay_checkout_button_render_hook', $default_hook_name );
 			$render_placeholder = is_string( $render_placeholder ) ? $render_placeholder : $default_hook_name;
@@ -321,7 +301,7 @@ class Button implements ButtonInterface {
 			);
 		}
 
-		if ( $button_enabled_payorder ) {
+		if ( $button_enabled_payorder ) { // @phpstan-ignore if.alwaysTrue
 			$default_hook_name  = 'woocommerce_paypal_payments_payorder_button_render';
 			$render_placeholder = apply_filters( 'woocommerce_paypal_payments_googlepay_payorder_button_render_hook', $default_hook_name );
 			$render_placeholder = is_string( $render_placeholder ) ? $render_placeholder : $default_hook_name;
@@ -389,7 +369,7 @@ class Button implements ButtonInterface {
 
 		wp_register_script(
 			'wc-ppcp-googlepay',
-			untrailingslashit( $this->module_url ) . '/assets/js/boot.js',
+			$this->asset_getter->get_asset_url( 'boot.js' ),
 			array(),
 			$this->version,
 			true
@@ -415,7 +395,7 @@ class Button implements ButtonInterface {
 
 		wp_register_style(
 			'wc-ppcp-googlepay',
-			untrailingslashit( $this->module_url ) . '/assets/css/styles.css',
+			$this->asset_getter->get_asset_url( 'styles.css' ),
 			array(),
 			$this->version
 		);
@@ -428,7 +408,7 @@ class Button implements ButtonInterface {
 	public function enqueue_admin(): void {
 		wp_register_style(
 			'wc-ppcp-googlepay-admin',
-			untrailingslashit( $this->module_url ) . '/assets/css/styles.css',
+			$this->asset_getter->get_asset_url( 'styles.css' ),
 			array(),
 			$this->version
 		);
@@ -436,7 +416,7 @@ class Button implements ButtonInterface {
 
 		wp_register_script(
 			'wc-ppcp-googlepay-admin',
-			untrailingslashit( $this->module_url ) . '/assets/js/boot-admin.js',
+			$this->asset_getter->get_asset_url( 'boot-admin.js' ),
 			array(),
 			$this->version,
 			true
@@ -459,16 +439,6 @@ class Button implements ButtonInterface {
 	public function script_data(): array {
 		$use_shipping_form = $this->should_use_shipping();
 
-		// On the product page, only show the shipping form for physical products.
-		$context = $this->context();
-		if ( $use_shipping_form && 'product' === $context ) {
-			$product = wc_get_product();
-
-			if ( ! $product || $product->is_downloadable() || $product->is_virtual() ) {
-				$use_shipping_form = false;
-			}
-		}
-
 		$shipping = array(
 			'enabled'    => $use_shipping_form,
 			'configured' => wc_shipping_enabled() && wc_get_shipping_method_count( false, true ) > 0,
@@ -484,8 +454,8 @@ class Button implements ButtonInterface {
 		$is_wc_gateway_enabled = isset( $available_gateways[ GooglePayGateway::ID ] );
 
 		return array(
-			'environment'           => $this->environment->current_environment_is( Environment::SANDBOX ) ? 'TEST' : 'PRODUCTION',
-			'is_debug'              => defined( 'WP_DEBUG' ) && WP_DEBUG,
+			'environment'           => $this->environment->is_sandbox() ? 'TEST' : 'PRODUCTION',
+			'is_debug'              => defined( 'WP_DEBUG' ) && WP_DEBUG, // @phpstan-ignore booleanAnd.rightAlwaysFalse
 			'is_enabled'            => $is_enabled,
 			'is_wc_gateway_enabled' => $is_wc_gateway_enabled,
 			'sdk_url'               => $this->sdk_url,
@@ -542,18 +512,25 @@ class Button implements ButtonInterface {
 		return new WC_Countries();
 	}
 
-	/**
-	 * Check if new settings model exist and if so check enable pay now setting,
-	 * if none of the above is true, check legacy settings for shipping enabled.
-	 *
-	 * @return bool Whether shipping should be used or not.
-	 * @throws NotFoundException If the settings are not found.
-	 */
 	private function should_use_shipping(): bool {
-		if ( ! is_null( $this->new_settings ) && $this->new_settings->get_enable_pay_now() === true ) {
-			return true;
+		// Check if Pay Now is enabled in the new setting model, or if no new model, then check the legacy settings.
+		if ( is_null( $this->new_settings ) ) {
+			if ( ! $this->settings->has( 'googlepay_button_shipping_enabled' ) || ! $this->settings->get( 'googlepay_button_shipping_enabled' ) ) {
+				return false;
+			}
+		} elseif ( ! $this->new_settings->get_enable_pay_now() ) {
+			return false;
 		}
 
-		return $this->settings->has( 'googlepay_button_shipping_enabled' ) && $this->settings->get( 'googlepay_button_shipping_enabled' );
+		$context = $this->context->context();
+		// On the product page, only show shipping if a physical product.
+		if ( 'product' === $context ) {
+			$product = wc_get_product();
+
+			return $product instanceof WC_Product && ! $product->is_downloadable() && ! $product->is_virtual();
+		}
+
+		// On other pages, just check the cart.
+		return ! is_null( WC()->cart ) && WC()->cart->needs_shipping();
 	}
 }

@@ -1,18 +1,18 @@
 import { __ } from '@wordpress/i18n';
 import { Button } from '@wordpress/components';
 
-import PaymentMethodIcons from '../../../ReusableComponents/PaymentMethodIcons';
-import { Separator } from '../../../ReusableComponents/Elements';
-import Accordion from '../../../ReusableComponents/AccordionSection';
-import { CommonHooks, OnboardingHooks } from '../../../../data';
-import BusyStateWrapper from '../../../ReusableComponents/BusyStateWrapper';
-import HelpSection from '../../../ReusableComponents/HelpSection';
+import PaymentMethodIcons from '@ppcp-settings/Components/ReusableComponents/PaymentMethodIcons';
+import { Separator } from '@ppcp-settings/Components/ReusableComponents/Elements';
+import Accordion from '@ppcp-settings/Components/ReusableComponents/AccordionSection';
+import { CommonHooks, OnboardingHooks } from '@ppcp-settings/data';
+import BusyStateWrapper from '@ppcp-settings/Components/ReusableComponents/BusyStateWrapper';
+import HelpSection from '@ppcp-settings/Components/ReusableComponents/HelpSection';
 import OnboardingHeader from '../Components/OnboardingHeader';
 import WelcomeDocs from '../Components/WelcomeDocs';
 import AdvancedOptionsForm from '../Components/AdvancedOptionsForm';
 import { usePaymentConfig } from '../hooks/usePaymentConfig';
 
-const StepWelcome = ( { setStep, currentStep } ) => {
+const StepWelcome = ( { onNext } ) => {
 	const { storeCountry, ownBrandOnly } = CommonHooks.useWooSettings();
 	const { canUseCardPayments, canUseFastlane } = OnboardingHooks.useFlags();
 
@@ -33,11 +33,6 @@ const StepWelcome = ( { setStep, currentStep } ) => {
 					'Your all-in-one integration for PayPal checkout solutions that enable buyers to pay via PayPal, Pay Later, and more.',
 					'woocommerce-paypal-payments'
 			  );
-
-	const handleActivatePayPal = () => {
-		const nextStep = currentStep + 1;
-		setStep( nextStep, 'user' );
-	};
 
 	return (
 		<div className="ppcp-r-page-welcome">
@@ -61,7 +56,7 @@ const StepWelcome = ( { setStep, currentStep } ) => {
 					<Button
 						className="ppcp-r-button-activate-paypal"
 						variant="primary"
-						onClick={ handleActivatePayPal }
+						onClick={ onNext }
 					>
 						{ __(
 							'Activate PayPal Payments',

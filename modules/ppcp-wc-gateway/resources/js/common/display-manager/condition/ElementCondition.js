@@ -1,5 +1,5 @@
 import BaseCondition from './BaseCondition';
-import { inputValue } from '../../../helper/form';
+import { inputValue } from '@ppcp-wc-gateway/helper/form';
 
 class ElementCondition extends BaseCondition {
 	register() {

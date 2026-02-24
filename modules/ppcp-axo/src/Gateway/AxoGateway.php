@@ -68,13 +68,6 @@ class AxoGateway extends WC_Payment_Gateway {
 	protected CardPaymentsConfiguration $dcc_configuration;
 
 	/**
-	 * The WcGateway module URL.
-	 *
-	 * @var string
-	 */
-	protected $wcgateway_module_url;
-
-	/**
 	 * The processor for orders.
 	 *
 	 * @var OrderProcessor
@@ -152,12 +145,9 @@ class AxoGateway extends WC_Payment_Gateway {
 	protected $settings_model;
 
 	/**
-	 * AXOGateway constructor.
-	 *
 	 * @param SettingsRenderer          $settings_renderer           The settings renderer.
 	 * @param ContainerInterface        $ppcp_settings               The settings.
 	 * @param CardPaymentsConfiguration $dcc_configuration           The DCC Gateway configuration.
-	 * @param string                    $wcgateway_module_url        The WcGateway module URL.
 	 * @param SessionHandler            $session_handler             The Session Handler.
 	 * @param OrderProcessor            $order_processor             The Order processor.
 	 * @param array                     $card_icons                  The card icons.
@@ -174,7 +164,6 @@ class AxoGateway extends WC_Payment_Gateway {
 		SettingsRenderer $settings_renderer,
 		ContainerInterface $ppcp_settings,
 		CardPaymentsConfiguration $dcc_configuration,
-		string $wcgateway_module_url,
 		SessionHandler $session_handler,
 		OrderProcessor $order_processor,
 		array $card_icons,
@@ -192,7 +181,6 @@ class AxoGateway extends WC_Payment_Gateway {
 		$this->settings_renderer          = $settings_renderer;
 		$this->ppcp_settings              = $ppcp_settings;
 		$this->dcc_configuration          = $dcc_configuration;
-		$this->wcgateway_module_url       = $wcgateway_module_url;
 		$this->session_handler            = $session_handler;
 		$this->order_processor            = $order_processor;
 		$this->card_icons                 = $card_icons;
@@ -207,8 +195,10 @@ class AxoGateway extends WC_Payment_Gateway {
 			$this->update_option( 'enabled', $is_axo_enabled ? 'yes' : 'no' );
 		}
 
+		$description = $this->get_option( 'description', __( 'Enter your email address above to continue.', 'woocommerce-paypal-payments' ) );
+
 		$this->title       = apply_filters( 'woocommerce_paypal_payments_axo_gateway_title', $this->dcc_configuration->gateway_title( $this->get_option( 'title', $this->method_title ) ), $this );
-		$this->description = apply_filters( 'woocommerce_paypal_payments_axo_gateway_description', __( 'Enter your email address above to continue.', 'woocommerce-paypal-payments' ), $this );
+		$this->description = apply_filters( 'woocommerce_paypal_payments_axo_gateway_description', $description, $this );
 
 		$this->init_form_fields();
 		$this->init_settings();
@@ -259,7 +249,7 @@ class AxoGateway extends WC_Payment_Gateway {
 	public function process_payment( $order_id ) {
 		$wc_order = wc_get_order( $order_id );
 
-		if ( ! is_a( $wc_order, WC_Order::class ) ) {
+		if ( ! ( $wc_order instanceof WC_Order ) ) {
 			return $this->handle_payment_failure(
 				null,
 				new GatewayGenericException( new Exception( 'WC order was not found.' ) ),
@@ -472,8 +462,7 @@ class AxoGateway extends WC_Payment_Gateway {
 			null,
 			self::ID,
 			$this->build_order_data(),
-			$payment_source,
-			$wc_order
+			$payment_source
 		);
 	}
 

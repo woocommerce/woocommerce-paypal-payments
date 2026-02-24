@@ -1,7 +1,7 @@
 name: woocommerce-paypal-payments
 type: php
 docroot: .ddev/wordpress
-php_version: "7.4"
+php_version: "8.0"
 webserver_type: apache-fpm
 router_http_port: "80"
 router_https_port: "443"
@@ -19,15 +19,15 @@ hooks:
   pre-start:
     - exec-host: "mkdir -p .ddev/wordpress/wp-content/plugins/${DDEV_PROJECT}"
 web_environment:
-  - WP_VERSION=6.7.1
+  - WP_VERSION=6.8.2
   - WP_LOCALE=en_US
   - WP_TITLE=WooCommerce PayPal Payments
-  - WP_MULTISITE=true
+  - WP_MULTISITE=false
   - WP_MULTISITE_SLUGS=de,es
   - ADMIN_USER=admin
   - ADMIN_PASS=admin
   - ADMIN_EMAIL=admin@example.com
-  - WC_VERSION=9.5.1
+  - WC_VERSION=10.1.2
 
 # Key features of ddev's config.yaml:
 

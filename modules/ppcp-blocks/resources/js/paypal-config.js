@@ -2,7 +2,7 @@ import {
 	paypalOrderToWcAddresses,
 	paypalSubscriptionToWcAddresses,
 } from './Helper/Address';
-import ResumeFlowHelper from '../../../ppcp-button/resources/js/modules/Helper/ResumeFlowHelper';
+import { shouldEnableAppSwitch } from './Components/paypal';
 
 export const createOrder = async ( data, config, onError, onClose ) => {
 	try {
@@ -64,13 +64,16 @@ export const handleApprove = async (
 	setGotoContinuationOnError,
 	onSubmit,
 	onError,
-	onClose
+	onClose,
+	setIsFullPageSpinnerActive
 ) => {
+	setIsFullPageSpinnerActive( true );
+
 	try {
 		let order;
 
 		// actions.order.get is not available on the AppSwitch flow.
-		if ( ! ResumeFlowHelper.isResumeFlow() ) {
+		if ( ! shouldEnableAppSwitch( config ) ) {
 			order = await actions.order.get();
 		} else {
 			const res = await fetch(
@@ -167,6 +170,8 @@ export const handleApprove = async (
 		}
 	} catch ( err ) {
 		console.error( err );
+
+		setIsFullPageSpinnerActive( false );
 
 		onError( err.message );
 

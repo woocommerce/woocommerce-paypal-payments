@@ -46,13 +46,13 @@ class SellerStatus {
 	 */
 	public function __construct( array $products, array $capabilities, string $country = '' ) {
 		foreach ( $products as $key => $product ) {
-			if ( is_a( $product, SellerStatusProduct::class ) ) {
+			if ( $product instanceof SellerStatusProduct ) {
 				continue;
 			}
 			unset( $products[ $key ] );
 		}
 		foreach ( $capabilities as $key => $capability ) {
-			if ( is_a( $capability, SellerStatusCapability::class ) ) {
+			if ( $capability instanceof SellerStatusCapability ) {
 				continue;
 			}
 			unset( $capabilities[ $key ] );

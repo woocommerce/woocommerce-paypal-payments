@@ -11,18 +11,14 @@ namespace WooCommerce\PayPalCommerce\Applepay\Assets;
 
 use Automattic\WooCommerce\Blocks\Payments\Integrations\AbstractPaymentMethodType;
 use Automattic\WooCommerce\Blocks\Payments\PaymentMethodTypeInterface;
+use WooCommerce\PayPalCommerce\Assets\AssetGetter;
 use WooCommerce\PayPalCommerce\Button\Assets\ButtonInterface;
 
 /**
  * Class BlocksPaymentMethod
  */
 class BlocksPaymentMethod extends AbstractPaymentMethodType {
-	/**
-	 * The URL of this module.
-	 *
-	 * @var string
-	 */
-	private $module_url;
+	private AssetGetter $asset_getter;
 
 	/**
 	 * The assets version.
@@ -49,20 +45,20 @@ class BlocksPaymentMethod extends AbstractPaymentMethodType {
 	 * Assets constructor.
 	 *
 	 * @param string                     $name The name of this module.
-	 * @param string                     $module_url The url of this module.
+	 * @param AssetGetter                $asset_getter
 	 * @param string                     $version The assets version.
 	 * @param ButtonInterface            $button The button.
 	 * @param PaymentMethodTypeInterface $paypal_payment_method The paypal payment method.
 	 */
 	public function __construct(
 		string $name,
-		string $module_url,
+		AssetGetter $asset_getter,
 		string $version,
 		ButtonInterface $button,
 		PaymentMethodTypeInterface $paypal_payment_method
 	) {
 		$this->name                  = $name;
-		$this->module_url            = $module_url;
+		$this->asset_getter          = $asset_getter;
 		$this->version               = $version;
 		$this->button                = $button;
 		$this->paypal_payment_method = $paypal_payment_method;
@@ -88,7 +84,7 @@ class BlocksPaymentMethod extends AbstractPaymentMethodType {
 
 		wp_register_script(
 			$handle,
-			trailingslashit( $this->module_url ) . 'assets/js/boot-block.js',
+			$this->asset_getter->get_asset_url( 'boot-block.js' ),
 			array(),
 			$this->version,
 			true
@@ -104,7 +100,7 @@ class BlocksPaymentMethod extends AbstractPaymentMethodType {
 		$paypal_data = $this->paypal_payment_method->get_payment_method_data();
 
 		if ( is_admin() ) {
-			$script_data = $this->button->script_data_for_admin();
+			$script_data = $this->button->script_data_for_admin(); // @phpstan-ignore method.notFound
 		} else {
 			$script_data = $this->button->script_data();
 		}

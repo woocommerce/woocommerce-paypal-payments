@@ -16,6 +16,16 @@ class ReturnUrlFactoryTest extends TestCase
     {
         parent::setUp();
         $this->testee = new ReturnUrlFactory();
+
+		when('add_query_arg')->alias(function (array $args, string $url): string {
+			$query_parts = [];
+			foreach ($args as $key => $value) {
+				$query_parts[] = $key . '=' . $value;
+			}
+			return $url .
+				(strpos($url, '?') === false ? '?' : '&') .
+				implode('&', $query_parts);
+		});
     }
 
 	/**

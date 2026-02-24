@@ -21,12 +21,12 @@ use WooCommerce\PayPalCommerce\ApiClient\Endpoint\CatalogProducts;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\IdentityToken;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\LoginSeller;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
+use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpointCached;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\Orders;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PartnerReferrals;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PartnersEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PaymentMethodTokensEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PaymentsEndpoint;
-use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PaymentTokenEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PaymentTokensEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\WebhookEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\AddressFactory;
@@ -54,16 +54,15 @@ use WooCommerce\PayPalCommerce\ApiClient\Factory\ProductFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PurchaseUnitFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\RefundFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\RefundPayerFactory;
+use WooCommerce\PayPalCommerce\ApiClient\Factory\ReturnUrlFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\SellerPayableBreakdownFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\SellerReceivableBreakdownFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\SellerStatusFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\ShippingFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\ShippingOptionFactory;
-use WooCommerce\PayPalCommerce\ApiClient\Factory\ReturnUrlFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\ShippingPreferenceFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\WebhookEventFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\WebhookFactory;
-use WooCommerce\PayPalCommerce\ApiClient\Helper\ReferenceTransactionStatus;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\Cache;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\CurrencyGetter;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\DccApplies;
@@ -71,11 +70,15 @@ use WooCommerce\PayPalCommerce\ApiClient\Helper\FailureRegistry;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\OrderHelper;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\OrderTransient;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\PartnerAttribution;
+use WooCommerce\PayPalCommerce\ApiClient\Helper\PaymentLevelEligibility;
+use WooCommerce\PayPalCommerce\ApiClient\Helper\PaymentLevelHelper;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\PurchaseUnitSanitizer;
+use WooCommerce\PayPalCommerce\ApiClient\Helper\ReferenceTransactionStatus;
 use WooCommerce\PayPalCommerce\ApiClient\Repository\CustomerRepository;
 use WooCommerce\PayPalCommerce\ApiClient\Repository\OrderRepository;
 use WooCommerce\PayPalCommerce\ApiClient\Repository\PartnerReferralsData;
 use WooCommerce\PayPalCommerce\ApiClient\Repository\PayeeRepository;
+use WooCommerce\PayPalCommerce\ApiClient\VaultV2\PaymentTokenEndpoint;
 use WooCommerce\PayPalCommerce\Common\Pattern\SingletonDecorator;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
 use WooCommerce\PayPalCommerce\Settings\Data\SettingsModel;
@@ -156,7 +159,7 @@ return array(
 	'api.factory.sellerstatus'                       => static function ( ContainerInterface $container ): SellerStatusFactory {
 		return new SellerStatusFactory();
 	},
-	'api.endpoint.payment-token'                     => static function ( ContainerInterface $container ): PaymentTokenEndpoint {
+	'vault-v2.endpoint.payment-token'                => static function ( ContainerInterface $container ): PaymentTokenEndpoint {
 		return new PaymentTokenEndpoint(
 			$container->get( 'api.host' ),
 			$container->get( 'api.bearer' ),
@@ -242,10 +245,6 @@ return array(
 		);
 	},
 	'api.endpoint.order'                             => static function ( ContainerInterface $container ): OrderEndpoint {
-		$order_factory            = $container->get( 'api.factory.order' );
-		$patch_collection_factory = $container->get( 'api.factory.patch-collection-factory' );
-		$logger                   = $container->get( 'woocommerce.logger.woocommerce' );
-
 		$session_handler = $container->get( 'session.handler' );
 		assert( $session_handler instanceof SessionHandler );
 		$bn_code         = $session_handler->bn_code();
@@ -253,16 +252,39 @@ return array(
 		$settings = $container->get( 'wcgateway.settings' );
 		assert( $settings instanceof Settings );
 
-		$intent                         = $settings->has( 'intent' ) && strtoupper( (string) $settings->get( 'intent' ) ) === 'AUTHORIZE' ? 'AUTHORIZE' : 'CAPTURE';
-		$subscription_helper = $container->get( 'wc-subscriptions.helper' );
+		$intent = $settings->has( 'intent' ) && strtoupper( (string) $settings->get( 'intent' ) ) === 'AUTHORIZE' ? 'AUTHORIZE' : 'CAPTURE';
+
 		return new OrderEndpoint(
 			$container->get( 'api.host' ),
 			$container->get( 'api.bearer' ),
-			$order_factory,
-			$patch_collection_factory,
+			$container->get( 'api.factory.order' ),
+			$container->get( 'api.factory.patch-collection-factory' ),
 			$intent,
-			$logger,
-			$subscription_helper,
+			$container->get( 'woocommerce.logger.woocommerce' ),
+			$container->get( 'wc-subscriptions.helper' ),
+			$container->get( 'wcgateway.is-fraudnet-enabled' ),
+			$container->get( 'wcgateway.fraudnet' ),
+			$bn_code
+		);
+	},
+	'api.endpoint.order.cached'                      => static function ( ContainerInterface $container ): OrderEndpointCached {
+		$session_handler = $container->get( 'session.handler' );
+		assert( $session_handler instanceof SessionHandler );
+		$bn_code         = $session_handler->bn_code();
+
+		$settings = $container->get( 'wcgateway.settings' );
+		assert( $settings instanceof Settings );
+
+		$intent = $settings->has( 'intent' ) && strtoupper( (string) $settings->get( 'intent' ) ) === 'AUTHORIZE' ? 'AUTHORIZE' : 'CAPTURE';
+
+		return new OrderEndpointCached(
+			$container->get( 'api.host' ),
+			$container->get( 'api.bearer' ),
+			$container->get( 'api.factory.order' ),
+			$container->get( 'api.factory.patch-collection-factory' ),
+			$intent,
+			$container->get( 'woocommerce.logger.woocommerce' ),
+			$container->get( 'wc-subscriptions.helper' ),
 			$container->get( 'wcgateway.is-fraudnet-enabled' ),
 			$container->get( 'wcgateway.fraudnet' ),
 			$bn_code
@@ -291,7 +313,6 @@ return array(
 		return new BillingPlans(
 			$container->get( 'api.host' ),
 			$container->get( 'api.bearer' ),
-			$container->get( 'api.factory.billing-cycle' ),
 			$container->get( 'api.factory.plan' ),
 			$container->get( 'woocommerce.logger.woocommerce' )
 		);
@@ -389,6 +410,9 @@ return array(
 			$item_factory,
 			$shipping_factory,
 			$payments_factory,
+			$container->get( 'api.helpers.paymentLevelHelper' ),
+			$container->get( 'api.helpers.paymentLevelEligibility' ),
+			$container->get( 'settings.settings-provider' ),
 			$prefix,
 			$soft_descriptor,
 			$sanitizer
@@ -508,7 +532,7 @@ return array(
 			$container->get( 'api.dcc-supported-country-currency-matrix' ),
 			$container->get( 'api.dcc-supported-country-card-matrix' ),
 			$container->get( 'api.shop.currency.getter' ),
-			$container->get( 'api.shop.country' )
+			$container->get( 'api.merchant.country' )
 		);
 	},
 
@@ -825,19 +849,20 @@ return array(
 			'SE',
 		);
 	},
-
 	'api.paylater-countries'                         => static function ( ContainerInterface $container ): array {
+		$default_countries = array(
+			'US',
+			'DE',
+			'GB',
+			'FR',
+			'AU',
+			'IT',
+			'ES',
+			'CA',
+		);
 		return apply_filters(
 			'woocommerce_paypal_payments_supported_paylater_countries',
-			array(
-				'US',
-				'DE',
-				'GB',
-				'FR',
-				'AU',
-				'IT',
-				'ES',
-			)
+			$default_countries
 		);
 	},
 	'api.order-helper'                               => static function ( ContainerInterface $container ): OrderHelper {
@@ -989,6 +1014,24 @@ return array(
 				InstallationPathEnum::PAYMENT_SETTINGS => 'WooPPCP_Ecom_PS_CoreProfiler',
 			),
 			PPCP_PAYPAL_BN_CODE
+		);
+	},
+	/**
+	 * If connected, return the PayPal Onboarded merchant country.
+	 * Fallback to WooCommerce Store Country otherwise.
+	 */
+	'api.merchant.country'                           => static function ( ContainerInterface $container ): string {
+		return $container->get( 'settings.flag.is-connected' )
+			? $container->get( 'settings.data.general' )->get_merchant_country()
+			: $container->get( 'api.shop.country' );
+	},
+	'api.helpers.paymentLevelHelper'                 => static function ( ContainerInterface $container ): PaymentLevelHelper {
+		return new PaymentLevelHelper( $container->get( 'settings.settings-provider' ) );
+	},
+	'api.helpers.paymentLevelEligibility'            => static function ( ContainerInterface $container ): PaymentLevelEligibility {
+		return new PaymentLevelEligibility(
+			$container->get( 'api.merchant.country' ),
+			$container->get( 'api.shop.currency.getter' )
 		);
 	},
 );

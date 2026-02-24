@@ -90,6 +90,13 @@ class SettingsRenderer {
 	protected $page_id;
 
 	/**
+	 * A callable property used to check the eligibility for Fastlane.
+	 *
+	 * @var callable
+	 */
+	private $axo_eligibility_check;
+
+	/**
 	 * SettingsRenderer constructor.
 	 *
 	 * @param ContainerInterface $settings The Settings.
@@ -111,20 +118,22 @@ class SettingsRenderer {
 		DCCProductStatus $dcc_product_status,
 		SettingsStatus $settings_status,
 		string $page_id,
-		string $api_shop_country
+		string $api_shop_country,
+		callable $axo_eligibility_check
 	) {
 
 		// This is a legacy settings class, it's correctly relying on the `Status` class.
 
-		$this->settings           = $settings;
-		$this->state              = $state;
-		$this->fields             = $fields;
-		$this->dcc_applies        = $dcc_applies;
-		$this->messages_apply     = $messages_apply;
-		$this->dcc_product_status = $dcc_product_status;
-		$this->settings_status    = $settings_status;
-		$this->page_id            = $page_id;
-		$this->api_shop_country   = $api_shop_country;
+		$this->settings              = $settings;
+		$this->state                 = $state;
+		$this->fields                = $fields;
+		$this->dcc_applies           = $dcc_applies;
+		$this->messages_apply        = $messages_apply;
+		$this->dcc_product_status    = $dcc_product_status;
+		$this->settings_status       = $settings_status;
+		$this->page_id               = $page_id;
+		$this->api_shop_country      = $api_shop_country;
+		$this->axo_eligibility_check = $axo_eligibility_check;
 	}
 
 	/**
@@ -157,30 +166,12 @@ class SettingsRenderer {
 	}
 
 	/**
-	 * Check whether vaulting is enabled.
-	 *
-	 * @return bool
-	 */
-	private function paypal_vaulting_is_enabled(): bool {
-		return $this->settings->has( 'vault_enabled' ) && (bool) $this->settings->get( 'vault_enabled' );
-	}
-
-	/**
-	 * Check if current screen is Standard Payments settings screen.
-	 *
-	 * @return bool Whether is Standard Payments screen or not.
-	 */
-	private function is_paypal_checkout_screen(): bool {
-		return PayPalGateway::ID === $this->page_id;
-	}
-
-	/**
 	 * Renders the multiselect field.
 	 *
 	 * @param string $field The current field HTML.
 	 * @param string $key   The current key.
 	 * @param array  $config The configuration array.
-	 * @param string $value The current value.
+	 * @param array  $value The current selected values.
 	 *
 	 * @return string
 	 */
@@ -398,7 +389,7 @@ $data_rows_html
 			}
 			if (
 				in_array( 'axo', $config['requirements'], true )
-				&& $this->api_shop_country !== 'US'
+				&& ! ( $this->axo_eligibility_check )()
 			) {
 				continue;
 			}

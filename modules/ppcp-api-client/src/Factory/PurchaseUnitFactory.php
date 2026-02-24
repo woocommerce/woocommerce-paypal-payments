@@ -13,7 +13,10 @@ use WC_Session_Handler;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Item;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PurchaseUnit;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
+use WooCommerce\PayPalCommerce\ApiClient\Helper\PaymentLevelEligibility;
+use WooCommerce\PayPalCommerce\ApiClient\Helper\PaymentLevelHelper;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\PurchaseUnitSanitizer;
+use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
 use WooCommerce\PayPalCommerce\Webhooks\CustomIds;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Address;
 
@@ -50,6 +53,12 @@ class PurchaseUnitFactory {
 	 */
 	private $payments_factory;
 
+	protected PaymentLevelHelper $payment_level_helper;
+
+	protected PaymentLevelEligibility $payment_level_eligibility;
+
+	protected SettingsProvider $settings;
+
 	/**
 	 * The Prefix.
 	 *
@@ -71,34 +80,29 @@ class PurchaseUnitFactory {
 	 */
 	private $sanitizer;
 
-	/**
-	 * PurchaseUnitFactory constructor.
-	 *
-	 * @param AmountFactory          $amount_factory The amount factory.
-	 * @param ItemFactory            $item_factory The item factory.
-	 * @param ShippingFactory        $shipping_factory The shipping factory.
-	 * @param PaymentsFactory        $payments_factory The payments factory.
-	 * @param string                 $prefix The prefix.
-	 * @param string                 $soft_descriptor The soft descriptor.
-	 * @param ?PurchaseUnitSanitizer $sanitizer The purchase unit to_array sanitizer.
-	 */
 	public function __construct(
 		AmountFactory $amount_factory,
 		ItemFactory $item_factory,
 		ShippingFactory $shipping_factory,
 		PaymentsFactory $payments_factory,
+		PaymentLevelHelper $payment_level_helper,
+		PaymentLevelEligibility $payment_level_eligibility,
+		SettingsProvider $settings,
 		string $prefix = 'WC-',
 		string $soft_descriptor = '',
 		?PurchaseUnitSanitizer $sanitizer = null
 	) {
 
-		$this->amount_factory   = $amount_factory;
-		$this->item_factory     = $item_factory;
-		$this->shipping_factory = $shipping_factory;
-		$this->payments_factory = $payments_factory;
-		$this->prefix           = $prefix;
-		$this->soft_descriptor  = $soft_descriptor;
-		$this->sanitizer        = $sanitizer;
+		$this->amount_factory            = $amount_factory;
+		$this->item_factory              = $item_factory;
+		$this->shipping_factory          = $shipping_factory;
+		$this->payments_factory          = $payments_factory;
+		$this->payment_level_helper      = $payment_level_helper;
+		$this->payment_level_eligibility = $payment_level_eligibility;
+		$this->settings                  = $settings;
+		$this->prefix                    = $prefix;
+		$this->soft_descriptor           = $soft_descriptor;
+		$this->sanitizer                 = $sanitizer;
 	}
 
 	/**
@@ -108,7 +112,7 @@ class PurchaseUnitFactory {
 	 *
 	 * @return PurchaseUnit
 	 */
-	public function from_wc_order( \WC_Order $order ): PurchaseUnit {
+	public function from_wc_order( \WC_Order $order, string $payment_method = '' ): PurchaseUnit {
 		$amount = $this->amount_factory->from_wc_order( $order );
 		$items  = array_filter(
 			$this->item_factory->from_wc_order( $order ),
@@ -128,6 +132,12 @@ class PurchaseUnitFactory {
 		$custom_id       = (string) $order->get_id();
 		$invoice_id      = $this->prefix . $order->get_order_number();
 		$soft_descriptor = $this->sanitize_soft_descriptor( $this->soft_descriptor );
+		$payment_level   = null;
+		$payment_method  = ! empty( $payment_method ) ? $payment_method : $order->get_payment_method();
+
+		if ( $this->payment_level_eligibility->is_eligible( $payment_method ) && $this->settings->is_payment_level_processing_enabled() ) {
+			$payment_level = $this->payment_level_helper->build( $amount, $items, $shipping );
+		}
 
 		$purchase_unit = new PurchaseUnit(
 			$amount,
@@ -137,7 +147,9 @@ class PurchaseUnitFactory {
 			$description,
 			$custom_id,
 			$invoice_id,
-			$soft_descriptor
+			$soft_descriptor,
+			null,
+			$payment_level['supplementary_data'] ?? null
 		);
 
 		$this->init_purchase_unit( $purchase_unit );
@@ -160,7 +172,7 @@ class PurchaseUnitFactory {
 	 *
 	 * @return PurchaseUnit
 	 */
-	public function from_wc_cart( ?\WC_Cart $cart = null, bool $with_shipping_options = false ): PurchaseUnit {
+	public function from_wc_cart( ?\WC_Cart $cart = null, bool $with_shipping_options = false, string $payment_method = '' ): PurchaseUnit {
 		if ( ! $cart ) {
 			$cart = WC()->cart ?? new \WC_Cart();
 		}
@@ -176,7 +188,7 @@ class PurchaseUnitFactory {
 		$shipping = null;
 		$customer = \WC()->customer;
 		/** @psalm-suppress RedundantConditionGivenDocblockType False positive. Ignored because $customer can be null as well. */
-		if ( $this->shipping_needed( ...array_values( $items ) ) && is_a( $customer, \WC_Customer::class ) ) {
+		if ( $this->shipping_needed( ...array_values( $items ) ) && $customer instanceof \WC_Customer ) {
 			$shipping         = $this->shipping_factory->from_wc_customer( \WC()->customer, $with_shipping_options );
 			$shipping_address = $shipping->address();
 			if (
@@ -201,7 +213,13 @@ class PurchaseUnitFactory {
 		}
 		$invoice_id      = '';
 		$soft_descriptor = $this->sanitize_soft_descriptor( $this->soft_descriptor );
-		$purchase_unit   = new PurchaseUnit(
+		$payment_level   = null;
+
+		if ( $this->payment_level_eligibility->is_eligible( $payment_method ) && $this->settings->is_payment_level_processing_enabled() ) {
+			$payment_level = $this->payment_level_helper->build( $amount, $items, $shipping );
+		}
+
+		$purchase_unit = new PurchaseUnit(
 			$amount,
 			$items,
 			$shipping,
@@ -209,7 +227,9 @@ class PurchaseUnitFactory {
 			$description,
 			$custom_id,
 			$invoice_id,
-			$soft_descriptor
+			$soft_descriptor,
+			null,
+			$payment_level['supplementary_data'] ?? null
 		);
 
 		$this->init_purchase_unit( $purchase_unit );
@@ -292,6 +312,23 @@ class PurchaseUnitFactory {
 	 */
 	private function shipping_needed( Item ...$items ): bool {
 
+		/**
+		 * If you are returning false from this filter, do not forget to also set
+		 * shipping_preference to 'NO_SHIPPING', otherwise PayPal will return an error.
+		 *
+		 * @see ShippingPreferenceFactory::from_state() for
+		 *      the 'woocommerce_paypal_payments_shipping_preference' filter.
+		 */
+		$shipping_needed = apply_filters(
+			'woocommerce_paypal_payments_shipping_needed',
+			null,
+			$items
+		);
+
+		if ( is_bool( $shipping_needed ) ) {
+			return $shipping_needed;
+		}
+
 		foreach ( $items as $item ) {
 			if ( $item->category() !== Item::DIGITAL_GOODS ) {
 				return true;
@@ -353,6 +390,7 @@ class PurchaseUnitFactory {
 		return ! $this->shipping_needed( ...array_values( $items ) ) ||
 				! $shipping_address ||
 				empty( $shipping_address->country_code() ) ||
+				empty( $shipping_address->address_line_1() ) ||
 				( ! $shipping_address->postal_code() && ! $this->country_without_postal_code( $shipping_address->country_code() ) );
 	}
 }

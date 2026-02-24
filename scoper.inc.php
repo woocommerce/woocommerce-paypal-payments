@@ -21,8 +21,9 @@ $finders = array(
 				'.github',
 				'.ddev',
 				'.idea',
-				'.psalm',
+				'stubs',
 				'tests',
+				'node_modules',
 			)
 		)
 		->in( '.' ),

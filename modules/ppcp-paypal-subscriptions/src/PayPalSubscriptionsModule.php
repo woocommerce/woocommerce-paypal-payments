@@ -18,6 +18,7 @@ use WC_Subscriptions_Product;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\BillingSubscriptions;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
+use WooCommerce\PayPalCommerce\Assets\AssetGetter;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExecutableModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExtendingModule;
@@ -69,7 +70,7 @@ class PayPalSubscriptionsModule implements ServiceModule, ExtendingModule, Execu
 				}
 
 				$subscription = wcs_get_subscription( $wc_order->get_id() );
-				if ( ! is_a( $subscription, WC_Subscription::class ) ) {
+				if ( ! ( $subscription instanceof WC_Subscription ) ) {
 					return $payment_gateway_supports;
 				}
 
@@ -90,7 +91,7 @@ class PayPalSubscriptionsModule implements ServiceModule, ExtendingModule, Execu
 
 		add_filter(
 			'woocommerce_can_subscription_be_updated_to_active',
-			function ( bool $can_be_updated, \WC_Subscription $subscription ) use ( $c ) {
+			function ( bool $can_be_updated, \WC_Subscription $subscription ) {
 				$subscription_id = $subscription->get_meta( 'ppcp_subscription' ) ?? '';
 				if ( $subscription_id && $subscription->get_status() === 'pending-cancel' ) {
 					return true;
@@ -103,7 +104,7 @@ class PayPalSubscriptionsModule implements ServiceModule, ExtendingModule, Execu
 
 		add_filter(
 			'woocommerce_can_subscription_be_updated_to_new-payment-method',
-			function ( bool $can_be_updated, \WC_Subscription $subscription ) use ( $c ) {
+			function ( bool $can_be_updated, \WC_Subscription $subscription ) {
 				$subscription_id = $subscription->get_meta( 'ppcp_subscription' ) ?? '';
 				if ( $subscription_id ) {
 					return false;
@@ -116,7 +117,12 @@ class PayPalSubscriptionsModule implements ServiceModule, ExtendingModule, Execu
 
 		add_filter(
 			'woocommerce_paypal_payments_before_order_process',
-			function ( bool $process, \WC_Payment_Gateway $gateway, \WC_Order $wc_order ) use ( $c ) {
+			/**
+			 * WC_Payment_Gateway $gateway type removed.
+			 *
+			 * @psalm-suppress MissingClosureParamType
+			 */
+			function ( bool $process, $gateway, \WC_Order $wc_order ) use ( $c ) {
 				if ( ! $gateway instanceof PayPalGateway || $gateway::ID !== 'ppcp-gateway' ) {
 					return $process;
 				}
@@ -178,7 +184,7 @@ class PayPalSubscriptionsModule implements ServiceModule, ExtendingModule, Execu
 				}
 
 				$product = wc_get_product( $product_id );
-				if ( ! is_a( $product, WC_Product::class ) ) {
+				if ( ! ( $product instanceof WC_Product ) ) {
 					return;
 				}
 
@@ -197,13 +203,17 @@ class PayPalSubscriptionsModule implements ServiceModule, ExtendingModule, Execu
 			 * @psalm-suppress MissingClosureParamType
 			 */
 			static function ( $passed_validation, $product_id ) use ( $c ) {
+				if ( ! WC()->cart ) {
+					return $passed_validation;
+				}
+
 				if ( WC()->cart->is_empty() || wcs_is_manual_renewal_enabled() ) {
 					return $passed_validation;
 				}
 
 				$product = wc_get_product( $product_id );
 
-				if ( ! ( is_a( $product, WC_Product::class ) ) ) {
+				if ( ! ( $product instanceof WC_Product ) ) {
 					wc_add_notice( __( 'Cannot add this product to cart (invalid product).', 'woocommerce-paypal-payments' ), 'error' );
 					return false;
 				}
@@ -264,7 +274,7 @@ class PayPalSubscriptionsModule implements ServiceModule, ExtendingModule, Execu
 				}
 
 				$product = wc_get_product( $variation_id );
-				if ( ! is_a( $product, WC_Product_Subscription_Variation::class ) ) {
+				if ( ! ( $product instanceof WC_Product_Subscription_Variation ) ) {
 					return;
 				}
 
@@ -333,7 +343,7 @@ class PayPalSubscriptionsModule implements ServiceModule, ExtendingModule, Execu
 				$subscription_id = $subscription->get_meta( 'ppcp_subscription' ) ?? '';
 				if ( $subscription_id ) {
 					$environment = $c->get( 'settings.environment' );
-					$host        = $environment->current_environment_is( Environment::SANDBOX ) ? 'https://www.sandbox.paypal.com' : 'https://www.paypal.com';
+					$host        = $environment->is_sandbox() ? 'https://www.sandbox.paypal.com' : 'https://www.paypal.com';
 					?>
 					<tr>
 						<td><?php esc_html_e( 'PayPal Subscription', 'woocommerce-paypal-payments' ); ?></td>
@@ -384,7 +394,7 @@ class PayPalSubscriptionsModule implements ServiceModule, ExtendingModule, Execu
 						$subscriptions_endpoint->suspend( $subscription_id );
 					} catch ( RuntimeException $exception ) {
 						$error = $exception->getMessage();
-						if ( is_a( $exception, PayPalApiException::class ) ) {
+						if ( $exception instanceof PayPalApiException ) {
 							$error = $exception->get_details( $error );
 						}
 
@@ -412,7 +422,7 @@ class PayPalSubscriptionsModule implements ServiceModule, ExtendingModule, Execu
 						$subscriptions_endpoint->activate( $subscription_id );
 					} catch ( RuntimeException $exception ) {
 						$error = $exception->getMessage();
-						if ( is_a( $exception, PayPalApiException::class ) ) {
+						if ( $exception instanceof PayPalApiException ) {
 							$error = $exception->get_details( $error );
 						}
 
@@ -442,7 +452,7 @@ class PayPalSubscriptionsModule implements ServiceModule, ExtendingModule, Execu
 						 */
 						global $post;
 						$product = wc_get_product( $post->ID );
-						if ( ! is_a( $product, WC_Product::class ) ) {
+						if ( ! ( $product instanceof WC_Product ) ) {
 							return;
 						}
 
@@ -476,7 +486,7 @@ class PayPalSubscriptionsModule implements ServiceModule, ExtendingModule, Execu
 					$subscriptions_mode = $settings->get( 'subscriptions_mode' );
 					if ( $subscriptions_mode === 'subscriptions_api' ) {
 						$product = wc_get_product( $variation->ID );
-						if ( ! is_a( $product, WC_Product_Subscription_Variation::class ) ) {
+						if ( ! ( $product instanceof WC_Product_Subscription_Variation ) ) {
 							return;
 						}
 
@@ -510,10 +520,12 @@ class PayPalSubscriptionsModule implements ServiceModule, ExtendingModule, Execu
 					return;
 				}
 
-				$module_url = $c->get( 'paypal-subscriptions.module.url' );
+				$asset_getter = $c->get( 'paypal-subscriptions.asset_getter' );
+				assert( $asset_getter instanceof AssetGetter );
+
 				wp_enqueue_script(
 					'ppcp-paypal-subscription',
-					untrailingslashit( $module_url ) . '/assets/js/paypal-subscription.js',
+					$asset_getter->get_asset_url( 'paypal-subscription.js' ),
 					array( 'jquery' ),
 					$c->get( 'ppcp.asset-version' ),
 					true
@@ -572,12 +584,12 @@ class PayPalSubscriptionsModule implements ServiceModule, ExtendingModule, Execu
 					? wc_get_order( $post_or_order_object->ID )
 					: $post_or_order_object;
 
-				if ( ! is_a( $order, WC_Order::class ) ) {
+				if ( ! ( $order instanceof WC_Order ) ) {
 					return;
 				}
 
 				$subscription = wcs_get_subscription( $order->get_id() );
-				if ( ! is_a( $subscription, WC_Subscription::class ) ) {
+				if ( ! ( $subscription instanceof WC_Subscription ) ) {
 					return;
 				}
 
@@ -713,7 +725,7 @@ class PayPalSubscriptionsModule implements ServiceModule, ExtendingModule, Execu
 				'</p>'
 			);
 
-			$host = $environment->current_environment_is( Environment::SANDBOX ) ? 'https://www.sandbox.paypal.com' : 'https://www.paypal.com';
+			$host = $environment->is_sandbox() ? 'https://www.sandbox.paypal.com' : 'https://www.paypal.com';
 			if ( $subscription_product ) {
 				echo sprintf(
 				// translators: %1$s and %2$s are wrapper html tags.

@@ -1,7 +1,7 @@
 import { useMemo } from '@wordpress/element';
 import { useSelect } from '@wordpress/data';
-import { Watermark } from '../Watermark';
-import { STORE_NAME } from '../../stores/axoStore';
+import { Watermark } from '@ppcp-axo-block/components/Watermark';
+import { STORE_NAME } from '@ppcp-axo-block/stores/axoStore';
 
 const cardIcons = {
 	VISA: 'visa-light.svg',
@@ -48,14 +48,16 @@ const Card = ( { fastlaneSdk, showWatermark = true } ) => {
 						<div className="wc-block-checkout-axo-block-card__meta-logo">
 							{ cardLogo }
 						</div>
-						<div className="wc-block-checkout-axo-block-card__meta-digits">
-							{ `**** **** **** ${ lastDigits }` }
-						</div>
-						<div className="wc-block-checkout-axo-block-card__meta-expiry">
-							{ formattedExpiry }
-						</div>
-						<div className="wc-block-checkout-axo-block-card__meta-name">
-							{ name }
+						<div className="wc-block-checkout-axo-block-card__meta-container">
+							<div className="wc-block-checkout-axo-block-card__meta-digits">
+								{ `•••• ${ lastDigits }` }
+							</div>
+							<div className="wc-block-checkout-axo-block-card__meta-name">
+								{ name }
+							</div>
+							<div className="wc-block-checkout-axo-block-card__meta-expiry">
+								{ formattedExpiry }
+							</div>
 						</div>
 					</div>
 				</div>

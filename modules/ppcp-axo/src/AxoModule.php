@@ -9,13 +9,14 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\Axo;
 
+use WooCommerce\PayPalCommerce\Assets\AssetGetter;
 use WooCommerce\PayPalCommerce\Axo\Assets\AxoManager;
 use WooCommerce\PayPalCommerce\Axo\Endpoint\AxoScriptAttributes;
 use WooCommerce\PayPalCommerce\Axo\Endpoint\FrontendLogger;
 use WooCommerce\PayPalCommerce\Axo\Gateway\AxoGateway;
 use WooCommerce\PayPalCommerce\Axo\Service\AxoApplies;
 use WooCommerce\PayPalCommerce\Button\Assets\SmartButtonInterface;
-use WooCommerce\PayPalCommerce\Button\Helper\ContextTrait;
+use WooCommerce\PayPalCommerce\Button\Helper\Context;
 use WooCommerce\PayPalCommerce\Onboarding\Render\OnboardingOptionsRenderer;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExecutableModule;
@@ -37,7 +38,6 @@ use WooCommerce\PayPalCommerce\WcGateway\Helper\CardPaymentsConfiguration;
  */
 class AxoModule implements ServiceModule, ExtendingModule, ExecutableModule {
 	use ModuleClassNameIdTrait;
-	use ContextTrait;
 
 	/**
 	 * The session handler for ContextTrait.
@@ -72,7 +72,7 @@ class AxoModule implements ServiceModule, ExtendingModule, ExecutableModule {
 			 *
 			 * @psalm-suppress MissingClosureParamType
 			 */
-			function ( $methods ) use ( $c ): array {
+			function ( $methods ) use ( $c ) {
 				if ( ! is_array( $methods ) ) {
 					return $methods;
 				}
@@ -86,7 +86,11 @@ class AxoModule implements ServiceModule, ExtendingModule, ExecutableModule {
 
 				// Add the gateway in admin area.
 				if ( is_admin() ) {
-					if ( ! $this->is_wc_settings_payments_tab() ) {
+					/**
+					 * @var Context $context
+					 */
+					$context = $c->get( 'button.helper.context' );
+					if ( ! $context->is_wc_settings_payments_tab() ) {
 						$methods[] = $gateway;
 					}
 					return $methods;
@@ -184,15 +188,19 @@ class AxoModule implements ServiceModule, ExtendingModule, ExecutableModule {
 				$settings = $c->get( 'wcgateway.settings' );
 				assert( $settings instanceof Settings );
 
-				$is_paypal_enabled = $settings->has( 'enabled' ) && $settings->get( 'enabled' ) ?? false;
+				$is_paypal_enabled = $settings->has( 'enabled' ) && ( $settings->get( 'enabled' ) ?? false );
 
 				$subscription_helper = $c->get( 'wc-subscriptions.helper' );
 				assert( $subscription_helper instanceof SubscriptionHelper );
 
+				/**
+				 * @var Context $context
+				 */
+				$context = $c->get( 'button.helper.context' );
 				// Check if the module is applicable, correct country, currency, ... etc.
 				if ( ! $is_paypal_enabled
 					|| ! $c->get( 'axo.eligible' )
-					|| $this->is_paypal_continuation()
+					|| $context->is_paypal_continuation()
 					|| $subscription_helper->cart_contains_subscription()
 				) {
 					return;
@@ -285,7 +293,7 @@ class AxoModule implements ServiceModule, ExtendingModule, ExecutableModule {
 					 *
 					 * @psalm-suppress MissingClosureParamType
 					 */
-					function ( $rows, $renderer ): array {
+					function ( $rows, $renderer ) {
 						if ( ! is_array( $rows ) ) {
 							return $rows;
 						}
@@ -338,6 +346,24 @@ class AxoModule implements ServiceModule, ExtendingModule, ExecutableModule {
 			function () use ( $c ) {
 				$this->enqueue_paypal_insights_script_on_order_received( $c );
 			}
+		);
+
+		add_filter(
+			'ppcp_return_url_error_args',
+			/**
+			 * Param types removed to avoid third-party issues.
+			 *
+			 * @psalm-suppress MissingClosureParamType
+			 */
+			function ( $args ) use ( $c ): array {
+				$axo_applies = $c->get( 'axo.service.axo-applies' );
+				assert( $axo_applies instanceof AxoApplies );
+
+				if ( $axo_applies->should_render_fastlane() ) {
+					$args['ppcp_fastlane_error'] = '1';
+				}
+				return $args;
+			},
 		);
 
 		// Remove Fastlane on the Pay for Order page.
@@ -481,13 +507,22 @@ class AxoModule implements ServiceModule, ExtendingModule, ExecutableModule {
 			return;
 		}
 
-		$module_url    = $c->get( 'axo.url' );
+		//phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		$order_key_from_url = isset( $_GET['key'] ) ? wc_clean( wp_unslash( $_GET['key'] ) ) : '';
+		//phpcs:ignore WordPress.WP.Capabilities.Unknown
+		if ( $order->get_order_key() !== $order_key_from_url && ! current_user_can( 'view_order', $order_id ) ) {
+			return;
+		}
+
+		$asset_getter = $c->get( 'axo.asset_getter' );
+		assert( $asset_getter instanceof AssetGetter );
+
 		$asset_version = $c->get( 'ppcp.asset-version' );
 		$insights_data = $c->get( 'axo.insights' );
 
 		wp_register_script(
 			'wc-ppcp-paypal-insights-end-checkout',
-			untrailingslashit( $module_url ) . '/assets/js/TrackEndCheckout.js',
+			$asset_getter->get_asset_url( 'Insights/EndCheckoutTracker.js' ),
 			array( 'wp-plugins', 'wp-data', 'wp-element', 'wc-blocks-registry' ),
 			$asset_version,
 			true
@@ -503,7 +538,6 @@ class AxoModule implements ServiceModule, ExtendingModule, ExecutableModule {
 					'orderTotal'    => (string) $order->get_total(),
 					'orderCurrency' => (string) $order->get_currency(),
 					'paymentMethod' => (string) $order->get_payment_method(),
-					'orderKey'      => (string) $order->get_order_key(),
 				)
 			)
 		);

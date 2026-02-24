@@ -8,7 +8,6 @@ use Psr\Log\LoggerInterface;
 use WC_Order;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PaymentsEndpoint;
-use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PaymentTokensEndpoint;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
 use WooCommerce\PayPalCommerce\TestCase;
@@ -37,7 +36,6 @@ class CreditCardGatewayTest extends TestCase
 	private $subscriptionHelper;
 	private $captureCardPayment;
 	private $prefix;
-	private $paymentTokensEndpoint;
 	private $wcPaymentTokens;
 	private $logger;
 	private $paymentsEndpoint;
@@ -55,14 +53,12 @@ class CreditCardGatewayTest extends TestCase
 		$this->config = Mockery::mock(ContainerInterface::class);
 		$this->dcc_configuration = Mockery::mock(CardPaymentsConfiguration::class);
 		$this->creditCardIcons = [];
-		$this->moduleUrl = '';
 		$this->sessionHandler = Mockery::mock(SessionHandler::class);
 		$this->refundProcessor = Mockery::mock(RefundProcessor::class);
 		$this->transactionUrlProvider = Mockery::mock(TransactionUrlProvider::class);
 		$this->subscriptionHelper = Mockery::mock(SubscriptionHelper::class);
 		$this->captureCardPayment = Mockery::mock(CaptureCardPayment::class);
 		$this->prefix = 'some-prefix';
-		$this->paymentTokensEndpoint = Mockery::mock(PaymentTokensEndpoint::class);
 		$this->wcPaymentTokens = Mockery::mock(WooCommercePaymentTokens::class);
 		$this->logger = Mockery::mock(LoggerInterface::class);
 		$this->paymentsEndpoint = Mockery::mock(PaymentsEndpoint::class);
@@ -85,7 +81,6 @@ class CreditCardGatewayTest extends TestCase
 			$this->config,
 			$this->dcc_configuration,
 			$this->creditCardIcons,
-			$this->moduleUrl,
 			$this->sessionHandler,
 			$this->refundProcessor,
 			$this->transactionUrlProvider,
@@ -96,7 +91,6 @@ class CreditCardGatewayTest extends TestCase
 			$this->orderEndpoint,
 			$this->captureCardPayment,
 			$this->prefix,
-			$this->paymentTokensEndpoint,
 			$this->wcPaymentTokens,
 			$this->logger
 		);

@@ -5,10 +5,10 @@ namespace WooCommerce\PayPalCommerce\WcGateway\Gateway;
 
 use Exception;
 use Psr\Log\LoggerInterface;
-use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PaymentTokensEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\OrderStatus;
+use WooCommerce\PayPalCommerce\Assets\AssetGetter;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
 use WooCommerce\PayPalCommerce\Vaulting\WooCommercePaymentTokens;
@@ -44,10 +44,10 @@ class WcGatewayTest extends TestCase
 	private $paymentTokenRepository;
 	private $logger;
 	private $apiShopCountry;
-	private $orderEndpoint;
 	private $paymentTokensEndpoint;
 	private $vaultV3Enabled;
 	private $wcPaymentTokens;
+	private $assetGetter;
 
 	public function setUp(): void {
 		parent::setUp();
@@ -73,7 +73,7 @@ class WcGatewayTest extends TestCase
 			['venmo' => 'Venmo', 'paylater' => 'Pay Later', 'blik' => 'BLIK']
 		);
 		$this->apiShopCountry = 'DE';
-		$this->orderEndpoint = Mockery::mock(OrderEndpoint::class);
+		$this->assetGetter = new AssetGetter('http://example.com', '/plugin/', 'module');
 
 		$this->sessionHandler
 			->shouldReceive('funding_source')
@@ -113,7 +113,6 @@ class WcGatewayTest extends TestCase
 			$this->paymentTokenRepository,
 			$this->logger,
 			$this->apiShopCountry,
-			$this->orderEndpoint,
 			function ($id) {
 				return 'checkoutnow=' . $id;
 			},
@@ -121,7 +120,7 @@ class WcGatewayTest extends TestCase
 			$this->paymentTokensEndpoint,
 			$this->vaultV3Enabled,
 			$this->wcPaymentTokens,
-			'',
+			$this->assetGetter,
 			false
 		);
 	}

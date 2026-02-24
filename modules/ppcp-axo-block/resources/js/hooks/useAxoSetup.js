@@ -1,16 +1,17 @@
 import { useEffect } from '@wordpress/element';
 import { useDispatch } from '@wordpress/data';
-import { STORE_NAME } from '../stores/axoStore';
+import { STORE_NAME } from '@ppcp-axo-block/stores/axoStore';
 import usePayPalScript from './usePayPalScript';
-import { setupWatermark } from '../components/Watermark';
-import { setupEmailFunctionality } from '../components/EmailButton';
-import { createEmailLookupHandler } from '../events/emailLookupManager';
+import { setupWatermark } from '@ppcp-axo-block/components/Watermark';
+import { setupEmailFunctionality } from '@ppcp-axo-block/components/EmailButton';
+import { createEmailLookupHandler } from '@ppcp-axo-block/events/emailLookupManager';
 import usePhoneSyncHandler from './usePhoneSyncHandler';
-import { initializeClassToggles } from '../helpers/classnamesManager';
-import { snapshotFields } from '../helpers/fieldHelpers';
+import { initializeClassToggles } from '@ppcp-axo-block/helpers/classnamesManager';
+import { snapshotFields } from '@ppcp-axo-block/helpers/fieldHelpers';
 import useCustomerData from './useCustomerData';
 import useShippingAddressChange from './useShippingAddressChange';
 import useCardChange from './useCardChange';
+import useSessionRestoration from './useSessionRestoration';
 
 /**
  * Custom hook to set up AXO functionality.
@@ -63,6 +64,9 @@ const useAxoSetup = (
 	// Set up phone sync handler
 	usePhoneSyncHandler( paymentComponent );
 
+	// Set up session restoration
+	useSessionRestoration( fastlaneSdk );
+
 	// Initialize class toggles on mount
 	useEffect( () => {
 		initializeClassToggles();
@@ -104,6 +108,7 @@ const useAxoSetup = (
 		setShippingAddress,
 		setCardDetails,
 		paymentComponent,
+		setCardChangeHandler,
 	] );
 
 	return paypalLoaded;

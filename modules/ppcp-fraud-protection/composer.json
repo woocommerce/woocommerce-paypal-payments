@@ -1,0 +1,16 @@
+{
+    "name": "woocommerce/ppcp-fraud-protection",
+    "type": "inpsyde-module",
+    "description": "Fraud protection module",
+    "license": "GPL-2.0",
+    "require": {
+        "php": "^7.4 | ^8.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "WooCommerce\\PayPalCommerce\\FraudProtection\\": "src"
+        }
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true
+}

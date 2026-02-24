@@ -17,8 +17,8 @@ return array(
 		return array_merge(
 			$locations,
 			array(
-				'checkout-block-express' => _x( 'Express Checkout', 'Name of Buttons Location', 'woocommerce-paypal-payments' ),
-				'cart-block'             => _x( 'Cart', 'Name of Buttons Location', 'woocommerce-paypal-payments' ),
+				'checkout-block-express' => did_action( 'init' ) ? _x( 'Express Checkout', 'Name of Buttons Location', 'woocommerce-paypal-payments' ) : 'Express Checkout',
+				'cart-block'             => did_action( 'init' ) ? _x( 'Cart', 'Name of Buttons Location', 'woocommerce-paypal-payments' ) : 'Cart',
 			)
 		);
 	},
@@ -37,12 +37,18 @@ return array(
 			return array_merge( array_slice( $array, 0, $pos ), $new, array_slice( $array, $pos ) );
 		};
 
-		$label = __(
-			'Enable this option to require customers to manually confirm express payments on the checkout page.
+		// phpcs:disable WordPress.WP.I18n.NonSingularStringLiteralText
+		$label = did_action( 'init' )
+			? __(
+				'Enable this option to require customers to manually confirm express payments on the checkout page.
 <p class="description">This ensures they can review the order, update shipping options, and fill in eventual custom fields necessary for the transaction.</p>
 <p class="description">If this is disabled, the system will automatically synchronize shipping options with PayPal and bypass the final checkout confirmation. This expedites the checkout process but prevents buyers from filling in eventual custom fields and reviewing final details before finalizing the payment.</p>',
-			'woocommerce-paypal-payments'
-		);
+				'woocommerce-paypal-payments'
+			)
+			: 'Enable this option to require customers to manually confirm express payments on the checkout page.
+<p class="description">This ensures they can review the order, update shipping options, and fill in eventual custom fields necessary for the transaction.</p>
+<p class="description">If this is disabled, the system will automatically synchronize shipping options with PayPal and bypass the final checkout confirmation. This expedites the checkout process but prevents buyers from filling in eventual custom fields and reviewing final details before finalizing the payment.</p>';
+		// phpcs:enable WordPress.WP.I18n.NonSingularStringLiteralText
 
 		/**
 		 * Replace wc_terms_and_conditions_page_id() function to avoid errors when to avoid errors because of early loading.
@@ -51,10 +57,14 @@ return array(
 		$wc_terms_and_conditions_page_id = apply_filters( 'woocommerce_terms_and_conditions_page_id', 0 < $wc_terms_and_conditions_page_id ? absint( $wc_terms_and_conditions_page_id ) : 0 );
 
 		if ( $wc_terms_and_conditions_page_id > 0 ) {
-			$label .= __(
-				'<div class="ppcp-notice ppcp-notice-warning"><p><span class="highlight">Important:</span> Your store has a <a href="/wp-admin/admin.php?page=wc-settings&tab=advanced" target="_blank">Terms and Conditions</a> page configured. Buyers who use a PayPal express payment method will not be able to consent to the terms on the <code>Classic Checkout</code>, as the final checkout confirmation will be skipped.</p></div>',
-				'woocommerce-paypal-payments'
-			);
+			// phpcs:disable WordPress.WP.I18n.NonSingularStringLiteralText
+			$label .= did_action( 'init' )
+				? __(
+					'<div class="ppcp-notice ppcp-notice-warning"><p><span class="highlight">Important:</span> Your store has a <a href="/wp-admin/admin.php?page=wc-settings&tab=advanced" target="_blank">Terms and Conditions</a> page configured. Buyers who use a PayPal express payment method will not be able to consent to the terms on the <code>Classic Checkout</code>, as the final checkout confirmation will be skipped.</p></div>',
+					'woocommerce-paypal-payments'
+				)
+				: '<div class="ppcp-notice ppcp-notice-warning"><p><span class="highlight">Important:</span> Your store has a <a href="/wp-admin/admin.php?page=wc-settings&tab=advanced" target="_blank">Terms and Conditions</a> page configured. Buyers who use a PayPal express payment method will not be able to consent to the terms on the <code>Classic Checkout</code>, as the final checkout confirmation will be skipped.</p></div>';
+			// phpcs:enable WordPress.WP.I18n.NonSingularStringLiteralText
 		}
 
 		$should_disable_checkbox = apply_filters( 'woocommerce_paypal_payments_toggle_final_review_checkbox', false );
@@ -64,7 +74,7 @@ return array(
 			'smart_button_locations',
 			array(
 				'blocks_final_review_enabled' => array(
-					'title'        => __( 'Require final confirmation on checkout', 'woocommerce-paypal-payments' ),
+					'title'        => did_action( 'init' ) ? __( 'Require final confirmation on checkout', 'woocommerce-paypal-payments' ) : 'Require final confirmation on checkout',
 					'type'         => 'checkbox',
 					'label'        => $label,
 					'default'      => true,

@@ -9,6 +9,8 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\OrderTracking;
 
+use WooCommerce\PayPalCommerce\Assets\AssetGetter;
+use WooCommerce\PayPalCommerce\Assets\AssetGetterFactory;
 use WooCommerce\PayPalCommerce\OrderTracking\Integration\DhlShipmentIntegration;
 use WooCommerce\PayPalCommerce\OrderTracking\Integration\GermanizedShipmentIntegration;
 use WooCommerce\PayPalCommerce\OrderTracking\Integration\ShipmentTrackingIntegration;
@@ -24,7 +26,7 @@ use WooCommerce\PayPalCommerce\OrderTracking\Endpoint\OrderTrackingEndpoint;
 return array(
 	'order-tracking.assets'                           => function ( ContainerInterface $container ): OrderEditPageAssets {
 		return new OrderEditPageAssets(
-			$container->get( 'order-tracking.module.url' ),
+			$container->get( 'order-tracking.asset_getter' ),
 			$container->get( 'ppcp.asset-version' )
 		);
 	},
@@ -39,11 +41,15 @@ return array(
 			$container->get( 'button.request-data' ),
 			$container->get( 'order-tracking.shipment.factory' ),
 			$container->get( 'order-tracking.allowed-shipping-statuses' ),
-			$container->get( 'order-tracking.should-use-second-version-of-api' )
+			$container->get( 'order-tracking.should-use-second-version-of-api' ),
+			$container->get( 'api.endpoint.order.cached' )
 		);
 	},
-	'order-tracking.module.url'                       => static function ( ContainerInterface $container ): string {
-		return plugins_url( '/modules/ppcp-order-tracking/', $container->get( 'ppcp.path-to-plugin-main-file' ) );
+	'order-tracking.asset_getter'                     => static function ( ContainerInterface $container ): AssetGetter {
+		$factory = $container->get( 'assets.asset_getter_factory' );
+		assert( $factory instanceof AssetGetterFactory );
+
+		return $factory->for_module( 'ppcp-order-tracking' );
 	},
 	'order-tracking.meta-box.renderer'                => static function ( ContainerInterface $container ): MetaBoxRenderer {
 		return new MetaBoxRenderer(
@@ -74,7 +80,7 @@ return array(
 		$selected_country_carriers = $allowed_carriers[ $api_shop_country ] ?? array();
 
 		return array(
-			$api_shop_country => $selected_country_carriers ?? array(),
+			$api_shop_country => $selected_country_carriers ?? array(), // @phpstan-ignore nullCoalesce.variable
 			'global'          => $allowed_carriers['global'] ?? array(),
 			'other'           => array(
 				'name'  => 'Other',
