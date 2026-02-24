@@ -3319,12 +3319,6 @@ parameters:
 			path: modules/ppcp-settings/src/Data/Definition/FeaturesDefinition.php
 
 		-
-			message: '#^Method WooCommerce\\PayPalCommerce\\Settings\\Data\\Definition\\PaymentMethodsDefinition\:\:__construct\(\) has parameter \$axo_conflicts_notices with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: modules/ppcp-settings/src/Data/Definition/PaymentMethodsDefinition.php
-
-		-
 			message: '#^Method WooCommerce\\PayPalCommerce\\Settings\\Data\\Definition\\PaymentMethodsDefinition\:\:build_method_definition\(\) has parameter \$fields with no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
 			count: 1
@@ -3368,12 +3362,6 @@ parameters:
 
 		-
 			message: '#^Method WooCommerce\\PayPalCommerce\\Settings\\Data\\Definition\\PaymentMethodsDefinition\:\:group_paypal_methods\(\) return type has no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: modules/ppcp-settings/src/Data/Definition/PaymentMethodsDefinition.php
-
-		-
-			message: '#^Property WooCommerce\\PayPalCommerce\\Settings\\Data\\Definition\\PaymentMethodsDefinition\:\:\$axo_conflicts_notices type has no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
 			count: 1
 			path: modules/ppcp-settings/src/Data/Definition/PaymentMethodsDefinition.php
