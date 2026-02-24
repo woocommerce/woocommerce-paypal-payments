@@ -209,7 +209,7 @@ class StylingSettings extends AbstractDataModel {
 		foreach ( $location_map as $key => $location_name ) {
 			if ( isset( $this->data[ $key ] ) && $this->data[ $key ] instanceof LocationStylingDTO ) {
 				$dto = $this->data[ $key ];
-				if ( $dto->enabled && in_array( 'paylater', $dto->methods, true ) ) {
+				if ( $dto->enabled && in_array( 'pay-later', $dto->methods, true ) ) {
 					$locations[] = $location_name;
 				}
 			}
