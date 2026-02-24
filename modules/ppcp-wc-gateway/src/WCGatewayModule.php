@@ -655,8 +655,8 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
 
 				if ( 'DE' === $shop_country &&
 					( $is_our_page ||
-						( $is_gateways_list_page && $pui_product_status->is_active() ) ||
-						( $settings->has( 'products_pui_enabled' ) && $settings->get( 'products_pui_enabled' ) )
+						$is_gateways_list_page ||
+						$pui_product_status->is_active()
 					)
 				) {
 					$methods[] = $container->get( 'wcgateway.pay-upon-invoice-gateway' );

@@ -18,6 +18,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Factory\CaptureFactory;
 use WooCommerce\PayPalCommerce\Button\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\CheckoutHelper;
+use WooCommerce\PayPalCommerce\Settings\Data\PaymentSettings;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\PayUponInvoiceHelper;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\PayUponInvoiceProductStatus;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\TransactionIdHandlingTrait;
@@ -46,6 +47,8 @@ class PayUponInvoice {
 
 	protected CaptureFactory $capture_factory;
 
+	protected PaymentSettings $payment_settings;
+
 	/**
 	 * PayUponInvoice constructor.
 	 *
@@ -57,6 +60,7 @@ class PayUponInvoice {
 	 * @param PayUponInvoiceHelper        $pui_helper The PUI helper.
 	 * @param CheckoutHelper              $checkout_helper The checkout helper.
 	 * @param CaptureFactory              $capture_factory The capture factory.
+	 * @param PaymentSettings             $payment_settings The payment settings.
 	 */
 	public function __construct(
 		PayUponInvoiceOrderEndpoint $pui_order_endpoint,
@@ -66,7 +70,8 @@ class PayUponInvoice {
 		PayUponInvoiceProductStatus $pui_product_status,
 		PayUponInvoiceHelper $pui_helper,
 		CheckoutHelper $checkout_helper,
-		CaptureFactory $capture_factory
+		CaptureFactory $capture_factory,
+		PaymentSettings $payment_settings
 	) {
 		$this->pui_order_endpoint = $pui_order_endpoint;
 		$this->logger             = $logger;
@@ -76,6 +81,7 @@ class PayUponInvoice {
 		$this->pui_helper         = $pui_helper;
 		$this->checkout_helper    = $checkout_helper;
 		$this->capture_factory    = $capture_factory;
+		$this->payment_settings   = $payment_settings;
 	}
 
 	/**
@@ -148,8 +154,7 @@ class PayUponInvoice {
 
 					$instructions = $order->get_meta( 'ppcp_ratepay_payment_instructions_payment_reference' );
 
-					$gateway_settings = get_option( 'woocommerce_ppcp-pay-upon-invoice-gateway_settings' );
-					$merchant_name    = $gateway_settings['brand_name'] ?? '';
+					$merchant_name = $this->payment_settings->get_pui_brand_name();
 
 					$order_total = wc_price( $order->get_total(), array( 'currency' => $order->get_currency() ) );
 
@@ -357,62 +362,6 @@ class PayUponInvoice {
 				$gateway = WC()->payment_gateways()->payment_gateways()[ PayUponInvoiceGateway::ID ];
 				if ( $gateway && $gateway->get_option( 'customer_service_instructions' ) === '' ) {
 					$gateway->update_option( 'enabled', 'no' );
-				}
-			}
-		);
-
-		add_action(
-			'woocommerce_settings_checkout',
-			function () {
-				// Todo: Possibly needs to be optimized or migrated for the #react-ui.
-
-				if ( ! $this->is_settings_page ) {
-					return;
-				}
-
-				if ( ! $this->pui_product_status->is_active() ) {
-					$pui_gateway = WC()->payment_gateways->payment_gateways()[ PayUponInvoiceGateway::ID ];
-					if ( 'yes' === $pui_gateway->get_option( 'enabled' ) ) {
-						$pui_gateway->update_option( 'enabled', 'no' );
-						$redirect_url = admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-pay-upon-invoice-gateway' );
-						wp_safe_redirect( $redirect_url );
-						exit;
-					}
-
-					printf(
-						'<div class="notice notice-error"><p>%1$s</p></div>',
-						esc_html__( 'Could not enable gateway because the connected PayPal account is not activated for Pay upon Invoice. Reconnect your account while Onboard with Pay upon Invoice is selected to try again.', 'woocommerce-paypal-payments' )
-					);
-
-					return;
-				}
-
-				$error_messages = array();
-				$pui_gateway    = WC()->payment_gateways->payment_gateways()[ PayUponInvoiceGateway::ID ];
-				if ( $pui_gateway->get_option( 'brand_name' ) === '' ) {
-					$error_messages[] = esc_html__( 'Could not enable gateway because "Brand name" field is empty.', 'woocommerce-paypal-payments' );
-				}
-				if ( $pui_gateway->get_option( 'logo_url' ) === '' ) {
-					$error_messages[] = esc_html__( 'Could not enable gateway because "Logo URL" field is empty.', 'woocommerce-paypal-payments' );
-				}
-				if ( $pui_gateway->get_option( 'customer_service_instructions' ) === '' ) {
-					$error_messages[] = esc_html__( 'Could not enable gateway because "Customer service instructions" field is empty.', 'woocommerce-paypal-payments' );
-				}
-				if ( count( $error_messages ) > 0 ) {
-					$pui_gateway->update_option( 'enabled', 'no' );
-					?>
-					<div class="notice notice-error">
-						<?php
-						array_map(
-							static function ( $message ) {
-								// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
-								echo '<p>' . $message . '</p>';
-							},
-							$error_messages
-						)
-						?>
-					</div>
-					<?php
 				}
 			}
 		);
