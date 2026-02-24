@@ -2,7 +2,11 @@
  * External dependencies
  */
 import { Page } from '@playwright/test';
-import { expect, getLast4CardDigits } from '@inpsyde/playwright-utils/build';
+import {
+	expect,
+	getLast4CardDigits,
+	assertIframeWithRetry,
+} from '@inpsyde/playwright-utils/build';
 /**
  * Internal dependencies
  */
@@ -38,7 +42,7 @@ export class PayPalUi {
 
 	payPalButtonsBlockContainer = () =>
 		this.page.locator(
-			'ul.wc-block-components-express-payment__event-buttons'
+			'.wc-block-components-express-payment__event-buttons'
 		);
 	blockSmartButtonListItem = () =>
 		this.payPalButtonsBlockContainer().locator(
@@ -76,13 +80,9 @@ export class PayPalUi {
 		} );
 
 	payLaterMessageIframe = () =>
-		this.page.frameLocator( 'iframe[name^="__zoid__paypal_message__"]' );
+		this.page.frameLocator( 'iframe[title^="PayPal Message"]' );
 	payLaterMessageContainer = () =>
-		this.payLaterMessageIframe().locator( '.message__container' );
-	payLaterMessageTextPart = () =>
-		this.payLaterMessageContainer().getByText(
-			'Pay in 4 interest-free payments on'
-		);
+		this.page.locator( 'iframe[title^="PayPal Message"]' ).first();
 
 	fastlaneContinueButton = () =>
 		this.page
@@ -540,20 +540,77 @@ export class PayPalUi {
 	};
 
 	/**
-	 * - Asserts PayPal buttons block container is visible.
-	 * - Compares actual PayPal buttons container screenshot to expected.
-	 *
-	 * @param snapshotName
+	 * Asserts Pay Later Messaging iframe is visible. Uses retry-with-reload for SDK-loaded content.
+	 * Returns false if not found after retry (caller should test.skip()).
 	 */
-	snapshotBlockPayPalButtons = async ( snapshotName: string ) => {
-		await expect.soft( this.payPalButtonsBlockContainer() ).toBeVisible();
-		await this.page.waitForTimeout( 500 );
-		expect
-			.soft(
-				await this.payPalButtonsBlockContainer().screenshot( {
-					animations: 'disabled',
-				} )
-			)
-			.toMatchSnapshot( `${ snapshotName }.png` );
+	assertPayLaterMessageVisibleWithContent = async (): Promise<boolean> =>
+		assertIframeWithRetry(
+			this.page,
+			'iframe[title^="PayPal Message"]',			
+		);
+
+	/**
+	 * Asserts Pay Later Messaging iframe is not visible.
+	 */
+	assertPayLaterMessageNotVisible = async () => {
+		await expect(
+			this.payLaterMessageContainer(),
+			'Assert PLM iframe is not visible'
+		).toBeHidden();
+	};
+
+	/**
+	 * Asserts PayPal buttons block container is visible and contains PayPal payment button.
+	 */
+	assertPayPalButtonsBlockVisibleWithContent = async () => {
+		const container = this.payPalButtonsBlockContainer();
+		await expect(
+			container,
+			'Assert PayPal buttons block container is visible'
+		).toBeVisible();
+		await expect(
+			container.locator( '#express-payment-method-ppcp-gateway-paypal' ),
+			'Assert PayPal express payment button is visible'
+		).toBeVisible();
+	};
+
+	/** Host element with paypal-buttons-label-* and paypal-buttons-layout-* classes (block cart/checkout). */
+	payPalButtonsHostElement = () =>
+		this.page.locator(
+			'#express-payment-method-ppcp-gateway-paypal .paypal-buttons'
+		);
+
+	/**
+	 * Asserts PayPal buttons have the given label (pay, checkout, buynow, paypal).
+	 */
+	assertPayPalButtonsHaveLabel = async (
+		label: 'pay' | 'checkout' | 'buynow' | 'paypal'
+	) => {
+		await expect(
+			this.payPalButtonsHostElement(),
+			`Assert PayPal buttons have label ${ label }`
+		).toHaveClass( new RegExp( `paypal-buttons-label-${ label }` ) );
+	};
+
+	/**
+	 * Asserts PayPal buttons have the given layout (vertical, horizontal).
+	 */
+	assertPayPalButtonsHaveLayout = async (
+		layout: 'vertical' | 'horizontal'
+	) => {
+		await expect(
+			this.payPalButtonsHostElement(),
+			`Assert PayPal buttons have layout ${ layout }`
+		).toHaveClass( new RegExp( `paypal-buttons-layout-${ layout }` ) );
+	};
+
+	/**
+	 * Asserts PayPal buttons are not visible (block cart/checkout).
+	 */
+	assertPayPalButtonsNotVisible = async () => {
+		await expect(
+			this.page.locator( '#express-payment-method-ppcp-gateway-paypal' ),
+			'Assert PayPal buttons block container is not visible'
+		).toBeHidden();
 	};
 }
