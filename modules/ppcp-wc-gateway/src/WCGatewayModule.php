@@ -521,8 +521,12 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
 				$contact_module_check = $c->get( 'wcgateway.contact-module.eligibility.check' );
 				assert( is_callable( $contact_module_check ) );
 
+				$pui_product_status = $c->get( 'wcgateway.pay-upon-invoice-product-status' );
+				assert( $pui_product_status instanceof PayUponInvoiceProductStatus );
+
 				$save_payment_methods_check = $c->get( 'save-payment-methods.eligibility.check' );
 				assert( is_callable( $save_payment_methods_check ) );
+
 				$features[ FeaturesDefinition::FEATURE_SAVE_PAYPAL_AND_VENMO ] = array(
 					'enabled' => $reference_transaction_status->reference_transaction_enabled() && $save_payment_methods_check(),
 				);
@@ -550,6 +554,10 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
 
 				$features[ FeaturesDefinition::FEATURE_CONTACT_MODULE ] = array(
 					'enabled' => $contact_module_check(),
+				);
+
+				$features[ FeaturesDefinition::FEATURE_PAY_UPON_INVOICE ] = array(
+					'enabled' => $pui_product_status->is_active(),
 				);
 
 				return $features;
