@@ -453,21 +453,11 @@ return array(
 		);
 	},
 	'settings.data.definition.methods'                    => static function ( ContainerInterface $container ): PaymentMethodsDefinition {
-		$axo_checkout_config_notice      = $container->get( 'axo.checkout-config-notice.raw' );
-		$axo_incompatible_plugins_notice = $container->get( 'axo.incompatible-plugins-notice.raw' );
-
-		// Combine the notices - only include non-empty ones.
-		$axo_notices = array_filter(
-			array(
-				$axo_checkout_config_notice,
-				$axo_incompatible_plugins_notice,
-			)
-		);
-
 		return new PaymentMethodsDefinition(
 			$container->get( 'settings.data.payment' ),
 			$container->get( 'settings.data.general' ),
-			$axo_notices
+			$container->get( 'axo.checkout-config-notice.raw' ),
+			$container->get( 'axo.incompatible-plugins-notice.raw' )
 		);
 	},
 	'settings.data.definition.method_dependencies'        => static function ( ContainerInterface $container ): PaymentMethodsDependenciesDefinition {
