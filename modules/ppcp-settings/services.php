@@ -667,7 +667,7 @@ return array(
 			FeaturesDefinition::FEATURE_INSTALLMENTS    => $capabilities[ FeaturesDefinition::FEATURE_INSTALLMENTS ],
 			// Installments eligibility.
 			FeaturesDefinition::FEATURE_PAY_WITH_CRYPTO => $capabilities[ FeaturesDefinition::FEATURE_PAY_WITH_CRYPTO ], // Pay with Crypto eligibility.
-			FeaturesDefinition::FEATURE_PAY_UPON_INVOICE => $capabilities[ FeaturesDefinition::FEATURE_PAY_UPON_INVOICE ], // Pay Upon Invoice eligibility.
+			FeaturesDefinition::FEATURE_PAY_UPON_INVOICE => $capabilities[ FeaturesDefinition::FEATURE_PAY_UPON_INVOICE ], // Pay upon Invoice eligibility.
 		);
 
 		return new FeaturesDefinition(
@@ -694,7 +694,7 @@ return array(
 			$pay_later_eligible, // Pay Later eligibility.
 			'MX' === $container->get( 'api.merchant.country' ), // Installments eligibility.
 			$container->get( 'ppcp-local-apms.pwc.eligibility.check' ), // Pay with Crypto eligibility.
-			$container->get( 'ppcp-local-apms.pui.eligibility.check' ) // Pay Upon Invoice eligibility.
+			$container->get( 'ppcp-local-apms.pui.eligibility.check' ) // Pay upon Invoice eligibility.
 		);
 	},
 	'settings.service.payment_methods_eligibilities'      => static function ( ContainerInterface $container ): PaymentMethodsEligibilityService {
