@@ -76,7 +76,7 @@ class FeaturesEligibilityService {
 	private bool $is_pwc_eligibility_checked;
 
 	/**
-	 * Whether Pay Upon Invoice is eligible.
+	 * Whether Pay upon Invoice is eligible.
 	 *
 	 * @var bool
 	 */
@@ -93,7 +93,7 @@ class FeaturesEligibilityService {
 	 * @param bool     $is_pay_later_eligible If Pay Later is eligible.
 	 * @param bool     $is_installments_eligible If Installments is eligible.
 	 * @param bool     $is_pwc_eligibility_checked If Pay With Crypto eligibility has been checked.
-	 * @param bool     $is_pui_eligible If Pay Upon Invoice is eligible.
+	 * @param bool     $is_pui_eligible If Pay upon Invoice is eligible.
 	 */
 	public function __construct(
 		bool $is_save_paypal_eligible,

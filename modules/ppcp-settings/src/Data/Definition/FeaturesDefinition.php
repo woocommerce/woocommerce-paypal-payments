@@ -70,7 +70,7 @@ class FeaturesDefinition {
 	public const FEATURE_PAY_WITH_CRYPTO = 'pwc';
 
 	/**
-	 * Whether Pay Upon Invoice (PUI) is supported. Available for merchants in Germany.
+	 * Whether Pay upon Invoice (PUI) is supported. Available for merchants in Germany.
 	 */
 	public const FEATURE_PAY_UPON_INVOICE = 'pay_upon_invoice';
 
@@ -431,7 +431,7 @@ class FeaturesDefinition {
 				),
 			),
 			self::FEATURE_PAY_UPON_INVOICE                => array(
-				'title'       => __( 'Pay Upon Invoice', 'woocommerce-paypal-payments' ),
+				'title'       => __( 'Pay upon Invoice', 'woocommerce-paypal-payments' ),
 				'description' => __( 'Offer Pay upon Invoice (Rechnungskauf) for customers in Germany. Buyers receive goods first and pay within 30 days — no PayPal account needed. Powered by Ratepay.', 'woocommerce-paypal-payments' ),
 				'enabled'     => $this->merchant_capabilities[ self::FEATURE_PAY_UPON_INVOICE ],
 				'buttons'     => array(
