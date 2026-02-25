@@ -47,6 +47,10 @@ class AssetGetter
     {
         return $this->base_plugin_url . "modules/{$this->module_name}/assets/{$asset_name}";
     }
+    public function get_asset_handle(string $suffix): string
+    {
+        return "{$this->module_name}-{$suffix}";
+    }
     protected function get_compiled_asset_name(string $asset_name): string
     {
         $type = pathinfo($asset_name, \PATHINFO_EXTENSION);
