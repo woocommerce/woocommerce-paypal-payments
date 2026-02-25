@@ -314,13 +314,4 @@ class PaymentSettings extends \WooCommerce\PayPalCommerce\Settings\Data\Abstract
     {
         $this->data['pui_customer_service_instructions'] = $value;
     }
-    /**
-     * Check if Pay upon Invoice has all required fields configured.
-     *
-     * @return bool True if all required fields are configured.
-     */
-    public function is_pui_configured(): bool
-    {
-        return !empty($this->get_pui_brand_name()) && !empty($this->get_pui_logo_url()) && !empty($this->get_pui_customer_service_instructions());
-    }
 }
