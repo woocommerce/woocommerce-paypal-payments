@@ -67,4 +67,10 @@ return array('ppcp-local-apms.asset_getter' => static function (ContainerInterfa
     return 'USD' === $container->get('api.shop.currency.getter')->get();
 }, 'ppcp-local-apms.pwc.eligibility.check' => static function (ContainerInterface $container): bool {
     return $container->get('ppcp-local-apms.eligibility.check') && $container->get('ppcp-local-apms.pwc.currency.check');
+}, 'ppcp-local-apms.pui.country.check' => static function (ContainerInterface $container): bool {
+    return 'DE' === $container->get('api.merchant.country');
+}, 'ppcp-local-apms.pui.currency.check' => static function (ContainerInterface $container): bool {
+    return 'EUR' === $container->get('api.shop.currency.getter')->get();
+}, 'ppcp-local-apms.pui.eligibility.check' => static function (ContainerInterface $container): bool {
+    return $container->get('ppcp-local-apms.pui.country.check') && $container->get('ppcp-local-apms.pui.currency.check');
 });

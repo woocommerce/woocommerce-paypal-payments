@@ -366,6 +366,8 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
             assert($pwc_product_status instanceof PWCProductStatus);
             $contact_module_check = $c->get('wcgateway.contact-module.eligibility.check');
             assert(is_callable($contact_module_check));
+            $pui_product_status = $c->get('wcgateway.pay-upon-invoice-product-status');
+            assert($pui_product_status instanceof PayUponInvoiceProductStatus);
             $save_payment_methods_check = $c->get('save-payment-methods.eligibility.check');
             assert(is_callable($save_payment_methods_check));
             $features[FeaturesDefinition::FEATURE_SAVE_PAYPAL_AND_VENMO] = array('enabled' => $reference_transaction_status->reference_transaction_enabled() && $save_payment_methods_check());
@@ -376,6 +378,7 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
             $features[FeaturesDefinition::FEATURE_INSTALLMENTS] = array('enabled' => $installments_product_status->is_active());
             $features[FeaturesDefinition::FEATURE_PAY_WITH_CRYPTO] = array('enabled' => $pwc_product_status->is_active());
             $features[FeaturesDefinition::FEATURE_CONTACT_MODULE] = array('enabled' => $contact_module_check());
+            $features[FeaturesDefinition::FEATURE_PAY_UPON_INVOICE] = array('enabled' => $pui_product_status->is_active());
             return $features;
         });
         add_action('rest_api_init', static function () use ($c) {
@@ -436,7 +439,7 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
             $pui_product_status = $container->get('wcgateway.pay-upon-invoice-product-status');
             assert($pui_product_status instanceof PayUponInvoiceProductStatus);
             $shop_country = $container->get('api.shop.country');
-            if ('DE' === $shop_country && ($is_our_page || $is_gateways_list_page && $pui_product_status->is_active() || $settings->has('products_pui_enabled') && $settings->get('products_pui_enabled'))) {
+            if ('DE' === $shop_country && ($is_our_page || $is_gateways_list_page || $pui_product_status->is_active())) {
                 $methods[] = $container->get('wcgateway.pay-upon-invoice-gateway');
             }
             if ('MX' === $shop_country) {

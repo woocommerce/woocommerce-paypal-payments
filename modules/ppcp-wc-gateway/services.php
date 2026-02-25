@@ -323,7 +323,7 @@ return array(
         return new PayUponInvoiceOrderEndpoint($container->get('api.host'), $container->get('api.bearer'), $container->get('api.factory.order'), $container->get('wcgateway.fraudnet'), $container->get('woocommerce.logger.woocommerce'));
     },
     'wcgateway.pay-upon-invoice-payment-source-factory' => static function (ContainerInterface $container): PaymentSourceFactory {
-        return new PaymentSourceFactory();
+        return new PaymentSourceFactory($container->get('settings.data.payment'));
     },
     'wcgateway.pay-upon-invoice-gateway' => static function (ContainerInterface $container): PayUponInvoiceGateway {
         return new PayUponInvoiceGateway($container->get('wcgateway.pay-upon-invoice-order-endpoint'), $container->get('api.factory.purchase-unit'), $container->get('wcgateway.pay-upon-invoice-payment-source-factory'), $container->get('settings.environment'), $container->get('wcgateway.transaction-url-provider'), $container->get('woocommerce.logger.woocommerce'), $container->get('wcgateway.pay-upon-invoice-helper'), $container->get('wcgateway.checkout-helper'), $container->get('settings.flag.is-connected'), $container->get('wcgateway.processor.refunds'), $container->get('wcgateway.asset_getter'));
@@ -336,7 +336,7 @@ return array(
         return new FraudNet((string) $source_website_id());
     },
     'wcgateway.pay-upon-invoice-helper' => static function (ContainerInterface $container): PayUponInvoiceHelper {
-        return new PayUponInvoiceHelper($container->get('wcgateway.checkout-helper'), $container->get('api.shop.country'));
+        return new PayUponInvoiceHelper($container->get('wcgateway.checkout-helper'), $container->get('api.shop.country'), $container->get('settings.data.payment'));
     },
     'wcgateway.pay-upon-invoice-product-status' => static function (ContainerInterface $container): PayUponInvoiceProductStatus {
         return new PayUponInvoiceProductStatus($container->get('settings.flag.is-connected'), $container->get('api.endpoint.partners'), $container->get('api.helper.failure-registry'), $container->get('api.helper.product-status-result-cache'));
@@ -348,7 +348,7 @@ return array(
         return new PWCProductStatus($container->get('settings.flag.is-connected'), $container->get('api.endpoint.partners'), $container->get('api.helper.failure-registry'), $container->get('api.helper.product-status-result-cache'));
     },
     'wcgateway.pay-upon-invoice' => static function (ContainerInterface $container): PayUponInvoice {
-        return new PayUponInvoice($container->get('wcgateway.pay-upon-invoice-order-endpoint'), $container->get('woocommerce.logger.woocommerce'), $container->get('settings.flag.is-connected'), $container->get('wcgateway.is-plugin-settings-page'), $container->get('wcgateway.pay-upon-invoice-product-status'), $container->get('wcgateway.pay-upon-invoice-helper'), $container->get('wcgateway.checkout-helper'), $container->get('api.factory.capture'));
+        return new PayUponInvoice($container->get('wcgateway.pay-upon-invoice-order-endpoint'), $container->get('woocommerce.logger.woocommerce'), $container->get('settings.flag.is-connected'), $container->get('wcgateway.is-plugin-settings-page'), $container->get('wcgateway.pay-upon-invoice-product-status'), $container->get('wcgateway.pay-upon-invoice-helper'), $container->get('wcgateway.checkout-helper'), $container->get('api.factory.capture'), $container->get('settings.data.payment'));
     },
     'wcgateway.oxxo' => static function (ContainerInterface $container): OXXO {
         return new OXXO($container->get('wcgateway.checkout-helper'), $container->get('wcgateway.asset_getter'), $container->get('ppcp.asset-version'), $container->get('api.endpoint.order'), $container->get('woocommerce.logger.woocommerce'), $container->get('api.factory.capture'));

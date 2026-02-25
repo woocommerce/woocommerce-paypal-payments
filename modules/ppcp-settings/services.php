@@ -253,11 +253,7 @@ return array(
         return new TodosDefinition($container->get('settings.service.todos_eligibilities'), $container->get('settings.data.general'), $container->get('settings.data.todos'));
     },
     'settings.data.definition.methods' => static function (ContainerInterface $container): PaymentMethodsDefinition {
-        $axo_checkout_config_notice = $container->get('axo.checkout-config-notice.raw');
-        $axo_incompatible_plugins_notice = $container->get('axo.incompatible-plugins-notice.raw');
-        // Combine the notices - only include non-empty ones.
-        $axo_notices = array_filter(array($axo_checkout_config_notice, $axo_incompatible_plugins_notice));
-        return new PaymentMethodsDefinition($container->get('settings.data.payment'), $container->get('settings.data.general'), $axo_notices);
+        return new PaymentMethodsDefinition($container->get('settings.data.payment'), $container->get('settings.data.general'), $container->get('axo.checkout-config-notice.raw'), $container->get('axo.incompatible-plugins-notice.raw'));
     },
     'settings.data.definition.method_dependencies' => static function (ContainerInterface $container): PaymentMethodsDependenciesDefinition {
         return new PaymentMethodsDependenciesDefinition();
@@ -291,7 +287,7 @@ return array(
         // TODO: This condition included in the `*.eligibility.check` services; it can be removed when we switch to those services.
         $general_settings = $container->get('settings.data.general');
         assert($general_settings instanceof GeneralSettings);
-        return array(FeaturesDefinition::FEATURE_APPLE_PAY => ($features[FeaturesDefinition::FEATURE_APPLE_PAY]['enabled'] ?? \false) && !$general_settings->own_brand_only(), FeaturesDefinition::FEATURE_GOOGLE_PAY => ($features[FeaturesDefinition::FEATURE_GOOGLE_PAY]['enabled'] ?? \false) && !$general_settings->own_brand_only(), FeaturesDefinition::FEATURE_ADVANCED_CREDIT_AND_DEBIT_CARDS => ($features[FeaturesDefinition::FEATURE_ADVANCED_CREDIT_AND_DEBIT_CARDS]['enabled'] ?? \false) && !$general_settings->own_brand_only(), FeaturesDefinition::FEATURE_SAVE_PAYPAL_AND_VENMO => $features[FeaturesDefinition::FEATURE_SAVE_PAYPAL_AND_VENMO]['enabled'] ?? \false, FeaturesDefinition::FEATURE_ALTERNATIVE_PAYMENT_METHODS => $features[FeaturesDefinition::FEATURE_ALTERNATIVE_PAYMENT_METHODS]['enabled'] ?? \false, FeaturesDefinition::FEATURE_PAY_LATER_MESSAGING => $features[FeaturesDefinition::FEATURE_PAY_LATER_MESSAGING]['enabled'] ?? \false, FeaturesDefinition::FEATURE_INSTALLMENTS => $features[FeaturesDefinition::FEATURE_INSTALLMENTS]['enabled'] ?? \false, FeaturesDefinition::FEATURE_PAY_WITH_CRYPTO => $features[FeaturesDefinition::FEATURE_PAY_WITH_CRYPTO]['enabled'] ?? \false);
+        return array(FeaturesDefinition::FEATURE_APPLE_PAY => ($features[FeaturesDefinition::FEATURE_APPLE_PAY]['enabled'] ?? \false) && !$general_settings->own_brand_only(), FeaturesDefinition::FEATURE_GOOGLE_PAY => ($features[FeaturesDefinition::FEATURE_GOOGLE_PAY]['enabled'] ?? \false) && !$general_settings->own_brand_only(), FeaturesDefinition::FEATURE_ADVANCED_CREDIT_AND_DEBIT_CARDS => ($features[FeaturesDefinition::FEATURE_ADVANCED_CREDIT_AND_DEBIT_CARDS]['enabled'] ?? \false) && !$general_settings->own_brand_only(), FeaturesDefinition::FEATURE_SAVE_PAYPAL_AND_VENMO => $features[FeaturesDefinition::FEATURE_SAVE_PAYPAL_AND_VENMO]['enabled'] ?? \false, FeaturesDefinition::FEATURE_ALTERNATIVE_PAYMENT_METHODS => $features[FeaturesDefinition::FEATURE_ALTERNATIVE_PAYMENT_METHODS]['enabled'] ?? \false, FeaturesDefinition::FEATURE_PAY_LATER_MESSAGING => $features[FeaturesDefinition::FEATURE_PAY_LATER_MESSAGING]['enabled'] ?? \false, FeaturesDefinition::FEATURE_INSTALLMENTS => $features[FeaturesDefinition::FEATURE_INSTALLMENTS]['enabled'] ?? \false, FeaturesDefinition::FEATURE_PAY_WITH_CRYPTO => $features[FeaturesDefinition::FEATURE_PAY_WITH_CRYPTO]['enabled'] ?? \false, FeaturesDefinition::FEATURE_PAY_UPON_INVOICE => $features[FeaturesDefinition::FEATURE_PAY_UPON_INVOICE]['enabled'] ?? \false);
     },
     'settings.service.todos_eligibilities' => static function (ContainerInterface $container): TodosEligibilityService {
         $pay_later_service = $container->get('settings.service.pay_later_status');
@@ -393,7 +389,7 @@ return array(
         // Settings status.
         $gateways = array('card-button' => $settings['data']['ppcp-card-button-gateway']['enabled'] ?? \false);
         // Merchant capabilities serve to show active or inactive badge and buttons.
-        $capabilities = array(FeaturesDefinition::FEATURE_APPLE_PAY => $features[FeaturesDefinition::FEATURE_APPLE_PAY]['enabled'] ?? \false, FeaturesDefinition::FEATURE_GOOGLE_PAY => $features[FeaturesDefinition::FEATURE_GOOGLE_PAY]['enabled'] ?? \false, FeaturesDefinition::FEATURE_ADVANCED_CREDIT_AND_DEBIT_CARDS => $features[FeaturesDefinition::FEATURE_ADVANCED_CREDIT_AND_DEBIT_CARDS]['enabled'] ?? \false, FeaturesDefinition::FEATURE_SAVE_PAYPAL_AND_VENMO => $features[FeaturesDefinition::FEATURE_SAVE_PAYPAL_AND_VENMO]['enabled'] ?? \false, FeaturesDefinition::FEATURE_ALTERNATIVE_PAYMENT_METHODS => $features[FeaturesDefinition::FEATURE_ALTERNATIVE_PAYMENT_METHODS]['enabled'] ?? \false, FeaturesDefinition::FEATURE_INSTALLMENTS => $features[FeaturesDefinition::FEATURE_INSTALLMENTS]['enabled'] ?? \false, FeaturesDefinition::FEATURE_PAY_WITH_CRYPTO => $features[FeaturesDefinition::FEATURE_PAY_WITH_CRYPTO]['enabled'] ?? \false, FeaturesDefinition::FEATURE_PAY_LATER_MESSAGING => $features[FeaturesDefinition::FEATURE_PAY_LATER_MESSAGING]['enabled'] ?? \false);
+        $capabilities = array(FeaturesDefinition::FEATURE_APPLE_PAY => $features[FeaturesDefinition::FEATURE_APPLE_PAY]['enabled'] ?? \false, FeaturesDefinition::FEATURE_GOOGLE_PAY => $features[FeaturesDefinition::FEATURE_GOOGLE_PAY]['enabled'] ?? \false, FeaturesDefinition::FEATURE_ADVANCED_CREDIT_AND_DEBIT_CARDS => $features[FeaturesDefinition::FEATURE_ADVANCED_CREDIT_AND_DEBIT_CARDS]['enabled'] ?? \false, FeaturesDefinition::FEATURE_SAVE_PAYPAL_AND_VENMO => $features[FeaturesDefinition::FEATURE_SAVE_PAYPAL_AND_VENMO]['enabled'] ?? \false, FeaturesDefinition::FEATURE_ALTERNATIVE_PAYMENT_METHODS => $features[FeaturesDefinition::FEATURE_ALTERNATIVE_PAYMENT_METHODS]['enabled'] ?? \false, FeaturesDefinition::FEATURE_INSTALLMENTS => $features[FeaturesDefinition::FEATURE_INSTALLMENTS]['enabled'] ?? \false, FeaturesDefinition::FEATURE_PAY_WITH_CRYPTO => $features[FeaturesDefinition::FEATURE_PAY_WITH_CRYPTO]['enabled'] ?? \false, FeaturesDefinition::FEATURE_PAY_LATER_MESSAGING => $features[FeaturesDefinition::FEATURE_PAY_LATER_MESSAGING]['enabled'] ?? \false, FeaturesDefinition::FEATURE_PAY_UPON_INVOICE => $features[FeaturesDefinition::FEATURE_PAY_UPON_INVOICE]['enabled'] ?? \false);
         $merchant_capabilities = array(
             FeaturesDefinition::FEATURE_SAVE_PAYPAL_AND_VENMO => $capabilities[FeaturesDefinition::FEATURE_SAVE_PAYPAL_AND_VENMO],
             // Save PayPal and Venmo eligibility.
@@ -410,6 +406,8 @@ return array(
             FeaturesDefinition::FEATURE_INSTALLMENTS => $capabilities[FeaturesDefinition::FEATURE_INSTALLMENTS],
             // Installments eligibility.
             FeaturesDefinition::FEATURE_PAY_WITH_CRYPTO => $capabilities[FeaturesDefinition::FEATURE_PAY_WITH_CRYPTO],
+            // Pay with Crypto eligibility.
+            FeaturesDefinition::FEATURE_PAY_UPON_INVOICE => $capabilities[FeaturesDefinition::FEATURE_PAY_UPON_INVOICE],
         );
         return new FeaturesDefinition($container->get('settings.service.features_eligibilities'), $container->get('settings.data.general'), $merchant_capabilities, $container->get('settings.data.settings'));
     },
@@ -433,7 +431,9 @@ return array(
             // Pay Later eligibility.
             'MX' === $container->get('api.merchant.country'),
             // Installments eligibility.
-            $container->get('ppcp-local-apms.pwc.eligibility.check')
+            $container->get('ppcp-local-apms.pwc.eligibility.check'),
+            // Pay with Crypto eligibility.
+            $container->get('ppcp-local-apms.pui.eligibility.check')
         );
     },
     'settings.service.payment_methods_eligibilities' => static function (ContainerInterface $container): PaymentMethodsEligibilityService {
