@@ -18,18 +18,20 @@ export class PayPalUiClassic extends PayPalUi {
 	// Locators
 	cartMenu = () => this.page.locator( '#site-header-cart' );
 
-	payPalIframe = () =>
+	gatewayButtonIframe = ( name ) =>
 		this.page.frameLocator(
 			// unified selector for My Account and checkout pages
-			'[id^="ppc-button-ppcp-gateway"] iframe[name^="__zoid__paypal_buttons__"]'
+			`iframe[title="PayPal-${ name }"]`
 		);
 	payPalButtonsClassicContainer = () =>
-		this.payPalIframe().locator( '#buttons-container' );
+		this.page.locator( '[id^="ppc-button-ppcp-gateway"]' );
 	fundingSourceButton = ( name ) =>
-		this.payPalIframe().locator( `[data-funding-source="${ name }"]` );
+		this.gatewayButtonIframe( name ).locator( `[data-funding-source="${ name }"]` );
 
 	payPalButton = () => this.fundingSourceButton( 'paypal' );
-	payLaterButton = () => this.fundingSourceButton( 'paylater' );
+	payLaterButton = () => this.page
+		.frameLocator( 'iframe[title="PayPal-paylater"]' )
+		.locator( `[data-funding-source="paylater"]` );
 	sepaButton = () => this.fundingSourceButton( 'sepa' );
 	giropayButton = () => this.fundingSourceButton( 'giropay' );
 	sofortButton = () => this.fundingSourceButton( 'sofort' );
