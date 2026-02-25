@@ -89,7 +89,7 @@ const modulesAssets = {
 		'css/common.scss',
 	],
 	'ppcp-webhooks': [ 'js/status-page.js', 'css/status-page.scss' ],
-	'ppcp-agentic-commerce': [ 'js/settings.js', 'css/style.scss' ]
+	'ppcp-store-sync': [ 'js/settings.js', 'css/style.scss' ]
 };
 
 const entries = {};

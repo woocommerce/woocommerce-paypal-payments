@@ -89,11 +89,11 @@ return static function ( string $root_dir ): iterable {
 
 	if ( ! SettingsModule::should_use_the_old_ui()
 		&& apply_filters(
-			'woocommerce.feature-flags.woocommerce_paypal_payments.agentic_commerce_enabled',
-			getenv( 'PCP_AGENTIC_COMMERCE_ENABLED' ) === '1'
+			'woocommerce.feature-flags.woocommerce_paypal_payments.store_sync_enabled',
+			getenv( 'PCP_STORE_SYNC_ENABLED' ) === '1'
 		)
 	) {
-		$modules[] = ( require "$modules_dir/ppcp-agentic-commerce/module.php" )();
+		$modules[] = ( require "$modules_dir/ppcp-store-sync/module.php" )();
 	}
 
 	return $modules;
