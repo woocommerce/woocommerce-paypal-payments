@@ -37,13 +37,16 @@ class PaymentSettings extends AbstractDataModel {
 	 */
 	protected function get_defaults(): array {
 		return array(
-			'paypal_show_logo'            => false,
-			'cardholder_name'             => false,
-			'fastlane_display_watermark'  => false,
-			'venmo_enabled'               => false,
-			'paylater_enabled'            => false,
-			'applepay_validated'          => false,
-			'applepay_checkout_data_mode' => 'use_wc',
+			'paypal_show_logo'                  => false,
+			'cardholder_name'                   => false,
+			'fastlane_display_watermark'        => false,
+			'venmo_enabled'                     => false,
+			'paylater_enabled'                  => false,
+			'applepay_validated'                => false,
+			'applepay_checkout_data_mode'       => 'use_wc',
+			'pui_brand_name'                    => '',
+			'pui_logo_url'                      => '',
+			'pui_customer_service_instructions' => '',
 		);
 	}
 
@@ -306,4 +309,47 @@ class PaymentSettings extends AbstractDataModel {
 	public function set_applepay_checkout_data_mode( string $value ): void {
 		$this->data['applepay_checkout_data_mode'] = $value;
 	}
+
+	/**
+	 * Get Pay upon Invoice brand name.
+	 */
+	public function get_pui_brand_name(): string {
+		return (string) $this->data['pui_brand_name'];
+	}
+
+	/**
+	 * Set Pay upon Invoice brand name.
+	 */
+	public function set_pui_brand_name( string $value ): void {
+		$this->data['pui_brand_name'] = $value;
+	}
+
+	/**
+	 * Get Pay upon Invoice logo URL.
+	 */
+	public function get_pui_logo_url(): string {
+		return (string) $this->data['pui_logo_url'];
+	}
+
+	/**
+	 * Set Pay upon Invoice logo URL.
+	 */
+	public function set_pui_logo_url( string $value ): void {
+		$this->data['pui_logo_url'] = $value;
+	}
+
+	/**
+	 * Get Pay upon Invoice customer service instructions.
+	 */
+	public function get_pui_customer_service_instructions(): string {
+		return (string) $this->data['pui_customer_service_instructions'];
+	}
+
+	/**
+	 * Set Pay upon Invoice customer service instructions.
+	 */
+	public function set_pui_customer_service_instructions( string $value ): void {
+		$this->data['pui_customer_service_instructions'] = $value;
+	}
+
 }

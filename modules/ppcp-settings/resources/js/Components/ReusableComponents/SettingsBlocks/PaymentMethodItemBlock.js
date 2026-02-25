@@ -13,6 +13,7 @@ const PaymentMethodItemBlock = ( {
 	isDisabled,
 	disabledMessage,
 	warningMessages,
+	warningSeverity,
 } ) => {
 	const hasWarning =
 		warningMessages && Object.keys( warningMessages ).length > 0;
@@ -71,6 +72,7 @@ const PaymentMethodItemBlock = ( {
 						{ hasWarning && ! isDisabled && isSelected && (
 							<WarningMessages
 								warningMessages={ warningMessages }
+								severity={ warningSeverity }
 							/>
 						) }
 					</div>

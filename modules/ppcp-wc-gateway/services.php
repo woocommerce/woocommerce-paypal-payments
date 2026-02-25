@@ -686,7 +686,9 @@ return array(
 		);
 	},
 	'wcgateway.pay-upon-invoice-payment-source-factory'    => static function ( ContainerInterface $container ): PaymentSourceFactory {
-		return new PaymentSourceFactory();
+		return new PaymentSourceFactory(
+			$container->get( 'settings.data.payment' )
+		);
 	},
 	'wcgateway.pay-upon-invoice-gateway'                   => static function ( ContainerInterface $container ): PayUponInvoiceGateway {
 		return new PayUponInvoiceGateway(
@@ -716,7 +718,8 @@ return array(
 	'wcgateway.pay-upon-invoice-helper'                    => static function ( ContainerInterface $container ): PayUponInvoiceHelper {
 		return new PayUponInvoiceHelper(
 			$container->get( 'wcgateway.checkout-helper' ),
-			$container->get( 'api.shop.country' )
+			$container->get( 'api.shop.country' ),
+			$container->get( 'settings.data.payment' )
 		);
 	},
 	'wcgateway.pay-upon-invoice-product-status'            => static function ( ContainerInterface $container ): PayUponInvoiceProductStatus {
@@ -752,7 +755,8 @@ return array(
 			$container->get( 'wcgateway.pay-upon-invoice-product-status' ),
 			$container->get( 'wcgateway.pay-upon-invoice-helper' ),
 			$container->get( 'wcgateway.checkout-helper' ),
-			$container->get( 'api.factory.capture' )
+			$container->get( 'api.factory.capture' ),
+			$container->get( 'settings.data.payment' )
 		);
 	},
 	'wcgateway.oxxo'                                       => static function ( ContainerInterface $container ): OXXO {
