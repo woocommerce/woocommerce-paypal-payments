@@ -366,5 +366,4 @@ class PaymentSettings extends AbstractDataModel {
 	public function set_pui_customer_service_instructions( string $value ): void {
 		$this->data['pui_customer_service_instructions'] = $value;
 	}
-
 }
