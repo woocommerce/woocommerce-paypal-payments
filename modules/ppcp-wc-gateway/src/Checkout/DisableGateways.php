@@ -15,44 +15,34 @@ use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CardButtonGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
+use WooCommerce\PayPalCommerce\WcGateway\Helper\CardPaymentsConfiguration;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\SettingsStatus;
 
 /**
  * Class DisableGateways
  */
 class DisableGateways {
-
-	/**
-	 * @var Context Context data provider.
-	 */
 	private Context $context;
-
 	private SettingsProvider $settings_provider;
-
-	/**
-	 * The Settings status helper.
-	 *
-	 * @var SettingsStatus
-	 */
-	protected $settings_status;
-
-	/**
-	 * The subscription helper.
-	 *
-	 * @var SubscriptionHelper
-	 */
-	private $subscription_helper;
+	protected SettingsStatus $settings_status;
+	private SubscriptionHelper $subscription_helper;
+	private CardPaymentsConfiguration $card_configuration;
+	private string $store_country;
 
 	public function __construct(
 		SettingsProvider $settings_provider,
 		SettingsStatus $settings_status,
 		SubscriptionHelper $subscription_helper,
-		Context $context
+		Context $context,
+		CardPaymentsConfiguration $card_configuration,
+		string $store_country
 	) {
 		$this->settings_provider   = $settings_provider;
 		$this->settings_status     = $settings_status;
 		$this->subscription_helper = $subscription_helper;
 		$this->context             = $context;
+		$this->card_configuration  = $card_configuration;
+		$this->store_country       = $store_country;
 	}
 
 	/**
@@ -83,6 +73,10 @@ class DisableGateways {
 			if ( $this->subscription_helper->cart_contains_subscription() ) {
 				unset( $methods[ PayPalGateway::ID ] );
 			}
+		}
+
+		if ( $this->card_configuration->use_acdc() && $this->store_country !== 'MX' ) {
+			unset( $methods[ CardButtonGateway::ID ] );
 		}
 
 		if ( ! $this->needs_to_disable_gateways() ) {

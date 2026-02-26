@@ -221,12 +221,14 @@ return array(
 		);
 	},
 	'wcgateway.disabler'                                   => static function ( ContainerInterface $container ): DisableGateways {
-		$settings_provider   = $container->get( 'settings.settings-provider' );
-		$settings_status     = $container->get( 'wcgateway.settings.status' );
+		$settings_provider  = $container->get( 'settings.settings-provider' );
+		$settings_status    = $container->get( 'wcgateway.settings.status' );
 		$subscription_helper = $container->get( 'wc-subscriptions.helper' );
-		$context             = $container->get( 'button.helper.context' );
+		$context            = $container->get( 'button.helper.context' );
+		$card_configuration = $container->get( 'wcgateway.configuration.card-configuration' );
+		$store_country      = $container->get( 'api.merchant.country' );
 
-		return new DisableGateways( $settings_provider, $settings_status, $subscription_helper, $context );
+		return new DisableGateways( $settings_provider, $settings_status, $subscription_helper, $context, $card_configuration, $store_country );
 	},
 
 	'wcgateway.is-wc-settings-page'                        => static function ( ContainerInterface $container ): bool {
