@@ -308,6 +308,14 @@ export class PayPalUiClassic extends PayPalUi {
 	usingVaultedPayPalAccountText = ( payPalEmail: string ) =>
 		this.page.getByText( `Using ${ payPalEmail } PayPal.` );
 
+	/** Host element with paypal-buttons-label-* and paypal-buttons-layout-* classes (product, cart, checkout). */
+	payPalButtonsHostElement = () =>
+		this.page.locator( '#ppc-button-ppcp-gateway .paypal-buttons' );
+
+	/** Host element for mini cart PayPal buttons. */
+	minicartPayPalButtonsHostElement = () =>
+		this.page.locator( '#ppc-button-minicart .paypal-buttons' );
+
 	// Actions
 
 	/**
@@ -532,14 +540,6 @@ export class PayPalUiClassic extends PayPalUi {
 			'Assert PayPal button is visible'
 		).toBeVisible();
 	};
-
-	/** Host element with paypal-buttons-label-* and paypal-buttons-layout-* classes (product, cart, checkout). */
-	payPalButtonsHostElement = () =>
-		this.page.locator( '#ppc-button-ppcp-gateway .paypal-buttons' );
-
-	/** Host element for mini cart PayPal buttons. */
-	minicartPayPalButtonsHostElement = () =>
-		this.page.locator( '#ppc-button-minicart .paypal-buttons' );
 
 	/**
 	 * Asserts PayPal buttons have the given label (pay, checkout, buynow, paypal).

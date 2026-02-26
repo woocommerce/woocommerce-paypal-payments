@@ -3,60 +3,81 @@
  */
 import { Pcp } from '../../../resources';
 
+type PlmCheckoutPageData = {
+	location: Pcp.Admin.Plm.Location;
+	settings: {
+		logoType?: Pcp.Admin.Plm.LogoType;
+		textColor?: Pcp.Admin.Plm.TextColor;
+		logoPosition?: Pcp.Admin.Plm.LogoPosition;
+		textSize?: Pcp.Admin.Plm.TextSize;
+	}[];
+};
+
+type PlmBannerPageData = {
+	location: Pcp.Admin.Plm.Location;
+	settings: {
+		bannerColor?: Pcp.Admin.Plm.BannerColor;
+		bannerSize?: Pcp.Admin.Plm.BannerSize;
+	}[];
+};
+
 /**
  * One variant per location (per plan).
  */
-export const payLaterMessagingData = {
+export const payLaterMessagingData: {
+	checkoutLocationSettings: Record<string, PlmCheckoutPageData>;
+	bannerLocationSettings: Record<string, PlmBannerPageData>;
+} = {
 	checkoutLocationSettings: {
 		'Product page': {
-			location: 'Product page' as Pcp.Admin.Plm.Location,
+			location: 'Product page',
 			settings: [
 				{
-					logoType: 'Full logo' as Pcp.Admin.Plm.LogoType,
-					textColor: 'Black / Blue logo' as Pcp.Admin.Plm.TextColor,
-					logoPosition: 'Left' as Pcp.Admin.Plm.LogoPosition,
-					textSize: 'Medium' as Pcp.Admin.Plm.TextSize,
+					logoType: 'Full logo',
+					textColor: 'Black / Blue logo',
+					logoPosition: 'Left',
+					textSize: 'Medium',
 				},
 			],
 		},
 		Cart: {
-			location: 'Cart' as Pcp.Admin.Plm.Location,
+			location: 'Cart',
 			settings: [
 				{
-					logoType: 'Monogram' as Pcp.Admin.Plm.LogoType,
-					textColor: 'Black / Blue logo' as Pcp.Admin.Plm.TextColor,
-					textSize: 'Medium' as Pcp.Admin.Plm.TextSize,
+					logoType: 'Monogram',
+					textColor: 'Black / Blue logo',
+					textSize: 'Medium',
 				},
 			],
 		},
 		Checkout: {
-			location: 'Checkout' as Pcp.Admin.Plm.Location,
+			location: 'Checkout',
 			settings: [
 				{
-					logoType: 'Full logo' as Pcp.Admin.Plm.LogoType,
-					textColor: 'Black / Blue logo' as Pcp.Admin.Plm.TextColor,
-					logoPosition: 'Right' as Pcp.Admin.Plm.LogoPosition,
-					textSize: 'Medium' as Pcp.Admin.Plm.TextSize,
+					logoType: 'Full logo',
+					textColor: 'Black / Blue logo',
+					logoPosition: 'Right',
+					textSize: 'Medium',
 				},
 			],
 		},
 	},
 	bannerLocationSettings: {
 		Home: {
-			location: 'Home' as Pcp.Admin.Plm.Location,
+			location: 'Home',
 			settings: [
 				{
-					bannerColor: 'Blue' as Pcp.Admin.Plm.BannerColor,
-					bannerSize: '20 x 1' as Pcp.Admin.Plm.BannerSize,
+					bannerColor: 'Blue',
+					bannerSize: '20 x 1',
 				},
 			],
 		},
 		Shop: {
-			location: 'Shop' as Pcp.Admin.Plm.Location,
+			location: 'Shop',
 			settings: [
 				{
-					bannerColor: 'White' as Pcp.Admin.Plm.BannerColor,
-					bannerSize: '20 x 1' as Pcp.Admin.Plm.BannerSize,
+					bannerColor: 'White',
+					bannerSize: '20 x 1',
 				},
 			],
 		},

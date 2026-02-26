@@ -178,6 +178,12 @@ export class PayPalUi {
 	threeDSSubmitButton = () =>
 		this.threeDSFrame2().locator( 'input.primary[type="submit"]' );
 
+	/** Host element with paypal-buttons-label-* and paypal-buttons-layout-* classes (block cart/checkout). */
+	payPalButtonsHostElement = () =>
+		this.page.locator(
+			'#express-payment-method-ppcp-gateway-paypal .paypal-buttons'
+		);
+
 	// Actions
 
 	/**
@@ -573,12 +579,6 @@ export class PayPalUi {
 			'Assert PayPal express payment button is visible'
 		).toBeVisible();
 	};
-
-	/** Host element with paypal-buttons-label-* and paypal-buttons-layout-* classes (block cart/checkout). */
-	payPalButtonsHostElement = () =>
-		this.page.locator(
-			'#express-payment-method-ppcp-gateway-paypal .paypal-buttons'
-		);
 
 	/**
 	 * Asserts PayPal buttons have the given label (pay, checkout, buynow, paypal).

@@ -9,11 +9,11 @@ import {
 	products,
 } from '../../resources';
 
+// 'Mini Cart' skipped: minicart buttons unreliable in test env
 const LOCATIONS: Pcp.Admin.Styling.Location[] = [
 	'Cart',
 	'Classic Checkout',
 	'Express Checkout',
-	// 'Mini Cart' skipped: minicart buttons unreliable in test env
 	'Product Page',
 ];
 

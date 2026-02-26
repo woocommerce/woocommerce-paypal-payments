@@ -199,30 +199,26 @@ test.describe( 'PLM Configurator', () => {
 		await pcpPayLaterMessaging.page.reload();
 		await pcpPayLaterMessaging.expandAccordionSection( location );
 
-		const previewIframe = pcpPayLaterMessaging
-			.previewContainer()
-			.locator( 'iframe' )
-			.first();
 		await expect(
-			previewIframe,
+			pcpPayLaterMessaging.previewIframe(),
 			'Assert PLM preview iframe is visible'
 		).toBeVisible();
 
 		await pcpPayLaterMessaging.previewTextButton().click();
 		await expect(
-			previewIframe,
+			pcpPayLaterMessaging.previewIframe(),
 			'Assert PLM preview iframe still visible after Text layout'
 		).toBeVisible();
 
 		await pcpPayLaterMessaging.previewDesktopButton().click();
 		await expect(
-			previewIframe,
+			pcpPayLaterMessaging.previewIframe(),
 			'Assert PLM preview iframe still visible after Desktop layout'
 		).toBeVisible();
 
 		await pcpPayLaterMessaging.previewMobileButton().click();
 		await expect(
-			previewIframe,
+			pcpPayLaterMessaging.previewIframe(),
 			'Assert PLM preview iframe still visible after Mobile layout'
 		).toBeVisible();
 	} );

@@ -64,6 +64,8 @@ export class PcpPayLaterMessaging extends PcpAdminPage {
 	};
 	previewContainer = () =>
 		this.page.locator( '#configurator-previewSectionContainer' );
+	previewIframe = () =>
+		this.previewContainer().locator( 'iframe' ).first();
 	previewTextButton = () =>
 		this.page.locator(
 			'svg path[d="M5 5a1 1 0 0 0 0 2h14a1 1 0 1 0 0-2H5zm-1 7a1 1 0 0 1 1-1h14a1 1 0 1 1 0 2H5a1 1 0 0 1-1-1zm0 6a1 1 0 0 1 1-1h14a1 1 0 1 1 0 2H5a1 1 0 0 1-1-1z"]'
@@ -352,11 +354,8 @@ export class PcpPayLaterMessaging extends PcpAdminPage {
 	 */
 	assertPreviewShowsMessage = async () => {
 		// Assert preview iframe is visible (works for all layouts including banner)
-		const previewIframe = this.previewContainer()
-			.locator( 'iframe' )
-			.first();
 		await expect(
-			previewIframe,
+			this.previewIframe(),
 			'Assert PLM preview iframe is visible'
 		).toBeVisible();
 	};
