@@ -4,7 +4,6 @@ pkill -f ngrok 2>/dev/null || true
 
 PROJECT_HOST=$(ddev describe -j | jq -r '.raw.hostnames[0]')
 ddev share >/dev/null &
-NGROK_PID=$!
 ngrok-url(){
     curl -s localhost:4040/api/tunnels | jq -r .tunnels[0].public_url | awk -F'^http[s]?://' '{print $2}'
 }
@@ -13,11 +12,11 @@ wp-replace(){
   ddev wp search-replace "${1}" "${2}" --all-tables --precise --recurse-objects
 }
 kill-ngrok(){
-  echo "Killing ngrok process ${NGROK_PID}"
-  pkill "${NGROK_PID}"
+  echo "Killing ngrok process"
+  pkill -f ngrok
   wp-replace "${NGROK_HOST}" "${PROJECT_HOST}"
 }
-echo "ngrok started with PID ${NGROK_PID}"
+echo "ngrok started"
 
 echo "Waiting a few seconds for the service to come up"
 sleep 3
@@ -27,4 +26,7 @@ wp-replace "${PROJECT_HOST}" "${NGROK_HOST}"
 echo "Your site is now reachable at https://${NGROK_HOST}"
 echo "ctrl-c to stop sharing and revert database changes"
 trap kill-ngrok INT
-wait "${NGROK_PID}"
+
+while pgrep -f ngrok >/dev/null 2>&1; do
+  sleep 1
+done
