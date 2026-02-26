@@ -17,7 +17,7 @@ class LocationsTest extends ModularTestCase
 	public function setUp(): void {
 		parent::setUp();
 
-		$this->settingsProvider = Mockery::mock(SettingsProvider::class);
+		$this->settingsProvider = Mockery::mock(SettingsProvider::class)->shouldIgnoreMissing('');
 		$this->settingsProvider->shouldReceive('smart_button_locations')
 			->andReturnUsing(function () {
 				return $this->selectedLocations;
