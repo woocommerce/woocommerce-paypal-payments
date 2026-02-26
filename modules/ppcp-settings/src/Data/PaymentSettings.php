@@ -69,6 +69,11 @@ class PaymentSettings extends \WooCommerce\PayPalCommerce\Settings\Data\Abstract
                 if ($gateway) {
                     $gateway->enabled = wc_bool_to_string($is_enabled);
                     $this->modified_gateway($gateway);
+                } else {
+                    $option_key = 'woocommerce_' . $method_id . '_settings';
+                    $settings = get_option($option_key, array());
+                    $settings['enabled'] = wc_bool_to_string($is_enabled);
+                    update_option($option_key, $settings);
                 }
         }
     }
@@ -103,6 +108,11 @@ class PaymentSettings extends \WooCommerce\PayPalCommerce\Settings\Data\Abstract
         if ($gateway) {
             $gateway->title = $title;
             $this->modified_gateway($gateway);
+        } else {
+            $option_key = 'woocommerce_' . $method_id . '_settings';
+            $settings = get_option($option_key, array());
+            $settings['title'] = $title;
+            update_option($option_key, $settings);
         }
     }
     /**
@@ -114,6 +124,11 @@ class PaymentSettings extends \WooCommerce\PayPalCommerce\Settings\Data\Abstract
         if ($gateway) {
             $gateway->description = $description;
             $this->modified_gateway($gateway);
+        } else {
+            $option_key = 'woocommerce_' . $method_id . '_settings';
+            $settings = get_option($option_key, array());
+            $settings['description'] = $description;
+            update_option($option_key, $settings);
         }
     }
     /**
