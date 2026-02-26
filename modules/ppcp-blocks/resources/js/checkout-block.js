@@ -109,6 +109,7 @@ if ( blockEnabled ) {
 			},
 			supports: {
 				features,
+				showSavedCards: true,
 			},
 		} );
 	}
@@ -187,6 +188,7 @@ if ( blockEnabled ) {
 				supports: {
 					features,
 					style: [ 'height', 'borderRadius' ],
+					showSavedCards: true,
 				},
 			} );
 		}
