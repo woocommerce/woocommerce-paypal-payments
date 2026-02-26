@@ -291,6 +291,15 @@ class SettingsModule implements ServiceModule, ExecutableModule
                 }
                 unset(WC()->payment_gateways->payment_gateways[$index]);
             }
+            $card_config = $container->get('wcgateway.configuration.card-configuration');
+            $store_country = $container->get('api.merchant.country');
+            if ($card_config->use_acdc() && $store_country !== 'MX') {
+                foreach (WC()->payment_gateways->payment_gateways as $index => $gateway) {
+                    if ($gateway->id === CardButtonGateway::ID) {
+                        unset(WC()->payment_gateways->payment_gateways[$index]);
+                    }
+                }
+            }
         }, 5);
         // Remove the Fastlane gateway if the customer is logged in, ensuring that we don't interfere with the Fastlane gateway status in the settings UI.
         add_filter(
