@@ -197,6 +197,9 @@ class SettingsDataManager {
 		// Apply defaults for the "Settings" tab.
 		$this->apply_payment_settings( $flags );
 
+		// Enable/disable payment gateways based on onboarding choices.
+		$this->toggle_payment_gateways( $flags );
+
 		// Assign defaults for the "Styling" tab.
 		$this->apply_location_styles( $flags );
 
