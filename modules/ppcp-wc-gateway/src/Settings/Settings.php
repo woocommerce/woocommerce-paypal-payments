@@ -80,7 +80,11 @@ class Settings implements ContainerInterface
         if (!$this->has($id)) {
             throw new NotFoundException();
         }
-        return $this->settings[$id];
+        if (isset($this->settings[$id])) {
+            return $this->settings[$id];
+        }
+        $defaults = $this->get_defaults();
+        return $defaults[$id];
     }
     /**
      * Whether a value exists.
