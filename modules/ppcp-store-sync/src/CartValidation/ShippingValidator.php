@@ -4,10 +4,10 @@
  *
  * Validates shipping addresses and restrictions according to WooCommerce settings.
  * Covers four main scenarios:
- * 0. Missing Shipping Address (physical products, no address provided)
- * 1. Invalid Shipping Address (completeness, format)
- * 2. PO Box Restriction (signature-required items)
- * 3. Region Restricted (country not allowed)
+ * 1. Missing Shipping Address (physical products, no address provided)
+ * 2. Invalid Shipping Address (completeness, format)
+ * 3. PO Box Restriction (signature-required items)
+ * 4. Region Restricted (country not allowed)
  *
  * @package WooCommerce\PayPalCommerce\StoreSync\CartValidation
  */
@@ -49,11 +49,7 @@ class ShippingValidator implements ValidatorInterface {
 						'',
 						array( 'specific_issue' => ShippingIssue::MISSING_SHIPPING_ADDRESS ),
 						array(
-							array(
-								'action'   => 'PROVIDE_SHIPPING_ADDRESS',
-								'label'    => 'Add shipping address',
-								'metadata' => array( 'priority' => 'HIGH' ),
-							),
+							ResolutionOption::provide_shipping_address(),
 						)
 					),
 				);

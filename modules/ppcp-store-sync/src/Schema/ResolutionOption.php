@@ -172,6 +172,12 @@ class ResolutionOption {
 		);
 	}
 
+	public static function provide_shipping_address(): self {
+		return self::provide_missing_field( 'shipping_address', 'Add shipping address' )->with(
+			array( 'metadata' => array( 'priority' => Priority::HIGH ) )
+		);
+	}
+
 	/**
 	 * Factory: Wait for product restock.
 	 *
