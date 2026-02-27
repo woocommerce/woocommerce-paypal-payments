@@ -11,6 +11,7 @@ namespace WooCommerce\PayPalCommerce\OrderTracking;
 use Automattic\WooCommerce\Internal\DataStores\Orders\CustomOrdersTableController;
 use Exception;
 use WC_Order;
+use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExecutableModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExtendingModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ModuleClassNameIdTrait;
@@ -22,7 +23,6 @@ use WooCommerce\PayPalCommerce\OrderTracking\Endpoint\OrderTrackingEndpoint;
 use WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\TransactionIdHandlingTrait;
 use WP_Post;
-use function WooCommerce\PayPalCommerce\Api\ppcp_get_paypal_order;
 /**
  * Class OrderTrackingModule
  */
@@ -90,8 +90,10 @@ class OrderTrackingModule implements ServiceModule, ExtendingModule, ExecutableM
                 if (!$wc_order instanceof WC_Order) {
                     return;
                 }
+                $order_endpoint = $c->get('api.endpoint.order.cached');
+                assert($order_endpoint instanceof OrderEndpoint);
                 try {
-                    $paypal_order = ppcp_get_paypal_order($wc_order);
+                    $paypal_order = $order_endpoint->order($wc_order);
                 } catch (Exception $exception) {
                     return;
                 }

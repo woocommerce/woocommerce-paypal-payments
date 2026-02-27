@@ -8,7 +8,9 @@
 declare (strict_types=1);
 namespace WooCommerce\PayPalCommerce\ApiClient\Endpoint;
 
+use InvalidArgumentException;
 use stdClass;
+use WC_Order;
 use WooCommerce\PayPalCommerce\ApiClient\Authentication\Bearer;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\AuthorizationStatus;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\CaptureStatus;
@@ -25,6 +27,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Factory\OrderFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PatchCollectionFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\ErrorResponse;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Log\LoggerInterface;
+use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
 use WooCommerce\PayPalCommerce\WcGateway\FraudNet\FraudNet;
 use WP_Error;
@@ -282,15 +285,17 @@ class OrderEndpoint
     /**
      * Fetches an order for a given ID.
      *
-     * @param string $id The ID.
+     * @param string|WC_Order $paypal_id_or_wc_order The ID of PayPal order or a WC order (with the ID in meta).
      *
      * @return Order
      * @throws RuntimeException If the request fails.
+     * @throws InvalidArgumentException If the ID is not a string or WC order with the ID in meta.
      */
-    public function order(string $id): Order
+    public function order($paypal_id_or_wc_order): Order
     {
+        $paypal_id = $this->resolve_paypal_id($paypal_id_or_wc_order);
         $bearer = $this->bearer->bearer();
-        $url = trailingslashit($this->host) . 'v2/checkout/orders/' . $id;
+        $url = trailingslashit($this->host) . 'v2/checkout/orders/' . $paypal_id;
         $args = array('headers' => array('Authorization' => 'Bearer ' . $bearer->token(), 'Content-Type' => 'application/json'));
         if ($this->bn_code) {
             $args['headers']['PayPal-Partner-Attribution-Id'] = $this->bn_code;
@@ -394,5 +399,27 @@ class OrderEndpoint
             throw new PayPalApiException($json, $status_code);
         }
         return $json;
+    }
+    /**
+     * Resolves the PayPal order ID from the given argument.
+     *
+     * @param string|WC_Order $paypal_id_or_wc_order The ID of PayPal order or a WC order (with the ID in meta).
+     *
+     * @return string The PayPal order ID.
+     * @throws InvalidArgumentException If the ID cannot be resolved.
+     */
+    protected function resolve_paypal_id($paypal_id_or_wc_order): string
+    {
+        if ($paypal_id_or_wc_order instanceof WC_Order) {
+            $paypal_id = $paypal_id_or_wc_order->get_meta(PayPalGateway::ORDER_ID_META_KEY);
+            if (!$paypal_id) {
+                throw new InvalidArgumentException('PayPal order ID not found in meta.');
+            }
+            return $paypal_id;
+        }
+        if (!is_string($paypal_id_or_wc_order)) {
+            throw new InvalidArgumentException('Invalid PayPal order ID, string expected.');
+        }
+        return $paypal_id_or_wc_order;
     }
 }

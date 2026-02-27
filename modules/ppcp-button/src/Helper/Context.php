@@ -45,6 +45,7 @@ class Context
         });
         // Activate is_cart() on woocommerce/classic-shortcode cart blocks.
         if (!is_cart() && is_callable('wc_maybe_define_constant')) {
+            // @phpstan-ignore function.alreadyNarrowedType
             if (has_block('woocommerce/classic-shortcode')) {
                 $classic_block = $this->find_classic_shortcode_block();
                 $type = $classic_block['attrs']['shortcode'] ?? '';
@@ -63,11 +64,11 @@ class Context
      */
     protected function find_classic_shortcode_block(): ?array
     {
-        $post = get_the_content();
-        if (!$post) {
+        $post = get_post();
+        if (!$post || empty($post->post_content)) {
             return null;
         }
-        $blocks = parse_blocks($post);
+        $blocks = parse_blocks($post->post_content);
         foreach ($blocks as $block) {
             if ($block['blockName'] === 'woocommerce/classic-shortcode') {
                 return $block;

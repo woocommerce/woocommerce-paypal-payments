@@ -80,13 +80,15 @@ class AuthenticationManager
     /**
      * Constructor.
      *
-     * @param GeneralSettings      $common_settings  Data model that stores the connection details.
-     * @param EnvironmentConfig    $connection_host  API host for direct authentication.
-     * @param EnvironmentConfig    $login_endpoint   API handler to fetch merchant credentials.
-     * @param PartnerReferralsData $referrals_data   Partner referrals data.
-     * @param ConnectionState      $connection_state Connection state manager.
-     * @param InternalRestService  $rest_service     Allows calling internal REST endpoints.
-     * @param ?LoggerInterface     $logger           Logging instance.
+     * @param GeneralSettings                $common_settings  Data model that stores the connection details.
+     * @param EnvironmentConfig<string>      $connection_host  API host for direct authentication.
+     * @param EnvironmentConfig<LoginSeller> $login_endpoint   API handler to fetch merchant credentials.
+     * @param PartnerReferralsData           $referrals_data   Partner referrals data.
+     * @param ConnectionState                $connection_state Connection state manager.
+     * @param InternalRestService            $rest_service     Allows calling internal REST endpoints.
+     * @param ?LoggerInterface               $logger           Logging instance.
+     *
+     * phpcs:disable Squiz.Commenting.FunctionComment.IncorrectTypeHint
      */
     public function __construct(GeneralSettings $common_settings, EnvironmentConfig $connection_host, EnvironmentConfig $login_endpoint, PartnerReferralsData $referrals_data, ConnectionState $connection_state, \WooCommerce\PayPalCommerce\Settings\Service\InternalRestService $rest_service, ?LoggerInterface $logger = null)
     {
@@ -152,11 +154,16 @@ class AuthenticationManager
         if (empty($client_id)) {
             throw new RuntimeException('No client ID provided.');
         }
-        if (\false === preg_match('/^A[\w-]{79}$/', $client_secret)) {
+        // Exactly 80 alphanumeric, underscore, or hyphen characters.
+        if (1 !== preg_match('/^[\w-]{80}$/', $client_id)) {
             throw new RuntimeException('Invalid client ID provided.');
         }
         if (empty($client_secret)) {
             throw new RuntimeException('No client secret provided.');
+        }
+        // Exactly 80 alphanumeric, underscore, or hyphen characters.
+        if (1 !== preg_match('/^[\w-]{80}$/', $client_secret)) {
+            throw new RuntimeException('Invalid client secret provided.');
         }
     }
     /**
@@ -342,11 +349,9 @@ class AuthenticationManager
             $order_response = $orders->order($order_id);
             $order_body = json_decode($order_response['body'], \false, 512, \JSON_THROW_ON_ERROR);
         } catch (JsonException $exception) {
-            // Cast JsonException to a RuntimeException.
-            throw new RuntimeException('Could not decode JSON response: ' . $exception->getMessage());
+            throw new RuntimeException('Failed to retrieve payee details.', 0, $exception);
         } catch (Throwable $exception) {
-            // Cast any other Throwable to a RuntimeException.
-            throw new RuntimeException($exception->getMessage());
+            throw new RuntimeException('Failed to retrieve payee details.', 0, $exception);
         }
         $pu = $order_body->purchase_units[0];
         $payee = $pu->payee;

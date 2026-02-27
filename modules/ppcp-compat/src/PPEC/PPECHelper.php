@@ -37,12 +37,11 @@ class PPECHelper
     }
     /**
      * Checks if the PayPal Express Checkout plugin is active.
-     *
-     * @return bool
      */
-    public static function is_plugin_active()
+    public static function is_plugin_active(): bool
     {
         return is_callable('wc_gateway_ppec');
+        // @phpstan-ignore function.impossibleType
     }
     /**
      * Checks whether the PayPal Express Checkout plugin is available (plugin active and gateway configured).
@@ -52,9 +51,11 @@ class PPECHelper
     public static function is_gateway_available()
     {
         if (!self::is_plugin_active() || !is_callable('wc_gateway_ppec')) {
+            // @phpstan-ignore function.impossibleType
             return \false;
         }
         $ppec = wc_gateway_ppec();
+        // @phpstan-ignore function.notFound
         return is_object($ppec) && $ppec->settings && $ppec->settings->get_active_api_credentials();
     }
     /**

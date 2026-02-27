@@ -20,6 +20,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Endpoint\CatalogProducts;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\IdentityToken;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\LoginSeller;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
+use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpointCached;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\Orders;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PartnerReferrals;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PartnersEndpoint;
@@ -172,17 +173,22 @@ return array(
         return new LoginSeller($container->get('api.paypal-host'), $container->get('api.partner_merchant_id'), $logger);
     },
     'api.endpoint.order' => static function (ContainerInterface $container): OrderEndpoint {
-        $order_factory = $container->get('api.factory.order');
-        $patch_collection_factory = $container->get('api.factory.patch-collection-factory');
-        $logger = $container->get('woocommerce.logger.woocommerce');
         $session_handler = $container->get('session.handler');
         assert($session_handler instanceof SessionHandler);
         $bn_code = $session_handler->bn_code();
         $settings = $container->get('wcgateway.settings');
         assert($settings instanceof Settings);
         $intent = $settings->has('intent') && strtoupper((string) $settings->get('intent')) === 'AUTHORIZE' ? 'AUTHORIZE' : 'CAPTURE';
-        $subscription_helper = $container->get('wc-subscriptions.helper');
-        return new OrderEndpoint($container->get('api.host'), $container->get('api.bearer'), $order_factory, $patch_collection_factory, $intent, $logger, $subscription_helper, $container->get('wcgateway.is-fraudnet-enabled'), $container->get('wcgateway.fraudnet'), $bn_code);
+        return new OrderEndpoint($container->get('api.host'), $container->get('api.bearer'), $container->get('api.factory.order'), $container->get('api.factory.patch-collection-factory'), $intent, $container->get('woocommerce.logger.woocommerce'), $container->get('wc-subscriptions.helper'), $container->get('wcgateway.is-fraudnet-enabled'), $container->get('wcgateway.fraudnet'), $bn_code);
+    },
+    'api.endpoint.order.cached' => static function (ContainerInterface $container): OrderEndpointCached {
+        $session_handler = $container->get('session.handler');
+        assert($session_handler instanceof SessionHandler);
+        $bn_code = $session_handler->bn_code();
+        $settings = $container->get('wcgateway.settings');
+        assert($settings instanceof Settings);
+        $intent = $settings->has('intent') && strtoupper((string) $settings->get('intent')) === 'AUTHORIZE' ? 'AUTHORIZE' : 'CAPTURE';
+        return new OrderEndpointCached($container->get('api.host'), $container->get('api.bearer'), $container->get('api.factory.order'), $container->get('api.factory.patch-collection-factory'), $intent, $container->get('woocommerce.logger.woocommerce'), $container->get('wc-subscriptions.helper'), $container->get('wcgateway.is-fraudnet-enabled'), $container->get('wcgateway.fraudnet'), $bn_code);
     },
     'api.endpoint.orders' => static function (ContainerInterface $container): Orders {
         return new Orders($container->get('api.host'), $container->get('api.bearer'), $container->get('woocommerce.logger.woocommerce'));
@@ -192,7 +198,7 @@ return array(
         return new CatalogProducts($container->get('api.host'), $container->get('api.bearer'), $container->get('api.factory.product'), $container->get('woocommerce.logger.woocommerce'));
     },
     'api.endpoint.billing-plans' => static function (ContainerInterface $container): BillingPlans {
-        return new BillingPlans($container->get('api.host'), $container->get('api.bearer'), $container->get('api.factory.billing-cycle'), $container->get('api.factory.plan'), $container->get('woocommerce.logger.woocommerce'));
+        return new BillingPlans($container->get('api.host'), $container->get('api.bearer'), $container->get('api.factory.plan'), $container->get('woocommerce.logger.woocommerce'));
     },
     'api.endpoint.billing-subscriptions' => static function (ContainerInterface $container): BillingSubscriptions {
         return new BillingSubscriptions($container->get('api.host'), $container->get('api.bearer'), $container->get('woocommerce.logger.woocommerce'));

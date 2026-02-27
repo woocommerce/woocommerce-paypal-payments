@@ -305,6 +305,10 @@ class ApplePayButton implements ButtonInterface
             return;
         }
         $applepay_request_data_object->order_data($context);
+        if ($applepay_request_data_object->has_errors()) {
+            $this->response_templates->response_with_data_errors($applepay_request_data_object->errors());
+            return;
+        }
         $this->update_posted_data($applepay_request_data_object);
         if ($context === 'product') {
             $cart_item_key = $this->prepare_cart($applepay_request_data_object);
@@ -458,7 +462,7 @@ class ApplePayButton implements ButtonInterface
                 WC()->session->set('chosen_shipping_methods', array($shipping_method_id));
             }
         }
-        $selected_shipping_method = $shipping_methods_array[0];
+        $selected_shipping_method = $shipping_methods_array[0] ?? array();
         if ($shipping_method) {
             $selected_shipping_method = $shipping_method;
         }
@@ -498,7 +502,8 @@ class ApplePayButton implements ButtonInterface
     {
         $total = (float) $cart->get_total('edit');
         $total = round($total, 2);
-        return array('subtotal' => $cart->get_subtotal(), 'shipping' => array('amount' => $cart->needs_shipping() ? $cart->get_shipping_total() : null, 'label' => $cart->needs_shipping() ? $selected_shipping_method['label'] : null), 'shippingMethods' => $cart->needs_shipping() ? $shipping_methods_array : null, 'taxes' => $cart->get_total_tax(), 'total' => $total);
+        $discount_total = (float) $cart->get_discount_total();
+        return array('subtotal' => $cart->get_subtotal(), 'discount' => $discount_total > 0 ? array('amount' => $discount_total, 'label' => __('Discount', 'woocommerce-paypal-payments')) : null, 'shipping' => array('amount' => $cart->needs_shipping() ? $cart->get_shipping_total() : null, 'label' => $cart->needs_shipping() ? $selected_shipping_method['label'] ?? null : null), 'shippingMethods' => $cart->needs_shipping() ? $shipping_methods_array : null, 'taxes' => $cart->get_total_tax(), 'total' => $total);
     }
     /**
      * Calculates totals for the cart page with the given information
@@ -620,10 +625,10 @@ class ApplePayButton implements ButtonInterface
             $data['billing_email'] = $applepay_request_data_object->billing_address()['email'] ?? '';
             $data['billing_phone'] = $applepay_request_data_object->billing_address()['phone'] ?? '';
             // ApplePay doesn't send us a billing email or phone, use the shipping contacts instead.
-            if (!($data['billing_email'] ?? \false)) {
+            if (empty($data['billing_email'])) {
                 $data['billing_email'] = $applepay_request_data_object->shipping_address()['email'] ?? '';
             }
-            if (!($data['billing_phone'] ?? \false)) {
+            if (empty($data['billing_phone'])) {
                 $data['billing_phone'] = $applepay_request_data_object->shipping_address()['phone'] ?? '';
             }
             if (!empty($applepay_request_data_object->shipping_method())) {
@@ -680,6 +685,7 @@ class ApplePayButton implements ButtonInterface
             });
         }
         if ($button_enabled_checkout) {
+            // @phpstan-ignore if.alwaysTrue
             $default_hook_name = 'woocommerce_paypal_payments_checkout_button_render';
             $render_placeholder = apply_filters('woocommerce_paypal_payments_applepay_checkout_button_render_hook', $default_hook_name);
             $render_placeholder = is_string($render_placeholder) ? $render_placeholder : $default_hook_name;
@@ -689,6 +695,7 @@ class ApplePayButton implements ButtonInterface
             }, 21);
         }
         if ($button_enabled_payorder) {
+            // @phpstan-ignore if.alwaysTrue
             $default_hook_name = 'woocommerce_paypal_payments_payorder_button_render';
             $render_placeholder = apply_filters('woocommerce_paypal_payments_applepay_payorder_button_render_hook', $default_hook_name);
             $render_placeholder = is_string($render_placeholder) ? $render_placeholder : $default_hook_name;

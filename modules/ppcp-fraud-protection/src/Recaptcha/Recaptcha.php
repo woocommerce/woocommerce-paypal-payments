@@ -90,6 +90,9 @@ class Recaptcha
     }
     public function render_v2_container(): string
     {
+        if (!$this->should_use_recaptcha()) {
+            return '';
+        }
         return '<div id="' . esc_attr(self::V2_CONTAINER_ID) . '" style="margin:20px 0;"></div>';
     }
     public function intercept_paypal_ajax(array $request_data): void
@@ -101,7 +104,6 @@ class Recaptcha
         $version = sanitize_text_field(wp_unslash($request_data['ppcp_recaptcha_version'] ?? ''));
         if (empty($token)) {
             wp_send_json_error(array('message' => __('Please complete the CAPTCHA verification.', 'woocommerce-paypal-payments'), 'code' => self::ERROR_CODE_MISSING_TOKEN), 400);
-            exit;
         }
         $success = $version === 'v3' ? $this->verify_v3($token, $this->integration->get_option('secret_key_v3'), $this->score_threshold()) : $this->verify_v2($token, $this->integration->get_option('secret_key_v2'));
         if (!$success) {
@@ -114,7 +116,6 @@ class Recaptcha
                 $this->log_rejection('Create Order AJAX', $content);
             }
             wp_send_json_error(array('message' => __('CAPTCHA verification failed. Please try again.', 'woocommerce-paypal-payments'), 'code' => self::ERROR_CODE_VERIFICATION_FAILED), 403);
-            exit;
         }
     }
     public function validate_classic_checkout(): void

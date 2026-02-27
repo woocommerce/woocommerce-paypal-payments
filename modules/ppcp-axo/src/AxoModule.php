@@ -69,7 +69,7 @@ class AxoModule implements ServiceModule, ExtendingModule, ExecutableModule
              *
              * @psalm-suppress MissingClosureParamType
              */
-            function ($methods) use ($c): array {
+            function ($methods) use ($c) {
                 if (!is_array($methods)) {
                     return $methods;
                 }
@@ -152,7 +152,7 @@ class AxoModule implements ServiceModule, ExtendingModule, ExecutableModule
             $this->session_handler = $c->get('session.handler');
             $settings = $c->get('wcgateway.settings');
             assert($settings instanceof Settings);
-            $is_paypal_enabled = $settings->has('enabled') && $settings->get('enabled') ?? \false;
+            $is_paypal_enabled = $settings->has('enabled') && ($settings->get('enabled') ?? \false);
             $subscription_helper = $c->get('wc-subscriptions.helper');
             assert($subscription_helper instanceof SubscriptionHelper);
             /**
@@ -222,7 +222,7 @@ class AxoModule implements ServiceModule, ExtendingModule, ExecutableModule
                  *
                  * @psalm-suppress MissingClosureParamType
                  */
-                function ($rows, $renderer): array {
+                function ($rows, $renderer) {
                     if (!is_array($rows)) {
                         return $rows;
                     }
@@ -386,7 +386,7 @@ class AxoModule implements ServiceModule, ExtendingModule, ExecutableModule
         $asset_version = $c->get('ppcp.asset-version');
         $insights_data = $c->get('axo.insights');
         wp_register_script('wc-ppcp-paypal-insights-end-checkout', $asset_getter->get_asset_url('Insights/EndCheckoutTracker.js'), array('wp-plugins', 'wp-data', 'wp-element', 'wc-blocks-registry'), $asset_version, \true);
-        wp_localize_script('wc-ppcp-paypal-insights-end-checkout', 'wc_ppcp_axo_insights_data', array_merge($insights_data, array('orderId' => $order_id, 'orderTotal' => (string) $order->get_total(), 'orderCurrency' => (string) $order->get_currency(), 'paymentMethod' => (string) $order->get_payment_method(), 'orderKey' => (string) $order->get_order_key())));
+        wp_localize_script('wc-ppcp-paypal-insights-end-checkout', 'wc_ppcp_axo_insights_data', array_merge($insights_data, array('orderId' => $order_id, 'orderTotal' => (string) $order->get_total(), 'orderCurrency' => (string) $order->get_currency(), 'paymentMethod' => (string) $order->get_payment_method())));
         wp_enqueue_script('wc-ppcp-paypal-insights-end-checkout');
     }
 }

@@ -8,6 +8,7 @@
 declare (strict_types=1);
 namespace WooCommerce\PayPalCommerce;
 
+use Throwable;
 use WooCommerce\PayPalCommerce\Uninstall\ClearDatabaseInterface;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\NotFoundExceptionInterface;
@@ -45,7 +46,7 @@ require $main_plugin_file;
         $scheduled_action_names = $app_container->get('uninstall.ppcp-all-scheduled-action-names');
         $clear_db->delete_options($option_names);
         $clear_db->clear_scheduled_actions($scheduled_action_names);
-    } catch (\WooCommerce\PayPalCommerce\Throwable $throwable) {
+    } catch (Throwable $throwable) {
         $message = sprintf('<strong>Error:</strong> %s <br><pre>%s</pre>', $throwable->getMessage(), $throwable->getTraceAsString());
         add_action('all_admin_notices', static function () use ($message) {
             $class = 'notice notice-error';

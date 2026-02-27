@@ -31,7 +31,7 @@ return array('wc-subscriptions.helper' => static function (ContainerInterface $c
     $settings = $container->get('wcgateway.settings');
     $authorized_payments_processor = $container->get('wcgateway.processor.authorized-payments');
     $funding_source_renderer = $container->get('wcgateway.funding-source.renderer');
-    return new \WooCommerce\PayPalCommerce\WcSubscriptions\RenewalHandler($logger, $repository, $endpoint, $purchase_unit_factory, $container->get('api.factory.shipping-preference'), $payer_factory, $environment, $settings, $authorized_payments_processor, $funding_source_renderer, $container->get('wc-subscriptions.helpers.real-time-account-updater'), $container->get('wc-subscriptions.helper'), $container->get('api.endpoint.payment-tokens'), $container->get('vaulting.wc-payment-tokens'), $container->get('wcgateway.builder.experience-context'));
+    return new \WooCommerce\PayPalCommerce\WcSubscriptions\RenewalHandler($logger, $repository, $endpoint, $purchase_unit_factory, $container->get('api.factory.shipping-preference'), $payer_factory, $environment, $settings, $authorized_payments_processor, $funding_source_renderer, $container->get('wc-subscriptions.helpers.real-time-account-updater'), $container->get('wc-subscriptions.helper'), $container->get('vaulting.wc-payment-tokens'), $container->get('wcgateway.builder.experience-context'));
 }, 'wc-subscriptions.endpoint.subscription-change-payment-method' => static function (ContainerInterface $container): SubscriptionChangePaymentMethod {
     return new SubscriptionChangePaymentMethod($container->get('button.request-data'));
 }, 'wc-subscriptions.change-payment-method' => static function (ContainerInterface $container): ChangePaymentMethod {

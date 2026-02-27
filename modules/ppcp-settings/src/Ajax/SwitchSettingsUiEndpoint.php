@@ -48,7 +48,6 @@ class SwitchSettingsUiEndpoint
     {
         if (!current_user_can('manage_woocommerce')) {
             wp_send_json_error('Not an admin.', 403);
-            return;
         }
         try {
             $this->request_data->read_request($this->nonce());

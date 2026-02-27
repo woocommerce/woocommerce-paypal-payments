@@ -106,7 +106,7 @@ class SettingsModule implements ServiceModule, ExecutableModule
                 }
                 $message = sprintf(
                     // translators: %1$s is the URL for the startup guide.
-                    __('<strong>📢 Important: New PayPal Payments settings UI becoming default in January!</strong><br>We\'ve redesigned the settings for better performance and usability. Starting late January, this improved design will be the default for all WooCommerce installations to enjoy faster navigation, cleaner organization, and improved performance. Check out the <a href="%1$s" target="_blank">Startup Guide</a>, then click <a href="#" class="settings-switch-ui" role="button" aria-describedby="switch-ui-desc"><strong>Switch to New Settings</strong></a> to activate it.', 'woocommerce-paypal-payments'),
+                    __('<strong>📢 Important: New PayPal Payments settings UI becoming default soon!</strong><br>We\'ve redesigned the settings for better performance and usability. This improved design will be the default for all WooCommerce installations to enjoy faster navigation, cleaner organization, and improved performance. Check out the <a href="%1$s" target="_blank">Startup Guide</a>, then click <a href="#" class="settings-switch-ui" role="button" aria-describedby="switch-ui-desc"><strong>Switch to New Settings</strong></a> to activate it.', 'woocommerce-paypal-payments'),
                     'https://woocommerce.com/document/woocommerce-paypal-payments/paypal-payments-startup-guide/'
                 );
                 $notices[] = new Message($message, 'info', \false, 'ppcp-notice-wrapper');
@@ -305,12 +305,14 @@ class SettingsModule implements ServiceModule, ExecutableModule
                 assert($googlepay_gateway instanceof WC_Payment_Gateway);
                 $applepay_gateway = $container->get('applepay.wc-gateway');
                 assert($applepay_gateway instanceof WC_Payment_Gateway);
-                $axo_gateway = $container->get('axo.gateway');
-                assert($axo_gateway instanceof WC_Payment_Gateway);
                 $methods[] = $card_button_gateway;
                 $methods[] = $googlepay_gateway;
                 $methods[] = $applepay_gateway;
-                $methods[] = $axo_gateway;
+                if ($container->has('axo.eligible') && $container->get('axo.eligible')) {
+                    $axo_gateway = $container->get('axo.gateway');
+                    assert($axo_gateway instanceof WC_Payment_Gateway);
+                    $methods[] = $axo_gateway;
+                }
                 return $methods;
             },
             99
@@ -342,7 +344,7 @@ class SettingsModule implements ServiceModule, ExecutableModule
              *
              * @psalm-suppress MissingClosureParamType
              */
-            static function ($methods) use ($container): array {
+            static function ($methods) {
                 if (!is_array($methods)) {
                     return $methods;
                 }
@@ -485,6 +487,36 @@ class SettingsModule implements ServiceModule, ExecutableModule
             }
             return $disable_funding;
         });
+        add_action(
+            'woocommerce_paypal_payments_gateway_migrate',
+            /**
+             * Migrates payment level processing setting during plugin update.
+             *
+             * For merchants updating from version 3.3.2 or older, disables Level 2/3
+             * processing if they previously opted out of automatic updates (stay_updated=false).
+             * Merchants who opted into updates inherit the default enabled state.
+             *
+             * @param false|string $previous_version The previously installed plugin version,
+             *                                       or false on first installation.
+             */
+            static function ($previous_version) use ($container): void {
+                // Only run this migration logic when updating from version 3.3.2 or older.
+                if ($previous_version && version_compare($previous_version, '3.3.2', 'gt')) {
+                    return;
+                }
+                try {
+                    $settings_model = $container->get('settings.data.settings');
+                    assert($settings_model instanceof SettingsModel);
+                    if (!$settings_model->get_stay_updated()) {
+                        $settings_model->set_payment_level_processing(\false);
+                        $settings_model->save();
+                    }
+                } catch (Throwable $error) {
+                    // Something failed - ignore the error and assume there is no migration data.
+                    return;
+                }
+            }
+        );
         return \true;
     }
     /**
@@ -500,6 +532,42 @@ class SettingsModule implements ServiceModule, ExecutableModule
         assert($settings instanceof GeneralSettings);
         if (!$settings->own_brand_only()) {
             return;
+        }
+        /**
+         * Ensure BCDC remains functional in branded-only mode.
+         *
+         * In branded-only mode, white-label payment methods (ACDC, Apple Pay, Google Pay)
+         * are disabled, but the PayPal-branded card button (BCDC) should remain functional.
+         *
+         * BCDC requires the 'card' funding source to be enabled. This filter prevents 'card'
+         * from being added to the disabled funding sources list on checkout pages, ensuring
+         * the BCDC button remains clickable and functional for merchants using branded-only mode.
+         */
+        add_filter('woocommerce_paypal_payments_sdk_disabled_funding_hook', static function (array $disable_funding, array $flags) use ($container) {
+            $allowed_context = array('checkout-block', 'checkout');
+            if (!in_array($flags['context'], $allowed_context, \true)) {
+                return $disable_funding;
+            }
+            $payment_settings = $container->get('settings.data.payment');
+            assert($payment_settings instanceof PaymentSettings);
+            if (!$payment_settings->is_method_enabled(CardButtonGateway::ID)) {
+                return $disable_funding;
+            }
+            return array_filter($disable_funding, static fn(string $funding_source) => $funding_source !== 'card');
+        }, 10, 2);
+        $payment_settings = $container->get('settings.data.payment');
+        assert($payment_settings instanceof PaymentSettings);
+        if ($payment_settings->is_method_enabled(CreditCardGateway::ID)) {
+            $payment_settings->toggle_method_state(CreditCardGateway::ID, \false);
+            $payment_settings->save();
+        }
+        if ($payment_settings->is_method_enabled(ApplePayGateway::ID)) {
+            $payment_settings->toggle_method_state(ApplePayGateway::ID, \false);
+            $payment_settings->save();
+        }
+        if ($payment_settings->is_method_enabled(GooglePayGateway::ID)) {
+            $payment_settings->toggle_method_state(GooglePayGateway::ID, \false);
+            $payment_settings->save();
         }
         /**
          * In branded-only mode, we completely disable all white label features.

@@ -89,7 +89,7 @@ class CartProductsHelper
         if (!$wc_product) {
             return null;
         }
-        return array('product' => $wc_product, 'quantity' => (int) $product['quantity'], 'variations' => $product['variations'] ?? null, 'booking' => $product['booking'] ?? null, 'extra' => $product['extra'] ?? null);
+        return array('product' => $wc_product, 'quantity' => (int) $product['quantity'], 'variations' => $product['variations'] ?? array(), 'booking' => $product['booking'] ?? null, 'extra' => $product['extra'] ?? null);
     }
     /**
      * Adds products to cart.
@@ -114,6 +114,9 @@ class CartProductsHelper
             if ($product['product']->is_type('booking')) {
                 $success = $success && $this->add_booking_product($product['product'], $product['booking']);
             } elseif ($product['product']->is_type('variable')) {
+                if (empty($product['variations']) || !is_array($product['variations'])) {
+                    $product['variations'] = array();
+                }
                 $success = $success && $this->add_variable_product($product['product'], $product['quantity'], $product['variations']);
             } else {
                 $success = $success && $this->add_product($product['product'], $product['quantity']);
@@ -166,6 +169,7 @@ class CartProductsHelper
             }
             $variations[$value['name']] = $value['value'];
         }
+        // @phpstan-ignore method.notFound
         $variation_id = $this->product_data_store->find_matching_product_variation($product, $variations);
         // ToDo: Check stock status for variation.
         $cart_item_key = $this->cart->add_to_cart($product->get_id(), $quantity, $variation_id, $variations);
@@ -189,6 +193,7 @@ class CartProductsHelper
             throw new Exception('Cart not set.');
         }
         if (!is_callable('wc_bookings_get_posted_data')) {
+            // @phpstan-ignore function.impossibleType
             return \false;
         }
         $cart_item_data = array('booking' => wc_bookings_get_posted_data($data, $product));

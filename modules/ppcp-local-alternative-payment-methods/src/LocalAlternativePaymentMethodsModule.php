@@ -114,6 +114,7 @@ class LocalAlternativePaymentMethodsModule implements ServiceModule, ExtendingMo
              * @psalm-suppress MissingClosureParamType
              */
             function ($methods) use ($c) {
+                // @phpstan-ignore empty.property
                 if (!is_array($methods) || is_admin() || empty(WC()->customer)) {
                     // Don't restrict the gateway list on wp-admin or when no customer is known.
                     return $methods;
@@ -174,7 +175,7 @@ class LocalAlternativePaymentMethodsModule implements ServiceModule, ExtendingMo
             return $data;
         });
         add_action('woocommerce_before_thankyou', array($this, 'handle_cancelled_local_apm'));
-        add_action('woocommerce_before_thankyou', array($this, 'handle_pwc_order_received_redirect'));
+        add_action('template_redirect', array($this, 'handle_pwc_order_received_redirect'));
         add_action('woocommerce_paypal_payments_payment_capture_completed_webhook_handler', function (WC_Order $wc_order, string $order_id) use ($c) {
             $payment_methods = $c->get('ppcp-local-apms.payment-methods');
             if (!$this->is_local_apm($wc_order->get_payment_method(), $payment_methods)) {
@@ -368,23 +369,32 @@ class LocalAlternativePaymentMethodsModule implements ServiceModule, ExtendingMo
      * When the 'token' parameter is present on the order-received page, WooCommerce displays
      * a minimal page instead of the full order details.
      *
-     * This intercepts PWC orders on 'woocommerce_before_thankyou' and redirects to a clean
-     * URL without the token, allowing WooCommerce to display the full order-received page.
+     * This intercepts PWC orders on 'template_redirect' (before any output buffering)
+     * and redirects to a clean URL without the token, allowing WooCommerce to display
+     * the full order-received page.
      *
      * Note: PWC uses ORDER_COMPLETE_ON_PAYMENT_APPROVAL, so the token serves no purpose
      * but we can't prevent PayPal from appending it.
      *
-     * @param int $order_id The order ID.
      * @return void
      */
-    public function handle_pwc_order_received_redirect($order_id): void
+    public function handle_pwc_order_received_redirect(): void
     {
-        // phpcs:disable WordPress.Security.NonceVerification.Recommended
-        // Only intercept if 'token' parameter is present.
-        if (!isset($_GET['token'])) {
+        // Only run on order-received endpoint.
+        if (!is_wc_endpoint_url('order-received')) {
             return;
         }
-        // phpcs:enable
+        // Check if 'token' exists anywhere in the URL first.
+        $request_uri = isset($_SERVER['REQUEST_URI']) ? esc_url_raw(wp_unslash($_SERVER['REQUEST_URI'])) : '';
+        if (strpos($request_uri, 'token=') === \false) {
+            return;
+        }
+        // Get order ID from the URL endpoint.
+        global $wp;
+        $order_id = isset($wp->query_vars['order-received']) ? absint($wp->query_vars['order-received']) : 0;
+        if (!$order_id) {
+            return;
+        }
         $order = wc_get_order($order_id);
         if (!$order instanceof WC_Order) {
             return;
@@ -393,9 +403,7 @@ class LocalAlternativePaymentMethodsModule implements ServiceModule, ExtendingMo
         if ($order->get_payment_method() !== \WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\PWCGateway::ID) {
             return;
         }
-        // Redirect to clean URL, allowing WooCommerce to display the full order-received page.
-        $clean_url = remove_query_arg('token', $order->get_checkout_order_received_url());
-        wp_safe_redirect($clean_url);
+        wp_safe_redirect($order->get_checkout_order_received_url());
         exit;
     }
     /**

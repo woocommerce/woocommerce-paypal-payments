@@ -88,7 +88,7 @@ class PurchaseUnitFactory
      *
      * @return PurchaseUnit
      */
-    public function from_wc_order(\WC_Order $order): PurchaseUnit
+    public function from_wc_order(\WC_Order $order, string $payment_method = ''): PurchaseUnit
     {
         $amount = $this->amount_factory->from_wc_order($order);
         $items = array_filter($this->item_factory->from_wc_order($order), function (Item $item): bool {
@@ -105,7 +105,8 @@ class PurchaseUnitFactory
         $invoice_id = $this->prefix . $order->get_order_number();
         $soft_descriptor = $this->sanitize_soft_descriptor($this->soft_descriptor);
         $payment_level = null;
-        if ($this->payment_level_eligibility->is_eligible($order->get_payment_method()) && $this->settings->is_payment_level_processing_enabled()) {
+        $payment_method = !empty($payment_method) ? $payment_method : $order->get_payment_method();
+        if ($this->payment_level_eligibility->is_eligible($payment_method) && $this->settings->is_payment_level_processing_enabled()) {
             $payment_level = $this->payment_level_helper->build($amount, $items, $shipping);
         }
         $purchase_unit = new PurchaseUnit($amount, $items, $shipping, $reference_id, $description, $custom_id, $invoice_id, $soft_descriptor, null, $payment_level['supplementary_data'] ?? null);
@@ -135,7 +136,7 @@ class PurchaseUnitFactory
         $shipping = null;
         $customer = \WC()->customer;
         /** @psalm-suppress RedundantConditionGivenDocblockType False positive. Ignored because $customer can be null as well. */
-        if ($this->shipping_needed(...array_values($items)) && is_a($customer, \WC_Customer::class)) {
+        if ($this->shipping_needed(...array_values($items)) && $customer instanceof \WC_Customer) {
             $shipping = $this->shipping_factory->from_wc_customer(\WC()->customer, $with_shipping_options);
             $shipping_address = $shipping->address();
             if (!$shipping_address || 2 !== strlen($shipping_address->country_code()) || !$shipping_address->postal_code() && !$this->country_without_postal_code($shipping_address->country_code())) {

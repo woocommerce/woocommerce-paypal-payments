@@ -29,6 +29,7 @@ use WooCommerce\PayPalCommerce\Onboarding\Render\OnboardingOptionsRenderer;
 use WooCommerce\PayPalCommerce\Onboarding\State;
 use WooCommerce\PayPalCommerce\Settings\Data\Definition\FeaturesDefinition;
 use WooCommerce\PayPalCommerce\Settings\Data\SettingsModel;
+use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
 use WooCommerce\PayPalCommerce\Settings\SettingsModule;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\WcGateway\Admin\FeesRenderer;
@@ -106,10 +107,10 @@ use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
 use WooCommerce\PayPalCommerce\Webhooks\WebhookEventStorage;
 return array(
     'wcgateway.paypal-gateway' => static function (ContainerInterface $container): PayPalGateway {
-        return new PayPalGateway($container->get('wcgateway.settings.render'), $container->get('wcgateway.funding-source.renderer'), $container->get('wcgateway.order-processor'), $container->get('wcgateway.settings'), $container->get('session.handler'), $container->get('wcgateway.processor.refunds'), $container->get('settings.flag.is-connected'), $container->get('wcgateway.transaction-url-provider'), $container->get('wc-subscriptions.helper'), $container->get('wcgateway.current-ppcp-settings-page-id'), $container->get('settings.environment'), $container->get('vaulting.repository.payment-token'), $container->get('woocommerce.logger.woocommerce'), $container->get('api.shop.country'), $container->get('api.endpoint.order'), $container->get('api.factory.paypal-checkout-url'), $container->get('wcgateway.place-order-button-text'), $container->get('api.endpoint.payment-tokens'), $container->get('vaulting.vault-v3-enabled'), $container->get('vaulting.wc-payment-tokens'), $container->get('wcgateway.asset_getter'), $container->get('wcgateway.settings.admin-settings-enabled'));
+        return new PayPalGateway($container->get('wcgateway.settings.render'), $container->get('wcgateway.funding-source.renderer'), $container->get('wcgateway.order-processor'), $container->get('wcgateway.settings'), $container->get('session.handler'), $container->get('wcgateway.processor.refunds'), $container->get('settings.flag.is-connected'), $container->get('wcgateway.transaction-url-provider'), $container->get('wc-subscriptions.helper'), $container->get('wcgateway.current-ppcp-settings-page-id'), $container->get('settings.environment'), $container->get('vaulting.repository.payment-token'), $container->get('woocommerce.logger.woocommerce'), $container->get('api.shop.country'), $container->get('api.factory.paypal-checkout-url'), $container->get('wcgateway.place-order-button-text'), $container->get('api.endpoint.payment-tokens'), $container->get('vaulting.vault-v3-enabled'), $container->get('vaulting.wc-payment-tokens'), $container->get('wcgateway.asset_getter'), $container->get('wcgateway.settings.admin-settings-enabled'));
     },
     'wcgateway.credit-card-gateway' => static function (ContainerInterface $container): CreditCardGateway {
-        return new CreditCardGateway($container->get('wcgateway.settings.render'), $container->get('wcgateway.order-processor'), $container->get('wcgateway.settings'), $container->get('wcgateway.configuration.card-configuration'), $container->get('wcgateway.credit-card-icons'), $container->get('session.handler'), $container->get('wcgateway.processor.refunds'), $container->get('wcgateway.transaction-url-provider'), $container->get('wc-subscriptions.helper'), $container->get('api.endpoint.payments'), $container->get('vaulting.credit-card-handler'), $container->get('settings.environment'), $container->get('api.endpoint.order'), $container->get('wcgateway.endpoint.capture-card-payment'), $container->get('api.prefix'), $container->get('api.endpoint.payment-tokens'), $container->get('vaulting.wc-payment-tokens'), $container->get('woocommerce.logger.woocommerce'));
+        return new CreditCardGateway($container->get('wcgateway.settings.render'), $container->get('wcgateway.order-processor'), $container->get('wcgateway.settings'), $container->get('wcgateway.configuration.card-configuration'), $container->get('wcgateway.credit-card-icons'), $container->get('session.handler'), $container->get('wcgateway.processor.refunds'), $container->get('wcgateway.transaction-url-provider'), $container->get('wc-subscriptions.helper'), $container->get('api.endpoint.payments'), $container->get('vaulting.credit-card-handler'), $container->get('settings.environment'), $container->get('api.endpoint.order'), $container->get('wcgateway.endpoint.capture-card-payment'), $container->get('api.prefix'), $container->get('vaulting.wc-payment-tokens'), $container->get('woocommerce.logger.woocommerce'));
     },
     'wcgateway.credit-card-labels' => static function (ContainerInterface $container): array {
         return array('visa' => _x('Visa', 'Name of credit card', 'woocommerce-paypal-payments'), 'mastercard' => _x('Mastercard', 'Name of credit card', 'woocommerce-paypal-payments'), 'amex' => _x('American Express', 'Name of credit card', 'woocommerce-paypal-payments'), 'discover' => _x('Discover', 'Name of credit card', 'woocommerce-paypal-payments'), 'jcb' => _x('JCB', 'Name of credit card', 'woocommerce-paypal-payments'), 'elo' => _x('Elo', 'Name of credit card', 'woocommerce-paypal-payments'), 'hiper' => _x('Hiper', 'Name of credit card', 'woocommerce-paypal-payments'));
@@ -182,7 +183,7 @@ return array(
         return new Settings($container->get('wcgateway.button.default-locations'), $container->get('wcgateway.settings.dcc-gateway-title.default'), $container->get('wcgateway.settings.pay-later.default-button-locations'), $container->get('wcgateway.settings.pay-later.default-messaging-locations'), $container->get('compat.settings.settings_map_helper'));
     }),
     'wcgateway.notice.connect' => static function (ContainerInterface $container): ConnectAdminNotice {
-        return new ConnectAdminNotice($container->get('settings.flag.is-connected'), $container->get('wcgateway.settings'), $container->get('wcgateway.is-send-only-country'));
+        return new ConnectAdminNotice($container->get('settings.flag.is-connected'), $container->get('wcgateway.is-send-only-country'));
     },
     'wcgateway.notice.currency-unsupported' => static function (ContainerInterface $container): UnsupportedCurrencyAdminNotice {
         return new UnsupportedCurrencyAdminNotice($container->get('settings.flag.is-connected'), $container->get('api.shop.currency.getter'), $container->get('api.supported-currencies'), $container->get('wcgateway.is-wc-gateways-list-page'), $container->get('wcgateway.is-ppcp-settings-page'));
@@ -350,6 +351,7 @@ return array(
         $should_render_settings = $container->get('wcgateway.settings.should-render-settings');
         if (!$should_render_settings) {
             return array();
+            // @phpstan-ignore return.type
         }
         // Legacy settings service, correct use of `State` class.
         $state = $container->get('onboarding.state');
@@ -652,7 +654,7 @@ return array(
         return $vaulting_label;
     },
     'wcgateway.settings.dcc-gateway-title.default' => static function (ContainerInterface $container): string {
-        return __('Debit & Credit Cards', 'woocommerce-paypal-payments');
+        return did_action('init') ? __('Debit & Credit Cards', 'woocommerce-paypal-payments') : 'Debit & Credit Cards';
     },
     'wcgateway.settings.card_billing_data_mode.default' => static function (ContainerInterface $container): string {
         return $container->get('api.shop.is-latin-america') ? \WooCommerce\PayPalCommerce\WcGateway\CardBillingMode::MINIMAL_INPUT : \WooCommerce\PayPalCommerce\WcGateway\CardBillingMode::USE_WC;
@@ -729,7 +731,7 @@ return array(
         $enabled_status_text = esc_html__('Status: Available', 'woocommerce-paypal-payments');
         $disabled_status_text = esc_html__('Status: Not yet enabled', 'woocommerce-paypal-payments');
         $dcc_button_text = $dcc_enabled ? esc_html__('Settings', 'woocommerce-paypal-payments') : esc_html__('Enable Advanced Card Payments', 'woocommerce-paypal-payments');
-        $enable_dcc_url = $environment->current_environment_is(Environment::PRODUCTION) ? $container->get('wcgateway.enable-dcc-url-live') : $container->get('wcgateway.enable-dcc-url-sandbox');
+        $enable_dcc_url = $environment->is_production() ? $container->get('wcgateway.enable-dcc-url-live') : $container->get('wcgateway.enable-dcc-url-sandbox');
         $dcc_button_url = $dcc_enabled ? admin_url('admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway&ppcp-tab=ppcp-credit-card-gateway') : $enable_dcc_url;
         return sprintf('<p>%1$s %2$s</p><p><a target="%3$s" href="%4$s" class="button">%5$s</a></p>', $dcc_enabled ? $enabled_status_text : $disabled_status_text, $dcc_enabled ? '<span class="dashicons dashicons-yes"></span>' : '<span class="dashicons dashicons-no"></span>', $dcc_enabled ? '_self' : '_blank', esc_url($dcc_button_url), esc_html($dcc_button_text));
     },
@@ -742,7 +744,7 @@ return array(
         $enabled_status_text = esc_html__('Status: Available', 'woocommerce-paypal-payments');
         $disabled_status_text = esc_html__('Status: Not yet enabled', 'woocommerce-paypal-payments');
         $button_text = $enabled ? esc_html__('Settings', 'woocommerce-paypal-payments') : esc_html__('Enable saving PayPal & Venmo', 'woocommerce-paypal-payments');
-        $enable_url = $environment->current_environment_is(Environment::PRODUCTION) ? $container->get('wcgateway.enable-reference-transactions-url-live') : $container->get('wcgateway.enable-reference-transactions-url-sandbox');
+        $enable_url = $environment->is_production() ? $container->get('wcgateway.enable-reference-transactions-url-live') : $container->get('wcgateway.enable-reference-transactions-url-sandbox');
         $button_url = $enabled ? admin_url('admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway#field-paypal_saved_payments') : $enable_url;
         return sprintf('<p>%1$s %2$s</p><p><a target="%3$s" href="%4$s" class="button">%5$s</a></p>', $enabled ? $enabled_status_text : $disabled_status_text, $enabled ? '<span class="dashicons dashicons-yes"></span>' : '<span class="dashicons dashicons-no"></span>', $enabled ? '_self' : '_blank', esc_url($button_url), esc_html($button_text));
     },
@@ -758,7 +760,7 @@ return array(
         $pui_enabled = $pui_product_status->is_active();
         $enabled_status_text = esc_html__('Status: Available', 'woocommerce-paypal-payments');
         $disabled_status_text = esc_html__('Status: Not yet enabled', 'woocommerce-paypal-payments');
-        $enable_pui_url = $environment->current_environment_is(Environment::PRODUCTION) ? $container->get('wcgateway.enable-pui-url-live') : $container->get('wcgateway.enable-pui-url-sandbox');
+        $enable_pui_url = $environment->is_production() ? $container->get('wcgateway.enable-pui-url-live') : $container->get('wcgateway.enable-pui-url-sandbox');
         $pui_button_url = $pui_enabled ? admin_url('admin.php?page=wc-settings&tab=checkout&section=ppcp-pay-upon-invoice-gateway') : $enable_pui_url;
         $pui_button_text = $pui_enabled ? esc_html__('Settings', 'woocommerce-paypal-payments') : esc_html__('Enable Pay upon Invoice', 'woocommerce-paypal-payments');
         return sprintf('<p>%1$s %2$s</p><p><a target="%3$s" href="%4$s" class="button">%5$s</a></p>', $pui_enabled ? $enabled_status_text : $disabled_status_text, $pui_enabled ? '<span class="dashicons dashicons-yes"></span>' : '<span class="dashicons dashicons-no"></span>', $pui_enabled ? '_self' : '_blank', esc_url($pui_button_url), esc_html($pui_button_text));
@@ -799,7 +801,7 @@ return array(
     'wcgateway.settings.pay-later.messaging-locations' => static function (ContainerInterface $container): array {
         $button_locations = $container->get('wcgateway.button.locations');
         unset($button_locations['mini-cart']);
-        return array_merge($button_locations, array('shop' => __('Shop', 'woocommerce-paypal-payments'), 'home' => __('Home', 'woocommerce-paypal-payments')));
+        return array_merge($button_locations, array('shop' => did_action('init') ? __('Shop', 'woocommerce-paypal-payments') : 'Shop', 'home' => did_action('init') ? __('Home', 'woocommerce-paypal-payments') : 'Home'));
     },
     'wcgateway.settings.pay-later.default-messaging-locations' => static function (ContainerInterface $container): array {
         $locations = $container->get('wcgateway.settings.pay-later.messaging-locations');
@@ -848,7 +850,7 @@ return array(
         return apply_filters('woocommerce_paypal_payments_button_locales', array('' => __('Browser language', 'woocommerce-paypal-payments'), 'ar_DZ' => __('Arabic (Algeria)', 'woocommerce-paypal-payments'), 'ar_BH' => __('Arabic (Bahrain)', 'woocommerce-paypal-payments'), 'ar_EG' => __('Arabic (Egypt)', 'woocommerce-paypal-payments'), 'ar_JO' => __('Arabic (Jordan)', 'woocommerce-paypal-payments'), 'ar_KW' => __('Arabic (Kuwait)', 'woocommerce-paypal-payments'), 'ar_MA' => __('Arabic (Morocco)', 'woocommerce-paypal-payments'), 'ar_SA' => __('Arabic (Saudi Arabia)', 'woocommerce-paypal-payments'), 'cs_CZ' => __('Czech', 'woocommerce-paypal-payments'), 'zh_CN' => __('Chinese (Simplified)', 'woocommerce-paypal-payments'), 'zh_HK' => __('Chinese (Hong Kong)', 'woocommerce-paypal-payments'), 'zh_TW' => __('Chinese (Traditional)', 'woocommerce-paypal-payments'), 'da_DK' => __('Danish', 'woocommerce-paypal-payments'), 'nl_NL' => __('Dutch', 'woocommerce-paypal-payments'), 'en_AU' => __('English (Australia)', 'woocommerce-paypal-payments'), 'en_GB' => __('English (United Kingdom)', 'woocommerce-paypal-payments'), 'en_US' => __('English (United States)', 'woocommerce-paypal-payments'), 'fi_FI' => __('Finnish', 'woocommerce-paypal-payments'), 'fr_CA' => __('French (Canada)', 'woocommerce-paypal-payments'), 'fr_FR' => __('French (France)', 'woocommerce-paypal-payments'), 'de_DE' => __('German (Germany)', 'woocommerce-paypal-payments'), 'de_CH' => __('German (Switzerland)', 'woocommerce-paypal-payments'), 'de_AT' => __('German (Austria)', 'woocommerce-paypal-payments'), 'de_LU' => __('German (Luxembourg)', 'woocommerce-paypal-payments'), 'el_GR' => __('Greek', 'woocommerce-paypal-payments'), 'he_IL' => __('Hebrew', 'woocommerce-paypal-payments'), 'hu_HU' => __('Hungarian', 'woocommerce-paypal-payments'), 'id_ID' => __('Indonesian', 'woocommerce-paypal-payments'), 'it_IT' => __('Italian', 'woocommerce-paypal-payments'), 'ja_JP' => __('Japanese', 'woocommerce-paypal-payments'), 'ko_KR' => __('Korean', 'woocommerce-paypal-payments'), 'no_NO' => __('Norwegian', 'woocommerce-paypal-payments'), 'es_ES' => __('Spanish (Spain)', 'woocommerce-paypal-payments'), 'es_MX' => __('Spanish (Mexico)', 'woocommerce-paypal-payments'), 'pl_PL' => __('Polish', 'woocommerce-paypal-payments'), 'pt_BR' => __('Portuguese (Brazil)', 'woocommerce-paypal-payments'), 'pt_PT' => __('Portuguese (Portugal)', 'woocommerce-paypal-payments'), 'ru_RU' => __('Russian', 'woocommerce-paypal-payments'), 'sk_SK' => __('Slovak', 'woocommerce-paypal-payments'), 'sv_SE' => __('Swedish', 'woocommerce-paypal-payments'), 'th_TH' => __('Thai', 'woocommerce-paypal-payments')));
     },
     'wcgateway.endpoint.capture-card-payment' => static function (ContainerInterface $container): CaptureCardPayment {
-        return new CaptureCardPayment($container->get('api.host'), $container->get('api.bearer'), $container->get('api.factory.order'), $container->get('api.factory.purchase-unit'), $container->get('api.endpoint.order'), $container->get('session.handler'), $container->get('wc-subscriptions.helpers.real-time-account-updater'), $container->get('wcgateway.settings'), $container->get('woocommerce.logger.woocommerce'));
+        return new CaptureCardPayment($container->get('api.host'), $container->get('api.bearer'), $container->get('api.factory.order'), $container->get('api.factory.purchase-unit'), $container->get('wcgateway.settings'), $container->get('woocommerce.logger.woocommerce'));
     },
     'wcgateway.settings.wc-tasks.simple-redirect-task-factory' => static function (): SimpleRedirectTaskFactoryInterface {
         return new SimpleRedirectTaskFactory();
@@ -875,13 +877,15 @@ return array(
     'wcgateway.settings.wc-tasks.working-capital-config' => static function (ContainerInterface $container): array {
         $settings = $container->get('wcgateway.settings');
         assert($settings instanceof Settings);
+        $settings_provider = $container->get('settings.settings-provider');
+        assert($settings_provider instanceof SettingsProvider);
         $is_working_capital_feature_flag_enabled = apply_filters(
             // phpcs:ignore WordPress.NamingConventions.ValidHookName.UseUnderscores -- feature flags use this convention
             'woocommerce.feature-flags.woocommerce_paypal_payments.working_capital_enabled',
-            getenv('PCP_WORKING_CAPITAL_ENABLED') === '1'
+            \true
         );
-        $is_working_capital_eligible = $container->get('api.shop.country') === 'US' && $settings->has('stay_updated') && $settings->get('stay_updated');
-        if (!$is_working_capital_feature_flag_enabled || !$is_working_capital_eligible) {
+        $is_working_capital_eligible = $container->get('api.merchant.country') === 'US' && $settings->has('stay_updated') && $settings->get('stay_updated');
+        if (!$settings_provider->merchant_connected() || !$is_working_capital_feature_flag_enabled || !$is_working_capital_eligible) {
             return array();
         }
         return array(array('id' => 'ppcp-working-capital-task', 'title' => __('Fuel your business growth with a PayPal Working Capital loan. Check eligibility', 'woocommerce-paypal-payments'), 'description' => '', 'redirect_url' => 'https://www.paypal.com/us/business/financial-services/working-capital?partner_camp_id=woocommerce_ppwc'));
@@ -949,21 +953,24 @@ return array(
         assert($settings_model instanceof SettingsModel);
         $messages_apply = $container->get('button.helper.messages-apply');
         assert($messages_apply instanceof MessagesApply);
+        $settings_provider = $container->get('settings.settings-provider');
+        assert($settings_provider instanceof SettingsProvider);
         $is_working_capital_feature_flag_enabled = apply_filters(
             // phpcs:ignore WordPress.NamingConventions.ValidHookName.UseUnderscores -- feature flags use this convention
             'woocommerce.feature-flags.woocommerce_paypal_payments.working_capital_enabled',
-            getenv('PCP_WORKING_CAPITAL_ENABLED') === '1'
+            \true
         );
         $stay_updated = SettingsModule::should_use_the_old_ui() ? $settings->has('stay_updated') && $settings->get('stay_updated') : $settings_model->get_stay_updated();
+        $is_working_capital_eligible = $container->get('api.merchant.country') === 'US' && $stay_updated;
         $message = sprintf(
             // translators: %1$s is the URL for the startup guide.
-            __('We\'ve redesigned the settings for better performance and usability. Starting late January, this improved design will be the default for all WooCommerce installations to enjoy faster navigation, cleaner organization, and improved performance. Check out the <a href="%1$s" target="_blank">Startup Guide</a>, then click <a href="#" name="settings-switch-ui"><strong>Switch to New Settings</strong></a> to activate it.', 'woocommerce-paypal-payments'),
+            __('We\'ve redesigned the settings for better performance and usability. This improved design will be the default for all WooCommerce installations to enjoy faster navigation, cleaner organization, and improved performance. Check out the <a href="%1$s" target="_blank">Startup Guide</a>, then click <a href="#" name="settings-switch-ui"><strong>Switch to New Settings</strong></a> to activate it.', 'woocommerce-paypal-payments'),
             'https://woocommerce.com/document/woocommerce-paypal-payments/paypal-payments-startup-guide/'
         );
-        return array($inbox_note_factory->create_note(__('PayPal Working Capital', 'woocommerce-paypal-payments'), __('Business loans from $1k to $230k for first-time borrowers. Looking to fuel your business growth? With a PayPal Working Capital loan, approved loans are funded in minutes and repaid as a share of your sales. Minimum payment required every 90 days. The lender for PayPal Working Capital is WebBank.', 'woocommerce-paypal-payments'), Note::E_WC_ADMIN_NOTE_INFORMATIONAL, 'ppcp-working-capital-inbox-note', Note::E_WC_ADMIN_NOTE_UNACTIONED, $is_working_capital_feature_flag_enabled && $container->get('api.shop.country') === 'US' && $stay_updated, new InboxNoteAction('learn_more', __('Learn More', 'woocommerce-paypal-payments'), 'https://www.paypal.com/us/business/financial-services/working-capital?partner_camp_id=woocommerce_ppwc', Note::E_WC_ADMIN_NOTE_UNACTIONED, \true)), $inbox_note_factory->create_note(__('📢 Important: New PayPal Payments settings UI becoming default in January!', 'woocommerce-paypal-payments'), $message, Note::E_WC_ADMIN_NOTE_INFORMATIONAL, 'ppcp-settings-migration-inbox-note', Note::E_WC_ADMIN_NOTE_UNACTIONED, SettingsModule::should_use_the_old_ui(), new InboxNoteAction('switch_to_new_settings', __('Switch to New Settings', 'woocommerce-paypal-payments'), admin_url('admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway'), Note::E_WC_ADMIN_NOTE_UNACTIONED, \true)));
+        return array($inbox_note_factory->create_note(__('PayPal Working Capital', 'woocommerce-paypal-payments'), __('Business loans from $1k to $230k for first-time borrowers. Looking to fuel your business growth? With a PayPal Working Capital loan, approved loans are funded in minutes and repaid as a share of your sales. Minimum payment required every 90 days. The lender for PayPal Working Capital is WebBank.', 'woocommerce-paypal-payments'), Note::E_WC_ADMIN_NOTE_INFORMATIONAL, 'ppcp-working-capital-inbox-note', Note::E_WC_ADMIN_NOTE_UNACTIONED, $settings_provider->merchant_connected() && $is_working_capital_feature_flag_enabled && $is_working_capital_eligible, new InboxNoteAction('learn_more', __('Learn More', 'woocommerce-paypal-payments'), 'https://www.paypal.com/us/business/financial-services/working-capital?partner_camp_id=woocommerce_ppwc', Note::E_WC_ADMIN_NOTE_UNACTIONED, \true)), $inbox_note_factory->create_note(__('📢 Important: New PayPal Payments settings UI becoming default soon!', 'woocommerce-paypal-payments'), $message, Note::E_WC_ADMIN_NOTE_INFORMATIONAL, 'ppcp-settings-migration-inbox-note', Note::E_WC_ADMIN_NOTE_UNACTIONED, SettingsModule::should_use_the_old_ui(), new InboxNoteAction('switch_to_new_settings', __('Switch to New Settings', 'woocommerce-paypal-payments'), admin_url('admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway'), Note::E_WC_ADMIN_NOTE_UNACTIONED, \true)));
     },
     'wcgateway.void-button.assets' => function (ContainerInterface $container): VoidButtonAssets {
-        return new VoidButtonAssets($container->get('wcgateway.asset_getter'), $container->get('ppcp.asset-version'), $container->get('api.endpoint.order'), $container->get('wcgateway.processor.refunds'));
+        return new VoidButtonAssets($container->get('wcgateway.asset_getter'), $container->get('ppcp.asset-version'), $container->get('api.endpoint.order.cached'), $container->get('wcgateway.processor.refunds'));
     },
     'wcgateway.void-button.endpoint' => function (ContainerInterface $container): VoidOrderEndpoint {
         return new VoidOrderEndpoint($container->get('button.request-data'), $container->get('api.endpoint.order'), $container->get('wcgateway.processor.refunds'), $container->get('woocommerce.logger.woocommerce'));

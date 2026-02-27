@@ -4,7 +4,7 @@
 
 namespace Composer\Autoload;
 
-class ComposerStaticInita7bd3b1cdbdc420df68d5eeeaa8be8c8
+class ComposerStaticInitf454a4dc4519aa3bafab294be971ae9b
 {
     public static $files = array (
         '7b11c4dc42b3b3023073cb14e519683c' => __DIR__ . '/..' . '/ralouphie/getallheaders/src/getallheaders.php',
@@ -20,7 +20,6 @@ class ComposerStaticInita7bd3b1cdbdc420df68d5eeeaa8be8c8
             'WooCommerce\\PayPalCommerce\\WcSubscriptions\\' => 43,
             'WooCommerce\\PayPalCommerce\\WcGateway\\' => 37,
             'WooCommerce\\PayPalCommerce\\Vendor\\Psr\\Log\\' => 42,
-            'WooCommerce\\PayPalCommerce\\Vendor\\Psr\\Container\\' => 48,
             'WooCommerce\\PayPalCommerce\\Vendor\\' => 34,
             'WooCommerce\\PayPalCommerce\\Vaulting\\' => 36,
             'WooCommerce\\PayPalCommerce\\Uninstall\\' => 37,
@@ -54,14 +53,6 @@ class ComposerStaticInita7bd3b1cdbdc420df68d5eeeaa8be8c8
         array (
             'Symfony\\Polyfill\\Php80\\' => 23,
         ),
-        'I' =>
-        array (
-            'Interop\\Container\\' => 18,
-        ),
-        'D' =>
-        array (
-            'Dhii\\Modular\\Module\\' => 20,
-        ),
     );
 
     public static $prefixDirsPsr4 = array (
@@ -84,10 +75,6 @@ class ComposerStaticInita7bd3b1cdbdc420df68d5eeeaa8be8c8
         'WooCommerce\\PayPalCommerce\\Vendor\\Psr\\Log\\' =>
         array (
             0 => __DIR__ . '/..' . '/psr/log/Psr/Log',
-        ),
-        'WooCommerce\\PayPalCommerce\\Vendor\\Psr\\Container\\' =>
-        array (
-            0 => __DIR__ . '/..' . '/psr/container/src',
         ),
         'WooCommerce\\PayPalCommerce\\Vendor\\' =>
         array (
@@ -205,29 +192,13 @@ class ComposerStaticInita7bd3b1cdbdc420df68d5eeeaa8be8c8
         array (
             0 => __DIR__ . '/..' . '/symfony/polyfill-php80',
         ),
-        'Interop\\Container\\' =>
-        array (
-            0 => __DIR__ . '/..' . '/container-interop/service-provider/src',
-        ),
-        'Dhii\\Modular\\Module\\' =>
-        array (
-            0 => __DIR__ . '/..' . '/dhii/module-interface/src',
-        ),
     );
 
     public static $classMap = array (
-        'Attribute' => __DIR__ . '/..' . '/symfony/polyfill-php80/Resources/stubs/Attribute.php',
         'Composer\\InstalledVersions' => __DIR__ . '/..' . '/composer/InstalledVersions.php',
-        'Dhii\\Modular\\Module\\Exception\\ModuleExceptionInterface' => __DIR__ . '/..' . '/dhii/module-interface/src/Exception/ModuleExceptionInterface.php',
-        'Dhii\\Modular\\Module\\ModuleAwareInterface' => __DIR__ . '/..' . '/dhii/module-interface/src/ModuleAwareInterface.php',
-        'Dhii\\Modular\\Module\\ModuleInterface' => __DIR__ . '/..' . '/dhii/module-interface/src/ModuleInterface.php',
-        'Interop\\Container\\ServiceProviderInterface' => __DIR__ . '/..' . '/container-interop/service-provider/src/ServiceProviderInterface.php',
-        'PhpToken' => __DIR__ . '/..' . '/symfony/polyfill-php80/Resources/stubs/PhpToken.php',
         'Stringable' => __DIR__ . '/..' . '/symfony/polyfill-php80/Resources/stubs/Stringable.php',
         'Symfony\\Polyfill\\Php80\\Php80' => __DIR__ . '/..' . '/symfony/polyfill-php80/Php80.php',
         'Symfony\\Polyfill\\Php80\\PhpToken' => __DIR__ . '/..' . '/symfony/polyfill-php80/PhpToken.php',
-        'UnhandledMatchError' => __DIR__ . '/..' . '/symfony/polyfill-php80/Resources/stubs/UnhandledMatchError.php',
-        'ValueError' => __DIR__ . '/..' . '/symfony/polyfill-php80/Resources/stubs/ValueError.php',
         'Wikimedia\\Composer\\Merge\\V2\\ExtraPackage' => __DIR__ . '/..' . '/wikimedia/composer-merge-plugin/src/ExtraPackage.php',
         'Wikimedia\\Composer\\Merge\\V2\\Logger' => __DIR__ . '/..' . '/wikimedia/composer-merge-plugin/src/Logger.php',
         'Wikimedia\\Composer\\Merge\\V2\\MergePlugin' => __DIR__ . '/..' . '/wikimedia/composer-merge-plugin/src/MergePlugin.php',
@@ -258,6 +229,7 @@ class ComposerStaticInita7bd3b1cdbdc420df68d5eeeaa8be8c8
         'WooCommerce\\PayPalCommerce\\ApiClient\\Endpoint\\IdentityToken' => __DIR__ . '/../..' . '/modules/ppcp-api-client/src/Endpoint/IdentityToken.php',
         'WooCommerce\\PayPalCommerce\\ApiClient\\Endpoint\\LoginSeller' => __DIR__ . '/../..' . '/modules/ppcp-api-client/src/Endpoint/LoginSeller.php',
         'WooCommerce\\PayPalCommerce\\ApiClient\\Endpoint\\OrderEndpoint' => __DIR__ . '/../..' . '/modules/ppcp-api-client/src/Endpoint/OrderEndpoint.php',
+        'WooCommerce\\PayPalCommerce\\ApiClient\\Endpoint\\OrderEndpointCached' => __DIR__ . '/../..' . '/modules/ppcp-api-client/src/Endpoint/OrderEndpointCached.php',
         'WooCommerce\\PayPalCommerce\\ApiClient\\Endpoint\\Orders' => __DIR__ . '/../..' . '/modules/ppcp-api-client/src/Endpoint/Orders.php',
         'WooCommerce\\PayPalCommerce\\ApiClient\\Endpoint\\PartnerReferrals' => __DIR__ . '/../..' . '/modules/ppcp-api-client/src/Endpoint/PartnerReferrals.php',
         'WooCommerce\\PayPalCommerce\\ApiClient\\Endpoint\\PartnersEndpoint' => __DIR__ . '/../..' . '/modules/ppcp-api-client/src/Endpoint/PartnersEndpoint.php',
@@ -444,7 +416,6 @@ class ComposerStaticInita7bd3b1cdbdc420df68d5eeeaa8be8c8
         'WooCommerce\\PayPalCommerce\\CardFields\\Service\\CardCaptureValidator' => __DIR__ . '/../..' . '/modules/ppcp-card-fields/src/Service/CardCaptureValidator.php',
         'WooCommerce\\PayPalCommerce\\Common\\Pattern\\SingletonDecorator' => __DIR__ . '/../..' . '/lib/common/Pattern/SingletonDecorator.php',
         'WooCommerce\\PayPalCommerce\\Common\\Pattern\\SingletonTrait' => __DIR__ . '/../..' . '/lib/common/Pattern/SingletonTrait.php',
-        'WooCommerce\\PayPalCommerce\\Compat\\AdminContextTrait' => __DIR__ . '/../..' . '/modules/ppcp-compat/src/AdminContextTrait.php',
         'WooCommerce\\PayPalCommerce\\Compat\\Assets\\CompatAssets' => __DIR__ . '/../..' . '/modules/ppcp-compat/src/Assets/CompatAssets.php',
         'WooCommerce\\PayPalCommerce\\Compat\\CompatModule' => __DIR__ . '/../..' . '/modules/ppcp-compat/src/CompatModule.php',
         'WooCommerce\\PayPalCommerce\\Compat\\Integration' => __DIR__ . '/../..' . '/modules/ppcp-compat/src/Integration.php',
@@ -623,53 +594,6 @@ class ComposerStaticInita7bd3b1cdbdc420df68d5eeeaa8be8c8
         'WooCommerce\\PayPalCommerce\\Vaulting\\VaultedCreditCardHandler' => __DIR__ . '/../..' . '/modules/ppcp-vaulting/src/VaultedCreditCardHandler.php',
         'WooCommerce\\PayPalCommerce\\Vaulting\\VaultingModule' => __DIR__ . '/../..' . '/modules/ppcp-vaulting/src/VaultingModule.php',
         'WooCommerce\\PayPalCommerce\\Vaulting\\WooCommercePaymentTokens' => __DIR__ . '/../..' . '/modules/ppcp-vaulting/src/WooCommercePaymentTokens.php',
-        'WooCommerce\\PayPalCommerce\\Vendor\\Dhii\\Collection\\ClearableContainerInterface' => __DIR__ . '/../..' . '/lib/packages/Dhii/Collection/ClearableContainerInterface.php',
-        'WooCommerce\\PayPalCommerce\\Vendor\\Dhii\\Collection\\ContainerFactoryInterface' => __DIR__ . '/../..' . '/lib/packages/Dhii/Collection/ContainerFactoryInterface.php',
-        'WooCommerce\\PayPalCommerce\\Vendor\\Dhii\\Collection\\ContainerInterface' => __DIR__ . '/../..' . '/lib/packages/Dhii/Collection/ContainerInterface.php',
-        'WooCommerce\\PayPalCommerce\\Vendor\\Dhii\\Collection\\CountableListInterface' => __DIR__ . '/../..' . '/lib/packages/Dhii/Collection/CountableListInterface.php',
-        'WooCommerce\\PayPalCommerce\\Vendor\\Dhii\\Collection\\CountableMapInterface' => __DIR__ . '/../..' . '/lib/packages/Dhii/Collection/CountableMapInterface.php',
-        'WooCommerce\\PayPalCommerce\\Vendor\\Dhii\\Collection\\CountableSetInterface' => __DIR__ . '/../..' . '/lib/packages/Dhii/Collection/CountableSetInterface.php',
-        'WooCommerce\\PayPalCommerce\\Vendor\\Dhii\\Collection\\HasCapableInterface' => __DIR__ . '/../..' . '/lib/packages/Dhii/Collection/HasCapableInterface.php',
-        'WooCommerce\\PayPalCommerce\\Vendor\\Dhii\\Collection\\HasItemCapableInterface' => __DIR__ . '/../..' . '/lib/packages/Dhii/Collection/HasItemCapableInterface.php',
-        'WooCommerce\\PayPalCommerce\\Vendor\\Dhii\\Collection\\MapFactoryInterface' => __DIR__ . '/../..' . '/lib/packages/Dhii/Collection/MapFactoryInterface.php',
-        'WooCommerce\\PayPalCommerce\\Vendor\\Dhii\\Collection\\MapInterface' => __DIR__ . '/../..' . '/lib/packages/Dhii/Collection/MapInterface.php',
-        'WooCommerce\\PayPalCommerce\\Vendor\\Dhii\\Collection\\MutableContainerInterface' => __DIR__ . '/../..' . '/lib/packages/Dhii/Collection/MutableContainerInterface.php',
-        'WooCommerce\\PayPalCommerce\\Vendor\\Dhii\\Collection\\SetFactoryInterface' => __DIR__ . '/../..' . '/lib/packages/Dhii/Collection/SetFactoryInterface.php',
-        'WooCommerce\\PayPalCommerce\\Vendor\\Dhii\\Collection\\SetInterface' => __DIR__ . '/../..' . '/lib/packages/Dhii/Collection/SetInterface.php',
-        'WooCommerce\\PayPalCommerce\\Vendor\\Dhii\\Collection\\WritableContainerFactoryInterface' => __DIR__ . '/../..' . '/lib/packages/Dhii/Collection/WritableContainerFactoryInterface.php',
-        'WooCommerce\\PayPalCommerce\\Vendor\\Dhii\\Collection\\WritableContainerInterface' => __DIR__ . '/../..' . '/lib/packages/Dhii/Collection/WritableContainerInterface.php',
-        'WooCommerce\\PayPalCommerce\\Vendor\\Dhii\\Collection\\WritableMapFactoryInterface' => __DIR__ . '/../..' . '/lib/packages/Dhii/Collection/WritableMapFactoryInterface.php',
-        'WooCommerce\\PayPalCommerce\\Vendor\\Dhii\\Collection\\WritableMapInterface' => __DIR__ . '/../..' . '/lib/packages/Dhii/Collection/WritableMapInterface.php',
-        'WooCommerce\\PayPalCommerce\\Vendor\\Dhii\\Collection\\WritableSetFactoryInterface' => __DIR__ . '/../..' . '/lib/packages/Dhii/Collection/WritableSetFactoryInterface.php',
-        'WooCommerce\\PayPalCommerce\\Vendor\\Dhii\\Collection\\WritableSetInterface' => __DIR__ . '/../..' . '/lib/packages/Dhii/Collection/WritableSetInterface.php',
-        'WooCommerce\\PayPalCommerce\\Vendor\\Dhii\\Container\\AliasingContainer' => __DIR__ . '/../..' . '/lib/packages/Dhii/Container/AliasingContainer.php',
-        'WooCommerce\\PayPalCommerce\\Vendor\\Dhii\\Container\\CachingContainer' => __DIR__ . '/../..' . '/lib/packages/Dhii/Container/CachingContainer.php',
-        'WooCommerce\\PayPalCommerce\\Vendor\\Dhii\\Container\\CompositeCachingServiceProvider' => __DIR__ . '/../..' . '/lib/packages/Dhii/Container/CompositeCachingServiceProvider.php',
-        'WooCommerce\\PayPalCommerce\\Vendor\\Dhii\\Container\\CompositeContainer' => __DIR__ . '/../..' . '/lib/packages/Dhii/Container/CompositeContainer.php',
-        'WooCommerce\\PayPalCommerce\\Vendor\\Dhii\\Container\\DataStructureBasedFactory' => __DIR__ . '/../..' . '/lib/packages/Dhii/Container/DataStructureBasedFactory.php',
-        'WooCommerce\\PayPalCommerce\\Vendor\\Dhii\\Container\\DataStructureBasedFactoryInterface' => __DIR__ . '/../..' . '/lib/packages/Dhii/Container/DataStructureBasedFactoryInterface.php',
-        'WooCommerce\\PayPalCommerce\\Vendor\\Dhii\\Container\\DelegatingContainer' => __DIR__ . '/../..' . '/lib/packages/Dhii/Container/DelegatingContainer.php',
-        'WooCommerce\\PayPalCommerce\\Vendor\\Dhii\\Container\\DeprefixingContainer' => __DIR__ . '/../..' . '/lib/packages/Dhii/Container/DeprefixingContainer.php',
-        'WooCommerce\\PayPalCommerce\\Vendor\\Dhii\\Container\\Dictionary' => __DIR__ . '/../..' . '/lib/packages/Dhii/Container/Dictionary.php',
-        'WooCommerce\\PayPalCommerce\\Vendor\\Dhii\\Container\\DictionaryFactory' => __DIR__ . '/../..' . '/lib/packages/Dhii/Container/DictionaryFactory.php',
-        'WooCommerce\\PayPalCommerce\\Vendor\\Dhii\\Container\\Exception\\ContainerException' => __DIR__ . '/../..' . '/lib/packages/Dhii/Container/Exception/ContainerException.php',
-        'WooCommerce\\PayPalCommerce\\Vendor\\Dhii\\Container\\Exception\\NotFoundException' => __DIR__ . '/../..' . '/lib/packages/Dhii/Container/Exception/NotFoundException.php',
-        'WooCommerce\\PayPalCommerce\\Vendor\\Dhii\\Container\\FlashContainer' => __DIR__ . '/../..' . '/lib/packages/Dhii/Container/FlashContainer.php',
-        'WooCommerce\\PayPalCommerce\\Vendor\\Dhii\\Container\\HierarchyContainer' => __DIR__ . '/../..' . '/lib/packages/Dhii/Container/HierarchyContainer.php',
-        'WooCommerce\\PayPalCommerce\\Vendor\\Dhii\\Container\\MappingContainer' => __DIR__ . '/../..' . '/lib/packages/Dhii/Container/MappingContainer.php',
-        'WooCommerce\\PayPalCommerce\\Vendor\\Dhii\\Container\\MaskingContainer' => __DIR__ . '/../..' . '/lib/packages/Dhii/Container/MaskingContainer.php',
-        'WooCommerce\\PayPalCommerce\\Vendor\\Dhii\\Container\\NoOpContainer' => __DIR__ . '/../..' . '/lib/packages/Dhii/Container/NoOpContainer.php',
-        'WooCommerce\\PayPalCommerce\\Vendor\\Dhii\\Container\\PathContainer' => __DIR__ . '/../..' . '/lib/packages/Dhii/Container/PathContainer.php',
-        'WooCommerce\\PayPalCommerce\\Vendor\\Dhii\\Container\\PrefixingContainer' => __DIR__ . '/../..' . '/lib/packages/Dhii/Container/PrefixingContainer.php',
-        'WooCommerce\\PayPalCommerce\\Vendor\\Dhii\\Container\\ProxyContainer' => __DIR__ . '/../..' . '/lib/packages/Dhii/Container/ProxyContainer.php',
-        'WooCommerce\\PayPalCommerce\\Vendor\\Dhii\\Container\\SegmentingContainer' => __DIR__ . '/../..' . '/lib/packages/Dhii/Container/SegmentingContainer.php',
-        'WooCommerce\\PayPalCommerce\\Vendor\\Dhii\\Container\\ServiceProvider' => __DIR__ . '/../..' . '/lib/packages/Dhii/Container/ServiceProvider.php',
-        'WooCommerce\\PayPalCommerce\\Vendor\\Dhii\\Container\\SimpleCacheContainer' => __DIR__ . '/../..' . '/lib/packages/Dhii/Container/SimpleCacheContainer.php',
-        'WooCommerce\\PayPalCommerce\\Vendor\\Dhii\\Container\\TaggingServiceProvider' => __DIR__ . '/../..' . '/lib/packages/Dhii/Container/TaggingServiceProvider.php',
-        'WooCommerce\\PayPalCommerce\\Vendor\\Dhii\\Container\\Util\\StringTranslatingTrait' => __DIR__ . '/../..' . '/lib/packages/Dhii/Container/Util/StringTranslatingTrait.php',
-        'WooCommerce\\PayPalCommerce\\Vendor\\Dhii\\Modular\\Module\\Exception\\ModuleExceptionInterface' => __DIR__ . '/../..' . '/lib/packages/Dhii/Modular/Module/Exception/ModuleExceptionInterface.php',
-        'WooCommerce\\PayPalCommerce\\Vendor\\Dhii\\Modular\\Module\\ModuleAwareInterface' => __DIR__ . '/../..' . '/lib/packages/Dhii/Modular/Module/ModuleAwareInterface.php',
-        'WooCommerce\\PayPalCommerce\\Vendor\\Dhii\\Modular\\Module\\ModuleInterface' => __DIR__ . '/../..' . '/lib/packages/Dhii/Modular/Module/ModuleInterface.php',
         'WooCommerce\\PayPalCommerce\\Vendor\\Inpsyde\\Modularity\\Container\\ContainerConfigurator' => __DIR__ . '/../..' . '/lib/packages/Inpsyde/Modularity/Container/ContainerConfigurator.php',
         'WooCommerce\\PayPalCommerce\\Vendor\\Inpsyde\\Modularity\\Container\\PackageProxyContainer' => __DIR__ . '/../..' . '/lib/packages/Inpsyde/Modularity/Container/PackageProxyContainer.php',
         'WooCommerce\\PayPalCommerce\\Vendor\\Inpsyde\\Modularity\\Container\\ReadOnlyContainer' => __DIR__ . '/../..' . '/lib/packages/Inpsyde/Modularity/Container/ReadOnlyContainer.php',
@@ -686,10 +610,9 @@ class ComposerStaticInita7bd3b1cdbdc420df68d5eeeaa8be8c8
         'WooCommerce\\PayPalCommerce\\Vendor\\Inpsyde\\Modularity\\Properties\\PluginProperties' => __DIR__ . '/../..' . '/lib/packages/Inpsyde/Modularity/Properties/PluginProperties.php',
         'WooCommerce\\PayPalCommerce\\Vendor\\Inpsyde\\Modularity\\Properties\\Properties' => __DIR__ . '/../..' . '/lib/packages/Inpsyde/Modularity/Properties/Properties.php',
         'WooCommerce\\PayPalCommerce\\Vendor\\Inpsyde\\Modularity\\Properties\\ThemeProperties' => __DIR__ . '/../..' . '/lib/packages/Inpsyde/Modularity/Properties/ThemeProperties.php',
-        'WooCommerce\\PayPalCommerce\\Vendor\\Interop\\Container\\ServiceProviderInterface' => __DIR__ . '/../..' . '/lib/packages/Interop/Container/ServiceProviderInterface.php',
-        'WooCommerce\\PayPalCommerce\\Vendor\\Psr\\Container\\ContainerExceptionInterface' => __DIR__ . '/..' . '/psr/container/src/ContainerExceptionInterface.php',
-        'WooCommerce\\PayPalCommerce\\Vendor\\Psr\\Container\\ContainerInterface' => __DIR__ . '/..' . '/psr/container/src/ContainerInterface.php',
-        'WooCommerce\\PayPalCommerce\\Vendor\\Psr\\Container\\NotFoundExceptionInterface' => __DIR__ . '/..' . '/psr/container/src/NotFoundExceptionInterface.php',
+        'WooCommerce\\PayPalCommerce\\Vendor\\Psr\\Container\\ContainerExceptionInterface' => __DIR__ . '/../..' . '/lib/packages/Psr/Container/ContainerExceptionInterface.php',
+        'WooCommerce\\PayPalCommerce\\Vendor\\Psr\\Container\\ContainerInterface' => __DIR__ . '/../..' . '/lib/packages/Psr/Container/ContainerInterface.php',
+        'WooCommerce\\PayPalCommerce\\Vendor\\Psr\\Container\\NotFoundExceptionInterface' => __DIR__ . '/../..' . '/lib/packages/Psr/Container/NotFoundExceptionInterface.php',
         'WooCommerce\\PayPalCommerce\\Vendor\\Psr\\Log\\AbstractLogger' => __DIR__ . '/..' . '/psr/log/Psr/Log/AbstractLogger.php',
         'WooCommerce\\PayPalCommerce\\Vendor\\Psr\\Log\\InvalidArgumentException' => __DIR__ . '/..' . '/psr/log/Psr/Log/InvalidArgumentException.php',
         'WooCommerce\\PayPalCommerce\\Vendor\\Psr\\Log\\LogLevel' => __DIR__ . '/..' . '/psr/log/Psr/Log/LogLevel.php',
@@ -845,9 +768,9 @@ class ComposerStaticInita7bd3b1cdbdc420df68d5eeeaa8be8c8
     public static function getInitializer(ClassLoader $loader)
     {
         return \Closure::bind(function () use ($loader) {
-            $loader->prefixLengthsPsr4 = ComposerStaticInita7bd3b1cdbdc420df68d5eeeaa8be8c8::$prefixLengthsPsr4;
-            $loader->prefixDirsPsr4 = ComposerStaticInita7bd3b1cdbdc420df68d5eeeaa8be8c8::$prefixDirsPsr4;
-            $loader->classMap = ComposerStaticInita7bd3b1cdbdc420df68d5eeeaa8be8c8::$classMap;
+            $loader->prefixLengthsPsr4 = ComposerStaticInitf454a4dc4519aa3bafab294be971ae9b::$prefixLengthsPsr4;
+            $loader->prefixDirsPsr4 = ComposerStaticInitf454a4dc4519aa3bafab294be971ae9b::$prefixDirsPsr4;
+            $loader->classMap = ComposerStaticInitf454a4dc4519aa3bafab294be971ae9b::$classMap;
 
         }, null, ClassLoader::class);
     }

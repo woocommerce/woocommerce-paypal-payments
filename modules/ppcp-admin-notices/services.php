@@ -25,5 +25,5 @@ return array('admin-notices.asset_getter' => static function (ContainerInterface
 }, 'admin-notices.repository' => static function (ContainerInterface $container): RepositoryInterface {
     return new Repository();
 }, 'admin-notices.mute-message-endpoint' => static function (ContainerInterface $container): MuteMessageEndpoint {
-    return new MuteMessageEndpoint($container->get('button.request-data'), $container->get('admin-notices.repository'));
+    return new MuteMessageEndpoint($container->get('button.request-data'));
 });

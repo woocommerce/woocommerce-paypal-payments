@@ -9,7 +9,6 @@ declare (strict_types=1);
 namespace WooCommerce\PayPalCommerce\Googlepay\Assets;
 
 use Exception;
-use WooCommerce\PayPalCommerce\Vendor\Psr\Log\LoggerInterface;
 use WC_Countries;
 use WC_Product;
 use WooCommerce\PayPalCommerce\Assets\AssetGetter;
@@ -66,12 +65,6 @@ class Button implements ButtonInterface
      */
     private $settings_status;
     /**
-     * The logger.
-     *
-     * @var LoggerInterface
-     */
-    private $logger;
-    /**
      * The Subscription Helper.
      *
      * @var SubscriptionHelper
@@ -89,11 +82,10 @@ class Button implements ButtonInterface
      * @param Settings           $settings The legacy settings.
      * @param Environment        $environment The environment object.
      * @param SettingsStatus     $settings_status The Settings status helper.
-     * @param LoggerInterface    $logger The logger.
      * @param Context            $context Context data provider.
      * @param SettingsModel|null $new_settings The new settings model.
      */
-    public function __construct(AssetGetter $asset_getter, string $sdk_url, string $version, SubscriptionHelper $subscription_helper, Settings $settings, Environment $environment, SettingsStatus $settings_status, LoggerInterface $logger, Context $context, ?SettingsModel $new_settings = null)
+    public function __construct(AssetGetter $asset_getter, string $sdk_url, string $version, SubscriptionHelper $subscription_helper, Settings $settings, Environment $environment, SettingsStatus $settings_status, Context $context, ?SettingsModel $new_settings = null)
     {
         $this->asset_getter = $asset_getter;
         $this->sdk_url = $sdk_url;
@@ -102,7 +94,6 @@ class Button implements ButtonInterface
         $this->settings = $settings;
         $this->environment = $environment;
         $this->settings_status = $settings_status;
-        $this->logger = $logger;
         $this->new_settings = $new_settings;
         $this->context = $context;
     }
@@ -250,6 +241,7 @@ class Button implements ButtonInterface
             }, 21);
         }
         if ($button_enabled_checkout) {
+            // @phpstan-ignore if.alwaysTrue
             $default_hook_name = 'woocommerce_paypal_payments_checkout_button_render';
             $render_placeholder = apply_filters('woocommerce_paypal_payments_googlepay_checkout_button_render_hook', $default_hook_name);
             $render_placeholder = is_string($render_placeholder) ? $render_placeholder : $default_hook_name;
@@ -259,6 +251,7 @@ class Button implements ButtonInterface
             }, 21);
         }
         if ($button_enabled_payorder) {
+            // @phpstan-ignore if.alwaysTrue
             $default_hook_name = 'woocommerce_paypal_payments_payorder_button_render';
             $render_placeholder = apply_filters('woocommerce_paypal_payments_googlepay_payorder_button_render_hook', $default_hook_name);
             $render_placeholder = is_string($render_placeholder) ? $render_placeholder : $default_hook_name;
@@ -360,13 +353,23 @@ class Button implements ButtonInterface
         $is_enabled = $this->settings->has('googlepay_button_enabled') && $this->settings->get('googlepay_button_enabled');
         $available_gateways = WC()->payment_gateways->get_available_payment_gateways();
         $is_wc_gateway_enabled = isset($available_gateways[GooglePayGateway::ID]);
-        return array('environment' => $this->environment->current_environment_is(Environment::SANDBOX) ? 'TEST' : 'PRODUCTION', 'is_debug' => defined('WP_DEBUG') && WP_DEBUG, 'is_enabled' => $is_enabled, 'is_wc_gateway_enabled' => $is_wc_gateway_enabled, 'sdk_url' => $this->sdk_url, 'button' => array(
-            'wrapper' => '#ppc-button-googlepay-container',
-            'style' => $this->button_styles_for_context('cart'),
-            // For now use cart. Pass the context if necessary.
-            'mini_cart_wrapper' => '#ppc-button-googlepay-container-minicart',
-            'mini_cart_style' => $this->button_styles_for_context('mini-cart'),
-        ), 'shipping' => $shipping, 'ajax' => array('update_payment_data' => array('endpoint' => \WC_AJAX::get_endpoint(UpdatePaymentDataEndpoint::ENDPOINT), 'nonce' => wp_create_nonce(UpdatePaymentDataEndpoint::nonce()))));
+        return array(
+            'environment' => $this->environment->is_sandbox() ? 'TEST' : 'PRODUCTION',
+            'is_debug' => defined('WP_DEBUG') && WP_DEBUG,
+            // @phpstan-ignore booleanAnd.rightAlwaysFalse
+            'is_enabled' => $is_enabled,
+            'is_wc_gateway_enabled' => $is_wc_gateway_enabled,
+            'sdk_url' => $this->sdk_url,
+            'button' => array(
+                'wrapper' => '#ppc-button-googlepay-container',
+                'style' => $this->button_styles_for_context('cart'),
+                // For now use cart. Pass the context if necessary.
+                'mini_cart_wrapper' => '#ppc-button-googlepay-container-minicart',
+                'mini_cart_style' => $this->button_styles_for_context('mini-cart'),
+            ),
+            'shipping' => $shipping,
+            'ajax' => array('update_payment_data' => array('endpoint' => \WC_AJAX::get_endpoint(UpdatePaymentDataEndpoint::ENDPOINT), 'nonce' => wp_create_nonce(UpdatePaymentDataEndpoint::nonce()))),
+        );
     }
     /**
      * Determines the style for a given indicator in a given context.

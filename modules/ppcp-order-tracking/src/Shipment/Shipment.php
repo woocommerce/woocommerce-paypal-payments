@@ -139,7 +139,7 @@ class Shipment implements \WooCommerce\PayPalCommerce\OrderTracking\Shipment\Shi
                 continue;
             }
             $product = $item->get_product();
-            if (!is_a($product, WC_Product::class)) {
+            if (!$product instanceof WC_Product) {
                 continue;
             }
             $currency = $wc_order->get_currency();

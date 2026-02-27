@@ -24,9 +24,12 @@ use WooCommerce\PayPalCommerce\Settings\DTO\LocationStylingDTO;
 class StylingSettingsMapHelper
 {
     /**
-     * @var callable $context
+     * @var callable():string
      */
     protected $context_provider;
+    /**
+     * @param callable():string $context_provider
+     */
     public function __construct(callable $context_provider)
     {
         $this->context_provider = $context_provider;

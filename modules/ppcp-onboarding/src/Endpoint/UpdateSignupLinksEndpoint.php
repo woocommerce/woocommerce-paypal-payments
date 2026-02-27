@@ -90,14 +90,12 @@ class UpdateSignupLinksEndpoint implements EndpointInterface
     /**
      * Handles the request.
      *
-     * @return bool
      * @throws NotFoundException When order not found or handling failed.
      */
-    public function handle_request(): bool
+    public function handle_request(): void
     {
         if (!current_user_can('manage_woocommerce')) {
             wp_send_json_error('Not admin.', 403);
-            return \false;
         }
         $signup_links = array();
         try {
@@ -122,6 +120,5 @@ class UpdateSignupLinksEndpoint implements EndpointInterface
             $this->logger->error($exception->getMessage());
         }
         wp_send_json_success(array('onboarding_pui' => $this->settings->get('ppcp-onboarding-pui'), 'signup_links' => $signup_links));
-        return \true;
     }
 }
