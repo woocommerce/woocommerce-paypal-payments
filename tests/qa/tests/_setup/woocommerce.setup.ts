@@ -13,7 +13,6 @@ import {
 	products,
 	coupons,
 	customers,
-	wpDebuggingPlugin,
 	disableNoncePlugin,
 	subscriptionsPlugin,
 	disableWcSetupWizard,
@@ -41,15 +40,6 @@ setup(
 		await requestUtils.activatePlugin( disableNoncePlugin.slug );
 	}
 );
-
-setup( 'Setup WP Debugging plugin (inactive)', async ( { requestUtils } ) => {
-	if (
-		! ( await requestUtils.isPluginInstalled( wpDebuggingPlugin.slug ) )
-	) {
-		await requestUtils.installPlugin( wpDebuggingPlugin.slug );
-	}
-	await requestUtils.deactivatePlugin( wpDebuggingPlugin.slug );
-} );
 
 setup(
 	'Setup Disable Webhook Verification plugin (inactive)',

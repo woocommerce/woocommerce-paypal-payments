@@ -287,12 +287,9 @@ class SavePaymentMethodsModule implements ServiceModule, ExtendingModule, Execut
 						assert( $api instanceof UserIdToken );
 
 						try {
-							$target_customer_id = '';
-							if ( is_user_logged_in() ) {
-								$target_customer_id = get_user_meta( get_current_user_id(), '_ppcp_target_customer_id', true );
-								if ( ! $target_customer_id ) {
-									$target_customer_id = get_user_meta( get_current_user_id(), 'ppcp_customer_id', true );
-								}
+							$target_customer_id = get_user_meta( get_current_user_id(), '_ppcp_target_customer_id', true );
+							if ( ! $target_customer_id ) {
+								$target_customer_id = get_user_meta( get_current_user_id(), 'ppcp_customer_id', true );
 							}
 
 							$id_token = $api->id_token( $target_customer_id );
@@ -354,7 +351,7 @@ class SavePaymentMethodsModule implements ServiceModule, ExtendingModule, Execut
 							assert( $logger instanceof LoggerInterface );
 
 							$error = $exception->getMessage();
-							if ( is_a( $exception, PayPalApiException::class ) ) {
+							if ( $exception instanceof PayPalApiException ) {
 								$error = $exception->get_details( $error );
 							}
 
@@ -368,7 +365,7 @@ class SavePaymentMethodsModule implements ServiceModule, ExtendingModule, Execut
 				 */
 				add_action(
 					'woocommerce_add_payment_method_form_bottom',
-					function () use ( $c ) {
+					function () {
 						if ( ! is_user_logged_in() || ! is_add_payment_method_page() ) {
 							return;
 						}
@@ -420,7 +417,7 @@ class SavePaymentMethodsModule implements ServiceModule, ExtendingModule, Execut
 							assert( $logger instanceof LoggerInterface );
 
 							$error = $exception->getMessage();
-							if ( is_a( $exception, PayPalApiException::class ) ) {
+							if ( $exception instanceof PayPalApiException ) {
 								$error = $exception->get_details( $error );
 							}
 
@@ -487,7 +484,7 @@ class SavePaymentMethodsModule implements ServiceModule, ExtendingModule, Execut
 
 		} catch ( RuntimeException $exception ) {
 			$error = $exception->getMessage();
-			if ( is_a( $exception, PayPalApiException::class ) ) {
+			if ( $exception instanceof PayPalApiException ) {
 				$error = $exception->get_details( $error );
 			}
 

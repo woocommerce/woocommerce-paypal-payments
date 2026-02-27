@@ -278,7 +278,7 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
 		);
 		add_action(
 			'woocommerce_paypal_commerce_gateway_deactivate',
-			static function () use ( $c ) {
+			static function () {
 				delete_option( Settings::KEY );
 				delete_option( 'woocommerce_' . PayPalGateway::ID . '_settings' );
 				delete_option( 'woocommerce_' . CreditCardGateway::ID . '_settings' );
@@ -381,7 +381,7 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
 				$logger->info( "Checking payment captured webhook for WC order #{$wc_order_id}, PayPal order status: " . $order_status->name() );
 
 				$wc_order = wc_get_order( $wc_order_id );
-				if ( ! is_a( $wc_order, WC_Order::class ) || $wc_order->get_status() !== 'on-hold' ) {
+				if ( ! ( $wc_order instanceof WC_Order ) || $wc_order->get_status() !== 'on-hold' ) {
 					return;
 				}
 
@@ -621,7 +621,7 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
 		// Add processing instruction request data for OXXO payment.
 		add_filter(
 			'ppcp_create_order_request_body_data',
-			static function ( array $data, string $payment_method, array $request ) use ( $c ): array {
+			static function ( array $data, string $payment_method, array $request ): array {
 				if ( $payment_method !== OXXOGateway::ID ) {
 					return $data;
 				}
@@ -815,18 +815,14 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
 			static function ( $order_actions ) use ( $container ): array {
 				global $theorder;
 
-				if ( ! is_a( $theorder, WC_Order::class ) ) {
+				if ( ! ( $theorder instanceof WC_Order ) ) {
 					return $order_actions;
 				}
 
 				$render_reauthorize = $container->get( 'wcgateway.admin.render-reauthorize-action' );
 				$render_authorize   = $container->get( 'wcgateway.admin.render-authorize-action' );
 
-				/**
-				 * Renders the authorize action in the select field.
-				 *
-				 * @var RenderAuthorizeAction $render
-				 */
+				// Renders the authorize action in the select field.
 				return $render_reauthorize->render(
 					$render_authorize->render( $order_actions, $theorder ),
 					$theorder

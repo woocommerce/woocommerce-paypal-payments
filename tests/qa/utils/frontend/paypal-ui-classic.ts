@@ -7,7 +7,6 @@ import { expect, getLast4CardDigits } from '@inpsyde/playwright-utils/build';
  */
 import { Pcp } from '../../resources';
 import { PayPalPopup } from './paypal-popup';
-import { PayPalApi } from '../paypal-api';
 import { PayPalUi } from './paypal-ui';
 
 /**
@@ -291,7 +290,7 @@ export class PayPalUiClassic extends PayPalUi {
 	payPalMenuIframe = () =>
 		this.page.frameLocator( 'iframe[name^="__zoid__paypal_menu__"]' );
 	payWithDifferentAccountButton = () =>
-		this.payPalMenuIframe().getByText( 'pay with a different account' );
+		this.payPalMenuIframe().getByText( 'Pay with a different account' );
 
 	fastlaneContinueButton = () =>
 		this.page.locator( '#ppcp-axo-billing-email-submit-button' );
@@ -309,7 +308,39 @@ export class PayPalUiClassic extends PayPalUi {
 	usingVaultedPayPalAccountText = ( payPalEmail: string ) =>
 		this.page.getByText( `Using ${ payPalEmail } PayPal.` );
 
+	/** Host element with paypal-buttons-label-* and paypal-buttons-layout-* classes (product, cart, checkout). */
+	payPalButtonsHostElement = () =>
+		this.page.locator( '#ppc-button-ppcp-gateway .paypal-buttons' );
+
+	/** Host element for mini cart PayPal buttons. */
+	minicartPayPalButtonsHostElement = () =>
+		this.page.locator( '#ppc-button-minicart .paypal-buttons' );
+
 	// Actions
+
+	/**
+	 * Clicks PayPal gateway and PayPal button to open popup
+	 * Actual on Pay for Order and classic checkout pages
+	 */
+	async openPayPalPopup(): Promise< PayPalPopup > {
+		// Select gateway if not on classic-cart page
+		if ( ! this.page.url().includes( 'classic-cart' ) ) {
+			await this.payPalGateway().click();
+		}
+		return await super.openPayPalPopup();
+	}
+
+	/**
+	 * Clicks PayPal gateway and Pay Later button to open popup
+	 * Actual on Pay for Order and classic checkout pages
+	 */
+	async openPayLaterPopup(): Promise< PayPalPopup > {
+		// Select gateway if not on classic-cart page
+		if ( ! this.page.url().includes( 'classic-cart' ) ) {
+			await this.payPalGateway().click();
+		}
+		return await super.openPayLaterPopup();
+	}
 
 	/**
 	 * Completes payment with ACDC
@@ -497,38 +528,74 @@ export class PayPalUiClassic extends PayPalUi {
 	// Assertions
 
 	/**
-	 * - Asserts PayPal buttons classic container is visible.
-	 * - Compares actual PayPal buttons container screenshot to expected.
-	 *
-	 * @param snapshotName
+	 * Asserts PayPal buttons gateway container is visible and contains PayPal button (product, classic cart, classic checkout).
 	 */
-	snapshotClassicPayPalButtons = async ( snapshotName: string ) => {
-		await expect.soft( this.payPalButtonsClassicContainer() ).toBeVisible();
-		await this.page.waitForTimeout( 500 );
-		expect
-			.soft(
-				await this.payPalButtonsClassicContainer().screenshot( {
-					animations: 'disabled',
-				} )
-			)
-			.toMatchSnapshot( `${ snapshotName }.png` );
+	assertPayPalButtonsGatewayVisibleWithContent = async () => {
+		await expect(
+			this.payPalButtonsHostElement(),
+			'Assert PayPal buttons gateway host is visible'
+		).toBeVisible();
+		await expect(
+			this.payPalButton(),
+			'Assert PayPal button is visible'
+		).toBeVisible();
 	};
 
 	/**
-	 * - Asserts Minicart PayPal buttons container is visible.
-	 * - Compares actual PayPal buttons container screenshot to expected.
+	 * Asserts PayPal buttons have the given label (pay, checkout, buynow, paypal).
 	 *
-	 * @param snapshotName
+	 * @param label   - Expected label value
+	 * @param context - 'gateway' for product/cart/checkout, 'minicart' for mini cart
 	 */
-	snapshotMinicartPayPalButtons = async ( snapshotName: string ) => {
-		await expect.soft( this.miniCartButtonContainer() ).toBeVisible();
-		await this.page.waitForTimeout( 500 );
-		expect
-			.soft(
-				await this.miniCartButtonContainer().screenshot( {
-					animations: 'disabled',
-				} )
-			)
-			.toMatchSnapshot( `${ snapshotName }.png` );
+	assertPayPalButtonsHaveLabel = async (
+		label: 'pay' | 'checkout' | 'buynow' | 'paypal',
+		context: 'gateway' | 'minicart' = 'gateway'
+	) => {
+		const host =
+			context === 'minicart'
+				? this.minicartPayPalButtonsHostElement()
+				: this.payPalButtonsHostElement();
+		await expect(
+			host,
+			`Assert PayPal buttons have label ${ label }`
+		).toHaveClass( new RegExp( `paypal-buttons-label-${ label }` ) );
+	};
+
+	/**
+	 * Asserts PayPal buttons have the given layout (vertical, horizontal).
+	 *
+	 * @param layout  - Expected layout value
+	 * @param context - 'gateway' for product/cart/checkout, 'minicart' for mini cart
+	 */
+	assertPayPalButtonsHaveLayout = async (
+		layout: 'vertical' | 'horizontal',
+		context: 'gateway' | 'minicart' = 'gateway'
+	) => {
+		const host =
+			context === 'minicart'
+				? this.minicartPayPalButtonsHostElement()
+				: this.payPalButtonsHostElement();
+		await expect(
+			host,
+			`Assert PayPal buttons have layout ${ layout }`
+		).toHaveClass( new RegExp( `paypal-buttons-layout-${ layout }` ) );
+	};
+
+	/**
+	 * Asserts PayPal buttons are not visible.
+	 *
+	 * @param context - 'gateway' for product/cart/checkout, 'minicart' for mini cart
+	 */
+	assertPayPalButtonsNotVisible = async (
+		context: 'gateway' | 'minicart' = 'gateway'
+	) => {
+		const selector =
+			context === 'minicart'
+				? '#ppc-button-minicart .paypal-buttons'
+				: '#ppc-button-ppcp-gateway .paypal-buttons';
+		await expect(
+			this.page.locator( selector ),
+			`Assert PayPal buttons (${ context }) are not visible`
+		).toBeHidden();
 	};
 }

@@ -80,8 +80,8 @@ export class WooCommerceOrderEdit extends WooCommerceOrderEditBase {
 
 		await this.firstRefundTotalInput().fill( amount );
 		await this.page.on( 'dialog', ( dialog ) => dialog.accept() );
-		// await this.page.on('dialog', dialog => dialog.accept());
 		await this.refundViaButton( 'PayPal' ).click();
+		await this.page.waitForLoadState( 'networkidle' );
 	};
 
 	// Assertions
@@ -117,7 +117,6 @@ export class WooCommerceOrderEdit extends WooCommerceOrderEditBase {
 	/**
 	 * Asserts order edit page including PayPal related fields
 	 *
-	 * @param orderId
 	 * @param orderData
 	 * @param pcpData
 	 * @param pcpData.transactionId
@@ -132,7 +131,6 @@ export class WooCommerceOrderEdit extends WooCommerceOrderEditBase {
 	 * @param pcpData.currency
 	 */
 	assertOrderDetails = async (
-		orderId: number,
 		orderData: WooCommerce.ShopOrder,
 		pcpData?: {
 			transactionId?: string;
@@ -147,7 +145,7 @@ export class WooCommerceOrderEdit extends WooCommerceOrderEditBase {
 			currency?: string;
 		}
 	) => {
-		await super.assertOrderDetails( orderId, orderData );
+		await super.assertOrderDetails( orderData );
 
 		if ( ! pcpData || Object.keys( pcpData ).length === 0 ) {
 			return;

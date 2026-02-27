@@ -231,7 +231,8 @@ $services = array(
 	'settings.rest.authentication'                        => static function ( ContainerInterface $container ): AuthenticationRestEndpoint {
 		return new AuthenticationRestEndpoint(
 			$container->get( 'settings.service.authentication_manager' ),
-			$container->get( 'settings.service.data-manager' )
+			$container->get( 'settings.service.data-manager' ),
+			$container->get( 'woocommerce.logger.woocommerce' )
 		);
 	},
 	'settings.rest.login_link'                            => static function ( ContainerInterface $container ): LoginLinkRestEndpoint {
@@ -455,8 +456,8 @@ $services = array(
 			$axo_notices
 		);
 	},
-	'settings.data.definition.method_dependencies'        => static function ( ContainerInterface $container ): PaymentMethodsDependenciesDefinition {
-		return new PaymentMethodsDependenciesDefinition( $container->get( 'wcgateway.settings' ) );
+	'settings.data.definition.method_dependencies'        => static function (): PaymentMethodsDependenciesDefinition {
+		return new PaymentMethodsDependenciesDefinition();
 	},
 	'settings.service.pay_later_status'                   => static function ( ContainerInterface $container ): array {
 		$pay_later_endpoint = $container->get( 'settings.rest.pay_later_messaging' );
@@ -553,7 +554,7 @@ $services = array(
 		$is_working_capital_feature_flag_enabled = apply_filters(
 		// phpcs:ignore WordPress.NamingConventions.ValidHookName.UseUnderscores -- feature flags use this convention
 			'woocommerce.feature-flags.woocommerce_paypal_payments.working_capital_enabled',
-			getenv( 'PCP_WORKING_CAPITAL_ENABLED' ) === '1'
+			true
 		);
 
 		$is_working_capital_eligible = $container->get( 'settings.data.general' )->get_merchant_country() === 'US' && $settings_model->get_stay_updated();

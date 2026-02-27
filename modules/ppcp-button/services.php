@@ -59,7 +59,7 @@ return array(
 		 * @var Environment $env
 		 */
 
-		return $env->current_environment_is( Environment::SANDBOX ) ?
+		return $env->is_sandbox() ?
 			CONNECT_WOO_SANDBOX_CLIENT_ID : CONNECT_WOO_CLIENT_ID;
 	},
 	'button.client_id_for_admin'                  => static function ( ContainerInterface $container ): string {
@@ -144,8 +144,6 @@ return array(
 			$container->get( 'button.pay-now-contexts' ),
 			$container->get( 'wcgateway.funding-sources-without-redirect' ),
 			$container->get( 'vaulting.vault-v3-enabled' ),
-			$container->get( 'api.endpoint.payment-tokens' ),
-			$container->get( 'woocommerce.logger.woocommerce' ),
 			$container->get( 'button.handle-shipping-in-paypal' ),
 			$container->get( 'wcgateway.server-side-shipping-callback-enabled' ),
 			$container->get( 'wcgateway.appswitch-enabled' ),
@@ -327,13 +325,15 @@ return array(
 		);
 	},
 	'button.endpoint.get-order'                   => static function ( ContainerInterface $container ): GetOrderEndpoint {
-		$request_data   = $container->get( 'button.request-data' );
-		$order_endpoint = $container->get( 'api.endpoint.order' );
-		$logger         = $container->get( 'woocommerce.logger.woocommerce' );
+		$request_data          = $container->get( 'button.request-data' );
+		$order_endpoint        = $container->get( 'api.endpoint.order' );
+		$logger                = $container->get( 'woocommerce.logger.woocommerce' );
+		$cart_data_storage     = $container->get( 'button.session.storage.card-data.transient' );
 		return new GetOrderEndpoint(
 			$request_data,
 			$order_endpoint,
-			$logger
+			$logger,
+			$cart_data_storage
 		);
 	},
 	'button.helper.cart-products'                 => static function ( ContainerInterface $container ): CartProductsHelper {

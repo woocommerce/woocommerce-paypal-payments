@@ -37,8 +37,7 @@ return array(
 	},
 	'admin-notices.mute-message-endpoint' => static function ( ContainerInterface $container ): MuteMessageEndpoint {
 		return new MuteMessageEndpoint(
-			$container->get( 'button.request-data' ),
-			$container->get( 'admin-notices.repository' )
+			$container->get( 'button.request-data' )
 		);
 	},
 );

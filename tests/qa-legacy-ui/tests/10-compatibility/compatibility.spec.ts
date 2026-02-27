@@ -93,8 +93,8 @@ test.describe( 'Compatibility', () => {
 
 			await ppapi.assertOrder( orderJson, tested );
 			await ppapi.assertPayment( orderJson.transaction_id, tested );
+			await wooCommerceOrderEdit.visit( Number( orderId ) );
 			await wooCommerceOrderEdit.assertOrderDetails(
-				Number( orderId ),
 				tested,
 				pcpData
 			);

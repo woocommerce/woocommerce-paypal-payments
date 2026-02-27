@@ -285,10 +285,9 @@ class CreateOrderEndpoint implements EndpointInterface {
 	/**
 	 * Handles the request.
 	 *
-	 * @return bool
 	 * @throws Exception On Error.
 	 */
-	public function handle_request(): bool {
+	public function handle_request(): void {
 		try {
 			$data                      = $this->request_data->read_request( $this->nonce() );
 			$this->parsed_request_data = $data;
@@ -300,7 +299,7 @@ class CreateOrderEndpoint implements EndpointInterface {
 
 			if ( 'pay-now' === $data['context'] ) {
 				$wc_order = wc_get_order( (int) $data['order_id'] );
-				if ( ! is_a( $wc_order, WC_Order::class ) ) {
+				if ( ! ( $wc_order instanceof WC_Order ) ) {
 					wp_send_json_error(
 						array(
 							'name'    => 'order-not-found',
@@ -310,7 +309,21 @@ class CreateOrderEndpoint implements EndpointInterface {
 						)
 					);
 				}
-				$this->purchase_unit = $this->purchase_unit_factory->from_wc_order( $wc_order );
+
+				$order_key = $data['order_key'] ?? '';
+				//phpcs:ignore WordPress.WP.Capabilities.Unknown
+				if ( ! $wc_order->key_is_valid( $order_key ) || ! current_user_can( 'view_order', $data['order_id'] ) ) {
+					wp_send_json_error(
+						array(
+							'name'    => 'invalid-request',
+							'message' => __( 'Invalid request. Please try again.', 'woocommerce-paypal-payments' ),
+							'code'    => 0,
+							'details' => array(),
+						)
+					);
+				}
+
+				$this->purchase_unit = $this->purchase_unit_factory->from_wc_order( $wc_order, $payment_method );
 			} else {
 				$this->purchase_unit = $this->purchase_unit_factory->from_wc_cart( null, $this->should_handle_shipping_in_paypal( $funding_source ), $payment_method );
 
@@ -377,7 +390,7 @@ class CreateOrderEndpoint implements EndpointInterface {
 				$this->early_order_handler->register_for_order( $order );
 			}
 
-			if ( 'pay-now' === $data['context'] && is_a( $wc_order, WC_Order::class ) ) {
+			if ( 'pay-now' === $data['context'] && $wc_order instanceof WC_Order ) {
 				$wc_order->update_meta_data( PayPalGateway::ORDER_ID_META_KEY, $order->id() );
 				$wc_order->update_meta_data( PayPalGateway::INTENT_META_KEY, $order->intent() );
 
@@ -401,7 +414,6 @@ class CreateOrderEndpoint implements EndpointInterface {
 			}
 
 			wp_send_json_success( $this->make_response( $order ) );
-			return true;
 
 		} catch ( ValidationException $error ) {
 			$response = array(
@@ -418,10 +430,10 @@ class CreateOrderEndpoint implements EndpointInterface {
 
 			wp_send_json_error(
 				array(
-					'name'    => is_a( $error, PayPalApiException::class ) ? $error->name() : '',
+					'name'    => $error instanceof PayPalApiException ? $error->name() : '',
 					'message' => $error->getMessage(),
 					'code'    => $error->getCode(),
-					'details' => is_a( $error, PayPalApiException::class ) ? $error->details() : array(),
+					'details' => $error instanceof PayPalApiException ? $error->details() : array(),
 				)
 			);
 		} catch ( Exception $exception ) {
@@ -429,8 +441,6 @@ class CreateOrderEndpoint implements EndpointInterface {
 
 			wc_add_notice( $exception->getMessage(), 'error' );
 		}
-
-		return false;
 	}
 
 	/**

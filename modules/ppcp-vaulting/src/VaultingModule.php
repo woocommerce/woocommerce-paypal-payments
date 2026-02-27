@@ -164,7 +164,7 @@ class VaultingModule implements ServiceModule, ExtendingModule, ExecutableModule
 			 * @psalm-suppress MissingClosureParamType
 			 */
 			function ( $item, $payment_token ) {
-				if ( ! is_array( $item ) || ! is_a( $payment_token, WC_Payment_Token::class ) ) {
+				if ( ! is_array( $item ) || ! ( $payment_token instanceof WC_Payment_Token ) ) {
 					return $item;
 				}
 

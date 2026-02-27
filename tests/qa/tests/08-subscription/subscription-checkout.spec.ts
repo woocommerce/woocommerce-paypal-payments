@@ -12,7 +12,7 @@ const { vaultingGuest, vaultingCustomer, payPalGuest, payPalCustomer } =
 const { testSubscriptionOrderGuest, testSubscriptionOrderCustomer } =
 	testSubscriptionCheckout;
 
-test.beforeAll( async ( { utils, pcpApi } ) => {
+test.beforeAll( async ( { utils, pcpApi, wooCommerceApi } ) => {
 	await utils.configureStore( {
 		...storeConfigUsa,
 		enableClassicPages: false,
@@ -30,10 +30,6 @@ test.beforeAll( async ( { utils, pcpApi } ) => {
 			products: [ 'physical', 'virtual', 'subscriptions' ],
 		}
 	);
-} );
-
-test.afterAll( async ( { wooCommerceApi } ) => {
-	await wooCommerceApi.deleteAllSubscriptions();
 	await wooCommerceApi.deleteAllOrders();
 } );
 

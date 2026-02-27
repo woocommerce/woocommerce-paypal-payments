@@ -7,6 +7,7 @@ import {
 	Plugins,
 	WooCommerceUtils,
 	restLogin,
+	WpCli,
 } from '@inpsyde/playwright-utils/build';
 /**
  * Internal dependencies
@@ -19,7 +20,6 @@ import {
 } from './frontend';
 import {
 	subscriptionsPlugin,
-	wpDebuggingPlugin,
 	pcpPlugin,
 	ShopOrder,
 	ShopConfig,
@@ -37,6 +37,7 @@ export class Utils {
 	checkout: Checkout;
 	classicCheckout: ClassicCheckout;
 	orderReceived: OrderReceived;
+	cli: WpCli;
 
 	constructor( {
 		requestUtils,
@@ -48,6 +49,7 @@ export class Utils {
 		checkout,
 		classicCheckout,
 		orderReceived,
+		cli,
 	} ) {
 		this.requestUtils = requestUtils;
 		this.wooCommerceApi = wooCommerceApi;
@@ -58,6 +60,7 @@ export class Utils {
 		this.checkout = checkout;
 		this.classicCheckout = classicCheckout;
 		this.orderReceived = orderReceived;
+		this.cli = cli;
 	}
 
 	/**
@@ -68,14 +71,6 @@ export class Utils {
 	 */
 	restoreCustomer = async ( customer: WooCommerce.CreateCustomer ) => {
 		await this.wooCommerceUtils.deleteCustomer( customer );
-		if ( customer.username ) {
-			const user = await this.requestUtils.getUserByName(
-				customer.username
-			);
-			if ( user.length ) {
-				await this.requestUtils.deleteUser( user[ 0 ].id );
-			}
-		}
 		await this.wooCommerceUtils.createCustomer( customer );
 		const storageStateName = getCustomerStorageStateName( customer );
 		const storageStatePath = `${ process.env.STORAGE_STATE_PATH }/${ storageStateName }.json`;
@@ -233,16 +228,7 @@ export class Utils {
 	 * taxes: Tax settings in WC > Settings > General tab and Taxes > Tax rates tab
 	 * customer: Registered customer to be created
 	 *
-	 * @param {Object} data               see also /resources/woocommerce-config.ts
-	 * @param          data.wpDebugging
-	 * @param          data.subscription
-	 * @param          data.classicPages
-	 * @param          data.settings
-	 * @param          data.taxes
-	 * @param          data.taxes.options
-	 * @param          data.taxes.rates
-	 * @param          data.customer
-	 * @param          data.products
+	 * @param { ShopConfig } data see also /resources/woocommerce-config.ts
 	 */
 	configureStore = async ( data: ShopConfig ) => {
 		const {
@@ -266,11 +252,11 @@ export class Utils {
 		}
 
 		if ( enableWpDebugging === true ) {
-			await this.requestUtils.activatePlugin( wpDebuggingPlugin.slug );
+			await this.cli.setWpConst( { WP_DEBUG: true, SCRIPT_DEBUG: true } );
 		}
 
 		if ( enableWpDebugging === false ) {
-			await this.requestUtils.deactivatePlugin( wpDebuggingPlugin.slug );
+			await this.cli.setWpConst( { WP_DEBUG: false, SCRIPT_DEBUG: false } );
 		}
 
 		if ( enableClassicPages === true ) {

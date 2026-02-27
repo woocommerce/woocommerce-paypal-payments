@@ -229,7 +229,7 @@ class WcSubscriptionsModule implements ServiceModule, ExtendingModule, Executabl
 
 				if ( count( $subscription->get_related_orders() ) === 1 ) {
 					$parent_order = $subscription->get_parent();
-					if ( is_a( $parent_order, WC_Order::class ) ) {
+					if ( $parent_order instanceof WC_Order ) {
 						// Update the initial payment method title if not the same as the first order.
 						$payment_method_title = $parent_order->get_payment_method_title();
 						if (
@@ -400,20 +400,20 @@ class WcSubscriptionsModule implements ServiceModule, ExtendingModule, Executabl
 					return $localized_script_data;
 				}
 
+				$free_trial_subscription_helper = $c->get( 'wc-subscriptions.free-trial-subscription-helper' );
+				assert( $free_trial_subscription_helper instanceof FreeTrialSubscriptionHelper );
+
+				if ( ! is_checkout() || ! $free_trial_subscription_helper->is_free_trial_cart() ) {
+					return $localized_script_data;
+				}
+
 				$vaulted_paypal_email = $c->get( 'wc-subscriptions.vault-v2.vaulted-paypal-email' );
 				assert( $vaulted_paypal_email instanceof VaultedPayPalEmail );
 
 				$vaulted_email = $vaulted_paypal_email->get_vaulted_paypal_email();
-				if ( ! $vaulted_email ) {
-					return $localized_script_data;
+				if ( $vaulted_email ) {
+					$localized_script_data['vaulted_paypal_email'] = $vaulted_email;
 				}
-
-				$free_trial_subscription_helper = $c->get( 'wc-subscriptions.free-trial-subscription-helper' );
-				assert( $free_trial_subscription_helper instanceof FreeTrialSubscriptionHelper );
-
-				$localized_script_data['vaulted_paypal_email'] = ( is_checkout() && $free_trial_subscription_helper->is_free_trial_cart() )
-				? $vaulted_paypal_email->get_vaulted_paypal_email()
-				: '';
 
 				return $localized_script_data;
 			}

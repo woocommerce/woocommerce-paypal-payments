@@ -41,7 +41,8 @@ return array(
 			$container->get( 'button.request-data' ),
 			$container->get( 'order-tracking.shipment.factory' ),
 			$container->get( 'order-tracking.allowed-shipping-statuses' ),
-			$container->get( 'order-tracking.should-use-second-version-of-api' )
+			$container->get( 'order-tracking.should-use-second-version-of-api' ),
+			$container->get( 'api.endpoint.order.cached' )
 		);
 	},
 	'order-tracking.asset_getter'                     => static function ( ContainerInterface $container ): AssetGetter {
@@ -79,7 +80,7 @@ return array(
 		$selected_country_carriers = $allowed_carriers[ $api_shop_country ] ?? array();
 
 		return array(
-			$api_shop_country => $selected_country_carriers ?? array(),
+			$api_shop_country => $selected_country_carriers ?? array(), // @phpstan-ignore nullCoalesce.variable
 			'global'          => $allowed_carriers['global'] ?? array(),
 			'other'           => array(
 				'name'  => 'Other',
