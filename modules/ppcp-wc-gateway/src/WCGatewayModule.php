@@ -641,13 +641,9 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
 				assert( $dcc_product_status instanceof DCCProductStatus );
 
 				if ( $dcc_applies->for_country_currency() &&
-					// Show only if allowed in PayPal account, except when on our settings pages.
-					// Performing the full DCCProductStatus check only when on the gateway list page
-					// to avoid sending the API requests all the time.
-					( $is_our_page ||
-						( $is_gateways_list_page && $dcc_product_status->is_active() ) ||
-						( $settings->has( 'products_dcc_enabled' ) && $settings->get( 'products_dcc_enabled' ) )
-					)
+					// Always show on our settings pages.
+					// On other pages, check the cached product status.
+					( $is_our_page || $dcc_product_status->is_active() )
 				) {
 					$methods[] = $container->get( 'wcgateway.credit-card-gateway' );
 				}
