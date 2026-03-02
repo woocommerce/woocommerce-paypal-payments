@@ -1,13 +1,11 @@
 <?php
 
-declare( strict_types = 1 );
-
+declare (strict_types=1);
 namespace WooCommerce\PayPalCommerce\StoreSync\Auth;
 
 use Firebase\JWT\JWK;
 use Firebase\JWT\Key;
 use Exception;
-
 /**
  * Provides PayPal's public JWK (JSON Web Key) for JWT signature verification.
  *
@@ -15,135 +13,113 @@ use Exception;
  *
  * @see PayPalJwkProviderTest
  */
-class PayPalJwkProvider {
-	private const TRANSIENT_NAME = 'ppcp-ai-jwks';
-
-	private const TRANSIENT_TTL = 24 * HOUR_IN_SECONDS;
-
-	private const JWKS_URL = 'https://www.paypal.ai/.well-known/jwks.json';
-
-	/**
-	 * Returns the first public key from PayPal's JWKS.
-	 *
-	 * @return Key|null The public key, or null on failure.
-	 */
-	public function keys(): ?Key {
-		$jwks = $this->get_jwks_data();
-
-		if ( ! $jwks ) {
-			return null;
-		}
-
-		return $this->parse_first_key( $jwks );
-	}
-
-	/**
-	 * Clean up the DB.
-	 */
-	public static function flush(): void {
-		delete_transient( self::TRANSIENT_NAME );
-	}
-
-	/**
-	 * Retrieves JWKS data from cache or fetches it from remote.
-	 *
-	 * @return array|null The JWKS data, or null on failure.
-	 */
-	protected function get_jwks_data(): ?array {
-		$jwks = $this->cache_get();
-
-		if ( $jwks ) {
-			return $jwks;
-		}
-
-		$jwks = $this->fetch_jwks_from_remote();
-
-		if ( $jwks ) {
-			$this->cache_set( $jwks );
-		}
-
-		return $jwks;
-	}
-
-	/**
-	 * Retrieves JWKS data from transient cache.
-	 *
-	 * @return array|null The cached JWKS data, or null if not cached or invalid.
-	 */
-	protected function cache_get(): ?array {
-		$jwks = get_transient( self::TRANSIENT_NAME );
-
-		if ( ! is_array( $jwks ) || empty( $jwks['keys'] ) ) {
-			return null;
-		}
-
-		return $jwks;
-	}
-
-	/**
-	 * Stores JWKS data in transient cache.
-	 *
-	 * @param array $jwks The JWKS data to cache.
-	 */
-	protected function cache_set( array $jwks ): bool {
-		return set_transient( self::TRANSIENT_NAME, $jwks, self::TRANSIENT_TTL );
-	}
-
-	/**
-	 * Fetches JWKS data from PayPal's well-known URL.
-	 *
-	 * @return array|null The JWKS data, or null on failure.
-	 */
-	protected function fetch_jwks_from_remote(): ?array {
-		$remove_user_agent =
-			/**
-			 * @param mixed|array  $args
-			 * @param mixed|string $url
-			 * @return mixed|array
-			 */
-			static function ( $args, $url ) {
-				if ( is_array( $args ) && $url === self::JWKS_URL ) {
-					$args['user-agent'] = '';
-				}
-
-				return $args;
-			};
-
-		add_filter( 'http_request_args', $remove_user_agent, 10, 2 );
-		$response = wp_remote_get( self::JWKS_URL );
-		remove_filter( 'http_request_args', $remove_user_agent );
-
-		if ( is_wp_error( $response ) ) {
-			return null;
-		}
-
-		try {
-			$body = wp_remote_retrieve_body( $response );
-			$data = json_decode( $body, true, 512, JSON_THROW_ON_ERROR );
-
-			if ( ! is_array( $data ) || empty( $data['keys'] ) ) {
-				return null;
-			}
-
-			return $data;
-		} catch ( Exception $exception ) {
-			return null;
-		}
-	}
-
-	/**
-	 * Parses the first key from the JWKS data.
-	 *
-	 * @param array $jwks The JWKS data containing keys array.
-	 * @return Key|null The first key, or null if parsing fails.
-	 */
-	private function parse_first_key( array $jwks ): ?Key {
-		try {
-			$keys = JWK::parseKeySet( $jwks );
-
-			return reset( $keys ) ?: null;
-		} catch ( Exception $exception ) {
-			return null;
-		}
-	}
+class PayPalJwkProvider
+{
+    private const TRANSIENT_NAME = 'ppcp-ai-jwks';
+    private const TRANSIENT_TTL = 24 * HOUR_IN_SECONDS;
+    private const JWKS_URL = 'https://www.paypal.ai/.well-known/jwks.json';
+    /**
+     * Returns the first public key from PayPal's JWKS.
+     *
+     * @return Key|null The public key, or null on failure.
+     */
+    public function keys(): ?Key
+    {
+        $jwks = $this->get_jwks_data();
+        if (!$jwks) {
+            return null;
+        }
+        return $this->parse_first_key($jwks);
+    }
+    /**
+     * Clean up the DB.
+     */
+    public static function flush(): void
+    {
+        delete_transient(self::TRANSIENT_NAME);
+    }
+    /**
+     * Retrieves JWKS data from cache or fetches it from remote.
+     *
+     * @return array|null The JWKS data, or null on failure.
+     */
+    protected function get_jwks_data(): ?array
+    {
+        $jwks = $this->cache_get();
+        if ($jwks) {
+            return $jwks;
+        }
+        $jwks = $this->fetch_jwks_from_remote();
+        if ($jwks) {
+            $this->cache_set($jwks);
+        }
+        return $jwks;
+    }
+    /**
+     * Retrieves JWKS data from transient cache.
+     *
+     * @return array|null The cached JWKS data, or null if not cached or invalid.
+     */
+    protected function cache_get(): ?array
+    {
+        $jwks = get_transient(self::TRANSIENT_NAME);
+        if (!is_array($jwks) || empty($jwks['keys'])) {
+            return null;
+        }
+        return $jwks;
+    }
+    /**
+     * Stores JWKS data in transient cache.
+     *
+     * @param array $jwks The JWKS data to cache.
+     */
+    protected function cache_set(array $jwks): bool
+    {
+        return set_transient(self::TRANSIENT_NAME, $jwks, self::TRANSIENT_TTL);
+    }
+    /**
+     * Fetches JWKS data from PayPal's well-known URL.
+     *
+     * @return array|null The JWKS data, or null on failure.
+     */
+    protected function fetch_jwks_from_remote(): ?array
+    {
+        $remove_user_agent = static function ($args, $url) {
+            if (is_array($args) && $url === self::JWKS_URL) {
+                $args['user-agent'] = '';
+            }
+            return $args;
+        };
+        add_filter('http_request_args', $remove_user_agent, 10, 2);
+        $response = wp_remote_get(self::JWKS_URL);
+        remove_filter('http_request_args', $remove_user_agent);
+        if (is_wp_error($response)) {
+            return null;
+        }
+        try {
+            $body = wp_remote_retrieve_body($response);
+            $data = json_decode($body, \true, 512, \JSON_THROW_ON_ERROR);
+            if (!is_array($data) || empty($data['keys'])) {
+                return null;
+            }
+            return $data;
+        } catch (Exception $exception) {
+            return null;
+        }
+    }
+    /**
+     * Parses the first key from the JWKS data.
+     *
+     * @param array $jwks The JWKS data containing keys array.
+     * @return Key|null The first key, or null if parsing fails.
+     */
+    private function parse_first_key(array $jwks): ?Key
+    {
+        try {
+            $keys = JWK::parseKeySet($jwks);
+            return reset($keys) ?: null;
+        } catch (Exception $exception) {
+            return null;
+        }
+    }
 }

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Create Cart Endpoint for Agentic Commerce.
  *
@@ -6,72 +7,55 @@
  *
  * @package WooCommerce\PayPalCommerce\StoreSync\Endpoint
  */
-
-declare( strict_types = 1 );
-
+declare (strict_types=1);
 namespace WooCommerce\PayPalCommerce\StoreSync\Endpoint;
 
 use WP_REST_Request;
 use WP_REST_Response;
-
 use WooCommerce\PayPalCommerce\StoreSync\Errors\AgenticError;
-
 /**
  * Create Cart REST endpoint.
  */
-class CreateCartEndpoint extends AgenticRestEndpoint {
-
-	/**
-	 * The endpoint path following PayPal specs.
-	 */
-	private const PATH = 'merchant-cart';
-
-	/**
-	 * The expected HTTP method.
-	 */
-	private const METHOD = 'POST';
-
-	/**
-	 * Register REST API routes.
-	 *
-	 * @return void
-	 */
-	public function register_routes(): void {
-		register_rest_route(
-			self::NAMESPACE,
-			self::PATH,
-			array(
-				'methods'             => self::METHOD,
-				'callback'            => fn( $request ) => $this->with_session( fn() => $this->create_cart( $request ) ),
-				'permission_callback' => fn( $request ) => $this->check_permission( $request ),
-			)
-		);
-	}
-
-	public static function endpoint_url(): string {
-		$full_route = '/' . self::NAMESPACE . '/' . trim( self::PATH, '/' );
-		return rest_url( $full_route );
-	}
-
-	/**
-	 * Create a new cart.
-	 *
-	 * @param WP_REST_Request $request The REST request.
-	 * @return WP_REST_Response The REST response.
-	 */
-	public function create_cart( WP_REST_Request $request ): WP_REST_Response {
-		$cart = $this->get_cart_from_request( $request );
-
-		if ( $cart instanceof AgenticError ) {
-			return $this->error( $cart );
-		}
-
-		// Token might be an empty string, when order creation fails. That's okay.
-		$ec_token = $this->order_manager->create_order( $cart );
-
-		$cart_id  = $this->create_local_cart( $cart, $ec_token );
-		$response = $this->response_factory->new_cart( $cart, $cart_id, $ec_token );
-
-		return $this->cart_details( $response, 201 );
-	}
+class CreateCartEndpoint extends \WooCommerce\PayPalCommerce\StoreSync\Endpoint\AgenticRestEndpoint
+{
+    /**
+     * The endpoint path following PayPal specs.
+     */
+    private const PATH = 'merchant-cart';
+    /**
+     * The expected HTTP method.
+     */
+    private const METHOD = 'POST';
+    /**
+     * Register REST API routes.
+     *
+     * @return void
+     */
+    public function register_routes(): void
+    {
+        register_rest_route(self::NAMESPACE, self::PATH, array('methods' => self::METHOD, 'callback' => fn($request) => $this->with_session(fn() => $this->create_cart($request)), 'permission_callback' => fn($request) => $this->check_permission($request)));
+    }
+    public static function endpoint_url(): string
+    {
+        $full_route = '/' . self::NAMESPACE . '/' . trim(self::PATH, '/');
+        return rest_url($full_route);
+    }
+    /**
+     * Create a new cart.
+     *
+     * @param WP_REST_Request $request The REST request.
+     * @return WP_REST_Response The REST response.
+     */
+    public function create_cart(WP_REST_Request $request): WP_REST_Response
+    {
+        $cart = $this->get_cart_from_request($request);
+        if ($cart instanceof AgenticError) {
+            return $this->error($cart);
+        }
+        // Token might be an empty string, when order creation fails. That's okay.
+        $ec_token = $this->order_manager->create_order($cart);
+        $cart_id = $this->create_local_cart($cart, $ec_token);
+        $response = $this->response_factory->new_cart($cart, $cart_id, $ec_token);
+        return $this->cart_details($response, 201);
+    }
 }

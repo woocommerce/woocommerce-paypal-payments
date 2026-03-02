@@ -1,14 +1,12 @@
 <?php
 
-declare(strict_types=1);
-
+declare (strict_types=1);
 namespace WooCommerce\PayPalCommerce\Vendor\Dhii\Container;
 
 use WooCommerce\PayPalCommerce\Vendor\Dhii\Collection\ClearableContainerInterface;
 use WooCommerce\PayPalCommerce\Vendor\Dhii\Collection\MutableContainerInterface;
 use WooCommerce\PayPalCommerce\Vendor\Dhii\Container\Exception\NotFoundException;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerExceptionInterface;
-
 /**
  * A container for data that is accessible once per init.
  *
@@ -20,9 +18,7 @@ use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerExceptionInterface;
  * once per request. If a session-specific persistent container is used
  * as storage, this will become session-based flash data.
  */
-class FlashContainer implements
-    MutableContainerInterface,
-    ClearableContainerInterface
+class FlashContainer implements MutableContainerInterface, ClearableContainerInterface
 {
     /** @var MutableContainerInterface */
     protected $data;
@@ -30,7 +26,6 @@ class FlashContainer implements
     protected $dataKey;
     /** @var array<array-key, scalar> */
     protected $flashData = [];
-
     /**
      * @param MutableContainerInterface $data The storage.
      * @param string $dataKey The key to be used to store data in the storage.
@@ -40,7 +35,6 @@ class FlashContainer implements
         $this->data = $data;
         $this->dataKey = $dataKey;
     }
-
     /**
      * Prepare storage before use.
      *
@@ -49,23 +43,17 @@ class FlashContainer implements
      */
     public function init(): void
     {
-        $this->flashData = $this->data->has($this->dataKey)
-            ? $this->data->get($this->dataKey)
-            : [];
-
+        $this->flashData = $this->data->has($this->dataKey) ? $this->data->get($this->dataKey) : [];
         $this->purgePersistentData();
     }
-
     /**
      * @inheritDoc
      */
     public function has($key)
     {
         $key = (string) $key;
-
         return array_key_exists($key, $this->flashData);
     }
-
     /**
      * @inheritDoc
      *
@@ -76,10 +64,8 @@ class FlashContainer implements
         if (!array_key_exists($key, $this->flashData)) {
             throw new NotFoundException(sprintf('Flash data not found for key "%1$s"', $key));
         }
-
         return $this->flashData[$key];
     }
-
     /**
      * @inheritDoc
      *
@@ -90,7 +76,6 @@ class FlashContainer implements
         $this->flashData[$key] = $value;
         $this->persist($this->flashData);
     }
-
     /**
      * @inheritDoc
      *
@@ -101,11 +86,9 @@ class FlashContainer implements
         if (!array_key_exists($key, $this->flashData)) {
             throw new NotFoundException(sprintf('Flash data not found for key "%1$s"', $key));
         }
-
         unset($this->flashData[$key]);
         $this->persist($this->flashData);
     }
-
     /**
      * @inheritDoc
      *
@@ -116,7 +99,6 @@ class FlashContainer implements
         $this->flashData = [];
         $this->persist($this->flashData);
     }
-
     /**
      * Clear data from internal storage.
      */
@@ -124,7 +106,6 @@ class FlashContainer implements
     {
         $this->data->set($this->dataKey, []);
     }
-
     /**
      * Persist this instance's data from memory into storage.
      *
