@@ -8,8 +8,6 @@
 declare (strict_types=1);
 namespace WooCommerce\PayPalCommerce\Vaulting;
 
-use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
-use WC_Customer;
 use WC_Order;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\OrderStatus;
@@ -17,6 +15,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PayerFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PurchaseUnitFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\ShippingPreferenceFactory;
+use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
 use WooCommerce\PayPalCommerce\WcSubscriptions\FreeTrialHandlerTrait;
 use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
@@ -82,11 +81,11 @@ class VaultedCreditCardHandler
      */
     protected $authorized_payments_processor;
     /**
-     * The settings.
+     * The settings provider.
      *
-     * @var ContainerInterface
+     * @var SettingsProvider
      */
-    protected $config;
+    private SettingsProvider $settings_provider;
     /**
      * VaultedCreditCardHandler constructor
      *
@@ -98,9 +97,9 @@ class VaultedCreditCardHandler
      * @param OrderEndpoint               $order_endpoint The order endpoint.
      * @param Environment                 $environment The environment.
      * @param AuthorizedPaymentsProcessor $authorized_payments_processor The processor for authorized payments.
-     * @param ContainerInterface          $config The settings.
+     * @param SettingsProvider            $settings_provider The settings provider.
      */
-    public function __construct(SubscriptionHelper $subscription_helper, \WooCommerce\PayPalCommerce\Vaulting\PaymentTokenRepository $payment_token_repository, PurchaseUnitFactory $purchase_unit_factory, PayerFactory $payer_factory, ShippingPreferenceFactory $shipping_preference_factory, OrderEndpoint $order_endpoint, Environment $environment, AuthorizedPaymentsProcessor $authorized_payments_processor, ContainerInterface $config)
+    public function __construct(SubscriptionHelper $subscription_helper, \WooCommerce\PayPalCommerce\Vaulting\PaymentTokenRepository $payment_token_repository, PurchaseUnitFactory $purchase_unit_factory, PayerFactory $payer_factory, ShippingPreferenceFactory $shipping_preference_factory, OrderEndpoint $order_endpoint, Environment $environment, AuthorizedPaymentsProcessor $authorized_payments_processor, SettingsProvider $settings_provider)
     {
         $this->subscription_helper = $subscription_helper;
         $this->payment_token_repository = $payment_token_repository;
@@ -110,7 +109,7 @@ class VaultedCreditCardHandler
         $this->order_endpoint = $order_endpoint;
         $this->environment = $environment;
         $this->authorized_payments_processor = $authorized_payments_processor;
-        $this->config = $config;
+        $this->settings_provider = $settings_provider;
     }
     /**
      * Handles the saved credit card payment.
@@ -157,7 +156,7 @@ class VaultedCreditCardHandler
             if ($this->is_free_trial_order($wc_order)) {
                 $this->authorized_payments_processor->void_authorizations($order);
                 $wc_order->payment_complete();
-            } elseif ($this->config->has('intent') && strtoupper((string) $this->config->get('intent')) === 'CAPTURE') {
+            } elseif (!$this->settings_provider->authorize_only()) {
                 $this->authorized_payments_processor->capture_authorized_payment($wc_order);
             }
             return $wc_order;

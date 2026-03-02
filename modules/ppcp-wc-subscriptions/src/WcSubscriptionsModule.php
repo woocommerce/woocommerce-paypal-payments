@@ -17,7 +17,6 @@ use WooCommerce\PayPalCommerce\Button\Helper\Context;
 use WooCommerce\PayPalCommerce\SavePaymentMethods\Service\PaymentMethodTokensChecker;
 use WooCommerce\PayPalCommerce\Vaulting\PaymentTokenRepository;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExecutableModule;
-use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExtendingModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ModuleClassNameIdTrait;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ServiceModule;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
@@ -25,7 +24,7 @@ use WooCommerce\PayPalCommerce\WcGateway\Gateway\CardButtonGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\TransactionIdHandlingTrait;
-use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
+use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
 use WooCommerce\PayPalCommerce\WcSubscriptions\Endpoint\SubscriptionChangePaymentMethod;
 use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\FreeTrialSubscriptionHelper;
 use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
@@ -36,7 +35,7 @@ use WooCommerce\PayPalCommerce\WcSubscriptions\VaultV2\VaultedPayPalEmail;
 /**
  * Class SubscriptionModule
  */
-class WcSubscriptionsModule implements ServiceModule, ExtendingModule, ExecutableModule
+class WcSubscriptionsModule implements ServiceModule, ExecutableModule
 {
     use ModuleClassNameIdTrait;
     use TransactionIdHandlingTrait;
@@ -47,13 +46,6 @@ class WcSubscriptionsModule implements ServiceModule, ExtendingModule, Executabl
     public function services(): array
     {
         return require __DIR__ . '/../services.php';
-    }
-    /**
-     * {@inheritDoc}
-     */
-    public function extensions(): array
-    {
-        return require __DIR__ . '/../extensions.php';
     }
     /**
      * {@inheritDoc}
@@ -390,35 +382,58 @@ class WcSubscriptionsModule implements ServiceModule, ExtendingModule, Executabl
             return;
         }
         add_filter('woocommerce_paypal_payments_paypal_gateway_supports', function (array $supports) use ($c): array {
-            $settings = $c->get('wcgateway.settings');
-            assert($settings instanceof Settings);
-            $subscriptions_mode = $settings->has('subscriptions_mode') ? $settings->get('subscriptions_mode') : '';
+            $settings_provider = $c->get('settings.settings-provider');
+            assert($settings_provider instanceof SettingsProvider);
+            $subscription_helper = $c->get('wc-subscriptions.helper');
+            assert($subscription_helper instanceof SubscriptionHelper);
+            $subscriptions_mode = $this->get_subscriptions_mode($settings_provider, $subscription_helper);
             if ('disable_paypal_subscriptions' === $subscriptions_mode) {
                 return $supports;
             }
             return array_merge($supports, self::VAULT_SUPPORTS_SUBSCRIPTIONS);
         });
         add_filter('woocommerce_paypal_payments_credit_card_gateway_supports', function (array $supports) use ($c): array {
-            $settings = $c->get('wcgateway.settings');
-            assert($settings instanceof Settings);
-            $subscriptions_mode = $settings->has('subscriptions_mode') ? $settings->get('subscriptions_mode') : '';
+            $settings_provider = $c->get('settings.settings-provider');
+            assert($settings_provider instanceof SettingsProvider);
+            $subscription_helper = $c->get('wc-subscriptions.helper');
+            assert($subscription_helper instanceof SubscriptionHelper);
+            $subscriptions_mode = $this->get_subscriptions_mode($settings_provider, $subscription_helper);
             if ('disable_paypal_subscriptions' === $subscriptions_mode) {
                 return $supports;
             }
-            $vaulting_enabled = $settings->has('vault_enabled_dcc') && $settings->get('vault_enabled_dcc');
-            if (!$vaulting_enabled) {
+            if (!$settings_provider->save_card_details()) {
                 return $supports;
             }
             return array_merge($supports, self::VAULT_SUPPORTS_SUBSCRIPTIONS);
         });
         add_filter('woocommerce_paypal_payments_card_button_gateway_supports', function (array $supports) use ($c): array {
-            $settings = $c->get('wcgateway.settings');
-            assert($settings instanceof Settings);
-            $subscriptions_mode = $settings->has('subscriptions_mode') ? $settings->get('subscriptions_mode') : '';
+            $settings_provider = $c->get('settings.settings-provider');
+            assert($settings_provider instanceof SettingsProvider);
+            $subscription_helper = $c->get('wc-subscriptions.helper');
+            assert($subscription_helper instanceof SubscriptionHelper);
+            $subscriptions_mode = $this->get_subscriptions_mode($settings_provider, $subscription_helper);
             if ('disable_paypal_subscriptions' === $subscriptions_mode) {
                 return $supports;
             }
             return array_merge($supports, self::VAULT_SUPPORTS_SUBSCRIPTIONS);
         });
+    }
+    /**
+     * Gets the subscriptions mode based on settings.
+     *
+     * @param SettingsProvider   $settings_provider The settings provider.
+     * @param SubscriptionHelper $subscription_helper The subscription helper.
+     * @return string The subscriptions mode ('vaulting_api', 'subscriptions_api', or 'disable_paypal_subscriptions').
+     */
+    private function get_subscriptions_mode(SettingsProvider $settings_provider, SubscriptionHelper $subscription_helper): string
+    {
+        if (!$subscription_helper->plugin_is_active()) {
+            return '';
+        }
+        $subscription_mode_disabled = (bool) apply_filters('woocommerce_paypal_payments_subscription_mode_disabled', \false);
+        if ($subscription_mode_disabled) {
+            return 'disable_paypal_subscriptions';
+        }
+        return $settings_provider->save_paypal_and_venmo() ? 'vaulting_api' : 'subscriptions_api';
     }
 }

@@ -10,14 +10,10 @@ namespace WooCommerce\PayPalCommerce\Settings;
 
 use WC_Payment_Gateway;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Log\LoggerInterface;
-use WooCommerce\PayPalCommerce\AdminNotices\Entity\Message;
-use WooCommerce\PayPalCommerce\AdminNotices\Repository\Repository;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\PartnerAttribution;
 use WooCommerce\PayPalCommerce\Applepay\ApplePayGateway;
-use WooCommerce\PayPalCommerce\Assets\AssetGetter;
 use WooCommerce\PayPalCommerce\Axo\Gateway\AxoGateway;
 use WooCommerce\PayPalCommerce\Googlepay\GooglePayGateway;
-use WooCommerce\PayPalCommerce\Settings\Ajax\SwitchSettingsUiEndpoint;
 use WooCommerce\PayPalCommerce\Settings\Data\OnboardingProfile;
 use WooCommerce\PayPalCommerce\Settings\Data\SettingsModel;
 use WooCommerce\PayPalCommerce\Settings\Data\TodosModel;
@@ -27,6 +23,7 @@ use WooCommerce\PayPalCommerce\Settings\Handler\ConnectionListener;
 use WooCommerce\PayPalCommerce\Settings\Service\BrandedExperience\PathRepository;
 use WooCommerce\PayPalCommerce\Settings\Service\GatewayRedirectService;
 use WooCommerce\PayPalCommerce\Settings\Service\LoadingScreenService;
+use WooCommerce\PayPalCommerce\Settings\Service\Migration\MigrationManager;
 use WooCommerce\PayPalCommerce\Settings\Service\Migration\PaymentSettingsMigration;
 use WooCommerce\PayPalCommerce\Settings\Service\PaymentMethodsEligibilityService;
 use WooCommerce\PayPalCommerce\Settings\Service\ScriptDataHandler;
@@ -54,32 +51,6 @@ class SettingsModule implements ServiceModule, ExecutableModule
 {
     use ModuleClassNameIdTrait;
     /**
-     * Returns whether the old settings UI should be loaded.
-     */
-    public static function should_use_the_old_ui(): bool
-    {
-        /**
-         * Determine if the new Settings UI is disabled via feature flag.
-         *
-         * This is the highest-priority check: if the `woocommerce.feature-flags.woocommerce_paypal_payments.settings_enabled` filter
-         * is used to disable the new UI, it will override all other conditions.
-         */
-        if (!apply_filters(
-            // phpcs:ignore WordPress.NamingConventions.ValidHookName.UseUnderscores -- feature flags use this convention
-            'woocommerce.feature-flags.woocommerce_paypal_payments.settings_enabled',
-            getenv('PCP_SETTINGS_ENABLED') !== '1'
-        )) {
-            return \true;
-        }
-        // New merchants always see the new UI if the filter above is not used.
-        if ('1' === get_option('woocommerce-ppcp-is-new-merchant')) {
-            return \false;
-        }
-        // Existing merchants can opt out via DB option.
-        $opt_out = 'yes' === get_option(SwitchSettingsUiEndpoint::OPTION_NAME_SHOULD_USE_OLD_UI);
-        return apply_filters('woocommerce_paypal_payments_should_use_the_old_ui', $opt_out);
-    }
-    /**
      * {@inheritDoc}
      */
     public function services(): array
@@ -91,53 +62,38 @@ class SettingsModule implements ServiceModule, ExecutableModule
      */
     public function run(ContainerInterface $container): bool
     {
-        if (self::should_use_the_old_ui()) {
-            add_filter('woocommerce_paypal_payments_inside_settings_page_header', static fn(): string => sprintf('<button type="button" class="button button-settings-switch-ui" aria-describedby="switch-ui-desc">%s</button><span id="switch-ui-desc" class="screen-reader-text">%s</span>', esc_html__('Switch to New Settings', 'woocommerce-paypal-payments'), esc_html__('This action will permanently switch to the new settings interface and cannot be undone', 'woocommerce-paypal-payments')));
-            /**
-             * Adds notes to old UI settings screens.
-             *
-             * @param Message[] $notices
-             *
-             * @return Message[]
-             */
-            add_filter(Repository::NOTICES_FILTER, static function (array $notices) use ($container): array {
-                if (!$container->get('wcgateway.is-ppcp-settings-page')) {
-                    return $notices;
-                }
-                $message = sprintf(
-                    // translators: %1$s is the URL for the startup guide.
-                    __('<strong>📢 Important: New PayPal Payments settings UI becoming default soon!</strong><br>We\'ve redesigned the settings for better performance and usability. This improved design will be the default for all WooCommerce installations to enjoy faster navigation, cleaner organization, and improved performance. Check out the <a href="%1$s" target="_blank">Startup Guide</a>, then click <a href="#" class="settings-switch-ui" role="button" aria-describedby="switch-ui-desc"><strong>Switch to New Settings</strong></a> to activate it.', 'woocommerce-paypal-payments'),
-                    'https://woocommerce.com/document/woocommerce-paypal-payments/paypal-payments-startup-guide/'
-                );
-                $notices[] = new Message($message, 'info', \false, 'ppcp-notice-wrapper');
-                return $notices;
-            });
-            add_action('admin_enqueue_scripts', static function () use ($container) {
-                $asset_getter = $container->get('settings.asset_getter');
-                assert($asset_getter instanceof AssetGetter);
-                /** @psalm-suppress UnresolvableInclude */
-                $script_asset_file = require $asset_getter->get_asset_php_path('switchSettingsUi.js');
-                wp_register_script('ppcp-switch-settings-ui', $asset_getter->get_asset_url('switchSettingsUi.js'), $script_asset_file['dependencies'], $script_asset_file['version'], \true);
-                wp_localize_script('ppcp-switch-settings-ui', 'ppcpSwitchSettingsUi', array('endpoint' => \WC_AJAX::get_endpoint(SwitchSettingsUiEndpoint::ENDPOINT), 'nonce' => wp_create_nonce(SwitchSettingsUiEndpoint::nonce()), 'confirmMessage' => __('Are you sure you want to switch to the new settings interface?This action cannot be undone.', 'woocommerce-paypal-payments'), 'settingsUrl' => admin_url('admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway')));
-                wp_enqueue_script('ppcp-switch-settings-ui', '', array('wp-i18n'), $script_asset_file['version'], \false);
-                wp_set_script_translations('ppcp-switch-settings-ui', 'woocommerce-paypal-payments');
-            });
-            add_action('wc_ajax_' . SwitchSettingsUiEndpoint::ENDPOINT, static function () use ($container): void {
-                $endpoint = $container->get('settings.ajax.switch_ui') ? $container->get('settings.ajax.switch_ui') : null;
-                assert($endpoint instanceof SwitchSettingsUiEndpoint);
-                $endpoint->handle_request();
-            });
-            return \true;
-        }
-        /**
-         * This hook is fired when the plugin is updated.
-         */
-        add_action('woocommerce_paypal_payments_gateway_migrate_on_update', static fn() => !get_option(SwitchSettingsUiEndpoint::OPTION_NAME_SHOULD_USE_OLD_UI) && update_option(SwitchSettingsUiEndpoint::OPTION_NAME_SHOULD_USE_OLD_UI, 'yes'));
         // Suppress WooCommerce Settings UI elements via CSS to improve the loading experience.
         $loading_screen_service = $container->get('settings.services.loading-screen-service');
         assert($loading_screen_service instanceof LoadingScreenService);
         $loading_screen_service->register();
         add_action('init', fn() => $this->apply_branded_only_limitations($container), 1);
+        add_action(
+            'woocommerce_paypal_payments_gateway_migrate_on_update',
+            /**
+             * Auto-trigger settings migration to new UI on plugin update.
+             *
+             * This hook executes during plugin updates to automatically migrate existing merchants
+             * from the legacy settings interface to the new settings UI. The migration runs once
+             * per installation.
+             *
+             * Migration process includes:
+             * - Cleaning up legacy UI toggle options (old/new UI preference flags)
+             * - Marking onboarding as completed for existing merchants
+             * - Migrating general settings, styling settings, and payment method configurations
+             * - Syncing gateway states to reflect current settings
+             *
+             * The migration is skipped if:
+             * - OPTION_NAME_MIGRATION_IS_DONE flag is already set (migration completed previously)
+             */
+            static function () use ($container): void {
+                if (get_option(MigrationManager::OPTION_NAME_MIGRATION_IS_DONE) === '1') {
+                    return;
+                }
+                $migration_manager = $container->get('settings.service.data-migration');
+                assert($migration_manager instanceof MigrationManager);
+                $migration_manager->migrate();
+            }
+        );
         /**
          * Override ACDC status with BCDC for eligible merchants.
          *
@@ -334,6 +290,15 @@ class SettingsModule implements ServiceModule, ExecutableModule
                     continue;
                 }
                 unset(WC()->payment_gateways->payment_gateways[$index]);
+            }
+            $card_config = $container->get('wcgateway.configuration.card-configuration');
+            $store_country = $container->get('api.merchant.country');
+            if ($card_config->use_acdc() && $store_country !== 'MX') {
+                foreach (WC()->payment_gateways->payment_gateways as $index => $gateway) {
+                    if ($gateway->id === CardButtonGateway::ID) {
+                        unset(WC()->payment_gateways->payment_gateways[$index]);
+                    }
+                }
             }
         }, 5);
         // Remove the Fastlane gateway if the customer is logged in, ensuring that we don't interfere with the Fastlane gateway status in the settings UI.

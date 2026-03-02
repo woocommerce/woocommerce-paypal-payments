@@ -15,40 +15,23 @@ use WooCommerce\PayPalCommerce\AdminNotices\Repository\Repository;
  */
 class AvailabilityNotice
 {
-    /**
-     * The product status handler.
-     *
-     * @var ApmProductStatus
-     */
-    private $product_status;
+    private \WooCommerce\PayPalCommerce\Googlepay\Helper\GoogleProductStatus $product_status;
     /**
      * Indicates if we're on the WooCommerce gateways list page.
-     *
-     * @var bool
      */
-    private $is_wc_gateways_list_page;
+    private bool $is_wc_gateways_list_page;
     /**
-     * Indicates if we're on a PPCP Settings page.
-     *
-     * @var bool
+     * Indicates if we're on our plugin's settings page.
      */
-    private $is_ppcp_settings_page;
-    /**
-     * Class ApmProductStatus constructor.
-     * @param ApmProductStatus $product_status The product status handler.
-     * @param bool             $is_wc_gateways_list_page Indicates if we're on the WooCommerce gateways list page.
-     * @param bool             $is_ppcp_settings_page Indicates if we're on a PPCP Settings page.
-     */
-    public function __construct(\WooCommerce\PayPalCommerce\Googlepay\Helper\ApmProductStatus $product_status, bool $is_wc_gateways_list_page, bool $is_ppcp_settings_page)
+    private bool $is_ppcp_settings_page;
+    public function __construct(\WooCommerce\PayPalCommerce\Googlepay\Helper\GoogleProductStatus $product_status, bool $is_wc_gateways_list_page, bool $is_ppcp_settings_page)
     {
         $this->product_status = $product_status;
         $this->is_wc_gateways_list_page = $is_wc_gateways_list_page;
         $this->is_ppcp_settings_page = $is_ppcp_settings_page;
     }
     /**
-     * Adds availability notice if applicable.
-     *
-     * @return void
+     * Registers availability notice if needed.
      */
     public function execute(): void
     {
@@ -63,11 +46,6 @@ class AvailabilityNotice
             $this->add_not_available_notice();
         }
     }
-    /**
-     * Whether the message should display.
-     *
-     * @return bool
-     */
     protected function should_display(): bool
     {
         if (!$this->product_status->is_onboarded()) {
@@ -78,11 +56,6 @@ class AvailabilityNotice
         }
         return \true;
     }
-    /**
-     * Adds seller status failure notice.
-     *
-     * @return void
-     */
     private function add_seller_status_failure_notice(): void
     {
         add_filter(
@@ -95,7 +68,7 @@ class AvailabilityNotice
              *
              * @psalm-suppress MissingClosureParamType
              */
-            static function ($notices): array {
+            static function (array $notices): array {
                 $message = sprintf(
                     // translators: %1$s and %2$s are the opening and closing of HTML <a> tag.
                     __('<p>Notice: We could not determine your PayPal seller status to list your available features. Disconnect and reconnect your PayPal account through our %1$sonboarding process%2$s to resolve this.</p><p>Don\'t worry if you cannot use the %1$sonboarding process%2$s; most functionalities available to your account should work.</p>', 'woocommerce-paypal-payments'),
@@ -108,11 +81,6 @@ class AvailabilityNotice
             }
         );
     }
-    /**
-     * Adds not available notice.
-     *
-     * @return void
-     */
     private function add_not_available_notice(): void
     {
         add_filter(

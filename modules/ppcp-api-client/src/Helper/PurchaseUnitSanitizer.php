@@ -67,18 +67,14 @@ class PurchaseUnitSanitizer
      * PurchaseUnitSanitizer constructor.
      *
      * @param string|null $mode The mismatch handling mode, ditch or extra_line.
-     * @param string|null $extra_line_name The name of the extra line.
      */
-    public function __construct(?string $mode = null, ?string $extra_line_name = null)
+    public function __construct(?string $mode = null)
     {
         if (!in_array($mode, self::VALID_MODES, \true)) {
             $mode = self::MODE_DITCH;
         }
-        if (!$extra_line_name) {
-            $extra_line_name = self::EXTRA_LINE_NAME;
-        }
         $this->mode = $mode;
-        $this->extra_line_name = $extra_line_name;
+        $this->extra_line_name = self::EXTRA_LINE_NAME;
     }
     /**
      * The purchase_unit amount.
