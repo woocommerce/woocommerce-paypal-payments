@@ -48,15 +48,43 @@ jobs:
 
   build_plugin:
     needs: prepare_version
-    uses: inpsyde/reusable-workflows/.github/workflows/build-plugin-archive.yml@a9af34f34e95cbe18703198c7e972e97ebcd7473
-    with:
-      PHP_VERSION: 7.4
-      NODE_VERSION: 22
-      PLUGIN_MAIN_FILE: ./woocommerce-paypal-payments.php
-      PLUGIN_VERSION: ${{ needs.prepare_version.outputs.plugin_version }}
-      PLUGIN_FOLDER_NAME: woocommerce-paypal-payments
-      ARCHIVE_NAME: ${{ needs.prepare_version.outputs.artifact_name }}
-      COMPILE_ASSETS_ARGS: "-vv --env=root"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '7.4'
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install Composer dependencies
+        run: composer install --no-dev --prefer-dist --optimize-autoloader
+
+      - name: Install npm dependencies and build assets
+        run: npm ci && npm run build -- -vv --env=root
+
+      - name: Set plugin version
+        run: |
+          sed -i "s/Version: .*/Version: ${{ needs.prepare_version.outputs.plugin_version }}/" woocommerce-paypal-payments.php
+
+      - name: Clean up dev files
+        run: |
+          while IFS= read -r pattern; do
+            [ -z "$pattern" ] && continue
+            [[ "$pattern" == \#* ]] && continue
+            rm -rf $pattern
+          done < .distignore
+
+      - name: Upload plugin artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ needs.prepare_version.outputs.artifact_name }}
+          path: .
 
   create_archive:
     runs-on: ubuntu-latest
