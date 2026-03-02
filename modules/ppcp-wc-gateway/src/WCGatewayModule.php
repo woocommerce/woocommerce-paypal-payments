@@ -430,7 +430,7 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
             assert($dcc_applies instanceof DccApplies);
             $dcc_product_status = $container->get('wcgateway.helper.dcc-product-status');
             assert($dcc_product_status instanceof DCCProductStatus);
-            if ($dcc_applies->for_country_currency() && ($is_our_page || $is_gateways_list_page && $dcc_product_status->is_active() || $settings->has('products_dcc_enabled') && $settings->get('products_dcc_enabled'))) {
+            if ($dcc_applies->for_country_currency() && ($is_our_page || $dcc_product_status->is_active())) {
                 $methods[] = $container->get('wcgateway.credit-card-gateway');
             }
             if ($paypal_gateway_enabled && apply_filters('woocommerce_paypal_payments_card_button_gateway_should_register_gateway', $container->get('wcgateway.settings.allow_card_button_gateway'))) {
