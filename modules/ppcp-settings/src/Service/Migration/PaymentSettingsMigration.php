@@ -70,6 +70,18 @@ class PaymentSettingsMigration implements \WooCommerce\PayPalCommerce\Settings\S
                 $this->payment_settings->toggle_method_state($method_name, \true);
             }
         }
+        $pui_settings = get_option('woocommerce_ppcp-pay-upon-invoice-gateway_settings', array());
+        if (is_array($pui_settings)) {
+            if (!empty($pui_settings['brand_name'])) {
+                $this->payment_settings->set_pui_brand_name($pui_settings['brand_name']);
+            }
+            if (!empty($pui_settings['logo_url'])) {
+                $this->payment_settings->set_pui_logo_url($pui_settings['logo_url']);
+            }
+            if (!empty($pui_settings['customer_service_instructions'])) {
+                $this->payment_settings->set_pui_customer_service_instructions($pui_settings['customer_service_instructions']);
+            }
+        }
         $this->payment_settings->save();
     }
     /**

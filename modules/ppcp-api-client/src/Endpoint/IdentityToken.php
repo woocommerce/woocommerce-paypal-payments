@@ -14,7 +14,8 @@ use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\ApiClient\Repository\CustomerRepository;
-use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
+use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
+use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
 /**
  * Class IdentityToken
  */
@@ -42,7 +43,7 @@ class IdentityToken
     /**
      * The settings
      *
-     * @var Settings
+     * @var SettingsProvider
      */
     private $settings;
     /**
@@ -52,21 +53,29 @@ class IdentityToken
      */
     protected $customer_repository;
     /**
+     * WooCommerce subscriptions mode.
+     *
+     * @var string
+     */
+    private string $subscription_mode;
+    /**
      * IdentityToken constructor.
      *
      * @param string             $host The host.
      * @param Bearer             $bearer The bearer.
      * @param LoggerInterface    $logger The logger.
-     * @param Settings           $settings The settings.
+     * @param SettingsProvider   $settings The settings.
      * @param CustomerRepository $customer_repository The customer repository.
+     * @param string             $subscription_mode WooCommerce subscriptions mode.
      */
-    public function __construct(string $host, Bearer $bearer, LoggerInterface $logger, Settings $settings, CustomerRepository $customer_repository)
+    public function __construct(string $host, Bearer $bearer, LoggerInterface $logger, SettingsProvider $settings, CustomerRepository $customer_repository, string $subscription_mode)
     {
         $this->host = $host;
         $this->bearer = $bearer;
         $this->logger = $logger;
         $this->settings = $settings;
         $this->customer_repository = $customer_repository;
+        $this->subscription_mode = $subscription_mode;
     }
     /**
      * Generates a token for a specific user.
@@ -81,7 +90,10 @@ class IdentityToken
         $bearer = $this->bearer->bearer();
         $url = trailingslashit($this->host) . 'v1/identity/generate-token';
         $args = array('method' => 'POST', 'headers' => array('Authorization' => 'Bearer ' . $bearer->token(), 'Content-Type' => 'application/json'));
-        if ($this->settings->has('vault_enabled') && $this->settings->get('vault_enabled') || $this->settings->has('vault_enabled_dcc') && $this->settings->get('vault_enabled_dcc') || $this->settings->has('subscriptions_mode') && $this->settings->get('subscriptions_mode') === 'vaulting_api') {
+        $vault_enabled = $this->settings->save_paypal_and_venmo();
+        $vault_enabled_dcc = $this->settings->save_card_details();
+        $subscriptions_mode_vaulting = $this->subscription_mode === SubscriptionHelper::SUBSCRIPTION_MODE_VALUE_VAULTING;
+        if ($vault_enabled || $vault_enabled_dcc || $subscriptions_mode_vaulting) {
             $customer_id = $this->customer_repository->customer_id_for_user($user_id);
             update_user_meta($user_id, 'ppcp_customer_id', $customer_id);
             $args['body'] = wp_json_encode(array('customer_id' => $customer_id));

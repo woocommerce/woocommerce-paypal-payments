@@ -11,5 +11,5 @@ namespace WooCommerce\PayPalCommerce\ApiClient;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\ExperienceContextBuilder;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 return array('wcgateway.builder.experience-context' => static function (ContainerInterface $container): ExperienceContextBuilder {
-    return new ExperienceContextBuilder($container->get('wcgateway.settings'), $container->get('wcgateway.shipping.callback.factory.url'));
+    return new ExperienceContextBuilder($container->get('settings.settings-provider'), $container->get('wcgateway.shipping.callback.factory.url'));
 });

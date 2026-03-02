@@ -13,7 +13,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Entity\Token;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\Cache;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Log\LoggerInterface;
-use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
+use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
 /**
  * Class PayPalBearer
  */
@@ -24,7 +24,7 @@ class PayPalBearer implements \WooCommerce\PayPalCommerce\ApiClient\Authenticati
     /**
      * The settings.
      *
-     * @var ?ContainerInterface
+     * @var ?SettingsProvider
      */
     protected $settings;
     /**
@@ -60,14 +60,14 @@ class PayPalBearer implements \WooCommerce\PayPalCommerce\ApiClient\Authenticati
     /**
      * PayPalBearer constructor.
      *
-     * @param Cache               $cache    The cache.
-     * @param string              $host     The host.
-     * @param string              $key      The key.
-     * @param string              $secret   The secret.
-     * @param LoggerInterface     $logger   The logger.
-     * @param ?ContainerInterface $settings The settings.
+     * @param Cache             $cache The cache.
+     * @param string            $host The host.
+     * @param string            $key The key.
+     * @param string            $secret The secret.
+     * @param LoggerInterface   $logger The logger.
+     * @param ?SettingsProvider $settings The settings.
      */
-    public function __construct(Cache $cache, string $host, string $key, string $secret, LoggerInterface $logger, ?ContainerInterface $settings)
+    public function __construct(Cache $cache, string $host, string $key, string $secret, LoggerInterface $logger, ?SettingsProvider $settings)
     {
         $this->cache = $cache;
         $this->host = $host;
@@ -79,8 +79,8 @@ class PayPalBearer implements \WooCommerce\PayPalCommerce\ApiClient\Authenticati
     /**
      * Returns a bearer token.
      *
-     * @throws RuntimeException When request fails.
      * @return Token
+     * @throws RuntimeException When request fails.
      */
     public function bearer(): Token
     {
@@ -98,10 +98,11 @@ class PayPalBearer implements \WooCommerce\PayPalCommerce\ApiClient\Authenticati
      */
     private function get_key(): string
     {
-        if ($this->settings && $this->settings->has('client_id') && $this->settings->get('client_id')) {
-            return $this->settings->get('client_id');
+        if (is_null($this->settings)) {
+            return $this->key;
         }
-        return $this->key;
+        $merchant_data = $this->settings->merchant_data();
+        return $merchant_data->client_id;
     }
     /**
      * Retrieves the client secret for authentication.
@@ -110,16 +111,17 @@ class PayPalBearer implements \WooCommerce\PayPalCommerce\ApiClient\Authenticati
      */
     private function get_secret(): string
     {
-        if ($this->settings && $this->settings->has('client_secret') && $this->settings->get('client_secret')) {
-            return $this->settings->get('client_secret');
+        if (is_null($this->settings)) {
+            return $this->secret;
         }
-        return $this->secret;
+        $merchant_data = $this->settings->merchant_data();
+        return $merchant_data->client_secret;
     }
     /**
      * Creates a new bearer token.
      *
-     * @throws RuntimeException When request fails.
      * @return Token
+     * @throws RuntimeException When request fails.
      */
     private function newBearer(): Token
     {

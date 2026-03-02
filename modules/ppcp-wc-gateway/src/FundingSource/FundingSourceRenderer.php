@@ -8,18 +8,13 @@
 declare (strict_types=1);
 namespace WooCommerce\PayPalCommerce\WcGateway\FundingSource;
 
-use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
+use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
 /**
  * Class FundingSourceRenderer
  */
 class FundingSourceRenderer
 {
-    /**
-     * The settings.
-     *
-     * @var ContainerInterface
-     */
-    protected $settings;
+    protected SettingsProvider $settings_provider;
     /**
      * Map funding source ID -> human-readable name.
      *
@@ -33,14 +28,12 @@ class FundingSourceRenderer
      */
     protected $own_funding_sources = array('venmo', 'paylater', 'paypal');
     /**
-     * FundingSourceRenderer constructor.
-     *
-     * @param ContainerInterface    $settings The settings.
-     * @param array<string, string> $funding_sources Map funding source ID -> human-readable name.
+     * @param SettingsProvider      $settings_provider Settings provider.
+     * @param array<string, string> $funding_sources   Map funding source ID -> human-readable name.
      */
-    public function __construct(ContainerInterface $settings, array $funding_sources)
+    public function __construct(SettingsProvider $settings_provider, array $funding_sources)
     {
-        $this->settings = $settings;
+        $this->settings_provider = $settings_provider;
         $this->funding_sources = $funding_sources;
     }
     /**
@@ -61,7 +54,7 @@ class FundingSourceRenderer
                 $this->funding_sources[$id]
             );
         }
-        return $this->settings->has('title') ? $this->settings->get('title') : __('PayPal', 'woocommerce-paypal-payments');
+        return $this->settings_provider->paypal_gateway_title();
     }
     /**
      * Returns description of the funding source (for checkout).
@@ -78,7 +71,7 @@ class FundingSourceRenderer
                 $this->funding_sources[$id]
             );
         }
-        return $this->settings->has('description') ? $this->settings->get('description') : __('Pay via PayPal.', 'woocommerce-paypal-payments');
+        return $this->settings_provider->paypal_gateway_description();
     }
     /**
      * Sanitizes the id to a standard format.

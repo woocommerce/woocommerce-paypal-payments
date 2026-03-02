@@ -61,14 +61,7 @@ class FraudProcessorResponse
      */
     public function to_array(): array
     {
-        return array(
-            'avs_code' => $this->avs_code(),
-            'cvv2_code' => $this->cvv_code(),
-            // For backwards compatibility.
-            'address_match' => $this->avs_code() === 'M' ? 'Y' : 'N',
-            'postal_match' => $this->avs_code() === 'M' ? 'Y' : 'N',
-            'cvv_match' => $this->cvv_code() === 'M' ? 'Y' : 'N',
-        );
+        return array('avs_code' => $this->avs_code(), 'cvv2_code' => $this->cvv_code());
     }
     /**
      * Retrieves the AVS (Address Verification System) code messages based on the AVS response code.

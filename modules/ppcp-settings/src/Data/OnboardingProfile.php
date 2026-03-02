@@ -35,17 +35,17 @@ class OnboardingProfile extends \WooCommerce\PayPalCommerce\Settings\Data\Abstra
     /**
      * Constructor.
      *
-     * @param bool $can_use_casual_selling Whether casual selling is enabled in the store's country.
-     * @param bool $can_use_vaulting       Whether vaulting is enabled in the store's country.
-     * @param bool $can_use_card_payments  Whether credit card payments are possible.
-     * @param bool $can_use_subscriptions  Whether WC Subscriptions plugin is active.
-     * @param bool $should_skip_payment_methods  Whether it should skip payment methods screen.
-     * @param bool $can_use_fastlane  Whether it can use Fastlane or not.
-     * @param bool $can_use_pay_later  Whether it can use Pay Later or not.
+     * @param callable $can_use_fastlane  Callable to check whether it can use Fastlane or not.
+     * @param bool     $can_use_casual_selling Whether casual selling is enabled in the store's country.
+     * @param bool     $can_use_vaulting       Whether vaulting is enabled in the store's country.
+     * @param bool     $can_use_card_payments  Whether credit card payments are possible.
+     * @param bool     $can_use_subscriptions  Whether WC Subscriptions plugin is active.
+     * @param bool     $should_skip_payment_methods  Whether it should skip payment methods screen.
+     * @param bool     $can_use_pay_later  Whether it can use Pay Later or not.
      *
      * @throws RuntimeException If the OPTION_KEY is not defined in the child class.
      */
-    public function __construct(bool $can_use_casual_selling = \false, bool $can_use_vaulting = \false, bool $can_use_card_payments = \false, bool $can_use_subscriptions = \false, bool $should_skip_payment_methods = \false, bool $can_use_fastlane = \false, bool $can_use_pay_later = \false)
+    public function __construct(callable $can_use_fastlane, bool $can_use_casual_selling = \false, bool $can_use_vaulting = \false, bool $can_use_card_payments = \false, bool $can_use_subscriptions = \false, bool $should_skip_payment_methods = \false, bool $can_use_pay_later = \false)
     {
         parent::__construct();
         $this->flags['can_use_casual_selling'] = $can_use_casual_selling;
@@ -163,7 +163,13 @@ class OnboardingProfile extends \WooCommerce\PayPalCommerce\Settings\Data\Abstra
      */
     public function get_flags(): array
     {
-        return $this->flags;
+        return array_map(function ($flag): bool {
+            if (is_callable($flag)) {
+                return $flag();
+            } else {
+                return $flag;
+            }
+        }, $this->flags);
     }
     /**
      * Gets the 'setup_done' flag.

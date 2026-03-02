@@ -4,7 +4,7 @@
  * Plugin Name: WooCommerce PayPal Payments
  * Plugin URI:  https://woocommerce.com/products/woocommerce-paypal-payments/
  * Description: PayPal's latest complete payments processing solution. Accept PayPal, Pay Later, credit/debit cards, alternative digital wallets local payment types and bank accounts. Turn on only PayPal options or process a full suite of payment methods. Enable global transaction with extensive currency and country coverage.
- * Version: 3.4.0-alpha20260224+pcp-5919-regression-in-3-4-0-deposits-remainder-payments-not-completed-for-pending-deposit-orders.90a794f
+ * Version: 3.4.0-alpha20260224+pcp-5919-regression-in-3-4-0-deposits-remainder-payments-not-completed-for-pending-deposit-orders.532a5e5
  * Author:      PayPal
  * Author URI:  https://paypal.com/
  * License:     GPL-2.0
@@ -20,7 +20,6 @@
 declare (strict_types=1);
 namespace WooCommerce\PayPalCommerce;
 
-use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 define('PAYPAL_API_URL', 'https://api-m.paypal.com');
 define('PAYPAL_URL', 'https://www.paypal.com');
 define('PAYPAL_SANDBOX_API_URL', 'https://api-m.sandbox.paypal.com');
@@ -143,7 +142,7 @@ define('PPCP_PAYPAL_BN_CODE', 'Woo_PPCP');
             if (!is_woocommerce_activated()) {
                 return $links;
             }
-            array_unshift($links, sprintf('<a href="%1$s">%2$s</a>', admin_url('admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway&ppcp-tab=' . Settings::CONNECTION_TAB_ID), __('Settings', 'woocommerce-paypal-payments')));
+            array_unshift($links, sprintf('<a href="%1$s">%2$s</a>', admin_url('admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway'), __('Settings', 'woocommerce-paypal-payments')));
             return $links;
         }
     );

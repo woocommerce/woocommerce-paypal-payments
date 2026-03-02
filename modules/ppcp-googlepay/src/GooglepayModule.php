@@ -14,21 +14,20 @@ use WooCommerce\PayPalCommerce\ApiClient\Factory\ExperienceContextBuilder;
 use WooCommerce\PayPalCommerce\Button\Assets\ButtonInterface;
 use WooCommerce\PayPalCommerce\Button\Assets\SmartButtonInterface;
 use WooCommerce\PayPalCommerce\Googlepay\Endpoint\UpdatePaymentDataEndpoint;
-use WooCommerce\PayPalCommerce\Googlepay\Helper\ApmProductStatus;
+use WooCommerce\PayPalCommerce\Googlepay\Helper\GoogleProductStatus;
 use WooCommerce\PayPalCommerce\Googlepay\Helper\AvailabilityNotice;
 use WooCommerce\PayPalCommerce\Settings\Data\Definition\FeaturesDefinition;
-use WooCommerce\PayPalCommerce\Settings\SettingsModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExecutableModule;
-use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExtendingModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ModuleClassNameIdTrait;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ServiceModule;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
-use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
-use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
+use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
+use WooCommerce\PayPalCommerce\Settings\DTO\LocationStylingDTO;
+use WooCommerce\PayPalCommerce\Googlepay\Helper\PropertiesDictionary;
 /**
  * Class GooglepayModule
  */
-class GooglepayModule implements ServiceModule, ExtendingModule, ExecutableModule
+class GooglepayModule implements ServiceModule, ExecutableModule
 {
     use ModuleClassNameIdTrait;
     /**
@@ -41,20 +40,13 @@ class GooglepayModule implements ServiceModule, ExtendingModule, ExecutableModul
     /**
      * {@inheritDoc}
      */
-    public function extensions(): array
-    {
-        return require __DIR__ . '/../extensions.php';
-    }
-    /**
-     * {@inheritDoc}
-     */
     public function run(ContainerInterface $c): bool
     {
         // Clears product status when appropriate.
-        add_action('woocommerce_paypal_payments_clear_apm_product_status', function (?Settings $settings = null) use ($c): void {
+        add_action('woocommerce_paypal_payments_clear_apm_product_status', static function () use ($c): void {
             $apm_status = $c->get('googlepay.helpers.apm-product-status');
-            assert($apm_status instanceof ApmProductStatus);
-            $apm_status->clear($settings);
+            assert($apm_status instanceof GoogleProductStatus);
+            $apm_status->clear();
         });
         add_action('init', static function () use ($c) {
             // Check if the module is applicable, correct country, currency, ... etc.
@@ -64,7 +56,6 @@ class GooglepayModule implements ServiceModule, ExtendingModule, ExecutableModul
             // Load the button handler.
             $button = $c->get('googlepay.button');
             assert($button instanceof ButtonInterface);
-            $button->initialize();
             // Show notice if there are product availability issues.
             $availability_notice = $c->get('googlepay.availability_notice');
             assert($availability_notice instanceof AvailabilityNotice);
@@ -109,7 +100,7 @@ class GooglepayModule implements ServiceModule, ExtendingModule, ExecutableModul
             });
             // Enqueue backend scripts.
             add_action('admin_enqueue_scripts', static function () use ($c, $button) {
-                if (!is_admin() || !$c->get('wcgateway.is-ppcp-settings-payment-methods-page')) {
+                if (!is_admin() || !$c->get('wcgateway.is-plugin-settings-page')) {
                     return;
                 }
                 /**
@@ -121,10 +112,7 @@ class GooglepayModule implements ServiceModule, ExtendingModule, ExecutableModul
                 $button->enqueue_admin();
             });
             // Registers buttons on blocks pages.
-            add_action('woocommerce_blocks_payment_method_type_registration', function (PaymentMethodRegistry $payment_method_registry) use ($c, $button): void {
-                if (SettingsModule::should_use_the_old_ui() && !$button->is_enabled()) {
-                    return;
-                }
+            add_action('woocommerce_blocks_payment_method_type_registration', function (PaymentMethodRegistry $payment_method_registry) use ($c): void {
                 $payment_method_registry->register($c->get('googlepay.blocks-payment-method'));
             });
             // Adds GooglePay component to the backend button preview settings.
@@ -152,9 +140,9 @@ class GooglepayModule implements ServiceModule, ExtendingModule, ExecutableModul
                 if (!is_array($methods)) {
                     return $methods;
                 }
-                $settings = $c->get('wcgateway.settings');
-                assert($settings instanceof Settings);
-                if ($settings->has('googlepay_button_enabled') && $settings->get('googlepay_button_enabled')) {
+                $settings = $c->get('settings.settings-provider');
+                assert($settings instanceof SettingsProvider);
+                if ($settings->googlepay_enabled()) {
                     $googlepay_gateway = $c->get('googlepay.wc-gateway');
                     assert($googlepay_gateway instanceof WC_Payment_Gateway);
                     $methods[] = $googlepay_gateway;
@@ -177,7 +165,7 @@ class GooglepayModule implements ServiceModule, ExtendingModule, ExecutableModul
         }, 10, 2);
         add_filter('woocommerce_paypal_payments_rest_common_merchant_features', function (array $features) use ($c): array {
             $product_status = $c->get('googlepay.helpers.apm-product-status');
-            assert($product_status instanceof ApmProductStatus);
+            assert($product_status instanceof GoogleProductStatus);
             $google_pay_enabled = $product_status->is_active();
             $features[FeaturesDefinition::FEATURE_GOOGLE_PAY] = array('enabled' => $google_pay_enabled);
             return $features;
@@ -187,18 +175,26 @@ class GooglepayModule implements ServiceModule, ExtendingModule, ExecutableModul
             if ($payment_method !== \WooCommerce\PayPalCommerce\Googlepay\GooglePayGateway::ID && $funding_source !== 'googlepay') {
                 return $data;
             }
-            $settings = $c->get('wcgateway.settings');
-            assert($settings instanceof Settings);
+            $settings = $c->get('settings.settings-provider');
+            assert($settings instanceof SettingsProvider);
             $experience_context_builder = $c->get('wcgateway.builder.experience-context');
             assert($experience_context_builder instanceof ExperienceContextBuilder);
             $payment_source_data = array('experience_context' => $experience_context_builder->with_endpoint_return_urls()->build()->to_array());
-            $three_d_secure_contingency = $settings->has('3d_secure_contingency') ? apply_filters('woocommerce_paypal_payments_three_d_secure_contingency', $settings->get('3d_secure_contingency')) : '';
+            $three_d_secure_contingency = $settings->three_d_secure_enum() ? apply_filters('woocommerce_paypal_payments_three_d_secure_contingency', $settings->three_d_secure_enum()) : '';
             if ($three_d_secure_contingency === 'SCA_ALWAYS' || $three_d_secure_contingency === 'SCA_WHEN_REQUIRED') {
                 $payment_source_data['attributes'] = array('verification' => array('method' => $three_d_secure_contingency));
             }
             $data['payment_source'] = array('google_pay' => $payment_source_data);
             return $data;
         }, 10, 3);
+        add_filter('woocommerce_paypal_payments_googlepay_button_styles', static function (LocationStylingDTO $styles): LocationStylingDTO {
+            $styles->color = PropertiesDictionary::map_color($styles->color);
+            $styles->label = PropertiesDictionary::map_type($styles->label);
+            return $styles;
+        }, 9999);
+        add_filter('woocommerce_paypal_payments_googlepay_button_language', static function (string $language): string {
+            return PropertiesDictionary::map_language($language);
+        }, 9999);
         return \true;
     }
 }
