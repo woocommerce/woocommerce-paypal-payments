@@ -66,6 +66,7 @@ use WooCommerce\PayPalCommerce\WcGateway\Helper\MerchantDetails;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\PayUponInvoiceHelper;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\PayUponInvoiceProductStatus;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\PWCProductStatus;
+use WooCommerce\PayPalCommerce\WcGateway\Helper\OrderStatusHelper;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\RefundFeesUpdater;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\SettingsStatus;
 use WooCommerce\PayPalCommerce\WcGateway\Notice\AuthorizeOrderActionNotice;
@@ -210,7 +211,7 @@ return array(
         $logger = $container->get('woocommerce.logger.woocommerce');
         $subscription_helper = $container->get('wc-subscriptions.helper');
         $order_helper = $container->get('api.order-helper');
-        return new OrderProcessor($session_handler, $order_endpoint, $order_factory, $threed_secure, $authorized_payments_processor, $settings_provider, $logger, $environment, $subscription_helper, $order_helper, $container->get('api.factory.purchase-unit'), $container->get('api.factory.payer'), $container->get('api.factory.shipping-preference'), $container->get('wcgateway.builder.experience-context'));
+        return new OrderProcessor($session_handler, $order_endpoint, $order_factory, $threed_secure, $authorized_payments_processor, $settings_provider, $logger, $environment, $subscription_helper, $order_helper, $container->get('api.factory.purchase-unit'), $container->get('api.factory.payer'), $container->get('api.factory.shipping-preference'), $container->get('wcgateway.builder.experience-context'), $container->get('wcgateway.helper.order-status'));
     },
     'wcgateway.processor.refunds' => static function (ContainerInterface $container): RefundProcessor {
         return new RefundProcessor($container->get('api.endpoint.order'), $container->get('api.endpoint.payments'), $container->get('wcgateway.helper.refund-fees-updater'), $container->get('api.prefix'), $container->get('woocommerce.logger.woocommerce'));
@@ -278,7 +279,7 @@ return array(
     'wcgateway.endpoint.return-url' => static function (ContainerInterface $container): ReturnUrlEndpoint {
         $gateway = $container->get('wcgateway.paypal-gateway');
         $endpoint = $container->get('api.endpoint.order');
-        return new ReturnUrlEndpoint($gateway, $endpoint, $container->get('session.handler'), $container->get('woocommerce.logger.woocommerce'));
+        return new ReturnUrlEndpoint($gateway, $endpoint, $container->get('session.handler'), $container->get('woocommerce.logger.woocommerce'), $container->get('wcgateway.helper.order-status'));
     },
     'wcgateway.endpoint.refresh-feature-status' => static function (ContainerInterface $container): RefreshFeatureStatusEndpoint {
         return new RefreshFeatureStatusEndpoint($container->get('wcgateway.settings'), new Cache('ppcp-timeout'), $container->get('woocommerce.logger.woocommerce'));
@@ -303,6 +304,9 @@ return array(
     },
     'wcgateway.helper.dcc-product-status' => static function (ContainerInterface $container): DCCProductStatus {
         return new DCCProductStatus($container->get('settings.flag.is-connected'), $container->get('api.endpoint.partners'), $container->get('api.helper.failure-registry'), $container->get('api.helper.product-status-result-cache'), $container->get('api.helpers.dccapplies'));
+    },
+    'wcgateway.helper.order-status' => static function (ContainerInterface $container): OrderStatusHelper {
+        return new OrderStatusHelper();
     },
     'wcgateway.helper.refund-fees-updater' => static function (ContainerInterface $container): RefundFeesUpdater {
         $order_endpoint = $container->get('api.endpoint.order');

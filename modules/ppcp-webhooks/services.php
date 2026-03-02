@@ -66,10 +66,11 @@ return array('webhook.registrar' => static function (ContainerInterface $contain
     $payment_token_factory = $container->get('vaulting.payment-token-factory');
     $payment_token_helper = $container->get('vaulting.payment-token-helper');
     $refund_fees_updater = $container->get('wcgateway.helper.refund-fees-updater');
+    $order_status_helper = $container->get('wcgateway.helper.order-status');
     return array(
-        new CheckoutOrderApproved($logger, $order_endpoint, $container->get('session.handler'), $container->get('wcgateway.funding-source.renderer'), $container->get('wcgateway.order-processor')),
-        new CheckoutOrderCompleted($logger),
-        new CheckoutPaymentApprovalReversed($logger),
+        new CheckoutOrderApproved($logger, $order_endpoint, $container->get('session.handler'), $container->get('wcgateway.funding-source.renderer'), $container->get('wcgateway.order-processor'), $order_status_helper),
+        new CheckoutOrderCompleted($logger, $order_status_helper),
+        new CheckoutPaymentApprovalReversed($logger, $order_status_helper),
         new PaymentCaptureRefunded($logger, $refund_fees_updater),
         new PaymentCaptureReversed($logger),
         new PaymentCaptureCompleted($logger, $order_endpoint),

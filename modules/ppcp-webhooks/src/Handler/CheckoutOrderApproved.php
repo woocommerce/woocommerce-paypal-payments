@@ -20,6 +20,7 @@ use WooCommerce\PayPalCommerce\Session\SessionHandler;
 use WooCommerce\PayPalCommerce\WcGateway\FundingSource\FundingSourceRenderer;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\OXXO\OXXOGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayUponInvoice\PayUponInvoiceGateway;
+use WooCommerce\PayPalCommerce\WcGateway\Helper\OrderStatusHelper;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\OrderProcessor;
 /**
  * Class CheckoutOrderApproved
@@ -57,6 +58,7 @@ class CheckoutOrderApproved implements \WooCommerce\PayPalCommerce\Webhooks\Hand
      * @var OrderProcessor
      */
     protected $order_processor;
+    private OrderStatusHelper $order_status_helper;
     /**
      * CheckoutOrderApproved constructor.
      *
@@ -66,13 +68,14 @@ class CheckoutOrderApproved implements \WooCommerce\PayPalCommerce\Webhooks\Hand
      * @param FundingSourceRenderer $funding_source_renderer The funding source renderer.
      * @param OrderProcessor        $order_processor The Order Processor.
      */
-    public function __construct(LoggerInterface $logger, OrderEndpoint $order_endpoint, SessionHandler $session_handler, FundingSourceRenderer $funding_source_renderer, OrderProcessor $order_processor)
+    public function __construct(LoggerInterface $logger, OrderEndpoint $order_endpoint, SessionHandler $session_handler, FundingSourceRenderer $funding_source_renderer, OrderProcessor $order_processor, OrderStatusHelper $order_status_helper)
     {
         $this->logger = $logger;
         $this->order_endpoint = $order_endpoint;
         $this->session_handler = $session_handler;
         $this->funding_source_renderer = $funding_source_renderer;
         $this->order_processor = $order_processor;
+        $this->order_status_helper = $order_status_helper;
     }
     /**
      * The event types a handler handles.
@@ -173,7 +176,7 @@ class CheckoutOrderApproved implements \WooCommerce\PayPalCommerce\Webhooks\Hand
             if (PayUponInvoiceGateway::ID === $wc_order->get_payment_method() || OXXOGateway::ID === $wc_order->get_payment_method()) {
                 continue;
             }
-            if (!in_array($wc_order->get_status(), array('pending', 'on-hold'), \true)) {
+            if (!$this->order_status_helper->is_awaiting_payment($wc_order)) {
                 continue;
             }
             try {
