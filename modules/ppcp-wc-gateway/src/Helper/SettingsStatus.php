@@ -94,6 +94,9 @@ class SettingsStatus
         if ('checkout-block' === $location) {
             $location = 'checkout-block-express';
         }
+        if ('cart-block' === $location) {
+            $location = 'cart';
+        }
         return $location;
     }
     /**
