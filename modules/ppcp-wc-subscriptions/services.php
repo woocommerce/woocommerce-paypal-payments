@@ -33,7 +33,7 @@ return array(
 		$purchase_unit_factory = $container->get( 'api.factory.purchase-unit' );
 		$payer_factory         = $container->get( 'api.factory.payer' );
 		$environment           = $container->get( 'settings.environment' );
-		$settings                      = $container->get( 'wcgateway.settings' );
+		$settings_provider             = $container->get( 'settings.settings-provider' );
 		$authorized_payments_processor = $container->get( 'wcgateway.processor.authorized-payments' );
 		$funding_source_renderer       = $container->get( 'wcgateway.funding-source.renderer' );
 		return new RenewalHandler(
@@ -44,7 +44,7 @@ return array(
 			$container->get( 'api.factory.shipping-preference' ),
 			$payer_factory,
 			$environment,
-			$settings,
+			$settings_provider,
 			$authorized_payments_processor,
 			$funding_source_renderer,
 			$container->get( 'wc-subscriptions.helpers.real-time-account-updater' ),
@@ -68,7 +68,7 @@ return array(
 	},
 	'wc-subscriptions.vault-v2.display-saved-payment-tokens' => static function ( ContainerInterface $container ): DisplaySavedPaymentTokens {
 		return new DisplaySavedPaymentTokens(
-			$container->get( 'wcgateway.settings' ),
+			$container->get( 'settings.settings-provider' ),
 			$container->get( 'wc-subscriptions.helper' )
 		);
 	},

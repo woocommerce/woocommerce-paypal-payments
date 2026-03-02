@@ -21,8 +21,8 @@ use WooCommerce\PayPalCommerce\Applepay\Helper\AvailabilityNotice;
 use WooCommerce\PayPalCommerce\Assets\AssetGetter;
 use WooCommerce\PayPalCommerce\Assets\AssetGetterFactory;
 use WooCommerce\PayPalCommerce\Common\Pattern\SingletonDecorator;
-use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
+use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
 
 return array(
 	// @deprecated - use `applepay.eligibility.check` instead.
@@ -60,36 +60,35 @@ return array(
 	},
 
 	'applepay.availability_notice'             => static function ( ContainerInterface $container ): AvailabilityNotice {
-		$settings = $container->get( 'wcgateway.settings' );
-
 		return new AvailabilityNotice(
 			$container->get( 'applepay.apple-product-status' ),
 			$container->get( 'wcgateway.is-wc-gateways-list-page' ),
-			$container->get( 'wcgateway.is-ppcp-settings-page' ),
+			$container->get( 'wcgateway.is-plugin-settings-page' ),
 			$container->get( 'applepay.available' ) || ( ! $container->get( 'applepay.is_referral' ) ),
 			$container->get( 'applepay.server_supported' ),
-			$container->get( 'applepay.is_validated' ),
+			$container->get( 'settings.settings-provider' ),
 			$container->get( 'applepay.button' )
 		);
 	},
 
 	'applepay.has_validated'                   => static function ( ContainerInterface $container ): bool {
-		$settings = $container->get( 'wcgateway.settings' );
-		return $settings->has( 'applepay_validated' );
+		$cache = $container->get( 'applepay.status-cache' );
+		assert( $cache instanceof Cache );
+		return $cache->has( AppleProductStatus::KEY );
 	},
 
 	'applepay.is_validated'                    => static function ( ContainerInterface $container ): bool {
-		$settings = $container->get( 'wcgateway.settings' );
-		return $settings->has( 'applepay_validated' ) ? $settings->get( 'applepay_validated' ) === true : false;
+		$settings = $container->get( 'settings.settings-provider' );
+		return $settings->applepay_validated();
 	},
 
 	'applepay.apple-product-status'            => SingletonDecorator::make(
 		static function ( ContainerInterface $container ): AppleProductStatus {
 			return new AppleProductStatus(
-				$container->get( 'wcgateway.settings' ),
-				$container->get( 'api.endpoint.partners' ),
 				$container->get( 'settings.flag.is-connected' ),
-				$container->get( 'api.helper.failure-registry' )
+				$container->get( 'api.endpoint.partners' ),
+				$container->get( 'api.helper.failure-registry' ),
+				$container->get( 'api.helper.product-status-result-cache' )
 			);
 		}
 	),
@@ -147,11 +146,12 @@ return array(
 		return 'https://applepay.cdn-apple.com/jsapi/v1/apple-pay-sdk.js';
 	},
 	'applepay.data_to_scripts'                 => static function ( ContainerInterface $container ): DataToAppleButtonScripts {
-		return new DataToAppleButtonScripts( $container->get( 'applepay.sdk_script_url' ), $container->get( 'wcgateway.settings' ) );
+		return new DataToAppleButtonScripts( $container->get( 'applepay.sdk_script_url' ), $container->get( 'settings.settings-provider' ) );
 	},
 	'applepay.button'                          => static function ( ContainerInterface $container ): ApplePayButton {
 		return new ApplePayButton(
-			$container->get( 'wcgateway.settings' ),
+			$container->get( 'settings.settings-provider' ),
+			$container->get( 'settings.data.payment' ),
 			$container->get( 'woocommerce.logger.woocommerce' ),
 			$container->get( 'wcgateway.order-processor' ),
 			$container->get( 'applepay.asset_getter' ),

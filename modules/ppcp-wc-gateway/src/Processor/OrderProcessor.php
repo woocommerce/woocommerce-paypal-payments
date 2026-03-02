@@ -29,9 +29,9 @@ use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
 use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
 use WooCommerce\PayPalCommerce\Vaulting\PaymentTokenRepository;
+use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
 use WooCommerce\PayPalCommerce\WcGateway\Exception\PayPalOrderMissingException;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
-use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 use Automattic\WooCommerce\Utilities\OrderUtil;
 
 /**
@@ -92,12 +92,7 @@ class OrderProcessor {
 	 */
 	private $authorized_payments_processor;
 
-	/**
-	 * The settings.
-	 *
-	 * @var Settings
-	 */
-	private $settings;
+	private SettingsProvider $settings_provider;
 
 	/**
 	 * A logger.
@@ -153,31 +148,13 @@ class OrderProcessor {
 	 */
 	private ExperienceContextBuilder $experience_context_builder;
 
-	/**
-	 * OrderProcessor constructor.
-	 *
-	 * @param SessionHandler              $session_handler The Session Handler.
-	 * @param OrderEndpoint               $order_endpoint The Order Endpoint.
-	 * @param OrderFactory                $order_factory The Order Factory.
-	 * @param ThreeDSecure                $three_d_secure The ThreeDSecure Helper.
-	 * @param AuthorizedPaymentsProcessor $authorized_payments_processor The Authorized Payments Processor.
-	 * @param Settings                    $settings The Settings.
-	 * @param LoggerInterface             $logger A logger service.
-	 * @param Environment                 $environment The environment.
-	 * @param SubscriptionHelper          $subscription_helper The subscription helper.
-	 * @param OrderHelper                 $order_helper The order helper.
-	 * @param PurchaseUnitFactory         $purchase_unit_factory The PurchaseUnit factory.
-	 * @param PayerFactory                $payer_factory The payer factory.
-	 * @param ShippingPreferenceFactory   $shipping_preference_factory The shipping_preference factory.
-	 * @param ExperienceContextBuilder    $experience_context_builder The ExperienceContextBuilder.
-	 */
 	public function __construct(
 		SessionHandler $session_handler,
 		OrderEndpoint $order_endpoint,
 		OrderFactory $order_factory,
 		ThreeDSecure $three_d_secure,
 		AuthorizedPaymentsProcessor $authorized_payments_processor,
-		Settings $settings,
+		SettingsProvider $settings_provider,
 		LoggerInterface $logger,
 		Environment $environment,
 		SubscriptionHelper $subscription_helper,
@@ -193,7 +170,7 @@ class OrderProcessor {
 		$this->order_factory                 = $order_factory;
 		$this->threed_secure                 = $three_d_secure;
 		$this->authorized_payments_processor = $authorized_payments_processor;
-		$this->settings                      = $settings;
+		$this->settings_provider             = $settings_provider;
 		$this->environment                   = $environment;
 		$this->logger                        = $logger;
 		$this->subscription_helper           = $subscription_helper;
@@ -530,10 +507,7 @@ class OrderProcessor {
 	 * @return bool
 	 */
 	private function capture_authorized_downloads( Order $order ): bool {
-		if (
-			! $this->settings->has( 'capture_for_virtual_only' )
-			|| ! $this->settings->get( 'capture_for_virtual_only' )
-		) {
+		if ( ! $this->settings_provider->capture_virtual_orders() ) {
 			return false;
 		}
 

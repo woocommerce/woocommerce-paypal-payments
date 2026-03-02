@@ -27,6 +27,10 @@ use WP_Query;
  */
 class SubscriptionHelper {
 
+	public const SUBSCRIPTION_MODE_VALUE_VAULTING      = 'vaulting_api';
+	public const SUBSCRIPTION_MODE_VALUE_SUBSCRIPTIONS = 'subscriptions_api';
+	public const SUBSCRIPTION_MODE_VALUE_DISABLED      = 'disable_paypal_subscriptions';
+
 	/**
 	 * Whether the current product is a subscription.
 	 *

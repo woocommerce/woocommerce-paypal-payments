@@ -5,22 +5,21 @@ namespace WooCommerce\PayPalCommerce\WcSubscriptions\VaultV2;
 
 use WC_Payment_Token_CC;
 use WC_Payment_Tokens;
-use WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
-use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
+use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
 use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
 
 class DisplaySavedPaymentTokens {
 
-	private Settings $settings;
+	private SettingsProvider $settings_provider;
 	private SubscriptionHelper $subscription_helper;
 
 	public function __construct(
-		Settings $settings,
+		SettingsProvider $settings_provider,
 		SubscriptionHelper $subscription_helper
 	) {
-		$this->settings            = $settings;
+		$this->settings_provider   = $settings_provider;
 		$this->subscription_helper = $subscription_helper;
 	}
 
@@ -35,8 +34,7 @@ class DisplaySavedPaymentTokens {
 		string $id,
 		string $description
 	): string {
-		if ( $this->settings->has( 'vault_enabled' )
-			&& $this->settings->get( 'vault_enabled' )
+		if ( $this->settings_provider->save_paypal_and_venmo()
 			&& PayPalGateway::ID === $id
 			&& $this->subscription_helper->is_subscription_change_payment()
 		) {
@@ -63,14 +61,12 @@ class DisplaySavedPaymentTokens {
 	 * @param string $id The payment gateway Id.
 	 * @param array  $default_fields Default payment gateway fields.
 	 * @return array|mixed|string
-	 * @throws NotFoundException When setting was not found.
 	 */
 	public function display_saved_credit_cards(
 		string $id,
 		array $default_fields
 	) {
-		if ( $this->settings->has( 'vault_enabled_dcc' )
-			&& $this->settings->get( 'vault_enabled_dcc' )
+		if ( $this->settings_provider->save_card_details()
 			&& $this->subscription_helper->is_subscription_change_payment()
 			&& CreditCardGateway::ID === $id
 		) {
