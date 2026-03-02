@@ -164,10 +164,12 @@ const test = base.extend< BaseExtend >( {
 		await use( new PcpSettings( { page } ) );
 	},
 	pcpStyling: async ( { page }, use ) => {
-		await use( new PcpStyling( { page } ) );
+		const pcpStyling = new PcpStyling( { page } );
+		await use( pcpStyling );
 	},
 	pcpPayLaterMessaging: async ( { page }, use ) => {
-		await use( new PcpPayLaterMessaging( { page } ) );
+		const pcpPayLaterMessaging = new PcpPayLaterMessaging( { page } );
+		await use( pcpPayLaterMessaging );
 	},
 
 	// WooCommerce dashboard
