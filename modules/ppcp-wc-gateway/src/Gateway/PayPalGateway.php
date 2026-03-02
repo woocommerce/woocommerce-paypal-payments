@@ -554,7 +554,7 @@ class PayPalGateway extends \WC_Payment_Gateway {
 
 				return $this->handle_payment_success( $wc_order );
 			} catch ( PayPalOrderMissingException $exc ) {
-				$order = $this->order_processor->create_order( $wc_order );
+				$order = $this->order_processor->create_order( $wc_order, is_string( $funding_source ) && $funding_source ? $funding_source : 'paypal' );
 
 				return array(
 					'result'   => 'success',
