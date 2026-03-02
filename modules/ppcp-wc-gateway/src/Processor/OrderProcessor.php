@@ -26,6 +26,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Factory\ShippingPreferenceFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\OrderHelper;
 use WooCommerce\PayPalCommerce\Button\Helper\ThreeDSecure;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
+use WooCommerce\PayPalCommerce\WcGateway\Helper\OrderStatusHelper;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
 use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
 use WooCommerce\PayPalCommerce\Vaulting\PaymentTokenRepository;
@@ -148,6 +149,8 @@ class OrderProcessor {
 	 */
 	private ExperienceContextBuilder $experience_context_builder;
 
+	private OrderStatusHelper $order_status_helper;
+
 	public function __construct(
 		SessionHandler $session_handler,
 		OrderEndpoint $order_endpoint,
@@ -162,7 +165,8 @@ class OrderProcessor {
 		PurchaseUnitFactory $purchase_unit_factory,
 		PayerFactory $payer_factory,
 		ShippingPreferenceFactory $shipping_preference_factory,
-		ExperienceContextBuilder $experience_context_builder
+		ExperienceContextBuilder $experience_context_builder,
+		OrderStatusHelper $order_status_helper
 	) {
 
 		$this->session_handler               = $session_handler;
@@ -179,6 +183,7 @@ class OrderProcessor {
 		$this->payer_factory                 = $payer_factory;
 		$this->shipping_preference_factory   = $shipping_preference_factory;
 		$this->experience_context_builder    = $experience_context_builder;
+		$this->order_status_helper           = $order_status_helper;
 	}
 
 	/**
@@ -370,7 +375,7 @@ class OrderProcessor {
 	 * @return bool
 	 */
 	private function verify_order_can_be_processed( WC_Order $wc_order ): bool {
-		if ( ! in_array( $wc_order->get_status(), array( 'pending', 'on-hold' ), true ) ) {
+		if ( ! $this->order_status_helper->is_awaiting_payment( $wc_order ) ) {
 			$this->logger->info(
 				sprintf(
 					'Order #%d has status "%s", skipping payment processing.',
