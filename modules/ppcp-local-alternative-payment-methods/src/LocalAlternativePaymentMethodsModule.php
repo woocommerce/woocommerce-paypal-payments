@@ -61,12 +61,12 @@ class LocalAlternativePaymentMethodsModule implements ServiceModule, ExecutableM
 	private function run_with_translations( ContainerInterface $c ): void {
 		$this->payment_methods = $c->get( 'ppcp-local-apms.payment-methods' );
 
+		$this->register_pwc_feature_flag_filters();
+
 		// When Local APMs are disabled, none of the following hooks are needed.
 		if ( ! $this->should_add_local_apm_gateways( $c ) ) {
 			return;
 		}
-
-		$this->register_pwc_feature_flag_filters();
 
 		add_action(
 			'wp_enqueue_scripts',
