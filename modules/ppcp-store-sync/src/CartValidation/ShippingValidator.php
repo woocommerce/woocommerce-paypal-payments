@@ -38,7 +38,7 @@ class ShippingValidator implements ValidatorInterface {
 
 	public function validate( PayPalCart $cart ) {
 		$shipping_address = $cart->shipping_address();
-
+		// Scenario 1: Missing Shipping Address.
 		if ( ! $shipping_address ) {
 			if ( $this->cart_needs_shipping( $cart ) ) {
 				return array(
@@ -59,19 +59,19 @@ class ShippingValidator implements ValidatorInterface {
 
 		$issues = array();
 
-		// Scenario 1: Invalid Shipping Address.
+		// Scenario 2: Invalid Shipping Address.
 		$address_issues = $this->validate_address_completeness( $shipping_address );
 		if ( $address_issues ) {
 			$issues = array_merge( $issues, $address_issues );
 		}
 
-		// Scenario 2: PO Box Restriction.
+		// Scenario 3: PO Box Restriction.
 		$po_box_issue = $this->validate_po_box_restrictions( $cart, $shipping_address );
 		if ( $po_box_issue ) {
 			$issues[] = $po_box_issue;
 		}
 
-		// Scenario 3: Region Restricted.
+		// Scenario 4: Region Restricted.
 		$country_issue = $this->validate_country( $shipping_address->country_code() );
 		if ( $country_issue ) {
 			$issues[] = $country_issue;
