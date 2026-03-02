@@ -40,7 +40,7 @@ use WooCommerce\PayPalCommerce\WcGateway\CardBillingMode;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CardButtonGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
-use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
+use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\ContactPreferenceFactory;
 
 /**
@@ -108,12 +108,7 @@ class CreateOrderEndpoint implements EndpointInterface {
 	 */
 	private $session_handler;
 
-	/**
-	 * The settings.
-	 *
-	 * @var Settings
-	 */
-	private $settings;
+	private SettingsProvider $settings_provider;
 
 	/**
 	 * The early order handler.
@@ -213,7 +208,7 @@ class CreateOrderEndpoint implements EndpointInterface {
 	 * @param OrderEndpoint             $order_endpoint The OrderEndpoint object.
 	 * @param PayerFactory              $payer_factory The PayerFactory object.
 	 * @param SessionHandler            $session_handler The SessionHandler object.
-	 * @param Settings                  $settings The Settings object.
+	 * @param SettingsProvider          $settings_provider The SettingsProvider object.
 	 * @param EarlyOrderHandler         $early_order_handler The EarlyOrderHandler object.
 	 * @param CartDataFactory           $cart_data_factory
 	 * @param CartDataTransientStorage  $cart_data_transient_storage
@@ -236,7 +231,7 @@ class CreateOrderEndpoint implements EndpointInterface {
 		OrderEndpoint $order_endpoint,
 		PayerFactory $payer_factory,
 		SessionHandler $session_handler,
-		Settings $settings,
+		SettingsProvider $settings_provider,
 		EarlyOrderHandler $early_order_handler,
 		CartDataFactory $cart_data_factory,
 		CartDataTransientStorage $cart_data_transient_storage,
@@ -259,7 +254,7 @@ class CreateOrderEndpoint implements EndpointInterface {
 		$this->api_endpoint                          = $order_endpoint;
 		$this->payer_factory                         = $payer_factory;
 		$this->session_handler                       = $session_handler;
-		$this->settings                              = $settings;
+		$this->settings_provider                     = $settings_provider;
 		$this->early_order_handler                   = $early_order_handler;
 		$this->cart_data_factory                     = $cart_data_factory;
 		$this->cart_data_transient_storage           = $cart_data_transient_storage;
@@ -702,7 +697,7 @@ class CreateOrderEndpoint implements EndpointInterface {
 	 * @return bool true if the shipping should be handled in PayPal popup, otherwise false.
 	 */
 	protected function should_handle_shipping_in_paypal( string $funding_source ): bool {
-		$is_vaulting_enabled = $this->settings->has( 'vault_enabled' ) && $this->settings->get( 'vault_enabled' );
+		$is_vaulting_enabled = $this->settings_provider->save_paypal_and_venmo();
 
 		if ( ! $this->handle_shipping_in_paypal ) {
 			return false;

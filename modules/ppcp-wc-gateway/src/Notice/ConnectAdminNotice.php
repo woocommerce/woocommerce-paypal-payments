@@ -6,7 +6,6 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\WcGateway\Notice;
 
 use WooCommerce\PayPalCommerce\AdminNotices\Entity\Message;
-use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 
 /**
  * Registers the admin message to "connect your account" if necessary.
@@ -18,7 +17,9 @@ class ConnectAdminNotice {
 	private bool $is_connected;
 
 	/**
-	 * Whether the current store's country is classified as a send-only country.
+	 * Whether the current store's country is classified as a send-only country..
+	 *
+	 * @var bool
 	 */
 	private bool $is_current_country_send_only;
 
@@ -39,7 +40,7 @@ class ConnectAdminNotice {
 	 *
 	 * @return Message|null
 	 */
-	public function connect_message() {
+	public function connect_message(): ?Message {
 		if ( ! $this->should_display() ) {
 			return null;
 		}
@@ -50,7 +51,7 @@ class ConnectAdminNotice {
 				'PayPal Payments is almost ready. To get started, connect your account with the <b>Activate PayPal Payments</b> button <a href="%1$s">on the Account Setup page</a>.',
 				'woocommerce-paypal-payments'
 			),
-			admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway&ppcp-tab=' . Settings::CONNECTION_TAB_ID )
+			admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway' )
 		);
 		return new Message( $message, 'warning' );
 	}

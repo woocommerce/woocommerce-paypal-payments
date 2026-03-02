@@ -12,9 +12,9 @@ namespace WooCommerce\PayPalCommerce\Blocks;
 use Automattic\WooCommerce\Blocks\Payments\Integrations\AbstractPaymentMethodType;
 use WooCommerce\PayPalCommerce\Assets\AssetGetter;
 use WooCommerce\PayPalCommerce\Button\Assets\SmartButtonInterface;
+use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\CardPaymentsConfiguration;
-use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 
 /**
  * Class AdvancedCardPaymentMethod
@@ -44,11 +44,11 @@ class AdvancedCardPaymentMethod extends AbstractPaymentMethodType {
 	private $smart_button;
 
 	/**
-	 * The settings.
+	 * The settings provider.
 	 *
-	 * @var Settings
+	 * @var SettingsProvider
 	 */
-	protected $plugin_settings;
+	protected SettingsProvider $plugin_settings;
 
 	protected CardPaymentsConfiguration $card_payments_configuration;
 
@@ -57,7 +57,7 @@ class AdvancedCardPaymentMethod extends AbstractPaymentMethodType {
 	 * @param string                        $version The assets version.
 	 * @param CreditCardGateway             $gateway
 	 * @param SmartButtonInterface|callable $smart_button The smart button script loading handler.
-	 * @param Settings                      $settings
+	 * @param SettingsProvider              $settings_provider The settings provider.
 	 * @param CardPaymentsConfiguration     $card_payments_configuration
 	 */
 	public function __construct(
@@ -65,7 +65,7 @@ class AdvancedCardPaymentMethod extends AbstractPaymentMethodType {
 		string $version,
 		CreditCardGateway $gateway,
 		$smart_button,
-		Settings $settings,
+		SettingsProvider $settings_provider,
 		CardPaymentsConfiguration $card_payments_configuration
 	) {
 		$this->name                        = CreditCardGateway::ID;
@@ -73,7 +73,7 @@ class AdvancedCardPaymentMethod extends AbstractPaymentMethodType {
 		$this->version                     = $version;
 		$this->gateway                     = $gateway;
 		$this->smart_button                = $smart_button;
-		$this->plugin_settings             = $settings;
+		$this->plugin_settings             = $settings_provider;
 		$this->card_payments_configuration = $card_payments_configuration;
 	}
 
@@ -123,8 +123,8 @@ class AdvancedCardPaymentMethod extends AbstractPaymentMethodType {
 			'scriptData'          => $script_data,
 			'supports'            => $this->gateway->supports,
 			'save_card_text'      => esc_html__( 'Save your card', 'woocommerce-paypal-payments' ),
-			'is_vaulting_enabled' => $this->plugin_settings->has( 'vault_enabled_dcc' ) && $this->plugin_settings->get( 'vault_enabled_dcc' ),
-			'card_icons'          => $this->plugin_settings->has( 'card_icons' ) ? (array) $this->plugin_settings->get( 'card_icons' ) : array(),
+			'is_vaulting_enabled' => $this->plugin_settings->save_card_details(),
+			'card_icons'          => $this->plugin_settings->card_icons(),
 			'name_on_card'        => $this->card_payments_configuration->show_name_on_card(),
 		);
 	}

@@ -13,7 +13,7 @@ use WC_AJAX;
 use WC_Order;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\CallbackConfig;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\ExperienceContext;
-use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
+use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
 use WooCommerce\PayPalCommerce\WcGateway\Endpoint\ReturnUrlEndpoint;
 use WooCommerce\PayPalCommerce\WcGateway\Shipping\ShippingCallbackUrlFactory;
 
@@ -28,14 +28,14 @@ class ExperienceContextBuilder {
 	private ExperienceContext $experience_context;
 
 	/**
-	 * The Settings.
+	 * The Settings Provider class.
 	 */
-	private ContainerInterface $settings;
+	private SettingsProvider $settings;
 
 	private ShippingCallbackUrlFactory $shipping_callback_url_factory;
 
 	public function __construct(
-		ContainerInterface $settings,
+		SettingsProvider $settings,
 		ShippingCallbackUrlFactory $shipping_callback_url_factory
 	) {
 		$this->experience_context = new ExperienceContext();
@@ -134,7 +134,7 @@ class ExperienceContextBuilder {
 	public function with_current_brand_name(): ExperienceContextBuilder {
 		$builder = clone $this;
 
-		$brand_name = $this->settings->has( 'brand_name' ) ? (string) $this->settings->get( 'brand_name' ) : '';
+		$brand_name = $this->settings->brand_name();
 		if ( empty( $brand_name ) ) {
 			$brand_name = null;
 		}
@@ -163,9 +163,7 @@ class ExperienceContextBuilder {
 	public function with_current_landing_page(): ExperienceContextBuilder {
 		$builder = clone $this;
 
-		$landing_page = $this->settings->has( 'landing_page' ) ?
-			(string) $this->settings->get( 'landing_page' )
-			: ExperienceContext::LANDING_PAGE_NO_PREFERENCE;
+		$landing_page = $this->settings->landing_page_enum();
 		if ( empty( $landing_page ) ) {
 			$landing_page = ExperienceContext::LANDING_PAGE_NO_PREFERENCE;
 		}
@@ -184,7 +182,7 @@ class ExperienceContextBuilder {
 
 		$builder->experience_context = $builder->experience_context
 			->with_payment_method_preference(
-				$this->settings->has( 'payee_preferred' ) && $this->settings->get( 'payee_preferred' ) ?
+				$this->settings->instant_payments_only() ?
 					ExperienceContext::PAYMENT_METHOD_IMMEDIATE_PAYMENT_REQUIRED
 					: ExperienceContext::PAYMENT_METHOD_UNRESTRICTED
 			);

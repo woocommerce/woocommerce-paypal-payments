@@ -26,6 +26,8 @@ export const learnMoreLinks = {
 			'https://www.paypal.com/uk/business/accept-payments/checkout',
 		PayInThree:
 			'https://www.paypal.com/uk/business/accept-payments/checkout/installments',
+		Fastlane:
+			'https://www.paypal.com/us/enterprise/payment-processing/guest-checkout',
 	},
 	FR: {
 		PaymentDetails:
@@ -66,5 +68,7 @@ export const learnMoreLinks = {
 			'https://www.paypal.com/au/business/accept-payments/checkout',
 		PayLater:
 			'https://www.paypal.com/au/business/accept-payments/checkout/installments',
+		Fastlane:
+			'https://www.paypal.com/us/enterprise/payment-processing/guest-checkout',
 	},
 };

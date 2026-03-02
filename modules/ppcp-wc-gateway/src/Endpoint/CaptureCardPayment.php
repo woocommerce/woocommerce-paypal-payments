@@ -6,7 +6,6 @@ namespace WooCommerce\PayPalCommerce\WcGateway\Endpoint;
 
 use Psr\Log\LoggerInterface;
 use RuntimeException;
-use stdClass;
 use WC_Order;
 use WooCommerce\PayPalCommerce\ApiClient\Authentication\Bearer;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\RequestTrait;
@@ -14,7 +13,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PurchaseUnit;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\OrderFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PurchaseUnitFactory;
-use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
+use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
 use WP_Error;
 
 class CaptureCardPayment {
@@ -49,12 +48,7 @@ class CaptureCardPayment {
 	 */
 	private $purchase_unit_factory;
 
-	/**
-	 * The settings.
-	 *
-	 * @var Settings
-	 */
-	private $settings;
+	private SettingsProvider $settings_provider;
 
 	/**
 	 * The logger.
@@ -68,14 +62,14 @@ class CaptureCardPayment {
 		Bearer $bearer,
 		OrderFactory $order_factory,
 		PurchaseUnitFactory $purchase_unit_factory,
-		Settings $settings,
+		SettingsProvider $settings_provider,
 		LoggerInterface $logger
 	) {
 		$this->host                  = $host;
 		$this->bearer                = $bearer;
 		$this->order_factory         = $order_factory;
 		$this->purchase_unit_factory = $purchase_unit_factory;
-		$this->settings              = $settings;
+		$this->settings_provider     = $settings_provider;
 		$this->logger                = $logger;
 	}
 
@@ -85,7 +79,7 @@ class CaptureCardPayment {
 	 * @throws RuntimeException When request fails.
 	 */
 	public function create_order( string $vault_id, string $custom_id, string $invoice_id, WC_Order $wc_order ): Order {
-		$intent = $this->settings->has( 'intent' ) && strtoupper( (string) $this->settings->get( 'intent' ) ) === 'AUTHORIZE' ? 'AUTHORIZE' : 'CAPTURE';
+		$intent = strtoupper( $this->settings_provider->payment_intent() ) === 'AUTHORIZE' ? 'AUTHORIZE' : 'CAPTURE';
 		$items  = array( $this->purchase_unit_factory->from_wc_cart( null, false, $wc_order->get_payment_method() ) );
 
 		// phpcs:disable WordPress.Security.NonceVerification
