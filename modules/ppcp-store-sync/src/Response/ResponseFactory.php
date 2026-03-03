@@ -57,6 +57,23 @@ class ResponseFactory {
 	}
 
 	/**
+	 * Create a cart response with token (for PUT when a new token was created).
+	 *
+	 * Used for PUT /merchant-cart/{id} when the endpoint creates a new PayPal order
+	 * because the cart didn't have a token or the existing token was expired.
+	 *
+	 * @param PayPalCart $cart The cart object.
+	 * @param string     $cart_id The cart ID.
+	 * @param string     $token The payment token.
+	 * @return UpdatedCartWithTokenResponse The response object.
+	 */
+	public function cart_with_token( PayPalCart $cart, string $cart_id, string $token ): UpdatedCartWithTokenResponse {
+		$wc_cart         = $this->build_wc_cart_or_null( $cart );
+		$applied_coupons = $this->build_applied_coupons( $cart );
+		return new UpdatedCartWithTokenResponse( $cart, $cart_id, $token, $applied_coupons, $wc_cart );
+	}
+
+	/**
 	 * Create a paid cart response.
 	 *
 	 * @param WC_Order   $order The WooCommerce order.

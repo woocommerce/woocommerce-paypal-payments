@@ -117,7 +117,7 @@ class AgenticSessionHandler {
 	 * @param PayPalCart $cart The updated cart.
 	 * @return bool True on success.
 	 */
-	public function update_cart_session( string $session_id, PayPalCart $cart ): bool {
+	public function update_cart_session( string $session_id, PayPalCart $cart, ?string $ec_token = null ): bool {
 		// Load the session first.
 		$existing = $this->load_cart_session( $session_id );
 		if ( ! $existing ) {
