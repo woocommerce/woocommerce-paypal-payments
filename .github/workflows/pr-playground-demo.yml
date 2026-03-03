@@ -66,25 +66,22 @@ jobs:
         run: composer install --no-dev --prefer-dist --optimize-autoloader
 
       - name: Install npm dependencies and build assets
-        run: npm ci && npm run build -- -vv --env=root
+        run: npm ci && npm run build
 
       - name: Set plugin version
         run: |
           sed -i "s/Version: .*/Version: ${{ needs.prepare_version.outputs.plugin_version }}/" woocommerce-paypal-payments.php
 
-      - name: Clean up dev files
+      - name: Prepare plugin directory
         run: |
-          while IFS= read -r pattern; do
-            [ -z "$pattern" ] && continue
-            [[ "$pattern" == \#* ]] && continue
-            rm -rf $pattern
-          done < .distignore
+          mkdir -p /tmp/plugin-build
+          rsync -a --exclude-from=.distignore . /tmp/plugin-build/
 
       - name: Upload plugin artifact
         uses: actions/upload-artifact@v4
         with:
           name: ${{ needs.prepare_version.outputs.artifact_name }}
-          path: .
+          path: /tmp/plugin-build
 
   create_archive:
     runs-on: ubuntu-latest
