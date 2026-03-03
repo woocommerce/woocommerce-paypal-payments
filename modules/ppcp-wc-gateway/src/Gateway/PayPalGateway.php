@@ -14,6 +14,7 @@ use Psr\Log\LoggerInterface;
 use WC_Order;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PaymentTokensEndpoint;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\OrderStatus;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentToken;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
@@ -528,9 +529,17 @@ class PayPalGateway extends \WC_Payment_Gateway {
 					);
 				}
 
+				$session_order = $this->session_handler->order();
+				if ( ! ( $session_order instanceof Order ) ) {
+					return $this->handle_payment_failure(
+						null,
+						new Exception( __( 'Payment session expired. Please try again.', 'woocommerce-paypal-payments' ) )
+					);
+				}
+
 				return array(
 					'result'   => 'success',
-					'redirect' => ( $this->paypal_checkout_url_factory )( $this->session_handler->order()->id() ),
+					'redirect' => ( $this->paypal_checkout_url_factory )( $session_order->id() ),
 				);
 			}
 
