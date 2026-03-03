@@ -19,6 +19,8 @@ use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentToken;
  */
 class SubscriptionsHandler {
 
+	const BILLING_AGREEMENT_TOKEN_TYPE = 'BILLING_AGREEMENT';
+
 	/**
 	 * PayPal Payments subscription renewal handler.
 	 *
@@ -37,16 +39,25 @@ class SubscriptionsHandler {
 
 	private LoggerInterface $logger;
 
+	/**
+	 * Whether the merchant is eligible for Vault v3.
+	 *
+	 * @var bool
+	 */
+	private bool $vault_v3_eligible;
+
 	public function __construct(
 		RenewalHandler $ppcp_renewal_handler,
 		MockGateway $gateway,
 		BillingAgreementTokenConverter $token_converter,
-		LoggerInterface $logger
+		LoggerInterface $logger,
+		bool $vault_v3_eligible = false
 	) {
 		$this->ppcp_renewal_handler = $ppcp_renewal_handler;
 		$this->mock_gateway         = $gateway;
 		$this->token_converter      = $token_converter;
 		$this->logger               = $logger;
+		$this->vault_v3_eligible    = $vault_v3_eligible;
 	}
 
 	/**
@@ -61,6 +72,9 @@ class SubscriptionsHandler {
 
 		// "Mock" PPEC when needed.
 		add_filter( 'woocommerce_payment_gateways', array( $this, 'add_mock_ppec_gateway' ) );
+
+		// Add billing agreement as a valid token type.
+		add_filter( 'woocommerce_paypal_payments_valid_payment_token_types', array( $this, 'add_billing_agreement_as_token_type' ) );
 
 		// Process PPEC renewals through PayPal Payments.
 		add_action( 'woocommerce_scheduled_subscription_payment_' . PPECHelper::PPEC_GATEWAY_ID, array( $this, 'process_renewal' ), 10, 2 );
@@ -83,6 +97,20 @@ class SubscriptionsHandler {
 	}
 
 	/**
+	 * Registers BILLING_AGREEMENT as a valid token type for using with the PayPal REST API.
+	 *
+	 * @param array $types List of token types.
+	 * @return array
+	 */
+	public function add_billing_agreement_as_token_type( $types ) {
+		if ( ! in_array( self::BILLING_AGREEMENT_TOKEN_TYPE, $types, true ) ) {
+			$types[] = self::BILLING_AGREEMENT_TOKEN_TYPE;
+		}
+
+		return $types;
+	}
+
+	/**
 	 * Processes subscription renewals on behalf of PayPal Express Checkout.
 	 * Hooked onto `woocommerce_scheduled_subscription_payment_ppec_paypal`.
 	 *
@@ -101,19 +129,22 @@ class SubscriptionsHandler {
 	/**
 	 * Short-circuits `RenewalHandler::get_token_for_customer()` for PPEC orders.
 	 *
-	 * Resolves a Vault v3 token converted from the original billing agreement.
+	 * Tries the vault v3 conversion path first. If that is not applicable or fails,
+	 * falls back to the legacy BILLING_AGREEMENT token path.
 	 */
 	public function use_billing_agreement_as_token( $token, $customer, $order ) {
 		if ( PPECHelper::PPEC_GATEWAY_ID !== $order->get_payment_method() || ! wcs_order_contains_renewal( $order ) ) {
 			return $token;
 		}
 
-		$vault_token = $this->get_vault_v3_token( $order );
-		if ( $vault_token ) {
-			return $vault_token;
+		if ( $this->vault_v3_eligible ) {
+			$vault_token = $this->get_vault_v3_token( $order );
+			if ( $vault_token ) {
+				return $vault_token;
+			}
 		}
 
-		return $token;
+		return $this->get_billing_agreement_token( $order ) ?? $token;
 	}
 
 	/**
@@ -158,6 +189,15 @@ class SubscriptionsHandler {
 		);
 
 		return new PaymentToken( $vault_token_id, new stdClass(), PaymentToken::TYPE_PAYMENT_METHOD_TOKEN );
+	}
+
+	private function get_billing_agreement_token( \WC_Order $order ): ?PaymentToken {
+		$billing_agreement_id = $this->resolve_billing_agreement_id( $order );
+		if ( ! $billing_agreement_id ) {
+			return null;
+		}
+
+		return new PaymentToken( $billing_agreement_id, new stdClass(), 'BILLING_AGREEMENT' );
 	}
 
 	private function resolve_billing_agreement_id( \WC_Order $order ): ?string {
