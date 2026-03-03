@@ -23,7 +23,6 @@ use WooCommerce\PayPalCommerce\Settings\Data\PaymentSettings;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CardButtonGateway;
 use WooCommerce\PayPalCommerce\Settings\Data\Definition\PaymentMethodsDefinition;
-use WooCommerce\PayPalCommerce\WcGateway\Helper\CardPaymentsConfiguration;
 /**
  * Class SettingsDataManager
  *
@@ -37,7 +36,6 @@ class SettingsDataManager
     private SettingsModel $payment_settings;
     private StylingSettings $styling_settings;
     private PaymentSettings $payment_methods;
-    private CardPaymentsConfiguration $dcc_configuration;
     /**
      * Data accessors for pay later messaging settings.
      *
@@ -59,7 +57,6 @@ class SettingsDataManager
         SettingsModel $payment_settings,
         StylingSettings $styling_settings,
         PaymentSettings $payment_methods,
-        CardPaymentsConfiguration $dcc_configuration,
         array $paylater_messaging,
         // TODO should be migrated to an AbstractDataModel.
         AbstractDataModel ...$data_models
@@ -78,7 +75,6 @@ class SettingsDataManager
         $this->payment_settings = $payment_settings;
         $this->styling_settings = $styling_settings;
         $this->payment_methods = $payment_methods;
-        $this->dcc_configuration = $dcc_configuration;
         $this->paylater_messaging = $paylater_messaging;
     }
     /**
@@ -187,13 +183,11 @@ class SettingsDataManager
         }
         if ($flags->is_business_seller) {
             if ($flags->use_card_payments) {
-                if ($this->dcc_configuration->use_acdc()) {
-                    // Enable ACDC for business sellers.
-                    $this->payment_methods->toggle_method_state(CreditCardGateway::ID, \true);
-                    // Apple Pay and Google Pay depend on the ACDC gateway.
-                    $this->payment_methods->toggle_method_state(ApplePayGateway::ID, \true);
-                    $this->payment_methods->toggle_method_state(GooglePayGateway::ID, \true);
-                }
+                // Enable ACDC for business sellers.
+                $this->payment_methods->toggle_method_state(CreditCardGateway::ID, \true);
+                // Apple Pay and Google Pay depend on the ACDC gateway.
+                $this->payment_methods->toggle_method_state(ApplePayGateway::ID, \true);
+                $this->payment_methods->toggle_method_state(GooglePayGateway::ID, \true);
                 // Enable Pay Later for business sellers if subscriptions were not selected.
                 // Selecting subscriptions automatically enables the "Save PayPal and Venmo" option, which is incompatible with Pay Later.
                 if (!$flags->use_subscriptions) {

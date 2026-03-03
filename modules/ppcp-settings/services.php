@@ -232,7 +232,7 @@ return array(
         return new DataSanitizer();
     },
     'settings.service.data-manager' => static function (ContainerInterface $container): SettingsDataManager {
-        return new SettingsDataManager($container->get('settings.data.definition.methods'), $container->get('settings.data.onboarding'), $container->get('settings.data.general'), $container->get('settings.data.settings'), $container->get('settings.data.styling'), $container->get('settings.data.payment'), $container->get('wcgateway.configuration.card-configuration'), $container->get('settings.data.paylater-messaging'), $container->get('settings.data.todos'));
+        return new SettingsDataManager($container->get('settings.data.definition.methods'), $container->get('settings.data.onboarding'), $container->get('settings.data.general'), $container->get('settings.data.settings'), $container->get('settings.data.styling'), $container->get('settings.data.payment'), $container->get('settings.data.paylater-messaging'), $container->get('settings.data.todos'));
     },
     'settings.service.script-data-handler' => static function (ContainerInterface $container): ScriptDataHandler {
         return new ScriptDataHandler($container->get('settings.asset_getter'), $container->get('paylater-configurator.is-available'), $container->get('wcgateway.store-country'), $container->get('api.partner_merchant_id'), $container->get('wcgateway.wp-paypal-locales-map'), $container->get('api.helper.partner-attribution'), $container->get('settings.settings-provider'), $container->get('api.helpers.paymentLevelEligibility'));
