@@ -24,6 +24,7 @@ use WooCommerce\PayPalCommerce\Settings\Data\PaymentSettings;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CardButtonGateway;
 use WooCommerce\PayPalCommerce\Settings\Data\Definition\PaymentMethodsDefinition;
+use WooCommerce\PayPalCommerce\WcGateway\Helper\CardPaymentsConfiguration;
 
 /**
  * Class SettingsDataManager
@@ -33,40 +34,12 @@ use WooCommerce\PayPalCommerce\Settings\Data\Definition\PaymentMethodsDefinition
  */
 class SettingsDataManager {
 
-	/**
-	 * The payment methods definition, provides a list of all available payment methods.
-	 *
-	 * @var PaymentMethodsDefinition
-	 */
 	private PaymentMethodsDefinition $methods_definition;
-
-	/**
-	 * The onboarding profile data model.
-	 *
-	 * @var OnboardingProfile
-	 */
 	private OnboardingProfile $onboarding_profile;
-
-	/**
-	 * Payment settings model.
-	 *
-	 * @var SettingsModel
-	 */
 	private SettingsModel $payment_settings;
-
-	/**
-	 * Data model that handles button styling on the front end.
-	 *
-	 * @var StylingSettings
-	 */
 	private StylingSettings $styling_settings;
-
-	/**
-	 * Model for handling payment methods.
-	 *
-	 * @var PaymentSettings
-	 */
 	private PaymentSettings $payment_methods;
+	private CardPaymentsConfiguration $dcc_configuration;
 
 	/**
 	 * Data accessors for pay later messaging settings.
@@ -84,18 +57,6 @@ class SettingsDataManager {
 	 */
 	private array $models_to_reset = array();
 
-	/**
-	 * Constructor.
-	 *
-	 * @param PaymentMethodsDefinition $methods_definition Access list of all payment methods.
-	 * @param OnboardingProfile        $onboarding_profile The onboarding profile model.
-	 * @param GeneralSettings          $general_settings   The general settings model.
-	 * @param SettingsModel            $payment_settings   The settings model.
-	 * @param StylingSettings          $styling_settings   The styling settings model.
-	 * @param PaymentSettings          $payment_methods    The payment settings model.
-	 * @param array                    $paylater_messaging Paylater Messaging accessor.
-	 * @param array                    ...$data_models     List of additional data models to reset.
-	 */
 	public function __construct(
 		PaymentMethodsDefinition $methods_definition,
 		OnboardingProfile $onboarding_profile,
@@ -103,6 +64,7 @@ class SettingsDataManager {
 		SettingsModel $payment_settings,
 		StylingSettings $styling_settings,
 		PaymentSettings $payment_methods,
+		CardPaymentsConfiguration $dcc_configuration,
 		array $paylater_messaging, // TODO should be migrated to an AbstractDataModel.
 		...$data_models
 	) {
@@ -130,6 +92,7 @@ class SettingsDataManager {
 		$this->payment_settings   = $payment_settings;
 		$this->styling_settings   = $styling_settings;
 		$this->payment_methods    = $payment_methods;
+		$this->dcc_configuration  = $dcc_configuration;
 		$this->paylater_messaging = $paylater_messaging;
 	}
 
@@ -253,12 +216,14 @@ class SettingsDataManager {
 
 		if ( $flags->is_business_seller ) {
 			if ( $flags->use_card_payments ) {
-				// Enable ACDC for business sellers.
-				$this->payment_methods->toggle_method_state( CreditCardGateway::ID, true );
+				if ( $this->dcc_configuration->use_acdc() ) {
+					// Enable ACDC for business sellers.
+					$this->payment_methods->toggle_method_state( CreditCardGateway::ID, true );
 
-				// Apple Pay and Google Pay depend on the ACDC gateway.
-				$this->payment_methods->toggle_method_state( ApplePayGateway::ID, true );
-				$this->payment_methods->toggle_method_state( GooglePayGateway::ID, true );
+					// Apple Pay and Google Pay depend on the ACDC gateway.
+					$this->payment_methods->toggle_method_state( ApplePayGateway::ID, true );
+					$this->payment_methods->toggle_method_state( GooglePayGateway::ID, true );
+				}
 
 				// Enable Pay Later for business sellers if subscriptions were not selected.
 				// Selecting subscriptions automatically enables the "Save PayPal and Venmo" option, which is incompatible with Pay Later.
