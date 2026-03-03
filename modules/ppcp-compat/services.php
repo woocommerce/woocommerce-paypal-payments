@@ -47,14 +47,6 @@ return array(
 		);
 	},
 
-	'compat.ppec.settings_importer'                  => static function ( ContainerInterface $container ): PPEC\SettingsImporter {
-		return new PPEC\SettingsImporter(
-			$container->get( 'settings.data.settings' ),
-			$container->get( 'settings.data.payment' ),
-			$container->get( 'settings.data.styling' )
-		);
-	},
-
 	'compat.plugin-script-names'                     => static function ( ContainerInterface $container ): array {
 		return array(
 			'ppcp-smart-button',

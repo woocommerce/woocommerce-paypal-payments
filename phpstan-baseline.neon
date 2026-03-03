@@ -2401,36 +2401,6 @@ parameters:
 			path: modules/ppcp-compat/src/CompatModule.php
 
 		-
-			message: '#^Access to an undefined property object\:\:\$settings\.$#'
-			identifier: property.notFound
-			count: 1
-			path: modules/ppcp-compat/src/PPEC/PPECHelper.php
-
-		-
-			message: '#^Method WooCommerce\\PayPalCommerce\\Compat\\PPEC\\SettingsImporter\:\:get_settings_translated\(\) return type has no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: modules/ppcp-compat/src/PPEC/SettingsImporter.php
-
-		-
-			message: '#^Property WooCommerce\\PayPalCommerce\\Compat\\PPEC\\SettingsImporter\:\:\$ppec_settings type has no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: modules/ppcp-compat/src/PPEC/SettingsImporter.php
-
-		-
-			message: '#^Method WooCommerce\\PayPalCommerce\\Compat\\PPEC\\SubscriptionsHandler\:\:add_billing_agreement_as_token_type\(\) has parameter \$types with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: modules/ppcp-compat/src/PPEC/SubscriptionsHandler.php
-
-		-
-			message: '#^Method WooCommerce\\PayPalCommerce\\Compat\\PPEC\\SubscriptionsHandler\:\:add_billing_agreement_as_token_type\(\) return type has no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: modules/ppcp-compat/src/PPEC/SubscriptionsHandler.php
-
-		-
 			message: '#^Method WooCommerce\\PayPalCommerce\\Compat\\PPEC\\SubscriptionsHandler\:\:add_mock_ppec_gateway\(\) has parameter \$gateways with no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
 			count: 1
@@ -2439,6 +2409,30 @@ parameters:
 		-
 			message: '#^Method WooCommerce\\PayPalCommerce\\Compat\\PPEC\\SubscriptionsHandler\:\:add_mock_ppec_gateway\(\) return type has no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
+			count: 1
+			path: modules/ppcp-compat/src/PPEC/SubscriptionsHandler.php
+
+		-
+			message: '#^Method WooCommerce\\PayPalCommerce\\Compat\\PPEC\\SubscriptionsHandler\:\:use_billing_agreement_as_token\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: modules/ppcp-compat/src/PPEC/SubscriptionsHandler.php
+
+		-
+			message: '#^Method WooCommerce\\PayPalCommerce\\Compat\\PPEC\\SubscriptionsHandler\:\:use_billing_agreement_as_token\(\) has parameter \$customer with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: modules/ppcp-compat/src/PPEC/SubscriptionsHandler.php
+
+		-
+			message: '#^Method WooCommerce\\PayPalCommerce\\Compat\\PPEC\\SubscriptionsHandler\:\:use_billing_agreement_as_token\(\) has parameter \$order with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: modules/ppcp-compat/src/PPEC/SubscriptionsHandler.php
+
+		-
+			message: '#^Method WooCommerce\\PayPalCommerce\\Compat\\PPEC\\SubscriptionsHandler\:\:use_billing_agreement_as_token\(\) has parameter \$token with no type specified\.$#'
+			identifier: missingType.parameter
 			count: 1
 			path: modules/ppcp-compat/src/PPEC/SubscriptionsHandler.php
 
