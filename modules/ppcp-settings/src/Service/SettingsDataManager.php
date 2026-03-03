@@ -66,19 +66,10 @@ class SettingsDataManager {
 		PaymentSettings $payment_methods,
 		CardPaymentsConfiguration $dcc_configuration,
 		array $paylater_messaging, // TODO should be migrated to an AbstractDataModel.
-		...$data_models
+		AbstractDataModel ...$data_models
 	) {
 		foreach ( $data_models as $data_model ) {
-			/**
-			 * An instance extracted from the spread operator. We only process
-			 * AbstractDataModel instances.
-			 *
-			 * @var mixed|AbstractDataModel $data_model
-			 */
-
-			if ( $data_model instanceof AbstractDataModel ) {
-				$this->models_to_reset[] = $data_model;
-			}
+			$this->models_to_reset[] = $data_model;
 		}
 
 		$this->models_to_reset[] = $onboarding_profile;
