@@ -15,7 +15,6 @@ use WooCommerce\PayPalCommerce\ApiClient\Helper\DccApplies;
 use WooCommerce\PayPalCommerce\Applepay\ApplePayGateway;
 use WooCommerce\PayPalCommerce\Axo\Gateway\AxoGateway;
 use WooCommerce\PayPalCommerce\Button\Helper\MessagesApply;
-use WooCommerce\PayPalCommerce\Compat\PPEC\PPECHelper;
 use WooCommerce\PayPalCommerce\Googlepay\GooglePayGateway;
 use WooCommerce\PayPalCommerce\Settings\Data\GeneralSettings;
 use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
@@ -65,7 +64,7 @@ class StatusReportModule implements ServiceModule, ExecutableModule
             assert($reference_transaction_status instanceof ReferenceTransactionStatus);
             /* @var Renderer $renderer The renderer. */
             $renderer = $c->get('status-report.renderer');
-            $had_ppec_plugin = PPECHelper::is_plugin_configured();
+            $had_ppec_plugin = is_array(get_option('woocommerce_ppec_paypal_settings'));
             $subscription_mode_options = $c->get('wcgateway.settings.fields.subscriptions_mode_options');
             /* @var GeneralSettings $general_settings General plugin settings. */
             $general_settings = $c->get('settings.data.general');
