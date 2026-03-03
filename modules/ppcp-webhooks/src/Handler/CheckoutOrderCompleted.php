@@ -11,6 +11,7 @@ namespace WooCommerce\PayPalCommerce\Webhooks\Handler;
 
 use Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayUponInvoice\PayUponInvoiceGateway;
+use WooCommerce\PayPalCommerce\WcGateway\Helper\OrderStatusHelper;
 use WP_REST_Request;
 use WP_REST_Response;
 
@@ -28,13 +29,16 @@ class CheckoutOrderCompleted implements RequestHandler {
 	 */
 	private $logger;
 
+	private OrderStatusHelper $order_status_helper;
+
 	/**
 	 * CheckoutOrderCompleted constructor.
 	 *
 	 * @param LoggerInterface $logger The logger.
 	 */
-	public function __construct( LoggerInterface $logger ) {
-		$this->logger = $logger;
+	public function __construct( LoggerInterface $logger, OrderStatusHelper $order_status_helper ) {
+		$this->logger              = $logger;
+		$this->order_status_helper = $order_status_helper;
 	}
 
 	/**
@@ -81,7 +85,8 @@ class CheckoutOrderCompleted implements RequestHandler {
 			if ( PayUponInvoiceGateway::ID === $wc_order->get_payment_method() ) {
 				continue;
 			}
-			if ( ! in_array( $wc_order->get_status(), array( 'pending', 'on-hold' ), true ) ) {
+
+			if ( ! $this->order_status_helper->is_awaiting_payment( $wc_order ) ) {
 				continue;
 			}
 

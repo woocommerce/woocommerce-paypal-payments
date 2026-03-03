@@ -29,7 +29,7 @@ return array(
 		return new AxoBlockPaymentMethod(
 			$container->get( 'axoblock.asset_getter' ),
 			$container->get( 'axo.gateway' ),
-			$container->get( 'wcgateway.settings' ),
+			$container->get( 'settings.settings-provider' ),
 			$container->get( 'wcgateway.configuration.card-configuration' ),
 			$container->get( 'settings.environment' ),
 			$container->get( 'wcgateway.asset_getter' ),
