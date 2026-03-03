@@ -30,11 +30,21 @@ return array(
 		return new PPEC\MockGateway( $title );
 	},
 
-	'compat.ppec.subscriptions-handler'              => static function ( ContainerInterface $container ) {
-		$ppcp_renewal_handler = $container->get( 'wc-subscriptions.renewal-handler' );
-		$gateway              = $container->get( 'compat.ppec.mock-gateway' );
+	'compat.ppec.billing-agreement-converter'        => static function ( ContainerInterface $container ) {
+		return new PPEC\BillingAgreementTokenConverter(
+			$container->get( 'api.endpoint.payment-method-tokens' ),
+			$container->get( 'api.repository.customer' ),
+			$container->get( 'woocommerce.logger.woocommerce' )
+		);
+	},
 
-		return new PPEC\SubscriptionsHandler( $ppcp_renewal_handler, $gateway );
+	'compat.ppec.subscriptions-handler'              => static function ( ContainerInterface $container ) {
+		return new PPEC\SubscriptionsHandler(
+			$container->get( 'wc-subscriptions.renewal-handler' ),
+			$container->get( 'compat.ppec.mock-gateway' ),
+			$container->get( 'compat.ppec.billing-agreement-converter' ),
+			$container->get( 'woocommerce.logger.woocommerce' )
+		);
 	},
 
 	'compat.ppec.settings_importer'                  => static function ( ContainerInterface $container ): PPEC\SettingsImporter {
