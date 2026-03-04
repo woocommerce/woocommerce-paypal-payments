@@ -5,7 +5,7 @@
  * @package WooCommerce\PayPalCommerce\AdminNotices
  */
 
-declare( strict_types=1 );
+declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\AdminNotices;
 
