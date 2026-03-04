@@ -4,7 +4,7 @@ Tags: woocommerce, paypal, payments, ecommerce, credit card
 Requires at least: 6.5
 Tested up to: 6.9
 Requires PHP: 7.4
-Stable tag: 3.4.0
+Stable tag: 3.4.1
 License: GPLv2
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -155,6 +155,9 @@ If you encounter issues with the PayPal buttons not appearing after an update, p
 6. Main settings screen.
 
 == Changelog ==
+
+= 3.4.1 - XXXX-XX-XX =
+* Fix - Performance issue in /v2/vault/payment-tokens/id #4098
 
 = 3.4.0 - 2026-02-10 =
 * New - Level 2 and Level 3 card processing support for Advanced Credit and Debit Cards #3970, #3999

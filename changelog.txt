@@ -1,5 +1,8 @@
 *** Changelog ***
 
+= 3.4.1 - XXXX-XX-XX =
+* Fix - Performance issue in /v2/vault/payment-tokens/id #4098
+
 = 3.4.0 - 2026-02-10 =
 * New - Level 2 and Level 3 card processing support for Advanced Credit and Debit Cards #3970, #3999
 * Enhancement - PayPal Working Capital promotional messaging now available for eligible merchants #4048
