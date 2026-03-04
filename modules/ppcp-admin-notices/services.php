@@ -3,7 +3,7 @@
 /**
  * The services of the admin notice module.
  *
- * @package WooCommerce\PayPalCommerce\Button
+ * @package WooCommerce\PayPalCommerce\AdminNotices
  */
 declare (strict_types=1);
 namespace WooCommerce\PayPalCommerce\AdminNotices;
