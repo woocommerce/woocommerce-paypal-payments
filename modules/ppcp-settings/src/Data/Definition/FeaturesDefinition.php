@@ -70,6 +70,11 @@ class FeaturesDefinition {
 	public const FEATURE_PAY_WITH_CRYPTO = 'pwc';
 
 	/**
+	 * Whether Pay upon Invoice (PUI) is supported. Available for merchants in Germany.
+	 */
+	public const FEATURE_PAY_UPON_INVOICE = 'pay_upon_invoice';
+
+	/**
 	 * The features eligibility service.
 	 *
 	 * @var FeaturesEligibilityService
@@ -421,6 +426,41 @@ class FeaturesDefinition {
 						'type'  => 'tertiary',
 						'text'  => __( 'Learn more', 'woocommerce-paypal-payments' ),
 						'url'   => 'https://www.paypal.com/us/digital-wallet/manage-money/crypto',
+						'class' => 'small-button',
+					),
+				),
+			),
+			self::FEATURE_PAY_UPON_INVOICE                => array(
+				'title'       => __( 'Pay upon Invoice', 'woocommerce-paypal-payments' ),
+				'description' => __( 'Offer Pay upon Invoice (Rechnungskauf) for customers in Germany. Buyers receive goods first and pay within 30 days — no PayPal account needed. Powered by Ratepay.', 'woocommerce-paypal-payments' ),
+				'enabled'     => $this->merchant_capabilities[ self::FEATURE_PAY_UPON_INVOICE ],
+				'buttons'     => array(
+					array(
+						'type'     => 'secondary',
+						'text'     => __( 'Configure', 'woocommerce-paypal-payments' ),
+						'action'   => array(
+							'type'    => 'tab',
+							'tab'     => 'payment_methods',
+							'section' => 'ppcp-pay-upon-invoice-gateway',
+							'modal'   => 'ppcp-pay-upon-invoice-gateway',
+						),
+						'showWhen' => 'enabled',
+						'class'    => 'small-button',
+					),
+					array(
+						'type'     => 'secondary',
+						'text'     => __( 'Sign up', 'woocommerce-paypal-payments' ),
+						'urls'     => array(
+							'sandbox' => 'https://www.sandbox.paypal.com/bizsignup/entry?country.x=DE&product=payment_methods&capabilities=PAY_UPON_INVOICE',
+							'live'    => 'https://www.paypal.com/bizsignup/entry?country.x=DE&product=payment_methods&capabilities=PAY_UPON_INVOICE',
+						),
+						'showWhen' => 'disabled',
+						'class'    => 'small-button',
+					),
+					array(
+						'type'  => 'tertiary',
+						'text'  => __( 'Learn more', 'woocommerce-paypal-payments' ),
+						'url'   => 'https://developer.paypal.com/docs/checkout/apm/pay-upon-invoice/',
 						'class' => 'small-button',
 					),
 				),

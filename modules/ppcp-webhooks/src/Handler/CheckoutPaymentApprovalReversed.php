@@ -10,6 +10,7 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\Webhooks\Handler;
 
 use Psr\Log\LoggerInterface;
+use WooCommerce\PayPalCommerce\WcGateway\Helper\OrderStatusHelper;
 use WP_REST_Request;
 use WP_REST_Response;
 
@@ -27,13 +28,16 @@ class CheckoutPaymentApprovalReversed implements RequestHandler {
 	 */
 	protected $logger;
 
+	private OrderStatusHelper $order_status_helper;
+
 	/**
 	 * CheckoutPaymentApprovalReversed constructor.
 	 *
 	 * @param LoggerInterface $logger The logger.
 	 */
-	public function __construct( LoggerInterface $logger ) {
-		$this->logger = $logger;
+	public function __construct( LoggerInterface $logger, OrderStatusHelper $order_status_helper ) {
+		$this->logger              = $logger;
+		$this->order_status_helper = $order_status_helper;
 	}
 
 	/**
@@ -77,7 +81,7 @@ class CheckoutPaymentApprovalReversed implements RequestHandler {
 		}
 
 		foreach ( $wc_orders as $wc_order ) {
-			if ( in_array( $wc_order->get_status(), array( 'pending', 'on-hold' ), true ) ) {
+			if ( $this->order_status_helper->is_awaiting_payment( $wc_order ) ) {
 				$error_message = sprintf(
 					'Failed to capture order %1$s through PayPal.',
 					(string) $wc_order->get_id()
