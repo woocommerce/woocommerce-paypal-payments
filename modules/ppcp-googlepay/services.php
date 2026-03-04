@@ -105,6 +105,7 @@ return array(
 				'BG', // Bulgaria
 				'CA', // Canada
 				'CN', // China
+				'C2', // China (PayPal)
 				'CY', // Cyprus
 				'CZ', // Czech Republic
 				'DK', // Denmark
