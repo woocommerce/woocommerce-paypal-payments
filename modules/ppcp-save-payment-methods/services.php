@@ -36,7 +36,7 @@ return array(
         if (has_filter('woocommerce_paypal_payments_save_payment_methods_supported_country_currency_matrix')) {
             _deprecated_hook('woocommerce_paypal_payments_save_payment_methods_supported_country_currency_matrix', '3.0.0', 'woocommerce_paypal_payments_save_payment_methods_supported_countries', esc_attr__('Please use the new Hook to filter countries for saved payments in PayPal Payments.', 'woocommerce-paypal-payments'));
         }
-        return apply_filters('woocommerce_paypal_payments_save_payment_methods_supported_countries', array('AU', 'AT', 'BE', 'BG', 'CA', 'CN', 'CY', 'CZ', 'DK', 'EE', 'FI', 'FR', 'DE', 'HK', 'HU', 'IE', 'IT', 'LV', 'LI', 'LT', 'LU', 'MT', 'NO', 'NL', 'PL', 'PT', 'RO', 'SG', 'SK', 'SI', 'ES', 'SE', 'GB', 'US', 'YT', 'RE', 'GP', 'GF', 'MQ'));
+        return apply_filters('woocommerce_paypal_payments_save_payment_methods_supported_countries', array('AU', 'AT', 'BE', 'BG', 'CA', 'CN', 'C2', 'CY', 'CZ', 'DK', 'EE', 'FI', 'FR', 'DE', 'HK', 'HU', 'IE', 'IT', 'LV', 'LI', 'LT', 'LU', 'MT', 'NO', 'NL', 'PL', 'PT', 'RO', 'SG', 'SK', 'SI', 'ES', 'SE', 'GB', 'US', 'YT', 'RE', 'GP', 'GF', 'MQ'));
     },
     'save-payment-methods.asset_getter' => static function (ContainerInterface $container): AssetGetter {
         $factory = $container->get('assets.asset_getter_factory');

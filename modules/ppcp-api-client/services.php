@@ -374,7 +374,7 @@ return array(
         /**
          * Returns which countries and currency combinations can be used for DCC.
          */
-        return apply_filters('woocommerce_paypal_payments_supported_country_currency_matrix', array('AU' => $default_currencies, 'AT' => $default_currencies, 'BE' => $default_currencies, 'BG' => $default_currencies, 'CA' => $default_currencies, 'CN' => $default_currencies, 'CY' => $default_currencies, 'CZ' => $default_currencies, 'DK' => $default_currencies, 'EE' => $default_currencies, 'FI' => $default_currencies, 'FR' => $default_currencies, 'DE' => $default_currencies, 'GR' => $default_currencies, 'HK' => $default_currencies, 'HU' => $default_currencies, 'IE' => $default_currencies, 'IT' => $default_currencies, 'JP' => $default_currencies, 'LV' => $default_currencies, 'LI' => $default_currencies, 'LT' => $default_currencies, 'LU' => $default_currencies, 'MT' => $default_currencies, 'MX' => array('MXN'), 'NL' => $default_currencies, 'PL' => $default_currencies, 'PT' => $default_currencies, 'RO' => $default_currencies, 'SK' => $default_currencies, 'SG' => $default_currencies, 'SI' => $default_currencies, 'ES' => $default_currencies, 'SE' => $default_currencies, 'GB' => $default_currencies, 'US' => $default_currencies, 'NO' => $default_currencies, 'YT' => $default_currencies, 'RE' => $default_currencies, 'GP' => $default_currencies, 'GF' => $default_currencies, 'MQ' => $default_currencies));
+        return apply_filters('woocommerce_paypal_payments_supported_country_currency_matrix', array('AU' => $default_currencies, 'AT' => $default_currencies, 'BE' => $default_currencies, 'BG' => $default_currencies, 'CA' => $default_currencies, 'CN' => $default_currencies, 'C2' => $default_currencies, 'CY' => $default_currencies, 'CZ' => $default_currencies, 'DK' => $default_currencies, 'EE' => $default_currencies, 'FI' => $default_currencies, 'FR' => $default_currencies, 'DE' => $default_currencies, 'GR' => $default_currencies, 'HK' => $default_currencies, 'HU' => $default_currencies, 'IE' => $default_currencies, 'IT' => $default_currencies, 'JP' => $default_currencies, 'LV' => $default_currencies, 'LI' => $default_currencies, 'LT' => $default_currencies, 'LU' => $default_currencies, 'MT' => $default_currencies, 'MX' => array('MXN'), 'NL' => $default_currencies, 'PL' => $default_currencies, 'PT' => $default_currencies, 'RO' => $default_currencies, 'SK' => $default_currencies, 'SG' => $default_currencies, 'SI' => $default_currencies, 'ES' => $default_currencies, 'SE' => $default_currencies, 'GB' => $default_currencies, 'US' => $default_currencies, 'NO' => $default_currencies, 'YT' => $default_currencies, 'RE' => $default_currencies, 'GP' => $default_currencies, 'GF' => $default_currencies, 'MQ' => $default_currencies));
     },
     /**
      * Which countries support which credit cards. Empty credit card arrays mean no restriction on currency.
@@ -390,6 +390,7 @@ return array(
             'BE' => $mastercard_visa_amex,
             'BG' => $mastercard_visa_amex,
             'CN' => array('mastercard' => array(), 'visa' => array()),
+            'C2' => array('mastercard' => array(), 'visa' => array()),
             'CY' => $mastercard_visa_amex,
             'CZ' => $mastercard_visa_amex,
             'DE' => $mastercard_visa_amex,

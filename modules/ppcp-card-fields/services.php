@@ -28,7 +28,7 @@ return array(
         return new CardFieldsApplies($container->get('card-fields.supported-country-matrix'), $container->get('api.merchant.country'));
     },
     'card-fields.supported-country-matrix' => static function (ContainerInterface $container): array {
-        return apply_filters('woocommerce_paypal_payments_card_fields_supported_country_matrix', array('AU', 'AT', 'BE', 'BG', 'CA', 'CN', 'CY', 'CZ', 'DK', 'EE', 'FI', 'FR', 'DE', 'GR', 'HK', 'HU', 'IE', 'IT', 'LV', 'LI', 'LT', 'LU', 'MT', 'MX', 'NL', 'PL', 'PT', 'RO', 'SK', 'SG', 'SI', 'ES', 'SE', 'GB', 'US', 'NO', 'YT', 'RE', 'GP', 'GF', 'MQ'));
+        return apply_filters('woocommerce_paypal_payments_card_fields_supported_country_matrix', array('AU', 'AT', 'BE', 'BG', 'CA', 'CN', 'C2', 'CY', 'CZ', 'DK', 'EE', 'FI', 'FR', 'DE', 'GR', 'HK', 'HU', 'IE', 'IT', 'LV', 'LI', 'LT', 'LU', 'MT', 'MX', 'NL', 'PL', 'PT', 'RO', 'SK', 'SG', 'SI', 'ES', 'SE', 'GB', 'US', 'NO', 'YT', 'RE', 'GP', 'GF', 'MQ'));
     },
     'card-fields.service.card-capture-validator' => static function (ContainerInterface $container): CardCaptureValidator {
         return new CardCaptureValidator();
