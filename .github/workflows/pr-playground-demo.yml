@@ -3,12 +3,6 @@ name: PR Playground Demo
 on:
   pull_request:
     types: [opened, synchronize, reopened]
-    paths:
-      - "src/**"
-      - "assets/**"
-      - "modules/**"
-      - "package.json"
-      - "composer.json"
 
 # Cancels all previous workflow runs for pull requests that have not completed.
 concurrency:
