@@ -127,6 +127,7 @@ class AxoBlockPaymentMethod extends AbstractPaymentMethodType
             'enabled_shipping_locations' => apply_filters('woocommerce_paypal_payments_axo_shipping_wc_enabled_locations', array()),
             'style_options' => array('root' => $this->settings_provider->fastlane_root_styles(), 'input' => $this->settings_provider->fastlane_input_styles()),
             'name_on_card' => $this->dcc_configuration->show_name_on_card(),
+            'show_watermark' => $this->settings_provider->show_fastlane_watermark(),
             'woocommerce' => array('states' => array('US' => WC()->countries->get_states('US'), 'CA' => WC()->countries->get_states('CA'))),
             'icons_directory' => $this->wcgateway_module_asset_getter->get_static_asset_url('images/axo/'),
             'ajax' => array('frontend_logger' => array('endpoint' => \WC_AJAX::get_endpoint(FrontendLogger::ENDPOINT), 'nonce' => wp_create_nonce(FrontendLogger::nonce())), 'axo_script_attributes' => array('endpoint' => \WC_AJAX::get_endpoint(AxoScriptAttributes::ENDPOINT), 'nonce' => wp_create_nonce(AxoScriptAttributes::nonce()))),

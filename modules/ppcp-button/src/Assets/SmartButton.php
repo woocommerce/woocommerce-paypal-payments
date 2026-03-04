@@ -976,6 +976,9 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
         if ($context === 'checkout-block') {
             $context = 'checkout-block-express';
         }
+        if ($context === 'pay-now') {
+            $context = 'checkout';
+        }
         $defaults = array('layout' => 'vertical', 'size' => 'responsive', 'color' => 'gold', 'shape' => 'pill', 'label' => 'paypal', 'tagline' => \true);
         return $this->get_style_value("button_{$context}_{$style}") ?? $this->get_style_value("button_{$style}") ?? ($default ? $this->normalize_style_value($default) : null) ?? $this->normalize_style_value($defaults[$style] ?? '');
     }
