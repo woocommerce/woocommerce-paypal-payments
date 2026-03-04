@@ -1,5 +1,8 @@
 import { createElement, createRoot } from '@wordpress/element';
-import { Watermark, WatermarkManager } from '@ppcp-axo-block/components/Watermark';
+import {
+	Watermark,
+	WatermarkManager,
+} from '@ppcp-axo-block/components/Watermark';
 
 // Object to store references to the watermark container and root
 const watermarkReference = {
@@ -11,6 +14,12 @@ const watermarkReference = {
  * Creates a container for the watermark in the checkout contact information block.
  */
 export const createWatermarkContainer = () => {
+	const axoConfig = window.wc_ppcp_axo;
+
+	if ( axoConfig?.show_watermark !== '1' ) {
+		//return;
+	}
+
 	const textInputContainer = document.querySelector(
 		'.wp-block-woocommerce-checkout-contact-information-block .wc-block-components-text-input'
 	);
