@@ -158,6 +158,7 @@ If you encounter issues with the PayPal buttons not appearing after an update, p
 
 = 3.4.1 - XXXX-XX-XX =
 * Fix - Performance issue in /v2/vault/payment-tokens/id #4098
+* Fix - China Merchants ACDC and Vaulting Missing #4139
 
 = 3.4.0 - 2026-02-10 =
 * New - Level 2 and Level 3 card processing support for Advanced Credit and Debit Cards #3970, #3999
