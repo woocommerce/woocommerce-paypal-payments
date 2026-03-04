@@ -143,6 +143,8 @@ return array(
                 // Canada
                 'CN',
                 // China
+                'C2',
+                // China (PayPal)
                 'CY',
                 // Cyprus
                 'CZ',
