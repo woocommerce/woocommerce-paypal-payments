@@ -672,6 +672,7 @@ return array(
 				'BG' => $default_currencies,
 				'CA' => $default_currencies,
 				'CN' => $default_currencies,
+				'C2' => $default_currencies,
 				'CY' => $default_currencies,
 				'CZ' => $default_currencies,
 				'DK' => $default_currencies,
@@ -739,6 +740,10 @@ return array(
 				'BE' => $mastercard_visa_amex,
 				'BG' => $mastercard_visa_amex,
 				'CN' => array(
+					'mastercard' => array(),
+					'visa'       => array(),
+				),
+				'C2' => array(
 					'mastercard' => array(),
 					'visa'       => array(),
 				),
