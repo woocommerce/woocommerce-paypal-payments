@@ -17,13 +17,14 @@ const Watermark = ( {
 } ) => {
 	const containerRef = useRef( null );
 	const watermarkRef = useRef( null );
+	const axoConfig = window.wc_ppcp_axo;
 
 	useEffect( () => {
 		/**
 		 * Renders the Fastlane watermark.
 		 */
 		const renderWatermark = async () => {
-			if ( ! containerRef.current ) {
+			if ( ! containerRef.current || axoConfig.show_watermark !== '1' ) {
 				return;
 			}
 
