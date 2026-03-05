@@ -12,6 +12,7 @@ namespace WooCommerce\PayPalCommerce\StoreSync;
 use Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\Assets\AssetGetter;
 use WooCommerce\PayPalCommerce\Assets\AssetGetterFactory;
+use WooCommerce\PayPalCommerce\StoreSync\CartValidation\PurchaseLimitsValidator;
 use WooCommerce\WooCommerce\Logging\Logger\NullLogger;
 use WooCommerce\WooCommerce\Logging\Logger\WooCommerceLogger;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
@@ -210,6 +211,11 @@ return array(
 			$c->get( 'agentic.validator.coupon.context-builder' ),
 			$c->get( 'agentic.validator.coupon.discount-calculator' ),
 			$c->get( 'agentic.validator.coupon.resolution-builder' )
+		);
+	},
+	'agentic.validator.purchase-limits'            => static function ( ContainerInterface $c ): PurchaseLimitsValidator {
+		return new PurchaseLimitsValidator(
+			$c->get( 'agentic.helper.product-manager' )
 		);
 	},
 

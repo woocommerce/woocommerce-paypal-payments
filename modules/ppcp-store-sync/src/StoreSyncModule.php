@@ -51,6 +51,7 @@ class StoreSyncModule implements ServiceModule, ExecutableModule {
 		'agentic.validator.product',
 		'agentic.validator.price',
 		'agentic.validator.inventory',
+		'agentic.validator.purchase-limits',
 		'agentic.validator.shipping',
 		'agentic.validator.currency',
 		'agentic.validator.coupon',
