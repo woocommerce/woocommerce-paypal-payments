@@ -30,10 +30,7 @@ class BillingAgreementTokenConverterTest extends TestCase
 	 */
 	private $logger;
 
-	/**
-	 * @var BillingAgreementTokenConverter
-	 */
-	private $sut;
+	private BillingAgreementTokenConverter $sut;
 
 	public function setUp(): void
 	{

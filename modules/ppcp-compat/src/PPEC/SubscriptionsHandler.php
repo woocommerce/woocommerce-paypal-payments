@@ -39,11 +39,6 @@ class SubscriptionsHandler {
 
 	private LoggerInterface $logger;
 
-	/**
-	 * Whether the merchant is eligible for Vault v3.
-	 *
-	 * @var bool
-	 */
 	private bool $vault_v3_eligible;
 
 	public function __construct(
