@@ -120,10 +120,7 @@ class PayPalGateway extends \WC_Payment_Gateway {
 
 	private OrderEndpoint $order_endpoint;
 
-	/**
-	 * @var string
-	 */
-	private $prefix;
+	private string $prefix;
 
 	/**
 	 * ID of the class extending the settings API. Used in option names.

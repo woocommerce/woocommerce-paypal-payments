@@ -20,35 +20,17 @@ class CapturePayPalPayment {
 
 	use RequestTrait;
 
-	/**
-	 * @var string
-	 */
-	private $host;
+	private string $host;
 
-	/**
-	 * @var Bearer
-	 */
-	private $bearer;
+	private Bearer $bearer;
 
-	/**
-	 * @var OrderFactory
-	 */
-	private $order_factory;
+	private OrderFactory $order_factory;
 
-	/**
-	 * @var PurchaseUnitFactory
-	 */
-	private $purchase_unit_factory;
+	private PurchaseUnitFactory $purchase_unit_factory;
 
-	/**
-	 * @var SettingsProvider
-	 */
-	private $settings_provider;
+	private SettingsProvider $settings_provider;
 
-	/**
-	 * @var LoggerInterface
-	 */
-	private $logger;
+	private LoggerInterface $logger;
 
 	public function __construct(
 		string $host,
@@ -68,12 +50,6 @@ class CapturePayPalPayment {
 
 	/**
 	 * Creates PayPal order from the given PayPal/Venmo vault id.
-	 *
-	 * @param string   $vault_id The vault ID.
-	 * @param string   $custom_id The custom ID.
-	 * @param string   $invoice_id The invoice ID.
-	 * @param WC_Order $wc_order The WooCommerce order.
-	 * @param string   $payment_source_name The payment source name ('paypal' or 'venmo').
 	 *
 	 * @throws RuntimeException When request fails.
 	 */
