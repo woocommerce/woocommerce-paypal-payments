@@ -35,6 +35,7 @@ extend-ignore-re = [
 ]
 
 [default.extend-identifiers]
+ba = "ba"
 Automattic = "Automattic"
 automattic = "automattic"
 PayPal = "PayPal"
