@@ -13,6 +13,7 @@ use WooCommerce\PayPalCommerce\Vendor\Psr\Log\LoggerInterface;
 use WC_Order;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PaymentTokensEndpoint;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\OrderStatus;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentToken;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
@@ -378,7 +379,11 @@ class PayPalGateway extends \WC_Payment_Gateway
                 if ($this->session_handler->insufficient_funding_tries() >= 3) {
                     return $this->handle_payment_failure(null, new Exception(__('Please use a different payment method.', 'woocommerce-paypal-payments'), $error->getCode(), $error));
                 }
-                return array('result' => 'success', 'redirect' => ($this->paypal_checkout_url_factory)($this->session_handler->order()->id()));
+                $session_order = $this->session_handler->order();
+                if (!$session_order instanceof Order) {
+                    return $this->handle_payment_failure(null, new Exception(__('Payment session expired. Please try again.', 'woocommerce-paypal-payments')));
+                }
+                return array('result' => 'success', 'redirect' => ($this->paypal_checkout_url_factory)($session_order->id()));
             }
             return $this->handle_payment_failure($wc_order, new Exception(\WooCommerce\PayPalCommerce\WcGateway\Gateway\Messages::generic_payment_error_message() . ' ' . $error->getMessage(), $error->getCode(), $error));
         } catch (Exception $error) {
