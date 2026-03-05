@@ -43,6 +43,13 @@ class BillingAgreementTokenConverter {
 			$customer_id = $this->customer_repository->customer_id_for_user( $user_id );
 			$result      = $this->payment_method_tokens_endpoint->create_payment_token( $payment_source, $customer_id );
 
+			if ( empty( $result->id ) ) {
+				$this->logger->error(
+					sprintf( 'Vault token creation for Billing Agreement %s returned no token ID.', $billing_agreement_id )
+				);
+				return null;
+			}
+
 			if ( isset( $result->customer->id ) ) {
 				update_user_meta( $user_id, '_ppcp_target_customer_id', $result->customer->id );
 			}
