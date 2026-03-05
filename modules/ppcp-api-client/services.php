@@ -101,9 +101,13 @@ return array(
     'api.paypal-host' => function (ContainerInterface $container): string {
         return PAYPAL_API_URL;
     },
-    // It seems this 'api.paypal-website-url' key is always overridden in ppcp-onboarding/services.php.
-    'api.paypal-website-url' => function (ContainerInterface $container): string {
-        return PAYPAL_URL;
+    'api.paypal-website-url' => static function (ContainerInterface $container): string {
+        $environment = $container->get('settings.environment');
+        assert($environment instanceof Environment);
+        if ($environment->is_sandbox()) {
+            return $container->get('api.paypal-website-url-sandbox');
+        }
+        return $container->get('api.paypal-website-url-production');
     },
     'api.factory.paypal-checkout-url' => function (ContainerInterface $container): callable {
         return function (string $id) use ($container): string {

@@ -110,7 +110,7 @@ class VaultingModule implements ServiceModule, ExecutableModule
                 // Exclude ApplePay tokens from payment pages.
                 if ((is_checkout() || is_cart() || is_product()) && !$is_post) {
                     foreach ($tokens as $index => $token) {
-                        if ($token instanceof \WooCommerce\PayPalCommerce\Vaulting\PaymentTokenApplePay || $token instanceof \WooCommerce\PayPalCommerce\Vaulting\PaymentTokenPayPal || $token instanceof \WooCommerce\PayPalCommerce\Vaulting\PaymentTokenVenmo) {
+                        if ($token instanceof \WooCommerce\PayPalCommerce\Vaulting\PaymentTokenApplePay) {
                             unset($tokens[$index]);
                         }
                     }
