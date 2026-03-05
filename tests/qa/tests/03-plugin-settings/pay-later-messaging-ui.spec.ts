@@ -14,7 +14,7 @@ test.beforeAll( async ( { utils, pcpApi } ) => {
 	);
 } );
 
-test.fixme(
+test(
 	'PCP-0000 | Settings - Pay Later Messaging - Default UI',
 	async (
 		{
@@ -27,9 +27,7 @@ test.fixme(
 			classicCart,
 			checkout,
 			classicCheckout,
-		},
-		testInfo
-	) => {
+		} ) => {
 		await utils.fillVisitorsCart( [ products.simple100 ] );
 
 		await pcpPayLaterMessaging.visit();
@@ -72,31 +70,31 @@ test.fixme(
 		await product.visit( products.simple100.slug );
 		await expect(
 			product.payPalUi.payLaterMessageContainer(),
-			'Assert PLM container is visible on product page'
+			'Assert PLM is visible on product page'
 		).toBeVisible();
 
 		await cart.visit();
 		await expect(
 			cart.payPalUi.payLaterMessageContainer(),
-			'Assert PLM container is visible on cart'
+			'Assert PLM is visible on cart'
 		).toBeVisible();
 
 		await classicCart.visit();
 		await expect(
 			classicCart.payPalUi.payLaterMessageContainer(),
-			'Assert PLM container is visible on classic cart'
+			'Assert PLM is visible on classic cart'
 		).toBeVisible();
 
 		await checkout.visit();
 		await expect(
 			checkout.payPalUi.payLaterMessageContainer(),
-			'Assert PLM container is visible on checkout'
+			'Assert PLM is visible on checkout'
 		).toBeVisible();
 
 		await classicCheckout.visit();
 		await expect(
 			classicCheckout.payPalUi.payLaterMessageContainer(),
-			'Assert PLM container is visible on classic checkout'
+			'Assert PLM is visible on classic checkout'
 		).toBeVisible();
 
 		await shop.visit();
@@ -113,7 +111,7 @@ test.fixme(
 	}
 );
 
-test.fixme(
+test(
 	'PCP-0000 | Settings - Pay Later Messaging - Disabled on all pages',
 	async ( {
 		utils,
@@ -129,6 +127,8 @@ test.fixme(
 		await utils.fillVisitorsCart( [ products.simple100 ] );
 
 		await pcpPayLaterMessaging.visit();
+		await pcpPayLaterMessaging.waitForLoadingMaskRemoved();
+
 		await pcpPayLaterMessaging.disableMessagingForLocation(
 			'Product page'
 		);
@@ -136,8 +136,10 @@ test.fixme(
 		await pcpPayLaterMessaging.disableMessagingForLocation( 'Checkout' );
 		await pcpPayLaterMessaging.disableMessagingForLocation( 'Home' );
 		await pcpPayLaterMessaging.disableMessagingForLocation( 'Shop' );
+
 		await pcpPayLaterMessaging.saveChanges();
 		await pcpPayLaterMessaging.page.reload();
+		await pcpPayLaterMessaging.waitForLoadingMaskRemoved();
 
 		expect
 			.soft(

@@ -35,7 +35,7 @@ const PreviewPanel = ( { location } ) => {
 		return disabled;
 	}, [ paymentMethods ] );
 
-	// TODO: Changes in the providerOptions are not reflected on the page.
+	// PayPalScriptProvider ignores option changes after mount — key forces a full remount.
 	const providerOptions = useMemo(
 		() => ( {
 			clientId: PREVIEW_CLIENT_ID,
@@ -51,7 +51,10 @@ const PreviewPanel = ( { location } ) => {
 	return (
 		<div className="preview-panel">
 			<div className="preview-panel-inner">
-				<PayPalScriptProvider options={ providerOptions }>
+				<PayPalScriptProvider
+					options={ providerOptions }
+					key={ providerOptions[ 'disable-funding' ] }
+				>
 					<PayPalButtons style={ style } forceReRender={ [ style ] }>
 						Error
 					</PayPalButtons>

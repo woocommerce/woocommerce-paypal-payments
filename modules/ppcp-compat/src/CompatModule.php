@@ -137,23 +137,8 @@ class CompatModule implements ServiceModule, ExecutableModule {
 	 * @return void
 	 */
 	private function initialize_ppec_compat_layer( ContainerInterface $container ): void {
-		// Process PPEC subscription renewals through PayPal Payments.
 		$handler = $container->get( 'compat.ppec.subscriptions-handler' );
 		$handler->maybe_hook();
-
-		// Settings.
-		$ppec_import = $container->get( 'compat.ppec.settings_importer' );
-		$ppec_import->maybe_hook();
-
-		// Inbox note inviting merchant to disable PayPal Express Checkout.
-		add_action(
-			'woocommerce_init',
-			function () {
-				if ( is_admin() && is_callable( array( WC(), 'is_wc_admin_active' ) ) && WC()->is_wc_admin_active() && class_exists( 'Automattic\WooCommerce\Admin\Notes\Notes' ) ) {
-					PPEC\DeactivateNote::init();
-				}
-			}
-		);
 	}
 
 	/**

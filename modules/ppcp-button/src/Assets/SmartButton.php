@@ -1543,6 +1543,9 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
 		if ( $context === 'checkout-block' ) {
 			$context = 'checkout-block-express';
 		}
+		if ( $context === 'pay-now' ) {
+			$context = 'checkout';
+		}
 
 		$defaults = array(
 			'layout'  => 'vertical',
