@@ -239,20 +239,21 @@ class OrderProcessor {
 	 * Creates a PayPal order for the given WC order.
 	 *
 	 * @param WC_Order $wc_order The WC order.
+	 * @param string   $funding_source The funding source (e.g. 'paypal', 'venmo').
 	 * @return Order
 	 * @throws RuntimeException If order creation fails.
 	 */
-	public function create_order( WC_Order $wc_order ): Order {
+	public function create_order( WC_Order $wc_order, string $funding_source = 'paypal' ): Order {
 		$pu                  = $this->purchase_unit_factory->from_wc_order( $wc_order );
 		$shipping_preference = $this->shipping_preference_factory->from_state( $pu, 'checkout' );
 		$order               = $this->order_endpoint->create(
 			array( $pu ),
 			$shipping_preference,
 			$this->payer_factory->from_wc_order( $wc_order ),
-			'',
-			array(),
+			$wc_order->get_payment_method(),
+			array( 'funding_source' => $funding_source ),
 			new PaymentSource(
-				'paypal',
+				$funding_source,
 				(object) array(
 					'experience_context' => $this->experience_context_builder
 						->with_default_paypal_config( $shipping_preference, ExperienceContext::USER_ACTION_PAY_NOW )
