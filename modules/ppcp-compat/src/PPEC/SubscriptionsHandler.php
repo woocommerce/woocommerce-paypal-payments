@@ -32,11 +32,6 @@ class SubscriptionsHandler
     private $mock_gateway;
     private \WooCommerce\PayPalCommerce\Compat\PPEC\BillingAgreementTokenConverter $token_converter;
     private LoggerInterface $logger;
-    /**
-     * Whether the merchant is eligible for Vault v3.
-     *
-     * @var bool
-     */
     private bool $vault_v3_eligible;
     public function __construct(RenewalHandler $ppcp_renewal_handler, \WooCommerce\PayPalCommerce\Compat\PPEC\MockGateway $gateway, \WooCommerce\PayPalCommerce\Compat\PPEC\BillingAgreementTokenConverter $token_converter, LoggerInterface $logger, bool $vault_v3_eligible = \false)
     {
