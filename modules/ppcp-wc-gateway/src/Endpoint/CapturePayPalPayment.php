@@ -49,7 +49,7 @@ class CapturePayPalPayment {
 	}
 
 	/**
-	 * Creates PayPal order from the given PayPal/Venmo vault id.
+	 * Creates PayPal order from the given PayPal/Venmo vault ID.
 	 *
 	 * @throws RuntimeException When request fails.
 	 */

@@ -451,6 +451,8 @@ class PayPalGateway extends \WC_Payment_Gateway {
 						if ( $this->subscription_helper->has_subscription( $wc_order->get_id() ) ) {
 							$wc_order->update_meta_data( '_ppcp_captured_vault_webhook', 'false' );
 						}
+
+						$wc_order->save();
 					}
 
 					$transaction_id = $this->get_paypal_order_transaction_id( $order );
