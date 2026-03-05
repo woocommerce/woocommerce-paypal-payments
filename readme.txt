@@ -156,7 +156,7 @@ If you encounter issues with the PayPal buttons not appearing after an update, p
 
 == Changelog ==
 
-= 3.4.1 - XXXX-XX-XX =
+= 3.4.1 - 2026-03-05 =
 * Fix - Performance issue in /v2/vault/payment-tokens/id #4098
 * Fix - China Merchants ACDC and Vaulting Missing #4139
 
