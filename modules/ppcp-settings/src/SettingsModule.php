@@ -682,6 +682,30 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 			}
 		);
 
+		/**
+		 * Disable ACDC-dependent gateways for merchants not eligible for ACDC
+		 * after onboarding is completed.
+		 *
+		 * Apple Pay and Google Pay depend on the ACDC, so they
+		 * must be disabled alongside ACDC when the merchant's country is not
+		 * eligible for Advanced Card Processing.
+		 */
+		add_action(
+			'woocommerce_paypal_payments_toggle_payment_gateways',
+			function ( PaymentSettings $payment_methods, ConfigurationFlagsDTO $flags ) use ( $container ) {
+				$dcc_configuration = $container->get( 'wcgateway.configuration.card-configuration' );
+				assert( $dcc_configuration instanceof CardPaymentsConfiguration );
+
+				if ( $flags->is_business_seller && $flags->use_card_payments && ! $dcc_configuration->use_acdc() ) {
+					$payment_methods->toggle_method_state( CreditCardGateway::ID, false );
+					$payment_methods->toggle_method_state( ApplePayGateway::ID, false );
+					$payment_methods->toggle_method_state( GooglePayGateway::ID, false );
+				}
+			},
+			10,
+			2
+		);
+
 		return true;
 	}
 
