@@ -416,7 +416,11 @@ class CouponValidator implements ValidatorInterface {
 			$context
 		);
 
-		return new CouponInvalid( $config['message'], $user_message, $field, '', $context, $resolutions );
+		return CouponInvalid::create( $config['message'] )
+			->user_message( $user_message )
+			->for_field( $field )
+			->add_context( $context )
+			->add_resolution( $resolutions );
 	}
 
 	/**

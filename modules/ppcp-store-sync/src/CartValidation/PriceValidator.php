@@ -9,6 +9,7 @@ declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\StoreSync\CartValidation;
 
+use WC_Product;
 use WooCommerce\PayPalCommerce\StoreSync\Enums\ErrorCode;
 use WooCommerce\PayPalCommerce\StoreSync\Enums\Priority;
 use WooCommerce\PayPalCommerce\StoreSync\Helper\CartHelper;
@@ -16,6 +17,7 @@ use WooCommerce\PayPalCommerce\StoreSync\Helper\ProductManager;
 use WooCommerce\PayPalCommerce\StoreSync\Schema\PayPalCart;
 use WooCommerce\PayPalCommerce\StoreSync\Schema\CartItem;
 use WooCommerce\PayPalCommerce\StoreSync\Schema\ResolutionOption;
+use WooCommerce\PayPalCommerce\StoreSync\Schema\Money;
 use WooCommerce\PayPalCommerce\StoreSync\Validation\PriceMismatch;
 use WooCommerce\PayPalCommerce\StoreSync\Validation\ValidationIssue;
 
@@ -46,7 +48,7 @@ class PriceValidator implements ValidatorInterface {
 	}
 
 	private function validate_price_matches_store( int $key, CartItem $item, PayPalCart $cart ): ?ValidationIssue {
-		$field = "items[{$key}]";
+		$field = "items[$key]";
 
 		$product = $this->product_manager->find_product( $item );
 
@@ -69,38 +71,36 @@ class PriceValidator implements ValidatorInterface {
 		return null;
 	}
 
-	private function create_price_mismatch_issue( $product, $cart_price, float $store_price, string $field, PayPalCart $cart ): PriceMismatch {
+	private function create_price_mismatch_issue( WC_Product $product, Money $cart_price, float $store_price, string $field, PayPalCart $cart ): PriceMismatch {
 		$price_difference = $store_price - $cart_price->value();
 		$is_increase      = $price_difference > 0;
 
-		$context            = $this->build_mismatch_context( $cart_price, $store_price, $price_difference, $is_increase );
-		$resolution_options = $this->build_resolution_options( $cart_price, $store_price, $price_difference, $is_increase, $cart );
-
-		return new PriceMismatch(
+		return PriceMismatch::create(
 			sprintf(
 				"Price mismatch for '%s': cart price is %s but store price is %s",
 				$product->get_name(),
 				$cart_price->value(),
 				$store_price
-			),
-			sprintf(
-				'The price of %s has %s from %s to %s.',
-				$product->get_name(),
-				$is_increase ? 'increased' : 'decreased',
-				CartHelper::format_price( (string) $cart_price->value(), $cart ),
-				CartHelper::format_price( (string) $store_price, $cart )
-			),
-			$field,
-			'',
-			$context,
-			$resolution_options
-		);
+			)
+		)
+			->user_message(
+				sprintf(
+					'The price of %s has %s from %s to %s.',
+					$product->get_name(),
+					$is_increase ? 'increased' : 'decreased',
+					CartHelper::format_price( (string) $cart_price->value(), $cart ),
+					CartHelper::format_price( (string) $store_price, $cart )
+				)
+			)
+			->for_field( $field )
+			->add_context( $this->build_mismatch_context( $cart_price, $store_price, $price_difference, $is_increase ) )
+			->add_resolution( $this->build_resolution_options( $cart_price, $store_price, $price_difference, $is_increase, $cart ) );
 	}
 
-	private function build_mismatch_context( $cart_price, float $store_price, float $price_difference, bool $is_increase ): array {
+	private function build_mismatch_context( Money $cart_price, float $store_price, float $price_difference, bool $is_increase ): array {
 		$context = array(
 			'specific_issue' => 'PRICE_MISMATCH',
-			'original_price' => CartHelper::format_decimal( $cart_price->value() ),
+			'original_price' => CartHelper::format_decimal( $cart_price->value() ?? 0. ),
 			'current_price'  => CartHelper::format_decimal( $store_price ),
 			'currency_code'  => $cart_price->currency_code(),
 		);
@@ -114,7 +114,7 @@ class PriceValidator implements ValidatorInterface {
 		return $context;
 	}
 
-	private function build_resolution_options( $cart_price, float $store_price, float $price_difference, bool $is_increase, PayPalCart $cart ): array {
+	private function build_resolution_options( Money $cart_price, float $store_price, float $price_difference, bool $is_increase, PayPalCart $cart ): array {
 		return array(
 			ResolutionOption::accept_new_price(
 				sprintf( 'Continue with %s', CartHelper::format_price( (string) $store_price, $cart ) ),

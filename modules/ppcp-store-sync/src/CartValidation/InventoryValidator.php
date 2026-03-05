@@ -55,44 +55,36 @@ class InventoryValidator implements ValidatorInterface {
 		}
 
 		if ( ! $this->product_manager->is_in_stock( $product ) ) {
-			return new ItemOutOfStock(
-				'Product is no longer available',
-				sprintf( '%s is currently out of stock.', $product->get_name() ),
-				$field,
-				'',
-				array(),
-				array(
-					ResolutionOption::remove_item( Priority::HIGH ),
-					ResolutionOption::wait_for_restock(),
-				)
-			);
+			return ItemOutOfStock::create( 'Product is no longer available' )
+				->user_message( sprintf( '%s is currently out of stock.', $product->get_name() ) )
+				->for_field( $field )
+				->add_resolution( ResolutionOption::remove_item( Priority::HIGH ) )
+				->add_resolution( ResolutionOption::wait_for_restock() );
 		}
 
 		if ( ! $this->product_manager->is_in_stock( $product, $item->quantity() ) ) {
 			$stock_quantity = $product->get_stock_quantity() ?? 0;
 
-			return new InsufficientQuantity(
-				'Insufficient inventory',
-				sprintf(
-					'Only %d of %s available, but %d requested.',
-					$stock_quantity,
-					$product->get_name(),
-					$item->quantity()
-				),
-				$field,
-				'',
-				array(),
-				array(
+			return InsufficientQuantity::create( 'Insufficient inventory' )
+				->user_message(
+					sprintf(
+						'Only %d of %s available, but %d requested.',
+						$stock_quantity,
+						$product->get_name(),
+						$item->quantity()
+					)
+				)
+				->for_field( $field )
+				->add_resolution(
 					ResolutionOption::modify_cart(
 						sprintf( 'Reduce quantity to %d', $stock_quantity ),
 						array(
 							'priority'     => Priority::HIGH,
 							'max_quantity' => $stock_quantity,
 						)
-					),
-					ResolutionOption::remove_item( Priority::LOW ),
+					)
 				)
-			);
+				->add_resolution( ResolutionOption::remove_item( Priority::LOW ) );
 		}
 
 		return null;

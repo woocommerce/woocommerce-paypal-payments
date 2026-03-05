@@ -9,7 +9,6 @@ declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\StoreSync\Validation;
 
-use RuntimeException;
 use WooCommerce\PayPalCommerce\StoreSync\Schema\ResolutionOption;
 
 /**
@@ -32,82 +31,36 @@ abstract class ValidationIssue {
 	 */
 	protected const ISSUE_TYPE = '';
 
-	/**
-	 * Maximum length for the technical message field.
-	 */
 	private const MAX_MESSAGE_LENGTH = 255;
 
-	/**
-	 * Maximum length for the user-facing message field.
-	 */
 	private const MAX_USER_MESSAGE_LENGTH = 500;
 
-	/**
-	 * Maximum number of resolution options allowed.
-	 */
 	private const MAX_RESOLUTION_OPTIONS = 5;
 
-	/**
-	 * Technical error message, mainly for AI.
-	 */
 	private string $message;
 
-	/**
-	 * Customer friendly error message.
-	 */
-	private string $user_message;
+	private string $user_message = '';
+
+	private string $field = '';
+
+	private string $item_id = '';
+
+	private array $context = array();
+
+	private array $resolution_options = array();
+
+	final private function __construct( string $message ) {
+		$this->message = trim( substr( $message, 0, self::MAX_MESSAGE_LENGTH ) );
+	}
 
 	/**
-	 * Reference to the field that triggered the issue, e.g. "shipping_address.postal_code"
-	 */
-	private string $field;
-
-	/**
-	 * Reference to the cart item that triggered the issue.
-	 */
-	private string $item_id;
-
-	/**
-	 * Context information about the validation issue.
-	 */
-	private array $context;
-
-	/**
-	 * Available resolution options for the validation issue.
-	 */
-	private array $resolution_options;
-
-	/**
-	 * Defines the validation issue contents.
+	 * Creates a new validation issue instance.
 	 *
-	 * @param string $message            Technical error description.
-	 * @param string $user_message       Optional. Customer friendly error message.
-	 * @param string $field              Optional. Identifies the field that triggered the issue.
-	 * @param string $item_id            Optional. Identifies the cart item that triggered the issue.
-	 * @param array  $context            Optional. Context information.
-	 * @param array  $resolution_options Optional. Available resolution options.
-	 * @throws RuntimeException If child class does not define ISSUE_CODE or ISSUE_TYPE constants.
+	 * @param string $message Technical error description for AI consumption.
+	 * @return static
 	 */
-	public function __construct(
-		string $message,
-		string $user_message = '',
-		string $field = '',
-		string $item_id = '',
-		array $context = array(),
-		array $resolution_options = array()
-	) {
-		if ( static::ISSUE_CODE === '' || static::ISSUE_TYPE === '' ) {
-			throw new RuntimeException(
-				sprintf( '%s must define ISSUE_CODE and ISSUE_TYPE constants.', static::class )
-			);
-		}
-
-		$this->message            = $message ?: 'Validation error occurred';
-		$this->user_message       = $user_message;
-		$this->field              = $field;
-		$this->item_id            = $item_id;
-		$this->context            = $context;
-		$this->resolution_options = array_slice( $resolution_options, 0, self::MAX_RESOLUTION_OPTIONS );
+	public static function create( string $message ): self {
+		return new static( $message );
 	}
 
 	/**
@@ -127,49 +80,94 @@ abstract class ValidationIssue {
 	}
 
 	/**
-	 * Adds a context entry to the validation issue.
+	 * Sets the field that triggered the issue.
 	 *
-	 * @param string $key   The context key.
-	 * @param mixed  $value The context value.
+	 * @param string $field Field path, e.g. "shipping_address.postal_code".
 	 * @return static
 	 */
-	public function add_context( string $key, $value ): self {
-		$this->context[ $key ] = $value;
+	public function for_field( string $field ): self {
+		$this->field = $field;
+
 		return $this;
 	}
 
 	/**
-	 * Adds a resolution option to the validation issue.
+	 * Sets the customer-friendly error message.
 	 *
-	 * Resolution options suggest possible actions to resolve the issue.
-	 * Maximum of 5 resolution options are allowed.
-	 *
-	 * @param string $action   The action identifier (e.g., 'REMOVE_ITEM', 'SUGGEST_ALTERNATIVE').
-	 * @param string $label    Human-readable action description.
-	 * @param string $url      Optional. URL for redirect actions. Must be a valid URL on the merchant's site.
-	 * @param array  $metadata Optional. Additional metadata (e.g., priority, cost_impact).
+	 * @param string $user_message Customer-facing message.
 	 * @return static
 	 */
-	public function add_resolution( string $action, string $label, string $url = '', array $metadata = array() ): self {
-		if ( count( $this->resolution_options ) < self::MAX_RESOLUTION_OPTIONS ) {
-			$resolution = array(
-				'action' => $action,
-				'label'  => $label,
-			);
+	public function user_message( string $user_message ): self {
+		$this->user_message = trim( substr( $user_message, 0, self::MAX_USER_MESSAGE_LENGTH ) );
 
-			if ( $url ) {
-				$validated_url = \wp_validate_redirect( $url, '' );
-				if ( $validated_url ) {
-					$resolution['url'] = $validated_url;
-				}
-			}
+		return $this;
+	}
 
-			if ( ! empty( $metadata ) ) {
-				$resolution['metadata'] = $metadata;
-			}
+	/**
+	 * Sets the cart item ID that triggered the issue.
+	 *
+	 * @param string $item_id Cart item identifier.
+	 * @return static
+	 */
+	public function item_id( string $item_id ): self {
+		$this->item_id = $item_id;
 
-			$this->resolution_options[] = $resolution;
+		return $this;
+	}
+
+	/**
+	 * Adds one or more context entries to the validation issue.
+	 *
+	 * Accepts either a single key/value pair or an associative array of entries.
+	 * Non-string keys and non-array first arguments are silently ignored.
+	 *
+	 * @param string|array $key   Context key, or an associative array of key => value pairs.
+	 * @param mixed        $value Context value. Ignored when $key is an array.
+	 * @return static
+	 */
+	public function add_context( $key, $value = null ): self {
+		if ( is_string( $key ) ) {
+			$this->context[ $key ] = $value;
+
+			return $this;
 		}
+
+		if ( is_array( $key ) ) {
+			foreach ( $key as $k => $v ) {
+				$this->add_context( $k, $v );
+			}
+		}
+
+		return $this;
+	}
+
+	/**
+	 * Adds one or more resolution options to the validation issue.
+	 *
+	 * Accepts either a single ResolutionOption or an array of ResolutionOption objects.
+	 * Non-ResolutionOption values are silently ignored.
+	 * A maximum of 5 resolution options is allowed in total.
+	 *
+	 * @param ResolutionOption|array $resolution A resolution option or array of options.
+	 * @return static
+	 */
+	public function add_resolution( $resolution ): self {
+		if ( count( $this->resolution_options ) >= self::MAX_RESOLUTION_OPTIONS ) {
+			return $this;
+		}
+
+		if ( $resolution instanceof ResolutionOption ) {
+			$this->resolution_options[] = $resolution;
+
+			return $this;
+		}
+
+		if ( is_array( $resolution ) ) {
+			foreach ( $resolution as $item ) {
+				$this->add_resolution( $item );
+			}
+		}
+
 		return $this;
 	}
 
@@ -177,11 +175,11 @@ abstract class ValidationIssue {
 		$data = array(
 			'code'    => $this->code(),
 			'type'    => $this->type(),
-			'message' => substr( $this->message, 0, self::MAX_MESSAGE_LENGTH ),
+			'message' => $this->message,
 		);
 
 		if ( $this->user_message ) {
-			$data['user_message'] = substr( $this->user_message, 0, self::MAX_USER_MESSAGE_LENGTH );
+			$data['user_message'] = $this->user_message;
 		}
 		if ( $this->field ) {
 			$data['field'] = $this->field;
