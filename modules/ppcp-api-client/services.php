@@ -339,9 +339,10 @@ return array(
 		);
 	},
 	'api.repository.partner-referrals-data'          => static function ( ContainerInterface $container ): PartnerReferralsData {
-
-		$dcc_applies    = $container->get( 'api.helpers.dccapplies' );
-		return new PartnerReferralsData( $dcc_applies );
+		return new PartnerReferralsData(
+			$container->get( 'api.helpers.dccapplies' ),
+			$container->get( 'ppcp-local-apms.pui.eligibility.check' )
+		);
 	},
 	'api.repository.payee'                           => static function ( ContainerInterface $container ): PayeeRepository {
 		$merchant_email = $container->get( 'api.merchant_email' );
