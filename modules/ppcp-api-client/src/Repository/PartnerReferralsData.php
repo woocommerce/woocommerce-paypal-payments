@@ -11,9 +11,6 @@ namespace WooCommerce\PayPalCommerce\ApiClient\Repository;
 
 use WooCommerce\PayPalCommerce\ApiClient\Helper\DccApplies;
 
-/**
- * Class PartnerReferralsData
- */
 class PartnerReferralsData {
 	/**
 	 * The DCC Applies Helper object.
@@ -25,14 +22,11 @@ class PartnerReferralsData {
 	 * @var DccApplies
 	 */
 	private DccApplies $dcc_applies;
+	protected bool $is_pui_eligible;
 
-	/**
-	 * PartnerReferralsData constructor.
-	 *
-	 * @param DccApplies $dcc_applies The DCC Applies helper.
-	 */
-	public function __construct( DccApplies $dcc_applies ) {
-		$this->dcc_applies = $dcc_applies; // @phpstan-ignore property.deprecated
+	public function __construct( DccApplies $dcc_applies, bool $is_pui_eligible ) {
+		$this->dcc_applies     = $dcc_applies; // @phpstan-ignore property.deprecated
+		$this->is_pui_eligible = $is_pui_eligible;
 	}
 
 	/**
@@ -104,6 +98,11 @@ class PartnerReferralsData {
 		if ( $use_card_payments !== false ) {
 			$first_party_features[] = 'VAULT';
 			$first_party_features[] = 'FUTURE_PAYMENT';
+		}
+
+		if ( $this->is_pui_eligible ) {
+			$products[]     = 'PAYMENT_METHODS';
+			$capabilities[] = 'PAY_UPON_INVOICE';
 		}
 
 		$payload = array(
