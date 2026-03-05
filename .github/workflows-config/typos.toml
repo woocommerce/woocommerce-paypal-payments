@@ -34,8 +34,10 @@ extend-ignore-re = [
 	"Vestibulum lectus .*",
 ]
 
-[default.extend-identifiers]
+[default.extend-words]
 ba = "ba"
+
+[default.extend-identifiers]
 Automattic = "Automattic"
 automattic = "automattic"
 PayPal = "PayPal"
