@@ -9,9 +9,6 @@ declare (strict_types=1);
 namespace WooCommerce\PayPalCommerce\ApiClient\Repository;
 
 use WooCommerce\PayPalCommerce\ApiClient\Helper\DccApplies;
-/**
- * Class PartnerReferralsData
- */
 class PartnerReferralsData
 {
     /**
@@ -24,15 +21,12 @@ class PartnerReferralsData
      * @var DccApplies
      */
     private DccApplies $dcc_applies;
-    /**
-     * PartnerReferralsData constructor.
-     *
-     * @param DccApplies $dcc_applies The DCC Applies helper.
-     */
-    public function __construct(DccApplies $dcc_applies)
+    protected bool $is_pui_eligible;
+    public function __construct(DccApplies $dcc_applies, bool $is_pui_eligible)
     {
         $this->dcc_applies = $dcc_applies;
         // @phpstan-ignore property.deprecated
+        $this->is_pui_eligible = $is_pui_eligible;
     }
     /**
      * Returns a nonce.
@@ -80,6 +74,10 @@ class PartnerReferralsData
         if ($use_card_payments !== \false) {
             $first_party_features[] = 'VAULT';
             $first_party_features[] = 'FUTURE_PAYMENT';
+        }
+        if ($this->is_pui_eligible) {
+            $products[] = 'PAYMENT_METHODS';
+            $capabilities[] = 'PAY_UPON_INVOICE';
         }
         $payload = array('partner_config_override' => array('return_url' => $return_url, 'return_url_description' => $return_url_label, 'show_add_credit_card' => $use_card_payments), 'products' => $products, 'capabilities' => $capabilities, 'legal_consents' => array(array('type' => 'SHARE_DATA_CONSENT', 'granted' => \true)), 'operations' => array(array('operation' => 'API_INTEGRATION', 'api_integration_preference' => array('rest_api_integration' => array('integration_method' => 'PAYPAL', 'integration_type' => 'FIRST_PARTY', 'first_party_details' => array('features' => $first_party_features, 'seller_nonce' => $this->nonce()))))));
         /**
