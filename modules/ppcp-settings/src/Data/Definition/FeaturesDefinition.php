@@ -62,17 +62,7 @@ class FeaturesDefinition
      * Whether Pay upon Invoice (PUI) is supported. Available for merchants in Germany.
      */
     public const FEATURE_PAY_UPON_INVOICE = 'pay_upon_invoice';
-    /**
-     * The features eligibility service.
-     *
-     * @var FeaturesEligibilityService
-     */
     protected FeaturesEligibilityService $eligibilities;
-    /**
-     * The general settings service.
-     *
-     * @var GeneralSettings
-     */
     protected GeneralSettings $settings;
     /**
      * The merchant capabilities.
@@ -80,21 +70,8 @@ class FeaturesDefinition
      * @var array
      */
     protected array $merchant_capabilities;
-    /**
-     * The plugin settings.
-     *
-     * @var SettingsModel
-     */
     protected SettingsModel $plugin_settings;
     protected LoggerInterface $logger;
-    /**
-     * Constructor.
-     *
-     * @param FeaturesEligibilityService $eligibilities The features eligibility service.
-     * @param GeneralSettings            $settings The general settings service.
-     * @param array                      $merchant_capabilities The merchant capabilities.
-     * @param SettingsModel              $plugin_settings The plugin settings.
-     */
     public function __construct(FeaturesEligibilityService $eligibilities, GeneralSettings $settings, array $merchant_capabilities, SettingsModel $plugin_settings, LoggerInterface $logger)
     {
         $this->eligibilities = $eligibilities;
