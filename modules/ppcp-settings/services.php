@@ -429,6 +429,7 @@ return array(
 		(array) get_option( 'woocommerce-ppcp-settings', array() ),
 		$c->get( 'settings.data.general' ),
 		$c->get( 'api.endpoint.partners' ),
+		$c->get( 'woocommerce.logger.woocommerce' ),
 	),
 	'settings.service.data-migration.fastlane'            => static fn( ContainerInterface $c ): FastlaneSettingsMigration => new FastlaneSettingsMigration(
 		(array) get_option( 'woocommerce-ppcp-settings', array() ),

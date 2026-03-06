@@ -9,6 +9,7 @@ declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\Settings\Service\Migration;
 
+use Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PartnersEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\SellerStatus;
 use WooCommerce\PayPalCommerce\Settings\Data\GeneralSettings;
@@ -28,15 +29,18 @@ class SettingsMigration implements SettingsMigrationInterface {
 	protected array $settings;
 	protected GeneralSettings $general_settings;
 	protected PartnersEndpoint $partners_endpoint;
+	protected LoggerInterface $logger;
 
 	public function __construct(
 		array $settings,
 		GeneralSettings $general_settings,
-		PartnersEndpoint $partners_endpoint
+		PartnersEndpoint $partners_endpoint,
+		LoggerInterface $logger
 	) {
 		$this->settings          = $settings;
 		$this->general_settings  = $general_settings;
 		$this->partners_endpoint = $partners_endpoint;
+		$this->logger            = $logger;
 	}
 
 	public function migrate(): void {
@@ -46,14 +50,28 @@ class SettingsMigration implements SettingsMigrationInterface {
 			return;
 		}
 
+		$country     = '';
+		$seller_type = SellerTypeEnum::UNKNOWN;
+
+		try {
+			$seller_status = $this->partners_endpoint->seller_status();
+			$country       = $seller_status->country();
+			$seller_type   = $this->merchant_account_type( $seller_status );
+		} catch ( \Exception $exception ) {
+			$this->logger->warning(
+				'Seller status API call failed during settings migration; using defaults.',
+				array( 'error' => $exception->getMessage() )
+			);
+		}
+
 		$connection = new MerchantConnectionDTO(
 			! empty( $this->settings['sandbox_on'] ),
 			$this->settings['client_id'],
 			$this->settings['client_secret'],
 			$this->settings['merchant_id'],
 			$this->settings['merchant_email'] ?? '',
-			$this->partners_endpoint->seller_status()->country(),
-			$this->merchant_account_type( $this->partners_endpoint->seller_status() )
+			$country,
+			$seller_type
 		);
 
 		$this->general_settings->set_merchant_data( $connection );

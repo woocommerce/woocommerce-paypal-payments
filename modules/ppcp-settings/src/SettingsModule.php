@@ -100,6 +100,24 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 			}
 		);
 
+		add_action(
+			'admin_init',
+			static function () use ( $container ): void {
+				if ( get_option( MigrationManager::OPTION_NAME_MIGRATION_IS_DONE ) === '1' ) {
+					return;
+				}
+
+				$legacy_settings = (array) get_option( 'woocommerce-ppcp-settings', array() );
+				if ( empty( $legacy_settings['client_id'] ) ) {
+					return;
+				}
+
+				$migration_manager = $container->get( 'settings.service.data-migration' );
+				assert( $migration_manager instanceof MigrationManager );
+				$migration_manager->migrate();
+			}
+		);
+
 		/**
 		 * Override ACDC status with BCDC for eligible merchants.
 		 *
