@@ -14,7 +14,9 @@ use WooCommerce\PayPalCommerce\StoreSync\Enums\Priority;
 use WooCommerce\PayPalCommerce\StoreSync\Helper\ProductManager;
 use WooCommerce\PayPalCommerce\StoreSync\Schema\PayPalCart;
 use WooCommerce\PayPalCommerce\StoreSync\Schema\CartItem;
-use WooCommerce\PayPalCommerce\StoreSync\Validation\Resolution\ResolutionOption;
+use WooCommerce\PayPalCommerce\StoreSync\Validation\Resolution\Action\ModifyCart;
+use WooCommerce\PayPalCommerce\StoreSync\Validation\Resolution\Action\RemoveItem;
+use WooCommerce\PayPalCommerce\StoreSync\Validation\Resolution\Action\WaitForRestock;
 use WooCommerce\PayPalCommerce\StoreSync\Validation\InsufficientQuantity;
 use WooCommerce\PayPalCommerce\StoreSync\Validation\ItemOutOfStock;
 use WooCommerce\PayPalCommerce\StoreSync\Validation\ValidationIssue;
@@ -58,8 +60,8 @@ class InventoryValidator implements ValidatorInterface {
 			return ItemOutOfStock::create( 'Product is no longer available' )
 				->user_message( sprintf( '%s is currently out of stock.', $product->get_name() ) )
 				->for_field( $field )
-				->add_resolution( ResolutionOption::remove_item( Priority::HIGH ) )
-				->add_resolution( ResolutionOption::wait_for_restock() );
+				->add_resolution( RemoveItem::create()->priority( Priority::HIGH ) )
+				->add_resolution( WaitForRestock::create() );
 		}
 
 		if ( ! $this->product_manager->is_in_stock( $product, $item->quantity() ) ) {
@@ -76,15 +78,12 @@ class InventoryValidator implements ValidatorInterface {
 				)
 				->for_field( $field )
 				->add_resolution(
-					ResolutionOption::modify_cart(
-						sprintf( 'Reduce quantity to %d', $stock_quantity ),
-						array(
-							'priority'     => Priority::HIGH,
-							'max_quantity' => $stock_quantity,
-						)
-					)
+					ModifyCart::create()
+						->label( sprintf( 'Reduce quantity to %d', $stock_quantity ) )
+						->priority( Priority::HIGH )
+						->set_meta( 'max_quantity', $stock_quantity )
 				)
-				->add_resolution( ResolutionOption::remove_item( Priority::LOW ) );
+				->add_resolution( RemoveItem::create()->priority( Priority::LOW ) );
 		}
 
 		return null;

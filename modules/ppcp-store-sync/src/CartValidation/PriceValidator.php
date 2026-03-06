@@ -16,7 +16,8 @@ use WooCommerce\PayPalCommerce\StoreSync\Helper\CartHelper;
 use WooCommerce\PayPalCommerce\StoreSync\Helper\ProductManager;
 use WooCommerce\PayPalCommerce\StoreSync\Schema\PayPalCart;
 use WooCommerce\PayPalCommerce\StoreSync\Schema\CartItem;
-use WooCommerce\PayPalCommerce\StoreSync\Validation\Resolution\ResolutionOption;
+use WooCommerce\PayPalCommerce\StoreSync\Validation\Resolution\Action\AcceptNewPrice;
+use WooCommerce\PayPalCommerce\StoreSync\Validation\Resolution\Action\RemoveItem;
 use WooCommerce\PayPalCommerce\StoreSync\Schema\Money;
 use WooCommerce\PayPalCommerce\StoreSync\Validation\Context\PricingErrorContext;
 use WooCommerce\PayPalCommerce\StoreSync\Validation\Context\Specific\PricingPriceMismatchContext;
@@ -115,20 +116,24 @@ class PriceValidator implements ValidatorInterface {
 	}
 
 	private function build_resolution_options( Money $cart_price, float $store_price, float $price_difference, bool $is_increase, PayPalCart $cart ): array {
+		$formatted_difference = sprintf(
+			'%s%s',
+			$is_increase ? '+' : '-',
+			CartHelper::format_price( (string) abs( $price_difference ), $cart )
+		);
+		$formatted_removal    = sprintf(
+			'-%s',
+			CartHelper::format_price( (string) $cart_price->value(), $cart )
+		);
+
 		return array(
-			ResolutionOption::accept_new_price(
-				sprintf( 'Continue with %s', CartHelper::format_price( (string) $store_price, $cart ) ),
-				array(
-					'cost_impact' => sprintf( '%s%s', $is_increase ? '+' : '-', CartHelper::format_price( (string) abs( $price_difference ), $cart ) ),
-					'priority'    => Priority::HIGH,
-				)
-			),
-			ResolutionOption::remove_item(
-				Priority::MEDIUM,
-				array(
-					'cost_impact' => sprintf( '-%s', CartHelper::format_price( (string) $cart_price->value(), $cart ) ),
-				)
-			),
+			AcceptNewPrice::create()
+				->label( sprintf( 'Continue with %s', CartHelper::format_price( (string) $store_price, $cart ) ) )
+				->priority( Priority::HIGH )
+				->set_meta( 'cost_impact', $formatted_difference ),
+			RemoveItem::create()
+				->priority( Priority::MEDIUM )
+				->set_meta( 'cost_impact', $formatted_removal ),
 		);
 	}
 }

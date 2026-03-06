@@ -11,7 +11,8 @@ namespace WooCommerce\PayPalCommerce\StoreSync\CartValidation;
 
 use WooCommerce\PayPalCommerce\StoreSync\Enums\Priority;
 use WooCommerce\PayPalCommerce\StoreSync\Schema\PayPalCart;
-use WooCommerce\PayPalCommerce\StoreSync\Validation\Resolution\ResolutionOption;
+use WooCommerce\PayPalCommerce\StoreSync\Validation\Resolution\Action\RemoveItem;
+use WooCommerce\PayPalCommerce\StoreSync\Validation\Resolution\Action\UseDifferentCurrency;
 use WooCommerce\PayPalCommerce\StoreSync\Validation\CurrencyMismatch;
 
 class CurrencyValidator implements ValidatorInterface {
@@ -24,7 +25,8 @@ class CurrencyValidator implements ValidatorInterface {
 			return array();
 		}
 
-		$consistency_issue = $this->validate_consistent_currency( $cart_currencies, $store_currency );
+		$consistency_issue =
+			$this->validate_consistent_currency( $cart_currencies, $store_currency );
 		if ( $consistency_issue ) {
 			return array( $consistency_issue );
 		}
@@ -93,14 +95,16 @@ class CurrencyValidator implements ValidatorInterface {
 			->user_message( 'All items in the cart must use the same currency.' )
 			->for_field( "items[{$mismatch['index']}].price.currency_code" )
 			->add_resolution(
-				ResolutionOption::use_different_currency(
-					sprintf( 'Set all items to %s', $store_currency ),
-					$store_currency
-				)
-					->metadata( array( 'expected_currency' => $store_currency ) )
+				UseDifferentCurrency::create()
+					->label( sprintf( 'Set all items to %s', $store_currency ) )
+					->set_meta( 'expected_currency', $store_currency )
 					->priority( Priority::HIGH )
 			)
-			->add_resolution( ResolutionOption::remove_item( Priority::LOW, array( 'item_index' => $mismatch['index'] ) ) );
+			->add_resolution(
+				RemoveItem::create()
+					->priority( Priority::LOW )
+					->set_meta( 'item_index', $mismatch['index'] )
+			);
 	}
 
 	private function validate_store_currency( string $cart_currency, int $item_index, string $store_currency ): ?CurrencyMismatch {
@@ -111,10 +115,9 @@ class CurrencyValidator implements ValidatorInterface {
 				->user_message( sprintf( 'This store only accepts payments in %s.', $store_currency ) )
 				->for_field( "items[{$item_index}].price.currency_code" )
 				->add_resolution(
-					ResolutionOption::use_different_currency(
-						sprintf( 'Change to %s', $store_currency ),
-						$store_currency
-					)
+					UseDifferentCurrency::create()
+						->label( sprintf( 'Change to %s', $store_currency ) )
+						->set_meta( 'expected_currency', $store_currency )
 				);
 		}
 

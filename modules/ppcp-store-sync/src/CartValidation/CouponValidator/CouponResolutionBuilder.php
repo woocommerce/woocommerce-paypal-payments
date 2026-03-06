@@ -15,6 +15,11 @@ use WC_Coupon;
 use WooCommerce\PayPalCommerce\StoreSync\Enums\Priority;
 use WooCommerce\PayPalCommerce\StoreSync\Helper\CartHelper;
 use WooCommerce\PayPalCommerce\StoreSync\Schema\PayPalCart;
+use WooCommerce\PayPalCommerce\StoreSync\Validation\Resolution\Action\ApplyDifferentCoupon;
+use WooCommerce\PayPalCommerce\StoreSync\Validation\Resolution\Action\KeepCurrentCoupon;
+use WooCommerce\PayPalCommerce\StoreSync\Validation\Resolution\Action\ModifyCart;
+use WooCommerce\PayPalCommerce\StoreSync\Validation\Resolution\Action\RedirectToMerchant;
+use WooCommerce\PayPalCommerce\StoreSync\Validation\Resolution\Action\RemoveCoupon;
 use WooCommerce\PayPalCommerce\StoreSync\Validation\Resolution\ResolutionOption;
 
 /**
@@ -26,11 +31,11 @@ class CouponResolutionBuilder {
 	 * Builds resolutions from config keys, with special handling for stacking.
 	 *
 	 * @param string         $issue_type The issue type.
-	 * @param array          $keys Resolution keys from config.
-	 * @param string         $code The coupon code.
-	 * @param array          $context The context data.
-	 * @param PayPalCart     $cart The cart context.
-	 * @param WC_Coupon|null $wc_coupon The WC coupon object.
+	 * @param array          $keys       Resolution keys from config.
+	 * @param string         $code       The coupon code.
+	 * @param array          $context    The context data.
+	 * @param PayPalCart     $cart       The cart context.
+	 * @param WC_Coupon|null $wc_coupon  The WC coupon object.
 	 * @return ResolutionOption[] The resolution options.
 	 */
 	public function build_resolution_options(
@@ -61,50 +66,52 @@ class CouponResolutionBuilder {
 	/**
 	 * Dispatches to the appropriate resolution factory method.
 	 *
-	 * @param string     $key The resolution key.
+	 * @param string     $key     The resolution key.
 	 * @param array      $context The context data.
-	 * @param PayPalCart $cart The cart context.
+	 * @param PayPalCart $cart    The cart context.
 	 * @return ResolutionOption|null The resolution option or null if key not recognized.
 	 */
 	private function build_resolution_by_key( string $key, array $context, PayPalCart $cart ): ?ResolutionOption {
 		switch ( $key ) {
 			case 'try_different':
-				return ResolutionOption::apply_different_coupon( 'Try a different coupon code', Priority::HIGH );
+				return ApplyDifferentCoupon::create()
+					->label( 'Try a different coupon code' )
+					->priority( Priority::HIGH );
 
 			case 'remove':
-				return ResolutionOption::remove_coupon( 'Continue without coupon', Priority::MEDIUM );
+				return RemoveCoupon::create()
+					->label( 'Continue without coupon' )
+					->priority( Priority::MEDIUM );
 
 			case 'modify_cart':
-				return ResolutionOption::modify_cart(
-					'Add eligible items to use this coupon',
-					array( 'priority' => Priority::HIGH )
-				);
+				return ModifyCart::create()
+					->label( 'Add eligible items to use this coupon' )
+					->priority( Priority::HIGH );
 
 			case 'view_available':
-				return ResolutionOption::redirect_to_merchant(
-					'View available offers',
-					'',
-					array( 'priority' => Priority::LOW )
-				);
+				return RedirectToMerchant::create()
+					->label( 'View available offers' )
+					->priority( Priority::LOW );
 
 			case 'suggest_alternative':
-				return ResolutionOption::apply_different_coupon( 'Try a different coupon', Priority::MEDIUM );
+				return ApplyDifferentCoupon::create()
+					->label( 'Try a different coupon' )
+					->priority( Priority::MEDIUM );
 
 			case 'add_items_to_minimum':
 				$formatted_amount = isset( $context['shortage_amount'] )
 					? CartHelper::format_price( $context['shortage_amount'], $cart )
 					: '';
 
-				return ResolutionOption::modify_cart(
-					sprintf( 'Add %s more to qualify', $formatted_amount ),
-					array(
-						'priority'      => Priority::HIGH,
-						'amount_needed' => $formatted_amount,
-					)
-				);
+				return ModifyCart::create()
+					->label( sprintf( 'Add %s more to qualify', $formatted_amount ) )
+					->priority( Priority::HIGH )
+					->set_meta( 'amount_needed', $formatted_amount );
 
 			case 'continue_without':
-				return ResolutionOption::remove_coupon( 'Continue without coupon', Priority::LOW );
+				return RemoveCoupon::create()
+					->label( 'Continue without coupon' )
+					->priority( Priority::LOW );
 
 			default:
 				return null;
@@ -114,9 +121,9 @@ class CouponResolutionBuilder {
 	/**
 	 * Builds stacking-specific resolutions with savings comparison.
 	 *
-	 * @param string     $code The coupon code.
+	 * @param string     $code    The coupon code.
 	 * @param array      $context The context data.
-	 * @param PayPalCart $cart The cart context.
+	 * @param PayPalCart $cart    The cart context.
 	 * @return ResolutionOption[] The resolution options.
 	 */
 	private function build_stacking_resolutions( string $code, array $context, PayPalCart $cart ): array {
@@ -128,16 +135,14 @@ class CouponResolutionBuilder {
 		$formatted_attempted = CartHelper::format_price( $attempted_discount, $cart );
 
 		return array(
-			ResolutionOption::keep_current_coupon(
-				sprintf( 'Keep %s (saves %s)', $code, $formatted_current ),
-				Priority::HIGH,
-				array( 'savings' => $formatted_current )
-			),
-			ResolutionOption::apply_different_coupon(
-				sprintf( 'Switch to %s (saves %s)', $attempted_coupon, $formatted_attempted ),
-				Priority::LOW,
-				array( 'savings' => $formatted_attempted )
-			),
+			KeepCurrentCoupon::create()
+				->label( sprintf( 'Keep %s (saves %s)', $code, $formatted_current ) )
+				->priority( Priority::HIGH )
+				->set_meta( 'savings', $formatted_current ),
+			ApplyDifferentCoupon::create()
+				->label( sprintf( 'Switch to %s (saves %s)', $attempted_coupon, $formatted_attempted ) )
+				->priority( Priority::LOW )
+				->set_meta( 'savings', $formatted_attempted ),
 		);
 	}
 }

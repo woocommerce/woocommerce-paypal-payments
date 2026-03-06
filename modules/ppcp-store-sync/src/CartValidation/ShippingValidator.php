@@ -21,7 +21,9 @@ use WC_Product;
 use WooCommerce\PayPalCommerce\StoreSync\Enums\Priority;
 use WooCommerce\PayPalCommerce\StoreSync\Helper\ProductManager;
 use WooCommerce\PayPalCommerce\StoreSync\Schema\PayPalCart;
-use WooCommerce\PayPalCommerce\StoreSync\Validation\Resolution\ResolutionOption;
+use WooCommerce\PayPalCommerce\StoreSync\Validation\Resolution\Action\ProvideMissingField;
+use WooCommerce\PayPalCommerce\StoreSync\Validation\Resolution\Action\RemoveItem;
+use WooCommerce\PayPalCommerce\StoreSync\Validation\Resolution\Action\UpdateAddress;
 use WooCommerce\PayPalCommerce\StoreSync\Validation\Context\Specific\ShippingToPoBoxNotAllowedContext;
 use WooCommerce\PayPalCommerce\StoreSync\Validation\InvalidAddress;
 use WooCommerce\PayPalCommerce\StoreSync\Validation\ShippingUnavailable;
@@ -79,16 +81,32 @@ class ShippingValidator implements ValidatorInterface {
 			$issues[] = InvalidAddress::create( 'Shipping address is missing street address' )
 				->user_message( 'Please provide a complete street address.' )
 				->for_field( 'shipping_address.address_line_1' )
-				->add_resolution( ResolutionOption::provide_missing_field( 'address_line_1', 'Provide street address' ) )
-				->add_resolution( ResolutionOption::update_address( 'Update shipping address', Priority::LOW ) );
+				->add_resolution(
+					ProvideMissingField::create()
+						->label( 'Provide street address' )
+						->set_meta( 'field', 'address_line_1' )
+				)
+				->add_resolution(
+					UpdateAddress::create()
+						->label( 'Update shipping address' )
+						->priority( Priority::LOW )
+				);
 		}
 
 		if ( ! $address->admin_area_2() ) {
 			$issues[] = InvalidAddress::create( 'Shipping address is missing city' )
 				->user_message( 'Please provide a city.' )
 				->for_field( 'shipping_address.admin_area_2' )
-				->add_resolution( ResolutionOption::provide_missing_field( 'admin_area_2', 'Provide city' ) )
-				->add_resolution( ResolutionOption::update_address( 'Update shipping address', Priority::LOW ) );
+				->add_resolution(
+					ProvideMissingField::create()
+						->label( 'Provide city' )
+						->set_meta( 'field', 'admin_area_2' )
+				)
+				->add_resolution(
+					UpdateAddress::create()
+						->label( 'Update shipping address' )
+						->priority( Priority::LOW )
+				);
 		}
 
 		$postal_code = $address->postal_code();
@@ -96,10 +114,19 @@ class ShippingValidator implements ValidatorInterface {
 			$issues[] = InvalidAddress::create( 'Shipping address is missing postal code' )
 				->user_message( 'Please provide a postal code.' )
 				->for_field( 'shipping_address.postal_code' )
-				->add_resolution( ResolutionOption::provide_missing_field( 'postal_code', 'Provide postal code' ) )
-				->add_resolution( ResolutionOption::update_address( 'Update shipping address', Priority::LOW ) );
+				->add_resolution(
+					ProvideMissingField::create()
+						->label( 'Provide postal code' )
+						->set_meta( 'field', 'postal_code' )
+				)
+				->add_resolution(
+					UpdateAddress::create()
+						->label( 'Update shipping address' )
+						->priority( Priority::LOW )
+				);
 		} else {
-			$postal_validation = $this->validate_postal_code_format( $postal_code, $address->country_code() );
+			$postal_validation =
+				$this->validate_postal_code_format( $postal_code, $address->country_code() );
 			if ( $postal_validation ) {
 				$issues[] = $postal_validation;
 			}
@@ -133,7 +160,12 @@ class ShippingValidator implements ValidatorInterface {
 			)
 				->user_message( 'Please provide a valid postal code.' )
 				->for_field( 'shipping_address.postal_code' )
-				->add_resolution( ResolutionOption::update_address( 'Correct the postal code', Priority::HIGH, array( 'field' => 'postal_code' ) ) );
+				->add_resolution(
+					UpdateAddress::create()
+						->label( 'Correct the postal code' )
+						->priority( Priority::HIGH )
+						->set_meta( 'field', 'postal_code' )
+				);
 		}
 
 		return null;
@@ -170,9 +202,14 @@ class ShippingValidator implements ValidatorInterface {
 						->restriction_reason( 'signature_required' )
 						->po_box_detected( true )
 				)
-				->add_resolution( ResolutionOption::update_address( 'Use street address instead', Priority::HIGH ) )
 				->add_resolution(
-					ResolutionOption::remove_item( Priority::LOW )
+					UpdateAddress::create()
+						->label( 'Use street address instead' )
+						->priority( Priority::HIGH )
+				)
+				->add_resolution(
+					RemoveItem::create()
+						->priority( Priority::LOW )
 						->label( 'Remove items requiring signature' )
 				);
 		}
@@ -261,7 +298,11 @@ class ShippingValidator implements ValidatorInterface {
 			return ShippingUnavailable::create( sprintf( 'Shipping to %s is not available', $country_code ) )
 				->user_message( sprintf( 'We do not ship to %s.', $this->get_country_name( $country_code ) ) )
 				->for_field( 'shipping_address.country_code' )
-				->add_resolution( ResolutionOption::update_address( 'Use a different shipping country', Priority::HIGH ) );
+				->add_resolution(
+					UpdateAddress::create()
+						->label( 'Use a different shipping country' )
+						->priority( Priority::HIGH )
+				);
 		}
 
 		return null;
