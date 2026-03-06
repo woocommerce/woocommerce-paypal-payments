@@ -96,7 +96,9 @@ return array(
         $dcc_card_matrix = $container->get('api.dcc-supported-country-card-matrix');
         $matrix = array();
         foreach ($dcc_card_matrix as $country => $cards) {
-            $matrix[$country] = array_map('strtoupper', array_keys($cards));
+            $matrix[$country] = array_map(static function ($key): string {
+                return strtoupper((string) $key);
+            }, array_keys($cards));
         }
         return apply_filters('woocommerce_paypal_payments_axo_supported_country_card_type_matrix', $matrix);
     },
