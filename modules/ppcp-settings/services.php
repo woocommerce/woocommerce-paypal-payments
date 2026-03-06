@@ -674,7 +674,8 @@ return array(
 			$container->get( 'settings.service.features_eligibilities' ),
 			$container->get( 'settings.data.general' ),
 			$merchant_capabilities,
-			$container->get( 'settings.data.settings' )
+			$container->get( 'settings.data.settings' ),
+			$container->get( 'woocommerce.logger.woocommerce' )
 		);
 	},
 	'settings.service.features_eligibilities'             => static function ( ContainerInterface $container ): FeaturesEligibilityService {

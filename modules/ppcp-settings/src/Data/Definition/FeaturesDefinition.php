@@ -9,6 +9,7 @@ declare( strict_types=1 );
 
 namespace WooCommerce\PayPalCommerce\Settings\Data\Definition;
 
+use Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\Settings\Data\SettingsModel;
 use WooCommerce\PayPalCommerce\Settings\Service\FeaturesEligibilityService;
 use WooCommerce\PayPalCommerce\Settings\Data\GeneralSettings;
@@ -101,6 +102,7 @@ class FeaturesDefinition {
 	 * @var SettingsModel
 	 */
 	protected SettingsModel $plugin_settings;
+	protected LoggerInterface $logger;
 
 	/**
 	 * Constructor.
@@ -114,12 +116,14 @@ class FeaturesDefinition {
 		FeaturesEligibilityService $eligibilities,
 		GeneralSettings $settings,
 		array $merchant_capabilities,
-		SettingsModel $plugin_settings
+		SettingsModel $plugin_settings,
+		LoggerInterface $logger
 	) {
 		$this->eligibilities         = $eligibilities;
 		$this->settings              = $settings;
 		$this->merchant_capabilities = $merchant_capabilities;
 		$this->plugin_settings       = $plugin_settings;
+		$this->logger                = $logger;
 	}
 
 	/**
@@ -140,6 +144,28 @@ class FeaturesDefinition {
 		}
 
 		return $eligible_features;
+	}
+
+	/**
+	 * Returns whether a specific feature is eligible.
+	 *
+	 * @param string $feature_name One of the FEATURE_* constants.
+	 * @return bool true if the feature is eligible, false otherwise or if unknown.
+	 */
+	public function is_feature_eligible( string $feature_name ): bool {
+		$eligibility_checks = $this->eligibilities->get_eligibility_checks();
+
+		if ( ! isset( $eligibility_checks[ $feature_name ] ) ) {
+			$this->logger->warning(
+				sprintf(
+					'No eligibility check registered for feature "%s".',
+					$feature_name
+				)
+			);
+			return false;
+		}
+
+		return (bool) $eligibility_checks[ $feature_name ]();
 	}
 
 	/**
