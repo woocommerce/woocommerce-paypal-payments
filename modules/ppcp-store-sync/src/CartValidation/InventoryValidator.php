@@ -60,7 +60,11 @@ class InventoryValidator implements ValidatorInterface {
 			return ItemOutOfStock::create( 'Product is no longer available' )
 				->user_message( sprintf( '%s is currently out of stock.', $product->get_name() ) )
 				->for_field( $field )
-				->add_resolution( RemoveItem::create()->priority( Priority::HIGH ) )
+				->add_resolution(
+					RemoveItem::create()
+						->label( 'Remove from cart' )
+						->priority( Priority::HIGH )
+				)
 				->add_resolution( WaitForRestock::create() );
 		}
 
@@ -83,7 +87,11 @@ class InventoryValidator implements ValidatorInterface {
 						->priority( Priority::HIGH )
 						->set_meta( 'max_quantity', $stock_quantity )
 				)
-				->add_resolution( RemoveItem::create()->priority( Priority::LOW ) );
+				->add_resolution(
+					RemoveItem::create()
+						->label( 'Remove from cart' )
+						->priority( Priority::LOW )
+				);
 		}
 
 		return null;

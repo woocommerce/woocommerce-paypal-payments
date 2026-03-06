@@ -209,8 +209,8 @@ class ShippingValidator implements ValidatorInterface {
 				)
 				->add_resolution(
 					RemoveItem::create()
-						->priority( Priority::LOW )
 						->label( 'Remove items requiring signature' )
+						->priority( Priority::LOW )
 				);
 		}
 

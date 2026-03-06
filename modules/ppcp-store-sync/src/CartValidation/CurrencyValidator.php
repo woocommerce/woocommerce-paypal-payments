@@ -102,6 +102,7 @@ class CurrencyValidator implements ValidatorInterface {
 			)
 			->add_resolution(
 				RemoveItem::create()
+					->label( 'Remove from cart' )
 					->priority( Priority::LOW )
 					->set_meta( 'item_index', $mismatch['index'] )
 			);

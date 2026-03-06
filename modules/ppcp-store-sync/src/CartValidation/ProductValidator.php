@@ -60,14 +60,22 @@ class ProductValidator implements ValidatorInterface {
 			return InvalidProduct::create( "Product '{$identifier}' not found in WooCommerce catalog" )
 				->user_message( "'{$item->name()}' not found in WooCommerce catalog" )
 				->for_field( $field )
-				->add_resolution( RemoveItem::create()->priority( Priority::HIGH ) );
+				->add_resolution(
+					RemoveItem::create()
+						->label( 'Remove from cart' )
+						->priority( Priority::HIGH )
+				);
 		}
 
 		if ( ! $product->is_purchasable() ) {
 			return InvalidProduct::create( "Product '{$identifier}' is not available for purchase" )
 				->user_message( "'{$item->name()}' cannot be purchased at this time" )
 				->for_field( $field )
-				->add_resolution( RemoveItem::create()->priority( Priority::HIGH ) )
+				->add_resolution(
+					RemoveItem::create()
+						->label( 'Remove from cart' )
+						->priority( Priority::HIGH )
+				)
 				->add_resolution( SuggestAlternative::create() );
 		}
 

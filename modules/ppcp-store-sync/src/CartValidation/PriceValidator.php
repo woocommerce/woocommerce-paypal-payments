@@ -132,6 +132,7 @@ class PriceValidator implements ValidatorInterface {
 				->priority( Priority::HIGH )
 				->set_meta( 'cost_impact', $formatted_difference ),
 			RemoveItem::create()
+				->label( 'Remove from cart' )
 				->priority( Priority::MEDIUM )
 				->set_meta( 'cost_impact', $formatted_removal ),
 		);
