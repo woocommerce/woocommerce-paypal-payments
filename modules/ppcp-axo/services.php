@@ -166,7 +166,12 @@ return array(
 		$matrix = array();
 
 		foreach ( $dcc_card_matrix as $country => $cards ) {
-			$matrix[ $country ] = array_map( 'strtoupper', array_keys( $cards ) );
+			$matrix[ $country ] = array_map(
+				static function ( $key ): string {
+					return strtoupper( (string) $key );
+				},
+				array_keys( $cards )
+			);
 		}
 
 		return apply_filters(
