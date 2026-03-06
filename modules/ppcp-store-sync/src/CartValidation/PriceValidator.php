@@ -16,7 +16,7 @@ use WooCommerce\PayPalCommerce\StoreSync\Helper\CartHelper;
 use WooCommerce\PayPalCommerce\StoreSync\Helper\ProductManager;
 use WooCommerce\PayPalCommerce\StoreSync\Schema\PayPalCart;
 use WooCommerce\PayPalCommerce\StoreSync\Schema\CartItem;
-use WooCommerce\PayPalCommerce\StoreSync\Schema\ResolutionOption;
+use WooCommerce\PayPalCommerce\StoreSync\Validation\Resolution\ResolutionOption;
 use WooCommerce\PayPalCommerce\StoreSync\Schema\Money;
 use WooCommerce\PayPalCommerce\StoreSync\Validation\Context\PricingErrorContext;
 use WooCommerce\PayPalCommerce\StoreSync\Validation\Context\Specific\PricingPriceMismatchContext;

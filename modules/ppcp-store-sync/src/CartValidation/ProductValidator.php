@@ -14,7 +14,7 @@ use WooCommerce\PayPalCommerce\StoreSync\Enums\Priority;
 use WooCommerce\PayPalCommerce\StoreSync\Helper\ProductManager;
 use WooCommerce\PayPalCommerce\StoreSync\Schema\PayPalCart;
 use WooCommerce\PayPalCommerce\StoreSync\Schema\CartItem;
-use WooCommerce\PayPalCommerce\StoreSync\Schema\ResolutionOption;
+use WooCommerce\PayPalCommerce\StoreSync\Validation\Resolution\ResolutionOption;
 use WooCommerce\PayPalCommerce\StoreSync\Validation\InvalidProduct;
 use WooCommerce\PayPalCommerce\StoreSync\Validation\ValidationIssue;
 use WooCommerce\PayPalCommerce\StoreSync\Config\IngestionConfiguration;

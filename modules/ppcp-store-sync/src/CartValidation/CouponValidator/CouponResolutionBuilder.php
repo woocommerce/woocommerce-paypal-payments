@@ -15,7 +15,7 @@ use WC_Coupon;
 use WooCommerce\PayPalCommerce\StoreSync\Enums\Priority;
 use WooCommerce\PayPalCommerce\StoreSync\Helper\CartHelper;
 use WooCommerce\PayPalCommerce\StoreSync\Schema\PayPalCart;
-use WooCommerce\PayPalCommerce\StoreSync\Schema\ResolutionOption;
+use WooCommerce\PayPalCommerce\StoreSync\Validation\Resolution\ResolutionOption;
 
 /**
  * Builds resolution options for coupon validation issues.

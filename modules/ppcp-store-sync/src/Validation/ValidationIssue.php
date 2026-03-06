@@ -9,7 +9,7 @@ declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\StoreSync\Validation;
 
-use WooCommerce\PayPalCommerce\StoreSync\Schema\ResolutionOption;
+use WooCommerce\PayPalCommerce\StoreSync\Validation\Resolution\ResolutionOption;
 use WooCommerce\PayPalCommerce\StoreSync\Validation\Context\IssueContext;
 
 /**

@@ -5,12 +5,12 @@
  * Provides factory methods to create standardized resolution options
  * that suggest actions to resolve validation issues.
  *
- * @package WooCommerce\PayPalCommerce\StoreSync\Schema
+ * @package WooCommerce\PayPalCommerce\StoreSync\Validation\\Resolution
  */
 
 declare( strict_types = 1 );
 
-namespace WooCommerce\PayPalCommerce\StoreSync\Schema;
+namespace WooCommerce\PayPalCommerce\StoreSync\Validation\Resolution;
 
 use WooCommerce\PayPalCommerce\StoreSync\Enums\Priority;
 use WooCommerce\PayPalCommerce\StoreSync\Enums\ResolutionAction;
@@ -20,39 +20,50 @@ use WooCommerce\PayPalCommerce\StoreSync\Enums\ResolutionAction;
  */
 class ResolutionOption {
 	private string $action;
-	private string $label;
-	private string $url;
-	private array $metadata;
+	private ?string $label    = null;
+	private ?string $url      = null;
+	private ?string $priority = null;
+	private array $metadata   = array();
 
-	/**
-	 * Private constructor to enforce factory method usage.
-	 *
-	 * @param string $action   Resolution action constant from ResolutionAction.
-	 * @param string $label    Human-readable action description.
-	 * @param string $url      Optional. URL for redirect actions.
-	 * @param array  $metadata Optional. Additional metadata.
-	 */
-	private function __construct( string $action, string $label, string $url = '', array $metadata = array() ) {
-		$this->action   = $action;
-		$this->label    = $label;
-		$this->url      = $url;
-		$this->metadata = $metadata;
+	private function __construct( string $action ) {
+		$this->action = $action;
 	}
 
 	/**
-	 * Creates a new instance with additional properties.
-	 *
-	 * Allows chaining to customize the resolution option.
-	 *
-	 * @param array $props Properties to merge (label, url, metadata).
-	 * @return self New instance with merged properties.
+	 * Assign a custom label to the resolution option.
 	 */
-	public function with( array $props ): self {
-		$label    = $props['label'] ?? $this->label;
-		$url      = $props['url'] ?? $this->url;
-		$metadata = array_merge( $this->metadata, $props['metadata'] ?? array() );
+	public function label( string $label ): self {
+		$this->label = $label;
 
-		return new self( $this->action, $label, $url, $metadata );
+		return $this;
+	}
+
+	/**
+	 * Assign a new resolution URL to the option.
+	 */
+	public function url( string $url ): self {
+		$this->url = wp_validate_redirect( $url );
+
+		return $this;
+	}
+
+	/**
+	 * Changes the priority of the resolution option; available options are defined in
+	 * the `Priority` enum.
+	 */
+	public function priority( string $priority ): self {
+		$this->priority = $priority;
+
+		return $this;
+	}
+
+	/**
+	 * Replaces or extends the resolution metadata.
+	 */
+	public function metadata( array $metadata, bool $replace = false ): self {
+		$this->metadata = $replace ? $metadata : array_merge( $this->metadata, $metadata );
+
+		return $this;
 	}
 
 	/**
@@ -67,14 +78,15 @@ class ResolutionOption {
 		);
 
 		if ( $this->url ) {
-			$validated_url = \wp_validate_redirect( $this->url, '' );
-			if ( $validated_url ) {
-				$data['url'] = $validated_url;
-			}
+			$data['url'] = $this->url;
 		}
-
 		if ( ! empty( $this->metadata ) ) {
 			$data['metadata'] = $this->metadata;
+		}
+		if ( $this->priority ) {
+			$data['metadata'] = $data['metadata'] ?? array();
+
+			$data['metadata']['priority'] = $this->priority;
 		}
 
 		return $data;
@@ -88,14 +100,10 @@ class ResolutionOption {
 	 * @return self
 	 */
 	public static function remove_item( string $priority = Priority::MEDIUM, array $metadata = array() ): self {
-		$metadata['priority'] = $priority;
-
-		return new self(
-			ResolutionAction::REMOVE_ITEM,
-			'Remove from cart',
-			'',
-			$metadata
-		);
+		return ( new self( ResolutionAction::REMOVE_ITEM ) )
+			->label( 'Remove from cart' )
+			->priority( $priority )
+			->metadata( $metadata );
 	}
 
 	/**
@@ -107,14 +115,10 @@ class ResolutionOption {
 	 * @return self
 	 */
 	public static function update_address( string $label = 'Update shipping address', string $priority = Priority::MEDIUM, array $metadata = array() ): self {
-		$metadata['priority'] = $priority;
-
-		return new self(
-			ResolutionAction::UPDATE_ADDRESS,
-			$label,
-			'',
-			$metadata
-		);
+		return ( new self( ResolutionAction::UPDATE_ADDRESS ) )
+			->label( $label )
+			->priority( $priority )
+			->metadata( $metadata );
 	}
 
 	/**
@@ -125,12 +129,9 @@ class ResolutionOption {
 	 * @return self
 	 */
 	public static function modify_cart( string $label, array $metadata = array() ): self {
-		return new self(
-			ResolutionAction::MODIFY_CART,
-			$label,
-			'',
-			$metadata
-		);
+		return ( new self( ResolutionAction::MODIFY_CART ) )
+			->label( $label )
+			->metadata( $metadata );
 	}
 
 	/**
@@ -141,12 +142,9 @@ class ResolutionOption {
 	 * @return self
 	 */
 	public static function suggest_alternative( string $label = 'View similar items', array $metadata = array() ): self {
-		return new self(
-			ResolutionAction::SUGGEST_ALTERNATIVE,
-			$label,
-			'',
-			$metadata
-		);
+		return ( new self( ResolutionAction::SUGGEST_ALTERNATIVE ) )
+			->label( $label )
+			->metadata( $metadata );
 	}
 
 	/**
@@ -164,12 +162,9 @@ class ResolutionOption {
 
 		$metadata['field'] = $field_name;
 
-		return new self(
-			ResolutionAction::PROVIDE_MISSING_FIELD,
-			$label,
-			'',
-			$metadata
-		);
+		return ( new self( ResolutionAction::PROVIDE_MISSING_FIELD ) )
+			->label( $label )
+			->metadata( $metadata );
 	}
 
 	/**
@@ -180,18 +175,15 @@ class ResolutionOption {
 	 * @return self
 	 */
 	public static function wait_for_restock( string $label = 'Wait for restock', array $metadata = array() ): self {
-		return new self(
-			ResolutionAction::WAIT_FOR_RESTOCK,
-			$label,
-			'',
-			$metadata
-		);
+		return ( new self( ResolutionAction::WAIT_FOR_RESTOCK ) )
+			->label( $label )
+			->metadata( $metadata );
 	}
 
 	/**
 	 * Factory: Use different currency.
 	 *
-	 * @param string $label            Action description.
+	 * @param string $label             Action description.
 	 * @param string $expected_currency The expected currency code.
 	 * @param array  $metadata          Optional. Additional metadata.
 	 * @return self
@@ -199,12 +191,9 @@ class ResolutionOption {
 	public static function use_different_currency( string $label, string $expected_currency, array $metadata = array() ): self {
 		$metadata['expected_currency'] = $expected_currency;
 
-		return new self(
-			ResolutionAction::USE_DIFFERENT_CURRENCY,
-			$label,
-			'',
-			$metadata
-		);
+		return ( new self( ResolutionAction::USE_DIFFERENT_CURRENCY ) )
+			->label( $label )
+			->metadata( $metadata );
 	}
 
 	/**
@@ -215,12 +204,9 @@ class ResolutionOption {
 	 * @return self
 	 */
 	public static function accept_new_price( string $label, array $metadata = array() ): self {
-		return new self(
-			ResolutionAction::ACCEPT_NEW_PRICE,
-			$label,
-			'',
-			$metadata
-		);
+		return ( new self( ResolutionAction::ACCEPT_NEW_PRICE ) )
+			->label( $label )
+			->metadata( $metadata );
 	}
 
 	/**
@@ -232,12 +218,10 @@ class ResolutionOption {
 	 * @return self
 	 */
 	public static function redirect_to_merchant( string $label, string $url, array $metadata = array() ): self {
-		return new self(
-			ResolutionAction::REDIRECT_TO_MERCHANT,
-			$label,
-			$url,
-			$metadata
-		);
+		return ( new self( ResolutionAction::REDIRECT_TO_MERCHANT ) )
+			->label( $label )
+			->url( $url )
+			->metadata( $metadata );
 	}
 
 	/**
@@ -248,12 +232,9 @@ class ResolutionOption {
 	 * @return self
 	 */
 	public static function update_shipping_method( string $label, array $metadata = array() ): self {
-		return new self(
-			ResolutionAction::UPDATE_SHIPPING_METHOD,
-			$label,
-			'',
-			$metadata
-		);
+		return ( new self( ResolutionAction::UPDATE_SHIPPING_METHOD ) )
+			->label( $label )
+			->metadata( $metadata );
 	}
 
 	/**
@@ -264,12 +245,9 @@ class ResolutionOption {
 	 * @return self
 	 */
 	public static function contact_support( string $label = 'Contact support', array $metadata = array() ): self {
-		return new self(
-			ResolutionAction::CONTACT_SUPPORT,
-			$label,
-			'',
-			$metadata
-		);
+		return ( new self( ResolutionAction::CONTACT_SUPPORT ) )
+			->label( $label )
+			->metadata( $metadata );
 	}
 
 	/**
@@ -281,14 +259,10 @@ class ResolutionOption {
 	 * @return self
 	 */
 	public static function remove_coupon( string $label = 'Continue without coupon', string $priority = Priority::MEDIUM, array $metadata = array() ): self {
-		$metadata['priority'] = $priority;
-
-		return new self(
-			ResolutionAction::REMOVE_COUPON,
-			$label,
-			'',
-			$metadata
-		);
+		return ( new self( ResolutionAction::REMOVE_COUPON ) )
+			->label( $label )
+			->priority( $priority )
+			->metadata( $metadata );
 	}
 
 	/**
@@ -300,14 +274,10 @@ class ResolutionOption {
 	 * @return self
 	 */
 	public static function apply_different_coupon( string $label, string $priority = Priority::MEDIUM, array $metadata = array() ): self {
-		$metadata['priority'] = $priority;
-
-		return new self(
-			ResolutionAction::APPLY_DIFFERENT_COUPON,
-			$label,
-			'',
-			$metadata
-		);
+		return ( new self( ResolutionAction::APPLY_DIFFERENT_COUPON ) )
+			->label( $label )
+			->priority( $priority )
+			->metadata( $metadata );
 	}
 
 	/**
@@ -319,13 +289,9 @@ class ResolutionOption {
 	 * @return self
 	 */
 	public static function keep_current_coupon( string $label, string $priority = Priority::HIGH, array $metadata = array() ): self {
-		$metadata['priority'] = $priority;
-
-		return new self(
-			ResolutionAction::KEEP_CURRENT_COUPON,
-			$label,
-			'',
-			$metadata
-		);
+		return ( new self( ResolutionAction::KEEP_CURRENT_COUPON ) )
+			->label( $label )
+			->priority( $priority )
+			->metadata( $metadata );
 	}
 }

@@ -11,7 +11,7 @@ namespace WooCommerce\PayPalCommerce\StoreSync\CartValidation;
 
 use WooCommerce\PayPalCommerce\StoreSync\Enums\Priority;
 use WooCommerce\PayPalCommerce\StoreSync\Schema\PayPalCart;
-use WooCommerce\PayPalCommerce\StoreSync\Schema\ResolutionOption;
+use WooCommerce\PayPalCommerce\StoreSync\Validation\Resolution\ResolutionOption;
 use WooCommerce\PayPalCommerce\StoreSync\Validation\CurrencyMismatch;
 
 class CurrencyValidator implements ValidatorInterface {
@@ -96,14 +96,9 @@ class CurrencyValidator implements ValidatorInterface {
 				ResolutionOption::use_different_currency(
 					sprintf( 'Set all items to %s', $store_currency ),
 					$store_currency
-				)->with(
-					array(
-						'metadata' => array(
-							'priority'          => Priority::HIGH,
-							'expected_currency' => $store_currency,
-						),
-					)
 				)
+					->metadata( array( 'expected_currency' => $store_currency ) )
+					->priority( Priority::HIGH )
 			)
 			->add_resolution( ResolutionOption::remove_item( Priority::LOW, array( 'item_index' => $mismatch['index'] ) ) );
 	}

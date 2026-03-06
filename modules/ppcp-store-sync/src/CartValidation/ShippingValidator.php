@@ -16,10 +16,12 @@ declare( strict_types = 1 );
 namespace WooCommerce\PayPalCommerce\StoreSync\CartValidation;
 
 use WC_Countries;
+use WC_Validation;
+use WC_Product;
 use WooCommerce\PayPalCommerce\StoreSync\Enums\Priority;
 use WooCommerce\PayPalCommerce\StoreSync\Helper\ProductManager;
 use WooCommerce\PayPalCommerce\StoreSync\Schema\PayPalCart;
-use WooCommerce\PayPalCommerce\StoreSync\Schema\ResolutionOption;
+use WooCommerce\PayPalCommerce\StoreSync\Validation\Resolution\ResolutionOption;
 use WooCommerce\PayPalCommerce\StoreSync\Validation\Context\Specific\ShippingToPoBoxNotAllowedContext;
 use WooCommerce\PayPalCommerce\StoreSync\Validation\InvalidAddress;
 use WooCommerce\PayPalCommerce\StoreSync\Validation\ShippingUnavailable;
@@ -123,7 +125,7 @@ class ShippingValidator implements ValidatorInterface {
 			return null;
 		}
 
-		$is_valid = \WC_Validation::is_postcode( $postal_code, $country_code );
+		$is_valid = WC_Validation::is_postcode( $postal_code, $country_code );
 
 		if ( ! $is_valid ) {
 			return InvalidAddress::create(
@@ -171,7 +173,7 @@ class ShippingValidator implements ValidatorInterface {
 				->add_resolution( ResolutionOption::update_address( 'Use street address instead', Priority::HIGH ) )
 				->add_resolution(
 					ResolutionOption::remove_item( Priority::LOW )
-						->with( array( 'label' => 'Remove items requiring signature' ) )
+						->label( 'Remove items requiring signature' )
 				);
 		}
 
@@ -218,9 +220,9 @@ class ShippingValidator implements ValidatorInterface {
 		 *
 		 * @since 1.0.0
 		 *
-		 * @param bool        $requires_signature Whether signature is required (defaults to false).
-		 * @param \WC_Product $product            The WooCommerce product object.
-		 * @param CartItem    $item               The cart item.
+		 * @param bool       $requires_signature Whether signature is required (defaults to false).
+		 * @param WC_Product $product            The WooCommerce product object.
+		 * @param CartItem   $item               The cart item.
 		 *
 		 * @return bool True if signature delivery is required.
 		 */
