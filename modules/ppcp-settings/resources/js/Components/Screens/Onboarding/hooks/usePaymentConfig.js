@@ -73,6 +73,13 @@ const DEFAULT_CONFIG = {
 			isOwnBrand: true,
 			isAcdc: true,
 		},
+		{
+			name: 'Fastlane',
+			Component: Fastlane,
+			isOwnBrand: false,
+			isAcdc: true,
+			isFastlane: true,
+		},
 	],
 };
 
@@ -85,43 +92,11 @@ const COUNTRY_CONFIGS = {
 			{ name: 'Venmo', Component: Venmo },
 			{ name: 'Crypto', Component: Crypto },
 		],
-		extendedMethods: [
-			...DEFAULT_CONFIG.extendedMethods,
-			{
-				name: 'Fastlane',
-				Component: Fastlane,
-				isOwnBrand: false,
-				isAcdc: true,
-				isFastlane: true,
-			},
-		],
 	},
 	GB: {
 		includedMethods: [
 			{ name: 'PayWithPayPal', Component: PayWithPayPal },
 			{ name: 'PayInThree', Component: PayInThree },
-		],
-		extendedMethods: [
-			...DEFAULT_CONFIG.extendedMethods,
-			{
-				name: 'Fastlane',
-				Component: Fastlane,
-				isOwnBrand: false,
-				isAcdc: true,
-				isFastlane: true,
-			},
-		],
-	},
-	AU: {
-		extendedMethods: [
-			...DEFAULT_CONFIG.extendedMethods,
-			{
-				name: 'Fastlane',
-				Component: Fastlane,
-				isOwnBrand: false,
-				isAcdc: true,
-				isFastlane: true,
-			},
 		],
 	},
 	MX: {
