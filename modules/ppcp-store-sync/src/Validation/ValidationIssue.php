@@ -10,6 +10,7 @@ declare( strict_types = 1 );
 namespace WooCommerce\PayPalCommerce\StoreSync\Validation;
 
 use WooCommerce\PayPalCommerce\StoreSync\Schema\ResolutionOption;
+use WooCommerce\PayPalCommerce\StoreSync\Validation\Context\IssueContext;
 
 /**
  * Implements the ValidationIssue schema.
@@ -116,25 +117,24 @@ abstract class ValidationIssue {
 	}
 
 	/**
-	 * Adds one or more context entries to the validation issue.
+	 * Adds one or more context instances to the validation issue.
 	 *
-	 * Accepts either a single key/value pair or an associative array of entries.
-	 * Non-string keys and non-array first arguments are silently ignored.
+	 * Accepts either a single IssueContext or an array of IssueContext objects.
+	 * Non-IssueContext values are silently ignored.
 	 *
-	 * @param string|array $key   Context key, or an associative array of key => value pairs.
-	 * @param mixed        $value Context value. Ignored when $key is an array.
+	 * @param IssueContext|array $context A context instance or array of instances.
 	 * @return static
 	 */
-	public function add_context( $key, $value = null ): self {
-		if ( is_string( $key ) ) {
-			$this->context[ $key ] = $value;
+	public function add_context( $context ): self {
+		if ( $context instanceof IssueContext ) {
+			$this->context[] = $context;
 
 			return $this;
 		}
 
-		if ( is_array( $key ) ) {
-			foreach ( $key as $k => $v ) {
-				$this->add_context( $k, $v );
+		if ( is_array( $context ) ) {
+			foreach ( $context as $item ) {
+				$this->add_context( $item );
 			}
 		}
 
@@ -188,7 +188,10 @@ abstract class ValidationIssue {
 			$data['item_id'] = $this->item_id;
 		}
 		if ( ! empty( $this->context ) ) {
-			$data['context'] = $this->context;
+			$data['context'] = array_map(
+				static fn( IssueContext $context ) => $context->to_array(),
+				$this->context
+			);
 		}
 		if ( ! empty( $this->resolution_options ) ) {
 			$data['resolution_options'] = array_map(
