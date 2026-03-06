@@ -18,6 +18,8 @@ use WooCommerce\PayPalCommerce\StoreSync\Schema\PayPalCart;
 use WooCommerce\PayPalCommerce\StoreSync\Schema\CartItem;
 use WooCommerce\PayPalCommerce\StoreSync\Schema\ResolutionOption;
 use WooCommerce\PayPalCommerce\StoreSync\Schema\Money;
+use WooCommerce\PayPalCommerce\StoreSync\Validation\Context\PricingErrorContext;
+use WooCommerce\PayPalCommerce\StoreSync\Validation\Context\Specific\PricingPriceMismatchContext;
 use WooCommerce\PayPalCommerce\StoreSync\Validation\PriceMismatch;
 use WooCommerce\PayPalCommerce\StoreSync\Validation\ValidationIssue;
 
@@ -97,18 +99,16 @@ class PriceValidator implements ValidatorInterface {
 			->add_resolution( $this->build_resolution_options( $cart_price, $store_price, $price_difference, $is_increase, $cart ) );
 	}
 
-	private function build_mismatch_context( Money $cart_price, float $store_price, float $price_difference, bool $is_increase ): array {
-		$context = array(
-			'specific_issue' => 'PRICE_MISMATCH',
-			'original_price' => CartHelper::format_decimal( $cart_price->value() ?? 0. ),
-			'current_price'  => CartHelper::format_decimal( $store_price ),
-			'currency_code'  => $cart_price->currency_code(),
-		);
+	private function build_mismatch_context( Money $cart_price, float $store_price, float $price_difference, bool $is_increase ): PricingErrorContext {
+		$context = PricingPriceMismatchContext::create()
+			->original_price( CartHelper::format_decimal( $cart_price->value() ?? 0. ) )
+			->current_price( CartHelper::format_decimal( $store_price ) )
+			->currency_code( $cart_price->currency_code() ?? '' );
 
 		if ( $is_increase ) {
-			$context['price_increase'] = CartHelper::format_decimal( $price_difference );
+			$context->price_increase( CartHelper::format_decimal( $price_difference ) );
 		} else {
-			$context['price_decrease'] = CartHelper::format_decimal( abs( $price_difference ) );
+			$context->price_decrease( CartHelper::format_decimal( abs( $price_difference ) ) );
 		}
 
 		return $context;

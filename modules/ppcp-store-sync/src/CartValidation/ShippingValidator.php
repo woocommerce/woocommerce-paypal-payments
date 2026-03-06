@@ -20,6 +20,7 @@ use WooCommerce\PayPalCommerce\StoreSync\Enums\Priority;
 use WooCommerce\PayPalCommerce\StoreSync\Helper\ProductManager;
 use WooCommerce\PayPalCommerce\StoreSync\Schema\PayPalCart;
 use WooCommerce\PayPalCommerce\StoreSync\Schema\ResolutionOption;
+use WooCommerce\PayPalCommerce\StoreSync\Validation\Context\Specific\ShippingToPoBoxNotAllowedContext;
 use WooCommerce\PayPalCommerce\StoreSync\Validation\InvalidAddress;
 use WooCommerce\PayPalCommerce\StoreSync\Validation\ShippingUnavailable;
 use WooCommerce\PayPalCommerce\StoreSync\Schema\Address;
@@ -161,9 +162,12 @@ class ShippingValidator implements ValidatorInterface {
 			return ShippingUnavailable::create( 'PO Box delivery not available for this order' )
 				->user_message( 'This order contains items requiring signature confirmation and cannot be delivered to a PO Box.' )
 				->for_field( 'shipping_address' )
-				->add_context( 'restricted_items', $restricted_items )
-				->add_context( 'restriction_reason', 'signature_required' )
-				->add_context( 'po_box_detected', true )
+				->add_context(
+					ShippingToPoBoxNotAllowedContext::create()
+						->restricted_items( $restricted_items )
+						->restriction_reason( 'signature_required' )
+						->po_box_detected( true )
+				)
 				->add_resolution( ResolutionOption::update_address( 'Use street address instead', Priority::HIGH ) )
 				->add_resolution(
 					ResolutionOption::remove_item( Priority::LOW )
