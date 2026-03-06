@@ -53,5 +53,13 @@ class MigrationManager implements \WooCommerce\PayPalCommerce\Settings\Service\M
             }
         }
         update_option(self::OPTION_NAME_MIGRATION_IS_DONE, \true);
+        /**
+         * Clear product status caches that may have been poisoned during migration.
+         *
+         * The PartnersEndpoint call in SettingsMigration may use the wrong environment
+         * (production instead of sandbox) before sandbox_merchant is set, causing
+         * stale false values in reference_transaction and other caches.
+         */
+        do_action('woocommerce_paypal_payments_clear_apm_product_status');
     }
 }

@@ -128,8 +128,12 @@ class SettingsModule implements ServiceModule, ExecutableModule
                 if ($seller_type !== SellerTypeEnum::UNKNOWN) {
                     $connection = $general_settings->get_merchant_data();
                     $connection->seller_type = $seller_type;
+                    if (empty($connection->merchant_country)) {
+                        $connection->merchant_country = $seller_status->country();
+                    }
                     $general_settings->set_merchant_data($connection);
                     $general_settings->save();
+                    do_action('woocommerce_paypal_payments_clear_apm_product_status');
                 }
             } catch (\Exception $e) {
                 $logger = $container->get('woocommerce.logger.woocommerce');
