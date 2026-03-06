@@ -47,7 +47,11 @@ class CartTotals extends AgenticSchema {
 
 		// Required field: total.
 		if ( ! isset( $input['total'] ) || ! is_array( $input['total'] ) ) {
-			$add_issue( new MissingField( 'Total is required', 'Please provide a total amount', 'total' ) );
+			$add_issue(
+				MissingField::create( 'Total is required' )
+					->user_message( 'Please provide a total amount' )
+					->for_field( 'total' )
+			);
 		} else {
 			$money  = Money::from_array( $input['total'], $add_issue );
 			$issues = $money->issues();
