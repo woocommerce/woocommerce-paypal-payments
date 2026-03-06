@@ -27,6 +27,9 @@ use WooCommerce\PayPalCommerce\Settings\Service\Migration\MigrationManager;
 use WooCommerce\PayPalCommerce\Settings\Service\Migration\PaymentSettingsMigration;
 use WooCommerce\PayPalCommerce\Settings\Service\PaymentMethodsEligibilityService;
 use WooCommerce\PayPalCommerce\Settings\Service\ScriptDataHandler;
+use WooCommerce\PayPalCommerce\Settings\Service\SellerTypeResolver;
+use WooCommerce\PayPalCommerce\Settings\Enum\SellerTypeEnum;
+use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PartnersEndpoint;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExecutableModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ModuleClassNameIdTrait;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ServiceModule;
@@ -105,6 +108,34 @@ class SettingsModule implements ServiceModule, ExecutableModule
             $migration_manager = $container->get('settings.service.data-migration');
             assert($migration_manager instanceof MigrationManager);
             $migration_manager->migrate();
+        });
+        add_action('admin_init', static function () use ($container): void {
+            $general_settings = $container->get('settings.data.general');
+            assert($general_settings instanceof GeneralSettings);
+            if (!$general_settings->is_merchant_connected()) {
+                return;
+            }
+            if ($general_settings->is_business_seller() || $general_settings->is_casual_seller()) {
+                return;
+            }
+            try {
+                $partners_endpoint = $container->get('api.endpoint.partners');
+                assert($partners_endpoint instanceof PartnersEndpoint);
+                $seller_type_resolver = $container->get('settings.service.seller-type-resolver');
+                assert($seller_type_resolver instanceof SellerTypeResolver);
+                $seller_status = $partners_endpoint->seller_status();
+                $seller_type = $seller_type_resolver->resolve($seller_status);
+                if ($seller_type !== SellerTypeEnum::UNKNOWN) {
+                    $connection = $general_settings->get_merchant_data();
+                    $connection->seller_type = $seller_type;
+                    $general_settings->set_merchant_data($connection);
+                    $general_settings->save();
+                }
+            } catch (\Exception $e) {
+                $logger = $container->get('woocommerce.logger.woocommerce');
+                assert($logger instanceof LoggerInterface);
+                $logger->debug('Seller type resolution deferred; will retry on next admin page load.', array('error' => $e->getMessage()));
+            }
         });
         /**
          * Override ACDC status with BCDC for eligible merchants.

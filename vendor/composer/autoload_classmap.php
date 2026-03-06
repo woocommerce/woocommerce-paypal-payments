@@ -370,6 +370,7 @@ return array(
     'WooCommerce\\PayPalCommerce\\Settings\\Service\\OnboardingUrlManager' => $baseDir . '/modules/ppcp-settings/src/Service/OnboardingUrlManager.php',
     'WooCommerce\\PayPalCommerce\\Settings\\Service\\PaymentMethodsEligibilityService' => $baseDir . '/modules/ppcp-settings/src/Service/PaymentMethodsEligibilityService.php',
     'WooCommerce\\PayPalCommerce\\Settings\\Service\\ScriptDataHandler' => $baseDir . '/modules/ppcp-settings/src/Service/ScriptDataHandler.php',
+    'WooCommerce\\PayPalCommerce\\Settings\\Service\\SellerTypeResolver' => $baseDir . '/modules/ppcp-settings/src/Service/SellerTypeResolver.php',
     'WooCommerce\\PayPalCommerce\\Settings\\Service\\SettingsDataManager' => $baseDir . '/modules/ppcp-settings/src/Service/SettingsDataManager.php',
     'WooCommerce\\PayPalCommerce\\Settings\\Service\\TodosEligibilityService' => $baseDir . '/modules/ppcp-settings/src/Service/TodosEligibilityService.php',
     'WooCommerce\\PayPalCommerce\\Settings\\Service\\TodosSortingAndFilteringService' => $baseDir . '/modules/ppcp-settings/src/Service/TodosSortingAndFilteringService.php',
