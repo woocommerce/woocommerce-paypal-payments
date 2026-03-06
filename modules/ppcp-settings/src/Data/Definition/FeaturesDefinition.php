@@ -125,9 +125,11 @@ class FeaturesDefinition {
 	/**
 	 * Returns the full list of feature definitions with their eligibility conditions.
 	 *
+	 * Only features whose eligibility check passes are included.
+	 *
 	 * @return array The array of feature definitions.
 	 */
-	public function get(): array {
+	public function eligible_features(): array {
 		$all_features       = $this->all_available_features();
 		$eligible_features  = array();
 		$eligibility_checks = $this->eligibilities->get_eligibility_checks();
