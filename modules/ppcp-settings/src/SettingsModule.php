@@ -100,20 +100,26 @@ class SettingsModule implements ServiceModule, ExecutableModule
                 $migration_manager->migrate();
             }
         );
-        add_action('admin_init', static function () use ($container): void {
-            if (get_option(MigrationManager::OPTION_NAME_MIGRATION_IS_DONE) === '1') {
-                return;
-            }
-            $legacy_settings = (array) get_option('woocommerce-ppcp-settings', array());
-            if (empty($legacy_settings['client_id'])) {
-                return;
-            }
-            $migration_manager = $container->get('settings.service.data-migration');
-            assert($migration_manager instanceof MigrationManager);
-            $migration_manager->migrate();
-        });
         add_action('admin_init', function () use ($container): void {
-            $this->resolve_unknown_seller_type($container);
+            if (get_option(MigrationManager::OPTION_NAME_MIGRATION_IS_DONE) !== '1') {
+                $legacy_settings = (array) get_option('woocommerce-ppcp-settings', array());
+                if (!empty($legacy_settings['client_id'])) {
+                    $migration_manager = $container->get('settings.service.data-migration');
+                    assert($migration_manager instanceof MigrationManager);
+                    $migration_manager->migrate();
+                }
+            }
+            $failure_registry = $container->get('api.helper.failure-registry');
+            assert($failure_registry instanceof FailureRegistry);
+            $general_settings = $container->get('settings.data.general');
+            assert($general_settings instanceof GeneralSettings);
+            $partners_endpoint = $container->get('api.endpoint.partners');
+            assert($partners_endpoint instanceof PartnersEndpoint);
+            $seller_type_resolver = $container->get('settings.service.seller-type-resolver');
+            assert($seller_type_resolver instanceof SellerTypeResolver);
+            $logger = $container->get('woocommerce.logger.woocommerce');
+            assert($logger instanceof LoggerInterface);
+            $this->resolve_unknown_seller_type($failure_registry, $general_settings, $partners_endpoint, $seller_type_resolver, $logger);
         });
         /**
          * Override ACDC status with BCDC for eligible merchants.
@@ -649,20 +655,18 @@ class SettingsModule implements ServiceModule, ExecutableModule
      * during migration), this retries the seller status call and persists the
      * resolved type. Also backfills empty merchant_country.
      *
-     * @param ContainerInterface $container The DI container.
+     * @param FailureRegistry    $failure_registry    The failure registry.
+     * @param GeneralSettings    $general_settings    The general settings.
+     * @param PartnersEndpoint   $partners_endpoint   The partners endpoint.
+     * @param SellerTypeResolver $seller_type_resolver The seller type resolver.
+     * @param LoggerInterface    $logger              The logger.
      */
-    protected function resolve_unknown_seller_type(ContainerInterface $container): void
+    private function resolve_unknown_seller_type(FailureRegistry $failure_registry, GeneralSettings $general_settings, PartnersEndpoint $partners_endpoint, SellerTypeResolver $seller_type_resolver, LoggerInterface $logger): void
     {
-        if (!$this->needs_seller_type_resolution($container)) {
+        if (!$this->needs_seller_type_resolution($failure_registry, $general_settings)) {
             return;
         }
         try {
-            $general_settings = $container->get('settings.data.general');
-            assert($general_settings instanceof GeneralSettings);
-            $partners_endpoint = $container->get('api.endpoint.partners');
-            assert($partners_endpoint instanceof PartnersEndpoint);
-            $seller_type_resolver = $container->get('settings.service.seller-type-resolver');
-            assert($seller_type_resolver instanceof SellerTypeResolver);
             $seller_status = $partners_endpoint->seller_status();
             $seller_type = $seller_type_resolver->resolve($seller_status);
             if ($seller_type !== SellerTypeEnum::UNKNOWN) {
@@ -673,27 +677,21 @@ class SettingsModule implements ServiceModule, ExecutableModule
                 do_action('woocommerce_paypal_payments_clear_apm_product_status');
             }
         } catch (Exception $e) {
-            set_transient('ppcp_seller_type_resolve_cooldown', '1', HOUR_IN_SECONDS);
-            $logger = $container->get('woocommerce.logger.woocommerce');
-            assert($logger instanceof LoggerInterface);
             $logger->debug('Seller type resolution deferred; will retry in 1 hour.', array('error' => $e->getMessage()));
         }
     }
     /**
      * Checks whether seller type resolution is needed.
      *
-     * @param ContainerInterface $container The DI container.
+     * @param FailureRegistry $failure_registry The failure registry.
+     * @param GeneralSettings $general_settings The general settings.
      * @return bool True if the merchant is connected but has an unknown seller type.
      */
-    protected function needs_seller_type_resolution(ContainerInterface $container): bool
+    private function needs_seller_type_resolution(FailureRegistry $failure_registry, GeneralSettings $general_settings): bool
     {
-        $failure_registry = $container->get('api.helper.failure-registry');
-        assert($failure_registry instanceof FailureRegistry);
         if ($failure_registry->has_failure_in_timeframe(FailureRegistry::SELLER_STATUS_KEY, HOUR_IN_SECONDS)) {
             return \false;
         }
-        $general_settings = $container->get('settings.data.general');
-        assert($general_settings instanceof GeneralSettings);
         if (!$general_settings->is_merchant_connected()) {
             return \false;
         }

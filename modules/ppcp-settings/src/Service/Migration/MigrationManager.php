@@ -38,6 +38,16 @@ class MigrationManager implements \WooCommerce\PayPalCommerce\Settings\Service\M
     }
     public function migrate(): void
     {
+        /**
+         * Clean up legacy UI toggle options that are no longer needed.
+         *
+         * These options were used to control whether merchants saw the old or new settings UI:
+         * - OPTION_NAME_SHOULD_USE_OLD_UI: Stored merchant's preference to use the old UI
+         * - woocommerce-ppcp-is-new-merchant: Flagged new merchants to bypass the old UI
+         *
+         * With the new settings UI now being the only interface, these options serve no purpose
+         * and are removed during the final migration to prevent confusion and reduce database bloat.
+         */
         delete_option('woocommerce_ppcp-settings-should-use-old-ui');
         delete_option('woocommerce-ppcp-is-new-merchant');
         $this->onboarding_profile->set_completed(\true);

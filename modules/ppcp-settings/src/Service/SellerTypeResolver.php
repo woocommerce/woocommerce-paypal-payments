@@ -1,18 +1,10 @@
 <?php
 
-/**
- * Resolves the merchant seller type from PayPal seller status.
- *
- * @package WooCommerce\PayPalCommerce\Settings\Service
- */
 declare (strict_types=1);
 namespace WooCommerce\PayPalCommerce\Settings\Service;
 
 use WooCommerce\PayPalCommerce\ApiClient\Entity\SellerStatus;
 use WooCommerce\PayPalCommerce\Settings\Enum\SellerTypeEnum;
-/**
- * Class SellerTypeResolver
- */
 class SellerTypeResolver
 {
     /**
