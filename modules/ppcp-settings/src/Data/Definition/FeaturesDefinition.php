@@ -8,6 +8,7 @@
 declare (strict_types=1);
 namespace WooCommerce\PayPalCommerce\Settings\Data\Definition;
 
+use WooCommerce\PayPalCommerce\Vendor\Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\Settings\Data\SettingsModel;
 use WooCommerce\PayPalCommerce\Settings\Service\FeaturesEligibilityService;
 use WooCommerce\PayPalCommerce\Settings\Data\GeneralSettings;
@@ -61,17 +62,7 @@ class FeaturesDefinition
      * Whether Pay upon Invoice (PUI) is supported. Available for merchants in Germany.
      */
     public const FEATURE_PAY_UPON_INVOICE = 'pay_upon_invoice';
-    /**
-     * The features eligibility service.
-     *
-     * @var FeaturesEligibilityService
-     */
     protected FeaturesEligibilityService $eligibilities;
-    /**
-     * The general settings service.
-     *
-     * @var GeneralSettings
-     */
     protected GeneralSettings $settings;
     /**
      * The merchant capabilities.
@@ -79,43 +70,49 @@ class FeaturesDefinition
      * @var array
      */
     protected array $merchant_capabilities;
-    /**
-     * The plugin settings.
-     *
-     * @var SettingsModel
-     */
     protected SettingsModel $plugin_settings;
-    /**
-     * Constructor.
-     *
-     * @param FeaturesEligibilityService $eligibilities The features eligibility service.
-     * @param GeneralSettings            $settings The general settings service.
-     * @param array                      $merchant_capabilities The merchant capabilities.
-     * @param SettingsModel              $plugin_settings The plugin settings.
-     */
-    public function __construct(FeaturesEligibilityService $eligibilities, GeneralSettings $settings, array $merchant_capabilities, SettingsModel $plugin_settings)
+    protected LoggerInterface $logger;
+    public function __construct(FeaturesEligibilityService $eligibilities, GeneralSettings $settings, array $merchant_capabilities, SettingsModel $plugin_settings, LoggerInterface $logger)
     {
         $this->eligibilities = $eligibilities;
         $this->settings = $settings;
         $this->merchant_capabilities = $merchant_capabilities;
         $this->plugin_settings = $plugin_settings;
+        $this->logger = $logger;
     }
     /**
      * Returns the full list of feature definitions with their eligibility conditions.
      *
+     * Only features whose eligibility check passes are included.
+     *
      * @return array The array of feature definitions.
      */
-    public function get(): array
+    public function eligible_features(): array
     {
         $all_features = $this->all_available_features();
         $eligible_features = array();
         $eligibility_checks = $this->eligibilities->get_eligibility_checks();
         foreach ($all_features as $feature_key => $feature) {
-            if ($eligibility_checks[$feature_key]()) {
+            if (isset($eligibility_checks[$feature_key]) && $eligibility_checks[$feature_key]()) {
                 $eligible_features[$feature_key] = $feature;
             }
         }
         return $eligible_features;
+    }
+    /**
+     * Returns whether a specific feature is eligible.
+     *
+     * @param string $feature_name One of the FEATURE_* constants.
+     * @return bool true if the feature is eligible, false otherwise or if unknown.
+     */
+    public function is_feature_eligible(string $feature_name): bool
+    {
+        $eligibility_checks = $this->eligibilities->get_eligibility_checks();
+        if (!isset($eligibility_checks[$feature_name])) {
+            $this->logger->warning(sprintf('No eligibility check registered for feature "%s".', $feature_name));
+            return \false;
+        }
+        return (bool) $eligibility_checks[$feature_name]();
     }
     /**
      * Returns all available features.

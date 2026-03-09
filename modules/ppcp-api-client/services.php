@@ -217,7 +217,7 @@ return array(
         return new PaymentMethodTokensEndpoint($container->get('api.host'), $container->get('api.bearer'), $container->get('woocommerce.logger.woocommerce'));
     },
     'api.repository.partner-referrals-data' => static function (ContainerInterface $container): PartnerReferralsData {
-        return new PartnerReferralsData($container->get('api.helpers.dccapplies'), $container->get('ppcp-local-apms.pui.eligibility.check'));
+        return new PartnerReferralsData($container->get('api.helpers.dccapplies'), $container->get('settings.data.definition.features'));
     },
     'api.repository.payee' => static function (ContainerInterface $container): PayeeRepository {
         $merchant_email = $container->get('api.merchant_email');

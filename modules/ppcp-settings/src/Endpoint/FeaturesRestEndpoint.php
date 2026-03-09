@@ -67,7 +67,7 @@ class FeaturesRestEndpoint extends \WooCommerce\PayPalCommerce\Settings\Endpoint
     public function get_features(): WP_REST_Response
     {
         $features = array();
-        foreach ($this->features_definition->get() as $id => $feature) {
+        foreach ($this->features_definition->eligible_features() as $id => $feature) {
             $features[] = array_merge(array('id' => $id), $feature);
         }
         return $this->return_success(array('features' => $features));
