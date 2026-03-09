@@ -890,17 +890,14 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 	 * @param ContainerInterface $container The DI container.
 	 */
 	protected function resolve_unknown_seller_type( ContainerInterface $container ): void {
-		$general_settings = $container->get( 'settings.data.general' );
-		assert( $general_settings instanceof GeneralSettings );
-
-		if ( ! $general_settings->is_merchant_connected() ) {
-			return;
-		}
-		if ( $general_settings->is_business_seller() || $general_settings->is_casual_seller() ) {
+		if ( ! $this->needs_seller_type_resolution( $container ) ) {
 			return;
 		}
 
 		try {
+			$general_settings = $container->get( 'settings.data.general' );
+			assert( $general_settings instanceof GeneralSettings );
+
 			$partners_endpoint = $container->get( 'api.endpoint.partners' );
 			assert( $partners_endpoint instanceof PartnersEndpoint );
 
@@ -929,5 +926,22 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 				array( 'error' => $e->getMessage() )
 			);
 		}
+	}
+
+	/**
+	 * Checks whether seller type resolution is needed.
+	 *
+	 * @param ContainerInterface $container The DI container.
+	 * @return bool True if the merchant is connected but has an unknown seller type.
+	 */
+	protected function needs_seller_type_resolution( ContainerInterface $container ): bool {
+		$general_settings = $container->get( 'settings.data.general' );
+		assert( $general_settings instanceof GeneralSettings );
+
+		if ( ! $general_settings->is_merchant_connected() ) {
+			return false;
+		}
+
+		return ! $general_settings->is_business_seller() && ! $general_settings->is_casual_seller();
 	}
 }
