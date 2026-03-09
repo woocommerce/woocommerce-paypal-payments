@@ -919,10 +919,12 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 				do_action( 'woocommerce_paypal_payments_clear_apm_product_status' );
 			}
 		} catch ( \Exception $e ) {
+			set_transient( 'ppcp_seller_type_resolve_cooldown', '1', HOUR_IN_SECONDS );
+
 			$logger = $container->get( 'woocommerce.logger.woocommerce' );
 			assert( $logger instanceof LoggerInterface );
 			$logger->debug(
-				'Seller type resolution deferred; will retry on next admin page load.',
+				'Seller type resolution deferred; will retry in 1 hour.',
 				array( 'error' => $e->getMessage() )
 			);
 		}
@@ -935,6 +937,10 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 	 * @return bool True if the merchant is connected but has an unknown seller type.
 	 */
 	protected function needs_seller_type_resolution( ContainerInterface $container ): bool {
+		if ( get_transient( 'ppcp_seller_type_resolve_cooldown' ) ) {
+			return false;
+		}
+
 		$general_settings = $container->get( 'settings.data.general' );
 		assert( $general_settings instanceof GeneralSettings );
 
