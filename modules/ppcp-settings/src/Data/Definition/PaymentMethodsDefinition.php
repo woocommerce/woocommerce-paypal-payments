@@ -315,7 +315,7 @@ class PaymentMethodsDefinition {
 				'method_title'       => __( 'Pay with Crypto', 'woocommerce-paypal-payments' ),
 				'method_description' => __( 'Accept cryptocurrency payments through PayPal, supporting various digital currencies for global customers.', 'woocommerce-paypal-payments' ),
 				'title'              => __( 'Pay with Crypto', 'woocommerce-paypal-payments' ),
-				'description'        => __( 'Clicking "Place order" will redirect you to PayPal\'s encrypted checkout to complete your cryptocurrency purchase.', 'woocommerce-paypal-payments' ),
+				'description'        => __( 'Clicking "Place order" will take you to PayPal to complete your payment using cryptocurrency.', 'woocommerce-paypal-payments' ),
 			),
 			BancontactGateway::ID     => array(
 				'method_title'       => __( 'Bancontact (via PayPal)', 'woocommerce-paypal-payments' ),
