@@ -345,7 +345,7 @@ return array(
 	'api.repository.partner-referrals-data'          => static function ( ContainerInterface $container ): PartnerReferralsData {
 		return new PartnerReferralsData(
 			$container->get( 'api.helpers.dccapplies' ),
-			$container->get( 'ppcp-local-apms.pui.eligibility.check' )
+			$container->get( 'settings.data.definition.features' )
 		);
 	},
 	'api.repository.payee'                           => static function ( ContainerInterface $container ): PayeeRepository {
