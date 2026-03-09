@@ -109,37 +109,8 @@ class SettingsModule implements ServiceModule, ExecutableModule
             assert($migration_manager instanceof MigrationManager);
             $migration_manager->migrate();
         });
-        add_action('admin_init', static function () use ($container): void {
-            $general_settings = $container->get('settings.data.general');
-            assert($general_settings instanceof GeneralSettings);
-            if (!$general_settings->is_merchant_connected()) {
-                return;
-            }
-            if ($general_settings->is_business_seller() || $general_settings->is_casual_seller()) {
-                return;
-            }
-            try {
-                $partners_endpoint = $container->get('api.endpoint.partners');
-                assert($partners_endpoint instanceof PartnersEndpoint);
-                $seller_type_resolver = $container->get('settings.service.seller-type-resolver');
-                assert($seller_type_resolver instanceof SellerTypeResolver);
-                $seller_status = $partners_endpoint->seller_status();
-                $seller_type = $seller_type_resolver->resolve($seller_status);
-                if ($seller_type !== SellerTypeEnum::UNKNOWN) {
-                    $connection = $general_settings->get_merchant_data();
-                    $connection->seller_type = $seller_type;
-                    if (empty($connection->merchant_country)) {
-                        $connection->merchant_country = $seller_status->country();
-                    }
-                    $general_settings->set_merchant_data($connection);
-                    $general_settings->save();
-                    do_action('woocommerce_paypal_payments_clear_apm_product_status');
-                }
-            } catch (\Exception $e) {
-                $logger = $container->get('woocommerce.logger.woocommerce');
-                assert($logger instanceof LoggerInterface);
-                $logger->debug('Seller type resolution deferred; will retry on next admin page load.', array('error' => $e->getMessage()));
-            }
+        add_action('admin_init', function () use ($container): void {
+            $this->resolve_unknown_seller_type($container);
         });
         /**
          * Override ACDC status with BCDC for eligible merchants.
@@ -667,5 +638,63 @@ class SettingsModule implements ServiceModule, ExecutableModule
         $gateway_settings = get_option("woocommerce_{$gateway_name}_settings", array());
         $gateway_enabled = $gateway_settings['enabled'] ?? \false;
         return $gateway_enabled === 'yes';
+    }
+    /**
+     * Resolves unknown seller type for connected merchants via PayPal API.
+     *
+     * For merchants that migrated with an unknown seller type (e.g. API was down
+     * during migration), this retries the seller status call and persists the
+     * resolved type. Also backfills empty merchant_country.
+     *
+     * @param ContainerInterface $container The DI container.
+     */
+    protected function resolve_unknown_seller_type(ContainerInterface $container): void
+    {
+        if (!$this->needs_seller_type_resolution($container)) {
+            return;
+        }
+        try {
+            $general_settings = $container->get('settings.data.general');
+            assert($general_settings instanceof GeneralSettings);
+            $partners_endpoint = $container->get('api.endpoint.partners');
+            assert($partners_endpoint instanceof PartnersEndpoint);
+            $seller_type_resolver = $container->get('settings.service.seller-type-resolver');
+            assert($seller_type_resolver instanceof SellerTypeResolver);
+            $seller_status = $partners_endpoint->seller_status();
+            $seller_type = $seller_type_resolver->resolve($seller_status);
+            if ($seller_type !== SellerTypeEnum::UNKNOWN) {
+                $connection = $general_settings->get_merchant_data();
+                $connection->seller_type = $seller_type;
+                if (empty($connection->merchant_country)) {
+                    $connection->merchant_country = $seller_status->country();
+                }
+                $general_settings->set_merchant_data($connection);
+                $general_settings->save();
+                do_action('woocommerce_paypal_payments_clear_apm_product_status');
+            }
+        } catch (\Exception $e) {
+            set_transient('ppcp_seller_type_resolve_cooldown', '1', HOUR_IN_SECONDS);
+            $logger = $container->get('woocommerce.logger.woocommerce');
+            assert($logger instanceof LoggerInterface);
+            $logger->debug('Seller type resolution deferred; will retry in 1 hour.', array('error' => $e->getMessage()));
+        }
+    }
+    /**
+     * Checks whether seller type resolution is needed.
+     *
+     * @param ContainerInterface $container The DI container.
+     * @return bool True if the merchant is connected but has an unknown seller type.
+     */
+    protected function needs_seller_type_resolution(ContainerInterface $container): bool
+    {
+        if (get_transient('ppcp_seller_type_resolve_cooldown')) {
+            return \false;
+        }
+        $general_settings = $container->get('settings.data.general');
+        assert($general_settings instanceof GeneralSettings);
+        if (!$general_settings->is_merchant_connected()) {
+            return \false;
+        }
+        return !$general_settings->is_business_seller() && !$general_settings->is_casual_seller();
     }
 }
