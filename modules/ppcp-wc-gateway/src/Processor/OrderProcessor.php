@@ -35,120 +35,34 @@ use WooCommerce\PayPalCommerce\WcGateway\Exception\PayPalOrderMissingException;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use Automattic\WooCommerce\Utilities\OrderUtil;
 
-/**
- * Class OrderProcessor
- */
 class OrderProcessor {
 
 	use OrderMetaTrait;
 	use PaymentsStatusHandlingTrait;
 	use TransactionIdHandlingTrait;
 
-	/**
-	 * The environment.
-	 *
-	 * @var Environment
-	 */
-	protected $environment;
-
-	/**
-	 * The payment token repository.
-	 *
-	 * @var PaymentTokenRepository
-	 */
-	protected $payment_token_repository;
-
-	/**
-	 * The Session Handler.
-	 *
-	 * @var SessionHandler
-	 */
-	private $session_handler;
-
-	/**
-	 * The Order Endpoint.
-	 *
-	 * @var OrderEndpoint
-	 */
-	private $order_endpoint;
-
-	/**
-	 * The Order Factory.
-	 *
-	 * @var OrderFactory
-	 */
-	private $order_factory;
-
-	/**
-	 * The helper for 3d secure.
-	 *
-	 * @var ThreeDSecure
-	 */
-	private $threed_secure;
-
-	/**
-	 * The processor for authorized payments.
-	 *
-	 * @var AuthorizedPaymentsProcessor
-	 */
-	private $authorized_payments_processor;
-
+	protected Environment $environment;
+	protected PaymentTokenRepository $payment_token_repository;
+	private SessionHandler $session_handler;
+	private OrderEndpoint $order_endpoint;
+	private OrderFactory $order_factory;
+	private ThreeDSecure $threed_secure;
+	private AuthorizedPaymentsProcessor $authorized_payments_processor;
 	private SettingsProvider $settings_provider;
+	private LoggerInterface $logger;
+	private SubscriptionHelper $subscription_helper;
+	private OrderHelper $order_helper;
+	private PurchaseUnitFactory $purchase_unit_factory;
+	private PayerFactory $payer_factory;
+	private ShippingPreferenceFactory $shipping_preference_factory;
 
 	/**
-	 * A logger.
-	 *
-	 * @var LoggerInterface
-	 */
-	private $logger;
-
-	/**
-	 * The subscription helper.
-	 *
-	 * @var SubscriptionHelper
-	 */
-	private $subscription_helper;
-
-	/**
-	 * The order helper.
-	 *
-	 * @var OrderHelper
-	 */
-	private $order_helper;
-
-	/**
-	 * The PurchaseUnit factory.
-	 *
-	 * @var PurchaseUnitFactory
-	 */
-	private $purchase_unit_factory;
-
-	/**
-	 * The payer factory.
-	 *
-	 * @var PayerFactory
-	 */
-	private $payer_factory;
-
-	/**
-	 * The shipping_preference factory.
-	 *
-	 * @var ShippingPreferenceFactory
-	 */
-	private $shipping_preference_factory;
-
-	/**
-	 * Array to store temporary order data changes to restore after processing.
+	 * Temporary order data changes to restore after processing.
 	 *
 	 * @var array
 	 */
-	private $restore_order_data = array();
-
-	/**
-	 * The ExperienceContextBuilder.
-	 */
+	private array $restore_order_data = array();
 	private ExperienceContextBuilder $experience_context_builder;
-
 	private OrderStatusHelper $order_status_helper;
 
 	public function __construct(
@@ -325,20 +239,21 @@ class OrderProcessor {
 	 * Creates a PayPal order for the given WC order.
 	 *
 	 * @param WC_Order $wc_order The WC order.
+	 * @param string   $funding_source The funding source (e.g. 'paypal', 'venmo').
 	 * @return Order
 	 * @throws RuntimeException If order creation fails.
 	 */
-	public function create_order( WC_Order $wc_order ): Order {
+	public function create_order( WC_Order $wc_order, string $funding_source = 'paypal' ): Order {
 		$pu                  = $this->purchase_unit_factory->from_wc_order( $wc_order );
 		$shipping_preference = $this->shipping_preference_factory->from_state( $pu, 'checkout' );
 		$order               = $this->order_endpoint->create(
 			array( $pu ),
 			$shipping_preference,
 			$this->payer_factory->from_wc_order( $wc_order ),
-			'',
-			array(),
+			$wc_order->get_payment_method(),
+			array( 'funding_source' => $funding_source ),
 			new PaymentSource(
-				'paypal',
+				$funding_source,
 				(object) array(
 					'experience_context' => $this->experience_context_builder
 						->with_default_paypal_config( $shipping_preference, ExperienceContext::USER_ACTION_PAY_NOW )

@@ -178,7 +178,7 @@ test.describe( 'PLM Configurator', () => {
 				'Assert PLM is visible on WooCommerce Block page'
 			).toBeVisible();
 		} finally {
-			await requestUtils.deletePageById( page.id );
+			await requestUtils.deletePage( page.id );
 		}
 	} );
 
