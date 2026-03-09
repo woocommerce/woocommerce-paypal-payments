@@ -554,6 +554,7 @@ class ComposerStaticInitf454a4dc4519aa3bafab294be971ae9b
         'WooCommerce\\PayPalCommerce\\Settings\\Service\\OnboardingUrlManager' => __DIR__ . '/../..' . '/modules/ppcp-settings/src/Service/OnboardingUrlManager.php',
         'WooCommerce\\PayPalCommerce\\Settings\\Service\\PaymentMethodsEligibilityService' => __DIR__ . '/../..' . '/modules/ppcp-settings/src/Service/PaymentMethodsEligibilityService.php',
         'WooCommerce\\PayPalCommerce\\Settings\\Service\\ScriptDataHandler' => __DIR__ . '/../..' . '/modules/ppcp-settings/src/Service/ScriptDataHandler.php',
+        'WooCommerce\\PayPalCommerce\\Settings\\Service\\SellerTypeResolver' => __DIR__ . '/../..' . '/modules/ppcp-settings/src/Service/SellerTypeResolver.php',
         'WooCommerce\\PayPalCommerce\\Settings\\Service\\SettingsDataManager' => __DIR__ . '/../..' . '/modules/ppcp-settings/src/Service/SettingsDataManager.php',
         'WooCommerce\\PayPalCommerce\\Settings\\Service\\TodosEligibilityService' => __DIR__ . '/../..' . '/modules/ppcp-settings/src/Service/TodosEligibilityService.php',
         'WooCommerce\\PayPalCommerce\\Settings\\Service\\TodosSortingAndFilteringService' => __DIR__ . '/../..' . '/modules/ppcp-settings/src/Service/TodosSortingAndFilteringService.php',

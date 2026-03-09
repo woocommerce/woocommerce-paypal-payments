@@ -27,6 +27,7 @@ use WooCommerce\PayPalCommerce\Settings\Service\Migration\MigrationManager;
 use WooCommerce\PayPalCommerce\Settings\Service\Migration\PaymentSettingsMigration;
 use WooCommerce\PayPalCommerce\Settings\Service\PaymentMethodsEligibilityService;
 use WooCommerce\PayPalCommerce\Settings\Service\ScriptDataHandler;
+use WooCommerce\PayPalCommerce\Settings\Service\SellerTypeResolver;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExecutableModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ModuleClassNameIdTrait;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ServiceModule;
@@ -94,6 +95,19 @@ class SettingsModule implements ServiceModule, ExecutableModule
                 $migration_manager->migrate();
             }
         );
+        add_action('admin_init', function () use ($container): void {
+            if (get_option(MigrationManager::OPTION_NAME_MIGRATION_IS_DONE) !== '1') {
+                $legacy_settings = (array) get_option('woocommerce-ppcp-settings', array());
+                if (!empty($legacy_settings['client_id'])) {
+                    $migration_manager = $container->get('settings.service.data-migration');
+                    assert($migration_manager instanceof MigrationManager);
+                    $migration_manager->migrate();
+                }
+            }
+            $seller_type_resolver = $container->get('settings.service.seller-type-resolver');
+            assert($seller_type_resolver instanceof SellerTypeResolver);
+            $seller_type_resolver->resolve_unknown_seller_type($container->get('api.helper.failure-registry'), $container->get('settings.data.general'), $container->get('api.endpoint.partners'), $container->get('woocommerce.logger.woocommerce'));
+        });
         /**
          * Override ACDC status with BCDC for eligible merchants.
          *
