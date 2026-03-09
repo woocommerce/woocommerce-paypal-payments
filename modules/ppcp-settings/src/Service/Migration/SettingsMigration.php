@@ -8,6 +8,7 @@
 declare (strict_types=1);
 namespace WooCommerce\PayPalCommerce\Settings\Service\Migration;
 
+use Exception;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PartnersEndpoint;
 use WooCommerce\PayPalCommerce\Settings\Data\GeneralSettings;
@@ -48,7 +49,7 @@ class SettingsMigration implements \WooCommerce\PayPalCommerce\Settings\Service\
             $seller_status = $this->partners_endpoint->seller_status();
             $country = $seller_status->country();
             $seller_type = $this->seller_type_resolver->resolve($seller_status);
-        } catch (\Exception $exception) {
+        } catch (Exception $exception) {
             $this->logger->warning('Seller status API call failed during settings migration; using defaults.', array('error' => $exception->getMessage()));
         }
         $connection = new MerchantConnectionDTO(!empty($this->settings['sandbox_on']), $this->settings['client_id'], $this->settings['client_secret'], $this->settings['merchant_id'], $this->settings['merchant_email'] ?? '', $country, $seller_type);
