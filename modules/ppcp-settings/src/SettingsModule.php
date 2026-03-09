@@ -11,6 +11,7 @@ namespace WooCommerce\PayPalCommerce\Settings;
 
 use WC_Payment_Gateway;
 use Psr\Log\LoggerInterface;
+use WooCommerce\PayPalCommerce\ApiClient\Helper\FailureRegistry;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\PartnerAttribution;
 use WooCommerce\PayPalCommerce\Applepay\ApplePayGateway;
 use WooCommerce\PayPalCommerce\Axo\Gateway\AxoGateway;
@@ -944,7 +945,9 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 	 * @return bool True if the merchant is connected but has an unknown seller type.
 	 */
 	protected function needs_seller_type_resolution( ContainerInterface $container ): bool {
-		if ( get_transient( 'ppcp_seller_type_resolve_cooldown' ) ) {
+		$failure_registry = $container->get( 'api.helper.failure-registry' );
+		assert( $failure_registry instanceof FailureRegistry );
+		if ( $failure_registry->has_failure_in_timeframe( FailureRegistry::SELLER_STATUS_KEY, HOUR_IN_SECONDS ) ) {
 			return false;
 		}
 
