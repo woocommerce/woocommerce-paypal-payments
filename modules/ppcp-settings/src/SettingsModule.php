@@ -10,7 +10,6 @@ namespace WooCommerce\PayPalCommerce\Settings;
 
 use WC_Payment_Gateway;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Log\LoggerInterface;
-use WooCommerce\PayPalCommerce\ApiClient\Helper\FailureRegistry;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\PartnerAttribution;
 use WooCommerce\PayPalCommerce\Applepay\ApplePayGateway;
 use WooCommerce\PayPalCommerce\Axo\Gateway\AxoGateway;
@@ -29,8 +28,6 @@ use WooCommerce\PayPalCommerce\Settings\Service\Migration\PaymentSettingsMigrati
 use WooCommerce\PayPalCommerce\Settings\Service\PaymentMethodsEligibilityService;
 use WooCommerce\PayPalCommerce\Settings\Service\ScriptDataHandler;
 use WooCommerce\PayPalCommerce\Settings\Service\SellerTypeResolver;
-use WooCommerce\PayPalCommerce\Settings\Enum\SellerTypeEnum;
-use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PartnersEndpoint;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExecutableModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ModuleClassNameIdTrait;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ServiceModule;
@@ -41,9 +38,7 @@ use WooCommerce\PayPalCommerce\WcGateway\Gateway\OXXO\OXXO;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayUponInvoice\PayUponInvoiceGateway;
 use WooCommerce\PayPalCommerce\Settings\Service\SettingsDataManager;
-use Exception;
 use WooCommerce\PayPalCommerce\Settings\DTO\ConfigurationFlagsDTO;
-use WooCommerce\PayPalCommerce\Settings\DTO\MerchantConnectionDTO;
 use WooCommerce\PayPalCommerce\Settings\Enum\ProductChoicesEnum;
 use WooCommerce\PayPalCommerce\Settings\Data\GeneralSettings;
 use WooCommerce\PayPalCommerce\Settings\Data\PaymentSettings;
@@ -109,17 +104,9 @@ class SettingsModule implements ServiceModule, ExecutableModule
                     $migration_manager->migrate();
                 }
             }
-            $failure_registry = $container->get('api.helper.failure-registry');
-            assert($failure_registry instanceof FailureRegistry);
-            $general_settings = $container->get('settings.data.general');
-            assert($general_settings instanceof GeneralSettings);
-            $partners_endpoint = $container->get('api.endpoint.partners');
-            assert($partners_endpoint instanceof PartnersEndpoint);
             $seller_type_resolver = $container->get('settings.service.seller-type-resolver');
             assert($seller_type_resolver instanceof SellerTypeResolver);
-            $logger = $container->get('woocommerce.logger.woocommerce');
-            assert($logger instanceof LoggerInterface);
-            $this->resolve_unknown_seller_type($failure_registry, $general_settings, $partners_endpoint, $seller_type_resolver, $logger);
+            $seller_type_resolver->resolve_unknown_seller_type($container->get('api.helper.failure-registry'), $container->get('settings.data.general'), $container->get('api.endpoint.partners'), $container->get('woocommerce.logger.woocommerce'));
         });
         /**
          * Override ACDC status with BCDC for eligible merchants.
@@ -647,54 +634,5 @@ class SettingsModule implements ServiceModule, ExecutableModule
         $gateway_settings = get_option("woocommerce_{$gateway_name}_settings", array());
         $gateway_enabled = $gateway_settings['enabled'] ?? \false;
         return $gateway_enabled === 'yes';
-    }
-    /**
-     * Resolves unknown seller type for connected merchants via PayPal API.
-     *
-     * For merchants that migrated with an unknown seller type (e.g. API was down
-     * during migration), this retries the seller status call and persists the
-     * resolved type. Also backfills empty merchant_country.
-     *
-     * @param FailureRegistry    $failure_registry    The failure registry.
-     * @param GeneralSettings    $general_settings    The general settings.
-     * @param PartnersEndpoint   $partners_endpoint   The partners endpoint.
-     * @param SellerTypeResolver $seller_type_resolver The seller type resolver.
-     * @param LoggerInterface    $logger              The logger.
-     */
-    private function resolve_unknown_seller_type(FailureRegistry $failure_registry, GeneralSettings $general_settings, PartnersEndpoint $partners_endpoint, SellerTypeResolver $seller_type_resolver, LoggerInterface $logger): void
-    {
-        if (!$this->needs_seller_type_resolution($failure_registry, $general_settings)) {
-            return;
-        }
-        try {
-            $seller_status = $partners_endpoint->seller_status();
-            $seller_type = $seller_type_resolver->resolve($seller_status);
-            if ($seller_type !== SellerTypeEnum::UNKNOWN) {
-                $current = $general_settings->get_merchant_data();
-                $connection = new MerchantConnectionDTO($current->is_sandbox, $current->client_id, $current->client_secret, $current->merchant_id, $current->merchant_email, empty($current->merchant_country) ? $seller_status->country() : $current->merchant_country, $seller_type);
-                $general_settings->set_merchant_data($connection);
-                $general_settings->save();
-                do_action('woocommerce_paypal_payments_clear_apm_product_status');
-            }
-        } catch (Exception $e) {
-            $logger->debug('Seller type resolution deferred; will retry in 1 hour.', array('error' => $e->getMessage()));
-        }
-    }
-    /**
-     * Checks whether seller type resolution is needed.
-     *
-     * @param FailureRegistry $failure_registry The failure registry.
-     * @param GeneralSettings $general_settings The general settings.
-     * @return bool True if the merchant is connected but has an unknown seller type.
-     */
-    private function needs_seller_type_resolution(FailureRegistry $failure_registry, GeneralSettings $general_settings): bool
-    {
-        if ($failure_registry->has_failure_in_timeframe(FailureRegistry::SELLER_STATUS_KEY, HOUR_IN_SECONDS)) {
-            return \false;
-        }
-        if (!$general_settings->is_merchant_connected()) {
-            return \false;
-        }
-        return !$general_settings->is_business_seller() && !$general_settings->is_casual_seller();
     }
 }
