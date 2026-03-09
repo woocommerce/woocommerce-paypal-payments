@@ -41,7 +41,9 @@ use WooCommerce\PayPalCommerce\WcGateway\Gateway\OXXO\OXXO;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayUponInvoice\PayUponInvoiceGateway;
 use WooCommerce\PayPalCommerce\Settings\Service\SettingsDataManager;
+use Exception;
 use WooCommerce\PayPalCommerce\Settings\DTO\ConfigurationFlagsDTO;
+use WooCommerce\PayPalCommerce\Settings\DTO\MerchantConnectionDTO;
 use WooCommerce\PayPalCommerce\Settings\Enum\ProductChoicesEnum;
 use WooCommerce\PayPalCommerce\Settings\Data\GeneralSettings;
 use WooCommerce\PayPalCommerce\Settings\Data\PaymentSettings;
@@ -908,17 +910,22 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 			$seller_type   = $seller_type_resolver->resolve( $seller_status );
 
 			if ( $seller_type !== SellerTypeEnum::UNKNOWN ) {
-				$connection              = $general_settings->get_merchant_data();
-				$connection->seller_type = $seller_type;
-				if ( empty( $connection->merchant_country ) ) {
-					$connection->merchant_country = $seller_status->country();
-				}
+				$current    = $general_settings->get_merchant_data();
+				$connection = new MerchantConnectionDTO(
+					$current->is_sandbox,
+					$current->client_id,
+					$current->client_secret,
+					$current->merchant_id,
+					$current->merchant_email,
+					empty( $current->merchant_country ) ? $seller_status->country() : $current->merchant_country,
+					$seller_type
+				);
 				$general_settings->set_merchant_data( $connection );
 				$general_settings->save();
 
 				do_action( 'woocommerce_paypal_payments_clear_apm_product_status' );
 			}
-		} catch ( \Exception $e ) {
+		} catch ( Exception $e ) {
 			set_transient( 'ppcp_seller_type_resolve_cooldown', '1', HOUR_IN_SECONDS );
 
 			$logger = $container->get( 'woocommerce.logger.woocommerce' );
