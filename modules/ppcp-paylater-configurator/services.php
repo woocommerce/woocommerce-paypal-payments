@@ -55,7 +55,7 @@ return array(
 
 		$vault_enabled = $settings_provider->save_paypal_and_venmo();
 
-		return ! $vault_enabled && $messages_apply->for_country() && $dcc_product_status->is_active();
+		return ! $vault_enabled && $messages_apply->for_country();
 	},
 	'paylater-configurator.messaging-locations'  => static function ( ContainerInterface $container ): array {
 		$settings_provider = $container->get( 'settings.settings-provider' );
