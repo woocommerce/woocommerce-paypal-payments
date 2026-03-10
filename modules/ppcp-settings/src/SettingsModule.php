@@ -677,6 +677,45 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 		add_action(
 			'woocommerce_paypal_payments_gateway_migrate',
 			/**
+			 * Retroactive fix for CardButtonGateway not enabled after migration.
+			 *
+			 * In versions up to 3.4.1, the migration only enabled CardButtonGateway for
+			 * ACDC-eligible merchants using BCDC. Non-ACDC merchants who had the card
+			 * funding source active (the default) were missed, causing the card button
+			 * to disappear after upgrade.
+			 *
+			 * @param false|string $previous_version The previously installed plugin version,
+			 *                                       or false on first installation.
+			 */
+			static function ( $previous_version ) use ( $container ): void {
+				if ( $previous_version && version_compare( $previous_version, '3.4.1', 'gt' ) ) {
+					return;
+				}
+
+				if ( get_option( MigrationManager::OPTION_NAME_MIGRATION_IS_DONE ) !== '1' ) {
+					return;
+				}
+
+				$payment_settings = $container->get( 'settings.data.payment' );
+				assert( $payment_settings instanceof PaymentSettings );
+
+				if ( $payment_settings->is_method_enabled( CardButtonGateway::ID ) ) {
+					return;
+				}
+
+				$legacy_settings = (array) get_option( 'woocommerce-ppcp-settings', array() );
+				$disable_funding = (array) ( $legacy_settings['disable_funding'] ?? array() );
+
+				if ( ! in_array( 'card', $disable_funding, true ) ) {
+					$payment_settings->toggle_method_state( CardButtonGateway::ID, true );
+					$payment_settings->save();
+				}
+			}
+		);
+
+		add_action(
+			'woocommerce_paypal_payments_gateway_migrate',
+			/**
 			 * Migrates payment level processing setting during plugin update.
 			 *
 			 * For merchants updating from version 3.3.2 or older, disables Level 2/3
