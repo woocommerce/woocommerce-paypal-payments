@@ -6,6 +6,7 @@ namespace WooCommerce\PayPalCommerce\FraudProtection;
 
 use WooCommerce\PayPalCommerce\Assets\AssetGetter;
 use WooCommerce\PayPalCommerce\Assets\AssetGetterFactory;
+use WooCommerce\PayPalCommerce\Axo\Gateway\AxoGateway;
 use WooCommerce\PayPalCommerce\FraudProtection\Recaptcha\Recaptcha;
 use WooCommerce\PayPalCommerce\FraudProtection\Recaptcha\RecaptchaIntegration;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
@@ -41,6 +42,7 @@ return array(
 				PayPalGateway::ID,
 				CreditCardGateway::ID,
 				CardButtonGateway::ID,
+				AxoGateway::ID,
 			)
 		);
 	},
