@@ -25,7 +25,8 @@ export const transactionsOnPayByLink = ( testOrder: ShopOrder ) => {
 			await orderReceived.assertOrderDetails( testOrder );
 
 			await expect( order.id ).toEqual(
-				await orderReceived.getOrderNumber()
+				await orderReceived.getOrderNumber(),
+				`Assert order number on order received page matches ${ order.id }`
 			);
 			const { transaction_id: transactionId } =
 				await wooCommerceApi.getOrder( order.id );
