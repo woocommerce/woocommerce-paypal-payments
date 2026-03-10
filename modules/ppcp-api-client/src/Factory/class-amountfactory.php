@@ -94,39 +94,62 @@ class AmountFactory {
 		$currency   = $order->get_currency();
 		$items      = $this->item_factory->from_wc_order( $order );
 		$total      = new Money( (float) $order->get_total(), $currency );
-		$item_total = new Money(
-			(float) array_reduce(
-				$items,
-				static function ( float $total, Item $item ): float {
-					return $total + $item->quantity() * $item->unit_amount()->value();
-				},
-				0
-			),
-			$currency
+	
+		$item_total_value = (float) array_reduce(
+			$items,
+			static function ( float $total, Item $item ): float {
+				return $total + $item->quantity() * $item->unit_amount()->value();
+			},
+			0
 		);
-		$shipping   = new Money(
+	
+		$taxes_value = (float) array_reduce(
+			$items,
+			static function ( float $total, Item $item ): float {
+				return $total + $item->quantity() * $item->tax()->value();
+			},
+			0
+		);
+	
+		$shipping = new Money(
 			(float) $order->get_shipping_total() + (float) $order->get_shipping_tax(),
 			$currency
 		);
-		$taxes      = new Money(
-			(float) array_reduce(
-				$items,
-				static function ( float $total, Item $item ): float {
-					return $total + $item->quantity() * $item->tax()->value();
-				},
-				0
-			),
+	
+		$discount_value = (float) $order->get_total_discount( false );
+	
+		foreach ( $order->get_fees() as $fee_item ) {
+			$fee_total = (float) $fee_item->get_total();
+			$fee_tax   = (float) $fee_item->get_total_tax();
+			$fee_gross = $fee_total + $fee_tax;
+	
+			if ( $fee_gross < 0 ) {
+				$discount_value += abs( $fee_gross );
+				continue;
+			}
+	
+			$item_total_value += $fee_total;
+			$taxes_value      += $fee_tax;
+		}
+	
+		$item_total = new Money(
+			$item_total_value,
 			$currency
 		);
-
+	
+		$taxes = new Money(
+			$taxes_value,
+			$currency
+		);
+	
 		$discount = null;
-		if ( (float) $order->get_total_discount( false ) ) {
+		if ( $discount_value > 0 ) {
 			$discount = new Money(
-				(float) $order->get_total_discount( false ),
+				$discount_value,
 				$currency
 			);
 		}
-
+	
 		$breakdown = new AmountBreakdown(
 			$item_total,
 			$shipping,
@@ -136,11 +159,11 @@ class AmountFactory {
 			null, // shipping discounts?
 			$discount
 		);
-		$amount    = new Amount(
+	
+		return new Amount(
 			$total,
 			$breakdown
 		);
-		return $amount;
 	}
 
 	/**
