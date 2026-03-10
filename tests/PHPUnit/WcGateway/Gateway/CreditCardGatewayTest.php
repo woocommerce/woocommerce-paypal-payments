@@ -17,14 +17,12 @@ use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\WcGateway\Endpoint\CaptureCardPayment;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\OrderProcessor;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\RefundProcessor;
-use WooCommerce\PayPalCommerce\WcGateway\Settings\SettingsRenderer;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\CardPaymentsConfiguration;
 use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
 use function Brain\Monkey\Functions\when;
 
 class CreditCardGatewayTest extends TestCase
 {
-	private $settingsRenderer;
 	private $orderProcessor;
 	private $config;
 	private $dcc_configuration;
@@ -48,7 +46,6 @@ class CreditCardGatewayTest extends TestCase
 	{
 		parent::setUp();
 
-		$this->settingsRenderer = Mockery::mock(SettingsRenderer::class);
 		$this->orderProcessor = Mockery::mock(OrderProcessor::class);
 		$this->config = Mockery::mock(ContainerInterface::class);
 		$this->dcc_configuration = Mockery::mock(CardPaymentsConfiguration::class);
@@ -76,7 +73,6 @@ class CreditCardGatewayTest extends TestCase
 		when('wc_clean')->returnArg();
 
 		$this->testee = new CreditCardGateway(
-			$this->settingsRenderer,
 			$this->orderProcessor,
 			$this->config,
 			$this->dcc_configuration,

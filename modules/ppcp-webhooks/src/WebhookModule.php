@@ -9,23 +9,19 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\Webhooks;
 
-use Exception;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExecutableModule;
-use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExtendingModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\FactoryModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ModuleClassNameIdTrait;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ServiceModule;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
-use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 use WooCommerce\PayPalCommerce\Webhooks\Endpoint\ResubscribeEndpoint;
 use WooCommerce\PayPalCommerce\Webhooks\Endpoint\SimulateEndpoint;
 use WooCommerce\PayPalCommerce\Webhooks\Endpoint\SimulationStateEndpoint;
-use WooCommerce\PayPalCommerce\Webhooks\Status\Assets\WebhooksStatusPageAssets;
 
 /**
  * Class WebhookModule
  */
-class WebhookModule implements ServiceModule, FactoryModule, ExtendingModule, ExecutableModule {
+class WebhookModule implements ServiceModule, FactoryModule, ExecutableModule {
 	use ModuleClassNameIdTrait;
 
 	/**
@@ -40,13 +36,6 @@ class WebhookModule implements ServiceModule, FactoryModule, ExtendingModule, Ex
 	 */
 	public function factories(): array {
 		return require __DIR__ . '/../factories.php';
-	}
-
-	/**
-	 * {@inheritDoc}
-	 */
-	public function extensions(): array {
-		return require __DIR__ . '/../extensions.php';
 	}
 
 	/**
@@ -111,61 +100,6 @@ class WebhookModule implements ServiceModule, FactoryModule, ExtendingModule, Ex
 				assert( $endpoint instanceof SimulationStateEndpoint );
 
 				$endpoint->handle_request();
-			}
-		);
-
-		add_action(
-			'init',
-			function () use ( $container ) {
-				$page_id = $container->get( 'wcgateway.current-ppcp-settings-page-id' );
-				if ( Settings::CONNECTION_TAB_ID !== $page_id ) {
-					return;
-				}
-
-				$asset_loader = $container->get( 'webhook.status.assets' );
-				assert( $asset_loader instanceof WebhooksStatusPageAssets );
-				$asset_loader->register();
-				add_action(
-					'admin_enqueue_scripts',
-					array( $asset_loader, 'enqueue' )
-				);
-
-				try {
-					$webhooks     = $container->get( 'webhook.status.registered-webhooks' );
-					$is_connected = $container->get( 'settings.flag.is-connected' );
-
-					if ( empty( $webhooks ) && $is_connected ) {
-						$registrar = $container->get( 'webhook.registrar' );
-						assert( $registrar instanceof WebhookRegistrar );
-						$registrar->register();
-					}
-				} catch ( Exception $exception ) {
-					$container->get( 'woocommerce.logger.woocommerce' )->error( 'Failed to load webhooks list: ' . $exception->getMessage() );
-				}
-			}
-		);
-
-		add_action(
-			'woocommerce_paypal_payments_gateway_migrate',
-			static function ( string $installed_plugin_version ) use ( $container ) {
-				// Skip on fresh installation.
-				if ( empty( $installed_plugin_version ) ) {
-					return;
-				}
-
-				// Disabled when upgrading from 3.0.0+.
-				if ( version_compare( $installed_plugin_version, '3.0.0', '>=' ) ) {
-					return;
-				}
-
-				$registrar = $container->get( 'webhook.registrar' );
-				assert( $registrar instanceof WebhookRegistrar );
-				add_action(
-					'init',
-					function () use ( $registrar ) {
-						$registrar->register();
-					}
-				);
 			}
 		);
 

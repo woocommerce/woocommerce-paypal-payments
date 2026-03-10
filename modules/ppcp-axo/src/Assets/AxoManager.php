@@ -8,7 +8,9 @@ use WooCommerce\PayPalCommerce\Assets\AssetGetter;
 use WooCommerce\PayPalCommerce\Axo\Endpoint\AxoScriptAttributes;
 use WooCommerce\PayPalCommerce\Axo\Endpoint\FrontendLogger;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
-use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
+use WooCommerce\PayPalCommerce\Session\SessionHandler;
+use WooCommerce\PayPalCommerce\WcGateway\Helper\SettingsStatus;
+use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
 
 class AxoManager {
 	private AssetGetter $asset_getter;
@@ -21,11 +23,11 @@ class AxoManager {
 	private string $version;
 
 	/**
-	 * The settings.
+	 * The settings provider.
 	 *
-	 * @var Settings
+	 * @var SettingsProvider
 	 */
-	private Settings $settings;
+	private SettingsProvider $settings_provider;
 
 	/**
 	 * The environment object.
@@ -50,18 +52,18 @@ class AxoManager {
 	private array $supported_country_card_type_matrix;
 
 	/**
-	 * @param AssetGetter $asset_getter
-	 * @param string      $version The assets version.
-	 * @param Settings    $settings The Settings.
-	 * @param Environment $environment The environment object.
-	 * @param array       $insights_data Data needed for the PayPal Insights.
-	 * @param AssetGetter $wcgateway_module_asset_getter
-	 * @param array       $supported_country_card_type_matrix The supported country card type matrix for Axo.
+	 * @param AssetGetter      $asset_getter
+	 * @param string           $version The assets version.
+	 * @param SettingsProvider $settings_provider The Settings provider.
+	 * @param Environment      $environment The environment object.
+	 * @param array            $insights_data Data needed for the PayPal Insights.
+	 * @param AssetGetter      $wcgateway_module_asset_getter
+	 * @param array            $supported_country_card_type_matrix The supported country card type matrix for Axo.
 	 */
 	public function __construct(
 		AssetGetter $asset_getter,
 		string $version,
-		Settings $settings,
+		SettingsProvider $settings_provider,
 		Environment $environment,
 		array $insights_data,
 		AssetGetter $wcgateway_module_asset_getter,
@@ -70,7 +72,7 @@ class AxoManager {
 
 		$this->asset_getter                       = $asset_getter;
 		$this->version                            = $version;
-		$this->settings                           = $settings;
+		$this->settings_provider                  = $settings_provider;
 		$this->environment                        = $environment;
 		$this->insights_data                      = $insights_data;
 		$this->wcgateway_module_asset_getter      = $wcgateway_module_asset_getter;
@@ -128,28 +130,14 @@ class AxoManager {
 				$data['amount']['value'] = WC()->cart->get_total( 'numeric' );
 				return $data; } )( $this->insights_data ),
 			'allowed_cards'              => $this->supported_country_card_type_matrix,
-			'disable_cards'              => $this->settings->has( 'disable_cards' ) ? (array) $this->settings->get( 'disable_cards' ) : array(),
+			'disable_cards'              => $this->settings_provider->disabled_cards(),
 			'enabled_shipping_locations' => apply_filters( 'woocommerce_paypal_payments_axo_shipping_wc_enabled_locations', array() ),
 			'style_options'              => array(
-				'root'  => array(
-					'backgroundColor' => $this->settings->has( 'axo_style_root_bg_color' ) ? $this->settings->get( 'axo_style_root_bg_color' ) : '',
-					'errorColor'      => $this->settings->has( 'axo_style_root_error_color' ) ? $this->settings->get( 'axo_style_root_error_color' ) : '',
-					'fontFamily'      => $this->settings->has( 'axo_style_root_font_family' ) ? $this->settings->get( 'axo_style_root_font_family' ) : '',
-					'textColorBase'   => $this->settings->has( 'axo_style_root_text_color_base' ) ? $this->settings->get( 'axo_style_root_text_color_base' ) : '',
-					'fontSizeBase'    => $this->settings->has( 'axo_style_root_font_size_base' ) ? $this->settings->get( 'axo_style_root_font_size_base' ) : '',
-					'padding'         => $this->settings->has( 'axo_style_root_padding' ) ? $this->settings->get( 'axo_style_root_padding' ) : '',
-					'primaryColor'    => $this->settings->has( 'axo_style_root_primary_color' ) ? $this->settings->get( 'axo_style_root_primary_color' ) : '',
-				),
-				'input' => array(
-					'backgroundColor'  => $this->settings->has( 'axo_style_input_bg_color' ) ? $this->settings->get( 'axo_style_input_bg_color' ) : '',
-					'borderRadius'     => $this->settings->has( 'axo_style_input_border_radius' ) ? $this->settings->get( 'axo_style_input_border_radius' ) : '',
-					'borderColor'      => $this->settings->has( 'axo_style_input_border_color' ) ? $this->settings->get( 'axo_style_input_border_color' ) : '',
-					'borderWidth'      => $this->settings->has( 'axo_style_input_border_width' ) ? $this->settings->get( 'axo_style_input_border_width' ) : '',
-					'textColorBase'    => $this->settings->has( 'axo_style_input_text_color_base' ) ? $this->settings->get( 'axo_style_input_text_color_base' ) : '',
-					'focusBorderColor' => $this->settings->has( 'axo_style_input_focus_border_color' ) ? $this->settings->get( 'axo_style_input_focus_border_color' ) : '',
-				),
+				'root'  => $this->settings_provider->fastlane_root_styles(),
+				'input' => $this->settings_provider->fastlane_input_styles(),
 			),
-			'name_on_card'               => $this->settings->has( 'axo_name_on_card' ) ? $this->settings->get( 'axo_name_on_card' ) : '',
+			'name_on_card'               => $this->settings_provider->fastlane_name_on_card(),
+			'show_watermark'             => $this->settings_provider->show_fastlane_watermark(),
 			'woocommerce'                => array(
 				'states' => array(
 					'US' => WC()->countries->get_states( 'US' ),
@@ -167,7 +155,7 @@ class AxoManager {
 					'nonce'    => wp_create_nonce( AxoScriptAttributes::nonce() ),
 				),
 			),
-			'logging_enabled'            => $this->settings->has( 'logging_enabled' ) ? $this->settings->get( 'logging_enabled' ) : '',
+			'logging_enabled'            => $this->settings_provider->enable_logging(),
 			'wp_debug'                   => defined( 'WP_DEBUG' ) && WP_DEBUG, // @phpstan-ignore booleanAnd.rightAlwaysFalse
 			'billing_email_button_text'  => __( 'Continue', 'woocommerce-paypal-payments' ),
 			'merchant_country'           => WC()->countries->get_base_country(),

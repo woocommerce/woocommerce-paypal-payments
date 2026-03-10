@@ -23,12 +23,9 @@ use WooCommerce\PayPalCommerce\ApiClient\Factory\ExperienceContextBuilder;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
 use WooCommerce\PayPalCommerce\WcGateway\Endpoint\ReturnUrlEndpoint;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
-use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
-use WooCommerce\PayPalCommerce\WcGateway\Gateway\GatewaySettingsRendererTrait;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\TransactionUrlProvider;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\OrderMetaTrait;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\OrderProcessor;
-use WooCommerce\PayPalCommerce\WcGateway\Settings\SettingsRenderer;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\ProcessPaymentTrait;
 use WooCommerce\PayPalCommerce\WcGateway\Exception\GatewayGenericException;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
@@ -41,24 +38,9 @@ use DomainException;
  */
 class AxoGateway extends WC_Payment_Gateway {
 	use OrderMetaTrait;
-	use GatewaySettingsRendererTrait;
 	use ProcessPaymentTrait;
 
 	const ID = 'ppcp-axo-gateway';
-
-	/**
-	 * The Settings Renderer.
-	 *
-	 * @var SettingsRenderer
-	 */
-	protected $settings_renderer;
-
-	/**
-	 * The settings.
-	 *
-	 * @var ContainerInterface
-	 */
-	protected $ppcp_settings;
 
 	/**
 	 * Gateway configuration object, providing relevant settings.
@@ -145,8 +127,6 @@ class AxoGateway extends WC_Payment_Gateway {
 	protected $settings_model;
 
 	/**
-	 * @param SettingsRenderer          $settings_renderer           The settings renderer.
-	 * @param ContainerInterface        $ppcp_settings               The settings.
 	 * @param CardPaymentsConfiguration $dcc_configuration           The DCC Gateway configuration.
 	 * @param SessionHandler            $session_handler             The Session Handler.
 	 * @param OrderProcessor            $order_processor             The Order processor.
@@ -161,8 +141,6 @@ class AxoGateway extends WC_Payment_Gateway {
 	 * @param SettingsModel             $settings_model              The settings model.
 	 */
 	public function __construct(
-		SettingsRenderer $settings_renderer,
-		ContainerInterface $ppcp_settings,
 		CardPaymentsConfiguration $dcc_configuration,
 		SessionHandler $session_handler,
 		OrderProcessor $order_processor,
@@ -178,8 +156,6 @@ class AxoGateway extends WC_Payment_Gateway {
 	) {
 		$this->id = self::ID;
 
-		$this->settings_renderer          = $settings_renderer;
-		$this->ppcp_settings              = $ppcp_settings;
 		$this->dcc_configuration          = $dcc_configuration;
 		$this->session_handler            = $session_handler;
 		$this->order_processor            = $order_processor;
@@ -577,14 +553,5 @@ class AxoGateway extends WC_Payment_Gateway {
 		}
 
 		return parent::get_title();
-	}
-
-	/**
-	 * Returns the settings renderer.
-	 *
-	 * @return SettingsRenderer
-	 */
-	protected function settings_renderer(): SettingsRenderer {
-		return $this->settings_renderer;
 	}
 }

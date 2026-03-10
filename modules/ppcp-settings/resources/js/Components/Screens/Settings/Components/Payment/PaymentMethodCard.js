@@ -5,6 +5,7 @@ import usePaymentDependencyState from '@ppcp-settings/hooks/usePaymentDependency
 import useSettingDependencyState from '@ppcp-settings/hooks/useSettingDependencyState';
 import usePaymentMethodsToggle from '@ppcp-settings/hooks/usePaymentMethodsToggle';
 import useDependencyMessages from '@ppcp-settings/hooks/useDependencyMessages';
+import useMethodWarnings from '@ppcp-settings/hooks/useMethodWarnings';
 import BulkPaymentToggle from './BulkPaymentToggle';
 import SpinnerOverlay from '@ppcp-settings/Components/ReusableComponents/SpinnerOverlay';
 import {
@@ -78,6 +79,9 @@ const PaymentMethodCard = ( {
 			groupName,
 		} );
 
+	// Evaluate reactive warning visibility conditions against store data.
+	const methodsWithWarnings = useMethodWarnings( methods );
+
 	useEffect( () => {
 		if ( isPaymentStoreReady && isSettingsStoreReady ) {
 			handleHighlightFromUrl();
@@ -93,7 +97,7 @@ const PaymentMethodCard = ( {
 	}
 
 	// Process methods with dependencies from the pre-computed map.
-	const processedMethods = methods.map( ( method ) => {
+	const processedMethods = methodsWithWarnings.map( ( method ) => {
 		const dependencyInfo = dependencyMessagesMap[ method.id ] || {};
 
 		return {
