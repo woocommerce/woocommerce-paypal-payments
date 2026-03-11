@@ -53,9 +53,7 @@ const PaymentFlow = ( {
 		);
 	}
 	const description =
-		( useAcdc || resolvedUseDigitalWallets ) && 'MX' !== storeCountry
-			? optionalDescription
-			: '';
+		useAcdc || resolvedUseDigitalWallets ? optionalDescription : '';
 	return (
 		<div className="ppcp-r-welcome-docs__wrapper">
 			<DefaultMethodsSection
