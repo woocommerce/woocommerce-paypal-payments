@@ -42,8 +42,7 @@ class ProductsPayload
                 continue;
             }
             // For all other product types (simple, grouped, etc.).
-            $description = $product->get_description() ?: $product->get_short_description();
-            $api_product = array('id' => (string) $product->get_id(), 'title' => $this->filter_product_title($product->get_name(), $product), 'link' => $this->filter_product_link($product->get_permalink(), $product), 'image_link' => $this->filter_product_image(wp_get_attachment_image_url((int) $product->get_image_id(), 'full') ?: '', $product), 'description' => $this->filter_product_description($description, $product), 'price' => $this->format_price($product->get_price()), 'availability' => $this->filter_product_availability($this->map_stock_status($product->get_stock_status()), $product), 'merchantStoreUrl' => $this->merchant_store_url);
+            $api_product = array('id' => (string) $product->get_id(), 'title' => $this->get_product_title($product), 'link' => $this->get_product_link($product), 'image_link' => $this->get_product_image($product), 'description' => $this->get_product_description($product, $product->get_short_description()), 'price' => $this->format_price($product->get_price()), 'availability' => $this->get_product_availability($product), 'merchantStoreUrl' => $this->merchant_store_url);
             // Add optional fields.
             if ($product->get_sku()) {
                 $api_product['mpn'] = $product->get_sku();
@@ -51,10 +50,9 @@ class ProductsPayload
             if ($product->get_sale_price()) {
                 $api_product['sale_price'] = $this->format_price($product->get_sale_price());
             }
-            // Add product categories using WooCommerce functions.
-            $categories = wc_get_product_category_list($product_id);
-            if ($categories) {
-                $api_product['product_type'] = wp_strip_all_tags($categories);
+            $product_type = $this->get_product_type($product);
+            if ($product_type) {
+                $api_product['product_type'] = $product_type;
             }
             $api_products[] = $api_product;
         }
@@ -64,16 +62,13 @@ class ProductsPayload
     {
         $variants = array();
         $variation_ids = $variable_product->get_children();
-        // Get parent product categories for variations.
-        $parent_categories = wc_get_product_category_list($variable_product->get_id());
-        $product_type = $parent_categories ? wp_strip_all_tags($parent_categories) : '';
+        $product_type = $this->get_product_type($variable_product);
         foreach ($variation_ids as $variation_id) {
             $variation = wc_get_product($variation_id);
             if (!$variation instanceof WC_Product_Variation || !$variation->is_purchasable()) {
                 continue;
             }
-            $description = $variation->get_description() ?: $variable_product->get_description();
-            $variant = array('id' => (string) $variation->get_id(), 'item_group_id' => (string) $variable_product->get_id(), 'title' => $this->filter_product_title($variation->get_name(), $variation), 'link' => $this->filter_product_link($variation->get_permalink(), $variation), 'image_link' => $this->filter_product_image((wp_get_attachment_image_url((int) $variation->get_image_id(), 'full') ?: wp_get_attachment_image_url((int) $variable_product->get_image_id(), 'full')) ?: '', $variation), 'description' => $this->filter_product_description($description, $variation), 'price' => $this->format_price($variation->get_price()), 'availability' => $this->filter_product_availability($this->map_stock_status($variation->get_stock_status()), $variation), 'merchantStoreUrl' => $this->merchant_store_url);
+            $variant = array('id' => (string) $variation->get_id(), 'item_group_id' => (string) $variable_product->get_id(), 'title' => $this->get_product_title($variation), 'link' => $this->get_product_link($variation), 'image_link' => $this->get_product_image($variation, wp_get_attachment_image_url((int) $variable_product->get_image_id(), 'full') ?: ''), 'description' => $this->get_product_description($variation, $variable_product->get_description()), 'price' => $this->format_price($variation->get_price()), 'availability' => $this->get_product_availability($variation), 'merchantStoreUrl' => $this->merchant_store_url);
             // Add variant attributes using WooCommerce methods.
             $attributes = $variation->get_variation_attributes();
             foreach ($attributes as $attribute => $value) {
@@ -97,18 +92,17 @@ class ProductsPayload
         return $variants;
     }
     /**
-     * Filters and sanitizes the product description for PayPal ingestion.
-     * Converts HTML to plain text while preserving important details.
-     *
-     * @param string     $description The raw product description.
-     * @param WC_Product $product     The WooCommerce product object.
-     * @return string The filtered description.
+     * @param WC_Product $product  The WooCommerce product object.
+     * @param string     $fallback Fallback description (e.g. short description for simple products,
+     *                             parent description for variations).
+     * @return string Plain-text description, passed through the filter hook.
      */
-    private function filter_product_description(string $description, WC_Product $product): string
+    private function get_product_description(WC_Product $product, string $fallback = ''): string
     {
-        // Convert HTML to plain text, preserving line breaks and normalize.
+        $description = $product->get_description() ?: $fallback;
         $plain_text = wp_strip_all_tags($description);
-        $plain_text = trim(preg_replace('/\s+/', ' ', $plain_text));
+        $plain_text = html_entity_decode($plain_text, \ENT_QUOTES, 'UTF-8');
+        $plain_text = trim(preg_replace('/\s+/', ' ', $plain_text) ?? '');
         /**
          * Filters the product description for PayPal Agentic Commerce ingestion.
          *
@@ -120,13 +114,10 @@ class ProductsPayload
         return apply_filters('woocommerce_paypal_payments_agentic_commerce_item_description', $plain_text, $product);
     }
     /**
-     * Filters the product title for PayPal ingestion.
-     *
-     * @param string     $title   The product title.
      * @param WC_Product $product The WooCommerce product object.
-     * @return string The filtered title.
+     * @return string The filtered product title.
      */
-    private function filter_product_title(string $title, WC_Product $product): string
+    private function get_product_title(WC_Product $product): string
     {
         /**
          * Filters the product title for PayPal Agentic Commerce ingestion.
@@ -136,16 +127,13 @@ class ProductsPayload
          * @param string     $title   The product title.
          * @param WC_Product $product The WooCommerce product object.
          */
-        return apply_filters('woocommerce_paypal_payments_agentic_commerce_item_title', $title, $product);
+        return apply_filters('woocommerce_paypal_payments_agentic_commerce_item_title', $product->get_name(), $product);
     }
     /**
-     * Filters the product link for PayPal ingestion.
-     *
-     * @param string     $link    The product permalink.
      * @param WC_Product $product The WooCommerce product object.
-     * @return string The filtered link.
+     * @return string The filtered product permalink.
      */
-    private function filter_product_link(string $link, WC_Product $product): string
+    private function get_product_link(WC_Product $product): string
     {
         /**
          * Filters the product link for PayPal Agentic Commerce ingestion.
@@ -155,17 +143,16 @@ class ProductsPayload
          * @param string     $link    The product permalink.
          * @param WC_Product $product The WooCommerce product object.
          */
-        return apply_filters('woocommerce_paypal_payments_agentic_commerce_item_link', $link, $product);
+        return apply_filters('woocommerce_paypal_payments_agentic_commerce_item_link', $product->get_permalink(), $product);
     }
     /**
-     * Filters the product image URL for PayPal ingestion.
-     *
-     * @param string     $image_url The product image URL.
-     * @param WC_Product $product   The WooCommerce product object.
+     * @param WC_Product $product  The WooCommerce product object.
+     * @param string     $fallback Fallback image URL (e.g. parent product image for variations).
      * @return string The filtered image URL.
      */
-    private function filter_product_image(string $image_url, WC_Product $product): string
+    private function get_product_image(WC_Product $product, string $fallback = ''): string
     {
+        $image_url = wp_get_attachment_image_url((int) $product->get_image_id(), 'full') ?: $fallback;
         /**
          * Filters the product image URL for PayPal Agentic Commerce ingestion.
          *
@@ -177,14 +164,13 @@ class ProductsPayload
         return apply_filters('woocommerce_paypal_payments_agentic_commerce_item_image', $image_url, $product);
     }
     /**
-     * Filters the product availability status for PayPal ingestion.
-     *
-     * @param string     $availability The mapped availability status.
-     * @param WC_Product $product      The WooCommerce product object.
-     * @return string The filtered availability.
+     * @param WC_Product $product The WooCommerce product object.
+     * @return string The filtered availability status.
      */
-    private function filter_product_availability(string $availability, WC_Product $product): string
+    private function get_product_availability(WC_Product $product): string
     {
+        $mapping = array('instock' => 'in stock', 'outofstock' => 'out of stock', 'onbackorder' => 'backorder');
+        $availability = $mapping[$product->get_stock_status()] ?? 'out of stock';
         /**
          * Filters the product availability for PayPal Agentic Commerce ingestion.
          *
@@ -194,6 +180,26 @@ class ProductsPayload
          * @param WC_Product $product      The WooCommerce product object.
          */
         return apply_filters('woocommerce_paypal_payments_agentic_commerce_item_availability', $availability, $product);
+    }
+    /**
+     * @param WC_Product $product The WooCommerce product object.
+     * @return string Plain-text category list, passed through the filter hook, or empty string.
+     */
+    private function get_product_type(WC_Product $product): string
+    {
+        $categories = wc_get_product_category_list($product->get_id());
+        $plain_text = wp_strip_all_tags($categories);
+        $plain_text = html_entity_decode($plain_text, \ENT_QUOTES, 'UTF-8');
+        $plain_text = trim(preg_replace('/\s+/', ' ', $plain_text) ?? '');
+        /**
+         * Filters the product type for PayPal Agentic Commerce ingestion.
+         *
+         * @since 3.4.0
+         *
+         * @param string     $plain_text The plain text category list.
+         * @param WC_Product $product    The WooCommerce product object.
+         */
+        return apply_filters('woocommerce_paypal_payments_agentic_commerce_item_product_type', $plain_text, $product);
     }
     /**
      * @param string|mixed $price WooCommerce uses strings, but any numeric value is accepted.
@@ -207,10 +213,5 @@ class ProductsPayload
             return '';
         }
         return number_format((float) $price, 2, '.', '') . ' ' . get_woocommerce_currency();
-    }
-    private function map_stock_status(string $stock_status): string
-    {
-        $mapping = array('instock' => 'in stock', 'outofstock' => 'out of stock', 'onbackorder' => 'backorder');
-        return $mapping[$stock_status] ?? 'out of stock';
     }
 }
