@@ -22,7 +22,11 @@ const EXPECTED_PAYMENT_METHODS = [
 		[ 'PayWithPayPal', 'PayLater' ],
 		[ 'CardFields', 'DigitalWallets', 'APMs', 'Fastlane' ],
 	],
-	[ 'MX', [ 'PayWithPayPal', 'PayLater' ], [ 'CreditDebitCards', 'APMs' ] ],
+	[
+		'MX',
+		[ 'PayWithPayPal', 'PayLater' ],
+		[ 'CardFields', 'DigitalWallets', 'APMs', 'Fastlane' ],
+	],
 ];
 
 describe( 'usePaymentConfig hook', () => {
@@ -117,14 +121,15 @@ describe( 'usePaymentConfig hook', () => {
 			}
 		);
 
-		test( 'Country MX should contain non ACDC methods when canUseCardPayments is true', () => {
+		test( 'Country MX should contain ACDC methods when canUseCardPayments is true', () => {
 			const { result } = renderHook( () =>
 				usePaymentConfig( 'MX', true, false, false, false )
 			);
 			const methodNames = result.current.optionalMethods.map(
 				( method ) => method.name
 			);
-			expect( methodNames ).toContain( 'CreditDebitCards' );
+			expect( methodNames ).toContain( 'CardFields' );
+			expect( methodNames ).toContain( 'DigitalWallets' );
 			expect( methodNames ).toContain( 'APMs' );
 		} );
 
@@ -136,7 +141,7 @@ describe( 'usePaymentConfig hook', () => {
 				( method ) => method.name
 			);
 			expect( methodNames ).toContain( 'CreditDebitCards' );
-			expect( methodNames ).toContain( 'APMs' );
+			expect( methodNames ).not.toContain( 'APMs' );
 		} );
 	} );
 
