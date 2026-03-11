@@ -88,6 +88,9 @@ class PaymentSettingsMigration implements \WooCommerce\PayPalCommerce\Settings\S
                 $this->payment_settings->set_pui_customer_service_instructions($pui_settings['customer_service_instructions']);
             }
         }
+        if (isset($this->settings['dcc_name_on_card'])) {
+            $this->payment_settings->set_cardholder_name($this->settings['dcc_name_on_card'] === 'yes');
+        }
         $this->payment_settings->save();
     }
     /**
