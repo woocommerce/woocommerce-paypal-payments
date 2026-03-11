@@ -4,13 +4,50 @@ declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\StoreSync\Validation\Context;
 
+use WooCommerce\PayPalCommerce\StoreSync\Enums\ContextPricingIssue;
+
 /**
- * Base context class for pricing-related validation issues.
+ * Context class for pricing-related validation issues.
  *
- * Concrete subclasses must set SPECIFIC_ISSUE to a ContextPricingIssue constant.
  * All props are optional and included in to_array() only when set.
  */
-abstract class PricingErrorContext extends IssueContext {
+class PricingErrorContext extends IssueContext {
+
+	public static function create_price_mismatch(): self {
+		return new self( ContextPricingIssue::PRICE_MISMATCH );
+	}
+
+	public static function create_discount_expired(): self {
+		return new self( ContextPricingIssue::DISCOUNT_EXPIRED );
+	}
+
+	public static function create_discount_usage_limit_exceeded(): self {
+		return new self( ContextPricingIssue::DISCOUNT_USAGE_LIMIT_EXCEEDED );
+	}
+
+	public static function create_discount_customer_ineligible(): self {
+		return new self( ContextPricingIssue::DISCOUNT_CUSTOMER_INELIGIBLE );
+	}
+
+	public static function create_discount_minimum_not_met(): self {
+		return new self( ContextPricingIssue::DISCOUNT_MINIMUM_NOT_MET );
+	}
+
+	public static function create_tax_calculation_failed(): self {
+		return new self( ContextPricingIssue::TAX_CALCULATION_FAILED );
+	}
+
+	public static function create_currency_not_supported(): self {
+		return new self( ContextPricingIssue::CURRENCY_NOT_SUPPORTED );
+	}
+
+	public static function create_currency_mismatch(): self {
+		return new self( ContextPricingIssue::CURRENCY_MISMATCH );
+	}
+
+	public static function create_promotional_conflict(): self {
+		return new self( ContextPricingIssue::PROMOTIONAL_CONFLICT );
+	}
 
 	private const VALID_PRICE_CHANGE_REASONS = array(
 		'promotional_ended',
@@ -244,7 +281,9 @@ abstract class PricingErrorContext extends IssueContext {
 	}
 
 	public function to_array(): array {
-		$data = parent::to_array();
+		$data = array(
+			'specific_issue' => $this->specific_issue,
+		);
 
 		if ( $this->item_id !== null ) {
 			$data['item_id'] = $this->item_id;

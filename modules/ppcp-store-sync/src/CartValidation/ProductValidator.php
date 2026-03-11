@@ -14,8 +14,7 @@ use WooCommerce\PayPalCommerce\StoreSync\Enums\Priority;
 use WooCommerce\PayPalCommerce\StoreSync\Helper\ProductManager;
 use WooCommerce\PayPalCommerce\StoreSync\Schema\PayPalCart;
 use WooCommerce\PayPalCommerce\StoreSync\Schema\CartItem;
-use WooCommerce\PayPalCommerce\StoreSync\Validation\Resolution\Action\RemoveItem;
-use WooCommerce\PayPalCommerce\StoreSync\Validation\Resolution\Action\SuggestAlternative;
+use WooCommerce\PayPalCommerce\StoreSync\Validation\Resolution\ResolutionOption;
 use WooCommerce\PayPalCommerce\StoreSync\Validation\InvalidProduct;
 use WooCommerce\PayPalCommerce\StoreSync\Validation\ValidationIssue;
 use WooCommerce\PayPalCommerce\StoreSync\Config\IngestionConfiguration;
@@ -61,7 +60,7 @@ class ProductValidator implements ValidatorInterface {
 				->user_message( "'{$item->name()}' not found in WooCommerce catalog" )
 				->for_field( $field )
 				->add_resolution(
-					RemoveItem::create()
+					ResolutionOption::create_remove_item()
 						->label( 'Remove from cart' )
 						->priority( Priority::HIGH )
 				);
@@ -72,11 +71,11 @@ class ProductValidator implements ValidatorInterface {
 				->user_message( "'{$item->name()}' cannot be purchased at this time" )
 				->for_field( $field )
 				->add_resolution(
-					RemoveItem::create()
+					ResolutionOption::create_remove_item()
 						->label( 'Remove from cart' )
 						->priority( Priority::HIGH )
 				)
-				->add_resolution( SuggestAlternative::create() );
+				->add_resolution( ResolutionOption::create_suggest_alternative() );
 		}
 
 		$filter_args = $this->configuration->get_valid_product_filters();

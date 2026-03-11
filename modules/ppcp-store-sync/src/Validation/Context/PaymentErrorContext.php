@@ -4,13 +4,54 @@ declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\StoreSync\Validation\Context;
 
+use WooCommerce\PayPalCommerce\StoreSync\Enums\ContextPaymentIssue;
+
 /**
- * Base context class for payment-related validation issues.
+ * Context class for payment-related validation issues.
  *
- * Concrete subclasses must set SPECIFIC_ISSUE to a ContextPaymentIssue constant.
  * All props are optional and included in to_array() only when set.
  */
-abstract class PaymentErrorContext extends IssueContext {
+class PaymentErrorContext extends IssueContext {
+
+	public static function create_payment_amount_too_large(): self {
+		return new self( ContextPaymentIssue::PAYMENT_AMOUNT_TOO_LARGE );
+	}
+
+	public static function create_payment_amount_too_small(): self {
+		return new self( ContextPaymentIssue::PAYMENT_AMOUNT_TOO_SMALL );
+	}
+
+	public static function create_payment_method_not_accepted(): self {
+		return new self( ContextPaymentIssue::PAYMENT_METHOD_NOT_ACCEPTED );
+	}
+
+	public static function create_currency_conversion_failed(): self {
+		return new self( ContextPaymentIssue::CURRENCY_CONVERSION_FAILED );
+	}
+
+	public static function create_payment_processor_unavailable(): self {
+		return new self( ContextPaymentIssue::PAYMENT_PROCESSOR_UNAVAILABLE );
+	}
+
+	public static function create_merchant_account_issue(): self {
+		return new self( ContextPaymentIssue::MERCHANT_ACCOUNT_ISSUE );
+	}
+
+	public static function create_payment_declined(): self {
+		return new self( ContextPaymentIssue::PAYMENT_DECLINED );
+	}
+
+	public static function create_payment_insufficient_funds(): self {
+		return new self( ContextPaymentIssue::PAYMENT_INSUFFICIENT_FUNDS );
+	}
+
+	public static function create_payment_expired(): self {
+		return new self( ContextPaymentIssue::PAYMENT_EXPIRED );
+	}
+
+	public static function create_payment_fraud_detected(): self {
+		return new self( ContextPaymentIssue::PAYMENT_FRAUD_DETECTED );
+	}
 
 	private ?string $order_total = null;
 
@@ -156,7 +197,9 @@ abstract class PaymentErrorContext extends IssueContext {
 	}
 
 	public function to_array(): array {
-		$data = parent::to_array();
+		$data = array(
+			'specific_issue' => $this->specific_issue,
+		);
 
 		if ( $this->order_total !== null ) {
 			$data['order_total'] = $this->order_total;

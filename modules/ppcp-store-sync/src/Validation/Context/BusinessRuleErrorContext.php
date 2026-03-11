@@ -4,13 +4,62 @@ declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\StoreSync\Validation\Context;
 
+use WooCommerce\PayPalCommerce\StoreSync\Enums\ContextBusinessRuleIssue;
+
 /**
- * Base context class for business-rule-related validation issues.
+ * Context class for business-rule-related validation issues.
  *
- * Concrete subclasses must set SPECIFIC_ISSUE to a ContextBusinessRuleIssue constant.
  * All props are optional and included in to_array() only when set.
  */
-abstract class BusinessRuleErrorContext extends IssueContext {
+class BusinessRuleErrorContext extends IssueContext {
+
+	public static function create_minimum_order_not_met(): self {
+		return new self( ContextBusinessRuleIssue::MINIMUM_ORDER_NOT_MET );
+	}
+
+	public static function create_minimum_quantity_not_met(): self {
+		return new self( ContextBusinessRuleIssue::MINIMUM_QUANTITY_NOT_MET );
+	}
+
+	public static function create_maximum_quantity_exceeded(): self {
+		return new self( ContextBusinessRuleIssue::MAXIMUM_QUANTITY_EXCEEDED );
+	}
+
+	public static function create_cart_limit_exceeded(): self {
+		return new self( ContextBusinessRuleIssue::CART_LIMIT_EXCEEDED );
+	}
+
+	public static function create_customer_account_suspended(): self {
+		return new self( ContextBusinessRuleIssue::CUSTOMER_ACCOUNT_SUSPENDED );
+	}
+
+	public static function create_purchase_limit_exceeded(): self {
+		return new self( ContextBusinessRuleIssue::PURCHASE_LIMIT_EXCEEDED );
+	}
+
+	public static function create_bulk_order_approval_required(): self {
+		return new self( ContextBusinessRuleIssue::BULK_ORDER_APPROVAL_REQUIRED );
+	}
+
+	public static function create_store_temporarily_closed(): self {
+		return new self( ContextBusinessRuleIssue::STORE_TEMPORARILY_CLOSED );
+	}
+
+	public static function create_age_restricted_product(): self {
+		return new self( ContextBusinessRuleIssue::AGE_RESTRICTED_PRODUCT );
+	}
+
+	public static function create_loyalty_program_validation_failed(): self {
+		return new self( ContextBusinessRuleIssue::LOYALTY_PROGRAM_VALIDATION_FAILED );
+	}
+
+	public static function create_business_hours_restriction(): self {
+		return new self( ContextBusinessRuleIssue::BUSINESS_HOURS_RESTRICTION );
+	}
+
+	public static function create_product_archived(): self {
+		return new self( ContextBusinessRuleIssue::PRODUCT_ARCHIVED );
+	}
 
 	private ?string $current_amount = null;
 
@@ -263,7 +312,9 @@ abstract class BusinessRuleErrorContext extends IssueContext {
 	}
 
 	public function to_array(): array {
-		$data = parent::to_array();
+		$data = array(
+			'specific_issue' => $this->specific_issue,
+		);
 
 		if ( $this->current_amount !== null ) {
 			$data['current_amount'] = $this->current_amount;

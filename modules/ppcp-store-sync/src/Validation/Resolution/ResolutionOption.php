@@ -9,27 +9,116 @@ declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\StoreSync\Validation\Resolution;
 
+use WooCommerce\PayPalCommerce\StoreSync\Enums\ResolutionAction;
+
 /**
  * Immutable resolution option builder with factory methods.
  */
-abstract class ResolutionOption {
-	protected const RESOLUTION_ACTION = '';
+class ResolutionOption {
+	/**
+	 * @readonly Must only be changed via the constructor!
+	 */
+	private string $resolution_action;
 
 	private ?string $label    = null;
 	private ?string $url      = null;
 	private ?string $priority = null;
 	private array $metadata   = array();
 
-	final private function __construct() {
+	private function __construct( string $action ) {
+		$this->resolution_action = $action;
 	}
 
-	/**
-	 * Creates a new resolution option instance.
-	 *
-	 * @return static
-	 */
-	public static function create(): self {
-		return new static();
+	public static function create_accept_back_order(): self {
+		return new self( ResolutionAction::ACCEPT_BACK_ORDER );
+	}
+
+	public static function create_accept_new_price(): self {
+		return new self( ResolutionAction::ACCEPT_NEW_PRICE );
+	}
+
+	public static function create_accept_pre_order(): self {
+		return new self( ResolutionAction::ACCEPT_PRE_ORDER );
+	}
+
+	public static function create_accept_terms(): self {
+		return new self( ResolutionAction::ACCEPT_TERMS );
+	}
+
+	public static function create_apply_different_coupon(): self {
+		return new self( ResolutionAction::APPLY_DIFFERENT_COUPON );
+	}
+
+	public static function create_choose_different_variant(): self {
+		return new self( ResolutionAction::CHOOSE_DIFFERENT_VARIANT );
+	}
+
+	public static function create_contact_support(): self {
+		return new self( ResolutionAction::CONTACT_SUPPORT );
+	}
+
+	public static function create_keep_current_coupon(): self {
+		return new self( ResolutionAction::KEEP_CURRENT_COUPON );
+	}
+
+	public static function create_modify_cart(): self {
+		return new self( ResolutionAction::MODIFY_CART );
+	}
+
+	public static function create_provide_missing_field(): self {
+		return new self( ResolutionAction::PROVIDE_MISSING_FIELD );
+	}
+
+	public static function create_redirect_to_merchant(): self {
+		return new self( ResolutionAction::REDIRECT_TO_MERCHANT );
+	}
+
+	public static function create_remove_coupon(): self {
+		return new self( ResolutionAction::REMOVE_COUPON );
+	}
+
+	public static function create_remove_item(): self {
+		return new self( ResolutionAction::REMOVE_ITEM );
+	}
+
+	public static function create_request_approval(): self {
+		return new self( ResolutionAction::REQUEST_APPROVAL );
+	}
+
+	public static function create_retry_later(): self {
+		return new self( ResolutionAction::RETRY_LATER );
+	}
+
+	public static function create_split_order(): self {
+		return new self( ResolutionAction::SPLIT_ORDER );
+	}
+
+	public static function create_suggest_alternative(): self {
+		return new self( ResolutionAction::SUGGEST_ALTERNATIVE );
+	}
+
+	public static function create_update_address(): self {
+		return new self( ResolutionAction::UPDATE_ADDRESS );
+	}
+
+	public static function create_update_shipping_method(): self {
+		return new self( ResolutionAction::UPDATE_SHIPPING_METHOD );
+	}
+
+	public static function create_use_different_currency(): self {
+		return new self( ResolutionAction::USE_DIFFERENT_CURRENCY );
+	}
+
+	public static function create_use_different_payment(): self {
+		return new self( ResolutionAction::USE_DIFFERENT_PAYMENT );
+	}
+
+	public static function create_verify_account(): self {
+		return new self( ResolutionAction::VERIFY_ACCOUNT );
+	}
+
+	public static function create_wait_for_restock(): self {
+		return new self( ResolutionAction::WAIT_FOR_RESTOCK );
 	}
 
 	/**
@@ -92,7 +181,7 @@ abstract class ResolutionOption {
 	 */
 	public function to_array(): array {
 		$data = array(
-			'action' => static::RESOLUTION_ACTION,
+			'action' => $this->resolution_action,
 			'label'  => $this->label,
 		);
 

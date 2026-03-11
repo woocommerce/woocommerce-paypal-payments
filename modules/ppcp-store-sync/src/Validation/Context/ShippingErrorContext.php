@@ -4,13 +4,54 @@ declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\StoreSync\Validation\Context;
 
+use WooCommerce\PayPalCommerce\StoreSync\Enums\ContextShippingIssue;
+
 /**
- * Base context class for shipping-related validation issues.
+ * Context class for shipping-related validation issues.
  *
- * Concrete subclasses must set SPECIFIC_ISSUE to a ContextShippingIssue constant.
  * All props are optional and included in to_array() only when set.
  */
-abstract class ShippingErrorContext extends IssueContext {
+class ShippingErrorContext extends IssueContext {
+
+	public static function create_missing_shipping_address(): self {
+		return new self( ContextShippingIssue::MISSING_SHIPPING_ADDRESS );
+	}
+
+	public static function create_shipping_address_invalid(): self {
+		return new self( ContextShippingIssue::SHIPPING_ADDRESS_INVALID );
+	}
+
+	public static function create_shipping_to_po_box_not_allowed(): self {
+		return new self( ContextShippingIssue::SHIPPING_TO_PO_BOX_NOT_ALLOWED );
+	}
+
+	public static function create_no_shipping_options(): self {
+		return new self( ContextShippingIssue::NO_SHIPPING_OPTIONS );
+	}
+
+	public static function create_international_shipping_restricted(): self {
+		return new self( ContextShippingIssue::INTERNATIONAL_SHIPPING_RESTRICTED );
+	}
+
+	public static function create_region_restricted(): self {
+		return new self( ContextShippingIssue::REGION_RESTRICTED );
+	}
+
+	public static function create_oversized_item_shipping(): self {
+		return new self( ContextShippingIssue::OVERSIZED_ITEM_SHIPPING );
+	}
+
+	public static function create_hazardous_material_shipping(): self {
+		return new self( ContextShippingIssue::HAZARDOUS_MATERIAL_SHIPPING );
+	}
+
+	public static function create_shipping_zone_not_covered(): self {
+		return new self( ContextShippingIssue::SHIPPING_ZONE_NOT_COVERED );
+	}
+
+	public static function create_missing_coordinates_for_enhanced_delivery(): self {
+		return new self( ContextShippingIssue::MISSING_COORDINATES_FOR_ENHANCED_DELIVERY );
+	}
 
 	private const VALID_RESTRICTION_REASONS = array(
 		'signature_required',
@@ -147,7 +188,9 @@ abstract class ShippingErrorContext extends IssueContext {
 	}
 
 	public function to_array(): array {
-		$data = parent::to_array();
+		$data = array(
+			'specific_issue' => $this->specific_issue,
+		);
 
 		if ( $this->validation_failures !== null ) {
 			$data['validation_failures'] = $this->validation_failures;

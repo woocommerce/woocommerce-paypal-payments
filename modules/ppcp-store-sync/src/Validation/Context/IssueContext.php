@@ -11,30 +11,18 @@ namespace WooCommerce\PayPalCommerce\StoreSync\Validation\Context;
  * and define the SPECIFIC_ISSUE constant using the matching Context*Issue enum.
  */
 abstract class IssueContext {
-	/**
-	 * The specific issue code for this context.
-	 *
-	 * Concrete subclasses must override this constant using the appropriate
-	 * Context*Issue enum value (e.g. ContextPricingIssue::PRICE_MISMATCH).
-	 */
-	protected const SPECIFIC_ISSUE = '';
-
-	final private function __construct() {
-	}
 
 	/**
-	 * Creates a new context instance.
-	 *
-	 * @return static
+	 * @readonly Must only be changed via the constructor!
 	 */
-	public static function create(): self {
-		return new static();
+	protected string $specific_issue;
+
+	protected function __construct( string $specific_issue ) {
+		$this->specific_issue = $specific_issue;
 	}
 
 	public function to_array(): array {
-		return array(
-			'specific_issue' => static::SPECIFIC_ISSUE,
-		);
+		return array();
 	}
 
 	/**

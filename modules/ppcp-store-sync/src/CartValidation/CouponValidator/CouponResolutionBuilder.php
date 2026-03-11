@@ -15,11 +15,6 @@ use WC_Coupon;
 use WooCommerce\PayPalCommerce\StoreSync\Enums\Priority;
 use WooCommerce\PayPalCommerce\StoreSync\Helper\CartHelper;
 use WooCommerce\PayPalCommerce\StoreSync\Schema\PayPalCart;
-use WooCommerce\PayPalCommerce\StoreSync\Validation\Resolution\Action\ApplyDifferentCoupon;
-use WooCommerce\PayPalCommerce\StoreSync\Validation\Resolution\Action\KeepCurrentCoupon;
-use WooCommerce\PayPalCommerce\StoreSync\Validation\Resolution\Action\ModifyCart;
-use WooCommerce\PayPalCommerce\StoreSync\Validation\Resolution\Action\RedirectToMerchant;
-use WooCommerce\PayPalCommerce\StoreSync\Validation\Resolution\Action\RemoveCoupon;
 use WooCommerce\PayPalCommerce\StoreSync\Validation\Resolution\ResolutionOption;
 
 /**
@@ -74,27 +69,27 @@ class CouponResolutionBuilder {
 	private function build_resolution_by_key( string $key, array $context, PayPalCart $cart ): ?ResolutionOption {
 		switch ( $key ) {
 			case 'try_different':
-				return ApplyDifferentCoupon::create()
+				return ResolutionOption::create_apply_different_coupon()
 					->label( 'Try a different coupon code' )
 					->priority( Priority::HIGH );
 
 			case 'remove':
-				return RemoveCoupon::create()
+				return ResolutionOption::create_remove_coupon()
 					->label( 'Continue without coupon' )
 					->priority( Priority::MEDIUM );
 
 			case 'modify_cart':
-				return ModifyCart::create()
+				return ResolutionOption::create_modify_cart()
 					->label( 'Add eligible items to use this coupon' )
 					->priority( Priority::HIGH );
 
 			case 'view_available':
-				return RedirectToMerchant::create()
+				return ResolutionOption::create_redirect_to_merchant()
 					->label( 'View available offers' )
 					->priority( Priority::LOW );
 
 			case 'suggest_alternative':
-				return ApplyDifferentCoupon::create()
+				return ResolutionOption::create_apply_different_coupon()
 					->label( 'Try a different coupon' )
 					->priority( Priority::MEDIUM );
 
@@ -103,13 +98,13 @@ class CouponResolutionBuilder {
 					? CartHelper::format_price( $context['shortage_amount'], $cart )
 					: '';
 
-				return ModifyCart::create()
+				return ResolutionOption::create_modify_cart()
 					->label( sprintf( 'Add %s more to qualify', $formatted_amount ) )
 					->priority( Priority::HIGH )
 					->set_meta( 'amount_needed', $formatted_amount );
 
 			case 'continue_without':
-				return RemoveCoupon::create()
+				return ResolutionOption::create_remove_coupon()
 					->label( 'Continue without coupon' )
 					->priority( Priority::LOW );
 
@@ -135,11 +130,11 @@ class CouponResolutionBuilder {
 		$formatted_attempted = CartHelper::format_price( $attempted_discount, $cart );
 
 		return array(
-			KeepCurrentCoupon::create()
+			ResolutionOption::create_keep_current_coupon()
 				->label( sprintf( 'Keep %s (saves %s)', $code, $formatted_current ) )
 				->priority( Priority::HIGH )
 				->set_meta( 'savings', $formatted_current ),
-			ApplyDifferentCoupon::create()
+			ResolutionOption::create_apply_different_coupon()
 				->label( sprintf( 'Switch to %s (saves %s)', $attempted_coupon, $formatted_attempted ) )
 				->priority( Priority::LOW )
 				->set_meta( 'savings', $formatted_attempted ),

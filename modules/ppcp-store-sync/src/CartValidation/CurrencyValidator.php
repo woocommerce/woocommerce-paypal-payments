@@ -11,8 +11,7 @@ namespace WooCommerce\PayPalCommerce\StoreSync\CartValidation;
 
 use WooCommerce\PayPalCommerce\StoreSync\Enums\Priority;
 use WooCommerce\PayPalCommerce\StoreSync\Schema\PayPalCart;
-use WooCommerce\PayPalCommerce\StoreSync\Validation\Resolution\Action\RemoveItem;
-use WooCommerce\PayPalCommerce\StoreSync\Validation\Resolution\Action\UseDifferentCurrency;
+use WooCommerce\PayPalCommerce\StoreSync\Validation\Resolution\ResolutionOption;
 use WooCommerce\PayPalCommerce\StoreSync\Validation\CurrencyMismatch;
 
 class CurrencyValidator implements ValidatorInterface {
@@ -95,13 +94,13 @@ class CurrencyValidator implements ValidatorInterface {
 			->user_message( 'All items in the cart must use the same currency.' )
 			->for_field( "items[{$mismatch['index']}].price.currency_code" )
 			->add_resolution(
-				UseDifferentCurrency::create()
+				ResolutionOption::create_use_different_currency()
 					->label( sprintf( 'Set all items to %s', $store_currency ) )
 					->set_meta( 'expected_currency', $store_currency )
 					->priority( Priority::HIGH )
 			)
 			->add_resolution(
-				RemoveItem::create()
+				ResolutionOption::create_remove_item()
 					->label( 'Remove from cart' )
 					->priority( Priority::LOW )
 					->set_meta( 'item_index', $mismatch['index'] )
@@ -116,7 +115,7 @@ class CurrencyValidator implements ValidatorInterface {
 				->user_message( sprintf( 'This store only accepts payments in %s.', $store_currency ) )
 				->for_field( "items[{$item_index}].price.currency_code" )
 				->add_resolution(
-					UseDifferentCurrency::create()
+					ResolutionOption::create_use_different_currency()
 						->label( sprintf( 'Change to %s', $store_currency ) )
 						->set_meta( 'expected_currency', $store_currency )
 				);

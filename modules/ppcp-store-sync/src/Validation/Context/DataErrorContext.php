@@ -4,13 +4,70 @@ declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\StoreSync\Validation\Context;
 
+use WooCommerce\PayPalCommerce\StoreSync\Enums\ContextDataIssue;
+
 /**
- * Base context class for data-related validation issues.
+ * Context class for data-related validation issues.
  *
- * Concrete subclasses must set SPECIFIC_ISSUE to a ContextDataIssue constant.
  * All props are optional and included in to_array() only when set.
  */
-abstract class DataErrorContext extends IssueContext {
+class DataErrorContext extends IssueContext {
+
+	public static function create_missing_checkout_fields(): self {
+		return new self( ContextDataIssue::MISSING_CHECKOUT_FIELDS );
+	}
+
+	public static function create_missing_payment_method(): self {
+		return new self( ContextDataIssue::MISSING_PAYMENT_METHOD );
+	}
+
+	public static function create_missing_policy_acceptance(): self {
+		return new self( ContextDataIssue::MISSING_POLICY_ACCEPTANCE );
+	}
+
+	public static function create_required_field_missing(): self {
+		return new self( ContextDataIssue::REQUIRED_FIELD_MISSING );
+	}
+
+	public static function create_invalid_email_format(): self {
+		return new self( ContextDataIssue::INVALID_EMAIL_FORMAT );
+	}
+
+	public static function create_invalid_phone_format(): self {
+		return new self( ContextDataIssue::INVALID_PHONE_FORMAT );
+	}
+
+	public static function create_field_value_too_long(): self {
+		return new self( ContextDataIssue::FIELD_VALUE_TOO_LONG );
+	}
+
+	public static function create_field_value_too_short(): self {
+		return new self( ContextDataIssue::FIELD_VALUE_TOO_SHORT );
+	}
+
+	public static function create_invalid_date_format(): self {
+		return new self( ContextDataIssue::INVALID_DATE_FORMAT );
+	}
+
+	public static function create_future_date_not_allowed(): self {
+		return new self( ContextDataIssue::FUTURE_DATE_NOT_ALLOWED );
+	}
+
+	public static function create_invalid_customer_data(): self {
+		return new self( ContextDataIssue::INVALID_CUSTOMER_DATA );
+	}
+
+	public static function create_item_not_found(): self {
+		return new self( ContextDataIssue::ITEM_NOT_FOUND );
+	}
+
+	public static function create_invalid_item_data(): self {
+		return new self( ContextDataIssue::INVALID_ITEM_DATA );
+	}
+
+	public static function create_item_attribute_mismatch(): self {
+		return new self( ContextDataIssue::ITEM_ATTRIBUTE_MISMATCH );
+	}
 
 	private ?string $field_name = null;
 
@@ -140,7 +197,9 @@ abstract class DataErrorContext extends IssueContext {
 	}
 
 	public function to_array(): array {
-		$data = parent::to_array();
+		$data = array(
+			'specific_issue' => $this->specific_issue,
+		);
 
 		if ( $this->field_name !== null ) {
 			$data['field_name'] = $this->field_name;

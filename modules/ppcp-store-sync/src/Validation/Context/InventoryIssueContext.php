@@ -4,13 +4,54 @@ declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\StoreSync\Validation\Context;
 
+use WooCommerce\PayPalCommerce\StoreSync\Enums\ContextInventoryIssue;
+
 /**
- * Base context class for inventory-related validation issues.
+ * Context class for inventory-related validation issues.
  *
- * Concrete subclasses must set SPECIFIC_ISSUE to a ContextInventoryIssue constant.
  * All props are optional and included in to_array() only when set.
  */
-abstract class InventoryIssueContext extends IssueContext {
+class InventoryIssueContext extends IssueContext {
+
+	public static function create_item_out_of_stock(): self {
+		return new self( ContextInventoryIssue::ITEM_OUT_OF_STOCK );
+	}
+
+	public static function create_insufficient_inventory(): self {
+		return new self( ContextInventoryIssue::INSUFFICIENT_INVENTORY );
+	}
+
+	public static function create_back_ordered(): self {
+		return new self( ContextInventoryIssue::BACK_ORDERED );
+	}
+
+	public static function create_pre_order_only(): self {
+		return new self( ContextInventoryIssue::PRE_ORDER_ONLY );
+	}
+
+	public static function create_item_discontinued(): self {
+		return new self( ContextInventoryIssue::ITEM_DISCONTINUED );
+	}
+
+	public static function create_low_stock_warning(): self {
+		return new self( ContextInventoryIssue::LOW_STOCK_WARNING );
+	}
+
+	public static function create_inventory_reserved(): self {
+		return new self( ContextInventoryIssue::INVENTORY_RESERVED );
+	}
+
+	public static function create_seasonal_unavailable(): self {
+		return new self( ContextInventoryIssue::SEASONAL_UNAVAILABLE );
+	}
+
+	public static function create_variant_not_available(): self {
+		return new self( ContextInventoryIssue::VARIANT_NOT_AVAILABLE );
+	}
+
+	public static function create_custom_option_unavailable(): self {
+		return new self( ContextInventoryIssue::CUSTOM_OPTION_UNAVAILABLE );
+	}
 
 	private ?string $item_id = null;
 
@@ -177,7 +218,9 @@ abstract class InventoryIssueContext extends IssueContext {
 	}
 
 	public function to_array(): array {
-		$data = parent::to_array();
+		$data = array(
+			'specific_issue' => $this->specific_issue,
+		);
 
 		if ( $this->item_id !== null ) {
 			$data['item_id'] = $this->item_id;

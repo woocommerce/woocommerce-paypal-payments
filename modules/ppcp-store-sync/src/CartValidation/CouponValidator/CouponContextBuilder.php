@@ -16,11 +16,7 @@ use WooCommerce\PayPalCommerce\StoreSync\Helper\CartHelper;
 use WooCommerce\PayPalCommerce\StoreSync\Helper\ProductManager;
 use WooCommerce\PayPalCommerce\StoreSync\Schema\PayPalCart;
 use WooCommerce\PayPalCommerce\StoreSync\Validation\Context\IssueContext;
-use WooCommerce\PayPalCommerce\StoreSync\Validation\Context\Specific\PricingDiscountCustomerIneligibleContext;
-use WooCommerce\PayPalCommerce\StoreSync\Validation\Context\Specific\PricingDiscountExpiredContext;
-use WooCommerce\PayPalCommerce\StoreSync\Validation\Context\Specific\PricingDiscountMinimumNotMetContext;
-use WooCommerce\PayPalCommerce\StoreSync\Validation\Context\Specific\PricingDiscountUsageLimitExceededContext;
-use WooCommerce\PayPalCommerce\StoreSync\Validation\Context\Specific\PricingPromotionalConflictContext;
+use WooCommerce\PayPalCommerce\StoreSync\Validation\Context\PricingErrorContext;
 
 /**
  * Builds context data for coupon validation issues.
@@ -343,24 +339,24 @@ class CouponContextBuilder {
 		$context = null;
 		switch ( $issue_type ) {
 			case 'COUPON_EXPIRED':
-				$context = PricingDiscountExpiredContext::create();
+				$context = PricingErrorContext::create_discount_expired();
 				break;
 
 			case 'USAGE_LIMIT_EXCEEDED':
-				$context = PricingDiscountUsageLimitExceededContext::create();
+				$context = PricingErrorContext::create_discount_usage_limit_exceeded();
 				break;
 
 			case 'MINIMUM_ORDER_NOT_MET':
-				$context = PricingDiscountMinimumNotMetContext::create();
+				$context = PricingErrorContext::create_discount_minimum_not_met();
 				break;
 
 			case 'COUPON_NOT_APPLICABLE':
 			case 'COUPON_EMAIL_RESTRICTED':
-				$context = PricingDiscountCustomerIneligibleContext::create();
+				$context = PricingErrorContext::create_discount_customer_ineligible();
 				break;
 
 			case 'COUPON_STACKING_NOT_ALLOWED':
-				$context = PricingPromotionalConflictContext::create();
+				$context = PricingErrorContext::create_promotional_conflict();
 				break;
 		}
 

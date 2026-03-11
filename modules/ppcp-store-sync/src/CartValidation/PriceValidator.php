@@ -16,11 +16,9 @@ use WooCommerce\PayPalCommerce\StoreSync\Helper\CartHelper;
 use WooCommerce\PayPalCommerce\StoreSync\Helper\ProductManager;
 use WooCommerce\PayPalCommerce\StoreSync\Schema\PayPalCart;
 use WooCommerce\PayPalCommerce\StoreSync\Schema\CartItem;
-use WooCommerce\PayPalCommerce\StoreSync\Validation\Resolution\Action\AcceptNewPrice;
-use WooCommerce\PayPalCommerce\StoreSync\Validation\Resolution\Action\RemoveItem;
+use WooCommerce\PayPalCommerce\StoreSync\Validation\Resolution\ResolutionOption;
 use WooCommerce\PayPalCommerce\StoreSync\Schema\Money;
 use WooCommerce\PayPalCommerce\StoreSync\Validation\Context\PricingErrorContext;
-use WooCommerce\PayPalCommerce\StoreSync\Validation\Context\Specific\PricingPriceMismatchContext;
 use WooCommerce\PayPalCommerce\StoreSync\Validation\PriceMismatch;
 use WooCommerce\PayPalCommerce\StoreSync\Validation\ValidationIssue;
 
@@ -101,7 +99,7 @@ class PriceValidator implements ValidatorInterface {
 	}
 
 	private function build_mismatch_context( Money $cart_price, float $store_price, float $price_difference, bool $is_increase ): PricingErrorContext {
-		$context = PricingPriceMismatchContext::create()
+		$context = PricingErrorContext::create_price_mismatch()
 			->original_price( CartHelper::format_decimal( $cart_price->value() ?? 0. ) )
 			->current_price( CartHelper::format_decimal( $store_price ) )
 			->currency_code( $cart_price->currency_code() ?? '' );
@@ -127,11 +125,11 @@ class PriceValidator implements ValidatorInterface {
 		);
 
 		return array(
-			AcceptNewPrice::create()
+			ResolutionOption::create_accept_new_price()
 				->label( sprintf( 'Continue with %s', CartHelper::format_price( (string) $store_price, $cart ) ) )
 				->priority( Priority::HIGH )
 				->set_meta( 'cost_impact', $formatted_difference ),
-			RemoveItem::create()
+			ResolutionOption::create_remove_item()
 				->label( 'Remove from cart' )
 				->priority( Priority::MEDIUM )
 				->set_meta( 'cost_impact', $formatted_removal ),

@@ -10,7 +10,7 @@ declare( strict_types = 1 );
 namespace WooCommerce\PayPalCommerce\StoreSync\Schema;
 
 use WooCommerce\PayPalCommerce\StoreSync\Enums\Priority;
-use WooCommerce\PayPalCommerce\StoreSync\Validation\Resolution\Action\ModifyCart;
+use WooCommerce\PayPalCommerce\StoreSync\Validation\Resolution\ResolutionOption;
 use WooCommerce\PayPalCommerce\StoreSync\Validation\MissingField;
 use WooCommerce\PayPalCommerce\StoreSync\Validation\InvalidData;
 
@@ -58,7 +58,7 @@ class CartItem extends AgenticSchema {
 						->user_message( 'Item quantity must be between 1 and 999' )
 						->for_field( 'quantity' )
 						->add_resolution(
-							ModifyCart::create()
+							ResolutionOption::create_modify_cart()
 								->label( 'Set a valid quantity (1–999)' )
 								->priority( Priority::HIGH )
 								->set_meta( 'min_quantity', 1 )
