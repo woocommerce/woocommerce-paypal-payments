@@ -43,6 +43,7 @@ class PaymentSettings extends AbstractDataModel {
 			'venmo_enabled'                     => false,
 			'paylater_enabled'                  => false,
 			'applepay_validated'                => false,
+			'capture_on_status_change'          => true,
 			'applepay_checkout_data_mode'       => 'use_wc',
 			'pui_brand_name'                    => '',
 			'pui_logo_url'                      => '',
@@ -182,7 +183,7 @@ class PaymentSettings extends AbstractDataModel {
 	/**
 	 * Gets the payment method description.
 	 *
-	 * @param string $method_id ID of the payment method.
+	 * @param string $method_id           ID of the payment method.
 	 * @param string $default_description Default description to return if method not found.
 	 * @return string The method description, or an empty string if not found.
 	 */
@@ -365,5 +366,21 @@ class PaymentSettings extends AbstractDataModel {
 	 */
 	public function set_pui_customer_service_instructions( string $value ): void {
 		$this->data['pui_customer_service_instructions'] = $value;
+	}
+
+	/**
+	 * A legacy setting that has no React UI: Whether to capture an authorize-only payment
+	 * when the order is transitioned to "Processing". No setter.
+	 */
+	public function get_capture_on_status_change(): bool {
+		return $this->data['capture_on_status_change'];
+	}
+
+	/**
+	 * Changes the "capture on status change" legacy setting. No UI equivalent, only used by
+	 * the migration script.
+	 */
+	public function set_capture_on_status_change( bool $capture ): void {
+		$this->data['capture_on_status_change'] = $capture;
 	}
 }
