@@ -106,6 +106,10 @@ class PaymentSettingsMigration implements SettingsMigrationInterface {
 			}
 		}
 
+		if ( isset( $this->settings[ 'dcc_name_on_card' ] ) ) {
+			$this->payment_settings->set_cardholder_name( $this->settings[ 'dcc_name_on_card' ] === 'yes' );
+		}
+
 		$this->payment_settings->save();
 	}
 
