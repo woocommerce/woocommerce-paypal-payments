@@ -3,10 +3,11 @@
  * Shipping Validator for Agentic Commerce.
  *
  * Validates shipping addresses and restrictions according to WooCommerce settings.
- * Covers three main scenarios:
- * 1. Invalid Shipping Address (completeness, format)
- * 2. PO Box Restriction (signature-required items)
- * 3. Region Restricted (country not allowed)
+ * Covers four main scenarios:
+ * 1. Missing Shipping Address (physical products, no address provided)
+ * 2. Invalid Shipping Address (completeness, format)
+ * 3. PO Box Restriction (signature-required items)
+ * 4. Region Restricted (country not allowed)
  *
  * @package WooCommerce\PayPalCommerce\StoreSync\CartValidation
  */
@@ -19,6 +20,7 @@ use WC_Countries;
 use WC_Validation;
 use WC_Product;
 use WooCommerce\PayPalCommerce\StoreSync\Enums\Priority;
+use WooCommerce\PayPalCommerce\StoreSync\Enums\ShippingIssue;
 use WooCommerce\PayPalCommerce\StoreSync\Helper\ProductManager;
 use WooCommerce\PayPalCommerce\StoreSync\Schema\PayPalCart;
 use WooCommerce\PayPalCommerce\StoreSync\Validation\Resolution\Action\ProvideMissingField;
@@ -27,8 +29,10 @@ use WooCommerce\PayPalCommerce\StoreSync\Validation\Resolution\Action\UpdateAddr
 use WooCommerce\PayPalCommerce\StoreSync\Validation\Context\Specific\ShippingToPoBoxNotAllowedContext;
 use WooCommerce\PayPalCommerce\StoreSync\Validation\InvalidAddress;
 use WooCommerce\PayPalCommerce\StoreSync\Validation\ShippingUnavailable;
+use WooCommerce\PayPalCommerce\StoreSync\Validation\MissingField;
 use WooCommerce\PayPalCommerce\StoreSync\Schema\Address;
 use WooCommerce\PayPalCommerce\StoreSync\Schema\CartItem;
+use WooCommerce\PayPalCommerce\StoreSync\Validation\Context\Specific\ShippingMissingShippingAddressContext;
 
 class ShippingValidator implements ValidatorInterface {
 
@@ -40,32 +44,64 @@ class ShippingValidator implements ValidatorInterface {
 
 	public function validate( PayPalCart $cart ) {
 		$shipping_address = $cart->shipping_address();
-
+		// Scenario 1: Missing Shipping Address.
 		if ( ! $shipping_address ) {
+			if ( $this->cart_needs_shipping( $cart ) ) {
+				return array(
+					MissingField::create( 'Shipping address is required' )
+						->user_message( 'Please provide a shipping address to continue.' )
+						->for_field( 'shipping_address' )
+						->add_context( ShippingMissingShippingAddressContext::create() )
+						->add_resolution(
+							ProvideMissingField::create()
+								->label( 'Add shipping address' )
+								->priority( Priority::HIGH )
+								->set_meta( 'field', 'shipping_address' )
+						),
+				);
+			}
+
 			return null;
 		}
 
 		$issues = array();
 
-		// Scenario 1: Invalid Shipping Address.
+		// Scenario 2: Invalid Shipping Address.
 		$address_issues = $this->validate_address_completeness( $shipping_address );
 		if ( $address_issues ) {
 			$issues = array_merge( $issues, $address_issues );
 		}
 
-		// Scenario 2: PO Box Restriction.
+		// Scenario 3: PO Box Restriction.
 		$po_box_issue = $this->validate_po_box_restrictions( $cart, $shipping_address );
 		if ( $po_box_issue ) {
 			$issues[] = $po_box_issue;
 		}
 
-		// Scenario 3: Region Restricted.
+		// Scenario 4: Region Restricted.
 		$country_issue = $this->validate_country( $shipping_address->country_code() );
 		if ( $country_issue ) {
 			$issues[] = $country_issue;
 		}
 
 		return $issues ?: null;
+	}
+
+	/**
+	 * Checks if any item in the cart requires shipping.
+	 *
+	 * @param PayPalCart $cart The cart to check.
+	 * @return bool True if at least one item needs shipping.
+	 */
+	private function cart_needs_shipping( PayPalCart $cart ): bool {
+		foreach ( $cart->items() as $item ) {
+			$product = $this->product_manager->find_product( $item );
+			if ( $product && $product->needs_shipping() ) {
+				return true;
+			}
+		}
+
+		return false;
 	}
 
 	/**
