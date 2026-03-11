@@ -65,6 +65,7 @@ use WooCommerce\PayPalCommerce\Settings\Service\Migration\SettingsTabMigration;
 use WooCommerce\PayPalCommerce\Settings\Service\Migration\StylingSettingsMigration;
 use WooCommerce\PayPalCommerce\Settings\Service\Migration\FastlaneSettingsMigration;
 use WooCommerce\PayPalCommerce\Settings\Service\OnboardingUrlManager;
+use WooCommerce\PayPalCommerce\Settings\Service\SellerTypeResolver;
 use WooCommerce\PayPalCommerce\Settings\Service\PaymentMethodsEligibilityService;
 use WooCommerce\PayPalCommerce\Settings\Service\ScriptDataHandler;
 use WooCommerce\PayPalCommerce\Settings\Service\TodosEligibilityService;
@@ -241,7 +242,8 @@ return array(
     'settings.service.data-migration.settings-tab' => static fn(ContainerInterface $c): SettingsTabMigration => new SettingsTabMigration((array) get_option('woocommerce-ppcp-settings', array()), $c->get('settings.data.settings')),
     'settings.service.data-migration.styling' => static fn(ContainerInterface $c): StylingSettingsMigration => new StylingSettingsMigration((array) get_option('woocommerce-ppcp-settings', array()), $c->get('settings.data.styling')),
     'settings.service.data-migration.payment-settings' => static fn(ContainerInterface $c): PaymentSettingsMigration => new PaymentSettingsMigration((array) get_option('woocommerce-ppcp-settings', array()), $c->get('settings.data.payment'), $c->get('api.helpers.dccapplies'), $c->get('wcgateway.helper.dcc-product-status'), $c->get('wcgateway.configuration.card-configuration'), $c->get('ppcp-local-apms.payment-methods')),
-    'settings.service.data-migration.general-settings' => static fn(ContainerInterface $c): SettingsMigration => new SettingsMigration((array) get_option('woocommerce-ppcp-settings', array()), $c->get('settings.data.general'), $c->get('api.endpoint.partners')),
+    'settings.service.seller-type-resolver' => static fn(): SellerTypeResolver => new SellerTypeResolver(),
+    'settings.service.data-migration.general-settings' => static fn(ContainerInterface $c): SettingsMigration => new SettingsMigration((array) get_option('woocommerce-ppcp-settings', array()), $c->get('settings.data.general'), $c->get('api.endpoint.partners'), $c->get('woocommerce.logger.woocommerce'), $c->get('settings.service.seller-type-resolver')),
     'settings.service.data-migration.fastlane' => static fn(ContainerInterface $c): FastlaneSettingsMigration => new FastlaneSettingsMigration((array) get_option('woocommerce-ppcp-settings', array()), $c->get('settings.data.fastlane')),
     'settings.rest.todos' => static function (ContainerInterface $container): TodosRestEndpoint {
         return new TodosRestEndpoint($container->get('settings.data.todos'), $container->get('settings.data.definition.todos'), $container->get('settings.rest.settings'), $container->get('settings.service.todos_sorting'));
@@ -409,7 +411,7 @@ return array(
             // Pay with Crypto eligibility.
             FeaturesDefinition::FEATURE_PAY_UPON_INVOICE => $capabilities[FeaturesDefinition::FEATURE_PAY_UPON_INVOICE],
         );
-        return new FeaturesDefinition($container->get('settings.service.features_eligibilities'), $container->get('settings.data.general'), $merchant_capabilities, $container->get('settings.data.settings'));
+        return new FeaturesDefinition($container->get('settings.service.features_eligibilities'), $container->get('settings.data.general'), $merchant_capabilities, $container->get('settings.data.settings'), $container->get('woocommerce.logger.woocommerce'));
     },
     'settings.service.features_eligibilities' => static function (ContainerInterface $container): FeaturesEligibilityService {
         $messages_apply = $container->get('button.helper.messages-apply');

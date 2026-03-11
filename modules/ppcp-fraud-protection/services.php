@@ -5,6 +5,7 @@ namespace WooCommerce\PayPalCommerce\FraudProtection;
 
 use WooCommerce\PayPalCommerce\Assets\AssetGetter;
 use WooCommerce\PayPalCommerce\Assets\AssetGetterFactory;
+use WooCommerce\PayPalCommerce\Axo\Gateway\AxoGateway;
 use WooCommerce\PayPalCommerce\FraudProtection\Recaptcha\Recaptcha;
 use WooCommerce\PayPalCommerce\FraudProtection\Recaptcha\RecaptchaIntegration;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
@@ -20,7 +21,7 @@ return array('fraud-protection.asset_getter' => static function (ContainerInterf
 }, 'fraud-protection.recaptcha.integration' => static function (): RecaptchaIntegration {
     return new RecaptchaIntegration();
 }, 'fraud-protection.recaptcha.payment-methods' => static function (): array {
-    return apply_filters('woocommerce_paypal_payments_recaptcha_payment_methods', array(PayPalGateway::ID, CreditCardGateway::ID, CardButtonGateway::ID));
+    return apply_filters('woocommerce_paypal_payments_recaptcha_payment_methods', array(PayPalGateway::ID, CreditCardGateway::ID, CardButtonGateway::ID, AxoGateway::ID));
 }, 'fraud-protection.recaptcha.rejection-counter' => static function (ContainerInterface $container): \WooCommerce\PayPalCommerce\FraudProtection\PersistentCounter {
     return new \WooCommerce\PayPalCommerce\FraudProtection\PersistentCounter(Recaptcha::REJECTION_COUNTER_OPTION);
 }, 'fraud-protection.wc-tasks.recaptcha-task-config' => static function (ContainerInterface $container): array {

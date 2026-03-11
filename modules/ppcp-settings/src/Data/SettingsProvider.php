@@ -665,7 +665,7 @@ class SettingsProvider
     }
     public function acdc_gateway_title(): string
     {
-        return $this->payment_settings->get_method_title(CreditCardGateway::ID, __('Credit Cards', 'woocommerce-paypal-payments'));
+        return $this->payment_settings->get_method_title(CreditCardGateway::ID, __('Debit & Credit Cards', 'woocommerce-paypal-payments'));
     }
     public function acdc_gateway_description(): string
     {

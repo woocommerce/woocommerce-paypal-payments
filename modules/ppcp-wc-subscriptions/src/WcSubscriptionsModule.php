@@ -52,6 +52,11 @@ class WcSubscriptionsModule implements ServiceModule, ExecutableModule
      */
     public function run(ContainerInterface $c): bool
     {
+        $subscriptions_helper = $c->get('wc-subscriptions.helper');
+        assert($subscriptions_helper instanceof SubscriptionHelper);
+        if (!$subscriptions_helper->plugin_is_active()) {
+            return \true;
+        }
         $this->add_gateways_support($c);
         add_action(
             'woocommerce_scheduled_subscription_payment_' . PayPalGateway::ID,
@@ -376,11 +381,6 @@ class WcSubscriptionsModule implements ServiceModule, ExecutableModule
      */
     private function add_gateways_support(ContainerInterface $c): void
     {
-        $subscriptions_helper = $c->get('wc-subscriptions.helper');
-        assert($subscriptions_helper instanceof SubscriptionHelper);
-        if (!$subscriptions_helper->plugin_is_active()) {
-            return;
-        }
         add_filter('woocommerce_paypal_payments_paypal_gateway_supports', function (array $supports) use ($c): array {
             $settings_provider = $c->get('settings.settings-provider');
             assert($settings_provider instanceof SettingsProvider);

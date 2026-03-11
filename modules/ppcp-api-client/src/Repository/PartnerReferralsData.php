@@ -9,6 +9,7 @@ declare (strict_types=1);
 namespace WooCommerce\PayPalCommerce\ApiClient\Repository;
 
 use WooCommerce\PayPalCommerce\ApiClient\Helper\DccApplies;
+use WooCommerce\PayPalCommerce\Settings\Data\Definition\FeaturesDefinition;
 class PartnerReferralsData
 {
     /**
@@ -21,12 +22,12 @@ class PartnerReferralsData
      * @var DccApplies
      */
     private DccApplies $dcc_applies;
-    protected bool $is_pui_eligible;
-    public function __construct(DccApplies $dcc_applies, bool $is_pui_eligible)
+    protected FeaturesDefinition $features_definition;
+    public function __construct(DccApplies $dcc_applies, FeaturesDefinition $features_definition)
     {
         $this->dcc_applies = $dcc_applies;
         // @phpstan-ignore property.deprecated
-        $this->is_pui_eligible = $is_pui_eligible;
+        $this->features_definition = $features_definition;
     }
     /**
      * Returns a nonce.
@@ -75,7 +76,7 @@ class PartnerReferralsData
             $first_party_features[] = 'VAULT';
             $first_party_features[] = 'FUTURE_PAYMENT';
         }
-        if ($this->is_pui_eligible) {
+        if ($this->features_definition->is_feature_eligible(FeaturesDefinition::FEATURE_PAY_UPON_INVOICE)) {
             $products[] = 'PAYMENT_METHODS';
             $capabilities[] = 'PAY_UPON_INVOICE';
         }

@@ -54,7 +54,6 @@ class SettingsTabMigration implements \WooCommerce\PayPalCommerce\Settings\Servi
                 case 'intent':
                     $value = $this->settings[$old_key];
                     $data['authorize_only'] = $value === 'authorize';
-                    $data['capture_virtual_orders'] = $value === 'capture';
                     break;
                 case 'blocks_final_review_enabled':
                     $data[$new_key] = !$this->settings[$old_key];
@@ -78,6 +77,6 @@ class SettingsTabMigration implements \WooCommerce\PayPalCommerce\Settings\Servi
      */
     protected function map(): array
     {
-        return array('disable_cards' => 'disabled_cards', 'brand_name' => 'brand_name', 'soft_descriptor' => 'soft_descriptor', 'payee_preferred' => 'instant_payments_only', 'subtotal_mismatch_behavior' => 'subtotal_adjustment', 'landing_page' => 'landing_page', 'smart_button_language' => 'button_language', 'prefix' => 'invoice_prefix', 'intent' => '', 'vault_enabled_dcc' => 'save_card_details', 'blocks_final_review_enabled' => 'enable_pay_now', 'logging_enabled' => 'enable_logging', 'vault_enabled' => FeaturesDefinition::FEATURE_SAVE_PAYPAL_AND_VENMO, '3d_secure_contingency' => 'three_d_secure', 'stay_updated' => 'stay_updated', 'card_icons' => 'card_icons');
+        return array('disable_cards' => 'disabled_cards', 'brand_name' => 'brand_name', 'soft_descriptor' => 'soft_descriptor', 'payee_preferred' => 'instant_payments_only', 'subtotal_mismatch_behavior' => 'subtotal_adjustment', 'landing_page' => 'landing_page', 'smart_button_language' => 'button_language', 'prefix' => 'invoice_prefix', 'intent' => '', 'capture_for_virtual_only' => 'capture_virtual_orders', 'vault_enabled_dcc' => 'save_card_details', 'blocks_final_review_enabled' => 'enable_pay_now', 'logging_enabled' => 'enable_logging', 'vault_enabled' => FeaturesDefinition::FEATURE_SAVE_PAYPAL_AND_VENMO, '3d_secure_contingency' => 'three_d_secure', 'stay_updated' => 'stay_updated', 'card_icons' => 'card_icons');
     }
 }

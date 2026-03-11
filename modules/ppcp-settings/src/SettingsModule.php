@@ -27,6 +27,7 @@ use WooCommerce\PayPalCommerce\Settings\Service\Migration\MigrationManager;
 use WooCommerce\PayPalCommerce\Settings\Service\Migration\PaymentSettingsMigration;
 use WooCommerce\PayPalCommerce\Settings\Service\PaymentMethodsEligibilityService;
 use WooCommerce\PayPalCommerce\Settings\Service\ScriptDataHandler;
+use WooCommerce\PayPalCommerce\Settings\Service\SellerTypeResolver;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExecutableModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ModuleClassNameIdTrait;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ServiceModule;
@@ -94,6 +95,19 @@ class SettingsModule implements ServiceModule, ExecutableModule
                 $migration_manager->migrate();
             }
         );
+        add_action('admin_init', function () use ($container): void {
+            if (get_option(MigrationManager::OPTION_NAME_MIGRATION_IS_DONE) !== '1') {
+                $legacy_settings = (array) get_option('woocommerce-ppcp-settings', array());
+                if (!empty($legacy_settings['client_id'])) {
+                    $migration_manager = $container->get('settings.service.data-migration');
+                    assert($migration_manager instanceof MigrationManager);
+                    $migration_manager->migrate();
+                }
+            }
+            $seller_type_resolver = $container->get('settings.service.seller-type-resolver');
+            assert($seller_type_resolver instanceof SellerTypeResolver);
+            $seller_type_resolver->resolve_unknown_seller_type($container->get('api.helper.failure-registry'), $container->get('settings.data.general'), $container->get('api.endpoint.partners'), $container->get('woocommerce.logger.woocommerce'));
+        });
         /**
          * Override ACDC status with BCDC for eligible merchants.
          *
@@ -452,6 +466,39 @@ class SettingsModule implements ServiceModule, ExecutableModule
             }
             return $disable_funding;
         });
+        add_action(
+            'woocommerce_paypal_payments_gateway_migrate',
+            /**
+             * Retroactive fix for CardButtonGateway not enabled after migration.
+             *
+             * In versions up to 3.4.1, the migration only enabled CardButtonGateway for
+             * ACDC-eligible merchants using BCDC. Non-ACDC merchants who had the card
+             * funding source active (the default) were missed, causing the card button
+             * to disappear after upgrade.
+             *
+             * @param false|string $previous_version The previously installed plugin version,
+             *                                       or false on first installation.
+             */
+            static function ($previous_version) use ($container): void {
+                if ($previous_version && version_compare($previous_version, '3.4.1', 'gt')) {
+                    return;
+                }
+                if (get_option(MigrationManager::OPTION_NAME_MIGRATION_IS_DONE) !== '1') {
+                    return;
+                }
+                $payment_settings = $container->get('settings.data.payment');
+                assert($payment_settings instanceof PaymentSettings);
+                if ($payment_settings->is_method_enabled(CardButtonGateway::ID)) {
+                    return;
+                }
+                $legacy_settings = (array) get_option('woocommerce-ppcp-settings', array());
+                $disable_funding = (array) ($legacy_settings['disable_funding'] ?? array());
+                if (!in_array('card', $disable_funding, \true)) {
+                    $payment_settings->toggle_method_state(CardButtonGateway::ID, \true);
+                    $payment_settings->save();
+                }
+            }
+        );
         add_action(
             'woocommerce_paypal_payments_gateway_migrate',
             /**
