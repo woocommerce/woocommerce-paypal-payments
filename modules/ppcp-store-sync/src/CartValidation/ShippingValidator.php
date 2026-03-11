@@ -377,12 +377,17 @@ class ShippingValidator implements ValidatorInterface {
 		return $countries[ $country_code ] ?? $country_code;
 	}
 
-	private function get_wc_countries(): ?WC_Countries {
+	/**
+	 * @return \WC_Countries|null
+	 */
+	private function get_wc_countries() {
 		if ( ! function_exists( 'WC' ) ) {
 			return null;
 		}
 
 		// The only place in the class that has a `WC()` dependency.
-		return WC()->countries;
+		$wc = WC();
+
+		return $wc ? $wc->countries : null;
 	}
 }
