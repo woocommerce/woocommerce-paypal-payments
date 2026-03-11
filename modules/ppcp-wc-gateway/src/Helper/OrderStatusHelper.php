@@ -14,12 +14,12 @@ class OrderStatusHelper {
 		/**
 		 * Filters the WC order statuses considered as "awaiting payment".
 		 *
-		 * @param string[] $statuses Default: array( 'pending', 'on-hold' ).
+		 * @param string[] $statuses Default: array( 'pending', 'on-hold', 'failed' ).
 		 * @param WC_Order $wc_order The WooCommerce order.
 		 */
 		return (array) apply_filters(
 			'woocommerce_paypal_payments_awaiting_payment_statuses',
-			array( 'pending', 'on-hold' ),
+			array( 'pending', 'on-hold', 'failed' ),
 			$wc_order
 		);
 	}

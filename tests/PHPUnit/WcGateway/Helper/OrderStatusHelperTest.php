@@ -10,31 +10,27 @@ use function Brain\Monkey\Functions\expect;
 
 class OrderStatusHelperTest extends TestCase
 {
-	public function testPendingStatusIsAwaitingPayment()
+	public function isAwaitingPaymentProvider(): array
 	{
-		$order = Mockery::mock(WC_Order::class);
-		$order->shouldReceive('get_status')->andReturn('pending');
-
-		$helper = new OrderStatusHelper();
-		$this->assertTrue($helper->is_awaiting_payment($order));
+		return array(
+			'pending'    => array( 'pending', true ),
+			'on-hold'    => array( 'on-hold', true ),
+			'failed'     => array( 'failed', true ),
+			'processing' => array( 'processing', false ),
+			'completed'  => array( 'completed', false ),
+		);
 	}
 
-	public function testOnHoldStatusIsAwaitingPayment()
+	/**
+	 * @dataProvider isAwaitingPaymentProvider
+	 */
+	public function testIsAwaitingPayment( string $status, bool $expected )
 	{
 		$order = Mockery::mock(WC_Order::class);
-		$order->shouldReceive('get_status')->andReturn('on-hold');
+		$order->shouldReceive('get_status')->andReturn($status);
 
 		$helper = new OrderStatusHelper();
-		$this->assertTrue($helper->is_awaiting_payment($order));
-	}
-
-	public function testProcessingStatusIsNotAwaitingPayment()
-	{
-		$order = Mockery::mock(WC_Order::class);
-		$order->shouldReceive('get_status')->andReturn('processing');
-
-		$helper = new OrderStatusHelper();
-		$this->assertFalse($helper->is_awaiting_payment($order));
+		$this->assertSame($expected, $helper->is_awaiting_payment($order));
 	}
 
 	public function testCustomStatusViaFilter()
@@ -44,7 +40,7 @@ class OrderStatusHelperTest extends TestCase
 
 		expect('apply_filters')
 			->once()
-			->with('woocommerce_paypal_payments_awaiting_payment_statuses', array('pending', 'on-hold'), $order)
+			->with('woocommerce_paypal_payments_awaiting_payment_statuses', array('pending', 'on-hold', 'failed'), $order)
 			->andReturn(array('pending', 'on-hold', 'pending-deposit'));
 
 		$helper = new OrderStatusHelper();
@@ -58,6 +54,6 @@ class OrderStatusHelperTest extends TestCase
 		$helper = new OrderStatusHelper();
 		$statuses = $helper->get_awaiting_payment_statuses($order);
 
-		$this->assertSame(array('pending', 'on-hold'), $statuses);
+		$this->assertSame(array('pending', 'on-hold', 'failed'), $statuses);
 	}
 }

@@ -66,6 +66,7 @@ use WooCommerce\PayPalCommerce\Settings\Service\Migration\SettingsTabMigration;
 use WooCommerce\PayPalCommerce\Settings\Service\Migration\StylingSettingsMigration;
 use WooCommerce\PayPalCommerce\Settings\Service\Migration\FastlaneSettingsMigration;
 use WooCommerce\PayPalCommerce\Settings\Service\OnboardingUrlManager;
+use WooCommerce\PayPalCommerce\Settings\Service\SellerTypeResolver;
 use WooCommerce\PayPalCommerce\Settings\Service\PaymentMethodsEligibilityService;
 use WooCommerce\PayPalCommerce\Settings\Service\ScriptDataHandler;
 use WooCommerce\PayPalCommerce\Settings\Service\TodosEligibilityService;
@@ -425,10 +426,13 @@ return array(
 		$c->get( 'wcgateway.configuration.card-configuration' ),
 		$c->get( 'ppcp-local-apms.payment-methods' ),
 	),
+	'settings.service.seller-type-resolver'               => static fn(): SellerTypeResolver => new SellerTypeResolver(),
 	'settings.service.data-migration.general-settings'    => static fn( ContainerInterface $c ): SettingsMigration => new SettingsMigration(
 		(array) get_option( 'woocommerce-ppcp-settings', array() ),
 		$c->get( 'settings.data.general' ),
 		$c->get( 'api.endpoint.partners' ),
+		$c->get( 'woocommerce.logger.woocommerce' ),
+		$c->get( 'settings.service.seller-type-resolver' ),
 	),
 	'settings.service.data-migration.fastlane'            => static fn( ContainerInterface $c ): FastlaneSettingsMigration => new FastlaneSettingsMigration(
 		(array) get_option( 'woocommerce-ppcp-settings', array() ),
@@ -524,14 +528,14 @@ return array(
 		assert( $general_settings instanceof GeneralSettings );
 
 		return array(
-			FeaturesDefinition::FEATURE_APPLE_PAY       => ( $features[ FeaturesDefinition::FEATURE_APPLE_PAY ]['enabled'] ?? false ) && ! $general_settings->own_brand_only(),
-			FeaturesDefinition::FEATURE_GOOGLE_PAY      => ( $features[ FeaturesDefinition::FEATURE_GOOGLE_PAY ]['enabled'] ?? false ) && ! $general_settings->own_brand_only(),
+			FeaturesDefinition::FEATURE_APPLE_PAY        => ( $features[ FeaturesDefinition::FEATURE_APPLE_PAY ]['enabled'] ?? false ) && ! $general_settings->own_brand_only(),
+			FeaturesDefinition::FEATURE_GOOGLE_PAY       => ( $features[ FeaturesDefinition::FEATURE_GOOGLE_PAY ]['enabled'] ?? false ) && ! $general_settings->own_brand_only(),
 			FeaturesDefinition::FEATURE_ADVANCED_CREDIT_AND_DEBIT_CARDS => ( $features[ FeaturesDefinition::FEATURE_ADVANCED_CREDIT_AND_DEBIT_CARDS ]['enabled'] ?? false ) && ! $general_settings->own_brand_only(),
 			FeaturesDefinition::FEATURE_SAVE_PAYPAL_AND_VENMO => $features[ FeaturesDefinition::FEATURE_SAVE_PAYPAL_AND_VENMO ]['enabled'] ?? false,
 			FeaturesDefinition::FEATURE_ALTERNATIVE_PAYMENT_METHODS => $features[ FeaturesDefinition::FEATURE_ALTERNATIVE_PAYMENT_METHODS ]['enabled'] ?? false,
 			FeaturesDefinition::FEATURE_PAY_LATER_MESSAGING => $features[ FeaturesDefinition::FEATURE_PAY_LATER_MESSAGING ]['enabled'] ?? false,
-			FeaturesDefinition::FEATURE_INSTALLMENTS    => $features[ FeaturesDefinition::FEATURE_INSTALLMENTS ]['enabled'] ?? false,
-			FeaturesDefinition::FEATURE_PAY_WITH_CRYPTO => $features[ FeaturesDefinition::FEATURE_PAY_WITH_CRYPTO ]['enabled'] ?? false,
+			FeaturesDefinition::FEATURE_INSTALLMENTS     => $features[ FeaturesDefinition::FEATURE_INSTALLMENTS ]['enabled'] ?? false,
+			FeaturesDefinition::FEATURE_PAY_WITH_CRYPTO  => $features[ FeaturesDefinition::FEATURE_PAY_WITH_CRYPTO ]['enabled'] ?? false,
 			FeaturesDefinition::FEATURE_PAY_UPON_INVOICE => $features[ FeaturesDefinition::FEATURE_PAY_UPON_INVOICE ]['enabled'] ?? false,
 		);
 	},
@@ -640,13 +644,13 @@ return array(
 		);
 		// Merchant capabilities serve to show active or inactive badge and buttons.
 		$capabilities = array(
-			FeaturesDefinition::FEATURE_APPLE_PAY       => $features[ FeaturesDefinition::FEATURE_APPLE_PAY ]['enabled'] ?? false,
-			FeaturesDefinition::FEATURE_GOOGLE_PAY      => $features[ FeaturesDefinition::FEATURE_GOOGLE_PAY ]['enabled'] ?? false,
+			FeaturesDefinition::FEATURE_APPLE_PAY        => $features[ FeaturesDefinition::FEATURE_APPLE_PAY ]['enabled'] ?? false,
+			FeaturesDefinition::FEATURE_GOOGLE_PAY       => $features[ FeaturesDefinition::FEATURE_GOOGLE_PAY ]['enabled'] ?? false,
 			FeaturesDefinition::FEATURE_ADVANCED_CREDIT_AND_DEBIT_CARDS => $features[ FeaturesDefinition::FEATURE_ADVANCED_CREDIT_AND_DEBIT_CARDS ]['enabled'] ?? false,
 			FeaturesDefinition::FEATURE_SAVE_PAYPAL_AND_VENMO => $features[ FeaturesDefinition::FEATURE_SAVE_PAYPAL_AND_VENMO ]['enabled'] ?? false,
 			FeaturesDefinition::FEATURE_ALTERNATIVE_PAYMENT_METHODS => $features[ FeaturesDefinition::FEATURE_ALTERNATIVE_PAYMENT_METHODS ]['enabled'] ?? false,
-			FeaturesDefinition::FEATURE_INSTALLMENTS    => $features[ FeaturesDefinition::FEATURE_INSTALLMENTS ]['enabled'] ?? false,
-			FeaturesDefinition::FEATURE_PAY_WITH_CRYPTO => $features[ FeaturesDefinition::FEATURE_PAY_WITH_CRYPTO ]['enabled'] ?? false,
+			FeaturesDefinition::FEATURE_INSTALLMENTS     => $features[ FeaturesDefinition::FEATURE_INSTALLMENTS ]['enabled'] ?? false,
+			FeaturesDefinition::FEATURE_PAY_WITH_CRYPTO  => $features[ FeaturesDefinition::FEATURE_PAY_WITH_CRYPTO ]['enabled'] ?? false,
 			FeaturesDefinition::FEATURE_PAY_LATER_MESSAGING => $features[ FeaturesDefinition::FEATURE_PAY_LATER_MESSAGING ]['enabled'] ?? false,
 			FeaturesDefinition::FEATURE_PAY_UPON_INVOICE => $features[ FeaturesDefinition::FEATURE_PAY_UPON_INVOICE ]['enabled'] ?? false,
 		);
@@ -658,15 +662,15 @@ return array(
 			// Advanced credit and debit cards eligibility.
 			FeaturesDefinition::FEATURE_ALTERNATIVE_PAYMENT_METHODS => $capabilities[ FeaturesDefinition::FEATURE_ALTERNATIVE_PAYMENT_METHODS ],
 			// Alternative payment methods eligibility.
-			FeaturesDefinition::FEATURE_GOOGLE_PAY      => $capabilities[ FeaturesDefinition::FEATURE_ADVANCED_CREDIT_AND_DEBIT_CARDS ] && $capabilities[ FeaturesDefinition::FEATURE_GOOGLE_PAY ],
+			FeaturesDefinition::FEATURE_GOOGLE_PAY       => $capabilities[ FeaturesDefinition::FEATURE_ADVANCED_CREDIT_AND_DEBIT_CARDS ] && $capabilities[ FeaturesDefinition::FEATURE_GOOGLE_PAY ],
 			// Google Pay eligibility.
-			FeaturesDefinition::FEATURE_APPLE_PAY       => $capabilities[ FeaturesDefinition::FEATURE_ADVANCED_CREDIT_AND_DEBIT_CARDS ] && $capabilities[ FeaturesDefinition::FEATURE_APPLE_PAY ],
+			FeaturesDefinition::FEATURE_APPLE_PAY        => $capabilities[ FeaturesDefinition::FEATURE_ADVANCED_CREDIT_AND_DEBIT_CARDS ] && $capabilities[ FeaturesDefinition::FEATURE_APPLE_PAY ],
 			// Apple Pay eligibility.
 			FeaturesDefinition::FEATURE_PAY_LATER_MESSAGING => $capabilities[ FeaturesDefinition::FEATURE_PAY_LATER_MESSAGING ] && $capabilities[ FeaturesDefinition::FEATURE_ADVANCED_CREDIT_AND_DEBIT_CARDS ] && ! $gateways['card-button'],
 			// Pay Later eligibility.
-			FeaturesDefinition::FEATURE_INSTALLMENTS    => $capabilities[ FeaturesDefinition::FEATURE_INSTALLMENTS ],
+			FeaturesDefinition::FEATURE_INSTALLMENTS     => $capabilities[ FeaturesDefinition::FEATURE_INSTALLMENTS ],
 			// Installments eligibility.
-			FeaturesDefinition::FEATURE_PAY_WITH_CRYPTO => $capabilities[ FeaturesDefinition::FEATURE_PAY_WITH_CRYPTO ], // Pay with Crypto eligibility.
+			FeaturesDefinition::FEATURE_PAY_WITH_CRYPTO  => $capabilities[ FeaturesDefinition::FEATURE_PAY_WITH_CRYPTO ], // Pay with Crypto eligibility.
 			FeaturesDefinition::FEATURE_PAY_UPON_INVOICE => $capabilities[ FeaturesDefinition::FEATURE_PAY_UPON_INVOICE ], // Pay upon Invoice eligibility.
 		);
 
