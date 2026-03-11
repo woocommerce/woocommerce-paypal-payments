@@ -99,32 +99,17 @@ const COUNTRY_CONFIGS = {
 			{ name: 'PayInThree', Component: PayInThree },
 		],
 	},
-	MX: {
-		extendedMethods: [
-			{
-				name: 'CreditDebitCards',
-				Component: CreditDebitCards,
-				isOwnBrand: false,
-				isAcdc: false,
-			},
-			{
-				name: 'APMs',
-				Component: AlternativePaymentMethods,
-				isOwnBrand: true,
-				isAcdc: false,
-			},
-		],
-	},
 };
 
 /**
  * Gets all UI text elements based on country and branding options.
  *
- * @param {string}  country     - The country code
- * @param {boolean} onlyBranded - Whether to show only branded payment methods
+ * @param {string}  country            - The country code
+ * @param {boolean} canUseCardPayments - Whether merchant can use card payments (ACDC)
+ * @param {boolean} onlyBranded        - Whether to show only branded payment methods
  * @return {Object} All UI text elements
  */
-const getUIText = ( country, onlyBranded ) => {
+const getUIText = ( country, canUseCardPayments, onlyBranded ) => {
 	const TITLES = {
 		EXPANDED: __( 'Expanded Checkout', 'woocommerce-paypal-payments' ),
 		OPTIONAL: __(
@@ -162,14 +147,15 @@ const getUIText = ( country, onlyBranded ) => {
 	// Base text configuration for all countries.
 	const texts = {
 		paypalCheckoutDescription: CORE_DESCRIPTIONS.DEFAULT_CHECKOUT,
-		optionalTitle: TITLES.OPTIONAL,
+		optionalTitle: canUseCardPayments
+			? TITLES.EXPANDED
+			: TITLES.OPTIONAL,
 		optionalDescription: OPTIONAL_DESCRIPTIONS.WITH_APPLICATION,
 	};
 
 	// Country-specific overrides.
 	if ( country === 'US' ) {
 		texts.paypalCheckoutDescription = CORE_DESCRIPTIONS.US_CHECKOUT;
-		texts.optionalTitle = TITLES.EXPANDED;
 		texts.optionalDescription = OPTIONAL_DESCRIPTIONS.US_EXPANDED;
 	}
 
@@ -213,15 +199,10 @@ const getRelevantIcons = (
 			if ( isDigitalWallet ) {
 				return (
 					includeDigitalWallets &&
-					country !== 'MX' &&
 					( ! onlyBranded || isOwnBrand )
 				);
 			}
 
-			// If we're in Mexico, only show OXXO from the APMs.
-			if ( country === 'MX' && onlyAcdc ) {
-				return false;
-			}
 
 			if ( onlyBranded && ! isOwnBrand ) {
 				return false;
@@ -279,22 +260,15 @@ export const usePaymentConfig = (
 			learnMoreConfig = { ...rest, APMs: OptionalMethods };
 		}
 
-		const isMexico = country === 'MX';
-
 		// Filter out conditional methods.
 		const availableOptionalMethods = filterMethods(
 			config.extendedMethods,
 			[
-				// Digital wallets are independent of ACDC; not available in Mexico.
+				// Digital wallets are independent of ACDC.
 				( method ) =>
-					! method.isDigitalWallet ||
-					( canUseDigitalWallets && ! isMexico ),
-				// In Mexico, ACDC methods are only included when card payments are enabled.
+					! method.isDigitalWallet || canUseDigitalWallets,
+				// Include ACDC methods when card payments available, non-ACDC otherwise.
 				( method ) =>
-					! isMexico || ! method.isAcdc || canUseCardPayments,
-				// Outside Mexico, only include methods that match the card payments flag.
-				( method ) =>
-					isMexico ||
 					method.isDigitalWallet ||
 					method.isAcdc === canUseCardPayments,
 				// Only include own-brand methods when ownBrandOnly is true.
@@ -305,7 +279,7 @@ export const usePaymentConfig = (
 		);
 
 		// Get all UI text elements.
-		const uiText = getUIText( country, ownBrandOnly );
+		const uiText = getUIText( country, canUseCardPayments, ownBrandOnly );
 
 		// Get icons appropriate for this configuration.
 		const icons = getRelevantIcons(
