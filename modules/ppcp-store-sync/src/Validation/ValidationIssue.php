@@ -9,6 +9,8 @@ declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\StoreSync\Validation;
 
+use WooCommerce\PayPalCommerce\StoreSync\Enums\ErrorCode;
+use WooCommerce\PayPalCommerce\StoreSync\Enums\ErrorType;
 use WooCommerce\PayPalCommerce\StoreSync\Validation\Resolution\ResolutionOption;
 use WooCommerce\PayPalCommerce\StoreSync\Validation\Context\IssueContext;
 
@@ -17,26 +19,23 @@ use WooCommerce\PayPalCommerce\StoreSync\Validation\Context\IssueContext;
  *
  * @see https://github.com/paypal/agent-commerce/blob/28b799b0d11b6fb62f423e203de6ea4b9f2ce122/v1/docs/SCHEMA_REFERENCE.md#validationissue
  */
-abstract class ValidationIssue {
-	/**
-	 * Main error category.
-	 *
-	 * Child classes must override this constant.
-	 */
-	protected const ISSUE_CODE = '';
-
-	/**
-	 * Classifies the issue.
-	 *
-	 * Child classes must override this constant.
-	 */
-	protected const ISSUE_TYPE = '';
+class ValidationIssue {
 
 	private const MAX_MESSAGE_LENGTH = 255;
 
 	private const MAX_USER_MESSAGE_LENGTH = 500;
 
 	private const MAX_RESOLUTION_OPTIONS = 5;
+
+	/**
+	 * @readonly Must only be changed via the constructor!
+	 */
+	private string $issue_code;
+
+	/**
+	 * @readonly Must only be changed via the constructor!
+	 */
+	private string $issue_type;
 
 	private string $message;
 
@@ -50,18 +49,116 @@ abstract class ValidationIssue {
 
 	private array $resolution_options = array();
 
-	final private function __construct( string $message ) {
-		$this->message = trim( substr( $message, 0, self::MAX_MESSAGE_LENGTH ) );
+	private function __construct( string $message, string $issue_code, string $issue_type ) {
+		$this->message    = trim( substr( $message, 0, self::MAX_MESSAGE_LENGTH ) );
+		$this->issue_code = $issue_code;
+		$this->issue_type = $issue_type;
 	}
 
 	/**
-	 * Creates a new validation issue instance.
-	 *
-	 * @param string $message Technical error description for AI consumption.
-	 * @return static
+	 * A generic business rule issue, intended for third-party code or cases
+	 * not covered by the more specific factory methods below.
 	 */
-	public static function create( string $message ): self {
-		return new static( $message );
+	public static function create_business_rule_violation( string $message ): self {
+		return new self( $message, ErrorCode::BUSINESS_RULE_ERROR, ErrorType::BUSINESS_RULE );
+	}
+
+	/**
+	 * When to use:
+	 * - Coupon code is invalid or expired.
+	 * - Coupon not applicable to cart items.
+	 * - Coupon usage limit reached.
+	 */
+	public static function create_coupon_invalid( string $message ): self {
+		return new self( $message, ErrorCode::PRICING_ERROR, ErrorType::BUSINESS_RULE );
+	}
+
+	/**
+	 * When to use:
+	 * - Cart items have different currencies (mixed currency not supported).
+	 * - Cart currency does not match WooCommerce store currency.
+	 */
+	public static function create_currency_mismatch( string $message ): self {
+		return new self( $message, ErrorCode::PRICING_ERROR, ErrorType::BUSINESS_RULE );
+	}
+
+	/**
+	 * When to use:
+	 * - Requested quantity exceeds available stock.
+	 * - Stock reduced between cart creation and checkout.
+	 * - High-demand item with limited availability.
+	 */
+	public static function create_insufficient_quantity( string $message ): self {
+		return new self( $message, ErrorCode::INVENTORY_ISSUE, ErrorType::BUSINESS_RULE );
+	}
+
+	/**
+	 * When to use:
+	 * - Product is currently unavailable.
+	 * - No stock remaining.
+	 * - Item temporarily out of inventory.
+	 */
+	public static function create_item_out_of_stock( string $message ): self {
+		return new self( $message, ErrorCode::INVENTORY_ISSUE, ErrorType::BUSINESS_RULE );
+	}
+
+	/**
+	 * When to use:
+	 * - Product price does not match the cart value.
+	 * - Promotional pricing ended.
+	 * - Dynamic pricing adjustments occurred.
+	 */
+	public static function create_price_mismatch( string $message ): self {
+		return new self( $message, ErrorCode::PRICING_ERROR, ErrorType::BUSINESS_RULE );
+	}
+
+	/**
+	 * When to use:
+	 * - Shipping not available to a specified location.
+	 * - Regional restrictions apply.
+	 * - No shipping methods available for this address.
+	 */
+	public static function create_shipping_unavailable( string $message ): self {
+		return new self( $message, ErrorCode::SHIPPING_ERROR, ErrorType::BUSINESS_RULE );
+	}
+
+	/**
+	 * A generic invalid-data issue, intended for third-party code or cases
+	 * not covered by the more specific factory methods below.
+	 *
+	 * When to use:
+	 * - Provided data is incorrect, e.g., malformed email.
+	 * - Unexpected data format, e.g., non-numeric price.
+	 */
+	public static function create_invalid_data( string $message ): self {
+		return new self( $message, ErrorCode::DATA_ERROR, ErrorType::INVALID_DATA );
+	}
+
+	/**
+	 * When to use:
+	 * - Shipping address cannot be validated.
+	 * - Address is incomplete or malformed.
+	 * - Postal code format is invalid.
+	 */
+	public static function create_invalid_address( string $message ): self {
+		return new self( $message, ErrorCode::SHIPPING_ERROR, ErrorType::INVALID_DATA );
+	}
+
+	/**
+	 * When to use:
+	 * - Product ID doesn't exist in WooCommerce.
+	 * - Invalid or malformed item_id.
+	 */
+	public static function create_invalid_product( string $message ): self {
+		return new self( $message, ErrorCode::INVENTORY_ISSUE, ErrorType::INVALID_DATA );
+	}
+
+	/**
+	 * When to use:
+	 * - Required information missing, e.g., missing shipping address.
+	 */
+	public static function create_missing_field( string $message ): self {
+		return new self( $message, ErrorCode::DATA_ERROR, ErrorType::MISSING_FIELD );
 	}
 
 	/**
@@ -69,7 +166,7 @@ abstract class ValidationIssue {
 	 * Possible values are defined in the `Enums/ErrorCode` class.
 	 */
 	public function code(): string {
-		return static::ISSUE_CODE;
+		return $this->issue_code;
 	}
 
 	/**
@@ -77,7 +174,7 @@ abstract class ValidationIssue {
 	 * Possible values are defined in the `Enums/ErrorType` class.
 	 */
 	public function type(): string {
-		return static::ISSUE_TYPE;
+		return $this->issue_type;
 	}
 
 	/**

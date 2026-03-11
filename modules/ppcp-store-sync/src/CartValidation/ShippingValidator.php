@@ -25,9 +25,7 @@ use WooCommerce\PayPalCommerce\StoreSync\Helper\ProductManager;
 use WooCommerce\PayPalCommerce\StoreSync\Schema\PayPalCart;
 use WooCommerce\PayPalCommerce\StoreSync\Validation\Context\ShippingErrorContext;
 use WooCommerce\PayPalCommerce\StoreSync\Validation\Resolution\ResolutionOption;
-use WooCommerce\PayPalCommerce\StoreSync\Validation\InvalidAddress;
-use WooCommerce\PayPalCommerce\StoreSync\Validation\ShippingUnavailable;
-use WooCommerce\PayPalCommerce\StoreSync\Validation\MissingField;
+use WooCommerce\PayPalCommerce\StoreSync\Validation\ValidationIssue;
 use WooCommerce\PayPalCommerce\StoreSync\Schema\Address;
 use WooCommerce\PayPalCommerce\StoreSync\Schema\CartItem;
 
@@ -45,7 +43,7 @@ class ShippingValidator implements ValidatorInterface {
 		if ( ! $shipping_address ) {
 			if ( $this->cart_needs_shipping( $cart ) ) {
 				return array(
-					MissingField::create( 'Shipping address is required' )
+					ValidationIssue::create_missing_field( 'Shipping address is required' )
 						->user_message( 'Please provide a shipping address to continue.' )
 						->for_field( 'shipping_address' )
 						->add_context( ShippingErrorContext::create_missing_shipping_address() )
@@ -105,13 +103,13 @@ class ShippingValidator implements ValidatorInterface {
 	 * Scenario 1: Validates that the address has all required fields and proper formats.
 	 *
 	 * @param Address $address The address to validate.
-	 * @return InvalidAddress[] Array of validation issues.
+	 * @return ValidationIssue[] Array of validation issues.
 	 */
 	private function validate_address_completeness( Address $address ): array {
 		$issues = array();
 
 		if ( ! $address->address_line_1() ) {
-			$issues[] = InvalidAddress::create( 'Shipping address is missing street address' )
+			$issues[] = ValidationIssue::create_invalid_address( 'Shipping address is missing street address' )
 				->user_message( 'Please provide a complete street address.' )
 				->for_field( 'shipping_address.address_line_1' )
 				->add_resolution(
@@ -127,7 +125,7 @@ class ShippingValidator implements ValidatorInterface {
 		}
 
 		if ( ! $address->admin_area_2() ) {
-			$issues[] = InvalidAddress::create( 'Shipping address is missing city' )
+			$issues[] = ValidationIssue::create_invalid_address( 'Shipping address is missing city' )
 				->user_message( 'Please provide a city.' )
 				->for_field( 'shipping_address.admin_area_2' )
 				->add_resolution(
@@ -144,7 +142,7 @@ class ShippingValidator implements ValidatorInterface {
 
 		$postal_code = $address->postal_code();
 		if ( ! $postal_code ) {
-			$issues[] = InvalidAddress::create( 'Shipping address is missing postal code' )
+			$issues[] = ValidationIssue::create_invalid_address( 'Shipping address is missing postal code' )
 				->user_message( 'Please provide a postal code.' )
 				->for_field( 'shipping_address.postal_code' )
 				->add_resolution(
@@ -173,9 +171,9 @@ class ShippingValidator implements ValidatorInterface {
 	 *
 	 * @param string      $postal_code  The postal code to validate.
 	 * @param string|null $country_code The country code.
-	 * @return InvalidAddress|null Validation issue if format is invalid.
+	 * @return ValidationIssue|null Validation issue if format is invalid.
 	 */
-	private function validate_postal_code_format( string $postal_code, ?string $country_code ): ?InvalidAddress {
+	private function validate_postal_code_format( string $postal_code, ?string $country_code ): ?ValidationIssue {
 		if ( ! $country_code ) {
 			return null;
 		}
@@ -188,7 +186,7 @@ class ShippingValidator implements ValidatorInterface {
 		$is_valid = WC_Validation::is_postcode( $postal_code, $country_code );
 
 		if ( ! $is_valid ) {
-			return InvalidAddress::create(
+			return ValidationIssue::create_invalid_address(
 				sprintf( 'Invalid postal code format for %s: %s', $country_code, $postal_code )
 			)
 				->user_message( 'Please provide a valid postal code.' )
@@ -209,9 +207,9 @@ class ShippingValidator implements ValidatorInterface {
 	 *
 	 * @param PayPalCart $cart    The cart to validate.
 	 * @param Address    $address The shipping address.
-	 * @return ShippingUnavailable|null Validation issue if PO Box restrictions apply.
+	 * @return ValidationIssue|null Validation issue if PO Box restrictions apply.
 	 */
-	private function validate_po_box_restrictions( PayPalCart $cart, Address $address ): ?ShippingUnavailable {
+	private function validate_po_box_restrictions( PayPalCart $cart, Address $address ): ?ValidationIssue {
 		$address_line = $address->address_line_1();
 
 		if ( ! $address_line || ! $this->is_po_box( $address_line ) ) {
@@ -226,7 +224,7 @@ class ShippingValidator implements ValidatorInterface {
 				$signature_required_items
 			);
 
-			return ShippingUnavailable::create( 'PO Box delivery not available for this order' )
+			return ValidationIssue::create_shipping_unavailable( 'PO Box delivery not available for this order' )
 				->user_message( 'This order contains items requiring signature confirmation and cannot be delivered to a PO Box.' )
 				->for_field( 'shipping_address' )
 				->add_context(
@@ -320,15 +318,15 @@ class ShippingValidator implements ValidatorInterface {
 	 * Scenario 3: Validates that the country code is allowed for shipping.
 	 *
 	 * @param string|null $country_code The country code to validate.
-	 * @return ShippingUnavailable|null Validation issue if country is not allowed.
+	 * @return ValidationIssue|null Validation issue if country is not allowed.
 	 */
-	private function validate_country( ?string $country_code ): ?ShippingUnavailable {
+	private function validate_country( ?string $country_code ): ?ValidationIssue {
 		if ( ! $country_code ) {
 			return null;
 		}
 
 		if ( ! $this->is_country_allowed( $country_code ) ) {
-			return ShippingUnavailable::create( sprintf( 'Shipping to %s is not available', $country_code ) )
+			return ValidationIssue::create_shipping_unavailable( sprintf( 'Shipping to %s is not available', $country_code ) )
 				->user_message( sprintf( 'We do not ship to %s.', $this->get_country_name( $country_code ) ) )
 				->for_field( 'shipping_address.country_code' )
 				->add_resolution(

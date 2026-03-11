@@ -9,7 +9,7 @@ declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\StoreSync\Schema;
 
-use WooCommerce\PayPalCommerce\StoreSync\Validation\MissingField;
+use WooCommerce\PayPalCommerce\StoreSync\Validation\ValidationIssue;
 
 /**
  * @see CartTotalsTest - Unit tests for this class.
@@ -48,7 +48,7 @@ class CartTotals extends AgenticSchema {
 		// Required field: total.
 		if ( ! isset( $input['total'] ) || ! is_array( $input['total'] ) ) {
 			$add_issue(
-				MissingField::create( 'Total is required' )
+				ValidationIssue::create_missing_field( 'Total is required' )
 					->user_message( 'Please provide a total amount' )
 					->for_field( 'total' )
 			);

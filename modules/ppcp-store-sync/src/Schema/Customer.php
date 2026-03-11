@@ -9,7 +9,7 @@ declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\StoreSync\Schema;
 
-use WooCommerce\PayPalCommerce\StoreSync\Validation\InvalidData;
+use WooCommerce\PayPalCommerce\StoreSync\Validation\ValidationIssue;
 
 /**
  * @see CustomerTest - Unit tests for this class.
@@ -35,7 +35,7 @@ class Customer extends AgenticSchema {
 				$this->email_address = $email_address;
 			} else {
 				$add_issue(
-					InvalidData::create( 'Invalid email' )
+					ValidationIssue::create_invalid_data( 'Invalid email' )
 						->user_message( 'The customers email address is not valid' )
 						->for_field( 'email_address' )
 				);
@@ -53,7 +53,7 @@ class Customer extends AgenticSchema {
 			if ( is_string( $given_name ) ) {
 				if ( strlen( $given_name ) > 140 ) {
 					$add_issue(
-						InvalidData::create( 'Given name too long' )
+						ValidationIssue::create_invalid_data( 'Given name too long' )
 							->user_message( 'The customers given name cannot be longer than 140 characters' )
 							->for_field( 'name.given_name' )
 					);
@@ -64,7 +64,7 @@ class Customer extends AgenticSchema {
 			if ( is_string( $surname ) ) {
 				if ( strlen( $surname ) > 140 ) {
 					$add_issue(
-						InvalidData::create( 'Surname too long' )
+						ValidationIssue::create_invalid_data( 'Surname too long' )
 							->user_message( 'The customers surname cannot be longer than 140 characters' )
 							->for_field( 'name.surname' )
 					);
@@ -87,13 +87,13 @@ class Customer extends AgenticSchema {
 
 				if ( ! is_numeric( $country_code ) || '0' === $country_code ) {
 					$add_issue(
-						InvalidData::create( 'Invalid country code format' )
+						ValidationIssue::create_invalid_data( 'Invalid country code format' )
 							->user_message( 'The customers phone country-code must be numeric' )
 							->for_field( 'phone.country_code' )
 					);
 				} elseif ( strlen( $country_code ) > 3 ) {
 					$add_issue(
-						InvalidData::create( 'Invalid country code length' )
+						ValidationIssue::create_invalid_data( 'Invalid country code length' )
 							->user_message( 'The customers phone country-code must have between 1 and 3 digits' )
 							->for_field( 'phone.country_code' )
 					);
@@ -106,13 +106,13 @@ class Customer extends AgenticSchema {
 
 				if ( ! is_numeric( $national_number ) ) {
 					$add_issue(
-						InvalidData::create( 'Invalid national number format' )
+						ValidationIssue::create_invalid_data( 'Invalid national number format' )
 							->user_message( 'The customers phone number must be numeric' )
 							->for_field( 'phone.national_number' )
 					);
 				} elseif ( strlen( $national_number ) > 14 ) {
 					$add_issue(
-						InvalidData::create( 'Invalid national number length' )
+						ValidationIssue::create_invalid_data( 'Invalid national number length' )
 							->user_message( 'The customers phone number must have between 1 and 3 digits' )
 							->for_field( 'phone.national_number' )
 					);

@@ -15,7 +15,6 @@ use WooCommerce\PayPalCommerce\StoreSync\Helper\ProductManager;
 use WooCommerce\PayPalCommerce\StoreSync\Schema\PayPalCart;
 use WooCommerce\PayPalCommerce\StoreSync\Schema\CartItem;
 use WooCommerce\PayPalCommerce\StoreSync\Validation\Resolution\ResolutionOption;
-use WooCommerce\PayPalCommerce\StoreSync\Validation\InvalidProduct;
 use WooCommerce\PayPalCommerce\StoreSync\Validation\ValidationIssue;
 use WooCommerce\PayPalCommerce\StoreSync\Config\IngestionConfiguration;
 
@@ -56,7 +55,7 @@ class ProductValidator implements ValidatorInterface {
 		$product = $this->product_manager->find_product( $item );
 
 		if ( ! $product ) {
-			return InvalidProduct::create( "Product '{$identifier}' not found in WooCommerce catalog" )
+			return ValidationIssue::create_invalid_product( "Product '{$identifier}' not found in WooCommerce catalog" )
 				->user_message( "'{$item->name()}' not found in WooCommerce catalog" )
 				->for_field( $field )
 				->add_resolution(
@@ -67,7 +66,7 @@ class ProductValidator implements ValidatorInterface {
 		}
 
 		if ( ! $product->is_purchasable() ) {
-			return InvalidProduct::create( "Product '{$identifier}' is not available for purchase" )
+			return ValidationIssue::create_invalid_product( "Product '{$identifier}' is not available for purchase" )
 				->user_message( "'{$item->name()}' cannot be purchased at this time" )
 				->for_field( $field )
 				->add_resolution(
@@ -85,17 +84,17 @@ class ProductValidator implements ValidatorInterface {
 		$valid_types       = (array) ( $filter_args['type'] ?? array() );
 
 		if ( ! $support_downloads && $product->is_downloadable() ) {
-			return InvalidProduct::create( "Downloadable product '{$identifier}' is not supported" )
+			return ValidationIssue::create_invalid_product( "Downloadable product '{$identifier}' is not supported" )
 				->user_message( "'{$item->name()}' cannot be purchased at this time" )
 				->for_field( $field );
 		}
 		if ( ! $product->is_type( $valid_types ) ) {
-			return InvalidProduct::create( "Product '{$identifier}' is not supported (unsupported product type)" )
+			return ValidationIssue::create_invalid_product( "Product '{$identifier}' is not supported (unsupported product type)" )
 				->user_message( "'{$item->name()}' cannot be purchased at this time" )
 				->for_field( $field );
 		}
 		if ( ! in_array( $product->get_status(), $valid_status, true ) ) {
-			return InvalidProduct::create( "Product '{$identifier}' is not supported (product has an unsupported status)" )
+			return ValidationIssue::create_invalid_product( "Product '{$identifier}' is not supported (product has an unsupported status)" )
 				->user_message( "'{$item->name()}' cannot be purchased at this time" )
 				->for_field( $field );
 		}

@@ -12,7 +12,7 @@ namespace WooCommerce\PayPalCommerce\StoreSync\CartValidation;
 use WooCommerce\PayPalCommerce\StoreSync\Enums\Priority;
 use WooCommerce\PayPalCommerce\StoreSync\Schema\PayPalCart;
 use WooCommerce\PayPalCommerce\StoreSync\Validation\Resolution\ResolutionOption;
-use WooCommerce\PayPalCommerce\StoreSync\Validation\CurrencyMismatch;
+use WooCommerce\PayPalCommerce\StoreSync\Validation\ValidationIssue;
 
 class CurrencyValidator implements ValidatorInterface {
 
@@ -68,7 +68,7 @@ class CurrencyValidator implements ValidatorInterface {
 		);
 	}
 
-	private function validate_consistent_currency( array $currencies, string $store_currency ): ?CurrencyMismatch {
+	private function validate_consistent_currency( array $currencies, string $store_currency ): ?ValidationIssue {
 		$unique_currencies = array_unique( array_column( $currencies, 'currency' ) );
 
 		if ( count( $unique_currencies ) === 1 ) {
@@ -83,7 +83,7 @@ class CurrencyValidator implements ValidatorInterface {
 			)
 		);
 
-		return CurrencyMismatch::create(
+		return ValidationIssue::create_currency_mismatch(
 			sprintf(
 				'Mixed currencies detected: item %d has currency %s, expected %s',
 				$mismatch['index'],
@@ -107,9 +107,9 @@ class CurrencyValidator implements ValidatorInterface {
 			);
 	}
 
-	private function validate_store_currency( string $cart_currency, int $item_index, string $store_currency ): ?CurrencyMismatch {
+	private function validate_store_currency( string $cart_currency, int $item_index, string $store_currency ): ?ValidationIssue {
 		if ( $cart_currency !== $store_currency ) {
-			return CurrencyMismatch::create(
+			return ValidationIssue::create_currency_mismatch(
 				sprintf( 'Cart currency %s does not match store currency %s', $cart_currency, $store_currency )
 			)
 				->user_message( sprintf( 'This store only accepts payments in %s.', $store_currency ) )

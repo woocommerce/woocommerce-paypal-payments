@@ -19,7 +19,6 @@ use WooCommerce\PayPalCommerce\StoreSync\Schema\CartItem;
 use WooCommerce\PayPalCommerce\StoreSync\Validation\Resolution\ResolutionOption;
 use WooCommerce\PayPalCommerce\StoreSync\Schema\Money;
 use WooCommerce\PayPalCommerce\StoreSync\Validation\Context\PricingErrorContext;
-use WooCommerce\PayPalCommerce\StoreSync\Validation\PriceMismatch;
 use WooCommerce\PayPalCommerce\StoreSync\Validation\ValidationIssue;
 
 class PriceValidator implements ValidatorInterface {
@@ -72,11 +71,11 @@ class PriceValidator implements ValidatorInterface {
 		return null;
 	}
 
-	private function create_price_mismatch_issue( WC_Product $product, Money $cart_price, float $store_price, string $field, PayPalCart $cart ): PriceMismatch {
+	private function create_price_mismatch_issue( WC_Product $product, Money $cart_price, float $store_price, string $field, PayPalCart $cart ): ValidationIssue {
 		$price_difference = $store_price - $cart_price->value();
 		$is_increase      = $price_difference > 0;
 
-		return PriceMismatch::create(
+		return ValidationIssue::create_price_mismatch(
 			sprintf(
 				"Price mismatch for '%s': cart price is %s but store price is %s",
 				$product->get_name(),

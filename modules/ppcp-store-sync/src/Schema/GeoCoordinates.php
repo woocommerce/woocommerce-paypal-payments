@@ -9,7 +9,7 @@ declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\StoreSync\Schema;
 
-use WooCommerce\PayPalCommerce\StoreSync\Validation\InvalidData;
+use WooCommerce\PayPalCommerce\StoreSync\Validation\ValidationIssue;
 
 /**
  * @see GeoCoordinatesTest - Unit tests for this class.
@@ -46,7 +46,7 @@ class GeoCoordinates extends AgenticSchema {
 			if ( is_float( $latitude ) ) {
 				if ( $latitude < - 90.0 || $latitude > 90.0 ) {
 					$add_issue(
-						InvalidData::create( 'Invalid latitude' )
+						ValidationIssue::create_invalid_data( 'Invalid latitude' )
 							->user_message( 'Latitude must be a decimal value between -90.0 and 90.0' )
 							->for_field( 'latitude' )
 					);
@@ -55,7 +55,7 @@ class GeoCoordinates extends AgenticSchema {
 				}
 			} else {
 				$add_issue(
-					InvalidData::create( 'Invalid latitude' )
+					ValidationIssue::create_invalid_data( 'Invalid latitude' )
 						->user_message( 'Latitude must be a decimal value between -90.0 and 90.0' )
 						->for_field( 'latitude' )
 				);
@@ -76,7 +76,7 @@ class GeoCoordinates extends AgenticSchema {
 			if ( is_float( $longitude ) ) {
 				if ( $longitude < - 180.0 || $longitude > 180.0 ) {
 					$add_issue(
-						InvalidData::create( 'Invalid longitude' )
+						ValidationIssue::create_invalid_data( 'Invalid longitude' )
 							->user_message( 'Longitude must be a decimal value between -180.0 and 180.0' )
 							->for_field( 'longitude' )
 					);
@@ -85,7 +85,7 @@ class GeoCoordinates extends AgenticSchema {
 				}
 			} else {
 				$add_issue(
-					InvalidData::create( 'Invalid longitude' )
+					ValidationIssue::create_invalid_data( 'Invalid longitude' )
 						->user_message( 'Longitude must be a decimal value between -180.0 and 180.0' )
 						->for_field( 'longitude' )
 				);
@@ -96,13 +96,13 @@ class GeoCoordinates extends AgenticSchema {
 
 			if ( strlen( $subdivision ) > 10 ) {
 				$add_issue(
-					InvalidData::create( 'Subdivision too long' )
+					ValidationIssue::create_invalid_data( 'Subdivision too long' )
 						->user_message( 'The subdivision code must be in ISO 3166-2 format (no country code).' )
 						->for_field( 'subdivision' )
 				);
 			} elseif ( ! preg_match( '/^[A-Z0-9-]+$/', $subdivision ) ) {
 				$add_issue(
-					InvalidData::create( 'Subdivision invalid' )
+					ValidationIssue::create_invalid_data( 'Subdivision invalid' )
 						->user_message( 'The subdivision code must be in ISO 3166-2 format.' )
 						->for_field( 'subdivision' )
 				);
@@ -115,7 +115,7 @@ class GeoCoordinates extends AgenticSchema {
 
 			if ( ! preg_match( '/^[A-Z]{2}$/', $country_code ) ) {
 				$add_issue(
-					InvalidData::create( 'Country code invalid' )
+					ValidationIssue::create_invalid_data( 'Country code invalid' )
 						->user_message( 'The country code must be a 2-letter value.' )
 						->for_field( 'country_code' )
 				);

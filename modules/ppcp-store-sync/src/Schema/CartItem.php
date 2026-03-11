@@ -11,8 +11,7 @@ namespace WooCommerce\PayPalCommerce\StoreSync\Schema;
 
 use WooCommerce\PayPalCommerce\StoreSync\Enums\Priority;
 use WooCommerce\PayPalCommerce\StoreSync\Validation\Resolution\ResolutionOption;
-use WooCommerce\PayPalCommerce\StoreSync\Validation\MissingField;
-use WooCommerce\PayPalCommerce\StoreSync\Validation\InvalidData;
+use WooCommerce\PayPalCommerce\StoreSync\Validation\ValidationIssue;
 
 /**
  * @see CartItemTest - Unit tests for this class.
@@ -54,7 +53,7 @@ class CartItem extends AgenticSchema {
 
 			if ( $quantity < 1 || $quantity > 999 ) {
 				$add_issue(
-					InvalidData::create( 'Quantity is invalid' )
+					ValidationIssue::create_invalid_data( 'Quantity is invalid' )
 						->user_message( 'Item quantity must be between 1 and 999' )
 						->for_field( 'quantity' )
 						->add_resolution(
@@ -70,7 +69,7 @@ class CartItem extends AgenticSchema {
 			}
 		} else {
 			$add_issue(
-				MissingField::create( 'Quantity missing' )
+				ValidationIssue::create_missing_field( 'Quantity missing' )
 					->user_message( 'The quantity field is required.' )
 					->for_field( 'quantity' )
 			);
@@ -82,7 +81,7 @@ class CartItem extends AgenticSchema {
 
 			if ( strlen( $id ) > 127 ) {
 				$add_issue(
-					InvalidData::create( 'Item id too long' )
+					ValidationIssue::create_invalid_data( 'Item id too long' )
 						->user_message( 'The item ID can be at most 127 characters long' )
 						->for_field( 'item_id' )
 				);
@@ -96,7 +95,7 @@ class CartItem extends AgenticSchema {
 
 			if ( strlen( $variant_id ) > 127 ) {
 				$add_issue(
-					InvalidData::create( 'Variant id too long' )
+					ValidationIssue::create_invalid_data( 'Variant id too long' )
 						->user_message( 'The variant ID can be at most 127 characters long' )
 						->for_field( 'variant_id' )
 				);
@@ -110,7 +109,7 @@ class CartItem extends AgenticSchema {
 
 			if ( strlen( $parent_id ) > 127 ) {
 				$add_issue(
-					InvalidData::create( 'Parent id too long' )
+					ValidationIssue::create_invalid_data( 'Parent id too long' )
 						->user_message( 'The parent ID can be at most 127 characters long' )
 						->for_field( 'parent_id' )
 				);
@@ -124,7 +123,7 @@ class CartItem extends AgenticSchema {
 
 			if ( strlen( $name ) > 127 ) {
 				$add_issue(
-					InvalidData::create( 'Item name too long' )
+					ValidationIssue::create_invalid_data( 'Item name too long' )
 						->user_message( 'The item name can be at most 127 characters long' )
 						->for_field( 'name' )
 				);
@@ -138,7 +137,7 @@ class CartItem extends AgenticSchema {
 
 			if ( strlen( $description ) > 255 ) {
 				$add_issue(
-					InvalidData::create( 'Item description too long' )
+					ValidationIssue::create_invalid_data( 'Item description too long' )
 						->user_message( 'The item description can be at most 127 characters long' )
 						->for_field( 'description' )
 				);
@@ -152,7 +151,7 @@ class CartItem extends AgenticSchema {
 
 			if ( $price->value() <= 0. ) {
 				$add_issue(
-					InvalidData::create( 'Item price is invalid' )
+					ValidationIssue::create_invalid_data( 'Item price is invalid' )
 						->user_message( 'The item price is invalid' )
 						->for_field( 'price' )
 				);
@@ -170,7 +169,7 @@ class CartItem extends AgenticSchema {
 
 			if ( count( $attributes ) > 10 ) {
 				$add_issue(
-					InvalidData::create( 'Too many attributes' )
+					ValidationIssue::create_invalid_data( 'Too many attributes' )
 						->user_message( 'The item can have at most 10 attributes' )
 						->for_field( 'selected_attributes' )
 				);

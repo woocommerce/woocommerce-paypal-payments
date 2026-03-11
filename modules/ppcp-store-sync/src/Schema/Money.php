@@ -9,8 +9,7 @@ declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\StoreSync\Schema;
 
-use WooCommerce\PayPalCommerce\StoreSync\Validation\MissingField;
-use WooCommerce\PayPalCommerce\StoreSync\Validation\InvalidData;
+use WooCommerce\PayPalCommerce\StoreSync\Validation\ValidationIssue;
 
 /**
  * @see MoneyTest - Unit tests for this class.
@@ -33,14 +32,14 @@ class Money extends AgenticSchema {
 				$this->currency = $currency;
 			} else {
 				$add_issue(
-					InvalidData::create( 'Unexpected currency_code' )
+					ValidationIssue::create_invalid_data( 'Unexpected currency_code' )
 						->user_message( 'Please provide a valid 3-letter currency code.' )
 						->for_field( 'currency_code' )
 				);
 			}
 		} else {
 			$add_issue(
-				MissingField::create( 'Required field missing' )
+				ValidationIssue::create_missing_field( 'Required field missing' )
 					->user_message( 'Please provide a currency code.' )
 					->for_field( 'currency_code' )
 			);
@@ -55,14 +54,14 @@ class Money extends AgenticSchema {
 				$this->value = (float) $value;
 			} else {
 				$add_issue(
-					InvalidData::create( 'Unexpected money value' )
+					ValidationIssue::create_invalid_data( 'Unexpected money value' )
 						->user_message( 'Please provide a valid numerical value.' )
 						->for_field( 'value' )
 				);
 			}
 		} else {
 			$add_issue(
-				MissingField::create( 'Required field missing' )
+				ValidationIssue::create_missing_field( 'Required field missing' )
 					->user_message( 'Please provide a value.' )
 					->for_field( 'value' )
 			);

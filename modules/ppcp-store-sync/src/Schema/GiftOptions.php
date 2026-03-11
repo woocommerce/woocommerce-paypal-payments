@@ -12,7 +12,7 @@ namespace WooCommerce\PayPalCommerce\StoreSync\Schema;
 use DateTime;
 use DateTimeInterface;
 
-use WooCommerce\PayPalCommerce\StoreSync\Validation\InvalidData;
+use WooCommerce\PayPalCommerce\StoreSync\Validation\ValidationIssue;
 
 /**
  * @see GiftOptionsTest - Unit tests for this class.
@@ -54,7 +54,7 @@ class GiftOptions extends AgenticSchema {
 
 			if ( strlen( $gift_message ) > 500 ) {
 				$add_issue(
-					InvalidData::create( 'Gift message too long' )
+					ValidationIssue::create_invalid_data( 'Gift message too long' )
 						->user_message( 'The gift message must be no longer than 500 characters' )
 						->for_field( 'gift_message' )
 				);
@@ -71,7 +71,7 @@ class GiftOptions extends AgenticSchema {
 				$this->delivery_date = $delivery_date;
 			} else {
 				$add_issue(
-					InvalidData::create( 'Invalid delivery date format' )
+					ValidationIssue::create_invalid_data( 'Invalid delivery date format' )
 						->user_message( 'The delivery date must be in RFC3339 format (e.g., 2024-12-25T09:00:00Z)' )
 						->for_field( 'delivery_date' )
 				);
@@ -87,7 +87,7 @@ class GiftOptions extends AgenticSchema {
 				if ( ! filter_var( $recipient_email, FILTER_VALIDATE_EMAIL ) ) {
 					$recipient_email = null;
 					$add_issue(
-						InvalidData::create( 'Invalid recipient email' )
+						ValidationIssue::create_invalid_data( 'Invalid recipient email' )
 							->user_message( 'The recipient email is not valid' )
 							->for_field( 'recipient.email' )
 					);

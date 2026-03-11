@@ -11,8 +11,7 @@ namespace WooCommerce\PayPalCommerce\StoreSync\Schema;
 
 use DateTime;
 
-use WooCommerce\PayPalCommerce\StoreSync\Validation\InvalidData;
-use WooCommerce\PayPalCommerce\StoreSync\Validation\MissingField;
+use WooCommerce\PayPalCommerce\StoreSync\Validation\ValidationIssue;
 
 /**
  * @see ShippingOptionTest - Unit tests for this class.
@@ -42,7 +41,7 @@ class ShippingOption extends AgenticSchema {
 		// Required field: id.
 		if ( ! isset( $input['id'] ) || ! is_string( $input['id'] ) ) {
 			$add_issue(
-				MissingField::create( 'Shipping option ID is required' )
+				ValidationIssue::create_missing_field( 'Shipping option ID is required' )
 					->user_message( 'Please provide a shipping option ID' )
 					->for_field( 'id' )
 			);
@@ -51,7 +50,7 @@ class ShippingOption extends AgenticSchema {
 
 			if ( empty( $id ) ) {
 				$add_issue(
-					MissingField::create( 'Shipping option ID is required' )
+					ValidationIssue::create_missing_field( 'Shipping option ID is required' )
 						->user_message( 'Please provide a shipping option ID' )
 						->for_field( 'id' )
 				);
@@ -63,7 +62,7 @@ class ShippingOption extends AgenticSchema {
 		// Required field: name.
 		if ( ! isset( $input['name'] ) || ! is_string( $input['name'] ) ) {
 			$add_issue(
-				MissingField::create( 'Shipping option name is required' )
+				ValidationIssue::create_missing_field( 'Shipping option name is required' )
 					->user_message( 'Please provide a shipping option name' )
 					->for_field( 'name' )
 			);
@@ -72,7 +71,7 @@ class ShippingOption extends AgenticSchema {
 
 			if ( empty( $name ) ) {
 				$add_issue(
-					MissingField::create( 'Shipping option name is required' )
+					ValidationIssue::create_missing_field( 'Shipping option name is required' )
 						->user_message( 'Please provide a shipping option name' )
 						->for_field( 'name' )
 				);
@@ -84,7 +83,7 @@ class ShippingOption extends AgenticSchema {
 		// Required field: price.
 		if ( ! isset( $input['price'] ) || ! is_array( $input['price'] ) ) {
 			$add_issue(
-				MissingField::create( 'Shipping price is required' )
+				ValidationIssue::create_missing_field( 'Shipping price is required' )
 					->user_message( 'Please provide a shipping price' )
 					->for_field( 'price' )
 			);
@@ -104,7 +103,7 @@ class ShippingOption extends AgenticSchema {
 		// Required field: isSelected.
 		if ( ! isset( $input['isSelected'] ) ) {
 			$add_issue(
-				MissingField::create( 'Selection status is required' )
+				ValidationIssue::create_missing_field( 'Selection status is required' )
 					->user_message( 'Please specify if this shipping option is selected' )
 					->for_field( 'isSelected' )
 			);
@@ -123,7 +122,7 @@ class ShippingOption extends AgenticSchema {
 
 			if ( ! preg_match( '/^\d{4}-\d{2}-\d{2}$/', $estimated_delivery ) ) {
 				$add_issue(
-					InvalidData::create( 'Invalid delivery date format' )
+					ValidationIssue::create_invalid_data( 'Invalid delivery date format' )
 						->user_message( 'The estimated delivery date must be in YYYY-MM-DD format' )
 						->for_field( 'estimated_delivery' )
 				);
@@ -133,7 +132,7 @@ class ShippingOption extends AgenticSchema {
 
 				if ( $real_date !== $estimated_delivery ) {
 					$add_issue(
-						InvalidData::create( 'Invalid date' )
+						ValidationIssue::create_invalid_data( 'Invalid date' )
 							->user_message( 'The date provided does not exist (e.g., Feb 31 or month 13)' )
 							->for_field( 'estimated_delivery' )
 					);

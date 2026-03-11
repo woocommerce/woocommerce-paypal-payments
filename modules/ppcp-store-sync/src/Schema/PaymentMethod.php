@@ -9,8 +9,7 @@ declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\StoreSync\Schema;
 
-use WooCommerce\PayPalCommerce\StoreSync\Validation\InvalidData;
-use WooCommerce\PayPalCommerce\StoreSync\Validation\MissingField;
+use WooCommerce\PayPalCommerce\StoreSync\Validation\ValidationIssue;
 
 /**
  * @see PaymentMethodTest - Unit tests for this class.
@@ -28,7 +27,7 @@ class PaymentMethod extends AgenticSchema {
 		// Mandatory fields.
 		if ( ! isset( $input['type'] ) || ! is_string( $input['type'] ) ) {
 			$add_issue(
-				MissingField::create( 'Payment method is required' )
+				ValidationIssue::create_missing_field( 'Payment method is required' )
 					->user_message( 'No value for the payment method type found' )
 					->for_field( 'type' )
 			);
@@ -37,13 +36,13 @@ class PaymentMethod extends AgenticSchema {
 
 			if ( empty( $type ) ) {
 				$add_issue(
-					MissingField::create( 'Payment method is required' )
+					ValidationIssue::create_missing_field( 'Payment method is required' )
 						->user_message( 'No value for the payment method type found' )
 						->for_field( 'type' )
 				);
 			} elseif ( 'paypal' !== $type ) {
 				$add_issue(
-					InvalidData::create( 'Unexpected payment method type' )
+					ValidationIssue::create_invalid_data( 'Unexpected payment method type' )
 						->user_message( 'Only PayPal is supported' )
 						->for_field( 'type' )
 				);

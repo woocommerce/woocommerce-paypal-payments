@@ -15,8 +15,6 @@ use WooCommerce\PayPalCommerce\StoreSync\Helper\ProductManager;
 use WooCommerce\PayPalCommerce\StoreSync\Schema\PayPalCart;
 use WooCommerce\PayPalCommerce\StoreSync\Schema\CartItem;
 use WooCommerce\PayPalCommerce\StoreSync\Validation\Resolution\ResolutionOption;
-use WooCommerce\PayPalCommerce\StoreSync\Validation\InsufficientQuantity;
-use WooCommerce\PayPalCommerce\StoreSync\Validation\ItemOutOfStock;
 use WooCommerce\PayPalCommerce\StoreSync\Validation\ValidationIssue;
 
 class InventoryValidator implements ValidatorInterface {
@@ -55,7 +53,7 @@ class InventoryValidator implements ValidatorInterface {
 		}
 
 		if ( ! $this->product_manager->is_in_stock( $product ) ) {
-			return ItemOutOfStock::create( 'Product is no longer available' )
+			return ValidationIssue::create_item_out_of_stock( 'Product is no longer available' )
 				->user_message( sprintf( '%s is currently out of stock.', $product->get_name() ) )
 				->for_field( $field )
 				->add_resolution(
@@ -69,7 +67,7 @@ class InventoryValidator implements ValidatorInterface {
 		if ( ! $this->product_manager->is_in_stock( $product, $item->quantity() ) ) {
 			$stock_quantity = $product->get_stock_quantity() ?? 0;
 
-			return InsufficientQuantity::create( 'Insufficient inventory' )
+			return ValidationIssue::create_insufficient_quantity( 'Insufficient inventory' )
 				->user_message(
 					sprintf(
 						'Only %d of %s available, but %d requested.',
