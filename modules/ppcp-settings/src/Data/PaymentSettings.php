@@ -375,12 +375,4 @@ class PaymentSettings extends AbstractDataModel {
 	public function get_capture_on_status_change(): bool {
 		return $this->data['capture_on_status_change'];
 	}
-
-	/**
-	 * Changes the "capture on status change" legacy setting. No UI equivalent, only used by
-	 * the migration script.
-	 */
-	public function set_capture_on_status_change( bool $capture ): void {
-		$this->data['capture_on_status_change'] = $capture;
-	}
 }
