@@ -563,13 +563,6 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 
 				$merchant_data    = $general_settings->get_merchant_data();
 				$merchant_country = $merchant_data->merchant_country;
-
-				// Disable all extended checkout card methods if the store is in Mexico.
-				if ( 'MX' === $merchant_country ) {
-					$payment_methods->toggle_method_state( CreditCardGateway::ID, false );
-					$payment_methods->toggle_method_state( ApplePayGateway::ID, false );
-					$payment_methods->toggle_method_state( GooglePayGateway::ID, false );
-				}
 			},
 			10,
 			2
@@ -606,10 +599,7 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 						continue;
 					}
 
-					// For all other APMs: enable only if merchant is NOT in Mexico.
-					if ( 'MX' !== $merchant_country ) {
-						$payment_methods->toggle_method_state( $method['id'], true );
-					}
+					$payment_methods->toggle_method_state( $method['id'], true );
 				}
 			},
 			10,
