@@ -94,7 +94,7 @@ const OptionalMethodDescription = () => {
 	const { isCasualSeller } = OnboardingHooks.useBusiness();
 	const { storeCountry, storeCurrency, ownBrandOnly } =
 		CommonHooks.useWooSettings();
-	const { canUseCardPayments, canUseDigitalWallets } =
+	const { canUseCardPayments, canUseDigitalWallets, canUseFastlane } =
 		OnboardingHooks.useFlags();
 
 	return (
@@ -108,7 +108,7 @@ const OptionalMethodDescription = () => {
 				canUseDigitalWallets &&
 				'MX' !== storeCountry
 			}
-			isFastlane={ true }
+			isFastlane={ canUseFastlane }
 			isPayLater={ true }
 			ownBrandOnly={ ownBrandOnly }
 			storeCountry={ storeCountry }
