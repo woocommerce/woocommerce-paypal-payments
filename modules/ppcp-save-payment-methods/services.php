@@ -53,6 +53,7 @@ return array(
 				'BG',
 				'CA',
 				'CN',
+				'C2',
 				'CY',
 				'CZ',
 				'DK',

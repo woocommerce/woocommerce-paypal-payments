@@ -73,6 +73,12 @@ class WcSubscriptionsModule implements ServiceModule, ExtendingModule, Executabl
 	 * {@inheritDoc}
 	 */
 	public function run( ContainerInterface $c ): bool {
+		$subscriptions_helper = $c->get( 'wc-subscriptions.helper' );
+		assert( $subscriptions_helper instanceof SubscriptionHelper );
+		if ( ! $subscriptions_helper->plugin_is_active() ) {
+			return true;
+		}
+
 		$this->add_gateways_support( $c );
 
 		add_action(
@@ -400,20 +406,20 @@ class WcSubscriptionsModule implements ServiceModule, ExtendingModule, Executabl
 					return $localized_script_data;
 				}
 
+				$free_trial_subscription_helper = $c->get( 'wc-subscriptions.free-trial-subscription-helper' );
+				assert( $free_trial_subscription_helper instanceof FreeTrialSubscriptionHelper );
+
+				if ( ! is_checkout() || ! $free_trial_subscription_helper->is_free_trial_cart() ) {
+					return $localized_script_data;
+				}
+
 				$vaulted_paypal_email = $c->get( 'wc-subscriptions.vault-v2.vaulted-paypal-email' );
 				assert( $vaulted_paypal_email instanceof VaultedPayPalEmail );
 
 				$vaulted_email = $vaulted_paypal_email->get_vaulted_paypal_email();
-				if ( ! $vaulted_email ) {
-					return $localized_script_data;
+				if ( $vaulted_email ) {
+					$localized_script_data['vaulted_paypal_email'] = $vaulted_email;
 				}
-
-				$free_trial_subscription_helper = $c->get( 'wc-subscriptions.free-trial-subscription-helper' );
-				assert( $free_trial_subscription_helper instanceof FreeTrialSubscriptionHelper );
-
-				$localized_script_data['vaulted_paypal_email'] = ( is_checkout() && $free_trial_subscription_helper->is_free_trial_cart() )
-				? $vaulted_paypal_email->get_vaulted_paypal_email()
-				: '';
 
 				return $localized_script_data;
 			}
@@ -477,12 +483,6 @@ class WcSubscriptionsModule implements ServiceModule, ExtendingModule, Executabl
 	 * @return void
 	 */
 	private function add_gateways_support( ContainerInterface $c ): void {
-		$subscriptions_helper = $c->get( 'wc-subscriptions.helper' );
-		assert( $subscriptions_helper instanceof SubscriptionHelper );
-		if ( ! $subscriptions_helper->plugin_is_active() ) {
-			return;
-		}
-
 		add_filter(
 			'woocommerce_paypal_payments_paypal_gateway_supports',
 			function ( array $supports ) use ( $c ): array {
