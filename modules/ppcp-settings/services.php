@@ -109,8 +109,8 @@ return array(
 		$can_use_casual_selling      = $container->get( 'settings.casual-selling.eligible' );
 		$can_use_vaulting            = $container->has( 'save-payment-methods.eligible' ) && $container->get( 'save-payment-methods.eligible' );
 		$can_use_card_payments       = $container->has( 'card-fields.eligibility.check' ) && $container->get( 'card-fields.eligibility.check' )();
-		$can_use_subscriptions       = $container->has( 'wc-subscriptions.helper' ) &&
-			$container->get( 'wc-subscriptions.helper' )->plugin_is_active();
+		$can_use_subscriptions       = $container->has( 'wc-subscriptions.helper' ) && $container->get( 'wc-subscriptions.helper' )
+																								->plugin_is_active();
 		$should_skip_payment_methods = class_exists( '\WC_Payments' );
 		$can_use_fastlane            = $container->get( 'axo.eligibility.check' );
 		$can_use_pay_later           = $container->get( 'button.helper.messages-apply' );
