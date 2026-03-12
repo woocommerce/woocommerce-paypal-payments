@@ -110,7 +110,19 @@ class LocalAlternativePaymentMethodsModule implements ServiceModule, ExecutableM
 
 				$payment_methods = apply_filters( 'woocommerce_paypal_payments_local_apm_payment_methods', $payment_methods );
 
+				// Only register eligible gateways when the merchant is connected.
+				$is_connected       = $c->get( 'settings.flag.is-connected' );
+				$eligibility_checks = array();
+				if ( $is_connected ) {
+					$eligibility_service = $c->get( 'settings.service.payment_methods_eligibilities' );
+					$eligibility_checks  = $eligibility_service->get_eligibility_checks();
+				}
+
 				foreach ( $payment_methods as $key => $value ) {
+					$gateway_id = $value['id'];
+					if ( isset( $eligibility_checks[ $gateway_id ] ) && ! $eligibility_checks[ $gateway_id ]() ) {
+						continue;
+					}
 					$methods[] = $c->get( 'ppcp-local-apms.' . $key . '.wc-gateway' );
 				}
 
