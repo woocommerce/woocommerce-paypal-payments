@@ -143,11 +143,6 @@ class GooglepayModule implements ServiceModule, ExecutableModule
                 $settings = $c->get('settings.settings-provider');
                 assert($settings instanceof SettingsProvider);
                 if ($settings->googlepay_enabled()) {
-                    $eligibility_service = $c->get('settings.service.payment_methods_eligibilities');
-                    $eligibility_checks = $eligibility_service->get_eligibility_checks();
-                    if (isset($eligibility_checks[\WooCommerce\PayPalCommerce\Googlepay\GooglePayGateway::ID]) && !$eligibility_checks[\WooCommerce\PayPalCommerce\Googlepay\GooglePayGateway::ID]()) {
-                        return $methods;
-                    }
                     $googlepay_gateway = $c->get('googlepay.wc-gateway');
                     assert($googlepay_gateway instanceof WC_Payment_Gateway);
                     $methods[] = $googlepay_gateway;

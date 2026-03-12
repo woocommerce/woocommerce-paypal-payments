@@ -113,11 +113,6 @@ class ApplepayModule implements ServiceModule, ExecutableModule
                 $settings = $c->get('settings.settings-provider');
                 assert($settings instanceof SettingsProvider);
                 if ($settings->applepay_enabled()) {
-                    $eligibility_service = $c->get('settings.service.payment_methods_eligibilities');
-                    $eligibility_checks = $eligibility_service->get_eligibility_checks();
-                    if (isset($eligibility_checks[\WooCommerce\PayPalCommerce\Applepay\ApplePayGateway::ID]) && !$eligibility_checks[\WooCommerce\PayPalCommerce\Applepay\ApplePayGateway::ID]()) {
-                        return $methods;
-                    }
                     $applepay_gateway = $c->get('applepay.wc-gateway');
                     assert($applepay_gateway instanceof WC_Payment_Gateway);
                     $methods[] = $applepay_gateway;
