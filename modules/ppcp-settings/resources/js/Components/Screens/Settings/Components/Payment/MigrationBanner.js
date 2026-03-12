@@ -77,6 +77,9 @@ const MigrationBanner = ( {
 				</Content>
 				<Content asCard={ false } className={ `${ className }__icon` }>
 					<PPIcon imageName="icon-button-payment-method-advanced-cards-large.svg" />
+					<span className={ `${ className }__icon-close` }>
+						<PPIcon imageName="icon-close.svg" />
+					</span>
 				</Content>
 			</ContentWrapper>
 		</div>

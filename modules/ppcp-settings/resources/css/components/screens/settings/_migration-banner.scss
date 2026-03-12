@@ -19,5 +19,13 @@
 	.ppcp-r-settings-migration-banner__icon {
 		text-align: center;
 		flex: 0.7;
+		height: 100%;
+		position: relative;
+
+		&-close {
+			position: absolute;
+			top: -10%;
+			right: -3%
+		}
 	}
 }
