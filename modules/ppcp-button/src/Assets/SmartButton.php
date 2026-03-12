@@ -347,6 +347,7 @@ class SmartButton implements SmartButtonInterface {
 				if (
 					CreditCardGateway::ID === $id
 					&& is_user_logged_in()
+					&& $this->vault_v3_enabled
 					&& $this->settings_provider->save_card_details()
 					&& apply_filters( 'woocommerce_paypal_payments_should_render_card_custom_fields', true )
 				) {
