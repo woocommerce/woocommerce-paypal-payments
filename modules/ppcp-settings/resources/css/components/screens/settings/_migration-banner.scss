@@ -1,0 +1,23 @@
+.ppcp-r-settings-migration-banner {
+
+	.ppcp-r-settings-card__content-wrapper {
+		display: flex;
+		flex-direction: row;
+		gap: 24px;
+		background-color: #F6F7FA;
+		padding: 24px;
+		border-radius: 4px;
+		align-items: center;
+	}
+
+	.ppcp-r-settings-card__title {
+		@include font(15, 20, 500);
+		color: var(--color-text-title);
+		margin: 0 0 8px 0;
+	}
+
+	.ppcp-r-settings-migration-banner__icon {
+		text-align: center;
+		flex: 0.7;
+	}
+}
