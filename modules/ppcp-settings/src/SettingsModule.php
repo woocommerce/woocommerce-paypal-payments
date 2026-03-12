@@ -283,6 +283,13 @@ class SettingsModule implements ServiceModule, ExecutableModule
                     assert($axo_gateway instanceof WC_Payment_Gateway);
                     $methods[] = $axo_gateway;
                 }
+                // Remove gateways where the merchant is not eligible.
+                $eligibility_service = $container->get('settings.service.payment_methods_eligibilities');
+                $eligibility_checks = $eligibility_service->get_eligibility_checks();
+                $methods = array_filter($methods, static function ($gateway) use ($eligibility_checks) {
+                    $id = $gateway instanceof WC_Payment_Gateway ? $gateway->id : '';
+                    return !isset($eligibility_checks[$id]) || $eligibility_checks[$id]();
+                });
                 return $methods;
             },
             99
