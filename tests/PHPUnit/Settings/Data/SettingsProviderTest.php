@@ -16,13 +16,14 @@ use WooCommerce\PayPalCommerce\Settings\Data\StylingSettings;
 use WooCommerce\PayPalCommerce\Settings\DTO\LocationStylingDTO;
 use WooCommerce\PayPalCommerce\Settings\DTO\MerchantConnectionDTO;
 use WooCommerce\PayPalCommerce\TestCase;
+use function Brain\Monkey\Functions\expect;
 
 class SettingsProviderTest extends TestCase {
 
 	private const EXPECTED_VALUE_STRING = 'EXPECTED_VALUE';
-	private const EXPECTED_VALUE_BOOL = true;
-	private const EXPECTED_VALUE_ARRAY = array();
-	private const EXPECTED_VALUE_INT = 2;
+	private const EXPECTED_VALUE_BOOL   = true;
+	private const EXPECTED_VALUE_ARRAY  = array();
+	private const EXPECTED_VALUE_INT    = 2;
 
 	private GeneralSettings $general_settings;
 	private OnboardingProfile $onboarding_profile;
@@ -444,5 +445,48 @@ class SettingsProviderTest extends TestCase {
 				'expected_value'  => self::EXPECTED_VALUE_ARRAY,
 			),
 		);
+	}
+
+	/**
+	 * @dataProvider capture_on_status_change_cases
+	 */
+	public function test_capture_on_status_change( bool $db_value, ?bool $filter_override, bool $expected ): void {
+		$this->payment_settings
+			->shouldReceive( 'get_capture_on_status_change' )
+			->andReturn( $db_value );
+
+		expect( 'apply_filters' )
+			->once()
+			->with( 'woocommerce_paypal_payments_capture_on_status_change', $db_value )
+			->andReturn( $filter_override ?? $db_value );
+
+		$result = $this->provider->capture_on_status_change();
+
+		$this->assertEquals( $expected, $result );
+	}
+
+	public function capture_on_status_change_cases(): array {
+		return [
+			'default'              => [
+				'db_value'        => true,
+				'filter_override' => null,
+				'expected'        => true,
+			],
+			'disable_by_migration' => [
+				'db_value'        => false,
+				'filter_override' => null,
+				'expected'        => false,
+			],
+			'disable_by_filter'    => [
+				'db_value'        => true,
+				'filter_override' => false,
+				'expected'        => false,
+			],
+			'enable_by_filter'     => [
+				'db_value'        => false,
+				'filter_override' => true,
+				'expected'        => true,
+			],
+		];
 	}
 }
