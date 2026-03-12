@@ -162,6 +162,14 @@ class LocalAlternativePaymentMethodsModule implements ServiceModule, ExecutableM
 					}
 				}
 
+				// Remove gateways where the merchant is not eligible.
+				$eligibility_service = $c->get( 'settings.service.payment_methods_eligibilities' );
+				foreach ( $eligibility_service->get_eligibility_checks() as $gateway_id => $check ) {
+					if ( isset( $methods[ $gateway_id ] ) && ! $check() ) {
+						unset( $methods[ $gateway_id ] );
+					}
+				}
+
 				return $methods;
 			}
 		);
