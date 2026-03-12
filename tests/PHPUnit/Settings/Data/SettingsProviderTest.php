@@ -472,17 +472,17 @@ class SettingsProviderTest extends TestCase {
 				'filter_override' => null,
 				'expected'        => true,
 			],
-			'disable_by_migration' => [
+			'disable by migration' => [
 				'db_value'        => false,
 				'filter_override' => null,
 				'expected'        => false,
 			],
-			'disable_by_filter'    => [
+			'disable by filter'    => [
 				'db_value'        => true,
 				'filter_override' => false,
 				'expected'        => false,
 			],
-			'enable_by_filter'     => [
+			'enable by filter'     => [
 				'db_value'        => false,
 				'filter_override' => true,
 				'expected'        => true,
