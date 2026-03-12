@@ -5,6 +5,11 @@
     "license": "GPL-2.0-or-later",
     "repositories": [
         {
+            "name": "private-packagist",
+            "type": "composer",
+            "url": "https://repo.packagist.com/inpsyde/payment-gateways/"
+        },
+        {
             "type": "composer",
             "url": "https://raw.githubusercontent.com/inpsyde/wp-stubs/main",
             "only": [
@@ -67,6 +72,9 @@
         "installer-paths": {
             "modules/{$name}/": [
                 "type:inpsyde-module"
+            ],
+            "tests/qa/resources/files/{$name}/": [
+                "type:wordpress-plugin"
             ]
         },
         "merge-plugin": {
@@ -107,7 +115,8 @@
         "allow-plugins": {
             "inpsyde/composer-assets-compiler": true,
             "dealerdirect/phpcodesniffer-composer-installer": true,
-            "wikimedia/composer-merge-plugin": true
+            "wikimedia/composer-merge-plugin": true,
+            "composer/installers": true
         }
     }
 }

@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "f454a4dc4519aa3bafab294be971ae9b",
+    "content-hash": "e2197995241a0d5b72bf42c2bf3bc3b8",
     "packages": [
         {
             "name": "psr/log",
@@ -18,7 +18,13 @@
                 "type": "zip",
                 "url": "https://api.github.com/repos/php-fig/log/zipball/d49695b909c3b7628b6289db5479a1c204601f11",
                 "reference": "d49695b909c3b7628b6289db5479a1c204601f11",
-                "shasum": ""
+                "shasum": "",
+                "mirrors": [
+                    {
+                        "url": "https://repo.packagist.com/inpsyde/payment-gateways/dists/%package%/%version%/r%reference%.%type%",
+                        "preferred": true
+                    }
+                ]
             },
             "require": {
                 "php": ">=5.3.0"
@@ -34,7 +40,7 @@
                     "Psr\\Log\\": "Psr/Log/"
                 }
             },
-            "notification-url": "https://packagist.org/downloads/",
+            "notification-url": "https://repo.packagist.com/inpsyde/payment-gateways/downloads/",
             "license": [
                 "MIT"
             ],
@@ -68,7 +74,13 @@
                 "type": "zip",
                 "url": "https://api.github.com/repos/ralouphie/getallheaders/zipball/120b605dfeb996808c31b6477290a714d356e822",
                 "reference": "120b605dfeb996808c31b6477290a714d356e822",
-                "shasum": ""
+                "shasum": "",
+                "mirrors": [
+                    {
+                        "url": "https://repo.packagist.com/inpsyde/payment-gateways/dists/%package%/%version%/r%reference%.%type%",
+                        "preferred": true
+                    }
+                ]
             },
             "require": {
                 "php": ">=5.6"
@@ -83,7 +95,7 @@
                     "src/getallheaders.php"
                 ]
             },
-            "notification-url": "https://packagist.org/downloads/",
+            "notification-url": "https://repo.packagist.com/inpsyde/payment-gateways/downloads/",
             "license": [
                 "MIT"
             ],
@@ -94,10 +106,6 @@
                 }
             ],
             "description": "A polyfill for getallheaders.",
-            "support": {
-                "issues": "https://github.com/ralouphie/getallheaders/issues",
-                "source": "https://github.com/ralouphie/getallheaders/tree/develop"
-            },
             "time": "2019-03-08T08:55:37+00:00"
         },
         {
@@ -112,7 +120,13 @@
                 "type": "zip",
                 "url": "https://api.github.com/repos/symfony/polyfill-php80/zipball/0cc9dd0f17f61d8131e7df6b84bd344899fe2608",
                 "reference": "0cc9dd0f17f61d8131e7df6b84bd344899fe2608",
-                "shasum": ""
+                "shasum": "",
+                "mirrors": [
+                    {
+                        "url": "https://repo.packagist.com/inpsyde/payment-gateways/dists/%package%/%version%/r%reference%.%type%",
+                        "preferred": true
+                    }
+                ]
             },
             "require": {
                 "php": ">=7.2"
@@ -135,7 +149,7 @@
                     "Resources/stubs"
                 ]
             },
-            "notification-url": "https://packagist.org/downloads/",
+            "notification-url": "https://repo.packagist.com/inpsyde/payment-gateways/downloads/",
             "license": [
                 "MIT"
             ],
@@ -196,7 +210,13 @@
                 "type": "zip",
                 "url": "https://api.github.com/repos/wikimedia/composer-merge-plugin/zipball/a03d426c8e9fb2c9c569d9deeb31a083292788bc",
                 "reference": "a03d426c8e9fb2c9c569d9deeb31a083292788bc",
-                "shasum": ""
+                "shasum": "",
+                "mirrors": [
+                    {
+                        "url": "https://repo.packagist.com/inpsyde/payment-gateways/dists/%package%/%version%/r%reference%.%type%",
+                        "preferred": true
+                    }
+                ]
             },
             "require": {
                 "composer-plugin-api": "^1.1||^2.0",
@@ -213,17 +233,17 @@
             },
             "type": "composer-plugin",
             "extra": {
-                "class": "Wikimedia\\Composer\\Merge\\V2\\MergePlugin",
                 "branch-alias": {
                     "dev-master": "2.x-dev"
-                }
+                },
+                "class": "Wikimedia\\Composer\\Merge\\V2\\MergePlugin"
             },
             "autoload": {
                 "psr-4": {
                     "Wikimedia\\Composer\\Merge\\V2\\": "src/"
                 }
             },
-            "notification-url": "https://packagist.org/downloads/",
+            "notification-url": "https://repo.packagist.com/inpsyde/payment-gateways/downloads/",
             "license": [
                 "MIT"
             ],
@@ -254,7 +274,13 @@
                 "type": "zip",
                 "url": "https://api.github.com/repos/antecedent/patchwork/zipball/8b6b235f405af175259c8f56aea5fc23ab9f03ce",
                 "reference": "8b6b235f405af175259c8f56aea5fc23ab9f03ce",
-                "shasum": ""
+                "shasum": "",
+                "mirrors": [
+                    {
+                        "url": "https://repo.packagist.com/inpsyde/payment-gateways/dists/%package%/%version%/r%reference%.%type%",
+                        "preferred": true
+                    }
+                ]
             },
             "require": {
                 "php": ">=7.1.0"
@@ -263,7 +289,7 @@
                 "phpunit/phpunit": ">=4"
             },
             "type": "library",
-            "notification-url": "https://packagist.org/downloads/",
+            "notification-url": "https://repo.packagist.com/inpsyde/payment-gateways/downloads/",
             "license": [
                 "MIT"
             ],
@@ -302,7 +328,13 @@
                 "type": "zip",
                 "url": "https://api.github.com/repos/Brain-WP/BrainMonkey/zipball/ea3aeb3d559ba3c0930b3f4d210b665a4c044d83",
                 "reference": "ea3aeb3d559ba3c0930b3f4d210b665a4c044d83",
-                "shasum": ""
+                "shasum": "",
+                "mirrors": [
+                    {
+                        "url": "https://repo.packagist.com/inpsyde/payment-gateways/dists/%package%/%version%/r%reference%.%type%",
+                        "preferred": true
+                    }
+                ]
             },
             "require": {
                 "antecedent/patchwork": "^2.1.17",
@@ -329,7 +361,7 @@
                     "Brain\\Monkey\\": "src/"
                 }
             },
-            "notification-url": "https://packagist.org/downloads/",
+            "notification-url": "https://repo.packagist.com/inpsyde/payment-gateways/downloads/",
             "license": [
                 "MIT"
             ],
@@ -372,7 +404,13 @@
                 "type": "zip",
                 "url": "https://api.github.com/repos/coenjacobs/mozart/zipball/dbcdeb992d20d9c8914eef090f9a0d684bb1102c",
                 "reference": "dbcdeb992d20d9c8914eef090f9a0d684bb1102c",
-                "shasum": ""
+                "shasum": "",
+                "mirrors": [
+                    {
+                        "url": "https://repo.packagist.com/inpsyde/payment-gateways/dists/%package%/%version%/r%reference%.%type%",
+                        "preferred": true
+                    }
+                ]
             },
             "require": {
                 "league/flysystem": "^1.0",
@@ -395,7 +433,7 @@
                     "CoenJacobs\\Mozart\\": "src/"
                 }
             },
-            "notification-url": "https://packagist.org/downloads/",
+            "notification-url": "https://repo.packagist.com/inpsyde/payment-gateways/downloads/",
             "license": [
                 "MIT"
             ],
@@ -419,6 +457,158 @@
             "time": "2021-02-02T21:37:03+00:00"
         },
         {
+            "name": "composer/installers",
+            "version": "v2.3.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/composer/installers.git",
+                "reference": "12fb2dfe5e16183de69e784a7b84046c43d97e8e"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/composer/installers/zipball/12fb2dfe5e16183de69e784a7b84046c43d97e8e",
+                "reference": "12fb2dfe5e16183de69e784a7b84046c43d97e8e",
+                "shasum": "",
+                "mirrors": [
+                    {
+                        "url": "https://repo.packagist.com/inpsyde/payment-gateways/dists/%package%/%version%/r%reference%.%type%",
+                        "preferred": true
+                    }
+                ]
+            },
+            "require": {
+                "composer-plugin-api": "^1.0 || ^2.0",
+                "php": "^7.2 || ^8.0"
+            },
+            "require-dev": {
+                "composer/composer": "^1.10.27 || ^2.7",
+                "composer/semver": "^1.7.2 || ^3.4.0",
+                "phpstan/phpstan": "^1.11",
+                "phpstan/phpstan-phpunit": "^1",
+                "symfony/phpunit-bridge": "^7.1.1",
+                "symfony/process": "^5 || ^6 || ^7"
+            },
+            "type": "composer-plugin",
+            "extra": {
+                "class": "Composer\\Installers\\Plugin",
+                "branch-alias": {
+                    "dev-main": "2.x-dev"
+                },
+                "plugin-modifies-install-path": true
+            },
+            "autoload": {
+                "psr-4": {
+                    "Composer\\Installers\\": "src/Composer/Installers"
+                }
+            },
+            "notification-url": "https://repo.packagist.com/inpsyde/payment-gateways/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Kyle Robinson Young",
+                    "email": "kyle@dontkry.com",
+                    "homepage": "https://github.com/shama"
+                }
+            ],
+            "description": "A multi-framework Composer library installer",
+            "homepage": "https://composer.github.io/installers/",
+            "keywords": [
+                "Dolibarr",
+                "Eliasis",
+                "Hurad",
+                "ImageCMS",
+                "Kanboard",
+                "Lan Management System",
+                "MODX Evo",
+                "MantisBT",
+                "Mautic",
+                "Maya",
+                "OXID",
+                "Plentymarkets",
+                "Porto",
+                "RadPHP",
+                "SMF",
+                "Starbug",
+                "Thelia",
+                "Whmcs",
+                "WolfCMS",
+                "agl",
+                "annotatecms",
+                "attogram",
+                "bitrix",
+                "cakephp",
+                "chef",
+                "cockpit",
+                "codeigniter",
+                "concrete5",
+                "concreteCMS",
+                "croogo",
+                "dokuwiki",
+                "drupal",
+                "eZ Platform",
+                "elgg",
+                "expressionengine",
+                "fuelphp",
+                "grav",
+                "installer",
+                "itop",
+                "known",
+                "kohana",
+                "laravel",
+                "lavalite",
+                "lithium",
+                "magento",
+                "majima",
+                "mako",
+                "matomo",
+                "mediawiki",
+                "miaoxing",
+                "modulework",
+                "modx",
+                "moodle",
+                "osclass",
+                "pantheon",
+                "phpbb",
+                "piwik",
+                "ppi",
+                "processwire",
+                "puppet",
+                "pxcms",
+                "reindex",
+                "roundcube",
+                "shopware",
+                "silverstripe",
+                "sydes",
+                "sylius",
+                "tastyigniter",
+                "wordpress",
+                "yawik",
+                "zend",
+                "zikula"
+            ],
+            "support": {
+                "issues": "https://github.com/composer/installers/issues",
+                "source": "https://github.com/composer/installers/tree/v2.3.0"
+            },
+            "funding": [
+                {
+                    "url": "https://packagist.com",
+                    "type": "custom"
+                },
+                {
+                    "url": "https://github.com/composer",
+                    "type": "github"
+                },
+                {
+                    "url": "https://tidelift.com/funding/github/packagist/composer/composer",
+                    "type": "tidelift"
+                }
+            ],
+            "time": "2024-06-24T20:46:46+00:00"
+        },
+        {
             "name": "dealerdirect/phpcodesniffer-composer-installer",
             "version": "v1.2.0",
             "source": {
@@ -430,7 +620,13 @@
                 "type": "zip",
                 "url": "https://api.github.com/repos/PHPCSStandards/composer-installer/zipball/845eb62303d2ca9b289ef216356568ccc075ffd1",
                 "reference": "845eb62303d2ca9b289ef216356568ccc075ffd1",
-                "shasum": ""
+                "shasum": "",
+                "mirrors": [
+                    {
+                        "url": "https://repo.packagist.com/inpsyde/payment-gateways/dists/%package%/%version%/r%reference%.%type%",
+                        "preferred": true
+                    }
+                ]
             },
             "require": {
                 "composer-plugin-api": "^2.2",
@@ -454,7 +650,7 @@
                     "PHPCSStandards\\Composer\\Plugin\\Installers\\PHPCodeSniffer\\": "src/"
                 }
             },
-            "notification-url": "https://packagist.org/downloads/",
+            "notification-url": "https://repo.packagist.com/inpsyde/payment-gateways/downloads/",
             "license": [
                 "MIT"
             ],
@@ -526,7 +722,13 @@
                 "type": "zip",
                 "url": "https://api.github.com/repos/doctrine/instantiator/zipball/0a0fa9780f5d4e507415a065172d26a98d02047b",
                 "reference": "0a0fa9780f5d4e507415a065172d26a98d02047b",
-                "shasum": ""
+                "shasum": "",
+                "mirrors": [
+                    {
+                        "url": "https://repo.packagist.com/inpsyde/payment-gateways/dists/%package%/%version%/r%reference%.%type%",
+                        "preferred": true
+                    }
+                ]
             },
             "require": {
                 "php": "^7.1 || ^8.0"
@@ -547,7 +749,7 @@
                     "Doctrine\\Instantiator\\": "src/Doctrine/Instantiator/"
                 }
             },
-            "notification-url": "https://packagist.org/downloads/",
+            "notification-url": "https://repo.packagist.com/inpsyde/payment-gateways/downloads/",
             "license": [
                 "MIT"
             ],
@@ -596,7 +798,13 @@
                 "type": "zip",
                 "url": "https://api.github.com/repos/GrahamCampbell/Result-Type/zipball/e01f4a821471308ba86aa202fed6698b6b695e3b",
                 "reference": "e01f4a821471308ba86aa202fed6698b6b695e3b",
-                "shasum": ""
+                "shasum": "",
+                "mirrors": [
+                    {
+                        "url": "https://repo.packagist.com/inpsyde/payment-gateways/dists/%package%/%version%/r%reference%.%type%",
+                        "preferred": true
+                    }
+                ]
             },
             "require": {
                 "php": "^7.2.5 || ^8.0",
@@ -611,7 +819,7 @@
                     "GrahamCampbell\\ResultType\\": "src/"
                 }
             },
-            "notification-url": "https://packagist.org/downloads/",
+            "notification-url": "https://repo.packagist.com/inpsyde/payment-gateways/downloads/",
             "license": [
                 "MIT"
             ],
@@ -658,7 +866,13 @@
                 "type": "zip",
                 "url": "https://api.github.com/repos/hamcrest/hamcrest-php/zipball/f8b1c0173b22fa6ec77a81fe63e5b01eba7e6487",
                 "reference": "f8b1c0173b22fa6ec77a81fe63e5b01eba7e6487",
-                "shasum": ""
+                "shasum": "",
+                "mirrors": [
+                    {
+                        "url": "https://repo.packagist.com/inpsyde/payment-gateways/dists/%package%/%version%/r%reference%.%type%",
+                        "preferred": true
+                    }
+                ]
             },
             "require": {
                 "php": "^7.4|^8.0"
@@ -683,7 +897,7 @@
                     "hamcrest"
                 ]
             },
-            "notification-url": "https://packagist.org/downloads/",
+            "notification-url": "https://repo.packagist.com/inpsyde/payment-gateways/downloads/",
             "license": [
                 "BSD-3-Clause"
             ],
@@ -698,6 +912,34 @@
             "time": "2025-04-30T06:54:44+00:00"
         },
         {
+            "name": "inpsyde-mirror/woocommerce-subscriptions",
+            "version": "8.5.0",
+            "dist": {
+                "type": "zip",
+                "url": "https://packagist.syde.com/satispress/woocommerce-subscriptions/8.5.0",
+                "shasum": "dbbaaf713d5a4aed7cfba1607d1fe80f0ef48eda",
+                "mirrors": [
+                    {
+                        "url": "https://repo.packagist.com/inpsyde/payment-gateways/dists/%package%/%version%/r%reference%.%type%",
+                        "preferred": true
+                    }
+                ]
+            },
+            "require": {
+                "composer/installers": "^1.0 || ^2.0"
+            },
+            "type": "wordpress-plugin",
+            "notification-url": "https://repo.packagist.com/inpsyde/payment-gateways/downloads/",
+            "authors": [
+                {
+                    "name": "WooCommerce",
+                    "homepage": "https://woocommerce.com/"
+                }
+            ],
+            "description": "Sell products and services with recurring payments in your WooCommerce Store.",
+            "homepage": "https://www.woocommerce.com/products/woocommerce-subscriptions/"
+        },
+        {
             "name": "inpsyde/composer-assets-compiler",
             "version": "2.5.3",
             "source": {
@@ -709,7 +951,13 @@
                 "type": "zip",
                 "url": "https://api.github.com/repos/inpsyde/composer-asset-compiler/zipball/3db3bea66088421377b725d110bd16ee23716c05",
                 "reference": "3db3bea66088421377b725d110bd16ee23716c05",
-                "shasum": ""
+                "shasum": "",
+                "mirrors": [
+                    {
+                        "url": "https://repo.packagist.com/inpsyde/payment-gateways/dists/%package%/%version%/r%reference%.%type%",
+                        "preferred": true
+                    }
+                ]
             },
             "require": {
                 "composer-plugin-api": "^1 || ^2",
@@ -728,10 +976,10 @@
             "extra": {
                 "class": "Inpsyde\\AssetsCompiler\\Composer\\Plugin",
                 "branch-alias": {
+                    "dev-master": "2.x-dev",
                     "dev-v1.x": "1.x-dev",
                     "dev-v2.x": "2.x-dev",
-                    "dev-v3.x": "3.x-dev",
-                    "dev-master": "2.x-dev"
+                    "dev-v3.x": "3.x-dev"
                 }
             },
             "autoload": {
@@ -739,7 +987,7 @@
                     "Inpsyde\\AssetsCompiler\\": "src/"
                 }
             },
-            "notification-url": "https://packagist.org/downloads/",
+            "notification-url": "https://repo.packagist.com/inpsyde/payment-gateways/downloads/",
             "license": [
                 "MIT"
             ],
@@ -774,7 +1022,13 @@
                 "type": "zip",
                 "url": "https://api.github.com/repos/inpsyde/modularity/zipball/e1ca1c81b7b663355906b586525d21ac5d46bc65",
                 "reference": "e1ca1c81b7b663355906b586525d21ac5d46bc65",
-                "shasum": ""
+                "shasum": "",
+                "mirrors": [
+                    {
+                        "url": "https://repo.packagist.com/inpsyde/payment-gateways/dists/%package%/%version%/r%reference%.%type%",
+                        "preferred": true
+                    }
+                ]
             },
             "require": {
                 "ext-json": "*",
@@ -804,7 +1058,7 @@
                     "Inpsyde\\Modularity\\": "src/"
                 }
             },
-            "notification-url": "https://packagist.org/downloads/",
+            "notification-url": "https://repo.packagist.com/inpsyde/payment-gateways/downloads/",
             "license": [
                 "GPL-2.0-or-later"
             ],
@@ -829,9 +1083,16 @@
             "dist": {
                 "type": "file",
                 "url": "https://raw.githubusercontent.com/inpsyde/wp-stubs/66228ab34637d6e7091978b82c495474f18bdb0d/stubs/latest.php",
-                "reference": "66228ab34637d6e7091978b82c495474f18bdb0d"
+                "reference": "66228ab34637d6e7091978b82c495474f18bdb0d",
+                "mirrors": [
+                    {
+                        "url": "https://repo.packagist.com/inpsyde/payment-gateways/dists/%package%/%version%/r%reference%.%type%",
+                        "preferred": true
+                    }
+                ]
             },
-            "type": "library"
+            "type": "library",
+            "notification-url": "https://repo.packagist.com/inpsyde/payment-gateways/downloads/"
         },
         {
             "name": "league/flysystem",
@@ -845,7 +1106,13 @@
                 "type": "zip",
                 "url": "https://api.github.com/repos/thephpleague/flysystem/zipball/3239285c825c152bcc315fe0e87d6b55f5972ed1",
                 "reference": "3239285c825c152bcc315fe0e87d6b55f5972ed1",
-                "shasum": ""
+                "shasum": "",
+                "mirrors": [
+                    {
+                        "url": "https://repo.packagist.com/inpsyde/payment-gateways/dists/%package%/%version%/r%reference%.%type%",
+                        "preferred": true
+                    }
+                ]
             },
             "require": {
                 "ext-fileinfo": "*",
@@ -885,7 +1152,7 @@
                     "League\\Flysystem\\": "src/"
                 }
             },
-            "notification-url": "https://packagist.org/downloads/",
+            "notification-url": "https://repo.packagist.com/inpsyde/payment-gateways/downloads/",
             "license": [
                 "MIT"
             ],
@@ -939,7 +1206,13 @@
                 "type": "zip",
                 "url": "https://api.github.com/repos/thephpleague/mime-type-detection/zipball/2d6702ff215bf922936ccc1ad31007edc76451b9",
                 "reference": "2d6702ff215bf922936ccc1ad31007edc76451b9",
-                "shasum": ""
+                "shasum": "",
+                "mirrors": [
+                    {
+                        "url": "https://repo.packagist.com/inpsyde/payment-gateways/dists/%package%/%version%/r%reference%.%type%",
+                        "preferred": true
+                    }
+                ]
             },
             "require": {
                 "ext-fileinfo": "*",
@@ -956,7 +1229,7 @@
                     "League\\MimeTypeDetection\\": "src"
                 }
             },
-            "notification-url": "https://packagist.org/downloads/",
+            "notification-url": "https://repo.packagist.com/inpsyde/payment-gateways/downloads/",
             "license": [
                 "MIT"
             ],
@@ -995,7 +1268,13 @@
                 "type": "zip",
                 "url": "https://api.github.com/repos/mockery/mockery/zipball/1f4efdd7d3beafe9807b08156dfcb176d18f1699",
                 "reference": "1f4efdd7d3beafe9807b08156dfcb176d18f1699",
-                "shasum": ""
+                "shasum": "",
+                "mirrors": [
+                    {
+                        "url": "https://repo.packagist.com/inpsyde/payment-gateways/dists/%package%/%version%/r%reference%.%type%",
+                        "preferred": true
+                    }
+                ]
             },
             "require": {
                 "hamcrest/hamcrest-php": "^2.0.1",
@@ -1019,7 +1298,7 @@
                     "Mockery\\": "library/Mockery"
                 }
             },
-            "notification-url": "https://packagist.org/downloads/",
+            "notification-url": "https://repo.packagist.com/inpsyde/payment-gateways/downloads/",
             "license": [
                 "BSD-3-Clause"
             ],
@@ -1078,7 +1357,13 @@
                 "type": "zip",
                 "url": "https://api.github.com/repos/myclabs/DeepCopy/zipball/07d290f0c47959fd5eed98c95ee5602db07e0b6a",
                 "reference": "07d290f0c47959fd5eed98c95ee5602db07e0b6a",
-                "shasum": ""
+                "shasum": "",
+                "mirrors": [
+                    {
+                        "url": "https://repo.packagist.com/inpsyde/payment-gateways/dists/%package%/%version%/r%reference%.%type%",
+                        "preferred": true
+                    }
+                ]
             },
             "require": {
                 "php": "^7.1 || ^8.0"
@@ -1102,7 +1387,7 @@
                     "DeepCopy\\": "src/DeepCopy/"
                 }
             },
-            "notification-url": "https://packagist.org/downloads/",
+            "notification-url": "https://repo.packagist.com/inpsyde/payment-gateways/downloads/",
             "license": [
                 "MIT"
             ],
@@ -1138,7 +1423,13 @@
                 "type": "zip",
                 "url": "https://api.github.com/repos/nikic/PHP-Parser/zipball/dca41cd15c2ac9d055ad70dbfd011130757d1f82",
                 "reference": "dca41cd15c2ac9d055ad70dbfd011130757d1f82",
-                "shasum": ""
+                "shasum": "",
+                "mirrors": [
+                    {
+                        "url": "https://repo.packagist.com/inpsyde/payment-gateways/dists/%package%/%version%/r%reference%.%type%",
+                        "preferred": true
+                    }
+                ]
             },
             "require": {
                 "ext-ctype": "*",
@@ -1164,7 +1455,7 @@
                     "PhpParser\\": "lib/PhpParser"
                 }
             },
-            "notification-url": "https://packagist.org/downloads/",
+            "notification-url": "https://repo.packagist.com/inpsyde/payment-gateways/downloads/",
             "license": [
                 "BSD-3-Clause"
             ],
@@ -1196,7 +1487,13 @@
                 "type": "zip",
                 "url": "https://api.github.com/repos/phar-io/manifest/zipball/54750ef60c58e43759730615a392c31c80e23176",
                 "reference": "54750ef60c58e43759730615a392c31c80e23176",
-                "shasum": ""
+                "shasum": "",
+                "mirrors": [
+                    {
+                        "url": "https://repo.packagist.com/inpsyde/payment-gateways/dists/%package%/%version%/r%reference%.%type%",
+                        "preferred": true
+                    }
+                ]
             },
             "require": {
                 "ext-dom": "*",
@@ -1217,7 +1514,7 @@
                     "src/"
                 ]
             },
-            "notification-url": "https://packagist.org/downloads/",
+            "notification-url": "https://repo.packagist.com/inpsyde/payment-gateways/downloads/",
             "license": [
                 "BSD-3-Clause"
             ],
@@ -1263,7 +1560,13 @@
                 "type": "zip",
                 "url": "https://api.github.com/repos/phar-io/version/zipball/4f7fd7836c6f332bb2933569e566a0d6c4cbed74",
                 "reference": "4f7fd7836c6f332bb2933569e566a0d6c4cbed74",
-                "shasum": ""
+                "shasum": "",
+                "mirrors": [
+                    {
+                        "url": "https://repo.packagist.com/inpsyde/payment-gateways/dists/%package%/%version%/r%reference%.%type%",
+                        "preferred": true
+                    }
+                ]
             },
             "require": {
                 "php": "^7.2 || ^8.0"
@@ -1274,7 +1577,7 @@
                     "src/"
                 ]
             },
-            "notification-url": "https://packagist.org/downloads/",
+            "notification-url": "https://repo.packagist.com/inpsyde/payment-gateways/downloads/",
             "license": [
                 "BSD-3-Clause"
             ],
@@ -1314,7 +1617,13 @@
                 "type": "zip",
                 "url": "https://api.github.com/repos/php-stubs/woocommerce-stubs/zipball/3f4d4e14afe6150569bd96cf14e8a17a84812447",
                 "reference": "3f4d4e14afe6150569bd96cf14e8a17a84812447",
-                "shasum": ""
+                "shasum": "",
+                "mirrors": [
+                    {
+                        "url": "https://repo.packagist.com/inpsyde/payment-gateways/dists/%package%/%version%/r%reference%.%type%",
+                        "preferred": true
+                    }
+                ]
             },
             "require": {
                 "php-stubs/wordpress-stubs": "^5.3 || ^6.0"
@@ -1328,7 +1637,7 @@
                 "szepeviktor/phpstan-wordpress": "WordPress extensions for PHPStan"
             },
             "type": "library",
-            "notification-url": "https://packagist.org/downloads/",
+            "notification-url": "https://repo.packagist.com/inpsyde/payment-gateways/downloads/",
             "license": [
                 "MIT"
             ],
@@ -1358,7 +1667,13 @@
                 "type": "zip",
                 "url": "https://api.github.com/repos/php-stubs/wordpress-stubs/zipball/f12220f303e0d7c0844c0e5e957b0c3cee48d2f7",
                 "reference": "f12220f303e0d7c0844c0e5e957b0c3cee48d2f7",
-                "shasum": ""
+                "shasum": "",
+                "mirrors": [
+                    {
+                        "url": "https://repo.packagist.com/inpsyde/payment-gateways/dists/%package%/%version%/r%reference%.%type%",
+                        "preferred": true
+                    }
+                ]
             },
             "conflict": {
                 "phpdocumentor/reflection-docblock": "5.6.1"
@@ -1381,7 +1696,7 @@
                 "szepeviktor/phpstan-wordpress": "WordPress extensions for PHPStan"
             },
             "type": "library",
-            "notification-url": "https://packagist.org/downloads/",
+            "notification-url": "https://repo.packagist.com/inpsyde/payment-gateways/downloads/",
             "license": [
                 "MIT"
             ],
@@ -1410,7 +1725,13 @@
                 "type": "zip",
                 "url": "https://api.github.com/repos/PHPCompatibility/PHPCompatibility/zipball/9fb324479acf6f39452e0655d2429cc0d3914243",
                 "reference": "9fb324479acf6f39452e0655d2429cc0d3914243",
-                "shasum": ""
+                "shasum": "",
+                "mirrors": [
+                    {
+                        "url": "https://repo.packagist.com/inpsyde/payment-gateways/dists/%package%/%version%/r%reference%.%type%",
+                        "preferred": true
+                    }
+                ]
             },
             "require": {
                 "php": ">=5.3",
@@ -1427,7 +1748,7 @@
                 "roave/security-advisories": "dev-master || Helps prevent installing dependencies with known security issues."
             },
             "type": "phpcodesniffer-standard",
-            "notification-url": "https://packagist.org/downloads/",
+            "notification-url": "https://repo.packagist.com/inpsyde/payment-gateways/downloads/",
             "license": [
                 "LGPL-3.0-or-later"
             ],
@@ -1454,10 +1775,6 @@
                 "phpcs",
                 "standards"
             ],
-            "support": {
-                "issues": "https://github.com/PHPCompatibility/PHPCompatibility/issues",
-                "source": "https://github.com/PHPCompatibility/PHPCompatibility"
-            },
             "time": "2019-12-27T09:44:58+00:00"
         },
         {
@@ -1472,7 +1789,13 @@
                 "type": "zip",
                 "url": "https://api.github.com/repos/PHPCompatibility/PHPCompatibilityParagonie/zipball/244d7b04fc4bc2117c15f5abe23eb933b5f02bbf",
                 "reference": "244d7b04fc4bc2117c15f5abe23eb933b5f02bbf",
-                "shasum": ""
+                "shasum": "",
+                "mirrors": [
+                    {
+                        "url": "https://repo.packagist.com/inpsyde/payment-gateways/dists/%package%/%version%/r%reference%.%type%",
+                        "preferred": true
+                    }
+                ]
             },
             "require": {
                 "phpcompatibility/php-compatibility": "^9.0"
@@ -1487,7 +1810,7 @@
                 "roave/security-advisories": "dev-master || Helps prevent installing dependencies with known security issues."
             },
             "type": "phpcodesniffer-standard",
-            "notification-url": "https://packagist.org/downloads/",
+            "notification-url": "https://repo.packagist.com/inpsyde/payment-gateways/downloads/",
             "license": [
                 "LGPL-3.0-or-later"
             ],
@@ -1548,7 +1871,13 @@
                 "type": "zip",
                 "url": "https://api.github.com/repos/PHPCompatibility/PHPCompatibilityWP/zipball/7c8d18b4d90dac9e86b0869a608fa09158e168fa",
                 "reference": "7c8d18b4d90dac9e86b0869a608fa09158e168fa",
-                "shasum": ""
+                "shasum": "",
+                "mirrors": [
+                    {
+                        "url": "https://repo.packagist.com/inpsyde/payment-gateways/dists/%package%/%version%/r%reference%.%type%",
+                        "preferred": true
+                    }
+                ]
             },
             "require": {
                 "phpcompatibility/php-compatibility": "^9.0",
@@ -1563,7 +1892,7 @@
                 "roave/security-advisories": "dev-master || Helps prevent installing dependencies with known security issues."
             },
             "type": "phpcodesniffer-standard",
-            "notification-url": "https://packagist.org/downloads/",
+            "notification-url": "https://repo.packagist.com/inpsyde/payment-gateways/downloads/",
             "license": [
                 "LGPL-3.0-or-later"
             ],
@@ -1623,7 +1952,13 @@
                 "type": "zip",
                 "url": "https://api.github.com/repos/PHPCSStandards/PHPCSExtra/zipball/b598aa890815b8df16363271b659d73280129101",
                 "reference": "b598aa890815b8df16363271b659d73280129101",
-                "shasum": ""
+                "shasum": "",
+                "mirrors": [
+                    {
+                        "url": "https://repo.packagist.com/inpsyde/payment-gateways/dists/%package%/%version%/r%reference%.%type%",
+                        "preferred": true
+                    }
+                ]
             },
             "require": {
                 "php": ">=5.4",
@@ -1644,7 +1979,7 @@
                     "dev-develop": "1.x-dev"
                 }
             },
-            "notification-url": "https://packagist.org/downloads/",
+            "notification-url": "https://repo.packagist.com/inpsyde/payment-gateways/downloads/",
             "license": [
                 "LGPL-3.0-or-later"
             ],
@@ -1705,7 +2040,13 @@
                 "type": "zip",
                 "url": "https://api.github.com/repos/PHPCSStandards/PHPCSUtils/zipball/c216317e96c8b3f5932808f9b0f1f7a14e3bbf55",
                 "reference": "c216317e96c8b3f5932808f9b0f1f7a14e3bbf55",
-                "shasum": ""
+                "shasum": "",
+                "mirrors": [
+                    {
+                        "url": "https://repo.packagist.com/inpsyde/payment-gateways/dists/%package%/%version%/r%reference%.%type%",
+                        "preferred": true
+                    }
+                ]
             },
             "require": {
                 "dealerdirect/phpcodesniffer-composer-installer": "^0.4.1 || ^0.5 || ^0.6.2 || ^0.7 || ^1.0",
@@ -1731,7 +2072,7 @@
                     "PHPCSUtils/"
                 ]
             },
-            "notification-url": "https://packagist.org/downloads/",
+            "notification-url": "https://repo.packagist.com/inpsyde/payment-gateways/downloads/",
             "license": [
                 "LGPL-3.0-or-later"
             ],
@@ -1798,7 +2139,13 @@
                 "type": "zip",
                 "url": "https://api.github.com/repos/schmittjoh/php-option/zipball/75365b91986c2405cf5e1e012c5595cd487a98be",
                 "reference": "75365b91986c2405cf5e1e012c5595cd487a98be",
-                "shasum": ""
+                "shasum": "",
+                "mirrors": [
+                    {
+                        "url": "https://repo.packagist.com/inpsyde/payment-gateways/dists/%package%/%version%/r%reference%.%type%",
+                        "preferred": true
+                    }
+                ]
             },
             "require": {
                 "php": "^7.2.5 || ^8.0"
@@ -1822,7 +2169,7 @@
                     "PhpOption\\": "src/PhpOption/"
                 }
             },
-            "notification-url": "https://packagist.org/downloads/",
+            "notification-url": "https://repo.packagist.com/inpsyde/payment-gateways/downloads/",
             "license": [
                 "Apache-2.0"
             ],
@@ -1863,12 +2210,18 @@
         },
         {
             "name": "phpstan/phpstan",
-            "version": "2.1.39",
+            "version": "2.1.40",
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/phpstan/phpstan/zipball/c6f73a2af4cbcd99c931d0fb8f08548cc0fa8224",
-                "reference": "c6f73a2af4cbcd99c931d0fb8f08548cc0fa8224",
-                "shasum": ""
+                "url": "https://api.github.com/repos/phpstan/phpstan/zipball/9b2c7aeb83a75d8680ea5e7c9b7fca88052b766b",
+                "reference": "9b2c7aeb83a75d8680ea5e7c9b7fca88052b766b",
+                "shasum": "",
+                "mirrors": [
+                    {
+                        "url": "https://repo.packagist.com/inpsyde/payment-gateways/dists/%package%/%version%/r%reference%.%type%",
+                        "preferred": true
+                    }
+                ]
             },
             "require": {
                 "php": "^7.4|^8.0"
@@ -1886,7 +2239,7 @@
                     "bootstrap.php"
                 ]
             },
-            "notification-url": "https://packagist.org/downloads/",
+            "notification-url": "https://repo.packagist.com/inpsyde/payment-gateways/downloads/",
             "license": [
                 "MIT"
             ],
@@ -1912,7 +2265,7 @@
                     "type": "github"
                 }
             ],
-            "time": "2026-02-11T14:48:56+00:00"
+            "time": "2026-02-23T15:04:35+00:00"
         },
         {
             "name": "phpstan/phpstan-deprecation-rules",
@@ -1926,7 +2279,13 @@
                 "type": "zip",
                 "url": "https://api.github.com/repos/phpstan/phpstan-deprecation-rules/zipball/6b5571001a7f04fa0422254c30a0017ec2f2cacc",
                 "reference": "6b5571001a7f04fa0422254c30a0017ec2f2cacc",
-                "shasum": ""
+                "shasum": "",
+                "mirrors": [
+                    {
+                        "url": "https://repo.packagist.com/inpsyde/payment-gateways/dists/%package%/%version%/r%reference%.%type%",
+                        "preferred": true
+                    }
+                ]
             },
             "require": {
                 "php": "^7.4 || ^8.0",
@@ -1950,7 +2309,7 @@
                     "PHPStan\\": "src/"
                 }
             },
-            "notification-url": "https://packagist.org/downloads/",
+            "notification-url": "https://repo.packagist.com/inpsyde/payment-gateways/downloads/",
             "license": [
                 "MIT"
             ],
@@ -1976,7 +2335,13 @@
                 "type": "zip",
                 "url": "https://api.github.com/repos/sebastianbergmann/php-code-coverage/zipball/85402a822d1ecf1db1096959413d35e1c37cf1a5",
                 "reference": "85402a822d1ecf1db1096959413d35e1c37cf1a5",
-                "shasum": ""
+                "shasum": "",
+                "mirrors": [
+                    {
+                        "url": "https://repo.packagist.com/inpsyde/payment-gateways/dists/%package%/%version%/r%reference%.%type%",
+                        "preferred": true
+                    }
+                ]
             },
             "require": {
                 "ext-dom": "*",
@@ -2011,7 +2376,7 @@
                     "src/"
                 ]
             },
-            "notification-url": "https://packagist.org/downloads/",
+            "notification-url": "https://repo.packagist.com/inpsyde/payment-gateways/downloads/",
             "license": [
                 "BSD-3-Clause"
             ],
@@ -2054,7 +2419,13 @@
                 "type": "zip",
                 "url": "https://api.github.com/repos/sebastianbergmann/php-file-iterator/zipball/cf1c2e7c203ac650e352f4cc675a7021e7d1b3cf",
                 "reference": "cf1c2e7c203ac650e352f4cc675a7021e7d1b3cf",
-                "shasum": ""
+                "shasum": "",
+                "mirrors": [
+                    {
+                        "url": "https://repo.packagist.com/inpsyde/payment-gateways/dists/%package%/%version%/r%reference%.%type%",
+                        "preferred": true
+                    }
+                ]
             },
             "require": {
                 "php": ">=7.3"
@@ -2073,7 +2444,7 @@
                     "src/"
                 ]
             },
-            "notification-url": "https://packagist.org/downloads/",
+            "notification-url": "https://repo.packagist.com/inpsyde/payment-gateways/downloads/",
             "license": [
                 "BSD-3-Clause"
             ],
@@ -2114,7 +2485,13 @@
                 "type": "zip",
                 "url": "https://api.github.com/repos/sebastianbergmann/php-invoker/zipball/5a10147d0aaf65b58940a0b72f71c9ac0423cc67",
                 "reference": "5a10147d0aaf65b58940a0b72f71c9ac0423cc67",
-                "shasum": ""
+                "shasum": "",
+                "mirrors": [
+                    {
+                        "url": "https://repo.packagist.com/inpsyde/payment-gateways/dists/%package%/%version%/r%reference%.%type%",
+                        "preferred": true
+                    }
+                ]
             },
             "require": {
                 "php": ">=7.3"
@@ -2137,7 +2514,7 @@
                     "src/"
                 ]
             },
-            "notification-url": "https://packagist.org/downloads/",
+            "notification-url": "https://repo.packagist.com/inpsyde/payment-gateways/downloads/",
             "license": [
                 "BSD-3-Clause"
             ],
@@ -2177,7 +2554,13 @@
                 "type": "zip",
                 "url": "https://api.github.com/repos/sebastianbergmann/php-text-template/zipball/5da5f67fc95621df9ff4c4e5a84d6a8a2acf7c28",
                 "reference": "5da5f67fc95621df9ff4c4e5a84d6a8a2acf7c28",
-                "shasum": ""
+                "shasum": "",
+                "mirrors": [
+                    {
+                        "url": "https://repo.packagist.com/inpsyde/payment-gateways/dists/%package%/%version%/r%reference%.%type%",
+                        "preferred": true
+                    }
+                ]
             },
             "require": {
                 "php": ">=7.3"
@@ -2196,7 +2579,7 @@
                     "src/"
                 ]
             },
-            "notification-url": "https://packagist.org/downloads/",
+            "notification-url": "https://repo.packagist.com/inpsyde/payment-gateways/downloads/",
             "license": [
                 "BSD-3-Clause"
             ],
@@ -2236,7 +2619,13 @@
                 "type": "zip",
                 "url": "https://api.github.com/repos/sebastianbergmann/php-timer/zipball/5a63ce20ed1b5bf577850e2c4e87f4aa902afbd2",
                 "reference": "5a63ce20ed1b5bf577850e2c4e87f4aa902afbd2",
-                "shasum": ""
+                "shasum": "",
+                "mirrors": [
+                    {
+                        "url": "https://repo.packagist.com/inpsyde/payment-gateways/dists/%package%/%version%/r%reference%.%type%",
+                        "preferred": true
+                    }
+                ]
             },
             "require": {
                 "php": ">=7.3"
@@ -2255,7 +2644,7 @@
                     "src/"
                 ]
             },
-            "notification-url": "https://packagist.org/downloads/",
+            "notification-url": "https://repo.packagist.com/inpsyde/payment-gateways/downloads/",
             "license": [
                 "BSD-3-Clause"
             ],
@@ -2295,7 +2684,13 @@
                 "type": "zip",
                 "url": "https://api.github.com/repos/sebastianbergmann/phpunit/zipball/b36f02317466907a230d3aa1d34467041271ef4a",
                 "reference": "b36f02317466907a230d3aa1d34467041271ef4a",
-                "shasum": ""
+                "shasum": "",
+                "mirrors": [
+                    {
+                        "url": "https://repo.packagist.com/inpsyde/payment-gateways/dists/%package%/%version%/r%reference%.%type%",
+                        "preferred": true
+                    }
+                ]
             },
             "require": {
                 "doctrine/instantiator": "^1.5.0 || ^2",
@@ -2347,7 +2742,7 @@
                     "src/"
                 ]
             },
-            "notification-url": "https://packagist.org/downloads/",
+            "notification-url": "https://repo.packagist.com/inpsyde/payment-gateways/downloads/",
             "license": [
                 "BSD-3-Clause"
             ],
@@ -2406,7 +2801,13 @@
                 "type": "zip",
                 "url": "https://api.github.com/repos/php-fig/container/zipball/513e0666f7216c7459170d56df27dfcefe1689ea",
                 "reference": "513e0666f7216c7459170d56df27dfcefe1689ea",
-                "shasum": ""
+                "shasum": "",
+                "mirrors": [
+                    {
+                        "url": "https://repo.packagist.com/inpsyde/payment-gateways/dists/%package%/%version%/r%reference%.%type%",
+                        "preferred": true
+                    }
+                ]
             },
             "require": {
                 "php": ">=7.4.0"
@@ -2417,7 +2818,7 @@
                     "Psr\\Container\\": "src/"
                 }
             },
-            "notification-url": "https://packagist.org/downloads/",
+            "notification-url": "https://repo.packagist.com/inpsyde/payment-gateways/downloads/",
             "license": [
                 "MIT"
             ],
@@ -2454,7 +2855,13 @@
                 "type": "zip",
                 "url": "https://api.github.com/repos/sebastianbergmann/cli-parser/zipball/2b56bea83a09de3ac06bb18b92f068e60cc6f50b",
                 "reference": "2b56bea83a09de3ac06bb18b92f068e60cc6f50b",
-                "shasum": ""
+                "shasum": "",
+                "mirrors": [
+                    {
+                        "url": "https://repo.packagist.com/inpsyde/payment-gateways/dists/%package%/%version%/r%reference%.%type%",
+                        "preferred": true
+                    }
+                ]
             },
             "require": {
                 "php": ">=7.3"
@@ -2473,7 +2880,7 @@
                     "src/"
                 ]
             },
-            "notification-url": "https://packagist.org/downloads/",
+            "notification-url": "https://repo.packagist.com/inpsyde/payment-gateways/downloads/",
             "license": [
                 "BSD-3-Clause"
             ],
@@ -2510,7 +2917,13 @@
                 "type": "zip",
                 "url": "https://api.github.com/repos/sebastianbergmann/code-unit/zipball/1fc9f64c0927627ef78ba436c9b17d967e68e120",
                 "reference": "1fc9f64c0927627ef78ba436c9b17d967e68e120",
-                "shasum": ""
+                "shasum": "",
+                "mirrors": [
+                    {
+                        "url": "https://repo.packagist.com/inpsyde/payment-gateways/dists/%package%/%version%/r%reference%.%type%",
+                        "preferred": true
+                    }
+                ]
             },
             "require": {
                 "php": ">=7.3"
@@ -2529,7 +2942,7 @@
                     "src/"
                 ]
             },
-            "notification-url": "https://packagist.org/downloads/",
+            "notification-url": "https://repo.packagist.com/inpsyde/payment-gateways/downloads/",
             "license": [
                 "BSD-3-Clause"
             ],
@@ -2566,7 +2979,13 @@
                 "type": "zip",
                 "url": "https://api.github.com/repos/sebastianbergmann/code-unit-reverse-lookup/zipball/ac91f01ccec49fb77bdc6fd1e548bc70f7faa3e5",
                 "reference": "ac91f01ccec49fb77bdc6fd1e548bc70f7faa3e5",
-                "shasum": ""
+                "shasum": "",
+                "mirrors": [
+                    {
+                        "url": "https://repo.packagist.com/inpsyde/payment-gateways/dists/%package%/%version%/r%reference%.%type%",
+                        "preferred": true
+                    }
+                ]
             },
             "require": {
                 "php": ">=7.3"
@@ -2585,7 +3004,7 @@
                     "src/"
                 ]
             },
-            "notification-url": "https://packagist.org/downloads/",
+            "notification-url": "https://repo.packagist.com/inpsyde/payment-gateways/downloads/",
             "license": [
                 "BSD-3-Clause"
             ],
@@ -2621,7 +3040,13 @@
                 "type": "zip",
                 "url": "https://api.github.com/repos/sebastianbergmann/comparator/zipball/e4df00b9b3571187db2831ae9aada2c6efbd715d",
                 "reference": "e4df00b9b3571187db2831ae9aada2c6efbd715d",
-                "shasum": ""
+                "shasum": "",
+                "mirrors": [
+                    {
+                        "url": "https://repo.packagist.com/inpsyde/payment-gateways/dists/%package%/%version%/r%reference%.%type%",
+                        "preferred": true
+                    }
+                ]
             },
             "require": {
                 "php": ">=7.3",
@@ -2642,7 +3067,7 @@
                     "src/"
                 ]
             },
-            "notification-url": "https://packagist.org/downloads/",
+            "notification-url": "https://repo.packagist.com/inpsyde/payment-gateways/downloads/",
             "license": [
                 "BSD-3-Clause"
             ],
@@ -2707,7 +3132,13 @@
                 "type": "zip",
                 "url": "https://api.github.com/repos/sebastianbergmann/complexity/zipball/25f207c40d62b8b7aa32f5ab026c53561964053a",
                 "reference": "25f207c40d62b8b7aa32f5ab026c53561964053a",
-                "shasum": ""
+                "shasum": "",
+                "mirrors": [
+                    {
+                        "url": "https://repo.packagist.com/inpsyde/payment-gateways/dists/%package%/%version%/r%reference%.%type%",
+                        "preferred": true
+                    }
+                ]
             },
             "require": {
                 "nikic/php-parser": "^4.18 || ^5.0",
@@ -2727,7 +3158,7 @@
                     "src/"
                 ]
             },
-            "notification-url": "https://packagist.org/downloads/",
+            "notification-url": "https://repo.packagist.com/inpsyde/payment-gateways/downloads/",
             "license": [
                 "BSD-3-Clause"
             ],
@@ -2764,7 +3195,13 @@
                 "type": "zip",
                 "url": "https://api.github.com/repos/sebastianbergmann/diff/zipball/ba01945089c3a293b01ba9badc29ad55b106b0bc",
                 "reference": "ba01945089c3a293b01ba9badc29ad55b106b0bc",
-                "shasum": ""
+                "shasum": "",
+                "mirrors": [
+                    {
+                        "url": "https://repo.packagist.com/inpsyde/payment-gateways/dists/%package%/%version%/r%reference%.%type%",
+                        "preferred": true
+                    }
+                ]
             },
             "require": {
                 "php": ">=7.3"
@@ -2784,7 +3221,7 @@
                     "src/"
                 ]
             },
-            "notification-url": "https://packagist.org/downloads/",
+            "notification-url": "https://repo.packagist.com/inpsyde/payment-gateways/downloads/",
             "license": [
                 "BSD-3-Clause"
             ],
@@ -2830,7 +3267,13 @@
                 "type": "zip",
                 "url": "https://api.github.com/repos/sebastianbergmann/environment/zipball/830c43a844f1f8d5b7a1f6d6076b784454d8b7ed",
                 "reference": "830c43a844f1f8d5b7a1f6d6076b784454d8b7ed",
-                "shasum": ""
+                "shasum": "",
+                "mirrors": [
+                    {
+                        "url": "https://repo.packagist.com/inpsyde/payment-gateways/dists/%package%/%version%/r%reference%.%type%",
+                        "preferred": true
+                    }
+                ]
             },
             "require": {
                 "php": ">=7.3"
@@ -2852,7 +3295,7 @@
                     "src/"
                 ]
             },
-            "notification-url": "https://packagist.org/downloads/",
+            "notification-url": "https://repo.packagist.com/inpsyde/payment-gateways/downloads/",
             "license": [
                 "BSD-3-Clause"
             ],
@@ -2893,7 +3336,13 @@
                 "type": "zip",
                 "url": "https://api.github.com/repos/sebastianbergmann/exporter/zipball/14c6ba52f95a36c3d27c835d65efc7123c446e8c",
                 "reference": "14c6ba52f95a36c3d27c835d65efc7123c446e8c",
-                "shasum": ""
+                "shasum": "",
+                "mirrors": [
+                    {
+                        "url": "https://repo.packagist.com/inpsyde/payment-gateways/dists/%package%/%version%/r%reference%.%type%",
+                        "preferred": true
+                    }
+                ]
             },
             "require": {
                 "php": ">=7.3",
@@ -2914,7 +3363,7 @@
                     "src/"
                 ]
             },
-            "notification-url": "https://packagist.org/downloads/",
+            "notification-url": "https://repo.packagist.com/inpsyde/payment-gateways/downloads/",
             "license": [
                 "BSD-3-Clause"
             ],
@@ -2982,7 +3431,13 @@
                 "type": "zip",
                 "url": "https://api.github.com/repos/sebastianbergmann/global-state/zipball/b6781316bdcd28260904e7cc18ec983d0d2ef4f6",
                 "reference": "b6781316bdcd28260904e7cc18ec983d0d2ef4f6",
-                "shasum": ""
+                "shasum": "",
+                "mirrors": [
+                    {
+                        "url": "https://repo.packagist.com/inpsyde/payment-gateways/dists/%package%/%version%/r%reference%.%type%",
+                        "preferred": true
+                    }
+                ]
             },
             "require": {
                 "php": ">=7.3",
@@ -3007,7 +3462,7 @@
                     "src/"
                 ]
             },
-            "notification-url": "https://packagist.org/downloads/",
+            "notification-url": "https://repo.packagist.com/inpsyde/payment-gateways/downloads/",
             "license": [
                 "BSD-3-Clause"
             ],
@@ -3058,7 +3513,13 @@
                 "type": "zip",
                 "url": "https://api.github.com/repos/sebastianbergmann/lines-of-code/zipball/e1e4a170560925c26d424b6a03aed157e7dcc5c5",
                 "reference": "e1e4a170560925c26d424b6a03aed157e7dcc5c5",
-                "shasum": ""
+                "shasum": "",
+                "mirrors": [
+                    {
+                        "url": "https://repo.packagist.com/inpsyde/payment-gateways/dists/%package%/%version%/r%reference%.%type%",
+                        "preferred": true
+                    }
+                ]
             },
             "require": {
                 "nikic/php-parser": "^4.18 || ^5.0",
@@ -3078,7 +3539,7 @@
                     "src/"
                 ]
             },
-            "notification-url": "https://packagist.org/downloads/",
+            "notification-url": "https://repo.packagist.com/inpsyde/payment-gateways/downloads/",
             "license": [
                 "BSD-3-Clause"
             ],
@@ -3115,7 +3576,13 @@
                 "type": "zip",
                 "url": "https://api.github.com/repos/sebastianbergmann/object-enumerator/zipball/5c9eeac41b290a3712d88851518825ad78f45c71",
                 "reference": "5c9eeac41b290a3712d88851518825ad78f45c71",
-                "shasum": ""
+                "shasum": "",
+                "mirrors": [
+                    {
+                        "url": "https://repo.packagist.com/inpsyde/payment-gateways/dists/%package%/%version%/r%reference%.%type%",
+                        "preferred": true
+                    }
+                ]
             },
             "require": {
                 "php": ">=7.3",
@@ -3136,7 +3603,7 @@
                     "src/"
                 ]
             },
-            "notification-url": "https://packagist.org/downloads/",
+            "notification-url": "https://repo.packagist.com/inpsyde/payment-gateways/downloads/",
             "license": [
                 "BSD-3-Clause"
             ],
@@ -3172,7 +3639,13 @@
                 "type": "zip",
                 "url": "https://api.github.com/repos/sebastianbergmann/object-reflector/zipball/b4f479ebdbf63ac605d183ece17d8d7fe49c15c7",
                 "reference": "b4f479ebdbf63ac605d183ece17d8d7fe49c15c7",
-                "shasum": ""
+                "shasum": "",
+                "mirrors": [
+                    {
+                        "url": "https://repo.packagist.com/inpsyde/payment-gateways/dists/%package%/%version%/r%reference%.%type%",
+                        "preferred": true
+                    }
+                ]
             },
             "require": {
                 "php": ">=7.3"
@@ -3191,7 +3664,7 @@
                     "src/"
                 ]
             },
-            "notification-url": "https://packagist.org/downloads/",
+            "notification-url": "https://repo.packagist.com/inpsyde/payment-gateways/downloads/",
             "license": [
                 "BSD-3-Clause"
             ],
@@ -3227,7 +3700,13 @@
                 "type": "zip",
                 "url": "https://api.github.com/repos/sebastianbergmann/recursion-context/zipball/539c6691e0623af6dc6f9c20384c120f963465a0",
                 "reference": "539c6691e0623af6dc6f9c20384c120f963465a0",
-                "shasum": ""
+                "shasum": "",
+                "mirrors": [
+                    {
+                        "url": "https://repo.packagist.com/inpsyde/payment-gateways/dists/%package%/%version%/r%reference%.%type%",
+                        "preferred": true
+                    }
+                ]
             },
             "require": {
                 "php": ">=7.3"
@@ -3246,7 +3725,7 @@
                     "src/"
                 ]
             },
-            "notification-url": "https://packagist.org/downloads/",
+            "notification-url": "https://repo.packagist.com/inpsyde/payment-gateways/downloads/",
             "license": [
                 "BSD-3-Clause"
             ],
@@ -3302,7 +3781,13 @@
                 "type": "zip",
                 "url": "https://api.github.com/repos/sebastianbergmann/resource-operations/zipball/05d5692a7993ecccd56a03e40cd7e5b09b1d404e",
                 "reference": "05d5692a7993ecccd56a03e40cd7e5b09b1d404e",
-                "shasum": ""
+                "shasum": "",
+                "mirrors": [
+                    {
+                        "url": "https://repo.packagist.com/inpsyde/payment-gateways/dists/%package%/%version%/r%reference%.%type%",
+                        "preferred": true
+                    }
+                ]
             },
             "require": {
                 "php": ">=7.3"
@@ -3321,7 +3806,7 @@
                     "src/"
                 ]
             },
-            "notification-url": "https://packagist.org/downloads/",
+            "notification-url": "https://repo.packagist.com/inpsyde/payment-gateways/downloads/",
             "license": [
                 "BSD-3-Clause"
             ],
@@ -3356,7 +3841,13 @@
                 "type": "zip",
                 "url": "https://api.github.com/repos/sebastianbergmann/type/zipball/75e2c2a32f5e0b3aef905b9ed0b179b953b3d7c7",
                 "reference": "75e2c2a32f5e0b3aef905b9ed0b179b953b3d7c7",
-                "shasum": ""
+                "shasum": "",
+                "mirrors": [
+                    {
+                        "url": "https://repo.packagist.com/inpsyde/payment-gateways/dists/%package%/%version%/r%reference%.%type%",
+                        "preferred": true
+                    }
+                ]
             },
             "require": {
                 "php": ">=7.3"
@@ -3375,7 +3866,7 @@
                     "src/"
                 ]
             },
-            "notification-url": "https://packagist.org/downloads/",
+            "notification-url": "https://repo.packagist.com/inpsyde/payment-gateways/downloads/",
             "license": [
                 "BSD-3-Clause"
             ],
@@ -3412,7 +3903,13 @@
                 "type": "zip",
                 "url": "https://api.github.com/repos/sebastianbergmann/version/zipball/c6c1022351a901512170118436c764e473f6de8c",
                 "reference": "c6c1022351a901512170118436c764e473f6de8c",
-                "shasum": ""
+                "shasum": "",
+                "mirrors": [
+                    {
+                        "url": "https://repo.packagist.com/inpsyde/payment-gateways/dists/%package%/%version%/r%reference%.%type%",
+                        "preferred": true
+                    }
+                ]
             },
             "require": {
                 "php": ">=7.3"
@@ -3428,7 +3925,7 @@
                     "src/"
                 ]
             },
-            "notification-url": "https://packagist.org/downloads/",
+            "notification-url": "https://repo.packagist.com/inpsyde/payment-gateways/downloads/",
             "license": [
                 "BSD-3-Clause"
             ],
@@ -3465,7 +3962,13 @@
                 "type": "zip",
                 "url": "https://api.github.com/repos/PHPCSStandards/PHP_CodeSniffer/zipball/0ca86845ce43291e8f5692c7356fccf3bcf02bf4",
                 "reference": "0ca86845ce43291e8f5692c7356fccf3bcf02bf4",
-                "shasum": ""
+                "shasum": "",
+                "mirrors": [
+                    {
+                        "url": "https://repo.packagist.com/inpsyde/payment-gateways/dists/%package%/%version%/r%reference%.%type%",
+                        "preferred": true
+                    }
+                ]
             },
             "require": {
                 "ext-simplexml": "*",
@@ -3481,7 +3984,7 @@
                 "bin/phpcs"
             ],
             "type": "library",
-            "notification-url": "https://packagist.org/downloads/",
+            "notification-url": "https://repo.packagist.com/inpsyde/payment-gateways/downloads/",
             "license": [
                 "BSD-3-Clause"
             ],
@@ -3544,7 +4047,13 @@
                 "type": "zip",
                 "url": "https://api.github.com/repos/swissspidy/phpstan-no-private/zipball/559cb0e8d092df7314ed4254db83db0427440af2",
                 "reference": "559cb0e8d092df7314ed4254db83db0427440af2",
-                "shasum": ""
+                "shasum": "",
+                "mirrors": [
+                    {
+                        "url": "https://repo.packagist.com/inpsyde/payment-gateways/dists/%package%/%version%/r%reference%.%type%",
+                        "preferred": true
+                    }
+                ]
             },
             "require": {
                 "php": "^7.4 || ^8.0",
@@ -3573,7 +4082,7 @@
                     "Swissspidy\\PHPStan\\": "src/"
                 }
             },
-            "notification-url": "https://packagist.org/downloads/",
+            "notification-url": "https://repo.packagist.com/inpsyde/payment-gateways/downloads/",
             "license": [
                 "MIT"
             ],
@@ -3596,7 +4105,13 @@
                 "type": "zip",
                 "url": "https://api.github.com/repos/symfony/console/zipball/c4ba980ca61a9eb18ee6bcc73f28e475852bb1ed",
                 "reference": "c4ba980ca61a9eb18ee6bcc73f28e475852bb1ed",
-                "shasum": ""
+                "shasum": "",
+                "mirrors": [
+                    {
+                        "url": "https://repo.packagist.com/inpsyde/payment-gateways/dists/%package%/%version%/r%reference%.%type%",
+                        "preferred": true
+                    }
+                ]
             },
             "require": {
                 "php": ">=7.2.5",
@@ -3642,7 +4157,7 @@
                     "/Tests/"
                 ]
             },
-            "notification-url": "https://packagist.org/downloads/",
+            "notification-url": "https://repo.packagist.com/inpsyde/payment-gateways/downloads/",
             "license": [
                 "MIT"
             ],
@@ -3695,19 +4210,25 @@
                 "type": "zip",
                 "url": "https://api.github.com/repos/symfony/deprecation-contracts/zipball/605389f2a7e5625f273b53960dc46aeaf9c62918",
                 "reference": "605389f2a7e5625f273b53960dc46aeaf9c62918",
-                "shasum": ""
+                "shasum": "",
+                "mirrors": [
+                    {
+                        "url": "https://repo.packagist.com/inpsyde/payment-gateways/dists/%package%/%version%/r%reference%.%type%",
+                        "preferred": true
+                    }
+                ]
             },
             "require": {
                 "php": ">=7.1"
             },
             "type": "library",
             "extra": {
-                "thanks": {
-                    "url": "https://github.com/symfony/contracts",
-                    "name": "symfony/contracts"
-                },
                 "branch-alias": {
                     "dev-main": "2.5-dev"
+                },
+                "thanks": {
+                    "name": "symfony/contracts",
+                    "url": "https://github.com/symfony/contracts"
                 }
             },
             "autoload": {
@@ -3715,7 +4236,7 @@
                     "function.php"
                 ]
             },
-            "notification-url": "https://packagist.org/downloads/",
+            "notification-url": "https://repo.packagist.com/inpsyde/payment-gateways/downloads/",
             "license": [
                 "MIT"
             ],
@@ -3762,7 +4283,13 @@
                 "type": "zip",
                 "url": "https://api.github.com/repos/symfony/finder/zipball/63741784cd7b9967975eec610b256eed3ede022b",
                 "reference": "63741784cd7b9967975eec610b256eed3ede022b",
-                "shasum": ""
+                "shasum": "",
+                "mirrors": [
+                    {
+                        "url": "https://repo.packagist.com/inpsyde/payment-gateways/dists/%package%/%version%/r%reference%.%type%",
+                        "preferred": true
+                    }
+                ]
             },
             "require": {
                 "php": ">=7.2.5",
@@ -3778,7 +4305,7 @@
                     "/Tests/"
                 ]
             },
-            "notification-url": "https://packagist.org/downloads/",
+            "notification-url": "https://repo.packagist.com/inpsyde/payment-gateways/downloads/",
             "license": [
                 "MIT"
             ],
@@ -3825,7 +4352,13 @@
                 "type": "zip",
                 "url": "https://api.github.com/repos/symfony/polyfill-ctype/zipball/a3cc8b044a6ea513310cbd48ef7333b384945638",
                 "reference": "a3cc8b044a6ea513310cbd48ef7333b384945638",
-                "shasum": ""
+                "shasum": "",
+                "mirrors": [
+                    {
+                        "url": "https://repo.packagist.com/inpsyde/payment-gateways/dists/%package%/%version%/r%reference%.%type%",
+                        "preferred": true
+                    }
+                ]
             },
             "require": {
                 "php": ">=7.2"
@@ -3851,7 +4384,7 @@
                     "Symfony\\Polyfill\\Ctype\\": ""
                 }
             },
-            "notification-url": "https://packagist.org/downloads/",
+            "notification-url": "https://repo.packagist.com/inpsyde/payment-gateways/downloads/",
             "license": [
                 "MIT"
             ],
@@ -3908,7 +4441,13 @@
                 "type": "zip",
                 "url": "https://api.github.com/repos/symfony/polyfill-intl-grapheme/zipball/380872130d3a5dd3ace2f4010d95125fde5d5c70",
                 "reference": "380872130d3a5dd3ace2f4010d95125fde5d5c70",
-                "shasum": ""
+                "shasum": "",
+                "mirrors": [
+                    {
+                        "url": "https://repo.packagist.com/inpsyde/payment-gateways/dists/%package%/%version%/r%reference%.%type%",
+                        "preferred": true
+                    }
+                ]
             },
             "require": {
                 "php": ">=7.2"
@@ -3931,7 +4470,7 @@
                     "Symfony\\Polyfill\\Intl\\Grapheme\\": ""
                 }
             },
-            "notification-url": "https://packagist.org/downloads/",
+            "notification-url": "https://repo.packagist.com/inpsyde/payment-gateways/downloads/",
             "license": [
                 "MIT"
             ],
@@ -3990,7 +4529,13 @@
                 "type": "zip",
                 "url": "https://api.github.com/repos/symfony/polyfill-intl-normalizer/zipball/3833d7255cc303546435cb650316bff708a1c75c",
                 "reference": "3833d7255cc303546435cb650316bff708a1c75c",
-                "shasum": ""
+                "shasum": "",
+                "mirrors": [
+                    {
+                        "url": "https://repo.packagist.com/inpsyde/payment-gateways/dists/%package%/%version%/r%reference%.%type%",
+                        "preferred": true
+                    }
+                ]
             },
             "require": {
                 "php": ">=7.2"
@@ -4016,7 +4561,7 @@
                     "Resources/stubs"
                 ]
             },
-            "notification-url": "https://packagist.org/downloads/",
+            "notification-url": "https://repo.packagist.com/inpsyde/payment-gateways/downloads/",
             "license": [
                 "MIT"
             ],
@@ -4075,7 +4620,13 @@
                 "type": "zip",
                 "url": "https://api.github.com/repos/symfony/polyfill-mbstring/zipball/6d857f4d76bd4b343eac26d6b539585d2bc56493",
                 "reference": "6d857f4d76bd4b343eac26d6b539585d2bc56493",
-                "shasum": ""
+                "shasum": "",
+                "mirrors": [
+                    {
+                        "url": "https://repo.packagist.com/inpsyde/payment-gateways/dists/%package%/%version%/r%reference%.%type%",
+                        "preferred": true
+                    }
+                ]
             },
             "require": {
                 "ext-iconv": "*",
@@ -4102,7 +4653,7 @@
                     "Symfony\\Polyfill\\Mbstring\\": ""
                 }
             },
-            "notification-url": "https://packagist.org/downloads/",
+            "notification-url": "https://repo.packagist.com/inpsyde/payment-gateways/downloads/",
             "license": [
                 "MIT"
             ],
@@ -4160,7 +4711,13 @@
                 "type": "zip",
                 "url": "https://api.github.com/repos/symfony/polyfill-php73/zipball/0f68c03565dcaaf25a890667542e8bd75fe7e5bb",
                 "reference": "0f68c03565dcaaf25a890667542e8bd75fe7e5bb",
-                "shasum": ""
+                "shasum": "",
+                "mirrors": [
+                    {
+                        "url": "https://repo.packagist.com/inpsyde/payment-gateways/dists/%package%/%version%/r%reference%.%type%",
+                        "preferred": true
+                    }
+                ]
             },
             "require": {
                 "php": ">=7.2"
@@ -4183,7 +4740,7 @@
                     "Resources/stubs"
                 ]
             },
-            "notification-url": "https://packagist.org/downloads/",
+            "notification-url": "https://repo.packagist.com/inpsyde/payment-gateways/downloads/",
             "license": [
                 "MIT"
             ],
@@ -4240,7 +4797,13 @@
                 "type": "zip",
                 "url": "https://api.github.com/repos/symfony/service-contracts/zipball/f37b419f7aea2e9abf10abd261832cace12e3300",
                 "reference": "f37b419f7aea2e9abf10abd261832cace12e3300",
-                "shasum": ""
+                "shasum": "",
+                "mirrors": [
+                    {
+                        "url": "https://repo.packagist.com/inpsyde/payment-gateways/dists/%package%/%version%/r%reference%.%type%",
+                        "preferred": true
+                    }
+                ]
             },
             "require": {
                 "php": ">=7.2.5",
@@ -4255,12 +4818,12 @@
             },
             "type": "library",
             "extra": {
-                "thanks": {
-                    "url": "https://github.com/symfony/contracts",
-                    "name": "symfony/contracts"
-                },
                 "branch-alias": {
                     "dev-main": "2.5-dev"
+                },
+                "thanks": {
+                    "name": "symfony/contracts",
+                    "url": "https://github.com/symfony/contracts"
                 }
             },
             "autoload": {
@@ -4268,7 +4831,7 @@
                     "Symfony\\Contracts\\Service\\": ""
                 }
             },
-            "notification-url": "https://packagist.org/downloads/",
+            "notification-url": "https://repo.packagist.com/inpsyde/payment-gateways/downloads/",
             "license": [
                 "MIT"
             ],
@@ -4323,7 +4886,13 @@
                 "type": "zip",
                 "url": "https://api.github.com/repos/symfony/string/zipball/136ca7d72f72b599f2631aca474a4f8e26719799",
                 "reference": "136ca7d72f72b599f2631aca474a4f8e26719799",
-                "shasum": ""
+                "shasum": "",
+                "mirrors": [
+                    {
+                        "url": "https://repo.packagist.com/inpsyde/payment-gateways/dists/%package%/%version%/r%reference%.%type%",
+                        "preferred": true
+                    }
+                ]
             },
             "require": {
                 "php": ">=7.2.5",
@@ -4354,7 +4923,7 @@
                     "/Tests/"
                 ]
             },
-            "notification-url": "https://packagist.org/downloads/",
+            "notification-url": "https://repo.packagist.com/inpsyde/payment-gateways/downloads/",
             "license": [
                 "MIT"
             ],
@@ -4409,7 +4978,13 @@
                 "type": "zip",
                 "url": "https://api.github.com/repos/symfony/var-dumper/zipball/42f18f170aa86d612c3559cfb3bd11a375df32c8",
                 "reference": "42f18f170aa86d612c3559cfb3bd11a375df32c8",
-                "shasum": ""
+                "shasum": "",
+                "mirrors": [
+                    {
+                        "url": "https://repo.packagist.com/inpsyde/payment-gateways/dists/%package%/%version%/r%reference%.%type%",
+                        "preferred": true
+                    }
+                ]
             },
             "require": {
                 "php": ">=7.2.5",
@@ -4447,7 +5022,7 @@
                     "/Tests/"
                 ]
             },
-            "notification-url": "https://packagist.org/downloads/",
+            "notification-url": "https://repo.packagist.com/inpsyde/payment-gateways/downloads/",
             "license": [
                 "MIT"
             ],
@@ -4498,7 +5073,13 @@
                 "type": "zip",
                 "url": "https://api.github.com/repos/theseer/tokenizer/zipball/b7489ce515e168639d17feec34b8847c326b0b3c",
                 "reference": "b7489ce515e168639d17feec34b8847c326b0b3c",
-                "shasum": ""
+                "shasum": "",
+                "mirrors": [
+                    {
+                        "url": "https://repo.packagist.com/inpsyde/payment-gateways/dists/%package%/%version%/r%reference%.%type%",
+                        "preferred": true
+                    }
+                ]
             },
             "require": {
                 "ext-dom": "*",
@@ -4512,7 +5093,7 @@
                     "src/"
                 ]
             },
-            "notification-url": "https://packagist.org/downloads/",
+            "notification-url": "https://repo.packagist.com/inpsyde/payment-gateways/downloads/",
             "license": [
                 "BSD-3-Clause"
             ],
@@ -4548,7 +5129,13 @@
                 "type": "zip",
                 "url": "https://api.github.com/repos/vlucas/phpdotenv/zipball/955e7815d677a3eaa7075231212f2110983adecc",
                 "reference": "955e7815d677a3eaa7075231212f2110983adecc",
-                "shasum": ""
+                "shasum": "",
+                "mirrors": [
+                    {
+                        "url": "https://repo.packagist.com/inpsyde/payment-gateways/dists/%package%/%version%/r%reference%.%type%",
+                        "preferred": true
+                    }
+                ]
             },
             "require": {
                 "ext-pcre": "*",
@@ -4582,7 +5169,7 @@
                     "Dotenv\\": "src/"
                 }
             },
-            "notification-url": "https://packagist.org/downloads/",
+            "notification-url": "https://repo.packagist.com/inpsyde/payment-gateways/downloads/",
             "license": [
                 "BSD-3-Clause"
             ],
@@ -4632,7 +5219,13 @@
                 "type": "zip",
                 "url": "https://api.github.com/repos/woocommerce/woocommerce-sniffs/zipball/e6da0c372573724806b270ec1d5d94988b8aec52",
                 "reference": "e6da0c372573724806b270ec1d5d94988b8aec52",
-                "shasum": ""
+                "shasum": "",
+                "mirrors": [
+                    {
+                        "url": "https://repo.packagist.com/inpsyde/payment-gateways/dists/%package%/%version%/r%reference%.%type%",
+                        "preferred": true
+                    }
+                ]
             },
             "require": {
                 "dealerdirect/phpcodesniffer-composer-installer": "^1.0.0",
@@ -4641,7 +5234,7 @@
                 "wp-coding-standards/wpcs": "^3.0.0"
             },
             "type": "phpcodesniffer-standard",
-            "notification-url": "https://packagist.org/downloads/",
+            "notification-url": "https://repo.packagist.com/inpsyde/payment-gateways/downloads/",
             "license": [
                 "MIT"
             ],
@@ -4671,7 +5264,13 @@
                 "type": "zip",
                 "url": "https://api.github.com/repos/WordPress/WordPress-Coding-Standards/zipball/7795ec6fa05663d716a549d0b44e47ffc8b0d4a6",
                 "reference": "7795ec6fa05663d716a549d0b44e47ffc8b0d4a6",
-                "shasum": ""
+                "shasum": "",
+                "mirrors": [
+                    {
+                        "url": "https://repo.packagist.com/inpsyde/payment-gateways/dists/%package%/%version%/r%reference%.%type%",
+                        "preferred": true
+                    }
+                ]
             },
             "require": {
                 "ext-filter": "*",
@@ -4695,7 +5294,7 @@
                 "ext-mbstring": "For improved results"
             },
             "type": "phpcodesniffer-standard",
-            "notification-url": "https://packagist.org/downloads/",
+            "notification-url": "https://repo.packagist.com/inpsyde/payment-gateways/downloads/",
             "license": [
                 "MIT"
             ],
