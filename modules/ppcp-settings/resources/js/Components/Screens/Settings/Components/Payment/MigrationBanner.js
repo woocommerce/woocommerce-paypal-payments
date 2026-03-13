@@ -8,6 +8,12 @@ import {
 } from '../../../../ReusableComponents/Elements';
 import { PPIcon } from '../../../../ReusableComponents/Icons';
 import classNames from 'classnames';
+import ConnectionStatusBadge from '@ppcp-settings/Components/Screens/Settings/Components/Settings/Parts/ConnectionStatusBadge';
+import { ControlStaticValue } from '@ppcp-settings/Components/ReusableComponents/Controls';
+import { __ } from '@wordpress/i18n';
+import TitleBadge, {
+	TITLE_BADGE_INFO,
+} from '@ppcp-settings/Components/ReusableComponents/TitleBadge';
 
 const MigrationBanner = ( {
 	id,
@@ -32,12 +38,21 @@ const MigrationBanner = ( {
 			<ContentWrapper>
 				<Content asCard={ false }>
 					<Header>
-						<h2
-							id={ titleId }
-							className="ppcp-r-settings-card__title"
-						>
-							{ title }
-						</h2>
+						<div className="ppcp--title-wrapper">
+							<h2
+								id={ titleId }
+								className="ppcp-r-settings-card__title"
+							>
+								{ title }
+							</h2>
+							<TitleBadge
+								type={ TITLE_BADGE_INFO }
+								text={ __(
+									'You’re eligible',
+									'woocommerce-paypal-payments'
+								) }
+							/>
+						</div>
 						<Description>{ description }</Description>
 					</Header>
 					<Action>
@@ -61,9 +76,12 @@ const MigrationBanner = ( {
 				</Content>
 				<Content asCard={ false } className={ `${ className }__icon` }>
 					<PPIcon imageName="icon-button-payment-method-advanced-cards-large.svg" />
-					<span className={ `${ className }__icon-close` }>
+					<button
+						className={ `${ className }__icon-close` }
+						aria-label="Dismiss todo item"
+					>
 						<PPIcon imageName="icon-close.svg" />
-					</span>
+					</button>
 				</Content>
 			</ContentWrapper>
 		</div>
