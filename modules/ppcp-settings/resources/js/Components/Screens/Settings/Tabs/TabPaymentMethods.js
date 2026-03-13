@@ -1,11 +1,7 @@
 import { __ } from '@wordpress/i18n';
 import { useCallback } from '@wordpress/element';
 
-import {
-	CommonHooks,
-	OnboardingHooks,
-	PaymentHooks,
-} from '@ppcp-settings/data';
+import { CommonHooks, PaymentHooks } from '@ppcp-settings/data';
 import {
 	useActiveModal,
 	useWooSettings,
@@ -65,18 +61,9 @@ const TabPaymentMethods = () => {
 
 	const merchant = CommonHooks.useMerchant();
 	const { storeCountry } = useWooSettings();
-	const { canUseCardPayments } = OnboardingHooks.useFlags();
 
 	const showCardPayments =
-		methods.cardPayment.length > 0 &&
-		merchant.isBusinessSeller &&
-		canUseCardPayments &&
-		// Show ACDC if the merchant has the feature enabled in PayPal account.
-		features.some(
-			( feature ) =>
-				feature.id === 'advanced_credit_and_debit_cards' &&
-				feature.enabled
-		);
+		methods.cardPayment.length > 0 && merchant.isBusinessSeller;
 
 	// Hide BCDC for all countries except Mexico when ACDC is turned on.
 	const filteredPayPalMethods = methods.paypal.filter(
