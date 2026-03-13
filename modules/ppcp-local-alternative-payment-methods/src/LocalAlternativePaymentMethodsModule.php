@@ -202,7 +202,7 @@ class LocalAlternativePaymentMethodsModule implements ServiceModule, ExecutableM
         if (!$order instanceof WC_Order) {
             return;
         }
-        $request_uri = isset($_SERVER['REQUEST_URI']) ? esc_url_raw((string) wp_unslash($_SERVER['REQUEST_URI'])) : '';
+        $request_uri = isset($_SERVER['REQUEST_URI']) ? esc_url_raw(wp_unslash((string) $_SERVER['REQUEST_URI'])) : '';
         $query_string = (string) wp_parse_url($request_uri, \PHP_URL_QUERY);
         $params = array();
         wp_parse_str(str_replace('?', '&', $query_string), $params);
@@ -384,7 +384,7 @@ class LocalAlternativePaymentMethodsModule implements ServiceModule, ExecutableM
         if (!is_wc_endpoint_url('order-received')) {
             return;
         }
-        $request_uri = isset($_SERVER['REQUEST_URI']) ? esc_url_raw((string) wp_unslash($_SERVER['REQUEST_URI'])) : '';
+        $request_uri = isset($_SERVER['REQUEST_URI']) ? esc_url_raw(wp_unslash((string) $_SERVER['REQUEST_URI'])) : '';
         $query_string = (string) wp_parse_url($request_uri, \PHP_URL_QUERY);
         $params = array();
         wp_parse_str(str_replace('?', '&', $query_string), $params);
