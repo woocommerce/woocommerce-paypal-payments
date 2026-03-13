@@ -19,7 +19,7 @@ import {
 import { transactionsOnClassicCheckout } from './_test-scenarios';
 
 test.beforeAll( async ( { utils } ) => {
-	test.setTimeout( 2 * 60 * 1000 );
+	test.setTimeout( 2 * 60_000 );
 	await utils.configureStore( {
 		...storeConfigGermany,
 		classicPages: true,

@@ -47,7 +47,7 @@ import {
 import { acdcPayByLink } from './_test-data/acdc';
 
 test.beforeAll( async ( { utils, standardPayments } ) => {
-	test.setTimeout( 3 * 60 * 1000 );
+	test.setTimeout( 3 * 60_000 );
 	await utils.configureStore( storeConfigUsa );
 	await utils.configurePcp( pcpConfigUsa );
 	await utils.pcpPaymentMethodIsEnabled( payPal.method );

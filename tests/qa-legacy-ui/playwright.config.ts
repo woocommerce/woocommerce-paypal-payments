@@ -11,9 +11,9 @@ require( 'dotenv' ).config();
 export default defineConfig< BaseExtend >( {
 	testDir: 'tests',
 	expect: {
-		timeout: 20 * 1000,
+		timeout: 20_000,
 	},
-	timeout: 2 * 60 * 1000,
+	timeout: 2 * 60_000,
 	/* Run tests in files in parallel */
 	fullyParallel: false,
 	/* Fail the build on CI if you accidentally left test.only in the source code. */
@@ -26,7 +26,7 @@ export default defineConfig< BaseExtend >( {
 	reporter: process.env.CI
 		? [
 				[ 'list' ],
-				// [ 'html', { outputFolder: 'playwright-report' } ],
+				[ 'html', { outputFolder: 'playwright-report' } ],
 				[
 					'@inpsyde/playwright-utils/build/integration/jira/xray-reporter.js',
 					{
@@ -40,7 +40,7 @@ export default defineConfig< BaseExtend >( {
 		  ]
 		: [
 				[ 'list' ],
-				[ 'html', { outputFolder: 'playwright-report' } ],
+				// [ 'html', { outputFolder: 'playwright-report' } ],
 				[
 					'@inpsyde/playwright-utils/build/integration/jira/xray-reporter.js',
 					{

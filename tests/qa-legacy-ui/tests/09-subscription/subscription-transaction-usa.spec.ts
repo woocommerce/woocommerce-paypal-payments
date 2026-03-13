@@ -12,7 +12,7 @@ import { subscriptionPayPalClassicCheckoutVaulted } from './_test-data/paypal';
 
 const customer = storeConfigSubscriptionUsa.customer;
 test.beforeAll( async ( { utils } ) => {
-	test.setTimeout( 3 * 60 * 1000 );
+	test.setTimeout( 3 * 60_000 );
 	await utils.configureStore( storeConfigSubscriptionUsa );
 	await utils.configurePcp( {
 		...pcpConfigUsa,

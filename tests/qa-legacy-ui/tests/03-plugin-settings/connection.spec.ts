@@ -89,12 +89,12 @@ test.describe( 'Connection', () => {
 		// 		connection.page.getByText(
 		// 			'Waiting for the webhook to arrive...'
 		// 		)
-		// 	).toBeVisible( { timeout: 1 * 60 * 1000 } );
+		// 	).toBeVisible( { timeout: 1 * 60_000 } );
 		// 	await expect(
 		// 		connection.page.getByText(
 		// 			'The webhook was received successfully.'
 		// 		)
-		// 	).toBeVisible( { timeout: 1 * 60 * 1000 } );
+		// 	).toBeVisible( { timeout: 1 * 60_000 } );
 		// } );
 
 		// //can't restore Advanced Credit and Debit Card Payments status to initial state('Status: Not yet enabled')

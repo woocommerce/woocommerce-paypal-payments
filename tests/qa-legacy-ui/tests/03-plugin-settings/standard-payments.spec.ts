@@ -396,7 +396,7 @@ test.describe( 'Standard Payments', () => {
 				expressCheckout: true,
 			},
 		];
-		test.setTimeout( 5 * 60 * 1000 );
+		test.setTimeout( 5 * 60_000 );
 		await standardPayments.visit();
 		await standardPayments.removeItemsFromSelectBox(
 			'Smart Button Locations',

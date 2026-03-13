@@ -69,7 +69,7 @@ import {
 } from './_test-data/standard-card-button';
 
 test.beforeAll( async ( { utils, standardPayments } ) => {
-	test.setTimeout( 3 * 60 * 1000 );
+	test.setTimeout( 3 * 60_000 );
 	await utils.configureStore( {
 		...storeConfigUsa,
 		classicPages: true,
