@@ -49,6 +49,7 @@ use WooCommerce\PayPalCommerce\WcGateway\Gateway\CardButtonGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\CardPaymentsConfiguration;
+use WooCommerce\PayPalCommerce\WcGateway\Helper\CartCheckoutDetector;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\SettingsStatus;
 use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
@@ -1545,7 +1546,7 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
 			$context = 'checkout-block-express';
 		}
 		if ( $context === 'pay-now' ) {
-			$context = 'checkout';
+			$context = CartCheckoutDetector::has_block_checkout() ? 'checkout-block-express' : 'checkout';
 		}
 
 		$defaults = array(
