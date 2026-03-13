@@ -42,7 +42,7 @@
     "env:setup:pcp:mexico": "npx playwright test --project setup-pcp --grep \"setup:pcp:mexico;\"",
     "env:setup:pcp:update": "npx playwright test --project setup-pcp --grep \"setup:pcp:update;\"",
     "test:frontend-ui-pay-later": "npx playwright test frontend-ui-pay-later.spec.ts",
-    "test:frontend-ui-acdc": "npx playwright test frontend-ui-acdc.spec.ts --headed",
+    "test:frontend-ui-acdc": "npx playwright test frontend-ui-acdc.spec.ts",
     "test:frontend-ui": "npx playwright test frontend-ui.spec.ts",
     "test:frontend-ui-all": "npm run test:frontend-ui-pay-later & npm run test:frontend-ui-acdc & npm run test:frontend-ui"
   },
