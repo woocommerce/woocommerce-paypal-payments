@@ -176,7 +176,23 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 					$payment_settings_migration = $container->get( 'settings.service.data-migration.payment-settings' );
 					assert( $payment_settings_migration instanceof PaymentSettingsMigration );
 
-					if ( ! $payment_settings_migration->is_bcdc_enabled_for_acdc_merchant() ) {
+					$is_bcdc_merchant = $payment_settings_migration->is_bcdc_enabled_for_acdc_merchant();
+
+					// Fallback: when API-based check fails (no cached DCC product status after major
+					// version upgrade), detect BCDC usage from legacy settings directly.
+					if ( ! $is_bcdc_merchant ) {
+						$dcc_applies = $container->get( 'api.helpers.dccapplies' );
+						if ( $dcc_applies->for_country_currency() ) {
+							$legacy_settings = (array) get_option( 'woocommerce-ppcp-settings', array() );
+							$disable_funding = (array) ( $legacy_settings['disable_funding'] ?? array() );
+							$card_was_active = ! in_array( 'card', $disable_funding, true );
+							$dcc_not_enabled = empty( $legacy_settings['dcc_enabled'] );
+
+							$is_bcdc_merchant = $card_was_active && $dcc_not_enabled;
+						}
+					}
+
+					if ( ! $is_bcdc_merchant ) {
 						return;
 					}
 
@@ -765,9 +781,17 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 				assert( $dcc_configuration instanceof CardPaymentsConfiguration );
 
 				if ( $flags->is_business_seller && $flags->use_card_payments && ! $dcc_configuration->use_acdc() ) {
+					$check_override = $container->get( 'settings.migration.bcdc-override-check' );
+					assert( is_callable( $check_override ) );
+
 					$payment_methods->toggle_method_state( CreditCardGateway::ID, false );
-					$payment_methods->toggle_method_state( ApplePayGateway::ID, false );
-					$payment_methods->toggle_method_state( GooglePayGateway::ID, false );
+
+					// BCDC-override merchants may have Google Pay and Apple Pay configured
+					// alongside BCDC. Only disable these if NOT in BCDC-override mode.
+					if ( ! $check_override() ) {
+						$payment_methods->toggle_method_state( ApplePayGateway::ID, false );
+						$payment_methods->toggle_method_state( GooglePayGateway::ID, false );
+					}
 				}
 			},
 			10,
