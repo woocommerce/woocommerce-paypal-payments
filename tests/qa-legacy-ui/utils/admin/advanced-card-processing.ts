@@ -3,6 +3,7 @@
  */
 import { PcpSettingsPage } from './pcp-settings-page';
 import urls from '../urls';
+import { expect } from '../../utils';
 
 export class AdvancedCardProcessing extends PcpSettingsPage {
 	url = urls.pcp.advancedCardProcessing;
@@ -33,18 +34,38 @@ export class AdvancedCardProcessing extends PcpSettingsPage {
 		await this.visit();
 
 		// restore checkbox to enable Save Changes button
-		const currentValue = await this.enableGatewayCheckbox().isChecked();
-		await this.enableGatewayCheckbox().setChecked( ! currentValue );
-		await this.enableGatewayCheckbox().setChecked( data.enableGateway ?? currentValue );
+		const enableGatewayCheckbox = this.enableGatewayCheckbox();
+		await expect(
+			enableGatewayCheckbox,
+			'Assert enable Gateway checkbox is visible.'
+		).toBeVisible();
+		const currentValue = await enableGatewayCheckbox.isChecked();
+		await enableGatewayCheckbox.setChecked( ! currentValue );
+		await enableGatewayCheckbox.setChecked( data.enableGateway ?? currentValue );
 
 		// Add other settings here
 		if ( data.vaulting !== undefined ) {
-			await this.vaultingCheckbox().check();
+			const vaultingCheckbox = this.vaultingCheckbox();
+			await expect(
+				vaultingCheckbox,
+				'Assert vaulting checkbox is visible.'
+			).toBeVisible();
+			await vaultingCheckbox.check();
 		}
 
 		if ( data.threeDSecure ) {
-			await this.contingencyFor3DSecureDropdown().click();
-			await this.dropdownOption( data.threeDSecure ).click();
+			const contingencyFor3DSecureDropdown = this.contingencyFor3DSecureDropdown();
+			await expect(
+				contingencyFor3DSecureDropdown,
+				'Assert 3D Secure contingency dropdown is visible.'
+			).toBeVisible();
+			await contingencyFor3DSecureDropdown.click();
+			const dropdownOption = this.dropdownOption( data.threeDSecure );
+			await expect(
+				dropdownOption,
+				`Assert 3D Secure contingency dropdown option "${ data.threeDSecure }" is visible.`
+			).toBeVisible();
+			await dropdownOption.click();
 		}
 
 		await this.saveChanges();
