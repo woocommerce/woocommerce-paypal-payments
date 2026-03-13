@@ -45,6 +45,7 @@ class AdvancedCardPaymentMethod extends AbstractPaymentMethodType
      */
     protected SettingsProvider $plugin_settings;
     protected CardPaymentsConfiguration $card_payments_configuration;
+    protected bool $save_payment_methods_eligible;
     /**
      * @param AssetGetter                   $asset_getter
      * @param string                        $version The assets version.
@@ -52,8 +53,9 @@ class AdvancedCardPaymentMethod extends AbstractPaymentMethodType
      * @param SmartButtonInterface|callable $smart_button The smart button script loading handler.
      * @param SettingsProvider              $settings_provider The settings provider.
      * @param CardPaymentsConfiguration     $card_payments_configuration
+     * @param bool                          $save_payment_methods_eligible Whether save payment methods is eligible for the current country.
      */
-    public function __construct(AssetGetter $asset_getter, string $version, CreditCardGateway $gateway, $smart_button, SettingsProvider $settings_provider, CardPaymentsConfiguration $card_payments_configuration)
+    public function __construct(AssetGetter $asset_getter, string $version, CreditCardGateway $gateway, $smart_button, SettingsProvider $settings_provider, CardPaymentsConfiguration $card_payments_configuration, bool $save_payment_methods_eligible)
     {
         $this->name = CreditCardGateway::ID;
         $this->asset_getter = $asset_getter;
@@ -62,6 +64,7 @@ class AdvancedCardPaymentMethod extends AbstractPaymentMethodType
         $this->smart_button = $smart_button;
         $this->plugin_settings = $settings_provider;
         $this->card_payments_configuration = $card_payments_configuration;
+        $this->save_payment_methods_eligible = $save_payment_methods_eligible;
     }
     /**
      * {@inheritDoc}
@@ -92,7 +95,7 @@ class AdvancedCardPaymentMethod extends AbstractPaymentMethodType
     {
         $script_data = $this->smart_button_instance()->script_data();
         $script_data = array_merge($script_data, array('is_user_logged_in' => is_user_logged_in()));
-        return array('id' => $this->name, 'title' => $this->gateway->title, 'description' => $this->gateway->description, 'scriptData' => $script_data, 'supports' => $this->gateway->supports, 'save_card_text' => esc_html__('Save your card', 'woocommerce-paypal-payments'), 'is_vaulting_enabled' => $this->plugin_settings->save_card_details(), 'card_icons' => $this->plugin_settings->card_icons(), 'name_on_card' => $this->card_payments_configuration->show_name_on_card());
+        return array('id' => $this->name, 'title' => $this->gateway->title, 'description' => $this->gateway->description, 'scriptData' => $script_data, 'supports' => $this->gateway->supports, 'save_card_text' => esc_html__('Save your card', 'woocommerce-paypal-payments'), 'is_vaulting_enabled' => $this->save_payment_methods_eligible && $this->plugin_settings->save_card_details(), 'card_icons' => $this->plugin_settings->card_icons(), 'name_on_card' => $this->card_payments_configuration->show_name_on_card());
     }
     /**
      * The smart button.
