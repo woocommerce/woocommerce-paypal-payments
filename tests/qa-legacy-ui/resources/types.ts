@@ -1,3 +1,16 @@
+export type ShopConfig = {
+	classicPages?: boolean; // false = block cart and checkout (default), true = classic cart & checkout pages
+	settings?: WooCommerce.Settings; // WC settings
+	taxes?: {
+		options: WooCommerce.Settings; // Tax settings in WC > Settings > General tab
+		rates: WooCommerce.CreateTax[]; // Tax rates to be active in WC > Settings > Taxes > Tax rates tab
+	};
+	customer?: WooCommerce.CreateCustomer; // Add registered customer
+	subscription?: boolean; // if true WC Subscription plugin is activated
+	products?: WooCommerce.CreateProduct[]; // Products to be created if not existing
+	wpDebugging?: boolean; // if true sets { WP_DEBUG: true, SCRIPT_DEBUG: true }
+};
+
 export type PcpMerchant = {
 	email: string;
 	password: string;

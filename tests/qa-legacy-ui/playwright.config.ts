@@ -110,7 +110,12 @@ export default defineConfig< BaseExtend >( {
 			fullyParallel: false,
 		},
 		{
-			name: 'all',
+			name: 'setup-pcp',
+			dependencies: [ 'setup-woocommerce' ],
+			testMatch: /pcp\.setup\.ts/,
+		},
+		{
+			name: 'migration',
 			dependencies: [ 'setup-woocommerce' ],
 		},
 	],
