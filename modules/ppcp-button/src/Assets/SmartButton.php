@@ -48,6 +48,7 @@ use WooCommerce\PayPalCommerce\WcGateway\Gateway\CardButtonGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\CardPaymentsConfiguration;
+use WooCommerce\PayPalCommerce\WcGateway\Helper\CartCheckoutDetector;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\SettingsStatus;
 use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
@@ -977,7 +978,7 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
             $context = 'checkout-block-express';
         }
         if ($context === 'pay-now') {
-            $context = 'checkout';
+            $context = CartCheckoutDetector::has_block_checkout() ? 'checkout-block-express' : 'checkout';
         }
         $defaults = array('layout' => 'vertical', 'size' => 'responsive', 'color' => 'gold', 'shape' => 'pill', 'label' => 'paypal', 'tagline' => \true);
         return $this->get_style_value("button_{$context}_{$style}") ?? $this->get_style_value("button_{$style}") ?? ($default ? $this->normalize_style_value($default) : null) ?? $this->normalize_style_value($defaults[$style] ?? '');
