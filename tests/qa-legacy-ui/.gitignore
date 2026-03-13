@@ -11,5 +11,5 @@ test-results
 !.env.example
 .DS_Store
 
-/resources/files/woocommerce-paypal-payments.zip
+/resources/files/woocommerce-paypal-payments*.zip
 /resources/files/woocommerce-subscriptions.zip

@@ -35,6 +35,7 @@ import {
 	pcpPlugin,
 	PcpMerchant,
 	PcpConfig,
+	pcpPluginUpdate,
 } from '../resources';
 import { generateRandomString, getCustomerStorageStateName } from './helpers';
 import urls from './urls';
@@ -456,6 +457,10 @@ export class Utils {
 			await this.restoreCustomer( data.customer );
 		}
 	};
+
+	updatePcpPlugin = async () => {
+		await this.plugins.installPluginFromFile( pcpPluginUpdate.zipFilePath );
+	}
 
 	configurePcp = async ( data: PcpConfig ) => {
 		if (

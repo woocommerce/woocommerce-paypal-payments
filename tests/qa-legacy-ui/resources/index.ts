@@ -18,6 +18,7 @@ export * from './pcp-config';
 export * from './types';
 
 export { default as pcpPlugin } from './pcp-plugin.json';
+export { default as pcpPluginUpdate } from './pcp-plugin-update.json';
 export { default as disableNoncePlugin } from './disable-nonce-plugin.json';
 export { default as enableVaultV2Plugin } from './enable-vault-v2-plugin.json';
 export { default as paypalButtonColors } from './paypal-button-colors.json';
