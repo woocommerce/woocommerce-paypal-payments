@@ -1,11 +1,4 @@
-import { __ } from '@wordpress/i18n';
-import {
-	Button,
-	TextControl,
-	ToggleControl,
-	RadioControl,
-} from '@wordpress/components';
-import { useState } from '@wordpress/element';
+import { Button } from '@wordpress/components';
 import {
 	Content,
 	ContentWrapper,
@@ -14,11 +7,7 @@ import {
 	Description,
 } from '../../../../ReusableComponents/Elements';
 import { PPIcon } from '../../../../ReusableComponents/Icons';
-
-import PaymentMethodModal from '@ppcp-settings/Components/ReusableComponents/PaymentMethodModal';
-import { PaymentHooks } from '@ppcp-settings/data';
 import classNames from 'classnames';
-import { ControlButton } from '@ppcp-settings/Components/ReusableComponents/Controls';
 
 const MigrationBanner = ( {
 	id,
@@ -37,7 +26,7 @@ const MigrationBanner = ( {
 	};
 
 	const titleId = id ? `${ id }-title` : undefined;
-	const descriptionId = id ? `${ id }-description` : undefined;
+
 	return (
 		<div { ...props } role="region" aria-labelledby={ titleId }>
 			<ContentWrapper>
@@ -54,12 +43,7 @@ const MigrationBanner = ( {
 					<Action>
 						<div className="ppcp--action-buttons">
 							{ actionProps?.buttons.map( ( buttonData ) => {
-								const {
-									class: className,
-									type,
-									text,
-									onClick,
-								} = buttonData;
+								const { type, text, onClick } = buttonData;
 
 								return (
 									<Button
