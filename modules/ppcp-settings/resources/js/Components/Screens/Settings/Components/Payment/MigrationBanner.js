@@ -6,13 +6,14 @@ import {
 	Header,
 	Action,
 	Description,
-} from '../../../../ReusableComponents/Elements';
+} from '@ppcp-settings/ReusableComponents/Elements';
 import { PPIcon } from '../../../../ReusableComponents/Icons';
 import classNames from 'classnames';
 import { __ } from '@wordpress/i18n';
 import TitleBadge, {
 	TITLE_BADGE_INFO,
 } from '@ppcp-settings/Components/ReusableComponents/TitleBadge';
+import { migrateToAcdc } from '@ppcp-settings/data/migration/actions';
 
 let isBannerDismissed = false;
 
@@ -24,6 +25,7 @@ const MigrationBanner = ( {
 	actionProps,
 } ) => {
 	const [ isDismissed, setIsDismissed ] = useState( () => isBannerDismissed );
+	const [ isMigrating, setIsMigrating ] = useState( false );
 
 	const dismiss = () => {
 		isBannerDismissed = true;
@@ -33,6 +35,16 @@ const MigrationBanner = ( {
 	if ( isDismissed ) {
 		return null;
 	}
+
+	const handleUpgrade = async () => {
+		setIsMigrating( true );
+		try {
+			await migrateToAcdc();
+			window.location.reload();
+		} catch ( error ) {
+			setIsMigrating( false );
+		}
+	};
 
 	const migrationBannerClassNames = classNames(
 		'ppcp-r-settings-card',
@@ -76,10 +88,11 @@ const MigrationBanner = ( {
 								return (
 									<Button
 										className="small-button"
-										isBusy={ false }
+										isBusy={ ! isDismiss && isMigrating }
 										variant={ type }
+										disabled={ isMigrating }
 										onClick={
-											isDismiss ? dismiss : onClick
+											isDismiss ? dismiss : handleUpgrade
 										}
 									>
 										{ text }
