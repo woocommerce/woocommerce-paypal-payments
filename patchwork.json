@@ -1,6 +1,0 @@
-{
-    "redefinable-internals": [
-        "json_decode",
-        "filter_input"
-    ]
-}
