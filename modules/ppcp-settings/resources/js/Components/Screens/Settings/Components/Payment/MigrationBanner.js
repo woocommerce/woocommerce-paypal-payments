@@ -1,4 +1,5 @@
 import { Button } from '@wordpress/components';
+import { useState } from '@wordpress/element';
 import {
 	Content,
 	ContentWrapper,
@@ -8,12 +9,12 @@ import {
 } from '../../../../ReusableComponents/Elements';
 import { PPIcon } from '../../../../ReusableComponents/Icons';
 import classNames from 'classnames';
-import ConnectionStatusBadge from '@ppcp-settings/Components/Screens/Settings/Components/Settings/Parts/ConnectionStatusBadge';
-import { ControlStaticValue } from '@ppcp-settings/Components/ReusableComponents/Controls';
 import { __ } from '@wordpress/i18n';
 import TitleBadge, {
 	TITLE_BADGE_INFO,
 } from '@ppcp-settings/Components/ReusableComponents/TitleBadge';
+
+let isBannerDismissed = false;
 
 const MigrationBanner = ( {
 	id,
@@ -22,6 +23,17 @@ const MigrationBanner = ( {
 	description,
 	actionProps,
 } ) => {
+	const [ isDismissed, setIsDismissed ] = useState( () => isBannerDismissed );
+
+	const dismiss = () => {
+		isBannerDismissed = true;
+		setIsDismissed( true );
+	};
+
+	if ( isDismissed ) {
+		return null;
+	}
+
 	const migrationBannerClassNames = classNames(
 		'ppcp-r-settings-card',
 		className
@@ -48,7 +60,7 @@ const MigrationBanner = ( {
 							<TitleBadge
 								type={ TITLE_BADGE_INFO }
 								text={ __(
-									'You’re eligible',
+									"You're eligible",
 									'woocommerce-paypal-payments'
 								) }
 							/>
@@ -59,13 +71,16 @@ const MigrationBanner = ( {
 						<div className="ppcp--action-buttons">
 							{ actionProps?.buttons.map( ( buttonData ) => {
 								const { type, text, onClick } = buttonData;
+								const isDismiss = type === 'tertiary';
 
 								return (
 									<Button
 										className="small-button"
 										isBusy={ false }
 										variant={ type }
-										onClick={ onClick }
+										onClick={
+											isDismiss ? dismiss : onClick
+										}
 									>
 										{ text }
 									</Button>
@@ -78,7 +93,11 @@ const MigrationBanner = ( {
 					<PPIcon imageName="icon-button-payment-method-advanced-cards-large.svg" />
 					<button
 						className={ `${ className }__icon-close` }
-						aria-label="Dismiss todo item"
+						aria-label={ __(
+							'Dismiss',
+							'woocommerce-paypal-payments'
+						) }
+						onClick={ dismiss }
 					>
 						<PPIcon imageName="icon-close.svg" />
 					</button>
