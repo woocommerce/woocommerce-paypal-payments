@@ -128,8 +128,9 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 		/**
 		 * Override ACDC status with BCDC for eligible merchants.
 		 *
-		 * This filter determines whether to force BCDC (Standard Card buttons) classification
-		 * for merchants instead of ACDC (Advanced Card processing). It handles two scenarios:
+		 * When the BCDC migration override is active, forces BCDC (Standard Card buttons)
+		 * classification instead of ACDC (Advanced Card processing), and suppresses ACDC
+		 * eligibility so the payment methods panel shows BCDC instead of ACDC.
 		 *
 		 * @param bool|null $use_bcdc Whether to use BCDC instead of ACDC.
 		 *
@@ -143,6 +144,9 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 
 				if ( $check_override() ) {
 					$use_bcdc = true;
+
+					add_filter( 'woocommerce_paypal_payments_is_acdc_active', '__return_false' );
+					add_filter( 'woocommerce_paypal_payments_is_eligible_for_card_fields', '__return_false' );
 				}
 
 				return $use_bcdc;
