@@ -205,13 +205,3 @@ setup( 'Setup products', async ( { wooCommerceUtils } ) => {
 	// store created products as CART_ITEMS env var
 	process.env.PRODUCTS = JSON.stringify( cartItems );
 } );
-
-setup(
-	'Setup Disable new UI plugin (active)',
-	async ( { requestUtils, plugins } ) => {
-		if ( ! ( await requestUtils.isPluginInstalled( disableNewUi.slug ) ) ) {
-			await plugins.installPluginFromFile( disableNewUi.zipFilePath );
-		}
-		await requestUtils.activatePlugin( disableNewUi.slug );
-	}
-);
