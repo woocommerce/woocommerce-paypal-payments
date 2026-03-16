@@ -6,7 +6,7 @@ import {
 	Header,
 	Action,
 	Description,
-} from '@ppcp-settings/ReusableComponents/Elements';
+} from '@ppcp-settings/Components/ReusableComponents/Elements';
 import { PPIcon } from '../../../../ReusableComponents/Icons';
 import classNames from 'classnames';
 import { __ } from '@wordpress/i18n';

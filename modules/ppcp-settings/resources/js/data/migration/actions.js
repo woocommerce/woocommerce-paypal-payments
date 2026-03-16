@@ -8,7 +8,7 @@
 
 import apiFetch from '@wordpress/api-fetch';
 
-const REST_MIGRATION_PATH = '/wc/v3/wc_paypal/migrate-to-acdc';
+const REST_ACDC_MIGRATION_PATH = '/wc/v3/wc_paypal/migrate-to-acdc';
 
 /**
  * Side effect. Triggers the migration from BCDC to ACDC on the server.
@@ -20,6 +20,6 @@ const REST_MIGRATION_PATH = '/wc/v3/wc_paypal/migrate-to-acdc';
  */
 export const migrateToAcdc = () =>
 	apiFetch( {
-		path: REST_MIGRATION_PATH,
+		path: REST_ACDC_MIGRATION_PATH,
 		method: 'POST',
 	} );
