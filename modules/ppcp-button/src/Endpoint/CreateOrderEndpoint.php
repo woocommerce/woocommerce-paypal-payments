@@ -311,7 +311,7 @@ class CreateOrderEndpoint implements EndpointInterface {
 					wp_send_json_error(
 						array(
 							'name'    => 'invalid-request',
-							'message' => __( 'Invalid request. Please try again.', 'woocommerce-paypal-payments' ),
+							'message' => __( 'You cannot pay for this order. Contact the shop for assistance.', 'woocommerce-paypal-payments' ),
 							'code'    => 0,
 							'details' => array(),
 						)
