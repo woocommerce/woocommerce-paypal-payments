@@ -50,7 +50,7 @@ class AuthenticationRestEndpoint extends RestEndpoint {
 	 */
 	private SettingsDataManager $data_manager;
 
-	private ?LoggerInterface $logger;
+	private LoggerInterface $logger;
 
 	/**
 	 * Defines the JSON response format (when connection was successful).
