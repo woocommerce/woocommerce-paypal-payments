@@ -247,7 +247,7 @@ class CreateOrderEndpoint implements \WooCommerce\PayPalCommerce\Button\Endpoint
                 $order_key = $data['order_key'] ?? '';
                 //phpcs:ignore WordPress.WP.Capabilities.Unknown
                 if (!$wc_order->key_is_valid($order_key) || !current_user_can('view_order', $data['order_id'])) {
-                    wp_send_json_error(array('name' => 'invalid-request', 'message' => __('Invalid request. Please try again.', 'woocommerce-paypal-payments'), 'code' => 0, 'details' => array()));
+                    wp_send_json_error(array('name' => 'invalid-request', 'message' => __('You cannot pay for this order. Contact the shop for assistance.', 'woocommerce-paypal-payments'), 'code' => 0, 'details' => array()));
                 }
                 $this->purchase_unit = $this->purchase_unit_factory->from_wc_order($wc_order, $payment_method);
             } else {
