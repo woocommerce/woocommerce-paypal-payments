@@ -123,7 +123,7 @@ describe( 'usePaymentConfig hook', () => {
 
 		test( 'Country MX should contain ACDC methods when canUseCardPayments is true', () => {
 			const { result } = renderHook( () =>
-				usePaymentConfig( 'MX', true, false, false, false )
+				usePaymentConfig( 'MX', true, true, false, false )
 			);
 			const methodNames = result.current.optionalMethods.map(
 				( method ) => method.name
@@ -175,14 +175,14 @@ describe( 'usePaymentConfig hook', () => {
 			}
 		);
 
-		test( 'Mexico should not show DigitalWallets regardless of canUseDigitalWallets', () => {
+		test( 'Mexico should show DigitalWallets when canUseDigitalWallets is true', () => {
 			const { result } = renderHook( () =>
 				usePaymentConfig( 'MX', false, true, false, false )
 			);
 			const methodNames = result.current.optionalMethods.map(
 				( method ) => method.name
 			);
-			expect( methodNames ).not.toContain( 'DigitalWallets' );
+			expect( methodNames ).toContain( 'DigitalWallets' );
 		} );
 	} );
 } );
