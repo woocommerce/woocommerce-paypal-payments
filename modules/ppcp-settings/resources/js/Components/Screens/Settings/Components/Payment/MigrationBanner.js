@@ -81,24 +81,31 @@ const MigrationBanner = ( {
 					</Header>
 					<Action>
 						<div className="ppcp--action-buttons">
-							{ actionProps?.buttons.map( ( buttonData ) => {
-								const { type, text, onClick } = buttonData;
-								const isDismiss = type === 'tertiary';
+							{ actionProps?.buttons.map(
+								( buttonData, index ) => {
+									const { type, text } = buttonData;
+									const isDismiss = type === 'tertiary';
 
-								return (
-									<Button
-										className="small-button"
-										isBusy={ ! isDismiss && isMigrating }
-										variant={ type }
-										disabled={ isMigrating }
-										onClick={
-											isDismiss ? dismiss : handleUpgrade
-										}
-									>
-										{ text }
-									</Button>
-								);
-							} ) }
+									return (
+										<Button
+											key={ index }
+											className="small-button"
+											isBusy={
+												! isDismiss && isMigrating
+											}
+											variant={ type }
+											disabled={ isMigrating }
+											onClick={
+												isDismiss
+													? dismiss
+													: handleUpgrade
+											}
+										>
+											{ text }
+										</Button>
+									);
+								}
+							) }
 						</div>
 					</Action>
 				</Content>
