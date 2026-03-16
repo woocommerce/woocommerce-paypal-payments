@@ -39,10 +39,27 @@ class CardFieldsModule implements ServiceModule, ExecutableModule {
 	 * {@inheritDoc}
 	 */
 	public function run( ContainerInterface $c ): bool {
-		if ( ! $c->get( 'card-fields.eligible' ) ) {
-			return true;
-		}
+		add_action(
+			'init',
+			function () use ( $c ): void {
+				$eligibility_check = $c->get( 'card-fields.eligibility.check' );
+				if ( ! $eligibility_check() ) {
+					return;
+				}
 
+				$this->register_hooks( $c );
+			}
+		);
+
+		return true;
+	}
+
+	/**
+	 * Registers all hooks that require card-fields eligibility.
+	 *
+	 * @param ContainerInterface $c The DI container.
+	 */
+	private function register_hooks( ContainerInterface $c ): void {
 		add_filter(
 			'woocommerce_paypal_payments_sdk_components_hook',
 			static function ( array $components ) use ( $c ) {
@@ -203,7 +220,5 @@ class CardFieldsModule implements ServiceModule, ExecutableModule {
 				}
 			}
 		);
-
-		return true;
 	}
 }
