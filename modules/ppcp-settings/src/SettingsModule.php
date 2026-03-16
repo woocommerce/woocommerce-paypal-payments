@@ -840,15 +840,15 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 				}
 
 				$applepay_product_status = $container->get( 'applepay.apple-product-status' );
-				$apple_pay_available     = $applepay_product_status->is_active()
-					&& $container->get( 'applepay.eligible' );
+				$applepay_eligibility    = $container->get( 'applepay.eligibility.check' );
+				$apple_pay_available     = $applepay_product_status->is_active() && $applepay_eligibility();
 				if ( ! $apple_pay_available ) {
 					$payment_methods->toggle_method_state( ApplePayGateway::ID, false );
 				}
 
 				$googlepay_product_status = $container->get( 'googlepay.helpers.apm-product-status' );
-				$google_pay_available     = $googlepay_product_status->is_active()
-					&& $container->get( 'googlepay.eligible' );
+				$googlepay_eligibility    = $container->get( 'googlepay.eligibility.check' );
+				$google_pay_available     = $googlepay_product_status->is_active() && $googlepay_eligibility();
 				if ( ! $google_pay_available ) {
 					$payment_methods->toggle_method_state( GooglePayGateway::ID, false );
 				}
