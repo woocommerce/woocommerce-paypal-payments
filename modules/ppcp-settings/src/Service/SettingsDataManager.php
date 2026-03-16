@@ -152,6 +152,7 @@ class SettingsDataManager
         $profile_data = $this->onboarding_profile->to_array();
         $flags->is_business_seller = !($profile_data['is_casual_seller'] ?? \false);
         $flags->use_card_payments = $profile_data['accept_card_payments'] ?? \false;
+        $flags->use_digital_wallets = $profile_data['accept_card_payments'] ?? \false;
         $flags->use_subscriptions = in_array(ProductChoicesEnum::SUBSCRIPTIONS, $profile_data['products'] ?? array(), \true);
         $this->toggle_payment_gateways($flags);
     }
@@ -185,9 +186,6 @@ class SettingsDataManager
             if ($flags->use_card_payments) {
                 // Enable ACDC for business sellers.
                 $this->payment_methods->toggle_method_state(CreditCardGateway::ID, \true);
-                // Apple Pay and Google Pay depend on the ACDC gateway.
-                $this->payment_methods->toggle_method_state(ApplePayGateway::ID, \true);
-                $this->payment_methods->toggle_method_state(GooglePayGateway::ID, \true);
                 // Enable Pay Later for business sellers if subscriptions were not selected.
                 // Selecting subscriptions automatically enables the "Save PayPal and Venmo" option, which is incompatible with Pay Later.
                 if (!$flags->use_subscriptions) {
@@ -195,6 +193,10 @@ class SettingsDataManager
                 }
                 // Enable BCDC for business sellers without ACDC.
                 $this->payment_methods->toggle_method_state(CardButtonGateway::ID, \true);
+            }
+            if ($flags->use_digital_wallets) {
+                $this->payment_methods->toggle_method_state(ApplePayGateway::ID, \true);
+                $this->payment_methods->toggle_method_state(GooglePayGateway::ID, \true);
             }
             /**
              * Allow plugins to modify apm payment gateway states before saving.

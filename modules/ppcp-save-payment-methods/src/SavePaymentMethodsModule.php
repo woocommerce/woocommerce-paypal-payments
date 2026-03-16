@@ -253,6 +253,9 @@ class SavePaymentMethodsModule implements ServiceModule, ExecutableModule
                 }
             });
             add_filter('woocommerce_paypal_payments_credit_card_gateway_supports', function (array $supports) use ($c): array {
+                if (!$c->get('save-payment-methods.eligible')) {
+                    return $supports;
+                }
                 $settings_provider = $c->get('settings.settings-provider');
                 assert($settings_provider instanceof SettingsProvider);
                 if ($settings_provider->save_card_details()) {

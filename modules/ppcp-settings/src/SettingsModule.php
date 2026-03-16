@@ -213,7 +213,7 @@ class SettingsModule implements ServiceModule, ExecutableModule
             $this->render_content();
         });
         add_action('rest_api_init', static function () use ($container): void {
-            $endpoints = array('onboarding' => $container->get('settings.rest.onboarding'), 'common' => $container->get('settings.rest.common'), 'connect_manual' => $container->get('settings.rest.authentication'), 'login_link' => $container->get('settings.rest.login_link'), 'webhooks' => $container->get('settings.rest.webhooks'), 'refresh_feature_status' => $container->get('settings.rest.refresh_feature_status'), 'payment' => $container->get('settings.rest.payment'), 'settings' => $container->get('settings.rest.settings'), 'styling' => $container->get('settings.rest.styling'), 'todos' => $container->get('settings.rest.todos'), 'pay_later_messaging' => $container->get('settings.rest.pay_later_messaging'), 'features' => $container->get('settings.rest.features'));
+            $endpoints = array('onboarding' => $container->get('settings.rest.onboarding'), 'common' => $container->get('settings.rest.common'), 'connect_manual' => $container->get('settings.rest.authentication'), 'login_link' => $container->get('settings.rest.login_link'), 'webhooks' => $container->get('settings.rest.webhooks'), 'refresh_feature_status' => $container->get('settings.rest.refresh_feature_status'), 'payment' => $container->get('settings.rest.payment'), 'settings' => $container->get('settings.rest.settings'), 'styling' => $container->get('settings.rest.styling'), 'todos' => $container->get('settings.rest.todos'), 'pay_later_messaging' => $container->get('settings.rest.pay_later_messaging'), 'features' => $container->get('settings.rest.features'), 'migrate_to_acdc' => $container->get('settings.rest.migrate_to_acdc'));
             foreach ($endpoints as $endpoint) {
                 assert($endpoint instanceof RestEndpoint);
                 $endpoint->register_routes();
@@ -299,6 +299,13 @@ class SettingsModule implements ServiceModule, ExecutableModule
                     assert($axo_gateway instanceof WC_Payment_Gateway);
                     $methods[] = $axo_gateway;
                 }
+                // Remove gateways where the merchant is not eligible.
+                $eligibility_service = $container->get('settings.service.payment_methods_eligibilities');
+                $eligibility_checks = $eligibility_service->get_eligibility_checks();
+                $methods = array_filter($methods, static function ($gateway) use ($eligibility_checks) {
+                    $id = $gateway instanceof WC_Payment_Gateway ? $gateway->id : '';
+                    return !isset($eligibility_checks[$id]) || $eligibility_checks[$id]();
+                });
                 return $methods;
             },
             99
@@ -518,6 +525,49 @@ class SettingsModule implements ServiceModule, ExecutableModule
         add_action(
             'woocommerce_paypal_payments_gateway_migrate',
             /**
+             * Retroactive fix for local APMs not enabled after migration when
+             * allow_local_apm_gateways was false.
+             *
+             * In versions up to 3.4.1, the migration only enabled local APMs when
+             * allow_local_apm_gateways was truthy. When it was false, APMs were shown
+             * inside the PayPal button, not as separate gateways. The new UI always
+             * treats APMs as separate gateways, so skipping them left them invisible.
+             *
+             * @param false|string $previous_version The previously installed plugin version,
+             *                                       or false on first installation.
+             */
+            static function ($previous_version) use ($container): void {
+                if ($previous_version && version_compare($previous_version, '3.4.1', 'gt')) {
+                    return;
+                }
+                if (get_option(MigrationManager::OPTION_NAME_MIGRATION_IS_DONE) !== '1') {
+                    return;
+                }
+                $legacy_settings = (array) get_option('woocommerce-ppcp-settings', array());
+                // Only fix merchants who had allow_local_apm_gateways falsy.
+                // Truthy merchants were migrated correctly.
+                if (!empty($legacy_settings['allow_local_apm_gateways'])) {
+                    return;
+                }
+                $payment_settings = $container->get('settings.data.payment');
+                assert($payment_settings instanceof PaymentSettings);
+                $local_apms = $container->get('ppcp-local-apms.payment-methods');
+                $disable_funding = (array) ($legacy_settings['disable_funding'] ?? array());
+                $changed = \false;
+                foreach ($local_apms as $apm) {
+                    if (!in_array($apm['id'], $disable_funding, \true) && !$payment_settings->is_method_enabled($apm['id'])) {
+                        $payment_settings->toggle_method_state($apm['id'], \true);
+                        $changed = \true;
+                    }
+                }
+                if ($changed) {
+                    $payment_settings->save();
+                }
+            }
+        );
+        add_action(
+            'woocommerce_paypal_payments_gateway_migrate',
+            /**
              * Migrates payment level processing setting during plugin update.
              *
              * For merchants updating from version 3.3.2 or older, disables Level 2/3
@@ -546,26 +596,35 @@ class SettingsModule implements ServiceModule, ExecutableModule
             }
         );
         /**
-         * Disable ACDC-dependent gateways for merchants not eligible for ACDC
+         * Disable ACDC gateway for merchants not eligible for ACDC
          * after onboarding is completed.
-         *
-         * Apple Pay and Google Pay depend on the ACDC, so they
-         * must be disabled alongside ACDC when the merchant's country is not
-         * eligible for Advanced Card Processing.
          */
         add_action('woocommerce_paypal_payments_toggle_payment_gateways', function (PaymentSettings $payment_methods, ConfigurationFlagsDTO $flags) use ($container) {
             $dcc_configuration = $container->get('wcgateway.configuration.card-configuration');
             assert($dcc_configuration instanceof CardPaymentsConfiguration);
             if ($flags->is_business_seller && $flags->use_card_payments && !$dcc_configuration->use_acdc()) {
-                $check_override = $container->get('settings.migration.bcdc-override-check');
-                assert(is_callable($check_override));
                 $payment_methods->toggle_method_state(CreditCardGateway::ID, \false);
-                // BCDC-override merchants may have Google Pay and Apple Pay configured
-                // alongside BCDC. Only disable these if NOT in BCDC-override mode.
-                if (!$check_override()) {
-                    $payment_methods->toggle_method_state(ApplePayGateway::ID, \false);
-                    $payment_methods->toggle_method_state(GooglePayGateway::ID, \false);
-                }
+            }
+        }, 10, 2);
+        /**
+         * Disable Apple Pay/Google Pay gateways for merchants not eligible
+         * after onboarding is completed.
+         */
+        add_action('woocommerce_paypal_payments_toggle_payment_gateways', function (PaymentSettings $payment_methods, ConfigurationFlagsDTO $flags) use ($container) {
+            if (!$flags->is_business_seller || !$flags->use_digital_wallets) {
+                return;
+            }
+            $applepay_product_status = $container->get('applepay.apple-product-status');
+            $applepay_eligibility = $container->get('applepay.eligibility.check');
+            $apple_pay_available = $applepay_product_status->is_active() && $applepay_eligibility();
+            if (!$apple_pay_available) {
+                $payment_methods->toggle_method_state(ApplePayGateway::ID, \false);
+            }
+            $googlepay_product_status = $container->get('googlepay.helpers.apm-product-status');
+            $googlepay_eligibility = $container->get('googlepay.eligibility.check');
+            $google_pay_available = $googlepay_product_status->is_active() && $googlepay_eligibility();
+            if (!$google_pay_available) {
+                $payment_methods->toggle_method_state(GooglePayGateway::ID, \false);
             }
         }, 10, 2);
         return \true;
