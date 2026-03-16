@@ -1,6 +1,7 @@
 <?php
 /**
- * The Shipment integration for Germanized plugin.
+ * Shiptastic integration.
+ * https://wordpress.org/plugins/shiptastic-for-woocommerce/
  *
  * @package WooCommerce\PayPalCommerce\OrderTracking\Shipment
  */
@@ -13,17 +14,15 @@ use Exception;
 use Psr\Log\LoggerInterface;
 use WC_Order;
 use WooCommerce\PayPalCommerce\Compat\Integration;
-use Vendidero\Germanized\Shipments\Shipment;
-use Vendidero\Germanized\Shipments\ShipmentItem;
 use WooCommerce\PayPalCommerce\OrderTracking\Endpoint\OrderTrackingEndpoint;
 use WooCommerce\PayPalCommerce\OrderTracking\Shipment\ShipmentFactoryInterface;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\TransactionIdHandlingTrait;
 use function WooCommerce\PayPalCommerce\Api\ppcp_get_paypal_order;
 
 /**
- * Class GermanizedShipmentIntegration.
+ * Class ShiptasticIntegration.
  */
-class GermanizedShipmentIntegration implements Integration {
+class ShiptasticIntegration implements Integration {
 
 	use TransactionIdHandlingTrait;
 
@@ -69,12 +68,11 @@ class GermanizedShipmentIntegration implements Integration {
 	 * {@inheritDoc}
 	 */
 	public function integrate(): void {
-
 		add_action(
-			'woocommerce_gzd_shipment_status_shipped',
-			function ( int $shipment_id, Shipment $shipment ) {
+			'woocommerce_shiptastic_shipment_status_shipped',
+			function ( int $shipment_id, $shipment ) {
 				try {
-					if ( ! apply_filters( 'woocommerce_paypal_payments_sync_gzd_tracking', true ) ) {
+					if ( ! apply_filters( 'woocommerce_paypal_payments_sync_shiptastic_tracking', true ) ) {
 						return;
 					}
 
@@ -91,7 +89,7 @@ class GermanizedShipmentIntegration implements Integration {
 					$carrier         = $shipment->get_shipping_provider();
 
 					$items = array_map(
-						function ( ShipmentItem $item ): int {
+						function ( $item ): int {
 							return $item->get_order_item_id();
 						},
 						$shipment->get_items()
