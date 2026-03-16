@@ -16,12 +16,10 @@ const StepPaymentMethods = () => {
 		OnboardingHooks.useFlags();
 
 	const hasAdvancedMethods = canUseCardPayments || canUseDigitalWallets;
-	const isMexico = 'MX' === storeCountry;
-	const showAdvancedSection = hasAdvancedMethods && ! isMexico;
 
 	const optionalMethodTitle = useMemo( () => {
-		// The BCDC flow does not show a title. No ACDC and no digital wallets does not show a title. Mexico does not show a title.
-		if ( isCasualSeller || ! showAdvancedSection ) {
+		// The BCDC flow does not show a title. No ACDC and no digital wallets does not show a title.
+		if ( isCasualSeller || ! hasAdvancedMethods ) {
 			return null;
 		}
 
@@ -29,7 +27,7 @@ const StepPaymentMethods = () => {
 			'Available with additional application',
 			'woocommerce-paypal-payments'
 		);
-	}, [ isCasualSeller, showAdvancedSection ] );
+	}, [ isCasualSeller, hasAdvancedMethods ] );
 
 	const methodChoices = [
 		{
@@ -39,7 +37,7 @@ const StepPaymentMethods = () => {
 		},
 		{
 			title:
-				ownBrandOnly || ! showAdvancedSection
+				ownBrandOnly || ! hasAdvancedMethods
 					? __(
 							'No thanks, I prefer to use a different provider for local payment methods',
 							'woocommerce-paypal-payments'
@@ -94,21 +92,17 @@ const OptionalMethodDescription = () => {
 	const { isCasualSeller } = OnboardingHooks.useBusiness();
 	const { storeCountry, storeCurrency, ownBrandOnly } =
 		CommonHooks.useWooSettings();
-	const { canUseCardPayments, canUseDigitalWallets } =
+	const { canUseCardPayments, canUseDigitalWallets, canUseFastlane } =
 		OnboardingHooks.useFlags();
 
 	return (
 		<PaymentFlow
 			onlyOptional={ true }
-			useAcdc={
-				! isCasualSeller && canUseCardPayments && 'MX' !== storeCountry
-			}
+			useAcdc={ ! isCasualSeller && canUseCardPayments }
 			useDigitalWallets={
-				! isCasualSeller &&
-				canUseDigitalWallets &&
-				'MX' !== storeCountry
+				! isCasualSeller && canUseDigitalWallets
 			}
-			isFastlane={ true }
+			isFastlane={ canUseFastlane }
 			isPayLater={ true }
 			ownBrandOnly={ ownBrandOnly }
 			storeCountry={ storeCountry }

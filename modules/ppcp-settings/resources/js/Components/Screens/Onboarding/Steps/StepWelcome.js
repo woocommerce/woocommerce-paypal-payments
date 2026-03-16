@@ -26,9 +26,7 @@ const StepWelcome = ( { onNext } ) => {
 	);
 
 	const onboardingHeaderDescription =
-		( canUseCardPayments || canUseDigitalWallets ) &&
-		! ownBrandOnly &&
-		'MX' !== storeCountry
+		( canUseCardPayments || canUseDigitalWallets ) && ! ownBrandOnly
 			? __(
 					'Your all-in-one integration for PayPal checkout solutions that enable buyers to pay via PayPal, Pay Later, all major credit/debit cards, Apple Pay, Google Pay, and more.',
 					'woocommerce-paypal-payments'

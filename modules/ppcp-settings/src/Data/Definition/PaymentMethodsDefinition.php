@@ -518,9 +518,11 @@ class PaymentMethodsDefinition {
 		);
 
 		// Fastlane (Axo) conflict warnings.
-		$warnings[ AxoGateway::ID ] = array(
-			'axo_checkout_config'      => $this->axo_checkout_config_notice,
-			'axo_incompatible_plugins' => $this->axo_incompatible_plugins_notice,
+		$warnings[ AxoGateway::ID ] = array_filter(
+			array(
+				'axo_checkout_config'      => $this->axo_checkout_config_notice,
+				'axo_incompatible_plugins' => $this->axo_incompatible_plugins_notice,
+			)
 		);
 
 		return $warnings;

@@ -18,6 +18,8 @@ export const learnMoreLinks = {
 			'https://www.paypal.com/ca/business/paypal-business-fees',
 		PayPalCheckout:
 			'https://www.paypal.com/ca/business/accept-payments/checkout',
+		Fastlane:
+			'https://www.paypal.com/us/enterprise/payment-processing/guest-checkout',
 	},
 	GB: {
 		PaymentDetails:
@@ -36,6 +38,8 @@ export const learnMoreLinks = {
 			'https://www.paypal.com/fr/business/accept-payments/checkout',
 		PayLater:
 			'https://www.paypal.com/fr/business/accept-payments/checkout/installments',
+		Fastlane:
+			'https://www.paypal.com/us/enterprise/payment-processing/guest-checkout',
 	},
 	ES: {
 		PaymentDetails:
@@ -44,6 +48,8 @@ export const learnMoreLinks = {
 			'https://www.paypal.com/es/business/accept-payments/checkout',
 		PayLater:
 			'https://www.paypal.com/es/business/accept-payments/checkout/installments',
+		Fastlane:
+			'https://www.paypal.com/us/enterprise/payment-processing/guest-checkout',
 	},
 	IT: {
 		PaymentDetails:
@@ -52,6 +58,8 @@ export const learnMoreLinks = {
 			'https://www.paypal.com/it/business/accept-payments/checkout',
 		PayLater:
 			'https://www.paypal.com/it/business/accept-payments/checkout/installments',
+		Fastlane:
+			'https://www.paypal.com/us/enterprise/payment-processing/guest-checkout',
 	},
 	DE: {
 		PaymentDetails:
@@ -60,6 +68,8 @@ export const learnMoreLinks = {
 			'https://www.paypal.com/de/business/accept-payments/checkout',
 		PayLater:
 			'https://www.paypal.com/de/business/accept-payments/checkout/installments',
+		Fastlane:
+			'https://www.paypal.com/us/enterprise/payment-processing/guest-checkout',
 	},
 	AU: {
 		PaymentDetails:

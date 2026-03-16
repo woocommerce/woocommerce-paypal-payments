@@ -94,7 +94,7 @@ export const determineProductsAndCaps = (
 		if ( canUseVaulting ) {
 			apiModules.push( PAYPAL_PRODUCTS.VAULTING );
 		}
-	} else if ( isCasualSeller || 'MX' === storeCountry ) {
+	} else if ( isCasualSeller ) {
 		/**
 		 * Branch 2: Merchant has no business.
 		 * The store uses the Express-checkout product.
