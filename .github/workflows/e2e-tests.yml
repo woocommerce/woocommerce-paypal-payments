@@ -19,6 +19,36 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  debug-npm:
+    name: Debug npm config
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          registry-url: https://npm.pkg.github.com/
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_SYDE }}
+
+      - name: Show npm config
+        working-directory: ./tests/qa
+        run: |
+          echo "=== ~/.npmrc ==="
+          cat ~/.npmrc || true
+          echo ""
+          echo "=== .npmrc (local) ==="
+          cat .npmrc || true
+          echo ""
+          echo "=== repo root .npmrc ==="
+          cat "$GITHUB_WORKSPACE/.npmrc" || true
+          echo ""
+          echo "=== npm config list ==="
+          npm config list
+          echo ""
+          echo "=== npm config list -l (grep registry) ==="
+          npm config list -l 2>/dev/null | grep -i registry || true
   build:
     name: Build tested plugin package
     uses: inpsyde/reusable-workflows/.github/workflows/build-and-distribute.yml@main
