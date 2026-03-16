@@ -78,7 +78,7 @@ class RefreshFeatureStatusEndpoint
             )));
         }
         $this->cache->set(self::CACHE_KEY, $now, self::TIMEOUT);
-        do_action('woocommerce_paypal_payments_clear_apm_product_status', $this->settings);
+        do_action('woocommerce_paypal_payments_clear_apm_product_status');
         wp_send_json_success();
     }
     /**

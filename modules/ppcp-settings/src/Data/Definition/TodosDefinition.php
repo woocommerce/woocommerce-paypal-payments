@@ -8,8 +8,8 @@
 declare (strict_types=1);
 namespace WooCommerce\PayPalCommerce\Settings\Data\Definition;
 
-use WooCommerce\PayPalCommerce\Settings\Ajax\SwitchSettingsUiEndpoint;
 use WooCommerce\PayPalCommerce\Settings\Data\TodosModel;
+use WooCommerce\PayPalCommerce\Settings\Service\Migration\MigrationManager;
 use WooCommerce\PayPalCommerce\Settings\Service\TodosEligibilityService;
 use WooCommerce\PayPalCommerce\Settings\Data\GeneralSettings;
 /**
@@ -65,7 +65,7 @@ class TodosDefinition
      */
     protected function is_settings_migration_done(): bool
     {
-        return '1' === get_option(SwitchSettingsUiEndpoint::OPTION_NAME_MIGRATION_IS_DONE);
+        return '1' === get_option(MigrationManager::OPTION_NAME_MIGRATION_IS_DONE);
     }
     /**
      * Determines whether all todos have been completed or dismissed appropriately.

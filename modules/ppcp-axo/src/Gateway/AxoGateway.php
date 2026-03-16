@@ -22,12 +22,9 @@ use WooCommerce\PayPalCommerce\ApiClient\Factory\ExperienceContextBuilder;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
 use WooCommerce\PayPalCommerce\WcGateway\Endpoint\ReturnUrlEndpoint;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
-use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
-use WooCommerce\PayPalCommerce\WcGateway\Gateway\GatewaySettingsRendererTrait;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\TransactionUrlProvider;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\OrderMetaTrait;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\OrderProcessor;
-use WooCommerce\PayPalCommerce\WcGateway\Settings\SettingsRenderer;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\ProcessPaymentTrait;
 use WooCommerce\PayPalCommerce\WcGateway\Exception\GatewayGenericException;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
@@ -40,21 +37,8 @@ use DomainException;
 class AxoGateway extends WC_Payment_Gateway
 {
     use OrderMetaTrait;
-    use GatewaySettingsRendererTrait;
     use ProcessPaymentTrait;
     const ID = 'ppcp-axo-gateway';
-    /**
-     * The Settings Renderer.
-     *
-     * @var SettingsRenderer
-     */
-    protected $settings_renderer;
-    /**
-     * The settings.
-     *
-     * @var ContainerInterface
-     */
-    protected $ppcp_settings;
     /**
      * Gateway configuration object, providing relevant settings.
      *
@@ -128,8 +112,6 @@ class AxoGateway extends WC_Payment_Gateway
      */
     protected $settings_model;
     /**
-     * @param SettingsRenderer          $settings_renderer           The settings renderer.
-     * @param ContainerInterface        $ppcp_settings               The settings.
      * @param CardPaymentsConfiguration $dcc_configuration           The DCC Gateway configuration.
      * @param SessionHandler            $session_handler             The Session Handler.
      * @param OrderProcessor            $order_processor             The Order processor.
@@ -143,11 +125,9 @@ class AxoGateway extends WC_Payment_Gateway
      * @param ExperienceContextBuilder  $experience_context_builder  The experience context builder.
      * @param SettingsModel             $settings_model              The settings model.
      */
-    public function __construct(SettingsRenderer $settings_renderer, ContainerInterface $ppcp_settings, CardPaymentsConfiguration $dcc_configuration, SessionHandler $session_handler, OrderProcessor $order_processor, array $card_icons, OrderEndpoint $order_endpoint, PurchaseUnitFactory $purchase_unit_factory, ShippingPreferenceFactory $shipping_preference_factory, TransactionUrlProvider $transaction_url_provider, Environment $environment, LoggerInterface $logger, ExperienceContextBuilder $experience_context_builder, SettingsModel $settings_model)
+    public function __construct(CardPaymentsConfiguration $dcc_configuration, SessionHandler $session_handler, OrderProcessor $order_processor, array $card_icons, OrderEndpoint $order_endpoint, PurchaseUnitFactory $purchase_unit_factory, ShippingPreferenceFactory $shipping_preference_factory, TransactionUrlProvider $transaction_url_provider, Environment $environment, LoggerInterface $logger, ExperienceContextBuilder $experience_context_builder, SettingsModel $settings_model)
     {
         $this->id = self::ID;
-        $this->settings_renderer = $settings_renderer;
-        $this->ppcp_settings = $ppcp_settings;
         $this->dcc_configuration = $dcc_configuration;
         $this->session_handler = $session_handler;
         $this->order_processor = $order_processor;
@@ -190,7 +170,7 @@ class AxoGateway extends WC_Payment_Gateway
     public function process_payment($order_id)
     {
         $wc_order = wc_get_order($order_id);
-        if (!is_a($wc_order, WC_Order::class)) {
+        if (!$wc_order instanceof WC_Order) {
             return $this->handle_payment_failure(null, new GatewayGenericException(new Exception('WC order was not found.')));
         }
         // phpcs:disable WordPress.Security.NonceVerification
@@ -327,7 +307,7 @@ class AxoGateway extends WC_Payment_Gateway
         // Build payment source with 3DS verification if needed.
         $payment_source_properties = $this->build_payment_source_properties($payment_token);
         $payment_source = new PaymentSource('card', $payment_source_properties);
-        return $this->order_endpoint->create(array($purchase_unit), $shipping_preference, null, self::ID, $this->build_order_data(), $payment_source, $wc_order);
+        return $this->order_endpoint->create(array($purchase_unit), $shipping_preference, null, self::ID, $this->build_order_data(), $payment_source);
     }
     /**
      * Build payment source properties.
@@ -415,14 +395,5 @@ class AxoGateway extends WC_Payment_Gateway
             }
         }
         return parent::get_title();
-    }
-    /**
-     * Returns the settings renderer.
-     *
-     * @return SettingsRenderer
-     */
-    protected function settings_renderer(): SettingsRenderer
-    {
-        return $this->settings_renderer;
     }
 }

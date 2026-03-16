@@ -112,7 +112,7 @@ class ReturnUrlEndpoint
             exit;
         }
         $wc_order = wc_get_order($wc_order_id);
-        if (!is_a($wc_order, \WC_Order::class)) {
+        if (!$wc_order instanceof \WC_Order) {
             $this->logger->warning("Return URL endpoint {$token}: WC order {$wc_order_id} not found.");
             wc_add_notice(__('Order not found. Please try placing your order again.', 'woocommerce-paypal-payments'), 'error');
             wp_safe_redirect($this->get_checkout_url_with_error());
@@ -122,14 +122,6 @@ class ReturnUrlEndpoint
             $this->session_handler->destroy_session_data();
             wp_safe_redirect(wc_get_checkout_url());
             exit;
-        }
-        if (!in_array($wc_order->get_status(), array('pending', 'on-hold'), \true)) {
-            $payment_gateway = $this->get_payment_gateway($wc_order->get_payment_method());
-            if ($payment_gateway) {
-                $this->session_handler->destroy_session_data();
-                wp_safe_redirect($payment_gateway->get_return_url($wc_order));
-                exit;
-            }
         }
         $payment_gateway = $this->get_payment_gateway($wc_order->get_payment_method());
         if (!$payment_gateway) {

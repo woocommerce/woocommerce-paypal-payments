@@ -8,7 +8,6 @@
 declare (strict_types=1);
 namespace WooCommerce\PayPalCommerce\WcGateway\Helper;
 
-use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 /**
  * Class CartCheckoutDetector
  */
@@ -34,6 +33,7 @@ class CartCheckoutDetector
             preg_match_all($reg_exp, $elementor_data[0], $output_array, \PREG_SET_ORDER);
             $widgets_list = array();
             foreach ($output_array as $found) {
+                /** @phpstan-ignore isset.offset */
                 if (!isset($found[1])) {
                     continue;
                 }

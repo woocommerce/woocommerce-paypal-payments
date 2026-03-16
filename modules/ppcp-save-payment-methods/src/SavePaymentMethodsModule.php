@@ -22,22 +22,21 @@ use WooCommerce\PayPalCommerce\Button\Helper\Context;
 use WooCommerce\PayPalCommerce\SavePaymentMethods\Endpoint\CreatePaymentToken;
 use WooCommerce\PayPalCommerce\SavePaymentMethods\Endpoint\CreatePaymentTokenForGuest;
 use WooCommerce\PayPalCommerce\SavePaymentMethods\Endpoint\CreateSetupToken;
-use WooCommerce\PayPalCommerce\SavePaymentMethods\Service\PaymentMethodTokensChecker;
 use WooCommerce\PayPalCommerce\Vaulting\WooCommercePaymentTokens;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExecutableModule;
-use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExtendingModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ModuleClassNameIdTrait;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ServiceModule;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
+use WooCommerce\PayPalCommerce\Settings\Data\SettingsModel;
+use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
-use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 use WooCommerce\PayPalCommerce\WcSubscriptions\Endpoint\SubscriptionChangePaymentMethod;
 use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
 /**
  * Class SavePaymentMethodsModule
  */
-class SavePaymentMethodsModule implements ServiceModule, ExtendingModule, ExecutableModule
+class SavePaymentMethodsModule implements ServiceModule, ExecutableModule
 {
     use ModuleClassNameIdTrait;
     /**
@@ -50,31 +49,25 @@ class SavePaymentMethodsModule implements ServiceModule, ExtendingModule, Execut
     /**
      * {@inheritDoc}
      */
-    public function extensions(): array
-    {
-        return require __DIR__ . '/../extensions.php';
-    }
-    /**
-     * {@inheritDoc}
-     */
     public function run(ContainerInterface $c): bool
     {
         if (!$c->get('save-payment-methods.eligible')) {
             return \true;
         }
         add_action('woocommerce_paypal_payments_gateway_migrate_on_update', function () use ($c) {
-            $settings = $c->get('wcgateway.settings');
-            assert($settings instanceof Settings);
+            $settings_model = $c->get('settings.data.settings');
+            assert($settings_model instanceof SettingsModel);
             $reference_transaction_status = $c->get('api.reference-transaction-status');
             assert($reference_transaction_status instanceof ReferenceTransactionStatus);
             if (!$reference_transaction_status->reference_transaction_enabled()) {
-                $settings->set('vault_enabled', \false);
-                $settings->persist();
+                $settings_model->set_save_paypal_and_venmo(\false);
+                $settings_model->save();
             }
         });
         add_action('after_setup_theme', function () use ($c) {
-            $settings = $c->get('wcgateway.settings');
-            if ((!$settings->has('vault_enabled') || !$settings->get('vault_enabled')) && (!$settings->has('vault_enabled_dcc') || !$settings->get('vault_enabled_dcc'))) {
+            $settings_provider = $c->get('settings.settings-provider');
+            assert($settings_provider instanceof SettingsProvider);
+            if (!$settings_provider->save_paypal_and_venmo() && !$settings_provider->save_card_details()) {
                 return \true;
             }
             add_filter('woocommerce_paypal_payments_localized_script_data', function (array $localized_script_data) use ($c) {
@@ -91,8 +84,8 @@ class SavePaymentMethodsModule implements ServiceModule, ExtendingModule, Execut
             });
             // Adds attributes needed to save payment method.
             add_filter('ppcp_create_order_request_body_data', function (array $data, string $payment_method, array $request_data) use ($c): array {
-                $settings = $c->get('wcgateway.settings');
-                assert($settings instanceof Settings);
+                $settings_provider = $c->get('settings.settings-provider');
+                assert($settings_provider instanceof SettingsProvider);
                 $new_attributes = array('vault' => array('store_in_vault' => 'ON_SUCCESS'));
                 $target_customer_id = get_user_meta(get_current_user_id(), '_ppcp_target_customer_id', \true);
                 if (!$target_customer_id) {
@@ -103,7 +96,7 @@ class SavePaymentMethodsModule implements ServiceModule, ExtendingModule, Execut
                 }
                 $funding_source = (string) ($request_data['funding_source'] ?? '');
                 if ($payment_method === CreditCardGateway::ID) {
-                    if (!$settings->has('vault_enabled_dcc') || !$settings->get('vault_enabled_dcc')) {
+                    if (!$settings_provider->save_card_details()) {
                         return $data;
                     }
                     $save_payment_method = $request_data['save_payment_method'] ?? \false;
@@ -111,7 +104,7 @@ class SavePaymentMethodsModule implements ServiceModule, ExtendingModule, Execut
                         return $data;
                     }
                 } elseif ($payment_method === PayPalGateway::ID) {
-                    if (!$settings->has('vault_enabled') || !$settings->get('vault_enabled')) {
+                    if (!$settings_provider->save_paypal_and_venmo()) {
                         return $data;
                     }
                     if (!in_array($funding_source, array('paypal', 'venmo'), \true)) {
@@ -198,17 +191,14 @@ class SavePaymentMethodsModule implements ServiceModule, ExtendingModule, Execut
                 $api = $c->get('api.user-id-token');
                 assert($api instanceof UserIdToken);
                 try {
-                    $target_customer_id = '';
-                    if (is_user_logged_in()) {
-                        $target_customer_id = get_user_meta(get_current_user_id(), '_ppcp_target_customer_id', \true);
-                        if (!$target_customer_id) {
-                            $target_customer_id = get_user_meta(get_current_user_id(), 'ppcp_customer_id', \true);
-                        }
+                    $target_customer_id = get_user_meta(get_current_user_id(), '_ppcp_target_customer_id', \true);
+                    if (!$target_customer_id) {
+                        $target_customer_id = get_user_meta(get_current_user_id(), 'ppcp_customer_id', \true);
                     }
                     $id_token = $api->id_token($target_customer_id);
-                    $settings = $c->get('wcgateway.settings');
-                    assert($settings instanceof Settings);
-                    $verification_method = $settings->has('3d_secure_contingency') ? apply_filters('woocommerce_paypal_payments_three_d_secure_contingency', $settings->get('3d_secure_contingency')) : '';
+                    $settings_provider = $c->get('settings.settings-provider');
+                    assert($settings_provider instanceof SettingsProvider);
+                    $verification_method = apply_filters('woocommerce_paypal_payments_three_d_secure_contingency', $settings_provider->three_d_secure_enum());
                     // phpcs:ignore WordPress.Security.NonceVerification
                     $change_payment_method = wc_clean(wp_unslash($_GET['change_payment_method'] ?? ''));
                     $is_subscription_change_payment_method_page = $context->is_subscription_change_payment_method_page();
@@ -217,7 +207,7 @@ class SavePaymentMethodsModule implements ServiceModule, ExtendingModule, Execut
                     $logger = $c->get('woocommerce.logger.woocommerce');
                     assert($logger instanceof LoggerInterface);
                     $error = $exception->getMessage();
-                    if (is_a($exception, PayPalApiException::class)) {
+                    if ($exception instanceof PayPalApiException) {
                         $error = $exception->get_details($error);
                     }
                     $logger->error($error);
@@ -226,7 +216,7 @@ class SavePaymentMethodsModule implements ServiceModule, ExtendingModule, Execut
             /**
              * Displays the PayPal button on the Add Payment Method page.
              */
-            add_action('woocommerce_add_payment_method_form_bottom', function () use ($c) {
+            add_action('woocommerce_add_payment_method_form_bottom', function () {
                 if (!is_user_logged_in() || !is_add_payment_method_page()) {
                     return;
                 }
@@ -256,16 +246,19 @@ class SavePaymentMethodsModule implements ServiceModule, ExtendingModule, Execut
                     $logger = $c->get('woocommerce.logger.woocommerce');
                     assert($logger instanceof LoggerInterface);
                     $error = $exception->getMessage();
-                    if (is_a($exception, PayPalApiException::class)) {
+                    if ($exception instanceof PayPalApiException) {
                         $error = $exception->get_details($error);
                     }
                     $logger->error($error);
                 }
             });
             add_filter('woocommerce_paypal_payments_credit_card_gateway_supports', function (array $supports) use ($c): array {
-                $settings = $c->get('wcgateway.settings');
-                assert($settings instanceof ContainerInterface);
-                if ($settings->has('vault_enabled_dcc') && $settings->get('vault_enabled_dcc')) {
+                if (!$c->get('save-payment-methods.eligible')) {
+                    return $supports;
+                }
+                $settings_provider = $c->get('settings.settings-provider');
+                assert($settings_provider instanceof SettingsProvider);
+                if ($settings_provider->save_card_details()) {
                     $supports[] = 'tokenization';
                     $supports[] = 'add_payment_method';
                 }
@@ -300,7 +293,7 @@ class SavePaymentMethodsModule implements ServiceModule, ExtendingModule, Execut
             $localized_script_data['data_client_id']['set_attribute'] = \false;
         } catch (RuntimeException $exception) {
             $error = $exception->getMessage();
-            if (is_a($exception, PayPalApiException::class)) {
+            if ($exception instanceof PayPalApiException) {
                 $error = $exception->get_details($error);
             }
             $logger->error($error);

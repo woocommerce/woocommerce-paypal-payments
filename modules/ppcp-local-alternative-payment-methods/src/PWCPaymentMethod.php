@@ -59,6 +59,7 @@ class PWCPaymentMethod extends AbstractPaymentMethodType
     public function get_payment_method_script_handles(): array
     {
         wp_register_script('ppcp-pwc-payment-method', $this->asset_getter->get_asset_url('pwc-payment-method.js'), array(), $this->version, \true);
+        wp_enqueue_style('ppcp-pwc-payment-method', $this->asset_getter->get_asset_url('gateway.css'), array(), $this->version);
         return array('ppcp-pwc-payment-method');
     }
     /**

@@ -23,6 +23,6 @@ return array(
         return $factory->for_module('ppcp-axo-block');
     },
     'axoblock.method' => static function (ContainerInterface $container): \WooCommerce\PayPalCommerce\AxoBlock\AxoBlockPaymentMethod {
-        return new \WooCommerce\PayPalCommerce\AxoBlock\AxoBlockPaymentMethod($container->get('axoblock.asset_getter'), $container->get('ppcp.asset-version'), $container->get('axo.gateway'), fn(): SmartButtonInterface => $container->get('button.smart-button'), $container->get('wcgateway.settings'), $container->get('wcgateway.configuration.card-configuration'), $container->get('settings.environment'), $container->get('wcgateway.asset_getter'), $container->get('axo.payment_method_selected_map'), $container->get('axo.supported-country-card-type-matrix'));
+        return new \WooCommerce\PayPalCommerce\AxoBlock\AxoBlockPaymentMethod($container->get('axoblock.asset_getter'), $container->get('axo.gateway'), $container->get('settings.settings-provider'), $container->get('wcgateway.configuration.card-configuration'), $container->get('settings.environment'), $container->get('wcgateway.asset_getter'), $container->get('axo.payment_method_selected_map'), $container->get('axo.supported-country-card-type-matrix'));
     },
 );

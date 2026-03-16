@@ -54,10 +54,9 @@ class UpdatePaymentDataEndpoint
     /**
      * Handles the request.
      *
-     * @return bool
      * @throws RuntimeException When a validation fails.
      */
-    public function handle_request(): bool
+    public function handle_request(): void
     {
         try {
             $data = $this->request_data->read_request($this->nonce());
@@ -68,6 +67,7 @@ class UpdatePaymentDataEndpoint
             $payment_data = $data['paymentData'];
             // Set context as cart.
             if (is_callable('wc_maybe_define_constant')) {
+                // @phpstan-ignore function.alreadyNarrowedType
                 wc_maybe_define_constant('WOOCOMMERCE_CART', \true);
             }
             $this->update_addresses($payment_data);
@@ -82,11 +82,9 @@ class UpdatePaymentDataEndpoint
             $shop_country_code = $base_location['country'];
             $currency_code = get_woocommerce_currency();
             wp_send_json_success(array('total' => $total, 'shipping_fee' => $shipping_fee, 'currency_code' => $currency_code, 'country_code' => $shop_country_code, 'shipping_options' => $this->get_shipping_options()));
-            return \true;
         } catch (Throwable $error) {
             $this->logger->error("UpdatePaymentDataEndpoint execution failed. {$error->getMessage()} {$error->getFile()}:{$error->getLine()}");
             wp_send_json_error();
-            return \false;
         }
     }
     /**

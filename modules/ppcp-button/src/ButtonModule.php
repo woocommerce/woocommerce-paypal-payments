@@ -27,7 +27,6 @@ use WooCommerce\PayPalCommerce\Button\Helper\WooCommerceOrderCreator;
 use WooCommerce\PayPalCommerce\Button\Session\CartDataTransientStorage;
 use WooCommerce\PayPalCommerce\Button\VaultV2\StartPayPalVaultingEndpoint;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExecutableModule;
-use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExtendingModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ModuleClassNameIdTrait;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ServiceModule;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
@@ -35,7 +34,7 @@ use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 /**
  * Class ButtonModule
  */
-class ButtonModule implements ServiceModule, ExtendingModule, ExecutableModule
+class ButtonModule implements ServiceModule, ExecutableModule
 {
     use ModuleClassNameIdTrait;
     /**
@@ -44,13 +43,6 @@ class ButtonModule implements ServiceModule, ExtendingModule, ExecutableModule
     public function services(): array
     {
         return require __DIR__ . '/../services.php';
-    }
-    /**
-     * {@inheritDoc}
-     */
-    public function extensions(): array
-    {
-        return require __DIR__ . '/../extensions.php';
     }
     /**
      * {@inheritDoc}
@@ -255,7 +247,7 @@ class ButtonModule implements ServiceModule, ExtendingModule, ExecutableModule
          * present, forces the chosen method back to PayPalGateway. This ensures the
          * resumed PayPal flow continues as expected.
          */
-        add_action('template_redirect', function () use ($container) {
+        add_action('template_redirect', function () {
             // phpcs:ignore WordPress.Security.NonceVerification
             if (!isset($_GET[ReturnUrlFactory::PCP_QUERY_ARG])) {
                 return;

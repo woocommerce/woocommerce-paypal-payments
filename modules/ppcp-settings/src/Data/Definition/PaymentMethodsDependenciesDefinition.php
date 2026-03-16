@@ -1,16 +1,10 @@
 <?php
 
-/**
- * Payment Methods Dependencies Definition
- *
- * @package WooCommerce\PayPalCommerce\Settings\Data\Definition
- */
 declare (strict_types=1);
 namespace WooCommerce\PayPalCommerce\Settings\Data\Definition;
 
 use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\PWCGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException;
-use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 use WooCommerce\PayPalCommerce\Applepay\ApplePayGateway;
 use WooCommerce\PayPalCommerce\Axo\Gateway\AxoGateway;
 use WooCommerce\PayPalCommerce\Googlepay\GooglePayGateway;
@@ -28,27 +22,10 @@ use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\TrustlyGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\OXXO\OXXO;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayUponInvoice\PayUponInvoiceGateway;
 /**
- * Class PaymentMethodsDependenciesDefinition
- *
  * Defines dependency relationships between payment methods and settings.
  */
 class PaymentMethodsDependenciesDefinition
 {
-    /**
-     * Current settings values
-     *
-     * @var Settings
-     */
-    private Settings $settings;
-    /**
-     * Constructor
-     *
-     * @param Settings $settings Settings instance.
-     */
-    public function __construct(Settings $settings)
-    {
-        $this->settings = $settings;
-    }
     /**
      * Get payment method to payment method dependencies
      *
@@ -59,7 +36,7 @@ class PaymentMethodsDependenciesDefinition
      */
     public function get_payment_method_dependencies(): array
     {
-        $dependencies = array(CardButtonGateway::ID => array(PayPalGateway::ID), CreditCardGateway::ID => array(PayPalGateway::ID), AxoGateway::ID => array(PayPalGateway::ID, CreditCardGateway::ID), ApplePayGateway::ID => array(PayPalGateway::ID, CreditCardGateway::ID), GooglePayGateway::ID => array(PayPalGateway::ID, CreditCardGateway::ID), BancontactGateway::ID => array(PayPalGateway::ID), BlikGateway::ID => array(PayPalGateway::ID), EPSGateway::ID => array(PayPalGateway::ID), IDealGateway::ID => array(PayPalGateway::ID), MultibancoGateway::ID => array(PayPalGateway::ID), MyBankGateway::ID => array(PayPalGateway::ID), P24Gateway::ID => array(PayPalGateway::ID), TrustlyGateway::ID => array(PayPalGateway::ID), PayUponInvoiceGateway::ID => array(PayPalGateway::ID), OXXO::ID => array(PayPalGateway::ID), PWCGateway::ID => array(PayPalGateway::ID), 'venmo' => array(PayPalGateway::ID), 'pay-later' => array(PayPalGateway::ID));
+        $dependencies = array(CardButtonGateway::ID => array(PayPalGateway::ID), CreditCardGateway::ID => array(PayPalGateway::ID), AxoGateway::ID => array(PayPalGateway::ID, CreditCardGateway::ID), ApplePayGateway::ID => array(PayPalGateway::ID), GooglePayGateway::ID => array(PayPalGateway::ID), BancontactGateway::ID => array(PayPalGateway::ID), BlikGateway::ID => array(PayPalGateway::ID), EPSGateway::ID => array(PayPalGateway::ID), IDealGateway::ID => array(PayPalGateway::ID), MultibancoGateway::ID => array(PayPalGateway::ID), MyBankGateway::ID => array(PayPalGateway::ID), P24Gateway::ID => array(PayPalGateway::ID), TrustlyGateway::ID => array(PayPalGateway::ID), PayUponInvoiceGateway::ID => array(PayPalGateway::ID), OXXO::ID => array(PayPalGateway::ID), PWCGateway::ID => array(PayPalGateway::ID), 'venmo' => array(PayPalGateway::ID), 'pay-later' => array(PayPalGateway::ID));
         return apply_filters('woocommerce_paypal_payments_payment_method_dependencies', $dependencies);
     }
     /**

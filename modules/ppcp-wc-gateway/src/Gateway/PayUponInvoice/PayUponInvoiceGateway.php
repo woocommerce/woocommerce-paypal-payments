@@ -185,6 +185,10 @@ class PayUponInvoiceGateway extends WC_Payment_Gateway
     public function process_payment($order_id)
     {
         $wc_order = wc_get_order($order_id);
+        if (!$wc_order instanceof WC_Order) {
+            $this->logger->error('Invalid WC_Order id ' . (int) $order_id);
+            return array('result' => 'failure', 'redirect' => wc_get_checkout_url());
+        }
         // phpcs:disable WordPress.Security.NonceVerification
         $birth_date = wc_clean(wp_unslash($_POST['billing_birth_date'] ?? ''));
         $pay_for_order = wc_clean(wp_unslash($_GET['pay_for_order'] ?? ''));
@@ -211,7 +215,7 @@ class PayUponInvoiceGateway extends WC_Payment_Gateway
             return array('result' => 'success', 'redirect' => $this->get_return_url($wc_order));
         } catch (RuntimeException $exception) {
             $error = $exception->getMessage();
-            if (is_a($exception, PayPalApiException::class)) {
+            if ($exception instanceof PayPalApiException) {
                 $error = $exception->get_details($error);
             }
             $this->logger->error($error);
@@ -231,7 +235,7 @@ class PayUponInvoiceGateway extends WC_Payment_Gateway
     public function process_refund($order_id, $amount = null, $reason = '')
     {
         $order = wc_get_order($order_id);
-        if (!is_a($order, \WC_Order::class)) {
+        if (!$order instanceof WC_Order) {
             return \false;
         }
         return $this->refund_processor->process($order, (float) $amount, (string) $reason);

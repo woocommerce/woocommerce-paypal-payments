@@ -28,10 +28,10 @@ return array('wc-subscriptions.helper' => static function (ContainerInterface $c
     $purchase_unit_factory = $container->get('api.factory.purchase-unit');
     $payer_factory = $container->get('api.factory.payer');
     $environment = $container->get('settings.environment');
-    $settings = $container->get('wcgateway.settings');
+    $settings_provider = $container->get('settings.settings-provider');
     $authorized_payments_processor = $container->get('wcgateway.processor.authorized-payments');
     $funding_source_renderer = $container->get('wcgateway.funding-source.renderer');
-    return new \WooCommerce\PayPalCommerce\WcSubscriptions\RenewalHandler($logger, $repository, $endpoint, $purchase_unit_factory, $container->get('api.factory.shipping-preference'), $payer_factory, $environment, $settings, $authorized_payments_processor, $funding_source_renderer, $container->get('wc-subscriptions.helpers.real-time-account-updater'), $container->get('wc-subscriptions.helper'), $container->get('api.endpoint.payment-tokens'), $container->get('vaulting.wc-payment-tokens'), $container->get('wcgateway.builder.experience-context'));
+    return new \WooCommerce\PayPalCommerce\WcSubscriptions\RenewalHandler($logger, $repository, $endpoint, $purchase_unit_factory, $container->get('api.factory.shipping-preference'), $payer_factory, $environment, $settings_provider, $authorized_payments_processor, $funding_source_renderer, $container->get('wc-subscriptions.helpers.real-time-account-updater'), $container->get('wc-subscriptions.helper'), $container->get('vaulting.wc-payment-tokens'), $container->get('wcgateway.builder.experience-context'));
 }, 'wc-subscriptions.endpoint.subscription-change-payment-method' => static function (ContainerInterface $container): SubscriptionChangePaymentMethod {
     return new SubscriptionChangePaymentMethod($container->get('button.request-data'));
 }, 'wc-subscriptions.change-payment-method' => static function (ContainerInterface $container): ChangePaymentMethod {
@@ -39,7 +39,7 @@ return array('wc-subscriptions.helper' => static function (ContainerInterface $c
 }, 'wc-subscriptions.free-trial-subscription-helper' => static function (ContainerInterface $container): FreeTrialSubscriptionHelper {
     return new FreeTrialSubscriptionHelper();
 }, 'wc-subscriptions.vault-v2.display-saved-payment-tokens' => static function (ContainerInterface $container): DisplaySavedPaymentTokens {
-    return new DisplaySavedPaymentTokens($container->get('wcgateway.settings'), $container->get('wc-subscriptions.helper'));
+    return new DisplaySavedPaymentTokens($container->get('settings.settings-provider'), $container->get('wc-subscriptions.helper'));
 }, 'wc-subscriptions.vault-v2.change-payment-method' => static function (ContainerInterface $container): ChangePaymentMethodVaultV2 {
     return new ChangePaymentMethodVaultV2($container->get('button.helper.context'));
 }, 'wc-subscriptions.vault-v2.vaulted-paypal-email' => static function (ContainerInterface $container): VaultedPayPalEmail {

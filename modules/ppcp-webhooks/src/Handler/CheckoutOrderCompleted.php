@@ -74,9 +74,6 @@ class CheckoutOrderCompleted implements \WooCommerce\PayPalCommerce\Webhooks\Han
             if (PayUponInvoiceGateway::ID === $wc_order->get_payment_method()) {
                 continue;
             }
-            if (!in_array($wc_order->get_status(), array('pending', 'on-hold'), \true)) {
-                continue;
-            }
             $wc_order->payment_complete();
             $this->logger->info(sprintf('Order %s has been updated through PayPal', (string) $wc_order->get_id()));
         }

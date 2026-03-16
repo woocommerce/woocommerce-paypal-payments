@@ -8,8 +8,7 @@
 declare (strict_types=1);
 namespace WooCommerce\PayPalCommerce\Applepay\Assets;
 
-use WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException;
-use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
+use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
 use WooCommerce\PayPalCommerce\Applepay\ApplePayGateway;
 use WC_Product;
 /**
@@ -17,25 +16,9 @@ use WC_Product;
  */
 class DataToAppleButtonScripts
 {
-    /**
-     * The URL to the SDK.
-     *
-     * @var string
-     */
-    private $sdk_url;
-    /**
-     * The settings.
-     *
-     * @var Settings
-     */
-    private $settings;
-    /**
-     * DataToAppleButtonScripts constructor.
-     *
-     * @param string   $sdk_url  The URL to the SDK.
-     * @param Settings $settings The settings.
-     */
-    public function __construct(string $sdk_url, Settings $settings)
+    private string $sdk_url;
+    private SettingsProvider $settings;
+    public function __construct(string $sdk_url, SettingsProvider $settings)
     {
         $this->sdk_url = $sdk_url;
         $this->settings = $settings;
@@ -77,19 +60,33 @@ class DataToAppleButtonScripts
         $is_wc_gateway_enabled = isset($available_gateways[ApplePayGateway::ID]);
         // use_wc: Use WC checkout data
         // use_applepay: Use data provided by Apple Pay.
-        $checkout_data_mode = $this->settings->has('applepay_checkout_data_mode') ? $this->settings->get('applepay_checkout_data_mode') : \WooCommerce\PayPalCommerce\Applepay\Assets\PropertiesDictionary::BILLING_DATA_MODE_DEFAULT;
+        $checkout_data_mode = $this->settings->applepay_checkout_data_mode();
         // Store country, currency and name.
         $base_location = wc_get_base_location();
         $shop_country_code = $base_location['country'];
         $currency_code = get_woocommerce_currency();
         $total_label = get_bloginfo('name');
         // Button layout (label, color, language).
-        $type = $this->settings->has('applepay_button_type') ? $this->settings->get('applepay_button_type') : '';
-        $color = $this->settings->has('applepay_button_color') ? $this->settings->get('applepay_button_color') : '';
-        $lang = $this->settings->has('applepay_button_language') ? $this->settings->get('applepay_button_language') : '';
-        $lang = apply_filters('woocommerce_paypal_payments_applepay_button_language', $lang);
-        $is_enabled = $this->settings->has('applepay_button_enabled') && $this->settings->get('applepay_button_enabled');
-        return array('sdk_url' => $this->sdk_url, 'is_debug' => defined('WP_DEBUG') && WP_DEBUG, 'is_admin' => \false, 'is_enabled' => $is_enabled, 'is_wc_gateway_enabled' => $is_wc_gateway_enabled, 'preferences' => array('checkout_data_mode' => $checkout_data_mode), 'button' => array('wrapper' => 'ppc-button-applepay-container', 'mini_cart_wrapper' => 'ppc-button-applepay-container-minicart', 'type' => $type, 'color' => $color, 'lang' => $lang), 'product' => $product, 'shop' => array('countryCode' => $shop_country_code, 'currencyCode' => $currency_code, 'totalLabel' => $total_label), 'ajax_url' => admin_url('admin-ajax.php'), 'nonce' => wp_create_nonce('woocommerce-process_checkout'));
+        $styles = $this->settings->applepay_styles();
+        // todo: verify how applepay defines the location/context.
+        $type = $styles->label;
+        $color = $styles->color;
+        $lang = $this->settings->applepay_button_language();
+        $is_enabled = $this->settings->applepay_enabled();
+        return array(
+            'sdk_url' => $this->sdk_url,
+            'is_debug' => defined('WP_DEBUG') && WP_DEBUG,
+            // @phpstan-ignore booleanAnd.rightAlwaysFalse
+            'is_admin' => \false,
+            'is_enabled' => $is_enabled,
+            'is_wc_gateway_enabled' => $is_wc_gateway_enabled,
+            'preferences' => array('checkout_data_mode' => $checkout_data_mode),
+            'button' => array('wrapper' => 'ppc-button-applepay-container', 'mini_cart_wrapper' => 'ppc-button-applepay-container-minicart', 'type' => $type, 'color' => $color, 'lang' => $lang),
+            'product' => $product,
+            'shop' => array('countryCode' => $shop_country_code, 'currencyCode' => $currency_code, 'totalLabel' => $total_label),
+            'ajax_url' => admin_url('admin-ajax.php'),
+            'nonce' => wp_create_nonce('woocommerce-process_checkout'),
+        );
     }
     /**
      * Check if the product needs shipping

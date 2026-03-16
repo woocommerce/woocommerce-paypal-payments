@@ -82,7 +82,7 @@ class WcShippingTaxIntegration implements Integration
                         continue;
                     }
                     $wc_order = wc_get_order($order_id);
-                    if (!is_a($wc_order, WC_Order::class)) {
+                    if (!$wc_order instanceof WC_Order) {
                         continue;
                     }
                     $paypal_order = ppcp_get_paypal_order($wc_order);

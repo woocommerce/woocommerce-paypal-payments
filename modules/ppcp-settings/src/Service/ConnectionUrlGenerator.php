@@ -14,8 +14,6 @@ use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PartnerReferrals;
 use WooCommerce\PayPalCommerce\ApiClient\Repository\PartnerReferralsData;
 use WooCommerce\WooCommerce\Logging\Logger\NullLogger;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\EnvironmentConfig;
-// TODO: Replace the OnboardingUrl with a new implementation for this module.
-use WooCommerce\PayPalCommerce\Onboarding\Helper\OnboardingUrl;
 /**
  * Generator that builds the ISU connection URL.
  */
@@ -50,10 +48,12 @@ class ConnectionUrlGenerator
      *
      * Initializes the cache and logger properties of the class.
      *
-     * @param EnvironmentConfig    $partner_referrals PartnerReferrals for URL generation.
-     * @param PartnerReferralsData $referrals_data    Default partner referrals data.
-     * @param OnboardingUrlManager $url_manager       Manages access to OnboardingUrl instances.
-     * @param ?LoggerInterface     $logger            The logger object for logging messages.
+     * @param EnvironmentConfig<PartnerReferrals> $partner_referrals PartnerReferrals for URL generation.
+     * @param PartnerReferralsData                $referrals_data    Default partner referrals data.
+     * @param OnboardingUrlManager                $url_manager       Manages access to OnboardingUrl instances.
+     * @param ?LoggerInterface                    $logger            The logger object for logging messages.
+     *
+     *  phpcs:disable Squiz.Commenting.FunctionComment.IncorrectTypeHint
      */
     public function __construct(EnvironmentConfig $partner_referrals, PartnerReferralsData $referrals_data, \WooCommerce\PayPalCommerce\Settings\Service\OnboardingUrlManager $url_manager, ?LoggerInterface $logger = null)
     {
@@ -123,20 +123,15 @@ class ConnectionUrlGenerator
      *
      * @return string The cached URL, or an empty string if no URL is found.
      */
-    protected function try_get_from_cache(OnboardingUrl $onboarding_url, string $cache_key): string
+    protected function try_get_from_cache(\WooCommerce\PayPalCommerce\Settings\Service\OnboardingUrl $onboarding_url, string $cache_key): string
     {
-        try {
-            if ($onboarding_url->load()) {
-                $this->logger->debug('Loaded onboarding URL from cache: ' . $cache_key);
-                /**
-                 * Filters the cached onboarding URL. Used for cache control
-                 * when testing or development.
-                 */
-                return apply_filters('woocommerce_paypal_payments_cached_onboarding_url', $onboarding_url->get(), $onboarding_url);
-            }
-        } catch (Exception $e) {
-            // No problem, return an empty string to generate a new URL.
-            $this->logger->warning('Failed to load onboarding URL from cache: ' . $cache_key);
+        if ($onboarding_url->load()) {
+            $this->logger->debug('Loaded onboarding URL from cache: ' . $cache_key);
+            /**
+             * Filters the cached onboarding URL. Used for cache control
+             * when testing or development.
+             */
+            return apply_filters('woocommerce_paypal_payments_cached_onboarding_url', $onboarding_url->get_onboarding_url(), $onboarding_url);
         }
         return '';
     }
@@ -151,13 +146,12 @@ class ConnectionUrlGenerator
      *
      * @return string The generated URL or an empty string on failure.
      */
-    protected function generate_new_url(bool $for_sandbox, array $products, array $flags, OnboardingUrl $onboarding_url, string $cache_key): string
+    protected function generate_new_url(bool $for_sandbox, array $products, array $flags, \WooCommerce\PayPalCommerce\Settings\Service\OnboardingUrl $onboarding_url, string $cache_key): string
     {
         $query_args = array('displayMode' => 'minibrowser');
         $onboarding_url->init();
-        try {
-            $onboarding_token = $onboarding_url->token();
-        } catch (Exception $e) {
+        $onboarding_token = $onboarding_url->onboarding_token();
+        if (!$onboarding_token) {
             $this->logger->warning('Could not generate an onboarding token for: ' . $cache_key);
             return '';
         }
@@ -190,9 +184,9 @@ class ConnectionUrlGenerator
      * @param OnboardingUrl $onboarding_url The OnboardingUrl object.
      * @param string        $url            The URL to persist.
      */
-    protected function persist_url(OnboardingUrl $onboarding_url, string $url): void
+    protected function persist_url(\WooCommerce\PayPalCommerce\Settings\Service\OnboardingUrl $onboarding_url, string $url): void
     {
-        $onboarding_url->set($url);
+        $onboarding_url->set_onboarding_url($url);
         $onboarding_url->persist();
     }
 }

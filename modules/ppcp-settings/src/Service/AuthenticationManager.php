@@ -80,13 +80,15 @@ class AuthenticationManager
     /**
      * Constructor.
      *
-     * @param GeneralSettings      $common_settings  Data model that stores the connection details.
-     * @param EnvironmentConfig    $connection_host  API host for direct authentication.
-     * @param EnvironmentConfig    $login_endpoint   API handler to fetch merchant credentials.
-     * @param PartnerReferralsData $referrals_data   Partner referrals data.
-     * @param ConnectionState      $connection_state Connection state manager.
-     * @param InternalRestService  $rest_service     Allows calling internal REST endpoints.
-     * @param ?LoggerInterface     $logger           Logging instance.
+     * @param GeneralSettings                $common_settings  Data model that stores the connection details.
+     * @param EnvironmentConfig<string>      $connection_host  API host for direct authentication.
+     * @param EnvironmentConfig<LoginSeller> $login_endpoint   API handler to fetch merchant credentials.
+     * @param PartnerReferralsData           $referrals_data   Partner referrals data.
+     * @param ConnectionState                $connection_state Connection state manager.
+     * @param InternalRestService            $rest_service     Allows calling internal REST endpoints.
+     * @param ?LoggerInterface               $logger           Logging instance.
+     *
+     * phpcs:disable Squiz.Commenting.FunctionComment.IncorrectTypeHint
      */
     public function __construct(GeneralSettings $common_settings, EnvironmentConfig $connection_host, EnvironmentConfig $login_endpoint, PartnerReferralsData $referrals_data, ConnectionState $connection_state, \WooCommerce\PayPalCommerce\Settings\Service\InternalRestService $rest_service, ?LoggerInterface $logger = null)
     {
@@ -132,7 +134,7 @@ class AuthenticationManager
         /**
          * Clear the APM eligibility flags from the default settings object.
          */
-        do_action('woocommerce_paypal_payments_clear_apm_product_status', null);
+        do_action('woocommerce_paypal_payments_clear_apm_product_status');
     }
     /**
      * Checks if the provided ID and secret have a valid format.
@@ -462,7 +464,7 @@ class AuthenticationManager
             /**
              * Clear the APM eligibility flags from the default settings object.
              */
-            do_action('woocommerce_paypal_payments_clear_apm_product_status', null);
+            do_action('woocommerce_paypal_payments_clear_apm_product_status');
             /**
              * Subscribe the new merchant to relevant PayPal webhooks.
              */

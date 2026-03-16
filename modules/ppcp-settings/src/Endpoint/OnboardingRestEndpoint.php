@@ -43,7 +43,7 @@ class OnboardingRestEndpoint extends \WooCommerce\PayPalCommerce\Settings\Endpoi
      *
      * @var array
      */
-    private array $flag_map = array('can_use_casual_selling' => array('js_name' => 'canUseCasualSelling'), 'can_use_vaulting' => array('js_name' => 'canUseVaulting'), 'can_use_card_payments' => array('js_name' => 'canUseCardPayments'), 'can_use_subscriptions' => array('js_name' => 'canUseSubscriptions'), 'should_skip_payment_methods' => array('js_name' => 'shouldSkipPaymentMethods'), 'can_use_fastlane' => array('js_name' => 'canUseFastlane'), 'can_use_pay_later' => array('js_name' => 'canUsePayLater'));
+    private array $flag_map = array('can_use_casual_selling' => array('js_name' => 'canUseCasualSelling'), 'can_use_vaulting' => array('js_name' => 'canUseVaulting'), 'can_use_card_payments' => array('js_name' => 'canUseCardPayments'), 'can_use_digital_wallets' => array('js_name' => 'canUseDigitalWallets'), 'can_use_subscriptions' => array('js_name' => 'canUseSubscriptions'), 'should_skip_payment_methods' => array('js_name' => 'shouldSkipPaymentMethods'), 'can_use_fastlane' => array('js_name' => 'canUseFastlane'), 'can_use_pay_later' => array('js_name' => 'canUsePayLater'));
     /**
      * Constructor.
      *

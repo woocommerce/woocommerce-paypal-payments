@@ -46,10 +46,9 @@ class SubscriptionChangePaymentMethod implements EndpointInterface
     /**
      * Handles the request.
      *
-     * @return bool
      * @throws Exception On Error.
      */
-    public function handle_request(): bool
+    public function handle_request(): void
     {
         try {
             $data = $this->request_data->read_request($this->nonce());
@@ -62,13 +61,10 @@ class SubscriptionChangePaymentMethod implements EndpointInterface
                     $subscription->save();
                 }
                 wp_send_json_success();
-                return \true;
             }
             wp_send_json_error();
-            return \false;
         } catch (Exception $exception) {
             wp_send_json_error();
-            return \false;
         }
     }
 }

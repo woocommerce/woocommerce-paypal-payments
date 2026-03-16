@@ -58,26 +58,22 @@ abstract class AbstractCartEndpoint implements \WooCommerce\PayPalCommerce\Butto
     }
     /**
      * Handles the request.
-     *
-     * @return bool
      */
-    public function handle_request(): bool
+    public function handle_request(): void
     {
         try {
-            return $this->handle_data();
+            $this->handle_data();
         } catch (Exception $error) {
             $this->logger->error('Cart ' . $this->logger_tag . ' failed: ' . $error->getMessage());
-            wp_send_json_error(array('name' => is_a($error, PayPalApiException::class) ? $error->name() : '', 'message' => $error->getMessage(), 'code' => $error->getCode(), 'details' => is_a($error, PayPalApiException::class) ? $error->details() : array()));
-            return \false;
+            wp_send_json_error(array('name' => $error instanceof PayPalApiException ? $error->name() : '', 'message' => $error->getMessage(), 'code' => $error->getCode(), 'details' => $error instanceof PayPalApiException ? $error->details() : array()));
         }
     }
     /**
      * Handles the request data.
      *
-     * @return bool
      * @throws Exception On error.
      */
-    abstract protected function handle_data(): bool;
+    abstract protected function handle_data(): void;
     /**
      * Adds products to cart.
      *
@@ -126,7 +122,6 @@ abstract class AbstractCartEndpoint implements \WooCommerce\PayPalCommerce\Butto
         $products = $this->cart_products->products_from_data($data);
         if (!$products) {
             wp_send_json_error(array('name' => '', 'message' => __('Necessary fields not defined. Action aborted.', 'woocommerce-paypal-payments'), 'code' => 0, 'details' => array()));
-            return \false;
         }
         return $products;
     }

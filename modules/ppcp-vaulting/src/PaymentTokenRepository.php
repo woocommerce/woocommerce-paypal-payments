@@ -1,43 +1,19 @@
 <?php
 
-/**
- * The payment token repository returns or deletes payment tokens for users.
- *
- * @package WooCommerce\PayPalCommerce\Vaulting
- */
 declare (strict_types=1);
 namespace WooCommerce\PayPalCommerce\Vaulting;
 
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentToken;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
-use WooCommerce\PayPalCommerce\ApiClient\Factory\PaymentTokenFactory;
 use WooCommerce\PayPalCommerce\ApiClient\VaultV2\PaymentTokenEndpoint;
 /**
- * Class PaymentTokenRepository
- */
+The payment token repository returns or deletes payment tokens for users.
+*/
 class PaymentTokenRepository
 {
-    /**
-     * The payment token factory.
-     *
-     * @var PaymentTokenFactory
-     */
-    private $factory;
-    /**
-     * The payment token endpoint.
-     *
-     * @var PaymentTokenEndpoint
-     */
-    private $endpoint;
-    /**
-     * PaymentTokenRepository constructor.
-     *
-     * @param PaymentTokenFactory  $factory The payment token factory.
-     * @param PaymentTokenEndpoint $endpoint The payment token endpoint.
-     */
-    public function __construct(PaymentTokenFactory $factory, PaymentTokenEndpoint $endpoint)
+    private PaymentTokenEndpoint $endpoint;
+    public function __construct(PaymentTokenEndpoint $endpoint)
     {
-        $this->factory = $factory;
         $this->endpoint = $endpoint;
     }
     /**

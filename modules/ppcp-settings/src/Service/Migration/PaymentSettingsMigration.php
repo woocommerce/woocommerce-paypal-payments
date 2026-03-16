@@ -13,6 +13,7 @@ use WooCommerce\PayPalCommerce\Applepay\ApplePayGateway;
 use WooCommerce\PayPalCommerce\Axo\Gateway\AxoGateway;
 use WooCommerce\PayPalCommerce\Googlepay\GooglePayGateway;
 use WooCommerce\PayPalCommerce\Settings\Data\PaymentSettings;
+use WooCommerce\PayPalCommerce\WcGateway\Gateway\CardButtonGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\CardPaymentsConfiguration;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\DCCProductStatus;
@@ -49,26 +50,41 @@ class PaymentSettingsMigration implements \WooCommerce\PayPalCommerce\Settings\S
     }
     public function migrate(): void
     {
-        if (isset($this->settings['disable_funding'])) {
-            $disable_funding = (array) $this->settings['disable_funding'];
-            if (!in_array('venmo', $disable_funding, \true)) {
-                $this->payment_settings->toggle_method_state('venmo', \true);
-            }
-            if (!empty($this->settings['allow_local_apm_gateways'])) {
-                foreach ($this->local_apms as $apm) {
-                    if (!in_array($apm['id'], $disable_funding, \true)) {
-                        $this->payment_settings->toggle_method_state($apm['id'], \true);
-                    }
-                }
+        $disable_funding = (array) ($this->settings['disable_funding'] ?? array());
+        if (!in_array('venmo', $disable_funding, \true)) {
+            $this->payment_settings->toggle_method_state('venmo', \true);
+        }
+        foreach ($this->local_apms as $apm) {
+            if (!in_array($apm['id'], $disable_funding, \true)) {
+                $this->payment_settings->toggle_method_state($apm['id'], \true);
             }
         }
+        $card_funding_was_active = !in_array('card', $disable_funding, \true);
         if ($this->is_bcdc_enabled_for_acdc_merchant()) {
             update_option(self::OPTION_NAME_BCDC_MIGRATION_OVERRIDE, \true);
+        }
+        if ($card_funding_was_active) {
+            $this->payment_settings->toggle_method_state(CardButtonGateway::ID, \true);
         }
         foreach ($this->map() as $old_key => $method_name) {
             if (!empty($this->settings[$old_key])) {
                 $this->payment_settings->toggle_method_state($method_name, \true);
             }
+        }
+        $pui_settings = get_option('woocommerce_ppcp-pay-upon-invoice-gateway_settings', array());
+        if (is_array($pui_settings)) {
+            if (!empty($pui_settings['brand_name'])) {
+                $this->payment_settings->set_pui_brand_name($pui_settings['brand_name']);
+            }
+            if (!empty($pui_settings['logo_url'])) {
+                $this->payment_settings->set_pui_logo_url($pui_settings['logo_url']);
+            }
+            if (!empty($pui_settings['customer_service_instructions'])) {
+                $this->payment_settings->set_pui_customer_service_instructions($pui_settings['customer_service_instructions']);
+            }
+        }
+        if (isset($this->settings['dcc_name_on_card'])) {
+            $this->payment_settings->set_cardholder_name($this->settings['dcc_name_on_card'] === 'yes');
         }
         $this->payment_settings->save();
     }

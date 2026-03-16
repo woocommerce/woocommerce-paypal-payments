@@ -70,7 +70,7 @@ class CheckoutPaymentApprovalReversed implements \WooCommerce\PayPalCommerce\Web
             return $this->no_wc_orders_response($request);
         }
         foreach ($wc_orders as $wc_order) {
-            if (in_array($wc_order->get_status(), array('pending', 'on-hold'), \true)) {
+            if (!$wc_order->is_paid()) {
                 $error_message = sprintf('Failed to capture order %1$s through PayPal.', (string) $wc_order->get_id());
                 $this->logger->warning('CHECKOUT.PAYMENT-APPROVAL.REVERSED received. ' . $error_message);
                 $wc_order->update_status('failed', $error_message);

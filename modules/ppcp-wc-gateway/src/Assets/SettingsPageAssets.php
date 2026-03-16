@@ -86,7 +86,7 @@ class SettingsPageAssets
      * @var bool
      */
     private $is_acdc_enabled;
-    private $reference_transaction_status;
+    private ReferenceTransactionStatus $reference_transaction_status;
     /**
      * Whether we're on a settings page for our plugin's payment methods.
      *
@@ -158,7 +158,7 @@ class SettingsPageAssets
         wp_localize_script('ppcp-gateway-settings', 'PayPalCommerceGatewaySettings', apply_filters('woocommerce_paypal_payments_admin_gateway_settings', array('is_subscriptions_plugin_active' => $this->subscription_helper->plugin_is_active(), 'client_id' => $this->client_id, 'currency' => $this->currency->get(), 'country' => $this->country, 'environment' => $this->environment->current_environment(), 'integration_date' => PAYPAL_INTEGRATION_DATE, 'is_pay_later_button_enabled' => $this->is_pay_later_button_enabled, 'is_acdc_enabled' => $this->is_acdc_enabled, 'disabled_sources' => $this->disabled_sources, 'all_funding_sources' => $this->all_funding_sources, 'components' => array('buttons', 'funding-eligibility', 'messages'), 'ajax' => array('refresh_feature_status' => array('endpoint' => \WC_AJAX::get_endpoint(RefreshFeatureStatusEndpoint::ENDPOINT), 'nonce' => wp_create_nonce(RefreshFeatureStatusEndpoint::nonce()), 'button' => '.ppcp-refresh-feature-status', 'messages' => array('waiting' => __('Checking features...', 'woocommerce-paypal-payments'), 'success' => __('Feature status refreshed.', 'woocommerce-paypal-payments')))), 'reference_transaction_enabled' => $this->reference_transaction_status->reference_transaction_enabled(), 'vaulting_must_enable_advanced_wallet_message' => sprintf(
             // translators: %1$s and %2$s are the opening and closing of HTML <a> tag.
             esc_html__('Your PayPal account must be eligible to %1$ssave PayPal and Venmo payment methods%2$s to enable PayPal Vaulting.', 'woocommerce-paypal-payments'),
-            '<a href="/wp-admin/admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway&ppcp-tab=ppcp-connection#field-credentials_feature_onboarding_heading">',
+            '<a href="/wp-admin/admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway">',
             '</a>'
         ))));
     }

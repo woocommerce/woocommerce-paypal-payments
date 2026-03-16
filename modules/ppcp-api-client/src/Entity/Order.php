@@ -79,6 +79,7 @@ class Order
      * @param string             $intent The intent.
      * @param DateTime|null      $create_time The create time.
      * @param DateTime|null      $update_time The update time.
+     * @param mixed|null         $links
      */
     public function __construct(string $id, array $purchase_units, \WooCommerce\PayPalCommerce\ApiClient\Entity\OrderStatus $order_status, ?\WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentSource $payment_source = null, ?\WooCommerce\PayPalCommerce\ApiClient\Entity\Payer $payer = null, string $intent = 'CAPTURE', ?DateTime $create_time = null, ?DateTime $update_time = null, $links = null)
     {

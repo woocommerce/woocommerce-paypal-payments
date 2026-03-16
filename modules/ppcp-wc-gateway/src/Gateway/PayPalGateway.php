@@ -11,9 +11,9 @@ namespace WooCommerce\PayPalCommerce\WcGateway\Gateway;
 use Exception;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Log\LoggerInterface;
 use WC_Order;
-use WC_Payment_Tokens;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PaymentTokensEndpoint;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\OrderStatus;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentToken;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
@@ -26,16 +26,18 @@ use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
 use WooCommerce\PayPalCommerce\Vaulting\PaymentTokenRepository;
 use WooCommerce\PayPalCommerce\WcGateway\Exception\GatewayGenericException;
 use WooCommerce\PayPalCommerce\WcGateway\Exception\PayPalOrderMissingException;
+use WC_Payment_Tokens;
+use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
+use WooCommerce\PayPalCommerce\Vaulting\PaymentTokenVenmo;
+use WooCommerce\PayPalCommerce\WcGateway\Endpoint\CapturePayPalPayment;
 use WooCommerce\PayPalCommerce\WcGateway\FundingSource\FundingSourceRenderer;
-use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayUponInvoice\PayUponInvoiceGateway;
+use WooCommerce\PayPalCommerce\WcGateway\Processor\AuthorizedPaymentsProcessor;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\OrderMetaTrait;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\OrderProcessor;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\PaymentsStatusHandlingTrait;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\RefundProcessor;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\TransactionIdHandlingTrait;
-use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
-use WooCommerce\PayPalCommerce\WcGateway\Settings\SettingsRenderer;
-use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
+use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
 /**
  * Class PayPalGateway
  */
@@ -43,7 +45,6 @@ class PayPalGateway extends \WC_Payment_Gateway
 {
     use \WooCommerce\PayPalCommerce\WcGateway\Gateway\ProcessPaymentTrait;
     use FreeTrialHandlerTrait;
-    use \WooCommerce\PayPalCommerce\WcGateway\Gateway\GatewaySettingsRendererTrait;
     use OrderMetaTrait;
     use TransactionIdHandlingTrait;
     use PaymentsStatusHandlingTrait;
@@ -69,126 +70,31 @@ class PayPalGateway extends \WC_Payment_Gateway
      * List of payment sources for which we are expected to store the payer email in the WC Order metadata.
      */
     const PAYMENT_SOURCES_WITH_PAYER_EMAIL = array('paypal', 'paylater', 'venmo');
-    /**
-     * The Settings Renderer.
-     *
-     * @var SettingsRenderer
-     */
-    protected $settings_renderer;
-    /**
-     * The funding source renderer.
-     *
-     * @var FundingSourceRenderer
-     */
-    protected $funding_source_renderer;
-    /**
-     * The processor for orders.
-     *
-     * @var OrderProcessor
-     */
-    protected $order_processor;
-    /**
-     * The settings.
-     *
-     * @var ContainerInterface
-     */
-    protected $config;
-    /**
-     * The Session Handler.
-     *
-     * @var SessionHandler
-     */
-    protected $session_handler;
-    /**
-     * The Refund Processor.
-     *
-     * @var RefundProcessor
-     */
-    private $refund_processor;
-    /**
-     * Service able to provide transaction url for an order.
-     *
-     * @var TransactionUrlProvider
-     */
-    protected $transaction_url_provider;
-    /**
-     * The subscription helper.
-     *
-     * @var SubscriptionHelper
-     */
-    protected $subscription_helper;
-    /**
-     * The payment token repository.
-     *
-     * @var PaymentTokenRepository
-     */
-    protected $payment_token_repository;
-    /**
-     * Whether the plugin is in onboarded state.
-     *
-     * @var bool
-     */
+    protected FundingSourceRenderer $funding_source_renderer;
+    protected OrderProcessor $order_processor;
+    protected SettingsProvider $settings_provider;
+    protected SessionHandler $session_handler;
+    private RefundProcessor $refund_processor;
+    protected \WooCommerce\PayPalCommerce\WcGateway\Gateway\TransactionUrlProvider $transaction_url_provider;
+    protected SubscriptionHelper $subscription_helper;
+    protected PaymentTokenRepository $payment_token_repository;
     private bool $onboarded;
-    /**
-     * ID of the current PPCP gateway settings page, or empty if it is not such page.
-     *
-     * @var string
-     */
-    protected $page_id;
-    /**
-     * The environment.
-     *
-     * @var Environment
-     */
-    protected $environment;
-    /**
-     * The logger.
-     *
-     * @var LoggerInterface
-     */
-    private $logger;
-    /**
-     * The api shop country.
-     *
-     * @var string
-     */
-    protected $api_shop_country;
-    /**
-     * The order endpoint.
-     *
-     * @var OrderEndpoint
-     */
-    private $order_endpoint;
+    protected Environment $environment;
+    private LoggerInterface $logger;
+    protected string $api_shop_country;
     /**
      * The function return the PayPal checkout URL for the given order ID.
      *
      * @var callable(string):string
      */
     private $paypal_checkout_url_factory;
-    /**
-     * Payment tokens endpoint.
-     *
-     * @var PaymentTokensEndpoint
-     */
-    private $payment_tokens_endpoint;
-    /**
-     * Whether Vault v3 module is enabled.
-     *
-     * @var bool
-     */
-    private $vault_v3_enabled;
-    /**
-     * WooCommerce payment tokens.
-     *
-     * @var WooCommercePaymentTokens
-     */
-    private $wc_payment_tokens;
-    /**
-     * Whether settings module is enabled.
-     *
-     * @var bool
-     */
-    private $admin_settings_enabled;
+    private PaymentTokensEndpoint $payment_tokens_endpoint;
+    private bool $vault_v3_enabled;
+    private WooCommercePaymentTokens $wc_payment_tokens;
+    private bool $admin_settings_enabled;
+    private CapturePayPalPayment $capture_paypal_payment;
+    private OrderEndpoint $order_endpoint;
+    private string $prefix;
     /**
      * ID of the class extending the settings API. Used in option names.
      *
@@ -236,29 +142,27 @@ class PayPalGateway extends \WC_Payment_Gateway
      *
      * @var array
      */
-    public $supports = array('products');
+    public $supports;
     /**
      * Set if the place order button should be renamed on selection.
      *
-     * @var string
+     * @var string|null
+     * @phpstan-ignore property.phpDocType
      */
     public $order_button_text;
     /**
-     * @param SettingsRenderer         $settings_renderer The Settings Renderer.
      * @param FundingSourceRenderer    $funding_source_renderer The funding source renderer.
      * @param OrderProcessor           $order_processor The Order Processor.
-     * @param ContainerInterface       $config The settings.
+     * @param SettingsProvider         $config The settings.
      * @param SessionHandler           $session_handler The Session Handler.
      * @param RefundProcessor          $refund_processor The Refund Processor.
      * @param bool                     $is_connected Whether onboarding was completed.
      * @param TransactionUrlProvider   $transaction_url_provider Service providing transaction view URL based on order.
      * @param SubscriptionHelper       $subscription_helper The subscription helper.
-     * @param string                   $page_id ID of the current PPCP gateway settings page, or empty if it is not such page.
      * @param Environment              $environment The environment.
      * @param PaymentTokenRepository   $payment_token_repository The payment token repository.
      * @param LoggerInterface          $logger The logger.
      * @param string                   $api_shop_country The api shop country.
-     * @param OrderEndpoint            $order_endpoint The order endpoint.
      * @param callable(string):string  $paypal_checkout_url_factory The function return the PayPal checkout URL for the given order ID.
      * @param string                   $place_order_button_text The text for the standard "Place order" button.
      * @param PaymentTokensEndpoint    $payment_tokens_endpoint Payment tokens endpoint.
@@ -266,19 +170,20 @@ class PayPalGateway extends \WC_Payment_Gateway
      * @param WooCommercePaymentTokens $wc_payment_tokens WooCommerce payment tokens.
      * @param AssetGetter              $asset_getter
      * @param bool                     $admin_settings_enabled Whether settings module is enabled.
+     * @param CapturePayPalPayment     $capture_paypal_payment The PayPal vault payment capture endpoint.
+     * @param OrderEndpoint            $order_endpoint The order endpoint.
+     * @param string                   $prefix The invoice prefix.
      */
-    public function __construct(SettingsRenderer $settings_renderer, FundingSourceRenderer $funding_source_renderer, OrderProcessor $order_processor, ContainerInterface $config, SessionHandler $session_handler, RefundProcessor $refund_processor, bool $is_connected, \WooCommerce\PayPalCommerce\WcGateway\Gateway\TransactionUrlProvider $transaction_url_provider, SubscriptionHelper $subscription_helper, string $page_id, Environment $environment, PaymentTokenRepository $payment_token_repository, LoggerInterface $logger, string $api_shop_country, OrderEndpoint $order_endpoint, callable $paypal_checkout_url_factory, string $place_order_button_text, PaymentTokensEndpoint $payment_tokens_endpoint, bool $vault_v3_enabled, WooCommercePaymentTokens $wc_payment_tokens, AssetGetter $asset_getter, bool $admin_settings_enabled)
+    public function __construct(FundingSourceRenderer $funding_source_renderer, OrderProcessor $order_processor, SettingsProvider $config, SessionHandler $session_handler, RefundProcessor $refund_processor, bool $is_connected, \WooCommerce\PayPalCommerce\WcGateway\Gateway\TransactionUrlProvider $transaction_url_provider, SubscriptionHelper $subscription_helper, Environment $environment, PaymentTokenRepository $payment_token_repository, LoggerInterface $logger, string $api_shop_country, callable $paypal_checkout_url_factory, string $place_order_button_text, PaymentTokensEndpoint $payment_tokens_endpoint, bool $vault_v3_enabled, WooCommercePaymentTokens $wc_payment_tokens, AssetGetter $asset_getter, bool $admin_settings_enabled, CapturePayPalPayment $capture_paypal_payment, OrderEndpoint $order_endpoint, string $prefix)
     {
         $this->id = self::ID;
-        $this->settings_renderer = $settings_renderer;
         $this->funding_source_renderer = $funding_source_renderer;
         $this->order_processor = $order_processor;
-        $this->config = $config;
+        $this->settings_provider = $config;
         $this->session_handler = $session_handler;
         $this->refund_processor = $refund_processor;
         $this->transaction_url_provider = $transaction_url_provider;
         $this->subscription_helper = $subscription_helper;
-        $this->page_id = $page_id;
         $this->environment = $environment;
         $this->onboarded = $is_connected;
         $this->payment_token_repository = $payment_token_repository;
@@ -286,18 +191,20 @@ class PayPalGateway extends \WC_Payment_Gateway
         $this->api_shop_country = $api_shop_country;
         $this->paypal_checkout_url_factory = $paypal_checkout_url_factory;
         $this->order_button_text = $place_order_button_text;
-        $this->order_endpoint = $order_endpoint;
         $this->payment_tokens_endpoint = $payment_tokens_endpoint;
         $this->vault_v3_enabled = $vault_v3_enabled;
         $this->wc_payment_tokens = $wc_payment_tokens;
         $this->icon = apply_filters('woocommerce_paypal_payments_paypal_gateway_icon', $asset_getter->get_static_asset_url('images/paypal.svg'));
         $this->admin_settings_enabled = $admin_settings_enabled;
+        $this->capture_paypal_payment = $capture_paypal_payment;
+        $this->order_endpoint = $order_endpoint;
+        $this->prefix = $prefix;
         $default_support = array('products', 'refunds', 'tokenization', 'add_payment_method');
         $this->supports = array_merge($default_support, apply_filters('woocommerce_paypal_payments_paypal_gateway_supports', array()));
         $this->method_title = $this->define_method_title();
         $this->method_description = $this->define_method_description();
-        $this->title = apply_filters('woocommerce_paypal_payments_gateway_title', $this->config->has('title') ? $this->config->get('title') : $this->method_title, $this);
-        $this->description = apply_filters('woocommerce_paypal_payments_gateway_description', $this->config->has('description') ? $this->config->get('description') : $this->method_description, $this);
+        $this->title = apply_filters('woocommerce_paypal_payments_gateway_title', $this->settings_provider->paypal_gateway_title(), $this);
+        $this->description = apply_filters('woocommerce_paypal_payments_gateway_description', $this->settings_provider->paypal_gateway_description(), $this);
         $funding_source = $this->session_handler->funding_source();
         if ($funding_source) {
             $order = $this->session_handler->order();
@@ -316,7 +223,7 @@ class PayPalGateway extends \WC_Payment_Gateway
      *
      * @return string
      */
-    public function get_title()
+    public function get_title(): string
     {
         if (is_admin()) {
             // $theorder and other things for retrieving the order or post info are not available
@@ -338,7 +245,7 @@ class PayPalGateway extends \WC_Payment_Gateway
      *
      * @return string
      */
-    public function get_description()
+    public function get_description(): string
     {
         $gateway_settings = get_option($this->get_option_key(), array());
         $description = array_key_exists('description', $gateway_settings) ? $gateway_settings['description'] : $this->description;
@@ -363,13 +270,9 @@ class PayPalGateway extends \WC_Payment_Gateway
     /**
      * Initializes the form fields.
      */
-    public function init_form_fields()
+    public function init_form_fields(): void
     {
         $this->form_fields = array('enabled' => array('title' => __('Enable/Disable', 'woocommerce-paypal-payments'), 'type' => 'checkbox', 'desc_tip' => \true, 'description' => __('In order to use PayPal or Advanced Card Processing, you need to enable the Gateway.', 'woocommerce-paypal-payments'), 'label' => __('Enable the PayPal gateway and more features for your store.', 'woocommerce-paypal-payments'), 'default' => 'no'), 'ppcp' => array('type' => 'ppcp'));
-        $should_show_enabled_checkbox = $this->is_paypal_tab() && ($this->config->has('merchant_email') && $this->config->get('merchant_email'));
-        if (!$should_show_enabled_checkbox) {
-            unset($this->form_fields['enabled']);
-        }
     }
     /**
      * Defines the method title. If we are on the credit card tab in the settings, we want to change this.
@@ -378,22 +281,7 @@ class PayPalGateway extends \WC_Payment_Gateway
      */
     private function define_method_title(): string
     {
-        if ($this->is_connection_tab()) {
-            return __('Account Setup', 'woocommerce-paypal-payments');
-        }
-        if ($this->is_credit_card_tab()) {
-            return __('Advanced Card Processing', 'woocommerce-paypal-payments');
-        }
-        if ($this->is_pay_later_tab()) {
-            return __('PayPal Pay Later', 'woocommerce-paypal-payments');
-        }
-        if ($this->is_paypal_tab()) {
-            return __('Standard Payments', 'woocommerce-paypal-payments');
-        }
-        if ($this->is_pui_tab()) {
-            return __('Pay upon Invoice', 'woocommerce-paypal-payments');
-        }
-        return __('PayPal', 'woocommerce-paypal-payments');
+        return 'PayPal';
     }
     /**
      * Defines the method description. If we are on the credit card tab in the settings, we want to change this.
@@ -402,70 +290,11 @@ class PayPalGateway extends \WC_Payment_Gateway
      */
     private function define_method_description(): string
     {
-        if ($this->is_connection_tab()) {
-            return '';
-        }
-        if ($this->is_credit_card_tab()) {
-            return __('Accept debit and credit cards, and local payment methods.', 'woocommerce-paypal-payments');
-        }
-        if ($this->is_pay_later_tab()) {
-            return '';
-        }
         if (is_admin()) {
             return __('Accept PayPal, Pay Later and alternative payment types.', 'woocommerce-paypal-payments');
         }
         return __('Pay via PayPal.', 'woocommerce-paypal-payments');
     }
-    // phpcs:disable WordPress.Security.NonceVerification.Recommended
-    /**
-     * Determines, whether the current session is on the credit card tab in the admin settings.
-     *
-     * @return bool
-     */
-    private function is_credit_card_tab(): bool
-    {
-        return is_admin() && \WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway::ID === $this->page_id;
-    }
-    /**
-     * Whether we are on the PUI tab.
-     *
-     * @return bool
-     */
-    private function is_pui_tab(): bool
-    {
-        if ('DE' !== $this->api_shop_country) {
-            return \false;
-        }
-        return is_admin() && PayUponInvoiceGateway::ID === $this->page_id;
-    }
-    /**
-     * Whether we are on the connection tab.
-     *
-     * @return bool true if is connection tab, otherwise false
-     */
-    protected function is_connection_tab(): bool
-    {
-        return is_admin() && Settings::CONNECTION_TAB_ID === $this->page_id;
-    }
-    /**
-     * Whether we are on the pay-later tab.
-     *
-     * @return bool true if is pay-later tab, otherwise false
-     */
-    protected function is_pay_later_tab(): bool
-    {
-        return is_admin() && Settings::PAY_LATER_TAB_ID === $this->page_id;
-    }
-    /**
-     * Whether we are on the PayPal settings tab.
-     *
-     * @return bool
-     */
-    private function is_paypal_tab(): bool
-    {
-        return !$this->is_credit_card_tab() && is_admin() && self::ID === $this->page_id;
-    }
-    // phpcs:enable WordPress.Security.NonceVerification.Recommended
     /**
      * Process payment for a WooCommerce order.
      *
@@ -473,10 +302,10 @@ class PayPalGateway extends \WC_Payment_Gateway
      *
      * @return array
      */
-    public function process_payment($order_id)
+    public function process_payment($order_id): array
     {
         $wc_order = wc_get_order($order_id);
-        if (!is_a($wc_order, WC_Order::class)) {
+        if (!$wc_order instanceof WC_Order) {
             return $this->handle_payment_failure(null, new GatewayGenericException(new Exception('WC order was not found.')));
         }
         // phpcs:ignore WordPress.Security.NonceVerification.Missing
@@ -485,9 +314,44 @@ class PayPalGateway extends \WC_Payment_Gateway
             $wc_order->set_payment_method_title($this->funding_source_renderer->render_name($funding_source));
             $wc_order->save();
         }
+        // phpcs:ignore WordPress.Security.NonceVerification.Missing
+        $paypal_payment_token_id = wc_clean(wp_unslash($_POST['wc-ppcp-gateway-payment-token'] ?? ''));
+        if ($paypal_payment_token_id && 'new' !== $paypal_payment_token_id) {
+            $tokens = WC_Payment_Tokens::get_customer_tokens(get_current_user_id());
+            foreach ($tokens as $token) {
+                if ($token->get_id() === (int) $paypal_payment_token_id) {
+                    $payment_source_name = $token instanceof PaymentTokenVenmo ? 'venmo' : 'paypal';
+                    $custom_id = (string) $wc_order->get_id();
+                    $invoice_id = $this->prefix . $wc_order->get_order_number();
+                    try {
+                        $created_order = $this->capture_paypal_payment->create_order($token->get_token(), $custom_id, $invoice_id, $wc_order, $payment_source_name);
+                    } catch (RuntimeException $exception) {
+                        $this->logger->error($exception->getMessage());
+                        return $this->handle_payment_failure($wc_order, $exception);
+                    }
+                    $order = $this->order_endpoint->order($created_order->id());
+                    $this->add_paypal_meta($wc_order, $created_order, $this->environment);
+                    $wc_order->add_payment_token($token);
+                    if ($order->intent() === 'AUTHORIZE') {
+                        $order = $this->order_endpoint->authorize($order);
+                        $wc_order->update_meta_data(AuthorizedPaymentsProcessor::CAPTURED_META_KEY, 'false');
+                        if ($this->subscription_helper->has_subscription($wc_order->get_id())) {
+                            $wc_order->update_meta_data('_ppcp_captured_vault_webhook', 'false');
+                        }
+                        $wc_order->save();
+                    }
+                    $transaction_id = $this->get_paypal_order_transaction_id($order);
+                    if ($transaction_id) {
+                        $this->update_transaction_id($transaction_id, $wc_order);
+                    }
+                    $this->handle_new_order_status($order, $wc_order);
+                    return $this->handle_payment_success($wc_order);
+                }
+            }
+        }
         if ('card' !== $funding_source && $this->is_free_trial_order($wc_order) && !$this->subscription_helper->paypal_subscription_id()) {
             $ppcp_guest_payment_for_free_trial = WC()->session->get('ppcp_guest_payment_for_free_trial') ?? null;
-            if ($this->vault_v3_enabled && $ppcp_guest_payment_for_free_trial) {
+            if ($this->vault_v3_enabled && is_object($ppcp_guest_payment_for_free_trial)) {
                 $customer_id = $ppcp_guest_payment_for_free_trial->customer->id ?? '';
                 if ($customer_id) {
                     update_user_meta($wc_order->get_customer_id(), '_ppcp_target_customer_id', $customer_id);
@@ -549,7 +413,7 @@ class PayPalGateway extends \WC_Payment_Gateway
                 do_action('woocommerce_paypal_payments_before_handle_payment_success', $wc_order);
                 return $this->handle_payment_success($wc_order);
             } catch (PayPalOrderMissingException $exc) {
-                $order = $this->order_processor->create_order($wc_order);
+                $order = $this->order_processor->create_order($wc_order, is_string($funding_source) && $funding_source ? $funding_source : 'paypal');
                 return array('result' => 'success', 'redirect' => ($this->paypal_checkout_url_factory)($order->id()));
             }
         } catch (PayPalApiException $error) {
@@ -559,12 +423,16 @@ class PayPalGateway extends \WC_Payment_Gateway
             }));
             if ($retry_errors) {
                 $retry_error_key = $retry_errors[0];
-                $wc_order->update_status('failed', $retry_keys_messages[$retry_error_key] . ' ' . $error->details()[0]->description ?? '');
+                $wc_order->update_status('failed', $retry_keys_messages[$retry_error_key] . ' ' . ($error->details()[0]->description ?? ''));
                 $this->session_handler->increment_insufficient_funding_tries();
                 if ($this->session_handler->insufficient_funding_tries() >= 3) {
                     return $this->handle_payment_failure(null, new Exception(__('Please use a different payment method.', 'woocommerce-paypal-payments'), $error->getCode(), $error));
                 }
-                return array('result' => 'success', 'redirect' => ($this->paypal_checkout_url_factory)($this->session_handler->order()->id()));
+                $session_order = $this->session_handler->order();
+                if (!$session_order instanceof Order) {
+                    return $this->handle_payment_failure(null, new Exception(__('Payment session expired. Please try again.', 'woocommerce-paypal-payments')));
+                }
+                return array('result' => 'success', 'redirect' => ($this->paypal_checkout_url_factory)($session_order->id()));
             }
             return $this->handle_payment_failure($wc_order, new Exception(\WooCommerce\PayPalCommerce\WcGateway\Gateway\Messages::generic_payment_error_message() . ' ' . $error->getMessage(), $error->getCode(), $error));
         } catch (Exception $error) {
@@ -575,17 +443,16 @@ class PayPalGateway extends \WC_Payment_Gateway
      * Process refund.
      *
      * If the gateway declares 'refunds' support, this will allow it to refund.
-     * a passed in amount.
      *
      * @param  int    $order_id Order ID.
      * @param  float  $amount Refund amount.
      * @param  string $reason Refund reason.
      * @return boolean True or false based on success, or a WP_Error object.
      */
-    public function process_refund($order_id, $amount = null, $reason = '')
+    public function process_refund($order_id, $amount = null, $reason = ''): bool
     {
         $order = wc_get_order($order_id);
-        if (!is_a($order, \WC_Order::class)) {
+        if (!$order instanceof \WC_Order) {
             return \false;
         }
         return $this->refund_processor->process($order, (float) $amount, (string) $reason);
@@ -603,39 +470,13 @@ class PayPalGateway extends \WC_Payment_Gateway
         return parent::get_transaction_url($order);
     }
     /**
-     * Updates WooCommerce gateway option.
-     *
-     * @param string $key The option key.
-     * @param string $value The option value.
-     * @return bool was anything saved?
-     */
-    public function update_option($key, $value = '')
-    {
-        $ret = parent::update_option($key, $value);
-        if ('enabled' === $key) {
-            $this->config->set('enabled', 'yes' === $value);
-            $this->config->persist();
-            return \true;
-        }
-        return $ret;
-    }
-    /**
      * Override the parent admin_options method.
      */
-    public function admin_options()
+    public function admin_options(): void
     {
         if (!$this->admin_settings_enabled) {
             parent::admin_options();
         }
         do_action('woocommerce_paypal_payments_gateway_admin_options_wrapper', $this);
-    }
-    /**
-     * Returns the settings renderer.
-     *
-     * @return SettingsRenderer
-     */
-    protected function settings_renderer(): SettingsRenderer
-    {
-        return $this->settings_renderer;
     }
 }
