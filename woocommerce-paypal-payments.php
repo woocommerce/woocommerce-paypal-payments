@@ -3,7 +3,7 @@
  * Plugin Name: WooCommerce PayPal Payments
  * Plugin URI:  https://woocommerce.com/products/woocommerce-paypal-payments/
  * Description: PayPal's latest complete payments processing solution. Accept PayPal, Pay Later, credit/debit cards, alternative digital wallets local payment types and bank accounts. Turn on only PayPal options or process a full suite of payment methods. Enable global transaction with extensive currency and country coverage.
- * Version:     3.3.2
+ * Version:     3.4.1
  * Author:      PayPal
  * Author URI:  https://paypal.com/
  * License:     GPL-2.0
@@ -11,7 +11,7 @@
  * Requires Plugins: woocommerce
  * Requires at least: 6.5
  * WC requires at least: 9.6
- * WC tested up to: 10.4
+ * WC tested up to: 10.5
  * Text Domain: woocommerce-paypal-payments
  *
  * @package WooCommerce\PayPalCommerce
@@ -21,13 +21,11 @@ declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce;
 
-use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
-
 define( 'PAYPAL_API_URL', 'https://api-m.paypal.com' );
 define( 'PAYPAL_URL', 'https://www.paypal.com' );
 define( 'PAYPAL_SANDBOX_API_URL', 'https://api-m.sandbox.paypal.com' );
 define( 'PAYPAL_SANDBOX_URL', 'https://www.sandbox.paypal.com' );
-define( 'PAYPAL_INTEGRATION_DATE', '2026-01-05' );
+define( 'PAYPAL_INTEGRATION_DATE', '2026-03-04' );
 define( 'PPCP_PAYPAL_BN_CODE', 'Woo_PPCP' );
 
 ! defined( 'CONNECT_WOO_CLIENT_ID' ) && define( 'CONNECT_WOO_CLIENT_ID', 'AcCAsWta_JTL__OfpjspNyH7c1GGHH332fLwonA5CwX4Y10mhybRZmHLA0GdRbwKwjQIhpDQy0pluX_P' );
@@ -54,14 +52,8 @@ define( 'PPCP_PAYPAL_BN_CODE', 'Woo_PPCP' );
 	 *                                  Should echo/print the notice markup directly.
 	 * @param bool     $auto_deactivate Optional. Whether to automatically deactivate the plugin
 	 *                                  after displaying the notice. Default true.
-	 *
-	 * @return void
 	 */
 	function show_admin_notice_and_deactivate( callable $notice_callback, bool $auto_deactivate = true ): void {
-		if ( ! is_callable( $notice_callback ) ) {
-			return;
-		}
-
 		$admin_notice_hooks = array( 'admin_notices', 'network_admin_notices' );
 
 		foreach ( $admin_notice_hooks as $hook ) {
@@ -218,7 +210,7 @@ define( 'PPCP_PAYPAL_BN_CODE', 'Woo_PPCP' );
 				$links,
 				sprintf(
 					'<a href="%1$s">%2$s</a>',
-					admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway&ppcp-tab=' . Settings::CONNECTION_TAB_ID ),
+					admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway' ),
 					__( 'Settings', 'woocommerce-paypal-payments' )
 				)
 			);

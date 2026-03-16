@@ -21,10 +21,7 @@ export class PayForOrder extends PayForOrderBase {
 
 	makeOrder = async ( tested, order ) => {
 		await this.visit( order.id, order.order_key );
-		await this.ppui.makeClassicPayment( {
-			merchant: tested.merchant,
-			payment: tested.payment,
-		} );
+		await this.ppui.makeClassicPayment( tested );
 	};
 
 	// Assertions

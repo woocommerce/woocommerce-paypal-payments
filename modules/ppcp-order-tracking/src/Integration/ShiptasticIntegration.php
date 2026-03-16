@@ -78,7 +78,7 @@ class ShiptasticIntegration implements Integration {
 
 					$wc_order = $shipment->get_order();
 
-					if ( ! is_a( $wc_order, WC_Order::class ) ) {
+					if ( ! ( $wc_order instanceof WC_Order ) ) {
 						return;
 					}
 

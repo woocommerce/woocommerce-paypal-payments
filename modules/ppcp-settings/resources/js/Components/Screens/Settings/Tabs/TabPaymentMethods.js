@@ -46,6 +46,9 @@ const TabPaymentMethods = () => {
 				'threeDSecure',
 				'cardholderName',
 				'fastlaneDisplayWatermark',
+				'puiBrandName',
+				'puiLogoUrl',
+				'puiCustomerServiceInstructions',
 			];
 
 			persistentSettings.forEach( ( setting ) => {

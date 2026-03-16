@@ -19,8 +19,6 @@ export class Checkout extends CheckoutBase {
 	}
 
 	// Locators
-	proceedToPayPalButton = () =>
-		this.page.getByRole( 'button', { name: 'Proceed to PayPal' } );
 
 	// Actions
 

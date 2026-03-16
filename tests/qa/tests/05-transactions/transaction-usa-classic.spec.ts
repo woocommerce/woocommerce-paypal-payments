@@ -7,7 +7,6 @@ import {
 	storeConfigUsa,
 	gateways,
 	taxSettings,
-	wpDebuggingPlugin,
 	customers,
 } from '../../resources';
 import {

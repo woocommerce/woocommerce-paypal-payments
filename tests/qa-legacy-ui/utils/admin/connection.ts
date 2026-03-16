@@ -126,11 +126,8 @@ export class Connection extends PcpSettingsPage {
 			this.toggleToManualCredentialInputButton();
 		await expect( toggleToManualCredentialInputButton ).toBeVisible();
 		await toggleToManualCredentialInputButton.click( { force: true } );
-
-		const sandboxCheckbox = this.sandboxCheckbox();
-		await expect( sandboxCheckbox ).toBeVisible();
-		await sandboxCheckbox.check( { force: true } );
-		await expect( this.sandboxCheckbox() ).toBeChecked();
+		
+		await this.sandboxCheckbox().click( { force: true } ); // this is not a regular checkbox element
 
 		const sandboxEmailAddressInput = this.sandboxEmailAddressInput();
 		await expect( sandboxEmailAddressInput ).toBeVisible();

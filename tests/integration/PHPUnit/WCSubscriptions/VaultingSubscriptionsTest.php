@@ -9,7 +9,6 @@ use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PaymentTokensEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentSource;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Token;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\ReferenceTransactionStatus;
-use WooCommerce\PayPalCommerce\Onboarding\State;
 use WooCommerce\PayPalCommerce\Tests\Integration\IntegrationMockedTestCase;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
@@ -105,10 +104,6 @@ class VaultingSubscriptionsTest extends IntegrationMockedTestCase {
 		$reference_transaction_status->shouldReceive( 'reference_transaction_enabled' )
 		                             ->andReturn( true );
 
-		$state_mock = \Mockery::mock( State::class );
-		$state_mock->shouldReceive( 'current_state' )
-		           ->andReturn( State::STATE_ONBOARDED );
-
 		$token_mock = \Mockery::mock( Token::class );
 		$token_mock->shouldReceive( 'vaulting_available' )
 		           ->andReturn( true );
@@ -124,9 +119,6 @@ class VaultingSubscriptionsTest extends IntegrationMockedTestCase {
 			'api.endpoint.billing-agreements' => function () use ( $reference_transaction_status ) {
 				return $reference_transaction_status;
 			},
-			'onboarding.state'                => function () use ( $state_mock ) {
-				return $state_mock;
-			},
 			'api.bearer'                      => function () use ( $bearer_mock ) {
 				return $bearer_mock;
 			},
@@ -136,9 +128,6 @@ class VaultingSubscriptionsTest extends IntegrationMockedTestCase {
 		$this->assertTrue( $reference_transaction_status->reference_transaction_enabled(),
 			'Reference transactions should be enabled for vaulting to work' );
 
-		$this->assertEquals( State::STATE_ONBOARDED, $state_mock->current_state(),
-			'Account should be onboarded for vaulting to work' );
-
 		$bearer = $c->get( 'api.bearer' );
 		$token  = $bearer->bearer();
 		$this->assertTrue( $token->vaulting_available(),
@@ -146,7 +135,6 @@ class VaultingSubscriptionsTest extends IntegrationMockedTestCase {
 
 		// Validate that the container can provide the necessary services
 		$this->assertInstanceOf( ReferenceTransactionStatus::class, $reference_transaction_status );
-		$this->assertInstanceOf( State::class, $state_mock );
 		$this->assertInstanceOf( Bearer::class, $bearer );
 		$this->assertInstanceOf( Token::class, $token );
 	}
@@ -196,10 +184,6 @@ class VaultingSubscriptionsTest extends IntegrationMockedTestCase {
 		$reference_transaction_status->shouldReceive( 'reference_transaction_enabled' )
 		                             ->andReturn( true );
 
-		$state_mock = \Mockery::mock( State::class );
-		$state_mock->shouldReceive( 'current_state' )
-		           ->andReturn( State::STATE_ONBOARDED );
-
 		$token_mock = \Mockery::mock( Token::class );
 		$token_mock->shouldReceive( 'vaulting_available' )
 		           ->andReturn( true );
@@ -222,9 +206,6 @@ class VaultingSubscriptionsTest extends IntegrationMockedTestCase {
 			},
 			'api.endpoint.billing-agreements' => function () use ( $reference_transaction_status ) {
 				return $reference_transaction_status;
-			},
-			'onboarding.state'                => function () use ( $state_mock ) {
-				return $state_mock;
 			},
 			'api.bearer'                      => function () use ( $bearer_mock ) {
 				return $bearer_mock;

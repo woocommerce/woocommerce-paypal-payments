@@ -3,36 +3,25 @@ name: PR Playground Demo
 on:
   pull_request:
     types: [opened, synchronize, reopened]
-    paths:
-      - "src/**"
-      - "assets/**"
-      - "modules/**"
-      - "package.json"
-      - "composer.json"
-  push:
-    paths:
-      - "src/**"
-      - "assets/**"
-      - "modules/**"
-      - "package.json"
-      - "composer.json"
 
 # Cancels all previous workflow runs for pull requests that have not completed.
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.head_ref || github.sha }}
+  group: ${{ github.workflow }}-${{ github.head_ref }}
   cancel-in-progress: true
 
 # Disable permissions for all available scopes by default.
 permissions: {}
 
 jobs:
-  prepare_version:
+  fetch_build:
     runs-on: ubuntu-latest
-    # Only run for the main repository, not forks
-    if: github.repository == 'woocommerce/woocommerce-paypal-payments' && github.event_name == 'pull_request'
+    if: github.repository == 'woocommerce/woocommerce-paypal-payments'
+    permissions:
+      actions: read
     outputs:
       artifact_name: ${{ steps.version.outputs.artifact_name }}
       plugin_version: ${{ steps.version.outputs.plugin_version }}
+      has_build: ${{ steps.fetch.outputs.has_build }}
     steps:
       - uses: actions/checkout@v4
 
@@ -46,118 +35,129 @@ jobs:
           echo "plugin_version=$PR_VERSION" >> $GITHUB_OUTPUT
           echo "artifact_name=$ARTIFACT_NAME" >> $GITHUB_OUTPUT
 
-  build_plugin:
-    needs: prepare_version
-    uses: inpsyde/reusable-workflows/.github/workflows/build-plugin-archive.yml@a9af34f34e95cbe18703198c7e972e97ebcd7473
-    with:
-      PHP_VERSION: 7.4
-      NODE_VERSION: 22
-      PLUGIN_MAIN_FILE: ./woocommerce-paypal-payments.php
-      PLUGIN_VERSION: ${{ needs.prepare_version.outputs.plugin_version }}
-      PLUGIN_FOLDER_NAME: woocommerce-paypal-payments
-      ARCHIVE_NAME: ${{ needs.prepare_version.outputs.artifact_name }}
-      COMPILE_ASSETS_ARGS: "-vv --env=root"
-
-  create_archive:
-    runs-on: ubuntu-latest
-    needs: [prepare_version, build_plugin]
-    outputs:
-      artifact_name: ${{ needs.prepare_version.outputs.artifact_name }}
-      plugin_version: ${{ needs.prepare_version.outputs.plugin_version }}
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Save PR details
-        run: |
-          mkdir -p ./pr
-          echo "${{ github.event.pull_request.number }}" > ./pr/NR
-          echo "${{ needs.prepare_version.outputs.plugin_version }}" > ./pr/VERSION
-          echo "${{ needs.prepare_version.outputs.artifact_name }}" > ./pr/ARTIFACT
-
-      - name: Upload PR number
-        uses: actions/upload-artifact@v4
-        with:
-          name: pr-details
-          path: pr/
-
-  playground_demo:
-    name: Comment on PR with Playground details
-    runs-on: ubuntu-latest
-    needs: create_archive
-    permissions:
-      issues: write
-      pull-requests: write
-    # Only run for pull requests in the main repository
-    if: github.repository == 'woocommerce/woocommerce-paypal-payments' && github.event_name == 'pull_request'
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Download PR details artifact
+      - name: Wait for and download Build and distribute artifact
+        id: fetch
         uses: actions/github-script@v7
         with:
           script: |
+            const fs = require('fs');
+            const headSha = context.payload.pull_request.head.sha;
+            core.info(`Looking for Build and distribute run for SHA: ${headSha}`);
+
+            // Find the "Build and distribute" workflow
+            const workflows = await github.rest.actions.listRepoWorkflows({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+            });
+            const bdWorkflow = workflows.data.workflows.find(w => w.name === 'Build and distribute');
+            if (!bdWorkflow) {
+              core.setFailed('Could not find "Build and distribute" workflow');
+              return;
+            }
+            core.info(`Found workflow ID: ${bdWorkflow.id}`);
+
+            // Poll for the workflow run to appear and complete
+            const maxWait = 5 * 60 * 1000;
+            const interval = 30 * 1000;
+            const start = Date.now();
+
+            let run = null;
+            while (Date.now() - start < maxWait) {
+              const runs = await github.rest.actions.listWorkflowRuns({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                workflow_id: bdWorkflow.id,
+                head_sha: headSha,
+              });
+
+              if (runs.data.workflow_runs.length > 0) {
+                run = runs.data.workflow_runs[0];
+                core.info(`Found run #${run.id} — status: ${run.status}, conclusion: ${run.conclusion}`);
+
+                if (run.status === 'completed') {
+                  break;
+                }
+              } else {
+                core.info('No matching run found yet, waiting...');
+              }
+
+              await new Promise(r => setTimeout(r, interval));
+            }
+
+            // No B&D run found — build workflow did not trigger for this commit, skip gracefully
+            if (!run) {
+              core.info('No Build and distribute run found for this commit — skipping playground demo');
+              core.setOutput('has_build', 'false');
+              return;
+            }
+            if (run.status !== 'completed') {
+              core.info('Build and distribute did not complete in time — skipping playground demo');
+              core.setOutput('has_build', 'false');
+              return;
+            }
+            if (run.conclusion !== 'success') {
+              core.setFailed(`Build and distribute finished with: ${run.conclusion}`);
+              return;
+            }
+
+            core.setOutput('has_build', 'true');
+
+            // Download the artifact
             const artifacts = await github.rest.actions.listWorkflowRunArtifacts({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              run_id: context.runId,
+              run_id: run.id,
             });
 
-            const matchArtifact = artifacts.data.artifacts.filter((artifact) => {
-              return artifact.name === 'pr-details'
-            })[0];
-
-            if (!matchArtifact) {
-              core.setFailed('No pr-details artifact found!');
+            if (artifacts.data.artifacts.length === 0) {
+              core.setFailed('No artifacts found in Build and distribute run');
               return;
             }
+
+            const artifact = artifacts.data.artifacts[0];
+            core.info(`Downloading artifact: ${artifact.name} (ID: ${artifact.id})`);
 
             const download = await github.rest.actions.downloadArtifact({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              artifact_id: matchArtifact.id,
+              artifact_id: artifact.id,
               archive_format: 'zip',
             });
 
-            const fs = require('fs');
-            fs.writeFileSync('${{github.workspace}}/pr-details.zip', Buffer.from(download.data));
+            fs.writeFileSync('/tmp/plugin.zip', Buffer.from(download.data));
+            core.info('Artifact downloaded to /tmp/plugin.zip');
 
-      - name: Unzip PR details
-        run: unzip pr-details.zip
+      - name: Unzip artifact
+        if: steps.fetch.outputs.has_build == 'true'
+        run: |
+          mkdir -p /tmp/plugin-build
+          unzip -o /tmp/plugin.zip -d /tmp/plugin-build
+
+      - name: Re-upload artifact for Playground
+        if: steps.fetch.outputs.has_build == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.version.outputs.artifact_name }}
+          path: /tmp/plugin-build
+
+  playground_demo:
+    name: Comment on PR with Playground details
+    runs-on: ubuntu-latest
+    needs: fetch_build
+    if: needs.fetch_build.outputs.has_build == 'true'
+    permissions:
+      issues: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
 
       - name: Create or update PR playground comment
         uses: actions/github-script@v7
         with:
           script: |
-            const fs = require('fs');
-
-            const pr_number = fs.readFileSync('./NR', 'utf8').trim();
-            const plugin_version = fs.readFileSync('./VERSION', 'utf8').trim();
-            const artifact_name = fs.readFileSync('./ARTIFACT', 'utf8').trim();
-
-            // Load the comment script
             const script = require('./.github/scripts/playground-comment.js');
 
-            // Set environment variables for the script
-            process.env.PLUGIN_VERSION = plugin_version;
-            process.env.ARTIFACT_NAME = artifact_name;
+            process.env.PLUGIN_VERSION = '${{ needs.fetch_build.outputs.plugin_version }}';
+            process.env.ARTIFACT_NAME = '${{ needs.fetch_build.outputs.artifact_name }}';
 
-            const updatedContext = {
-              repo: {
-                owner: context.repo.owner,
-                repo: context.repo.repo
-              },
-              issue: {
-                number: parseInt(pr_number, 10)
-              },
-              runId: context.runId,
-              payload: {
-                pull_request: {
-                  number: parseInt(pr_number, 10),
-                  head: {
-                    sha: context.sha
-                  }
-                }
-              }
-            };
-
-            await script.run({ github, context: updatedContext, core });
+            await script.run({ github, context, core });
