@@ -466,7 +466,6 @@ return array(
     'WooCommerce\\PayPalCommerce\\WcGateway\\Helper\\FeesUpdater' => $baseDir . '/modules/ppcp-wc-gateway/src/Helper/FeesUpdater.php',
     'WooCommerce\\PayPalCommerce\\WcGateway\\Helper\\InstallmentsProductStatus' => $baseDir . '/modules/ppcp-wc-gateway/src/Helper/InstallmentsProductStatus.php',
     'WooCommerce\\PayPalCommerce\\WcGateway\\Helper\\MerchantDetails' => $baseDir . '/modules/ppcp-wc-gateway/src/Helper/MerchantDetails.php',
-    'WooCommerce\\PayPalCommerce\\WcGateway\\Helper\\OrderStatusHelper' => $baseDir . '/modules/ppcp-wc-gateway/src/Helper/OrderStatusHelper.php',
     'WooCommerce\\PayPalCommerce\\WcGateway\\Helper\\PWCProductStatus' => $baseDir . '/modules/ppcp-wc-gateway/src/Helper/PWCProductStatus.php',
     'WooCommerce\\PayPalCommerce\\WcGateway\\Helper\\PayUponInvoiceHelper' => $baseDir . '/modules/ppcp-wc-gateway/src/Helper/PayUponInvoiceHelper.php',
     'WooCommerce\\PayPalCommerce\\WcGateway\\Helper\\PayUponInvoiceProductStatus' => $baseDir . '/modules/ppcp-wc-gateway/src/Helper/PayUponInvoiceProductStatus.php',

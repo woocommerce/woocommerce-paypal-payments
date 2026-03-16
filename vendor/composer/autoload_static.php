@@ -650,7 +650,6 @@ class ComposerStaticInitf454a4dc4519aa3bafab294be971ae9b
         'WooCommerce\\PayPalCommerce\\WcGateway\\Helper\\FeesUpdater' => __DIR__ . '/../..' . '/modules/ppcp-wc-gateway/src/Helper/FeesUpdater.php',
         'WooCommerce\\PayPalCommerce\\WcGateway\\Helper\\InstallmentsProductStatus' => __DIR__ . '/../..' . '/modules/ppcp-wc-gateway/src/Helper/InstallmentsProductStatus.php',
         'WooCommerce\\PayPalCommerce\\WcGateway\\Helper\\MerchantDetails' => __DIR__ . '/../..' . '/modules/ppcp-wc-gateway/src/Helper/MerchantDetails.php',
-        'WooCommerce\\PayPalCommerce\\WcGateway\\Helper\\OrderStatusHelper' => __DIR__ . '/../..' . '/modules/ppcp-wc-gateway/src/Helper/OrderStatusHelper.php',
         'WooCommerce\\PayPalCommerce\\WcGateway\\Helper\\PWCProductStatus' => __DIR__ . '/../..' . '/modules/ppcp-wc-gateway/src/Helper/PWCProductStatus.php',
         'WooCommerce\\PayPalCommerce\\WcGateway\\Helper\\PayUponInvoiceHelper' => __DIR__ . '/../..' . '/modules/ppcp-wc-gateway/src/Helper/PayUponInvoiceHelper.php',
         'WooCommerce\\PayPalCommerce\\WcGateway\\Helper\\PayUponInvoiceProductStatus' => __DIR__ . '/../..' . '/modules/ppcp-wc-gateway/src/Helper/PayUponInvoiceProductStatus.php',
