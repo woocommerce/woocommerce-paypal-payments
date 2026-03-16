@@ -14,6 +14,7 @@ use Psr\Log\LoggerInterface;
 use WP_REST_Request;
 use WP_REST_Response;
 use WP_REST_Server;
+use WooCommerce\WooCommerce\Logging\Logger\NullLogger;
 use WooCommerce\PayPalCommerce\Settings\Service\AuthenticationManager;
 use WooCommerce\PayPalCommerce\Settings\Service\SettingsDataManager;
 
@@ -72,7 +73,7 @@ class AuthenticationRestEndpoint extends RestEndpoint {
 	) {
 		$this->authentication_manager = $authentication_manager;
 		$this->data_manager           = $data_manager;
-		$this->logger                 = $logger;
+		$this->logger                 = $logger ?? new NullLogger();
 	}
 
 	/**
@@ -188,9 +189,7 @@ class AuthenticationRestEndpoint extends RestEndpoint {
 		try {
 			$this->authentication_manager->authenticate_via_direct_api( $use_sandbox, $client_id, $client_secret );
 		} catch ( Exception $exception ) {
-			if ( $this->logger ) {
-				$this->logger->error( 'Direct API authentication failed: ' . $exception->getMessage() );
-			}
+			$this->logger->error( 'Direct API authentication failed: ' . $exception->getMessage() );
 			return $this->return_error(
 				__( 'Could not connect to PayPal. Please verify your credentials and try again.', 'woocommerce-paypal-payments' )
 			);
