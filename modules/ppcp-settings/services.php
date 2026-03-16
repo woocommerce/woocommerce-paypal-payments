@@ -99,11 +99,12 @@ return array(
         $can_use_casual_selling = $container->get('settings.casual-selling.eligible');
         $can_use_vaulting = $container->has('save-payment-methods.eligible') && $container->get('save-payment-methods.eligible');
         $can_use_card_payments = $container->has('card-fields.eligibility.check') && $container->get('card-fields.eligibility.check')();
+        $can_use_digital_wallets = $container->has('applepay.eligibility.check') && $container->get('applepay.eligibility.check')() || $container->has('googlepay.eligibility.check') && $container->get('googlepay.eligibility.check')();
         $can_use_subscriptions = $container->has('wc-subscriptions.helper') && $container->get('wc-subscriptions.helper')->plugin_is_active();
         $should_skip_payment_methods = class_exists('\WC_Payments');
         $can_use_fastlane = $container->get('axo.eligibility.check');
         $can_use_pay_later = $container->get('button.helper.messages-apply');
-        return new OnboardingProfile($can_use_fastlane, $can_use_casual_selling, $can_use_vaulting, $can_use_card_payments, $can_use_subscriptions, $should_skip_payment_methods, $can_use_pay_later->for_country());
+        return new OnboardingProfile($can_use_fastlane, $can_use_casual_selling, $can_use_vaulting, $can_use_card_payments, $can_use_digital_wallets, $can_use_subscriptions, $should_skip_payment_methods, $can_use_pay_later->for_country());
     },
     'settings.data.general' => static function (ContainerInterface $container): GeneralSettings {
         return new GeneralSettings($container->get('api.shop.country'), $container->get('api.shop.currency.getter')->get(), $container->get('wcgateway.is-send-only-country'));
