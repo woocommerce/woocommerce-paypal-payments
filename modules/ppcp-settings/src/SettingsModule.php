@@ -377,6 +377,17 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 					$methods[] = $axo_gateway;
 				}
 
+				// Remove gateways where the merchant is not eligible.
+				$eligibility_service = $container->get( 'settings.service.payment_methods_eligibilities' );
+				$eligibility_checks  = $eligibility_service->get_eligibility_checks();
+				$methods             = array_filter(
+					$methods,
+					static function ( $gateway ) use ( $eligibility_checks ) {
+						$id = $gateway instanceof WC_Payment_Gateway ? $gateway->id : '';
+						return ! isset( $eligibility_checks[ $id ] ) || $eligibility_checks[ $id ]();
+					}
+				);
+
 				return $methods;
 			},
 			99
@@ -708,6 +719,59 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 
 				if ( ! in_array( 'card', $disable_funding, true ) ) {
 					$payment_settings->toggle_method_state( CardButtonGateway::ID, true );
+					$payment_settings->save();
+				}
+			}
+		);
+
+		add_action(
+			'woocommerce_paypal_payments_gateway_migrate',
+			/**
+			 * Retroactive fix for local APMs not enabled after migration when
+			 * allow_local_apm_gateways was false.
+			 *
+			 * In versions up to 3.4.1, the migration only enabled local APMs when
+			 * allow_local_apm_gateways was truthy. When it was false, APMs were shown
+			 * inside the PayPal button, not as separate gateways. The new UI always
+			 * treats APMs as separate gateways, so skipping them left them invisible.
+			 *
+			 * @param false|string $previous_version The previously installed plugin version,
+			 *                                       or false on first installation.
+			 */
+			static function ( $previous_version ) use ( $container ): void {
+				if ( $previous_version && version_compare( $previous_version, '3.4.1', 'gt' ) ) {
+					return;
+				}
+
+				if ( get_option( MigrationManager::OPTION_NAME_MIGRATION_IS_DONE ) !== '1' ) {
+					return;
+				}
+
+				$legacy_settings = (array) get_option( 'woocommerce-ppcp-settings', array() );
+
+				// Only fix merchants who had allow_local_apm_gateways falsy.
+				// Truthy merchants were migrated correctly.
+				if ( ! empty( $legacy_settings['allow_local_apm_gateways'] ) ) {
+					return;
+				}
+
+				$payment_settings = $container->get( 'settings.data.payment' );
+				assert( $payment_settings instanceof PaymentSettings );
+
+				$local_apms      = $container->get( 'ppcp-local-apms.payment-methods' );
+				$disable_funding = (array) ( $legacy_settings['disable_funding'] ?? array() );
+				$changed         = false;
+
+				foreach ( $local_apms as $apm ) {
+					if ( ! in_array( $apm['id'], $disable_funding, true )
+						&& ! $payment_settings->is_method_enabled( $apm['id'] )
+					) {
+						$payment_settings->toggle_method_state( $apm['id'], true );
+						$changed = true;
+					}
+				}
+
+				if ( $changed ) {
 					$payment_settings->save();
 				}
 			}

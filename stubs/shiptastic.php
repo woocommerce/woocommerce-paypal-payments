@@ -1,6 +1,6 @@
 <?php
 
-namespace Vendidero\Germanized\Shipments {
+namespace Vendidero\Shiptastic {
 
 	use WC_Data;
 	use WC_Order;
