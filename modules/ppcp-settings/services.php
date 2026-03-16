@@ -42,6 +42,7 @@ use WooCommerce\PayPalCommerce\Settings\Endpoint\AuthenticationRestEndpoint;
 use WooCommerce\PayPalCommerce\Settings\Endpoint\CommonRestEndpoint;
 use WooCommerce\PayPalCommerce\Settings\Endpoint\FeaturesRestEndpoint;
 use WooCommerce\PayPalCommerce\Settings\Endpoint\LoginLinkRestEndpoint;
+use WooCommerce\PayPalCommerce\Settings\Endpoint\MigrateToAcdcRestEndpoint;
 use WooCommerce\PayPalCommerce\Settings\Endpoint\OnboardingRestEndpoint;
 use WooCommerce\PayPalCommerce\Settings\Endpoint\PayLaterMessagingEndpoint;
 use WooCommerce\PayPalCommerce\Settings\Endpoint\PaymentRestEndpoint;
@@ -97,7 +98,7 @@ return array(
     'settings.data.onboarding' => static function (ContainerInterface $container): OnboardingProfile {
         $can_use_casual_selling = $container->get('settings.casual-selling.eligible');
         $can_use_vaulting = $container->has('save-payment-methods.eligible') && $container->get('save-payment-methods.eligible');
-        $can_use_card_payments = $container->has('card-fields.eligible') && $container->get('card-fields.eligible');
+        $can_use_card_payments = $container->has('card-fields.eligibility.check') && $container->get('card-fields.eligibility.check')();
         $can_use_subscriptions = $container->has('wc-subscriptions.helper') && $container->get('wc-subscriptions.helper')->plugin_is_active();
         $should_skip_payment_methods = class_exists('\WC_Payments');
         $can_use_fastlane = $container->get('axo.eligibility.check');
@@ -203,6 +204,9 @@ return array(
     'settings.rest.settings' => static function (ContainerInterface $container): SettingsRestEndpoint {
         return new SettingsRestEndpoint($container->get('settings.data.settings'));
     },
+    'settings.rest.migrate_to_acdc' => static function (ContainerInterface $container): MigrateToAcdcRestEndpoint {
+        return new MigrateToAcdcRestEndpoint($container->get('settings.data.payment'));
+    },
     'settings.casual-selling.supported-countries' => static function (ContainerInterface $container): array {
         return array('AR', 'AU', 'AT', 'BE', 'BR', 'CA', 'CL', 'CN', 'CY', 'CZ', 'DK', 'EE', 'FI', 'FR', 'GR', 'HU', 'ID', 'IE', 'IT', 'JP', 'LV', 'LI', 'LU', 'MY', 'MT', 'NL', 'NZ', 'NO', 'PH', 'PL', 'PT', 'RO', 'RU', 'SM', 'SA', 'SG', 'SK', 'SI', 'ZA', 'KR', 'ES', 'SE', 'TW', 'GB', 'US', 'VN');
     },
@@ -236,7 +240,9 @@ return array(
         return new SettingsDataManager($container->get('settings.data.definition.methods'), $container->get('settings.data.onboarding'), $container->get('settings.data.general'), $container->get('settings.data.settings'), $container->get('settings.data.styling'), $container->get('settings.data.payment'), $container->get('settings.data.paylater-messaging'), $container->get('settings.data.todos'));
     },
     'settings.service.script-data-handler' => static function (ContainerInterface $container): ScriptDataHandler {
-        return new ScriptDataHandler($container->get('settings.asset_getter'), $container->get('paylater-configurator.is-available'), $container->get('wcgateway.store-country'), $container->get('api.partner_merchant_id'), $container->get('wcgateway.wp-paypal-locales-map'), $container->get('api.helper.partner-attribution'), $container->get('settings.settings-provider'), $container->get('api.helpers.paymentLevelEligibility'));
+        $check_override = $container->get('settings.migration.bcdc-override-check');
+        assert(is_callable($check_override));
+        return new ScriptDataHandler($container->get('settings.asset_getter'), $container->get('paylater-configurator.is-available'), $container->get('wcgateway.store-country'), $container->get('api.partner_merchant_id'), $container->get('wcgateway.wp-paypal-locales-map'), $container->get('api.helper.partner-attribution'), $container->get('settings.settings-provider'), $container->get('api.helpers.paymentLevelEligibility'), $check_override());
     },
     'settings.service.data-migration' => static fn(ContainerInterface $c): MigrationManager => new MigrationManager($c->get('settings.service.data-migration.general-settings'), $c->get('settings.service.data-migration.settings-tab'), $c->get('settings.service.data-migration.styling'), $c->get('settings.service.data-migration.payment-settings'), $c->get('settings.service.data-migration.fastlane'), $c->get('settings.data.onboarding'), $c->get('woocommerce.logger.woocommerce')),
     'settings.service.data-migration.settings-tab' => static fn(ContainerInterface $c): SettingsTabMigration => new SettingsTabMigration((array) get_option('woocommerce-ppcp-settings', array()), $c->get('settings.data.settings')),

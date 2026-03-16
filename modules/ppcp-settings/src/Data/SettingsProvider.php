@@ -688,7 +688,8 @@ class SettingsProvider
         return $this->paylater_messaging_settings->get_messaging_enabled();
     }
     /**
-     * Whether to show the cardholder name field in the ACDC (Advanced Card Processing) payment form.
+     * Whether to show the cardholder name field in the ACDC (Advanced Card Processing) payment
+     * form.
      *
      * @return string 'yes' to show the field, 'no' to hide it.
      */
@@ -699,5 +700,9 @@ class SettingsProvider
             return $name_on_card;
         }
         return $this->payment_settings->get_cardholder_name() ? 'yes' : 'no';
+    }
+    public function capture_on_status_change(): bool
+    {
+        return apply_filters('woocommerce_paypal_payments_capture_on_status_change', $this->payment_settings->get_capture_on_status_change());
     }
 }
