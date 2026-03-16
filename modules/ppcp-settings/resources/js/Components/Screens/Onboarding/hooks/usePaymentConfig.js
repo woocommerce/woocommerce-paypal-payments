@@ -304,19 +304,24 @@ export const usePaymentConfig = (
 			learnMoreConfig = { ...rest, APMs: OptionalMethods };
 		}
 
+		const isMexico = country === 'MX';
+
 		// Filter out conditional methods.
 		const availableOptionalMethods = filterMethods(
 			config.extendedMethods,
 			[
-				// Digital wallets are independent of ACDC.
-				( method ) => {
-					if ( method.isDigitalWallet ) {
-						return canUseDigitalWallets && country !== 'MX';
-					}
-					return country === 'MX'
-						? ! method.isAcdc || canUseCardPayments
-						: method.isAcdc === canUseCardPayments;
-				},
+				// Digital wallets are independent of ACDC; not available in Mexico.
+				( method ) =>
+					! method.isDigitalWallet ||
+					( canUseDigitalWallets && ! isMexico ),
+				// In Mexico, ACDC methods are only included when card payments are enabled.
+				( method ) =>
+					! isMexico || ! method.isAcdc || canUseCardPayments,
+				// Outside Mexico, only include methods that match the card payments flag.
+				( method ) =>
+					isMexico ||
+					method.isDigitalWallet ||
+					method.isAcdc === canUseCardPayments,
 				// Only include own-brand methods when ownBrandOnly is true.
 				( method ) => ! ownBrandOnly || method.isOwnBrand === true,
 				// Only include Fastlane when hasFastlane is true.

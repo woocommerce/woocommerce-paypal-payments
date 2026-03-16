@@ -26,8 +26,7 @@ const PaymentFlow = ( {
 	ownBrandOnly,
 	onlyOptional = false,
 } ) => {
-	const resolvedUseDigitalWallets =
-		useDigitalWallets !== undefined ? useDigitalWallets : useAcdc;
+	const resolvedUseDigitalWallets = useDigitalWallets ?? useAcdc;
 
 	const {
 		includedMethods,

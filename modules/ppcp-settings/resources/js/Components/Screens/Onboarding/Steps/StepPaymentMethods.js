@@ -15,13 +15,13 @@ const StepPaymentMethods = () => {
 	const { canUseCardPayments, canUseDigitalWallets } =
 		OnboardingHooks.useFlags();
 
+	const hasAdvancedMethods = canUseCardPayments || canUseDigitalWallets;
+	const isMexico = 'MX' === storeCountry;
+	const showAdvancedSection = hasAdvancedMethods && ! isMexico;
+
 	const optionalMethodTitle = useMemo( () => {
 		// The BCDC flow does not show a title. No ACDC and no digital wallets does not show a title. Mexico does not show a title.
-		if (
-			isCasualSeller ||
-			( ! canUseCardPayments && ! canUseDigitalWallets ) ||
-			'MX' === storeCountry
-		) {
+		if ( isCasualSeller || ! showAdvancedSection ) {
 			return null;
 		}
 
@@ -29,12 +29,7 @@ const StepPaymentMethods = () => {
 			'Available with additional application',
 			'woocommerce-paypal-payments'
 		);
-	}, [
-		isCasualSeller,
-		canUseCardPayments,
-		canUseDigitalWallets,
-		storeCountry,
-	] );
+	}, [ isCasualSeller, showAdvancedSection ] );
 
 	const methodChoices = [
 		{
@@ -44,9 +39,7 @@ const StepPaymentMethods = () => {
 		},
 		{
 			title:
-				ownBrandOnly ||
-				( ! canUseCardPayments && ! canUseDigitalWallets ) ||
-				'MX' === storeCountry
+				ownBrandOnly || ! showAdvancedSection
 					? __(
 							'No thanks, I prefer to use a different provider for local payment methods',
 							'woocommerce-paypal-payments'
