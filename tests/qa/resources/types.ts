@@ -202,13 +202,14 @@ export namespace Pcp {
 			export type ButtonShape = 'Rectangle' | 'Pill';
 
 			export type ButtonLabel =
-				| 'Paypal'
+				| 'PayPal'
 				| 'Checkout'
 				| 'PayPal Buy Now'
 				| 'Pay with PayPal';
 
 			export type ButtonColor =
 				| 'Gold (recommended)'
+				| 'Gold (Recommended)'
 				| 'Blue'
 				| 'Silver'
 				| 'Black'
@@ -232,10 +233,11 @@ export namespace Pcp {
 				| 'Cart'
 				| 'Checkout'
 				| 'Home'
-				| 'Shop';
+				| 'Shop'
+				| 'WooCommerce Block';
 
 			export type LogoType =
-				| 'Full Logo'
+				| 'Full logo'
 				| 'Monogram'
 				| 'Inline'
 				| 'Message only';

@@ -39,6 +39,7 @@ use WooCommerce\PayPalCommerce\Button\Session\CartDataTransientStorage;
 use WooCommerce\PayPalCommerce\Button\Validation\CheckoutFormValidator;
 use WooCommerce\PayPalCommerce\Button\VaultV2\StartPayPalVaultingEndpoint;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
+use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\CardPaymentsConfiguration;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\SettingsStatus;
@@ -46,8 +47,9 @@ use WooCommerce\PayPalCommerce\WcGateway\Helper\SettingsStatus;
 return array(
 	'button.client_id'                            => static function ( ContainerInterface $container ): string {
 
-		$settings = $container->get( 'wcgateway.settings' );
-		$client_id = $settings->has( 'client_id' ) ? $settings->get( 'client_id' ) : '';
+		$settings_provider = $container->get( 'settings.settings-provider' );
+		$merchant_data     = $settings_provider->merchant_data();
+		$client_id         = $merchant_data->client_id;
 		if ( $client_id ) {
 			return $client_id;
 		}
@@ -59,7 +61,7 @@ return array(
 		 * @var Environment $env
 		 */
 
-		return $env->current_environment_is( Environment::SANDBOX ) ?
+		return $env->is_sandbox() ?
 			CONNECT_WOO_SANDBOX_CLIENT_ID : CONNECT_WOO_CLIENT_ID;
 	},
 	'button.client_id_for_admin'                  => static function ( ContainerInterface $container ): string {
@@ -110,8 +112,8 @@ return array(
 			return new DisabledSmartButton();
 		}
 
-		$settings           = $container->get( 'wcgateway.settings' );
-		$paypal_disabled     = ! $settings->has( 'enabled' ) || ! $settings->get( 'enabled' );
+		$settings_provider   = $container->get( 'settings.settings-provider' );
+		$paypal_disabled     = ! $settings_provider->gateway_enabled( PayPalGateway::ID );
 		if ( $paypal_disabled ) {
 			return new DisabledSmartButton();
 		}
@@ -128,12 +130,13 @@ return array(
 			$container->get( 'button.asset_getter' ),
 			$container->get( 'ppcp.asset-version' ),
 			$container->get( 'session.handler' ),
-			$settings,
+			$settings_provider,
 			$payer_factory,
 			$client_id,
 			$request_data,
 			$dcc_applies,
 			$subscription_helper,
+			$container->get( 'button.subscriptions-mode' ),
 			$messages_apply,
 			$environment,
 			$payment_token_repository,
@@ -144,8 +147,6 @@ return array(
 			$container->get( 'button.pay-now-contexts' ),
 			$container->get( 'wcgateway.funding-sources-without-redirect' ),
 			$container->get( 'vaulting.vault-v3-enabled' ),
-			$container->get( 'api.endpoint.payment-tokens' ),
-			$container->get( 'woocommerce.logger.woocommerce' ),
 			$container->get( 'button.handle-shipping-in-paypal' ),
 			$container->get( 'wcgateway.server-side-shipping-callback-enabled' ),
 			$container->get( 'wcgateway.appswitch-enabled' ),
@@ -203,7 +204,7 @@ return array(
 		$order_endpoint        = $container->get( 'api.endpoint.order' );
 		$payer_factory         = $container->get( 'api.factory.payer' );
 		$session_handler       = $container->get( 'session.handler' );
-		$settings              = $container->get( 'wcgateway.settings' );
+		$settings_provider     = $container->get( 'settings.settings-provider' );
 		$early_order_handler   = $container->get( 'button.helper.early-order-handler' );
 		$registration_needed   = $container->get( 'button.current-user-must-register' );
 		$logger                = $container->get( 'woocommerce.logger.woocommerce' );
@@ -217,7 +218,7 @@ return array(
 			$order_endpoint,
 			$payer_factory,
 			$session_handler,
-			$settings,
+			$settings_provider,
 			$early_order_handler,
 			$container->get( 'button.session.factory.card-data' ),
 			$container->get( 'button.session.storage.card-data.transient' ),
@@ -243,7 +244,8 @@ return array(
 		$order_endpoint       = $container->get( 'api.endpoint.order' );
 		$session_handler      = $container->get( 'session.handler' );
 		$three_d_secure       = $container->get( 'button.helper.three-d-secure' );
-		$settings             = $container->get( 'wcgateway.settings' );
+		$settings_provider    = $container->get( 'settings.settings-provider' );
+		$settings_model       = $container->get( 'settings.data.settings' );
 		$dcc_applies          = $container->get( 'api.helpers.dccapplies' );
 		$order_helper         = $container->get( 'api.order-helper' );
 		$final_review_enabled = $container->get( 'blocks.settings.final_review_enabled' );
@@ -257,7 +259,8 @@ return array(
 			$order_endpoint,
 			$session_handler,
 			$three_d_secure,
-			$settings,
+			$settings_provider,
+			$settings_model,
 			$dcc_applies,
 			$order_helper,
 			$final_review_enabled,
@@ -356,7 +359,7 @@ return array(
 	},
 	'button.helper.disabled-funding-sources'      => static function ( ContainerInterface $container ): DisabledFundingSources {
 		return new DisabledFundingSources(
-			$container->get( 'wcgateway.settings' ),
+			$container->get( 'settings.settings-provider' ),
 			$container->get( 'wcgateway.all-funding-sources' ),
 			$container->get( 'wcgateway.configuration.card-configuration' ),
 			$container->get( 'api.shop.country' )
@@ -390,6 +393,29 @@ return array(
 	},
 	'button.validation.wc-checkout-validator'     => static function ( ContainerInterface $container ): CheckoutFormValidator {
 		return new CheckoutFormValidator();
+	},
+	'button.subscriptions-mode'                   => static function ( ContainerInterface $container ): callable {
+		return static function () use ( $container ): string {
+			$settings_provider   = $container->get( 'settings.settings-provider' );
+			$subscription_helper = $container->get( 'wc-subscriptions.helper' );
+
+			if ( ! $subscription_helper->plugin_is_active() ) {
+				return '';
+			}
+
+			$subscription_mode_disabled = (bool) apply_filters(
+				'woocommerce_paypal_payments_subscription_mode_disabled',
+				false
+			);
+
+			if ( $subscription_mode_disabled ) {
+				return 'disable_paypal_subscriptions';
+			}
+
+			return $settings_provider->save_paypal_and_venmo()
+				? 'vaulting_api'
+				: 'subscriptions_api';
+		};
 	},
 
 	/**

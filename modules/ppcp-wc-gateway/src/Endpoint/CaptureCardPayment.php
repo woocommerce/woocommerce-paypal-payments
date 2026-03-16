@@ -1,9 +1,4 @@
 <?php
-/**
- * The Capture Card Payment endpoint.
- *
- * @package WooCommerce\PayPalCommerce\ApiClient\Endpoint
- */
 
 declare(strict_types=1);
 
@@ -11,18 +6,14 @@ namespace WooCommerce\PayPalCommerce\WcGateway\Endpoint;
 
 use Psr\Log\LoggerInterface;
 use RuntimeException;
-use stdClass;
 use WC_Order;
 use WooCommerce\PayPalCommerce\ApiClient\Authentication\Bearer;
-use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\RequestTrait;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PurchaseUnit;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\OrderFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PurchaseUnitFactory;
-use WooCommerce\PayPalCommerce\Session\SessionHandler;
-use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
-use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\RealTimeAccountUpdaterHelper;
+use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
 use WP_Error;
 
 class CaptureCardPayment {
@@ -57,33 +48,7 @@ class CaptureCardPayment {
 	 */
 	private $purchase_unit_factory;
 
-	/**
-	 * The order endpoint.
-	 *
-	 * @var OrderEndpoint
-	 */
-	private $order_endpoint;
-
-	/**
-	 * The session handler.
-	 *
-	 * @var SessionHandler
-	 */
-	private $session_handler;
-
-	/**
-	 * Real Time Account Updater helper.
-	 *
-	 * @var RealTimeAccountUpdaterHelper
-	 */
-	private $real_time_account_updater_helper;
-
-	/**
-	 * The settings.
-	 *
-	 * @var Settings
-	 */
-	private $settings;
+	private SettingsProvider $settings_provider;
 
 	/**
 	 * The logger.
@@ -97,21 +62,15 @@ class CaptureCardPayment {
 		Bearer $bearer,
 		OrderFactory $order_factory,
 		PurchaseUnitFactory $purchase_unit_factory,
-		OrderEndpoint $order_endpoint,
-		SessionHandler $session_handler,
-		RealTimeAccountUpdaterHelper $real_time_account_updater_helper,
-		Settings $settings,
+		SettingsProvider $settings_provider,
 		LoggerInterface $logger
 	) {
-		$this->host                             = $host;
-		$this->bearer                           = $bearer;
-		$this->order_factory                    = $order_factory;
-		$this->purchase_unit_factory            = $purchase_unit_factory;
-		$this->order_endpoint                   = $order_endpoint;
-		$this->session_handler                  = $session_handler;
-		$this->real_time_account_updater_helper = $real_time_account_updater_helper;
-		$this->settings                         = $settings;
-		$this->logger                           = $logger;
+		$this->host                  = $host;
+		$this->bearer                = $bearer;
+		$this->order_factory         = $order_factory;
+		$this->purchase_unit_factory = $purchase_unit_factory;
+		$this->settings_provider     = $settings_provider;
+		$this->logger                = $logger;
 	}
 
 	/**
@@ -120,7 +79,7 @@ class CaptureCardPayment {
 	 * @throws RuntimeException When request fails.
 	 */
 	public function create_order( string $vault_id, string $custom_id, string $invoice_id, WC_Order $wc_order ): Order {
-		$intent = $this->settings->has( 'intent' ) && strtoupper( (string) $this->settings->get( 'intent' ) ) === 'AUTHORIZE' ? 'AUTHORIZE' : 'CAPTURE';
+		$intent = strtoupper( $this->settings_provider->payment_intent() ) === 'AUTHORIZE' ? 'AUTHORIZE' : 'CAPTURE';
 		$items  = array( $this->purchase_unit_factory->from_wc_cart( null, false, $wc_order->get_payment_method() ) );
 
 		// phpcs:disable WordPress.Security.NonceVerification

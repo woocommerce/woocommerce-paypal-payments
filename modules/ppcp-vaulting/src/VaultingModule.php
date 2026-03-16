@@ -15,14 +15,12 @@ use WC_Payment_Token;
 use WC_Payment_Tokens;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExecutableModule;
-use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExtendingModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ModuleClassNameIdTrait;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ServiceModule;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
-use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 use WP_User_Query;
 
 /**
@@ -30,7 +28,7 @@ use WP_User_Query;
  *
  * @psalm-suppress MissingConstructor
  */
-class VaultingModule implements ServiceModule, ExtendingModule, ExecutableModule {
+class VaultingModule implements ServiceModule, ExecutableModule {
 	use ModuleClassNameIdTrait;
 
 	/**
@@ -45,13 +43,6 @@ class VaultingModule implements ServiceModule, ExtendingModule, ExecutableModule
 	 */
 	public function services(): array {
 		return require __DIR__ . '/../services.php';
-	}
-
-	/**
-	 * {@inheritDoc}
-	 */
-	public function extensions(): array {
-		return require __DIR__ . '/../extensions.php';
 	}
 
 	/**
@@ -127,6 +118,7 @@ class VaultingModule implements ServiceModule, ExtendingModule, ExecutableModule
 					return $tokens;
 				}
 
+				//phpcs:ignore WordPress.Security.NonceVerification.Recommended
 				if ( isset( $_GET['change_payment_method'] ) && is_wc_endpoint_url( 'order-pay' ) ) {
 					return $tokens;
 				}
@@ -139,7 +131,7 @@ class VaultingModule implements ServiceModule, ExtendingModule, ExecutableModule
 					&& ! $is_post // Don't check on POST so we have all payment methods on form submissions.
 				) {
 					foreach ( $tokens as $index => $token ) {
-						if ( $token instanceof PaymentTokenApplePay || $token instanceof PaymentTokenPayPal || $token instanceof PaymentTokenVenmo ) {
+						if ( $token instanceof PaymentTokenApplePay ) {
 							unset( $tokens[ $index ] );
 						}
 					}
@@ -164,7 +156,7 @@ class VaultingModule implements ServiceModule, ExtendingModule, ExecutableModule
 			 * @psalm-suppress MissingClosureParamType
 			 */
 			function ( $item, $payment_token ) {
-				if ( ! is_array( $item ) || ! is_a( $payment_token, WC_Payment_Token::class ) ) {
+				if ( ! is_array( $item ) || ! ( $payment_token instanceof WC_Payment_Token ) ) {
 					return $item;
 				}
 
@@ -231,23 +223,6 @@ class VaultingModule implements ServiceModule, ExtendingModule, ExecutableModule
 
 					return;
 				}
-			}
-		);
-
-		add_action(
-			'woocommerce_paypal_payments_gateway_migrate_on_update',
-			function () use ( $container ) {
-				$settings = $container->get( 'wcgateway.settings' );
-				assert( $settings instanceof Settings );
-				if ( $settings->has( 'vault_enabled' ) && $settings->get( 'vault_enabled' ) && $settings->has( 'vault_enabled_dcc' ) ) {
-					$settings->set( 'vault_enabled_dcc', true );
-					$settings->persist();
-				}
-
-				$logger = $container->get( 'woocommerce.logger.woocommerce' );
-				assert( $logger instanceof LoggerInterface );
-
-				$this->migrate_payment_tokens( $logger );
 			}
 		);
 

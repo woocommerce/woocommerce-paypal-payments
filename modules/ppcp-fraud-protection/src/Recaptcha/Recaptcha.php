@@ -184,7 +184,6 @@ class Recaptcha {
 				),
 				400
 			);
-			exit;
 		}
 
 		$success = ( $version === 'v3' )
@@ -215,7 +214,6 @@ class Recaptcha {
 				),
 				403
 			);
-			exit;
 		}
 	}
 

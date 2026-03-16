@@ -10,26 +10,22 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\ApiClient;
 
 use WC_Order;
-use WooCommerce\PayPalCommerce\ApiClient\Authentication\UserIdToken;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\Cache;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\FailureRegistry;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\OrderTransient;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\PartnerAttribution;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExecutableModule;
-use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExtendingModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\FactoryModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ModuleClassNameIdTrait;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ServiceModule;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
-use WooCommerce\PayPalCommerce\ApiClient\Authentication\PayPalBearer;
-use WooCommerce\PayPalCommerce\ApiClient\Authentication\SdkClientToken;
 use Psr\Log\LoggerInterface;
 
 /**
  * Class ApiModule
  */
-class ApiModule implements ServiceModule, FactoryModule, ExtendingModule, ExecutableModule {
+class ApiModule implements ServiceModule, FactoryModule, ExecutableModule {
 	use ModuleClassNameIdTrait;
 
 	/**
@@ -49,13 +45,6 @@ class ApiModule implements ServiceModule, FactoryModule, ExtendingModule, Execut
 	/**
 	 * {@inheritDoc}
 	 */
-	public function extensions(): array {
-		return require __DIR__ . '/../extensions.php';
-	}
-
-	/**
-	 * {@inheritDoc}
-	 */
 	public function run( ContainerInterface $c ): bool {
 		add_action(
 			'woocommerce_after_calculate_totals',
@@ -66,7 +55,7 @@ class ApiModule implements ServiceModule, FactoryModule, ExtendingModule, Execut
 		);
 		add_filter(
 			'ppcp_create_order_request_body_data',
-			function ( array $data ) use ( $c ) {
+			function ( array $data ) {
 
 				foreach ( ( $data['purchase_units'] ?? array() ) as $purchase_unit_index => $purchase_unit ) {
 					foreach ( ( $purchase_unit['items'] ?? array() ) as $item_index => $item ) {
@@ -104,7 +93,7 @@ class ApiModule implements ServiceModule, FactoryModule, ExtendingModule, Execut
 		);
 		add_action(
 			'woocommerce_paypal_payments_clear_apm_product_status',
-			function () use ( $c ) {
+			static function () use ( $c ) {
 				$failure_registry = $c->has( 'api.helper.failure-registry' ) ? $c->get( 'api.helper.failure-registry' ) : null;
 
 				if ( $failure_registry instanceof FailureRegistry ) {

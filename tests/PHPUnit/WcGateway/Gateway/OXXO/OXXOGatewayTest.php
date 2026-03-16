@@ -139,6 +139,7 @@ private $testee;
 		$this->wcOrder->shouldReceive('update_meta_data');
 		$this->wcOrder->shouldReceive('save');
 
+		$this->environment->shouldReceive('is_sandbox')->andReturn(false);
 		$this->environment->shouldReceive('current_environment_is');
 
 		$woocommerce = Mockery::mock(\WooCommerce::class);

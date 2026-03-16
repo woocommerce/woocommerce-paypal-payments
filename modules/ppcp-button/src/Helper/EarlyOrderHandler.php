@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\Button\Helper;
 
+use RuntimeException;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
@@ -108,25 +109,22 @@ class EarlyOrderHandler {
 	 * Registers the necessary checkout actions for a given order.
 	 *
 	 * @param Order $order The PayPal order.
-	 *
-	 * @return bool
 	 */
-	public function register_for_order( Order $order ): bool {
-
-		$success = (bool) add_action(
+	public function register_for_order( Order $order ): void {
+		add_action(
 			'woocommerce_checkout_order_processed',
 			function ( $order_id ) use ( $order ) {
 				try {
 					$order = $this->configure_session_and_order( (int) $order_id, $order );
 					wp_send_json_success( $order->to_array() );
-				} catch ( \RuntimeException $error ) {
+				} catch ( RuntimeException $error ) {
 					wp_send_json_error(
 						array(
-							'name'    => is_a( $error, PayPalApiException::class ) ?
+							'name'    => $error instanceof PayPalApiException ?
 								$error->name() : '',
 							'message' => $error->getMessage(),
 							'code'    => $error->getCode(),
-							'details' => is_a( $error, PayPalApiException::class ) ?
+							'details' => $error instanceof PayPalApiException ?
 								$error->details() : array(),
 
 						)
@@ -134,8 +132,6 @@ class EarlyOrderHandler {
 				}
 			}
 		);
-
-		return $success;
 	}
 
 	/**
@@ -144,7 +140,7 @@ class EarlyOrderHandler {
 	 * @param int   $order_id The WooCommerce order id.
 	 * @param Order $order The PayPal order.
 	 *
-	 * @return Order
+	 * @throws RuntimeException On error.
 	 */
 	public function configure_session_and_order( int $order_id, Order $order ): Order {
 
@@ -155,6 +151,9 @@ class EarlyOrderHandler {
 		WC()->session->set( 'order_awaiting_payment', $order_id );
 
 		$wc_order = wc_get_order( $order_id );
+		if ( ! ( $wc_order instanceof \WC_Order ) ) {
+			throw new RuntimeException( "Invalid WC_Order id $order_id." );
+		}
 		$wc_order->update_meta_data( PayPalGateway::ORDER_ID_META_KEY, $order->id() );
 		$wc_order->update_meta_data( PayPalGateway::INTENT_META_KEY, $order->intent() );
 
@@ -165,7 +164,6 @@ class EarlyOrderHandler {
 			$payer
 			&& $payment_source_name
 			&& in_array( $payment_source_name, PayPalGateway::PAYMENT_SOURCES_WITH_PAYER_EMAIL, true )
-			&& $wc_order instanceof \WC_Order
 		) {
 			$payer_email = $payer->email_address();
 			if ( $payer_email ) {

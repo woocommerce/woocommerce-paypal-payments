@@ -147,7 +147,7 @@ export class PayPalPopup {
 				await Promise.race( [
 					this.submitPaymentButton().click(),
 					this.tryAgainLink().click(),
-					this.popup.waitForEvent( 'close', { timeout: 30 * 1000 } ), // Short timeout to prevent hang
+					this.popup.waitForEvent( 'close', { timeout: 30_000 } ), // Short timeout to prevent hang
 				] );
 			} catch ( error ) {
 				if ( this.popup.isClosed() ) break; // Exit cleanly if popup closed

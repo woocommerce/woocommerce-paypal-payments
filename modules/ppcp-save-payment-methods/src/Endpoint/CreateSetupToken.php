@@ -63,10 +63,9 @@ class CreateSetupToken implements EndpointInterface {
 	/**
 	 * Handles the request.
 	 *
-	 * @return bool
 	 * @throws Exception On Error.
 	 */
-	public function handle_request(): bool {
+	public function handle_request(): void {
 		try {
 			$data = $this->request_data->read_request( $this->nonce() );
 
@@ -108,10 +107,8 @@ class CreateSetupToken implements EndpointInterface {
 			$result = $this->payment_method_tokens_endpoint->setup_tokens( $payment_source, (string) $customer_id );
 
 			wp_send_json_success( $result );
-			return true;
 		} catch ( Exception $exception ) {
 			wp_send_json_error();
-			return false;
 		}
 	}
 }

@@ -100,7 +100,7 @@ class BlocksPaymentMethod extends AbstractPaymentMethodType {
 		$paypal_data = $this->paypal_payment_method->get_payment_method_data();
 
 		if ( is_admin() ) {
-			$script_data = $this->button->script_data_for_admin();
+			$script_data = $this->button->script_data_for_admin(); // @phpstan-ignore method.notFound
 		} else {
 			$script_data = $this->button->script_data();
 		}

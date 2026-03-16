@@ -1,5 +1,9 @@
 *** Changelog ***
 
+= 3.4.1 - 2026-03-05 =
+* Fix - Performance issue in /v2/vault/payment-tokens/id #4098
+* Fix - China Merchants ACDC and Vaulting Missing #4139
+
 = 3.4.0 - 2026-02-10 =
 * New - Level 2 and Level 3 card processing support for Advanced Credit and Debit Cards #3970, #3999
 * Enhancement - PayPal Working Capital promotional messaging now available for eligible merchants #4048

@@ -12,6 +12,7 @@ import BlockCheckoutMessagesBootstrap from './Bootstrap/BlockCheckoutMessagesBoo
 import { PayPalComponent } from './Components/paypal';
 import { BlockEditorPayPalComponent } from './Components/block-editor-paypal';
 import { PaypalLabel } from './Components/paypal-label';
+import { PayPalPlaceOrderContent } from './Components/paypal-place-order-content';
 const namespace = 'ppcpBlocksPaypalExpressButtons';
 const config = wc.wcSettings.getSetting( 'ppcp-gateway_data' );
 
@@ -72,35 +73,24 @@ if ( cartHasSubscriptionProducts( config.scriptData ) ) {
 
 if ( blockEnabled ) {
 	if ( config.placeOrderEnabled && ! config.scriptData.continuation ) {
-		let descriptionElement = (
-			<div
-				dangerouslySetInnerHTML={ { __html: config.description } }
-			></div>
-		);
-		if ( config.placeOrderButtonDescription ) {
-			descriptionElement = (
-				<div>
-					<p
-						dangerouslySetInnerHTML={ {
-							__html: config.description,
-						} }
-					></p>
-					<p
-						style={ { textAlign: 'center' } }
-						className={ 'ppcp-place-order-description' }
-						dangerouslySetInnerHTML={ {
-							__html: config.placeOrderButtonDescription,
-						} }
-					></p>
-				</div>
-			);
-		}
-
 		registerPaymentMethod( {
 			name: config.id,
 			label: <PaypalLabel config={ config } />,
-			content: descriptionElement,
-			edit: descriptionElement,
+			content: (
+				<PayPalPlaceOrderContent
+					description={ config.description }
+					placeOrderButtonDescription={
+						config.placeOrderButtonDescription
+					}
+				/>
+			),
+			edit: (
+				<div
+					dangerouslySetInnerHTML={ {
+						__html: config.description,
+					} }
+				/>
+			),
 			placeOrderButtonLabel: config.placeOrderButtonText,
 			ariaLabel: config.title,
 			canMakePayment: ( cartData ) => {
@@ -109,6 +99,7 @@ if ( blockEnabled ) {
 			},
 			supports: {
 				features,
+				showSavedCards: true,
 			},
 		} );
 	}
@@ -187,6 +178,7 @@ if ( blockEnabled ) {
 				supports: {
 					features,
 					style: [ 'height', 'borderRadius' ],
+					showSavedCards: true,
 				},
 			} );
 		}

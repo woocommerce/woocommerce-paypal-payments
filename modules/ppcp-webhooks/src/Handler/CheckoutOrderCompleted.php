@@ -81,9 +81,6 @@ class CheckoutOrderCompleted implements RequestHandler {
 			if ( PayUponInvoiceGateway::ID === $wc_order->get_payment_method() ) {
 				continue;
 			}
-			if ( ! in_array( $wc_order->get_status(), array( 'pending', 'on-hold' ), true ) ) {
-				continue;
-			}
 
 			$wc_order->payment_complete();
 

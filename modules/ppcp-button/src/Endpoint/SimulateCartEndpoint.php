@@ -65,19 +65,17 @@ class SimulateCartEndpoint extends AbstractCartEndpoint {
 	/**
 	 * Handles the request data.
 	 *
-	 * @return bool
 	 * @throws Exception On error.
 	 */
-	protected function handle_data(): bool {
+	protected function handle_data(): void {
 		if ( ! $this->smart_button instanceof SmartButton ) {
 			wp_send_json_error();
-			return false;
 		}
 
 		$products = $this->products_from_request();
 
 		if ( ! $products ) {
-			return false;
+			return;
 		}
 
 		$this->replace_real_cart();
@@ -101,9 +99,9 @@ class SimulateCartEndpoint extends AbstractCartEndpoint {
 				'order_total' => $total,
 			);
 
-			$pay_later_enabled           = $pay_later_enabled && $this->smart_button->is_pay_later_button_enabled_for_location( 'product', $context_data );
-			$pay_later_messaging_enabled = $pay_later_messaging_enabled && $this->smart_button->is_pay_later_messaging_enabled_for_location( 'product', $context_data );
-			$button_enabled              = $button_enabled && ! $this->smart_button->is_button_disabled( 'product', $context_data );
+			$pay_later_enabled           = $pay_later_enabled && $this->smart_button->is_pay_later_button_enabled_for_location( 'product', $context_data ); // @phpstan-ignore method.notFound
+			$pay_later_messaging_enabled = $pay_later_messaging_enabled && $this->smart_button->is_pay_later_messaging_enabled_for_location( 'product', $context_data ); // @phpstan-ignore method.notFound
+			$button_enabled              = $button_enabled && ! $this->smart_button->is_button_disabled( 'product', $context_data ); // @phpstan-ignore method.notFound
 		}
 
 		// Shop settings.
@@ -130,7 +128,6 @@ class SimulateCartEndpoint extends AbstractCartEndpoint {
 				),
 			)
 		);
-		return true;
 	}
 
 	/**

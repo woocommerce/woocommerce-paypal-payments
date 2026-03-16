@@ -41,6 +41,7 @@ return array(
 	},
 	'save-payment-methods.supported-countries'           => static function ( ContainerInterface $container ): array {
 		if ( has_filter( 'woocommerce_paypal_payments_save_payment_methods_supported_country_currency_matrix' ) ) {
+			// @phpstan-ignore no.private.function
 			_deprecated_hook( 'woocommerce_paypal_payments_save_payment_methods_supported_country_currency_matrix', '3.0.0', 'woocommerce_paypal_payments_save_payment_methods_supported_countries', esc_attr__( 'Please use the new Hook to filter countries for saved payments in PayPal Payments.', 'woocommerce-paypal-payments' ) );
 		}
 
@@ -53,6 +54,7 @@ return array(
 				'BG',
 				'CA',
 				'CN',
+				'C2',
 				'CY',
 				'CZ',
 				'DK',
