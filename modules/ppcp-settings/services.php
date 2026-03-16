@@ -43,6 +43,7 @@ use WooCommerce\PayPalCommerce\Settings\Endpoint\AuthenticationRestEndpoint;
 use WooCommerce\PayPalCommerce\Settings\Endpoint\CommonRestEndpoint;
 use WooCommerce\PayPalCommerce\Settings\Endpoint\FeaturesRestEndpoint;
 use WooCommerce\PayPalCommerce\Settings\Endpoint\LoginLinkRestEndpoint;
+use WooCommerce\PayPalCommerce\Settings\Endpoint\MigrateToAcdcRestEndpoint;
 use WooCommerce\PayPalCommerce\Settings\Endpoint\OnboardingRestEndpoint;
 use WooCommerce\PayPalCommerce\Settings\Endpoint\PayLaterMessagingEndpoint;
 use WooCommerce\PayPalCommerce\Settings\Endpoint\PaymentRestEndpoint;
@@ -276,6 +277,11 @@ return array(
 			$container->get( 'settings.data.settings' )
 		);
 	},
+	'settings.rest.migrate_to_acdc'                       => static function ( ContainerInterface $container ): MigrateToAcdcRestEndpoint {
+		return new MigrateToAcdcRestEndpoint(
+			$container->get( 'settings.data.payment' )
+		);
+	},
 	'settings.casual-selling.supported-countries'         => static function ( ContainerInterface $container ): array {
 		return array(
 			'AR',
@@ -390,6 +396,9 @@ return array(
 		);
 	},
 	'settings.service.script-data-handler'                => static function ( ContainerInterface $container ): ScriptDataHandler {
+		$check_override = $container->get( 'settings.migration.bcdc-override-check' );
+		assert( is_callable( $check_override ) );
+
 		return new ScriptDataHandler(
 			$container->get( 'settings.asset_getter' ),
 			$container->get( 'paylater-configurator.is-available' ),
@@ -398,7 +407,8 @@ return array(
 			$container->get( 'wcgateway.wp-paypal-locales-map' ),
 			$container->get( 'api.helper.partner-attribution' ),
 			$container->get( 'settings.settings-provider' ),
-			$container->get( 'api.helpers.paymentLevelEligibility' )
+			$container->get( 'api.helpers.paymentLevelEligibility' ),
+			$check_override()
 		);
 	},
 	'settings.service.data-migration'                     => static fn( ContainerInterface $c ): MigrationManager => new MigrationManager(

@@ -12,6 +12,7 @@ import {
 } from '@ppcp-settings/data/common/hooks';
 import Modal from '../Components/Payment/Modal';
 import PaymentMethodCard from '../Components/Payment/PaymentMethodCard';
+import MigrationBanner from '../Components/Payment/MigrationBanner';
 import { useFeatures } from '@ppcp-settings/data/features/hooks';
 
 const TabPaymentMethods = () => {
@@ -91,6 +92,9 @@ const TabPaymentMethods = () => {
 	);
 
 	const showApms = methods.apm.length > 0 && merchant.isBusinessSeller;
+
+	const isBcdcOverrideFlagEnabled =
+		window.ppcpSettings?.isBcdcOverrideFlagEnabled;
 	return (
 		<div className="ppcp-r-payment-methods">
 			<PaymentMethodCard
@@ -121,6 +125,39 @@ const TabPaymentMethods = () => {
 					methods={ methods.cardPayment }
 					onTriggerModal={ setActiveModal }
 					methodsMap={ methodsMap }
+				/>
+			) }
+
+			{ isBcdcOverrideFlagEnabled && (
+				<MigrationBanner
+					id="ppcp-migration-banner"
+					className="ppcp-r-settings-migration-banner"
+					title={ __(
+						'Unlock Advanced Card Processing',
+						'woocommerce-paypal-payments'
+					) }
+					description={ __(
+						'Upgrade your card payments with embedded card fields for faster checkout, Apple Pay and Google Pay support, and Fastlane one-click checkout (US only).',
+						'woocommerce-paypal-payments'
+					) }
+					actionProps={ {
+						buttons: [
+							{
+								type: 'secondary',
+								text: __(
+									'Upgrade now',
+									'woocommerce-paypal-payments'
+								),
+							},
+							{
+								type: 'tertiary',
+								text: __(
+									'Dismiss',
+									'woocommerce-paypal-payments'
+								),
+							},
+						],
+					} }
 				/>
 			) }
 

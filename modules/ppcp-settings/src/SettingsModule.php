@@ -253,6 +253,7 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 					'todos'                  => $container->get( 'settings.rest.todos' ),
 					'pay_later_messaging'    => $container->get( 'settings.rest.pay_later_messaging' ),
 					'features'               => $container->get( 'settings.rest.features' ),
+					'migrate_to_acdc'        => $container->get( 'settings.rest.migrate_to_acdc' ),
 				);
 
 				foreach ( $endpoints as $endpoint ) {
