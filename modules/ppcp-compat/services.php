@@ -72,8 +72,8 @@ return array(
 		);
 	},
 
-	'compat.gzd.is_supported_plugin_version_active'  => function (): bool {
-		return function_exists( 'wc_gzd_get_shipments_by_order' ); // 3.0+
+	'compat.shiptastic.is_supported_plugin_version_active'  => function (): bool {
+		return function_exists( 'wc_stc_get_shipments' );
 	},
 
 	'compat.wc_shipment_tracking.is_supported_plugin_version_active' => function (): bool {
@@ -110,7 +110,7 @@ return array(
 		return new CompatAssets(
 			$container->get( 'compat.asset_getter' ),
 			$container->get( 'ppcp.asset-version' ),
-			$container->get( 'compat.gzd.is_supported_plugin_version_active' ),
+			$container->get( 'compat.shiptastic.is_supported_plugin_version_active' ),
 			$container->get( 'compat.wc_shipment_tracking.is_supported_plugin_version_active' ),
 			$container->get( 'compat.wc_shipping_tax.is_supported_plugin_version_active' ),
 			$container->get( 'api.bearer' )

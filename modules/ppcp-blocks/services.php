@@ -53,7 +53,8 @@ return array(
 				return $container->get( 'button.smart-button' );
 			},
 			$container->get( 'settings.settings-provider' ),
-			$container->get( 'wcgateway.configuration.card-configuration' )
+			$container->get( 'wcgateway.configuration.card-configuration' ),
+			$container->get( 'save-payment-methods.eligible' )
 		);
 	},
 	'blocks.settings.final_review_enabled' => static function ( ContainerInterface $container ): bool {
