@@ -43,6 +43,7 @@ use WooCommerce\PayPalCommerce\Settings\Endpoint\AuthenticationRestEndpoint;
 use WooCommerce\PayPalCommerce\Settings\Endpoint\CommonRestEndpoint;
 use WooCommerce\PayPalCommerce\Settings\Endpoint\FeaturesRestEndpoint;
 use WooCommerce\PayPalCommerce\Settings\Endpoint\LoginLinkRestEndpoint;
+use WooCommerce\PayPalCommerce\Settings\Endpoint\MigrateToAcdcRestEndpoint;
 use WooCommerce\PayPalCommerce\Settings\Endpoint\OnboardingRestEndpoint;
 use WooCommerce\PayPalCommerce\Settings\Endpoint\PayLaterMessagingEndpoint;
 use WooCommerce\PayPalCommerce\Settings\Endpoint\PaymentRestEndpoint;
@@ -274,6 +275,11 @@ return array(
 	'settings.rest.settings'                              => static function ( ContainerInterface $container ): SettingsRestEndpoint {
 		return new SettingsRestEndpoint(
 			$container->get( 'settings.data.settings' )
+		);
+	},
+	'settings.rest.migrate_to_acdc'                       => static function ( ContainerInterface $container ): MigrateToAcdcRestEndpoint {
+		return new MigrateToAcdcRestEndpoint(
+			$container->get( 'settings.data.payment' )
 		);
 	},
 	'settings.casual-selling.supported-countries'         => static function ( ContainerInterface $container ): array {
