@@ -11,7 +11,7 @@ namespace WooCommerce\PayPalCommerce\OrderTracking;
 use WooCommerce\PayPalCommerce\Assets\AssetGetter;
 use WooCommerce\PayPalCommerce\Assets\AssetGetterFactory;
 use WooCommerce\PayPalCommerce\OrderTracking\Integration\DhlShipmentIntegration;
-use WooCommerce\PayPalCommerce\OrderTracking\Integration\GermanizedShipmentIntegration;
+use WooCommerce\PayPalCommerce\OrderTracking\Integration\ShiptasticIntegration;
 use WooCommerce\PayPalCommerce\OrderTracking\Integration\ShipmentTrackingIntegration;
 use WooCommerce\PayPalCommerce\OrderTracking\Integration\ShipStationIntegration;
 use WooCommerce\PayPalCommerce\OrderTracking\Integration\WcShippingTaxIntegration;
@@ -74,15 +74,15 @@ return array(
         $shipment_factory = $container->get('order-tracking.shipment.factory');
         $logger = $container->get('woocommerce.logger.woocommerce');
         $endpoint = $container->get('order-tracking.endpoint.controller');
-        $is_gzd_active = $container->get('compat.gzd.is_supported_plugin_version_active');
+        $is_shiptastic_active = $container->get('compat.shiptastic.is_supported_plugin_version_active');
         $is_wc_shipment_active = $container->get('compat.wc_shipment_tracking.is_supported_plugin_version_active');
         $is_yith_ywot_active = $container->get('compat.ywot.is_supported_plugin_version_active');
         $is_dhl_de_active = $container->get('compat.dhl.is_supported_plugin_version_active');
         $is_ship_station_active = $container->get('compat.shipstation.is_supported_plugin_version_active');
         $is_wc_shipping_tax_active = $container->get('compat.wc_shipping_tax.is_supported_plugin_version_active');
         $integrations = array();
-        if ($is_gzd_active) {
-            $integrations[] = new GermanizedShipmentIntegration($shipment_factory, $logger, $endpoint);
+        if ($is_shiptastic_active) {
+            $integrations[] = new ShiptasticIntegration($shipment_factory, $logger, $endpoint);
         }
         if ($is_wc_shipment_active) {
             $integrations[] = new ShipmentTrackingIntegration($shipment_factory, $logger, $endpoint);
