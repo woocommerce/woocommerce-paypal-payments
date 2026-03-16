@@ -111,8 +111,9 @@ class SettingsModule implements ServiceModule, ExecutableModule
         /**
          * Override ACDC status with BCDC for eligible merchants.
          *
-         * This filter determines whether to force BCDC (Standard Card buttons) classification
-         * for merchants instead of ACDC (Advanced Card processing). It handles two scenarios:
+         * When the BCDC migration override is active, forces BCDC (Standard Card buttons)
+         * classification instead of ACDC (Advanced Card processing), and suppresses ACDC
+         * eligibility so the payment methods panel shows BCDC instead of ACDC.
          *
          * @param bool|null $use_bcdc Whether to use BCDC instead of ACDC.
          *
@@ -123,6 +124,8 @@ class SettingsModule implements ServiceModule, ExecutableModule
             assert(is_callable($check_override));
             if ($check_override()) {
                 $use_bcdc = \true;
+                add_filter('woocommerce_paypal_payments_is_acdc_active', '__return_false');
+                add_filter('woocommerce_paypal_payments_is_eligible_for_card_fields', '__return_false');
             }
             return $use_bcdc;
         });
@@ -147,7 +150,20 @@ class SettingsModule implements ServiceModule, ExecutableModule
                 try {
                     $payment_settings_migration = $container->get('settings.service.data-migration.payment-settings');
                     assert($payment_settings_migration instanceof PaymentSettingsMigration);
-                    if (!$payment_settings_migration->is_bcdc_enabled_for_acdc_merchant()) {
+                    $is_bcdc_merchant = $payment_settings_migration->is_bcdc_enabled_for_acdc_merchant();
+                    // Fallback: when API-based check fails (no cached DCC product status after major
+                    // version upgrade), detect BCDC usage from legacy settings directly.
+                    if (!$is_bcdc_merchant) {
+                        $dcc_applies = $container->get('api.helpers.dccapplies');
+                        if ($dcc_applies->for_country_currency()) {
+                            $legacy_settings = (array) get_option('woocommerce-ppcp-settings', array());
+                            $disable_funding = (array) ($legacy_settings['disable_funding'] ?? array());
+                            $card_was_active = !in_array('card', $disable_funding, \true);
+                            $dcc_not_enabled = empty($legacy_settings['dcc_enabled']);
+                            $is_bcdc_merchant = $card_was_active && $dcc_not_enabled;
+                        }
+                    }
+                    if (!$is_bcdc_merchant) {
                         return;
                     }
                     $payment_settings = $container->get('settings.data.payment');
