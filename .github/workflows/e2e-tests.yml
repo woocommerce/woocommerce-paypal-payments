@@ -49,10 +49,10 @@ jobs:
       PRE_SCRIPT: |
         # 1. Download and unzip the built plugin
         gh run download ${{ github.run_id }} -p "woocommerce-paypal-payments-*" -D tests/qa/resources/files
-          cd tests/qa/resources/files
-          mv woocommerce-paypal-payments-*/woocommerce-paypal-payments .
-          zip -r woocommerce-paypal-payments.zip woocommerce-paypal-payments
-          rm -rf woocommerce-paypal-payments woocommerce-paypal-payments-*/
+        cd tests/qa/resources/files
+        mv woocommerce-paypal-payments-*/woocommerce-paypal-payments .
+        zip -r woocommerce-paypal-payments.zip woocommerce-paypal-payments
+        rm -rf woocommerce-paypal-payments woocommerce-paypal-payments-*/
 
         # 2. Setup wp-env
         npm run e2e:setup:env
