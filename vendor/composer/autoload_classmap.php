@@ -336,6 +336,7 @@ return array(
     'WooCommerce\\PayPalCommerce\\Settings\\Endpoint\\CompleteOnClickEndpoint' => $baseDir . '/modules/ppcp-settings/src/Endpoint/CompleteOnClickEndpoint.php',
     'WooCommerce\\PayPalCommerce\\Settings\\Endpoint\\FeaturesRestEndpoint' => $baseDir . '/modules/ppcp-settings/src/Endpoint/FeaturesRestEndpoint.php',
     'WooCommerce\\PayPalCommerce\\Settings\\Endpoint\\LoginLinkRestEndpoint' => $baseDir . '/modules/ppcp-settings/src/Endpoint/LoginLinkRestEndpoint.php',
+    'WooCommerce\\PayPalCommerce\\Settings\\Endpoint\\MigrateToAcdcRestEndpoint' => $baseDir . '/modules/ppcp-settings/src/Endpoint/MigrateToAcdcRestEndpoint.php',
     'WooCommerce\\PayPalCommerce\\Settings\\Endpoint\\OnboardingRestEndpoint' => $baseDir . '/modules/ppcp-settings/src/Endpoint/OnboardingRestEndpoint.php',
     'WooCommerce\\PayPalCommerce\\Settings\\Endpoint\\PayLaterMessagingEndpoint' => $baseDir . '/modules/ppcp-settings/src/Endpoint/PayLaterMessagingEndpoint.php',
     'WooCommerce\\PayPalCommerce\\Settings\\Endpoint\\PaymentRestEndpoint' => $baseDir . '/modules/ppcp-settings/src/Endpoint/PaymentRestEndpoint.php',

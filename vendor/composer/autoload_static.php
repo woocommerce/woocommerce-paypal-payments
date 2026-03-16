@@ -520,6 +520,7 @@ class ComposerStaticInitf454a4dc4519aa3bafab294be971ae9b
         'WooCommerce\\PayPalCommerce\\Settings\\Endpoint\\CompleteOnClickEndpoint' => __DIR__ . '/../..' . '/modules/ppcp-settings/src/Endpoint/CompleteOnClickEndpoint.php',
         'WooCommerce\\PayPalCommerce\\Settings\\Endpoint\\FeaturesRestEndpoint' => __DIR__ . '/../..' . '/modules/ppcp-settings/src/Endpoint/FeaturesRestEndpoint.php',
         'WooCommerce\\PayPalCommerce\\Settings\\Endpoint\\LoginLinkRestEndpoint' => __DIR__ . '/../..' . '/modules/ppcp-settings/src/Endpoint/LoginLinkRestEndpoint.php',
+        'WooCommerce\\PayPalCommerce\\Settings\\Endpoint\\MigrateToAcdcRestEndpoint' => __DIR__ . '/../..' . '/modules/ppcp-settings/src/Endpoint/MigrateToAcdcRestEndpoint.php',
         'WooCommerce\\PayPalCommerce\\Settings\\Endpoint\\OnboardingRestEndpoint' => __DIR__ . '/../..' . '/modules/ppcp-settings/src/Endpoint/OnboardingRestEndpoint.php',
         'WooCommerce\\PayPalCommerce\\Settings\\Endpoint\\PayLaterMessagingEndpoint' => __DIR__ . '/../..' . '/modules/ppcp-settings/src/Endpoint/PayLaterMessagingEndpoint.php',
         'WooCommerce\\PayPalCommerce\\Settings\\Endpoint\\PaymentRestEndpoint' => __DIR__ . '/../..' . '/modules/ppcp-settings/src/Endpoint/PaymentRestEndpoint.php',

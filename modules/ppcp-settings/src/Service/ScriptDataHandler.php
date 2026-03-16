@@ -18,29 +18,15 @@ use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 class ScriptDataHandler
 {
     private AssetGetter $asset_getter;
-    /**
-     * Whether the pay later configurator is available.
-     */
     protected bool $paylater_is_available;
-    /**
-     * The store country.
-     */
     protected string $store_country;
-    /**
-     * The merchant ID.
-     */
     protected string $merchant_id;
-    /**
-     * The button language choices.
-     */
     protected array $button_language_choices;
-    /**
-     * The partner attribution object.
-     */
     protected PartnerAttribution $partner_attribution;
     protected SettingsProvider $settings_provider;
     protected PaymentLevelEligibility $payment_level_eligibility;
-    public function __construct(AssetGetter $asset_getter, bool $paylater_is_available, string $store_country, string $merchant_id, array $button_language_choices, PartnerAttribution $partner_attribution, SettingsProvider $settings_provider, PaymentLevelEligibility $payment_level_eligibility)
+    private bool $is_bcdc_override_flag_enabled;
+    public function __construct(AssetGetter $asset_getter, bool $paylater_is_available, string $store_country, string $merchant_id, array $button_language_choices, PartnerAttribution $partner_attribution, SettingsProvider $settings_provider, PaymentLevelEligibility $payment_level_eligibility, bool $is_bcdc_override_flag_enabled)
     {
         $this->asset_getter = $asset_getter;
         $this->paylater_is_available = $paylater_is_available;
@@ -50,6 +36,7 @@ class ScriptDataHandler
         $this->partner_attribution = $partner_attribution;
         $this->settings_provider = $settings_provider;
         $this->payment_level_eligibility = $payment_level_eligibility;
+        $this->is_bcdc_override_flag_enabled = $is_bcdc_override_flag_enabled;
     }
     /**
      * Localize scripts.
@@ -99,6 +86,7 @@ class ScriptDataHandler
             'disabledCardsChoices' => $disabled_cards_choices,
             'threeDSecureOptions' => $three_d_secure_options,
             'isEligibleForPaymentLevelProcessing' => $this->payment_level_eligibility->is_eligible(CreditCardGateway::ID),
+            'isBcdcOverrideFlagEnabled' => $this->is_bcdc_override_flag_enabled,
         );
         if ($is_pay_later_configurator_available) {
             wp_enqueue_script('ppcp-paylater-configurator-lib', 'https://www.paypalobjects.com/merchant-library/merchant-configurator.js', array('wp-i18n'), $script_asset_file['version'], \true);
