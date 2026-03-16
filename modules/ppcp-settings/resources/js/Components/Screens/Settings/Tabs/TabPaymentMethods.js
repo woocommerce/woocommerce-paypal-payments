@@ -94,7 +94,7 @@ const TabPaymentMethods = () => {
 	const showApms = methods.apm.length > 0 && merchant.isBusinessSeller;
 
 	const isBcdcOverrideFlagEnabled =
-		window.ppcpSettings.isBcdcOverrideFlagEnabled;
+		window.ppcpSettings?.isBcdcOverrideFlagEnabled;
 	return (
 		<div className="ppcp-r-payment-methods">
 			<PaymentMethodCard
