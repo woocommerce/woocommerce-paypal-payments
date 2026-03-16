@@ -15,15 +15,6 @@ namespace WooCommerce\PayPalCommerce\WcGateway\Helper;
 class MerchantDetails {
 
 	/**
-	 * @deprecated Use FeaturesDefinition constants instead.
-	 */
-	public const FEATURE_SAVE_PAYPAL_VENMO        = 'save_paypal_venmo';
-	public const FEATURE_ADVANCED_CARD_PROCESSING = 'acdc';
-	public const FEATURE_GOOGLE_PAY               = 'googlepay';
-	public const FEATURE_APPLE_PAY                = 'applepay';
-	public const FEATURE_CONTACT_MODULE           = 'contact_module';
-
-	/**
 	 * The merchant's country according to PayPal, which might be different from
 	 * the WooCommerce country.
 	 *

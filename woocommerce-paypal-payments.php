@@ -77,11 +77,6 @@ define( 'PPCP_PAYPAL_BN_CODE', 'Woo_PPCP' );
 	function init(): void {
 		$root_dir = __DIR__;
 
-		global $pagenow;
-		if ( isset( $pagenow ) && 'update.php' === $pagenow ) {
-			return;
-		}
-
 		if ( ! is_woocommerce_activated() ) {
 			show_admin_notice_and_deactivate(
 				static fn() => printf(
@@ -146,11 +141,6 @@ define( 'PPCP_PAYPAL_BN_CODE', 'Woo_PPCP' );
 	add_action(
 		'plugins_loaded',
 		function () {
-			global $pagenow;
-			if ( isset( $pagenow ) && 'update.php' === $pagenow ) {
-				return;
-			}
-
 			init();
 
 			if ( ! is_woocommerce_activated() ) {
