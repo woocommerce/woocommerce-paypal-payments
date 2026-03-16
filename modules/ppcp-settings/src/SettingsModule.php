@@ -590,6 +590,25 @@ class SettingsModule implements ServiceModule, ExecutableModule
                 $payment_methods->toggle_method_state(CreditCardGateway::ID, \false);
             }
         }, 10, 2);
+        /**
+         * Disable Apple Pay/Google Pay gateways for merchants not eligible
+         * after onboarding is completed.
+         */
+        add_action('woocommerce_paypal_payments_toggle_payment_gateways', function (PaymentSettings $payment_methods, ConfigurationFlagsDTO $flags) use ($container) {
+            if (!$flags->is_business_seller || !$flags->use_digital_wallets) {
+                return;
+            }
+            $applepay_product_status = $container->get('applepay.apple-product-status');
+            $apple_pay_available = $applepay_product_status->is_active() && $container->get('applepay.eligible');
+            if (!$apple_pay_available) {
+                $payment_methods->toggle_method_state(ApplePayGateway::ID, \false);
+            }
+            $googlepay_product_status = $container->get('googlepay.helpers.apm-product-status');
+            $google_pay_available = $googlepay_product_status->is_active() && $container->get('googlepay.eligible');
+            if (!$google_pay_available) {
+                $payment_methods->toggle_method_state(GooglePayGateway::ID, \false);
+            }
+        }, 10, 2);
         return \true;
     }
     /**
