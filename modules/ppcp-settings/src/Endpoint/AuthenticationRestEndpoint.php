@@ -46,7 +46,7 @@ class AuthenticationRestEndpoint extends \WooCommerce\PayPalCommerce\Settings\En
      * @var SettingsDataManager
      */
     private SettingsDataManager $data_manager;
-    private ?LoggerInterface $logger;
+    private LoggerInterface $logger;
     /**
      * Defines the JSON response format (when connection was successful).
      *
