@@ -30,9 +30,8 @@ return array('compat.ppec.mock-gateway' => static function ($container) {
     return array('ppcp-smart-button', 'ppcp-oxxo', 'ppcp-pay-upon-invoice', 'ppcp-vaulting-myaccount-payments', 'ppcp-gateway-settings', 'ppcp-webhooks-status-page', 'ppcp-tracking', 'ppcp-fraudnet', 'ppcp-tracking-compat');
 }, 'compat.plugin-script-file-names' => static function (ContainerInterface $container): array {
     return array('button.js', 'gateway-settings.js', 'order-edit-page.js', 'fraudnet.js', 'tracking-compat.js');
-}, 'compat.gzd.is_supported_plugin_version_active' => function (): bool {
-    return function_exists('wc_gzd_get_shipments_by_order');
-    // 3.0+
+}, 'compat.shiptastic.is_supported_plugin_version_active' => function (): bool {
+    return function_exists('wc_stc_get_shipments');
 }, 'compat.wc_shipment_tracking.is_supported_plugin_version_active' => function (): bool {
     return class_exists('WC_Shipment_Tracking');
 }, 'compat.ywot.is_supported_plugin_version_active' => function (): bool {
@@ -52,5 +51,5 @@ return array('compat.ppec.mock-gateway' => static function ($container) {
     assert($factory instanceof AssetGetterFactory);
     return $factory->for_module('ppcp-compat');
 }, 'compat.assets' => function (ContainerInterface $container): CompatAssets {
-    return new CompatAssets($container->get('compat.asset_getter'), $container->get('ppcp.asset-version'), $container->get('compat.gzd.is_supported_plugin_version_active'), $container->get('compat.wc_shipment_tracking.is_supported_plugin_version_active'), $container->get('compat.wc_shipping_tax.is_supported_plugin_version_active'), $container->get('api.bearer'));
+    return new CompatAssets($container->get('compat.asset_getter'), $container->get('ppcp.asset-version'), $container->get('compat.shiptastic.is_supported_plugin_version_active'), $container->get('compat.wc_shipment_tracking.is_supported_plugin_version_active'), $container->get('compat.wc_shipping_tax.is_supported_plugin_version_active'), $container->get('api.bearer'));
 });

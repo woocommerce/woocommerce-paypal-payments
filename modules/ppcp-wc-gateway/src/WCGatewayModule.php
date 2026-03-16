@@ -30,7 +30,6 @@ use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\WcGateway\Admin\FeesRenderer;
 use WooCommerce\PayPalCommerce\WcGateway\Admin\OrderTablePaymentStatusColumn;
 use WooCommerce\PayPalCommerce\WcGateway\Admin\PaymentStatusOrderDetail;
-use WooCommerce\PayPalCommerce\WcGateway\Admin\RenderAuthorizeAction;
 use WooCommerce\PayPalCommerce\WcGateway\Assets\FraudNetAssets;
 use WooCommerce\PayPalCommerce\WcGateway\Assets\SettingsPageAssets;
 use WooCommerce\PayPalCommerce\WcGateway\Assets\VoidButtonAssets;
@@ -60,6 +59,7 @@ use WooCommerce\PayPalCommerce\WcGateway\Processor\CreditCardOrderInfoHandlingTr
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 use WooCommerce\PayPalCommerce\WcGateway\WcInboxNotes\InboxNoteRegistrar;
 use WooCommerce\PayPalCommerce\WcGateway\WcTasks\Registrar\TaskRegistrarInterface;
+use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
 /**
  * Class WcGatewayModule
  */
@@ -268,14 +268,14 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
             if (!$wc_order instanceof WC_Order) {
                 return;
             }
-            $settings = $c->get('wcgateway.settings');
-            assert($settings instanceof ContainerInterface);
-            if (!$settings->has('capture_on_status_change') || !$settings->get('capture_on_status_change')) {
+            $settings = $c->get('settings.settings-provider');
+            assert($settings instanceof SettingsProvider);
+            if (!$settings->capture_on_status_change()) {
                 return;
             }
             $gateway_repository = $c->get('wcgateway.gateway-repository');
             assert($gateway_repository instanceof GatewayRepository);
-            // Only allow to proceed if the payment method is one of our Gateways.
+            // Only allow proceeding if the payment method is one of our Gateways.
             if (!$gateway_repository->exists($wc_order->get_payment_method())) {
                 return;
             }

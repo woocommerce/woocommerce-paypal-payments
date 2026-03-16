@@ -54,6 +54,7 @@ class CompatModule implements ServiceModule, ExecutableModule
         $this->migrate_pay_later_settings($c);
         $this->migrate_smart_button_settings($c);
         $this->migrate_three_d_secure_setting();
+        $this->migrate_capture_on_status_change();
         $this->fix_page_builders();
         $this->exclude_cache_plugins_js_minification($c);
         $is_nyp_active = $c->get('compat.nyp.is_supported_plugin_version_active');
@@ -262,6 +263,24 @@ class CompatModule implements ServiceModule, ExecutableModule
             unset($payment_settings['three_d_secure']);
             // Save both.
             update_option('woocommerce-ppcp-data-settings', $data_settings);
+            update_option('woocommerce-ppcp-data-payment', $payment_settings);
+        });
+    }
+    /**
+     * Migrates the "capture on status change" setting from the legacy UI.
+     *
+     * The migration will be done on plugin update if it hasn't already done.
+     */
+    protected function migrate_capture_on_status_change(): void
+    {
+        add_action('woocommerce_paypal_payments_gateway_migrate_on_update', static function () {
+            $legacy_settings = (array) get_option('woocommerce-ppcp-settings') ?: array();
+            $payment_settings = (array) get_option('woocommerce-ppcp-data-payment') ?: array();
+            // Noop if the legacy setting does not exist, or the setting was already migrated.
+            if (!isset($legacy_settings['capture_on_status_change']) || isset($payment_settings['capture_on_status_change'])) {
+                return;
+            }
+            $payment_settings['capture_on_status_change'] = $legacy_settings['capture_on_status_change'];
             update_option('woocommerce-ppcp-data-payment', $payment_settings);
         });
     }
