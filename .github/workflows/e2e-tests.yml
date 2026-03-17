@@ -48,8 +48,8 @@ jobs:
       PLAYWRIGHT_BROWSER_ARGS: 'chromium --with-deps'
       PRE_SCRIPT: |
         # 1. Download and unzip the built plugin
-        gh run download ${{ github.run_id }} -p "woocommerce-paypal-payments-*" -D tests/qa/resources/files
-        cd tests/qa/resources/files
+        gh run download ${{ github.run_id }} -p "woocommerce-paypal-payments-*" -D resources/files
+        cd resources/files
         mv woocommerce-paypal-payments-*/woocommerce-paypal-payments .
         zip -r woocommerce-paypal-payments.zip woocommerce-paypal-payments
         rm -rf woocommerce-paypal-payments woocommerce-paypal-payments-*/
