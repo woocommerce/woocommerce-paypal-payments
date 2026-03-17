@@ -27,10 +27,10 @@ jobs:
       GITHUB_USER_NAME: ${{ secrets.DEPLOYBOT_USER }}
       GITHUB_USER_SSH_KEY: ${{ secrets.DEPLOYBOT_SSH_PRIVATE_KEY }}
       GITHUB_USER_SSH_PUBLIC_KEY: ${{ secrets.DEPLOYBOT_SSH_PUBLIC_KEY }}
-      NPM_REGISTRY_TOKEN: ${{ secrets.NPM_SYDE }}
+      NPM_REGISTRY_TOKEN: ${{ secrets.DEPLOYBOT_GITHUB_TOKEN_PACKAGES }}
     with:
       PACKAGE_NAME: woocommerce-paypal-payments
-      NODE_VERSION: 24
+      NODE_VERSION: 22
 
   e2e-playwright:
     name: Run Playwright E2E Tests
@@ -58,4 +58,4 @@ jobs:
         npm run e2e:setup:env
     secrets:
       ENV_FILE_DATA: ${{ secrets.QA_ENV_FILE }}
-      NPM_REGISTRY_TOKEN: ${{ secrets.NPM_SYDE }}
+      NPM_REGISTRY_TOKEN: ${{ secrets.DEPLOYBOT_GITHUB_TOKEN_PACKAGES }}
