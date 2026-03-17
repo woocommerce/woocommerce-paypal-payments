@@ -120,7 +120,10 @@ export const testSubscriptionRenewal = ( testOrder: ShopOrder ) => {
 					await wooCommerceApi.getSubscriptionRenewalOrderIds(
 						subscriptionId
 					);
-				await expect( renewalOrderIds ).toHaveLength( 1 );
+				await expect(
+					renewalOrderIds,
+					'Assert one renewal order is created'
+				).toHaveLength( 1 );
 
 				const relatedRenewalOrders = [];
 
@@ -251,7 +254,10 @@ export const testFreeTrialSubscriptionRenewal = ( testOrder: ShopOrder ) => {
 					await wooCommerceApi.getSubscriptionRenewalOrderIds(
 						subscriptionId
 					);
-				await expect( renewalOrderIds ).toHaveLength( 1 );
+				await expect(
+					renewalOrderIds,
+					'Assert one renewal order is created'
+				).toHaveLength( 1 );
 
 				const relatedRenewalOrders = [];
 
