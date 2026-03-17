@@ -15,6 +15,8 @@ use WooCommerce\PayPalCommerce\Googlepay\GooglePayGateway;
 use WooCommerce\PayPalCommerce\Settings\Data\PaymentSettings;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CardButtonGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
+use WooCommerce\PayPalCommerce\WcGateway\Gateway\OXXO\OXXO;
+use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayUponInvoice\PayUponInvoiceGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\CardPaymentsConfiguration;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\DCCProductStatus;
 /**
@@ -82,6 +84,12 @@ class PaymentSettingsMigration implements \WooCommerce\PayPalCommerce\Settings\S
             if (!empty($pui_settings['customer_service_instructions'])) {
                 $this->payment_settings->set_pui_customer_service_instructions($pui_settings['customer_service_instructions']);
             }
+        }
+        if ($this->payment_settings->is_method_enabled(PayUponInvoiceGateway::ID)) {
+            $this->payment_settings->toggle_method_state(PayUponInvoiceGateway::ID, \true);
+        }
+        if ($this->payment_settings->is_method_enabled(OXXO::ID)) {
+            $this->payment_settings->toggle_method_state(OXXO::ID, \true);
         }
         if (isset($this->settings['dcc_name_on_card'])) {
             $this->payment_settings->set_cardholder_name($this->settings['dcc_name_on_card'] === 'yes');
