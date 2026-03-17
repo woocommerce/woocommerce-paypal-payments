@@ -129,23 +129,17 @@ npx playwright test
 	npm run test:critical
 	```
 
-- Run several tests by test ID (on Windows, Powershell):
+- Run several tests by test ID
 
 	```bash
-	npx playwright test --grep --% "WOL-123^|WOL-124^|WOL-125"
-	```
-
-	It may be required additionally to specify the project (if tests relate to more then one project):
-
-	```bash
-	npx playwright test --project "project-name" --grep --% "WOL-123^|WOL-124^|WOL-125"
+	npx playwright test --project project-name --grep "PCP-123|PCP-124|PCP-125"
 	```
 
 ## Autotest Execution workflow
 
 1. Create Test Execution ticket in Jira, named after the tested plugin version, for example "Test Execution for v2.3.4-rc1, PHP8.1".
 
-2. Link release ticket (via `tests: WOL-234`).
+2. Link release ticket (via `tests: PCP-234`).
 
 3. Set Test Execution ticket status `In progress`.
 
@@ -155,14 +149,14 @@ npx playwright test
 
 6. Optional: delete previous version of tested plugin from the website if you don't execute __plugin foundation__ tests.
 
-7. Start autotest execution from command line for the defined scope of tests (e.g. all, Critical, etc.). You should see `Test execution Jira key: WOL-234` in the terminal.
+7. Start autotest execution from command line for the defined scope of tests (e.g. all, Critical, etc.). You should see `Test execution Jira key: PCP-234` in the terminal.
 
 8. When finished test results should be exported to the specified test execution ticket in Jira.
 
 9. Analyze failed tests (if any). Restart execution for failed tests, possibly in debug mode (for Windows):
 
 	```bash
-	npx playwright test --grep --% "WOL-123^|WOL-124^|WOL-125" --debug
+	npx playwright test --grep "PCP-123|PCP-124|PCP-125" --debug
 	```
 
 10. Report bugs (if any) and attach them to the test-runs of failed tests (Click "Create defect" or "Add defect" on test execution screen).
@@ -177,4 +171,102 @@ Before commiting changes run following command:
 
 ```bash
 npm run lint:js:fix
+```
+
+## Reset Kinsta env
+
+Find SSH data in [Kinsta dashboard](https://my.kinsta.com/sites/details) for your tested env. Replace data in the following one-line command and run it in the terminal to reset the env:
+
+```bash
+ssh <your-ssh-username>@<your-ssh-host> -p <your-ssh-port> '${HOME}/bin/reset-wp.sh --wp-version=6.9 --wp-type=single && exit'
+```
+
+## Automated env setup scripts
+
+### Preconditions
+
+Local usage of _automated env setup scripts_ assumes that the following steps are fulfilled:
+
+> **Note:** the staging env on Kinsta should be created and the script to reset env [provided by devops](https://inpsyde.atlassian.net/wiki/spaces/ENG/pages/6240338010/WordPress+hosting+FAQs#How-can-QA-reset-a-test-environment%3F) (if not - create a ticket on [SDO board](https://inpsyde.atlassian.net/jira/software/c/projects/SDO/boards/395)).
+
+1. Clone PayPal repo to your local machine:
+
+	```bash
+	git clone https://github.com/woocommerce/woocommerce-paypal-payments.git
+	```
+
+	> **Note:** temporary, for migration testing change branch to `dev/qa/migration-tests`: `git checkout dev/qa/migration-tests`.
+
+2. Copy following packages into `/tests/qa/resources/files`:
+
+	* Tested PayPal plugin package named as `woocommerce-paypal-payments.zip`
+
+		> **Note:** temporary, for migration testing add 2 packages: legacy (v2.9.6) as `woocommerce-paypal-payments.zip` and new tested RC version as `woocommerce-paypal-payments-update.zip`.
+	
+	* WooCommerce Subscriptions package named as `woocommerce-subscriptions.zip`
+
+3. In the terminal open the cloned repo and navigate to `/tests/qa` dir:
+
+	```bash
+	cd tests/qa
+	```
+
+4. Install Node dependencies and Playwright:
+
+	```bash
+	npm run setup:tests
+	```
+
+5.  In the `/tests/qa` directory create a `.env` file and copy-paste content from `PCP .env` vault of 1Password replacing all the data for your test env. Alternatively use `.env.example`.
+
+6. Run the scripts described below.
+
+### Reset env and WooCommerce
+
+- Resets the Kinsta staging env.
+- Configures website permalinks (`%postname%`).
+- Installs plugins and themes:
+	- WooCommerce
+	- Storefront theme
+	- Additional plugins (Disable Nonce, WC Subscriptions, etc.)
+- Configures WooCommerce for default country (USA):
+	- API keys
+	- Country/currency: USA/USD
+	- Taxes: included, 10% rate
+	- Shipping: flat rate/10 USD and free
+	- Emails: disabled
+- Creates test entities:
+	- Classic cart and checkout
+	- Tested products
+	- Coupons
+	- Registered US customer
+
+```bash
+npm run env:reset
+```
+
+### Setup PCP for specific country
+
+- Runs [reset env and WooCommerce](#reset-env-and-woocommerce) script (for specific country).
+- Installs PCP plugin (`woocommerce-paypal-payments.zip`)
+- Connects merchant from specified country
+
+**For USA**
+
+```bash
+
+npm run "env:setup:pcp:usa"
+```
+
+**For Germany & PUI (disabled by default)**
+
+```bash
+npm run "env:setup:pcp:germany"
+
+```
+
+**For Mexico & OXXO (disabled by default)**
+
+```bash
+npm run "env:setup:pcp:mexico"
 ```
