@@ -65,11 +65,8 @@ class PaymentSettingsMigration implements SettingsMigrationInterface {
 		$this->local_apms        = $local_apms;
 		$this->dcc_configuration = $dcc_configuration;
 
-		$pui_option               = get_option( 'woocommerce_' . PayUponInvoiceGateway::ID . '_settings', array() );
-		$this->legacy_pui_enabled = is_array( $pui_option ) && ( $pui_option['enabled'] ?? 'no' ) === 'yes';
-
-		$oxxo_option               = get_option( 'woocommerce_' . OXXO::ID . '_settings', array() );
-		$this->legacy_oxxo_enabled = is_array( $oxxo_option ) && ( $oxxo_option['enabled'] ?? 'no' ) === 'yes';
+		$this->legacy_pui_enabled  = $this->payment_settings->is_method_enabled( PayUponInvoiceGateway::ID );
+		$this->legacy_oxxo_enabled = $this->payment_settings->is_method_enabled( OXXO::ID );
 	}
 
 	public function migrate(): void {
