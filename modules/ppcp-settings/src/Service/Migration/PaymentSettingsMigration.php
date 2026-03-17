@@ -16,6 +16,8 @@ use WooCommerce\PayPalCommerce\Googlepay\GooglePayGateway;
 use WooCommerce\PayPalCommerce\Settings\Data\PaymentSettings;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CardButtonGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
+use WooCommerce\PayPalCommerce\WcGateway\Gateway\OXXO\OXXO;
+use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayUponInvoice\PayUponInvoiceGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\CardPaymentsConfiguration;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\DCCProductStatus;
 
@@ -44,6 +46,10 @@ class PaymentSettingsMigration implements SettingsMigrationInterface {
 	 */
 	protected array $local_apms;
 
+	protected bool $legacy_pui_enabled;
+
+	protected bool $legacy_oxxo_enabled;
+
 	public function __construct(
 		array $settings,
 		PaymentSettings $payment_settings,
@@ -58,6 +64,12 @@ class PaymentSettingsMigration implements SettingsMigrationInterface {
 		$this->dcc_status        = $dcc_status;
 		$this->local_apms        = $local_apms;
 		$this->dcc_configuration = $dcc_configuration;
+
+		$pui_option               = get_option( 'woocommerce_' . PayUponInvoiceGateway::ID . '_settings', array() );
+		$this->legacy_pui_enabled = is_array( $pui_option ) && ( $pui_option['enabled'] ?? 'no' ) === 'yes';
+
+		$oxxo_option               = get_option( 'woocommerce_' . OXXO::ID . '_settings', array() );
+		$this->legacy_oxxo_enabled = is_array( $oxxo_option ) && ( $oxxo_option['enabled'] ?? 'no' ) === 'yes';
 	}
 
 	public function migrate(): void {
@@ -99,6 +111,14 @@ class PaymentSettingsMigration implements SettingsMigrationInterface {
 			if ( ! empty( $pui_settings['customer_service_instructions'] ) ) {
 				$this->payment_settings->set_pui_customer_service_instructions( $pui_settings['customer_service_instructions'] );
 			}
+		}
+
+		if ( $this->legacy_pui_enabled ) {
+			$this->payment_settings->toggle_method_state( PayUponInvoiceGateway::ID, true );
+		}
+
+		if ( $this->legacy_oxxo_enabled ) {
+			$this->payment_settings->toggle_method_state( OXXO::ID, true );
 		}
 
 		if ( isset( $this->settings['dcc_name_on_card'] ) ) {
