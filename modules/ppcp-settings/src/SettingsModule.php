@@ -656,10 +656,35 @@ class SettingsModule implements ServiceModule, ExecutableModule
             }
             return array_filter($disable_funding, static fn(string $funding_source) => $funding_source !== 'card');
         }, 10, 2);
+        /**
+         * Prevent white-label payment methods from being enabled during onboarding.
+         *
+         * During the onboarding flow, toggle_payment_gateways() enables ACDC, Apple Pay,
+         * and Google Pay for business sellers. In branded-only mode, these white-label
+         * methods should never be enabled.
+         *
+         * This hook runs during the 'woocommerce_paypal_payments_toggle_payment_gateways_apms'
+         * action, immediately disabling these methods before payment settings are saved.
+         * This prevents them from being enabled even temporarily during onboarding.
+         *
+         * Without this hook, white-label methods would be enabled during onboarding and
+         * then disabled afterward, creating an inconsistent state during the upgrade process.
+         */
+        add_action('woocommerce_paypal_payments_toggle_payment_gateways_apms', static function (PaymentSettings $payment_settings): void {
+            $payment_settings->toggle_method_state(CreditCardGateway::ID, \false);
+            $payment_settings->toggle_method_state(ApplePayGateway::ID, \false);
+            $payment_settings->toggle_method_state(GooglePayGateway::ID, \false);
+        });
         $payment_settings = $container->get('settings.data.payment');
         assert($payment_settings instanceof PaymentSettings);
+        $gateway_name = CardButtonGateway::ID;
+        $gateway_settings = get_option("woocommerce_{$gateway_name}_settings", array());
+        $gateway_enabled = $gateway_settings['enabled'] ?? \false;
         if ($payment_settings->is_method_enabled(CreditCardGateway::ID)) {
             $payment_settings->toggle_method_state(CreditCardGateway::ID, \false);
+            if ($gateway_enabled === 'yes') {
+                $payment_settings->toggle_method_state(CardButtonGateway::ID, \true);
+            }
             $payment_settings->save();
         }
         if ($payment_settings->is_method_enabled(ApplePayGateway::ID)) {
