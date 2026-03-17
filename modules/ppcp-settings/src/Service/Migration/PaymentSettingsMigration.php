@@ -46,10 +46,6 @@ class PaymentSettingsMigration implements SettingsMigrationInterface {
 	 */
 	protected array $local_apms;
 
-	protected bool $legacy_pui_enabled;
-
-	protected bool $legacy_oxxo_enabled;
-
 	public function __construct(
 		array $settings,
 		PaymentSettings $payment_settings,
@@ -64,9 +60,6 @@ class PaymentSettingsMigration implements SettingsMigrationInterface {
 		$this->dcc_status        = $dcc_status;
 		$this->local_apms        = $local_apms;
 		$this->dcc_configuration = $dcc_configuration;
-
-		$this->legacy_pui_enabled  = $this->payment_settings->is_method_enabled( PayUponInvoiceGateway::ID );
-		$this->legacy_oxxo_enabled = $this->payment_settings->is_method_enabled( OXXO::ID );
 	}
 
 	public function migrate(): void {
@@ -110,11 +103,11 @@ class PaymentSettingsMigration implements SettingsMigrationInterface {
 			}
 		}
 
-		if ( $this->legacy_pui_enabled ) {
+		if ( $this->payment_settings->is_method_enabled( PayUponInvoiceGateway::ID ) ) {
 			$this->payment_settings->toggle_method_state( PayUponInvoiceGateway::ID, true );
 		}
 
-		if ( $this->legacy_oxxo_enabled ) {
+		if ( $this->payment_settings->is_method_enabled( OXXO::ID ) ) {
 			$this->payment_settings->toggle_method_state( OXXO::ID, true );
 		}
 
