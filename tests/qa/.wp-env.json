@@ -10,6 +10,7 @@
     ],
     "mappings": {
         "wp-cli.yml": "./wp-cli.yml",
+        "wp-content/plugins": "./resources/plugins",
         "wp-content/files": "./resources/files"
     },
     "lifecycleScripts": {
