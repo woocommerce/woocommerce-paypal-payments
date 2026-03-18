@@ -475,8 +475,8 @@ return array(
 		return new PaymentMethodsDefinition(
 			$container->get( 'settings.data.payment' ),
 			$container->get( 'settings.data.general' ),
-			$container->get( 'axo.checkout-config-notice.raw' ),
-			$container->get( 'axo.incompatible-plugins-notice.raw' )
+			$container->has( 'axo.checkout-config-notice.raw' ) ? (string) $container->get( 'axo.checkout-config-notice.raw' ) : '',
+			$container->has( 'axo.incompatible-plugins-notice.raw' ) ? (string) $container->get( 'axo.incompatible-plugins-notice.raw' ) : ''
 		);
 	},
 	'settings.data.definition.method_dependencies'        => static function ( ContainerInterface $container ): PaymentMethodsDependenciesDefinition {
