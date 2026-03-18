@@ -124,7 +124,7 @@ const TabPaymentMethods = () => {
 						'woocommerce-paypal-payments'
 					) }
 					description={ __(
-						'Upgrade your card payments with embedded card fields for faster checkout, Apple Pay and Google Pay support, and Fastlane one-click checkout (US only).',
+						'Your card payments can do more. Unlock lower processing fees, advanced fraud protection, and a faster checkout with Apple Pay, Google Pay, and Fastlane one-click checkout.',
 						'woocommerce-paypal-payments'
 					) }
 					actionProps={ {
@@ -132,7 +132,7 @@ const TabPaymentMethods = () => {
 							{
 								type: 'secondary',
 								text: __(
-									'Upgrade now',
+									'Unlock now',
 									'woocommerce-paypal-payments'
 								),
 							},
