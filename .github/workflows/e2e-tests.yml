@@ -56,8 +56,10 @@ jobs:
         popd
 
         # 2. Add private composer repository and download WooCommerce Subscriptions
+        pushd ../../
         composer config repositories.repo-name composer https://repo.packagist.com/inpsyde/payment-gateways/
         composer require inpsyde-mirror/woocommerce-subscriptions
+        popd
 
         # 3. Setup wp-env
         npm run e2e:setup:env
