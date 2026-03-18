@@ -168,7 +168,8 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 			 */
 			static function ( $previous_version ) use ( $container ): void {
 				// Only run this migration logic when updating from version 3.1.1 or older.
-				if ( $previous_version && version_compare( $previous_version, '3.1.1', 'gt' ) ) {
+				// Skip on fresh installs (no previous version) since there's nothing to migrate.
+				if ( ! $previous_version || version_compare( $previous_version, '3.1.1', 'gt' ) ) {
 					return;
 				}
 
