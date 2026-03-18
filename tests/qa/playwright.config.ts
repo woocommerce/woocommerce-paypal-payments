@@ -70,12 +70,15 @@ export default defineConfig< BaseExtend >( {
 		ignoreHTTPSErrors: process.env.IGNORE_HTTPS_ERRORS === 'true',
 
 		/**
-		 * For envs with Basic Auth
+		 * For envs with Basic Auth. Omit when both are empty (e.g. wp-env).
 		 */
-		httpCredentials: {
-			username: process.env.WP_BASIC_AUTH_USER,
-			password: process.env.WP_BASIC_AUTH_PASS,
-		},
+		...( process.env.WP_BASIC_AUTH_USER &&
+		process.env.WP_BASIC_AUTH_PASS && {
+			httpCredentials: {
+				username: process.env.WP_BASIC_AUTH_USER,
+				password: process.env.WP_BASIC_AUTH_PASS,
+			},
+		} ),
 
 		...devices[ 'Desktop Chrome' ],
 
