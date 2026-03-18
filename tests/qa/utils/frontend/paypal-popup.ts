@@ -59,7 +59,8 @@ export class PayPalPopup {
 			.or( this.page.getByTestId( 'consentButton' ) )
 			.or( this.page.getByRole( 'button', { name: 'Continue' } ) )
 			.or( this.page.locator( '#confirmButtonTop' ) )
-			.or( this.page.locator( '#one-time-cta' ) );
+			.or( this.page.locator( '#one-time-cta' ) )
+			.or( this.page.getByRole( 'button', { name: /Link and Pay/ } ) );
 	payLaterSwitcher = () => this.page.getByTestId( 'paylater-tab' );
 	payLaterRadio = () =>
 		this.page.locator( 'label[for^="credit-offer"]' ).first();
@@ -90,7 +91,14 @@ export class PayPalPopup {
 
 		await this.loginInput().fill( email );
 
+		// Track if Next advanced the page; we need checkout URL for redirect recovery.
+		const urlBeforeNext = this.page.url();
 		await this.tryClickNext();
+		const nextAdvancedPage = this.page.url() !== urlBeforeNext;
+
+		// URL has ctxId/returnUri for redirect recovery.
+		const checkoutSigninUrl = this.page.url();
+
 		await this.tryLoginWithPasswordInstead();
 
 		await this.tryAnotherWay();
@@ -98,6 +106,40 @@ export class PayPalPopup {
 
 		await this.passwordInput().fill( password );
 		await this.loginButton().click();
+		// Wait for redirect to consent/vaulting page.
+		try {
+			await this.passwordInput().waitFor( { state: 'detached', timeout: 30000 } );
+		} catch {}
+		await this.page.waitForLoadState();
+
+		// If sandbox redirected to myaccount/signin instead of checkout, go back to checkpoint URL.
+		const needsRedirect = ( url: string ) =>
+			url.includes( 'myaccount' ) || url.includes( 'signin?returnUri' );
+
+		if ( nextAdvancedPage && needsRedirect( this.page.url() ) ) {
+			await this.page.goto( checkoutSigninUrl );
+			await this.page.waitForLoadState();
+		}
+
+		// If sandbox redirected to login again, re-submit credentials.
+		try {
+			await this.loginInput().waitFor( { state: 'visible', timeout: 3000 } );
+			const emailValue = await this.loginInput().inputValue();
+			if ( ! emailValue ) {
+				await this.loginInput().fill( email );
+			}
+			await this.passwordInput().fill( password );
+			await this.loginButton().click();
+			try {
+				await this.passwordInput().waitFor( { state: 'detached', timeout: 30000 } );
+			} catch {}
+			await this.page.waitForLoadState();
+			// Apply the same redirect fix for the re-login case.
+			if ( nextAdvancedPage && needsRedirect( this.page.url() ) ) {
+				await this.page.goto( checkoutSigninUrl );
+				await this.page.waitForLoadState();
+			}
+		} catch {}
 	};
 
 	/**
@@ -215,8 +257,19 @@ export class PayPalPopup {
 	 */
 	completePayLaterPayment = async ( payPalAccount ) => {
 		await this.login( payPalAccount.email, payPalAccount.password );
+		// Click "Continue" on the Pay Later payment selection screen to advance
+		// to the loan-agreement / application form.
 		await this.submitPaymentButton().click();
+		// Wait for the Confirm Details page (CAP iframe) to fully load before
+		// trying to interact with it.
+		await this.page.waitForLoadState( 'domcontentloaded' );
 		await this.loanAgreementCheckbox().click();
+		// After checking the loan agreement checkbox, PayPal briefly shows a
+		// loading overlay inside the CAP iframe that intercepts pointer events.
+		await this.payLaterIframe()
+			.locator( '[data-testid="loading-overlay"]' )
+			.waitFor( { state: 'hidden', timeout: 15000 } )
+			.catch( () => {} ); // overlay may not always appear
 		await this.agreeAndApplyButton().click();
 		await this.completePayment();
 	};
