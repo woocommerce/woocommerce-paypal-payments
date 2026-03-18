@@ -268,21 +268,34 @@ return array(
         return new PaymentMethodsDependenciesDefinition();
     },
     'settings.service.pay_later_status' => static function (ContainerInterface $container): array {
-        $pay_later_endpoint = $container->get('settings.rest.pay_later_messaging');
-        $pay_later_settings = $pay_later_endpoint->get_details()->get_data();
-        $pay_later_statuses = array('cart' => $pay_later_settings['data']['cart']['status'] === 'enabled', 'checkout' => $pay_later_settings['data']['checkout']['status'] === 'enabled', 'product' => $pay_later_settings['data']['product']['status'] === 'enabled', 'shop' => $pay_later_settings['data']['shop']['status'] === 'enabled', 'home' => $pay_later_settings['data']['home']['status'] === 'enabled', 'custom_placement' => !empty($pay_later_settings['data']['custom_placement']) && $pay_later_settings['data']['custom_placement'][0]['status'] === 'enabled');
-        $is_pay_later_messaging_enabled_for_any_location = !array_filter($pay_later_statuses);
-        return array('statuses' => $pay_later_statuses, 'is_enabled_for_any_location' => $is_pay_later_messaging_enabled_for_any_location);
+        try {
+            $pay_later_endpoint = $container->get('settings.rest.pay_later_messaging');
+            $pay_later_settings = $pay_later_endpoint->get_details()->get_data();
+            $pay_later_statuses = array('cart' => $pay_later_settings['data']['cart']['status'] === 'enabled', 'checkout' => $pay_later_settings['data']['checkout']['status'] === 'enabled', 'product' => $pay_later_settings['data']['product']['status'] === 'enabled', 'shop' => $pay_later_settings['data']['shop']['status'] === 'enabled', 'home' => $pay_later_settings['data']['home']['status'] === 'enabled', 'custom_placement' => !empty($pay_later_settings['data']['custom_placement']) && $pay_later_settings['data']['custom_placement'][0]['status'] === 'enabled');
+            $is_pay_later_messaging_enabled_for_any_location = !array_filter($pay_later_statuses);
+            return array('statuses' => $pay_later_statuses, 'is_enabled_for_any_location' => $is_pay_later_messaging_enabled_for_any_location);
+        } catch (\Throwable $exception) {
+            $pay_later_statuses = array('cart' => \false, 'checkout' => \false, 'product' => \false, 'shop' => \false, 'home' => \false, 'custom_placement' => \false);
+            return array('statuses' => $pay_later_statuses, 'is_enabled_for_any_location' => \false);
+        }
     },
     'settings.service.button_locations' => static function (ContainerInterface $container): array {
-        $styling_endpoint = $container->get('settings.rest.styling');
-        $styling_data = $styling_endpoint->get_details()->get_data()['data'];
-        return array('cart_enabled' => $styling_data['cart']->enabled ?? \false, 'block_checkout_enabled' => $styling_data['expressCheckout']->enabled ?? \false, 'product_enabled' => $styling_data['product']->enabled ?? \false);
+        try {
+            $styling_endpoint = $container->get('settings.rest.styling');
+            $styling_data = $styling_endpoint->get_details()->get_data()['data'];
+            return array('cart_enabled' => $styling_data['cart']->enabled ?? \false, 'block_checkout_enabled' => $styling_data['expressCheckout']->enabled ?? \false, 'product_enabled' => $styling_data['product']->enabled ?? \false);
+        } catch (\Throwable $exception) {
+            return array('cart_enabled' => \false, 'block_checkout_enabled' => \false, 'product_enabled' => \false);
+        }
     },
     'settings.service.gateways_status' => static function (ContainerInterface $container): array {
-        $payment_endpoint = $container->get('settings.rest.payment');
-        $settings = $payment_endpoint->get_details()->get_data();
-        return array('apple_pay' => $settings['data']['ppcp-applepay']['enabled'] ?? \false, 'google_pay' => $settings['data']['ppcp-googlepay']['enabled'] ?? \false, 'axo' => $settings['data']['ppcp-axo-gateway']['enabled'] ?? \false, 'card-button' => $settings['data']['ppcp-card-button-gateway']['enabled'] ?? \false, 'pwc' => $settings['data']['ppcp-pwc']['enabled'] ?? \false);
+        try {
+            $payment_endpoint = $container->get('settings.rest.payment');
+            $settings = $payment_endpoint->get_details()->get_data();
+            return array('apple_pay' => $settings['data']['ppcp-applepay']['enabled'] ?? \false, 'google_pay' => $settings['data']['ppcp-googlepay']['enabled'] ?? \false, 'axo' => $settings['data']['ppcp-axo-gateway']['enabled'] ?? \false, 'card-button' => $settings['data']['ppcp-card-button-gateway']['enabled'] ?? \false, 'pwc' => $settings['data']['ppcp-pwc']['enabled'] ?? \false);
+        } catch (\Throwable $exception) {
+            return array('apple_pay' => \false, 'google_pay' => \false, 'axo' => \false, 'card-button' => \false, 'pwc' => \false);
+        }
     },
     'settings.service.merchant_capabilities' => static function (ContainerInterface $container): array {
         /**
@@ -393,10 +406,14 @@ return array(
     },
     'settings.data.definition.features' => static function (ContainerInterface $container): FeaturesDefinition {
         $features = apply_filters('woocommerce_paypal_payments_rest_common_merchant_features', array());
-        $payment_endpoint = $container->get('settings.rest.payment');
-        $settings = $payment_endpoint->get_details()->get_data();
+        try {
+            $payment_endpoint = $container->get('settings.rest.payment');
+            $settings = $payment_endpoint->get_details()->get_data();
+            $gateways = array('card-button' => $settings['data']['ppcp-card-button-gateway']['enabled'] ?? \false);
+        } catch (\Throwable $exception) {
+            $gateways = array('card-button' => \false);
+        }
         // Settings status.
-        $gateways = array('card-button' => $settings['data']['ppcp-card-button-gateway']['enabled'] ?? \false);
         // Merchant capabilities serve to show active or inactive badge and buttons.
         $capabilities = array(FeaturesDefinition::FEATURE_APPLE_PAY => $features[FeaturesDefinition::FEATURE_APPLE_PAY]['enabled'] ?? \false, FeaturesDefinition::FEATURE_GOOGLE_PAY => $features[FeaturesDefinition::FEATURE_GOOGLE_PAY]['enabled'] ?? \false, FeaturesDefinition::FEATURE_ADVANCED_CREDIT_AND_DEBIT_CARDS => $features[FeaturesDefinition::FEATURE_ADVANCED_CREDIT_AND_DEBIT_CARDS]['enabled'] ?? \false, FeaturesDefinition::FEATURE_SAVE_PAYPAL_AND_VENMO => $features[FeaturesDefinition::FEATURE_SAVE_PAYPAL_AND_VENMO]['enabled'] ?? \false, FeaturesDefinition::FEATURE_ALTERNATIVE_PAYMENT_METHODS => $features[FeaturesDefinition::FEATURE_ALTERNATIVE_PAYMENT_METHODS]['enabled'] ?? \false, FeaturesDefinition::FEATURE_INSTALLMENTS => $features[FeaturesDefinition::FEATURE_INSTALLMENTS]['enabled'] ?? \false, FeaturesDefinition::FEATURE_PAY_WITH_CRYPTO => $features[FeaturesDefinition::FEATURE_PAY_WITH_CRYPTO]['enabled'] ?? \false, FeaturesDefinition::FEATURE_PAY_LATER_MESSAGING => $features[FeaturesDefinition::FEATURE_PAY_LATER_MESSAGING]['enabled'] ?? \false, FeaturesDefinition::FEATURE_PAY_UPON_INVOICE => $features[FeaturesDefinition::FEATURE_PAY_UPON_INVOICE]['enabled'] ?? \false);
         $merchant_capabilities = array(

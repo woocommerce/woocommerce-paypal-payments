@@ -70,14 +70,21 @@ class PaymentMethodsDefinition
      *
      * @param PaymentSettings $settings                        Payment methods data model.
      * @param GeneralSettings $general_settings                General plugin settings model.
-     * @param string          $axo_checkout_config_notice      Axo checkout config conflict notice.
+     * @param string|array    $axo_checkout_config_notice      Axo checkout config conflict notice,
+     *                                                         or array of notices (3.4.x compat).
      * @param string          $axo_incompatible_plugins_notice Axo incompatible plugins notice.
      */
-    public function __construct(PaymentSettings $settings, GeneralSettings $general_settings, string $axo_checkout_config_notice = '', string $axo_incompatible_plugins_notice = '')
+    public function __construct(PaymentSettings $settings, GeneralSettings $general_settings, $axo_checkout_config_notice = '', string $axo_incompatible_plugins_notice = '')
     {
         $this->settings = $settings;
         $this->general_settings = $general_settings;
-        $this->axo_checkout_config_notice = $axo_checkout_config_notice;
+        // Backward compat: 3.4.x passed a single array of notices as arg 3.
+        if (is_array($axo_checkout_config_notice)) {
+            $this->axo_checkout_config_notice = (string) ($axo_checkout_config_notice[0] ?? '');
+            $this->axo_incompatible_plugins_notice = (string) ($axo_checkout_config_notice[1] ?? '');
+            return;
+        }
+        $this->axo_checkout_config_notice = (string) $axo_checkout_config_notice;
         $this->axo_incompatible_plugins_notice = $axo_incompatible_plugins_notice;
     }
     /**
@@ -88,7 +95,8 @@ class PaymentMethodsDefinition
     public function get_definitions(): array
     {
         // Refresh the WooCommerce gateway details before we build the definitions.
-        $this->wc_gateways = WC()->payment_gateways()->payment_gateways();
+        $payment_gateways = WC()->payment_gateways();
+        $this->wc_gateways = $payment_gateways ? $payment_gateways->payment_gateways() : array();
         $all_methods = array_merge($this->group_paypal_methods(), $this->group_card_methods(), $this->group_apms());
         $result = array();
         foreach ($all_methods as $method) {
