@@ -49,10 +49,11 @@ jobs:
       PRE_SCRIPT: |
         # 1. Download and unzip the built plugin
         gh run download ${{ github.run_id }} -p "woocommerce-paypal-payments-*" -D resources/files
-        cd resources/files
+        pushd resources/files
         mv woocommerce-paypal-payments-*/woocommerce-paypal-payments .
         zip -r woocommerce-paypal-payments.zip woocommerce-paypal-payments
         rm -rf woocommerce-paypal-payments woocommerce-paypal-payments-*/
+        popd
 
         # 2. Add private composer repository and download WooCommerce Subscriptions
         composer config repositories.repo-name composer https://repo.packagist.com/inpsyde/payment-gateways/
