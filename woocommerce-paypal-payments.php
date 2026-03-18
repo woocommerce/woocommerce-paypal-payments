@@ -155,17 +155,24 @@ define( 'PPCP_PAYPAL_BN_CODE', 'Woo_PPCP' );
 					if ( $installed_plugin_version !== $current_plugin_version ) {
 						update_option( 'woocommerce-ppcp-version', $current_plugin_version );
 
-						/**
-						 * The hook fired when the plugin is installed or updated.
-						 */
-						do_action( 'woocommerce_paypal_payments_gateway_migrate', $installed_plugin_version );
+						// Defer migration to 'woocommerce_init' to ensure WC is fully
+						// initialized (WC()->countries, payment gateways, etc.).
+						add_action(
+							'woocommerce_init',
+							function () use ( $installed_plugin_version ) {
+								/**
+								 * The hook fired when the plugin is installed or updated.
+								 */
+								do_action( 'woocommerce_paypal_payments_gateway_migrate', $installed_plugin_version );
 
-						if ( $installed_plugin_version ) {
-							/**
-							 * The hook fired when the plugin is updated.
-							 */
-							do_action( 'woocommerce_paypal_payments_gateway_migrate_on_update' );
-						}
+								if ( $installed_plugin_version ) {
+									/**
+									 * The hook fired when the plugin is updated.
+									 */
+									do_action( 'woocommerce_paypal_payments_gateway_migrate_on_update' );
+								}
+							}
+						);
 					}
 				},
 				-1
