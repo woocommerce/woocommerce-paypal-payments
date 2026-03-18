@@ -18,9 +18,17 @@ use WooCommerce\PayPalCommerce\Settings\Data\PayLaterMessagingSettings;
 class GetConfig
 {
     const ENDPOINT = 'ppc-get-message-config';
-    protected PayLaterMessagingSettings $settings;
+    /**
+     * @var PayLaterMessagingSettings|mixed
+     */
+    protected $settings;
     private LoggerInterface $logger;
-    public function __construct(PayLaterMessagingSettings $settings, LoggerInterface $logger)
+    /**
+     * @param PayLaterMessagingSettings|mixed $settings Pay Later messaging settings
+     *                                                  (accepts legacy Settings during upgrade).
+     * @param LoggerInterface                $logger   Logger instance.
+     */
+    public function __construct($settings, LoggerInterface $logger)
     {
         $this->settings = $settings;
         $this->logger = $logger;

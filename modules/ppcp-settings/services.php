@@ -127,14 +127,18 @@ return array(
         return new SettingsModel($container->get('settings.service.sanitizer'), $environment->is_sandbox() ? $container->get('wcgateway.settings.invoice-prefix-random') : $container->get('wcgateway.settings.invoice-prefix'));
     },
     'settings.data.paylater-messaging' => static function (ContainerInterface $container): array {
-        $config_factory = $container->get('paylater-configurator.factory.config');
-        assert($config_factory instanceof ConfigFactory);
-        $save_config = $container->get('paylater-configurator.endpoint.save-config');
-        assert($save_config instanceof SaveConfig);
-        $paylater_settings = $container->get('settings.data.paylater-messaging-settings');
-        assert($paylater_settings instanceof PayLaterMessagingSettings);
-        $pay_later_config = $config_factory->from_settings($paylater_settings);
-        return array('read' => $pay_later_config, 'save' => $save_config);
+        try {
+            $config_factory = $container->get('paylater-configurator.factory.config');
+            assert($config_factory instanceof ConfigFactory);
+            $save_config = $container->get('paylater-configurator.endpoint.save-config');
+            assert($save_config instanceof SaveConfig);
+            $paylater_settings = $container->get('settings.data.paylater-messaging-settings');
+            assert($paylater_settings instanceof PayLaterMessagingSettings);
+            $pay_later_config = $config_factory->from_settings($paylater_settings);
+            return array('read' => $pay_later_config, 'save' => $save_config);
+        } catch (\Throwable $exception) {
+            return array('read' => array(), 'save' => null);
+        }
     },
     'settings.connection-state' => static function (ContainerInterface $container): ConnectionState {
         $data = $container->get('settings.data.general');
