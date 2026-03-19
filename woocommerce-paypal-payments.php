@@ -304,3 +304,31 @@ define( 'PPCP_PAYPAL_BN_CODE', 'Woo_PPCP' );
 		}
 	);
 } )();
+
+/**
+ * Addresses refactoring related opcache sync issues, e.g., when a new plugin version
+ * introduces a new constructor argument or an abstract base class changes. Without the
+ * `opcache_reset` call, the first request after the update could throw a fatal error.
+ */
+add_action(
+	'upgrader_process_complete',
+	static function ( $upgrader, $extra ) {
+		if ( ! is_array( $extra ) ) {
+			return;
+		}
+		$type    = $extra['type'] ?? '';
+		$plugins = $extra['plugins'] ?? array();
+
+		if ( 'plugin' !== $type ) {
+			return;
+		}
+		if ( ! in_array( 'woocommerce-paypal-payments/woocommerce-paypal-payments.php', $plugins, true ) ) {
+			return;
+		}
+		if ( function_exists( 'opcache_reset' ) ) {
+			opcache_reset();
+		}
+	},
+	10,
+	2
+);
