@@ -12,7 +12,6 @@ import {
 	disableNoncePlugin,
 	subscriptionsPlugin,
 	disableWcSetupWizard,
-	disableNewUi,
 } from '../../resources';
 /**
  * External dependencies

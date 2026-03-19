@@ -32,19 +32,20 @@
   "scripts": {
     "setup:tests": "npm install && npx playwright install",
     "setup:utils": "npm run setup:tests && cd ./playwright-utils && yarn devLocal",
+    
     "lint:md": "wp-scripts lint-md-docs ./**/*.md README.md",
     "lint:md:fix": "wp-scripts lint-md-docs --fix ./**/*.md README.md",
     "lint:js": "wp-scripts lint-js  --resolve-plugins-relative-to ./ **/*.{ts,tsx,mjs}",
     "lint:js:fix": "wp-scripts lint-js --resolve-plugins-relative-to ./ --fix **/*.{ts,tsx,mjs}",
-    "env:reset": "npx playwright test woocommerce.setup.ts",
+    
+    "env:reset": "npx playwright test --project setup-pcp --grep \"setup:env:reset;\"",
     "env:setup:pcp:usa": "npx playwright test --project setup-pcp --grep \"setup:pcp:usa;\"",
     "env:setup:pcp:germany": "npx playwright test --project setup-pcp --grep \"setup:pcp:germany;\"",
     "env:setup:pcp:mexico": "npx playwright test --project setup-pcp --grep \"setup:pcp:mexico;\"",
-    "env:setup:pcp:update": "npx playwright test --project setup-pcp --grep \"setup:pcp:update;\"",
-    "test:frontend-ui-pay-later": "npx playwright test frontend-ui-pay-later.spec.ts",
-    "test:frontend-ui-acdc": "npx playwright test frontend-ui-acdc.spec.ts",
-    "test:frontend-ui": "npx playwright test frontend-ui.spec.ts",
-    "test:frontend-ui-all": "npm run test:frontend-ui-pay-later & npm run test:frontend-ui-acdc & npm run test:frontend-ui"
+    
+    "test:frontend-ui": "npx playwright test 05-frontend-ui",
+    "test:transaction": "npx playwright test 06-transaction",
+    "test:transaction:critical": "npx playwright test 06-transaction --grep \"@Critical\""
   },
   "eslintConfig": {
     "extends": [

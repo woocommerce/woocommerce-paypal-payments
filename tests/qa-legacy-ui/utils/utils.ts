@@ -1,14 +1,18 @@
 /**
  * External dependencies
  */
+import { execFileSync  } from 'node:child_process';
+import { WpCliEnvType } from '@inpsyde/playwright-utils/build/@types/wp-cli';
 import {
 	WooCommerceApi,
 	RequestUtils,
 	Plugins,
 	WooCommerceUtils,
 	restLogin,
+	guestStorageState,
 	expect,
 	WpCli,
+	updateDotenv,
 } from '@inpsyde/playwright-utils/build';
 /**
  * Internal dependencies
@@ -31,6 +35,14 @@ import {
 	CustomerPaymentMethods,
 } from './frontend';
 import {
+	shopSettings,
+	shippingZones,
+	taxSettings,
+	products,
+	coupons,
+	customers,
+	disableNoncePlugin,
+	disableWcSetupWizard,
 	subscriptionsPlugin,
 	pcpPlugin,
 	PcpMerchant,
@@ -345,44 +357,63 @@ export class Utils {
 	 * @param method
 	 */
 	pcpPaymentMethodIsEnabled = async ( method ) => {
+		let start, end;
 		switch ( method ) {
 			case 'PayPal':
 				// Is enabled by default within Standard Payments
 				break;
 
 			case 'PayLater':
+				start = Date.now();
 				await this.cli.setWpConst( { WP_DEBUG: true, SCRIPT_DEBUG: true } );
 				await this.standardPayments.setup( { vaulting: false } );
 				await this.payLater.setup( { enableGateway: true } );
+				end = Date.now();
+				console.log( `Pay Later configured in ${ ( end - start ) / 1000 } seconds` );
+
 				break;
 
 			case 'Venmo':
+				start = Date.now();
 				await this.cli.setWpConst( { WP_DEBUG: true, SCRIPT_DEBUG: true } );
 				await this.standardPayments.setup( {
 					enableAlternativePaymentMethods: [ 'Venmo' ],
 				} );
+				end = Date.now();
+				console.log( `Venmo configured in ${ ( end - start ) / 1000 } seconds` );
 				break;
 
 			case 'ACDC':
+				start = Date.now();
 				await this.advancedCardProcessing.setup( {
 					enableGateway: true,
 					threeDSecure:
 						'No 3D Secure (transaction will be denied if 3D Secure is required)',
 				} );
+				end = Date.now();
+				console.log( `ACDC configured in ${ ( end - start ) / 1000 } seconds` );
+
 				break;
 
 			case 'ACDC3DS':
+				start = Date.now();
 				await this.advancedCardProcessing.setup( {
 					enableGateway: true,
 					threeDSecure: 'Always trigger 3D Secure',
 				} );
+				end = Date.now();
+				console.log( `ACDC 3D Secure configured in ${ ( end - start ) / 1000 } seconds` );
 				break;
 
 			case 'OXXO':
+				start = Date.now();
 				await this.oxxo.setup( { enableGateway: true } );
+				end = Date.now();
+				console.log( `OXXO configured in ${ ( end - start ) / 1000 } seconds` );
 				break;
 
 			case 'DebitOrCreditCard':
+				await this.cli.setWpConst( { WP_DEBUG: true, SCRIPT_DEBUG: true } );
 				await this.standardPayments.setup( {
 					enableAlternativePaymentMethods: [
 						'Credit or debit cards',
@@ -392,9 +423,12 @@ export class Utils {
 				await this.advancedCardProcessing.setup( {
 					enableGateway: false,
 				} );
+				end = Date.now();
+				console.log( `Debit or Credit Card configured in ${ ( end - start ) / 1000 } seconds` );
 				break;
 
 			case 'StandardCardButton':
+				start = Date.now();
 				await this.standardPayments.setup( {
 					standardCardButton: true,
 				} );
@@ -402,14 +436,107 @@ export class Utils {
 					enableGateway: false,
 				} );
 				await this.standardCardButton.setup( { enableGateway: true } );
+				end = Date.now();
+				console.log( `Standard Card Button configured in ${ ( end - start ) / 1000 } seconds` );
 				break;
 
 			case 'PayUponInvoice':
+				start = Date.now();
 				// Is activated before merchant connection
 				await this.payUponInvoice.setup( { enableGateway: true } );
+				end = Date.now();
+				console.log( `Pay Upon Invoice configured in ${ ( end - start ) / 1000 } seconds` );
 				break;
 		}
 	};
+
+	/**
+	 * Reset the WordPress environment to a clean state.
+	 * Supports 'localhost' (PowerShell/XAMPP) and 'ssh' env types.
+	 */
+	async resetEnvironment(): Promise< void > {
+		let start, end;
+		start = Date.now();
+
+		const envType = process.env.WPCLI_ENV_TYPE as WpCliEnvType;
+
+		let command: string;
+		let args: string[];
+
+		if ( envType === 'localhost' ) {
+			const psCommand = [
+				'$env:PATH += ";C:\\xampp\\mysql\\bin"',
+				`cd ${ process.env.WPCLI_PATH }`,
+				'wp db reset --yes',
+				'wp config create --dbname=geniuscourse --dbuser=root --dbpass="" --dbhost=localhost --skip-check --force',
+				`wp core install --url="${ process.env.WP_BASE_URL }" --title="Test Site" --admin_user="admin" --admin_password="password" --admin_email="test@test.com"`,
+				'wp plugin delete --all',
+				'wp theme delete --all',
+				'wp plugin install woocommerce --activate',
+				'wp cache flush',
+			].join( '; ' );
+
+			command = 'powershell';
+			args = [ '-NoProfile', '-Command', psCommand ];
+		} else if ( envType === 'ssh' ) {
+			const WP_VERSION = process.env.WP_VERSION ?? '6.9';
+			const WP_TYPE = process.env.WP_TYPE ?? 'single';
+			const remoteCmd = `$HOME/bin/reset-wp.sh --wp-version=${ WP_VERSION } --wp-type=${ WP_TYPE }`;
+
+			command = 'ssh';
+			args = [
+				`${ process.env.SSH_LOGIN }@${ process.env.SSH_HOST }`,
+				'-p', process.env.SSH_PORT!,
+				'-o', 'StrictHostKeyChecking=no',
+				remoteCmd,
+			];
+		} else {
+			throw new Error( `Unsupported WPCLI_ENV_TYPE: ${ envType }` );
+		}
+
+		console.log( `Executing: ${ command } ${ args.join( ' ' ) }` );
+
+		execFileSync( command, args, {
+			stdio: 'inherit',
+			timeout: 60_000,
+		} );
+		end = Date.now();
+		console.log( `Environment reset completed in ${ ( end - start ) / 1000 } seconds` );
+	}
+
+	/**
+	 * Create admin and guest storage states.
+	 */
+	async createStorageStates(): Promise< void > {
+		let start, end;
+		start = Date.now();
+		await restLogin( {
+			baseURL: process.env.WP_BASE_URL!,
+			storageStatePath: process.env.STORAGE_STATE_PATH_ADMIN,
+			httpCredentials: {
+				username: process.env.WP_BASIC_AUTH_USER,
+				password: process.env.WP_BASIC_AUTH_PASS,
+			},
+			user: {
+				username: process.env.WP_USERNAME,
+				password: process.env.WP_PASSWORD,
+			},
+		} );
+		end = Date.now();
+		console.log( `Admin storage state created in ${ ( end - start ) / 1000 } seconds` );
+
+		start = Date.now();
+		await guestStorageState( {
+			baseURL: process.env.WP_BASE_URL!,
+			httpCredentials: {
+				username: process.env.WP_BASIC_AUTH_USER,
+				password: process.env.WP_BASIC_AUTH_PASS,
+			},
+			storageStatePath: `${ process.env.STORAGE_STATE_PATH }/guest.json`,
+		} );
+		end = Date.now();
+		console.log( `Guest storage state created in ${ ( end - start ) / 1000 } seconds` );
+	}
 
 	/**
 	 * Configures store according to the data provided
@@ -417,67 +544,91 @@ export class Utils {
 	 * @param {Object} data see /resources/woocommerce-config.ts
 	 */
 	configureStore = async ( data ) => {
-		if ( data.wpDebugging === true ) {
-			await this.cli.setWpConst( { WP_DEBUG: true, SCRIPT_DEBUG: true } );
-		}
+	const start = Date.now();
+	const tasks: Promise< unknown >[] = [];
 
-		if ( data.wpDebugging === false ) {
-			await this.cli.setWpConst( { WP_DEBUG: false, SCRIPT_DEBUG: false } );
-		}
+	// CLI operation — independent
+	if ( data.wpDebugging === true ) {
+		tasks.push( this.cli.setWpConst( { WP_DEBUG: true, SCRIPT_DEBUG: true } ) );
+	}
+	if ( data.wpDebugging === false ) {
+		tasks.push( this.cli.setWpConst( { WP_DEBUG: false, SCRIPT_DEBUG: false } ) );
+	}
 
-		if ( data.subscription === true ) {
-			await this.activateWcSubscriptionsPlugin();
-		}
+	// Plugin activate/deactivate — API-based, independent
+	if ( data.subscription === true ) {
+		tasks.push( this.activateWcSubscriptionsPlugin() );
+	}
+	if ( data.subscription === false ) {
+		tasks.push( this.deactivateWcSubscriptionsPlugin() );
+	}
 
-		if ( data.subscription === false ) {
-			await this.deactivateWcSubscriptionsPlugin();
-		}
-
-		if ( data.classicPages === true ) {
+	// Pages — sequential internally if page-based, but parallel with other tasks
+	if ( data.classicPages === true ) {
+		tasks.push( ( async () => {
 			await this.wooCommerceUtils.activateClassicCartPage();
 			await this.wooCommerceUtils.activateClassicCheckoutPage();
-		}
-
-		if ( data.classicPages === false ) {
+		} )() );
+	}
+	if ( data.classicPages === false ) {
+		tasks.push( ( async () => {
 			await this.wooCommerceUtils.activateBlockCartPage();
 			await this.wooCommerceUtils.activateBlockCheckoutPage();
-		}
+		} )() );
+	}
 
-		if ( data.settings?.general ) {
-			await this.wooCommerceApi.updateGeneralSettings(
-				data.settings.general
-			);
-		}
+	// API calls — independent
+	if ( data.settings?.general ) {
+		tasks.push( this.wooCommerceApi.updateGeneralSettings( data.settings.general ) );
+	}
+	if ( data.taxes ) {
+		tasks.push( this.wooCommerceUtils.setTaxes( data.taxes ) );
+	}
+	if ( data.customer ) {
+		tasks.push( this.restoreCustomer( data.customer ) );
+	}
 
-		if ( data.taxes ) {
-			await this.wooCommerceUtils.setTaxes( data.taxes );
-		}
-
-		if ( data.customer ) {
-			await this.restoreCustomer( data.customer );
-		}
-	};
+	await Promise.all( tasks );
+	console.log( `Store configured in ${ ( Date.now() - start ) / 1000 }s` );
+};
 
 	updatePcpPlugin = async () => {
+		let start, end;
+		start = Date.now();
+		console.log( `Updating PCP plugin from ${ pcpPluginUpdate.zipFilePath }....` );
 		await this.plugins.installPluginFromFile( pcpPluginUpdate.zipFilePath );
+		end = Date.now();
+		console.log( `PCP Plugin updated in ${ ( end - start ) / 1000 } seconds` );
 	}
 
 	configurePcp = async ( data: PcpConfig ) => {
+		let start, end;
 		if (
 			! ( await this.requestUtils.isPluginInstalled( pcpPlugin.slug ) )
 		) {
+			start = Date.now();
+			console.log( `Installing PCP plugin from ${ pcpPlugin.zipFilePath }....` );
 			await this.plugins.installPluginFromFile( pcpPlugin.zipFilePath );
+			end = Date.now();
+			console.log( `PCP Plugin installed in ${ ( end - start ) / 1000 } seconds` );
 		}
+		start = Date.now();
+		console.log( `Activating PCP plugin...` );
 		await this.requestUtils.activatePlugin( pcpPlugin.slug );
+		end = Date.now();
+		console.log( `PCP plugin activated in ${ ( end - start ) / 1000 } seconds` );
 
 		if ( data.merchant ) {
 			if ( data.clearPCPDB ) {
 				// Make sure merchant is connected to clear PCP DB
+				start = Date.now();
 				await this.disconnectMerchant();
 				await this.connectMerchant( data.merchant, {
 					enablePayUponInvoice: !! data.enablePayUponInvoice,
 				} );
 				await this.clearPcpDb();
+				end = Date.now();
+				console.log( `PCP DB cleared in ${ ( end - start ) / 1000 } seconds` );
 			}
 
 			if ( data.merchantIsDisconnected ) {
@@ -485,36 +636,179 @@ export class Utils {
 				return;
 			}
 
+			
+			start = Date.now();
 			await this.disconnectMerchant();
+			end = Date.now();
+			console.log( `Merchant disconnected in ${ ( end - start ) / 1000 } seconds` );
+
+			start = Date.now();
 			await this.connectMerchant( data.merchant, {
 				enablePayUponInvoice: !! data.enablePayUponInvoice,
 			} );
+			end = Date.now();
+			console.log( `Merchant connected in ${ ( end - start ) / 1000 } seconds` );
 		}
 
 		if ( data.standardPayments ) {
+			start = Date.now();
 			await this.standardPayments.setup( data.standardPayments );
+			end = Date.now();
+			console.log( `Standard payments configured in ${ ( end - start ) / 1000 } seconds` );
 		}
 
 		if ( data.payLater ) {
+			start = Date.now();
 			await this.payLater.setup( data.payLater );
+			end = Date.now();
+			console.log( `Pay Later configured in ${ ( end - start ) / 1000 } seconds` );
 		}
 
 		if ( data.advancedCardProcessing ) {
+			start = Date.now();
 			await this.advancedCardProcessing.setup(
 				data.advancedCardProcessing
 			);
+			end = Date.now();
+			console.log( `Advanced Card Processing configured in ${ ( end - start ) / 1000 } seconds` );
 		}
 
 		if ( data.standardCardButton ) {
+			start = Date.now();
 			await this.standardCardButton.setup( data.standardCardButton );
+			end = Date.now();
+			console.log( `Standard Card Button configured in ${ ( end - start ) / 1000 } seconds` );
 		}
 
 		if ( data.oxxo ) {
+			start = Date.now();
 			await this.oxxo.setup( data.oxxo );
+			end = Date.now();
+			console.log( `OXXO configured in ${ ( end - start ) / 1000 } seconds` );
 		}
 
 		if ( data.payUponInvoice ) {
+			start = Date.now();
 			await this.payUponInvoice.setup( data.payUponInvoice );
+			end = Date.now();
+			console.log( `Pay Upon Invoice configured in ${ ( end - start ) / 1000 } seconds` );
 		}
 	};
+
+	/**
+	 * Run full WooCommerce store setup (equivalent to the setup project).
+	 * Requires fixture instances since these are API/page-based operations.
+	 */
+	async setupStore(): Promise< void > {
+		let start;
+
+		// Phase 1: Plugins + Theme (sequential — shares browser page)
+		start = Date.now();
+		await this.requestUtils.setPermalinks( '/%postname%/' );
+		await this.installAndActivatePlugin( disableNoncePlugin );
+		await this.installAndActivatePlugin( disableWcSetupWizard );
+
+		if ( ! ( await this.requestUtils.isPluginInstalled( 'woocommerce' ) ) ) {
+			await this.requestUtils.installPlugin( 'woocommerce' );
+		}
+		await this.requestUtils.activatePlugin( 'woocommerce' );
+
+		if ( ! ( await this.requestUtils.isPluginInstalled( subscriptionsPlugin.slug ) ) ) {
+			await this.plugins.installPluginFromFile( subscriptionsPlugin.zipFilePath );
+		}
+		await this.requestUtils.deactivatePlugin( subscriptionsPlugin.slug );
+
+		const themeSlug = 'storefront';
+		if ( ! ( await this.requestUtils.isThemeInstalled( themeSlug ) ) ) {
+			await this.requestUtils.installTheme( themeSlug );
+		}
+		await this.requestUtils.activateTheme( themeSlug );
+		console.log( `Phase 1 (permalinks, plugins, theme) in ${ ( Date.now() - start ) / 1000 }s` );
+
+		// Phase 2: API keys + site visibility (parallel, both need WC active)
+		start = Date.now();
+		await Promise.all( [
+			this.wooCommerceUtils.setSiteVisibility(),
+			( async () => {
+				if ( ! ( await this.wooCommerceUtils.apiKeysExist() ) ) {
+					const apiKeys = await this.wooCommerceUtils.createApiKeys();
+					if ( ! process.env.CI ) {
+						await updateDotenv( './.env', apiKeys );
+					}
+					for ( const [ key, value ] of Object.entries( apiKeys ) ) {
+						process.env[ key ] = value;
+					}
+				}
+			} )(),
+		] );
+		console.log( `Phase 2 (API keys + visibility) in ${ ( Date.now() - start ) / 1000 }s` );
+
+		// Phase 3: Everything else (parallel — all API-based, independent of each other)
+		start = Date.now();
+		const couponItems = {};
+		const cartItems = {};
+
+		await Promise.all( [
+			// Pages (sequential internally — may share page context)
+			( async () => {
+				await this.wooCommerceUtils.publishBlockCartPage();
+				await this.wooCommerceUtils.publishBlockCheckoutPage();
+				await this.wooCommerceUtils.publishClassicCartPage();
+				await this.wooCommerceUtils.publishClassicCheckoutPage();
+			} )(),
+			// Emails
+			Promise.all(
+				[
+					'email_new_order', 'email_cancelled_order', 'email_failed_order',
+					'email_customer_on_hold_order', 'email_customer_processing_order',
+					'email_customer_completed_order', 'email_customer_refunded_order',
+					'email_customer_note', 'email_customer_reset_password',
+					'email_customer_new_account',
+				].map( ( type ) =>
+					this.wooCommerceApi.updateEmailSubSettings( type, { enabled: 'no' } )
+				)
+			),
+			// Shop config
+			( async () => {
+				await this.wooCommerceApi.updateGeneralSettings( shopSettings.germany.general );
+				await this.wooCommerceUtils.configureShippingZone( shippingZones.worldwide );
+				await this.wooCommerceUtils.setTaxes( taxSettings.including );
+			} )(),
+			// Orders
+			this.wooCommerceApi.deleteAllOrders(),
+			// Coupons
+			( async () => {
+				await Promise.all(
+					Object.entries( coupons ).map( async ( [ _key, coupon ] ) => {
+						const created = await this.wooCommerceUtils.createCoupon( coupon );
+						couponItems[ coupon.code ] = { id: created.id };
+					} )
+				);
+				process.env.COUPONS = JSON.stringify( couponItems );
+			} )(),
+			// Products
+			( async () => {
+				await Promise.all(
+					Object.entries( products ).map( async ( [ _key, product ] ) => {
+						if ( ! product.slug.includes( 'subscription' ) ) {
+							const created = await this.wooCommerceUtils.createProduct( product );
+							cartItems[ product.slug ] = { id: created.id };
+						}
+					} )
+				);
+				process.env.PRODUCTS = JSON.stringify( cartItems );
+			} )(),
+		] );
+		console.log( `Phase 3 (pages, emails, config, data) in ${ ( Date.now() - start ) / 1000 }s` );
+	}
+
+	/**
+	 * Helper: install plugin from file if not installed, then activate.
+	 */
+	private async installAndActivatePlugin( plugin ): Promise< void > {
+		if ( ! ( await this.requestUtils.isPluginInstalled( plugin.slug ) ) ) {
+			await this.plugins.installPluginFromFile( plugin.zipFilePath );
+		}
+		await this.requestUtils.activatePlugin( plugin.slug );
+	}
 }

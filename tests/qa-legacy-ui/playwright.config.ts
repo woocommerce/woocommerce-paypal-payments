@@ -1,11 +1,12 @@
 /**
  * External dependencies
  */
+import { WpCliEnvType } from '@inpsyde/playwright-utils/build/@types/wp-cli';
 import { defineConfig, devices } from '@playwright/test';
 /**
  * Internal dependencies
  */
-import { BaseExtend } from 'utils';
+import { BaseExtend } from './utils/test';
 require( 'dotenv' ).config();
 
 export default defineConfig< BaseExtend >( {
@@ -40,7 +41,7 @@ export default defineConfig< BaseExtend >( {
 		  ]
 		: [
 				[ 'list' ],
-				// [ 'html', { outputFolder: 'playwright-report' } ],
+				[ 'html', { outputFolder: 'playwright-report' } ],
 				[
 					'@inpsyde/playwright-utils/build/integration/jira/xray-reporter.js',
 					{
@@ -93,7 +94,8 @@ export default defineConfig< BaseExtend >( {
 		},
 
 		cliConfig: {
-			envType: 'ssh',
+			envType: process.env.WPCLI_ENV_TYPE as WpCliEnvType,
+			path: String( process.env.WPCLI_PATH ),
 			ssh: {
 				login: process.env.SSH_LOGIN,
 				host: process.env.SSH_HOST,
@@ -111,12 +113,14 @@ export default defineConfig< BaseExtend >( {
 		},
 		{
 			name: 'setup-pcp',
-			dependencies: [ 'setup-woocommerce' ],
 			testMatch: /pcp\.setup\.ts/,
 		},
 		{
 			name: 'migration',
-			dependencies: [ 'setup-woocommerce' ],
+			testIgnore: [
+				/woocommerce\.setup\.ts/,
+				/pcp\.setup\.ts/,
+			],
 		},
 	],
 } );
