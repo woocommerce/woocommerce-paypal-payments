@@ -315,7 +315,7 @@ class PaymentMethodsDefinition {
 				'method_title'       => __( 'Pay with Crypto', 'woocommerce-paypal-payments' ),
 				'method_description' => __( 'A PayPal-powered checkout option letting customers pay with cryptocurrency. You receive funds in USD, settled directly to your PayPal balance — no crypto exposure, no chargeback risk. Promotional processing rate of 0.99% through July 31, 2026.', 'woocommerce-paypal-payments' ),
 				'title'              => __( 'Pay with Crypto', 'woocommerce-paypal-payments' ),
-				'description'        => __( 'Clicking "Place order" will take you to PayPal to complete your payment using cryptocurrency.', 'woocommerce-paypal-payments' ),
+				'description'        => __( 'Pay with top wallets and coins.', 'woocommerce-paypal-payments' ),
 			),
 			BancontactGateway::ID     => array(
 				'method_title'       => __( 'Bancontact (via PayPal)', 'woocommerce-paypal-payments' ),
