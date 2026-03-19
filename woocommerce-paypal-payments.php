@@ -4,7 +4,7 @@
  * Plugin Name: WooCommerce PayPal Payments
  * Plugin URI:  https://woocommerce.com/products/woocommerce-paypal-payments/
  * Description: PayPal's latest complete payments processing solution. Accept PayPal, Pay Later, credit/debit cards, alternative digital wallets local payment types and bank accounts. Turn on only PayPal options or process a full suite of payment methods. Enable global transaction with extensive currency and country coverage.
- * Version: 4.0.0-rc1+pcp-6063-opcache-invalidation.d6abd33
+ * Version: 4.0.0-rc1+pcp-6063-opcache-invalidation.d157af5
  * Author:      PayPal
  * Author URI:  https://paypal.com/
  * License:     GPL-2.0
@@ -203,22 +203,29 @@ define('PPCP_PAYPAL_BN_CODE', 'Woo_PPCP');
 })();
 /**
  * Addresses refactoring related opcache sync issues, e.g., when a new plugin version
- * introduces a new constructor argument or an abstract base class changes. Without the
- * `opcache_reset` call, the first request after the update could throw a fatal error.
+ * introduces a new constructor argument or an abstract base class changes.
+ *
+ * The reset must happen BEFORE files are replaced (upgrader_pre_install), not after.
+ * Calling opcache_reset() after replacement (upgrader_process_complete) is too late:
+ * PHP classes loaded earlier in the same request stay in runtime memory, so a stale
+ * base-class definition can still conflict with a freshly-loaded subclass.
+ * Resetting the cache before the swap ensures every class is read from the new files.
  */
-add_action('upgrader_process_complete', static function ($upgrader, $extra) {
-    if (!is_array($extra)) {
-        return;
+add_filter('upgrader_pre_install', static function ($hook_name, $hook_extra) {
+    if (!is_array($hook_extra)) {
+        return $hook_name;
     }
-    $type = $extra['type'] ?? '';
-    $plugins = $extra['plugins'] ?? array();
-    if ('plugin' !== $type) {
-        return;
+    if (($hook_extra['action'] ?? '') !== 'update') {
+        return $hook_name;
     }
-    if (!in_array('woocommerce-paypal-payments/woocommerce-paypal-payments.php', $plugins, \true)) {
-        return;
+    if (($hook_extra['type'] ?? '') !== 'plugin') {
+        return $hook_name;
+    }
+    if (($hook_extra['plugin'] ?? '') !== 'woocommerce-paypal-payments/woocommerce-paypal-payments.php') {
+        return $hook_name;
     }
     if (function_exists('opcache_reset')) {
         opcache_reset();
     }
+    return $hook_name;
 }, 10, 2);
