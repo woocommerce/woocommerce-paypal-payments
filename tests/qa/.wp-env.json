@@ -6,11 +6,12 @@
     },
     "phpVersion": "8.0",
     "plugins": [
-        "https://downloads.wordpress.org/plugin/wp-debugging.2.12.2.zip",
         "./resources/e2e-snippets"
     ],
     "mappings": {
-        "wp-cli.yml": "./wp-cli.yml"
+        "wp-cli.yml": "./wp-cli.yml",
+        "wp-content/plugins": "./resources/plugins",
+        "wp-content/files": "./resources/files"
     },
     "lifecycleScripts": {
         "afterStart": "node bin/test-env-setup.js",
