@@ -18,7 +18,7 @@ import {
 	vaultingPayPalClassicCheckoutVaulted,
 } from './_test-data/paypal';
 import {
-	vaultingAcdcClassicCheckoutReguar,
+	vaultingAcdcClassicCheckoutRegular,
 	vaultingAcdcClassicCheckoutVaulted,
 } from './_test-data/acdc';
 

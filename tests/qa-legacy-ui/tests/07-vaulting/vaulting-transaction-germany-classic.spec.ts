@@ -18,7 +18,7 @@ import {
 	vaultingPayPalClassicCheckoutVaulted,
 } from './_test-data/paypal';
 import {
-	vaultingAcdcClassicCheckoutReguar,
+	vaultingAcdcClassicCheckoutRegular,
 	vaultingAcdcClassicCheckoutVaulted,
 } from './_test-data/acdc';
 
@@ -32,7 +32,7 @@ test.beforeAll( async ( { utils, advancedCardProcessing } ) => {
 
 // Regular transactions with vaulting enabled
 
-transactionsOnClassicCheckout( vaultingAcdcClassicCheckoutReguar );
+transactionsOnClassicCheckout( vaultingAcdcClassicCheckoutRegular );
 
 test.describe( 'Customer has vaulted payment method', () => {
 	test.beforeAll( async ( { utils, customerPaymentMethods } ) => {

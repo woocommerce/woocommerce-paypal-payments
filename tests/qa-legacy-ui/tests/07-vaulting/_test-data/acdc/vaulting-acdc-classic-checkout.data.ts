@@ -3,7 +3,7 @@
  */
 import { orders, acdc } from '../../../../resources';
 
-export const vaultingAcdcClassicCheckoutReguar = [
+export const vaultingAcdcClassicCheckoutRegular = [
 	{
 		title: 'PCP-1204 | Vaulting - Transaction - Classic checkout - ACDC - Order with checked save card checkbox ',
 		...orders.byCustomer,
