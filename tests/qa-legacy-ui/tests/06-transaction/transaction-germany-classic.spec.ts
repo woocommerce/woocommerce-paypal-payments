@@ -2,9 +2,6 @@
  * Internal dependencies
  */
 import { test } from '../../utils';
-/**
- * External dependencies
- */
 import {
 	payUponInvoice,
 	pcpConfigGermany,

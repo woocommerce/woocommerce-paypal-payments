@@ -1,12 +1,12 @@
 /**
  * Internal dependencies
  */
+import { test } from '../../utils';
 import {
 	payPal,
 	pcpConfigUsa,
 	storeConfigUsa
 } from '../../resources';
-import { test } from '../../utils';
 import {
 	payPalClassicCheckoutSpecificMerchant,
 	specificMerchant

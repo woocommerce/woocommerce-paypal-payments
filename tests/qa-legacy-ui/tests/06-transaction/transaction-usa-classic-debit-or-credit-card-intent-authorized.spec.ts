@@ -1,12 +1,12 @@
 /**
  * Internal dependencies
  */
+import { test } from '../../utils';
 import {
 	debitOrCreditCard,
 	pcpConfigUsa,
 	storeConfigUsa
 } from '../../resources';
-import { test } from '../../utils';
 import {
 	debitOrCreditCardClassicCheckoutIntentAuthorized
 } from './_test-data/debit-or-credit-card';

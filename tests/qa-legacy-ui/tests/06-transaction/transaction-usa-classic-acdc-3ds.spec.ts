@@ -1,12 +1,11 @@
 /**
  * Internal dependencies
  */
+import { test } from '../../utils';
 import {
-	acdc,
 	pcpConfigUsa,
 	storeConfigUsa
 } from '../../resources';
-import { test } from '../../utils';
 import {
 	acdcClassicCheckout3ds
 } from './_test-data/acdc';

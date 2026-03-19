@@ -2,9 +2,6 @@
  * Internal dependencies
  */
 import { test } from '../../utils';
-/**
- * External dependencies
- */
 import { transactionsOnClassicCheckoutOxxo } from './_test-scenarios';
 import {
 	oxxo,

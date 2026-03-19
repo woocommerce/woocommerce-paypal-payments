@@ -1,6 +1,7 @@
 /**
  * Internal dependencies
  */
+import { test } from '../../utils';
 import {
 	acdc,
 	payLater,
@@ -9,7 +10,6 @@ import {
 	storeConfigUsa,
 	taxSettings
 } from '../../resources';
-import { test } from '../../utils';
 import {
 	acdcClassicCheckout,
 	acdcClassicCheckoutDebugging,

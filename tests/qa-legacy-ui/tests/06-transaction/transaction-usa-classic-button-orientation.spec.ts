@@ -1,6 +1,7 @@
 /**
  * Internal dependencies
  */
+import { test } from '../../utils';
 import {
 	acdc,
 	payLater,
@@ -8,7 +9,6 @@ import {
 	pcpConfigUsa,
 	storeConfigUsa
 } from '../../resources';
-import { test } from '../../utils';
 import {
 	payLaterClassicCartHorizontalButton,
 	payLaterClassicCheckoutHorizontalButton,

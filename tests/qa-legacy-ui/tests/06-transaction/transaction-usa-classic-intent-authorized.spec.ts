@@ -1,15 +1,14 @@
 /**
  * Internal dependencies
  */
+import { expect, test } from '../../utils';
 import {
-	acdc,
 	orders,
 	payLater,
 	payPal,
 	pcpConfigUsa,
 	storeConfigUsa
 } from '../../resources';
-import { expect, test } from '../../utils';
 import {
 	payLaterClassicCartIntentAuthorized,
 	payLaterClassicCheckoutIntentAuthorized

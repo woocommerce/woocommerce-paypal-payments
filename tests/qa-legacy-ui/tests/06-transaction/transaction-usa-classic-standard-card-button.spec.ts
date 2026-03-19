@@ -1,13 +1,13 @@
 /**
  * Internal dependencies
  */
+import { test } from '../../utils';
 import {
 	pcpConfigUsa,
 	standardCardButton,
 	storeConfigUsa,
 	taxSettings
 } from '../../resources';
-import { test } from '../../utils';
 import {
 	standardCardButtonClassicCheckout,
 	standardCardButtonClassicCheckoutExcludingTax

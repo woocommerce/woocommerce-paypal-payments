@@ -1,12 +1,12 @@
 /**
  * Internal dependencies
  */
+import { test } from '../../utils';
 import {
 	pcpConfigUsa,
 	standardCardButton,
 	storeConfigUsa
 } from '../../resources';
-import { test } from '../../utils';
 import {
 	standardCardButtonClassicCheckoutIntentAuthorized
 } from './_test-data/standard-card-button';
