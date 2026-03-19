@@ -369,7 +369,7 @@ export class Utils {
 				await this.standardPayments.setup( { vaulting: false } );
 				await this.payLater.setup( { enableGateway: true } );
 				end = Date.now();
-				console.log( `Pay Later configured in ${ ( end - start ) / 1000 } seconds` );
+				console.log( `✓ Pay Later configured in ${ ( end - start ) / 1000 } seconds` );
 
 				break;
 
@@ -380,7 +380,7 @@ export class Utils {
 					enableAlternativePaymentMethods: [ 'Venmo' ],
 				} );
 				end = Date.now();
-				console.log( `Venmo configured in ${ ( end - start ) / 1000 } seconds` );
+				console.log( `✓ Venmo configured in ${ ( end - start ) / 1000 } seconds` );
 				break;
 
 			case 'ACDC':
@@ -391,7 +391,7 @@ export class Utils {
 						'No 3D Secure (transaction will be denied if 3D Secure is required)',
 				} );
 				end = Date.now();
-				console.log( `ACDC configured in ${ ( end - start ) / 1000 } seconds` );
+				console.log( `✓ ACDC configured in ${ ( end - start ) / 1000 } seconds` );
 
 				break;
 
@@ -402,14 +402,14 @@ export class Utils {
 					threeDSecure: 'Always trigger 3D Secure',
 				} );
 				end = Date.now();
-				console.log( `ACDC 3D Secure configured in ${ ( end - start ) / 1000 } seconds` );
+				console.log( `✓ ACDC 3D Secure configured in ${ ( end - start ) / 1000 } seconds` );
 				break;
 
 			case 'OXXO':
 				start = Date.now();
 				await this.oxxo.setup( { enableGateway: true } );
 				end = Date.now();
-				console.log( `OXXO configured in ${ ( end - start ) / 1000 } seconds` );
+				console.log( `✓ OXXO configured in ${ ( end - start ) / 1000 } seconds` );
 				break;
 
 			case 'DebitOrCreditCard':
@@ -424,7 +424,7 @@ export class Utils {
 					enableGateway: false,
 				} );
 				end = Date.now();
-				console.log( `Debit or Credit Card configured in ${ ( end - start ) / 1000 } seconds` );
+				console.log( `✓ Debit or Credit Card configured in ${ ( end - start ) / 1000 } seconds` );
 				break;
 
 			case 'StandardCardButton':
@@ -437,7 +437,7 @@ export class Utils {
 				} );
 				await this.standardCardButton.setup( { enableGateway: true } );
 				end = Date.now();
-				console.log( `Standard Card Button configured in ${ ( end - start ) / 1000 } seconds` );
+				console.log( `✓ Standard Card Button configured in ${ ( end - start ) / 1000 } seconds` );
 				break;
 
 			case 'PayUponInvoice':
@@ -445,7 +445,7 @@ export class Utils {
 				// Is activated before merchant connection
 				await this.payUponInvoice.setup( { enableGateway: true } );
 				end = Date.now();
-				console.log( `Pay Upon Invoice configured in ${ ( end - start ) / 1000 } seconds` );
+				console.log( `✓ Pay Upon Invoice configured in ${ ( end - start ) / 1000 } seconds` );
 				break;
 		}
 	};
@@ -501,7 +501,7 @@ export class Utils {
 			timeout: 60_000,
 		} );
 		end = Date.now();
-		console.log( `Environment reset completed in ${ ( end - start ) / 1000 } seconds` );
+		console.log( `✓ Environment reset completed in ${ ( end - start ) / 1000 } seconds` );
 	}
 
 	/**
@@ -523,7 +523,7 @@ export class Utils {
 			},
 		} );
 		end = Date.now();
-		console.log( `Admin storage state created in ${ ( end - start ) / 1000 } seconds` );
+		console.log( `✓ Admin storage state created in ${ ( end - start ) / 1000 } seconds` );
 	}
 
 	/**
@@ -577,16 +577,15 @@ export class Utils {
 	}
 
 	await Promise.all( tasks );
-	console.log( `Store configured in ${ ( Date.now() - start ) / 1000 }s` );
+	console.log( `✓ Store configured in ${ ( Date.now() - start ) / 1000 }s` );
 };
 
 	updatePcpPlugin = async () => {
 		let start, end;
 		start = Date.now();
-		console.log( `Updating PCP plugin from ${ pcpPluginUpdate.zipFilePath }....` );
 		await this.plugins.installPluginFromFile( pcpPluginUpdate.zipFilePath );
 		end = Date.now();
-		console.log( `PCP Plugin updated in ${ ( end - start ) / 1000 } seconds` );
+		console.log( `✓ PCP plugin updated in ${ ( end - start ) / 1000 } seconds` );
 	}
 
 	configurePcp = async ( data: PcpConfig ) => {
@@ -595,16 +594,14 @@ export class Utils {
 			! ( await this.requestUtils.isPluginInstalled( pcpPlugin.slug ) )
 		) {
 			start = Date.now();
-			console.log( `Installing PCP plugin from ${ pcpPlugin.zipFilePath }....` );
 			await this.plugins.installPluginFromFile( pcpPlugin.zipFilePath );
 			end = Date.now();
-			console.log( `PCP Plugin installed in ${ ( end - start ) / 1000 } seconds` );
+			console.log( `✓ PCP Plugin installed in ${ ( end - start ) / 1000 } seconds` );
 		}
 		start = Date.now();
-		console.log( `Activating PCP plugin...` );
 		await this.requestUtils.activatePlugin( pcpPlugin.slug );
 		end = Date.now();
-		console.log( `PCP plugin activated in ${ ( end - start ) / 1000 } seconds` );
+		console.log( `✓ PCP plugin activated in ${ ( end - start ) / 1000 } seconds` );
 
 		if ( data.merchant ) {
 			if ( data.clearPCPDB ) {
@@ -616,7 +613,7 @@ export class Utils {
 				} );
 				await this.clearPcpDb();
 				end = Date.now();
-				console.log( `PCP DB cleared in ${ ( end - start ) / 1000 } seconds` );
+				console.log( `✓ PCP DB cleared in ${ ( end - start ) / 1000 } seconds` );
 			}
 
 			if ( data.merchantIsDisconnected ) {
@@ -628,28 +625,28 @@ export class Utils {
 			start = Date.now();
 			await this.disconnectMerchant();
 			end = Date.now();
-			console.log( `Merchant disconnected in ${ ( end - start ) / 1000 } seconds` );
+			console.log( `✓ Merchant disconnected in ${ ( end - start ) / 1000 } seconds` );
 
 			start = Date.now();
 			await this.connectMerchant( data.merchant, {
 				enablePayUponInvoice: !! data.enablePayUponInvoice,
 			} );
 			end = Date.now();
-			console.log( `Merchant connected in ${ ( end - start ) / 1000 } seconds` );
+			console.log( `✓ Merchant connected in ${ ( end - start ) / 1000 } seconds` );
 		}
 
 		if ( data.standardPayments ) {
 			start = Date.now();
 			await this.standardPayments.setup( data.standardPayments );
 			end = Date.now();
-			console.log( `Standard payments configured in ${ ( end - start ) / 1000 } seconds` );
+			console.log( `✓ Standard payments configured in ${ ( end - start ) / 1000 } seconds` );
 		}
 
 		if ( data.payLater ) {
 			start = Date.now();
 			await this.payLater.setup( data.payLater );
 			end = Date.now();
-			console.log( `Pay Later configured in ${ ( end - start ) / 1000 } seconds` );
+			console.log( `✓ Pay Later configured in ${ ( end - start ) / 1000 } seconds` );
 		}
 
 		if ( data.advancedCardProcessing ) {
@@ -658,28 +655,28 @@ export class Utils {
 				data.advancedCardProcessing
 			);
 			end = Date.now();
-			console.log( `Advanced Card Processing configured in ${ ( end - start ) / 1000 } seconds` );
+			console.log( `✓ Advanced Card Processing configured in ${ ( end - start ) / 1000 } seconds` );
 		}
 
 		if ( data.standardCardButton ) {
 			start = Date.now();
 			await this.standardCardButton.setup( data.standardCardButton );
 			end = Date.now();
-			console.log( `Standard Card Button configured in ${ ( end - start ) / 1000 } seconds` );
+			console.log( `✓ Standard Card Button configured in ${ ( end - start ) / 1000 } seconds` );
 		}
 
 		if ( data.oxxo ) {
 			start = Date.now();
 			await this.oxxo.setup( data.oxxo );
 			end = Date.now();
-			console.log( `OXXO configured in ${ ( end - start ) / 1000 } seconds` );
+			console.log( `✓ OXXO configured in ${ ( end - start ) / 1000 } seconds` );
 		}
 
 		if ( data.payUponInvoice ) {
 			start = Date.now();
 			await this.payUponInvoice.setup( data.payUponInvoice );
 			end = Date.now();
-			console.log( `Pay Upon Invoice configured in ${ ( end - start ) / 1000 } seconds` );
+			console.log( `✓ Pay Upon Invoice configured in ${ ( end - start ) / 1000 } seconds` );
 		}
 	};
 
@@ -711,7 +708,7 @@ export class Utils {
 			await this.requestUtils.installTheme( themeSlug );
 		}
 		await this.requestUtils.activateTheme( themeSlug );
-		console.log( `Phase 1 (permalinks, plugins, theme) in ${ ( Date.now() - start ) / 1000 }s` );
+		console.log( `✓ Phase 1 (permalinks, plugins, theme) in ${ ( Date.now() - start ) / 1000 }s` );
 
 		// Phase 2: API keys + site visibility (parallel, both need WC active)
 		start = Date.now();
@@ -729,7 +726,7 @@ export class Utils {
 				}
 			} )(),
 		] );
-		console.log( `Phase 2 (API keys + visibility) in ${ ( Date.now() - start ) / 1000 }s` );
+		console.log( `✓ Phase 2 (API keys + visibility) in ${ ( Date.now() - start ) / 1000 }s` );
 
 		// Phase 3: Everything else (parallel — all API-based, independent of each other)
 		start = Date.now();
@@ -787,7 +784,7 @@ export class Utils {
 				process.env.PRODUCTS = JSON.stringify( cartItems );
 			} )(),
 		] );
-		console.log( `Phase 3 (pages, emails, config, data) in ${ ( Date.now() - start ) / 1000 }s` );
+		console.log( `✓ Phase 3 (pages, emails, config, data) in ${ ( Date.now() - start ) / 1000 }s` );
 	}
 
 	/**
