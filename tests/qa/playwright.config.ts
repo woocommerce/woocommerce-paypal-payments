@@ -3,12 +3,17 @@
  */
 import { defineConfig, devices, ViewportSize } from '@playwright/test';
 import { WpCliEnvType } from '@inpsyde/playwright-utils/build/@types/wp-cli';
-require( 'dotenv' ).config();
-
+import dotenv from 'dotenv';
+import path from 'path';
 /**
  * Internal dependencies
  */
 import { BaseExtend } from './utils';
+
+const dotenvPath = process.env.CI
+    ? path.resolve( __dirname, '.env.ci' )
+    : undefined;
+dotenv.config( { path: dotenvPath } );
 
 const viewportSize: ViewportSize = { width: 1280, height: 850 };
 
