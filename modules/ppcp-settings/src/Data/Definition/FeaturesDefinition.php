@@ -176,7 +176,7 @@ class FeaturesDefinition {
 						'action'   => array(
 							'type'    => 'tab',
 							'tab'     => 'payment_methods',
-							'section' => 'ppcp-pay-with-crypto',
+							'section' => 'ppcp-pwc',
 						),
 						'showWhen' => 'enabled',
 						'class'    => 'small-button',
