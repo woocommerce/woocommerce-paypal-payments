@@ -208,9 +208,15 @@ class OnboardingProfile extends \WooCommerce\PayPalCommerce\Settings\Data\Abstra
     public function set_gateways_synced(bool $synced): void
     {
         $this->data['gateways_synced'] = $synced;
-        // If enabling the flag, trigger the action.
-        if ($synced) {
+        // No sync = no action needed.
+        if (!$synced) {
+            return;
+        }
+        // Timing is important - we can sync only on/after woocommerce_init fired.
+        if (did_action('woocommerce_init')) {
             do_action('woocommerce_paypal_payments_sync_gateways');
+        } else {
+            add_action('woocommerce_init', static fn() => do_action('woocommerce_paypal_payments_sync_gateways'));
         }
     }
     /**
