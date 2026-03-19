@@ -4,7 +4,7 @@
  * Plugin Name: WooCommerce PayPal Payments
  * Plugin URI:  https://woocommerce.com/products/woocommerce-paypal-payments/
  * Description: PayPal's latest complete payments processing solution. Accept PayPal, Pay Later, credit/debit cards, alternative digital wallets local payment types and bank accounts. Turn on only PayPal options or process a full suite of payment methods. Enable global transaction with extensive currency and country coverage.
- * Version: 4.0.0-rc1+pcp-6026-migrate-capture-for-virtual-only.6f7ff04
+ * Version: 4.0.0-rc1+pcp-6026-migrate-capture-for-virtual-only.06e40c5
  * Author:      PayPal
  * Author URI:  https://paypal.com/
  * License:     GPL-2.0
@@ -201,3 +201,24 @@ define('PPCP_PAYPAL_BN_CODE', 'Woo_PPCP');
         }
     );
 })();
+/**
+ * Addresses refactoring related opcache sync issues, e.g., when a new plugin version
+ * introduces a new constructor argument or an abstract base class changes. Without the
+ * `opcache_reset` call, the first request after the update could throw a fatal error.
+ */
+add_action('upgrader_process_complete', static function ($upgrader, $extra) {
+    if (!is_array($extra)) {
+        return;
+    }
+    $type = $extra['type'] ?? '';
+    $plugins = $extra['plugins'] ?? array();
+    if ('plugin' !== $type) {
+        return;
+    }
+    if (!in_array('woocommerce-paypal-payments/woocommerce-paypal-payments.php', $plugins, \true)) {
+        return;
+    }
+    if (function_exists('opcache_reset')) {
+        opcache_reset();
+    }
+}, 10, 2);
