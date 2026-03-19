@@ -524,18 +524,6 @@ export class Utils {
 		} );
 		end = Date.now();
 		console.log( `Admin storage state created in ${ ( end - start ) / 1000 } seconds` );
-
-		start = Date.now();
-		await guestStorageState( {
-			baseURL: process.env.WP_BASE_URL!,
-			httpCredentials: {
-				username: process.env.WP_BASIC_AUTH_USER,
-				password: process.env.WP_BASIC_AUTH_PASS,
-			},
-			storageStatePath: `${ process.env.STORAGE_STATE_PATH }/guest.json`,
-		} );
-		end = Date.now();
-		console.log( `Guest storage state created in ${ ( end - start ) / 1000 } seconds` );
 	}
 
 	/**
