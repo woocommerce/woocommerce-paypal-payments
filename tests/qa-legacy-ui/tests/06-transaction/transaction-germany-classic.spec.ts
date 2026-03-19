@@ -8,7 +8,6 @@ import { test } from '../../utils';
 import {
 	payUponInvoice,
 	pcpConfigGermany,
-	storeConfigClassic,
 	storeConfigGermany,
 	taxSettings,
 } from '../../resources';
@@ -19,27 +18,38 @@ import {
 import { transactionsOnClassicCheckout } from './_test-scenarios';
 
 test.beforeAll( async ( { utils } ) => {
-	test.setTimeout( 2 * 60_000 );
-	await utils.configureStore( {
-		...storeConfigGermany,
-		classicPages: true,
-	} );
-	await utils.configurePcp( pcpConfigGermany );
-	await utils.pcpPaymentMethodIsEnabled( payUponInvoice.method );
+	await utils.resetEnvironment();
+	await utils.createStorageStates();
 } );
 
-transactionsOnClassicCheckout( payUponInvoiceClassicCheckoutGermany );
+test.describe( () => {
 
-test.describe( 'Excluding Tax', () => {
-	test.beforeAll( async ( { wooCommerceUtils } ) => {
-		await wooCommerceUtils.setTaxes( taxSettings.excluding );
+	test.beforeAll( async ( { utils } ) => {
+		test.setTimeout( 5 * 60_000 );
+		await utils.setupStore();
+		await utils.configureStore( {
+			...storeConfigGermany,
+			classicPages: true,
+		} );
+		await utils.configurePcp( pcpConfigGermany );
+		await utils.pcpPaymentMethodIsEnabled( payUponInvoice.method );
+		await utils.updatePcpPlugin();
+		// await new Promise( ( resolve ) => setTimeout( resolve, 60_000 ) );
 	} );
 
-	transactionsOnClassicCheckout(
-		payUponInvoiceClassicCheckoutGermanyExcludingTax
-	);
+	transactionsOnClassicCheckout( payUponInvoiceClassicCheckoutGermany );
 
-	test.afterAll( async ( { wooCommerceUtils } ) => {
-		await wooCommerceUtils.setTaxes( taxSettings.including );
+	test.describe( 'Excluding Tax', () => {
+		test.beforeAll( async ( { wooCommerceUtils } ) => {
+			await wooCommerceUtils.setTaxes( taxSettings.excluding );
+		} );
+
+		transactionsOnClassicCheckout(
+			payUponInvoiceClassicCheckoutGermanyExcludingTax
+		);
+
+		test.afterAll( async ( { wooCommerceUtils } ) => {
+			await wooCommerceUtils.setTaxes( taxSettings.including );
+		} );
 	} );
 } );
