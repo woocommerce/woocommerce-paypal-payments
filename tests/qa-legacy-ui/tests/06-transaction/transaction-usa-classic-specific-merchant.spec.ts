@@ -32,8 +32,9 @@ test.describe( () => {
 			...pcpConfigUsa,
 			merchant: specificMerchant,
 			standardPayments: {
+        		...pcpConfigUsa.standardPayments,
 				disableAlternativePaymentMethods: [ 'Venmo' ],
-			}
+			},
 		} );
 		await utils.pcpPaymentMethodIsEnabled( payPal.method );
 		await utils.updatePcpPlugin();

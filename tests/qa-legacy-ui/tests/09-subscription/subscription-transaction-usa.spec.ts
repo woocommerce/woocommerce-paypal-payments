@@ -17,7 +17,7 @@ test.beforeAll( async ( { utils } ) => {
 	await utils.configurePcp( {
 		...pcpConfigUsa,
 		standardPayments: {
-			enableGateway: true,
+			...pcpConfigUsa.standardPayments,
 			subscriptionsMode: 'PayPal Vaulting',
 			vaulting: true,
 		},

@@ -30,6 +30,7 @@ test.describe( () => {
 		await utils.configurePcp( {
 			...pcpConfigUsa,
 			standardPayments: {
+        		...pcpConfigUsa.standardPayments,
 				disableAlternativePaymentMethods: [ 'Venmo' ],
 				intent: 'Authorize',
 			}
