@@ -67,6 +67,9 @@
         "installer-paths": {
             "modules/{$name}/": [
                 "type:inpsyde-module"
+            ],
+            "tests/qa/resources/plugins/{$name}/": [
+                "inpsyde-mirror/woocommerce-subscriptions"
             ]
         },
         "merge-plugin": {
@@ -107,7 +110,8 @@
         "allow-plugins": {
             "inpsyde/composer-assets-compiler": true,
             "dealerdirect/phpcodesniffer-composer-installer": true,
-            "wikimedia/composer-merge-plugin": true
+            "wikimedia/composer-merge-plugin": true,
+            "composer/installers": true
         }
     }
 }

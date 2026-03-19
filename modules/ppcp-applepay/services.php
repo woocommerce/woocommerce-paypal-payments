@@ -206,6 +206,7 @@ return array(
 				'LT', // Lithuania
 				'LU', // Luxembourg
 				'MT', // Malta
+				'MX', // Mexico
 				'NL', // Netherlands
 				'NO', // Norway
 				'PL', // Poland

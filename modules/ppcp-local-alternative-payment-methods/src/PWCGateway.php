@@ -89,7 +89,6 @@ class PWCGateway extends WC_Payment_Gateway {
 
 		$this->init_apm_defaults();
 
-		// TODO: Change to the official svg asset when it's available: Something like https://www.paypalobjects.com/images/checkout/alternative_payments/paypal_crypto_color.svg.
 		$this->icon = $wc_gateway_module_asset_getter->get_static_asset_url( 'images/pwc.svg' );
 
 		$this->init_form_fields();
