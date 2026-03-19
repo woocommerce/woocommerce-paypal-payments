@@ -31,50 +31,9 @@ return array(
 	'card-fields.supported-country-matrix'             => static function ( ContainerInterface $container ): array {
 		return apply_filters(
 			'woocommerce_paypal_payments_card_fields_supported_country_matrix',
-			array(
-				'AU',
-				'AT',
-				'BE',
-				'BG',
-				'CA',
-				'CN',
-				'C2',
-				'CY',
-				'CZ',
-				'DK',
-				'EE',
-				'FI',
-				'FR',
-				'DE',
-				'GR',
-				'HK',
-				'HU',
-				'IE',
-				'IT',
-				'LV',
-				'LI',
-				'LT',
-				'LU',
-				'MT',
-				'MX',
-				'NL',
-				'PL',
-				'PT',
-				'RO',
-				'SK',
-				'SG',
-				'SI',
-				'ES',
-				'SE',
-				'GB',
-				'US',
-				'NO',
-				'YT',
-				'RE',
-				'GP',
-				'GF',
-				'MQ',
-			)
+			// Since Vault v3, country coverage is identical to ACDC countries.
+			// TODO: Replace the card-fields.supported-country-matrix service dependency with api.dcc-supported-country-currency-matrix.
+			array_keys( $container->get( 'api.dcc-supported-country-currency-matrix' ) )
 		);
 	},
 	'card-fields.service.card-capture-validator'       => static function ( ContainerInterface $container ): CardCaptureValidator {
