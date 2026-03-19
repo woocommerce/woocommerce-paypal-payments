@@ -87,33 +87,19 @@ return array(
      * The matrix which countries and currency combinations can be used for AXO.
      */
     'axo.supported-country-currency-matrix' => static function (ContainerInterface $container): array {
-        $dcc_allowed_country_currency_matrix = $container->get('api.dcc-supported-country-currency-matrix');
-        $matrix = array('US' => $dcc_allowed_country_currency_matrix['US']);
-        if ($container->get('axo.uk.enabled')) {
-            $matrix['GB'] = $dcc_allowed_country_currency_matrix['GB'];
-        }
-        if ($container->get('axo.au.enabled')) {
-            $matrix['AU'] = $dcc_allowed_country_currency_matrix['AU'];
-        }
-        /**
-         * Returns which countries and currency combinations can be used for AXO.
-         */
-        return apply_filters('woocommerce_paypal_payments_axo_supported_country_currency_matrix', $matrix);
+        return apply_filters('woocommerce_paypal_payments_axo_supported_country_currency_matrix', $container->get('api.dcc-supported-country-currency-matrix'));
     },
     /**
      * The matrix which countries and card type combinations can be used for AXO.
      */
     'axo.supported-country-card-type-matrix' => static function (ContainerInterface $container): array {
-        $matrix = array('US' => array('VISA', 'MASTERCARD', 'AMEX', 'DISCOVER'), 'CA' => array('VISA', 'MASTERCARD', 'AMEX', 'DISCOVER'));
-        if ($container->get('axo.uk.enabled')) {
-            $matrix['GB'] = array('VISA', 'MASTERCARD', 'AMEX', 'DISCOVER');
+        $dcc_card_matrix = $container->get('api.dcc-supported-country-card-matrix');
+        $matrix = array();
+        foreach ($dcc_card_matrix as $country => $cards) {
+            $matrix[$country] = array_map(static function ($key): string {
+                return strtoupper((string) $key);
+            }, array_keys($cards));
         }
-        if ($container->get('axo.au.enabled')) {
-            $matrix['AU'] = array('VISA', 'MASTERCARD', 'AMEX');
-        }
-        /**
-         * Returns which countries and card type combinations can be used for AXO.
-         */
         return apply_filters('woocommerce_paypal_payments_axo_supported_country_card_type_matrix', $matrix);
     },
     'axo.settings-conflict-notice' => static function (ContainerInterface $container): string {
@@ -193,25 +179,5 @@ return array(
         $shipping_zones = \WC_Shipping_Zones::get_zones();
         $get_zone_locations = fn(\WC_Shipping_Zone $zone): array => !empty($zone->get_shipping_methods(\true)) ? array_map(fn(object $location): string => $location->code, $zone->get_zone_locations()) : array();
         return array_unique(array_merge(...array_map($get_zone_locations, array_map(fn($zone): \WC_Shipping_Zone => $zone instanceof \WC_Shipping_Zone ? $zone : new \WC_Shipping_Zone($zone['id']), $shipping_zones))));
-    },
-    'axo.uk.enabled' => static function (ContainerInterface $container): bool {
-        // phpcs:disable WordPress.NamingConventions.ValidHookName.UseUnderscores
-        /**
-         * Filter to determine if Fastlane UK with 3D Secure should be enabled.
-         *
-         * @param bool $enabled Whether Fastlane UK is enabled.
-         */
-        return apply_filters('woocommerce.feature-flags.woocommerce_paypal_payments.axo_uk_enabled', getenv('PCP_AXO_UK_ENABLED') !== '0');
-        // phpcs:enable WordPress.NamingConventions.ValidHookName.UseUnderscores
-    },
-    'axo.au.enabled' => static function (ContainerInterface $container): bool {
-        // phpcs:disable WordPress.NamingConventions.ValidHookName.UseUnderscores
-        /**
-         * Filter to determine if Fastlane AU should be enabled.
-         *
-         * @param bool $enabled Whether Fastlane AU is enabled.
-         */
-        return apply_filters('woocommerce.feature-flags.woocommerce_paypal_payments.axo_au_enabled', getenv('PCP_AXO_AU_ENABLED') !== '0');
-        // phpcs:enable WordPress.NamingConventions.ValidHookName.UseUnderscores
     },
 );

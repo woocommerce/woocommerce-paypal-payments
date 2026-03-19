@@ -179,6 +179,8 @@ return array(
                 // Luxembourg
                 'MT',
                 // Malta
+                'MX',
+                // Mexico
                 'NL',
                 // Netherlands
                 'NO',

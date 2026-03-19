@@ -111,8 +111,9 @@ class SettingsModule implements ServiceModule, ExecutableModule
         /**
          * Override ACDC status with BCDC for eligible merchants.
          *
-         * This filter determines whether to force BCDC (Standard Card buttons) classification
-         * for merchants instead of ACDC (Advanced Card processing). It handles two scenarios:
+         * When the BCDC migration override is active, forces BCDC (Standard Card buttons)
+         * classification instead of ACDC (Advanced Card processing), and suppresses ACDC
+         * eligibility so the payment methods panel shows BCDC instead of ACDC.
          *
          * @param bool|null $use_bcdc Whether to use BCDC instead of ACDC.
          *
@@ -123,6 +124,8 @@ class SettingsModule implements ServiceModule, ExecutableModule
             assert(is_callable($check_override));
             if ($check_override()) {
                 $use_bcdc = \true;
+                add_filter('woocommerce_paypal_payments_is_acdc_active', '__return_false');
+                add_filter('woocommerce_paypal_payments_is_eligible_for_card_fields', '__return_false');
             }
             return $use_bcdc;
         });
@@ -147,7 +150,20 @@ class SettingsModule implements ServiceModule, ExecutableModule
                 try {
                     $payment_settings_migration = $container->get('settings.service.data-migration.payment-settings');
                     assert($payment_settings_migration instanceof PaymentSettingsMigration);
-                    if (!$payment_settings_migration->is_bcdc_enabled_for_acdc_merchant()) {
+                    $is_bcdc_merchant = $payment_settings_migration->is_bcdc_enabled_for_acdc_merchant();
+                    // Fallback: when API-based check fails (no cached DCC product status after major
+                    // version upgrade), detect BCDC usage from legacy settings directly.
+                    if (!$is_bcdc_merchant) {
+                        $dcc_applies = $container->get('api.helpers.dccapplies');
+                        if ($dcc_applies->for_country_currency()) {
+                            $legacy_settings = (array) get_option('woocommerce-ppcp-settings', array());
+                            $disable_funding = (array) ($legacy_settings['disable_funding'] ?? array());
+                            $card_was_active = !in_array('card', $disable_funding, \true);
+                            $dcc_not_enabled = empty($legacy_settings['dcc_enabled']);
+                            $is_bcdc_merchant = $card_was_active && $dcc_not_enabled;
+                        }
+                    }
+                    if (!$is_bcdc_merchant) {
                         return;
                     }
                     $payment_settings = $container->get('settings.data.payment');
@@ -197,7 +213,7 @@ class SettingsModule implements ServiceModule, ExecutableModule
             $this->render_content();
         });
         add_action('rest_api_init', static function () use ($container): void {
-            $endpoints = array('onboarding' => $container->get('settings.rest.onboarding'), 'common' => $container->get('settings.rest.common'), 'connect_manual' => $container->get('settings.rest.authentication'), 'login_link' => $container->get('settings.rest.login_link'), 'webhooks' => $container->get('settings.rest.webhooks'), 'refresh_feature_status' => $container->get('settings.rest.refresh_feature_status'), 'payment' => $container->get('settings.rest.payment'), 'settings' => $container->get('settings.rest.settings'), 'styling' => $container->get('settings.rest.styling'), 'todos' => $container->get('settings.rest.todos'), 'pay_later_messaging' => $container->get('settings.rest.pay_later_messaging'), 'features' => $container->get('settings.rest.features'));
+            $endpoints = array('onboarding' => $container->get('settings.rest.onboarding'), 'common' => $container->get('settings.rest.common'), 'connect_manual' => $container->get('settings.rest.authentication'), 'login_link' => $container->get('settings.rest.login_link'), 'webhooks' => $container->get('settings.rest.webhooks'), 'refresh_feature_status' => $container->get('settings.rest.refresh_feature_status'), 'payment' => $container->get('settings.rest.payment'), 'settings' => $container->get('settings.rest.settings'), 'styling' => $container->get('settings.rest.styling'), 'todos' => $container->get('settings.rest.todos'), 'pay_later_messaging' => $container->get('settings.rest.pay_later_messaging'), 'features' => $container->get('settings.rest.features'), 'migrate_to_acdc' => $container->get('settings.rest.migrate_to_acdc'));
             foreach ($endpoints as $endpoint) {
                 assert($endpoint instanceof RestEndpoint);
                 $endpoint->register_routes();
@@ -391,12 +407,6 @@ class SettingsModule implements ServiceModule, ExecutableModule
             assert($general_settings instanceof GeneralSettings);
             $merchant_data = $general_settings->get_merchant_data();
             $merchant_country = $merchant_data->merchant_country;
-            // Disable all extended checkout card methods if the store is in Mexico.
-            if ('MX' === $merchant_country) {
-                $payment_methods->toggle_method_state(CreditCardGateway::ID, \false);
-                $payment_methods->toggle_method_state(ApplePayGateway::ID, \false);
-                $payment_methods->toggle_method_state(GooglePayGateway::ID, \false);
-            }
         }, 10, 2);
         // Enable APMs after onboarding if the country is compatible.
         add_action('woocommerce_paypal_payments_toggle_payment_gateways_apms', function (PaymentSettings $payment_methods, array $methods_apm, ConfigurationFlagsDTO $flags) use ($container) {
@@ -421,10 +431,7 @@ class SettingsModule implements ServiceModule, ExecutableModule
                     }
                     continue;
                 }
-                // For all other APMs: enable only if merchant is NOT in Mexico.
-                if ('MX' !== $merchant_country) {
-                    $payment_methods->toggle_method_state($method['id'], \true);
-                }
+                $payment_methods->toggle_method_state($method['id'], \true);
             }
         }, 10, 3);
         // Toggle payment gateways after onboarding based on flags.
@@ -580,19 +587,34 @@ class SettingsModule implements ServiceModule, ExecutableModule
             }
         );
         /**
-         * Disable ACDC-dependent gateways for merchants not eligible for ACDC
+         * Disable ACDC gateway for merchants not eligible for ACDC
          * after onboarding is completed.
-         *
-         * Apple Pay and Google Pay depend on the ACDC, so they
-         * must be disabled alongside ACDC when the merchant's country is not
-         * eligible for Advanced Card Processing.
          */
         add_action('woocommerce_paypal_payments_toggle_payment_gateways', function (PaymentSettings $payment_methods, ConfigurationFlagsDTO $flags) use ($container) {
             $dcc_configuration = $container->get('wcgateway.configuration.card-configuration');
             assert($dcc_configuration instanceof CardPaymentsConfiguration);
             if ($flags->is_business_seller && $flags->use_card_payments && !$dcc_configuration->use_acdc()) {
                 $payment_methods->toggle_method_state(CreditCardGateway::ID, \false);
+            }
+        }, 10, 2);
+        /**
+         * Disable Apple Pay/Google Pay gateways for merchants not eligible
+         * after onboarding is completed.
+         */
+        add_action('woocommerce_paypal_payments_toggle_payment_gateways', function (PaymentSettings $payment_methods, ConfigurationFlagsDTO $flags) use ($container) {
+            if (!$flags->is_business_seller || !$flags->use_digital_wallets) {
+                return;
+            }
+            $applepay_product_status = $container->get('applepay.apple-product-status');
+            $applepay_eligibility = $container->get('applepay.eligibility.check');
+            $apple_pay_available = $applepay_product_status->is_active() && $applepay_eligibility();
+            if (!$apple_pay_available) {
                 $payment_methods->toggle_method_state(ApplePayGateway::ID, \false);
+            }
+            $googlepay_product_status = $container->get('googlepay.helpers.apm-product-status');
+            $googlepay_eligibility = $container->get('googlepay.eligibility.check');
+            $google_pay_available = $googlepay_product_status->is_active() && $googlepay_eligibility();
+            if (!$google_pay_available) {
                 $payment_methods->toggle_method_state(GooglePayGateway::ID, \false);
             }
         }, 10, 2);
@@ -634,10 +656,35 @@ class SettingsModule implements ServiceModule, ExecutableModule
             }
             return array_filter($disable_funding, static fn(string $funding_source) => $funding_source !== 'card');
         }, 10, 2);
+        /**
+         * Prevent white-label payment methods from being enabled during onboarding.
+         *
+         * During the onboarding flow, toggle_payment_gateways() enables ACDC, Apple Pay,
+         * and Google Pay for business sellers. In branded-only mode, these white-label
+         * methods should never be enabled.
+         *
+         * This hook runs during the 'woocommerce_paypal_payments_toggle_payment_gateways_apms'
+         * action, immediately disabling these methods before payment settings are saved.
+         * This prevents them from being enabled even temporarily during onboarding.
+         *
+         * Without this hook, white-label methods would be enabled during onboarding and
+         * then disabled afterward, creating an inconsistent state during the upgrade process.
+         */
+        add_action('woocommerce_paypal_payments_toggle_payment_gateways_apms', static function (PaymentSettings $payment_settings): void {
+            $payment_settings->toggle_method_state(CreditCardGateway::ID, \false);
+            $payment_settings->toggle_method_state(ApplePayGateway::ID, \false);
+            $payment_settings->toggle_method_state(GooglePayGateway::ID, \false);
+        });
         $payment_settings = $container->get('settings.data.payment');
         assert($payment_settings instanceof PaymentSettings);
+        $gateway_name = CardButtonGateway::ID;
+        $gateway_settings = get_option("woocommerce_{$gateway_name}_settings", array());
+        $gateway_enabled = $gateway_settings['enabled'] ?? \false;
         if ($payment_settings->is_method_enabled(CreditCardGateway::ID)) {
             $payment_settings->toggle_method_state(CreditCardGateway::ID, \false);
+            if ($gateway_enabled === 'yes') {
+                $payment_settings->toggle_method_state(CardButtonGateway::ID, \true);
+            }
             $payment_settings->save();
         }
         if ($payment_settings->is_method_enabled(ApplePayGateway::ID)) {

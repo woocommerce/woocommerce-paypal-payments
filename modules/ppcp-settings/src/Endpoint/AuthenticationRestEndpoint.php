@@ -13,6 +13,7 @@ use WooCommerce\PayPalCommerce\Vendor\Psr\Log\LoggerInterface;
 use WP_REST_Request;
 use WP_REST_Response;
 use WP_REST_Server;
+use WooCommerce\WooCommerce\Logging\Logger\NullLogger;
 use WooCommerce\PayPalCommerce\Settings\Service\AuthenticationManager;
 use WooCommerce\PayPalCommerce\Settings\Service\SettingsDataManager;
 /**
@@ -52,11 +53,11 @@ class AuthenticationRestEndpoint extends \WooCommerce\PayPalCommerce\Settings\En
      * @var array
      */
     private array $response_map = array('merchant_id' => array('js_name' => 'merchantId'), 'merchant_email' => array('js_name' => 'email'));
-    public function __construct(AuthenticationManager $authentication_manager, SettingsDataManager $data_manager, LoggerInterface $logger)
+    public function __construct(AuthenticationManager $authentication_manager, SettingsDataManager $data_manager, ?LoggerInterface $logger = null)
     {
         $this->authentication_manager = $authentication_manager;
         $this->data_manager = $data_manager;
-        $this->logger = $logger;
+        $this->logger = $logger ?? new NullLogger();
     }
     /**
      * Configure REST API routes.

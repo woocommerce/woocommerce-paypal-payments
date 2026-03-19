@@ -203,7 +203,7 @@ class PaymentMethodsDefinition
             'visibleWhen' => array('store' => 'payment', 'condition' => 'any_empty', 'fields' => array('puiBrandName' => __('Brand name', 'woocommerce-paypal-payments'), 'puiLogoUrl' => __('Logo URL', 'woocommerce-paypal-payments'), 'puiCustomerServiceInstructions' => __('Customer service instructions', 'woocommerce-paypal-payments'))),
         ));
         // Fastlane (Axo) conflict warnings.
-        $warnings[AxoGateway::ID] = array('axo_checkout_config' => $this->axo_checkout_config_notice, 'axo_incompatible_plugins' => $this->axo_incompatible_plugins_notice);
+        $warnings[AxoGateway::ID] = array_filter(array('axo_checkout_config' => $this->axo_checkout_config_notice, 'axo_incompatible_plugins' => $this->axo_incompatible_plugins_notice));
         return $warnings;
     }
 }
