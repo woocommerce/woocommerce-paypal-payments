@@ -97,7 +97,7 @@ class WebhookModule implements ServiceModule, FactoryModule, ExecutableModule {
 
 		add_action(
 			'woocommerce_paypal_payments_gateway_migrate',
-			static function ( $installed_plugin_version ) use ( $container ) {
+			static function ( $installed_plugin_version ) {
 				// Skip fresh installs.
 				if ( ! $installed_plugin_version ) {
 					return;
