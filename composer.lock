@@ -4729,8 +4729,8 @@
     "aliases": [],
     "minimum-stability": "dev",
     "stability-flags": {
-        "inpsyde/wp-stubs-versions": 20,
-        "php-stubs/woocommerce-stubs": 0
+        "php-stubs/woocommerce-stubs": 0,
+        "inpsyde/wp-stubs-versions": 20
     },
     "prefer-stable": true,
     "prefer-lowest": false,
@@ -4738,9 +4738,9 @@
         "php": "^7.4 | ^8.0",
         "ext-json": "*"
     },
-    "platform-dev": {},
+    "platform-dev": [],
     "platform-overrides": {
         "php": "7.4"
     },
-    "plugin-api-version": "2.9.0"
+    "plugin-api-version": "2.6.0"
 }
