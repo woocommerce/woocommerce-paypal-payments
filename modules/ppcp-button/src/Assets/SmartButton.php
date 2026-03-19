@@ -49,6 +49,7 @@ use WooCommerce\PayPalCommerce\WcGateway\Gateway\CardButtonGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\CardPaymentsConfiguration;
+use WooCommerce\PayPalCommerce\WcGateway\Helper\CartCheckoutDetector;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\SettingsStatus;
 use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
@@ -347,6 +348,7 @@ class SmartButton implements SmartButtonInterface {
 				if (
 					CreditCardGateway::ID === $id
 					&& is_user_logged_in()
+					&& $this->vault_v3_enabled
 					&& $this->settings_provider->save_card_details()
 					&& apply_filters( 'woocommerce_paypal_payments_should_render_card_custom_fields', true )
 				) {
@@ -1544,7 +1546,7 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
 			$context = 'checkout-block-express';
 		}
 		if ( $context === 'pay-now' ) {
-			$context = 'checkout';
+			$context = CartCheckoutDetector::has_block_checkout() ? 'checkout-block-express' : 'checkout';
 		}
 
 		$defaults = array(

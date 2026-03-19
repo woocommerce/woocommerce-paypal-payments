@@ -12,11 +12,14 @@ const StepPaymentMethods = () => {
 		OnboardingHooks.useOptionalPaymentMethods();
 	const { ownBrandOnly, storeCountry } = CommonHooks.useWooSettings();
 	const { isCasualSeller } = OnboardingHooks.useBusiness();
-	const { canUseCardPayments } = OnboardingHooks.useFlags();
+	const { canUseCardPayments, canUseDigitalWallets } =
+		OnboardingHooks.useFlags();
+
+	const hasAdvancedMethods = canUseCardPayments || canUseDigitalWallets;
 
 	const optionalMethodTitle = useMemo( () => {
-		// The BCDC flow does not show a title. !acdc does not show a title. Mexico does not show a title.
-		if ( isCasualSeller || ! canUseCardPayments || 'MX' === storeCountry ) {
+		// The BCDC flow does not show a title. No ACDC and no digital wallets does not show a title.
+		if ( isCasualSeller || ! hasAdvancedMethods ) {
 			return null;
 		}
 
@@ -24,7 +27,7 @@ const StepPaymentMethods = () => {
 			'Available with additional application',
 			'woocommerce-paypal-payments'
 		);
-	}, [ isCasualSeller, canUseCardPayments, storeCountry ] );
+	}, [ isCasualSeller, hasAdvancedMethods ] );
 
 	const methodChoices = [
 		{
@@ -34,7 +37,7 @@ const StepPaymentMethods = () => {
 		},
 		{
 			title:
-				ownBrandOnly || ! canUseCardPayments || 'MX' === storeCountry
+				ownBrandOnly || ! hasAdvancedMethods
 					? __(
 							'No thanks, I prefer to use a different provider for local payment methods',
 							'woocommerce-paypal-payments'
@@ -89,15 +92,17 @@ const OptionalMethodDescription = () => {
 	const { isCasualSeller } = OnboardingHooks.useBusiness();
 	const { storeCountry, storeCurrency, ownBrandOnly } =
 		CommonHooks.useWooSettings();
-	const { canUseCardPayments } = OnboardingHooks.useFlags();
+	const { canUseCardPayments, canUseDigitalWallets, canUseFastlane } =
+		OnboardingHooks.useFlags();
 
 	return (
 		<PaymentFlow
 			onlyOptional={ true }
-			useAcdc={
-				! isCasualSeller && canUseCardPayments && 'MX' !== storeCountry
+			useAcdc={ ! isCasualSeller && canUseCardPayments }
+			useDigitalWallets={
+				! isCasualSeller && canUseDigitalWallets
 			}
-			isFastlane={ true }
+			isFastlane={ canUseFastlane }
 			isPayLater={ true }
 			ownBrandOnly={ ownBrandOnly }
 			storeCountry={ storeCountry }

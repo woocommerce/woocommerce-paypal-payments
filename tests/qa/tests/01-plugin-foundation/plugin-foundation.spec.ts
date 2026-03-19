@@ -13,7 +13,7 @@ import {
  */
 import { pcpPlugin } from '../../resources';
 
-testPluginInstallationFromFile( 'PCP-1000', pcpPlugin, '@Critical' );
+testPluginInstallationFromFile( 'PCP-1000', pcpPlugin, '@Critical @Smoke' );
 
 testPluginReinstallationFromFile( 'PCP-1007', pcpPlugin, '@Critical' );
 

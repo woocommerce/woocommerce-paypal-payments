@@ -85,6 +85,10 @@ class SettingsTabMigration implements SettingsMigrationInterface {
 			}
 		}
 
+		if ( isset( $this->settings['stay_updated'] ) && ! $this->settings['stay_updated'] ) {
+			$this->settings_tab->set_payment_level_processing( false );
+		}
+
 		$this->settings_tab->from_array( $data );
 		$this->settings_tab->save();
 	}

@@ -188,6 +188,7 @@ return array(
 				'BG', // Bulgaria
 				'CA', // Canada
 				'CN', // China
+				'C2', // China (PayPal)
 				'CY', // Cyprus
 				'CZ', // Czech Republic
 				'DK', // Denmark
@@ -205,6 +206,7 @@ return array(
 				'LT', // Lithuania
 				'LU', // Luxembourg
 				'MT', // Malta
+				'MX', // Mexico
 				'NL', // Netherlands
 				'NO', // Norway
 				'PL', // Poland
