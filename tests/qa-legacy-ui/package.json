@@ -42,6 +42,9 @@
     "env:setup:pcp:usa": "npx playwright test --project setup-pcp --grep \"setup:pcp:usa;\"",
     "env:setup:pcp:germany": "npx playwright test --project setup-pcp --grep \"setup:pcp:germany;\"",
     "env:setup:pcp:mexico": "npx playwright test --project setup-pcp --grep \"setup:pcp:mexico;\"",
+    "env:setup:pcp:update": "npx playwright test --project setup-pcp --grep \"setup:pcp:update;\"",
+    "env:setup:classic:pages": "npx playwright test --project setup-pcp --grep \"setup:classic:pages;\"",
+    "env:setup:block:pages": "npx playwright test --project setup-pcp --grep \"setup:block:pages;\"",
     
     "test:frontend-ui": "npx playwright test 05-frontend-ui",
     "test:transaction": "npx playwright test 06-transaction",
