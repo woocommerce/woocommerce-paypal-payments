@@ -181,7 +181,7 @@ Find SSH data in [Kinsta dashboard](https://my.kinsta.com/sites/details) for you
 ssh <your-ssh-username>@<your-ssh-host> -p <your-ssh-port> '${HOME}/bin/reset-wp.sh --wp-version=6.9 --wp-type=single && exit'
 ```
 
-## Automated env setup scripts
+## Automated env setup scripts for migration
 
 ### Preconditions
 
@@ -197,18 +197,18 @@ Local usage of _automated env setup scripts_ assumes that the following steps ar
 
 	> **Note:** temporary, for migration testing change branch to `dev/qa/migration-tests`: `git checkout dev/qa/migration-tests`.
 
-2. Copy following packages into `/tests/qa/resources/files`:
+2. Copy following packages into `/tests/qa-legacy-ui/resources/files`:
 
-	* Tested PayPal plugin package named as `woocommerce-paypal-payments.zip`
+	* Legacy PayPal plugin package (e.g. v2.9.6) named as `woocommerce-paypal-payments.zip`
 
-		> **Note:** temporary, for migration testing add 2 packages: legacy (v2.9.6) as `woocommerce-paypal-payments.zip` and new tested RC version as `woocommerce-paypal-payments-update.zip`.
+	* Tested RC version (v4.0.0+) as `woocommerce-paypal-payments-update.zip`.
 	
 	* WooCommerce Subscriptions package named as `woocommerce-subscriptions.zip`
 
-3. In the terminal open the cloned repo and navigate to `/tests/qa` dir:
+3. In the terminal open the cloned repo and navigate to `/tests/qa-legacy-ui` dir:
 
 	```bash
-	cd tests/qa
+	cd tests/qa-legacy-ui
 	```
 
 4. Install Node dependencies and Playwright:
@@ -217,7 +217,7 @@ Local usage of _automated env setup scripts_ assumes that the following steps ar
 	npm run setup:tests
 	```
 
-5.  In the `/tests/qa` directory create a `.env` file and copy-paste content from `PCP .env` vault of 1Password replacing all the data for your test env. Alternatively use `.env.example`.
+5.  In the `/tests/qa-legacy-ui` directory create a `.env` file and copy-paste content from `PCP .env` vault of 1Password replacing all the data for your test env. Alternatively use `.env.example`.
 
 6. Run the scripts described below.
 
@@ -255,18 +255,38 @@ npm run env:reset
 
 ```bash
 
-npm run "env:setup:pcp:usa"
+npm run env:setup:pcp:usa
 ```
 
 **For Germany & PUI (disabled by default)**
 
 ```bash
-npm run "env:setup:pcp:germany"
+npm run env:setup:pcp:germany
 
 ```
 
 **For Mexico & OXXO (disabled by default)**
 
 ```bash
-npm run "env:setup:pcp:mexico"
+npm run env:setup:pcp:mexico
+```
+
+### Upgrade PCP (without env reload)
+
+```bash
+npm run env:setup:pcp:update
+```
+
+### Upgrade checkout pages (without env reload)
+
+**Enable classic cart/chekcout**
+
+```bash
+npm run env:setup:classic:pages
+```
+
+**Enable block cart/chekcout**
+
+```bash
+npm run env:setup:block:pages
 ```
