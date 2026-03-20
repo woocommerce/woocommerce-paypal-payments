@@ -125,6 +125,19 @@ class PaymentSettingsMigration implements SettingsMigrationInterface {
 			$this->payment_settings->set_cardholder_name( $this->settings['dcc_name_on_card'] === 'yes' );
 		}
 
+		if ( ! empty( $this->settings['title'] ) ) {
+			$this->payment_settings->set_method_title( 'ppcp-gateway', $this->settings['title'] );
+		}
+		if ( ! empty( $this->settings['description'] ) ) {
+			$this->payment_settings->set_method_description( 'ppcp-gateway', $this->settings['description'] );
+		}
+		if ( ! empty( $this->settings['dcc_gateway_title'] ) ) {
+			$this->payment_settings->set_method_title( CreditCardGateway::ID, $this->settings['dcc_gateway_title'] );
+		}
+		if ( ! empty( $this->settings['dcc_gateway_description'] ) ) {
+			$this->payment_settings->set_method_description( CreditCardGateway::ID, $this->settings['dcc_gateway_description'] );
+		}
+
 		$this->payment_settings->save();
 	}
 
