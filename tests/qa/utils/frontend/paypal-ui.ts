@@ -332,8 +332,9 @@ export class PayPalUi {
 	 * Submits order and waits for page load
 	 */
 	submitOrder = async () => {
-		await expect( this.placeOrderButton() ).toBeVisible();
-		await this.placeOrderButton().click();
+		const button = this.placeOrderButton();
+		await button.focus();
+		await button.click();
 		await this.page.waitForLoadState();
 	};
 
