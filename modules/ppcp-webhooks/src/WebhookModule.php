@@ -60,6 +60,13 @@ class WebhookModule implements ServiceModule, FactoryModule, ExecutableModule
             assert($registrar instanceof \WooCommerce\PayPalCommerce\Webhooks\WebhookRegistrar);
             $registrar->unregister();
         });
+        /**
+         * Auto-recover missing webhook registration on admin pages.
+         *
+         * Registers webhooks when a connected merchant has no active subscription,
+         * e.g. after a fresh install or if the webhook was lost. Throttled to once
+         * every 5 minutes.
+         */
         add_action('admin_init', static function () use ($container) {
             $is_connected = $container->get('settings.flag.is-connected');
             $is_registered = $container->get('webhook.is-registered');
@@ -75,12 +82,17 @@ class WebhookModule implements ServiceModule, FactoryModule, ExecutableModule
             assert($registrar instanceof \WooCommerce\PayPalCommerce\Webhooks\WebhookRegistrar);
             $registrar->register();
         });
+        /**
+         * Force webhook re-registration for PUI/OXXO merchants on plugin upgrade.
+         *
+         * Clears the stored webhook so the auto-recovery hook above re-registers it
+         * with the full event list required by PUI/OXXO. Only runs on upgrades (not
+         * fresh installs) when PUI or OXXO is enabled.
+         */
         add_action('woocommerce_paypal_payments_gateway_migrate', static function ($installed_plugin_version) {
-            // Skip fresh installs.
             if (!$installed_plugin_version) {
                 return;
             }
-            // Only resubscribe for PUI or OXXO merchants.
             $pui_settings = get_option('woocommerce_ppcp-pay-upon-invoice-gateway_settings', array());
             $pui_enabled = is_array($pui_settings) && ($pui_settings['enabled'] ?? 'no') === 'yes';
             $oxxo_settings = get_option('woocommerce_ppcp-oxxo-gateway_settings', array());
@@ -88,7 +100,6 @@ class WebhookModule implements ServiceModule, FactoryModule, ExecutableModule
             if (!$pui_enabled && !$oxxo_enabled) {
                 return;
             }
-            // Clear stored webhook to force re-registration via self-healing.
             delete_option(\WooCommerce\PayPalCommerce\Webhooks\WebhookRegistrar::KEY);
         });
         add_action('wc_ajax_' . ResubscribeEndpoint::ENDPOINT, static function () use ($container) {
