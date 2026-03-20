@@ -141,6 +141,12 @@ define( 'PPCP_PAYPAL_BN_CODE', 'Woo_PPCP' );
 	add_action(
 		'plugins_loaded',
 		function () {
+			// Skip full bootstrap during plugin upgrades to prevent class-mismatch
+			// fatals when old in-memory code autoloads new files from disk.
+			if ( 'update.php' === ( $GLOBALS['pagenow'] ?? '' ) ) {
+				return;
+			}
+
 			init();
 
 			if ( ! is_woocommerce_activated() ) {
