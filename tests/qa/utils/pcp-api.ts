@@ -205,15 +205,20 @@ export class PcpApi extends WooCommerceApiBase {
 
 			// Retry up to 10 seconds to detect if the renewal was triggered,
 			// avoiding sending a duplicate webhook while the first is still processing.
-			for ( let retry = 0; retry < 10; retry++ ) {
+			for (
+				let retry = 0;
+				retry < 10 && ! isRenewalTriggered;
+				retry++
+			) {
 				const renewalCount = await this.getSubscriptionRenewalCount(
 					subscriptionId
 				);
-				if ( renewalCount > initialRenewalCount ) {
-					isRenewalTriggered = true;
-					break;
+				isRenewalTriggered = renewalCount > initialRenewalCount;
+				if ( ! isRenewalTriggered ) {
+					await new Promise( ( resolve ) =>
+						setTimeout( resolve, 1000 )
+					);
 				}
-				await new Promise( ( resolve ) => setTimeout( resolve, 1000 ) );
 			}
 		}
 
