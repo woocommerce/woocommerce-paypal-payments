@@ -3,56 +3,30 @@
  */
 import { test } from '../../utils';
 import {
-	pcpConfigUsa,
-	standardCardButton,
-	storeConfigUsa,
-	taxSettings
-} from '../../resources';
+	transactionsOnClassicCheckout
+} from './_test-scenarios';
+import { taxSettings } from '../../resources';
 import {
 	standardCardButtonClassicCheckout,
 	standardCardButtonClassicCheckoutExcludingTax
 } from './_test-data/standard-card-button';
-import {
-	transactionsOnClassicCheckout
-} from './_test-scenarios';
 
-test.beforeAll( async ( { utils } ) => {
-	await utils.resetEnvironment();
-	await utils.createStorageStates();
-} );
+transactionsOnClassicCheckout( standardCardButtonClassicCheckout );
 
-test.describe( () => {
-	test.beforeAll( async ( { utils } ) => {
-		test.setTimeout( 5 * 60_000 );
-		await utils.setupStore();
-		await utils.configureStore( {
-			...storeConfigUsa,
-			classicPages: true,
-		} );
-		await utils.configurePcp( {
-			...pcpConfigUsa,
-			standardPayments: {
-        		...pcpConfigUsa.standardPayments,
-				disableAlternativePaymentMethods: [ 'Venmo' ],
-			}
-		} );
-		await utils.pcpPaymentMethodIsEnabled( standardCardButton.method )
-		await utils.updatePcpPlugin();
+test.describe( 'Excluding Tax', () => {
+	test.beforeAll( async ( { wooCommerceUtils } ) => {
+		await wooCommerceUtils.setTaxes( taxSettings.excluding );
 	} );
 
-	transactionsOnClassicCheckout( standardCardButtonClassicCheckout );
+	test.beforeEach( async ( {}, testInfo ) => {
+		testInfo.setTimeout( 3 * 60_000 );
+	} );
+	
+	transactionsOnClassicCheckout(
+		standardCardButtonClassicCheckoutExcludingTax
+	);
 
-	test.describe( 'Excluding Tax', () => {
-		test.beforeAll( async ( { wooCommerceUtils } ) => {
-			await wooCommerceUtils.setTaxes( taxSettings.excluding );
-		} );
-
-		transactionsOnClassicCheckout(
-			standardCardButtonClassicCheckoutExcludingTax
-		);
-
-		test.afterAll( async ( { wooCommerceUtils } ) => {
-			await wooCommerceUtils.setTaxes( taxSettings.including );
-		} );
+	test.afterAll( async ( { wooCommerceUtils } ) => {
+		await wooCommerceUtils.setTaxes( taxSettings.including );
 	} );
 } );

@@ -2,25 +2,22 @@
  * Internal dependencies
  */
 import { test } from '../../utils';
-import { transactionsOnClassicCheckout } from './_test-scenarios';
+import { transactionsOnClassicCheckoutOxxo } from './_test-scenarios';
 import {
 	taxSettings,
 } from '../../resources';
 import {
-	payUponInvoiceClassicCheckoutGermany,
-	payUponInvoiceClassicCheckoutGermanyExcludingTax,
-} from './_test-data/pay-upon-invoice';
+	oxxoClassicCheckoutMexico,
+	oxxoClassicCheckoutMexicoExcludingTax,
+} from './_test-data/oxxo';
 
-transactionsOnClassicCheckout( payUponInvoiceClassicCheckoutGermany );
+transactionsOnClassicCheckoutOxxo( oxxoClassicCheckoutMexico );
 
 test.describe( 'Excluding Tax', () => {
 	test.beforeAll( async ( { wooCommerceUtils } ) => {
 		await wooCommerceUtils.setTaxes( taxSettings.excluding );
 	} );
-
-	transactionsOnClassicCheckout(
-		payUponInvoiceClassicCheckoutGermanyExcludingTax
-	);
+	transactionsOnClassicCheckoutOxxo( oxxoClassicCheckoutMexicoExcludingTax );
 
 	test.afterAll( async ( { wooCommerceUtils } ) => {
 		await wooCommerceUtils.setTaxes( taxSettings.including );

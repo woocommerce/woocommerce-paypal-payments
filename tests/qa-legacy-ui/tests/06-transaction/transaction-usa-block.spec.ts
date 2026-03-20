@@ -3,11 +3,12 @@
  */
 import { test } from '../../utils';
 import {
-	acdc,
-	payLater,
-	payPal,
-	pcpConfigUsa,
-	storeConfigUsa,
+	transactionsOnCart,
+	transactionsOnCheckout,
+	transactionsOnPayByLink,
+	transactionsOnProduct,
+} from './_test-scenarios';
+import {
 	taxSettings
 } from '../../resources';
 import { acdcPayByLink } from './_test-data/acdc';
@@ -27,71 +28,43 @@ import {
 	payPalPayByLinkDebugging,
 	payPalProduct
 } from './_test-data/paypal';
-import {
-	transactionsOnCart,
-	transactionsOnCheckout,
-	transactionsOnPayByLink,
-	transactionsOnProduct,
-} from './_test-scenarios';
 
-test.beforeAll( async ( { utils } ) => {
-	await utils.resetEnvironment();
-	await utils.createStorageStates();
+transactionsOnCart( payPalCart );
+transactionsOnCart( payLaterCart );
+
+transactionsOnCheckout( payPalCheckout );
+transactionsOnCheckout( payLaterCheckout );
+
+transactionsOnProduct( payPalProduct );
+transactionsOnProduct( payLaterProduct );
+
+transactionsOnPayByLink( payPalPayByLink );
+transactionsOnPayByLink( acdcPayByLink );
+
+test.describe( 'Excluding Tax', () => {
+	test.beforeAll( async ( { wooCommerceUtils } ) => {
+		await wooCommerceUtils.setTaxes( taxSettings.excluding );
+	} );
+
+	transactionsOnCart( payPalCartExcludingTax );
+	transactionsOnCart( payLaterCartExcludingTax );
+
+	transactionsOnCheckout( payPalCheckoutExcludingTax );
+	transactionsOnCheckout( payLaterCheckoutExcludingTax );
+
+	test.afterAll( async ( { wooCommerceUtils } ) => {
+		await wooCommerceUtils.setTaxes( taxSettings.including );
+	} );
 } );
 
-test.describe( () => {
+test.describe( 'WP Debugging', () => {
+	test.beforeAll(
+		async ( { cli } ) => await cli.setWpConst( { WP_DEBUG: true, SCRIPT_DEBUG: true } )
+	);
 
-	test.beforeAll( async ( { utils, standardPayments } ) => {
-		test.setTimeout( 5 * 60_000 );
-		await utils.setupStore();
-		await utils.configureStore( storeConfigUsa );
-		await utils.configurePcp( pcpConfigUsa );
-		await utils.pcpPaymentMethodIsEnabled( payPal.method );
-		await utils.pcpPaymentMethodIsEnabled( payLater.method );
-		await utils.pcpPaymentMethodIsEnabled( acdc.method );
-		await standardPayments.setup( {
-			disableAlternativePaymentMethods: [ 'Venmo' ],
-		} );
-		await utils.updatePcpPlugin();
-	} );
+	transactionsOnPayByLink( payPalPayByLinkDebugging );
 
-	transactionsOnCart( payPalCart );
-	transactionsOnCart( payLaterCart );
-
-	transactionsOnCheckout( payPalCheckout );
-	transactionsOnCheckout( payLaterCheckout );
-
-	transactionsOnProduct( payPalProduct );
-	transactionsOnProduct( payLaterProduct );
-
-	transactionsOnPayByLink( payPalPayByLink );
-	transactionsOnPayByLink( acdcPayByLink );
-
-	test.describe( 'Excluding Tax', () => {
-		test.beforeAll( async ( { wooCommerceUtils } ) => {
-			await wooCommerceUtils.setTaxes( taxSettings.excluding );
-		} );
-
-		transactionsOnCart( payPalCartExcludingTax );
-		transactionsOnCart( payLaterCartExcludingTax );
-
-		transactionsOnCheckout( payPalCheckoutExcludingTax );
-		transactionsOnCheckout( payLaterCheckoutExcludingTax );
-
-		test.afterAll( async ( { wooCommerceUtils } ) => {
-			await wooCommerceUtils.setTaxes( taxSettings.including );
-		} );
-	} );
-
-	test.describe( 'WP Debugging', () => {
-		test.beforeAll(
-			async ( { cli } ) => await cli.setWpConst( { WP_DEBUG: true, SCRIPT_DEBUG: true } )
-		);
-
-		transactionsOnPayByLink( payPalPayByLinkDebugging );
-
-		test.beforeAll(
-			async ( { cli } ) => await cli.setWpConst( { WP_DEBUG: false, SCRIPT_DEBUG: false } )
-		);
-	} );
+	test.beforeAll(
+		async ( { cli } ) => await cli.setWpConst( { WP_DEBUG: false, SCRIPT_DEBUG: false } )
+	);
 } );

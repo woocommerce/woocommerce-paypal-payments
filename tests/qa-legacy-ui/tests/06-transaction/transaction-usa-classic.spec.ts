@@ -2,6 +2,11 @@
  * Internal dependencies
  */
 import { test } from '../../utils';
+import {
+	transactionsOnClassicCart,
+	transactionsOnClassicCheckout,
+	transactionsOnClassicProduct,
+} from './_test-scenarios';
 import { taxSettings } from '../../resources';
 import {
 	acdcClassicCheckout,
@@ -22,11 +27,6 @@ import {
 	payPalClassicCheckoutExcludingTax,
 	payPalClassicProduct
 } from './_test-data/paypal';
-import {
-	transactionsOnClassicCart,
-	transactionsOnClassicCheckout,
-	transactionsOnClassicProduct,
-} from './_test-scenarios';
 
 transactionsOnClassicCart( payPalClassicCart );
 transactionsOnClassicCart( payLaterClassicCart );
