@@ -195,6 +195,23 @@ export class PayPalUi {
 		} );
 		await expect( this.payPalButton() ).toBeVisible();
 		await this.payPalButton().click();
+		// Popup opens directly or PayPal shows "Click to Continue" overlay
+		await Promise.race( [
+			popupPromise,
+			( async () => {
+				try {
+					const clickToContinue = this.page.getByRole( 'link', {
+						name: 'Click to Continue',
+					} );
+					await clickToContinue.waitFor( {
+						state: 'visible',
+					} );
+					await clickToContinue.click();
+				} catch {
+					// popup opened directly (normal case)
+				}
+			} )(),
+		] );
 
 		const popup = await popupPromise;
 		await popup.waitForLoadState();
