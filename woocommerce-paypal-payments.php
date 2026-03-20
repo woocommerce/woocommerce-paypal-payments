@@ -74,8 +74,8 @@ define( 'PPCP_PAYPAL_BN_CODE', 'Woo_PPCP' );
 	/**
 	 * Initialize the plugin and its modules.
 	 */
-	function init(): void {
-		$root_dir = __DIR__;
+	function init(): bool {
+		static $initialized = false;
 
 		if ( ! is_woocommerce_activated() ) {
 			show_admin_notice_and_deactivate(
@@ -105,7 +105,7 @@ define( 'PPCP_PAYPAL_BN_CODE', 'Woo_PPCP' );
 				)
 			);
 
-			return;
+			return $initialized;
 		}
 		if ( version_compare( PHP_VERSION, '7.4', '<' ) ) {
 			show_admin_notice_and_deactivate(
@@ -119,11 +119,11 @@ define( 'PPCP_PAYPAL_BN_CODE', 'Woo_PPCP' );
 				)
 			);
 
-			return;
+			return $initialized;
 		}
 
-		static $initialized;
 		if ( ! $initialized ) {
+			$root_dir  = __DIR__;
 			$bootstrap = require "$root_dir/bootstrap.php";
 
 			$app_container = $bootstrap( $root_dir );
@@ -136,6 +136,8 @@ define( 'PPCP_PAYPAL_BN_CODE', 'Woo_PPCP' );
 			 */
 			do_action( 'woocommerce_paypal_payments_built_container', $app_container );
 		}
+
+		return $initialized;
 	}
 
 	add_action(
@@ -147,9 +149,7 @@ define( 'PPCP_PAYPAL_BN_CODE', 'Woo_PPCP' );
 				return;
 			}
 
-			init();
-
-			if ( ! is_woocommerce_activated() ) {
+			if ( ! init() ) {
 				return;
 			}
 
