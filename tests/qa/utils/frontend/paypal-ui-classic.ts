@@ -383,8 +383,8 @@ export class PayPalUiClassic extends PayPalUi {
 			await this.acdcSaveToAccountCheckbox().check();
 		}
 
-		await this.submitOrder();
 		await this.replacePayPalAuthToken( merchant );
+		await this.submitOrder();
 	};
 
 	/**
@@ -405,8 +405,8 @@ export class PayPalUiClassic extends PayPalUi {
 		await expect( savedCard ).toBeVisible();
 		await savedCard.click();
 
-		await this.submitOrder();
 		await this.replacePayPalAuthToken( merchant );
+		await this.submitOrder();
 	};
 
 	/**

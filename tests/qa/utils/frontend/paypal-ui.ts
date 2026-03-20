@@ -379,8 +379,8 @@ export class PayPalUi {
 			await this.acdcSaveToAccountCheckbox().check();
 		}
 
-		await this.submitOrder();
 		await this.replacePayPalAuthToken( merchant );
+		await this.submitOrder();
 	};
 
 	/**
@@ -414,8 +414,8 @@ export class PayPalUi {
 		const savedCardGateway = this.acdcSavedCard( payment.card );
 		await expect( savedCardGateway ).toBeVisible();
 		await savedCardGateway.click();
-		await this.submitOrder();
 		await this.replacePayPalAuthToken( merchant );
+		await this.submitOrder();
 	};
 
 	/**
