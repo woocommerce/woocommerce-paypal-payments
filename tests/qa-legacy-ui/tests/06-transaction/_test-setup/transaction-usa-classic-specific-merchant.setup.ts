@@ -15,18 +15,17 @@ setup.beforeAll( async ( { utils } ) => {
 } );
 
 setup( 'Setup USA classic, Specific Merchant', async ( { utils, standardPayments } ) => {
-	setup.setTimeout( 5 * 60_000 );
-		setup.setTimeout( 6 * 60_000 );
-		await utils.setupStore();
-		await utils.configureStore( {
-			...storeConfigUsa,
-			merchant: specificMerchant,
-			classicPages: true,
-		} );
-		await utils.configurePcp( pcpConfigUsa );
-		await utils.pcpPaymentMethodIsEnabled( payPal.method );
-		await standardPayments.setup( {
-			disableAlternativePaymentMethods: [ 'Venmo' ],
-		} );
-		await utils.updatePcpPlugin();
+	setup.setTimeout( 6 * 60_000 );
+	await utils.setupStore();
+	await utils.configureStore( {
+		...storeConfigUsa,
+		merchant: specificMerchant,
+		classicPages: true,
+	} );
+	await utils.configurePcp( pcpConfigUsa );
+	await utils.pcpPaymentMethodIsEnabled( payPal.method );
+	await standardPayments.setup( {
+		disableAlternativePaymentMethods: [ 'Venmo' ],
+	} );
+	await utils.updatePcpPlugin();
 } );

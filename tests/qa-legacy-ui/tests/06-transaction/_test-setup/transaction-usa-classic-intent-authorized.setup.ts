@@ -15,7 +15,7 @@ setup.beforeAll( async ( { utils } ) => {
 } );
 
 setup( 'Setup USA classic, Intent Authorized', async ( { utils, standardPayments } ) => {
-	setup.setTimeout( 5 * 60_000 );
+	setup.setTimeout( 6 * 60_000 );
 	await utils.setupStore();
 	await utils.configureStore( {
 		...storeConfigUsa,
