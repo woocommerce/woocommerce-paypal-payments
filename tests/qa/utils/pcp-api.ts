@@ -39,11 +39,11 @@ export class PcpApi extends WooCommerceApiBase {
 			products: [ 'physical', 'virtual' ],
 		}
 	) => {
-		// Preset onboarding options
+		// Preset onboarding options (without gatewaysSynced — sync must run after
+		// authentication so ACDC eligibility can be checked with a live connection).
 		await this.wcRequest( 'post', 'wc_paypal/onboarding', {
 			...onboardingOptions,
 			gatewaysRefreshed: true,
-			gatewaysSynced: true,
 			_locale: 'user',
 		} );
 		// Merchant connection request
@@ -57,6 +57,13 @@ export class PcpApi extends WooCommerceApiBase {
 				_locale: 'user',
 			}
 		);
+		// Sync gateway states now that the merchant is connected, so that
+		// eligibility checks (e.g. ACDC) use live PayPal API responses instead
+		// of returning false due to an unauthenticated state.
+		await this.wcRequest( 'post', 'wc_paypal/onboarding', {
+			gatewaysSynced: true,
+			_locale: 'user',
+		} );
 		await this.updatePcpSettings( {
 			invoicePrefix: `${ generateRandomString( 8 ) }-`,
 		} );

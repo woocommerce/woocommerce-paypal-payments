@@ -285,7 +285,7 @@ export class PayPalUiClassic extends PayPalUi {
 
 	payPalButtonMoreOptions = () =>
 		this.payPalIframe().locator(
-			'.paypal-button-wallet-menu .menu-button'
+			'.paypal-button-wallet-menu .menu-button, [aria-label="More options"]'
 		);
 	payPalMenuIframe = () =>
 		this.page.frameLocator( 'iframe[name^="__zoid__paypal_menu__"]' );
