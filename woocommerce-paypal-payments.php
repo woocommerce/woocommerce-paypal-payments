@@ -35,9 +35,9 @@ define( 'PPCP_PAYPAL_BN_CODE', 'Woo_PPCP' );
 ! defined( 'CONNECT_WOO_URL' ) && define( 'CONNECT_WOO_URL', 'https://api.woocommerce.com/integrations/ppc' );
 ! defined( 'CONNECT_WOO_SANDBOX_URL' ) && define( 'CONNECT_WOO_SANDBOX_URL', 'https://api.woocommerce.com/integrations/ppcsandbox' );
 
-( function () {
+( static function () {
 	$autoload_filepath = __DIR__ . '/vendor/autoload.php';
-	if ( file_exists( $autoload_filepath ) && ! class_exists( '\WooCommerce\PayPalCommerce\PluginModule' ) ) {
+	if ( ! class_exists( '\WooCommerce\PayPalCommerce\PluginModule' ) && file_exists( $autoload_filepath ) ) {
 		require $autoload_filepath;
 	}
 
@@ -140,8 +140,8 @@ define( 'PPCP_PAYPAL_BN_CODE', 'Woo_PPCP' );
 
 	add_action(
 		'plugins_loaded',
-		function () {
-			// Skip full bootstrap during plugin upgrades to prevent class-mismatch
+		static function () {
+			// Skip full bootstrap during manual plugin updates to prevent class-mismatch
 			// fatals when old in-memory code autoloads new files from disk.
 			if ( 'update.php' === ( $GLOBALS['pagenow'] ?? '' ) ) {
 				return;
@@ -155,7 +155,7 @@ define( 'PPCP_PAYPAL_BN_CODE', 'Woo_PPCP' );
 
 			add_action(
 				'init',
-				function () {
+				static function () {
 					$current_plugin_version   = PPCP::container()->get( 'ppcp.plugin-version' );
 					$installed_plugin_version = get_option( 'woocommerce-ppcp-version' );
 					if ( $installed_plugin_version !== $current_plugin_version ) {
@@ -180,7 +180,7 @@ define( 'PPCP_PAYPAL_BN_CODE', 'Woo_PPCP' );
 	);
 	register_activation_hook(
 		__FILE__,
-		function () {
+		static function () {
 			init();
 			/**
 			 * The hook fired in register_activation_hook.
@@ -190,7 +190,7 @@ define( 'PPCP_PAYPAL_BN_CODE', 'Woo_PPCP' );
 	);
 	register_deactivation_hook(
 		__FILE__,
-		function () {
+		static function () {
 			init();
 			/**
 			 * The hook fired in register_deactivation_hook.
@@ -207,7 +207,7 @@ define( 'PPCP_PAYPAL_BN_CODE', 'Woo_PPCP' );
 		 * @param array $links
 		 * @return array
 		 */
-		function ( $links ) {
+		static function ( $links ) {
 			if ( ! is_woocommerce_activated() ) {
 				return $links;
 			}
@@ -234,7 +234,7 @@ define( 'PPCP_PAYPAL_BN_CODE', 'Woo_PPCP' );
 		 * @param string $file
 		 * @return array
 		 */
-		function ( $links, $file ) {
+		static function ( $links, $file ) {
 			if ( plugin_basename( __FILE__ ) !== $file ) {
 				return $links;
 			}
@@ -271,7 +271,7 @@ define( 'PPCP_PAYPAL_BN_CODE', 'Woo_PPCP' );
 
 	add_action(
 		'before_woocommerce_init',
-		function () {
+		static function () {
 			if ( class_exists( '\Automattic\WooCommerce\Utilities\FeaturesUtil' ) ) {
 				/**
 				 * Skip WC class check.
