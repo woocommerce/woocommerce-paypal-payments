@@ -203,11 +203,18 @@ export class PcpApi extends WooCommerceApiBase {
 				`Assert PayPal Subscription Renewal request (${ i }) to be OK`
 			).toBeTruthy();
 
-			const renewalCount = await this.getSubscriptionRenewalCount(
-				subscriptionId
-			);
-
-			isRenewalTriggered = renewalCount === initialRenewalCount + 1;
+			// Retry up to 10 seconds to detect if the renewal was triggered,
+			// avoiding sending a duplicate webhook while the first is still processing.
+			for ( let retry = 0; retry < 10; retry++ ) {
+				const renewalCount = await this.getSubscriptionRenewalCount(
+					subscriptionId
+				);
+				if ( renewalCount > initialRenewalCount ) {
+					isRenewalTriggered = true;
+					break;
+				}
+				await new Promise( ( resolve ) => setTimeout( resolve, 1000 ) );
+			}
 		}
 
 		expect.soft(
