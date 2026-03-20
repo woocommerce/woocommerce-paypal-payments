@@ -141,6 +141,12 @@ define( 'PPCP_PAYPAL_BN_CODE', 'Woo_PPCP' );
 	add_action(
 		'plugins_loaded',
 		function () {
+			// Skip full bootstrap during plugin upgrades to prevent class-mismatch
+			// fatals when old in-memory code autoloads new files from disk.
+			if ( 'update.php' === ( $GLOBALS['pagenow'] ?? '' ) ) {
+				return;
+			}
+
 			init();
 
 			if ( ! is_woocommerce_activated() ) {
@@ -304,37 +310,3 @@ define( 'PPCP_PAYPAL_BN_CODE', 'Woo_PPCP' );
 		}
 	);
 } )();
-
-/**
- * Addresses refactoring related opcache sync issues, e.g., when a new plugin version
- * introduces a new constructor argument or an abstract base class changes.
- *
- * The reset must happen BEFORE files are replaced (upgrader_pre_install), not after.
- * Calling opcache_reset() after replacement (upgrader_process_complete) is too late:
- * PHP classes loaded earlier in the same request stay in runtime memory, so a stale
- * base-class definition can still conflict with a freshly-loaded subclass.
- * Resetting the cache before the swap ensures every class is read from the new files.
- */
-add_filter(
-	'upgrader_pre_install',
-	static function ( $hook_name, $hook_extra ) {
-		if ( ! is_array( $hook_extra ) ) {
-			return $hook_name;
-		}
-		if ( ( $hook_extra['action'] ?? '' ) !== 'update' ) {
-			return $hook_name;
-		}
-		if ( ( $hook_extra['type'] ?? '' ) !== 'plugin' ) {
-			return $hook_name;
-		}
-		if ( ( $hook_extra['plugin'] ?? '' ) !== 'woocommerce-paypal-payments/woocommerce-paypal-payments.php' ) {
-			return $hook_name;
-		}
-		if ( function_exists( 'opcache_reset' ) ) {
-			opcache_reset();
-		}
-		return $hook_name;
-	},
-	10,
-	2
-);
