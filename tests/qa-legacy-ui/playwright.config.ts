@@ -7,6 +7,8 @@ import { defineConfig, devices } from '@playwright/test';
  * Internal dependencies
  */
 import { BaseExtend } from './utils/test';
+import { frontendUiProjects } from 'tests/05-frontend-ui/_test-setup/_projects';
+import { transactionProjects } from 'tests/06-transaction/_test-setup/_projects';
 require( 'dotenv' ).config();
 
 export default defineConfig< BaseExtend >( {
@@ -116,24 +118,7 @@ export default defineConfig< BaseExtend >( {
 			testMatch: /pcp\.setup\.ts/,
 			fullyParallel: false,
 		},
-		{
-			name: 'migration',
-			testIgnore: [
-				/woocommerce\.setup\.ts/,
-				/pcp\.setup\.ts/,
-			],
-			fullyParallel: false,
-		},
-		{
-			name: 'setup-usa-classic',
-			testMatch: /06-transaction\/_test-setup\/transaction-usa-classic\.setup\.ts/,
-			fullyParallel: false,
-		},
-		{
-			name: 'transaction-usa-classic',
-			testMatch: /06-transaction\/transaction-usa-classic\.spec\.ts/,
-			dependencies: [ 'setup-usa-classic' ],
-			fullyParallel: false,
-		},
+		...frontendUiProjects,
+		...transactionProjects,
 	],
 } );
