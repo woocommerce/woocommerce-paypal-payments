@@ -532,53 +532,53 @@ export class Utils {
 	 * @param {Object} data see /resources/woocommerce-config.ts
 	 */
 	configureStore = async ( data ) => {
-	const start = Date.now();
-	const tasks: Promise< unknown >[] = [];
+		const start = Date.now();
+		const tasks: Promise< unknown >[] = [];
 
-	// CLI operation — independent
-	if ( data.wpDebugging === true ) {
-		tasks.push( this.cli.setWpConst( { WP_DEBUG: true, SCRIPT_DEBUG: true } ) );
-	}
-	if ( data.wpDebugging === false ) {
-		tasks.push( this.cli.setWpConst( { WP_DEBUG: false, SCRIPT_DEBUG: false } ) );
-	}
+		// CLI operation — independent
+		if ( data.wpDebugging === true ) {
+			tasks.push( this.cli.setWpConst( { WP_DEBUG: true, SCRIPT_DEBUG: true } ) );
+		}
+		if ( data.wpDebugging === false ) {
+			tasks.push( this.cli.setWpConst( { WP_DEBUG: false, SCRIPT_DEBUG: false } ) );
+		}
 
-	// Plugin activate/deactivate — API-based, independent
-	if ( data.subscription === true ) {
-		tasks.push( this.activateWcSubscriptionsPlugin() );
-	}
-	if ( data.subscription === false ) {
-		tasks.push( this.deactivateWcSubscriptionsPlugin() );
-	}
+		// Plugin activate/deactivate — API-based, independent
+		if ( data.subscription === true ) {
+			tasks.push( this.activateWcSubscriptionsPlugin() );
+		}
+		if ( data.subscription === false ) {
+			tasks.push( this.deactivateWcSubscriptionsPlugin() );
+		}
 
-	// Pages — sequential internally if page-based, but parallel with other tasks
-	if ( data.classicPages === true ) {
-		tasks.push( ( async () => {
-			await this.wooCommerceUtils.activateClassicCartPage();
-			await this.wooCommerceUtils.activateClassicCheckoutPage();
-		} )() );
-	}
-	if ( data.classicPages === false ) {
-		tasks.push( ( async () => {
-			await this.wooCommerceUtils.activateBlockCartPage();
-			await this.wooCommerceUtils.activateBlockCheckoutPage();
-		} )() );
-	}
+		// Pages — sequential internally if page-based, but parallel with other tasks
+		if ( data.classicPages === true ) {
+			tasks.push( ( async () => {
+				await this.wooCommerceUtils.activateClassicCartPage();
+				await this.wooCommerceUtils.activateClassicCheckoutPage();
+			} )() );
+		}
+		if ( data.classicPages === false ) {
+			tasks.push( ( async () => {
+				await this.wooCommerceUtils.activateBlockCartPage();
+				await this.wooCommerceUtils.activateBlockCheckoutPage();
+			} )() );
+		}
 
-	// API calls — independent
-	if ( data.settings?.general ) {
-		tasks.push( this.wooCommerceApi.updateGeneralSettings( data.settings.general ) );
-	}
-	if ( data.taxes ) {
-		tasks.push( this.wooCommerceUtils.setTaxes( data.taxes ) );
-	}
-	if ( data.customer ) {
-		tasks.push( this.restoreCustomer( data.customer ) );
-	}
+		// API calls — independent
+		if ( data.settings?.general ) {
+			tasks.push( this.wooCommerceApi.updateGeneralSettings( data.settings.general ) );
+		}
+		if ( data.taxes ) {
+			tasks.push( this.wooCommerceUtils.setTaxes( data.taxes ) );
+		}
+		if ( data.customer ) {
+			tasks.push( this.restoreCustomer( data.customer ) );
+		}
 
-	await Promise.all( tasks );
-	console.log( `✓ Store configured in ${ ( Date.now() - start ) / 1000 }s` );
-};
+		await Promise.all( tasks );
+		console.log( `✓ Store configured in ${ ( Date.now() - start ) / 1000 }s` );
+	};
 
 	updatePcpPlugin = async () => {
 		let start, end;
