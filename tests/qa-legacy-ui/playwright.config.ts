@@ -114,6 +114,7 @@ export default defineConfig< BaseExtend >( {
 		{
 			name: 'setup-pcp',
 			testMatch: /pcp\.setup\.ts/,
+			fullyParallel: false,
 		},
 		{
 			name: 'migration',
@@ -121,6 +122,18 @@ export default defineConfig< BaseExtend >( {
 				/woocommerce\.setup\.ts/,
 				/pcp\.setup\.ts/,
 			],
+			fullyParallel: false,
+		},
+		{
+			name: 'setup-usa-classic',
+			testMatch: /06-transaction\/_test-setup\/transaction-usa-classic\.setup\.ts/,
+			fullyParallel: false,
+		},
+		{
+			name: 'transaction-usa-classic',
+			testMatch: /06-transaction\/transaction-usa-classic\.spec\.ts/,
+			dependencies: [ 'setup-usa-classic' ],
+			fullyParallel: false,
 		},
 	],
 } );
