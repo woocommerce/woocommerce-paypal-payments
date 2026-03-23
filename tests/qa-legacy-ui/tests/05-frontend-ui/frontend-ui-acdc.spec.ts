@@ -5,6 +5,7 @@ import { test, expect } from '../../utils';
 import {
 	orders,
 	acdc,
+	merchants,
 } from '../../resources';
 
 test( 'PCP-2064 | Frontend UI - Pay by link - ACDC - Unchecked Terms and conditions @Critical', async ( {
@@ -19,18 +20,10 @@ test( 'PCP-2064 | Frontend UI - Pay by link - ACDC - Unchecked Terms and conditi
 	let order = await wooCommerceUtils.createApiOrder( testOrder );
 
 	await classicPayForOrder.visit( order.id, order.order_key );
-	await classicPayForOrder.ppui.acdcGateway().click();
-	await classicPayForOrder.ppui
-		.cardNumberInput()
-		.fill( testOrder.payment.card.card_number );
-	await classicPayForOrder.ppui.cardExpirationInput().click();
-	await classicPayForOrder.ppui.page.keyboard.type(
-		testOrder.payment.card.expiration_date
-	);
-	await classicPayForOrder.ppui
-		.cardCVVInput()
-		.fill( testOrder.payment.card.card_cvv );
-	await classicPayForOrder.payForOrderButton().click();
+	await classicPayForOrder.ppui.completeAcdcPayment(
+		acdc,
+		merchants.usa
+	)
 
 	await classicPayForOrder.assertUrl( order.id, order.order_key );
 	await expect(
