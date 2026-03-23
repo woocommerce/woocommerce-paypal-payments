@@ -108,6 +108,10 @@ class SettingsModule implements ServiceModule, ExecutableModule
                     $migration_manager->migrate();
                 }
             }
+        });
+        // Resolve unknown seller type on all pages (not just admin), so frontend
+        // page loads after migration also fix the seller_type saved as 'unknown'.
+        add_action('init', static function () use ($container): void {
             $seller_type_resolver = $container->get('settings.service.seller-type-resolver');
             assert($seller_type_resolver instanceof SellerTypeResolver);
             $seller_type_resolver->resolve_unknown_seller_type($container->get('api.helper.failure-registry'), $container->get('settings.data.general'), $container->get('api.endpoint.partners'), $container->get('woocommerce.logger.woocommerce'));
