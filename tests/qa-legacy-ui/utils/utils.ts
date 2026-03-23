@@ -357,59 +357,49 @@ export class Utils {
 	 * @param method
 	 */
 	pcpPaymentMethodIsEnabled = async ( method ) => {
-		let start, end;
+		const start = Date.now();
 		switch ( method ) {
 			case 'PayPal':
 				// Is enabled by default within Standard Payments
 				break;
 
 			case 'PayLater':
-				start = Date.now();
 				await this.cli.setWpConst( { WP_DEBUG: true, SCRIPT_DEBUG: true } );
 				await this.standardPayments.setup( { vaulting: false } );
 				await this.payLater.setup( { enableGateway: true } );
-				end = Date.now();
-				console.log( `✓ Pay Later configured in ${ ( end - start ) / 1000 } seconds` );
+				console.log( `✓ Pay Later configured in ${ ( Date.now() - start ) / 1000 } seconds` );
 
 				break;
 
 			case 'Venmo':
-				start = Date.now();
 				await this.cli.setWpConst( { WP_DEBUG: true, SCRIPT_DEBUG: true } );
 				await this.standardPayments.setup( {
 					enableAlternativePaymentMethods: [ 'Venmo' ],
 				} );
-				end = Date.now();
-				console.log( `✓ Venmo configured in ${ ( end - start ) / 1000 } seconds` );
+				console.log( `✓ Venmo configured in ${ ( Date.now() - start ) / 1000 } seconds` );
 				break;
 
 			case 'ACDC':
-				start = Date.now();
 				await this.advancedCardProcessing.setup( {
 					enableGateway: true,
 					threeDSecure:
 						'No 3D Secure (transaction will be denied if 3D Secure is required)',
 				} );
-				end = Date.now();
-				console.log( `✓ ACDC configured in ${ ( end - start ) / 1000 } seconds` );
+				console.log( `✓ ACDC configured in ${ ( Date.now() - start ) / 1000 } seconds` );
 
 				break;
 
 			case 'ACDC3DS':
-				start = Date.now();
 				await this.advancedCardProcessing.setup( {
 					enableGateway: true,
 					threeDSecure: 'Always trigger 3D Secure',
 				} );
-				end = Date.now();
-				console.log( `✓ ACDC 3D Secure configured in ${ ( end - start ) / 1000 } seconds` );
+				console.log( `✓ ACDC 3D Secure configured in ${ ( Date.now() - start ) / 1000 } seconds` );
 				break;
 
 			case 'OXXO':
-				start = Date.now();
 				await this.oxxo.setup( { enableGateway: true } );
-				end = Date.now();
-				console.log( `✓ OXXO configured in ${ ( end - start ) / 1000 } seconds` );
+				console.log( `✓ OXXO configured in ${ ( Date.now() - start ) / 1000 } seconds` );
 				break;
 
 			case 'DebitOrCreditCard':
@@ -423,12 +413,10 @@ export class Utils {
 				await this.advancedCardProcessing.setup( {
 					enableGateway: false,
 				} );
-				end = Date.now();
-				console.log( `✓ Debit or Credit Card configured in ${ ( end - start ) / 1000 } seconds` );
+				console.log( `✓ Debit or Credit Card configured in ${ ( Date.now() - start ) / 1000 } seconds` );
 				break;
 
 			case 'StandardCardButton':
-				start = Date.now();
 				await this.standardPayments.setup( {
 					standardCardButton: true,
 				} );
@@ -436,16 +424,13 @@ export class Utils {
 					enableGateway: false,
 				} );
 				await this.standardCardButton.setup( { enableGateway: true } );
-				end = Date.now();
-				console.log( `✓ Standard Card Button configured in ${ ( end - start ) / 1000 } seconds` );
+				console.log( `✓ Standard Card Button configured in ${ ( Date.now() - start ) / 1000 } seconds` );
 				break;
 
 			case 'PayUponInvoice':
-				start = Date.now();
 				// Is activated before merchant connection
 				await this.payUponInvoice.setup( { enableGateway: true } );
-				end = Date.now();
-				console.log( `✓ Pay Upon Invoice configured in ${ ( end - start ) / 1000 } seconds` );
+				console.log( `✓ Pay Upon Invoice configured in ${ ( Date.now() - start ) / 1000 } seconds` );
 				break;
 		}
 	};
