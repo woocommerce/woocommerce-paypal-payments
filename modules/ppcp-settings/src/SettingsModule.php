@@ -671,31 +671,6 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 			}
 		);
 
-		/**
-		 * Implement the mutually exclusive BCDC or ACDC rule:
-		 * If the current merchant is _not BCDC eligible_, we disable the "card" funding source.
-		 * This effectively hides the black Standard Card button from the express payment block
-		 * and the PayPal smart button stack in classic checkout.
-		 */
-		add_filter(
-			'woocommerce_paypal_payments_sdk_disabled_funding_hook',
-			static function ( array $disable_funding ) use ( $container ) {
-				// Already disabled, no correction needed.
-				if ( in_array( 'card', $disable_funding, true ) ) {
-					return $disable_funding;
-				}
-
-				$dcc_configuration = $container->get( 'wcgateway.configuration.card-configuration' );
-				assert( $dcc_configuration instanceof CardPaymentsConfiguration );
-
-				if ( ! $dcc_configuration->is_bcdc_enabled() ) {
-					$disable_funding[] = 'card';
-				}
-
-				return $disable_funding;
-			}
-		);
-
 		add_action(
 			'woocommerce_paypal_payments_gateway_migrate',
 			/**
