@@ -14,18 +14,10 @@ use WooCommerce\PayPalCommerce\WcSubscriptions\FreeTrialHandlerTrait;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\CardPaymentsConfiguration;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\CartCheckoutDetector;
 
-/**
- * Class DisabledFundingSources
- */
 class DisabledFundingSources {
 
 	use FreeTrialHandlerTrait;
 
-	/**
-	 * The settings provider.
-	 *
-	 * @var SettingsProvider
-	 */
 	private SettingsProvider $settings_provider;
 
 	/**
@@ -34,29 +26,9 @@ class DisabledFundingSources {
 	 * @var array
 	 */
 	private array $all_funding_sources;
-
-	/**
-	 * Provides details about the DCC configuration.
-	 *
-	 * @var CardPaymentsConfiguration
-	 */
 	private CardPaymentsConfiguration $dcc_configuration;
-
-	/**
-	 * Merchant Country
-	 *
-	 * @var string
-	 */
 	private string $merchant_country;
 
-	/**
-	 * DisabledFundingSources constructor.
-	 *
-	 * @param SettingsProvider          $settings_provider   The settings provider.
-	 * @param array                     $all_funding_sources All existing funding sources.
-	 * @param CardPaymentsConfiguration $dcc_configuration   DCC gateway configuration.
-	 * @param string                    $merchant_country    Merchant country.
-	 */
 	public function __construct(
 		SettingsProvider $settings_provider,
 		array $all_funding_sources,
