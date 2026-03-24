@@ -40,7 +40,9 @@ use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayUponInvoice\PayUponInvoiceGateway;
 use WooCommerce\PayPalCommerce\Settings\Service\SettingsDataManager;
 use WooCommerce\PayPalCommerce\Settings\DTO\ConfigurationFlagsDTO;
+use WooCommerce\PayPalCommerce\Settings\DTO\MerchantConnectionDTO;
 use WooCommerce\PayPalCommerce\Settings\Enum\ProductChoicesEnum;
+use WooCommerce\PayPalCommerce\Settings\Enum\SellerTypeEnum;
 use WooCommerce\PayPalCommerce\Settings\Data\GeneralSettings;
 use WooCommerce\PayPalCommerce\Settings\Data\PaymentSettings;
 use WooCommerce\PayPalCommerce\Axo\Helper\CompatibilityChecker;
@@ -94,6 +96,8 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 					return;
 				}
 
+				self::pre_populate_credentials( $container );
+
 				$migration_manager = $container->get( 'settings.service.data-migration' );
 				assert( $migration_manager instanceof MigrationManager );
 
@@ -107,12 +111,21 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 				if ( get_option( MigrationManager::OPTION_NAME_MIGRATION_IS_DONE ) !== '1' ) {
 					$legacy_settings = (array) get_option( 'woocommerce-ppcp-settings', array() );
 					if ( ! empty( $legacy_settings['client_id'] ) ) {
+						self::pre_populate_credentials( $container );
+
 						$migration_manager = $container->get( 'settings.service.data-migration' );
 						assert( $migration_manager instanceof MigrationManager );
 						$migration_manager->migrate();
 					}
 				}
+			}
+		);
 
+		// Resolve unknown seller type on all pages (not just admin), so frontend
+		// page loads after migration also fix the seller_type saved as 'unknown'.
+		add_action(
+			'init',
+			static function () use ( $container ): void {
 				$seller_type_resolver = $container->get( 'settings.service.seller-type-resolver' );
 				assert( $seller_type_resolver instanceof SellerTypeResolver );
 
@@ -870,6 +883,44 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 		);
 
 		return true;
+	}
+
+	/**
+	 * Pre-populates GeneralSettings with legacy credentials before migration
+	 * DI services are resolved.
+	 *
+	 * DI services like api.key, api.secret, api.merchant_id are resolved from
+	 * SettingsProvider → GeneralSettings → woocommerce-ppcp-data-common.
+	 * This option does not exist before migration, so these DI services resolve
+	 * to empty strings. Pre-populating ensures PartnersEndpoint has working
+	 * credentials during migration so seller_status() API call succeeds.
+	 *
+	 * @param ContainerInterface $container The DI container.
+	 */
+	private static function pre_populate_credentials( ContainerInterface $container ): void {
+		$general = $container->get( 'settings.data.general' );
+		assert( $general instanceof GeneralSettings );
+
+		if ( $general->is_merchant_connected() ) {
+			return;
+		}
+
+		$legacy = (array) get_option( 'woocommerce-ppcp-settings', array() );
+		if ( empty( $legacy['client_id'] ) || empty( $legacy['merchant_id'] ) ) {
+			return;
+		}
+
+		$general->set_merchant_data(
+			new MerchantConnectionDTO(
+				! empty( $legacy['sandbox_on'] ),
+				$legacy['client_id'],
+				$legacy['client_secret'] ?? '',
+				$legacy['merchant_id'],
+				$legacy['merchant_email'] ?? '',
+				'',
+				SellerTypeEnum::UNKNOWN
+			)
+		);
 	}
 
 	/**

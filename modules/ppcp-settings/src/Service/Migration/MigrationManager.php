@@ -64,7 +64,7 @@ class MigrationManager implements SettingsMigrationInterface {
 
 		$this->onboarding_profile->set_completed( true );
 		$this->onboarding_profile->set_gateways_refreshed( true );
-		$this->onboarding_profile->set_gateways_synced( true );
+		$this->onboarding_profile->set_gateways_synced( true, true );
 		$this->onboarding_profile->save();
 
 		$migrations = array(
