@@ -52,7 +52,7 @@ class MigrationManager implements \WooCommerce\PayPalCommerce\Settings\Service\M
         delete_option('woocommerce-ppcp-is-new-merchant');
         $this->onboarding_profile->set_completed(\true);
         $this->onboarding_profile->set_gateways_refreshed(\true);
-        $this->onboarding_profile->set_gateways_synced(\true);
+        $this->onboarding_profile->set_gateways_synced(\true, \true);
         $this->onboarding_profile->save();
         $migrations = array('general_settings' => $this->general_settings_migration, 'settings_tab' => $this->settings_tab_migration, 'styling' => $this->styling_settings_migration, 'payment' => $this->payment_settings_migration, 'fastlane' => $this->fastlane_settings_migration);
         foreach ($migrations as $name => $migration) {
