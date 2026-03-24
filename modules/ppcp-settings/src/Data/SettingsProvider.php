@@ -486,21 +486,21 @@ class SettingsProvider
     {
         switch ($location) {
             case 'product':
-                return $this->styling_product();
+                return clone $this->styling_product();
             case 'cart':
             case 'cart-block':
-                return $this->styling_cart();
+                return clone $this->styling_cart();
             case 'mini-cart':
             case 'mini_cart':
-                return $this->styling_mini_cart();
+                return clone $this->styling_mini_cart();
             case 'checkout-block':
             case 'express_checkout':
-                return $this->styling_express_checkout();
+                return clone $this->styling_express_checkout();
             case 'checkout':
             case 'classic_checkout':
             case 'pay-now':
             default:
-                return $this->styling_classic_checkout();
+                return clone $this->styling_classic_checkout();
         }
     }
     /**
