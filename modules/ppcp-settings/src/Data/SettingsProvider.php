@@ -600,7 +600,7 @@ class SettingsProvider {
 	}
 
 	public function applepay_styles( string $location = 'checkout' ): LocationStylingDTO {
-		return apply_filters( 'woocommerce_paypal_payments_applepay_button_styles', $this->button_styling( $location ) );
+		return apply_filters( 'woocommerce_paypal_payments_applepay_button_styles', clone $this->button_styling( $location ) );
 	}
 
 	public function applepay_button_language(): string {
@@ -624,7 +624,7 @@ class SettingsProvider {
 	}
 
 	public function googlepay_styles( string $location = 'checkout' ): LocationStylingDTO {
-		return apply_filters( 'woocommerce_paypal_payments_googlepay_button_styles', $this->button_styling( $location ) );
+		return apply_filters( 'woocommerce_paypal_payments_googlepay_button_styles', clone $this->button_styling( $location ) );
 	}
 
 	public function googlepay_button_language(): string {
