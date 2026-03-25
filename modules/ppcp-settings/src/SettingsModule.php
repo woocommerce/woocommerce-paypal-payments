@@ -98,10 +98,20 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 
 				self::pre_populate_credentials( $container );
 
-				$migration_manager = $container->get( 'settings.service.data-migration' );
-				assert( $migration_manager instanceof MigrationManager );
+				$run_migration = static function () use ( $container ): void {
+					$migration_manager = $container->get( 'settings.service.data-migration' );
+					assert( $migration_manager instanceof MigrationManager );
 
-				$migration_manager->migrate();
+					$migration_manager->migrate();
+				};
+
+				// Timing is important - migration saves gateway options, which triggers WooCommerce
+				// hooks that require WC to be fully initialized.
+				if ( did_action( 'woocommerce_init' ) ) {
+					$run_migration();
+				} else {
+					add_action( 'woocommerce_init', $run_migration );
+				}
 			}
 		);
 
