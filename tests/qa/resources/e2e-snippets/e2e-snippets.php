@@ -26,6 +26,7 @@ add_filter('woocommerce_enable_setup_wizard', '__return_false');
 /**
  * Disable webhook verification
  */
+const PAYPAL_WEBHOOK_REQUEST_VERIFICATION = false;
 if ( ! defined( 'PAYPAL_WEBHOOK_REQUEST_VERIFICATION' ) ) {
 	define( 'PAYPAL_WEBHOOK_REQUEST_VERIFICATION', false );
 }
