@@ -634,13 +634,6 @@ class SettingsProvider {
 	// ----- PAY LATER -----
 
 	/**
-	 * Whether Pay Later messaging styling should be customized per location.
-	 */
-	public function pay_later_styling_per_location(): bool {
-		return $this->styling_settings->get_pay_later_styling_per_location();
-	}
-
-	/**
 	 * Whether the given gateway is enabled.
 	 */
 	public function gateway_enabled( string $method_id ): bool {
