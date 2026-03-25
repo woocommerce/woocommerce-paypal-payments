@@ -61,7 +61,9 @@ export class PayPalPopup {
 			.or( this.page.getByRole( 'button', { name: 'Continue' } ) )
 			.or( this.page.locator( '#confirmButtonTop' ) )
 			.or( this.page.locator( '#one-time-cta' ) )
-			.or( this.page.getByRole( 'button', { name: /Link and Pay/ } ) );
+			.or( this.page.getByRole( 'button', { name: /Link and Pay/ } ) )
+			// German PayPal consent page (pay/billing flow) uses "Zustimmen und weiter"
+			.or( this.page.getByRole( 'button', { name: /Zustimmen/ } ) );
 	payLaterSwitcher = () => this.page.getByTestId( 'paylater-tab' );
 	payLaterRadio = () =>
 		this.page.locator( 'label[for^="credit-offer"]' ).first();
