@@ -1,22 +1,6 @@
-const BASE_SETUP = '06-transaction/_test-setup';
-const BASE_SPEC = '06-transaction';
+import { buildProject } from '../../../utils';
 
-function transactionProject( name: string ) {
-	const safeName = name.replace( /\./g, '\\.' );
-	return [
-		{
-			name: `setup-${ name }`,
-			testMatch: new RegExp( `${ BASE_SETUP }/${ safeName }\\.setup\\.ts` ),
-			fullyParallel: false,
-		},
-		{
-			name: name,
-			testMatch: new RegExp( `${ BASE_SPEC }/${ safeName }\\.spec\\.ts` ),
-			dependencies: [ `setup-${ name }` ],
-			fullyParallel: false,
-		},
-	];
-}
+const project = buildProject( '06-transaction' );
 
 export const transactionProjects = [
 	'transaction-germany-classic',
@@ -33,4 +17,4 @@ export const transactionProjects = [
 	'transaction-usa-classic-debit-or-credit-card-intent-authorized',
 	'transaction-usa-classic-standard-card-button',
 	'transaction-usa-classic-standard-card-button-intent-authorized',
-].flatMap( transactionProject );
+].flatMap( project );

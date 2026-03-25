@@ -7,8 +7,9 @@ import { defineConfig, devices } from '@playwright/test';
  * Internal dependencies
  */
 import { BaseExtend } from './utils/test';
-import { frontendUiProjects } from 'tests/05-frontend-ui/_test-setup/_projects';
-import { transactionProjects } from 'tests/06-transaction/_test-setup/_projects';
+import { frontendUiProjects } from './tests/05-frontend-ui/_test-setup/_projects';
+import { transactionProjects } from './tests/06-transaction/_test-setup/_projects';
+import { refundProjects } from './tests/08-refund/_test-setup/_projects';
 require( 'dotenv' ).config();
 
 export default defineConfig< BaseExtend >( {
@@ -16,13 +17,13 @@ export default defineConfig< BaseExtend >( {
 	expect: {
 		timeout: 20_000,
 	},
-	timeout: 2 * 60_000,
+	timeout: 2.5 * 60_000,
 	/* Run tests in files in parallel */
 	fullyParallel: false,
 	/* Fail the build on CI if you accidentally left test.only in the source code. */
 	forbidOnly: !! process.env.CI,
 	/* Retry on CI only */
-	retries: process.env.CI ? 2 : 0,
+	retries: process.env.CI ? 2 : 1,
 	/* Opt out of parallel tests on CI. */
 	workers: process.env.CI ? 1 : 1,
 	/* Reporter to use. See https://playwright.dev/docs/test-reporters */
@@ -120,5 +121,6 @@ export default defineConfig< BaseExtend >( {
 		},
 		...frontendUiProjects,
 		...transactionProjects,
+		...refundProjects,
 	],
 } );

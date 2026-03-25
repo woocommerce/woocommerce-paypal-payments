@@ -60,7 +60,7 @@ export const acdc3ds: PcpPayment = {
 };
 
 export const debitOrCreditCard: PcpPayment = {
-	gatewayName: 'Credit or debit cards (via PayPal)', //'Debit or Credit Cards',//
+	gatewayName: 'Debit & Credit Cards',
 	method: 'DebitOrCreditCard',
 	dataFundingSource: 'card',
 	gateway: 'ppcp-gateway',

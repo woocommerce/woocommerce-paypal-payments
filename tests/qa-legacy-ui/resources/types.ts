@@ -13,7 +13,7 @@ export type ShopConfig = {
 
 export type PcpMerchant = {
 	email: string;
-	password: string;
+	password?: string;
 	client_id: string;
 	client_secret: string;
 	account_id: string;

@@ -11,6 +11,32 @@ import { expect } from './test';
 const TEST_RESULTS_DIR = join( process.cwd(), 'test-results' ); // Root 'test-results/' dir
 
 /**
+ * Buolds project with a dependency project pair
+ * 
+ * @param baseSetup 
+ * @param baseSpec 
+ */
+export function buildProject( baseTestDir: string ) {
+	return ( name: string ) => {
+		const specName = name.replace( /\./g, '\\.' );
+		return [
+			{
+				name: `setup-${ name }`,
+				testMatch: new RegExp( `${ baseTestDir }/_test-setup/${ specName }\\.setup\\.ts` ),
+				fullyParallel: false,
+			},
+			{
+				name: name,
+				testMatch: new RegExp( `${ baseTestDir }/${ specName }\\.spec\\.ts` ),
+				dependencies: [ `setup-${ name }` ],
+				fullyParallel: false,
+				workers: 1,
+			},
+		];
+	};
+}
+
+/**
  * Sets annotation about tested customer
  * If tested customer is registered (has non-empty username),
  * then his billing.country will be added to annotation for example: customer-germany
