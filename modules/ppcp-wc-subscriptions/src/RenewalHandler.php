@@ -170,7 +170,8 @@ class RenewalHandler
     public function renew(\WC_Order $wc_order): void
     {
         try {
-            $subscription = wcs_get_subscription($wc_order->get_id());
+            $subscriptions = wcs_get_subscriptions_for_renewal_order($wc_order);
+            $subscription = end($subscriptions);
             if ($subscription instanceof WC_Subscription) {
                 $subscription_id = $subscription->get_meta('ppcp_subscription') ?? '';
                 if ($subscription_id) {
