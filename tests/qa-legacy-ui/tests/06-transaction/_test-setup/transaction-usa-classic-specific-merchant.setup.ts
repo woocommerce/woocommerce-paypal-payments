@@ -5,9 +5,9 @@ import { test as setup } from '../../../utils';
 import {
 	payPal,
 	pcpConfigUsa,
-	storeConfigUsa
+	storeConfigUsa,
+	merchants,
 } from '../../../resources';
-import { specificMerchant } from '../_test-data/paypal';
 
 setup.beforeAll( async ( { utils } ) => {
 	await utils.resetEnvironment();
@@ -19,7 +19,7 @@ setup( 'Setup USA classic, Specific Merchant', async ( { utils, standardPayments
 	await utils.setupStore();
 	await utils.configureStore( {
 		...storeConfigUsa,
-		merchant: specificMerchant,
+		merchant: merchants.noReferenceTransaction,
 		classicPages: true,
 	} );
 	await utils.configurePcp( pcpConfigUsa );

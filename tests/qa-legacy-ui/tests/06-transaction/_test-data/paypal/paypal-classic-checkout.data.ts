@@ -1,7 +1,7 @@
 /**
  * Internal dependencies
  */
-import { payPal, orders, PcpMerchant } from '../../../../resources';
+import { payPal, orders, merchants } from '../../../../resources';
 
 export const payPalClassicCheckout = [
 	{
@@ -74,21 +74,11 @@ export const payPalClassicCheckoutHorizontalButton = [
 	},
 ];
 
-export const specificMerchant: PcpMerchant = {
-	email: 'sb-zkep4329130907@business.example.com',
-	password: '8z^QK{k_',
-	client_id:
-		'BAAL_uqnIg5303RyVWgr6v8-LH8r-jBHl1XYJBSB7gAfz_2lzedc1dqaDRHvdqfPFnFU1vYX6UQynK2PHU',
-	client_secret:
-		'EI5q8VPWzZ4pwdOIj2o25ih3p-htMBF1srqU7i3NM-5jUwZ79davNXnbS60IMCfAThMYTrCAnBA2sTDp',
-	account_id: 'MPWPG7V6XSB84',
-};
-
 export const payPalClassicCheckoutSpecificMerchant = [
 	{
 		title: 'PCP-2608 | Transaction - Classic checkout - PayPal - Merchant without reference transaction',
 		...orders.default,
 		payment: payPal,
-		merchant: specificMerchant,
+		merchant: merchants.noReferenceTransaction,
 	},
 ];

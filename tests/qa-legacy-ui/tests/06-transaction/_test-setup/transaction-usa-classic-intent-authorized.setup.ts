@@ -25,6 +25,7 @@ setup( 'Setup USA classic, Intent Authorized', async ( { utils, standardPayments
 	await utils.pcpPaymentMethodIsEnabled( payPal.method );
 	await utils.pcpPaymentMethodIsEnabled( payLater.method );
 	await standardPayments.setup( {
+		classicCartButtonLayout: 'Vertical',
 		disableAlternativePaymentMethods: [ 'Venmo' ],
 		intent: 'Authorize',
 	} );

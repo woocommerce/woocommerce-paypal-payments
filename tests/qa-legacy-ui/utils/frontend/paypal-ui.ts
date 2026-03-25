@@ -36,6 +36,7 @@ export class PayPalUI {
 		);
 	fundingSourceButton = ( name ) =>
 		this.payPalIframe().locator( `[data-funding-source="${ name }"]` );
+		// this.page.locator( `#ppc-button-ppcp-gateway .item-${ name }` );
 
 	payPalButton = () => this.fundingSourceButton( 'paypal' );
 	payLaterButton = () => this.fundingSourceButton( 'paylater' );
@@ -474,11 +475,13 @@ export class PayPalUI {
 				break;
 
 			case 'DebitOrCreditCard':
-				await this.completeDebitOrCreditCardPayment( data );
+				await this.completeBcdcPayment(
+					data.payment.card
+				);
 				break;
 
 			case 'StandardCardButton':
-				await this.completeStandardCardButtonPayment(
+				await this.completeBcdcPayment(
 					data.payment.card
 				);
 				break;
@@ -693,74 +696,11 @@ export class PayPalUI {
 	};
 
 	/**
-	 * Completes payment with Debit Or Credit Card
-	 *
-	 * @param data
-	 */
-	completeDebitOrCreditCardPayment = async (
-		data: WooCommerce.ShopOrder
-	) => {
-		const { payment, customer } = data;
-		const { card } = payment;
-		await expect( this.debitOrCreditCardButton() ).toBeVisible();
-		await this.debitOrCreditCardButton().click();
-		await this.debitOrCreditCardNumberInput().fill( card.card_number );
-		await this.debitOrCreditCardExpirationInput().fill(
-			card.expiration_date
-		);
-		await this.debitOrCreditCardCSCInput().fill( card.card_cvv );
-		await this.debitOrCreditCardPayNowButton().click();
-		await this.page.waitForTimeout( 2500 );
-
-		// Commented by MUtkin on 30-09-2025 due to changed UI behavior by PayPal
-		// const firstName = this.debitOrCreditCardFirstNameInput();
-		// if ( await firstName.isVisible() ) {
-		// 	await firstName.fill( customer.first_name );
-		// }
-		// const lastName = this.debitOrCreditCardLastNameInput();
-		// if ( await lastName.isVisible() ) {
-		// 	await lastName.fill( customer.last_name );
-		// }
-		// const street = this.debitOrCreditCardStreetInput();
-		// if ( await street.isVisible() ) {
-		// 	await street.fill( customer.billing.address_1 );
-		// }
-		// const apartment = this.debitOrCreditCardApartmentInput();
-		// if ( await apartment.isVisible() ) {
-		// 	await apartment.fill( customer.billing.address_2 );
-		// }
-		// const city = this.debitOrCreditCardCityInput();
-		// if ( await city.isVisible() ) {
-		// 	await city.fill( customer.billing.city );
-		// }
-		// const state = this.debitOrCreditCardStateInput();
-		// if ( await state.isVisible() ) {
-		// 	await state.fill( customer.billing.state );
-		// }
-		// const postcode = this.debitOrCreditCardZipCodeInput();
-		// if ( await postcode.isVisible() ) {
-		// 	await postcode.fill( customer.billing.postcode );
-		// }
-		// const phone = this.debitOrCreditCardPhoneInput();
-		// if ( await phone.isVisible() ) {
-		// 	await phone.fill( customer.billing.phone );
-		// }
-		// const email = this.debitOrCreditCardEmailInput();
-		// if ( await email.isVisible() ) {
-		// 	await email.fill( customer.billing.email );
-		// }
-		// const payNow = this.debitOrCreditCardPayNowButton();
-		// if ( await payNow.isVisible() ) {
-		// 	await payNow.click();
-		// }
-	};
-
-	/**
 	 * Completes payment with Standard Card Button
 	 *
 	 * @param card
 	 */
-	completeStandardCardButtonPayment = async (
+	completeBcdcPayment = async (
 		card: WooCommerce.CreditCard
 	) => {
 		await expect( this.standardCardButtonGateway() ).toBeVisible();

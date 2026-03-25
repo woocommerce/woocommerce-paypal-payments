@@ -35,6 +35,13 @@ const mexico: PcpMerchant = {
 	password: process.env.MERCHANT_MX_PASS,
 };
 
+const noReferenceTransaction: PcpMerchant = {
+	email: process.env.MERCHANT_USA_NOREF_EMAIL,
+	client_id: process.env.MERCHANT_USA_NOREF_CLIENT_ID,
+	client_secret: process.env.MERCHANT_USA_NOREF_CLIENT_SECRET,
+	account_id: process.env.MERCHANT_USA_NOREF_ACCOUNT_ID,
+};
+
 export const merchants: {
 	[ key: string ]: PcpMerchant;
 } = {
@@ -42,4 +49,5 @@ export const merchants: {
 	germany,
 	usa,
 	mexico,
+	noReferenceTransaction,
 };

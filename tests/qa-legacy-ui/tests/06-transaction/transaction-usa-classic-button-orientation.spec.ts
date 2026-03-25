@@ -20,8 +20,8 @@ import {
 transactionsOnClassicCart( payPalClassicCartHorizontalButton );
 transactionsOnClassicCart( payLaterClassicCartHorizontalButton );
 
-transactionsOnClassicCheckout( payPalClassicCheckoutHorizontalButton );
-transactionsOnClassicCheckout( payLaterClassicCheckoutHorizontalButton );
-
 transactionsOnClassicProduct( payPalClassicProductVerticalButton );
 transactionsOnClassicProduct( payLaterClassicProductVerticalButton );
+
+transactionsOnClassicCheckout( payPalClassicCheckoutHorizontalButton );
+transactionsOnClassicCheckout( payLaterClassicCheckoutHorizontalButton );
