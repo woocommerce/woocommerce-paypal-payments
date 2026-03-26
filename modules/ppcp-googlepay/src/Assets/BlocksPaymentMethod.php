@@ -19,12 +19,6 @@ use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
 
 class BlocksPaymentMethod extends AbstractPaymentMethodType {
 	private AssetGetter $asset_getter;
-
-	/**
-	 * The assets version.
-	 *
-	 * @var string
-	 */
 	private string $version;
 	private ButtonInterface $button;
 	private PaymentMethodTypeInterface $paypal_payment_method;
