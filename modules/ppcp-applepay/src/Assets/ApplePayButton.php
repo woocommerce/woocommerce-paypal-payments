@@ -19,7 +19,6 @@ use WooCommerce\PayPalCommerce\Button\Helper\CartProductsHelper;
 use WooCommerce\PayPalCommerce\Button\Helper\Context;
 use WooCommerce\PayPalCommerce\Settings\Data\PaymentSettings;
 use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
-use WooCommerce\PayPalCommerce\WcGateway\Helper\SettingsStatus;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\OrderProcessor;
 use WooCommerce\PayPalCommerce\Webhooks\Handler\RequestHandlerTrait;
 
@@ -39,7 +38,6 @@ class ApplePayButton implements ButtonInterface {
 	private string $version;
 	private AssetGetter $asset_getter;
 	private DataToAppleButtonScripts $script_data;
-	private SettingsStatus $settings_status;
 	protected CartProductsHelper $cart_products;
 	private Context $context;
 
@@ -51,7 +49,6 @@ class ApplePayButton implements ButtonInterface {
 		AssetGetter $asset_getter,
 		string $version,
 		DataToAppleButtonScripts $data,
-		SettingsStatus $settings_status,
 		CartProductsHelper $cart_products,
 		Context $context
 	) {
@@ -65,7 +62,6 @@ class ApplePayButton implements ButtonInterface {
 		$this->asset_getter       = $asset_getter;
 		$this->version            = $version;
 		$this->script_data        = $data;
-		$this->settings_status    = $settings_status;
 		$this->cart_products      = $cart_products;
 		$this->context            = $context;
 	}
