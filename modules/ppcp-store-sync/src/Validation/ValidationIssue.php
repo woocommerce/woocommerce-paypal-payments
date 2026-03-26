@@ -194,7 +194,7 @@ abstract class ValidationIssue {
 		}
 		if ( ! empty( $this->resolution_options ) ) {
 			$data['resolution_options'] = array_map(
-				static fn( ResolutionOption $option ) => $option->to_array(),
+				static fn( $option ) => $option instanceof ResolutionOption ? $option->to_array() : $option,
 				$this->resolution_options
 			);
 		}

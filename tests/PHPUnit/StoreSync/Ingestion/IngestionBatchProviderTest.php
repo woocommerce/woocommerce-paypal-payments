@@ -45,8 +45,12 @@ class IngestionBatchProviderTest extends TestCase {
 		$this->expired_timestamp = strtotime( '-7 days' );
 
 		$this->configuration = Mockery::mock( IngestionConfiguration::class );
-		$this->configuration->allows( 'get_supported_product_types' )
-			->andReturn( $this->product_types );
+		$this->configuration->allows( 'get_valid_product_filters' )
+			->andReturn( array(
+				'status'       => ProductStatus::PUBLISH,
+				'type'         => $this->product_types,
+				'downloadable' => false,
+			) );
 		$this->configuration->allows( 'get_sync_batch_size' )->andReturn( $this->batch_size );
 		$this->configuration->allows( 'get_expired_product_timestamp' )
 			->andReturn( $this->expired_timestamp );
@@ -111,7 +115,11 @@ class IngestionBatchProviderTest extends TestCase {
 	public function test_get_batch_respects_limit_with_never_synced_products(): void {
 		// Arrange - configure batch size of 5
 		$config = Mockery::mock( IngestionConfiguration::class );
-		$config->allows( 'get_supported_product_types' )->andReturn( $this->product_types );
+		$config->allows( 'get_valid_product_filters' )->andReturn( array(
+			'status'       => ProductStatus::PUBLISH,
+			'type'         => $this->product_types,
+			'downloadable' => false,
+		) );
 		$config->allows( 'get_sync_batch_size' )->andReturn( 5 );
 		$config->allows( 'get_expired_product_timestamp' )->andReturn( $this->expired_timestamp );
 
@@ -265,7 +273,11 @@ class IngestionBatchProviderTest extends TestCase {
 		// Arrange - configure custom expired timestamp (30 days ago)
 		$custom_expired_timestamp = strtotime( '-30 days' );
 		$config                   = Mockery::mock( IngestionConfiguration::class );
-		$config->allows( 'get_supported_product_types' )->andReturn( $this->product_types );
+		$config->allows( 'get_valid_product_filters' )->andReturn( array(
+			'status'       => ProductStatus::PUBLISH,
+			'type'         => $this->product_types,
+			'downloadable' => false,
+		) );
 		$config->allows( 'get_sync_batch_size' )->andReturn( 10 );
 		$config->allows( 'get_expired_product_timestamp' )->andReturn( $custom_expired_timestamp );
 
@@ -299,7 +311,11 @@ class IngestionBatchProviderTest extends TestCase {
 		// Arrange - configure custom product types
 		$custom_types = array( 'simple', 'variable', 'grouped' );
 		$config       = Mockery::mock( IngestionConfiguration::class );
-		$config->allows( 'get_supported_product_types' )->andReturn( $custom_types );
+		$config->allows( 'get_valid_product_filters' )->andReturn( array(
+			'status'       => ProductStatus::PUBLISH,
+			'type'         => $custom_types,
+			'downloadable' => false,
+		) );
 		$config->allows( 'get_sync_batch_size' )->andReturn( 10 );
 		$config->allows( 'get_expired_product_timestamp' )->andReturn( $this->expired_timestamp );
 
@@ -321,7 +337,11 @@ class IngestionBatchProviderTest extends TestCase {
     public function test_get_batch_handles_mixed_results(): void {
         // Arrange - configure batch size of 15
         $config = Mockery::mock( IngestionConfiguration::class );
-        $config->allows( 'get_supported_product_types' )->andReturn( $this->product_types );
+        $config->allows( 'get_valid_product_filters' )->andReturn( array(
+            'status'       => ProductStatus::PUBLISH,
+            'type'         => $this->product_types,
+            'downloadable' => false,
+        ) );
         $config->allows( 'get_sync_batch_size' )->andReturn( 15 );
         $config->allows( 'get_expired_product_timestamp' )->andReturn( $this->expired_timestamp );
 
@@ -362,7 +382,11 @@ class IngestionBatchProviderTest extends TestCase {
     public function test_get_batch_stops_when_limit_reached_after_fresh_products(): void {
         // Arrange - configure batch size of 7
         $config = Mockery::mock( IngestionConfiguration::class );
-        $config->allows( 'get_supported_product_types' )->andReturn( $this->product_types );
+        $config->allows( 'get_valid_product_filters' )->andReturn( array(
+            'status'       => ProductStatus::PUBLISH,
+            'type'         => $this->product_types,
+            'downloadable' => false,
+        ) );
         $config->allows( 'get_sync_batch_size' )->andReturn( 7 );
         $config->allows( 'get_expired_product_timestamp' )->andReturn( $this->expired_timestamp );
 

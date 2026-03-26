@@ -79,6 +79,11 @@ class ShippingValidatorTest extends TestCase {
 			array( 'US' => 'United States' )
 		);
 
+		$product = \Mockery::mock( 'WC_Product' );
+		$product->shouldReceive( 'needs_shipping' )->andReturn( false );
+		$this->product_manager->shouldReceive( 'find_product' )
+			->andReturn( $product );
+
 		$cart = PayPalCart::from_array(
 			array(
 				'items'          => array(
@@ -97,8 +102,13 @@ class ShippingValidatorTest extends TestCase {
 		$this->assertNull( $result );
 	}
 
+	/**
+	 * @runInSeparateProcess
+	 * @preserveGlobalState disabled
+	 */
 	public function test_validate_passes_country_check_when_wc_not_available(): void {
-		when( 'WC' )->justReturn( null );
+		// WC() must not be defined; run in a separate process so that
+		// Patchwork stubs from other tests do not leak in.
 
 		$cart = $this->create_cart_with_shipping(
 			array(
@@ -384,30 +394,13 @@ class ShippingValidatorTest extends TestCase {
 	}
 
 	private function mock_wc_countries( array $all_countries, array $shipping_countries ): void {
+		$countries_mock = \Mockery::mock( 'WC_Countries' );
+		$countries_mock->allows( 'get_countries' )->andReturn( $all_countries );
+		$countries_mock->allows( 'get_allowed_countries' )->andReturn( $all_countries );
+		$countries_mock->allows( 'get_shipping_countries' )->andReturn( $shipping_countries );
+
 		when( 'WC' )->alias(
-			function () use ( $all_countries, $shipping_countries ) {
-				$countries_mock = new class( $all_countries, $shipping_countries ) {
-					private array $all_countries;
-					private array $shipping_countries;
-
-					public function __construct( array $all, array $shipping ) {
-						$this->all_countries      = $all;
-						$this->shipping_countries = $shipping;
-					}
-
-					public function get_countries(): array {
-						return $this->all_countries;
-					}
-
-					public function get_allowed_countries(): array {
-						return $this->all_countries;
-					}
-
-					public function get_shipping_countries(): array {
-						return $this->shipping_countries;
-					}
-				};
-
+			function () use ( $countries_mock ) {
 				$wc            = new \stdClass();
 				$wc->countries = $countries_mock;
 

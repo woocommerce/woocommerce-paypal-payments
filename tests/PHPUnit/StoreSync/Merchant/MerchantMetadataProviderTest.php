@@ -209,6 +209,7 @@ class MerchantMetadataProviderTest extends TestCase {
 				return rtrim( $url, '/' );
 			}
 		);
+		when( 'rest_url' )->justReturn( $site_url . '/wp-json/wc/v3/agentic' );
 
 		$wc_countries = Mockery::mock( 'WC_Countries' );
 		$wc_countries->allows( 'get_base_country' )->andReturn( $store_country );
