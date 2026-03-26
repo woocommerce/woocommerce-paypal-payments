@@ -30,18 +30,21 @@ return array(
 		return new PPEC\MockGateway( $title );
 	},
 
-	'compat.ppec.subscriptions-handler'              => static function ( ContainerInterface $container ) {
-		$ppcp_renewal_handler = $container->get( 'wc-subscriptions.renewal-handler' );
-		$gateway              = $container->get( 'compat.ppec.mock-gateway' );
-
-		return new PPEC\SubscriptionsHandler( $ppcp_renewal_handler, $gateway );
+	'compat.ppec.billing-agreement-converter'        => static function ( ContainerInterface $container ) {
+		return new PPEC\BillingAgreementTokenConverter(
+			$container->get( 'api.endpoint.payment-method-tokens' ),
+			$container->get( 'api.repository.customer' ),
+			$container->get( 'woocommerce.logger.woocommerce' )
+		);
 	},
 
-	'compat.ppec.settings_importer'                  => static function ( ContainerInterface $container ): PPEC\SettingsImporter {
-		return new PPEC\SettingsImporter(
-			$container->get( 'settings.data.settings' ),
-			$container->get( 'settings.data.payment' ),
-			$container->get( 'settings.data.styling' )
+	'compat.ppec.subscriptions-handler'              => static function ( ContainerInterface $container ) {
+		return new PPEC\SubscriptionsHandler(
+			$container->get( 'wc-subscriptions.renewal-handler' ),
+			$container->get( 'compat.ppec.mock-gateway' ),
+			$container->get( 'compat.ppec.billing-agreement-converter' ),
+			$container->get( 'woocommerce.logger.woocommerce' ),
+			$container->get( 'vaulting.vault-v3-enabled' )
 		);
 	},
 
@@ -69,8 +72,8 @@ return array(
 		);
 	},
 
-	'compat.gzd.is_supported_plugin_version_active'  => function (): bool {
-		return function_exists( 'wc_gzd_get_shipments_by_order' ); // 3.0+
+	'compat.shiptastic.is_supported_plugin_version_active'  => function (): bool {
+		return function_exists( 'wc_stc_get_shipments' );
 	},
 
 	'compat.wc_shipment_tracking.is_supported_plugin_version_active' => function (): bool {
@@ -107,7 +110,7 @@ return array(
 		return new CompatAssets(
 			$container->get( 'compat.asset_getter' ),
 			$container->get( 'ppcp.asset-version' ),
-			$container->get( 'compat.gzd.is_supported_plugin_version_active' ),
+			$container->get( 'compat.shiptastic.is_supported_plugin_version_active' ),
 			$container->get( 'compat.wc_shipment_tracking.is_supported_plugin_version_active' ),
 			$container->get( 'compat.wc_shipping_tax.is_supported_plugin_version_active' ),
 			$container->get( 'api.bearer' )

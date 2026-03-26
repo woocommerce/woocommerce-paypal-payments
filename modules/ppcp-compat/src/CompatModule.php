@@ -5,7 +5,7 @@
  * @package WooCommerce\PayPalCommerce\Compat
  */
 
-declare(strict_types=1);
+declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\Compat;
 
@@ -65,6 +65,7 @@ class CompatModule implements ServiceModule, ExecutableModule {
 		$this->migrate_pay_later_settings( $c );
 		$this->migrate_smart_button_settings( $c );
 		$this->migrate_three_d_secure_setting();
+		$this->migrate_capture_on_status_change();
 
 		$this->fix_page_builders();
 		$this->exclude_cache_plugins_js_minification( $c );
@@ -137,23 +138,8 @@ class CompatModule implements ServiceModule, ExecutableModule {
 	 * @return void
 	 */
 	private function initialize_ppec_compat_layer( ContainerInterface $container ): void {
-		// Process PPEC subscription renewals through PayPal Payments.
 		$handler = $container->get( 'compat.ppec.subscriptions-handler' );
 		$handler->maybe_hook();
-
-		// Settings.
-		$ppec_import = $container->get( 'compat.ppec.settings_importer' );
-		$ppec_import->maybe_hook();
-
-		// Inbox note inviting merchant to disable PayPal Express Checkout.
-		add_action(
-			'woocommerce_init',
-			function () {
-				if ( is_admin() && is_callable( array( WC(), 'is_wc_admin_active' ) ) && WC()->is_wc_admin_active() && class_exists( 'Automattic\WooCommerce\Admin\Notes\Notes' ) ) {
-					PPEC\DeactivateNote::init();
-				}
-			}
-		);
 	}
 
 	/**
@@ -335,6 +321,30 @@ class CompatModule implements ServiceModule, ExecutableModule {
 
 				// Save both.
 				update_option( 'woocommerce-ppcp-data-settings', $data_settings );
+				update_option( 'woocommerce-ppcp-data-payment', $payment_settings );
+			}
+		);
+	}
+
+	/**
+	 * Migrates the "capture on status change" setting from the legacy UI.
+	 *
+	 * The migration will be done on plugin update if it hasn't already done.
+	 */
+	protected function migrate_capture_on_status_change(): void {
+		add_action(
+			'woocommerce_paypal_payments_gateway_migrate_on_update',
+			static function () {
+				$legacy_settings  = (array) get_option( 'woocommerce-ppcp-settings' ) ?: array();
+				$payment_settings = (array) get_option( 'woocommerce-ppcp-data-payment' ) ?: array();
+
+				// Noop if the legacy setting does not exist, or the setting was already migrated.
+				if ( ! isset( $legacy_settings['capture_on_status_change'] ) || isset( $payment_settings['capture_on_status_change'] ) ) {
+					return;
+				}
+
+				$payment_settings['capture_on_status_change'] = $legacy_settings['capture_on_status_change'];
+
 				update_option( 'woocommerce-ppcp-data-payment', $payment_settings );
 			}
 		);

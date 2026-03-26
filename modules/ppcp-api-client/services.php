@@ -105,9 +105,13 @@ return array(
 	'api.paypal-host'                                => function ( ContainerInterface $container ): string {
 		return PAYPAL_API_URL;
 	},
-	// It seems this 'api.paypal-website-url' key is always overridden in ppcp-onboarding/services.php.
-	'api.paypal-website-url'                         => function ( ContainerInterface $container ): string {
-		return PAYPAL_URL;
+	'api.paypal-website-url'                         => static function ( ContainerInterface $container ): string {
+		$environment = $container->get( 'settings.environment' );
+		assert( $environment instanceof Environment );
+		if ( $environment->is_sandbox() ) {
+			return $container->get( 'api.paypal-website-url-sandbox' );
+		}
+		return $container->get( 'api.paypal-website-url-production' );
 	},
 	'api.factory.paypal-checkout-url'                => function ( ContainerInterface $container ): callable {
 		return function ( string $id ) use ( $container ): string {
@@ -339,9 +343,10 @@ return array(
 		);
 	},
 	'api.repository.partner-referrals-data'          => static function ( ContainerInterface $container ): PartnerReferralsData {
-
-		$dcc_applies    = $container->get( 'api.helpers.dccapplies' );
-		return new PartnerReferralsData( $dcc_applies );
+		return new PartnerReferralsData(
+			$container->get( 'api.helpers.dccapplies' ),
+			$container->get( 'settings.data.definition.features' )
+		);
 	},
 	'api.repository.payee'                           => static function ( ContainerInterface $container ): PayeeRepository {
 		$merchant_email = $container->get( 'api.merchant_email' );
@@ -691,6 +696,7 @@ return array(
 				'BG' => $default_currencies,
 				'CA' => $default_currencies,
 				'CN' => $default_currencies,
+				'C2' => $default_currencies,
 				'CY' => $default_currencies,
 				'CZ' => $default_currencies,
 				'DK' => $default_currencies,
@@ -758,6 +764,10 @@ return array(
 				'BE' => $mastercard_visa_amex,
 				'BG' => $mastercard_visa_amex,
 				'CN' => array(
+					'mastercard' => array(),
+					'visa'       => array(),
+				),
+				'C2' => array(
 					'mastercard' => array(),
 					'visa'       => array(),
 				),

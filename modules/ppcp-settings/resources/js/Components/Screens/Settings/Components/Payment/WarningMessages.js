@@ -11,7 +11,7 @@ import { warning } from '@wordpress/icons';
  * @return {JSX.Element|null} The formatted warning messages or null
  */
 const WarningMessages = ( { warningMessages, severity = 'warning' } ) => {
-	const messages = Object.values( warningMessages || {} );
+	const messages = Object.values( warningMessages || {} ).filter( Boolean );
 
 	if ( messages.length === 0 ) {
 		return null;

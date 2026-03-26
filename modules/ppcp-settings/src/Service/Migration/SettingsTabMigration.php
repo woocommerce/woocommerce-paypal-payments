@@ -69,9 +69,8 @@ class SettingsTabMigration implements SettingsMigrationInterface {
 						);
 					break;
 				case 'intent':
-					$value                          = $this->settings[ $old_key ];
-					$data['authorize_only']         = $value === 'authorize';
-					$data['capture_virtual_orders'] = $value === 'capture';
+					$value                  = $this->settings[ $old_key ];
+					$data['authorize_only'] = $value === 'authorize';
 					break;
 				case 'blocks_final_review_enabled':
 					$data[ $new_key ] = ! $this->settings[ $old_key ];
@@ -84,6 +83,10 @@ class SettingsTabMigration implements SettingsMigrationInterface {
 				default:
 					$data[ $new_key ] = $this->settings[ $old_key ];
 			}
+		}
+
+		if ( isset( $this->settings['stay_updated'] ) && ! $this->settings['stay_updated'] ) {
+			$this->settings_tab->set_payment_level_processing( false );
 		}
 
 		$this->settings_tab->from_array( $data );
@@ -106,6 +109,7 @@ class SettingsTabMigration implements SettingsMigrationInterface {
 			'smart_button_language'       => 'button_language',
 			'prefix'                      => 'invoice_prefix',
 			'intent'                      => '',
+			'capture_for_virtual_only'    => 'capture_virtual_orders',
 			'vault_enabled_dcc'           => 'save_card_details',
 			'blocks_final_review_enabled' => 'enable_pay_now',
 			'logging_enabled'             => 'enable_logging',

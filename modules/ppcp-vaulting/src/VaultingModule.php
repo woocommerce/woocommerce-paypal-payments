@@ -131,7 +131,7 @@ class VaultingModule implements ServiceModule, ExecutableModule {
 					&& ! $is_post // Don't check on POST so we have all payment methods on form submissions.
 				) {
 					foreach ( $tokens as $index => $token ) {
-						if ( $token instanceof PaymentTokenApplePay || $token instanceof PaymentTokenPayPal || $token instanceof PaymentTokenVenmo ) {
+						if ( $token instanceof PaymentTokenApplePay ) {
 							unset( $tokens[ $index ] );
 						}
 					}

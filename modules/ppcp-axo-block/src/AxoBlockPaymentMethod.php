@@ -187,6 +187,7 @@ class AxoBlockPaymentMethod extends AbstractPaymentMethodType {
 				'input' => $this->settings_provider->fastlane_input_styles(),
 			),
 			'name_on_card'               => $this->dcc_configuration->show_name_on_card(),
+			'show_watermark'             => $this->settings_provider->show_fastlane_watermark(),
 			'woocommerce'                => array(
 				'states' => array(
 					'US' => WC()->countries->get_states( 'US' ),

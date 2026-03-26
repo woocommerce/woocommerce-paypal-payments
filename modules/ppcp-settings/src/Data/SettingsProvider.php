@@ -712,7 +712,7 @@ class SettingsProvider {
 	public function acdc_gateway_title(): string {
 		return $this->payment_settings->get_method_title(
 			CreditCardGateway::ID,
-			__( 'Credit Cards', 'woocommerce-paypal-payments' )
+			__( 'Debit & Credit Cards', 'woocommerce-paypal-payments' )
 		);
 	}
 
@@ -740,7 +740,8 @@ class SettingsProvider {
 	}
 
 	/**
-	 * Whether to show the cardholder name field in the ACDC (Advanced Card Processing) payment form.
+	 * Whether to show the cardholder name field in the ACDC (Advanced Card Processing) payment
+	 * form.
 	 *
 	 * @return string 'yes' to show the field, 'no' to hide it.
 	 */
@@ -751,5 +752,12 @@ class SettingsProvider {
 		}
 
 		return $this->payment_settings->get_cardholder_name() ? 'yes' : 'no';
+	}
+
+	public function capture_on_status_change(): bool {
+		return apply_filters(
+			'woocommerce_paypal_payments_capture_on_status_change',
+			$this->payment_settings->get_capture_on_status_change()
+		);
 	}
 }

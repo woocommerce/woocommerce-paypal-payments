@@ -40,6 +40,7 @@ use WooCommerce\PayPalCommerce\WcGateway\Assets\VoidButtonAssets;
 use WooCommerce\PayPalCommerce\WcGateway\Checkout\CheckoutPayPalAddressPreset;
 use WooCommerce\PayPalCommerce\WcGateway\Checkout\DisableGateways;
 use WooCommerce\PayPalCommerce\WcGateway\Endpoint\CaptureCardPayment;
+use WooCommerce\PayPalCommerce\WcGateway\Endpoint\CapturePayPalPayment;
 use WooCommerce\PayPalCommerce\WcGateway\Endpoint\RefreshFeatureStatusEndpoint;
 use WooCommerce\PayPalCommerce\WcGateway\Endpoint\ReturnUrlEndpoint;
 use WooCommerce\PayPalCommerce\WcGateway\Endpoint\ShippingCallbackEndpoint;
@@ -69,7 +70,6 @@ use WooCommerce\PayPalCommerce\WcGateway\Helper\MerchantDetails;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\PayUponInvoiceHelper;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\PayUponInvoiceProductStatus;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\PWCProductStatus;
-use WooCommerce\PayPalCommerce\WcGateway\Helper\OrderStatusHelper;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\RefundFeesUpdater;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\SettingsStatus;
 use WooCommerce\PayPalCommerce\WcGateway\Notice\AuthorizeOrderActionNotice;
@@ -123,7 +123,10 @@ return array(
 			$container->get( 'vaulting.vault-v3-enabled' ),
 			$container->get( 'vaulting.wc-payment-tokens' ),
 			$container->get( 'wcgateway.asset_getter' ),
-			$container->get( 'wcgateway.settings.admin-settings-enabled' )
+			$container->get( 'wcgateway.settings.admin-settings-enabled' ),
+			$container->get( 'wcgateway.endpoint.capture-paypal-payment' ),
+			$container->get( 'api.endpoint.order' ),
+			$container->get( 'api.prefix' )
 		);
 	},
 	'wcgateway.credit-card-gateway'                        => static function ( ContainerInterface $container ): CreditCardGateway {
@@ -461,8 +464,7 @@ return array(
 			$container->get( 'api.factory.purchase-unit' ),
 			$container->get( 'api.factory.payer' ),
 			$container->get( 'api.factory.shipping-preference' ),
-			$container->get( 'wcgateway.builder.experience-context' ),
-			$container->get( 'wcgateway.helper.order-status' )
+			$container->get( 'wcgateway.builder.experience-context' )
 		);
 	},
 	'wcgateway.processor.refunds'                          => static function ( ContainerInterface $container ): RefundProcessor {
@@ -601,8 +603,7 @@ return array(
 			$gateway,
 			$endpoint,
 			$container->get( 'session.handler' ),
-			$container->get( 'woocommerce.logger.woocommerce' ),
-			$container->get( 'wcgateway.helper.order-status' )
+			$container->get( 'woocommerce.logger.woocommerce' )
 		);
 	},
 	'wcgateway.endpoint.refresh-feature-status'            => static function ( ContainerInterface $container ): RefreshFeatureStatusEndpoint {
@@ -651,10 +652,6 @@ return array(
 			$container->get( 'api.helper.product-status-result-cache' ),
 			$container->get( 'api.helpers.dccapplies' )
 		);
-	},
-
-	'wcgateway.helper.order-status'                        => static function ( ContainerInterface $container ): OrderStatusHelper {
-		return new OrderStatusHelper();
 	},
 
 	'wcgateway.helper.refund-fees-updater'                 => static function ( ContainerInterface $container ): RefundFeesUpdater {
@@ -1224,6 +1221,16 @@ return array(
 	},
 	'wcgateway.endpoint.capture-card-payment'              => static function ( ContainerInterface $container ): CaptureCardPayment {
 		return new CaptureCardPayment(
+			$container->get( 'api.host' ),
+			$container->get( 'api.bearer' ),
+			$container->get( 'api.factory.order' ),
+			$container->get( 'api.factory.purchase-unit' ),
+			$container->get( 'settings.settings-provider' ),
+			$container->get( 'woocommerce.logger.woocommerce' )
+		);
+	},
+	'wcgateway.endpoint.capture-paypal-payment'            => static function ( ContainerInterface $container ): CapturePayPalPayment {
+		return new CapturePayPalPayment(
 			$container->get( 'api.host' ),
 			$container->get( 'api.bearer' ),
 			$container->get( 'api.factory.order' ),

@@ -28,6 +28,7 @@ use WooCommerce\PayPalCommerce\Settings\Service\Migration\MigrationManager;
 use WooCommerce\PayPalCommerce\Settings\Service\Migration\PaymentSettingsMigration;
 use WooCommerce\PayPalCommerce\Settings\Service\PaymentMethodsEligibilityService;
 use WooCommerce\PayPalCommerce\Settings\Service\ScriptDataHandler;
+use WooCommerce\PayPalCommerce\Settings\Service\SellerTypeResolver;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExecutableModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ModuleClassNameIdTrait;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ServiceModule;
@@ -100,11 +101,36 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 			}
 		);
 
+		add_action(
+			'admin_init',
+			function () use ( $container ): void {
+				if ( get_option( MigrationManager::OPTION_NAME_MIGRATION_IS_DONE ) !== '1' ) {
+					$legacy_settings = (array) get_option( 'woocommerce-ppcp-settings', array() );
+					if ( ! empty( $legacy_settings['client_id'] ) ) {
+						$migration_manager = $container->get( 'settings.service.data-migration' );
+						assert( $migration_manager instanceof MigrationManager );
+						$migration_manager->migrate();
+					}
+				}
+
+				$seller_type_resolver = $container->get( 'settings.service.seller-type-resolver' );
+				assert( $seller_type_resolver instanceof SellerTypeResolver );
+
+				$seller_type_resolver->resolve_unknown_seller_type(
+					$container->get( 'api.helper.failure-registry' ),
+					$container->get( 'settings.data.general' ),
+					$container->get( 'api.endpoint.partners' ),
+					$container->get( 'woocommerce.logger.woocommerce' )
+				);
+			}
+		);
+
 		/**
 		 * Override ACDC status with BCDC for eligible merchants.
 		 *
-		 * This filter determines whether to force BCDC (Standard Card buttons) classification
-		 * for merchants instead of ACDC (Advanced Card processing). It handles two scenarios:
+		 * When the BCDC migration override is active, forces BCDC (Standard Card buttons)
+		 * classification instead of ACDC (Advanced Card processing), and suppresses ACDC
+		 * eligibility so the payment methods panel shows BCDC instead of ACDC.
 		 *
 		 * @param bool|null $use_bcdc Whether to use BCDC instead of ACDC.
 		 *
@@ -118,6 +144,9 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 
 				if ( $check_override() ) {
 					$use_bcdc = true;
+
+					add_filter( 'woocommerce_paypal_payments_is_acdc_active', '__return_false' );
+					add_filter( 'woocommerce_paypal_payments_is_eligible_for_card_fields', '__return_false' );
 				}
 
 				return $use_bcdc;
@@ -147,7 +176,23 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 					$payment_settings_migration = $container->get( 'settings.service.data-migration.payment-settings' );
 					assert( $payment_settings_migration instanceof PaymentSettingsMigration );
 
-					if ( ! $payment_settings_migration->is_bcdc_enabled_for_acdc_merchant() ) {
+					$is_bcdc_merchant = $payment_settings_migration->is_bcdc_enabled_for_acdc_merchant();
+
+					// Fallback: when API-based check fails (no cached DCC product status after major
+					// version upgrade), detect BCDC usage from legacy settings directly.
+					if ( ! $is_bcdc_merchant ) {
+						$dcc_applies = $container->get( 'api.helpers.dccapplies' );
+						if ( $dcc_applies->for_country_currency() ) {
+							$legacy_settings = (array) get_option( 'woocommerce-ppcp-settings', array() );
+							$disable_funding = (array) ( $legacy_settings['disable_funding'] ?? array() );
+							$card_was_active = ! in_array( 'card', $disable_funding, true );
+							$dcc_not_enabled = empty( $legacy_settings['dcc_enabled'] );
+
+							$is_bcdc_merchant = $card_was_active && $dcc_not_enabled;
+						}
+					}
+
+					if ( ! $is_bcdc_merchant ) {
 						return;
 					}
 
@@ -228,6 +273,7 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 					'todos'                  => $container->get( 'settings.rest.todos' ),
 					'pay_later_messaging'    => $container->get( 'settings.rest.pay_later_messaging' ),
 					'features'               => $container->get( 'settings.rest.features' ),
+					'migrate_to_acdc'        => $container->get( 'settings.rest.migrate_to_acdc' ),
 				);
 
 				foreach ( $endpoints as $endpoint ) {
@@ -351,6 +397,17 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 					assert( $axo_gateway instanceof WC_Payment_Gateway );
 					$methods[] = $axo_gateway;
 				}
+
+				// Remove gateways where the merchant is not eligible.
+				$eligibility_service = $container->get( 'settings.service.payment_methods_eligibilities' );
+				$eligibility_checks  = $eligibility_service->get_eligibility_checks();
+				$methods             = array_filter(
+					$methods,
+					static function ( $gateway ) use ( $eligibility_checks ) {
+						$id = $gateway instanceof WC_Payment_Gateway ? $gateway->id : '';
+						return ! isset( $eligibility_checks[ $id ] ) || $eligibility_checks[ $id ]();
+					}
+				);
 
 				return $methods;
 			},
@@ -526,13 +583,6 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 
 				$merchant_data    = $general_settings->get_merchant_data();
 				$merchant_country = $merchant_data->merchant_country;
-
-				// Disable all extended checkout card methods if the store is in Mexico.
-				if ( 'MX' === $merchant_country ) {
-					$payment_methods->toggle_method_state( CreditCardGateway::ID, false );
-					$payment_methods->toggle_method_state( ApplePayGateway::ID, false );
-					$payment_methods->toggle_method_state( GooglePayGateway::ID, false );
-				}
 			},
 			10,
 			2
@@ -569,10 +619,7 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 						continue;
 					}
 
-					// For all other APMs: enable only if merchant is NOT in Mexico.
-					if ( 'MX' !== $merchant_country ) {
-						$payment_methods->toggle_method_state( $method['id'], true );
-					}
+					$payment_methods->toggle_method_state( $method['id'], true );
 				}
 			},
 			10,
@@ -652,6 +699,98 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 		add_action(
 			'woocommerce_paypal_payments_gateway_migrate',
 			/**
+			 * Retroactive fix for CardButtonGateway not enabled after migration.
+			 *
+			 * In versions up to 3.4.1, the migration only enabled CardButtonGateway for
+			 * ACDC-eligible merchants using BCDC. Non-ACDC merchants who had the card
+			 * funding source active (the default) were missed, causing the card button
+			 * to disappear after upgrade.
+			 *
+			 * @param false|string $previous_version The previously installed plugin version,
+			 *                                       or false on first installation.
+			 */
+			static function ( $previous_version ) use ( $container ): void {
+				if ( $previous_version && version_compare( $previous_version, '3.4.1', 'gt' ) ) {
+					return;
+				}
+
+				if ( get_option( MigrationManager::OPTION_NAME_MIGRATION_IS_DONE ) !== '1' ) {
+					return;
+				}
+
+				$payment_settings = $container->get( 'settings.data.payment' );
+				assert( $payment_settings instanceof PaymentSettings );
+
+				if ( $payment_settings->is_method_enabled( CardButtonGateway::ID ) ) {
+					return;
+				}
+
+				$legacy_settings = (array) get_option( 'woocommerce-ppcp-settings', array() );
+				$disable_funding = (array) ( $legacy_settings['disable_funding'] ?? array() );
+
+				if ( ! in_array( 'card', $disable_funding, true ) ) {
+					$payment_settings->toggle_method_state( CardButtonGateway::ID, true );
+					$payment_settings->save();
+				}
+			}
+		);
+
+		add_action(
+			'woocommerce_paypal_payments_gateway_migrate',
+			/**
+			 * Retroactive fix for local APMs not enabled after migration when
+			 * allow_local_apm_gateways was false.
+			 *
+			 * In versions up to 3.4.1, the migration only enabled local APMs when
+			 * allow_local_apm_gateways was truthy. When it was false, APMs were shown
+			 * inside the PayPal button, not as separate gateways. The new UI always
+			 * treats APMs as separate gateways, so skipping them left them invisible.
+			 *
+			 * @param false|string $previous_version The previously installed plugin version,
+			 *                                       or false on first installation.
+			 */
+			static function ( $previous_version ) use ( $container ): void {
+				if ( $previous_version && version_compare( $previous_version, '3.4.1', 'gt' ) ) {
+					return;
+				}
+
+				if ( get_option( MigrationManager::OPTION_NAME_MIGRATION_IS_DONE ) !== '1' ) {
+					return;
+				}
+
+				$legacy_settings = (array) get_option( 'woocommerce-ppcp-settings', array() );
+
+				// Only fix merchants who had allow_local_apm_gateways falsy.
+				// Truthy merchants were migrated correctly.
+				if ( ! empty( $legacy_settings['allow_local_apm_gateways'] ) ) {
+					return;
+				}
+
+				$payment_settings = $container->get( 'settings.data.payment' );
+				assert( $payment_settings instanceof PaymentSettings );
+
+				$local_apms      = $container->get( 'ppcp-local-apms.payment-methods' );
+				$disable_funding = (array) ( $legacy_settings['disable_funding'] ?? array() );
+				$changed         = false;
+
+				foreach ( $local_apms as $apm ) {
+					if ( ! in_array( $apm['id'], $disable_funding, true )
+						&& ! $payment_settings->is_method_enabled( $apm['id'] )
+					) {
+						$payment_settings->toggle_method_state( $apm['id'], true );
+						$changed = true;
+					}
+				}
+
+				if ( $changed ) {
+					$payment_settings->save();
+				}
+			}
+		);
+
+		add_action(
+			'woocommerce_paypal_payments_gateway_migrate',
+			/**
 			 * Migrates payment level processing setting during plugin update.
 			 *
 			 * For merchants updating from version 3.3.2 or older, disables Level 2/3
@@ -680,6 +819,53 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 					return;
 				}
 			}
+		);
+
+		/**
+		 * Disable ACDC gateway for merchants not eligible for ACDC
+		 * after onboarding is completed.
+		 */
+		add_action(
+			'woocommerce_paypal_payments_toggle_payment_gateways',
+			function ( PaymentSettings $payment_methods, ConfigurationFlagsDTO $flags ) use ( $container ) {
+				$dcc_configuration = $container->get( 'wcgateway.configuration.card-configuration' );
+				assert( $dcc_configuration instanceof CardPaymentsConfiguration );
+
+				if ( $flags->is_business_seller && $flags->use_card_payments && ! $dcc_configuration->use_acdc() ) {
+					$payment_methods->toggle_method_state( CreditCardGateway::ID, false );
+				}
+			},
+			10,
+			2
+		);
+
+		/**
+		 * Disable Apple Pay/Google Pay gateways for merchants not eligible
+		 * after onboarding is completed.
+		 */
+		add_action(
+			'woocommerce_paypal_payments_toggle_payment_gateways',
+			function ( PaymentSettings $payment_methods, ConfigurationFlagsDTO $flags ) use ( $container ) {
+				if ( ! $flags->is_business_seller || ! $flags->use_digital_wallets ) {
+					return;
+				}
+
+				$applepay_product_status = $container->get( 'applepay.apple-product-status' );
+				$applepay_eligibility    = $container->get( 'applepay.eligibility.check' );
+				$apple_pay_available     = $applepay_product_status->is_active() && $applepay_eligibility();
+				if ( ! $apple_pay_available ) {
+					$payment_methods->toggle_method_state( ApplePayGateway::ID, false );
+				}
+
+				$googlepay_product_status = $container->get( 'googlepay.helpers.apm-product-status' );
+				$googlepay_eligibility    = $container->get( 'googlepay.eligibility.check' );
+				$google_pay_available     = $googlepay_product_status->is_active() && $googlepay_eligibility();
+				if ( ! $google_pay_available ) {
+					$payment_methods->toggle_method_state( GooglePayGateway::ID, false );
+				}
+			},
+			10,
+			2
 		);
 
 		return true;
@@ -734,11 +920,41 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 			2
 		);
 
+		/**
+		 * Prevent white-label payment methods from being enabled during onboarding.
+		 *
+		 * During the onboarding flow, toggle_payment_gateways() enables ACDC, Apple Pay,
+		 * and Google Pay for business sellers. In branded-only mode, these white-label
+		 * methods should never be enabled.
+		 *
+		 * This hook runs during the 'woocommerce_paypal_payments_toggle_payment_gateways_apms'
+		 * action, immediately disabling these methods before payment settings are saved.
+		 * This prevents them from being enabled even temporarily during onboarding.
+		 *
+		 * Without this hook, white-label methods would be enabled during onboarding and
+		 * then disabled afterward, creating an inconsistent state during the upgrade process.
+		 */
+		add_action(
+			'woocommerce_paypal_payments_toggle_payment_gateways_apms',
+			static function ( PaymentSettings $payment_settings ): void {
+				$payment_settings->toggle_method_state( CreditCardGateway::ID, false );
+				$payment_settings->toggle_method_state( ApplePayGateway::ID, false );
+				$payment_settings->toggle_method_state( GooglePayGateway::ID, false );
+			}
+		);
+
 		$payment_settings = $container->get( 'settings.data.payment' );
 		assert( $payment_settings instanceof PaymentSettings );
 
+		$gateway_name     = CardButtonGateway::ID;
+		$gateway_settings = get_option( "woocommerce_{$gateway_name}_settings", array() );
+		$gateway_enabled  = $gateway_settings['enabled'] ?? false;
+
 		if ( $payment_settings->is_method_enabled( CreditCardGateway::ID ) ) {
 			$payment_settings->toggle_method_state( CreditCardGateway::ID, false );
+			if ( $gateway_enabled === 'yes' ) {
+				$payment_settings->toggle_method_state( CardButtonGateway::ID, true );
+			}
 			$payment_settings->save();
 		}
 
