@@ -14,6 +14,8 @@ use WC_Coupon;
 use WooCommerce\PayPalCommerce\StoreSync\Helper\CartHelper;
 use WooCommerce\PayPalCommerce\StoreSync\Helper\ProductManager;
 use WooCommerce\PayPalCommerce\StoreSync\Schema\PayPalCart;
+use WooCommerce\PayPalCommerce\StoreSync\Validation\Context\IssueContext;
+use WooCommerce\PayPalCommerce\StoreSync\Validation\Context\PricingErrorContext;
 /**
  * Builds context data for coupon validation issues.
  */
@@ -40,11 +42,11 @@ class CouponContextBuilder
      * Builds context by calling declared context builders.
      *
      * @param string         $issue_type The issue type.
-     * @param string         $code The coupon code.
-     * @param PayPalCart     $cart The cart context.
-     * @param WC_Coupon|null $wc_coupon The WC coupon object.
-     * @param array          $builders Array of builder names to call.
-     * @param array          $extra Extra context data.
+     * @param string         $code       The coupon code.
+     * @param PayPalCart     $cart       The cart context.
+     * @param WC_Coupon|null $wc_coupon  The WC coupon object.
+     * @param array          $builders   Array of builder names to call.
+     * @param array          $extra      Extra context data.
      * @return array The built context.
      */
     public function build_coupon_context(string $issue_type, string $code, PayPalCart $cart, ?WC_Coupon $wc_coupon, array $builders, array $extra = array()): array
@@ -59,11 +61,11 @@ class CouponContextBuilder
     /**
      * Dispatches to the appropriate builder method.
      *
-     * @param string         $builder The builder name.
-     * @param string         $code The coupon code.
-     * @param PayPalCart     $cart The cart context.
+     * @param string         $builder   The builder name.
+     * @param string         $code      The coupon code.
+     * @param PayPalCart     $cart      The cart context.
      * @param WC_Coupon|null $wc_coupon The WC coupon object.
-     * @param array          $extra Extra context data.
+     * @param array          $extra     Extra context data.
      * @return array The context data from the builder.
      */
     private function call_builder(string $builder, string $code, PayPalCart $cart, ?WC_Coupon $wc_coupon, array $extra): array
@@ -92,10 +94,10 @@ class CouponContextBuilder
     /**
      * Builds alternative coupons context.
      *
-     * @param string         $code The coupon code.
-     * @param PayPalCart     $cart The cart context.
+     * @param string         $code      The coupon code.
+     * @param PayPalCart     $cart      The cart context.
      * @param WC_Coupon|null $wc_coupon The WC coupon object.
-     * @param array          $extra Extra context data.
+     * @param array          $extra     Extra context data.
      * @return array The context data.
      */
     private function build_alternatives(string $code, PayPalCart $cart, ?WC_Coupon $wc_coupon, array $extra): array
@@ -109,10 +111,10 @@ class CouponContextBuilder
     /**
      * Builds expiration context.
      *
-     * @param string         $code The coupon code.
-     * @param PayPalCart     $cart The cart context.
+     * @param string         $code      The coupon code.
+     * @param PayPalCart     $cart      The cart context.
      * @param WC_Coupon|null $wc_coupon The WC coupon object.
-     * @param array          $extra Extra context data.
+     * @param array          $extra     Extra context data.
      * @return array The context data.
      */
     private function build_expiration(string $code, PayPalCart $cart, ?WC_Coupon $wc_coupon, array $extra): array
@@ -124,15 +126,15 @@ class CouponContextBuilder
         if (!$expiration_date) {
             return array();
         }
-        return array('expiration_date' => $expiration_date->format('c'));
+        return array('expiration_date' => $expiration_date->getTimestamp());
     }
     /**
      * Builds usage limits context.
      *
-     * @param string         $code The coupon code.
-     * @param PayPalCart     $cart The cart context.
+     * @param string         $code      The coupon code.
+     * @param PayPalCart     $cart      The cart context.
      * @param WC_Coupon|null $wc_coupon The WC coupon object.
-     * @param array          $extra Extra context data.
+     * @param array          $extra     Extra context data.
      * @return array The context data.
      */
     private function build_usage_limits(string $code, PayPalCart $cart, ?WC_Coupon $wc_coupon, array $extra): array
@@ -145,10 +147,10 @@ class CouponContextBuilder
     /**
      * Builds minimum spend context.
      *
-     * @param string         $code The coupon code.
-     * @param PayPalCart     $cart The cart context.
+     * @param string         $code      The coupon code.
+     * @param PayPalCart     $cart      The cart context.
      * @param WC_Coupon|null $wc_coupon The WC coupon object.
-     * @param array          $extra Extra context data.
+     * @param array          $extra     Extra context data.
      * @return array The context data.
      */
     private function build_minimum_spend(string $code, PayPalCart $cart, ?WC_Coupon $wc_coupon, array $extra): array
@@ -165,10 +167,10 @@ class CouponContextBuilder
     /**
      * Builds maximum spend context.
      *
-     * @param string         $code The coupon code.
-     * @param PayPalCart     $cart The cart context.
+     * @param string         $code      The coupon code.
+     * @param PayPalCart     $cart      The cart context.
      * @param WC_Coupon|null $wc_coupon The WC coupon object.
-     * @param array          $extra Extra context data.
+     * @param array          $extra     Extra context data.
      * @return array The context data.
      */
     private function build_maximum_spend(string $code, PayPalCart $cart, ?WC_Coupon $wc_coupon, array $extra): array
@@ -184,10 +186,10 @@ class CouponContextBuilder
     /**
      * Builds eligible items context.
      *
-     * @param string         $code The coupon code.
-     * @param PayPalCart     $cart The cart context.
+     * @param string         $code      The coupon code.
+     * @param PayPalCart     $cart      The cart context.
      * @param WC_Coupon|null $wc_coupon The WC coupon object.
-     * @param array          $extra Extra context data.
+     * @param array          $extra     Extra context data.
      * @return array The context data.
      */
     private function build_eligible_items(string $code, PayPalCart $cart, ?WC_Coupon $wc_coupon, array $extra): array
@@ -204,10 +206,10 @@ class CouponContextBuilder
     /**
      * Builds stacking conflict context.
      *
-     * @param string         $code The coupon code.
-     * @param PayPalCart     $cart The cart context.
+     * @param string         $code      The coupon code.
+     * @param PayPalCart     $cart      The cart context.
      * @param WC_Coupon|null $wc_coupon The WC coupon object.
-     * @param array          $extra Extra context data.
+     * @param array          $extra     Extra context data.
      * @return array The context data.
      */
     private function build_stacking(string $code, PayPalCart $cart, ?WC_Coupon $wc_coupon, array $extra): array
@@ -229,10 +231,10 @@ class CouponContextBuilder
     /**
      * Builds email restriction context.
      *
-     * @param string         $code The coupon code.
-     * @param PayPalCart     $cart The cart context.
+     * @param string         $code      The coupon code.
+     * @param PayPalCart     $cart      The cart context.
      * @param WC_Coupon|null $wc_coupon The WC coupon object.
-     * @param array          $extra Extra context data.
+     * @param array          $extra     Extra context data.
      * @return array The context data.
      */
     private function build_email_restriction(string $code, PayPalCart $cart, ?WC_Coupon $wc_coupon, array $extra): array
@@ -250,13 +252,68 @@ class CouponContextBuilder
      * Gets alternative coupon suggestions via filter.
      *
      * @param string     $failed_code The coupon code that failed.
-     * @param string     $reason The failure reason.
-     * @param PayPalCart $cart The cart context.
+     * @param string     $reason      The failure reason.
+     * @param PayPalCart $cart        The cart context.
      * @return array Array of alternative coupon codes.
      */
     private function get_alternative_coupons(string $failed_code, string $reason, PayPalCart $cart): array
     {
         return apply_filters('woocommerce_paypal_payments_store_sync_suggested_alternative_coupons', array(), $failed_code, $reason, $cart);
+    }
+    /**
+     * Builds a typed IssueContext instance from a resolved context array.
+     *
+     * Returns null for issue types that have no matching context class.
+     *
+     * @param string $issue_type  The coupon issue type (e.g. 'COUPON_EXPIRED').
+     * @param string $coupon_code The coupon code that triggered the issue.
+     * @param array  $args        The flat context array built by build_coupon_context().
+     * @return IssueContext|null
+     */
+    public function build_coupon_issue_context(string $issue_type, string $coupon_code, array $args): ?IssueContext
+    {
+        $context = null;
+        switch ($issue_type) {
+            case 'COUPON_EXPIRED':
+                $context = PricingErrorContext::create_discount_expired();
+                break;
+            case 'USAGE_LIMIT_EXCEEDED':
+                $context = PricingErrorContext::create_discount_usage_limit_exceeded();
+                break;
+            case 'MINIMUM_ORDER_NOT_MET':
+                $context = PricingErrorContext::create_discount_minimum_not_met();
+                break;
+            case 'COUPON_NOT_APPLICABLE':
+            case 'COUPON_EMAIL_RESTRICTED':
+                $context = PricingErrorContext::create_discount_customer_ineligible();
+                break;
+            case 'COUPON_STACKING_NOT_ALLOWED':
+                $context = PricingErrorContext::create_promotional_conflict();
+                break;
+        }
+        if (!$context) {
+            return null;
+        }
+        $context->coupon_code($coupon_code);
+        if (isset($args['expiration_date'])) {
+            $context->expiration_date((int) $args['expiration_date']);
+        }
+        if (isset($args['usage_limit']) && is_numeric($args['usage_limit'])) {
+            $context->usage_limit((int) $args['usage_limit']);
+        }
+        if (isset($args['minimum_required'])) {
+            $context->minimum_order_amount((string) $args['minimum_required']);
+        }
+        if (isset($args['current_usage'])) {
+            $context->current_usage((int) $args['current_usage']);
+        }
+        if (isset($args['currency_code'])) {
+            $context->currency_code((string) $args['currency_code']);
+        }
+        if (isset($args['current_discount'])) {
+            $context->discount_amount((string) $args['current_discount']);
+        }
+        return $context;
     }
     /**
      * Gets eligible items for a coupon via filter.
@@ -266,7 +323,7 @@ class CouponContextBuilder
      * excluded items, sale items, and third-party plugin logic.
      *
      * @param WC_Coupon  $wc_coupon The WC coupon.
-     * @param PayPalCart $cart The cart context.
+     * @param PayPalCart $cart      The cart context.
      * @return array Array of eligible variant IDs.
      */
     private function get_eligible_items(WC_Coupon $wc_coupon, PayPalCart $cart): array

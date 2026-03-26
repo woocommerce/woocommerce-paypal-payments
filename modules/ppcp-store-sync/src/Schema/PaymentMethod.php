@@ -8,8 +8,7 @@
 declare (strict_types=1);
 namespace WooCommerce\PayPalCommerce\StoreSync\Schema;
 
-use WooCommerce\PayPalCommerce\StoreSync\Validation\InvalidData;
-use WooCommerce\PayPalCommerce\StoreSync\Validation\MissingField;
+use WooCommerce\PayPalCommerce\StoreSync\Validation\ValidationIssue;
 /**
  * @see PaymentMethodTest - Unit tests for this class.
  */
@@ -24,13 +23,13 @@ class PaymentMethod extends \WooCommerce\PayPalCommerce\StoreSync\Schema\Agentic
         $this->payer_id = null;
         // Mandatory fields.
         if (!isset($input['type']) || !is_string($input['type'])) {
-            $add_issue(new MissingField('Payment method is required', 'No value for the payment method type found', 'type'));
+            $add_issue(ValidationIssue::create_missing_field('Payment method is required')->user_message('No value for the payment method type found')->for_field('type'));
         } else {
             $type = trim($input['type']);
             if (empty($type)) {
-                $add_issue(new MissingField('Payment method is required', 'No value for the payment method type found', 'type'));
+                $add_issue(ValidationIssue::create_missing_field('Payment method is required')->user_message('No value for the payment method type found')->for_field('type'));
             } elseif ('paypal' !== $type) {
-                $add_issue(new InvalidData('Unexpected payment method type', 'Only PayPal is supported', 'type'));
+                $add_issue(ValidationIssue::create_invalid_data('Unexpected payment method type')->user_message('Only PayPal is supported')->for_field('type'));
             }
         }
         // Optional fields.

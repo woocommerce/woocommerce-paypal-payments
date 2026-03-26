@@ -8,8 +8,7 @@
 declare (strict_types=1);
 namespace WooCommerce\PayPalCommerce\StoreSync\Schema;
 
-use WooCommerce\PayPalCommerce\StoreSync\Validation\MissingField;
-use WooCommerce\PayPalCommerce\StoreSync\Validation\InvalidData;
+use WooCommerce\PayPalCommerce\StoreSync\Validation\ValidationIssue;
 class PayPalCart extends \WooCommerce\PayPalCommerce\StoreSync\Schema\AgenticSchema
 {
     /**
@@ -44,7 +43,7 @@ class PayPalCart extends \WooCommerce\PayPalCommerce\StoreSync\Schema\AgenticSch
         if (!empty($input['items']) && is_array($input['items'])) {
             $items = $input['items'];
             if (count($items) > 100) {
-                $add_issue(new InvalidData('Too many items', 'The cart cannot hold more than 100 items', 'items'));
+                $add_issue(ValidationIssue::create_invalid_data('Too many items')->user_message('The cart cannot hold more than 100 items')->for_field('items'));
             } else {
                 foreach ($items as $item) {
                     if (is_object($item)) {
@@ -57,12 +56,12 @@ class PayPalCart extends \WooCommerce\PayPalCommerce\StoreSync\Schema\AgenticSch
                 }
             }
         } else {
-            $add_issue(new MissingField('Required field missing', 'Please provide a list of cart items.', 'items'));
+            $add_issue(ValidationIssue::create_missing_field('Required field missing')->user_message('Please provide a list of cart items.')->for_field('items'));
         }
         if (!empty($input['payment_method']) && is_array($input['payment_method'])) {
             $this->payment_method = \WooCommerce\PayPalCommerce\StoreSync\Schema\PaymentMethod::from_array($input['payment_method'], $add_issue);
         } else {
-            $add_issue(new MissingField('Required field missing', 'No payment_method defined.', 'payment_method'));
+            $add_issue(ValidationIssue::create_missing_field('Required field missing')->user_message('No payment_method defined.')->for_field('payment_method'));
         }
         // Parse optional fields.
         if (!empty($input['customer']) && is_array($input['customer'])) {
@@ -81,7 +80,7 @@ class PayPalCart extends \WooCommerce\PayPalCommerce\StoreSync\Schema\AgenticSch
             $checkout_fields = $input['checkout_fields'];
             $this->checkout_fields = array();
             if (count($checkout_fields) > 20) {
-                $add_issue(new InvalidData('Too many checkout fields', 'The cart cannot hold more than 20 checkout fields', 'checkout_fields'));
+                $add_issue(ValidationIssue::create_invalid_data('Too many checkout fields')->user_message('The cart cannot hold more than 20 checkout fields')->for_field('checkout_fields'));
             } else {
                 foreach ($checkout_fields as $field) {
                     $this->checkout_fields[] = \WooCommerce\PayPalCommerce\StoreSync\Schema\CheckoutField::from_array($field, $add_issue);
