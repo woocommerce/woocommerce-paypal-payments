@@ -11,8 +11,8 @@ namespace WooCommerce\PayPalCommerce\StoreSync\CartValidation;
 
 use WooCommerce\PayPalCommerce\StoreSync\Enums\Priority;
 use WooCommerce\PayPalCommerce\StoreSync\Schema\PayPalCart;
-use WooCommerce\PayPalCommerce\StoreSync\Schema\ResolutionOption;
-use WooCommerce\PayPalCommerce\StoreSync\Validation\CurrencyMismatch;
+use WooCommerce\PayPalCommerce\StoreSync\Validation\Resolution\ResolutionOption;
+use WooCommerce\PayPalCommerce\StoreSync\Validation\ValidationIssue;
 
 class CurrencyValidator implements ValidatorInterface {
 
@@ -24,7 +24,8 @@ class CurrencyValidator implements ValidatorInterface {
 			return array();
 		}
 
-		$consistency_issue = $this->validate_consistent_currency( $cart_currencies, $store_currency );
+		$consistency_issue =
+			$this->validate_consistent_currency( $cart_currencies, $store_currency );
 		if ( $consistency_issue ) {
 			return array( $consistency_issue );
 		}
@@ -67,7 +68,7 @@ class CurrencyValidator implements ValidatorInterface {
 		);
 	}
 
-	private function validate_consistent_currency( array $currencies, string $store_currency ): ?CurrencyMismatch {
+	private function validate_consistent_currency( array $currencies, string $store_currency ): ?ValidationIssue {
 		$unique_currencies = array_unique( array_column( $currencies, 'currency' ) );
 
 		if ( count( $unique_currencies ) === 1 ) {
@@ -82,56 +83,42 @@ class CurrencyValidator implements ValidatorInterface {
 			)
 		);
 
-		return new CurrencyMismatch(
+		return ValidationIssue::create_currency_mismatch(
 			sprintf(
 				'Mixed currencies detected: item %d has currency %s, expected %s',
 				$mismatch['index'],
 				$mismatch['currency'],
 				$reference['currency']
-			),
-			'All items in the cart must use the same currency.',
-			"items[{$mismatch['index']}].price.currency_code",
-			'',
-			array(),
-			array(
-				ResolutionOption::use_different_currency(
-					sprintf( 'Set all items to %s', $store_currency ),
-					$store_currency
-				)->with(
-					array(
-						'metadata' => array(
-							'priority'          => Priority::HIGH,
-							'expected_currency' => $store_currency,
-						),
-					)
-				),
-				ResolutionOption::remove_item( Priority::LOW, array( 'item_index' => $mismatch['index'] ) ),
 			)
-		);
+		)
+			->user_message( 'All items in the cart must use the same currency.' )
+			->for_field( "items[{$mismatch['index']}].price.currency_code" )
+			->add_resolution(
+				ResolutionOption::create_use_different_currency()
+					->label( sprintf( 'Set all items to %s', $store_currency ) )
+					->set_meta( 'expected_currency', $store_currency )
+					->priority( Priority::HIGH )
+			)
+			->add_resolution(
+				ResolutionOption::create_remove_item()
+					->label( 'Remove from cart' )
+					->priority( Priority::LOW )
+					->set_meta( 'item_index', $mismatch['index'] )
+			);
 	}
 
-	private function validate_store_currency( string $cart_currency, int $item_index, string $store_currency ): ?CurrencyMismatch {
+	private function validate_store_currency( string $cart_currency, int $item_index, string $store_currency ): ?ValidationIssue {
 		if ( $cart_currency !== $store_currency ) {
-			return new CurrencyMismatch(
-				sprintf(
-					'Cart currency %s does not match store currency %s',
-					$cart_currency,
-					$store_currency
-				),
-				sprintf(
-					'This store only accepts payments in %s.',
-					$store_currency
-				),
-				"items[{$item_index}].price.currency_code",
-				'',
-				array(),
-				array(
-					ResolutionOption::use_different_currency(
-						sprintf( 'Change to %s', $store_currency ),
-						$store_currency
-					),
-				)
-			);
+			return ValidationIssue::create_currency_mismatch(
+				sprintf( 'Cart currency %s does not match store currency %s', $cart_currency, $store_currency )
+			)
+				->user_message( sprintf( 'This store only accepts payments in %s.', $store_currency ) )
+				->for_field( "items[{$item_index}].price.currency_code" )
+				->add_resolution(
+					ResolutionOption::create_use_different_currency()
+						->label( sprintf( 'Change to %s', $store_currency ) )
+						->set_meta( 'expected_currency', $store_currency )
+				);
 		}
 
 		return null;

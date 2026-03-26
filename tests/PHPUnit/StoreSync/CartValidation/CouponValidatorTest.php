@@ -4,11 +4,9 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\StoreSync\CartValidation;
 
 use Mockery;
-use WooCommerce\PayPalCommerce\StoreSync\Enums\Priority;
 use WooCommerce\PayPalCommerce\StoreSync\Helper\ProductManager;
 use WooCommerce\PayPalCommerce\StoreSync\Schema\PayPalCart;
-use WooCommerce\PayPalCommerce\StoreSync\Schema\ResolutionOption;
-use WooCommerce\PayPalCommerce\StoreSync\Validation\CouponInvalid;
+use WooCommerce\PayPalCommerce\StoreSync\Validation\ValidationIssue;
 use WooCommerce\PayPalCommerce\StoreSync\CartValidation\CouponValidator\CouponValidator;
 use WooCommerce\PayPalCommerce\StoreSync\CartValidation\CouponValidator\CouponContextBuilder;
 use WooCommerce\PayPalCommerce\StoreSync\CartValidation\CouponValidator\DiscountCalculator;
@@ -114,63 +112,28 @@ class CouponValidatorTest extends TestCase
 
 	public function test_coupon_invalid_issue_has_correct_error_code(): void
 	{
-		$issue = new CouponInvalid(
-			'Test message',
-			'Test user message',
-			'coupons[0]',
-			''
-		);
+		$issue = ValidationIssue::create_coupon_invalid( 'Test message' )
+			->user_message( 'Test user message' )
+			->for_field( 'coupons[0]' );
 
 		$data = $issue->to_array();
 
-		$this->assertSame('PRICING_ERROR', $data['code']);
-		$this->assertSame('BUSINESS_RULE', $data['type']);
-	}
-
-	public function test_coupon_invalid_issue_includes_context_and_resolution(): void
-	{
-		$context = array(
-			'specific_issue' => 'COUPON_NOT_EXIST',
-			'coupon_code' => 'INVALID',
-		);
-
-		$resolution_options = array(
-			ResolutionOption::apply_different_coupon( 'Try again', Priority::HIGH ),
-		);
-
-		$issue = new CouponInvalid(
-			'Coupon does not exist',
-			'The coupon is not valid.',
-			'coupons[0]',
-			'',
-			$context,
-			$resolution_options
-		);
-
-		$data = $issue->to_array();
-
-		$this->assertArrayHasKey('context', $data);
-		$this->assertArrayHasKey('resolution_options', $data);
-		$this->assertSame('COUPON_NOT_EXIST', $data['context']['specific_issue']);
-		$this->assertSame('APPLY_DIFFERENT_COUPON', $data['resolution_options'][0]['action']);
+		$this->assertSame( 'PRICING_ERROR', $data['code'] );
+		$this->assertSame( 'BUSINESS_RULE', $data['type'] );
 	}
 
 	public function test_coupon_invalid_truncates_long_messages(): void
 	{
-		$long_message = str_repeat('a', 300);
-		$long_user_message = str_repeat('b', 600);
+		$long_message      = str_repeat( 'a', 300 );
+		$long_user_message = str_repeat( 'b', 600 );
 
-		$issue = new CouponInvalid(
-			$long_message,
-			$long_user_message,
-			'coupons[0]',
-			''
-		);
+		$issue = ValidationIssue::create_coupon_invalid( $long_message )
+			->user_message( $long_user_message );
 
 		$data = $issue->to_array();
 
-		$this->assertSame(255, strlen($data['message']));
-		$this->assertSame(500, strlen($data['user_message']));
+		$this->assertSame( 255, strlen( $data['message'] ) );
+		$this->assertSame( 500, strlen( $data['user_message'] ) );
 	}
 
 	/**

@@ -31,29 +31,6 @@ class HttpErrorName {
 	public const ORDER_SYSTEM_ERROR            = 'ORDER_SYSTEM_ERROR';
 
 	/**
-	 * Get all available HTTP error names.
-	 *
-	 * @return array<string>
-	 */
-	public static function get_all(): array {
-		return array(
-			self::INVALID_REQUEST,
-			self::INVALID_CART_ID,
-			self::CART_NOT_FOUND,
-			self::UNPROCESSABLE_ENTITY,
-			self::INTERNAL_SERVER_ERROR,
-			self::PAYMENT_PROCESSOR_UNAVAILABLE,
-			self::PAYMENT_CAPTURE_FAILED,
-			self::INVENTORY_SYSTEM_ERROR,
-			self::ORDER_SYSTEM_ERROR,
-		);
-	}
-
-	public static function is_valid( string $name ): bool {
-		return in_array( $name, self::get_all(), true );
-	}
-
-	/**
 	 * Get the appropriate HTTP status code for an error name.
 	 *
 	 * @param string $name The error name.

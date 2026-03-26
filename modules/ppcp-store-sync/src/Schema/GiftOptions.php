@@ -12,7 +12,7 @@ namespace WooCommerce\PayPalCommerce\StoreSync\Schema;
 use DateTime;
 use DateTimeInterface;
 
-use WooCommerce\PayPalCommerce\StoreSync\Validation\InvalidData;
+use WooCommerce\PayPalCommerce\StoreSync\Validation\ValidationIssue;
 
 /**
  * @see GiftOptionsTest - Unit tests for this class.
@@ -53,7 +53,11 @@ class GiftOptions extends AgenticSchema {
 			$gift_message = trim( $input['gift_message'] );
 
 			if ( strlen( $gift_message ) > 500 ) {
-				$add_issue( new InvalidData( 'Gift message too long', 'The gift message must be no longer than 500 characters', 'gift_message' ) );
+				$add_issue(
+					ValidationIssue::create_invalid_data( 'Gift message too long' )
+						->user_message( 'The gift message must be no longer than 500 characters' )
+						->for_field( 'gift_message' )
+				);
 			} else {
 				$this->gift_message = $gift_message;
 			}
@@ -66,7 +70,11 @@ class GiftOptions extends AgenticSchema {
 			if ( $rfc_date ) {
 				$this->delivery_date = $delivery_date;
 			} else {
-				$add_issue( new InvalidData( 'Invalid delivery date format', 'The delivery date must be in RFC3339 format (e.g., 2024-12-25T09:00:00Z)', 'delivery_date' ) );
+				$add_issue(
+					ValidationIssue::create_invalid_data( 'Invalid delivery date format' )
+						->user_message( 'The delivery date must be in RFC3339 format (e.g., 2024-12-25T09:00:00Z)' )
+						->for_field( 'delivery_date' )
+				);
 			}
 		}
 		if ( ! empty( $input['recipient'] ) && is_array( $input['recipient'] ) ) {
@@ -78,7 +86,11 @@ class GiftOptions extends AgenticSchema {
 
 				if ( ! filter_var( $recipient_email, FILTER_VALIDATE_EMAIL ) ) {
 					$recipient_email = null;
-					$add_issue( new InvalidData( 'Invalid recipient email', 'The recipient email is not valid', 'recipient.email' ) );
+					$add_issue(
+						ValidationIssue::create_invalid_data( 'Invalid recipient email' )
+							->user_message( 'The recipient email is not valid' )
+							->for_field( 'recipient.email' )
+					);
 				}
 			}
 			if ( $recipient_name && is_string( $recipient_name ) ) {
@@ -116,7 +128,7 @@ class GiftOptions extends AgenticSchema {
 	}
 
 	/**
-	 * @return null|array Recipient as simple array, no own schema.
+	 * @return null|array Recipient as a simple array, no own schema.
 	 */
 	public function recipient(): ?array {
 		return $this->recipient;

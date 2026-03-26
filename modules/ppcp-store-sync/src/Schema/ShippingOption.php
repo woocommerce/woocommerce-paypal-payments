@@ -11,8 +11,7 @@ namespace WooCommerce\PayPalCommerce\StoreSync\Schema;
 
 use DateTime;
 
-use WooCommerce\PayPalCommerce\StoreSync\Validation\InvalidData;
-use WooCommerce\PayPalCommerce\StoreSync\Validation\MissingField;
+use WooCommerce\PayPalCommerce\StoreSync\Validation\ValidationIssue;
 
 /**
  * @see ShippingOptionTest - Unit tests for this class.
@@ -41,12 +40,20 @@ class ShippingOption extends AgenticSchema {
 
 		// Required field: id.
 		if ( ! isset( $input['id'] ) || ! is_string( $input['id'] ) ) {
-			$add_issue( new MissingField( 'Shipping option ID is required', 'Please provide a shipping option ID', 'id' ) );
+			$add_issue(
+				ValidationIssue::create_missing_field( 'Shipping option ID is required' )
+					->user_message( 'Please provide a shipping option ID' )
+					->for_field( 'id' )
+			);
 		} else {
 			$id = trim( $input['id'] );
 
 			if ( empty( $id ) ) {
-				$add_issue( new MissingField( 'Shipping option ID is required', 'Please provide a shipping option ID', 'id' ) );
+				$add_issue(
+					ValidationIssue::create_missing_field( 'Shipping option ID is required' )
+						->user_message( 'Please provide a shipping option ID' )
+						->for_field( 'id' )
+				);
 			} else {
 				$this->id = $id;
 			}
@@ -54,12 +61,20 @@ class ShippingOption extends AgenticSchema {
 
 		// Required field: name.
 		if ( ! isset( $input['name'] ) || ! is_string( $input['name'] ) ) {
-			$add_issue( new MissingField( 'Shipping option name is required', 'Please provide a shipping option name', 'name' ) );
+			$add_issue(
+				ValidationIssue::create_missing_field( 'Shipping option name is required' )
+					->user_message( 'Please provide a shipping option name' )
+					->for_field( 'name' )
+			);
 		} else {
 			$name = trim( $input['name'] );
 
 			if ( empty( $name ) ) {
-				$add_issue( new MissingField( 'Shipping option name is required', 'Please provide a shipping option name', 'name' ) );
+				$add_issue(
+					ValidationIssue::create_missing_field( 'Shipping option name is required' )
+						->user_message( 'Please provide a shipping option name' )
+						->for_field( 'name' )
+				);
 			} else {
 				$this->name = $name;
 			}
@@ -67,7 +82,11 @@ class ShippingOption extends AgenticSchema {
 
 		// Required field: price.
 		if ( ! isset( $input['price'] ) || ! is_array( $input['price'] ) ) {
-			$add_issue( new MissingField( 'Shipping price is required', 'Please provide a shipping price', 'price' ) );
+			$add_issue(
+				ValidationIssue::create_missing_field( 'Shipping price is required' )
+					->user_message( 'Please provide a shipping price' )
+					->for_field( 'price' )
+			);
 		} else {
 			$money  = Money::from_array( $input['price'], $add_issue );
 			$issues = $money->issues();
@@ -83,7 +102,11 @@ class ShippingOption extends AgenticSchema {
 
 		// Required field: isSelected.
 		if ( ! isset( $input['isSelected'] ) ) {
-			$add_issue( new MissingField( 'Selection status is required', 'Please specify if this shipping option is selected', 'isSelected' ) );
+			$add_issue(
+				ValidationIssue::create_missing_field( 'Selection status is required' )
+					->user_message( 'Please specify if this shipping option is selected' )
+					->for_field( 'isSelected' )
+			);
 		} elseif ( is_bool( $input['isSelected'] ) ) {
 			$this->is_selected = $input['isSelected'];
 		}
@@ -98,13 +121,21 @@ class ShippingOption extends AgenticSchema {
 			$estimated_delivery = trim( $input['estimated_delivery'] );
 
 			if ( ! preg_match( '/^\d{4}-\d{2}-\d{2}$/', $estimated_delivery ) ) {
-				$add_issue( new InvalidData( 'Invalid delivery date format', 'The estimated delivery date must be in YYYY-MM-DD format', 'estimated_delivery' ) );
+				$add_issue(
+					ValidationIssue::create_invalid_data( 'Invalid delivery date format' )
+						->user_message( 'The estimated delivery date must be in YYYY-MM-DD format' )
+						->for_field( 'estimated_delivery' )
+				);
 			} else {
 				$parsed_date = DateTime::createFromFormat( 'Y-m-d', $estimated_delivery );
-				$real_date   = $parsed_date->format( 'Y-m-d' );
+				$real_date   = $parsed_date ? $parsed_date->format( 'Y-m-d' ) : '';
 
 				if ( $real_date !== $estimated_delivery ) {
-					$add_issue( new InvalidData( 'Invalid date', 'The date provided does not exist (e.g., Feb 31 or month 13)', 'estimated_delivery' ) );
+					$add_issue(
+						ValidationIssue::create_invalid_data( 'Invalid date' )
+							->user_message( 'The date provided does not exist (e.g., Feb 31 or month 13)' )
+							->for_field( 'estimated_delivery' )
+					);
 				} else {
 					$this->estimated_delivery = $estimated_delivery;
 				}

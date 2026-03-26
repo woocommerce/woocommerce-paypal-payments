@@ -4,7 +4,7 @@ declare( strict_types = 1 );
 namespace WooCommerce\PayPalCommerce\StoreSync\CartValidation;
 
 use WooCommerce\PayPalCommerce\StoreSync\Schema\PayPalCart;
-use WooCommerce\PayPalCommerce\StoreSync\Validation\CurrencyMismatch;
+use WooCommerce\PayPalCommerce\StoreSync\Validation\ValidationIssue;
 use WooCommerce\PayPalCommerce\TestCase;
 
 use function Brain\Monkey\Functions\when;
@@ -51,7 +51,7 @@ class CurrencyValidatorTest extends TestCase {
 
 		$this->assertIsArray( $result );
 		$this->assertCount( 1, $result );
-		$this->assertInstanceOf( CurrencyMismatch::class, $result[0] );
+		$this->assertInstanceOf( ValidationIssue::class, $result[0] );
 
 		$issue_data = $result[0]->to_array();
 		$this->assertStringContainsString( 'Mixed currencies detected', $issue_data['message'] );
@@ -72,7 +72,7 @@ class CurrencyValidatorTest extends TestCase {
 
 		$this->assertIsArray( $result );
 		$this->assertCount( 1, $result );
-		$this->assertInstanceOf( CurrencyMismatch::class, $result[0] );
+		$this->assertInstanceOf( ValidationIssue::class, $result[0] );
 
 		$issue_data = $result[0]->to_array();
 		$this->assertStringContainsString( 'Cart currency EUR does not match store currency USD', $issue_data['message'] );
@@ -165,7 +165,7 @@ class CurrencyValidatorTest extends TestCase {
 
 		$this->assertIsArray( $result );
 		$this->assertCount( 1, $result );
-		$this->assertInstanceOf( CurrencyMismatch::class, $result[0] );
+		$this->assertInstanceOf( ValidationIssue::class, $result[0] );
 
 		$issue_data = $result[0]->to_array();
 		$this->assertStringContainsString( 'Mixed currencies detected', $issue_data['message'] );
@@ -203,7 +203,7 @@ class CurrencyValidatorTest extends TestCase {
 
 		$this->assertIsArray( $result );
 		$this->assertCount( 1, $result );
-		$this->assertInstanceOf( CurrencyMismatch::class, $result[0] );
+		$this->assertInstanceOf( ValidationIssue::class, $result[0] );
 
 		$issue_data = $result[0]->to_array();
 		$this->assertStringContainsString( 'Cart currency EUR does not match store currency USD', $issue_data['message'] );
@@ -224,7 +224,7 @@ class CurrencyValidatorTest extends TestCase {
 
 		$this->assertIsArray( $result );
 		$this->assertCount( 1, $result );
-		$this->assertInstanceOf( CurrencyMismatch::class, $result[0] );
+		$this->assertInstanceOf( ValidationIssue::class, $result[0] );
 
 		$issue = $result[0]->to_array();
 		$this->assertStringContainsString( 'Mixed currencies detected', $issue['message'] );

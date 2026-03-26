@@ -5,8 +5,7 @@ namespace WooCommerce\PayPalCommerce\StoreSync\CartValidation;
 
 use WooCommerce\PayPalCommerce\StoreSync\Helper\ProductManager;
 use WooCommerce\PayPalCommerce\StoreSync\Schema\PayPalCart;
-use WooCommerce\PayPalCommerce\StoreSync\Validation\InvalidAddress;
-use WooCommerce\PayPalCommerce\StoreSync\Validation\ShippingUnavailable;
+use WooCommerce\PayPalCommerce\StoreSync\Validation\ValidationIssue;
 use WooCommerce\PayPalCommerce\TestCase;
 
 use function Brain\Monkey\Functions\when;
@@ -65,7 +64,7 @@ class ShippingValidatorTest extends TestCase {
 
 		$this->assertIsArray( $result );
 		$this->assertCount( 1, $result );
-		$this->assertInstanceOf( ShippingUnavailable::class, $result[0] );
+		$this->assertInstanceOf( ValidationIssue::class, $result[0] );
 
 		$issue_data = $result[0]->to_array();
 		$this->assertStringContainsString( 'Shipping to FR is not available', $issue_data['message'] );
@@ -144,7 +143,7 @@ class ShippingValidatorTest extends TestCase {
 
 		$this->assertIsArray( $result );
 		$this->assertCount( 1, $result );
-		$this->assertInstanceOf( InvalidAddress::class, $result[0] );
+		$this->assertInstanceOf( ValidationIssue::class, $result[0] );
 
 		$issue_data = $result[0]->to_array();
 		$this->assertStringContainsString( 'missing street address', $issue_data['message'] );
@@ -169,7 +168,7 @@ class ShippingValidatorTest extends TestCase {
 
 		$this->assertIsArray( $result );
 		$this->assertCount( 1, $result );
-		$this->assertInstanceOf( InvalidAddress::class, $result[0] );
+		$this->assertInstanceOf( ValidationIssue::class, $result[0] );
 
 		$issue_data = $result[0]->to_array();
 		$this->assertStringContainsString( 'missing city', $issue_data['message'] );
@@ -194,7 +193,7 @@ class ShippingValidatorTest extends TestCase {
 
 		$this->assertIsArray( $result );
 		$this->assertCount( 1, $result );
-		$this->assertInstanceOf( InvalidAddress::class, $result[0] );
+		$this->assertInstanceOf( ValidationIssue::class, $result[0] );
 
 		$issue_data = $result[0]->to_array();
 		$this->assertStringContainsString( 'missing postal code', $issue_data['message'] );
@@ -217,9 +216,9 @@ class ShippingValidatorTest extends TestCase {
 
 		$this->assertIsArray( $result );
 		$this->assertCount( 3, $result );
-		$this->assertInstanceOf( InvalidAddress::class, $result[0] );
-		$this->assertInstanceOf( InvalidAddress::class, $result[1] );
-		$this->assertInstanceOf( InvalidAddress::class, $result[2] );
+		$this->assertInstanceOf( ValidationIssue::class, $result[0] );
+		$this->assertInstanceOf( ValidationIssue::class, $result[1] );
+		$this->assertInstanceOf( ValidationIssue::class, $result[2] );
 	}
 
 	// Scenario 2: PO Box Restriction Tests
@@ -251,20 +250,22 @@ class ShippingValidatorTest extends TestCase {
 
 		$this->assertIsArray( $result );
 		$this->assertCount( 1, $result );
-		$this->assertInstanceOf( ShippingUnavailable::class, $result[0] );
+		$this->assertInstanceOf( ValidationIssue::class, $result[0] );
 
 		$issue_data = $result[0]->to_array();
 		$this->assertStringContainsString( 'PO Box delivery not available', $issue_data['message'] );
 		$this->assertStringContainsString( 'signature confirmation', $issue_data['user_message'] );
 		$this->assertSame( 'shipping_address', $issue_data['field'] );
 
-		// Verify context
+		// Verify context (context is a list of IssueContext::to_array() results)
 		$this->assertArrayHasKey( 'context', $issue_data );
-		$this->assertArrayHasKey( 'restricted_items', $issue_data['context'] );
-		$this->assertArrayHasKey( 'restriction_reason', $issue_data['context'] );
-		$this->assertArrayHasKey( 'po_box_detected', $issue_data['context'] );
-		$this->assertSame( 'signature_required', $issue_data['context']['restriction_reason'] );
-		$this->assertTrue( $issue_data['context']['po_box_detected'] );
+		$this->assertCount( 1, $issue_data['context'] );
+		$context = $issue_data['context'][0];
+		$this->assertArrayHasKey( 'restricted_items', $context );
+		$this->assertArrayHasKey( 'restriction_reason', $context );
+		$this->assertArrayHasKey( 'po_box_detected', $context );
+		$this->assertSame( 'signature_required', $context['restriction_reason'] );
+		$this->assertTrue( $context['po_box_detected'] );
 
 		// Verify resolution_options
 		$this->assertArrayHasKey( 'resolution_options', $issue_data );
@@ -350,7 +351,7 @@ class ShippingValidatorTest extends TestCase {
 
 		$this->assertIsArray( $result );
 		$this->assertCount( 1, $result );
-		$this->assertInstanceOf( ShippingUnavailable::class, $result[0] );
+		$this->assertInstanceOf( ValidationIssue::class, $result[0] );
 	}
 
 	public function test_validate_handles_product_not_found_for_signature_check(): void {
