@@ -132,12 +132,23 @@ class ApplepayModule implements ServiceModule, ExecutableModule {
 				$settings = $c->get( 'settings.settings-provider' );
 				assert( $settings instanceof SettingsProvider );
 
-				if ( $settings->applepay_enabled() ) {
-					$applepay_gateway = $c->get( 'applepay.wc-gateway' );
-					assert( $applepay_gateway instanceof WC_Payment_Gateway );
-
-					$methods[] = $applepay_gateway;
+				if ( ! $settings->applepay_enabled() ) {
+					return $methods;
 				}
+
+				$context = $c->get( 'button.helper.context' );
+				assert( $context instanceof Context );
+
+				$page_methods = $settings->button_styling( $context->context() )->methods;
+
+				if ( ! in_array( ApplePayGateway::ID, $page_methods, true ) ) {
+					return $methods;
+				}
+
+				$applepay_gateway = $c->get( 'applepay.wc-gateway' );
+				assert( $applepay_gateway instanceof WC_Payment_Gateway );
+
+				$methods[] = $applepay_gateway;
 
 				return $methods;
 			}
