@@ -55,9 +55,9 @@ class AgenticSessionHandler
      *
      * @param PayPalCart $cart The cart to save.
      * @param string     $ec_token The PayPal EC token.
-     * @return string|null The session ID or null on failure.
+     * @return string The session ID or null on failure.
      */
-    public function create_cart_session(PayPalCart $cart, string $ec_token): ?string
+    public function create_cart_session(PayPalCart $cart, string $ec_token): string
     {
         $session_key = $this->generate_session_id();
         // Create a new empty session with our custom ID.

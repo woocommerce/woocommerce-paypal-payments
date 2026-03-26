@@ -116,7 +116,7 @@ class RegistrationService
     private function create_token(): string
     {
         $metadata = $this->metadata_provider->get_metadata();
-        $payload = array('storeName' => $metadata->store_name, 'storeUrl' => $metadata->store_url, 'country' => $metadata->store_country, 'currency' => $metadata->currency, 'paypalMerchantId' => $metadata->paypal_merchant_id, 'wooSydeCommerceId' => $metadata->store_url, 'catalogDownloadUrl' => $metadata->catalog_url, 'favIcon' => '', 'shippingCountries' => array('US'));
+        $payload = array('storeName' => $metadata->store_name, 'storeUrl' => $metadata->store_url, 'apiBaseUrl' => $metadata->api_base_url, 'country' => $metadata->store_country, 'currency' => $metadata->currency, 'paypalMerchantId' => $metadata->paypal_merchant_id, 'wooSydeCommerceId' => $metadata->store_url, 'catalogDownloadUrl' => $metadata->catalog_url, 'favIcon' => '', 'shippingCountries' => array('US'));
         return JWT::encode($payload, 'no-signature', 'HS256');
     }
     /**

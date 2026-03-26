@@ -33,7 +33,7 @@ abstract class AgenticRestEndpoint extends WC_REST_Controller
     /**
      * Endpoint namespace.
      */
-    protected const NAMESPACE = 'wc/v3/agentic';
+    public const NAMESPACE = 'wc/v3/agentic';
     /**
      * JWT scope(s) required for the endpoint.
      */
@@ -67,12 +67,14 @@ abstract class AgenticRestEndpoint extends WC_REST_Controller
         $auth_service = $this->auth_provider->auth_service();
         $context = $auth_service->get_token($token);
         if (is_wp_error($context)) {
-            assert($context instanceof WP_Error);
             $this->logger->error('[REST] Permission denied', $context->get_all_error_data());
             return $context;
         }
         return $auth_service->verify_claims($context, static::REQUIRED_SCOPES);
     }
+    /**
+     * @return mixed
+     */
     protected function with_session(callable $callback)
     {
         return $this->session_manager->with_session($callback);
