@@ -12,18 +12,17 @@ namespace WooCommerce\PayPalCommerce\Applepay\Assets;
 use Exception;
 use Psr\Log\LoggerInterface;
 use WC_Cart;
+use WooCommerce\PayPalCommerce\Applepay\ApplePayGateway;
 use WooCommerce\PayPalCommerce\Assets\AssetGetter;
 use WooCommerce\PayPalCommerce\Button\Assets\ButtonInterface;
 use WooCommerce\PayPalCommerce\Button\Helper\CartProductsHelper;
+use WooCommerce\PayPalCommerce\Button\Helper\Context;
 use WooCommerce\PayPalCommerce\Settings\Data\PaymentSettings;
 use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\SettingsStatus;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\OrderProcessor;
 use WooCommerce\PayPalCommerce\Webhooks\Handler\RequestHandlerTrait;
 
-/**
- * Class ApplePayButton
- */
 class ApplePayButton implements ButtonInterface {
 	use RequestHandlerTrait;
 
@@ -42,20 +41,8 @@ class ApplePayButton implements ButtonInterface {
 	private DataToAppleButtonScripts $script_data;
 	private SettingsStatus $settings_status;
 	protected CartProductsHelper $cart_products;
+	private Context $context;
 
-	/**
-	 * PayPalPaymentMethod constructor.
-	 *
-	 * @param SettingsProvider         $settings_provider The settings provider.
-	 * @param PaymentSettings          $payment_settings The payment settings.
-	 * @param LoggerInterface          $logger The logger.
-	 * @param OrderProcessor           $order_processor The Order processor.
-	 * @param AssetGetter              $asset_getter
-	 * @param string                   $version The module version.
-	 * @param DataToAppleButtonScripts $data The data to send to the ApplePay button script.
-	 * @param SettingsStatus           $settings_status The settings status helper.
-	 * @param CartProductsHelper       $cart_products The cart products helper.
-	 */
 	public function __construct(
 		SettingsProvider $settings_provider,
 		PaymentSettings $payment_settings,
@@ -65,7 +52,8 @@ class ApplePayButton implements ButtonInterface {
 		string $version,
 		DataToAppleButtonScripts $data,
 		SettingsStatus $settings_status,
-		CartProductsHelper $cart_products
+		CartProductsHelper $cart_products,
+		Context $context
 	) {
 		$this->settings_provider  = $settings_provider;
 		$this->payment_settings   = $payment_settings;
@@ -79,6 +67,7 @@ class ApplePayButton implements ButtonInterface {
 		$this->script_data        = $data;
 		$this->settings_status    = $settings_status;
 		$this->cart_products      = $cart_products;
+		$this->context            = $context;
 	}
 
 	public function initialize(): void {
@@ -992,6 +981,12 @@ class ApplePayButton implements ButtonInterface {
 	 * @return bool
 	 */
 	public function is_enabled(): bool {
-		return $this->settings_provider->applepay_enabled();
+		if ( ! $this->settings_provider->applepay_enabled() ) {
+			return false;
+		}
+
+		$methods = $this->settings_provider->button_styling( $this->context->context() )->methods;
+
+		return in_array( ApplePayGateway::ID, $methods, true );
 	}
 }
