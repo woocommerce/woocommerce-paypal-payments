@@ -50,6 +50,7 @@ class JwtAuthServiceTest extends TestCase {
 		return new MerchantMetadata(
 			'Test Store',
 			'https://example.com',
+			'https://example.com/wp-json/wc/store/v1',
 			'US',
 			'USD',
 			$merchant_id,

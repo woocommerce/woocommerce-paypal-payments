@@ -45,6 +45,7 @@ class RegistrationServiceTest extends TestCase {
 		$metadata = new MerchantMetadata(
 			'Test Store',
 			'https://example.com',
+			'https://example.com/wp-json/wc/store/v1',
 			'US',
 			'USD',
 			'MERCHANT123',
