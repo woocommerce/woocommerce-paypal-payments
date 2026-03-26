@@ -210,6 +210,46 @@ class GooglepayModule implements ServiceModule, ExecutableModule {
 			}
 		);
 
+		/**
+		 * Filters the available payment gateways to remove the Google Pay gateway
+		 * when the button is disabled for the current location (e.g., classic checkout) in the styling settings.
+		 * This is necessary because WooCommerce automatically includes the gateway when it is enabled,
+		 * even if the button is hidden via settings.
+		 */
+		add_filter(
+			'woocommerce_available_payment_gateways',
+			/**
+			 * Param types removed to avoid third-party issues.
+			 *
+			 * @psalm-suppress MissingClosureParamType
+			 */
+			static function ( $methods ) use ( $c ) {
+				if ( ! is_array( $methods ) ) {
+					return $methods;
+				}
+
+				$context = $c->get( 'button.helper.context' );
+				assert( $context instanceof Context );
+
+				$current_context = $context->context();
+
+				if ( $current_context !== 'checkout' ) {
+					return $methods;
+				}
+
+				$settings = $c->get( 'settings.settings-provider' );
+				assert( $settings instanceof SettingsProvider );
+
+				$page_methods = $settings->button_styling( $current_context )->methods;
+
+				if ( ! in_array( GooglePayGateway::ID, $page_methods, true ) ) {
+					unset( $methods[ GooglePayGateway::ID ] );
+				}
+
+				return $methods;
+			}
+		);
+
 		add_action(
 			'woocommerce_review_order_after_submit',
 			function () {
