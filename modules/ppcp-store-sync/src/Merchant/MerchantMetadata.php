@@ -25,6 +25,13 @@ class MerchantMetadata {
 	public string $store_url;
 
 	/**
+	 * The base REST-endpoint of the Cart API.
+	 *
+	 * @var string
+	 */
+	public string $api_base_url;
+
+	/**
 	 * Base country code (ISO 3166-1 alpha-2).
 	 *
 	 * @var string
@@ -64,6 +71,7 @@ class MerchantMetadata {
 	 *
 	 * @param string $store_name         Store name.
 	 * @param string $store_url          Store URL (canonical identifier).
+	 * @param string $api_base_url       The base URL for the cart API.
 	 * @param string $store_country      Base country code.
 	 * @param string $currency           Base currency code.
 	 * @param string $paypal_merchant_id PayPal merchant ID.
@@ -73,6 +81,7 @@ class MerchantMetadata {
 	public function __construct(
 		string $store_name,
 		string $store_url,
+		string $api_base_url,
 		string $store_country,
 		string $currency,
 		string $paypal_merchant_id,
@@ -81,6 +90,7 @@ class MerchantMetadata {
 	) {
 		$this->store_name         = $store_name;
 		$this->store_url          = $store_url;
+		$this->api_base_url       = $api_base_url;
 		$this->store_country      = $store_country;
 		$this->currency           = $currency;
 		$this->paypal_merchant_id = $paypal_merchant_id;

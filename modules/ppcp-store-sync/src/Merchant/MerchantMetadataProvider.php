@@ -7,6 +7,7 @@ use WooCommerce;
 
 use WooCommerce\PayPalCommerce\Settings\Data\GeneralSettings;
 use WooCommerce\PayPalCommerce\Settings\DTO\MerchantConnectionDTO;
+use WooCommerce\PayPalCommerce\StoreSync\Endpoint\AgenticRestEndpoint;
 
 /**
  * Provides merchant metadata for registration and catalog operations.
@@ -38,6 +39,7 @@ class MerchantMetadataProvider {
 		return new MerchantMetadata(
 			get_bloginfo( 'name' ),
 			$this->get_canonical_store_url(),
+			$this->get_api_base_url(),
 			$this->wc->countries->get_base_country(),
 			get_woocommerce_currency(),
 			$merchant_id,
@@ -47,7 +49,7 @@ class MerchantMetadataProvider {
 	}
 
 	/**
-	 * Get canonical store URL used as stable identifier.
+	 * Get canonical store URL used as a stable identifier.
 	 *
 	 * CRITICAL: This must remain stable between registration and catalog ingestion.
 	 * The store URL serves as the primary key for identifying this merchant.
@@ -56,9 +58,10 @@ class MerchantMetadataProvider {
 		return untrailingslashit( get_site_url() );
 	}
 
-	/**
-	 * Get PayPal merchant connection data.
-	 */
+	private function get_api_base_url(): string {
+		return rest_url( AgenticRestEndpoint::NAMESPACE );
+	}
+
 	private function get_merchant_connection(): MerchantConnectionDTO {
 		return $this->general_settings->get_merchant_data();
 	}
