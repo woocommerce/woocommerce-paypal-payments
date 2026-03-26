@@ -17,14 +17,15 @@ declare( strict_types = 1 );
 namespace WooCommerce\PayPalCommerce\StoreSync\CartValidation;
 
 use WC_Countries;
+use WC_Validation;
+use WC_Product;
 use WooCommerce\PayPalCommerce\StoreSync\Enums\Priority;
 use WooCommerce\PayPalCommerce\StoreSync\Enums\ShippingIssue;
 use WooCommerce\PayPalCommerce\StoreSync\Helper\ProductManager;
 use WooCommerce\PayPalCommerce\StoreSync\Schema\PayPalCart;
-use WooCommerce\PayPalCommerce\StoreSync\Schema\ResolutionOption;
-use WooCommerce\PayPalCommerce\StoreSync\Validation\InvalidAddress;
-use WooCommerce\PayPalCommerce\StoreSync\Validation\ShippingUnavailable;
-use WooCommerce\PayPalCommerce\StoreSync\Validation\MissingField;
+use WooCommerce\PayPalCommerce\StoreSync\Validation\Context\ShippingErrorContext;
+use WooCommerce\PayPalCommerce\StoreSync\Validation\Resolution\ResolutionOption;
+use WooCommerce\PayPalCommerce\StoreSync\Validation\ValidationIssue;
 use WooCommerce\PayPalCommerce\StoreSync\Schema\Address;
 use WooCommerce\PayPalCommerce\StoreSync\Schema\CartItem;
 
@@ -42,18 +43,19 @@ class ShippingValidator implements ValidatorInterface {
 		if ( ! $shipping_address ) {
 			if ( $this->cart_needs_shipping( $cart ) ) {
 				return array(
-					new MissingField(
-						'Shipping address is required',
-						'Please provide a shipping address to continue.',
-						'shipping_address',
-						'',
-						array( 'specific_issue' => ShippingIssue::MISSING_SHIPPING_ADDRESS ),
-						array(
-							ResolutionOption::provide_shipping_address(),
-						)
-					),
+					ValidationIssue::create_missing_field( 'Shipping address is required' )
+						->user_message( 'Please provide a shipping address to continue.' )
+						->for_field( 'shipping_address' )
+						->add_context( ShippingErrorContext::create_missing_shipping_address() )
+						->add_resolution(
+							ResolutionOption::create_provide_missing_field()
+								->label( 'Add shipping address' )
+								->priority( Priority::HIGH )
+								->set_meta( 'field', 'shipping_address' )
+						),
 				);
 			}
+
 			return null;
 		}
 
@@ -93,6 +95,7 @@ class ShippingValidator implements ValidatorInterface {
 				return true;
 			}
 		}
+
 		return false;
 	}
 
@@ -100,54 +103,61 @@ class ShippingValidator implements ValidatorInterface {
 	 * Scenario 1: Validates that the address has all required fields and proper formats.
 	 *
 	 * @param Address $address The address to validate.
-	 * @return InvalidAddress[] Array of validation issues.
+	 * @return ValidationIssue[] Array of validation issues.
 	 */
 	private function validate_address_completeness( Address $address ): array {
 		$issues = array();
 
 		if ( ! $address->address_line_1() ) {
-			$issues[] = new InvalidAddress(
-				'Shipping address is missing street address',
-				'Please provide a complete street address.',
-				'shipping_address.address_line_1',
-				'',
-				array(),
-				array(
-					ResolutionOption::provide_missing_field( 'address_line_1', 'Provide street address' ),
-					ResolutionOption::update_address( 'Update shipping address', Priority::LOW ),
+			$issues[] = ValidationIssue::create_invalid_address( 'Shipping address is missing street address' )
+				->user_message( 'Please provide a complete street address.' )
+				->for_field( 'shipping_address.address_line_1' )
+				->add_resolution(
+					ResolutionOption::create_provide_missing_field()
+						->label( 'Provide street address' )
+						->set_meta( 'field', 'address_line_1' )
 				)
-			);
+				->add_resolution(
+					ResolutionOption::create_update_address()
+						->label( 'Update shipping address' )
+						->priority( Priority::LOW )
+				);
 		}
 
 		if ( ! $address->admin_area_2() ) {
-			$issues[] = new InvalidAddress(
-				'Shipping address is missing city',
-				'Please provide a city.',
-				'shipping_address.admin_area_2',
-				'',
-				array(),
-				array(
-					ResolutionOption::provide_missing_field( 'admin_area_2', 'Provide city' ),
-					ResolutionOption::update_address( 'Update shipping address', Priority::LOW ),
+			$issues[] = ValidationIssue::create_invalid_address( 'Shipping address is missing city' )
+				->user_message( 'Please provide a city.' )
+				->for_field( 'shipping_address.admin_area_2' )
+				->add_resolution(
+					ResolutionOption::create_provide_missing_field()
+						->label( 'Provide city' )
+						->set_meta( 'field', 'admin_area_2' )
 				)
-			);
+				->add_resolution(
+					ResolutionOption::create_update_address()
+						->label( 'Update shipping address' )
+						->priority( Priority::LOW )
+				);
 		}
 
 		$postal_code = $address->postal_code();
 		if ( ! $postal_code ) {
-			$issues[] = new InvalidAddress(
-				'Shipping address is missing postal code',
-				'Please provide a postal code.',
-				'shipping_address.postal_code',
-				'',
-				array(),
-				array(
-					ResolutionOption::provide_missing_field( 'postal_code', 'Provide postal code' ),
-					ResolutionOption::update_address( 'Update shipping address', Priority::LOW ),
+			$issues[] = ValidationIssue::create_invalid_address( 'Shipping address is missing postal code' )
+				->user_message( 'Please provide a postal code.' )
+				->for_field( 'shipping_address.postal_code' )
+				->add_resolution(
+					ResolutionOption::create_provide_missing_field()
+						->label( 'Provide postal code' )
+						->set_meta( 'field', 'postal_code' )
 				)
-			);
+				->add_resolution(
+					ResolutionOption::create_update_address()
+						->label( 'Update shipping address' )
+						->priority( Priority::LOW )
+				);
 		} else {
-			$postal_validation = $this->validate_postal_code_format( $postal_code, $address->country_code() );
+			$postal_validation =
+				$this->validate_postal_code_format( $postal_code, $address->country_code() );
 			if ( $postal_validation ) {
 				$issues[] = $postal_validation;
 			}
@@ -161,9 +171,9 @@ class ShippingValidator implements ValidatorInterface {
 	 *
 	 * @param string      $postal_code  The postal code to validate.
 	 * @param string|null $country_code The country code.
-	 * @return InvalidAddress|null Validation issue if format is invalid.
+	 * @return ValidationIssue|null Validation issue if format is invalid.
 	 */
-	private function validate_postal_code_format( string $postal_code, ?string $country_code ): ?InvalidAddress {
+	private function validate_postal_code_format( string $postal_code, ?string $country_code ): ?ValidationIssue {
 		if ( ! $country_code ) {
 			return null;
 		}
@@ -173,23 +183,20 @@ class ShippingValidator implements ValidatorInterface {
 			return null;
 		}
 
-		$is_valid = \WC_Validation::is_postcode( $postal_code, $country_code );
+		$is_valid = WC_Validation::is_postcode( $postal_code, $country_code );
 
 		if ( ! $is_valid ) {
-			return new InvalidAddress(
-				sprintf(
-					'Invalid postal code format for %s: %s',
-					$country_code,
-					$postal_code
-				),
-				'Please provide a valid postal code.',
-				'shipping_address.postal_code',
-				'',
-				array(),
-				array(
-					ResolutionOption::update_address( 'Correct the postal code', Priority::HIGH, array( 'field' => 'postal_code' ) ),
-				)
-			);
+			return ValidationIssue::create_invalid_address(
+				sprintf( 'Invalid postal code format for %s: %s', $country_code, $postal_code )
+			)
+				->user_message( 'Please provide a valid postal code.' )
+				->for_field( 'shipping_address.postal_code' )
+				->add_resolution(
+					ResolutionOption::create_update_address()
+						->label( 'Correct the postal code' )
+						->priority( Priority::HIGH )
+						->set_meta( 'field', 'postal_code' )
+				);
 		}
 
 		return null;
@@ -200,9 +207,9 @@ class ShippingValidator implements ValidatorInterface {
 	 *
 	 * @param PayPalCart $cart    The cart to validate.
 	 * @param Address    $address The shipping address.
-	 * @return ShippingUnavailable|null Validation issue if PO Box restrictions apply.
+	 * @return ValidationIssue|null Validation issue if PO Box restrictions apply.
 	 */
-	private function validate_po_box_restrictions( PayPalCart $cart, Address $address ): ?ShippingUnavailable {
+	private function validate_po_box_restrictions( PayPalCart $cart, Address $address ): ?ValidationIssue {
 		$address_line = $address->address_line_1();
 
 		if ( ! $address_line || ! $this->is_po_box( $address_line ) ) {
@@ -217,29 +224,25 @@ class ShippingValidator implements ValidatorInterface {
 				$signature_required_items
 			);
 
-			$context = array(
-				'restricted_items'   => $restricted_items,
-				'restriction_reason' => 'signature_required',
-				'po_box_detected'    => true,
-			);
-
-			$resolution_options = array(
-				ResolutionOption::update_address( 'Use street address instead', Priority::HIGH ),
-				ResolutionOption::remove_item( Priority::LOW )->with(
-					array(
-						'label' => 'Remove items requiring signature',
-					)
-				),
-			);
-
-			return new ShippingUnavailable(
-				'PO Box delivery not available for this order',
-				'This order contains items requiring signature confirmation and cannot be delivered to a PO Box.',
-				'shipping_address',
-				'',
-				$context,
-				$resolution_options
-			);
+			return ValidationIssue::create_shipping_unavailable( 'PO Box delivery not available for this order' )
+				->user_message( 'This order contains items requiring signature confirmation and cannot be delivered to a PO Box.' )
+				->for_field( 'shipping_address' )
+				->add_context(
+					ShippingErrorContext::create_shipping_to_po_box_not_allowed()
+						->restricted_items( $restricted_items )
+						->restriction_reason( 'signature_required' )
+						->po_box_detected( true )
+				)
+				->add_resolution(
+					ResolutionOption::create_update_address()
+						->label( 'Use street address instead' )
+						->priority( Priority::HIGH )
+				)
+				->add_resolution(
+					ResolutionOption::create_remove_item()
+						->label( 'Remove items requiring signature' )
+						->priority( Priority::LOW )
+				);
 		}
 
 		return null;
@@ -285,9 +288,9 @@ class ShippingValidator implements ValidatorInterface {
 		 *
 		 * @since 1.0.0
 		 *
-		 * @param bool        $requires_signature Whether signature is required (defaults to false).
-		 * @param \WC_Product $product            The WooCommerce product object.
-		 * @param CartItem    $item               The cart item.
+		 * @param bool       $requires_signature Whether signature is required (defaults to false).
+		 * @param WC_Product $product            The WooCommerce product object.
+		 * @param CartItem   $item               The cart item.
 		 *
 		 * @return bool True if signature delivery is required.
 		 */
@@ -315,30 +318,22 @@ class ShippingValidator implements ValidatorInterface {
 	 * Scenario 3: Validates that the country code is allowed for shipping.
 	 *
 	 * @param string|null $country_code The country code to validate.
-	 * @return ShippingUnavailable|null Validation issue if country is not allowed.
+	 * @return ValidationIssue|null Validation issue if country is not allowed.
 	 */
-	private function validate_country( ?string $country_code ): ?ShippingUnavailable {
+	private function validate_country( ?string $country_code ): ?ValidationIssue {
 		if ( ! $country_code ) {
 			return null;
 		}
 
 		if ( ! $this->is_country_allowed( $country_code ) ) {
-			return new ShippingUnavailable(
-				sprintf(
-					'Shipping to %s is not available',
-					$country_code
-				),
-				sprintf(
-					'We do not ship to %s.',
-					$this->get_country_name( $country_code )
-				),
-				'shipping_address.country_code',
-				'',
-				array(),
-				array(
-					ResolutionOption::update_address( 'Use a different shipping country', Priority::HIGH ),
-				)
-			);
+			return ValidationIssue::create_shipping_unavailable( sprintf( 'Shipping to %s is not available', $country_code ) )
+				->user_message( sprintf( 'We do not ship to %s.', $this->get_country_name( $country_code ) ) )
+				->for_field( 'shipping_address.country_code' )
+				->add_resolution(
+					ResolutionOption::create_update_address()
+						->label( 'Use a different shipping country' )
+						->priority( Priority::HIGH )
+				);
 		}
 
 		return null;
@@ -382,12 +377,17 @@ class ShippingValidator implements ValidatorInterface {
 		return $countries[ $country_code ] ?? $country_code;
 	}
 
-	private function get_wc_countries(): ?WC_Countries {
+	/**
+	 * @return \WC_Countries|null
+	 */
+	private function get_wc_countries() {
 		if ( ! function_exists( 'WC' ) ) {
 			return null;
 		}
 
 		// The only place in the class that has a `WC()` dependency.
-		return WC()->countries;
+		$wc = WC();
+
+		return $wc ? $wc->countries : null;
 	}
 }
