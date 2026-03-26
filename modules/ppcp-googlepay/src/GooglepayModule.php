@@ -218,11 +218,6 @@ class GooglepayModule implements ServiceModule, ExecutableModule {
 		 */
 		add_filter(
 			'woocommerce_available_payment_gateways',
-			/**
-			 * Param types removed to avoid third-party issues.
-			 *
-			 * @psalm-suppress MissingClosureParamType
-			 */
 			static function ( $methods ) use ( $c ) {
 				if ( ! is_array( $methods ) ) {
 					return $methods;
