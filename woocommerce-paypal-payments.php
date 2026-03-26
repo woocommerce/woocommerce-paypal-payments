@@ -4,7 +4,7 @@
  * Plugin Name: WooCommerce PayPal Payments
  * Plugin URI:  https://woocommerce.com/products/woocommerce-paypal-payments/
  * Description: PayPal's latest complete payments processing solution. Accept PayPal, Pay Later, credit/debit cards, alternative digital wallets local payment types and bank accounts. Turn on only PayPal options or process a full suite of payment methods. Enable global transaction with extensive currency and country coverage.
- * Version: 3.4.0-alpha20260224+pcp-4891-agentic-commerce.582d923
+ * Version: 4.0.0-rc2+pcp-4891-agentic-commerce.6b5bd5b
  * Author:      PayPal
  * Author URI:  https://paypal.com/
  * License:     GPL-2.0
@@ -20,12 +20,11 @@
 declare (strict_types=1);
 namespace WooCommerce\PayPalCommerce;
 
-use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 define('PAYPAL_API_URL', 'https://api-m.paypal.com');
 define('PAYPAL_URL', 'https://www.paypal.com');
 define('PAYPAL_SANDBOX_API_URL', 'https://api-m.sandbox.paypal.com');
 define('PAYPAL_SANDBOX_URL', 'https://www.sandbox.paypal.com');
-define('PAYPAL_INTEGRATION_DATE', '2026-02-05');
+define('PAYPAL_INTEGRATION_DATE', '2026-03-04');
 define('PPCP_PAYPAL_BN_CODE', 'Woo_PPCP');
 !defined('CONNECT_WOO_CLIENT_ID') && define('CONNECT_WOO_CLIENT_ID', 'AcCAsWta_JTL__OfpjspNyH7c1GGHH332fLwonA5CwX4Y10mhybRZmHLA0GdRbwKwjQIhpDQy0pluX_P');
 !defined('CONNECT_WOO_SANDBOX_CLIENT_ID') && define('CONNECT_WOO_SANDBOX_CLIENT_ID', 'AYmOHbt1VHg-OZ_oihPdzKEVbU3qg0qXonBcAztuzniQRaKE0w1Hr762cSFwd4n8wxOl-TCWohEa0XM_');
@@ -143,7 +142,7 @@ define('PPCP_PAYPAL_BN_CODE', 'Woo_PPCP');
             if (!is_woocommerce_activated()) {
                 return $links;
             }
-            array_unshift($links, sprintf('<a href="%1$s">%2$s</a>', admin_url('admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway&ppcp-tab=' . Settings::CONNECTION_TAB_ID), __('Settings', 'woocommerce-paypal-payments')));
+            array_unshift($links, sprintf('<a href="%1$s">%2$s</a>', admin_url('admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway'), __('Settings', 'woocommerce-paypal-payments')));
             return $links;
         }
     );

@@ -33,7 +33,7 @@ class PaymentSettings extends \WooCommerce\PayPalCommerce\Settings\Data\Abstract
      */
     protected function get_defaults(): array
     {
-        return array('paypal_show_logo' => \false, 'cardholder_name' => \false, 'fastlane_display_watermark' => \false, 'venmo_enabled' => \false, 'paylater_enabled' => \false);
+        return array('paypal_show_logo' => \false, 'cardholder_name' => \false, 'fastlane_display_watermark' => \false, 'venmo_enabled' => \false, 'paylater_enabled' => \false, 'applepay_validated' => \false, 'capture_on_status_change' => \true, 'applepay_checkout_data_mode' => 'use_wc', 'pui_brand_name' => '', 'pui_logo_url' => '', 'pui_customer_service_instructions' => '');
     }
     /**
      * Saves the model data to WordPress options.
@@ -69,6 +69,11 @@ class PaymentSettings extends \WooCommerce\PayPalCommerce\Settings\Data\Abstract
                 if ($gateway) {
                     $gateway->enabled = wc_bool_to_string($is_enabled);
                     $this->modified_gateway($gateway);
+                } else {
+                    $option_key = 'woocommerce_' . $method_id . '_settings';
+                    $settings = get_option($option_key, array());
+                    $settings['enabled'] = wc_bool_to_string($is_enabled);
+                    update_option($option_key, $settings);
                 }
         }
     }
@@ -86,19 +91,16 @@ class PaymentSettings extends \WooCommerce\PayPalCommerce\Settings\Data\Abstract
             case 'pay-later':
                 return $this->get_paylater_enabled();
             default:
-                $gateway = $this->get_gateway($method_id);
-                if ($gateway) {
-                    return wc_string_to_bool($gateway->enabled);
+                $option_key = 'woocommerce_' . $method_id . '_settings';
+                $settings = get_option($option_key, array());
+                if (!empty($settings) && isset($settings['enabled'])) {
+                    return wc_string_to_bool($settings['enabled']);
                 }
                 return \false;
         }
     }
     /**
      * Updates the payment method title.
-     *
-     * @param string $method_id ID of the payment method.
-     * @param string $title     The new title.
-     * @return void
      */
     public function set_method_title(string $method_id, string $title): void
     {
@@ -106,14 +108,15 @@ class PaymentSettings extends \WooCommerce\PayPalCommerce\Settings\Data\Abstract
         if ($gateway) {
             $gateway->title = $title;
             $this->modified_gateway($gateway);
+        } else {
+            $option_key = 'woocommerce_' . $method_id . '_settings';
+            $settings = get_option($option_key, array());
+            $settings['title'] = $title;
+            update_option($option_key, $settings);
         }
     }
     /**
      * Updates the payment method description.
-     *
-     * @param string $method_id   ID of the payment method.
-     * @param string $description The new description.
-     * @return void
      */
     public function set_method_description(string $method_id, string $description): void
     {
@@ -121,21 +124,55 @@ class PaymentSettings extends \WooCommerce\PayPalCommerce\Settings\Data\Abstract
         if ($gateway) {
             $gateway->description = $description;
             $this->modified_gateway($gateway);
+        } else {
+            $option_key = 'woocommerce_' . $method_id . '_settings';
+            $settings = get_option($option_key, array());
+            $settings['description'] = $description;
+            update_option($option_key, $settings);
         }
     }
     /**
-     * Get PayPal show logo.
+     * Gets the payment method title.
      *
-     * @return bool
+     * @param string $method_id     ID of the payment method.
+     * @param string $default_title Default title to return if method not found.
+     * @return string The method title, or an empty string if not found.
+     */
+    public function get_method_title(string $method_id, string $default_title = ''): string
+    {
+        $option_key = 'woocommerce_' . $method_id . '_settings';
+        $settings = get_option($option_key, array());
+        if (!empty($settings) && isset($settings['title'])) {
+            return (string) $settings['title'];
+        }
+        return $default_title;
+    }
+    /**
+     * Gets the payment method description.
+     *
+     * @param string $method_id           ID of the payment method.
+     * @param string $default_description Default description to return if method not found.
+     * @return string The method description, or an empty string if not found.
+     */
+    public function get_method_description(string $method_id, string $default_description = ''): string
+    {
+        $option_key = 'woocommerce_' . $method_id . '_settings';
+        $settings = get_option($option_key, array());
+        if (!empty($settings) && isset($settings['description'])) {
+            return (string) $settings['description'];
+        }
+        return $default_description;
+    }
+    /**
+     * Whether to display the PayPal logo on the checkout page as an additional trust sign.
      */
     public function get_paypal_show_logo(): bool
     {
         return (bool) $this->data['paypal_show_logo'];
     }
     /**
-     * Get cardholder name.
-     *
-     * @return bool
+     * Whether to ask for the card-holder name during checkout.
+     * If true, a new field is displayed during checkout when paying with CC.
      */
     public function get_cardholder_name(): bool
     {
@@ -143,8 +180,6 @@ class PaymentSettings extends \WooCommerce\PayPalCommerce\Settings\Data\Abstract
     }
     /**
      * Get Fastlane display watermark.
-     *
-     * @return bool
      */
     public function get_fastlane_display_watermark(): bool
     {
@@ -152,8 +187,6 @@ class PaymentSettings extends \WooCommerce\PayPalCommerce\Settings\Data\Abstract
     }
     /**
      * Get Venmo enabled.
-     *
-     * @return bool
      */
     public function get_venmo_enabled(): bool
     {
@@ -161,28 +194,20 @@ class PaymentSettings extends \WooCommerce\PayPalCommerce\Settings\Data\Abstract
     }
     /**
      * Get Pay Later enabled.
-     *
-     * @return bool
      */
     public function get_paylater_enabled(): bool
     {
         return (bool) $this->data['paylater_enabled'];
     }
     /**
-     * Set PayPal show logo.
-     *
-     * @param bool $value The value.
-     * @return void
+     * @see self::get_paypal_show_logo()
      */
     public function set_paypal_show_logo(bool $value): void
     {
         $this->data['paypal_show_logo'] = $value;
     }
     /**
-     * Set cardholder name.
-     *
-     * @param bool $value The value.
-     * @return void
+     * @see self::get_cardholder_name()
      */
     public function set_cardholder_name(bool $value): void
     {
@@ -190,9 +215,6 @@ class PaymentSettings extends \WooCommerce\PayPalCommerce\Settings\Data\Abstract
     }
     /**
      * Set Fastlane display watermark.
-     *
-     * @param bool $value The value.
-     * @return void
      */
     public function set_fastlane_display_watermark(bool $value): void
     {
@@ -200,9 +222,6 @@ class PaymentSettings extends \WooCommerce\PayPalCommerce\Settings\Data\Abstract
     }
     /**
      * Set Venmo enabled.
-     *
-     * @param bool $value The value.
-     * @return void
      */
     public function set_venmo_enabled(bool $value): void
     {
@@ -210,9 +229,6 @@ class PaymentSettings extends \WooCommerce\PayPalCommerce\Settings\Data\Abstract
     }
     /**
      * Set Pay Later enabled.
-     *
-     * @param bool $value The value.
-     * @return void
      */
     public function set_paylater_enabled(bool $value): void
     {
@@ -220,9 +236,6 @@ class PaymentSettings extends \WooCommerce\PayPalCommerce\Settings\Data\Abstract
     }
     /**
      * Get the gateway object for the given method ID.
-     *
-     * @param string $method_id ID of the payment method.
-     * @return WC_Payment_Gateway|null
      */
     private function get_gateway(string $method_id): ?WC_Payment_Gateway
     {
@@ -239,12 +252,89 @@ class PaymentSettings extends \WooCommerce\PayPalCommerce\Settings\Data\Abstract
     }
     /**
      * Store the gateway object for later saving.
-     *
-     * @param WC_Payment_Gateway $gateway The gateway object.
-     * @return void
      */
     private function modified_gateway(WC_Payment_Gateway $gateway): void
     {
         $this->unsaved_gateways[$gateway->id] = $gateway;
+    }
+    /**
+     * Whether the domain verification for ApplePay completed successfully.
+     */
+    public function get_applepay_validated(): bool
+    {
+        return (bool) $this->data['applepay_validated'];
+    }
+    /**
+     * @see self::get_applepay_validated()
+     */
+    public function set_applepay_validated(bool $value): void
+    {
+        $this->data['applepay_validated'] = $value;
+    }
+    /**
+     * Get Apple Pay checkout data mode.
+     */
+    public function get_applepay_checkout_data_mode(): string
+    {
+        return (string) $this->data['applepay_checkout_data_mode'];
+    }
+    /**
+     * Todo: This setter is not used anywhere/no UI option.
+     *
+     * @see self::get_applepay_checkout_data_mode()
+     */
+    public function set_applepay_checkout_data_mode(string $value): void
+    {
+        $this->data['applepay_checkout_data_mode'] = $value;
+    }
+    /**
+     * Get Pay upon Invoice brand name.
+     */
+    public function get_pui_brand_name(): string
+    {
+        return (string) $this->data['pui_brand_name'];
+    }
+    /**
+     * Set Pay upon Invoice brand name.
+     */
+    public function set_pui_brand_name(string $value): void
+    {
+        $this->data['pui_brand_name'] = $value;
+    }
+    /**
+     * Get Pay upon Invoice logo URL.
+     */
+    public function get_pui_logo_url(): string
+    {
+        return (string) $this->data['pui_logo_url'];
+    }
+    /**
+     * Set Pay upon Invoice logo URL.
+     */
+    public function set_pui_logo_url(string $value): void
+    {
+        $this->data['pui_logo_url'] = $value;
+    }
+    /**
+     * Get Pay upon Invoice customer service instructions.
+     */
+    public function get_pui_customer_service_instructions(): string
+    {
+        return (string) $this->data['pui_customer_service_instructions'];
+    }
+    /**
+     * Set Pay upon Invoice customer service instructions.
+     */
+    public function set_pui_customer_service_instructions(string $value): void
+    {
+        $this->data['pui_customer_service_instructions'] = $value;
+    }
+    /**
+     * A legacy setting that has no React UI: Whether to capture an authorize-only payment
+     * when the order is transitioned to "Processing". No setter.
+     */
+    public function get_capture_on_status_change(): bool
+    {
+        return $this->data['capture_on_status_change'];
     }
 }

@@ -11,7 +11,6 @@ namespace WooCommerce\PayPalCommerce\AdminNotices;
 use WooCommerce\PayPalCommerce\AdminNotices\Notes\MexicoInstallmentsNote;
 use WooCommerce\PayPalCommerce\AdminNotices\Repository\Repository;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExecutableModule;
-use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExtendingModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ModuleClassNameIdTrait;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ServiceModule;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
@@ -21,7 +20,7 @@ use WooCommerce\PayPalCommerce\AdminNotices\Entity\PersistentMessage;
 /**
  * Class AdminNotices
  */
-class AdminNotices implements ServiceModule, ExtendingModule, ExecutableModule
+class AdminNotices implements ServiceModule, ExecutableModule
 {
     use ModuleClassNameIdTrait;
     /**
@@ -30,13 +29,6 @@ class AdminNotices implements ServiceModule, ExtendingModule, ExecutableModule
     public function services(): array
     {
         return require __DIR__ . '/../services.php';
-    }
-    /**
-     * {@inheritDoc}
-     */
-    public function extensions(): array
-    {
-        return require __DIR__ . '/../extensions.php';
     }
     /**
      * {@inheritDoc}

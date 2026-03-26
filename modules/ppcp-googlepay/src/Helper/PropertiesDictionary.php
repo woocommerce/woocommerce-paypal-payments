@@ -3,6 +3,7 @@
 /**
  * Properties of the GooglePay module.
  *
+ * @see     https://developers.google.com/pay/api/web/guides/resources/customize
  * @package WooCommerce\PayPalCommerce\Googlepay\Helper
  */
 declare (strict_types=1);
@@ -13,31 +14,56 @@ namespace WooCommerce\PayPalCommerce\Googlepay\Helper;
  */
 class PropertiesDictionary
 {
+    private const VALID_COLORS = array('', 'black', 'white');
+    private const VALID_TYPES = array('book', 'buy', 'checkout', 'donate', 'order', 'pay', 'plain', 'subscribe');
+    private const VALID_LANGUAGES = array('', 'ar', 'bg', 'ca', 'zh', 'hr', 'cs', 'da', 'nl', 'en', 'et', 'fi', 'fr', 'de', 'el', 'id', 'it', 'ja', 'ko', 'ms', 'no', 'pl', 'pt', 'ru', 'sr', 'sk', 'sl', 'es', 'sv', 'th', 'tr', 'uk');
     /**
-     * Returns the possible list of button colors.
-     *
-     * @return array
+     * Maps a color value from the React settings UI's "Styling" tab to a color-key
+     * that is supported by Google button.
      */
-    public static function button_colors(): array
+    public static function map_color(string $color): string
     {
-        return array('white' => __('White', 'woocommerce-paypal-payments'), 'black' => __('Black', 'woocommerce-paypal-payments'));
+        if (in_array($color, self::VALID_COLORS, \true)) {
+            return $color;
+        }
+        switch ($color) {
+            case 'silver':
+                return 'white';
+            case 'gold':
+            case 'blue':
+            default:
+                return 'black';
+        }
     }
     /**
-     * Returns the possible list of button types.
-     *
-     * @return array
+     * Maps the "label" string from the React settings UI's "Styling" tab to a button type
+     * that is supported by Google button.
      */
-    public static function button_types(): array
+    public static function map_type(string $label): string
     {
-        return array('book' => __('Book', 'woocommerce-paypal-payments'), 'buy' => __('Buy', 'woocommerce-paypal-payments'), 'checkout' => __('Checkout', 'woocommerce-paypal-payments'), 'donate' => __('Donate', 'woocommerce-paypal-payments'), 'order' => __('Order', 'woocommerce-paypal-payments'), 'pay' => __('Pay', 'woocommerce-paypal-payments'), 'plain' => __('Plain', 'woocommerce-paypal-payments'), 'subscribe' => __('Subscribe', 'woocommerce-paypal-payments'));
+        if (in_array($label, self::VALID_TYPES, \true)) {
+            return $label;
+        }
+        switch ($label) {
+            case 'buynow':
+                return 'buy';
+            case 'paypal':
+            default:
+                return 'plain';
+        }
     }
     /**
-     * Returns the possible list of button languages.
-     *
-     * @return array
+     * Translates the plugin's "language" setting to a valid language identifier that
+     * the Google button understands.
      */
-    public static function button_languages(): array
+    public static function map_language(string $language): string
     {
-        return array('' => __('Browser language', 'woocommerce-paypal-payments'), 'ar' => __('Arabic', 'woocommerce-paypal-payments'), 'bg' => __('Bulgarian', 'woocommerce-paypal-payments'), 'ca' => __('Catalan', 'woocommerce-paypal-payments'), 'zh' => __('Chinese', 'woocommerce-paypal-payments'), 'hr' => __('Croatian', 'woocommerce-paypal-payments'), 'cs' => __('Czech', 'woocommerce-paypal-payments'), 'da' => __('Danish', 'woocommerce-paypal-payments'), 'nl' => __('Dutch', 'woocommerce-paypal-payments'), 'en' => __('English', 'woocommerce-paypal-payments'), 'et' => __('Estonian', 'woocommerce-paypal-payments'), 'fi' => __('Finnish', 'woocommerce-paypal-payments'), 'fr' => __('French', 'woocommerce-paypal-payments'), 'de' => __('German', 'woocommerce-paypal-payments'), 'el' => __('Greek', 'woocommerce-paypal-payments'), 'id' => __('Indonesian', 'woocommerce-paypal-payments'), 'it' => __('Italian', 'woocommerce-paypal-payments'), 'ja' => __('Japanese', 'woocommerce-paypal-payments'), 'ko' => __('Korean', 'woocommerce-paypal-payments'), 'ms' => __('Malay', 'woocommerce-paypal-payments'), 'no' => __('Norwegian', 'woocommerce-paypal-payments'), 'pl' => __('Polish', 'woocommerce-paypal-payments'), 'pt' => __('Portuguese', 'woocommerce-paypal-payments'), 'ru' => __('Russian', 'woocommerce-paypal-payments'), 'sr' => __('Serbian', 'woocommerce-paypal-payments'), 'sk' => __('Slovak', 'woocommerce-paypal-payments'), 'sl' => __('Slovenian', 'woocommerce-paypal-payments'), 'es' => __('Spanish', 'woocommerce-paypal-payments'), 'sv' => __('Swedish', 'woocommerce-paypal-payments'), 'th' => __('Thai', 'woocommerce-paypal-payments'), 'tr' => __('Turkish', 'woocommerce-paypal-payments'), 'uk' => __('Ukrainian', 'woocommerce-paypal-payments'));
+        if (strlen($language) > 2) {
+            $language = substr($language, 0, 2);
+        }
+        if (in_array($language, self::VALID_LANGUAGES, \true)) {
+            return $language;
+        }
+        return '';
     }
 }

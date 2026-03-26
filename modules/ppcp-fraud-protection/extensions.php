@@ -10,8 +10,8 @@ namespace WooCommerce\PayPalCommerce\FraudProtection;
 
 use Automattic\WooCommerce\Admin\Notes\Note;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
-use WooCommerce\PayPalCommerce\WcGateway\Settings\WcInboxNotes\InboxNoteAction;
-use WooCommerce\PayPalCommerce\WcGateway\Settings\WcInboxNotes\InboxNoteFactory;
+use WooCommerce\PayPalCommerce\WcGateway\WcInboxNotes\InboxNoteAction;
+use WooCommerce\PayPalCommerce\WcGateway\WcInboxNotes\InboxNoteFactory;
 return array('wcgateway.settings.inbox-notes' => function (array $notes, ContainerInterface $container): array {
     $inbox_note_factory = $container->get('wcgateway.settings.inbox-note-factory');
     assert($inbox_note_factory instanceof InboxNoteFactory);

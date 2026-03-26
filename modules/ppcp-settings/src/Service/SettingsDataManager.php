@@ -31,35 +31,10 @@ use WooCommerce\PayPalCommerce\Settings\Data\Definition\PaymentMethodsDefinition
  */
 class SettingsDataManager
 {
-    /**
-     * The payment methods definition, provides a list of all available payment methods.
-     *
-     * @var PaymentMethodsDefinition
-     */
     private PaymentMethodsDefinition $methods_definition;
-    /**
-     * The onboarding profile data model.
-     *
-     * @var OnboardingProfile
-     */
     private OnboardingProfile $onboarding_profile;
-    /**
-     * Payment settings model.
-     *
-     * @var SettingsModel
-     */
     private SettingsModel $payment_settings;
-    /**
-     * Data model that handles button styling on the front end.
-     *
-     * @var StylingSettings
-     */
     private StylingSettings $styling_settings;
-    /**
-     * Model for handling payment methods.
-     *
-     * @var PaymentSettings
-     */
     private PaymentSettings $payment_methods;
     /**
      * Data accessors for pay later messaging settings.
@@ -75,18 +50,6 @@ class SettingsDataManager
      * @var AbstractDataModel[]
      */
     private array $models_to_reset = array();
-    /**
-     * Constructor.
-     *
-     * @param PaymentMethodsDefinition $methods_definition Access list of all payment methods.
-     * @param OnboardingProfile        $onboarding_profile The onboarding profile model.
-     * @param GeneralSettings          $general_settings   The general settings model.
-     * @param SettingsModel            $payment_settings   The settings model.
-     * @param StylingSettings          $styling_settings   The styling settings model.
-     * @param PaymentSettings          $payment_methods    The payment settings model.
-     * @param array                    $paylater_messaging Paylater Messaging accessor.
-     * @param array                    ...$data_models     List of additional data models to reset.
-     */
     public function __construct(
         PaymentMethodsDefinition $methods_definition,
         OnboardingProfile $onboarding_profile,
@@ -96,19 +59,11 @@ class SettingsDataManager
         PaymentSettings $payment_methods,
         array $paylater_messaging,
         // TODO should be migrated to an AbstractDataModel.
-        ...$data_models
+        AbstractDataModel ...$data_models
     )
     {
         foreach ($data_models as $data_model) {
-            /**
-             * An instance extracted from the spread operator. We only process
-             * AbstractDataModel instances.
-             *
-             * @var mixed|AbstractDataModel $data_model
-             */
-            if ($data_model instanceof AbstractDataModel) {
-                $this->models_to_reset[] = $data_model;
-            }
+            $this->models_to_reset[] = $data_model;
         }
         $this->models_to_reset[] = $onboarding_profile;
         $this->models_to_reset[] = $general_settings;
@@ -197,6 +152,7 @@ class SettingsDataManager
         $profile_data = $this->onboarding_profile->to_array();
         $flags->is_business_seller = !($profile_data['is_casual_seller'] ?? \false);
         $flags->use_card_payments = $profile_data['accept_card_payments'] ?? \false;
+        $flags->use_digital_wallets = $profile_data['accept_card_payments'] ?? \false;
         $flags->use_subscriptions = in_array(ProductChoicesEnum::SUBSCRIPTIONS, $profile_data['products'] ?? array(), \true);
         $this->toggle_payment_gateways($flags);
     }
@@ -230,9 +186,6 @@ class SettingsDataManager
             if ($flags->use_card_payments) {
                 // Enable ACDC for business sellers.
                 $this->payment_methods->toggle_method_state(CreditCardGateway::ID, \true);
-                // Apple Pay and Google Pay depend on the ACDC gateway.
-                $this->payment_methods->toggle_method_state(ApplePayGateway::ID, \true);
-                $this->payment_methods->toggle_method_state(GooglePayGateway::ID, \true);
                 // Enable Pay Later for business sellers if subscriptions were not selected.
                 // Selecting subscriptions automatically enables the "Save PayPal and Venmo" option, which is incompatible with Pay Later.
                 if (!$flags->use_subscriptions) {
@@ -240,6 +193,10 @@ class SettingsDataManager
                 }
                 // Enable BCDC for business sellers without ACDC.
                 $this->payment_methods->toggle_method_state(CardButtonGateway::ID, \true);
+            }
+            if ($flags->use_digital_wallets) {
+                $this->payment_methods->toggle_method_state(ApplePayGateway::ID, \true);
+                $this->payment_methods->toggle_method_state(GooglePayGateway::ID, \true);
             }
             /**
              * Allow plugins to modify apm payment gateway states before saving.

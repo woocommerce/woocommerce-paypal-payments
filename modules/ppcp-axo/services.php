@@ -19,8 +19,9 @@ use WooCommerce\PayPalCommerce\Axo\Helper\CompatibilityChecker;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
-use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\CardPaymentsConfiguration;
+use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
+use WooCommerce\PayPalCommerce\Settings\Data\PaymentSettings;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\CurrencyGetter;
 return array(
     // @deprecated - use `axo.eligibility.check` instead.
@@ -29,9 +30,9 @@ return array(
         return $eligibility_check();
     },
     'axo.eligibility.check' => static function (ContainerInterface $container): callable {
-        $axo_applies = $container->get('axo.service.axo-applies');
-        assert($axo_applies instanceof AxoApplies);
-        return static function () use ($axo_applies): bool {
+        return static function () use ($container): bool {
+            $axo_applies = $container->get('axo.service.axo-applies');
+            assert($axo_applies instanceof AxoApplies);
             return $axo_applies->for_country_currency() && $axo_applies->for_merchant();
         };
     },
@@ -43,9 +44,9 @@ return array(
     },
     // If AXO is configured and onboarded.
     'axo.available' => static function (ContainerInterface $container): bool {
-        $settings = $container->get('wcgateway.settings');
-        assert($settings instanceof Settings);
-        return $settings->has('axo_enabled') && $settings->get('axo_enabled');
+        $payment_settings = $container->get('settings.data.payment');
+        assert($payment_settings instanceof PaymentSettings);
+        return $payment_settings->is_method_enabled(AxoGateway::ID);
     },
     'axo.asset_getter' => static function (ContainerInterface $container): AssetGetter {
         $factory = $container->get('assets.asset_getter_factory');
@@ -53,15 +54,15 @@ return array(
         return $factory->for_module('ppcp-axo');
     },
     'axo.manager' => static function (ContainerInterface $container): AxoManager {
-        return new AxoManager($container->get('axo.asset_getter'), $container->get('ppcp.asset-version'), $container->get('wcgateway.settings'), $container->get('settings.environment'), $container->get('axo.insights'), $container->get('wcgateway.asset_getter'), $container->get('axo.supported-country-card-type-matrix'));
+        return new AxoManager($container->get('axo.asset_getter'), $container->get('ppcp.asset-version'), $container->get('settings.settings-provider'), $container->get('settings.environment'), $container->get('axo.insights'), $container->get('wcgateway.asset_getter'), $container->get('axo.supported-country-card-type-matrix'));
     },
     'axo.gateway' => static function (ContainerInterface $container): AxoGateway {
-        return new AxoGateway($container->get('wcgateway.settings.render'), $container->get('wcgateway.settings'), $container->get('wcgateway.configuration.card-configuration'), $container->get('session.handler'), $container->get('wcgateway.order-processor'), $container->get('wcgateway.credit-card-icons'), $container->get('api.endpoint.order'), $container->get('api.factory.purchase-unit'), $container->get('api.factory.shipping-preference'), $container->get('wcgateway.transaction-url-provider'), $container->get('settings.environment'), $container->get('woocommerce.logger.woocommerce'), $container->get('wcgateway.builder.experience-context'), $container->get('settings.data.settings'));
+        return new AxoGateway($container->get('wcgateway.configuration.card-configuration'), $container->get('session.handler'), $container->get('wcgateway.order-processor'), $container->get('wcgateway.credit-card-icons'), $container->get('api.endpoint.order'), $container->get('api.factory.purchase-unit'), $container->get('api.factory.shipping-preference'), $container->get('wcgateway.transaction-url-provider'), $container->get('settings.environment'), $container->get('woocommerce.logger.woocommerce'), $container->get('wcgateway.builder.experience-context'), $container->get('settings.data.settings'));
     },
     // Data needed for the PayPal Insights.
     'axo.insights' => static function (ContainerInterface $container): array {
-        $settings = $container->get('wcgateway.settings');
-        assert($settings instanceof Settings);
+        $settings_provider = $container->get('settings.settings-provider');
+        assert($settings_provider instanceof SettingsProvider);
         $currency = $container->get('api.shop.currency.getter');
         assert($currency instanceof CurrencyGetter);
         $session_id = '';
@@ -71,7 +72,7 @@ return array(
         return array(
             'enabled' => defined('WP_DEBUG') && WP_DEBUG,
             // @phpstan-ignore booleanAnd.rightAlwaysFalse
-            'client_id' => $settings->has('client_id') ? $settings->get('client_id') : null,
+            'client_id' => $settings_provider->merchant_data()->client_id,
             'session_id' => $session_id,
             'amount' => array('currency_code' => $currency->get()),
             'payment_method_selected_map' => $container->get('axo.payment_method_selected_map'),
@@ -86,33 +87,19 @@ return array(
      * The matrix which countries and currency combinations can be used for AXO.
      */
     'axo.supported-country-currency-matrix' => static function (ContainerInterface $container): array {
-        $dcc_allowed_country_currency_matrix = $container->get('api.dcc-supported-country-currency-matrix');
-        $matrix = array('US' => $dcc_allowed_country_currency_matrix['US']);
-        if ($container->get('axo.uk.enabled')) {
-            $matrix['GB'] = $dcc_allowed_country_currency_matrix['GB'];
-        }
-        if ($container->get('axo.au.enabled')) {
-            $matrix['AU'] = $dcc_allowed_country_currency_matrix['AU'];
-        }
-        /**
-         * Returns which countries and currency combinations can be used for AXO.
-         */
-        return apply_filters('woocommerce_paypal_payments_axo_supported_country_currency_matrix', $matrix);
+        return apply_filters('woocommerce_paypal_payments_axo_supported_country_currency_matrix', $container->get('api.dcc-supported-country-currency-matrix'));
     },
     /**
      * The matrix which countries and card type combinations can be used for AXO.
      */
     'axo.supported-country-card-type-matrix' => static function (ContainerInterface $container): array {
-        $matrix = array('US' => array('VISA', 'MASTERCARD', 'AMEX', 'DISCOVER'), 'CA' => array('VISA', 'MASTERCARD', 'AMEX', 'DISCOVER'));
-        if ($container->get('axo.uk.enabled')) {
-            $matrix['GB'] = array('VISA', 'MASTERCARD', 'AMEX', 'DISCOVER');
+        $dcc_card_matrix = $container->get('api.dcc-supported-country-card-matrix');
+        $matrix = array();
+        foreach ($dcc_card_matrix as $country => $cards) {
+            $matrix[$country] = array_map(static function ($key): string {
+                return strtoupper((string) $key);
+            }, array_keys($cards));
         }
-        if ($container->get('axo.au.enabled')) {
-            $matrix['AU'] = array('VISA', 'MASTERCARD', 'AMEX');
-        }
-        /**
-         * Returns which countries and card type combinations can be used for AXO.
-         */
         return apply_filters('woocommerce_paypal_payments_axo_supported_country_card_type_matrix', $matrix);
     },
     'axo.settings-conflict-notice' => static function (ContainerInterface $container): string {
@@ -144,7 +131,7 @@ return array(
         $dcc_configuration = $container->get('wcgateway.configuration.card-configuration');
         assert($dcc_configuration instanceof CardPaymentsConfiguration);
         if ($dcc_configuration->use_fastlane()) {
-            $fastlane_settings_url = admin_url(sprintf('admin.php?page=wc-settings&tab=checkout&section=%1$s&ppcp-tab=%2$s#field-axo_heading', PayPalGateway::ID, CreditCardGateway::ID));
+            $fastlane_settings_url = admin_url(sprintf('admin.php?page=wc-settings&tab=checkout&section=%1$s', PayPalGateway::ID));
             $notice_content = sprintf(
                 /* translators: %1$s: URL to the Checkout edit page. */
                 __('<span class="highlight">Important:</span> The <code>Cart</code> & <code>Classic Cart</code> <strong>Smart Button Locations</strong> cannot be disabled while <a href="%1$s">Fastlane</a> is active.', 'woocommerce-paypal-payments'),
@@ -192,25 +179,5 @@ return array(
         $shipping_zones = \WC_Shipping_Zones::get_zones();
         $get_zone_locations = fn(\WC_Shipping_Zone $zone): array => !empty($zone->get_shipping_methods(\true)) ? array_map(fn(object $location): string => $location->code, $zone->get_zone_locations()) : array();
         return array_unique(array_merge(...array_map($get_zone_locations, array_map(fn($zone): \WC_Shipping_Zone => $zone instanceof \WC_Shipping_Zone ? $zone : new \WC_Shipping_Zone($zone['id']), $shipping_zones))));
-    },
-    'axo.uk.enabled' => static function (ContainerInterface $container): bool {
-        // phpcs:disable WordPress.NamingConventions.ValidHookName.UseUnderscores
-        /**
-         * Filter to determine if Fastlane UK with 3D Secure should be enabled.
-         *
-         * @param bool $enabled Whether Fastlane UK is enabled.
-         */
-        return apply_filters('woocommerce.feature-flags.woocommerce_paypal_payments.axo_uk_enabled', getenv('PCP_AXO_UK_ENABLED') !== '0');
-        // phpcs:enable WordPress.NamingConventions.ValidHookName.UseUnderscores
-    },
-    'axo.au.enabled' => static function (ContainerInterface $container): bool {
-        // phpcs:disable WordPress.NamingConventions.ValidHookName.UseUnderscores
-        /**
-         * Filter to determine if Fastlane AU should be enabled.
-         *
-         * @param bool $enabled Whether Fastlane AU is enabled.
-         */
-        return apply_filters('woocommerce.feature-flags.woocommerce_paypal_payments.axo_au_enabled', getenv('PCP_AXO_AU_ENABLED') !== '0');
-        // phpcs:enable WordPress.NamingConventions.ValidHookName.UseUnderscores
     },
 );

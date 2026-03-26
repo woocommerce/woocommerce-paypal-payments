@@ -8,7 +8,7 @@
 declare (strict_types=1);
 namespace WooCommerce\PayPalCommerce\Compat\PPEC;
 
-use Automattic\WooCommerce\Utilities\OrderUtil;
+use WooCommerce\PayPalCommerce\Vendor\Psr\Log\LoggerInterface;
 use stdClass;
 use WooCommerce\PayPalCommerce\WcSubscriptions\RenewalHandler;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentToken;
@@ -30,16 +30,16 @@ class SubscriptionsHandler
      * @var MockGateway
      */
     private $mock_gateway;
-    /**
-     * Constructor.
-     *
-     * @param RenewalHandler $ppcp_renewal_handler PayPal Payments Subscriptions renewal handler.
-     * @param MockGateway    $gateway              Mock gateway instance.
-     */
-    public function __construct(RenewalHandler $ppcp_renewal_handler, \WooCommerce\PayPalCommerce\Compat\PPEC\MockGateway $gateway)
+    private \WooCommerce\PayPalCommerce\Compat\PPEC\BillingAgreementTokenConverter $token_converter;
+    private LoggerInterface $logger;
+    private bool $vault_v3_eligible;
+    public function __construct(RenewalHandler $ppcp_renewal_handler, \WooCommerce\PayPalCommerce\Compat\PPEC\MockGateway $gateway, \WooCommerce\PayPalCommerce\Compat\PPEC\BillingAgreementTokenConverter $token_converter, LoggerInterface $logger, bool $vault_v3_eligible = \false)
     {
         $this->ppcp_renewal_handler = $ppcp_renewal_handler;
         $this->mock_gateway = $gateway;
+        $this->token_converter = $token_converter;
+        $this->logger = $logger;
+        $this->vault_v3_eligible = $vault_v3_eligible;
     }
     /**
      * Sets up hooks.
@@ -101,34 +101,79 @@ class SubscriptionsHandler
         remove_filter('woocommerce_paypal_payments_subscriptions_get_token_for_customer', array($this, 'use_billing_agreement_as_token'));
     }
     /**
-     * Short-circuits `RenewalHandler::get_token_for_customer()` to use a Billing Agreement ID for PPEC orders
-     * instead of vaulted tokens.
+     * Short-circuits `RenewalHandler::get_token_for_customer()` for PPEC orders.
      *
-     * @param null|PaymentToken $token    Current token value.
-     * @param \WC_Customer      $customer Customer object.
-     * @param \WC_Order         $order    Renewal order.
-     * @return null|PaymentToken
+     * Tries the vault v3 conversion path first. If that is not applicable or fails,
+     * falls back to the legacy BILLING_AGREEMENT token path.
      */
     public function use_billing_agreement_as_token($token, $customer, $order)
     {
-        if (\WooCommerce\PayPalCommerce\Compat\PPEC\PPECHelper::PPEC_GATEWAY_ID === $order->get_payment_method() && wcs_order_contains_renewal($order)) {
-            $billing_agreement_id = $order->get_meta('_ppec_billing_agreement_id', \true);
-            if ($billing_agreement_id) {
-                return new PaymentToken($billing_agreement_id, new stdClass(), 'BILLING_AGREEMENT');
+        if (\WooCommerce\PayPalCommerce\Compat\PPEC\PPECHelper::PPEC_GATEWAY_ID !== $order->get_payment_method() || !wcs_order_contains_renewal($order)) {
+            return $token;
+        }
+        if ($this->vault_v3_eligible) {
+            $vault_token = $this->get_vault_v3_token($order);
+            if ($vault_token) {
+                return $vault_token;
             }
-            $subscriptions = wcs_get_subscriptions_for_renewal_order($order);
-            if (!empty($subscriptions)) {
-                $subscription = reset($subscriptions);
-                // Get first subscription.
-                $parent_order = $subscription->get_parent();
-                if ($parent_order) {
-                    $billing_agreement_id = $parent_order->get_meta('_ppec_billing_agreement_id', \true);
-                    if ($billing_agreement_id) {
-                        return new PaymentToken($billing_agreement_id, new stdClass(), 'BILLING_AGREEMENT');
-                    }
+        }
+        return $this->get_billing_agreement_token($order) ?? $token;
+    }
+    /**
+     * Attempts to resolve or create a Vault v3 payment token for the renewal order.
+     *
+     * Checks if the subscription already has a converted vault token. If not,
+     * attempts conversion from the billing agreement via the PayPal Vault v3 API.
+     */
+    private function get_vault_v3_token(\WC_Order $order): ?PaymentToken
+    {
+        $subscriptions = wcs_get_subscriptions_for_renewal_order($order);
+        $subscription = !empty($subscriptions) ? reset($subscriptions) : null;
+        if (!$subscription) {
+            return null;
+        }
+        $vault_token_id = $subscription->get_meta('_ppec_ba_converted_to_vault_v3', \true);
+        if ($vault_token_id) {
+            return new PaymentToken($vault_token_id, new stdClass(), PaymentToken::TYPE_PAYMENT_METHOD_TOKEN);
+        }
+        $billing_agreement_id = $this->resolve_billing_agreement_id($order);
+        if (!$billing_agreement_id) {
+            return null;
+        }
+        $vault_token_id = $this->token_converter->convert($billing_agreement_id, $order->get_customer_id());
+        if (!$vault_token_id) {
+            return null;
+        }
+        $subscription->update_meta_data('_ppec_ba_converted_to_vault_v3', $vault_token_id);
+        $subscription->save();
+        $this->logger->info(sprintf('Subscription #%d: converted Billing Agreement %s to Vault v3 token %s.', $subscription->get_id(), $billing_agreement_id, $vault_token_id));
+        return new PaymentToken($vault_token_id, new stdClass(), PaymentToken::TYPE_PAYMENT_METHOD_TOKEN);
+    }
+    private function get_billing_agreement_token(\WC_Order $order): ?PaymentToken
+    {
+        $billing_agreement_id = $this->resolve_billing_agreement_id($order);
+        if (!$billing_agreement_id) {
+            return null;
+        }
+        return new PaymentToken($billing_agreement_id, new stdClass(), 'BILLING_AGREEMENT');
+    }
+    private function resolve_billing_agreement_id(\WC_Order $order): ?string
+    {
+        $billing_agreement_id = $order->get_meta('_ppec_billing_agreement_id', \true);
+        if ($billing_agreement_id) {
+            return $billing_agreement_id;
+        }
+        $subscriptions = wcs_get_subscriptions_for_renewal_order($order);
+        if (!empty($subscriptions)) {
+            $subscription = reset($subscriptions);
+            $parent_order = $subscription->get_parent();
+            if ($parent_order) {
+                $billing_agreement_id = $parent_order->get_meta('_ppec_billing_agreement_id', \true);
+                if ($billing_agreement_id) {
+                    return $billing_agreement_id;
                 }
             }
         }
-        return $token;
+        return null;
     }
 }

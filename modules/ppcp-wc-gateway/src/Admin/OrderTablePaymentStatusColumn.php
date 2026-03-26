@@ -9,9 +9,9 @@
 declare (strict_types=1);
 namespace WooCommerce\PayPalCommerce\WcGateway\Admin;
 
+use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\AuthorizedPaymentsProcessor;
-use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 /**
  * Class OrderTablePaymentStatusColumn
  */
@@ -20,20 +20,10 @@ class OrderTablePaymentStatusColumn
     const COLUMN_KEY = 'ppcp_payment_status';
     const INTENT = 'authorize';
     const AFTER_COLUMN_KEY = 'order_status';
-    /**
-     * The settings.
-     *
-     * @var Settings
-     */
-    private $settings;
-    /**
-     * OrderTablePaymentStatusColumn constructor.
-     *
-     * @param Settings $settings The Settings.
-     */
-    public function __construct(Settings $settings)
+    private SettingsProvider $settings_provider;
+    public function __construct(SettingsProvider $settings_provider)
     {
-        $this->settings = $settings;
+        $this->settings_provider = $settings_provider;
     }
     /**
      * Register the columns.
@@ -44,7 +34,7 @@ class OrderTablePaymentStatusColumn
      */
     public function register(array $columns): array
     {
-        if (!$this->settings->has('intent') || $this->settings->get('intent') !== self::INTENT) {
+        if ($this->settings_provider->payment_intent() !== self::INTENT) {
             return $columns;
         }
         $status_column_position = array_search(self::AFTER_COLUMN_KEY, array_keys($columns), \true);
@@ -60,7 +50,7 @@ class OrderTablePaymentStatusColumn
      */
     public function render(string $column, int $wc_order_id)
     {
-        if (!$this->settings->has('intent') || $this->settings->get('intent') !== self::INTENT) {
+        if ($this->settings_provider->payment_intent() !== self::INTENT) {
             return;
         }
         if (self::COLUMN_KEY !== $column) {

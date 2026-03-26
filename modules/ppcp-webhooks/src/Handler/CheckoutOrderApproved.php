@@ -173,9 +173,6 @@ class CheckoutOrderApproved implements \WooCommerce\PayPalCommerce\Webhooks\Hand
             if (PayUponInvoiceGateway::ID === $wc_order->get_payment_method() || OXXOGateway::ID === $wc_order->get_payment_method()) {
                 continue;
             }
-            if (!in_array($wc_order->get_status(), array('pending', 'on-hold'), \true)) {
-                continue;
-            }
             try {
                 /**
                  * This filter controls if the method 'process()' from OrderProcessor will be called.

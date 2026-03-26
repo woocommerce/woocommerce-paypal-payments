@@ -8,40 +8,30 @@
 declare (strict_types=1);
 namespace WooCommerce\PayPalCommerce\WcGateway\Helper;
 
-use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
+use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
 /**
  * Class SettingsStatus
  */
 class SettingsStatus
 {
-    /**
-     * The Settings.
-     *
-     * @var Settings
-     */
-    protected $settings;
-    /**
-     * SettingsStatus constructor.
-     *
-     * @param Settings $settings The Settings.
-     */
-    public function __construct(Settings $settings)
+    protected SettingsProvider $settings_provider;
+    public function __construct(SettingsProvider $settings_provider)
     {
-        $this->settings = $settings;
+        $this->settings_provider = $settings_provider;
     }
     /**
      * Checks whether Pay Later messaging is enabled.
      */
     public function is_pay_later_messaging_enabled(): bool
     {
-        return $this->settings->has('pay_later_messaging_enabled') && $this->settings->get('pay_later_messaging_enabled');
+        return $this->settings_provider->pay_later_messaging_enabled();
     }
     /**
      * Check whether any Pay Later messaging location is enabled.
      */
     public function has_pay_later_messaging_locations(): bool
     {
-        $selected_locations = $this->settings->has('pay_later_messaging_locations') ? $this->settings->get('pay_later_messaging_locations') : array();
+        $selected_locations = $this->settings_provider->pay_later_messaging_locations();
         return !empty($selected_locations);
     }
     /**
@@ -52,7 +42,7 @@ class SettingsStatus
      */
     public function is_pay_later_messaging_enabled_for_location(string $location): bool
     {
-        return $this->is_pay_later_messaging_enabled() && $this->has_pay_later_messaging_locations() && $this->is_enabled_for_location('pay_later_messaging_locations', $location);
+        return $this->is_pay_later_messaging_enabled() && $this->has_pay_later_messaging_locations() && $this->is_location_enabled($this->settings_provider->pay_later_messaging_locations(), $location);
     }
     /**
      * Check whether Pay Later button is enabled either for checkout, cart or product page.
@@ -61,8 +51,8 @@ class SettingsStatus
      */
     public function is_pay_later_button_enabled(): bool
     {
-        $pay_later_button_enabled = $this->settings->has('pay_later_button_enabled') && $this->settings->get('pay_later_button_enabled');
-        $selected_locations = $this->settings->has('pay_later_button_locations') ? $this->settings->get('pay_later_button_locations') : array();
+        $pay_later_button_enabled = $this->settings_provider->pay_later_button_enabled();
+        $selected_locations = $this->settings_provider->pay_later_button_locations();
         return $pay_later_button_enabled && !empty($selected_locations);
     }
     /**
@@ -73,7 +63,8 @@ class SettingsStatus
      */
     public function is_pay_later_button_enabled_for_location(string $location): bool
     {
-        return $this->is_pay_later_button_enabled() && ($this->is_enabled_for_location('pay_later_button_locations', $location) || 'product' === $location && $this->is_enabled_for_location('pay_later_button_locations', 'mini-cart'));
+        $locations = $this->settings_provider->pay_later_button_locations();
+        return $this->is_pay_later_button_enabled() && ($this->is_location_enabled($locations, $location) || 'product' === $location && $this->is_location_enabled($locations, 'mini-cart'));
     }
     /**
      * Checks whether smart buttons are enabled for a given location.
@@ -86,7 +77,8 @@ class SettingsStatus
         if ($location === 'block-editor') {
             $location = 'checkout-block';
         }
-        return $this->is_enabled_for_location('smart_button_locations', $location);
+        $locations = $this->settings_provider->smart_button_locations();
+        return $this->is_location_enabled($locations, $location);
     }
     /**
      * Adapts the context value to match the location settings.
@@ -102,19 +94,22 @@ class SettingsStatus
         if ('checkout-block' === $location) {
             $location = 'checkout-block-express';
         }
+        if ('cart-block' === $location) {
+            $location = 'cart';
+        }
         return $location;
     }
     /**
-     * Checks whether the locations field in the settings includes the given location.
+     * Checks whether the location is in the list.
      *
-     * @param string $setting_name The name of the enabled locations field in the settings.
-     * @param string $location The location.
+     * @param array  $locations The list of enabled locations.
+     * @param string $location The location to check.
      * @return bool
      */
-    protected function is_enabled_for_location(string $setting_name, string $location): bool
+    protected function is_location_enabled(array $locations, string $location): bool
     {
         $location = $this->normalize_location($location);
-        $selected_locations = apply_filters('woocommerce_paypal_payments_selected_button_locations', $this->settings->has($setting_name) ? $this->settings->get($setting_name) : array(), $setting_name);
+        $selected_locations = apply_filters('woocommerce_paypal_payments_selected_button_locations', $locations, 'locations');
         if (empty($selected_locations)) {
             return \false;
         }
