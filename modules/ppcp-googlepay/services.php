@@ -191,7 +191,6 @@ return array(
 			$container->get( 'wc-subscriptions.helper' ),
 			$container->get( 'settings.settings-provider' ),
 			$container->get( 'settings.environment' ),
-			$container->get( 'wcgateway.settings.status' ),
 			$container->get( 'button.helper.context' )
 		);
 	},

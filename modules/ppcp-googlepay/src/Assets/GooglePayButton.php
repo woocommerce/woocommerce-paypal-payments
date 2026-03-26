@@ -25,37 +25,16 @@ use WooCommerce\PayPalCommerce\WcGateway\Helper\SettingsStatus;
 use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
 use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
 
-/**
- * Class Button
- */
 class GooglePayButton implements ButtonInterface {
 
 	private Context $context;
-
 	private AssetGetter $asset_getter;
-
 	private string $sdk_url;
-
 	private string $version;
-
 	private SettingsProvider $settings;
-
 	private Environment $environment;
-
-	private SettingsStatus $settings_status;
-
 	private SubscriptionHelper $subscription_helper;
 
-	/**
-	 * @param AssetGetter        $asset_getter
-	 * @param string             $sdk_url             The URL to the SDK.
-	 * @param string             $version             The assets version.
-	 * @param SubscriptionHelper $subscription_helper The subscription helper.
-	 * @param SettingsProvider   $settings            The legacy settings.
-	 * @param Environment        $environment         The environment object.
-	 * @param SettingsStatus     $settings_status     The Settings status helper.
-	 * @param Context            $context             Context data provider.
-	 */
 	public function __construct(
 		AssetGetter $asset_getter,
 		string $sdk_url,
@@ -63,7 +42,6 @@ class GooglePayButton implements ButtonInterface {
 		SubscriptionHelper $subscription_helper,
 		SettingsProvider $settings,
 		Environment $environment,
-		SettingsStatus $settings_status,
 		Context $context
 	) {
 		$this->asset_getter        = $asset_getter;
@@ -72,7 +50,6 @@ class GooglePayButton implements ButtonInterface {
 		$this->subscription_helper = $subscription_helper;
 		$this->settings            = $settings;
 		$this->environment         = $environment;
-		$this->settings_status     = $settings_status;
 		$this->context             = $context;
 	}
 
