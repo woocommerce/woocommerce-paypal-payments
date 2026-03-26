@@ -157,7 +157,6 @@ return array(
 			$container->get( 'applepay.asset_getter' ),
 			$container->get( 'ppcp.asset-version' ),
 			$container->get( 'applepay.data_to_scripts' ),
-			$container->get( 'wcgateway.settings.status' ),
 			$container->get( 'button.helper.cart-products' ),
 			$container->get( 'button.helper.context' )
 		);
