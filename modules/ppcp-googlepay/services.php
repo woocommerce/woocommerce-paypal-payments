@@ -202,7 +202,9 @@ return array(
 			$container->get( 'googlepay.asset_getter' ),
 			$container->get( 'ppcp.asset-version' ),
 			$container->get( 'googlepay.button' ),
-			$container->get( 'blocks.method' )
+			$container->get( 'blocks.method' ),
+			$container->get( 'button.helper.context' ),
+			$container->get( 'settings.settings-provider' )
 		);
 	},
 
