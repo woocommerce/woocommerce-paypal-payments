@@ -85,7 +85,7 @@ export class PcpOnboarding extends PcpAdminPage {
 	/** First pricing badge on the page (PayPal Checkout: checkout % + fixed fee from countryPriceInfo). */
 	badgeContainer = () =>
 		this.page
-			.locator( 'span.ppcp-r-title-badge.ppcp-r-title-badge--info' )
+			.locator( 'span.ppcp-r-title-badge.ppcp-r-title-badge--pricing' )
 			.first();
 	welcomeDocsContainer = () =>
 		this.page.locator( '.ppcp-r-welcome-docs__wrapper' ).last();

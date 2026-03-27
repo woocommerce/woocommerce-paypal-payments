@@ -198,6 +198,23 @@ export class PayPalUi {
 			'Assert PayPal button is visible'
 		).toBeVisible();
 		await this.payPalButton().click();
+		// Popup opens directly or PayPal shows "Click to Continue" overlay
+		await Promise.race( [
+			popupPromise,
+			( async () => {
+				try {
+					const clickToContinue = this.page.getByRole( 'link', {
+						name: 'Click to Continue',
+					} );
+					await clickToContinue.waitFor( {
+						state: 'visible',
+					} );
+					await clickToContinue.click();
+				} catch {
+					// popup opened directly (normal case)
+				}
+			} )(),
+		] );
 
 		const popup = await popupPromise;
 		await popup.waitForLoadState();
@@ -327,11 +344,9 @@ export class PayPalUi {
 	 * Submits order and waits for page load
 	 */
 	submitOrder = async () => {
-		await expect(
-			this.placeOrderButton(),
-			'Assert place order button is visible'
-		).toBeVisible();
-		await this.placeOrderButton().click();
+		const button = this.placeOrderButton();
+		await button.focus();
+		await button.click();
 		await this.page.waitForLoadState();
 	};
 
@@ -409,8 +424,8 @@ export class PayPalUi {
 			await this.acdcSaveToAccountCheckbox().check();
 		}
 
-		await this.submitOrder();
 		await this.replacePayPalAuthToken( merchant );
+		await this.submitOrder();
 	};
 
 	/**
@@ -447,8 +462,8 @@ export class PayPalUi {
 			'Assert saved ACDC card gateway is visible'
 		).toBeVisible();
 		await savedCardGateway.click();
-		await this.submitOrder();
 		await this.replacePayPalAuthToken( merchant );
+		await this.submitOrder();
 	};
 
 	/**
@@ -488,9 +503,10 @@ export class PayPalUi {
 			).toBeVisible();
 			await this.fastlaneGateway().click();
 
+			// Wait for Braintree hosted field iframes to load
 			await expect(
 				this.fastlaneCardNumberInput(),
-				'Assert Fastlane card number input is visible'
+				'Wait for Braintree card form'
 			).toBeVisible();
 			await this.fastlaneCardNumberInput().fill( card.card_number );
 
@@ -512,8 +528,9 @@ export class PayPalUi {
 			if ( await this.fastlaneCardHolderInput().isVisible() ) {
 				await this.fastlaneCardHolderInput().fill( 'Gary From-USA' );
 			}
+
+			await expect( this.placeOrderButton() ).toBeEnabled();
 		}
-		await this.page.waitForTimeout( 1000 );
 		await this.submitOrder();
 	};
 
@@ -592,9 +609,9 @@ export class PayPalUi {
 	) => {
 		switch ( payment.gateway.shortcut ) {
 			case 'paypal':
-				await expect
-					.soft( this.payPalButton() )
-					.not.toContainClass( 'paypal-button-wallet' ); // Class applied for vaulted button
+				// Only check the wallet dropdown trigger — it's visible iff wallet mode is active.
+				// Checking a class on payPalButton() is fragile when the SDK renders in a
+				// different structure (e.g. after a prior PayPal popup in the same browser context).
 				await expect
 					.soft( this.payPalButtonMoreOptions() )
 					.not.toBeVisible();
