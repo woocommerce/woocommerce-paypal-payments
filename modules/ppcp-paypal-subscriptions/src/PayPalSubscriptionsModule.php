@@ -558,7 +558,11 @@ class PayPalSubscriptionsModule implements ServiceModule, ExecutableModule {
 
 				$subscription = wcs_get_subscription( $order->get_id() );
 				if ( ! ( $subscription instanceof WC_Subscription ) ) {
-					return;
+					$subscriptions = wcs_get_subscriptions_for_renewal_order( $order );
+					$subscription  = reset( $subscriptions ) ?: null;
+					if ( ! ( $subscription instanceof WC_Subscription ) ) {
+						return;
+					}
 				}
 
 				$subscription_id = $subscription->get_meta( 'ppcp_subscription' ) ?? '';
