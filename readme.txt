@@ -154,6 +154,11 @@ If you encounter issues with the PayPal buttons not appearing after an update, p
 5. Click "Connect to PayPal" to link your site to your PayPal account.
 6. Main settings screen.
 
+== Upgrade Notice ==
+
+= 4.0.0 =
+⚠️ Major Update — This release includes significant changes. Please back up your site before updating.
+
 == Changelog ==
 
 = 4.0.0 - XXXX-XX-XX =
