@@ -339,7 +339,7 @@ class CardPaymentsConfiguration {
 			return $this->gateway_title;
 		}
 
-		return $fallback ?: __( 'Advanced Card Processing', 'woocommerce-paypal-payments' );
+		return $fallback ?: __( 'Debit & Credit Cards', 'woocommerce-paypal-payments' );
 	}
 
 	/**
