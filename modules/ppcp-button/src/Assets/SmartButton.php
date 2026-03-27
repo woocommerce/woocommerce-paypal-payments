@@ -848,7 +848,8 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
         }
         $disabled_funding_sources = $this->disabled_funding_sources->sources($current_context);
         $enable_funding = array();
-        if ($this->settings_provider->venmo_enabled()) {
+        $methods = $this->settings_provider->button_styling($current_context);
+        if ($this->settings_provider->venmo_enabled() && in_array('venmo', $methods->methods, \true)) {
             $enable_funding[] = 'venmo';
         }
         if ($this->is_pay_later_button_enabled_for_location($current_context)) {
