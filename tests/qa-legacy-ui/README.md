@@ -253,16 +253,28 @@ npm run env:reset
 
 **For USA**
 
-```bash
 
-npm run env:setup:pcp:usa
-```
+
+1. PCP + connected US merchant (PayPal and all PMs disabled)
+
+	```bash
+	npm run env:setup:pcp:usa
+	```
+
+2. PCP + connected US merchant + enabled PayPal, Pay Later, ACDC and disabled Venmo + button orientation
+
+	```bash
+	npm run env:setup:pcp:usa:classic:horizontal:paypal-paylater-acdc
+	npm run env:setup:pcp:usa:classic:vertical:paypal-paylater-acdc
+	env:setup:pcp:usa:classic:acdc
+	env:setup:pcp:usa:classic:bcdc
+	env:setup:pcp:usa:classic:bcdc-paypal
+	```
 
 **For Germany & PUI (disabled by default)**
 
 ```bash
 npm run env:setup:pcp:germany
-
 ```
 
 **For Mexico & OXXO (disabled by default)**
