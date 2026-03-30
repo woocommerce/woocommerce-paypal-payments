@@ -100,7 +100,7 @@ class StylingSettingsMigration implements SettingsMigrationInterface {
 		$key = "{$type}_button_locations";
 
 		if ( ! isset( $this->settings[ $key ] ) ) {
-			$default_locations = array( 'product', 'cart', 'checkout' );
+			$default_locations = array( 'product', 'cart', 'checkout', 'checkout-block-express' );
 
 			if ( 'pay_later' === $type ) {
 				$pay_later_enabled = $this->settings['pay_later_button_enabled'] ?? true;
