@@ -73,11 +73,9 @@ class StylingSettingsMigration implements SettingsMigrationInterface {
 			$methods[] = 'pay-later';
 		}
 
-		if ( isset( $this->settings['disable_funding'] ) ) {
-			$disable_funding = $this->settings['disable_funding'];
-			if ( ! in_array( 'venmo', $disable_funding, true ) ) {
-				$methods[] = 'venmo';
-			}
+		$disable_funding = (array) ( $this->settings['disable_funding'] ?? array() );
+		if ( ! in_array( 'venmo', $disable_funding, true ) ) {
+			$methods[] = 'venmo';
 		}
 
 		if ( ! empty( $this->settings['applepay_button_enabled'] ) ) {
@@ -100,8 +98,18 @@ class StylingSettingsMigration implements SettingsMigrationInterface {
 	 */
 	protected function is_button_enabled_for_location( string $location, string $type ): bool {
 		$key = "{$type}_button_locations";
+
 		if ( ! isset( $this->settings[ $key ] ) ) {
-			return false;
+			$default_locations = array( 'product', 'cart', 'checkout' );
+
+			if ( 'pay_later' === $type ) {
+				$pay_later_enabled = $this->settings['pay_later_button_enabled'] ?? true;
+				if ( ! $pay_later_enabled ) {
+					return false;
+				}
+			}
+
+			return in_array( $location, $default_locations, true );
 		}
 
 		$enabled_locations = $this->settings[ $key ];

@@ -94,6 +94,13 @@ class PaymentSettingsMigration implements SettingsMigrationInterface {
 			$this->payment_settings->toggle_method_state( CardButtonGateway::ID, true );
 		}
 
+		// Pay Later was enabled by default in the old settings.
+		// Use null coalescing to apply the old default when key is absent.
+		$pay_later_enabled = $this->settings['pay_later_button_enabled'] ?? true;
+		if ( $pay_later_enabled ) {
+			$this->payment_settings->toggle_method_state( 'pay-later', true );
+		}
+
 		foreach ( $this->map() as $old_key => $method_name ) {
 			if ( ! empty( $this->settings[ $old_key ] ) ) {
 				$this->payment_settings->toggle_method_state( $method_name, true );
@@ -152,7 +159,6 @@ class PaymentSettingsMigration implements SettingsMigrationInterface {
 			'axo_enabled'              => AxoGateway::ID,
 			'applepay_button_enabled'  => ApplePayGateway::ID,
 			'googlepay_button_enabled' => GooglePayGateway::ID,
-			'pay_later_button_enabled' => 'pay-later',
 		);
 	}
 
