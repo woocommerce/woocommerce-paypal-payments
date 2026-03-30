@@ -85,6 +85,10 @@ class PaymentSettingsMigration implements \WooCommerce\PayPalCommerce\Settings\S
                 $this->payment_settings->toggle_method_state($method_name, \true);
             }
         }
+        // Also check WooCommerce gateway options for Apple Pay and Google Pay,
+        // as they may have been enabled via the gateway toggle rather than the main settings.
+        $this->enable_if_wc_gateway_active(ApplePayGateway::ID);
+        $this->enable_if_wc_gateway_active(GooglePayGateway::ID);
         $pui_settings = get_option('woocommerce_ppcp-pay-upon-invoice-gateway_settings', array());
         if (is_array($pui_settings)) {
             if (!empty($pui_settings['brand_name'])) {
@@ -149,5 +153,20 @@ class PaymentSettingsMigration implements \WooCommerce\PayPalCommerce\Settings\S
             return \false;
         }
         return !in_array('card', $this->settings['disable_funding'] ?? array(), \true);
+    }
+    /**
+     * Enables a payment method if its WooCommerce gateway is active.
+     *
+     * @param string $gateway_id The gateway ID.
+     */
+    private function enable_if_wc_gateway_active(string $gateway_id): void
+    {
+        if ($this->payment_settings->is_method_enabled($gateway_id)) {
+            return;
+        }
+        $option = get_option('woocommerce_' . $gateway_id . '_settings', array());
+        if (is_array($option) && ($option['enabled'] ?? 'no') === 'yes') {
+            $this->payment_settings->toggle_method_state($gateway_id, \true);
+        }
     }
 }
