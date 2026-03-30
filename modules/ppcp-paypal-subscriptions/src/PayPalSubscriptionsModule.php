@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\PayPalSubscriptions;
 
+use Exception;
 use WC_Order;
 use WC_Product;
 use WC_Product_Subscription_Variation;
@@ -25,6 +26,9 @@ use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ServiceModule;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
+use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
+use Psr\Log\LoggerInterface;
+use WooCommerce\PayPalCommerce\Button\Endpoint\ApproveSubscriptionEndpoint;
 use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
 use WP_Post;
 
@@ -119,6 +123,19 @@ class PayPalSubscriptionsModule implements ServiceModule, ExecutableModule {
 
 				$paypal_subscription_id = \WC()->session->get( 'ppcp_subscription_id' );
 				if ( empty( $paypal_subscription_id ) || ! is_string( $paypal_subscription_id ) ) {
+					return $process;
+				}
+
+				$subscriptions_endpoint = $c->get( 'api.endpoint.billing-subscriptions' );
+				assert( $subscriptions_endpoint instanceof BillingSubscriptions );
+
+				try {
+					$this->validate_subscription_status( $subscriptions_endpoint, $paypal_subscription_id );
+				} catch ( Exception $exception ) {
+					$logger = $c->get( 'woocommerce.logger.woocommerce' );
+					assert( $logger instanceof LoggerInterface );
+					$logger->error( 'Subscription validation failed during payment: ' . $exception->getMessage() );
+
 					return $process;
 				}
 
@@ -588,6 +605,20 @@ class PayPalSubscriptionsModule implements ServiceModule, ExecutableModule {
 		);
 
 		return true;
+	}
+
+	/**
+	 * @throws RuntimeException When subscription status is not valid.
+	 */
+	private function validate_subscription_status( BillingSubscriptions $subscriptions_endpoint, string $paypal_subscription_id ): void {
+		$subscription = $subscriptions_endpoint->subscription( $paypal_subscription_id );
+		$status       = $subscription->status ?? '';
+
+		if ( ! in_array( $status, ApproveSubscriptionEndpoint::VALID_SUBSCRIPTION_STATUSES, true ) ) {
+			throw new RuntimeException(
+				"PayPal subscription $paypal_subscription_id has invalid status: $status"
+			);
+		}
 	}
 
 	/**
