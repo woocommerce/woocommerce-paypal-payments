@@ -2,7 +2,7 @@
  * External dependencies
  */
 import { expect, WpPage } from '@inpsyde/playwright-utils/build';
-import { Locator, LocatorScreenshotOptions } from 'playwright';
+import { Locator, LocatorScreenshotOptions } from '@playwright/test';
 
 export class PcpAdminPage extends WpPage {
 	// Locators

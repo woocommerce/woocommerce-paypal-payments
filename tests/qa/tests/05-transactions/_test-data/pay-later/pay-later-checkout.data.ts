@@ -7,7 +7,7 @@ const { payLater } = payments;
 
 export const payLaterCheckout: ShopOrder[] = [
 	{
-		title: 'PCP-2864 | Transaction - Checkout - Pay Later - Default order @Critical',
+		title: 'PCP-2864 | Transaction - Checkout - Pay Later - Default order @Critical @Smoke',
 		payment: payLater,
 		...orders.default,
 	},
