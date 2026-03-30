@@ -31,7 +31,6 @@ class MigrationManagerTest extends TestCase {
 	 */
 	public function tearDown(): void {
 		delete_option(MigrationManager::OPTION_NAME_MIGRATION_IS_DONE);
-		delete_option('woocommerce_ppcp-settings-should-use-old-ui');
 
 		parent::tearDown();
 	}
@@ -44,12 +43,7 @@ class MigrationManagerTest extends TestCase {
 	 * and NOT set the migration complete flag, allowing retry on next update.
 	 */
 	public function test_migration_handles_api_failures_gracefully(): void {
-		// Arrange: Set up legacy options
-		update_option('woocommerce_ppcp-settings-should-use-old-ui', 'yes');
-
 		// Assert pre-conditions
-		$this->assertSame('yes', get_option('woocommerce_ppcp-settings-should-use-old-ui'));
-
 		$this->assertNotSame('1', get_option(MigrationManager::OPTION_NAME_MIGRATION_IS_DONE));
 
 		// Act: Run migration (will fail due to missing API connection in tests)
@@ -61,28 +55,10 @@ class MigrationManagerTest extends TestCase {
 		// Assert: Migration did NOT complete due to API failure
 		$this->assertNotSame('1', get_option(MigrationManager::OPTION_NAME_MIGRATION_IS_DONE));
 
-		// Assert: Legacy options WERE cleaned up (happens before API calls)
-		$this->assertFalse(get_option('woocommerce_ppcp-settings-should-use-old-ui'));
-
 		// Assert: Onboarding profile WAS updated (happens before API calls)
 		$this->assertTrue($this->onboarding_profile->get_completed());
 		$this->assertTrue($this->onboarding_profile->is_gateways_refreshed());
 		$this->assertTrue($this->onboarding_profile->is_gateways_synced());
-	}
-
-
-	/**
-	 * Test legacy options cleanup specifically.
-	 */
-	public function test_legacy_options_cleanup(): void {
-		// Arrange: Create legacy options
-		update_option('woocommerce_ppcp-settings-should-use-old-ui', 'yes');
-
-		// Act: Run migration
-		$this->migration_manager->migrate();
-
-		// Assert: Legacy options deleted (this happens even if API calls fail later)
-		$this->assertFalse(get_option('woocommerce_ppcp-settings-should-use-old-ui'));
 	}
 
 	/**
