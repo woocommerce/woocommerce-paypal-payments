@@ -63,7 +63,7 @@ const vaultingFreeTrialRenewal: ShopOrder[] = [
 const payPalRenewal: ShopOrder[] = [
 	{
 		// https://inpsyde.atlassian.net/browse/PCP-2048
-		title: 'PCP-2048 | PayPal subscription - Order renewal @Critical',
+		title: 'PCP-2048 | PayPal subscription - Order renewal @Critical @Smoke',
 		...orders.default,
 		payment: payments.payPal,
 		merchant,
@@ -75,7 +75,6 @@ const payPalRenewal: ShopOrder[] = [
 
 const payPalFreeTrialRenewal: ShopOrder[] = [
 	{
-		// Fail: https://inpsyde.atlassian.net/browse/PCP-4980
 		// https://inpsyde.atlassian.net/browse/PCP-4915
 		title: 'PCP-4915 | PayPal subscription - Free trial order renewal',
 		...orders.default,
