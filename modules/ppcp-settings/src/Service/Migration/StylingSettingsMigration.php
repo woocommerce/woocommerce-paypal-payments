@@ -78,15 +78,26 @@ class StylingSettingsMigration implements SettingsMigrationInterface {
 			$methods[] = 'venmo';
 		}
 
-		if ( ! empty( $this->settings['applepay_button_enabled'] ) ) {
+		if ( ! empty( $this->settings['applepay_button_enabled'] ) || $this->is_wc_gateway_enabled( ApplePayGateway::ID ) ) {
 			$methods[] = ApplePayGateway::ID;
 		}
 
-		if ( ! empty( $this->settings['googlepay_button_enabled'] ) ) {
+		if ( ! empty( $this->settings['googlepay_button_enabled'] ) || $this->is_wc_gateway_enabled( GooglePayGateway::ID ) ) {
 			$methods[] = GooglePayGateway::ID;
 		}
 
 		return $methods;
+	}
+
+	/**
+	 * Checks if a WooCommerce payment gateway is enabled.
+	 *
+	 * @param string $gateway_id The gateway ID.
+	 * @return bool True if the gateway is enabled, false otherwise.
+	 */
+	private function is_wc_gateway_enabled( string $gateway_id ): bool {
+		$option = get_option( 'woocommerce_' . $gateway_id . '_settings', array() );
+		return is_array( $option ) && ( $option['enabled'] ?? 'no' ) === 'yes';
 	}
 
 	/**
