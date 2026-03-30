@@ -179,6 +179,12 @@ test.describe( () => {
 					password: process.env.PAYPAL_PERSONAL_PASS_US2,
 				};
 				await customerPaymentMethods.addPaymentMethodButton().click();
+				const payPalGatewayButton = customerPaymentMethods.payPalUi.payPalGateway();
+				await expect (
+					payPalGatewayButton,
+					'Assert PayPal gateway is visible',
+				).toBeVisible();
+				await payPalGatewayButton.click();
 				await customerPaymentMethods.page.waitForLoadState();
 				await expect(
 					customerPaymentMethods.payPalUi.payPalButton(),
