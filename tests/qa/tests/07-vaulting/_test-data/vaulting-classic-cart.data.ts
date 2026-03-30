@@ -9,7 +9,7 @@ const savePaymentMethodData: ShopOrder[] = [
 	{
 		// FAIL: vaulted PayPal button is not displayed.
 		// https://inpsyde.atlassian.net/browse/PCP-5397
-		title: 'PCP-5397 | Vaulting - Transaction - Classic cart - PayPal - Save payment method @Critical',
+		title: 'PCP-5397 | Vaulting - Transaction - Classic cart - PayPal - Save payment method @Critical @Smoke',
 		...orders.default,
 		payment: {
 			...payments.payPal,

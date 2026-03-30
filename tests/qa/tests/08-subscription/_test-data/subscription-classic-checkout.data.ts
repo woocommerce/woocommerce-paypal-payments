@@ -75,7 +75,7 @@ const vaultingCustomer: ShopOrder[] = [
 	},
 	{
 		// https://inpsyde.atlassian.net/browse/PCP-4892
-		title: 'PCP-4892 | Vaulting subscription - Transaction - Classic checkout - ACDC - Order by customer @Critical',
+		title: 'PCP-4892 | Vaulting subscription - Transaction - Classic checkout - ACDC - Order by customer @Critical @Smoke',
 		...orders.default,
 		payment: payments.acdc,
 		merchant,
@@ -123,7 +123,7 @@ const payPalGuest: ShopOrder[] = [
 const payPalCustomer: ShopOrder[] = [
 	{
 		// https://inpsyde.atlassian.net/browse/PCP-2642
-		title: 'PCP-2642 | PayPal subscription - Transaction - Classic checkout - Order by customer @Critical',
+		title: 'PCP-2642 | PayPal subscription - Transaction - Classic checkout - Order by customer @Critical @Smoke',
 		...orders.default,
 		payment: {
 			...payments.payPal,
