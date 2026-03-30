@@ -175,7 +175,7 @@ return array(
         return new ApproveOrderEndpoint($request_data, $order_endpoint, $session_handler, $three_d_secure, $settings_provider, $settings_model, $dcc_applies, $order_helper, $final_review_enabled, $gateway, $wc_order_creator, $logger, $context);
     },
     'button.endpoint.approve-subscription' => static function (ContainerInterface $container): ApproveSubscriptionEndpoint {
-        return new ApproveSubscriptionEndpoint($container->get('button.request-data'), $container->get('api.endpoint.order'), $container->get('session.handler'), $container->get('blocks.settings.final_review_enabled'), $container->get('button.helper.wc-order-creator'), $container->get('wcgateway.paypal-gateway'), $container->get('button.helper.context'));
+        return new ApproveSubscriptionEndpoint($container->get('button.request-data'), $container->get('api.endpoint.order'), $container->get('session.handler'), $container->get('blocks.settings.final_review_enabled'), $container->get('button.helper.wc-order-creator'), $container->get('wcgateway.paypal-gateway'), $container->get('button.helper.context'), $container->get('api.endpoint.billing-subscriptions'), $container->get('woocommerce.logger.woocommerce'), $container->get('wc-subscriptions.helper'));
     },
     'button.helper.context' => static function (ContainerInterface $container): Context {
         $session_handler = $container->get('session.handler');
