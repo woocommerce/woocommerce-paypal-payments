@@ -50,18 +50,15 @@ class MigrationManager implements SettingsMigrationInterface {
 
 	public function migrate(): void {
 		/**
-		 * Clean up legacy UI toggle options that are no longer needed.
+		 * Note on UI toggles:
 		 *
-		 * These options were used to control whether merchants saw the old or new settings UI:
-		 * - OPTION_NAME_SHOULD_USE_OLD_UI: Stored merchant's preference to use the old UI
+		 * There are two options that control the UI experience in all 3.x versions. Both flags
+		 * are intentionally preserved during the migration, though they do not serve a purpose
+		 * in version 4.x; however, they must be intact to ensure a stable downgrade path.
 		 *
-		 * Do NOT delete
-		 * - woocommerce-ppcp-is-new-merchant: Must be present when downgrading to 3.x to preserve new UI
-		 *
-		 * With the new settings UI now being the only interface, these options serve no purpose
-		 * and are removed during the final migration to prevent confusion and reduce database bloat.
+		 * - "woocommerce_ppcp-settings-should-use-old-ui" (OPTION_NAME_SHOULD_USE_OLD_UI)
+		 * - "woocommerce-ppcp-is-new-merchant"
 		 */
-		delete_option( 'woocommerce_ppcp-settings-should-use-old-ui' );
 
 		$this->onboarding_profile->set_completed( true );
 		$this->onboarding_profile->set_gateways_refreshed( true );
