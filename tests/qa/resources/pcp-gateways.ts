@@ -55,7 +55,7 @@ const acdc: Pcp.Gateway = {
 	description: '',
 	title: 'Debit & Credit Cards',
 	titleInPcpSettings: 'Advanced Credit and Debit Card Payments',
-	titleInWcSettings: 'Debit & Credit Cards',
+	titleInWcSettings: 'Advanced Card Processing',
 	hasSettingsButton: true,
 	enabled: false,
 
