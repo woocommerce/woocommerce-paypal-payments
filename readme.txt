@@ -156,12 +156,12 @@ If you encounter issues with the PayPal buttons not appearing after an update, p
 
 == Upgrade Notice ==
 
-= 4.0.0 =
+= 4.0.1 =
 ⚠️ Major Update — This release includes significant changes. Please back up your site before updating.
 
 == Changelog ==
 
-= 4.0.0 - 2026-03-31 =
+= 4.0.1 - 2026-03-31 =
 * Enhancement – Removed legacy UI #4031
 * Enhancement – Added migration banner guiding BCDC merchants through upgrade to Advanced Card Processing #4192
 * Enhancement – Apple Pay and Google Pay can now be enabled independently, without requiring Advanced Card Processing (ACDC) to be active #4186
