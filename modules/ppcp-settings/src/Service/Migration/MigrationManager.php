@@ -50,6 +50,17 @@ class MigrationManager implements SettingsMigrationInterface {
 
 	public function migrate(): void {
 		/**
+		 * When this is a new merchant that never had the legacy UI we can simply
+		 * mark the migration as done (prevent future migration attempts) and
+		 * exit directly, as there are no legacy settings to convert.
+		 */
+		if ( 1 === (int) get_option( 'woocommerce-ppcp-is-new-merchant' ) ) {
+			update_option( self::OPTION_NAME_MIGRATION_IS_DONE, true );
+
+			return;
+		}
+
+		/**
 		 * Clean up legacy UI toggle options that are no longer needed.
 		 *
 		 * These options were used to control whether merchants saw the old or new settings UI:
