@@ -63,15 +63,19 @@ test.describe( 'PayPal Subscription', () => {
 				products.subscriptionPayPalFreeTrial,
 			],
 		} );
-		await requestUtils.activatePlugin(
-			disableWebhookVerifivationPlugin.slug
-		);
+		if ( ! process.env.CI ) {
+			await requestUtils.activatePlugin(
+				disableWebhookVerifivationPlugin.slug
+			);
+		}
 	} );
 
 	test.afterAll( async ( { requestUtils } ) => {
-		await requestUtils.deactivatePlugin(
-			disableWebhookVerifivationPlugin.slug
-		);
+		if ( ! process.env.CI ) {
+			await requestUtils.deactivatePlugin(
+				disableWebhookVerifivationPlugin.slug
+			);
+		}
 	} );
 
 	for ( const testOrder of payPalRenewal ) {
