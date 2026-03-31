@@ -6,13 +6,13 @@ export const disableGutenbergWelcomeGuidePlugin = {
 	zipFilePath: `${ filePath }disable-gutenberg-welcome-guide.zip`,
 };
 
-export const disableNonceCheckPlugin = {
+export const disableNoncePlugin = {
 	name: 'Disable nonce check',
 	slug: 'disable-nonce-check',
 	zipFilePath: `${ filePath }disable-nonce-check.zip`,
 };
 
-export const disableWcSetupWizardPlugin = {
+export const disableWcSetupWizard = {
 	name: 'Disable WC Setup Wizard',
 	slug: 'disable-wc-setup-wizard',
 	zipFilePath: `${ filePath }disable-wc-setup-wizard.zip`,
@@ -30,7 +30,7 @@ export const pcpPlugin = {
 	zipFilePath: `${ filePath }woocommerce-paypal-payments.zip`,
 };
 
-export const woocommerceSubscriptionsPlugin = {
+export const subscriptionsPlugin = {
 	name: 'WooCommerce Subscriptions',
 	slug: 'woocommerce-subscriptions',
 	zipFilePath: `${ filePath }woocommerce-subscriptions.zip`,

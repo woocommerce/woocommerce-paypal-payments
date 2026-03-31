@@ -3,7 +3,7 @@
  */
 import { test } from '../../utils';
 import {
-	disableWebhookVerifivationPlugin,
+	disableWebhookVerificationPlugin,
 	merchants,
 	products,
 	storeConfigUsa,
@@ -65,7 +65,7 @@ test.describe( 'PayPal Subscription', () => {
 		} );
 		if ( ! process.env.CI ) {
 			await requestUtils.activatePlugin(
-				disableWebhookVerifivationPlugin.slug
+				disableWebhookVerificationPlugin.slug
 			);
 		}
 	} );
@@ -73,7 +73,7 @@ test.describe( 'PayPal Subscription', () => {
 	test.afterAll( async ( { requestUtils } ) => {
 		if ( ! process.env.CI ) {
 			await requestUtils.deactivatePlugin(
-				disableWebhookVerifivationPlugin.slug
+				disableWebhookVerificationPlugin.slug
 			);
 		}
 	} );
