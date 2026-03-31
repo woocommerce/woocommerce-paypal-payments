@@ -6,7 +6,7 @@ import { join } from 'path';
 /**
  * Internal dependencies
  */
-import { expect } from './test';
+import { expect } from '../test';
 
 const TEST_RESULTS_DIR = join( process.cwd(), 'test-results' ); // Root 'test-results/' dir
 
