@@ -156,7 +156,7 @@ If you encounter issues with the PayPal buttons not appearing after an update, p
 
 == Upgrade Notice ==
 
-= 4.0.1 =
+= 4.0 =
 ⚠️ Major Update — This release includes significant changes. Please back up your site before updating.
 
 == Changelog ==
