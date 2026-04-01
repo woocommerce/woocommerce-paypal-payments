@@ -69,16 +69,16 @@ class PartnersEndpoint
      *
      * @var Cache
      */
-    private $cache;
+    private Cache $cache;
     /**
      * Cache lifetime for seller status responses, in seconds.
      */
-    const SELLER_STATUS_CACHE_TTL = 600;
+    public const SELLER_STATUS_CACHE_TTL = 600;
     // 10 minutes.
     /**
      * Cache key for the seller status response.
      */
-    const SELLER_STATUS_CACHE_KEY = 'seller_status';
+    public const SELLER_STATUS_CACHE_KEY = 'seller_status';
     /**
      * PartnersEndpoint constructor.
      *
