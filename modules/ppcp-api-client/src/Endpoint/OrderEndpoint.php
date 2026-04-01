@@ -601,6 +601,10 @@ class OrderEndpoint {
 			'body'    => wp_json_encode( $data ),
 		);
 
+		if ( $this->bn_code ) {
+			$args['headers']['PayPal-Partner-Attribution-Id'] = $this->bn_code;
+		}
+
 		$response = $this->request( $url, $args );
 		if ( $response instanceof WP_Error ) {
 			throw new RuntimeException( $response->get_error_message() );
