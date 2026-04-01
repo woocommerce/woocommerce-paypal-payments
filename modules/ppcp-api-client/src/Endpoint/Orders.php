@@ -20,36 +20,16 @@ use WP_Error;
 class Orders
 {
     use \WooCommerce\PayPalCommerce\ApiClient\Endpoint\RequestTrait;
-    /**
-     * The host.
-     *
-     * @var string
-     */
-    private $host;
-    /**
-     * The bearer.
-     *
-     * @var Bearer
-     */
-    private $bearer;
-    /**
-     * The logger.
-     *
-     * @var LoggerInterface
-     */
-    private $logger;
-    /**
-     * Orders constructor.
-     *
-     * @param string          $host The host.
-     * @param Bearer          $bearer The bearer.
-     * @param LoggerInterface $logger The logger.
-     */
-    public function __construct(string $host, Bearer $bearer, LoggerInterface $logger)
+    private string $host;
+    private Bearer $bearer;
+    private LoggerInterface $logger;
+    private string $bn_code;
+    public function __construct(string $host, Bearer $bearer, LoggerInterface $logger, string $bn_code = '')
     {
         $this->host = $host;
         $this->bearer = $bearer;
         $this->logger = $logger;
+        $this->bn_code = $bn_code;
     }
     /**
      * Creates a PayPal order.
@@ -98,6 +78,9 @@ class Orders
         $bearer = $this->bearer->bearer();
         $url = trailingslashit($this->host) . 'v2/checkout/orders/' . $id . '/confirm-payment-source';
         $args = array('method' => 'POST', 'headers' => array('Authorization' => 'Bearer ' . $bearer->token(), 'Content-Type' => 'application/json', 'PayPal-Request-Id' => uniqid('ppcp-', \true)), 'body' => wp_json_encode($request_body));
+        if ($this->bn_code) {
+            $args['headers']['PayPal-Partner-Attribution-Id'] = $this->bn_code;
+        }
         $response = $this->request($url, $args);
         if ($response instanceof WP_Error) {
             throw new RuntimeException($response->get_error_message());
