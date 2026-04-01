@@ -195,4 +195,14 @@ class PartnersEndpoint {
 
 		return $status;
 	}
+
+	/**
+	 * Clears the cached seller status response, forcing a fresh API call
+	 * on the next invocation of seller_status().
+	 *
+	 * @return void
+	 */
+	public function clear_seller_status_cache(): void {
+		$this->cache->delete( self::SELLER_STATUS_CACHE_KEY );
+	}
 }
