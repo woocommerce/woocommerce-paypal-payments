@@ -302,10 +302,14 @@ return array(
 		);
 	},
 	'api.endpoint.orders'                            => static function ( ContainerInterface $container ): Orders {
+		$session_handler = $container->get( 'session.handler' );
+		assert( $session_handler instanceof SessionHandler );
+
 		return new Orders(
 			$container->get( 'api.host' ),
 			$container->get( 'api.bearer' ),
-			$container->get( 'woocommerce.logger.woocommerce' )
+			$container->get( 'woocommerce.logger.woocommerce' ),
+			$session_handler->bn_code()
 		);
 	},
 	'api.reference-transaction-status'               => static fn ( ContainerInterface $container ): ReferenceTransactionStatus => new ReferenceTransactionStatus(

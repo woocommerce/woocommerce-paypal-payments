@@ -23,42 +23,21 @@ class Orders {
 
 	use RequestTrait;
 
-	/**
-	 * The host.
-	 *
-	 * @var string
-	 */
-	private $host;
+	private string $host;
+	private Bearer $bearer;
+	private LoggerInterface $logger;
+	private string $bn_code;
 
-	/**
-	 * The bearer.
-	 *
-	 * @var Bearer
-	 */
-	private $bearer;
-
-	/**
-	 * The logger.
-	 *
-	 * @var LoggerInterface
-	 */
-	private $logger;
-
-	/**
-	 * Orders constructor.
-	 *
-	 * @param string          $host The host.
-	 * @param Bearer          $bearer The bearer.
-	 * @param LoggerInterface $logger The logger.
-	 */
 	public function __construct(
 		string $host,
 		Bearer $bearer,
-		LoggerInterface $logger
+		LoggerInterface $logger,
+		string $bn_code = ''
 	) {
-		$this->host   = $host;
-		$this->bearer = $bearer;
-		$this->logger = $logger;
+		$this->host    = $host;
+		$this->bearer  = $bearer;
+		$this->logger  = $logger;
+		$this->bn_code = $bn_code;
 	}
 
 	/**
@@ -137,6 +116,10 @@ class Orders {
 			),
 			'body'    => wp_json_encode( $request_body ),
 		);
+
+		if ( $this->bn_code ) {
+			$args['headers']['PayPal-Partner-Attribution-Id'] = $this->bn_code;
+		}
 
 		$response = $this->request( $url, $args );
 		if ( $response instanceof WP_Error ) {
