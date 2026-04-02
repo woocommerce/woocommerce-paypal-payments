@@ -108,14 +108,22 @@ class SettingsModule implements ServiceModule, ExecutableModule
             }
         );
         add_action('admin_init', function () use ($container): void {
-            if (get_option(MigrationManager::OPTION_NAME_MIGRATION_IS_DONE) !== '1') {
-                $legacy_settings = (array) get_option('woocommerce-ppcp-settings', array());
-                if (!empty($legacy_settings['client_id'])) {
-                    self::pre_populate_credentials($container);
-                    $migration_manager = $container->get('settings.service.data-migration');
-                    assert($migration_manager instanceof MigrationManager);
-                    $migration_manager->migrate();
-                }
+            if (get_option(MigrationManager::OPTION_NAME_MIGRATION_IS_DONE) === '1') {
+                return;
+            }
+            $legacy_settings = (array) get_option('woocommerce-ppcp-settings', array());
+            if (empty($legacy_settings['client_id'])) {
+                return;
+            }
+            self::pre_populate_credentials($container);
+            $migration_manager = $container->get('settings.service.data-migration');
+            assert($migration_manager instanceof MigrationManager);
+            $migration_manager->migrate();
+            $migration_done = get_option(MigrationManager::OPTION_NAME_MIGRATION_IS_DONE);
+            if ((string) $migration_done !== '1') {
+                add_action('admin_notices', static function (): void {
+                    printf('<div class="notice notice-warning"><p>%s</p></div>', esc_html__('PayPal Payments: Settings migration could not be completed because the PayPal API is temporarily unavailable. It will retry automatically on the next page load.', 'woocommerce-paypal-payments'));
+                });
             }
         });
         // Resolve unknown seller type on all pages (not just admin), so frontend
