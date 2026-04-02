@@ -34,7 +34,7 @@ class StylingSettingsMigration implements SettingsMigrationInterface {
 	}
 
 	public function migrate(): void {
-		if ( empty( $this->settings ) ) {
+		if ( empty( $this->settings ) || ! isset( $this->settings['smart_button_locations'] ) ) {
 			return;
 		}
 
