@@ -21,6 +21,21 @@ import {
 
 const country = process.env.WC_DEFAULT_COUNTRY || 'usa';
 
+const installPluginResolveActiveState = async ( {
+	requestUtils,
+	plugins,
+	slug,
+	zipFilePath,
+	isActive = true
+} ) => {
+	if ( ! ( await requestUtils.isPluginInstalled( slug ) ) ) {
+		await plugins.installPluginFromFile( zipFilePath );
+	}
+	isActive
+		? await requestUtils.activatePlugin( slug )
+		: await requestUtils.deactivatePlugin( slug );
+};
+
 export const setupWooCommerce = async () => {
 	// In CI wp-env is used and following setup is already done by wp-env, so skip it in CI to save time
 	if ( ! process.env.CI ) {
@@ -31,43 +46,33 @@ export const setupWooCommerce = async () => {
 		setup(
 			'Setup Disable Nonce plugin (active)',
 			async ( { requestUtils, plugins } ) => {
-				if (
-					! ( await requestUtils.isPluginInstalled(
-						disableNoncePlugin.slug
-					) )
-				) {
-					await plugins.installPluginFromFile(
-						disableNoncePlugin.zipFilePath
-					);
-				}
-				await requestUtils.activatePlugin( disableNoncePlugin.slug );
+				await installPluginResolveActiveState( {
+					requestUtils,
+					plugins,
+					...disableNoncePlugin,
+				} );
 			}
 		);
 
 		setup(
 			'Setup Disable Webhook Verification plugin (inactive)',
 			async ( { plugins, requestUtils } ) => {
-				const plugin = disableWebhookVerificationPlugin;
-				if ( ! ( await requestUtils.isPluginInstalled( plugin.slug ) ) ) {
-					await plugins.installPluginFromFile( plugin.zipFilePath );
-				}
-				await requestUtils.deactivatePlugin( plugin.slug );
+				await installPluginResolveActiveState( {
+					requestUtils,
+					plugins,
+					...disableWebhookVerificationPlugin,
+				} );
 			}
 		);
 
 		setup(
 			'Setup Disable WooCommerce Setup Wizard Plugin (active)',
 			async ( { requestUtils, plugins } ) => {
-				if (
-					! ( await requestUtils.isPluginInstalled(
-						disableWcSetupWizard.slug
-					) )
-				) {
-					await plugins.installPluginFromFile(
-						disableWcSetupWizard.zipFilePath
-					);
-				}
-				await requestUtils.activatePlugin( disableWcSetupWizard.slug );
+				await installPluginResolveActiveState( {
+					requestUtils,
+					plugins,
+					...disableWcSetupWizard,
+				} );
 			}
 		);
 
@@ -81,16 +86,12 @@ export const setupWooCommerce = async () => {
 		setup(
 			'Setup WC Subscriptions plugin (inactive)',
 			async ( { requestUtils, plugins } ) => {
-				if (
-					! ( await requestUtils.isPluginInstalled(
-						subscriptionsPlugin.slug
-					) )
-				) {
-					await plugins.installPluginFromFile(
-						subscriptionsPlugin.zipFilePath
-					);
-				}
-				await requestUtils.deactivatePlugin( subscriptionsPlugin.slug );
+				await installPluginResolveActiveState( {
+					requestUtils,
+					plugins,
+					...subscriptionsPlugin,
+					isActive: false,
+				} );
 			}
 		);
 
