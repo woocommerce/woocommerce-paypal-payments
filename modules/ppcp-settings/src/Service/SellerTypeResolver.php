@@ -88,6 +88,8 @@ class SellerTypeResolver {
 				$general_settings->save();
 
 				do_action( 'woocommerce_paypal_payments_clear_apm_product_status' );
+
+				return;
 			}
 		} catch ( Exception $e ) {
 			$logger->debug(
@@ -95,6 +97,9 @@ class SellerTypeResolver {
 				array( 'error' => $e->getMessage() )
 			);
 		}
+
+		// Seller type still unknown — throttle retries to once per hour.
+		$failure_registry->add_failure( FailureRegistry::SELLER_STATUS_KEY );
 	}
 
 	/**
@@ -113,7 +118,7 @@ class SellerTypeResolver {
 			return false;
 		}
 
-		return ! $general_settings->is_business_seller() && ! $general_settings->is_casual_seller();
+		return SellerTypeEnum::UNKNOWN === $general_settings->get_merchant_data()->seller_type;
 	}
 
 	/**

@@ -76,12 +76,27 @@ class MigrationManager implements SettingsMigrationInterface {
 		$this->onboarding_profile->set_gateways_synced( true, true );
 		$this->onboarding_profile->save();
 
+		// General settings migration is critical — it resolves the seller type
+		// via the PayPal API. If it fails, abort so migration retries on next load.
+		try {
+			$this->general_settings_migration->migrate();
+		} catch ( Exception $error ) {
+			$this->logger->warning(
+				'Settings migration aborted: seller status API call failed. Will retry on next page load.',
+				array(
+					'error_message' => $error->getMessage(),
+					'error_code'    => $error->getCode(),
+				)
+			);
+
+			return;
+		}
+
 		$migrations = array(
-			'general_settings' => $this->general_settings_migration,
-			'settings_tab'     => $this->settings_tab_migration,
-			'styling'          => $this->styling_settings_migration,
-			'payment'          => $this->payment_settings_migration,
-			'fastlane'         => $this->fastlane_settings_migration,
+			'settings_tab' => $this->settings_tab_migration,
+			'styling'      => $this->styling_settings_migration,
+			'payment'      => $this->payment_settings_migration,
+			'fastlane'     => $this->fastlane_settings_migration,
 		);
 
 		foreach ( $migrations as $name => $migration ) {
