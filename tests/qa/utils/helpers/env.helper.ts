@@ -10,9 +10,6 @@ import { execFileSync } from 'node:child_process';
  * Supports 'localhost' (PowerShell/XAMPP) and 'ssh' env types.
  */
 export const resetEnvironment = async (): Promise< void > => {
-	let start, end;
-	start = Date.now();
-
 	const envType = process.env.WPCLI_ENV_TYPE as WpCliEnvType;
 
 	let command: string;
@@ -55,16 +52,12 @@ export const resetEnvironment = async (): Promise< void > => {
 		stdio: 'inherit',
 		timeout: 60_000,
 	} );
-	end = Date.now();
-	console.log( `✓ Environment reset completed in ${ ( end - start ) / 1000 } seconds` );
 }
 
 /**
  * Create admin and guest storage states.
  */
 export const createStorageStates = async (): Promise< void > => {
-	let start, end;
-	start = Date.now();
 	await restLogin( {
 		baseURL: process.env.WP_BASE_URL!,
 		storageStatePath: process.env.STORAGE_STATE_PATH_ADMIN,
@@ -77,6 +70,4 @@ export const createStorageStates = async (): Promise< void > => {
 			password: process.env.WP_PASSWORD,
 		},
 	} );
-	end = Date.now();
-	console.log( `✓ Admin storage state created in ${ ( end - start ) / 1000 } seconds` );
 }

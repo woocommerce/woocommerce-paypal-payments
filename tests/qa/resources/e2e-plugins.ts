@@ -9,7 +9,7 @@ export const disableGutenbergWelcomeGuidePlugin = {
 export const disableNoncePlugin = {
 	name: 'Disable nonce check',
 	slug: 'disable-nonce-check',
-	zipFilePath: `${ filePath }disable-nonce-check.zip`,
+	zipFilePath: `${ filePath }disable-nonce.zip`,
 };
 
 export const disableWcSetupWizard = {
