@@ -161,7 +161,7 @@ If you encounter issues with the PayPal buttons not appearing after an update, p
 
 == Changelog ==
 
-= 4.0.2 - XXXX-XX-XX =
+= 4.0.2 - 2026-04-02 =
 * Fix – API rate limiting #4244
 
 = 4.0.1 - 2026-03-31 =
