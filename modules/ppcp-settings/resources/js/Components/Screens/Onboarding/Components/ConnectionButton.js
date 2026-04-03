@@ -8,6 +8,9 @@ import { OnboardingHooks } from '@ppcp-settings/data/onboarding/hooks';
 import BusyStateWrapper from '@ppcp-settings/Components/ReusableComponents/BusyStateWrapper';
 import { Notice } from '@ppcp-settings/Components/ReusableComponents/Elements';
 
+const isFirefox =
+	typeof window !== 'undefined' &&
+	window.navigator.userAgent.toLowerCase().includes( 'firefox' );
 /**
  * Button component that outputs a placeholder button when no onboardingUrl is present yet - the
  * placeholder button looks identical to the working button, but has no href, target, or
@@ -40,6 +43,20 @@ const ButtonOrPlaceholder = ( {
 		buttonProps.href = href;
 		buttonProps[ 'data-paypal-button' ] = 'true';
 		buttonProps[ 'data-paypal-onboard-button' ] = 'true';
+	}
+
+	if ( isFirefox ) {
+		return (
+			<>
+				<Button { ...buttonProps }>{ children }</Button>
+				<Notice type={ 'error' }>
+					{ __(
+						'This button may not work in Firefox. Please use another browser, like Chrome, to complete this step.',
+						'woocommerce-paypal-payments'
+					) }
+				</Notice>
+			</>
+		);
 	}
 
 	return <Button { ...buttonProps }>{ children }</Button>;
