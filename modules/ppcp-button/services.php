@@ -37,7 +37,6 @@ use WooCommerce\PayPalCommerce\Button\Helper\WooCommerceOrderCreator;
 use WooCommerce\PayPalCommerce\Button\Session\CartDataFactory;
 use WooCommerce\PayPalCommerce\Button\Session\CartDataTransientStorage;
 use WooCommerce\PayPalCommerce\Button\Validation\CheckoutFormValidator;
-use WooCommerce\PayPalCommerce\Button\VaultV2\StartPayPalVaultingEndpoint;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\CardPaymentsConfiguration;
@@ -125,7 +124,6 @@ return array(
 		$subscription_helper = $container->get( 'wc-subscriptions.helper' );
 		$messages_apply      = $container->get( 'button.helper.messages-apply' );
 		$environment         = $container->get( 'settings.environment' );
-		$payment_token_repository = $container->get( 'vaulting.repository.payment-token' );
 		return new SmartButton(
 			$container->get( 'button.asset_getter' ),
 			$container->get( 'ppcp.asset-version' ),
@@ -139,14 +137,12 @@ return array(
 			$container->get( 'button.subscriptions-mode' ),
 			$messages_apply,
 			$environment,
-			$payment_token_repository,
 			$settings_status,
 			$container->get( 'api.shop.currency.getter' ),
 			$container->get( 'button.basic-checkout-validation-enabled' ),
 			$container->get( 'button.early-wc-checkout-validation-enabled' ),
 			$container->get( 'button.pay-now-contexts' ),
 			$container->get( 'wcgateway.funding-sources-without-redirect' ),
-			$container->get( 'vaulting.vault-v3-enabled' ),
 			$container->get( 'button.handle-shipping-in-paypal' ),
 			$container->get( 'wcgateway.server-side-shipping-callback-enabled' ),
 			$container->get( 'wcgateway.appswitch-enabled' ),
@@ -307,13 +303,6 @@ return array(
 			$request_data,
 			$identity_token,
 			$logger
-		);
-	},
-	'button.vault-v2.endpoint.vault-paypal'       => static function ( ContainerInterface $container ): StartPayPalVaultingEndpoint {
-		return new StartPayPalVaultingEndpoint(
-			$container->get( 'button.request-data' ),
-			$container->get( 'vault-v2.endpoint.payment-token' ),
-			$container->get( 'woocommerce.logger.woocommerce' )
 		);
 	},
 	'button.endpoint.validate-checkout'           => static function ( ContainerInterface $container ): ValidateCheckoutEndpoint {

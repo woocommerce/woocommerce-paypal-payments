@@ -19,3 +19,4 @@ tests/.DS_Store
 .composer_compiled_assets
 /coverage/
 assets
+tests/inc/inpsyde/

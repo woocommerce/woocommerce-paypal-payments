@@ -43,8 +43,7 @@ return array(
 			$container->get( 'wc-subscriptions.renewal-handler' ),
 			$container->get( 'compat.ppec.mock-gateway' ),
 			$container->get( 'compat.ppec.billing-agreement-converter' ),
-			$container->get( 'woocommerce.logger.woocommerce' ),
-			$container->get( 'vaulting.vault-v3-enabled' )
+			$container->get( 'woocommerce.logger.woocommerce' )
 		);
 	},
 

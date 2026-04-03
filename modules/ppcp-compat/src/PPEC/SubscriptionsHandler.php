@@ -39,20 +39,16 @@ class SubscriptionsHandler {
 
 	private LoggerInterface $logger;
 
-	private bool $vault_v3_eligible;
-
 	public function __construct(
 		RenewalHandler $ppcp_renewal_handler,
 		MockGateway $gateway,
 		BillingAgreementTokenConverter $token_converter,
-		LoggerInterface $logger,
-		bool $vault_v3_eligible = false
+		LoggerInterface $logger
 	) {
 		$this->ppcp_renewal_handler = $ppcp_renewal_handler;
 		$this->mock_gateway         = $gateway;
 		$this->token_converter      = $token_converter;
 		$this->logger               = $logger;
-		$this->vault_v3_eligible    = $vault_v3_eligible;
 	}
 
 	/**
@@ -132,11 +128,9 @@ class SubscriptionsHandler {
 			return $token;
 		}
 
-		if ( $this->vault_v3_eligible ) {
-			$vault_token = $this->get_vault_v3_token( $order );
-			if ( $vault_token ) {
-				return $vault_token;
-			}
+		$vault_token = $this->get_vault_v3_token( $order );
+		if ( $vault_token ) {
+			return $vault_token;
 		}
 
 		return $this->get_billing_agreement_token( $order ) ?? $token;

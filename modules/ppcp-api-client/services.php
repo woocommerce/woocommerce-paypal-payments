@@ -79,7 +79,6 @@ use WooCommerce\PayPalCommerce\ApiClient\Repository\CustomerRepository;
 use WooCommerce\PayPalCommerce\ApiClient\Repository\OrderRepository;
 use WooCommerce\PayPalCommerce\ApiClient\Repository\PartnerReferralsData;
 use WooCommerce\PayPalCommerce\ApiClient\Repository\PayeeRepository;
-use WooCommerce\PayPalCommerce\ApiClient\VaultV2\PaymentTokenEndpoint;
 use WooCommerce\PayPalCommerce\Common\Pattern\SingletonDecorator;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
 use WooCommerce\PayPalCommerce\Settings\Data\SettingsModel;
@@ -165,16 +164,6 @@ return array(
 	},
 	'api.factory.sellerstatus'                       => static function ( ContainerInterface $container ): SellerStatusFactory {
 		return new SellerStatusFactory();
-	},
-	'vault-v2.endpoint.payment-token'                => static function ( ContainerInterface $container ): PaymentTokenEndpoint {
-		return new PaymentTokenEndpoint(
-			$container->get( 'api.host' ),
-			$container->get( 'api.bearer' ),
-			$container->get( 'api.factory.payment-token' ),
-			$container->get( 'api.factory.payment-token-action-links' ),
-			$container->get( 'woocommerce.logger.woocommerce' ),
-			$container->get( 'api.repository.customer' )
-		);
 	},
 	'api.endpoint.payment-tokens'                    => static function ( ContainerInterface $container ): PaymentTokensEndpoint {
 		return new PaymentTokensEndpoint(
