@@ -7,6 +7,7 @@ import SendOnlyMessage from './Screens/SendOnlyMessage';
 import OnboardingScreen from './Screens/Onboarding';
 import SettingsScreen from './Screens/Settings';
 import { getQuery, cleanUrlQueryParams } from '@ppcp-settings/utils/navigation';
+import { ScrollHighlightProvider } from '@ppcp-settings/hooks/useScrollHighlight';
 
 import { initializeTracking } from '@ppcp-settings/services/tracking';
 
@@ -81,7 +82,11 @@ const SettingsApp = () => {
 		activePanel,
 	] );
 
-	return <div className={ wrapperClass }>{ Content }</div>;
+	return (
+		<ScrollHighlightProvider>
+			<div className={ wrapperClass }>{ Content }</div>
+		</ScrollHighlightProvider>
+	);
 };
 
 export default SettingsApp;

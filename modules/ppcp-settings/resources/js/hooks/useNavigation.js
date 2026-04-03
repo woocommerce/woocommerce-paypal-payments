@@ -1,4 +1,4 @@
-import { scrollAndHighlight } from '@ppcp-settings/utils/scrollAndHighlight';
+import { useScrollTo } from '@ppcp-settings/hooks/useScrollHighlight';
 
 /**
  * Navigate to the WooCommerce "Payments" settings tab, i.e. exit the settings app.
@@ -24,35 +24,37 @@ const goToPluginSettings = ( panel = null ) => {
 	window.location.href = url;
 };
 
-/**
- * Check URL for highlight parameter and scroll to the element if present.
- *
- * @return {boolean} Whether a highlight parameter was found and processed
- */
-const handleHighlightFromUrl = () => {
-	const urlParams = new URLSearchParams( window.location.search );
-	const elementId = urlParams.get( 'highlight' );
-
-	if ( elementId ) {
-		setTimeout( () => {
-			scrollAndHighlight( elementId );
-
-			// Clean up the URL by removing the highlight parameter.
-			urlParams.delete( 'highlight' );
-			const newUrl =
-				window.location.pathname +
-				( urlParams.toString() ? '?' + urlParams.toString() : '' ) +
-				window.location.hash;
-
-			window.history.replaceState( {}, document.title, newUrl );
-		}, 100 );
-		return true;
-	}
-
-	return false;
-};
-
 export const useNavigation = () => {
+	const scrollTo = useScrollTo();
+
+	/**
+	 * Check URL for highlight parameter and scroll to the element if present.
+	 *
+	 * @return {boolean} Whether a highlight parameter was found and processed
+	 */
+	const handleHighlightFromUrl = () => {
+		const urlParams = new URLSearchParams( window.location.search );
+		const elementId = urlParams.get( 'highlight' );
+
+		if ( elementId ) {
+			setTimeout( () => {
+				scrollTo( elementId );
+
+				// Clean up the URL by removing the highlight parameter.
+				urlParams.delete( 'highlight' );
+				const newUrl =
+					window.location.pathname +
+					( urlParams.toString() ? '?' + urlParams.toString() : '' ) +
+					window.location.hash;
+
+				window.history.replaceState( {}, document.title, newUrl );
+			}, 100 );
+			return true;
+		}
+
+		return false;
+	};
+
 	return {
 		goToWooCommercePaymentsTab,
 		goToPluginSettings,

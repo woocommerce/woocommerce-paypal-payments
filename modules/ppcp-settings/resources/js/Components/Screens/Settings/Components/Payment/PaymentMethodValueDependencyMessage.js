@@ -1,6 +1,6 @@
 import { createInterpolateElement } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
-import { scrollAndHighlight } from '@ppcp-settings/utils/scrollAndHighlight';
+import { useScrollTo } from '@ppcp-settings/hooks/useScrollHighlight';
 
 /**
  * Component to display a payment method value dependency message
@@ -16,6 +16,7 @@ const PaymentMethodValueDependencyMessage = ( {
 	dependentMethodName,
 	requiredValue,
 } ) => {
+	const scrollTo = useScrollTo();
 	const displayName = dependentMethodName || dependentMethodId;
 
 	// Determine appropriate message template based on the required value
@@ -32,15 +33,13 @@ const PaymentMethodValueDependencyMessage = ( {
 	return createInterpolateElement( template, {
 		methodLink: (
 			<strong>
-				<a
-					href="#"
-					onClick={ ( e ) => {
-						e.preventDefault();
-						scrollAndHighlight( dependentMethodId );
-					} }
+				<button
+					type="button"
+					className="ppcp--link-button"
+					onClick={ () => scrollTo( dependentMethodId ) }
 				>
 					{ displayName }
-				</a>
+				</button>
 			</strong>
 		),
 	} );

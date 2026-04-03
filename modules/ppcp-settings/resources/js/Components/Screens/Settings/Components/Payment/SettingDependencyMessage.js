@@ -1,7 +1,6 @@
 import { createInterpolateElement } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
-import { selectTab, TAB_IDS } from '@ppcp-settings/utils/tabSelector';
-import { scrollAndHighlight } from '@ppcp-settings/utils/scrollAndHighlight';
+import { useSelectTab, TAB_IDS } from '@ppcp-settings/utils/tabSelector';
 
 /**
  * Transforms camelCase section IDs to kebab-case with ppcp prefix
@@ -34,32 +33,29 @@ const transformSectionId = ( sectionId ) => {
  * @param {string} props.sectionId   - Section ID to scroll to
  * @return {JSX.Element} The formatted link element
  */
-const SettingLink = ( { settingName, sectionId } ) => (
-	<strong>
-		<a
-			href="#"
-			onClick={ ( e ) => {
-				e.preventDefault();
+const SettingLink = ( { settingName, sectionId } ) => {
+	const selectTab = useSelectTab();
 
-				if ( sectionId ) {
-					const tabId = TAB_IDS.SETTINGS;
-
-					// Transform the section ID before passing to selectTab.
-					const transformedSectionId =
-						transformSectionId( sectionId );
-
-					selectTab( tabId );
-
-					setTimeout( () => {
-						scrollAndHighlight( transformedSectionId );
-					}, 100 );
-				}
-			} }
-		>
-			{ settingName }
-		</a>
-	</strong>
-);
+	return (
+		<strong>
+			<button
+				type="button"
+				className="ppcp--link-button"
+				onClick={ () => {
+					if ( sectionId ) {
+						selectTab(
+							TAB_IDS.SETTINGS,
+							transformSectionId( sectionId ),
+							true
+						);
+					}
+				} }
+			>
+				{ settingName }
+			</button>
+		</strong>
+	);
+};
 
 /**
  * Component to display a setting dependency message

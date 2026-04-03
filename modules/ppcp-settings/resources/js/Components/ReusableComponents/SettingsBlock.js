@@ -1,5 +1,6 @@
 import classNames from 'classnames';
 import { Description, Header, Title, TitleExtra, Content } from './Elements';
+import { useScrollTarget } from '@ppcp-settings/hooks/useScrollHighlight';
 
 const SettingsBlock = ( {
 	id,
@@ -12,6 +13,8 @@ const SettingsBlock = ( {
 	separatorAndGap = true,
 	visible = true,
 } ) => {
+	const { ref, isHighlighted } = useScrollTarget( id );
+
 	if ( ! visible ) {
 		return null;
 	}
@@ -19,11 +22,12 @@ const SettingsBlock = ( {
 	const blockClassName = classNames( 'ppcp-r-settings-block', className, {
 		'ppcp--no-gap': ! separatorAndGap,
 		'ppcp--horizontal': horizontalLayout,
+		'ppcp-highlight': isHighlighted,
 	} );
 
 	const props = {
 		className: blockClassName,
-		...( id && { id } ),
+		...( id && { id, ref } ),
 	};
 
 	return (
