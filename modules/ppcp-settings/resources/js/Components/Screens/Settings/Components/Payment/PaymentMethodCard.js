@@ -1,4 +1,3 @@
-import { useEffect } from '@wordpress/element';
 import SettingsCard from '@ppcp-settings/Components/ReusableComponents/SettingsCard';
 import { PaymentMethodsBlock } from '@ppcp-settings/Components/ReusableComponents/SettingsBlocks';
 import usePaymentDependencyState from '@ppcp-settings/hooks/usePaymentDependencyState';
@@ -13,7 +12,6 @@ import {
 	SettingsHooks,
 	OnboardingHooks,
 } from '@ppcp-settings/data';
-import { useNavigation } from '@ppcp-settings/hooks/useNavigation';
 import usePaymentGatewayRefresh from '@ppcp-settings/hooks/usePaymentGatewayRefresh';
 
 /**
@@ -47,7 +45,6 @@ const PaymentMethodCard = ( {
 	const { isReady: isPaymentStoreReady, changePaymentSettings } =
 		PaymentHooks.useStore();
 	const { isReady: isSettingsStoreReady } = SettingsHooks.useStore();
-	const { handleHighlightFromUrl } = useNavigation();
 	const { gatewaysRefreshed } = OnboardingHooks.useGatewayRefresh();
 
 	// Re-fetch payment gateway data to hide methods based on exclusion conditions.
@@ -81,12 +78,6 @@ const PaymentMethodCard = ( {
 
 	// Evaluate reactive warning visibility conditions against store data.
 	const methodsWithWarnings = useMethodWarnings( methods );
-
-	useEffect( () => {
-		if ( isPaymentStoreReady && isSettingsStoreReady ) {
-			handleHighlightFromUrl();
-		}
-	}, [ handleHighlightFromUrl, isPaymentStoreReady, isSettingsStoreReady ] );
 
 	if (
 		! isPaymentStoreReady ||
