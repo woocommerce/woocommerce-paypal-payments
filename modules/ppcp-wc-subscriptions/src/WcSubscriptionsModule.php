@@ -148,7 +148,7 @@ class WcSubscriptionsModule implements ServiceModule, ExecutableModule
              *
              * @psalm-suppress MissingClosureParamType
              */
-            function ($subscription) use ($c) {
+            function ($subscription) {
                 if (!in_array($subscription->get_payment_method(), array(PayPalGateway::ID, CreditCardGateway::ID, CardButtonGateway::ID), \true)) {
                     return;
                 }
