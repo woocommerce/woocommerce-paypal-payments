@@ -24,14 +24,6 @@ use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
  * Class WooCommercePaymentTokens
  */
 class WooCommercePaymentTokens {
-
-	/**
-	 * The payment token helper.
-	 *
-	 * @var PaymentTokenHelper
-	 */
-	private $payment_token_helper;
-
 	/**
 	 * The payment token factory.
 	 *
@@ -56,18 +48,15 @@ class WooCommercePaymentTokens {
 	/**
 	 * WooCommercePaymentTokens constructor.
 	 *
-	 * @param PaymentTokenHelper    $payment_token_helper The payment token helper.
 	 * @param PaymentTokenFactory   $payment_token_factory The payment token factory.
 	 * @param PaymentTokensEndpoint $payment_tokens_endpoint Payment tokens endpoint.
 	 * @param LoggerInterface       $logger The logger.
 	 */
 	public function __construct(
-		PaymentTokenHelper $payment_token_helper,
 		PaymentTokenFactory $payment_token_factory,
 		PaymentTokensEndpoint $payment_tokens_endpoint,
 		LoggerInterface $logger
 	) {
-		$this->payment_token_helper    = $payment_token_helper;
 		$this->payment_token_factory   = $payment_token_factory;
 		$this->payment_tokens_endpoint = $payment_tokens_endpoint;
 		$this->logger                  = $logger;
