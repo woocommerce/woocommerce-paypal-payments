@@ -46,8 +46,6 @@ use WooCommerce\PayPalCommerce\ApiClient\Factory\PayeeFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PayerFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PaymentPreferencesFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PaymentsFactory;
-use WooCommerce\PayPalCommerce\ApiClient\Factory\PaymentTokenActionLinksFactory;
-use WooCommerce\PayPalCommerce\ApiClient\Factory\PaymentTokenFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PlanFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PlatformFeeFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\ProductFactory;
@@ -366,12 +364,6 @@ return array(
 			$contact_module_active,
 			$container->get( 'settings.merchant-details' )
 		);
-	},
-	'api.factory.payment-token'                      => static function ( ContainerInterface $container ): PaymentTokenFactory {
-		return new PaymentTokenFactory();
-	},
-	'api.factory.payment-token-action-links'         => static function ( ContainerInterface $container ): PaymentTokenActionLinksFactory {
-		return new PaymentTokenActionLinksFactory();
 	},
 	'api.factory.webhook'                            => static function ( ContainerInterface $container ): WebhookFactory {
 		return new WebhookFactory();
