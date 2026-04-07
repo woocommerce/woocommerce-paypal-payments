@@ -12,19 +12,21 @@ import WelcomeDocs from '../Components/WelcomeDocs';
 import AdvancedOptionsForm from '../Components/AdvancedOptionsForm';
 import { usePaymentConfig } from '../hooks/usePaymentConfig';
 
-const StepWelcome = ( { setStep, currentStep } ) => {
+const StepWelcome = ( { onNext } ) => {
 	const { storeCountry, ownBrandOnly } = CommonHooks.useWooSettings();
-	const { canUseCardPayments, canUseFastlane } = OnboardingHooks.useFlags();
+	const { canUseCardPayments, canUseDigitalWallets, canUseFastlane } =
+		OnboardingHooks.useFlags();
 
 	const { icons } = usePaymentConfig(
 		storeCountry,
 		canUseCardPayments,
+		canUseDigitalWallets,
 		canUseFastlane,
 		ownBrandOnly
 	);
 
 	const onboardingHeaderDescription =
-		canUseCardPayments && ! ownBrandOnly && 'MX' !== storeCountry
+		( canUseCardPayments || canUseDigitalWallets ) && ! ownBrandOnly
 			? __(
 					'Your all-in-one integration for PayPal checkout solutions that enable buyers to pay via PayPal, Pay Later, all major credit/debit cards, Apple Pay, Google Pay, and more.',
 					'woocommerce-paypal-payments'
@@ -33,11 +35,6 @@ const StepWelcome = ( { setStep, currentStep } ) => {
 					'Your all-in-one integration for PayPal checkout solutions that enable buyers to pay via PayPal, Pay Later, and more.',
 					'woocommerce-paypal-payments'
 			  );
-
-	const handleActivatePayPal = () => {
-		const nextStep = currentStep + 1;
-		setStep( nextStep, 'user' );
-	};
 
 	return (
 		<div className="ppcp-r-page-welcome">
@@ -61,7 +58,7 @@ const StepWelcome = ( { setStep, currentStep } ) => {
 					<Button
 						className="ppcp-r-button-activate-paypal"
 						variant="primary"
-						onClick={ handleActivatePayPal }
+						onClick={ onNext }
 					>
 						{ __(
 							'Activate PayPal Payments',
@@ -73,6 +70,7 @@ const StepWelcome = ( { setStep, currentStep } ) => {
 			<Separator className="ppcp-r-page-welcome-mode-separator" />
 			<WelcomeDocs
 				useAcdc={ canUseCardPayments }
+				useDigitalWallets={ canUseDigitalWallets }
 				isFastlane={ canUseFastlane }
 				storeCountry={ storeCountry }
 				ownBrandOnly={ ownBrandOnly }

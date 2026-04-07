@@ -44,7 +44,7 @@ class GetOrderEndpoint implements EndpointInterface {
 	public static function nonce(): string {
 		return self::ENDPOINT;
 	}
-	public function handle_request(): bool {
+	public function handle_request(): void {
 		try {
 			$data     = $this->request_data->read_request( $this->nonce() );
 			$order_id = $data['order_id'] ?? '';
@@ -55,7 +55,6 @@ class GetOrderEndpoint implements EndpointInterface {
 						'message' => __( 'Order ID is required', 'woocommerce-paypal-payments' ),
 					)
 				);
-				return false;
 			}
 
 			// Security: Verify that CartData transient exists for this PayPal order ID.
@@ -77,22 +76,20 @@ class GetOrderEndpoint implements EndpointInterface {
 						'message' => __( 'Invalid or expired order access', 'woocommerce-paypal-payments' ),
 					)
 				);
-				return false;
 			}
 
 			$order = $this->api_endpoint->order( $order_id );
 
 			wp_send_json_success( $order->to_array() );
-			return true;
 		} catch ( RuntimeException $error ) {
 			$this->logger->error( 'Get order failed: ' . $error->getMessage() );
 
 			wp_send_json_error(
 				array(
-					'name'    => is_a( $error, PayPalApiException::class ) ? $error->name() : '',
+					'name'    => $error instanceof PayPalApiException ? $error->name() : '',
 					'message' => $error->getMessage(),
 					'code'    => $error->getCode(),
-					'details' => is_a( $error, PayPalApiException::class ) ? $error->details() : array(),
+					'details' => $error instanceof PayPalApiException ? $error->details() : array(),
 				)
 			);
 		} catch ( Exception $exception ) {
@@ -104,7 +101,5 @@ class GetOrderEndpoint implements EndpointInterface {
 				)
 			);
 		}
-
-		return false;
 	}
 }

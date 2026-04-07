@@ -9,57 +9,22 @@ declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\Button\Helper;
 
-use WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException;
-use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
+use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
 use WooCommerce\PayPalCommerce\WcSubscriptions\FreeTrialHandlerTrait;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\CardPaymentsConfiguration;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\CartCheckoutDetector;
 
-/**
- * Class DisabledFundingSources
- */
 class DisabledFundingSources {
 
 	use FreeTrialHandlerTrait;
 
-	/**
-	 * The settings.
-	 *
-	 * @var Settings
-	 */
-	private Settings $settings;
-
-	/**
-	 * All existing funding sources.
-	 *
-	 * @var array
-	 */
+	private SettingsProvider $settings_provider;
 	private array $all_funding_sources;
-
-	/**
-	 * Provides details about the DCC configuration.
-	 *
-	 * @var CardPaymentsConfiguration
-	 */
 	private CardPaymentsConfiguration $dcc_configuration;
-
-	/**
-	 * Merchant Country
-	 *
-	 * @var string
-	 */
 	private string $merchant_country;
 
-	/**
-	 * DisabledFundingSources constructor.
-	 *
-	 * @param Settings                  $settings            The settings.
-	 * @param array                     $all_funding_sources All existing funding sources.
-	 * @param CardPaymentsConfiguration $dcc_configuration   DCC gateway configuration.
-	 * @param string                    $merchant_country    Merchant country.
-	 */
-	public function __construct( Settings $settings, array $all_funding_sources, CardPaymentsConfiguration $dcc_configuration, string $merchant_country ) {
-		$this->settings            = $settings;
+	public function __construct( SettingsProvider $settings_provider, array $all_funding_sources, CardPaymentsConfiguration $dcc_configuration, string $merchant_country ) {
+		$this->settings_provider   = $settings_provider;
 		$this->all_funding_sources = $all_funding_sources;
 		$this->dcc_configuration   = $dcc_configuration;
 		$this->merchant_country    = $merchant_country;
@@ -86,7 +51,7 @@ class DisabledFundingSources {
 			return $this->sanitize_and_filter_sources( $disable_funding, $flags );
 		}
 
-		$disable_funding = $this->get_sources_from_settings();
+		$disable_funding = $this->get_sources_from_settings( $context );
 
 		// Apply rules based on context and payment methods.
 		$disable_funding = $this->apply_context_rules( $disable_funding );
@@ -104,20 +69,18 @@ class DisabledFundingSources {
 	 *
 	 * @return array
 	 */
-	private function get_sources_from_settings(): array {
-		try {
-			// Settings field present in the legacy UI.
-			$disabled_funding = $this->settings->get( 'disable_funding' );
-		} catch ( NotFoundException $exception ) {
-			$disabled_funding = array();
+	private function get_sources_from_settings( string $context ): array {
+		$disabled_funding = array();
+		$methods          = $this->settings_provider->button_styling( $context )->methods;
+
+		if ( ! $this->settings_provider->venmo_enabled() || ! in_array( 'venmo', $methods, true ) ) {
+			$disabled_funding[] = 'venmo';
 		}
 
 		/**
-		 * Filters the list of disabled funding methods. In the legacy UI, this
-		 * list was accessible via a settings field.
+		 * Filters the list of disabled funding methods.
 		 *
-		 * This filter allows merchants to programmatically disable funding sources
-		 * in the new UI.
+		 * This filter allows merchants to programmatically disable funding sources.
 		 */
 		return (array) apply_filters(
 			'woocommerce_paypal_payments_disabled_funding',

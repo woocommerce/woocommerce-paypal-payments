@@ -208,6 +208,7 @@ class CheckoutOrderApproved implements RequestHandler {
 					 * Wrong type-hint.
 					 *
 					 * @psalm-suppress InvalidScalarArgument
+					 * @phpstan-ignore argument.type
 					 */
 					$session->delete_session( $customer_id );
 					$session->forget_session();
@@ -222,10 +223,6 @@ class CheckoutOrderApproved implements RequestHandler {
 
 		foreach ( $wc_orders as $wc_order ) {
 			if ( PayUponInvoiceGateway::ID === $wc_order->get_payment_method() || OXXOGateway::ID === $wc_order->get_payment_method() ) {
-				continue;
-			}
-
-			if ( ! in_array( $wc_order->get_status(), array( 'pending', 'on-hold' ), true ) ) {
 				continue;
 			}
 

@@ -28,7 +28,7 @@ const testSubscriptionOrderGuest = ( testOrder: ShopOrder ) => {
 				orderReceived,
 				customerSubscriptions,
 			} ) => {
-				test.setTimeout( 2 * 60 * 1000 );
+				test.setTimeout( 2 * 60_000 );
 				await utils.fillVisitorsCart( products );
 				await checkout.visit();
 				await checkout.completeCheckoutDetails( testOrder );
@@ -91,7 +91,7 @@ const testSubscriptionOrderCustomer = ( testOrder: ShopOrder ) => {
 				orderReceived,
 				customerSubscriptions,
 			} ) => {
-				test.setTimeout( 2 * 60 * 1000 );
+				test.setTimeout( 2 * 60_000 );
 				// Preconditions
 				await customerPaymentMethods.visit();
 				await customerPaymentMethods.assertIsNotSavedPaymentMethod(

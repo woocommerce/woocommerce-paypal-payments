@@ -220,25 +220,25 @@ test.describe( 'Button orientation', () => {
 
 test.describe( 'WP Debugging', () => {
 	test.beforeAll(
-		async ( { utils } ) => await utils.activateWpDebuggingPlugin()
+		async ( { cli } ) => await cli.setWpConst( { WP_DEBUG: true, SCRIPT_DEBUG: true } )
 	);
 
 	transactionsOnClassicCheckout( acdcClassicCheckoutDebugging );
 
 	test.afterAll(
-		async ( { utils } ) => await utils.deactivateWpDebuggingPlugin()
+		async ( { cli } ) => await cli.setWpConst( { WP_DEBUG: false, SCRIPT_DEBUG: false } )
 	);
 } );
 
 test.describe( 'Specific merchants', () => {
-	test.beforeAll( async ( { utils } ) => {
-		await utils.connectMerchant( specificMerchant );
+	test.beforeAll( async ( { pcpApi } ) => {
+		await pcpApi.connectMerchant( specificMerchant );
 	} );
 
 	transactionsOnClassicCheckout( payPalClassicCheckoutSpecificMerchant );
 
-	test.afterAll( async ( { utils } ) => {
-		await utils.connectMerchant( pcpConfigUsa.merchant );
+	test.afterAll( async ( { pcpApi } ) => {
+		await pcpApi.connectMerchant( pcpConfigUsa.merchant );
 	} );
 } );
 

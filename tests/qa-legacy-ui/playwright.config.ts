@@ -91,6 +91,16 @@ export default defineConfig< BaseExtend >( {
 			mode: 'retain-on-failure',
 			size: { width: 1280, height: 850 },
 		},
+
+		cliConfig: {
+			envType: 'ssh',
+			ssh: {
+				login: process.env.SSH_LOGIN,
+				host: process.env.SSH_HOST,
+				port: process.env.SSH_PORT,
+				path: process.env.SSH_PATH,
+			}
+		},
 	},
 
 	projects: [

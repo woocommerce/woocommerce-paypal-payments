@@ -19,7 +19,7 @@ return array(
 	},
 	'session.cancellation.view'       => function ( ContainerInterface $container ): CancelView {
 		return new CancelView(
-			$container->get( 'wcgateway.settings' ),
+			$container->get( 'settings.settings-provider' ),
 			$container->get( 'wcgateway.funding-source.renderer' )
 		);
 	},

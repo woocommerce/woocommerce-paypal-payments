@@ -13,6 +13,7 @@ import {
 } from '../../resources';
 
 const customer = storeConfigClassic.customer;
+const popupTitle = 'Pay with PayPal';
 
 test.describe( 'Frontend UI', () => {
 	test.beforeAll( async ( { utils } ) => {
@@ -46,7 +47,7 @@ test.describe( 'Frontend UI', () => {
 
 		let payPalPopup = await classicCheckout.ppui.openPayPalPupup();
 		await expect( payPalPopup.popup ).toHaveTitle(
-			'Log in to your PayPal account'
+			popupTitle
 		);
 		await payPalPopup.popup.close();
 		await expect( payPalPopup.popup.isClosed() ).toBeTruthy();
@@ -54,7 +55,7 @@ test.describe( 'Frontend UI', () => {
 
 		payPalPopup = await classicCheckout.ppui.openPayPalPupup();
 		await expect( payPalPopup.popup ).toHaveTitle(
-			'Log in to your PayPal account'
+			popupTitle
 		);
 	} );
 
@@ -263,7 +264,7 @@ test.describe( 'Frontend UI', () => {
 
 		let payPalPopup = await classicPayForOrder.ppui.openPayPalPupup();
 		await expect( payPalPopup.popup ).toHaveTitle(
-			'Log in to your PayPal account'
+			popupTitle
 		);
 		await payPalPopup.popup.close();
 		await expect( payPalPopup.popup.isClosed() ).toBeTruthy();
@@ -271,7 +272,7 @@ test.describe( 'Frontend UI', () => {
 
 		payPalPopup = await classicPayForOrder.ppui.openPayPalPupup();
 		await expect( payPalPopup.popup ).toHaveTitle(
-			'Log in to your PayPal account'
+			popupTitle
 		);
 
 		order = await wooCommerceApi.getOrder( order.id );

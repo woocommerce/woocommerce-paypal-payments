@@ -1,7 +1,7 @@
 /**
  * Internal dependencies
  */
-import { annotateVisitor, expect, test } from '../../utils';
+import { annotateVisitor, expect, test, PayPalPopup } from '../../utils';
 import {
 	merchants,
 	storeConfigUsa,
@@ -163,21 +163,61 @@ test.describe( () => {
 		'PCP-5380 | Vaulting - My Account - Payment Methods - PayPal - Unable to save additional account',
 		annotateVisitor( customer ),
 		async ( { customerPaymentMethods } ) => {
-			// Preconditions
-			await customerPaymentMethods.visit();
-			// Save initial card (not tested)
-			await customerPaymentMethods.savePaymentMethod( payPal );
-			// Assert tested card is not present in My Account
-			await customerPaymentMethods.assertIsSavedPaymentMethod( payPal );
-			await customerPaymentMethods.addPaymentMethodButton().click();
-			await customerPaymentMethods.page.waitForLoadState();
-			// Low prio bug: gateway is visible without ability to add payment method. Uncomment when fixed
-			// await expect(
-			// 	customerPaymentMethods.payPalUi.payPalGateway()
-			// ).not.toBeVisible();
-			await expect(
-				customerPaymentMethods.payPalUi.payPalButton()
-			).not.toBeVisible();
+			await test.step( 'Save initial PayPal account', async () => {
+				await customerPaymentMethods.visit();
+				// Save and assert payment method
+				await customerPaymentMethods.savePaymentMethod( payPal );
+			} );
+			
+			await test.step( 'Save another PayPal account', async () => {
+				const secondPayPalAccount = {
+					email: process.env.PAYPAL_PERSONAL_EMAIL_US2,
+					password: process.env.PAYPAL_PERSONAL_PASS_US2,
+				};
+				await customerPaymentMethods.addPaymentMethodButton().click();
+				await customerPaymentMethods.page.waitForLoadState();
+				await expect(
+					customerPaymentMethods.payPalUi.payPalButton(),
+					'Assert PayPal button is visible'
+				).toBeVisible();
+				
+				// Assert PayPal dropdown menu button
+				const payPalButtonMoreOptions =
+					customerPaymentMethods.payPalUi.payPalButtonMoreOptions();
+				await expect(
+					payPalButtonMoreOptions,
+					'Assert PayPal dropdown menu button is visible'
+				).toBeVisible();
+				await payPalButtonMoreOptions.click();
+
+				// Assert "Pay with different account" button
+				const payWithDifferentAccountButton =
+					customerPaymentMethods.payPalUi.payWithDifferentAccountButton();
+				await expect(
+					payWithDifferentAccountButton,
+					'Assert Pay with different account button is visible'
+				).toBeVisible();
+				
+				// Call PayPal popup using "Pay with different account" button
+				const popupPromise =
+					customerPaymentMethods.payPalUi.page.waitForEvent( 'popup', {
+						timeout: 20_000,
+					} );
+				await payWithDifferentAccountButton.click();
+		
+				const popup = await popupPromise;
+				await popup.waitForLoadState();
+				const payPalPopup = new PayPalPopup( popup );
+
+				await payPalPopup.tryChangeUser();
+				await payPalPopup.completePayPalPayment( secondPayPalAccount );
+				await customerPaymentMethods.assertUrl();
+				await customerPaymentMethods.assertIsSavedPaymentMethod( {
+					gateway: payPal.gateway,
+					payPalAccount: secondPayPalAccount
+				} );
+				await customerPaymentMethods.assertIsNotSavedPaymentMethod( payPal );
+			} );
 		}
 	);
 } );

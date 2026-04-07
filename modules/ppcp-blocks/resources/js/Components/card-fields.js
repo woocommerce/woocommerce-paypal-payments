@@ -47,11 +47,17 @@ export function CardFields( { config, eventRegistration, emitResponse } ) {
 		() =>
 			onPaymentSetup( () => {
 				async function handlePaymentProcessing() {
-					await cardFieldsForm.submit().catch( ( error ) => {
+					try {
+						await cardFieldsForm.submit();
+					} catch ( error ) {
+						console.error( error );
 						return {
 							type: responseTypes.ERROR,
+							message:
+								config.scriptData.hosted_fields.labels
+									.fields_not_valid,
 						};
-					} );
+					}
 
 					return {
 						type: responseTypes.SUCCESS,

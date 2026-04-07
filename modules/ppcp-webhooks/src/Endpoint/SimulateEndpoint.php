@@ -60,10 +60,9 @@ class SimulateEndpoint {
 	/**
 	 * Handles the incoming request.
 	 */
-	public function handle_request() {
+	public function handle_request(): void {
 		if ( ! current_user_can( 'manage_woocommerce' ) ) {
 			wp_send_json_error( 'Not admin.', 403 );
-			return false;
 		}
 
 		try {
@@ -73,10 +72,8 @@ class SimulateEndpoint {
 			$this->simulation->start();
 
 			wp_send_json_success();
-			return true;
 		} catch ( Exception $error ) {
 			wp_send_json_error( $error->getMessage(), 500 );
-			return false;
 		}
 	}
 }

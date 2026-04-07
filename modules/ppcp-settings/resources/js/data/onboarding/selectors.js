@@ -63,7 +63,8 @@ export const determineProductsAndCaps = (
 
 	const { isCasualSeller, areOptionalPaymentMethodsEnabled, products } =
 		persistentData( state );
-	const { canUseVaulting, canUseCardPayments } = flags( state );
+	const { canUseVaulting, canUseCardPayments, canUseDigitalWallets } =
+		flags( state );
 	const isBrandedCasualSeller = isCasualSeller && ownBrandOnly;
 
 	const cardPaymentsEligibleAndSelected =
@@ -71,9 +72,17 @@ export const determineProductsAndCaps = (
 		areOptionalPaymentMethodsEnabled &&
 		! isBrandedCasualSeller;
 
-	if ( ! cardPaymentsEligibleAndSelected ) {
+	const digitalWalletsEligibleAndSelected =
+		canUseDigitalWallets &&
+		areOptionalPaymentMethodsEnabled &&
+		! isBrandedCasualSeller;
+
+	if (
+		! cardPaymentsEligibleAndSelected &&
+		! digitalWalletsEligibleAndSelected
+	) {
 		/**
-		 * Branch 1: Credit Card Payments not available.
+		 * Branch 1: Neither Credit Card Payments nor Digital Wallets available.
 		 * The store uses the Express-checkout product.
 		 */
 		apiModules.push( PAYPAL_PRODUCTS.BCDC );
@@ -85,7 +94,7 @@ export const determineProductsAndCaps = (
 		if ( canUseVaulting ) {
 			apiModules.push( PAYPAL_PRODUCTS.VAULTING );
 		}
-	} else if ( isCasualSeller || 'MX' === storeCountry ) {
+	} else if ( isCasualSeller ) {
 		/**
 		 * Branch 2: Merchant has no business.
 		 * The store uses the Express-checkout product.
@@ -93,7 +102,7 @@ export const determineProductsAndCaps = (
 		apiModules.push( PAYPAL_PRODUCTS.BCDC );
 	} else {
 		/**
-		 * Branch 3: Merchant is business, and can use CC payments.
+		 * Branch 3: Merchant is business, and can use CC payments or digital wallets.
 		 * The store uses the advanced PPCP product.
 		 *
 		 * This is the only branch that can use subscriptions.
@@ -109,7 +118,8 @@ export const determineProductsAndCaps = (
 		}
 	}
 
-	options.useCardPayments = cardPaymentsEligibleAndSelected;
+	options.useCardPayments =
+		cardPaymentsEligibleAndSelected || digitalWalletsEligibleAndSelected;
 
 	return { products: apiModules, options };
 };

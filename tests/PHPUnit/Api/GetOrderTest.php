@@ -39,13 +39,10 @@ class GetOrderTest extends ModularTestCase
 
 	public function testSuccessWithOrder(): void {
 		$wcOrder = Mockery::mock(WC_Order::class);
-		$wcOrder->expects('get_meta')
-			->with(PayPalGateway::ORDER_ID_META_KEY)
-			->andReturn('123abc');
 
 		$this->orderEndpoint
 			->expects('order')
-			->with('123abc')
+			->with($wcOrder)
 			->andReturn(Mockery::mock(Order::class))
 			->once();
 
@@ -54,9 +51,12 @@ class GetOrderTest extends ModularTestCase
 
 	public function testOrderWithoutId(): void {
 		$wcOrder = Mockery::mock(WC_Order::class);
-		$wcOrder->expects('get_meta')
-			->with(PayPalGateway::ORDER_ID_META_KEY)
-			->andReturn(false);
+
+		$this->orderEndpoint
+			->expects('order')
+			->with($wcOrder)
+			->andThrow(new InvalidArgumentException())
+			->once();
 
 		$this->expectException(InvalidArgumentException::class);
 
@@ -76,6 +76,12 @@ class GetOrderTest extends ModularTestCase
 	}
 
 	public function testInvalidId(): void {
+		$this->orderEndpoint
+			->expects('order')
+			->with(123)
+			->andThrow(new InvalidArgumentException())
+			->once();
+
 		$this->expectException(InvalidArgumentException::class);
 
 		ppcp_get_paypal_order(123);

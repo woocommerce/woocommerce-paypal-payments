@@ -9,6 +9,7 @@ declare( strict_types=1 );
 
 namespace WooCommerce\PayPalCommerce\Settings\Data\Definition;
 
+use Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\Settings\Data\SettingsModel;
 use WooCommerce\PayPalCommerce\Settings\Service\FeaturesEligibilityService;
 use WooCommerce\PayPalCommerce\Settings\Data\GeneralSettings;
@@ -70,17 +71,11 @@ class FeaturesDefinition {
 	public const FEATURE_PAY_WITH_CRYPTO = 'pwc';
 
 	/**
-	 * The features eligibility service.
-	 *
-	 * @var FeaturesEligibilityService
+	 * Whether Pay upon Invoice (PUI) is supported. Available for merchants in Germany.
 	 */
-	protected FeaturesEligibilityService $eligibilities;
+	public const FEATURE_PAY_UPON_INVOICE = 'pay_upon_invoice';
 
-	/**
-	 * The general settings service.
-	 *
-	 * @var GeneralSettings
-	 */
+	protected FeaturesEligibilityService $eligibilities;
 	protected GeneralSettings $settings;
 
 	/**
@@ -89,50 +84,63 @@ class FeaturesDefinition {
 	 * @var array
 	 */
 	protected array $merchant_capabilities;
-
-	/**
-	 * The plugin settings.
-	 *
-	 * @var SettingsModel
-	 */
 	protected SettingsModel $plugin_settings;
+	protected LoggerInterface $logger;
 
-	/**
-	 * Constructor.
-	 *
-	 * @param FeaturesEligibilityService $eligibilities The features eligibility service.
-	 * @param GeneralSettings            $settings The general settings service.
-	 * @param array                      $merchant_capabilities The merchant capabilities.
-	 * @param SettingsModel              $plugin_settings The plugin settings.
-	 */
 	public function __construct(
 		FeaturesEligibilityService $eligibilities,
 		GeneralSettings $settings,
 		array $merchant_capabilities,
-		SettingsModel $plugin_settings
+		SettingsModel $plugin_settings,
+		LoggerInterface $logger
 	) {
 		$this->eligibilities         = $eligibilities;
 		$this->settings              = $settings;
 		$this->merchant_capabilities = $merchant_capabilities;
 		$this->plugin_settings       = $plugin_settings;
+		$this->logger                = $logger;
 	}
 
 	/**
 	 * Returns the full list of feature definitions with their eligibility conditions.
 	 *
+	 * Only features whose eligibility check passes are included.
+	 *
 	 * @return array The array of feature definitions.
 	 */
-	public function get(): array {
+	public function eligible_features(): array {
 		$all_features       = $this->all_available_features();
 		$eligible_features  = array();
 		$eligibility_checks = $this->eligibilities->get_eligibility_checks();
 		foreach ( $all_features as $feature_key => $feature ) {
-			if ( $eligibility_checks[ $feature_key ]() ) {
+			if ( isset( $eligibility_checks[ $feature_key ] ) && $eligibility_checks[ $feature_key ]() ) {
 				$eligible_features[ $feature_key ] = $feature;
 			}
 		}
 
 		return $eligible_features;
+	}
+
+	/**
+	 * Returns whether a specific feature is eligible.
+	 *
+	 * @param string $feature_name One of the FEATURE_* constants.
+	 * @return bool true if the feature is eligible, false otherwise or if unknown.
+	 */
+	public function is_feature_eligible( string $feature_name ): bool {
+		$eligibility_checks = $this->eligibilities->get_eligibility_checks();
+
+		if ( ! isset( $eligibility_checks[ $feature_name ] ) ) {
+			$this->logger->warning(
+				sprintf(
+					'No eligibility check registered for feature "%s".',
+					$feature_name
+				)
+			);
+			return false;
+		}
+
+		return (bool) $eligibility_checks[ $feature_name ]();
 	}
 
 	/**
@@ -156,6 +164,41 @@ class FeaturesDefinition {
 		$save_paypal_and_venmo          = $this->plugin_settings->get_save_paypal_and_venmo();
 
 		$feature_items = array(
+			self::FEATURE_PAY_WITH_CRYPTO                 => array(
+				'title'       => __( 'Pay with Crypto', 'woocommerce-paypal-payments' ),
+				'description' => __( 'Enable customers to pay with cryptocurrency, and receive payments in USD in your PayPal balance.', 'woocommerce-paypal-payments' )
+					. '<p>' . __( 'Promotional processing rate of 0.99% through July 31, 2026.', 'woocommerce-paypal-payments' ) . '</p>',
+				'enabled'     => $this->merchant_capabilities[ self::FEATURE_PAY_WITH_CRYPTO ],
+				'buttons'     => array(
+					array(
+						'type'     => 'secondary',
+						'text'     => __( 'Configure', 'woocommerce-paypal-payments' ),
+						'action'   => array(
+							'type'    => 'tab',
+							'tab'     => 'payment_methods',
+							'section' => 'ppcp-pwc',
+						),
+						'showWhen' => 'enabled',
+						'class'    => 'small-button',
+					),
+					array(
+						'type'     => 'secondary',
+						'text'     => __( 'Sign up', 'woocommerce-paypal-payments' ),
+						'urls'     => array(
+							'sandbox' => 'https://www.sandbox.paypal.com/bizsignup/add-product?product=CRYPTO_PYMTS',
+							'live'    => 'https://www.paypal.com/bizsignup/add-product?product=CRYPTO_PYMTS',
+						),
+						'showWhen' => 'disabled',
+						'class'    => 'small-button',
+					),
+					array(
+						'type'  => 'tertiary',
+						'text'  => __( 'Learn more', 'woocommerce-paypal-payments' ),
+						'url'   => 'https://www.paypal.com/us/digital-wallet/manage-money/crypto',
+						'class' => 'small-button',
+					),
+				),
+			),
 			self::FEATURE_SAVE_PAYPAL_AND_VENMO           => array(
 				'title'       => __( 'Save PayPal and Venmo', 'woocommerce-paypal-payments' ),
 				'description' => __( 'Securely save PayPal and Venmo payment methods for subscriptions or return buyers.', 'woocommerce-paypal-payments' ),
@@ -391,10 +434,10 @@ class FeaturesDefinition {
 					),
 				),
 			),
-			self::FEATURE_PAY_WITH_CRYPTO                 => array(
-				'title'       => __( 'Pay with Crypto', 'woocommerce-paypal-payments' ),
-				'description' => __( 'Enable customers to pay with cryptocurrency, and receive payments in USD in your PayPal balance.', 'woocommerce-paypal-payments' ),
-				'enabled'     => $this->merchant_capabilities[ self::FEATURE_PAY_WITH_CRYPTO ],
+			self::FEATURE_PAY_UPON_INVOICE                => array(
+				'title'       => __( 'Pay upon Invoice', 'woocommerce-paypal-payments' ),
+				'description' => __( 'Offer Pay upon Invoice (Rechnungskauf) for customers in Germany. Buyers receive goods first and pay within 30 days — no PayPal account needed. Powered by Ratepay.', 'woocommerce-paypal-payments' ),
+				'enabled'     => $this->merchant_capabilities[ self::FEATURE_PAY_UPON_INVOICE ],
 				'buttons'     => array(
 					array(
 						'type'     => 'secondary',
@@ -402,7 +445,8 @@ class FeaturesDefinition {
 						'action'   => array(
 							'type'    => 'tab',
 							'tab'     => 'payment_methods',
-							'section' => 'ppcp-pay-with-crypto',
+							'section' => 'ppcp-pay-upon-invoice-gateway',
+							'modal'   => 'ppcp-pay-upon-invoice-gateway',
 						),
 						'showWhen' => 'enabled',
 						'class'    => 'small-button',
@@ -411,8 +455,8 @@ class FeaturesDefinition {
 						'type'     => 'secondary',
 						'text'     => __( 'Sign up', 'woocommerce-paypal-payments' ),
 						'urls'     => array(
-							'sandbox' => 'https://www.sandbox.paypal.com/bizsignup/add-product?product=CRYPTO_PYMTS',
-							'live'    => 'https://www.paypal.com/bizsignup/add-product?product=CRYPTO_PYMTS',
+							'sandbox' => 'https://www.sandbox.paypal.com/bizsignup/entry?country.x=DE&product=payment_methods&capabilities=PAY_UPON_INVOICE',
+							'live'    => 'https://www.paypal.com/bizsignup/entry?country.x=DE&product=payment_methods&capabilities=PAY_UPON_INVOICE',
 						),
 						'showWhen' => 'disabled',
 						'class'    => 'small-button',
@@ -420,7 +464,7 @@ class FeaturesDefinition {
 					array(
 						'type'  => 'tertiary',
 						'text'  => __( 'Learn more', 'woocommerce-paypal-payments' ),
-						'url'   => 'https://www.paypal.com/us/digital-wallet/manage-money/crypto',
+						'url'   => 'https://developer.paypal.com/docs/checkout/apm/pay-upon-invoice/',
 						'class' => 'small-button',
 					),
 				),
