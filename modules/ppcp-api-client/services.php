@@ -160,8 +160,12 @@ return array(
 			$container->get( 'api.factory.sellerstatus' ),
 			$container->get( 'api.partner_merchant_id' ),
 			$container->get( 'api.merchant_id' ),
-			$container->get( 'api.helper.failure-registry' )
+			$container->get( 'api.helper.failure-registry' ),
+			$container->get( 'api.partners-seller-status-cache' )
 		);
+	},
+	'api.partners-seller-status-cache'               => static function ( ContainerInterface $container ): Cache {
+		return new Cache( 'ppcp-seller-status-' );
 	},
 	'api.factory.sellerstatus'                       => static function ( ContainerInterface $container ): SellerStatusFactory {
 		return new SellerStatusFactory();

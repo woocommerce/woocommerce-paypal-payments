@@ -124,7 +124,7 @@ const TabPaymentMethods = () => {
 						'woocommerce-paypal-payments'
 					) }
 					description={ __(
-						'Your card payments can do more. Unlock lower processing fees, advanced fraud protection, and a faster checkout with Apple Pay, Google Pay, and Fastlane one-click checkout.',
+						'Get Apple Pay, Google Pay, and Fastlane accelerated guest checkout, and enjoy lower processing fees and advanced fraud protection.',
 						'woocommerce-paypal-payments'
 					) }
 					actionProps={ {

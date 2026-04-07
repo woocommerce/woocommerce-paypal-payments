@@ -880,9 +880,6 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
 			$amount = WC()->cart->get_total( 'raw' );
 		}
 
-		$styling_per_location = $this->settings_provider->pay_later_styling_per_location();
-		$location             = $styling_per_location ? $location : 'general';
-
 		// Map checkout-block and cart-block message options to checkout and cart options.
 		switch ( $location ) {
 			case 'checkout-block':
@@ -1388,7 +1385,12 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
 
 		$disabled_funding_sources = $this->disabled_funding_sources->sources( $current_context );
 
-		$enable_funding = array( 'venmo' );
+		$enable_funding = array();
+
+		$methods = $this->settings_provider->button_styling( $current_context );
+		if ( $this->settings_provider->venmo_enabled() && in_array( 'venmo', $methods->methods, true ) ) {
+			$enable_funding[] = 'venmo';
+		}
 
 		if ( $this->is_pay_later_button_enabled_for_location( $current_context ) ) {
 			$enable_funding[] = 'paylater';
