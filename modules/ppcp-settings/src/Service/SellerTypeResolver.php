@@ -61,10 +61,13 @@ class SellerTypeResolver
                 $general_settings->set_merchant_data($connection);
                 $general_settings->save();
                 do_action('woocommerce_paypal_payments_clear_apm_product_status');
+                return;
             }
         } catch (Exception $e) {
             $logger->debug('Seller type resolution deferred; will retry in 1 hour.', array('error' => $e->getMessage()));
         }
+        // Seller type still unknown — throttle retries to once per hour.
+        $failure_registry->add_failure(FailureRegistry::SELLER_STATUS_KEY);
     }
     /**
      * Checks whether seller type resolution is needed.
@@ -81,7 +84,7 @@ class SellerTypeResolver
         if (!$general_settings->is_merchant_connected()) {
             return \false;
         }
-        return !$general_settings->is_business_seller() && !$general_settings->is_casual_seller();
+        return SellerTypeEnum::UNKNOWN === $general_settings->get_merchant_data()->seller_type;
     }
     /**
      * Checks if a specific capability is active for the seller.

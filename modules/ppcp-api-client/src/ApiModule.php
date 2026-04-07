@@ -10,6 +10,7 @@ namespace WooCommerce\PayPalCommerce\ApiClient;
 
 use WC_Order;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\Cache;
+use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PartnersEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\FailureRegistry;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\OrderTransient;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\PartnerAttribution;
@@ -73,6 +74,10 @@ class ApiModule implements ServiceModule, FactoryModule, ExecutableModule
             $failure_registry = $c->has('api.helper.failure-registry') ? $c->get('api.helper.failure-registry') : null;
             if ($failure_registry instanceof FailureRegistry) {
                 $failure_registry->clear_failures(FailureRegistry::SELLER_STATUS_KEY);
+            }
+            $partners_endpoint = $c->has('api.endpoint.partners') ? $c->get('api.endpoint.partners') : null;
+            if ($partners_endpoint instanceof PartnersEndpoint) {
+                $partners_endpoint->clear_seller_status_cache();
             }
         }, 10, 2);
         /**

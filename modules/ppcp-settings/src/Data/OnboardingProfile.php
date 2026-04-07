@@ -203,14 +203,23 @@ class OnboardingProfile extends \WooCommerce\PayPalCommerce\Settings\Data\Abstra
     /**
      * Set whether gateways have been synced.
      *
-     * @param bool $synced Whether gateways have been synced.
+     * @param bool $synced    Whether gateways have been synced.
+     * @param bool $skip_sync When true, only updates the flag without triggering
+     *                        the gateway sync action. Use during migration where
+     *                        gateway states are already handled by the migration itself.
      */
-    public function set_gateways_synced(bool $synced): void
+    public function set_gateways_synced(bool $synced, bool $skip_sync = \false): void
     {
         $this->data['gateways_synced'] = $synced;
-        // If enabling the flag, trigger the action.
-        if ($synced) {
+        // No sync = no action needed.
+        if (!$synced || $skip_sync) {
+            return;
+        }
+        // Timing is important - we can sync only on/after woocommerce_init fired.
+        if (did_action('woocommerce_init')) {
             do_action('woocommerce_paypal_payments_sync_gateways');
+        } else {
+            add_action('woocommerce_init', static fn() => do_action('woocommerce_paypal_payments_sync_gateways'));
         }
     }
     /**

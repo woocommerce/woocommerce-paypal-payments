@@ -20,12 +20,8 @@ use WooCommerce\PayPalCommerce\Googlepay\Endpoint\UpdatePaymentDataEndpoint;
 use WooCommerce\PayPalCommerce\Googlepay\GooglePayGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
 use WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException;
-use WooCommerce\PayPalCommerce\WcGateway\Helper\SettingsStatus;
 use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
 use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
-/**
- * Class Button
- */
 class GooglePayButton implements ButtonInterface
 {
     private Context $context;
@@ -34,19 +30,8 @@ class GooglePayButton implements ButtonInterface
     private string $version;
     private SettingsProvider $settings;
     private Environment $environment;
-    private SettingsStatus $settings_status;
     private SubscriptionHelper $subscription_helper;
-    /**
-     * @param AssetGetter        $asset_getter
-     * @param string             $sdk_url             The URL to the SDK.
-     * @param string             $version             The assets version.
-     * @param SubscriptionHelper $subscription_helper The subscription helper.
-     * @param SettingsProvider   $settings            The legacy settings.
-     * @param Environment        $environment         The environment object.
-     * @param SettingsStatus     $settings_status     The Settings status helper.
-     * @param Context            $context             Context data provider.
-     */
-    public function __construct(AssetGetter $asset_getter, string $sdk_url, string $version, SubscriptionHelper $subscription_helper, SettingsProvider $settings, Environment $environment, SettingsStatus $settings_status, Context $context)
+    public function __construct(AssetGetter $asset_getter, string $sdk_url, string $version, SubscriptionHelper $subscription_helper, SettingsProvider $settings, Environment $environment, Context $context)
     {
         $this->asset_getter = $asset_getter;
         $this->sdk_url = $sdk_url;
@@ -54,7 +39,6 @@ class GooglePayButton implements ButtonInterface
         $this->subscription_helper = $subscription_helper;
         $this->settings = $settings;
         $this->environment = $environment;
-        $this->settings_status = $settings_status;
         $this->context = $context;
     }
     public function initialize(): void
@@ -65,7 +49,11 @@ class GooglePayButton implements ButtonInterface
      */
     public function is_enabled(): bool
     {
-        return $this->settings->googlepay_enabled();
+        if (!$this->settings->googlepay_enabled()) {
+            return \false;
+        }
+        $methods = $this->settings->button_styling($this->context->context())->methods;
+        return in_array(GooglePayGateway::ID, $methods, \true);
     }
     /**
      * Registers the necessary action hooks to render the HTML depending on the settings.
@@ -79,13 +67,6 @@ class GooglePayButton implements ButtonInterface
         if (!$this->is_enabled()) {
             return \false;
         }
-        $button_enabled_product = $this->settings_status->is_smart_button_enabled_for_location('product');
-        $button_enabled_cart = $this->settings_status->is_smart_button_enabled_for_location('cart');
-        $button_enabled_checkout = \true;
-        // todo - why is this hardcoded as true?
-        $button_enabled_payorder = \true;
-        // todo - why is this hardcoded as true?
-        $button_enabled_minicart = $this->settings_status->is_smart_button_enabled_for_location('mini-cart');
         if ($this->subscription_helper->plugin_is_active() && !$this->subscription_helper->accept_manual_renewals()) {
             if (is_product() && $this->subscription_helper->current_product_is_subscription()) {
                 return \false;
@@ -106,49 +87,17 @@ class GooglePayButton implements ButtonInterface
             $components[] = 'googlepay';
             return $components;
         });
-        if ($button_enabled_product) {
-            $default_hook_name = 'woocommerce_paypal_payments_single_product_button_render';
-            $render_placeholder = apply_filters('woocommerce_paypal_payments_googlepay_single_product_button_render_hook', $default_hook_name);
-            $render_placeholder = is_string($render_placeholder) ? $render_placeholder : $default_hook_name;
-            add_action($render_placeholder, function () {
-                $this->googlepay_button();
-            }, 32);
-        }
-        if ($button_enabled_cart) {
-            $default_hook_name = 'woocommerce_paypal_payments_cart_button_render';
-            $render_placeholder = apply_filters('woocommerce_paypal_payments_googlepay_cart_button_render_hook', $default_hook_name);
-            $render_placeholder = is_string($render_placeholder) ? $render_placeholder : $default_hook_name;
-            add_action($render_placeholder, function () {
-                $this->googlepay_button();
-            }, 21);
-        }
-        if ($button_enabled_checkout) {
-            // @phpstan-ignore if.alwaysTrue
-            $default_hook_name = 'woocommerce_paypal_payments_checkout_button_render';
-            $render_placeholder = apply_filters('woocommerce_paypal_payments_googlepay_checkout_button_render_hook', $default_hook_name);
-            $render_placeholder = is_string($render_placeholder) ? $render_placeholder : $default_hook_name;
-            add_action($render_placeholder, function () {
-                $this->googlepay_button();
-                $this->hide_gateway_until_eligible();
-            }, 21);
-        }
-        if ($button_enabled_payorder) {
-            // @phpstan-ignore if.alwaysTrue
-            $default_hook_name = 'woocommerce_paypal_payments_payorder_button_render';
-            $render_placeholder = apply_filters('woocommerce_paypal_payments_googlepay_payorder_button_render_hook', $default_hook_name);
-            $render_placeholder = is_string($render_placeholder) ? $render_placeholder : $default_hook_name;
-            add_action($render_placeholder, function () {
-                $this->googlepay_button();
-                $this->hide_gateway_until_eligible();
-            }, 21);
-        }
-        if ($button_enabled_minicart) {
-            $default_hook_name = 'woocommerce_paypal_payments_minicart_button_render';
-            $render_placeholder = apply_filters('woocommerce_paypal_payments_googlepay_minicart_button_render_hook', $default_hook_name);
-            $render_placeholder = is_string($render_placeholder) ? $render_placeholder : $default_hook_name;
-            add_action($render_placeholder, function () {
-                echo '<span id="ppc-button-googlepay-container-minicart" class="ppcp-button-apm ppcp-button-googlepay ppcp-button-minicart"></span>';
-            }, 21);
+        $button_hooks = array(array('hook' => 'woocommerce_paypal_payments_single_product_button_render', 'filter' => 'woocommerce_paypal_payments_googlepay_single_product_button_render_hook', 'callback' => fn() => $this->googlepay_button(), 'priority' => 32), array('hook' => 'woocommerce_paypal_payments_cart_button_render', 'filter' => 'woocommerce_paypal_payments_googlepay_cart_button_render_hook', 'callback' => fn() => $this->googlepay_button()), array('hook' => 'woocommerce_paypal_payments_checkout_button_render', 'filter' => 'woocommerce_paypal_payments_googlepay_checkout_button_render_hook', 'callback' => function () {
+            $this->googlepay_button();
+            $this->hide_gateway_until_eligible();
+        }), array('hook' => 'woocommerce_paypal_payments_payorder_button_render', 'filter' => 'woocommerce_paypal_payments_googlepay_payorder_button_render_hook', 'callback' => function () {
+            $this->googlepay_button();
+            $this->hide_gateway_until_eligible();
+        }), array('hook' => 'woocommerce_paypal_payments_minicart_button_render', 'filter' => 'woocommerce_paypal_payments_googlepay_minicart_button_render_hook', 'callback' => fn() => print '<span id="ppc-button-googlepay-container-minicart" class="ppcp-button-apm ppcp-button-googlepay ppcp-button-minicart"></span>'));
+        foreach ($button_hooks as $entry) {
+            $hook = apply_filters($entry['filter'], $entry['hook']);
+            $hook = is_string($hook) ? $hook : $entry['hook'];
+            add_action($hook, $entry['callback'], $entry['priority'] ?? 21);
         }
         return \true;
     }

@@ -115,10 +115,10 @@ return array(
         return new DataToAppleButtonScripts($container->get('applepay.sdk_script_url'), $container->get('settings.settings-provider'));
     },
     'applepay.button' => static function (ContainerInterface $container): ApplePayButton {
-        return new ApplePayButton($container->get('settings.settings-provider'), $container->get('settings.data.payment'), $container->get('woocommerce.logger.woocommerce'), $container->get('wcgateway.order-processor'), $container->get('applepay.asset_getter'), $container->get('ppcp.asset-version'), $container->get('applepay.data_to_scripts'), $container->get('wcgateway.settings.status'), $container->get('button.helper.cart-products'));
+        return new ApplePayButton($container->get('settings.settings-provider'), $container->get('settings.data.payment'), $container->get('woocommerce.logger.woocommerce'), $container->get('wcgateway.order-processor'), $container->get('applepay.asset_getter'), $container->get('ppcp.asset-version'), $container->get('applepay.data_to_scripts'), $container->get('button.helper.cart-products'), $container->get('button.helper.context'));
     },
     'applepay.blocks-payment-method' => static function (ContainerInterface $container): PaymentMethodTypeInterface {
-        return new BlocksPaymentMethod('ppcp-applepay', $container->get('applepay.asset_getter'), $container->get('ppcp.asset-version'), $container->get('applepay.button'), $container->get('blocks.method'));
+        return new BlocksPaymentMethod('ppcp-applepay', $container->get('applepay.asset_getter'), $container->get('ppcp.asset-version'), $container->get('applepay.button'), $container->get('blocks.method'), $container->get('button.helper.context'), $container->get('settings.settings-provider'));
     },
     /**
      * The list of which countries can be used for ApplePay.
