@@ -18,6 +18,9 @@ jobs:
 
     - uses: actions/checkout@v1
 
+    - name: Setup Composer Auth
+      run: echo '${{ secrets.COMPOSER_AUTH_JSON }}' > auth.json
+
     - name: Configure DDEV PHP
       run: ddev config --php-version ${{ matrix.php-versions }}
     - name: Configure DDEV WC
@@ -28,6 +31,16 @@ jobs:
 
     - name: Orchestrate DDEV
       run: ddev orchestrate -f
+
+    - name: Install WooCommerce Subscriptions
+      run: |
+        ddev composer config repositories.repo-name composer https://repo.packagist.com/inpsyde/payment-gateways/
+        ddev composer require inpsyde-mirror/woocommerce-subscriptions --no-interaction --no-scripts
+        ddev exec cp -r vendor/inpsyde-mirror/woocommerce-subscriptions .ddev/wordpress/wp-content/plugins/woocommerce-subscriptions
+        ddev wp plugin activate woocommerce-subscriptions
+
+    - name: Cleanup Composer Auth
+      run: rm -f auth.json
 
     - name: Create config
       run: cp -n .env.integration.example .env.integration
