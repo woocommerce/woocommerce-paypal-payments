@@ -18,10 +18,10 @@ class ComposerStaticInita39f67516f6df923b6f79368c7def9e4
             'WooCommerce\\WooCommerce\\Logging\\' => 32,
             'WooCommerce\\PayPalCommerce\\Webhooks\\' => 36,
             'WooCommerce\\PayPalCommerce\\WcSubscriptions\\' => 43,
+            'WooCommerce\\PayPalCommerce\\WcPaymentTokens\\' => 43,
             'WooCommerce\\PayPalCommerce\\WcGateway\\' => 37,
             'WooCommerce\\PayPalCommerce\\Vendor\\Psr\\Log\\' => 42,
             'WooCommerce\\PayPalCommerce\\Vendor\\' => 34,
-            'WooCommerce\\PayPalCommerce\\Vaulting\\' => 36,
             'WooCommerce\\PayPalCommerce\\Uninstall\\' => 37,
             'WooCommerce\\PayPalCommerce\\StatusReport\\' => 40,
             'WooCommerce\\PayPalCommerce\\Settings\\' => 36,
@@ -67,6 +67,10 @@ class ComposerStaticInita39f67516f6df923b6f79368c7def9e4
         array (
             0 => __DIR__ . '/../..' . '/modules/ppcp-wc-subscriptions/src',
         ),
+        'WooCommerce\\PayPalCommerce\\WcPaymentTokens\\' =>
+        array (
+            0 => __DIR__ . '/../..' . '/modules/ppcp-wc-payment-tokens/src',
+        ),
         'WooCommerce\\PayPalCommerce\\WcGateway\\' =>
         array (
             0 => __DIR__ . '/../..' . '/modules/ppcp-wc-gateway/src',
@@ -78,10 +82,6 @@ class ComposerStaticInita39f67516f6df923b6f79368c7def9e4
         'WooCommerce\\PayPalCommerce\\Vendor\\' =>
         array (
             0 => __DIR__ . '/../..' . '/lib/packages',
-        ),
-        'WooCommerce\\PayPalCommerce\\Vaulting\\' =>
-        array (
-            0 => __DIR__ . '/../..' . '/modules/ppcp-vaulting/src',
         ),
         'WooCommerce\\PayPalCommerce\\Uninstall\\' =>
         array (
@@ -559,12 +559,6 @@ class ComposerStaticInita39f67516f6df923b6f79368c7def9e4
         'WooCommerce\\PayPalCommerce\\StatusReport\\StatusReportModule' => __DIR__ . '/../..' . '/modules/ppcp-status-report/src/StatusReportModule.php',
         'WooCommerce\\PayPalCommerce\\Uninstall\\ClearDatabase' => __DIR__ . '/../..' . '/modules/ppcp-uninstall/src/ClearDatabase.php',
         'WooCommerce\\PayPalCommerce\\Uninstall\\UninstallModule' => __DIR__ . '/../..' . '/modules/ppcp-uninstall/src/UninstallModule.php',
-        'WooCommerce\\PayPalCommerce\\Vaulting\\PaymentTokenApplePay' => __DIR__ . '/../..' . '/modules/ppcp-vaulting/src/PaymentTokenApplePay.php',
-        'WooCommerce\\PayPalCommerce\\Vaulting\\PaymentTokenFactory' => __DIR__ . '/../..' . '/modules/ppcp-vaulting/src/PaymentTokenFactory.php',
-        'WooCommerce\\PayPalCommerce\\Vaulting\\PaymentTokenPayPal' => __DIR__ . '/../..' . '/modules/ppcp-vaulting/src/PaymentTokenPayPal.php',
-        'WooCommerce\\PayPalCommerce\\Vaulting\\PaymentTokenVenmo' => __DIR__ . '/../..' . '/modules/ppcp-vaulting/src/PaymentTokenVenmo.php',
-        'WooCommerce\\PayPalCommerce\\Vaulting\\VaultingModule' => __DIR__ . '/../..' . '/modules/ppcp-vaulting/src/VaultingModule.php',
-        'WooCommerce\\PayPalCommerce\\Vaulting\\WooCommercePaymentTokens' => __DIR__ . '/../..' . '/modules/ppcp-vaulting/src/WooCommercePaymentTokens.php',
         'WooCommerce\\PayPalCommerce\\Vendor\\Inpsyde\\Modularity\\Container\\ContainerConfigurator' => __DIR__ . '/../..' . '/lib/packages/Inpsyde/Modularity/Container/ContainerConfigurator.php',
         'WooCommerce\\PayPalCommerce\\Vendor\\Inpsyde\\Modularity\\Container\\PackageProxyContainer' => __DIR__ . '/../..' . '/lib/packages/Inpsyde/Modularity/Container/PackageProxyContainer.php',
         'WooCommerce\\PayPalCommerce\\Vendor\\Inpsyde\\Modularity\\Container\\ReadOnlyContainer' => __DIR__ . '/../..' . '/lib/packages/Inpsyde/Modularity/Container/ReadOnlyContainer.php',
@@ -683,6 +677,12 @@ class ComposerStaticInita39f67516f6df923b6f79368c7def9e4
         'WooCommerce\\PayPalCommerce\\WcGateway\\WcTasks\\Registrar\\TaskRegistrar' => __DIR__ . '/../..' . '/modules/ppcp-wc-gateway/src/WcTasks/Registrar/TaskRegistrar.php',
         'WooCommerce\\PayPalCommerce\\WcGateway\\WcTasks\\Registrar\\TaskRegistrarInterface' => __DIR__ . '/../..' . '/modules/ppcp-wc-gateway/src/WcTasks/Registrar/TaskRegistrarInterface.php',
         'WooCommerce\\PayPalCommerce\\WcGateway\\WcTasks\\Tasks\\SimpleRedirectTask' => __DIR__ . '/../..' . '/modules/ppcp-wc-gateway/src/WcTasks/Tasks/SimpleRedirectTask.php',
+        'WooCommerce\\PayPalCommerce\\WcPaymentTokens\\PaymentTokenApplePay' => __DIR__ . '/../..' . '/modules/ppcp-wc-payment-tokens/src/PaymentTokenApplePay.php',
+        'WooCommerce\\PayPalCommerce\\WcPaymentTokens\\PaymentTokenFactory' => __DIR__ . '/../..' . '/modules/ppcp-wc-payment-tokens/src/PaymentTokenFactory.php',
+        'WooCommerce\\PayPalCommerce\\WcPaymentTokens\\PaymentTokenPayPal' => __DIR__ . '/../..' . '/modules/ppcp-wc-payment-tokens/src/PaymentTokenPayPal.php',
+        'WooCommerce\\PayPalCommerce\\WcPaymentTokens\\PaymentTokenVenmo' => __DIR__ . '/../..' . '/modules/ppcp-wc-payment-tokens/src/PaymentTokenVenmo.php',
+        'WooCommerce\\PayPalCommerce\\WcPaymentTokens\\WcPaymentTokensModule' => __DIR__ . '/../..' . '/modules/ppcp-wc-payment-tokens/src/WcPaymentTokensModule.php',
+        'WooCommerce\\PayPalCommerce\\WcPaymentTokens\\WooCommercePaymentTokens' => __DIR__ . '/../..' . '/modules/ppcp-wc-payment-tokens/src/WooCommercePaymentTokens.php',
         'WooCommerce\\PayPalCommerce\\WcSubscriptions\\Endpoint\\SubscriptionChangePaymentMethod' => __DIR__ . '/../..' . '/modules/ppcp-wc-subscriptions/src/Endpoint/SubscriptionChangePaymentMethod.php',
         'WooCommerce\\PayPalCommerce\\WcSubscriptions\\FreeTrialHandlerTrait' => __DIR__ . '/../..' . '/modules/ppcp-wc-subscriptions/src/FreeTrialHandlerTrait.php',
         'WooCommerce\\PayPalCommerce\\WcSubscriptions\\Helper\\FreeTrialSubscriptionHelper' => __DIR__ . '/../..' . '/modules/ppcp-wc-subscriptions/src/Helper/FreeTrialSubscriptionHelper.php',

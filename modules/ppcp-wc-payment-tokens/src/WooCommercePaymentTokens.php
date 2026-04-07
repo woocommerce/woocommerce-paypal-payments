@@ -3,10 +3,10 @@
 /**
  * Service to create WC Payment Tokens.
  *
- * @package WooCommerce\PayPalCommerce\Applepay
+ * @package WooCommerce\PayPalCommerce\WcPaymentTokens
  */
 declare (strict_types=1);
-namespace WooCommerce\PayPalCommerce\Vaulting;
+namespace WooCommerce\PayPalCommerce\WcPaymentTokens;
 
 use Exception;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Log\LoggerInterface;
@@ -48,7 +48,7 @@ class WooCommercePaymentTokens
      * @param PaymentTokensEndpoint $payment_tokens_endpoint Payment tokens endpoint.
      * @param LoggerInterface       $logger The logger.
      */
-    public function __construct(\WooCommerce\PayPalCommerce\Vaulting\PaymentTokenFactory $payment_token_factory, PaymentTokensEndpoint $payment_tokens_endpoint, LoggerInterface $logger)
+    public function __construct(\WooCommerce\PayPalCommerce\WcPaymentTokens\PaymentTokenFactory $payment_token_factory, PaymentTokensEndpoint $payment_tokens_endpoint, LoggerInterface $logger)
     {
         $this->payment_token_factory = $payment_token_factory;
         $this->payment_tokens_endpoint = $payment_tokens_endpoint;
@@ -69,15 +69,15 @@ class WooCommercePaymentTokens
             return 0;
         }
         $wc_tokens = WC_Payment_Tokens::get_customer_tokens($customer_id, PayPalGateway::ID);
-        if ($this->token_exist($wc_tokens, $token, \WooCommerce\PayPalCommerce\Vaulting\PaymentTokenPayPal::class)) {
+        if ($this->token_exist($wc_tokens, $token, \WooCommerce\PayPalCommerce\WcPaymentTokens\PaymentTokenPayPal::class)) {
             return 0;
         }
         // Try to update existing token of type before creating a new one.
-        $payment_token_paypal = $this->first_token_of_type($wc_tokens, \WooCommerce\PayPalCommerce\Vaulting\PaymentTokenPayPal::class);
+        $payment_token_paypal = $this->first_token_of_type($wc_tokens, \WooCommerce\PayPalCommerce\WcPaymentTokens\PaymentTokenPayPal::class);
         if (!$payment_token_paypal) {
             $payment_token_paypal = $this->payment_token_factory->create('paypal');
         }
-        assert($payment_token_paypal instanceof \WooCommerce\PayPalCommerce\Vaulting\PaymentTokenPayPal);
+        assert($payment_token_paypal instanceof \WooCommerce\PayPalCommerce\WcPaymentTokens\PaymentTokenPayPal);
         $payment_token_paypal->set_token($token);
         $payment_token_paypal->set_user_id($customer_id);
         $payment_token_paypal->set_gateway_id(PayPalGateway::ID);
@@ -106,15 +106,15 @@ class WooCommercePaymentTokens
             return 0;
         }
         $wc_tokens = WC_Payment_Tokens::get_customer_tokens($customer_id, PayPalGateway::ID);
-        if ($this->token_exist($wc_tokens, $token, \WooCommerce\PayPalCommerce\Vaulting\PaymentTokenVenmo::class)) {
+        if ($this->token_exist($wc_tokens, $token, \WooCommerce\PayPalCommerce\WcPaymentTokens\PaymentTokenVenmo::class)) {
             return 0;
         }
         // Try to update existing token of type before creating a new one.
-        $payment_token_venmo = $this->first_token_of_type($wc_tokens, \WooCommerce\PayPalCommerce\Vaulting\PaymentTokenVenmo::class);
+        $payment_token_venmo = $this->first_token_of_type($wc_tokens, \WooCommerce\PayPalCommerce\WcPaymentTokens\PaymentTokenVenmo::class);
         if (!$payment_token_venmo) {
             $payment_token_venmo = $this->payment_token_factory->create('venmo');
         }
-        assert($payment_token_venmo instanceof \WooCommerce\PayPalCommerce\Vaulting\PaymentTokenVenmo);
+        assert($payment_token_venmo instanceof \WooCommerce\PayPalCommerce\WcPaymentTokens\PaymentTokenVenmo);
         $payment_token_venmo->set_token($token);
         $payment_token_venmo->set_user_id($customer_id);
         $payment_token_venmo->set_gateway_id(PayPalGateway::ID);
@@ -142,15 +142,15 @@ class WooCommercePaymentTokens
             return 0;
         }
         $wc_tokens = WC_Payment_Tokens::get_customer_tokens($customer_id, PayPalGateway::ID);
-        if ($this->token_exist($wc_tokens, $token, \WooCommerce\PayPalCommerce\Vaulting\PaymentTokenApplePay::class)) {
+        if ($this->token_exist($wc_tokens, $token, \WooCommerce\PayPalCommerce\WcPaymentTokens\PaymentTokenApplePay::class)) {
             return 0;
         }
         // Try to update existing token of type before creating a new one.
-        $payment_token_applepay = $this->first_token_of_type($wc_tokens, \WooCommerce\PayPalCommerce\Vaulting\PaymentTokenApplePay::class);
+        $payment_token_applepay = $this->first_token_of_type($wc_tokens, \WooCommerce\PayPalCommerce\WcPaymentTokens\PaymentTokenApplePay::class);
         if (!$payment_token_applepay) {
             $payment_token_applepay = $this->payment_token_factory->create('apple_pay');
         }
-        assert($payment_token_applepay instanceof \WooCommerce\PayPalCommerce\Vaulting\PaymentTokenApplePay);
+        assert($payment_token_applepay instanceof \WooCommerce\PayPalCommerce\WcPaymentTokens\PaymentTokenApplePay);
         $payment_token_applepay->set_token($token);
         $payment_token_applepay->set_user_id($customer_id);
         $payment_token_applepay->set_gateway_id(PayPalGateway::ID);

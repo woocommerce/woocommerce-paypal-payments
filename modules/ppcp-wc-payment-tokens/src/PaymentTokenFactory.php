@@ -3,10 +3,10 @@
 /**
  * WooCommerce Payment token factory.
  *
- * @package WooCommerce\PayPalCommerce\Vaulting
+ * @package WooCommerce\PayPalCommerce\WcPaymentTokens
  */
 declare (strict_types=1);
-namespace WooCommerce\PayPalCommerce\Vaulting;
+namespace WooCommerce\PayPalCommerce\WcPaymentTokens;
 
 /**
  * Class PaymentTokenFactory
@@ -24,11 +24,11 @@ class PaymentTokenFactory
     {
         switch ($type) {
             case 'paypal':
-                return new \WooCommerce\PayPalCommerce\Vaulting\PaymentTokenPayPal();
+                return new \WooCommerce\PayPalCommerce\WcPaymentTokens\PaymentTokenPayPal();
             case 'venmo':
-                return new \WooCommerce\PayPalCommerce\Vaulting\PaymentTokenVenmo();
+                return new \WooCommerce\PayPalCommerce\WcPaymentTokens\PaymentTokenVenmo();
             case 'apple_pay':
-                return new \WooCommerce\PayPalCommerce\Vaulting\PaymentTokenApplePay();
+                return new \WooCommerce\PayPalCommerce\WcPaymentTokens\PaymentTokenApplePay();
         }
     }
 }

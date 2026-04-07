@@ -3,10 +3,10 @@
 /**
  * WooCommerce Payment token for PayPal.
  *
- * @package WooCommerce\PayPalCommerce\Vaulting
+ * @package WooCommerce\PayPalCommerce\WcPaymentTokens
  */
 declare (strict_types=1);
-namespace WooCommerce\PayPalCommerce\Vaulting;
+namespace WooCommerce\PayPalCommerce\WcPaymentTokens;
 
 use WC_Payment_Token;
 /**

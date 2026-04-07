@@ -3,10 +3,10 @@
 /**
  * The vaulting module.
  *
- * @package WooCommerce\PayPalCommerce\Vaulting
+ * @package WooCommerce\PayPalCommerce\WcPaymentTokens
  */
 declare (strict_types=1);
-namespace WooCommerce\PayPalCommerce\Vaulting;
+namespace WooCommerce\PayPalCommerce\WcPaymentTokens;
 
 use RuntimeException;
 use WC_Payment_Token;
@@ -20,11 +20,11 @@ use WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 /**
- * Class StatusReportModule
+ * Class WcPaymentTokensModule
  *
  * @psalm-suppress MissingConstructor
  */
-class VaultingModule implements ServiceModule, ExecutableModule
+class WcPaymentTokensModule implements ServiceModule, ExecutableModule
 {
     use ModuleClassNameIdTrait;
     /**
@@ -57,13 +57,13 @@ class VaultingModule implements ServiceModule, ExecutableModule
              */
             function ($type) {
                 if ($type === 'WC_Payment_Token_PayPal') {
-                    return \WooCommerce\PayPalCommerce\Vaulting\PaymentTokenPayPal::class;
+                    return \WooCommerce\PayPalCommerce\WcPaymentTokens\PaymentTokenPayPal::class;
                 }
                 if ($type === 'WC_Payment_Token_Venmo') {
-                    return \WooCommerce\PayPalCommerce\Vaulting\PaymentTokenVenmo::class;
+                    return \WooCommerce\PayPalCommerce\WcPaymentTokens\PaymentTokenVenmo::class;
                 }
                 if ($type === 'WC_Payment_Token_ApplePay') {
-                    return \WooCommerce\PayPalCommerce\Vaulting\PaymentTokenApplePay::class;
+                    return \WooCommerce\PayPalCommerce\WcPaymentTokens\PaymentTokenApplePay::class;
                 }
                 return $type;
             }
@@ -89,7 +89,7 @@ class VaultingModule implements ServiceModule, ExecutableModule
                 // Exclude ApplePay tokens from payment pages.
                 if ((is_checkout() || is_cart() || is_product()) && !$is_post) {
                     foreach ($tokens as $index => $token) {
-                        if ($token instanceof \WooCommerce\PayPalCommerce\Vaulting\PaymentTokenApplePay) {
+                        if ($token instanceof \WooCommerce\PayPalCommerce\WcPaymentTokens\PaymentTokenApplePay) {
                             unset($tokens[$index]);
                         }
                     }
@@ -114,15 +114,15 @@ class VaultingModule implements ServiceModule, ExecutableModule
                 if (!is_array($item) || !$payment_token instanceof WC_Payment_Token) {
                     return $item;
                 }
-                if ($payment_token instanceof \WooCommerce\PayPalCommerce\Vaulting\PaymentTokenPayPal) {
+                if ($payment_token instanceof \WooCommerce\PayPalCommerce\WcPaymentTokens\PaymentTokenPayPal) {
                     $item['method']['brand'] = 'PayPal / ' . $payment_token->get_email();
                     return $item;
                 }
-                if ($payment_token instanceof \WooCommerce\PayPalCommerce\Vaulting\PaymentTokenVenmo) {
+                if ($payment_token instanceof \WooCommerce\PayPalCommerce\WcPaymentTokens\PaymentTokenVenmo) {
                     $item['method']['brand'] = 'Venmo / ' . $payment_token->get_email();
                     return $item;
                 }
-                if ($payment_token instanceof \WooCommerce\PayPalCommerce\Vaulting\PaymentTokenApplePay) {
+                if ($payment_token instanceof \WooCommerce\PayPalCommerce\WcPaymentTokens\PaymentTokenApplePay) {
                     $item['method']['brand'] = 'ApplePay #' . (string) $payment_token->get_id();
                     return $item;
                 }
