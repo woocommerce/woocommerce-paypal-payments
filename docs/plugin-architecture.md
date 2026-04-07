@@ -172,7 +172,7 @@ class ApiModule implements ServiceModule, FactoryModule, ExtendingModule, Execut
 ### Feature Modules
 
 - **ppcp-settings**: New React-based admin settings interface
-- **ppcp-vaulting**: Saved payment methods functionality
+- **ppcp-wc-payment-tokens**: Saved payment methods functionality
 - **ppcp-onboarding**: Merchant onboarding flow
 
 ### Alternative Payment Methods

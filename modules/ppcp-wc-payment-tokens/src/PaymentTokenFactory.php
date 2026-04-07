@@ -2,12 +2,12 @@
 /**
  * WooCommerce Payment token factory.
  *
- * @package WooCommerce\PayPalCommerce\Vaulting
+ * @package WooCommerce\PayPalCommerce\WcPaymentTokens
  */
 
 declare(strict_types=1);
 
-namespace WooCommerce\PayPalCommerce\Vaulting;
+namespace WooCommerce\PayPalCommerce\WcPaymentTokens;
 
 /**
  * Class PaymentTokenFactory

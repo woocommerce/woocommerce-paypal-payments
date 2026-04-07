@@ -52,7 +52,7 @@ return array(
 			'ppcp-smart-button',
 			'ppcp-oxxo',
 			'ppcp-pay-upon-invoice',
-			'ppcp-vaulting-myaccount-payments',
+			'ppcp-wc-payment-tokens-myaccount-payments',
 			'ppcp-gateway-settings',
 			'ppcp-webhooks-status-page',
 			'ppcp-tracking',

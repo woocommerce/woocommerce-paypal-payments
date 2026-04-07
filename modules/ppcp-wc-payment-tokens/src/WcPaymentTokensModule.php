@@ -2,12 +2,12 @@
 /**
  * The vaulting module.
  *
- * @package WooCommerce\PayPalCommerce\Vaulting
+ * @package WooCommerce\PayPalCommerce\WcPaymentTokens
  */
 
 declare(strict_types=1);
 
-namespace WooCommerce\PayPalCommerce\Vaulting;
+namespace WooCommerce\PayPalCommerce\WcPaymentTokens;
 
 use RuntimeException;
 use WC_Payment_Token;
@@ -22,11 +22,11 @@ use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 
 /**
- * Class StatusReportModule
+ * Class WcPaymentTokensModule
  *
  * @psalm-suppress MissingConstructor
  */
-class VaultingModule implements ServiceModule, ExecutableModule {
+class WcPaymentTokensModule implements ServiceModule, ExecutableModule {
 	use ModuleClassNameIdTrait;
 
 	/**

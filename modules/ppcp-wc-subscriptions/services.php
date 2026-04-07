@@ -44,7 +44,7 @@ return array(
 			$funding_source_renderer,
 			$container->get( 'wc-subscriptions.helpers.real-time-account-updater' ),
 			$container->get( 'wc-subscriptions.helper' ),
-			$container->get( 'vaulting.wc-payment-tokens' ),
+			$container->get( 'wc-payment-tokens.wc-payment-tokens' ),
 			$container->get( 'wcgateway.builder.experience-context' )
 		);
 	},

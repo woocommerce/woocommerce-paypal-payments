@@ -114,7 +114,7 @@ return array(
 			$container->get( 'api.factory.paypal-checkout-url' ),
 			$container->get( 'wcgateway.place-order-button-text' ),
 			$container->get( 'api.endpoint.payment-tokens' ),
-			$container->get( 'vaulting.wc-payment-tokens' ),
+			$container->get( 'wc-payment-tokens.wc-payment-tokens' ),
 			$container->get( 'wcgateway.asset_getter' ),
 			$container->get( 'wcgateway.settings.admin-settings-enabled' ),
 			$container->get( 'wcgateway.endpoint.capture-paypal-payment' ),
@@ -137,7 +137,7 @@ return array(
 			$container->get( 'api.endpoint.order' ),
 			$container->get( 'wcgateway.endpoint.capture-card-payment' ),
 			$container->get( 'api.prefix' ),
-			$container->get( 'vaulting.wc-payment-tokens' ),
+			$container->get( 'wc-payment-tokens.wc-payment-tokens' ),
 			$container->get( 'woocommerce.logger.woocommerce' )
 		);
 	},

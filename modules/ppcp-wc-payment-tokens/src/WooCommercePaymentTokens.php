@@ -2,12 +2,12 @@
 /**
  * Service to create WC Payment Tokens.
  *
- * @package WooCommerce\PayPalCommerce\Applepay
+ * @package WooCommerce\PayPalCommerce\WcPaymentTokens
  */
 
 declare(strict_types=1);
 
-namespace WooCommerce\PayPalCommerce\Vaulting;
+namespace WooCommerce\PayPalCommerce\WcPaymentTokens;
 
 use Exception;
 use Psr\Log\LoggerInterface;

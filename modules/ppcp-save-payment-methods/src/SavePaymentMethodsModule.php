@@ -23,7 +23,7 @@ use WooCommerce\PayPalCommerce\Button\Helper\Context;
 use WooCommerce\PayPalCommerce\SavePaymentMethods\Endpoint\CreatePaymentToken;
 use WooCommerce\PayPalCommerce\SavePaymentMethods\Endpoint\CreatePaymentTokenForGuest;
 use WooCommerce\PayPalCommerce\SavePaymentMethods\Endpoint\CreateSetupToken;
-use WooCommerce\PayPalCommerce\Vaulting\WooCommercePaymentTokens;
+use WooCommerce\PayPalCommerce\WcPaymentTokens\WooCommercePaymentTokens;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExecutableModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ModuleClassNameIdTrait;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ServiceModule;
@@ -186,7 +186,7 @@ class SavePaymentMethodsModule implements ServiceModule, ExecutableModule {
 
 							update_user_meta( $wc_order->get_customer_id(), '_ppcp_target_customer_id', $customer_id );
 
-							$wc_payment_tokens = $c->get( 'vaulting.wc-payment-tokens' );
+							$wc_payment_tokens = $c->get( 'wc-payment-tokens.wc-payment-tokens' );
 							assert( $wc_payment_tokens instanceof WooCommercePaymentTokens );
 
 							try {
