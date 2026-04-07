@@ -145,16 +145,7 @@ class SavePaymentMethodsModule implements ServiceModule, ExecutableModule
                     assert($wc_payment_tokens instanceof WooCommercePaymentTokens);
                     try {
                         if ($wc_order->get_payment_method() === CreditCardGateway::ID) {
-                            $token = new \WC_Payment_Token_CC();
-                            $token->set_token($token_id);
-                            $token->set_user_id($wc_order->get_customer_id());
-                            $token->set_gateway_id(CreditCardGateway::ID);
-                            $token->set_last4($payment_source->properties()->last_digits ?? '');
-                            $expiry = explode('-', $payment_source->properties()->expiry ?? '');
-                            $token->set_expiry_year($expiry[0] ?? '');
-                            $token->set_expiry_month($expiry[1] ?? '');
-                            $token->set_card_type($payment_source->properties()->brand ?? '');
-                            $token->save();
+                            $wc_payment_tokens->create_payment_token_card($wc_order->get_customer_id(), (object) array('id' => $token_id, 'payment_source' => (object) array('card' => $payment_source->properties())));
                         }
                         if ($wc_order->get_payment_method() === PayPalGateway::ID) {
                             switch ($payment_source->name()) {

@@ -195,7 +195,6 @@ class WooCommercePaymentTokens
         } catch (Exception $exception) {
             $this->logger->error("Could not create WC payment token card for customer {$customer_id}. " . $exception->getMessage());
         }
-        $token->save();
         return $token->get_id();
     }
     /**
