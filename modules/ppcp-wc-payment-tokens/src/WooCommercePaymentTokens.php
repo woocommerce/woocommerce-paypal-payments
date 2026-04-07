@@ -252,7 +252,6 @@ class WooCommercePaymentTokens {
 			);
 		}
 
-		$token->save();
 		return $token->get_id();
 	}
 
