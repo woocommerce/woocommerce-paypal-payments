@@ -9,7 +9,6 @@ declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\Settings\Service\Migration;
 
-use Exception;
 use Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PartnersEndpoint;
 use WooCommerce\PayPalCommerce\Settings\Data\GeneralSettings;
@@ -54,30 +53,30 @@ class SettingsMigration implements SettingsMigrationInterface {
 			return;
 		}
 
-		$country     = '';
-		$seller_type = SellerTypeEnum::UNKNOWN;
-
-		try {
-			$seller_status = $this->partners_endpoint->seller_status();
-			$country       = $seller_status->country();
-			$seller_type   = $this->seller_type_resolver->resolve( $seller_status );
-		} catch ( Exception $exception ) {
-			$this->logger->warning(
-				'Seller status API call failed during settings migration; using defaults.',
-				array( 'error' => $exception->getMessage() )
-			);
-		}
-
+		// Save credentials first so they persist even if the API call fails.
 		$connection = new MerchantConnectionDTO(
 			! empty( $this->settings['sandbox_on'] ),
 			$this->settings['client_id'],
 			$this->settings['client_secret'],
 			$this->settings['merchant_id'],
 			$this->settings['merchant_email'] ?? '',
-			$country,
-			$seller_type
+			'',
+			SellerTypeEnum::UNKNOWN
 		);
+		$this->general_settings->set_merchant_data( $connection );
+		$this->general_settings->save();
 
+		// Resolve seller type — exception propagates so migration can retry.
+		$seller_status = $this->partners_endpoint->seller_status();
+		$connection    = new MerchantConnectionDTO(
+			! empty( $this->settings['sandbox_on'] ),
+			$this->settings['client_id'],
+			$this->settings['client_secret'],
+			$this->settings['merchant_id'],
+			$this->settings['merchant_email'] ?? '',
+			$seller_status->country(),
+			$this->seller_type_resolver->resolve( $seller_status )
+		);
 		$this->general_settings->set_merchant_data( $connection );
 		$this->general_settings->save();
 	}

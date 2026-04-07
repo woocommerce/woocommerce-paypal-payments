@@ -8,6 +8,7 @@
 .phpstorm*
 .idea*
 *.env*
+docs/
 stubs/
 tests*
 *.xml*
@@ -29,8 +30,11 @@ assets-compiler.json
 patchwork.json
 .babelrc
 README.md
+AGENTS.md
+CLAUDE.md
 wordpress_org_assets*
 .DS_Store
 auth.json
 *.log
 scoper.inc.php
+jsconfig.json
