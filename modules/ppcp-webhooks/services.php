@@ -92,8 +92,6 @@ return array(
 		$prefix         = $container->get( 'api.prefix' );
 		$order_endpoint = $container->get( 'api.endpoint.order' );
 		$authorized_payments_processor = $container->get( 'wcgateway.processor.authorized-payments' );
-		$payment_token_factory = $container->get( 'vaulting.payment-token-factory' );
-		$payment_token_helper = $container->get( 'vaulting.payment-token-helper' );
 		$refund_fees_updater = $container->get( 'wcgateway.helper.refund-fees-updater' );
 
 		return array(
