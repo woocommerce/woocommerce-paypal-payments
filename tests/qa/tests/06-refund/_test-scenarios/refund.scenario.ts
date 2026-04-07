@@ -51,13 +51,16 @@ export const testRefund = ( testData: ShopRefund ) => {
 
 			// Assertions before refund
 			await expect(
-				wooCommerceOrderEdit.restockRefundedItemsCheckbox()
+				wooCommerceOrderEdit.restockRefundedItemsCheckbox(),
+				'Assert "Restock refunded items" checkbox is visible'				
 			).toBeVisible();
 			await expect(
-				wooCommerceOrderEdit.totalAmountAlreadyRefunded()
+				wooCommerceOrderEdit.totalAmountAlreadyRefunded(),
+				'Assert total amount already refunded is visible'
 			).toHaveText( `-${ formatMoney( 0, testData.currency ) }` );
 			await expect(
-				wooCommerceOrderEdit.totalAvailableToRefund()
+				wooCommerceOrderEdit.totalAvailableToRefund(),
+				'Assert total amount available to refund is visible'
 			).toHaveText(
 				formatMoney( Number( refundAvailable ), testData.currency )
 			);
@@ -67,29 +70,45 @@ export const testRefund = ( testData: ShopRefund ) => {
 			// Assert URL after page is reloaded
 			await wooCommerceOrderEdit.assertUrl( order.id );
 			// Assert refund ID and expected refund amount are displayed
-			await expect( wooCommerceOrderEdit.refundNumber() ).toContainText(
-				`Refund #`
-			);
-			await expect( wooCommerceOrderEdit.refundAmount() ).toHaveText(
+			await expect(
+				wooCommerceOrderEdit.refundNumber(),
+				'Assert refund number is visible'
+			).toContainText( `Refund #` );
+			await expect(
+				wooCommerceOrderEdit.refundAmount(),
+				'Assert refund amount is visible'
+			).toHaveText(
 				`-${ formatMoney( Number( refundAmount ), testData.currency ) }`
 			);
 
 			// Assert via API WooCommerce Order refund status and presence of refunds
 			order = await wooCommerceApi.getOrder( order.id );
-			await expect( order.status ).toEqual( testData.refundOrderStatus );
-			await expect( order.refunds ).not.toHaveLength( 0 );
+			await expect(
+				order.status,
+				`Assert order status is ${ testData.refundOrderStatus }`
+			).toEqual( testData.refundOrderStatus );
+			await expect(
+				order.refunds,
+				'Assert order has refunds'
+			).not.toHaveLength( 0 );
 
 			// Assert via API the refund status of PayPal payment
 			const payPalPayment = await payPalApi.getCapturedPayment(
 				order.transaction_id,
 				testData.merchant
 			);
-			await expect( payPalPayment.status ).toEqual(
+			await expect(
+				payPalPayment.status,
+				`Assert PayPal payment status is ${ testData.refundPaymentStatus }`
+			).toEqual(
 				testData.refundPaymentStatus
 			);
 
 			const orderRefund = order.refunds[ 0 ];
-			await expect( orderRefund.total ).toEqual(
+			await expect(
+				orderRefund.total,
+				'Assert refund total is the expected'
+			).toEqual(
 				`-${ Number( refundAmount ).toFixed( 2 ) }`
 			);
 
@@ -101,7 +120,10 @@ export const testRefund = ( testData: ShopRefund ) => {
 				payPalRefundId,
 				testData.merchant
 			);
-			await expect( payPalRefund.status ).toEqual( 'COMPLETED' );
+			await expect(
+				payPalRefund.status,
+				'Assert PayPal payment status is COMPLETED'
+			).toEqual( 'COMPLETED' );
 
 			// Assert on OrderEdit page that WooCommerce and PayPal refund fields are displayed and have expected values
 			await wooCommerceOrderEdit.assertRefundData( {

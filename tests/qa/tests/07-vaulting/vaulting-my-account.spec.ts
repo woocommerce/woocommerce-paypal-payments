@@ -65,7 +65,8 @@ for ( const testData of savePaymentMethodData ) {
 			async ( { utils, customerPaymentMethods, classicCheckout } ) => {
 				await customerPaymentMethods.visit();
 				await expect(
-					customerPaymentMethods.noSavedMethodsMessage()
+					customerPaymentMethods.noSavedMethodsMessage(),
+					'Assert no saved payment methods message is visible'
 				).toBeVisible();
 
 				await customerPaymentMethods.savePaymentMethod( payment );
@@ -115,7 +116,8 @@ for ( const testData of deletePaymentMethodData ) {
 			async ( { utils, customerPaymentMethods, classicCheckout } ) => {
 				await customerPaymentMethods.visit();
 				await expect(
-					customerPaymentMethods.noSavedMethodsMessage()
+					customerPaymentMethods.noSavedMethodsMessage(),
+					'Assert no saved payment methods message is visible'
 				).toBeVisible();
 
 				await customerPaymentMethods.savePaymentMethod( payment );
@@ -132,10 +134,12 @@ for ( const testData of deletePaymentMethodData ) {
 
 				await customerPaymentMethods.assertUrl();
 				await expect(
-					customerPaymentMethods.paymentMethodDeletedMessage()
+					customerPaymentMethods.paymentMethodDeletedMessage(),
+					'Assert payment method deleted message is visible'
 				).toBeVisible();
 				await expect(
-					customerPaymentMethods.noSavedMethodsMessage()
+					customerPaymentMethods.noSavedMethodsMessage(),
+					'Assert no saved payment methods message is visible after deletion'
 				).toBeVisible();
 				await customerPaymentMethods.assertIsNotSavedPaymentMethod(
 					payment
@@ -175,6 +179,12 @@ test.describe( () => {
 					password: process.env.PAYPAL_PERSONAL_PASS_US2,
 				};
 				await customerPaymentMethods.addPaymentMethodButton().click();
+				const payPalGatewayButton = customerPaymentMethods.payPalUi.payPalGateway();
+				await expect (
+					payPalGatewayButton,
+					'Assert PayPal gateway is visible',
+				).toBeVisible();
+				await payPalGatewayButton.click();
 				await customerPaymentMethods.page.waitForLoadState();
 				await expect(
 					customerPaymentMethods.payPalUi.payPalButton(),

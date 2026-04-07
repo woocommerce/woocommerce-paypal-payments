@@ -51,7 +51,8 @@ export class PayPalPopup {
 				this.page.locator(
 					'button[data-atomic-wait-intent="Submit_Password"]'
 				)
-			);
+			)
+			.or( this.page.getByRole( 'button', { name: 'Log In' } ) );
 	submitPaymentButton = () =>
 		this.page
 			.locator( '#payment-submit-btn' )
@@ -59,7 +60,10 @@ export class PayPalPopup {
 			.or( this.page.getByTestId( 'consentButton' ) )
 			.or( this.page.getByRole( 'button', { name: 'Continue' } ) )
 			.or( this.page.locator( '#confirmButtonTop' ) )
-			.or( this.page.locator( '#one-time-cta' ) );
+			.or( this.page.locator( '#one-time-cta' ) )
+			.or( this.page.getByRole( 'button', { name: /Link and Pay/ } ) )
+			// German PayPal consent page (pay/billing flow) uses "Zustimmen und weiter"
+			.or( this.page.getByRole( 'button', { name: /Zustimmen/ } ) );
 	payLaterSwitcher = () => this.page.getByTestId( 'paylater-tab' );
 	payLaterRadio = () =>
 		this.page.locator( 'label[for^="credit-offer"]' ).first();
@@ -71,9 +75,7 @@ export class PayPalPopup {
 	payLaterIframe = () =>
 		this.page.locator( 'iframe[title="CAP"]' ).contentFrame();
 	loanAgreementCheckbox = () =>
-		this.payLaterIframe().getByText(
-			'You have read and agree to the Loan Agreement'
-		);
+		this.payLaterIframe().locator( 'input[type="checkbox"]' ).first();
 	agreeAndApplyButton = () => this.payLaterIframe().getByTestId( 'apply' );
 	changeUserButton = () => this.page.locator( 'button[aria-label="Change user"]');
 
@@ -90,7 +92,14 @@ export class PayPalPopup {
 
 		await this.loginInput().fill( email );
 
+		// Track if Next advanced the page; we need checkout URL for redirect recovery.
+		const urlBeforeNext = this.page.url();
 		await this.tryClickNext();
+		const nextAdvancedPage = this.page.url() !== urlBeforeNext;
+
+		// URL has ctxId/returnUri for redirect recovery.
+		const checkoutSigninUrl = this.page.url();
+
 		await this.tryLoginWithPasswordInstead();
 
 		await this.tryAnotherWay();
@@ -98,6 +107,40 @@ export class PayPalPopup {
 
 		await this.passwordInput().fill( password );
 		await this.loginButton().click();
+		// Wait for redirect to consent/vaulting page.
+		try {
+			await this.passwordInput().waitFor( { state: 'detached', timeout: 30000 } );
+		} catch {}
+		await this.page.waitForLoadState();
+
+		// If sandbox redirected to myaccount/signin instead of checkout, go back to checkpoint URL.
+		const needsRedirect = ( url: string ) =>
+			url.includes( 'myaccount' ) || url.includes( 'signin?returnUri' );
+
+		if ( nextAdvancedPage && needsRedirect( this.page.url() ) ) {
+			await this.page.goto( checkoutSigninUrl );
+			await this.page.waitForLoadState();
+		}
+
+		// If sandbox redirected to login again, re-submit credentials.
+		try {
+			await this.loginInput().waitFor( { state: 'visible', timeout: 3000 } );
+			const emailValue = await this.loginInput().inputValue();
+			if ( ! emailValue ) {
+				await this.loginInput().fill( email );
+			}
+			await this.passwordInput().fill( password );
+			await this.loginButton().click();
+			try {
+				await this.passwordInput().waitFor( { state: 'detached', timeout: 30000 } );
+			} catch {}
+			await this.page.waitForLoadState();
+			// Apply the same redirect fix for the re-login case.
+			if ( nextAdvancedPage && needsRedirect( this.page.url() ) ) {
+				await this.page.goto( checkoutSigninUrl );
+				await this.page.waitForLoadState();
+			}
+		} catch {}
 	};
 
 	/**
@@ -162,7 +205,7 @@ export class PayPalPopup {
 
 	trySubmitPayment = async () => {
 		await this.page.waitForLoadState();
-		await expect( this.loadSpinnerContainer() ).not.toBeVisible();
+		await expect( this.loadSpinnerContainer(), 'Assert load spinner is not visible' ).not.toBeVisible();
 
 		while ( ! this.page.isClosed() ) {
 			// Race click with popup closure
@@ -179,10 +222,16 @@ export class PayPalPopup {
 
 			// Optional: wait for spinner to disappear
 			try {
-				await expect( this.loadSpinnerContainer() ).toBeVisible( {
+				await expect(
+					this.loadSpinnerContainer(),
+					'Assert load spinner is visible'
+			 	).toBeVisible( {
 					timeout: 1000,
 				} );
-				await expect( this.loadSpinnerContainer() ).not.toBeVisible( {
+				await expect(
+					this.loadSpinnerContainer(),
+					'Assert load spinner is not visible'
+				).not.toBeVisible( {
 					timeout: 4000,
 				} );
 			} catch {
@@ -215,8 +264,31 @@ export class PayPalPopup {
 	 */
 	completePayLaterPayment = async ( payPalAccount ) => {
 		await this.login( payPalAccount.email, payPalAccount.password );
-		await this.submitPaymentButton().click();
-		await this.loanAgreementCheckbox().click();
+		// If the CAP iframe is not yet visible, we're on the Pay Later selection
+		// screen — click Continue to advance to the confirm details page.
+		// If the CAP iframe is already there, we can skip this step.
+		const capIframe = this.page.locator( 'iframe[title="CAP"]' );
+		const isCapVisible = await capIframe.isVisible().catch( () => false );
+		if ( ! isCapVisible ) {
+			await this.submitPaymentButton().click();
+		}
+		// Wait for the CAP iframe to be present and fully loaded.
+		await capIframe.waitFor( { state: 'visible', timeout: 30000 } );
+		// Click the loan agreement checkbox via JS eval to avoid contentFrame
+		// timing race that causes "Target page, context or browser has been closed".
+		await this.page.evaluate( () => {
+			const iframe = document.querySelector( 'iframe[title="CAP"]' ) as HTMLIFrameElement;
+			const checkbox = iframe?.contentDocument?.querySelector( 'input[type="checkbox"]' ) as HTMLInputElement;
+			if ( checkbox && ! checkbox.checked ) {
+				checkbox.click();
+			}
+		} );
+		// After checking the loan agreement checkbox, PayPal briefly shows a
+		// loading overlay inside the CAP iframe that intercepts pointer events.
+		await this.payLaterIframe()
+			.locator( '[data-testid="loading-overlay"]' )
+			.waitFor( { state: 'hidden', timeout: 15000 } )
+			.catch( () => {} ); // overlay may not always appear
 		await this.agreeAndApplyButton().click();
 		await this.completePayment();
 	};
