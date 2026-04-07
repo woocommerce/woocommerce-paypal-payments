@@ -12,7 +12,7 @@ namespace WooCommerce\PayPalCommerce\Vaulting;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 
 return array(
-	'vaulting.payment-token-factory' => function ( ContainerInterface $container ): PaymentTokenFactory {
+	'vaulting.payment-token-factory' => function (): PaymentTokenFactory {
 		return new PaymentTokenFactory();
 	},
 	'vaulting.wc-payment-tokens'     => static function ( ContainerInterface $container ): WooCommercePaymentTokens {
