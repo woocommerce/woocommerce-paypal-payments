@@ -494,7 +494,6 @@ return array(
     'WooCommerce\\PayPalCommerce\\WcGateway\\WcTasks\\Registrar\\TaskRegistrarInterface' => $baseDir . '/modules/ppcp-wc-gateway/src/WcTasks/Registrar/TaskRegistrarInterface.php',
     'WooCommerce\\PayPalCommerce\\WcGateway\\WcTasks\\Tasks\\SimpleRedirectTask' => $baseDir . '/modules/ppcp-wc-gateway/src/WcTasks/Tasks/SimpleRedirectTask.php',
     'WooCommerce\\PayPalCommerce\\WcPaymentTokens\\PaymentTokenApplePay' => $baseDir . '/modules/ppcp-wc-payment-tokens/src/PaymentTokenApplePay.php',
-    'WooCommerce\\PayPalCommerce\\WcPaymentTokens\\PaymentTokenFactory' => $baseDir . '/modules/ppcp-wc-payment-tokens/src/PaymentTokenFactory.php',
     'WooCommerce\\PayPalCommerce\\WcPaymentTokens\\PaymentTokenPayPal' => $baseDir . '/modules/ppcp-wc-payment-tokens/src/PaymentTokenPayPal.php',
     'WooCommerce\\PayPalCommerce\\WcPaymentTokens\\PaymentTokenVenmo' => $baseDir . '/modules/ppcp-wc-payment-tokens/src/PaymentTokenVenmo.php',
     'WooCommerce\\PayPalCommerce\\WcPaymentTokens\\WcPaymentTokensModule' => $baseDir . '/modules/ppcp-wc-payment-tokens/src/WcPaymentTokensModule.php',

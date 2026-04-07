@@ -678,7 +678,6 @@ class ComposerStaticInita39f67516f6df923b6f79368c7def9e4
         'WooCommerce\\PayPalCommerce\\WcGateway\\WcTasks\\Registrar\\TaskRegistrarInterface' => __DIR__ . '/../..' . '/modules/ppcp-wc-gateway/src/WcTasks/Registrar/TaskRegistrarInterface.php',
         'WooCommerce\\PayPalCommerce\\WcGateway\\WcTasks\\Tasks\\SimpleRedirectTask' => __DIR__ . '/../..' . '/modules/ppcp-wc-gateway/src/WcTasks/Tasks/SimpleRedirectTask.php',
         'WooCommerce\\PayPalCommerce\\WcPaymentTokens\\PaymentTokenApplePay' => __DIR__ . '/../..' . '/modules/ppcp-wc-payment-tokens/src/PaymentTokenApplePay.php',
-        'WooCommerce\\PayPalCommerce\\WcPaymentTokens\\PaymentTokenFactory' => __DIR__ . '/../..' . '/modules/ppcp-wc-payment-tokens/src/PaymentTokenFactory.php',
         'WooCommerce\\PayPalCommerce\\WcPaymentTokens\\PaymentTokenPayPal' => __DIR__ . '/../..' . '/modules/ppcp-wc-payment-tokens/src/PaymentTokenPayPal.php',
         'WooCommerce\\PayPalCommerce\\WcPaymentTokens\\PaymentTokenVenmo' => __DIR__ . '/../..' . '/modules/ppcp-wc-payment-tokens/src/PaymentTokenVenmo.php',
         'WooCommerce\\PayPalCommerce\\WcPaymentTokens\\WcPaymentTokensModule' => __DIR__ . '/../..' . '/modules/ppcp-wc-payment-tokens/src/WcPaymentTokensModule.php',
