@@ -38,7 +38,7 @@ jobs:
       run: |
         ddev composer config repositories.repo-name composer https://repo.packagist.com/inpsyde/payment-gateways/
         ddev composer require inpsyde-mirror/woocommerce-subscriptions --no-interaction --no-scripts
-        ddev exec cp -r vendor/inpsyde-mirror/woocommerce-subscriptions .ddev/wordpress/wp-content/plugins/woocommerce-subscriptions
+        ddev exec cp -r tests/qa/resources/plugins/woocommerce-subscriptions .ddev/wordpress/wp-content/plugins/woocommerce-subscriptions
         ddev wp plugin activate woocommerce-subscriptions
 
     - name: Cleanup Composer Auth
