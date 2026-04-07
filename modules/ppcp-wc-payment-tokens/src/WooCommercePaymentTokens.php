@@ -25,13 +25,6 @@ use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
  */
 class WooCommercePaymentTokens {
 	/**
-	 * The payment token factory.
-	 *
-	 * @var PaymentTokenFactory
-	 */
-	private $payment_token_factory;
-
-	/**
 	 * Payment tokens endpoint.
 	 *
 	 * @var PaymentTokensEndpoint
@@ -48,16 +41,13 @@ class WooCommercePaymentTokens {
 	/**
 	 * WooCommercePaymentTokens constructor.
 	 *
-	 * @param PaymentTokenFactory   $payment_token_factory The payment token factory.
 	 * @param PaymentTokensEndpoint $payment_tokens_endpoint Payment tokens endpoint.
 	 * @param LoggerInterface       $logger The logger.
 	 */
 	public function __construct(
-		PaymentTokenFactory $payment_token_factory,
 		PaymentTokensEndpoint $payment_tokens_endpoint,
 		LoggerInterface $logger
 	) {
-		$this->payment_token_factory   = $payment_token_factory;
 		$this->payment_tokens_endpoint = $payment_tokens_endpoint;
 		$this->logger                  = $logger;
 	}
@@ -90,7 +80,7 @@ class WooCommercePaymentTokens {
 		$payment_token_paypal = $this->first_token_of_type( $wc_tokens, PaymentTokenPayPal::class );
 
 		if ( ! $payment_token_paypal ) {
-			$payment_token_paypal = $this->payment_token_factory->create( 'paypal' );
+			$payment_token_paypal = $this->create_payment_token( 'paypal' );
 		}
 
 		assert( $payment_token_paypal instanceof PaymentTokenPayPal );
@@ -142,7 +132,7 @@ class WooCommercePaymentTokens {
 		$payment_token_venmo = $this->first_token_of_type( $wc_tokens, PaymentTokenVenmo::class );
 
 		if ( ! $payment_token_venmo ) {
-			$payment_token_venmo = $this->payment_token_factory->create( 'venmo' );
+			$payment_token_venmo = $this->create_payment_token( 'venmo' );
 		}
 
 		assert( $payment_token_venmo instanceof PaymentTokenVenmo );
@@ -191,7 +181,7 @@ class WooCommercePaymentTokens {
 		// Try to update existing token of type before creating a new one.
 		$payment_token_applepay = $this->first_token_of_type( $wc_tokens, PaymentTokenApplePay::class );
 		if ( ! $payment_token_applepay ) {
-			$payment_token_applepay = $this->payment_token_factory->create( 'apple_pay' );
+			$payment_token_applepay = $this->create_payment_token( 'apple_pay' );
 		}
 
 		assert( $payment_token_applepay instanceof PaymentTokenApplePay );
@@ -351,5 +341,23 @@ class WooCommercePaymentTokens {
 		}
 
 		return null;
+	}
+
+	/**
+	 * Creates a new WC payment token instance of the given type.
+	 *
+	 * @param string $type The type of WC payment token.
+	 *
+	 * @return void|PaymentTokenPayPal|PaymentTokenVenmo|PaymentTokenApplePay
+	 */
+	private function create_payment_token( string $type ) {
+		switch ( $type ) {
+			case 'paypal':
+				return new PaymentTokenPayPal();
+			case 'venmo':
+				return new PaymentTokenVenmo();
+			case 'apple_pay':
+				return new PaymentTokenApplePay();
+		}
 	}
 }

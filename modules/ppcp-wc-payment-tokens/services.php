@@ -12,12 +12,8 @@ namespace WooCommerce\PayPalCommerce\WcPaymentTokens;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 
 return array(
-	'wc-payment-tokens.payment-token-factory' => function (): PaymentTokenFactory {
-		return new PaymentTokenFactory();
-	},
-	'wc-payment-tokens.wc-payment-tokens'     => static function ( ContainerInterface $container ): WooCommercePaymentTokens {
+	'wc-payment-tokens.wc-payment-tokens' => static function ( ContainerInterface $container ): WooCommercePaymentTokens {
 		return new WooCommercePaymentTokens(
-			$container->get( 'wc-payment-tokens.payment-token-factory' ),
 			$container->get( 'api.endpoint.payment-tokens' ),
 			$container->get( 'woocommerce.logger.woocommerce' )
 		);
