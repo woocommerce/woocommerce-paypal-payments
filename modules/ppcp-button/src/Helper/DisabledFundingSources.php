@@ -40,7 +40,7 @@ class DisabledFundingSources
         if ($flags['is_free_trial']) {
             return $this->sanitize_and_filter_sources($this->get_sources_for_free_trial(), $flags);
         }
-        $disable_funding = $this->get_sources_from_settings();
+        $disable_funding = $this->get_sources_from_settings($context);
         $disable_funding = $this->apply_card_rules($disable_funding, $flags);
         if ($flags['is_block_context']) {
             $disable_funding = $this->apply_block_checkout_rules($disable_funding);
