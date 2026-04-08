@@ -3,11 +3,13 @@ import { loadPayPalScript } from '@ppcp-button/Helper/PayPalScriptLoading';
 
 const namespace = 'ppcpBlocksPaypalExpressButtons';
 
-export const VaultComponent = ( { config, onRenderError } ) => {
+export const VaultComponent = ( { config, onApproveOrder, onRenderError } ) => {
 	const containerRef = useRef( null );
 	const vaultInstanceRef = useRef( null );
 	const [ sdkReady, setSdkReady ] = useState( false );
 	const [ renderFailed, setRenderFailed ] = useState( false );
+
+	const vaultData = config.scriptData.vault_component;
 
 	// Load SDK if not already loaded.
 	useEffect( () => {
@@ -47,12 +49,33 @@ export const VaultComponent = ( { config, onRenderError } ) => {
 		try {
 			vaultInstanceRef.current = paypal.Vault( {
 				createOrder: async () => {
-					// Edit flow — wired in Ticket 3.
-					throw new Error( 'Edit flow not yet implemented.' );
+					const res = await fetch(
+						vaultData.ajax.create_order.endpoint,
+						{
+							method: 'POST',
+							credentials: 'same-origin',
+							headers: {
+								'Content-Type': 'application/json',
+							},
+							body: JSON.stringify( {
+								nonce: vaultData.ajax.create_order.nonce,
+								vault_token_id: vaultData.token_id,
+							} ),
+						}
+					);
+
+					const json = await res.json();
+
+					if ( ! json.success ) {
+						throw new Error(
+							json.data?.message || 'Order creation failed.'
+						);
+					}
+
+					return json.data.id;
 				},
 				onApprove: async ( data ) => {
-					// Path A — wired in Ticket 3.
-					console.log( 'Vault onApprove:', data );
+					onApproveOrder?.( data.orderID );
 				},
 				onCancel: () => {
 					// No changes, component remains unchanged.
