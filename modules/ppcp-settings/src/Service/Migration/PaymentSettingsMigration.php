@@ -46,6 +46,10 @@ class PaymentSettingsMigration implements SettingsMigrationInterface {
 	 */
 	protected array $local_apms;
 
+	protected bool $legacy_pui_enabled;
+
+	protected bool $legacy_oxxo_enabled;
+
 	public function __construct(
 		array $settings,
 		PaymentSettings $payment_settings,
@@ -60,6 +64,12 @@ class PaymentSettingsMigration implements SettingsMigrationInterface {
 		$this->dcc_status        = $dcc_status;
 		$this->local_apms        = $local_apms;
 		$this->dcc_configuration = $dcc_configuration;
+
+		$pui_option               = get_option( 'woocommerce_' . PayUponInvoiceGateway::ID . '_settings', array() );
+		$this->legacy_pui_enabled = is_array( $pui_option ) && ( $pui_option['enabled'] ?? 'no' ) === 'yes';
+
+		$oxxo_option               = get_option( 'woocommerce_' . OXXO::ID . '_settings', array() );
+		$this->legacy_oxxo_enabled = is_array( $oxxo_option ) && ( $oxxo_option['enabled'] ?? 'no' ) === 'yes';
 	}
 
 	public function migrate(): void {
@@ -103,16 +113,29 @@ class PaymentSettingsMigration implements SettingsMigrationInterface {
 			}
 		}
 
-		if ( $this->payment_settings->is_method_enabled( PayUponInvoiceGateway::ID ) ) {
+		if ( $this->legacy_pui_enabled ) {
 			$this->payment_settings->toggle_method_state( PayUponInvoiceGateway::ID, true );
 		}
 
-		if ( $this->payment_settings->is_method_enabled( OXXO::ID ) ) {
+		if ( $this->legacy_oxxo_enabled ) {
 			$this->payment_settings->toggle_method_state( OXXO::ID, true );
 		}
 
 		if ( isset( $this->settings['dcc_name_on_card'] ) ) {
 			$this->payment_settings->set_cardholder_name( $this->settings['dcc_name_on_card'] === 'yes' );
+		}
+
+		if ( ! empty( $this->settings['title'] ) ) {
+			$this->payment_settings->set_method_title( 'ppcp-gateway', $this->settings['title'] );
+		}
+		if ( ! empty( $this->settings['description'] ) ) {
+			$this->payment_settings->set_method_description( 'ppcp-gateway', $this->settings['description'] );
+		}
+		if ( ! empty( $this->settings['dcc_gateway_title'] ) ) {
+			$this->payment_settings->set_method_title( CreditCardGateway::ID, $this->settings['dcc_gateway_title'] );
+		}
+		if ( ! empty( $this->settings['dcc_gateway_description'] ) ) {
+			$this->payment_settings->set_method_description( CreditCardGateway::ID, $this->settings['dcc_gateway_description'] );
 		}
 
 		$this->payment_settings->save();

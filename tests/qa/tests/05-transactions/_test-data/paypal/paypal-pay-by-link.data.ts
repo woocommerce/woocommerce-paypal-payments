@@ -7,7 +7,7 @@ const { payPal } = payments;
 
 export const payPalPayByLink = [
 	{
-		title: 'PCP-2886 | Transaction - Pay by link - PayPal - Customer - Default order @Critical',
+		title: 'PCP-2886 | Transaction - Pay by link - PayPal - Customer - Default order @Critical @Smoke',
 		...orders.byCustomer,
 		payment: payPal,
 	},

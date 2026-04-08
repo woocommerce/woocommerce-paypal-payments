@@ -12,18 +12,16 @@ namespace WooCommerce\PayPalCommerce\Applepay\Assets;
 use Exception;
 use Psr\Log\LoggerInterface;
 use WC_Cart;
+use WooCommerce\PayPalCommerce\Applepay\ApplePayGateway;
 use WooCommerce\PayPalCommerce\Assets\AssetGetter;
 use WooCommerce\PayPalCommerce\Button\Assets\ButtonInterface;
 use WooCommerce\PayPalCommerce\Button\Helper\CartProductsHelper;
+use WooCommerce\PayPalCommerce\Button\Helper\Context;
 use WooCommerce\PayPalCommerce\Settings\Data\PaymentSettings;
 use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
-use WooCommerce\PayPalCommerce\WcGateway\Helper\SettingsStatus;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\OrderProcessor;
 use WooCommerce\PayPalCommerce\Webhooks\Handler\RequestHandlerTrait;
 
-/**
- * Class ApplePayButton
- */
 class ApplePayButton implements ButtonInterface {
 	use RequestHandlerTrait;
 
@@ -40,22 +38,9 @@ class ApplePayButton implements ButtonInterface {
 	private string $version;
 	private AssetGetter $asset_getter;
 	private DataToAppleButtonScripts $script_data;
-	private SettingsStatus $settings_status;
 	protected CartProductsHelper $cart_products;
+	private Context $context;
 
-	/**
-	 * PayPalPaymentMethod constructor.
-	 *
-	 * @param SettingsProvider         $settings_provider The settings provider.
-	 * @param PaymentSettings          $payment_settings The payment settings.
-	 * @param LoggerInterface          $logger The logger.
-	 * @param OrderProcessor           $order_processor The Order processor.
-	 * @param AssetGetter              $asset_getter
-	 * @param string                   $version The module version.
-	 * @param DataToAppleButtonScripts $data The data to send to the ApplePay button script.
-	 * @param SettingsStatus           $settings_status The settings status helper.
-	 * @param CartProductsHelper       $cart_products The cart products helper.
-	 */
 	public function __construct(
 		SettingsProvider $settings_provider,
 		PaymentSettings $payment_settings,
@@ -64,8 +49,8 @@ class ApplePayButton implements ButtonInterface {
 		AssetGetter $asset_getter,
 		string $version,
 		DataToAppleButtonScripts $data,
-		SettingsStatus $settings_status,
-		CartProductsHelper $cart_products
+		CartProductsHelper $cart_products,
+		Context $context
 	) {
 		$this->settings_provider  = $settings_provider;
 		$this->payment_settings   = $payment_settings;
@@ -77,8 +62,8 @@ class ApplePayButton implements ButtonInterface {
 		$this->asset_getter       = $asset_getter;
 		$this->version            = $version;
 		$this->script_data        = $data;
-		$this->settings_status    = $settings_status;
 		$this->cart_products      = $cart_products;
+		$this->context            = $context;
 	}
 
 	public function initialize(): void {
@@ -778,14 +763,8 @@ class ApplePayButton implements ButtonInterface {
 	 */
 	public function render(): bool {
 		if ( ! $this->is_enabled() ) {
-			return true;
+			return false;
 		}
-
-		$button_enabled_product  = $this->settings_status->is_smart_button_enabled_for_location( 'product' );
-		$button_enabled_cart     = $this->settings_status->is_smart_button_enabled_for_location( 'cart' );
-		$button_enabled_checkout = true;
-		$button_enabled_payorder = true;
-		$button_enabled_minicart = $this->settings_status->is_smart_button_enabled_for_location( 'mini-cart' );
 
 		add_filter(
 			'woocommerce_paypal_payments_sdk_components_hook',
@@ -794,67 +773,49 @@ class ApplePayButton implements ButtonInterface {
 				return $components;
 			}
 		);
-		if ( $button_enabled_product ) {
-			$default_hookname   = 'woocommerce_paypal_payments_single_product_button_render';
-			$render_placeholder = apply_filters( 'woocommerce_paypal_payments_applepay_render_hook_product', $default_hookname );
-			$render_placeholder = is_string( $render_placeholder ) ? $render_placeholder : $default_hookname;
-			add_action(
-				$render_placeholder,
-				function () {
-					$this->applepay_button();
-				}
-			);
-		}
-		if ( $button_enabled_cart ) {
-			$default_hook_name  = 'woocommerce_paypal_payments_cart_button_render';
-			$render_placeholder = apply_filters( 'woocommerce_paypal_payments_applepay_cart_button_render_hook', $default_hook_name );
-			$render_placeholder = is_string( $render_placeholder ) ? $render_placeholder : $default_hook_name;
-			add_action(
-				$render_placeholder,
-				function () {
-					$this->applepay_button();
-				}
-			);
-		}
 
-		if ( $button_enabled_checkout ) { // @phpstan-ignore if.alwaysTrue
-			$default_hook_name  = 'woocommerce_paypal_payments_checkout_button_render';
-			$render_placeholder = apply_filters( 'woocommerce_paypal_payments_applepay_checkout_button_render_hook', $default_hook_name );
-			$render_placeholder = is_string( $render_placeholder ) ? $render_placeholder : $default_hook_name;
-			add_action(
-				$render_placeholder,
-				function () {
+		$button_hooks = array(
+			array(
+				'hook'     => 'woocommerce_paypal_payments_single_product_button_render',
+				'filter'   => 'woocommerce_paypal_payments_applepay_render_hook_product',
+				'callback' => fn() => $this->applepay_button(),
+			),
+			array(
+				'hook'     => 'woocommerce_paypal_payments_cart_button_render',
+				'filter'   => 'woocommerce_paypal_payments_applepay_cart_button_render_hook',
+				'callback' => fn() => $this->applepay_button(),
+			),
+			array(
+				'hook'     => 'woocommerce_paypal_payments_checkout_button_render',
+				'filter'   => 'woocommerce_paypal_payments_applepay_checkout_button_render_hook',
+				'callback' => function () {
 					$this->applepay_button();
 					$this->hide_gateway_until_eligible();
 				},
-				21
-			);
-		}
-		if ( $button_enabled_payorder ) { // @phpstan-ignore if.alwaysTrue
-			$default_hook_name  = 'woocommerce_paypal_payments_payorder_button_render';
-			$render_placeholder = apply_filters( 'woocommerce_paypal_payments_applepay_payorder_button_render_hook', $default_hook_name );
-			$render_placeholder = is_string( $render_placeholder ) ? $render_placeholder : $default_hook_name;
-			add_action(
-				$render_placeholder,
-				function () {
+				'priority' => 21,
+			),
+			array(
+				'hook'     => 'woocommerce_paypal_payments_payorder_button_render',
+				'filter'   => 'woocommerce_paypal_payments_applepay_payorder_button_render_hook',
+				'callback' => function () {
 					$this->applepay_button();
 					$this->hide_gateway_until_eligible();
 				},
-				21
-			);
-		}
+				'priority' => 21,
+			),
+			array(
+				'hook'     => 'woocommerce_paypal_payments_minicart_button_render',
+				'filter'   => 'woocommerce_paypal_payments_applepay_minicart_button_render_hook',
+				'callback' => fn() => print( '<span id="ppc-button-applepay-container-minicart" class="ppcp-button-apm ppcp-button-applepay ppcp-button-minicart"></span>' ),
+				'priority' => 21,
+			),
+		);
 
-		if ( $button_enabled_minicart ) {
-			$default_hook_name  = 'woocommerce_paypal_payments_minicart_button_render';
-			$render_placeholder = apply_filters( 'woocommerce_paypal_payments_applepay_minicart_button_render_hook', $default_hook_name );
-			$render_placeholder = is_string( $render_placeholder ) ? $render_placeholder : $default_hook_name;
-			add_action(
-				$render_placeholder,
-				function () {
-					echo '<span id="ppc-button-applepay-container-minicart" class="ppcp-button-apm ppcp-button-applepay ppcp-button-minicart"></span>';
-				},
-				21
-			);
+		foreach ( $button_hooks as $entry ) {
+			$hook = apply_filters( $entry['filter'], $entry['hook'] );
+			$hook = is_string( $hook ) ? $hook : $entry['hook'];
+
+			add_action( $hook, $entry['callback'], $entry['priority'] ?? 21 );
 		}
 
 		return true;
@@ -992,6 +953,12 @@ class ApplePayButton implements ButtonInterface {
 	 * @return bool
 	 */
 	public function is_enabled(): bool {
-		return $this->settings_provider->applepay_enabled();
+		if ( ! $this->settings_provider->applepay_enabled() ) {
+			return false;
+		}
+
+		$methods = $this->settings_provider->button_styling( $this->context->context() )->methods;
+
+		return in_array( ApplePayGateway::ID, $methods, true );
 	}
 }

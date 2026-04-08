@@ -191,7 +191,6 @@ return array(
 			$container->get( 'wc-subscriptions.helper' ),
 			$container->get( 'settings.settings-provider' ),
 			$container->get( 'settings.environment' ),
-			$container->get( 'wcgateway.settings.status' ),
 			$container->get( 'button.helper.context' )
 		);
 	},
@@ -202,7 +201,9 @@ return array(
 			$container->get( 'googlepay.asset_getter' ),
 			$container->get( 'ppcp.asset-version' ),
 			$container->get( 'googlepay.button' ),
-			$container->get( 'blocks.method' )
+			$container->get( 'blocks.method' ),
+			$container->get( 'button.helper.context' ),
+			$container->get( 'settings.settings-provider' )
 		);
 	},
 

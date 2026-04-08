@@ -19,12 +19,6 @@ class DisabledFundingSources {
 	use FreeTrialHandlerTrait;
 
 	private SettingsProvider $settings_provider;
-
-	/**
-	 * All existing funding sources.
-	 *
-	 * @var array
-	 */
 	private array $all_funding_sources;
 	private CardPaymentsConfiguration $dcc_configuration;
 	private string $merchant_country;
@@ -78,10 +72,11 @@ class DisabledFundingSources {
 	 *
 	 * @return array
 	 */
-	private function get_sources_from_settings(): array {
+	private function get_sources_from_settings( string $context ): array {
 		$disabled_funding = array();
+		$methods          = $this->settings_provider->button_styling( $context )->methods;
 
-		if ( ! $this->settings_provider->venmo_enabled() ) {
+		if ( ! $this->settings_provider->venmo_enabled() || ! in_array( 'venmo', $methods, true ) ) {
 			$disabled_funding[] = 'venmo';
 		}
 

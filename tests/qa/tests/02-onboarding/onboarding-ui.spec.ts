@@ -151,18 +151,15 @@ test( 'PCP-4318 | Settings - US - Onboarding - Connect with business account, al
 		woocommerce_currency: 'USD',
 	} );
 	await pcpOnboarding.visit();
+	await pcpOnboarding.waitForLoadingMaskRemoved();
 	await pcpOnboarding.gotoInitialOnboardingPage();
+	await pcpOnboarding.page.waitForLoadState();
 	await pcpOnboarding.activatePayPalPaymentsButton().click();
-	// Account-type step: wait for content then business radio (step can take a moment to render)
-	await expect(
-		pcpOnboarding.onboardingContentContainer(),
-		'Assert onboarding content is visible after Activate PayPal Payments'
-	).toBeVisible();
+	// Account-type step: wait for business radio (step can take a moment to render)
 	await expect(
 		pcpOnboarding.businessRadio(),
 		'Assert store type step shows business radio after Activate PayPal Payments'
 	).toBeVisible();
-
 	await pcpOnboarding.businessRadio().click();
 	await pcpOnboarding.continueButton().click();
 	await expect(

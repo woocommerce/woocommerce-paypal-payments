@@ -14,8 +14,7 @@
     },
     "homepage": "https://github.com/woocommerce/woocommerce-paypal-payments#readme",
     "devDependencies": {
-        "playwright": "^1.49.1",
-        "@playwright/test": "^1.50.0",
+        "@playwright/test": "^1.58.2",
         "@inpsyde/playwright-utils": "^5.0.0",
         "dotenv": "^16.3.1",
         "yarn": "^1.22.21",

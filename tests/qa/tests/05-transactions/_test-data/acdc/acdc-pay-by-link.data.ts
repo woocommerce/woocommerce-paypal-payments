@@ -15,7 +15,7 @@ const guest = guests.usa;
 export const acdcPayByLink: ShopOrder[] = [
 	{
 		// https://inpsyde.atlassian.net/browse/PCP-1327
-		title: 'PCP-1327 | Transaction - Pay by link - ACDC - Guest - Default order @Critical',
+		title: 'PCP-1327 | Transaction - Pay by link - ACDC - Guest - Default order @Critical @Smoke',
 		...orders.default,
 		payment: payments.acdc,
 		customer: guest,
