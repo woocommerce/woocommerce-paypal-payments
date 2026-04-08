@@ -21,10 +21,10 @@ declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce;
 
-define( 'PAYPAL_API_URL', 'https://api-m.paypal.com' );
-define( 'PAYPAL_URL', 'https://www.paypal.com' );
-define( 'PAYPAL_SANDBOX_API_URL', 'https://api-m.sandbox.paypal.com' );
-define( 'PAYPAL_SANDBOX_URL', 'https://www.sandbox.paypal.com' );
+! defined( 'PAYPAL_API_URL' ) && define( 'PAYPAL_API_URL', 'https://api-m.paypal.com' );
+! defined( 'PAYPAL_URL' ) && define( 'PAYPAL_URL', 'https://www.paypal.com' );
+! defined( 'PAYPAL_SANDBOX_API_URL' ) && define( 'PAYPAL_SANDBOX_API_URL', 'https://api-m.sandbox.paypal.com' );
+! defined( 'PAYPAL_SANDBOX_URL' ) && define( 'PAYPAL_SANDBOX_URL', 'https://www.sandbox.paypal.com' );
 define( 'PAYPAL_INTEGRATION_DATE', '2026-04-01' );
 define( 'PPCP_PAYPAL_BN_CODE', 'Woo_PPCP' );
 
