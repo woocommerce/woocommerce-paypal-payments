@@ -3,11 +3,7 @@
 declare (strict_types=1);
 namespace WooCommerce\PayPalCommerce\VaultComponent;
 
-use WooCommerce\PayPalCommerce\Vendor\Psr\Log\LoggerInterface;
 use WC_Payment_Tokens;
-use WooCommerce\PayPalCommerce\ApiClient\Authentication\UserIdToken;
-use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
-use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\Vaulting\PaymentTokenPayPal;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExecutableModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ModuleClassNameIdTrait;
@@ -27,6 +23,10 @@ class VaultComponentModule implements ServiceModule, ExecutableModule
         if (!$eligibility_check()) {
             return \true;
         }
+        add_filter('woocommerce_paypal_payments_sdk_components_hook', static function (array $components): array {
+            $components[] = 'vault';
+            return $components;
+        });
         add_action('after_setup_theme', function () use ($c) {
             add_filter('woocommerce_paypal_payments_localized_script_data', function (array $localized_script_data) use ($c): array {
                 return $this->maybe_add_vault_component_data($localized_script_data, $c);
@@ -48,30 +48,7 @@ class VaultComponentModule implements ServiceModule, ExecutableModule
             return $localized_script_data;
         }
         $primary_token = reset($paypal_tokens);
-        $logger = $c->get('woocommerce.logger.woocommerce');
-        assert($logger instanceof LoggerInterface);
-        // Reuse the ID token from save-payment-methods if already generated.
-        if (!empty($localized_script_data['save_payment_methods']['id_token'])) {
-            $id_token = $localized_script_data['save_payment_methods']['id_token'];
-        } else {
-            try {
-                $api = $c->get('api.user-id-token');
-                assert($api instanceof UserIdToken);
-                $target_customer_id = get_user_meta($customer_id, '_ppcp_target_customer_id', \true);
-                if (!$target_customer_id) {
-                    $target_customer_id = get_user_meta($customer_id, 'ppcp_customer_id', \true);
-                }
-                $id_token = $api->id_token($target_customer_id);
-            } catch (RuntimeException $exception) {
-                $error = $exception->getMessage();
-                if ($exception instanceof PayPalApiException) {
-                    $error = $exception->get_details($error);
-                }
-                $logger->error('Vault Component: Failed to get user ID token. ' . $error);
-                return $localized_script_data;
-            }
-        }
-        $localized_script_data['vault_component'] = array('is_eligible' => \true, 'token_id' => $primary_token->get_token(), 'id_token' => $id_token);
+        $localized_script_data['vault_component'] = array('is_eligible' => \true, 'token_id' => $primary_token->get_token());
         return $localized_script_data;
     }
 }
