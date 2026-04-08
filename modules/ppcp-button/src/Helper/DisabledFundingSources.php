@@ -57,7 +57,7 @@ class DisabledFundingSources {
 			);
 		}
 
-		$disable_funding = $this->get_sources_from_settings();
+		$disable_funding = $this->get_sources_from_settings( $context );
 		$disable_funding = $this->apply_card_rules( $disable_funding, $flags );
 
 		if ( $flags['is_block_context'] ) {
