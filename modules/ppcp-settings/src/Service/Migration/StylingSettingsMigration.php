@@ -32,6 +32,9 @@ class StylingSettingsMigration implements \WooCommerce\PayPalCommerce\Settings\S
     }
     public function migrate(): void
     {
+        if (empty($this->settings) || !isset($this->settings['smart_button_locations'])) {
+            return;
+        }
         $location_styles = array();
         $styling_per_location = !empty($this->settings['smart_button_enable_styling_per_location']);
         foreach ($this->locations_map() as $old_location => $new_location) {

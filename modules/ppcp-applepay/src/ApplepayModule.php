@@ -17,6 +17,7 @@ use WooCommerce\PayPalCommerce\Applepay\Assets\PropertiesDictionary;
 use WooCommerce\PayPalCommerce\Button\Assets\ButtonInterface;
 use WooCommerce\PayPalCommerce\Button\Assets\SmartButtonInterface;
 use WooCommerce\PayPalCommerce\Applepay\Helper\AvailabilityNotice;
+use WooCommerce\PayPalCommerce\Button\Helper\Context;
 use WooCommerce\PayPalCommerce\Settings\Data\Definition\FeaturesDefinition;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExecutableModule;
@@ -112,14 +113,45 @@ class ApplepayModule implements ServiceModule, ExecutableModule
                 }
                 $settings = $c->get('settings.settings-provider');
                 assert($settings instanceof SettingsProvider);
-                if ($settings->applepay_enabled()) {
-                    $applepay_gateway = $c->get('applepay.wc-gateway');
-                    assert($applepay_gateway instanceof WC_Payment_Gateway);
-                    $methods[] = $applepay_gateway;
+                if (!$settings->applepay_enabled()) {
+                    return $methods;
                 }
+                $context = $c->get('button.helper.context');
+                assert($context instanceof Context);
+                $page_methods = $settings->button_styling($context->context())->methods;
+                if (!in_array(\WooCommerce\PayPalCommerce\Applepay\ApplePayGateway::ID, $page_methods, \true)) {
+                    return $methods;
+                }
+                $applepay_gateway = $c->get('applepay.wc-gateway');
+                assert($applepay_gateway instanceof WC_Payment_Gateway);
+                $methods[] = $applepay_gateway;
                 return $methods;
             }
         );
+        /**
+         * Filters the available payment gateways to remove the Apple Pay gateway
+         * when the button is disabled for the current location (e.g., classic checkout) in the styling settings.
+         * This is necessary because WooCommerce automatically includes the gateway when it is enabled,
+         * even if the button is hidden via settings.
+         */
+        add_filter('woocommerce_available_payment_gateways', static function ($methods) use ($c) {
+            if (!is_array($methods)) {
+                return $methods;
+            }
+            $context = $c->get('button.helper.context');
+            assert($context instanceof Context);
+            $current_context = $context->context();
+            if ($current_context !== 'checkout') {
+                return $methods;
+            }
+            $settings = $c->get('settings.settings-provider');
+            assert($settings instanceof SettingsProvider);
+            $page_methods = $settings->button_styling($current_context)->methods;
+            if (!in_array(\WooCommerce\PayPalCommerce\Applepay\ApplePayGateway::ID, $page_methods, \true)) {
+                unset($methods[\WooCommerce\PayPalCommerce\Applepay\ApplePayGateway::ID]);
+            }
+            return $methods;
+        });
         add_action('woocommerce_review_order_after_submit', function () {
             // Wrapper ID: #ppc-button-ppcp-applepay.
             echo '<div id="ppc-button-' . esc_attr(\WooCommerce\PayPalCommerce\Applepay\ApplePayGateway::ID) . '"></div>';
