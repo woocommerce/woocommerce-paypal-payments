@@ -366,7 +366,7 @@ return array(
             // Add PayPal buttons to block checkout.
             !$button_locations['product_enabled'],
             // Add PayPal buttons to product.
-            $container->get('applepay.eligible') && $capabilities[FeaturesDefinition::FEATURE_APPLE_PAY],
+            $container->get('applepay.eligible') && $capabilities[FeaturesDefinition::FEATURE_APPLE_PAY] && !$container->get('applepay.is_validated'),
             // Register Domain for Apple Pay.
             $capabilities[FeaturesDefinition::FEATURE_ADVANCED_CREDIT_AND_DEBIT_CARDS] && !($capabilities[FeaturesDefinition::FEATURE_APPLE_PAY] && $capabilities[FeaturesDefinition::FEATURE_GOOGLE_PAY]),
             // Add digital wallets to your account.
