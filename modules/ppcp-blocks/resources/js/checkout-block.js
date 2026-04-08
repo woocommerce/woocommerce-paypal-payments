@@ -78,6 +78,7 @@ if ( blockEnabled ) {
 			label: <PaypalLabel config={ config } />,
 			content: (
 				<PayPalPlaceOrderContent
+					config={ config }
 					description={ config.description }
 					placeOrderButtonDescription={
 						config.placeOrderButtonDescription
