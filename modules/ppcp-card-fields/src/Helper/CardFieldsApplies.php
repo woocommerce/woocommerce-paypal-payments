@@ -43,7 +43,7 @@ class CardFieldsApplies
      */
     public function for_country(): bool
     {
-        return in_array($this->country, $this->allowed_country_matrix, \true);
+        return array_key_exists($this->country, $this->allowed_country_matrix);
     }
     /**
      * Indicates, whether the current merchant is eligible for Card Fields. Always true,
