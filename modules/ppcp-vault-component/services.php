@@ -1,10 +1,5 @@
 <?php
 
-/**
- * The Vault Component module services.
- *
- * @package WooCommerce\PayPalCommerce\VaultComponent
- */
 declare (strict_types=1);
 namespace WooCommerce\PayPalCommerce\VaultComponent;
 

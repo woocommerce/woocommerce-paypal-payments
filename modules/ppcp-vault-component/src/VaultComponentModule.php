@@ -1,10 +1,5 @@
 <?php
 
-/**
- * The Vault Component module.
- *
- * @package WooCommerce\PayPalCommerce\VaultComponent
- */
 declare (strict_types=1);
 namespace WooCommerce\PayPalCommerce\VaultComponent;
 
@@ -19,22 +14,13 @@ use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ModuleClassNameI
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ServiceModule;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
-/**
- * Class VaultComponentModule
- */
 class VaultComponentModule implements ServiceModule, ExecutableModule
 {
     use ModuleClassNameIdTrait;
-    /**
-     * {@inheritDoc}
-     */
     public function services(): array
     {
         return require __DIR__ . '/../services.php';
     }
-    /**
-     * {@inheritDoc}
-     */
     public function run(ContainerInterface $c): bool
     {
         $eligibility_check = $c->get('vault-component.eligibility.check');
@@ -48,14 +34,6 @@ class VaultComponentModule implements ServiceModule, ExecutableModule
         });
         return \true;
     }
-    /**
-     * Adds vault component data to localized script data if the
-     * current customer is eligible (customer-level check).
-     *
-     * @param array              $localized_script_data The localized script data.
-     * @param ContainerInterface $c The container.
-     * @return array
-     */
     private function maybe_add_vault_component_data(array $localized_script_data, ContainerInterface $c): array
     {
         if (!is_user_logged_in()) {
