@@ -5,6 +5,7 @@ namespace WooCommerce\PayPalCommerce\VaultComponent;
 
 use WC_Payment_Tokens;
 use WooCommerce\PayPalCommerce\Vaulting\PaymentTokenPayPal;
+use WooCommerce\PayPalCommerce\VaultComponent\Endpoint\CreateVaultOrderEndpoint;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExecutableModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ModuleClassNameIdTrait;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ServiceModule;
@@ -27,6 +28,11 @@ class VaultComponentModule implements ServiceModule, ExecutableModule
             $components[] = 'vault';
             return $components;
         });
+        add_action('wc_ajax_' . CreateVaultOrderEndpoint::ENDPOINT, static function () use ($c) {
+            $endpoint = $c->get('vault-component.endpoint.create-order');
+            assert($endpoint instanceof CreateVaultOrderEndpoint);
+            $endpoint->handle_request();
+        });
         add_action('after_setup_theme', function () use ($c) {
             add_filter('woocommerce_paypal_payments_localized_script_data', function (array $localized_script_data) use ($c): array {
                 return $this->maybe_add_vault_component_data($localized_script_data, $c);
@@ -48,7 +54,7 @@ class VaultComponentModule implements ServiceModule, ExecutableModule
             return $localized_script_data;
         }
         $primary_token = reset($paypal_tokens);
-        $localized_script_data['vault_component'] = array('is_eligible' => \true, 'token_id' => $primary_token->get_token());
+        $localized_script_data['vault_component'] = array('is_eligible' => \true, 'token_id' => $primary_token->get_token(), 'ajax' => array('create_order' => array('endpoint' => \WC_AJAX::get_endpoint(CreateVaultOrderEndpoint::ENDPOINT), 'nonce' => wp_create_nonce(CreateVaultOrderEndpoint::nonce()))));
         return $localized_script_data;
     }
 }
