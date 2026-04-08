@@ -218,7 +218,6 @@ class ButtonModule implements ServiceModule, ExecutableModule {
 				$endpoint->handle_request();
 			}
 		);
-
 	}
 
 	private static function is_cross_browser_order( WC_Order $wc_order ): bool {
