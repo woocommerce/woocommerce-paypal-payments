@@ -278,7 +278,10 @@ return array(
 			$container->get( 'blocks.settings.final_review_enabled' ),
 			$container->get( 'button.helper.wc-order-creator' ),
 			$container->get( 'wcgateway.paypal-gateway' ),
-			$container->get( 'button.helper.context' )
+			$container->get( 'button.helper.context' ),
+			$container->get( 'api.endpoint.billing-subscriptions' ),
+			$container->get( 'woocommerce.logger.woocommerce' ),
+			$container->get( 'wc-subscriptions.helper' )
 		);
 	},
 	'button.helper.context'                       => static function ( ContainerInterface $container ): Context {

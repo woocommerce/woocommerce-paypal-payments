@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\Button\Helper;
 
 use Mockery;
+use WooCommerce\PayPalCommerce\Settings\DTO\LocationStylingDTO;
 use WooCommerce\PayPalCommerce\TestCase;
 use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\CardPaymentsConfiguration;
@@ -20,6 +21,8 @@ class DisabledFundingSourcesTest extends TestCase
 
 		$this->settings_provider = Mockery::mock(SettingsProvider::class);
 		$this->settings_provider->shouldReceive('venmo_enabled')->andReturn(true)->byDefault();
+		$this->settings_provider->shouldReceive('button_styling')
+			->andReturn(new LocationStylingDTO('', true, ['venmo']))->byDefault();
 
 		$this->dcc_configuration = Mockery::mock(CardPaymentsConfiguration::class);
 	}
@@ -140,6 +143,8 @@ class DisabledFundingSourcesTest extends TestCase
 	{
 		$this->settings_provider = Mockery::mock(SettingsProvider::class);
 		$this->settings_provider->shouldReceive('venmo_enabled')->andReturn(false);
+		$this->settings_provider->shouldReceive('button_styling')
+			->andReturn(new LocationStylingDTO('', true, ['venmo']));
 
 		$this->dcc_configuration->shouldReceive('is_enabled')->andReturn(true);
 		$this->dcc_configuration->shouldReceive('use_acdc')->andReturn(true);
@@ -148,6 +153,22 @@ class DisabledFundingSourcesTest extends TestCase
 
 		$this->setWooCommerceFunctionMocks();
 
+		when('is_checkout')->justReturn(true);
+
+		$this->assertContains('venmo', $sut->sources('checkout-block'));
+	}
+
+	public function test_venmo_disabled_for_location_when_not_in_styling_methods()
+	{
+		$this->settings_provider->shouldReceive('button_styling')
+			->andReturn(new LocationStylingDTO('', true, []));
+
+		$this->dcc_configuration->shouldReceive('is_enabled')->andReturn(true);
+		$this->dcc_configuration->shouldReceive('use_acdc')->andReturn(true);
+
+		$sut = new DisabledFundingSources($this->settings_provider, [], $this->dcc_configuration, 'US');
+
+		$this->setWooCommerceFunctionMocks();
 		when('is_checkout')->justReturn(true);
 
 		$this->assertContains('venmo', $sut->sources('checkout-block'));

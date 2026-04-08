@@ -72,7 +72,7 @@ const MigrationBanner = ( {
 							<TitleBadge
 								type={ TITLE_BADGE_INFO }
 								text={ __(
-									"You're eligible",
+									'Offer more.',
 									'woocommerce-paypal-payments'
 								) }
 							/>

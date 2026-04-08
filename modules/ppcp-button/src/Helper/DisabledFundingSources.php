@@ -14,44 +14,15 @@ use WooCommerce\PayPalCommerce\WcSubscriptions\FreeTrialHandlerTrait;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\CardPaymentsConfiguration;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\CartCheckoutDetector;
 
-/**
- * Class DisabledFundingSources
- */
 class DisabledFundingSources {
 
 	use FreeTrialHandlerTrait;
 
 	private SettingsProvider $settings_provider;
-
-	/**
-	 * All existing funding sources.
-	 *
-	 * @var array
-	 */
 	private array $all_funding_sources;
-
-	/**
-	 * Provides details about the DCC configuration.
-	 *
-	 * @var CardPaymentsConfiguration
-	 */
 	private CardPaymentsConfiguration $dcc_configuration;
-
-	/**
-	 * Merchant Country
-	 *
-	 * @var string
-	 */
 	private string $merchant_country;
 
-	/**
-	 * DisabledFundingSources constructor.
-	 *
-	 * @param SettingsProvider          $settings_provider   The settings provider.
-	 * @param array                     $all_funding_sources All existing funding sources.
-	 * @param CardPaymentsConfiguration $dcc_configuration   DCC gateway configuration.
-	 * @param string                    $merchant_country    Merchant country.
-	 */
 	public function __construct( SettingsProvider $settings_provider, array $all_funding_sources, CardPaymentsConfiguration $dcc_configuration, string $merchant_country ) {
 		$this->settings_provider   = $settings_provider;
 		$this->all_funding_sources = $all_funding_sources;
@@ -80,7 +51,7 @@ class DisabledFundingSources {
 			return $this->sanitize_and_filter_sources( $disable_funding, $flags );
 		}
 
-		$disable_funding = $this->get_sources_from_settings();
+		$disable_funding = $this->get_sources_from_settings( $context );
 
 		// Apply rules based on context and payment methods.
 		$disable_funding = $this->apply_context_rules( $disable_funding );
@@ -98,10 +69,11 @@ class DisabledFundingSources {
 	 *
 	 * @return array
 	 */
-	private function get_sources_from_settings(): array {
+	private function get_sources_from_settings( string $context ): array {
 		$disabled_funding = array();
+		$methods          = $this->settings_provider->button_styling( $context )->methods;
 
-		if ( ! $this->settings_provider->venmo_enabled() ) {
+		if ( ! $this->settings_provider->venmo_enabled() || ! in_array( 'venmo', $methods, true ) ) {
 			$disabled_funding[] = 'venmo';
 		}
 

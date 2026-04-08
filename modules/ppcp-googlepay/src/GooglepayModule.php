@@ -14,6 +14,7 @@ use WC_Payment_Gateway;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\ExperienceContextBuilder;
 use WooCommerce\PayPalCommerce\Button\Assets\ButtonInterface;
 use WooCommerce\PayPalCommerce\Button\Assets\SmartButtonInterface;
+use WooCommerce\PayPalCommerce\Button\Helper\Context;
 use WooCommerce\PayPalCommerce\Googlepay\Endpoint\UpdatePaymentDataEndpoint;
 use WooCommerce\PayPalCommerce\Googlepay\Helper\GoogleProductStatus;
 use WooCommerce\PayPalCommerce\Googlepay\Helper\AvailabilityNotice;
@@ -187,11 +188,57 @@ class GooglepayModule implements ServiceModule, ExecutableModule {
 				$settings = $c->get( 'settings.settings-provider' );
 				assert( $settings instanceof SettingsProvider );
 
-				if ( $settings->googlepay_enabled() ) {
-					$googlepay_gateway = $c->get( 'googlepay.wc-gateway' );
-					assert( $googlepay_gateway instanceof WC_Payment_Gateway );
+				if ( ! $settings->googlepay_enabled() ) {
+					return $methods;
+				}
 
-					$methods[] = $googlepay_gateway;
+				$context = $c->get( 'button.helper.context' );
+				assert( $context instanceof Context );
+
+				$page_methods = $settings->button_styling( $context->context() )->methods;
+
+				if ( ! in_array( 'ppcp-googlepay', $page_methods, true ) ) {
+					return $methods;
+				}
+
+				$googlepay_gateway = $c->get( 'googlepay.wc-gateway' );
+				assert( $googlepay_gateway instanceof WC_Payment_Gateway );
+
+				$methods[] = $googlepay_gateway;
+
+				return $methods;
+			}
+		);
+
+		/**
+		 * Filters the available payment gateways to remove the Google Pay gateway
+		 * when the button is disabled for the current location (e.g., classic checkout) in the styling settings.
+		 * This is necessary because WooCommerce automatically includes the gateway when it is enabled,
+		 * even if the button is hidden via settings.
+		 */
+		add_filter(
+			'woocommerce_available_payment_gateways',
+			static function ( $methods ) use ( $c ) {
+				if ( ! is_array( $methods ) ) {
+					return $methods;
+				}
+
+				$context = $c->get( 'button.helper.context' );
+				assert( $context instanceof Context );
+
+				$current_context = $context->context();
+
+				if ( $current_context !== 'checkout' ) {
+					return $methods;
+				}
+
+				$settings = $c->get( 'settings.settings-provider' );
+				assert( $settings instanceof SettingsProvider );
+
+				$page_methods = $settings->button_styling( $current_context )->methods;
+
+				if ( ! in_array( GooglePayGateway::ID, $page_methods, true ) ) {
+					unset( $methods[ GooglePayGateway::ID ] );
 				}
 
 				return $methods;
