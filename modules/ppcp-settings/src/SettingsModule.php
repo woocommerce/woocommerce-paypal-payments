@@ -488,24 +488,6 @@ class SettingsModule implements ServiceModule, ExecutableModule
                 $partner_attribution->initialize_bn_code(InstallationPathEnum::DIRECT, \true);
             }
         });
-        /**
-         * Implement the mutually exclusive BCDC or ACDC rule:
-         * If the current merchant is _not BCDC eligible_, we disable the "card" funding source.
-         * This effectively hides the black Standard Card button from the express payment block
-         * and the PayPal smart button stack in classic checkout.
-         */
-        add_filter('woocommerce_paypal_payments_sdk_disabled_funding_hook', static function (array $disable_funding) use ($container) {
-            // Already disabled, no correction needed.
-            if (in_array('card', $disable_funding, \true)) {
-                return $disable_funding;
-            }
-            $dcc_configuration = $container->get('wcgateway.configuration.card-configuration');
-            assert($dcc_configuration instanceof CardPaymentsConfiguration);
-            if (!$dcc_configuration->is_bcdc_enabled()) {
-                $disable_funding[] = 'card';
-            }
-            return $disable_funding;
-        });
         add_action(
             'woocommerce_paypal_payments_gateway_migrate',
             /**
@@ -685,28 +667,6 @@ class SettingsModule implements ServiceModule, ExecutableModule
         if (!$settings->own_brand_only()) {
             return;
         }
-        /**
-         * Ensure BCDC remains functional in branded-only mode.
-         *
-         * In branded-only mode, white-label payment methods (ACDC, Apple Pay, Google Pay)
-         * are disabled, but the PayPal-branded card button (BCDC) should remain functional.
-         *
-         * BCDC requires the 'card' funding source to be enabled. This filter prevents 'card'
-         * from being added to the disabled funding sources list on checkout pages, ensuring
-         * the BCDC button remains clickable and functional for merchants using branded-only mode.
-         */
-        add_filter('woocommerce_paypal_payments_sdk_disabled_funding_hook', static function (array $disable_funding, array $flags) use ($container) {
-            $allowed_context = array('checkout-block', 'checkout');
-            if (!in_array($flags['context'], $allowed_context, \true)) {
-                return $disable_funding;
-            }
-            $payment_settings = $container->get('settings.data.payment');
-            assert($payment_settings instanceof PaymentSettings);
-            if (!$payment_settings->is_method_enabled(CardButtonGateway::ID)) {
-                return $disable_funding;
-            }
-            return array_filter($disable_funding, static fn(string $funding_source) => $funding_source !== 'card');
-        }, 10, 2);
         /**
          * Prevent white-label payment methods from being enabled during onboarding.
          *
