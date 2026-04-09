@@ -48,7 +48,7 @@ return array(
         return new CreateSetupToken($container->get('button.request-data'), $container->get('api.endpoint.payment-method-tokens'));
     },
     'save-payment-methods.endpoint.create-payment-token' => static function (ContainerInterface $container): CreatePaymentToken {
-        return new CreatePaymentToken($container->get('button.request-data'), $container->get('api.endpoint.payment-method-tokens'), $container->get('vaulting.wc-payment-tokens'));
+        return new CreatePaymentToken($container->get('button.request-data'), $container->get('api.endpoint.payment-method-tokens'), $container->get('wc-payment-tokens.wc-payment-tokens'));
     },
     'save-payment-methods.endpoint.create-payment-token-for-guest' => static function (ContainerInterface $container): CreatePaymentTokenForGuest {
         return new CreatePaymentTokenForGuest($container->get('button.request-data'), $container->get('api.endpoint.payment-method-tokens'));

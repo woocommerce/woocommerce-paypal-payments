@@ -36,7 +36,6 @@ use WooCommerce\PayPalCommerce\Button\Helper\WooCommerceOrderCreator;
 use WooCommerce\PayPalCommerce\Button\Session\CartDataFactory;
 use WooCommerce\PayPalCommerce\Button\Session\CartDataTransientStorage;
 use WooCommerce\PayPalCommerce\Button\Validation\CheckoutFormValidator;
-use WooCommerce\PayPalCommerce\Button\VaultV2\StartPayPalVaultingEndpoint;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\CardPaymentsConfiguration;
@@ -102,8 +101,7 @@ return array(
         $subscription_helper = $container->get('wc-subscriptions.helper');
         $messages_apply = $container->get('button.helper.messages-apply');
         $environment = $container->get('settings.environment');
-        $payment_token_repository = $container->get('vaulting.repository.payment-token');
-        return new SmartButton($container->get('button.asset_getter'), $container->get('ppcp.asset-version'), $container->get('session.handler'), $settings_provider, $payer_factory, $client_id, $request_data, $dcc_applies, $subscription_helper, $container->get('button.subscriptions-mode'), $messages_apply, $environment, $payment_token_repository, $settings_status, $container->get('api.shop.currency.getter'), $container->get('button.basic-checkout-validation-enabled'), $container->get('button.early-wc-checkout-validation-enabled'), $container->get('button.pay-now-contexts'), $container->get('wcgateway.funding-sources-without-redirect'), $container->get('vaulting.vault-v3-enabled'), $container->get('button.handle-shipping-in-paypal'), $container->get('wcgateway.server-side-shipping-callback-enabled'), $container->get('wcgateway.appswitch-enabled'), $container->get('button.helper.disabled-funding-sources'), $container->get('wcgateway.configuration.card-configuration'), $container->get('api.helper.partner-attribution'), $container->get('blocks.settings.final_review_enabled'), $container->get('button.helper.context'));
+        return new SmartButton($container->get('button.asset_getter'), $container->get('ppcp.asset-version'), $container->get('session.handler'), $settings_provider, $payer_factory, $client_id, $request_data, $dcc_applies, $subscription_helper, $container->get('button.subscriptions-mode'), $messages_apply, $environment, $settings_status, $container->get('api.shop.currency.getter'), $container->get('button.basic-checkout-validation-enabled'), $container->get('button.early-wc-checkout-validation-enabled'), $container->get('button.pay-now-contexts'), $container->get('wcgateway.funding-sources-without-redirect'), $container->get('button.handle-shipping-in-paypal'), $container->get('wcgateway.server-side-shipping-callback-enabled'), $container->get('wcgateway.appswitch-enabled'), $container->get('button.helper.disabled-funding-sources'), $container->get('wcgateway.configuration.card-configuration'), $container->get('api.helper.partner-attribution'), $container->get('blocks.settings.final_review_enabled'), $container->get('button.helper.context'));
     },
     'button.asset_getter' => static function (ContainerInterface $container): AssetGetter {
         $factory = $container->get('assets.asset_getter_factory');
@@ -193,9 +191,6 @@ return array(
         $identity_token = $container->get('api.endpoint.identity-token');
         $logger = $container->get('woocommerce.logger.woocommerce');
         return new DataClientIdEndpoint($request_data, $identity_token, $logger);
-    },
-    'button.vault-v2.endpoint.vault-paypal' => static function (ContainerInterface $container): StartPayPalVaultingEndpoint {
-        return new StartPayPalVaultingEndpoint($container->get('button.request-data'), $container->get('vault-v2.endpoint.payment-token'), $container->get('woocommerce.logger.woocommerce'));
     },
     'button.endpoint.validate-checkout' => static function (ContainerInterface $container): ValidateCheckoutEndpoint {
         return new ValidateCheckoutEndpoint($container->get('button.request-data'), $container->get('button.validation.wc-checkout-validator'), $container->get('woocommerce.logger.woocommerce'));

@@ -18,8 +18,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
-use WooCommerce\PayPalCommerce\Vaulting\VaultedCreditCardHandler;
-use WooCommerce\PayPalCommerce\Vaulting\WooCommercePaymentTokens;
+use WooCommerce\PayPalCommerce\WcPaymentTokens\WooCommercePaymentTokens;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\WcGateway\Endpoint\CaptureCardPayment;
 use WooCommerce\PayPalCommerce\WcGateway\Exception\GatewayGenericException;
@@ -68,12 +67,6 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC
      * @var CardPaymentsConfiguration
      */
     protected CardPaymentsConfiguration $dcc_configuration;
-    /**
-     * The vaulted credit card handler.
-     *
-     * @var VaultedCreditCardHandler
-     */
-    protected $vaulted_credit_card_handler;
     /**
      * The Session Handler.
      *
@@ -198,7 +191,6 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC
      * @param TransactionUrlProvider    $transaction_url_provider    Service able to provide view transaction url base.
      * @param SubscriptionHelper        $subscription_helper         The subscription helper.
      * @param PaymentsEndpoint          $payments_endpoint           The payments endpoint.
-     * @param VaultedCreditCardHandler  $vaulted_credit_card_handler The vaulted credit card handler.
      * @param Environment               $environment                 The environment.
      * @param OrderEndpoint             $order_endpoint              The order endpoint.
      * @param CaptureCardPayment        $capture_card_payment        Capture card payment.
@@ -206,7 +198,7 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC
      * @param WooCommercePaymentTokens  $wc_payment_tokens           WooCommerce payment tokens factory.
      * @param LoggerInterface           $logger                      The logger.
      */
-    public function __construct(OrderProcessor $order_processor, ContainerInterface $config, CardPaymentsConfiguration $dcc_configuration, array $card_icons, SessionHandler $session_handler, RefundProcessor $refund_processor, \WooCommerce\PayPalCommerce\WcGateway\Gateway\TransactionUrlProvider $transaction_url_provider, SubscriptionHelper $subscription_helper, PaymentsEndpoint $payments_endpoint, VaultedCreditCardHandler $vaulted_credit_card_handler, Environment $environment, OrderEndpoint $order_endpoint, CaptureCardPayment $capture_card_payment, string $prefix, WooCommercePaymentTokens $wc_payment_tokens, LoggerInterface $logger)
+    public function __construct(OrderProcessor $order_processor, ContainerInterface $config, CardPaymentsConfiguration $dcc_configuration, array $card_icons, SessionHandler $session_handler, RefundProcessor $refund_processor, \WooCommerce\PayPalCommerce\WcGateway\Gateway\TransactionUrlProvider $transaction_url_provider, SubscriptionHelper $subscription_helper, PaymentsEndpoint $payments_endpoint, Environment $environment, OrderEndpoint $order_endpoint, CaptureCardPayment $capture_card_payment, string $prefix, WooCommercePaymentTokens $wc_payment_tokens, LoggerInterface $logger)
     {
         $this->id = self::ID;
         $this->order_processor = $order_processor;
@@ -217,7 +209,6 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC
         $this->transaction_url_provider = $transaction_url_provider;
         $this->subscription_helper = $subscription_helper;
         $this->payments_endpoint = $payments_endpoint;
-        $this->vaulted_credit_card_handler = $vaulted_credit_card_handler;
         $this->environment = $environment;
         $this->order_endpoint = $order_endpoint;
         $this->capture_card_payment = $capture_card_payment;
@@ -410,19 +401,6 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC
                     $this->handle_new_order_status($order, $wc_order);
                     return $this->handle_payment_success($wc_order);
                 }
-            }
-        }
-        /**
-         * If customer has chosen a saved credit card payment from checkout page.
-         */
-        // phpcs:ignore WordPress.Security.NonceVerification.Missing
-        $saved_credit_card = wc_clean(wp_unslash($_POST['saved_credit_card'] ?? ''));
-        if ($saved_credit_card && is_checkout()) {
-            try {
-                $wc_order = $this->vaulted_credit_card_handler->handle_payment($saved_credit_card, $wc_order);
-                return $this->handle_payment_success($wc_order);
-            } catch (RuntimeException $error) {
-                return $this->handle_payment_failure($wc_order, $error);
             }
         }
         /**
