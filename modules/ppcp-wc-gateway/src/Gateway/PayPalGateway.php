@@ -316,7 +316,10 @@ class PayPalGateway extends \WC_Payment_Gateway
         }
         // phpcs:ignore WordPress.Security.NonceVerification.Missing
         $paypal_payment_token_id = wc_clean(wp_unslash($_POST['wc-ppcp-gateway-payment-token'] ?? ''));
-        if ($paypal_payment_token_id && 'new' !== $paypal_payment_token_id) {
+        // phpcs:ignore WordPress.Security.NonceVerification.Missing
+        $vault_approved_order_id = wc_clean(wp_unslash($_POST['paypal_order_id'] ?? ''));
+        // Skip saved token handling when an approved order exists (Vault Component Path A).
+        if ($paypal_payment_token_id && 'new' !== $paypal_payment_token_id && !$vault_approved_order_id) {
             $tokens = WC_Payment_Tokens::get_customer_tokens(get_current_user_id());
             foreach ($tokens as $token) {
                 if ($token->get_id() === (int) $paypal_payment_token_id) {
