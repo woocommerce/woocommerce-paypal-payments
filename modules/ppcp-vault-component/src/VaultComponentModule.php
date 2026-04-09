@@ -3,7 +3,10 @@
 declare (strict_types=1);
 namespace WooCommerce\PayPalCommerce\VaultComponent;
 
+use WC_Order;
+use WC_Payment_Token;
 use WC_Payment_Tokens;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
 use WooCommerce\PayPalCommerce\Vaulting\PaymentTokenPayPal;
 use WooCommerce\PayPalCommerce\VaultComponent\Endpoint\CreateVaultOrderEndpoint;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExecutableModule;
@@ -36,6 +39,9 @@ class VaultComponentModule implements ServiceModule, ExecutableModule
         add_action('ppcp_end_button_wrapper_ppcp_gateway', static function () {
             echo '<div id="ppcp-vault-component" style="display:none"></div>';
         });
+        add_action('woocommerce_paypal_payments_after_order_processor', function (WC_Order $wc_order, Order $order) {
+            $this->maybe_update_token_fi_details($order);
+        }, 10, 2);
         add_action('after_setup_theme', function () use ($c) {
             add_filter('woocommerce_paypal_payments_localized_script_data', function (array $localized_script_data) use ($c): array {
                 return $this->maybe_add_vault_component_data($localized_script_data, $c);
@@ -59,5 +65,42 @@ class VaultComponentModule implements ServiceModule, ExecutableModule
         $primary_token = reset($paypal_tokens);
         $localized_script_data['vault_component'] = array('is_eligible' => \true, 'token_id' => $primary_token->get_token(), 'ajax' => array('create_order' => array('endpoint' => \WC_AJAX::get_endpoint(CreateVaultOrderEndpoint::ENDPOINT), 'nonce' => wp_create_nonce(CreateVaultOrderEndpoint::nonce()))));
         return $localized_script_data;
+    }
+    /**
+     * After Path A capture, update the WC payment token with the new FI details
+     * from the PayPal order response.
+     */
+    private function maybe_update_token_fi_details(Order $order): void
+    {
+        // phpcs:ignore WordPress.Security.NonceVerification.Missing
+        $approved_order_id = wc_clean(wp_unslash($_POST['paypal_order_id'] ?? ''));
+        if (!$approved_order_id) {
+            return;
+        }
+        // phpcs:ignore WordPress.Security.NonceVerification.Missing
+        $token_db_id = wc_clean(wp_unslash($_POST['wc-ppcp-gateway-payment-token'] ?? ''));
+        if (!$token_db_id || 'new' === $token_db_id) {
+            return;
+        }
+        $token = WC_Payment_Tokens::get((int) $token_db_id);
+        if (!$token instanceof WC_Payment_Token) {
+            return;
+        }
+        $payment_source = $order->payment_source();
+        if (!$payment_source) {
+            return;
+        }
+        $props = $payment_source->properties();
+        $card_brand = $props->brand ?? '';
+        $card_last4 = $props->last_digits ?? '';
+        if ($card_brand) {
+            $token->update_meta_data('_ppcp_card_brand', $card_brand);
+        }
+        if ($card_last4) {
+            $token->update_meta_data('_ppcp_card_last4', $card_last4);
+        }
+        if ($card_brand || $card_last4) {
+            $token->save();
+        }
     }
 }
