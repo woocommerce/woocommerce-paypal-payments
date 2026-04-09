@@ -24,16 +24,6 @@ const features = [ 'products' ];
 let blockEnabled = true;
 
 if ( cartHasSubscriptionProducts( config.scriptData ) ) {
-	// Don't show buttons on block cart page if using vault v2 and user is not logged in
-	if (
-		! config.scriptData.user.is_logged &&
-		config.scriptData.context === 'cart-block' &&
-		! isPayPalSubscription( config.scriptData ) && // using vaulting
-		! config.scriptData?.save_payment_methods?.id_token // not vault v3
-	) {
-		blockEnabled = false;
-	}
-
 	// Don't show buttons on block cart page if user is not logged in and cart contains free trial product
 	if (
 		! config.scriptData.user.is_logged &&
@@ -56,14 +46,6 @@ if ( cartHasSubscriptionProducts( config.scriptData ) ) {
 	if (
 		isPayPalSubscription( config.scriptData ) &&
 		! config.scriptData.subscription_product_allowed
-	) {
-		blockEnabled = false;
-	}
-
-	// Don't show buttons if cart contains free trial product and the store is not eligible for saving payment methods.
-	if (
-		! config.scriptData.vault_v3_enabled &&
-		config.scriptData.is_free_trial_cart
 	) {
 		blockEnabled = false;
 	}

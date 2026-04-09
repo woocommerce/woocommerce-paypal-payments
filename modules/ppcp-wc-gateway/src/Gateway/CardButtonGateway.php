@@ -17,7 +17,6 @@ use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
 use WooCommerce\PayPalCommerce\WcSubscriptions\FreeTrialHandlerTrait;
 use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
-use WooCommerce\PayPalCommerce\Vaulting\PaymentTokenRepository;
 use WooCommerce\PayPalCommerce\WcGateway\Exception\GatewayGenericException;
 use WooCommerce\PayPalCommerce\WcGateway\Exception\PayPalOrderMissingException;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\OrderProcessor;
@@ -70,13 +69,6 @@ class CardButtonGateway extends \WC_Payment_Gateway {
 	protected $subscription_helper;
 
 	/**
-	 * The payment token repository.
-	 *
-	 * @var PaymentTokenRepository
-	 */
-	protected $payment_token_repository;
-
-	/**
 	 * Whether the plugin is in onboarded state.
 	 *
 	 * @var bool
@@ -122,7 +114,6 @@ class CardButtonGateway extends \WC_Payment_Gateway {
 	 * @param SubscriptionHelper      $subscription_helper The subscription helper.
 	 * @param bool                    $default_enabled Whether the gateway should be enabled by default.
 	 * @param Environment             $environment The environment.
-	 * @param PaymentTokenRepository  $payment_token_repository The payment token repository.
 	 * @param LoggerInterface         $logger  The logger.
 	 * @param callable(string):string $paypal_checkout_url_factory The function return the PayPal checkout URL for the given order ID.
 	 * @param string                  $place_order_button_text The text for the standard "Place order" button.
@@ -136,7 +127,6 @@ class CardButtonGateway extends \WC_Payment_Gateway {
 		SubscriptionHelper $subscription_helper,
 		bool $default_enabled,
 		Environment $environment,
-		PaymentTokenRepository $payment_token_repository,
 		LoggerInterface $logger,
 		callable $paypal_checkout_url_factory,
 		string $place_order_button_text
@@ -150,7 +140,6 @@ class CardButtonGateway extends \WC_Payment_Gateway {
 		$this->default_enabled             = $default_enabled;
 		$this->environment                 = $environment;
 		$this->onboarded                   = $is_connected;
-		$this->payment_token_repository    = $payment_token_repository;
 		$this->logger                      = $logger;
 		$this->paypal_checkout_url_factory = $paypal_checkout_url_factory;
 		$this->order_button_text           = $place_order_button_text;

@@ -1063,18 +1063,6 @@ parameters:
 			path: modules/ppcp-api-client/src/Factory/PayerFactory.php
 
 		-
-			message: '#^Access to an undefined property object\:\:\$source\.$#'
-			identifier: property.notFound
-			count: 1
-			path: modules/ppcp-api-client/src/Factory/PaymentTokenFactory.php
-
-		-
-			message: '#^Method WooCommerce\\PayPalCommerce\\ApiClient\\Factory\\PaymentTokenFactory\:\:from_array\(\) has parameter \$data with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: modules/ppcp-api-client/src/Factory/PaymentTokenFactory.php
-
-		-
 			message: '#^Method WooCommerce\\PayPalCommerce\\ApiClient\\Factory\\PurchaseUnitFactory\:\:should_disable_shipping\(\) has parameter \$items with no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
 			count: 1
@@ -4081,52 +4069,34 @@ parameters:
 			path: modules/ppcp-uninstall/src/UninstallModule.php
 
 		-
-			message: '#^Parameter \#1 \$haystack of function str_contains expects string\|null, int\<min, \-1\>\|int\<1, max\>\|string given\.$#'
-			identifier: argument.type
+			message: '#^Method WooCommerce\\PayPalCommerce\\WcPaymentTokens\\PaymentTokenPayPal\:\:set_email\(\) has no return type specified\.$#'
+			identifier: missingType.return
 			count: 1
-			path: modules/ppcp-vaulting/src/CustomerApprovalListener.php
+			path: modules/ppcp-wc-payment-tokens/src/PaymentTokenPayPal.php
 
 		-
-			message: '#^Method WooCommerce\\PayPalCommerce\\Vaulting\\PaymentTokenHelper\:\:first_token_of_type\(\) has parameter \$wc_tokens with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
+			message: '#^Method WooCommerce\\PayPalCommerce\\WcPaymentTokens\\PaymentTokenVenmo\:\:set_email\(\) has no return type specified\.$#'
+			identifier: missingType.return
 			count: 1
-			path: modules/ppcp-vaulting/src/PaymentTokenHelper.php
+			path: modules/ppcp-wc-payment-tokens/src/PaymentTokenVenmo.php
 
 		-
-			message: '#^Method WooCommerce\\PayPalCommerce\\Vaulting\\PaymentTokenHelper\:\:first_token_of_type\(\) should return WC_Payment_Token\|null but returns object\.$#'
+			message: '#^Method WooCommerce\\PayPalCommerce\\WcPaymentTokens\\WooCommercePaymentTokens\:\:first_token_of_type\(\) should return WC_Payment_Token\|null but returns object\.$#'
 			identifier: return.type
 			count: 1
-			path: modules/ppcp-vaulting/src/PaymentTokenHelper.php
+			path: modules/ppcp-wc-payment-tokens/src/WooCommercePaymentTokens.php
 
 		-
-			message: '#^Method WooCommerce\\PayPalCommerce\\Vaulting\\PaymentTokenPayPal\:\:set_email\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: modules/ppcp-vaulting/src/PaymentTokenPayPal.php
-
-		-
-			message: '#^Method WooCommerce\\PayPalCommerce\\Vaulting\\PaymentTokenRepository\:\:token_contains_source\(\) has parameter \$tokens with no value type specified in iterable type array\.$#'
+			message: '#^Method WooCommerce\\PayPalCommerce\\WcPaymentTokens\\WooCommercePaymentTokens\:\:create_wc_tokens\(\) has parameter \$customer_tokens with no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
 			count: 1
-			path: modules/ppcp-vaulting/src/PaymentTokenRepository.php
+			path: modules/ppcp-wc-payment-tokens/src/WooCommercePaymentTokens.php
 
 		-
-			message: '#^Method WooCommerce\\PayPalCommerce\\Vaulting\\PaymentTokenVenmo\:\:set_email\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: modules/ppcp-vaulting/src/PaymentTokenVenmo.php
-
-		-
-			message: '#^Method WooCommerce\\PayPalCommerce\\Vaulting\\WooCommercePaymentTokens\:\:create_wc_tokens\(\) has parameter \$customer_tokens with no value type specified in iterable type array\.$#'
+			message: '#^Method WooCommerce\\PayPalCommerce\\WcPaymentTokens\\WooCommercePaymentTokens\:\:customer_tokens\(\) return type has no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
 			count: 1
-			path: modules/ppcp-vaulting/src/WooCommercePaymentTokens.php
-
-		-
-			message: '#^Method WooCommerce\\PayPalCommerce\\Vaulting\\WooCommercePaymentTokens\:\:customer_tokens\(\) return type has no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: modules/ppcp-vaulting/src/WooCommercePaymentTokens.php
+			path: modules/ppcp-wc-payment-tokens/src/WooCommercePaymentTokens.php
 
 		-
 			message: '#^Parameter \#1 \$str of function sanitize_text_field expects string, array\|string given\.$#'
@@ -4383,12 +4353,6 @@ parameters:
 		-
 			message: '#^Method WooCommerce\\PayPalCommerce\\WcGateway\\Gateway\\CreditCardGateway\:\:process_payment\(\) return type has no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
-			count: 1
-			path: modules/ppcp-wc-gateway/src/Gateway/CreditCardGateway.php
-
-		-
-			message: '#^Parameter \#1 \$saved_credit_card of method WooCommerce\\PayPalCommerce\\Vaulting\\VaultedCreditCardHandler\:\:handle_payment\(\) expects string, array\|string given\.$#'
-			identifier: argument.type
 			count: 1
 			path: modules/ppcp-wc-gateway/src/Gateway/CreditCardGateway.php
 

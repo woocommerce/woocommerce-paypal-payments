@@ -13,10 +13,9 @@ use WooCommerce\PayPalCommerce\Assets\AssetGetter;
 use WooCommerce\PayPalCommerce\WcGateway\Endpoint\CapturePayPalPayment;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
-use WooCommerce\PayPalCommerce\Vaulting\WooCommercePaymentTokens;
+use WooCommerce\PayPalCommerce\WcPaymentTokens\WooCommercePaymentTokens;
 use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
 use WooCommerce\PayPalCommerce\TestCase;
-use WooCommerce\PayPalCommerce\Vaulting\PaymentTokenRepository;
 use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
 use WooCommerce\PayPalCommerce\WcGateway\FundingSource\FundingSourceRenderer;
 use WooCommerce\PayPalCommerce\WcGateway\Notice\AuthorizeOrderActionNotice;
@@ -43,11 +42,9 @@ class WcGatewayTest extends TestCase
 	private $transactionUrlProvider;
 	private $subscriptionHelper;
 	private $environment;
-	private $paymentTokenRepository;
 	private $logger;
 	private $apiShopCountry;
 	private $paymentTokensEndpoint;
-	private $vaultV3Enabled;
 	private $wcPaymentTokens;
 	private $assetGetter;
 
@@ -68,7 +65,6 @@ class WcGatewayTest extends TestCase
 		$this->transactionUrlProvider = Mockery::mock(TransactionUrlProvider::class);
 		$this->subscriptionHelper = Mockery::mock(SubscriptionHelper::class);
 		$this->environment = Mockery::mock(Environment::class);
-		$this->paymentTokenRepository = Mockery::mock(PaymentTokenRepository::class);
 		$this->logger = Mockery::mock(LoggerInterface::class);
 		$this->settingsProvider->shouldReceive('paypal_gateway_title')->andReturn('PayPal');
 		$this->settingsProvider->shouldReceive('paypal_gateway_description')->andReturn('Pay via PayPal.');
@@ -97,7 +93,6 @@ class WcGatewayTest extends TestCase
 		$this->logger->shouldReceive('error');
 
 		$this->paymentTokensEndpoint = Mockery::mock(PaymentTokensEndpoint::class);
-		$this->vaultV3Enabled = true;
 		$this->wcPaymentTokens = Mockery::mock(WooCommercePaymentTokens::class);
 	}
 
@@ -113,13 +108,11 @@ class WcGatewayTest extends TestCase
 			$this->transactionUrlProvider,
 			$this->subscriptionHelper,
 			$this->environment,
-			$this->paymentTokenRepository,
 			$this->logger,
 			$this->apiShopCountry,
 			static fn ($id) => 'checkoutnow=' . $id,
 			'Pay via PayPal',
 			$this->paymentTokensEndpoint,
-			$this->vaultV3Enabled,
 			$this->wcPaymentTokens,
 			$this->assetGetter,
 			false,

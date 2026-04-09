@@ -43,8 +43,7 @@ return array(
 			$container->get( 'wc-subscriptions.renewal-handler' ),
 			$container->get( 'compat.ppec.mock-gateway' ),
 			$container->get( 'compat.ppec.billing-agreement-converter' ),
-			$container->get( 'woocommerce.logger.woocommerce' ),
-			$container->get( 'vaulting.vault-v3-enabled' )
+			$container->get( 'woocommerce.logger.woocommerce' )
 		);
 	},
 
@@ -53,7 +52,7 @@ return array(
 			'ppcp-smart-button',
 			'ppcp-oxxo',
 			'ppcp-pay-upon-invoice',
-			'ppcp-vaulting-myaccount-payments',
+			'ppcp-wc-payment-tokens-myaccount-payments',
 			'ppcp-gateway-settings',
 			'ppcp-webhooks-status-page',
 			'ppcp-tracking',
