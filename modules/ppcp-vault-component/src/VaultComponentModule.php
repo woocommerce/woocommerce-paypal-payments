@@ -37,9 +37,16 @@ class VaultComponentModule implements ServiceModule, ExecutableModule {
 			'wc_ajax_' . CreateVaultOrderEndpoint::ENDPOINT,
 			static function () use ( $c ) {
 				$endpoint = $c->get( 'vault-component.endpoint.create-order' );
-				assert($endpoint instanceof CreateVaultOrderEndpoint);
+				assert( $endpoint instanceof CreateVaultOrderEndpoint );
 
 				$endpoint->handle_request();
+			}
+		);
+
+		add_action(
+			'ppcp_end_button_wrapper_ppcp_gateway',
+			static function () {
+				echo '<div id="ppcp-vault-component" style="display:none"></div>';
 			}
 		);
 

@@ -14,6 +14,7 @@ import {
 	ButtonEvents,
 	dispatchButtonEvent,
 } from '../Helper/PaymentButtonHelpers';
+import VaultRenderer from '../Renderer/VaultRenderer';
 
 class CheckoutBootstrap {
 	constructor( gateway, renderer, spinner, errorHandler ) {
@@ -23,6 +24,11 @@ class CheckoutBootstrap {
 		this.errorHandler = errorHandler;
 
 		this.standardOrderButtonSelector = ORDER_BUTTON_SELECTOR;
+
+		this.vaultRenderer = PayPalCommerceGateway.vault_component?.is_eligible
+			? new VaultRenderer( PayPalCommerceGateway )
+			: null;
+		this.approvedVaultOrderId = null;
 
 		this.renderer.onButtonsInit(
 			this.gateway.button.wrapper,
@@ -46,6 +52,12 @@ class CheckoutBootstrap {
 		);
 
 		jQuery( document.body ).on( 'updated_checkout', () => {
+			if ( this.vaultRenderer ) {
+				this.vaultRenderer.reset();
+				this.approvedVaultOrderId = null;
+				this.removeVaultOrderIdInput();
+			}
+
 			this.render();
 			this.handleButtonStatus();
 
@@ -85,6 +97,14 @@ class CheckoutBootstrap {
 				this.updateUi();
 			} );
 		} );
+
+		jQuery( document ).on(
+			'change',
+			'input[name="wc-ppcp-gateway-payment-token"]',
+			() => {
+				this.updateUi();
+			}
+		);
 
 		jQuery( document ).on( 'ppcp_should_show_messages', ( e, data ) => {
 			if ( ! this.shouldShowMessages() ) {
@@ -212,6 +232,10 @@ class CheckoutBootstrap {
 		const hasVaultedPaypal =
 			!! PayPalCommerceGateway.vaulted_paypal_email;
 		const useSmartButtons = this.renderer.useSmartButtons ?? true;
+		const showVaultComponent =
+			!! this.vaultRenderer &&
+			isPaypal &&
+			this.isSavedPayPalTokenSelected();
 
 		const paypalButtonWrappers = {
 			...Object.entries( PayPalCommerceGateway.separate_buttons ).reduce(
@@ -227,14 +251,35 @@ class CheckoutBootstrap {
 			( isPaypal && isFreeTrial && hasVaultedPaypal ) ||
 				isNotOurGateway ||
 				isSavedCard ||
-				( isPaypal && ! useSmartButtons ),
+				( isPaypal && ! useSmartButtons ) ||
+				showVaultComponent,
 			'ppcp-hidden'
 		);
 		setVisible( '.ppcp-vaulted-paypal-details', isPaypal );
 		setVisible(
 			this.gateway.button.wrapper,
-			isPaypal && ! ( isFreeTrial && hasVaultedPaypal )
+			isPaypal &&
+				! ( isFreeTrial && hasVaultedPaypal ) &&
+				! showVaultComponent
 		);
+		setVisible( '#ppcp-vault-component', showVaultComponent );
+
+		if ( showVaultComponent && ! this.vaultRenderer.isRendered() ) {
+			this.vaultRenderer.render(
+				( orderID ) => {
+					this.approvedVaultOrderId = orderID;
+					this.injectVaultOrderIdInput( orderID );
+				},
+				() => {
+					this.approvedVaultOrderId = null;
+					this.removeVaultOrderIdInput();
+				}
+			);
+		} else if ( ! showVaultComponent && this.vaultRenderer ) {
+			this.vaultRenderer.close();
+			this.approvedVaultOrderId = null;
+			this.removeVaultOrderIdInput();
+		}
 		setVisible(
 			this.gateway.hosted_fields.wrapper,
 			isCard && ! isSavedCard
@@ -312,6 +357,44 @@ class CheckoutBootstrap {
 		);
 		jQuery( '#ppcp-credit-card-vault' ).attr( 'disabled', true );
 		this.renderer.disableCreditCardFields();
+	}
+
+	isSavedPayPalTokenSelected() {
+		const checkedRadio = document.querySelector(
+			'input[name="wc-ppcp-gateway-payment-token"]:checked'
+		);
+		return (
+			checkedRadio &&
+			checkedRadio.value &&
+			checkedRadio.value !== 'new'
+		);
+	}
+
+	injectVaultOrderIdInput( orderID ) {
+		const form =
+			document.querySelector( 'form.checkout' ) ||
+			document.querySelector( 'form#order_review' );
+		if ( ! form ) {
+			return;
+		}
+
+		let input = form.querySelector( 'input[name="paypal_order_id"]' );
+		if ( ! input ) {
+			input = document.createElement( 'input' );
+			input.type = 'hidden';
+			input.name = 'paypal_order_id';
+			form.appendChild( input );
+		}
+		input.value = orderID;
+	}
+
+	removeVaultOrderIdInput() {
+		const input = document.querySelector(
+			'input[name="paypal_order_id"]'
+		);
+		if ( input ) {
+			input.remove();
+		}
 	}
 
 	enableCreditCardFields() {
