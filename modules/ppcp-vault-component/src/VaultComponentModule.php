@@ -33,6 +33,9 @@ class VaultComponentModule implements ServiceModule, ExecutableModule
             assert($endpoint instanceof CreateVaultOrderEndpoint);
             $endpoint->handle_request();
         });
+        add_action('ppcp_end_button_wrapper_ppcp_gateway', static function () {
+            echo '<div id="ppcp-vault-component" style="display:none"></div>';
+        });
         add_action('after_setup_theme', function () use ($c) {
             add_filter('woocommerce_paypal_payments_localized_script_data', function (array $localized_script_data) use ($c): array {
                 return $this->maybe_add_vault_component_data($localized_script_data, $c);
