@@ -113,7 +113,7 @@ const testSubscriptionOrderCustomer = ( testOrder: ShopOrder ) => {
 				await expect(
 					customerSubscriptions.paymentMethod(),
 					`Assert payment method is ${ payment.gateway.title }`
-				).toHaveText( new RegExp( payment.gateway.titleInWcSettings ?? payment.gateway.title ) );
+				).toHaveText( new RegExp( payment.gateway.title ) );
 				// TODO: additional assertions?
 
 				await customerPaymentMethods.visit();
