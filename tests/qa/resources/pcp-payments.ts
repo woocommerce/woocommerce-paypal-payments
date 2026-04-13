@@ -70,6 +70,11 @@ const payUponInvoice: Pcp.Payment = {
 	birthDate: '01.01.1991',
 };
 
+const googlePay: Pcp.Payment = {
+	gateway: gateways.googlepay,
+	card: cards.visa,
+};
+
 export const payments = {
 	payPal,
 	payPalVaulted,
@@ -83,4 +88,5 @@ export const payments = {
 	debitOrCreditCard,
 	standardCardButton,
 	payUponInvoice,
+	googlePay,
 };
