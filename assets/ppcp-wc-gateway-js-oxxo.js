@@ -1,0 +1,1 @@
+document.addEventListener("DOMContentLoaded",function(){jQuery("form.checkout").on("checkout_place_order_success",function(e,n){if(n.payer_action&&""!==n.payer_action){var t=screen.width/2,o=screen.height/2,c=t-t/2,i=o-o/2;window.open(n.payer_action,"_blank","popup, width="+t+", height="+o+", top="+i+", left="+c)}})});
