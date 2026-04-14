@@ -486,21 +486,21 @@ class SettingsProvider
     {
         switch ($location) {
             case 'product':
-                return $this->styling_product();
+                return clone $this->styling_product();
             case 'cart':
             case 'cart-block':
-                return $this->styling_cart();
+                return clone $this->styling_cart();
             case 'mini-cart':
             case 'mini_cart':
-                return $this->styling_mini_cart();
+                return clone $this->styling_mini_cart();
             case 'checkout-block':
             case 'express_checkout':
-                return $this->styling_express_checkout();
+                return clone $this->styling_express_checkout();
             case 'checkout':
             case 'classic_checkout':
             case 'pay-now':
             default:
-                return $this->styling_classic_checkout();
+                return clone $this->styling_classic_checkout();
         }
     }
     /**
@@ -616,13 +616,6 @@ class SettingsProvider
         return apply_filters('woocommerce_paypal_payments_googlepay_button_language', $this->button_language());
     }
     // ----- PAY LATER -----
-    /**
-     * Whether Pay Later messaging styling should be customized per location.
-     */
-    public function pay_later_styling_per_location(): bool
-    {
-        return $this->styling_settings->get_pay_later_styling_per_location();
-    }
     /**
      * Whether the given gateway is enabled.
      */

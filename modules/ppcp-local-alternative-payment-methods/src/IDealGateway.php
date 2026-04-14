@@ -96,7 +96,7 @@ class IDealGateway extends WC_Payment_Gateway
         if (!$wc_order instanceof WC_Order) {
             return array('result' => 'failure', 'redirect' => wc_get_checkout_url());
         }
-        $wc_order->update_status('on-hold', __('Awaiting iDeal to confirm the payment.', 'woocommerce-paypal-payments'));
+        $wc_order->update_status('pending', __('Awaiting iDeal to confirm the payment.', 'woocommerce-paypal-payments'));
         $purchase_unit = $this->purchase_unit_factory->from_wc_order($wc_order);
         $amount = $purchase_unit->amount()->to_array();
         $request_body = array('intent' => 'CAPTURE', 'payment_source' => array('ideal' => array('country_code' => $wc_order->get_billing_country(), 'name' => $wc_order->get_billing_first_name() . ' ' . $wc_order->get_billing_last_name(), 'experience_context' => $this->experience_context_builder->with_order_return_urls($wc_order)->build()->to_array())), 'processing_instruction' => 'ORDER_COMPLETE_ON_PAYMENT_APPROVAL', 'purchase_units' => array(array('reference_id' => $purchase_unit->reference_id(), 'amount' => array('currency_code' => $amount['currency_code'], 'value' => $amount['value']), 'custom_id' => $purchase_unit->custom_id(), 'invoice_id' => $purchase_unit->invoice_id())));
