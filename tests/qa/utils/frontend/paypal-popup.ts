@@ -205,7 +205,7 @@ export class PayPalPopup {
 
 	trySubmitPayment = async () => {
 		await this.page.waitForLoadState();
-		await expect( this.loadSpinnerContainer() ).not.toBeVisible();
+		await expect( this.loadSpinnerContainer(), 'Assert load spinner is not visible' ).not.toBeVisible();
 
 		while ( ! this.page.isClosed() ) {
 			// Race click with popup closure
@@ -222,10 +222,16 @@ export class PayPalPopup {
 
 			// Optional: wait for spinner to disappear
 			try {
-				await expect( this.loadSpinnerContainer() ).toBeVisible( {
+				await expect(
+					this.loadSpinnerContainer(),
+					'Assert load spinner is visible'
+			 	).toBeVisible( {
 					timeout: 1000,
 				} );
-				await expect( this.loadSpinnerContainer() ).not.toBeVisible( {
+				await expect(
+					this.loadSpinnerContainer(),
+					'Assert load spinner is not visible'
+				).not.toBeVisible( {
 					timeout: 4000,
 				} );
 			} catch {

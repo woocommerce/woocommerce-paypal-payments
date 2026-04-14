@@ -24,7 +24,7 @@ import {
 	ShopOrder,
 	ShopConfig,
 } from '../resources';
-import { getCustomerStorageStateName } from './helpers';
+import { getCustomerStorageStateName } from './helpers/';
 import urls from './urls';
 
 export class Utils {

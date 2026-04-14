@@ -28,7 +28,7 @@ class PaymentSettingsMigrationTest extends TestCase {
 	 */
 	private array $local_apms;
 
-	protected function setUp(): void {
+	public function setUp(): void {
 		parent::setUp();
 		$container              = $this->getContainer();
 		$this->payment_settings = $container->get( 'settings.data.payment' );
@@ -36,7 +36,7 @@ class PaymentSettingsMigrationTest extends TestCase {
 		$this->cleanUp();
 	}
 
-	protected function tearDown(): void {
+	public function tearDown(): void {
 		$this->cleanUp();
 		parent::tearDown();
 	}
@@ -44,6 +44,7 @@ class PaymentSettingsMigrationTest extends TestCase {
 	private function cleanUp(): void {
 		delete_option( self::OLD_SETTINGS_OPTION );
 		delete_option( 'woocommerce-ppcp-data-payment' );
+		$this->payment_settings = new PaymentSettings();
 		delete_option( MigrationManager::OPTION_NAME_MIGRATION_IS_DONE );
 
 		foreach ( $this->local_apms as $apm ) {

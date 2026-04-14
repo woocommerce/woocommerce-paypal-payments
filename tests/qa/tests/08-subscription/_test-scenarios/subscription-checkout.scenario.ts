@@ -40,8 +40,9 @@ const testSubscriptionOrderGuest = ( testOrder: ShopOrder ) => {
 				await customerSubscriptions.visit( subscriptionId );
 				await customerSubscriptions.assertUrl( subscriptionId );
 				await expect(
-					customerSubscriptions.paymentMethod()
-				).toHaveText( new RegExp( payment.gateway.titleInWcSettings ?? payment.gateway.title ) );
+					customerSubscriptions.paymentMethod(),
+					`Assert payment method is ${ payment.gateway.title }`
+				).toHaveText( new RegExp( payment.gateway.title ) );
 				// TODO: additional assertions?
 
 				await customerPaymentMethods.visit();
@@ -110,8 +111,9 @@ const testSubscriptionOrderCustomer = ( testOrder: ShopOrder ) => {
 				await customerSubscriptions.visit( subscriptionId );
 				await customerSubscriptions.assertUrl( subscriptionId );
 				await expect(
-					customerSubscriptions.paymentMethod()
-				).toHaveText( new RegExp( payment.gateway.titleInWcSettings ?? payment.gateway.title ) );
+					customerSubscriptions.paymentMethod(),
+					`Assert payment method is ${ payment.gateway.title }`
+				).toHaveText( new RegExp( payment.gateway.title ) );
 				// TODO: additional assertions?
 
 				await customerPaymentMethods.visit();

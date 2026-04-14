@@ -40,7 +40,9 @@ use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayUponInvoice\PayUponInvoiceGateway;
 use WooCommerce\PayPalCommerce\Settings\Service\SettingsDataManager;
 use WooCommerce\PayPalCommerce\Settings\DTO\ConfigurationFlagsDTO;
+use WooCommerce\PayPalCommerce\Settings\DTO\MerchantConnectionDTO;
 use WooCommerce\PayPalCommerce\Settings\Enum\ProductChoicesEnum;
+use WooCommerce\PayPalCommerce\Settings\Enum\SellerTypeEnum;
 use WooCommerce\PayPalCommerce\Settings\Data\GeneralSettings;
 use WooCommerce\PayPalCommerce\Settings\Data\PaymentSettings;
 use WooCommerce\PayPalCommerce\Axo\Helper\CompatibilityChecker;
@@ -94,25 +96,67 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 					return;
 				}
 
-				$migration_manager = $container->get( 'settings.service.data-migration' );
-				assert( $migration_manager instanceof MigrationManager );
+				self::pre_populate_credentials( $container );
 
-				$migration_manager->migrate();
+				$run_migration = static function () use ( $container ): void {
+					$migration_manager = $container->get( 'settings.service.data-migration' );
+					assert( $migration_manager instanceof MigrationManager );
+
+					$migration_manager->migrate();
+				};
+
+				// Timing is important - migration saves gateway options, which triggers WooCommerce
+				// hooks that require WC to be fully initialized.
+				if ( did_action( 'woocommerce_init' ) ) {
+					$run_migration();
+				} else {
+					add_action( 'woocommerce_init', $run_migration );
+				}
 			}
 		);
 
 		add_action(
 			'admin_init',
 			function () use ( $container ): void {
-				if ( get_option( MigrationManager::OPTION_NAME_MIGRATION_IS_DONE ) !== '1' ) {
-					$legacy_settings = (array) get_option( 'woocommerce-ppcp-settings', array() );
-					if ( ! empty( $legacy_settings['client_id'] ) ) {
-						$migration_manager = $container->get( 'settings.service.data-migration' );
-						assert( $migration_manager instanceof MigrationManager );
-						$migration_manager->migrate();
-					}
+				if ( get_option( MigrationManager::OPTION_NAME_MIGRATION_IS_DONE ) === '1' ) {
+					return;
 				}
 
+				$legacy_settings = (array) get_option( 'woocommerce-ppcp-settings', array() );
+				if ( empty( $legacy_settings['client_id'] ) ) {
+					return;
+				}
+
+				self::pre_populate_credentials( $container );
+
+				$migration_manager = $container->get( 'settings.service.data-migration' );
+				assert( $migration_manager instanceof MigrationManager );
+				$migration_manager->migrate();
+
+				$migration_done = get_option( MigrationManager::OPTION_NAME_MIGRATION_IS_DONE );
+
+				if ( (string) $migration_done !== '1' ) {
+					add_action(
+						'admin_notices',
+						static function (): void {
+							printf(
+								'<div class="notice notice-warning"><p>%s</p></div>',
+								esc_html__(
+									'PayPal Payments: Settings migration could not be completed because the PayPal API is temporarily unavailable. It will retry automatically on the next page load.',
+									'woocommerce-paypal-payments'
+								)
+							);
+						}
+					);
+				}
+			}
+		);
+
+		// Resolve unknown seller type on all pages (not just admin), so frontend
+		// page loads after migration also fix the seller_type saved as 'unknown'.
+		add_action(
+			'init',
+			static function () use ( $container ): void {
 				$seller_type_resolver = $container->get( 'settings.service.seller-type-resolver' );
 				assert( $seller_type_resolver instanceof SellerTypeResolver );
 
@@ -168,7 +212,8 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 			 */
 			static function ( $previous_version ) use ( $container ): void {
 				// Only run this migration logic when updating from version 3.1.1 or older.
-				if ( $previous_version && version_compare( $previous_version, '3.1.1', 'gt' ) ) {
+				// Skip on fresh installs (no previous version) since there's nothing to migrate.
+				if ( ! $previous_version || version_compare( $previous_version, '3.1.1', 'gt' ) ) {
 					return;
 				}
 
@@ -671,31 +716,6 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 			}
 		);
 
-		/**
-		 * Implement the mutually exclusive BCDC or ACDC rule:
-		 * If the current merchant is _not BCDC eligible_, we disable the "card" funding source.
-		 * This effectively hides the black Standard Card button from the express payment block
-		 * and the PayPal smart button stack in classic checkout.
-		 */
-		add_filter(
-			'woocommerce_paypal_payments_sdk_disabled_funding_hook',
-			static function ( array $disable_funding ) use ( $container ) {
-				// Already disabled, no correction needed.
-				if ( in_array( 'card', $disable_funding, true ) ) {
-					return $disable_funding;
-				}
-
-				$dcc_configuration = $container->get( 'wcgateway.configuration.card-configuration' );
-				assert( $dcc_configuration instanceof CardPaymentsConfiguration );
-
-				if ( ! $dcc_configuration->is_bcdc_enabled() ) {
-					$disable_funding[] = 'card';
-				}
-
-				return $disable_funding;
-			}
-		);
-
 		add_action(
 			'woocommerce_paypal_payments_gateway_migrate',
 			/**
@@ -872,6 +892,44 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 	}
 
 	/**
+	 * Pre-populates GeneralSettings with legacy credentials before migration
+	 * DI services are resolved.
+	 *
+	 * DI services like api.key, api.secret, api.merchant_id are resolved from
+	 * SettingsProvider → GeneralSettings → woocommerce-ppcp-data-common.
+	 * This option does not exist before migration, so these DI services resolve
+	 * to empty strings. Pre-populating ensures PartnersEndpoint has working
+	 * credentials during migration so seller_status() API call succeeds.
+	 *
+	 * @param ContainerInterface $container The DI container.
+	 */
+	private static function pre_populate_credentials( ContainerInterface $container ): void {
+		$general = $container->get( 'settings.data.general' );
+		assert( $general instanceof GeneralSettings );
+
+		if ( $general->is_merchant_connected() ) {
+			return;
+		}
+
+		$legacy = (array) get_option( 'woocommerce-ppcp-settings', array() );
+		if ( empty( $legacy['client_id'] ) || empty( $legacy['merchant_id'] ) ) {
+			return;
+		}
+
+		$general->set_merchant_data(
+			new MerchantConnectionDTO(
+				! empty( $legacy['sandbox_on'] ),
+				$legacy['client_id'],
+				$legacy['client_secret'] ?? '',
+				$legacy['merchant_id'],
+				$legacy['merchant_email'] ?? '',
+				'',
+				SellerTypeEnum::UNKNOWN
+			)
+		);
+	}
+
+	/**
 	 * Checks the branded-only state and applies relevant site-wide feature limitations, if needed.
 	 *
 	 * @param ContainerInterface $container The DI container provider.
@@ -885,40 +943,6 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 		if ( ! $settings->own_brand_only() ) {
 			return;
 		}
-
-		/**
-		 * Ensure BCDC remains functional in branded-only mode.
-		 *
-		 * In branded-only mode, white-label payment methods (ACDC, Apple Pay, Google Pay)
-		 * are disabled, but the PayPal-branded card button (BCDC) should remain functional.
-		 *
-		 * BCDC requires the 'card' funding source to be enabled. This filter prevents 'card'
-		 * from being added to the disabled funding sources list on checkout pages, ensuring
-		 * the BCDC button remains clickable and functional for merchants using branded-only mode.
-		 */
-		add_filter(
-			'woocommerce_paypal_payments_sdk_disabled_funding_hook',
-			static function ( array $disable_funding, array $flags ) use ( $container ) {
-				$allowed_context = array( 'checkout-block', 'checkout' );
-				if ( ! in_array( $flags['context'], $allowed_context, true ) ) {
-					return $disable_funding;
-				}
-
-				$payment_settings = $container->get( 'settings.data.payment' );
-				assert( $payment_settings instanceof PaymentSettings );
-
-				if ( ! $payment_settings->is_method_enabled( CardButtonGateway::ID ) ) {
-					return $disable_funding;
-				}
-
-				return array_filter(
-					$disable_funding,
-					static fn( string $funding_source ) => $funding_source !== 'card'
-				);
-			},
-			10,
-			2
-		);
 
 		/**
 		 * Prevent white-label payment methods from being enabled during onboarding.

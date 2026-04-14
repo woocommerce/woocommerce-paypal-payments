@@ -53,12 +53,11 @@ class StylingSettings extends AbstractDataModel {
 	 */
 	protected function get_defaults(): array {
 		return array(
-			'cart'                           => new LocationStylingDTO( 'cart' ),
-			'classic_checkout'               => new LocationStylingDTO( 'classic_checkout' ),
-			'express_checkout'               => new LocationStylingDTO( 'express_checkout' ),
-			'mini_cart'                      => new LocationStylingDTO( 'mini_cart', false ),
-			'product'                        => new LocationStylingDTO( 'product' ),
-			'pay_later_styling_per_location' => false,
+			'cart'             => new LocationStylingDTO( 'cart' ),
+			'classic_checkout' => new LocationStylingDTO( 'classic_checkout' ),
+			'express_checkout' => new LocationStylingDTO( 'express_checkout' ),
+			'mini_cart'        => new LocationStylingDTO( 'mini_cart', false ),
+			'product'          => new LocationStylingDTO( 'product' ),
 		);
 	}
 
@@ -155,14 +154,6 @@ class StylingSettings extends AbstractDataModel {
 	 */
 	public function set_product( $styles ): void {
 		$this->data['product'] = $this->sanitizer->sanitize_location_style( $styles );
-	}
-
-	public function get_pay_later_styling_per_location(): bool {
-		return (bool) $this->data['pay_later_styling_per_location'];
-	}
-
-	public function set_pay_later_styling_per_location( bool $enabled ): void {
-		$this->data['pay_later_styling_per_location'] = $enabled;
 	}
 
 	/**

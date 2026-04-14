@@ -11,7 +11,7 @@ import {
  */
 import { Pcp } from '../resources';
 import urls from './urls';
-import { generateRandomString } from './helpers';
+import { generateRandomString } from './helpers/';
 
 /**
  * Class for REST API interactions with PCP Settings.

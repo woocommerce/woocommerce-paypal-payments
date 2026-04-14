@@ -28,7 +28,7 @@ class BrMigrationManagerTest extends AbstractMigrationManager {
 				'vault_enabled_dcc'              => false,
 				'fraudnet_enabled'               => true,
 				'capture_on_status_change'       => '',
-				'capture_for_virtual_only'       => '',
+				'capture_for_virtual_only'       => false,
 				'card_billing_data_mode'         => 'minimal_input',
 				'allow_card_button_gateway'      => true,
 			)

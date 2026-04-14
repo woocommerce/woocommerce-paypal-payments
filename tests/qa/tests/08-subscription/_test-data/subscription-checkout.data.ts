@@ -75,7 +75,7 @@ const vaultingCustomer: ShopOrder[] = [
 	},
 	{
 		// https://inpsyde.atlassian.net/browse/PCP-4898
-		title: 'PCP-4898 | Vaulting subscription - Transaction - Checkout - ACDC - Order by customer @Critical',
+		title: 'PCP-4898 | Vaulting subscription - Transaction - Checkout - ACDC - Order by customer @Critical @Smoke',
 		...orders.default,
 		payment: payments.acdc,
 		merchant,

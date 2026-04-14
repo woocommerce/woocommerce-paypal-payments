@@ -132,8 +132,8 @@ export default defineConfig< BaseExtend >( {
 			fullyParallel: false,
 		},
 		{
-			name: 'setup-store',
-			testMatch: /store\.setup\.ts/,
+			name: 'setup-pcp',
+			testMatch: /pcp\.setup\.ts/,
 			fullyParallel: false,
 		},
 		{
