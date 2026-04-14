@@ -17,8 +17,24 @@ export class PcpPaymentMethods extends PcpAdminPage {
 			has: this.paymentMethodTitle( title ),
 		} );
 	paymentMethodContainers = () => this.page.locator( '.ppcp--method-item' );
+
+	// Group containers — IDs come from TabPaymentMethods.js PaymentMethodCard `id` props
+	payPalCheckoutContainer = () =>
+		this.page.locator( '#ppcp-paypal-checkout-card' );
 	onlineCardPaymentsContainer = () =>
 		this.page.locator( '#ppcp-card-payments-card' );
+	alternativePaymentMethodsContainer = () =>
+		this.page.locator( '#ppcp-alternative-payments-card' );
+
+	// Per-group item counts (scoped to each section)
+	payPalCheckoutMethodItems = () =>
+		this.payPalCheckoutContainer().locator( '.ppcp--method-item' );
+	onlineCardPaymentMethodItems = () =>
+		this.onlineCardPaymentsContainer().locator( '.ppcp--method-item' );
+	alternativePaymentMethodItems = () =>
+		this.alternativePaymentMethodsContainer().locator(
+			'.ppcp--method-item'
+		);
 	paymentMethodContainer = ( title: string ) =>
 		this.paymentMethodContainers().filter( {
 			has: this.paymentMethodTitleContainer( title ),
