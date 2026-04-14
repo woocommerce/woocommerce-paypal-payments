@@ -100,11 +100,7 @@ abstract class AbstractCartEndpoint implements EndpointInterface {
 	protected function add_products( array $products ): bool {
 		$this->cart->empty_cart( false );
 
-		try {
-			$this->cart_products->add_products( $products );
-		} catch ( Exception $e ) {
-			$this->handle_error();
-		}
+		$this->cart_products->add_products( $products );
 
 		return true;
 	}
