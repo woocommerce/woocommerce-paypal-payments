@@ -151,13 +151,7 @@ class ApproveSubscriptionEndpoint implements EndpointInterface {
 			wp_send_json_success();
 
 		} catch ( NonceValidationException $error ) {
-			wp_send_json_error(
-				array(
-					'message' => $error->getMessage(),
-					'code'    => $error->getCode(),
-				),
-				400
-			);
+			wp_send_json_error( array( 'message' => $error->getMessage() ), 400 );
 		} catch ( Exception $error ) {
 			$this->logger->error( 'Subscription approve failed: ' . $error->getMessage() );
 

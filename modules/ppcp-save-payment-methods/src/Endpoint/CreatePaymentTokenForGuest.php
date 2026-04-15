@@ -69,14 +69,7 @@ class CreatePaymentTokenForGuest implements EndpointInterface {
 		try {
 			$data = $this->request_data->read_request( $this->nonce() );
 		} catch ( NonceValidationException $error ) {
-			wp_send_json_error(
-				array(
-					'message' => $error->getMessage(),
-					'code'    => $error->getCode(),
-				),
-				400
-			);
-			return;
+			wp_send_json_error( array( 'message' => $error->getMessage() ), 400 );
 		}
 
 		/**
