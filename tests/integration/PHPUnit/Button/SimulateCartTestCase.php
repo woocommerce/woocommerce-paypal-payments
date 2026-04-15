@@ -8,7 +8,6 @@ use WC_Product_Variable;
 use WC_Product_Variation;
 use WooCommerce\PayPalCommerce\Button\Helper\CartProductsHelper;
 use WooCommerce\PayPalCommerce\Button\Helper\IsolatedCartSimulator;
-use WooCommerce\PayPalCommerce\Button\Helper\ProductPriceCalculator;
 use WooCommerce\PayPalCommerce\Tests\Integration\TestCase;
 use WooCommerce\WooCommerce\Logging\Logger\NullLogger;
 
@@ -17,18 +16,13 @@ abstract class SimulateCartTestCase extends TestCase {
 	/** @var int[] */
 	protected $postIds = [];
 
-	/** @var ProductPriceCalculator */
-	protected $price_calculator;
-
 	/** @var IsolatedCartSimulator */
 	protected $cart_simulator;
 
 	public function setUp(): void {
 		parent::setUp();
 
-		$data_store             = \WC_Data_Store::load( 'product' );
-		$this->price_calculator = new ProductPriceCalculator( $data_store );
-
+		$data_store           = \WC_Data_Store::load( 'product' );
 		$cart_products        = new CartProductsHelper( $data_store );
 		$this->cart_simulator = new IsolatedCartSimulator( $cart_products, new NullLogger() );
 
@@ -94,7 +88,7 @@ abstract class SimulateCartTestCase extends TestCase {
 	}
 
 	/**
-	 * Builds a product data array in the format expected by the calculator/simulator.
+	 * Builds a product data array in the format expected by the simulator.
 	 *
 	 * @param \WC_Product $product The product.
 	 * @param int         $quantity Quantity.

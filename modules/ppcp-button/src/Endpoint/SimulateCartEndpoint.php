@@ -9,7 +9,6 @@ use WooCommerce\PayPalCommerce\Button\Assets\SmartButton;
 use WooCommerce\PayPalCommerce\Button\Assets\SmartButtonInterface;
 use WooCommerce\PayPalCommerce\Button\Helper\CartProductsHelper;
 use WooCommerce\PayPalCommerce\Button\Helper\IsolatedCartSimulator;
-use WooCommerce\PayPalCommerce\Button\Helper\ProductPriceCalculator;
 
 class SimulateCartEndpoint extends AbstractCartEndpoint {
 
@@ -17,24 +16,20 @@ class SimulateCartEndpoint extends AbstractCartEndpoint {
 
 	private SmartButtonInterface $smart_button;
 
-	private ProductPriceCalculator $price_calculator;
-
 	private IsolatedCartSimulator $cart_simulator;
 
 	public function __construct(
 		SmartButtonInterface $smart_button,
 		RequestData $request_data,
 		CartProductsHelper $cart_products,
-		ProductPriceCalculator $price_calculator,
 		IsolatedCartSimulator $cart_simulator,
 		LoggerInterface $logger
 	) {
-		$this->smart_button     = $smart_button;
-		$this->request_data     = $request_data;
-		$this->cart_products    = $cart_products;
-		$this->price_calculator = $price_calculator;
-		$this->cart_simulator   = $cart_simulator;
-		$this->logger           = $logger;
+		$this->smart_button  = $smart_button;
+		$this->request_data  = $request_data;
+		$this->cart_products = $cart_products;
+		$this->cart_simulator = $cart_simulator;
+		$this->logger        = $logger;
 
 		$this->logger_tag = 'simulation';
 	}
@@ -64,14 +59,9 @@ class SimulateCartEndpoint extends AbstractCartEndpoint {
 			return;
 		}
 
-		if ( $this->price_calculator->needs_cart_simulation( $products ) ) {
-			$result       = $this->cart_simulator->simulate( $products );
-			$total        = $result['total'];
-			$shipping_fee = $result['shipping_fee'];
-		} else {
-			$total        = $this->price_calculator->calculate_total( $products );
-			$shipping_fee = 0.0;
-		}
+		$result       = $this->cart_simulator->simulate( $products );
+		$total        = $result['total'];
+		$shipping_fee = $result['shipping_fee'];
 
 		// Process filters.
 		$pay_later_enabled           = true;
