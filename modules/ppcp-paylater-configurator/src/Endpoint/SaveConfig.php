@@ -12,6 +12,7 @@ namespace WooCommerce\PayPalCommerce\PayLaterConfigurator\Endpoint;
 use Psr\Log\LoggerInterface;
 use Throwable;
 use WooCommerce\PayPalCommerce\Button\Endpoint\RequestData;
+use WooCommerce\PayPalCommerce\Button\Exception\NonceValidationException;
 use WooCommerce\PayPalCommerce\Settings\Data\PayLaterMessagingSettings;
 
 /**
@@ -52,6 +53,8 @@ class SaveConfig {
 			$this->save_config( $data['config']['config'] );
 
 			wp_send_json_success();
+		} catch ( NonceValidationException $error ) {
+			wp_send_json_error( array( 'message' => $error->getMessage() ), 400 );
 		} catch ( Throwable $error ) {
 			$this->logger->error( "SaveConfig execution failed. {$error->getMessage()} {$error->getFile()}:{$error->getLine()}" );
 
