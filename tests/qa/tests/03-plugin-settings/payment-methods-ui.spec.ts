@@ -25,7 +25,7 @@ for ( const testData of paymentMethodsData.defaultUi ) {
 	} = testData;
 
 	test(
-		`${ testKey } | Settings - US - Payment Methods - Default UI — groups, toggles, modals, live PayPal buttons`,
+		`${ testKey } | Settings - US - Payment Methods - Default UI — groups, toggles, modals, live PayPal buttons @Critical`,
 		async (
 			{
 				utils,
