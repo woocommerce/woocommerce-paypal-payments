@@ -55,6 +55,7 @@ const acdc: Pcp.Gateway = {
 	description: '',
 	title: 'Debit & Credit Cards',
 	titleInPcpSettings: 'Advanced Credit and Debit Card Payments',
+	titleInModal: 'Debit & Credit Cards',
 	titleInWcSettings: 'Advanced Card Processing',
 	hasSettingsButton: true,
 	enabled: false,
@@ -76,6 +77,7 @@ const fastlane: Pcp.Gateway = {
 	description: '',
 	title: 'Fastlane',
 	titleInPcpSettings: 'Fastlane by PayPal',
+	titleInModal: 'Debit & Credit Cards',
 	titleInWcSettings: 'Fastlane Debit & Credit Cards',
 	hasSettingsButton: true,
 	dependsOn: 'acdc',
@@ -127,7 +129,8 @@ const bancontact: Pcp.Gateway = {
 	titleInPcpSettings: 'Bancontact',
 	titleInWcSettings: 'Bancontact (via PayPal)',
 	hasSettingsButton: true,
-	enabled: true,
+	// Disabled by default after a fresh connect; enabled only in country-specific test setups.
+	enabled: false,
 };
 
 const blik: Pcp.Gateway = {
@@ -138,11 +141,12 @@ const blik: Pcp.Gateway = {
 
 	id: 'ppcp-blik',
 	description: '',
-	title: 'BLIK',
-	titleInPcpSettings: 'BLIK',
+	title: 'Blik',
+	titleInPcpSettings: 'Blik',
 	titleInWcSettings: ' (via PayPal)',
 	hasSettingsButton: true,
-	enabled: true,
+	// Disabled by default after a fresh connect; enabled only in country-specific test setups.
+	enabled: false,
 };
 
 const eps: Pcp.Gateway = {
@@ -153,11 +157,12 @@ const eps: Pcp.Gateway = {
 
 	id: 'ppcp-eps',
 	description: '',
-	title: 'eps',
-	titleInPcpSettings: 'eps',
+	title: 'EPS',
+	titleInPcpSettings: 'EPS',
 	titleInWcSettings: 'EPS (via PayPal)',
 	hasSettingsButton: true,
-	enabled: true,
+	// Disabled by default after a fresh connect; enabled only in country-specific test setups.
+	enabled: false,
 };
 
 const ideal: Pcp.Gateway = {
@@ -168,11 +173,12 @@ const ideal: Pcp.Gateway = {
 
 	id: 'ppcp-ideal',
 	description: '',
-	title: 'iDEAL',
-	titleInPcpSettings: 'iDEAL',
+	title: 'iDeal',
+	titleInPcpSettings: 'iDeal',
 	titleInWcSettings: ' (via PayPal)',
 	hasSettingsButton: true,
-	enabled: true,
+	// Disabled by default after a fresh connect; enabled only in country-specific test setups.
+	enabled: false,
 };
 
 const mybank: Pcp.Gateway = {
@@ -186,7 +192,8 @@ const mybank: Pcp.Gateway = {
 	titleInPcpSettings: 'MyBank',
 	titleInWcSettings: ' (via PayPal)',
 	hasSettingsButton: true,
-	enabled: true,
+	// Disabled by default after a fresh connect; enabled only in country-specific test setups.
+	enabled: false,
 };
 
 const przelewy24: Pcp.Gateway = {
@@ -200,7 +207,8 @@ const przelewy24: Pcp.Gateway = {
 	titleInPcpSettings: 'Przelewy24',
 	titleInWcSettings: ' (via PayPal)',
 	hasSettingsButton: true,
-	enabled: true,
+	// Disabled by default after a fresh connect; enabled only in country-specific test setups.
+	enabled: false,
 };
 
 const trustly: Pcp.Gateway = {
@@ -215,7 +223,8 @@ const trustly: Pcp.Gateway = {
 	titleInPcpSettings: 'Trustly',
 	titleInWcSettings: 'Trustly (via PayPal)',
 	hasSettingsButton: true,
-	enabled: true,
+	// Disabled by default after a fresh connect; enabled only in country-specific test setups.
+	enabled: false,
 };
 
 const multibanco: Pcp.Gateway = {
@@ -229,7 +238,8 @@ const multibanco: Pcp.Gateway = {
 	titleInPcpSettings: 'Multibanco',
 	titleInWcSettings: 'Multibanco (via PayPal)',
 	hasSettingsButton: true,
-	enabled: true,
+	// Disabled by default after a fresh connect; enabled only in country-specific test setups.
+	enabled: false,
 };
 
 const oxxo: Pcp.Gateway = {
@@ -243,7 +253,8 @@ const oxxo: Pcp.Gateway = {
 	titleInPcpSettings: 'OXXO',
 	titleInWcSettings: 'OXXO (via PayPal)',
 	hasSettingsButton: true,
-	enabled: true,
+	// Disabled by default after a fresh connect; enabled only in country-specific test setups.
+	enabled: false,
 };
 
 const payUponInvoice: Pcp.Gateway = {
@@ -259,7 +270,8 @@ const payUponInvoice: Pcp.Gateway = {
 	titleInPcpSettings: 'Pay upon Invoice',
 	titleInWcSettings: 'Pay upon Invoice',
 	hasSettingsButton: true,
-	enabled: true,
+	// Disabled by default after a fresh connect; enabled only in country-specific test setups.
+	enabled: false,
 };
 
 const debitOrCreditCard: Pcp.Gateway = {
