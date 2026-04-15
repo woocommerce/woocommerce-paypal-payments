@@ -307,7 +307,6 @@ class CreateOrderEndpoint implements \WooCommerce\PayPalCommerce\Button\Endpoint
             wp_send_json_success($this->make_response($order));
         } catch (NonceValidationException $error) {
             wp_send_json_error(array('message' => $error->getMessage()), 400);
-            return;
         } catch (ValidationException $error) {
             $response = array('message' => $error->getMessage(), 'errors' => $error->errors(), 'refresh' => isset(WC()->session->refresh_totals));
             unset(WC()->session->refresh_totals);

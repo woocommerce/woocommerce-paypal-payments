@@ -38,7 +38,6 @@ class AxoScriptAttributes implements EndpointInterface
             $this->request_data->read_request($this->nonce());
         } catch (NonceValidationException $error) {
             wp_send_json_error(array('message' => $error->getMessage()), 400);
-            return;
         }
         if (!$this->axo_eligible || is_user_logged_in() || $this->context->is_paypal_continuation()) {
             wp_send_json_error('Failed to load axo script attributes.');

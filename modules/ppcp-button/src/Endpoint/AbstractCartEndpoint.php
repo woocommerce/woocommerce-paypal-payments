@@ -123,7 +123,6 @@ abstract class AbstractCartEndpoint implements \WooCommerce\PayPalCommerce\Butto
             $data = $this->request_data->read_request($this->nonce());
         } catch (NonceValidationException $error) {
             wp_send_json_error(array('message' => $error->getMessage()), 400);
-            return \false;
         }
         $products = $this->cart_products->products_from_data($data);
         if (!$products) {

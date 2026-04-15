@@ -80,7 +80,6 @@ class VoidOrderEndpoint
             $request = $this->request_data->read_request(self::nonce());
         } catch (NonceValidationException $error) {
             wp_send_json_error(array('message' => $error->getMessage()), 400);
-            return;
         }
         if (!current_user_can('manage_woocommerce')) {
             wp_send_json_error(array('message' => 'Invalid request.'));
