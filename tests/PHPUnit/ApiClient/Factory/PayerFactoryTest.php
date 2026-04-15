@@ -148,6 +148,43 @@ class PayerFactoryTest extends TestCase
         $this->assertEquals($expectedPhone, $result->phone()->phone()->national_number());
     }
 
+    public function testFromWcOrderUsesBillingAddress()
+    {
+        $expectedPhone = '012345678901';
+        $expectedEmail = 'test@example.com';
+        $expectedFirstName = 'John';
+        $expectedLastName = 'Locke';
+        $address = Mockery::mock(Address::class);
+        $order = Mockery::mock(\WC_Order::class);
+        $order
+            ->shouldReceive('get_billing_phone')
+            ->andReturn($expectedPhone);
+        $order
+            ->shouldReceive('get_billing_email')
+            ->andReturn($expectedEmail);
+        $order
+            ->shouldReceive('get_billing_last_name')
+            ->andReturn($expectedLastName);
+        $order
+            ->shouldReceive('get_billing_first_name')
+            ->andReturn($expectedFirstName);
+        $addressFactory = Mockery::mock(AddressFactory::class);
+        $addressFactory
+            ->expects('from_wc_order')
+            ->with($order, 'billing')
+            ->andReturn($address);
+        $testee = new PayerFactory($addressFactory);
+        $result = $testee->from_wc_order($order);
+
+        $this->assertEquals($expectedEmail, $result->email_address());
+        $this->assertEquals($expectedLastName, $result->name()->surname());
+        $this->assertEquals($expectedFirstName, $result->name()->given_name());
+        $this->assertEquals($address, $result->address());
+        $this->assertEquals($expectedPhone, $result->phone()->phone()->national_number());
+        $this->assertNull($result->birthdate());
+        $this->assertEmpty($result->payer_id());
+    }
+
     /**
      * @dataProvider dataForTestFromPayPalResponse
      */

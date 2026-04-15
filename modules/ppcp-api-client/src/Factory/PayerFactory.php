@@ -70,7 +70,7 @@ class PayerFactory {
 			),
 			$wc_order->get_billing_email(),
 			$payer_id,
-			$this->address_factory->from_wc_order( $wc_order ),
+			$this->address_factory->from_wc_order( $wc_order, 'billing' ),
 			$birthdate,
 			$phone
 		);
