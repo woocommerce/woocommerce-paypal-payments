@@ -213,7 +213,6 @@ return array(
     'WooCommerce\\PayPalCommerce\\Button\\Helper\\IsolatedCartSimulator' => $baseDir . '/modules/ppcp-button/src/Helper/IsolatedCartSimulator.php',
     'WooCommerce\\PayPalCommerce\\Button\\Helper\\MessagesApply' => $baseDir . '/modules/ppcp-button/src/Helper/MessagesApply.php',
     'WooCommerce\\PayPalCommerce\\Button\\Helper\\MessagesDisclaimers' => $baseDir . '/modules/ppcp-button/src/Helper/MessagesDisclaimers.php',
-    'WooCommerce\\PayPalCommerce\\Button\\Helper\\ProductPriceCalculator' => $baseDir . '/modules/ppcp-button/src/Helper/ProductPriceCalculator.php',
     'WooCommerce\\PayPalCommerce\\Button\\Helper\\ThreeDSecure' => $baseDir . '/modules/ppcp-button/src/Helper/ThreeDSecure.php',
     'WooCommerce\\PayPalCommerce\\Button\\Helper\\WooCommerceOrderCreator' => $baseDir . '/modules/ppcp-button/src/Helper/WooCommerceOrderCreator.php',
     'WooCommerce\\PayPalCommerce\\Button\\Session\\CartData' => $baseDir . '/modules/ppcp-button/src/Session/CartData.php',

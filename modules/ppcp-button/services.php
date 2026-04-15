@@ -32,7 +32,6 @@ use WooCommerce\PayPalCommerce\Button\Helper\DisabledFundingSources;
 use WooCommerce\PayPalCommerce\Button\Helper\EarlyOrderHandler;
 use WooCommerce\PayPalCommerce\Button\Helper\IsolatedCartSimulator;
 use WooCommerce\PayPalCommerce\Button\Helper\MessagesApply;
-use WooCommerce\PayPalCommerce\Button\Helper\ProductPriceCalculator;
 use WooCommerce\PayPalCommerce\Button\Helper\ThreeDSecure;
 use WooCommerce\PayPalCommerce\Button\Helper\WooCommerceOrderCreator;
 use WooCommerce\PayPalCommerce\Button\Session\CartDataFactory;
@@ -121,7 +120,7 @@ return array(
         return new RequestData();
     },
     'button.endpoint.simulate-cart' => static function (ContainerInterface $container): SimulateCartEndpoint {
-        return new SimulateCartEndpoint($container->get('button.smart-button'), $container->get('button.request-data'), $container->get('button.helper.cart-products'), $container->get('button.helper.product-price-calculator'), $container->get('button.helper.isolated-cart-simulator'), $container->get('woocommerce.logger.woocommerce'));
+        return new SimulateCartEndpoint($container->get('button.smart-button'), $container->get('button.request-data'), $container->get('button.helper.cart-products'), $container->get('button.helper.isolated-cart-simulator'), $container->get('woocommerce.logger.woocommerce'));
     },
     'button.endpoint.change-cart' => static function (ContainerInterface $container): ChangeCartEndpoint {
         if (!\WC()->cart) {
@@ -202,10 +201,6 @@ return array(
     'button.helper.cart-products' => static function (ContainerInterface $container): CartProductsHelper {
         $data_store = \WC_Data_Store::load('product');
         return new CartProductsHelper($data_store);
-    },
-    'button.helper.product-price-calculator' => static function (ContainerInterface $container): ProductPriceCalculator {
-        $data_store = \WC_Data_Store::load('product');
-        return new ProductPriceCalculator($data_store);
     },
     'button.helper.isolated-cart-simulator' => static function (ContainerInterface $container): IsolatedCartSimulator {
         return new IsolatedCartSimulator($container->get('button.helper.cart-products'), $container->get('woocommerce.logger.woocommerce'));

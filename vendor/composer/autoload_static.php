@@ -397,7 +397,6 @@ class ComposerStaticInita39f67516f6df923b6f79368c7def9e4
         'WooCommerce\\PayPalCommerce\\Button\\Helper\\IsolatedCartSimulator' => __DIR__ . '/../..' . '/modules/ppcp-button/src/Helper/IsolatedCartSimulator.php',
         'WooCommerce\\PayPalCommerce\\Button\\Helper\\MessagesApply' => __DIR__ . '/../..' . '/modules/ppcp-button/src/Helper/MessagesApply.php',
         'WooCommerce\\PayPalCommerce\\Button\\Helper\\MessagesDisclaimers' => __DIR__ . '/../..' . '/modules/ppcp-button/src/Helper/MessagesDisclaimers.php',
-        'WooCommerce\\PayPalCommerce\\Button\\Helper\\ProductPriceCalculator' => __DIR__ . '/../..' . '/modules/ppcp-button/src/Helper/ProductPriceCalculator.php',
         'WooCommerce\\PayPalCommerce\\Button\\Helper\\ThreeDSecure' => __DIR__ . '/../..' . '/modules/ppcp-button/src/Helper/ThreeDSecure.php',
         'WooCommerce\\PayPalCommerce\\Button\\Helper\\WooCommerceOrderCreator' => __DIR__ . '/../..' . '/modules/ppcp-button/src/Helper/WooCommerceOrderCreator.php',
         'WooCommerce\\PayPalCommerce\\Button\\Session\\CartData' => __DIR__ . '/../..' . '/modules/ppcp-button/src/Session/CartData.php',
