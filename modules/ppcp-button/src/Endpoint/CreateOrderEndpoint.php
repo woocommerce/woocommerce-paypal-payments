@@ -413,7 +413,6 @@ class CreateOrderEndpoint implements EndpointInterface {
 
 		} catch ( NonceValidationException $error ) {
 			wp_send_json_error( array( 'message' => $error->getMessage() ), 400 );
-			return;
 		} catch ( ValidationException $error ) {
 			$response = array(
 				'message' => $error->getMessage(),

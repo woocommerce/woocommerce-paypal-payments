@@ -46,7 +46,6 @@ class AxoScriptAttributes implements EndpointInterface {
 			$this->request_data->read_request( $this->nonce() );
 		} catch ( NonceValidationException $error ) {
 			wp_send_json_error( array( 'message' => $error->getMessage() ), 400 );
-			return;
 		}
 
 		if (
