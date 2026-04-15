@@ -14,6 +14,7 @@ use Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\IdentityToken;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
+use WooCommerce\PayPalCommerce\Button\Exception\NonceValidationException;
 
 /**
  * Class DataClientIdEndpoint
@@ -86,6 +87,8 @@ class DataClientIdEndpoint implements EndpointInterface {
 					'user'       => $user_id,
 				)
 			);
+		} catch ( NonceValidationException $error ) {
+			wp_send_json_error( array( 'message' => $error->getMessage() ), 400 );
 		} catch ( Exception $error ) {
 			$this->logger->error( 'Client ID retrieval failed: ' . $error->getMessage() );
 

@@ -14,6 +14,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PaymentMethodTokensEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentSource;
 use WooCommerce\PayPalCommerce\Button\Endpoint\EndpointInterface;
 use WooCommerce\PayPalCommerce\Button\Endpoint\RequestData;
+use WooCommerce\PayPalCommerce\Button\Exception\NonceValidationException;
 
 /**
  * Class UpdateCustomerId
@@ -65,7 +66,11 @@ class CreatePaymentTokenForGuest implements EndpointInterface {
 	 * @throws Exception On Error.
 	 */
 	public function handle_request(): void {
-		$data = $this->request_data->read_request( $this->nonce() );
+		try {
+			$data = $this->request_data->read_request( $this->nonce() );
+		} catch ( NonceValidationException $error ) {
+			wp_send_json_error( array( 'message' => $error->getMessage() ), 400 );
+		}
 
 		/**
 		 * Suppress ArgumentTypeCoercion

@@ -10,6 +10,7 @@ namespace WooCommerce\PayPalCommerce\Button\Endpoint;
 use Exception;
 use Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
+use WooCommerce\PayPalCommerce\Button\Exception\NonceValidationException;
 use WooCommerce\PayPalCommerce\Button\Helper\CartProductsHelper;
 
 /**
@@ -151,7 +152,12 @@ abstract class AbstractCartEndpoint implements EndpointInterface {
 	 * @return array|false
 	 */
 	protected function products_from_request() {
-		$data     = $this->request_data->read_request( $this->nonce() );
+		try {
+			$data = $this->request_data->read_request( $this->nonce() );
+		} catch ( NonceValidationException $error ) {
+			wp_send_json_error( array( 'message' => $error->getMessage() ), 400 );
+		}
+
 		$products = $this->cart_products->products_from_data( $data );
 		if ( ! $products ) {
 			wp_send_json_error(

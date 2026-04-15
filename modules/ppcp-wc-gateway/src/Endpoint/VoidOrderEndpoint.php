@@ -17,6 +17,7 @@ use WC_Order_Item_Product;
 use WC_Order_Item_Shipping;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
 use WooCommerce\PayPalCommerce\Button\Endpoint\RequestData;
+use WooCommerce\PayPalCommerce\Button\Exception\NonceValidationException;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\RefundProcessor;
 
@@ -86,7 +87,11 @@ class VoidOrderEndpoint {
 	 * Handles the incoming request.
 	 */
 	public function handle_request(): void {
-		$request = $this->request_data->read_request( self::nonce() );
+		try {
+			$request = $this->request_data->read_request( self::nonce() );
+		} catch ( NonceValidationException $error ) {
+			wp_send_json_error( array( 'message' => $error->getMessage() ), 400 );
+		}
 
 		if ( ! current_user_can( 'manage_woocommerce' ) ) {
 			wp_send_json_error(
