@@ -1,18 +1,11 @@
 <?php
 
-/**
- * The Address factory.
- *
- * @package WooCommerce\PayPalCommerce\ApiClient\Factory
- */
 declare (strict_types=1);
 namespace WooCommerce\PayPalCommerce\ApiClient\Factory;
 
+use WC_Order;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Address;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
-/**
- * Class AddressFactory
- */
 class AddressFactory
 {
     /**
@@ -30,13 +23,14 @@ class AddressFactory
     /**
      * Returns an Address object based of a WooCommerce order.
      *
-     * @param \WC_Order $order The order.
+     * @param WC_Order $order The order.
+     * @param string   $type Either 'shipping' or 'billing'.
      *
      * @return Address
      */
-    public function from_wc_order(\WC_Order $order): Address
+    public function from_wc_order(WC_Order $order, string $type = 'shipping'): Address
     {
-        return new Address($order->get_shipping_country(), $order->get_shipping_address_1(), $order->get_shipping_address_2(), $order->get_shipping_state(), $order->get_shipping_city(), $order->get_shipping_postcode());
+        return new Address('shipping' === $type ? $order->get_shipping_country() : $order->get_billing_country(), 'shipping' === $type ? $order->get_shipping_address_1() : $order->get_billing_address_1(), 'shipping' === $type ? $order->get_shipping_address_2() : $order->get_billing_address_2(), 'shipping' === $type ? $order->get_shipping_state() : $order->get_billing_state(), 'shipping' === $type ? $order->get_shipping_city() : $order->get_billing_city(), 'shipping' === $type ? $order->get_shipping_postcode() : $order->get_billing_postcode());
     }
     /**
      * Creates an Address object based off a PayPal Response.
