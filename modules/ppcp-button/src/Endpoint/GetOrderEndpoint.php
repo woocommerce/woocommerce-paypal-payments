@@ -14,6 +14,7 @@ use Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
+use WooCommerce\PayPalCommerce\Button\Exception\NonceValidationException;
 use WooCommerce\PayPalCommerce\Button\Session\CartDataTransientStorage;
 
 /**
@@ -81,6 +82,8 @@ class GetOrderEndpoint implements EndpointInterface {
 			$order = $this->api_endpoint->order( $order_id );
 
 			wp_send_json_success( $order->to_array() );
+		} catch ( NonceValidationException $error ) {
+			wp_send_json_error( array( 'message' => $error->getMessage() ), 400 );
 		} catch ( RuntimeException $error ) {
 			$this->logger->error( 'Get order failed: ' . $error->getMessage() );
 
