@@ -387,6 +387,7 @@ class ComposerStaticInita39f67516f6df923b6f79368c7def9e4
         'WooCommerce\\PayPalCommerce\\Button\\Endpoint\\SaveCheckoutFormEndpoint' => __DIR__ . '/../..' . '/modules/ppcp-button/src/Endpoint/SaveCheckoutFormEndpoint.php',
         'WooCommerce\\PayPalCommerce\\Button\\Endpoint\\SimulateCartEndpoint' => __DIR__ . '/../..' . '/modules/ppcp-button/src/Endpoint/SimulateCartEndpoint.php',
         'WooCommerce\\PayPalCommerce\\Button\\Endpoint\\ValidateCheckoutEndpoint' => __DIR__ . '/../..' . '/modules/ppcp-button/src/Endpoint/ValidateCheckoutEndpoint.php',
+        'WooCommerce\\PayPalCommerce\\Button\\Exception\\NonceValidationException' => __DIR__ . '/../..' . '/modules/ppcp-button/src/Exception/NonceValidationException.php',
         'WooCommerce\\PayPalCommerce\\Button\\Exception\\RuntimeException' => __DIR__ . '/../..' . '/modules/ppcp-button/src/Exception/RuntimeException.php',
         'WooCommerce\\PayPalCommerce\\Button\\Exception\\ValidationException' => __DIR__ . '/../..' . '/modules/ppcp-button/src/Exception/ValidationException.php',
         'WooCommerce\\PayPalCommerce\\Button\\Helper\\CartProductsHelper' => __DIR__ . '/../..' . '/modules/ppcp-button/src/Helper/CartProductsHelper.php',

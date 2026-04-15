@@ -203,6 +203,7 @@ return array(
     'WooCommerce\\PayPalCommerce\\Button\\Endpoint\\SaveCheckoutFormEndpoint' => $baseDir . '/modules/ppcp-button/src/Endpoint/SaveCheckoutFormEndpoint.php',
     'WooCommerce\\PayPalCommerce\\Button\\Endpoint\\SimulateCartEndpoint' => $baseDir . '/modules/ppcp-button/src/Endpoint/SimulateCartEndpoint.php',
     'WooCommerce\\PayPalCommerce\\Button\\Endpoint\\ValidateCheckoutEndpoint' => $baseDir . '/modules/ppcp-button/src/Endpoint/ValidateCheckoutEndpoint.php',
+    'WooCommerce\\PayPalCommerce\\Button\\Exception\\NonceValidationException' => $baseDir . '/modules/ppcp-button/src/Exception/NonceValidationException.php',
     'WooCommerce\\PayPalCommerce\\Button\\Exception\\RuntimeException' => $baseDir . '/modules/ppcp-button/src/Exception/RuntimeException.php',
     'WooCommerce\\PayPalCommerce\\Button\\Exception\\ValidationException' => $baseDir . '/modules/ppcp-button/src/Exception/ValidationException.php',
     'WooCommerce\\PayPalCommerce\\Button\\Helper\\CartProductsHelper' => $baseDir . '/modules/ppcp-button/src/Helper/CartProductsHelper.php',

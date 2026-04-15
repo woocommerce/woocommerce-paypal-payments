@@ -9,6 +9,7 @@ declare (strict_types=1);
 namespace WooCommerce\PayPalCommerce\AdminNotices\Endpoint;
 
 use WooCommerce\PayPalCommerce\Button\Endpoint\RequestData;
+use WooCommerce\PayPalCommerce\Button\Exception\NonceValidationException;
 use WooCommerce\PayPalCommerce\Button\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\AdminNotices\Entity\PersistentMessage;
 /**
@@ -30,6 +31,8 @@ class MuteMessageEndpoint
     {
         try {
             $data = $this->request_data->read_request($this->nonce());
+        } catch (NonceValidationException $error) {
+            wp_send_json_error(array('message' => $error->getMessage()), 400);
         } catch (RuntimeException $ex) {
             wp_send_json_error();
         }

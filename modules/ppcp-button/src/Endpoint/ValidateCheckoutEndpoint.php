@@ -10,6 +10,7 @@ namespace WooCommerce\PayPalCommerce\Button\Endpoint;
 
 use WooCommerce\PayPalCommerce\Vendor\Psr\Log\LoggerInterface;
 use Throwable;
+use WooCommerce\PayPalCommerce\Button\Exception\NonceValidationException;
 use WooCommerce\PayPalCommerce\Button\Exception\ValidationException;
 use WooCommerce\PayPalCommerce\Button\Validation\CheckoutFormValidator;
 /**
@@ -68,6 +69,8 @@ class ValidateCheckoutEndpoint implements \WooCommerce\PayPalCommerce\Button\End
             $form_fields = $data['form'];
             $this->checkout_form_validator->validate($form_fields);
             wp_send_json_success();
+        } catch (NonceValidationException $error) {
+            wp_send_json_error(array('message' => $error->getMessage()), 400);
         } catch (ValidationException $exception) {
             $response = array('message' => $exception->getMessage(), 'errors' => $exception->errors(), 'refresh' => isset(WC()->session->refresh_totals));
             unset(WC()->session->refresh_totals);

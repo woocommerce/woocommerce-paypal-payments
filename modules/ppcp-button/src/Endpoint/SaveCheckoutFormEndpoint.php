@@ -10,6 +10,7 @@ namespace WooCommerce\PayPalCommerce\Button\Endpoint;
 
 use Exception;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Log\LoggerInterface;
+use WooCommerce\PayPalCommerce\Button\Exception\NonceValidationException;
 use WooCommerce\PayPalCommerce\Button\Helper\CheckoutFormSaver;
 /**
  * Class SaveCheckoutFormEndpoint
@@ -66,6 +67,8 @@ class SaveCheckoutFormEndpoint implements \WooCommerce\PayPalCommerce\Button\End
             $data = $this->request_data->read_request($this->nonce());
             $this->checkout_form_saver->save($data['form']);
             wp_send_json_success();
+        } catch (NonceValidationException $error) {
+            wp_send_json_error(array('message' => $error->getMessage()), 400);
         } catch (Exception $error) {
             $this->logger->error('Checkout form saving failed: ' . $error->getMessage());
             wp_send_json_error(array('message' => $error->getMessage()));

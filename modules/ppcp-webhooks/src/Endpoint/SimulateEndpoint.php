@@ -10,6 +10,7 @@ namespace WooCommerce\PayPalCommerce\Webhooks\Endpoint;
 
 use Exception;
 use WooCommerce\PayPalCommerce\Button\Endpoint\RequestData;
+use WooCommerce\PayPalCommerce\Button\Exception\NonceValidationException;
 use WooCommerce\PayPalCommerce\Webhooks\Status\WebhookSimulation;
 /**
  * Class SimulateEndpoint
@@ -62,6 +63,8 @@ class SimulateEndpoint
             $this->request_data->read_request($this->nonce());
             $this->simulation->start();
             wp_send_json_success();
+        } catch (NonceValidationException $error) {
+            wp_send_json_error(array('message' => $error->getMessage()), 400);
         } catch (Exception $error) {
             wp_send_json_error($error->getMessage(), 500);
         }
