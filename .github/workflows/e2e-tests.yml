@@ -6,9 +6,10 @@ on:
       TEST_SUITE:
         description: 'Test suite'
         required: true
-        default: 'smoke'
+        default: 'e2e:test:dev'
         type: choice
         options:
+          - e2e:test:dev
           - e2e:test:smoke
           - e2e:test:critical
           - e2e:test:stress
