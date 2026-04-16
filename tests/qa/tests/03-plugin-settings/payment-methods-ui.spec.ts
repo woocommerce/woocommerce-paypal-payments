@@ -18,6 +18,7 @@ test.beforeAll( async ( { utils, pcpApi } ) => {
 for ( const testData of paymentMethodsData.defaultUi ) {
 	const {
 		testKey,
+		testLabel,
 		country,
 		testGateways,
 		expectedGatewayCount,
@@ -25,7 +26,7 @@ for ( const testData of paymentMethodsData.defaultUi ) {
 	} = testData;
 
 	test(
-		`${ testKey } | Settings - US - Payment Methods - Default UI — groups, toggles, modals, live PayPal buttons @Critical`,
+		`${ testKey } | Settings - US - Payment Methods - Default UI — groups, toggles, modals, live PayPal buttons${ testLabel ?? '' }`,
 		async (
 			{
 				utils,

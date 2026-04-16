@@ -8,6 +8,7 @@
 
 export type PaymentMethodsUiTestData = {
 	testKey: string;
+	testLabel?: string;
 	country: string;
 	expectedGatewayCount: number;
 	expectedGroupCounts: {
@@ -22,6 +23,7 @@ const defaultUi: PaymentMethodsUiTestData[] = [
 	{
 		// https://inpsyde.atlassian.net/browse/PCP-6228
 		testKey: 'PCP-6228',
+		testLabel: ' @Critical @Dev',
 		country: 'usa',
 		expectedGatewayCount: 15,
 		expectedGroupCounts: {
