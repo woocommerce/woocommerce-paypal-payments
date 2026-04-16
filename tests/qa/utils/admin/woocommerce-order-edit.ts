@@ -68,7 +68,7 @@ export class WooCommerceOrderEdit extends WooCommerceOrderEditBase {
 	 *
 	 * @param amount
 	 */
-	makePayPalRefund = async ( amount?: string ) => {
+	makeRefundVia = async ( paymentMethod: string, amount?: string ) => {
 		// Make full-amount refund if amount is not specified
 		if ( ! amount ) {
 			const totalAmount =
@@ -80,7 +80,7 @@ export class WooCommerceOrderEdit extends WooCommerceOrderEditBase {
 
 		await this.firstRefundTotalInput().fill( amount );
 		await this.page.on( 'dialog', ( dialog ) => dialog.accept() );
-		await this.refundViaButton( 'PayPal' ).click();
+		await this.refundViaButton( paymentMethod ).click();
 		await this.page.waitForLoadState( 'networkidle' );
 	};
 
