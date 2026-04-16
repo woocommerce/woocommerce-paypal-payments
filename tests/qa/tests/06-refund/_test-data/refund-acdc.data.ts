@@ -15,7 +15,7 @@ const guest = guests.usa;
 
 export const refundAcdcFromCheckout: ShopRefund[] = [
 	{
-		// https://inpsyde.atlassian.net/browse/PCP-1394
+		// https://inpsyde.atlassian.net/browse/PCP-1396
 		title: 'PCP-1396 | Refund - Full - ACDC - Order from shop @Critical @Dev',
 		...orders.default,
 		payment: acdc,
@@ -27,7 +27,7 @@ export const refundAcdcFromCheckout: ShopRefund[] = [
 		currency: 'USD',
 	},
 	{
-		// https://inpsyde.atlassian.net/browse/PCP-1395
+		// https://inpsyde.atlassian.net/browse/PCP-1397
 		title: 'PCP-1397 | Refund - Partial - ACDC - Order from shop @Critical @Dev',
 		...orders.default,
 		payment: acdc,
@@ -42,7 +42,7 @@ export const refundAcdcFromCheckout: ShopRefund[] = [
 
 export const refundAcdcFromPayByLink: ShopRefund[] = [
 	{
-		// https://inpsyde.atlassian.net/browse/PCP-1405
+		// https://inpsyde.atlassian.net/browse/PCP-1409
 		title: 'PCP-1409 | Refund - Full - ACDC - Order from dashboard',
 		...orders.default,
 		payment: acdc,
@@ -54,7 +54,7 @@ export const refundAcdcFromPayByLink: ShopRefund[] = [
 		currency: 'USD',
 	},
 	{
-		// https://inpsyde.atlassian.net/browse/PCP-1406
+		// https://inpsyde.atlassian.net/browse/PCP-1410
 		title: 'PCP-1410 | Refund - Partial - ACDC - Order from dashboard',
 		...orders.default,
 		payment: acdc,
