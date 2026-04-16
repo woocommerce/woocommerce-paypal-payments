@@ -7,7 +7,7 @@ import {
 	ShopRefund,
 	customers,
 	guests,
-} from '../../../../resources';
+} from '../../../resources';
 
 const { payPal } = payments;
 const customer = customers.usa;
