@@ -88,10 +88,10 @@ export const testRefund = ( testData: ShopRefund ) => {
 				await wooCommerceOrderEdit.makeRefundVia( payment.gateway.title, refundAmount );
 				// Assert URL after page is reloaded
 				await wooCommerceOrderEdit.assertUrl( order.id );
-				// Assert refund ID and expected refund amount are displayed\
 			} );
 
-			await test.step( 'Assert refund number and amount', async ( step ) => {
+			await test.step( 'Assert refund number and amount', async () => {
+				// Assert refund ID and expected refund amount are displayed
 				await expect(
 					wooCommerceOrderEdit.refundNumber(),
 					'Assert refund number is visible'
@@ -107,7 +107,7 @@ export const testRefund = ( testData: ShopRefund ) => {
 			let orderRefund;
 			let payPalRefund;
 			let payPalPayment;
-			await test.step( 'Assert via API WooCommerce Order refund status and presence of refunds', async ( step ) => {
+			await test.step( 'Assert via API WooCommerce Order refund status and presence of refunds', async () => {
 				order = await wooCommerceApi.getOrder( order.id );
 				await expect(
 					order.status,
@@ -152,7 +152,7 @@ export const testRefund = ( testData: ShopRefund ) => {
 				).toEqual( 'COMPLETED' );
 			} );
 
-			await test.step( 'Assert on OrderEdit page that WooCommerce and PayPal refund fields are displayed and have expected values', async ( step ) => {
+			await test.step( 'Assert on OrderEdit page that WooCommerce and PayPal refund fields are displayed and have expected values', async () => {
 				await wooCommerceOrderEdit.assertRefundData( {
 					currency: currency,
 					orderStatus: capitalizeFirst( refundOrderStatus ),
