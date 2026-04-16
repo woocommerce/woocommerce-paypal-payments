@@ -15,12 +15,12 @@
     "homepage": "https://github.com/woocommerce/woocommerce-paypal-payments#readme",
     "devDependencies": {
         "@playwright/test": "^1.58.2",
-        "@inpsyde/playwright-utils": "^5.0.0",
+        "@inpsyde/playwright-utils": "^5.1.0",
         "dotenv": "^16.3.1",
         "yarn": "^1.22.21",
         "@types/node": "^20.8.4",
         "@wordpress/env": "^10.30.0",
-        "@wordpress/scripts": "^25.0.0"
+        "@wordpress/scripts": "^30.24.0"
     },
     "scripts": {
         "setup:tests": "npm install && npx playwright install",
@@ -37,6 +37,7 @@
         "e2e:test:stress": "npx playwright test --project=\"stress\"",
         "e2e:test:critical": "npx playwright test --grep=\"@Critical\"",
         "e2e:test:smoke": "npx playwright test --grep=\"@Smoke\"",
+        "e2e:test:dev": "npx playwright test --grep=\"@Dev\"",
         
         "env:reset": "npx playwright test --grep=\"env:reset;\"",
         "env:reset:pcp:usa": "npx playwright test --grep=\"env:reset;|setup:pcp:usa;\"",
