@@ -61,14 +61,7 @@ test(
 		await pcpOverview.visit();
 		await pcpOverview.waitForOverview();
 
-		const todosVisible = await pcpOverview.todosCard().isVisible();
-		if ( ! todosVisible ) {
-			test.skip(
-				true,
-				'Todos card not visible — no eligible todos for this merchant/store state'
-			);
-			return;
-		}
+		await pcpOverview.todosCard().waitFor( { state: 'visible' } );
 
 		let initialCount = 0;
 
@@ -93,15 +86,8 @@ test(
 			initialCount = await pcpOverview.todoItems().count();
 			expect(
 				initialCount,
-				'Assert at least one todo item is rendered'
-			).toBeGreaterThan( 0 );
-
-			expect
-				.soft(
-					initialCount,
-					'Assert todo items do not exceed the cap of 5'
-				)
-				.toBeLessThanOrEqual( 5 );
+				'Assert todo items are rendered at the cap of 5'
+			).toBe( 5 );
 
 			const firstTitle = await pcpOverview
 				.todoItemTitle()
@@ -162,14 +148,7 @@ test(
 		await pcpOverview.visit();
 		await pcpOverview.waitForOverview();
 
-		const todosVisible = await pcpOverview.todosCard().isVisible();
-		if ( ! todosVisible ) {
-			test.skip(
-				true,
-				'Todos card not visible — no eligible todos for this merchant/store state'
-			);
-			return;
-		}
+		await pcpOverview.todosCard().waitFor( { state: 'visible' } );
 
 		// Target the "Enable Fastlane" todo
 		const fastlaneTodo = pcpOverview
@@ -177,18 +156,10 @@ test(
 			.filter( { hasText: 'Enable Fastlane' } )
 			.first();
 
-		const isTodoVisible = await fastlaneTodo
-			.waitFor( { state: 'visible', timeout: 3_000 } )
-			.then( () => true )
-			.catch( () => false );
-
-		if ( ! isTodoVisible ) {
-			test.skip(
-				true,
-				'"Enable Fastlane" todo not visible — ACDC capability may not be active or Fastlane is already enabled'
-			);
-			return;
-		}
+		await expect(
+			fastlaneTodo,
+			'Assert "Enable Fastlane" todo is present'
+		).toBeVisible();
 
 		// Click the title area of the todo item (avoids the dismiss button)
 		await fastlaneTodo
