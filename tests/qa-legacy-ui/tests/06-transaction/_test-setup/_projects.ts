@@ -13,8 +13,8 @@ export const transactionProjects = [
 	'transaction-usa-classic-button-orientation',
 	'transaction-usa-classic-intent-authorized',
 	'transaction-usa-classic-specific-merchant',
-	'transaction-usa-classic-debit-or-credit-card',
-	'transaction-usa-classic-debit-or-credit-card-intent-authorized',
-	'transaction-usa-classic-standard-card-button',
-	'transaction-usa-classic-standard-card-button-intent-authorized',
+	'transaction-usa-classic-bcdc',
+	'transaction-usa-classic-bcdc-intent-authorized',
+	'transaction-usa-classic-bcdc-paypal',
+	'transaction-usa-classic-bcdc-paypal-intent-authorized',
 ].flatMap( project );

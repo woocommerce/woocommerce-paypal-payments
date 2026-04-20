@@ -16,21 +16,20 @@
   "homepage": "https://github.com/inpsyde/playwright-tests#readme",
   "devDependencies": {
     "@inpsyde/playwright-utils": "5.0.1-beta.0",
-    "dotenv": "^16.3.1",
-    "yarn": "^1.22.21",
     "@playwright/test": "^1.58.0",
     "@types/node": "^20.8.4",
-    "@wordpress/scripts": "^25.0.0"
+    "@wordpress/scripts": "^25.0.0",
+    "dotenv": "^16.3.1",
+    "npm-run-all2": "^8.0.4",
+    "yarn": "^1.22.21"
   },
   "scripts": {
     "setup:tests": "npm install && npx playwright install",
     "setup:utils": "npm run setup:tests && cd ./playwright-utils && yarn devLocal",
-    
     "lint:md": "wp-scripts lint-md-docs ./**/*.md README.md",
     "lint:md:fix": "wp-scripts lint-md-docs --fix ./**/*.md README.md",
     "lint:js": "wp-scripts lint-js  --resolve-plugins-relative-to ./ **/*.{ts,tsx,mjs}",
     "lint:js:fix": "wp-scripts lint-js --resolve-plugins-relative-to ./ --fix **/*.{ts,tsx,mjs}",
-    
     "env:reset": "npx playwright test --project setup-pcp --grep \"setup:env:reset;\"",
     
     "env:setup:pcp:usa": "npx playwright test --project setup-pcp --grep \"setup:pcp:usa;\"",
@@ -39,20 +38,31 @@
     "env:setup:pcp:usa:classic:acdc": "npx playwright test --project setup-pcp --grep \"setup:pcp:usa:classic:acdc;\"",
     "env:setup:pcp:usa:classic:bcdc": "npx playwright test --project setup-pcp --grep \"setup:pcp:usa:classic:bcdc;\"",
     "env:setup:pcp:usa:classic:bcdc-paypal": "npx playwright test --project setup-pcp --grep \"setup:pcp:usa:classic:bcdc-paypal;\"",
-
     "env:setup:pcp:germany": "npx playwright test --project setup-pcp --grep \"setup:pcp:germany;\"",
     "env:setup:pcp:mexico": "npx playwright test --project setup-pcp --grep \"setup:pcp:mexico;\"",
     "env:setup:pcp:update": "npx playwright test --project setup-pcp --grep \"setup:pcp:update;\"",
     "env:setup:classic:pages": "npx playwright test --project setup-pcp --grep \"setup:classic:pages;\"",
     "env:setup:block:pages": "npx playwright test --project setup-pcp --grep \"setup:block:pages;\"",
-    
     "test:frontend-ui": "npx playwright test --project frontend-ui",
     "test:frontend-ui-acdc": "npx playwright test --project frontend-ui-acdc",
     "test:frontend-ui-pay-later": "npx playwright test --project frontend-ui-pay-later",
-    "test:frontend-ui-all": "npm run test:frontend-ui & npm run test:frontend-ui-acdc & npm run test:frontend-ui-pay-later",
-    
-    "test:transaction": "npx playwright test 06-transaction",
-    "test:transaction:critical": "npx playwright test 06-transaction --grep \"@Critical\""
+    "test:frontend-ui-all": "run-s --continue-on-error test:frontend-*",
+    "test:transaction-germany-classic": "npx playwright test --project transaction-germany-classic",
+    "test:transaction-mexico-classic": "npx playwright test --project transaction-mexico-classic",
+    "test:transaction-usa-block": "npx playwright test --project transaction-usa-block",
+    "test:transaction-usa-block-intent-authorized": "npx playwright test --project transaction-usa-block-intent-authorized",
+    "test:transaction-usa-block-vertical-buttons": "npx playwright test --project transaction-usa-block-vertical-buttons",
+    "test:transaction-usa-classic": "npx playwright test --project transaction-usa-classic",
+    "test:transaction-usa-classic-acdc-3ds": "npx playwright test --project transaction-usa-classic-acdc-3ds",
+    "test:transaction-usa-classic-button-orientation": "npx playwright test --project transaction-usa-classic-button-orientation",
+    "test:transaction-usa-classic-intent-authorized": "npx playwright test --project transaction-usa-classic-intent-authorized",
+    "test:transaction-usa-classic-specific-merchant": "npx playwright test --project transaction-usa-classic-specific-merchant",
+    "test:transaction-usa-classic-bcdc-paypal": "npx playwright test --project transaction-usa-classic-bcdc-paypal",
+    "test:transaction-usa-classic-bcdc-paypal-intent-authorized": "npx playwright test --project transaction-usa-classic-bcdc-paypal-intent-authorized",
+    "test:transaction-usa-classic-bcdc": "npx playwright test --project transaction-usa-classic-bcdc",
+    "test:transaction-usa-classic-bcdc-intent-authorized": "npx playwright test --project transaction-usa-classic-bcdc-intent-authorized",
+    "test:transaction-all": "run-s --continue-on-error test:transaction-*",
+    "test:refund": "npx playwright test --project refund-usa-block"
   },
   "eslintConfig": {
     "extends": [

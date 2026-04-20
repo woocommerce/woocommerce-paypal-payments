@@ -9,7 +9,7 @@ import {
 	acdc,
 	payPal,
 	pcpConfigVaulting,
-	storeConfigClassic,
+	storeConfigDefault,
 } from '../../resources';
 import { transactionsOnClassicCheckout } from '../06-transaction/_test-scenarios';
 import {
@@ -22,17 +22,11 @@ import {
 	vaultingAcdcClassicCheckoutVaulted,
 } from './_test-data/acdc';
 
-test.beforeAll( async ( { utils, advancedCardProcessing } ) => {
-	await utils.configureStore( storeConfigClassic );
-	await utils.configurePcp( pcpConfigVaulting );
-	await utils.pcpPaymentMethodIsEnabled( payPal.method );
-	await utils.pcpPaymentMethodIsEnabled( acdc.method );
-	await advancedCardProcessing.setup( { vaulting: true } );
-} );
-
 // Regular transactions with vaulting enabled
 
-transactionsOnClassicCheckout( vaultingAcdcClassicCheckoutRegular );
+test.describe( 'Regular transactions', () => {
+	//......
+} );
 
 test.describe( 'Customer has vaulted payment method', () => {
 	test.beforeAll( async ( { utils, customerPaymentMethods } ) => {
