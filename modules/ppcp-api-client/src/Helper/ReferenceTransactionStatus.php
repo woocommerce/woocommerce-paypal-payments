@@ -36,20 +36,23 @@ class ReferenceTransactionStatus
     public function reference_transaction_enabled(): bool
     {
         if ($this->cache->has(self::CACHE_KEY)) {
-            return (bool) $this->cache->get(self::CACHE_KEY);
+            $cached = $this->cache->get(self::CACHE_KEY);
+            if (is_string($cached) || is_bool($cached)) {
+                return wc_string_to_bool($cached);
+            }
         }
         try {
             foreach ($this->partners_endpoint->seller_status()->capabilities() as $capability) {
                 if ($capability->name() === 'PAYPAL_WALLET_VAULTING_ADVANCED' && $capability->status() === 'ACTIVE') {
-                    $this->cache->set(self::CACHE_KEY, \true, MONTH_IN_SECONDS);
+                    $this->cache->set(self::CACHE_KEY, wc_bool_to_string(\true), MONTH_IN_SECONDS);
                     return \true;
                 }
             }
         } catch (RuntimeException $exception) {
-            $this->cache->set(self::CACHE_KEY, \false, HOUR_IN_SECONDS);
+            $this->cache->set(self::CACHE_KEY, wc_bool_to_string(\false), HOUR_IN_SECONDS);
             return \false;
         }
-        $this->cache->set(self::CACHE_KEY, \false, HOUR_IN_SECONDS);
+        $this->cache->set(self::CACHE_KEY, wc_bool_to_string(\false), HOUR_IN_SECONDS);
         return \false;
     }
 }
