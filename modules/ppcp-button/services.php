@@ -31,6 +31,7 @@ use WooCommerce\PayPalCommerce\Button\Helper\CheckoutFormSaver;
 use WooCommerce\PayPalCommerce\Button\Helper\Context;
 use WooCommerce\PayPalCommerce\Button\Helper\DisabledFundingSources;
 use WooCommerce\PayPalCommerce\Button\Helper\EarlyOrderHandler;
+use WooCommerce\PayPalCommerce\Button\Helper\IsolatedCartSimulator;
 use WooCommerce\PayPalCommerce\Button\Helper\MessagesApply;
 use WooCommerce\PayPalCommerce\Button\Helper\ThreeDSecure;
 use WooCommerce\PayPalCommerce\Button\Helper\WooCommerceOrderCreator;
@@ -172,15 +173,13 @@ return array(
 		return new RequestData();
 	},
 	'button.endpoint.simulate-cart'               => static function ( ContainerInterface $container ): SimulateCartEndpoint {
-		if ( ! \WC()->cart ) {
-			throw new RuntimeException( 'cant initialize endpoint at this moment' );
-		}
-		$smart_button  = $container->get( 'button.smart-button' );
-		$cart          = WC()->cart;
-		$request_data  = $container->get( 'button.request-data' );
-		$cart_products = $container->get( 'button.helper.cart-products' );
-		$logger        = $container->get( 'woocommerce.logger.woocommerce' );
-		return new SimulateCartEndpoint( $smart_button, $cart, $request_data, $cart_products, $logger );
+		return new SimulateCartEndpoint(
+			$container->get( 'button.smart-button' ),
+			$container->get( 'button.request-data' ),
+			$container->get( 'button.helper.cart-products' ),
+			$container->get( 'button.helper.isolated-cart-simulator' ),
+			$container->get( 'woocommerce.logger.woocommerce' )
+		);
 	},
 	'button.endpoint.change-cart'                 => static function ( ContainerInterface $container ): ChangeCartEndpoint {
 		if ( ! \WC()->cart ) {
@@ -336,6 +335,12 @@ return array(
 	'button.helper.cart-products'                 => static function ( ContainerInterface $container ): CartProductsHelper {
 		$data_store = \WC_Data_Store::load( 'product' );
 		return new CartProductsHelper( $data_store );
+	},
+	'button.helper.isolated-cart-simulator'      => static function ( ContainerInterface $container ): IsolatedCartSimulator {
+		return new IsolatedCartSimulator(
+			$container->get( 'button.helper.cart-products' ),
+			$container->get( 'woocommerce.logger.woocommerce' )
+		);
 	},
 	'button.helper.three-d-secure'                => static function ( ContainerInterface $container ): ThreeDSecure {
 		return new ThreeDSecure(
