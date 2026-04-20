@@ -211,6 +211,7 @@ return array(
     'WooCommerce\\PayPalCommerce\\Button\\Helper\\Context' => $baseDir . '/modules/ppcp-button/src/Helper/Context.php',
     'WooCommerce\\PayPalCommerce\\Button\\Helper\\DisabledFundingSources' => $baseDir . '/modules/ppcp-button/src/Helper/DisabledFundingSources.php',
     'WooCommerce\\PayPalCommerce\\Button\\Helper\\EarlyOrderHandler' => $baseDir . '/modules/ppcp-button/src/Helper/EarlyOrderHandler.php',
+    'WooCommerce\\PayPalCommerce\\Button\\Helper\\IsolatedCartSimulator' => $baseDir . '/modules/ppcp-button/src/Helper/IsolatedCartSimulator.php',
     'WooCommerce\\PayPalCommerce\\Button\\Helper\\MessagesApply' => $baseDir . '/modules/ppcp-button/src/Helper/MessagesApply.php',
     'WooCommerce\\PayPalCommerce\\Button\\Helper\\MessagesDisclaimers' => $baseDir . '/modules/ppcp-button/src/Helper/MessagesDisclaimers.php',
     'WooCommerce\\PayPalCommerce\\Button\\Helper\\ThreeDSecure' => $baseDir . '/modules/ppcp-button/src/Helper/ThreeDSecure.php',

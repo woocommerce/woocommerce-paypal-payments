@@ -395,6 +395,7 @@ class ComposerStaticInita39f67516f6df923b6f79368c7def9e4
         'WooCommerce\\PayPalCommerce\\Button\\Helper\\Context' => __DIR__ . '/../..' . '/modules/ppcp-button/src/Helper/Context.php',
         'WooCommerce\\PayPalCommerce\\Button\\Helper\\DisabledFundingSources' => __DIR__ . '/../..' . '/modules/ppcp-button/src/Helper/DisabledFundingSources.php',
         'WooCommerce\\PayPalCommerce\\Button\\Helper\\EarlyOrderHandler' => __DIR__ . '/../..' . '/modules/ppcp-button/src/Helper/EarlyOrderHandler.php',
+        'WooCommerce\\PayPalCommerce\\Button\\Helper\\IsolatedCartSimulator' => __DIR__ . '/../..' . '/modules/ppcp-button/src/Helper/IsolatedCartSimulator.php',
         'WooCommerce\\PayPalCommerce\\Button\\Helper\\MessagesApply' => __DIR__ . '/../..' . '/modules/ppcp-button/src/Helper/MessagesApply.php',
         'WooCommerce\\PayPalCommerce\\Button\\Helper\\MessagesDisclaimers' => __DIR__ . '/../..' . '/modules/ppcp-button/src/Helper/MessagesDisclaimers.php',
         'WooCommerce\\PayPalCommerce\\Button\\Helper\\ThreeDSecure' => __DIR__ . '/../..' . '/modules/ppcp-button/src/Helper/ThreeDSecure.php',
