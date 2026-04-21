@@ -9,7 +9,7 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\Button\Endpoint;
 
-use WooCommerce\PayPalCommerce\Button\Exception\RuntimeException;
+use WooCommerce\PayPalCommerce\Button\Exception\NonceValidationException;
 
 /**
  * Class RequestData
@@ -36,7 +36,7 @@ class RequestData {
 	 * @param string $nonce The nonce.
 	 *
 	 * @return array
-	 * @throws RuntimeException When nonce validation fails.
+	 * @throws NonceValidationException When nonce validation fails.
 	 */
 	public function read_request( string $nonce ): array {
 		$stream = file_get_contents( 'php://input' );
@@ -47,7 +47,7 @@ class RequestData {
 			|| ! wp_verify_nonce( $json['nonce'], $nonce )
 		) {
 			remove_filter( 'nonce_user_logged_out', array( $this, 'nonce_fix' ), 100 );
-			throw new RuntimeException( 'Could not validate nonce.' );
+			throw new NonceValidationException( 'Could not validate nonce.' );
 		}
 		$this->dequeue_nonce_fix();
 
