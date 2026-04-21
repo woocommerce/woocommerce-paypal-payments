@@ -117,7 +117,7 @@ This will run the next scripts:
 
 3. Set Test Execution ticket status `In progress`.
 
-4. In `.env` file of the test project (`/tests/qa/`) add/update test execution ticket key (`TEST_EXEC_KEY='PCP-234'`).
+4. In `.env` file of the test project (`/tests/qa/`) add/update test execution ticket key (`XRAY_TEST_EXEC_KEY='PCP-234'`).
 
 5. Download tested plugin `.zip` package (usually attached to release ticket) and add it to `/tests/qa/resources/files`. You may need to remove version number from the file name (expected name: `woocommerce-paypal-payments.zip`).
 
