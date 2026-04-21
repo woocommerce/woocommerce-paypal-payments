@@ -16,6 +16,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Entity\PatchCollection;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PurchaseUnitFactory;
 use WooCommerce\PayPalCommerce\Button\Endpoint\EndpointInterface;
 use WooCommerce\PayPalCommerce\Button\Endpoint\RequestData;
+use WooCommerce\PayPalCommerce\Button\Exception\NonceValidationException;
 /**
  * Class UpdateShippingEndpoint
  */
@@ -88,6 +89,8 @@ class UpdateShippingEndpoint implements EndpointInterface
             $patches = new PatchCollection(new Patch('replace', "/purchase_units/@reference_id=='{$pu->reference_id()}'", $pu_data));
             $this->order_endpoint->patch($order_id, $patches);
             wp_send_json_success();
+        } catch (NonceValidationException $error) {
+            wp_send_json_error(array('message' => $error->getMessage()), 400);
         } catch (Exception $error) {
             wp_send_json_error(array('message' => $error->getMessage()));
         }
