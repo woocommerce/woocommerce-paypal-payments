@@ -63,8 +63,8 @@ class DisabledFundingSourcesTest extends TestCase
 
 	public function test_is_checkout_true_add_allowed_sources_when_checkout_block_context()
 	{
-		$this->dcc_configuration->shouldReceive('is_enabled')->andReturn(true);
-		$this->dcc_configuration->shouldReceive('use_acdc')->andReturn(true);
+		$this->dcc_configuration->shouldReceive('is_acdc_enabled')->andReturn(true);
+		$this->dcc_configuration->shouldReceive('is_bcdc_enabled')->andReturn(false);
 		$sut = new DisabledFundingSources(
 			$this->settings_provider,
 			[
@@ -88,8 +88,7 @@ class DisabledFundingSourcesTest extends TestCase
 	 */
 	public function test_mexico_bcdc_enabled_does_not_disable_card_funding()
 	{
-		$this->dcc_configuration->shouldReceive('is_enabled')->andReturn(true);
-		$this->dcc_configuration->shouldReceive('use_acdc')->andReturn(false);
+		$this->dcc_configuration->shouldReceive('is_acdc_enabled')->andReturn(false);
 		$this->dcc_configuration->shouldReceive('is_bcdc_enabled')->andReturn(true);
 
 		$sut = new DisabledFundingSources($this->settings_provider, [], $this->dcc_configuration, 'MX');
@@ -106,8 +105,7 @@ class DisabledFundingSourcesTest extends TestCase
 	 */
 	public function test_mexico_bcdc_disabled_disables_card_funding()
 	{
-		$this->dcc_configuration->shouldReceive('is_enabled')->andReturn(true);
-		$this->dcc_configuration->shouldReceive('use_acdc')->andReturn(true);
+		$this->dcc_configuration->shouldReceive('is_acdc_enabled')->andReturn(true);
 		$this->dcc_configuration->shouldReceive('is_bcdc_enabled')->andReturn(false);
 
 		$sut = new DisabledFundingSources($this->settings_provider, [], $this->dcc_configuration, 'MX');
@@ -124,8 +122,8 @@ class DisabledFundingSourcesTest extends TestCase
 	 */
 	public function test_non_mexico_country_behavior_unchanged()
 	{
-		$this->dcc_configuration->shouldReceive('is_enabled')->andReturn(true);
-		$this->dcc_configuration->shouldReceive('use_acdc')->andReturn(true);
+		$this->dcc_configuration->shouldReceive('is_acdc_enabled')->andReturn(true);
+		$this->dcc_configuration->shouldReceive('is_bcdc_enabled')->andReturn(false);
 
 		$sut = new DisabledFundingSources($this->settings_provider, [], $this->dcc_configuration, 'CA');
 
@@ -146,8 +144,8 @@ class DisabledFundingSourcesTest extends TestCase
 		$this->settings_provider->shouldReceive('button_styling')
 			->andReturn(new LocationStylingDTO('', true, ['venmo']));
 
-		$this->dcc_configuration->shouldReceive('is_enabled')->andReturn(true);
-		$this->dcc_configuration->shouldReceive('use_acdc')->andReturn(true);
+		$this->dcc_configuration->shouldReceive('is_acdc_enabled')->andReturn(true);
+		$this->dcc_configuration->shouldReceive('is_bcdc_enabled')->andReturn(false);
 
 		$sut = new DisabledFundingSources($this->settings_provider, [], $this->dcc_configuration, 'US');
 
@@ -163,8 +161,8 @@ class DisabledFundingSourcesTest extends TestCase
 		$this->settings_provider->shouldReceive('button_styling')
 			->andReturn(new LocationStylingDTO('', true, []));
 
-		$this->dcc_configuration->shouldReceive('is_enabled')->andReturn(true);
-		$this->dcc_configuration->shouldReceive('use_acdc')->andReturn(true);
+		$this->dcc_configuration->shouldReceive('is_acdc_enabled')->andReturn(true);
+		$this->dcc_configuration->shouldReceive('is_bcdc_enabled')->andReturn(false);
 
 		$sut = new DisabledFundingSources($this->settings_provider, [], $this->dcc_configuration, 'US');
 
@@ -179,8 +177,8 @@ class DisabledFundingSourcesTest extends TestCase
 	 */
 	public function test_venmo_enabled_when_setting_is_true()
 	{
-		$this->dcc_configuration->shouldReceive('is_enabled')->andReturn(true);
-		$this->dcc_configuration->shouldReceive('use_acdc')->andReturn(true);
+		$this->dcc_configuration->shouldReceive('is_acdc_enabled')->andReturn(true);
+		$this->dcc_configuration->shouldReceive('is_bcdc_enabled')->andReturn(false);
 
 		$sut = new DisabledFundingSources($this->settings_provider, [], $this->dcc_configuration, 'US');
 
