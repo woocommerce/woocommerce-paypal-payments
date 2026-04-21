@@ -336,7 +336,7 @@ return array(
 		$data_store = \WC_Data_Store::load( 'product' );
 		return new CartProductsHelper( $data_store );
 	},
-	'button.helper.isolated-cart-simulator'      => static function ( ContainerInterface $container ): IsolatedCartSimulator {
+	'button.helper.isolated-cart-simulator'       => static function ( ContainerInterface $container ): IsolatedCartSimulator {
 		return new IsolatedCartSimulator(
 			$container->get( 'button.helper.cart-products' ),
 			$container->get( 'woocommerce.logger.woocommerce' )
