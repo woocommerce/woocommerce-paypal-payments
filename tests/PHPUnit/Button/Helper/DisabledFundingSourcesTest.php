@@ -33,8 +33,8 @@ class DisabledFundingSourcesTest extends TestCase
 	 */
 	public function test_is_checkout_true_add_card_when_checkout_block_context()
 	{
-		$this->dcc_configuration->shouldReceive('is_enabled')->andReturn(true);
-		$this->dcc_configuration->shouldReceive('use_acdc')->andReturn(true);
+		$this->dcc_configuration->shouldReceive('is_acdc_enabled')->andReturn(true);
+		$this->dcc_configuration->shouldReceive('is_bcdc_enabled')->andReturn(false);
 		$sut = new DisabledFundingSources($this->settings_provider, [], $this->dcc_configuration, 'US');
 
 		$this->setWooCommerceFunctionMocks();
