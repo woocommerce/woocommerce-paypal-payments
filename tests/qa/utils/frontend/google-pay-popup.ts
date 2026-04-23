@@ -1,7 +1,9 @@
 /**
  * External dependencies
  */
-import { expect, BrowserContext, Page } from '@playwright/test';
+import fs from 'fs';
+import path from 'path';
+import { expect, BrowserContext, Cookie, Page } from '@playwright/test';
 
 /**
  * Handles the Google Pay TEST-environment popup.
@@ -177,6 +179,23 @@ export class GooglePayPopup {
 		await this.page
 			.waitForURL( ( url ) => url.href !== 'about:blank', { timeout: 15_000 } )
 			.catch( () => {} );
+
+		// Reload only when still on about:blank; reloading during Google's redirect can break sign-in.
+		if ( this.page.url() === 'about:blank' || this.page.url() === '' ) {
+			await this.page.reload( { waitUntil: 'domcontentloaded' } ).catch( () => {} );
+		}
+
+		// Wait until the pay.google loading step finishes so we land on sign-in or the pay screen before other checks run.
+		await this.page
+			.waitForURL(
+				( url ) =>
+					url.hostname.includes( 'accounts.google.com' ) ||
+					( url.hostname.includes( 'pay.google.com' ) &&
+						! url.pathname.startsWith( '/gp/p/loading' ) ),
+				{ timeout: 20_000 }
+			)
+			.catch( () => {} );
+
 		await this.page.waitForLoadState( 'domcontentloaded' ).catch( () => {} );
 
 		// In headed mode the popup occasionally loads blank on the first attempt —
