@@ -22,7 +22,7 @@ const merchant = merchants.mexico;
 export const standardCardButtonClassicCheckout: ShopOrder[] = [
 	{
 		// https://inpsyde.atlassian.net/browse/PCP-1211
-		title: 'PCP-1211 | Transaction - Classic checkout - Standard Card Button - Default order @Critical @Smoke @Dev',
+		title: 'PCP-1211 | Transaction - Classic checkout - Standard Card Button - Default order @Critical',
 		...orders.default,
 		payment: payments.standardCardButton,
 		customer: guest,
