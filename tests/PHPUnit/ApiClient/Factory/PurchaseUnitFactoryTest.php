@@ -290,6 +290,33 @@ class PurchaseUnitFactoryTest extends TestCase
 		$this->assertNull($unit->shipping());
 	}
 
+	public function test_wc_cart_shipping_gets_dropped_when_no_address_line_1()
+	{
+		$wc_customer = Mockery::mock(\WC_Customer::class);
+		expect('WC')->andReturn((object) ['customer' => $wc_customer, 'session' => null]);
+
+		$wc_cart = Mockery::mock(\WC_Cart::class);
+		$amount = Mockery::mock(Amount::class);
+		$shipping = $this->create_shipping_mock(
+			$this->create_address_mock('DE', '12345', '', 'Berlin')
+		);
+
+		$shipping_factory = Mockery::mock(ShippingFactory::class);
+		$shipping_factory->expects('from_wc_customer')->with($wc_customer, false)->andReturn($shipping);
+
+		$testee = $this->create_testee(
+			$this->create_amount_factory_mock($amount, 'from_wc_cart', $wc_cart),
+			$this->create_item_factory_mock([$this->item], 'from_wc_cart', $wc_cart),
+			$shipping_factory,
+			null,
+			null,
+			$this->create_payment_level_eligibility_mock('', false)
+		);
+
+		$unit = $testee->from_wc_cart($wc_cart);
+		$this->assertNull($unit->shipping());
+	}
+
 	public function test_wc_cart_shipping_gets_dropped_when_no_city()
 	{
 		$wc_customer = Mockery::mock(\WC_Customer::class);
