@@ -21,6 +21,49 @@ export class GooglePayPopup {
 		this.page = page;
 	}
 
+	/**
+	 * Path to the cached Google session cookies file
+	 */
+	private static readonly SESSION_PATH = path.join(
+		__dirname,
+		'../../.google-session.json'
+	);
+
+	/**
+	 * Loads previously saved Google cookies into the browser context
+	 */
+	private static loadGoogleSession = async (
+		context: BrowserContext
+	): Promise< void > => {
+		try {
+			if ( ! fs.existsSync( GooglePayPopup.SESSION_PATH ) ) return;
+			const { cookies } = JSON.parse(
+				fs.readFileSync( GooglePayPopup.SESSION_PATH, 'utf-8' )
+			) as { cookies: Cookie[] };
+			if ( Array.isArray( cookies ) && cookies.length > 0 ) {
+				await context.addCookies( cookies );
+			}
+		} catch {}
+	};
+
+	/**
+	 * Saves this popup's google.com cookies to disk so they can be reused later.
+	 */
+	private saveGoogleSession = async (): Promise< void > => {
+		try {
+			const all = await this.page.context().cookies();
+			const googleCookies = all.filter(
+				( c ) =>
+					c.domain === 'google.com' ||
+					c.domain.endsWith( '.google.com' )
+			);
+			fs.writeFileSync(
+				GooglePayPopup.SESSION_PATH,
+				JSON.stringify( { cookies: googleCookies }, null, 2 )
+			);
+		} catch {}
+	};
+
 	// -------------------------------------------------------------------------
 	// Browser-level patches — call once on the context before the test runs
 	// -------------------------------------------------------------------------
@@ -31,6 +74,9 @@ export class GooglePayPopup {
 	 * Call this in beforeEach, before any page navigation.
 	 */
 	static applyBrowserPatches = async ( context: BrowserContext ) => {
+		// Restore a cached Google session from disk
+		await GooglePayPopup.loadGoogleSession( context );
+
 		await context.addInitScript( () => {
 			// Google Pay requires a secure context. On a local http:// dev site it
 			// throws DEVELOPER_ERROR without this patch.
@@ -178,6 +224,9 @@ export class GooglePayPopup {
 			{ timeout: 30_000 }
 		);
 		await this.page.waitForLoadState();
+
+		// Save login cookies so the next test run can skip Google sign-in.
+		await this.saveGoogleSession();
 	};
 
 	/**
@@ -226,6 +275,8 @@ export class GooglePayPopup {
 
 		await expect( this.confirmButton(), 'Google Pay confirm button is visible' )
 			.toBeVisible( { timeout: 30_000 } );
+
+		await this.saveGoogleSession();
 
 		await Promise.all( [
 			this.page.waitForEvent( 'close' ),
