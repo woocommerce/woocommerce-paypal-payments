@@ -122,9 +122,17 @@ export default defineConfig< BaseExtend >( {
 			fullyParallel: false,
 		},
 		{
+			name: 'plugin-foundation',
+			dependencies: [ 'setup-woocommerce' ],
+			testMatch: /plugin-foundation\.spec\.ts/,
+		},
+		{
 			name: 'all',
 			dependencies: [ 'setup-woocommerce' ],
-			testIgnore: /stress\.spec\.ts/,
+			testIgnore: [
+				/stress\.spec\.ts/,
+				/plugin-foundation\.spec\.ts/,
+			],
 		},
 		{
 			name: 'stress',
