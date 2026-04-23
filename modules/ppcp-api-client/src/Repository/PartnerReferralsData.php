@@ -26,7 +26,7 @@ class PartnerReferralsData {
 	protected FeaturesDefinition $features_definition;
 
 	public function __construct( DccApplies $dcc_applies, FeaturesDefinition $features_definition ) {
-		$this->dcc_applies     = $dcc_applies; // @phpstan-ignore property.deprecated
+		$this->dcc_applies         = $dcc_applies; // @phpstan-ignore property.deprecated
 		$this->features_definition = $features_definition;
 	}
 
