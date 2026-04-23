@@ -1,8 +1,8 @@
 import { __ } from '@wordpress/i18n';
 import { useMemo } from '@wordpress/element';
 
-import { CommonHooks, OnboardingHooks } from '../../../../data';
-import { OptionSelector } from '../../../ReusableComponents/Fields';
+import { CommonHooks, OnboardingHooks } from '@ppcp-settings/data';
+import { OptionSelector } from '@ppcp-settings/Components/ReusableComponents/Fields';
 import PricingDescription from '../Components/PricingDescription';
 import OnboardingHeader from '../Components/OnboardingHeader';
 import PaymentFlow from '../Components/PaymentFlow';
@@ -12,11 +12,14 @@ const StepPaymentMethods = () => {
 		OnboardingHooks.useOptionalPaymentMethods();
 	const { ownBrandOnly, storeCountry } = CommonHooks.useWooSettings();
 	const { isCasualSeller } = OnboardingHooks.useBusiness();
-	const { canUseCardPayments } = OnboardingHooks.useFlags();
+	const { canUseCardPayments, canUseDigitalWallets } =
+		OnboardingHooks.useFlags();
+
+	const hasAdvancedMethods = canUseCardPayments || canUseDigitalWallets;
 
 	const optionalMethodTitle = useMemo( () => {
-		// The BCDC flow does not show a title. !acdc does not show a title. Mexico does not show a title.
-		if ( isCasualSeller || ! canUseCardPayments || 'MX' === storeCountry ) {
+		// The BCDC flow does not show a title. No ACDC and no digital wallets does not show a title.
+		if ( isCasualSeller || ! hasAdvancedMethods ) {
 			return null;
 		}
 
@@ -24,7 +27,7 @@ const StepPaymentMethods = () => {
 			'Available with additional application',
 			'woocommerce-paypal-payments'
 		);
-	}, [ isCasualSeller, canUseCardPayments, storeCountry ] );
+	}, [ isCasualSeller, hasAdvancedMethods ] );
 
 	const methodChoices = [
 		{
@@ -34,7 +37,7 @@ const StepPaymentMethods = () => {
 		},
 		{
 			title:
-				ownBrandOnly || ! canUseCardPayments || 'MX' === storeCountry
+				ownBrandOnly || ! hasAdvancedMethods
 					? __(
 							'No thanks, I prefer to use a different provider for local payment methods',
 							'woocommerce-paypal-payments'
@@ -79,22 +82,27 @@ const PaymentStepTitle = ( ownBrandOnly ) => {
 			'woocommerce-paypal-payments'
 		);
 	}
-	return __( 'Add Credit and Debit Cards', 'woocommerce-paypal-payments' );
+	return __(
+		'Add Expanded Checkout for more ways to pay',
+		'woocommerce-paypal-payments'
+	);
 };
 
 const OptionalMethodDescription = () => {
 	const { isCasualSeller } = OnboardingHooks.useBusiness();
 	const { storeCountry, storeCurrency, ownBrandOnly } =
 		CommonHooks.useWooSettings();
-	const { canUseCardPayments } = OnboardingHooks.useFlags();
+	const { canUseCardPayments, canUseDigitalWallets, canUseFastlane } =
+		OnboardingHooks.useFlags();
 
 	return (
 		<PaymentFlow
 			onlyOptional={ true }
-			useAcdc={
-				! isCasualSeller && canUseCardPayments && 'MX' !== storeCountry
+			useAcdc={ ! isCasualSeller && canUseCardPayments }
+			useDigitalWallets={
+				! isCasualSeller && canUseDigitalWallets
 			}
-			isFastlane={ true }
+			isFastlane={ canUseFastlane }
 			isPayLater={ true }
 			ownBrandOnly={ ownBrandOnly }
 			storeCountry={ storeCountry }

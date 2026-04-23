@@ -1,4 +1,4 @@
-import { Separator } from '../../../ReusableComponents/Elements';
+import { Separator } from '@ppcp-settings/Components/ReusableComponents/Elements';
 
 const PaymentMethodsGroup = ( { methods, learnMoreConfig } ) => {
 	return (

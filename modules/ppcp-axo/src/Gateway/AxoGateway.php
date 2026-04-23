@@ -23,12 +23,9 @@ use WooCommerce\PayPalCommerce\ApiClient\Factory\ExperienceContextBuilder;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
 use WooCommerce\PayPalCommerce\WcGateway\Endpoint\ReturnUrlEndpoint;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
-use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
-use WooCommerce\PayPalCommerce\WcGateway\Gateway\GatewaySettingsRendererTrait;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\TransactionUrlProvider;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\OrderMetaTrait;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\OrderProcessor;
-use WooCommerce\PayPalCommerce\WcGateway\Settings\SettingsRenderer;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\ProcessPaymentTrait;
 use WooCommerce\PayPalCommerce\WcGateway\Exception\GatewayGenericException;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
@@ -40,23 +37,10 @@ use DomainException;
  * Class AXOGateway.
  */
 class AxoGateway extends WC_Payment_Gateway {
-	use OrderMetaTrait, GatewaySettingsRendererTrait, ProcessPaymentTrait;
+	use OrderMetaTrait;
+	use ProcessPaymentTrait;
 
 	const ID = 'ppcp-axo-gateway';
-
-	/**
-	 * The Settings Renderer.
-	 *
-	 * @var SettingsRenderer
-	 */
-	protected $settings_renderer;
-
-	/**
-	 * The settings.
-	 *
-	 * @var ContainerInterface
-	 */
-	protected $ppcp_settings;
 
 	/**
 	 * Gateway configuration object, providing relevant settings.
@@ -64,13 +48,6 @@ class AxoGateway extends WC_Payment_Gateway {
 	 * @var CardPaymentsConfiguration
 	 */
 	protected CardPaymentsConfiguration $dcc_configuration;
-
-	/**
-	 * The WcGateway module URL.
-	 *
-	 * @var string
-	 */
-	protected $wcgateway_module_url;
 
 	/**
 	 * The processor for orders.
@@ -150,12 +127,7 @@ class AxoGateway extends WC_Payment_Gateway {
 	protected $settings_model;
 
 	/**
-	 * AXOGateway constructor.
-	 *
-	 * @param SettingsRenderer          $settings_renderer           The settings renderer.
-	 * @param ContainerInterface        $ppcp_settings               The settings.
 	 * @param CardPaymentsConfiguration $dcc_configuration           The DCC Gateway configuration.
-	 * @param string                    $wcgateway_module_url        The WcGateway module URL.
 	 * @param SessionHandler            $session_handler             The Session Handler.
 	 * @param OrderProcessor            $order_processor             The Order processor.
 	 * @param array                     $card_icons                  The card icons.
@@ -169,10 +141,7 @@ class AxoGateway extends WC_Payment_Gateway {
 	 * @param SettingsModel             $settings_model              The settings model.
 	 */
 	public function __construct(
-		SettingsRenderer $settings_renderer,
-		ContainerInterface $ppcp_settings,
 		CardPaymentsConfiguration $dcc_configuration,
-		string $wcgateway_module_url,
 		SessionHandler $session_handler,
 		OrderProcessor $order_processor,
 		array $card_icons,
@@ -187,10 +156,7 @@ class AxoGateway extends WC_Payment_Gateway {
 	) {
 		$this->id = self::ID;
 
-		$this->settings_renderer          = $settings_renderer;
-		$this->ppcp_settings              = $ppcp_settings;
 		$this->dcc_configuration          = $dcc_configuration;
-		$this->wcgateway_module_url       = $wcgateway_module_url;
 		$this->session_handler            = $session_handler;
 		$this->order_processor            = $order_processor;
 		$this->card_icons                 = $card_icons;
@@ -205,8 +171,10 @@ class AxoGateway extends WC_Payment_Gateway {
 			$this->update_option( 'enabled', $is_axo_enabled ? 'yes' : 'no' );
 		}
 
+		$description = $this->get_option( 'description', __( 'Enter your email address above to continue.', 'woocommerce-paypal-payments' ) );
+
 		$this->title       = apply_filters( 'woocommerce_paypal_payments_axo_gateway_title', $this->dcc_configuration->gateway_title( $this->get_option( 'title', $this->method_title ) ), $this );
-		$this->description = apply_filters( 'woocommerce_paypal_payments_axo_gateway_description', __( 'Enter your email address above to continue.', 'woocommerce-paypal-payments' ), $this );
+		$this->description = apply_filters( 'woocommerce_paypal_payments_axo_gateway_description', $description, $this );
 
 		$this->init_form_fields();
 		$this->init_settings();
@@ -257,7 +225,7 @@ class AxoGateway extends WC_Payment_Gateway {
 	public function process_payment( $order_id ) {
 		$wc_order = wc_get_order( $order_id );
 
-		if ( ! is_a( $wc_order, WC_Order::class ) ) {
+		if ( ! ( $wc_order instanceof WC_Order ) ) {
 			return $this->handle_payment_failure(
 				null,
 				new GatewayGenericException( new Exception( 'WC order was not found.' ) ),
@@ -351,7 +319,7 @@ class AxoGateway extends WC_Payment_Gateway {
 	 *
 	 * @return array
 	 */
-	protected function process_3ds_return( WC_Order $wc_order, string $token ) : array {
+	protected function process_3ds_return( WC_Order $wc_order, string $token ): array {
 		try {
 			$paypal_order = $this->order_endpoint->order( $token );
 
@@ -424,7 +392,7 @@ class AxoGateway extends WC_Payment_Gateway {
 	 * @param Order $order The PayPal order.
 	 * @return string The payer action URL or an empty string if not found.
 	 */
-	private function get_payer_action_url( Order $order ) : string {
+	private function get_payer_action_url( Order $order ): string {
 		$links = $order->links();
 
 		if ( ! $links ) {
@@ -448,7 +416,7 @@ class AxoGateway extends WC_Payment_Gateway {
 	 *
 	 * @return Order The PayPal order.
 	 */
-	protected function create_paypal_order( WC_Order $wc_order, string $payment_token ) : Order {
+	protected function create_paypal_order( WC_Order $wc_order, string $payment_token ): Order {
 		$purchase_unit = $this->purchase_unit_factory->from_wc_order( $wc_order );
 
 		$shipping_preference = $this->shipping_preference_factory->from_state(
@@ -470,8 +438,7 @@ class AxoGateway extends WC_Payment_Gateway {
 			null,
 			self::ID,
 			$this->build_order_data(),
-			$payment_source,
-			$wc_order
+			$payment_source
 		);
 	}
 
@@ -559,7 +526,7 @@ class AxoGateway extends WC_Payment_Gateway {
 	 *
 	 * @return string
 	 */
-	public function get_transaction_url( $order ) : string {
+	public function get_transaction_url( $order ): string {
 		$this->view_transaction_url = $this->transaction_url_provider->get_transaction_url_base( $order );
 
 		return parent::get_transaction_url( $order );
@@ -586,14 +553,5 @@ class AxoGateway extends WC_Payment_Gateway {
 		}
 
 		return parent::get_title();
-	}
-
-	/**
-	 * Returns the settings renderer.
-	 *
-	 * @return SettingsRenderer
-	 */
-	protected function settings_renderer() : SettingsRenderer {
-		return $this->settings_renderer;
 	}
 }

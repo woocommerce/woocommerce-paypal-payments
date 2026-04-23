@@ -42,40 +42,73 @@ $fast-transition-duration: 0.5s;
 		display: flex;
 		flex-direction: column;
 		align-items: center;
-		max-width: 300px;
+		max-width: 340px;
 		width: 100%;
 	}
 
 	&__content {
+		position: relative;
 		box-sizing: border-box;
-		aspect-ratio: 1.586;
-		display: flex;
-		flex-direction: column;
-		justify-content: space-between;
-		border: 1px solid $border-color;
-		font-size: 0.875em;
-		font-family: monospace;
-		padding: 1em;
 		margin: 1em 0;
-		border-radius: 4px;
+		border-radius: 10px;
 		width: 100%;
+		background-color: #F8F9FA;
+		border: 2px solid #ECEEF2;
 	}
 
 	&__meta {
-		@include flex-space-between;
 		width: 100%;
+		text-align: left;
+		padding: 15px;
+		display: flex;
+		gap: 15px;
 
 		&-digits {
-			letter-spacing: 2px;
+			font-size: 18px;
+			line-height: 1em;
+			color: #666;
+			font-family: monospace;
+			font-weight: bold;
+			width: 100%;
 		}
 
-		&:last-child {
-			align-self: flex-end;
+		&-logo {
+			width: 60px;
+			align-self: center;
+			flex-grow: 1;
+			flex-shrink: 0;
+
+			img {
+				max-width: 100%;
+				display: block;
+				margin: 0;
+			}
+		}
+
+		&-name {
+			padding-right: 20px;
+			position: relative;
+			&::after {
+				content: "•";
+				position: absolute;
+				right: 10px;
+				transform: translateX(50%);
+				color: #6d6d6d;
+			}
+		}
+
+		&-name,
+		&-expiry {
+			font-size: 16px;
+			line-height: 1em;
+			color: #6d6d6d;
 		}
 	}
 
-	&__watermark {
-		align-self: flex-end;
+	&__meta-container {
+		display: flex;
+		flex-wrap: wrap;
+		row-gap: .5em;
 	}
 
 	&__edit {
@@ -94,10 +127,6 @@ $fast-transition-duration: 0.5s;
 			text-decoration: underline;
 		}
 	}
-}
-
-.wc-block-axo-block-card__meta-icon {
-	max-height: 25px;
 }
 
 // 3. Express Payment Block

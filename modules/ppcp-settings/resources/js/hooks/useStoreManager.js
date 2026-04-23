@@ -7,7 +7,7 @@ import {
 	SettingsHooks,
 	StylingHooks,
 	TodosHooks,
-} from '../data';
+} from '@ppcp-settings/data';
 
 export const useStoreManager = () => {
 	const { withActivity } = CommonHooks.useBusyState();

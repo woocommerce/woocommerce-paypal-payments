@@ -1,5 +1,5 @@
 import { useMemo } from '@wordpress/element';
-import { combineStyles } from '../../../../../ppcp-button/resources/js/modules/Helper/PaymentButtonHelpers';
+import { combineStyles } from '@ppcp-button/Helper/PaymentButtonHelpers';
 
 const useButtonStyles = ( buttonConfig, ppcpConfig ) => {
 	return useMemo( () => {

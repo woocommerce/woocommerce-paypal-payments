@@ -10,21 +10,17 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\Blocks;
 
 use Automattic\WooCommerce\Blocks\Payments\Integrations\AbstractPaymentMethodType;
+use WooCommerce\PayPalCommerce\Assets\AssetGetter;
 use WooCommerce\PayPalCommerce\Button\Assets\SmartButtonInterface;
+use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
-use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
+use WooCommerce\PayPalCommerce\WcGateway\Helper\CardPaymentsConfiguration;
 
 /**
  * Class AdvancedCardPaymentMethod
  */
 class AdvancedCardPaymentMethod extends AbstractPaymentMethodType {
-
-	/**
-	 * The URL of this module.
-	 *
-	 * @var string
-	 */
-	private $module_url;
+	private AssetGetter $asset_getter;
 
 	/**
 	 * The assets version.
@@ -48,34 +44,42 @@ class AdvancedCardPaymentMethod extends AbstractPaymentMethodType {
 	private $smart_button;
 
 	/**
-	 * The settings.
+	 * The settings provider.
 	 *
-	 * @var Settings
+	 * @var SettingsProvider
 	 */
-	protected $plugin_settings;
+	protected SettingsProvider $plugin_settings;
+
+	protected CardPaymentsConfiguration $card_payments_configuration;
+
+	protected bool $save_payment_methods_eligible;
 
 	/**
-	 * AdvancedCardPaymentMethod constructor.
-	 *
-	 * @param string                        $module_url The URL of this module.
+	 * @param AssetGetter                   $asset_getter
 	 * @param string                        $version The assets version.
-	 * @param CreditCardGateway             $gateway Credit card gateway.
+	 * @param CreditCardGateway             $gateway
 	 * @param SmartButtonInterface|callable $smart_button The smart button script loading handler.
-	 * @param Settings                      $settings The settings.
+	 * @param SettingsProvider              $settings_provider The settings provider.
+	 * @param CardPaymentsConfiguration     $card_payments_configuration
+	 * @param bool                          $save_payment_methods_eligible Whether save payment methods is eligible for the current country.
 	 */
 	public function __construct(
-		string $module_url,
+		AssetGetter $asset_getter,
 		string $version,
 		CreditCardGateway $gateway,
 		$smart_button,
-		Settings $settings
+		SettingsProvider $settings_provider,
+		CardPaymentsConfiguration $card_payments_configuration,
+		bool $save_payment_methods_eligible
 	) {
-		$this->name            = CreditCardGateway::ID;
-		$this->module_url      = $module_url;
-		$this->version         = $version;
-		$this->gateway         = $gateway;
-		$this->smart_button    = $smart_button;
-		$this->plugin_settings = $settings;
+		$this->name                          = CreditCardGateway::ID;
+		$this->asset_getter                  = $asset_getter;
+		$this->version                       = $version;
+		$this->gateway                       = $gateway;
+		$this->smart_button                  = $smart_button;
+		$this->plugin_settings               = $settings_provider;
+		$this->card_payments_configuration   = $card_payments_configuration;
+		$this->save_payment_methods_eligible = $save_payment_methods_eligible;
 	}
 
 	/**
@@ -96,7 +100,7 @@ class AdvancedCardPaymentMethod extends AbstractPaymentMethodType {
 	public function get_payment_method_script_handles() {
 		wp_register_script(
 			'ppcp-advanced-card-checkout-block',
-			trailingslashit( $this->module_url ) . 'assets/js/advanced-card-checkout-block.js',
+			$this->asset_getter->get_asset_url( 'advanced-card-checkout-block.js' ),
 			array( 'wp-i18n' ),
 			$this->version,
 			true
@@ -124,8 +128,9 @@ class AdvancedCardPaymentMethod extends AbstractPaymentMethodType {
 			'scriptData'          => $script_data,
 			'supports'            => $this->gateway->supports,
 			'save_card_text'      => esc_html__( 'Save your card', 'woocommerce-paypal-payments' ),
-			'is_vaulting_enabled' => $this->plugin_settings->has( 'vault_enabled_dcc' ) && $this->plugin_settings->get( 'vault_enabled_dcc' ),
-			'card_icons'          => $this->plugin_settings->has( 'card_icons' ) ? (array) $this->plugin_settings->get( 'card_icons' ) : array(),
+			'is_vaulting_enabled' => $this->save_payment_methods_eligible && $this->plugin_settings->save_card_details(),
+			'card_icons'          => $this->plugin_settings->card_icons(),
+			'name_on_card'        => $this->card_payments_configuration->show_name_on_card(),
 		);
 	}
 

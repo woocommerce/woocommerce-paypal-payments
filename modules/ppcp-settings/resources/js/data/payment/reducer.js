@@ -7,7 +7,7 @@
  * @file
  */
 
-import { createReducer, createReducerSetters } from '../utils';
+import { createReducer, createReducerSetters } from '@ppcp-settings/data/utils';
 import ACTION_TYPES from './action-types';
 
 // Store structure.
@@ -28,6 +28,7 @@ const defaultPersistent = Object.freeze( {
 	'ppcp-axo-gateway': {},
 	'ppcp-applepay': {},
 	'ppcp-googlepay': {},
+	'ppcp-pwc': {},
 	'ppcp-bancontact': {},
 	'ppcp-blik': {},
 	'ppcp-eps': {},
@@ -42,8 +43,11 @@ const defaultPersistent = Object.freeze( {
 	// Custom payment method properties.
 	paypalShowLogo: false,
 	threeDSecure: 'no-3d-secure',
-	fastlaneCardholderName: false,
+	cardholderName: false,
 	fastlaneDisplayWatermark: false,
+	puiBrandName: '',
+	puiLogoUrl: '',
+	puiCustomerServiceInstructions: '',
 	__meta: false,
 } );
 

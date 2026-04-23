@@ -1,8 +1,8 @@
 import { __ } from '@wordpress/i18n';
 
-import { CommonHooks } from '../../../../../../data';
-import SettingsBlock from '../../../../../ReusableComponents/SettingsBlock';
-import { Title } from '../../../../../ReusableComponents/Elements';
+import { CommonHooks } from '@ppcp-settings/data';
+import SettingsBlock from '@ppcp-settings/Components/ReusableComponents/SettingsBlock';
+import { Title } from '@ppcp-settings/Components/ReusableComponents/Elements';
 
 const HooksListBlock = () => {
 	const { webhooks } = CommonHooks.useWebhooks();

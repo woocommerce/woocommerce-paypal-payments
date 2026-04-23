@@ -16,6 +16,7 @@ use WC_Payment_Gateway;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PayUponInvoiceOrderEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PurchaseUnitFactory;
+use WooCommerce\PayPalCommerce\Assets\AssetGetter;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\TransactionUrlProvider;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\CheckoutHelper;
@@ -96,15 +97,62 @@ class PayUponInvoiceGateway extends WC_Payment_Gateway {
 	protected $refund_processor;
 
 	/**
-	 * The module URL
+	 * ID of the class extending the settings API. Used in option names.
 	 *
 	 * @var string
 	 */
-	private $module_url;
+	public $id;
 
 	/**
-	 * PayUponInvoiceGateway constructor.
+	 * Gateway title.
 	 *
+	 * @var string
+	 */
+	public $method_title = '';
+
+	/**
+	 * Gateway description.
+	 *
+	 * @var string
+	 */
+	public $method_description = '';
+
+	/**
+	 * Payment method title for the frontend.
+	 *
+	 * @var string
+	 */
+	public $title;
+
+	/**
+	 * Payment method description for the frontend.
+	 *
+	 * @var string
+	 */
+	public $description;
+
+	/**
+	 * Form option fields.
+	 *
+	 * @var array
+	 */
+	public $form_fields = array();
+
+	/**
+	 * Icon for the gateway.
+	 *
+	 * @var string
+	 */
+	public $icon;
+
+	/**
+	 * Supported features such as 'default_credit_card_form', 'refunds'.
+	 *
+	 * @var array
+	 */
+	public $supports = array( 'products' );
+
+	/**
 	 * @param PayUponInvoiceOrderEndpoint $order_endpoint The order endpoint.
 	 * @param PurchaseUnitFactory         $purchase_unit_factory The purchase unit factory.
 	 * @param PaymentSourceFactory        $payment_source_factory The payment source factory.
@@ -115,7 +163,7 @@ class PayUponInvoiceGateway extends WC_Payment_Gateway {
 	 * @param CheckoutHelper              $checkout_helper The checkout helper.
 	 * @param bool                        $is_connected Whether the onboarding was completed.
 	 * @param RefundProcessor             $refund_processor The refund processor.
-	 * @param string                      $module_url The module URL.
+	 * @param AssetGetter                 $asset_getter
 	 */
 	public function __construct(
 		PayUponInvoiceOrderEndpoint $order_endpoint,
@@ -128,7 +176,7 @@ class PayUponInvoiceGateway extends WC_Payment_Gateway {
 		CheckoutHelper $checkout_helper,
 		bool $is_connected,
 		RefundProcessor $refund_processor,
-		string $module_url
+		AssetGetter $asset_getter
 	) {
 		$this->id = self::ID;
 
@@ -158,8 +206,10 @@ class PayUponInvoiceGateway extends WC_Payment_Gateway {
 		$this->transaction_url_provider = $transaction_url_provider;
 		$this->pui_helper               = $pui_helper;
 		$this->checkout_helper          = $checkout_helper;
-		$this->module_url               = $module_url;
-		$this->icon                     = apply_filters( 'woocommerce_paypal_payments_pay_upon_invoice_gateway_icon', esc_url( $this->module_url ) . 'assets/images/ratepay.svg' );
+		$this->icon                     = apply_filters(
+			'woocommerce_paypal_payments_pay_upon_invoice_gateway_icon',
+			$asset_getter->get_static_asset_url( 'images/ratepay.svg' )
+		);
 
 		if ( $is_connected ) {
 			$this->supports = array( 'refunds' );
@@ -247,8 +297,15 @@ class PayUponInvoiceGateway extends WC_Payment_Gateway {
 	 */
 	public function process_payment( $order_id ) {
 		$wc_order = wc_get_order( $order_id );
+		if ( ! ( $wc_order instanceof WC_Order ) ) {
+			$this->logger->error( 'Invalid WC_Order id ' . (int) $order_id );
+			return array(
+				'result'   => 'failure',
+				'redirect' => wc_get_checkout_url(),
+			);
+		}
 		// phpcs:disable WordPress.Security.NonceVerification
-		$birth_date = wc_clean( wp_unslash( $_POST['billing_birth_date'] ?? '' ) );
+		$birth_date    = wc_clean( wp_unslash( $_POST['billing_birth_date'] ?? '' ) );
 		$pay_for_order = wc_clean( wp_unslash( $_GET['pay_for_order'] ?? '' ) );
 		if ( 'true' === $pay_for_order ) {
 			if ( ! $this->checkout_helper->validate_birth_date( $birth_date ) ) {
@@ -291,7 +348,7 @@ class PayUponInvoiceGateway extends WC_Payment_Gateway {
 			);
 		} catch ( RuntimeException $exception ) {
 			$error = $exception->getMessage();
-			if ( is_a( $exception, PayPalApiException::class ) ) {
+			if ( $exception instanceof PayPalApiException ) {
 				$error = $exception->get_details( $error );
 			}
 
@@ -320,7 +377,7 @@ class PayUponInvoiceGateway extends WC_Payment_Gateway {
 	 */
 	public function process_refund( $order_id, $amount = null, $reason = '' ) {
 		$order = wc_get_order( $order_id );
-		if ( ! is_a( $order, \WC_Order::class ) ) {
+		if ( ! ( $order instanceof WC_Order ) ) {
 			return false;
 		}
 		return $this->refund_processor->process( $order, (float) $amount, (string) $reason );

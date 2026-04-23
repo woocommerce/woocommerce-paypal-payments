@@ -13,6 +13,7 @@ use Exception;
 use Psr\Log\LoggerInterface;
 use WC_Order;
 use WC_Payment_Gateway;
+use WooCommerce\PayPalCommerce\Assets\AssetGetter;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\ProcessPaymentTrait;
@@ -67,13 +68,6 @@ class ApplePayGateway extends WC_Payment_Gateway {
 	protected $session_handler;
 
 	/**
-	 * The URL to the module.
-	 *
-	 * @var string
-	 */
-	private $module_url;
-
-	/**
 	 * The logger.
 	 *
 	 * @var LoggerInterface
@@ -81,8 +75,6 @@ class ApplePayGateway extends WC_Payment_Gateway {
 	private $logger;
 
 	/**
-	 * ApplePayGateway constructor.
-	 *
 	 * @param OrderProcessor          $order_processor             The Order Processor.
 	 * @param callable(string):string $paypal_checkout_url_factory The function return the PayPal
 	 *                                                             checkout URL for the given order
@@ -91,7 +83,7 @@ class ApplePayGateway extends WC_Payment_Gateway {
 	 * @param TransactionUrlProvider  $transaction_url_provider    Service providing transaction
 	 *                                                             view URL based on order.
 	 * @param SessionHandler          $session_handler             The Session Handler.
-	 * @param string                  $module_url                  The URL to the module.
+	 * @param AssetGetter             $asset_getter
 	 * @param LoggerInterface         $logger The logger.
 	 */
 	public function __construct(
@@ -100,7 +92,7 @@ class ApplePayGateway extends WC_Payment_Gateway {
 		RefundProcessor $refund_processor,
 		TransactionUrlProvider $transaction_url_provider,
 		SessionHandler $session_handler,
-		string $module_url,
+		AssetGetter $asset_getter,
 		LoggerInterface $logger
 	) {
 		$this->id = self::ID;
@@ -116,8 +108,7 @@ class ApplePayGateway extends WC_Payment_Gateway {
 		$this->title       = $this->get_option( 'title', __( 'Apple Pay', 'woocommerce-paypal-payments' ) );
 		$this->description = $this->get_option( 'description', '' );
 
-		$this->module_url = $module_url;
-		$this->icon       = esc_url( $this->module_url ) . 'assets/images/applepay.svg';
+		$this->icon = $asset_getter->get_static_asset_url( 'images/applepay.svg' );
 
 		$this->init_form_fields();
 		$this->init_settings();
@@ -171,9 +162,9 @@ class ApplePayGateway extends WC_Payment_Gateway {
 	 *
 	 * @return array
 	 */
-	public function process_payment( $order_id ) : array {
+	public function process_payment( $order_id ): array {
 		$wc_order = wc_get_order( $order_id );
-		if ( ! is_a( $wc_order, WC_Order::class ) ) {
+		if ( ! ( $wc_order instanceof WC_Order ) ) {
 			return $this->handle_payment_failure(
 				null,
 				new GatewayGenericException( new Exception( 'WC order was not found.' ) )
@@ -234,9 +225,9 @@ class ApplePayGateway extends WC_Payment_Gateway {
 	 *
 	 * @return boolean True or false based on success, or a WP_Error object.
 	 */
-	public function process_refund( $order_id, $amount = null, $reason = '' ) : bool {
+	public function process_refund( $order_id, $amount = null, $reason = '' ): bool {
 		$order = wc_get_order( $order_id );
-		if ( ! is_a( $order, WC_Order::class ) ) {
+		if ( ! ( $order instanceof WC_Order ) ) {
 			return false;
 		}
 
@@ -250,7 +241,7 @@ class ApplePayGateway extends WC_Payment_Gateway {
 	 *
 	 * @return string
 	 */
-	public function get_transaction_url( $order ) : string {
+	public function get_transaction_url( $order ): string {
 		$this->view_transaction_url = $this->transaction_url_provider->get_transaction_url_base( $order );
 
 		return parent::get_transaction_url( $order );

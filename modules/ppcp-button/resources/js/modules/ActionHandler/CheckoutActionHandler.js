@@ -91,6 +91,7 @@ class CheckoutActionHandler {
 					bn_code: bnCode,
 					context: this.config.context,
 					order_id: this.config.order_id,
+                    order_key: this.config.order_key,
 					payment_method: paymentMethod,
 					funding_source: fundingSource,
 					// send as urlencoded string to handle complex fields via PHP functions the same as normal form submit
@@ -105,7 +106,7 @@ class CheckoutActionHandler {
 				.then( function ( data ) {
 					if ( ! data.success ) {
 						spinner.unblock();
-						//handle both messages sent from Woocommerce (data.messages) and this plugin (data.data.message)
+						//handle both messages sent from WooCommerce (data.messages) and this plugin (data.data.message)
 						if ( typeof data.messages !== 'undefined' ) {
 							const domParser = new DOMParser();
 							errorHandler.appendPreparedErrorMessageElement(
@@ -158,9 +159,13 @@ class CheckoutActionHandler {
 		};
 		return {
 			createOrder,
-			onApprove: onApprove( this, this.errorHandler, this.spinner ),
+			onApprove: onApprove( this, this.errorHandler ),
 			onCancel: () => {
 				spinner.unblock();
+
+				ResumeFlowHelper.reloadButtonsIfRequired(
+					this.config.button.wrapper
+				);
 			},
 			onError: ( err ) => {
 				console.error( err );
@@ -172,12 +177,9 @@ class CheckoutActionHandler {
 
 				this.errorHandler.genericError();
 
-				if ( ResumeFlowHelper.isResumeFlow() ) {
-					ResumeFlowHelper.cleanHashParams();
-					jQuery( this.config.button.wrapper ).trigger(
-						'ppcp-reload-buttons'
-					);
-				}
+				ResumeFlowHelper.reloadButtonsIfRequired(
+					this.config.button.wrapper
+				);
 			},
 		};
 	}

@@ -1,5 +1,5 @@
 /.github/ export-ignore
-/.psalm/ export-ignore
+/stubs/ export-ignore
 /.ddev/ export-ignore
 /tests/ export-ignore
 /.idea/ export-ignore
@@ -16,7 +16,7 @@ gulpfile.js export-ignore
 package.json export-ignore
 phpcs.xml export-ignore
 phpunit.xml export-ignore
-psalm.xml export-ignore
-yarn.lock export-ignore
+phpstan* export-ignore
+package-lock.json export-ignore
 
 * text=auto

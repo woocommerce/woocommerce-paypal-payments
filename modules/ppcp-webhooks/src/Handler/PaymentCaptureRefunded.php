@@ -23,7 +23,9 @@ use WP_REST_Response;
  */
 class PaymentCaptureRefunded implements RequestHandler {
 
-	use TransactionIdHandlingTrait, RefundMetaTrait, RequestHandlerTrait;
+	use TransactionIdHandlingTrait;
+	use RefundMetaTrait;
+	use RequestHandlerTrait;
 
 	/**
 	 * The logger.
@@ -92,7 +94,7 @@ class PaymentCaptureRefunded implements RequestHandler {
 		}
 
 		$wc_order = wc_get_order( $order_id );
-		if ( ! is_a( $wc_order, WC_Order::class ) ) {
+		if ( ! ( $wc_order instanceof WC_Order ) ) {
 			$message = sprintf(
 				'Order for PayPal refund %s not found.',
 				$refund_id

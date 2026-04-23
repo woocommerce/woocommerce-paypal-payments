@@ -9,6 +9,6 @@ declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\Settings;
 
-return static function () : SettingsModule {
+return static function (): SettingsModule {
 	return new SettingsModule();
 };

@@ -1,4 +1,4 @@
-import { LocalStorage } from '../../../../ppcp-button/resources/js/modules/Helper/LocalStorage';
+import { LocalStorage } from '@ppcp-button/Helper/LocalStorage';
 
 export class GooglePayStorage extends LocalStorage {
 	static PAYER = 'payer';

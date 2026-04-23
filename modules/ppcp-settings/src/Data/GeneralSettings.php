@@ -72,7 +72,7 @@ class GeneralSettings extends AbstractDataModel {
 	 *
 	 * @return array
 	 */
-	protected function get_defaults() : array {
+	protected function get_defaults(): array {
 		return array(
 			'use_sandbox'           => false, // UI state, not a connection detail.
 			'use_manual_connection' => false, // UI state, not a connection detail.
@@ -100,7 +100,7 @@ class GeneralSettings extends AbstractDataModel {
 	 *
 	 * @return bool
 	 */
-	public function get_sandbox() : bool {
+	public function get_sandbox(): bool {
 		return (bool) $this->data['use_sandbox'];
 	}
 
@@ -109,7 +109,7 @@ class GeneralSettings extends AbstractDataModel {
 	 *
 	 * @param bool $use_sandbox Whether to use sandbox mode.
 	 */
-	public function set_sandbox( bool $use_sandbox ) : void {
+	public function set_sandbox( bool $use_sandbox ): void {
 		$this->data['use_sandbox'] = $use_sandbox;
 	}
 
@@ -118,7 +118,7 @@ class GeneralSettings extends AbstractDataModel {
 	 *
 	 * @return bool
 	 */
-	public function get_manual_connection() : bool {
+	public function get_manual_connection(): bool {
 		return (bool) $this->data['use_manual_connection'];
 	}
 
@@ -127,7 +127,7 @@ class GeneralSettings extends AbstractDataModel {
 	 *
 	 * @param bool $use_manual_connection Whether to use manual connection.
 	 */
-	public function set_manual_connection( bool $use_manual_connection ) : void {
+	public function set_manual_connection( bool $use_manual_connection ): void {
 		$this->data['use_manual_connection'] = $use_manual_connection;
 	}
 
@@ -136,7 +136,7 @@ class GeneralSettings extends AbstractDataModel {
 	 *
 	 * @return array
 	 */
-	public function get_woo_settings() : array {
+	public function get_woo_settings(): array {
 		$settings = $this->woo_settings;
 
 		$settings['own_brand_only'] = $this->own_brand_only();
@@ -151,7 +151,7 @@ class GeneralSettings extends AbstractDataModel {
 	 *
 	 * @return void
 	 */
-	public function set_merchant_data( MerchantConnectionDTO $connection ) : void {
+	public function set_merchant_data( MerchantConnectionDTO $connection ): void {
 		$this->data['sandbox_merchant']   = $connection->is_sandbox;
 		$this->data['merchant_id']        = sanitize_text_field( $connection->merchant_id );
 		$this->data['merchant_email']     = sanitize_email( $connection->merchant_email );
@@ -167,7 +167,7 @@ class GeneralSettings extends AbstractDataModel {
 	 *
 	 * @return MerchantConnectionDTO All connection details.
 	 */
-	public function get_merchant_data() : MerchantConnectionDTO {
+	public function get_merchant_data(): MerchantConnectionDTO {
 		return new MerchantConnectionDTO(
 			$this->is_sandbox_merchant(),
 			$this->data['client_id'],
@@ -184,7 +184,7 @@ class GeneralSettings extends AbstractDataModel {
 	 *
 	 * @return void
 	 */
-	public function reset_merchant_data() : void {
+	public function reset_merchant_data(): void {
 		$defaults = $this->get_defaults();
 
 		$this->data['sandbox_merchant']   = $defaults['sandbox_merchant'];
@@ -202,7 +202,7 @@ class GeneralSettings extends AbstractDataModel {
 	 *
 	 * @return bool
 	 */
-	public function is_sandbox_merchant() : bool {
+	public function is_sandbox_merchant(): bool {
 		return $this->data['sandbox_merchant'];
 	}
 
@@ -211,7 +211,7 @@ class GeneralSettings extends AbstractDataModel {
 	 *
 	 * @return bool
 	 */
-	public function is_merchant_connected() : bool {
+	public function is_merchant_connected(): bool {
 		return $this->data['merchant_email']
 			&& $this->data['merchant_id']
 			&& $this->data['client_id']
@@ -226,20 +226,22 @@ class GeneralSettings extends AbstractDataModel {
 	 *
 	 * @return bool
 	 */
-	public function is_business_seller() : bool {
+	public function is_business_seller(): bool {
 		return SellerTypeEnum::BUSINESS === $this->data['seller_type'];
 	}
 
 	/**
-	 * Whether the merchant is a casual seller using a personal account.
+	 * Whether the merchant is a casual seller (i.e., not a confirmed business).
 	 *
-	 * Note: It's possible that the seller type is unknown, and both methods,
-	 * `is_casual_seller()` and `is_business_seller()` return false.
+	 * Returns true for both explicitly personal accounts and unknown seller
+	 * types. This prevents unresolvable UNKNOWN types from triggering
+	 * repeated API calls in the seller-type resolution loop, while keeping
+	 * the persisted value unchanged.
 	 *
 	 * @return bool
 	 */
-	public function is_casual_seller() : bool {
-		return SellerTypeEnum::PERSONAL === $this->data['seller_type'];
+	public function is_casual_seller(): bool {
+		return SellerTypeEnum::BUSINESS !== $this->data['seller_type'];
 	}
 
 	/**
@@ -247,7 +249,7 @@ class GeneralSettings extends AbstractDataModel {
 	 *
 	 * @return string
 	 */
-	public function get_merchant_id() : string {
+	public function get_merchant_id(): string {
 		return $this->data['merchant_id'];
 	}
 
@@ -256,7 +258,7 @@ class GeneralSettings extends AbstractDataModel {
 	 *
 	 * @return string
 	 */
-	public function get_merchant_email() : string {
+	public function get_merchant_email(): string {
 		return $this->data['merchant_email'];
 	}
 
@@ -265,7 +267,7 @@ class GeneralSettings extends AbstractDataModel {
 	 *
 	 * @return string
 	 */
-	public function get_merchant_country() : string {
+	public function get_merchant_country(): string {
 		// When we don't know the merchant's real country, we assume it's the Woo store-country.
 		if ( empty( $this->data['merchant_country'] ) ) {
 			return $this->woo_settings['country'];
@@ -284,7 +286,7 @@ class GeneralSettings extends AbstractDataModel {
 	 *
 	 * @return void
 	 */
-	public function set_installation_path( string $installation_path ) : void {
+	public function set_installation_path( string $installation_path ): void {
 		// The installation path can be set only once.
 		if ( InstallationPathEnum::is_valid( $this->data['wc_installation_path'] ?? '' ) ) {
 			return;
@@ -303,7 +305,7 @@ class GeneralSettings extends AbstractDataModel {
 	 *
 	 * @return string
 	 */
-	public function get_installation_path() : string {
+	public function get_installation_path(): string {
 		return $this->data['wc_installation_path'] ?? InstallationPathEnum::DIRECT;
 	}
 
@@ -314,7 +316,7 @@ class GeneralSettings extends AbstractDataModel {
 	 * @param string $reason The reason for resetting the path, must be an allowed value.
 	 * @return bool Whether the reset was successful.
 	 */
-	public function reset_installation_path( string $reason ) : bool {
+	public function reset_installation_path( string $reason ): bool {
 		if ( ! in_array( $reason, self::ALLOWED_RESET_REASONS, true ) ) {
 			return false;
 		}
@@ -329,7 +331,7 @@ class GeneralSettings extends AbstractDataModel {
 	 *
 	 * @return bool
 	 */
-	public function own_brand_only() : bool {
+	public function own_brand_only(): bool {
 		/**
 		 * If the current store is not eligible for WooPayments, we have to also show the other payment methods.
 		 */

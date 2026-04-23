@@ -1,11 +1,11 @@
 import { useEffect, useRef, useState, useMemo } from '@wordpress/element';
 import { useSelect } from '@wordpress/data';
-import Fastlane from '../../../../ppcp-axo/resources/js/Connection/Fastlane';
-import { log } from '../../../../ppcp-axo/resources/js/Helper/Debug';
+import Fastlane from '@ppcp-axo/Connection/Fastlane';
+import { log } from '@ppcp-axo/Helper/Debug';
 import { useDeleteEmptyKeys } from './useDeleteEmptyKeys';
 import useCardOptions from './useCardOptions';
 import useAllowedLocations from './useAllowedLocations';
-import { STORE_NAME } from '../stores/axoStore';
+import { STORE_NAME } from '@ppcp-axo-block/stores/axoStore';
 
 /**
  * Custom hook to initialize and manage the Fastlane SDK.

@@ -25,16 +25,16 @@
 
 PayPal's latest complete payments processing solution. Accept PayPal, Pay Later, credit/debit cards, alternative digital wallets local payment types and bank accounts. Turn on only PayPal options or process a full suite of payment methods. Enable global transaction with extensive currency and country coverage.
 
-## Features  
-  
-- **Multiple Payment Options**: PayPal, credit/debit cards, Pay Later, digital wallets (Apple Pay, Google Pay), and localized payment methods  
-- **Subscription Support**: Supports WooCommerce Subscriptions with PayPal Vaulting and PayPal Subscriptions  
-- **Customizable Experience**: Flexible button placement and styling options  
-- **Enhanced Security**: PCI compliance, 3D Secure, and fraud protection tools  
-- **Global Compliance**: Meets international standards (PSD2, SCA)  
-  
-## Documentation  
-  
+## Features
+
+- **Multiple Payment Options**: PayPal, credit/debit cards, Pay Later, digital wallets (Apple Pay, Google Pay), and localized payment methods
+- **Subscription Support**: Supports WooCommerce Subscriptions with PayPal Vaulting and PayPal Subscriptions
+- **Customizable Experience**: Flexible button placement and styling options
+- **Enhanced Security**: PCI compliance, 3D Secure, and fraud protection tools
+- **Global Compliance**: Meets international standards (PSD2, SCA)
+
+## Documentation
+
 Visit our [official documentation](https://woocommerce.com/document/woocommerce-paypal-payments/) for detailed guides and setup instructions.
 
 ## Dependencies
@@ -43,82 +43,98 @@ Visit our [official documentation](https://woocommerce.com/document/woocommerce-
 * WordPress >= 6.5
 * WooCommerce >= 9.6
 
-## Quick Installation  
-  
-1. Go to **Plugins > Add New** in your WordPress admin  
-2. Search for "WooCommerce PayPal Payments"  
-3. Click "Install Now" and then "Activate"  
+## Quick Installation
+
+1. Go to **Plugins > Add New** in your WordPress admin
+2. Search for "WooCommerce PayPal Payments"
+3. Click "Install Now" and then "Activate"
 4. Go to **WooCommerce > Settings > Payments** to configure PayPal Payments
 
 ## Development
 
-### Install dependencies & build
+### Setup using DDEV (recommended)
 
-- `$ composer install`
-- `$ yarn install`
-
-Optionally, change the `PAYPAL_INTEGRATION_DATE` constant to `gmdate( 'Y-m-d' )` to run the latest PayPal JavaScript SDK
-
-### Unit tests and code style
-
-1. `$ composer install`
-2. `$ ./vendor/bin/phpunit`
-3. `$ ./vendor/bin/phpcs`
-4. `$ ./vendor/bin/psalm`
-5. `$ wp-scripts lint-js`
-6. `$ yarn run test:unit-js` - Ensure node version is `18` or above
-
-### Building a release package
-
-If you want to build a release package
-(that can be used for deploying a new version on wordpress.org or manual installation on a WP website via ZIP uploading),
-follow these steps:
-
-1. Clone the repository and `cd` into it.
-2. Make sure you have the version in the plugin root file updated.
-3. Update the PayPal JavaScript SDK integration date by using the current date for the `PAYPAL_INTEGRATION_DATE` constant.
-4. The following command should get you a ZIP file ready to be used on a WordPress site:
-
-```
-$ yarn run build
-```
-or if using the DDEV setup:
-
-```
-$ yarn run ddev:build-package
-```
-
-## Setup
-
-You can install WooCommerce PayPal Payments locally using the dev environment of your preference, or you can use the DDEV setup provided in this repository which includes WP, WC and all developments tools.
+You can install WooCommerce PayPal Payments locally using the dev environment of your preference, or you can use the DDEV setup provided in this repository. Which includes WordPress, WooCommerce and all development tools.
 
 To set up the DDEV environment, follow these steps:
 
 0. Install Docker and [DDEV](https://ddev.readthedocs.io/en/stable/).
-1. Edit the configuration in the [`.ddev/config.yml`](.ddev/config.yaml) file if needed.
-2. `$ ddev start`
-3. `$ ddev orchestrate` to install WP/WC.
-4. Open https://wc-pp.ddev.site
+1. Edit the [configuration](https://docs.ddev.com/en/stable/users/configuration/config/#managing-configuration) in the `.ddev/config.local.yml` file if needed.
+2. Run `$ ddev start && ddev orchestrate` to setup and orchestrate the plugin, WooCommerce and WordPress (you can also use `$ npm run ddev:setup`)
+3. Open https://woocommerce-paypal-payments.ddev.site
 
-Use `$ ddev orchestrate -f` for reinstallation (will destroy all site data).
+Use `$ ddev reset` for reinstallation (will destroy all site data).
 You may also need `$ ddev restart` to apply the config changes.
 
-### Running tests and other tasks in the DDEV environment
+#### Troubleshooting DDEV setup
+
+**`vmnetd` / port 443 error** (`failed to connect to /var/run/com.docker.vmnetd.sock`):
+Docker Desktop's privileged helper isn't running. Open **Docker Desktop > Settings > General** and toggle "Allow privileged port mapping", then restart Docker Desktop. Alternatively, use non-privileged ports:
+```
+$ ddev config global --router-http-port=8080 --router-https-port=8443
+```
+
+**Mutagen can't find `docker`** (`unable to identify 'docker' command`):
+Docker Desktop may not symlink the CLI to `/usr/local/bin`. Either enable "Install Docker CLI in system PATH" in Docker Desktop settings, or create the symlink manually. Here's an example:
+```
+$ sudo ln -s /Applications/Docker.app/Contents/Resources/bin/docker /usr/local/bin/docker
+```
+Then run `ddev mutagen reset && ddev restart`.
+
+**Untrusted SSL / "Not Secure" in browser**:
+Install mkcert's root CA so your system and browsers trust DDEV's certificates:
+```
+$ brew install mkcert nss
+$ mkcert -install
+$ ddev restart
+```
+After installing the CA, fully quit Chrome (Cmd+Q) and reopen it — Chrome caches certificate trust state and won't pick up the new CA until restarted.
+
+#### Running tests and other tasks in the DDEV environment
 
 Tests and code style:
-- `$ yarn ddev:test`
-- `$ yarn ddev:lint`
-- `$ yarn ddev:fix-lint`
-- `$ yarn ddev:lint-js`
+- `$ ddev npm run test`
+- `$ ddev npm run lint`
+- `$ ddev npm run fix-lint`
+- `$ ddev npm run lint-js`
+- `$ npm run ddev:unit-tests:coverage`
 
 See [package.json](/package.json) for other useful commands.
 
 For debugging, see [the DDEV docs](https://ddev.readthedocs.io/en/stable/users/step-debugging/).
-Enable xdebug via `$ ddev xdebug`, and press `Start Listening for PHP Debug Connections` in PHPStorm.
+Enable xdebug via `$ ddev xdebug enable`, and press `Start Listening for PHP Debug Connections` in PHPStorm.
 After creating the server in the PHPStorm dialog, you need to set the local project path for the server plugin path.
-It should look [like this](https://i.imgur.com/ofsF1Mc.png).
+Check [this article](https://docs.ddev.com/en/stable/users/debugging-profiling/step-debugging/#phpstorm-debugging-setup) for a detailed guide.
 
-See [tests/playwright](tests/playwright) for e2e (browser-based) tests.
+## Setup in other environments
+
+#### Install dependencies & build
+
+- `$ composer install`
+- `$ npm ci`
+- `$ npm run build`
+
+Optionally, change the `PAYPAL_INTEGRATION_DATE` constant to `gmdate( 'Y-m-d' )` to run the latest PayPal JavaScript SDK
+
+#### Unit tests and code style
+
+1. `$ ./vendor/bin/phpunit`
+2. `$ ./vendor/bin/phpcs`
+3. `$ ./vendor/bin/phpstan`
+4. `$ npm run lint-js`
+5. `$ npm run test:unit-js` - Ensure node version is `18` or above
+
+#### Unit tests with Coverage
+
+Run `npm run ddev:unit-tests:coverage`
+
+This command generates a full test coverage report, available at the URL https://woocommerce-paypal-payments.ddev.site/coverage
+
+### Building a release package
+
+If you want to build a release package, use the **Build package (New)** in GitHub Actions.
+
+Currently, there is no script for building a proper release package locally, but you may try to run GHA locally via [nektos/act](https://github.com/nektos/act).
 
 ## Test account setup
 
@@ -133,7 +149,7 @@ For testing webhooks locally, follow these steps to set up ngrok:
 0. Install [ngrok](https://ngrok.com/).
 
 1.
-  - If using DDEV, run our wrapper Bash script which will start `ddev share` and replace the URLs in the WP database:
+  - If using DDEV, run our wrapper Bash script which will start `ddev share` and replace the URLs in the WordPress database:
     ```
     $ .ddev/bin/share
     ```

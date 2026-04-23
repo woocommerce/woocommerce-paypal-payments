@@ -1,13 +1,5 @@
 import BaseHandler from './BaseHandler';
 
-class CartBlockHandler extends BaseHandler {
-	createOrder() {
-		return this.externalHandler.createOrder();
-	}
-
-	approveOrder( data, actions ) {
-		return this.externalHandler.onApprove( data, actions );
-	}
-}
+class CartBlockHandler extends BaseHandler {}
 
 export default CartBlockHandler;

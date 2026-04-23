@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang='en'>
+<!--
+
+URL: /wp-content/plugins/woocommerce-paypal-payments/modules/ppcp-googlepay/docs/payment-test.html
+
+-->
+<head>
+	<meta charset='UTF-8'>
+	<title>Google Pay Test</title>
+	<script defer src='https://pay.google.com/gp/p/js/pay.js' onload='loadSdk()'></script>
+
+	<style>
+		body {
+			font-family: Arial, sans-serif;
+			max-width: 800px;
+			margin: 0 auto;
+			padding: 0;
+		}
+
+		section {
+			border: 1px solid #ddd;
+			padding: 20px;
+			border-radius: 8px;
+			margin-top: 20px;
+		}
+
+		.logger {
+			margin-top: 20px;
+			border: 1px solid #eee;
+			padding: 10px;
+			min-height: 100px;
+			max-height: calc(100vh - 296px);
+			overflow-y: auto;
+			background-color: #f9f9f9;
+			border-radius: 4px;
+			font-family: monospace;
+
+			> div {
+				border-bottom: 1px solid #eee;
+				padding: 0 0 10px 0;
+				margin: 0 0 10px 0;
+
+				&:last-child {
+					border-bottom: none;
+					margin-bottom: 0;
+					padding-bottom: 0;
+				}
+			}
+		}
+
+		#google-pay-button {
+			margin-top: 15px;
+		}
+
+		h3 {
+			color: #333;
+		}
+
+		.form-group {
+			display: flex;
+			height: 24px;
+			line-height: 24px;
+			margin: 6px 0;
+			justify-content: space-between;
+		}
+
+		#credentials-form .form-group {
+			flex-direction: column;
+			height: 46px;
+		}
+
+		#client-id {
+			white-space: nowrap;
+			overflow: hidden;
+			text-overflow: ellipsis;
+			padding: 0 10px;
+			width: 500px;
+			display: inline-block;
+			vertical-align: text-bottom;
+			font-size: 0.8em;
+		}
+	</style>
+</head>
+<body>
+<section>
+	<h3>Google Pay with PayPal SDK Integration</h3>
+	<div id='test-form'>
+		<div class='form-group'>
+			<div>
+				PayPal client ID:
+				<span id='client-id'></span>
+			</div>
+			<button id='clear-credentials'>Clear</button>
+		</div>
+		<div class='form-group'>
+			<label for='sca-method'>3DS Verification:</label>
+			<select id='sca-method'>
+				<option value=''>NEVER - Do not ask for 3DS verification</option>
+				<option value='SCA_WHEN_REQUIRED'>WHEN REQUIRED - Let PayPal decide if to show
+					3DS
+				</option>
+				<option value='SCA_ALWAYS'>ALWAYS - Ask for 3DS verification</option>
+			</select>
+		</div>
+		<div id='google-pay-button'></div>
+	</div>
+	<div class='logger' id='response-log'></div>
+</section>
+
+<!--
+
+SCRIPT
+
+-->
+
+<script>
+	// Check if credentials exist in localStorage
+	const PAYPAL_CLIENT_ID = localStorage.getItem('PAYPAL_CLIENT_ID');
+	const PAYPAL_CLIENT_SECRET = localStorage.getItem('PAYPAL_CLIENT_SECRET');
+
+	// If credentials don't exist, show input form
+	if (!PAYPAL_CLIENT_ID || !PAYPAL_CLIENT_SECRET) {
+		document.getElementById('test-form').innerHTML = `
+            <div id='credentials-form'>
+                <h4>Enter PayPal API Credentials</h4>
+                <div class='form-group'>
+                    <label for='form-client-id'>Client ID:</label>
+                    <input type='text' id='form-client-id'>
+                </div>
+                <div class='form-group'>
+                    <label for='form-client-secret'>Client Secret:</label>
+                    <input type='text' id='form-client-secret'>
+                </div>
+                <button id='save-credentials'>Save Credentials</button>
+            </div>
+        `;
+
+		document.addEventListener('DOMContentLoaded', () => {
+			document.getElementById('save-credentials').addEventListener('click', () => {
+				const clientId = document.getElementById('form-client-id').value.trim();
+				const clientSecret = document.getElementById('form-client-secret').value.trim();
+
+				if (!clientId || !clientSecret) {
+					alert('Please enter both Client ID and Client Secret');
+					return;
+				}
+
+				localStorage.setItem('PAYPAL_CLIENT_ID', clientId);
+				localStorage.setItem('PAYPAL_CLIENT_SECRET', clientSecret);
+
+				window.location.reload();
+			});
+		});
+	} else {
+		const clientIdElement = document.getElementById('client-id');
+		clientIdElement.textContent = PAYPAL_CLIENT_ID;
+
+		document.getElementById('clear-credentials').addEventListener('click', () => {
+			if (confirm('Are you sure you want to clear your PayPal credentials?')) {
+				localStorage.removeItem('PAYPAL_CLIENT_ID');
+				localStorage.removeItem('PAYPAL_CLIENT_SECRET');
+				window.location.reload();
+			}
+		});
+
+		const selectSCA = document.getElementById('sca-method');
+
+		selectSCA.addEventListener('change', () => {
+			const scaMethod = selectSCA.value;
+			localStorage.setItem('SCA_METHOD', scaMethod);
+			logResponse(`3DS verification method changed to: ${scaMethod || 'NEVER'}`);
+		});
+		selectSCA.value = localStorage.getItem('SCA_METHOD');
+	}
+
+	// ---
+
+	let paymentsClient = null;
+	let googlePayConfig = null;
+
+	function logResponse(message, data) {
+		const logger = document.getElementById('response-log');
+		const timestamp = new Date().toLocaleTimeString();
+
+		if (undefined === data) {
+			logger.innerHTML += `<div>[${timestamp}] ${message}</div>`;
+			console.log(message);
+		} else {
+			logger.innerHTML +=
+				`<div>[${timestamp}] ${message}<pre>${JSON.stringify(data, null, 2)}</pre></div>`;
+			console.log(message, data);
+		}
+
+		logger.scrollTop = logger.scrollHeight;
+	}
+
+	/*
+	 *
+	 *
+	 * Actual Google Pay test logic starts here
+	 *
+	 *
+	 */
+
+	function loadSdk() {
+		if (!PAYPAL_CLIENT_ID) {
+			return;
+		}
+
+		logResponse('Loading the JS SDK...');
+		const script = document.createElement('script');
+		script.src =
+			'https://www.paypal.com/sdk/js?components=googlepay&client-id=' + PAYPAL_CLIENT_ID;
+		script.onload = initializeDemo;
+		document.head.appendChild(script);
+	}
+
+	async function initializeDemo() {
+		logResponse(`PayPal SDK loaded for client ID ${PAYPAL_CLIENT_ID}`);
+
+		paymentsClient = new google.payments.api.PaymentsClient({
+			environment: 'TEST',
+		});
+
+		googlePayConfig = await paypal.Googlepay().config();
+		logResponse('PayPal Google Pay config loaded:', googlePayConfig);
+
+		const isReadyToPayRequest = {
+			apiVersion: 2,
+			apiVersionMinor: 0,
+			allowedPaymentMethods: googlePayConfig.allowedPaymentMethods,
+		};
+
+		const response = await paymentsClient.isReadyToPay(isReadyToPayRequest);
+
+		if (response.result) {
+			logResponse('Google Pay is available on this device/browser');
+
+			// Add Google Pay button to the UI!
+			addGooglePayButton();
+		} else {
+			logResponse('Google Pay is not available on this device/browser');
+		}
+	}
+
+	function addGooglePayButton() {
+		const paymentRequest = {
+			apiVersion: 2,
+			apiVersionMinor: 0,
+			allowedPaymentMethods: googlePayConfig.allowedPaymentMethods,
+			merchantInfo: {
+				merchantName: 'Example Merchant',
+			},
+			transactionInfo: {
+				totalPriceStatus: 'FINAL',
+				totalPrice: '10.00',
+				currencyCode: 'USD',
+				countryCode: 'US',
+			},
+		};
+
+		const button = paymentsClient.createButton({
+			buttonType: 'plain',
+			buttonColor: 'black',
+			buttonSizeMode: 'fill',
+			onClick: async function() {
+				await onGooglePayButtonClicked(paymentRequest);
+
+				logResponse('========== end of payment process');
+			},
+		});
+
+		document.getElementById('google-pay-button').appendChild(button);
+		logResponse('Google Pay button added');
+	}
+
+	async function onGooglePayButtonClicked(paymentRequest) {
+		logResponse('Google Pay button clicked');
+
+		try {
+			// 1. First get the Google Pay response
+			const paymentData = await paymentsClient.loadPaymentData(paymentRequest);
+			logResponse('Payment data received:', paymentData);
+
+			// 2. Create a PayPal order using the SDK
+			const orderId = await createPayPalOrder();
+
+			// 3. Confirm the order with the payment data
+			logResponse(`Confirm payment "${orderId}" via PayPal...`);
+			const paypalOrder = await paypal.Googlepay().confirmOrder({
+				orderId,
+				paymentMethodData: paymentData.paymentMethodData,
+			});
+
+			logResponse('Payment confirmation result:', paypalOrder);
+
+			// 4. Handle approval or additional actions
+			if (!paypalOrder?.status) {
+				logResponse('Unexpected approval response', paypalOrder);
+			} else if (paypalOrder.status === 'APPROVED') {
+				logResponse('Payment approved!', paypalOrder);
+			} else if (paypalOrder.status === 'PAYER_ACTION_REQUIRED') {
+				logResponse('Additional authentication required');
+				const res = await paypal.Googlepay().initiatePayerAction({ orderId });
+				logResponse('Authentication completed', res);
+			}
+		} catch (err) {
+			logResponse('Payment error:', err);
+		}
+	}
+
+	function createPayPalOrder() {
+		logResponse('[Mock Server] Creating PayPal order directly from client...');
+
+		return fetch('https://api-m.sandbox.paypal.com/v1/oauth2/token', {
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/x-www-form-urlencoded',
+				'Authorization': `Basic ${btoa(`${PAYPAL_CLIENT_ID}:${PAYPAL_CLIENT_SECRET}`)}`,
+			},
+			body: 'grant_type=client_credentials',
+		})
+			.then(function(response) {
+				if (!response.ok) {
+					throw new Error('Failed to get PayPal access token');
+				}
+				logResponse('[Mock Server] Access token obtained');
+				return response.json();
+			})
+			.then(function(tokenData) {
+				const SCA_METHOD = localStorage.getItem('SCA_METHOD');
+				const accessToken = tokenData.access_token;
+
+				const payer = {
+					email_address: 'john.doe@personal.example.com',
+					name: {
+						given_name: 'John',
+						surname: 'Doe',
+					},
+					address: {
+						country_code: 'US',
+						address_line_1: '456 Elm Street',
+						admin_area_1: 'WA',
+						admin_area_2: 'Seattle',
+						postal_code: '85745',
+					},
+					phone: {
+						phone_type: 'HOME',
+						phone_number: { national_number: '5552223365' },
+					},
+				};
+
+				const body = {
+					intent: 'CAPTURE',
+					purchase_units: [
+						{
+							amount: {
+								currency_code: 'USD',
+								value: '10.00',
+							},
+							description: 'Sample Item',
+						},
+					],
+					payer,
+				};
+
+				if ('SCA_ALWAYS' === SCA_METHOD || 'SCA_WHEN_REQUIRED' === SCA_METHOD) {
+					body.payment_source = {
+						google_pay: {
+							attributes: { verification: { method: SCA_METHOD } },
+						},
+					};
+				}
+
+				logResponse('[Mock Server] Create PayPal order', body.payment_source);
+				return fetch('https://api-m.sandbox.paypal.com/v2/checkout/orders', {
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json',
+						'Authorization': `Bearer ${accessToken}`,
+					},
+					body: JSON.stringify(body),
+				});
+			})
+			.then(function(response) {
+				if (!response.ok) {
+					throw new Error('Failed to create PayPal order');
+				}
+				return response.json();
+			})
+			.then(function(orderData) {
+				logResponse('[Mock Server] Order created with ID: ' + orderData.id);
+				return orderData.id;
+			})
+			.catch(function(err) {
+				logResponse('[Mock Server] Error creating order: ' + err.message);
+
+				// For demo purposes, if the direct API call fails, fall back to a mock order ID
+				const mockOrderId = 'MOCK_ORDER_' + Math.random().toString(36).substring(2, 15);
+				logResponse('[Mock Server] Using mock order ID for demo: ' + mockOrderId);
+				return mockOrderId;
+			});
+	}
+</script>
+</body>
+</html>

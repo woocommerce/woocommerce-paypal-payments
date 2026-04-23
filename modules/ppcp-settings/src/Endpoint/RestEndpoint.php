@@ -26,7 +26,7 @@ abstract class RestEndpoint extends WC_REST_Controller {
 	 *
 	 * Override this method if custom permissions required.
 	 */
-	public function check_permission() : bool {
+	public function check_permission(): bool {
 		return current_user_can( 'manage_woocommerce' );
 	}
 
@@ -38,7 +38,7 @@ abstract class RestEndpoint extends WC_REST_Controller {
 	 *
 	 * @return WP_REST_Response The successful response.
 	 */
-	protected function return_success( $data, array $extra = array() ) : WP_REST_Response {
+	protected function return_success( $data, array $extra = array() ): WP_REST_Response {
 		$response = array(
 			'success' => true,
 			'data'    => $data,
@@ -65,7 +65,7 @@ abstract class RestEndpoint extends WC_REST_Controller {
 	 *
 	 * @return WP_REST_Response The error response.
 	 */
-	protected function return_error( string $reason, $details = null ) : WP_REST_Response {
+	protected function return_error( string $reason, $details = null ): WP_REST_Response {
 		$response = array(
 			'success' => false,
 			'message' => $reason,
@@ -90,7 +90,7 @@ abstract class RestEndpoint extends WC_REST_Controller {
 	 *
 	 * @return array An array of sanitized parameters.
 	 */
-	protected function sanitize_for_wordpress( array $params, array $field_map ) : array {
+	protected function sanitize_for_wordpress( array $params, array $field_map ): array {
 		$sanitized = array();
 
 		foreach ( $field_map as $key => $details ) {
@@ -136,7 +136,7 @@ abstract class RestEndpoint extends WC_REST_Controller {
 	 *
 	 * @return array An array of sanitized data with keys renamed for JavaScript use.
 	 */
-	protected function sanitize_for_javascript( array $data, array $field_map ) : array {
+	protected function sanitize_for_javascript( array $data, array $field_map ): array {
 		$sanitized = array();
 
 		foreach ( $field_map as $key => $details ) {
@@ -160,7 +160,7 @@ abstract class RestEndpoint extends WC_REST_Controller {
 	 * @return bool The boolean value.
 	 * @todo Switch to the DataSanitizer class.
 	 */
-	public function to_boolean( $value ) : bool {
+	public function to_boolean( $value ): bool {
 		return (bool) $value;
 	}
 
@@ -172,7 +172,7 @@ abstract class RestEndpoint extends WC_REST_Controller {
 	 * @return int The numeric value.
 	 * @todo Switch to the DataSanitizer class.
 	 */
-	public function to_number( $value ) : int {
+	public function to_number( $value ): int {
 		return (int) $value;
 	}
 }

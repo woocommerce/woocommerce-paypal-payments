@@ -61,6 +61,8 @@ class OrderFactory
         $order->calculate_totals();
         $order->save();
 
+		$this->created_order_ids[] = $order->get_id();
+
         return $order;
     }
 

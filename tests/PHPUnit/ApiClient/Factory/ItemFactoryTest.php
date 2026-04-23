@@ -18,7 +18,7 @@ class ItemFactoryTest extends TestCase
 	public function setUp(): void
 	{
 		parent::setUp();
-		
+
 		$this->currency = new CurrencyGetterStub();
 	}
 
@@ -44,12 +44,15 @@ class ItemFactoryTest extends TestCase
                 'data' => $product,
                 'quantity' => 2,
 				'line_subtotal' => 84,
+	            'line_total' => 40.00
             ],
         ];
         $cart = Mockery::mock(\WC_Cart::class);
         $cart
             ->expects('get_cart_contents')
             ->andReturn($items);
+
+	    when('get_woocommerce_currency')->justReturn('USD');
 
 	    expect('wp_strip_all_tags')->andReturnFirstArg();
 	    expect('strip_shortcodes')->andReturnFirstArg();
@@ -67,6 +70,7 @@ class ItemFactoryTest extends TestCase
 		$product
 			->expects('get_permalink')
 			->andReturn('url');
+	    $product->shouldReceive('get_id')->andReturn(null);
 
         $result = $testee->from_wc_cart($cart);
 
@@ -107,6 +111,7 @@ class ItemFactoryTest extends TestCase
                 'data' => $product,
                 'quantity' => 1,
 				'line_subtotal' => 42,
+	            'line_total' => 40.00
             ],
         ];
         $cart = Mockery::mock(\WC_Cart::class);
@@ -130,6 +135,9 @@ class ItemFactoryTest extends TestCase
 		$product
 			->expects('get_permalink')
 			->andReturn('url');
+
+	    $product->shouldReceive('get_id')->andReturn(null);
+	    when('get_woocommerce_currency')->justReturn('USD');
 
         $result = $testee->from_wc_cart($cart);
 
@@ -175,9 +183,10 @@ class ItemFactoryTest extends TestCase
             ->andReturn(1);
 
         $order = Mockery::mock(\WC_Order::class);
-        $order
-            ->expects('get_currency')
-            ->andReturn($this->currency->get());
+	    $order
+		    ->shouldReceive('get_currency')
+		    ->once()
+		    ->andReturn($this->currency->get());
         $order
             ->expects('get_items')
             ->andReturn([$item]);
@@ -188,7 +197,10 @@ class ItemFactoryTest extends TestCase
         $order
             ->expects('get_fees')
             ->andReturn([]);
-
+	    $product->shouldReceive('get_id')->andReturn(123);
+	    $item->shouldReceive('get_subtotal')->andReturn(50.00);
+	    $item->shouldReceive('get_total')->andReturn(40.00);
+	    $item->shouldReceive('get_total_tax')->andReturn(1.00);
 
         $result = $testee->from_wc_order($order);
         $this->assertCount(1, $result);
@@ -234,9 +246,10 @@ class ItemFactoryTest extends TestCase
             ->andReturn(1);
 
         $order = Mockery::mock(\WC_Order::class);
-        $order
-            ->expects('get_currency')
-            ->andReturn($this->currency->get());
+	    $order
+		    ->shouldReceive('get_currency')
+		    ->once()
+		    ->andReturn($this->currency->get());
         $order
             ->expects('get_items')
             ->andReturn([$item]);
@@ -256,7 +269,12 @@ class ItemFactoryTest extends TestCase
 			->expects('get_permalink')
 			->andReturn('url');
 
-        $result = $testee->from_wc_order($order);
+	    $product->shouldReceive('get_id')->andReturn(123);
+	    $item->shouldReceive('get_subtotal')->andReturn(50.00);
+	    $item->shouldReceive('get_total')->andReturn(40.00);
+	    $item->shouldReceive('get_total_tax')->andReturn(1.00);
+
+	    $result = $testee->from_wc_order($order);
         $item = current($result);
         /**
          * @var Item $item
@@ -296,9 +314,10 @@ class ItemFactoryTest extends TestCase
             ->andReturn(1);
 
         $order = Mockery::mock(\WC_Order::class);
-        $order
-            ->expects('get_currency')
-            ->andReturn('EUR');
+	    $order
+		    ->shouldReceive('get_currency')
+		    ->once()
+		    ->andReturn('EUR');
         $order
             ->expects('get_items')
             ->andReturn([$item]);
@@ -318,7 +337,12 @@ class ItemFactoryTest extends TestCase
 			->expects('get_permalink')
 			->andReturn('url');
 
-        $result = $testee->from_wc_order($order);
+	    $product->shouldReceive('get_id')->andReturn(123);
+	    $item->shouldReceive('get_subtotal')->andReturn(50.00);
+	    $item->shouldReceive('get_total')->andReturn(40.00);
+	    $item->shouldReceive('get_total_tax')->andReturn(1.00);
+
+	    $result = $testee->from_wc_order($order);
         $item = current($result);
 
         /**

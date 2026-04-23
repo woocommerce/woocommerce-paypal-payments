@@ -191,5 +191,4 @@ class RefundFeesUpdater {
 
 		return $notes;
 	}
-
 }

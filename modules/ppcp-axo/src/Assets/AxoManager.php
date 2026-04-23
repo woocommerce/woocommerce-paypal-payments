@@ -1,35 +1,19 @@
 <?php
-/**
- * The AXO AxoManager
- *
- * @package WooCommerce\PayPalCommerce\WcGateway\Assets
- */
 
 declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\Axo\Assets;
 
-use Psr\Log\LoggerInterface;
-use WooCommerce\PayPalCommerce\ApiClient\Helper\CurrencyGetter;
-use WooCommerce\PayPalCommerce\Axo\FrontendLoggerEndpoint;
+use WooCommerce\PayPalCommerce\Assets\AssetGetter;
+use WooCommerce\PayPalCommerce\Axo\Endpoint\AxoScriptAttributes;
+use WooCommerce\PayPalCommerce\Axo\Endpoint\FrontendLogger;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\SettingsStatus;
-use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
+use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
 
-/**
- * Class AxoManager.
- *
- * @param string $module_url The URL to the module.
- */
 class AxoManager {
-
-	/**
-	 * The URL to the module.
-	 *
-	 * @var string
-	 */
-	private string $module_url;
+	private AssetGetter $asset_getter;
 
 	/**
 	 * The assets version.
@@ -39,11 +23,11 @@ class AxoManager {
 	private string $version;
 
 	/**
-	 * The settings.
+	 * The settings provider.
 	 *
-	 * @var Settings
+	 * @var SettingsProvider
 	 */
-	private Settings $settings;
+	private SettingsProvider $settings_provider;
 
 	/**
 	 * The environment object.
@@ -59,40 +43,7 @@ class AxoManager {
 	 */
 	private array $insights_data;
 
-	/**
-	 * The Settings status helper.
-	 *
-	 * @var SettingsStatus
-	 */
-	private $settings_status;
-
-	/**
-	 * The getter of the 3-letter currency code of the shop.
-	 *
-	 * @var CurrencyGetter
-	 */
-	private CurrencyGetter $currency;
-
-	/**
-	 * The logger.
-	 *
-	 * @var LoggerInterface
-	 */
-	private LoggerInterface $logger;
-
-	/**
-	 * Session handler.
-	 *
-	 * @var SessionHandler
-	 */
-	private SessionHandler $session_handler;
-
-	/**
-	 * The WcGateway module URL.
-	 *
-	 * @var string
-	 */
-	private string $wcgateway_module_url;
+	private AssetGetter $wcgateway_module_asset_getter;
 	/**
 	 * The supported country card type matrix.
 	 *
@@ -101,44 +52,30 @@ class AxoManager {
 	private array $supported_country_card_type_matrix;
 
 	/**
-	 * AxoManager constructor.
-	 *
-	 * @param string          $module_url The URL to the module.
-	 * @param string          $version The assets version.
-	 * @param SessionHandler  $session_handler The Session handler.
-	 * @param Settings        $settings The Settings.
-	 * @param Environment     $environment The environment object.
-	 * @param array           $insights_data Data needed for the PayPal Insights.
-	 * @param SettingsStatus  $settings_status The Settings status helper.
-	 * @param CurrencyGetter  $currency The getter of the 3-letter currency code of the shop.
-	 * @param LoggerInterface $logger The logger.
-	 * @param string          $wcgateway_module_url The WcGateway module URL.
-	 * @param array           $supported_country_card_type_matrix The supported country card type matrix for Axo.
+	 * @param AssetGetter      $asset_getter
+	 * @param string           $version The assets version.
+	 * @param SettingsProvider $settings_provider The Settings provider.
+	 * @param Environment      $environment The environment object.
+	 * @param array            $insights_data Data needed for the PayPal Insights.
+	 * @param AssetGetter      $wcgateway_module_asset_getter
+	 * @param array            $supported_country_card_type_matrix The supported country card type matrix for Axo.
 	 */
 	public function __construct(
-		string $module_url,
+		AssetGetter $asset_getter,
 		string $version,
-		SessionHandler $session_handler,
-		Settings $settings,
+		SettingsProvider $settings_provider,
 		Environment $environment,
 		array $insights_data,
-		SettingsStatus $settings_status,
-		CurrencyGetter $currency,
-		LoggerInterface $logger,
-		string $wcgateway_module_url,
+		AssetGetter $wcgateway_module_asset_getter,
 		array $supported_country_card_type_matrix
 	) {
 
-		$this->module_url                         = $module_url;
+		$this->asset_getter                       = $asset_getter;
 		$this->version                            = $version;
-		$this->session_handler                    = $session_handler;
-		$this->settings                           = $settings;
+		$this->settings_provider                  = $settings_provider;
 		$this->environment                        = $environment;
 		$this->insights_data                      = $insights_data;
-		$this->settings_status                    = $settings_status;
-		$this->currency                           = $currency;
-		$this->logger                             = $logger;
-		$this->wcgateway_module_url               = $wcgateway_module_url;
+		$this->wcgateway_module_asset_getter      = $wcgateway_module_asset_getter;
 		$this->supported_country_card_type_matrix = $supported_country_card_type_matrix;
 	}
 
@@ -152,7 +89,7 @@ class AxoManager {
 		// Register styles.
 		wp_register_style(
 			'wc-ppcp-axo',
-			untrailingslashit( $this->module_url ) . '/assets/css/styles.css',
+			$this->asset_getter->get_asset_url( 'styles.css' ),
 			array(),
 			$this->version
 		);
@@ -161,7 +98,7 @@ class AxoManager {
 		// Register scripts.
 		wp_register_script(
 			'wc-ppcp-axo',
-			untrailingslashit( $this->module_url ) . '/assets/js/boot.js',
+			$this->asset_getter->get_asset_url( 'boot.js' ),
 			array(),
 			$this->version,
 			true
@@ -189,48 +126,37 @@ class AxoManager {
 				'email' => 'render',
 			),
 			// The amount is not available when setting the insights data, so we need to merge it here.
-			'insights'                   => ( function( array $data ): array {
+			'insights'                   => ( function ( array $data ): array {
 				$data['amount']['value'] = WC()->cart->get_total( 'numeric' );
 				return $data; } )( $this->insights_data ),
 			'allowed_cards'              => $this->supported_country_card_type_matrix,
-			'disable_cards'              => $this->settings->has( 'disable_cards' ) ? (array) $this->settings->get( 'disable_cards' ) : array(),
+			'disable_cards'              => $this->settings_provider->disabled_cards(),
 			'enabled_shipping_locations' => apply_filters( 'woocommerce_paypal_payments_axo_shipping_wc_enabled_locations', array() ),
 			'style_options'              => array(
-				'root'  => array(
-					'backgroundColor' => $this->settings->has( 'axo_style_root_bg_color' ) ? $this->settings->get( 'axo_style_root_bg_color' ) : '',
-					'errorColor'      => $this->settings->has( 'axo_style_root_error_color' ) ? $this->settings->get( 'axo_style_root_error_color' ) : '',
-					'fontFamily'      => $this->settings->has( 'axo_style_root_font_family' ) ? $this->settings->get( 'axo_style_root_font_family' ) : '',
-					'textColorBase'   => $this->settings->has( 'axo_style_root_text_color_base' ) ? $this->settings->get( 'axo_style_root_text_color_base' ) : '',
-					'fontSizeBase'    => $this->settings->has( 'axo_style_root_font_size_base' ) ? $this->settings->get( 'axo_style_root_font_size_base' ) : '',
-					'padding'         => $this->settings->has( 'axo_style_root_padding' ) ? $this->settings->get( 'axo_style_root_padding' ) : '',
-					'primaryColor'    => $this->settings->has( 'axo_style_root_primary_color' ) ? $this->settings->get( 'axo_style_root_primary_color' ) : '',
-				),
-				'input' => array(
-					'backgroundColor'  => $this->settings->has( 'axo_style_input_bg_color' ) ? $this->settings->get( 'axo_style_input_bg_color' ) : '',
-					'borderRadius'     => $this->settings->has( 'axo_style_input_border_radius' ) ? $this->settings->get( 'axo_style_input_border_radius' ) : '',
-					'borderColor'      => $this->settings->has( 'axo_style_input_border_color' ) ? $this->settings->get( 'axo_style_input_border_color' ) : '',
-					'borderWidth'      => $this->settings->has( 'axo_style_input_border_width' ) ? $this->settings->get( 'axo_style_input_border_width' ) : '',
-					'textColorBase'    => $this->settings->has( 'axo_style_input_text_color_base' ) ? $this->settings->get( 'axo_style_input_text_color_base' ) : '',
-					'focusBorderColor' => $this->settings->has( 'axo_style_input_focus_border_color' ) ? $this->settings->get( 'axo_style_input_focus_border_color' ) : '',
-				),
+				'root'  => $this->settings_provider->fastlane_root_styles(),
+				'input' => $this->settings_provider->fastlane_input_styles(),
 			),
-			'name_on_card'               => $this->settings->has( 'axo_name_on_card' ) ? $this->settings->get( 'axo_name_on_card' ) : '',
+			'name_on_card'               => $this->settings_provider->fastlane_name_on_card(),
+			'show_watermark'             => $this->settings_provider->show_fastlane_watermark(),
 			'woocommerce'                => array(
 				'states' => array(
 					'US' => WC()->countries->get_states( 'US' ),
 					'CA' => WC()->countries->get_states( 'CA' ),
 				),
 			),
-			'icons_directory'            => esc_url( $this->wcgateway_module_url ) . 'assets/images/axo/',
-			'module_url'                 => untrailingslashit( $this->module_url ),
+			'icons_directory'            => $this->wcgateway_module_asset_getter->get_static_asset_url( 'images/axo/' ),
 			'ajax'                       => array(
-				'frontend_logger' => array(
-					'endpoint' => \WC_AJAX::get_endpoint( FrontendLoggerEndpoint::ENDPOINT ),
-					'nonce'    => wp_create_nonce( FrontendLoggerEndpoint::nonce() ),
+				'frontend_logger'       => array(
+					'endpoint' => \WC_AJAX::get_endpoint( FrontendLogger::ENDPOINT ),
+					'nonce'    => wp_create_nonce( FrontendLogger::nonce() ),
+				),
+				'axo_script_attributes' => array(
+					'endpoint' => \WC_AJAX::get_endpoint( AxoScriptAttributes::ENDPOINT ),
+					'nonce'    => wp_create_nonce( AxoScriptAttributes::nonce() ),
 				),
 			),
-			'logging_enabled'            => $this->settings->has( 'logging_enabled' ) ? $this->settings->get( 'logging_enabled' ) : '',
-			'wp_debug'                   => defined( 'WP_DEBUG' ) && WP_DEBUG,
+			'logging_enabled'            => $this->settings_provider->enable_logging(),
+			'wp_debug'                   => defined( 'WP_DEBUG' ) && WP_DEBUG, // @phpstan-ignore booleanAnd.rightAlwaysFalse
 			'billing_email_button_text'  => __( 'Continue', 'woocommerce-paypal-payments' ),
 			'merchant_country'           => WC()->countries->get_base_country(),
 		);
@@ -265,5 +191,4 @@ class AxoManager {
 			esc_html( $label )
 		);
 	}
-
 }

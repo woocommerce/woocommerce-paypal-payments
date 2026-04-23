@@ -4,24 +4,14 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Properties;
 
-/**
- * Class PluginProperties
- *
- * @package WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Properties
- *
- * @psalm-suppress PossiblyFalseArgument, InvalidArgument
- */
 class PluginProperties extends BaseProperties
 {
-    /**
-     * Custom properties for Plugins.
-     */
+    // Custom properties for Plugins
     public const PROP_NETWORK = 'network';
+    public const PROP_REQUIRES_PLUGINS = 'requiresPlugins';
+
     /**
-     * Available methods of Properties::__call()
-     * from plugin headers.
-     *
-     * @link https://developer.wordpress.org/reference/functions/get_plugin_data/
+     * @see https://developer.wordpress.org/reference/functions/get_plugin_data/
      */
     protected const HEADERS = [
         self::PROP_AUTHOR => 'Author',
@@ -37,36 +27,17 @@ class PluginProperties extends BaseProperties
 
         // additional headers
         self::PROP_NETWORK => 'Network',
+        self::PROP_REQUIRES_PLUGINS => 'RequiresPlugins',
     ];
 
-    /**
-     * @var string
-     */
-    private $pluginMainFile;
-
-    /**
-     * @var string
-     */
-    private $pluginBaseName;
-
-    /**
-     * @var bool|null
-     */
-    protected $isMu;
-
-    /**
-     * @var bool|null
-     */
-    protected $isActive;
-
-    /**
-     * @var bool|null
-     */
-    protected $isNetworkActive;
+    private string $pluginMainFile;
+    private string $pluginBaseName;
+    protected ?bool $isMu = null;
+    protected ?bool $isActive = null;
+    protected ?bool $isNetworkActive = null;
 
     /**
      * @param string $pluginMainFile
-     *
      * @return PluginProperties
      */
     public static function new(string $pluginMainFile): PluginProperties
@@ -75,8 +46,6 @@ class PluginProperties extends BaseProperties
     }
 
     /**
-     * PluginProperties constructor.
-     *
      * @param string $pluginMainFile
      */
     protected function __construct(string $pluginMainFile)
@@ -85,7 +54,11 @@ class PluginProperties extends BaseProperties
             require_once ABSPATH . 'wp-admin/includes/plugin.php';
         }
 
-        $pluginData = get_plugin_data($pluginMainFile);
+        // $markup = false, to avoid an incorrect early wptexturize call.
+        // $translate = false, to avoid loading translations too early
+        // @see https://core.trac.wordpress.org/ticket/49965
+        // @see https://core.trac.wordpress.org/ticket/34114
+        $pluginData = (array) get_plugin_data($pluginMainFile, false, false);
         $properties = Properties::DEFAULT_PROPERTIES;
 
         // Map pluginData to internal structure.
@@ -93,6 +66,7 @@ class PluginProperties extends BaseProperties
             $properties[$key] = $pluginData[$pluginDataKey] ?? '';
             unset($pluginData[$pluginDataKey]);
         }
+        /** @var array<string, mixed> $properties */
         $properties = array_merge($properties, $pluginData);
 
         $this->pluginMainFile = wp_normalize_path($pluginMainFile);
@@ -119,12 +93,20 @@ class PluginProperties extends BaseProperties
 
     /**
      * @return bool
-     *
-     * @psalm-suppress PossiblyFalseArgument
      */
     public function network(): bool
     {
         return (bool) $this->get(self::PROP_NETWORK, false);
+    }
+
+    /**
+     * @return string[]
+     */
+    public function requiresPlugins(): array
+    {
+        $value = $this->get(self::PROP_REQUIRES_PLUGINS);
+
+        return $value && is_string($value) ? explode(',', $value) : [];
     }
 
     /**
@@ -163,10 +145,6 @@ class PluginProperties extends BaseProperties
     public function isMuPlugin(): bool
     {
         if ($this->isMu === null) {
-            /**
-             * @psalm-suppress UndefinedConstant
-             * @psalm-suppress MixedArgument
-             */
             $muPluginDir = wp_normalize_path(WPMU_PLUGIN_DIR);
             $this->isMu = strpos($this->pluginMainFile, $muPluginDir) === 0;
         }

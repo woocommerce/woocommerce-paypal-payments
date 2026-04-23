@@ -19,6 +19,7 @@ use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\IDealGateway;
 use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\MultibancoGateway;
 use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\MyBankGateway;
 use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\P24Gateway;
+use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\PWCGateway;
 use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\TrustlyGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CardButtonGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
@@ -58,6 +59,7 @@ class GatewayRedirectService {
 			MultibancoGateway::ID,
 			OXXO::ID,
 			PayUponInvoiceGateway::ID,
+			PWCGateway::ID,
 		);
 	}
 

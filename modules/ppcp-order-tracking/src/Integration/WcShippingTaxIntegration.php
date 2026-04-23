@@ -27,7 +27,8 @@ use function WooCommerce\PayPalCommerce\Api\ppcp_get_paypal_order;
  */
 class WcShippingTaxIntegration implements Integration {
 
-	use TrackingAvailabilityTrait, TransactionIdHandlingTrait;
+	use TrackingAvailabilityTrait;
+	use TransactionIdHandlingTrait;
 
 	/**
 	 * The shipment factory.
@@ -74,7 +75,7 @@ class WcShippingTaxIntegration implements Integration {
 
 		add_filter(
 			'rest_post_dispatch',
-			function( WP_HTTP_Response $response, WP_REST_Server $server, WP_REST_Request $request ): WP_HTTP_Response {
+			function ( WP_HTTP_Response $response, WP_REST_Server $server, WP_REST_Request $request ): WP_HTTP_Response {
 				try {
 					if ( ! apply_filters( 'woocommerce_paypal_payments_sync_wc_shipping_tax', true ) ) {
 						return $response;
@@ -98,7 +99,7 @@ class WcShippingTaxIntegration implements Integration {
 						}
 
 						$wc_order = wc_get_order( $order_id );
-						if ( ! is_a( $wc_order, WC_Order::class ) ) {
+						if ( ! ( $wc_order instanceof WC_Order ) ) {
 							continue;
 						}
 
@@ -122,7 +123,6 @@ class WcShippingTaxIntegration implements Integration {
 			10,
 			3
 		);
-
 	}
 
 	/**

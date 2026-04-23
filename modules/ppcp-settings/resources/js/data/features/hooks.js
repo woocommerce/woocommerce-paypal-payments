@@ -32,10 +32,8 @@ export const useFeatures = () => {
 				if ( response?.data?.features ) {
 					const featuresData = response.data.features;
 
-					if ( featuresData.length > 0 ) {
-						await setFeatures( featuresData );
-						await setIsReady( true );
-					}
+					await setFeatures( featuresData );
+					await setIsReady( true );
 				}
 			} catch ( error ) {}
 		};
@@ -53,12 +51,10 @@ export const useFeatures = () => {
 				const response = await apiFetch( { path: REST_PATH } );
 				const featuresData = response.data?.features || [];
 
-				if ( featuresData.length > 0 ) {
-					await setFeatures( featuresData );
-					await setIsReady( true );
-					return { success: true, features: featuresData };
-				}
-				return { success: false, features: [] };
+				await setFeatures( featuresData );
+				await setIsReady( true );
+
+				return { success: true, features: featuresData };
 			} catch ( error ) {
 				return { success: false, error, message: error.message };
 			}

@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\Button\Endpoint;
 
 
+use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PurchaseUnit;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PurchaseUnitFactory;
 use WooCommerce\PayPalCommerce\Button\Helper\CartProductsHelper;
@@ -14,6 +15,7 @@ use function Brain\Monkey\Functions\expect;
 
 class ChangeCartEndpointTest extends TestCase
 {
+	use MockeryPHPUnitIntegration;
 
     /**
      * @dataProvider dataForTestProducts
@@ -84,6 +86,18 @@ class ChangeCartEndpointTest extends TestCase
             ->with(ChangeCartEndpoint::nonce())
             ->andReturn($data);
 
+        // Mock WC session for shipping data preservation
+        $session = Mockery::mock(\WC_Session::class);
+        $session->shouldReceive('get')
+            ->with('chosen_shipping_methods')
+            ->andReturn(null);
+        $session->shouldReceive('set')
+            ->with('chosen_shipping_methods', Mockery::any());
+
+        $wc = Mockery::mock();
+        $wc->session = $session;
+        expect('WC')->andReturn($wc);
+
 		$pu = Mockery::mock(PurchaseUnit::class);
 		$pu
 			->shouldReceive('to_array')
@@ -107,8 +121,9 @@ class ChangeCartEndpointTest extends TestCase
         );
 
         expect('wp_send_json_success')
+            ->once()
             ->with($responseExpectation);
-        $this->assertTrue($testee->handle_request());
+        $testee->handle_request();
     }
 
     public function dataForTestProducts() : array {

@@ -1,0 +1,40 @@
+includes:
+    - vendor/phpstan/phpstan-deprecation-rules/rules.neon
+    - vendor/swissspidy/phpstan-no-private/rules.neon
+    - phpstan-baseline.neon
+parameters:
+    level: 8
+    reportUnmatchedIgnoredErrors: false
+    scanFiles:
+        - stubs/stubs.php
+        - stubs/wcblocks.php
+        - stubs/wcs.php
+        - stubs/shiptastic.php
+        - stubs/wc-bookings.php
+        - stubs/wpcli.php
+        - vendor/inpsyde/wp-stubs-versions/latest.php
+        - vendor/php-stubs/woocommerce-stubs/woocommerce-stubs.php
+    paths:
+        - api/
+        - src/
+        - modules/
+        - bootstrap.php
+        - modules.php
+        - uninstall.php
+        - woocommerce-paypal-payments.php
+    excludePaths:
+        - modules/*/tests/*
+        - modules/*/vendor/*
+        - modules/*/assets/*
+        - modules/*/resources/*
+    treatPhpDocTypesAsCertain: false
+    ignoreErrors:
+        - '#Property WooCommerce\:\:\$cart \(WC_Cart\) .+ is not nullable.#'
+        - '#Access to an undefined property WooCommerce\:\:\$payment_gateways.#'
+        - '#Access to an undefined property WooCommerce\:\:\$shipping.#'
+        - '#Access to an undefined property WC_Session\:\:\$applied_coupon.#'
+        - '#Access to an undefined property WC_Cart\:\:\$subtotal.#'
+        - '#Access to an undefined property WC_Cart\:\:\$total.#'
+        - '#Property WooCommerce\:\:\$session \(WC_Session\) .+ is not nullable.#'
+        - '#PayLaterMessagingSettings.+ has parameter \$styles with no type specified#'
+        - identifier: missingType.iterableValue

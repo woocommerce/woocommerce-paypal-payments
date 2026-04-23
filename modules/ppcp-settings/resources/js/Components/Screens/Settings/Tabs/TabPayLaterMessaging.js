@@ -1,4 +1,4 @@
-import { PayLaterMessagingHooks } from '../../../../data';
+import { PayLaterMessagingHooks } from '@ppcp-settings/data';
 import { useEffect } from '@wordpress/element';
 
 const TabPayLaterMessaging = () => {

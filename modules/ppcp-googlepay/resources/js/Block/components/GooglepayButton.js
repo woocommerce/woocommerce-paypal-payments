@@ -1,8 +1,8 @@
 import { useState } from '@wordpress/element';
-import useGooglepayApiToGenerateButton from '../hooks/useGooglepayApiToGenerateButton';
-import usePayPalScript from '../hooks/usePayPalScript';
-import useGooglepayScript from '../hooks/useGooglepayScript';
-import useGooglepayConfig from '../hooks/useGooglepayConfig';
+import useGooglepayApiToGenerateButton from '@ppcp-googlepay/Block/hooks/useGooglepayApiToGenerateButton';
+import usePayPalScript from '@ppcp-googlepay/Block/hooks/usePayPalScript';
+import useGooglepayScript from '@ppcp-googlepay/Block/hooks/useGooglepayScript';
+import useGooglepayConfig from '@ppcp-googlepay/Block/hooks/useGooglepayConfig';
 
 const GooglepayButton = ( {
 	namespace,

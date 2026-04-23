@@ -1,5 +1,5 @@
 import { useEffect, useRef } from '@wordpress/element';
-import { log } from '../../../../../ppcp-axo/resources/js/Helper/Debug';
+import { log } from '@ppcp-axo/Helper/Debug';
 
 /**
  * Watermark component for displaying AXO watermark.

@@ -10,7 +10,7 @@
 import { useDispatch, useSelect } from '@wordpress/data';
 import { useCallback, useEffect, useMemo, useState } from '@wordpress/element';
 
-import { createHooksForStore } from '../utils';
+import { createHooksForStore } from '@ppcp-settings/data/utils';
 import { STORE_NAME } from './constants';
 
 /**

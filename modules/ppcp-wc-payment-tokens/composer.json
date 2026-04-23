@@ -1,0 +1,16 @@
+{
+    "name": "woocommerce/ppcp-wc-payment-tokens",
+    "type": "dhii-mod",
+    "description": "WC Payment Tokens module for PPCP",
+    "license": "GPL-2.0",
+    "require": {
+        "php": "^7.4 | ^8.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "WooCommerce\\PayPalCommerce\\WcPaymentTokens\\": "src"
+        }
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true
+}

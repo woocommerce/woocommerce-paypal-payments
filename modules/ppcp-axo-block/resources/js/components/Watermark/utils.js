@@ -1,5 +1,8 @@
 import { createElement, createRoot } from '@wordpress/element';
-import { Watermark, WatermarkManager } from '../Watermark';
+import {
+	Watermark,
+	WatermarkManager,
+} from '@ppcp-axo-block/components/Watermark';
 
 // Object to store references to the watermark container and root
 const watermarkReference = {

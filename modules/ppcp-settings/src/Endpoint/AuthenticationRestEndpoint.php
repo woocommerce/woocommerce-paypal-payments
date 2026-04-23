@@ -10,9 +10,11 @@ declare( strict_types = 1 );
 namespace WooCommerce\PayPalCommerce\Settings\Endpoint;
 
 use Exception;
+use Psr\Log\LoggerInterface;
 use WP_REST_Request;
 use WP_REST_Response;
 use WP_REST_Server;
+use WooCommerce\WooCommerce\Logging\Logger\NullLogger;
 use WooCommerce\PayPalCommerce\Settings\Service\AuthenticationManager;
 use WooCommerce\PayPalCommerce\Settings\Service\SettingsDataManager;
 
@@ -48,6 +50,8 @@ class AuthenticationRestEndpoint extends RestEndpoint {
 	 */
 	private SettingsDataManager $data_manager;
 
+	private LoggerInterface $logger;
+
 	/**
 	 * Defines the JSON response format (when connection was successful).
 	 *
@@ -62,22 +66,20 @@ class AuthenticationRestEndpoint extends RestEndpoint {
 		),
 	);
 
-	/**
-	 * Constructor.
-	 *
-	 * @param AuthenticationManager $authentication_manager The authentication manager.
-	 * @param SettingsDataManager   $data_manager           Settings data manager, to reset
-	 *                                                      settings.
-	 */
-	public function __construct( AuthenticationManager $authentication_manager, SettingsDataManager $data_manager ) {
+	public function __construct(
+		AuthenticationManager $authentication_manager,
+		SettingsDataManager $data_manager,
+		?LoggerInterface $logger = null
+	) {
 		$this->authentication_manager = $authentication_manager;
 		$this->data_manager           = $data_manager;
+		$this->logger                 = $logger ?? new NullLogger();
 	}
 
 	/**
 	 * Configure REST API routes.
 	 */
-	public function register_routes() : void {
+	public function register_routes(): void {
 		/**
 		 * POST /wp-json/wc/v3/wc_paypal/authenticate/direct
 		 * {
@@ -173,16 +175,24 @@ class AuthenticationRestEndpoint extends RestEndpoint {
 	 *
 	 * @param WP_REST_Request $request Full data about the request.
 	 */
-	public function connect_direct( WP_REST_Request $request ) : WP_REST_Response {
+	public function connect_direct( WP_REST_Request $request ): WP_REST_Response {
 		$client_id     = $request->get_param( 'clientId' );
 		$client_secret = $request->get_param( 'clientSecret' );
 		$use_sandbox   = $request->get_param( 'useSandbox' );
 
 		try {
 			$this->authentication_manager->validate_id_and_secret( $client_id, $client_secret );
-			$this->authentication_manager->authenticate_via_direct_api( $use_sandbox, $client_id, $client_secret );
 		} catch ( Exception $exception ) {
 			return $this->return_error( $exception->getMessage() );
+		}
+
+		try {
+			$this->authentication_manager->authenticate_via_direct_api( $use_sandbox, $client_id, $client_secret );
+		} catch ( Exception $exception ) {
+			$this->logger->error( 'Direct API authentication failed: ' . $exception->getMessage() );
+			return $this->return_error(
+				__( 'Could not connect to PayPal. Please verify your credentials and try again.', 'woocommerce-paypal-payments' )
+			);
 		}
 
 		$account  = $this->authentication_manager->get_account_details();
@@ -199,7 +209,7 @@ class AuthenticationRestEndpoint extends RestEndpoint {
 	 *
 	 * @param WP_REST_Request $request Full data about the request.
 	 */
-	public function connect_oauth( WP_REST_Request $request ) : WP_REST_Response {
+	public function connect_oauth( WP_REST_Request $request ): WP_REST_Response {
 		$shared_id   = $request->get_param( 'sharedId' );
 		$auth_code   = $request->get_param( 'authCode' );
 		$use_sandbox = $request->get_param( 'useSandbox' );
@@ -216,7 +226,7 @@ class AuthenticationRestEndpoint extends RestEndpoint {
 	 *
 	 * @return WP_REST_Response
 	 */
-	public function disconnect( WP_REST_Request $request ) : WP_REST_Response {
+	public function disconnect( WP_REST_Request $request ): WP_REST_Response {
 		$reset_settings = $request->get_param( 'reset' );
 
 		$this->authentication_manager->disconnect();

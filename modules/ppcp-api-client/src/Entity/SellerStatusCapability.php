@@ -49,7 +49,7 @@ class SellerStatusCapability {
 	 *
 	 * @return string
 	 */
-	public function name() : string {
+	public function name(): string {
 		return $this->name;
 	}
 
@@ -58,7 +58,7 @@ class SellerStatusCapability {
 	 *
 	 * @return string
 	 */
-	public function status() : string {
+	public function status(): string {
 		return $this->status;
 	}
 
@@ -67,11 +67,10 @@ class SellerStatusCapability {
 	 *
 	 * @return array
 	 */
-	public function to_array() : array {
+	public function to_array(): array {
 		return array(
 			'name'   => $this->name(),
 			'status' => $this->status(),
 		);
 	}
-
 }

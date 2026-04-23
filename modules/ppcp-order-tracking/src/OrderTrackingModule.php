@@ -12,25 +12,24 @@ namespace WooCommerce\PayPalCommerce\OrderTracking;
 use Automattic\WooCommerce\Internal\DataStores\Orders\CustomOrdersTableController;
 use Exception;
 use WC_Order;
+use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExecutableModule;
-use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExtendingModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ModuleClassNameIdTrait;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ServiceModule;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
-use Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\OrderTracking\Assets\OrderEditPageAssets;
 use WooCommerce\PayPalCommerce\OrderTracking\Endpoint\OrderTrackingEndpoint;
 use WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\TransactionIdHandlingTrait;
 use WP_Post;
-use function WooCommerce\PayPalCommerce\Api\ppcp_get_paypal_order;
 
 /**
  * Class OrderTrackingModule
  */
-class OrderTrackingModule implements ServiceModule, ExtendingModule, ExecutableModule {
+class OrderTrackingModule implements ServiceModule, ExecutableModule {
 	use ModuleClassNameIdTrait;
-	use TrackingAvailabilityTrait, TransactionIdHandlingTrait;
+	use TrackingAvailabilityTrait;
+	use TransactionIdHandlingTrait;
 
 	public const PPCP_TRACKING_INFO_META_NAME = '_ppcp_paypal_tracking_info_meta_name';
 
@@ -43,13 +42,6 @@ class OrderTrackingModule implements ServiceModule, ExtendingModule, ExecutableM
 
 	/**
 	 * {@inheritDoc}
-	 */
-	public function extensions(): array {
-		return require __DIR__ . '/../extensions.php';
-	}
-
-	/**
-	 * {@inheritDoc}
 	 *
 	 * @param ContainerInterface $c A services container instance.
 	 * @throws NotFoundException
@@ -58,7 +50,7 @@ class OrderTrackingModule implements ServiceModule, ExtendingModule, ExecutableM
 
 		add_action(
 			'wc_ajax_' . OrderTrackingEndpoint::ENDPOINT,
-			function() use ( $c ) {
+			function () use ( $c ) {
 				$c->get( 'order-tracking.endpoint.controller' )->handle_request();
 			}
 		);
@@ -68,7 +60,7 @@ class OrderTrackingModule implements ServiceModule, ExtendingModule, ExecutableM
 
 		add_action(
 			'init',
-			function() use ( $asset_loader, $c ) {
+			function () use ( $asset_loader, $c ) {
 				if ( ! $this->is_tracking_enabled( $c->get( 'api.bearer' ) ) ) {
 					return;
 				}
@@ -78,7 +70,7 @@ class OrderTrackingModule implements ServiceModule, ExtendingModule, ExecutableM
 		);
 		add_action(
 			'init',
-			function() use ( $asset_loader, $c ) {
+			function () use ( $asset_loader, $c ) {
 				if ( ! $this->is_tracking_enabled( $c->get( 'api.bearer' ) ) ) {
 					return;
 				}
@@ -98,7 +90,7 @@ class OrderTrackingModule implements ServiceModule, ExtendingModule, ExecutableM
 			 *
 			 * @psalm-suppress MissingClosureParamType
 			 */
-			function( string $post_type, $post_or_order_object ) use ( $c ) {
+			function ( string $post_type, $post_or_order_object ) use ( $c ) {
 				if ( ! $this->is_tracking_enabled( $c->get( 'api.bearer' ) ) ) {
 					return;
 				}
@@ -108,8 +100,11 @@ class OrderTrackingModule implements ServiceModule, ExtendingModule, ExecutableM
 					return;
 				}
 
+				$order_endpoint = $c->get( 'api.endpoint.order.cached' );
+				assert( $order_endpoint instanceof OrderEndpoint );
+
 				try {
-					$paypal_order = ppcp_get_paypal_order( $wc_order );
+					$paypal_order = $order_endpoint->order( $wc_order );
 				} catch ( Exception $exception ) {
 					return;
 				}

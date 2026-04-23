@@ -10,6 +10,7 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\Blocks;
 
 use Automattic\WooCommerce\Blocks\Payments\PaymentMethodRegistry;
+use WooCommerce\PayPalCommerce\Assets\AssetGetter;
 use WooCommerce\PayPalCommerce\Blocks\Endpoint\UpdateShippingEndpoint;
 use WooCommerce\PayPalCommerce\Button\Assets\SmartButtonInterface;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExecutableModule;
@@ -17,8 +18,6 @@ use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExtendingModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ModuleClassNameIdTrait;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ServiceModule;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
-use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
-use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
 
 /**
  * Class BlocksModule
@@ -68,19 +67,15 @@ class BlocksModule implements ServiceModule, ExtendingModule, ExecutableModule {
 
 		add_action(
 			'woocommerce_blocks_payment_method_type_registration',
-			function( PaymentMethodRegistry $payment_method_registry ) use ( $c ): void {
+			function ( PaymentMethodRegistry $payment_method_registry ) use ( $c ): void {
 				$payment_method_registry->register( $c->get( 'blocks.method' ) );
-
-				$settings = $c->get( 'wcgateway.settings' );
-				assert( $settings instanceof Settings );
-
 				$payment_method_registry->register( $c->get( 'blocks.advanced-card-method' ) );
 			}
 		);
 
 		woocommerce_store_api_register_payment_requirements(
 			array(
-				'data_callback' => function() use ( $c ): array {
+				'data_callback' => function () use ( $c ): array {
 					$smart_button = $c->get( 'button.smart-button' );
 					assert( $smart_button instanceof SmartButtonInterface );
 
@@ -111,12 +106,14 @@ class BlocksModule implements ServiceModule, ExtendingModule, ExecutableModule {
 					return;
 				}
 
-				$module_url    = $c->get( 'blocks.url' );
+				$asset_getter = $c->get( 'blocks.asset_getter' );
+				assert( $asset_getter instanceof AssetGetter );
+
 				$asset_version = $c->get( 'ppcp.asset-version' );
 
 				wp_register_style(
 					'wc-ppcp-blocks',
-					untrailingslashit( $module_url ) . '/assets/css/gateway.css',
+					$asset_getter->get_asset_url( 'gateway.css' ),
 					array(),
 					$asset_version
 				);
@@ -128,12 +125,14 @@ class BlocksModule implements ServiceModule, ExtendingModule, ExecutableModule {
 		add_action(
 			'enqueue_block_editor_assets',
 			static function () use ( $c ) {
-				$module_url    = $c->get( 'blocks.url' );
+				$asset_getter = $c->get( 'blocks.asset_getter' );
+				assert( $asset_getter instanceof AssetGetter );
+
 				$asset_version = $c->get( 'ppcp.asset-version' );
 
 				wp_register_style(
 					'wc-ppcp-blocks-editor',
-					untrailingslashit( $module_url ) . '/assets/css/gateway-editor.css',
+					$asset_getter->get_asset_url( 'gateway-editor.css' ),
 					array(),
 					$asset_version
 				);
@@ -143,7 +142,7 @@ class BlocksModule implements ServiceModule, ExtendingModule, ExecutableModule {
 
 		add_filter(
 			'woocommerce_paypal_payments_sdk_components_hook',
-			function( array $components, string $context ) {
+			function ( array $components, string $context ) {
 				if ( str_ends_with( $context, '-block' ) ) {
 					$components[] = 'buttons';
 				}

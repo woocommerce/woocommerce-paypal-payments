@@ -44,6 +44,23 @@ class CheckoutPayPalAddressPresetTest extends TestCase
         );
     }
 
+	/**
+	 * @dataProvider filterCheckoutFieldDataNoAddress
+	 */
+	public function testFilterCheckoutFieldNoAddress(string $fieldId, ?Order $order, ?string $expected): void
+	{
+		$this->buildTestee()[0]->shouldReceive('order')
+		                       ->andReturn($order);
+
+		/* @var CheckoutPayPalAddressPreset $testee */
+		$testee = $this->buildTestee()[1];
+
+		self::assertSame(
+			$expected,
+			$testee->filter_checkout_field(null, $fieldId)
+		);
+	}
+
     /**
      * @see testFilterCheckoutField
      */
@@ -156,6 +173,109 @@ class CheckoutPayPalAddressPresetTest extends TestCase
             ],
         ];
     }
+
+	/**
+	 * @see testFilterCheckoutFieldNoAddress
+	 */
+	public function filterCheckoutFieldDataNoAddress(): array
+	{
+		$order = \Mockery::mock(
+			Order::class,
+			[
+				'id' => 'abc123def',
+				'purchase_units' => [
+					\Mockery::mock(
+						PurchaseUnit::class,
+						[
+							'shipping' => \Mockery::mock(
+								Shipping::class,
+								[
+									'address' => null,
+								]
+							),
+						]
+					),
+				],
+				'payer' => \Mockery::mock(
+					Payer::class,
+					[
+						'name' => \Mockery::mock(
+							PayerName::class,
+							[
+								'given_name' => 'John',
+								'surname' => 'Doe',
+							]
+						),
+						'email_address' => 'mail@domain.tld',
+						'phone' => \Mockery::mock(
+							PhoneWithType::class,
+							[
+								'phone' => \Mockery::mock(
+									Phone::class,
+									[
+										'national_number' => '+4912345678',
+									]
+								),
+							]
+						),
+					]
+				),
+			]
+		);
+
+		return [
+			'Test billing_address_1' => [
+				'fieldId' => 'billing_address_1',
+				'order' => $order,
+				'expected' => null,
+			],
+			'Test billing_address_2' => [
+				'fieldId' => 'billing_address_2',
+				'order' => $order,
+				'expected' => null,
+			],
+			'Test billing_postcode' => [
+				'fieldId' => 'billing_postcode',
+				'order' => $order,
+				'expected' => null,
+			],
+			'Test billing_country' => [
+				'fieldId' => 'billing_country',
+				'order' => $order,
+				'expected' => null,
+			],
+			'Test billing_city' => [
+				'fieldId' => 'billing_city',
+				'order' => $order,
+				'expected' => null,
+			],
+			'Test billing_state' => [
+				'fieldId' => 'billing_state',
+				'order' => $order,
+				'expected' => null,
+			],
+			'Test billing_last_name' => [
+				'fieldId' => 'billing_last_name',
+				'order' => $order,
+				'expected' => 'Doe',
+			],
+			'Test billing_first_name' => [
+				'fieldId' => 'billing_first_name',
+				'order' => $order,
+				'expected' => 'John',
+			],
+			'Test billing_email' => [
+				'fieldId' => 'billing_email',
+				'order' => $order,
+				'expected' => 'mail@domain.tld',
+			],
+			'Test billing_phone' => [
+				'fieldId' => 'billing_phone',
+				'order' => $order,
+				'expected' => '+4912345678',
+			],
+		];
+	}
 
     public function testReadShippingFromOrder(): void
     {

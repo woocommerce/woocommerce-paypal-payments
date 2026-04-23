@@ -8,7 +8,7 @@ import {
 } from '@wordpress/element';
 import classNames from 'classnames';
 
-import { CommonHooks } from '../../data';
+import { CommonHooks } from '@ppcp-settings/data';
 import SpinnerOverlay from './SpinnerOverlay';
 
 // Create context to track the busy state across nested wrappers

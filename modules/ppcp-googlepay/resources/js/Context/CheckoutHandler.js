@@ -1,7 +1,7 @@
-import Spinner from '../../../../ppcp-button/resources/js/modules/Helper/Spinner';
+import Spinner from '@ppcp-button/Helper/Spinner';
 import BaseHandler from './BaseHandler';
-import CheckoutActionHandler from '../../../../ppcp-button/resources/js/modules/ActionHandler/CheckoutActionHandler';
-import FormValidator from '../../../../ppcp-button/resources/js/modules/Helper/FormValidator';
+import CheckoutActionHandler from '@ppcp-button/ActionHandler/CheckoutActionHandler';
+import FormValidator from '@ppcp-button/Helper/FormValidator';
 
 class CheckoutHandler extends BaseHandler {
 	validateForm() {

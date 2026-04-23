@@ -9,21 +9,22 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\PayLaterWCBlocks;
 
+use WooCommerce\PayPalCommerce\Assets\AssetGetter;
 use WooCommerce\PayPalCommerce\Button\Endpoint\CartScriptParamsEndpoint;
 use WooCommerce\PayPalCommerce\PayLaterConfigurator\Factory\ConfigFactory;
+use WooCommerce\PayPalCommerce\Settings\Data\PayLaterMessagingSettings;
+use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExecutableModule;
-use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExtendingModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ModuleClassNameIdTrait;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ServiceModule;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\Button\Helper\MessagesApply;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\SettingsStatus;
-use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 
 /**
  * Class PayLaterWCBlocksModule
  */
-class PayLaterWCBlocksModule implements ServiceModule, ExtendingModule, ExecutableModule {
+class PayLaterWCBlocksModule implements ServiceModule, ExecutableModule {
 	use ModuleClassNameIdTrait;
 
 	/**
@@ -31,13 +32,6 @@ class PayLaterWCBlocksModule implements ServiceModule, ExtendingModule, Executab
 	 */
 	public function services(): array {
 		return require __DIR__ . '/../services.php';
-	}
-
-	/**
-	 * {@inheritDoc}
-	 */
-	public function extensions(): array {
-		return require __DIR__ . '/../extensions.php';
 	}
 
 	/**
@@ -71,7 +65,7 @@ class PayLaterWCBlocksModule implements ServiceModule, ExtendingModule, Executab
 	 * @param string         $location The location to check.
 	 * @return bool true if the placement is enabled, otherwise false.
 	 */
-	public static function is_placement_enabled( SettingsStatus $settings_status, string $location ) : bool {
+	public static function is_placement_enabled( SettingsStatus $settings_status, string $location ): bool {
 		return self::is_block_enabled( $settings_status, $location );
 	}
 
@@ -80,7 +74,7 @@ class PayLaterWCBlocksModule implements ServiceModule, ExtendingModule, Executab
 	 *
 	 * @return bool true if the under cart totals placement is enabled, otherwise false.
 	 */
-	public function is_under_cart_totals_placement_enabled() : bool {
+	public function is_under_cart_totals_placement_enabled(): bool {
 		return apply_filters(
 			// phpcs:ignore WordPress.NamingConventions.ValidHookName.UseUnderscores
 			'woocommerce.feature-flags.woocommerce_paypal_payments.paylater_wc_blocks_cart_under_totals_enabled',
@@ -102,16 +96,23 @@ class PayLaterWCBlocksModule implements ServiceModule, ExtendingModule, Executab
 		add_action(
 			'init',
 			function () use ( $c ): void {
-				$settings = $c->get( 'wcgateway.settings' );
-				assert( $settings instanceof Settings );
+				$paylater_settings = $c->get( 'settings.data.paylater-messaging-settings' );
+				assert( $paylater_settings instanceof PayLaterMessagingSettings );
+
+				$settings_provider = $c->get( 'settings.settings-provider' );
+				assert( $settings_provider instanceof SettingsProvider );
+
 				$config_factory = $c->get( 'paylater-configurator.factory.config' );
 				assert( $config_factory instanceof ConfigFactory );
 
 				$script_handle = 'ppcp-cart-paylater-block';
 
+				$asset_getter = $c->get( 'paylater-wc-blocks.asset_getter' );
+				assert( $asset_getter instanceof AssetGetter );
+
 				wp_register_script(
 					$script_handle,
-					$c->get( 'paylater-wc-blocks.url' ) . 'assets/js/cart-paylater-block.js',
+					$asset_getter->get_asset_url( 'CartPayLaterMessagesBlock/cart-paylater-block.js' ),
 					array(),
 					$c->get( 'ppcp.asset-version' ),
 					true
@@ -126,11 +127,11 @@ class PayLaterWCBlocksModule implements ServiceModule, ExtendingModule, Executab
 								'endpoint' => \WC_AJAX::get_endpoint( CartScriptParamsEndpoint::ENDPOINT ),
 							),
 						),
-						'config'                      => $config_factory->from_settings( $settings ),
+						'config'                      => $config_factory->from_settings( $paylater_settings ),
 						'settingsUrl'                 => admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway' ),
-						'vaultingEnabled'             => $settings->has( 'vault_enabled' ) && $settings->get( 'vault_enabled' ),
+						'vaultingEnabled'             => $settings_provider->save_paypal_and_venmo(),
 						'placementEnabled'            => self::is_placement_enabled( $c->get( 'wcgateway.settings.status' ), 'cart' ),
-						'payLaterSettingsUrl'         => admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway&ppcp-tab=ppcp-pay-later' ),
+						'payLaterSettingsUrl'         => admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway' ),
 						'underTotalsPlacementEnabled' => self::is_under_cart_totals_placement_enabled(),
 					)
 				);
@@ -139,7 +140,7 @@ class PayLaterWCBlocksModule implements ServiceModule, ExtendingModule, Executab
 
 				wp_register_script(
 					$script_handle,
-					$c->get( 'paylater-wc-blocks.url' ) . 'assets/js/checkout-paylater-block.js',
+					$asset_getter->get_asset_url( 'CheckoutPayLaterMessagesBlock/checkout-paylater-block.js' ),
 					array(),
 					$c->get( 'ppcp.asset-version' ),
 					true
@@ -154,11 +155,11 @@ class PayLaterWCBlocksModule implements ServiceModule, ExtendingModule, Executab
 								'endpoint' => \WC_AJAX::get_endpoint( CartScriptParamsEndpoint::ENDPOINT ),
 							),
 						),
-						'config'              => $config_factory->from_settings( $settings ),
+						'config'              => $config_factory->from_settings( $paylater_settings ),
 						'settingsUrl'         => admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway' ),
-						'vaultingEnabled'     => $settings->has( 'vault_enabled' ) && $settings->get( 'vault_enabled' ),
+						'vaultingEnabled'     => $settings_provider->save_paypal_and_venmo(),
 						'placementEnabled'    => self::is_placement_enabled( $c->get( 'wcgateway.settings.status' ), 'checkout' ),
-						'payLaterSettingsUrl' => admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway&ppcp-tab=ppcp-pay-later' ),
+						'payLaterSettingsUrl' => admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway' ),
 					)
 				);
 			},
@@ -192,13 +193,10 @@ class PayLaterWCBlocksModule implements ServiceModule, ExtendingModule, Executab
 					return;
 				}
 
-				/**
-				 * Cannot return false for this path.
-				 *
-				 * @psalm-suppress PossiblyFalseArgument
-				 */
+				$path_to_module_js_folder = $c->get( 'ppcp.path-to-plugin-folder' ) . 'modules/ppcp-paylater-wc-blocks/resources/js/';
+
 				register_block_type(
-					dirname( realpath( __FILE__ ), 2 ) . '/resources/js/CartPayLaterMessagesBlock',
+					$path_to_module_js_folder . 'CartPayLaterMessagesBlock',
 					array(
 						'render_callback' => function ( array $attributes ) use ( $c ) {
 							return PayLaterWCBlocksUtils::render_paylater_block(
@@ -211,13 +209,8 @@ class PayLaterWCBlocksModule implements ServiceModule, ExtendingModule, Executab
 					)
 				);
 
-				/**
-				 * Cannot return false for this path.
-				 *
-				 * @psalm-suppress PossiblyFalseArgument
-				 */
 				register_block_type(
-					dirname( realpath( __FILE__ ), 2 ) . '/resources/js/CheckoutPayLaterMessagesBlock',
+					$path_to_module_js_folder . 'CheckoutPayLaterMessagesBlock',
 					array(
 						'render_callback' => function ( array $attributes ) use ( $c ) {
 							return PayLaterWCBlocksUtils::render_paylater_block(
@@ -277,7 +270,11 @@ class PayLaterWCBlocksModule implements ServiceModule, ExtendingModule, Executab
 				'enqueue_block_editor_assets',
 				function () use ( $c ): void {
 					$handle = 'ppcp-checkout-paylater-block-editor-inserter';
-					$path   = $c->get( 'paylater-wc-blocks.url' ) . 'assets/js/cart-paylater-block-inserter.js';
+
+					$asset_getter = $c->get( 'paylater-wc-blocks.asset_getter' );
+					assert( $asset_getter instanceof AssetGetter );
+
+					$path = $asset_getter->get_asset_url( 'CartPayLaterMessagesBlock/cart-paylater-block-inserter.js' );
 
 					wp_register_script(
 						$handle,

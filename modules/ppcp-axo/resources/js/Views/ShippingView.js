@@ -44,7 +44,7 @@ class ShippingView {
 						? this.states[ countryCode ][ stateCode ]
 						: stateCode;
 
-				if ( this.hasEmptyValues( data, stateName ) ) {
+				if ( this.hasEmptyValues( data ) ) {
 					return `
                         <div style="margin-bottom: 20px;">
                             <div class="axo-checkout-header-section">
@@ -71,9 +71,9 @@ class ShippingView {
 						) }</div>
                         <div>${ data.value( 'street1' ) }</div>
                         <div>${ data.value( 'street2' ) }</div>
-                        <div>${ data.value(
-							'city'
-						) }, ${ stateName } ${ data.value( 'postCode' ) }</div>
+                        <div>${ data.value( 'city' ) }${
+							stateName ? ', ' + stateName : ''
+						} ${ data.value( 'postCode' ) }</div>
                         <div>${ valueOfSelect(
 							'#billing_country',
 							countryCode
@@ -158,14 +158,13 @@ class ShippingView {
 		} );
 	}
 
-	hasEmptyValues( data, stateName ) {
+	hasEmptyValues( data ) {
 		return (
 			! data.value( 'email' ) ||
 			! data.value( 'firstName' ) ||
 			! data.value( 'lastName' ) ||
 			! data.value( 'street1' ) ||
-			! data.value( 'city' ) ||
-			! stateName
+			! data.value( 'city' )
 		);
 	}
 

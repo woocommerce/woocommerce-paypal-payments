@@ -19,6 +19,7 @@ use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\IDealGateway;
 use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\MultibancoGateway;
 use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\MyBankGateway;
 use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\P24Gateway;
+use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\PWCGateway;
 use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\TrustlyGateway;
 use WooCommerce\PayPalCommerce\Settings\Data\PaymentSettings;
 use WooCommerce\PayPalCommerce\Settings\Data\GeneralSettings;
@@ -50,11 +51,18 @@ class PaymentMethodsDefinition {
 	private GeneralSettings $general_settings;
 
 	/**
-	 * Conflict notices for Axo gateway.
+	 * Axo checkout configuration conflict notice.
 	 *
-	 * @var array
+	 * @var string
 	 */
-	private array $axo_conflicts_notices;
+	private string $axo_checkout_config_notice;
+
+	/**
+	 * Axo incompatible plugins conflict notice.
+	 *
+	 * @var string
+	 */
+	private string $axo_incompatible_plugins_notice;
 
 	/**
 	 * List of WooCommerce payment gateways.
@@ -66,18 +74,21 @@ class PaymentMethodsDefinition {
 	/**
 	 * Constructor.
 	 *
-	 * @param PaymentSettings $settings              Payment methods data model.
-	 * @param GeneralSettings $general_settings      General plugin settings model.
-	 * @param array           $axo_conflicts_notices Conflicts notices for Axo.
+	 * @param PaymentSettings $settings                        Payment methods data model.
+	 * @param GeneralSettings $general_settings                General plugin settings model.
+	 * @param string          $axo_checkout_config_notice      Axo checkout config conflict notice.
+	 * @param string          $axo_incompatible_plugins_notice Axo incompatible plugins notice.
 	 */
 	public function __construct(
 		PaymentSettings $settings,
 		GeneralSettings $general_settings,
-		array $axo_conflicts_notices = array()
+		string $axo_checkout_config_notice = '',
+		string $axo_incompatible_plugins_notice = ''
 	) {
-		$this->settings              = $settings;
-		$this->general_settings      = $general_settings;
-		$this->axo_conflicts_notices = $axo_conflicts_notices;
+		$this->settings                        = $settings;
+		$this->general_settings                = $general_settings;
+		$this->axo_checkout_config_notice      = $axo_checkout_config_notice;
+		$this->axo_incompatible_plugins_notice = $axo_incompatible_plugins_notice;
 	}
 
 	/**
@@ -85,7 +96,7 @@ class PaymentMethodsDefinition {
 	 *
 	 * @return array
 	 */
-	public function get_definitions() : array {
+	public function get_definitions(): array {
 		// Refresh the WooCommerce gateway details before we build the definitions.
 		$this->wc_gateways = WC()->payment_gateways()->payment_gateways();
 		$all_methods       = array_merge(
@@ -104,6 +115,7 @@ class PaymentMethodsDefinition {
 				$method['icon'],
 				$method['fields'] ?? array(),
 				$method['warningMessages'] ?? array(),
+				$method['warningSeverity'] ?? 'warning',
 			);
 		}
 
@@ -123,6 +135,8 @@ class PaymentMethodsDefinition {
 	 *                                                fields.
 	 * @param array       $warning_messages           Optional. Warning messages to display in the
 	 *                                                UI.
+	 * @param string      $warning_severity           Optional. Severity level: 'warning' (yellow)
+	 *                                                or 'error' (red).
 	 * @return array Payment method definition.
 	 */
 	private function build_method_definition(
@@ -131,12 +145,13 @@ class PaymentMethodsDefinition {
 		string $description,
 		string $icon,
 		$fields = array(),
-		array $warning_messages = array()
-	) : array {
+		array $warning_messages = array(),
+		string $warning_severity = 'warning'
+	): array {
 		$gateway = $this->wc_gateways[ $gateway_id ] ?? null;
 
 		$gateway_title       = $gateway ? $gateway->get_title() : $title;
-		$gateway_description = $gateway ? $gateway->get_description() : $description;
+		$gateway_description = $gateway ? $gateway->description : $description;
 		$enabled             = $this->settings->is_method_enabled( $gateway_id );
 		$config              = array(
 			'id'              => $gateway_id,
@@ -147,24 +162,27 @@ class PaymentMethodsDefinition {
 			'itemTitle'       => $title,
 			'itemDescription' => $description,
 			'warningMessages' => $warning_messages,
+			'warningSeverity' => $warning_severity,
 		);
 
 		if ( is_array( $fields ) ) {
-			$config['fields'] = array_merge(
-				array(
-					'checkoutPageTitle'       => array(
-						'type'    => 'text',
-						'default' => $gateway_title,
-						'label'   => __( 'Checkout page title', 'woocommerce-paypal-payments' ),
-					),
-					'checkoutPageDescription' => array(
-						'type'    => 'text',
-						'default' => $gateway ? $gateway->get_description() : '',
-						'label'   => __( 'Checkout page description', 'woocommerce-paypal-payments' ),
-					),
+			$base_fields = array(
+				'checkoutPageTitle' => array(
+					'type'    => 'text',
+					'default' => $gateway_title,
+					'label'   => __( 'Checkout page title', 'woocommerce-paypal-payments' ),
 				),
-				$fields
 			);
+
+			if ( CreditCardGateway::ID !== $gateway_id ) {
+				$base_fields['checkoutPageDescription'] = array(
+					'type'    => 'text',
+					'default' => $gateway_description,
+					'label'   => __( 'Checkout page description', 'woocommerce-paypal-payments' ),
+				);
+			}
+
+			$config['fields'] = array_merge( $base_fields, $fields );
 		}
 
 		return $config;
@@ -173,11 +191,11 @@ class PaymentMethodsDefinition {
 	// Payment method groups.
 
 	/**
-	 * Define PayPal related payment methods.
+	 * Defines PayPal's branded payment methods; not affected by the "own_brand_only" setting.
 	 *
 	 * @return array
 	 */
-	public function group_paypal_methods() : array {
+	public function group_paypal_methods(): array {
 		$group = array(
 			array(
 				'id'          => PayPalGateway::ID,
@@ -214,25 +232,25 @@ class PaymentMethodsDefinition {
 			),
 		);
 
-		if ( ! $this->general_settings->own_brand_only() ) {
-			$group[] = array(
-				'id'          => CardButtonGateway::ID,
-				'title'       => __( 'Credit and debit card payments', 'woocommerce-paypal-payments' ),
-				'description' => __( "Accept all major credit and debit cards - even if your customer doesn't have a PayPal account . ", 'woocommerce-paypal-payments' ),
-				'icon'        => 'payment-method-cards',
-			);
-		}
+		// This CardButtonGateway is a branded gateway!
+		$group[] = array(
+			'id'          => CardButtonGateway::ID,
+			'title'       => __( 'Credit and debit card payments', 'woocommerce-paypal-payments' ),
+			'description' => __( "Accept all major credit and debit cards - even if your customer doesn't have a PayPal account . ", 'woocommerce-paypal-payments' ),
+			'icon'        => 'payment-method-cards',
+		);
 
 		return apply_filters( 'woocommerce_paypal_payments_gateway_group_paypal', $group );
 	}
 
 	/**
-	 * Define card related payment methods.
+	 * Define embedded payment methods, which are only available in whitelabel mode.
 	 *
 	 * @return array
 	 */
-	public function group_card_methods() : array {
-		$group = array();
+	public function group_card_methods(): array {
+		$group    = array();
+		$warnings = $this->get_warning_messages();
 
 		if ( ! $this->general_settings->own_brand_only() ) {
 			$group[] = array(
@@ -240,7 +258,16 @@ class PaymentMethodsDefinition {
 				'title'       => __( 'Advanced Credit and Debit Card Payments', 'woocommerce-paypal-payments' ),
 				'description' => __( "Present custom credit and debit card fields to your payers so they can pay with credit and debit cards using your site's branding.", 'woocommerce-paypal-payments' ),
 				'icon'        => 'payment-method-advanced-cards',
-				'fields'      => array(),
+				'fields'      => array(
+					'cardholderName' => array(
+						'type'    => 'toggle',
+						'default' => $this->settings->get_cardholder_name(),
+						'label'   => __(
+							'Display cardholder name',
+							'woocommerce-paypal-payments'
+						),
+					),
+				),
 			);
 			$group[] = array(
 				'id'              => AxoGateway::ID,
@@ -248,14 +275,6 @@ class PaymentMethodsDefinition {
 				'description'     => __( "Tap into the scale and trust of PayPal's customer network to recognize shoppers and make guest checkout more seamless than ever.", 'woocommerce-paypal-payments' ),
 				'icon'            => 'payment-method-fastlane',
 				'fields'          => array(
-					'fastlaneCardholderName'   => array(
-						'type'    => 'toggle',
-						'default' => $this->settings->get_fastlane_cardholder_name(),
-						'label'   => __(
-							'Display cardholder name',
-							'woocommerce-paypal-payments'
-						),
-					),
 					'fastlaneDisplayWatermark' => array(
 						'type'    => 'toggle',
 						'default' => $this->settings->get_fastlane_display_watermark(),
@@ -265,7 +284,7 @@ class PaymentMethodsDefinition {
 						),
 					),
 				),
-				'warningMessages' => $this->axo_conflicts_notices,
+				'warningMessages' => $warnings[ AxoGateway::ID ] ?? array(),
 			);
 			$group[] = array(
 				'id'          => ApplePayGateway::ID,
@@ -285,105 +304,227 @@ class PaymentMethodsDefinition {
 	}
 
 	/**
+	 * Get default titles and descriptions for APM gateways.
+	 * Single source of truth for all APM gateway metadata.
+	 *
+	 * @return array Array of default settings keyed by gateway ID.
+	 */
+	public static function get_apm_defaults(): array {
+		return array(
+			PWCGateway::ID            => array(
+				'method_title'       => __( 'Pay with Crypto', 'woocommerce-paypal-payments' ),
+				'method_description' => __( 'A PayPal-powered checkout option letting customers pay with cryptocurrency. You receive funds in USD, settled directly to your PayPal balance — no crypto exposure, no chargeback risk. Promotional processing rate of 0.99% through July 31, 2026.', 'woocommerce-paypal-payments' ),
+				'title'              => __( 'Pay with Crypto', 'woocommerce-paypal-payments' ),
+				'description'        => __( 'Pay with top wallets and coins.', 'woocommerce-paypal-payments' ),
+			),
+			BancontactGateway::ID     => array(
+				'method_title'       => __( 'Bancontact (via PayPal)', 'woocommerce-paypal-payments' ),
+				'method_description' => __( 'A popular and trusted electronic payment method in Belgium, used by Belgian customers with Bancontact cards issued by local banks. Transactions are processed in EUR.', 'woocommerce-paypal-payments' ),
+				'title'              => __( 'Bancontact', 'woocommerce-paypal-payments' ),
+				'description'        => '',
+			),
+			BlikGateway::ID           => array(
+				'method_title'       => __( 'Blik (via PayPal)', 'woocommerce-paypal-payments' ),
+				'method_description' => __( 'A widely used mobile payment method in Poland, allowing Polish customers to pay directly via their banking apps. Transactions are processed in PLN.', 'woocommerce-paypal-payments' ),
+				'title'              => __( 'Blik', 'woocommerce-paypal-payments' ),
+				'description'        => '',
+			),
+			EPSGateway::ID            => array(
+				'method_title'       => __( 'EPS (via PayPal)', 'woocommerce-paypal-payments' ),
+				'method_description' => __( 'An online payment method in Austria, enabling Austrian buyers to make secure payments directly through their bank accounts. Transactions are processed in EUR.', 'woocommerce-paypal-payments' ),
+				'title'              => __( 'EPS', 'woocommerce-paypal-payments' ),
+				'description'        => '',
+			),
+			IDealGateway::ID          => array(
+				'method_title'       => __( 'iDeal (via PayPal)', 'woocommerce-paypal-payments' ),
+				'method_description' => __( 'The most common payment method in the Netherlands, allowing Dutch buyers to pay directly through their preferred bank. Transactions are processed in EUR.', 'woocommerce-paypal-payments' ),
+				'title'              => __( 'iDeal', 'woocommerce-paypal-payments' ),
+				'description'        => '',
+			),
+			MyBankGateway::ID         => array(
+				'method_title'       => __( 'MyBank (via PayPal)', 'woocommerce-paypal-payments' ),
+				'method_description' => __( 'A European online banking payment solution primarily used in Italy, enabling customers to make secure bank transfers during checkout. Transactions are processed in EUR.', 'woocommerce-paypal-payments' ),
+				'title'              => __( 'MyBank', 'woocommerce-paypal-payments' ),
+				'description'        => '',
+			),
+			P24Gateway::ID            => array(
+				'method_title'       => __( 'Przelewy24 (via PayPal)', 'woocommerce-paypal-payments' ),
+				'method_description' => __( 'A popular online payment gateway in Poland, offering various payment options for Polish customers. Transactions can be processed in PLN or EUR.', 'woocommerce-paypal-payments' ),
+				'title'              => __( 'Przelewy24', 'woocommerce-paypal-payments' ),
+				'description'        => '',
+			),
+			TrustlyGateway::ID        => array(
+				'method_title'       => __( 'Trustly (via PayPal)', 'woocommerce-paypal-payments' ),
+				'method_description' => __( 'A European payment method that allows buyers to make payments directly from their bank accounts, suitable for customers across multiple European countries. Supported currencies include EUR, DKK, SEK, GBP, and NOK.', 'woocommerce-paypal-payments' ),
+				'title'              => __( 'Trustly', 'woocommerce-paypal-payments' ),
+				'description'        => '',
+			),
+			MultibancoGateway::ID     => array(
+				'method_title'       => __( 'Multibanco (via PayPal)', 'woocommerce-paypal-payments' ),
+				'method_description' => __( 'An online payment method in Portugal, enabling Portuguese buyers to make secure payments directly through their bank accounts. Transactions are processed in EUR.', 'woocommerce-paypal-payments' ),
+				'title'              => __( 'Multibanco', 'woocommerce-paypal-payments' ),
+				'description'        => '',
+			),
+			PayUponInvoiceGateway::ID => array(
+				'method_title'       => __( 'Pay upon Invoice', 'woocommerce-paypal-payments' ),
+				'method_description' => __( 'Pay upon Invoice is an invoice payment method in Germany. It is a local buy now, pay later payment method that allows the buyer to place an order, receive the goods, try them, verify they are in good order, and then pay the invoice within 30 days.', 'woocommerce-paypal-payments' ),
+				'title'              => __( 'Pay upon Invoice', 'woocommerce-paypal-payments' ),
+				'description'        => '',
+			),
+			OXXO::ID                  => array(
+				'method_title'       => __( 'OXXO', 'woocommerce-paypal-payments' ),
+				'method_description' => __( 'OXXO is a Mexican chain of convenience stores. *Get PayPal account permission to use OXXO payment functionality by contacting us at (+52) 800–925–0304', 'woocommerce-paypal-payments' ),
+				'title'              => __( 'OXXO', 'woocommerce-paypal-payments' ),
+				'description'        => '',
+			),
+		);
+	}
+
+	/**
 	 * Builds an array of payment method definitions, which includes details
 	 * of all APM gateways.
 	 *
 	 * @return array List of payment method definitions.
 	 */
-	public function group_apms() : array {
+	public function group_apms(): array {
+		$defaults = self::get_apm_defaults();
+		$warnings = $this->get_warning_messages();
+
 		$group = array(
 			array(
+				'id'          => PWCGateway::ID,
+				'title'       => $defaults[ PWCGateway::ID ]['title'],
+				'description' => $defaults[ PWCGateway::ID ]['method_description'],
+				'icon'        => 'payment-method-pwc',
+			),
+			array(
 				'id'          => BancontactGateway::ID,
-				'title'       => __( 'Bancontact', 'woocommerce-paypal-payments' ),
-				'description' => __(
-					'Bancontact is the most widely used, accepted and trusted electronic payment method in Belgium. Bancontact makes it possible to pay directly through the online payment systems of all major Belgian banks.',
-					'woocommerce-paypal-payments'
-				),
+				'title'       => $defaults[ BancontactGateway::ID ]['title'],
+				'description' => $defaults[ BancontactGateway::ID ]['method_description'],
 				'icon'        => 'payment-method-bancontact',
 			),
 			array(
 				'id'          => BlikGateway::ID,
-				'title'       => __( 'BLIK', 'woocommerce-paypal-payments' ),
-				'description' => __(
-					'A widely used mobile payment method in Poland, allowing Polish customers to pay directly via their banking apps. Transactions are processed in PLN.',
-					'woocommerce-paypal-payments'
-				),
+				'title'       => $defaults[ BlikGateway::ID ]['title'],
+				'description' => $defaults[ BlikGateway::ID ]['method_description'],
 				'icon'        => 'payment-method-blik',
 			),
 			array(
 				'id'          => EPSGateway::ID,
-				'title'       => __( 'eps', 'woocommerce-paypal-payments' ),
-				'description' => __(
-					'An online payment method in Austria, enabling Austrian buyers to make secure payments directly through their bank accounts. Transactions are processed in EUR.',
-					'woocommerce-paypal-payments'
-				),
+				'title'       => $defaults[ EPSGateway::ID ]['title'],
+				'description' => $defaults[ EPSGateway::ID ]['method_description'],
 				'icon'        => 'payment-method-eps',
 			),
 			array(
 				'id'          => IDealGateway::ID,
-				'title'       => __( 'iDEAL', 'woocommerce-paypal-payments' ),
-				'description' => __(
-					'iDEAL is a payment method in the Netherlands that allows buyers to select their issuing bank from a list of options.',
-					'woocommerce-paypal-payments'
-				),
+				'title'       => $defaults[ IDealGateway::ID ]['title'],
+				'description' => $defaults[ IDealGateway::ID ]['method_description'],
 				'icon'        => 'payment-method-ideal',
 			),
 			array(
 				'id'          => MyBankGateway::ID,
-				'title'       => __( 'MyBank', 'woocommerce-paypal-payments' ),
-				'description' => __(
-					'A European online banking payment solution primarily used in Italy, enabling customers to make secure bank transfers during checkout. Transactions are processed in EUR.',
-					'woocommerce-paypal-payments'
-				),
+				'title'       => $defaults[ MyBankGateway::ID ]['title'],
+				'description' => $defaults[ MyBankGateway::ID ]['method_description'],
 				'icon'        => 'payment-method-mybank',
 			),
 			array(
 				'id'          => P24Gateway::ID,
-				'title'       => __( 'Przelewy24', 'woocommerce-paypal-payments' ),
-				'description' => __(
-					'A popular online payment gateway in Poland, offering various payment options for Polish customers. Transactions can be processed in PLN or EUR.',
-					'woocommerce-paypal-payments'
-				),
+				'title'       => $defaults[ P24Gateway::ID ]['title'],
+				'description' => $defaults[ P24Gateway::ID ]['method_description'],
 				'icon'        => 'payment-method-przelewy24',
 			),
 			array(
 				'id'          => TrustlyGateway::ID,
-				'title'       => __( 'Trustly', 'woocommerce-paypal-payments' ),
-				'description' => __(
-					'A European payment method that allows buyers to make payments directly from their bank accounts, suitable for customers across multiple European countries. Supported currencies include EUR, DKK, SEK, GBP, and NOK.',
-					'woocommerce-paypal-payments'
-				),
+				'title'       => $defaults[ TrustlyGateway::ID ]['title'],
+				'description' => $defaults[ TrustlyGateway::ID ]['method_description'],
 				'icon'        => 'payment-method-trustly',
 			),
 			array(
 				'id'          => MultibancoGateway::ID,
-				'title'       => __( 'Multibanco', 'woocommerce-paypal-payments' ),
-				'description' => __(
-					'An online payment method in Portugal, enabling Portuguese buyers to make secure payments directly through their bank accounts. Transactions are processed in EUR.',
-					'woocommerce-paypal-payments'
-				),
+				'title'       => $defaults[ MultibancoGateway::ID ]['title'],
+				'description' => $defaults[ MultibancoGateway::ID ]['method_description'],
 				'icon'        => 'payment-method-multibanco',
 			),
 			array(
-				'id'          => PayUponInvoiceGateway::ID,
-				'title'       => __( 'Pay upon Invoice', 'woocommerce-paypal-payments' ),
-				'description' => __(
-					'Pay upon Invoice is an invoice payment method in Germany. It is a local buy now, pay later payment method that allows the buyer to place an order, receive the goods, try them, verify they are in good order, and then pay the invoice within 30 days.',
-					'woocommerce-paypal-payments'
+				'id'              => PayUponInvoiceGateway::ID,
+				'title'           => $defaults[ PayUponInvoiceGateway::ID ]['title'],
+				'description'     => $defaults[ PayUponInvoiceGateway::ID ]['method_description'],
+				'icon'            => 'payment-method-ratepay',
+				'fields'          => array(
+					'puiBrandName'                   => array(
+						'type'     => 'text',
+						'default'  => $this->settings->get_pui_brand_name(),
+						'label'    => __( 'Brand name', 'woocommerce-paypal-payments' ),
+						'required' => true,
+					),
+					'puiLogoUrl'                     => array(
+						'type'     => 'text',
+						'default'  => $this->settings->get_pui_logo_url(),
+						'label'    => __( 'Logo URL', 'woocommerce-paypal-payments' ),
+						'required' => true,
+					),
+					'puiCustomerServiceInstructions' => array(
+						'type'     => 'text',
+						'default'  => $this->settings->get_pui_customer_service_instructions(),
+						'label'    => __( 'Customer service instructions', 'woocommerce-paypal-payments' ),
+						'required' => true,
+					),
 				),
-				'icon'        => '',
+				'warningMessages' => $warnings[ PayUponInvoiceGateway::ID ] ?? array(),
+				'warningSeverity' => 'error',
 			),
 			array(
 				'id'          => OXXO::ID,
-				'title'       => __( 'OXXO', 'woocommerce-paypal-payments' ),
-				'description' => __(
-					'OXXO is a Mexican chain of convenience stores. *Get PayPal account permission to use OXXO payment functionality by contacting us at (+52) 800–925–0304',
-					'woocommerce-paypal-payments'
-				),
+				'title'       => $defaults[ OXXO::ID ]['title'],
+				'description' => $defaults[ OXXO::ID ]['method_description'],
 				'icon'        => 'payment-method-oxxo',
 			),
 		);
 
 		return apply_filters( 'woocommerce_paypal_payments_gateway_group_apm', $group );
+	}
+
+	/**
+	 * Returns warning definitions keyed by gateway ID.
+	 *
+	 * Each gateway can have multiple warnings. Each warning can be either:
+	 * - A plain string: always displayed.
+	 * - An object with { message, visibleWhen }: displayed only when the
+	 *   visibleWhen condition evaluates to true.
+	 *
+	 * @return array Warning definitions keyed by gateway ID.
+	 */
+	private function get_warning_messages(): array {
+		$warnings = array();
+
+		// Pay upon Invoice warnings.
+		$warnings[ PayUponInvoiceGateway::ID ] = array(
+			'pui_required_fields' => array(
+				/* translators: %s: comma-separated list of missing field names. */
+				'message'     => __(
+					'Pay upon Invoice requires %s to be configured. Click the settings icon to configure.',
+					'woocommerce-paypal-payments'
+				),
+				'visibleWhen' => array(
+					'store'     => 'payment',
+					'condition' => 'any_empty',
+					'fields'    => array(
+						'puiBrandName'                   => __( 'Brand name', 'woocommerce-paypal-payments' ),
+						'puiLogoUrl'                     => __( 'Logo URL', 'woocommerce-paypal-payments' ),
+						'puiCustomerServiceInstructions' => __( 'Customer service instructions', 'woocommerce-paypal-payments' ),
+					),
+				),
+			),
+		);
+
+		// Fastlane (Axo) conflict warnings.
+		$warnings[ AxoGateway::ID ] = array_filter(
+			array(
+				'axo_checkout_config'      => $this->axo_checkout_config_notice,
+				'axo_incompatible_plugins' => $this->axo_incompatible_plugins_notice,
+			)
+		);
+
+		return $warnings;
 	}
 }

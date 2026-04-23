@@ -13,9 +13,10 @@ declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\WcGateway\Helper;
 
-use WooCommerce\PayPalCommerce\Settings\Data\GeneralSettings;
-use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
-use WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException;
+use WooCommerce\PayPalCommerce\Axo\Gateway\AxoGateway;
+use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
+use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
+use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\Axo\Helper\PropertiesDictionary;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\DccApplies;
 
@@ -24,8 +25,9 @@ use WooCommerce\PayPalCommerce\ApiClient\Helper\DccApplies;
  * configuration.
  *
  * Terminology:
- * - DCC or ACDC refers to the new "Advanced Card Processing" integration.
- * - BCDC is the older "Credit and Debit Cards" integration.
+ * - DCC or ACDC are synonymous referring to the "expanded integration"
+ *       The credit card form is embedded inline on the checkout page.
+ * - BCDC is the "Branded" card payment integration (branded button that opens a modal)
  * - AXO is Fastlane, which is an improved UI for ACDC.
  *
  * Technical implementation via the JS SDK:
@@ -49,12 +51,7 @@ class CardPaymentsConfiguration {
 	 */
 	private ConnectionState $connection_state;
 
-	/**
-	 * The plugin settings instance.
-	 *
-	 * @var Settings
-	 */
-	private Settings $settings;
+	private SettingsProvider $settings_provider;
 
 	/**
 	 * Helper to determine availability of DCC features.
@@ -135,27 +132,18 @@ class CardPaymentsConfiguration {
 	 */
 	private bool $hide_fastlane_watermark = false;
 
-	/**
-	 * Initializes the gateway details based on the provided Settings instance.
-	 *
-	 * @param ConnectionState  $connection_state Connection state instance.
-	 * @param Settings         $settings         Plugin settings instance.
-	 * @param DccApplies       $dcc_applies      DCC eligibility helper.
-	 * @param DCCProductStatus $dcc_status        Manages the Seller status.
-	 * @param string           $store_country The shop's country code.
-	 */
 	public function __construct(
 		ConnectionState $connection_state,
-		Settings $settings,
+		SettingsProvider $settings_provider,
 		DccApplies $dcc_applies,
 		DCCProductStatus $dcc_status,
 		string $store_country
 	) {
-		$this->connection_state = $connection_state;
-		$this->settings         = $settings;
-		$this->dcc_applies      = $dcc_applies;
-		$this->dcc_status       = $dcc_status;
-		$this->store_country    = $store_country;
+		$this->connection_state  = $connection_state;
+		$this->settings_provider = $settings_provider;
+		$this->dcc_applies       = $dcc_applies;
+		$this->dcc_status        = $dcc_status;
+		$this->store_country     = $store_country;
 
 		$this->is_resolved = false;
 	}
@@ -166,7 +154,7 @@ class CardPaymentsConfiguration {
 	 *
 	 * @return void
 	 */
-	public function refresh() : void {
+	public function refresh(): void {
 		$this->is_resolved = false;
 	}
 
@@ -175,7 +163,7 @@ class CardPaymentsConfiguration {
 	 *
 	 * @return void
 	 */
-	private function ensure_resolved_values() : void {
+	private function ensure_resolved_values(): void {
 		if ( $this->is_resolved ) {
 			return;
 		}
@@ -188,9 +176,8 @@ class CardPaymentsConfiguration {
 	/**
 	 * Refreshes the internal gateway configuration based on the current settings.
 	 */
-	private function resolve() : void {
+	private function resolve(): void {
 		$show_on_card_options = array_keys( PropertiesDictionary::cardholder_name_options() );
-		$show_on_card_value   = null;
 
 		// Reset all flags, disable everything.
 		$this->use_acdc                = false;
@@ -217,37 +204,23 @@ class CardPaymentsConfiguration {
 			return;
 		}
 
-		try {
-			$is_paypal_enabled = filter_var( $this->settings->get( 'enabled' ), FILTER_VALIDATE_BOOLEAN );
+		$is_paypal_enabled = $this->settings_provider->gateway_enabled( PayPalGateway::ID );
 
-			// When the core payment logic of the plugin is disabled, we cannot handle card payments.
-			if ( ! $is_paypal_enabled ) {
-				return;
-			}
-
-			$is_dcc_enabled     = filter_var( $this->settings->get( 'dcc_enabled' ), FILTER_VALIDATE_BOOLEAN );
-			$this->use_fastlane = filter_var( $this->settings->get( 'axo_enabled' ), FILTER_VALIDATE_BOOLEAN );
-
-			if ( $this->settings->has( 'dcc_gateway_title' ) ) {
-				$this->gateway_title = $this->settings->get( 'dcc_gateway_title' );
-			}
-			if ( $this->settings->has( 'dcc_gateway_description' ) ) {
-				$this->gateway_description = $this->settings->get( 'dcc_gateway_description' );
-			}
-
-			if ( $this->settings->has( 'dcc_name_on_card' ) ) {
-				$show_on_card_value = $this->settings->get( 'dcc_name_on_card' );
-			} elseif ( $this->settings->has( 'axo_name_on_card' ) ) {
-				// Legacy. The AXO gateway setting was replaced by the DCC setting.
-				// Remove this condition with the #legacy-ui.
-				$show_on_card_value = $this->settings->get( 'axo_name_on_card' );
-			}
-			if ( in_array( $show_on_card_value, $show_on_card_options, true ) ) {
-				$this->show_name_on_card = $show_on_card_value;
-			}
-		} catch ( NotFoundException $exception ) {
-			// A setting is missing in the DB, disable card payments.
+		// When the core payment logic of the plugin is disabled, we cannot handle card payments.
+		if ( ! $is_paypal_enabled ) {
 			return;
+		}
+
+		$is_dcc_enabled     = $this->settings_provider->is_method_enabled( CreditCardGateway::ID );
+		$this->use_fastlane = $this->settings_provider->is_method_enabled( AxoGateway::ID );
+
+		$this->gateway_title       = $this->settings_provider->acdc_gateway_title();
+		$this->gateway_description = $this->settings_provider->acdc_gateway_description();
+
+		$show_on_card_value = $this->settings_provider->acdc_show_name_on_card();
+
+		if ( in_array( $show_on_card_value, $show_on_card_options, true ) ) {
+			$this->show_name_on_card = $show_on_card_value;
 		}
 
 		/**
@@ -285,7 +258,7 @@ class CardPaymentsConfiguration {
 	 *
 	 * @return bool
 	 */
-	public function use_acdc() : bool {
+	public function use_acdc(): bool {
 		$this->ensure_resolved_values();
 
 		return $this->use_acdc;
@@ -299,7 +272,7 @@ class CardPaymentsConfiguration {
 	 * @internal Use "is_acdc_enabled()" or "is_bcdc_enabled()" instead.
 	 * @return bool
 	 */
-	public function is_enabled() : bool {
+	public function is_enabled(): bool {
 		$this->ensure_resolved_values();
 
 		return $this->is_enabled;
@@ -317,7 +290,7 @@ class CardPaymentsConfiguration {
 	 *
 	 * @return bool
 	 */
-	public function is_acdc_enabled() : bool {
+	public function is_acdc_enabled(): bool {
 		return $this->is_enabled() && $this->use_acdc();
 	}
 
@@ -329,14 +302,15 @@ class CardPaymentsConfiguration {
 	 *
 	 * @return bool
 	 */
-	public function is_bcdc_enabled() : bool {
-		if ( 'MX' === $this->store_country ) {
+	public function is_bcdc_enabled(): bool {
+		if ( 'MX' === $this->store_country || ! $this->use_acdc() ) {
 			$bcdc_setting = get_option( 'woocommerce_ppcp-card-button-gateway_settings' );
 			$enabled      = $bcdc_setting['enabled'] ?? '';
 
 			return 'yes' === $enabled;
 		}
 
+		/** @phpstan-ignore booleanNot.alwaysFalse,booleanAnd.alwaysFalse */
 		return $this->is_enabled() && ! $this->use_acdc();
 	}
 
@@ -348,7 +322,7 @@ class CardPaymentsConfiguration {
 	 *
 	 * @return bool
 	 */
-	public function use_fastlane() : bool {
+	public function use_fastlane(): bool {
 		return $this->is_acdc_enabled() && $this->use_fastlane;
 	}
 
@@ -359,13 +333,13 @@ class CardPaymentsConfiguration {
 	 *
 	 * @return string Display title of the gateway.
 	 */
-	public function gateway_title( string $fallback = '' ) : string {
+	public function gateway_title( string $fallback = '' ): string {
 		$this->ensure_resolved_values();
 		if ( $this->gateway_title ) {
 			return $this->gateway_title;
 		}
 
-		return $fallback ?: __( 'Advanced Card Processing', 'woocommerce-paypal-payments' );
+		return $fallback ?: __( 'Debit & Credit Cards', 'woocommerce-paypal-payments' );
 	}
 
 	/**
@@ -375,7 +349,7 @@ class CardPaymentsConfiguration {
 	 *
 	 * @return string Display description of the gateway.
 	 */
-	public function gateway_description( string $fallback = '' ) : string {
+	public function gateway_description( string $fallback = '' ): string {
 		$this->ensure_resolved_values();
 		if ( $this->gateway_description ) {
 			return $this->gateway_description;
@@ -395,7 +369,7 @@ class CardPaymentsConfiguration {
 	 *
 	 * @return string ['yes'|'no']
 	 */
-	public function show_name_on_card() : string {
+	public function show_name_on_card(): string {
 		$this->ensure_resolved_values();
 
 		return $this->show_name_on_card;
@@ -409,7 +383,7 @@ class CardPaymentsConfiguration {
 	 *
 	 * @return bool True means, the default watermark is displayed to customers.
 	 */
-	public function show_fastlane_watermark() : bool {
+	public function show_fastlane_watermark(): bool {
 		$this->ensure_resolved_values();
 
 		return ! $this->hide_fastlane_watermark;

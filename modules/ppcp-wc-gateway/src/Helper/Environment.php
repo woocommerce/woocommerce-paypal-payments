@@ -46,7 +46,7 @@ class Environment {
 	 * @param bool $is_sandbox Whether this instance represents a sandbox environment.
 	 * @return string The environment name.
 	 */
-	private function prepare_environment_name( bool $is_sandbox ) : string {
+	private function prepare_environment_name( bool $is_sandbox ): string {
 		if ( $is_sandbox ) {
 			return self::SANDBOX;
 		}
@@ -59,7 +59,7 @@ class Environment {
 	 *
 	 * @param bool $is_sandbox Whether this instance represents a sandbox environment.
 	 */
-	public function set_environment( bool $is_sandbox ) : void {
+	public function set_environment( bool $is_sandbox ): void {
 		$new_environment = $this->prepare_environment_name( $is_sandbox );
 
 		if ( $new_environment !== $this->environment_name ) {
@@ -84,7 +84,7 @@ class Environment {
 	 *
 	 * @return string
 	 */
-	public function current_environment() : string {
+	public function current_environment(): string {
 		return $this->environment_name;
 	}
 
@@ -98,7 +98,7 @@ class Environment {
 	 *
 	 * @return bool
 	 */
-	public function current_environment_is( string $environment ) : bool {
+	public function current_environment_is( string $environment ): bool {
 		return $this->current_environment() === $environment;
 	}
 
@@ -107,7 +107,7 @@ class Environment {
 	 *
 	 * @return bool
 	 */
-	public function is_sandbox() : bool {
+	public function is_sandbox(): bool {
 		return $this->current_environment() === self::SANDBOX;
 	}
 
@@ -116,7 +116,7 @@ class Environment {
 	 *
 	 * @return bool
 	 */
-	public function is_production() : bool {
+	public function is_production(): bool {
 		return $this->current_environment() === self::PRODUCTION;
 	}
 }

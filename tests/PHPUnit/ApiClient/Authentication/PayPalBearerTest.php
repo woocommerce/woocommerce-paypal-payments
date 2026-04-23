@@ -8,6 +8,8 @@ use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\Cache;
 use Psr\Log\LoggerInterface;
 use Mockery;
+use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
+use WooCommerce\PayPalCommerce\Settings\DTO\MerchantConnectionDTO;
 use WooCommerce\PayPalCommerce\TestCase;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 use function Brain\Monkey\Functions\expect;
@@ -30,9 +32,13 @@ class PayPalBearerTest extends TestCase
         $secret = 'secret';
         $logger = Mockery::mock(LoggerInterface::class);
         $logger->shouldReceive('debug');
-        $settings = Mockery::mock(Settings::class);
-        $settings->shouldReceive('has')->andReturn(true);
-        $settings->shouldReceive('get')->andReturn('');
+        $settings = Mockery::mock(SettingsProvider::class);
+        $settings->shouldReceive('merchant_data')->andReturn(new MerchantConnectionDTO(
+			true,
+	        'key',
+	        'secret',
+	        '123'
+        ));
         $headers = Mockery::mock(Requests_Utility_CaseInsensitiveDictionary::class);
         $headers->shouldReceive('getAll');
 
@@ -85,9 +91,13 @@ class PayPalBearerTest extends TestCase
         $secret = 'secret';
         $logger = Mockery::mock(LoggerInterface::class);
         $logger->shouldReceive('debug');
-        $settings = Mockery::mock(Settings::class);
-        $settings->shouldReceive('has')->andReturn(true);
-        $settings->shouldReceive('get')->andReturn('');
+	    $settings = Mockery::mock(SettingsProvider::class);
+	    $settings->shouldReceive('merchant_data')->andReturn(new MerchantConnectionDTO(
+		    true,
+		    'key',
+		    'secret',
+		    '123'
+	    ));
 		$headers = Mockery::mock(Requests_Utility_CaseInsensitiveDictionary::class);
 		$headers->shouldReceive('getAll');
 
@@ -137,9 +147,13 @@ class PayPalBearerTest extends TestCase
         $secret = 'secret';
         $logger = Mockery::mock(LoggerInterface::class);
         $logger->shouldNotReceive('warning');
-        $settings = Mockery::mock(Settings::class);
-        $settings->shouldReceive('has')->andReturn(true);
-        $settings->shouldReceive('get')->andReturn('');
+	    $settings = Mockery::mock(SettingsProvider::class);
+	    $settings->shouldReceive('merchant_data')->andReturn(new MerchantConnectionDTO(
+		    true,
+		    'key',
+		    'secret',
+		    '123'
+	    ));
 
         $bearer = new PayPalBearer($cache, $host, $key, $secret, $logger, $settings);
 
@@ -161,9 +175,13 @@ class PayPalBearerTest extends TestCase
         $logger = Mockery::mock(LoggerInterface::class);
         $logger->shouldReceive('warning');
         $logger->shouldReceive('debug');
-        $settings = Mockery::mock(Settings::class);
-        $settings->shouldReceive('has')->andReturn(true);
-        $settings->shouldReceive('get')->andReturn('');
+	    $settings = Mockery::mock(SettingsProvider::class);
+	    $settings->shouldReceive('merchant_data')->andReturn(new MerchantConnectionDTO(
+		    true,
+		    'key',
+		    'secret',
+		    '123'
+	    ));
 		$headers = Mockery::mock(Requests_Utility_CaseInsensitiveDictionary::class);
 		$headers->shouldReceive('getAll');
 
@@ -211,9 +229,13 @@ class PayPalBearerTest extends TestCase
         $logger = Mockery::mock(LoggerInterface::class);
         $logger->shouldReceive('warning');
         $logger->shouldReceive('debug');
-        $settings = Mockery::mock(Settings::class);
-        $settings->shouldReceive('has')->andReturn(true);
-        $settings->shouldReceive('get')->andReturn('');
+	    $settings = Mockery::mock(SettingsProvider::class);
+	    $settings->shouldReceive('merchant_data')->andReturn(new MerchantConnectionDTO(
+		    true,
+		    'key',
+		    'secret',
+		    '123'
+	    ));
 		$headers = Mockery::mock(Requests_Utility_CaseInsensitiveDictionary::class);
 		$headers->shouldReceive('getAll');
 

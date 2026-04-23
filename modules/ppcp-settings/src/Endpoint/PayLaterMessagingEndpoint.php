@@ -11,7 +11,7 @@ namespace WooCommerce\PayPalCommerce\Settings\Endpoint;
 
 use WooCommerce\PayPalCommerce\PayLaterConfigurator\Endpoint\SaveConfig;
 use WooCommerce\PayPalCommerce\PayLaterConfigurator\Factory\ConfigFactory;
-use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
+use WooCommerce\PayPalCommerce\Settings\Data\PayLaterMessagingSettings;
 use WP_REST_Request;
 use WP_REST_Response;
 use WP_REST_Server;
@@ -33,9 +33,9 @@ class PayLaterMessagingEndpoint extends RestEndpoint {
 	/**
 	 * The settings.
 	 *
-	 * @var Settings
+	 * @var PayLaterMessagingSettings
 	 */
-	protected $settings;
+	protected PayLaterMessagingSettings $settings;
 
 	/**
 	 * Save config handler.
@@ -47,10 +47,10 @@ class PayLaterMessagingEndpoint extends RestEndpoint {
 	/**
 	 * PayLaterMessagingEndpoint constructor.
 	 *
-	 * @param Settings   $settings The settings.
-	 * @param SaveConfig $save_config Save config handler.
+	 * @param PayLaterMessagingSettings $settings The settings.
+	 * @param SaveConfig                $save_config Save config handler.
 	 */
-	public function __construct( Settings $settings, SaveConfig $save_config ) {
+	public function __construct( PayLaterMessagingSettings $settings, SaveConfig $save_config ) {
 		$this->settings    = $settings;
 		$this->save_config = $save_config;
 	}
@@ -58,7 +58,7 @@ class PayLaterMessagingEndpoint extends RestEndpoint {
 	/**
 	 * Configure REST API routes.
 	 */
-	public function register_routes() : void {
+	public function register_routes(): void {
 		/**
 		 * GET wc/v3/wc_paypal/pay_later_messaging
 		 */
@@ -91,7 +91,7 @@ class PayLaterMessagingEndpoint extends RestEndpoint {
 	 *
 	 * @return WP_REST_Response The current payment methods details.
 	 */
-	public function get_details() : WP_REST_Response {
+	public function get_details(): WP_REST_Response {
 		return $this->return_success( ( new ConfigFactory() )->from_settings( $this->settings ) );
 	}
 
@@ -102,7 +102,7 @@ class PayLaterMessagingEndpoint extends RestEndpoint {
 	 *
 	 * @return WP_REST_Response The updated Pay Later Messaging configuration details.
 	 */
-	public function update_details( WP_REST_Request $request ) : WP_REST_Response {
+	public function update_details( WP_REST_Request $request ): WP_REST_Response {
 		$this->save_config->save_config( $request->get_json_params() );
 
 		return $this->get_details();

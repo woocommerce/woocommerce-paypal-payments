@@ -128,6 +128,29 @@ class SubscriptionStatus {
 	}
 
 	/**
+	 * Get status by subscription ID.
+	 *
+	 * @param string $subscription_id Subscription ID to get status for.
+	 * @return string Current subscription status.
+	 *
+	 * @throws RuntimeException If the request fails.
+	 */
+	public function get_status( string $subscription_id ): string {
+		static $subscription_status = null;
+
+		if ( null === $subscription_status ) {
+			$subscription = $this->subscriptions_endpoint->subscription( $subscription_id );
+
+			if ( ! isset( $subscription->status ) ) {
+				throw new RuntimeException( 'Status not found in subscription data' );
+			}
+			$subscription_status = (string) $subscription->status;
+		}
+
+		return $subscription_status;
+	}
+
+	/**
 	 * Get error from exception.
 	 *
 	 * @param RuntimeException $exception The exception.
@@ -135,7 +158,7 @@ class SubscriptionStatus {
 	 */
 	private function get_error( RuntimeException $exception ): string {
 		$error = $exception->getMessage();
-		if ( is_a( $exception, PayPalApiException::class ) ) {
+		if ( $exception instanceof PayPalApiException ) {
 			$error = $exception->get_details( $error );
 		}
 

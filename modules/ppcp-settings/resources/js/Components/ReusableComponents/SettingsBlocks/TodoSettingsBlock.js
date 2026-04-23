@@ -1,7 +1,7 @@
-import { selectTab, TAB_IDS } from '../../../utils/tabSelector';
+import { selectTab, TAB_IDS } from '@ppcp-settings/utils/tabSelector';
 import { useEffect, useState } from '@wordpress/element';
 import { useDispatch, useSelect } from '@wordpress/data';
-import { STORE_NAME as TODOS_STORE_NAME } from '../../../data/todos';
+import { STORE_NAME as TODOS_STORE_NAME } from '@ppcp-settings/data/todos';
 
 const TodoSettingsBlock = ( {
 	todosData,

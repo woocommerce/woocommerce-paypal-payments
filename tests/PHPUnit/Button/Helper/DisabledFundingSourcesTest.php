@@ -4,23 +4,26 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\Button\Helper;
 
 use Mockery;
-use WC_Payment_Gateways;
-use WooCommerce;
+use WooCommerce\PayPalCommerce\Settings\DTO\LocationStylingDTO;
 use WooCommerce\PayPalCommerce\TestCase;
-use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
+use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\CardPaymentsConfiguration;
 use function Brain\Monkey\Functions\when;
 
 class DisabledFundingSourcesTest extends TestCase
 {
-	private $settings;
+	private $settings_provider;
 	private $dcc_configuration;
 
 	public function setUp(): void
 	{
 		parent::setUp();
 
-		$this->settings = Mockery::mock(Settings::class);
+		$this->settings_provider = Mockery::mock(SettingsProvider::class);
+		$this->settings_provider->shouldReceive('venmo_enabled')->andReturn(true)->byDefault();
+		$this->settings_provider->shouldReceive('button_styling')
+			->andReturn(new LocationStylingDTO('', true, ['venmo']))->byDefault();
+
 		$this->dcc_configuration = Mockery::mock(CardPaymentsConfiguration::class);
 	}
 
@@ -32,10 +35,8 @@ class DisabledFundingSourcesTest extends TestCase
 	{
 		$this->dcc_configuration->shouldReceive('is_enabled')->andReturn(true);
 		$this->dcc_configuration->shouldReceive('use_acdc')->andReturn(true);
-		$sut = new DisabledFundingSources($this->settings, [], $this->dcc_configuration, 'US');
+		$sut = new DisabledFundingSources($this->settings_provider, [], $this->dcc_configuration, 'US');
 
-		$this->setExpectations();
-		$this->setWcPaymentGateways();
 		$this->setWooCommerceFunctionMocks();
 
 		when('is_checkout')->justReturn(true);
@@ -51,10 +52,8 @@ class DisabledFundingSourcesTest extends TestCase
 	{
 		$this->dcc_configuration->shouldReceive('is_enabled')->andReturn(true);
 		$this->dcc_configuration->shouldReceive('use_acdc')->andReturn(true);
-		$sut = new DisabledFundingSources($this->settings, [], $this->dcc_configuration, 'US');
+		$sut = new DisabledFundingSources($this->settings_provider, [], $this->dcc_configuration, 'US');
 
-		$this->setExpectations();
-		$this->setWcPaymentGateways();
 		$this->setWooCommerceFunctionMocks();
 
 		when('is_checkout')->justReturn(false);
@@ -67,7 +66,7 @@ class DisabledFundingSourcesTest extends TestCase
 		$this->dcc_configuration->shouldReceive('is_enabled')->andReturn(true);
 		$this->dcc_configuration->shouldReceive('use_acdc')->andReturn(true);
 		$sut = new DisabledFundingSources(
-			$this->settings,
+			$this->settings_provider,
 			[
 				'card' => 'Credit or debit cards',
 				'paypal' => 'PayPal',
@@ -77,8 +76,6 @@ class DisabledFundingSourcesTest extends TestCase
 			'US'
 		);
 
-		$this->setExpectations();
-		$this->setWcPaymentGateways();
 		$this->setWooCommerceFunctionMocks();
 
 		when('is_checkout')->justReturn(true);
@@ -92,18 +89,15 @@ class DisabledFundingSourcesTest extends TestCase
 	public function test_mexico_bcdc_enabled_does_not_disable_card_funding()
 	{
 		$this->dcc_configuration->shouldReceive('is_enabled')->andReturn(true);
-		$this->dcc_configuration->shouldReceive('use_acdc')->andReturn(false); // Changed to false
+		$this->dcc_configuration->shouldReceive('use_acdc')->andReturn(false);
 		$this->dcc_configuration->shouldReceive('is_bcdc_enabled')->andReturn(true);
 
-		$sut = new DisabledFundingSources($this->settings, [], $this->dcc_configuration, 'MX');
+		$sut = new DisabledFundingSources($this->settings_provider, [], $this->dcc_configuration, 'MX');
 
-		$this->setExpectations();
-		$this->setWcPaymentGateways();
 		$this->setWooCommerceFunctionMocks();
 
 		when('is_checkout')->justReturn(true);
 
-		// For Mexico with BCDC enabled, card should not be in disabled funding sources
 		$this->assertEquals([], $sut->sources('checkout-block'));
 	}
 
@@ -113,18 +107,15 @@ class DisabledFundingSourcesTest extends TestCase
 	public function test_mexico_bcdc_disabled_disables_card_funding()
 	{
 		$this->dcc_configuration->shouldReceive('is_enabled')->andReturn(true);
-		$this->dcc_configuration->shouldReceive('use_acdc')->andReturn(true); // This should cause card to be disabled
+		$this->dcc_configuration->shouldReceive('use_acdc')->andReturn(true);
 		$this->dcc_configuration->shouldReceive('is_bcdc_enabled')->andReturn(false);
 
-		$sut = new DisabledFundingSources($this->settings, [], $this->dcc_configuration, 'MX');
+		$sut = new DisabledFundingSources($this->settings_provider, [], $this->dcc_configuration, 'MX');
 
-		$this->setExpectations();
-		$this->setWcPaymentGateways();
 		$this->setWooCommerceFunctionMocks();
 
 		when('is_checkout')->justReturn(true);
 
-		// For Mexico with BCDC disabled, card should be in disabled funding sources
 		$this->assertEquals(['card'], $sut->sources('checkout-block'));
 	}
 
@@ -135,50 +126,69 @@ class DisabledFundingSourcesTest extends TestCase
 	{
 		$this->dcc_configuration->shouldReceive('is_enabled')->andReturn(true);
 		$this->dcc_configuration->shouldReceive('use_acdc')->andReturn(true);
-		// BCDC method should not be called for non-Mexico countries
 
-		$sut = new DisabledFundingSources($this->settings, [], $this->dcc_configuration, 'CA');
+		$sut = new DisabledFundingSources($this->settings_provider, [], $this->dcc_configuration, 'CA');
 
-		$this->setExpectations();
-		$this->setWcPaymentGateways();
 		$this->setWooCommerceFunctionMocks();
 
 		when('is_checkout')->justReturn(true);
 
-		// For non-Mexico countries, existing logic applies
 		$this->assertEquals(['card'], $sut->sources('checkout-block'));
 	}
 
-	private function setExpectations(
-		array $disabledFundings = [],
-		bool  $dccEnambled = true
-	): void
+	/**
+	 * Test venmo is disabled when venmo_enabled setting is false
+	 */
+	public function test_venmo_disabled_when_setting_is_false()
 	{
-		$this->settings->shouldReceive('has')
-			->with('disable_funding')
-			->andReturn(true);
+		$this->settings_provider = Mockery::mock(SettingsProvider::class);
+		$this->settings_provider->shouldReceive('venmo_enabled')->andReturn(false);
+		$this->settings_provider->shouldReceive('button_styling')
+			->andReturn(new LocationStylingDTO('', true, ['venmo']));
 
-		$this->settings->shouldReceive('get')
-			->with('disable_funding')
-			->andReturn($disabledFundings);
+		$this->dcc_configuration->shouldReceive('is_enabled')->andReturn(true);
+		$this->dcc_configuration->shouldReceive('use_acdc')->andReturn(true);
 
-		$this->settings->shouldReceive('has')
-			->with('dcc_enabled')
-			->andReturn(true);
+		$sut = new DisabledFundingSources($this->settings_provider, [], $this->dcc_configuration, 'US');
 
-		$this->settings->shouldReceive('get')
-			->with('dcc_enabled')
-			->andReturn($dccEnambled);
+		$this->setWooCommerceFunctionMocks();
+
+		when('is_checkout')->justReturn(true);
+
+		$this->assertContains('venmo', $sut->sources('checkout-block'));
 	}
 
-	private function setWcPaymentGateways(array $paymentGateways = []): void
+	public function test_venmo_disabled_for_location_when_not_in_styling_methods()
 	{
-		$woocommerce = Mockery::mock(WooCommerce::class);
-		$payment_gateways = Mockery::mock(WC_Payment_Gateways::class);
-		when('WC')->justReturn($woocommerce);
-		$woocommerce->payment_gateways = $payment_gateways;
-		$payment_gateways->shouldReceive('get_available_payment_gateways')
-			->andReturn($paymentGateways);
+		$this->settings_provider->shouldReceive('button_styling')
+			->andReturn(new LocationStylingDTO('', true, []));
+
+		$this->dcc_configuration->shouldReceive('is_enabled')->andReturn(true);
+		$this->dcc_configuration->shouldReceive('use_acdc')->andReturn(true);
+
+		$sut = new DisabledFundingSources($this->settings_provider, [], $this->dcc_configuration, 'US');
+
+		$this->setWooCommerceFunctionMocks();
+		when('is_checkout')->justReturn(true);
+
+		$this->assertContains('venmo', $sut->sources('checkout-block'));
+	}
+
+	/**
+	 * Test venmo is not disabled when venmo_enabled setting is true
+	 */
+	public function test_venmo_enabled_when_setting_is_true()
+	{
+		$this->dcc_configuration->shouldReceive('is_enabled')->andReturn(true);
+		$this->dcc_configuration->shouldReceive('use_acdc')->andReturn(true);
+
+		$sut = new DisabledFundingSources($this->settings_provider, [], $this->dcc_configuration, 'US');
+
+		$this->setWooCommerceFunctionMocks();
+
+		when('is_checkout')->justReturn(true);
+
+		$this->assertNotContains('venmo', $sut->sources('checkout-block'));
 	}
 
 	/**

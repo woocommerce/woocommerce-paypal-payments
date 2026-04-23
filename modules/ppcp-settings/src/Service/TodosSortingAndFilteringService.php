@@ -81,7 +81,7 @@ class TodosSortingAndFilteringService {
 	public function sort_todos_by_priority( array $todos ): array {
 		usort(
 			$todos,
-			function( $a, $b ) {
+			function ( $a, $b ) {
 				$priority_a = $a['priority'] ?? 999;
 				$priority_b = $b['priority'] ?? 999;
 				return $priority_a <=> $priority_b;
@@ -104,14 +104,14 @@ class TodosSortingAndFilteringService {
 
 		$group_todos = array_filter(
 			$todos,
-			function( $todo ) use ( $group_ids ) {
+			function ( $todo ) use ( $group_ids ) {
 				return in_array( $todo['id'], $group_ids, true );
 			}
 		);
 
 		$other_todos = array_filter(
 			$todos,
-			function( $todo ) use ( $group_ids ) {
+			function ( $todo ) use ( $group_ids ) {
 				return ! in_array( $todo['id'], $group_ids, true );
 			}
 		);
@@ -127,7 +127,7 @@ class TodosSortingAndFilteringService {
 			$matching_todo = current(
 				array_filter(
 					$group_todos,
-					function( $todo ) use ( $todo_id ) {
+					function ( $todo ) use ( $todo_id ) {
 						return $todo['id'] === $todo_id;
 					}
 				)

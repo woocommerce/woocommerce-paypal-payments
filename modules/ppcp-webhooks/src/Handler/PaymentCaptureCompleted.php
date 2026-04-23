@@ -10,6 +10,7 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\Webhooks\Handler;
 
 use Exception;
+use WC_Order;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use Psr\Log\LoggerInterface;
@@ -22,7 +23,8 @@ use WP_REST_Response;
  */
 class PaymentCaptureCompleted implements RequestHandler {
 
-	use TransactionIdHandlingTrait, RequestHandlerTrait;
+	use TransactionIdHandlingTrait;
+	use RequestHandlerTrait;
 
 	/**
 	 * The logger.
@@ -95,7 +97,7 @@ class PaymentCaptureCompleted implements RequestHandler {
 		}
 
 		$wc_order = wc_get_order( $wc_order_id );
-		if ( ! is_a( $wc_order, \WC_Order::class ) ) {
+		if ( ! ( $wc_order instanceof WC_Order ) ) {
 			$message = sprintf( 'No order for webhook event %s was found.', $webhook_id );
 			return $this->failure_response( $message );
 		}

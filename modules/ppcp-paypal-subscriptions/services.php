@@ -9,6 +9,8 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\PayPalSubscriptions;
 
+use WooCommerce\PayPalCommerce\Assets\AssetGetter;
+use WooCommerce\PayPalCommerce\Assets\AssetGetterFactory;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 
 return array(
@@ -18,10 +20,9 @@ return array(
 			$container->get( 'api.endpoint.billing-plans' )
 		);
 	},
-	'paypal-subscriptions.api-handler'              => static function( ContainerInterface $container ): SubscriptionsApiHandler {
+	'paypal-subscriptions.api-handler'              => static function ( ContainerInterface $container ): SubscriptionsApiHandler {
 		return new SubscriptionsApiHandler(
 			$container->get( 'api.endpoint.catalog-products' ),
-			$container->get( 'api.factory.product' ),
 			$container->get( 'api.endpoint.billing-plans' ),
 			$container->get( 'api.factory.billing-cycle' ),
 			$container->get( 'api.factory.payment-preferences' ),
@@ -29,16 +30,11 @@ return array(
 			$container->get( 'woocommerce.logger.woocommerce' )
 		);
 	},
-	'paypal-subscriptions.module.url'               => static function ( ContainerInterface $container ): string {
-		/**
-		 * The path cannot be false.
-		 *
-		 * @psalm-suppress PossiblyFalseArgument
-		 */
-		return plugins_url(
-			'/modules/ppcp-paypal-subscriptions/',
-			dirname( realpath( __FILE__ ), 3 ) . '/woocommerce-paypal-payments.php'
-		);
+	'paypal-subscriptions.asset_getter'             => static function ( ContainerInterface $container ): AssetGetter {
+		$factory = $container->get( 'assets.asset_getter_factory' );
+		assert( $factory instanceof AssetGetterFactory );
+
+		return $factory->for_module( 'ppcp-paypal-subscriptions' );
 	},
 	'paypal-subscriptions.renewal-handler'          => static function ( ContainerInterface $container ): RenewalHandler {
 		return new RenewalHandler( $container->get( 'woocommerce.logger.woocommerce' ) );

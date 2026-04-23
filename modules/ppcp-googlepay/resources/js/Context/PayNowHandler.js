@@ -1,7 +1,7 @@
-import Spinner from '../../../../ppcp-button/resources/js/modules/Helper/Spinner';
+import Spinner from '@ppcp-button/Helper/Spinner';
 import BaseHandler from './BaseHandler';
-import CheckoutActionHandler from '../../../../ppcp-button/resources/js/modules/ActionHandler/CheckoutActionHandler';
-import TransactionInfo from '../Helper/TransactionInfo';
+import CheckoutActionHandler from '@ppcp-button/ActionHandler/CheckoutActionHandler';
+import TransactionInfo from '@ppcp-googlepay/Helper/TransactionInfo';
 
 class PayNowHandler extends BaseHandler {
 	validateContext() {

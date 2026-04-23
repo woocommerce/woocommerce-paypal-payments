@@ -351,17 +351,36 @@ class ApplePayDataObjectHttp {
 	 * @param array $data The data.
 	 */
 	protected function assign_data_object_values( array $data ): void {
+		$class_properties = array(
+			'nonce',
+			'simplified_contact',
+			'need_shipping',
+			'caller_page',
+			'product_id',
+			'product_quantity',
+			'product_variations',
+			'product_extra',
+			'product_booking',
+			'shipping_method',
+			'billing_contact',
+			'shipping_contact',
+		);
+
 		foreach ( $data as $key => $value ) {
-			// Null values may give origin to type errors. If necessary replace this condition with a specialized field filter.
 			if ( null === $value ) {
 				continue;
 			}
+
 			if ( $key === 'woocommerce-process-checkout-nonce' ) {
 				$key = 'nonce';
 			}
+
+			if ( ! in_array( $key, $class_properties, true ) ) {
+				continue;
+			}
+
 			$this->$key = $value;
 		}
-
 	}
 
 	/**
@@ -509,7 +528,7 @@ class ApplePayDataObjectHttp {
 	 * @param array $data The data.
 	 * @return void
 	 */
-	protected function update_simplified_contact( array $data ) : void {
+	protected function update_simplified_contact( array $data ): void {
 		$simplified_contact_info  = array_map( 'sanitize_text_field', $data );
 		$this->simplified_contact = $this->simplified_address(
 			$simplified_contact_info
@@ -727,7 +746,7 @@ class ApplePayDataObjectHttp {
 	 *
 	 * @return bool
 	 */
-	public function is_nonce_valid():bool {
+	public function is_nonce_valid(): bool {
 		$nonce = filter_input( INPUT_POST, 'woocommerce-process-checkout-nonce', FILTER_SANITIZE_SPECIAL_CHARS );
 		if ( ! $nonce ) {
 			return false;

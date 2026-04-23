@@ -41,7 +41,7 @@ class InstallationPathEnum {
 	 *
 	 * @return array List of all valid options.
 	 */
-	public static function get_valid_values() : array {
+	public static function get_valid_values(): array {
 		return array(
 			self::CORE_PROFILER,
 			self::PAYMENT_SETTINGS,
@@ -55,7 +55,7 @@ class InstallationPathEnum {
 	 * @param string $type The value to validate.
 	 * @return bool True, if the value is a valid installation path.
 	 */
-	public static function is_valid( string $type ) : bool {
+	public static function is_valid( string $type ): bool {
 		return in_array( $type, self::get_valid_values(), true );
 	}
 }

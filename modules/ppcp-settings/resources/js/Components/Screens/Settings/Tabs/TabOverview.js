@@ -1,10 +1,9 @@
 import { __ } from '@wordpress/i18n';
 import Todos from '../Components/Overview/Todos/Todos';
 import Features from '../Components/Overview/Features/Features';
-import Help from '../Components/Overview/Help/Help';
-import { TodosHooks, CommonHooks, FeaturesHooks } from '../../../../data';
-import SpinnerOverlay from '../../../ReusableComponents/SpinnerOverlay';
-import usePaymentGatewaySync from '../../../../hooks/usePaymentGatewaySync';
+import { TodosHooks, CommonHooks, FeaturesHooks } from '@ppcp-settings/data';
+import SpinnerOverlay from '@ppcp-settings/Components/ReusableComponents/SpinnerOverlay';
+import usePaymentGatewaySync from '@ppcp-settings/hooks/usePaymentGatewaySync';
 
 const TabOverview = () => {
 	const { isReady: areTodosReady } = TodosHooks.useTodos();
@@ -37,7 +36,6 @@ const TabOverview = () => {
 		>
 			<Todos />
 			<Features />
-			<Help />
 		</div>
 	);
 };

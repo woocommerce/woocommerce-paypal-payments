@@ -109,7 +109,7 @@ class SessionHandler {
 	 *
 	 * @return string
 	 */
-	public function bn_code() : string {
+	public function bn_code(): string {
 		$this->load_session();
 
 		return $this->bn_code;
@@ -120,7 +120,7 @@ class SessionHandler {
 	 *
 	 * @param string $bn_code The new BN Code.
 	 */
-	public function replace_bn_code( string $bn_code ) : void {
+	public function replace_bn_code( string $bn_code ): void {
 		$this->load_session();
 
 		$this->bn_code = $bn_code;
@@ -157,7 +157,7 @@ class SessionHandler {
 	 *
 	 * @return int
 	 */
-	public function insufficient_funding_tries() : int {
+	public function insufficient_funding_tries(): int {
 		$this->load_session();
 
 		return $this->insufficient_funding_tries;
@@ -169,7 +169,7 @@ class SessionHandler {
 	public function increment_insufficient_funding_tries(): void {
 		$this->load_session();
 
-		$this->insufficient_funding_tries++;
+		++$this->insufficient_funding_tries;
 
 		$this->store_session();
 	}
@@ -179,7 +179,7 @@ class SessionHandler {
 	 *
 	 * @return SessionHandler
 	 */
-	public function destroy_session_data() : SessionHandler {
+	public function destroy_session_data(): SessionHandler {
 		$this->order                      = null;
 		$this->bn_code                    = '';
 		$this->insufficient_funding_tries = 0;

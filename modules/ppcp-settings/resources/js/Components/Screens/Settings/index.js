@@ -1,4 +1,5 @@
-import Container from '../../ReusableComponents/Container';
+import Container from '@ppcp-settings/Components/ReusableComponents/Container';
+import HelpSection from '@ppcp-settings/Components/ReusableComponents/HelpSection';
 import SettingsNavigation from './Components/Navigation';
 import { getSettingsTabs } from './Tabs';
 
@@ -13,7 +14,10 @@ const SettingsScreen = ( { activePanel, setActivePanel } ) => {
 				activePanel={ activePanel }
 				setActivePanel={ setActivePanel }
 			/>
-			<Container page="settings">{ Component }</Container>
+			<Container page="settings">
+				{ Component }
+				<HelpSection />
+			</Container>
 		</>
 	);
 };

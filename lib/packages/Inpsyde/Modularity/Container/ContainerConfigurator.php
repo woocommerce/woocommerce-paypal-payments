@@ -1,52 +1,38 @@
 <?php
+
 declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Container;
 
-use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerExceptionInterface;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 
+/**
+ * @phpstan-import-type Service from \WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ServiceModule
+ * @phpstan-import-type ExtendingService from \WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExtendingModule
+ */
 class ContainerConfigurator
 {
-    /**
-     * @var array<string, callable(ContainerInterface $container):mixed>
-     */
-    private $services = [];
+    /** @var array<string, Service> */
+    private array $services = [];
+    /** @var array<string, bool> */
+    private array $factoryIds = [];
+    private ServiceExtensions $extensions;
+    private ?ContainerInterface $compiledContainer = null;
+    /** @var ContainerInterface[] */
+    private array $containers = [];
 
     /**
-     * @var array<string, bool>
-     */
-    private $factoryIds = [];
-
-    /**
-     * @var array<string, array<callable(mixed $service, ContainerInterface $container):mixed>>
-     */
-    private $extensions = [];
-
-    /**
-     * @var ContainerInterface[]
-     */
-    private $containers = [];
-
-    /**
-     * @var null|ContainerInterface
-     */
-    private $compiledContainer;
-
-    /**
-     * ContainerConfigurator constructor.
-     *
      * @param ContainerInterface[] $containers
      */
-    public function __construct(array $containers = [])
+    public function __construct(array $containers = [], ?ServiceExtensions $extensions = null)
     {
         array_map([$this, 'addContainer'], $containers);
+        $this->extensions = $extensions ?? new ServiceExtensions();
     }
 
     /**
-     * Allowing to add child containers.
-     *
      * @param ContainerInterface $container
+     * @return void
      */
     public function addContainer(ContainerInterface $container): void
     {
@@ -55,7 +41,7 @@ class ContainerConfigurator
 
     /**
      * @param string $id
-     * @param callable(ContainerInterface $container):mixed $factory
+     * @param Service $factory
      */
     public function addFactory(string $id, callable $factory): void
     {
@@ -67,8 +53,7 @@ class ContainerConfigurator
 
     /**
      * @param string $id
-     * @param callable(ContainerInterface $container):mixed $service
-     *
+     * @param Service $service
      * @return void
      */
     public function addService(string $id, callable $service): void
@@ -89,7 +74,6 @@ class ContainerConfigurator
 
     /**
      * @param string $id
-     *
      * @return bool
      */
     public function hasService(string $id): bool
@@ -109,37 +93,31 @@ class ContainerConfigurator
 
     /**
      * @param string $id
-     * @param callable(mixed $service, ContainerInterface $container):mixed $extender
-     *
+     * @param ExtendingService $extender
      * @return void
      */
     public function addExtension(string $id, callable $extender): void
     {
-        if (!isset($this->extensions[$id])) {
-            $this->extensions[$id] = [];
-        }
-
-        $this->extensions[$id][] = $extender;
+        $this->extensions->add($id, $extender);
     }
 
     /**
      * @param string $id
-     *
      * @return bool
      */
     public function hasExtension(string $id): bool
     {
-        return isset($this->extensions[$id]);
+        return $this->extensions->has($id);
     }
 
     /**
-     * Returns a read only version of this Container.
-     *
      * @return ContainerInterface
+     *
+     * @phpstan-assert ContainerInterface $this->compiledContainer
      */
     public function createReadOnlyContainer(): ContainerInterface
     {
-        if (!$this->compiledContainer) {
+        if ($this->compiledContainer === null) {
             $this->compiledContainer = new ReadOnlyContainer(
                 $this->services,
                 $this->factoryIds,

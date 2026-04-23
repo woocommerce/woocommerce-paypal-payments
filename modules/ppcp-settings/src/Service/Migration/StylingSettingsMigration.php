@@ -14,7 +14,6 @@ use WooCommerce\PayPalCommerce\Googlepay\GooglePayGateway;
 use WooCommerce\PayPalCommerce\Settings\Data\StylingSettings;
 use WooCommerce\PayPalCommerce\Settings\DTO\LocationStylingDTO;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
-use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 
 /**
  * Class StylingSettingsMigration
@@ -23,18 +22,25 @@ use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
  */
 class StylingSettingsMigration implements SettingsMigrationInterface {
 
-	protected Settings $settings;
+	/**
+	 * @var array<string, mixed>
+	 */
+	protected array $settings;
 	protected StylingSettings $styling_settings;
 
-	public function __construct( Settings $settings, StylingSettings $styling_settings ) {
+	public function __construct( array $settings, StylingSettings $styling_settings ) {
 		$this->settings         = $settings;
 		$this->styling_settings = $styling_settings;
 	}
 
 	public function migrate(): void {
+		if ( empty( $this->settings ) || ! isset( $this->settings['smart_button_locations'] ) ) {
+			return;
+		}
+
 		$location_styles = array();
 
-		$styling_per_location = $this->settings->has( 'smart_button_enable_styling_per_location' ) && $this->settings->get( 'smart_button_enable_styling_per_location' );
+		$styling_per_location = ! empty( $this->settings['smart_button_enable_styling_per_location'] );
 
 		foreach ( $this->locations_map() as $old_location => $new_location ) {
 			$context = $styling_per_location ? $old_location : 'general';
@@ -71,18 +77,18 @@ class StylingSettingsMigration implements SettingsMigrationInterface {
 			$methods[] = 'pay-later';
 		}
 
-		if ( $this->settings->has( 'disable_funding' ) ) {
-			$disable_funding = $this->settings->get( 'disable_funding' );
+		if ( isset( $this->settings['disable_funding'] ) ) {
+			$disable_funding = $this->settings['disable_funding'];
 			if ( ! in_array( 'venmo', $disable_funding, true ) ) {
 				$methods[] = 'venmo';
 			}
 		}
 
-		if ( $this->settings->has( 'applepay_button_enabled' ) && $this->settings->get( 'applepay_button_enabled' ) ) {
+		if ( ! empty( $this->settings['applepay_button_enabled'] ) ) {
 			$methods[] = ApplePayGateway::ID;
 		}
 
-		if ( $this->settings->has( 'googlepay_button_enabled' ) && $this->settings->get( 'googlepay_button_enabled' ) ) {
+		if ( ! empty( $this->settings['googlepay_button_enabled'] ) ) {
 			$methods[] = GooglePayGateway::ID;
 		}
 
@@ -98,11 +104,11 @@ class StylingSettingsMigration implements SettingsMigrationInterface {
 	 */
 	protected function is_button_enabled_for_location( string $location, string $type ): bool {
 		$key = "{$type}_button_locations";
-		if ( ! $this->settings->has( $key ) ) {
+		if ( ! isset( $this->settings[ $key ] ) ) {
 			return false;
 		}
 
-		$enabled_locations = $this->settings->get( $key );
+		$enabled_locations = $this->settings[ $key ];
 
 		if ( $location === 'cart' ) {
 			return in_array( $location, $enabled_locations, true ) || in_array( 'cart-block', $enabled_locations, true );
@@ -153,9 +159,9 @@ class StylingSettingsMigration implements SettingsMigrationInterface {
 	 * @return string|bool|null The style value or null if not found.
 	 */
 	private function get_style_value( string $key ) {
-		if ( ! $this->settings->has( $key ) ) {
+		if ( ! isset( $this->settings[ $key ] ) ) {
 			return null;
 		}
-		return $this->settings->get( $key );
+		return $this->settings[ $key ];
 	}
 }

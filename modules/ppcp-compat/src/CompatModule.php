@@ -5,28 +5,28 @@
  * @package WooCommerce\PayPalCommerce\Compat
  */
 
-declare(strict_types=1);
+declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\Compat;
 
 use Exception;
-use WC_Cart;
 use WC_Order;
 use WC_Order_Item_Product;
+use WooCommerce\PayPalCommerce\Button\Session\CartData;
+use WooCommerce\PayPalCommerce\Settings\Data\PaymentSettings;
+use WooCommerce\PayPalCommerce\Settings\Data\SettingsModel;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExecutableModule;
-use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExtendingModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ModuleClassNameIdTrait;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ServiceModule;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\Compat\Assets\CompatAssets;
 use WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException;
-use WooCommerce\PayPalCommerce\WcGateway\Helper\CartCheckoutDetector;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 
 /**
  * Class CompatModule
  */
-class CompatModule implements ServiceModule, ExtendingModule, ExecutableModule {
+class CompatModule implements ServiceModule, ExecutableModule {
 	use ModuleClassNameIdTrait;
 
 	/**
@@ -38,13 +38,6 @@ class CompatModule implements ServiceModule, ExtendingModule, ExecutableModule {
 
 	/**
 	 * {@inheritDoc}
-	 */
-	public function extensions(): array {
-		return require __DIR__ . '/../extensions.php';
-	}
-
-	/**
-	 * {@inheritDoc}
 	 *
 	 * @throws NotFoundException
 	 */
@@ -52,7 +45,7 @@ class CompatModule implements ServiceModule, ExtendingModule, ExecutableModule {
 
 		add_action(
 			'woocommerce_init',
-			function() use ( $c ) {
+			function () use ( $c ) {
 				$this->initialize_ppec_compat_layer( $c );
 				$this->initialize_tracking_compat_layer( $c );
 			}
@@ -60,7 +53,7 @@ class CompatModule implements ServiceModule, ExtendingModule, ExecutableModule {
 
 		add_action(
 			'init',
-			function() use ( $c ) {
+			function () use ( $c ) {
 				$asset_loader = $c->get( 'compat.assets' );
 				assert( $asset_loader instanceof CompatAssets );
 
@@ -72,10 +65,10 @@ class CompatModule implements ServiceModule, ExtendingModule, ExecutableModule {
 		$this->migrate_pay_later_settings( $c );
 		$this->migrate_smart_button_settings( $c );
 		$this->migrate_three_d_secure_setting();
+		$this->migrate_capture_on_status_change();
 
 		$this->fix_page_builders();
 		$this->exclude_cache_plugins_js_minification( $c );
-		$this->set_elementor_checkout_context();
 
 		$is_nyp_active = $c->get( 'compat.nyp.is_supported_plugin_version_active' );
 		if ( $is_nyp_active ) {
@@ -93,6 +86,50 @@ class CompatModule implements ServiceModule, ExtendingModule, ExecutableModule {
 
 		$this->legacy_ui_card_payment_mapping( $c );
 
+		/**
+		 * Automatically enable Pay Later messaging for Canadian stores during plugin update.
+		 *
+		 * This action runs during plugin updates to automatically enable Pay Later messaging for stores
+		 * that meet the following criteria:
+		 * - Store Country is set as Canada
+		 * - The "Stay updated" checkbox is enabled
+		 *
+		 * When all conditions are met, this will:
+		 * - Enable Pay Later messaging
+		 * - Enable Pay Later Payment Method
+		 * - Add default messaging locations (product, cart, checkout) to existing selections
+		 *
+		 * @hook woocommerce_paypal_payments_gateway_migrate
+		 */
+		add_action(
+			'woocommerce_paypal_payments_gateway_migrate',
+			static function () use ( $c ) {
+				// Check if the "Stay updated" checkbox is enabled (checked in either old or new UI).
+				$settings_model = $c->get( 'settings.data.settings' );
+				assert( $settings_model instanceof SettingsModel );
+
+				$settings = $c->get( 'wcgateway.settings' );
+				assert( $settings instanceof Settings );
+
+				// Store Country is set as Canada.
+				if ( $c->get( 'api.shop.country' ) !== 'CA' || ! $settings_model->get_stay_updated() ) {
+					return;
+				}
+
+				// Enable Pay Later messaging.
+				$selected_locations = $settings->has( 'pay_later_messaging_locations' ) ? $settings->get( 'pay_later_messaging_locations' ) : array();
+				$settings->set( 'pay_later_messaging_enabled', true );
+				$settings->set( 'pay_later_messaging_locations', array_unique( array_merge( $selected_locations, array( 'product', 'cart', 'checkout' ) ) ) );
+				$settings->persist();
+
+				// Enable Pay Later Payment Method.
+				$payment_settings = $c->get( 'settings.data.payment' );
+				assert( $payment_settings instanceof PaymentSettings );
+				$payment_settings->set_paylater_enabled( true );
+				$payment_settings->save();
+			}
+		);
+
 		return true;
 	}
 
@@ -103,23 +140,8 @@ class CompatModule implements ServiceModule, ExtendingModule, ExecutableModule {
 	 * @return void
 	 */
 	private function initialize_ppec_compat_layer( ContainerInterface $container ): void {
-		// Process PPEC subscription renewals through PayPal Payments.
 		$handler = $container->get( 'compat.ppec.subscriptions-handler' );
 		$handler->maybe_hook();
-
-		// Settings.
-		$ppec_import = $container->get( 'compat.ppec.settings_importer' );
-		$ppec_import->maybe_hook();
-
-		// Inbox note inviting merchant to disable PayPal Express Checkout.
-		add_action(
-			'woocommerce_init',
-			function() {
-				if ( is_admin() && is_callable( array( WC(), 'is_wc_admin_active' ) ) && WC()->is_wc_admin_active() && class_exists( 'Automattic\WooCommerce\Admin\Notes\Notes' ) ) {
-					PPEC\DeactivateNote::init();
-				}
-			}
-		);
 	}
 
 	/**
@@ -307,6 +329,30 @@ class CompatModule implements ServiceModule, ExtendingModule, ExecutableModule {
 	}
 
 	/**
+	 * Migrates the "capture on status change" setting from the legacy UI.
+	 *
+	 * The migration will be done on plugin update if it hasn't already done.
+	 */
+	protected function migrate_capture_on_status_change(): void {
+		add_action(
+			'woocommerce_paypal_payments_gateway_migrate_on_update',
+			static function () {
+				$legacy_settings  = (array) get_option( 'woocommerce-ppcp-settings' ) ?: array();
+				$payment_settings = (array) get_option( 'woocommerce-ppcp-data-payment' ) ?: array();
+
+				// Noop if the legacy setting does not exist, or the setting was already migrated.
+				if ( ! isset( $legacy_settings['capture_on_status_change'] ) || isset( $payment_settings['capture_on_status_change'] ) ) {
+					return;
+				}
+
+				$payment_settings['capture_on_status_change'] = $legacy_settings['capture_on_status_change'];
+
+				update_option( 'woocommerce-ppcp-data-payment', $payment_settings );
+			}
+		);
+	}
+
+	/**
 	 * Changes the button rendering place for page builders
 	 * that do not work well with our default places.
 	 *
@@ -315,7 +361,7 @@ class CompatModule implements ServiceModule, ExtendingModule, ExecutableModule {
 	protected function fix_page_builders(): void {
 		add_action(
 			'init',
-			function() {
+			function () {
 				if (
 					$this->is_block_theme_active()
 					|| $this->is_elementor_pro_active()
@@ -324,7 +370,7 @@ class CompatModule implements ServiceModule, ExtendingModule, ExecutableModule {
 				) {
 					add_filter(
 						'woocommerce_paypal_payments_single_product_renderer_hook',
-						function(): string {
+						function (): string {
 							return 'woocommerce_after_add_to_cart_form';
 						},
 						5
@@ -374,31 +420,6 @@ class CompatModule implements ServiceModule, ExtendingModule, ExecutableModule {
 	}
 
 	/**
-	 * Sets the context for the Elementor checkout page.
-	 *
-	 * @return void
-	 */
-	protected function set_elementor_checkout_context(): void {
-		add_action(
-			'wp',
-			function() {
-				$page_id = get_the_ID();
-				if ( ! is_numeric( $page_id ) || ! CartCheckoutDetector::has_elementor_checkout( (int) $page_id ) ) {
-					return;
-				}
-
-				add_filter(
-					'woocommerce_paypal_payments_context',
-					function ( string $context ): string {
-						// Default context.
-						return ( 'mini-cart' === $context ) ? 'checkout' : $context;
-					}
-				);
-			}
-		);
-	}
-
-	/**
 	 * Excludes PayPal scripts from being minified by cache plugins.
 	 *
 	 * @param ContainerInterface $c The Container.
@@ -411,7 +432,7 @@ class CompatModule implements ServiceModule, ExtendingModule, ExecutableModule {
 		// Siteground SG Optimize.
 		add_filter(
 			'sgo_js_minify_exclude',
-			function( array $scripts ) use ( $ppcp_script_names ) {
+			function ( array $scripts ) use ( $ppcp_script_names ) {
 				return array_merge( $scripts, $ppcp_script_names );
 			}
 		);
@@ -419,7 +440,7 @@ class CompatModule implements ServiceModule, ExtendingModule, ExecutableModule {
 		// LiteSpeed Cache.
 		add_filter(
 			'litespeed_optimize_js_excludes',
-			function( array $excluded_js ) use ( $ppcp_script_file_names ) {
+			function ( array $excluded_js ) use ( $ppcp_script_file_names ) {
 				return array_merge( $excluded_js, $ppcp_script_file_names );
 			}
 		);
@@ -436,7 +457,7 @@ class CompatModule implements ServiceModule, ExtendingModule, ExecutableModule {
 			 * @return bool Whether to do tag minification.
 			 * @psalm-suppress MissingClosureParamType
 			 */
-			function( bool $do_tag_minification, string $script_tag, $file ) {
+			function ( bool $do_tag_minification, string $script_tag, $file ) {
 				if ( $file && strpos( $file, 'ppcp' ) !== false ) {
 					return false;
 				}
@@ -455,7 +476,7 @@ class CompatModule implements ServiceModule, ExtendingModule, ExecutableModule {
 	protected function initialize_nyp_compat_layer(): void {
 		add_filter(
 			'woocommerce_paypal_payments_shipping_callback_cart_line_item_total',
-			static function( string $total, array $cart_item ) {
+			static function ( string $total, array $cart_item ) {
 				if ( ! isset( $cart_item['nyp'] ) ) {
 					return $total;
 				}
@@ -475,17 +496,16 @@ class CompatModule implements ServiceModule, ExtendingModule, ExecutableModule {
 	 */
 	protected function initialize_wc_bookings_compat_layer( ContainerInterface $container ): void {
 		add_action(
-			'woocommerce_paypal_payments_shipping_callback_woocommerce_order_created',
-			static function ( WC_Order $wc_order, WC_Cart $wc_cart ) use ( $container ): void {
+			'woocommerce_paypal_payments_woocommerce_order_created_from_cart',
+			static function ( WC_Order $wc_order, CartData $cart_data ) use ( $container ): void {
 				try {
-					$cart_contents = $wc_cart->get_cart();
-					foreach ( $cart_contents as $cart_item ) {
+					foreach ( $cart_data->items() as $cart_item ) {
 						if ( empty( $cart_item['booking'] ) ) {
 							continue;
 						}
 
 						foreach ( $wc_order->get_items() as $wc_order_item ) {
-							if ( ! is_a( $wc_order_item, WC_Order_Item_Product::class ) ) {
+							if ( ! ( $wc_order_item instanceof WC_Order_Item_Product ) ) {
 								continue;
 							}
 
@@ -532,8 +552,13 @@ class CompatModule implements ServiceModule, ExtendingModule, ExecutableModule {
 	 * @return void
 	 */
 	private function initialize_blueprint_compat_layer( ContainerInterface $container ): void {
-			$blueprint_bootstrap = $container->get( 'compat.blueprint.bootstrap' );
-			$blueprint_bootstrap->init();
+		$is_blueprint_available = $container->get( 'compat.blueprint.is_available' );
+		if ( ! $is_blueprint_available ) {
+			return;
+		}
+
+		$blueprint_bootstrap = $container->get( 'compat.blueprint.bootstrap' );
+		$blueprint_bootstrap->init();
 	}
 
 	/**
@@ -545,7 +570,7 @@ class CompatModule implements ServiceModule, ExtendingModule, ExecutableModule {
 	 * @param ContainerInterface $container DI container instance.
 	 * @return void
 	 */
-	protected function legacy_ui_card_payment_mapping( ContainerInterface $container ) : void {
+	protected function legacy_ui_card_payment_mapping( ContainerInterface $container ): void {
 		$new_ui = $container->get( 'wcgateway.settings.admin-settings-enabled' );
 		if ( $new_ui ) {
 			return;
@@ -553,7 +578,7 @@ class CompatModule implements ServiceModule, ExtendingModule, ExecutableModule {
 
 		add_filter(
 			'woocommerce_paypal_payments_is_acdc_active',
-			static function ( bool $is_acdc ) use ( $container ) : bool {
+			static function ( bool $is_acdc ) use ( $container ): bool {
 				$settings = $container->get( 'wcgateway.settings' );
 				assert( $settings instanceof Settings );
 

@@ -1,6 +1,6 @@
 import { __ } from '@wordpress/i18n';
 
-import { StylingHooks } from '../../../../../../data';
+import { StylingHooks } from '@ppcp-settings/data';
 import { RadiobuttonStylingSection } from '../Layout';
 import { Tagline } from './index';
 

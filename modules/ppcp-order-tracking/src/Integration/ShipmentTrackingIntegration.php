@@ -72,7 +72,7 @@ class ShipmentTrackingIntegration implements Integration {
 
 		add_action(
 			'wp_ajax_wc_shipment_tracking_save_form',
-			function() {
+			function () {
 				try {
 					check_ajax_referer( 'create-tracking-item', 'security', true );
 
@@ -82,7 +82,7 @@ class ShipmentTrackingIntegration implements Integration {
 
 					$order_id = (int) wc_clean( wp_unslash( $_POST['order_id'] ?? '' ) );
 					$wc_order = wc_get_order( $order_id );
-					if ( ! is_a( $wc_order, WC_Order::class ) ) {
+					if ( ! ( $wc_order instanceof WC_Order ) ) {
 						return;
 					}
 
@@ -110,7 +110,7 @@ class ShipmentTrackingIntegration implements Integration {
 		 */
 		add_filter(
 			'woocommerce_rest_prepare_order_shipment_tracking',
-			function( WP_REST_Response $response, array $tracking_item, WP_REST_Request $request ): WP_REST_Response {
+			function ( WP_REST_Response $response, array $tracking_item, WP_REST_Request $request ): WP_REST_Response {
 				try {
 					if ( ! apply_filters( 'woocommerce_paypal_payments_sync_wc_shipment_tracking', true ) ) {
 						return $response;
@@ -123,7 +123,7 @@ class ShipmentTrackingIntegration implements Integration {
 
 					$order_id = $tracking_item['order_id'] ?? 0;
 					$wc_order = wc_get_order( $order_id );
-					if ( ! is_a( $wc_order, WC_Order::class ) ) {
+					if ( ! ( $wc_order instanceof WC_Order ) ) {
 						return $response;
 					}
 

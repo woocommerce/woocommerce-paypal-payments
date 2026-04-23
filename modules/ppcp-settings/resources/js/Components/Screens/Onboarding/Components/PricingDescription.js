@@ -1,8 +1,8 @@
 import { __, sprintf } from '@wordpress/i18n';
 
-import { countryPriceInfo } from '../../../../utils/countryPriceInfo';
-import { learnMoreLinks } from '../../../../utils/countryInfoLinks';
-import { CommonHooks } from '../../../../data';
+import { countryPriceInfo } from '@ppcp-settings/utils/countryPriceInfo';
+import { learnMoreLinks } from '@ppcp-settings/utils/countryInfoLinks';
+import { CommonHooks } from '@ppcp-settings/data';
 
 const PricingDescription = () => {
 	const { storeCountry } = CommonHooks.useWooSettings();

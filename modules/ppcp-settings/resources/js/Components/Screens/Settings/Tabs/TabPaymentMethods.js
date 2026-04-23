@@ -1,11 +1,15 @@
 import { __ } from '@wordpress/i18n';
 import { useCallback } from '@wordpress/element';
 
-import { CommonHooks, OnboardingHooks, PaymentHooks } from '../../../../data';
-import { useActiveModal, useWooSettings } from '../../../../data/common/hooks';
+import { CommonHooks, PaymentHooks } from '@ppcp-settings/data';
+import {
+	useActiveModal,
+	useWooSettings,
+} from '@ppcp-settings/data/common/hooks';
 import Modal from '../Components/Payment/Modal';
 import PaymentMethodCard from '../Components/Payment/PaymentMethodCard';
-import { useFeatures } from '../../../../data/features/hooks';
+import MigrationBanner from '../Components/Payment/MigrationBanner';
+import { useFeatures } from '@ppcp-settings/data/features/hooks';
 
 const TabPaymentMethods = () => {
 	const methods = PaymentHooks.usePaymentMethods();
@@ -37,8 +41,11 @@ const TabPaymentMethods = () => {
 			const persistentSettings = [
 				'paypalShowLogo',
 				'threeDSecure',
-				'fastlaneCardholderName',
+				'cardholderName',
 				'fastlaneDisplayWatermark',
+				'puiBrandName',
+				'puiLogoUrl',
+				'puiCustomerServiceInstructions',
 			];
 
 			persistentSettings.forEach( ( setting ) => {
@@ -55,18 +62,9 @@ const TabPaymentMethods = () => {
 
 	const merchant = CommonHooks.useMerchant();
 	const { storeCountry } = useWooSettings();
-	const { canUseCardPayments } = OnboardingHooks.useFlags();
 
 	const showCardPayments =
-		methods.cardPayment.length > 0 &&
-		merchant.isBusinessSeller &&
-		canUseCardPayments &&
-		// Show ACDC if the merchant has the feature enabled in PayPal account.
-		features.some(
-			( feature ) =>
-				feature.id === 'advanced_credit_and_debit_cards' &&
-				feature.enabled
-		);
+		methods.cardPayment.length > 0 && merchant.isBusinessSeller;
 
 	// Hide BCDC for all countries except Mexico when ACDC is turned on.
 	const filteredPayPalMethods = methods.paypal.filter(
@@ -81,6 +79,9 @@ const TabPaymentMethods = () => {
 	);
 
 	const showApms = methods.apm.length > 0 && merchant.isBusinessSeller;
+
+	const isBcdcOverrideFlagEnabled =
+		window.ppcpSettings?.isBcdcOverrideFlagEnabled;
 	return (
 		<div className="ppcp-r-payment-methods">
 			<PaymentMethodCard
@@ -111,6 +112,39 @@ const TabPaymentMethods = () => {
 					methods={ methods.cardPayment }
 					onTriggerModal={ setActiveModal }
 					methodsMap={ methodsMap }
+				/>
+			) }
+
+			{ isBcdcOverrideFlagEnabled && (
+				<MigrationBanner
+					id="ppcp-migration-banner"
+					className="ppcp-r-settings-migration-banner"
+					title={ __(
+						'Unlock Advanced Card Processing',
+						'woocommerce-paypal-payments'
+					) }
+					description={ __(
+						'Get Apple Pay, Google Pay, and Fastlane accelerated guest checkout, and enjoy lower processing fees and advanced fraud protection.',
+						'woocommerce-paypal-payments'
+					) }
+					actionProps={ {
+						buttons: [
+							{
+								type: 'secondary',
+								text: __(
+									'Unlock now',
+									'woocommerce-paypal-payments'
+								),
+							},
+							{
+								type: 'tertiary',
+								text: __(
+									'Dismiss',
+									'woocommerce-paypal-payments'
+								),
+							},
+						],
+					} }
 				/>
 			) }
 

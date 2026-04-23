@@ -7,13 +7,30 @@
 	<config name="testVersion" value="7.4-" />
 
 	<!-- Rules -->
-	<rule ref="WooCommerce-Core" />
+	<rule ref="WooCommerce-Core">
+		<exclude name="WordPress.Security.EscapeOutput.ExceptionNotEscaped" />
+		<exclude name="WordPress.WP.GetMetaSingle.Missing" />
+		<exclude name="Generic.CodeAnalysis.UnusedFunctionParameter.Found" />
+		<exclude name="Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed" />
+		<exclude name="Universal.Operators.DisallowShortTernary.Found" />
+		<exclude name="Universal.CodeAnalysis.NoEchoSprintf.Found" />
+		<exclude name="Universal.NamingConventions.NoReservedKeywordParameterNames.arrayFound" />
+		<exclude name="Universal.NamingConventions.NoReservedKeywordParameterNames.newFound" />
+		<exclude name="Universal.NamingConventions.NoReservedKeywordParameterNames.listFound" />
+		<exclude name="Universal.NamingConventions.NoReservedKeywordParameterNames.resourceFound" />
+		<exclude name="Universal.NamingConventions.NoReservedKeywordParameterNames.defaultFound" />
+		<exclude name="Universal.NamingConventions.NoReservedKeywordParameterNames.classFound" />
+		<exclude name="Universal.NamingConventions.NoReservedKeywordParameterNames.stringFound" />
+	</rule>
 
 	<rule ref="WordPress.WP.I18n">
-		<properties>
-			<property name="text_domain" type="array" value="woocommerce-paypal-payments" />
-		</properties>
-	</rule>
+        <properties>
+            <property name="text_domain" type="array">
+                <element value="woocommerce-paypal-payments" />
+            </property>
+        </properties>
+    </rule>
+
 
 	<rule ref="PHPCompatibility">
 		<exclude-pattern>tests/</exclude-pattern>
@@ -22,7 +39,6 @@
 	<rule ref="WordPress">
 		<exclude name="WordPress.Files.FileName.NotHyphenatedLowercase" />
 		<exclude name="WordPress.Files.FileName.InvalidClassFileName" />
-		<exclude name="WordPress.PHP.DisallowShortTernary" />
 		<exclude name="WordPress.PHP.YodaConditions.NotYoda" />
 	</rule>
 
@@ -51,9 +67,20 @@
 		<exclude name="Squiz.Commenting.FileComment.Missing" />
 		<exclude name="Squiz.Commenting.FileComment.MissingPackageTag" />
 	</rule>
+	<rule ref="Squiz.Commenting.ClassComment">
+		<exclude name="Squiz.Commenting.ClassComment.Missing" />
+	</rule>
 	<rule ref="Generic.Commenting.DocComment">
 		<exclude name="Generic.Commenting.DocComment.MissingShort" />
 	</rule>
+
+	<rule ref="WordPress.WP.Capabilities">
+    	<properties>
+    		<property name="custom_capabilities" type="array">
+    				<element value="manage_woocommerce"/>
+    		</property>
+    	</properties>
+    </rule>
 
 
 	<arg name="extensions" value="php"/>

@@ -104,7 +104,7 @@ class PaymentPreferences {
 	 *
 	 * @return array
 	 */
-	public function to_array():array {
+	public function to_array(): array {
 		return array(
 			'setup_fee'                 => $this->setup_fee(),
 			'auto_bill_outstanding'     => $this->auto_bill_outstanding(),

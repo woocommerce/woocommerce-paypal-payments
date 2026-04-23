@@ -15,7 +15,7 @@ use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 
 return array(
-	'woocommerce.logger.source'      => function(): string {
+	'woocommerce.logger.source'      => function (): string {
 		return 'woocommerce-paypal-payments';
 	},
 	'woocommerce.logger.woocommerce' => function ( ContainerInterface $container ): LoggerInterface {

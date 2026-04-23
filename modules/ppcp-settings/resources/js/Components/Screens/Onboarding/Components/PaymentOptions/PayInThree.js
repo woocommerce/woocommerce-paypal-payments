@@ -1,6 +1,6 @@
 import { __ } from '@wordpress/i18n';
 
-import BadgeBox from '../../../../ReusableComponents/BadgeBox';
+import BadgeBox from '@ppcp-settings/Components/ReusableComponents/BadgeBox';
 
 const PayInThree = ( { learnMore = '' } ) => {
 	return (

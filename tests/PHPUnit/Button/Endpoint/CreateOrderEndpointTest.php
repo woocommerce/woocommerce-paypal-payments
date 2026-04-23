@@ -15,10 +15,12 @@ use WooCommerce\PayPalCommerce\ApiClient\Factory\ShippingPreferenceFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\ReturnUrlFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\ContactPreferenceFactory;
 use WooCommerce\PayPalCommerce\Button\Helper\EarlyOrderHandler;
+use WooCommerce\PayPalCommerce\Button\Session\CartDataFactory;
+use WooCommerce\PayPalCommerce\Button\Session\CartDataTransientStorage;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
 use WooCommerce\PayPalCommerce\TestCase;
 use WooCommerce\PayPalCommerce\WcGateway\CardBillingMode;
-use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
+use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
 
 use WooCommerce\WooCommerce\Logging\Logger\NullLogger;
 use function Brain\Monkey\Functions\expect;
@@ -157,9 +159,9 @@ class CreateOrderEndpointTest extends TestCase
         $order_endpoint = Mockery::mock(OrderEndpoint::class);
         $payer_factory = Mockery::mock(PayerFactory::class);
         $session_handler = Mockery::mock(SessionHandler::class);
-        $settings = Mockery::mock(Settings::class);
+        $settings_provider = Mockery::mock(SettingsProvider::class);
+	    $settings_provider->shouldReceive('save_paypal_and_venmo')->andReturn(false);
         $early_order_handler = Mockery::mock(EarlyOrderHandler::class);
-		$settings->shouldReceive('has')->andReturnFalse();
 
         $testee = new CreateOrderEndpoint(
             $request_data,
@@ -171,8 +173,10 @@ class CreateOrderEndpointTest extends TestCase
             $order_endpoint,
             $payer_factory,
             $session_handler,
-            $settings,
+            $settings_provider,
             $early_order_handler,
+			Mockery::mock(CartDataFactory::class),
+			Mockery::mock(CartDataTransientStorage::class),
 			false,
 			CardBillingMode::MINIMAL_INPUT,
 			false,

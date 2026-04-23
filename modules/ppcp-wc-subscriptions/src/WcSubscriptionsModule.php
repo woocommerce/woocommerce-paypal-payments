@@ -9,31 +9,29 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\WcSubscriptions;
 
+use Exception;
 use Psr\Log\LoggerInterface;
 use WC_Order;
-use WC_Payment_Token_CC;
-use WC_Payment_Tokens;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
-use WooCommerce\PayPalCommerce\Session\SessionHandler;
-use WooCommerce\PayPalCommerce\Vaulting\PaymentTokenRepository;
+use WooCommerce\PayPalCommerce\Button\Helper\Context;
+use WooCommerce\PayPalCommerce\SavePaymentMethods\Service\PaymentMethodTokensChecker;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExecutableModule;
-use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExtendingModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ModuleClassNameIdTrait;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ServiceModule;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
-use WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CardButtonGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\TransactionIdHandlingTrait;
-use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
+use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
 use WooCommerce\PayPalCommerce\WcSubscriptions\Endpoint\SubscriptionChangePaymentMethod;
 use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
+use WooCommerce\PayPalCommerce\WcSubscriptions\Service\ChangePaymentMethod;
 
 /**
  * Class SubscriptionModule
  */
-class WcSubscriptionsModule implements ServiceModule, ExtendingModule, ExecutableModule {
+class WcSubscriptionsModule implements ServiceModule, ExecutableModule {
 	use ModuleClassNameIdTrait;
 	use TransactionIdHandlingTrait;
 
@@ -60,14 +58,13 @@ class WcSubscriptionsModule implements ServiceModule, ExtendingModule, Executabl
 	/**
 	 * {@inheritDoc}
 	 */
-	public function extensions(): array {
-		return require __DIR__ . '/../extensions.php';
-	}
-
-	/**
-	 * {@inheritDoc}
-	 */
 	public function run( ContainerInterface $c ): bool {
+		$subscriptions_helper = $c->get( 'wc-subscriptions.helper' );
+		assert( $subscriptions_helper instanceof SubscriptionHelper );
+		if ( ! $subscriptions_helper->plugin_is_active() ) {
+			return true;
+		}
+
 		$this->add_gateways_support( $c );
 
 		add_action(
@@ -96,123 +93,6 @@ class WcSubscriptionsModule implements ServiceModule, ExtendingModule, Executabl
 			},
 			10,
 			2
-		);
-
-		add_action(
-			'woocommerce_subscription_payment_complete',
-			/**
-			 * Param types removed to avoid third-party issues.
-			 *
-			 * @psalm-suppress MissingClosureParamType
-			 */
-			function ( $subscription ) use ( $c ) {
-				if ( ! in_array( $subscription->get_payment_method(), array( PayPalGateway::ID, CreditCardGateway::ID, CardButtonGateway::ID ), true ) ) {
-					return;
-				}
-
-				$paypal_subscription_id = $subscription->get_meta( 'ppcp_subscription' ) ?? '';
-				if ( $paypal_subscription_id ) {
-					return;
-				}
-
-				$payment_token_repository = $c->get( 'vaulting.repository.payment-token' );
-				$logger                   = $c->get( 'woocommerce.logger.woocommerce' );
-
-				if ( ! $c->has( 'save-payment-methods.eligible' ) || ! $c->get( 'save-payment-methods.eligible' ) ) {
-					$this->add_payment_token_id( $subscription, $payment_token_repository, $logger );
-				}
-
-				if ( count( $subscription->get_related_orders() ) === 1 ) {
-					$parent_order = $subscription->get_parent();
-					if ( is_a( $parent_order, WC_Order::class ) ) {
-						// Update the initial payment method title if not the same as the first order.
-						$payment_method_title = $parent_order->get_payment_method_title();
-						if (
-							$payment_method_title
-							&& $subscription instanceof \WC_Subscription
-							&& $subscription->get_payment_method_title() !== $payment_method_title
-						) {
-							$subscription->set_payment_method_title( $payment_method_title );
-							$subscription->save();
-						}
-					}
-				}
-			}
-		);
-
-		add_filter(
-			'woocommerce_gateway_description',
-			/**
-			 * Param types removed to avoid third-party issues.
-			 *
-			 * @psalm-suppress MissingClosureParamType
-			 */
-			function ( $description, $id ) use ( $c ) {
-				$payment_token_repository = $c->get( 'vaulting.repository.payment-token' );
-				$settings                 = $c->get( 'wcgateway.settings' );
-				$subscription_helper      = $c->get( 'wc-subscriptions.helper' );
-
-				return $this->display_saved_paypal_payments( $settings, (string) $id, $payment_token_repository, (string) $description, $subscription_helper );
-			},
-			10,
-			2
-		);
-
-		add_filter(
-			'woocommerce_credit_card_form_fields',
-			/**
-			 * Param types removed to avoid third-party issues.
-			 *
-			 * @psalm-suppress MissingClosureParamType
-			 */
-			function ( $default_fields, $id ) use ( $c ) {
-				if ( $c->has( 'save-payment-methods.eligible' ) && $c->get( 'save-payment-methods.eligible' ) ) {
-					return $default_fields;
-				}
-
-				$payment_token_repository = $c->get( 'vaulting.repository.payment-token' );
-				$settings                 = $c->get( 'wcgateway.settings' );
-				$subscription_helper      = $c->get( 'wc-subscriptions.helper' );
-
-				return $this->display_saved_credit_cards( $settings, $id, $payment_token_repository, $default_fields, $subscription_helper );
-			},
-			20,
-			2
-		);
-
-		add_filter(
-			'woocommerce_available_payment_gateways',
-			/**
-			 * Param types removed to avoid third-party issues.
-			 *
-			 * @psalm-suppress MissingClosureParamType
-			 */
-			function( $methods ) use ( $c ) {
-				if ( ! is_array( $methods ) ) {
-					return $methods;
-				}
-
-				//phpcs:disable WordPress.Security.NonceVerification.Recommended
-				if ( ! ( isset( $_GET['change_payment_method'] ) && is_wc_endpoint_url( 'order-pay' ) ) ) {
-					return $methods;
-				}
-
-				$paypal_tokens = WC_Payment_Tokens::get_customer_tokens( get_current_user_id(), PayPalGateway::ID );
-				if ( ! $paypal_tokens ) {
-					unset( $methods[ PayPalGateway::ID ] );
-				}
-
-				if ( $c->has( 'save-payment-methods.eligible' ) && $c->get( 'save-payment-methods.eligible' ) ) {
-					return $methods;
-				}
-
-				$card_tokens = WC_Payment_Tokens::get_customer_tokens( get_current_user_id(), CreditCardGateway::ID );
-				if ( ! $card_tokens ) {
-					unset( $methods[ CreditCardGateway::ID ] );
-				}
-
-				return $methods;
-			}
 		);
 
 		add_filter(
@@ -250,6 +130,88 @@ class WcSubscriptionsModule implements ServiceModule, ExtendingModule, Executabl
 			}
 		);
 
+		add_action(
+			'woocommerce_subscriptions_change_payment_after_submit',
+			function () use ( $c ) {
+				$context = $c->get( 'button.helper.context' );
+				assert( $context instanceof Context );
+
+				if ( ! is_user_logged_in() || ! $context->is_subscription_change_payment_method_page() ) {
+					return;
+				}
+
+				$payment_method_tokens_checked = $c->get( 'save-payment-methods.service.payment-method-tokens-checker' );
+				assert( $payment_method_tokens_checked instanceof PaymentMethodTokensChecker );
+				$customer_id = get_user_meta( get_current_user_id(), '_ppcp_target_customer_id', true );
+
+				// Do not display PayPal button if the user already has a PayPal payment token.
+				if ( $payment_method_tokens_checked->has_paypal_payment_token( $customer_id ) ) {
+					return;
+				}
+
+				echo '<div id="ppc-button-' . esc_attr( PayPalGateway::ID ) . '-save-payment-method"></div>';
+			}
+		);
+
+		/**
+		 * If customer has chosen change Subscription payment to PayPal payment.
+		 */
+		add_filter(
+			'woocommerce_paypal_payments_before_order_process',
+			/**
+			 * WC_Payment_Gateway $gateway type removed.
+			 *
+			 * @psalm-suppress MissingClosureParamType
+			 */
+			function ( bool $process, $gateway, WC_Order $wc_order ) use ( $c ) {
+				if ( ! $gateway instanceof PayPalGateway || $gateway::ID !== PayPalGateway::ID ) {
+					return $process;
+				}
+
+				$change_payment_method = $c->get( 'wc-subscriptions.change-payment-method' );
+				assert( $change_payment_method instanceof ChangePaymentMethod );
+
+				return $change_payment_method->to_paypal_payment();
+			},
+			10,
+			3
+		);
+
+		add_action(
+			'woocommerce_subscription_payment_complete',
+			/**
+			 * Param types removed to avoid third-party issues.
+			 *
+			 * @psalm-suppress MissingClosureParamType
+			 */
+			function ( $subscription ) {
+				if ( ! in_array( $subscription->get_payment_method(), array( PayPalGateway::ID, CreditCardGateway::ID, CardButtonGateway::ID ), true ) ) {
+					return;
+				}
+
+				$paypal_subscription_id = $subscription->get_meta( 'ppcp_subscription' ) ?? '';
+				if ( $paypal_subscription_id ) {
+					return;
+				}
+
+				if ( count( $subscription->get_related_orders() ) === 1 ) {
+					$parent_order = $subscription->get_parent();
+					if ( $parent_order instanceof WC_Order ) {
+						// Update the initial payment method title if not the same as the first order.
+						$payment_method_title = $parent_order->get_payment_method_title();
+						if (
+							$payment_method_title
+							&& $subscription instanceof \WC_Subscription
+							&& $subscription->get_payment_method_title() !== $payment_method_title
+						) {
+							$subscription->set_payment_method_title( $payment_method_title );
+							$subscription->save();
+						}
+					}
+				}
+			}
+		);
+
 		return true;
 	}
 
@@ -268,146 +230,22 @@ class WcSubscriptionsModule implements ServiceModule, ExtendingModule, Executabl
 	}
 
 	/**
-	 * Adds Payment token ID to subscription.
-	 *
-	 * @param \WC_Subscription       $subscription The subscription.
-	 * @param PaymentTokenRepository $payment_token_repository The payment repository.
-	 * @param LoggerInterface        $logger The logger.
-	 */
-	protected function add_payment_token_id(
-		\WC_Subscription $subscription,
-		PaymentTokenRepository $payment_token_repository,
-		LoggerInterface $logger
-	): void {
-		try {
-			$tokens = $payment_token_repository->all_for_user_id( $subscription->get_customer_id() );
-			if ( $tokens ) {
-				$latest_token_id = end( $tokens )->id() ? end( $tokens )->id() : '';
-				$subscription->update_meta_data( 'payment_token_id', $latest_token_id );
-				$subscription->save();
-			}
-		} catch ( RuntimeException $error ) {
-			$message = sprintf(
-				// translators: %1$s is the payment token Id, %2$s is the error message.
-				__(
-					'Could not add token Id to subscription %1$s: %2$s',
-					'woocommerce-paypal-payments'
-				),
-				$subscription->get_id(),
-				$error->getMessage()
-			);
-
-			$logger->log( 'warning', $message );
-		}
-	}
-
-	/**
-	 * Displays saved PayPal payments.
-	 *
-	 * @param Settings               $settings The settings.
-	 * @param string                 $id The payment gateway Id.
-	 * @param PaymentTokenRepository $payment_token_repository The payment token repository.
-	 * @param string                 $description The payment gateway description.
-	 * @param SubscriptionHelper     $subscription_helper The subscription helper.
-	 * @return string
-	 */
-	protected function display_saved_paypal_payments(
-		Settings $settings,
-		string $id,
-		PaymentTokenRepository $payment_token_repository,
-		string $description,
-		SubscriptionHelper $subscription_helper
-	): string {
-		if ( $settings->has( 'vault_enabled' )
-			&& $settings->get( 'vault_enabled' )
-			&& PayPalGateway::ID === $id
-			&& $subscription_helper->is_subscription_change_payment()
-		) {
-			$tokens = WC_Payment_Tokens::get_customer_tokens( get_current_user_id(), PayPalGateway::ID );
-
-			$output = '<ul class="wc-saved-payment-methods">';
-			foreach ( $tokens as $token ) {
-				$output     .= '<li>';
-					$output .= sprintf( '<input name="saved_paypal_payment" type="radio" value="%s" style="width:auto;" checked="checked">', $token->get_id() );
-					$output .= sprintf( '<label for="saved_paypal_payment">%s / %s</label>', $token->get_type(), $token->get_meta( 'email' ) ?? '' );
-				$output     .= '</li>';
-			}
-			$output .= '</ul>';
-
-			return $output;
-		}
-
-		return $description;
-	}
-
-	/**
-	 * Displays saved credit cards.
-	 *
-	 * @param Settings               $settings The settings.
-	 * @param string                 $id The payment gateway Id.
-	 * @param PaymentTokenRepository $payment_token_repository The payment token repository.
-	 * @param array                  $default_fields Default payment gateway fields.
-	 * @param SubscriptionHelper     $subscription_helper The subscription helper.
-	 * @return array|mixed|string
-	 * @throws NotFoundException When setting was not found.
-	 */
-	protected function display_saved_credit_cards(
-		Settings $settings,
-		string $id,
-		PaymentTokenRepository $payment_token_repository,
-		array $default_fields,
-		SubscriptionHelper $subscription_helper
-	) {
-		if ( $settings->has( 'vault_enabled_dcc' )
-			&& $settings->get( 'vault_enabled_dcc' )
-			&& $subscription_helper->is_subscription_change_payment()
-			&& CreditCardGateway::ID === $id
-		) {
-			$tokens = WC_Payment_Tokens::get_customer_tokens( get_current_user_id(), CreditCardGateway::ID );
-			$output = sprintf(
-				'<p class="form-row form-row-wide"><label>%1$s</label><select id="saved-credit-card" name="saved_credit_card">',
-				esc_html__( 'Select a saved Credit Card payment', 'woocommerce-paypal-payments' )
-			);
-			foreach ( $tokens as $token ) {
-				if ( $token instanceof WC_Payment_Token_CC ) {
-					$output .= sprintf(
-						'<option value="%1$s">%2$s ...%3$s</option>',
-						$token->get_id(),
-						$token->get_card_type(),
-						$token->get_last4()
-					);
-				}
-			}
-			$output .= '</select></p>';
-
-			$default_fields                      = array();
-			$default_fields['saved-credit-card'] = $output;
-			return $default_fields;
-		}
-
-		return $default_fields;
-	}
-
-	/**
 	 * Groups all filters for adding WC Subscriptions gateway support.
 	 *
 	 * @param ContainerInterface $c The container.
 	 * @return void
 	 */
 	private function add_gateways_support( ContainerInterface $c ): void {
-		$subscriptions_helper = $c->get( 'wc-subscriptions.helper' );
-		assert( $subscriptions_helper instanceof SubscriptionHelper );
-		if ( ! $subscriptions_helper->plugin_is_active() ) {
-			return;
-		}
-
 		add_filter(
 			'woocommerce_paypal_payments_paypal_gateway_supports',
 			function ( array $supports ) use ( $c ): array {
-				$settings = $c->get( 'wcgateway.settings' );
-				assert( $settings instanceof Settings );
+				$settings_provider = $c->get( 'settings.settings-provider' );
+				assert( $settings_provider instanceof SettingsProvider );
 
-				$subscriptions_mode = $settings->has( 'subscriptions_mode' ) ? $settings->get( 'subscriptions_mode' ) : '';
+				$subscription_helper = $c->get( 'wc-subscriptions.helper' );
+				assert( $subscription_helper instanceof SubscriptionHelper );
+
+				$subscriptions_mode = $this->get_subscriptions_mode( $settings_provider, $subscription_helper );
 				if ( 'disable_paypal_subscriptions' === $subscriptions_mode ) {
 					return $supports;
 				}
@@ -421,15 +259,17 @@ class WcSubscriptionsModule implements ServiceModule, ExtendingModule, Executabl
 		add_filter(
 			'woocommerce_paypal_payments_credit_card_gateway_supports',
 			function ( array $supports ) use ( $c ): array {
-				$settings = $c->get( 'wcgateway.settings' );
-				assert( $settings instanceof Settings );
+				$settings_provider = $c->get( 'settings.settings-provider' );
+				assert( $settings_provider instanceof SettingsProvider );
 
-				$subscriptions_mode = $settings->has( 'subscriptions_mode' ) ? $settings->get( 'subscriptions_mode' ) : '';
+				$subscription_helper = $c->get( 'wc-subscriptions.helper' );
+				assert( $subscription_helper instanceof SubscriptionHelper );
+
+				$subscriptions_mode = $this->get_subscriptions_mode( $settings_provider, $subscription_helper );
 				if ( 'disable_paypal_subscriptions' === $subscriptions_mode ) {
 					return $supports;
 				}
-				$vaulting_enabled = $settings->has( 'vault_enabled_dcc' ) && $settings->get( 'vault_enabled_dcc' );
-				if ( ! $vaulting_enabled ) {
+				if ( ! $settings_provider->save_card_details() ) {
 					return $supports;
 				}
 				return array_merge(
@@ -442,10 +282,13 @@ class WcSubscriptionsModule implements ServiceModule, ExtendingModule, Executabl
 		add_filter(
 			'woocommerce_paypal_payments_card_button_gateway_supports',
 			function ( array $supports ) use ( $c ): array {
-				$settings = $c->get( 'wcgateway.settings' );
-				assert( $settings instanceof Settings );
+				$settings_provider = $c->get( 'settings.settings-provider' );
+				assert( $settings_provider instanceof SettingsProvider );
 
-				$subscriptions_mode = $settings->has( 'subscriptions_mode' ) ? $settings->get( 'subscriptions_mode' ) : '';
+				$subscription_helper = $c->get( 'wc-subscriptions.helper' );
+				assert( $subscription_helper instanceof SubscriptionHelper );
+
+				$subscriptions_mode = $this->get_subscriptions_mode( $settings_provider, $subscription_helper );
 				if ( 'disable_paypal_subscriptions' === $subscriptions_mode ) {
 					return $supports;
 				}
@@ -455,5 +298,34 @@ class WcSubscriptionsModule implements ServiceModule, ExtendingModule, Executabl
 				);
 			}
 		);
+	}
+
+	/**
+	 * Gets the subscriptions mode based on settings.
+	 *
+	 * @param SettingsProvider   $settings_provider The settings provider.
+	 * @param SubscriptionHelper $subscription_helper The subscription helper.
+	 * @return string The subscriptions mode ('vaulting_api', 'subscriptions_api', or 'disable_paypal_subscriptions').
+	 */
+	private function get_subscriptions_mode(
+		SettingsProvider $settings_provider,
+		SubscriptionHelper $subscription_helper
+	): string {
+		if ( ! $subscription_helper->plugin_is_active() ) {
+			return '';
+		}
+
+		$subscription_mode_disabled = (bool) apply_filters(
+			'woocommerce_paypal_payments_subscription_mode_disabled',
+			false
+		);
+
+		if ( $subscription_mode_disabled ) {
+			return 'disable_paypal_subscriptions';
+		}
+
+		return $settings_provider->save_paypal_and_venmo()
+			? 'vaulting_api'
+			: 'subscriptions_api';
 	}
 }

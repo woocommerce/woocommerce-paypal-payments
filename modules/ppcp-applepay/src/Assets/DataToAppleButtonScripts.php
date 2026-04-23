@@ -9,8 +9,7 @@ declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\Applepay\Assets;
 
-use WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException;
-use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
+use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
 use WooCommerce\PayPalCommerce\Applepay\ApplePayGateway;
 use WC_Product;
 
@@ -19,26 +18,10 @@ use WC_Product;
  */
 class DataToAppleButtonScripts {
 
-	/**
-	 * The URL to the SDK.
-	 *
-	 * @var string
-	 */
-	private $sdk_url;
-	/**
-	 * The settings.
-	 *
-	 * @var Settings
-	 */
-	private $settings;
+	private string $sdk_url;
+	private SettingsProvider $settings;
 
-	/**
-	 * DataToAppleButtonScripts constructor.
-	 *
-	 * @param string   $sdk_url  The URL to the SDK.
-	 * @param Settings $settings The settings.
-	 */
-	public function __construct( string $sdk_url, Settings $settings ) {
+	public function __construct( string $sdk_url, SettingsProvider $settings ) {
 		$this->sdk_url  = $sdk_url;
 		$this->settings = $settings;
 	}
@@ -49,7 +32,7 @@ class DataToAppleButtonScripts {
 	 *
 	 * @return array
 	 */
-	public function apple_pay_script_data() : array {
+	public function apple_pay_script_data(): array {
 		if ( is_product() ) {
 			return $this->data_for_product_page();
 		}
@@ -62,7 +45,7 @@ class DataToAppleButtonScripts {
 	 *
 	 * @return array
 	 */
-	public function apple_pay_script_data_for_admin() : array {
+	public function apple_pay_script_data_for_admin(): array {
 		return $this->data_for_admin_page();
 	}
 
@@ -73,7 +56,7 @@ class DataToAppleButtonScripts {
 	 *
 	 * @return array
 	 */
-	private function get_apple_pay_data( array $product = array() ) : array {
+	private function get_apple_pay_data( array $product = array() ): array {
 		// true: Use Apple Pay as distinct gateway.
 		// false: integrate it with the smart buttons.
 		$available_gateways    = WC()->payment_gateways->get_available_payment_gateways();
@@ -81,9 +64,7 @@ class DataToAppleButtonScripts {
 
 		// use_wc: Use WC checkout data
 		// use_applepay: Use data provided by Apple Pay.
-		$checkout_data_mode = $this->settings->has( 'applepay_checkout_data_mode' )
-			? $this->settings->get( 'applepay_checkout_data_mode' )
-			: PropertiesDictionary::BILLING_DATA_MODE_DEFAULT;
+		$checkout_data_mode = $this->settings->applepay_checkout_data_mode();
 
 		// Store country, currency and name.
 		$base_location     = wc_get_base_location();
@@ -92,15 +73,15 @@ class DataToAppleButtonScripts {
 		$total_label       = get_bloginfo( 'name' );
 
 		// Button layout (label, color, language).
-		$type       = $this->settings->has( 'applepay_button_type' ) ? $this->settings->get( 'applepay_button_type' ) : '';
-		$color      = $this->settings->has( 'applepay_button_color' ) ? $this->settings->get( 'applepay_button_color' ) : '';
-		$lang       = $this->settings->has( 'applepay_button_language' ) ? $this->settings->get( 'applepay_button_language' ) : '';
-		$lang       = apply_filters( 'woocommerce_paypal_payments_applepay_button_language', $lang );
-		$is_enabled = $this->settings->has( 'applepay_button_enabled' ) && $this->settings->get( 'applepay_button_enabled' );
+		$styles     = $this->settings->applepay_styles(); // todo: verify how applepay defines the location/context.
+		$type       = $styles->label;
+		$color      = $styles->color;
+		$lang       = $this->settings->applepay_button_language();
+		$is_enabled = $this->settings->applepay_enabled();
 
 		return array(
 			'sdk_url'               => $this->sdk_url,
-			'is_debug'              => defined( 'WP_DEBUG' ) && WP_DEBUG,
+			'is_debug'              => defined( 'WP_DEBUG' ) && WP_DEBUG, // @phpstan-ignore booleanAnd.rightAlwaysFalse
 			'is_admin'              => false,
 			'is_enabled'            => $is_enabled,
 			'is_wc_gateway_enabled' => $is_wc_gateway_enabled,
@@ -132,7 +113,7 @@ class DataToAppleButtonScripts {
 	 *
 	 * @return bool
 	 */
-	protected function check_if_need_shipping( WC_Product $product ) : bool {
+	protected function check_if_need_shipping( WC_Product $product ): bool {
 		if (
 			! wc_shipping_enabled()
 			|| 0 === wc_get_shipping_method_count(
@@ -154,7 +135,7 @@ class DataToAppleButtonScripts {
 	 *
 	 * @return array
 	 */
-	protected function data_for_product_page() : array {
+	protected function data_for_product_page(): array {
 		$product = wc_get_product( get_the_id() );
 		if ( ! $product ) {
 			return array();
@@ -185,7 +166,7 @@ class DataToAppleButtonScripts {
 	 *
 	 * @return array
 	 */
-	protected function data_for_cart_page() : array {
+	protected function data_for_cart_page(): array {
 		$cart = WC()->cart;
 		if ( ! $cart ) {
 			return array();
@@ -206,7 +187,7 @@ class DataToAppleButtonScripts {
 	 *
 	 * @return array
 	 */
-	protected function data_for_admin_page() : array {
+	protected function data_for_admin_page(): array {
 		$data = $this->get_apple_pay_data(
 			array(
 				'needShipping' => false,

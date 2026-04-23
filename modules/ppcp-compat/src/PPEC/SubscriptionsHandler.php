@@ -9,7 +9,7 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\Compat\PPEC;
 
-use Automattic\WooCommerce\Utilities\OrderUtil;
+use Psr\Log\LoggerInterface;
 use stdClass;
 use WooCommerce\PayPalCommerce\WcSubscriptions\RenewalHandler;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentToken;
@@ -35,16 +35,20 @@ class SubscriptionsHandler {
 	 */
 	private $mock_gateway;
 
+	private BillingAgreementTokenConverter $token_converter;
 
-	/**
-	 * Constructor.
-	 *
-	 * @param RenewalHandler $ppcp_renewal_handler PayPal Payments Subscriptions renewal handler.
-	 * @param MockGateway    $gateway              Mock gateway instance.
-	 */
-	public function __construct( RenewalHandler $ppcp_renewal_handler, MockGateway $gateway ) {
+	private LoggerInterface $logger;
+
+	public function __construct(
+		RenewalHandler $ppcp_renewal_handler,
+		MockGateway $gateway,
+		BillingAgreementTokenConverter $token_converter,
+		LoggerInterface $logger
+	) {
 		$this->ppcp_renewal_handler = $ppcp_renewal_handler;
 		$this->mock_gateway         = $gateway;
+		$this->token_converter      = $token_converter;
+		$this->logger               = $logger;
 	}
 
 	/**
@@ -76,7 +80,7 @@ class SubscriptionsHandler {
 	 * @return array
 	 */
 	public function add_mock_ppec_gateway( $gateways ) {
-		if ( ! isset( $gateways[ PPECHelper::PPEC_GATEWAY_ID ] ) && $this->should_mock_ppec_gateway() ) {
+		if ( ! isset( $gateways[ PPECHelper::PPEC_GATEWAY_ID ] ) ) {
 			$gateways[ PPECHelper::PPEC_GATEWAY_ID ] = $this->mock_gateway;
 		}
 
@@ -114,98 +118,96 @@ class SubscriptionsHandler {
 	}
 
 	/**
-	 * Short-circuits `RenewalHandler::get_token_for_customer()` to use a Billing Agreement ID for PPEC orders
-	 * instead of vaulted tokens.
+	 * Short-circuits `RenewalHandler::get_token_for_customer()` for PPEC orders.
 	 *
-	 * @param null|PaymentToken $token    Current token value.
-	 * @param \WC_Customer      $customer Customer object.
-	 * @param \WC_Order         $order    Renewal order.
-	 * @return null|PaymentToken
+	 * Tries the vault v3 conversion path first. If that is not applicable or fails,
+	 * falls back to the legacy BILLING_AGREEMENT token path.
 	 */
 	public function use_billing_agreement_as_token( $token, $customer, $order ) {
-		if ( PPECHelper::PPEC_GATEWAY_ID === $order->get_payment_method() && wcs_order_contains_renewal( $order ) ) {
-			$billing_agreement_id = $order->get_meta( '_ppec_billing_agreement_id', true );
-
-			if ( $billing_agreement_id ) {
-				$token = new PaymentToken( $billing_agreement_id, new stdClass(), 'BILLING_AGREEMENT' );
-			}
+		if ( PPECHelper::PPEC_GATEWAY_ID !== $order->get_payment_method() || ! wcs_order_contains_renewal( $order ) ) {
+			return $token;
 		}
 
-		return $token;
+		$vault_token = $this->get_vault_v3_token( $order );
+		if ( $vault_token ) {
+			return $vault_token;
+		}
+
+		return $this->get_billing_agreement_token( $order ) ?? $token;
 	}
 
 	/**
-	 * Checks whether the mock PPEC gateway should be used or not.
+	 * Attempts to resolve or create a Vault v3 payment token for the renewal order.
 	 *
-	 * @return bool
+	 * Checks if the subscription already has a converted vault token. If not,
+	 * attempts conversion from the billing agreement via the PayPal Vault v3 API.
 	 */
-	private function should_mock_ppec_gateway() {
-		// Are we processing a renewal?
-		if ( doing_action( 'woocommerce_scheduled_subscription_payment' ) ) {
-			return true;
+	private function get_vault_v3_token( \WC_Order $order ): ?PaymentToken {
+		$subscriptions = wcs_get_subscriptions_for_renewal_order( $order );
+		$subscription  = ! empty( $subscriptions ) ? reset( $subscriptions ) : null;
+
+		if ( ! $subscription ) {
+			return null;
 		}
 
-		// My Account > Subscriptions.
-		if ( is_wc_endpoint_url( 'subscriptions' ) ) {
-			return true;
+		$vault_token_id = $subscription->get_meta( '_ppec_ba_converted_to_vault_v3', true );
+		if ( $vault_token_id ) {
+			return new PaymentToken( $vault_token_id, new stdClass(), PaymentToken::TYPE_PAYMENT_METHOD_TOKEN );
 		}
 
-		// phpcs:disable WordPress.Security.NonceVerification
+		$billing_agreement_id = $this->resolve_billing_agreement_id( $order );
+		if ( ! $billing_agreement_id ) {
+			return null;
+		}
 
-		// Checks that require Subscriptions.
-		if ( class_exists( \WC_Subscriptions::class ) ) {
-			// My Account > Subscriptions > (Subscription).
-			if ( wcs_is_view_subscription_page() ) {
-				$subscription = wcs_get_subscription( absint( get_query_var( 'view-subscription' ) ) );
+		$vault_token_id = $this->token_converter->convert( $billing_agreement_id, $order->get_customer_id() );
+		if ( ! $vault_token_id ) {
+			return null;
+		}
 
-				return ( $subscription && PPECHelper::PPEC_GATEWAY_ID === $subscription->get_payment_method() );
+		$subscription->update_meta_data( '_ppec_ba_converted_to_vault_v3', $vault_token_id );
+		$subscription->save();
+
+		$this->logger->info(
+			sprintf(
+				'Subscription #%d: converted Billing Agreement %s to Vault v3 token %s.',
+				$subscription->get_id(),
+				$billing_agreement_id,
+				$vault_token_id
+			)
+		);
+
+		return new PaymentToken( $vault_token_id, new stdClass(), PaymentToken::TYPE_PAYMENT_METHOD_TOKEN );
+	}
+
+	private function get_billing_agreement_token( \WC_Order $order ): ?PaymentToken {
+		$billing_agreement_id = $this->resolve_billing_agreement_id( $order );
+		if ( ! $billing_agreement_id ) {
+			return null;
+		}
+
+		return new PaymentToken( $billing_agreement_id, new stdClass(), 'BILLING_AGREEMENT' );
+	}
+
+	private function resolve_billing_agreement_id( \WC_Order $order ): ?string {
+		$billing_agreement_id = $order->get_meta( '_ppec_billing_agreement_id', true );
+		if ( $billing_agreement_id ) {
+			return $billing_agreement_id;
+		}
+
+		$subscriptions = wcs_get_subscriptions_for_renewal_order( $order );
+		if ( ! empty( $subscriptions ) ) {
+			$subscription = reset( $subscriptions );
+			$parent_order = $subscription->get_parent();
+
+			if ( $parent_order ) {
+				$billing_agreement_id = $parent_order->get_meta( '_ppec_billing_agreement_id', true );
+				if ( $billing_agreement_id ) {
+					return $billing_agreement_id;
+				}
 			}
-
-			// Changing payment method?
-			if ( is_wc_endpoint_url( 'order-pay' ) && isset( $_GET['change_payment_method'] ) ) {
-				$subscription = wcs_get_subscription( absint( get_query_var( 'order-pay' ) ) );
-
-				return ( $subscription && PPECHelper::PPEC_GATEWAY_ID === $subscription->get_payment_method() );
-			}
-
-			// Early renew (via modal).
-			if ( isset( $_GET['process_early_renewal'], $_GET['subscription_id'] ) ) {
-				$subscription = wcs_get_subscription( absint( $_GET['subscription_id'] ) );
-
-				return ( $subscription && PPECHelper::PPEC_GATEWAY_ID === $subscription->get_payment_method() );
-			}
 		}
 
-		// Admin-only from here onwards.
-		if ( ! is_admin() ) {
-			return false;
-		}
-
-		// Are we saving metadata for a subscription?
-		if ( doing_action( 'woocommerce_process_shop_order_meta' ) ) {
-			return true;
-		}
-
-		// Are we editing an order or subscription tied to PPEC?
-		$order_id = wc_clean( wp_unslash( $_GET['id'] ?? $_GET['post'] ?? $_POST['post_ID'] ?? '' ) );
-		if ( $order_id ) {
-			$order = wc_get_order( $order_id );
-			return ( $order && PPECHelper::PPEC_GATEWAY_ID === $order->get_payment_method() );
-		}
-
-		// Are we on the WC > Subscriptions screen?
-		/**
-		 * Class exist in WooCommerce.
-		 *
-		 * @psalm-suppress UndefinedClass
-		 */
-		$post_type_or_page = class_exists( OrderUtil::class ) && OrderUtil::custom_orders_table_usage_is_enabled()
-			? wc_clean( wp_unslash( $_GET['page'] ?? '' ) )
-			: wc_clean( wp_unslash( $_GET['post_type'] ?? $_POST['post_type'] ?? '' ) );
-		if ( $post_type_or_page === 'shop_subscription' || $post_type_or_page === 'wc-orders--shop_subscription' ) {
-			return true;
-		}
-
-		return false;
+		return null;
 	}
 }

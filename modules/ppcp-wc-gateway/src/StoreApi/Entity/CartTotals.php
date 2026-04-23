@@ -91,6 +91,4 @@ class CartTotals {
 	public function total_tax(): Money {
 		return $this->total_tax;
 	}
-
-
 }

@@ -1,4 +1,4 @@
-import { STORE_NAME } from '../../stores/axoStore';
+import { STORE_NAME } from '@ppcp-axo-block/stores/axoStore';
 import { useSelect } from '@wordpress/data';
 import { __ } from '@wordpress/i18n';
 

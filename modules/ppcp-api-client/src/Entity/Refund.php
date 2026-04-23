@@ -119,7 +119,7 @@ class Refund {
 	 *
 	 * @return string
 	 */
-	public function id() : string {
+	public function id(): string {
 		return $this->id;
 	}
 
@@ -128,7 +128,7 @@ class Refund {
 	 *
 	 * @return RefundStatus
 	 */
-	public function status() : RefundStatus {
+	public function status(): RefundStatus {
 		return $this->status;
 	}
 
@@ -137,7 +137,7 @@ class Refund {
 	 *
 	 * @return Amount
 	 */
-	public function amount() : Amount {
+	public function amount(): Amount {
 		return $this->amount;
 	}
 
@@ -146,7 +146,7 @@ class Refund {
 	 *
 	 * @return string
 	 */
-	public function invoice_id() : string {
+	public function invoice_id(): string {
 		return $this->invoice_id;
 	}
 
@@ -155,7 +155,7 @@ class Refund {
 	 *
 	 * @return string
 	 */
-	public function custom_id() : string {
+	public function custom_id(): string {
 		return $this->custom_id;
 	}
 
@@ -164,7 +164,7 @@ class Refund {
 	 *
 	 * @return SellerPayableBreakdown|null
 	 */
-	public function seller_payable_breakdown() : ?SellerPayableBreakdown {
+	public function seller_payable_breakdown(): ?SellerPayableBreakdown {
 		return $this->seller_payable_breakdown;
 	}
 
@@ -173,7 +173,7 @@ class Refund {
 	 *
 	 * @return string
 	 */
-	public function acquirer_reference_number() : string {
+	public function acquirer_reference_number(): string {
 		return $this->acquirer_reference_number;
 	}
 
@@ -182,7 +182,7 @@ class Refund {
 	 *
 	 * @return string
 	 */
-	public function note_to_payer() : string {
+	public function note_to_payer(): string {
 		return $this->note_to_payer;
 	}
 
@@ -191,7 +191,7 @@ class Refund {
 	 *
 	 * @return RefundPayer|null
 	 */
-	public function payer() : ?RefundPayer {
+	public function payer(): ?RefundPayer {
 		return $this->payer;
 	}
 
@@ -200,7 +200,7 @@ class Refund {
 	 *
 	 * @return array
 	 */
-	public function to_array() : array {
+	public function to_array(): array {
 		$data    = array(
 			'id'                        => $this->id(),
 			'status'                    => $this->status()->name(),

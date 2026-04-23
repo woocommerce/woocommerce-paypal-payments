@@ -5,6 +5,7 @@ const TODO_TRIGGERS = {
 	'ppcp-googlepay': 'enable_google_pay',
 	'ppcp-axo-gateway': 'enable_fastlane',
 	'ppcp-card-button-gateway': 'enable_credit_debit_cards',
+	'ppcp-pwc': 'enable_pwc',
 };
 
 /**

@@ -11,26 +11,22 @@ namespace WooCommerce\PayPalCommerce\Blocks;
 
 use Automattic\WooCommerce\Blocks\Payments\Integrations\AbstractPaymentMethodType;
 use WC_AJAX;
+use WooCommerce\PayPalCommerce\Assets\AssetGetter;
 use WooCommerce\PayPalCommerce\Blocks\Endpoint\UpdateShippingEndpoint;
 use WooCommerce\PayPalCommerce\Button\Assets\SmartButtonInterface;
 use WooCommerce\PayPalCommerce\Session\Cancellation\CancelController;
 use WooCommerce\PayPalCommerce\Session\Cancellation\CancelView;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
+use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\SettingsStatus;
-use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
 
 /**
  * Class PayPalPaymentMethod
  */
 class PayPalPaymentMethod extends AbstractPaymentMethodType {
-	/**
-	 * The URL of this module.
-	 *
-	 * @var string
-	 */
-	private $module_url;
+	private AssetGetter $asset_getter;
 
 	/**
 	 * The assets version.
@@ -47,11 +43,11 @@ class PayPalPaymentMethod extends AbstractPaymentMethodType {
 	private $smart_button;
 
 	/**
-	 * The settings.
+	 * The settings provider.
 	 *
-	 * @var Settings
+	 * @var SettingsProvider
 	 */
-	private $plugin_settings;
+	private SettingsProvider $plugin_settings;
 
 	/**
 	 * The Settings status helper.
@@ -131,12 +127,10 @@ class PayPalPaymentMethod extends AbstractPaymentMethodType {
 	private $all_funding_sources;
 
 	/**
-	 * Assets constructor.
-	 *
-	 * @param string                        $module_url The url of this module.
+	 * @param AssetGetter                   $asset_getter
 	 * @param string                        $version    The assets version.
 	 * @param SmartButtonInterface|callable $smart_button The smart button script loading handler.
-	 * @param Settings                      $plugin_settings The settings.
+	 * @param SettingsProvider              $plugin_settings The settings provider.
 	 * @param SettingsStatus                $settings_status The Settings status helper.
 	 * @param PayPalGateway                 $gateway The WC gateway.
 	 * @param bool                          $final_review_enabled Whether the final review is enabled.
@@ -150,10 +144,10 @@ class PayPalPaymentMethod extends AbstractPaymentMethodType {
 	 * @param array                         $all_funding_sources All existing funding sources for PayPal buttons.
 	 */
 	public function __construct(
-		string $module_url,
+		AssetGetter $asset_getter,
 		string $version,
 		$smart_button,
-		Settings $plugin_settings,
+		SettingsProvider $plugin_settings,
 		SettingsStatus $settings_status,
 		PayPalGateway $gateway,
 		bool $final_review_enabled,
@@ -167,7 +161,7 @@ class PayPalPaymentMethod extends AbstractPaymentMethodType {
 		array $all_funding_sources
 	) {
 		$this->name                           = PayPalGateway::ID;
-		$this->module_url                     = $module_url;
+		$this->asset_getter                   = $asset_getter;
 		$this->version                        = $version;
 		$this->smart_button                   = $smart_button;
 		$this->plugin_settings                = $plugin_settings;
@@ -193,10 +187,7 @@ class PayPalPaymentMethod extends AbstractPaymentMethodType {
 	 * {@inheritDoc}
 	 */
 	public function is_active() {
-		// Do not load when definitely not needed,
-		// but we still need to check the locations later and handle in JS
-		// because has_block cannot be called here (too early).
-		return $this->plugin_settings->has( 'enabled' ) && $this->plugin_settings->get( 'enabled' );
+		return $this->plugin_settings->is_method_enabled( PayPalGateway::ID );
 	}
 
 	/**
@@ -205,7 +196,7 @@ class PayPalPaymentMethod extends AbstractPaymentMethodType {
 	public function get_payment_method_script_handles() {
 		wp_register_script(
 			'ppcp-checkout-block',
-			trailingslashit( $this->module_url ) . 'assets/js/checkout-block.js',
+			$this->asset_getter->get_asset_url( 'checkout-block.js' ),
 			array(),
 			$this->version,
 			true
@@ -260,7 +251,7 @@ class PayPalPaymentMethod extends AbstractPaymentMethodType {
 					'src' => $this->gateway->icon,
 				),
 			),
-			'description'                 => $this->gateway->description,
+			'description'                 => $this->gateway->get_description(),
 			'smartButtonsEnabled'         => $smart_buttons_enabled,
 			'placeOrderEnabled'           => $place_order_enabled,
 			'fundingSource'               => $this->session_handler->funding_source(),

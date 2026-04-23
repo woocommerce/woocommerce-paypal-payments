@@ -1,12 +1,12 @@
 import {
 	combineStyles,
 	combineWrapperIds,
-} from '../../../ppcp-button/resources/js/modules/Helper/PaymentButtonHelpers';
-import PaymentButton from '../../../ppcp-button/resources/js/modules/Renderer/PaymentButton';
-import widgetBuilder from '../../../ppcp-button/resources/js/modules/Renderer/WidgetBuilder';
+} from '@ppcp-button/Helper/PaymentButtonHelpers';
+import PaymentButton from '@ppcp-button/Renderer/PaymentButton';
+import widgetBuilder from '@ppcp-button/Renderer/WidgetBuilder';
 import UpdatePaymentData from './Helper/UpdatePaymentData';
-import { PaymentMethods } from '../../../ppcp-button/resources/js/modules/Helper/CheckoutMethodState';
-import { setPayerData } from '../../../ppcp-button/resources/js/modules/Helper/PayerData';
+import { PaymentMethods } from '@ppcp-button/Helper/CheckoutMethodState';
+import { setPayerData } from '@ppcp-button/Helper/PayerData';
 import moduleStorage from './Helper/GooglePayStorage';
 
 /**
@@ -77,6 +77,17 @@ const ORDER_FAILED = 'failed';
  */
 const ORDER_INCOMPLETE = 'payerAction';
 
+function getAddressFromData( data ) {
+	return {
+		country_code: data?.countryCode,
+		address_line_1: data?.address1,
+		address_line_2: data?.address2,
+		admin_area_1: data?.administrativeArea,
+		admin_area_2: data?.locality,
+		postal_code: data?.postalCode,
+	};
+}
+
 function payerDataFromPaymentResponse( response ) {
 	const raw = response?.paymentMethodData?.info?.billingAddress;
 
@@ -86,14 +97,20 @@ function payerDataFromPaymentResponse( response ) {
 			given_name: raw.name.split( ' ' )[ 0 ], // Assuming first name is the first part
 			surname: raw.name.split( ' ' ).slice( 1 ).join( ' ' ), // Assuming last name is the rest
 		},
-		address: {
-			country_code: raw.countryCode,
-			address_line_1: raw.address1,
-			address_line_2: raw.address2,
-			admin_area_1: raw.administrativeArea,
-			admin_area_2: raw.locality,
-			postal_code: raw.postalCode,
+		address: getAddressFromData( raw ),
+	};
+}
+
+function shippingAddressDataFromPaymentResponse( response ) {
+	const shippingAddress =
+		response?.shippingAddress ??
+		response?.paymentMethodData?.info?.billingAddress;
+
+	return {
+		name: {
+			full_name: shippingAddress?.name,
 		},
+		address: getAddressFromData( shippingAddress ),
 	};
 }
 
@@ -829,10 +846,11 @@ class GooglepayButton extends PaymentButton {
 
 	async processPayment( paymentData ) {
 		this.logGroup( 'processPayment' );
-
 		let result;
 
 		const payer = payerDataFromPaymentResponse( paymentData );
+		const shippingAddress =
+			shippingAddressDataFromPaymentResponse( paymentData );
 
 		const paymentResponse = ( state, intent = null, message = null ) => {
 			const response = {
@@ -909,7 +927,7 @@ class GooglepayButton extends PaymentButton {
 			this.log( 'approveOrder', orderID );
 
 			await this.contextHandler.approveOrder(
-				{ orderID, payer },
+				{ orderID, payer, shippingAddress },
 				{
 					restart: () =>
 						new Promise( ( resolve ) => {

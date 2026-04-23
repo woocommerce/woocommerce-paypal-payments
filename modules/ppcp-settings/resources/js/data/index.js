@@ -10,7 +10,7 @@ import * as Features from './features';
 import * as Tracking from './tracking';
 
 // Initialize tracking funnels before any store initialization.
-import '../services/tracking/init';
+import '@ppcp-settings/services/tracking/init';
 
 const stores = [
 	Onboarding,

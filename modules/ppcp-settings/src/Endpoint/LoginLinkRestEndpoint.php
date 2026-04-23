@@ -51,7 +51,7 @@ class LoginLinkRestEndpoint extends RestEndpoint {
 	/**
 	 * Configure REST API routes.
 	 */
-	public function register_routes() : void {
+	public function register_routes(): void {
 		/**
 		 * POST /wp-json/wc/v3/wc_paypal/login_link
 		 * {
@@ -104,7 +104,7 @@ class LoginLinkRestEndpoint extends RestEndpoint {
 	 *
 	 * @return WP_REST_Response The login URL or an error response.
 	 */
-	public function get_login_url( WP_REST_Request $request ) : WP_REST_Response {
+	public function get_login_url( WP_REST_Request $request ): WP_REST_Response {
 		$use_sandbox = $request->get_param( 'useSandbox' );
 		$products    = $request->get_param( 'products' );
 		$flags       = (array) $request->get_param( 'options' );

@@ -1,6 +1,6 @@
 import { __ } from '@wordpress/i18n';
 
-import { CommonHooks, OnboardingHooks } from '../../../../data';
+import { CommonHooks, OnboardingHooks } from '@ppcp-settings/data';
 import StepWelcome from './StepWelcome';
 import StepBusiness from './StepBusiness';
 import StepProducts from './StepProducts';
@@ -64,10 +64,22 @@ export const getSteps = ( flags ) => {
 		// Casual selling: Unlock the "Personal Account" choice.
 		( step ) => flags.canUseCasualSelling || step.id !== 'business',
 		// Skip payment methods screen.
-		( step ) =>
-			step.id !== 'methods' ||
-			( ! flags.shouldSkipPaymentMethods &&
-				! ( ownBrandOnly && isCasualSeller ) ),
+		( step ) => {
+			if ( step.id !== 'methods' ) {
+				return true;
+			}
+
+			const isBrandedBCDC =
+				ownBrandOnly &&
+				! flags.canUseCardPayments &&
+				! flags.canUseDigitalWallets;
+			const shouldSkip =
+				flags.shouldSkipPaymentMethods ||
+				isCasualSeller ||
+				isBrandedBCDC;
+
+			return ! shouldSkip;
+		},
 	] );
 
 	const totalStepsCount = steps.length;

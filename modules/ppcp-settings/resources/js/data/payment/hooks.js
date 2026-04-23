@@ -10,7 +10,7 @@
 import { useDispatch, useSelect } from '@wordpress/data';
 
 import { STORE_NAME } from './constants';
-import { createHooksForStore } from '../utils';
+import { createHooksForStore } from '@ppcp-settings/data/utils';
 import { useMemo } from '@wordpress/element';
 
 /**
@@ -72,6 +72,7 @@ export const usePaymentMethods = () => {
 	const [ googlePay ] = usePersistent( 'ppcp-googlepay' );
 
 	// Alternative payment methods.
+	const [ pwc ] = usePersistent( 'ppcp-pwc' );
 	const [ bancontact ] = usePersistent( 'ppcp-bancontact' );
 	const [ blik ] = usePersistent( 'ppcp-blik' );
 	const [ eps ] = usePersistent( 'ppcp-eps' );
@@ -99,6 +100,7 @@ export const usePaymentMethods = () => {
 		googlePay,
 	] );
 	const alternative = removeEmpty( [
+		pwc,
 		bancontact,
 		blik,
 		eps,
@@ -129,16 +131,22 @@ export const usePaymentMethodsModal = () => {
 	const { usePersistent } = useStoreData();
 
 	const [ paypalShowLogo ] = usePersistent( 'paypalShowLogo' );
-	const [ fastlaneCardholderName ] = usePersistent(
-		'fastlaneCardholderName'
-	);
+	const [ cardholderName ] = usePersistent( 'cardholderName' );
 	const [ fastlaneDisplayWatermark ] = usePersistent(
 		'fastlaneDisplayWatermark'
+	);
+	const [ puiBrandName ] = usePersistent( 'puiBrandName' );
+	const [ puiLogoUrl ] = usePersistent( 'puiLogoUrl' );
+	const [ puiCustomerServiceInstructions ] = usePersistent(
+		'puiCustomerServiceInstructions'
 	);
 
 	return {
 		paypalShowLogo,
-		fastlaneCardholderName,
+		cardholderName,
 		fastlaneDisplayWatermark,
+		puiBrandName,
+		puiLogoUrl,
+		puiCustomerServiceInstructions,
 	};
 };

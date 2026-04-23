@@ -33,7 +33,7 @@ class SellerTypeEnum {
 	 *
 	 * @return array List of all valid seller_types.
 	 */
-	public static function get_valid_values() : array {
+	public static function get_valid_values(): array {
 		return array(
 			self::BUSINESS,
 			self::PERSONAL,
@@ -47,7 +47,7 @@ class SellerTypeEnum {
 	 * @param string $type The value to validate.
 	 * @return bool True, if the value is a valid seller_type.
 	 */
-	public static function is_valid( string $type ) : bool {
+	public static function is_valid( string $type ): bool {
 		return in_array( $type, self::get_valid_values(), true );
 	}
 }

@@ -10,6 +10,7 @@ declare( strict_types = 1 );
 namespace WooCommerce\PayPalCommerce\ApiClient\Factory;
 
 use WooCommerce\PayPalCommerce\ApiClient\Entity\ExperienceContext;
+use WooCommerce\PayPalCommerce\Settings\Data\Definition\FeaturesDefinition;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\MerchantDetails;
 
 /**
@@ -48,7 +49,7 @@ class ContactPreferenceFactory {
 	 * @param string $payment_source_key Name of the payment_source.
 	 * @return string|null
 	 */
-	public function from_state( string $payment_source_key ) : ?string {
+	public function from_state( string $payment_source_key ): ?string {
 		$payment_sources_with_contact = array( 'paypal', 'venmo' );
 
 		/**
@@ -63,7 +64,7 @@ class ContactPreferenceFactory {
 			return ExperienceContext::CONTACT_PREFERENCE_NO_CONTACT_INFO;
 		}
 
-		if ( ! $this->merchant_details->is_eligible_for( MerchantDetails::FEATURE_CONTACT_MODULE ) ) {
+		if ( ! $this->merchant_details->is_eligible_for( FeaturesDefinition::FEATURE_CONTACT_MODULE ) ) {
 			return ExperienceContext::CONTACT_PREFERENCE_NO_CONTACT_INFO;
 		}
 

@@ -2,19 +2,15 @@ import { Button } from '@wordpress/components';
 import { useEffect, useCallback } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
 import classNames from 'classnames';
-import { OpenSignup } from '../../../ReusableComponents/Icons';
-import { useHandleOnboardingButton } from '../../../../hooks/useHandleConnections';
-import { OnboardingHooks } from '../../../../data/onboarding/hooks';
-import BusyStateWrapper from '../../../ReusableComponents/BusyStateWrapper';
-import { Notice } from '../../../ReusableComponents/Elements';
+import { OpenSignup } from '@ppcp-settings/Components/ReusableComponents/Icons';
+import { useHandleOnboardingButton } from '@ppcp-settings/hooks/useHandleConnections';
+import { OnboardingHooks } from '@ppcp-settings/data/onboarding/hooks';
+import BusyStateWrapper from '@ppcp-settings/Components/ReusableComponents/BusyStateWrapper';
+import { Notice } from '@ppcp-settings/Components/ReusableComponents/Elements';
 
-const useIsFirefox = () => {
-	if ( typeof window === 'undefined' ) {
-		return false;
-	}
-	return window.navigator.userAgent.toLowerCase().indexOf( 'firefox' ) > -1;
-};
-
+const isFirefox =
+	typeof window !== 'undefined' &&
+	window.navigator.userAgent.toLowerCase().includes( 'firefox' );
 /**
  * Button component that outputs a placeholder button when no onboardingUrl is present yet - the
  * placeholder button looks identical to the working button, but has no href, target, or
@@ -36,8 +32,6 @@ const ButtonOrPlaceholder = ( {
 	children,
 	onClick,
 } ) => {
-	const isFirefox = useIsFirefox();
-
 	const buttonProps = {
 		className,
 		variant,

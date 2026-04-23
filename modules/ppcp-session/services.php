@@ -14,19 +14,20 @@ use WooCommerce\PayPalCommerce\Session\Cancellation\CancelController;
 use WooCommerce\PayPalCommerce\Session\Cancellation\CancelView;
 
 return array(
-	'session.handler'                 => function ( ContainerInterface $container ) : SessionHandler {
+	'session.handler'                 => function ( ContainerInterface $container ): SessionHandler {
 		return new SessionHandler();
 	},
-	'session.cancellation.view'       => function ( ContainerInterface $container ) : CancelView {
+	'session.cancellation.view'       => function ( ContainerInterface $container ): CancelView {
 		return new CancelView(
-			$container->get( 'wcgateway.settings' ),
+			$container->get( 'settings.settings-provider' ),
 			$container->get( 'wcgateway.funding-source.renderer' )
 		);
 	},
-	'session.cancellation.controller' => function ( ContainerInterface $container ) : CancelController {
+	'session.cancellation.controller' => function ( ContainerInterface $container ): CancelController {
 		return new CancelController(
 			$container->get( 'session.handler' ),
-			$container->get( 'session.cancellation.view' )
+			$container->get( 'session.cancellation.view' ),
+			$container->get( 'button.helper.context' )
 		);
 	},
 );

@@ -66,7 +66,7 @@ class CaptureFactory {
 	 * @return Capture
 	 * @throws RuntimeException When capture amount data is invalid.
 	 */
-	public function from_paypal_response( \stdClass $data ) : Capture {
+	public function from_paypal_response( \stdClass $data ): Capture {
 		$reason                      = $data->status_details->reason ?? null;
 		$seller_receivable_breakdown = isset( $data->seller_receivable_breakdown ) ?
 			$this->seller_receivable_breakdown_factory->from_paypal_response( $data->seller_receivable_breakdown )
@@ -89,9 +89,9 @@ class CaptureFactory {
 			),
 			$amount,
 			(bool) $data->final_capture,
-			(string) $data->seller_protection->status,
-			(string) $data->invoice_id,
-			(string) $data->custom_id,
+			(string) ( $data->seller_protection->status ?? '' ),
+			(string) ( $data->invoice_id ?? '' ),
+			(string) ( $data->custom_id ?? '' ),
 			$seller_receivable_breakdown,
 			$fraud_processor_response
 		);

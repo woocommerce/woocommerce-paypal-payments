@@ -8,9 +8,9 @@
  */
 
 import { loadCustomScript } from '@paypal/paypal-js';
-import { loadPayPalScript } from '../../../ppcp-button/resources/js/modules/Helper/PayPalScriptLoading';
+import { loadPayPalScript } from '@ppcp-button/Helper/PayPalScriptLoading';
 import GooglepayManager from './GooglepayManager';
-import { setupButtonEvents } from '../../../ppcp-button/resources/js/modules/Helper/ButtonRefreshHelper';
+import { setupButtonEvents } from '@ppcp-button/Helper/ButtonRefreshHelper';
 import { CheckoutBootstrap } from './ContextBootstrap/CheckoutBootstrap';
 import moduleStorage from './Helper/GooglePayStorage';
 

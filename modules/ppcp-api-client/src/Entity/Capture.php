@@ -120,7 +120,7 @@ class Capture {
 	 *
 	 * @return string
 	 */
-	public function id() : string {
+	public function id(): string {
 		return $this->id;
 	}
 
@@ -129,7 +129,7 @@ class Capture {
 	 *
 	 * @return CaptureStatus
 	 */
-	public function status() : CaptureStatus {
+	public function status(): CaptureStatus {
 		return $this->status;
 	}
 
@@ -138,7 +138,7 @@ class Capture {
 	 *
 	 * @return Amount
 	 */
-	public function amount() : Amount {
+	public function amount(): Amount {
 		return $this->amount;
 	}
 
@@ -147,7 +147,7 @@ class Capture {
 	 *
 	 * @return bool
 	 */
-	public function final_capture() : bool {
+	public function final_capture(): bool {
 		return $this->final_capture;
 	}
 
@@ -165,7 +165,7 @@ class Capture {
 	 *
 	 * @return string
 	 */
-	public function invoice_id() : string {
+	public function invoice_id(): string {
 		return $this->invoice_id;
 	}
 
@@ -174,7 +174,7 @@ class Capture {
 	 *
 	 * @return string
 	 */
-	public function custom_id() : string {
+	public function custom_id(): string {
 		return $this->custom_id;
 	}
 
@@ -183,7 +183,7 @@ class Capture {
 	 *
 	 * @return SellerReceivableBreakdown|null
 	 */
-	public function seller_receivable_breakdown() : ?SellerReceivableBreakdown {
+	public function seller_receivable_breakdown(): ?SellerReceivableBreakdown {
 		return $this->seller_receivable_breakdown;
 	}
 
@@ -192,7 +192,7 @@ class Capture {
 	 *
 	 * @return FraudProcessorResponse|null
 	 */
-	public function fraud_processor_response() : ?FraudProcessorResponse {
+	public function fraud_processor_response(): ?FraudProcessorResponse {
 		return $this->fraud_processor_response;
 	}
 
@@ -201,7 +201,7 @@ class Capture {
 	 *
 	 * @return array
 	 */
-	public function to_array() : array {
+	public function to_array(): array {
 		$data    = array(
 			'id'                => $this->id(),
 			'status'            => $this->status()->name(),

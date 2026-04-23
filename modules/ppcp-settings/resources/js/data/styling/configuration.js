@@ -27,7 +27,7 @@ export const STYLING_LOCATIONS = {
 	},
 	miniCart: {
 		value: 'miniCart',
-		label: __( 'Mini Cart', 'woocommerce-paypel-payements' ),
+		label: __( 'Mini Cart', 'woocommerce-paypal-payments' ),
 		link: 'https://woocommerce.com/document/woocommerce-paypal-payments/#button-on-mini-cart',
 		props: { layout: true, tagline: true },
 	},
@@ -117,6 +117,7 @@ export const STYLING_PAYMENT_METHODS = {
 	},
 	'pay-later': {
 		value: 'pay-later',
+		fundingKey: 'paylater',
 		label: __( 'Pay Later', 'woocommerce-paypal-payments' ),
 		isFunding: true,
 	},

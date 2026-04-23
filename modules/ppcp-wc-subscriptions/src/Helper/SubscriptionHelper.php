@@ -14,6 +14,7 @@ namespace WooCommerce\PayPalCommerce\WcSubscriptions\Helper;
 use WC_Order;
 use WC_Product;
 use WC_Product_Subscription_Variation;
+use WC_Product_Variable;
 use WC_Subscription;
 use WC_Subscriptions;
 use WC_Subscriptions_Product;
@@ -25,6 +26,10 @@ use WP_Query;
  * Class SubscriptionHelper
  */
 class SubscriptionHelper {
+
+	public const SUBSCRIPTION_MODE_VALUE_VAULTING      = 'vaulting_api';
+	public const SUBSCRIPTION_MODE_VALUE_SUBSCRIPTIONS = 'subscriptions_api';
+	public const SUBSCRIPTION_MODE_VALUE_DISABLED      = 'disable_paypal_subscriptions';
 
 	/**
 	 * Whether the current product is a subscription.
@@ -199,13 +204,11 @@ class SubscriptionHelper {
 			}
 
 			if ( $product->get_type() === 'variable-subscription' ) {
-				/**
-				 * The method is defined in WC_Product_Variable class.
-				 *
-				 * @psalm-suppress UndefinedMethod
-				 */
+				assert( $product instanceof WC_Product_Variable );
+
 				$product_variations = $product->get_available_variations();
 				foreach ( $product_variations as $variation ) {
+					/** @psalm-suppress UndefinedMethod */
 					$variation_product = wc_get_product( $variation['variation_id'] ) ?? '';
 					if ( $variation_product && $variation_product->meta_exists( 'ppcp_subscription_plan' ) ) {
 						return $variation_product->get_meta( 'ppcp_subscription_plan' )['id'];
@@ -237,7 +240,7 @@ class SubscriptionHelper {
 		$variation_ids = $product->get_children();
 		foreach ( $variation_ids as $id ) {
 			$product = wc_get_product( $id );
-			if ( ! is_a( $product, WC_Product_Subscription_Variation::class ) ) {
+			if ( ! ( $product instanceof WC_Product_Subscription_Variation ) ) {
 				continue;
 			}
 
@@ -299,7 +302,7 @@ class SubscriptionHelper {
 			return '';
 		}
 
-		// Sort orders by oder ID descending.
+		// Sort orders by order ID descending.
 		rsort( $orders );
 		$current_order = wc_get_order( array_shift( $orders ) );
 		if ( ! $current_order instanceof WC_Order ) {
@@ -309,7 +312,7 @@ class SubscriptionHelper {
 		foreach ( $orders as $order_id ) {
 			$order = wc_get_order( $order_id );
 			if (
-				is_a( $order, WC_Order::class )
+				$order instanceof WC_Order
 				&& in_array( $order->get_status(), array( 'processing', 'completed' ), true )
 				&& $current_order->get_payment_method() === $order->get_payment_method()
 			) {

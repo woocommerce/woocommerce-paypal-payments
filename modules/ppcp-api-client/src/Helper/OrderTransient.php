@@ -156,5 +156,4 @@ class OrderTransient {
 		}
 		return implode( '_', array( self::CACHE_KEY . $order->id() ) );
 	}
-
 }

@@ -1,5 +1,5 @@
 import { useState, useEffect } from '@wordpress/element';
-import { loadPayPalScript } from '../../../../../ppcp-button/resources/js/modules/Helper/PayPalScriptLoading';
+import { loadPayPalScript } from '@ppcp-button/Helper/PayPalScriptLoading';
 
 const usePayPalScript = ( namespace, ppcpConfig ) => {
 	const [ isPayPalLoaded, setIsPayPalLoaded ] = useState( false );

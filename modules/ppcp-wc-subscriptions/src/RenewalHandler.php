@@ -17,18 +17,16 @@ use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PaymentTokensEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentSource;
-use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentToken;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\ExperienceContextBuilder;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PayerFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PurchaseUnitFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\ShippingPreferenceFactory;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
-use WooCommerce\PayPalCommerce\Vaulting\PaymentTokenApplePay;
-use WooCommerce\PayPalCommerce\Vaulting\PaymentTokenPayPal;
-use WooCommerce\PayPalCommerce\Vaulting\PaymentTokenRepository;
-use WooCommerce\PayPalCommerce\Vaulting\PaymentTokenVenmo;
-use WooCommerce\PayPalCommerce\Vaulting\WooCommercePaymentTokens;
+use WooCommerce\PayPalCommerce\WcPaymentTokens\PaymentTokenApplePay;
+use WooCommerce\PayPalCommerce\WcPaymentTokens\PaymentTokenPayPal;
+use WooCommerce\PayPalCommerce\WcPaymentTokens\PaymentTokenVenmo;
+use WooCommerce\PayPalCommerce\WcPaymentTokens\WooCommercePaymentTokens;
 use WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException;
 use WooCommerce\PayPalCommerce\WcGateway\FundingSource\FundingSourceRenderer;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
@@ -37,7 +35,7 @@ use WooCommerce\PayPalCommerce\WcGateway\Processor\AuthorizedPaymentsProcessor;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\OrderMetaTrait;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\PaymentsStatusHandlingTrait;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\TransactionIdHandlingTrait;
-use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
+use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
 use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\RealTimeAccountUpdaterHelper;
 use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
 
@@ -56,13 +54,6 @@ class RenewalHandler {
 	 * @var LoggerInterface
 	 */
 	private $logger;
-
-	/**
-	 * The payment token repository.
-	 *
-	 * @var PaymentTokenRepository
-	 */
-	private $repository;
 
 	/**
 	 * The order endpoint.
@@ -100,11 +91,11 @@ class RenewalHandler {
 	protected $environment;
 
 	/**
-	 * The settings
+	 * The settings provider
 	 *
-	 * @var Settings
+	 * @var SettingsProvider
 	 */
-	protected $settings;
+	protected $settings_provider;
 
 	/**
 	 * The processor for authorized payments.
@@ -135,13 +126,6 @@ class RenewalHandler {
 	private $subscription_helper;
 
 	/**
-	 * Payment tokens endpoint
-	 *
-	 * @var PaymentTokensEndpoint
-	 */
-	private $payment_tokens_endpoint;
-
-	/**
 	 * WooCommerce payments tokens factory.
 	 *
 	 * @var WooCommercePaymentTokens
@@ -154,55 +138,47 @@ class RenewalHandler {
 	private ExperienceContextBuilder $experience_context_builder;
 
 	/**
-	 * RenewalHandler constructor.
-	 *
 	 * @param LoggerInterface              $logger The logger.
-	 * @param PaymentTokenRepository       $repository The payment token repository.
 	 * @param OrderEndpoint                $order_endpoint The order endpoint.
 	 * @param PurchaseUnitFactory          $purchase_unit_factory The purchase unit factory.
 	 * @param ShippingPreferenceFactory    $shipping_preference_factory The shipping_preference factory.
 	 * @param PayerFactory                 $payer_factory The payer factory.
 	 * @param Environment                  $environment The environment.
-	 * @param Settings                     $settings The Settings.
+	 * @param SettingsProvider             $settings_provider The Settings Provider.
 	 * @param AuthorizedPaymentsProcessor  $authorized_payments_processor The Authorized Payments Processor.
 	 * @param FundingSourceRenderer        $funding_source_renderer The funding source renderer.
 	 * @param RealTimeAccountUpdaterHelper $real_time_account_updater_helper Real Time Account Updater helper.
 	 * @param SubscriptionHelper           $subscription_helper Subscription helper.
-	 * @param PaymentTokensEndpoint        $payment_tokens_endpoint Payment tokens endpoint.
 	 * @param WooCommercePaymentTokens     $wc_payment_tokens WooCommerce payments tokens factory.
 	 * @param ExperienceContextBuilder     $experience_context_builder The ExperienceContextBuilder.
 	 */
 	public function __construct(
 		LoggerInterface $logger,
-		PaymentTokenRepository $repository,
 		OrderEndpoint $order_endpoint,
 		PurchaseUnitFactory $purchase_unit_factory,
 		ShippingPreferenceFactory $shipping_preference_factory,
 		PayerFactory $payer_factory,
 		Environment $environment,
-		Settings $settings,
+		SettingsProvider $settings_provider,
 		AuthorizedPaymentsProcessor $authorized_payments_processor,
 		FundingSourceRenderer $funding_source_renderer,
 		RealTimeAccountUpdaterHelper $real_time_account_updater_helper,
 		SubscriptionHelper $subscription_helper,
-		PaymentTokensEndpoint $payment_tokens_endpoint,
 		WooCommercePaymentTokens $wc_payment_tokens,
 		ExperienceContextBuilder $experience_context_builder
 	) {
 
 		$this->logger                           = $logger;
-		$this->repository                       = $repository;
 		$this->order_endpoint                   = $order_endpoint;
 		$this->purchase_unit_factory            = $purchase_unit_factory;
 		$this->shipping_preference_factory      = $shipping_preference_factory;
 		$this->payer_factory                    = $payer_factory;
 		$this->environment                      = $environment;
-		$this->settings                         = $settings;
+		$this->settings_provider                = $settings_provider;
 		$this->authorized_payments_processor    = $authorized_payments_processor;
 		$this->funding_source_renderer          = $funding_source_renderer;
 		$this->real_time_account_updater_helper = $real_time_account_updater_helper;
 		$this->subscription_helper              = $subscription_helper;
-		$this->payment_tokens_endpoint          = $payment_tokens_endpoint;
 		$this->wc_payment_tokens                = $wc_payment_tokens;
 		$this->experience_context_builder       = $experience_context_builder;
 	}
@@ -214,8 +190,9 @@ class RenewalHandler {
 	 */
 	public function renew( \WC_Order $wc_order ): void {
 		try {
-			$subscription = wcs_get_subscription( $wc_order->get_id() );
-			if ( is_a( $subscription, WC_Subscription::class ) ) {
+			$subscriptions = wcs_get_subscriptions_for_renewal_order( $wc_order );
+			$subscription  = end( $subscriptions );
+			if ( $subscription instanceof WC_Subscription ) {
 				$subscription_id = $subscription->get_meta( 'ppcp_subscription' ) ?? '';
 				if ( $subscription_id ) {
 					return;
@@ -225,7 +202,7 @@ class RenewalHandler {
 			$this->process_order( $wc_order );
 		} catch ( \Exception $exception ) {
 			$error = $exception->getMessage();
-			if ( is_a( $exception, PayPalApiException::class ) ) {
+			if ( $exception instanceof PayPalApiException ) {
 				$error = $exception->get_details( $error );
 			}
 
@@ -383,11 +360,11 @@ class RenewalHandler {
 			return;
 		}
 
-		// Vault v2.
+		// PPEC compat: allow filters to provide a token for legacy billing agreement renewals.
 		$token = $this->get_token_for_customer( $customer, $wc_order );
 		if ( $token ) {
 			if ( $payment_method === CreditCardGateway::ID ) {
-				$payment_source = $this->card_payment_source( $token->id(), $wc_order );
+				$card_payment_source = $this->card_payment_source( $token->id(), $wc_order );
 
 				$order = $this->order_endpoint->create(
 					array( $purchase_unit ),
@@ -395,7 +372,7 @@ class RenewalHandler {
 					$payer,
 					'',
 					array(),
-					$payment_source
+					$card_payment_source
 				);
 
 				$this->handle_paypal_order( $wc_order, $order );
@@ -433,12 +410,12 @@ class RenewalHandler {
 	}
 
 	/**
-	 * Returns a payment token for a customer.
+	 * Returns a payment token for a customer via filter (used by PPEC compat).
 	 *
 	 * @param \WC_Customer $customer The customer.
 	 * @param \WC_Order    $wc_order The current WooCommerce order we want to process.
 	 *
-	 * @return PaymentToken|null|false
+	 * @return \WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentToken|false
 	 */
 	private function get_token_for_customer( \WC_Customer $customer, \WC_Order $wc_order ) {
 		/**
@@ -449,24 +426,7 @@ class RenewalHandler {
 			return $token;
 		}
 
-		$tokens = $this->repository->all_for_user_id( (int) $customer->get_id() );
-		if ( ! $tokens ) {
-			return false;
-		}
-
-		$subscription = function_exists( 'wcs_get_subscription' ) ? wcs_get_subscription( $wc_order->get_meta( '_subscription_renewal' ) ) : null;
-		if ( $subscription ) {
-			$token_id = $subscription->get_meta( 'payment_token_id' );
-			if ( $token_id ) {
-				foreach ( $tokens as $token ) {
-					if ( $token_id === $token->id() ) {
-						return $token;
-					}
-				}
-			}
-		}
-
-		return current( $tokens );
+		return false;
 	}
 
 	/**
@@ -475,13 +435,9 @@ class RenewalHandler {
 	 * @param Order $order The PayPal order.
 	 *
 	 * @return bool
-	 * @throws NotFoundException When a setting was not found.
 	 */
 	protected function capture_authorized_downloads( Order $order ): bool {
-		if (
-			! $this->settings->has( 'capture_for_virtual_only' )
-			|| ! $this->settings->get( 'capture_for_virtual_only' )
-		) {
+		if ( ! $this->settings_provider->capture_virtual_orders() ) {
 			return false;
 		}
 
@@ -516,7 +472,7 @@ class RenewalHandler {
 		$this->add_paypal_meta( $wc_order, $order, $this->environment );
 
 		if ( $order->intent() === 'AUTHORIZE' ) {
-			$order = $this->order_endpoint->authorize( $order );
+			// No authorize call needed - vault tokens auto-authorize during order creation.
 			$wc_order->update_meta_data( AuthorizedPaymentsProcessor::CAPTURED_META_KEY, 'false' );
 		}
 

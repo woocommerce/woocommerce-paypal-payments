@@ -37,7 +37,7 @@ abstract class AbstractDataModel {
 	 *
 	 * @return array
 	 */
-	abstract protected function get_defaults() : array;
+	abstract protected function get_defaults(): array;
 
 	/**
 	 * Constructor.
@@ -56,7 +56,7 @@ abstract class AbstractDataModel {
 	/**
 	 * Loads the model data from WordPress options.
 	 */
-	public function load() : void {
+	public function load(): void {
 		$saved_data    = get_option( static::OPTION_KEY, array() );
 		$filtered_data = array_intersect_key( (array) $saved_data, $this->data );
 		$this->data    = array_merge( $this->data, $filtered_data );
@@ -65,14 +65,14 @@ abstract class AbstractDataModel {
 	/**
 	 * Saves the model data to WordPress options.
 	 */
-	public function save() : void {
+	public function save(): void {
 		update_option( static::OPTION_KEY, $this->data );
 	}
 
 	/**
 	 * Deletes the settings entry from the WordPress database.
 	 */
-	public function purge() : void {
+	public function purge(): void {
 		delete_option( static::OPTION_KEY );
 	}
 
@@ -81,7 +81,7 @@ abstract class AbstractDataModel {
 	 *
 	 * @return array
 	 */
-	public function to_array() : array {
+	public function to_array(): array {
 		return array_merge( array(), $this->data );
 	}
 
@@ -90,7 +90,7 @@ abstract class AbstractDataModel {
 	 *
 	 * @param array $data The model data.
 	 */
-	public function from_array( array $data ) : void {
+	public function from_array( array $data ): void {
 		foreach ( $data as $key => $value ) {
 			if ( ! array_key_exists( $key, $this->data ) ) {
 				continue;
@@ -112,7 +112,7 @@ abstract class AbstractDataModel {
 	 *
 	 * @return string The generated setter method name.
 	 */
-	private function get_setter_name( $field_key ) : string {
+	private function get_setter_name( $field_key ): string {
 		if ( ! is_string( $field_key ) ) {
 			return '';
 		}

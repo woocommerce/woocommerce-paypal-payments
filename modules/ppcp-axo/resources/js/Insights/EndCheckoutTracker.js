@@ -1,4 +1,4 @@
-import PayPalInsights from '../../../../ppcp-axo/resources/js/Insights/PayPalInsights';
+import PayPalInsights from '@ppcp-axo/Insights/PayPalInsights';
 
 class EndCheckoutTracker {
 	constructor() {
@@ -39,7 +39,6 @@ class EndCheckoutTracker {
 						is_store_member: false,
 					},
 					order_id: axoConfig?.orderId,
-					order_key: axoConfig?.orderKey,
 				};
 
 				PayPalInsights.trackEndCheckout( trackingData );

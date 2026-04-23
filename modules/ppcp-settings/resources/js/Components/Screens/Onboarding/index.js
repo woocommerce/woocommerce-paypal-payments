@@ -1,5 +1,5 @@
-import Container from '../../ReusableComponents/Container';
-import { OnboardingHooks } from '../../../data';
+import Container from '@ppcp-settings/Components/ReusableComponents/Container';
+import { OnboardingHooks } from '@ppcp-settings/data';
 
 import { getSteps, getCurrentStep } from './Steps';
 import OnboardingNavigation from './Components/Navigation';
@@ -33,9 +33,8 @@ const OnboardingScreen = () => {
 			<Container page="onboarding">
 				<div className="ppcp-r-card">
 					<currentStep.StepComponent
-						setStep={ setStep }
-						currentStep={ step }
-						stepperOrder={ Steps }
+						onNext={ handleNext }
+						onPrev={ handlePrev }
 					/>
 				</div>
 			</Container>

@@ -1,5 +1,5 @@
 import { dispatch } from '@wordpress/data';
-import { log } from '../../../../ppcp-axo/resources/js/Helper/Debug';
+import { log } from '@ppcp-axo/Helper/Debug';
 
 /**
  * Saves the current shipping and billing address to localStorage.
@@ -121,7 +121,7 @@ export const populateWooFields = (
 		address_1: address.addressLine1,
 		address_2: address.addressLine2 || '',
 		city: address.adminArea2,
-		state: address.adminArea1,
+		state: address.adminArea1 || '',
 		postcode: address.postalCode,
 		country: address.countryCode,
 		phone: phoneNumber.nationalNumber,

@@ -1,9 +1,9 @@
 import { registerPlugin } from '@wordpress/plugins';
 import { useEffect, useCallback, useState, useRef } from '@wordpress/element';
 import { useSelect } from '@wordpress/data';
-import PayPalInsights from '../../../../ppcp-axo/resources/js/Insights/PayPalInsights';
-import { STORE_NAME } from '../stores/axoStore';
-import usePayPalCommerceGateway from '../hooks/usePayPalCommerceGateway';
+import PayPalInsights from '@ppcp-axo/Insights/PayPalInsights';
+import { STORE_NAME } from '@ppcp-axo-block/stores/axoStore';
+import usePayPalCommerceGateway from '@ppcp-axo-block/hooks/usePayPalCommerceGateway';
 
 const GATEWAY_HANDLE = 'ppcp-axo-gateway';
 

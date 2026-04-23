@@ -1,6 +1,6 @@
 import { useCallback } from '@wordpress/element';
 import { useSelect } from '@wordpress/data';
-import { STORE_NAME } from '../stores/axoStore';
+import { STORE_NAME } from '@ppcp-axo-block/stores/axoStore';
 
 /**
  * Custom hook to handle payment setup in the checkout process.

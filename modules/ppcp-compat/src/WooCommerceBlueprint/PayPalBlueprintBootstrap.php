@@ -1,6 +1,6 @@
 <?php
 /**
- * PayPal Blueprint Bootstrap - Registers exporters and importers
+ * PayPal Blueprint Bootstrap - Registers exporters and importers.
  *
  * @package WooCommerce\PayPalCommerce\Compat\WooCommerceBlueprint
  */
@@ -10,26 +10,26 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\Compat\WooCommerceBlueprint;
 
 /**
- * Bootstrap class for PayPal Blueprint functionality
+ * Bootstrap class for PayPal Blueprint functionality.
  */
 class PayPalBlueprintBootstrap {
 
 	/**
-	 * PayPal Settings Exporter instance
+	 * PayPal Settings Exporter instance.
 	 *
 	 * @var PayPalSettingsExporter
 	 */
 	private PayPalSettingsExporter $exporter;
 
 	/**
-	 * PayPal Settings Importer instance
+	 * PayPal Settings Importer instance.
 	 *
 	 * @var PayPalSettingsImporter
 	 */
 	private PayPalSettingsImporter $importer;
 
 	/**
-	 * Constructor
+	 * Constructor.
 	 *
 	 * @param PayPalSettingsExporter $exporter PayPal settings exporter.
 	 * @param PayPalSettingsImporter $importer PayPal settings importer.
@@ -43,7 +43,7 @@ class PayPalBlueprintBootstrap {
 	}
 
 	/**
-	 * Initialize the PayPal Blueprint functionality
+	 * Initialize the PayPal Blueprint functionality.
 	 *
 	 * @return void
 	 */
@@ -52,17 +52,17 @@ class PayPalBlueprintBootstrap {
 	}
 
 	/**
-	 * Register WordPress hooks
+	 * Register WordPress hooks.
 	 *
 	 * @return void
 	 */
 	private function register_hooks(): void {
-		add_filter( 'wooblueprint_exporters', [ $this, 'register_exporters' ] );
-		add_filter( 'wooblueprint_importers', [ $this, 'register_importers' ] );
+		add_filter( 'wooblueprint_exporters', array( $this, 'register_exporters' ) );
+		add_filter( 'wooblueprint_importers', array( $this, 'register_importers' ) );
 	}
 
 	/**
-	 * Register PayPal exporters
+	 * Register PayPal exporters.
 	 *
 	 * @param array $exporters Existing exporters.
 	 * @return array
@@ -73,7 +73,7 @@ class PayPalBlueprintBootstrap {
 	}
 
 	/**
-	 * Register PayPal importers
+	 * Register PayPal importers.
 	 *
 	 * @param array $importers Existing importers.
 	 * @return array

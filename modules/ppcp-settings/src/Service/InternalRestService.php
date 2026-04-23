@@ -109,7 +109,7 @@ class InternalRestService {
 	 *
 	 * @return array A list of cookies that are required to authenticate the user.
 	 */
-	private function build_authentication_cookie() : array {
+	private function build_authentication_cookie(): array {
 		$cookies = array();
 
 		// Cookie names are defined in constants and can be changed by site owners.

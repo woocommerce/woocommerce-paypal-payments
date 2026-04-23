@@ -19,6 +19,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\ExperienceContextBuilder;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PurchaseUnitFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\ShippingPreferenceFactory;
+use WooCommerce\PayPalCommerce\Assets\AssetGetter;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\TransactionUrlProvider;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\OrderMetaTrait;
@@ -54,13 +55,6 @@ class OXXOGateway extends WC_Payment_Gateway {
 	protected $shipping_preference_factory;
 
 	/**
-	 * The URL to the module.
-	 *
-	 * @var string
-	 */
-	private $module_url;
-
-	/**
 	 * The transaction url provider.
 	 *
 	 * @var TransactionUrlProvider
@@ -87,13 +81,60 @@ class OXXOGateway extends WC_Payment_Gateway {
 	protected ExperienceContextBuilder $experience_context_builder;
 
 	/**
-	 * OXXOGateway constructor.
+	 * ID of the class extending the settings API. Used in option names.
 	 *
+	 * @var string
+	 */
+	public $id;
+
+	/**
+	 * Gateway title.
+	 *
+	 * @var string
+	 */
+	public $method_title = '';
+
+	/**
+	 * Gateway description.
+	 *
+	 * @var string
+	 */
+	public $method_description = '';
+
+	/**
+	 * Payment method title for the frontend.
+	 *
+	 * @var string
+	 */
+	public $title;
+
+	/**
+	 * Payment method description for the frontend.
+	 *
+	 * @var string
+	 */
+	public $description;
+
+	/**
+	 * Form option fields.
+	 *
+	 * @var array
+	 */
+	public $form_fields = array();
+
+	/**
+	 * Icon for the gateway.
+	 *
+	 * @var string
+	 */
+	public $icon;
+
+	/**
 	 * @param OrderEndpoint             $order_endpoint The order endpoint.
 	 * @param PurchaseUnitFactory       $purchase_unit_factory The purchase unit factory.
 	 * @param ShippingPreferenceFactory $shipping_preference_factory The shipping preference factory.
 	 * @param ExperienceContextBuilder  $experience_context_builder The ExperienceContextBuilder.
-	 * @param string                    $module_url The URL to the module.
+	 * @param AssetGetter               $asset_getter
 	 * @param TransactionUrlProvider    $transaction_url_provider The transaction url provider.
 	 * @param Environment               $environment The environment.
 	 * @param LoggerInterface           $logger The logger.
@@ -103,7 +144,7 @@ class OXXOGateway extends WC_Payment_Gateway {
 		PurchaseUnitFactory $purchase_unit_factory,
 		ShippingPreferenceFactory $shipping_preference_factory,
 		ExperienceContextBuilder $experience_context_builder,
-		string $module_url,
+		AssetGetter $asset_getter,
 		TransactionUrlProvider $transaction_url_provider,
 		Environment $environment,
 		LoggerInterface $logger
@@ -131,10 +172,9 @@ class OXXOGateway extends WC_Payment_Gateway {
 		$this->purchase_unit_factory       = $purchase_unit_factory;
 		$this->shipping_preference_factory = $shipping_preference_factory;
 		$this->experience_context_builder  = $experience_context_builder;
-		$this->module_url                  = $module_url;
 		$this->logger                      = $logger;
 
-		$this->icon                     = esc_url( $this->module_url ) . 'assets/images/oxxo.svg';
+		$this->icon                     = $asset_getter->get_static_asset_url( 'images/oxxo.svg' );
 		$this->transaction_url_provider = $transaction_url_provider;
 		$this->environment              = $environment;
 	}
@@ -176,7 +216,15 @@ class OXXOGateway extends WC_Payment_Gateway {
 	 * @return array
 	 */
 	public function process_payment( $order_id ) {
-		$wc_order      = wc_get_order( $order_id );
+		$wc_order = wc_get_order( $order_id );
+		if ( ! ( $wc_order instanceof WC_Order ) ) {
+			$this->logger->error( 'Invalid WC_Order id ' . (int) $order_id );
+			return array(
+				'result'   => 'failure',
+				'redirect' => wc_get_checkout_url(),
+			);
+		}
+
 		$purchase_unit = $this->purchase_unit_factory->from_wc_order( $wc_order );
 		$payer_action  = '';
 
@@ -222,7 +270,7 @@ class OXXOGateway extends WC_Payment_Gateway {
 			}
 		} catch ( RuntimeException $exception ) {
 			$error = $exception->getMessage();
-			if ( is_a( $exception, PayPalApiException::class ) ) {
+			if ( $exception instanceof PayPalApiException ) {
 				$error = $exception->get_details( $error );
 			}
 

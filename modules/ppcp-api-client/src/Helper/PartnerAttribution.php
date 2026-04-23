@@ -63,7 +63,7 @@ class PartnerAttribution {
 	 * @param string $installation_path The installation path used to determine the BN Code.
 	 * @param bool   $force_update Whether to force an update of the BN code if it already exists.
 	 */
-	public function initialize_bn_code( string $installation_path, bool $force_update = false ) : void {
+	public function initialize_bn_code( string $installation_path, bool $force_update = false ): void {
 		$selected_bn_code = $this->bn_codes[ $installation_path ] ?? '';
 		if ( ! $selected_bn_code ) {
 			return;
@@ -82,7 +82,7 @@ class PartnerAttribution {
 	 *
 	 * @return string The stored BN Code, or the default value if no path is detected.
 	 */
-	public function get_bn_code() : string {
+	public function get_bn_code(): string {
 		$bn_code = (string) ( get_option( $this->bn_code_option_name, $this->default_bn_code ) ?? $this->default_bn_code );
 
 		if ( ! in_array( $bn_code, $this->bn_codes, true ) ) {

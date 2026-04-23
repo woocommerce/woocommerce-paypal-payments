@@ -11,11 +11,11 @@ declare( strict_types = 1 );
 namespace WooCommerce\PayPalCommerce\Settings\Handler;
 
 use Psr\Log\LoggerInterface;
+use Exception;
 use RuntimeException;
 use WooCommerce\PayPalCommerce\Settings\Service\AuthenticationManager;
 use WooCommerce\PayPalCommerce\Settings\Service\OnboardingUrlManager;
 use WooCommerce\WooCommerce\Logging\Logger\NullLogger;
-use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 use WooCommerce\PayPalCommerce\Http\RedirectorInterface;
 use WooCommerce\PayPalCommerce\Settings\Enum\SellerTypeEnum;
 
@@ -40,74 +40,59 @@ class ConnectionListener {
 	private const TOKEN_STATE_TRANSIENT = 'ppcp_auth_token_state';
 
 	/**
-	 * ID of the current settings page; empty if not on a PayPal settings page.
-	 *
-	 * @var string
+	 * Whether the current request renders the plugin's settings page.
 	 */
-	private string $settings_page_id;
+	private bool $is_settings_page;
 
 	/**
 	 * Access to the onboarding URL manager.
-	 *
-	 * @var OnboardingUrlManager
 	 */
 	private OnboardingUrlManager $url_manager;
 
 	/**
 	 * Authentication manager service, responsible to update connection details.
-	 *
-	 * @var AuthenticationManager
 	 */
 	private AuthenticationManager $authentication_manager;
 
 	/**
 	 * A redirector-instance to redirect the merchant after authentication.
-	 * ™
-	 *
-	 * @var RedirectorInterface
 	 */
 	private RedirectorInterface $redirector;
 
 	/**
 	 * Logger instance, mainly used for debugging purposes.
-	 *
-	 * @var LoggerInterface
 	 */
 	private LoggerInterface $logger;
 
 	/**
 	 * ID of the current user, set by the process() method.
 	 *
-	 * Default value is 0 (guest), until the real ID is provided to process().
-	 *
-	 * @var int
+	 * The default value is 0 (guest), until the real ID is provided to process().
 	 */
 	private int $user_id = 0;
 
 	/**
 	 * The request details (usually the GET data) which were provided.
-	 *
-	 * @var array
 	 */
 	private array $request_data = array();
 
 	/**
 	 * Prepare the instance.
 	 *
-	 * @param string                $settings_page_id       Current plugin settings page ID.
+	 * @param bool                  $is_settings_page       Whether this is the settings page.
 	 * @param OnboardingUrlManager  $url_manager            Get OnboardingURL instances.
 	 * @param AuthenticationManager $authentication_manager Authentication manager service.
 	 * @param RedirectorInterface   $redirector             Redirect-handler.
 	 * @param ?LoggerInterface      $logger                 The logger, for debugging purposes.
 	 */
 	public function __construct(
-		string $settings_page_id,
+		bool $is_settings_page,
 		OnboardingUrlManager $url_manager,
 		AuthenticationManager $authentication_manager,
 		RedirectorInterface $redirector,
 		?LoggerInterface $logger = null
 	) {
-		$this->settings_page_id       = $settings_page_id;
+		$this->is_settings_page       = $is_settings_page;
 		$this->url_manager            = $url_manager;
 		$this->authentication_manager = $authentication_manager;
 		$this->redirector             = $redirector;
@@ -115,14 +100,14 @@ class ConnectionListener {
 	}
 
 	/**
-	 * Process the request data, and extract connection details, if present.
+	 * Process the request data and extract connection details, if present.
 	 *
 	 * @param int   $user_id The current user ID.
 	 * @param array $request Request details to process.
 	 *
 	 * @throws RuntimeException If the merchant ID does not match the ID previously set via OAuth.
 	 */
-	public function process( int $user_id, array $request ) : void {
+	public function process( int $user_id, array $request ): void {
 		$this->user_id      = $user_id;
 		$this->request_data = $request;
 
@@ -143,7 +128,7 @@ class ConnectionListener {
 	 * @param string $token The OAuth token extracted from the request.
 	 * @return void
 	 */
-	private function process_oauth_token( string $token ) : void {
+	private function process_oauth_token( string $token ): void {
 		if ( ! $token ) {
 			return;
 		}
@@ -198,7 +183,7 @@ class ConnectionListener {
 			$this->set_token_state( $token, self::TOKEN_STATE_PROCESSING );
 
 			$this->authentication_manager->handle_oauth_authentication( $data );
-		} catch ( \Exception $e ) {
+		} catch ( Exception $e ) {
 			$this->logger->error( 'Failed to complete authentication: ' . $e->getMessage() );
 		}
 
@@ -206,13 +191,13 @@ class ConnectionListener {
 	}
 
 	/**
-	 * Determine, if the request details contain connection data that should be
+	 * Determine if the request details contain connection data that should be
 	 * extracted and stored.
 	 *
 	 * @return bool True, if the request contains valid connection details.
 	 */
-	private function is_valid_request() : bool {
-		if ( $this->user_id < 1 || ! $this->settings_page_id ) {
+	private function is_valid_request(): bool {
+		if ( $this->user_id < 1 || ! $this->is_settings_page ) {
 			return false;
 		}
 
@@ -242,7 +227,7 @@ class ConnectionListener {
 	 * @param string $state The state to set.
 	 * @return void
 	 */
-	private function set_token_state( string $token, string $state ) : void {
+	private function set_token_state( string $token, string $state ): void {
 		$data = array(
 			'token' => $token,
 			'state' => $state,
@@ -258,7 +243,7 @@ class ConnectionListener {
 	 * @param string $token The token to check.
 	 * @return string The current state of the token, or empty string if the token doesn't match.
 	 */
-	private function get_token_state( string $token ) : string {
+	private function get_token_state( string $token ): string {
 		$data = get_transient( self::TOKEN_STATE_TRANSIENT );
 
 		if ( empty( $data ) || ! is_array( $data ) || empty( $data['token'] ) || empty( $data['state'] ) ) {
@@ -275,7 +260,7 @@ class ConnectionListener {
 	 * @param string $token The token to check.
 	 * @return bool True if the token is currently being processed, false otherwise.
 	 */
-	private function is_token_processing( string $token ) : bool {
+	private function is_token_processing( string $token ): bool {
 		return $this->get_token_state( $token ) === self::TOKEN_STATE_PROCESSING;
 	}
 
@@ -285,7 +270,7 @@ class ConnectionListener {
 	 * @param string $token The token to check.
 	 * @return bool True if the token has been processed, false otherwise.
 	 */
-	private function was_token_processed( string $token ) : bool {
+	private function was_token_processed( string $token ): bool {
 		return $this->get_token_state( $token ) === self::TOKEN_STATE_PROCESSED;
 	}
 
@@ -295,7 +280,7 @@ class ConnectionListener {
 	 * @return array Structured array with 'is_sandbox', 'merchant_id', and 'merchant_email' keys,
 	 *               or an empty array on failure.
 	 */
-	private function extract_data() : array {
+	private function extract_data(): array {
 		$this->logger->info( 'Extracting connection data from request...' );
 
 		$merchant_id    = $this->get_merchant_id_from_request( $this->request_data );
@@ -318,7 +303,7 @@ class ConnectionListener {
 	 *
 	 * @return void
 	 */
-	private function redirect_after_authentication() : void {
+	private function redirect_after_authentication(): void {
 		$redirect_url = $this->get_onboarding_redirect_url();
 
 		$this->redirector->redirect( $redirect_url );
@@ -330,7 +315,7 @@ class ConnectionListener {
 	 *
 	 * @return string The sanitized token, or an empty string.
 	 */
-	private function get_token_from_request() : string {
+	private function get_token_from_request(): string {
 		return $this->sanitize_string( $this->request_data['ppcpToken'] ?? '' );
 	}
 
@@ -341,7 +326,7 @@ class ConnectionListener {
 	 *
 	 * @return string The sanitized merchant ID, or an empty string.
 	 */
-	private function get_merchant_id_from_request( array $request ) : string {
+	private function get_merchant_id_from_request( array $request ): string {
 		return $this->sanitize_string( $request['merchantIdInPayPal'] ?? '' );
 	}
 
@@ -356,7 +341,7 @@ class ConnectionListener {
 	 *
 	 * @return string The sanitized merchant email, or an empty string.
 	 */
-	private function get_merchant_email_from_request( array $request ) : string {
+	private function get_merchant_email_from_request( array $request ): string {
 		return $this->sanitize_merchant_email( $request['merchantId'] ?? '' );
 	}
 
@@ -371,7 +356,7 @@ class ConnectionListener {
 	 *
 	 * @return string A valid SellerTypeEnum value.
 	 */
-	private function get_seller_type_from_request( array $request ) : string {
+	private function get_seller_type_from_request( array $request ): string {
 		$account_status = $request['accountStatus'] ?? '';
 
 		if ( 'BUSINESS_ACCOUNT' === $account_status ) {
@@ -401,7 +386,7 @@ class ConnectionListener {
 	 *
 	 * @return string Sanitized value.
 	 */
-	private function sanitize_string( string $value ) : string {
+	private function sanitize_string( string $value ): string {
 		return trim( sanitize_text_field( wp_unslash( $value ) ) );
 	}
 
@@ -412,7 +397,7 @@ class ConnectionListener {
 	 *
 	 * @return string Sanitized email address.
 	 */
-	private function sanitize_merchant_email( string $email ) : string {
+	private function sanitize_merchant_email( string $email ): string {
 		return sanitize_text_field( str_replace( ' ', '+', $email ) );
 	}
 
@@ -421,13 +406,13 @@ class ConnectionListener {
 	 *
 	 * @return string
 	 */
-	private function get_onboarding_redirect_url() : string {
+	private function get_onboarding_redirect_url(): string {
 		/**
 		 * The URL opened at the end of onboarding after saving the merchant ID/email.
 		 */
 		return apply_filters(
 			'woocommerce_paypal_payments_onboarding_redirect_url',
-			admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway&ppcp-tab=' . Settings::CONNECTION_TAB_ID )
+			admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway' )
 		);
 	}
 }

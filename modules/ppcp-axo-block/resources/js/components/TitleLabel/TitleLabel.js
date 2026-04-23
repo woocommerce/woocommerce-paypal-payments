@@ -1,4 +1,4 @@
-import CardChangeButton from './../Card/CardChangeButton';
+import CardChangeButton from '@ppcp-axo-block/components/Card/CardChangeButton';
 
 /**
  * TitleLabel component for displaying a payment method title with icons and a change card button.

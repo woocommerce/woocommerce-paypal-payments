@@ -137,7 +137,7 @@ class CommonRestEndpoint extends RestEndpoint {
 	 * @param bool $full_route Whether to return the full endpoint path or just the route name.
 	 * @return string The full path to the REST endpoint.
 	 */
-	public static function seller_account_route( bool $full_route = false ) : string {
+	public static function seller_account_route( bool $full_route = false ): string {
 		if ( $full_route ) {
 			return '/' . static::NAMESPACE . '/' . self::SELLER_ACCOUNT_PATH;
 		}
@@ -148,7 +148,7 @@ class CommonRestEndpoint extends RestEndpoint {
 	/**
 	 * Configure REST API routes.
 	 */
-	public function register_routes() : void {
+	public function register_routes(): void {
 		/**
 		 * GET /wp-json/wc/v3/wc_paypal/common
 		 */
@@ -210,7 +210,7 @@ class CommonRestEndpoint extends RestEndpoint {
 	 *
 	 * @return WP_REST_Response The common settings.
 	 */
-	public function get_details() : WP_REST_Response {
+	public function get_details(): WP_REST_Response {
 		$js_data = $this->sanitize_for_javascript(
 			$this->settings->to_array(),
 			$this->field_map
@@ -229,7 +229,7 @@ class CommonRestEndpoint extends RestEndpoint {
 	 *
 	 * @return WP_REST_Response The new common settings.
 	 */
-	public function update_details( WP_REST_Request $request ) : WP_REST_Response {
+	public function update_details( WP_REST_Request $request ): WP_REST_Response {
 		$wp_data = $this->sanitize_for_wordpress(
 			$request->get_params(),
 			$this->field_map
@@ -246,7 +246,7 @@ class CommonRestEndpoint extends RestEndpoint {
 	 *
 	 * @return WP_REST_Response Merchant details.
 	 */
-	public function get_merchant_details() : WP_REST_Response {
+	public function get_merchant_details(): WP_REST_Response {
 		$js_data    = array(); // No persistent data.
 		$extra_data = $this->add_merchant_info( array() );
 
@@ -260,7 +260,7 @@ class CommonRestEndpoint extends RestEndpoint {
 	 *
 	 * @return WP_REST_Response Seller details, provided by PayPal's API.
 	 */
-	public function get_seller_account_info() : WP_REST_Response {
+	public function get_seller_account_info(): WP_REST_Response {
 		try {
 			$seller_status = $this->partners_endpoint->seller_status();
 
@@ -282,7 +282,7 @@ class CommonRestEndpoint extends RestEndpoint {
 	 *
 	 * @return array Updated extra_data collection.
 	 */
-	protected function add_merchant_info( array $extra_data ) : array {
+	protected function add_merchant_info( array $extra_data ): array {
 		$extra_data['merchant'] = $this->sanitize_for_javascript(
 			$this->settings->to_array(),
 			$this->merchant_info_map
@@ -306,7 +306,7 @@ class CommonRestEndpoint extends RestEndpoint {
 	 *
 	 * @return array Updated extra_data collection.
 	 */
-	protected function add_woo_settings( array $extra_data ) : array {
+	protected function add_woo_settings( array $extra_data ): array {
 		$extra_data['wooSettings'] = $this->sanitize_for_javascript(
 			$this->settings->get_woo_settings(),
 			$this->woo_settings_map

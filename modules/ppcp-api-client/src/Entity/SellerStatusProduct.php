@@ -69,7 +69,7 @@ class SellerStatusProduct {
 	 *
 	 * @return string
 	 */
-	public function name() : string {
+	public function name(): string {
 		return $this->name;
 	}
 
@@ -78,7 +78,7 @@ class SellerStatusProduct {
 	 *
 	 * @return string
 	 */
-	public function vetting_status() : string {
+	public function vetting_status(): string {
 		return $this->vetting_status;
 	}
 
@@ -87,7 +87,7 @@ class SellerStatusProduct {
 	 *
 	 * @return string[]
 	 */
-	public function capabilities() : array {
+	public function capabilities(): array {
 		return $this->capabilities;
 	}
 
@@ -96,13 +96,11 @@ class SellerStatusProduct {
 	 *
 	 * @return array
 	 */
-	public function to_array() : array {
+	public function to_array(): array {
 		return array(
 			'name'           => $this->name(),
 			'vetting_status' => $this->vetting_status(),
 			'capabilities'   => $this->capabilities(),
 		);
 	}
-
-
 }

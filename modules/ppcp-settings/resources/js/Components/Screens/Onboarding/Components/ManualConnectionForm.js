@@ -9,15 +9,15 @@ import { Button, TextControl } from '@wordpress/components';
 import { __, sprintf } from '@wordpress/i18n';
 import classNames from 'classnames';
 
-import SettingsToggleBlock from '../../../ReusableComponents/SettingsToggleBlock';
-import DataStoreControl from '../../../ReusableComponents/DataStoreControl';
-import BusyStateWrapper from '../../../ReusableComponents/BusyStateWrapper';
+import SettingsToggleBlock from '@ppcp-settings/Components/ReusableComponents/SettingsToggleBlock';
+import DataStoreControl from '@ppcp-settings/Components/ReusableComponents/DataStoreControl';
+import BusyStateWrapper from '@ppcp-settings/Components/ReusableComponents/BusyStateWrapper';
 import {
 	useDirectAuthentication,
 	useSandboxConnection,
-} from '../../../../hooks/useHandleConnections';
-import { OnboardingHooks } from '../../../../data';
-import { useManualConnection } from '../../../../data/common/hooks';
+} from '@ppcp-settings/hooks/useHandleConnections';
+import { OnboardingHooks } from '@ppcp-settings/data';
+import { useManualConnection } from '@ppcp-settings/data/common/hooks';
 
 const FORM_ERRORS = {
 	noClientId: __(

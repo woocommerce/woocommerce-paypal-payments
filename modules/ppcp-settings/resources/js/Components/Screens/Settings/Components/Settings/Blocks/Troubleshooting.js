@@ -1,13 +1,13 @@
 import { __, sprintf } from '@wordpress/i18n';
 
-import { ControlToggleButton } from '../../../../../ReusableComponents/Controls';
-import SettingsBlock from '../../../../../ReusableComponents/SettingsBlock';
-import Accordion from '../../../../../ReusableComponents/AccordionSection';
+import { ControlToggleButton } from '@ppcp-settings/Components/ReusableComponents/Controls';
+import SettingsBlock from '@ppcp-settings/Components/ReusableComponents/SettingsBlock';
+import Accordion from '@ppcp-settings/Components/ReusableComponents/AccordionSection';
 
 import SimulationBlock from './SimulationBlock';
 import ResubscribeBlock from './ResubscribeBlock';
 import HooksListBlock from './HooksListBlock';
-import { SettingsHooks } from '../../../../../../data';
+import { SettingsHooks } from '@ppcp-settings/data';
 
 const Troubleshooting = () => {
 	const { logging, setLogging } = SettingsHooks.useSettings();
@@ -24,9 +24,12 @@ const Troubleshooting = () => {
 			<SettingsBlock>
 				<ControlToggleButton
 					label={ __( 'Logging', 'woocommerce-paypal-payments' ) }
-					description={ __(
-						'Log additional debugging information in the WooCommerce logs that can assist technical staff to determine issues.',
-						'woocommerce-paypal-payments'
+					description={ sprintf(
+						__(
+							'Log additional debugging information in the WooCommerce logs that can assist technical staff to determine issues. <a href="%s" target="_blank" rel="noopener noreferrer">View logs</a>.',
+							'woocommerce-paypal-payments'
+						),
+						'admin.php?page=wc-status&tab=logs'
 					) }
 					value={ logging }
 					onChange={ setLogging }

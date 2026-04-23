@@ -1,9 +1,9 @@
 import { useState, useEffect, useCallback } from '@wordpress/element';
 import { useDispatch } from '@wordpress/data';
 import apiFetch from '@wordpress/api-fetch';
-import { STORE_NAME as PAYMENT_STORE_NAME } from '../data/payment';
-import { OnboardingHooks } from '../data';
-import { STORE_NAME as ONBOARDING_STORE_NAME } from '../data/onboarding';
+import { STORE_NAME as PAYMENT_STORE_NAME } from '@ppcp-settings/data/payment';
+import { OnboardingHooks } from '@ppcp-settings/data';
+import { STORE_NAME as ONBOARDING_STORE_NAME } from '@ppcp-settings/data/onboarding';
 
 /**
  * Custom hook for refreshing payment gateway data.

@@ -53,7 +53,7 @@ class ConnectionState {
 	 *
 	 * @param bool $is_sandbox Whether to connect to a sandbox environment.
 	 */
-	public function connect( bool $is_sandbox = false ) : void {
+	public function connect( bool $is_sandbox = false ): void {
 		if ( ! $this->is_connected ) {
 			/**
 			 * Action that fires before the connection status changes from
@@ -69,7 +69,7 @@ class ConnectionState {
 	/**
 	 * Set connection status to "not connected to PayPal" (start onboarding).
 	 */
-	public function disconnect() : void {
+	public function disconnect(): void {
 		if ( $this->is_connected ) {
 			/**
 			 * Action that fires before the connection status changes from
@@ -86,7 +86,7 @@ class ConnectionState {
 	 *
 	 * @return Environment The environment instance.
 	 */
-	public function get_environment() : Environment {
+	public function get_environment(): Environment {
 		return $this->environment;
 	}
 
@@ -95,7 +95,7 @@ class ConnectionState {
 	 *
 	 * @return bool True, if onboarding was completed and connection details are present.
 	 */
-	public function is_connected() : bool {
+	public function is_connected(): bool {
 		return $this->is_connected;
 	}
 
@@ -104,7 +104,7 @@ class ConnectionState {
 	 *
 	 * @return bool True, if we don't know merchant connection details.
 	 */
-	public function is_onboarding() : bool {
+	public function is_onboarding(): bool {
 		return ! $this->is_connected;
 	}
 
@@ -113,7 +113,7 @@ class ConnectionState {
 	 *
 	 * @return bool True, if connected to a sandbox environment.
 	 */
-	public function is_sandbox() : bool {
+	public function is_sandbox(): bool {
 		return $this->is_connected && $this->environment->is_sandbox();
 	}
 
@@ -122,7 +122,7 @@ class ConnectionState {
 	 *
 	 * @return bool True, if connected to a production environment.
 	 */
-	public function is_production() : bool {
+	public function is_production(): bool {
 		return $this->is_connected && $this->environment->is_production();
 	}
 
@@ -131,7 +131,7 @@ class ConnectionState {
 	 *
 	 * @return string Name of the currently connected environment; empty string if not connected.
 	 */
-	public function current_environment() : string {
+	public function current_environment(): string {
 		return $this->is_connected ? $this->environment->current_environment() : '';
 	}
 }

@@ -51,9 +51,8 @@ class ResponsesToApple {
 	 * Returns an error response to be handled by the script
 	 *
 	 * @param array $error_list [['errorCode'=>required, 'contactField'=>'']].
-	 * @return void
 	 */
-	public function response_with_data_errors( $error_list ) {
+	public function response_with_data_errors( $error_list ): void {
 		$response             = array();
 		$response['errors']   = $this->apple_pay_error( $error_list );
 		$response['newTotal'] = $this->apple_new_total_response(
@@ -162,6 +161,15 @@ class ResponsesToApple {
 			round( floatval( $payment_details['subtotal'] ), 2 ),
 			$type
 		);
+
+		$has_discount = $payment_details['discount']['amount'] ?? null;
+		if ( $has_discount ) {
+			$response[] = $this->apple_item_format(
+				$payment_details['discount']['label'] ?: __( 'Discount', 'woocommerce-paypal-payments' ),
+				-round( floatval( $payment_details['discount']['amount'] ), 2 ),
+				$type
+			);
+		}
 
 		if ( $payment_details['shipping']['amount'] ) {
 			$response[] = $this->apple_item_format(

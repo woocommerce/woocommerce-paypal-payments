@@ -12,7 +12,6 @@ namespace WooCommerce\PayPalCommerce\AdminNotices;
 use WooCommerce\PayPalCommerce\AdminNotices\Notes\MexicoInstallmentsNote;
 use WooCommerce\PayPalCommerce\AdminNotices\Repository\Repository;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExecutableModule;
-use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExtendingModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ModuleClassNameIdTrait;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ServiceModule;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
@@ -23,7 +22,7 @@ use WooCommerce\PayPalCommerce\AdminNotices\Entity\PersistentMessage;
 /**
  * Class AdminNotices
  */
-class AdminNotices implements ServiceModule, ExtendingModule, ExecutableModule {
+class AdminNotices implements ServiceModule, ExecutableModule {
 	use ModuleClassNameIdTrait;
 
 	/**
@@ -36,20 +35,13 @@ class AdminNotices implements ServiceModule, ExtendingModule, ExecutableModule {
 	/**
 	 * {@inheritDoc}
 	 */
-	public function extensions(): array {
-		return require __DIR__ . '/../extensions.php';
-	}
-
-	/**
-	 * {@inheritDoc}
-	 */
 	public function run( ContainerInterface $c ): bool {
 		$renderer = $c->get( 'admin-notices.renderer' );
 		assert( $renderer instanceof RendererInterface );
 
 		add_action(
 			'admin_notices',
-			function() use ( $renderer ) {
+			function () use ( $renderer ) {
 				$renderer->render();
 			}
 		);
@@ -113,11 +105,10 @@ class AdminNotices implements ServiceModule, ExtendingModule, ExecutableModule {
 
 		add_action(
 			'woocommerce_init',
-			function() {
+			function () {
 				if ( is_admin() && is_callable( array( WC(), 'is_wc_admin_active' ) ) && WC()->is_wc_admin_active() && class_exists( 'Automattic\WooCommerce\Admin\Notes\Notes' ) ) {
 					MexicoInstallmentsNote::init();
 				}
-
 			}
 		);
 

@@ -9,7 +9,7 @@
 import { useDispatch, useSelect } from '@wordpress/data';
 
 import { STORE_NAME } from './constants';
-import { createHooksForStore } from '../utils';
+import { createHooksForStore } from '@ppcp-settings/data/utils';
 import { useMemo } from '@wordpress/element';
 
 /**
@@ -61,6 +61,9 @@ export const useSettings = () => {
 
 	const [ subtotalAdjustment, setSubtotalAdjustment ] =
 		usePersistent( 'subtotalAdjustment' );
+	const [ instantPaymentsOnly, setInstantPaymentsOnly ] = usePersistent(
+		'instantPaymentsOnly'
+	);
 	const [ landingPage, setLandingPage ] = usePersistent( 'landingPage' );
 	const [ buttonLanguage, setButtonLanguage ] =
 		usePersistent( 'buttonLanguage' );
@@ -86,6 +89,12 @@ export const useSettings = () => {
 
 	const [ threeDSecure, setThreeDSecure ] = usePersistent( 'threeDSecure' );
 
+	const [ paymentLevelProcessing, setPaymentLevelProcessing ] = usePersistent(
+		'paymentLevelProcessing'
+	);
+	const [ shipsFromPostalCode, setShipsFromPostalCode ] = usePersistent(
+		'shipsFromPostalCode'
+	);
 
 	return {
 		invoicePrefix,
@@ -108,6 +117,8 @@ export const useSettings = () => {
 		setStayUpdated,
 		subtotalAdjustment,
 		setSubtotalAdjustment,
+		instantPaymentsOnly,
+		setInstantPaymentsOnly,
 		brandName,
 		setBrandName,
 		softDescriptor,
@@ -120,5 +131,9 @@ export const useSettings = () => {
 		setDisabledCards,
 		threeDSecure,
 		setThreeDSecure,
+		paymentLevelProcessing,
+		setPaymentLevelProcessing,
+		shipsFromPostalCode,
+		setShipsFromPostalCode,
 	};
 };

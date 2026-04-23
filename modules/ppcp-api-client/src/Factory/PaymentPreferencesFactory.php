@@ -41,7 +41,7 @@ class PaymentPreferencesFactory {
 	 * @param WC_Product $product WC product.
 	 * @return PaymentPreferences
 	 */
-	public function from_wc_product( WC_Product $product ):PaymentPreferences {
+	public function from_wc_product( WC_Product $product ): PaymentPreferences {
 		return new PaymentPreferences(
 			array(
 				'value'         => $product->get_meta( '_subscription_sign_up_fee' ) ?: '0',

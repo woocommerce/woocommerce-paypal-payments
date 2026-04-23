@@ -47,11 +47,17 @@ export function CardFields( { config, eventRegistration, emitResponse } ) {
 		() =>
 			onPaymentSetup( () => {
 				async function handlePaymentProcessing() {
-					await cardFieldsForm.submit().catch( ( error ) => {
+					try {
+						await cardFieldsForm.submit();
+					} catch ( error ) {
+						console.error( error );
 						return {
 							type: responseTypes.ERROR,
+							message:
+								config.scriptData.hosted_fields.labels
+									.fields_not_valid,
 						};
-					} );
+					}
 
 					return {
 						type: responseTypes.SUCCESS,
@@ -92,12 +98,14 @@ export function CardFields( { config, eventRegistration, emitResponse } ) {
 						console.error( err );
 					} }
 				>
-					<PayPalNameField
-						placeholder={ __(
-							'Cardholder Name (optional)',
-							'woocommerce-paypal-payments'
-						) }
-					/>
+					{ config.name_on_card === 'yes' && (
+						<PayPalNameField
+							placeholder={ __(
+								'Cardholder Name (optional)',
+								'woocommerce-paypal-payments'
+							) }
+						/>
+					) }
 					<PayPalNumberField
 						placeholder={ __(
 							'Card number',

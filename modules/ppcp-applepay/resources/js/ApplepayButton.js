@@ -2,18 +2,18 @@
 /* global PayPalCommerceGateway */
 
 import { createAppleErrors } from './Helper/applePayError';
-import FormValidator from '../../../ppcp-button/resources/js/modules/Helper/FormValidator';
-import ErrorHandler from '../../../ppcp-button/resources/js/modules/ErrorHandler';
-import widgetBuilder from '../../../ppcp-button/resources/js/modules/Renderer/WidgetBuilder';
-import PaymentButton from '../../../ppcp-button/resources/js/modules/Renderer/PaymentButton';
+import FormValidator from '@ppcp-button/Helper/FormValidator';
+import ErrorHandler from '@ppcp-button/ErrorHandler';
+import widgetBuilder from '@ppcp-button/Renderer/WidgetBuilder';
+import PaymentButton from '@ppcp-button/Renderer/PaymentButton';
 import {
 	PaymentContext,
 	PaymentMethods,
-} from '../../../ppcp-button/resources/js/modules/Helper/CheckoutMethodState';
+} from '@ppcp-button/Helper/CheckoutMethodState';
 import {
 	combineStyles,
 	combineWrapperIds,
-} from '../../../ppcp-button/resources/js/modules/Helper/PaymentButtonHelpers';
+} from '@ppcp-button/Helper/PaymentButtonHelpers';
 
 /**
  * Plugin-specific styling.
@@ -334,11 +334,21 @@ class ApplePayButton extends PaymentButton {
 		this.checkEligibility();
 	}
 
-	reinit() {
+	async reinit() {
 		// Missing (invalid) configuration indicates, that the first `init()` call did not happen yet.
 		if ( ! this.validateConfiguration( true ) ) {
 			return;
 		}
+
+		// Ensures transaction info is updated when cart or checkout update events are triggered.
+		await this.contextHandler
+			.transactionInfo()
+			.then( ( transactionInfo ) => {
+				this.transactionInfo = transactionInfo;
+			} )
+			.catch( ( error ) => {
+				console.error( 'Failed to get transaction info:', error );
+			} );
 
 		super.reinit();
 

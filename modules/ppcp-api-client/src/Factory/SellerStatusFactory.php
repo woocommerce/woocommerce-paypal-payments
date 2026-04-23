@@ -25,9 +25,9 @@ class SellerStatusFactory {
 	 *
 	 * @return SellerStatus
 	 */
-	public function from_paypal_response( \stdClass $json ) : SellerStatus {
+	public function from_paypal_response( \stdClass $json ): SellerStatus {
 		$products = array_map(
-			function( $json ) : SellerStatusProduct {
+			function ( $json ): SellerStatusProduct {
 				$product = new SellerStatusProduct(
 					isset( $json->name ) ? (string) $json->name : '',
 					isset( $json->vetting_status ) ? (string) $json->vetting_status : '',
@@ -39,7 +39,7 @@ class SellerStatusFactory {
 		);
 
 		$capabilities = array_map(
-			function( $json ) : SellerStatusCapability {
+			function ( $json ): SellerStatusCapability {
 				$capability = new SellerStatusCapability(
 					isset( $json->name ) ? (string) $json->name : '',
 					isset( $json->status ) ? (string) $json->status : ''

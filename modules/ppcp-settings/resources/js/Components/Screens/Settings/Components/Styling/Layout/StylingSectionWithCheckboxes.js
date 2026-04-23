@@ -1,7 +1,7 @@
 import classNames from 'classnames';
 
-import { CheckboxGroup } from '../../../../../ReusableComponents/Fields';
-import { VStack } from '../../../../../ReusableComponents/Stack';
+import { CheckboxGroup } from '@ppcp-settings/Components/ReusableComponents/Fields';
+import { VStack } from '@ppcp-settings/Components/ReusableComponents/Stack';
 import StylingSection from './StylingSection';
 
 const StylingSectionWithCheckboxes = ( {

@@ -4,26 +4,12 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Properties;
 
-/**
- * Class ThemeProperties
- *
- * @package WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Properties
- *
- * @psalm-suppress PossiblyFalseArgument, InvalidArgument
- */
 class ThemeProperties extends BaseProperties
 {
-    /**
-     * Additional properties specific for themes.
-     */
     public const PROP_STATUS = 'status';
     public const PROP_TEMPLATE = 'template';
-    /**
-     * Available methods of Properties::__call()
-     * from theme headers.
-     *
-     * @link https://developer.wordpress.org/reference/classes/wp_theme/
-     */
+
+    /** @see https://developer.wordpress.org/reference/classes/wp_theme/ */
     protected const HEADERS = [
         self::PROP_AUTHOR => 'Author',
         self::PROP_AUTHOR_URI => 'AuthorURI',
@@ -53,8 +39,6 @@ class ThemeProperties extends BaseProperties
     }
 
     /**
-     * ThemeProperties constructor.
-     *
      * @param string $themeDirectory
      */
     protected function __construct(string $themeDirectory)
@@ -67,13 +51,15 @@ class ThemeProperties extends BaseProperties
         $properties = Properties::DEFAULT_PROPERTIES;
 
         foreach (self::HEADERS as $key => $themeKey) {
-            /** @psalm-suppress DocblockTypeContradiction */
-            $properties[$key] = $theme->get($themeKey) ?? '';
+            $property = $theme->get($themeKey);
+            if (is_string($property) || is_array($property)) {
+                $properties[$key] = $property;
+            }
         }
 
         $baseName = $theme->get_stylesheet();
         $basePath = $theme->get_stylesheet_directory();
-        $baseUrl = (string) trailingslashit($theme->get_stylesheet_directory_uri());
+        $baseUrl = trailingslashit($theme->get_stylesheet_directory_uri());
 
         parent::__construct(
             $baseName,
@@ -84,8 +70,6 @@ class ThemeProperties extends BaseProperties
     }
 
     /**
-     * If the theme is published.
-     *
      * @return string
      */
     public function status(): string
@@ -93,6 +77,9 @@ class ThemeProperties extends BaseProperties
         return (string) $this->get(self::PROP_STATUS);
     }
 
+    /**
+     * @return string
+     */
     public function template(): string
     {
         return (string) $this->get(self::PROP_TEMPLATE);
@@ -120,7 +107,7 @@ class ThemeProperties extends BaseProperties
     public function parentThemeProperties(): ?ThemeProperties
     {
         $template = $this->template();
-        if (!$template) {
+        if ($template === '') {
             return null;
         }
 

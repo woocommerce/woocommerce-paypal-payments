@@ -1,5 +1,5 @@
 import { Icon } from '@wordpress/components';
-import data from '../../utils/data';
+import data from '@ppcp-settings/utils/data';
 
 const PaymentMethodIcon = ( { type } ) => (
 	<Icon

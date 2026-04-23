@@ -25,7 +25,7 @@ class Repository implements RepositoryInterface {
 	 *
 	 * @return Message[]
 	 */
-	public function current_message() : array {
+	public function current_message(): array {
 		return array_filter(
 			/**
 			 * Returns the list of admin messages.
@@ -34,12 +34,12 @@ class Repository implements RepositoryInterface {
 				self::NOTICES_FILTER,
 				array()
 			),
-			function ( $element ) : bool {
+			function ( $element ): bool {
 				if ( $element instanceof PersistentMessage ) {
 					return ! $element->is_muted();
 				}
 
-				return is_a( $element, Message::class );
+				return $element instanceof Message;
 			}
 		);
 	}
@@ -51,7 +51,7 @@ class Repository implements RepositoryInterface {
 	 *
 	 * @return void
 	 */
-	public function persist( Message $message ) : void {
+	public function persist( Message $message ): void {
 		$persisted_notices = get_option( self::PERSISTED_NOTICES_OPTION ) ?: array();
 
 		$persisted_notices[] = $message->to_array();
@@ -64,7 +64,7 @@ class Repository implements RepositoryInterface {
 	 *
 	 * @return array|Message[]
 	 */
-	public function get_persisted_and_clear() : array {
+	public function get_persisted_and_clear(): array {
 		$notices = array();
 
 		$persisted_data = get_option( self::PERSISTED_NOTICES_OPTION ) ?: array();

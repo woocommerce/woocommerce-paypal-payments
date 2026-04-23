@@ -10,7 +10,7 @@
 import { useDispatch, useSelect } from '@wordpress/data';
 import { useCallback } from '@wordpress/element';
 
-import { STORE_NAME as TRACKING_STORE } from '../data/tracking/constants';
+import { STORE_NAME as TRACKING_STORE } from '@ppcp-settings/data/tracking/constants';
 
 /**
  * Updates an object with new values, filtering based on allowed keys.

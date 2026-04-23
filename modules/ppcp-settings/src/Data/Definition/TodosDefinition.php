@@ -9,6 +9,8 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\Settings\Data\Definition;
 
+use WooCommerce\PayPalCommerce\Settings\Data\TodosModel;
+use WooCommerce\PayPalCommerce\Settings\Service\Migration\MigrationManager;
 use WooCommerce\PayPalCommerce\Settings\Service\TodosEligibilityService;
 use WooCommerce\PayPalCommerce\Settings\Data\GeneralSettings;
 
@@ -34,18 +36,23 @@ class TodosDefinition {
 	 */
 	protected GeneralSettings $settings;
 
+	protected TodosModel $todos;
+
 	/**
 	 * Constructor.
 	 *
 	 * @param TodosEligibilityService $eligibilities The todos eligibility service.
 	 * @param GeneralSettings         $settings The general settings service.
+	 * @param TodosModel              $todos The todos model instance.
 	 */
 	public function __construct(
 		TodosEligibilityService $eligibilities,
-		GeneralSettings $settings
+		GeneralSettings $settings,
+		TodosModel $todos
 	) {
 		$this->eligibilities = $eligibilities;
 		$this->settings      = $settings;
+		$this->todos         = $todos;
 	}
 
 	/**
@@ -56,7 +63,7 @@ class TodosDefinition {
 	public function get(): array {
 		$eligibility_checks = $this->eligibilities->get_eligibility_checks();
 
-		return array(
+		$todo_items = array(
 			'enable_fastlane'                      => array(
 				'title'       => __( 'Enable Fastlane', 'woocommerce-paypal-payments' ),
 				'description' => __( 'Accelerate your guest checkout with Fastlane by PayPal', 'woocommerce-paypal-payments' ),
@@ -227,6 +234,105 @@ class TodosDefinition {
 				),
 				'priority'    => 13,
 			),
+			'apply_for_working_capital'            => array(
+				'title'       => __( 'Discover how PayPal Working Capital can fuel your business growth', 'woocommerce-paypal-payments' ),
+				'description' => __( 'Approved loans are quickly deposited, so you can put them to work right away. Check eligibility.', 'woocommerce-paypal-payments' ),
+				'isEligible'  => $eligibility_checks['apply_for_working_capital'],
+				'action'      => array(
+					'type' => 'external',
+					'url'  => 'https://www.paypal.com/us/business/financial-services/working-capital?partner_camp_id=woocommerce_ppwc',
+				),
+				'priority'    => 14,
+			),
+			'enable_pwc'                           => array(
+				'title'       => __( 'Enable Pay with Crypto', 'woocommerce-paypal-payments' ),
+				'description' => __( 'Enable customers to pay with cryptocurrency, and receive payments in USD in your PayPal balance.', 'woocommerce-paypal-payments' ),
+				'isEligible'  => $eligibility_checks['enable_pwc'],
+				'action'      => array(
+					'type'      => 'tab',
+					'tab'       => 'payment_methods',
+					'section'   => 'ppcp-pwc',
+					'highlight' => 'ppcp-pwc',
+				),
+				'priority'    => 15,
+			),
+			'apply_for_pwc'                        => array(
+				'title'       => __( 'Start your Pay with Crypto application', 'woocommerce-paypal-payments' ),
+				'description' => __( 'Enable customers to pay with cryptocurrency, and receive payments in USD in your PayPal balance.', 'woocommerce-paypal-payments' ),
+				'isEligible'  => $eligibility_checks['apply_for_pwc'],
+				'action'      => array(
+					'type' => 'external',
+					'url'  => 'http://example.com/',
+				),
+				'priority'    => 16,
+			),
+			'enable_recaptcha_protection'          => array(
+				'title'       => __( 'Enable required fraud protection for PayPal Payments', 'woocommerce-paypal-payments' ),
+				'description' => __( 'Help protect your store and maintain compliance. Enable reCAPTCHA →', 'woocommerce-paypal-payments' ),
+				'isEligible'  => $eligibility_checks['enable_recaptcha_protection'],
+				'action'      => array(
+					'type' => 'external',
+					'url'  => admin_url( 'admin.php?page=wc-settings&tab=integration&section=ppcp-recaptcha' ),
+				),
+				'priority'    => 2,
+			),
 		);
+
+		$todo_items['check_settings_after_migration'] = array(
+			'title'       => __( "You're now using the new PayPal Payments interface!", 'woocommerce-paypal-payments' ),
+			'description' => __( 'Complete the items below to ensure your payment configuration is optimized for your store.', 'woocommerce-paypal-payments' ),
+			'isEligible'  => fn(): bool => $this->is_settings_migration_done() && ! $this->are_all_todos_completed( $todo_items ),
+			'action'      => array(
+				'type' => 'tab',
+				'tab'  => 'overview',
+			),
+			'priority'    => 0,
+		);
+
+		return apply_filters( 'woocommerce_paypal_payments_todos_list', $todo_items );
+	}
+
+	/**
+	 * Checks whether the settings migration to the new UI has been completed.
+	 *
+	 * @return bool True if the migration is marked as done, false otherwise.
+	 */
+	protected function is_settings_migration_done(): bool {
+		return '1' === get_option( MigrationManager::OPTION_NAME_MIGRATION_IS_DONE );
+	}
+
+	/**
+	 * Determines whether all todos have been completed or dismissed appropriately.
+	 *
+	 * A to-do is considered completed if:
+	 * - It's eligible (based on the callable `isEligible`), AND
+	 * - It is either:
+	 *     - A "completeOnClick" type and is present in the completed list, OR
+	 *     - Not a "completeOnClick" type and is present in the dismissed list.
+	 *
+	 * @param array $todos The array of to-do definitions.
+	 * @return bool True if all to-dos are completed or dismissed as expected, false otherwise.
+	 */
+	protected function are_all_todos_completed( array $todos ): bool {
+		$dismissed = $this->todos->get_dismissed_todos();
+		$completed = $this->todos->get_completed_onclick_todos();
+
+		foreach ( $todos as $id => $todo ) {
+			if ( ! is_callable( $todo['isEligible'] ) || ! call_user_func( $todo['isEligible'] ) ) {
+				continue;
+			}
+
+			$is_click_to_complete = $todo['action']['completeOnClick'] ?? false;
+
+			if ( $is_click_to_complete && ! in_array( $id, $completed, true ) ) {
+				return false;
+			}
+
+			if ( ! $is_click_to_complete && ! in_array( $id, $dismissed, true ) ) {
+				return false;
+			}
+		}
+
+		return true;
 	}
 }

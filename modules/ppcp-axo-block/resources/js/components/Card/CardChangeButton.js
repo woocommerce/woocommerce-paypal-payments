@@ -1,7 +1,7 @@
 import { createElement } from '@wordpress/element';
 import { useSelect } from '@wordpress/data';
 import { __ } from '@wordpress/i18n';
-import { STORE_NAME } from '../../stores/axoStore';
+import { STORE_NAME } from '@ppcp-axo-block/stores/axoStore';
 
 /**
  * Renders a button to change the selected card in the checkout process.

@@ -1,6 +1,6 @@
 import { __ } from '@wordpress/i18n';
 
-import { PaymentHooks, StylingHooks } from '../../../../../../data';
+import { PaymentHooks, StylingHooks } from '@ppcp-settings/data';
 import { CheckboxStylingSection } from '../Layout';
 import { useMemo } from '@wordpress/element';
 

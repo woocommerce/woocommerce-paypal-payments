@@ -1,3 +1,5 @@
+import escapeHtml from 'escape-html';
+
 class FormFieldGroup {
 	#stored;
 	#data = {};
@@ -15,6 +17,10 @@ class FormFieldGroup {
 		this.#stored = new Map();
 	}
 
+	isActive() {
+		return this.#active;
+	}
+
 	setData( data ) {
 		this.#data = data;
 		this.refresh();
@@ -26,7 +32,8 @@ class FormFieldGroup {
 		}
 
 		if ( typeof this.#fields[ fieldKey ].valueCallback === 'function' ) {
-			return this.#fields[ fieldKey ].valueCallback( this.#data );
+			const value = this.#fields[ fieldKey ].valueCallback( this.#data );
+			return this.#escapeValue( value );
 		}
 
 		const path = this.#fields[ fieldKey ].valuePath;
@@ -42,7 +49,23 @@ class FormFieldGroup {
 					acc && acc[ key ] !== undefined ? acc[ key ] : undefined,
 				this.#data
 			);
-		return value ? value : '';
+		return this.#escapeValue( value );
+	}
+
+	/**
+	 * Escapes a value for HTML output.
+	 *
+	 * @param {*} value - The value to escape
+	 * @return {string} - The escaped string safe for HTML output
+	 */
+	#escapeValue( value ) {
+		if ( value === null || value === undefined ) {
+			return '';
+		}
+
+		const stringValue = String( value );
+
+		return escapeHtml( stringValue );
 	}
 
 	/**

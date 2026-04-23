@@ -1,0 +1,15 @@
+# CODEOWNERS file for PayPal Payments Plugin
+# This file defines code owners who will automatically be requested for review
+# when a pull request touches files matching the specified patterns.
+
+# Global owners - will be requested for review on all changes
+# @Dinamiko is listed first as dev lead, followed by team members in alphabetical order
+* @Dinamiko @AlexP11223 @danieldudzic @hmouhtar @mmaymo @Narek13 @stracker-phil
+
+# You can also add specific patterns for different parts of the codebase:
+# Examples (uncomment and modify as needed):
+# /src/                    @Dinamiko @stracker-phil
+# /tests/                  @AlexP11223 @hmouhtar
+# /assets/                 @danieldudzic
+# /.github/workflows/      @Narek13
+# /docs/                   @Dinamiko

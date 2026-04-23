@@ -9,29 +9,21 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\WcGateway\Assets;
 
-use WooCommerce\PayPalCommerce\Button\Helper\ContextTrait;
+use WooCommerce\PayPalCommerce\Assets\AssetGetter;
+use WooCommerce\PayPalCommerce\Button\Helper\Context;
+use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
-use WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException;
 use WooCommerce\PayPalCommerce\WcGateway\FraudNet\FraudNet;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\GatewayRepository;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayUponInvoice\PayUponInvoiceGateway;
-use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 
 /**
  * Class FraudNetAssets
  */
 class FraudNetAssets {
-
-	use ContextTrait;
-
-	/**
-	 * The URL of this module.
-	 *
-	 * @var string
-	 */
-	protected $module_url;
+	private AssetGetter $asset_getter;
 
 	/**
 	 * The assets version.
@@ -54,12 +46,7 @@ class FraudNetAssets {
 	 */
 	protected $environment;
 
-	/**
-	 * The Settings.
-	 *
-	 * @var Settings
-	 */
-	protected $settings;
+	protected SettingsProvider $settings_provider;
 
 	/**
 	 * The list of enabled PayPal gateways.
@@ -89,36 +76,28 @@ class FraudNetAssets {
 	 */
 	protected $is_fraudnet_enabled;
 
-	/**
-	 * Assets constructor.
-	 *
-	 * @param string            $module_url The url of this module.
-	 * @param string            $version The assets version.
-	 * @param FraudNet          $fraud_net The FraudNet entity.
-	 * @param Environment       $environment The environment.
-	 * @param Settings          $settings The Settings.
-	 * @param GatewayRepository $gateway_repository The GatewayRepository.
-	 * @param SessionHandler    $session_handler The session handler.
-	 * @param bool              $is_fraudnet_enabled true if FraudNet support is enabled in settings, otherwise false.
-	 */
+	protected Context $context;
+
 	public function __construct(
-		string $module_url,
+		AssetGetter $asset_getter,
 		string $version,
 		FraudNet $fraud_net,
 		Environment $environment,
-		Settings $settings,
+		SettingsProvider $settings_provider,
 		GatewayRepository $gateway_repository,
 		SessionHandler $session_handler,
-		bool $is_fraudnet_enabled
+		bool $is_fraudnet_enabled,
+		Context $context
 	) {
-		$this->module_url          = $module_url;
+		$this->asset_getter        = $asset_getter;
 		$this->version             = $version;
 		$this->fraud_net           = $fraud_net;
 		$this->environment         = $environment;
-		$this->settings            = $settings;
+		$this->settings_provider   = $settings_provider;
 		$this->gateway_repository  = $gateway_repository;
 		$this->session_handler     = $session_handler;
 		$this->is_fraudnet_enabled = $is_fraudnet_enabled;
+		$this->context             = $context;
 	}
 
 	/**
@@ -127,11 +106,11 @@ class FraudNetAssets {
 	public function register_assets(): void {
 		add_action(
 			'wp_enqueue_scripts',
-			function() {
+			function () {
 				if ( $this->should_load_fraudnet_script() ) {
 					wp_enqueue_script(
 						'ppcp-fraudnet',
-						trailingslashit( $this->module_url ) . 'assets/js/fraudnet.js',
+						$this->asset_getter->get_asset_url( 'fraudnet.js' ),
 						array(),
 						$this->version,
 						true
@@ -143,7 +122,7 @@ class FraudNetAssets {
 						array(
 							'f'       => $this->fraud_net->session_id(),
 							's'       => $this->fraud_net->source_website_id(),
-							'sandbox' => $this->environment->current_environment_is( Environment::SANDBOX ),
+							'sandbox' => $this->environment->is_sandbox(),
 						)
 					);
 				}
@@ -164,7 +143,7 @@ class FraudNetAssets {
 		$is_pui_gateway_enabled           = in_array( PayUponInvoiceGateway::ID, $this->enabled_ppcp_gateways(), true );
 		$is_only_standard_gateway_enabled = $this->enabled_ppcp_gateways() === array( PayPalGateway::ID );
 
-		if ( $this->context() !== 'checkout' || $is_only_standard_gateway_enabled ) {
+		if ( $this->context->context() !== 'checkout' || $is_only_standard_gateway_enabled ) {
 			return $this->is_fraudnet_enabled && $this->are_buttons_enabled_for_context();
 		}
 
@@ -176,25 +155,26 @@ class FraudNetAssets {
 	 *
 	 * @return bool true if enabled, otherwise false.
 	 */
-	protected function are_buttons_enabled_for_context() : bool {
+	protected function are_buttons_enabled_for_context(): bool {
 		if ( ! in_array( PayPalGateway::ID, $this->enabled_ppcp_gateways(), true ) ) {
 			return false;
 		}
-		try {
-			$button_locations = $this->settings->get( 'smart_button_locations' );
-		} catch ( NotFoundException $exception ) {
+
+		$button_locations = $this->settings_provider->smart_button_locations();
+
+		if ( empty( $button_locations ) ) {
 			return false;
 		}
 
-		if ( $this->context() === 'pay-now' ) {
+		if ( $this->context->context() === 'pay-now' ) {
 			return true;
 		}
 
-		if ( $this->context() === 'product' ) {
+		if ( $this->context->context() === 'product' ) {
 			return in_array( 'product', $button_locations, true ) || in_array( 'mini-cart', $button_locations, true );
 		}
 
-		return in_array( $this->context(), $button_locations, true );
+		return in_array( $this->context->context(), $button_locations, true );
 	}
 
 	/**

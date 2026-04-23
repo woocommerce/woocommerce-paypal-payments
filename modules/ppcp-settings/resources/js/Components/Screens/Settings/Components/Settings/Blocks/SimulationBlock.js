@@ -3,13 +3,13 @@ import { __ } from '@wordpress/i18n';
 import { useDispatch } from '@wordpress/data';
 import { store as noticesStore } from '@wordpress/notices';
 
-import { ControlButton } from '../../../../../ReusableComponents/Controls';
-import { CommonHooks } from '../../../../../../data';
+import { ControlButton } from '@ppcp-settings/Components/ReusableComponents/Controls';
+import { CommonHooks } from '@ppcp-settings/data';
 import {
 	NOTIFICATION_ERROR,
 	NOTIFICATION_SUCCESS,
-} from '../../../../../ReusableComponents/Icons';
-import SettingsBlock from '../../../../../ReusableComponents/SettingsBlock';
+} from '@ppcp-settings/Components/ReusableComponents/Icons';
+import SettingsBlock from '@ppcp-settings/Components/ReusableComponents/SettingsBlock';
 
 const SimulationBlock = () => {
 	const {

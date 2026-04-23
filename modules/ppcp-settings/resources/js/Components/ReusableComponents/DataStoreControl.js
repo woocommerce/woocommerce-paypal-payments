@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from '@wordpress/element';
-import { debounce } from '../../../../../ppcp-blocks/resources/js/Helper/debounce';
+import { debounce } from '@ppcp-blocks/Helper/debounce';
 
 /**
  * Approach 1: Component Injection

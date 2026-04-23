@@ -1,8 +1,8 @@
-import SingleProductActionHandler from '../../../../ppcp-button/resources/js/modules/ActionHandler/SingleProductActionHandler';
-import SimulateCart from '../../../../ppcp-button/resources/js/modules/Helper/SimulateCart';
-import ErrorHandler from '../../../../ppcp-button/resources/js/modules/ErrorHandler';
-import UpdateCart from '../../../../ppcp-button/resources/js/modules/Helper/UpdateCart';
-import BaseHandler from './BaseHandler';
+import SingleProductActionHandler from '@ppcp-button/ActionHandler/SingleProductActionHandler';
+import SimulateCart from '@ppcp-button/Helper/SimulateCart';
+import ErrorHandler from '@ppcp-button/ErrorHandler';
+import UpdateCart from '@ppcp-button/Helper/UpdateCart';
+import BaseHandler from '@ppcp-applepay/Context/BaseHandler';
 
 class SingleProductHandler extends BaseHandler {
 	validateContext() {

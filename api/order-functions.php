@@ -17,6 +17,8 @@ use RuntimeException;
 use WC_Order;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
+use WooCommerce\PayPalCommerce\OrderTracking\Endpoint\OrderTrackingEndpoint;
+use WooCommerce\PayPalCommerce\OrderTracking\Shipment\ShipmentFactoryInterface;
 use WooCommerce\PayPalCommerce\PPCP;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\RefundFeesUpdater;
@@ -32,16 +34,6 @@ use WooCommerce\PayPalCommerce\WcGateway\Processor\RefundProcessor;
  * @throws Exception When the operation fails.
  */
 function ppcp_get_paypal_order( $paypal_id_or_wc_order ): Order {
-	if ( $paypal_id_or_wc_order instanceof WC_Order ) {
-		$paypal_id_or_wc_order = $paypal_id_or_wc_order->get_meta( PayPalGateway::ORDER_ID_META_KEY );
-		if ( ! $paypal_id_or_wc_order ) {
-			throw new InvalidArgumentException( 'PayPal order ID not found in meta.' );
-		}
-	}
-	if ( ! is_string( $paypal_id_or_wc_order ) ) {
-		throw new InvalidArgumentException( 'Invalid PayPal order ID, string expected.' );
-	}
-
 	$order_endpoint = PPCP::container()->get( 'api.endpoint.order' );
 	assert( $order_endpoint instanceof OrderEndpoint );
 
@@ -158,4 +150,54 @@ function ppcp_update_order_refund_fees( WC_Order $wc_order ): void {
 	$updater = PPCP::container()->get( 'wcgateway.helper.refund-fees-updater' );
 	assert( $updater instanceof RefundFeesUpdater );
 	$updater->update( $wc_order );
+}
+
+/**
+ * Creates or updates PayPal order tracking information for a WooCommerce order.
+ *
+ * Retrieves the PayPal capture ID associated with the given WooCommerce order,
+ * creates a shipment instance, and sends it to the PayPal Order Tracking API.
+ * If tracking information for the given tracking number already exists, it will
+ * be updated; otherwise, it will be added as new tracking information.
+ *
+ * @param WC_Order $wc_order WooCommerce order instance to attach tracking to.
+ * @param string   $tracking_number Tracking number provided by the carrier.
+ * @param string   $carrier Name of the shipping carrier (must be PayPal-approved).
+ * @param string   $status Shipment status (must be PayPal-approved). Defaults to 'SHIPPED'.
+ *
+ * @see https://developer.paypal.com/docs/tracking/reference/carriers/ List of PayPal-approved carriers.
+ * @see https://developer.paypal.com/docs/tracking/reference/shipping-status/ List of PayPal-approved shipment statuses.
+ *
+ * @return void
+ */
+function ppcp_create_order_tracking( WC_Order $wc_order, string $tracking_number, string $carrier, string $status = 'SHIPPED' ): void {
+	$shipment_factory = PPCP::container()->get( 'order-tracking.shipment.factory' );
+	assert( $shipment_factory instanceof ShipmentFactoryInterface );
+
+	$endpoint = PPCP::container()->get( 'order-tracking.endpoint.controller' );
+	assert( $endpoint instanceof OrderTrackingEndpoint );
+
+	$paypal_order = ppcp_get_paypal_order( $wc_order );
+	$capture_id   = $endpoint->get_paypal_order_transaction_id( $paypal_order );
+	if ( is_null( $capture_id ) ) {
+		throw new RuntimeException( 'Could not retrieve transaction ID from PayPal order' );
+	}
+
+	$wc_order_id = $wc_order->get_id();
+
+	$ppcp_shipment = $shipment_factory->create_shipment(
+		$wc_order_id,
+		$capture_id,
+		$tracking_number,
+		$status,
+		'OTHER',
+		$carrier,
+		array()
+	);
+
+	$tracking_information = $endpoint->get_tracking_information( $wc_order_id, $tracking_number );
+
+	$tracking_information
+		? $endpoint->update_tracking_information( $ppcp_shipment, $wc_order_id )
+		: $endpoint->add_tracking_information( $ppcp_shipment, $wc_order_id );
 }

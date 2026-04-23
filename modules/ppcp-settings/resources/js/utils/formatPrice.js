@@ -1,15 +1,15 @@
 const priceFormatInfo = {
 	USD: {
 		prefix: '$',
-		suffix: 'USD',
+		suffix: ' USD',
 	},
 	CAD: {
 		prefix: '$',
-		suffix: 'CAD',
+		suffix: ' CAD',
 	},
 	AUD: {
 		prefix: '$',
-		suffix: 'AUD',
+		suffix: ' AUD',
 	},
 	EUR: {
 		prefix: '€',
@@ -30,5 +30,5 @@ export const formatPrice = ( value, currency ) => {
 		return amount;
 	}
 
-	return `${ currencyInfo.prefix }${ amount } ${ currencyInfo.suffix }`;
+	return `${ currencyInfo.prefix }${ amount }${ currencyInfo.suffix }`;
 };

@@ -1,6 +1,6 @@
 import { createElement, createRoot } from '@wordpress/element';
-import { log } from '../../../../../ppcp-axo/resources/js/Helper/Debug';
-import { STORE_NAME } from '../../stores/axoStore';
+import { log } from '@ppcp-axo/Helper/Debug';
+import { STORE_NAME } from '@ppcp-axo-block/stores/axoStore';
 import EmailButton from './EmailButton';
 
 // Cache for DOM elements and references

@@ -4,12 +4,10 @@ import DomElementCollection from './Components/DomElementCollection';
 import ShippingView from './Views/ShippingView';
 import BillingView from './Views/BillingView';
 import CardView from './Views/CardView';
+import ButtonStateManager from './ButtonStateManager';
 import PayPalInsights from './Insights/PayPalInsights';
-import {
-	disable,
-	enable,
-} from '../../../ppcp-button/resources/js/modules/Helper/ButtonDisabler';
-import { getCurrentPaymentMethod } from '../../../ppcp-button/resources/js/modules/Helper/CheckoutMethodState';
+import { disable, enable } from '@ppcp-button/Helper/ButtonDisabler';
+import { getCurrentPaymentMethod } from '@ppcp-button/Helper/CheckoutMethodState';
 
 /**
  * Internal customer details.
@@ -60,6 +58,8 @@ class AxoManager {
 		this.fastlane = new Fastlane( namespace );
 		this.$ = jQuery;
 
+		this.hasProcessedSessionRestore = false;
+
 		this.status = {
 			active: false,
 			validEmail: false,
@@ -67,6 +67,8 @@ class AxoManager {
 			useEmailWidget: this.useEmailWidget(),
 			hasCard: false,
 		};
+
+		this.buttonStateManager = null;
 
 		this.clearData();
 
@@ -163,6 +165,15 @@ class AxoManager {
 		return this.el.paymentContainer.selector + '-form';
 	}
 
+	/**
+	 * Whether the Fastlane watermark should be displayed.
+	 *
+	 * @return {boolean}
+	 */
+	get isWatermarkEnabled() {
+		return this.axoConfig.show_watermark === '1';
+	}
+
 	registerEventHandlers() {
 		// Payment method change tracking with duplicate prevention
 		let lastSelectedPaymentMethod = document.querySelector(
@@ -249,41 +260,19 @@ class AxoManager {
 			this.cardView.refresh();
 		} );
 
-		// Prevents sending checkout form when pressing Enter key on input field
-		// and triggers customer lookup
-		this.$( 'form.woocommerce-checkout input' ).on(
-			'keydown',
-			async ( ev ) => {
-				if (
-					ev.key === 'Enter' &&
-					getCurrentPaymentMethod() === 'ppcp-axo-gateway'
-				) {
-					ev.preventDefault();
-					log(
-						`Enter key attempt - emailInput: ${ this.emailInput.value }`
-					);
-					log(
-						`this.lastEmailCheckedIdentity: ${ this.lastEmailCheckedIdentity }`
-					);
-					this.validateEmail( this.el.fieldBillingEmail.selector );
-					if (
-						this.emailInput &&
-						this.lastEmailCheckedIdentity !== this.emailInput.value
-					) {
-						await this.onChangeEmail();
-					}
-				}
-			}
-		);
-
 		this.reEnableEmailInput();
 
 		// Clear last email checked identity when email field is focused.
 		this.$( '#billing_email_field input' ).on( 'focus', ( ev ) => {
-			log(
-				`Clear the last email checked: ${ this.lastEmailCheckedIdentity }`
-			);
-			this.lastEmailCheckedIdentity = '';
+			if ( ! this.buttonStateManager?.isProcessing() ) {
+				this.buttonStateManager?.clearLastProcessedEmail();
+				if (
+					this.emailInput?.value &&
+					this.validateEmailFormat( this.emailInput.value )
+				) {
+					this.buttonStateManager?.setReady();
+				}
+			}
 		} );
 
 		// Listening to status update event
@@ -409,9 +398,6 @@ class AxoManager {
 		if ( scenario.axoPaymentContainer ) {
 			this.el.paymentContainer.show();
 			this.el.gatewayDescription.hide();
-			document
-				.querySelector( this.el.billingEmailSubmitButton.selector )
-				.setAttribute( 'disabled', 'disabled' );
 		} else {
 			this.el.paymentContainer.hide();
 		}
@@ -470,14 +456,10 @@ class AxoManager {
 			'.woocommerce-billing-fields .form-row:visible'
 		);
 		const $billingHeaders = this.$( '.woocommerce-billing-fields h3' );
-		if ( this.billingView.isActive() ) {
-			if ( $billingFields.length ) {
-				$billingHeaders.show();
-			} else {
-				$billingHeaders.hide();
-			}
-		} else {
+		if ( $billingFields.length ) {
 			$billingHeaders.show();
+		} else {
+			$billingHeaders.hide();
 		}
 	}
 
@@ -486,14 +468,10 @@ class AxoManager {
 			'.woocommerce-shipping-fields .form-row:visible'
 		);
 		const $shippingHeaders = this.$( '.woocommerce-shipping-fields h3' );
-		if ( this.shippingView.isActive() ) {
-			if ( $shippingFields.length ) {
-				$shippingHeaders.show();
-			} else {
-				$shippingHeaders.hide();
-			}
-		} else {
+		if ( $shippingFields.length ) {
 			$shippingHeaders.show();
+		} else {
+			$shippingHeaders.hide();
 		}
 	}
 
@@ -526,14 +504,25 @@ class AxoManager {
 		this.readPhoneFromWoo();
 
 		log( `Attempt on activation - emailInput: ${ this.emailInput.value }` );
-		log(
-			`this.lastEmailCheckedIdentity: ${ this.lastEmailCheckedIdentity }`
-		);
-		if (
-			this.emailInput &&
-			this.lastEmailCheckedIdentity !== this.emailInput.value
-		) {
-			this.onChangeEmail();
+
+		const urlParams = new URLSearchParams( window.location.search );
+		const hasErrorParam = urlParams.get( 'ppcp_fastlane_error' ) === '1';
+
+		if ( hasErrorParam ) {
+			log(
+				'Payment failure detected, session restoration will be attempted'
+			);
+		} else if ( this.emailInput && this.emailInput.value ) {
+			if (
+				this.buttonStateManager?.shouldProcessEmail(
+					this.emailInput.value,
+					this.validateEmailFormat.bind( this )
+				)
+			) {
+				this.onChangeEmail();
+			} else {
+				this.refreshFastlanePrefills();
+			}
 		} else {
 			this.refreshFastlanePrefills();
 		}
@@ -652,6 +641,75 @@ class AxoManager {
 		}
 	}
 
+	initButtonStateManager() {
+		if ( ! this.buttonStateManager ) {
+			this.buttonStateManager = new ButtonStateManager(
+				this.el.billingEmailSubmitButton.selector,
+				this.el.billingEmailSubmitButtonSpinner.selector
+			);
+			log( 'Button state manager initialized' );
+		}
+	}
+
+	registerEmailEventHandlers() {
+		const emailInput = document.querySelector(
+			'#billing_email_field input'
+		);
+
+		if ( emailInput ) {
+			emailInput.addEventListener( 'keydown', async ( ev ) => {
+				if (
+					ev.key === 'Enter' &&
+					getCurrentPaymentMethod() === 'ppcp-axo-gateway'
+				) {
+					ev.preventDefault();
+					ev.stopPropagation();
+
+					log(
+						`Enter key on email field - value: ${ this.emailInput.value }`
+					);
+					this.validateEmail( this.el.fieldBillingEmail.selector );
+
+					if (
+						this.emailInput &&
+						this.buttonStateManager?.shouldAllowRetry(
+							this.emailInput.value,
+							this.validateEmailFormat.bind( this )
+						)
+					) {
+						await this.onChangeEmail();
+					}
+
+					return false;
+				}
+			} );
+		}
+
+		const submitButton = document.querySelector(
+			this.el.billingEmailSubmitButton.selector
+		);
+
+		if ( submitButton ) {
+			submitButton.addEventListener( 'click', async ( ev ) => {
+				ev.preventDefault();
+
+				log(
+					`Submit button clicked - email: ${ this.emailInput.value }`
+				);
+
+				if (
+					this.emailInput &&
+					this.buttonStateManager?.shouldAllowRetry(
+						this.emailInput.value,
+						this.validateEmailFormat.bind( this )
+					)
+				) {
+					await this.onChangeEmail();
+				}
+			} );
+		}
+	}
+
 	async initFastlane() {
 		if ( this.initialized ) {
 			return;
@@ -661,7 +719,11 @@ class AxoManager {
 		await this.connect();
 		await this.renderWatermark();
 		this.renderEmailSubmitButton();
+		this.initButtonStateManager();
+		this.registerEmailEventHandlers();
 		this.watchEmail();
+
+		await this.restoreSessionAfterFailure();
 	}
 
 	async connect() {
@@ -688,6 +750,11 @@ class AxoManager {
 	}
 
 	async renderWatermark( includeAdditionalInfo = true ) {
+		if ( ! this.isWatermarkEnabled ) {
+			this.el.watermarkContainer.hide();
+			return;
+		}
+
 		(
 			await this.fastlane.FastlaneWatermarkComponent( {
 				includeAdditionalInfo,
@@ -731,7 +798,9 @@ class AxoManager {
 			// Reorder button to ensure it's before the watermark container
 			wrapper.insertBefore( buttonElement, watermarkContainer );
 
-			buttonElement.offsetHeight;
+			// eslint-disable-next-line no-unused-expressions
+			buttonElement.offsetHeight; // Force layout reflow
+
 			buttonElement.classList.remove(
 				'ppcp-axo-billing-email-submit-button-hidden'
 			);
@@ -749,30 +818,25 @@ class AxoManager {
 				log(
 					`Change event attempt - emailInput: ${ this.emailInput.value }`
 				);
-				log(
-					`this.lastEmailCheckedIdentity: ${ this.lastEmailCheckedIdentity }`
-				);
+
 				if (
 					this.emailInput &&
-					this.lastEmailCheckedIdentity !== this.emailInput.value
+					this.buttonStateManager?.shouldProcessEmail(
+						this.emailInput.value,
+						this.validateEmailFormat.bind( this )
+					)
 				) {
 					this.validateEmail( this.el.fieldBillingEmail.selector );
 					this.onChangeEmail();
 				}
 			} );
 
-			log(
-				`Last, this.emailInput.value attempt - emailInput: ${ this.emailInput.value }`
-			);
-			log(
-				`this.lastEmailCheckedIdentity: ${ this.lastEmailCheckedIdentity }`
-			);
+			log( `Checking initial email value: ${ this.emailInput.value }` );
 			if ( this.emailInput.value ) {
 				this.onChangeEmail();
 			}
 		}
 	}
-
 	/**
 	 * Locates the WooCommerce checkout "billing phone" field and adds event listeners to it.
 	 */
@@ -829,29 +893,32 @@ class AxoManager {
 			return;
 		}
 
-		if ( this.data.email === this.emailInput.value ) {
-			log( 'Email has not changed since last validation.' );
+		const currentEmail = this.emailInput.value;
+
+		// Check if we should process this email using ButtonStateManager
+		if (
+			! this.buttonStateManager?.shouldProcessEmail(
+				currentEmail,
+				this.validateEmailFormat.bind( this )
+			)
+		) {
+			log(
+				'Email processing skipped - already processing or same email'
+			);
 			return;
 		}
 
-		log(
-			`Email changed: ${
-				this.emailInput ? this.emailInput.value : '<empty>'
-			}`
-		);
+		log( `Email changed: ${ currentEmail || '<empty>' }` );
+
+		this.buttonStateManager.markEmailAsProcessing( currentEmail );
+
 		this.clearData();
-
 		this.emailInput.value = this.stripSpaces( this.emailInput.value );
-
 		this.$( this.el.paymentContainer.selector + '-details' ).html( '' );
 		this.removeFastlaneComponent();
-
 		this.setStatus( 'validEmail', false );
 		this.setStatus( 'hasProfile', false );
-
 		this.hideGatewaySelection = false;
-
-		this.lastEmailCheckedIdentity = this.emailInput.value;
 
 		if (
 			! this.emailInput.value ||
@@ -859,16 +926,17 @@ class AxoManager {
 			! this.validateEmailFormat( this.emailInput.value )
 		) {
 			log( 'The email address is not valid.' );
+			this.buttonStateManager?.setDisabled();
 			return;
 		}
 
 		this.data.email = this.emailInput.value;
 		this.billingView.setData( this.data );
-
 		this.readPhoneFromWoo();
 
 		if ( ! this.fastlane.identity ) {
 			log( 'Not initialized.' );
+			this.buttonStateManager?.setDisabled();
 			return;
 		}
 
@@ -877,18 +945,15 @@ class AxoManager {
 		} );
 
 		this.disableGatewaySelection();
-		this.spinnerToggleLoaderAndOverlay(
-			this.el.billingEmailSubmitButtonSpinner,
-			'loader',
-			'ppcp-axo-overlay'
-		);
-		await this.lookupCustomerByEmail();
-		this.spinnerToggleLoaderAndOverlay(
-			this.el.billingEmailSubmitButtonSpinner,
-			'loader',
-			'ppcp-axo-overlay'
-		);
-		this.enableGatewaySelection();
+
+		try {
+			await this.lookupCustomerByEmail();
+		} catch ( error ) {
+			log( `Email lookup failed: ${ error.message }`, 'error' );
+			this.buttonStateManager?.handleEmailLookupFailure();
+		} finally {
+			this.enableGatewaySelection();
+		}
 	}
 
 	/**
@@ -908,93 +973,49 @@ class AxoManager {
 	}
 
 	async lookupCustomerByEmail() {
-		const lookupResponse =
-			await this.fastlane.identity.lookupCustomerByEmail(
-				this.emailInput.value
-			);
-
-		log( `lookupCustomerByEmail: ${ JSON.stringify( lookupResponse ) }` );
-
-		if ( lookupResponse.customerContextId ) {
-			// Email is associated with a Connect profile or a PayPal member.
-			// Authenticate the customer to get access to their profile.
-			log(
-				'Email is associated with a Connect profile or a PayPal member'
-			);
-
-			const authResponse =
-				await this.fastlane.identity.triggerAuthenticationFlow(
-					lookupResponse.customerContextId
+		try {
+			const lookupResponse =
+				await this.fastlane.identity.lookupCustomerByEmail(
+					this.emailInput.value
 				);
 
 			log(
-				`AuthResponse - triggerAuthenticationFlow: ${ JSON.stringify(
-					authResponse
-				) }`
+				`lookupCustomerByEmail: ${ JSON.stringify( lookupResponse ) }`
 			);
 
-			if ( authResponse.authenticationState === 'succeeded' ) {
-				const shippingData = authResponse.profileData.shippingAddress;
-				if ( shippingData ) {
-					this.setShipping( shippingData );
-				}
+			if ( lookupResponse.customerContextId ) {
+				log(
+					'Email is associated with a Connect profile or a PayPal member'
+				);
 
-				if ( authResponse.profileData.card ) {
-					this.setStatus( 'hasCard', true );
+				const authResponse =
+					await this.fastlane.identity.triggerAuthenticationFlow(
+						lookupResponse.customerContextId
+					);
+
+				log(
+					`AuthResponse - triggerAuthenticationFlow: ${ JSON.stringify(
+						authResponse
+					) }`
+				);
+
+				if ( authResponse.authenticationState === 'succeeded' ) {
+					await this.handleSuccessfulAuth( authResponse );
+					this.buttonStateManager?.handleSuccess();
 				} else {
-					await this.initializeFastlaneComponent();
+					log( 'Authentication Failed or Canceled' );
+					await this.handleFailedAuth();
+					this.buttonStateManager?.handleAuthFailureOrCancellation();
 				}
-
-				const cardBillingAddress =
-					authResponse.profileData?.card?.paymentSource?.card
-						?.billingAddress;
-				if ( cardBillingAddress ) {
-					this.setCard( authResponse.profileData.card );
-
-					const billingData = {
-						address: cardBillingAddress,
-					};
-					const phoneNumber =
-						authResponse.profileData?.shippingAddress?.phoneNumber
-							?.nationalNumber ?? '';
-					if ( phoneNumber ) {
-						billingData.phoneNumber = phoneNumber;
-					}
-
-					this.setBilling( billingData );
-				}
-
-				this.setStatus( 'validEmail', true );
-				this.setStatus( 'hasProfile', true );
-
-				this.hideGatewaySelection = true;
-				this.$( '.wc_payment_methods label' ).hide();
-				this.$( '.wc_payment_methods input' ).hide();
-
-				await this.renderWatermark( false );
-
-				this.rerender();
 			} else {
-				// authentication failed or canceled by the customer
-				// set status as guest customer
-				log( 'Authentication Failed' );
-
-				this.setStatus( 'validEmail', true );
-				this.setStatus( 'hasProfile', false );
-
-				await this.renderWatermark( true );
-				await this.initializeFastlaneComponent();
+				log( 'No profile found with this email address.' );
+				await this.handleGuestCustomer();
+				this.buttonStateManager?.handleSuccess();
 			}
-		} else {
-			// No profile found with this email address.
-			// This is a guest customer.
-			log( 'No profile found with this email address.' );
-
-			this.setStatus( 'validEmail', true );
-			this.setStatus( 'hasProfile', false );
-
-			await this.renderWatermark( true );
-			await this.initializeFastlaneComponent();
+		} catch ( error ) {
+			log( `lookupCustomerByEmail error: ${ error.message }`, 'error' );
+			this.buttonStateManager?.handleEmailLookupFailure();
+			throw error;
 		}
 	}
 
@@ -1371,17 +1392,133 @@ class AxoManager {
 
 	reEnableEmailInput() {
 		const reEnableInput = ( ev ) => {
-			const submitButton = document.querySelector(
-				this.el.billingEmailSubmitButton.selector
-			);
-			if ( submitButton.hasAttribute( 'disabled' ) ) {
-				submitButton.removeAttribute( 'disabled' );
+			if (
+				! this.buttonStateManager?.isProcessing() &&
+				this.emailInput?.value &&
+				this.validateEmailFormat( this.emailInput.value )
+			) {
+				this.buttonStateManager?.setReady();
 			}
 		};
 
 		this.$( '#billing_email_field input' ).on( 'focus', reEnableInput );
 		this.$( '#billing_email_field input' ).on( 'input', reEnableInput );
 		this.$( '#billing_email_field input' ).on( 'click', reEnableInput );
+	}
+
+	async restoreSessionAfterFailure() {
+		if ( ! this.fastlane || this.hasProcessedSessionRestore ) {
+			return;
+		}
+
+		const urlParams = new URLSearchParams( window.location.search );
+		const hasErrorParam = urlParams.get( 'ppcp_fastlane_error' ) === '1';
+
+		if ( ! hasErrorParam ) {
+			return;
+		}
+
+		urlParams.delete( 'ppcp_fastlane_error' );
+		const newUrl = new URL( window.location );
+		newUrl.search = urlParams.toString();
+		window.history.replaceState( {}, '', newUrl );
+
+		this.hasProcessedSessionRestore = true;
+
+		try {
+			if ( this.emailInput?.value ) {
+				log(
+					`Restoring Fastlane session for email: ${ this.emailInput.value }`
+				);
+
+				// Set processing state for session restoration.
+				this.buttonStateManager?.markEmailAsProcessing(
+					this.emailInput.value
+				);
+
+				const lookupResult =
+					await this.fastlane.identity.lookupCustomerByEmail(
+						this.emailInput.value
+					);
+
+				if ( lookupResult?.customerContextId ) {
+					const authenticatedCustomerResult =
+						await this.fastlane.identity.triggerAuthenticationFlow(
+							lookupResult.customerContextId
+						);
+
+					if (
+						authenticatedCustomerResult?.authenticationState ===
+						'succeeded'
+					) {
+						await this.handleSuccessfulAuth(
+							authenticatedCustomerResult
+						);
+						this.buttonStateManager?.handleSuccess();
+						log( 'Fastlane session successfully restored' );
+					} else {
+						await this.handleFailedAuth();
+						this.buttonStateManager?.handleAuthFailureOrCancellation();
+					}
+				} else {
+					await this.handleGuestCustomer();
+					this.buttonStateManager?.handleSuccess();
+				}
+			}
+		} catch ( error ) {
+			log( 'Failed to restore Fastlane session', 'warn' );
+			log( 'Fastlane session restoration error:', 'error' );
+			this.buttonStateManager?.handleEmailLookupFailure();
+		}
+	}
+
+	async handleSuccessfulAuth( authResponse ) {
+		const shippingData = authResponse.profileData.shippingAddress;
+		if ( shippingData ) {
+			this.setShipping( shippingData );
+		}
+
+		if ( authResponse.profileData.card ) {
+			this.setStatus( 'hasCard', true );
+		} else {
+			await this.initializeFastlaneComponent();
+		}
+
+		const cardBillingAddress =
+			authResponse.profileData?.card?.paymentSource?.card?.billingAddress;
+		if ( cardBillingAddress ) {
+			this.setCard( authResponse.profileData.card );
+			const billingData = { address: cardBillingAddress };
+			const phoneNumber =
+				authResponse.profileData?.shippingAddress?.phoneNumber
+					?.nationalNumber ?? '';
+			if ( phoneNumber ) {
+				billingData.phoneNumber = phoneNumber;
+			}
+			this.setBilling( billingData );
+		}
+
+		this.setStatus( 'validEmail', true );
+		this.setStatus( 'hasProfile', true );
+		this.hideGatewaySelection = true;
+		this.$( '.wc_payment_methods label' ).hide();
+		this.$( '.wc_payment_methods input' ).hide();
+		await this.renderWatermark( false );
+		this.rerender();
+	}
+
+	async handleFailedAuth() {
+		this.setStatus( 'validEmail', true );
+		this.setStatus( 'hasProfile', false );
+		await this.renderWatermark( true );
+		await this.initializeFastlaneComponent();
+	}
+
+	async handleGuestCustomer() {
+		this.setStatus( 'validEmail', true );
+		this.setStatus( 'hasProfile', false );
+		await this.renderWatermark( true );
+		await this.initializeFastlaneComponent();
 	}
 }
 

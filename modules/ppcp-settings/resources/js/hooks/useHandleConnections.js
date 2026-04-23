@@ -3,7 +3,7 @@ import { useDispatch } from '@wordpress/data';
 import { useState, useEffect, useCallback, useRef } from '@wordpress/element';
 import { store as noticesStore } from '@wordpress/notices';
 
-import { CommonHooks, OnboardingHooks } from '../data';
+import { CommonHooks, OnboardingHooks } from '@ppcp-settings/data';
 import { useStoreManager } from './useStoreManager';
 
 const PAYPAL_PARTNER_SDK_URL =

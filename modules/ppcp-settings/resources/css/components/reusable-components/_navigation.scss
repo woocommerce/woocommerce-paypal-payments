@@ -7,7 +7,7 @@ $margin_bottom: 48px;
 	--color-disabled: #CCC;
 	--navbar-height: 40px;
 	--navbar-vertical-padding: 10px;
-	--subnavigation-height: 40px;
+	--subnavigation-height: 38px;
 
 	// Styling.
 	position: sticky;
@@ -93,7 +93,6 @@ $margin_bottom: 48px;
 	}
 
 	.ppcp--top-sub-navigation {
-		height: var(--subnavigation-height);
 		margin: 0;
 		padding: 0;
 
@@ -108,6 +107,12 @@ $margin_bottom: 48px;
 			&[data-focus-visible="true"]:focus:not(:disabled) {
 				outline: none;
 			}
+		}
+	}
+
+	@media screen and (max-width: 782px) {
+		.ppcp--top-sub-navigation {
+			height: var(--subnavigation-height);
 		}
 	}
 

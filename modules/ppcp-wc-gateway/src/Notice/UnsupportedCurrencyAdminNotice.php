@@ -73,7 +73,6 @@ class UnsupportedCurrencyAdminNotice {
 		$this->supported_currencies     = $supported_currencies;
 		$this->is_wc_gateways_list_page = $is_wc_gateways_list_page;
 		$this->is_ppcp_settings_page    = $is_ppcp_settings_page;
-
 	}
 
 	/**

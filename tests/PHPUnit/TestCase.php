@@ -41,6 +41,11 @@ class TestCase extends \PHPUnit\Framework\TestCase
 		when('delete_transient')->returnArg();
 		when('wcs_get_subscription')->returnArg();
 
+
+		if (!defined('HOUR_IN_SECONDS')) {
+			define('HOUR_IN_SECONDS', 60 * 60);
+		}
+
 		setUp();
 	}
 

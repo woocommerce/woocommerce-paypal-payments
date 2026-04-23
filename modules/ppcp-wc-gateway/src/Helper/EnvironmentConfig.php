@@ -54,7 +54,7 @@ class EnvironmentConfig {
 	 * @param U      $sandbox_value    Value for the sandbox environment.
 	 * @return self<U>
 	 */
-	public static function create( string $data_type, $production_value, $sandbox_value ) : self {
+	public static function create( string $data_type, $production_value, $sandbox_value ): self {
 		assert(
 			gettype( $production_value ) === $data_type || $production_value instanceof $data_type,
 			"Production value must be of type '$data_type'"

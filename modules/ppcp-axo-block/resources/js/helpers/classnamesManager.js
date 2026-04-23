@@ -1,6 +1,6 @@
 import { select, subscribe } from '@wordpress/data';
-import { log } from '../../../../ppcp-axo/resources/js/Helper/Debug';
-import { STORE_NAME } from '../stores/axoStore';
+import { log } from '@ppcp-axo/Helper/Debug';
+import { STORE_NAME } from '@ppcp-axo-block/stores/axoStore';
 
 /**
  * Sets up a class toggle based on the isGuest state for the express payment block.

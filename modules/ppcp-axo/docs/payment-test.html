@@ -1,0 +1,863 @@
+<!DOCTYPE html>
+<html lang='en'>
+<!--
+URL: /wp-content/plugins/woocommerce-paypal-payments/modules/ppcp-axo/docs/payment-test.html
+-->
+<head>
+	<meta charset='UTF-8'>
+	<meta name='viewport' content='width=device-width, initial-scale=1.0'>
+	<title>PayPal Fastlane Checkout - Minimal POC</title>
+</head>
+<body>
+<section>
+	<h3>PayPal Fastlane Test</h3>
+	<div id='test-form'>
+		<p>
+			PayPal client ID: <span id='client-id'></span>
+			<button id='clear-credentials'>Clear</button>
+		</p>
+		<div id='fastlane-container'>
+			<div class='form-group'>
+				<label for='sca-method'>3DS Verification:</label>
+				<select id='sca-method' style='width: 100%;'>
+					<option value=''>NEVER - Do not ask for 3DS verification</option>
+					<option value='SCA_WHEN_REQUIRED'>WHEN REQUIRED - Let PayPal decide if to show
+						3DS
+					</option>
+					<option value='SCA_ALWAYS'>ALWAYS - Ask for 3DS verification</option>
+				</select>
+			</div>
+
+			<div class='form-group'>
+				<label for='email'>Email Address</label>
+				<input type='email' id='email' placeholder='Enter your email address'>
+			</div>
+
+			<button id='lookupButton'>Continue</button>
+
+			<!-- Fastlane Watermark will be rendered here -->
+			<div id='fastlaneWatermark'></div>
+
+			<!-- Shipping Address Container -->
+			<div id='shippingAddressContainer' style='display: none;'>
+				<h3>Shipping Address</h3>
+				<div id='shippingAddressDetails'></div>
+				<button id='changeShippingButton' style='display: none;'>Change Address</button>
+			</div>
+
+			<!-- Payment Method Container -->
+			<div id='paymentMethodContainer' style='display: none;'>
+				<h3>Payment Method</h3>
+				<div id='paymentMethodDetails'></div>
+				<button id='changePaymentButton' style='display: none;'>Change Payment Method
+				</button>
+
+				<!-- Fastlane Card Component will be rendered here for guests or members without cards -->
+				<div id='fastlaneCardComponent' style='display: none;'></div>
+			</div>
+
+			<!-- Checkout Container -->
+			<div id='checkout-container' style='display: none;'>
+				<h3>Order Summary</h3>
+				<p>Product: Test Item</p>
+				<p>Price: $10.00</p>
+				<button id='placeOrderButton'>Place Order</button>
+			</div>
+		</div>
+	</div>
+	<div class='logger' id='response-log'></div>
+</section>
+
+<script>
+	// Check if credentials exist in localStorage
+	const PAYPAL_CLIENT_ID = localStorage.getItem('PAYPAL_CLIENT_ID');
+	const PAYPAL_CLIENT_SECRET = localStorage.getItem('PAYPAL_CLIENT_SECRET');
+	const SCA_METHOD = localStorage.getItem('SCA_METHOD') || '';
+
+	// Variables to store the Fastlane instance and other data
+	let fastlane;
+	let identity;
+	let customerContextId;
+	let renderFastlaneMemberExperience = false;
+	let profileData = null;
+	let sdkLoaded = false;
+
+	// If credentials don't exist, show input form
+	if (!PAYPAL_CLIENT_ID || !PAYPAL_CLIENT_SECRET) {
+		document.getElementById('test-form').innerHTML = `
+            <div id='credentials-form'>
+                <h4>Enter PayPal API Credentials</h4>
+                <div style='margin-bottom: 10px;'>
+                    <label for='client-id-input'>Client ID:</label>
+                    <input type='text' id='client-id-input' style='width: 100%;'>
+                </div>
+                <div style='margin-bottom: 10px;'>
+                    <label for='client-secret'>Client Secret:</label>
+                    <input type='text' id='client-secret' style='width: 100%;'>
+                </div>
+                <button id='save-credentials' style='padding: 8px 16px;'>Save Credentials</button>
+            </div>
+        `;
+
+		document.addEventListener('DOMContentLoaded', () => {
+			document.getElementById('save-credentials').addEventListener('click', () => {
+				const clientId = document.getElementById('client-id-input').value.trim();
+				const clientSecret = document.getElementById('client-secret').value.trim();
+
+				if (!clientId || !clientSecret) {
+					alert('Please enter both Client ID and Client Secret');
+					return;
+				}
+
+				localStorage.setItem('PAYPAL_CLIENT_ID', clientId);
+				localStorage.setItem('PAYPAL_CLIENT_SECRET', clientSecret);
+
+				window.location.reload();
+			});
+		});
+	} else {
+		const clientIdElement = document.getElementById('client-id');
+		clientIdElement.textContent = PAYPAL_CLIENT_ID;
+		document.getElementById('sca-method').value = SCA_METHOD;
+
+		// Add event listener for SCA method change
+		document.getElementById('sca-method').addEventListener('change', () => {
+			const scaMethod = document.getElementById('sca-method').value;
+			localStorage.setItem('SCA_METHOD', scaMethod);
+			logResponse(`3DS verification method changed to: ${scaMethod || 'NEVER'}`);
+		});
+
+		document.getElementById('clear-credentials').addEventListener('click', () => {
+			if (confirm('Are you sure you want to clear your PayPal credentials?')) {
+				localStorage.removeItem('PAYPAL_CLIENT_ID');
+				localStorage.removeItem('PAYPAL_CLIENT_SECRET');
+				localStorage.removeItem('SCA_METHOD');
+				window.location.reload();
+			}
+		});
+
+		// Initialize the app since we have credentials
+		document.addEventListener('DOMContentLoaded', initializeApp);
+	}
+
+	// Logging function for better debugging
+	function logResponse(message, data) {
+		const logger = document.getElementById('response-log');
+		const timestamp = new Date().toLocaleTimeString();
+
+		if (undefined === data) {
+			logger.innerHTML += `<div>[${timestamp}] ${message}</div>`;
+			console.log(message);
+		} else {
+			logger.innerHTML +=
+				`<div>[${timestamp}] ${message}<pre>${JSON.stringify(data, null, 2)}</pre></div>`;
+			console.log(message, data);
+		}
+
+		logger.scrollTop = logger.scrollHeight;
+	}
+
+	// Main initialization function
+	async function initializeApp() {
+		try {
+			logResponse('[Mock Server] Generating client token...');
+
+			// Generate access token
+			const tokenResponse = await fetch('https://api-m.sandbox.paypal.com/v1/oauth2/token', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/x-www-form-urlencoded',
+					'Authorization': `Basic ${btoa(`${PAYPAL_CLIENT_ID}:${PAYPAL_CLIENT_SECRET}`)}`,
+				},
+				body: 'grant_type=client_credentials',
+			});
+
+			if (!tokenResponse.ok) {
+				throw new Error('Failed to get PayPal access token');
+			}
+
+			const tokenData = await tokenResponse.json();
+			const accessToken = tokenData.access_token;
+			logResponse('[Mock Server] Access token obtained');
+
+			const clientTokenBody = {
+				customer_type: 'MERCHANT',
+				features: ['FASTLANE', 'VAULT'],
+				domains: [location.hostname],
+			};
+			logResponse('[Mock Server] Generate client token...', clientTokenBody);
+
+			// Generate client token for SDK
+			const clientTokenResponse = await fetch('https://api-m.sandbox.paypal.com/v1/identity/generate-token',
+				{
+					method: 'POST',
+					headers: {
+						'Authorization': `Bearer ${accessToken}`,
+						'Content-Type': 'application/json',
+						'Accept-Language': 'en_US',
+					},
+					body: JSON.stringify(clientTokenBody),
+				},
+			);
+
+			if (!clientTokenResponse.ok) {
+				throw new Error('Failed to generate client token');
+			}
+
+			const clientTokenData = await clientTokenResponse.json();
+			const clientToken = clientTokenData.client_token;
+			logResponse('[Mock Server] Client token generated', clientTokenData);
+
+			// Load the PayPal SDK
+			loadPayPalSdk(clientToken);
+		} catch (error) {
+			logResponse('[Mock Server] Error:', error);
+		}
+	}
+
+	// Load PayPal SDK with the generated token
+	function loadPayPalSdk(clientToken) {
+		logResponse('Loading the PayPal JS SDK...');
+		const script = document.createElement('script');
+		script.src =
+			`https://www.paypal.com/sdk/js?client-id=${PAYPAL_CLIENT_ID}&components=fastlane`;
+
+		script.setAttribute('data-sdk-client-token', clientToken);
+		script.setAttribute('data-client-token', clientToken);
+
+		script.onload = async function() {
+			logResponse('PayPal SDK loaded');
+			sdkLoaded = true;
+
+			try {
+				// Initialize Fastlane
+				logResponse('Initialize Fastlane...');
+				fastlane = await window.paypal.Fastlane();
+
+				// Set locale if needed (en_us is default)
+				fastlane.setLocale('en_us');
+			} catch (error) {
+				logResponse('Failed to initialize Fastlane:', error);
+				logResponse('-- Maybe it\'s not available/enabled for this account --');
+
+				return;
+			}
+
+			try {
+				// Get identity module for customer lookup and authentication
+				logResponse('Get identity module and add watermark...');
+				identity = fastlane.Identity();
+
+				// Render Fastlane watermark for transparency
+				const watermarkElement = document.getElementById('fastlaneWatermark');
+				identity.renderWatermark(watermarkElement);
+
+				// Add event listener for lookup button
+				setupEventListeners();
+
+				logResponse('Fastlane initialized successfully');
+			} catch (error) {
+				logResponse('Failed to configure Fastlane:', error);
+			}
+		};
+
+		document.head.appendChild(script);
+	}
+
+	// Setup all event listeners
+	function setupEventListeners() {
+		// Lookup button click handler
+		document.getElementById('lookupButton').addEventListener('click', handleLookupButtonClick);
+
+		// Place order button handler
+		document.getElementById('placeOrderButton')
+			.addEventListener('click', handlePlaceOrderButtonClick);
+	}
+
+	// Handle lookup button click
+	async function handleLookupButtonClick() {
+		const email = document.getElementById('email').value;
+
+		if (!email) {
+			alert('Please enter your email address');
+			return;
+		}
+
+		logResponse(`Looking up customer email: ${email}`);
+
+		try {
+			// Look up customer by email
+			const lookupResult = await identity.lookupCustomerByEmail(email);
+			customerContextId = lookupResult.customerContextId;
+
+			if (customerContextId) {
+				// Email is associated with a Fastlane profile or PayPal member
+				logResponse('Customer found with ID:', customerContextId);
+
+				// Trigger authentication flow (OTP)
+				logResponse('Triggering authentication flow...');
+				const authResult = await identity.triggerAuthenticationFlow(customerContextId);
+				logResponse('Authentication result:', authResult);
+
+				if (authResult.authenticationState === 'succeeded') {
+					// Authentication successful - we have profile data
+					renderFastlaneMemberExperience = true;
+					profileData = authResult.profileData;
+
+					// Display member checkout experience
+					displayMemberCheckout(profileData);
+				} else {
+					// Authentication failed or was canceled
+					logResponse('Authentication failed or was canceled');
+					renderFastlaneMemberExperience = false;
+					displayGuestCheckout();
+				}
+			} else {
+				// No profile found - this is a guest
+				logResponse('No Fastlane profile found - processing as guest');
+				renderFastlaneMemberExperience = false;
+				displayGuestCheckout();
+			}
+		} catch (error) {
+			logResponse('Error during customer lookup:', error);
+			displayGuestCheckout();
+		}
+	}
+
+	// Display checkout for authenticated Fastlane members
+	function displayMemberCheckout(profile) {
+		logResponse('Displaying member checkout with profile:', profile);
+
+		// Show shipping address if available
+		if (profile.shippingAddress) {
+			const shippingContainer = document.getElementById('shippingAddressContainer');
+			const shippingDetails = document.getElementById('shippingAddressDetails');
+			const changeShippingBtn = document.getElementById('changeShippingButton');
+
+			// Format and display address
+			const address = profile.shippingAddress;
+			shippingDetails.innerHTML = `
+                <p>${profile.name || ''}</p>
+                <p>${address.line1 || ''}</p>
+                ${address.line2 ? `<p>${address.line2}</p>` : ''}
+                <p>${address.city || ''}, ${address.state || ''} ${address.postal_code || ''}</p>
+                <p>${address.country_code || ''}</p>
+            `;
+
+			// Show container and change button
+			shippingContainer.style.display = 'block';
+			changeShippingBtn.style.display = 'block';
+
+			// Handle change address button
+			changeShippingBtn.onclick = function() {
+				try {
+					logResponse('Opening shipping address selector');
+					// Show shipping address selector
+					fastlane.Address().showShippingAddressSelector();
+				} catch (error) {
+					logResponse('Error showing address selector:', error);
+				}
+			};
+		}
+
+		// Show payment method if available
+		if (profile.card) {
+			const paymentContainer = document.getElementById('paymentMethodContainer');
+			const paymentDetails = document.getElementById('paymentMethodDetails');
+			const changePaymentBtn = document.getElementById('changePaymentButton');
+
+			// Format and display card info
+			const card = profile.card;
+			paymentDetails.innerHTML = `
+                <p>Card: ${card.brand || ''} ending in ${card.last_digits || ''}</p>
+                <p>Expires: ${card.expiry || ''}</p>
+            `;
+
+			// Show container and change button
+			paymentContainer.style.display = 'block';
+			changePaymentBtn.style.display = 'block';
+
+			// Handle change payment button
+			changePaymentBtn.onclick = function() {
+				try {
+					logResponse('Opening card selector');
+					// Show card selector
+					fastlane.Payment().showCardSelector();
+				} catch (error) {
+					logResponse('Error showing card selector:', error);
+				}
+			};
+		} else {
+			// No card available, show card component
+			displayCardComponent();
+		}
+
+		// Show checkout container
+		document.getElementById('checkout-container').style.display = 'block';
+	}
+
+	// Display checkout for guests or unauthenticated users
+	function displayGuestCheckout() {
+		logResponse('Displaying guest checkout');
+
+		// Show shipping container with empty form
+		const shippingContainer = document.getElementById('shippingAddressContainer');
+		const shippingDetails = document.getElementById('shippingAddressDetails');
+
+		// Create shipping form for guest
+		shippingDetails.innerHTML = `
+            <div class='form-group'>
+                <label for='name'>Full Name</label>
+                <input type='text' id='name' placeholder='Enter your full name'>
+            </div>
+            <div class='form-group'>
+                <label for='line1'>Address Line 1</label>
+                <input type='text' id='line1' placeholder='Street address'>
+            </div>
+            <div class='form-group'>
+                <label for='line2'>Address Line 2</label>
+                <input type='text' id='line2' placeholder='Apt, suite, etc. (optional)'>
+            </div>
+            <div class='form-group'>
+                <label for='city'>City</label>
+                <input type='text' id='city' placeholder='City'>
+            </div>
+            <div class='form-group'>
+                <label for='state'>State</label>
+                <input type='text' id='state' placeholder='State'>
+            </div>
+            <div class='form-group'>
+                <label for='postal_code'>Postal Code</label>
+                <input type='text' id='postal_code' placeholder='Postal code'>
+            </div>
+            <div class='form-group'>
+                <label for='country_code'>Country Code</label>
+                <input type='text' id='country_code' placeholder='Country code (e.g., US)'>
+            </div>
+        `;
+
+		shippingContainer.style.display = 'block';
+
+		// Show card component for payment
+		displayCardComponent();
+
+		// Show checkout container
+		document.getElementById('checkout-container').style.display = 'block';
+	}
+
+	// Display Fastlane card component
+	function displayCardComponent() {
+		try {
+			const paymentContainer = document.getElementById('paymentMethodContainer');
+			const cardComponent = document.getElementById('fastlaneCardComponent');
+
+			// Show containers
+			paymentContainer.style.display = 'block';
+			cardComponent.style.display = 'block';
+
+			logResponse('Initializing Fastlane card component');
+
+			// Create and render the card component
+			const payment = fastlane.Payment();
+
+			// Customize the card component (optional)
+			const cardStyle = {
+				input: {
+					color: '#333333',
+					fontSize: '16px',
+					fontFamily: 'Arial, sans-serif',
+				},
+				invalid: {
+					color: '#e5424d',
+				},
+				base: {
+					backgroundColor: '#ffffff',
+					color: '#333333',
+				},
+			};
+
+			// Initialize the card component with options
+			payment.initCardComponent(cardComponent, {
+				style: cardStyle, // Set fields that should be collected
+				fields: {
+					name: {
+						required: true,
+					},
+					number: {
+						required: true,
+					},
+					cvv: {
+						required: true,
+					},
+					expiry: {
+						required: true,
+					},
+				}, // Callbacks
+				onReady: function() {
+					logResponse('Card component is ready');
+				},
+				onChange: function(state) {
+					logResponse('Card component state changed:', state);
+				},
+				onError: function(error) {
+					logResponse('Card component error:', error);
+				},
+			});
+		} catch (error) {
+			logResponse('Error initializing card component:', error);
+		}
+	}
+
+	// Handle place order button click
+	async function handlePlaceOrderButtonClick() {
+		logResponse('Processing order...');
+
+		// Get the selected SCA method
+		const scaMethod = document.getElementById('sca-method').value;
+		logResponse(`3DS verification method: ${scaMethod || 'NEVER'}`);
+
+		try {
+			if (renderFastlaneMemberExperience && profileData && profileData.card) {
+				// For an authenticated Fastlane member with a saved card
+				logResponse('Processing order for Fastlane member with saved card');
+
+				// Get access token for server call
+				const tokenResponse = await fetch(
+					'https://api-m.sandbox.paypal.com/v1/oauth2/token',
+					{
+						method: 'POST',
+						headers: {
+							'Content-Type': 'application/x-www-form-urlencoded',
+							'Authorization': `Basic ${btoa(`${PAYPAL_CLIENT_ID}:${PAYPAL_CLIENT_SECRET}`)}`,
+						},
+						body: 'grant_type=client_credentials',
+					},
+				);
+
+				if (!tokenResponse.ok) {
+					throw new Error('Failed to get PayPal access token');
+				}
+
+				const tokenData = await tokenResponse.json();
+				const accessToken = tokenData.access_token;
+
+				// Get payment token
+				const payment = fastlane.Payment();
+				const tokenizeResult = await payment.tokenizeCard();
+
+				if (!tokenizeResult || !tokenizeResult.token) {
+					throw new Error('Failed to tokenize saved card');
+				}
+
+				logResponse('Card tokenized:', tokenizeResult);
+
+				// Create the order request body
+				const orderRequestBody = {
+					intent: 'CAPTURE',
+					payment_source: {
+						card: {
+							single_use_token: tokenizeResult.token,
+						},
+					},
+					purchase_units: [
+						{
+							amount: {
+								currency_code: 'USD',
+								value: '10.00',
+							},
+							description: 'Test Item',
+						},
+					],
+				};
+
+				// Add 3DS verification if specified
+				if (scaMethod) {
+					orderRequestBody.payment_source.card.attributes = {
+						verification: {
+							method: scaMethod,
+						},
+					};
+				}
+
+				logResponse('Creating order with request:', orderRequestBody);
+
+				// Create order with Orders V2 API
+				const orderResponse = await fetch('https://api-m.sandbox.paypal.com/v2/checkout/orders',
+					{
+						method: 'POST',
+						headers: {
+							'Content-Type': 'application/json',
+							'Authorization': `Bearer ${accessToken}`,
+						},
+						body: JSON.stringify(orderRequestBody),
+					},
+				);
+
+				if (!orderResponse.ok) {
+					const errorData = await orderResponse.json();
+					throw new Error(`Failed to create order: ${JSON.stringify(errorData)}`);
+				}
+
+				const orderData = await orderResponse.json();
+				logResponse('Order created successfully:', orderData);
+
+				// Check if 3DS verification is required (PAYER_ACTION_REQUIRED)
+				if (orderData.status === 'PAYER_ACTION_REQUIRED') {
+					logResponse('3DS verification required');
+
+					// Find the payer-action link for 3DS verification
+					const payerActionLink = orderData.links.find(link => link.rel === 'payer-action');
+
+					if (payerActionLink) {
+						// In a real implementation, you would redirect the buyer to this URL
+						logResponse('3DS verification URL:', payerActionLink.href);
+
+						// For this POC, we'll just show an alert with the URL
+						alert(`3DS verification required. In a real implementation, you would redirect to: ${payerActionLink.href}`);
+
+						// After 3DS verification is complete, capture the payment
+						logResponse('3DS verification complete. Capturing payment...');
+						alert(
+							'After 3DS verification, you would need to capture the payment using the Orders API');
+					}
+				} else {
+					// No 3DS required, capture the payment directly
+					alert('Order created successfully! Order ID: ' + orderData.id);
+				}
+			} else {
+				// For guests or members without a saved card
+				logResponse('Processing order for guest or member without saved card');
+
+				// Get payment token
+				const payment = fastlane.Payment();
+				const tokenizeResult = await payment.tokenizeCard();
+
+				if (!tokenizeResult || !tokenizeResult.token) {
+					throw new Error('Failed to tokenize card');
+				}
+
+				logResponse('Card tokenized:', tokenizeResult);
+
+				// Get access token for server call
+				const tokenResponse = await fetch(
+					'https://api-m.sandbox.paypal.com/v1/oauth2/token',
+					{
+						method: 'POST',
+						headers: {
+							'Content-Type': 'application/x-www-form-urlencoded',
+							'Authorization': `Basic ${btoa(`${PAYPAL_CLIENT_ID}:${PAYPAL_CLIENT_SECRET}`)}`,
+						},
+						body: 'grant_type=client_credentials',
+					},
+				);
+
+				if (!tokenResponse.ok) {
+					throw new Error('Failed to get PayPal access token');
+				}
+
+				const tokenData = await tokenResponse.json();
+				const accessToken = tokenData.access_token;
+
+				// Collect shipping address from form
+				const shippingAddress = {
+					name: document.getElementById('name').value,
+					address_line_1: document.getElementById('line1').value,
+					address_line_2: document.getElementById('line2').value || '',
+					admin_area_2: document.getElementById('city').value,
+					admin_area_1: document.getElementById('state').value,
+					postal_code: document.getElementById('postal_code').value,
+					country_code: document.getElementById('country_code').value,
+				};
+
+				// Create the order request body
+				const orderRequestBody = {
+					intent: 'CAPTURE',
+					payment_source: {
+						card: {
+							single_use_token: tokenizeResult.token,
+							store_in_vault: true,  // This enables creating a Fastlane profile
+						},
+					},
+					purchase_units: [
+						{
+							amount: {
+								currency_code: 'USD',
+								value: '10.00',
+							},
+							description: 'Test Item',
+							shipping: {
+								name: {
+									full_name: shippingAddress.name,
+								},
+								address: {
+									address_line_1: shippingAddress.address_line_1,
+									address_line_2: shippingAddress.address_line_2,
+									admin_area_2: shippingAddress.admin_area_2,
+									admin_area_1: shippingAddress.admin_area_1,
+									postal_code: shippingAddress.postal_code,
+									country_code: shippingAddress.country_code,
+								},
+							},
+						},
+					],
+				};
+
+				// Add 3DS verification if specified
+				if (scaMethod) {
+					orderRequestBody.payment_source.card.attributes = {
+						verification: {
+							method: scaMethod,
+						},
+					};
+				}
+
+				logResponse('Creating order with request:', orderRequestBody);
+
+				// Create order with Orders V2 API
+				const orderResponse = await fetch('https://api-m.sandbox.paypal.com/v2/checkout/orders',
+					{
+						method: 'POST',
+						headers: {
+							'Content-Type': 'application/json',
+							'Authorization': `Bearer ${accessToken}`,
+						},
+						body: JSON.stringify(orderRequestBody),
+					},
+				);
+
+				if (!orderResponse.ok) {
+					const errorData = await orderResponse.json();
+					throw new Error(`Failed to create order: ${JSON.stringify(errorData)}`);
+				}
+
+				const orderData = await orderResponse.json();
+				logResponse('Order created successfully:', orderData);
+
+				// Check if 3DS verification is required (PAYER_ACTION_REQUIRED)
+				if (orderData.status === 'PAYER_ACTION_REQUIRED') {
+					logResponse('3DS verification required');
+
+					// Find the payer-action link for 3DS verification
+					const payerActionLink = orderData.links.find(link => link.rel === 'payer-action');
+
+					if (payerActionLink) {
+						// In a real implementation, you would redirect the buyer to this URL
+						logResponse('3DS verification URL:', payerActionLink.href);
+
+						// For this POC, we'll just show an alert with the URL
+						alert(`3DS verification required. In a real implementation, you would redirect to: ${payerActionLink.href}`);
+
+						// After 3DS verification is complete, capture the payment
+						logResponse('3DS verification complete. Capturing payment...');
+						alert(
+							'After 3DS verification, you would need to capture the payment using the Orders API');
+					}
+				} else {
+					// No 3DS required, capture the payment directly
+					alert('Order created successfully! Order ID: ' + orderData.id);
+				}
+			}
+		} catch (error) {
+			logResponse('Error processing order:', error);
+			alert('Error processing order: ' + error.message);
+		}
+	}
+</script>
+<style>
+	body {
+		font-family: Arial, sans-serif;
+		max-width: 800px;
+		margin: 0 auto;
+		padding: 20px;
+	}
+
+	section {
+		border: 1px solid #ddd;
+		padding: 20px;
+		border-radius: 8px;
+		margin-top: 20px;
+	}
+
+	.form-group {
+		margin-bottom: 15px;
+	}
+
+	label {
+		display: block;
+		margin-bottom: 5px;
+		font-weight: bold;
+	}
+
+	input[type="text"],
+	input[type="email"] {
+		width: 100%;
+		padding: 8px;
+		border: 1px solid #ddd;
+		border-radius: 4px;
+		box-sizing: border-box;
+	}
+
+	button {
+		background-color: #0070ba;
+		color: white;
+		padding: 10px 15px;
+		border: none;
+		border-radius: 4px;
+		cursor: pointer;
+		margin-top: 10px;
+	}
+
+	button:hover {
+		background-color: #005ea6;
+	}
+
+	.logger {
+		margin-top: 20px;
+		border: 1px solid #eee;
+		padding: 10px;
+		min-height: 100px;
+		max-height: calc(100vh - 260px);
+		overflow-y: auto;
+		background-color: #f9f9f9;
+		border-radius: 4px;
+		font-family: monospace;
+
+		> div {
+			border-bottom: 1px solid #eee;
+			padding: 0 0 10px 0;
+			margin: 0 0 10px 0;
+
+			&:last-child {
+				border-bottom: none;
+				margin-bottom: 0;
+				padding-bottom: 0;
+			}
+		}
+	}
+
+	#shippingAddressContainer,
+	#paymentMethodContainer,
+	#fastlaneWatermark,
+	#checkout-container {
+		margin-top: 20px;
+	}
+
+	#fastlaneCardComponent {
+		min-height: 150px;
+		border: 1px solid #eee;
+		padding: 10px;
+		margin-top: 10px;
+	}
+
+	#client-id {
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		width: 300px;
+		display: inline-block;
+		vertical-align: text-bottom;
+		font-size: 0.8em;
+	}
+</style>
+</body>
+</html>

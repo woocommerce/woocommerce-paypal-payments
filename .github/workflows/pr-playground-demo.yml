@@ -1,0 +1,163 @@
+name: PR Playground Demo
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+# Cancels all previous workflow runs for pull requests that have not completed.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref }}
+  cancel-in-progress: true
+
+# Disable permissions for all available scopes by default.
+permissions: {}
+
+jobs:
+  fetch_build:
+    runs-on: ubuntu-latest
+    if: github.repository == 'woocommerce/woocommerce-paypal-payments'
+    permissions:
+      actions: read
+    outputs:
+      artifact_name: ${{ steps.version.outputs.artifact_name }}
+      plugin_version: ${{ steps.version.outputs.plugin_version }}
+      has_build: ${{ steps.fetch.outputs.has_build }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set plugin version and artifact name
+        id: version
+        run: |
+          BASE_VERSION=$(sed -nE '/Version:/s/.* ([0-9.]+).*/\1/p' woocommerce-paypal-payments.php)
+          VERSUFFIX="${GITHUB_RUN_ID}-g$(git rev-parse --short HEAD)"
+          PR_VERSION="${BASE_VERSION}-pr${{ github.event.pull_request.number }}-${VERSUFFIX}"
+          ARTIFACT_NAME="woocommerce-paypal-payments-${PR_VERSION}"
+          echo "plugin_version=$PR_VERSION" >> $GITHUB_OUTPUT
+          echo "artifact_name=$ARTIFACT_NAME" >> $GITHUB_OUTPUT
+
+      - name: Wait for and download Build and distribute artifact
+        id: fetch
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const headSha = context.payload.pull_request.head.sha;
+            core.info(`Looking for Build and distribute run for SHA: ${headSha}`);
+
+            // Find the "Build and distribute" workflow
+            const workflows = await github.rest.actions.listRepoWorkflows({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+            });
+            const bdWorkflow = workflows.data.workflows.find(w => w.name === 'Build and distribute');
+            if (!bdWorkflow) {
+              core.setFailed('Could not find "Build and distribute" workflow');
+              return;
+            }
+            core.info(`Found workflow ID: ${bdWorkflow.id}`);
+
+            // Poll for the workflow run to appear and complete
+            const maxWait = 5 * 60 * 1000;
+            const interval = 30 * 1000;
+            const start = Date.now();
+
+            let run = null;
+            while (Date.now() - start < maxWait) {
+              const runs = await github.rest.actions.listWorkflowRuns({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                workflow_id: bdWorkflow.id,
+                head_sha: headSha,
+              });
+
+              if (runs.data.workflow_runs.length > 0) {
+                run = runs.data.workflow_runs[0];
+                core.info(`Found run #${run.id} — status: ${run.status}, conclusion: ${run.conclusion}`);
+
+                if (run.status === 'completed') {
+                  break;
+                }
+              } else {
+                core.info('No matching run found yet, waiting...');
+              }
+
+              await new Promise(r => setTimeout(r, interval));
+            }
+
+            // No B&D run found — build workflow did not trigger for this commit, skip gracefully
+            if (!run) {
+              core.info('No Build and distribute run found for this commit — skipping playground demo');
+              core.setOutput('has_build', 'false');
+              return;
+            }
+            if (run.status !== 'completed') {
+              core.info('Build and distribute did not complete in time — skipping playground demo');
+              core.setOutput('has_build', 'false');
+              return;
+            }
+            if (run.conclusion !== 'success') {
+              core.setFailed(`Build and distribute finished with: ${run.conclusion}`);
+              return;
+            }
+
+            core.setOutput('has_build', 'true');
+
+            // Download the artifact
+            const artifacts = await github.rest.actions.listWorkflowRunArtifacts({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              run_id: run.id,
+            });
+
+            if (artifacts.data.artifacts.length === 0) {
+              core.setFailed('No artifacts found in Build and distribute run');
+              return;
+            }
+
+            const artifact = artifacts.data.artifacts[0];
+            core.info(`Downloading artifact: ${artifact.name} (ID: ${artifact.id})`);
+
+            const download = await github.rest.actions.downloadArtifact({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              artifact_id: artifact.id,
+              archive_format: 'zip',
+            });
+
+            fs.writeFileSync('/tmp/plugin.zip', Buffer.from(download.data));
+            core.info('Artifact downloaded to /tmp/plugin.zip');
+
+      - name: Unzip artifact
+        if: steps.fetch.outputs.has_build == 'true'
+        run: |
+          mkdir -p /tmp/plugin-build
+          unzip -o /tmp/plugin.zip -d /tmp/plugin-build
+
+      - name: Re-upload artifact for Playground
+        if: steps.fetch.outputs.has_build == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.version.outputs.artifact_name }}
+          path: /tmp/plugin-build
+
+  playground_demo:
+    name: Comment on PR with Playground details
+    runs-on: ubuntu-latest
+    needs: fetch_build
+    if: needs.fetch_build.outputs.has_build == 'true'
+    permissions:
+      issues: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Create or update PR playground comment
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const script = require('./.github/scripts/playground-comment.js');
+
+            process.env.PLUGIN_VERSION = '${{ needs.fetch_build.outputs.plugin_version }}';
+            process.env.ARTIFACT_NAME = '${{ needs.fetch_build.outputs.artifact_name }}';
+
+            await script.run({ github, context, core });

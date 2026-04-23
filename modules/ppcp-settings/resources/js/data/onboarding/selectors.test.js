@@ -12,7 +12,11 @@ describe( 'determineProductsAndCaps selector [casual seller]', () => {
 					isCasualSeller: true,
 					areOptionalPaymentMethodsEnabled: true,
 				},
-				flags: { canUseCardPayments: false, canUseVaulting: false },
+				flags: {
+					canUseCardPayments: false,
+					canUseDigitalWallets: false,
+					canUseVaulting: false,
+				},
 			},
 			expected: {
 				products: [ 'EXPRESS_CHECKOUT' ],
@@ -26,7 +30,11 @@ describe( 'determineProductsAndCaps selector [casual seller]', () => {
 					isCasualSeller: true,
 					areOptionalPaymentMethodsEnabled: false,
 				},
-				flags: { canUseCardPayments: true, canUseVaulting: false },
+				flags: {
+					canUseCardPayments: true,
+					canUseDigitalWallets: false,
+					canUseVaulting: false,
+				},
 			},
 			expected: {
 				products: [ 'EXPRESS_CHECKOUT' ],
@@ -40,7 +48,11 @@ describe( 'determineProductsAndCaps selector [casual seller]', () => {
 					isCasualSeller: true,
 					areOptionalPaymentMethodsEnabled: true,
 				},
-				flags: { canUseCardPayments: true, canUseVaulting: false },
+				flags: {
+					canUseCardPayments: true,
+					canUseDigitalWallets: false,
+					canUseVaulting: false,
+				},
 			},
 			expected: {
 				products: [ 'EXPRESS_CHECKOUT' ],
@@ -54,10 +66,14 @@ describe( 'determineProductsAndCaps selector [casual seller]', () => {
 					isCasualSeller: true,
 					areOptionalPaymentMethodsEnabled: true,
 				},
-				flags: { canUseCardPayments: false, canUseVaulting: true },
+				flags: {
+					canUseCardPayments: false,
+					canUseDigitalWallets: false,
+					canUseVaulting: true,
+				},
 			},
 			expected: {
-				products: [ 'EXPRESS_CHECKOUT' ],
+				products: [ 'EXPRESS_CHECKOUT', 'ADVANCED_VAULTING' ],
 				options: { useSubscriptions: false, useCardPayments: false },
 			},
 		},
@@ -69,11 +85,15 @@ describe( 'determineProductsAndCaps selector [casual seller]', () => {
 					areOptionalPaymentMethodsEnabled: true,
 					products: [ PRODUCT_TYPES.SUBSCRIPTIONS ],
 				},
-				flags: { canUseCardPayments: false, canUseVaulting: true },
+				flags: {
+					canUseCardPayments: false,
+					canUseDigitalWallets: false,
+					canUseVaulting: true,
+				},
 			},
 			expected: {
-				products: [ 'EXPRESS_CHECKOUT' ],
-				options: { useSubscriptions: false, useCardPayments: false },
+				products: [ 'EXPRESS_CHECKOUT', 'ADVANCED_VAULTING' ],
+				options: { useSubscriptions: true, useCardPayments: false },
 			},
 		},
 	];
@@ -93,7 +113,11 @@ describe( 'determineProductsAndCaps selector [business seller]', () => {
 					isCasualSeller: false,
 					areOptionalPaymentMethodsEnabled: true,
 				},
-				flags: { canUseCardPayments: false, canUseVaulting: false },
+				flags: {
+					canUseCardPayments: false,
+					canUseDigitalWallets: false,
+					canUseVaulting: false,
+				},
 			},
 			expected: {
 				products: [ 'EXPRESS_CHECKOUT' ],
@@ -107,7 +131,11 @@ describe( 'determineProductsAndCaps selector [business seller]', () => {
 					isCasualSeller: false,
 					areOptionalPaymentMethodsEnabled: false,
 				},
-				flags: { canUseCardPayments: true, canUseVaulting: false },
+				flags: {
+					canUseCardPayments: true,
+					canUseDigitalWallets: false,
+					canUseVaulting: false,
+				},
 			},
 			expected: {
 				products: [ 'EXPRESS_CHECKOUT' ],
@@ -121,7 +149,11 @@ describe( 'determineProductsAndCaps selector [business seller]', () => {
 					isCasualSeller: false,
 					areOptionalPaymentMethodsEnabled: true,
 				},
-				flags: { canUseCardPayments: true, canUseVaulting: false },
+				flags: {
+					canUseCardPayments: true,
+					canUseDigitalWallets: false,
+					canUseVaulting: false,
+				},
 			},
 			expected: {
 				products: [ 'PPCP' ],
@@ -135,7 +167,11 @@ describe( 'determineProductsAndCaps selector [business seller]', () => {
 					isCasualSeller: false,
 					areOptionalPaymentMethodsEnabled: true,
 				},
-				flags: { canUseCardPayments: true, canUseVaulting: true },
+				flags: {
+					canUseCardPayments: true,
+					canUseDigitalWallets: false,
+					canUseVaulting: true,
+				},
 			},
 			expected: {
 				products: [ 'PPCP', 'ADVANCED_VAULTING' ],
@@ -150,10 +186,14 @@ describe( 'determineProductsAndCaps selector [business seller]', () => {
 					areOptionalPaymentMethodsEnabled: true,
 					products: [ PRODUCT_TYPES.VIRTUAL ],
 				},
-				flags: { canUseCardPayments: false, canUseVaulting: true },
+				flags: {
+					canUseCardPayments: false,
+					canUseDigitalWallets: false,
+					canUseVaulting: true,
+				},
 			},
 			expected: {
-				products: [ 'EXPRESS_CHECKOUT' ],
+				products: [ 'EXPRESS_CHECKOUT', 'ADVANCED_VAULTING' ],
 				options: { useSubscriptions: false, useCardPayments: false },
 			},
 		},
@@ -165,11 +205,79 @@ describe( 'determineProductsAndCaps selector [business seller]', () => {
 					areOptionalPaymentMethodsEnabled: true,
 					products: [ PRODUCT_TYPES.SUBSCRIPTIONS ],
 				},
-				flags: { canUseCardPayments: true, canUseVaulting: true },
+				flags: {
+					canUseCardPayments: true,
+					canUseDigitalWallets: false,
+					canUseVaulting: true,
+				},
 			},
 			expected: {
 				products: [ 'PPCP', 'ADVANCED_VAULTING' ],
 				options: { useSubscriptions: true, useCardPayments: true },
+			},
+		},
+	];
+
+	test.each( testCases )( '$name', ( { state, expected } ) => {
+		const result = determineProductsAndCaps( state );
+		expect( result ).toEqual( expected );
+	} );
+} );
+
+describe( 'determineProductsAndCaps selector [digital wallets]', () => {
+	const testCases = [
+		{
+			name: 'should return PPCP when digital wallets eligible but ACDC not (business seller)',
+			state: {
+				data: {
+					isCasualSeller: false,
+					areOptionalPaymentMethodsEnabled: true,
+				},
+				flags: {
+					canUseCardPayments: false,
+					canUseDigitalWallets: true,
+					canUseVaulting: false,
+				},
+			},
+			expected: {
+				products: [ 'PPCP' ],
+				options: { useSubscriptions: false, useCardPayments: true },
+			},
+		},
+		{
+			name: 'should return EXPRESS_CHECKOUT when neither ACDC nor digital wallets eligible',
+			state: {
+				data: {
+					isCasualSeller: false,
+					areOptionalPaymentMethodsEnabled: true,
+				},
+				flags: {
+					canUseCardPayments: false,
+					canUseDigitalWallets: false,
+					canUseVaulting: false,
+				},
+			},
+			expected: {
+				products: [ 'EXPRESS_CHECKOUT' ],
+				options: { useSubscriptions: false, useCardPayments: false },
+			},
+		},
+		{
+			name: 'should return PPCP when both ACDC and digital wallets eligible',
+			state: {
+				data: {
+					isCasualSeller: false,
+					areOptionalPaymentMethodsEnabled: true,
+				},
+				flags: {
+					canUseCardPayments: true,
+					canUseDigitalWallets: true,
+					canUseVaulting: false,
+				},
+			},
+			expected: {
+				products: [ 'PPCP' ],
+				options: { useSubscriptions: false, useCardPayments: true },
 			},
 		},
 	];

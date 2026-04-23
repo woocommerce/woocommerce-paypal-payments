@@ -33,39 +33,10 @@ use WooCommerce\PayPalCommerce\Settings\Data\Definition\PaymentMethodsDefinition
  */
 class SettingsDataManager {
 
-	/**
-	 * The payment methods definition, provides a list of all available payment methods.
-	 *
-	 * @var PaymentMethodsDefinition
-	 */
 	private PaymentMethodsDefinition $methods_definition;
-
-	/**
-	 * The onboarding profile data model.
-	 *
-	 * @var OnboardingProfile
-	 */
 	private OnboardingProfile $onboarding_profile;
-
-	/**
-	 * Payment settings model.
-	 *
-	 * @var SettingsModel
-	 */
 	private SettingsModel $payment_settings;
-
-	/**
-	 * Data model that handles button styling on the front end.
-	 *
-	 * @var StylingSettings
-	 */
 	private StylingSettings $styling_settings;
-
-	/**
-	 * Model for handling payment methods.
-	 *
-	 * @var PaymentSettings
-	 */
 	private PaymentSettings $payment_methods;
 
 	/**
@@ -84,18 +55,6 @@ class SettingsDataManager {
 	 */
 	private array $models_to_reset = array();
 
-	/**
-	 * Constructor.
-	 *
-	 * @param PaymentMethodsDefinition $methods_definition Access list of all payment methods.
-	 * @param OnboardingProfile        $onboarding_profile The onboarding profile model.
-	 * @param GeneralSettings          $general_settings   The general settings model.
-	 * @param SettingsModel            $payment_settings   The settings model.
-	 * @param StylingSettings          $styling_settings   The styling settings model.
-	 * @param PaymentSettings          $payment_methods    The payment settings model.
-	 * @param array                    $paylater_messaging Paylater Messaging accessor.
-	 * @param array                    ...$data_models     List of additional data models to reset.
-	 */
 	public function __construct(
 		PaymentMethodsDefinition $methods_definition,
 		OnboardingProfile $onboarding_profile,
@@ -104,19 +63,10 @@ class SettingsDataManager {
 		StylingSettings $styling_settings,
 		PaymentSettings $payment_methods,
 		array $paylater_messaging, // TODO should be migrated to an AbstractDataModel.
-		...$data_models
+		AbstractDataModel ...$data_models
 	) {
 		foreach ( $data_models as $data_model ) {
-			/**
-			 * An instance extracted from the spread operator. We only process
-			 * AbstractDataModel instances.
-			 *
-			 * @var mixed|AbstractDataModel $data_model
-			 */
-
-			if ( $data_model instanceof AbstractDataModel ) {
-				$this->models_to_reset[] = $data_model;
-			}
+			$this->models_to_reset[] = $data_model;
 		}
 
 		$this->models_to_reset[] = $onboarding_profile;
@@ -138,7 +88,7 @@ class SettingsDataManager {
 	 *
 	 * @return void
 	 */
-	public function reset_all_settings() : void {
+	public function reset_all_settings(): void {
 		/**
 		 * Broadcast the settings-reset event to allow other modules to perform
 		 * cleanup tasks, if needed.
@@ -163,7 +113,7 @@ class SettingsDataManager {
 	 * @param ConfigurationFlagsDTO $flags The configuration flags.
 	 * @return void
 	 */
-	public function set_defaults_for_new_merchant( ConfigurationFlagsDTO $flags ) : void {
+	public function set_defaults_for_new_merchant( ConfigurationFlagsDTO $flags ): void {
 		if ( $this->onboarding_profile->is_setup_done() ) {
 			return;
 		}
@@ -193,7 +143,7 @@ class SettingsDataManager {
 	 * @param ConfigurationFlagsDTO $flags The configuration flags.
 	 * @return void
 	 */
-	protected function apply_configuration( ConfigurationFlagsDTO $flags ) : void {
+	protected function apply_configuration( ConfigurationFlagsDTO $flags ): void {
 		// Apply defaults for the "Settings" tab.
 		$this->apply_payment_settings( $flags );
 
@@ -209,14 +159,15 @@ class SettingsDataManager {
 	 *
 	 * @return void
 	 */
-	public function sync_gateway_settings() : void {
+	public function sync_gateway_settings(): void {
 		$flags = new ConfigurationFlagsDTO();
 
 		$profile_data = $this->onboarding_profile->to_array();
 
-		$flags->is_business_seller = ! ( $profile_data['is_casual_seller'] ?? false );
-		$flags->use_card_payments  = $profile_data['accept_card_payments'] ?? false;
-		$flags->use_subscriptions  = in_array( ProductChoicesEnum::SUBSCRIPTIONS, $profile_data['products'] ?? array(), true );
+		$flags->is_business_seller  = ! ( $profile_data['is_casual_seller'] ?? false );
+		$flags->use_card_payments   = $profile_data['accept_card_payments'] ?? false;
+		$flags->use_digital_wallets = $profile_data['accept_card_payments'] ?? false;
+		$flags->use_subscriptions   = in_array( ProductChoicesEnum::SUBSCRIPTIONS, $profile_data['products'] ?? array(), true );
 
 		$this->toggle_payment_gateways( $flags );
 	}
@@ -228,7 +179,7 @@ class SettingsDataManager {
 	 * @param ConfigurationFlagsDTO $flags Shop configuration flags.
 	 * @return void
 	 */
-	protected function toggle_payment_gateways( ConfigurationFlagsDTO $flags ) : void {
+	protected function toggle_payment_gateways( ConfigurationFlagsDTO $flags ): void {
 		// First, disable all payment methods.
 		$methods_paypal = $this->methods_definition->group_paypal_methods();
 		$methods_cards  = $this->methods_definition->group_card_methods();
@@ -256,10 +207,6 @@ class SettingsDataManager {
 				// Enable ACDC for business sellers.
 				$this->payment_methods->toggle_method_state( CreditCardGateway::ID, true );
 
-				// Apple Pay and Google Pay depend on the ACDC gateway.
-				$this->payment_methods->toggle_method_state( ApplePayGateway::ID, true );
-				$this->payment_methods->toggle_method_state( GooglePayGateway::ID, true );
-
 				// Enable Pay Later for business sellers if subscriptions were not selected.
 				// Selecting subscriptions automatically enables the "Save PayPal and Venmo" option, which is incompatible with Pay Later.
 				if ( ! $flags->use_subscriptions ) {
@@ -269,6 +216,12 @@ class SettingsDataManager {
 				// Enable BCDC for business sellers without ACDC.
 				$this->payment_methods->toggle_method_state( CardButtonGateway::ID, true );
 			}
+
+			if ( $flags->use_digital_wallets ) {
+				$this->payment_methods->toggle_method_state( ApplePayGateway::ID, true );
+				$this->payment_methods->toggle_method_state( GooglePayGateway::ID, true );
+			}
+
 			/**
 			 * Allow plugins to modify apm payment gateway states before saving.
 			 *
@@ -297,7 +250,7 @@ class SettingsDataManager {
 	 * @param ConfigurationFlagsDTO $flags Shop configuration flags.
 	 * @return void
 	 */
-	protected function apply_payment_settings( ConfigurationFlagsDTO $flags ) : void {
+	protected function apply_payment_settings( ConfigurationFlagsDTO $flags ): void {
 		// Enable Pay-Now experience for all merchants.
 		$this->payment_settings->set_enable_pay_now( true );
 
@@ -315,7 +268,7 @@ class SettingsDataManager {
 	 * @param ConfigurationFlagsDTO $flags Shop configuration flags.
 	 * @return void
 	 */
-	protected function apply_location_styles( ConfigurationFlagsDTO $flags ) : void {
+	protected function apply_location_styles( ConfigurationFlagsDTO $flags ): void {
 		$methods_full = array(
 			PayPalGateway::ID,
 			'venmo',
@@ -358,7 +311,7 @@ class SettingsDataManager {
 	 * @param ConfigurationFlagsDTO $flags Shop configuration flags.
 	 * @return void
 	 */
-	protected function apply_pay_later_messaging( ConfigurationFlagsDTO $flags ) : void {
+	protected function apply_pay_later_messaging( ConfigurationFlagsDTO $flags ): void {
 		$config = $this->paylater_messaging['read'];
 
 		$config['cart']['status']     = 'enabled';

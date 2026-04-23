@@ -3,6 +3,7 @@
 @import './settings/tab-settings';
 @import './settings/tab-styling';
 @import './settings/tab-paylater-configurator';
+@import './settings/migration-banner';
 
 // Container and Tab Settings
 .ppcp-r-tabs.settings,
@@ -162,10 +163,6 @@
 
 .ppcp-r-tab-overview-features {
 	--block-header-gap: 12px;
-}
-
-.ppcp-r-tab-overview-help {
-	--block-header-gap: 8px;
 }
 
 .ppcp-r-settings-block__feature {

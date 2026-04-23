@@ -3,7 +3,7 @@ import { useState, useEffect } from '@wordpress/element';
 import { InspectorControls, useBlockProps } from '@wordpress/block-editor';
 import { PanelBody, Spinner } from '@wordpress/components';
 import { PayPalScriptProvider, PayPalMessages } from '@paypal/react-paypal-js';
-import { useScriptParams } from '../../../../ppcp-paylater-block/resources/js/hooks/script-params';
+import { useScriptParams } from '@ppcp-paylater-block/hooks/script-params';
 
 export default function Edit( { attributes, clientId, setAttributes } ) {
 	const { ppcpId } = attributes;

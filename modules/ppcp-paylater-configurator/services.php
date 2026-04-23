@@ -9,78 +9,62 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\PayLaterConfigurator;
 
+use WooCommerce\PayPalCommerce\Assets\AssetGetter;
+use WooCommerce\PayPalCommerce\Assets\AssetGetterFactory;
 use WooCommerce\PayPalCommerce\PayLaterConfigurator\Endpoint\SaveConfig;
 use WooCommerce\PayPalCommerce\PayLaterConfigurator\Endpoint\GetConfig;
 use WooCommerce\PayPalCommerce\PayLaterConfigurator\Factory\ConfigFactory;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\Button\Helper\MessagesApply;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\DCCProductStatus;
-use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
+use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
+use WooCommerce\PayPalCommerce\Settings\Data\PayLaterMessagingSettings;
 
 return array(
-	'paylater-configurator.url'                  => static function ( ContainerInterface $container ): string {
-		/**
-		 * The return value must not contain a trailing slash.
-		 *
-		 * Cannot return false for this path.
-		 *
-		 * @psalm-suppress PossiblyFalseArgument
-		 */
-		return plugins_url(
-			'/modules/ppcp-paylater-configurator',
-			dirname( realpath( __FILE__ ), 3 ) . '/woocommerce-paypal-payments.php'
-		);
+	'paylater-configurator.asset_getter'         => static function ( ContainerInterface $container ): AssetGetter {
+		$factory = $container->get( 'assets.asset_getter_factory' );
+		assert( $factory instanceof AssetGetterFactory );
+
+		return $factory->for_module( 'ppcp-paylater-configurator' );
 	},
 	'paylater-configurator.factory.config'       => static function ( ContainerInterface $container ): ConfigFactory {
 		return new ConfigFactory();
 	},
 	'paylater-configurator.endpoint.save-config' => static function ( ContainerInterface $container ): SaveConfig {
 		return new SaveConfig(
-			$container->get( 'wcgateway.settings' ),
+			$container->get( 'settings.data.paylater-messaging-settings' ),
 			$container->get( 'button.request-data' ),
 			$container->get( 'woocommerce.logger.woocommerce' )
 		);
 	},
 	'paylater-configurator.endpoint.get-config'  => static function ( ContainerInterface $container ): GetConfig {
 		return new GetConfig(
-			$container->get( 'wcgateway.settings' ),
+			$container->get( 'settings.data.paylater-messaging-settings' ),
 			$container->get( 'woocommerce.logger.woocommerce' )
 		);
 	},
-	'paylater-configurator.is-available'         => static function ( ContainerInterface $container ) : bool {
-		// Test, if Pay-Later is available; depends on the shop country and Vaulting status.
+	'paylater-configurator.is-available'         => static function ( ContainerInterface $container ): bool {
 		$messages_apply = $container->get( 'button.helper.messages-apply' );
 		assert( $messages_apply instanceof MessagesApply );
 
-		$settings = $container->get( 'wcgateway.settings' );
-		assert( $settings instanceof Settings );
+		$settings_provider = $container->get( 'settings.settings-provider' );
+		assert( $settings_provider instanceof SettingsProvider );
 
 		$dcc_product_status = $container->get( 'wcgateway.helper.dcc-product-status' );
 		assert( $dcc_product_status instanceof DCCProductStatus );
 
-		$card_fields_eligible = $container->get( 'card-fields.eligible' );
+		$vault_enabled = $settings_provider->save_paypal_and_venmo();
 
-		$vault_enabled = $settings->has( 'vault_enabled' ) && $settings->get( 'vault_enabled' );
-
-		// Pay Later Messaging is available if vaulting is not enabled, the shop country is supported, and is eligible for ACDC.
-		return ! $vault_enabled && $messages_apply->for_country() && $dcc_product_status->is_active() && $card_fields_eligible;
+		return ! $vault_enabled && $messages_apply->for_country();
 	},
-	'paylater-configurator.messaging-locations'  => static function ( ContainerInterface $container ) : array {
-		// Get an array of locations that display the Pay-Later message.
-		$settings = $container->get( 'wcgateway.settings' );
-		assert( $settings instanceof Settings );
+	'paylater-configurator.messaging-locations'  => static function ( ContainerInterface $container ): array {
+		$settings_provider = $container->get( 'settings.settings-provider' );
+		assert( $settings_provider instanceof SettingsProvider );
 
-		$is_enabled = $settings->has( 'pay_later_messaging_enabled' ) && $settings->get( 'pay_later_messaging_enabled' );
-
-		if ( ! $is_enabled ) {
+		if ( ! $settings_provider->paylater_enabled() ) {
 			return array();
 		}
 
-		$selected_locations = $settings->has( 'pay_later_messaging_locations' ) ? $settings->get( 'pay_later_messaging_locations' ) : array();
-		if ( is_array( $selected_locations ) ) {
-			return $selected_locations;
-		}
-
-		return array();
+		return $settings_provider->pay_later_messaging_locations();
 	},
 );

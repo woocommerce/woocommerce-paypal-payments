@@ -9,7 +9,7 @@
 
 import { useDispatch } from '@wordpress/data';
 
-import { createHooksForStore } from '../utils';
+import { createHooksForStore } from '@ppcp-settings/data/utils';
 import { STORE_NAME } from './constants';
 
 const useHooks = () => {

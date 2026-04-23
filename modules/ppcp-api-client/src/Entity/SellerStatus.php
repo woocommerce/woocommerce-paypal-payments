@@ -46,13 +46,13 @@ class SellerStatus {
 	 */
 	public function __construct( array $products, array $capabilities, string $country = '' ) {
 		foreach ( $products as $key => $product ) {
-			if ( is_a( $product, SellerStatusProduct::class ) ) {
+			if ( $product instanceof SellerStatusProduct ) {
 				continue;
 			}
 			unset( $products[ $key ] );
 		}
 		foreach ( $capabilities as $key => $capability ) {
-			if ( is_a( $capability, SellerStatusCapability::class ) ) {
+			if ( $capability instanceof SellerStatusCapability ) {
 				continue;
 			}
 			unset( $capabilities[ $key ] );
@@ -68,7 +68,7 @@ class SellerStatus {
 	 *
 	 * @return SellerStatusProduct[]
 	 */
-	public function products() : array {
+	public function products(): array {
 		return $this->products;
 	}
 
@@ -77,7 +77,7 @@ class SellerStatus {
 	 *
 	 * @return SellerStatusCapability[]
 	 */
-	public function capabilities() : array {
+	public function capabilities(): array {
 		return $this->capabilities;
 	}
 
@@ -86,7 +86,7 @@ class SellerStatus {
 	 *
 	 * @return string
 	 */
-	public function country() : string {
+	public function country(): string {
 		return $this->country;
 	}
 
@@ -95,16 +95,16 @@ class SellerStatus {
 	 *
 	 * @return array
 	 */
-	public function to_array() : array {
+	public function to_array(): array {
 		$products = array_map(
-			function( SellerStatusProduct $product ) : array {
+			function ( SellerStatusProduct $product ): array {
 				return $product->to_array();
 			},
 			$this->products()
 		);
 
 		$capabilities = array_map(
-			function( SellerStatusCapability $capability ) : array {
+			function ( SellerStatusCapability $capability ): array {
 				return $capability->to_array();
 			},
 			$this->capabilities()

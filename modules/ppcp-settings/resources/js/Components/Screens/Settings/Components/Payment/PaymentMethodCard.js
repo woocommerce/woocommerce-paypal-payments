@@ -1,19 +1,20 @@
 import { useEffect } from '@wordpress/element';
-import SettingsCard from '../../../../ReusableComponents/SettingsCard';
-import { PaymentMethodsBlock } from '../../../../ReusableComponents/SettingsBlocks';
-import usePaymentDependencyState from '../../../../../hooks/usePaymentDependencyState';
-import useSettingDependencyState from '../../../../../hooks/useSettingDependencyState';
-import usePaymentMethodsToggle from '../../../../../hooks/usePaymentMethodsToggle';
-import useDependencyMessages from '../../../../../hooks/useDependencyMessages';
+import SettingsCard from '@ppcp-settings/Components/ReusableComponents/SettingsCard';
+import { PaymentMethodsBlock } from '@ppcp-settings/Components/ReusableComponents/SettingsBlocks';
+import usePaymentDependencyState from '@ppcp-settings/hooks/usePaymentDependencyState';
+import useSettingDependencyState from '@ppcp-settings/hooks/useSettingDependencyState';
+import usePaymentMethodsToggle from '@ppcp-settings/hooks/usePaymentMethodsToggle';
+import useDependencyMessages from '@ppcp-settings/hooks/useDependencyMessages';
+import useMethodWarnings from '@ppcp-settings/hooks/useMethodWarnings';
 import BulkPaymentToggle from './BulkPaymentToggle';
-import SpinnerOverlay from '../../../../ReusableComponents/SpinnerOverlay';
+import SpinnerOverlay from '@ppcp-settings/Components/ReusableComponents/SpinnerOverlay';
 import {
 	PaymentHooks,
 	SettingsHooks,
 	OnboardingHooks,
-} from '../../../../../data';
-import { useNavigation } from '../../../../../hooks/useNavigation';
-import usePaymentGatewayRefresh from '../../../../../hooks/usePaymentGatewayRefresh';
+} from '@ppcp-settings/data';
+import { useNavigation } from '@ppcp-settings/hooks/useNavigation';
+import usePaymentGatewayRefresh from '@ppcp-settings/hooks/usePaymentGatewayRefresh';
 
 /**
  * Renders a payment method card with dependency handling
@@ -78,6 +79,9 @@ const PaymentMethodCard = ( {
 			groupName,
 		} );
 
+	// Evaluate reactive warning visibility conditions against store data.
+	const methodsWithWarnings = useMethodWarnings( methods );
+
 	useEffect( () => {
 		if ( isPaymentStoreReady && isSettingsStoreReady ) {
 			handleHighlightFromUrl();
@@ -93,7 +97,7 @@ const PaymentMethodCard = ( {
 	}
 
 	// Process methods with dependencies from the pre-computed map.
-	const processedMethods = methods.map( ( method ) => {
+	const processedMethods = methodsWithWarnings.map( ( method ) => {
 		const dependencyInfo = dependencyMessagesMap[ method.id ] || {};
 
 		return {

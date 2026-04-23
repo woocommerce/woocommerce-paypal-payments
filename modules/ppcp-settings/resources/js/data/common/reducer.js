@@ -7,7 +7,7 @@
  * @file
  */
 
-import { createReducer, createReducerSetters } from '../utils';
+import { createReducer, createReducerSetters } from '@ppcp-settings/data/utils';
 import ACTION_TYPES from './action-types';
 
 // Store structure.

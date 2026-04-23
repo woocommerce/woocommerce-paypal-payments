@@ -1,0 +1,100 @@
+name: PCP Tests
+on:
+  # push:
+
+  workflow_dispatch:
+    inputs:
+      TEST_ENV:
+        type: choice
+        description: Choose test environment
+        required: true
+        default: ''
+        options:
+        - MISHA_PHP80
+        - MISHA_PHP81
+        - EMILI_PHP80
+        - SIARHEI_PHP81
+      TEST_EXEC_KEY:
+        type: string
+        description: Enter Test Execution ticket key
+        default: ''
+      TEST_SET:
+        type: choice
+        description: Choose test set
+        default: defaultOrder
+        options:
+          - testCI
+          - all
+          - critical
+          - transaction
+          - defaultOrder
+
+jobs:
+  test:
+    timeout-minutes: 180
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.TEST_ENV }}
+    env:
+      # PERCY_TOKEN: ${{ secrets.PCP_PERCY_TOKEN }}
+      
+      # Xray in Jira
+      XRAY_CLIENT_ID: ${{ secrets.XRAY_AUTOTEST_ID }}
+      XRAY_CLIENT_SECRET: ${{ secrets.XRAY_AUTOTEST_SECRET }}
+      
+      # Xray Test Execution key
+      TEST_EXEC_KEY: ${{ inputs.TEST_EXEC_KEY }}
+
+      # Website config 
+      WP_BASE_URL: ${{ vars.WP_BASE_URL }}
+      WP_USERNAME: ${{ secrets.WP_USERNAME }}
+      WP_PASSWORD: ${{ secrets.WP_PASSWORD }}
+      WP_BASIC_AUTH_USER: ${{ secrets.WP_BASIC_AUTH_USER }}
+      WP_BASIC_AUTH_PASS: ${{ secrets.WP_BASIC_AUTH_PASS }}
+      STORAGE_STATE_PATH: './storage-states/admin-credentials.json'
+
+      # WooCommerce API config
+      WC_API_KEY: ${{ secrets.WC_API_KEY }}
+      WC_API_SECRET: ${{ secrets.WC_API_SECRET }}
+      
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-node@v4
+      with:
+        node-version: 18
+        
+    - name: Github Packages Auth
+      run: |
+        npm config set @inpsyde:registry 'https://npm.pkg.github.com'
+        npm config set //npm.pkg.github.com/:_authToken ${{ secrets.DEPLOYBOT_PACKAGES_READ_ACCESS_TOKEN}}
+
+    - name: Setup Playwright tests and dependencies
+      run: npm run setup:tests
+
+    - name: Install Playwright Browsers
+      run: npx playwright install --with-deps
+    
+    - name: Run Playwright tests (${{ inputs.TEST_SET }})
+      id: run-tests
+      run: npm run test:paypal:${{ inputs.TEST_SET }}
+
+    - uses: actions/upload-artifact@v4
+      id: artifact-upload-step
+      if: always()
+      with:
+        name: playwright-report
+        path: projects/paypal/playwright-report/
+        retention-days: 30
+        
+    - name: Post to a Slack channel
+      id: slack
+      if: always()
+      uses: slackapi/slack-github-action@v1.25.0
+      with:
+        channel-id: '${{ secrets.TEST_SLACK_CHANNEL }}'
+        slack-message: |
+          PCP test run (${{ inputs.TEST_SET }} on ${{ inputs.TEST_ENV }})
+          ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          Status: ${{ steps.run-tests.outcome == 'success' && '*Passed*' || '*Failed*' }}
+          ${{ env.TEST_EXEC_KEY && format('Test execution: https://inpsyde.atlassian.net/browse/{0}', env.TEST_EXEC_KEY) || '' }}
+      env:
+        SLACK_BOT_TOKEN: ${{ secrets.SLACK_QAREPORTER_TOKEN }}

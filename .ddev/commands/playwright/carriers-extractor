@@ -1,0 +1,57 @@
+#!/bin/bash
+#ddev-generated
+# PayPal Carriers Extractor Command
+## Description: Extract PayPal carrier data using Playwright
+
+## Usage: carriers-extractor
+## Example: ddev carriers-extractor
+
+
+cd /var/www/html || exit 1
+PRE="sudo -u pwuser PLAYWRIGHT_BROWSERS_PATH=0 "
+
+# Check if the carriers-extractor.js file exists
+if [ ! -f ".ddev/bin/carriers-extractor.js" ]; then
+    echo "❌ Error: carriers-extractor.js not found in project root"
+    echo "Please make sure the carriers-extractor.js file is in your project root directory"
+    exit 1
+fi
+
+# Check if Playwright is installed
+if [ ! -d "node_modules/playwright" ] && [ ! -d "${PLAYWRIGHT_TEST_DIR}/node_modules/playwright" ]; then
+    echo "❌ Error: Playwright is not installed"
+    echo "Please run 'ddev playwright-install' first to install Playwright"
+    exit 1
+fi
+
+
+# Install Playwright browsers if not already installed
+if [ ! -d "node_modules/playwright-core/.local-browsers" ]; then
+    echo "🎭 Installing Playwright browsers..."
+    $PRE npx playwright install --with-deps chromium >/dev/null
+fi
+
+
+echo "🚀 Starting PayPal carriers extraction..."
+echo "📡 Fetching data from: https://developer.paypal.com/docs/tracking/reference/carriers/"
+echo ""
+
+# Run the carriers extractor script
+$PRE node .ddev/bin/carriers-extractor.js
+
+if [ $? -eq 0 ]; then
+    echo ""
+    echo "📄 Generated file: carriers_data.php in the root of the project"
+    echo ""
+
+    echo "⏭️ Next steps:"
+    echo "1. Copy the array from carriers_data.php into your PayPal Payments plugin in \`modules/ppcp-order-tracking/carriers.php\`"
+    echo "2. Run \`npm run ddev:fix-lint modules/ppcp-order-tracking/carriers.php\` to format the file."
+    echo "3. Run \`npm run ddev:unit-tests\` to be sure nothing is broken :)"
+    echo "3. Remove the temporary carries_data.php from the root of the project"
+    echo "4. Review and commit your changes"
+
+else
+    echo "❌ Extraction failed. Please check the error messages above."
+    exit 1
+fi

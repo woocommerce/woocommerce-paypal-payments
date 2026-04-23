@@ -48,7 +48,7 @@ class CardFieldsApplies {
 	 * @return bool
 	 */
 	public function for_country(): bool {
-		return in_array( $this->country, $this->allowed_country_matrix, true );
+		return array_key_exists( $this->country, $this->allowed_country_matrix );
 	}
 
 	/**
@@ -57,7 +57,7 @@ class CardFieldsApplies {
 	 *
 	 * @return bool
 	 */
-	public function for_merchant() : bool {
+	public function for_merchant(): bool {
 		return apply_filters(
 			'woocommerce_paypal_payments_is_eligible_for_card_fields',
 			true

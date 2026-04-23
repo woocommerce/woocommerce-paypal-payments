@@ -1,8 +1,8 @@
 import ConnectionStatus from '../Components/Settings/ConnectionStatus';
 import CommonSettings from '../Components/Settings/CommonSettings';
 import ExpertSettings from '../Components/Settings/ExpertSettings';
-import SpinnerOverlay from '../../../ReusableComponents/SpinnerOverlay';
-import { CommonHooks, SettingsHooks } from '../../../../data';
+import SpinnerOverlay from '@ppcp-settings/Components/ReusableComponents/SpinnerOverlay';
+import { CommonHooks, SettingsHooks } from '@ppcp-settings/data';
 
 const TabSettings = () => {
 	const { ownBrandOnly } = CommonHooks.useWooSettings();
@@ -16,7 +16,7 @@ const TabSettings = () => {
 	return (
 		<div className="ppcp-r-settings">
 			<ConnectionStatus />
-			<CommonSettings ownBradOnly={ ownBrandOnly } />
+			<CommonSettings />
 			<ExpertSettings
 				ownBradOnly={ ownBrandOnly }
 				hasContactModule={ features?.contact_module?.enabled }

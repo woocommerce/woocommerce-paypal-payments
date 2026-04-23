@@ -21,26 +21,22 @@ class BrandedExperienceTest extends TestCase {
 	}
 
 	public function test_should_persist_path_only_once() {
-		$this->generalSettings->set_installation_path( '' );
+		$this->generalSettings->reset_installation_path( 'plugin_uninstall' );
 
 		$detector = Mockery::mock( ActivationDetector::class );
+
+		$detector->shouldReceive( 'detect_activation_path' )
+		         ->once()
+		         ->andReturn( 'payment-settings' );
 
 		$repository = new PathRepository(
 			$detector,
 			$this->generalSettings
 		);
 
-		$detector->shouldReceive( 'detect_activation_path' )
-		         ->once()
-		         ->andReturn( 'foo' );
-
-		$detector->shouldReceive( 'detect_activation_path' )
-		         ->once()
-		         ->andReturn( 'bar' );
-
 		$repository->persist();
 		$repository->persist();
 
-		$this->assertEquals( 'foo', $this->generalSettings->get_installation_path() );
+		$this->assertEquals( 'payment-settings', $this->generalSettings->get_installation_path() );
 	}
 }

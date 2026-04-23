@@ -2,7 +2,7 @@ import {
 	paypalOrderToWcAddresses,
 	paypalSubscriptionToWcAddresses,
 } from './Helper/Address';
-import ResumeFlowHelper from '../../../ppcp-button/resources/js/modules/Helper/ResumeFlowHelper';
+import { shouldEnableAppSwitch } from './Components/paypal';
 
 export const createOrder = async ( data, config, onError, onClose ) => {
 	try {
@@ -64,13 +64,16 @@ export const handleApprove = async (
 	setGotoContinuationOnError,
 	onSubmit,
 	onError,
-	onClose
+	onClose,
+	setIsFullPageSpinnerActive
 ) => {
+	setIsFullPageSpinnerActive( true );
+
 	try {
 		let order;
 
 		// actions.order.get is not available on the AppSwitch flow.
-		if ( ! ResumeFlowHelper.isResumeFlow() ) {
+		if ( ! shouldEnableAppSwitch( config ) ) {
 			order = await actions.order.get();
 		} else {
 			const res = await fetch(
@@ -99,31 +102,34 @@ export const handleApprove = async (
 			order = json.data;
 		}
 
-		const addresses = paypalOrderToWcAddresses( order );
+		const shippingAddress = order?.purchase_units?.[ 0 ]?.shipping?.address;
+		if ( shippingAddress ) {
+			const addresses = paypalOrderToWcAddresses( order );
 
-		const promises = [
-			// save address on server
-			wp.data.dispatch( 'wc/store/cart' ).updateCustomerData( {
-				billing_address: addresses.billingAddress,
-				shipping_address: addresses.shippingAddress,
-			} ),
-		];
-		if ( shouldHandleShippingInPayPal() ) {
-			// set address in UI
-			promises.push(
-				wp.data
-					.dispatch( 'wc/store/cart' )
-					.setBillingAddress( addresses.billingAddress )
-			);
-			if ( shippingData.needsShipping ) {
+			const promises = [
+				// save address on server
+				wp.data.dispatch( 'wc/store/cart' ).updateCustomerData( {
+					billing_address: addresses.billingAddress,
+					shipping_address: addresses.shippingAddress,
+				} ),
+			];
+			if ( shouldHandleShippingInPayPal() ) {
+				// set address in UI
 				promises.push(
 					wp.data
 						.dispatch( 'wc/store/cart' )
-						.setShippingAddress( addresses.shippingAddress )
+						.setBillingAddress( addresses.billingAddress )
 				);
+				if ( shippingData.needsShipping ) {
+					promises.push(
+						wp.data
+							.dispatch( 'wc/store/cart' )
+							.setShippingAddress( addresses.shippingAddress )
+					);
+				}
 			}
+			await Promise.all( promises );
 		}
-		await Promise.all( promises );
 
 		setPaypalOrder( order );
 
@@ -164,6 +170,8 @@ export const handleApprove = async (
 		}
 	} catch ( err ) {
 		console.error( err );
+
+		setIsFullPageSpinnerActive( false );
 
 		onError( err.message );
 

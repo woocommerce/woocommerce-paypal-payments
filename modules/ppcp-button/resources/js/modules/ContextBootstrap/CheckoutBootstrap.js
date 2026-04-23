@@ -9,7 +9,7 @@ import {
 	PaymentMethods,
 } from '../Helper/CheckoutMethodState';
 import BootstrapHelper from '../Helper/BootstrapHelper';
-import { addPaymentMethodConfiguration } from '../../../../../ppcp-save-payment-methods/resources/js/Configuration';
+import { addPaymentMethodConfiguration } from '../../../../../ppcp-save-payment-methods/resources/js/configuration';
 import {
 	ButtonEvents,
 	dispatchButtonEvent,
@@ -163,10 +163,7 @@ class CheckoutBootstrap {
 			return;
 		}
 
-		if (
-			PayPalCommerceGateway.is_free_trial_cart &&
-			PayPalCommerceGateway.vault_v3_enabled
-		) {
+		if ( PayPalCommerceGateway.is_free_trial_cart ) {
 			this.renderer.render(
 				addPaymentMethodConfiguration( PayPalCommerceGateway ),
 				{},
@@ -210,7 +207,7 @@ class CheckoutBootstrap {
 			! isApplePayMethod;
 		const isFreeTrial = PayPalCommerceGateway.is_free_trial_cart;
 		const hasVaultedPaypal =
-			PayPalCommerceGateway.vaulted_paypal_email !== '';
+			!! PayPalCommerceGateway.vaulted_paypal_email;
 		const useSmartButtons = this.renderer.useSmartButtons ?? true;
 
 		const paypalButtonWrappers = {

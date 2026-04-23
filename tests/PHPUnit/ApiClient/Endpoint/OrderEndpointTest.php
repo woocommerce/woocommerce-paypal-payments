@@ -3,8 +3,8 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\ApiClient\Endpoint;
 
-use Hamcrest\Matchers;
-use Requests_Utility_CaseInsensitiveDictionary;
+use InvalidArgumentException;
+use WC_Order;
 use WooCommerce\PayPalCommerce\ApiClient\Authentication\Bearer;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Address;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Capture;
@@ -14,7 +14,6 @@ use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\OrderStatus;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PatchCollection;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Payer;
-use WooCommerce\PayPalCommerce\ApiClient\Entity\PayerName;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Payments;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PurchaseUnit;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Shipping;
@@ -25,6 +24,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Factory\PatchCollectionFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\ErrorResponse;
 use Mockery;
 use Psr\Log\LoggerInterface;
+use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
 use WooCommerce\PayPalCommerce\TestCase;
 use WooCommerce\PayPalCommerce\WcGateway\FraudNet\FraudNet;
@@ -42,10 +42,26 @@ class OrderEndpointTest extends TestCase
 		$this->shipping = new Shipping('shipping', new Address('US', 'street', '', 'CA', '', '12345'));
 	}
 
-	public function testOrderDefault()
+	public static function orderValidInputsDataProvider(): array
+	{
+		$wcOrder = Mockery::mock(WC_Order::class);
+		$wcOrder
+			->shouldReceive('get_meta')
+			->with(PayPalGateway::ORDER_ID_META_KEY)
+			->andReturn('abc123');
+
+		return [
+			['abc123', 'abc123'],
+			[$wcOrder, 'abc123'],
+		];
+	}
+
+	/**
+	 * @dataProvider orderValidInputsDataProvider
+	 */
+	public function testOrderDefault($input, string $orderId)
     {
 	    expect('wp_json_encode')->andReturnUsing('json_encode');
-        $orderId = 'id';
         $host = 'https://example.com/';
         $token = Mockery::mock(Token::class);
         $token
@@ -103,8 +119,44 @@ class OrderEndpointTest extends TestCase
         expect('is_wp_error')->with($rawResponse)->andReturn(false);
         expect('wp_remote_retrieve_response_code')->with($rawResponse)->andReturn(200);
 
-        $result = $testee->order($orderId);
+        $result = $testee->order($input);
         $this->assertEquals($order, $result);
+    }
+
+	public static function orderInvalidInputsDataProvider(): array
+	{
+		$wcOrder = Mockery::mock(WC_Order::class);
+		$wcOrder
+			->shouldReceive('get_meta')
+			->with(PayPalGateway::ORDER_ID_META_KEY)
+			->andReturnFalse();
+
+		return [
+			[123],
+			[$wcOrder],
+		];
+	}
+
+	/**
+	 * @dataProvider orderInvalidInputsDataProvider
+	 */
+	public function testOrderInvalidInput($input)
+    {
+		$testee = new OrderEndpoint(
+			'https://example.com/',
+			Mockery::mock(Bearer::class),
+			Mockery::mock(OrderFactory::class),
+			Mockery::mock(PatchCollectionFactory::class),
+			'CAPTURE',
+			Mockery::mock(LoggerInterface::class),
+			Mockery::mock(SubscriptionHelper::class),
+			false,
+			Mockery::mock(FraudNet::class)
+		);
+
+		$this->expectException(InvalidArgumentException::class);
+
+        $testee->order($input);
     }
 
     public function testOrderResponseIsWpError()

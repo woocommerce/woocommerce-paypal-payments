@@ -15,33 +15,6 @@ namespace WooCommerce\PayPalCommerce\WcGateway\Helper;
 class MerchantDetails {
 
 	/**
-	 * Save tokenized PayPal and Venmo payment details, required for subscriptions and saving
-	 * payment methods in user account.
-	 */
-	public const FEATURE_SAVE_PAYPAL_VENMO = 'save_paypal_venmo';
-
-	/**
-	 * Advanced card processing eligibility. Required for credit- and debit-card processing.
-	 */
-	public const FEATURE_ADVANCED_CARD_PROCESSING = 'acdc';
-
-	/**
-	 * Merchant eligibility to use Google Pay.
-	 */
-	public const FEATURE_GOOGLE_PAY = 'googlepay';
-
-	/**
-	 * Whether Apple Pay can be used by the merchant. Apple Pay requires an Apple device (like
-	 * iPhone) to be used by customers.
-	 */
-	public const FEATURE_APPLE_PAY = 'applepay';
-
-	/**
-	 * Contact module allows the merchant to unlock the "Custom Shipping Contact" toggle.
-	 */
-	public const FEATURE_CONTACT_MODULE = 'contact_module';
-
-	/**
 	 * The merchant's country according to PayPal, which might be different from
 	 * the WooCommerce country.
 	 *
@@ -90,7 +63,7 @@ class MerchantDetails {
 	 *
 	 * @return string
 	 */
-	public function get_merchant_country() : string {
+	public function get_merchant_country(): string {
 		return $this->merchant_country;
 	}
 
@@ -100,7 +73,7 @@ class MerchantDetails {
 	 *
 	 * @return string
 	 */
-	public function get_shop_country() : string {
+	public function get_shop_country(): string {
 		return $this->store_country;
 	}
 
@@ -117,7 +90,7 @@ class MerchantDetails {
 	 * @param string $feature One of the public self::FEATURE_* values.
 	 * @return bool Whether the merchant can use the relevant feature.
 	 */
-	public function is_eligible_for( string $feature ) : bool {
+	public function is_eligible_for( string $feature ): bool {
 		if ( ! array_key_exists( $feature, $this->eligibility_checks ) ) {
 			return false;
 		}

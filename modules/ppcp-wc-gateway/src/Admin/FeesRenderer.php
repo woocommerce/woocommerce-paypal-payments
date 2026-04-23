@@ -23,7 +23,7 @@ class FeesRenderer {
 	 *
 	 * @return string
 	 */
-	public function render( WC_Order $wc_order ) : string {
+	public function render( WC_Order $wc_order ): string {
 		$breakdown        = $wc_order->get_meta( PayPalGateway::FEES_META_KEY );
 		$refund_breakdown = $wc_order->get_meta( PayPalGateway::REFUND_FEES_META_KEY ) ?: array();
 

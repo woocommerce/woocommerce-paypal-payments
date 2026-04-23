@@ -8,84 +8,46 @@
 namespace WooCommerce\PayPalCommerce\Settings\Service;
 
 use WooCommerce\PayPalCommerce\ApiClient\Helper\PartnerAttribution;
-use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
+use WooCommerce\PayPalCommerce\ApiClient\Helper\PaymentLevelEligibility;
+use WooCommerce\PayPalCommerce\Assets\AssetGetter;
+use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
+use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 
 /**
- * Class ScriptDataHandler
  * This class is responsible for localizing the scripts and styles for the settings page.
  */
 class ScriptDataHandler {
 
-	/**
-	 * The settings object.
-	 *
-	 * @var Settings
-	 */
-	protected Settings $settings;
-	/**
-	 * The settings URL.
-	 *
-	 * @var string
-	 */
-	protected string $settings_url;
-	/**
-	 * Whether the pay later configurator is available.
-	 *
-	 * @var bool
-	 */
+	private AssetGetter $asset_getter;
 	protected bool $paylater_is_available;
-	/**
-	 * The store country.
-	 *
-	 * @var string
-	 */
 	protected string $store_country;
-	/**
-	 * The merchant ID.
-	 *
-	 * @var string
-	 */
 	protected string $merchant_id;
-	/**
-	 * The button language choices.
-	 *
-	 * @var array
-	 */
 	protected array $button_language_choices;
-	/**
-	 * The partner attribution object.
-	 *
-	 * @var PartnerAttribution
-	 */
 	protected PartnerAttribution $partner_attribution;
+	protected SettingsProvider $settings_provider;
+	protected PaymentLevelEligibility $payment_level_eligibility;
+	private bool $is_bcdc_override_flag_enabled;
 
-	/**
-	 * ScriptDataHandler constructor.
-	 *
-	 * @param Settings           $settings The settings object.
-	 * @param string             $settings_url The settings URL.
-	 * @param bool               $paylater_is_available Whether the pay later configurator is available.
-	 * @param string             $store_country The store country.
-	 * @param string             $merchant_id The merchant ID.
-	 * @param array              $button_language_choices The button language choices.
-	 * @param PartnerAttribution $partner_attribution The partner attribution object.
-	 */
 	public function __construct(
-		Settings $settings,
-		string $settings_url,
+		AssetGetter $asset_getter,
 		bool $paylater_is_available,
 		string $store_country,
 		string $merchant_id,
 		array $button_language_choices,
-		PartnerAttribution $partner_attribution
+		PartnerAttribution $partner_attribution,
+		SettingsProvider $settings_provider,
+		PaymentLevelEligibility $payment_level_eligibility,
+		bool $is_bcdc_override_flag_enabled
 	) {
-		$this->settings                = $settings;
-		$this->settings_url            = $settings_url;
-		$this->paylater_is_available   = $paylater_is_available;
-		$this->store_country           = $store_country;
-		$this->merchant_id             = $merchant_id;
-		$this->button_language_choices = $button_language_choices;
-		$this->partner_attribution     = $partner_attribution;
+		$this->asset_getter                  = $asset_getter;
+		$this->paylater_is_available         = $paylater_is_available;
+		$this->store_country                 = $store_country;
+		$this->merchant_id                   = $merchant_id;
+		$this->button_language_choices       = $button_language_choices;
+		$this->partner_attribution           = $partner_attribution;
+		$this->settings_provider             = $settings_provider;
+		$this->payment_level_eligibility     = $payment_level_eligibility;
+		$this->is_bcdc_override_flag_enabled = $is_bcdc_override_flag_enabled;
 	}
 
 	/**
@@ -109,13 +71,11 @@ class ScriptDataHandler {
 		 *
 		 * @psalm-suppress UnresolvableInclude
 		 */
-		$script_asset_file = require dirname( realpath( __FILE__ ) ?: '', 3 ) . '/assets/index.asset.php';
-
-		$module_url = $this->settings_url;
+		$script_asset_file = require $this->asset_getter->get_asset_php_path( 'index.js' );
 
 		wp_register_script(
 			'ppcp-admin-settings',
-			$module_url . '/assets/index.js',
+			$this->asset_getter->get_asset_url( 'index.js' ),
 			$script_asset_file['dependencies'],
 			$script_asset_file['version'],
 			true
@@ -127,16 +87,12 @@ class ScriptDataHandler {
 			'woocommerce-paypal-payments',
 		);
 
-		/**
-		 * Require resolves.
-		 *
-		 * @psalm-suppress UnresolvableInclude
-		 */
-		$style_asset_file = require dirname( realpath( __FILE__ ) ?: '', 3 ) . '/assets/style.asset.php';
+		/** @psalm-suppress UnresolvableInclude */
+		$style_asset_file = require $this->asset_getter->get_asset_php_path( 'styles.css' );
 
 		wp_register_style(
 			'ppcp-admin-settings',
-			$module_url . '/assets/style-style.css',
+			$this->asset_getter->get_asset_url( 'styles.css' ),
 			$style_asset_file['dependencies'],
 			$style_asset_file['version']
 		);
@@ -205,7 +161,7 @@ class ScriptDataHandler {
 		);
 
 		$transformed_button_choices = array_map(
-			function( $key, $value ) {
+			function ( $key, $value ) {
 				return array(
 					'value' => $key,
 					'label' => $value,
@@ -216,17 +172,24 @@ class ScriptDataHandler {
 		);
 
 		$script_data = array(
-			'assets'                          => array(
-				'imagesUrl' => $module_url . '/images/',
+			'assets'                              => array(
+				'imagesUrl' => $this->asset_getter->get_static_asset_url( 'images/' ),
 			),
-			'wcPaymentsTabUrl'                => admin_url( 'admin.php?page=wc-settings&tab=checkout' ),
-			'pluginSettingsUrl'               => admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway' ),
-			'debug'                           => defined( 'WP_DEBUG' ) && WP_DEBUG,
-			'isPayLaterConfiguratorAvailable' => $is_pay_later_configurator_available,
-			'storeCountry'                    => $this->store_country,
-			'buttonLanguageChoices'           => $transformed_button_choices,
-			'disabledCardsChoices'            => $disabled_cards_choices,
-			'threeDSecureOptions'             => $three_d_secure_options,
+			'wcPaymentsTabUrl'                    => admin_url( 'admin.php?page=wc-settings&tab=checkout' ),
+			'pluginSettingsUrl'                   => admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway' ),
+			'debug'                               => defined( 'WP_DEBUG' ) && WP_DEBUG, // @phpstan-ignore booleanAnd.rightAlwaysFalse
+			'isPayLaterConfiguratorAvailable'     => $is_pay_later_configurator_available,
+			'storeCountry'                        => $this->store_country,
+			'storePostcode'                       => get_option( 'woocommerce_store_postcode', '' ),
+			'buttonLanguageChoices'               => $transformed_button_choices,
+			'disabledCardsChoices'                => $disabled_cards_choices,
+			'threeDSecureOptions'                 => $three_d_secure_options,
+			'isEligibleForPaymentLevelProcessing' => $this->payment_level_eligibility->is_eligible( CreditCardGateway::ID ),
+			'isBcdcOverrideFlagEnabled'           => $this->is_bcdc_override_flag_enabled,
+			'blueprint'                           => array(
+				'isActive'  => 'yes' === get_option( 'woocommerce_feature_blueprint_enabled', 'no' ),
+				'importUrl' => admin_url( 'admin.php?page=wc-settings&tab=advanced&section=blueprint' ),
+			),
 		);
 
 		if ( $is_pay_later_configurator_available ) {
@@ -244,7 +207,7 @@ class ScriptDataHandler {
 			);
 			$script_data['PcpPayLaterConfigurator'] = array(
 				'config'           => array(),
-				'merchantClientId' => $this->settings->get( 'client_id' ),
+				'merchantClientId' => $this->settings_provider->merchant_data()->client_id,
 				'partnerClientId'  => $this->merchant_id,
 				'bnCode'           => $this->partner_attribution->get_bn_code(),
 			);

@@ -70,14 +70,14 @@ class YithShipmentIntegration implements Integration {
 
 		add_action(
 			'woocommerce_process_shop_order_meta',
-			function( int $order_id ) {
+			function ( int $order_id ) {
 				try {
 					if ( ! apply_filters( 'woocommerce_paypal_payments_sync_ywot_tracking', true ) ) {
 						return;
 					}
 
 					$wc_order = wc_get_order( $order_id );
-					if ( ! is_a( $wc_order, WC_Order::class ) ) {
+					if ( ! ( $wc_order instanceof WC_Order ) ) {
 						return;
 					}
 

@@ -1,0 +1,33 @@
+{
+	"compilerOptions": {
+		"baseUrl": ".",
+		"paths": {
+            "@ppcp-admin-notices/*": [ "modules/ppcp-admin-notices/resources/js/*" ],
+            "@ppcp-applepay/*": [ "modules/ppcp-applepay/resources/js/*" ],
+            "@ppcp-axo/*": [ "modules/ppcp-axo/resources/js/*" ],
+            "@ppcp-axo-block/*": [ "modules/ppcp-axo-block/resources/js/*" ],
+            "@ppcp-blocks/*": [ "modules/ppcp-blocks/resources/js/*" ],
+            "@ppcp-button/*": [ "modules/ppcp-button/resources/js/modules/*" ],
+            "@ppcp-card-fields/*": [ "modules/ppcp-card-fields/resources/js/*" ],
+            "@ppcp-compat/*": [ "modules/ppcp-compat/resources/js/*" ],
+            "@ppcp-fraud-protection/*": [ "modules/ppcp-fraud-protection/resources/js/*" ],
+            "@ppcp-googlepay/*": [ "modules/ppcp-googlepay/resources/js/*" ],
+            "@ppcp-local-alternative-payment-methods/*": [ "modules/ppcp-local-alternative-payment-methods/resources/js/*" ],
+            "@ppcp-onboarding/*": [ "modules/ppcp-onboarding/resources/js/*" ],
+            "@ppcp-order-tracking/*": [ "modules/ppcp-order-tracking/resources/js/*" ],
+            "@ppcp-paylater-block/*": [ "modules/ppcp-paylater-block/resources/js/*" ],
+            "@ppcp-paylater-configurator/*": [ "modules/ppcp-paylater-configurator/resources/js/*" ],
+            "@ppcp-paylater-wc-blocks/*": [ "modules/ppcp-paylater-wc-blocks/resources/js/*" ],
+            "@ppcp-paypal-subscriptions/*": [ "modules/ppcp-paypal-subscriptions/resources/js/*" ],
+            "@ppcp-save-payment-methods/*": [ "modules/ppcp-save-payment-methods/resources/js/*" ],
+            "@ppcp-settings/*": [ "modules/ppcp-settings/resources/js/*" ],
+            "@ppcp-uninstall/*": [ "modules/ppcp-uninstall/resources/js/*" ],
+            "@ppcp-wc-gateway/*": [ "modules/ppcp-wc-gateway/resources/js/*" ],
+            "@ppcp-webhooks/*": [ "modules/ppcp-webhooks/resources/js/*" ]
+		}
+	},
+	"exclude": [
+		"node_modules",
+		"assets"
+	]
+}

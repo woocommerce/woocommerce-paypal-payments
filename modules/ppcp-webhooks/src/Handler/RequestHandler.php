@@ -31,7 +31,7 @@ interface RequestHandler {
 	 *
 	 * @return bool
 	 */
-	public function responsible_for_request( WP_REST_Request $request): bool;
+	public function responsible_for_request( WP_REST_Request $request ): bool;
 
 	/**
 	 * Responsible for handling the request.
@@ -40,5 +40,5 @@ interface RequestHandler {
 	 *
 	 * @return WP_REST_Response
 	 */
-	public function handle_request( WP_REST_Request $request): WP_REST_Response;
+	public function handle_request( WP_REST_Request $request ): WP_REST_Response;
 }

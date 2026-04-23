@@ -36,7 +36,7 @@ class ProductChoicesEnum {
 	 *
 	 * @return array List of all valid products.
 	 */
-	public static function get_valid_values() : array {
+	public static function get_valid_values(): array {
 		return array(
 			self::VIRTUAL,
 			self::PHYSICAL,
@@ -50,7 +50,7 @@ class ProductChoicesEnum {
 	 * @param string $type The value to validate.
 	 * @return bool True, if the value is a valid product.
 	 */
-	public static function is_valid( string $type ) : bool {
+	public static function is_valid( string $type ): bool {
 		return in_array( $type, self::get_valid_values(), true );
 	}
 }

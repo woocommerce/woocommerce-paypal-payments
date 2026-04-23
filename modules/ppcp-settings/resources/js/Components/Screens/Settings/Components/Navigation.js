@@ -3,10 +3,10 @@ import { __ } from '@wordpress/i18n';
 import { speak } from '@wordpress/a11y';
 import { useCallback, useEffect, useRef, useState } from '@wordpress/element';
 
-import TopNavigation from '../../../ReusableComponents/TopNavigation';
-import { useStoreManager } from '../../../../hooks/useStoreManager';
-import { CommonHooks } from '../../../../data';
-import TabBar from '../../../ReusableComponents/TabBar';
+import TopNavigation from '@ppcp-settings/Components/ReusableComponents/TopNavigation';
+import { useStoreManager } from '@ppcp-settings/hooks/useStoreManager';
+import { CommonHooks } from '@ppcp-settings/data';
+import TabBar from '@ppcp-settings/Components/ReusableComponents/TabBar';
 import classNames from 'classnames';
 
 // How long the save confirmation stays visible, in milliseconds.

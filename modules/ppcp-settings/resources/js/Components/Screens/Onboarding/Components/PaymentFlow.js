@@ -1,6 +1,6 @@
 import { __ } from '@wordpress/i18n';
 
-import BadgeBox from '../../../ReusableComponents/BadgeBox';
+import BadgeBox from '@ppcp-settings/Components/ReusableComponents/BadgeBox';
 import PaymentMethodsGroup from './PaymentMethodsGroup';
 import { PayPalCheckout } from './PaymentOptions';
 import { usePaymentConfig } from '../hooks/usePaymentConfig';
@@ -9,21 +9,25 @@ import { usePaymentConfig } from '../hooks/usePaymentConfig';
  * Displays the payment method details, tailored to the defined merchant.
  *
  * @param {Object}  props
- * @param {string}  props.storeCountry The merchant's store country. 2-character ISO code.
- * @param {boolean} props.useAcdc      Whether to include advanced card payments. When false, only BCDC items are included.
- * @param {boolean} props.isFastlane   Whether Fastlane should be included.
- * @param {boolean} props.ownBrandOnly Whether to show only PayPal's own payment methods.
- * @param {boolean} props.onlyOptional Whether to only return the "right column", which includes the optional opt-in payment methods. When true, the "core" payment methods are not included.
+ * @param {string}  props.storeCountry      The merchant's store country. 2-character ISO code.
+ * @param {boolean} props.useAcdc           Whether to include advanced card payments. When false, only BCDC items are included.
+ * @param {boolean} props.useDigitalWallets Whether to include digital wallets (Apple Pay/Google Pay). Defaults to useAcdc for backward compat.
+ * @param {boolean} props.isFastlane        Whether Fastlane should be included.
+ * @param {boolean} props.ownBrandOnly      Whether to show only PayPal's own payment methods.
+ * @param {boolean} props.onlyOptional      Whether to only return the "right column", which includes the optional opt-in payment methods. When true, the "core" payment methods are not included.
  * @return {JSX.Element} The payment options component.
  * @class
  */
 const PaymentFlow = ( {
 	useAcdc,
+	useDigitalWallets,
 	isFastlane,
 	storeCountry,
 	ownBrandOnly,
 	onlyOptional = false,
 } ) => {
+	const resolvedUseDigitalWallets = useDigitalWallets ?? useAcdc;
+
 	const {
 		includedMethods,
 		optionalMethods,
@@ -31,7 +35,13 @@ const PaymentFlow = ( {
 		optionalDescription,
 		learnMoreConfig,
 		paypalCheckoutDescription,
-	} = usePaymentConfig( storeCountry, useAcdc, isFastlane, ownBrandOnly );
+	} = usePaymentConfig(
+		storeCountry,
+		useAcdc,
+		resolvedUseDigitalWallets,
+		isFastlane,
+		ownBrandOnly
+	);
 
 	// When only opt-in methods are requested, without core-payment details, return early.
 	if ( onlyOptional ) {
@@ -43,7 +53,7 @@ const PaymentFlow = ( {
 		);
 	}
 	const description =
-		useAcdc && 'MX' !== storeCountry ? optionalDescription : '';
+		useAcdc || resolvedUseDigitalWallets ? optionalDescription : '';
 	return (
 		<div className="ppcp-r-welcome-docs__wrapper">
 			<DefaultMethodsSection

@@ -1,5 +1,5 @@
-import Spinner from '../../../../ppcp-button/resources/js/modules/Helper/Spinner';
-import CheckoutActionHandler from '../../../../ppcp-button/resources/js/modules/ActionHandler/CheckoutActionHandler';
+import Spinner from '@ppcp-button/Helper/Spinner';
+import CheckoutActionHandler from '@ppcp-button/ActionHandler/CheckoutActionHandler';
 import BaseHandler from './BaseHandler';
 
 class CheckoutHandler extends BaseHandler {

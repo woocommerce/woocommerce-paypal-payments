@@ -1,9 +1,9 @@
 import { __, sprintf } from '@wordpress/i18n';
 
-import { CommonHooks } from '../../data';
-import { countryPriceInfo } from '../../utils/countryPriceInfo';
-import { formatPrice } from '../../utils/formatPrice';
-import TitleBadge, { TITLE_BADGE_INFO } from './TitleBadge';
+import { CommonHooks } from '@ppcp-settings/data';
+import { countryPriceInfo } from '@ppcp-settings/utils/countryPriceInfo';
+import { formatPrice } from '@ppcp-settings/utils/formatPrice';
+import TitleBadge, { TITLE_BADGE_PRICING } from './TitleBadge';
 
 const getFixedAmount = ( currency, priceList, itemFixedAmount ) => {
 	if ( priceList[ currency ] ) {
@@ -43,7 +43,7 @@ const PricingTitleBadge = ( { item } ) => {
 
 	return (
 		<TitleBadge
-			type={ TITLE_BADGE_INFO }
+			type={ TITLE_BADGE_PRICING }
 			text={ `${ label }<sup>1</sup>` }
 		/>
 	);

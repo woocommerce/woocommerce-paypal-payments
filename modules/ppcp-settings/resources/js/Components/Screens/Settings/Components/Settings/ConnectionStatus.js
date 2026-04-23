@@ -1,13 +1,13 @@
 import { __ } from '@wordpress/i18n';
 import classNames from 'classnames';
 
-import SettingsCard from '../../../../ReusableComponents/SettingsCard';
-import { CommonHooks } from '../../../../../data';
+import SettingsCard from '@ppcp-settings/Components/ReusableComponents/SettingsCard';
+import { CommonHooks } from '@ppcp-settings/data';
 import ConnectionStatusBadge from './Parts/ConnectionStatusBadge';
 import DisconnectButton from './Parts/DisconnectButton';
-import SettingsBlock from '../../../../ReusableComponents/SettingsBlock';
-import { ControlStaticValue } from '../../../../ReusableComponents/Controls';
-import { CardActions } from '../../../../ReusableComponents/Elements';
+import SettingsBlock from '@ppcp-settings/Components/ReusableComponents/SettingsBlock';
+import { ControlStaticValue } from '@ppcp-settings/Components/ReusableComponents/Controls';
+import { CardActions } from '@ppcp-settings/Components/ReusableComponents/Elements';
 
 const ConnectionStatus = () => {
 	const merchant = CommonHooks.useMerchant();
@@ -37,17 +37,23 @@ const ConnectionStatus = () => {
 				title={ __( 'Merchant ID', 'woocommerce-paypal-payments' ) }
 				className="ppcp--no-gap"
 			>
-				<ControlStaticValue value={ merchant.id } />
+				<ControlStaticValue value={ merchant.id } showCopy={ true } />
 			</SettingsBlock>
 			<SettingsBlock
 				title={ __( 'Email address', 'woocommerce-paypal-payments' ) }
 			>
-				<ControlStaticValue value={ merchant.email } />
+				<ControlStaticValue
+					value={ merchant.email }
+					showCopy={ true }
+				/>
 			</SettingsBlock>
 			<SettingsBlock
 				title={ __( 'Client ID', 'woocommerce-paypal-payments' ) }
 			>
-				<ControlStaticValue value={ merchant.clientId } />
+				<ControlStaticValue
+					value={ merchant.clientId }
+					showCopy={ true }
+				/>
 			</SettingsBlock>
 		</SettingsCard>
 	);

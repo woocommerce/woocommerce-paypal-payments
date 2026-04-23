@@ -12,6 +12,7 @@ namespace WooCommerce\PayPalCommerce\AdminNotices\Renderer;
 use WooCommerce\PayPalCommerce\AdminNotices\Repository\RepositoryInterface;
 use WooCommerce\PayPalCommerce\AdminNotices\Endpoint\MuteMessageEndpoint;
 use WooCommerce\PayPalCommerce\AdminNotices\Entity\PersistentMessage;
+use WooCommerce\PayPalCommerce\Assets\AssetGetter;
 
 /**
  * Class Renderer
@@ -25,12 +26,7 @@ class Renderer implements RendererInterface {
 	 */
 	private $repository;
 
-	/**
-	 * Used to enqueue assets.
-	 *
-	 * @var string
-	 */
-	private $module_url;
+	private AssetGetter $asset_getter;
 
 	/**
 	 * Used to enqueue assets.
@@ -47,20 +43,18 @@ class Renderer implements RendererInterface {
 	private $can_mute_message = false;
 
 	/**
-	 * Renderer constructor.
-	 *
 	 * @param RepositoryInterface $repository The message repository.
-	 * @param string              $module_url The module URL.
+	 * @param AssetGetter         $asset_getter
 	 * @param string              $version The module version.
 	 */
 	public function __construct(
 		RepositoryInterface $repository,
-		string $module_url,
+		AssetGetter $asset_getter,
 		string $version
 	) {
-		$this->repository = $repository;
-		$this->module_url = untrailingslashit( $module_url );
-		$this->version    = $version;
+		$this->repository   = $repository;
+		$this->asset_getter = $asset_getter;
+		$this->version      = $version;
 	}
 
 	/**
@@ -95,20 +89,20 @@ class Renderer implements RendererInterface {
 	/**
 	 * {@inheritDoc}
 	 */
-	public function enqueue_admin() : void {
+	public function enqueue_admin(): void {
 		if ( ! $this->can_mute_message ) {
 			return;
 		}
 
 		wp_register_style(
 			'wc-ppcp-admin-notice',
-			$this->module_url . '/assets/css/styles.css',
+			$this->asset_getter->get_asset_url( 'styles.css' ),
 			array(),
 			$this->version
 		);
 		wp_register_script(
 			'wc-ppcp-admin-notice',
-			$this->module_url . '/assets/js/boot-admin.js',
+			$this->asset_getter->get_asset_url( 'boot-admin.js' ),
 			array(),
 			$this->version,
 			true
@@ -129,7 +123,7 @@ class Renderer implements RendererInterface {
 	 *
 	 * @return array
 	 */
-	protected function script_data_for_admin() : array {
+	protected function script_data_for_admin(): array {
 		$ajax_url = admin_url( 'admin-ajax.php' );
 
 		return array(
