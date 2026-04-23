@@ -220,6 +220,10 @@ export class PayPalUiClassic extends PayPalUi {
 		this.standardCardButtonDetailsIframe().locator(
 			'[id="billingAddress.city"]'
 		);
+	standardCardButtonCountryInput = () =>
+		this.standardCardButtonDetailsIframe().locator(
+			'[id="billingAddress.country"]'
+		);
 	standardCardButtonStateInput = () =>
 		this.standardCardButtonDetailsIframe().locator(
 			'[id="billingAddress.state"]'
@@ -545,6 +549,86 @@ export class PayPalUiClassic extends PayPalUi {
 			'Assert standard card button CSC input is visible'
 		).toBeVisible();
 		await this.standardCardButtonCSCInput().fill( card.card_cvv );
+
+		// Latin America (Mexico) uses minimal mode: PayPal shows its own billing form inside the modal
+		// Fill those fields from the WC checkout form when they are visible.
+		const firstNameInput = this.standardCardButtonFirstNameInput();
+		if ( await firstNameInput.isVisible() ) {
+			const firstName = await this.page
+				.locator( '#billing_first_name' )
+				.inputValue();
+			const lastName = await this.page
+				.locator( '#billing_last_name' )
+				.inputValue();
+			const street = await this.page
+				.locator( '#billing_address_1' )
+				.inputValue();
+			const city = await this.page
+				.locator( '#billing_city' )
+				.inputValue();
+			const postcode = await this.page
+				.locator( '#billing_postcode' )
+				.inputValue();
+			const email = await this.page
+				.locator( '#billing_email' )
+				.inputValue();
+			const phone = await this.page
+				.locator( '#billing_phone' )
+				.inputValue()
+				.catch( () => '' );
+			const country = await this.page
+				.locator( '#billing_country' )
+				.inputValue()
+				.catch( () => '' );
+			const stateValue = await this.page
+				.locator( '#billing_state' )
+				.inputValue()
+				.catch( () => '' );
+
+			// Set country first — PayPal populates state options based on country.
+			const countryInput = this.standardCardButtonCountryInput();
+			// Wait for the billing address fields to fully load.
+			const stateInput = this.standardCardButtonStateInput();
+			await stateInput.waitFor( { state: 'visible', timeout: 30000 } );
+
+			if ( country ) {
+				await countryInput.selectOption( { value: country }, { force: true } );
+			}
+
+			await firstNameInput.fill( firstName );
+			await this.standardCardButtonLastNameInput().fill( lastName );
+			await this.standardCardButtonStreetInput().fill( street );
+			await this.standardCardButtonCityInput().fill( city );
+			await this.standardCardButtonZipCodeInput().fill( postcode );
+			if ( email ) {
+				await this.standardCardButtonEmailInput().fill( email );
+			}
+			if ( phone ) {
+				const phoneInput = this.standardCardButtonPhoneInput();
+				if ( await phoneInput.isVisible() ) {
+					await phoneInput.fill( phone );
+				}
+			}
+
+			const stateOptions = await stateInput.evaluate(
+				( el: HTMLSelectElement ) =>
+					el.tagName.toLowerCase() === 'select'
+						? Array.from( el.options )
+							.filter( ( o ) => o.value )
+							.map( ( o ) => ( { v: o.value, t: o.text } ) )
+						: []
+			);
+			const code = stateValue.trim();
+			if ( stateOptions.length > 0 ) {
+				const match =
+					stateOptions.find( ( o ) => o.v === code ) ||
+					stateOptions.find( ( o ) => o.t.toLowerCase().includes( code.toLowerCase() ) ) ||
+					stateOptions[ 0 ];
+				await stateInput.selectOption( { value: match.v }, { force: true } );
+			} else if ( code ) {
+				await stateInput.fill( code );
+			}
+		}
 
 		await expect(
 			this.standardCardButtonPayNowButton(),
