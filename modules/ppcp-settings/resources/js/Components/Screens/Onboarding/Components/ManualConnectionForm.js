@@ -101,9 +101,10 @@ const ManualConnectionForm = () => {
 
 	// On-the-fly form validation.
 	useEffect( () => {
-		setClientValid(
-			! manualClientId || /^A[\w-]{79}$/.test( manualClientId )
-		);
+		// setClientValid(
+		// 	! manualClientId || /^A[\w-]{79}$/.test( manualClientId )
+		// );
+		setClientValid( true );
 		setSecretValid( manualClientSecret && manualClientSecret.length > 0 );
 	}, [ manualClientId, manualClientSecret ] );
 
