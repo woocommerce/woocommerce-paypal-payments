@@ -194,6 +194,7 @@ class PurchaseUnitFactory {
 			if (
 				! $shipping_address ||
 				2 !== strlen( $shipping_address->country_code() ) ||
+				! $shipping_address->admin_area_2() ||
 				( ! $shipping_address->postal_code() && ! $this->country_without_postal_code( $shipping_address->country_code() ) )
 			) {
 				$shipping = null;
@@ -391,6 +392,7 @@ class PurchaseUnitFactory {
 				! $shipping_address ||
 				empty( $shipping_address->country_code() ) ||
 				empty( $shipping_address->address_line_1() ) ||
+				empty( $shipping_address->admin_area_2() ) ||
 				( ! $shipping_address->postal_code() && ! $this->country_without_postal_code( $shipping_address->country_code() ) );
 	}
 }

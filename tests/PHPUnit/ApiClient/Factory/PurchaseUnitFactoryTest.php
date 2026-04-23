@@ -63,6 +63,7 @@ class PurchaseUnitFactoryTest extends TestCase
             ->shouldReceive('postal_code')
             ->andReturn('12345');
 		$address->shouldReceive('address_line_1')->andReturn('Berlin Street');
+		$address->shouldReceive('admin_area_2')->andReturn('Berlin');
         $shipping = Mockery::mock(Shipping::class);
         $shipping
             ->shouldReceive('address')
@@ -134,6 +135,7 @@ class PurchaseUnitFactoryTest extends TestCase
 		$address->shouldReceive('country_code')->andReturn('DE');
 		$address->shouldReceive('postal_code')->andReturn('12345');
 		$address->shouldReceive('address_line_1')->andReturn('Berlin Street');
+		$address->shouldReceive('admin_area_2')->andReturn('Berlin');
 
 		$shipping = Mockery::mock(Shipping::class);
 		$shipping->shouldReceive('address')->andReturn($address);
@@ -192,6 +194,7 @@ class PurchaseUnitFactoryTest extends TestCase
             ->expects('postal_code')
             ->andReturn('');
 	    $address->shouldReceive('address_line_1')->andReturn('Berlin Street');
+	    $address->shouldReceive('admin_area_2')->andReturn('Berlin');
 
 	    $shipping = Mockery::mock(Shipping::class);
         $shipping
@@ -333,6 +336,112 @@ class PurchaseUnitFactoryTest extends TestCase
 		$this->assertEquals(null, $unit->shipping());
 	}
 
+	public function testWcOrderShippingGetsDroppedWhenNoCity()
+	{
+		$wcOrder = Mockery::mock(\WC_Order::class);
+		$wcOrder->expects('get_order_number')->andReturn($this->wcOrderNumber);
+		$wcOrder->expects('get_id')->andReturn($this->wcOrderId);
+		$wcOrder->shouldReceive('get_payment_method')->andReturn(PayPalGateway::ID);
+		$amount = Mockery::mock(Amount::class);
+		$amountFactory = Mockery::mock(AmountFactory::class);
+		$amountFactory
+			->expects('from_wc_order')
+			->with($wcOrder)
+			->andReturn($amount);
+		$itemFactory = Mockery::mock(ItemFactory::class);
+		$itemFactory
+			->expects('from_wc_order')
+			->with($wcOrder)
+			->andReturn([$this->item]);
+
+		$address = Mockery::mock(Address::class);
+		$address->shouldReceive('country_code')->andReturn('DE');
+		$address->shouldReceive('postal_code')->andReturn('12345');
+		$address->shouldReceive('address_line_1')->andReturn('Berlin Street');
+		$address->shouldReceive('admin_area_2')->andReturn('');
+
+		$shipping = Mockery::mock(Shipping::class);
+		$shipping->expects('address')->andReturn($address);
+		$shippingFactory = Mockery::mock(ShippingFactory::class);
+		$shippingFactory
+			->expects('from_wc_order')
+			->with($wcOrder)
+			->andReturn($shipping);
+		$paymentsFacory = Mockery::mock(PaymentsFactory::class);
+
+		$paymentLevelEligibility = Mockery::mock(PaymentLevelEligibility::class);
+		$paymentLevelEligibility
+			->shouldReceive('is_eligible')
+			->with(PayPalGateway::ID)
+			->andReturn(false);
+
+		$testee = new PurchaseUnitFactory(
+			$amountFactory,
+			$itemFactory,
+			$shippingFactory,
+			$paymentsFacory,
+			Mockery::mock(PaymentLevelHelper::class),
+			$paymentLevelEligibility,
+			Mockery::mock(SettingsProvider::class)
+		);
+
+		$unit = $testee->from_wc_order($wcOrder);
+		$this->assertNull($unit->shipping());
+	}
+
+	public function testWcOrderShippingGetsDroppedWhenNoCityInPostalCodeExemptCountry()
+	{
+		$wcOrder = Mockery::mock(\WC_Order::class);
+		$wcOrder->expects('get_order_number')->andReturn($this->wcOrderNumber);
+		$wcOrder->expects('get_id')->andReturn($this->wcOrderId);
+		$wcOrder->shouldReceive('get_payment_method')->andReturn(PayPalGateway::ID);
+		$amount = Mockery::mock(Amount::class);
+		$amountFactory = Mockery::mock(AmountFactory::class);
+		$amountFactory
+			->expects('from_wc_order')
+			->with($wcOrder)
+			->andReturn($amount);
+		$itemFactory = Mockery::mock(ItemFactory::class);
+		$itemFactory
+			->expects('from_wc_order')
+			->with($wcOrder)
+			->andReturn([$this->item]);
+
+		$address = Mockery::mock(Address::class);
+		$address->shouldReceive('country_code')->andReturn('IE');
+		$address->shouldReceive('postal_code')->andReturn('');
+		$address->shouldReceive('address_line_1')->andReturn('Some Street');
+		$address->shouldReceive('admin_area_2')->andReturn('');
+
+		$shipping = Mockery::mock(Shipping::class);
+		$shipping->expects('address')->andReturn($address);
+		$shippingFactory = Mockery::mock(ShippingFactory::class);
+		$shippingFactory
+			->expects('from_wc_order')
+			->with($wcOrder)
+			->andReturn($shipping);
+		$paymentsFacory = Mockery::mock(PaymentsFactory::class);
+
+		$paymentLevelEligibility = Mockery::mock(PaymentLevelEligibility::class);
+		$paymentLevelEligibility
+			->shouldReceive('is_eligible')
+			->with(PayPalGateway::ID)
+			->andReturn(false);
+
+		$testee = new PurchaseUnitFactory(
+			$amountFactory,
+			$itemFactory,
+			$shippingFactory,
+			$paymentsFacory,
+			Mockery::mock(PaymentLevelHelper::class),
+			$paymentLevelEligibility,
+			Mockery::mock(SettingsProvider::class)
+		);
+
+		$unit = $testee->from_wc_order($wcOrder);
+		$this->assertNull($unit->shipping());
+	}
+
     public function testWcCartDefault()
     {
         $wcCustomer = Mockery::mock(\WC_Customer::class);
@@ -360,6 +469,9 @@ class PurchaseUnitFactoryTest extends TestCase
         $address
             ->shouldReceive('postal_code')
             ->andReturn('12345');
+        $address
+            ->shouldReceive('admin_area_2')
+            ->andReturn('Berlin');
         $shipping = Mockery::mock(Shipping::class);
         $shipping
             ->shouldReceive('address')
@@ -492,6 +604,110 @@ class PurchaseUnitFactoryTest extends TestCase
         $unit = $testee->from_wc_cart($wcCart);
         $this->assertNull($unit->shipping());
     }
+
+	public function testWcCartShippingGetsDroppedWhenNoCity()
+	{
+		$wcCustomer = Mockery::mock(\WC_Customer::class);
+		expect('WC')
+			->andReturn((object) ['customer' => $wcCustomer, 'session' => null]);
+
+		$wcCart = Mockery::mock(\WC_Cart::class);
+		$amount = Mockery::mock(Amount::class);
+		$amountFactory = Mockery::mock(AmountFactory::class);
+		$amountFactory
+			->expects('from_wc_cart')
+			->with($wcCart)
+			->andReturn($amount);
+		$itemFactory = Mockery::mock(ItemFactory::class);
+		$itemFactory
+			->expects('from_wc_cart')
+			->with($wcCart)
+			->andReturn([$this->item]);
+
+		$address = Mockery::mock(Address::class);
+		$address->shouldReceive('country_code')->andReturn('IE');
+		$address->shouldReceive('postal_code')->andReturn('');
+		$address->shouldReceive('admin_area_2')->andReturn('');
+		$shipping = Mockery::mock(Shipping::class);
+		$shipping->shouldReceive('address')->andReturn($address);
+		$shippingFactory = Mockery::mock(ShippingFactory::class);
+		$shippingFactory
+			->expects('from_wc_customer')
+			->with($wcCustomer, false)
+			->andReturn($shipping);
+		$paymentsFacory = Mockery::mock(PaymentsFactory::class);
+
+		$paymentLevelEligibility = Mockery::mock(PaymentLevelEligibility::class);
+		$paymentLevelEligibility
+			->shouldReceive('is_eligible')
+			->with('')
+			->andReturn(false);
+
+		$testee = new PurchaseUnitFactory(
+			$amountFactory,
+			$itemFactory,
+			$shippingFactory,
+			$paymentsFacory,
+			Mockery::mock(PaymentLevelHelper::class),
+			$paymentLevelEligibility,
+			Mockery::mock(SettingsProvider::class)
+		);
+
+		$unit = $testee->from_wc_cart($wcCart);
+		$this->assertNull($unit->shipping());
+	}
+
+	public function testWcCartShippingKeptWhenIrelandHasCityNoPostalCode()
+	{
+		$wcCustomer = Mockery::mock(\WC_Customer::class);
+		expect('WC')
+			->andReturn((object) ['customer' => $wcCustomer, 'session' => null]);
+
+		$wcCart = Mockery::mock(\WC_Cart::class);
+		$amount = Mockery::mock(Amount::class);
+		$amountFactory = Mockery::mock(AmountFactory::class);
+		$amountFactory
+			->expects('from_wc_cart')
+			->with($wcCart)
+			->andReturn($amount);
+		$itemFactory = Mockery::mock(ItemFactory::class);
+		$itemFactory
+			->expects('from_wc_cart')
+			->with($wcCart)
+			->andReturn([$this->item]);
+
+		$address = Mockery::mock(Address::class);
+		$address->shouldReceive('country_code')->andReturn('IE');
+		$address->shouldReceive('postal_code')->andReturn('');
+		$address->shouldReceive('admin_area_2')->andReturn('Dublin');
+		$shipping = Mockery::mock(Shipping::class);
+		$shipping->shouldReceive('address')->zeroOrMoreTimes()->andReturn($address);
+		$shippingFactory = Mockery::mock(ShippingFactory::class);
+		$shippingFactory
+			->expects('from_wc_customer')
+			->with($wcCustomer, false)
+			->andReturn($shipping);
+		$paymentsFacory = Mockery::mock(PaymentsFactory::class);
+
+		$paymentLevelEligibility = Mockery::mock(PaymentLevelEligibility::class);
+		$paymentLevelEligibility
+			->shouldReceive('is_eligible')
+			->with('')
+			->andReturn(false);
+
+		$testee = new PurchaseUnitFactory(
+			$amountFactory,
+			$itemFactory,
+			$shippingFactory,
+			$paymentsFacory,
+			Mockery::mock(PaymentLevelHelper::class),
+			$paymentLevelEligibility,
+			Mockery::mock(SettingsProvider::class)
+		);
+
+		$unit = $testee->from_wc_cart($wcCart);
+		$this->assertEquals($shipping, $unit->shipping());
+	}
 
     public function testFromPayPalResponseDefault()
     {
@@ -736,6 +952,7 @@ class PurchaseUnitFactoryTest extends TestCase
 		$address->shouldReceive('country_code')->andReturn('US');
 		$address->shouldReceive('postal_code')->andReturn('12345');
 		$address->shouldReceive('address_line_1')->andReturn('123 Main St');
+		$address->shouldReceive('admin_area_2')->andReturn('Anytown');
 		$address->shouldReceive('to_array')->andReturn([
 			'country_code' => 'US',
 			'postal_code' => '12345',
@@ -858,6 +1075,7 @@ class PurchaseUnitFactoryTest extends TestCase
 		$address->shouldReceive('country_code')->andReturn('DE');
 		$address->shouldReceive('postal_code')->andReturn('12345');
 		$address->shouldReceive('address_line_1')->andReturn('Berlin Street');
+		$address->shouldReceive('admin_area_2')->andReturn('Berlin');
 		$address->shouldReceive('to_array')->andReturn([
 			'country_code' => 'DE',
 			'postal_code' => '12345',
@@ -951,6 +1169,7 @@ class PurchaseUnitFactoryTest extends TestCase
 		$address->shouldReceive('country_code')->andReturn('US');
 		$address->shouldReceive('postal_code')->andReturn('94102');
 		$address->shouldReceive('address_line_1')->andReturn('123 Market St');
+		$address->shouldReceive('admin_area_2')->andReturn('San Francisco');
 		$address->shouldReceive('to_array')->andReturn([
 			'country_code' => 'US',
 			'postal_code' => '94102',
@@ -1113,6 +1332,7 @@ class PurchaseUnitFactoryTest extends TestCase
 		$address->shouldReceive('country_code')->andReturn('US');
 		$address->shouldReceive('postal_code')->andReturn('10001');
 		$address->shouldReceive('address_line_1')->andReturn('350 5th Ave');
+		$address->shouldReceive('admin_area_2')->andReturn('New York');
 		$address->shouldReceive('to_array')->andReturn([
 			'country_code' => 'US',
 			'postal_code' => '10001',
@@ -1298,6 +1518,7 @@ class PurchaseUnitFactoryTest extends TestCase
 		$address = Mockery::mock(Address::class);
 		$address->shouldReceive('country_code')->andReturn('US');
 		$address->shouldReceive('postal_code')->andReturn('90210');
+		$address->shouldReceive('admin_area_2')->andReturn('Beverly Hills');
 
 		$shipping = Mockery::mock(Shipping::class);
 		$shipping->shouldReceive('address')->andReturn($address);
