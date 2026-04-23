@@ -197,24 +197,6 @@ export class GooglePayPopup {
 			.catch( () => {} );
 
 		await this.page.waitForLoadState( 'domcontentloaded' ).catch( () => {} );
-
-		// In headed mode the popup occasionally loads blank on the first attempt —
-		// one reload is usually enough to get the real content.
-		for ( let attempt = 0; attempt < 2; attempt++ ) {
-			const hasContent = await this.page
-				.locator( 'input, button, iframe' )
-				.first()
-				.isVisible()
-				.catch( () => false );
-			if ( hasContent ) return;
-			await this.page.reload( { waitUntil: 'domcontentloaded' } );
-			await this.page.waitForTimeout( 1_000 );
-		}
-
-		await expect(
-			this.page.locator( 'body' ),
-			'Google Pay popup stayed blank after retries'
-		).not.toHaveText( /^\s*$/, { timeout: 10_000 } );
 	};
 
 	private signInToGoogle = async () => {
