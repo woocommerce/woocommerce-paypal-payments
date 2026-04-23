@@ -12,11 +12,18 @@ namespace WooCommerce\PayPalCommerce\Compat;
 use WooCommerce\PayPalCommerce\Assets\AssetGetter;
 use WooCommerce\PayPalCommerce\Assets\AssetGetterFactory;
 use WooCommerce\PayPalCommerce\Compat\Assets\CompatAssets;
-use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
-use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
+use WooCommerce\PayPalCommerce\Compat\Settings\GeneralSettingsMapHelper;
+use WooCommerce\PayPalCommerce\Compat\Settings\PaymentMethodSettingsMapHelper;
+use WooCommerce\PayPalCommerce\Compat\Settings\SettingsMap;
+use WooCommerce\PayPalCommerce\Compat\Settings\SettingsMapHelper;
+use WooCommerce\PayPalCommerce\Compat\Settings\SettingsTabMapHelper;
+use WooCommerce\PayPalCommerce\Compat\Settings\StylingSettingsMapHelper;
+use WooCommerce\PayPalCommerce\Compat\Settings\SubscriptionSettingsMapHelper;
+use WooCommerce\PayPalCommerce\Compat\WooCommerceBlueprint\PayPalBlueprintBootstrap;
 use WooCommerce\PayPalCommerce\Compat\WooCommerceBlueprint\PayPalSettingsExporter;
 use WooCommerce\PayPalCommerce\Compat\WooCommerceBlueprint\PayPalSettingsImporter;
-use WooCommerce\PayPalCommerce\Compat\WooCommerceBlueprint\PayPalBlueprintBootstrap;
+use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
+use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 
 return array(
 
