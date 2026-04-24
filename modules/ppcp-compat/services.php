@@ -27,7 +27,7 @@ use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 
 return array(
 
-	'compat.ppec.mock-gateway'                       => static function ( $container ) {
+	'compat.ppec.mock-gateway'                             => static function ( $container ) {
 		$settings = $container->get( 'settings.settings-provider' );
 		assert( $settings instanceof SettingsProvider );
 
@@ -40,7 +40,7 @@ return array(
 		return new PPEC\MockGateway( $title );
 	},
 
-	'compat.ppec.billing-agreement-converter'        => static function ( ContainerInterface $container ) {
+	'compat.ppec.billing-agreement-converter'              => static function ( ContainerInterface $container ) {
 		return new PPEC\BillingAgreementTokenConverter(
 			$container->get( 'api.endpoint.payment-method-tokens' ),
 			$container->get( 'api.repository.customer' ),
@@ -48,7 +48,7 @@ return array(
 		);
 	},
 
-	'compat.ppec.subscriptions-handler'              => static function ( ContainerInterface $container ) {
+	'compat.ppec.subscriptions-handler'                    => static function ( ContainerInterface $container ) {
 		return new PPEC\SubscriptionsHandler(
 			$container->get( 'wc-subscriptions.renewal-handler' ),
 			$container->get( 'compat.ppec.mock-gateway' ),
@@ -57,7 +57,7 @@ return array(
 		);
 	},
 
-	'compat.plugin-script-names'                     => static function ( ContainerInterface $container ): array {
+	'compat.plugin-script-names'                           => static function ( ContainerInterface $container ): array {
 		return array(
 			'ppcp-smart-button',
 			'ppcp-oxxo',
@@ -71,7 +71,7 @@ return array(
 		);
 	},
 
-	'compat.plugin-script-file-names'                => static function ( ContainerInterface $container ): array {
+	'compat.plugin-script-file-names'                      => static function ( ContainerInterface $container ): array {
 		return array(
 			'button.js',
 			'gateway-settings.js',
@@ -81,7 +81,7 @@ return array(
 		);
 	},
 
-	'compat.shiptastic.is_supported_plugin_version_active'  => function (): bool {
+	'compat.shiptastic.is_supported_plugin_version_active' => function (): bool {
 		return function_exists( 'wc_stc_get_shipments' );
 	},
 
@@ -89,10 +89,10 @@ return array(
 		return class_exists( 'WC_Shipment_Tracking' );
 	},
 
-	'compat.ywot.is_supported_plugin_version_active' => function (): bool {
+	'compat.ywot.is_supported_plugin_version_active'       => function (): bool {
 		return function_exists( 'yith_ywot_init' );
 	},
-	'compat.dhl.is_supported_plugin_version_active'  => function (): bool {
+	'compat.dhl.is_supported_plugin_version_active'        => function (): bool {
 		return function_exists( 'PR_DHL' );
 	},
 	'compat.shipstation.is_supported_plugin_version_active' => function (): bool {
@@ -101,21 +101,21 @@ return array(
 	'compat.wc_shipping_tax.is_supported_plugin_version_active' => function (): bool {
 		return class_exists( 'WC_Connect_Loader' );
 	},
-	'compat.nyp.is_supported_plugin_version_active'  => function (): bool {
+	'compat.nyp.is_supported_plugin_version_active'        => function (): bool {
 		return function_exists( 'wc_nyp_init' );
 	},
 	'compat.wc_bookings.is_supported_plugin_version_active' => function (): bool {
 		return class_exists( 'WC_Bookings' );
 	},
 
-	'compat.asset_getter'                            => static function ( ContainerInterface $container ): AssetGetter {
+	'compat.asset_getter'                                  => static function ( ContainerInterface $container ): AssetGetter {
 		$factory = $container->get( 'assets.asset_getter_factory' );
 		assert( $factory instanceof AssetGetterFactory );
 
 		return $factory->for_module( 'ppcp-compat' );
 	},
 
-	'compat.assets'                                  => function ( ContainerInterface $container ): CompatAssets {
+	'compat.assets'                                        => function ( ContainerInterface $container ): CompatAssets {
 		return new CompatAssets(
 			$container->get( 'compat.asset_getter' ),
 			$container->get( 'ppcp.asset-version' ),
@@ -131,7 +131,7 @@ return array(
 	 *
 	 * @returns SettingsMap[]
 	 */
-	'compat.setting.new-to-old-map'                  => static function ( ContainerInterface $container ): array {
+	'compat.setting.new-to-old-map'                        => static function ( ContainerInterface $container ): array {
 		$are_new_settings_enabled = $container->get( 'wcgateway.settings.admin-settings-enabled' );
 		if ( ! $are_new_settings_enabled ) {
 			return array();
@@ -195,7 +195,7 @@ return array(
 			),
 		);
 	},
-	'compat.settings.settings_map_helper'            => static function ( ContainerInterface $container ): SettingsMapHelper {
+	'compat.settings.settings_map_helper'                  => static function ( ContainerInterface $container ): SettingsMapHelper {
 		return new SettingsMapHelper(
 			$container->get( 'compat.setting.new-to-old-map' ),
 			$container->get( 'compat.settings.styling_map_helper' ),
@@ -206,7 +206,7 @@ return array(
 			$container->get( 'wcgateway.settings.admin-settings-enabled' )
 		);
 	},
-	'compat.settings.styling_map_helper'             => static function ( ContainerInterface $container ): StylingSettingsMapHelper {
+	'compat.settings.styling_map_helper'                   => static function ( ContainerInterface $container ): StylingSettingsMapHelper {
 		$context_provider = static function () use ( $container ): string {
 			$context = $container->get( 'button.helper.context' );
 
@@ -214,28 +214,28 @@ return array(
 		};
 		return new StylingSettingsMapHelper( $context_provider );
 	},
-	'compat.settings.settings_tab_map_helper'        => static function (): SettingsTabMapHelper {
+	'compat.settings.settings_tab_map_helper'              => static function (): SettingsTabMapHelper {
 		return new SettingsTabMapHelper();
 	},
-	'compat.settings.subscription_map_helper'        => static function ( ContainerInterface $container ): SubscriptionSettingsMapHelper {
+	'compat.settings.subscription_map_helper'              => static function ( ContainerInterface $container ): SubscriptionSettingsMapHelper {
 		return new SubscriptionSettingsMapHelper( $container->get( 'wc-subscriptions.helper' ) );
 	},
-	'compat.settings.general_map_helper'             => static function (): GeneralSettingsMapHelper {
+	'compat.settings.general_map_helper'                   => static function (): GeneralSettingsMapHelper {
 		return new GeneralSettingsMapHelper();
 	},
-	'compat.settings.payment_methods_map_helper'     => static function (): PaymentMethodSettingsMapHelper {
+	'compat.settings.payment_methods_map_helper'           => static function (): PaymentMethodSettingsMapHelper {
 		return new PaymentMethodSettingsMapHelper();
 	},
-	'compat.blueprint.is_available'                  => function (): bool {
+	'compat.blueprint.is_available'                        => function (): bool {
 		return interface_exists( 'Automattic\WooCommerce\Blueprint\Exporters\StepExporter' );
 	},
-	'compat.blueprint.paypal_settings_exporter'      => static function ( ContainerInterface $container ): PayPalSettingsExporter {
+	'compat.blueprint.paypal_settings_exporter'            => static function ( ContainerInterface $container ): PayPalSettingsExporter {
 		return new PayPalSettingsExporter();
 	},
-	'compat.blueprint.paypal_settings_importer'      => static function ( ContainerInterface $container ): PayPalSettingsImporter {
+	'compat.blueprint.paypal_settings_importer'            => static function ( ContainerInterface $container ): PayPalSettingsImporter {
 		return new PayPalSettingsImporter();
 	},
-	'compat.blueprint.bootstrap'                     => static function ( ContainerInterface $container ): PayPalBlueprintBootstrap {
+	'compat.blueprint.bootstrap'                           => static function ( ContainerInterface $container ): PayPalBlueprintBootstrap {
 		return new PayPalBlueprintBootstrap(
 			$container->get( 'compat.blueprint.paypal_settings_exporter' ),
 			$container->get( 'compat.blueprint.paypal_settings_importer' )
