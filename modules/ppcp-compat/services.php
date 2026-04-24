@@ -12,13 +12,6 @@ namespace WooCommerce\PayPalCommerce\Compat;
 use WooCommerce\PayPalCommerce\Assets\AssetGetter;
 use WooCommerce\PayPalCommerce\Assets\AssetGetterFactory;
 use WooCommerce\PayPalCommerce\Compat\Assets\CompatAssets;
-use WooCommerce\PayPalCommerce\Compat\Settings\GeneralSettingsMapHelper;
-use WooCommerce\PayPalCommerce\Compat\Settings\PaymentMethodSettingsMapHelper;
-use WooCommerce\PayPalCommerce\Compat\Settings\SettingsMap;
-use WooCommerce\PayPalCommerce\Compat\Settings\SettingsMapHelper;
-use WooCommerce\PayPalCommerce\Compat\Settings\SettingsTabMapHelper;
-use WooCommerce\PayPalCommerce\Compat\Settings\StylingSettingsMapHelper;
-use WooCommerce\PayPalCommerce\Compat\Settings\SubscriptionSettingsMapHelper;
 use WooCommerce\PayPalCommerce\Compat\WooCommerceBlueprint\PayPalBlueprintBootstrap;
 use WooCommerce\PayPalCommerce\Compat\WooCommerceBlueprint\PayPalSettingsExporter;
 use WooCommerce\PayPalCommerce\Compat\WooCommerceBlueprint\PayPalSettingsImporter;
@@ -126,106 +119,6 @@ return array(
 		);
 	},
 
-	/**
-	 * Configuration for the new/old settings map.
-	 *
-	 * @returns SettingsMap[]
-	 */
-	'compat.setting.new-to-old-map'                        => static function ( ContainerInterface $container ): array {
-		$are_new_settings_enabled = $container->get( 'wcgateway.settings.admin-settings-enabled' );
-		if ( ! $are_new_settings_enabled ) {
-			return array();
-		}
-
-		$styling_settings_map_helper = $container->get( 'compat.settings.styling_map_helper' );
-		assert( $styling_settings_map_helper instanceof StylingSettingsMapHelper );
-
-		$settings_tab_map_helper = $container->get( 'compat.settings.settings_tab_map_helper' );
-		assert( $settings_tab_map_helper instanceof SettingsTabMapHelper );
-
-		$subscription_map_helper = $container->get( 'compat.settings.subscription_map_helper' );
-		assert( $subscription_map_helper instanceof SubscriptionSettingsMapHelper );
-
-		$general_map_helper = $container->get( 'compat.settings.general_map_helper' );
-		assert( $general_map_helper instanceof GeneralSettingsMapHelper );
-
-		$payment_methods_map_helper = $container->get( 'compat.settings.payment_methods_map_helper' );
-		assert( $payment_methods_map_helper instanceof PaymentMethodSettingsMapHelper );
-
-		return array(
-			new SettingsMap(
-				$container->get( 'settings.data.general' ),
-				$general_map_helper->map()
-			),
-			new SettingsMap(
-				$container->get( 'settings.data.settings' ),
-				$settings_tab_map_helper->map()
-			),
-			new SettingsMap(
-				$container->get( 'settings.data.styling' ),
-				/**
-				 * The `StylingSettings` class stores settings as `LocationStylingDTO` objects.
-				 * This method creates a mapping from old setting keys to the corresponding style names.
-				 *
-				 * Example:
-				 * 'button_product_layout' => 'layout'
-				 *
-				 * This mapping will allow to retrieve the correct style value
-				 * from a `LocationStylingDTO` object by dynamically accessing its properties.
-				 */
-				$styling_settings_map_helper->map()
-			),
-			new SettingsMap(
-				$container->get( 'settings.data.settings' ),
-				$subscription_map_helper->map()
-			),
-			/**
-			 * We need to pass the PaymentSettings model instance to use it in some helpers.
-			 * Once the new settings module is permanently enabled,
-			 * this model can be passed as a dependency to the appropriate helper classes.
-			 * For now, we must pass it this way to avoid errors when the new settings module is disabled.
-			 */
-			new SettingsMap(
-				$container->get( 'settings.data.payment' ),
-				array()
-			),
-			new SettingsMap(
-				$container->get( 'settings.data.payment' ),
-				$payment_methods_map_helper->map()
-			),
-		);
-	},
-	'compat.settings.settings_map_helper'                  => static function ( ContainerInterface $container ): SettingsMapHelper {
-		return new SettingsMapHelper(
-			$container->get( 'compat.setting.new-to-old-map' ),
-			$container->get( 'compat.settings.styling_map_helper' ),
-			$container->get( 'compat.settings.settings_tab_map_helper' ),
-			$container->get( 'compat.settings.subscription_map_helper' ),
-			$container->get( 'compat.settings.general_map_helper' ),
-			$container->get( 'compat.settings.payment_methods_map_helper' ),
-			$container->get( 'wcgateway.settings.admin-settings-enabled' )
-		);
-	},
-	'compat.settings.styling_map_helper'                   => static function ( ContainerInterface $container ): StylingSettingsMapHelper {
-		$context_provider = static function () use ( $container ): string {
-			$context = $container->get( 'button.helper.context' );
-
-			return $context->context();
-		};
-		return new StylingSettingsMapHelper( $context_provider );
-	},
-	'compat.settings.settings_tab_map_helper'              => static function (): SettingsTabMapHelper {
-		return new SettingsTabMapHelper();
-	},
-	'compat.settings.subscription_map_helper'              => static function ( ContainerInterface $container ): SubscriptionSettingsMapHelper {
-		return new SubscriptionSettingsMapHelper( $container->get( 'wc-subscriptions.helper' ) );
-	},
-	'compat.settings.general_map_helper'                   => static function (): GeneralSettingsMapHelper {
-		return new GeneralSettingsMapHelper();
-	},
-	'compat.settings.payment_methods_map_helper'           => static function (): PaymentMethodSettingsMapHelper {
-		return new PaymentMethodSettingsMapHelper();
-	},
 	'compat.blueprint.is_available'                        => function (): bool {
 		return interface_exists( 'Automattic\WooCommerce\Blueprint\Exporters\StepExporter' );
 	},
