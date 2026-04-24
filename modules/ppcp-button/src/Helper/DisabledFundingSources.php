@@ -38,7 +38,7 @@ class DisabledFundingSources
         $flags = array('context' => $context, 'is_block_context' => in_array($context, $block_contexts, \true), 'is_free_trial' => $this->is_free_trial_cart());
         // Free trials have a shorter, special funding-source rule.
         if ($flags['is_free_trial']) {
-            return $this->sanitize_and_filter_sources($this->get_sources_for_free_trial(), $flags);
+            return $this->sanitize_and_filter_sources($this->get_sources_for_free_trial($flags), $flags);
         }
         $disable_funding = $this->get_sources_from_settings($context);
         $disable_funding = $this->apply_card_rules($disable_funding, $flags);
@@ -72,14 +72,20 @@ class DisabledFundingSources
      * Rule: Carts that include a free trial product can ONLY use the
      * funding source "card" - all other sources are disabled.
      *
+     * The 'card' decision defers to {@see self::should_disable_card()} so the
+     * same decision table applies to free-trial carts — notably: classic
+     * checkout keeps 'card' enabled for ACDC (card-fields) or BCDC (card
+     * button); block checkout keeps 'card' disabled because ACDC there is
+     * rendered via the WC Blocks integration.
+     *
+     * @param array $flags Decision flags (context, is_block_context, …).
      * @return array
      */
-    private function get_sources_for_free_trial(): array
+    private function get_sources_for_free_trial(array $flags): array
     {
         // Disable all sources.
         $disable_funding = array_keys($this->all_funding_sources);
-        if (is_checkout() && $this->dcc_configuration->is_bcdc_enabled()) {
-            // If BCDC is used, re-enable card payments.
+        if (!$this->should_disable_card((bool) ($flags['is_block_context'] ?? \false))) {
             $disable_funding = array_filter($disable_funding, static fn(string $funding_source) => $funding_source !== 'card');
         }
         return $disable_funding;
