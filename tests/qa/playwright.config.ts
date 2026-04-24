@@ -34,35 +34,20 @@ export default defineConfig< BaseExtend >( {
 	/* The base directory, relative to the config file, for snapshot files created with toMatchSnapshot */
 	snapshotDir: './snapshots',
 	/* Reporter to use. See https://playwright.dev/docs/test-reporters */
-	reporter: process.env.CI
-		? [
-				[ 'list' ],
-				[ 'html', { outputFolder: 'playwright-report' } ],
-				[
-					'@inpsyde/playwright-utils/build/integration/jira/xray-reporter.js',
-					{
-						apiClient: {
-							client_id: process.env.XRAY_CLIENT_ID,
-							client_secret: process.env.XRAY_CLIENT_SECRET,
-						},
-						testExecutionKey: process.env.TEST_EXEC_KEY,
-					},
-				],
-		  ]
-		: [
-				[ 'list' ],
-				[ 'html', { outputFolder: 'playwright-report' } ],
-				[
-					'@inpsyde/playwright-utils/build/integration/jira/xray-reporter.js',
-					{
-						apiClient: {
-							client_id: process.env.XRAY_CLIENT_ID,
-							client_secret: process.env.XRAY_CLIENT_SECRET,
-						},
-						testExecutionKey: process.env.TEST_EXEC_KEY,
-					},
-				],
-		  ],
+	reporter: [
+		[ 'list' ],
+		[ 'html', { outputFolder: 'playwright-report' } ],
+		[
+			'@inpsyde/playwright-utils/build/integration/jira/xray-reporter.js',
+			{
+				apiClient: {
+					client_id: process.env.XRAY_CLIENT_ID,
+					client_secret: process.env.XRAY_CLIENT_SECRET,
+				},
+				testExecutionKey: process.env.XRAY_TEST_EXEC_KEY,
+			},
+		],
+	],
 	/* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
 
 	globalSetup: require.resolve( './global-setup' ),
@@ -137,9 +122,17 @@ export default defineConfig< BaseExtend >( {
 			fullyParallel: false,
 		},
 		{
+			name: 'plugin-foundation',
+			dependencies: [ 'setup-woocommerce' ],
+			testMatch: /plugin-foundation\.spec\.ts/,
+		},
+		{
 			name: 'all',
 			dependencies: [ 'setup-woocommerce' ],
-			testIgnore: /stress\.spec\.ts/,
+			testIgnore: [
+				/stress\.spec\.ts/,
+				/plugin-foundation\.spec\.ts/,
+			],
 		},
 		{
 			name: 'stress',
