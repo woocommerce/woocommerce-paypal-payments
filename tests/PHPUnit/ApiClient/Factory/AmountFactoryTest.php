@@ -182,8 +182,9 @@ class AmountFactoryTest extends TestCase
 		$cart->shouldReceive( 'get_shipping_total' )->andReturn( 5.00 );
 		$cart->shouldReceive( 'get_total_tax' )->andReturn( 1.07 );
 		$cart->shouldReceive( 'get_discount_total' )->andReturn( 0.0 );
-		// get_total() deliberately returns a mismatched value to prove it is not used.
-		$cart->shouldReceive( 'get_total' )->withAnyArgs()->andReturn( 19.39 );
+		// Enforce that get_total() is never consulted — the total is derived solely
+		// from breakdown components. If it were called, the test would fail.
+		$cart->shouldNotReceive( 'get_total' );
 
 		$woocommerce          = Mockery::mock( \WooCommerce::class );
 		$session              = Mockery::mock( \WC_Session::class );
@@ -225,7 +226,7 @@ class AmountFactoryTest extends TestCase
 		$totals->shouldReceive( 'total_shipping' )->andReturn( $make( $shipping ) );
 		$totals->shouldReceive( 'total_tax' )->andReturn( $make( $tax ) );
 		$totals->shouldReceive( 'total_discount' )->andReturn( $make( $discount ) );
-		$totals->shouldReceive( 'total_price' )->andReturn( $make( 0 ) ); // never used for value
+		$totals->shouldReceive( 'total_price' )->andReturn( $make( 0 ) ); // used for currency metadata only
 
 		$result    = $this->testee->from_store_api_cart( $totals );
 		$breakdown = $result->breakdown();
@@ -370,6 +371,35 @@ class AmountFactoryTest extends TestCase
         $result = $this->testee->from_wc_order($order);
         $this->assertNull($result->breakdown()->discount());
     }
+
+	/**
+	 * Proves that from_wc_order() derives the total from breakdown components
+	 * and never calls get_total(). Mirrors the equivalent from_wc_cart() test.
+	 */
+	public function testFromWcOrderTotalDerivesFromComponentsNotGetTotal(): void
+	{
+		$order = Mockery::mock( \WC_Order::class );
+		// Enforce get_total() is never consulted.
+		$order->shouldNotReceive( 'get_total' );
+		$order->shouldReceive( 'get_payment_method' )->andReturn( PayPalGateway::ID );
+		$order->shouldReceive( 'get_meta' )->andReturn( null );
+		$order->shouldReceive( 'get_currency' )->andReturn( $this->currency );
+		// subtotal=$13.33, fees=0, shipping=$5.00, tax=$1.07 → total should be $19.40.
+		$order->shouldReceive( 'get_subtotal' )->andReturn( 13.33 );
+		$order->shouldReceive( 'get_total_fees' )->andReturn( 0.0 );
+		$order->shouldReceive( 'get_shipping_total' )->andReturn( 5.00 );
+		$order->shouldReceive( 'get_total_tax' )->andReturn( 1.07 );
+		$order->shouldReceive( 'get_total_discount' )->andReturn( 0.0 );
+		$this->itemFactory->shouldReceive( 'from_wc_order' )->andReturn( [] );
+
+		$result = $this->testee->from_wc_order( $order );
+
+		$this->assertSame( '19.40', $result->value_str() );
+		$this->assertSame( '13.33', $result->breakdown()->item_total()->value_str() );
+		$this->assertSame( '5.00', $result->breakdown()->shipping()->value_str() );
+		$this->assertSame( '1.07', $result->breakdown()->tax_total()->value_str() );
+		$this->assertNull( $result->breakdown()->discount() );
+	}
 
     /**
      * @dataProvider dataFromPayPalResponse

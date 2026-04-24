@@ -149,7 +149,7 @@ class AmountFactory {
 				null,
 				null,
 				null,
-				$make( $discount_minor ),
+				$discount_minor > 0 ? $make( $discount_minor ) : null,
 			)
 		);
 	}
