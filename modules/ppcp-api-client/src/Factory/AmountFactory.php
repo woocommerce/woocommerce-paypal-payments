@@ -74,27 +74,29 @@ class AmountFactory {
 	 * @return Amount
 	 */
 	public function from_wc_cart( \WC_Cart $cart ): Amount {
-		$total = new Money( (float) $cart->get_total( 'numeric' ), $this->currency->get() );
+		$item_total_val = (float) $cart->get_subtotal() + (float) $cart->get_fee_total();
+		$shipping_val   = (float) $cart->get_shipping_total();
+		$taxes_val      = (float) $cart->get_total_tax();
+		$discount_val   = (float) $cart->get_discount_total();
 
-		$item_total = (float) $cart->get_subtotal() + (float) $cart->get_fee_total();
-		$item_total = new Money( $item_total, $this->currency->get() );
-		$shipping   = new Money(
-			(float) $cart->get_shipping_total(),
-			$this->currency->get()
-		);
-
-		$taxes = new Money(
-			(float) $cart->get_total_tax(),
-			$this->currency->get()
-		);
+		$item_total = new Money( $item_total_val, $this->currency->get() );
+		$shipping   = new Money( $shipping_val, $this->currency->get() );
+		$taxes      = new Money( $taxes_val, $this->currency->get() );
 
 		$discount = null;
-		if ( $cart->get_discount_total() ) {
-			$discount = new Money(
-				(float) $cart->get_discount_total(),
-				$this->currency->get()
-			);
+		if ( $discount_val ) {
+			$discount = new Money( $discount_val, $this->currency->get() );
 		}
+
+		// Derive the total from breakdown components in integer cents rather than
+		// using get_total(), which can diverge from the component sum by ±$0.01
+		// due to WooCommerce per-item tax rounding. PayPal requires amount.value to
+		// exactly equal the sum of its breakdown fields or it rejects the PATCH.
+		$total_cents = (int) round( $item_total_val * 100 )
+			+ (int) round( $shipping_val * 100 )
+			+ (int) round( $taxes_val * 100 )
+			- (int) round( $discount_val * 100 );
+		$total       = new Money( $total_cents / 100, $this->currency->get() );
 
 		$breakdown = new AmountBreakdown(
 			$item_total,
@@ -116,16 +118,38 @@ class AmountFactory {
 	 *  Returns an Amount object based off a WooCommerce cart object from the Store API.
 	 */
 	public function from_store_api_cart( CartTotals $cart_totals ): Amount {
+		// Store API values are in integer minor units (e.g. cents), so integer
+		// arithmetic here is exact. Fees are included in items to match
+		// from_wc_cart() and to avoid a breakdown mismatch when fees are present.
+		// Total is derived from the breakdown sum rather than total_price() so
+		// PayPal's amount.value === sum(breakdown) invariant always holds.
+		$items_minor    = (int) $cart_totals->total_items()->value()
+			+ (int) $cart_totals->total_fees()->value();
+		$shipping_minor = (int) $cart_totals->total_shipping()->value();
+		$tax_minor      = (int) $cart_totals->total_tax()->value();
+		$discount_minor = (int) $cart_totals->total_discount()->value();
+		$total_minor    = $items_minor + $shipping_minor + $tax_minor - $discount_minor;
+
+		$currency   = $cart_totals->total_price()->currency_code();
+		$minor_unit = $cart_totals->total_price()->currency_minor_unit();
+		$make       = static function ( int $minor ) use ( $currency, $minor_unit ): Money {
+			return ( new \WooCommerce\PayPalCommerce\WcGateway\StoreApi\Entity\Money(
+				(string) $minor,
+				$currency,
+				$minor_unit
+			) )->to_paypal();
+		};
+
 		return new Amount(
-			$cart_totals->total_price()->to_paypal(),
+			$make( $total_minor ),
 			new AmountBreakdown(
-				$cart_totals->total_items()->to_paypal(),
-				$cart_totals->total_shipping()->to_paypal(),
-				$cart_totals->total_tax()->to_paypal(),
+				$make( $items_minor ),
+				$make( $shipping_minor ),
+				$make( $tax_minor ),
 				null,
 				null,
 				null,
-				$cart_totals->total_discount()->to_paypal(),
+				$make( $discount_minor ),
 			)
 		);
 	}
