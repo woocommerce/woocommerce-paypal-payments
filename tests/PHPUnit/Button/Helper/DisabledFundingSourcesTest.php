@@ -190,6 +190,115 @@ class DisabledFundingSourcesTest extends TestCase
 	}
 
 	/**
+	 * Free-trial cart on classic checkout with ACDC enabled: 'card' must stay enabled
+	 * (otherwise paypal.CardFields() reports ineligible and the card iframes never
+	 * render over the stock WooCommerce inputs).
+	 */
+	public function test_free_trial_classic_checkout_with_acdc_keeps_card_enabled()
+	{
+		$this->dcc_configuration->shouldReceive('is_acdc_enabled')->andReturn(true);
+		$this->dcc_configuration->shouldReceive('is_bcdc_enabled')->andReturn(false);
+
+		$sut = $this->makeFreeTrialSut(
+			[
+				'card' => 'Credit or debit cards',
+				'paypal' => 'PayPal',
+				'venmo' => 'Venmo',
+			],
+			'US'
+		);
+
+		$this->setWooCommerceFunctionMocks();
+		when('is_checkout')->justReturn(true);
+
+		$this->assertNotContains('card', $sut->sources('checkout'));
+	}
+
+	/**
+	 * Free-trial cart on classic checkout with BCDC enabled: 'card' stays enabled
+	 * (pre-existing behavior, kept intact by the refactor).
+	 */
+	public function test_free_trial_classic_checkout_with_bcdc_keeps_card_enabled()
+	{
+		$this->dcc_configuration->shouldReceive('is_acdc_enabled')->andReturn(false);
+		$this->dcc_configuration->shouldReceive('is_bcdc_enabled')->andReturn(true);
+
+		$sut = $this->makeFreeTrialSut(
+			[
+				'card' => 'Credit or debit cards',
+				'paypal' => 'PayPal',
+			],
+			'US'
+		);
+
+		$this->setWooCommerceFunctionMocks();
+		when('is_checkout')->justReturn(true);
+
+		$this->assertNotContains('card', $sut->sources('checkout'));
+	}
+
+	/**
+	 * Free-trial cart on block checkout with ACDC enabled: 'card' stays disabled
+	 * (block ACDC uses the WC Blocks integration, not the 'card' SDK funding source).
+	 */
+	public function test_free_trial_block_checkout_with_acdc_disables_card()
+	{
+		$this->dcc_configuration->shouldReceive('is_acdc_enabled')->andReturn(true);
+		$this->dcc_configuration->shouldReceive('is_bcdc_enabled')->andReturn(false);
+
+		$sut = $this->makeFreeTrialSut(
+			[
+				'card' => 'Credit or debit cards',
+				'paypal' => 'PayPal',
+			],
+			'US'
+		);
+
+		$this->setWooCommerceFunctionMocks();
+		when('is_checkout')->justReturn(true);
+
+		$this->assertContains('card', $sut->sources('checkout-block'));
+	}
+
+	/**
+	 * Free-trial cart on classic checkout with neither ACDC nor BCDC: 'card' disabled
+	 * (no card flow active).
+	 */
+	public function test_free_trial_classic_checkout_no_card_flow_disables_card()
+	{
+		$this->dcc_configuration->shouldReceive('is_acdc_enabled')->andReturn(false);
+		$this->dcc_configuration->shouldReceive('is_bcdc_enabled')->andReturn(false);
+
+		$sut = $this->makeFreeTrialSut(
+			[
+				'card' => 'Credit or debit cards',
+				'paypal' => 'PayPal',
+			],
+			'US'
+		);
+
+		$this->setWooCommerceFunctionMocks();
+		when('is_checkout')->justReturn(true);
+
+		$this->assertContains('card', $sut->sources('checkout'));
+	}
+
+	/**
+	 * Builds a DisabledFundingSources whose is_free_trial_cart() is forced to true,
+	 * so the free-trial branch can be tested without bootstrapping WooCommerce
+	 * Subscriptions and WC()->cart.
+	 */
+	private function makeFreeTrialSut(array $funding_sources, string $country): DisabledFundingSources
+	{
+		return new class($this->settings_provider, $funding_sources, $this->dcc_configuration, $country) extends DisabledFundingSources {
+			protected function is_free_trial_cart(): bool
+			{
+				return true;
+			}
+		};
+	}
+
+	/**
 	 * Set up common WooCommerce function mocks
 	 */
 	private function setWooCommerceFunctionMocks(): void
