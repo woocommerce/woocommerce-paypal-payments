@@ -11,7 +11,6 @@ namespace WooCommerce\PayPalCommerce\Compat\Settings;
 
 use RuntimeException;
 use WooCommerce\PayPalCommerce\Applepay\ApplePayGateway;
-use WooCommerce\PayPalCommerce\Button\Helper\ContextTrait;
 use WooCommerce\PayPalCommerce\Googlepay\GooglePayGateway;
 use WooCommerce\PayPalCommerce\Settings\Data\AbstractDataModel;
 use WooCommerce\PayPalCommerce\Settings\Data\PaymentSettings;
@@ -24,8 +23,6 @@ use WooCommerce\PayPalCommerce\Settings\DTO\LocationStylingDTO;
  * @psalm-import-type oldSettingsKey from SettingsMap
  */
 class StylingSettingsMapHelper {
-
-	use ContextTrait;
 
 	protected const BUTTON_NAMES = array( GooglePayGateway::ID, ApplePayGateway::ID );
 
@@ -43,6 +40,15 @@ class StylingSettingsMapHelper {
 	 */
 	public function __construct( callable $context_provider ) {
 		$this->context_provider = $context_provider;
+	}
+
+	/**
+	 * Returns the current context string.
+	 *
+	 * @return string
+	 */
+	private function context(): string {
+		return ( $this->context_provider )();
 	}
 
 	/**
