@@ -16,6 +16,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Entity\Money;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\CurrencyGetter;
 use WooCommerce\PayPalCommerce\WcGateway\StoreApi\Entity\CartTotals;
+use WooCommerce\PayPalCommerce\WcGateway\StoreApi\Entity\Money as StoreApiMoney;
 use WooCommerce\PayPalCommerce\WcSubscriptions\FreeTrialHandlerTrait;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CardButtonGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
@@ -92,11 +93,14 @@ class AmountFactory {
 		// using get_total(), which can diverge from the component sum by ±$0.01
 		// due to WooCommerce per-item tax rounding. PayPal requires amount.value to
 		// exactly equal the sum of its breakdown fields or it rejects the PATCH.
+		// Formatting through a string avoids floating-point representation issues
+		// when converting the integer-cent sum back to a decimal (e.g. 1001/100).
 		$total_cents = (int) round( $item_total_val * 100 )
 			+ (int) round( $shipping_val * 100 )
 			+ (int) round( $taxes_val * 100 )
 			- (int) round( $discount_val * 100 );
-		$total       = new Money( $total_cents / 100, $this->currency->get() );
+		$total_str   = number_format( $total_cents / 100, 2, '.', '' );
+		$total       = new Money( (float) $total_str, $this->currency->get() );
 
 		$breakdown = new AmountBreakdown(
 			$item_total,
@@ -133,11 +137,7 @@ class AmountFactory {
 		$currency   = $cart_totals->total_price()->currency_code();
 		$minor_unit = $cart_totals->total_price()->currency_minor_unit();
 		$make       = static function ( int $minor ) use ( $currency, $minor_unit ): Money {
-			return ( new \WooCommerce\PayPalCommerce\WcGateway\StoreApi\Entity\Money(
-				(string) $minor,
-				$currency,
-				$minor_unit
-			) )->to_paypal();
+			return ( new StoreApiMoney( (string) $minor, $currency, $minor_unit ) )->to_paypal();
 		};
 
 		return new Amount(
@@ -171,37 +171,37 @@ class AmountFactory {
 				$this->discounts_from_items( $items ),
 			)
 		);
-		$discount       = null;
+		$discount = null;
 		if ( $discount_value ) {
-			$discount = new Money(
-				(float) $discount_value,
-				$currency
-			);
+			$discount = new Money( (float) $discount_value, $currency );
 		}
 
-		$total_value = (float) $order->get_total();
+		$item_total_val = (float) $order->get_subtotal() + (float) $order->get_total_fees();
+		$shipping_val   = (float) $order->get_shipping_total();
+		$taxes_val      = (float) $order->get_total_tax();
+
+		$item_total = new Money( $item_total_val, $currency );
+		$shipping   = new Money( $shipping_val, $currency );
+		$taxes      = new Money( $taxes_val, $currency );
+
+		// Free trial orders charge a fixed $1.00 regardless of cart contents —
+		// preserve that override. For all other orders derive the total from
+		// breakdown components so amount.value always equals the breakdown sum.
 		if ( (
 				in_array( $order->get_payment_method(), array( CreditCardGateway::ID, CardButtonGateway::ID ), true )
 				|| ( PayPalGateway::ID === $order->get_payment_method() && 'card' === $order->get_meta( PayPalGateway::ORDER_PAYMENT_SOURCE_META_KEY ) )
 			)
 			&& $this->is_free_trial_order( $order )
 		) {
-			$total_value = 1.0;
+			$total = new Money( 1.0, $currency );
+		} else {
+			$total_cents = (int) round( $item_total_val * 100 )
+				+ (int) round( $shipping_val * 100 )
+				+ (int) round( $taxes_val * 100 )
+				- (int) round( $discount_value * 100 );
+			$total_str   = number_format( $total_cents / 100, 2, '.', '' );
+			$total       = new Money( (float) $total_str, $currency );
 		}
-		$total = new Money( $total_value, $currency );
-
-		$item_total = new Money(
-			(float) $order->get_subtotal() + (float) $order->get_total_fees(),
-			$currency
-		);
-		$shipping   = new Money(
-			(float) $order->get_shipping_total(),
-			$currency
-		);
-		$taxes      = new Money(
-			(float) $order->get_total_tax(),
-			$currency
-		);
 
 		$breakdown = new AmountBreakdown(
 			$item_total,
@@ -212,11 +212,7 @@ class AmountFactory {
 			null, // shipping discounts?
 			$discount
 		);
-		$amount    = new Amount(
-			$total,
-			$breakdown
-		);
-		return $amount;
+		return new Amount( $total, $breakdown );
 	}
 
 	/**
