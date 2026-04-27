@@ -73,6 +73,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Helper\PaymentLevelHelper;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\PurchaseUnitSanitizer;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\ReferenceTransactionStatus;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\ProductStatusResultCache;
+use WooCommerce\PayPalCommerce\ApiClient\Helper\SellerStatusFilter;
 use WooCommerce\PayPalCommerce\ApiClient\Repository\CustomerRepository;
 use WooCommerce\PayPalCommerce\ApiClient\Repository\OrderRepository;
 use WooCommerce\PayPalCommerce\ApiClient\Repository\PartnerReferralsData;
@@ -158,11 +159,25 @@ return array(
 			$container->get( 'api.partner_merchant_id' ),
 			$container->get( 'api.merchant_id' ),
 			$container->get( 'api.helper.failure-registry' ),
-			$container->get( 'api.partners-seller-status-cache' )
+			$container->get( 'api.partners-seller-status-cache' ),
+			$container->get( 'api.seller-status-filter' )
 		);
 	},
 	'api.partners-seller-status-cache'               => static function ( ContainerInterface $container ): Cache {
 		return new Cache( 'ppcp-seller-status-' );
+	},
+	'api.seller-status-filter'                       => static function ( ContainerInterface $container ): SellerStatusFilter {
+		$filter = new SellerStatusFilter();
+
+		/**
+		 * Fires after the SellerStatusFilter is created, allowing modules or
+		 * external code to register overrides, injections, or a complete fallback.
+		 *
+		 * @param SellerStatusFilter $filter The seller status filter instance.
+		 */
+		do_action( 'woocommerce_paypal_payments_seller_status_filter_init', $filter );
+
+		return $filter;
 	},
 	'api.factory.sellerstatus'                       => static function ( ContainerInterface $container ): SellerStatusFactory {
 		return new SellerStatusFactory();
