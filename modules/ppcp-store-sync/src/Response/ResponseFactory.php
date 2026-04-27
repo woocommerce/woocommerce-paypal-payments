@@ -12,34 +12,31 @@ namespace WooCommerce\PayPalCommerce\StoreSync\Response;
 use WC_Cart;
 use WC_Order;
 use WooCommerce\PayPalCommerce\StoreSync\CartValidation\CouponValidator\AppliedCouponsBuilder;
-use WooCommerce\PayPalCommerce\StoreSync\Schema\PayPalCart;
 use WooCommerce\PayPalCommerce\StoreSync\Helper\AgenticCartBuilder;
+use WooCommerce\PayPalCommerce\StoreSync\Helper\ShippingOptionsBuilder;
+use WooCommerce\PayPalCommerce\StoreSync\Schema\PayPalCart;
 
 class ResponseFactory {
 
-	/**
-	 * Cart builder service.
-	 *
-	 * @var AgenticCartBuilder
-	 */
 	private AgenticCartBuilder $cart_builder;
-
-	/**
-	 * Applied coupons builder service.
-	 *
-	 * @var AppliedCouponsBuilder
-	 */
 	private AppliedCouponsBuilder $applied_coupons_builder;
+	private ShippingOptionsBuilder $shipping_options_builder;
 
 	/**
 	 * Constructor.
 	 *
-	 * @param AgenticCartBuilder    $cart_builder Cart builder service.
-	 * @param AppliedCouponsBuilder $applied_coupons_builder Applied coupons builder service.
+	 * @param AgenticCartBuilder     $cart_builder Cart builder service.
+	 * @param AppliedCouponsBuilder  $applied_coupons_builder Applied coupons builder service.
+	 * @param ShippingOptionsBuilder $shipping_options_builder Shipping options builder service.
 	 */
-	public function __construct( AgenticCartBuilder $cart_builder, AppliedCouponsBuilder $applied_coupons_builder ) {
-		$this->cart_builder            = $cart_builder;
-		$this->applied_coupons_builder = $applied_coupons_builder;
+	public function __construct(
+		AgenticCartBuilder $cart_builder,
+		AppliedCouponsBuilder $applied_coupons_builder,
+		ShippingOptionsBuilder $shipping_options_builder
+	) {
+		$this->cart_builder             = $cart_builder;
+		$this->applied_coupons_builder  = $applied_coupons_builder;
+		$this->shipping_options_builder = $shipping_options_builder;
 	}
 
 	/**
