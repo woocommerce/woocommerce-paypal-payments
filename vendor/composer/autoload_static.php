@@ -646,8 +646,6 @@ class ComposerStaticInit844a779aae516bed9e0beccea9d01fda
         'WooCommerce\\PayPalCommerce\\StoreSync\\Registration\\RegistrationResult' => __DIR__ . '/../..' . '/modules/ppcp-store-sync/src/Registration/RegistrationResult.php',
         'WooCommerce\\PayPalCommerce\\StoreSync\\Registration\\RegistrationService' => __DIR__ . '/../..' . '/modules/ppcp-store-sync/src/Registration/RegistrationService.php',
         'WooCommerce\\PayPalCommerce\\StoreSync\\Response\\CartResponse' => __DIR__ . '/../..' . '/modules/ppcp-store-sync/src/Response/CartResponse.php',
-        'WooCommerce\\PayPalCommerce\\StoreSync\\Response\\NewCartResponse' => __DIR__ . '/../..' . '/modules/ppcp-store-sync/src/Response/NewCartResponse.php',
-        'WooCommerce\\PayPalCommerce\\StoreSync\\Response\\PaidCartResponse' => __DIR__ . '/../..' . '/modules/ppcp-store-sync/src/Response/PaidCartResponse.php',
         'WooCommerce\\PayPalCommerce\\StoreSync\\Response\\ResponseFactory' => __DIR__ . '/../..' . '/modules/ppcp-store-sync/src/Response/ResponseFactory.php',
         'WooCommerce\\PayPalCommerce\\StoreSync\\Schema\\Address' => __DIR__ . '/../..' . '/modules/ppcp-store-sync/src/Schema/Address.php',
         'WooCommerce\\PayPalCommerce\\StoreSync\\Schema\\AgenticSchema' => __DIR__ . '/../..' . '/modules/ppcp-store-sync/src/Schema/AgenticSchema.php',

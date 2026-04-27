@@ -449,8 +449,6 @@ return array(
     'WooCommerce\\PayPalCommerce\\StoreSync\\Registration\\RegistrationResult' => $baseDir . '/modules/ppcp-store-sync/src/Registration/RegistrationResult.php',
     'WooCommerce\\PayPalCommerce\\StoreSync\\Registration\\RegistrationService' => $baseDir . '/modules/ppcp-store-sync/src/Registration/RegistrationService.php',
     'WooCommerce\\PayPalCommerce\\StoreSync\\Response\\CartResponse' => $baseDir . '/modules/ppcp-store-sync/src/Response/CartResponse.php',
-    'WooCommerce\\PayPalCommerce\\StoreSync\\Response\\NewCartResponse' => $baseDir . '/modules/ppcp-store-sync/src/Response/NewCartResponse.php',
-    'WooCommerce\\PayPalCommerce\\StoreSync\\Response\\PaidCartResponse' => $baseDir . '/modules/ppcp-store-sync/src/Response/PaidCartResponse.php',
     'WooCommerce\\PayPalCommerce\\StoreSync\\Response\\ResponseFactory' => $baseDir . '/modules/ppcp-store-sync/src/Response/ResponseFactory.php',
     'WooCommerce\\PayPalCommerce\\StoreSync\\Schema\\Address' => $baseDir . '/modules/ppcp-store-sync/src/Schema/Address.php',
     'WooCommerce\\PayPalCommerce\\StoreSync\\Schema\\AgenticSchema' => $baseDir . '/modules/ppcp-store-sync/src/Schema/AgenticSchema.php',
