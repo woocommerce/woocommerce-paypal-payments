@@ -2,7 +2,7 @@
 
 declare( strict_types = 1 );
 
-namespace WooCommerce\PayPalCommerce\StoreSync\Response;
+namespace WooCommerce\PayPalCommerce\StoreSync\Helper;
 
 use Brain\Monkey;
 use Mockery;
@@ -10,7 +10,7 @@ use WC_Cart;
 use WooCommerce\PayPalCommerce\TestCase;
 
 /**
- * @covers \WooCommerce\PayPalCommerce\StoreSync\Response\ShippingOptionsBuilder
+ * @covers \WooCommerce\PayPalCommerce\StoreSync\Helper\ShippingOptionsBuilder
  */
 class ShippingOptionsBuilderTest extends TestCase {
 
