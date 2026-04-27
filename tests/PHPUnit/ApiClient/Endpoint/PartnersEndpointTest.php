@@ -13,6 +13,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\SellerStatusFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\Cache;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\FailureRegistry;
+use WooCommerce\PayPalCommerce\ApiClient\Helper\SellerStatusFilter;
 use WooCommerce\PayPalCommerce\TestCase;
 use function Brain\Monkey\Functions\expect;
 use function Brain\Monkey\Functions\when;
@@ -78,7 +79,7 @@ class PartnersEndpointTest extends TestCase
 	// Factory helper
 	// -----------------------------------------------------------------------
 
-	private function make_endpoint(): PartnersEndpoint
+	private function make_endpoint(?SellerStatusFilter $filter = null): PartnersEndpoint
 	{
 		return new PartnersEndpoint(
 			self::HOST,
@@ -88,7 +89,8 @@ class PartnersEndpointTest extends TestCase
 			self::PARTNER_ID,
 			self::MERCHANT_ID,
 			$this->failure_registry,
-			$this->cache
+			$this->cache,
+			$filter ?? new SellerStatusFilter()
 		);
 	}
 
