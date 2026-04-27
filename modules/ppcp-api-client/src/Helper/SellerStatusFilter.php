@@ -21,9 +21,14 @@ namespace WooCommerce\PayPalCommerce\ApiClient\Helper;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\SellerStatus;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\SellerStatusCapability;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\SellerStatusProduct;
+/**
+ * Class SellerStatusFilter
+ */
 class SellerStatusFilter
 {
     /**
+     * Complete fallback SellerStatus used when the API call fails.
+     *
      * @var SellerStatus|null
      */
     private ?SellerStatus $fallback = null;
@@ -58,6 +63,8 @@ class SellerStatusFilter
      */
     private array $removed_capabilities = array();
     /**
+     * Country override, or null to keep the original value.
+     *
      * @var string|null
      */
     private ?string $country_override = null;
@@ -72,10 +79,20 @@ class SellerStatusFilter
         $this->fallback = $fallback;
         return $this;
     }
+    /**
+     * Returns the fallback SellerStatus, or null if none is set.
+     *
+     * @return SellerStatus|null
+     */
     public function get_fallback(): ?SellerStatus
     {
         return $this->fallback;
     }
+    /**
+     * Whether a fallback is configured.
+     *
+     * @return bool
+     */
     public function has_fallback(): bool
     {
         return null !== $this->fallback;
@@ -158,7 +175,7 @@ class SellerStatusFilter
      */
     public function has_modifications(): bool
     {
-        return $this->fallback !== null || !empty($this->product_capability_additions) || !empty($this->product_capability_removals) || !empty($this->removed_products) || !empty($this->ensured_capabilities) || !empty($this->removed_capabilities) || $this->country_override !== null;
+        return !empty($this->product_capability_additions) || !empty($this->product_capability_removals) || !empty($this->removed_products) || !empty($this->ensured_capabilities) || !empty($this->removed_capabilities) || $this->country_override !== null;
     }
     /**
      * Applies all registered transformations to a SellerStatus object.
