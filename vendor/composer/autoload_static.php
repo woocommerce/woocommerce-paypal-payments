@@ -338,7 +338,6 @@ class ComposerStaticInita39f67516f6df923b6f79368c7def9e4
         'WooCommerce\\PayPalCommerce\\ApiClient\\Helper\\ProductStatusResultCache' => __DIR__ . '/../..' . '/modules/ppcp-api-client/src/Helper/ProductStatusResultCache.php',
         'WooCommerce\\PayPalCommerce\\ApiClient\\Helper\\PurchaseUnitSanitizer' => __DIR__ . '/../..' . '/modules/ppcp-api-client/src/Helper/PurchaseUnitSanitizer.php',
         'WooCommerce\\PayPalCommerce\\ApiClient\\Helper\\ReferenceTransactionStatus' => __DIR__ . '/../..' . '/modules/ppcp-api-client/src/Helper/ReferenceTransactionStatus.php',
-        'WooCommerce\\PayPalCommerce\\ApiClient\\Helper\\SellerStatusFilter' => __DIR__ . '/../..' . '/modules/ppcp-api-client/src/Helper/SellerStatusFilter.php',
         'WooCommerce\\PayPalCommerce\\ApiClient\\Repository\\CustomerRepository' => __DIR__ . '/../..' . '/modules/ppcp-api-client/src/Repository/CustomerRepository.php',
         'WooCommerce\\PayPalCommerce\\ApiClient\\Repository\\OrderRepository' => __DIR__ . '/../..' . '/modules/ppcp-api-client/src/Repository/OrderRepository.php',
         'WooCommerce\\PayPalCommerce\\ApiClient\\Repository\\PartnerReferralsData' => __DIR__ . '/../..' . '/modules/ppcp-api-client/src/Repository/PartnerReferralsData.php',

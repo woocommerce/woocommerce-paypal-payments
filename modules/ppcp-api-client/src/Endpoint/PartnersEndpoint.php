@@ -16,7 +16,6 @@ use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\SellerStatusFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\Cache;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\FailureRegistry;
-use WooCommerce\PayPalCommerce\ApiClient\Helper\SellerStatusFilter;
 /**
  * Class PartnersEndpoint
  */
@@ -72,12 +71,6 @@ class PartnersEndpoint
      */
     private Cache $cache;
     /**
-     * The seller status filter for overriding/injecting seller status data.
-     *
-     * @var SellerStatusFilter
-     */
-    private SellerStatusFilter $seller_status_filter;
-    /**
      * Cache lifetime for seller status responses, in seconds.
      */
     public const SELLER_STATUS_CACHE_TTL = 600;
@@ -97,9 +90,8 @@ class PartnersEndpoint
      * @param string              $merchant_id The merchant ID.
      * @param FailureRegistry     $failure_registry The API failure registry.
      * @param Cache               $cache The cache for seller status responses.
-     * @param SellerStatusFilter  $seller_status_filter The seller status filter.
      */
-    public function __construct(string $host, Bearer $bearer, LoggerInterface $logger, SellerStatusFactory $seller_status_factory, string $partner_id, string $merchant_id, FailureRegistry $failure_registry, Cache $cache, SellerStatusFilter $seller_status_filter)
+    public function __construct(string $host, Bearer $bearer, LoggerInterface $logger, SellerStatusFactory $seller_status_factory, string $partner_id, string $merchant_id, FailureRegistry $failure_registry, Cache $cache)
     {
         $this->host = $host;
         $this->bearer = $bearer;
@@ -109,7 +101,6 @@ class PartnersEndpoint
         $this->merchant_id = $merchant_id;
         $this->failure_registry = $failure_registry;
         $this->cache = $cache;
-        $this->seller_status_filter = $seller_status_filter;
     }
     /**
      * Returns the current seller status.
@@ -124,22 +115,36 @@ class PartnersEndpoint
     {
         $cached = $this->cache->get(self::SELLER_STATUS_CACHE_KEY);
         if ($cached instanceof SellerStatus) {
-            return $this->seller_status_filter->apply($cached);
+            /**
+             * Filters the seller status object before it is returned.
+             *
+             * @param SellerStatus $status The seller status (from cache or API).
+             */
+            return apply_filters('woocommerce_paypal_payments_seller_status', $cached);
         }
         try {
             $status = $this->fetch_seller_status_from_api();
         } catch (RuntimeException $exception) {
-            if ($this->seller_status_filter->has_fallback()) {
+            /**
+             * Provides a fallback SellerStatus when the API call fails.
+             *
+             * Return a SellerStatus instance to use as fallback instead of
+             * throwing. Return null to let the exception propagate.
+             *
+             * @param SellerStatus|null $fallback Default null (no fallback).
+             */
+            $fallback = apply_filters('woocommerce_paypal_payments_seller_status_fallback', null);
+            if ($fallback instanceof SellerStatus) {
                 $this->logger->log('info', 'Seller status API failed, using configured fallback.', array('error' => $exception->getMessage()));
                 /** @var SellerStatus $status */
-                $status = $this->seller_status_filter->get_fallback();
-                $status = $this->seller_status_filter->apply($status);
+                $status = apply_filters('woocommerce_paypal_payments_seller_status', $fallback);
                 $this->cache->set(self::SELLER_STATUS_CACHE_KEY, $status, self::SELLER_STATUS_CACHE_TTL);
                 return $status;
             }
             throw $exception;
         }
-        $status = $this->seller_status_filter->apply($status);
+        /** This filter is documented above. */
+        $status = apply_filters('woocommerce_paypal_payments_seller_status', $status);
         $this->cache->set(self::SELLER_STATUS_CACHE_KEY, $status, self::SELLER_STATUS_CACHE_TTL);
         return $status;
     }

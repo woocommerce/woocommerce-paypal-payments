@@ -154,7 +154,6 @@ return array(
     'WooCommerce\\PayPalCommerce\\ApiClient\\Helper\\ProductStatusResultCache' => $baseDir . '/modules/ppcp-api-client/src/Helper/ProductStatusResultCache.php',
     'WooCommerce\\PayPalCommerce\\ApiClient\\Helper\\PurchaseUnitSanitizer' => $baseDir . '/modules/ppcp-api-client/src/Helper/PurchaseUnitSanitizer.php',
     'WooCommerce\\PayPalCommerce\\ApiClient\\Helper\\ReferenceTransactionStatus' => $baseDir . '/modules/ppcp-api-client/src/Helper/ReferenceTransactionStatus.php',
-    'WooCommerce\\PayPalCommerce\\ApiClient\\Helper\\SellerStatusFilter' => $baseDir . '/modules/ppcp-api-client/src/Helper/SellerStatusFilter.php',
     'WooCommerce\\PayPalCommerce\\ApiClient\\Repository\\CustomerRepository' => $baseDir . '/modules/ppcp-api-client/src/Repository/CustomerRepository.php',
     'WooCommerce\\PayPalCommerce\\ApiClient\\Repository\\OrderRepository' => $baseDir . '/modules/ppcp-api-client/src/Repository/OrderRepository.php',
     'WooCommerce\\PayPalCommerce\\ApiClient\\Repository\\PartnerReferralsData' => $baseDir . '/modules/ppcp-api-client/src/Repository/PartnerReferralsData.php',
