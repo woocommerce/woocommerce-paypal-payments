@@ -33,7 +33,6 @@ test.beforeAll( async ( { utils, pcpApi, wooCommerceApi } ) => {
 		[ payPal.id ]: { id: payPal.id, enabled: true },
 		[ acdc.id ]: { id: acdc.id, enabled: true },
 	} );
-	await wooCommerceApi.deleteAllOrders();
 } );
 
 for ( const testOrder of refundPayPalFromCheckout ) {

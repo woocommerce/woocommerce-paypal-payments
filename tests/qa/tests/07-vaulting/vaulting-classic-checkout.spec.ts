@@ -37,7 +37,6 @@ test.beforeAll( async ( { utils, pcpApi, wooCommerceApi } ) => {
 		savePaypalAndVenmo: true,
 		saveCardDetails: true,
 	} );
-	await wooCommerceApi.deleteAllOrders();
 } );
 
 for ( const testOrder of savePaymentMethodData ) {
