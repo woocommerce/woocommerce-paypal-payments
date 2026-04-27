@@ -20,6 +20,7 @@ export default function Edit( { attributes, clientId, setAttributes } ) {
 	const isFlex = layout === 'flex';
 
 	const [ loaded, setLoaded ] = useState( false );
+	const [ timedOut, setTimedOut ] = useState( false );
 
 	let amount;
 	const postContent = String(
@@ -60,6 +61,14 @@ export default function Edit( { attributes, clientId, setAttributes } ) {
 			setAttributes( { id: `ppcp-${ clientId }` } );
 		}
 	}, [ id, clientId ] );
+
+	useEffect( () => {
+		if ( loaded ) {
+			return;
+		}
+		const timer = setTimeout( () => setTimedOut( true ), 5000 );
+		return () => clearTimeout( timer );
+	}, [ loaded ] );
 
 	if ( PcpPayLaterBlock.vaultingEnabled ) {
 		return (
@@ -160,7 +169,16 @@ export default function Edit( { attributes, clientId, setAttributes } ) {
 	if ( scriptParams === null ) {
 		return (
 			<div { ...props }>
-				<Spinner />
+				{ timedOut ? (
+					<p>
+						{ __(
+							'Pay Later messaging preview unavailable in editor. Messaging will display on the frontend when eligibility conditions are met.',
+							'woocommerce-paypal-payments'
+						) }
+					</p>
+				) : (
+					<Spinner />
+				) }
 			</div>
 		);
 	}
@@ -498,7 +516,17 @@ export default function Edit( { attributes, clientId, setAttributes } ) {
 				<div className="ppcp-overlay-child ppcp-unclicable-overlay">
 					{ ' ' }
 					{ /* make the message not clickable */ }
-					{ ! loaded && <Spinner /> }
+					{ ! loaded &&
+						( timedOut ? (
+							<p>
+								{ __(
+									'Pay Later messaging preview unavailable in editor. Messaging will display on the frontend when eligibility conditions are met.',
+									'woocommerce-paypal-payments'
+								) }
+							</p>
+						) : (
+							<Spinner />
+						) ) }
 				</div>
 			</div>
 		</>
