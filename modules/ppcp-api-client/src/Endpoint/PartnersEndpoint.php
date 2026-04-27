@@ -17,6 +17,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\SellerStatusFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\Cache;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\FailureRegistry;
+use WooCommerce\PayPalCommerce\ApiClient\Helper\SellerStatusFilter;
 
 /**
  * Class PartnersEndpoint
@@ -82,6 +83,13 @@ class PartnersEndpoint {
 	private Cache $cache;
 
 	/**
+	 * The seller status filter for overriding/injecting seller status data.
+	 *
+	 * @var SellerStatusFilter
+	 */
+	private SellerStatusFilter $seller_status_filter;
+
+	/**
 	 * Cache lifetime for seller status responses, in seconds.
 	 */
 	public const SELLER_STATUS_CACHE_TTL = 600; // 10 minutes.
@@ -102,6 +110,7 @@ class PartnersEndpoint {
 	 * @param string              $merchant_id The merchant ID.
 	 * @param FailureRegistry     $failure_registry The API failure registry.
 	 * @param Cache               $cache The cache for seller status responses.
+	 * @param SellerStatusFilter  $seller_status_filter The seller status filter.
 	 */
 	public function __construct(
 		string $host,
@@ -111,7 +120,8 @@ class PartnersEndpoint {
 		string $partner_id,
 		string $merchant_id,
 		FailureRegistry $failure_registry,
-		Cache $cache
+		Cache $cache,
+		SellerStatusFilter $seller_status_filter
 	) {
 		$this->host                  = $host;
 		$this->bearer                = $bearer;
@@ -121,6 +131,7 @@ class PartnersEndpoint {
 		$this->merchant_id           = $merchant_id;
 		$this->failure_registry      = $failure_registry;
 		$this->cache                 = $cache;
+		$this->seller_status_filter  = $seller_status_filter;
 	}
 
 	/**
@@ -135,9 +146,45 @@ class PartnersEndpoint {
 	public function seller_status(): SellerStatus {
 		$cached = $this->cache->get( self::SELLER_STATUS_CACHE_KEY );
 		if ( $cached instanceof SellerStatus ) {
-			return $cached;
+			return $this->seller_status_filter->apply( $cached );
 		}
 
+		try {
+			$status = $this->fetch_seller_status_from_api();
+		} catch ( RuntimeException $exception ) {
+			if ( $this->seller_status_filter->has_fallback() ) {
+				$this->logger->log(
+					'info',
+					'Seller status API failed, using configured fallback.',
+					array( 'error' => $exception->getMessage() )
+				);
+
+				/** @var SellerStatus $status */
+				$status = $this->seller_status_filter->get_fallback();
+				$status = $this->seller_status_filter->apply( $status );
+
+				$this->cache->set( self::SELLER_STATUS_CACHE_KEY, $status, self::SELLER_STATUS_CACHE_TTL );
+
+				return $status;
+			}
+
+			throw $exception;
+		}
+
+		$status = $this->seller_status_filter->apply( $status );
+
+		$this->cache->set( self::SELLER_STATUS_CACHE_KEY, $status, self::SELLER_STATUS_CACHE_TTL );
+
+		return $status;
+	}
+
+	/**
+	 * Fetches the seller status from the PayPal API.
+	 *
+	 * @return SellerStatus
+	 * @throws RuntimeException When request could not be fulfilled.
+	 */
+	private function fetch_seller_status_from_api(): SellerStatus {
 		$url      = trailingslashit( $this->host ) . 'v1/customer/partners/' . $this->partner_id . '/merchant-integrations/' . $this->merchant_id;
 		$bearer   = $this->bearer->bearer();
 		$args     = array(
@@ -189,11 +236,7 @@ class PartnersEndpoint {
 
 		$this->failure_registry->clear_failures( FailureRegistry::SELLER_STATUS_KEY );
 
-		$status = $this->seller_status_factory->from_paypal_response( $json );
-
-		$this->cache->set( self::SELLER_STATUS_CACHE_KEY, $status, self::SELLER_STATUS_CACHE_TTL );
-
-		return $status;
+		return $this->seller_status_factory->from_paypal_response( $json );
 	}
 
 	/**
