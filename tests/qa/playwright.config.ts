@@ -139,5 +139,37 @@ export default defineConfig< BaseExtend >( {
 			dependencies: [ 'setup-woocommerce' ],
 			testMatch: /stress\.spec\.ts/,
 		},
+
+		// Parallel CI
+		{
+			name: 'shard:plugin-foundation',
+			dependencies: [ 'setup-woocommerce' ],
+			testMatch: /01-plugin-foundation\/.*\.spec\.ts/,
+		},
+		{
+			name: 'shard:onboarding-settings',
+			dependencies: [ 'setup-woocommerce' ],
+			testMatch: /(02-onboarding|03-plugin-settings)\/.*\.spec\.ts/,
+		},
+		{
+			name: 'shard:transactions',
+			dependencies: [ 'setup-woocommerce' ],
+			testMatch: /05-transactions\/.*\.spec\.ts/,
+		},
+		{
+			name: 'shard:refund',
+			dependencies: [ 'setup-woocommerce' ],
+			testMatch: /06-refund\/.*\.spec\.ts/,
+		},
+		{
+			name: 'shard:vaulting',
+			dependencies: [ 'setup-woocommerce' ],
+			testMatch: /07-vaulting\/.*\.spec\.ts/,
+		},
+		{
+			name: 'shard:subscription',
+			dependencies: [ 'setup-woocommerce' ],
+			testMatch: /08-subscription\/.*\.spec\.ts/,
+		},
 	],
 } );

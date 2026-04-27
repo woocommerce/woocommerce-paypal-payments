@@ -15,6 +15,7 @@ on:
           - e2e:test:critical
           - e2e:test:stress
           - e2e:test:all
+          - e2e:test:all:parallel
       XRAY_TEST_EXEC_KEY:
         description: 'Xray Test Execution Key'
         required: false
@@ -41,11 +42,60 @@ jobs:
 
   e2e-playwright:
     name: Run Playwright E2E Tests
+    if: ${{ inputs.TEST_SUITE != 'e2e:test:all:parallel' }}
     needs: build
     uses: inpsyde/reusable-workflows/.github/workflows/test-playwright.yml@fix/test-playwright
     with:
       WORK_DIR: tests/qa
       PLAYWRIGHT_SCRIPT: ${{ inputs.TEST_SUITE }}
+      ARTIFACT_PATH: |
+        tests/qa/artifacts/*
+        tests/qa/playwright-report/
+        tests/qa/test-results/
+      ARTIFACT_INCLUDE_HIDDEN_FILES: true
+      NODE_VERSION: 22
+      PLAYWRIGHT_BROWSER_ARGS: 'chromium --with-deps'
+      XRAY_TEST_EXEC_KEY: ${{ inputs.XRAY_TEST_EXEC_KEY }}
+      PRE_SCRIPT: |
+        # 1. Download and unzip the built plugin
+        gh run download ${{ github.run_id }} -p "woocommerce-paypal-payments-*" -D resources/files
+        pushd resources/files
+        mv woocommerce-paypal-payments-*/woocommerce-paypal-payments .
+        zip -r woocommerce-paypal-payments.zip woocommerce-paypal-payments
+        rm -rf woocommerce-paypal-payments woocommerce-paypal-payments-*/
+        popd
+
+        # 2. Add private composer repository and download WooCommerce Subscriptions
+        pushd ../../
+        composer config repositories.repo-name composer https://repo.packagist.com/inpsyde/payment-gateways/
+        composer require inpsyde-mirror/woocommerce-subscriptions
+        popd
+
+        # 3. Setup wp-env
+        npm run e2e:setup:env
+    secrets:
+      ENV_FILE_DATA: ${{ secrets.QA_ENV_FILE }}
+      NPM_REGISTRY_TOKEN: ${{ secrets.DEPLOYBOT_GITHUB_TOKEN_PACKAGES }}
+      COMPOSER_AUTH_JSON: ${{ secrets.COMPOSER_AUTH_JSON }}
+
+  e2e-playwright-parallel:
+    name: Run Playwright E2E Tests / ${{ matrix.shard }}
+    if: ${{ inputs.TEST_SUITE == 'e2e:test:all:parallel' }}
+    needs: build
+    strategy:
+      fail-fast: false
+      matrix:
+        shard:
+          - plugin-foundation
+          - onboarding-settings
+          - transactions
+          - refund
+          - vaulting
+          - subscription
+    uses: inpsyde/reusable-workflows/.github/workflows/test-playwright.yml@fix/test-playwright
+    with:
+      WORK_DIR: tests/qa
+      PLAYWRIGHT_SCRIPT: e2e:test:shard:${{ matrix.shard }}
       ARTIFACT_PATH: |
         tests/qa/artifacts/*
         tests/qa/playwright-report/
