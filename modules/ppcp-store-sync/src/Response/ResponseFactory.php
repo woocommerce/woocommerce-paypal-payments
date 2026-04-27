@@ -25,8 +25,8 @@ class ResponseFactory {
 	/**
 	 * Constructor.
 	 *
-	 * @param AgenticCartBuilder     $cart_builder Cart builder service.
-	 * @param AppliedCouponsBuilder  $applied_coupons_builder Applied coupons builder service.
+	 * @param AgenticCartBuilder     $cart_builder             Cart builder service.
+	 * @param AppliedCouponsBuilder  $applied_coupons_builder  Applied coupons builder service.
 	 * @param ShippingOptionsBuilder $shipping_options_builder Shipping options builder service.
 	 */
 	public function __construct(
@@ -42,42 +42,51 @@ class ResponseFactory {
 	/**
 	 * Create a new cart response (status: CREATED).
 	 *
-	 * @param PayPalCart $cart The cart object.
+	 * @param PayPalCart $cart    The cart object.
 	 * @param string     $cart_id The cart ID.
-	 * @param string     $token The payment token.
-	 * @return NewCartResponse The response object.
+	 * @param string     $token   The payment token.
+	 * @return CartResponse The response object.
 	 */
-	public function new_cart( PayPalCart $cart, string $cart_id, string $token ): NewCartResponse {
-		$wc_cart         = $this->build_wc_cart_or_null( $cart );
-		$applied_coupons = $this->build_applied_coupons( $cart );
-		return new NewCartResponse( $cart, $cart_id, $token, $applied_coupons, $wc_cart );
+	public function new_cart( PayPalCart $cart, string $cart_id, string $token ): CartResponse {
+		$wc_cart = $this->build_wc_cart_or_null( $cart );
+
+		return CartResponse::create_new( $cart, $cart_id, $token )
+			->wc_cart( $wc_cart )
+			->applied_coupons( $this->build_applied_coupons( $cart ) )
+			->shipping_options( $this->shipping_options_builder->build( $wc_cart ) );
 	}
 
 	/**
 	 * Create a paid cart response.
 	 *
-	 * @param WC_Order   $order The WooCommerce order.
-	 * @param PayPalCart $cart The cart object.
+	 * @param WC_Order   $order   The WooCommerce order.
+	 * @param PayPalCart $cart    The cart object.
 	 * @param string     $cart_id The cart ID.
-	 * @return PaidCartResponse The response object.
+	 * @return CartResponse The response object.
 	 */
-	public function from_order( WC_Order $order, PayPalCart $cart, string $cart_id ): PaidCartResponse {
-		$wc_cart         = $this->build_wc_cart_or_null( $cart );
-		$applied_coupons = $this->build_applied_coupons( $cart );
-		return new PaidCartResponse( $cart, $cart_id, $order, $applied_coupons, $wc_cart );
+	public function from_order( WC_Order $order, PayPalCart $cart, string $cart_id ): CartResponse {
+		$wc_cart = $this->build_wc_cart_or_null( $cart );
+
+		return CartResponse::create_completed( $cart, $cart_id, $order )
+			->wc_cart( $wc_cart )
+			->applied_coupons( $this->build_applied_coupons( $cart ) )
+			->shipping_options( $this->shipping_options_builder->build( $wc_cart ) );
 	}
 
 	/**
 	 * Create a basic cart response.
 	 *
-	 * @param PayPalCart $cart The cart object.
+	 * @param PayPalCart $cart    The cart object.
 	 * @param string     $cart_id The cart ID.
 	 * @return CartResponse The response object.
 	 */
 	public function from_cart( PayPalCart $cart, string $cart_id ): CartResponse {
-		$wc_cart         = $this->build_wc_cart_or_null( $cart );
-		$applied_coupons = $this->build_applied_coupons( $cart );
-		return new CartResponse( $cart, $applied_coupons, $cart_id, $wc_cart );
+		$wc_cart = $this->build_wc_cart_or_null( $cart );
+
+		return CartResponse::create( $cart, $cart_id )
+			->wc_cart( $wc_cart )
+			->applied_coupons( $this->build_applied_coupons( $cart ) )
+			->shipping_options( $this->shipping_options_builder->build( $wc_cart ) );
 	}
 
 	/**
@@ -104,6 +113,7 @@ class ResponseFactory {
 	 */
 	private function build_applied_coupons( PayPalCart $cart ): array {
 		$validation_status = $cart->issues() ? 'INVALID' : 'VALID';
+
 		return $this->applied_coupons_builder->build_applied_coupons_array( $cart, $validation_status );
 	}
 }
