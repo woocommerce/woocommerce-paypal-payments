@@ -161,7 +161,7 @@ If you encounter issues with the PayPal buttons not appearing after an update, p
 
 == Changelog ==
 
-= 4.0.3 - XXXX-XX-XX =
+= 4.0.3 - 2026-04-27 =
 * Enhancement – consolidate disabled funding sources card decision #4216
 * Enhancement – Hide Apple Pay Register Domain TODO when domain is already validated #4263
 * Enhancement – Remove vault v2 code #4254
