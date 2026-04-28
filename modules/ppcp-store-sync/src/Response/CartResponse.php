@@ -16,6 +16,7 @@ use WooCommerce\PayPalCommerce\StoreSync\Schema\PayPalCart;
 use WooCommerce\PayPalCommerce\StoreSync\Validation\ValidationIssue;
 use WooCommerce\PayPalCommerce\StoreSync\Helper\CartHelper;
 use WooCommerce\PayPalCommerce\StoreSync\Enums\ErrorCode;
+use WooCommerce\PayPalCommerce\StoreSync\Config\StoreCurrencyValue;
 
 class CartResponse {
 	private const ALLOWED_STATUS = array(
@@ -32,6 +33,8 @@ class CartResponse {
 	);
 
 	private PayPalCart $cart;
+
+	private string $default_currency = '';
 
 	private ?WC_Cart $wc_cart = null;
 
@@ -161,6 +164,18 @@ class CartResponse {
 	}
 
 	/**
+	 * Configures the CartResponse instance - only used by the ResponseFactory.
+	 *
+	 * @param StoreCurrencyValue $store_currency Resolves the WooCommerce currency code.
+	 * @return $this
+	 */
+	public function store_currency( StoreCurrencyValue $store_currency ): self {
+		$this->default_currency = $store_currency->value();
+
+		return $this;
+	}
+
+	/**
 	 * Convert to array for API response.
 	 *
 	 * @return array The response array.
@@ -216,9 +231,11 @@ class CartResponse {
 			return null;
 		}
 
-		$currency_code = CartHelper::currency( $this->cart );
+		return CartHelper::calculate_totals( $this->wc_cart, $this->currency_code() );
+	}
 
-		return CartHelper::calculate_totals( $this->wc_cart, $currency_code );
+	private function currency_code(): string {
+		return CartHelper::currency( $this->cart, $this->default_currency );
 	}
 
 	private function status(): string {
