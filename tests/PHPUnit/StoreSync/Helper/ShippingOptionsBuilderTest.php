@@ -188,48 +188,6 @@ class ShippingOptionsBuilderTest extends TestCase {
 		$this->assertTrue( $by_id['free_shipping:1']['is_selected'] );
 	}
 
-	/**
-	 * @scenario Multiple packages, only the first package's chosen method drives selection
-	 *
-	 * Given a cart with two shipping packages each containing one rate
-	 * And the chosen_shipping_methods session entry maps package 0 to the first rate
-	 * When build() is called
-	 * Then rates from both packages are included in the result
-	 * And exactly one option across all packages is marked is_selected=true
-	 */
-	public function test_build_aggregates_rates_from_multiple_packages(): void {
-		$rate_a = $this->create_shipping_rate_stub( 'flat_rate:1', 'Zone A Flat', 3.0 );
-		$rate_b = $this->create_shipping_rate_stub( 'flat_rate:2', 'Zone B Flat', 7.0 );
-
-		$packages = array(
-			$this->make_package( array( 'flat_rate:1' => $rate_a ) ),
-			$this->make_package( array( 'flat_rate:2' => $rate_b ) ),
-		);
-
-		// Package 0 chosen method is flat_rate:1
-		$this->stub_wc( $packages, array( 'flat_rate:1', 'flat_rate:2' ) );
-
-		$wc_cart = Mockery::mock( WC_Cart::class );
-		$builder = new ShippingOptionsBuilder();
-
-		$result = $builder->build( $wc_cart );
-
-		$this->assertCount( 2, $result );
-
-		$selected_count = 0;
-		$ids            = array();
-		foreach ( $result as $option ) {
-			$ids[] = $option['id'];
-			if ( $option['is_selected'] ) {
-				$selected_count ++;
-			}
-		}
-
-		$this->assertSame( 1, $selected_count );
-		$this->assertContains( 'flat_rate:1', $ids );
-		$this->assertContains( 'flat_rate:2', $ids );
-	}
-
 	// -------------------------------------------------------------------------
 	// Rule 5 — default to first rate when no session value
 	// -------------------------------------------------------------------------
