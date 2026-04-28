@@ -136,17 +136,15 @@ class PartnersEndpoint
             $fallback = apply_filters('woocommerce_paypal_payments_seller_status_fallback', null);
             if ($fallback instanceof SellerStatus) {
                 $this->logger->log('info', 'Seller status API failed, using configured fallback.', array('error' => $exception->getMessage()));
+                $this->cache->set(self::SELLER_STATUS_CACHE_KEY, $fallback, self::SELLER_STATUS_CACHE_TTL);
                 /** @var SellerStatus $status */
-                $status = apply_filters('woocommerce_paypal_payments_seller_status', $fallback);
-                $this->cache->set(self::SELLER_STATUS_CACHE_KEY, $status, self::SELLER_STATUS_CACHE_TTL);
-                return $status;
+                return apply_filters('woocommerce_paypal_payments_seller_status', $fallback);
             }
             throw $exception;
         }
-        /** This filter is documented above. */
-        $status = apply_filters('woocommerce_paypal_payments_seller_status', $status);
         $this->cache->set(self::SELLER_STATUS_CACHE_KEY, $status, self::SELLER_STATUS_CACHE_TTL);
-        return $status;
+        /** This filter is documented above. */
+        return apply_filters('woocommerce_paypal_payments_seller_status', $status);
     }
     /**
      * Fetches the seller status from the PayPal API.
