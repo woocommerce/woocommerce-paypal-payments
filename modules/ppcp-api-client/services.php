@@ -200,7 +200,7 @@ return array(
     'api.endpoint.orders' => static function (ContainerInterface $container): Orders {
         return new Orders($container->get('api.host'), $container->get('api.bearer'), $container->get('woocommerce.logger.woocommerce'));
     },
-    'api.reference-transaction-status' => static fn(ContainerInterface $container): ReferenceTransactionStatus => new ReferenceTransactionStatus($container->get('api.endpoint.partners'), $container->get('api.reference-transaction-status-cache')),
+    'api.reference-transaction-status' => static fn(ContainerInterface $container): ReferenceTransactionStatus => new ReferenceTransactionStatus($container->get('api.endpoint.partners')),
     'api.endpoint.catalog-products' => static function (ContainerInterface $container): CatalogProducts {
         return new CatalogProducts($container->get('api.host'), $container->get('api.bearer'), $container->get('api.factory.product'), $container->get('woocommerce.logger.woocommerce'));
     },
@@ -473,9 +473,6 @@ return array(
     },
     'api.user-id-token-cache' => static function (ContainerInterface $container): Cache {
         return new Cache('ppcp-id-token-cache');
-    },
-    'api.reference-transaction-status-cache' => static function (ContainerInterface $container): Cache {
-        return new Cache('ppcp-reference-transaction-status-cache');
     },
     'api.user-id-token' => static function (ContainerInterface $container): UserIdToken {
         return new UserIdToken($container->get('api.host'), $container->get('woocommerce.logger.woocommerce'), $container->get('api.client-credentials'), $container->get('api.user-id-token-cache'));
