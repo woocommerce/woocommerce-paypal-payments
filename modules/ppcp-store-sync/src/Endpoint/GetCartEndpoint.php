@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Get Cart Endpoint for Agentic Commerce.
  *
@@ -6,67 +7,48 @@
  *
  * @package WooCommerce\PayPalCommerce\StoreSync\Endpoint
  */
-
-declare( strict_types = 1 );
-
+declare (strict_types=1);
 namespace WooCommerce\PayPalCommerce\StoreSync\Endpoint;
 
 use WP_REST_Request;
 use WP_REST_Response;
-
 use WooCommerce\PayPalCommerce\StoreSync\Errors\AgenticError;
-
 /**
  * Get Cart REST endpoint.
  */
-class GetCartEndpoint extends AgenticRestEndpoint {
-	/**
-	 * The endpoint path following PayPal specs.
-	 */
-	private const PATH = 'merchant-cart/(?P<cart_id>[a-zA-Z0-9_-]+)';
-
-	/**
-	 * The expected HTTP method.
-	 */
-	private const METHOD = 'GET';
-
-	/**
-	 * Register REST API routes.
-	 *
-	 * @return void
-	 */
-	public function register_routes(): void {
-		register_rest_route(
-			self::NAMESPACE,
-			self::PATH,
-			array(
-				'methods'             => self::METHOD,
-				'callback'            => fn( $request ) => $this->with_session( fn() => $this->get_cart( $request ) ),
-				'permission_callback' => fn( $request ) => $this->check_permission( $request ),
-				'args'                => array(
-					'cart_id' => $this->get_cart_id_arg(),
-				),
-			)
-		);
-	}
-
-	/**
-	 * Get an existing cart.
-	 *
-	 * @param WP_REST_Request $request The REST request.
-	 * @return WP_REST_Response The REST response.
-	 */
-	public function get_cart( WP_REST_Request $request ): WP_REST_Response {
-		$cart_id = $request->get_param( 'cart_id' );
-
-		$session = $this->get_stored_cart( $cart_id );
-
-		if ( $session instanceof AgenticError ) {
-			return $this->error( $session );
-		}
-
-		$response = $this->response_factory->from_cart( $session['cart'], $cart_id );
-
-		return $this->cart_details( $response, 200 );
-	}
+class GetCartEndpoint extends \WooCommerce\PayPalCommerce\StoreSync\Endpoint\AgenticRestEndpoint
+{
+    /**
+     * The endpoint path following PayPal specs.
+     */
+    private const PATH = 'merchant-cart/(?P<cart_id>[a-zA-Z0-9_-]+)';
+    /**
+     * The expected HTTP method.
+     */
+    private const METHOD = 'GET';
+    /**
+     * Register REST API routes.
+     *
+     * @return void
+     */
+    public function register_routes(): void
+    {
+        register_rest_route(self::NAMESPACE, self::PATH, array('methods' => self::METHOD, 'callback' => fn($request) => $this->with_session(fn() => $this->get_cart($request)), 'permission_callback' => fn($request) => $this->check_permission($request), 'args' => array('cart_id' => $this->get_cart_id_arg())));
+    }
+    /**
+     * Get an existing cart.
+     *
+     * @param WP_REST_Request $request The REST request.
+     * @return WP_REST_Response The REST response.
+     */
+    public function get_cart(WP_REST_Request $request): WP_REST_Response
+    {
+        $cart_id = $request->get_param('cart_id');
+        $session = $this->get_stored_cart($cart_id);
+        if ($session instanceof AgenticError) {
+            return $this->error($session);
+        }
+        $response = $this->response_factory->from_cart($session['cart'], $cart_id);
+        return $this->cart_details($response, 200);
+    }
 }
