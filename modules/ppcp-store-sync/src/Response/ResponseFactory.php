@@ -57,6 +57,7 @@ class ResponseFactory {
 
 		return CartResponse::create_new( $cart, $cart_id, $token )
 			->wc_cart( $wc_cart )
+			->store_currency( $this->store_currency )
 			->applied_coupons( $this->build_applied_coupons( $cart ) )
 			->shipping_options( $this->shipping_options_builder->build( $wc_cart ) );
 	}
@@ -74,6 +75,7 @@ class ResponseFactory {
 
 		return CartResponse::create_completed( $cart, $cart_id, $order )
 			->wc_cart( $wc_cart )
+			->store_currency( $this->store_currency )
 			->applied_coupons( $this->build_applied_coupons( $cart ) )
 			->shipping_options( $this->shipping_options_builder->build( $wc_cart ) );
 	}
@@ -90,6 +92,7 @@ class ResponseFactory {
 
 		return CartResponse::create( $cart, $cart_id )
 			->wc_cart( $wc_cart )
+			->store_currency( $this->store_currency )
 			->applied_coupons( $this->build_applied_coupons( $cart ) )
 			->shipping_options( $this->shipping_options_builder->build( $wc_cart ) );
 	}
