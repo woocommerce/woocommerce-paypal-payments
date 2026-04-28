@@ -226,7 +226,8 @@ return array(
 	'agentic.response.factory'                     => static function ( ContainerInterface $c ): ResponseFactory {
 		return new ResponseFactory(
 			$c->get( 'agentic.helper.cart-builder' ),
-			$c->get( 'agentic.response.applied-coupons-builder' )
+			$c->get( 'agentic.response.applied-coupons-builder' ),
+			$c->get( 'agentic.config.store-currency' )
 		);
 	},
 
