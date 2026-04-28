@@ -1,7 +1,6 @@
 <?php
 
-declare( strict_types = 1 );
-
+declare (strict_types=1);
 namespace WooCommerce\PayPalCommerce\StoreSync\Enums;
 
 /**
@@ -9,15 +8,16 @@ namespace WooCommerce\PayPalCommerce\StoreSync\Enums;
  *
  * Used as the value of the SPECIFIC_ISSUE constant on ShippingErrorContext subclasses.
  */
-class ContextShippingIssue {
-	public const MISSING_SHIPPING_ADDRESS                  = 'MISSING_SHIPPING_ADDRESS';
-	public const SHIPPING_ADDRESS_INVALID                  = 'SHIPPING_ADDRESS_INVALID';
-	public const SHIPPING_TO_PO_BOX_NOT_ALLOWED            = 'SHIPPING_TO_PO_BOX_NOT_ALLOWED';
-	public const NO_SHIPPING_OPTIONS                       = 'NO_SHIPPING_OPTIONS';
-	public const INTERNATIONAL_SHIPPING_RESTRICTED         = 'INTERNATIONAL_SHIPPING_RESTRICTED';
-	public const REGION_RESTRICTED                         = 'REGION_RESTRICTED';
-	public const OVERSIZED_ITEM_SHIPPING                   = 'OVERSIZED_ITEM_SHIPPING';
-	public const HAZARDOUS_MATERIAL_SHIPPING               = 'HAZARDOUS_MATERIAL_SHIPPING';
-	public const SHIPPING_ZONE_NOT_COVERED                 = 'SHIPPING_ZONE_NOT_COVERED';
-	public const MISSING_COORDINATES_FOR_ENHANCED_DELIVERY = 'MISSING_COORDINATES_FOR_ENHANCED_DELIVERY';
+class ContextShippingIssue
+{
+    public const MISSING_SHIPPING_ADDRESS = 'MISSING_SHIPPING_ADDRESS';
+    public const SHIPPING_ADDRESS_INVALID = 'SHIPPING_ADDRESS_INVALID';
+    public const SHIPPING_TO_PO_BOX_NOT_ALLOWED = 'SHIPPING_TO_PO_BOX_NOT_ALLOWED';
+    public const NO_SHIPPING_OPTIONS = 'NO_SHIPPING_OPTIONS';
+    public const INTERNATIONAL_SHIPPING_RESTRICTED = 'INTERNATIONAL_SHIPPING_RESTRICTED';
+    public const REGION_RESTRICTED = 'REGION_RESTRICTED';
+    public const OVERSIZED_ITEM_SHIPPING = 'OVERSIZED_ITEM_SHIPPING';
+    public const HAZARDOUS_MATERIAL_SHIPPING = 'HAZARDOUS_MATERIAL_SHIPPING';
+    public const SHIPPING_ZONE_NOT_COVERED = 'SHIPPING_ZONE_NOT_COVERED';
+    public const MISSING_COORDINATES_FOR_ENHANCED_DELIVERY = 'MISSING_COORDINATES_FOR_ENHANCED_DELIVERY';
 }
