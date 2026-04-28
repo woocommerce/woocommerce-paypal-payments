@@ -162,7 +162,7 @@ class CouponContextBuilder
         $minimum = (float) $wc_coupon->get_minimum_amount();
         $shortage = max(0, $minimum - $subtotal);
         $currency = CartHelper::currency($cart, get_woocommerce_currency());
-        return array('minimum_required' => number_format($minimum, 2, '.', ''), 'current_subtotal' => number_format($subtotal, 2, '.', ''), 'shortage_amount' => number_format($shortage, 2, '.', ''), 'currency_code' => $currency);
+        return array('minimum_required' => CartHelper::format_decimal($minimum), 'current_subtotal' => CartHelper::format_decimal($subtotal), 'shortage_amount' => CartHelper::format_decimal($shortage), 'currency_code' => $currency);
     }
     /**
      * Builds maximum spend context.
@@ -181,7 +181,7 @@ class CouponContextBuilder
         $subtotal = CartHelper::cart_item_total($cart);
         $maximum = (float) $wc_coupon->get_maximum_amount();
         $currency = CartHelper::currency($cart, get_woocommerce_currency());
-        return array('maximum_allowed' => number_format($maximum, 2, '.', ''), 'current_subtotal' => number_format($subtotal, 2, '.', ''), 'currency_code' => $currency);
+        return array('maximum_allowed' => CartHelper::format_decimal($maximum), 'current_subtotal' => CartHelper::format_decimal($subtotal), 'currency_code' => $currency);
     }
     /**
      * Builds eligible items context.

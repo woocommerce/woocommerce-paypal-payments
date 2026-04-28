@@ -26,25 +26,35 @@ class ShippingOptionsBuilder
             return array();
         }
         $packages = WC()->shipping()->get_packages();
-        if (empty($packages)) {
+        // Note: This plugin only supports a single package.
+        // Key constraint is the PayPal API that can receive one shipping address per order.
+        $package = $packages[0] ?? null;
+        if (empty($package)) {
             return array();
         }
         $chosen_methods = WC()->session->get('chosen_shipping_methods');
-        $chosen_id = is_array($chosen_methods) && !empty($chosen_methods) ? $chosen_methods[0] : null;
+        $chosen_id = null;
+        // The CartResponse schema expects only one selected shipping option.
+        // If we have _any_ options, we pluck the first value as it's always present,
+        // even when the session incorrectly contains multiple chosen methods.
+        // We silently ignore cases where more than one option is chosen in the session.
+        if (is_array($chosen_methods) && !empty($chosen_methods)) {
+            $chosen_id = $chosen_methods[0];
+        }
         $currency = get_woocommerce_currency();
         $options = array();
+        $all_rates = $package['rates'] ?? array();
         $first_rate_id = null;
-        foreach ($packages as $package) {
-            if (empty($package['rates'])) {
-                continue;
+        foreach ($all_rates as $rate) {
+            // Note: Rate IDs can repeat in different packages, e.g. "flat_rate:1" can apply
+            // to all packages. We do not care about this potential repeat ID, for 2 reasons:
+            // 1. The PayPal API only supports single-package orders.
+            // 2. The PayPalCart only supports a single shipping method.
+            $rate_id = $rate->get_id();
+            if (null === $first_rate_id) {
+                $first_rate_id = $rate_id;
             }
-            foreach ($package['rates'] as $rate) {
-                $rate_id = $rate->get_id();
-                if (null === $first_rate_id) {
-                    $first_rate_id = $rate_id;
-                }
-                $options[] = array('id' => $rate_id, 'label' => $rate->get_label(), 'amount' => number_format((float) $rate->get_cost(), 2, '.', ''), 'currency' => $currency, 'is_selected' => \false);
-            }
+            $options[] = array('id' => $rate_id, 'label' => $rate->get_label(), 'amount' => \WooCommerce\PayPalCommerce\StoreSync\Helper\CartHelper::format_decimal($rate->get_cost()), 'currency' => $currency, 'is_selected' => \false);
         }
         if (empty($options)) {
             return array();
