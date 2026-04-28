@@ -448,7 +448,6 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
 				if ( $pwc_product_status instanceof PWCProductStatus ) {
 					$pwc_product_status->clear();
 				}
-
 			}
 		);
 
