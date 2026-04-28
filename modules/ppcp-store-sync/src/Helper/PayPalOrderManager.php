@@ -257,7 +257,7 @@ class PayPalOrderManager {
 				'quantity'    => (string) $item->quantity(),
 				'unit_amount' => array(
 					'currency_code' => $currency,
-					'value'         => $this->format_money( (float) $price->value() ),
+					'value'         => CartHelper::format_decimal( $price->value() ),
 				),
 			);
 		}
@@ -405,17 +405,5 @@ class PayPalOrderManager {
 			// Return null - payment can be handled manually or via webhook.
 			return null;
 		}
-	}
-
-	/**
-	 * Format a money value for PayPal API.
-	 *
-	 * PayPal requires money values as strings with 2 decimal places.
-	 *
-	 * @param float $value The money value.
-	 * @return string Formatted money value.
-	 */
-	private function format_money( float $value ): string {
-		return number_format( $value, 2, '.', '' );
 	}
 }
