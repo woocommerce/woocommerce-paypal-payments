@@ -26,7 +26,7 @@ class CartResponseTest extends TestCase
 		$wc_cart->allows('get_shipping_total')->andReturn((string) $shipping);
 		$wc_cart->allows('get_total_tax')->andReturn((string) $tax);
 
-		// Calculate cart total: item_total - discount + shipping + tax
+		// Calculate cart total: subtotal - discount + shipping + tax
 		$cart_total = $item_total - $discount + $shipping + $tax;
 		$wc_cart->allows('get_total')->andReturn((string) $cart_total);
 
@@ -203,9 +203,9 @@ class CartResponseTest extends TestCase
 		// Item total: 2 * 50.00 = 100.00
 		// Discount: 20.00
 		// Amount: 100.00 - 20.00 = 80.00
-		$this->assertEquals('100.00', $result['totals']['item_total']['value']);
+		$this->assertEquals('100.00', $result['totals']['subtotal']['value']);
 		$this->assertEquals('20.00', $result['totals']['discount']['value']);
-		$this->assertEquals(80.0, $result['totals']['amount']['value']);
+		$this->assertEquals(80.0, $result['totals']['total']['value']);
 	}
 
 	public function test_response_structure_matches_paypal_spec(): void
@@ -236,13 +236,13 @@ class CartResponseTest extends TestCase
 		$this->assertArrayHasKey('totals', $result);
 
 		// Verify totals structure
-		$this->assertArrayHasKey('item_total', $result['totals']);
+		$this->assertArrayHasKey('subtotal', $result['totals']);
 		$this->assertArrayHasKey('shipping', $result['totals']);
-		$this->assertArrayHasKey('tax_total', $result['totals']);
-		$this->assertArrayHasKey('amount', $result['totals']);
+		$this->assertArrayHasKey('tax', $result['totals']);
+		$this->assertArrayHasKey('total', $result['totals']);
 
 		// Verify each total has currency_code and value
-		foreach (array('item_total', 'shipping', 'tax_total', 'amount') as $field) {
+		foreach (array('subtotal', 'shipping', 'tax', 'total') as $field) {
 			$this->assertArrayHasKey('currency_code', $result['totals'][$field]);
 			$this->assertArrayHasKey('value', $result['totals'][$field]);
 		}
@@ -284,7 +284,7 @@ class CartResponseTest extends TestCase
 		// Total discount should be 10.00 + 5.00 = 15.00
 		$this->assertEquals('15.00', $result['totals']['discount']['value']);
 		// Amount should be 100.00 - 15.00 = 85.00
-		$this->assertEquals(85.0, $result['totals']['amount']['value']);
+		$this->assertEquals(85.0, $result['totals']['total']['value']);
 	}
 
 	public function test_discount_is_capped_when_exceeds_item_total(): void
@@ -321,12 +321,12 @@ class CartResponseTest extends TestCase
 
 		$result = $response->to_array();
 
-		// Discount should be capped at item_total - 0.01 = 24.99
+		// Discount should be capped at subtotal - 0.01 = 24.99
 		$this->assertEquals('24.99', $result['totals']['discount']['value']);
 		// Amount should be minimum 0.01 to satisfy PayPal
-		$this->assertEquals('0.01', $result['totals']['amount']['value']);
+		$this->assertEquals('0.01', $result['totals']['total']['value']);
 		// Item total should remain unchanged
-		$this->assertEquals('25.00', $result['totals']['item_total']['value']);
+		$this->assertEquals('25.00', $result['totals']['subtotal']['value']);
 	}
 
 	public function test_discount_equal_to_item_total_is_capped(): void
@@ -358,10 +358,10 @@ class CartResponseTest extends TestCase
 
 		$result = $response->to_array();
 
-		// Discount should be capped at item_total - 0.01 = 49.99
+		// Discount should be capped at subtotal - 0.01 = 49.99
 		$this->assertEquals('49.99', $result['totals']['discount']['value']);
 		// Amount should be minimum 0.01 to satisfy PayPal
-		$this->assertEquals('0.01', $result['totals']['amount']['value']);
+		$this->assertEquals('0.01', $result['totals']['total']['value']);
 	}
 
 	public function test_amount_formatting_avoids_floating_point_precision_issues(): void
@@ -399,9 +399,9 @@ class CartResponseTest extends TestCase
 
 		// Verify amount is properly formatted as string with 2 decimals
 		// Should be "0.01" not 0.010000000000001563
-		$this->assertIsString($result['totals']['amount']['value']);
-		$this->assertEquals('0.01', $result['totals']['amount']['value']);
-		$this->assertMatchesRegularExpression('/^\d+\.\d{2}$/', $result['totals']['amount']['value']);
+		$this->assertIsString($result['totals']['total']['value']);
+		$this->assertEquals('0.01', $result['totals']['total']['value']);
+		$this->assertMatchesRegularExpression('/^\d+\.\d{2}$/', $result['totals']['total']['value']);
 	}
 
 	public function test_all_money_values_are_formatted_consistently(): void
@@ -433,7 +433,7 @@ class CartResponseTest extends TestCase
 		$result = $response->to_array();
 
 		// All money values should be strings with 2 decimal places
-		$money_fields = array('item_total', 'discount', 'shipping', 'tax_total', 'amount');
+		$money_fields = array('subtotal', 'discount', 'shipping', 'tax', 'total');
 		foreach ($money_fields as $field) {
 			if (isset($result['totals'][$field])) {
 				$this->assertIsString(
