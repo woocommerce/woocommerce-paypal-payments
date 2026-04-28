@@ -69,10 +69,10 @@ class ReturnUrlEndpoint {
 		SessionHandler $session_handler,
 		LoggerInterface $logger
 	) {
-		$this->gateway             = $gateway;
-		$this->order_endpoint      = $order_endpoint;
-		$this->session_handler     = $session_handler;
-		$this->logger              = $logger;
+		$this->gateway         = $gateway;
+		$this->order_endpoint  = $order_endpoint;
+		$this->session_handler = $session_handler;
+		$this->logger          = $logger;
 	}
 
 	/**
