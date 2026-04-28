@@ -345,9 +345,18 @@ class OrderEndpoint {
 
 		$order = $this->order_factory->from_paypal_response( $json );
 
-		$capture_status = $order->purchase_units()[0]->payments()->captures()[0]->status() ?? null;
+		$first_capture  = $order->purchase_units()[0]->payments()->captures()[0] ?? null;
+		$capture_status = $first_capture ? $first_capture->status() : null;
 		if ( $capture_status && $capture_status->is( CaptureStatus::DECLINED ) ) {
-			throw new RuntimeException( __( 'Payment provider declined the payment, please use a different payment method.', 'woocommerce-paypal-payments' ) );
+			$fraud           = $first_capture->fraud_processor_response();
+			$decline_message = ( $fraud && $fraud->response_code() )
+				? sprintf(
+					/* translators: %s - processor response code and description */
+					__( 'Payment declined by card processor: %s. Please use a different payment method or contact your bank.', 'woocommerce-paypal-payments' ),
+					$fraud->get_response_code_message()
+				)
+				: __( 'Payment provider declined the payment, please use a different payment method.', 'woocommerce-paypal-payments' );
+			throw new RuntimeException( $decline_message );
 		}
 
 		return $order;
