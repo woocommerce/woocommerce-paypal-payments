@@ -51,7 +51,7 @@ class ReplaceCartEndpointTest extends AgenticEndpointTestCase {
 
 		// Mock response factory.
 		$response_factory->allows( 'from_cart' )
-			->andReturnUsing( fn( $cart ) => new CartResponse( $cart ) );
+			->andReturnUsing( fn( $cart ) => CartResponse::create( $cart ) );
 
 		// Mock AppliedCouponsBuilder.
 		$applied_coupons_builder = Mockery::mock( AppliedCouponsBuilder::class );
@@ -196,7 +196,7 @@ class ReplaceCartEndpointTest extends AgenticEndpointTestCase {
 
 		// Mock response factory.
 		$response_factory->allows( 'from_cart' )
-			->andReturnUsing( fn( $cart ) => new CartResponse( $cart ) );
+			->andReturnUsing( fn( $cart ) => CartResponse::create( $cart ) );
 
 		// Mock AppliedCouponsBuilder.
 		$applied_coupons_builder = Mockery::mock( AppliedCouponsBuilder::class );

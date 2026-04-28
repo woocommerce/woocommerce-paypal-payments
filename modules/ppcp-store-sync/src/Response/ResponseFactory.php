@@ -12,31 +12,36 @@ namespace WooCommerce\PayPalCommerce\StoreSync\Response;
 use WC_Cart;
 use WC_Order;
 use WooCommerce\PayPalCommerce\StoreSync\CartValidation\CouponValidator\AppliedCouponsBuilder;
-use WooCommerce\PayPalCommerce\StoreSync\Schema\PayPalCart;
 use WooCommerce\PayPalCommerce\StoreSync\Helper\AgenticCartBuilder;
+use WooCommerce\PayPalCommerce\StoreSync\Helper\ShippingOptionsBuilder;
+use WooCommerce\PayPalCommerce\StoreSync\Schema\PayPalCart;
 use WooCommerce\PayPalCommerce\StoreSync\Config\StoreCurrencyValue;
 
 class ResponseFactory {
 
 	private AgenticCartBuilder $cart_builder;
 	private AppliedCouponsBuilder $applied_coupons_builder;
+	private ShippingOptionsBuilder $shipping_options_builder;
 	private StoreCurrencyValue $store_currency;
 
 	/**
 	 * Constructor.
 	 *
-	 * @param AgenticCartBuilder    $cart_builder            Cart builder service.
-	 * @param AppliedCouponsBuilder $applied_coupons_builder Applied coupons builder service.
-	 * @param StoreCurrencyValue    $store_currency          Woo's currency code.
+	 * @param AgenticCartBuilder     $cart_builder             Cart builder service.
+	 * @param AppliedCouponsBuilder  $applied_coupons_builder  Applied coupons builder service.
+	 * @param ShippingOptionsBuilder $shipping_options_builder Shipping options builder service.
+	 * @param StoreCurrencyValue     $store_currency
 	 */
 	public function __construct(
 		AgenticCartBuilder $cart_builder,
 		AppliedCouponsBuilder $applied_coupons_builder,
+		ShippingOptionsBuilder $shipping_options_builder,
 		StoreCurrencyValue $store_currency
 	) {
-		$this->cart_builder            = $cart_builder;
-		$this->applied_coupons_builder = $applied_coupons_builder;
-		$this->store_currency          = $store_currency;
+		$this->cart_builder             = $cart_builder;
+		$this->applied_coupons_builder  = $applied_coupons_builder;
+		$this->shipping_options_builder = $shipping_options_builder;
+		$this->store_currency           = $store_currency;
 	}
 
 	/**
@@ -45,13 +50,15 @@ class ResponseFactory {
 	 * @param PayPalCart $cart    The cart object.
 	 * @param string     $cart_id The cart ID.
 	 * @param string     $token   The payment token.
-	 * @return NewCartResponse The response object.
+	 * @return CartResponse The response object.
 	 */
-	public function new_cart( PayPalCart $cart, string $cart_id, string $token ): NewCartResponse {
-		$wc_cart         = $this->build_wc_cart_or_null( $cart );
-		$applied_coupons = $this->build_applied_coupons( $cart );
+	public function new_cart( PayPalCart $cart, string $cart_id, string $token ): CartResponse {
+		$wc_cart = $this->build_wc_cart_or_null( $cart );
 
-		return new NewCartResponse( $cart, $cart_id, $token, $applied_coupons, $wc_cart );
+		return CartResponse::create_new( $cart, $cart_id, $token )
+			->wc_cart( $wc_cart )
+			->applied_coupons( $this->build_applied_coupons( $cart ) )
+			->shipping_options( $this->shipping_options_builder->build( $wc_cart ) );
 	}
 
 	/**
@@ -60,13 +67,15 @@ class ResponseFactory {
 	 * @param WC_Order   $order   The WooCommerce order.
 	 * @param PayPalCart $cart    The cart object.
 	 * @param string     $cart_id The cart ID.
-	 * @return PaidCartResponse The response object.
+	 * @return CartResponse The response object.
 	 */
-	public function from_order( WC_Order $order, PayPalCart $cart, string $cart_id ): PaidCartResponse {
-		$wc_cart         = $this->build_wc_cart_or_null( $cart );
-		$applied_coupons = $this->build_applied_coupons( $cart );
+	public function from_order( WC_Order $order, PayPalCart $cart, string $cart_id ): CartResponse {
+		$wc_cart = $this->build_wc_cart_or_null( $cart );
 
-		return new PaidCartResponse( $cart, $cart_id, $order, $applied_coupons, $wc_cart );
+		return CartResponse::create_completed( $cart, $cart_id, $order )
+			->wc_cart( $wc_cart )
+			->applied_coupons( $this->build_applied_coupons( $cart ) )
+			->shipping_options( $this->shipping_options_builder->build( $wc_cart ) );
 	}
 
 	/**
@@ -77,10 +86,12 @@ class ResponseFactory {
 	 * @return CartResponse The response object.
 	 */
 	public function from_cart( PayPalCart $cart, string $cart_id ): CartResponse {
-		$wc_cart         = $this->build_wc_cart_or_null( $cart );
-		$applied_coupons = $this->build_applied_coupons( $cart );
+		$wc_cart = $this->build_wc_cart_or_null( $cart );
 
-		return new CartResponse( $cart, $applied_coupons, $cart_id, $wc_cart );
+		return CartResponse::create( $cart, $cart_id )
+			->wc_cart( $wc_cart )
+			->applied_coupons( $this->build_applied_coupons( $cart ) )
+			->shipping_options( $this->shipping_options_builder->build( $wc_cart ) );
 	}
 
 	/**

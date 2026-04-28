@@ -38,6 +38,7 @@ use WooCommerce\PayPalCommerce\StoreSync\Registration\RegistrationEligibility;
 use WooCommerce\PayPalCommerce\StoreSync\Inspector\InspectionFormHandler;
 use WooCommerce\PayPalCommerce\StoreSync\Inspector\InspectionStatusPage;
 use WooCommerce\PayPalCommerce\StoreSync\Helper\AgenticCheckoutProcessor;
+use WooCommerce\PayPalCommerce\StoreSync\Helper\ShippingOptionsBuilder;
 use WooCommerce\PayPalCommerce\StoreSync\Helper\PayPalOrderManager;
 use WooCommerce\PayPalCommerce\StoreSync\Helper\AgenticCartBuilder;
 use WooCommerce\PayPalCommerce\StoreSync\Helper\ProductManager;
@@ -146,7 +147,9 @@ return array(
 			$c->get( 'agentic.logger' )
 		);
 	},
-
+	'agentic.helper.shipping-options-builder'      => static function (): ShippingOptionsBuilder {
+		return new ShippingOptionsBuilder();
+	},
 	'agentic.helper.checkout-processor'            => static function ( ContainerInterface $c ): AgenticCheckoutProcessor {
 		return new AgenticCheckoutProcessor(
 			$c->get( 'agentic.helper.paypal-order-manager' ),
@@ -227,6 +230,7 @@ return array(
 		return new ResponseFactory(
 			$c->get( 'agentic.helper.cart-builder' ),
 			$c->get( 'agentic.response.applied-coupons-builder' ),
+			$c->get( 'agentic.helper.shipping-options-builder' ),
 			$c->get( 'agentic.config.store-currency' )
 		);
 	},
