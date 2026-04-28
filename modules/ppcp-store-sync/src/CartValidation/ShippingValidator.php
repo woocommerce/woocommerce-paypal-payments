@@ -16,9 +16,9 @@ declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\StoreSync\CartValidation;
 
-use WC_Countries;
 use WC_Validation;
 use WC_Product;
+
 use WooCommerce\PayPalCommerce\StoreSync\Enums\Priority;
 use WooCommerce\PayPalCommerce\StoreSync\Enums\ShippingIssue;
 use WooCommerce\PayPalCommerce\StoreSync\Helper\ProductManager;
@@ -109,10 +109,11 @@ class ShippingValidator implements ValidatorInterface {
 		$issues = array();
 
 		if ( ! $address->address_line_1() ) {
-			$issues[] = ValidationIssue::create_invalid_address( 'Shipping address is missing street address' )
-				->user_message( 'Please provide a complete street address.' )
-				->for_field( 'shipping_address.address_line_1' )
-				->add_resolution(
+			$issues[] =
+				ValidationIssue::create_invalid_address( 'Shipping address is missing street address' )
+					->user_message( 'Please provide a complete street address.' )
+					->for_field( 'shipping_address.address_line_1' )
+					->add_resolution(
 					ResolutionOption::create_provide_missing_field()
 						->label( 'Provide street address' )
 						->set_meta( 'field', 'address_line_1' )
@@ -125,10 +126,11 @@ class ShippingValidator implements ValidatorInterface {
 		}
 
 		if ( ! $address->admin_area_2() ) {
-			$issues[] = ValidationIssue::create_invalid_address( 'Shipping address is missing city' )
-				->user_message( 'Please provide a city.' )
-				->for_field( 'shipping_address.admin_area_2' )
-				->add_resolution(
+			$issues[] =
+				ValidationIssue::create_invalid_address( 'Shipping address is missing city' )
+					->user_message( 'Please provide a city.' )
+					->for_field( 'shipping_address.admin_area_2' )
+					->add_resolution(
 					ResolutionOption::create_provide_missing_field()
 						->label( 'Provide city' )
 						->set_meta( 'field', 'admin_area_2' )
@@ -142,10 +144,11 @@ class ShippingValidator implements ValidatorInterface {
 
 		$postal_code = $address->postal_code();
 		if ( ! $postal_code ) {
-			$issues[] = ValidationIssue::create_invalid_address( 'Shipping address is missing postal code' )
-				->user_message( 'Please provide a postal code.' )
-				->for_field( 'shipping_address.postal_code' )
-				->add_resolution(
+			$issues[] =
+				ValidationIssue::create_invalid_address( 'Shipping address is missing postal code' )
+					->user_message( 'Please provide a postal code.' )
+					->for_field( 'shipping_address.postal_code' )
+					->add_resolution(
 					ResolutionOption::create_provide_missing_field()
 						->label( 'Provide postal code' )
 						->set_meta( 'field', 'postal_code' )
