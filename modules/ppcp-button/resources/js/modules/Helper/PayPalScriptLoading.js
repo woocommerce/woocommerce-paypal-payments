@@ -1,30 +1,9 @@
 import { loadScript } from '@paypal/paypal-js';
-import dataClientIdAttributeHandler from '../DataClientIdAttributeHandler';
 import widgetBuilder from '../Renderer/WidgetBuilder';
 import { processConfig } from './ConfigProcessor';
 
 const loadedScripts = new Map();
 const scriptPromises = new Map();
-
-const handleDataClientIdAttribute = async ( scriptOptions, config ) => {
-	if (
-		config.data_client_id?.set_attribute &&
-		config.vault_v3_enabled !== true
-	) {
-		return new Promise( ( resolve, reject ) => {
-			dataClientIdAttributeHandler(
-				scriptOptions,
-				config.data_client_id,
-				( paypal ) => {
-					widgetBuilder.setPaypal( paypal );
-					resolve( paypal );
-				},
-				reject
-			);
-		} );
-	}
-	return null;
-};
 
 export const loadPayPalScript = async ( namespace, config ) => {
 	if ( ! namespace ) {
@@ -47,14 +26,6 @@ export const loadPayPalScript = async ( namespace, config ) => {
 		...processConfig( config ),
 		'data-namespace': namespace,
 	};
-
-	const dataClientIdResult = await handleDataClientIdAttribute(
-		scriptOptions,
-		config
-	);
-	if ( dataClientIdResult ) {
-		return dataClientIdResult;
-	}
 
 	const scriptPromise = new Promise( ( resolve, reject ) => {
 		loadScript( scriptOptions )

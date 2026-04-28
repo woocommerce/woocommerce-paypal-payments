@@ -12,6 +12,7 @@ import {
  */
 import { PayPalAccount, Pcp } from '../../resources';
 import { PayPalPopup } from './paypal-popup';
+import { GooglePayPopup } from './google-pay-popup';
 import { PayPalApi } from '../paypal-api';
 
 /**
@@ -67,6 +68,16 @@ export class PayPalUi {
 				'#express-payment-method-ppcp-gateway-venmo .component-frame'
 			)
 			.locator( `[data-funding-source="venmo"]` );
+
+	googlepayButton = () =>
+		this.page
+			.locator( '#express-payment-method-ppcp-googlepay .gpay-button' )
+			.or(
+				this.page.locator(
+					'#express-payment-method-ppcp-googlepay button'
+				)
+			)
+			.first();
 
 	payPalGateway = () =>
 		this.page.locator(
@@ -258,6 +269,24 @@ export class PayPalUi {
 	};
 
 	/**
+	 * Clicks Google Pay button to open the TEST environment popup
+	 */
+	openGooglePayPopup = async (): Promise< GooglePayPopup > => {
+		const popupPromise = this.page.waitForEvent( 'popup', {
+			timeout: 20 * 1000,
+		} );
+		await expect(
+			this.googlepayButton(),
+			'Assert Google Pay button is visible'
+		).toBeVisible();
+		await this.googlepayButton().click();
+
+		const popup = await popupPromise;
+		await popup.waitForLoadState();
+		return new GooglePayPopup( popup );
+	};
+
+	/**
 	 * Completes payment on Classic pages with given payment method
 	 *
 	 * @param data
@@ -301,6 +330,12 @@ export class PayPalUi {
 				popup = await this.openVenmoPupup();
 				await popup.completeVenmoPayment();
 				break;
+
+			case 'googlepay': {
+				const googlePayPopup = await this.openGooglePayPopup();
+				await googlePayPopup.completePayment();
+				break;
+			}
 
 			case 'acdc':
 				if ( payment.isVaulted ) {

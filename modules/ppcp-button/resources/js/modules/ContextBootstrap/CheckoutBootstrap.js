@@ -183,10 +183,7 @@ class CheckoutBootstrap {
 			return;
 		}
 
-		if (
-			PayPalCommerceGateway.is_free_trial_cart &&
-			PayPalCommerceGateway.vault_v3_enabled
-		) {
+		if ( PayPalCommerceGateway.is_free_trial_cart ) {
 			this.renderer.render(
 				addPaymentMethodConfiguration( PayPalCommerceGateway ),
 				{},

@@ -37,14 +37,12 @@ use WooCommerce\PayPalCommerce\Button\Endpoint\ValidateCheckoutEndpoint;
 use WooCommerce\PayPalCommerce\Button\Helper\Context;
 use WooCommerce\PayPalCommerce\Button\Helper\DisabledFundingSources;
 use WooCommerce\PayPalCommerce\Button\Helper\MessagesApply;
-use WooCommerce\PayPalCommerce\Button\VaultV2\StartPayPalVaultingEndpoint;
 use WooCommerce\PayPalCommerce\PayLaterBlock\PayLaterBlockModule;
 use WooCommerce\PayPalCommerce\PayLaterWCBlocks\PayLaterWCBlocksModule;
 use WooCommerce\PayPalCommerce\SavePaymentMethods\Endpoint\CreatePaymentToken;
 use WooCommerce\PayPalCommerce\SavePaymentMethods\Endpoint\CreatePaymentTokenForGuest;
 use WooCommerce\PayPalCommerce\SavePaymentMethods\Endpoint\CreateSetupToken;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
-use WooCommerce\PayPalCommerce\Vaulting\PaymentTokenRepository;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CardButtonGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
@@ -141,13 +139,6 @@ class SmartButton implements SmartButtonInterface {
 	private $environment;
 
 	/**
-	 * The payment token repository.
-	 *
-	 * @var PaymentTokenRepository
-	 */
-	private $payment_token_repository;
-
-	/**
 	 * The getter of the 3-letter currency code of the shop.
 	 *
 	 * @var CurrencyGetter
@@ -188,13 +179,6 @@ class SmartButton implements SmartButtonInterface {
 	 * @var SessionHandler
 	 */
 	private $session_handler;
-
-	/**
-	 * Whether Vault v3 module is enabled.
-	 *
-	 * @var bool
-	 */
-	private $vault_v3_enabled;
 
 	/**
 	 * Whether the shipping should be handled in PayPal.
@@ -252,14 +236,12 @@ class SmartButton implements SmartButtonInterface {
 		callable $get_subscriptions_mode,
 		MessagesApply $messages_apply,
 		Environment $environment,
-		PaymentTokenRepository $payment_token_repository,
 		SettingsStatus $settings_status,
 		CurrencyGetter $currency,
 		bool $basic_checkout_validation_enabled,
 		bool $early_validation_enabled,
 		array $pay_now_contexts,
 		array $funding_sources_without_redirect,
-		bool $vault_v3_enabled,
 		bool $should_handle_shipping_in_paypal,
 		bool $server_side_shipping_callback_enabled,
 		bool $appswitch_enabled,
@@ -281,14 +263,12 @@ class SmartButton implements SmartButtonInterface {
 		$this->get_subscriptions_mode                = $get_subscriptions_mode;
 		$this->messages_apply                        = $messages_apply;
 		$this->environment                           = $environment;
-		$this->payment_token_repository              = $payment_token_repository;
 		$this->settings_status                       = $settings_status;
 		$this->currency                              = $currency;
 		$this->basic_checkout_validation_enabled     = $basic_checkout_validation_enabled;
 		$this->early_validation_enabled              = $early_validation_enabled;
 		$this->pay_now_contexts                      = $pay_now_contexts;
 		$this->funding_sources_without_redirect      = $funding_sources_without_redirect;
-		$this->vault_v3_enabled                      = $vault_v3_enabled;
 		$this->should_handle_shipping_in_paypal      = $should_handle_shipping_in_paypal;
 		$this->server_side_shipping_callback_enabled = $server_side_shipping_callback_enabled;
 		$this->appswitch_enabled                     = $appswitch_enabled;
@@ -348,7 +328,6 @@ class SmartButton implements SmartButtonInterface {
 				if (
 					CreditCardGateway::ID === $id
 					&& is_user_logged_in()
-					&& $this->vault_v3_enabled
 					&& $this->settings_provider->save_card_details()
 					&& apply_filters( 'woocommerce_paypal_payments_should_render_card_custom_fields', true )
 				) {
@@ -359,28 +338,6 @@ class SmartButton implements SmartButtonInterface {
 					);
 					if ( $subscription_helper->cart_contains_subscription() || $subscription_helper->order_pay_contains_subscription() ) {
 						$default_fields['card-vault'] = '';
-					}
-
-					$tokens = $this->payment_token_repository->all_for_user_id( get_current_user_id() );
-					if ( $tokens && $this->payment_token_repository->tokens_contains_card( $tokens ) ) {
-						$output = sprintf(
-							'<p class="form-row form-row-wide"><label>%1$s</label><select id="saved-credit-card" name="saved_credit_card"><option value="">%2$s</option>',
-							esc_html__( 'Or select a saved Credit Card payment', 'woocommerce-paypal-payments' ),
-							esc_html__( 'Choose a saved payment', 'woocommerce-paypal-payments' )
-						);
-						foreach ( $tokens as $token ) {
-							if ( isset( $token->source()->card ) ) {
-								$output .= sprintf(
-									'<option value="%1$s">%2$s ...%3$s</option>',
-									$token->id(),
-									$token->source()->card->brand,
-									$token->source()->card->last_digits
-								);
-							}
-						}
-						$output .= '</select></p>';
-
-						$default_fields['saved-credit-card'] = $output;
 					}
 				}
 
@@ -1087,10 +1044,6 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
 					'endpoint' => \WC_AJAX::get_endpoint( ApproveSubscriptionEndpoint::ENDPOINT ),
 					'nonce'    => wp_create_nonce( ApproveSubscriptionEndpoint::nonce() ),
 				),
-				'vault_paypal'                   => array(
-					'endpoint' => \WC_AJAX::get_endpoint( StartPayPalVaultingEndpoint::ENDPOINT ),
-					'nonce'    => wp_create_nonce( StartPayPalVaultingEndpoint::nonce() ),
-				),
 				'save_checkout_form'             => array(
 					'endpoint' => \WC_AJAX::get_endpoint( SaveCheckoutFormEndpoint::ENDPOINT ),
 					'nonce'    => wp_create_nonce( SaveCheckoutFormEndpoint::nonce() ),
@@ -1132,7 +1085,6 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
 			),
 			'cart_contains_subscription'              => $this->subscription_helper->cart_contains_subscription(),
 			'subscription_plan_id'                    => $this->subscription_helper->paypal_subscription_id(),
-			'vault_v3_enabled'                        => $this->vault_v3_enabled,
 			'variable_paypal_subscription_variations' => $this->subscription_helper->variable_paypal_subscription_variations(),
 			'variable_paypal_subscription_variation_from_cart' => $this->subscription_helper->paypal_subscription_variation_from_cart(),
 			'subscription_product_allowed'            => $this->subscription_helper->checkout_subscription_product_allowed(),

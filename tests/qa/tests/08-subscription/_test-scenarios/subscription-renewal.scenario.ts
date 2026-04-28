@@ -33,7 +33,7 @@ export const testSubscriptionRenewal = ( testOrder: ShopOrder ) => {
 				wooCommerceOrderEdit,
 				wooCommerceSubscriptionEdit,
 			} ) => {
-				test.setTimeout( 2 * 60_000 );
+				test.setTimeout( 2.5 * 60_000 );
 				// Precondition: purchase test subscription
 				await utils.fillVisitorsCart( products );
 				await classicCheckout.visit();

@@ -8,7 +8,7 @@ const customer = customers.usa;
 const savePaymentMethodData: ShopOrder[] = [
 	{
 		// https://inpsyde.atlassian.net/browse/PCP-5382
-		title: 'PCP-5382 | Vaulting - Transaction - Checkout - PayPal - Save payment method @Critical @Smoke',
+		title: 'PCP-5382 | Vaulting - Transaction - Checkout - PayPal - Save payment method @Critical @Smoke @Dev',
 		...orders.default,
 		payment: {
 			...payments.payPal,
@@ -18,7 +18,7 @@ const savePaymentMethodData: ShopOrder[] = [
 	},
 	{
 		// https://inpsyde.atlassian.net/browse/PCP-3234
-		title: 'PCP-3234 | Vaulting - Transaction - Checkout - ACDC - Save payment method @Critical',
+		title: 'PCP-3234 | Vaulting - Transaction - Checkout - ACDC - Save payment method @Critical @Dev',
 		...orders.default,
 		payment: {
 			...payments.acdc,

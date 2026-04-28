@@ -8,7 +8,7 @@ jobs:
     strategy:
       matrix:
         php-versions: ['7.4']
-        wc-versions: ['9.7.1']
+        wc-versions: ['10.6.2']
 
     name: PHP ${{ matrix.php-versions }} WC ${{ matrix.wc-versions }}
     steps:
@@ -17,6 +17,11 @@ jobs:
         autostart: false
 
     - uses: actions/checkout@v1
+
+    - name: Setup Composer Auth
+      env:
+        COMPOSER_AUTH_JSON: ${{ secrets.COMPOSER_AUTH_JSON }}
+      run: echo "$COMPOSER_AUTH_JSON" > auth.json
 
     - name: Configure DDEV PHP
       run: ddev config --php-version ${{ matrix.php-versions }}
@@ -28,6 +33,16 @@ jobs:
 
     - name: Orchestrate DDEV
       run: ddev orchestrate -f
+
+    - name: Install WooCommerce Subscriptions
+      run: |
+        ddev composer config repositories.repo-name composer https://repo.packagist.com/inpsyde/payment-gateways/
+        ddev composer require inpsyde-mirror/woocommerce-subscriptions --no-interaction --no-scripts
+        ddev exec cp -r tests/qa/resources/plugins/woocommerce-subscriptions .ddev/wordpress/wp-content/plugins/woocommerce-subscriptions
+        ddev wp plugin activate woocommerce-subscriptions
+
+    - name: Cleanup Composer Auth
+      run: rm -f auth.json
 
     - name: Create config
       run: cp -n .env.integration.example .env.integration

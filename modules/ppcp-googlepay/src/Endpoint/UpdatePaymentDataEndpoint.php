@@ -13,6 +13,7 @@ use Psr\Log\LoggerInterface;
 use Throwable;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Money;
 use WooCommerce\PayPalCommerce\Button\Endpoint\RequestData;
+use WooCommerce\PayPalCommerce\Button\Exception\NonceValidationException;
 use WooCommerce\PayPalCommerce\Button\Exception\RuntimeException;
 
 /**
@@ -106,6 +107,8 @@ class UpdatePaymentDataEndpoint {
 					'shipping_options' => $this->get_shipping_options(),
 				)
 			);
+		} catch ( NonceValidationException $error ) {
+			wp_send_json_error( array( 'message' => $error->getMessage() ), 400 );
 		} catch ( Throwable $error ) {
 			$this->logger->error( "UpdatePaymentDataEndpoint execution failed. {$error->getMessage()} {$error->getFile()}:{$error->getLine()}" );
 

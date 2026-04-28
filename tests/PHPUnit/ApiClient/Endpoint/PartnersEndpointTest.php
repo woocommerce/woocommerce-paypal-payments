@@ -124,6 +124,10 @@ class PartnersEndpointTest extends TestCase
 			->with(PartnersEndpoint::SELLER_STATUS_CACHE_KEY)
 			->andReturn($cached_status);
 
+		when('apply_filters')->alias(function (string $hook, ...$args) {
+			return $args[0] ?? null;
+		});
+
 		// wp_remote_get must not be called — any invocation will cause the
 		// Brain Monkey expectation to fail with an unexpected call.
 		expect('wp_remote_get')->never();
@@ -209,6 +213,58 @@ class PartnersEndpointTest extends TestCase
 		$this->expectException(PayPalApiException::class);
 
 		$this->make_endpoint()->seller_status();
+	}
+
+	// -----------------------------------------------------------------------
+	// Tests: seller_status() fallback filter
+	// -----------------------------------------------------------------------
+
+	/**
+	 * GIVEN the transient cache is empty
+	 * AND the PayPal API returns a non-200 status code
+	 * AND the fallback filter returns a SellerStatus
+	 * WHEN seller_status() is called
+	 * THEN the fallback is used instead of throwing
+	 * AND the result is stored in the cache
+	 */
+	public function testSellerStatusOnApiErrorUsesFallbackFilter(): void
+	{
+		$fallback     = Mockery::mock(SellerStatus::class);
+		$raw_response = $this->make_raw_response(500);
+
+		$this->cache
+			->shouldReceive('get')
+			->once()
+			->with(PartnersEndpoint::SELLER_STATUS_CACHE_KEY)
+			->andReturn(false);
+
+		$this->cache
+			->shouldReceive('set')
+			->once()
+			->with(
+				PartnersEndpoint::SELLER_STATUS_CACHE_KEY,
+				$fallback,
+				PartnersEndpoint::SELLER_STATUS_CACHE_TTL
+			);
+
+		$this->failure_registry
+			->shouldReceive('add_failure')
+			->once()
+			->with(FailureRegistry::SELLER_STATUS_KEY);
+
+		when('apply_filters')->alias(function (string $hook, ...$args) use ($fallback) {
+			if ($hook === 'woocommerce_paypal_payments_seller_status_fallback') {
+				return $fallback;
+			}
+			return $args[0] ?? null;
+		});
+		when('wp_remote_get')->justReturn($raw_response);
+		when('is_wp_error')->justReturn(false);
+		when('wp_remote_retrieve_response_code')->justReturn(500);
+
+		$result = $this->make_endpoint()->seller_status();
+
+		$this->assertSame($fallback, $result);
 	}
 
 	// -----------------------------------------------------------------------
