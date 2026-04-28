@@ -33,6 +33,7 @@
         "lint:js:fix": "wp-scripts lint-js --resolve-plugins-relative-to ./ --fix **/*.{ts,tsx,mjs}",
         "e2e:setup:hosts": "echo '127.0.0.1 mywp.site' | sudo tee -a /etc/hosts",
         "e2e:setup:env": "npm run e2e:setup:hosts && npm install && npx wp-env start --update",
+        "e2e:test:plugin-foundation": "npx playwright test --workers=1 --project \"plugin-foundation\"",
         "e2e:test:all": "npx playwright test --workers=1 --project \"all\"",
         "e2e:test:stress": "npx playwright test --project=\"stress\"",
         "e2e:test:critical": "npx playwright test --grep=\"@Critical\"",
