@@ -7,7 +7,7 @@ use WC_Order;
 use WC_Payment_Token;
 use WC_Payment_Tokens;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
-use WooCommerce\PayPalCommerce\Vaulting\PaymentTokenPayPal;
+use WooCommerce\PayPalCommerce\WcPaymentTokens\PaymentTokenPayPal;
 use WooCommerce\PayPalCommerce\VaultComponent\Endpoint\CreateVaultOrderEndpoint;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExecutableModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ModuleClassNameIdTrait;
@@ -27,14 +27,6 @@ class VaultComponentModule implements ServiceModule, ExecutableModule {
 		if ( ! $eligibility_check() ) {
 			return true;
 		}
-
-		add_filter(
-			'woocommerce_paypal_payments_sdk_components_hook',
-			static function ( array $components ): array {
-				$components[] = 'vault';
-				return $components;
-			}
-		);
 
 		add_action(
 			'wc_ajax_' . CreateVaultOrderEndpoint::ENDPOINT,
