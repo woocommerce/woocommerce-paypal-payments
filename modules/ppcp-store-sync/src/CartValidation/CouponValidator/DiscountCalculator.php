@@ -14,6 +14,7 @@ use WC_Coupon;
 use WC_Discounts;
 use WooCommerce\PayPalCommerce\StoreSync\Helper\ProductManager;
 use WooCommerce\PayPalCommerce\StoreSync\Schema\PayPalCart;
+use WooCommerce\PayPalCommerce\StoreSync\Helper\CartHelper;
 /**
  * Calculates discount amounts for coupons using WooCommerce's native discount calculation.
  */
@@ -61,8 +62,7 @@ class DiscountCalculator
         if (isset($totals[$code])) {
             // Handle both array (multiple items) and scalar (single value) formats.
             $discount_value = is_array($totals[$code]) ? array_sum($totals[$code]) : $totals[$code];
-            // The value from get_discounts_by_coupon() is already in regular decimal format.
-            return number_format($discount_value, 2, '.', '');
+            return CartHelper::format_decimal($discount_value);
         }
         return '0.00';
     }
