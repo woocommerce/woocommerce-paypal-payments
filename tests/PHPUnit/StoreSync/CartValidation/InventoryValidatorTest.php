@@ -6,7 +6,6 @@ namespace WooCommerce\PayPalCommerce\StoreSync\CartValidation;
 
 use Mockery;
 use WooCommerce\PayPalCommerce\StoreSync\Helper\ProductManager;
-use WooCommerce\PayPalCommerce\StoreSync\Schema\PayPalCart;
 use WooCommerce\PayPalCommerce\StoreSync\Validation\ValidationIssue;
 
 /**
@@ -178,7 +177,8 @@ class InventoryValidatorTest extends ValidationTest {
 		$this->product_manager->shouldNotReceive( 'find_product' );
 		$this->product_manager->shouldNotReceive( 'is_in_stock' );
 
-		$pre_existing_issue = ValidationIssue::create_item_out_of_stock( 'Pre-existing inventory problem' );
+		$pre_existing_issue =
+			ValidationIssue::create_item_out_of_stock( 'Pre-existing inventory problem' );
 
 		$cart = $this->create_cart()->with_validation_issues( $pre_existing_issue );
 

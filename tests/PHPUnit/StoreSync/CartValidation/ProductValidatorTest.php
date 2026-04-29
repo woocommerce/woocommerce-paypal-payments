@@ -27,7 +27,8 @@ class ProductValidatorTest extends ValidationTest {
 
 		$this->product_manager = Mockery::mock( ProductManager::class );
 		$this->configuration   = Mockery::mock( IngestionConfiguration::class );
-		$this->validator       = new ProductValidator( $this->product_manager, $this->configuration );
+		$this->validator       =
+			new ProductValidator( $this->product_manager, $this->configuration );
 	}
 
 	/**
@@ -108,7 +109,8 @@ class ProductValidatorTest extends ValidationTest {
 		$this->product_manager->shouldNotReceive( 'find_product' );
 		$this->configuration->shouldNotReceive( 'get_valid_product_filters' );
 
-		$pre_existing_issue = ValidationIssue::create_item_out_of_stock( 'Pre-existing inventory problem' );
+		$pre_existing_issue =
+			ValidationIssue::create_item_out_of_stock( 'Pre-existing inventory problem' );
 
 		$cart = $this->create_cart()->with_validation_issues( $pre_existing_issue );
 

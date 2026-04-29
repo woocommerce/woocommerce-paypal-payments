@@ -656,22 +656,6 @@ class ShippingValidatorTest extends ValidationTest {
 		$this->assertIssueContext( $issue_data, 'SHIPPING_ADDRESS_UNSERVICEABLE' );
 	}
 
-	private function create_cart_with_shipping( array $address_data ): PayPalCart {
-		return PayPalCart::from_array(
-			array(
-				'items'            => array(
-					array(
-						'item_id'  => '1',
-						'quantity' => 1,
-						'name'     => 'Test Product',
-					),
-				),
-				'shipping_address' => $address_data,
-				'payment_method'   => 'paypal',
-			)
-		);
-	}
-
 	private function mock_wc_countries( array $all_countries, array $shipping_countries ): void {
 		$countries_mock = \Mockery::mock( 'WC_Countries' );
 		$countries_mock->allows( 'get_countries' )->andReturn( $all_countries );

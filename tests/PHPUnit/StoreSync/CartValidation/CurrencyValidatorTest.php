@@ -215,32 +215,4 @@ class CurrencyValidatorTest extends ValidationTest {
 		$this->assertValidationIssue( $issue, 'PRICING_ERROR', 'BUSINESS_RULE', null, 'Mixed currencies detected' );
 	}
 
-	/**
-	 * Helper method to create a cart with items.
-	 *
-	 * @param array $items Array of items with currency and value.
-	 * @return PayPalCart
-	 */
-	private function create_cart_with_items( array $items ): PayPalCart {
-		$cart_items = array();
-
-		foreach ( $items as $index => $item_data ) {
-			$cart_items[] = array(
-				'item_id'  => (string) ( $index + 1 ),
-				'quantity' => 1,
-				'name'     => "Item $index",
-				'price'    => array(
-					'currency_code' => $item_data['currency'],
-					'value'         => $item_data['value'],
-				),
-			);
-		}
-
-		return PayPalCart::from_array(
-			array(
-				'items'          => $cart_items,
-				'payment_method' => 'paypal',
-			)
-		);
-	}
 }
