@@ -3,12 +3,17 @@
  */
 import { defineConfig, devices, ViewportSize } from '@playwright/test';
 import { WpCliEnvType } from '@inpsyde/playwright-utils/build/@types/wp-cli';
-require( 'dotenv' ).config();
-
+import dotenv from 'dotenv';
+import path from 'path';
 /**
  * Internal dependencies
  */
 import { BaseExtend } from './utils';
+
+const dotenvPath = process.env.CI
+    ? path.resolve( __dirname, '.env.ci' )
+    : undefined;
+dotenv.config( { path: dotenvPath } );
 
 const viewportSize: ViewportSize = { width: 1280, height: 850 };
 
@@ -70,12 +75,15 @@ export default defineConfig< BaseExtend >( {
 		ignoreHTTPSErrors: process.env.IGNORE_HTTPS_ERRORS === 'true',
 
 		/**
-		 * For envs with Basic Auth
+		 * For envs with Basic Auth. Omit when both are empty (e.g. wp-env).
 		 */
-		httpCredentials: {
-			username: process.env.WP_BASIC_AUTH_USER,
-			password: process.env.WP_BASIC_AUTH_PASS,
-		},
+		...( process.env.WP_BASIC_AUTH_USER &&
+		process.env.WP_BASIC_AUTH_PASS && {
+			httpCredentials: {
+				username: process.env.WP_BASIC_AUTH_USER,
+				password: process.env.WP_BASIC_AUTH_PASS,
+			},
+		} ),
 
 		...devices[ 'Desktop Chrome' ],
 
@@ -124,8 +132,8 @@ export default defineConfig< BaseExtend >( {
 			fullyParallel: false,
 		},
 		{
-			name: 'setup-store',
-			testMatch: /store\.setup\.ts/,
+			name: 'setup-pcp',
+			testMatch: /pcp\.setup\.ts/,
 			fullyParallel: false,
 		},
 		{

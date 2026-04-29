@@ -12,6 +12,7 @@ namespace WooCommerce\PayPalCommerce\Button\Endpoint;
 use Exception;
 use Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PurchaseUnitFactory;
+use WooCommerce\PayPalCommerce\Button\Exception\NonceValidationException;
 use WooCommerce\PayPalCommerce\Button\Helper\CartProductsHelper;
 
 /**
@@ -70,7 +71,11 @@ class ChangeCartEndpoint extends AbstractCartEndpoint {
 	 * @throws Exception On error.
 	 */
 	protected function handle_data(): void {
-		$data = $this->request_data->read_request( $this->nonce() );
+		try {
+			$data = $this->request_data->read_request( $this->nonce() );
+		} catch ( NonceValidationException $error ) {
+			wp_send_json_error( array( 'message' => $error->getMessage() ), 400 );
+		}
 
 		$this->cart_products->set_cart( $this->cart );
 

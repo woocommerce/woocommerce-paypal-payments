@@ -25,7 +25,7 @@ Detailed information about current test project can be found in [docs](./docs/RE
 	git clone https://github.com/woocommerce/woocommerce-paypal-payments.git
 	```
 
-## Installation of `wp env, PlayWright and PayPal plugin`
+## Installation of `wp env`, PlayWright and PayPal plugin
 
 > See also [@inpsyde/playwright-utils documentation](https://github.com/inpsyde/playwright-utils?tab=readme-ov-file#installation).
 
@@ -59,7 +59,7 @@ This will run the next scripts:
 
 	2.1 Set general variables following [these steps](https://github.com/inpsyde/playwright-utils?tab=readme-ov-file#env-variables).
 	
-	2.2 Set PayPal API keys and test credentials. See `.env.example`. The `.env` content with actual test users' credentials is [stored in 1Password](https://start.1password.com/open/i?a=UL7QZZ6P6JDVBI422AOVJXMEGU&v=uthlbcp4jkori6w6rhgxvsvfoe&i=klejf7rgcip76c7auhsnhvxcbi&h=inpsyde.1password.eu).
+	2.2 Set PayPal API keys and test credentials. See `.env.example`. For Google Pay transaction tests, make sure to also set `GOOGLE_PAY_EMAIL` and `GOOGLE_PAY_PASSWORD`. The `.env` content with actual test users' credentials is [stored in 1Password](https://start.1password.com/open/i?a=UL7QZZ6P6JDVBI422AOVJXMEGU&v=uthlbcp4jkori6w6rhgxvsvfoe&i=klejf7rgcip76c7auhsnhvxcbi&h=inpsyde.1password.eu).
 
 3. Configure `playwright.config.ts` of the project following [these steps](https://github.com/inpsyde/playwright-utils?tab=readme-ov-file#playwright-configuration).
 
@@ -149,121 +149,149 @@ Before commiting changes run following command:
 npm run lint:js:fix
 ```
 
-## Automated env setup scripts
+## Reset Kinsta env
+
+> **Note:** the staging env on Kinsta should be created and the script to reset env [provided by devops](https://inpsyde.atlassian.net/wiki/spaces/ENG/pages/6240338010/WordPress+hosting+FAQs#How-can-QA-reset-a-test-environment%3F) (if not - create a ticket on [SDO board](https://inpsyde.atlassian.net/jira/software/c/projects/SDO/boards/395)).
+
+Find SSH data in [Kinsta dashboard](https://my.kinsta.com/sites/details) for your tested env. Replace data in the following one-line command and run it in the terminal to reset the env:
+
+```bash
+ssh <your-ssh-username>@<your-ssh-host> -p <your-ssh-port> '${HOME}/bin/reset-wp.sh --wp-version=6.9 --wp-type=single && exit'
+```
+
+## Automated env setup scripts for migration
+
+### Preconditions
 
 Local usage of _automated env setup scripts_ assumes that the following steps are fulfilled:
 
-1. Your current terminal dir to run scripts is `./tests/qa`.
-
-2. Dependencies and `node_modules` are installed (see [this section](#installation-of-node_modules)).
-
-	> Note: for now the storage of .zip files is restricted in .gitignore. Please ask someone of QA to provide the content of `./tests/qa/resources/files` dir.
-
-3. `.env` file is configured as per step 2 of [this section](#project-configuration) (simply copy-paste it from `PCP .env` vault of 1Password).
-
-4. (Optional) For DDEV setup add `IGNORE_HTTPS_ERRORS=true` to `.env` and remove the Basic Auth credentials:
+1. Clone PayPal repo to your local machine:
 
 	```bash
-	# playwright-utils config
-	IGNORE_HTTPS_ERRORS=true
-	WP_BASE_URL='https://woocommerce-paypal-payments.ddev.site'
-	WP_USERNAME=admin
-	WP_PASSWORD=admin
-	WP_BASIC_AUTH_USER=
-	WP_BASIC_AUTH_PASS=
-	STORAGE_STATE_PATH='./storage-states'
-	STORAGE_STATE_PATH_ADMIN='./storage-states/admin.json'
+	git clone https://github.com/woocommerce/woocommerce-paypal-payments.git
 	```
 
-### Reset SSE env
+	> **Note:** temporary, for migration testing change branch to `dev/qa/migration-tests`: `git checkout dev/qa/migration-tests`.
 
-> Note: see [SSE setup](https://inpsyde.atlassian.net/wiki/spaces/AT/pages/3175907370/Self+Service+WordPress+Environment) don in Confluence (will be deprecated in 2025).
+2. Copy following packages into `/tests/qa/resources/files`:
 
-1. Connect via `ssh`:
+	* Configured PayPal plugin package (e.g. v3.4.1) named as `woocommerce-paypal-payments.zip`
+
+	* Optional: Paypal plugin version to upgrade/downgrade to (e.g. v3.0.0 or v4.0.0) as `woocommerce-paypal-payments-update.zip`.
+	
+	* WooCommerce Subscriptions package named as `woocommerce-subscriptions.zip`
+
+3. In the terminal open the cloned repo and navigate to `/tests/qa` dir:
 
 	```bash
-	ssh -l fname php_version.emp.pluginpsyde.com
+	cd tests/qa
 	```
 
-2. Reset SSE website:
+4. Install Node dependencies and Playwright:
 
 	```bash
-	rm -rf /var/www/html/* 2>/dev/null; wp core download --version=X.Y.Z && wp config create && mariadb -e "DROP DATABASE fname; CREATE DATABASE fname;" && wp core install
+	npm run setup:tests
 	```
 
-### Setup store
+5.  In the `/tests/qa` directory create a `.env` file and copy-paste content from `PCP .env` vault of 1Password replacing all the data for your test env. Alternatively use `.env.example`.
 
-- Installs WooCommerce, Storefront theme, additional plugins (WP Debugging, Disable Nonce, Subscriptions, etc.).
-- Configures website permalinks (`%postname%`).
-- Configures WooCommerce default settings (country, currency, taxes, shipping, API keys, emails).
-- Creates classic pages, products, coupons, registered customer.
+6. Run the scripts described below.
+
+### Script naming convention
+
+Scripts follow a three-tier naming pattern:
+
+| Prefix | Meaning | Example |
+|---|---|---|
+| `env:reset` | Reset only env + WooCommerce | `npm run env:reset` |
+| `env:reset:pcp:*` | Reset env + PCP setup (single run) | `npm run env:reset:pcp:usa` |
+| `env:setup:*` | PCP/config setup only, no reset | `npm run env:setup:pcp:usa` |
+
+### Reset env and WooCommerce setup
+
+- Resets the env
+- Configures website permalinks (`%postname%`)
+- Installs plugins and themes:
+	- WooCommerce
+	- Storefront theme
+	- Additional plugins (Disable Nonce, WC Subscriptions, etc.)
+- Configures WooCommerce for default country (USA):
+	- API keys
+	- Country/currency: USA/USD
+	- Taxes: included, 10% rate
+	- Shipping: flat rate/10 USD and free
+	- Emails: disabled
+- Creates test entities:
+	- Classic cart and checkout
+	- Tested products
+	- Coupons
+	- Registered US customer
 
 ```bash
-npm run setup:store:default
+npm run env:reset
 ```
 
-### Setup block pages
+**WooCommerce setup only (no SSH reset):**
 
 ```bash
-npm run setup:checkout:block
+npm run env:setup:wc
 ```
 
-### Setup classic pages
+### Setup PCP for specific country
+
+- Installs PCP plugin (`woocommerce-paypal-payments.zip`).
+- Connects merchant from specified country.
+
+**For USA** — PCP + connected US merchant + ACDC enabled (PayPal and other PMs disabled).
+
+| With reset | Without reset |
+|---|---|
+| `npm run env:reset:pcp:usa` | `npm run env:setup:pcp:usa` |
+
+**For Germany & PUI (disabled by default)**
+
+| With reset | Without reset |
+|---|---|
+| `npm run env:reset:pcp:germany` | `npm run env:setup:pcp:germany` |
+
+**For Mexico & OXXO (disabled by default)**
+
+| With reset | Without reset |
+|---|---|
+| `npm run env:reset:pcp:mexico` | `npm run env:setup:pcp:mexico` |
+
+### Upgrade PCP (without env reload)
+
+Installs `woocommerce-paypal-payments-update.zip` over the existing PCP installation.
 
 ```bash
-npm run setup:checkout:classic
+npm run env:setup:pcp:update
 ```
 
-### Setup taxes included
+### Switch checkout layout (without env reload)
+
+**Enable classic cart/checkout**
 
 ```bash
-npm run setup:tax:inc
+npm run env:setup:checkout:classic
 ```
 
-### Setup taxes excluded
+**Enable block cart/checkout**
 
 ```bash
-npm run setup:tax:exc
+npm run env:setup:checkout:block
 ```
 
-### Setup US store and merchant (block pages)
+### Switch tax configuration (without env reload)
+
+**Tax included in prices**
 
 ```bash
-npm run setup:pcp:usa
+npm run env:setup:tax:inc
 ```
 
-### Setup German store and merchant (block pages)
+**Tax excluded from prices**
 
 ```bash
-npm run setup:pcp:germany
-```
-
-### Setup Mexican store and merchant (block pages)
-
-```bash
-npm run setup:pcp:mexico
-```
-
-### Setup US store and merchant with vaulting (PayPal, ACDC) enabled (block pages)
-
-```bash
-npm run setup:pcp:usa:vaulting
-```
-
-### Setup US store and merchant with vaulting (PayPal, ACDC) enabled (classic pages)
-
-```bash
-npm run setup:pcp:usa:vaulting:classic
-```
-
-### Setup US store and merchant for Vaulting subscription (WC Subscriptions plugin, products, block pages)
-
-```bash
-npm run setup:pcp:usa:vaulting:subscription
-```
-
-### Setup US store and merchant for PayPal subscriptions (WC Subscriptions plugin, products, block pages)
-
-```bash
-npm run setup:pcp:usa:paypal:subscription
+npm run env:setup:tax:exc
 ```

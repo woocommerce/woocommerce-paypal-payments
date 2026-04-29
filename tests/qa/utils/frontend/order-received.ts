@@ -27,8 +27,8 @@ export class OrderReceived extends OrderReceivedBase {
 		await super.assertOrderDetails( order );
 
 		if ( order.payment.gateway.shortcut === 'oxxo' ) {
-			await expect( this.seeOXXOVoucherButton_1() ).toBeVisible();
-			await expect( this.seeOXXOVoucherButton_2() ).toBeVisible();
+			await expect( this.seeOXXOVoucherButton_1(), 'Assert OXXO voucher button 1 is visible' ).toBeVisible();
+			await expect( this.seeOXXOVoucherButton_2(), 'Assert OXXO voucher button 2 is visible' ).toBeVisible();
 		}
 	};
 

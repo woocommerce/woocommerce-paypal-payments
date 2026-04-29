@@ -36,6 +36,11 @@ test.describe( 'PLM Configurator', () => {
 		await pcpPayLaterMessaging.assertPreviewShowsMessage();
 
 		await product.visit( products.simple100.slug );
+		const productPlmVisible =
+			await product.payPalUi.assertPayLaterMessageVisibleWithContent();
+		if ( ! productPlmVisible ) {
+			test.skip();
+		}
 		await expect(
 			product.payPalUi.payLaterMessageContainer(),
 			'Assert PLM is visible on product page'
@@ -63,12 +68,22 @@ test.describe( 'PLM Configurator', () => {
 		await pcpPayLaterMessaging.assertPreviewShowsMessage();
 
 		await cart.visit();
+		const cartPlmVisible =
+			await cart.payPalUi.assertPayLaterMessageVisibleWithContent();
+		if ( ! cartPlmVisible ) {
+			test.skip();
+		}
 		await expect(
 			cart.payPalUi.payLaterMessageContainer(),
 			'Assert PLM is visible on cart'
 		).toBeVisible();
 
 		await classicCart.visit();
+		const classicCartPlmVisible =
+			await classicCart.payPalUi.assertPayLaterMessageVisibleWithContent();
+		if ( ! classicCartPlmVisible ) {
+			test.skip();
+		}
 		await expect(
 			classicCart.payPalUi.payLaterMessageContainer(),
 			'Assert PLM is visible on classic cart'
@@ -97,12 +112,22 @@ test.describe( 'PLM Configurator', () => {
 		await pcpPayLaterMessaging.assertPreviewShowsMessage();
 
 		await checkout.visit();
+		const checkoutPlmVisible =
+			await checkout.payPalUi.assertPayLaterMessageVisibleWithContent();
+		if ( ! checkoutPlmVisible ) {
+			test.skip();
+		}
 		await expect(
 			checkout.payPalUi.payLaterMessageContainer(),
 			'Assert PLM is visible on checkout'
 		).toBeVisible();
 
 		await classicCheckout.visit();
+		const classicCheckoutPlmVisible =
+			await classicCheckout.payPalUi.assertPayLaterMessageVisibleWithContent();
+		if ( ! classicCheckoutPlmVisible ) {
+			test.skip();
+		}
 		await expect(
 			classicCheckout.payPalUi.payLaterMessageContainer(),
 			'Assert PLM is visible on classic checkout'

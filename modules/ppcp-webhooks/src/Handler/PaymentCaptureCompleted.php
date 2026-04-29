@@ -109,7 +109,7 @@ class PaymentCaptureCompleted implements RequestHandler {
 		 */
 		do_action( 'woocommerce_paypal_payments_payment_capture_completed_webhook_handler', $wc_order, $order_id );
 
-		if ( $wc_order->get_status() !== 'on-hold' ) {
+		if ( ! in_array( $wc_order->get_status(), array( 'pending', 'on-hold' ), true ) ) {
 			return $this->success_response();
 		}
 		$wc_order->add_order_note(

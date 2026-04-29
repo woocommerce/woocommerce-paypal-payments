@@ -7,6 +7,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Authentication\SdkClientToken;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 use WooCommerce\PayPalCommerce\Button\Endpoint\EndpointInterface;
 use WooCommerce\PayPalCommerce\Button\Endpoint\RequestData;
+use WooCommerce\PayPalCommerce\Button\Exception\NonceValidationException;
 use WooCommerce\PayPalCommerce\Button\Helper\Context;
 
 /**
@@ -41,7 +42,11 @@ class AxoScriptAttributes implements EndpointInterface {
 	}
 
 	public function handle_request(): void {
-		$this->request_data->read_request( $this->nonce() );
+		try {
+			$this->request_data->read_request( $this->nonce() );
+		} catch ( NonceValidationException $error ) {
+			wp_send_json_error( array( 'message' => $error->getMessage() ), 400 );
+		}
 
 		if (
 			! $this->axo_eligible

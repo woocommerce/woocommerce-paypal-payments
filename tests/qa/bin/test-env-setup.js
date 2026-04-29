@@ -22,11 +22,6 @@ const commands = [
 		command: 'wp-env run tests-cli -- wp plugin activate woocommerce',
 	},
 	{
-		description: 'Install WooCommerce Payments',
-		command:
-			'wp-env run tests-cli -- wp plugin install woocommerce-payments',
-	},
-	{
 		description: 'Update URL structure',
 		command:
 			'wp-env run tests-cli -- wp rewrite structure "/%postname%/" --hard',
@@ -40,16 +35,6 @@ const commands = [
 		description: 'Set the store as live',
 		command:
 			'wp-env run tests-cli -- wp option update woocommerce_coming_soon "no"',
-	},
-	{
-		description: 'PayPal - Set new UI (merchant flag)',
-		command:
-			'wp-env run tests-cli -- wp option update woocommerce-ppcp-is-new-merchant "yes"',
-	},
-	{
-		description: 'PayPal - Set new UI (disable old UI)',
-		command:
-			'wp-env run tests-cli -- wp option update woocommerce_ppcp-settings-should-use-old-ui "no"',
 	},
 ];
 

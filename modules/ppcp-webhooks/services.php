@@ -34,7 +34,6 @@ use WooCommerce\PayPalCommerce\Webhooks\Handler\PaymentSaleCompleted;
 use WooCommerce\PayPalCommerce\Webhooks\Handler\PaymentSaleRefunded;
 use WooCommerce\PayPalCommerce\Webhooks\Handler\VaultPaymentTokenDeleted;
 use WooCommerce\PayPalCommerce\Webhooks\Status\WebhookSimulation;
-use WooCommerce\PayPalCommerce\Webhooks\VaultV2\VaultPaymentTokenCreated;
 
 return array(
 
@@ -93,8 +92,6 @@ return array(
 		$prefix         = $container->get( 'api.prefix' );
 		$order_endpoint = $container->get( 'api.endpoint.order' );
 		$authorized_payments_processor = $container->get( 'wcgateway.processor.authorized-payments' );
-		$payment_token_factory = $container->get( 'vaulting.payment-token-factory' );
-		$payment_token_helper = $container->get( 'vaulting.payment-token-helper' );
 		$refund_fees_updater = $container->get( 'wcgateway.helper.refund-fees-updater' );
 
 		return array(
@@ -118,8 +115,6 @@ return array(
 			new BillingPlanPricingChangeActivated( $logger ),
 			new CatalogProductUpdated( $logger ),
 			new BillingPlanUpdated( $logger ),
-			// Vault v2 handler, would be deleted when Vault v3 becomes the only one used by merchants.
-			new VaultPaymentTokenCreated( $logger, $prefix, $authorized_payments_processor, $payment_token_factory, $payment_token_helper ),
 		);
 	},
 

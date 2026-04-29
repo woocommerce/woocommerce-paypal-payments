@@ -285,7 +285,7 @@ export class PayPalUiClassic extends PayPalUi {
 
 	payPalButtonMoreOptions = () =>
 		this.payPalIframe().locator(
-			'.paypal-button-wallet-menu .menu-button'
+			'.paypal-button-wallet-menu .menu-button, [aria-label="More options"]'
 		);
 	payPalMenuIframe = () =>
 		this.page.frameLocator( 'iframe[name^="__zoid__paypal_menu__"]' );
@@ -325,6 +325,10 @@ export class PayPalUiClassic extends PayPalUi {
 	async openPayPalPopup(): Promise< PayPalPopup > {
 		// Select gateway if not on classic-cart page
 		if ( ! this.page.url().includes( 'classic-cart' ) ) {
+			await expect (
+				this.payPalGateway(),
+				'Assert PayPal gateway is visible',
+			).toBeVisible();
 			await this.payPalGateway().click();
 		}
 		return await super.openPayPalPopup();
@@ -353,7 +357,10 @@ export class PayPalUiClassic extends PayPalUi {
 		merchant: Pcp.Merchant
 	) => {
 		const { card, saveToAccount, isVaulted } = payment;
-		await expect( this.acdcGateway() ).toBeVisible();
+		await expect(
+			this.acdcGateway(),
+			'Assert ACDC gateway is visible'
+		).toBeVisible();
 		await this.acdcGateway().click();
 
 		//if some cards are already stored then "Use a new payment method" radio should be checked
@@ -364,10 +371,16 @@ export class PayPalUiClassic extends PayPalUi {
 			await this.acdcUseNewPaymentRadio().check();
 		}
 
-		await expect( this.acdcCardNumberInput() ).toBeVisible();
+		await expect(
+			this.acdcCardNumberInput(),
+			'Assert ACDC card number input is visible'
+		).toBeVisible();
 		await this.acdcCardNumberInput().fill( card.card_number );
 
-		await expect( this.acdcCardExpirationInput() ).toBeVisible();
+		await expect(
+			this.acdcCardExpirationInput(),
+			'Assert ACDC card expiration input is visible'
+		).toBeVisible();
 		// trick to properly fill expiration date input
 		await this.acdcCardExpirationInput().click();
 		for ( const char of card.expiration_date ) {
@@ -375,16 +388,22 @@ export class PayPalUiClassic extends PayPalUi {
 			await this.page.waitForTimeout( 200 );
 		}
 
-		await expect( this.acdcCardCvvInput() ).toBeVisible();
+		await expect(
+			this.acdcCardCvvInput(),
+			'Assert ACDC card CVV input is visible'
+		).toBeVisible();
 		await this.acdcCardCvvInput().fill( card.card_cvv );
 
 		if ( saveToAccount ) {
-			await expect( this.acdcSaveToAccountCheckbox() ).toBeVisible();
+			await expect(
+				this.acdcSaveToAccountCheckbox(),
+				'Assert ACDC save to account checkbox is visible'
+			).toBeVisible();
 			await this.acdcSaveToAccountCheckbox().check();
 		}
 
-		await this.submitOrder();
 		await this.replacePayPalAuthToken( merchant );
+		await this.submitOrder();
 	};
 
 	/**
@@ -398,27 +417,37 @@ export class PayPalUiClassic extends PayPalUi {
 		merchant: Pcp.Merchant
 	) => {
 		const acdcGateway = this.acdcGateway();
-		await expect( acdcGateway ).toBeVisible();
+		await expect(
+			acdcGateway,
+			'Assert ACDC gateway is visible'
+		).toBeVisible();
 		await acdcGateway.click();
 
 		const savedCard = this.acdcSavedCard( payment.card );
-		await expect( savedCard ).toBeVisible();
+		await expect(
+			savedCard,
+			'Assert saved ACDC card is visible'
+		).toBeVisible();
 		await savedCard.click();
 
-		await this.submitOrder();
 		await this.replacePayPalAuthToken( merchant );
+		await this.submitOrder();
 	};
 
 	/**
 	 * Completes payment with OXXO (vaulting disabled)
 	 */
 	completeOXXOPayment = async () => {
-		await expect( this.oxxoGateway() ).toBeVisible();
+		await expect(
+			this.oxxoGateway(),
+			'Assert OXXO gateway is visible'
+		).toBeVisible();
 		await this.oxxoGateway().click();
 		await expect(
 			this.page.getByText(
 				'OXXO allows you to pay bills and online purchases in-store with cash.'
-			)
+			),
+			'Assert OXXO description is visible'
 		).toBeVisible();
 
 		const popupPromise = this.page.waitForEvent( 'popup', {
@@ -429,7 +458,8 @@ export class PayPalUiClassic extends PayPalUi {
 		const paypal = new PayPalPopup( popup );
 
 		await expect(
-			paypal.page.getByText( 'Successful Payment', { exact: true } )
+			paypal.page.getByText( 'Successful Payment', { exact: true } ),
+			'Assert OXXO successful payment message is visible in PayPal popup'
 		).toBeVisible();
 
 		await popup.close();
@@ -443,21 +473,36 @@ export class PayPalUiClassic extends PayPalUi {
 	completeDebitOrCreditCardPayment = async (
 		card: WooCommerce.CreditCard
 	) => {
-		await expect( this.debitOrCreditCardButton() ).toBeVisible();
+		await expect(
+			this.debitOrCreditCardButton(),
+			'Assert debit or credit card button is visible'
+		).toBeVisible();
 		await this.debitOrCreditCardButton().click();
 
-		await expect( this.debitOrCreditCardNumberInput() ).toBeVisible();
+		await expect(
+			this.debitOrCreditCardNumberInput(),
+			'Assert debit or credit card number input is visible'
+		).toBeVisible();
 		await this.debitOrCreditCardNumberInput().fill( card.card_number );
 
-		await expect( this.debitOrCreditCardExpirationInput() ).toBeVisible();
+		await expect(
+			this.debitOrCreditCardExpirationInput(),
+			'Assert debit or credit card expiration input is visible'
+		).toBeVisible();
 		await this.debitOrCreditCardExpirationInput().fill(
 			card.expiration_date
 		);
 
-		await expect( this.debitOrCreditCardCSCInput() ).toBeVisible();
+		await expect(
+			this.debitOrCreditCardCSCInput(),
+			'Assert debit or credit card CSC input is visible'
+		).toBeVisible();
 		await this.debitOrCreditCardCSCInput().fill( card.card_cvv );
 
-		await expect( this.debitOrCreditCardPayNowButton() ).toBeVisible();
+		await expect(
+			this.debitOrCreditCardPayNowButton(),
+			'Assert debit or credit card pay now button is visible'
+		).toBeVisible();
 		await this.debitOrCreditCardPayNowButton().click();
 	};
 
@@ -469,24 +514,42 @@ export class PayPalUiClassic extends PayPalUi {
 	completeStandardCardButtonPayment = async (
 		card: WooCommerce.CreditCard
 	) => {
-		await expect( this.standardCardButtonGateway() ).toBeVisible();
+		await expect(
+			this.standardCardButtonGateway(),
+			'Assert standard card button gateway is visible'
+		).toBeVisible();
 		await this.standardCardButtonGateway().click();
 
-		await expect( this.standardCardButton() ).toBeVisible();
+		await expect(
+			this.standardCardButton(),
+			'Assert standard card button is visible'
+		).toBeVisible();
 		await this.standardCardButton().click();
 
-		await expect( this.standardCardButtonNumberInput() ).toBeVisible();
+		await expect(
+			this.standardCardButtonNumberInput(),
+			'Assert standard card button number input is visible'
+		).toBeVisible();
 		await this.standardCardButtonNumberInput().fill( card.card_number );
 
-		await expect( this.standardCardButtonExpirationInput() ).toBeVisible();
+		await expect(
+			this.standardCardButtonExpirationInput(),
+			'Assert standard card button expiration input is visible'
+		).toBeVisible();
 		await this.standardCardButtonExpirationInput().fill(
 			card.expiration_date
 		);
 
-		await expect( this.standardCardButtonCSCInput() ).toBeVisible();
+		await expect(
+			this.standardCardButtonCSCInput(),
+			'Assert standard card button CSC input is visible'
+		).toBeVisible();
 		await this.standardCardButtonCSCInput().fill( card.card_cvv );
 
-		await expect( this.standardCardButtonPayNowButton() ).toBeVisible();
+		await expect(
+			this.standardCardButtonPayNowButton(),
+			'Assert standard card button pay now button is visible'
+		).toBeVisible();
 		await this.standardCardButtonPayNowButton().click();
 	};
 
@@ -496,10 +559,16 @@ export class PayPalUiClassic extends PayPalUi {
 	 * @param birthDate
 	 */
 	completePayUponInvoicePayment = async ( birthDate: string ) => {
-		await expect( this.payUponInvoiceGateway() ).toBeVisible();
+		await expect(
+			this.payUponInvoiceGateway(),
+			'Assert pay upon invoice gateway is visible'
+		).toBeVisible();
 		await this.payUponInvoiceGateway().click();
 
-		await expect( this.payUponInvoiceBirthDateInput() ).toBeVisible();
+		await expect(
+			this.payUponInvoiceBirthDateInput(),
+			'Assert pay upon invoice birth date input is visible'
+		).toBeVisible();
 		await this.payUponInvoiceBirthDateInput().click();
 		await this.page.keyboard.type( birthDate ); // Trick to properly fill date
 
@@ -508,20 +577,35 @@ export class PayPalUiClassic extends PayPalUi {
 
 	addCardPaymentMethod = async ( payment: Pcp.Payment ) => {
 		const { card } = payment;
-		await expect( this.debitCreditCardsGateway() ).toBeVisible();
+		await expect(
+			this.debitCreditCardsGateway(),
+			'Assert debit credit cards gateway is visible'
+		).toBeVisible();
 		await this.debitCreditCardsGateway().click();
 
-		await expect( this.acdcCardNumberInput() ).toBeVisible();
+		await expect(
+			this.acdcCardNumberInput(),
+			'Assert ACDC card number input is visible'
+		).toBeVisible();
 		await this.acdcCardNumberInput().fill( card.card_number );
 
-		await expect( this.acdcCardExpirationInput() ).toBeVisible();
+		await expect(
+			this.acdcCardExpirationInput(),
+			'Assert ACDC card expiration input is visible'
+		).toBeVisible();
 		await this.acdcCardExpirationInput().click();
 		await this.page.keyboard.type( card.expiration_date ); // Trick to properly fill date
 
-		await expect( this.acdcCardCvvInput() ).toBeVisible();
+		await expect(
+			this.acdcCardCvvInput(),
+			'Assert ACDC card CVV input is visible'
+		).toBeVisible();
 		await this.acdcCardCvvInput().fill( card.card_cvv );
 
-		await expect( this.addPaymentMethodButton() ).toBeVisible();
+		await expect(
+			this.addPaymentMethodButton(),
+			'Assert add payment method button is visible'
+		).toBeVisible();
 		await this.addPaymentMethodButton().click();
 	};
 

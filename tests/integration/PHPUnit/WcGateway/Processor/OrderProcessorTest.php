@@ -15,7 +15,7 @@ use WooCommerce\PayPalCommerce\WcGateway\Exception\PayPalOrderMissingException;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\AuthorizedPaymentsProcessor;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
-use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
+
 
 class OrderProcessorTest extends IntegrationMockedTestCase
 {
@@ -96,23 +96,12 @@ class OrderProcessorTest extends IntegrationMockedTestCase
 		$virtualProduct->set_status('publish');
 		$virtualProduct->save();
 
+		update_option( 'woocommerce-ppcp-data-settings', array( 'capture_virtual_orders' => true ) );
+
 		$mockOrderEndpoint = $this->mockOrderEndpoint('AUTHORIZE', false, true);
 		$sessionHandler = \Mockery::mock(SessionHandler::class);
 		$paypalOrder = $mockOrderEndpoint->order('test-order-id');
 		$sessionHandler->shouldReceive('order')->andReturn($paypalOrder);
-
-		$mockSettings = \Mockery::mock(Settings::class);
-		$mockSettings->shouldReceive('has')->andReturnUsing(function($key) {
-			return in_array($key, ['capture_for_virtual_only']);
-		});
-		$mockSettings->shouldReceive('get')->andReturnUsing(function($key) {
-			$defaults = [
-				'capture_for_virtual_only' => true,
-				'prefix' => '',
-				'subtotal_mismatch_behavior' => 'disable',
-			];
-			return $defaults[$key] ?? null;
-		});
 
 		$mockAuthorizedPaymentsProcessor = \Mockery::mock(AuthorizedPaymentsProcessor::class);
 		$mockAuthorizedPaymentsProcessor->shouldReceive('capture_authorized_payment')
@@ -121,7 +110,6 @@ class OrderProcessorTest extends IntegrationMockedTestCase
 
 		$container = $this->setupTestContainer($mockOrderEndpoint, [
 			'session.handler' => fn() => $sessionHandler,
-			'wcgateway.settings' => fn() => $mockSettings,
 			'wcgateway.processor.authorized-payments' => fn() => $mockAuthorizedPaymentsProcessor,
 		]);
 
@@ -140,6 +128,7 @@ class OrderProcessorTest extends IntegrationMockedTestCase
 		$this->assertNotEmpty($wcOrder->get_transaction_id());
 
 		wp_delete_post($virtualProduct->get_id(), true);
+		delete_option( 'woocommerce-ppcp-data-settings' );
 	}
 
 	public function testPaymentDeclined(): void
