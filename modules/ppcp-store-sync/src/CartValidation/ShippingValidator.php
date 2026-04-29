@@ -32,8 +32,6 @@ class ShippingValidator implements \WooCommerce\PayPalCommerce\StoreSync\CartVal
     /**
      * List of shipping countries that are supported by the agentic integration.
      * Managed on plugin-side for extra code and test stability.
-     *
-     * If this list is expanded, also update the message in {@see validate_country()}
      */
     private const PAYPAL_SUPPORTED_COUNTRIES = array('US');
     private ProductManager $product_manager;
@@ -220,9 +218,6 @@ class ShippingValidator implements \WooCommerce\PayPalCommerce\StoreSync\CartVal
         if (!$this->is_country_allowed($country_code)) {
             return ValidationIssue::create_shipping_unavailable(sprintf('Shipping to %s is not available', $country_code))->user_message(sprintf('We do not ship to %s.', $this->get_country_name($country_code)))->for_field('shipping_address.country_code')->add_resolution(ResolutionOption::create_update_address()->label('Use a different shipping country')->priority(Priority::HIGH));
         }
-        if ($this->get_wc_countries() && !$this->is_paypal_supported_country($country_code)) {
-            return ValidationIssue::create_shipping_unavailable(sprintf('Shipping to %s is not supported by PayPal', $country_code))->user_message('PayPal currently only supports shipping to the United States.')->for_field('shipping_address.country_code')->add_resolution(ResolutionOption::create_update_address()->label('Use a supported shipping country')->priority(Priority::HIGH));
-        }
         return null;
     }
     /**
@@ -236,6 +231,9 @@ class ShippingValidator implements \WooCommerce\PayPalCommerce\StoreSync\CartVal
         $wc_countries = $this->get_wc_countries();
         if (!$wc_countries) {
             return \true;
+        }
+        if (!$this->is_paypal_supported_country($country_code)) {
+            return \false;
         }
         $allowed_countries = $wc_countries->get_shipping_countries();
         if (empty($allowed_countries)) {
