@@ -5,7 +5,7 @@ import { expect, getLast4CardDigits } from '@inpsyde/playwright-utils/build';
 /**
  * Internal dependencies
  */
-import { Pcp } from '../../resources';
+import { Pcp, ShopOrder } from '../../resources';
 import { PayPalPopup } from './paypal-popup';
 import { PayPalUi } from './paypal-ui';
 
@@ -514,9 +514,11 @@ export class PayPalUiClassic extends PayPalUi {
 	 * Completes payment with Standard Card Button (vaulting disabled)
 	 *
 	 * @param card
+	 * @param customer
 	 */
 	completeStandardCardButtonPayment = async (
-		card: WooCommerce.CreditCard
+		card: WooCommerce.CreditCard,
+		customer?: ShopOrder[ 'customer' ]
 	) => {
 		await expect(
 			this.standardCardButtonGateway(),
@@ -550,63 +552,42 @@ export class PayPalUiClassic extends PayPalUi {
 		).toBeVisible();
 		await this.standardCardButtonCSCInput().fill( card.card_cvv );
 
-		// Latin America (Mexico) uses minimal mode: PayPal shows its own billing form inside the modal
-		// Fill those fields from the WC checkout form when they are visible.
+		// Latin America (Mexico) uses minimal mode: PayPal shows its own billing form inside the modal.
 		const firstNameInput = this.standardCardButtonFirstNameInput();
-		if ( await firstNameInput.isVisible() ) {
-			const firstName = await this.page
-				.locator( '#billing_first_name' )
-				.inputValue();
-			const lastName = await this.page
-				.locator( '#billing_last_name' )
-				.inputValue();
-			const street = await this.page
-				.locator( '#billing_address_1' )
-				.inputValue();
-			const city = await this.page
-				.locator( '#billing_city' )
-				.inputValue();
-			const postcode = await this.page
-				.locator( '#billing_postcode' )
-				.inputValue();
-			const email = await this.page
-				.locator( '#billing_email' )
-				.inputValue();
-			const phone = await this.page
-				.locator( '#billing_phone' )
-				.inputValue()
-				.catch( () => '' );
-			const country = await this.page
-				.locator( '#billing_country' )
-				.inputValue()
-				.catch( () => '' );
-			const stateValue = await this.page
-				.locator( '#billing_state' )
-				.inputValue()
-				.catch( () => '' );
-
-			// Set country first — PayPal populates state options based on country.
+		if ( ( await firstNameInput.isVisible() ) && customer?.billing ) {
+			const { billing } = customer;
 			const countryInput = this.standardCardButtonCountryInput();
-			// Wait for the billing address fields to fully load.
 			const stateInput = this.standardCardButtonStateInput();
 			await stateInput.waitFor( { state: 'visible', timeout: 30000 } );
 
-			if ( country ) {
-				await countryInput.selectOption( { value: country }, { force: true } );
+			if ( billing.country ) {
+				await countryInput.selectOption(
+					{ value: billing.country },
+					{ force: true }
+				);
 			}
 
-			await firstNameInput.fill( firstName );
-			await this.standardCardButtonLastNameInput().fill( lastName );
-			await this.standardCardButtonStreetInput().fill( street );
-			await this.standardCardButtonCityInput().fill( city );
-			await this.standardCardButtonZipCodeInput().fill( postcode );
-			if ( email ) {
-				await this.standardCardButtonEmailInput().fill( email );
+			await firstNameInput.fill( billing.first_name );
+			await this.standardCardButtonLastNameInput().fill(
+				billing.last_name
+			);
+			await this.standardCardButtonStreetInput().fill(
+				billing.address_1
+			);
+			await this.standardCardButtonCityInput().fill( billing.city );
+			await this.standardCardButtonZipCodeInput().fill(
+				billing.postcode
+			);
+			if ( billing.email ) {
+				const emailInput = this.standardCardButtonEmailInput();
+				if ( await emailInput.isVisible() ) {
+					await emailInput.fill( billing.email );
+				}
 			}
-			if ( phone ) {
+			if ( billing.phone ) {
 				const phoneInput = this.standardCardButtonPhoneInput();
 				if ( await phoneInput.isVisible() ) {
-					await phoneInput.fill( phone );
+					await phoneInput.fill( billing.phone );
 				}
 			}
 
@@ -614,19 +595,24 @@ export class PayPalUiClassic extends PayPalUi {
 				( el: HTMLSelectElement ) =>
 					el.tagName.toLowerCase() === 'select'
 						? Array.from( el.options )
-							.filter( ( o ) => o.value )
-							.map( ( o ) => ( { v: o.value, t: o.text } ) )
+								.filter( ( o ) => o.value )
+								.map( ( o ) => ( { v: o.value, t: o.text } ) )
 						: []
 			);
-			const code = stateValue.trim();
+			const stateCode = billing.state?.trim() ?? '';
 			if ( stateOptions.length > 0 ) {
 				const match =
-					stateOptions.find( ( o ) => o.v === code ) ||
-					stateOptions.find( ( o ) => o.t.toLowerCase().includes( code.toLowerCase() ) ) ||
+					stateOptions.find( ( o ) => o.v === stateCode ) ||
+					stateOptions.find( ( o ) =>
+						o.t.toLowerCase().includes( stateCode.toLowerCase() )
+					) ||
 					stateOptions[ 0 ];
-				await stateInput.selectOption( { value: match.v }, { force: true } );
-			} else if ( code ) {
-				await stateInput.fill( code );
+				await stateInput.selectOption(
+					{ value: match.v },
+					{ force: true }
+				);
+			} else if ( stateCode ) {
+				await stateInput.fill( stateCode );
 			}
 		}
 

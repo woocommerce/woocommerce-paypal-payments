@@ -10,7 +10,7 @@ import {
 /**
  * Internal dependencies
  */
-import { PayPalAccount, Pcp } from '../../resources';
+import { PayPalAccount, Pcp, ShopOrder } from '../../resources';
 import { PayPalPopup } from './paypal-popup';
 import { GooglePayPopup } from './google-pay-popup';
 import { PayPalApi } from '../paypal-api';
@@ -292,12 +292,14 @@ export class PayPalUi {
 	 * @param data
 	 * @param data.payment
 	 * @param data.merchant
+	 * @param data.customer
 	 */
 	makePayment = async ( data: {
 		payment: Pcp.Payment;
 		merchant?: Pcp.Merchant;
+		customer?: ShopOrder[ 'customer' ];
 	} ) => {
-		const { payment, merchant } = data;
+		const { payment, merchant, customer } = data;
 		const { gateway, payPalAccount } = payment;
 		const { shortcut } = gateway;
 		let popup: PayPalPopup;
@@ -357,7 +359,8 @@ export class PayPalUi {
 				// Standard Card Button
 				if ( gateway.id === 'ppcp-card-button-gateway' ) {
 					await this.completeStandardCardButtonPayment(
-						payment.card
+						payment.card,
+						customer
 					);
 					break;
 				}
