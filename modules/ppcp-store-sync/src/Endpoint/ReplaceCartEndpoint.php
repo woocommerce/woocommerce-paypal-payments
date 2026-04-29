@@ -132,7 +132,7 @@ class ReplaceCartEndpoint extends AgenticRestEndpoint {
 	 * @param PayPalCart $cart The new cart data.
 	 * @return bool True if a new token should be created.
 	 */
-	private function needs_new_token( string $existing_token, $cart ): bool {
+	private function needs_new_token( string $existing_token, PayPalCart $cart ): bool {
 		// Case 1: No existing token.
 		if ( empty( $existing_token ) ) {
 			// Only attempt to create if the cart is valid (no validation issues).
