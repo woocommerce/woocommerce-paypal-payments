@@ -39,11 +39,7 @@ class GetCartEndpointTest extends AgenticEndpointTestCase {
 
 		// Mock response factory.
 		$response_factory->allows( 'from_cart' )
-			->andReturnUsing( fn( $cart, $cart_id ) => new CartResponse(
-				$cart,
-				array(),
-				$cart_id
-			) );
+			->andReturnUsing( fn( $cart, $cart_id ) => CartResponse::create( $cart, $cart_id ) );
 
 		$endpoint = new GetCartEndpoint(
 			$mocks['auth_provider'],
