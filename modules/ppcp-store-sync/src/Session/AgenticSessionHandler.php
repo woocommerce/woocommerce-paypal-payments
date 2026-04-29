@@ -126,7 +126,7 @@ class AgenticSessionHandler {
 
 		$data = array(
 			'cart'     => $cart->to_array(),
-			'ec_token' => $existing['ec_token'],
+			'ec_token' => $ec_token ?? $existing['ec_token'],
 			'created'  => $existing['created'],
 			'modified' => time(),
 		);
