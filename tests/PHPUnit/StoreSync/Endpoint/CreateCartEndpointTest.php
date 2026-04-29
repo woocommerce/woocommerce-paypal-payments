@@ -5,7 +5,7 @@ namespace WooCommerce\PayPalCommerce\StoreSync\Endpoint;
 
 use WP_REST_Request;
 
-use WooCommerce\PayPalCommerce\StoreSync\Response\NewCartResponse;
+use WooCommerce\PayPalCommerce\StoreSync\Response\CartResponse;
 use WooCommerce\PayPalCommerce\StoreSync\Schema\PayPalCart;
 
 use function Brain\Monkey\Functions\when;
@@ -44,13 +44,7 @@ class CreateCartEndpointTest extends AgenticEndpointTestCase {
 
 		// Mock response factory.
 		$response_factory->allows( 'new_cart' )
-			->andReturnUsing( fn( $cart, $cart_id, $ec_token ) => new NewCartResponse(
-				$cart,
-				$cart_id,
-				$ec_token,
-				array(),
-				null
-			) );
+			->andReturnUsing( fn( $cart, $cart_id, $ec_token ) => CartResponse::create_new( $cart, $cart_id, $ec_token ) );
 
 		$endpoint = new CreateCartEndpoint(
 			$mocks['auth_provider'],
