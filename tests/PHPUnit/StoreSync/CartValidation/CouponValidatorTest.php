@@ -68,8 +68,8 @@ class CouponValidatorTest extends TestCase
 	{
 		// This test requires actual WooCommerce classes, so skip in unit test environment.
 		// TODO: This test does not run in a unit-test environment. How is it executed?
-		if (!class_exists('WC_Coupon') || !class_exists('WC_Discounts')) {
-			$this->markTestSkipped('WooCommerce classes not available in unit test environment');
+		if ( ! class_exists( 'WC_Coupon' ) || ! class_exists( 'WC_Discounts' ) ) {
+			$this->markTestSkipped( 'WooCommerce classes not available in unit test environment' );
 		}
 
 		// Stub wc_coupons_enabled to return false for this test.
