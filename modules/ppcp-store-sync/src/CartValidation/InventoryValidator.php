@@ -14,6 +14,7 @@ use WooCommerce\PayPalCommerce\StoreSync\Enums\Priority;
 use WooCommerce\PayPalCommerce\StoreSync\Helper\ProductManager;
 use WooCommerce\PayPalCommerce\StoreSync\Schema\PayPalCart;
 use WooCommerce\PayPalCommerce\StoreSync\Schema\CartItem;
+use WooCommerce\PayPalCommerce\StoreSync\Validation\Context\InventoryIssueContext;
 use WooCommerce\PayPalCommerce\StoreSync\Validation\Resolution\ResolutionOption;
 use WooCommerce\PayPalCommerce\StoreSync\Validation\ValidationIssue;
 
@@ -56,6 +57,10 @@ class InventoryValidator implements ValidatorInterface {
 			return ValidationIssue::create_item_out_of_stock( 'Product is no longer available' )
 				->user_message( sprintf( '%s is currently out of stock.', $product->get_name() ) )
 				->for_field( $field )
+				->add_context(
+					InventoryIssueContext::create_item_out_of_stock()
+						->item_id( $item->item_id() )
+				)
 				->add_resolution(
 					ResolutionOption::create_remove_item()
 						->label( 'Remove from cart' )
@@ -77,6 +82,12 @@ class InventoryValidator implements ValidatorInterface {
 					)
 				)
 				->for_field( $field )
+				->add_context(
+					InventoryIssueContext::create_insufficient_inventory()
+						->item_id( $item->item_id() )
+						->available_quantity( $stock_quantity )
+						->requested_quantity( $item->quantity() )
+				)
 				->add_resolution(
 					ResolutionOption::create_modify_cart()
 						->label( sprintf( 'Reduce quantity to %d', $stock_quantity ) )
