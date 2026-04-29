@@ -11,12 +11,11 @@ use WooCommerce\PayPalCommerce\StoreSync\CartValidation\CouponValidator\CouponVa
 use WooCommerce\PayPalCommerce\StoreSync\CartValidation\CouponValidator\CouponContextBuilder;
 use WooCommerce\PayPalCommerce\StoreSync\CartValidation\CouponValidator\DiscountCalculator;
 use WooCommerce\PayPalCommerce\StoreSync\CartValidation\CouponValidator\CouponResolutionBuilder;
-use WooCommerce\PayPalCommerce\TestCase;
 
 /**
  * @covers \WooCommerce\PayPalCommerce\StoreSync\CartValidation\CouponValidator\CouponValidator
  */
-class CouponValidatorTest extends TestCase
+class CouponValidatorTest extends ValidationTest
 {
 
 	private CouponValidator $validator;
@@ -85,14 +84,8 @@ class CouponValidatorTest extends TestCase
 		$this->assertIsArray($result);
 		$this->assertCount(1, $result);
 
-		$issue = $result[0];
-		$data = $issue->to_array();
-
-		$this->assertSame('PRICING_ERROR', $data['code']);
-		$this->assertSame('BUSINESS_RULE', $data['type']);
-		$this->assertSame('Coupons are not enabled', $data['message']);
-		$this->assertStringContainsString('does not accept coupon codes', $data['user_message']);
-		$this->assertSame('coupons', $data['field']);
+		$data = $result[0]->to_array();
+		$this->assertValidationIssue($data, 'PRICING_ERROR', 'BUSINESS_RULE', 'coupons', 'Coupons are not enabled');
 	}
 
 	public function test_validate_filters_only_apply_actions(): void
@@ -117,9 +110,7 @@ class CouponValidatorTest extends TestCase
 			->for_field( 'coupons[0]' );
 
 		$data = $issue->to_array();
-
-		$this->assertSame( 'PRICING_ERROR', $data['code'] );
-		$this->assertSame( 'BUSINESS_RULE', $data['type'] );
+		$this->assertValidationIssue( $data, 'PRICING_ERROR', 'BUSINESS_RULE' );
 	}
 
 	public function test_coupon_invalid_truncates_long_messages(): void
@@ -131,6 +122,7 @@ class CouponValidatorTest extends TestCase
 			->user_message( $long_user_message );
 
 		$data = $issue->to_array();
+		$this->assertValidationIssue( $data, 'PRICING_ERROR', 'BUSINESS_RULE' );
 
 		$this->assertSame( 255, strlen( $data['message'] ) );
 		$this->assertSame( 500, strlen( $data['user_message'] ) );
