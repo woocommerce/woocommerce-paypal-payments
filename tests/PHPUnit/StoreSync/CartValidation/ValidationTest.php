@@ -4,13 +4,9 @@ declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\StoreSync\CartValidation;
 
-use WooCommerce\PayPalCommerce\StoreSync\Helper\ProductManager;
 use WooCommerce\PayPalCommerce\StoreSync\Schema\PayPalCart;
 use WooCommerce\PayPalCommerce\StoreSync\Validation\ValidationIssue;
 use WooCommerce\PayPalCommerce\TestCase;
-
-use function Brain\Monkey\Functions\when;
-use function Brain\Monkey\Filters\expectApplied;
 
 abstract class ValidationTest extends TestCase {
 	/**
@@ -37,6 +33,56 @@ abstract class ValidationTest extends TestCase {
 		if ( $expected_message_substring !== null ) {
 			$this->assertStringContainsString( $expected_message_substring, $actual_issue['message'] );
 		}
+	}
+
+	/**
+	 * Asserts that a validation issue has a context array containing an entry whose
+	 * `specific_issue` value matches $expected_specific_issue, and returns that entry.
+	 *
+	 * @param array  $actual_issue            The issue array from ValidationIssue::to_array().
+	 * @param string $expected_specific_issue The expected value of the `specific_issue` key.
+	 * @return array The matched context entry (for further assertions by the caller).
+	 */
+	protected function assertIssueContext( array $actual_issue, string $expected_specific_issue ): array {
+		$this->assertArrayHasKey( 'context', $actual_issue, 'Validation issue has no "context" key' );
+		$this->assertIsArray( $actual_issue['context'], '"context" must be an array' );
+		$this->assertNotEmpty( $actual_issue['context'], '"context" must be a non-empty array' );
+
+		$found_values = array();
+
+		foreach ( $actual_issue['context'] as $entry ) {
+			$this->assertIsArray( $entry, 'Each context entry must be an array' );
+			$this->assertArrayHasKey( 'specific_issue', $entry, 'Each context entry must have a "specific_issue" key' );
+
+			if ( $entry['specific_issue'] === $expected_specific_issue ) {
+				return $entry;
+			}
+
+			$found_values[] = $entry['specific_issue'];
+		}
+
+		$this->fail(
+			sprintf(
+				'No context entry found with specific_issue "%s". Found: [%s]',
+				$expected_specific_issue,
+				implode( ', ', $found_values )
+			)
+		);
+	}
+
+	protected function create_cart( string $item_id = '1', int $quantity = 1, string $name = 'Test Product' ): PayPalCart {
+		return PayPalCart::from_array(
+			array(
+				'items'          => array(
+					array(
+						'item_id'  => $item_id,
+						'quantity' => $quantity,
+						'name'     => $name,
+					),
+				),
+				'payment_method' => 'paypal',
+			)
+		);
 	}
 
 	/**
