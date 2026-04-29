@@ -11,73 +11,64 @@ namespace WooCommerce\PayPalCommerce\StoreSync\Response;
 use WC_Cart;
 use WC_Order;
 use WooCommerce\PayPalCommerce\StoreSync\CartValidation\CouponValidator\AppliedCouponsBuilder;
-use WooCommerce\PayPalCommerce\StoreSync\Schema\PayPalCart;
 use WooCommerce\PayPalCommerce\StoreSync\Helper\AgenticCartBuilder;
+use WooCommerce\PayPalCommerce\StoreSync\Helper\ShippingOptionsBuilder;
+use WooCommerce\PayPalCommerce\StoreSync\Schema\PayPalCart;
 class ResponseFactory
 {
-    /**
-     * Cart builder service.
-     *
-     * @var AgenticCartBuilder
-     */
     private AgenticCartBuilder $cart_builder;
-    /**
-     * Applied coupons builder service.
-     *
-     * @var AppliedCouponsBuilder
-     */
     private AppliedCouponsBuilder $applied_coupons_builder;
+    private ShippingOptionsBuilder $shipping_options_builder;
     /**
      * Constructor.
      *
-     * @param AgenticCartBuilder    $cart_builder Cart builder service.
-     * @param AppliedCouponsBuilder $applied_coupons_builder Applied coupons builder service.
+     * @param AgenticCartBuilder     $cart_builder             Cart builder service.
+     * @param AppliedCouponsBuilder  $applied_coupons_builder  Applied coupons builder service.
+     * @param ShippingOptionsBuilder $shipping_options_builder Shipping options builder service.
      */
-    public function __construct(AgenticCartBuilder $cart_builder, AppliedCouponsBuilder $applied_coupons_builder)
+    public function __construct(AgenticCartBuilder $cart_builder, AppliedCouponsBuilder $applied_coupons_builder, ShippingOptionsBuilder $shipping_options_builder)
     {
         $this->cart_builder = $cart_builder;
         $this->applied_coupons_builder = $applied_coupons_builder;
+        $this->shipping_options_builder = $shipping_options_builder;
     }
     /**
      * Create a new cart response (status: CREATED).
      *
-     * @param PayPalCart $cart The cart object.
+     * @param PayPalCart $cart    The cart object.
      * @param string     $cart_id The cart ID.
-     * @param string     $token The payment token.
-     * @return NewCartResponse The response object.
+     * @param string     $token   The payment token.
+     * @return CartResponse The response object.
      */
-    public function new_cart(PayPalCart $cart, string $cart_id, string $token): \WooCommerce\PayPalCommerce\StoreSync\Response\NewCartResponse
+    public function new_cart(PayPalCart $cart, string $cart_id, string $token): \WooCommerce\PayPalCommerce\StoreSync\Response\CartResponse
     {
         $wc_cart = $this->build_wc_cart_or_null($cart);
-        $applied_coupons = $this->build_applied_coupons($cart);
-        return new \WooCommerce\PayPalCommerce\StoreSync\Response\NewCartResponse($cart, $cart_id, $token, $applied_coupons, $wc_cart);
+        return \WooCommerce\PayPalCommerce\StoreSync\Response\CartResponse::create_new($cart, $cart_id, $token)->wc_cart($wc_cart)->applied_coupons($this->build_applied_coupons($cart))->shipping_options($this->shipping_options_builder->build($wc_cart));
     }
     /**
      * Create a paid cart response.
      *
-     * @param WC_Order   $order The WooCommerce order.
-     * @param PayPalCart $cart The cart object.
+     * @param WC_Order   $order   The WooCommerce order.
+     * @param PayPalCart $cart    The cart object.
      * @param string     $cart_id The cart ID.
-     * @return PaidCartResponse The response object.
+     * @return CartResponse The response object.
      */
-    public function from_order(WC_Order $order, PayPalCart $cart, string $cart_id): \WooCommerce\PayPalCommerce\StoreSync\Response\PaidCartResponse
+    public function from_order(WC_Order $order, PayPalCart $cart, string $cart_id): \WooCommerce\PayPalCommerce\StoreSync\Response\CartResponse
     {
         $wc_cart = $this->build_wc_cart_or_null($cart);
-        $applied_coupons = $this->build_applied_coupons($cart);
-        return new \WooCommerce\PayPalCommerce\StoreSync\Response\PaidCartResponse($cart, $cart_id, $order, $applied_coupons, $wc_cart);
+        return \WooCommerce\PayPalCommerce\StoreSync\Response\CartResponse::create_completed($cart, $cart_id, $order)->wc_cart($wc_cart)->applied_coupons($this->build_applied_coupons($cart))->shipping_options($this->shipping_options_builder->build($wc_cart));
     }
     /**
      * Create a basic cart response.
      *
-     * @param PayPalCart $cart The cart object.
+     * @param PayPalCart $cart    The cart object.
      * @param string     $cart_id The cart ID.
      * @return CartResponse The response object.
      */
     public function from_cart(PayPalCart $cart, string $cart_id): \WooCommerce\PayPalCommerce\StoreSync\Response\CartResponse
     {
         $wc_cart = $this->build_wc_cart_or_null($cart);
-        $applied_coupons = $this->build_applied_coupons($cart);
-        return new \WooCommerce\PayPalCommerce\StoreSync\Response\CartResponse($cart, $applied_coupons, $cart_id, $wc_cart);
+        return \WooCommerce\PayPalCommerce\StoreSync\Response\CartResponse::create($cart, $cart_id)->wc_cart($wc_cart)->applied_coupons($this->build_applied_coupons($cart))->shipping_options($this->shipping_options_builder->build($wc_cart));
     }
     /**
      * Build WC_Cart from PayPalCart.

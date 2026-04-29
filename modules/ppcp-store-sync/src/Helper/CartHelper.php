@@ -66,14 +66,16 @@ class CartHelper
         }, 0.0);
     }
     /**
-     * Formats a price value to two decimal places.
+     * Formats a price value for an API response.
      *
-     * @param float $value The price value to format.
+     * PayPal expects monetary values to be strings with two decimal places.
+     *
+     * @param int|float|string $value The price value to format.
      * @return string The formatted price (e.g., "123.45").
      */
-    public static function format_decimal(float $value): string
+    public static function format_decimal($value): string
     {
-        return number_format($value, 2, '.', '');
+        return number_format((float) $value, 2, '.', '');
     }
     public static function full_customer_name(PayPalCart $cart, string $default = ''): string
     {
@@ -154,6 +156,6 @@ class CartHelper
      */
     public static function money(string $currency_code, float $value): array
     {
-        return array('currency_code' => $currency_code, 'value' => number_format($value, 2));
+        return array('currency_code' => $currency_code, 'value' => self::format_decimal($value));
     }
 }
