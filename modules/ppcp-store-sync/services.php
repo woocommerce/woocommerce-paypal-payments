@@ -35,6 +35,7 @@ use WooCommerce\PayPalCommerce\StoreSync\Registration\RegistrationEligibility;
 use WooCommerce\PayPalCommerce\StoreSync\Inspector\InspectionFormHandler;
 use WooCommerce\PayPalCommerce\StoreSync\Inspector\InspectionStatusPage;
 use WooCommerce\PayPalCommerce\StoreSync\Helper\AgenticCheckoutProcessor;
+use WooCommerce\PayPalCommerce\StoreSync\Helper\ShippingOptionsBuilder;
 use WooCommerce\PayPalCommerce\StoreSync\Helper\PayPalOrderManager;
 use WooCommerce\PayPalCommerce\StoreSync\Helper\AgenticCartBuilder;
 use WooCommerce\PayPalCommerce\StoreSync\Helper\ProductManager;
@@ -107,6 +108,9 @@ return array(
     'agentic.helper.cart-builder' => static function (ContainerInterface $c): AgenticCartBuilder {
         return new AgenticCartBuilder($c->get('woocommerce.core'), $c->get('agentic.helper.product-manager'), $c->get('button.session.factory.card-data'), $c->get('api.factory.purchase-unit'), $c->get('agentic.logger'));
     },
+    'agentic.helper.shipping-options-builder' => static function (): ShippingOptionsBuilder {
+        return new ShippingOptionsBuilder();
+    },
     'agentic.helper.checkout-processor' => static function (ContainerInterface $c): AgenticCheckoutProcessor {
         return new AgenticCheckoutProcessor($c->get('agentic.helper.paypal-order-manager'), $c->get('button.helper.wc-order-creator'), $c->get('agentic.helper.cart-builder'), $c->get('agentic.response.applied-coupons-builder'));
     },
@@ -149,7 +153,7 @@ return array(
         return new AppliedCouponsBuilder($c->get('agentic.validator.coupon.discount-calculator'));
     },
     'agentic.response.factory' => static function (ContainerInterface $c): ResponseFactory {
-        return new ResponseFactory($c->get('agentic.helper.cart-builder'), $c->get('agentic.response.applied-coupons-builder'));
+        return new ResponseFactory($c->get('agentic.helper.cart-builder'), $c->get('agentic.response.applied-coupons-builder'), $c->get('agentic.helper.shipping-options-builder'));
     },
     // REST endpoints.
     'agentic.rest.create_cart' => static function (ContainerInterface $c): CreateCartEndpoint {

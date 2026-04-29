@@ -4,6 +4,7 @@ namespace WooCommerce\PayPalCommerce\StoreSync\Ingestion;
 
 use WC_Product;
 use WC_Product_Variation;
+use WooCommerce\PayPalCommerce\StoreSync\Helper\CartHelper;
 class ProductsPayload
 {
     private string $merchant_store_url;
@@ -212,6 +213,6 @@ class ProductsPayload
         if (!$price || !is_numeric($price)) {
             return '';
         }
-        return number_format((float) $price, 2, '.', '') . ' ' . get_woocommerce_currency();
+        return CartHelper::format_decimal($price) . ' ' . get_woocommerce_currency();
     }
 }
