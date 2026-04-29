@@ -17,6 +17,8 @@ use WP_REST_Response;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\StoreSync\Errors\AgenticError;
 use WooCommerce\PayPalCommerce\StoreSync\Errors\Http\InternalServerError;
+use WooCommerce\PayPalCommerce\StoreSync\Validation\Context\PaymentErrorContext;
+use WooCommerce\PayPalCommerce\StoreSync\Validation\ValidationIssue;
 use WooCommerce\PayPalCommerce\StoreSync\Schema\PaymentMethod;
 use WooCommerce\PayPalCommerce\StoreSync\Helper\AgenticSessionManager;
 use WooCommerce\PayPalCommerce\StoreSync\Helper\AgenticCheckoutProcessor;
@@ -89,7 +91,9 @@ class CheckoutEndpoint extends \WooCommerce\PayPalCommerce\StoreSync\Endpoint\Ag
         }
         $order = $this->create_wc_order($cart, $payment_method, $session['ec_token']);
         if (is_wp_error($order)) {
-            return $this->error(InternalServerError::from_wp_error($order));
+            $issue = ValidationIssue::create_payment_error($order->get_error_message())->add_context(PaymentErrorContext::create_payment_declined()->decline_reason((string) $order->get_error_code()));
+            $cart_response = $this->response_factory->from_cart($cart->with_validation_issues($issue), $cart_id);
+            return $this->cart_details($cart_response, 200);
         }
         $this->flush_local_cart($cart_id);
         $response = $this->response_factory->from_order($order, $cart, $cart_id);

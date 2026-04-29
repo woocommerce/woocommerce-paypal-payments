@@ -93,14 +93,14 @@ class ShippingValidator implements \WooCommerce\PayPalCommerce\StoreSync\CartVal
     {
         $issues = array();
         if (!$address->address_line_1()) {
-            $issues[] = ValidationIssue::create_invalid_address('Shipping address is missing street address')->user_message('Please provide a complete street address.')->for_field('shipping_address.address_line_1')->add_resolution(ResolutionOption::create_provide_missing_field()->label('Provide street address')->set_meta('field', 'address_line_1'))->add_resolution(ResolutionOption::create_update_address()->label('Update shipping address')->priority(Priority::LOW));
+            $issues[] = ValidationIssue::create_invalid_address('Shipping address is missing street address')->user_message('Please provide a complete street address.')->for_field('shipping_address.address_line_1')->add_context(ShippingErrorContext::create_shipping_address_unserviceable())->add_resolution(ResolutionOption::create_provide_missing_field()->label('Provide street address')->set_meta('field', 'address_line_1'))->add_resolution(ResolutionOption::create_update_address()->label('Update shipping address')->priority(Priority::LOW));
         }
         if (!$address->admin_area_2()) {
-            $issues[] = ValidationIssue::create_invalid_address('Shipping address is missing city')->user_message('Please provide a city.')->for_field('shipping_address.admin_area_2')->add_resolution(ResolutionOption::create_provide_missing_field()->label('Provide city')->set_meta('field', 'admin_area_2'))->add_resolution(ResolutionOption::create_update_address()->label('Update shipping address')->priority(Priority::LOW));
+            $issues[] = ValidationIssue::create_invalid_address('Shipping address is missing city')->user_message('Please provide a city.')->for_field('shipping_address.admin_area_2')->add_context(ShippingErrorContext::create_shipping_address_unserviceable())->add_resolution(ResolutionOption::create_provide_missing_field()->label('Provide city')->set_meta('field', 'admin_area_2'))->add_resolution(ResolutionOption::create_update_address()->label('Update shipping address')->priority(Priority::LOW));
         }
         $postal_code = $address->postal_code();
         if (!$postal_code) {
-            $issues[] = ValidationIssue::create_invalid_address('Shipping address is missing postal code')->user_message('Please provide a postal code.')->for_field('shipping_address.postal_code')->add_resolution(ResolutionOption::create_provide_missing_field()->label('Provide postal code')->set_meta('field', 'postal_code'))->add_resolution(ResolutionOption::create_update_address()->label('Update shipping address')->priority(Priority::LOW));
+            $issues[] = ValidationIssue::create_invalid_address('Shipping address is missing postal code')->user_message('Please provide a postal code.')->for_field('shipping_address.postal_code')->add_context(ShippingErrorContext::create_shipping_address_unserviceable())->add_resolution(ResolutionOption::create_provide_missing_field()->label('Provide postal code')->set_meta('field', 'postal_code'))->add_resolution(ResolutionOption::create_update_address()->label('Update shipping address')->priority(Priority::LOW));
         } else {
             $postal_validation = $this->validate_postal_code_format($postal_code, $address->country_code());
             if ($postal_validation) {
@@ -127,7 +127,7 @@ class ShippingValidator implements \WooCommerce\PayPalCommerce\StoreSync\CartVal
         }
         $is_valid = WC_Validation::is_postcode($postal_code, $country_code);
         if (!$is_valid) {
-            return ValidationIssue::create_invalid_address(sprintf('Invalid postal code format for %s: %s', $country_code, $postal_code))->user_message('Please provide a valid postal code.')->for_field('shipping_address.postal_code')->add_resolution(ResolutionOption::create_update_address()->label('Correct the postal code')->priority(Priority::HIGH)->set_meta('field', 'postal_code'));
+            return ValidationIssue::create_invalid_address(sprintf('Invalid postal code format for %s: %s', $country_code, $postal_code))->user_message('Please provide a valid postal code.')->for_field('shipping_address.postal_code')->add_context(ShippingErrorContext::create_shipping_address_unserviceable())->add_resolution(ResolutionOption::create_update_address()->label('Correct the postal code')->priority(Priority::HIGH)->set_meta('field', 'postal_code'));
         }
         return null;
     }
@@ -216,7 +216,7 @@ class ShippingValidator implements \WooCommerce\PayPalCommerce\StoreSync\CartVal
             return null;
         }
         if (!$this->is_country_allowed($country_code)) {
-            return ValidationIssue::create_shipping_unavailable(sprintf('Shipping to %s is not available', $country_code))->user_message(sprintf('We do not ship to %s.', $this->get_country_name($country_code)))->for_field('shipping_address.country_code')->add_resolution(ResolutionOption::create_update_address()->label('Use a different shipping country')->priority(Priority::HIGH));
+            return ValidationIssue::create_shipping_unavailable(sprintf('Shipping to %s is not available', $country_code))->user_message(sprintf('We do not ship to %s.', $this->get_country_name($country_code)))->for_field('shipping_address.country_code')->add_context(ShippingErrorContext::create_shipping_not_available()->destination_country($country_code))->add_resolution(ResolutionOption::create_update_address()->label('Use a different shipping country')->priority(Priority::HIGH));
         }
         return null;
     }
