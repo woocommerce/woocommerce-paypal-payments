@@ -19,10 +19,10 @@ const guest = guests.mexico;
  */
 const merchant = merchants.mexico;
 
-export const standardCardButtonClassicCheckout: ShopOrder[] = [
+export const bcdcClassicCheckout: ShopOrder[] = [
 	{
 		// https://inpsyde.atlassian.net/browse/PCP-1211
-		title: 'PCP-1211 | Transaction - Classic checkout - Standard Card Button - Default order @Critical',
+		title: 'PCP-1211 | Transaction - Classic checkout - BCDC - Default order @Critical',
 		...orders.default,
 		payment: payments.standardCardButton,
 		customer: guest,
@@ -30,7 +30,7 @@ export const standardCardButtonClassicCheckout: ShopOrder[] = [
 	},
 	{
 		// https://inpsyde.atlassian.net/browse/PCP-2747
-		title: 'PCP-2747 | Transaction - Classic checkout - Standard Card Button - Order by customer',
+		title: 'PCP-2747 | Transaction - Classic checkout - BCDC - Order by customer',
 		...orders.default,
 		payment: payments.standardCardButton,
 		customer,
@@ -38,10 +38,10 @@ export const standardCardButtonClassicCheckout: ShopOrder[] = [
 	},
 ];
 
-export const standardCardButtonClassicCheckoutExcludingTax: ShopOrder[] = [
+export const bcdcClassicCheckoutExcludingTax: ShopOrder[] = [
 	{
 		// https://inpsyde.atlassian.net/browse/PCP-1253
-		title: 'PCP-1253 | Transaction - Classic checkout - Standard Card Button - Order with price excluding tax',
+		title: 'PCP-1253 | Transaction - Classic checkout - BCDC - Order with price excluding tax',
 		...orders.excludingTax,
 		payment: payments.standardCardButton,
 		customer: guest,
@@ -49,10 +49,10 @@ export const standardCardButtonClassicCheckoutExcludingTax: ShopOrder[] = [
 	},
 ];
 
-export const standardCardButtonClassicCheckoutIntentAuthorized: ShopOrder[] = [
+export const bcdcClassicCheckoutIntentAuthorized: ShopOrder[] = [
 	{
 		// https://inpsyde.atlassian.net/browse/PCP-2759
-		title: 'PCP-2759 | Transaction - Classic checkout - Standard Card Button - Order with Intent Authorized',
+		title: 'PCP-2759 | Transaction - Classic checkout - BCDC - Order with Intent Authorized',
 		...orders.default,
 		payment: {
 			...payments.standardCardButton,

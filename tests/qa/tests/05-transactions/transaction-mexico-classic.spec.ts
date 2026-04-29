@@ -11,17 +11,17 @@ import {
 } from '../../resources';
 import { transactionsOnClassicCheckout } from './_test-scenarios';
 import {
-	standardCardButtonClassicCheckout,
-	standardCardButtonClassicCheckoutExcludingTax,
-	standardCardButtonClassicCheckoutIntentAuthorized,
-} from './_test-data/standard-card-button';
+	bcdcClassicCheckout,
+	bcdcClassicCheckoutExcludingTax,
+	bcdcClassicCheckoutIntentAuthorized,
+} from './_test-data/bcdc';
 
 /**
- * Standard Card Button / BCDC
+ * BCDC
  * BCDC is classic-checkout only — block checkout is not supported.
  */
 
-const { payPal, standardCardButton } = gateways;
+const { payPal, standardCardButton: bcdc } = gateways;
 
 test.beforeAll( async ( { utils, pcpApi, wooCommerceApi } ) => {
 	await utils.configureStore( {
@@ -37,15 +37,15 @@ test.beforeAll( async ( { utils, pcpApi, wooCommerceApi } ) => {
 	);
 	await pcpApi.updatePcpPaymentMethods( {
 		[ payPal.id ]: { id: payPal.id, enabled: true },
-		[ standardCardButton.id ]: {
-			id: standardCardButton.id,
+		[ bcdc.id ]: {
+			id: bcdc.id,
 			enabled: true,
 		},
 	} );
 	await wooCommerceApi.deleteAllOrders();
 } );
 
-for ( const testOrder of standardCardButtonClassicCheckout ) {
+for ( const testOrder of bcdcClassicCheckout ) {
 	transactionsOnClassicCheckout( testOrder );
 }
 
@@ -55,7 +55,7 @@ test.describe( () => {
 		await wooCommerceUtils.setTaxes( taxSettings.excluding );
 	} );
 
-	for ( const testOrder of standardCardButtonClassicCheckoutExcludingTax ) {
+	for ( const testOrder of bcdcClassicCheckoutExcludingTax ) {
 		transactionsOnClassicCheckout( testOrder );
 	}
 
@@ -70,7 +70,7 @@ test.describe( () => {
 		await pcpApi.updatePcpSettings( { authorizeOnly: true } );
 	} );
 
-	for ( const testOrder of standardCardButtonClassicCheckoutIntentAuthorized ) {
+	for ( const testOrder of bcdcClassicCheckoutIntentAuthorized ) {
 		transactionsOnClassicCheckout( testOrder );
 	}
 
