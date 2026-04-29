@@ -15,6 +15,7 @@
 declare (strict_types=1);
 namespace WooCommerce\PayPalCommerce\StoreSync\CartValidation;
 
+use WC_Countries;
 use WC_Validation;
 use WC_Product;
 use WooCommerce\PayPalCommerce\StoreSync\Enums\Priority;
@@ -28,6 +29,13 @@ use WooCommerce\PayPalCommerce\StoreSync\Schema\Address;
 use WooCommerce\PayPalCommerce\StoreSync\Schema\CartItem;
 class ShippingValidator implements \WooCommerce\PayPalCommerce\StoreSync\CartValidation\ValidatorInterface
 {
+    /**
+     * List of shipping countries that are supported by the agentic integration.
+     * Managed on plugin-side for extra code and test stability.
+     *
+     * If this list is expanded, also update the message in {@see validate_country()}
+     */
+    private const PAYPAL_SUPPORTED_COUNTRIES = array('US');
     private ProductManager $product_manager;
     public function __construct(ProductManager $product_manager)
     {
@@ -212,6 +220,9 @@ class ShippingValidator implements \WooCommerce\PayPalCommerce\StoreSync\CartVal
         if (!$this->is_country_allowed($country_code)) {
             return ValidationIssue::create_shipping_unavailable(sprintf('Shipping to %s is not available', $country_code))->user_message(sprintf('We do not ship to %s.', $this->get_country_name($country_code)))->for_field('shipping_address.country_code')->add_resolution(ResolutionOption::create_update_address()->label('Use a different shipping country')->priority(Priority::HIGH));
         }
+        if ($this->get_wc_countries() && !$this->is_paypal_supported_country($country_code)) {
+            return ValidationIssue::create_shipping_unavailable(sprintf('Shipping to %s is not supported by PayPal', $country_code))->user_message('PayPal currently only supports shipping to the United States.')->for_field('shipping_address.country_code')->add_resolution(ResolutionOption::create_update_address()->label('Use a supported shipping country')->priority(Priority::HIGH));
+        }
         return null;
     }
     /**
@@ -247,16 +258,17 @@ class ShippingValidator implements \WooCommerce\PayPalCommerce\StoreSync\CartVal
         $countries = $wc_countries->get_countries();
         return $countries[$country_code] ?? $country_code;
     }
-    /**
-     * @return \WC_Countries|null
-     */
-    private function get_wc_countries()
+    private function get_wc_countries(): ?WC_Countries
     {
         if (!function_exists('WC')) {
             return null;
         }
         // The only place in the class that has a `WC()` dependency.
         $wc = WC();
-        return $wc ? $wc->countries : null;
+        return $wc->countries;
+    }
+    private function is_paypal_supported_country(string $country_code): bool
+    {
+        return in_array($country_code, self::PAYPAL_SUPPORTED_COUNTRIES, \true);
     }
 }
