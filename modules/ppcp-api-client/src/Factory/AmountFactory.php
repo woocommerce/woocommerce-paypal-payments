@@ -111,11 +111,7 @@ class AmountFactory {
 			null, // shipping discounts?
 			$discount
 		);
-		$amount    = new Amount(
-			$total,
-			$breakdown
-		);
-		return $amount;
+		return new Amount( $total, $breakdown );
 	}
 
 	/**
