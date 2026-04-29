@@ -143,7 +143,7 @@ class PayPalOrderManager
             if (!$price) {
                 continue;
             }
-            $items[] = array('name' => substr($item->name() ?? 'Item', 0, 127), 'quantity' => (string) $item->quantity(), 'unit_amount' => array('currency_code' => $currency, 'value' => $this->format_money((float) $price->value())));
+            $items[] = array('name' => substr($item->name() ?? 'Item', 0, 127), 'quantity' => (string) $item->quantity(), 'unit_amount' => array('currency_code' => $currency, 'value' => \WooCommerce\PayPalCommerce\StoreSync\Helper\CartHelper::format_decimal($price->value())));
         }
         return $items;
     }
@@ -214,17 +214,5 @@ class PayPalOrderManager
             // Return null - payment can be handled manually or via webhook.
             return null;
         }
-    }
-    /**
-     * Format a money value for PayPal API.
-     *
-     * PayPal requires money values as strings with 2 decimal places.
-     *
-     * @param float $value The money value.
-     * @return string Formatted money value.
-     */
-    private function format_money(float $value): string
-    {
-        return number_format($value, 2, '.', '');
     }
 }
