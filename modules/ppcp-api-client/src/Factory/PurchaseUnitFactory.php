@@ -139,7 +139,7 @@ class PurchaseUnitFactory
         if ($this->shipping_needed(...array_values($items)) && $customer instanceof \WC_Customer) {
             $shipping = $this->shipping_factory->from_wc_customer(\WC()->customer, $with_shipping_options);
             $shipping_address = $shipping->address();
-            if (!$shipping_address || 2 !== strlen($shipping_address->country_code()) || !$shipping_address->postal_code() && !$this->country_without_postal_code($shipping_address->country_code())) {
+            if (!$shipping_address || !$this->can_use_shipping_address($shipping_address)) {
                 $shipping = null;
             }
         }
@@ -288,6 +288,45 @@ class PurchaseUnitFactory
      */
     private function should_disable_shipping(array $items, ?Address $shipping_address): bool
     {
-        return !$this->shipping_needed(...array_values($items)) || !$shipping_address || empty($shipping_address->country_code()) || empty($shipping_address->address_line_1()) || !$shipping_address->postal_code() && !$this->country_without_postal_code($shipping_address->country_code());
+        // No items require physical shipping.
+        if (!$this->shipping_needed(...array_values($items))) {
+            return \true;
+        }
+        // Cannot proceed without a shipping address.
+        if (!$shipping_address) {
+            return \true;
+        }
+        return !$this->can_use_shipping_address($shipping_address);
+    }
+    /**
+     * Decides whether a shipping address is complete enough to send to PayPal.
+     *
+     * PayPal's Orders v2 API rejects incomplete addresses. For virtually every
+     * country, country_code, address_line_1, admin_area_2 (city), and postal_code
+     * are required. A small set of countries (see country_without_postal_code())
+     * have an optional postal code; city is still required there.
+     *
+     * @param Address $shipping_address The address to validate.
+     * @return bool True if the address is usable, false if it should be dropped.
+     */
+    private function can_use_shipping_address(Address $shipping_address): bool
+    {
+        // Country code must be a valid 2-letter ISO code.
+        if (2 !== strlen($shipping_address->country_code())) {
+            return \false;
+        }
+        // Street address is required.
+        if (empty($shipping_address->address_line_1())) {
+            return \false;
+        }
+        // City is required in virtually every country per PayPal's address rules.
+        if (empty($shipping_address->admin_area_2())) {
+            return \false;
+        }
+        // Postal code is required unless the country is on the no-postal-code allowlist.
+        if (empty($shipping_address->postal_code()) && !$this->country_without_postal_code($shipping_address->country_code())) {
+            return \false;
+        }
+        return \true;
     }
 }
