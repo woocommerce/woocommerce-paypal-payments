@@ -102,7 +102,6 @@ class IsolatedCartSimulator {
 	private function cleanup_cart( WC_Cart $cart ): void {
 		try {
 			$this->cart_products->remove_cart_items();
-			$cart->empty_cart( false );
 		} catch ( Exception $e ) {
 			$this->logger->warning( 'Cart simulation cleanup failed: ' . $e->getMessage() );
 		}
