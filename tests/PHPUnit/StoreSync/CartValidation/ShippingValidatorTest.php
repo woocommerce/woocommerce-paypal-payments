@@ -6,7 +6,6 @@ namespace WooCommerce\PayPalCommerce\StoreSync\CartValidation;
 use WooCommerce\PayPalCommerce\StoreSync\Helper\ProductManager;
 use WooCommerce\PayPalCommerce\StoreSync\Schema\PayPalCart;
 use WooCommerce\PayPalCommerce\StoreSync\Validation\ValidationIssue;
-use WooCommerce\PayPalCommerce\TestCase;
 
 use function Brain\Monkey\Functions\when;
 use function Brain\Monkey\Filters\expectApplied;
@@ -14,7 +13,7 @@ use function Brain\Monkey\Filters\expectApplied;
 /**
  * @covers \WooCommerce\PayPalCommerce\StoreSync\CartValidation\ShippingValidator
  */
-class ShippingValidatorTest extends TestCase {
+class ShippingValidatorTest extends ValidationTest {
 
 	private ShippingValidator $validator;
 	private $product_manager;
@@ -67,9 +66,7 @@ class ShippingValidatorTest extends TestCase {
 		$this->assertInstanceOf( ValidationIssue::class, $result[0] );
 
 		$issue_data = $result[0]->to_array();
-		$this->assertStringContainsString( 'Shipping to FR is not available', $issue_data['message'] );
-		$this->assertStringContainsString( 'We do not ship to France', $issue_data['user_message'] );
-		$this->assertSame( 'shipping_address.country_code', $issue_data['field'] );
+		$this->assertValidationIssue( $issue_data, 'SHIPPING_ERROR', 'BUSINESS_RULE', 'shipping_address.country_code' );
 	}
 
 	public function test_validate_returns_null_for_cart_without_shipping_address(): void {
@@ -146,8 +143,7 @@ class ShippingValidatorTest extends TestCase {
 		$this->assertInstanceOf( ValidationIssue::class, $result[0] );
 
 		$issue_data = $result[0]->to_array();
-		$this->assertStringContainsString( 'missing street address', $issue_data['message'] );
-		$this->assertSame( 'shipping_address.address_line_1', $issue_data['field'] );
+		$this->assertValidationIssue( $issue_data, 'SHIPPING_ERROR', 'INVALID_DATA', 'shipping_address.address_line_1', 'missing street address' );
 	}
 
 	public function test_validate_detects_missing_city(): void {
@@ -171,8 +167,7 @@ class ShippingValidatorTest extends TestCase {
 		$this->assertInstanceOf( ValidationIssue::class, $result[0] );
 
 		$issue_data = $result[0]->to_array();
-		$this->assertStringContainsString( 'missing city', $issue_data['message'] );
-		$this->assertSame( 'shipping_address.admin_area_2', $issue_data['field'] );
+		$this->assertValidationIssue( $issue_data, 'SHIPPING_ERROR', 'INVALID_DATA', 'shipping_address.admin_area_2', 'missing city' );
 	}
 
 	public function test_validate_detects_missing_postal_code(): void {
@@ -196,8 +191,7 @@ class ShippingValidatorTest extends TestCase {
 		$this->assertInstanceOf( ValidationIssue::class, $result[0] );
 
 		$issue_data = $result[0]->to_array();
-		$this->assertStringContainsString( 'missing postal code', $issue_data['message'] );
-		$this->assertSame( 'shipping_address.postal_code', $issue_data['field'] );
+		$this->assertValidationIssue( $issue_data, 'SHIPPING_ERROR', 'INVALID_DATA', 'shipping_address.postal_code', 'missing postal code' );
 	}
 
 	public function test_validate_detects_multiple_missing_fields(): void {
@@ -216,9 +210,9 @@ class ShippingValidatorTest extends TestCase {
 
 		$this->assertIsArray( $result );
 		$this->assertCount( 3, $result );
-		$this->assertInstanceOf( ValidationIssue::class, $result[0] );
-		$this->assertInstanceOf( ValidationIssue::class, $result[1] );
-		$this->assertInstanceOf( ValidationIssue::class, $result[2] );
+		$this->assertValidationIssue( $result[0]->to_array(), 'SHIPPING_ERROR', 'INVALID_DATA', 'shipping_address.address_line_1' );
+		$this->assertValidationIssue( $result[1]->to_array(), 'SHIPPING_ERROR', 'INVALID_DATA', 'shipping_address.admin_area_2' );
+		$this->assertValidationIssue( $result[2]->to_array(), 'SHIPPING_ERROR', 'INVALID_DATA', 'shipping_address.postal_code' );
 	}
 
 	// Scenario 2: PO Box Restriction Tests
@@ -253,9 +247,7 @@ class ShippingValidatorTest extends TestCase {
 		$this->assertInstanceOf( ValidationIssue::class, $result[0] );
 
 		$issue_data = $result[0]->to_array();
-		$this->assertStringContainsString( 'PO Box delivery not available', $issue_data['message'] );
-		$this->assertStringContainsString( 'signature confirmation', $issue_data['user_message'] );
-		$this->assertSame( 'shipping_address', $issue_data['field'] );
+		$this->assertValidationIssue( $issue_data, 'SHIPPING_ERROR', 'BUSINESS_RULE', 'shipping_address', 'PO Box delivery not available' );
 
 		// Verify context (context is a list of IssueContext::to_array() results)
 		$this->assertArrayHasKey( 'context', $issue_data );
@@ -351,7 +343,7 @@ class ShippingValidatorTest extends TestCase {
 
 		$this->assertIsArray( $result );
 		$this->assertCount( 1, $result );
-		$this->assertInstanceOf( ValidationIssue::class, $result[0] );
+		$this->assertValidationIssue( $result[0]->to_array(), 'SHIPPING_ERROR', 'BUSINESS_RULE', 'shipping_address' );
 	}
 
 	public function test_validate_handles_product_not_found_for_signature_check(): void {
@@ -411,9 +403,7 @@ class ShippingValidatorTest extends TestCase {
 		$this->assertInstanceOf( ValidationIssue::class, $result[0] );
 
 		$issue_data = $result[0]->to_array();
-		$this->assertStringContainsString( 'Shipping address is required', $issue_data['message'] );
-		$this->assertStringContainsString( 'Please provide a shipping address', $issue_data['user_message'] );
-		$this->assertSame( 'shipping_address', $issue_data['field'] );
+		$this->assertValidationIssue( $issue_data, 'DATA_ERROR', 'MISSING_FIELD', 'shipping_address', 'Shipping address is required' );
 
 		$this->assertArrayHasKey( 'resolution_options', $issue_data );
 		$actions = array_column( $issue_data['resolution_options'], 'action' );
@@ -448,8 +438,7 @@ class ShippingValidatorTest extends TestCase {
 		$this->assertInstanceOf( ValidationIssue::class, $result[0] );
 
 		$issue_data = $result[0]->to_array();
-		$this->assertStringContainsString( 'Invalid postal code format', $issue_data['message'] );
-		$this->assertSame( 'shipping_address.postal_code', $issue_data['field'] );
+		$this->assertValidationIssue( $issue_data, 'SHIPPING_ERROR', 'INVALID_DATA', 'shipping_address.postal_code', 'Invalid postal code format' );
 	}
 
 	// Gap A3: Fallback from empty shipping countries to allowed countries
@@ -541,23 +530,7 @@ class ShippingValidatorTest extends TestCase {
 		$this->assertInstanceOf( ValidationIssue::class, $result[0] );
 
 		$issue_data = $result[0]->to_array();
-		$this->assertSame( 'shipping_address.country_code', $issue_data['field'] );
-
-		$message_lower = strtolower( $issue_data['message'] );
-		$this->assertTrue(
-			strpos( $message_lower, 'ca' ) !== false
-				|| strpos( $message_lower, 'paypal' ) !== false
-				|| strpos( $message_lower, 'not supported' ) !== false,
-			'Expected issue message to reference CA, PayPal, or "not supported", got: ' . $issue_data['message']
-		);
-
-		$user_message_lower = strtolower( $issue_data['user_message'] );
-		$this->assertTrue(
-			strpos( $user_message_lower, 'united states' ) !== false
-				|| strpos( $user_message_lower, 'supported' ) !== false
-				|| strpos( $user_message_lower, 'country' ) !== false,
-			'Expected user_message to mention supported countries, got: ' . $issue_data['user_message']
-		);
+		$this->assertValidationIssue( $issue_data, 'SHIPPING_ERROR', 'BUSINESS_RULE', 'shipping_address.country_code' );
 	}
 
 	/**
@@ -590,15 +563,7 @@ class ShippingValidatorTest extends TestCase {
 		$this->assertInstanceOf( ValidationIssue::class, $result[0] );
 
 		$issue_data = $result[0]->to_array();
-		$this->assertSame( 'shipping_address.country_code', $issue_data['field'] );
-
-		$message_lower = strtolower( $issue_data['message'] );
-		$this->assertTrue(
-			strpos( $message_lower, 'de' ) !== false
-				|| strpos( $message_lower, 'paypal' ) !== false
-				|| strpos( $message_lower, 'not supported' ) !== false,
-			'Expected issue message to reference DE, PayPal, or "not supported", got: ' . $issue_data['message']
-		);
+		$this->assertValidationIssue( $issue_data, 'SHIPPING_ERROR', 'BUSINESS_RULE', 'shipping_address.country_code' );
 	}
 
 	/**
