@@ -97,7 +97,7 @@ class AxoBlockModule implements ServiceModule, ExecutableModule
         $asset_getter = $c->get('axoblock.asset_getter');
         assert($asset_getter instanceof AssetGetter);
         $asset_version = $c->get('ppcp.asset-version');
-        wp_register_script('wc-ppcp-paypal-insights', $asset_getter->get_asset_url('PayPalInsightsLoader.js'), array('wp-plugins', 'wp-data', 'wp-element', 'wc-blocks-registry'), $asset_version, \true);
+        wp_register_script('wc-ppcp-paypal-insights', $asset_getter->get_asset_url('plugins/PayPalInsightsLoader.js'), array('wp-plugins', 'wp-data', 'wp-element', 'wc-blocks-registry'), $asset_version, \true);
         wp_localize_script('wc-ppcp-paypal-insights', 'ppcpPayPalInsightsData', array('isAxoEnabled' => \true));
         wp_enqueue_script('wc-ppcp-paypal-insights');
     }

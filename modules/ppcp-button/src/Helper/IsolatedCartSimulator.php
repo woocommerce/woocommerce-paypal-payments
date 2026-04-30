@@ -37,6 +37,7 @@ class IsolatedCartSimulator
             return \true;
         };
         add_filter('woocommerce_paypal_payments_is_simulating_cart', $simulation_filter);
+        $existing_notices = wc_get_notices();
         try {
             $cart = $this->create_isolated_cart();
             $this->cart_products->set_cart($cart);
@@ -48,6 +49,14 @@ class IsolatedCartSimulator
             throw $e;
         } finally {
             remove_filter('woocommerce_paypal_payments_is_simulating_cart', $simulation_filter);
+            $current_notices = wc_get_notices();
+            /**
+             * Simulation may add WooCommerce notices (stored in the global session, not the cart).
+             * Snapshot + restore ensures simulation notices don't leak into the user session.
+             */
+            if ($current_notices !== $existing_notices) {
+                wc_set_notices($existing_notices);
+            }
             if ($cart instanceof WC_Cart) {
                 $this->cleanup_cart($cart);
             }
@@ -82,7 +91,6 @@ class IsolatedCartSimulator
     {
         try {
             $this->cart_products->remove_cart_items();
-            $cart->empty_cart(\false);
         } catch (Exception $e) {
             $this->logger->warning('Cart simulation cleanup failed: ' . $e->getMessage());
         }
