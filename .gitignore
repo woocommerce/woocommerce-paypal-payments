@@ -20,3 +20,9 @@ tests/.DS_Store
 /coverage/
 assets
 tests/inc/inpsyde/
+
+# Track Claude Code configuration.
+!.claude
+
+# Ignore all kind of local files - settings.local.json, CLAUDE.local.md, ...
+*.local.*
