@@ -40,7 +40,6 @@ test.beforeAll( async ( { utils, pcpApi, wooCommerceApi } ) => {
 			products: [ 'physical', 'virtual', 'subscriptions' ],
 		}
 	);
-	await wooCommerceApi.deleteAllOrders();
 } );
 
 for ( const testOrder of vaultingRenewal ) {

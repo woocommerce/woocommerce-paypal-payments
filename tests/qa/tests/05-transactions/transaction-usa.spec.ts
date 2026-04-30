@@ -58,7 +58,6 @@ test.beforeAll( async ( { utils, pcpApi, wooCommerceApi } ) => {
 		[ acdc.id ]: { id: acdc.id, enabled: true },
 		[ fastlane.id ]: { id: fastlane.id, enabled: false },
 	} );
-	await wooCommerceApi.deleteAllOrders();
 } );
 
 for ( const testOrder of payPalCheckout ) {
