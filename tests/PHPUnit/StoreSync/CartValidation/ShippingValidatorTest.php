@@ -471,7 +471,7 @@ class ShippingValidatorTest extends ValidationTest {
 		$this->assertNull( $result );
 	}
 
-	// Group B: PayPal-level US-only restriction (failing tests — feature not yet implemented)
+	// Group B: PayPal-level US-only restriction
 
 	/**
 	 * Given PayPal's supported-country allowlist only includes the United States
