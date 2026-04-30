@@ -67,6 +67,7 @@ class ShippingValidatorTest extends ValidationTest {
 
 		$issue_data = $result[0]->to_array();
 		$this->assertValidationIssue( $issue_data, 'SHIPPING_ERROR', 'BUSINESS_RULE', 'shipping_address.country_code' );
+		$this->assertIssueContext( $issue_data, 'SHIPPING_NOT_AVAILABLE' );
 	}
 
 	public function test_validate_returns_null_for_cart_without_shipping_address(): void {
@@ -130,9 +131,9 @@ class ShippingValidatorTest extends ValidationTest {
 
 		$cart = $this->create_cart_with_shipping(
 			array(
-				'country_code'   => 'US',
-				'admin_area_2'   => 'New York',
-				'postal_code'    => '10001',
+				'country_code' => 'US',
+				'admin_area_2' => 'New York',
+				'postal_code'  => '10001',
 			)
 		);
 
@@ -531,6 +532,9 @@ class ShippingValidatorTest extends ValidationTest {
 
 		$issue_data = $result[0]->to_array();
 		$this->assertValidationIssue( $issue_data, 'SHIPPING_ERROR', 'BUSINESS_RULE', 'shipping_address.country_code' );
+
+		$context = $this->assertIssueContext( $issue_data, 'SHIPPING_NOT_AVAILABLE' );
+		$this->assertSame( 'CA', $context['destination_country'] );
 	}
 
 	/**
@@ -567,10 +571,11 @@ class ShippingValidatorTest extends ValidationTest {
 	}
 
 	/**
-	 * Given a country is disallowed by both WooCommerce settings and the PayPal country restriction
-	 * And the cart ships to FR (France), which WooCommerce does not allow and PayPal does not support
-	 * When validate() is called
-	 * Then exactly one country-level ValidationIssue is returned (checks do not stack)
+	 * Given a country is disallowed by both WooCommerce settings and the PayPal country
+	 * restriction
+	 * And the cart ships to FR (France), which WooCommerce does not allow and PayPal does not
+	 * support When validate() is called Then exactly one country-level ValidationIssue is returned
+	 * (checks do not stack)
 	 */
 	public function test_validate_produces_single_country_issue_when_disallowed_by_both_woocommerce_and_paypal(): void {
 		$this->mock_wc_countries(
@@ -595,6 +600,7 @@ class ShippingValidatorTest extends ValidationTest {
 			$result,
 			static function ( ValidationIssue $issue ): bool {
 				$data = $issue->to_array();
+
 				return isset( $data['field'] ) && $data['field'] === 'shipping_address.country_code';
 			}
 		);
@@ -602,20 +608,52 @@ class ShippingValidatorTest extends ValidationTest {
 		$this->assertCount( 1, $country_issues );
 	}
 
-	private function create_cart_with_shipping( array $address_data ): PayPalCart {
-		return PayPalCart::from_array(
+	// ---------------------------------------------------------------------------
+	// Context assertions
+	// ---------------------------------------------------------------------------
+
+	/**
+	 * GIVEN a cart shipping to a US address that is missing the street address field
+	 * WHEN validate() is called
+	 * THEN a ValidationIssue is returned for shipping_address.address_line_1
+	 * AND context[0]['specific_issue'] === 'SHIPPING_ADDRESS_UNSERVICEABLE'
+	 */
+	public function test_validate_address_completeness_issue_includes_shipping_address_unserviceable_context(): void {
+		$this->mock_wc_countries(
+			array( 'US' => 'United States' ),
+			array( 'US' => 'United States' )
+		);
+
+		$cart = $this->create_cart_with_shipping(
 			array(
-				'items'            => array(
-					array(
-						'item_id'  => '1',
-						'quantity' => 1,
-						'name'     => 'Test Product',
-					),
-				),
-				'shipping_address' => $address_data,
-				'payment_method'   => 'paypal',
+				'country_code' => 'US',
+				'admin_area_2' => 'New York',
+				'postal_code'  => '10001',
+				// address_line_1 intentionally omitted
 			)
 		);
+
+		$result = $this->validator->validate( $cart );
+
+		$this->assertIsArray( $result );
+		$this->assertGreaterThanOrEqual( 1, count( $result ) );
+
+		// Isolate the street-address completeness issue.
+		$street_issues = array_values(
+			array_filter(
+				$result,
+				static function ( ValidationIssue $issue ): bool {
+					$data = $issue->to_array();
+
+					return isset( $data['field'] ) && $data['field'] === 'shipping_address.address_line_1';
+				}
+			)
+		);
+
+		$this->assertCount( 1, $street_issues );
+		$issue_data = $street_issues[0]->to_array();
+
+		$this->assertIssueContext( $issue_data, 'SHIPPING_ADDRESS_UNSERVICEABLE' );
 	}
 
 	private function mock_wc_countries( array $all_countries, array $shipping_countries ): void {

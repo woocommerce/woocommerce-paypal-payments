@@ -15,6 +15,7 @@ use WooCommerce\PayPalCommerce\StoreSync\Helper\ProductManager;
 use WooCommerce\PayPalCommerce\StoreSync\Schema\PayPalCart;
 use WooCommerce\PayPalCommerce\StoreSync\Schema\CartItem;
 use WooCommerce\PayPalCommerce\StoreSync\Validation\Resolution\ResolutionOption;
+use WooCommerce\PayPalCommerce\StoreSync\Validation\Context\DataErrorContext;
 use WooCommerce\PayPalCommerce\StoreSync\Validation\ValidationIssue;
 use WooCommerce\PayPalCommerce\StoreSync\Config\IngestionConfiguration;
 
@@ -58,6 +59,7 @@ class ProductValidator implements ValidatorInterface {
 			return ValidationIssue::create_invalid_product( "Product '{$identifier}' not found in WooCommerce catalog" )
 				->user_message( "'{$item->name()}' not found in WooCommerce catalog" )
 				->for_field( $field )
+				->add_context( DataErrorContext::create_item_not_found() )
 				->add_resolution(
 					ResolutionOption::create_remove_item()
 						->label( 'Remove from cart' )

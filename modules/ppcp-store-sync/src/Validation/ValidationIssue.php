@@ -162,6 +162,14 @@ class ValidationIssue {
 	}
 
 	/**
+	 * When to use:
+	 * - Payment was declined by the processor.
+	 */
+	public static function create_payment_error( string $message ): self {
+		return new self( $message, ErrorCode::PAYMENT_ERROR, ErrorType::BUSINESS_RULE );
+	}
+
+	/**
 	 * Returns the error code, which is a high-level description of the problem.
 	 * Possible values are defined in the `Enums/ErrorCode` class.
 	 */

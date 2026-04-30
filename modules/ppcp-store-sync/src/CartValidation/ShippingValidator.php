@@ -120,6 +120,7 @@ class ShippingValidator implements ValidatorInterface {
 				ValidationIssue::create_invalid_address( 'Shipping address is missing street address' )
 					->user_message( 'Please provide a complete street address.' )
 					->for_field( 'shipping_address.address_line_1' )
+					->add_context( ShippingErrorContext::create_shipping_address_unserviceable() )
 					->add_resolution(
 						ResolutionOption::create_provide_missing_field()
 							->label( 'Provide street address' )
@@ -137,6 +138,7 @@ class ShippingValidator implements ValidatorInterface {
 				ValidationIssue::create_invalid_address( 'Shipping address is missing city' )
 					->user_message( 'Please provide a city.' )
 					->for_field( 'shipping_address.admin_area_2' )
+					->add_context( ShippingErrorContext::create_shipping_address_unserviceable() )
 					->add_resolution(
 						ResolutionOption::create_provide_missing_field()
 							->label( 'Provide city' )
@@ -155,6 +157,7 @@ class ShippingValidator implements ValidatorInterface {
 				ValidationIssue::create_invalid_address( 'Shipping address is missing postal code' )
 					->user_message( 'Please provide a postal code.' )
 					->for_field( 'shipping_address.postal_code' )
+					->add_context( ShippingErrorContext::create_shipping_address_unserviceable() )
 					->add_resolution(
 						ResolutionOption::create_provide_missing_field()
 							->label( 'Provide postal code' )
@@ -201,6 +204,7 @@ class ShippingValidator implements ValidatorInterface {
 			)
 				->user_message( 'Please provide a valid postal code.' )
 				->for_field( 'shipping_address.postal_code' )
+				->add_context( ShippingErrorContext::create_shipping_address_unserviceable() )
 				->add_resolution(
 					ResolutionOption::create_update_address()
 						->label( 'Correct the postal code' )
@@ -339,6 +343,10 @@ class ShippingValidator implements ValidatorInterface {
 			return ValidationIssue::create_shipping_unavailable( sprintf( 'Shipping to %s is not available', $country_code ) )
 				->user_message( sprintf( 'We do not ship to %s.', $this->get_country_name( $country_code ) ) )
 				->for_field( 'shipping_address.country_code' )
+				->add_context(
+					ShippingErrorContext::create_shipping_not_available()
+						->destination_country( $country_code )
+				)
 				->add_resolution(
 					ResolutionOption::create_update_address()
 						->label( 'Use a different shipping country' )
