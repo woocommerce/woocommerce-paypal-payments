@@ -356,16 +356,11 @@ export class PayPalUi {
 				break;
 
 			case 'card':
-				// Standard Card Button
 				if ( gateway.id === 'ppcp-card-button-gateway' ) {
-					await this.completeStandardCardButtonPayment(
-						payment.card,
-						customer
-					);
+					await this.completeBcdcPayment( payment.card, customer );
 					break;
 				}
-				// Debit Or Credit Card
-				await this.completeDebitOrCreditCardPayment( payment.card );
+				await this.completeBcdcFundingSourcePayment( payment.card );
 				break;
 
 			case 'pay_upon_invoice':
@@ -575,13 +570,11 @@ export class PayPalUi {
 	completeOXXOPayment = async ( ...args ) =>
 		console.log( `TODO: completeOXXOPayment for block pages` );
 
-	completeStandardCardButtonPayment = async ( ...args ) =>
-		console.log(
-			`TODO: completeStandardCardButtonPayment for block pages`
-		);
+	completeBcdcPayment = async ( ...args ) =>
+		console.log( `TODO: completeBcdcPayment for block pages` );
 
-	completeDebitOrCreditCardPayment = async ( ...args ) =>
-		console.log( `TODO: completeDebitOrCreditCardPayment for block pages` );
+	completeBcdcFundingSourcePayment = async ( ...args ) =>
+		console.log( `TODO: completeBcdcFundingSourcePayment for block pages` );
 
 	completePayUponInvoicePayment = async ( ...args ) =>
 		console.log( `TODO: completePayUponInvoicePayment for block pages` );

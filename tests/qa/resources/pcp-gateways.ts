@@ -274,21 +274,7 @@ const payUponInvoice: Pcp.Gateway = {
 	enabled: false,
 };
 
-const debitOrCreditCard: Pcp.Gateway = {
-	shortcut: 'card',
-	country: 'usa',
-	currency: 'USD',
-
-	id: 'ppcp-gateway',
-	description: '',
-	title: 'Credit or debit cards (via PayPal)',
-	titleInPcpSettings: 'Credit or debit cards',
-	titleInWcSettings: 'Credit or debit cards (via PayPal)',
-	hasSettingsButton: true,
-	enabled: true,
-};
-
-const standardCardButton: Pcp.Gateway = {
+const bcdc: Pcp.Gateway = {
 	shortcut: 'card',
 	country: 'usa',
 	currency: 'USD',
@@ -323,6 +309,5 @@ export const gateways = {
 	multibanco,
 	oxxo,
 	payUponInvoice,
-	debitOrCreditCard,
-	standardCardButton,
+	bcdc,
 };

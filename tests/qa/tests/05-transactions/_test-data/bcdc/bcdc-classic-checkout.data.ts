@@ -24,7 +24,7 @@ export const bcdcClassicCheckout: ShopOrder[] = [
 		// https://inpsyde.atlassian.net/browse/PCP-1211
 		title: 'PCP-1211 | Transaction - Classic checkout - BCDC - Default order @Critical',
 		...orders.default,
-		payment: payments.standardCardButton,
+		payment: payments.bcdc,
 		customer: guest,
 		merchant,
 	},
@@ -32,7 +32,7 @@ export const bcdcClassicCheckout: ShopOrder[] = [
 		// https://inpsyde.atlassian.net/browse/PCP-2747
 		title: 'PCP-2747 | Transaction - Classic checkout - BCDC - Order by customer',
 		...orders.default,
-		payment: payments.standardCardButton,
+		payment: payments.bcdc,
 		customer,
 		merchant,
 	},
@@ -43,7 +43,7 @@ export const bcdcClassicCheckoutExcludingTax: ShopOrder[] = [
 		// https://inpsyde.atlassian.net/browse/PCP-1253
 		title: 'PCP-1253 | Transaction - Classic checkout - BCDC - Order with price excluding tax',
 		...orders.excludingTax,
-		payment: payments.standardCardButton,
+		payment: payments.bcdc,
 		customer: guest,
 		merchant,
 	},
@@ -55,7 +55,7 @@ export const bcdcClassicCheckoutIntentAuthorized: ShopOrder[] = [
 		title: 'PCP-2759 | Transaction - Classic checkout - BCDC - Order with Intent Authorized',
 		...orders.default,
 		payment: {
-			...payments.standardCardButton,
+			...payments.bcdc,
 			isAuthorized: true,
 		},
 		orderStatus: 'on-hold',

@@ -21,7 +21,7 @@ import {
  * BCDC is classic-checkout only — block checkout is not supported.
  */
 
-const { payPal, standardCardButton: bcdc } = gateways;
+const { payPal, bcdc } = gateways;
 
 test.beforeAll( async ( { utils, pcpApi, wooCommerceApi } ) => {
 	await utils.configureStore( {
