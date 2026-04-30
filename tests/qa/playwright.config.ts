@@ -86,15 +86,7 @@ export default defineConfig< BaseExtend >( {
 			fullPage: true, // Captures entire scrollable page
 		},
 
-		video: process.env.CI
-			? 'off'
-			: {
-					mode: 'retain-on-failure', //'on',//
-					size: viewportSize,
-			  },
-
 		recordVideoOptions: {
-			mode: 'retain-on-failure',
 			size: viewportSize,
 		},
 

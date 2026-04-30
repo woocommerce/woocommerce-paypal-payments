@@ -50,10 +50,6 @@ import {
 } from './frontend';
 
 export type BaseExtend = BaseExtendBase & {
-	recordVideoOptions?: {
-		mode: VideoMode;
-		size?: ViewportSize;
-	};
 	payPalApi: PayPalApi;
 	pcpApi: PcpApi;
 	visitorPage: Page;
@@ -93,7 +89,6 @@ export type BaseExtend = BaseExtendBase & {
 };
 
 const test = base.extend< BaseExtend >( {
-	recordVideoOptions: [ null, { option: true } ],
 	payPalApi: async ( { request }, use ) => {
 		await use( new PayPalApi( { request } ) );
 	},
@@ -114,29 +109,28 @@ const test = base.extend< BaseExtend >( {
 			storageState: fs.existsSync( storageStatePath )
 				? storageStatePath
 				: undefined,
-			...( recordVideoOptions && {
-				recordVideo: {
-					...recordVideoOptions,
-					dir: testInfo.outputDir, // Override recordVideo to use correct output dir
-				},
-			} ),
 		} );
 		const page = await context.newPage();
+
+		if ( recordVideoOptions ) {
+			await page.screencast.start( {
+				...recordVideoOptions,
+				path: testInfo.outputPath( 'video-visitor.webm' ),
+			} );
+		}
+
 		await use( page );
 
-		// Save video path BEFORE closing
-		const video = page.video();
-		await page.close();
-		await context.close();
-
-		// Attach video to report after context is closed
-		if ( video ) {
-			const videoPath = await video.path();
+		if ( recordVideoOptions ) {
+			await page.screencast.stop();
 			await testInfo.attach( 'video', {
-				path: videoPath,
+				path: testInfo.outputPath( 'video-visitor.webm' ),
 				contentType: 'video/webm',
 			} );
 		}
+
+		await page.close();
+		await context.close();
 	},
 	visitorRequest: async ( { visitorPage }, use ) => {
 		const request = visitorPage.request;
