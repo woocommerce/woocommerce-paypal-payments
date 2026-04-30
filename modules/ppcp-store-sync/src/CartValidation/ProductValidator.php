@@ -14,6 +14,7 @@ use WooCommerce\PayPalCommerce\StoreSync\Helper\ProductManager;
 use WooCommerce\PayPalCommerce\StoreSync\Schema\PayPalCart;
 use WooCommerce\PayPalCommerce\StoreSync\Schema\CartItem;
 use WooCommerce\PayPalCommerce\StoreSync\Validation\Resolution\ResolutionOption;
+use WooCommerce\PayPalCommerce\StoreSync\Validation\Context\DataErrorContext;
 use WooCommerce\PayPalCommerce\StoreSync\Validation\ValidationIssue;
 use WooCommerce\PayPalCommerce\StoreSync\Config\IngestionConfiguration;
 class ProductValidator implements \WooCommerce\PayPalCommerce\StoreSync\CartValidation\ValidatorInterface
@@ -48,7 +49,7 @@ class ProductValidator implements \WooCommerce\PayPalCommerce\StoreSync\CartVali
         $field = "items[{$key}]";
         $product = $this->product_manager->find_product($item);
         if (!$product) {
-            return ValidationIssue::create_invalid_product("Product '{$identifier}' not found in WooCommerce catalog")->user_message("'{$item->name()}' not found in WooCommerce catalog")->for_field($field)->add_resolution(ResolutionOption::create_remove_item()->label('Remove from cart')->priority(Priority::HIGH));
+            return ValidationIssue::create_invalid_product("Product '{$identifier}' not found in WooCommerce catalog")->user_message("'{$item->name()}' not found in WooCommerce catalog")->for_field($field)->add_context(DataErrorContext::create_item_not_found())->add_resolution(ResolutionOption::create_remove_item()->label('Remove from cart')->priority(Priority::HIGH));
         }
         if (!$product->is_purchasable()) {
             return ValidationIssue::create_invalid_product("Product '{$identifier}' is not available for purchase")->user_message("'{$item->name()}' cannot be purchased at this time")->for_field($field)->add_resolution(ResolutionOption::create_remove_item()->label('Remove from cart')->priority(Priority::HIGH))->add_resolution(ResolutionOption::create_suggest_alternative());

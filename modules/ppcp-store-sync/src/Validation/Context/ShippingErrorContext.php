@@ -51,6 +51,14 @@ class ShippingErrorContext extends \WooCommerce\PayPalCommerce\StoreSync\Validat
     {
         return new self(ContextShippingIssue::MISSING_COORDINATES_FOR_ENHANCED_DELIVERY);
     }
+    public static function create_shipping_not_available(): self
+    {
+        return new self(ContextShippingIssue::SHIPPING_NOT_AVAILABLE);
+    }
+    public static function create_shipping_address_unserviceable(): self
+    {
+        return new self(ContextShippingIssue::SHIPPING_ADDRESS_UNSERVICEABLE);
+    }
     private const VALID_RESTRICTION_REASONS = array('signature_required', 'age_verification_required', 'export_controlled', 'hazardous_material', 'oversized_item', 'po_box_restriction');
     private ?array $validation_failures = null;
     private ?array $suggested_corrections = null;
