@@ -181,7 +181,9 @@ class CartResponse {
 			$data['applied_coupons'] = $this->applied_coupons;
 		}
 
-		$data   = array_merge( $data, $this->cart->to_array() );
+		$data       = array_merge( $data, $this->cart->to_array() );
+		$data['id'] = $this->cart_id;
+
 		$totals = $this->calculate_totals();
 
 		if ( $totals ) {
