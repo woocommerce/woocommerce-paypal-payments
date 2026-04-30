@@ -33,8 +33,6 @@ use WooCommerce\PayPalCommerce\StoreSync\Setting\AgenticSettingsModule;
 use WooCommerce\PayPalCommerce\StoreSync\Merchant\MerchantMetadataProvider;
 use WooCommerce\PayPalCommerce\StoreSync\Registration\RegistrationService;
 use WooCommerce\PayPalCommerce\StoreSync\Registration\RegistrationEligibility;
-use WooCommerce\PayPalCommerce\StoreSync\Inspector\InspectionFormHandler;
-use WooCommerce\PayPalCommerce\StoreSync\Inspector\InspectionStatusPage;
 use WooCommerce\PayPalCommerce\StoreSync\Helper\AgenticCheckoutProcessor;
 use WooCommerce\PayPalCommerce\StoreSync\Helper\ShippingOptionsBuilder;
 use WooCommerce\PayPalCommerce\StoreSync\Helper\PayPalOrderManager;
@@ -51,9 +49,6 @@ use WooCommerce\PayPalCommerce\StoreSync\CartValidation\CouponValidator\Discount
 use WooCommerce\PayPalCommerce\StoreSync\CartValidation\CouponValidator\CouponResolutionBuilder;
 use WooCommerce\PayPalCommerce\StoreSync\CartValidation\CouponValidator\AppliedCouponsBuilder;
 use WooCommerce\PayPalCommerce\StoreSync\CartValidation\CartValidationProcessor;
-use WooCommerce\PayPalCommerce\StoreSync\Inspector\InspectionSessionData;
-use WooCommerce\PayPalCommerce\StoreSync\Inspector\Page\RegistrationStatusSection;
-use WooCommerce\PayPalCommerce\StoreSync\Inspector\Page\CartSessionSection;
 use WooCommerce\PayPalCommerce\StoreSync\Helper\AgenticSessionManager;
 /**
  * Using a different log-source for agentic commerce log entries makes it much easier to inspect
@@ -188,22 +183,6 @@ return array(
     },
     'agentic.settings.module' => static function (ContainerInterface $c): AgenticSettingsModule {
         return new AgenticSettingsModule($c->get('agentic.settings.endpoint'), $c->get('agentic.registration.eligibility'), $c->get('agentic.asset_getter'));
-    },
-    // Inspector.
-    'agentic.inspector.form_handler' => static function (ContainerInterface $c): InspectionFormHandler {
-        return new InspectionFormHandler($c->get('agentic.registration.handler'), $c->get('agentic.logger'));
-    },
-    'agentic.inspector.session_info' => static function (ContainerInterface $c): InspectionSessionData {
-        return new InspectionSessionData();
-    },
-    'agentic.inspector.page.status' => static function (ContainerInterface $c): RegistrationStatusSection {
-        return new RegistrationStatusSection($c->get('agentic.registration.handler'), $c->get('agentic.registration.eligibility'), $c->get('agentic.auth.provider'), $c->get('settings.data.general'));
-    },
-    'agentic.inspector.page.session' => static function (ContainerInterface $c): CartSessionSection {
-        return new CartSessionSection($c->get('agentic.inspector.session_info'), $c->get('agentic.validation.processor'));
-    },
-    'agentic.inspector.page' => static function (ContainerInterface $c): InspectionStatusPage {
-        return new InspectionStatusPage($c->get('agentic.inspector.form_handler'), $c->get('agentic.inspector.page.status'), $c->get('agentic.inspector.page.session'));
     },
     'agentic.asset_getter' => static function (ContainerInterface $container): AssetGetter {
         $factory = $container->get('assets.asset_getter_factory');

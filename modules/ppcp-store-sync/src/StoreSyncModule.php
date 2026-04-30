@@ -18,7 +18,6 @@ use WooCommerce\PayPalCommerce\StoreSync\Setting\AgenticSettingsModule;
 use WooCommerce\PayPalCommerce\StoreSync\Registration\RegistrationService;
 use WooCommerce\PayPalCommerce\StoreSync\Registration\RegistrationEligibility;
 use WooCommerce\PayPalCommerce\StoreSync\Setting\AgenticSettingsDataModel;
-use WooCommerce\PayPalCommerce\StoreSync\Inspector\InspectionStatusPage;
 use WooCommerce\PayPalCommerce\StoreSync\CartValidation\CartValidationProcessor;
 use WooCommerce\PayPalCommerce\StoreSync\CartValidation\ValidatorInterface;
 /**
@@ -66,9 +65,6 @@ class StoreSyncModule implements ServiceModule, ExecutableModule
         $this->add_cleanup_actions($registration_handler, $ingestion_manager);
         // Sync eligibility cache on init (when WC is available).
         $this->sync_eligibility_cache($agentic_settings, $eligibility_check);
-        $inspector = $container->get('agentic.inspector.page');
-        assert($inspector instanceof InspectionStatusPage);
-        $inspector->init();
         // Early exit if features should not be initialized.
         if (!$agentic_settings->should_initialize_features()) {
             $this->ensure_deregistered($registration_handler);
