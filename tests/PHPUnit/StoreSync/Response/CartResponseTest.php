@@ -685,6 +685,26 @@ class CartResponseTest extends TestCase {
 	// -------------------------------------------------------------------------
 
 	/**
+	 * @scenario Server-generated cart ID is not overwritten by a caller-supplied ID in the request
+	 *           body
+	 *
+	 * Given a PayPal cart built from request body data that already contains an "id" key
+	 * When the response is built via create_new() with a distinct server-generated cart ID
+	 * Then to_array()['id'] equals the server-generated ID
+	 * And the caller-supplied ID from the request body is ignored
+	 */
+	public function test_create_new_id_is_not_overwritten_by_caller_supplied_id(): void {
+		$cart_data       = $this->make_cart_data();
+		$cart_data['id'] = 'client-supplied-id';
+		$cart            = PayPalCart::from_array( $cart_data );
+		$response        = CartResponse::create_new( $cart, 'server-generated-id', 'tok_test' );
+
+		$result = $response->to_array();
+
+		$this->assertSame( 'server-generated-id', $result['id'] );
+	}
+
+	/**
 	 * @scenario Completed checkout sets status to COMPLETED
 	 *
 	 * Given a cart that has been paid and a corresponding WC_Order
