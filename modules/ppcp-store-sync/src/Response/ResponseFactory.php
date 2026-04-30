@@ -15,28 +15,25 @@ use WooCommerce\PayPalCommerce\StoreSync\CartValidation\CouponValidator\AppliedC
 use WooCommerce\PayPalCommerce\StoreSync\Helper\AgenticCartBuilder;
 use WooCommerce\PayPalCommerce\StoreSync\Helper\ShippingOptionsBuilder;
 use WooCommerce\PayPalCommerce\StoreSync\Schema\PayPalCart;
+use WooCommerce\PayPalCommerce\StoreSync\Config\StoreCurrencyValue;
 
 class ResponseFactory {
 
 	private AgenticCartBuilder $cart_builder;
 	private AppliedCouponsBuilder $applied_coupons_builder;
 	private ShippingOptionsBuilder $shipping_options_builder;
+	private StoreCurrencyValue $store_currency;
 
-	/**
-	 * Constructor.
-	 *
-	 * @param AgenticCartBuilder     $cart_builder             Cart builder service.
-	 * @param AppliedCouponsBuilder  $applied_coupons_builder  Applied coupons builder service.
-	 * @param ShippingOptionsBuilder $shipping_options_builder Shipping options builder service.
-	 */
 	public function __construct(
 		AgenticCartBuilder $cart_builder,
 		AppliedCouponsBuilder $applied_coupons_builder,
-		ShippingOptionsBuilder $shipping_options_builder
+		ShippingOptionsBuilder $shipping_options_builder,
+		StoreCurrencyValue $store_currency
 	) {
 		$this->cart_builder             = $cart_builder;
 		$this->applied_coupons_builder  = $applied_coupons_builder;
 		$this->shipping_options_builder = $shipping_options_builder;
+		$this->store_currency           = $store_currency;
 	}
 
 	/**
@@ -52,6 +49,7 @@ class ResponseFactory {
 
 		return CartResponse::create_new( $cart, $cart_id, $token )
 			->wc_cart( $wc_cart )
+			->store_currency( $this->store_currency )
 			->applied_coupons( $this->build_applied_coupons( $cart ) )
 			->shipping_options( $this->shipping_options_builder->build( $wc_cart ) );
 	}
@@ -69,6 +67,7 @@ class ResponseFactory {
 
 		return CartResponse::create_completed( $cart, $cart_id, $order )
 			->wc_cart( $wc_cart )
+			->store_currency( $this->store_currency )
 			->applied_coupons( $this->build_applied_coupons( $cart ) )
 			->shipping_options( $this->shipping_options_builder->build( $wc_cart ) );
 	}
@@ -85,6 +84,7 @@ class ResponseFactory {
 
 		return CartResponse::create( $cart, $cart_id )
 			->wc_cart( $wc_cart )
+			->store_currency( $this->store_currency )
 			->applied_coupons( $this->build_applied_coupons( $cart ) )
 			->shipping_options( $this->shipping_options_builder->build( $wc_cart ) );
 	}

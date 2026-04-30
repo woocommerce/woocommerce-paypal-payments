@@ -18,6 +18,7 @@ use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 
 use WooCommerce\PayPalCommerce\StoreSync\Config\AgenticWebhookConfiguration;
 use WooCommerce\PayPalCommerce\StoreSync\Config\IngestionConfiguration;
+use WooCommerce\PayPalCommerce\StoreSync\Config\StoreCurrencyValue;
 use WooCommerce\PayPalCommerce\StoreSync\Auth\AuthServiceProvider;
 use WooCommerce\PayPalCommerce\StoreSync\Auth\PayPalJwkProvider;
 use WooCommerce\PayPalCommerce\StoreSync\Endpoint\CreateCartEndpoint;
@@ -84,6 +85,9 @@ return array(
 	},
 	'agentic.config.ingestion'                     => static function (): IngestionConfiguration {
 		return new IngestionConfiguration();
+	},
+	'agentic.config.store-currency'                => static function (): StoreCurrencyValue {
+		return new StoreCurrencyValue();
 	},
 
 	// Registration and merchant identification.
@@ -226,7 +230,8 @@ return array(
 		return new ResponseFactory(
 			$c->get( 'agentic.helper.cart-builder' ),
 			$c->get( 'agentic.response.applied-coupons-builder' ),
-			$c->get( 'agentic.helper.shipping-options-builder' )
+			$c->get( 'agentic.helper.shipping-options-builder' ),
+			$c->get( 'agentic.config.store-currency' )
 		);
 	},
 
