@@ -1,5 +1,6 @@
 <?php
 
+declare (strict_types=1);
 namespace WooCommerce\PayPalCommerce\StoreSync\Ingestion;
 
 use WC_Product;

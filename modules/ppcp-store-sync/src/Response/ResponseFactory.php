@@ -14,23 +14,19 @@ use WooCommerce\PayPalCommerce\StoreSync\CartValidation\CouponValidator\AppliedC
 use WooCommerce\PayPalCommerce\StoreSync\Helper\AgenticCartBuilder;
 use WooCommerce\PayPalCommerce\StoreSync\Helper\ShippingOptionsBuilder;
 use WooCommerce\PayPalCommerce\StoreSync\Schema\PayPalCart;
+use WooCommerce\PayPalCommerce\StoreSync\Config\StoreCurrencyValue;
 class ResponseFactory
 {
     private AgenticCartBuilder $cart_builder;
     private AppliedCouponsBuilder $applied_coupons_builder;
     private ShippingOptionsBuilder $shipping_options_builder;
-    /**
-     * Constructor.
-     *
-     * @param AgenticCartBuilder     $cart_builder             Cart builder service.
-     * @param AppliedCouponsBuilder  $applied_coupons_builder  Applied coupons builder service.
-     * @param ShippingOptionsBuilder $shipping_options_builder Shipping options builder service.
-     */
-    public function __construct(AgenticCartBuilder $cart_builder, AppliedCouponsBuilder $applied_coupons_builder, ShippingOptionsBuilder $shipping_options_builder)
+    private StoreCurrencyValue $store_currency;
+    public function __construct(AgenticCartBuilder $cart_builder, AppliedCouponsBuilder $applied_coupons_builder, ShippingOptionsBuilder $shipping_options_builder, StoreCurrencyValue $store_currency)
     {
         $this->cart_builder = $cart_builder;
         $this->applied_coupons_builder = $applied_coupons_builder;
         $this->shipping_options_builder = $shipping_options_builder;
+        $this->store_currency = $store_currency;
     }
     /**
      * Create a new cart response (status: CREATED).
@@ -43,7 +39,7 @@ class ResponseFactory
     public function new_cart(PayPalCart $cart, string $cart_id, string $token): \WooCommerce\PayPalCommerce\StoreSync\Response\CartResponse
     {
         $wc_cart = $this->build_wc_cart_or_null($cart);
-        return \WooCommerce\PayPalCommerce\StoreSync\Response\CartResponse::create_new($cart, $cart_id, $token)->wc_cart($wc_cart)->applied_coupons($this->build_applied_coupons($cart))->shipping_options($this->shipping_options_builder->build($wc_cart));
+        return \WooCommerce\PayPalCommerce\StoreSync\Response\CartResponse::create_new($cart, $cart_id, $token)->wc_cart($wc_cart)->store_currency($this->store_currency)->applied_coupons($this->build_applied_coupons($cart))->shipping_options($this->shipping_options_builder->build($wc_cart));
     }
     /**
      * Create a paid cart response.
@@ -56,7 +52,7 @@ class ResponseFactory
     public function from_order(WC_Order $order, PayPalCart $cart, string $cart_id): \WooCommerce\PayPalCommerce\StoreSync\Response\CartResponse
     {
         $wc_cart = $this->build_wc_cart_or_null($cart);
-        return \WooCommerce\PayPalCommerce\StoreSync\Response\CartResponse::create_completed($cart, $cart_id, $order)->wc_cart($wc_cart)->applied_coupons($this->build_applied_coupons($cart))->shipping_options($this->shipping_options_builder->build($wc_cart));
+        return \WooCommerce\PayPalCommerce\StoreSync\Response\CartResponse::create_completed($cart, $cart_id, $order)->wc_cart($wc_cart)->store_currency($this->store_currency)->applied_coupons($this->build_applied_coupons($cart))->shipping_options($this->shipping_options_builder->build($wc_cart));
     }
     /**
      * Create a basic cart response.
@@ -68,7 +64,7 @@ class ResponseFactory
     public function from_cart(PayPalCart $cart, string $cart_id): \WooCommerce\PayPalCommerce\StoreSync\Response\CartResponse
     {
         $wc_cart = $this->build_wc_cart_or_null($cart);
-        return \WooCommerce\PayPalCommerce\StoreSync\Response\CartResponse::create($cart, $cart_id)->wc_cart($wc_cart)->applied_coupons($this->build_applied_coupons($cart))->shipping_options($this->shipping_options_builder->build($wc_cart));
+        return \WooCommerce\PayPalCommerce\StoreSync\Response\CartResponse::create($cart, $cart_id)->wc_cart($wc_cart)->store_currency($this->store_currency)->applied_coupons($this->build_applied_coupons($cart))->shipping_options($this->shipping_options_builder->build($wc_cart));
     }
     /**
      * Build WC_Cart from PayPalCart.

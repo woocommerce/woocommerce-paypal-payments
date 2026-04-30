@@ -404,6 +404,7 @@ return array(
     'WooCommerce\\PayPalCommerce\\StoreSync\\CartValidation\\ValidatorInterface' => $baseDir . '/modules/ppcp-store-sync/src/CartValidation/ValidatorInterface.php',
     'WooCommerce\\PayPalCommerce\\StoreSync\\Config\\AgenticWebhookConfiguration' => $baseDir . '/modules/ppcp-store-sync/src/Config/AgenticWebhookConfiguration.php',
     'WooCommerce\\PayPalCommerce\\StoreSync\\Config\\IngestionConfiguration' => $baseDir . '/modules/ppcp-store-sync/src/Config/IngestionConfiguration.php',
+    'WooCommerce\\PayPalCommerce\\StoreSync\\Config\\StoreCurrencyValue' => $baseDir . '/modules/ppcp-store-sync/src/Config/StoreCurrencyValue.php',
     'WooCommerce\\PayPalCommerce\\StoreSync\\Endpoint\\AgenticRestEndpoint' => $baseDir . '/modules/ppcp-store-sync/src/Endpoint/AgenticRestEndpoint.php',
     'WooCommerce\\PayPalCommerce\\StoreSync\\Endpoint\\CheckoutEndpoint' => $baseDir . '/modules/ppcp-store-sync/src/Endpoint/CheckoutEndpoint.php',
     'WooCommerce\\PayPalCommerce\\StoreSync\\Endpoint\\CreateCartEndpoint' => $baseDir . '/modules/ppcp-store-sync/src/Endpoint/CreateCartEndpoint.php',

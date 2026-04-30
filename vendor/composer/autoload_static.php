@@ -601,6 +601,7 @@ class ComposerStaticInit844a779aae516bed9e0beccea9d01fda
         'WooCommerce\\PayPalCommerce\\StoreSync\\CartValidation\\ValidatorInterface' => __DIR__ . '/../..' . '/modules/ppcp-store-sync/src/CartValidation/ValidatorInterface.php',
         'WooCommerce\\PayPalCommerce\\StoreSync\\Config\\AgenticWebhookConfiguration' => __DIR__ . '/../..' . '/modules/ppcp-store-sync/src/Config/AgenticWebhookConfiguration.php',
         'WooCommerce\\PayPalCommerce\\StoreSync\\Config\\IngestionConfiguration' => __DIR__ . '/../..' . '/modules/ppcp-store-sync/src/Config/IngestionConfiguration.php',
+        'WooCommerce\\PayPalCommerce\\StoreSync\\Config\\StoreCurrencyValue' => __DIR__ . '/../..' . '/modules/ppcp-store-sync/src/Config/StoreCurrencyValue.php',
         'WooCommerce\\PayPalCommerce\\StoreSync\\Endpoint\\AgenticRestEndpoint' => __DIR__ . '/../..' . '/modules/ppcp-store-sync/src/Endpoint/AgenticRestEndpoint.php',
         'WooCommerce\\PayPalCommerce\\StoreSync\\Endpoint\\CheckoutEndpoint' => __DIR__ . '/../..' . '/modules/ppcp-store-sync/src/Endpoint/CheckoutEndpoint.php',
         'WooCommerce\\PayPalCommerce\\StoreSync\\Endpoint\\CreateCartEndpoint' => __DIR__ . '/../..' . '/modules/ppcp-store-sync/src/Endpoint/CreateCartEndpoint.php',

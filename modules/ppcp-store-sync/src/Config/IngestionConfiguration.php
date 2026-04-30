@@ -1,5 +1,6 @@
 <?php
 
+declare (strict_types=1);
 namespace WooCommerce\PayPalCommerce\StoreSync\Config;
 
 use Automattic\WooCommerce\Enums\ProductType;
