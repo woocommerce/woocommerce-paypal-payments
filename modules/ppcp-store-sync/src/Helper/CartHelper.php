@@ -141,7 +141,7 @@ class CartHelper
         if (!$currency_code || $item_total <= 0 || $cart_total <= 0) {
             return null;
         }
-        $totals = array('item_total' => self::money($currency_code, $item_total), 'shipping' => self::money($currency_code, $shipping_total), 'tax_total' => self::money($currency_code, $tax_total), 'amount' => self::money($currency_code, $cart_total));
+        $totals = array('subtotal' => self::money($currency_code, $item_total), 'shipping' => self::money($currency_code, $shipping_total), 'tax' => self::money($currency_code, $tax_total), 'total' => self::money($currency_code, $cart_total));
         if ($discount_total > 0) {
             $totals['discount'] = self::money($currency_code, $discount_total);
         }
