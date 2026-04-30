@@ -29,6 +29,11 @@ use WooCommerce\PayPalCommerce\StoreSync\Schema\Address;
 use WooCommerce\PayPalCommerce\StoreSync\Schema\CartItem;
 class ShippingValidator implements \WooCommerce\PayPalCommerce\StoreSync\CartValidation\ValidatorInterface
 {
+    /**
+     * List of shipping countries that are supported by the agentic integration.
+     * Managed on plugin-side for extra code and test stability.
+     */
+    private const PAYPAL_SUPPORTED_COUNTRIES = array('US');
     private ProductManager $product_manager;
     public function __construct(ProductManager $product_manager)
     {
@@ -227,6 +232,9 @@ class ShippingValidator implements \WooCommerce\PayPalCommerce\StoreSync\CartVal
         if (!$wc_countries) {
             return \true;
         }
+        if (!$this->is_paypal_supported_country($country_code)) {
+            return \false;
+        }
         $allowed_countries = $wc_countries->get_shipping_countries();
         if (empty($allowed_countries)) {
             $allowed_countries = $wc_countries->get_allowed_countries();
@@ -248,16 +256,17 @@ class ShippingValidator implements \WooCommerce\PayPalCommerce\StoreSync\CartVal
         $countries = $wc_countries->get_countries();
         return $countries[$country_code] ?? $country_code;
     }
-    /**
-     * @return \WC_Countries|null
-     */
-    private function get_wc_countries()
+    private function get_wc_countries(): ?WC_Countries
     {
         if (!function_exists('WC')) {
             return null;
         }
         // The only place in the class that has a `WC()` dependency.
         $wc = WC();
-        return $wc ? $wc->countries : null;
+        return $wc->countries;
+    }
+    private function is_paypal_supported_country(string $country_code): bool
+    {
+        return in_array($country_code, self::PAYPAL_SUPPORTED_COUNTRIES, \true);
     }
 }
