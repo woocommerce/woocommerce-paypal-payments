@@ -21,14 +21,6 @@ class ResponseFactory
     private AppliedCouponsBuilder $applied_coupons_builder;
     private ShippingOptionsBuilder $shipping_options_builder;
     private StoreCurrencyValue $store_currency;
-    /**
-     * Constructor.
-     *
-     * @param AgenticCartBuilder     $cart_builder             Cart builder service.
-     * @param AppliedCouponsBuilder  $applied_coupons_builder  Applied coupons builder service.
-     * @param ShippingOptionsBuilder $shipping_options_builder Shipping options builder service.
-     * @param StoreCurrencyValue     $store_currency
-     */
     public function __construct(AgenticCartBuilder $cart_builder, AppliedCouponsBuilder $applied_coupons_builder, ShippingOptionsBuilder $shipping_options_builder, StoreCurrencyValue $store_currency)
     {
         $this->cart_builder = $cart_builder;
