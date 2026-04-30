@@ -39,7 +39,6 @@ test.beforeAll( async ( { utils, pcpApi, wooCommerceApi } ) => {
 		[ acdc.id ]: { id: acdc.id, enabled: true },
 		[ googlepay.id ]: { id: googlepay.id, enabled: true },
 	} );
-	await wooCommerceApi.deleteAllOrders();
 } );
 
 for ( const order of googlePayCheckout ) {

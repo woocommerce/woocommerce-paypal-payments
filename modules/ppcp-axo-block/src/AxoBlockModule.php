@@ -147,7 +147,7 @@ class AxoBlockModule implements ServiceModule, ExecutableModule {
 
 		wp_register_script(
 			'wc-ppcp-paypal-insights',
-			$asset_getter->get_asset_url( 'PayPalInsightsLoader.js' ),
+			$asset_getter->get_asset_url( 'plugins/PayPalInsightsLoader.js' ),
 			array( 'wp-plugins', 'wp-data', 'wp-element', 'wc-blocks-registry' ),
 			$asset_version,
 			true

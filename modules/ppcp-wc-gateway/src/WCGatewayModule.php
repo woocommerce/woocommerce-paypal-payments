@@ -19,7 +19,6 @@ use WooCommerce\PayPalCommerce\ApiClient\Entity\Authorization;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Capture;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\OrderStatus;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\ReferenceTransactionStatus;
-use WooCommerce\PayPalCommerce\ApiClient\Helper\Cache;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\DccApplies;
 use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\LocalApmProductStatus;
 use WooCommerce\PayPalCommerce\Settings\Data\Definition\FeaturesDefinition;
@@ -448,13 +447,6 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
 				$pwc_product_status = $c->get( 'wcgateway.pwc-product-status' );
 				if ( $pwc_product_status instanceof PWCProductStatus ) {
 					$pwc_product_status->clear();
-				}
-
-				$reference_transaction_status_cache = $c->get( 'api.reference-transaction-status-cache' );
-				assert( $reference_transaction_status_cache instanceof Cache );
-				// Clear Reference Transaction status.
-				if ( $reference_transaction_status_cache->has( ReferenceTransactionStatus::CACHE_KEY ) ) {
-					$reference_transaction_status_cache->delete( ReferenceTransactionStatus::CACHE_KEY );
 				}
 			}
 		);
