@@ -19,6 +19,7 @@ namespace WooCommerce\PayPalCommerce\StoreSync\CartValidation;
 use WC_Countries;
 use WC_Validation;
 use WC_Product;
+
 use WooCommerce\PayPalCommerce\StoreSync\Enums\Priority;
 use WooCommerce\PayPalCommerce\StoreSync\Enums\ShippingIssue;
 use WooCommerce\PayPalCommerce\StoreSync\Helper\ProductManager;
@@ -30,6 +31,12 @@ use WooCommerce\PayPalCommerce\StoreSync\Schema\Address;
 use WooCommerce\PayPalCommerce\StoreSync\Schema\CartItem;
 
 class ShippingValidator implements ValidatorInterface {
+
+	/**
+	 * List of shipping countries that are supported by the agentic integration.
+	 * Managed on plugin-side for extra code and test stability.
+	 */
+	private const PAYPAL_SUPPORTED_COUNTRIES = array( 'US' );
 
 	private ProductManager $product_manager;
 
@@ -109,52 +116,55 @@ class ShippingValidator implements ValidatorInterface {
 		$issues = array();
 
 		if ( ! $address->address_line_1() ) {
-			$issues[] = ValidationIssue::create_invalid_address( 'Shipping address is missing street address' )
-				->user_message( 'Please provide a complete street address.' )
-				->for_field( 'shipping_address.address_line_1' )
-				->add_resolution(
-					ResolutionOption::create_provide_missing_field()
-						->label( 'Provide street address' )
-						->set_meta( 'field', 'address_line_1' )
-				)
-				->add_resolution(
-					ResolutionOption::create_update_address()
-						->label( 'Update shipping address' )
-						->priority( Priority::LOW )
-				);
+			$issues[] =
+				ValidationIssue::create_invalid_address( 'Shipping address is missing street address' )
+					->user_message( 'Please provide a complete street address.' )
+					->for_field( 'shipping_address.address_line_1' )
+					->add_resolution(
+						ResolutionOption::create_provide_missing_field()
+							->label( 'Provide street address' )
+							->set_meta( 'field', 'address_line_1' )
+					)
+					->add_resolution(
+						ResolutionOption::create_update_address()
+							->label( 'Update shipping address' )
+							->priority( Priority::LOW )
+					);
 		}
 
 		if ( ! $address->admin_area_2() ) {
-			$issues[] = ValidationIssue::create_invalid_address( 'Shipping address is missing city' )
-				->user_message( 'Please provide a city.' )
-				->for_field( 'shipping_address.admin_area_2' )
-				->add_resolution(
-					ResolutionOption::create_provide_missing_field()
-						->label( 'Provide city' )
-						->set_meta( 'field', 'admin_area_2' )
-				)
-				->add_resolution(
-					ResolutionOption::create_update_address()
-						->label( 'Update shipping address' )
-						->priority( Priority::LOW )
-				);
+			$issues[] =
+				ValidationIssue::create_invalid_address( 'Shipping address is missing city' )
+					->user_message( 'Please provide a city.' )
+					->for_field( 'shipping_address.admin_area_2' )
+					->add_resolution(
+						ResolutionOption::create_provide_missing_field()
+							->label( 'Provide city' )
+							->set_meta( 'field', 'admin_area_2' )
+					)
+					->add_resolution(
+						ResolutionOption::create_update_address()
+							->label( 'Update shipping address' )
+							->priority( Priority::LOW )
+					);
 		}
 
 		$postal_code = $address->postal_code();
 		if ( ! $postal_code ) {
-			$issues[] = ValidationIssue::create_invalid_address( 'Shipping address is missing postal code' )
-				->user_message( 'Please provide a postal code.' )
-				->for_field( 'shipping_address.postal_code' )
-				->add_resolution(
-					ResolutionOption::create_provide_missing_field()
-						->label( 'Provide postal code' )
-						->set_meta( 'field', 'postal_code' )
-				)
-				->add_resolution(
-					ResolutionOption::create_update_address()
-						->label( 'Update shipping address' )
-						->priority( Priority::LOW )
-				);
+			$issues[] =
+				ValidationIssue::create_invalid_address( 'Shipping address is missing postal code' )
+					->user_message( 'Please provide a postal code.' )
+					->for_field( 'shipping_address.postal_code' )
+					->add_resolution(
+						ResolutionOption::create_provide_missing_field()
+							->label( 'Provide postal code' )
+							->set_meta( 'field', 'postal_code' )
+					)
+					->add_resolution(
+						ResolutionOption::create_update_address()
+							->label( 'Update shipping address' )
+							->priority( Priority::LOW )
+					);
 		} else {
 			$postal_validation =
 				$this->validate_postal_code_format( $postal_code, $address->country_code() );
@@ -351,6 +361,10 @@ class ShippingValidator implements ValidatorInterface {
 			return true;
 		}
 
+		if ( ! $this->is_paypal_supported_country( $country_code ) ) {
+			return false;
+		}
+
 		$allowed_countries = $wc_countries->get_shipping_countries();
 
 		if ( empty( $allowed_countries ) ) {
@@ -377,10 +391,7 @@ class ShippingValidator implements ValidatorInterface {
 		return $countries[ $country_code ] ?? $country_code;
 	}
 
-	/**
-	 * @return \WC_Countries|null
-	 */
-	private function get_wc_countries() {
+	private function get_wc_countries(): ?WC_Countries {
 		if ( ! function_exists( 'WC' ) ) {
 			return null;
 		}
@@ -388,6 +399,10 @@ class ShippingValidator implements ValidatorInterface {
 		// The only place in the class that has a `WC()` dependency.
 		$wc = WC();
 
-		return $wc ? $wc->countries : null;
+		return $wc->countries;
+	}
+
+	private function is_paypal_supported_country( string $country_code ): bool {
+		return in_array( $country_code, self::PAYPAL_SUPPORTED_COUNTRIES, true );
 	}
 }
