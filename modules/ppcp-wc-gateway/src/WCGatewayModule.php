@@ -90,6 +90,7 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
 		$this->register_payment_gateways( $c );
 		$this->register_order_functionality( $c );
 		$this->register_contact_handlers();
+		$this->register_block_express_payment_method_handler( $c );
 		$this->register_columns( $c );
 		$this->register_checkout_paypal_address_preset( $c );
 		$this->register_wc_tasks( $c );
@@ -969,6 +970,87 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
 				// so probably no need to add additional checks.
 				$set_order_contacts( $wc_order );
 			}
+		);
+	}
+
+	/**
+	 * Forces both the gateway dispatch and the order's stored payment method to PayPal when a
+	 * block-checkout express PayPal/Pay Later payment is processed via Store API.
+	 *
+	 * Reason: when the express PayPal button is clicked while ACDC (or any other PCP gateway)
+	 * is the first enabled gateway in WC Settings → Payments, WC Blocks ends up routing the
+	 * Store API checkout to that gateway. Without this guarding the order's `_payment_method`
+	 * resolves to the wrong gateway and the order edit page renders "Payment via Debit & Credit
+	 * Cards" instead of "Payment via PayPal".
+	 *
+	 * Two hooks together close the loop:
+	 *
+	 * 1. `woocommerce_rest_checkout_process_payment_with_context` at priority 100 — runs before
+	 *    WC's `Legacy::process_legacy_payment` (priority 999), so when a `paypal_order_id` is
+	 *    present in `payment_data` we reroute the gateway dispatch to PayPalGateway and stamp
+	 *    the order with the right gateway/title.
+	 *
+	 * 2. `woocommerce_before_order_object_save` — guards against a concurrent Store API cart
+	 *    request (`AbstractCartRoute::cart_updated` → `OrderController::update_order_from_cart`)
+	 *    that races the checkout POST and resets the order's `_payment_method` to whatever
+	 *    `chosen_payment_method` the WC session held when the cart route started. Once the
+	 *    PayPal-side meta `_ppcp_paypal_order_id` is on the order, we know the order has been
+	 *    paid via PayPal and any save attempting to overwrite the gateway is reverted.
+	 */
+	private function register_block_express_payment_method_handler( ContainerInterface $c ): void {
+		add_action(
+			'woocommerce_rest_checkout_process_payment_with_context',
+			function ( $context ) use ( $c ): void {
+				$payment_data = (array) ( $context->payment_data ?? array() );
+
+				if ( empty( $payment_data['paypal_order_id'] ) ) {
+					return;
+				}
+
+				if ( ( $context->payment_method ?? '' ) === PayPalGateway::ID ) {
+					return;
+				}
+
+				$available = WC()->payment_gateways->get_available_payment_gateways();
+				if ( ! isset( $available[ PayPalGateway::ID ] ) ) {
+					return;
+				}
+
+				$context->set_payment_method( PayPalGateway::ID );
+
+				$order = $context->order ?? null;
+				if ( $order instanceof WC_Order ) {
+					$order->set_payment_method( PayPalGateway::ID );
+
+					$session_handler         = $c->get( 'session.handler' );
+					$funding_source_renderer = $c->get( 'wcgateway.funding-source.renderer' );
+
+					$funding_source = $payment_data['funding_source']
+						?: ( $session_handler->funding_source() ?: 'paypal' );
+					$order->set_payment_method_title( $funding_source_renderer->render_name( $funding_source ) );
+					$order->save();
+				}
+			},
+			100,
+			1
+		);
+
+		add_action(
+			'woocommerce_before_order_object_save',
+			function ( $order ): void {
+				if ( ! $order instanceof WC_Order ) {
+					return;
+				}
+				if ( ! $order->get_meta( PayPalGateway::ORDER_ID_META_KEY ) ) {
+					return;
+				}
+				if ( $order->get_payment_method() === PayPalGateway::ID ) {
+					return;
+				}
+				$order->set_payment_method( PayPalGateway::ID );
+			},
+			10,
+			1
 		);
 	}
 
