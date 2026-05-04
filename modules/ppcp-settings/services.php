@@ -43,6 +43,7 @@ use WooCommerce\PayPalCommerce\Settings\Endpoint\AuthenticationRestEndpoint;
 use WooCommerce\PayPalCommerce\Settings\Endpoint\CommonRestEndpoint;
 use WooCommerce\PayPalCommerce\Settings\Endpoint\FeaturesRestEndpoint;
 use WooCommerce\PayPalCommerce\Settings\Endpoint\LoginLinkRestEndpoint;
+use WooCommerce\PayPalCommerce\Settings\Endpoint\AgenticBetaBannerEndpoint;
 use WooCommerce\PayPalCommerce\Settings\Endpoint\MigrateToAcdcRestEndpoint;
 use WooCommerce\PayPalCommerce\Settings\Endpoint\OnboardingRestEndpoint;
 use WooCommerce\PayPalCommerce\Settings\Endpoint\PayLaterMessagingEndpoint;
@@ -286,6 +287,9 @@ return array(
 		return new MigrateToAcdcRestEndpoint(
 			$container->get( 'settings.data.payment' )
 		);
+	},
+	'settings.rest.agentic_beta_banner'                   => static function ( ContainerInterface $container ): AgenticBetaBannerEndpoint {
+		return new AgenticBetaBannerEndpoint();
 	},
 	'settings.casual-selling.supported-countries'         => static function ( ContainerInterface $container ): array {
 		return array(
