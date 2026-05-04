@@ -8,10 +8,16 @@
 
 import apiFetch from '@wordpress/api-fetch';
 
-const REST_DISMISS_PATH = '/wc/v3/wc_paypal/agentic-beta-banner-dismiss';
+const REST_BASE_PATH = '/wc/v3/wc_paypal/agentic-beta-banner';
 
 export const dismissAgenticBetaBanner = () =>
 	apiFetch( {
-		path: REST_DISMISS_PATH,
+		path: `${ REST_BASE_PATH }/dismiss`,
+		method: 'POST',
+	} );
+
+export const applyForAgenticBeta = () =>
+	apiFetch( {
+		path: `${ REST_BASE_PATH }/apply`,
 		method: 'POST',
 	} );
