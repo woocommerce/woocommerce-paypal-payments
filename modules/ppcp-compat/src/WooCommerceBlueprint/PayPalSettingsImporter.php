@@ -26,33 +26,6 @@ class PayPalSettingsImporter implements StepProcessor {
 	private const OPTION_NOT_FOUND = '__PAYPAL_OPTION_NOT_FOUND__';
 
 	/**
-	 * Explicit list of PayPal options that can be imported.
-	 *
-	 * @var array<string>
-	 */
-	private const PAYPAL_OPTIONS = array(
-		// Core PPCP data settings (new settings).
-		'woocommerce-ppcp-data-common',
-		'woocommerce-ppcp-data-onboarding',
-		'woocommerce-ppcp-data-payment',
-		'woocommerce-ppcp-data-settings',
-		'woocommerce-ppcp-data-styling',
-		'woocommerce-ppcp-data-fastlane',
-		'woocommerce-ppcp-data-paylater-messaging',
-		// Legacy settings (maintained for backward compatibility during migration).
-		'woocommerce-ppcp-settings',
-		// Merchant state flags.
-		'woocommerce-ppcp-is-new-merchant',
-		// UI and migration state flags (prevent re-migration and control UI display).
-		'woocommerce_ppcp-settings-should-use-old-ui',
-		'woocommerce_ppcp-is_pay_later_settings_migrated',
-		'woocommerce_ppcp-is_smart_button_settings_migrated',
-		// Individual payment method settings (gateway titles/descriptions).
-		'woocommerce_venmo_settings',
-		'woocommerce_pay-later_settings',
-	);
-
-	/**
 	 * Process PayPal settings import.
 	 *
 	 * @param object $schema Schema object.
@@ -175,7 +148,7 @@ class PayPalSettingsImporter implements StepProcessor {
 	 * @return bool
 	 */
 	private function is_paypal_option( string $option_name ): bool {
-		return in_array( $option_name, self::PAYPAL_OPTIONS, true );
+		return in_array( $option_name, PayPalBlueprintOptions::OPTION_NAMES, true );
 	}
 
 	/**
