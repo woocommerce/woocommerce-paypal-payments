@@ -7,8 +7,12 @@ import {
 import Troubleshooting from './Blocks/Troubleshooting';
 import PaypalSettings from './Blocks/PaypalSettings';
 import OtherSettings from './Blocks/OtherSettings';
+import BlueprintExportImport from './Blocks/BlueprintExportImport';
+import data from '../../../../../utils/data';
 
 const ExpertSettings = ( { ownBradOnly, hasContactModule } ) => {
+	const { blueprint } = data();
+
 	return (
 		<SettingsCard
 			icon="icon-settings-expert.svg"
@@ -40,6 +44,12 @@ const ExpertSettings = ( { ownBradOnly, hasContactModule } ) => {
 					// The "other settings" accordion is only relevant in white-label mode.
 					<Content>
 						<OtherSettings />
+					</Content>
+				) }
+
+				{ blueprint?.isActive && (
+					<Content>
+						<BlueprintExportImport />
 					</Content>
 				) }
 			</ContentWrapper>
