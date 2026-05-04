@@ -74,8 +74,15 @@ trait PaymentsStatusHandlingTrait
             // It is checked in the capture endpoint already, but there are other ways to capture,
             // such as when paid via saved card.
             case CaptureStatus::DECLINED:
-                $wc_order->update_status('failed', __('Could not capture the payment.', 'woocommerce-paypal-payments'));
-                throw new RuntimeException(__('Payment provider declined the payment, please use a different payment method.', 'woocommerce-paypal-payments'));
+                $fraud = $capture->fraud_processor_response();
+                $status_note = $fraud && $fraud->response_code() ? sprintf(
+                    /* translators: %s - processor response code and description */
+                    __('Could not capture the payment. Processor response: %s', 'woocommerce-paypal-payments'),
+                    $fraud->get_response_code_message()
+                ) : __('Could not capture the payment.', 'woocommerce-paypal-payments');
+                $wc_order->update_status('failed', $status_note);
+                $decline_message = $fraud ? $fraud->get_customer_decline_message() : __('Payment provider declined the payment, please use a different payment method.', 'woocommerce-paypal-payments');
+                throw new RuntimeException($decline_message);
             case CaptureStatus::PENDING:
             case CaptureStatus::FAILED:
                 $wc_order->update_status('on-hold', __('Awaiting payment.', 'woocommerce-paypal-payments'));
