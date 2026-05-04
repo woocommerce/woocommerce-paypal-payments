@@ -4,7 +4,6 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\VaultComponent;
 
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
-use WooCommerce\PayPalCommerce\ApiClient\Factory\PayerFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PurchaseUnitFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\ShippingPreferenceFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\ReferenceTransactionStatus;
@@ -42,7 +41,6 @@ return array(
 			$container->get( 'button.request-data' ),
 			$container->get( 'api.endpoint.order' ),
 			$container->get( 'api.factory.purchase-unit' ),
-			$container->get( 'api.factory.payer' ),
 			$container->get( 'api.factory.shipping-preference' ),
 			$container->get( 'woocommerce.logger.woocommerce' )
 		);
