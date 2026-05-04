@@ -35,6 +35,7 @@ const SettingsScreen = ( { activePanel, setActivePanel } ) => {
 								'Apply for Early Access',
 								'woocommerce-paypal-payments'
 							),
+							url: 'https://example.com',
 						},
 						{
 							type: 'tertiary',
