@@ -26,15 +26,23 @@ class FraudProcessorResponse
      */
     protected string $cvv2_code;
     /**
+     * The processor response code (e.g. 9500, 9100).
+     *
+     * @var string
+     */
+    protected string $response_code;
+    /**
      * FraudProcessorResponse constructor.
      *
      * @param string|null $avs_code The AVS response code.
      * @param string|null $cvv2_code The CVV response code.
+     * @param string|null $response_code The processor response code.
      */
-    public function __construct(?string $avs_code, ?string $cvv2_code)
+    public function __construct(?string $avs_code, ?string $cvv2_code, ?string $response_code = null)
     {
         $this->avs_code = (string) $avs_code;
         $this->cvv2_code = (string) $cvv2_code;
+        $this->response_code = (string) $response_code;
     }
     /**
      * Returns the AVS response code.
@@ -55,13 +63,22 @@ class FraudProcessorResponse
         return $this->cvv2_code;
     }
     /**
+     * Returns the processor response code.
+     *
+     * @return string
+     */
+    public function response_code(): string
+    {
+        return $this->response_code;
+    }
+    /**
      * Returns the object as array.
      *
      * @return array
      */
     public function to_array(): array
     {
-        return array('avs_code' => $this->avs_code(), 'cvv2_code' => $this->cvv_code());
+        return array('avs_code' => $this->avs_code(), 'cvv2_code' => $this->cvv_code(), 'response_code' => $this->response_code());
     }
     /**
      * Retrieves the AVS (Address Verification System) code messages based on the AVS response code.
@@ -147,5 +164,34 @@ class FraudProcessorResponse
          * @psalm-suppress PossiblyNullArgument
          */
         return $messages[$this->cvv_code()] ?? sprintf('%s: Error', $this->cvv_code());
+    }
+    /**
+     * Returns the customer-facing decline message, including the processor response code when available.
+     *
+     * @return string
+     */
+    public function get_customer_decline_message(): string
+    {
+        if ($this->response_code()) {
+            return sprintf(
+                /* translators: %s - processor response code and description */
+                __('Payment declined by card processor: %s. Please use a different payment method or contact your bank.', 'woocommerce-paypal-payments'),
+                $this->get_response_code_message()
+            );
+        }
+        return __('Payment provider declined the payment, please use a different payment method.', 'woocommerce-paypal-payments');
+    }
+    /**
+     * Returns the human-readable description for the processor response code.
+     *
+     * @return string
+     */
+    public function get_response_code_message(): string
+    {
+        if (!$this->response_code()) {
+            return '';
+        }
+        $messages = array('0000' => '0000: Approved', '00N7' => '00N7: Decline CVV2 Failure', '0100' => '0100: Refer to card issuer', '0390' => '0390: No credit account', '0500' => '0500: Do not honor', '0580' => '0580: Transaction not permitted to cardholder', '0800' => '0800: Bad response reversal amount', '0880' => '0880: Cryptographic failure', '0890' => '0890: Unavailable', '0960' => '0960: System malfunction', '1000' => '1000: Partial Approval', '10BR' => '10BR: 3DS Authentication Failure', '1300' => '1300: Invalid data format', '1310' => '1310: Invalid amount', '1312' => '1312: Invalid transaction card issuer acquirer', '1317' => '1317: Invalid capture date', '1320' => '1320: Invalid currency code', '1330' => '1330: Invalid account', '1335' => '1335: Invalid account type', '1340' => '1340: Invalid terminal id', '1350' => '1350: Invalid merchant/terminal city', '1360' => '1360: Bad or malformed request', '1370' => '1370: Issuer unavailable', '1380' => '1380: Updates not allowed', '1382' => '1382: Bad CVV2', '1384' => '1384: Similar transaction recently submitted', '1390' => '1390: Trace number error', '1393' => '1393: Transaction amount range error', '5100' => '5100: Generic Decline', '5110' => '5110: CVV2 Failure', '5120' => '5120: Insufficient funds', '5130' => '5130: Invalid PIN', '5140' => '5140: Card closed', '5150' => '5150: Pick up card (fraud)', '5160' => '5160: Unauthorized user', '5170' => '5170: Card blocked', '5180' => '5180: Declined by the issuer', '5200' => '5200: Account closed', '5400' => '5400: Expired card', '5910' => '5910: Issuer not available, return to issuer', '5920' => '5920: Issuer not available, return to issuer', '5930' => '5930: Card not activated', '6300' => '6300: Account blocked', '9100' => '9100: Declined, Please Retry', '9500' => '9500: Suspected Fraud', '9510' => '9510: Security Violation', '9520' => '9520: Lost or Stolen Card', '9530' => '9530: Hold - Call issuer', '9540' => '9540: Refused Card', '9600' => '9600: Unacceptable PIN - Transaction Declined - Retry', 'PCNF' => 'PCNF: Purchase Confirmation Not Received', 'PCOM' => 'PCOM: Purchase Confirmation Received');
+        return $messages[$this->response_code()] ?? sprintf('%s: Unknown response code', $this->response_code());
     }
 }

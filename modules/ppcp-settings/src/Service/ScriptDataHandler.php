@@ -91,6 +91,7 @@ class ScriptDataHandler
             'isEligibleForPaymentLevelProcessing' => $this->payment_level_eligibility->is_eligible(CreditCardGateway::ID),
             'isBcdcOverrideFlagEnabled' => $this->is_bcdc_override_flag_enabled,
             'isAgenticBetaBannerEligible' => $this->agentic_beta_banner_eligibility->is_eligible(),
+            'blueprint' => array('isActive' => 'yes' === get_option('woocommerce_feature_blueprint_enabled', 'no'), 'importUrl' => admin_url('admin.php?page=wc-settings&tab=advanced&section=blueprint')),
         );
         if ($is_pay_later_configurator_available) {
             wp_enqueue_script('ppcp-paylater-configurator-lib', 'https://www.paypalobjects.com/merchant-library/merchant-configurator.js', array('wp-i18n'), $script_asset_file['version'], \true);
