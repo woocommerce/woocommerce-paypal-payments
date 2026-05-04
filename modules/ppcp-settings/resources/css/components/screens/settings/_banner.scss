@@ -1,4 +1,4 @@
-.ppcp-r-settings-migration-banner {
+.ppcp-r-settings-banner {
 
 	.ppcp-r-settings-card__content-wrapper {
 		display: flex;
@@ -34,7 +34,7 @@
 		margin-right: 16px;
 	}
 
-	.ppcp-r-settings-migration-banner__icon {
+	.ppcp-r-settings-banner__icon {
 		text-align: center;
 		width: 35%;
 		height: 100%;
@@ -56,11 +56,11 @@
 			flex-direction: column;
 		}
 
-		.ppcp--content:not(.ppcp-r-settings-migration-banner__icon) {
+		.ppcp--content:not(.ppcp-r-settings-banner__icon) {
 			order:2;
 		}
 
-		.ppcp-r-settings-migration-banner__icon-close {
+		.ppcp-r-settings-banner__icon-close {
 			display: none;
 		}
 	}
