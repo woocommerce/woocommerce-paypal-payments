@@ -28,6 +28,14 @@ class VaultComponentModule implements ServiceModule, ExecutableModule {
 			return true;
 		}
 
+		add_filter(
+			'woocommerce_paypal_payments_sdk_components_hook',
+			static function ( array $components ): array {
+				$components[] = 'saved-payment-methods';
+				return $components;
+			}
+		);
+
 		add_action(
 			'wc_ajax_' . CreateVaultOrderEndpoint::ENDPOINT,
 			static function () use ( $c ) {

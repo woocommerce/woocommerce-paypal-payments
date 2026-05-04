@@ -14,15 +14,17 @@ class VaultRenderer {
 		}
 
 		const paypal = window.paypal;
-		if ( ! paypal?.Vault ) {
-			console.error( 'PayPal Vault SDK component not available.' );
+		if ( ! paypal?.SavedPaymentMethods ) {
+			console.error(
+				'PayPal SavedPaymentMethods SDK component not available.'
+			);
 			return;
 		}
 
 		const vaultData = this.config.vault_component;
 
 		try {
-			this.vaultInstance = paypal.Vault( {
+			this.vaultInstance = paypal.SavedPaymentMethods( {
 				createOrder: async () => {
 					const res = await fetch(
 						vaultData.ajax.create_order.endpoint,

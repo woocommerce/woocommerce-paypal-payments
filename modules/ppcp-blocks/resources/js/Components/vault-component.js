@@ -14,7 +14,7 @@ export const VaultComponent = ( { config, onApproveOrder, onRenderError } ) => {
 	// Load SDK if not already loaded.
 	useEffect( () => {
 		const paypal = window[ namespace ];
-		if ( paypal?.Vault ) {
+		if ( paypal?.SavedPaymentMethods ) {
 			setSdkReady( true );
 			return;
 		}
@@ -28,7 +28,7 @@ export const VaultComponent = ( { config, onApproveOrder, onRenderError } ) => {
 			} );
 	}, [] );
 
-	// Render paypal.Vault() once SDK is ready.
+	// Render paypal.SavedPaymentMethods() once SDK is ready.
 	useEffect( () => {
 		if (
 			! sdkReady ||
@@ -39,15 +39,17 @@ export const VaultComponent = ( { config, onApproveOrder, onRenderError } ) => {
 		}
 
 		const paypal = window[ namespace ];
-		if ( ! paypal?.Vault ) {
-			console.error( 'PayPal Vault SDK component not available.' );
+		if ( ! paypal?.SavedPaymentMethods ) {
+			console.error(
+				'PayPal SavedPaymentMethods SDK component not available.'
+			);
 			setRenderFailed( true );
 			onRenderError?.();
 			return;
 		}
 
 		try {
-			vaultInstanceRef.current = paypal.Vault( {
+			vaultInstanceRef.current = paypal.SavedPaymentMethods( {
 				createOrder: async () => {
 					const res = await fetch(
 						vaultData.ajax.create_order.endpoint,
