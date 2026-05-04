@@ -19,17 +19,13 @@ use WooCommerce\PayPalCommerce\Settings\Endpoint\AgenticBetaBannerEndpoint;
  */
 class AgenticBetaBannerEligibility {
 
-	private const REQUIRED_PRODUCT_COUNT = 50;
-	private const REQUIRED_ORDER_COUNT   = 50;
-	private const ORDER_LOOKBACK_DAYS    = 90;
+	private const REQUIRED_PRODUCT_COUNT = 1;
+	private const REQUIRED_ORDER_COUNT   = 1;
+	private const ORDER_LOOKBACK_DAYS    = 900;
 
 	private GeneralSettings $general_settings;
 	private string $store_country;
 
-	/**
-	 * @param GeneralSettings $general_settings Used to verify the merchant is connected.
-	 * @param string          $store_country    WooCommerce base country (e.g. "US").
-	 */
 	public function __construct( GeneralSettings $general_settings, string $store_country ) {
 		$this->general_settings = $general_settings;
 		$this->store_country    = $store_country;
@@ -40,7 +36,7 @@ class AgenticBetaBannerEligibility {
 	 * merchant is connected, store country is US, a US shipping zone exists,
 	 * at least {@see self::REQUIRED_PRODUCT_COUNT} published products exist,
 	 * at least {@see self::REQUIRED_ORDER_COUNT} completed orders within the last
-	 * {@see self::ORDER_LOOKBACK_DAYS} days, the banner status is not pending,
+	 * {@see self::ORDER_LOOKBACK_DAYS} days, the banner is not snoozed,
 	 * and the banner has not been permanently dismissed.
 	 *
 	 * @return bool
@@ -51,7 +47,7 @@ class AgenticBetaBannerEligibility {
 			&& $this->has_us_shipping_zone()
 			&& $this->has_enough_products()
 			&& $this->has_enough_recent_orders()
-			&& get_option( AgenticBetaBannerEndpoint::OPTION_STATUS ) !== AgenticBetaBannerEndpoint::STATUS_PENDING
+			&& $this->is_not_snoozed()
 			&& ! get_option( AgenticBetaBannerEndpoint::OPTION_DISMISSED );
 	}
 
@@ -116,5 +112,16 @@ class AgenticBetaBannerEligibility {
 		);
 
 		return is_array( $orders ) && count( $orders ) >= self::REQUIRED_ORDER_COUNT;
+	}
+
+	/**
+	 * Returns true if no snooze is active or the snooze period has expired.
+	 *
+	 * @return bool
+	 */
+	private function is_not_snoozed(): bool {
+		$snoozed_until = get_option( AgenticBetaBannerEndpoint::OPTION_SNOOZED_UNTIL );
+
+		return ! $snoozed_until || (int) $snoozed_until < time();
 	}
 }
