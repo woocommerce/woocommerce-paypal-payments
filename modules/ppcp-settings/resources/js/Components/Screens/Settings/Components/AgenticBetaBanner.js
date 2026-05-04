@@ -85,7 +85,7 @@ const AgenticBetaBanner = ( {
 					</Action>
 				</Content>
 				<Content asCard={ false } className={ `${ className }__icon` }>
-					<PPIcon imageName="icon-button-payment-method-advanced-cards-large.svg" />
+					<PPIcon imageName="icon-paypal-business-loan.svg" />
 					<button
 						className={ `${ className }__icon-close` }
 						aria-label={ __(
