@@ -12,6 +12,7 @@ import classNames from 'classnames';
 import { __ } from '@wordpress/i18n';
 import {
 	dismissAgenticBetaBanner,
+	remindLaterAgenticBeta,
 	applyForAgenticBeta,
 } from '@ppcp-settings/data/agentic-beta/actions';
 
@@ -30,6 +31,12 @@ const AgenticBetaBanner = ( {
 		isBannerDismissed = true;
 		setIsDismissed( true );
 		dismissAgenticBetaBanner();
+	};
+
+	const remind = () => {
+		isBannerDismissed = true;
+		setIsDismissed( true );
+		remindLaterAgenticBeta();
 	};
 
 	if ( isDismissed ) {
@@ -67,7 +74,7 @@ const AgenticBetaBanner = ( {
 							{ actionProps?.buttons.map(
 								( buttonData, index ) => {
 									const { type, text, url } = buttonData;
-									const isDismiss = type === 'tertiary';
+									const isRemind = type === 'tertiary';
 
 									return (
 										<Button
@@ -79,8 +86,8 @@ const AgenticBetaBanner = ( {
 												url ? '_blank' : undefined
 											}
 											onClick={
-												isDismiss
-													? dismiss
+												isRemind
+													? remind
 													: applyForAgenticBeta
 											}
 										>
