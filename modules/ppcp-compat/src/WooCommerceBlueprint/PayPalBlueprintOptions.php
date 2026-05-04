@@ -28,14 +28,8 @@ class PayPalBlueprintOptions {
 		'woocommerce-ppcp-data-styling',
 		'woocommerce-ppcp-data-fastlane',
 		'woocommerce-ppcp-data-paylater-messaging',
-		// Legacy settings (maintained for backward compatibility during migration).
-		'woocommerce-ppcp-settings',
 		// Merchant state flags.
 		'woocommerce-ppcp-is-new-merchant',
-		// UI and migration state flags (prevent re-migration and control UI display).
-		'woocommerce_ppcp-settings-should-use-old-ui',
-		'woocommerce_ppcp-is_pay_later_settings_migrated',
-		'woocommerce_ppcp-is_smart_button_settings_migrated',
 		// Individual payment method settings (gateway titles/descriptions).
 		'woocommerce_venmo_settings',
 		'woocommerce_pay-later_settings',
