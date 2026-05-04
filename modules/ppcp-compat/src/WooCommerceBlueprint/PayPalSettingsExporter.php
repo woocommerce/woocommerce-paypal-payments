@@ -36,6 +36,8 @@ class PayPalSettingsExporter implements StepExporter, HasAlias {
 		'woocommerce-ppcp-data-payment',
 		'woocommerce-ppcp-data-settings',
 		'woocommerce-ppcp-data-styling',
+		'woocommerce-ppcp-data-fastlane',
+		'woocommerce-ppcp-data-paylater-messaging',
 		// Legacy settings (maintained for backward compatibility during migration).
 		'woocommerce-ppcp-settings',
 		// Merchant state flags.
