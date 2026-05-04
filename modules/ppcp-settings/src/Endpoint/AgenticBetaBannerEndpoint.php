@@ -15,13 +15,14 @@ use WP_REST_Request;
 
 /**
  * Handles banner interactions for the agentic beta program:
- * permanent dismissal and survey application.
+ * permanent dismissal, remind-me-later, and survey application.
  */
 class AgenticBetaBannerEndpoint extends RestEndpoint {
 
 	public const OPTION_DISMISSED = 'ppcp_agentic_banner_dismissed';
 	public const OPTION_STATUS    = 'ppcp_agentic_beta_status';
 	public const STATUS_PENDING   = 'pending';
+	public const STATUS_APPLIED   = 'applied';
 
 	protected $rest_base = 'agentic-beta-banner';
 
@@ -32,6 +33,16 @@ class AgenticBetaBannerEndpoint extends RestEndpoint {
 			array(
 				'methods'             => WP_REST_Server::CREATABLE,
 				'callback'            => array( $this, 'handle_dismiss' ),
+				'permission_callback' => array( $this, 'check_permission' ),
+			)
+		);
+
+		register_rest_route(
+			static::NAMESPACE,
+			'/' . $this->rest_base . '/remind',
+			array(
+				'methods'             => WP_REST_Server::CREATABLE,
+				'callback'            => array( $this, 'handle_remind' ),
 				'permission_callback' => array( $this, 'check_permission' ),
 			)
 		);
@@ -53,9 +64,15 @@ class AgenticBetaBannerEndpoint extends RestEndpoint {
 		return $this->return_success( array( 'dismissed' => true ) );
 	}
 
-	public function handle_apply( WP_REST_Request $request ): WP_REST_Response {
+	public function handle_remind( WP_REST_Request $request ): WP_REST_Response {
 		update_option( self::OPTION_STATUS, self::STATUS_PENDING );
 
 		return $this->return_success( array( 'status' => self::STATUS_PENDING ) );
+	}
+
+	public function handle_apply( WP_REST_Request $request ): WP_REST_Response {
+		update_option( self::OPTION_STATUS, self::STATUS_APPLIED );
+
+		return $this->return_success( array( 'status' => self::STATUS_APPLIED ) );
 	}
 }
