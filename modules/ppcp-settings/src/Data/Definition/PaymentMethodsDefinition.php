@@ -51,11 +51,18 @@ class PaymentMethodsDefinition {
 	private GeneralSettings $general_settings;
 
 	/**
-	 * Conflict notices for Axo gateway.
+	 * Axo checkout configuration conflict notice.
 	 *
-	 * @var array
+	 * @var string
 	 */
-	private array $axo_conflicts_notices;
+	private string $axo_checkout_config_notice;
+
+	/**
+	 * Axo incompatible plugins conflict notice.
+	 *
+	 * @var string
+	 */
+	private string $axo_incompatible_plugins_notice;
 
 	/**
 	 * List of WooCommerce payment gateways.
@@ -67,18 +74,21 @@ class PaymentMethodsDefinition {
 	/**
 	 * Constructor.
 	 *
-	 * @param PaymentSettings $settings              Payment methods data model.
-	 * @param GeneralSettings $general_settings      General plugin settings model.
-	 * @param array           $axo_conflicts_notices Conflicts notices for Axo.
+	 * @param PaymentSettings $settings                        Payment methods data model.
+	 * @param GeneralSettings $general_settings                General plugin settings model.
+	 * @param string          $axo_checkout_config_notice      Axo checkout config conflict notice.
+	 * @param string          $axo_incompatible_plugins_notice Axo incompatible plugins notice.
 	 */
 	public function __construct(
 		PaymentSettings $settings,
 		GeneralSettings $general_settings,
-		array $axo_conflicts_notices = array()
+		string $axo_checkout_config_notice = '',
+		string $axo_incompatible_plugins_notice = ''
 	) {
-		$this->settings              = $settings;
-		$this->general_settings      = $general_settings;
-		$this->axo_conflicts_notices = $axo_conflicts_notices;
+		$this->settings                        = $settings;
+		$this->general_settings                = $general_settings;
+		$this->axo_checkout_config_notice      = $axo_checkout_config_notice;
+		$this->axo_incompatible_plugins_notice = $axo_incompatible_plugins_notice;
 	}
 
 	/**
@@ -105,6 +115,7 @@ class PaymentMethodsDefinition {
 				$method['icon'],
 				$method['fields'] ?? array(),
 				$method['warningMessages'] ?? array(),
+				$method['warningSeverity'] ?? 'warning',
 			);
 		}
 
@@ -124,6 +135,8 @@ class PaymentMethodsDefinition {
 	 *                                                fields.
 	 * @param array       $warning_messages           Optional. Warning messages to display in the
 	 *                                                UI.
+	 * @param string      $warning_severity           Optional. Severity level: 'warning' (yellow)
+	 *                                                or 'error' (red).
 	 * @return array Payment method definition.
 	 */
 	private function build_method_definition(
@@ -132,7 +145,8 @@ class PaymentMethodsDefinition {
 		string $description,
 		string $icon,
 		$fields = array(),
-		array $warning_messages = array()
+		array $warning_messages = array(),
+		string $warning_severity = 'warning'
 	): array {
 		$gateway = $this->wc_gateways[ $gateway_id ] ?? null;
 
@@ -148,6 +162,7 @@ class PaymentMethodsDefinition {
 			'itemTitle'       => $title,
 			'itemDescription' => $description,
 			'warningMessages' => $warning_messages,
+			'warningSeverity' => $warning_severity,
 		);
 
 		if ( is_array( $fields ) ) {
@@ -234,7 +249,8 @@ class PaymentMethodsDefinition {
 	 * @return array
 	 */
 	public function group_card_methods(): array {
-		$group = array();
+		$group    = array();
+		$warnings = $this->get_warning_messages();
 
 		if ( ! $this->general_settings->own_brand_only() ) {
 			$group[] = array(
@@ -268,7 +284,7 @@ class PaymentMethodsDefinition {
 						),
 					),
 				),
-				'warningMessages' => $this->axo_conflicts_notices,
+				'warningMessages' => $warnings[ AxoGateway::ID ] ?? array(),
 			);
 			$group[] = array(
 				'id'          => ApplePayGateway::ID,
@@ -297,9 +313,9 @@ class PaymentMethodsDefinition {
 		return array(
 			PWCGateway::ID            => array(
 				'method_title'       => __( 'Pay with Crypto', 'woocommerce-paypal-payments' ),
-				'method_description' => __( 'Accept cryptocurrency payments through PayPal, supporting various digital currencies for global customers.', 'woocommerce-paypal-payments' ),
+				'method_description' => __( 'A PayPal-powered checkout option letting customers pay with cryptocurrency. You receive funds in USD, settled directly to your PayPal balance — no crypto exposure, no chargeback risk. Promotional processing rate of 0.99% through July 31, 2026.', 'woocommerce-paypal-payments' ),
 				'title'              => __( 'Pay with Crypto', 'woocommerce-paypal-payments' ),
-				'description'        => __( 'Clicking "Place order" will redirect you to PayPal\'s encrypted checkout to complete your cryptocurrency purchase.', 'woocommerce-paypal-payments' ),
+				'description'        => __( 'Pay with top wallets and coins.', 'woocommerce-paypal-payments' ),
 			),
 			BancontactGateway::ID     => array(
 				'method_title'       => __( 'Bancontact (via PayPal)', 'woocommerce-paypal-payments' ),
@@ -372,6 +388,7 @@ class PaymentMethodsDefinition {
 	 */
 	public function group_apms(): array {
 		$defaults = self::get_apm_defaults();
+		$warnings = $this->get_warning_messages();
 
 		$group = array(
 			array(
@@ -429,10 +446,32 @@ class PaymentMethodsDefinition {
 				'icon'        => 'payment-method-multibanco',
 			),
 			array(
-				'id'          => PayUponInvoiceGateway::ID,
-				'title'       => $defaults[ PayUponInvoiceGateway::ID ]['title'],
-				'description' => $defaults[ PayUponInvoiceGateway::ID ]['method_description'],
-				'icon'        => '',
+				'id'              => PayUponInvoiceGateway::ID,
+				'title'           => $defaults[ PayUponInvoiceGateway::ID ]['title'],
+				'description'     => $defaults[ PayUponInvoiceGateway::ID ]['method_description'],
+				'icon'            => 'payment-method-ratepay',
+				'fields'          => array(
+					'puiBrandName'                   => array(
+						'type'     => 'text',
+						'default'  => $this->settings->get_pui_brand_name(),
+						'label'    => __( 'Brand name', 'woocommerce-paypal-payments' ),
+						'required' => true,
+					),
+					'puiLogoUrl'                     => array(
+						'type'     => 'text',
+						'default'  => $this->settings->get_pui_logo_url(),
+						'label'    => __( 'Logo URL', 'woocommerce-paypal-payments' ),
+						'required' => true,
+					),
+					'puiCustomerServiceInstructions' => array(
+						'type'     => 'text',
+						'default'  => $this->settings->get_pui_customer_service_instructions(),
+						'label'    => __( 'Customer service instructions', 'woocommerce-paypal-payments' ),
+						'required' => true,
+					),
+				),
+				'warningMessages' => $warnings[ PayUponInvoiceGateway::ID ] ?? array(),
+				'warningSeverity' => 'error',
 			),
 			array(
 				'id'          => OXXO::ID,
@@ -443,5 +482,49 @@ class PaymentMethodsDefinition {
 		);
 
 		return apply_filters( 'woocommerce_paypal_payments_gateway_group_apm', $group );
+	}
+
+	/**
+	 * Returns warning definitions keyed by gateway ID.
+	 *
+	 * Each gateway can have multiple warnings. Each warning can be either:
+	 * - A plain string: always displayed.
+	 * - An object with { message, visibleWhen }: displayed only when the
+	 *   visibleWhen condition evaluates to true.
+	 *
+	 * @return array Warning definitions keyed by gateway ID.
+	 */
+	private function get_warning_messages(): array {
+		$warnings = array();
+
+		// Pay upon Invoice warnings.
+		$warnings[ PayUponInvoiceGateway::ID ] = array(
+			'pui_required_fields' => array(
+				/* translators: %s: comma-separated list of missing field names. */
+				'message'     => __(
+					'Pay upon Invoice requires %s to be configured. Click the settings icon to configure.',
+					'woocommerce-paypal-payments'
+				),
+				'visibleWhen' => array(
+					'store'     => 'payment',
+					'condition' => 'any_empty',
+					'fields'    => array(
+						'puiBrandName'                   => __( 'Brand name', 'woocommerce-paypal-payments' ),
+						'puiLogoUrl'                     => __( 'Logo URL', 'woocommerce-paypal-payments' ),
+						'puiCustomerServiceInstructions' => __( 'Customer service instructions', 'woocommerce-paypal-payments' ),
+					),
+				),
+			),
+		);
+
+		// Fastlane (Axo) conflict warnings.
+		$warnings[ AxoGateway::ID ] = array_filter(
+			array(
+				'axo_checkout_config'      => $this->axo_checkout_config_notice,
+				'axo_incompatible_plugins' => $this->axo_incompatible_plugins_notice,
+			)
+		);
+
+		return $warnings;
 	}
 }

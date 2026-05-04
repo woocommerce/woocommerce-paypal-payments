@@ -4,10 +4,10 @@ document.addEventListener( 'DOMContentLoaded', () => {
 	const orderTrackingContainerId = 'ppcp_order-tracking';
 	const orderTrackingContainerSelector =
 		'#ppcp_order-tracking .ppcp-tracking-column.shipments';
-	const gzdSaveButton = document.getElementById( 'order-shipments-save' );
+	const shiptasticSaveButton = document.getElementById( 'order-shipments-save' );
 	const loadLocation =
 		location.href + ' ' + orderTrackingContainerSelector + '>*';
-	const gzdSyncEnabled = config.gzd_sync_enabled;
+	const shiptasticSyncEnabled = config.shiptastic_sync_enabled;
 	const wcShipmentSyncEnabled = config.wc_shipment_sync_enabled;
 	const wcShippingTaxSyncEnabled = config.wc_shipping_tax_sync_enabled;
 	const wcShipmentSaveButton = document.querySelector(
@@ -61,11 +61,11 @@ document.addEventListener( 'DOMContentLoaded', () => {
 	};
 
 	if (
-		gzdSyncEnabled &&
-		typeof gzdSaveButton !== 'undefined' &&
-		gzdSaveButton != null
+		shiptasticSyncEnabled &&
+		typeof shiptasticSaveButton !== 'undefined' &&
+		shiptasticSaveButton != null
 	) {
-		gzdSaveButton.addEventListener( 'click', function ( event ) {
+		shiptasticSaveButton.addEventListener( 'click', function ( event ) {
 			toggleLoaderVisibility();
 			waitForTrackingUpdate( jQuery( '#order-shipments-save' ) );
 		} );

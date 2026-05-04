@@ -24,9 +24,6 @@
     "require-dev": {
         "inpsyde/composer-assets-compiler": "^2.5",
         "psr/container": "^1.0",
-        "dhii/module-interface": "^0.2 || ^0.3",
-        "container-interop/service-provider": "^0.4.0",
-        "dhii/containers": "^0.1.0-alpha1",
         "inpsyde/modularity": "^1.7",
         "woocommerce/woocommerce-sniffs": "^1.0.0",
         "phpunit/phpunit": "^7.0 | ^8.0 | ^9.0",
@@ -71,6 +68,9 @@
         "installer-paths": {
             "modules/{$name}/": [
                 "type:inpsyde-module"
+            ],
+            "tests/qa/resources/plugins/{$name}/": [
+                "inpsyde-mirror/woocommerce-subscriptions"
             ]
         },
         "merge-plugin": {
@@ -99,8 +99,6 @@
             "classmap_prefix": "PCPP_",
             "packages": [
                 "psr/container",
-                "dhii/containers",
-                "dhii/module-interface",
                 "inpsyde/modularity"
             ],
             "delete_vendor_directories": true
@@ -113,7 +111,8 @@
         "allow-plugins": {
             "inpsyde/composer-assets-compiler": true,
             "dealerdirect/phpcodesniffer-composer-installer": true,
-            "wikimedia/composer-merge-plugin": true
+            "wikimedia/composer-merge-plugin": true,
+            "composer/installers": true
         },
         "audit": {
             "ignore": {

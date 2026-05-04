@@ -14,8 +14,8 @@ use WooCommerce\PayPalCommerce\StoreSync\Enums\Priority;
 use WooCommerce\PayPalCommerce\StoreSync\Helper\ProductManager;
 use WooCommerce\PayPalCommerce\StoreSync\Schema\PayPalCart;
 use WooCommerce\PayPalCommerce\StoreSync\Schema\CartItem;
-use WooCommerce\PayPalCommerce\StoreSync\Schema\ResolutionOption;
-use WooCommerce\PayPalCommerce\StoreSync\Validation\InvalidProduct;
+use WooCommerce\PayPalCommerce\StoreSync\Validation\Resolution\ResolutionOption;
+use WooCommerce\PayPalCommerce\StoreSync\Validation\Context\DataErrorContext;
 use WooCommerce\PayPalCommerce\StoreSync\Validation\ValidationIssue;
 use WooCommerce\PayPalCommerce\StoreSync\Config\IngestionConfiguration;
 
@@ -56,30 +56,27 @@ class ProductValidator implements ValidatorInterface {
 		$product = $this->product_manager->find_product( $item );
 
 		if ( ! $product ) {
-			return new InvalidProduct(
-				"Product '{$identifier}' not found in WooCommerce catalog",
-				"'{$item->name()}' not found in WooCommerce catalog",
-				$field,
-				'',
-				array(),
-				array(
-					ResolutionOption::remove_item( Priority::HIGH ),
-				)
-			);
+			return ValidationIssue::create_invalid_product( "Product '{$identifier}' not found in WooCommerce catalog" )
+				->user_message( "'{$item->name()}' not found in WooCommerce catalog" )
+				->for_field( $field )
+				->add_context( DataErrorContext::create_item_not_found() )
+				->add_resolution(
+					ResolutionOption::create_remove_item()
+						->label( 'Remove from cart' )
+						->priority( Priority::HIGH )
+				);
 		}
 
 		if ( ! $product->is_purchasable() ) {
-			return new InvalidProduct(
-				"Product '{$identifier}' is not available for purchase",
-				"'{$item->name()}' cannot be purchased at this time",
-				$field,
-				'',
-				array(),
-				array(
-					ResolutionOption::remove_item( Priority::HIGH ),
-					ResolutionOption::suggest_alternative(),
+			return ValidationIssue::create_invalid_product( "Product '{$identifier}' is not available for purchase" )
+				->user_message( "'{$item->name()}' cannot be purchased at this time" )
+				->for_field( $field )
+				->add_resolution(
+					ResolutionOption::create_remove_item()
+						->label( 'Remove from cart' )
+						->priority( Priority::HIGH )
 				)
-			);
+				->add_resolution( ResolutionOption::create_suggest_alternative() );
 		}
 
 		$filter_args = $this->configuration->get_valid_product_filters();
@@ -89,25 +86,19 @@ class ProductValidator implements ValidatorInterface {
 		$valid_types       = (array) ( $filter_args['type'] ?? array() );
 
 		if ( ! $support_downloads && $product->is_downloadable() ) {
-			return new InvalidProduct(
-				"Downloadable product '{$identifier}' is not supported",
-				"'{$item->name()}' cannot be purchased at this time",
-				$field
-			);
+			return ValidationIssue::create_invalid_product( "Downloadable product '{$identifier}' is not supported" )
+				->user_message( "'{$item->name()}' cannot be purchased at this time" )
+				->for_field( $field );
 		}
 		if ( ! $product->is_type( $valid_types ) ) {
-			return new InvalidProduct(
-				"Product '{$identifier}' is not supported (unsupported product type)",
-				"'{$item->name()}' cannot be purchased at this time",
-				$field
-			);
+			return ValidationIssue::create_invalid_product( "Product '{$identifier}' is not supported (unsupported product type)" )
+				->user_message( "'{$item->name()}' cannot be purchased at this time" )
+				->for_field( $field );
 		}
 		if ( ! in_array( $product->get_status(), $valid_status, true ) ) {
-			return new InvalidProduct(
-				"Product '{$identifier}' is not supported (product has an unsupported status)",
-				"'{$item->name()}' cannot be purchased at this time",
-				$field
-			);
+			return ValidationIssue::create_invalid_product( "Product '{$identifier}' is not supported (product has an unsupported status)" )
+				->user_message( "'{$item->name()}' cannot be purchased at this time" )
+				->for_field( $field );
 		}
 
 		return null;

@@ -79,13 +79,15 @@ class CartHelper {
 	}
 
 	/**
-	 * Formats a price value to two decimal places.
+	 * Formats a price value for an API response.
 	 *
-	 * @param float $value The price value to format.
+	 * PayPal expects monetary values to be strings with two decimal places.
+	 *
+	 * @param int|float|string $value The price value to format.
 	 * @return string The formatted price (e.g., "123.45").
 	 */
-	public static function format_decimal( float $value ): string {
-		return number_format( $value, 2, '.', '' );
+	public static function format_decimal( $value ): string {
+		return number_format( (float) $value, 2, '.', '' );
 	}
 
 	public static function full_customer_name( PayPalCart $cart, string $default = '' ): string {
@@ -172,10 +174,10 @@ class CartHelper {
 		}
 
 		$totals = array(
-			'item_total' => self::money( $currency_code, $item_total ),
-			'shipping'   => self::money( $currency_code, $shipping_total ),
-			'tax_total'  => self::money( $currency_code, $tax_total ),
-			'amount'     => self::money( $currency_code, $cart_total ),
+			'subtotal' => self::money( $currency_code, $item_total ),
+			'shipping' => self::money( $currency_code, $shipping_total ),
+			'tax'      => self::money( $currency_code, $tax_total ),
+			'total'    => self::money( $currency_code, $cart_total ),
 		);
 
 		if ( $discount_total > 0 ) {
@@ -195,7 +197,7 @@ class CartHelper {
 	public static function money( string $currency_code, float $value ): array {
 		return array(
 			'currency_code' => $currency_code,
-			'value'         => number_format( $value, 2 ),
+			'value'         => self::format_decimal( $value ),
 		);
 	}
 }

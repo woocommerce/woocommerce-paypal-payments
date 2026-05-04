@@ -48,6 +48,7 @@ class UsMigrationManagerTest extends AbstractMigrationManager {
 				'applepay_button_color'                => 'black',
 				'applepay_button_language'             => '',
 				'applepay_checkout_data_mode'          => 'use_wc',
+				'capture_for_virtual_only'            => true,
 			)
 		);
 	}

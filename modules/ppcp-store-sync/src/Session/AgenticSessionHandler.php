@@ -7,7 +7,7 @@
  * @package WooCommerce\PayPalCommerce\StoreSync\Session
  */
 
-declare(strict_types=1);
+declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\StoreSync\Session;
 
@@ -58,11 +58,11 @@ class AgenticSessionHandler {
 	/**
 	 * Create and save a new cart session.
 	 *
-	 * @param PayPalCart $cart The cart to save.
+	 * @param PayPalCart $cart     The cart to save.
 	 * @param string     $ec_token The PayPal EC token.
-	 * @return string|null The session ID or null on failure.
+	 * @return string The session ID or null on failure.
 	 */
-	public function create_cart_session( PayPalCart $cart, string $ec_token ): ?string {
+	public function create_cart_session( PayPalCart $cart, string $ec_token ): string {
 		$session_key = $this->generate_session_id();
 
 		// Create a new empty session with our custom ID.
@@ -84,7 +84,8 @@ class AgenticSessionHandler {
 	 * Load a cart session by ID.
 	 *
 	 * @param string $session_id The session ID.
-	 * @return array|null Array with 'cart' (PayPalCart), 'ec_token', 'created', or null if not found.
+	 * @return array|null Array with 'cart' (PayPalCart), 'ec_token', 'created', or null if not
+	 *                    found.
 	 */
 	public function load_cart_session( string $session_id ): ?array {
 		if ( ! $this->session->load_session_by_id( $session_id ) ) {
@@ -114,7 +115,7 @@ class AgenticSessionHandler {
 	 * Update an existing cart session.
 	 *
 	 * @param string     $session_id The session ID.
-	 * @param PayPalCart $cart The updated cart.
+	 * @param PayPalCart $cart       The updated cart.
 	 * @return bool True on success.
 	 */
 	public function update_cart_session( string $session_id, PayPalCart $cart, ?string $ec_token = null ): bool {

@@ -12,7 +12,7 @@ namespace WooCommerce\PayPalCommerce\PayLaterConfigurator\Endpoint;
 use Psr\Log\LoggerInterface;
 use Throwable;
 use WooCommerce\PayPalCommerce\PayLaterConfigurator\Factory\ConfigFactory;
-use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
+use WooCommerce\PayPalCommerce\Settings\Data\PayLaterMessagingSettings;
 
 /**
  * Class GetConfig.
@@ -20,34 +20,14 @@ use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 class GetConfig {
 	const ENDPOINT = 'ppc-get-message-config';
 
-	/**
-	 * The settings.
-	 *
-	 * @var Settings
-	 */
-	protected $settings;
+	protected PayLaterMessagingSettings $settings;
+	private LoggerInterface $logger;
 
-	/**
-	 * The logger.
-	 *
-	 * @var LoggerInterface
-	 */
-	private $logger;
-
-	/**
-	 * GetConfig constructor.
-	 *
-	 * @param Settings        $settings The settings.
-	 * @param LoggerInterface $logger The logger.
-	 */
-	public function __construct( Settings $settings, LoggerInterface $logger ) {
+	public function __construct( PayLaterMessagingSettings $settings, LoggerInterface $logger ) {
 		$this->settings = $settings;
 		$this->logger   = $logger;
 	}
 
-	/**
-	 * Returns the nonce.
-	 */
 	public static function nonce(): string {
 		return self::ENDPOINT;
 	}

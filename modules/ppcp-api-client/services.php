@@ -46,8 +46,6 @@ use WooCommerce\PayPalCommerce\ApiClient\Factory\PayeeFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PayerFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PaymentPreferencesFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PaymentsFactory;
-use WooCommerce\PayPalCommerce\ApiClient\Factory\PaymentTokenActionLinksFactory;
-use WooCommerce\PayPalCommerce\ApiClient\Factory\PaymentTokenFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PlanFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PlatformFeeFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\ProductFactory;
@@ -74,19 +72,21 @@ use WooCommerce\PayPalCommerce\ApiClient\Helper\PaymentLevelEligibility;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\PaymentLevelHelper;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\PurchaseUnitSanitizer;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\ReferenceTransactionStatus;
+use WooCommerce\PayPalCommerce\ApiClient\Helper\ProductStatusResultCache;
 use WooCommerce\PayPalCommerce\ApiClient\Repository\CustomerRepository;
 use WooCommerce\PayPalCommerce\ApiClient\Repository\OrderRepository;
 use WooCommerce\PayPalCommerce\ApiClient\Repository\PartnerReferralsData;
 use WooCommerce\PayPalCommerce\ApiClient\Repository\PayeeRepository;
-use WooCommerce\PayPalCommerce\ApiClient\VaultV2\PaymentTokenEndpoint;
 use WooCommerce\PayPalCommerce\Common\Pattern\SingletonDecorator;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
 use WooCommerce\PayPalCommerce\Settings\Data\SettingsModel;
+use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
 use WooCommerce\PayPalCommerce\Settings\Enum\InstallationPathEnum;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\EnvironmentConfig;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
+use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
 
 return array(
 	'api.host'                                       => static function ( ContainerInterface $container ): string {
@@ -102,9 +102,13 @@ return array(
 	'api.paypal-host'                                => function ( ContainerInterface $container ): string {
 		return PAYPAL_API_URL;
 	},
-	// It seems this 'api.paypal-website-url' key is always overridden in ppcp-onboarding/services.php.
-	'api.paypal-website-url'                         => function ( ContainerInterface $container ): string {
-		return PAYPAL_URL;
+	'api.paypal-website-url'                         => static function ( ContainerInterface $container ): string {
+		$environment = $container->get( 'settings.environment' );
+		assert( $environment instanceof Environment );
+		if ( $environment->is_sandbox() ) {
+			return $container->get( 'api.paypal-website-url-sandbox' );
+		}
+		return $container->get( 'api.paypal-website-url-production' );
 	},
 	'api.factory.paypal-checkout-url'                => function ( ContainerInterface $container ): callable {
 		return function ( string $id ) use ( $container ): string {
@@ -142,7 +146,7 @@ return array(
 			$container->get( 'api.key' ),
 			$container->get( 'api.secret' ),
 			$container->get( 'woocommerce.logger.woocommerce' ),
-			$container->get( 'wcgateway.settings' )
+			$container->get( 'settings.settings-provider' )
 		);
 	},
 	'api.endpoint.partners'                          => static function ( ContainerInterface $container ): PartnersEndpoint {
@@ -153,21 +157,15 @@ return array(
 			$container->get( 'api.factory.sellerstatus' ),
 			$container->get( 'api.partner_merchant_id' ),
 			$container->get( 'api.merchant_id' ),
-			$container->get( 'api.helper.failure-registry' )
+			$container->get( 'api.helper.failure-registry' ),
+			$container->get( 'api.partners-seller-status-cache' )
 		);
+	},
+	'api.partners-seller-status-cache'               => static function ( ContainerInterface $container ): Cache {
+		return new Cache( 'ppcp-seller-status-' );
 	},
 	'api.factory.sellerstatus'                       => static function ( ContainerInterface $container ): SellerStatusFactory {
 		return new SellerStatusFactory();
-	},
-	'vault-v2.endpoint.payment-token'                => static function ( ContainerInterface $container ): PaymentTokenEndpoint {
-		return new PaymentTokenEndpoint(
-			$container->get( 'api.host' ),
-			$container->get( 'api.bearer' ),
-			$container->get( 'api.factory.payment-token' ),
-			$container->get( 'api.factory.payment-token-action-links' ),
-			$container->get( 'woocommerce.logger.woocommerce' ),
-			$container->get( 'api.repository.customer' )
-		);
 	},
 	'api.endpoint.payment-tokens'                    => static function ( ContainerInterface $container ): PaymentTokensEndpoint {
 		return new PaymentTokensEndpoint(
@@ -212,14 +210,15 @@ return array(
 	},
 	'api.endpoint.identity-token'                    => static function ( ContainerInterface $container ): IdentityToken {
 		$logger = $container->get( 'woocommerce.logger.woocommerce' );
-		$settings = $container->get( 'wcgateway.settings' );
+		$settings = $container->get( 'settings.settings-provider' );
 		$customer_repository = $container->get( 'api.repository.customer' );
 		return new IdentityToken(
 			$container->get( 'api.host' ),
 			$container->get( 'api.bearer' ),
 			$logger,
 			$settings,
-			$customer_repository
+			$customer_repository,
+			$container->get( 'api.subscription_mode' )
 		);
 	},
 	'api.endpoint.payments'                          => static function ( ContainerInterface $container ): PaymentsEndpoint {
@@ -245,23 +244,26 @@ return array(
 		);
 	},
 	'api.endpoint.order'                             => static function ( ContainerInterface $container ): OrderEndpoint {
+		$order_factory            = $container->get( 'api.factory.order' );
+		$patch_collection_factory = $container->get( 'api.factory.patch-collection-factory' );
+		$logger                   = $container->get( 'woocommerce.logger.woocommerce' );
+
 		$session_handler = $container->get( 'session.handler' );
 		assert( $session_handler instanceof SessionHandler );
 		$bn_code         = $session_handler->bn_code();
 
-		$settings = $container->get( 'wcgateway.settings' );
-		assert( $settings instanceof Settings );
+		$settings = $container->get( 'settings.settings-provider' );
+		assert( $settings instanceof SettingsProvider );
 
-		$intent = $settings->has( 'intent' ) && strtoupper( (string) $settings->get( 'intent' ) ) === 'AUTHORIZE' ? 'AUTHORIZE' : 'CAPTURE';
-
+		$subscription_helper = $container->get( 'wc-subscriptions.helper' );
 		return new OrderEndpoint(
 			$container->get( 'api.host' ),
 			$container->get( 'api.bearer' ),
-			$container->get( 'api.factory.order' ),
-			$container->get( 'api.factory.patch-collection-factory' ),
-			$intent,
-			$container->get( 'woocommerce.logger.woocommerce' ),
-			$container->get( 'wc-subscriptions.helper' ),
+			$order_factory,
+			$patch_collection_factory,
+			$settings->authorize_only() ? 'AUTHORIZE' : 'CAPTURE',
+			$logger,
+			$subscription_helper,
 			$container->get( 'wcgateway.is-fraudnet-enabled' ),
 			$container->get( 'wcgateway.fraudnet' ),
 			$bn_code
@@ -298,8 +300,7 @@ return array(
 		);
 	},
 	'api.reference-transaction-status'               => static fn ( ContainerInterface $container ): ReferenceTransactionStatus => new ReferenceTransactionStatus(
-		$container->get( 'api.endpoint.partners' ),
-		$container->get( 'api.reference-transaction-status-cache' )
+		$container->get( 'api.endpoint.partners' )
 	),
 	'api.endpoint.catalog-products'                  => static function ( ContainerInterface $container ): CatalogProducts {
 		return new CatalogProducts(
@@ -332,9 +333,10 @@ return array(
 		);
 	},
 	'api.repository.partner-referrals-data'          => static function ( ContainerInterface $container ): PartnerReferralsData {
-
-		$dcc_applies    = $container->get( 'api.helpers.dccapplies' );
-		return new PartnerReferralsData( $dcc_applies );
+		return new PartnerReferralsData(
+			$container->get( 'api.helpers.dccapplies' ),
+			$container->get( 'settings.data.definition.features' )
+		);
 	},
 	'api.repository.payee'                           => static function ( ContainerInterface $container ): PayeeRepository {
 		$merchant_email = $container->get( 'api.merchant_email' );
@@ -365,12 +367,6 @@ return array(
 			$contact_module_active,
 			$container->get( 'settings.merchant-details' )
 		);
-	},
-	'api.factory.payment-token'                      => static function ( ContainerInterface $container ): PaymentTokenFactory {
-		return new PaymentTokenFactory();
-	},
-	'api.factory.payment-token-action-links'         => static function ( ContainerInterface $container ): PaymentTokenActionLinksFactory {
-		return new PaymentTokenActionLinksFactory();
 	},
 	'api.factory.webhook'                            => static function ( ContainerInterface $container ): WebhookFactory {
 		return new WebhookFactory();
@@ -543,13 +539,6 @@ return array(
 		$location = wc_get_base_location();
 		return $location['country'];
 	},
-	'api.shop.is-psd2-country'                       => static function ( ContainerInterface $container ): bool {
-		return in_array(
-			$container->get( 'api.shop.country' ),
-			$container->get( 'api.psd2-countries' ),
-			true
-		);
-	},
 	'api.shop.is-currency-supported'                 => static function ( ContainerInterface $container ): bool {
 		return in_array(
 			$container->get( 'api.shop.currency.getter' )->get(),
@@ -691,6 +680,7 @@ return array(
 				'BG' => $default_currencies,
 				'CA' => $default_currencies,
 				'CN' => $default_currencies,
+				'C2' => $default_currencies,
 				'CY' => $default_currencies,
 				'CZ' => $default_currencies,
 				'DK' => $default_currencies,
@@ -761,6 +751,10 @@ return array(
 					'mastercard' => array(),
 					'visa'       => array(),
 				),
+				'C2' => array(
+					'mastercard' => array(),
+					'visa'       => array(),
+				),
 				'CY' => $mastercard_visa_amex,
 				'CZ' => $mastercard_visa_amex,
 				'DE' => $mastercard_visa_amex,
@@ -817,38 +811,6 @@ return array(
 		);
 	},
 
-	'api.psd2-countries'                             => static function ( ContainerInterface $container ): array {
-		return array(
-			'AT',
-			'BE',
-			'BG',
-			'CY',
-			'CZ',
-			'DK',
-			'EE',
-			'FI',
-			'FR',
-			'DE',
-			'GB',
-			'GR',
-			'HU',
-			'IE',
-			'IT',
-			'LV',
-			'LT',
-			'LU',
-			'MT',
-			'NL',
-			'NO',
-			'PL',
-			'PT',
-			'RO',
-			'SK',
-			'SI',
-			'ES',
-			'SE',
-		);
-	},
 	'api.paylater-countries'                         => static function ( ContainerInterface $container ): array {
 		$default_countries = array(
 			'US',
@@ -879,17 +841,19 @@ return array(
 	},
 	'api.helper.purchase-unit-sanitizer'             => SingletonDecorator::make(
 		static function ( ContainerInterface $container ): PurchaseUnitSanitizer {
-			$settings  = $container->get( 'wcgateway.settings' );
-			assert( $settings instanceof Settings );
+			$settings  = $container->get( 'settings.settings-provider' );
+			assert( $settings instanceof SettingsProvider );
 
-			$behavior  = $settings->has( 'subtotal_mismatch_behavior' ) ? $settings->get( 'subtotal_mismatch_behavior' ) : null;
-			$line_name = $settings->has( 'subtotal_mismatch_line_name' ) ? $settings->get( 'subtotal_mismatch_line_name' ) : null;
-			return new PurchaseUnitSanitizer( $behavior, $line_name );
+			$subtotal_adjustment = $settings->subtotal_adjustment();
+			return new PurchaseUnitSanitizer( $subtotal_adjustment );
 		}
 	),
+	'api.helper.product-status-result-cache'         => static function (): ProductStatusResultCache {
+		return new ProductStatusResultCache();
+	},
 	'api.client-credentials'                         => static function ( ContainerInterface $container ): ClientCredentials {
 		return new ClientCredentials(
-			$container->get( 'wcgateway.settings' )
+			$container->get( 'settings.settings-provider' )
 		);
 	},
 	'api.paypal-bearer-cache'                        => static function ( ContainerInterface $container ): Cache {
@@ -900,9 +864,6 @@ return array(
 	},
 	'api.user-id-token-cache'                        => static function ( ContainerInterface $container ): Cache {
 		return new Cache( 'ppcp-id-token-cache' );
-	},
-	'api.reference-transaction-status-cache'         => static function ( ContainerInterface $container ): Cache {
-		return new Cache( 'ppcp-reference-transaction-status-cache' );
 	},
 	'api.user-id-token'                              => static function ( ContainerInterface $container ): UserIdToken {
 		return new UserIdToken(
@@ -1024,6 +985,28 @@ return array(
 		return $container->get( 'settings.flag.is-connected' )
 			? $container->get( 'settings.data.general' )->get_merchant_country()
 			: $container->get( 'api.shop.country' );
+	},
+	'api.subscription_mode'                          => static function ( ContainerInterface $container ): string {
+		$subscription_helper = $container->get( 'wc-subscriptions.helper' );
+		assert( $subscription_helper instanceof SubscriptionHelper );
+
+		$settings_provider = $container->get( 'settings.settings-provider' );
+		assert( $settings_provider instanceof SettingsProvider );
+
+		if ( ! $subscription_helper->plugin_is_active() ) {
+			return SubscriptionHelper::SUBSCRIPTION_MODE_VALUE_DISABLED;
+		}
+
+		$vaulting                = $settings_provider->save_paypal_and_venmo();
+		$subscription_mode_value = $vaulting ? SubscriptionHelper::SUBSCRIPTION_MODE_VALUE_VAULTING : SubscriptionHelper::SUBSCRIPTION_MODE_VALUE_SUBSCRIPTIONS;
+
+		/**
+		 * Allows disabling the subscription mode when using the new settings UI.
+		 *
+		 * @returns bool true if the subscription mode should be disabled, false otherwise (default is false).
+		 */
+		$subscription_mode_disabled = (bool) apply_filters( 'woocommerce_paypal_payments_subscription_mode_disabled', false );
+		return $subscription_mode_disabled ? SubscriptionHelper::SUBSCRIPTION_MODE_VALUE_DISABLED : $subscription_mode_value;
 	},
 	'api.helpers.paymentLevelHelper'                 => static function ( ContainerInterface $container ): PaymentLevelHelper {
 		return new PaymentLevelHelper( $container->get( 'settings.settings-provider' ) );

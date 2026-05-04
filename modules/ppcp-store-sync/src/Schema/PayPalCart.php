@@ -9,8 +9,7 @@ declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\StoreSync\Schema;
 
-use WooCommerce\PayPalCommerce\StoreSync\Validation\MissingField;
-use WooCommerce\PayPalCommerce\StoreSync\Validation\InvalidData;
+use WooCommerce\PayPalCommerce\StoreSync\Validation\ValidationIssue;
 
 class PayPalCart extends AgenticSchema {
 	/**
@@ -54,7 +53,11 @@ class PayPalCart extends AgenticSchema {
 			$items = $input['items'];
 
 			if ( count( $items ) > 100 ) {
-				$add_issue( new InvalidData( 'Too many items', 'The cart cannot hold more than 100 items', 'items' ) );
+				$add_issue(
+					ValidationIssue::create_invalid_data( 'Too many items' )
+						->user_message( 'The cart cannot hold more than 100 items' )
+						->for_field( 'items' )
+				);
 			} else {
 				foreach ( $items as $item ) {
 					if ( is_object( $item ) ) {
@@ -68,13 +71,22 @@ class PayPalCart extends AgenticSchema {
 				}
 			}
 		} else {
-			$add_issue( new MissingField( 'Required field missing', 'Please provide a list of cart items.', 'items' ) );
+			$add_issue(
+				ValidationIssue::create_missing_field( 'Required field missing' )
+					->user_message( 'Please provide a list of cart items.' )
+					->for_field( 'items' )
+			);
 		}
 
 		if ( ! empty( $input['payment_method'] ) && is_array( $input['payment_method'] ) ) {
-			$this->payment_method = PaymentMethod::from_array( $input['payment_method'], $add_issue );
+			$this->payment_method =
+				PaymentMethod::from_array( $input['payment_method'], $add_issue );
 		} else {
-			$add_issue( new MissingField( 'Required field missing', 'No payment_method defined.', 'payment_method' ) );
+			$add_issue(
+				ValidationIssue::create_missing_field( 'Required field missing' )
+					->user_message( 'No payment_method defined.' )
+					->for_field( 'payment_method' )
+			);
 		}
 
 		// Parse optional fields.
@@ -91,7 +103,8 @@ class PayPalCart extends AgenticSchema {
 		}
 
 		if ( ! empty( $input['geo_coordinates'] ) && is_array( $input['geo_coordinates'] ) ) {
-			$this->geo_coordinates = GeoCoordinates::from_array( $input['geo_coordinates'], $add_issue );
+			$this->geo_coordinates =
+				GeoCoordinates::from_array( $input['geo_coordinates'], $add_issue );
 		}
 
 		if ( isset( $input['checkout_fields'] ) && is_array( $input['checkout_fields'] ) ) {
@@ -99,7 +112,11 @@ class PayPalCart extends AgenticSchema {
 			$this->checkout_fields = array();
 
 			if ( count( $checkout_fields ) > 20 ) {
-				$add_issue( new InvalidData( 'Too many checkout fields', 'The cart cannot hold more than 20 checkout fields', 'checkout_fields' ) );
+				$add_issue(
+					ValidationIssue::create_invalid_data( 'Too many checkout fields' )
+						->user_message( 'The cart cannot hold more than 20 checkout fields' )
+						->for_field( 'checkout_fields' )
+				);
 			} else {
 				foreach ( $checkout_fields as $field ) {
 					$this->checkout_fields[] = CheckoutField::from_array( $field, $add_issue );

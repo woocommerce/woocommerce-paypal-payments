@@ -10,10 +10,8 @@ declare( strict_types = 1 );
 namespace WooCommerce\PayPalCommerce\ApiClient\Repository;
 
 use WooCommerce\PayPalCommerce\ApiClient\Helper\DccApplies;
+use WooCommerce\PayPalCommerce\Settings\Data\Definition\FeaturesDefinition;
 
-/**
- * Class PartnerReferralsData
- */
 class PartnerReferralsData {
 	/**
 	 * The DCC Applies Helper object.
@@ -25,14 +23,11 @@ class PartnerReferralsData {
 	 * @var DccApplies
 	 */
 	private DccApplies $dcc_applies;
+	protected FeaturesDefinition $features_definition;
 
-	/**
-	 * PartnerReferralsData constructor.
-	 *
-	 * @param DccApplies $dcc_applies The DCC Applies helper.
-	 */
-	public function __construct( DccApplies $dcc_applies ) {
-		$this->dcc_applies = $dcc_applies; // @phpstan-ignore property.deprecated
+	public function __construct( DccApplies $dcc_applies, FeaturesDefinition $features_definition ) {
+		$this->dcc_applies         = $dcc_applies; // @phpstan-ignore property.deprecated
+		$this->features_definition = $features_definition;
 	}
 
 	/**
@@ -104,6 +99,11 @@ class PartnerReferralsData {
 		if ( $use_card_payments !== false ) {
 			$first_party_features[] = 'VAULT';
 			$first_party_features[] = 'FUTURE_PAYMENT';
+		}
+
+		if ( $this->features_definition->is_feature_eligible( FeaturesDefinition::FEATURE_PAY_UPON_INVOICE ) ) {
+			$products[]     = 'PAYMENT_METHODS';
+			$capabilities[] = 'PAY_UPON_INVOICE';
 		}
 
 		$payload = array(

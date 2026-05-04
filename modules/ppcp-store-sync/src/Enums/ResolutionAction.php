@@ -1,4 +1,5 @@
 <?php
+
 declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\StoreSync\Enums;
@@ -33,36 +34,4 @@ class ResolutionAction {
 	public const REMOVE_COUPON            = 'REMOVE_COUPON';
 	public const KEEP_CURRENT_COUPON      = 'KEEP_CURRENT_COUPON';
 	public const CHOOSE_DIFFERENT_VARIANT = 'CHOOSE_DIFFERENT_VARIANT';
-
-	public static function get_all(): array {
-		return array(
-			self::REDIRECT_TO_MERCHANT,
-			self::MODIFY_CART,
-			self::ACCEPT_NEW_PRICE,
-			self::ACCEPT_BACK_ORDER,
-			self::SUGGEST_ALTERNATIVE,
-			self::REMOVE_ITEM,
-			self::UPDATE_ADDRESS,
-			self::PROVIDE_MISSING_FIELD,
-			self::USE_DIFFERENT_PAYMENT,
-			self::SPLIT_ORDER,
-			self::CONTACT_SUPPORT,
-			self::RETRY_LATER,
-			self::REQUEST_APPROVAL,
-			self::WAIT_FOR_RESTOCK,
-			self::USE_DIFFERENT_CURRENCY,
-			self::ACCEPT_PRE_ORDER,
-			self::UPDATE_SHIPPING_METHOD,
-			self::ACCEPT_TERMS,
-			self::VERIFY_ACCOUNT,
-			self::APPLY_DIFFERENT_COUPON,
-			self::REMOVE_COUPON,
-			self::KEEP_CURRENT_COUPON,
-			self::CHOOSE_DIFFERENT_VARIANT,
-		);
-	}
-
-	public static function is_valid( string $action ): bool {
-		return in_array( $action, self::get_all(), true );
-	}
 }

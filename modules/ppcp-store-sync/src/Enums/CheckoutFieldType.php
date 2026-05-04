@@ -1,4 +1,5 @@
 <?php
+
 declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\StoreSync\Enums;
@@ -21,25 +22,4 @@ class CheckoutFieldType {
 	public const CUSTOM_SIZING_INFO       = 'CUSTOM_SIZING_INFO';
 	public const TERMS_ACCEPTANCE         = 'TERMS_ACCEPTANCE';
 	public const PRIVACY_CONSENT          = 'PRIVACY_CONSENT';
-
-	public static function get_all(): array {
-		return array(
-			self::AGE_VERIFICATION_18_PLUS,
-			self::AGE_VERIFICATION_21_PLUS,
-			self::GIFT_RECIPIENT_EMAIL,
-			self::GIFT_RECIPIENT_NAME,
-			self::GIFT_MESSAGE,
-			self::DELIVERY_INSTRUCTIONS,
-			self::DELIVERY_DATE_PREFERENCE,
-			self::ALLERGY_INFORMATION,
-			self::CUSTOM_ENGRAVING_TEXT,
-			self::CUSTOM_SIZING_INFO,
-			self::TERMS_ACCEPTANCE,
-			self::PRIVACY_CONSENT,
-		);
-	}
-
-	public static function is_valid( string $type ): bool {
-		return in_array( $type, self::get_all(), true );
-	}
 }

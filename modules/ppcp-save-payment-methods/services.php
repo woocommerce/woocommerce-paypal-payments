@@ -54,6 +54,7 @@ return array(
 				'BG',
 				'CA',
 				'CN',
+				'C2',
 				'CY',
 				'CZ',
 				'DK',
@@ -106,7 +107,7 @@ return array(
 		return new CreatePaymentToken(
 			$container->get( 'button.request-data' ),
 			$container->get( 'api.endpoint.payment-method-tokens' ),
-			$container->get( 'vaulting.wc-payment-tokens' )
+			$container->get( 'wc-payment-tokens.wc-payment-tokens' )
 		);
 	},
 	'save-payment-methods.endpoint.create-payment-token-for-guest' => static function ( ContainerInterface $container ): CreatePaymentTokenForGuest {

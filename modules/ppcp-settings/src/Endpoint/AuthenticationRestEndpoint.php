@@ -14,6 +14,7 @@ use Psr\Log\LoggerInterface;
 use WP_REST_Request;
 use WP_REST_Response;
 use WP_REST_Server;
+use WooCommerce\WooCommerce\Logging\Logger\NullLogger;
 use WooCommerce\PayPalCommerce\Settings\Service\AuthenticationManager;
 use WooCommerce\PayPalCommerce\Settings\Service\SettingsDataManager;
 
@@ -68,11 +69,11 @@ class AuthenticationRestEndpoint extends RestEndpoint {
 	public function __construct(
 		AuthenticationManager $authentication_manager,
 		SettingsDataManager $data_manager,
-		LoggerInterface $logger
+		?LoggerInterface $logger = null
 	) {
 		$this->authentication_manager = $authentication_manager;
 		$this->data_manager           = $data_manager;
-		$this->logger                 = $logger;
+		$this->logger                 = $logger ?? new NullLogger();
 	}
 
 	/**

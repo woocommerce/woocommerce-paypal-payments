@@ -27,7 +27,7 @@ class SettingsModel extends AbstractDataModel {
 	 *
 	 * @var string
 	 */
-	protected const OPTION_KEY = 'woocommerce-ppcp-data-settings';
+	public const OPTION_KEY = 'woocommerce-ppcp-data-settings';
 
 	/**
 	 * Valid options for subtotal adjustment.
@@ -89,6 +89,7 @@ class SettingsModel extends AbstractDataModel {
 			'invoice_prefix'           => $this->invoice_prefix,
 			'brand_name'               => '',
 			'soft_descriptor'          => '',
+			'ships_from_postal_code'   => '',
 
 			// Enum-type string values.
 			'subtotal_adjustment'      => 'correction', // Options: [correction|no_details].
@@ -110,7 +111,7 @@ class SettingsModel extends AbstractDataModel {
 
 			// Array of string values.
 			'disabled_cards'           => array(),
-			'ships_from_postal_code'   => '',
+			'card_icons'               => array(), // todo: not implemented.
 		);
 	}
 
@@ -205,6 +206,23 @@ class SettingsModel extends AbstractDataModel {
 	 */
 	public function set_landing_page( string $page ): void {
 		$this->data['landing_page'] = $this->sanitizer->sanitize_enum( $page, self::LANDING_PAGE_OPTIONS );
+	}
+
+	/**
+	 * Converts the landing page setting value to the corresponding API enum string.
+	 *
+	 * @return string The corresponding API enum string ('NO_PREFERENCE', 'LOGIN', 'GUEST_CHECKOUT').
+	 */
+	public function get_landing_page_enum(): string {
+		$landing_page = $this->get_landing_page();
+
+		$map = array(
+			'any'            => 'NO_PREFERENCE',
+			'login'          => 'LOGIN',
+			'guest_checkout' => 'GUEST_CHECKOUT',
+		);
+
+		return $map[ $landing_page ] ?? 'NO_PREFERENCE';
 	}
 
 	/**
@@ -342,7 +360,7 @@ class SettingsModel extends AbstractDataModel {
 	 * @return bool True if instant payments only setting is enabled, false otherwise.
 	 */
 	public function get_instant_payments_only(): bool {
-		return $this->data['instant_payments_only'];
+		return $this->data['instant_payments_only'] ?? false;
 	}
 
 	/**
@@ -444,6 +462,27 @@ class SettingsModel extends AbstractDataModel {
 		$this->data['disabled_cards'] = array_map(
 			array( $this->sanitizer, 'sanitize_text' ),
 			$cards
+		);
+	}
+
+	/**
+	 * Gets the card icons.
+	 *
+	 * @return array The array of card icons.
+	 */
+	public function get_card_icons(): array {
+		return $this->data['card_icons'];
+	}
+
+	/**
+	 * Sets the card icons.
+	 *
+	 * @param array $icons The array of card icons.
+	 */
+	public function set_card_icons( array $icons ): void {
+		$this->data['card_icons'] = array_map(
+			array( $this->sanitizer, 'sanitize_text' ),
+			$icons
 		);
 	}
 

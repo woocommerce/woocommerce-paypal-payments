@@ -39,23 +39,25 @@ class OnboardingProfile extends AbstractDataModel {
 	/**
 	 * Constructor.
 	 *
-	 * @param bool $can_use_casual_selling Whether casual selling is enabled in the store's country.
-	 * @param bool $can_use_vaulting       Whether vaulting is enabled in the store's country.
-	 * @param bool $can_use_card_payments  Whether credit card payments are possible.
-	 * @param bool $can_use_subscriptions  Whether WC Subscriptions plugin is active.
-	 * @param bool $should_skip_payment_methods  Whether it should skip payment methods screen.
-	 * @param bool $can_use_fastlane  Whether it can use Fastlane or not.
-	 * @param bool $can_use_pay_later  Whether it can use Pay Later or not.
+	 * @param callable $can_use_fastlane  Callable to check whether it can use Fastlane or not.
+	 * @param bool     $can_use_casual_selling Whether casual selling is enabled in the store's country.
+	 * @param bool     $can_use_vaulting       Whether vaulting is enabled in the store's country.
+	 * @param bool     $can_use_card_payments  Whether credit card payments are possible.
+	 * @param bool     $can_use_digital_wallets Whether digital wallets (Apple Pay/Google Pay) are possible.
+	 * @param bool     $can_use_subscriptions  Whether WC Subscriptions plugin is active.
+	 * @param bool     $should_skip_payment_methods  Whether it should skip payment methods screen.
+	 * @param bool     $can_use_pay_later  Whether it can use Pay Later or not.
 	 *
 	 * @throws RuntimeException If the OPTION_KEY is not defined in the child class.
 	 */
 	public function __construct(
+		callable $can_use_fastlane,
 		bool $can_use_casual_selling = false,
 		bool $can_use_vaulting = false,
 		bool $can_use_card_payments = false,
+		bool $can_use_digital_wallets = false,
 		bool $can_use_subscriptions = false,
 		bool $should_skip_payment_methods = false,
-		bool $can_use_fastlane = false,
 		bool $can_use_pay_later = false
 	) {
 		parent::__construct();
@@ -63,6 +65,7 @@ class OnboardingProfile extends AbstractDataModel {
 		$this->flags['can_use_casual_selling']      = $can_use_casual_selling;
 		$this->flags['can_use_vaulting']            = $can_use_vaulting;
 		$this->flags['can_use_card_payments']       = $can_use_card_payments;
+		$this->flags['can_use_digital_wallets']     = $can_use_digital_wallets;
 		$this->flags['can_use_subscriptions']       = $can_use_subscriptions;
 		$this->flags['should_skip_payment_methods'] = $should_skip_payment_methods;
 		$this->flags['can_use_fastlane']            = $can_use_fastlane;
@@ -185,7 +188,16 @@ class OnboardingProfile extends AbstractDataModel {
 	 * @return array
 	 */
 	public function get_flags(): array {
-		return $this->flags;
+		return array_map(
+			function ( $flag ): bool {
+				if ( is_callable( $flag ) ) {
+					return $flag();
+				} else {
+					return $flag;
+				}
+			},
+			$this->flags
+		);
 	}
 
 	/**
@@ -218,14 +230,24 @@ class OnboardingProfile extends AbstractDataModel {
 	/**
 	 * Set whether gateways have been synced.
 	 *
-	 * @param bool $synced Whether gateways have been synced.
+	 * @param bool $synced    Whether gateways have been synced.
+	 * @param bool $skip_sync When true, only updates the flag without triggering
+	 *                        the gateway sync action. Use during migration where
+	 *                        gateway states are already handled by the migration itself.
 	 */
-	public function set_gateways_synced( bool $synced ): void {
+	public function set_gateways_synced( bool $synced, bool $skip_sync = false ): void {
 		$this->data['gateways_synced'] = $synced;
 
-		// If enabling the flag, trigger the action.
-		if ( $synced ) {
+		// No sync = no action needed.
+		if ( ! $synced || $skip_sync ) {
+			return;
+		}
+
+		// Timing is important - we can sync only on/after woocommerce_init fired.
+		if ( did_action( 'woocommerce_init' ) ) {
 			do_action( 'woocommerce_paypal_payments_sync_gateways' );
+		} else {
+			add_action( 'woocommerce_init', static fn() => do_action( 'woocommerce_paypal_payments_sync_gateways' ) );
 		}
 	}
 

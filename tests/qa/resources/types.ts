@@ -84,7 +84,8 @@ export namespace Pcp {
 			minAmount?: string;
 			maxAmount?: string;
 			titleInWcSettings?: string; // gateway title on WooCommerce > Settings > Payments tab
-			titleInPcpSettings?: string; // gateway title on PCP Settings > Payment Methods tab
+			titleInPcpSettings?: string; // gateway title in PCP Settings > Payment Methods
+			titleInModal?: string; // title shown in the PCP Settings > Payment Methods modal
 			hasSettingsButton?: boolean; // gateway has Settings icon on PCP Settings > Payment Methods tab
 			dependsOn?: GatewayShortcut; // gateway can be enabled if leading gateway is enabled on PCP Settings > Payment Methods tab
 		};
@@ -202,13 +203,14 @@ export namespace Pcp {
 			export type ButtonShape = 'Rectangle' | 'Pill';
 
 			export type ButtonLabel =
-				| 'Paypal'
+				| 'PayPal'
 				| 'Checkout'
 				| 'PayPal Buy Now'
 				| 'Pay with PayPal';
 
 			export type ButtonColor =
 				| 'Gold (recommended)'
+				| 'Gold (Recommended)'
 				| 'Blue'
 				| 'Silver'
 				| 'Black'
@@ -232,10 +234,11 @@ export namespace Pcp {
 				| 'Cart'
 				| 'Checkout'
 				| 'Home'
-				| 'Shop';
+				| 'Shop'
+				| 'WooCommerce Block';
 
 			export type LogoType =
-				| 'Full Logo'
+				| 'Full logo'
 				| 'Monogram'
 				| 'Inline'
 				| 'Message only';

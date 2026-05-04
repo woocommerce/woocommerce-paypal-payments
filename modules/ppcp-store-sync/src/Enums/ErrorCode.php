@@ -1,4 +1,5 @@
 <?php
+
 declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\StoreSync\Enums;
@@ -16,19 +17,4 @@ class ErrorCode {
 	public const DATA_ERROR          = 'DATA_ERROR';
 	public const BUSINESS_RULE_ERROR = 'BUSINESS_RULE_ERROR';
 	public const PAYMENT_ERROR       = 'PAYMENT_ERROR';
-
-	public static function get_all(): array {
-		return array(
-			self::INVENTORY_ISSUE,
-			self::PRICING_ERROR,
-			self::SHIPPING_ERROR,
-			self::DATA_ERROR,
-			self::BUSINESS_RULE_ERROR,
-			self::PAYMENT_ERROR,
-		);
-	}
-
-	public static function is_valid( string $code ): bool {
-		return in_array( $code, self::get_all(), true );
-	}
 }

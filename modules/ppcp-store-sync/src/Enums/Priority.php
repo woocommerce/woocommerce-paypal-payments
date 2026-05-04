@@ -1,4 +1,5 @@
 <?php
+
 declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\StoreSync\Enums;
@@ -13,12 +14,4 @@ class Priority {
 	public const HIGH   = 'HIGH';
 	public const MEDIUM = 'MEDIUM';
 	public const LOW    = 'LOW';
-
-	public static function get_all(): array {
-		return array(
-			self::HIGH,
-			self::MEDIUM,
-			self::LOW,
-		);
-	}
 }

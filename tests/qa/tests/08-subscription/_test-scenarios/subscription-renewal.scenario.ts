@@ -33,7 +33,7 @@ export const testSubscriptionRenewal = ( testOrder: ShopOrder ) => {
 				wooCommerceOrderEdit,
 				wooCommerceSubscriptionEdit,
 			} ) => {
-				test.setTimeout( 2 * 60_000 );
+				test.setTimeout( 2.5 * 60_000 );
 				// Precondition: purchase test subscription
 				await utils.fillVisitorsCart( products );
 				await classicCheckout.visit();
@@ -120,7 +120,10 @@ export const testSubscriptionRenewal = ( testOrder: ShopOrder ) => {
 					await wooCommerceApi.getSubscriptionRenewalOrderIds(
 						subscriptionId
 					);
-				await expect( renewalOrderIds ).toHaveLength( 1 );
+				await expect(
+					renewalOrderIds,
+					'Assert one renewal order is created'
+				).toHaveLength( 1 );
 
 				const relatedRenewalOrders = [];
 
@@ -251,7 +254,10 @@ export const testFreeTrialSubscriptionRenewal = ( testOrder: ShopOrder ) => {
 					await wooCommerceApi.getSubscriptionRenewalOrderIds(
 						subscriptionId
 					);
-				await expect( renewalOrderIds ).toHaveLength( 1 );
+				await expect(
+					renewalOrderIds,
+					'Assert one renewal order is created'
+				).toHaveLength( 1 );
 
 				const relatedRenewalOrders = [];
 

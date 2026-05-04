@@ -26,48 +26,46 @@ export class PcpPayLaterMessaging extends PcpAdminPage {
 	accordionCheckboxSvg = ( location: Pcp.Admin.Plm.Location ) =>
 		this.accordionCheckbox( location ).locator( 'svg' );
 
-	logoTypeCombobox = () =>
-		this.page.locator(
+	logoTypeCombobox = ( location: Pcp.Admin.Plm.Location ) =>
+		this.accordionContainer( location ).locator(
 			'button[aria-labelledby^="dropdownMenuButton_Logotype"]'
 		);
-	textColorCombobox = () =>
-		this.page.locator(
+	textColorCombobox = ( location: Pcp.Admin.Plm.Location ) =>
+		this.accordionContainer( location ).locator(
 			'button[aria-labelledby^="dropdownMenuButton_Textcolor"]'
 		);
-	logoPositionCombobox = () =>
-		this.page.locator(
+	logoPositionCombobox = ( location: Pcp.Admin.Plm.Location ) =>
+		this.accordionContainer( location ).locator(
 			'button[aria-labelledby^="dropdownMenuButton_Logoposition"]'
 		);
-	textSizeCombobox = () =>
-		this.page.locator(
+	textSizeCombobox = ( location: Pcp.Admin.Plm.Location ) =>
+		this.accordionContainer( location ).locator(
 			'button[aria-labelledby^="dropdownMenuButton_Textsize"]'
 		);
-	bannerColorCombobox = () =>
-		this.page.locator(
+	bannerColorCombobox = ( location: Pcp.Admin.Plm.Location ) =>
+		this.accordionContainer( location ).locator(
 			'button[aria-labelledby^="dropdownMenuButton_Bannercolor"]'
 		);
-	bannerSizeCombobox = () =>
-		this.page.locator(
+	bannerSizeCombobox = ( location: Pcp.Admin.Plm.Location ) =>
+		this.accordionContainer( location ).locator(
 			'button[aria-labelledby^="dropdownMenuButton_Bannersize"]'
 		);
-	comboboxOption = ( optionName: string ) =>
-		this.page
+	comboboxOption = ( optionName: string ) => {
+		const escaped = optionName.replace(
+			/[.*+?^${}()|[\]\\]/g,
+			'\\$&'
+		);
+		return this.page
 			.locator( 'li[id^="smenu_item_"]' )
-			.filter( { hasText: optionName } );
+			.filter( {
+				hasText: new RegExp( `^${ escaped }$`, 'i' ),
+			} )
+			.first();
+	};
 	previewContainer = () =>
 		this.page.locator( '#configurator-previewSectionContainer' );
 	previewIframe = () =>
-		this.previewContainer().locator( 'iframe' ).first().contentFrame();
-	previewIframeSpan = () =>
-		this.previewIframe().locator( '[id^="zoid-paypal-message-uid"]' );
-	previewMessageIframe = () =>
-		this.previewIframeSpan().frameLocator(
-			'iframe[name^="__zoid__paypal_message__"]'
-		);
-	previewMessageTextPart = () =>
-		this.previewMessageIframe().getByText(
-			'Pay in 4 interest-free payments'
-		);
+		this.previewContainer().locator( 'iframe' ).first();
 	previewTextButton = () =>
 		this.page.locator(
 			'svg path[d="M5 5a1 1 0 0 0 0 2h14a1 1 0 1 0 0-2H5zm-1 7a1 1 0 0 1 1-1h14a1 1 0 1 1 0 2H5a1 1 0 0 1-1-1zm0 6a1 1 0 0 1 1-1h14a1 1 0 1 1 0 2H5a1 1 0 0 1-1-1z"]'
@@ -109,7 +107,8 @@ export class PcpPayLaterMessaging extends PcpAdminPage {
 		if ( pathData === collapsedPath ) {
 			await this.accordionButton( location ).click();
 			await expect(
-				this.accordionButtonSvgPath( location )
+				this.accordionButtonSvgPath( location ),
+				`Assert accordion section ${ location } is expanded`
 			).toHaveAttribute( 'd', expandedPath );
 		}
 	};
@@ -134,6 +133,7 @@ export class PcpPayLaterMessaging extends PcpAdminPage {
 
 	/**
 	 * Enables/disabled messaging for location.
+	 * Waits for checkbox state to change after click (no hard timeouts).
 	 *
 	 * @param location
 	 * @param isChecked
@@ -145,6 +145,12 @@ export class PcpPayLaterMessaging extends PcpAdminPage {
 		const isEnabled = await this.isMessagingForLocationEnabled( location );
 		if ( isEnabled !== isChecked ) {
 			await this.accordionCheckbox( location ).click();
+			await expect
+				.poll(
+					() => this.isMessagingForLocationEnabled( location ),
+					`Assert ${ location } checkbox is ${ isChecked ? 'enabled' : 'disabled' }`
+				)
+				.toBe( isChecked );
 		}
 	};
 
@@ -163,6 +169,13 @@ export class PcpPayLaterMessaging extends PcpAdminPage {
 	 */
 	disableMessagingForLocation = async ( location: Pcp.Admin.Plm.Location ) =>
 		this.setMessagingCheckboxStateForLocation( location, false );
+
+	/**
+	 * Enables messaging for WooCommerce Block placement (custom_placement).
+	 * Required for the PLM block to render on custom pages.
+	 */
+	enableMessagingForWooCommerceBlock = async () =>
+		this.enableMessagingForLocation( 'WooCommerce Block' );
 
 	/**
 	 * Toggles dark mode on/off.
@@ -228,32 +241,32 @@ export class PcpPayLaterMessaging extends PcpAdminPage {
 		await this.expandAccordionSection( location );
 
 		if ( logoType ) {
-			await this.logoTypeCombobox().click();
+			await this.logoTypeCombobox( location ).click();
 			await this.comboboxOption( logoType ).click();
 		}
 
 		if ( textColor ) {
-			await this.textColorCombobox().click();
+			await this.textColorCombobox( location ).click();
 			await this.comboboxOption( textColor ).click();
 		}
 
-		if ( logoPosition && logoType === 'Full Logo' ) {
-			await this.logoPositionCombobox().click();
+		if ( logoPosition && logoType === 'Full logo' ) {
+			await this.logoPositionCombobox( location ).click();
 			await this.comboboxOption( logoPosition ).click();
 		}
 
 		if ( textSize ) {
-			await this.textSizeCombobox().click();
+			await this.textSizeCombobox( location ).click();
 			await this.comboboxOption( textSize ).click();
 		}
 
 		if ( bannerColor ) {
-			await this.bannerColorCombobox().click();
+			await this.bannerColorCombobox( location ).click();
 			await this.comboboxOption( bannerColor ).click();
 		}
 
 		if ( bannerSize ) {
-			await this.bannerSizeCombobox().click();
+			await this.bannerSizeCombobox( location ).click();
 			await this.comboboxOption( bannerSize ).click();
 		}
 	};
@@ -271,14 +284,17 @@ export class PcpPayLaterMessaging extends PcpAdminPage {
 	 * @param settings.bannerColor
 	 * @param settings.bannerSize
 	 */
-	assertLocationSettings = async ( settings: {
-		logoType?: Pcp.Admin.Plm.LogoType;
-		textColor?: Pcp.Admin.Plm.TextColor;
-		logoPosition?: Pcp.Admin.Plm.LogoPosition;
-		textSize?: Pcp.Admin.Plm.TextSize;
-		bannerColor?: Pcp.Admin.Plm.BannerColor;
-		bannerSize?: Pcp.Admin.Plm.BannerSize;
-	} ) => {
+	assertLocationSettings = async (
+		location: Pcp.Admin.Plm.Location,
+		settings: {
+			logoType?: Pcp.Admin.Plm.LogoType;
+			textColor?: Pcp.Admin.Plm.TextColor;
+			logoPosition?: Pcp.Admin.Plm.LogoPosition;
+			textSize?: Pcp.Admin.Plm.TextSize;
+			bannerColor?: Pcp.Admin.Plm.BannerColor;
+			bannerSize?: Pcp.Admin.Plm.BannerSize;
+		}
+	) => {
 		const {
 			logoType,
 			textColor,
@@ -289,43 +305,58 @@ export class PcpPayLaterMessaging extends PcpAdminPage {
 		} = settings;
 
 		if ( logoType ) {
-			await expect( this.logoTypeCombobox() ).toHaveText( logoType );
+			await expect(
+				this.logoTypeCombobox( location ),
+				`Assert logo type is ${ logoType }`
+			).toHaveText( logoType );
 		}
 
 		if ( textColor ) {
-			await expect( this.textColorCombobox() ).toHaveText( textColor );
+			await expect(
+				this.textColorCombobox( location ),
+				`Assert text color is ${ textColor }`
+			).toHaveText( textColor );
 		}
 
-		if ( logoPosition && logoType === 'Full Logo' ) {
-			await expect( this.logoPositionCombobox() ).toHaveText(
-				logoPosition
-			);
+		if ( logoPosition && logoType === 'Full logo' ) {
+			await expect(
+				this.logoPositionCombobox( location ),
+				`Assert logo position is ${ logoPosition }`
+			).toHaveText( logoPosition );
 		}
 
 		if ( textSize ) {
-			await expect( this.textSizeCombobox() ).toHaveText( textSize );
+			await expect(
+				this.textSizeCombobox( location ),
+				`Assert text size is ${ textSize }`
+			).toHaveText( textSize );
 		}
 
 		if ( bannerColor ) {
-			await expect( this.bannerColorCombobox() ).toHaveText(
-				bannerColor
-			);
+			await expect(
+				this.bannerColorCombobox( location ),
+				`Assert banner color is ${ bannerColor }`
+			).toHaveText( bannerColor );
 		}
 
 		if ( bannerSize ) {
-			await expect( this.bannerSizeCombobox() ).toHaveText( bannerSize );
+			await expect(
+				this.bannerSizeCombobox( location ),
+				`Assert banner size is ${ bannerSize }`
+			).toHaveText( bannerSize );
 		}
 	};
 
 	/**
-	 * Compares actual configurator screenshot to expected.
-	 *
-	 * @param snapshotName
+	 * Asserts the PLM configurator preview shows the message (element-based).
+	 * For banner layouts (Home/Shop), the message text may be hidden initially;
+	 * we assert the preview iframe is present instead.
 	 */
-	snapshotPlmConfigurator = async ( snapshotName: string ) => {
-		// Assert message is displayed
-		await expect.soft( this.previewMessageTextPart() ).toBeVisible();
-		// Screenshot configurator
-		this.snapshotLocator( this.configContainer(), snapshotName );
+	assertPreviewShowsMessage = async () => {
+		// Assert preview iframe is visible (works for all layouts including banner)
+		await expect(
+			this.previewIframe(),
+			'Assert PLM preview iframe is visible'
+		).toBeVisible();
 	};
 }

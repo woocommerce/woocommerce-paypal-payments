@@ -13,49 +13,48 @@
         "url": "https://github.com/woocommerce/woocommerce-paypal-payments/issues"
     },
     "homepage": "https://github.com/woocommerce/woocommerce-paypal-payments#readme",
-    "dependencies": {
-        "@inpsyde/playwright-utils": "^4.0.0",
-        "dotenv": "^16.3.1",
-        "dotenv-cli": "^7.3.0",
-        "playwright": "^1.49.1",
-        "yarn": "^1.22.21"
-    },
     "devDependencies": {
-        "@percy/cli": "^1.30.6",
-        "@percy/playwright": "^1.0.4",
-        "@playwright/test": "^1.50.0",
+        "@playwright/test": "^1.58.2",
+        "@inpsyde/playwright-utils": "^5.1.0",
+        "dotenv": "^16.3.1",
+        "yarn": "^1.22.21",
         "@types/node": "^20.8.4",
         "@wordpress/env": "^10.30.0",
-        "@wordpress/scripts": "^25.0.0"
+        "@wordpress/scripts": "^30.24.0"
     },
     "scripts": {
-        "setup:all": "npm run setup:env && npm run setup:plugin && npm run setup:tests",
         "setup:tests": "npm install && npx playwright install",
         "setup:env": "npm install && npm run setup:wc-subscriptions && wp-env start --update",
         "setup:wc-subscriptions": "cd ../inc/inpsyde && composer install && cd wp-content/plugins && zip -r ./woocommerce-subscriptions.zip ./woocommerce-subscriptions && cp woocommerce-subscriptions.zip ../../../../qa/resources/files",
-        "setup:reset": "wp-env stop && wp-env destroy",
-        "setup:plugin": "cd ../.. && npm run build && mv woocommerce-paypal-payments.zip tests/qa/resources/files",
         "setup:utils": "npm run setup:tests && cd ./playwright-utils && yarn devLocal",
-        "wp-env": "wp-env",
         "lint:md": "wp-scripts lint-md-docs ./**/*.md README.md",
         "lint:md:fix": "wp-scripts lint-md-docs --fix ./**/*.md README.md",
         "lint:js": "wp-scripts lint-js  --resolve-plugins-relative-to ./ **/*.{ts,tsx,mjs}",
         "lint:js:fix": "wp-scripts lint-js --resolve-plugins-relative-to ./ --fix **/*.{ts,tsx,mjs}",
-        "tests:all": "npx playwright test --workers=1 --project \"all\"",
-        "tests:stress": "npx playwright test --project=\"stress\"",
-        "tests:critical": "npx playwright test --grep=\"@Critical\"",
-        "setup:store:default": "npx playwright test woocommerce.setup",
-        "setup:checkout:block": "npx playwright test --grep=\"setup:checkout:block;\"",
-        "setup:checkout:classic": "npx playwright test --grep=\"setup:checkout:classic;\"",
-        "setup:tax:inc": "npx playwright test --grep=\"setup:tax:inc;\"",
-        "setup:tax:exc": "npx playwright test --grep=\"setup:tax:exc;\"",
-        "setup:pcp:usa": "npx playwright test --grep=\"setup:pcp:usa;\"",
-        "setup:pcp:germany": "npx playwright test --grep \"setup:pcp:germany;\"",
-        "setup:pcp:mexico": "npx playwright test --grep \"setup:pcp:mexico;\"",
-        "setup:pcp:usa:vaulting": "npx playwright test --grep \"setup:pcp:usa:vaulting;\"",
-        "setup:pcp:usa:vaulting:classic": "npx playwright test --grep \"setup:pcp:usa:vaulting:classic;\"",
-        "setup:pcp:usa:vaulting:subscription": "npx playwright test --grep \"setup:pcp:usa:vaulting:subscription;\"",
-        "setup:pcp:usa:paypal:subscription": "npx playwright test --grep \"setup:pcp:usa:paypal:subscription;\""
+        "e2e:setup:hosts": "echo '127.0.0.1 mywp.site' | sudo tee -a /etc/hosts",
+        "e2e:setup:env": "npm run e2e:setup:hosts && npm install && npx wp-env start --update",
+        "e2e:test:plugin-foundation": "npx playwright test --workers=1 --project \"plugin-foundation\"",
+        "e2e:test:all": "npx playwright test --workers=1 --project \"all\"",
+        "e2e:test:stress": "npx playwright test --project=\"stress\"",
+        "e2e:test:critical": "npx playwright test --grep=\"@Critical\"",
+        "e2e:test:smoke": "npx playwright test --grep=\"@Smoke\"",
+        "e2e:test:dev": "npx playwright test --grep=\"@Dev\"",
+        
+        "env:reset": "npx playwright test --grep=\"env:reset;\"",
+        "env:reset:pcp:usa": "npx playwright test --grep=\"env:reset;|setup:pcp:usa;\"",
+        "env:reset:pcp:germany": "npx playwright test --grep=\"env:reset;|setup:pcp:germany;\"",
+        "env:reset:pcp:mexico": "npx playwright test --grep=\"env:reset;|setup:pcp:mexico;\"",
+
+        "env:setup:wc": "npx playwright test woocommerce.setup",
+        "env:setup:pcp:usa": "npx playwright test --grep=\"setup:pcp:usa;\"",
+        "env:setup:pcp:germany": "npx playwright test --grep=\"setup:pcp:germany;\"",
+        "env:setup:pcp:mexico": "npx playwright test --grep=\"setup:pcp:mexico;\"",
+
+        "env:setup:pcp:update": "npx playwright test --grep=\"setup:pcp:update;\"",
+        "env:setup:checkout:block": "npx playwright test --grep=\"setup:checkout:block;\"",
+        "env:setup:checkout:classic": "npx playwright test --grep=\"setup:checkout:classic;\"",
+        "env:setup:tax:inc": "npx playwright test --grep=\"setup:tax:inc;\"",
+        "env:setup:tax:exc": "npx playwright test --grep=\"setup:tax:exc;\""
     },
     "eslintConfig": {
         "extends": [
@@ -66,6 +65,5 @@
             "@wordpress/no-unsafe-wp-apis": "off",
             "no-console": "off"
         }
-    },
-    "workspaces": [ "playwright-utils" ]
+    }
 }

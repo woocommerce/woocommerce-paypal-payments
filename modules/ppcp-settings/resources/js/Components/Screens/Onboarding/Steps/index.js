@@ -69,7 +69,10 @@ export const getSteps = ( flags ) => {
 				return true;
 			}
 
-			const isBrandedBCDC = ownBrandOnly && ! flags.canUseCardPayments;
+			const isBrandedBCDC =
+				ownBrandOnly &&
+				! flags.canUseCardPayments &&
+				! flags.canUseDigitalWallets;
 			const shouldSkip =
 				flags.shouldSkipPaymentMethods ||
 				isCasualSeller ||

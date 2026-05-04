@@ -14,9 +14,8 @@ use WooCommerce\PayPalCommerce\StoreSync\Enums\Priority;
 use WooCommerce\PayPalCommerce\StoreSync\Helper\ProductManager;
 use WooCommerce\PayPalCommerce\StoreSync\Schema\PayPalCart;
 use WooCommerce\PayPalCommerce\StoreSync\Schema\CartItem;
-use WooCommerce\PayPalCommerce\StoreSync\Schema\ResolutionOption;
-use WooCommerce\PayPalCommerce\StoreSync\Validation\InsufficientQuantity;
-use WooCommerce\PayPalCommerce\StoreSync\Validation\ItemOutOfStock;
+use WooCommerce\PayPalCommerce\StoreSync\Validation\Context\InventoryIssueContext;
+use WooCommerce\PayPalCommerce\StoreSync\Validation\Resolution\ResolutionOption;
 use WooCommerce\PayPalCommerce\StoreSync\Validation\ValidationIssue;
 
 class InventoryValidator implements ValidatorInterface {
@@ -55,44 +54,51 @@ class InventoryValidator implements ValidatorInterface {
 		}
 
 		if ( ! $this->product_manager->is_in_stock( $product ) ) {
-			return new ItemOutOfStock(
-				'Product is no longer available',
-				sprintf( '%s is currently out of stock.', $product->get_name() ),
-				$field,
-				'',
-				array(),
-				array(
-					ResolutionOption::remove_item( Priority::HIGH ),
-					ResolutionOption::wait_for_restock(),
+			return ValidationIssue::create_item_out_of_stock( 'Product is no longer available' )
+				->user_message( sprintf( '%s is currently out of stock.', $product->get_name() ) )
+				->for_field( $field )
+				->add_context(
+					InventoryIssueContext::create_item_out_of_stock()
+						->item_id( $item->item_id() )
 				)
-			);
+				->add_resolution(
+					ResolutionOption::create_remove_item()
+						->label( 'Remove from cart' )
+						->priority( Priority::HIGH )
+				)
+				->add_resolution( ResolutionOption::create_wait_for_restock() );
 		}
 
 		if ( ! $this->product_manager->is_in_stock( $product, $item->quantity() ) ) {
 			$stock_quantity = $product->get_stock_quantity() ?? 0;
 
-			return new InsufficientQuantity(
-				'Insufficient inventory',
-				sprintf(
-					'Only %d of %s available, but %d requested.',
-					$stock_quantity,
-					$product->get_name(),
-					$item->quantity()
-				),
-				$field,
-				'',
-				array(),
-				array(
-					ResolutionOption::modify_cart(
-						sprintf( 'Reduce quantity to %d', $stock_quantity ),
-						array(
-							'priority'     => Priority::HIGH,
-							'max_quantity' => $stock_quantity,
-						)
-					),
-					ResolutionOption::remove_item( Priority::LOW ),
+			return ValidationIssue::create_insufficient_quantity( 'Insufficient inventory' )
+				->user_message(
+					sprintf(
+						'Only %d of %s available, but %d requested.',
+						$stock_quantity,
+						$product->get_name(),
+						$item->quantity()
+					)
 				)
-			);
+				->for_field( $field )
+				->add_context(
+					InventoryIssueContext::create_insufficient_inventory()
+						->item_id( $item->item_id() )
+						->available_quantity( $stock_quantity )
+						->requested_quantity( $item->quantity() )
+				)
+				->add_resolution(
+					ResolutionOption::create_modify_cart()
+						->label( sprintf( 'Reduce quantity to %d', $stock_quantity ) )
+						->priority( Priority::HIGH )
+						->set_meta( 'max_quantity', $stock_quantity )
+				)
+				->add_resolution(
+					ResolutionOption::create_remove_item()
+						->label( 'Remove from cart' )
+						->priority( Priority::LOW )
+				);
 		}
 
 		return null;

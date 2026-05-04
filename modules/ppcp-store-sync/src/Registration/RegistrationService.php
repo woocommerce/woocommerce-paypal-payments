@@ -1,4 +1,5 @@
 <?php
+
 declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\StoreSync\Registration;
@@ -185,6 +186,7 @@ class RegistrationService {
 		$payload = array(
 			'storeName'          => $metadata->store_name,
 			'storeUrl'           => $metadata->store_url,
+			'apiBaseUrl'         => $metadata->api_base_url,
 			'country'            => $metadata->store_country,
 			'currency'           => $metadata->currency,
 			'paypalMerchantId'   => $metadata->paypal_merchant_id,

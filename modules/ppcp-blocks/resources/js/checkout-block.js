@@ -12,6 +12,7 @@ import BlockCheckoutMessagesBootstrap from './Bootstrap/BlockCheckoutMessagesBoo
 import { PayPalComponent } from './Components/paypal';
 import { BlockEditorPayPalComponent } from './Components/block-editor-paypal';
 import { PaypalLabel } from './Components/paypal-label';
+import { PayPalPlaceOrderContent } from './Components/paypal-place-order-content';
 const namespace = 'ppcpBlocksPaypalExpressButtons';
 const config = wc.wcSettings.getSetting( 'ppcp-gateway_data' );
 
@@ -23,16 +24,6 @@ const features = [ 'products' ];
 let blockEnabled = true;
 
 if ( cartHasSubscriptionProducts( config.scriptData ) ) {
-	// Don't show buttons on block cart page if using vault v2 and user is not logged in
-	if (
-		! config.scriptData.user.is_logged &&
-		config.scriptData.context === 'cart-block' &&
-		! isPayPalSubscription( config.scriptData ) && // using vaulting
-		! config.scriptData?.save_payment_methods?.id_token // not vault v3
-	) {
-		blockEnabled = false;
-	}
-
 	// Don't show buttons on block cart page if user is not logged in and cart contains free trial product
 	if (
 		! config.scriptData.user.is_logged &&
@@ -59,48 +50,29 @@ if ( cartHasSubscriptionProducts( config.scriptData ) ) {
 		blockEnabled = false;
 	}
 
-	// Don't show buttons if cart contains free trial product and the store is not eligible for saving payment methods.
-	if (
-		! config.scriptData.vault_v3_enabled &&
-		config.scriptData.is_free_trial_cart
-	) {
-		blockEnabled = false;
-	}
-
 	features.push( 'subscriptions' );
 }
 
 if ( blockEnabled ) {
 	if ( config.placeOrderEnabled && ! config.scriptData.continuation ) {
-		let descriptionElement = (
-			<div
-				dangerouslySetInnerHTML={ { __html: config.description } }
-			></div>
-		);
-		if ( config.placeOrderButtonDescription ) {
-			descriptionElement = (
-				<div>
-					<p
-						dangerouslySetInnerHTML={ {
-							__html: config.description,
-						} }
-					></p>
-					<p
-						style={ { textAlign: 'center' } }
-						className={ 'ppcp-place-order-description' }
-						dangerouslySetInnerHTML={ {
-							__html: config.placeOrderButtonDescription,
-						} }
-					></p>
-				</div>
-			);
-		}
-
 		registerPaymentMethod( {
 			name: config.id,
 			label: <PaypalLabel config={ config } />,
-			content: descriptionElement,
-			edit: descriptionElement,
+			content: (
+				<PayPalPlaceOrderContent
+					description={ config.description }
+					placeOrderButtonDescription={
+						config.placeOrderButtonDescription
+					}
+				/>
+			),
+			edit: (
+				<div
+					dangerouslySetInnerHTML={ {
+						__html: config.description,
+					} }
+				/>
+			),
 			placeOrderButtonLabel: config.placeOrderButtonText,
 			ariaLabel: config.title,
 			canMakePayment: ( cartData ) => {
@@ -109,6 +81,7 @@ if ( blockEnabled ) {
 			},
 			supports: {
 				features,
+				showSavedCards: true,
 			},
 		} );
 	}
@@ -187,6 +160,7 @@ if ( blockEnabled ) {
 				supports: {
 					features,
 					style: [ 'height', 'borderRadius' ],
+					showSavedCards: true,
 				},
 			} );
 		}

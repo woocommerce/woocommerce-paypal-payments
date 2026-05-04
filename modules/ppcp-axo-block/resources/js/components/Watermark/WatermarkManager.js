@@ -23,7 +23,13 @@ const WatermarkManager = ( { fastlaneSdk } ) => {
 		select( STORE_NAME ).getIsAxoScriptLoaded()
 	);
 
+	const axoConfig = window.wc_ppcp_axo;
+
 	useEffect( () => {
+		if ( axoConfig?.show_watermark !== '1' ) {
+			return;
+		}
+
 		if ( isAxoActive || ( ! isAxoActive && ! isAxoScriptLoaded ) ) {
 			// Create watermark container and update content when AXO is active or loading
 			createWatermarkContainer();

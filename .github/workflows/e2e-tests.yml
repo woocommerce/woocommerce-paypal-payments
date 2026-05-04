@@ -3,23 +3,22 @@ name: E2E Tests
 on:
   workflow_dispatch:
     inputs:
-      wp-rc-version:
-        description: 'WordPress version for Release Candidate (i.e. 6.3-RC3)'
-      wc-rc-version:
-        description: 'WooCommerce version for Release Candidate (i.e. 8.0.0-rc.1)'
-      test-suite:
-        description: 'Test suite to run'
+      TEST_SUITE:
+        description: 'Test suite'
         required: true
-        default: 'critical'
+        default: 'e2e:test:dev'
         type: choice
         options:
-          - critical
-          - stress
-          - all
-          - grep
-      grep-pattern:
-        description: 'Grep pattern (only used when "Test suite to run" == "grep")'
+          - e2e:test:plugin-foundation
+          - e2e:test:dev
+          - e2e:test:smoke
+          - e2e:test:critical
+          - e2e:test:stress
+          - e2e:test:all
+      XRAY_TEST_EXEC_KEY:
+        description: 'Xray Test Execution Key'
         required: false
+        default: ''
         type: string
 
 concurrency:
@@ -28,115 +27,51 @@ concurrency:
 
 jobs:
   build:
-    name: Build package
-    uses: inpsyde/reusable-workflows/.github/workflows/build-plugin-archive.yml@a9af34f34e95cbe18703198c7e972e97ebcd7473
+    name: Build tested plugin package
+    uses: inpsyde/reusable-workflows/.github/workflows/build-and-distribute.yml@main
+    secrets:
+      GITHUB_USER_EMAIL: ${{ secrets.DEPLOYBOT_EMAIL }}
+      GITHUB_USER_NAME: ${{ secrets.DEPLOYBOT_USER }}
+      GITHUB_USER_SSH_KEY: ${{ secrets.DEPLOYBOT_SSH_PRIVATE_KEY }}
+      GITHUB_USER_SSH_PUBLIC_KEY: ${{ secrets.DEPLOYBOT_SSH_PUBLIC_KEY }}
+      NPM_REGISTRY_TOKEN: ${{ secrets.DEPLOYBOT_GITHUB_TOKEN_PACKAGES }}
     with:
-      PHP_VERSION: 7.4
+      PACKAGE_NAME: woocommerce-paypal-payments
       NODE_VERSION: 22
-      PLUGIN_MAIN_FILE: ./woocommerce-paypal-payments.php
-      PLUGIN_VERSION: 3.0.0
-      PLUGIN_FOLDER_NAME: woocommerce-paypal-payments
-      ARCHIVE_NAME: woocommerce-paypal-payments
-      COMPILE_ASSETS_ARGS: '-vv --env=root'
 
-  E2ETests:
-    name: E2E Tests
+  e2e-playwright:
+    name: Run Playwright E2E Tests
     needs: build
-    runs-on: ubuntu-latest
-    env:
-      FORCE_COLOR: 2
-    steps:
-      - name: Add custom domain to hosts
-        run: echo "127.0.0.1 mywp.site" | sudo tee -a /etc/hosts
+    uses: inpsyde/reusable-workflows/.github/workflows/test-playwright.yml@fix/test-playwright
+    with:
+      WORK_DIR: tests/qa
+      PLAYWRIGHT_SCRIPT: ${{ inputs.TEST_SUITE }}
+      ARTIFACT_PATH: |
+        tests/qa/artifacts/*
+        tests/qa/playwright-report/
+        tests/qa/test-results/
+      ARTIFACT_INCLUDE_HIDDEN_FILES: true
+      NODE_VERSION: 22
+      PLAYWRIGHT_BROWSER_ARGS: 'chromium --with-deps'
+      XRAY_TEST_EXEC_KEY: ${{ inputs.XRAY_TEST_EXEC_KEY }}
+      PRE_SCRIPT: |
+        # 1. Download and unzip the built plugin
+        gh run download ${{ github.run_id }} -p "woocommerce-paypal-payments-*" -D resources/files
+        pushd resources/files
+        mv woocommerce-paypal-payments-*/woocommerce-paypal-payments .
+        zip -r woocommerce-paypal-payments.zip woocommerce-paypal-payments
+        rm -rf woocommerce-paypal-payments woocommerce-paypal-payments-*/
+        popd
 
-      - uses: actions/checkout@v2
+        # 2. Add private composer repository and download WooCommerce Subscriptions
+        pushd ../../
+        composer config repositories.repo-name composer https://repo.packagist.com/inpsyde/payment-gateways/
+        composer require inpsyde-mirror/woocommerce-subscriptions
+        popd
 
-      - name: Download artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: woocommerce-paypal-payments
-          path: ./tests/qa/resources/files
-
-      - name: Create and upload zip file
-        working-directory: ./tests/qa/resources/files
-        run: |
-          zip -r ./woocommerce-paypal-payments.zip ./woocommerce-paypal-payments
-          rm -rf woocommerce-paypal-payments
-
-      - name: Configure npm for GitHub Packages
-        working-directory: ./tests/qa
-        run: |
-          # Create clean .npmrc
-          echo "@inpsyde:registry=https://npm.pkg.github.com" > .npmrc
-          echo "//npm.pkg.github.com/:_authToken=${{ secrets.NPM_SYDE }}" >> .npmrc
-
-      - name: Install Composer dependencies
-        uses: ramsey/composer-install@v3
-        with:
-          working-directory: "./tests/inc/inpsyde"
-        env:
-          COMPOSER_AUTH: '{ "http-basic": { "repo.packagist.com": { "username": "${{ secrets.SYDE_COMPOSER_USER }}", "password": "${{ secrets.SYDE_COMPOSER_PASSWORD }}" }}}'
-
-      - name: Install Environment
-        working-directory: ./tests/qa
-        run: npm run setup:env
-
-      - name: Install WP release candidate (optional)
-        if: github.event.inputs.wp-rc-version != ''
-        working-directory: ./tests/qa
-        env:
-          INPUT_WP_RC_VERSION: ${{ github.event.inputs.wp-rc-version }}
-        run: |
-          npm run -- wp-env run tests-cli -- wp core update --version="${INPUT_WP_RC_VERSION}"
-          npm run -- wp-env run tests-cli -- wp core update-db
-
-      - name: Install WC release candidate (optional)
-        if: github.event.inputs.wc-rc-version != ''
-        working-directory: ./tests/qa
-        env:
-          INPUT_WC_RC_VERSION: ${{ github.event.inputs.wc-rc-version }}
-        run: |
-          npm run -- wp-env run tests-cli -- wp plugin update woocommerce --version="${INPUT_WC_RC_VERSION}"
-          npm run -- wp-env run tests-cli -- wp wc update
-
-      - name: Install Tests
-        working-directory: ./tests/qa
-        run: npm run setup:tests
-
-      - name: Create .env file
-        working-directory: ./tests/qa
-        run: |
-          echo "${{ secrets.QA_ENV_FILE }}" > .env
-          
-      - name: Validate grep pattern
-        if: github.event.inputs.test-suite == 'grep' && github.event.inputs.grep-pattern == ''
-        run: |
-          echo "::error::Grep pattern is required when test-suite is 'grep'"
-          exit 1
-
-      - name: Run E2E tests
-        working-directory: ./tests/qa
-        run: |
-          if [ "${{ github.event.inputs.test-suite }}" == "grep" ]; then
-            npx playwright test --project="all" --grep "${{ github.event.inputs.grep-pattern }}"
-          else
-            npm run tests:${{ github.event.inputs.test-suite }}
-          fi
-
-      - name: Archive Playwright Report
-        if: ${{ always() }}
-        uses: actions/upload-artifact@v4
-        with:
-          name: playwright-test-results
-          path: tests/qa/playwright-report
-          if-no-files-found: ignore
-          retention-days: 5
-
-      - name: Archive Test Results
-        if: ${{ always() }}
-        uses: actions/upload-artifact@v4
-        with:
-          name: test-results
-          path: tests/qa/test-results/
-          if-no-files-found: ignore
-          retention-days: 5
+        # 3. Setup wp-env
+        npm run e2e:setup:env
+    secrets:
+      ENV_FILE_DATA: ${{ secrets.QA_ENV_FILE }}
+      NPM_REGISTRY_TOKEN: ${{ secrets.DEPLOYBOT_GITHUB_TOKEN_PACKAGES }}
+      COMPOSER_AUTH_JSON: ${{ secrets.COMPOSER_AUTH_JSON }}

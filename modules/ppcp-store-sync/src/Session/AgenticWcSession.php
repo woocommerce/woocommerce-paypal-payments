@@ -7,7 +7,7 @@
  * @package WooCommerce\PayPalCommerce\StoreSync\Session
  */
 
-declare(strict_types=1);
+declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\StoreSync\Session;
 
@@ -64,7 +64,7 @@ class AgenticWcSession extends WC_Session_Handler {
 	 *
 	 * We override this to do nothing since we load sessions manually via load_session_by_id().
 	 */
-	public function init_session_cookie() {
+	public function init_session_cookie(): void {
 		// No-op - sessions are loaded on-demand.
 	}
 }

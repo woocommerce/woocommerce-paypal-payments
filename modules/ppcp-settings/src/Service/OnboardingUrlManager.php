@@ -13,9 +13,6 @@ use Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\Cache;
 use WooCommerce\WooCommerce\Logging\Logger\NullLogger;
 
-// TODO: Replace the OnboardingUrl with a new implementation for this module.
-use WooCommerce\PayPalCommerce\Onboarding\Helper\OnboardingUrl;
-
 /**
  * Manages (generates, returns) Onboarding URL instances.
  *

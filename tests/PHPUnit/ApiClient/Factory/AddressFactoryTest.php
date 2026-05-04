@@ -106,6 +106,38 @@ class AddressFactoryTest extends TestCase
         $this->assertEquals('shipping_postcode', $result->postal_code());
     }
 
+    public function testFromWcOrderBillingAddress()
+    {
+        $testee = new AddressFactory();
+        $order = Mockery::mock(\WC_Order::class);
+        $order
+            ->expects('get_billing_country')
+            ->andReturn('billing_country');
+        $order
+            ->expects('get_billing_address_1')
+            ->andReturn('billing_address_1');
+        $order
+            ->expects('get_billing_address_2')
+            ->andReturn('billing_address_2');
+        $order
+            ->expects('get_billing_state')
+            ->andReturn('billing_state');
+        $order
+            ->expects('get_billing_city')
+            ->andReturn('billing_city');
+        $order
+            ->expects('get_billing_postcode')
+            ->andReturn('billing_postcode');
+
+        $result = $testee->from_wc_order($order, 'billing');
+        $this->assertEquals('billing_country', $result->country_code());
+        $this->assertEquals('billing_address_1', $result->address_line_1());
+        $this->assertEquals('billing_address_2', $result->address_line_2());
+        $this->assertEquals('billing_state', $result->admin_area_1());
+        $this->assertEquals('billing_city', $result->admin_area_2());
+        $this->assertEquals('billing_postcode', $result->postal_code());
+    }
+
     /**
      * @dataProvider dataFromPayPalRequest
      */

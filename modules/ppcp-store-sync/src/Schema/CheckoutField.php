@@ -9,8 +9,7 @@ declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\StoreSync\Schema;
 
-use WooCommerce\PayPalCommerce\StoreSync\Validation\InvalidData;
-use WooCommerce\PayPalCommerce\StoreSync\Validation\MissingField;
+use WooCommerce\PayPalCommerce\StoreSync\Validation\ValidationIssue;
 
 /**
  * @see CheckoutFieldTest - Unit tests for this class.
@@ -42,7 +41,11 @@ class CheckoutField extends AgenticSchema {
 		if ( ! empty( $input['type'] ) && is_string( $input['type'] ) ) {
 			$this->type = strtoupper( trim( $input['type'] ) );
 		} else {
-			$add_issue( new MissingField( 'Type is required', 'The field type is mandatory', 'type' ) );
+			$add_issue(
+				ValidationIssue::create_missing_field( 'Type is required' )
+					->user_message( 'The field type is mandatory' )
+					->for_field( 'type' )
+			);
 		}
 
 		if ( ! empty( $input['status'] ) && is_string( $input['status'] ) ) {
@@ -51,10 +54,18 @@ class CheckoutField extends AgenticSchema {
 			if ( in_array( $status, self::VALID_STATUS, true ) ) {
 				$this->status = $status;
 			} else {
-				$add_issue( new InvalidData( 'Status is invalid', 'The status value is not supported', 'status' ) );
+				$add_issue(
+					ValidationIssue::create_invalid_data( 'Status is invalid' )
+					->user_message( 'The status value is not supported' )
+					->for_field( 'status' )
+				);
 			}
 		} else {
-			$add_issue( new MissingField( 'Status is required', 'The field status is mandatory', 'status' ) );
+			$add_issue(
+				ValidationIssue::create_missing_field( 'Status is required' )
+				->user_message( 'The field status is mandatory' )
+				->for_field( 'status' )
+			);
 		}
 
 		// Parse optional fields.

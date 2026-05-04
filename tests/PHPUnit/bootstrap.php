@@ -23,5 +23,8 @@ require_once TESTS_ROOT_DIR . '/stubs/WP_REST_Request.php';
 require_once TESTS_ROOT_DIR . '/stubs/WP_REST_Response.php';
 require_once TESTS_ROOT_DIR . '/stubs/WP_REST_Controller.php';
 require_once TESTS_ROOT_DIR . '/stubs/WC_REST_Controller.php';
+require_once TESTS_ROOT_DIR . '/stubs/WC_Product.php';
+require_once TESTS_ROOT_DIR . '/stubs/WC_Countries.php';
+require_once TESTS_ROOT_DIR . '/stubs/WC_Validation.php';
 
 Hamcrest\Util::registerGlobalFunctions();

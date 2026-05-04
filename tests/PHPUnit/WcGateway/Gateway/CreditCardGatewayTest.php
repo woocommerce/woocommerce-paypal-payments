@@ -11,20 +11,17 @@ use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PaymentsEndpoint;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
 use WooCommerce\PayPalCommerce\TestCase;
-use WooCommerce\PayPalCommerce\Vaulting\VaultedCreditCardHandler;
-use WooCommerce\PayPalCommerce\Vaulting\WooCommercePaymentTokens;
+use WooCommerce\PayPalCommerce\WcPaymentTokens\WooCommercePaymentTokens;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\WcGateway\Endpoint\CaptureCardPayment;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\OrderProcessor;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\RefundProcessor;
-use WooCommerce\PayPalCommerce\WcGateway\Settings\SettingsRenderer;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\CardPaymentsConfiguration;
 use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
 use function Brain\Monkey\Functions\when;
 
 class CreditCardGatewayTest extends TestCase
 {
-	private $settingsRenderer;
 	private $orderProcessor;
 	private $config;
 	private $dcc_configuration;
@@ -39,7 +36,6 @@ class CreditCardGatewayTest extends TestCase
 	private $wcPaymentTokens;
 	private $logger;
 	private $paymentsEndpoint;
-	private $vaultedCreditCardHandler;
 	private $environment;
 	private $orderEndpoint;
 	private $testee;
@@ -48,7 +44,6 @@ class CreditCardGatewayTest extends TestCase
 	{
 		parent::setUp();
 
-		$this->settingsRenderer = Mockery::mock(SettingsRenderer::class);
 		$this->orderProcessor = Mockery::mock(OrderProcessor::class);
 		$this->config = Mockery::mock(ContainerInterface::class);
 		$this->dcc_configuration = Mockery::mock(CardPaymentsConfiguration::class);
@@ -62,7 +57,6 @@ class CreditCardGatewayTest extends TestCase
 		$this->wcPaymentTokens = Mockery::mock(WooCommercePaymentTokens::class);
 		$this->logger = Mockery::mock(LoggerInterface::class);
 		$this->paymentsEndpoint = Mockery::mock(PaymentsEndpoint::class);
-		$this->vaultedCreditCardHandler = Mockery::mock(VaultedCreditCardHandler::class);
 		$this->environment = Mockery::mock(Environment::class);
 		$this->orderEndpoint = Mockery::mock(OrderEndpoint::class);
 
@@ -76,7 +70,6 @@ class CreditCardGatewayTest extends TestCase
 		when('wc_clean')->returnArg();
 
 		$this->testee = new CreditCardGateway(
-			$this->settingsRenderer,
 			$this->orderProcessor,
 			$this->config,
 			$this->dcc_configuration,
@@ -86,7 +79,6 @@ class CreditCardGatewayTest extends TestCase
 			$this->transactionUrlProvider,
 			$this->subscriptionHelper,
 			$this->paymentsEndpoint,
-			$this->vaultedCreditCardHandler,
 			$this->environment,
 			$this->orderEndpoint,
 			$this->captureCardPayment,
@@ -119,32 +111,4 @@ class CreditCardGatewayTest extends TestCase
 		$this->assertEquals('success', $result['result']);
 	}
 
-	public function testProcessPaymentVaultedCard()
-	{
-		$wc_order = Mockery::mock(WC_Order::class);
-		$wc_order->shouldReceive('get_customer_id')->andReturn(1);
-		when('wc_get_order')->justReturn($wc_order);
-
-		$woocommerce = Mockery::mock(\WooCommerce::class);
-		$session = Mockery::mock(\WC_Session::class);
-		when('WC')->justReturn($woocommerce);
-		$woocommerce->session = $session;
-		$session->shouldReceive('set')->andReturn([]);
-		$session->shouldReceive('get')->andReturn('');
-
-		when('is_checkout')->justReturn(true);
-
-		$savedCreditCard = 'abc123';
-		$_POST['saved_credit_card'] = $savedCreditCard;
-
-		$this->vaultedCreditCardHandler
-			->shouldReceive('handle_payment')
-			->with($savedCreditCard, $wc_order)
-			->andReturn($wc_order);
-
-		$this->sessionHandler->shouldReceive('destroy_session_data')->once();
-
-		$result = $this->testee->process_payment(1);
-		$this->assertEquals('success', $result['result']);
-	}
 }

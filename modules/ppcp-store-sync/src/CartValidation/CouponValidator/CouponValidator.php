@@ -9,7 +9,7 @@
  * @package WooCommerce\PayPalCommerce\StoreSync\CartValidation\CouponValidator
  */
 
-declare(strict_types=1);
+declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\StoreSync\CartValidation\CouponValidator;
 
@@ -19,7 +19,7 @@ use WooCommerce\PayPalCommerce\StoreSync\CartValidation\ValidatorInterface;
 use WooCommerce\PayPalCommerce\StoreSync\Helper\CartHelper;
 use WooCommerce\PayPalCommerce\StoreSync\Schema\Coupon;
 use WooCommerce\PayPalCommerce\StoreSync\Schema\PayPalCart;
-use WooCommerce\PayPalCommerce\StoreSync\Validation\CouponInvalid;
+use WooCommerce\PayPalCommerce\StoreSync\Validation\ValidationIssue;
 
 /**
  * Validates coupons for Agentic Commerce using WooCommerce's native validation.
@@ -128,9 +128,9 @@ class CouponValidator implements ValidatorInterface {
 	/**
 	 * Constructor.
 	 *
-	 * @param CouponContextBuilder    $context_builder Context builder instance.
+	 * @param CouponContextBuilder    $context_builder     Context builder instance.
 	 * @param DiscountCalculator      $discount_calculator Discount calculator instance.
-	 * @param CouponResolutionBuilder $resolution_builder Resolution builder instance.
+	 * @param CouponResolutionBuilder $resolution_builder  Resolution builder instance.
 	 */
 	public function __construct(
 		CouponContextBuilder $context_builder,
@@ -146,7 +146,7 @@ class CouponValidator implements ValidatorInterface {
 	 * Validates coupons in the cart.
 	 *
 	 * @param PayPalCart $cart The cart to validate.
-	 * @return CouponInvalid[]|null Array of validation issues or null if valid.
+	 * @return ValidationIssue[]|null Array of validation issues or null if valid.
 	 */
 	public function validate( PayPalCart $cart ): ?array {
 		$coupons_to_apply = $this->get_coupons_to_apply( $cart );
@@ -221,10 +221,10 @@ class CouponValidator implements ValidatorInterface {
 	 * When individual_use is true, that coupon cannot be combined with ANY other coupons.
 	 *
 	 * @param Coupon[]   $coupons The coupons to check.
-	 * @param PayPalCart $cart The cart context.
-	 * @return CouponInvalid|null Validation issue or null if no conflicts.
+	 * @param PayPalCart $cart    The cart context.
+	 * @return ValidationIssue|null Validation issue or null if no conflicts.
 	 */
-	private function check_stacking_conflicts( array $coupons, PayPalCart $cart ): ?CouponInvalid {
+	private function check_stacking_conflicts( array $coupons, PayPalCart $cart ): ?ValidationIssue {
 		if ( count( $coupons ) < 2 ) {
 			return null;
 		}
@@ -275,13 +275,13 @@ class CouponValidator implements ValidatorInterface {
 	/**
 	 * Validates a single coupon using WC_Discounts.
 	 *
-	 * @param Coupon       $coupon The coupon to validate.
-	 * @param PayPalCart   $cart The cart context.
-	 * @param int          $index The coupon index.
+	 * @param Coupon       $coupon    The coupon to validate.
+	 * @param PayPalCart   $cart      The cart context.
+	 * @param int          $index     The coupon index.
 	 * @param WC_Discounts $discounts The WC discounts instance.
-	 * @return CouponInvalid|null Validation issue or null if valid.
+	 * @return ValidationIssue|null Validation issue or null if valid.
 	 */
-	private function validate_single_coupon( Coupon $coupon, PayPalCart $cart, int $index, WC_Discounts $discounts ): ?CouponInvalid {
+	private function validate_single_coupon( Coupon $coupon, PayPalCart $cart, int $index, WC_Discounts $discounts ): ?ValidationIssue {
 		$code  = $coupon->code() ?? '';
 		$field = $index > 0 ? "coupons[$index]" : 'coupons';
 
@@ -298,6 +298,7 @@ class CouponValidator implements ValidatorInterface {
 		$error_code    = 0;
 		$capture_error = static function ( string $error_message, int $code ) use ( &$error_code ): string {
 			$error_code = $code;
+
 			return $error_message;
 		};
 
@@ -307,6 +308,7 @@ class CouponValidator implements ValidatorInterface {
 
 		if ( is_wp_error( $result ) ) {
 			$issue_type = $this->map_error_code_to_issue_type( $error_code );
+
 			return $this->create_issue( $issue_type, $code, $field, $cart, $wc_coupon );
 		}
 
@@ -350,13 +352,13 @@ class CouponValidator implements ValidatorInterface {
 	/**
 	 * Creates a CouponInvalid issue - the single point of issue creation.
 	 *
-	 * @param string         $issue_type The issue type.
-	 * @param string         $code The coupon code.
-	 * @param string         $field The field identifier.
-	 * @param PayPalCart     $cart The cart context.
-	 * @param WC_Coupon|null $wc_coupon The WC coupon object.
+	 * @param string         $issue_type    The issue type.
+	 * @param string         $code          The coupon code.
+	 * @param string         $field         The field identifier.
+	 * @param PayPalCart     $cart          The cart context.
+	 * @param WC_Coupon|null $wc_coupon     The WC coupon object.
 	 * @param array          $extra_context Additional context data.
-	 * @return CouponInvalid The validation issue.
+	 * @return ValidationIssue The validation issue.
 	 */
 	private function create_issue(
 		string $issue_type,
@@ -365,7 +367,7 @@ class CouponValidator implements ValidatorInterface {
 		PayPalCart $cart,
 		?WC_Coupon $wc_coupon,
 		array $extra_context = array()
-	): CouponInvalid {
+	): ValidationIssue {
 		$config = self::ISSUE_CONFIG[ $issue_type ] ?? self::ISSUE_CONFIG['COUPON_INVALID'];
 
 		$context = $this->context_builder->build_coupon_context(
@@ -396,15 +398,15 @@ class CouponValidator implements ValidatorInterface {
 		 *
 		 * Allows coupon plugins to customize the user message for the AI agent.
 		 *
-		 * @param string $message The user message.
-		 * @param string $issue_type The issue type (e.g., 'COUPON_EXPIRED').
-		 * @param string $code The coupon code.
-		 * @param WC_Coupon|null $wc_coupon The WC_Coupon object (null if doesn't exist).
-		 * @param PayPalCart $cart The cart context.
-		 * @param array $context The validation context data.
-		 *
-		 * @return string Modified user message.
 		 * @since 1.0.0
+		 * @param string         $issue_type The issue type (e.g., 'COUPON_EXPIRED').
+		 * @param string         $code       The coupon code.
+		 * @param WC_Coupon|null $wc_coupon  The WC_Coupon object (null if doesn't exist).
+		 * @param PayPalCart     $cart       The cart context.
+		 * @param array          $context    The validation context data.
+		 *
+		 * @param string         $message    The user message.
+		 * @return string Modified user message.
 		 */
 		$user_message = apply_filters(
 			'woocommerce_paypal_payments_store_sync_coupon_validation_user_message',
@@ -416,16 +418,26 @@ class CouponValidator implements ValidatorInterface {
 			$context
 		);
 
-		return new CouponInvalid( $config['message'], $user_message, $field, '', $context, $resolutions );
+		$issue = ValidationIssue::create_coupon_invalid( $config['message'] )
+			->user_message( $user_message )
+			->for_field( $field )
+			->add_resolution( $resolutions );
+
+		$issue_context = $this->context_builder->build_coupon_issue_context( $issue_type, $code, $context );
+		if ( $issue_context ) {
+			$issue->add_context( $issue_context );
+		}
+
+		return $issue;
 	}
 
 	/**
 	 * Builds user message with context interpolation.
 	 *
 	 * @param string     $template The message template.
-	 * @param string     $code The coupon code.
-	 * @param array      $context The context data.
-	 * @param PayPalCart $cart The cart context.
+	 * @param string     $code     The coupon code.
+	 * @param array      $context  The context data.
+	 * @param PayPalCart $cart     The cart context.
 	 * @return string The formatted message.
 	 */
 	private function build_user_message( string $template, string $code, array $context, PayPalCart $cart ): string {
@@ -460,11 +472,11 @@ class CouponValidator implements ValidatorInterface {
 	 * Applies resolutions enrichment filter.
 	 *
 	 * @param array          $resolutions The resolution options.
-	 * @param string         $issue_type The issue type.
-	 * @param string         $code The coupon code.
-	 * @param WC_Coupon|null $wc_coupon The WC coupon object.
-	 * @param PayPalCart     $cart The cart context.
-	 * @param array          $context The context data.
+	 * @param string         $issue_type  The issue type.
+	 * @param string         $code        The coupon code.
+	 * @param WC_Coupon|null $wc_coupon   The WC coupon object.
+	 * @param PayPalCart     $cart        The cart context.
+	 * @param array          $context     The context data.
 	 * @return array The filtered resolutions.
 	 */
 	private function apply_resolutions_filter( array $resolutions, string $issue_type, string $code, ?WC_Coupon $wc_coupon, PayPalCart $cart, array $context ): array {
@@ -474,15 +486,15 @@ class CouponValidator implements ValidatorInterface {
 		 * Allows coupon plugins to add or modify resolution options for the
 		 * AI agent.
 		 *
-		 * @param array $resolutions The resolution options array.
-		 * @param string $issue_type The issue type (e.g., 'COUPON_EXPIRED').
-		 * @param string $code The coupon code.
-		 * @param WC_Coupon|null $wc_coupon The WC_Coupon object (null if doesn't exist).
-		 * @param PayPalCart $cart The cart context.
-		 * @param array $context The validation context data.
-		 *
-		 * @return array Modified resolution options array.
 		 * @since 1.0.0
+		 * @param string         $issue_type  The issue type (e.g., 'COUPON_EXPIRED').
+		 * @param string         $code        The coupon code.
+		 * @param WC_Coupon|null $wc_coupon   The WC_Coupon object (null if doesn't exist).
+		 * @param PayPalCart     $cart        The cart context.
+		 * @param array          $context     The validation context data.
+		 *
+		 * @param array          $resolutions The resolution options array.
+		 * @return array Modified resolution options array.
 		 */
 		return apply_filters(
 			'woocommerce_paypal_payments_store_sync_coupon_validation_resolutions',

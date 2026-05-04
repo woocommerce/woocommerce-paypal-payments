@@ -5,7 +5,7 @@
  * @package WooCommerce\PayPalCommerce\ApiClient\Authentication
  */
 
-declare( strict_types = 1 );
+declare( strict_types=1 );
 
 namespace WooCommerce\PayPalCommerce\ApiClient\Authentication;
 
@@ -14,7 +14,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Entity\Token;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\Cache;
 use Psr\Log\LoggerInterface;
-use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
+use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
 
 /**
  * Class PayPalBearer
@@ -28,7 +28,7 @@ class PayPalBearer implements Bearer {
 	/**
 	 * The settings.
 	 *
-	 * @var ?ContainerInterface
+	 * @var ?SettingsProvider
 	 */
 	protected $settings;
 
@@ -70,12 +70,12 @@ class PayPalBearer implements Bearer {
 	/**
 	 * PayPalBearer constructor.
 	 *
-	 * @param Cache               $cache    The cache.
-	 * @param string              $host     The host.
-	 * @param string              $key      The key.
-	 * @param string              $secret   The secret.
-	 * @param LoggerInterface     $logger   The logger.
-	 * @param ?ContainerInterface $settings The settings.
+	 * @param Cache             $cache The cache.
+	 * @param string            $host The host.
+	 * @param string            $key The key.
+	 * @param string            $secret The secret.
+	 * @param LoggerInterface   $logger The logger.
+	 * @param ?SettingsProvider $settings The settings.
 	 */
 	public function __construct(
 		Cache $cache,
@@ -83,7 +83,7 @@ class PayPalBearer implements Bearer {
 		string $key,
 		string $secret,
 		LoggerInterface $logger,
-		?ContainerInterface $settings
+		?SettingsProvider $settings
 	) {
 
 		$this->cache    = $cache;
@@ -97,8 +97,8 @@ class PayPalBearer implements Bearer {
 	/**
 	 * Returns a bearer token.
 	 *
-	 * @throws RuntimeException When request fails.
 	 * @return Token
+	 * @throws RuntimeException When request fails.
 	 */
 	public function bearer(): Token {
 		try {
@@ -116,15 +116,12 @@ class PayPalBearer implements Bearer {
 	 * @return string The client ID from settings, or the key defined via constructor.
 	 */
 	private function get_key(): string {
-		if (
-			$this->settings
-			&& $this->settings->has( 'client_id' )
-			&& $this->settings->get( 'client_id' )
-		) {
-			return $this->settings->get( 'client_id' );
+		if ( is_null( $this->settings ) ) {
+			return $this->key;
 		}
 
-		return $this->key;
+		$merchant_data = $this->settings->merchant_data();
+		return $merchant_data->client_id;
 	}
 
 	/**
@@ -133,22 +130,19 @@ class PayPalBearer implements Bearer {
 	 * @return string The client secret from settings, or the value defined via constructor.
 	 */
 	private function get_secret(): string {
-		if (
-			$this->settings
-			&& $this->settings->has( 'client_secret' )
-			&& $this->settings->get( 'client_secret' )
-		) {
-			return $this->settings->get( 'client_secret' );
+		if ( is_null( $this->settings ) ) {
+			return $this->secret;
 		}
 
-		return $this->secret;
+		$merchant_data = $this->settings->merchant_data();
+		return $merchant_data->client_secret;
 	}
 
 	/**
 	 * Creates a new bearer token.
 	 *
-	 * @throws RuntimeException When request fails.
 	 * @return Token
+	 * @throws RuntimeException When request fails.
 	 */
 	private function newBearer(): Token {
 		$key    = $this->get_key();

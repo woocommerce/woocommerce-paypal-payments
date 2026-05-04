@@ -145,7 +145,7 @@ class P24Gateway extends WC_Payment_Gateway {
 				'redirect' => wc_get_checkout_url(),
 			);
 		}
-		$wc_order->update_status( 'on-hold', __( 'Awaiting Przelewy24 to confirm the payment.', 'woocommerce-paypal-payments' ) );
+		$wc_order->update_status( 'pending', __( 'Awaiting Przelewy24 to confirm the payment.', 'woocommerce-paypal-payments' ) );
 
 		$purchase_unit = $this->purchase_unit_factory->from_wc_order( $wc_order );
 		$amount        = $purchase_unit->amount()->to_array();

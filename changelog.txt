@@ -1,5 +1,71 @@
 *** Changelog ***
 
+= 4.0.3 - 2026-04-27 =
+* Enhancement – consolidate disabled funding sources card decision #4216
+* Enhancement – Hide Apple Pay Register Domain TODO when domain is already validated #4263
+* Enhancement – Remove vault v2 code #4254
+* Fix – Cart simulation causes checkout instability and cannot be disabled #4277
+* Fix – Fix bool (false) in transients #4281
+* Fix – Return HTTP 400 on nonce validation failures instead of 500 #4280
+* Fix – AddressFactory::from_wc_order billing address #4279
+* Fix – Duplicate WooCommerce orders created when buyer switches payment method at checkout #4276
+* Fix – BCDC - Mexico - BCDC not visible on block checkout #4289
+* Fix – Guest Cart appears empty when product is added from product page #4288
+* Fix – APMS - Order with apms stay in pending status (iDeal, ...) #4294
+* Fix – Failing ACDC payment for Free Trial subscription on classic checkout #4299
+* Fix – Drop shipping when city is missing to prevent CITY_REQUIRED #4292
+
+= 4.0.2 - 2026-04-02 =
+* Fix – API rate limiting #4244
+
+= 4.0.1 - 2026-03-31 =
+* Enhancement – Removed legacy UI #4031
+* Enhancement – Added migration banner guiding BCDC merchants through upgrade to Advanced Card Processing #4192
+* Enhancement – Apple Pay and Google Pay can now be enabled independently, without requiring Advanced Card Processing (ACDC) to be active #4186
+* Enhancement – Fastlane is now available in all ACDC-supported countries #4149
+* Enhancement – Added Fastlane to reCAPTCHA-protected payment methods for improved fraud protection #4161
+* Enhancement – Pay with Crypto is now enabled by default for eligible merchants #4171
+* Enhancement – Added Pay Upon Invoice support to the new settings UI #4117, #4144
+* Enhancement – Vaulting via Orders API now supported for redirect gateway in Block Checkout #4131
+* Enhancement – Billing agreements can now be imported and converted to Vault tokens #4134
+* Fix – PUI and OXXO settings were not preserved after upgrading from 2.9.6 to 4.0.0 #4194
+* Fix – Merchant onboarding state was lost when upgrading from a previous version #4150
+* Fix – BCDC was not enabled after migration for merchants who had it active but were not ACDC-eligible #4160
+* Fix – BCDC button was not active after migration when BCDC was part of the PayPal gateway #4155, #4180
+* Fix – Pay Later messaging tab was missing after migration when BCDC was part of the PayPal gateway #4159
+* Fix – Capture virtual orders on status change setting was not preserved during migration #4157
+* Fix – Cardholder name was always shown on the frontend after legacy migration #4167
+* Fix – L2/L3 data was incorrectly sent when Stay Updated was disabled during migration #4168
+* Fix – APM settings were not correctly migrated when APMs were part of the PayPal gateway #4182
+* Fix – BCDC override flag was not functioning correctly #4177
+* Fix – Capture on status change was not working as expected in the new UI #4169
+* Fix – ACDC setting was not preserved after saving and reloading the settings page #4108
+* Fix – ACDC was not enabled by default after onboarding for eligible countries #4128
+* Fix – Standard card button gateway was incorrectly visible on the WooCommerce Payments tab and classic checkout #4118
+* Fix – Google Pay and Apple Pay were visible on classic checkout for non-eligible countries #4137
+* Fix – Save payment method checkbox was incorrectly shown for ACDC in unsupported countries #4176
+* Fix – Pay with Crypto gateway was visible on checkout for ineligible merchants #4175
+* Fix – Pay with Crypto cancel and return URL query parameters were not parsed correctly #4183
+* Fix – Various Pay with Crypto fixes including icon update and miscellaneous issues #4187, #4172
+* Fix – Fastlane watermark was not hidden when the "Display Fastlane Watermark" setting was disabled #4140
+* Fix – Fastlane "Learn More" link was missing for GB and AU locales #4112
+* Fix – PayPal buttons were not visible on the block cart page #4125
+* Fix – Incorrect button style was shown on the Pay for Order page #4184, #4141
+* Fix – Failed orders could not be paid via PayPal #4154
+* Fix – Deposits remainder payments were not completed for pending-deposit orders #4100
+* Fix – Infinite loop when changing payment method for a subscription #4085
+* Fix – Fatal error on plugin upgrade due to ArgumentCountError in AuthenticationRestEndpoint #4090
+* Fix – Fatal error on simulate cart calls #3769
+* Fix – AVS code mismatch causing payment failures #4132
+* Fix – BCDC-only merchants incorrectly had ACDC, Apple Pay, and Google Pay disabled #4088
+* Fix – Removed Order Status requirement for PayPal payment processing #4185
+* Fix – Refactored GermanizedShipmentIntegration to support Shiptastic #4061, #4193
+* Fix - Do not increment step directly #4086
+
+= 3.4.1 - 2026-03-05 =
+* Fix - Performance issue in /v2/vault/payment-tokens/id #4098
+* Fix - China Merchants ACDC and Vaulting Missing #4139
+
 = 3.4.0 - 2026-02-10 =
 * New - Level 2 and Level 3 card processing support for Advanced Credit and Debit Cards #3970, #3999
 * Enhancement - PayPal Working Capital promotional messaging now available for eligible merchants #4048

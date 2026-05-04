@@ -10,26 +10,23 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\ApiClient;
 
 use WC_Order;
-use WooCommerce\PayPalCommerce\ApiClient\Authentication\UserIdToken;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\Cache;
+use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PartnersEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\FailureRegistry;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\OrderTransient;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\PartnerAttribution;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExecutableModule;
-use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExtendingModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\FactoryModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ModuleClassNameIdTrait;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ServiceModule;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
-use WooCommerce\PayPalCommerce\ApiClient\Authentication\PayPalBearer;
-use WooCommerce\PayPalCommerce\ApiClient\Authentication\SdkClientToken;
 use Psr\Log\LoggerInterface;
 
 /**
  * Class ApiModule
  */
-class ApiModule implements ServiceModule, FactoryModule, ExtendingModule, ExecutableModule {
+class ApiModule implements ServiceModule, FactoryModule, ExecutableModule {
 	use ModuleClassNameIdTrait;
 
 	/**
@@ -44,13 +41,6 @@ class ApiModule implements ServiceModule, FactoryModule, ExtendingModule, Execut
 	 */
 	public function factories(): array {
 		return require __DIR__ . '/../factories.php';
-	}
-
-	/**
-	 * {@inheritDoc}
-	 */
-	public function extensions(): array {
-		return require __DIR__ . '/../extensions.php';
 	}
 
 	/**
@@ -104,11 +94,17 @@ class ApiModule implements ServiceModule, FactoryModule, ExtendingModule, Execut
 		);
 		add_action(
 			'woocommerce_paypal_payments_clear_apm_product_status',
-			function () use ( $c ) {
+			static function () use ( $c ) {
 				$failure_registry = $c->has( 'api.helper.failure-registry' ) ? $c->get( 'api.helper.failure-registry' ) : null;
 
 				if ( $failure_registry instanceof FailureRegistry ) {
 					$failure_registry->clear_failures( FailureRegistry::SELLER_STATUS_KEY );
+				}
+
+				$partners_endpoint = $c->has( 'api.endpoint.partners' ) ? $c->get( 'api.endpoint.partners' ) : null;
+
+				if ( $partners_endpoint instanceof PartnersEndpoint ) {
+					$partners_endpoint->clear_seller_status_cache();
 				}
 			},
 			10,

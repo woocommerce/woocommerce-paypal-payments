@@ -9,105 +9,164 @@ declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\StoreSync\Validation;
 
-use RuntimeException;
-use WooCommerce\PayPalCommerce\StoreSync\Schema\ResolutionOption;
+use WooCommerce\PayPalCommerce\StoreSync\Enums\ErrorCode;
+use WooCommerce\PayPalCommerce\StoreSync\Enums\ErrorType;
+use WooCommerce\PayPalCommerce\StoreSync\Validation\Resolution\ResolutionOption;
+use WooCommerce\PayPalCommerce\StoreSync\Validation\Context\IssueContext;
 
 /**
  * Implements the ValidationIssue schema.
  *
  * @see https://github.com/paypal/agent-commerce/blob/28b799b0d11b6fb62f423e203de6ea4b9f2ce122/v1/docs/SCHEMA_REFERENCE.md#validationissue
  */
-abstract class ValidationIssue {
-	/**
-	 * Main error category.
-	 *
-	 * Child classes must override this constant.
-	 */
-	protected const ISSUE_CODE = '';
+class ValidationIssue {
 
-	/**
-	 * Classifies the issue.
-	 *
-	 * Child classes must override this constant.
-	 */
-	protected const ISSUE_TYPE = '';
-
-	/**
-	 * Maximum length for the technical message field.
-	 */
 	private const MAX_MESSAGE_LENGTH = 255;
 
-	/**
-	 * Maximum length for the user-facing message field.
-	 */
 	private const MAX_USER_MESSAGE_LENGTH = 500;
 
-	/**
-	 * Maximum number of resolution options allowed.
-	 */
 	private const MAX_RESOLUTION_OPTIONS = 5;
 
 	/**
-	 * Technical error message, mainly for AI.
+	 * @readonly Must only be changed via the constructor!
 	 */
+	private string $issue_code;
+
+	/**
+	 * @readonly Must only be changed via the constructor!
+	 */
+	private string $issue_type;
+
 	private string $message;
 
-	/**
-	 * Customer friendly error message.
-	 */
-	private string $user_message;
+	private string $user_message = '';
+
+	private string $field = '';
+
+	private string $item_id = '';
+
+	private array $context = array();
+
+	private array $resolution_options = array();
+
+	private function __construct( string $message, string $issue_code, string $issue_type ) {
+		$this->message    = trim( substr( $message, 0, self::MAX_MESSAGE_LENGTH ) );
+		$this->issue_code = $issue_code;
+		$this->issue_type = $issue_type;
+	}
 
 	/**
-	 * Reference to the field that triggered the issue, e.g. "shipping_address.postal_code"
+	 * A generic business rule issue, intended for third-party code or cases
+	 * not covered by the more specific factory methods below.
 	 */
-	private string $field;
+	public static function create_business_rule_violation( string $message ): self {
+		return new self( $message, ErrorCode::BUSINESS_RULE_ERROR, ErrorType::BUSINESS_RULE );
+	}
 
 	/**
-	 * Reference to the cart item that triggered the issue.
+	 * When to use:
+	 * - Coupon code is invalid or expired.
+	 * - Coupon not applicable to cart items.
+	 * - Coupon usage limit reached.
 	 */
-	private string $item_id;
+	public static function create_coupon_invalid( string $message ): self {
+		return new self( $message, ErrorCode::PRICING_ERROR, ErrorType::BUSINESS_RULE );
+	}
 
 	/**
-	 * Context information about the validation issue.
+	 * When to use:
+	 * - Cart items have different currencies (mixed currency not supported).
+	 * - Cart currency does not match WooCommerce store currency.
 	 */
-	private array $context;
+	public static function create_currency_mismatch( string $message ): self {
+		return new self( $message, ErrorCode::PRICING_ERROR, ErrorType::BUSINESS_RULE );
+	}
 
 	/**
-	 * Available resolution options for the validation issue.
+	 * When to use:
+	 * - Requested quantity exceeds available stock.
+	 * - Stock reduced between cart creation and checkout.
+	 * - High-demand item with limited availability.
 	 */
-	private array $resolution_options;
+	public static function create_insufficient_quantity( string $message ): self {
+		return new self( $message, ErrorCode::INVENTORY_ISSUE, ErrorType::BUSINESS_RULE );
+	}
 
 	/**
-	 * Defines the validation issue contents.
+	 * When to use:
+	 * - Product is currently unavailable.
+	 * - No stock remaining.
+	 * - Item temporarily out of inventory.
+	 */
+	public static function create_item_out_of_stock( string $message ): self {
+		return new self( $message, ErrorCode::INVENTORY_ISSUE, ErrorType::BUSINESS_RULE );
+	}
+
+	/**
+	 * When to use:
+	 * - Product price does not match the cart value.
+	 * - Promotional pricing ended.
+	 * - Dynamic pricing adjustments occurred.
+	 */
+	public static function create_price_mismatch( string $message ): self {
+		return new self( $message, ErrorCode::PRICING_ERROR, ErrorType::BUSINESS_RULE );
+	}
+
+	/**
+	 * When to use:
+	 * - Shipping not available to a specified location.
+	 * - Regional restrictions apply.
+	 * - No shipping methods available for this address.
+	 */
+	public static function create_shipping_unavailable( string $message ): self {
+		return new self( $message, ErrorCode::SHIPPING_ERROR, ErrorType::BUSINESS_RULE );
+	}
+
+	/**
+	 * A generic invalid-data issue, intended for third-party code or cases
+	 * not covered by the more specific factory methods below.
 	 *
-	 * @param string $message            Technical error description.
-	 * @param string $user_message       Optional. Customer friendly error message.
-	 * @param string $field              Optional. Identifies the field that triggered the issue.
-	 * @param string $item_id            Optional. Identifies the cart item that triggered the issue.
-	 * @param array  $context            Optional. Context information.
-	 * @param array  $resolution_options Optional. Available resolution options.
-	 * @throws RuntimeException If child class does not define ISSUE_CODE or ISSUE_TYPE constants.
+	 * When to use:
+	 * - Provided data is incorrect, e.g., malformed email.
+	 * - Unexpected data format, e.g., non-numeric price.
 	 */
-	public function __construct(
-		string $message,
-		string $user_message = '',
-		string $field = '',
-		string $item_id = '',
-		array $context = array(),
-		array $resolution_options = array()
-	) {
-		if ( static::ISSUE_CODE === '' || static::ISSUE_TYPE === '' ) {
-			throw new RuntimeException(
-				sprintf( '%s must define ISSUE_CODE and ISSUE_TYPE constants.', static::class )
-			);
-		}
+	public static function create_invalid_data( string $message ): self {
+		return new self( $message, ErrorCode::DATA_ERROR, ErrorType::INVALID_DATA );
+	}
 
-		$this->message            = $message ?: 'Validation error occurred';
-		$this->user_message       = $user_message;
-		$this->field              = $field;
-		$this->item_id            = $item_id;
-		$this->context            = $context;
-		$this->resolution_options = array_slice( $resolution_options, 0, self::MAX_RESOLUTION_OPTIONS );
+	/**
+	 * When to use:
+	 * - Shipping address cannot be validated.
+	 * - Address is incomplete or malformed.
+	 * - Postal code format is invalid.
+	 */
+	public static function create_invalid_address( string $message ): self {
+		return new self( $message, ErrorCode::SHIPPING_ERROR, ErrorType::INVALID_DATA );
+	}
+
+	/**
+	 * When to use:
+	 * - Product ID doesn't exist in WooCommerce.
+	 * - Invalid or malformed item_id.
+	 */
+	public static function create_invalid_product( string $message ): self {
+		return new self( $message, ErrorCode::INVENTORY_ISSUE, ErrorType::INVALID_DATA );
+	}
+
+	/**
+	 * When to use:
+	 * - Required information missing, e.g., missing shipping address.
+	 */
+	public static function create_missing_field( string $message ): self {
+		return new self( $message, ErrorCode::DATA_ERROR, ErrorType::MISSING_FIELD );
+	}
+
+	/**
+	 * When to use:
+	 * - Payment was declined by the processor.
+	 */
+	public static function create_payment_error( string $message ): self {
+		return new self( $message, ErrorCode::PAYMENT_ERROR, ErrorType::BUSINESS_RULE );
 	}
 
 	/**
@@ -115,7 +174,7 @@ abstract class ValidationIssue {
 	 * Possible values are defined in the `Enums/ErrorCode` class.
 	 */
 	public function code(): string {
-		return static::ISSUE_CODE;
+		return $this->issue_code;
 	}
 
 	/**
@@ -123,53 +182,97 @@ abstract class ValidationIssue {
 	 * Possible values are defined in the `Enums/ErrorType` class.
 	 */
 	public function type(): string {
-		return static::ISSUE_TYPE;
+		return $this->issue_type;
 	}
 
 	/**
-	 * Adds a context entry to the validation issue.
+	 * Sets the field that triggered the issue.
 	 *
-	 * @param string $key   The context key.
-	 * @param mixed  $value The context value.
+	 * @param string $field Field path, e.g. "shipping_address.postal_code".
 	 * @return static
 	 */
-	public function add_context( string $key, $value ): self {
-		$this->context[ $key ] = $value;
+	public function for_field( string $field ): self {
+		$this->field = $field;
+
 		return $this;
 	}
 
 	/**
-	 * Adds a resolution option to the validation issue.
+	 * Sets the customer-friendly error message.
 	 *
-	 * Resolution options suggest possible actions to resolve the issue.
-	 * Maximum of 5 resolution options are allowed.
-	 *
-	 * @param string $action   The action identifier (e.g., 'REMOVE_ITEM', 'SUGGEST_ALTERNATIVE').
-	 * @param string $label    Human-readable action description.
-	 * @param string $url      Optional. URL for redirect actions. Must be a valid URL on the merchant's site.
-	 * @param array  $metadata Optional. Additional metadata (e.g., priority, cost_impact).
+	 * @param string $user_message Customer-facing message.
 	 * @return static
 	 */
-	public function add_resolution( string $action, string $label, string $url = '', array $metadata = array() ): self {
-		if ( count( $this->resolution_options ) < self::MAX_RESOLUTION_OPTIONS ) {
-			$resolution = array(
-				'action' => $action,
-				'label'  => $label,
-			);
+	public function user_message( string $user_message ): self {
+		$this->user_message = trim( substr( $user_message, 0, self::MAX_USER_MESSAGE_LENGTH ) );
 
-			if ( $url ) {
-				$validated_url = \wp_validate_redirect( $url, '' );
-				if ( $validated_url ) {
-					$resolution['url'] = $validated_url;
-				}
-			}
+		return $this;
+	}
 
-			if ( ! empty( $metadata ) ) {
-				$resolution['metadata'] = $metadata;
-			}
+	/**
+	 * Sets the cart item ID that triggered the issue.
+	 *
+	 * @param string $item_id Cart item identifier.
+	 * @return static
+	 */
+	public function item_id( string $item_id ): self {
+		$this->item_id = $item_id;
 
-			$this->resolution_options[] = $resolution;
+		return $this;
+	}
+
+	/**
+	 * Adds one or more context instances to the validation issue.
+	 *
+	 * Accepts either a single IssueContext or an array of IssueContext objects.
+	 * Non-IssueContext values are silently ignored.
+	 *
+	 * @param IssueContext|array $context A context instance or array of instances.
+	 * @return static
+	 */
+	public function add_context( $context ): self {
+		if ( $context instanceof IssueContext ) {
+			$this->context[] = $context;
+
+			return $this;
 		}
+
+		if ( is_array( $context ) ) {
+			foreach ( $context as $item ) {
+				$this->add_context( $item );
+			}
+		}
+
+		return $this;
+	}
+
+	/**
+	 * Adds one or more resolution options to the validation issue.
+	 *
+	 * Accepts either a single ResolutionOption or an array of ResolutionOption objects.
+	 * Non-ResolutionOption values are silently ignored.
+	 * A maximum of 5 resolution options is allowed in total.
+	 *
+	 * @param ResolutionOption|array $resolution A resolution option or array of options.
+	 * @return static
+	 */
+	public function add_resolution( $resolution ): self {
+		if ( count( $this->resolution_options ) >= self::MAX_RESOLUTION_OPTIONS ) {
+			return $this;
+		}
+
+		if ( $resolution instanceof ResolutionOption ) {
+			$this->resolution_options[] = $resolution;
+
+			return $this;
+		}
+
+		if ( is_array( $resolution ) ) {
+			foreach ( $resolution as $item ) {
+				$this->add_resolution( $item );
+			}
+		}
+
 		return $this;
 	}
 
@@ -177,11 +280,11 @@ abstract class ValidationIssue {
 		$data = array(
 			'code'    => $this->code(),
 			'type'    => $this->type(),
-			'message' => substr( $this->message, 0, self::MAX_MESSAGE_LENGTH ),
+			'message' => $this->message,
 		);
 
 		if ( $this->user_message ) {
-			$data['user_message'] = substr( $this->user_message, 0, self::MAX_USER_MESSAGE_LENGTH );
+			$data['user_message'] = $this->user_message;
 		}
 		if ( $this->field ) {
 			$data['field'] = $this->field;
@@ -190,11 +293,14 @@ abstract class ValidationIssue {
 			$data['item_id'] = $this->item_id;
 		}
 		if ( ! empty( $this->context ) ) {
-			$data['context'] = $this->context;
+			$data['context'] = array_map(
+				static fn( IssueContext $context ) => $context->to_array(),
+				$this->context
+			);
 		}
 		if ( ! empty( $this->resolution_options ) ) {
 			$data['resolution_options'] = array_map(
-				static fn( ResolutionOption $option ) => $option->to_array(),
+				static fn( $option ) => $option instanceof ResolutionOption ? $option->to_array() : $option,
 				$this->resolution_options
 			);
 		}

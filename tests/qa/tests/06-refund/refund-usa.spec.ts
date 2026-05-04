@@ -12,9 +12,11 @@ import { testRefund } from './_test-scenarios';
 import {
 	refundPayPalFromCheckout,
 	refundPayPalFromPayByLink,
-} from './_test-data/paypal/refund-paypal.data';
+	refundAcdcFromCheckout,
+	refundAcdcFromPayByLink,
+} from './_test-data';
 
-const { payPal } = gateways;
+const { payPal, acdc } = gateways;
 
 test.beforeAll( async ( { utils, pcpApi, wooCommerceApi } ) => {
 	await utils.configureStore( {
@@ -29,14 +31,22 @@ test.beforeAll( async ( { utils, pcpApi, wooCommerceApi } ) => {
 	);
 	await pcpApi.updatePcpPaymentMethods( {
 		[ payPal.id ]: { id: payPal.id, enabled: true },
+		[ acdc.id ]: { id: acdc.id, enabled: true },
 	} );
-	await wooCommerceApi.deleteAllOrders();
 } );
 
 for ( const testOrder of refundPayPalFromCheckout ) {
 	testRefund( testOrder );
 }
 
+for ( const testOrder of refundAcdcFromCheckout ) {
+	testRefund( testOrder );
+}
+
 for ( const testOrder of refundPayPalFromPayByLink ) {
+	testRefund( testOrder );
+}
+
+for ( const testOrder of refundAcdcFromPayByLink ) {
 	testRefund( testOrder );
 }

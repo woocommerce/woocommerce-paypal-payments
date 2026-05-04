@@ -11,74 +11,50 @@ namespace WooCommerce\PayPalCommerce\Applepay\Assets;
 
 use Automattic\WooCommerce\Blocks\Payments\Integrations\AbstractPaymentMethodType;
 use Automattic\WooCommerce\Blocks\Payments\PaymentMethodTypeInterface;
+use WooCommerce\PayPalCommerce\Applepay\ApplePayGateway;
 use WooCommerce\PayPalCommerce\Assets\AssetGetter;
 use WooCommerce\PayPalCommerce\Button\Assets\ButtonInterface;
+use WooCommerce\PayPalCommerce\Button\Helper\Context;
+use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
 
-/**
- * Class BlocksPaymentMethod
- */
 class BlocksPaymentMethod extends AbstractPaymentMethodType {
 	private AssetGetter $asset_getter;
+	private string $version;
+	private ButtonInterface $button;
+	private PaymentMethodTypeInterface $paypal_payment_method;
+	private Context $context;
+	private SettingsProvider $settings_provider;
 
-	/**
-	 * The assets version.
-	 *
-	 * @var string
-	 */
-	private $version;
-
-	/**
-	 * The button.
-	 *
-	 * @var ButtonInterface
-	 */
-	private $button;
-
-	/**
-	 * The paypal payment method.
-	 *
-	 * @var PaymentMethodTypeInterface
-	 */
-	private $paypal_payment_method;
-
-	/**
-	 * Assets constructor.
-	 *
-	 * @param string                     $name The name of this module.
-	 * @param AssetGetter                $asset_getter
-	 * @param string                     $version The assets version.
-	 * @param ButtonInterface            $button The button.
-	 * @param PaymentMethodTypeInterface $paypal_payment_method The paypal payment method.
-	 */
 	public function __construct(
 		string $name,
 		AssetGetter $asset_getter,
 		string $version,
 		ButtonInterface $button,
-		PaymentMethodTypeInterface $paypal_payment_method
+		PaymentMethodTypeInterface $paypal_payment_method,
+		Context $context,
+		SettingsProvider $settings_provider
 	) {
 		$this->name                  = $name;
 		$this->asset_getter          = $asset_getter;
 		$this->version               = $version;
 		$this->button                = $button;
 		$this->paypal_payment_method = $paypal_payment_method;
+		$this->context               = $context;
+		$this->settings_provider     = $settings_provider;
 	}
 
-	/**
-	 * {@inheritDoc}
-	 */
 	public function initialize() {  }
 
-	/**
-	 * {@inheritDoc}
-	 */
-	public function is_active() {
+	public function is_active(): bool {
+		$methods = $this->settings_provider->button_styling( $this->context->context() )->methods;
+
+		if ( ! in_array( ApplePayGateway::ID, $methods, true ) ) {
+			return false;
+		}
+
 		return $this->paypal_payment_method->is_active();
 	}
 
-	/**
-	 * {@inheritDoc}
-	 */
 	public function get_payment_method_script_handles() {
 		$handle = $this->name . '-block';
 
@@ -93,9 +69,6 @@ class BlocksPaymentMethod extends AbstractPaymentMethodType {
 		return array( $handle );
 	}
 
-	/**
-	 * {@inheritDoc}
-	 */
 	public function get_payment_method_data() {
 		$paypal_data = $this->paypal_payment_method->get_payment_method_data();
 
@@ -109,7 +82,7 @@ class BlocksPaymentMethod extends AbstractPaymentMethodType {
 			'id'          => $this->name,
 			'title'       => $paypal_data['title'], // TODO : see if we should use another.
 			'description' => $paypal_data['description'], // TODO : see if we should use another.
-			'enabled'     => $paypal_data['smartButtonsEnabled'], // This button is enabled when PayPal buttons are.
+			'enabled'     => $this->is_active(),
 			'scriptData'  => $script_data,
 		);
 	}

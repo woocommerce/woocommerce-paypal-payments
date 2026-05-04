@@ -117,6 +117,7 @@ export const STYLING_PAYMENT_METHODS = {
 	},
 	'pay-later': {
 		value: 'pay-later',
+		fundingKey: 'paylater',
 		label: __( 'Pay Later', 'woocommerce-paypal-payments' ),
 		isFunding: true,
 	},

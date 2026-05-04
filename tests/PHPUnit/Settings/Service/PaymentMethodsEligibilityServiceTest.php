@@ -34,14 +34,14 @@ class PaymentMethodsEligibilityServiceTest extends TestCase {
 
 		$this->assertTrue( $eligibility_checks[ OXXO::ID ]() );
 		$this->assertFalse( $eligibility_checks[ PWCGateway::ID ]() );
-		$this->assertFalse( $eligibility_checks[ BancontactGateway::ID ]() );
-		$this->assertFalse( $eligibility_checks[ BlikGateway::ID ]() );
-		$this->assertFalse( $eligibility_checks[ EPSGateway::ID ]() );
-		$this->assertFalse( $eligibility_checks[ IDealGateway::ID ]() );
-		$this->assertFalse( $eligibility_checks[ MyBankGateway::ID ]() );
-		$this->assertFalse( $eligibility_checks[ P24Gateway::ID ]() );
-		$this->assertFalse( $eligibility_checks[ TrustlyGateway::ID ]() );
-		$this->assertFalse( $eligibility_checks[ MultibancoGateway::ID ]() );
+		$this->assertTrue( $eligibility_checks[ BancontactGateway::ID ]() );
+		$this->assertTrue( $eligibility_checks[ BlikGateway::ID ]() );
+		$this->assertTrue( $eligibility_checks[ EPSGateway::ID ]() );
+		$this->assertTrue( $eligibility_checks[ IDealGateway::ID ]() );
+		$this->assertTrue( $eligibility_checks[ MyBankGateway::ID ]() );
+		$this->assertTrue( $eligibility_checks[ P24Gateway::ID ]() );
+		$this->assertTrue( $eligibility_checks[ TrustlyGateway::ID ]() );
+		$this->assertTrue( $eligibility_checks[ MultibancoGateway::ID ]() );
 	}
 
 	public function test_apm_no_mexico(): void {

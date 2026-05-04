@@ -5,9 +5,8 @@ namespace PHPUnit\ApiClient\Factory;
 
 use WooCommerce\PayPalCommerce\ApiClient\Entity\ExperienceContext;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\ExperienceContextBuilder;
+use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
 use WooCommerce\PayPalCommerce\TestCase;
-use WooCommerce\PayPalCommerce\WcGateway\Endpoint\ReturnUrlEndpoint;
-use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 use WooCommerce\PayPalCommerce\WcGateway\Shipping\ShippingCallbackUrlFactory;
 use function Brain\Monkey\Functions\expect;
 use Mockery;
@@ -24,7 +23,7 @@ class ExperienceContextBuilderTest extends TestCase
 	{
 		parent::setUp();
 
-		$this->settings = Mockery::mock(Settings::class);
+		$this->settings = Mockery::mock(SettingsProvider::class);
 		$this->shipping_callback_url_factory = Mockery::mock(ShippingCallbackUrlFactory::class);
 
 		$this->sut = new ExperienceContextBuilder($this->settings, $this->shipping_callback_url_factory);
@@ -67,18 +66,12 @@ class ExperienceContextBuilderTest extends TestCase
 	/**
 	 * @dataProvider brandNameDataProvider
 	 */
-	public function testCurrentBrandName($has, $value, $expected)
+	public function testCurrentBrandName($value, $expected)
 	{
+
 		$this->settings
-			->expects('has')
-			->with('brand_name')
-			->andReturn($has);
-		if ($has) {
-			$this->settings
-				->expects('get')
-				->with('brand_name')
-				->andReturn($value);
-		}
+			->expects('brand_name')
+			->andReturn($value);
 
 		$result = $this->sut
 			->with_current_brand_name()
@@ -97,17 +90,10 @@ class ExperienceContextBuilderTest extends TestCase
 	public function brandNameDataProvider()
 	{
 		yield [
-			false,
 			'',
 			null,
 		];
 		yield [
-			true,
-			'',
-			null,
-		];
-		yield [
-			true,
 			'company',
 			'company',
 		];
@@ -116,18 +102,11 @@ class ExperienceContextBuilderTest extends TestCase
 	/**
 	 * @dataProvider landingPageDataProvider
 	 */
-	public function testCurrentLandingPage($has, $value, $expected)
+	public function testCurrentLandingPage($value, $expected)
 	{
 		$this->settings
-			->expects('has')
-			->with('landing_page')
-			->andReturn($has);
-		if ($has) {
-			$this->settings
-				->expects('get')
-				->with('landing_page')
-				->andReturn($value);
-		}
+			->expects('landing_page_enum')
+			->andReturn($value);
 
 		$result = $this->sut
 			->with_current_landing_page()
@@ -141,17 +120,10 @@ class ExperienceContextBuilderTest extends TestCase
 	public function landingPageDataProvider()
 	{
 		yield [
-			false,
 			'',
 			ExperienceContext::LANDING_PAGE_NO_PREFERENCE,
 		];
 		yield [
-			true,
-			'',
-			ExperienceContext::LANDING_PAGE_NO_PREFERENCE,
-		];
-		yield [
-			true,
 			ExperienceContext::LANDING_PAGE_LOGIN,
 			ExperienceContext::LANDING_PAGE_LOGIN,
 		];
@@ -160,18 +132,11 @@ class ExperienceContextBuilderTest extends TestCase
 	/**
 	 * @dataProvider paymentMethodPreferenceDataProvider
 	 */
-	public function testCurrentPaymentMethodPreference($has, $value, $expected)
+	public function testCurrentPaymentMethodPreference( $value, $expected)
 	{
 		$this->settings
-			->expects('has')
-			->with('payee_preferred')
-			->andReturn($has);
-		if ($has) {
-			$this->settings
-				->expects('get')
-				->with('payee_preferred')
-				->andReturn($value);
-		}
+			->expects('instant_payments_only')
+			->andReturn($value);
 
 		$result = $this->sut
 			->with_current_payment_method_preference()
@@ -185,17 +150,10 @@ class ExperienceContextBuilderTest extends TestCase
 	public function paymentMethodPreferenceDataProvider()
 	{
 		yield [
-			false,
 			'',
 			ExperienceContext::PAYMENT_METHOD_UNRESTRICTED,
 		];
 		yield [
-			true,
-			'',
-			ExperienceContext::PAYMENT_METHOD_UNRESTRICTED,
-		];
-		yield [
-			true,
 			'yes',
 			ExperienceContext::PAYMENT_METHOD_IMMEDIATE_PAYMENT_REQUIRED,
 		];

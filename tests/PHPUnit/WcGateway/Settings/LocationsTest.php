@@ -2,23 +2,30 @@
 
 namespace WooCommerce\PayPalCommerce\WcGateway\Settings;
 
-use WooCommerce\PayPalCommerce\Helper\SettingsStub;
+use Mockery;
 use WooCommerce\PayPalCommerce\ModularTestCase;
+use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
 
 class LocationsTest extends ModularTestCase
 {
 	private $appContainer;
 
-	private $settings;
+	private $settingsProvider;
+
+	private $selectedLocations = [];
 
 	public function setUp(): void {
 		parent::setUp();
 
-		$this->settings = new SettingsStub([]);
+		$this->settingsProvider = Mockery::mock(SettingsProvider::class)->shouldIgnoreMissing('');
+		$this->settingsProvider->shouldReceive('smart_button_locations')
+			->andReturnUsing(function () {
+				return $this->selectedLocations;
+			});
 
 		$this->appContainer = $this->bootstrapModule([
-			'wcgateway.settings' => function () {
-				return $this->settings;
+			'settings.settings-provider' => function () {
+				return $this->settingsProvider;
 			},
 		]);
 	}
@@ -27,7 +34,7 @@ class LocationsTest extends ModularTestCase
 	 * @dataProvider payLaterButtonLocationsData
 	 */
 	public function testPayLaterButtonLocations(array $selectedLocations, array $expectedResult) {
-		$this->settings->set('smart_button_locations', $selectedLocations);
+		$this->selectedLocations = $selectedLocations;
 
 		$result = $this->appContainer->get('wcgateway.settings.pay-later.button-locations');
 

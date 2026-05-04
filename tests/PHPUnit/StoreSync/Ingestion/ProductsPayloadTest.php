@@ -39,7 +39,8 @@ class ProductsPayloadTest extends TestCase {
 		when( 'wp_get_attachment_image_url' )->justReturn( 'https://example.com/image.jpg' );
 		when( 'get_woocommerce_currency' )->justReturn( 'USD' );
 		when( 'wc_get_product_category_list' )->justReturn( 'Electronics, Gadgets' );
-		when( 'wp_strip_all_tags' )->justReturn( 'Electronics, Gadgets' );
+		when( 'wp_strip_all_tags' )->returnArg( 1 );
+
 
 		$payload = new ProductsPayload( 'https://example.com', array( $product_id ) );
 		$result  = $payload->get_array();
@@ -142,7 +143,8 @@ class ProductsPayloadTest extends TestCase {
 
 		when( 'get_woocommerce_currency' )->justReturn( 'USD' );
 		when( 'wc_get_product_category_list' )->justReturn( 'Clothing' );
-		when( 'wp_strip_all_tags' )->justReturn( 'Clothing' );
+		when( 'wp_strip_all_tags' )->returnArg( 1 );
+
 
 		$payload = new ProductsPayload( 'https://example.com', array( $parent_id ) );
 		$result  = $payload->get_array();

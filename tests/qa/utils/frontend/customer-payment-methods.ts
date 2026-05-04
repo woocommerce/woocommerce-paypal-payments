@@ -71,7 +71,7 @@ export class CustomerPaymentMethods extends CustomerPaymentMethodsBase {
 		const { gateway, card, payPalAccount } = payment;
 
 		const addPaymentMethodButton = this.addPaymentMethodButton();
-		await expect( addPaymentMethodButton ).toBeVisible();
+		await expect( addPaymentMethodButton, 'Assert add payment method button is visible' ).toBeVisible();
 		await addPaymentMethodButton.click();
 		await this.page.waitForLoadState();
 
@@ -113,7 +113,8 @@ export class CustomerPaymentMethods extends CustomerPaymentMethodsBase {
 			payment
 		);
 		await expect(
-			this.savedPaymentMethodRow( paymentMethodText )
+			this.savedPaymentMethodRow( paymentMethodText ),
+			`Assert payment method with text ${ paymentMethodText } is visible`
 		).toBeVisible();
 	};
 
@@ -127,7 +128,8 @@ export class CustomerPaymentMethods extends CustomerPaymentMethodsBase {
 			payment
 		);
 		await expect(
-			this.savedPaymentMethodRow( paymentMethodText )
+			this.savedPaymentMethodRow( paymentMethodText ),
+			`Assert payment method with text ${ paymentMethodText } is not visible`
 		).not.toBeVisible();
 	};
 }

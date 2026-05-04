@@ -17,7 +17,7 @@ use WooCommerce\PayPalCommerce\Assets\AssetGetterFactory;
 use WooCommerce\PayPalCommerce\Axo\Gateway\AxoGateway;
 use WooCommerce\PayPalCommerce\Button\Helper\MessagesApply;
 use WooCommerce\PayPalCommerce\Googlepay\GooglePayGateway;
-use WooCommerce\PayPalCommerce\Googlepay\Helper\ApmProductStatus;
+use WooCommerce\PayPalCommerce\Googlepay\Helper\GoogleProductStatus;
 use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\BancontactGateway;
 use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\BlikGateway;
 use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\EPSGateway;
@@ -27,7 +27,6 @@ use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\MyBankGateway;
 use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\P24Gateway;
 use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\PWCGateway;
 use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\TrustlyGateway;
-use WooCommerce\PayPalCommerce\Settings\Ajax\SwitchSettingsUiEndpoint;
 use WooCommerce\PayPalCommerce\Settings\Data\Definition\FeaturesDefinition;
 use WooCommerce\PayPalCommerce\Settings\Data\Definition\PaymentMethodsDependenciesDefinition;
 use WooCommerce\PayPalCommerce\Settings\Data\GeneralSettings;
@@ -36,12 +35,15 @@ use WooCommerce\PayPalCommerce\Settings\Data\PaymentSettings;
 use WooCommerce\PayPalCommerce\Settings\Data\SettingsModel;
 use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
 use WooCommerce\PayPalCommerce\Settings\Data\StylingSettings;
+use WooCommerce\PayPalCommerce\Settings\Data\FastlaneSettings;
+use WooCommerce\PayPalCommerce\Settings\Data\PayLaterMessagingSettings;
 use WooCommerce\PayPalCommerce\Settings\Data\TodosModel;
 use WooCommerce\PayPalCommerce\Settings\Data\Definition\TodosDefinition;
 use WooCommerce\PayPalCommerce\Settings\Endpoint\AuthenticationRestEndpoint;
 use WooCommerce\PayPalCommerce\Settings\Endpoint\CommonRestEndpoint;
 use WooCommerce\PayPalCommerce\Settings\Endpoint\FeaturesRestEndpoint;
 use WooCommerce\PayPalCommerce\Settings\Endpoint\LoginLinkRestEndpoint;
+use WooCommerce\PayPalCommerce\Settings\Endpoint\MigrateToAcdcRestEndpoint;
 use WooCommerce\PayPalCommerce\Settings\Endpoint\OnboardingRestEndpoint;
 use WooCommerce\PayPalCommerce\Settings\Endpoint\PayLaterMessagingEndpoint;
 use WooCommerce\PayPalCommerce\Settings\Endpoint\PaymentRestEndpoint;
@@ -63,7 +65,9 @@ use WooCommerce\PayPalCommerce\Settings\Service\Migration\MigrationManager;
 use WooCommerce\PayPalCommerce\Settings\Service\Migration\PaymentSettingsMigration;
 use WooCommerce\PayPalCommerce\Settings\Service\Migration\SettingsTabMigration;
 use WooCommerce\PayPalCommerce\Settings\Service\Migration\StylingSettingsMigration;
+use WooCommerce\PayPalCommerce\Settings\Service\Migration\FastlaneSettingsMigration;
 use WooCommerce\PayPalCommerce\Settings\Service\OnboardingUrlManager;
+use WooCommerce\PayPalCommerce\Settings\Service\SellerTypeResolver;
 use WooCommerce\PayPalCommerce\Settings\Service\PaymentMethodsEligibilityService;
 use WooCommerce\PayPalCommerce\Settings\Service\ScriptDataHandler;
 use WooCommerce\PayPalCommerce\Settings\Service\TodosEligibilityService;
@@ -78,14 +82,13 @@ use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\OXXO\OXXO;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayUponInvoice\PayUponInvoiceGateway;
-use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 use WooCommerce\PayPalCommerce\PayLaterConfigurator\Endpoint\SaveConfig;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\ConnectionState;
 use WooCommerce\PayPalCommerce\Settings\Service\InternalRestService;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\MerchantDetails;
 
-$services = array(
+return array(
 	'settings.asset_getter'                               => static function ( ContainerInterface $container ): AssetGetter {
 		$factory = $container->get( 'assets.asset_getter_factory' );
 		assert( $factory instanceof AssetGetterFactory );
@@ -99,25 +102,32 @@ $services = array(
 			$container->get( 'settings.data.payment' ),
 			$container->get( 'settings.data.settings' ),
 			$container->get( 'settings.data.styling' ),
+			$container->get( 'settings.data.fastlane' ),
+			$container->get( 'settings.data.paylater-messaging-settings' )
 		);
 	},
 	'settings.data.onboarding'                            => static function ( ContainerInterface $container ): OnboardingProfile {
 		$can_use_casual_selling      = $container->get( 'settings.casual-selling.eligible' );
 		$can_use_vaulting            = $container->has( 'save-payment-methods.eligible' ) && $container->get( 'save-payment-methods.eligible' );
-		$can_use_card_payments       = $container->has( 'card-fields.eligible' ) && $container->get( 'card-fields.eligible' );
+		$can_use_card_payments       = $container->has( 'card-fields.eligibility.check' ) && $container->get( 'card-fields.eligibility.check' )();
+		$can_use_digital_wallets     = (
+			( $container->has( 'applepay.eligibility.check' ) && $container->get( 'applepay.eligibility.check' )() ) ||
+			( $container->has( 'googlepay.eligibility.check' ) && $container->get( 'googlepay.eligibility.check' )() )
+		);
 		$can_use_subscriptions       = $container->has( 'wc-subscriptions.helper' ) && $container->get( 'wc-subscriptions.helper' )
 																								->plugin_is_active();
 		$should_skip_payment_methods = class_exists( '\WC_Payments' );
-		$can_use_fastlane            = $container->get( 'axo.eligible' );
+		$can_use_fastlane            = $container->get( 'axo.eligibility.check' );
 		$can_use_pay_later           = $container->get( 'button.helper.messages-apply' );
 
 		return new OnboardingProfile(
+			$can_use_fastlane,
 			$can_use_casual_selling,
 			$can_use_vaulting,
 			$can_use_card_payments,
+			$can_use_digital_wallets,
 			$can_use_subscriptions,
 			$should_skip_payment_methods,
-			$can_use_fastlane,
 			$can_use_pay_later->for_country()
 		);
 	},
@@ -136,6 +146,14 @@ $services = array(
 	'settings.data.payment'                               => static function ( ContainerInterface $container ): PaymentSettings {
 		return new PaymentSettings();
 	},
+	'settings.data.fastlane'                              => static function (): FastlaneSettings {
+		return new FastlaneSettings();
+	},
+	'settings.data.paylater-messaging-settings'           => static function ( ContainerInterface $container ): PayLaterMessagingSettings {
+		return new PayLaterMessagingSettings(
+			$container->get( 'settings.service.sanitizer' )
+		);
+	},
 	'settings.data.settings'                              => static function ( ContainerInterface $container ): SettingsModel {
 		$environment = $container->get( 'settings.environment' );
 		assert( $environment instanceof Environment );
@@ -146,23 +164,30 @@ $services = array(
 		);
 	},
 	'settings.data.paylater-messaging'                    => static function ( ContainerInterface $container ): array {
-		// TODO: Create an AbstractDataModel wrapper for this configuration!
-
-		$config_factors = $container->get( 'paylater-configurator.factory.config' );
-		assert( $config_factors instanceof ConfigFactory );
+		$config_factory = $container->get( 'paylater-configurator.factory.config' );
+		assert( $config_factory instanceof ConfigFactory );
 
 		$save_config = $container->get( 'paylater-configurator.endpoint.save-config' );
 		assert( $save_config instanceof SaveConfig );
 
-		$settings = $container->get( 'wcgateway.settings' );
-		assert( $settings instanceof Settings );
+		$paylater_settings = $container->get( 'settings.data.paylater-messaging-settings' );
+		assert( $paylater_settings instanceof PayLaterMessagingSettings );
 
-		$pay_later_config = $config_factors->from_settings( $settings );
+		$pay_later_config = $config_factory->from_settings( $paylater_settings );
 
 		return array(
 			'read' => $pay_later_config,
 			'save' => $save_config,
 		);
+	},
+	'settings.connection-state'                           => static function ( ContainerInterface $container ): ConnectionState {
+		$data = $container->get( 'settings.data.general' );
+		assert( $data instanceof GeneralSettings );
+
+		$is_connected = $data->is_merchant_connected();
+		$environment  = new Environment( $data->is_sandbox_merchant() );
+
+		return new ConnectionState( $is_connected, $environment );
 	},
 	/**
 	 * Returns details about the connected environment (production/sandbox).
@@ -223,7 +248,6 @@ $services = array(
 	},
 	'settings.rest.refresh_feature_status'                => static function ( ContainerInterface $container ): RefreshFeatureStatusEndpoint {
 		return new RefreshFeatureStatusEndpoint(
-			$container->get( 'wcgateway.settings' ),
 			new Cache( 'ppcp-timeout' ),
 			$container->get( 'woocommerce.logger.woocommerce' )
 		);
@@ -249,13 +273,18 @@ $services = array(
 	},
 	'settings.rest.pay_later_messaging'                   => static function ( ContainerInterface $container ): PayLaterMessagingEndpoint {
 		return new PayLaterMessagingEndpoint(
-			$container->get( 'wcgateway.settings' ),
+			$container->get( 'settings.data.paylater-messaging-settings' ),
 			$container->get( 'paylater-configurator.endpoint.save-config' )
 		);
 	},
 	'settings.rest.settings'                              => static function ( ContainerInterface $container ): SettingsRestEndpoint {
 		return new SettingsRestEndpoint(
 			$container->get( 'settings.data.settings' )
+		);
+	},
+	'settings.rest.migrate_to_acdc'                       => static function ( ContainerInterface $container ): MigrateToAcdcRestEndpoint {
+		return new MigrateToAcdcRestEndpoint(
+			$container->get( 'settings.data.payment' )
 		);
 	},
 	'settings.casual-selling.supported-countries'         => static function ( ContainerInterface $container ): array {
@@ -315,10 +344,8 @@ $services = array(
 		return in_array( $country, $eligible_countries, true );
 	},
 	'settings.handler.connection-listener'                => static function ( ContainerInterface $container ): ConnectionListener {
-		$page_id = $container->has( 'wcgateway.current-ppcp-settings-page-id' ) ? $container->get( 'wcgateway.current-ppcp-settings-page-id' ) : '';
-
 		return new ConnectionListener(
-			$page_id,
+			$container->get( 'wcgateway.is-plugin-settings-page' ),
 			$container->get( 'settings.service.onboarding-url-manager' ),
 			$container->get( 'settings.service.authentication_manager' ),
 			$container->get( 'http.redirector' ),
@@ -374,27 +401,33 @@ $services = array(
 		);
 	},
 	'settings.service.script-data-handler'                => static function ( ContainerInterface $container ): ScriptDataHandler {
-		$settings                     = $container->get( 'wcgateway.settings' );
-		$asset_getter                 = $container->get( 'settings.asset_getter' );
-		$paylater_is_available        = $container->get( 'paylater-configurator.is-available' );
-		$store_country                = $container->get( 'wcgateway.store-country' );
-		$merchant_id                  = $container->get( 'api.partner_merchant_id' );
-		$button_language_choices      = $container->get( 'wcgateway.wp-paypal-locales-map' );
-		$partner_attribution          = $container->get( 'api.helper.partner-attribution' );
-		$payment_level_eligibility    = $container->get( 'api.helpers.paymentLevelEligibility' );
+		$check_override = $container->get( 'settings.migration.bcdc-override-check' );
+		assert( is_callable( $check_override ) );
 
-		return new ScriptDataHandler( $settings, $asset_getter, $paylater_is_available, $store_country, $merchant_id, $button_language_choices, $partner_attribution, $payment_level_eligibility );
+		return new ScriptDataHandler(
+			$container->get( 'settings.asset_getter' ),
+			$container->get( 'paylater-configurator.is-available' ),
+			$container->get( 'wcgateway.store-country' ),
+			$container->get( 'api.partner_merchant_id' ),
+			$container->get( 'wcgateway.wp-paypal-locales-map' ),
+			$container->get( 'api.helper.partner-attribution' ),
+			$container->get( 'settings.settings-provider' ),
+			$container->get( 'api.helpers.paymentLevelEligibility' ),
+			$check_override()
+		);
 	},
 	'settings.service.data-migration'                     => static fn( ContainerInterface $c ): MigrationManager => new MigrationManager(
 		$c->get( 'settings.service.data-migration.general-settings' ),
 		$c->get( 'settings.service.data-migration.settings-tab' ),
 		$c->get( 'settings.service.data-migration.styling' ),
 		$c->get( 'settings.service.data-migration.payment-settings' ),
+		$c->get( 'settings.service.data-migration.fastlane' ),
+		$c->get( 'settings.data.onboarding' ),
+		$c->get( 'woocommerce.logger.woocommerce' )
 	),
 	'settings.service.data-migration.settings-tab'        => static fn( ContainerInterface $c ): SettingsTabMigration => new SettingsTabMigration(
 		(array) get_option( 'woocommerce-ppcp-settings', array() ),
 		$c->get( 'settings.data.settings' ),
-		$c->get( 'compat.settings.settings_tab_map_helper' ),
 	),
 	'settings.service.data-migration.styling'             => static fn( ContainerInterface $c ): StylingSettingsMigration => new StylingSettingsMigration(
 		(array) get_option( 'woocommerce-ppcp-settings', array() ),
@@ -408,17 +441,17 @@ $services = array(
 		$c->get( 'wcgateway.configuration.card-configuration' ),
 		$c->get( 'ppcp-local-apms.payment-methods' ),
 	),
+	'settings.service.seller-type-resolver'               => static fn(): SellerTypeResolver => new SellerTypeResolver(),
 	'settings.service.data-migration.general-settings'    => static fn( ContainerInterface $c ): SettingsMigration => new SettingsMigration(
 		(array) get_option( 'woocommerce-ppcp-settings', array() ),
 		$c->get( 'settings.data.general' ),
 		$c->get( 'api.endpoint.partners' ),
-	),
-	'settings.ajax.switch_ui'                             => static fn( ContainerInterface $c ): SwitchSettingsUiEndpoint => new SwitchSettingsUiEndpoint(
 		$c->get( 'woocommerce.logger.woocommerce' ),
-		$c->get( 'button.request-data' ),
-		$c->get( 'settings.data.onboarding' ),
-		$c->get( 'settings.service.data-migration' ),
-		$c->get( 'api.merchant_id' ) !== ''
+		$c->get( 'settings.service.seller-type-resolver' ),
+	),
+	'settings.service.data-migration.fastlane'            => static fn( ContainerInterface $c ): FastlaneSettingsMigration => new FastlaneSettingsMigration(
+		(array) get_option( 'woocommerce-ppcp-settings', array() ),
+		$c->get( 'settings.data.fastlane' ),
 	),
 	'settings.rest.todos'                                 => static function ( ContainerInterface $container ): TodosRestEndpoint {
 		return new TodosRestEndpoint(
@@ -439,24 +472,14 @@ $services = array(
 		);
 	},
 	'settings.data.definition.methods'                    => static function ( ContainerInterface $container ): PaymentMethodsDefinition {
-		$axo_checkout_config_notice      = $container->get( 'axo.checkout-config-notice.raw' );
-		$axo_incompatible_plugins_notice = $container->get( 'axo.incompatible-plugins-notice.raw' );
-
-		// Combine the notices - only include non-empty ones.
-		$axo_notices = array_filter(
-			array(
-				$axo_checkout_config_notice,
-				$axo_incompatible_plugins_notice,
-			)
-		);
-
 		return new PaymentMethodsDefinition(
 			$container->get( 'settings.data.payment' ),
 			$container->get( 'settings.data.general' ),
-			$axo_notices
+			$container->get( 'axo.checkout-config-notice.raw' ),
+			$container->get( 'axo.incompatible-plugins-notice.raw' )
 		);
 	},
-	'settings.data.definition.method_dependencies'        => static function (): PaymentMethodsDependenciesDefinition {
+	'settings.data.definition.method_dependencies'        => static function ( ContainerInterface $container ): PaymentMethodsDependenciesDefinition {
 		return new PaymentMethodsDependenciesDefinition();
 	},
 	'settings.service.pay_later_status'                   => static function ( ContainerInterface $container ): array {
@@ -520,14 +543,15 @@ $services = array(
 		assert( $general_settings instanceof GeneralSettings );
 
 		return array(
-			FeaturesDefinition::FEATURE_APPLE_PAY       => ( $features[ FeaturesDefinition::FEATURE_APPLE_PAY ]['enabled'] ?? false ) && ! $general_settings->own_brand_only(),
-			FeaturesDefinition::FEATURE_GOOGLE_PAY      => ( $features[ FeaturesDefinition::FEATURE_GOOGLE_PAY ]['enabled'] ?? false ) && ! $general_settings->own_brand_only(),
+			FeaturesDefinition::FEATURE_APPLE_PAY        => ( $features[ FeaturesDefinition::FEATURE_APPLE_PAY ]['enabled'] ?? false ) && ! $general_settings->own_brand_only(),
+			FeaturesDefinition::FEATURE_GOOGLE_PAY       => ( $features[ FeaturesDefinition::FEATURE_GOOGLE_PAY ]['enabled'] ?? false ) && ! $general_settings->own_brand_only(),
 			FeaturesDefinition::FEATURE_ADVANCED_CREDIT_AND_DEBIT_CARDS => ( $features[ FeaturesDefinition::FEATURE_ADVANCED_CREDIT_AND_DEBIT_CARDS ]['enabled'] ?? false ) && ! $general_settings->own_brand_only(),
 			FeaturesDefinition::FEATURE_SAVE_PAYPAL_AND_VENMO => $features[ FeaturesDefinition::FEATURE_SAVE_PAYPAL_AND_VENMO ]['enabled'] ?? false,
 			FeaturesDefinition::FEATURE_ALTERNATIVE_PAYMENT_METHODS => $features[ FeaturesDefinition::FEATURE_ALTERNATIVE_PAYMENT_METHODS ]['enabled'] ?? false,
 			FeaturesDefinition::FEATURE_PAY_LATER_MESSAGING => $features[ FeaturesDefinition::FEATURE_PAY_LATER_MESSAGING ]['enabled'] ?? false,
-			FeaturesDefinition::FEATURE_INSTALLMENTS    => $features[ FeaturesDefinition::FEATURE_INSTALLMENTS ]['enabled'] ?? false,
-			FeaturesDefinition::FEATURE_PAY_WITH_CRYPTO => $features[ FeaturesDefinition::FEATURE_PAY_WITH_CRYPTO ]['enabled'] ?? false,
+			FeaturesDefinition::FEATURE_INSTALLMENTS     => $features[ FeaturesDefinition::FEATURE_INSTALLMENTS ]['enabled'] ?? false,
+			FeaturesDefinition::FEATURE_PAY_WITH_CRYPTO  => $features[ FeaturesDefinition::FEATURE_PAY_WITH_CRYPTO ]['enabled'] ?? false,
+			FeaturesDefinition::FEATURE_PAY_UPON_INVOICE => $features[ FeaturesDefinition::FEATURE_PAY_UPON_INVOICE ]['enabled'] ?? false,
 		);
 	},
 
@@ -541,9 +565,6 @@ $services = array(
 
 		// TODO: This "merchant_capabilities" service is only used here. Could it be merged to make the code cleaner and less segmented?
 		$capabilities = $container->get( 'settings.service.merchant_capabilities' );
-
-		$settings = $container->get( 'wcgateway.settings' );
-		assert( $settings instanceof Settings );
 
 		$settings_model = $container->get( 'settings.data.settings' );
 		assert( $settings_model instanceof SettingsModel );
@@ -604,7 +625,7 @@ $services = array(
 			! $button_locations['cart_enabled'],                                                          // Add PayPal buttons to cart.
 			! $button_locations['block_checkout_enabled'],                                                // Add PayPal buttons to block checkout.
 			! $button_locations['product_enabled'],                                                       // Add PayPal buttons to product.
-			$container->get( 'applepay.eligible' ) && $capabilities[ FeaturesDefinition::FEATURE_APPLE_PAY ],  // Register Domain for Apple Pay.
+			$container->get( 'applepay.eligible' ) && $capabilities[ FeaturesDefinition::FEATURE_APPLE_PAY ] && ! $container->get( 'applepay.is_validated' ),  // Register Domain for Apple Pay.
 			$capabilities[ FeaturesDefinition::FEATURE_ADVANCED_CREDIT_AND_DEBIT_CARDS ] && ! ( $capabilities[ FeaturesDefinition::FEATURE_APPLE_PAY ] && $capabilities[ FeaturesDefinition::FEATURE_GOOGLE_PAY ] ),     // Add digital wallets to your account.
 			$container->get( 'applepay.eligible' ) && $capabilities[ FeaturesDefinition::FEATURE_ADVANCED_CREDIT_AND_DEBIT_CARDS ] && ! $capabilities[ FeaturesDefinition::FEATURE_APPLE_PAY ],                                        // Add Apple Pay to your account.
 			$container->get( 'googlepay.eligible' ) && $capabilities[ FeaturesDefinition::FEATURE_ADVANCED_CREDIT_AND_DEBIT_CARDS ] && ! $capabilities[ FeaturesDefinition::FEATURE_GOOGLE_PAY ],                                       // Add Google Pay to your account.
@@ -638,14 +659,15 @@ $services = array(
 		);
 		// Merchant capabilities serve to show active or inactive badge and buttons.
 		$capabilities = array(
-			FeaturesDefinition::FEATURE_APPLE_PAY       => $features[ FeaturesDefinition::FEATURE_APPLE_PAY ]['enabled'] ?? false,
-			FeaturesDefinition::FEATURE_GOOGLE_PAY      => $features[ FeaturesDefinition::FEATURE_GOOGLE_PAY ]['enabled'] ?? false,
+			FeaturesDefinition::FEATURE_APPLE_PAY        => $features[ FeaturesDefinition::FEATURE_APPLE_PAY ]['enabled'] ?? false,
+			FeaturesDefinition::FEATURE_GOOGLE_PAY       => $features[ FeaturesDefinition::FEATURE_GOOGLE_PAY ]['enabled'] ?? false,
 			FeaturesDefinition::FEATURE_ADVANCED_CREDIT_AND_DEBIT_CARDS => $features[ FeaturesDefinition::FEATURE_ADVANCED_CREDIT_AND_DEBIT_CARDS ]['enabled'] ?? false,
 			FeaturesDefinition::FEATURE_SAVE_PAYPAL_AND_VENMO => $features[ FeaturesDefinition::FEATURE_SAVE_PAYPAL_AND_VENMO ]['enabled'] ?? false,
 			FeaturesDefinition::FEATURE_ALTERNATIVE_PAYMENT_METHODS => $features[ FeaturesDefinition::FEATURE_ALTERNATIVE_PAYMENT_METHODS ]['enabled'] ?? false,
-			FeaturesDefinition::FEATURE_INSTALLMENTS    => $features[ FeaturesDefinition::FEATURE_INSTALLMENTS ]['enabled'] ?? false,
-			FeaturesDefinition::FEATURE_PAY_WITH_CRYPTO => $features[ FeaturesDefinition::FEATURE_PAY_WITH_CRYPTO ]['enabled'] ?? false,
+			FeaturesDefinition::FEATURE_INSTALLMENTS     => $features[ FeaturesDefinition::FEATURE_INSTALLMENTS ]['enabled'] ?? false,
+			FeaturesDefinition::FEATURE_PAY_WITH_CRYPTO  => $features[ FeaturesDefinition::FEATURE_PAY_WITH_CRYPTO ]['enabled'] ?? false,
 			FeaturesDefinition::FEATURE_PAY_LATER_MESSAGING => $features[ FeaturesDefinition::FEATURE_PAY_LATER_MESSAGING ]['enabled'] ?? false,
+			FeaturesDefinition::FEATURE_PAY_UPON_INVOICE => $features[ FeaturesDefinition::FEATURE_PAY_UPON_INVOICE ]['enabled'] ?? false,
 		);
 
 		$merchant_capabilities = array(
@@ -655,22 +677,24 @@ $services = array(
 			// Advanced credit and debit cards eligibility.
 			FeaturesDefinition::FEATURE_ALTERNATIVE_PAYMENT_METHODS => $capabilities[ FeaturesDefinition::FEATURE_ALTERNATIVE_PAYMENT_METHODS ],
 			// Alternative payment methods eligibility.
-			FeaturesDefinition::FEATURE_GOOGLE_PAY      => $capabilities[ FeaturesDefinition::FEATURE_ADVANCED_CREDIT_AND_DEBIT_CARDS ] && $capabilities[ FeaturesDefinition::FEATURE_GOOGLE_PAY ],
+			FeaturesDefinition::FEATURE_GOOGLE_PAY       => $capabilities[ FeaturesDefinition::FEATURE_ADVANCED_CREDIT_AND_DEBIT_CARDS ] && $capabilities[ FeaturesDefinition::FEATURE_GOOGLE_PAY ],
 			// Google Pay eligibility.
-			FeaturesDefinition::FEATURE_APPLE_PAY       => $capabilities[ FeaturesDefinition::FEATURE_ADVANCED_CREDIT_AND_DEBIT_CARDS ] && $capabilities[ FeaturesDefinition::FEATURE_APPLE_PAY ],
+			FeaturesDefinition::FEATURE_APPLE_PAY        => $capabilities[ FeaturesDefinition::FEATURE_ADVANCED_CREDIT_AND_DEBIT_CARDS ] && $capabilities[ FeaturesDefinition::FEATURE_APPLE_PAY ],
 			// Apple Pay eligibility.
 			FeaturesDefinition::FEATURE_PAY_LATER_MESSAGING => $capabilities[ FeaturesDefinition::FEATURE_PAY_LATER_MESSAGING ] && $capabilities[ FeaturesDefinition::FEATURE_ADVANCED_CREDIT_AND_DEBIT_CARDS ] && ! $gateways['card-button'],
 			// Pay Later eligibility.
-			FeaturesDefinition::FEATURE_INSTALLMENTS    => $capabilities[ FeaturesDefinition::FEATURE_INSTALLMENTS ],
+			FeaturesDefinition::FEATURE_INSTALLMENTS     => $capabilities[ FeaturesDefinition::FEATURE_INSTALLMENTS ],
 			// Installments eligibility.
-			FeaturesDefinition::FEATURE_PAY_WITH_CRYPTO => $capabilities[ FeaturesDefinition::FEATURE_PAY_WITH_CRYPTO ], // Pay with Crypto eligibility.
+			FeaturesDefinition::FEATURE_PAY_WITH_CRYPTO  => $capabilities[ FeaturesDefinition::FEATURE_PAY_WITH_CRYPTO ], // Pay with Crypto eligibility.
+			FeaturesDefinition::FEATURE_PAY_UPON_INVOICE => $capabilities[ FeaturesDefinition::FEATURE_PAY_UPON_INVOICE ], // Pay upon Invoice eligibility.
 		);
 
 		return new FeaturesDefinition(
 			$container->get( 'settings.service.features_eligibilities' ),
 			$container->get( 'settings.data.general' ),
 			$merchant_capabilities,
-			$container->get( 'settings.data.settings' )
+			$container->get( 'settings.data.settings' ),
+			$container->get( 'woocommerce.logger.woocommerce' )
 		);
 	},
 	'settings.service.features_eligibilities'             => static function ( ContainerInterface $container ): FeaturesEligibilityService {
@@ -689,7 +713,8 @@ $services = array(
 			$container->get( 'applepay.eligibility.check' ), // Apple Pay eligibility.
 			$pay_later_eligible, // Pay Later eligibility.
 			'MX' === $container->get( 'api.merchant.country' ), // Installments eligibility.
-			$container->get( 'ppcp-local-apms.pwc.eligibility.check' ) // Pay with Crypto eligibility.
+			$container->get( 'ppcp-local-apms.pwc.eligibility.check' ), // Pay with Crypto eligibility.
+			$container->get( 'ppcp-local-apms.pui.eligibility.check' ) // Pay upon Invoice eligibility.
 		);
 	},
 	'settings.service.payment_methods_eligibilities'      => static function ( ContainerInterface $container ): PaymentMethodsEligibilityService {
@@ -697,7 +722,7 @@ $services = array(
 		assert( $applepay_product_status instanceof AppleProductStatus );
 
 		$googlepay_product_status = $container->get( 'googlepay.helpers.apm-product-status' );
-		assert( $googlepay_product_status instanceof ApmProductStatus );
+		assert( $googlepay_product_status instanceof GoogleProductStatus );
 
 		return new PaymentMethodsEligibilityService(
 			$container->get( 'api.merchant.country' ),
@@ -771,22 +796,3 @@ $services = array(
 		return static fn(): bool => (bool) get_option( PaymentSettingsMigration::OPTION_NAME_BCDC_MIGRATION_OVERRIDE );
 	},
 );
-
-if ( ! SettingsModule::should_use_the_old_ui() ) {
-	/**
-	 * Merchant connection details, which includes the connection status
-	 * (onboarding/connected) and connection-aware environment checks.
-	 * This is the preferred solution to check environment and connection state.
-	 */
-	$services['settings.connection-state'] = static function ( ContainerInterface $container ): ConnectionState {
-		$data = $container->get( 'settings.data.general' );
-		assert( $data instanceof GeneralSettings );
-
-		$is_connected = $data->is_merchant_connected();
-		$environment  = new Environment( $data->is_sandbox_merchant() );
-
-		return new ConnectionState( $is_connected, $environment );
-	};
-}
-
-return $services;

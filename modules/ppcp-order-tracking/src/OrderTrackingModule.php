@@ -14,11 +14,9 @@ use Exception;
 use WC_Order;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExecutableModule;
-use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExtendingModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ModuleClassNameIdTrait;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ServiceModule;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
-use Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\OrderTracking\Assets\OrderEditPageAssets;
 use WooCommerce\PayPalCommerce\OrderTracking\Endpoint\OrderTrackingEndpoint;
 use WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException;
@@ -28,7 +26,7 @@ use WP_Post;
 /**
  * Class OrderTrackingModule
  */
-class OrderTrackingModule implements ServiceModule, ExtendingModule, ExecutableModule {
+class OrderTrackingModule implements ServiceModule, ExecutableModule {
 	use ModuleClassNameIdTrait;
 	use TrackingAvailabilityTrait;
 	use TransactionIdHandlingTrait;
@@ -40,13 +38,6 @@ class OrderTrackingModule implements ServiceModule, ExtendingModule, ExecutableM
 	 */
 	public function services(): array {
 		return require __DIR__ . '/../services.php';
-	}
-
-	/**
-	 * {@inheritDoc}
-	 */
-	public function extensions(): array {
-		return require __DIR__ . '/../extensions.php';
 	}
 
 	/**

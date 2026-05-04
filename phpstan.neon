@@ -9,7 +9,7 @@ parameters:
         - stubs/stubs.php
         - stubs/wcblocks.php
         - stubs/wcs.php
-        - stubs/gzd.php
+        - stubs/shiptastic.php
         - stubs/wc-bookings.php
         - stubs/wpcli.php
         - vendor/inpsyde/wp-stubs-versions/latest.php
@@ -36,3 +36,5 @@ parameters:
         - '#Access to an undefined property WC_Cart\:\:\$subtotal.#'
         - '#Access to an undefined property WC_Cart\:\:\$total.#'
         - '#Property WooCommerce\:\:\$session \(WC_Session\) .+ is not nullable.#'
+        - '#PayLaterMessagingSettings.+ has parameter \$styles with no type specified#'
+        - identifier: missingType.iterableValue

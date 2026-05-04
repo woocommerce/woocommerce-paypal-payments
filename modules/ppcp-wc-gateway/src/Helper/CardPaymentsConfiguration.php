@@ -13,9 +13,10 @@ declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\WcGateway\Helper;
 
-use WooCommerce\PayPalCommerce\Settings\Data\GeneralSettings;
-use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
-use WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException;
+use WooCommerce\PayPalCommerce\Axo\Gateway\AxoGateway;
+use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
+use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
+use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\Axo\Helper\PropertiesDictionary;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\DccApplies;
 
@@ -50,12 +51,7 @@ class CardPaymentsConfiguration {
 	 */
 	private ConnectionState $connection_state;
 
-	/**
-	 * The plugin settings instance.
-	 *
-	 * @var Settings
-	 */
-	private Settings $settings;
+	private SettingsProvider $settings_provider;
 
 	/**
 	 * Helper to determine availability of DCC features.
@@ -136,27 +132,18 @@ class CardPaymentsConfiguration {
 	 */
 	private bool $hide_fastlane_watermark = false;
 
-	/**
-	 * Initializes the gateway details based on the provided Settings instance.
-	 *
-	 * @param ConnectionState  $connection_state Connection state instance.
-	 * @param Settings         $settings         Plugin settings instance.
-	 * @param DccApplies       $dcc_applies      DCC eligibility helper.
-	 * @param DCCProductStatus $dcc_status       Manages the Seller status.
-	 * @param string           $store_country    The shop's country code.
-	 */
 	public function __construct(
 		ConnectionState $connection_state,
-		Settings $settings,
+		SettingsProvider $settings_provider,
 		DccApplies $dcc_applies,
 		DCCProductStatus $dcc_status,
 		string $store_country
 	) {
-		$this->connection_state = $connection_state;
-		$this->settings         = $settings;
-		$this->dcc_applies      = $dcc_applies;
-		$this->dcc_status       = $dcc_status;
-		$this->store_country    = $store_country;
+		$this->connection_state  = $connection_state;
+		$this->settings_provider = $settings_provider;
+		$this->dcc_applies       = $dcc_applies;
+		$this->dcc_status        = $dcc_status;
+		$this->store_country     = $store_country;
 
 		$this->is_resolved = false;
 	}
@@ -191,7 +178,6 @@ class CardPaymentsConfiguration {
 	 */
 	private function resolve(): void {
 		$show_on_card_options = array_keys( PropertiesDictionary::cardholder_name_options() );
-		$show_on_card_value   = null;
 
 		// Reset all flags, disable everything.
 		$this->use_acdc                = false;
@@ -218,39 +204,23 @@ class CardPaymentsConfiguration {
 			return;
 		}
 
-		try {
-			$is_paypal_enabled = filter_var( $this->settings->get( 'enabled' ), FILTER_VALIDATE_BOOLEAN );
+		$is_paypal_enabled = $this->settings_provider->gateway_enabled( PayPalGateway::ID );
 
-			// When the core payment logic of the plugin is disabled, we cannot handle card payments.
-			if ( ! $is_paypal_enabled ) {
-				return;
-			}
-
-			$is_dcc_enabled     = filter_var( $this->settings->get( 'dcc_enabled' ), FILTER_VALIDATE_BOOLEAN );
-			$this->use_fastlane = filter_var( $this->settings->get( 'axo_enabled' ), FILTER_VALIDATE_BOOLEAN );
-
-			if ( $this->settings->has( 'dcc_gateway_title' ) ) {
-				$this->gateway_title = $this->settings->get( 'dcc_gateway_title' );
-			}
-			if ( $this->settings->has( 'dcc_gateway_description' ) ) {
-				$this->gateway_description = $this->settings->get( 'dcc_gateway_description' );
-			}
-
-			if ( $this->settings->has( 'dcc_name_on_card' ) ) {
-				$show_on_card_value = $this->settings->get( 'dcc_name_on_card' );
-			} elseif ( $this->settings->has( 'axo_name_on_card' ) ) {
-				// Legacy. The AXO gateway setting was replaced by the DCC setting.
-				// Remove this condition with the #legacy-ui.
-				$show_on_card_value = $this->settings->get( 'axo_name_on_card' ) ? 'yes' : 'no';
-
-			}
-
-			if ( in_array( $show_on_card_value, $show_on_card_options, true ) ) {
-				$this->show_name_on_card = $show_on_card_value;
-			}
-		} catch ( NotFoundException $exception ) {
-			// A setting is missing in the DB, disable card payments.
+		// When the core payment logic of the plugin is disabled, we cannot handle card payments.
+		if ( ! $is_paypal_enabled ) {
 			return;
+		}
+
+		$is_dcc_enabled     = $this->settings_provider->is_method_enabled( CreditCardGateway::ID );
+		$this->use_fastlane = $this->settings_provider->is_method_enabled( AxoGateway::ID );
+
+		$this->gateway_title       = $this->settings_provider->acdc_gateway_title();
+		$this->gateway_description = $this->settings_provider->acdc_gateway_description();
+
+		$show_on_card_value = $this->settings_provider->acdc_show_name_on_card();
+
+		if ( in_array( $show_on_card_value, $show_on_card_options, true ) ) {
+			$this->show_name_on_card = $show_on_card_value;
 		}
 
 		/**
@@ -369,7 +339,7 @@ class CardPaymentsConfiguration {
 			return $this->gateway_title;
 		}
 
-		return $fallback ?: __( 'Advanced Card Processing', 'woocommerce-paypal-payments' );
+		return $fallback ?: __( 'Debit & Credit Cards', 'woocommerce-paypal-payments' );
 	}
 
 	/**

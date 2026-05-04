@@ -22,6 +22,7 @@ class RegistrationEligibilityTest extends TestCase {
 			->andReturnUsing( static fn() => new MerchantMetadata(
 				'Store Name',
 				'https://example.com',
+				'https://example.com/wp-json/wc/store/v1',
 				$store_country, // test value
 				'',
 				'MERCHANT123',

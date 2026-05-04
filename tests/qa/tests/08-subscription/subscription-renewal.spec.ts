@@ -3,7 +3,7 @@
  */
 import { test } from '../../utils';
 import {
-	disableWebhookVerifivationPlugin,
+	disableWebhookVerificationPlugin,
 	merchants,
 	products,
 	storeConfigUsa,
@@ -40,7 +40,6 @@ test.beforeAll( async ( { utils, pcpApi, wooCommerceApi } ) => {
 			products: [ 'physical', 'virtual', 'subscriptions' ],
 		}
 	);
-	await wooCommerceApi.deleteAllOrders();
 } );
 
 for ( const testOrder of vaultingRenewal ) {
@@ -63,15 +62,19 @@ test.describe( 'PayPal Subscription', () => {
 				products.subscriptionPayPalFreeTrial,
 			],
 		} );
-		await requestUtils.activatePlugin(
-			disableWebhookVerifivationPlugin.slug
-		);
+		if ( ! process.env.CI ) {
+			await requestUtils.activatePlugin(
+				disableWebhookVerificationPlugin.slug
+			);
+		}
 	} );
 
 	test.afterAll( async ( { requestUtils } ) => {
-		await requestUtils.deactivatePlugin(
-			disableWebhookVerifivationPlugin.slug
-		);
+		if ( ! process.env.CI ) {
+			await requestUtils.deactivatePlugin(
+				disableWebhookVerificationPlugin.slug
+			);
+		}
 	} );
 
 	for ( const testOrder of payPalRenewal ) {

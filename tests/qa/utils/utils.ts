@@ -24,7 +24,7 @@ import {
 	ShopOrder,
 	ShopConfig,
 } from '../resources';
-import { getCustomerStorageStateName } from './helpers';
+import { getCustomerStorageStateName } from './helpers/';
 import urls from './urls';
 
 export class Utils {
@@ -89,30 +89,6 @@ export class Utils {
 	};
 
 	/**
-	 * Pays for order created via API (dashboard order).
-	 * May be used for testing refunds/vaulting/subscriptions.
-	 *
-	 * @param orderId
-	 * @param orderKey
-	 * @param order
-	 */
-	payForApiOrder = async (
-		orderId: number,
-		orderKey: string,
-		order: ShopOrder
-	) => {
-		await this.payForOrder.visit( orderId, orderKey );
-		await this.payForOrder.payPalUi.makePayment( {
-			merchant: order.merchant,
-			payment: order.payment,
-		} );
-		return await this.wooCommerceApi.getOrderByIdAndStatus(
-			orderId,
-			'processing'
-		);
-	};
-
-	/**
 	 * Fills cart with array of products.
 	 *
 	 * - Creates WooCommerce.CartProduct from WooCommerce.CreateProduct (or gets CartProduct from process.env).
@@ -127,45 +103,6 @@ export class Utils {
 		);
 		await this.visitorWooCommerceApi.clearCart();
 		await this.visitorWooCommerceApi.addProductsToCart( cartProducts );
-	};
-
-	/**
-	 * Pays for order on checkout page
-	 *
-	 * @param shopOrder
-	 */
-	completeOrderOnCheckout = async ( shopOrder: ShopOrder ) => {
-		const { payment, products, merchant } = shopOrder;
-		await this.fillVisitorsCart( products );
-		await this.checkout.visit();
-		await this.checkout.completeCheckoutDetails( shopOrder );
-		await this.checkout.payPalUi.makePayment( { merchant, payment } );
-		const orderId = await this.orderReceived.getOrderNumber();
-		return await this.wooCommerceApi.getOrderByIdAndStatus(
-			orderId,
-			'processing'
-		);
-	};
-
-	/**
-	 * Pays for order on classic checkout page
-	 *
-	 * @param shopOrder
-	 */
-	completeOrderOnClassicCheckout = async ( shopOrder: ShopOrder ) => {
-		const { payment, products, merchant } = shopOrder;
-		await this.fillVisitorsCart( products );
-		await this.classicCheckout.visit();
-		await this.classicCheckout.completeCheckoutDetails( shopOrder );
-		await this.classicCheckout.payPalUi.makePayment( {
-			merchant,
-			payment,
-		} );
-		const orderId = await this.orderReceived.getOrderNumber();
-		return await this.wooCommerceApi.getOrderByIdAndStatus(
-			orderId,
-			'processing'
-		);
 	};
 
 	/**

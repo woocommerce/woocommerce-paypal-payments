@@ -9,8 +9,6 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\WcGateway\Helper;
 
-use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
-
 /**
  * Class CartCheckoutDetector
  */

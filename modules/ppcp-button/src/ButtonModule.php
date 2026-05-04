@@ -26,9 +26,7 @@ use WooCommerce\PayPalCommerce\Button\Endpoint\ValidateCheckoutEndpoint;
 use WooCommerce\PayPalCommerce\Button\Helper\EarlyOrderHandler;
 use WooCommerce\PayPalCommerce\Button\Helper\WooCommerceOrderCreator;
 use WooCommerce\PayPalCommerce\Button\Session\CartDataTransientStorage;
-use WooCommerce\PayPalCommerce\Button\VaultV2\StartPayPalVaultingEndpoint;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExecutableModule;
-use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExtendingModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ModuleClassNameIdTrait;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ServiceModule;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
@@ -37,7 +35,7 @@ use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 /**
  * Class ButtonModule
  */
-class ButtonModule implements ServiceModule, ExtendingModule, ExecutableModule {
+class ButtonModule implements ServiceModule, ExecutableModule {
 	use ModuleClassNameIdTrait;
 
 	/**
@@ -45,13 +43,6 @@ class ButtonModule implements ServiceModule, ExtendingModule, ExecutableModule {
 	 */
 	public function services(): array {
 		return require __DIR__ . '/../services.php';
-	}
-
-	/**
-	 * {@inheritDoc}
-	 */
-	public function extensions(): array {
-		return require __DIR__ . '/../extensions.php';
 	}
 
 	/**
@@ -224,19 +215,6 @@ class ButtonModule implements ServiceModule, ExtendingModule, ExecutableModule {
 			static function () use ( $container ) {
 				$endpoint = $container->get( 'button.endpoint.get-order' );
 				assert( $endpoint instanceof GetOrderEndpoint );
-				$endpoint->handle_request();
-			}
-		);
-
-		/**
-		 * Vault v2 ajax handler, would be removed when vault v3 becomes the default for all merchants.
-		 */
-		add_action(
-			'wc_ajax_' . StartPayPalVaultingEndpoint::ENDPOINT,
-			static function () use ( $container ) {
-				$endpoint = $container->get( 'button.vault-v2.endpoint.vault-paypal' );
-				assert( $endpoint instanceof StartPayPalVaultingEndpoint );
-
 				$endpoint->handle_request();
 			}
 		);

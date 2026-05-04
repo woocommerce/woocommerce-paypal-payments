@@ -6,10 +6,7 @@ import BillingView from './Views/BillingView';
 import CardView from './Views/CardView';
 import ButtonStateManager from './ButtonStateManager';
 import PayPalInsights from './Insights/PayPalInsights';
-import {
-	disable,
-	enable,
-} from '@ppcp-button/Helper/ButtonDisabler';
+import { disable, enable } from '@ppcp-button/Helper/ButtonDisabler';
 import { getCurrentPaymentMethod } from '@ppcp-button/Helper/CheckoutMethodState';
 
 /**
@@ -166,6 +163,15 @@ class AxoManager {
 	 */
 	get cardFormSelector() {
 		return this.el.paymentContainer.selector + '-form';
+	}
+
+	/**
+	 * Whether the Fastlane watermark should be displayed.
+	 *
+	 * @return {boolean}
+	 */
+	get isWatermarkEnabled() {
+		return this.axoConfig.show_watermark === '1';
 	}
 
 	registerEventHandlers() {
@@ -450,11 +456,11 @@ class AxoManager {
 			'.woocommerce-billing-fields .form-row:visible'
 		);
 		const $billingHeaders = this.$( '.woocommerce-billing-fields h3' );
-            if ( $billingFields.length ) {
-                $billingHeaders.show();
-            } else {
-                $billingHeaders.hide();
-            }
+		if ( $billingFields.length ) {
+			$billingHeaders.show();
+		} else {
+			$billingHeaders.hide();
+		}
 	}
 
 	ensureShippingFieldsConsistency() {
@@ -462,11 +468,11 @@ class AxoManager {
 			'.woocommerce-shipping-fields .form-row:visible'
 		);
 		const $shippingHeaders = this.$( '.woocommerce-shipping-fields h3' );
-            if ( $shippingFields.length ) {
-                $shippingHeaders.show();
-            } else {
-                $shippingHeaders.hide();
-            }
+		if ( $shippingFields.length ) {
+			$shippingHeaders.show();
+		} else {
+			$shippingHeaders.hide();
+		}
 	}
 
 	showAxoEmailField() {
@@ -744,6 +750,11 @@ class AxoManager {
 	}
 
 	async renderWatermark( includeAdditionalInfo = true ) {
+		if ( ! this.isWatermarkEnabled ) {
+			this.el.watermarkContainer.hide();
+			return;
+		}
+
 		(
 			await this.fastlane.FastlaneWatermarkComponent( {
 				includeAdditionalInfo,

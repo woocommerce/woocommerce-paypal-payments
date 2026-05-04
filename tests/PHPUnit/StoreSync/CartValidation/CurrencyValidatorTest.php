@@ -4,15 +4,12 @@ declare( strict_types = 1 );
 namespace WooCommerce\PayPalCommerce\StoreSync\CartValidation;
 
 use WooCommerce\PayPalCommerce\StoreSync\Schema\PayPalCart;
-use WooCommerce\PayPalCommerce\StoreSync\Validation\CurrencyMismatch;
-use WooCommerce\PayPalCommerce\TestCase;
-
 use function Brain\Monkey\Functions\when;
 
 /**
  * @covers \WooCommerce\PayPalCommerce\StoreSync\CartValidation\CurrencyValidator
  */
-class CurrencyValidatorTest extends TestCase {
+class CurrencyValidatorTest extends ValidationTest {
 
 	private CurrencyValidator $validator;
 
@@ -51,11 +48,9 @@ class CurrencyValidatorTest extends TestCase {
 
 		$this->assertIsArray( $result );
 		$this->assertCount( 1, $result );
-		$this->assertInstanceOf( CurrencyMismatch::class, $result[0] );
 
 		$issue_data = $result[0]->to_array();
-		$this->assertStringContainsString( 'Mixed currencies detected', $issue_data['message'] );
-		$this->assertSame( 'items[1].price.currency_code', $issue_data['field'] );
+		$this->assertValidationIssue( $issue_data, 'PRICING_ERROR', 'BUSINESS_RULE', 'items[1].price.currency_code', 'Mixed currencies detected' );
 	}
 
 	public function test_validate_detects_store_currency_mismatch(): void {
@@ -72,12 +67,9 @@ class CurrencyValidatorTest extends TestCase {
 
 		$this->assertIsArray( $result );
 		$this->assertCount( 1, $result );
-		$this->assertInstanceOf( CurrencyMismatch::class, $result[0] );
 
 		$issue_data = $result[0]->to_array();
-		$this->assertStringContainsString( 'Cart currency EUR does not match store currency USD', $issue_data['message'] );
-		$this->assertStringContainsString( 'This store only accepts payments in USD', $issue_data['user_message'] );
-		$this->assertSame( 'items[0].price.currency_code', $issue_data['field'] );
+		$this->assertValidationIssue( $issue_data, 'PRICING_ERROR', 'BUSINESS_RULE', 'items[0].price.currency_code', 'Cart currency EUR does not match store currency USD' );
 	}
 
 	public function test_validate_returns_null_for_empty_cart(): void {
@@ -165,13 +157,9 @@ class CurrencyValidatorTest extends TestCase {
 
 		$this->assertIsArray( $result );
 		$this->assertCount( 1, $result );
-		$this->assertInstanceOf( CurrencyMismatch::class, $result[0] );
 
 		$issue_data = $result[0]->to_array();
-		$this->assertStringContainsString( 'Mixed currencies detected', $issue_data['message'] );
-		$this->assertStringContainsString( 'EUR', $issue_data['message'] );
-		$this->assertStringContainsString( 'USD', $issue_data['message'] );
-		$this->assertSame( 'items[2].price.currency_code', $issue_data['field'] );
+		$this->assertValidationIssue( $issue_data, 'PRICING_ERROR', 'BUSINESS_RULE', 'items[2].price.currency_code', 'Mixed currencies detected' );
 	}
 
 	public function test_store_mismatch_points_to_correct_index(): void {
@@ -203,11 +191,9 @@ class CurrencyValidatorTest extends TestCase {
 
 		$this->assertIsArray( $result );
 		$this->assertCount( 1, $result );
-		$this->assertInstanceOf( CurrencyMismatch::class, $result[0] );
 
 		$issue_data = $result[0]->to_array();
-		$this->assertStringContainsString( 'Cart currency EUR does not match store currency USD', $issue_data['message'] );
-		$this->assertSame( 'items[1].price.currency_code', $issue_data['field'] );
+		$this->assertValidationIssue( $issue_data, 'PRICING_ERROR', 'BUSINESS_RULE', 'items[1].price.currency_code', 'Cart currency EUR does not match store currency USD' );
 	}
 
 	public function test_mixed_currency_prevents_store_check(): void {
@@ -224,38 +210,9 @@ class CurrencyValidatorTest extends TestCase {
 
 		$this->assertIsArray( $result );
 		$this->assertCount( 1, $result );
-		$this->assertInstanceOf( CurrencyMismatch::class, $result[0] );
 
 		$issue = $result[0]->to_array();
-		$this->assertStringContainsString( 'Mixed currencies detected', $issue['message'] );
+		$this->assertValidationIssue( $issue, 'PRICING_ERROR', 'BUSINESS_RULE', null, 'Mixed currencies detected' );
 	}
 
-	/**
-	 * Helper method to create a cart with items.
-	 *
-	 * @param array $items Array of items with currency and value.
-	 * @return PayPalCart
-	 */
-	private function create_cart_with_items( array $items ): PayPalCart {
-		$cart_items = array();
-
-		foreach ( $items as $index => $item_data ) {
-			$cart_items[] = array(
-				'item_id'  => (string) ( $index + 1 ),
-				'quantity' => 1,
-				'name'     => "Item $index",
-				'price'    => array(
-					'currency_code' => $item_data['currency'],
-					'value'         => $item_data['value'],
-				),
-			);
-		}
-
-		return PayPalCart::from_array(
-			array(
-				'items'          => $cart_items,
-				'payment_method' => 'paypal',
-			)
-		);
-	}
 }
