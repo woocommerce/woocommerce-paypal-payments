@@ -93,10 +93,12 @@ export default defineConfig< BaseExtend >( {
 					size: viewportSize,
 			  },
 
-		recordVideoOptions: {
-			mode: 'retain-on-failure',
-			size: viewportSize,
-		},
+		recordVideoOptions: process.env.CI
+			? undefined
+			: {
+				mode: 'retain-on-failure',
+				size: viewportSize,
+			},
 
 		cliConfig: {
 			envType: process.env.WPCLI_ENV_TYPE as WpCliEnvType,
