@@ -86,7 +86,7 @@ class ReplaceCartEndpoint extends AgenticRestEndpoint {
 
 		if ( $this->needs_new_token( $existing_token, $new_cart ) ) {
 			// Create new PayPal order - may return empty string if cart is invalid.
-			$new_token = $this->order_manager->create_order( $new_cart );
+			$new_token = $this->order_manager->create_order( $new_cart ) ?: null;
 
 			$this->logger->info(
 				'[REST] PUT created new PayPal order',
