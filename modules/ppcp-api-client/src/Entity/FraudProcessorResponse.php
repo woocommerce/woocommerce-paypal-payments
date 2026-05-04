@@ -176,6 +176,23 @@ class FraudProcessorResponse {
 	}
 
 	/**
+	 * Returns the customer-facing decline message, including the processor response code when available.
+	 *
+	 * @return string
+	 */
+	public function get_customer_decline_message(): string {
+		if ( $this->response_code() ) {
+			return sprintf(
+				/* translators: %s - processor response code and description */
+				__( 'Payment declined by card processor: %s. Please use a different payment method or contact your bank.', 'woocommerce-paypal-payments' ),
+				$this->get_response_code_message()
+			);
+		}
+
+		return __( 'Payment provider declined the payment, please use a different payment method.', 'woocommerce-paypal-payments' );
+	}
+
+	/**
 	 * Returns the human-readable description for the processor response code.
 	 *
 	 * @return string

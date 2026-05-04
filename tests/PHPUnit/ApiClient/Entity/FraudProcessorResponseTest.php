@@ -67,4 +67,22 @@ class FraudProcessorResponseTest extends TestCase
 		$testee = new FraudProcessorResponse(null, null, null);
 		$this->assertSame('', $testee->get_response_code_message());
 	}
+
+	public function testGetCustomerDeclineMessageWithKnownCode(): void
+	{
+		$testee = new FraudProcessorResponse(null, null, '9500');
+		$this->assertSame(
+			'Payment declined by card processor: 9500: Suspected Fraud. Please use a different payment method or contact your bank.',
+			$testee->get_customer_decline_message()
+		);
+	}
+
+	public function testGetCustomerDeclineMessageWithEmptyCodeReturnsGenericMessage(): void
+	{
+		$testee = new FraudProcessorResponse(null, null, null);
+		$this->assertSame(
+			'Payment provider declined the payment, please use a different payment method.',
+			$testee->get_customer_decline_message()
+		);
+	}
 }

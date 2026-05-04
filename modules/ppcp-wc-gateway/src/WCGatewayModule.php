@@ -17,7 +17,6 @@ use WooCommerce\PayPalCommerce\AdminNotices\Entity\Message;
 use WooCommerce\PayPalCommerce\AdminNotices\Repository\Repository;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Authorization;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Capture;
-use WooCommerce\PayPalCommerce\ApiClient\Entity\FraudProcessorResponse;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\OrderStatus;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\ReferenceTransactionStatus;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\Cache;
@@ -169,7 +168,7 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
 
 		add_action(
 			'woocommerce_admin_order_totals_after_total',
-			function ( int $order_id ) {
+			function ( int $order_id ) use ( $c ) {
 				$wc_order = wc_get_order( $order_id );
 				if ( ! $wc_order instanceof WC_Order ) {
 					return;
@@ -178,11 +177,8 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
 				if ( empty( $fraud_result['response_code'] ) ) {
 					return;
 				}
-				$fraud = new FraudProcessorResponse(
-					$fraud_result['avs_code'] ?? null,
-					$fraud_result['cvv2_code'] ?? null,
-					$fraud_result['response_code']
-				);
+				$fraud = $c->get( 'api.factory.fraud-processor-response' )
+					->from_paypal_response( (object) $fraud_result );
 				printf(
 					'<tr><td class="label">%s:</td><td width="1%%"></td><td class="total">%s</td></tr>',
 					esc_html__( 'Processor Response', 'woocommerce-paypal-payments' ),

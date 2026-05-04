@@ -260,7 +260,7 @@ class AuthorizedPaymentsProcessorTest extends TestCase
 		return new Authorization($id, new AuthorizationStatus($status), null);
 	}
 
-	public function testCaptureAuthorizedPaymentDeclinedWithFraudResponseCodeAddsOrderNoteAndThrows(): void
+	public function testCaptureAuthorizedPaymentDeclinedWithFraudResponseCodePassesCodeToStatusNote(): void
 	{
 		$this->orderEndpoint->shouldReceive('order')->andReturn($this->paypalOrder);
 
@@ -275,13 +275,13 @@ class AuthorizedPaymentsProcessorTest extends TestCase
 			->with($this->authorizationId, equalTo(new Money($this->amount, $this->currency)))
 			->andReturn($capture);
 
-		$this->wcOrder->shouldReceive('update_status');
 		$this->wcOrder
-			->shouldReceive('add_order_note')
+			->shouldReceive('update_status')
 			->once()
-			->with(Mockery::on(function (string $note): bool {
+			->with('failed', Mockery::on(function (string $note): bool {
 				return strpos($note, '9500: Suspected Fraud') !== false;
 			}));
+		$this->wcOrder->shouldNotReceive('add_order_note');
 
 		$this->expectException(RuntimeException::class);
 		$this->expectExceptionMessageMatches('/9500: Suspected Fraud/');
@@ -302,7 +302,7 @@ class AuthorizedPaymentsProcessorTest extends TestCase
 			->with($this->authorizationId, equalTo(new Money($this->amount, $this->currency)))
 			->andReturn($capture);
 
-		$this->wcOrder->shouldReceive('update_status');
+		$this->wcOrder->shouldReceive('update_status')->with('failed', 'Could not capture the payment.');
 		$this->wcOrder->shouldNotReceive('add_order_note');
 
 		$this->expectException(RuntimeException::class);
