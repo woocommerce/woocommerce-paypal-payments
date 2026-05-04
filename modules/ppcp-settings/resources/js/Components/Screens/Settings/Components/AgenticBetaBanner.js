@@ -10,7 +10,10 @@ import {
 import { PPIcon } from '../../../ReusableComponents/Icons';
 import classNames from 'classnames';
 import { __ } from '@wordpress/i18n';
-import { dismissAgenticBetaBanner } from '@ppcp-settings/data/agentic-beta/actions';
+import {
+	dismissAgenticBetaBanner,
+	applyForAgenticBeta,
+} from '@ppcp-settings/data/agentic-beta/actions';
 
 let isBannerDismissed = false;
 
@@ -63,7 +66,7 @@ const AgenticBetaBanner = ( {
 						<div className="ppcp--action-buttons">
 							{ actionProps?.buttons.map(
 								( buttonData, index ) => {
-									const { type, text } = buttonData;
+									const { type, text, url } = buttonData;
 									const isDismiss = type === 'tertiary';
 
 									return (
@@ -71,8 +74,14 @@ const AgenticBetaBanner = ( {
 											key={ index }
 											className="small-button"
 											variant={ type }
+											href={ url }
+											target={
+												url ? '_blank' : undefined
+											}
 											onClick={
-												isDismiss ? dismiss : undefined
+												isDismiss
+													? dismiss
+													: applyForAgenticBeta
 											}
 										>
 											{ text }
