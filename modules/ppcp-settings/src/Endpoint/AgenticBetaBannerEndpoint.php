@@ -1,6 +1,6 @@
 <?php
 /**
- * REST endpoint to handle the agentic beta banner dismiss action.
+ * REST endpoint to handle agentic beta banner interactions.
  *
  * @package WooCommerce\PayPalCommerce\Settings\Endpoint
  */
@@ -15,14 +15,16 @@ use WP_REST_Request;
 
 /**
  * Handles banner interactions for the agentic beta program:
- * permanent dismissal, remind-me-later, and survey application.
+ * permanent dismissal, 7-day snooze (remind-me-later), and survey application.
  */
 class AgenticBetaBannerEndpoint extends RestEndpoint {
 
-	public const OPTION_DISMISSED = 'ppcp_agentic_banner_dismissed';
-	public const OPTION_STATUS    = 'ppcp_agentic_beta_status';
-	public const STATUS_PENDING   = 'pending';
-	public const STATUS_APPLIED   = 'applied';
+	public const OPTION_DISMISSED     = 'ppcp_agentic_banner_dismissed';
+	public const OPTION_STATUS        = 'ppcp_agentic_beta_status';
+	public const OPTION_SNOOZED_UNTIL = 'ppcp_agentic_banner_snoozed_until';
+	public const STATUS_PENDING       = 'pending';
+	public const STATUS_APPLIED       = 'applied';
+	public const SNOOZE_DAYS          = 7;
 
 	protected $rest_base = 'agentic-beta-banner';
 
@@ -58,18 +60,30 @@ class AgenticBetaBannerEndpoint extends RestEndpoint {
 		);
 	}
 
+	/**
+	 * Permanently dismisses the banner. Once dismissed it will never be shown again.
+	 */
 	public function handle_dismiss( WP_REST_Request $request ): WP_REST_Response {
 		update_option( self::OPTION_DISMISSED, true );
 
 		return $this->return_success( array( 'dismissed' => true ) );
 	}
 
+	/**
+	 * Snoozes the banner for {@see self::SNOOZE_DAYS} days and sets status to pending.
+	 * After the snooze period expires the banner becomes eligible to show again.
+	 */
 	public function handle_remind( WP_REST_Request $request ): WP_REST_Response {
+		$snoozed_until = time() + self::SNOOZE_DAYS * DAY_IN_SECONDS;
+		update_option( self::OPTION_SNOOZED_UNTIL, $snoozed_until );
 		update_option( self::OPTION_STATUS, self::STATUS_PENDING );
 
-		return $this->return_success( array( 'status' => self::STATUS_PENDING ) );
+		return $this->return_success( array( 'snoozed_until' => $snoozed_until ) );
 	}
 
+	/**
+	 * Records that the merchant has applied for the beta program.
+	 */
 	public function handle_apply( WP_REST_Request $request ): WP_REST_Response {
 		update_option( self::OPTION_STATUS, self::STATUS_APPLIED );
 
