@@ -65,3 +65,16 @@
 		}
 	}
 }
+
+#ppcp-agentic-beta-banner {
+	.ppcp-r-settings-banner__icon {
+		padding-right: 8%;
+		display: flex;
+		align-items: center;
+		justify-content: right;
+	}
+
+	.ppcp-r-settings-card__content-wrapper .ppcp--content:first-child {
+		flex: 1.1;
+	}
+}
