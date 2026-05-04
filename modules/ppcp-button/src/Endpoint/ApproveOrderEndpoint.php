@@ -17,6 +17,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Entity\OrderStatus;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\DccApplies;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\OrderHelper;
+use WooCommerce\PayPalCommerce\Button\Exception\NonceValidationException;
 use WooCommerce\PayPalCommerce\Button\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\Button\Helper\Context;
 use WooCommerce\PayPalCommerce\Button\Helper\ThreeDSecure;
@@ -198,6 +199,8 @@ class ApproveOrderEndpoint implements \WooCommerce\PayPalCommerce\Button\Endpoin
                 wp_send_json_success(array('order_received_url' => $order_received_url));
             }
             wp_send_json_success();
+        } catch (NonceValidationException $error) {
+            wp_send_json_error(array('message' => $error->getMessage()), 400);
         } catch (Exception $error) {
             $this->logger->error('Order approve failed: ' . $error->getMessage());
             wp_send_json_error(array('name' => $error instanceof PayPalApiException ? $error->name() : '', 'message' => $error->getMessage(), 'code' => $error->getCode(), 'details' => $error instanceof PayPalApiException ? $error->details() : array()));

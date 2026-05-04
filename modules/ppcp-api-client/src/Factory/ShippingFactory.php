@@ -69,7 +69,7 @@ class ShippingFactory
     public function from_wc_order(\WC_Order $order): Shipping
     {
         $full_name = $order->get_formatted_shipping_full_name();
-        $address = $this->address_factory->from_wc_order($order);
+        $address = $this->address_factory->from_wc_order($order, 'shipping');
         return new Shipping($full_name, $address);
     }
     /**

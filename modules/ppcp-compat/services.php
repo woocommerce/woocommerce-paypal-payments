@@ -25,9 +25,9 @@ return array('compat.ppec.mock-gateway' => static function ($container) {
 }, 'compat.ppec.billing-agreement-converter' => static function (ContainerInterface $container) {
     return new \WooCommerce\PayPalCommerce\Compat\PPEC\BillingAgreementTokenConverter($container->get('api.endpoint.payment-method-tokens'), $container->get('api.repository.customer'), $container->get('woocommerce.logger.woocommerce'));
 }, 'compat.ppec.subscriptions-handler' => static function (ContainerInterface $container) {
-    return new \WooCommerce\PayPalCommerce\Compat\PPEC\SubscriptionsHandler($container->get('wc-subscriptions.renewal-handler'), $container->get('compat.ppec.mock-gateway'), $container->get('compat.ppec.billing-agreement-converter'), $container->get('woocommerce.logger.woocommerce'), $container->get('vaulting.vault-v3-enabled'));
+    return new \WooCommerce\PayPalCommerce\Compat\PPEC\SubscriptionsHandler($container->get('wc-subscriptions.renewal-handler'), $container->get('compat.ppec.mock-gateway'), $container->get('compat.ppec.billing-agreement-converter'), $container->get('woocommerce.logger.woocommerce'));
 }, 'compat.plugin-script-names' => static function (ContainerInterface $container): array {
-    return array('ppcp-smart-button', 'ppcp-oxxo', 'ppcp-pay-upon-invoice', 'ppcp-vaulting-myaccount-payments', 'ppcp-gateway-settings', 'ppcp-webhooks-status-page', 'ppcp-tracking', 'ppcp-fraudnet', 'ppcp-tracking-compat');
+    return array('ppcp-smart-button', 'ppcp-oxxo', 'ppcp-pay-upon-invoice', 'ppcp-wc-payment-tokens-myaccount-payments', 'ppcp-gateway-settings', 'ppcp-webhooks-status-page', 'ppcp-tracking', 'ppcp-fraudnet', 'ppcp-tracking-compat');
 }, 'compat.plugin-script-file-names' => static function (ContainerInterface $container): array {
     return array('button.js', 'gateway-settings.js', 'order-edit-page.js', 'fraudnet.js', 'tracking-compat.js');
 }, 'compat.shiptastic.is_supported_plugin_version_active' => function (): bool {

@@ -155,16 +155,16 @@ class AuthenticationManager
             throw new RuntimeException('No client ID provided.');
         }
         // Exactly 80 alphanumeric, underscore, or hyphen characters.
-        if (1 !== preg_match('/^[\w-]{80}$/', $client_id)) {
-            throw new RuntimeException('Invalid client ID provided.');
-        }
+        // if ( 1 !== preg_match( '/^[\w-]{80}$/', $client_id ) ) {
+        // 	throw new RuntimeException( 'Invalid client ID provided.' );
+        // }
         if (empty($client_secret)) {
             throw new RuntimeException('No client secret provided.');
         }
         // Exactly 80 alphanumeric, underscore, or hyphen characters.
-        if (1 !== preg_match('/^[\w-]{80}$/', $client_secret)) {
-            throw new RuntimeException('Invalid client secret provided.');
-        }
+        // if ( 1 !== preg_match( '/^[\w-]{80}$/', $client_secret ) ) {
+        // 	throw new RuntimeException( 'Invalid client secret provided.' );
+        // }
     }
     /**
      * Disconnects the current merchant, and then attempts to connect to a
