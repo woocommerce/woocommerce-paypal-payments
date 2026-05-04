@@ -35,7 +35,9 @@ class UpdatedCartWithTokenResponse extends CartResponse {
 		array $applied_coupons = array(),
 		?WC_Cart $wc_cart = null
 	) {
-		parent::__construct( $cart, $applied_coupons, $cart_id, $wc_cart );
+		parent::__construct( $cart, $cart_id );
+		$this->applied_coupons( $applied_coupons );
+		$this->wc_cart( $wc_cart );
 		$this->token = $token;
 
 		// Updated carts with valid tokens are READY for checkout.

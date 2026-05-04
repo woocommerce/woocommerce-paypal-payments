@@ -32,7 +32,7 @@ class CartResponse {
 		'REQUIRES_ADDITIONAL_INFORMATION',
 	);
 
-	private PayPalCart $cart;
+	protected PayPalCart $cart;
 
 	private string $default_currency = '';
 
@@ -51,7 +51,7 @@ class CartResponse {
 	 * Used to track cart lifecycle.
 	 * Possible values: CREATED, INCOMPLETE, READY, COMPLETED
 	 */
-	private string $status = 'INCOMPLETE';
+	protected string $status = 'INCOMPLETE';
 
 	/**
 	 * Used to determine the next step.
@@ -62,7 +62,7 @@ class CartResponse {
 	/**
 	 * The payment method token, only set for newly created carts.
 	 */
-	private string $token = '';
+	protected string $token = '';
 
 	/**
 	 * The WooCommerce order created during checkout, only set for completed carts.
@@ -73,7 +73,7 @@ class CartResponse {
 	 * @param PayPalCart $cart    The PayPal cart.
 	 * @param string     $cart_id The cart ID.
 	 */
-	private function __construct( PayPalCart $cart, string $cart_id = '' ) {
+	protected function __construct( PayPalCart $cart, string $cart_id = '' ) {
 		$this->cart    = $cart;
 		$this->cart_id = $cart_id;
 
