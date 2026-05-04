@@ -16,6 +16,12 @@ export const dismissAgenticBetaBanner = () =>
 		method: 'POST',
 	} );
 
+export const remindLaterAgenticBeta = () =>
+	apiFetch( {
+		path: `${ REST_BASE_PATH }/remind`,
+		method: 'POST',
+	} );
+
 export const applyForAgenticBeta = () =>
 	apiFetch( {
 		path: `${ REST_BASE_PATH }/apply`,
