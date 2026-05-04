@@ -12,6 +12,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Helper\PaymentLevelEligibility;
 use WooCommerce\PayPalCommerce\Assets\AssetGetter;
 use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
+use WooCommerce\PayPalCommerce\Settings\Service\AgenticBetaBannerEligibility;
 
 /**
  * This class is responsible for localizing the scripts and styles for the settings page.
@@ -27,6 +28,7 @@ class ScriptDataHandler {
 	protected SettingsProvider $settings_provider;
 	protected PaymentLevelEligibility $payment_level_eligibility;
 	private bool $is_bcdc_override_flag_enabled;
+	private AgenticBetaBannerEligibility $agentic_beta_banner_eligibility;
 
 	public function __construct(
 		AssetGetter $asset_getter,
@@ -37,17 +39,19 @@ class ScriptDataHandler {
 		PartnerAttribution $partner_attribution,
 		SettingsProvider $settings_provider,
 		PaymentLevelEligibility $payment_level_eligibility,
-		bool $is_bcdc_override_flag_enabled
+		bool $is_bcdc_override_flag_enabled,
+		AgenticBetaBannerEligibility $agentic_beta_banner_eligibility
 	) {
-		$this->asset_getter                  = $asset_getter;
-		$this->paylater_is_available         = $paylater_is_available;
-		$this->store_country                 = $store_country;
-		$this->merchant_id                   = $merchant_id;
-		$this->button_language_choices       = $button_language_choices;
-		$this->partner_attribution           = $partner_attribution;
-		$this->settings_provider             = $settings_provider;
-		$this->payment_level_eligibility     = $payment_level_eligibility;
-		$this->is_bcdc_override_flag_enabled = $is_bcdc_override_flag_enabled;
+		$this->asset_getter                    = $asset_getter;
+		$this->paylater_is_available           = $paylater_is_available;
+		$this->store_country                   = $store_country;
+		$this->merchant_id                     = $merchant_id;
+		$this->button_language_choices         = $button_language_choices;
+		$this->partner_attribution             = $partner_attribution;
+		$this->settings_provider               = $settings_provider;
+		$this->payment_level_eligibility       = $payment_level_eligibility;
+		$this->is_bcdc_override_flag_enabled   = $is_bcdc_override_flag_enabled;
+		$this->agentic_beta_banner_eligibility = $agentic_beta_banner_eligibility;
 	}
 
 	/**
@@ -186,6 +190,7 @@ class ScriptDataHandler {
 			'threeDSecureOptions'                 => $three_d_secure_options,
 			'isEligibleForPaymentLevelProcessing' => $this->payment_level_eligibility->is_eligible( CreditCardGateway::ID ),
 			'isBcdcOverrideFlagEnabled'           => $this->is_bcdc_override_flag_enabled,
+			'isAgenticBetaBannerEligible'         => $this->agentic_beta_banner_eligibility->is_eligible(),
 		);
 
 		if ( $is_pay_later_configurator_available ) {
