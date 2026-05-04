@@ -12,6 +12,8 @@ namespace WooCommerce\PayPalCommerce\Compat\WooCommerceBlueprint;
 use Automattic\WooCommerce\Blueprint\StepProcessor;
 use Automattic\WooCommerce\Blueprint\StepProcessorResult;
 use Automattic\WooCommerce\Blueprint\Steps\SetSiteOptions;
+use WooCommerce\PayPalCommerce\Settings\DTO\LocationStylingDTO;
+use WooCommerce\PayPalCommerce\Settings\DTO\PayLaterMessagingDTO;
 
 /**
  * PayPal Settings Importer.
@@ -182,8 +184,11 @@ class PayPalSettingsImporter implements StepProcessor {
 	 * @return bool
 	 */
 	private function update_option_safely( string $option_name, $option_value ): bool {
-		// Convert objects to arrays recursively.
+		// Convert stdClass objects from JSON decode to arrays.
 		$option_value = $this->convert_objects_to_arrays( $option_value );
+
+		// Hydrate DTO-based options so typed objects are preserved in the database.
+		$option_value = $this->hydrate_dtos( $option_name, $option_value );
 
 		// Get the current value with a sentinel to distinguish between false and non-existent.
 		$current_value = get_option( $option_name, self::OPTION_NOT_FOUND );
@@ -194,6 +199,81 @@ class PayPalSettingsImporter implements StepProcessor {
 		}
 
 		return update_option( $option_name, $option_value );
+	}
+
+	/**
+	 * Hydrate DTO-based options so the data models can load them correctly.
+	 *
+	 * Some options store typed DTO objects (e.g. LocationStylingDTO). Blueprint
+	 * export serializes these to JSON objects, and on import they arrive as plain
+	 * arrays after convert_objects_to_arrays(). This method restores the proper
+	 * DTO instances before the value is written to the database.
+	 *
+	 * @param string $option_name  Option name.
+	 * @param mixed  $option_value Option value.
+	 * @return mixed
+	 */
+	private function hydrate_dtos( string $option_name, $option_value ) {
+		if ( 'woocommerce-ppcp-data-styling' === $option_name && is_array( $option_value ) ) {
+			$location_keys = array( 'cart', 'classic_checkout', 'express_checkout', 'mini_cart', 'product' );
+			foreach ( $location_keys as $key ) {
+				if ( isset( $option_value[ $key ] ) && is_array( $option_value[ $key ] ) ) {
+					$option_value[ $key ] = $this->array_to_location_styling_dto( $option_value[ $key ], $key );
+				}
+			}
+		}
+
+		if ( 'woocommerce-ppcp-data-paylater-messaging' === $option_name && is_array( $option_value ) ) {
+			$location_keys = array( 'cart', 'checkout', 'product', 'shop', 'home', 'custom_placement' );
+			foreach ( $location_keys as $key ) {
+				if ( isset( $option_value[ $key ] ) && is_array( $option_value[ $key ] ) ) {
+					$option_value[ $key ] = $this->array_to_pay_later_messaging_dto( $option_value[ $key ], $key );
+				}
+			}
+		}
+
+		return $option_value;
+	}
+
+	/**
+	 * Convert an array to a LocationStylingDTO instance.
+	 *
+	 * @param array  $data     The array data.
+	 * @param string $location The location key.
+	 * @return LocationStylingDTO
+	 */
+	private function array_to_location_styling_dto( array $data, string $location ): LocationStylingDTO {
+		return new LocationStylingDTO(
+			$data['location'] ?? $location,
+			(bool) ( $data['enabled'] ?? true ),
+			(array) ( $data['methods'] ?? array() ),
+			(string) ( $data['shape'] ?? 'rect' ),
+			(string) ( $data['label'] ?? 'pay' ),
+			(string) ( $data['color'] ?? 'gold' ),
+			(string) ( $data['layout'] ?? 'vertical' ),
+			(bool) ( $data['tagline'] ?? false )
+		);
+	}
+
+	/**
+	 * Convert an array to a PayLaterMessagingDTO instance.
+	 *
+	 * @param array  $data     The array data.
+	 * @param string $location The location key.
+	 * @return PayLaterMessagingDTO
+	 */
+	private function array_to_pay_later_messaging_dto( array $data, string $location ): PayLaterMessagingDTO {
+		return new PayLaterMessagingDTO(
+			$data['location'] ?? $location,
+			(bool) ( $data['enabled'] ?? false ),
+			(string) ( $data['layout'] ?? 'text' ),
+			(string) ( $data['logo_type'] ?? 'inline' ),
+			(string) ( $data['logo_position'] ?? 'left' ),
+			(string) ( $data['text_color'] ?? 'black' ),
+			(string) ( $data['text_size'] ?? '12' ),
+			(string) ( $data['flex_color'] ?? 'black' ),
+			(string) ( $data['flex_ratio'] ?? '8x1' )
+		);
 	}
 
 	/**
