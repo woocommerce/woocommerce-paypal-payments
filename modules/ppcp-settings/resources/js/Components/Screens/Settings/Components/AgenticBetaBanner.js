@@ -10,6 +10,7 @@ import {
 import { PPIcon } from '../../../ReusableComponents/Icons';
 import classNames from 'classnames';
 import { __ } from '@wordpress/i18n';
+import { dismissAgenticBetaBanner } from '@ppcp-settings/data/agentic-beta/actions';
 
 let isBannerDismissed = false;
 
@@ -21,11 +22,11 @@ const AgenticBetaBanner = ( {
 	actionProps,
 } ) => {
 	const [ isDismissed, setIsDismissed ] = useState( () => isBannerDismissed );
-	const [ isMigrating, setIsMigrating ] = useState( false );
 
 	const dismiss = () => {
 		isBannerDismissed = true;
 		setIsDismissed( true );
+		dismissAgenticBetaBanner();
 	};
 
 	if ( isDismissed ) {
@@ -69,12 +70,10 @@ const AgenticBetaBanner = ( {
 										<Button
 											key={ index }
 											className="small-button"
-											isBusy={
-												! isDismiss && isMigrating
-											}
 											variant={ type }
-											disabled={ isMigrating }
-											onClick={ isDismiss ? dismiss : '' }
+											onClick={
+												isDismiss ? dismiss : undefined
+											}
 										>
 											{ text }
 										</Button>
