@@ -16,15 +16,14 @@ import {
 	applyForAgenticBeta,
 } from '@ppcp-settings/data/agentic-beta/actions';
 
+const BANNER_ID        = 'ppcp-agentic-beta-banner';
+const BANNER_CLASS     = 'ppcp-r-settings-banner';
+const BANNER_TITLE_ID  = `${ BANNER_ID }-title`;
+const APPLY_URL        = 'https://example.com';
+
 let isBannerDismissed = false;
 
-const AgenticBetaBanner = ( {
-	id,
-	className,
-	title,
-	description,
-	actionProps,
-} ) => {
+const AgenticBetaBanner = () => {
 	const [ isDismissed, setIsDismissed ] = useState( () => isBannerDismissed );
 
 	const dismiss = () => {
@@ -43,66 +42,65 @@ const AgenticBetaBanner = ( {
 		return null;
 	}
 
-	const migrationBannerClassNames = classNames(
-		'ppcp-r-settings-card',
-		className
-	);
-	const props = {
-		className: migrationBannerClassNames,
-		id,
-	};
-
-	const titleId = id ? `${ id }-title` : undefined;
-
 	return (
-		<div { ...props } role="region" aria-labelledby={ titleId }>
+		<div
+			id={ BANNER_ID }
+			className={ classNames( 'ppcp-r-settings-card', BANNER_CLASS ) }
+			role="region"
+			aria-labelledby={ BANNER_TITLE_ID }
+		>
 			<ContentWrapper>
 				<Content asCard={ false }>
 					<Header>
 						<div className="ppcp--title-wrapper">
 							<h2
-								id={ titleId }
+								id={ BANNER_TITLE_ID }
 								className="ppcp-r-settings-card__title"
 							>
-								{ title }
+								{ __(
+									'Be among the first: Join the PayPal Store Sync Beta',
+									'woocommerce-paypal-payments'
+								) }
 							</h2>
 						</div>
-						<Description>{ description }</Description>
+						<Description>
+							{ __(
+								"AI-powered shopping agents are changing how customers discover and buy. We're looking for a small group of active US-based WooCommerce merchants to help shape this experience — get early access, direct input into the roadmap, and dedicated support from the PayPal & Syde team.",
+								'woocommerce-paypal-payments'
+							) }
+						</Description>
 					</Header>
 					<Action>
 						<div className="ppcp--action-buttons">
-							{ actionProps?.buttons.map(
-								( buttonData, index ) => {
-									const { type, text, url } = buttonData;
-									const isRemind = type === 'tertiary';
-
-									return (
-										<Button
-											key={ index }
-											className="small-button"
-											variant={ type }
-											href={ url }
-											target={
-												url ? '_blank' : undefined
-											}
-											onClick={
-												isRemind
-													? remind
-													: applyForAgenticBeta
-											}
-										>
-											{ text }
-										</Button>
-									);
-								}
-							) }
+							<Button
+								className="small-button"
+								variant="secondary"
+								href={ APPLY_URL }
+								target="_blank"
+								onClick={ applyForAgenticBeta }
+							>
+								{ __(
+									'Apply for Early Access',
+									'woocommerce-paypal-payments'
+								) }
+							</Button>
+							<Button
+								className="small-button"
+								variant="tertiary"
+								onClick={ remind }
+							>
+								{ __(
+									'Remind me later',
+									'woocommerce-paypal-payments'
+								) }
+							</Button>
 						</div>
 					</Action>
 				</Content>
-				<Content asCard={ false } className={ `${ className }__icon` }>
+				<Content asCard={ false } className={ `${ BANNER_CLASS }__icon` }>
 					<PPIcon imageName="icon-paypal-business-loan.svg" />
 					<button
-						className={ `${ className }__icon-close` }
+						className={ `${ BANNER_CLASS }__icon-close` }
 						aria-label={ __(
 							'Dismiss',
 							'woocommerce-paypal-payments'
