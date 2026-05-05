@@ -12,14 +12,13 @@ use WooCommerce\PayPalCommerce\Settings\Data\GeneralSettings;
 use WooCommerce\PayPalCommerce\Settings\Endpoint\AgenticBetaBannerEndpoint;
 /**
  * Determines whether the agentic beta banner should be shown to the merchant.
- *
- * All seven conditions must be true for the banner to be eligible.
  */
 class AgenticBetaBannerEligibility
 {
-    private const REQUIRED_PRODUCT_COUNT = 1;
-    private const REQUIRED_ORDER_COUNT = 1;
-    private const ORDER_LOOKBACK_DAYS = 900;
+    private const REQUIRED_PRODUCT_COUNT = 50;
+    private const REQUIRED_ORDER_COUNT = 50;
+    private const ORDER_LOOKBACK_DAYS = 90;
+    private const TRANSIENT_KEY = 'ppcp_agentic_banner_base_eligible';
     private GeneralSettings $general_settings;
     private string $store_country;
     public function __construct(GeneralSettings $general_settings, string $store_country)
@@ -28,18 +27,47 @@ class AgenticBetaBannerEligibility
         $this->store_country = $store_country;
     }
     /**
-     * Returns true only when all seven conditions are met:
-     * merchant is connected, store country is US, a US shipping zone exists,
-     * at least {@see self::REQUIRED_PRODUCT_COUNT} published products exist,
-     * at least {@see self::REQUIRED_ORDER_COUNT} completed orders within the last
-     * {@see self::ORDER_LOOKBACK_DAYS} days, the banner is not snoozed,
-     * and the banner has not been permanently dismissed.
+     * Returns true only when all conditions are met. Checks user-preference
+     * conditions first (cheap option reads) before falling through to the
+     * store-level conditions, which are cached in a transient.
      *
      * @return bool
      */
     public function is_eligible(): bool
     {
-        return $this->general_settings->is_merchant_connected() && $this->store_country === 'US' && $this->has_us_shipping_zone() && $this->has_enough_products() && $this->has_enough_recent_orders() && $this->is_not_snoozed() && !get_option(AgenticBetaBannerEndpoint::OPTION_DISMISSED);
+        if (!$this->should_display_banner()) {
+            return \false;
+        }
+        return $this->are_store_conditions_met();
+    }
+    /**
+     * Returns false if the merchant has dismissed or snoozed the banner.
+     *
+     * @return bool
+     */
+    private function should_display_banner(): bool
+    {
+        return $this->is_not_snoozed() && !get_option(AgenticBetaBannerEndpoint::OPTION_DISMISSED);
+    }
+    /**
+     * Returns true when the store-level conditions are met: PHP >= 8.1, merchant
+     * connected, US store with a US shipping zone, and sufficient product/order
+     * counts. The result is cached for 10 minutes to avoid repeated DB queries.
+     *
+     * @return bool
+     */
+    private function are_store_conditions_met(): bool
+    {
+        if (!version_compare(\PHP_VERSION, '8.1', '>=')) {
+            return \false;
+        }
+        $cached = get_transient(self::TRANSIENT_KEY);
+        if ($cached !== \false) {
+            return (bool) $cached;
+        }
+        $result = $this->general_settings->is_merchant_connected() && $this->store_country === 'US' && $this->has_us_shipping_zone() && $this->has_enough_products() && $this->has_enough_recent_orders();
+        set_transient(self::TRANSIENT_KEY, (int) $result, 10 * MINUTE_IN_SECONDS);
+        return $result;
     }
     /**
      * Returns true if the default zone has active shipping methods, or if any
