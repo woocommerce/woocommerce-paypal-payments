@@ -24,6 +24,7 @@ export const testRefund = ( testData: ShopRefund ) => {
 		currency,
 		isApiOrder,
 		merchant,
+		products,
 	} = testData;
 
 	test(
@@ -32,12 +33,16 @@ export const testRefund = ( testData: ShopRefund ) => {
 		async ( {
 			wooCommerceUtils,
 			utils,
+			classicCheckout,
+			payForOrder,
+			orderReceived,
 			wooCommerceOrderEdit,
 			wooCommerceApi,
 			payPalApi,
 		} ) => {
 			test.setTimeout( 2 * 60_000 );
 			let order: WooCommerce.Order; // TODO: fix type in playwright-utils
+			let orderId: number;
 			const total = await countTotals( testData );
 			const refundAvailable = total.order;
 			const refundAmount = getAmountPercentage(
@@ -49,18 +54,31 @@ export const testRefund = ( testData: ShopRefund ) => {
 			await test.step( 'Precondition: create WooCommerce order', async () => {
 				if ( isApiOrder ) {
 					order = await wooCommerceUtils.createApiOrder( testData );
-					order = await utils.payForApiOrder(
-						order.id,
-						order.order_key,
-						testData
-					);
+					await payForOrder.visit( order.id, order.order_key );
+					await payForOrder.payPalUi.makePayment( { merchant, payment } );
 				} else {
-					order = await utils.completeOrderOnCheckout( testData );
+					await utils.fillVisitorsCart( products );
+					await classicCheckout.visit();
+					await classicCheckout.completeCheckoutDetails( testData );
+					await classicCheckout.payPalUi.makePayment( {merchant, payment } );
 				}
-				await expect(
-					order.status,
-					'Assert order status is processing'
-				).toEqual( 'processing' );
+
+				await orderReceived.page.waitForLoadState();
+				orderId = await orderReceived.getOrderNumber();
+				// Assert order status is processing (sometimes takes time to update after payment)
+				await expect
+					.poll(
+						async () => {
+							order = await wooCommerceApi.getOrder( orderId );
+							return order.status;
+						},
+						{
+							message: 'Assert order status is processing',
+							timeout: 30_000,
+							intervals: [ 1_000, 2_000, 3_000 ],
+						}
+					)
+					.toEqual( 'processing' );
 			} );
 
 			// Test

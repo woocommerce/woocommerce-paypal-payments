@@ -1257,6 +1257,12 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
 			return array();
 		}
 
+		$order_key = $this->get_order_pay_key();
+		//phpcs:ignore WordPress.WP.Capabilities.Unknown
+		if ( ! $wc_order->key_is_valid( $order_key ) || ! current_user_can( 'view_order', $order_id ) ) {
+			return array();
+		}
+
 		$total = (float) $wc_order->get_total( 'numeric' );
 
 		return array(

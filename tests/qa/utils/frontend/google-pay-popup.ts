@@ -1,7 +1,9 @@
 /**
  * External dependencies
  */
-import { expect, BrowserContext, Page } from '@playwright/test';
+import fs from 'fs';
+import path from 'path';
+import { expect, BrowserContext, Cookie, Page } from '@playwright/test';
 
 /**
  * Handles the Google Pay TEST-environment popup.
@@ -21,6 +23,49 @@ export class GooglePayPopup {
 		this.page = page;
 	}
 
+	/**
+	 * Path to the cached Google session cookies file
+	 */
+	private static readonly SESSION_PATH = path.join(
+		__dirname,
+		'../../.google-session.json'
+	);
+
+	/**
+	 * Loads previously saved Google cookies into the browser context
+	 */
+	private static loadGoogleSession = async (
+		context: BrowserContext
+	): Promise< void > => {
+		try {
+			if ( ! fs.existsSync( GooglePayPopup.SESSION_PATH ) ) return;
+			const { cookies } = JSON.parse(
+				fs.readFileSync( GooglePayPopup.SESSION_PATH, 'utf-8' )
+			) as { cookies: Cookie[] };
+			if ( Array.isArray( cookies ) && cookies.length > 0 ) {
+				await context.addCookies( cookies );
+			}
+		} catch {}
+	};
+
+	/**
+	 * Saves this popup's google.com cookies to disk so they can be reused later.
+	 */
+	private saveGoogleSession = async (): Promise< void > => {
+		try {
+			const all = await this.page.context().cookies();
+			const googleCookies = all.filter(
+				( c ) =>
+					c.domain === 'google.com' ||
+					c.domain.endsWith( '.google.com' )
+			);
+			fs.writeFileSync(
+				GooglePayPopup.SESSION_PATH,
+				JSON.stringify( { cookies: googleCookies }, null, 2 )
+			);
+		} catch {}
+	};
+
 	// -------------------------------------------------------------------------
 	// Browser-level patches — call once on the context before the test runs
 	// -------------------------------------------------------------------------
@@ -31,6 +76,9 @@ export class GooglePayPopup {
 	 * Call this in beforeEach, before any page navigation.
 	 */
 	static applyBrowserPatches = async ( context: BrowserContext ) => {
+		// Restore a cached Google session from disk
+		await GooglePayPopup.loadGoogleSession( context );
+
 		await context.addInitScript( () => {
 			// Google Pay requires a secure context. On a local http:// dev site it
 			// throws DEVELOPER_ERROR without this patch.
@@ -131,25 +179,24 @@ export class GooglePayPopup {
 		await this.page
 			.waitForURL( ( url ) => url.href !== 'about:blank', { timeout: 15_000 } )
 			.catch( () => {} );
-		await this.page.waitForLoadState( 'domcontentloaded' ).catch( () => {} );
 
-		// In headed mode the popup occasionally loads blank on the first attempt —
-		// one reload is usually enough to get the real content.
-		for ( let attempt = 0; attempt < 2; attempt++ ) {
-			const hasContent = await this.page
-				.locator( 'input, button, iframe' )
-				.first()
-				.isVisible()
-				.catch( () => false );
-			if ( hasContent ) return;
-			await this.page.reload( { waitUntil: 'domcontentloaded' } );
-			await this.page.waitForTimeout( 1_000 );
+		// Reload only when still on about:blank; reloading during Google's redirect can break sign-in.
+		if ( this.page.url() === 'about:blank' || this.page.url() === '' ) {
+			await this.page.reload( { waitUntil: 'domcontentloaded' } ).catch( () => {} );
 		}
 
-		await expect(
-			this.page.locator( 'body' ),
-			'Google Pay popup stayed blank after retries'
-		).not.toHaveText( /^\s*$/, { timeout: 10_000 } );
+		// Wait until the pay.google loading step finishes so we land on sign-in or the pay screen before other checks run.
+		await this.page
+			.waitForURL(
+				( url ) =>
+					url.hostname.includes( 'accounts.google.com' ) ||
+					( url.hostname.includes( 'pay.google.com' ) &&
+						! url.pathname.startsWith( '/gp/p/loading' ) ),
+				{ timeout: 20_000 }
+			)
+			.catch( () => {} );
+
+		await this.page.waitForLoadState( 'domcontentloaded' ).catch( () => {} );
 	};
 
 	private signInToGoogle = async () => {
@@ -178,6 +225,9 @@ export class GooglePayPopup {
 			{ timeout: 30_000 }
 		);
 		await this.page.waitForLoadState();
+
+		// Save login cookies so the next test run can skip Google sign-in.
+		await this.saveGoogleSession();
 	};
 
 	/**
@@ -226,6 +276,8 @@ export class GooglePayPopup {
 
 		await expect( this.confirmButton(), 'Google Pay confirm button is visible' )
 			.toBeVisible( { timeout: 30_000 } );
+
+		await this.saveGoogleSession();
 
 		await Promise.all( [
 			this.page.waitForEvent( 'close' ),

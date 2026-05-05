@@ -127,11 +127,11 @@ class FeaturesEligibilityService {
 			FeaturesDefinition::FEATURE_SAVE_PAYPAL_AND_VENMO => fn() => $this->is_save_paypal_eligible,
 			FeaturesDefinition::FEATURE_ADVANCED_CREDIT_AND_DEBIT_CARDS => $this->check_acdc_eligible,
 			FeaturesDefinition::FEATURE_ALTERNATIVE_PAYMENT_METHODS => fn() => $this->is_apm_eligible,
-			FeaturesDefinition::FEATURE_GOOGLE_PAY      => $this->check_google_pay_eligible,
-			FeaturesDefinition::FEATURE_APPLE_PAY       => $this->check_apple_pay_eligible,
+			FeaturesDefinition::FEATURE_GOOGLE_PAY       => $this->check_google_pay_eligible,
+			FeaturesDefinition::FEATURE_APPLE_PAY        => $this->check_apple_pay_eligible,
 			FeaturesDefinition::FEATURE_PAY_LATER_MESSAGING => fn() => $this->is_pay_later_eligible,
-			FeaturesDefinition::FEATURE_INSTALLMENTS    => fn() => $this->is_installments_eligible,
-			FeaturesDefinition::FEATURE_PAY_WITH_CRYPTO => fn() => $this->is_pwc_eligibility_checked,
+			FeaturesDefinition::FEATURE_INSTALLMENTS     => fn() => $this->is_installments_eligible,
+			FeaturesDefinition::FEATURE_PAY_WITH_CRYPTO  => fn() => $this->is_pwc_eligibility_checked,
 			FeaturesDefinition::FEATURE_PAY_UPON_INVOICE => fn() => $this->is_pui_eligible,
 		);
 	}

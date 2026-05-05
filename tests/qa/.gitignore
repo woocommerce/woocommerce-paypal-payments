@@ -11,6 +11,7 @@ test-results
 .DS_Store
 /resources/files/woocommerce-paypal-payments*.zip
 /resources/files/woocommerce-subscriptions*.zip
+.google-session.json
 
 
 

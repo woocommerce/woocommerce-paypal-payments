@@ -19,7 +19,6 @@ use WooCommerce\PayPalCommerce\ApiClient\Entity\Authorization;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Capture;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\OrderStatus;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\ReferenceTransactionStatus;
-use WooCommerce\PayPalCommerce\ApiClient\Helper\Cache;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\DccApplies;
 use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\LocalApmProductStatus;
 use WooCommerce\PayPalCommerce\Settings\Data\Definition\FeaturesDefinition;
@@ -163,6 +162,27 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
 
 				// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 				echo $fees_renderer->render( $wc_order );
+			}
+		);
+
+		add_action(
+			'woocommerce_admin_order_totals_after_total',
+			function ( int $order_id ) use ( $c ) {
+				$wc_order = wc_get_order( $order_id );
+				if ( ! $wc_order instanceof WC_Order ) {
+					return;
+				}
+				$fraud_result = $wc_order->get_meta( PayPalGateway::FRAUD_RESULT_META_KEY );
+				if ( empty( $fraud_result['response_code'] ) ) {
+					return;
+				}
+				$fraud = $c->get( 'api.factory.fraud-processor-response' )
+					->from_paypal_response( (object) $fraud_result );
+				printf(
+					'<tr><td class="label">%s:</td><td width="1%%"></td><td class="total">%s</td></tr>',
+					esc_html__( 'Processor Response', 'woocommerce-paypal-payments' ),
+					esc_html( $fraud->get_response_code_message() )
+				);
 			}
 		);
 
@@ -448,13 +468,6 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
 				$pwc_product_status = $c->get( 'wcgateway.pwc-product-status' );
 				if ( $pwc_product_status instanceof PWCProductStatus ) {
 					$pwc_product_status->clear();
-				}
-
-				$reference_transaction_status_cache = $c->get( 'api.reference-transaction-status-cache' );
-				assert( $reference_transaction_status_cache instanceof Cache );
-				// Clear Reference Transaction status.
-				if ( $reference_transaction_status_cache->has( ReferenceTransactionStatus::CACHE_KEY ) ) {
-					$reference_transaction_status_cache->delete( ReferenceTransactionStatus::CACHE_KEY );
 				}
 			}
 		);

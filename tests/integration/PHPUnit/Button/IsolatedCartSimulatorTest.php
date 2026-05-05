@@ -41,6 +41,24 @@ class IsolatedCartSimulatorTest extends SimulateCartTestCase {
 		self::assertEquals( $original_total, (float) WC()->cart->get_total( 'numeric' ) );
 	}
 
+	public function testSimulateDoesNotClearSessionCart(): void {
+		$product = $this->createSimpleProduct( 25.00 );
+		WC()->cart->add_to_cart( $product->get_id(), 1 );
+		WC()->cart->calculate_totals();
+
+		// Force a session write so there is something to preserve.
+		WC()->cart->session->set_session();
+		self::assertNotEmpty( WC()->session->get( 'cart' ) );
+
+		$sim_product = $this->createSimpleProduct( 99.00 );
+		$this->cart_simulator->simulate( [ $this->productData( $sim_product ) ] );
+
+		self::assertNotEmpty(
+			WC()->session->get( 'cart' ),
+			'Real session cart must survive a simulate call (guests rely on this).'
+		);
+	}
+
 	public function testSimulateDoesNotRemoveShutdownHooks(): void {
 		$callback = function () {};
 
