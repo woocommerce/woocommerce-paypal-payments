@@ -20,7 +20,6 @@ class AgenticBetaBannerEligibility {
 	private const REQUIRED_PRODUCT_COUNT = 50;
 	private const REQUIRED_ORDER_COUNT   = 50;
 	private const ORDER_LOOKBACK_DAYS    = 90;
-	private const MIN_PHP_VERSION        = '8.1';
 	private const TRANSIENT_KEY          = 'ppcp_agentic_banner_base_eligible';
 
 	private GeneralSettings $general_settings;
@@ -64,7 +63,7 @@ class AgenticBetaBannerEligibility {
 	 * @return bool
 	 */
 	private function are_store_conditions_met(): bool {
-		if ( ! version_compare( PHP_VERSION, self::MIN_PHP_VERSION, '>=' ) ) {
+		if ( ! version_compare( PHP_VERSION, '8.1', '>=' ) ) {
 			return false;
 		}
 
