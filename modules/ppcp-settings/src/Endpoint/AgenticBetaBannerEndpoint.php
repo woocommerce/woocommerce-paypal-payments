@@ -17,9 +17,9 @@ use WP_REST_Request;
  */
 class AgenticBetaBannerEndpoint extends \WooCommerce\PayPalCommerce\Settings\Endpoint\RestEndpoint
 {
-    public const OPTION_DISMISSED = 'ppcp_agentic_banner_dismissed';
-    public const OPTION_STATUS = 'ppcp_agentic_beta_status';
-    public const OPTION_SNOOZED_UNTIL = 'ppcp_agentic_banner_snoozed_until';
+    public const OPTION_DISMISSED = 'woocommerce-ppcp-agentic-banner-dismissed';
+    public const OPTION_STATUS = 'woocommerce-ppcp-agentic-beta-status';
+    public const OPTION_SNOOZED_UNTIL = 'woocommerce-ppcp-agentic-banner-snoozed-until';
     public const STATUS_PENDING = 'pending';
     public const STATUS_APPLIED = 'applied';
     public const SNOOZE_DAYS = 7;
