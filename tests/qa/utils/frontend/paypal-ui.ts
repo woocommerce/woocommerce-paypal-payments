@@ -10,7 +10,7 @@ import {
 /**
  * Internal dependencies
  */
-import { PayPalAccount, Pcp } from '../../resources';
+import { PayPalAccount, Pcp, ShopOrder } from '../../resources';
 import { PayPalPopup } from './paypal-popup';
 import { GooglePayPopup } from './google-pay-popup';
 import { PayPalApi } from '../paypal-api';
@@ -292,12 +292,14 @@ export class PayPalUi {
 	 * @param data
 	 * @param data.payment
 	 * @param data.merchant
+	 * @param data.customer
 	 */
 	makePayment = async ( data: {
 		payment: Pcp.Payment;
 		merchant?: Pcp.Merchant;
+		customer?: ShopOrder[ 'customer' ];
 	} ) => {
-		const { payment, merchant } = data;
+		const { payment, merchant, customer } = data;
 		const { gateway, payPalAccount } = payment;
 		const { shortcut } = gateway;
 		let popup: PayPalPopup;
@@ -354,15 +356,11 @@ export class PayPalUi {
 				break;
 
 			case 'card':
-				// Standard Card Button
 				if ( gateway.id === 'ppcp-card-button-gateway' ) {
-					await this.completeStandardCardButtonPayment(
-						payment.card
-					);
+					await this.completeBcdcPayment( payment.card, customer );
 					break;
 				}
-				// Debit Or Credit Card
-				await this.completeDebitOrCreditCardPayment( payment.card );
+				await this.completeBcdcFundingSourcePayment( payment.card );
 				break;
 
 			case 'pay_upon_invoice':
@@ -572,13 +570,11 @@ export class PayPalUi {
 	completeOXXOPayment = async ( ...args ) =>
 		console.log( `TODO: completeOXXOPayment for block pages` );
 
-	completeStandardCardButtonPayment = async ( ...args ) =>
-		console.log(
-			`TODO: completeStandardCardButtonPayment for block pages`
-		);
+	completeBcdcPayment = async ( ...args ) =>
+		console.log( `TODO: completeBcdcPayment for block pages` );
 
-	completeDebitOrCreditCardPayment = async ( ...args ) =>
-		console.log( `TODO: completeDebitOrCreditCardPayment for block pages` );
+	completeBcdcFundingSourcePayment = async ( ...args ) =>
+		console.log( `TODO: completeBcdcFundingSourcePayment for block pages` );
 
 	completePayUponInvoicePayment = async ( ...args ) =>
 		console.log( `TODO: completePayUponInvoicePayment for block pages` );
