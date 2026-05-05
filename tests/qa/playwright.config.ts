@@ -79,7 +79,9 @@ export default defineConfig< BaseExtend >( {
 
 		viewport: viewportSize,
 
-		trace: 'retain-on-failure', //process.env.CI ? 'off' : 'on-first-retry',//'on',//
+		trace: process.env.CI
+			? 'off'
+			: 'retain-on-failure', //process.env.CI ? 'off' : 'on-first-retry',//'on',//
 
 		screenshot: {
 			mode: 'only-on-failure',
