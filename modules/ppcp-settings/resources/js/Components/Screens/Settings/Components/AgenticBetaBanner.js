@@ -16,11 +16,10 @@ import {
 	applyForAgenticBeta,
 } from '@ppcp-settings/data/agentic-beta/actions';
 
-const BANNER_ID        = 'ppcp-agentic-beta-banner';
-const BANNER_CLASS     = 'ppcp-r-settings-banner';
-const BANNER_TITLE_ID  = `${ BANNER_ID }-title`;
-// TODO: Replace with the real beta sign-up URL once it is confirmed by the PayPal team.
-const APPLY_URL = 'https://example.com';
+const BANNER_ID = 'ppcp-agentic-beta-banner';
+const BANNER_CLASS = 'ppcp-r-settings-banner';
+const BANNER_TITLE_ID = `${ BANNER_ID }-title`;
+const APPLY_URL = 'https://example.com'; // TODO: Replace with the real beta sign-up URL once it is confirmed by the PayPal team.
 
 let isBannerDismissed = false;
 
@@ -98,7 +97,10 @@ const AgenticBetaBanner = () => {
 						</div>
 					</Action>
 				</Content>
-				<Content asCard={ false } className={ `${ BANNER_CLASS }__icon` }>
+				<Content
+					asCard={ false }
+					className={ `${ BANNER_CLASS }__icon` }
+				>
 					<PPIcon imageName="icon-paypal-business-loan.svg" />
 					<button
 						className={ `${ BANNER_CLASS }__icon-close` }
