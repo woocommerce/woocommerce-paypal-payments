@@ -19,9 +19,9 @@ use WooCommerce\PayPalCommerce\Settings\Endpoint\AgenticBetaBannerEndpoint;
  */
 class AgenticBetaBannerEligibility {
 
-	private const REQUIRED_PRODUCT_COUNT = 1;
-	private const REQUIRED_ORDER_COUNT   = 1;
-	private const ORDER_LOOKBACK_DAYS    = 900;
+	private const REQUIRED_PRODUCT_COUNT = 50;
+	private const REQUIRED_ORDER_COUNT   = 50;
+	private const ORDER_LOOKBACK_DAYS    = 90;
 
 	private GeneralSettings $general_settings;
 	private string $store_country;
