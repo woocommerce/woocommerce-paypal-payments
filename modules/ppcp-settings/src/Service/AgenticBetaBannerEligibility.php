@@ -20,6 +20,7 @@ class AgenticBetaBannerEligibility {
 	private const REQUIRED_PRODUCT_COUNT = 50;
 	private const REQUIRED_ORDER_COUNT   = 50;
 	private const ORDER_LOOKBACK_DAYS    = 90;
+	private const MIN_PHP_VERSION        = '8.1';
 	private const TRANSIENT_KEY          = 'ppcp_agentic_banner_base_eligible';
 
 	private GeneralSettings $general_settings;
@@ -56,12 +57,17 @@ class AgenticBetaBannerEligibility {
 	}
 
 	/**
-	 * Returns true when the store-level conditions are met. The result is cached
-	 * for 10 minutes to avoid running expensive DB queries on every admin load.
+	 * Returns true when the store-level conditions are met: PHP >= 8.1, merchant
+	 * connected, US store with a US shipping zone, and sufficient product/order
+	 * counts. The result is cached for 10 minutes to avoid repeated DB queries.
 	 *
 	 * @return bool
 	 */
 	private function are_store_conditions_met(): bool {
+		if ( ! version_compare( PHP_VERSION, self::MIN_PHP_VERSION, '>=' ) ) {
+			return false;
+		}
+
 		$cached = get_transient( self::TRANSIENT_KEY );
 		if ( $cached !== false ) {
 			return (bool) $cached;
