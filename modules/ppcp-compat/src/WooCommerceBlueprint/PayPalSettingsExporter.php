@@ -10,7 +10,6 @@ namespace WooCommerce\PayPalCommerce\Compat\WooCommerceBlueprint;
 
 use Automattic\WooCommerce\Blueprint\Exporters\StepExporter;
 use Automattic\WooCommerce\Blueprint\Exporters\HasAlias;
-use Automattic\WooCommerce\Blueprint\Steps\SetSiteOptions;
 use Automattic\WooCommerce\Blueprint\Steps\Step;
 /**
  * PayPal Settings Exporter for WooCommerce Blueprint.
@@ -35,7 +34,7 @@ class PayPalSettingsExporter implements StepExporter, HasAlias
                 $paypal_options[$option_name] = $value;
             }
         }
-        return new SetSiteOptions($paypal_options);
+        return new \WooCommerce\PayPalCommerce\Compat\WooCommerceBlueprint\SetPayPalSettings($paypal_options);
     }
     /**
      * Get step name.
@@ -44,7 +43,7 @@ class PayPalSettingsExporter implements StepExporter, HasAlias
      */
     public function get_step_name(): string
     {
-        return SetSiteOptions::get_step_name();
+        return \WooCommerce\PayPalCommerce\Compat\WooCommerceBlueprint\SetPayPalSettings::get_step_name();
     }
     /**
      * Get alias for this exporter.

@@ -236,6 +236,7 @@ return array(
     'WooCommerce\\PayPalCommerce\\Compat\\WooCommerceBlueprint\\PayPalBlueprintOptions' => $baseDir . '/modules/ppcp-compat/src/WooCommerceBlueprint/PayPalBlueprintOptions.php',
     'WooCommerce\\PayPalCommerce\\Compat\\WooCommerceBlueprint\\PayPalSettingsExporter' => $baseDir . '/modules/ppcp-compat/src/WooCommerceBlueprint/PayPalSettingsExporter.php',
     'WooCommerce\\PayPalCommerce\\Compat\\WooCommerceBlueprint\\PayPalSettingsImporter' => $baseDir . '/modules/ppcp-compat/src/WooCommerceBlueprint/PayPalSettingsImporter.php',
+    'WooCommerce\\PayPalCommerce\\Compat\\WooCommerceBlueprint\\SetPayPalSettings' => $baseDir . '/modules/ppcp-compat/src/WooCommerceBlueprint/SetPayPalSettings.php',
     'WooCommerce\\PayPalCommerce\\FraudProtection\\FraudProtectionModule' => $baseDir . '/modules/ppcp-fraud-protection/src/FraudProtectionModule.php',
     'WooCommerce\\PayPalCommerce\\FraudProtection\\PersistentCounter' => $baseDir . '/modules/ppcp-fraud-protection/src/PersistentCounter.php',
     'WooCommerce\\PayPalCommerce\\FraudProtection\\Recaptcha\\Recaptcha' => $baseDir . '/modules/ppcp-fraud-protection/src/Recaptcha/Recaptcha.php',

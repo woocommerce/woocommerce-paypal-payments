@@ -10,7 +10,6 @@ namespace WooCommerce\PayPalCommerce\Compat\WooCommerceBlueprint;
 
 use Automattic\WooCommerce\Blueprint\StepProcessor;
 use Automattic\WooCommerce\Blueprint\StepProcessorResult;
-use Automattic\WooCommerce\Blueprint\Steps\SetSiteOptions;
 use WooCommerce\PayPalCommerce\Settings\DTO\LocationStylingDTO;
 use WooCommerce\PayPalCommerce\Settings\DTO\PayLaterMessagingDTO;
 /**
@@ -30,7 +29,7 @@ class PayPalSettingsImporter implements StepProcessor
      */
     public function process($schema): StepProcessorResult
     {
-        $result = StepProcessorResult::success(SetSiteOptions::get_step_name());
+        $result = StepProcessorResult::success(\WooCommerce\PayPalCommerce\Compat\WooCommerceBlueprint\SetPayPalSettings::get_step_name());
         if (!isset($schema->options) || !is_object($schema->options)) {
             $result->add_error('Invalid PayPal options data');
             return $result;
@@ -54,10 +53,8 @@ class PayPalSettingsImporter implements StepProcessor
                 $result->add_warn("Skipped option with invalid value: {$sanitized_name}");
                 continue;
             }
-            // Check if this is a PayPal-related option.
+            // Only accept options from our allowlist.
             if (!$this->is_paypal_option($option_name)) {
-                $sanitized_name = sanitize_text_field($option_name);
-                $result->add_warn("Skipped non-PayPal option: {$sanitized_name}");
                 continue;
             }
             // Attempt to update the option with proper error handling.
@@ -68,7 +65,7 @@ class PayPalSettingsImporter implements StepProcessor
                 $result->add_error("Failed to update option: {$sanitized_name}");
             }
         }
-        $result->add_info("Successfully imported {$imported_count} PayPal options");
+        $result->add_info("Successfully imported {$imported_count} options");
         return $result;
     }
     /**
@@ -78,7 +75,7 @@ class PayPalSettingsImporter implements StepProcessor
      */
     public function get_step_class(): string
     {
-        return SetSiteOptions::class;
+        return \WooCommerce\PayPalCommerce\Compat\WooCommerceBlueprint\SetPayPalSettings::class;
     }
     /**
      * Check capabilities.
