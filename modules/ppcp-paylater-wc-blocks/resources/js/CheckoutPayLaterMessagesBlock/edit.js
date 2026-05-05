@@ -1,15 +1,17 @@
 import { __ } from '@wordpress/i18n';
 import { useState, useEffect } from '@wordpress/element';
 import { InspectorControls, useBlockProps } from '@wordpress/block-editor';
-import { PanelBody, Spinner } from '@wordpress/components';
+import { PanelBody } from '@wordpress/components';
 import { PayPalScriptProvider, PayPalMessages } from '@paypal/react-paypal-js';
 import { useScriptParams } from '@ppcp-paylater-block/hooks/script-params';
+import { usePreviewTimeout } from '@ppcp-paylater-block/hooks/use-preview-timeout';
+import { PreviewPlaceholder } from '@ppcp-paylater-block/components/preview-placeholder';
 
 export default function Edit( { attributes, clientId, setAttributes } ) {
 	const { ppcpId } = attributes;
 
 	const [ loaded, setLoaded ] = useState( false );
-	const [ timedOut, setTimedOut ] = useState( false );
+	const timedOut = usePreviewTimeout( loaded );
 
 	let amount;
 	const postContent = String(
@@ -64,14 +66,6 @@ export default function Edit( { attributes, clientId, setAttributes } ) {
 			setAttributes( { ppcpId: 'ppcp-' + clientId } );
 		}
 	}, [ ppcpId, clientId ] );
-
-	useEffect( () => {
-		if ( loaded ) {
-			return;
-		}
-		const timer = setTimeout( () => setTimedOut( true ), 5000 );
-		return () => clearTimeout( timer );
-	}, [ loaded ] );
 
 	if ( PcpCheckoutPayLaterBlock.vaultingEnabled ) {
 		return (
@@ -143,16 +137,7 @@ export default function Edit( { attributes, clientId, setAttributes } ) {
 	if ( scriptParams === null ) {
 		return (
 			<div { ...props }>
-				{ timedOut ? (
-					<p>
-						{ __(
-							'Pay Later messaging preview unavailable in editor. Messaging will display on the frontend when eligibility conditions are met.',
-							'woocommerce-paypal-payments'
-						) }
-					</p>
-				) : (
-					<Spinner />
-				) }
+				<PreviewPlaceholder timedOut={ timedOut } />
 			</div>
 		);
 	}
@@ -204,17 +189,9 @@ export default function Edit( { attributes, clientId, setAttributes } ) {
 				<div className={ 'ppcp-overlay-child ppcp-unclicable-overlay' }>
 					{ ' ' }
 					{ /* make the message not clickable */ }
-					{ ! loaded &&
-						( timedOut ? (
-							<p>
-								{ __(
-									'Pay Later messaging preview unavailable in editor. Messaging will display on the frontend when eligibility conditions are met.',
-									'woocommerce-paypal-payments'
-								) }
-							</p>
-						) : (
-							<Spinner />
-						) ) }
+					{ ! loaded && (
+						<PreviewPlaceholder timedOut={ timedOut } />
+					) }
 				</div>
 			</div>
 		</>
