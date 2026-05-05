@@ -6,6 +6,7 @@ namespace WooCommerce\PayPalCommerce\StoreSync\Schema;
 /**
  * @covers \WooCommerce\PayPalCommerce\StoreSync\Schema\AgenticSchema
  * @covers \WooCommerce\PayPalCommerce\StoreSync\Schema\PayPalCart
+ * @covers \WooCommerce\PayPalCommerce\StoreSync\Schema\ShippingOption
  */
 class PayPalCartTest extends SchemaTestCase {
 
@@ -143,6 +144,53 @@ class PayPalCartTest extends SchemaTestCase {
 		$this->assertArrayFieldMinCount( 'items', 1, $car_item );
 		$this->assertArrayFieldMaxCount( 'items', 100, $car_item );
 		$this->assertArrayFieldMaxCount( 'checkout_fields', 20, $checkout_field );
+	}
+
+	/**
+	 * @scenario Cart payload includes a selected shipping option
+	 *
+	 * Given a PayPal cart payload containing an available_shipping_options entry
+	 * with isSelected set to true
+	 * When PayPalCart::from_array() parses that payload
+	 * Then available_shipping_options() returns a non-empty array
+	 * And the first element is a ShippingOption instance
+	 * And that ShippingOption reports isSelected() as true with id() 'flat_rate:4'
+	 */
+	public function test_available_shipping_options_are_parsed_from_input(): void {
+		$input = array_merge(
+			$this->mandatory_data(),
+			array(
+				'available_shipping_options' => array(
+					array(
+						'id'         => 'flat_rate:4',
+						'name'       => 'Flat Rate',
+						'price'      => array( 'currency_code' => 'USD', 'value' => '5.00' ),
+						'isSelected' => true,
+					),
+				),
+			)
+		);
+
+		$cart = PayPalCart::from_array( $input );
+
+		$options = $cart->available_shipping_options();
+		$this->assertNotNull( $options, 'available_shipping_options() must not return null when options are provided' );
+		$this->assertNotEmpty( $options, 'available_shipping_options() must return a non-empty array' );
+		$this->assertInstanceOf( ShippingOption::class, $options[0] );
+		$this->assertTrue( $options[0]->isSelected(), 'The first option must report isSelected() = true' );
+		$this->assertSame( 'flat_rate:4', $options[0]->id() );
+	}
+
+	/**
+	 * @scenario Cart payload has no available_shipping_options key
+	 *
+	 * Given a minimal PayPal cart payload without an available_shipping_options key
+	 * When PayPalCart::from_array() parses that payload
+	 * Then available_shipping_options() returns null
+	 * And no validation issues are raised for the missing field
+	 */
+	public function test_available_shipping_options_is_optional_and_returns_null_when_absent(): void {
+		$this->assertOptionalField( 'available_shipping_options' );
 	}
 
 	public function test_validation_issue_propagation(): void {
