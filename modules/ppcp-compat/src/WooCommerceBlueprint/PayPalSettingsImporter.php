@@ -11,8 +11,7 @@ namespace WooCommerce\PayPalCommerce\Compat\WooCommerceBlueprint;
 
 use Automattic\WooCommerce\Blueprint\StepProcessor;
 use Automattic\WooCommerce\Blueprint\StepProcessorResult;
-use WooCommerce\PayPalCommerce\Settings\DTO\LocationStylingDTO;
-use WooCommerce\PayPalCommerce\Settings\DTO\PayLaterMessagingDTO;
+use WooCommerce\PayPalCommerce\Settings\Service\DataSanitizer;
 
 /**
  * PayPal Settings Importer.
@@ -23,6 +22,22 @@ class PayPalSettingsImporter implements StepProcessor {
 	 * Sentinel value to detect if option doesn't exist.
 	 */
 	private const OPTION_NOT_FOUND = '__PAYPAL_OPTION_NOT_FOUND__';
+
+	/**
+	 * Data sanitizer for DTO hydration.
+	 *
+	 * @var DataSanitizer
+	 */
+	private DataSanitizer $sanitizer;
+
+	/**
+	 * Constructor.
+	 *
+	 * @param DataSanitizer $sanitizer Data sanitizer.
+	 */
+	public function __construct( DataSanitizer $sanitizer ) {
+		$this->sanitizer = $sanitizer;
+	}
 
 	/**
 	 * Process PayPal settings import.
@@ -178,8 +193,17 @@ class PayPalSettingsImporter implements StepProcessor {
 	 *
 	 * Some options store typed DTO objects (e.g. LocationStylingDTO). Blueprint
 	 * export serializes these to JSON objects, and on import they arrive as plain
-	 * arrays after convert_objects_to_arrays(). This method restores the proper
-	 * DTO instances before the value is written to the database.
+	 * arrays after convert_objects_to_arrays(). This method uses DataSanitizer to
+	 * restore the proper DTO instances before writing to the database.
+	 *
+	 * @todo The blueprint importer currently hardcodes which options contain
+	 *       DTOs and which keys within them need hydration. This couples the
+	 *       importer to the internal structure of StylingSettings and
+	 *       PayLaterMessagingSettings. Consider having AbstractDataModel
+	 *       subclasses register their own hydration/sanitization logic so
+	 *       the importer can delegate without knowing the details. This
+	 *       would also make adding new DTO-based options automatic rather
+	 *       than requiring importer changes.
 	 *
 	 * @param string $option_name  Option name.
 	 * @param mixed  $option_value Option value.
@@ -189,8 +213,8 @@ class PayPalSettingsImporter implements StepProcessor {
 		if ( 'woocommerce-ppcp-data-styling' === $option_name && is_array( $option_value ) ) {
 			$location_keys = array( 'cart', 'classic_checkout', 'express_checkout', 'mini_cart', 'product' );
 			foreach ( $location_keys as $key ) {
-				if ( isset( $option_value[ $key ] ) && is_array( $option_value[ $key ] ) ) {
-					$option_value[ $key ] = $this->array_to_location_styling_dto( $option_value[ $key ], $key );
+				if ( isset( $option_value[ $key ] ) ) {
+					$option_value[ $key ] = $this->sanitizer->sanitize_location_style( $option_value[ $key ], $key );
 				}
 			}
 		}
@@ -198,54 +222,13 @@ class PayPalSettingsImporter implements StepProcessor {
 		if ( 'woocommerce-ppcp-data-paylater-messaging' === $option_name && is_array( $option_value ) ) {
 			$location_keys = array( 'cart', 'checkout', 'product', 'shop', 'home', 'custom_placement' );
 			foreach ( $location_keys as $key ) {
-				if ( isset( $option_value[ $key ] ) && is_array( $option_value[ $key ] ) ) {
-					$option_value[ $key ] = $this->array_to_pay_later_messaging_dto( $option_value[ $key ], $key );
+				if ( isset( $option_value[ $key ] ) ) {
+					$option_value[ $key ] = $this->sanitizer->sanitize_paylater_messaging( $option_value[ $key ], $key );
 				}
 			}
 		}
 
 		return $option_value;
-	}
-
-	/**
-	 * Convert an array to a LocationStylingDTO instance.
-	 *
-	 * @param array  $data     The array data.
-	 * @param string $location The location key.
-	 * @return LocationStylingDTO
-	 */
-	private function array_to_location_styling_dto( array $data, string $location ): LocationStylingDTO {
-		return new LocationStylingDTO(
-			$data['location'] ?? $location,
-			(bool) ( $data['enabled'] ?? true ),
-			(array) ( $data['methods'] ?? array() ),
-			(string) ( $data['shape'] ?? 'rect' ),
-			(string) ( $data['label'] ?? 'pay' ),
-			(string) ( $data['color'] ?? 'gold' ),
-			(string) ( $data['layout'] ?? 'vertical' ),
-			(bool) ( $data['tagline'] ?? false )
-		);
-	}
-
-	/**
-	 * Convert an array to a PayLaterMessagingDTO instance.
-	 *
-	 * @param array  $data     The array data.
-	 * @param string $location The location key.
-	 * @return PayLaterMessagingDTO
-	 */
-	private function array_to_pay_later_messaging_dto( array $data, string $location ): PayLaterMessagingDTO {
-		return new PayLaterMessagingDTO(
-			$data['location'] ?? $location,
-			(bool) ( $data['enabled'] ?? false ),
-			(string) ( $data['layout'] ?? 'text' ),
-			(string) ( $data['logo_type'] ?? 'inline' ),
-			(string) ( $data['logo_position'] ?? 'left' ),
-			(string) ( $data['text_color'] ?? 'black' ),
-			(string) ( $data['text_size'] ?? '12' ),
-			(string) ( $data['flex_color'] ?? 'black' ),
-			(string) ( $data['flex_ratio'] ?? '8x1' )
-		);
 	}
 
 	/**
