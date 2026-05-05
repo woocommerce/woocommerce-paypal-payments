@@ -112,6 +112,7 @@ export async function initializeScript( addPaymentMethodConfig ) {
 				'merchant-id': addPaymentMethodConfig.merchant_id,
 				components: 'buttons,card-fields',
 			},
+			script_attributes: addPaymentMethodConfig.script_attributes || {},
 			save_payment_methods: {
 				id_token: addPaymentMethodConfig.id_token,
 			},
