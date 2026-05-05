@@ -12,15 +12,15 @@ declare( strict_types = 1 );
 namespace WooCommerce\PayPalCommerce\StoreSync\Helper;
 
 use RuntimeException;
-use WC_Cart;
 use Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\Orders;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Order as WooOrder;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\ExperienceContext;
-
-use WooCommerce\PayPalCommerce\StoreSync\Schema\PayPalCart;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\Patch;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\PatchCollection;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
+use WooCommerce\PayPalCommerce\StoreSync\Schema\PayPalCart;
 
 class PayPalOrderManager {
 	private OrderEndpoint $order_endpoint;
@@ -190,29 +190,25 @@ class PayPalOrderManager {
 
 		$cart_amount = $totals['amount'];
 
-		// TODO - patch order does not update the cart items??
-		// Build patch operations - update both items and amount.
-		$patch_data = array(
-			// First, replace items to match the new cart.
-			array(
-				'op'    => 'replace',
-				'path'  => "/purchase_units/@reference_id=='default'/items",
-				'value' => $items,
+		$patches = new PatchCollection(
+			new Patch(
+				'replace',
+				"/purchase_units/@reference_id=='default'/items",
+				$items
 			),
-			// Then, update the amount with matching breakdown.
-			array(
-				'op'    => 'replace',
-				'path'  => "/purchase_units/@reference_id=='default'/amount",
-				'value' => array(
+			new Patch(
+				'replace',
+				"/purchase_units/@reference_id=='default'/amount",
+				array(
 					'currency_code' => $cart_amount['currency_code'],
 					'value'         => $cart_amount['value'],
 					'breakdown'     => $breakdown,
-				),
-			),
+				)
+			)
 		);
 
 		try {
-			$this->orders_api->patch_order( $order_id, $patch_data );
+			$this->order_endpoint->patch( $order_id, $patches );
 
 			$this->logger->info(
 				'[ORDER] PayPal Order updated successfully',
