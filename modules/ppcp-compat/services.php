@@ -126,7 +126,9 @@ return array(
 		return new PayPalSettingsExporter();
 	},
 	'compat.blueprint.paypal_settings_importer'            => static function ( ContainerInterface $container ): PayPalSettingsImporter {
-		return new PayPalSettingsImporter();
+		return new PayPalSettingsImporter(
+			$container->get( 'settings.service.sanitizer' )
+		);
 	},
 	'compat.blueprint.bootstrap'                           => static function ( ContainerInterface $container ): PayPalBlueprintBootstrap {
 		return new PayPalBlueprintBootstrap(
