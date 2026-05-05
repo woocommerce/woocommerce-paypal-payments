@@ -11,7 +11,6 @@ namespace WooCommerce\PayPalCommerce\Compat\WooCommerceBlueprint;
 
 use Automattic\WooCommerce\Blueprint\StepProcessor;
 use Automattic\WooCommerce\Blueprint\StepProcessorResult;
-use Automattic\WooCommerce\Blueprint\Steps\SetSiteOptions;
 use WooCommerce\PayPalCommerce\Settings\DTO\LocationStylingDTO;
 use WooCommerce\PayPalCommerce\Settings\DTO\PayLaterMessagingDTO;
 
@@ -32,7 +31,7 @@ class PayPalSettingsImporter implements StepProcessor {
 	 * @return StepProcessorResult
 	 */
 	public function process( $schema ): StepProcessorResult {
-		$result = StepProcessorResult::success( SetSiteOptions::get_step_name() );
+		$result = StepProcessorResult::success( SetPayPalSettings::get_step_name() );
 
 		if ( ! isset( $schema->options ) || ! is_object( $schema->options ) ) {
 			$result->add_error( 'Invalid PayPal options data' );
@@ -62,10 +61,8 @@ class PayPalSettingsImporter implements StepProcessor {
 				continue;
 			}
 
-			// Check if this is a PayPal-related option.
+			// Only accept options from our allowlist.
 			if ( ! $this->is_paypal_option( $option_name ) ) {
-				$sanitized_name = sanitize_text_field( $option_name );
-				$result->add_warn( "Skipped non-PayPal option: {$sanitized_name}" );
 				continue;
 			}
 
@@ -78,7 +75,7 @@ class PayPalSettingsImporter implements StepProcessor {
 			}
 		}
 
-		$result->add_info( "Successfully imported {$imported_count} PayPal options" );
+		$result->add_info( "Successfully imported {$imported_count} options" );
 		return $result;
 	}
 
@@ -88,7 +85,7 @@ class PayPalSettingsImporter implements StepProcessor {
 	 * @return string
 	 */
 	public function get_step_class(): string {
-		return SetSiteOptions::class;
+		return SetPayPalSettings::class;
 	}
 
 	/**
