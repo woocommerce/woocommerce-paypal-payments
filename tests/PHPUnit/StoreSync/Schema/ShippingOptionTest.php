@@ -21,7 +21,7 @@ class ShippingOptionTest extends SchemaTestCase {
 				'currency_code' => 'usd',
 				'value'         => '5.99',
 			),
-			'isSelected'         => true,
+			'is_selected'         => true,
 			'estimated_delivery' => '2024-07-01',
 		);
 	}
@@ -33,7 +33,7 @@ class ShippingOptionTest extends SchemaTestCase {
 			'description'         => 'Standard ground shipping via USPS',
 			'price.currency_code' => 'USD',
 			'price.value'         => 5.99,
-			'isSelected'          => true,
+			'is_selected'          => true,
 			'estimated_delivery'  => '2024-07-01',
 		);
 	}
@@ -43,7 +43,7 @@ class ShippingOptionTest extends SchemaTestCase {
 			'id'                 => array( 'type' => 'string', 'default' => '' ),
 			'name'               => array( 'type' => 'string', 'default' => '' ),
 			'description'        => 'string',
-			'isSelected'         => array( 'type' => 'bool', 'default' => false ),
+			'is_selected'        => array( 'type' => 'bool', 'default' => false ),
 			'estimated_delivery' => 'date',
 		);
 	}
@@ -56,7 +56,7 @@ class ShippingOptionTest extends SchemaTestCase {
 				'currency_code' => 'USD',
 				'value'         => '5.99',
 			),
-			'isSelected' => true,
+			'is_selected' => true,
 		);
 	}
 
@@ -64,9 +64,9 @@ class ShippingOptionTest extends SchemaTestCase {
 		$this->assertRequiredField( 'id' );
 		$this->assertRequiredField( 'name' );
 		$this->assertRequiredField( 'price' );
-		$this->assertRequiredField( 'isSelected' );
+		$this->assertRequiredField( 'is_selected' );
 
-		$this->assertBooleanFieldDefaultState( 'isSelected' );
+		$this->assertBooleanFieldDefaultState( 'is_selected' );
 
 		$this->assertOptionalField( 'description' );
 		$this->assertOptionalField( 'estimated_delivery' );

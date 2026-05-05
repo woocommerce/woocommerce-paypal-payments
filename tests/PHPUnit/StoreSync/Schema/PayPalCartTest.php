@@ -165,7 +165,7 @@ class PayPalCartTest extends SchemaTestCase {
 						'id'         => 'flat_rate:4',
 						'name'       => 'Flat Rate',
 						'price'      => array( 'currency_code' => 'USD', 'value' => '5.00' ),
-						'isSelected' => true,
+						'is_selected' => true,
 					),
 				),
 			)
@@ -177,7 +177,7 @@ class PayPalCartTest extends SchemaTestCase {
 		$this->assertNotNull( $options, 'available_shipping_options() must not return null when options are provided' );
 		$this->assertNotEmpty( $options, 'available_shipping_options() must return a non-empty array' );
 		$this->assertInstanceOf( ShippingOption::class, $options[0] );
-		$this->assertTrue( $options[0]->isSelected(), 'The first option must report isSelected() = true' );
+		$this->assertTrue( $options[0]->is_selected(), 'The first option must report is_selected() = true' );
 		$this->assertSame( 'flat_rate:4', $options[0]->id() );
 	}
 

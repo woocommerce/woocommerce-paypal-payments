@@ -30,7 +30,7 @@ class AgenticCartBuilderTest extends TestCase {
 	public function test_selected_shipping_option_is_applied_to_wc_session(): void {
 		// Arrange: a ShippingOption stub reporting isSelected = true.
 		$shipping_option = Mockery::mock( ShippingOption::class );
-		$shipping_option->allows( 'isSelected' )->andReturn( true );
+		$shipping_option->allows( 'is_selected' )->andReturn( true );
 		$shipping_option->allows( 'id' )->andReturn( 'flat_rate:4' );
 
 		// Arrange: a PayPalCart stub returning the option and minimal empty data.
