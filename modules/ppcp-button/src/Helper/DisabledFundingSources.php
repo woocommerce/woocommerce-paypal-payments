@@ -38,7 +38,7 @@ class DisabledFundingSources
         $flags = array('context' => $context, 'is_block_context' => in_array($context, $block_contexts, \true), 'is_free_trial' => $this->is_free_trial_cart());
         // Free trials have a shorter, special funding-source rule.
         if ($flags['is_free_trial']) {
-            return $this->sanitize_and_filter_sources($this->get_sources_for_free_trial(), $flags);
+            return $this->sanitize_and_filter_sources($this->get_sources_for_free_trial($flags), $flags);
         }
         $disable_funding = $this->get_sources_from_settings($context);
         $disable_funding = $this->apply_card_rules($disable_funding, $flags);
@@ -72,14 +72,20 @@ class DisabledFundingSources
      * Rule: Carts that include a free trial product can ONLY use the
      * funding source "card" - all other sources are disabled.
      *
+     * The 'card' decision defers to {@see self::should_disable_card()} so the
+     * same decision table applies to free-trial carts — notably: classic
+     * checkout keeps 'card' enabled for ACDC (card-fields) or BCDC (card
+     * button); block checkout keeps 'card' disabled because ACDC there is
+     * rendered via the WC Blocks integration.
+     *
+     * @param array $flags Decision flags (context, is_block_context, …).
      * @return array
      */
-    private function get_sources_for_free_trial(): array
+    private function get_sources_for_free_trial(array $flags): array
     {
         // Disable all sources.
         $disable_funding = array_keys($this->all_funding_sources);
-        if (is_checkout() && $this->dcc_configuration->is_bcdc_enabled()) {
-            // If BCDC is used, re-enable card payments.
+        if (!$this->should_disable_card((bool) ($flags['is_block_context'] ?? \false))) {
             $disable_funding = array_filter($disable_funding, static fn(string $funding_source) => $funding_source !== 'card');
         }
         return $disable_funding;
@@ -112,7 +118,7 @@ class DisabledFundingSources
      * Decision table:
      *
      *  Non-checkout page              → disabled  (no card button/fields needed outside checkout)
-     *  Block checkout + ACDC capable  → disabled  (ACDC uses WC Blocks card-fields, not this source)
+     *  Block checkout + ACDC enabled  → disabled  (ACDC uses WC Blocks card-fields, not this source)
      *  Block checkout + BCDC          → enabled   (BCDC card button shown in blocks)
      *  Block checkout, neither        → disabled
      *  MX + BCDC + classic            → enabled   (country-specific override)
@@ -120,11 +126,8 @@ class DisabledFundingSources
      *  Classic checkout + BCDC        → enabled   (card button needs this source)
      *  Classic checkout, neither      → disabled
      *
-     * Note: uses is_acdc_enabled() rather than use_acdc() in the classic checkout path,
-     * because use_acdc() only reflects merchant capability while is_acdc_enabled() also
-     * checks that the gateway is actually enabled. This prevents 'card' from staying
-     * enabled when ACDC capability exists but the gateway is off (e.g. after switching
-     * from branded-only mode).
+     * Note: uses is_acdc_enabled() (gateway actually on), not use_acdc() (capability only),
+     * so a MX merchant with BCDC on but ACDC gateway off still gets the BCDC button.
      *
      * @param bool $is_block_context Whether the current render context is a block.
      * @return bool True when 'card' should be added to the disabled list.
@@ -138,18 +141,14 @@ class DisabledFundingSources
         if ($is_block_context) {
             // In block checkout, ACDC is rendered via the WC Blocks integration —
             // it does not use the 'card' PayPal SDK funding source.
-            // Only keep 'card' enabled when BCDC button is needed and ACDC is inactive.
-            return $this->dcc_configuration->use_acdc() || !$this->dcc_configuration->is_bcdc_enabled();
+            // Keep 'card' enabled only when BCDC is active and ACDC is not actually enabled.
+            return $this->dcc_configuration->is_acdc_enabled() || !$this->dcc_configuration->is_bcdc_enabled();
         }
         // Mexico + BCDC + classic checkout: country-level override keeps card enabled.
         if ('MX' === $this->merchant_country && $this->dcc_configuration->is_bcdc_enabled() && CartCheckoutDetector::has_classic_checkout()) {
             return \false;
         }
         // Classic checkout: keep 'card' enabled for ACDC (card-fields) or BCDC (card button).
-        // Use is_acdc_enabled() — not use_acdc() — because use_acdc() only reflects merchant
-        // capability, while is_acdc_enabled() also checks that the gateway is actually on.
-        // Without this distinction, a merchant with ACDC capability but the gateway disabled
-        // (e.g. after switching from branded-only mode) would incorrectly keep 'card' enabled.
         return !$this->dcc_configuration->is_acdc_enabled() && !$this->dcc_configuration->is_bcdc_enabled();
     }
     /**

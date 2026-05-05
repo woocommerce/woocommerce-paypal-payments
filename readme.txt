@@ -4,7 +4,7 @@ Tags: woocommerce, paypal, payments, ecommerce, credit card
 Requires at least: 6.5
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 4.0.2
+Stable tag: 4.0.3
 License: GPLv2
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -160,6 +160,21 @@ If you encounter issues with the PayPal buttons not appearing after an update, p
 ⚠️ Major Update — This release includes significant changes. Please back up your site before updating.
 
 == Changelog ==
+
+= 4.0.3 - 2026-04-27 =
+* Enhancement – consolidate disabled funding sources card decision #4216
+* Enhancement – Hide Apple Pay Register Domain TODO when domain is already validated #4263
+* Enhancement – Remove vault v2 code #4254
+* Fix – Cart simulation causes checkout instability and cannot be disabled #4277
+* Fix – Fix bool (false) in transients #4281
+* Fix – Return HTTP 400 on nonce validation failures instead of 500 #4280
+* Fix – AddressFactory::from_wc_order billing address #4279
+* Fix – Duplicate WooCommerce orders created when buyer switches payment method at checkout #4276
+* Fix – BCDC - Mexico - BCDC not visible on block checkout #4289
+* Fix – Guest Cart appears empty when product is added from product page #4288
+* Fix – APMS - Order with apms stay in pending status (iDeal, ...) #4294
+* Fix – Failing ACDC payment for Free Trial subscription on classic checkout #4299
+* Fix – Drop shipping when city is missing to prevent CITY_REQUIRED #4292
 
 = 4.0.2 - 2026-04-02 =
 * Fix – API rate limiting #4244
