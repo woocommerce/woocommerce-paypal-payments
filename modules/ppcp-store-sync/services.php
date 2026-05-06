@@ -150,7 +150,8 @@ return array(
 			$c->get( 'agentic.helper.paypal-order-manager' ),
 			$c->get( 'button.helper.wc-order-creator' ),
 			$c->get( 'agentic.helper.cart-builder' ),
-			$c->get( 'agentic.response.applied-coupons-builder' )
+			$c->get( 'agentic.response.applied-coupons-builder' ),
+			$c->get( 'api.factory.shipping' )
 		);
 	},
 
