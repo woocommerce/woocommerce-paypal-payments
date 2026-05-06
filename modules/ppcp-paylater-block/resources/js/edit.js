@@ -1,9 +1,11 @@
 import { __ } from '@wordpress/i18n';
 import { useState, useEffect } from '@wordpress/element';
 import { InspectorControls, useBlockProps } from '@wordpress/block-editor';
-import { PanelBody, SelectControl, Spinner } from '@wordpress/components';
+import { PanelBody, SelectControl } from '@wordpress/components';
 import { PayPalScriptProvider, PayPalMessages } from '@paypal/react-paypal-js';
 import { useScriptParams } from './hooks/script-params';
+import { usePreviewTimeout } from './hooks/use-preview-timeout';
+import { PreviewPlaceholder } from './components/preview-placeholder';
 
 export default function Edit( { attributes, clientId, setAttributes } ) {
 	const {
@@ -20,6 +22,7 @@ export default function Edit( { attributes, clientId, setAttributes } ) {
 	const isFlex = layout === 'flex';
 
 	const [ loaded, setLoaded ] = useState( false );
+	const timedOut = usePreviewTimeout( loaded );
 
 	let amount;
 	const postContent = String(
@@ -160,7 +163,7 @@ export default function Edit( { attributes, clientId, setAttributes } ) {
 	if ( scriptParams === null ) {
 		return (
 			<div { ...props }>
-				<Spinner />
+				<PreviewPlaceholder timedOut={ timedOut } />
 			</div>
 		);
 	}
@@ -498,7 +501,9 @@ export default function Edit( { attributes, clientId, setAttributes } ) {
 				<div className="ppcp-overlay-child ppcp-unclicable-overlay">
 					{ ' ' }
 					{ /* make the message not clickable */ }
-					{ ! loaded && <Spinner /> }
+					{ ! loaded && (
+						<PreviewPlaceholder timedOut={ timedOut } />
+					) }
 				</div>
 			</div>
 		</>

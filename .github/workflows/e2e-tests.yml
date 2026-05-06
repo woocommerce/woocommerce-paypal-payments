@@ -46,11 +46,11 @@ jobs:
     with:
       WORK_DIR: tests/qa
       PLAYWRIGHT_SCRIPT: ${{ inputs.TEST_SUITE }}
-      ARTIFACT_PATH: |
+      PLAYWRIGHT_ARTIFACT_PATH: |
         tests/qa/artifacts/*
         tests/qa/playwright-report/
         tests/qa/test-results/
-      ARTIFACT_INCLUDE_HIDDEN_FILES: true
+      PLAYWRIGHT_ARTIFACT_INCLUDE_HIDDEN_FILES: true
       NODE_VERSION: 22
       PLAYWRIGHT_BROWSER_ARGS: 'chromium --with-deps'
       XRAY_TEST_EXEC_KEY: ${{ inputs.XRAY_TEST_EXEC_KEY }}
