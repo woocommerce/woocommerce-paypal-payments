@@ -42,6 +42,8 @@ require $main_plugin_file;
 	$general_settings = $app_container->get( 'settings.data.general' );
 	assert( $general_settings instanceof GeneralSettings );
 
+	delete_option( 'woocommerce_paypal_branded' );
+
 	if ( $general_settings->reset_installation_path( 'plugin_uninstall' ) ) {
 		$general_settings->save();
 	}
