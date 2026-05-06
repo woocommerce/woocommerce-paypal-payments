@@ -769,6 +769,11 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
         if (!$wc_order instanceof WC_Order) {
             return array();
         }
+        $order_key = $this->get_order_pay_key();
+        //phpcs:ignore WordPress.WP.Capabilities.Unknown
+        if (!$wc_order->key_is_valid($order_key) || !current_user_can('view_order', $order_id)) {
+            return array();
+        }
         $total = (float) $wc_order->get_total('numeric');
         return array('total' => $total, 'total_str' => (new Money($total, $currency_code))->value_str(), 'currency_code' => $currency_code, 'country_code' => $shop_country_code);
     }
