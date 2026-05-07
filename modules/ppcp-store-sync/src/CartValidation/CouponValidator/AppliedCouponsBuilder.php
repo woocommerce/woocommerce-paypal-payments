@@ -21,11 +21,6 @@ use WooCommerce\PayPalCommerce\StoreSync\Schema\PayPalCart;
  */
 class AppliedCouponsBuilder {
 
-	/**
-	 * Discount calculator for coupon amounts.
-	 *
-	 * @var DiscountCalculator
-	 */
 	private DiscountCalculator $discount_calculator;
 
 	private StoreCurrencyValue $store_currency;
@@ -49,7 +44,7 @@ class AppliedCouponsBuilder {
 	 * - Coupons have APPLY action
 	 * - WooCommerce classes are available
 	 *
-	 * @param PayPalCart $cart The PayPal cart.
+	 * @param PayPalCart $cart              The PayPal cart.
 	 * @param string     $validation_status The cart validation status.
 	 * @return array Array of applied coupon data.
 	 */
@@ -94,7 +89,10 @@ class AppliedCouponsBuilder {
 			}
 
 			// Calculate discount amount.
-			$discount_amount = $this->discount_calculator->calculate_discount_amount( $wc_coupon, $cart );
+			$discount_amount = $this->discount_calculator->calculate_discount_amount(
+				$wc_coupon,
+				$cart
+			);
 
 			$applied[] = array(
 				'code'            => $code,
@@ -125,6 +123,7 @@ class AppliedCouponsBuilder {
 			$applied_coupons,
 			static function ( float $total, array $coupon ): float {
 				$value = $coupon['discount_amount']['value'] ?? 0;
+
 				return $total + (float) $value;
 			},
 			0.0

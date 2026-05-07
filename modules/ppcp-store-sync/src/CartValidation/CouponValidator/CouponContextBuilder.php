@@ -24,18 +24,8 @@ use WooCommerce\PayPalCommerce\StoreSync\Validation\Context\PricingErrorContext;
  */
 class CouponContextBuilder {
 
-	/**
-	 * Product manager for resolving cart items.
-	 *
-	 * @var ProductManager
-	 */
 	private ProductManager $product_manager;
 
-	/**
-	 * Discount calculator for coupon amounts.
-	 *
-	 * @var DiscountCalculator
-	 */
 	private DiscountCalculator $discount_calculator;
 
 	private StoreCurrencyValue $store_currency;
@@ -71,8 +61,15 @@ class CouponContextBuilder {
 		);
 
 		foreach ( $builders as $builder ) {
-			$builder_context = $this->call_builder( $builder, $code, $cart, $wc_coupon, array_merge( $context, $extra ) );
-			$context         = array_merge( $context, $builder_context );
+			$builder_context = $this->call_builder(
+				$builder,
+				$code,
+				$cart,
+				$wc_coupon,
+				array_merge( $context, $extra )
+			);
+
+			$context = array_merge( $context, $builder_context );
 		}
 
 		return array_merge( $context, $extra );
@@ -121,7 +118,11 @@ class CouponContextBuilder {
 	 * @return array The context data.
 	 */
 	private function build_alternatives( string $code, PayPalCart $cart, ?WC_Coupon $wc_coupon, array $extra ): array {
-		$alternatives = $this->get_alternative_coupons( $code, $extra['specific_issue'] ?? 'COUPON_INVALID', $cart );
+		$alternatives = $this->get_alternative_coupons(
+			$code,
+			$extra['specific_issue'] ?? 'COUPON_INVALID',
+			$cart
+		);
 
 		if ( empty( $alternatives ) ) {
 			return array();
@@ -268,7 +269,9 @@ class CouponContextBuilder {
 			return array();
 		}
 
-		$current_discount   = $wc_coupon ? $this->discount_calculator->calculate_discount_amount( $wc_coupon, $cart ) : '0.00';
+		$current_discount   = $wc_coupon
+			? $this->discount_calculator->calculate_discount_amount( $wc_coupon, $cart )
+			: '0.00';
 		$attempted_discount = '0.00';
 
 		// Normalize coupon code to match WooCommerce's case-insensitive behavior.
@@ -276,7 +279,10 @@ class CouponContextBuilder {
 
 		$other_coupon = new WC_Coupon( $normalized_other_code );
 		if ( $other_coupon->get_id() ) {
-			$attempted_discount = $this->discount_calculator->calculate_discount_amount( $other_coupon, $cart );
+			$attempted_discount = $this->discount_calculator->calculate_discount_amount(
+				$other_coupon,
+				$cart
+			);
 		}
 
 		return array(

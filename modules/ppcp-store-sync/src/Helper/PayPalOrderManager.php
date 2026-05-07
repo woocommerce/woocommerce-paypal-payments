@@ -156,6 +156,7 @@ class PayPalOrderManager {
 					'error'    => $wc_cart->get_error_message(),
 				)
 			);
+
 			return;
 		}
 
@@ -168,6 +169,7 @@ class PayPalOrderManager {
 				'[ORDER] Cannot update PayPal Order: totals not calculable',
 				array( 'order_id' => $order_id )
 			);
+
 			return;
 		}
 
