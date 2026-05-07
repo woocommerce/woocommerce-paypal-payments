@@ -6,6 +6,7 @@ namespace WooCommerce\PayPalCommerce\StoreSync\Merchant;
 use WooCommerce;
 use WooCommerce\PayPalCommerce\Settings\Data\GeneralSettings;
 use WooCommerce\PayPalCommerce\Settings\DTO\MerchantConnectionDTO;
+use WooCommerce\PayPalCommerce\StoreSync\Config\StoreCurrencyValue;
 use WooCommerce\PayPalCommerce\StoreSync\Endpoint\AgenticRestEndpoint;
 /**
  * Provides merchant metadata for registration and catalog operations.
@@ -17,10 +18,12 @@ class MerchantMetadataProvider
 {
     private WooCommerce $wc;
     private GeneralSettings $general_settings;
-    public function __construct(WooCommerce $wc, GeneralSettings $general_settings)
+    private StoreCurrencyValue $store_currency;
+    public function __construct(WooCommerce $wc, GeneralSettings $general_settings, StoreCurrencyValue $store_currency)
     {
         $this->wc = $wc;
         $this->general_settings = $general_settings;
+        $this->store_currency = $store_currency;
     }
     /**
      * Get current merchant metadata.
@@ -32,7 +35,7 @@ class MerchantMetadataProvider
         if ($this->general_settings->is_merchant_connected()) {
             $merchant_id = $merchant->merchant_id;
         }
-        return new \WooCommerce\PayPalCommerce\StoreSync\Merchant\MerchantMetadata(get_bloginfo('name'), $this->get_canonical_store_url(), $this->get_api_base_url(), $this->wc->countries->get_base_country(), get_woocommerce_currency(), $merchant_id, $this->get_canonical_store_url(), $merchant->merchant_country);
+        return new \WooCommerce\PayPalCommerce\StoreSync\Merchant\MerchantMetadata(get_bloginfo('name'), $this->get_canonical_store_url(), $this->get_api_base_url(), $this->wc->countries->get_base_country(), $this->store_currency->value(), $merchant_id, $this->get_canonical_store_url(), $merchant->merchant_country);
     }
     /**
      * Get canonical store URL used as a stable identifier.

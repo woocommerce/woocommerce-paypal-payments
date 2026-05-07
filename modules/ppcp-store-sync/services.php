@@ -78,7 +78,7 @@ return array(
     },
     // Registration and merchant identification.
     'agentic.merchant.provider' => static function (ContainerInterface $c): MerchantMetadataProvider {
-        return new MerchantMetadataProvider($c->get('woocommerce.core'), $c->get('settings.data.general'));
+        return new MerchantMetadataProvider($c->get('woocommerce.core'), $c->get('settings.data.general'), $c->get('agentic.config.store-currency'));
     },
     'agentic.registration.eligibility' => static function (ContainerInterface $c): RegistrationEligibility {
         return new RegistrationEligibility($c->get('agentic.merchant.provider'));
@@ -107,14 +107,14 @@ return array(
     'agentic.helper.cart-builder' => static function (ContainerInterface $c): AgenticCartBuilder {
         return new AgenticCartBuilder($c->get('woocommerce.core'), $c->get('agentic.helper.product-manager'), $c->get('button.session.factory.card-data'), $c->get('api.factory.purchase-unit'), $c->get('agentic.logger'));
     },
-    'agentic.helper.shipping-options-builder' => static function (): ShippingOptionsBuilder {
-        return new ShippingOptionsBuilder();
+    'agentic.helper.shipping-options-builder' => static function (ContainerInterface $c): ShippingOptionsBuilder {
+        return new ShippingOptionsBuilder($c->get('agentic.config.store-currency'));
     },
     'agentic.helper.checkout-processor' => static function (ContainerInterface $c): AgenticCheckoutProcessor {
         return new AgenticCheckoutProcessor($c->get('agentic.helper.paypal-order-manager'), $c->get('button.helper.wc-order-creator'), $c->get('agentic.helper.cart-builder'), $c->get('agentic.response.applied-coupons-builder'), $c->get('api.factory.shipping'));
     },
     'agentic.helper.paypal-order-manager' => static function (ContainerInterface $c): PayPalOrderManager {
-        return new PayPalOrderManager($c->get('api.endpoint.order'), $c->get('api.endpoint.orders'), $c->get('agentic.helper.cart-builder'), $c->get('agentic.logger'));
+        return new PayPalOrderManager($c->get('api.endpoint.order'), $c->get('api.endpoint.orders'), $c->get('agentic.helper.cart-builder'), $c->get('agentic.logger'), $c->get('agentic.config.store-currency'));
     },
     // Validation services.
     'agentic.validation.processor' => static function (ContainerInterface $c): CartValidationProcessor {
@@ -132,14 +132,14 @@ return array(
     'agentic.validator.shipping' => static function (ContainerInterface $c): ShippingValidator {
         return new ShippingValidator($c->get('agentic.helper.product-manager'));
     },
-    'agentic.validator.currency' => static function (): CurrencyValidator {
-        return new CurrencyValidator();
+    'agentic.validator.currency' => static function (ContainerInterface $c): CurrencyValidator {
+        return new CurrencyValidator($c->get('agentic.config.store-currency'));
     },
     'agentic.validator.coupon.discount-calculator' => static function (ContainerInterface $c): DiscountCalculator {
         return new DiscountCalculator($c->get('agentic.helper.product-manager'));
     },
     'agentic.validator.coupon.context-builder' => static function (ContainerInterface $c): CouponContextBuilder {
-        return new CouponContextBuilder($c->get('agentic.helper.product-manager'), $c->get('agentic.validator.coupon.discount-calculator'));
+        return new CouponContextBuilder($c->get('agentic.helper.product-manager'), $c->get('agentic.validator.coupon.discount-calculator'), $c->get('agentic.config.store-currency'));
     },
     'agentic.validator.coupon.resolution-builder' => static function (): CouponResolutionBuilder {
         return new CouponResolutionBuilder();
@@ -149,7 +149,7 @@ return array(
     },
     // Response services.
     'agentic.response.applied-coupons-builder' => static function (ContainerInterface $c): AppliedCouponsBuilder {
-        return new AppliedCouponsBuilder($c->get('agentic.validator.coupon.discount-calculator'));
+        return new AppliedCouponsBuilder($c->get('agentic.validator.coupon.discount-calculator'), $c->get('agentic.config.store-currency'));
     },
     'agentic.response.factory' => static function (ContainerInterface $c): ResponseFactory {
         return new ResponseFactory($c->get('agentic.helper.cart-builder'), $c->get('agentic.response.applied-coupons-builder'), $c->get('agentic.helper.shipping-options-builder'), $c->get('agentic.config.store-currency'));

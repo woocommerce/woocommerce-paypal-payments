@@ -9,8 +9,14 @@ declare (strict_types=1);
 namespace WooCommerce\PayPalCommerce\StoreSync\Helper;
 
 use WC_Cart;
+use WooCommerce\PayPalCommerce\StoreSync\Config\StoreCurrencyValue;
 class ShippingOptionsBuilder
 {
+    private StoreCurrencyValue $store_currency;
+    public function __construct(StoreCurrencyValue $store_currency)
+    {
+        $this->store_currency = $store_currency;
+    }
     /**
      * Build shipping options from the WC cart state post calculate_totals().
      *
@@ -41,7 +47,7 @@ class ShippingOptionsBuilder
         if (is_array($chosen_methods) && !empty($chosen_methods)) {
             $chosen_id = $chosen_methods[0];
         }
-        $currency = get_woocommerce_currency();
+        $currency = $this->store_currency->value();
         $options = array();
         $all_rates = $package['rates'] ?? array();
         $first_rate_id = null;

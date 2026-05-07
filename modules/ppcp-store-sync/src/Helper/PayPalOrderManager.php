@@ -19,6 +19,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Entity\ExperienceContext;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Patch;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PatchCollection;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
+use WooCommerce\PayPalCommerce\StoreSync\Config\StoreCurrencyValue;
 use WooCommerce\PayPalCommerce\StoreSync\Schema\PayPalCart;
 class PayPalOrderManager
 {
@@ -26,12 +27,14 @@ class PayPalOrderManager
     private Orders $orders_api;
     private \WooCommerce\PayPalCommerce\StoreSync\Helper\AgenticCartBuilder $cart_builder;
     private LoggerInterface $logger;
-    public function __construct(OrderEndpoint $order_endpoint, Orders $orders_api, \WooCommerce\PayPalCommerce\StoreSync\Helper\AgenticCartBuilder $cart_builder, LoggerInterface $logger)
+    private StoreCurrencyValue $store_currency;
+    public function __construct(OrderEndpoint $order_endpoint, Orders $orders_api, \WooCommerce\PayPalCommerce\StoreSync\Helper\AgenticCartBuilder $cart_builder, LoggerInterface $logger, StoreCurrencyValue $store_currency)
     {
         $this->order_endpoint = $order_endpoint;
         $this->orders_api = $orders_api;
         $this->cart_builder = $cart_builder;
         $this->logger = $logger;
+        $this->store_currency = $store_currency;
     }
     /**
      * Create a new PayPal Order from cart WITHOUT creating a WooCommerce order.
@@ -98,7 +101,7 @@ class PayPalOrderManager
             $this->logger->warning('[ORDER] Cannot update PayPal Order: failed to build WC_Cart', array('order_id' => $order_id, 'error' => $wc_cart->get_error_message()));
             return;
         }
-        $currency_code = \WooCommerce\PayPalCommerce\StoreSync\Helper\CartHelper::currency($cart);
+        $currency_code = \WooCommerce\PayPalCommerce\StoreSync\Helper\CartHelper::currency($cart, $this->store_currency->value());
         $totals = \WooCommerce\PayPalCommerce\StoreSync\Helper\CartHelper::calculate_totals($wc_cart, $currency_code);
         $items = $this->build_items_for_patch($cart);
         if (!$totals) {
@@ -131,7 +134,7 @@ class PayPalOrderManager
     private function build_items_for_patch(PayPalCart $cart): array
     {
         $items = array();
-        $currency = \WooCommerce\PayPalCommerce\StoreSync\Helper\CartHelper::currency($cart);
+        $currency = \WooCommerce\PayPalCommerce\StoreSync\Helper\CartHelper::currency($cart, $this->store_currency->value());
         foreach ($cart->items() as $item) {
             $price = $item->price();
             if (!$price) {

@@ -11,6 +11,7 @@ declare (strict_types=1);
 namespace WooCommerce\PayPalCommerce\StoreSync\CartValidation\CouponValidator;
 
 use WC_Coupon;
+use WooCommerce\PayPalCommerce\StoreSync\Config\StoreCurrencyValue;
 use WooCommerce\PayPalCommerce\StoreSync\Helper\CartHelper;
 use WooCommerce\PayPalCommerce\StoreSync\Schema\PayPalCart;
 /**
@@ -18,20 +19,18 @@ use WooCommerce\PayPalCommerce\StoreSync\Schema\PayPalCart;
  */
 class AppliedCouponsBuilder
 {
-    /**
-     * Discount calculator for coupon amounts.
-     *
-     * @var DiscountCalculator
-     */
     private \WooCommerce\PayPalCommerce\StoreSync\CartValidation\CouponValidator\DiscountCalculator $discount_calculator;
+    private StoreCurrencyValue $store_currency;
     /**
      * Constructor.
      *
      * @param DiscountCalculator $discount_calculator Discount calculator instance.
+     * @param StoreCurrencyValue $store_currency      Store currency resolver.
      */
-    public function __construct(\WooCommerce\PayPalCommerce\StoreSync\CartValidation\CouponValidator\DiscountCalculator $discount_calculator)
+    public function __construct(\WooCommerce\PayPalCommerce\StoreSync\CartValidation\CouponValidator\DiscountCalculator $discount_calculator, StoreCurrencyValue $store_currency)
     {
         $this->discount_calculator = $discount_calculator;
+        $this->store_currency = $store_currency;
     }
     /**
      * Build applied_coupons array for successfully applied coupons.
@@ -41,7 +40,7 @@ class AppliedCouponsBuilder
      * - Coupons have APPLY action
      * - WooCommerce classes are available
      *
-     * @param PayPalCart $cart The PayPal cart.
+     * @param PayPalCart $cart              The PayPal cart.
      * @param string     $validation_status The cart validation status.
      * @return array Array of applied coupon data.
      */
@@ -63,7 +62,7 @@ class AppliedCouponsBuilder
             return array();
         }
         $applied = array();
-        $currency_code = CartHelper::currency($cart);
+        $currency_code = CartHelper::currency($cart, $this->store_currency->value());
         foreach ($apply_coupons as $coupon) {
             $code = $coupon->code();
             // Normalize coupon code to match WooCommerce's case-insensitive behavior.
