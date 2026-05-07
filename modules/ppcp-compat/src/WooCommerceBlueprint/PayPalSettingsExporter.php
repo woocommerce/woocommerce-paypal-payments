@@ -11,7 +11,6 @@ namespace WooCommerce\PayPalCommerce\Compat\WooCommerceBlueprint;
 
 use Automattic\WooCommerce\Blueprint\Exporters\StepExporter;
 use Automattic\WooCommerce\Blueprint\Exporters\HasAlias;
-use Automattic\WooCommerce\Blueprint\Steps\SetSiteOptions;
 use Automattic\WooCommerce\Blueprint\Steps\Step;
 
 /**
@@ -25,31 +24,6 @@ class PayPalSettingsExporter implements StepExporter, HasAlias {
 	private const OPTION_NOT_FOUND = '__PAYPAL_OPTION_NOT_FOUND__';
 
 	/**
-	 * PayPal-related options to export (excluding transients and plugin metadata).
-	 *
-	 * @var array<string>
-	 */
-	private const PAYPAL_OPTIONS = array(
-		// Core PPCP data settings (new settings).
-		'woocommerce-ppcp-data-common',
-		'woocommerce-ppcp-data-onboarding',
-		'woocommerce-ppcp-data-payment',
-		'woocommerce-ppcp-data-settings',
-		'woocommerce-ppcp-data-styling',
-		// Legacy settings (maintained for backward compatibility during migration).
-		'woocommerce-ppcp-settings',
-		// Merchant state flags.
-		'woocommerce-ppcp-is-new-merchant',
-		// UI and migration state flags (prevent re-migration and control UI display).
-		'woocommerce_ppcp-settings-should-use-old-ui',
-		'woocommerce_ppcp-is_pay_later_settings_migrated',
-		'woocommerce_ppcp-is_smart_button_settings_migrated',
-		// Individual payment method settings (gateway titles/descriptions).
-		'woocommerce_venmo_settings',
-		'woocommerce_pay-later_settings',
-	);
-
-	/**
 	 * Export PayPal settings.
 	 *
 	 * @return Step
@@ -57,14 +31,14 @@ class PayPalSettingsExporter implements StepExporter, HasAlias {
 	public function export(): Step {
 		$paypal_options = array();
 
-		foreach ( self::PAYPAL_OPTIONS as $option_name ) {
+		foreach ( PayPalBlueprintOptions::OPTION_NAMES as $option_name ) {
 			$value = get_option( $option_name, self::OPTION_NOT_FOUND );
 			if ( self::OPTION_NOT_FOUND !== $value ) {
 				$paypal_options[ $option_name ] = $value;
 			}
 		}
 
-		return new SetSiteOptions( $paypal_options );
+		return new SetPayPalSettings( $paypal_options );
 	}
 
 	/**
@@ -73,7 +47,7 @@ class PayPalSettingsExporter implements StepExporter, HasAlias {
 	 * @return string
 	 */
 	public function get_step_name(): string {
-		return SetSiteOptions::get_step_name();
+		return SetPayPalSettings::get_step_name();
 	}
 
 	/**

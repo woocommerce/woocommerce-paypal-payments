@@ -24,7 +24,21 @@
     "phpstan": "vendor/bin/phpstan analyze --memory-limit=2G",
     "fix-lint": "vendor/bin/phpcbf",
     "build": "wp-scripts build",
-    "watch-js": "wp-scripts start"
+    "watch-js": "wp-scripts start",
+    "e2e:setup:env": "npm --prefix tests/qa run e2e:setup:env",
+    "e2e:test:plugin-foundation": "npm --prefix tests/qa run e2e:test:plugin-foundation",
+    "e2e:test:dev": "npm --prefix tests/qa run e2e:test:dev",
+    "e2e:test:smoke": "npm --prefix tests/qa run e2e:test:smoke",
+    "e2e:test:critical": "npm --prefix tests/qa run e2e:test:critical",
+    "e2e:test:stress": "npm --prefix tests/qa run e2e:test:stress",
+    "e2e:test:all": "npm --prefix tests/qa run e2e:test:all",
+    "e2e:test:shard:plugin-foundation": "npm --prefix tests/qa run e2e:test:shard:plugin-foundation",
+    "e2e:test:shard:onboarding-settings": "npm --prefix tests/qa run e2e:test:shard:onboarding-settings",
+    "e2e:test:shard:transactions": "npm --prefix tests/qa run e2e:test:shard:transactions",
+    "e2e:test:shard:transactions-googlepay": "npm --prefix tests/qa run e2e:test:shard:transactions-googlepay",
+    "e2e:test:shard:refund": "npm --prefix tests/qa run e2e:test:shard:refund",
+    "e2e:test:shard:vaulting": "npm --prefix tests/qa run e2e:test:shard:vaulting",
+    "e2e:test:shard:subscription": "npm --prefix tests/qa run e2e:test:shard:subscription"
   },
   "config": {
     "wp_org_slug": "woocommerce-paypal-payments"
