@@ -8,7 +8,7 @@ import path from 'path';
 /**
  * Internal dependencies
  */
-import { BaseExtend } from './utils';
+import { BaseExtend } from './tests/qa/utils';
 
 const dotenvPath = process.env.CI
 	? path.resolve( __dirname, '.env.ci' )
