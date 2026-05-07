@@ -120,7 +120,7 @@ class AgenticCartBuilder
             return;
         }
         foreach ($options as $option) {
-            if ($option instanceof ShippingOption && $option->isSelected()) {
+            if ($option instanceof ShippingOption && $option->is_selected()) {
                 $this->wc->session->set('chosen_shipping_methods', array($option->id()));
                 return;
             }
