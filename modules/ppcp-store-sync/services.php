@@ -52,6 +52,7 @@ use WooCommerce\PayPalCommerce\StoreSync\CartValidation\CouponValidator\CouponRe
 use WooCommerce\PayPalCommerce\StoreSync\CartValidation\CouponValidator\AppliedCouponsBuilder;
 use WooCommerce\PayPalCommerce\StoreSync\CartValidation\CartValidationProcessor;
 use WooCommerce\PayPalCommerce\StoreSync\Helper\AgenticSessionManager;
+use WooCommerce\PayPalCommerce\StoreSync\StoreData\StoreData;
 
 /**
  * Using a different log-source for agentic commerce log entries makes it much easier to inspect
@@ -279,6 +280,14 @@ return array(
 			$c->get( 'agentic.logger' ),
 			$c->get( 'agentic.helper.paypal-order-manager' ),
 			$c->get( 'agentic.helper.checkout-processor' )
+		);
+	},
+
+	// Store Data Factory.
+	'agentic.store.data'                           => static function ( ContainerInterface $c ): StoreData {
+		return new StoreData(
+			$c->get( 'agentic.helper.product-manager' ),
+			$c->get( 'agentic.config.store-currency' )
 		);
 	},
 
