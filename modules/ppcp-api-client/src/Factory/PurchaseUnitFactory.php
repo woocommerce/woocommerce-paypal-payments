@@ -242,9 +242,9 @@ class PurchaseUnitFactory {
 	 * @throws RuntimeException When JSON object is malformed.
 	 */
 	public function from_paypal_response( \stdClass $data ): ?PurchaseUnit {
-		if ( ! isset( $data->reference_id ) || ! is_string( $data->reference_id ) ) {
-			throw new RuntimeException( 'No reference ID given.' );
-		}
+		$reference_id = ( isset( $data->reference_id ) && is_string( $data->reference_id ) )
+			? $data->reference_id
+			: 'default';
 
 		$amount_data = $data->amount ?? null;
 		$amount      = $this->amount_factory->from_paypal_response( $amount_data );
@@ -286,7 +286,7 @@ class PurchaseUnitFactory {
 			$amount,
 			$items,
 			$shipping,
-			$data->reference_id,
+			$reference_id,
 			$description,
 			$custom_id,
 			$invoice_id,
