@@ -11,8 +11,8 @@ import path from 'path';
 import { BaseExtend } from './utils';
 
 const dotenvPath = process.env.CI
-    ? path.resolve( __dirname, '.env.ci' )
-    : undefined;
+	? path.resolve( __dirname, '.env.ci' )
+	: undefined;
 dotenv.config( { path: dotenvPath } );
 
 const viewportSize: ViewportSize = { width: 1280, height: 850 };
@@ -63,12 +63,12 @@ export default defineConfig< BaseExtend >( {
 		 * For envs with Basic Auth. Omit when both are empty (e.g. wp-env).
 		 */
 		...( process.env.WP_BASIC_AUTH_USER &&
-		process.env.WP_BASIC_AUTH_PASS && {
-			httpCredentials: {
-				username: process.env.WP_BASIC_AUTH_USER,
-				password: process.env.WP_BASIC_AUTH_PASS,
-			},
-		} ),
+			process.env.WP_BASIC_AUTH_PASS && {
+				httpCredentials: {
+					username: process.env.WP_BASIC_AUTH_USER,
+					password: process.env.WP_BASIC_AUTH_PASS,
+				},
+			} ),
 
 		...devices[ 'Desktop Chrome' ],
 
@@ -110,7 +110,7 @@ export default defineConfig< BaseExtend >( {
 				host: process.env.SSH_HOST,
 				port: process.env.SSH_PORT,
 				path: process.env.SSH_PATH,
-			}
+			},
 		},
 	},
 
@@ -126,6 +126,41 @@ export default defineConfig< BaseExtend >( {
 			fullyParallel: false,
 		},
 		{
+			name: 'setup-pcp-usa-for-transactions',
+			dependencies: [ 'setup-woocommerce' ],
+			testMatch: /pcp\.setup\.ts/,
+			grep: /setup:pcp:usa:transactions;/,
+			fullyParallel: false,
+		},
+		{
+			name: 'setup-pcp-usa-for-transactions-googlepay',
+			dependencies: [ 'setup-woocommerce' ],
+			testMatch: /pcp\.setup\.ts/,
+			grep: /setup:pcp:usa:transactions:googlepay;/,
+			fullyParallel: false,
+		},
+		{
+			name: 'setup-pcp-usa-for-refund',
+			dependencies: [ 'setup-woocommerce' ],
+			testMatch: /pcp\.setup\.ts/,
+			grep: /setup:pcp:usa:refund;/,
+			fullyParallel: false,
+		},
+		{
+			name: 'setup-pcp-vaulting',
+			dependencies: [ 'setup-woocommerce' ],
+			testMatch: /pcp\.setup\.ts/,
+			grep: /setup:pcp:usa:vaulting;/,
+			fullyParallel: false,
+		},
+		{
+			name: 'setup-pcp-subscription',
+			dependencies: [ 'setup-woocommerce' ],
+			testMatch: /pcp\.setup\.ts/,
+			grep: /setup:pcp:usa:subscription;/,
+			fullyParallel: false,
+		},
+		{
 			name: 'plugin-foundation',
 			dependencies: [ 'setup-woocommerce' ],
 			testMatch: /plugin-foundation\.spec\.ts/,
@@ -133,15 +168,49 @@ export default defineConfig< BaseExtend >( {
 		{
 			name: 'all',
 			dependencies: [ 'setup-woocommerce' ],
-			testIgnore: [
-				/stress\.spec\.ts/,
-				/plugin-foundation\.spec\.ts/,
-			],
+			testIgnore: [ /stress\.spec\.ts/, /plugin-foundation\.spec\.ts/ ],
 		},
 		{
 			name: 'stress',
 			dependencies: [ 'setup-woocommerce' ],
 			testMatch: /stress\.spec\.ts/,
+		},
+
+		// Parallel CI
+		{
+			name: 'shard:plugin-foundation',
+			dependencies: [ 'setup-woocommerce' ],
+			testMatch: /01-plugin-foundation\/.*\.spec\.ts/,
+		},
+		{
+			name: 'shard:onboarding-settings',
+			dependencies: [ 'setup-woocommerce' ],
+			testMatch: /(02-onboarding|03-plugin-settings)\/.*\.spec\.ts/,
+		},
+		{
+			name: 'shard:transactions',
+			dependencies: [ 'setup-pcp-usa-for-transactions' ],
+			testMatch: /05-transactions\/transaction-usa.*\.spec\.ts/,
+		},
+		{
+			name: 'shard:transactions-googlepay',
+			dependencies: [ 'setup-pcp-usa-for-transactions-googlepay' ],
+			testMatch: /05-transactions\/transaction-googlepay\.spec\.ts/,
+		},
+		{
+			name: 'shard:refund',
+			dependencies: [ 'setup-pcp-usa-for-refund' ],
+			testMatch: /06-refund\/.*\.spec\.ts/,
+		},
+		{
+			name: 'shard:vaulting',
+			dependencies: [ 'setup-pcp-vaulting' ],
+			testMatch: /07-vaulting\/.*\.spec\.ts/,
+		},
+		{
+			name: 'shard:subscription',
+			dependencies: [ 'setup-pcp-subscription' ],
+			testMatch: /08-subscription\/.*\.spec\.ts/,
 		},
 	],
 } );
