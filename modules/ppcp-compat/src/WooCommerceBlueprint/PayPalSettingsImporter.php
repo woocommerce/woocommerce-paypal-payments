@@ -10,7 +10,7 @@ namespace WooCommerce\PayPalCommerce\Compat\WooCommerceBlueprint;
 
 use Automattic\WooCommerce\Blueprint\StepProcessor;
 use Automattic\WooCommerce\Blueprint\StepProcessorResult;
-use Automattic\WooCommerce\Blueprint\Steps\SetSiteOptions;
+use WooCommerce\PayPalCommerce\Settings\Service\DataSanitizer;
 /**
  * PayPal Settings Importer.
  */
@@ -21,29 +21,20 @@ class PayPalSettingsImporter implements StepProcessor
      */
     private const OPTION_NOT_FOUND = '__PAYPAL_OPTION_NOT_FOUND__';
     /**
-     * Explicit list of PayPal options that can be imported.
+     * Data sanitizer for DTO hydration.
      *
-     * @var array<string>
+     * @var DataSanitizer
      */
-    private const PAYPAL_OPTIONS = array(
-        // Core PPCP data settings (new settings).
-        'woocommerce-ppcp-data-common',
-        'woocommerce-ppcp-data-onboarding',
-        'woocommerce-ppcp-data-payment',
-        'woocommerce-ppcp-data-settings',
-        'woocommerce-ppcp-data-styling',
-        // Legacy settings (maintained for backward compatibility during migration).
-        'woocommerce-ppcp-settings',
-        // Merchant state flags.
-        'woocommerce-ppcp-is-new-merchant',
-        // UI and migration state flags (prevent re-migration and control UI display).
-        'woocommerce_ppcp-settings-should-use-old-ui',
-        'woocommerce_ppcp-is_pay_later_settings_migrated',
-        'woocommerce_ppcp-is_smart_button_settings_migrated',
-        // Individual payment method settings (gateway titles/descriptions).
-        'woocommerce_venmo_settings',
-        'woocommerce_pay-later_settings',
-    );
+    private DataSanitizer $sanitizer;
+    /**
+     * Constructor.
+     *
+     * @param DataSanitizer $sanitizer Data sanitizer.
+     */
+    public function __construct(DataSanitizer $sanitizer)
+    {
+        $this->sanitizer = $sanitizer;
+    }
     /**
      * Process PayPal settings import.
      *
@@ -52,7 +43,7 @@ class PayPalSettingsImporter implements StepProcessor
      */
     public function process($schema): StepProcessorResult
     {
-        $result = StepProcessorResult::success(SetSiteOptions::get_step_name());
+        $result = StepProcessorResult::success(\WooCommerce\PayPalCommerce\Compat\WooCommerceBlueprint\SetPayPalSettings::get_step_name());
         if (!isset($schema->options) || !is_object($schema->options)) {
             $result->add_error('Invalid PayPal options data');
             return $result;
@@ -76,10 +67,8 @@ class PayPalSettingsImporter implements StepProcessor
                 $result->add_warn("Skipped option with invalid value: {$sanitized_name}");
                 continue;
             }
-            // Check if this is a PayPal-related option.
+            // Only accept options from our allowlist.
             if (!$this->is_paypal_option($option_name)) {
-                $sanitized_name = sanitize_text_field($option_name);
-                $result->add_warn("Skipped non-PayPal option: {$sanitized_name}");
                 continue;
             }
             // Attempt to update the option with proper error handling.
@@ -90,7 +79,7 @@ class PayPalSettingsImporter implements StepProcessor
                 $result->add_error("Failed to update option: {$sanitized_name}");
             }
         }
-        $result->add_info("Successfully imported {$imported_count} PayPal options");
+        $result->add_info("Successfully imported {$imported_count} options");
         return $result;
     }
     /**
@@ -100,7 +89,7 @@ class PayPalSettingsImporter implements StepProcessor
      */
     public function get_step_class(): string
     {
-        return SetSiteOptions::class;
+        return \WooCommerce\PayPalCommerce\Compat\WooCommerceBlueprint\SetPayPalSettings::class;
     }
     /**
      * Check capabilities.
@@ -158,7 +147,7 @@ class PayPalSettingsImporter implements StepProcessor
      */
     private function is_paypal_option(string $option_name): bool
     {
-        return in_array($option_name, self::PAYPAL_OPTIONS, \true);
+        return in_array($option_name, \WooCommerce\PayPalCommerce\Compat\WooCommerceBlueprint\PayPalBlueprintOptions::OPTION_NAMES, \true);
     }
     /**
      * Safely update an option with proper comparison for existing values.
@@ -169,8 +158,10 @@ class PayPalSettingsImporter implements StepProcessor
      */
     private function update_option_safely(string $option_name, $option_value): bool
     {
-        // Convert objects to arrays recursively.
+        // Convert stdClass objects from JSON decode to arrays.
         $option_value = $this->convert_objects_to_arrays($option_value);
+        // Hydrate DTO-based options so typed objects are preserved in the database.
+        $option_value = $this->hydrate_dtos($option_name, $option_value);
         // Get the current value with a sentinel to distinguish between false and non-existent.
         $current_value = get_option($option_name, self::OPTION_NOT_FOUND);
         // If the values are already equal, consider it a success.
@@ -178,6 +169,47 @@ class PayPalSettingsImporter implements StepProcessor
             return \true;
         }
         return update_option($option_name, $option_value);
+    }
+    /**
+     * Hydrate DTO-based options so the data models can load them correctly.
+     *
+     * Some options store typed DTO objects (e.g. LocationStylingDTO). Blueprint
+     * export serializes these to JSON objects, and on import they arrive as plain
+     * arrays after convert_objects_to_arrays(). This method uses DataSanitizer to
+     * restore the proper DTO instances before writing to the database.
+     *
+     * @todo The blueprint importer currently hardcodes which options contain
+     *       DTOs and which keys within them need hydration. This couples the
+     *       importer to the internal structure of StylingSettings and
+     *       PayLaterMessagingSettings. Consider having AbstractDataModel
+     *       subclasses register their own hydration/sanitization logic so
+     *       the importer can delegate without knowing the details. This
+     *       would also make adding new DTO-based options automatic rather
+     *       than requiring importer changes.
+     *
+     * @param string $option_name  Option name.
+     * @param mixed  $option_value Option value.
+     * @return mixed
+     */
+    private function hydrate_dtos(string $option_name, $option_value)
+    {
+        if ('woocommerce-ppcp-data-styling' === $option_name && is_array($option_value)) {
+            $location_keys = array('cart', 'classic_checkout', 'express_checkout', 'mini_cart', 'product');
+            foreach ($location_keys as $key) {
+                if (isset($option_value[$key])) {
+                    $option_value[$key] = $this->sanitizer->sanitize_location_style($option_value[$key], $key);
+                }
+            }
+        }
+        if ('woocommerce-ppcp-data-paylater-messaging' === $option_name && is_array($option_value)) {
+            $location_keys = array('cart', 'checkout', 'product', 'shop', 'home', 'custom_placement');
+            foreach ($location_keys as $key) {
+                if (isset($option_value[$key])) {
+                    $option_value[$key] = $this->sanitizer->sanitize_paylater_messaging($option_value[$key], $key);
+                }
+            }
+        }
+        return $option_value;
     }
     /**
      * Recursively convert objects to arrays.
