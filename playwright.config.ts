@@ -50,7 +50,7 @@ export default defineConfig< BaseExtend >( {
 	],
 	/* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
 
-	globalSetup: require.resolve( './global-setup' ),
+	globalSetup: require.resolve( './tests/qa/global-setup' ),
 
 	use: {
 		baseURL: process.env.WP_BASE_URL,
