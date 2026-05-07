@@ -18,7 +18,7 @@ dotenv.config( { path: dotenvPath } );
 const viewportSize: ViewportSize = { width: 1280, height: 850 };
 
 export default defineConfig< BaseExtend >( {
-	testDir: 'tests',
+	testDir: 'tests/qa/tests',
 	expect: {
 		timeout: 20 * 1000,
 	},
