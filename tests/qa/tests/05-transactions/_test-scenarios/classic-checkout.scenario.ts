@@ -21,7 +21,11 @@ export const transactionsOnClassicCheckout = ( testOrder: ShopOrder ) => {
 			await utils.fillVisitorsCart( testOrder.products );
 			await classicCheckout.visit();
 			await classicCheckout.completeCheckoutDetails( testOrder );
-			await classicCheckout.payPalUi.makePayment( { merchant, payment } );
+			await classicCheckout.payPalUi.makePayment( {
+				merchant,
+				payment,
+				customer,
+			} );
 			await orderReceived.assertOrderDetails( testOrder );
 
 			const orderId = await orderReceived.getOrderNumber();
