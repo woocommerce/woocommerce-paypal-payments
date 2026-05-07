@@ -7,6 +7,7 @@ namespace WooCommerce\PayPalCommerce\StoreSync\Helper;
 use Brain\Monkey;
 use Mockery;
 use WC_Cart;
+use WooCommerce\PayPalCommerce\StoreSync\Config\StoreCurrencyValue;
 use WooCommerce\PayPalCommerce\TestCase;
 
 /**
@@ -14,9 +15,13 @@ use WooCommerce\PayPalCommerce\TestCase;
  */
 class ShippingOptionsBuilderTest extends TestCase {
 
+	private ShippingOptionsBuilder $sut;
+
 	public function setUp(): void {
 		parent::setUp();
-		Monkey\Functions\when( 'get_woocommerce_currency' )->justReturn( 'USD' );
+		$store_currency = Mockery::mock( StoreCurrencyValue::class );
+		$store_currency->allows( 'value' )->andReturn( 'USD' );
+		$this->sut = new ShippingOptionsBuilder( $store_currency );
 	}
 
 	// -------------------------------------------------------------------------
@@ -81,7 +86,7 @@ class ShippingOptionsBuilderTest extends TestCase {
 	 * Then an empty array is returned without consulting WC() at all
 	 */
 	public function test_build_returns_empty_array_when_cart_is_null(): void {
-		$builder = new ShippingOptionsBuilder();
+		$builder = $this->sut;
 
 		$result = $builder->build( null );
 
@@ -104,7 +109,7 @@ class ShippingOptionsBuilderTest extends TestCase {
 		$this->stub_wc( [], [ 'flat_rate:1' ] );
 
 		$wc_cart = Mockery::mock( WC_Cart::class );
-		$builder = new ShippingOptionsBuilder();
+		$builder = $this->sut;
 
 		$result = $builder->build( $wc_cart );
 
@@ -131,7 +136,7 @@ class ShippingOptionsBuilderTest extends TestCase {
 		$this->stub_wc( $packages, array( 'flat_rate:1' ) );
 
 		$wc_cart = Mockery::mock( WC_Cart::class );
-		$builder = new ShippingOptionsBuilder();
+		$builder = $this->sut;
 
 		$result = $builder->build( $wc_cart );
 
@@ -173,7 +178,7 @@ class ShippingOptionsBuilderTest extends TestCase {
 		$this->stub_wc( $packages, array( 'free_shipping:1' ) );
 
 		$wc_cart = Mockery::mock( WC_Cart::class );
-		$builder = new ShippingOptionsBuilder();
+		$builder = $this->sut;
 
 		$result = $builder->build( $wc_cart );
 
@@ -218,7 +223,7 @@ class ShippingOptionsBuilderTest extends TestCase {
 		$this->stub_wc( $packages, null );
 
 		$wc_cart = Mockery::mock( WC_Cart::class );
-		$builder = new ShippingOptionsBuilder();
+		$builder = $this->sut;
 
 		$result = $builder->build( $wc_cart );
 
@@ -244,7 +249,7 @@ class ShippingOptionsBuilderTest extends TestCase {
 		$this->stub_wc( $packages, array() );
 
 		$wc_cart = Mockery::mock( WC_Cart::class );
-		$builder = new ShippingOptionsBuilder();
+		$builder = $this->sut;
 
 		$result = $builder->build( $wc_cart );
 
@@ -275,7 +280,7 @@ class ShippingOptionsBuilderTest extends TestCase {
 		$this->stub_wc( $packages, array( 'flat_rate:1' ) );
 
 		$wc_cart = Mockery::mock( WC_Cart::class );
-		$builder = new ShippingOptionsBuilder();
+		$builder = $this->sut;
 
 		$result = $builder->build( $wc_cart );
 
@@ -311,8 +316,9 @@ class ShippingOptionsBuilderTest extends TestCase {
 	 * Then the currency field of every returned option reflects the store currency
 	 */
 	public function test_build_uses_currency_from_get_woocommerce_currency(): void {
-		// Override the default USD stub set in setUp()
-		Monkey\Functions\when( 'get_woocommerce_currency' )->justReturn( 'EUR' );
+		$store_currency = Mockery::mock( StoreCurrencyValue::class );
+		$store_currency->allows( 'value' )->andReturn( 'EUR' );
+		$builder = new ShippingOptionsBuilder( $store_currency );
 
 		$rate     = $this->create_shipping_rate_stub( 'flat_rate:1', 'Standard', 8.0 );
 		$packages = array( $this->make_package( array( 'flat_rate:1' => $rate ) ) );
@@ -320,7 +326,6 @@ class ShippingOptionsBuilderTest extends TestCase {
 		$this->stub_wc( $packages, array( 'flat_rate:1' ) );
 
 		$wc_cart = Mockery::mock( WC_Cart::class );
-		$builder = new ShippingOptionsBuilder();
 
 		$result = $builder->build( $wc_cart );
 
@@ -337,7 +342,9 @@ class ShippingOptionsBuilderTest extends TestCase {
 	 * Then every returned option has currency equal to GBP
 	 */
 	public function test_build_applies_currency_to_all_options(): void {
-		Monkey\Functions\when( 'get_woocommerce_currency' )->justReturn( 'GBP' );
+		$store_currency = Mockery::mock( StoreCurrencyValue::class );
+		$store_currency->allows( 'value' )->andReturn( 'GBP' );
+		$builder = new ShippingOptionsBuilder( $store_currency );
 
 		$rate_a = $this->create_shipping_rate_stub( 'flat_rate:1', 'Standard', 5.0 );
 		$rate_b = $this->create_shipping_rate_stub( 'express:1', 'Express', 15.0 );
@@ -354,7 +361,6 @@ class ShippingOptionsBuilderTest extends TestCase {
 		$this->stub_wc( $packages, array( 'flat_rate:1' ) );
 
 		$wc_cart = Mockery::mock( WC_Cart::class );
-		$builder = new ShippingOptionsBuilder();
 
 		$result = $builder->build( $wc_cart );
 
@@ -382,7 +388,7 @@ class ShippingOptionsBuilderTest extends TestCase {
 		$this->stub_wc( $packages, array( 'flat_rate:1' ) );
 
 		$wc_cart = Mockery::mock( WC_Cart::class );
-		$builder = new ShippingOptionsBuilder();
+		$builder = $this->sut;
 
 		$result = $builder->build( $wc_cart );
 

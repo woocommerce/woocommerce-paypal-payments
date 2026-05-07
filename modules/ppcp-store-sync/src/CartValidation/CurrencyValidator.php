@@ -9,6 +9,7 @@ declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\StoreSync\CartValidation;
 
+use WooCommerce\PayPalCommerce\StoreSync\Config\StoreCurrencyValue;
 use WooCommerce\PayPalCommerce\StoreSync\Enums\Priority;
 use WooCommerce\PayPalCommerce\StoreSync\Schema\PayPalCart;
 use WooCommerce\PayPalCommerce\StoreSync\Validation\Resolution\ResolutionOption;
@@ -16,8 +17,14 @@ use WooCommerce\PayPalCommerce\StoreSync\Validation\ValidationIssue;
 
 class CurrencyValidator implements ValidatorInterface {
 
+	private StoreCurrencyValue $store_currency;
+
+	public function __construct( StoreCurrencyValue $store_currency ) {
+		$this->store_currency = $store_currency;
+	}
+
 	public function validate( PayPalCart $cart ): array {
-		$store_currency  = get_woocommerce_currency();
+		$store_currency  = $this->store_currency->value();
 		$cart_currencies = $this->extract_cart_currencies( $cart );
 
 		if ( empty( $cart_currencies ) ) {

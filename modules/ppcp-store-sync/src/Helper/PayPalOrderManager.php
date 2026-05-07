@@ -20,6 +20,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Entity\ExperienceContext;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Patch;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PatchCollection;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
+use WooCommerce\PayPalCommerce\StoreSync\Config\StoreCurrencyValue;
 use WooCommerce\PayPalCommerce\StoreSync\Schema\PayPalCart;
 
 class PayPalOrderManager {
@@ -31,17 +32,21 @@ class PayPalOrderManager {
 
 	private LoggerInterface $logger;
 
+	private StoreCurrencyValue $store_currency;
+
 	public function __construct(
 		OrderEndpoint $order_endpoint,
 		Orders $orders_api,
 		AgenticCartBuilder $cart_builder,
-		LoggerInterface $logger
+		LoggerInterface $logger,
+		StoreCurrencyValue $store_currency
 	) {
 
 		$this->order_endpoint = $order_endpoint;
 		$this->orders_api     = $orders_api;
 		$this->cart_builder   = $cart_builder;
 		$this->logger         = $logger;
+		$this->store_currency = $store_currency;
 	}
 
 	/**
@@ -154,7 +159,7 @@ class PayPalOrderManager {
 			return;
 		}
 
-		$currency_code = CartHelper::currency( $cart );
+		$currency_code = CartHelper::currency( $cart, $this->store_currency->value() );
 		$totals        = CartHelper::calculate_totals( $wc_cart, $currency_code );
 		$items         = $this->build_items_for_patch( $cart );
 
@@ -240,7 +245,7 @@ class PayPalOrderManager {
 	 */
 	private function build_items_for_patch( PayPalCart $cart ): array {
 		$items    = array();
-		$currency = CartHelper::currency( $cart );
+		$currency = CartHelper::currency( $cart, $this->store_currency->value() );
 
 		foreach ( $cart->items() as $item ) {
 			$price = $item->price();

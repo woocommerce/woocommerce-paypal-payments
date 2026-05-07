@@ -3,6 +3,8 @@ declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\StoreSync\CartValidation;
 
+use Mockery;
+use WooCommerce\PayPalCommerce\StoreSync\Config\StoreCurrencyValue;
 use WooCommerce\PayPalCommerce\StoreSync\Schema\PayPalCart;
 use function Brain\Monkey\Functions\when;
 
@@ -15,11 +17,12 @@ class CurrencyValidatorTest extends ValidationTest {
 
 	public function setUp(): void {
 		parent::setUp();
-		$this->validator = new CurrencyValidator();
+		$store_currency  = Mockery::mock( StoreCurrencyValue::class );
+		$store_currency->allows( 'value' )->andReturn( 'USD' );
+		$this->validator = new CurrencyValidator( $store_currency );
 	}
 
 	public function test_validate_returns_null_for_valid_cart(): void {
-		when( 'get_woocommerce_currency' )->justReturn( 'USD' );
 
 		$cart = $this->create_cart_with_items(
 			array(
@@ -35,8 +38,6 @@ class CurrencyValidatorTest extends ValidationTest {
 	}
 
 	public function test_validate_detects_mixed_currencies(): void {
-		when( 'get_woocommerce_currency' )->justReturn( 'USD' );
-
 		$cart = $this->create_cart_with_items(
 			array(
 				array( 'currency' => 'USD', 'value' => 10.0 ),
@@ -54,8 +55,6 @@ class CurrencyValidatorTest extends ValidationTest {
 	}
 
 	public function test_validate_detects_store_currency_mismatch(): void {
-		when( 'get_woocommerce_currency' )->justReturn( 'USD' );
-
 		$cart = $this->create_cart_with_items(
 			array(
 				array( 'currency' => 'EUR', 'value' => 10.0 ),
@@ -73,8 +72,6 @@ class CurrencyValidatorTest extends ValidationTest {
 	}
 
 	public function test_validate_returns_null_for_empty_cart(): void {
-		when( 'get_woocommerce_currency' )->justReturn( 'USD' );
-
 		$cart = PayPalCart::from_array(
 			array(
 				'items'          => array(),
@@ -89,8 +86,6 @@ class CurrencyValidatorTest extends ValidationTest {
 	}
 
 	public function test_validates_with_some_items_without_prices(): void {
-		when( 'get_woocommerce_currency' )->justReturn( 'USD' );
-
 		$cart_data = array(
 			'items'          => array(
 				array(
@@ -120,8 +115,6 @@ class CurrencyValidatorTest extends ValidationTest {
 	}
 
 	public function test_detects_mismatch_skipping_empty_items(): void {
-		when( 'get_woocommerce_currency' )->justReturn( 'USD' );
-
 		$cart_data = array(
 			'items'          => array(
 				array(
@@ -163,8 +156,6 @@ class CurrencyValidatorTest extends ValidationTest {
 	}
 
 	public function test_store_mismatch_points_to_correct_index(): void {
-		when( 'get_woocommerce_currency' )->justReturn( 'USD' );
-
 		$cart_data = array(
 			'items'          => array(
 				array(
@@ -197,7 +188,9 @@ class CurrencyValidatorTest extends ValidationTest {
 	}
 
 	public function test_mixed_currency_prevents_store_check(): void {
-		when( 'get_woocommerce_currency' )->justReturn( 'GBP' );
+		$store_currency  = Mockery::mock( StoreCurrencyValue::class );
+		$store_currency->allows( 'value' )->andReturn( 'GBP' );
+		$this->validator = new CurrencyValidator( $store_currency );
 
 		$cart = $this->create_cart_with_items(
 			array(

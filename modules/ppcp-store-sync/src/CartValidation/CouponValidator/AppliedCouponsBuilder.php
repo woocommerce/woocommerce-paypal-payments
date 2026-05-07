@@ -12,6 +12,7 @@ declare( strict_types = 1 );
 namespace WooCommerce\PayPalCommerce\StoreSync\CartValidation\CouponValidator;
 
 use WC_Coupon;
+use WooCommerce\PayPalCommerce\StoreSync\Config\StoreCurrencyValue;
 use WooCommerce\PayPalCommerce\StoreSync\Helper\CartHelper;
 use WooCommerce\PayPalCommerce\StoreSync\Schema\PayPalCart;
 
@@ -27,13 +28,17 @@ class AppliedCouponsBuilder {
 	 */
 	private DiscountCalculator $discount_calculator;
 
+	private StoreCurrencyValue $store_currency;
+
 	/**
 	 * Constructor.
 	 *
 	 * @param DiscountCalculator $discount_calculator Discount calculator instance.
+	 * @param StoreCurrencyValue $store_currency      Store currency resolver.
 	 */
-	public function __construct( DiscountCalculator $discount_calculator ) {
+	public function __construct( DiscountCalculator $discount_calculator, StoreCurrencyValue $store_currency ) {
 		$this->discount_calculator = $discount_calculator;
+		$this->store_currency      = $store_currency;
 	}
 
 	/**
@@ -74,7 +79,7 @@ class AppliedCouponsBuilder {
 		}
 
 		$applied       = array();
-		$currency_code = CartHelper::currency( $cart );
+		$currency_code = CartHelper::currency( $cart, $this->store_currency->value() );
 
 		foreach ( $apply_coupons as $coupon ) {
 			$code = $coupon->code();

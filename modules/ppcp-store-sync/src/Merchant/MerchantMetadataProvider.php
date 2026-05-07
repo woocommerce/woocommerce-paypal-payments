@@ -8,6 +8,7 @@ use WooCommerce;
 
 use WooCommerce\PayPalCommerce\Settings\Data\GeneralSettings;
 use WooCommerce\PayPalCommerce\Settings\DTO\MerchantConnectionDTO;
+use WooCommerce\PayPalCommerce\StoreSync\Config\StoreCurrencyValue;
 use WooCommerce\PayPalCommerce\StoreSync\Endpoint\AgenticRestEndpoint;
 
 /**
@@ -20,10 +21,12 @@ class MerchantMetadataProvider {
 
 	private WooCommerce $wc;
 	private GeneralSettings $general_settings;
+	private StoreCurrencyValue $store_currency;
 
-	public function __construct( WooCommerce $wc, GeneralSettings $general_settings ) {
+	public function __construct( WooCommerce $wc, GeneralSettings $general_settings, StoreCurrencyValue $store_currency ) {
 		$this->wc               = $wc;
 		$this->general_settings = $general_settings;
+		$this->store_currency   = $store_currency;
 	}
 
 	/**
@@ -42,7 +45,7 @@ class MerchantMetadataProvider {
 			$this->get_canonical_store_url(),
 			$this->get_api_base_url(),
 			$this->wc->countries->get_base_country(),
-			get_woocommerce_currency(),
+			$this->store_currency->value(),
 			$merchant_id,
 			$this->get_canonical_store_url(),
 			$merchant->merchant_country

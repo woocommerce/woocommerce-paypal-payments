@@ -89,7 +89,8 @@ return array(
 	'agentic.merchant.provider'                    => static function ( ContainerInterface $c ): MerchantMetadataProvider {
 		return new MerchantMetadataProvider(
 			$c->get( 'woocommerce.core' ),
-			$c->get( 'settings.data.general' )
+			$c->get( 'settings.data.general' ),
+			$c->get( 'agentic.config.store-currency' )
 		);
 	},
 	'agentic.registration.eligibility'             => static function ( ContainerInterface $c ): RegistrationEligibility {
@@ -142,8 +143,8 @@ return array(
 			$c->get( 'agentic.logger' )
 		);
 	},
-	'agentic.helper.shipping-options-builder'      => static function (): ShippingOptionsBuilder {
-		return new ShippingOptionsBuilder();
+	'agentic.helper.shipping-options-builder'      => static function ( ContainerInterface $c ): ShippingOptionsBuilder {
+		return new ShippingOptionsBuilder( $c->get( 'agentic.config.store-currency' ) );
 	},
 	'agentic.helper.checkout-processor'            => static function ( ContainerInterface $c ): AgenticCheckoutProcessor {
 		return new AgenticCheckoutProcessor(
@@ -160,7 +161,8 @@ return array(
 			$c->get( 'api.endpoint.order' ),
 			$c->get( 'api.endpoint.orders' ),
 			$c->get( 'agentic.helper.cart-builder' ),
-			$c->get( 'agentic.logger' )
+			$c->get( 'agentic.logger' ),
+			$c->get( 'agentic.config.store-currency' )
 		);
 	},
 
@@ -191,8 +193,8 @@ return array(
 			$c->get( 'agentic.helper.product-manager' )
 		);
 	},
-	'agentic.validator.currency'                   => static function (): CurrencyValidator {
-		return new CurrencyValidator();
+	'agentic.validator.currency'                   => static function ( ContainerInterface $c ): CurrencyValidator {
+		return new CurrencyValidator( $c->get( 'agentic.config.store-currency' ) );
 	},
 	'agentic.validator.coupon.discount-calculator' => static function ( ContainerInterface $c ): DiscountCalculator {
 		return new DiscountCalculator(
@@ -202,7 +204,8 @@ return array(
 	'agentic.validator.coupon.context-builder'     => static function ( ContainerInterface $c ): CouponContextBuilder {
 		return new CouponContextBuilder(
 			$c->get( 'agentic.helper.product-manager' ),
-			$c->get( 'agentic.validator.coupon.discount-calculator' )
+			$c->get( 'agentic.validator.coupon.discount-calculator' ),
+			$c->get( 'agentic.config.store-currency' )
 		);
 	},
 	'agentic.validator.coupon.resolution-builder'  => static function (): CouponResolutionBuilder {
@@ -219,7 +222,8 @@ return array(
 	// Response services.
 	'agentic.response.applied-coupons-builder'     => static function ( ContainerInterface $c ): AppliedCouponsBuilder {
 		return new AppliedCouponsBuilder(
-			$c->get( 'agentic.validator.coupon.discount-calculator' )
+			$c->get( 'agentic.validator.coupon.discount-calculator' ),
+			$c->get( 'agentic.config.store-currency' )
 		);
 	},
 	'agentic.response.factory'                     => static function ( ContainerInterface $c ): ResponseFactory {

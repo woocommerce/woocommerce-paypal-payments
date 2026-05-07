@@ -7,6 +7,7 @@ use Mockery;
 use WooCommerce;
 use WooCommerce\PayPalCommerce\Settings\Data\GeneralSettings;
 use WooCommerce\PayPalCommerce\Settings\DTO\MerchantConnectionDTO;
+use WooCommerce\PayPalCommerce\StoreSync\Config\StoreCurrencyValue;
 use WooCommerce\PayPalCommerce\TestCase;
 use function Brain\Monkey\Functions\when;
 use stdClass;
@@ -25,7 +26,6 @@ class MerchantMetadataProviderTest extends TestCase {
 
 		$this->wc               = Mockery::mock( WooCommerce::class );
 		$this->general_settings = $this->createStub( GeneralSettings::class );
-		$this->testee           = new MerchantMetadataProvider( $this->wc, $this->general_settings );
 	}
 
 	/**
@@ -201,9 +201,12 @@ class MerchantMetadataProviderTest extends TestCase {
 		string $currency,
 		string $store_country
 	): void {
+		$store_currency = Mockery::mock( StoreCurrencyValue::class );
+		$store_currency->allows( 'value' )->andReturn( $currency );
+		$this->testee   = new MerchantMetadataProvider( $this->wc, $this->general_settings, $store_currency );
+
 		when( 'get_bloginfo' )->justReturn( $store_name );
 		when( 'get_site_url' )->justReturn( $site_url );
-		when( 'get_woocommerce_currency' )->justReturn( $currency );
 		when( 'untrailingslashit' )->alias(
 			function ( $url ) {
 				return rtrim( $url, '/' );

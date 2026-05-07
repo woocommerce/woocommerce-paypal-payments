@@ -12,6 +12,7 @@ declare( strict_types = 1 );
 namespace WooCommerce\PayPalCommerce\StoreSync\CartValidation\CouponValidator;
 
 use WC_Coupon;
+use WooCommerce\PayPalCommerce\StoreSync\Config\StoreCurrencyValue;
 use WooCommerce\PayPalCommerce\StoreSync\Helper\CartHelper;
 use WooCommerce\PayPalCommerce\StoreSync\Helper\ProductManager;
 use WooCommerce\PayPalCommerce\StoreSync\Schema\PayPalCart;
@@ -37,9 +38,12 @@ class CouponContextBuilder {
 	 */
 	private DiscountCalculator $discount_calculator;
 
-	public function __construct( ProductManager $product_manager, DiscountCalculator $discount_calculator ) {
+	private StoreCurrencyValue $store_currency;
+
+	public function __construct( ProductManager $product_manager, DiscountCalculator $discount_calculator, StoreCurrencyValue $store_currency ) {
 		$this->product_manager     = $product_manager;
 		$this->discount_calculator = $discount_calculator;
+		$this->store_currency      = $store_currency;
 	}
 
 	/**
@@ -190,7 +194,7 @@ class CouponContextBuilder {
 		$subtotal = CartHelper::cart_item_total( $cart );
 		$minimum  = (float) $wc_coupon->get_minimum_amount();
 		$shortage = max( 0, $minimum - $subtotal );
-		$currency = CartHelper::currency( $cart, get_woocommerce_currency() );
+		$currency = CartHelper::currency( $cart, $this->store_currency->value() );
 
 		return array(
 			'minimum_required' => CartHelper::format_decimal( $minimum ),
@@ -216,7 +220,7 @@ class CouponContextBuilder {
 
 		$subtotal = CartHelper::cart_item_total( $cart );
 		$maximum  = (float) $wc_coupon->get_maximum_amount();
-		$currency = CartHelper::currency( $cart, get_woocommerce_currency() );
+		$currency = CartHelper::currency( $cart, $this->store_currency->value() );
 
 		return array(
 			'maximum_allowed'  => CartHelper::format_decimal( $maximum ),

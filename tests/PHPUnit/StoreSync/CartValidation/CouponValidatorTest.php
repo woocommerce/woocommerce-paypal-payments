@@ -4,6 +4,7 @@ declare( strict_types = 1 );
 namespace WooCommerce\PayPalCommerce\StoreSync\CartValidation;
 
 use Mockery;
+use WooCommerce\PayPalCommerce\StoreSync\Config\StoreCurrencyValue;
 use WooCommerce\PayPalCommerce\StoreSync\Helper\ProductManager;
 use WooCommerce\PayPalCommerce\StoreSync\Validation\ValidationIssue;
 use WooCommerce\PayPalCommerce\StoreSync\CartValidation\CouponValidator\CouponValidator;
@@ -28,8 +29,10 @@ class CouponValidatorTest extends ValidationTest {
 		// Note: wc_coupons_enabled() is stubbed per-test as needed
 		$this->product_manager     = Mockery::mock( ProductManager::class );
 		$this->discount_calculator = new DiscountCalculator( $this->product_manager );
-		$this->context_builder     =
-			new CouponContextBuilder( $this->product_manager, $this->discount_calculator );
+		$store_currency        = Mockery::mock( StoreCurrencyValue::class );
+		$store_currency->allows( 'value' )->andReturn( 'USD' );
+		$this->context_builder =
+			new CouponContextBuilder( $this->product_manager, $this->discount_calculator, $store_currency );
 		$this->resolution_builder  = new CouponResolutionBuilder();
 		$this->validator           = new CouponValidator(
 			$this->context_builder,
