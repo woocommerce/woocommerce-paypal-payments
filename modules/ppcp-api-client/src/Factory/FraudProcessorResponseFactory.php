@@ -26,6 +26,7 @@ class FraudProcessorResponseFactory
     {
         $avs_code = $data->avs_code ?? null ?: null;
         $cvv_code = $data->cvv_code ?? null ?: null;
-        return new FraudProcessorResponse($avs_code, $cvv_code);
+        $response_code = $data->response_code ?? null ?: null;
+        return new FraudProcessorResponse($avs_code, $cvv_code, $response_code);
     }
 }
