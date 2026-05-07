@@ -41,7 +41,7 @@ This will run the next scripts:
 
 - `setup:env` -- Setup `wp env` and required plugins for running tests in http://localhost:8889
 - `setup:plugin` -- Compile WooCommerce PayPal Payments plugin, generates a ZIP and moves it into resources/files to be used in tests
-- `setup:tests` -- Setup required PlayWright libraries and utils
+- `e2e:setup:tests` -- Setup required PlayWright libraries and utils
 
 ## Project configuration (Devs)
 
@@ -146,7 +146,7 @@ This will run the next scripts:
 Before commiting changes run following command:
 
 ```bash
-npm run lint:js:fix
+npm run e2e:lint:js:fix
 ```
 
 ## Reset Kinsta env
@@ -190,7 +190,7 @@ Local usage of _automated env setup scripts_ assumes that the following steps ar
 4. Install Node dependencies and Playwright:
 
 	```bash
-	npm run setup:tests
+	npm run e2e:setup:tests
 	```
 
 5.  In the `/tests/qa` directory create a `.env` file and copy-paste content from `PCP .env` vault of 1Password replacing all the data for your test env. Alternatively use `.env.example`.
@@ -203,9 +203,9 @@ Scripts follow a three-tier naming pattern:
 
 | Prefix | Meaning | Example |
 |---|---|---|
-| `env:reset` | Reset only env + WooCommerce | `npm run env:reset` |
-| `env:reset:pcp:*` | Reset env + PCP setup (single run) | `npm run env:reset:pcp:usa` |
-| `env:setup:*` | PCP/config setup only, no reset | `npm run env:setup:pcp:usa` |
+| `e2e:env:reset` | Reset only env + WooCommerce | `npm run e2e:env:reset` |
+| `e2e:env:reset:pcp:*` | Reset env + PCP setup (single run) | `npm run e2e:env:reset:pcp:usa` |
+| `e2e:env:setup:*` | PCP/config setup only, no reset | `npm run e2e:env:setup:pcp:usa` |
 
 ### Reset env and WooCommerce setup
 
@@ -228,13 +228,13 @@ Scripts follow a three-tier naming pattern:
 	- Registered US customer
 
 ```bash
-npm run env:reset
+npm run e2e:env:reset
 ```
 
 **WooCommerce setup only (no SSH reset):**
 
 ```bash
-npm run env:setup:wc
+npm run e2e:env:setup:wc
 ```
 
 ### Setup PCP for specific country
@@ -246,26 +246,26 @@ npm run env:setup:wc
 
 | With reset | Without reset |
 |---|---|
-| `npm run env:reset:pcp:usa` | `npm run env:setup:pcp:usa` |
+| `npm run e2e:env:reset:pcp:usa` | `npm run e2e:env:setup:pcp:usa` |
 
 **For Germany & PUI (disabled by default)**
 
 | With reset | Without reset |
 |---|---|
-| `npm run env:reset:pcp:germany` | `npm run env:setup:pcp:germany` |
+| `npm run e2e:env:reset:pcp:germany` | `npm run e2e:env:setup:pcp:germany` |
 
 **For Mexico & OXXO (disabled by default)**
 
 | With reset | Without reset |
 |---|---|
-| `npm run env:reset:pcp:mexico` | `npm run env:setup:pcp:mexico` |
+| `npm run e2e:env:reset:pcp:mexico` | `npm run e2e:env:setup:pcp:mexico` |
 
 ### Upgrade PCP (without env reload)
 
 Installs `woocommerce-paypal-payments-update.zip` over the existing PCP installation.
 
 ```bash
-npm run env:setup:pcp:update
+npm run e2e:env:setup:pcp:update
 ```
 
 ### Switch checkout layout (without env reload)
@@ -273,13 +273,13 @@ npm run env:setup:pcp:update
 **Enable classic cart/checkout**
 
 ```bash
-npm run env:setup:checkout:classic
+npm run e2e:env:setup:checkout:classic
 ```
 
 **Enable block cart/checkout**
 
 ```bash
-npm run env:setup:checkout:block
+npm run e2e:env:setup:checkout:block
 ```
 
 ### Switch tax configuration (without env reload)
@@ -287,11 +287,11 @@ npm run env:setup:checkout:block
 **Tax included in prices**
 
 ```bash
-npm run env:setup:tax:inc
+npm run e2e:env:setup:tax:inc
 ```
 
 **Tax excluded from prices**
 
 ```bash
-npm run env:setup:tax:exc
+npm run e2e:env:setup:tax:exc
 ```
