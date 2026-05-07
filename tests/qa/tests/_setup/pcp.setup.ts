@@ -14,10 +14,11 @@ import {
 	storeConfigUsa,
 	taxSettings,
 	products,
+	customers,
 	gateways,
 } from '../../resources';
 
-const { acdc } = gateways;
+const { payPal, payLater, venmo, acdc, fastlane, googlepay } = gateways;
 
 setup.describe( 'env:reset;', async () => {
 	setup( 'Setup: Reset Environment', async () => {
@@ -42,6 +43,131 @@ setup( 'setup:pcp:usa;', async ( { utils, pcpApi } ) => {
 		merchants.usa.client_secret
 	);
 } );
+
+setup(
+	'setup:pcp:usa:transactions;',
+	async ( { utils, pcpApi, wooCommerceApi } ) => {
+		await utils.configureStore( {
+			...storeConfigUsa,
+			customer: customers.usa,
+		} );
+		await utils.installAndActivatePcp();
+		await pcpApi.resetDb();
+		await pcpApi.connectMerchant(
+			merchants.usa.client_id,
+			merchants.usa.client_secret
+		);
+		await pcpApi.updatePcpPaymentMethods( {
+			[ payPal.id ]: { id: payPal.id, enabled: true },
+			[ payLater.id ]: { id: payLater.id, enabled: true },
+			[ venmo.id ]: { id: venmo.id, enabled: true },
+			[ acdc.id ]: { id: acdc.id, enabled: true },
+			[ fastlane.id ]: { id: fastlane.id, enabled: false },
+		} );
+		await wooCommerceApi.deleteAllOrders();
+	}
+);
+
+setup( 'setup:pcp:usa:refund;', async ( { utils, pcpApi, wooCommerceApi } ) => {
+	await utils.configureStore( {
+		...storeConfigUsa,
+		customer: customers.usa,
+	} );
+	await utils.installAndActivatePcp();
+	await pcpApi.resetDb();
+	await pcpApi.connectMerchant(
+		merchants.usa.client_id,
+		merchants.usa.client_secret
+	);
+	await pcpApi.updatePcpPaymentMethods( {
+		[ payPal.id ]: { id: payPal.id, enabled: true },
+		[ acdc.id ]: { id: acdc.id, enabled: true },
+	} );
+	await wooCommerceApi.deleteAllOrders();
+} );
+
+setup(
+	'setup:pcp:usa:vaulting;',
+	async ( { utils, pcpApi, wooCommerceApi } ) => {
+		await utils.configureStore( storeConfigUsa );
+		await utils.installAndActivatePcp();
+		await pcpApi.resetDb();
+		await pcpApi.connectMerchant(
+			merchants.usa.client_id,
+			merchants.usa.client_secret,
+			{
+				isCasualSeller: false,
+				areOptionalPaymentMethodsEnabled: true,
+			}
+		);
+		await pcpApi.updatePcpSettings( {
+			savePaypalAndVenmo: true,
+			saveCardDetails: true,
+		} );
+		await pcpApi.updatePcpPaymentMethods( {
+			[ payPal.id ]: { id: payPal.id, enabled: true },
+			[ acdc.id ]: { id: acdc.id, enabled: true },
+		} );
+		await wooCommerceApi.deleteAllOrders();
+	}
+);
+
+setup(
+	'setup:pcp:usa:subscription;',
+	async ( { utils, pcpApi, wooCommerceApi } ) => {
+		await utils.configureStore( {
+			...storeConfigUsa,
+			enableWpDebugging: false,
+			enableSubscriptionsPlugin: true,
+			products: [
+				products.subscription100,
+				products.subscriptionFreeTrial,
+			],
+		} );
+		await utils.installAndActivatePcp();
+		await pcpApi.resetDb();
+		await pcpApi.connectMerchant(
+			merchants.usa.client_id,
+			merchants.usa.client_secret,
+			{
+				isCasualSeller: false,
+				areOptionalPaymentMethodsEnabled: true,
+				products: [ 'physical', 'virtual', 'subscriptions' ],
+			}
+		);
+		await pcpApi.updatePcpSettings( {
+			savePaypalAndVenmo: true,
+			saveCardDetails: true,
+		} );
+		await pcpApi.updatePcpPaymentMethods( {
+			[ payPal.id ]: { id: payPal.id, enabled: true },
+			[ acdc.id ]: { id: acdc.id, enabled: true },
+		} );
+		await wooCommerceApi.deleteAllOrders();
+	}
+);
+
+setup(
+	'setup:pcp:usa:transactions:googlepay;',
+	async ( { utils, pcpApi, wooCommerceApi } ) => {
+		await utils.configureStore( {
+			...storeConfigUsa,
+			enableClassicPages: false,
+			customer: customers.usa,
+		} );
+		await utils.installAndActivatePcp();
+		await pcpApi.resetDb();
+		await pcpApi.connectMerchant(
+			merchants.usa.client_id,
+			merchants.usa.client_secret
+		);
+		await pcpApi.updatePcpPaymentMethods( {
+			[ acdc.id ]: { id: acdc.id, enabled: true },
+			[ googlepay.id ]: { id: googlepay.id, enabled: true },
+		} );
+		await wooCommerceApi.deleteAllOrders();
+	}
+);
 
 // --- PCP Germany ---
 

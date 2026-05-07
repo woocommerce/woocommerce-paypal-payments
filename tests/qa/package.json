@@ -54,7 +54,15 @@
         "env:setup:checkout:block": "npx playwright test --grep=\"setup:checkout:block;\"",
         "env:setup:checkout:classic": "npx playwright test --grep=\"setup:checkout:classic;\"",
         "env:setup:tax:inc": "npx playwright test --grep=\"setup:tax:inc;\"",
-        "env:setup:tax:exc": "npx playwright test --grep=\"setup:tax:exc;\""
+        "env:setup:tax:exc": "npx playwright test --grep=\"setup:tax:exc;\"",
+
+        "e2e:test:shard:plugin-foundation": "npx playwright test --project \"shard:plugin-foundation\"",
+        "e2e:test:shard:onboarding-settings": "npx playwright test --project \"shard:onboarding-settings\"",
+        "e2e:test:shard:transactions": "npx playwright test --project \"shard:transactions\"",
+        "e2e:test:shard:transactions-googlepay": "npx playwright test --project \"shard:transactions-googlepay\"",
+        "e2e:test:shard:refund": "npx playwright test --project \"shard:refund\"",
+        "e2e:test:shard:vaulting": "npx playwright test --project \"shard:vaulting\"",
+        "e2e:test:shard:subscription": "npx playwright test --project \"shard:subscription\""
     },
     "eslintConfig": {
         "extends": [
