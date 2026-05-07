@@ -66,7 +66,6 @@ jobs:
       matrix: ${{ fromJson(needs.resolve-playwright-matrix.outputs.matrix) }}
     uses: inpsyde/reusable-workflows/.github/workflows/test-playwright.yml@fix/test-playwright
     with:
-      WORK_DIR: tests/qa
       PLAYWRIGHT_SCRIPT: ${{ matrix.script }}
       PLAYWRIGHT_ARTIFACT_PATH: |
         artifacts/*
