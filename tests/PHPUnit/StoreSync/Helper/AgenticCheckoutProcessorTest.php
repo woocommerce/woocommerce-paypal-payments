@@ -18,6 +18,7 @@ use WooCommerce\PayPalCommerce\StoreSync\CartValidation\CouponValidator\AppliedC
 use WooCommerce\PayPalCommerce\StoreSync\Schema\PaymentMethod;
 use WooCommerce\PayPalCommerce\StoreSync\Schema\PayPalCart;
 use WooCommerce\PayPalCommerce\StoreSync\Schema\ShippingOption;
+use Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\TestCase;
 use function Brain\Monkey\Functions\when;
 
@@ -27,12 +28,18 @@ class AgenticCheckoutProcessorTest extends TestCase {
 		ShippingFactory $shipping_factory,
 		?WooCommerceOrderCreator $wc_order_creator = null
 	): AgenticCheckoutProcessor {
+		$logger = Mockery::mock( LoggerInterface::class );
+		$logger->allows( 'info' );
+		$logger->allows( 'warning' );
+		$logger->allows( 'error' );
+
 		return new AgenticCheckoutProcessor(
 			Mockery::mock( PayPalOrderManager::class ),
 			$wc_order_creator ?? Mockery::mock( WooCommerceOrderCreator::class ),
 			Mockery::mock( AgenticCartBuilder::class ),
 			Mockery::mock( AppliedCouponsBuilder::class ),
-			$shipping_factory
+			$shipping_factory,
+			$logger
 		);
 	}
 

@@ -153,7 +153,8 @@ return array(
 			$c->get( 'button.helper.wc-order-creator' ),
 			$c->get( 'agentic.helper.cart-builder' ),
 			$c->get( 'agentic.response.applied-coupons-builder' ),
-			$c->get( 'api.factory.shipping' )
+			$c->get( 'api.factory.shipping' ),
+			$c->get( 'agentic.logger' )
 		);
 	},
 
