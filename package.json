@@ -24,7 +24,30 @@
     "phpstan": "vendor/bin/phpstan analyze --memory-limit=2G",
     "fix-lint": "vendor/bin/phpcbf",
     "build": "wp-scripts build",
-    "watch-js": "wp-scripts start"
+    "watch-js": "wp-scripts start",
+    "e2e:setup:tests": "npm install && npx playwright install",
+    "e2e:setup:utils": "npm run e2e:setup:tests && cd ./playwright-utils && yarn devLocal",
+    "e2e:test:plugin-foundation": "npx playwright test --workers=1 --project \"plugin-foundation\"",
+    "e2e:test:all": "npx playwright test --workers=1 --project \"all\"",
+    "e2e:test:stress": "npx playwright test --project=\"stress\"",
+    "e2e:test:critical": "npx playwright test --grep=\"@Critical\"",
+    "e2e:test:smoke": "npx playwright test --grep=\"@Smoke\"",
+    "e2e:test:dev": "npx playwright test --grep=\"@Dev\"",
+    "e2e:env:reset": "npx playwright test --grep=\"e2e:env:reset;\"",
+    "e2e:env:reset:pcp:usa": "npx playwright test --grep=\"e2e:env:reset;|setup:pcp:usa;\"",
+    "e2e:env:reset:pcp:germany": "npx playwright test --grep=\"e2e:env:reset;|setup:pcp:germany;\"",
+    "e2e:env:reset:pcp:mexico": "npx playwright test --grep=\"e2e:env:reset;|setup:pcp:mexico;\"",
+    "e2e:env:setup:wc": "npx playwright test woocommerce.setup",
+    "e2e:env:setup:pcp:usa": "npx playwright test --grep=\"setup:pcp:usa;\"",
+    "e2e:env:setup:pcp:germany": "npx playwright test --grep=\"setup:pcp:germany;\"",
+    "e2e:env:setup:pcp:mexico": "npx playwright test --grep=\"setup:pcp:mexico;\"",
+    "e2e:env:setup:pcp:update": "npx playwright test --grep=\"setup:pcp:update;\"",
+    "e2e:env:setup:checkout:block": "npx playwright test --grep=\"setup:checkout:block;\"",
+    "e2e:env:setup:checkout:classic": "npx playwright test --grep=\"setup:checkout:classic;\"",
+    "e2e:env:setup:tax:inc": "npx playwright test --grep=\"setup:tax:inc;\"",
+    "e2e:env:setup:tax:exc": "npx playwright test --grep=\"setup:tax:exc;\"",
+    "e2e:lint:md:fix": "wp-scripts lint-md-docs --fix ./tests/qa/**/*.md E2E-TESTS.md",
+    "e2e:lint:js:fix": "wp-scripts lint-js --resolve-plugins-relative-to ./tests/qa --fix --ext .ts,.tsx,.mjs ./tests/qa"
   },
   "config": {
     "wp_org_slug": "woocommerce-paypal-payments"
@@ -38,7 +61,6 @@
     "dotenv": "^16.0.3",
     "escape-html": "^1.0.3",
     "formdata-polyfill": "^4.0.10",
-    "playwright": "^1.43.0",
     "react": "^18",
     "react-dom": "^18",
     "react-select": "^5.10.2",
@@ -70,6 +92,22 @@
     "@wordpress/url": "^4.40.0",
     "babel-plugin-explicit-exports-references": "^1.0.2",
     "eslint-import-resolver-webpack": "^0.13.10",
-    "jquery": "^3.7.1"
+    "jquery": "^3.7.1",
+    "@playwright/test": "^1.59.0",
+    "@inpsyde/playwright-utils": "^5.1.0",
+    "dotenv": "^16.3.1",
+    "yarn": "^1.22.21",
+    "@types/node": "^20.8.4",
+    "@wordpress/env": "^10.30.0"
+  },
+  "eslintConfig": {
+      "extends": [
+          "plugin:@wordpress/eslint-plugin/recommended"
+      ],
+      "rules": {
+          "@wordpress/dependency-group": "error",
+          "@wordpress/no-unsafe-wp-apis": "off",
+          "no-console": "off"
+      }
   }
 }

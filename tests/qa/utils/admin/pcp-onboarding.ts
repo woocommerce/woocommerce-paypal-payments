@@ -7,7 +7,7 @@ import urls from '../urls';
 /**
  * External dependencies
  */
-import { expect, Locator } from 'playwright/test';
+import { expect, Locator } from '@playwright/test';
 
 export class PcpOnboarding extends PcpAdminPage {
 	url = urls.admin.pcp.onboarding;
