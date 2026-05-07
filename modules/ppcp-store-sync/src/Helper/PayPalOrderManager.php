@@ -20,9 +20,10 @@ use WooCommerce\PayPalCommerce\ApiClient\Entity\ExperienceContext;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Patch;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PatchCollection;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
+use WooCommerce\PayPalCommerce\ApiClient\Factory\AmountFactory;
 use WooCommerce\PayPalCommerce\StoreSync\Config\StoreCurrencyValue;
 use WooCommerce\PayPalCommerce\StoreSync\Schema\PayPalCart;
-use WooCommerce\PayPalCommerce\StoreSync\StoreData\StoreData;
+use WC_Cart;
 
 class PayPalOrderManager {
 	private OrderEndpoint $order_endpoint;
@@ -35,7 +36,7 @@ class PayPalOrderManager {
 
 	private StoreCurrencyValue $store_currency;
 
-	private StoreData $store_data;
+	private AmountFactory $amount_factory;
 
 	public function __construct(
 		OrderEndpoint $order_endpoint,
@@ -43,7 +44,7 @@ class PayPalOrderManager {
 		AgenticCartBuilder $cart_builder,
 		LoggerInterface $logger,
 		StoreCurrencyValue $store_currency,
-		StoreData $store_data
+		AmountFactory $amount_factory
 	) {
 
 		$this->order_endpoint = $order_endpoint;
@@ -51,7 +52,7 @@ class PayPalOrderManager {
 		$this->cart_builder   = $cart_builder;
 		$this->logger         = $logger;
 		$this->store_currency = $store_currency;
-		$this->store_data     = $store_data;
+		$this->amount_factory = $amount_factory;
 	}
 
 	/**
@@ -165,18 +166,8 @@ class PayPalOrderManager {
 			return;
 		}
 
-		$currency_code = CartHelper::currency( $cart, $this->store_currency->value() );
-		$totals        = CartHelper::calculate_totals( $wc_cart, $currency_code );
-		$items         = $this->build_items_for_patch( $cart );
-
-		if ( ! $totals ) {
-			$this->logger->warning(
-				'[ORDER] Cannot update PayPal Order: totals not calculable',
-				array( 'order_id' => $order_id )
-			);
-
-			return;
-		}
+		$amount = $this->amount_factory->from_wc_cart( $wc_cart );
+		$items  = $this->build_items_for_patch( $wc_cart );
 
 		$this->logger->info(
 			'[ORDER] Updating PayPal Order',
@@ -184,24 +175,9 @@ class PayPalOrderManager {
 				'order_id'   => $order_id,
 				'discount'   => $discount,
 				'item_count' => count( $items ),
-				'totals'     => $totals,
+				'amount'     => $amount->to_array(),
 			)
 		);
-
-		// Build the breakdown array.
-		// Note: PayPal API uses 'item_total'/'tax_total'; CartHelper::calculate_totals() uses 'subtotal'/'tax'.
-		$breakdown = array(
-			'item_total' => $totals['subtotal'],
-			'shipping'   => $totals['shipping'],
-			'tax_total'  => $totals['tax'],
-		);
-
-		// Only include discount in breakdown if there's a discount.
-		if ( isset( $totals['discount'] ) ) {
-			$breakdown['discount'] = $totals['discount'];
-		}
-
-		$cart_amount = $totals['total'];
 
 		$patches = new PatchCollection(
 			new Patch(
@@ -212,11 +188,7 @@ class PayPalOrderManager {
 			new Patch(
 				'replace',
 				"/purchase_units/@reference_id=='default'/amount",
-				array(
-					'currency_code' => $cart_amount['currency_code'],
-					'value'         => $cart_amount['value'],
-					'breakdown'     => $breakdown,
-				)
+				$amount->to_array()
 			)
 		);
 
@@ -227,7 +199,7 @@ class PayPalOrderManager {
 				'[ORDER] PayPal Order updated successfully',
 				array(
 					'order_id'   => $order_id,
-					'amount'     => $cart_amount['value'],
+					'amount'     => $amount->value_str(),
 					'item_count' => count( $items ),
 				)
 			);
@@ -237,7 +209,7 @@ class PayPalOrderManager {
 				array(
 					'order_id' => $order_id,
 					'error'    => $error->getMessage(),
-					'totals'   => $totals,
+					'amount'   => $amount->to_array(),
 				)
 			);
 
@@ -248,28 +220,33 @@ class PayPalOrderManager {
 	/**
 	 * Build items array for PayPal Order PATCH operation.
 	 *
-	 * Prices are always taken from the WooCommerce store via StoreData, never from the agent payload.
-	 * Items whose product cannot be resolved are silently skipped.
+	 * Prices are always taken from the WooCommerce store via StoreData, never from the agent
+	 * payload. Items whose product cannot be resolved are silently skipped.
 	 *
-	 * @param PayPalCart $cart The cart.
+	 * @param WC_Cart $wc_cart The cart.
 	 * @return array Items formatted for PayPal API.
 	 */
-	private function build_items_for_patch( PayPalCart $cart ): array {
+	private function build_items_for_patch( WC_Cart $wc_cart ): array {
 		$items    = array();
 		$currency = $this->store_currency->value();
 
-		foreach ( $cart->items() as $item ) {
-			$store_item = $this->store_data->cart_item( $item );
-			if ( null === $store_item ) {
+		foreach ( $wc_cart->get_cart() as $cart_item ) {
+			$product  = $cart_item['data'] ?? null;
+			$quantity = (int) ( $cart_item['quantity'] ?? 0 );
+
+			if ( ! $product instanceof \WC_Product || $quantity <= 0 ) {
 				continue;
 			}
 
+			$line_total = (float) ( $cart_item['line_subtotal'] ?? 0.0 );
+			$unit_price = $line_total / $quantity;
+
 			$items[] = array(
-				'name'        => substr( $item->name() ?? 'Item', 0, 127 ),
-				'quantity'    => (string) $item->quantity(),
+				'name'        => substr( $product->get_name() ?? 'Item', 0, 127 ),
+				'quantity'    => (string) $quantity,
 				'unit_amount' => array(
 					'currency_code' => $currency,
-					'value'         => CartHelper::format_decimal( $store_item->real_price() ),
+					'value'         => CartHelper::format_decimal( $unit_price ),
 				),
 			);
 		}

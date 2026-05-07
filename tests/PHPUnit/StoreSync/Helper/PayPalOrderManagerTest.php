@@ -7,14 +7,16 @@ namespace WooCommerce\PayPalCommerce\StoreSync\Helper;
 use Mockery;
 use Psr\Log\LoggerInterface;
 use ReflectionMethod;
+use WC_Cart;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\Orders;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\Amount;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\AmountBreakdown;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\Money;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PatchCollection;
+use WooCommerce\PayPalCommerce\ApiClient\Factory\AmountFactory;
 use WooCommerce\PayPalCommerce\StoreSync\Config\StoreCurrencyValue;
-use WooCommerce\PayPalCommerce\StoreSync\Schema\CartItem;
 use WooCommerce\PayPalCommerce\StoreSync\Schema\PayPalCart;
-use WooCommerce\PayPalCommerce\StoreSync\StoreData\StoreCartItem;
-use WooCommerce\PayPalCommerce\StoreSync\StoreData\StoreData;
 use WooCommerce\PayPalCommerce\StoreSync\StoreSyncTestCase;
 use function Brain\Monkey\Functions\when;
 
@@ -25,12 +27,12 @@ class PayPalOrderManagerTest extends StoreSyncTestCase {
 
 	private function make_sut(
 		?StoreCurrencyValue $store_currency = null,
-		?StoreData $store_data = null
+		?AmountFactory $amount_factory = null
 	): PayPalOrderManager {
 		$store_currency ??= Mockery::mock( StoreCurrencyValue::class );
 		$store_currency->allows( 'value' )->andReturn( 'USD' );
 
-		$store_data ??= Mockery::mock( StoreData::class );
+		$amount_factory ??= Mockery::mock( AmountFactory::class );
 
 		return new PayPalOrderManager(
 			Mockery::mock( OrderEndpoint::class ),
@@ -38,44 +40,39 @@ class PayPalOrderManagerTest extends StoreSyncTestCase {
 			Mockery::mock( AgenticCartBuilder::class ),
 			Mockery::mock( LoggerInterface::class ),
 			$store_currency,
-			$store_data
+			$amount_factory
 		);
 	}
 
 	/**
-	 * GIVEN a PayPalCart with 2 items that have no price data
+	 * GIVEN a WC_Cart with 2 line items
 	 * WHEN build_items_for_patch() is called via ReflectionMethod
-	 * THEN the result contains 2 items — one for each cart item
+	 * THEN the result contains 2 items — one for each cart line item
 	 */
-	public function test_items_without_price_are_included_in_patch_items(): void {
-		$item1 = CartItem::from_array( array( 'item_id' => '1', 'quantity' => 1, 'name' => 'Widget A' ) );
-		$item2 = CartItem::from_array( array( 'item_id' => '2', 'quantity' => 2, 'name' => 'Widget B' ) );
+	public function test_items_are_built_from_wc_cart(): void {
+		$product1 = Mockery::mock( 'WC_Product' );
+		$product1->allows( 'get_name' )->andReturn( 'Widget A' );
 
-		$cart = Mockery::mock( PayPalCart::class );
-		$cart->allows( 'items' )->andReturn( array( $item1, $item2 ) );
+		$product2 = Mockery::mock( 'WC_Product' );
+		$product2->allows( 'get_name' )->andReturn( 'Widget B' );
 
-		$wc_product = Mockery::mock( 'WC_Product' );
-		$wc_product->allows( 'get_price' )->andReturn( '10.00' );
+		$cart_item1 = array( 'data' => $product1, 'quantity' => 1, 'line_subtotal' => 10.0 );
+		$cart_item2 = array( 'data' => $product2, 'quantity' => 2, 'line_subtotal' => 20.0 );
 
-		$store_currency = Mockery::mock( StoreCurrencyValue::class );
-		$store_currency->allows( 'value' )->andReturn( 'USD' );
-
-		$store_item = new StoreCartItem( $item1, $wc_product, $store_currency );
-
-		$store_data = Mockery::mock( StoreData::class );
-		$store_data->allows( 'cart_item' )->andReturn( $store_item );
+		$wc_cart = Mockery::mock( WC_Cart::class );
+		$wc_cart->allows( 'get_cart' )->andReturn( array( $cart_item1, $cart_item2 ) );
 
 		$method = new ReflectionMethod( PayPalOrderManager::class, 'build_items_for_patch' );
 		$method->setAccessible( true );
 
-		$result = $method->invoke( $this->make_sut( $store_currency, $store_data ), $cart );
+		$result = $method->invoke( $this->make_sut(), $wc_cart );
 
 		$this->assertCount( 2, $result );
 	}
 
 	/**
 	 * GIVEN a cart with no items (to isolate from the items-patch behaviour)
-	 * AND paypal_cart_to_wc_cart() returns a WC_Cart with subtotal=22, shipping=10, tax=2.56, total=34.56
+	 * AND AmountFactory returns an Amount with total=34.56, item_total=22.00, shipping=10.00, tax=2.56
 	 * WHEN update_order() is called
 	 * THEN the amount PATCH received by order_endpoint has currency_code='USD', value='34.56',
 	 *      and breakdown with item_total='22.00', shipping='10.00', tax_total='2.56'
@@ -90,15 +87,23 @@ class PayPalOrderManagerTest extends StoreSyncTestCase {
 				}
 			);
 
-		$wc_cart = Mockery::mock( 'WC_Cart' );
-		$wc_cart->allows( 'get_cart_contents_total' )->andReturn( 22.0 );
-		$wc_cart->allows( 'get_discount_total' )->andReturn( 0.0 );
-		$wc_cart->allows( 'get_shipping_total' )->andReturn( 10.0 );
-		$wc_cart->allows( 'get_total_tax' )->andReturn( 2.56 );
-		$wc_cart->allows( 'get_total' )->andReturn( 34.56 );
+		$wc_cart = Mockery::mock( WC_Cart::class );
+		$wc_cart->allows( 'get_cart' )->andReturn( array() );
 
 		$cart_builder = Mockery::mock( AgenticCartBuilder::class );
 		$cart_builder->allows( 'paypal_cart_to_wc_cart' )->andReturn( $wc_cart );
+
+		$amount = new Amount(
+			new Money( 34.56, 'USD' ),
+			new AmountBreakdown(
+				new Money( 22.0, 'USD' ),
+				new Money( 10.0, 'USD' ),
+				new Money( 2.56, 'USD' )
+			)
+		);
+
+		$amount_factory = Mockery::mock( AmountFactory::class );
+		$amount_factory->allows( 'from_wc_cart' )->andReturn( $amount );
 
 		$cart = Mockery::mock( PayPalCart::class );
 		$cart->allows( 'items' )->andReturn( array() );
@@ -110,15 +115,13 @@ class PayPalOrderManagerTest extends StoreSyncTestCase {
 		$logger->allows( 'info' );
 		$logger->allows( 'warning' );
 
-		$store_data = Mockery::mock( StoreData::class );
-
 		$sut = new PayPalOrderManager(
 			$order_endpoint,
 			Mockery::mock( Orders::class ),
 			$cart_builder,
 			$logger,
 			$store_currency,
-			$store_data
+			$amount_factory
 		);
 
 		when( 'is_wp_error' )->justReturn( false );

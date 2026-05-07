@@ -164,7 +164,7 @@ return array(
 			$c->get( 'agentic.helper.cart-builder' ),
 			$c->get( 'agentic.logger' ),
 			$c->get( 'agentic.config.store-currency' ),
-			$c->get( 'agentic.store.data' )
+			$c->get( 'api.factory.amount' )
 		);
 	},
 
