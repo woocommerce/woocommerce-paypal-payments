@@ -13,13 +13,13 @@ use WooCommerce\PayPalCommerce\ApiClient\Entity\PatchCollection;
 use WooCommerce\PayPalCommerce\StoreSync\Config\StoreCurrencyValue;
 use WooCommerce\PayPalCommerce\StoreSync\Schema\CartItem;
 use WooCommerce\PayPalCommerce\StoreSync\Schema\PayPalCart;
-use WooCommerce\PayPalCommerce\TestCase;
+use WooCommerce\PayPalCommerce\StoreSync\StoreSyncTestCase;
 use function Brain\Monkey\Functions\when;
 
 /**
  * @covers \WooCommerce\PayPalCommerce\StoreSync\Helper\PayPalOrderManager
  */
-class PayPalOrderManagerTest extends TestCase {
+class PayPalOrderManagerTest extends StoreSyncTestCase {
 
 	private function make_sut( ?StoreCurrencyValue $store_currency = null ): PayPalOrderManager {
 		$store_currency ??= Mockery::mock( StoreCurrencyValue::class );
@@ -124,10 +124,9 @@ class PayPalOrderManagerTest extends TestCase {
 
 		$this->assertNotNull( $amount_patch, 'No amount patch found in PatchCollection' );
 		$value = $amount_patch->value();
-		$this->assertSame( 'USD', $value['currency_code'] );
-		$this->assertSame( '34.56', $value['value'] );
-		$this->assertSame( '22.00', $value['breakdown']['item_total']['value'] );
-		$this->assertSame( '10.00', $value['breakdown']['shipping']['value'] );
-		$this->assertSame( '2.56', $value['breakdown']['tax_total']['value'] );
+		$this->assertMoneyValue( $value, 34.56, 'USD' );
+		$this->assertMoneyValue( $value['breakdown']['item_total'], 22.0 );
+		$this->assertMoneyValue( $value['breakdown']['shipping'], 10.0 );
+		$this->assertMoneyValue( $value['breakdown']['tax_total'], 2.56 );
 	}
 }
