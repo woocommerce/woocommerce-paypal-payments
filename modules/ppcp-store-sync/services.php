@@ -163,7 +163,8 @@ return array(
 			$c->get( 'api.endpoint.orders' ),
 			$c->get( 'agentic.helper.cart-builder' ),
 			$c->get( 'agentic.logger' ),
-			$c->get( 'agentic.config.store-currency' )
+			$c->get( 'agentic.config.store-currency' ),
+			$c->get( 'agentic.store.data' )
 		);
 	},
 

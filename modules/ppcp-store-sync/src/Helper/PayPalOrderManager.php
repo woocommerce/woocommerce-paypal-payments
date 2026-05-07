@@ -22,6 +22,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Entity\PatchCollection;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 use WooCommerce\PayPalCommerce\StoreSync\Config\StoreCurrencyValue;
 use WooCommerce\PayPalCommerce\StoreSync\Schema\PayPalCart;
+use WooCommerce\PayPalCommerce\StoreSync\StoreData\StoreData;
 
 class PayPalOrderManager {
 	private OrderEndpoint $order_endpoint;
@@ -34,12 +35,15 @@ class PayPalOrderManager {
 
 	private StoreCurrencyValue $store_currency;
 
+	private StoreData $store_data;
+
 	public function __construct(
 		OrderEndpoint $order_endpoint,
 		Orders $orders_api,
 		AgenticCartBuilder $cart_builder,
 		LoggerInterface $logger,
-		StoreCurrencyValue $store_currency
+		StoreCurrencyValue $store_currency,
+		StoreData $store_data
 	) {
 
 		$this->order_endpoint = $order_endpoint;
@@ -47,6 +51,7 @@ class PayPalOrderManager {
 		$this->cart_builder   = $cart_builder;
 		$this->logger         = $logger;
 		$this->store_currency = $store_currency;
+		$this->store_data     = $store_data;
 	}
 
 	/**
@@ -184,10 +189,11 @@ class PayPalOrderManager {
 		);
 
 		// Build the breakdown array.
+		// Note: PayPal API uses 'item_total'/'tax_total'; CartHelper::calculate_totals() uses 'subtotal'/'tax'.
 		$breakdown = array(
-			'item_total' => $totals['item_total'],
+			'item_total' => $totals['subtotal'],
 			'shipping'   => $totals['shipping'],
-			'tax_total'  => $totals['tax_total'],
+			'tax_total'  => $totals['tax'],
 		);
 
 		// Only include discount in breakdown if there's a discount.
@@ -195,7 +201,7 @@ class PayPalOrderManager {
 			$breakdown['discount'] = $totals['discount'];
 		}
 
-		$cart_amount = $totals['amount'];
+		$cart_amount = $totals['total'];
 
 		$patches = new PatchCollection(
 			new Patch(
@@ -242,16 +248,19 @@ class PayPalOrderManager {
 	/**
 	 * Build items array for PayPal Order PATCH operation.
 	 *
+	 * Prices are always taken from the WooCommerce store via StoreData, never from the agent payload.
+	 * Items whose product cannot be resolved are silently skipped.
+	 *
 	 * @param PayPalCart $cart The cart.
 	 * @return array Items formatted for PayPal API.
 	 */
 	private function build_items_for_patch( PayPalCart $cart ): array {
 		$items    = array();
-		$currency = CartHelper::currency( $cart, $this->store_currency->value() );
+		$currency = $this->store_currency->value();
 
 		foreach ( $cart->items() as $item ) {
-			$price = $item->price();
-			if ( ! $price ) {
+			$store_item = $this->store_data->cart_item( $item );
+			if ( null === $store_item ) {
 				continue;
 			}
 
@@ -260,7 +269,7 @@ class PayPalOrderManager {
 				'quantity'    => (string) $item->quantity(),
 				'unit_amount' => array(
 					'currency_code' => $currency,
-					'value'         => CartHelper::format_decimal( $price->value() ),
+					'value'         => CartHelper::format_decimal( $store_item->real_price() ),
 				),
 			);
 		}

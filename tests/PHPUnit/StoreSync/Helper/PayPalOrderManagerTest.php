@@ -13,6 +13,8 @@ use WooCommerce\PayPalCommerce\ApiClient\Entity\PatchCollection;
 use WooCommerce\PayPalCommerce\StoreSync\Config\StoreCurrencyValue;
 use WooCommerce\PayPalCommerce\StoreSync\Schema\CartItem;
 use WooCommerce\PayPalCommerce\StoreSync\Schema\PayPalCart;
+use WooCommerce\PayPalCommerce\StoreSync\StoreData\StoreCartItem;
+use WooCommerce\PayPalCommerce\StoreSync\StoreData\StoreData;
 use WooCommerce\PayPalCommerce\StoreSync\StoreSyncTestCase;
 use function Brain\Monkey\Functions\when;
 
@@ -21,16 +23,22 @@ use function Brain\Monkey\Functions\when;
  */
 class PayPalOrderManagerTest extends StoreSyncTestCase {
 
-	private function make_sut( ?StoreCurrencyValue $store_currency = null ): PayPalOrderManager {
+	private function make_sut(
+		?StoreCurrencyValue $store_currency = null,
+		?StoreData $store_data = null
+	): PayPalOrderManager {
 		$store_currency ??= Mockery::mock( StoreCurrencyValue::class );
 		$store_currency->allows( 'value' )->andReturn( 'USD' );
+
+		$store_data ??= Mockery::mock( StoreData::class );
 
 		return new PayPalOrderManager(
 			Mockery::mock( OrderEndpoint::class ),
 			Mockery::mock( Orders::class ),
 			Mockery::mock( AgenticCartBuilder::class ),
 			Mockery::mock( LoggerInterface::class ),
-			$store_currency
+			$store_currency,
+			$store_data
 		);
 	}
 
@@ -46,10 +54,21 @@ class PayPalOrderManagerTest extends StoreSyncTestCase {
 		$cart = Mockery::mock( PayPalCart::class );
 		$cart->allows( 'items' )->andReturn( array( $item1, $item2 ) );
 
+		$wc_product = Mockery::mock( 'WC_Product' );
+		$wc_product->allows( 'get_price' )->andReturn( '10.00' );
+
+		$store_currency = Mockery::mock( StoreCurrencyValue::class );
+		$store_currency->allows( 'value' )->andReturn( 'USD' );
+
+		$store_item = new StoreCartItem( $item1, $wc_product, $store_currency );
+
+		$store_data = Mockery::mock( StoreData::class );
+		$store_data->allows( 'cart_item' )->andReturn( $store_item );
+
 		$method = new ReflectionMethod( PayPalOrderManager::class, 'build_items_for_patch' );
 		$method->setAccessible( true );
 
-		$result = $method->invoke( $this->make_sut(), $cart );
+		$result = $method->invoke( $this->make_sut( $store_currency, $store_data ), $cart );
 
 		$this->assertCount( 2, $result );
 	}
@@ -91,26 +110,20 @@ class PayPalOrderManagerTest extends StoreSyncTestCase {
 		$logger->allows( 'info' );
 		$logger->allows( 'warning' );
 
+		$store_data = Mockery::mock( StoreData::class );
+
 		$sut = new PayPalOrderManager(
 			$order_endpoint,
 			Mockery::mock( Orders::class ),
 			$cart_builder,
 			$logger,
-			$store_currency
+			$store_currency,
+			$store_data
 		);
 
 		when( 'is_wp_error' )->justReturn( false );
 
-		// Temporarily suppress E_WARNING so undefined-array-key notices from the buggy
-		// key names do not throw before patch() is reached; assertions below expose the bug.
-		set_error_handler( static function (): bool {
-			return true;
-		}, E_WARNING );
-		try {
-			$sut->update_order( 'ORDER-123', $cart );
-		} finally {
-			restore_error_handler();
-		}
+		$sut->update_order( 'ORDER-123', $cart );
 
 		$this->assertNotNull( $captured, 'order_endpoint::patch() was never called' );
 
