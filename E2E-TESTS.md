@@ -25,27 +25,9 @@ Detailed information about current test project can be found in [docs](./docs/RE
 	git clone https://github.com/woocommerce/woocommerce-paypal-payments.git
 	```
 
-## Installation of `wp env`, PlayWright and PayPal plugin
-
-> See also [@inpsyde/playwright-utils documentation](https://github.com/inpsyde/playwright-utils?tab=readme-ov-file#installation).
-
-1. Make sure you're logged in the [Syde npm package registry](https://inpsyde.atlassian.net/wiki/spaces/AT/pages/3112894465/GitHub+Package+Registry+for+npm).
-
-2. In the terminal change directory to `./tests/qa` and run following command:
-
-	```bash
-	npm run setup:all
-	```
-
-This will run the next scripts:
-
-- `setup:env` -- Setup `wp env` and required plugins for running tests in http://localhost:8889
-- `setup:plugin` -- Compile WooCommerce PayPal Payments plugin, generates a ZIP and moves it into resources/files to be used in tests
-- `e2e:setup:tests` -- Setup required PlayWright libraries and utils
-
 ## Project configuration (Devs)
 
-1. In the test project directory (`./tests/qa/`) create and configure `.env` file:
+1. Create and configure `.env` file:
 
 2. Set general variables following [these steps](https://github.com/inpsyde/playwright-utils?tab=readme-ov-file#env-variables).
 	
@@ -53,21 +35,19 @@ This will run the next scripts:
 
 ## Project configuration (QA team)
 
-1. [SSE setup](https://inpsyde.atlassian.net/wiki/spaces/AT/pages/3175907370/Self+Service+WordPress+Environment) - will be deprecated in Q1 of 2025.
+1. Create and configure `.env` file:
 
-2. In the test project directory (`./tests/qa/`) create and configure `.env` file:
-
-	2.1 Set general variables following [these steps](https://github.com/inpsyde/playwright-utils?tab=readme-ov-file#env-variables).
+	1.1 Set general variables following [these steps](https://github.com/inpsyde/playwright-utils?tab=readme-ov-file#env-variables).
 	
-	2.2 Set PayPal API keys and test credentials. See `.env.example`. For Google Pay transaction tests, make sure to also set `GOOGLE_PAY_EMAIL` and `GOOGLE_PAY_PASSWORD`. The `.env` content with actual test users' credentials is [stored in 1Password](https://start.1password.com/open/i?a=UL7QZZ6P6JDVBI422AOVJXMEGU&v=uthlbcp4jkori6w6rhgxvsvfoe&i=klejf7rgcip76c7auhsnhvxcbi&h=inpsyde.1password.eu).
+	1.2 Set PayPal API keys and test credentials. See `.env.example`. For Google Pay transaction tests, make sure to also set `GOOGLE_PAY_EMAIL` and `GOOGLE_PAY_PASSWORD`. The `.env` content with actual test users' credentials is [stored in 1Password](https://start.1password.com/open/i?a=UL7QZZ6P6JDVBI422AOVJXMEGU&v=uthlbcp4jkori6w6rhgxvsvfoe&i=klejf7rgcip76c7auhsnhvxcbi&h=inpsyde.1password.eu).
 
-3. Configure `playwright.config.ts` of the project following [these steps](https://github.com/inpsyde/playwright-utils?tab=readme-ov-file#playwright-configuration).
+2. Configure `playwright.config.ts` of the project following [these steps](https://github.com/inpsyde/playwright-utils?tab=readme-ov-file#playwright-configuration).
 
-4. Configure reporting to __Xray in Jira__ following [these steps](https://github.com/inpsyde/playwright-utils/blob/main/docs/test-report-api/report-to-xray.md).
+3. Configure reporting to __Xray in Jira__ following [these steps](https://github.com/inpsyde/playwright-utils/blob/main/docs/test-report-api/report-to-xray.md).
 
-5. To avoid conflicts make sure any other payment plugins are deleted.
+4. To avoid conflicts make sure any other payment plugins are deleted.
 
-6. Additional website and WooCommerce configuration is done automatically via `setup-woocommerce` dependency project (see [`/tests/_setup/woocommerce.setup.ts`](./tests/_setup/woocommerce.setup.ts)).
+5. Additional website and WooCommerce configuration is done automatically via `setup-woocommerce` dependency project (see [`/tests/_setup/woocommerce.setup.ts`](./tests/_setup/woocommerce.setup.ts)).
 
 ## Running tests
 
@@ -117,7 +97,7 @@ This will run the next scripts:
 
 3. Set Test Execution ticket status `In progress`.
 
-4. In `.env` file of the test project (`/tests/qa/`) add/update test execution ticket key (`XRAY_TEST_EXEC_KEY='PCP-234'`).
+4. In `.env` file add/update test execution ticket key (`XRAY_TEST_EXEC_KEY='PCP-234'`).
 
 5. Download tested plugin `.zip` package (usually attached to release ticket) and add it to `/tests/qa/resources/files`. You may need to remove version number from the file name (expected name: `woocommerce-paypal-payments.zip`).
 
@@ -181,21 +161,15 @@ Local usage of _automated env setup scripts_ assumes that the following steps ar
 	
 	* WooCommerce Subscriptions package named as `woocommerce-subscriptions.zip`
 
-3. In the terminal open the cloned repo and navigate to `/tests/qa` dir:
-
-	```bash
-	cd tests/qa
-	```
-
-4. Install Node dependencies and Playwright:
+3. Install Node dependencies and Playwright:
 
 	```bash
 	npm run e2e:setup:tests
 	```
 
-5.  In the `/tests/qa` directory create a `.env` file and copy-paste content from `PCP .env` vault of 1Password replacing all the data for your test env. Alternatively use `.env.example`.
+4.  In the root create a `.env` file and copy-paste content from `PCP .env` vault of 1Password replacing all the data for your test env. Alternatively use `.env.example`.
 
-6. Run the scripts described below.
+5. Run the scripts described below.
 
 ### Script naming convention
 
