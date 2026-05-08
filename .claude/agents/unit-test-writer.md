@@ -59,6 +59,9 @@ The deciding question: **Am I asserting THAT it was called, or WHAT it returns?*
 | The system under test                                                        | Never mock  |
 | Pure value objects                                                           | Never mock  |
 
+When a mock is the only expectation that is tested, the test must mark this as passed assertion
+via `$this->addToAssertionCount(1);`
+
 ## Required patterns
 
 ### Stateful fixture via closure
@@ -71,10 +74,10 @@ private function create_order_with_meta(array $initial = []): WC_Order {
     $meta = $initial;
 
     $order->method('get_meta')
-        ->willReturnCallback(fn($key) => $meta[$key] ?? '');
+        ->willReturnCallback(static fn($key) => $meta[$key] ?? '');
 
     $order->method('update_meta_data')
-        ->willReturnCallback(function($key, $value) use (&$meta): void {
+        ->willReturnCallback(static function($key, $value) use (&$meta): void {
             $meta[$key] = $value;
         });
 
@@ -137,10 +140,13 @@ Skip: third-party library internals, framework behavior, trivial getters/setters
 - Coupling to implementation details that break on valid refactors.
 - Generic assertions (`assertTrue(true)`, tests that cannot fail).
 - 350 lines of test for 50 lines of code.
+- Comment noise, like "// Assert" prefixing the assertion block.
+- Comments about current code state, like "// Fails until bug 1 is fixed".
 
 ## Quality gates (verify before delivering)
 
 - [ ] Every test has a `GIVEN/WHEN/THEN` doc block.
+- [ ] Comments are concise and evergreen.
 - [ ] Each test has a single, focused purpose.
 - [ ] Specific assertions used (`assertSame`, `assertEquals` — not `assertTrue`).
 - [ ] No shared state between tests.
@@ -148,6 +154,7 @@ Skip: third-party library internals, framework behavior, trivial getters/setters
 - [ ] Stubs by default; mocks only where justified.
 - [ ] Test names and provider keys read as business sentences.
 - [ ] Tests verify observable behavior, not implementation.
+- [ ] Every test has 1 or more assertions.
 
 ## Running tests (DDEV)
 
