@@ -569,6 +569,7 @@ class ComposerStaticInita39f67516f6df923b6f79368c7def9e4
         'WooCommerce\\PayPalCommerce\\StatusReport\\StatusReportModule' => __DIR__ . '/../..' . '/modules/ppcp-status-report/src/StatusReportModule.php',
         'WooCommerce\\PayPalCommerce\\Uninstall\\ClearDatabase' => __DIR__ . '/../..' . '/modules/ppcp-uninstall/src/ClearDatabase.php',
         'WooCommerce\\PayPalCommerce\\Uninstall\\UninstallModule' => __DIR__ . '/../..' . '/modules/ppcp-uninstall/src/UninstallModule.php',
+        'WooCommerce\\PayPalCommerce\\VaultComponent\\Authentication\\VaultClientToken' => __DIR__ . '/../..' . '/modules/ppcp-vault-component/src/Authentication/VaultClientToken.php',
         'WooCommerce\\PayPalCommerce\\VaultComponent\\Endpoint\\CreateVaultOrderEndpoint' => __DIR__ . '/../..' . '/modules/ppcp-vault-component/src/Endpoint/CreateVaultOrderEndpoint.php',
         'WooCommerce\\PayPalCommerce\\VaultComponent\\Helper\\VaultComponentApplies' => __DIR__ . '/../..' . '/modules/ppcp-vault-component/src/Helper/VaultComponentApplies.php',
         'WooCommerce\\PayPalCommerce\\VaultComponent\\VaultComponentModule' => __DIR__ . '/../..' . '/modules/ppcp-vault-component/src/VaultComponentModule.php',

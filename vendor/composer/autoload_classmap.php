@@ -380,6 +380,7 @@ return array(
     'WooCommerce\\PayPalCommerce\\StatusReport\\StatusReportModule' => $baseDir . '/modules/ppcp-status-report/src/StatusReportModule.php',
     'WooCommerce\\PayPalCommerce\\Uninstall\\ClearDatabase' => $baseDir . '/modules/ppcp-uninstall/src/ClearDatabase.php',
     'WooCommerce\\PayPalCommerce\\Uninstall\\UninstallModule' => $baseDir . '/modules/ppcp-uninstall/src/UninstallModule.php',
+    'WooCommerce\\PayPalCommerce\\VaultComponent\\Authentication\\VaultClientToken' => $baseDir . '/modules/ppcp-vault-component/src/Authentication/VaultClientToken.php',
     'WooCommerce\\PayPalCommerce\\VaultComponent\\Endpoint\\CreateVaultOrderEndpoint' => $baseDir . '/modules/ppcp-vault-component/src/Endpoint/CreateVaultOrderEndpoint.php',
     'WooCommerce\\PayPalCommerce\\VaultComponent\\Helper\\VaultComponentApplies' => $baseDir . '/modules/ppcp-vault-component/src/Helper/VaultComponentApplies.php',
     'WooCommerce\\PayPalCommerce\\VaultComponent\\VaultComponentModule' => $baseDir . '/modules/ppcp-vault-component/src/VaultComponentModule.php',

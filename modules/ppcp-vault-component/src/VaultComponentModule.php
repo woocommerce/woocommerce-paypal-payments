@@ -3,11 +3,15 @@
 declare (strict_types=1);
 namespace WooCommerce\PayPalCommerce\VaultComponent;
 
+use WooCommerce\PayPalCommerce\Vendor\Psr\Log\LoggerInterface;
 use WC_Order;
 use WC_Payment_Token;
 use WC_Payment_Tokens;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
+use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
+use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\WcPaymentTokens\PaymentTokenPayPal;
+use WooCommerce\PayPalCommerce\VaultComponent\Authentication\VaultClientToken;
 use WooCommerce\PayPalCommerce\VaultComponent\Endpoint\CreateVaultOrderEndpoint;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExecutableModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ModuleClassNameIdTrait;
@@ -63,7 +67,18 @@ class VaultComponentModule implements ServiceModule, ExecutableModule
             return $localized_script_data;
         }
         $primary_token = reset($paypal_tokens);
-        $localized_script_data['vault_component'] = array('is_eligible' => \true, 'token_id' => $primary_token->get_token(), 'ajax' => array('create_order' => array('endpoint' => \WC_AJAX::get_endpoint(CreateVaultOrderEndpoint::ENDPOINT), 'nonce' => wp_create_nonce(CreateVaultOrderEndpoint::nonce()))));
+        $vault_id = (string) $primary_token->get_token();
+        $localized_script_data['vault_component'] = array('is_eligible' => \true, 'token_id' => $vault_id, 'ajax' => array('create_order' => array('endpoint' => \WC_AJAX::get_endpoint(CreateVaultOrderEndpoint::ENDPOINT), 'nonce' => wp_create_nonce(CreateVaultOrderEndpoint::nonce()))));
+        try {
+            $client_token = $c->get('vault-component.auth.client-token');
+            assert($client_token instanceof VaultClientToken);
+            $localized_script_data['vault_component']['sdk_client_token'] = $client_token->client_token($vault_id);
+        } catch (RuntimeException $exception) {
+            $logger = $c->get('woocommerce.logger.woocommerce');
+            assert($logger instanceof LoggerInterface);
+            $message = $exception instanceof PayPalApiException ? $exception->get_details($exception->getMessage()) : $exception->getMessage();
+            $logger->error('Failed to mint vault client_token: ' . $message);
+        }
         return $localized_script_data;
     }
     /**
