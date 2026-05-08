@@ -4,11 +4,15 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\VaultComponent\Endpoint;
 
 use Psr\Log\LoggerInterface;
+use WC_Payment_Tokens;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentSource;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PurchaseUnitFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\ShippingPreferenceFactory;
 use WooCommerce\PayPalCommerce\Button\Endpoint\EndpointInterface;
 use WooCommerce\PayPalCommerce\Button\Endpoint\RequestData;
+use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
+use WooCommerce\PayPalCommerce\WcPaymentTokens\PaymentTokenPayPal;
 
 class CreateVaultOrderEndpoint implements EndpointInterface {
 
@@ -38,6 +42,53 @@ class CreateVaultOrderEndpoint implements EndpointInterface {
 		return self::ENDPOINT;
 	}
 
+	/**
+	 * Builds a PaymentSource that hints PayPal to open the paysheet pre-selecting the
+	 * buyer's existing vaulted funding instrument (the "change FI" flow). Returns null
+	 * when the current user has no saved PayPal token, in which case the order is
+	 * created without a payment_source.
+	 */
+	private function preferred_vault_payment_source(): ?PaymentSource {
+		$user_id = get_current_user_id();
+		if ( ! $user_id ) {
+			return null;
+		}
+
+		$tokens        = WC_Payment_Tokens::get_customer_tokens( $user_id, PayPalGateway::ID );
+		$paypal_tokens = array_filter(
+			$tokens,
+			static function ( $token ) {
+				return $token instanceof PaymentTokenPayPal;
+			}
+		);
+		if ( empty( $paypal_tokens ) ) {
+			return null;
+		}
+
+		$primary_token = reset( $paypal_tokens );
+		$vault_id      = (string) $primary_token->get_token();
+		if ( '' === $vault_id ) {
+			return null;
+		}
+
+		// PayPal requires `return_url` whenever `experience_context` is set, even though
+		// the vault component opens an in-page paysheet rather than redirecting.
+		$return_url = wc_get_checkout_url();
+
+		return new PaymentSource(
+			'paypal',
+			(object) array(
+				'experience_context' => (object) array(
+					'return_url'               => $return_url,
+					'cancel_url'               => $return_url,
+					'preferred_payment_source' => (object) array(
+						'vault_id' => $vault_id,
+					),
+				),
+			)
+		);
+	}
+
 	public function handle_request(): void {
 		try {
 			$this->request_data->read_request( $this->nonce() );
@@ -48,19 +99,30 @@ class CreateVaultOrderEndpoint implements EndpointInterface {
 				'checkout'
 			);
 
+			$payment_source = $this->preferred_vault_payment_source();
+
 			// The Vault Component opens the PayPal paysheet so the consumer can edit
-			// their funding instrument. The customer context is supplied via the SDK's
-			// `data-user-id-token` (minted with target_customer_id), so the create-order
-			// call must be a bare order — no payment_source.token (which would auto-
-			// capture the vault and prevent the paysheet from opening) and no payer/
-			// items/shipping/breakdown/custom_id (which can trigger Orders v2 5xx).
+			// their funding instrument. We hint the buyer's existing vault via
+			// `payment_source.paypal.experience_context.preferred_payment_source.vault_id`
+			// (added through OrderEndpoint::create's $payment_source argument) — that
+			// shape does NOT auto-capture. We must still strip any `payment_source.paypal.token`
+			// (which would auto-capture and skip the paysheet) and the payer/items/etc.
+			// fields that can trigger Orders v2 5xx errors here.
 			$strip_body = static function ( array $data ): array {
 				if ( isset( $data['purchase_units'][0]['amount'] ) ) {
 					$data['purchase_units'] = array(
 						array( 'amount' => $data['purchase_units'][0]['amount'] ),
 					);
 				}
-				unset( $data['payer'], $data['payment_source'] );
+				unset( $data['payer'] );
+				if ( isset( $data['payment_source']['paypal'] ) ) {
+					$paypal = $data['payment_source']['paypal'];
+					if ( is_array( $paypal ) && isset( $paypal['token'] ) ) {
+						unset( $data['payment_source']['paypal']['token'] );
+					} elseif ( is_object( $paypal ) && isset( $paypal->token ) ) {
+						unset( $data['payment_source']['paypal']->token );
+					}
+				}
 				return $data;
 			};
 			add_filter( 'ppcp_create_order_request_body_data', $strip_body, 99 );
@@ -69,7 +131,10 @@ class CreateVaultOrderEndpoint implements EndpointInterface {
 				$order = $this->order_endpoint->create(
 					array( $purchase_unit ),
 					$shipping_preference,
-					null
+					null,
+					'',
+					array(),
+					$payment_source
 				);
 			} finally {
 				remove_filter( 'ppcp_create_order_request_body_data', $strip_body, 99 );
