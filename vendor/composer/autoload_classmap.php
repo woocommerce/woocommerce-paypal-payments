@@ -471,6 +471,8 @@ return array(
     'WooCommerce\\PayPalCommerce\\StoreSync\\Setting\\AgenticSettingsDataModel' => $baseDir . '/modules/ppcp-store-sync/src/Setting/AgenticSettingsDataModel.php',
     'WooCommerce\\PayPalCommerce\\StoreSync\\Setting\\AgenticSettingsEndpoint' => $baseDir . '/modules/ppcp-store-sync/src/Setting/AgenticSettingsEndpoint.php',
     'WooCommerce\\PayPalCommerce\\StoreSync\\Setting\\AgenticSettingsModule' => $baseDir . '/modules/ppcp-store-sync/src/Setting/AgenticSettingsModule.php',
+    'WooCommerce\\PayPalCommerce\\StoreSync\\StoreData\\StoreCartItem' => $baseDir . '/modules/ppcp-store-sync/src/StoreData/StoreCartItem.php',
+    'WooCommerce\\PayPalCommerce\\StoreSync\\StoreData\\StoreData' => $baseDir . '/modules/ppcp-store-sync/src/StoreData/StoreData.php',
     'WooCommerce\\PayPalCommerce\\StoreSync\\StoreSyncModule' => $baseDir . '/modules/ppcp-store-sync/src/StoreSyncModule.php',
     'WooCommerce\\PayPalCommerce\\StoreSync\\Validation\\Context\\BusinessRuleErrorContext' => $baseDir . '/modules/ppcp-store-sync/src/Validation/Context/BusinessRuleErrorContext.php',
     'WooCommerce\\PayPalCommerce\\StoreSync\\Validation\\Context\\DataErrorContext' => $baseDir . '/modules/ppcp-store-sync/src/Validation/Context/DataErrorContext.php',

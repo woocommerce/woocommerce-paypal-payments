@@ -668,6 +668,8 @@ class ComposerStaticInit844a779aae516bed9e0beccea9d01fda
         'WooCommerce\\PayPalCommerce\\StoreSync\\Setting\\AgenticSettingsDataModel' => __DIR__ . '/../..' . '/modules/ppcp-store-sync/src/Setting/AgenticSettingsDataModel.php',
         'WooCommerce\\PayPalCommerce\\StoreSync\\Setting\\AgenticSettingsEndpoint' => __DIR__ . '/../..' . '/modules/ppcp-store-sync/src/Setting/AgenticSettingsEndpoint.php',
         'WooCommerce\\PayPalCommerce\\StoreSync\\Setting\\AgenticSettingsModule' => __DIR__ . '/../..' . '/modules/ppcp-store-sync/src/Setting/AgenticSettingsModule.php',
+        'WooCommerce\\PayPalCommerce\\StoreSync\\StoreData\\StoreCartItem' => __DIR__ . '/../..' . '/modules/ppcp-store-sync/src/StoreData/StoreCartItem.php',
+        'WooCommerce\\PayPalCommerce\\StoreSync\\StoreData\\StoreData' => __DIR__ . '/../..' . '/modules/ppcp-store-sync/src/StoreData/StoreData.php',
         'WooCommerce\\PayPalCommerce\\StoreSync\\StoreSyncModule' => __DIR__ . '/../..' . '/modules/ppcp-store-sync/src/StoreSyncModule.php',
         'WooCommerce\\PayPalCommerce\\StoreSync\\Validation\\Context\\BusinessRuleErrorContext' => __DIR__ . '/../..' . '/modules/ppcp-store-sync/src/Validation/Context/BusinessRuleErrorContext.php',
         'WooCommerce\\PayPalCommerce\\StoreSync\\Validation\\Context\\DataErrorContext' => __DIR__ . '/../..' . '/modules/ppcp-store-sync/src/Validation/Context/DataErrorContext.php',
