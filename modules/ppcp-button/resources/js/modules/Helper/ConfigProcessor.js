@@ -1,10 +1,10 @@
 import merge from 'deepmerge';
 import { keysToCamelCase } from './Utils';
 
-const processUserIdToken = ( config ) => {
-	const userIdToken = config?.save_payment_methods?.id_token;
-	return userIdToken && config?.user?.is_logged === true
-		? { 'data-user-id-token': userIdToken }
+const processSdkClientToken = ( config ) => {
+	const sdkClientToken = config?.vault_component?.sdk_client_token;
+	return sdkClientToken && config?.user?.is_logged === true
+		? { 'data-sdk-client-token': sdkClientToken }
 		: {};
 };
 
@@ -14,7 +14,7 @@ export const processConfig = ( config ) => {
 		scriptOptions = merge( scriptOptions, config.script_attributes );
 	}
 
-	const userIdTokenOptions = processUserIdToken( config );
+	const sdkClientTokenOptions = processSdkClientToken( config );
 
-	return merge.all( [ scriptOptions, userIdTokenOptions ] );
+	return merge.all( [ scriptOptions, sdkClientTokenOptions ] );
 };

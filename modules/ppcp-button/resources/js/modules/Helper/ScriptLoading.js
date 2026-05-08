@@ -69,10 +69,10 @@ export const loadPaypalScript = ( config, onLoaded, onError = null ) => {
 		scriptOptions = merge( scriptOptions, config.script_attributes );
 	}
 
-	// Adds data-user-id-token to script options.
-	const userIdToken = config?.save_payment_methods?.id_token;
-	if ( userIdToken && config?.user?.is_logged === true ) {
-		scriptOptions[ 'data-user-id-token' ] = userIdToken;
+	// Adds data-sdk-client-token to script options (vault-component path).
+	const sdkClientToken = config?.vault_component?.sdk_client_token;
+	if ( sdkClientToken && config?.user?.is_logged === true ) {
+		scriptOptions[ 'data-sdk-client-token' ] = sdkClientToken;
 	}
 
 	// Adds data-namespace to script options.
