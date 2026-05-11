@@ -7,13 +7,13 @@ Detailed information about current test project can be found in [docs](./docs/RE
 ## Table of Content
 
 - [Local installation](#local-installation)
-- [Installation of `node_modules`](#installation-of-node_modules)
-- [Installation of `playwright-utils` for local development](#installation-of-playwright-utils-for-local-development)
-- [Project configuration](#project-configuration)
-- [Run tests](#run-tests)
+- [Project configuration (Devs)](#project-configuration-devs)
+- [Project configuration (QA team)](#project-configuration-qa-team)
+- [Running tests](#running-tests)
     - [Additional options to run tests from command line](#additional-options-to-run-tests-from-command-line)
 - [Autotest Execution workflow](#autotest-execution-workflow)
 - [Coding standards](#coding-standards)
+- [Reset Kinsta env](#reset-kinsta-env)
 - [Automated env setup scripts](#automated-env-setup-scripts)
 
 
@@ -48,6 +48,26 @@ Detailed information about current test project can be found in [docs](./docs/RE
 4. To avoid conflicts make sure any other payment plugins are deleted.
 
 5. Additional website and WooCommerce configuration is done automatically via `setup-woocommerce` dependency project (see [`/tests/_setup/woocommerce.setup.ts`](./tests/_setup/woocommerce.setup.ts)).
+
+### Installation of `playwright-utils` for local development
+
+1. Add `yarn` to `devDependencies` in `package.json`:
+
+	```json
+	"devDependencies": {
+		"yarn": "^1.22.21",
+	```
+
+
+2. Execute steps for local development described [here](https://github.com/inpsyde/playwright-utils/blob/main/README.md#development).
+
+	General one-line `tsc-watch` command is:
+
+	```bash
+	npm run e2e:setup:tests && cd ./playwright-utils && yarn devLocal
+	```
+
+3. After development is finished cleanup `package.json` and regenerate the `package-lock.json`. 
 
 ## Running tests
 
