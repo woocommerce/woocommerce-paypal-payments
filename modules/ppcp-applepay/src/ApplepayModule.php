@@ -175,7 +175,8 @@ class ApplepayModule implements ServiceModule, ExecutableModule
             return $features;
         });
         add_filter('ppcp_create_order_request_body_data', static function (array $data, string $payment_method, array $request) use ($c): array {
-            if ($payment_method !== \WooCommerce\PayPalCommerce\Applepay\ApplePayGateway::ID) {
+            $funding_source = $request['funding_source'] ?? '';
+            if ($payment_method !== \WooCommerce\PayPalCommerce\Applepay\ApplePayGateway::ID && $funding_source !== 'apple_pay') {
                 return $data;
             }
             $experience_context_builder = $c->get('wcgateway.builder.experience-context');
