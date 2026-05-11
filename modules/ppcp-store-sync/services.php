@@ -289,7 +289,8 @@ return array(
 	'agentic.store.data'                           => static function ( ContainerInterface $c ): StoreData {
 		return new StoreData(
 			$c->get( 'agentic.helper.product-manager' ),
-			$c->get( 'agentic.config.store-currency' )
+			$c->get( 'agentic.config.store-currency' ),
+			$c->get( 'agentic.helper.cart-builder' )
 		);
 	},
 

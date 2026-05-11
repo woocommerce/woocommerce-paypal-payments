@@ -1,6 +1,6 @@
 <?php
 /**
- * Factory for store-enriched schema objects.
+ * Factory for store-enriched cart objects.
  *
  * @package WooCommerce\PayPalCommerce\StoreSync\StoreData
  */
@@ -10,30 +10,50 @@ declare( strict_types = 1 );
 namespace WooCommerce\PayPalCommerce\StoreSync\StoreData;
 
 use WooCommerce\PayPalCommerce\StoreSync\Config\StoreCurrencyValue;
+use WooCommerce\PayPalCommerce\StoreSync\Helper\AgenticCartBuilder;
 use WooCommerce\PayPalCommerce\StoreSync\Helper\ProductManager;
-use WooCommerce\PayPalCommerce\StoreSync\Schema\CartItem;
+use WooCommerce\PayPalCommerce\StoreSync\Schema\PayPalCart;
+use WooCommerce\PayPalCommerce\StoreSync\Validation\StoreValidation;
 
 class StoreData {
 
 	private ProductManager $product_manager;
 	private StoreCurrencyValue $store_currency;
+	private AgenticCartBuilder $cart_builder;
 
-	public function __construct( ProductManager $product_manager, StoreCurrencyValue $store_currency ) {
+	public function __construct(
+		ProductManager $product_manager,
+		StoreCurrencyValue $store_currency,
+		AgenticCartBuilder $cart_builder
+	) {
 		$this->product_manager = $product_manager;
 		$this->store_currency  = $store_currency;
+		$this->cart_builder    = $cart_builder;
 	}
 
 	/**
-	 * Creates a StoreCartItem by resolving the WC product for the given schema item.
+	 * Creates a StorePayPalCart with all cart items eagerly resolved against the WC product
+	 * catalog.
 	 *
-	 * Returns null when no matching product exists in the store.
+	 * Items whose product cannot be found in the store are silently omitted from the result.
 	 */
-	public function cart_item( CartItem $schema_item ): ?StoreCartItem {
-		$product = $this->product_manager->find_product( $schema_item );
-		if ( null === $product ) {
-			return null;
+	public function create_cart( PayPalCart $cart, StoreValidation $validation ): StorePayPalCart {
+		$store_items = array();
+
+		foreach ( $cart->items() as $item ) {
+			$product = $this->product_manager->find_product( $item );
+
+			if ( $product !== null ) {
+				$store_items[] = new StoreCartItem( $item, $product, $this->store_currency );
+			}
 		}
 
-		return new StoreCartItem( $schema_item, $product, $this->store_currency );
+		return new StorePayPalCart(
+			$cart,
+			$validation,
+			$store_items,
+			$this->cart_builder,
+			$this->store_currency
+		);
 	}
 }
