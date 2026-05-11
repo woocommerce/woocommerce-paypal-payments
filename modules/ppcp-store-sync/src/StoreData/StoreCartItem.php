@@ -30,7 +30,7 @@ class StoreCartItem {
 	 * The actual store price for this item, as a float.
 	 */
 	public function real_price(): float {
-		return (float) $this->product->get_price();
+		return (float) wc_get_price_excluding_tax( $this->product );
 	}
 
 	public function real_price_as_money(): Money {
