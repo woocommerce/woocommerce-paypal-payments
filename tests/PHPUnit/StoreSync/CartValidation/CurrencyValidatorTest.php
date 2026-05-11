@@ -6,6 +6,7 @@ namespace WooCommerce\PayPalCommerce\StoreSync\CartValidation;
 use Mockery;
 use WooCommerce\PayPalCommerce\StoreSync\Config\StoreCurrencyValue;
 use WooCommerce\PayPalCommerce\StoreSync\Schema\PayPalCart;
+use WooCommerce\PayPalCommerce\StoreSync\Validation\StoreValidation;
 use function Brain\Monkey\Functions\when;
 
 /**
@@ -17,7 +18,7 @@ class CurrencyValidatorTest extends ValidationTest {
 
 	public function setUp(): void {
 		parent::setUp();
-		$store_currency  = Mockery::mock( StoreCurrencyValue::class );
+		$store_currency = Mockery::mock( StoreCurrencyValue::class );
 		$store_currency->allows( 'value' )->andReturn( 'USD' );
 		$this->validator = new CurrencyValidator( $store_currency );
 	}
@@ -31,7 +32,7 @@ class CurrencyValidatorTest extends ValidationTest {
 			)
 		);
 
-		$result = $this->validator->validate( $cart );
+		$result = $this->validator->validate( $cart, new StoreValidation() );
 
 		$this->assertIsArray( $result );
 		$this->assertEmpty( $result );
@@ -45,7 +46,7 @@ class CurrencyValidatorTest extends ValidationTest {
 			)
 		);
 
-		$result = $this->validator->validate( $cart );
+		$result = $this->validator->validate( $cart, new StoreValidation() );
 
 		$this->assertIsArray( $result );
 		$this->assertCount( 1, $result );
@@ -62,7 +63,7 @@ class CurrencyValidatorTest extends ValidationTest {
 			)
 		);
 
-		$result = $this->validator->validate( $cart );
+		$result = $this->validator->validate( $cart, new StoreValidation() );
 
 		$this->assertIsArray( $result );
 		$this->assertCount( 1, $result );
@@ -76,10 +77,11 @@ class CurrencyValidatorTest extends ValidationTest {
 			array(
 				'items'          => array(),
 				'payment_method' => 'paypal',
-			)
+			),
+			new StoreValidation()
 		);
 
-		$result = $this->validator->validate( $cart );
+		$result = $this->validator->validate( $cart, new StoreValidation() );
 
 		$this->assertIsArray( $result );
 		$this->assertEmpty( $result );
@@ -107,8 +109,8 @@ class CurrencyValidatorTest extends ValidationTest {
 			'payment_method' => 'paypal',
 		);
 
-		$cart   = PayPalCart::from_array( $cart_data );
-		$result = $this->validator->validate( $cart );
+		$cart   = PayPalCart::from_array( $cart_data, new StoreValidation() );
+		$result = $this->validator->validate( $cart, new StoreValidation() );
 
 		$this->assertIsArray( $result );
 		$this->assertEmpty( $result );
@@ -145,8 +147,8 @@ class CurrencyValidatorTest extends ValidationTest {
 			'payment_method' => 'paypal',
 		);
 
-		$cart   = PayPalCart::from_array( $cart_data );
-		$result = $this->validator->validate( $cart );
+		$cart   = PayPalCart::from_array( $cart_data, new StoreValidation() );
+		$result = $this->validator->validate( $cart, new StoreValidation() );
 
 		$this->assertIsArray( $result );
 		$this->assertCount( 1, $result );
@@ -177,8 +179,8 @@ class CurrencyValidatorTest extends ValidationTest {
 			'payment_method' => 'paypal',
 		);
 
-		$cart   = PayPalCart::from_array( $cart_data );
-		$result = $this->validator->validate( $cart );
+		$cart   = PayPalCart::from_array( $cart_data, new StoreValidation() );
+		$result = $this->validator->validate( $cart, new StoreValidation() );
 
 		$this->assertIsArray( $result );
 		$this->assertCount( 1, $result );
@@ -188,7 +190,7 @@ class CurrencyValidatorTest extends ValidationTest {
 	}
 
 	public function test_mixed_currency_prevents_store_check(): void {
-		$store_currency  = Mockery::mock( StoreCurrencyValue::class );
+		$store_currency = Mockery::mock( StoreCurrencyValue::class );
 		$store_currency->allows( 'value' )->andReturn( 'GBP' );
 		$this->validator = new CurrencyValidator( $store_currency );
 
@@ -199,7 +201,7 @@ class CurrencyValidatorTest extends ValidationTest {
 			)
 		);
 
-		$result = $this->validator->validate( $cart );
+		$result = $this->validator->validate( $cart, new StoreValidation() );
 
 		$this->assertIsArray( $result );
 		$this->assertCount( 1, $result );

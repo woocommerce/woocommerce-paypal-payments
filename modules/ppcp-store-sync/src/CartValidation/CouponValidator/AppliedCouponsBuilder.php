@@ -116,8 +116,7 @@ class AppliedCouponsBuilder {
 	 * @return float Total discount amount.
 	 */
 	public function calculate_total_discount( PayPalCart $cart ): float {
-		$validation_status = $cart->issues() ? 'INVALID' : 'VALID';
-		$applied_coupons   = $this->build_applied_coupons_array( $cart, $validation_status );
+		$applied_coupons = $this->build_applied_coupons_array( $cart, 'VALID' );
 
 		return array_reduce(
 			$applied_coupons,

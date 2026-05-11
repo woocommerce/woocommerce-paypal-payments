@@ -6,6 +6,7 @@ namespace WooCommerce\PayPalCommerce\StoreSync\CartValidation;
 
 use Mockery;
 use WooCommerce\PayPalCommerce\StoreSync\Helper\ProductManager;
+use WooCommerce\PayPalCommerce\StoreSync\Validation\StoreValidation;
 use WooCommerce\PayPalCommerce\StoreSync\Validation\ValidationIssue;
 
 /**
@@ -51,7 +52,7 @@ class InventoryValidatorTest extends ValidationTest {
 			->andReturn( true );
 
 		$cart   = $this->create_cart( '1', 2 );
-		$result = $this->validator->validate( $cart );
+		$result = $this->validator->validate( $cart, new StoreValidation() );
 
 		$this->assertIsArray( $result );
 		$this->assertEmpty( $result );
@@ -82,7 +83,7 @@ class InventoryValidatorTest extends ValidationTest {
 			->andReturn( false );
 
 		$cart   = $this->create_cart( 'sku-001', 1 );
-		$result = $this->validator->validate( $cart );
+		$result = $this->validator->validate( $cart, new StoreValidation() );
 
 		$this->assertIsArray( $result );
 		$this->assertCount( 1, $result );
@@ -131,7 +132,7 @@ class InventoryValidatorTest extends ValidationTest {
 			->andReturn( false );
 
 		$cart   = $this->create_cart( 'sku-002', 5 );
-		$result = $this->validator->validate( $cart );
+		$result = $this->validator->validate( $cart, new StoreValidation() );
 
 		$this->assertIsArray( $result );
 		$this->assertCount( 1, $result );
@@ -162,7 +163,7 @@ class InventoryValidatorTest extends ValidationTest {
 		$this->product_manager->shouldNotReceive( 'is_in_stock' );
 
 		$cart   = $this->create_cart( 'ghost-sku', 1 );
-		$result = $this->validator->validate( $cart );
+		$result = $this->validator->validate( $cart, new StoreValidation() );
 
 		$this->assertIsArray( $result );
 		$this->assertEmpty( $result );
@@ -180,9 +181,10 @@ class InventoryValidatorTest extends ValidationTest {
 		$pre_existing_issue =
 			ValidationIssue::create_item_out_of_stock( 'Pre-existing inventory problem' );
 
-		$cart = $this->create_cart()->with_validation_issues( $pre_existing_issue );
+		$validation = new StoreValidation();
+		$validation->add( $pre_existing_issue );
 
-		$result = $this->validator->validate( $cart );
+		$result = $this->validator->validate( $this->create_cart(), $validation );
 
 		$this->assertNull( $result );
 	}

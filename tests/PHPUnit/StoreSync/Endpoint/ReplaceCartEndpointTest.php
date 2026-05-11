@@ -9,6 +9,7 @@ use WP_REST_Request;
 use WooCommerce\PayPalCommerce\StoreSync\CartValidation\CouponValidator\AppliedCouponsBuilder;
 use WooCommerce\PayPalCommerce\StoreSync\Response\CartResponse;
 use WooCommerce\PayPalCommerce\StoreSync\Schema\PayPalCart;
+use WooCommerce\PayPalCommerce\StoreSync\Validation\StoreValidation;
 
 /**
  * @covers \WooCommerce\PayPalCommerce\StoreSync\Endpoint\ReplaceCartEndpoint
@@ -33,7 +34,7 @@ class ReplaceCartEndpointTest extends AgenticEndpointTestCase {
 		$session_handler  = $mocks['session_handler'];
 		$response_factory = $mocks['response_factory'];
 
-		$existing_cart = PayPalCart::from_array( $existing_cart_data );
+		$existing_cart = PayPalCart::from_array( $existing_cart_data, new StoreValidation() );
 
 		// Mock session handler.
 		$session_handler->allows( 'load_cart_session' )
@@ -51,7 +52,7 @@ class ReplaceCartEndpointTest extends AgenticEndpointTestCase {
 
 		// Mock response factory.
 		$response_factory->allows( 'from_cart' )
-			->andReturnUsing( fn( $cart ) => CartResponse::create( $cart ) );
+			->andReturnUsing( fn( $cart ) => CartResponse::create( $cart, '', new StoreValidation() ) );
 
 		// Mock AppliedCouponsBuilder.
 		$applied_coupons_builder = Mockery::mock( AppliedCouponsBuilder::class );
@@ -149,7 +150,7 @@ class ReplaceCartEndpointTest extends AgenticEndpointTestCase {
 		$session_handler  = $mocks['session_handler'];
 		$response_factory = $mocks['response_factory'];
 
-		$existing_cart = PayPalCart::from_array( $existing_cart_data );
+		$existing_cart = PayPalCart::from_array( $existing_cart_data, new StoreValidation() );
 
 		// Mock load existing cart.
 		$session_handler->allows( 'load_cart_session' )
@@ -196,7 +197,7 @@ class ReplaceCartEndpointTest extends AgenticEndpointTestCase {
 
 		// Mock response factory.
 		$response_factory->allows( 'from_cart' )
-			->andReturnUsing( fn( $cart ) => CartResponse::create( $cart ) );
+			->andReturnUsing( fn( $cart ) => CartResponse::create( $cart, '', new StoreValidation() ) );
 
 		// Mock AppliedCouponsBuilder.
 		$applied_coupons_builder = Mockery::mock( AppliedCouponsBuilder::class );
@@ -248,7 +249,7 @@ class ReplaceCartEndpointTest extends AgenticEndpointTestCase {
 		$session_handler  = $mocks['session_handler'];
 		$response_factory = $mocks['response_factory'];
 
-		$existing_cart = PayPalCart::from_array( $existing_cart_data );
+		$existing_cart = PayPalCart::from_array( $existing_cart_data, new StoreValidation() );
 
 		// Mock load existing cart.
 		$session_handler->allows( 'load_cart_session' )

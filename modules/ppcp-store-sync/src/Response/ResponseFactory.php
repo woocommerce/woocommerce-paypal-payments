@@ -16,6 +16,7 @@ use WooCommerce\PayPalCommerce\StoreSync\Helper\AgenticCartBuilder;
 use WooCommerce\PayPalCommerce\StoreSync\Helper\ShippingOptionsBuilder;
 use WooCommerce\PayPalCommerce\StoreSync\Schema\PayPalCart;
 use WooCommerce\PayPalCommerce\StoreSync\Config\StoreCurrencyValue;
+use WooCommerce\PayPalCommerce\StoreSync\Validation\StoreValidation;
 
 class ResponseFactory {
 
@@ -39,53 +40,56 @@ class ResponseFactory {
 	/**
 	 * Create a new cart response (status: CREATED).
 	 *
-	 * @param PayPalCart $cart    The cart object.
-	 * @param string     $cart_id The cart ID.
-	 * @param string     $token   The payment token.
+	 * @param PayPalCart      $cart       The cart object.
+	 * @param string          $cart_id    The cart ID.
+	 * @param string          $token      The payment token.
+	 * @param StoreValidation $validation The validation state for this request.
 	 * @return CartResponse The response object.
 	 */
-	public function new_cart( PayPalCart $cart, string $cart_id, string $token ): CartResponse {
+	public function new_cart( PayPalCart $cart, string $cart_id, string $token, StoreValidation $validation ): CartResponse {
 		$wc_cart = $this->build_wc_cart_or_null( $cart );
 
-		return CartResponse::create_new( $cart, $cart_id, $token )
+		return CartResponse::create_new( $cart, $cart_id, $token, $validation )
 			->wc_cart( $wc_cart )
 			->store_currency( $this->store_currency )
-			->applied_coupons( $this->build_applied_coupons( $cart ) )
+			->applied_coupons( $this->build_applied_coupons( $cart, $validation ) )
 			->shipping_options( $this->shipping_options_builder->build( $wc_cart ) );
 	}
 
 	/**
 	 * Create a paid cart response.
 	 *
-	 * @param WC_Order   $order   The WooCommerce order.
-	 * @param PayPalCart $cart    The cart object.
-	 * @param string     $cart_id The cart ID.
+	 * @param WC_Order        $order      The WooCommerce order.
+	 * @param PayPalCart      $cart       The cart object.
+	 * @param string          $cart_id    The cart ID.
+	 * @param StoreValidation $validation The validation state for this request.
 	 * @return CartResponse The response object.
 	 */
-	public function from_order( WC_Order $order, PayPalCart $cart, string $cart_id ): CartResponse {
+	public function from_order( WC_Order $order, PayPalCart $cart, string $cart_id, StoreValidation $validation ): CartResponse {
 		$wc_cart = $this->build_wc_cart_or_null( $cart );
 
-		return CartResponse::create_completed( $cart, $cart_id, $order )
+		return CartResponse::create_completed( $cart, $cart_id, $order, $validation )
 			->wc_cart( $wc_cart )
 			->store_currency( $this->store_currency )
-			->applied_coupons( $this->build_applied_coupons( $cart ) )
+			->applied_coupons( $this->build_applied_coupons( $cart, $validation ) )
 			->shipping_options( $this->shipping_options_builder->build( $wc_cart ) );
 	}
 
 	/**
 	 * Create a basic cart response.
 	 *
-	 * @param PayPalCart $cart    The cart object.
-	 * @param string     $cart_id The cart ID.
+	 * @param PayPalCart      $cart       The cart object.
+	 * @param string          $cart_id    The cart ID.
+	 * @param StoreValidation $validation The validation state for this request.
 	 * @return CartResponse The response object.
 	 */
-	public function from_cart( PayPalCart $cart, string $cart_id ): CartResponse {
+	public function from_cart( PayPalCart $cart, string $cart_id, StoreValidation $validation ): CartResponse {
 		$wc_cart = $this->build_wc_cart_or_null( $cart );
 
-		return CartResponse::create( $cart, $cart_id )
+		return CartResponse::create( $cart, $cart_id, $validation )
 			->wc_cart( $wc_cart )
 			->store_currency( $this->store_currency )
-			->applied_coupons( $this->build_applied_coupons( $cart ) )
+			->applied_coupons( $this->build_applied_coupons( $cart, $validation ) )
 			->shipping_options( $this->shipping_options_builder->build( $wc_cart ) );
 	}
 
@@ -108,11 +112,12 @@ class ResponseFactory {
 	/**
 	 * Build applied coupons data for a cart.
 	 *
-	 * @param PayPalCart $cart The cart object.
+	 * @param PayPalCart      $cart       The cart object.
+	 * @param StoreValidation $validation The validation state for this request.
 	 * @return array Applied coupons data.
 	 */
-	private function build_applied_coupons( PayPalCart $cart ): array {
-		$validation_status = $cart->issues() ? 'INVALID' : 'VALID';
+	private function build_applied_coupons( PayPalCart $cart, StoreValidation $validation ): array {
+		$validation_status = $validation->is_empty() ? 'VALID' : 'INVALID';
 
 		return $this->applied_coupons_builder->build_applied_coupons_array( $cart, $validation_status );
 	}

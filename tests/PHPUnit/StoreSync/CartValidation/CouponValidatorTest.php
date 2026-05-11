@@ -6,6 +6,7 @@ namespace WooCommerce\PayPalCommerce\StoreSync\CartValidation;
 use Mockery;
 use WooCommerce\PayPalCommerce\StoreSync\Config\StoreCurrencyValue;
 use WooCommerce\PayPalCommerce\StoreSync\Helper\ProductManager;
+use WooCommerce\PayPalCommerce\StoreSync\Validation\StoreValidation;
 use WooCommerce\PayPalCommerce\StoreSync\Validation\ValidationIssue;
 use WooCommerce\PayPalCommerce\StoreSync\CartValidation\CouponValidator\CouponValidator;
 use WooCommerce\PayPalCommerce\StoreSync\CartValidation\CouponValidator\CouponContextBuilder;
@@ -29,12 +30,12 @@ class CouponValidatorTest extends ValidationTest {
 		// Note: wc_coupons_enabled() is stubbed per-test as needed
 		$this->product_manager     = Mockery::mock( ProductManager::class );
 		$this->discount_calculator = new DiscountCalculator( $this->product_manager );
-		$store_currency        = Mockery::mock( StoreCurrencyValue::class );
+		$store_currency            = Mockery::mock( StoreCurrencyValue::class );
 		$store_currency->allows( 'value' )->andReturn( 'USD' );
-		$this->context_builder =
+		$this->context_builder    =
 			new CouponContextBuilder( $this->product_manager, $this->discount_calculator, $store_currency );
-		$this->resolution_builder  = new CouponResolutionBuilder();
-		$this->validator           = new CouponValidator(
+		$this->resolution_builder = new CouponResolutionBuilder();
+		$this->validator          = new CouponValidator(
 			$this->context_builder,
 			$this->discount_calculator,
 			$this->resolution_builder
@@ -44,7 +45,7 @@ class CouponValidatorTest extends ValidationTest {
 	public function test_validate_returns_null_for_cart_without_coupons(): void {
 		$cart = $this->create_cart_with_coupons( array() );
 
-		$result = $this->validator->validate( $cart );
+		$result = $this->validator->validate( $cart, new StoreValidation() );
 
 		$this->assertNull( $result );
 	}
@@ -56,7 +57,7 @@ class CouponValidatorTest extends ValidationTest {
 			)
 		);
 
-		$result = $this->validator->validate( $cart );
+		$result = $this->validator->validate( $cart, new StoreValidation() );
 
 		// REMOVE actions are skipped entirely - no WC_Coupon instantiation needed.
 		$this->assertNull( $result );
@@ -78,7 +79,7 @@ class CouponValidatorTest extends ValidationTest {
 			)
 		);
 
-		$result = $this->validator->validate( $cart );
+		$result = $this->validator->validate( $cart, new StoreValidation() );
 
 		$this->assertIsArray( $result );
 		$this->assertCount( 1, $result );
@@ -95,7 +96,7 @@ class CouponValidatorTest extends ValidationTest {
 			)
 		);
 
-		$result = $this->validator->validate( $cart );
+		$result = $this->validator->validate( $cart, new StoreValidation() );
 
 		// All coupons are REMOVE actions, so nothing to validate.
 		$this->assertNull( $result );

@@ -7,6 +7,7 @@ use WP_REST_Request;
 
 use WooCommerce\PayPalCommerce\StoreSync\Response\CartResponse;
 use WooCommerce\PayPalCommerce\StoreSync\Schema\PayPalCart;
+use WooCommerce\PayPalCommerce\StoreSync\Validation\StoreValidation;
 
 /**
  * @covers \WooCommerce\PayPalCommerce\StoreSync\Endpoint\GetCartEndpoint
@@ -24,7 +25,7 @@ class GetCartEndpointTest extends AgenticEndpointTestCase {
 		$session_handler  = $mocks['session_handler'];
 		$response_factory = $mocks['response_factory'];
 
-		$mock_cart = PayPalCart::from_array( $mock_cart_data );
+		$mock_cart = PayPalCart::from_array( $mock_cart_data, new StoreValidation() );
 
 		// Mock session handler.
 		$session_handler->allows( 'load_cart_session' )
@@ -39,7 +40,7 @@ class GetCartEndpointTest extends AgenticEndpointTestCase {
 
 		// Mock response factory.
 		$response_factory->allows( 'from_cart' )
-			->andReturnUsing( fn( $cart, $cart_id ) => CartResponse::create( $cart, $cart_id ) );
+			->andReturnUsing( fn( $cart, $cart_id ) => CartResponse::create( $cart, $cart_id, new StoreValidation() ) );
 
 		$endpoint = new GetCartEndpoint(
 			$mocks['auth_provider'],

@@ -9,7 +9,7 @@ declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\StoreSync\Schema;
 
-use WooCommerce\PayPalCommerce\StoreSync\Validation\ValidationIssue;
+use WooCommerce\PayPalCommerce\StoreSync\Validation\StoreValidation;
 
 /**
  * @see CouponTest - Unit tests for this class.
@@ -19,7 +19,7 @@ class Coupon extends AgenticSchema {
 
 	private ?string $action = null;
 
-	protected function parse_fields( array $input, callable $add_issue ): void {
+	protected function parse_fields( array $input, StoreValidation $validation ): void {
 		// Reset all fields.
 		$this->code   = null;
 		$this->action = null;
@@ -27,11 +27,7 @@ class Coupon extends AgenticSchema {
 		if ( isset( $input['code'] ) && is_string( $input['code'] ) ) {
 			$this->code = trim( $input['code'] );
 		} else {
-			$add_issue(
-				ValidationIssue::create_invalid_data( 'Missing required field' )
-					->user_message( 'Please provide a coupon code.' )
-					->for_field( 'code' )
-			);
+			$validation->add_invalid_data( 'code', 'Missing required field', 'Please provide a coupon code.' );
 		}
 
 		if ( isset( $input['action'] ) && is_string( $input['action'] ) ) {
@@ -41,18 +37,14 @@ class Coupon extends AgenticSchema {
 			if ( in_array( $action, $valid_actions, true ) ) {
 				$this->action = $action;
 			} else {
-				$add_issue(
-					ValidationIssue::create_invalid_data( 'Action must be APPLY or REMOVE' )
-						->user_message( 'Please provide a valid action.' )
-						->for_field( 'action' )
+				$validation->add_invalid_data(
+					'action',
+					'Action must be APPLY or REMOVE',
+					'Please provide a valid action.'
 				);
 			}
 		} else {
-			$add_issue(
-				ValidationIssue::create_invalid_data( 'Missing required field' )
-					->user_message( 'Please provide an action.' )
-					->for_field( 'action' )
-			);
+			$validation->add_invalid_data( 'action', 'Missing required field', 'Please provide an action.' );
 		}
 	}
 

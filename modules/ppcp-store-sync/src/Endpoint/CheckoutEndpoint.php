@@ -20,6 +20,7 @@ use Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\StoreSync\Errors\AgenticError;
 use WooCommerce\PayPalCommerce\StoreSync\Errors\Http\InternalServerError;
 use WooCommerce\PayPalCommerce\StoreSync\Validation\Context\PaymentErrorContext;
+use WooCommerce\PayPalCommerce\StoreSync\Validation\StoreValidation;
 use WooCommerce\PayPalCommerce\StoreSync\Validation\ValidationIssue;
 use WooCommerce\PayPalCommerce\StoreSync\Schema\PaymentMethod;
 use WooCommerce\PayPalCommerce\StoreSync\Helper\AgenticSessionManager;
@@ -99,14 +100,14 @@ class CheckoutEndpoint extends AgenticRestEndpoint {
 		}
 
 		// TODO: Move this into a validator to add a PAYMENT_ERROR, which we can check here.
-		$payment_method        = PaymentMethod::from_array( $data['payment_method'] );
-		$payment_method_issues = $payment_method->issues();
+		$pm_validation  = new StoreValidation();
+		$payment_method = PaymentMethod::from_array( (array) ( $data['payment_method'] ?? array() ), $pm_validation );
 
-		if ( ! empty( $payment_method_issues ) ) {
+		if ( ! $pm_validation->is_empty() ) {
 			return $this->error(
 				new InternalServerError(
 					'Payment method is required for checkout',
-					$payment_method_issues
+					$pm_validation->all()
 				)
 			);
 		}
@@ -123,8 +124,8 @@ class CheckoutEndpoint extends AgenticRestEndpoint {
 		}
 
 		// If the cart has _any_ validation issue, stop here.
-		if ( $cart->issues() ) {
-			$cart_response = $this->response_factory->from_cart( $cart, $cart_id );
+		if ( ! $this->validation->is_empty() ) {
+			$cart_response = $this->response_factory->from_cart( $cart, $cart_id, $this->validation );
 
 			return $this->cart_details( $cart_response, 200 );
 		}
@@ -132,21 +133,19 @@ class CheckoutEndpoint extends AgenticRestEndpoint {
 		$order = $this->create_wc_order( $cart, $payment_method, $session['ec_token'] );
 
 		if ( is_wp_error( $order ) ) {
-			$issue         = ValidationIssue::create_payment_error( $order->get_error_message() )
+			$issue = ValidationIssue::create_payment_error( $order->get_error_message() )
 				->add_context(
 					PaymentErrorContext::create_payment_declined()
 						->decline_reason( (string) $order->get_error_code() )
 				);
-			$cart_response = $this->response_factory->from_cart(
-				$cart->with_validation_issues( $issue ),
-				$cart_id
-			);
+			$this->validation->add( $issue );
+			$cart_response = $this->response_factory->from_cart( $cart, $cart_id, $this->validation );
 			return $this->cart_details( $cart_response, 200 );
 		}
 
 		$this->flush_local_cart( $cart_id );
 
-		$response = $this->response_factory->from_order( $order, $cart, $cart_id );
+		$response = $this->response_factory->from_order( $order, $cart, $cart_id, $this->validation );
 
 		return $this->cart_details( $response, 200 );
 	}

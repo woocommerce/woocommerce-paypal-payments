@@ -13,9 +13,9 @@ use WC_Cart;
 use WC_Order;
 
 use WooCommerce\PayPalCommerce\StoreSync\Schema\PayPalCart;
+use WooCommerce\PayPalCommerce\StoreSync\Validation\StoreValidation;
 use WooCommerce\PayPalCommerce\StoreSync\Validation\ValidationIssue;
 use WooCommerce\PayPalCommerce\StoreSync\Helper\CartHelper;
-use WooCommerce\PayPalCommerce\StoreSync\Enums\ErrorCode;
 use WooCommerce\PayPalCommerce\StoreSync\Config\StoreCurrencyValue;
 
 class CartResponse {
@@ -33,6 +33,8 @@ class CartResponse {
 	);
 
 	private PayPalCart $cart;
+
+	private StoreValidation $validation;
 
 	private string $default_currency = '';
 
@@ -70,14 +72,16 @@ class CartResponse {
 	private ?WC_Order $wc_order = null;
 
 	/**
-	 * @param PayPalCart $cart    The PayPal cart.
-	 * @param string     $cart_id The cart ID.
+	 * @param PayPalCart      $cart       The PayPal cart.
+	 * @param StoreValidation $validation The validation state for this request.
+	 * @param string          $cart_id    The cart ID.
 	 */
-	private function __construct( PayPalCart $cart, string $cart_id = '' ) {
-		$this->cart    = $cart;
-		$this->cart_id = $cart_id;
+	private function __construct( PayPalCart $cart, StoreValidation $validation, string $cart_id = '' ) {
+		$this->cart       = $cart;
+		$this->validation = $validation;
+		$this->cart_id    = $cart_id;
 
-		if ( ! $this->cart->issues() ) {
+		if ( $validation->is_empty() ) {
 			$this->validation_status = 'VALID';
 		}
 	}
@@ -85,24 +89,26 @@ class CartResponse {
 	/**
 	 * Create a base cart response (status: INCOMPLETE).
 	 *
-	 * @param PayPalCart $cart    The PayPal cart.
-	 * @param string     $cart_id The cart ID.
+	 * @param PayPalCart      $cart       The PayPal cart.
+	 * @param string          $cart_id    The cart ID.
+	 * @param StoreValidation $validation The validation state for this request.
 	 * @return self
 	 */
-	public static function create( PayPalCart $cart, string $cart_id = '' ): self {
-		return new self( $cart, $cart_id );
+	public static function create( PayPalCart $cart, string $cart_id, StoreValidation $validation ): self {
+		return new self( $cart, $validation, $cart_id );
 	}
 
 	/**
 	 * Create a new cart response (status: CREATED).
 	 *
-	 * @param PayPalCart $cart    The PayPal cart.
-	 * @param string     $cart_id The cart ID.
-	 * @param string     $token   The EC token.
+	 * @param PayPalCart      $cart       The PayPal cart.
+	 * @param string          $cart_id    The cart ID.
+	 * @param string          $token      The EC token.
+	 * @param StoreValidation $validation The validation state for this request.
 	 * @return self
 	 */
-	public static function create_new( PayPalCart $cart, string $cart_id, string $token ): self {
-		$instance = new self( $cart, $cart_id );
+	public static function create_new( PayPalCart $cart, string $cart_id, string $token, StoreValidation $validation ): self {
+		$instance = new self( $cart, $validation, $cart_id );
 
 		$instance->status = 'CREATED';
 		$instance->token  = $token;
@@ -113,13 +119,14 @@ class CartResponse {
 	/**
 	 * Create a completed cart response (status: COMPLETED).
 	 *
-	 * @param PayPalCart $cart     The PayPal cart.
-	 * @param string     $cart_id  The cart ID.
-	 * @param WC_Order   $wc_order The WooCommerce order.
+	 * @param PayPalCart      $cart       The PayPal cart.
+	 * @param string          $cart_id    The cart ID.
+	 * @param WC_Order        $wc_order   The WooCommerce order.
+	 * @param StoreValidation $validation The validation state for this request.
 	 * @return self
 	 */
-	public static function create_completed( PayPalCart $cart, string $cart_id, WC_Order $wc_order ): self {
-		$instance = new self( $cart, $cart_id );
+	public static function create_completed( PayPalCart $cart, string $cart_id, WC_Order $wc_order, StoreValidation $validation ): self {
+		$instance = new self( $cart, $validation, $cart_id );
 
 		$instance->status   = 'COMPLETED';
 		$instance->wc_order = $wc_order;
@@ -187,7 +194,7 @@ class CartResponse {
 			'validation_status' => $this->validation_status(),
 			'validation_issues' => array_map(
 				static fn( ValidationIssue $issue ) => $issue->to_array(),
-				$this->cart->issues()
+				$this->validation->all()
 			),
 			'payment_method'    => array( 'type' => 'paypal' ),
 		);
@@ -195,9 +202,6 @@ class CartResponse {
 		if ( ! empty( $this->applied_coupons ) ) {
 			$data['applied_coupons'] = $this->applied_coupons;
 		}
-
-		$data       = array_merge( $data, $this->cart->to_array() );
-		$data['id'] = $this->cart_id;
 
 		$totals = $this->calculate_totals();
 
@@ -229,7 +233,7 @@ class CartResponse {
 	 * @return array|null The cart-totals array, or null if not calculable.
 	 */
 	private function calculate_totals(): ?array {
-		if ( ! $this->wc_cart || $this->cart->has_validation_issue( ErrorCode::PRICING_ERROR ) ) {
+		if ( ! $this->wc_cart || $this->validation->has_pricing_issue() ) {
 			return null;
 		}
 

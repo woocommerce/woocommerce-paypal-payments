@@ -9,7 +9,7 @@ declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\StoreSync\Schema;
 
-use WooCommerce\PayPalCommerce\StoreSync\Validation\ValidationIssue;
+use WooCommerce\PayPalCommerce\StoreSync\Validation\StoreValidation;
 
 class PayPalCart extends AgenticSchema {
 	/**
@@ -42,7 +42,7 @@ class PayPalCart extends AgenticSchema {
 	 */
 	private ?array $available_shipping_options = null;
 
-	protected function parse_fields( array $input, callable $add_issue ): void {
+	protected function parse_fields( array $input, StoreValidation $validation ): void {
 		// Reset all fields.
 		$this->items                      = array();
 		$this->payment_method             = null;
@@ -59,10 +59,10 @@ class PayPalCart extends AgenticSchema {
 			$items = $input['items'];
 
 			if ( count( $items ) > 100 ) {
-				$add_issue(
-					ValidationIssue::create_invalid_data( 'Too many items' )
-						->user_message( 'The cart cannot hold more than 100 items' )
-						->for_field( 'items' )
+				$validation->add_invalid_data(
+					'items',
+					'Too many items',
+					'The cart cannot hold more than 100 items'
 				);
 			} else {
 				foreach ( $items as $item ) {
@@ -73,44 +73,36 @@ class PayPalCart extends AgenticSchema {
 						continue;
 					}
 
-					$this->items[] = CartItem::from_array( $item, $add_issue );
+					$this->items[] = CartItem::from_array( $item, $validation );
 				}
 			}
 		} else {
-			$add_issue(
-				ValidationIssue::create_missing_field( 'Required field missing' )
-					->user_message( 'Please provide a list of cart items.' )
-					->for_field( 'items' )
-			);
+			$validation->add_missing_field( 'items', 'Please provide a list of cart items.' );
 		}
 
 		if ( ! empty( $input['payment_method'] ) && is_array( $input['payment_method'] ) ) {
 			$this->payment_method =
-				PaymentMethod::from_array( $input['payment_method'], $add_issue );
+				PaymentMethod::from_array( $input['payment_method'], $validation );
 		} else {
-			$add_issue(
-				ValidationIssue::create_missing_field( 'Required field missing' )
-					->user_message( 'No payment_method defined.' )
-					->for_field( 'payment_method' )
-			);
+			$validation->add_missing_field( 'payment_method', 'No payment_method defined.' );
 		}
 
 		// Parse optional fields.
 		if ( ! empty( $input['customer'] ) && is_array( $input['customer'] ) ) {
-			$this->customer = Customer::from_array( $input['customer'], $add_issue );
+			$this->customer = Customer::from_array( $input['customer'], $validation );
 		}
 
 		if ( ! empty( $input['shipping_address'] ) && is_array( $input['shipping_address'] ) ) {
-			$this->shipping_address = Address::from_array( $input['shipping_address'], $add_issue );
+			$this->shipping_address = Address::from_array( $input['shipping_address'], $validation );
 		}
 
 		if ( ! empty( $input['billing_address'] ) && is_array( $input['billing_address'] ) ) {
-			$this->billing_address = Address::from_array( $input['billing_address'], $add_issue );
+			$this->billing_address = Address::from_array( $input['billing_address'], $validation );
 		}
 
 		if ( ! empty( $input['geo_coordinates'] ) && is_array( $input['geo_coordinates'] ) ) {
 			$this->geo_coordinates =
-				GeoCoordinates::from_array( $input['geo_coordinates'], $add_issue );
+				GeoCoordinates::from_array( $input['geo_coordinates'], $validation );
 		}
 
 		if ( isset( $input['checkout_fields'] ) && is_array( $input['checkout_fields'] ) ) {
@@ -118,14 +110,14 @@ class PayPalCart extends AgenticSchema {
 			$this->checkout_fields = array();
 
 			if ( count( $checkout_fields ) > 20 ) {
-				$add_issue(
-					ValidationIssue::create_invalid_data( 'Too many checkout fields' )
-						->user_message( 'The cart cannot hold more than 20 checkout fields' )
-						->for_field( 'checkout_fields' )
+				$validation->add_invalid_data(
+					'checkout_fields',
+					'Too many checkout fields',
+					'The cart cannot hold more than 20 checkout fields'
 				);
 			} else {
 				foreach ( $checkout_fields as $field ) {
-					$this->checkout_fields[] = CheckoutField::from_array( $field, $add_issue );
+					$this->checkout_fields[] = CheckoutField::from_array( $field, $validation );
 				}
 			}
 		}
@@ -134,7 +126,7 @@ class PayPalCart extends AgenticSchema {
 			$this->coupons = array();
 
 			foreach ( $input['coupons'] as $coupon ) {
-				$this->coupons[] = Coupon::from_array( $coupon, $add_issue );
+				$this->coupons[] = Coupon::from_array( $coupon, $validation );
 			}
 		}
 
@@ -142,9 +134,17 @@ class PayPalCart extends AgenticSchema {
 			$this->available_shipping_options = array();
 
 			foreach ( $input['available_shipping_options'] as $option ) {
-				$this->available_shipping_options[] = ShippingOption::from_array( $option, $add_issue );
+				$this->available_shipping_options[] = ShippingOption::from_array( $option, $validation );
 			}
 		}
+	}
+
+	/**
+	 * Returns the raw input array for session/order-manager persistence.
+	 * Not for use in API responses — use getter-based serialization instead.
+	 */
+	public function to_array(): array {
+		return $this->raw_data();
 	}
 
 	public function items(): array {

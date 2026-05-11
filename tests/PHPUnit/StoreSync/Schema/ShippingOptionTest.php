@@ -21,7 +21,7 @@ class ShippingOptionTest extends SchemaTestCase {
 				'currency_code' => 'usd',
 				'value'         => '5.99',
 			),
-			'is_selected'         => true,
+			'is_selected'        => true,
 			'estimated_delivery' => '2024-07-01',
 		);
 	}
@@ -33,7 +33,7 @@ class ShippingOptionTest extends SchemaTestCase {
 			'description'         => 'Standard ground shipping via USPS',
 			'price.currency_code' => 'USD',
 			'price.value'         => 5.99,
-			'is_selected'          => true,
+			'is_selected'         => true,
 			'estimated_delivery'  => '2024-07-01',
 		);
 	}
@@ -50,9 +50,9 @@ class ShippingOptionTest extends SchemaTestCase {
 
 	protected function mandatory_data(): array {
 		return array(
-			'id'         => 'STANDARD_SHIPPING',
-			'name'       => 'Standard Shipping',
-			'price'      => array(
+			'id'          => 'STANDARD_SHIPPING',
+			'name'        => 'Standard Shipping',
+			'price'       => array(
 				'currency_code' => 'USD',
 				'value'         => '5.99',
 			),

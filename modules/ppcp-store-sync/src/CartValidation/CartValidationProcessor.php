@@ -13,6 +13,7 @@ use Throwable;
 use Psr\Log\LoggerInterface;
 
 use WooCommerce\PayPalCommerce\StoreSync\Schema\PayPalCart;
+use WooCommerce\PayPalCommerce\StoreSync\Validation\StoreValidation;
 use WooCommerce\PayPalCommerce\StoreSync\Validation\ValidationIssue;
 
 class CartValidationProcessor {
@@ -31,15 +32,14 @@ class CartValidationProcessor {
 	}
 
 	/**
-	 * @return PayPalCart Cart with accumulated validation issues.
+	 * Runs all registered validators and adds any found issues to $validation.
 	 */
-	public function validate_cart( PayPalCart $cart ): PayPalCart {
-		$validators   = $this->get_validators();
-		$current_cart = $cart;
+	public function validate_cart( PayPalCart $cart, StoreValidation $validation ): void {
+		$validators = $this->get_validators();
 
 		foreach ( $validators as $validator ) {
 			try {
-				$issues = $validator->validate( $current_cart );
+				$issues = $validator->validate( $cart, $validation );
 			} catch ( Throwable $error ) {
 				/*
 				 * Internal validators do not throw anything.
@@ -68,12 +68,10 @@ class CartValidationProcessor {
 
 			$issues = array_filter( $issues, static fn( $issue ) => $issue instanceof ValidationIssue );
 
-			if ( $issues ) {
-				$current_cart = $current_cart->with_validation_issues( ...$issues );
+			foreach ( $issues as $issue ) {
+				$validation->add( $issue );
 			}
 		}
-
-		return $current_cart;
 	}
 
 	/**

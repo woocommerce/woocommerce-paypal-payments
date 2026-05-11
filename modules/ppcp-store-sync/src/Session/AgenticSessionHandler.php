@@ -12,6 +12,7 @@ declare( strict_types = 1 );
 namespace WooCommerce\PayPalCommerce\StoreSync\Session;
 
 use WooCommerce\PayPalCommerce\StoreSync\Schema\PayPalCart;
+use WooCommerce\PayPalCommerce\StoreSync\Validation\StoreValidation;
 
 /**
  * Class AgenticSessionHandler
@@ -99,7 +100,8 @@ class AgenticSessionHandler {
 		}
 
 		try {
-			$cart = PayPalCart::from_array( $session_data['cart'] );
+			// TODO: Validation issues from re-parsing are discarded; will be cleaned up in a future refactor.
+			$cart = PayPalCart::from_array( $session_data['cart'], new StoreValidation() );
 
 			return array(
 				'cart'     => $cart,

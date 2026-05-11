@@ -5,6 +5,7 @@ declare( strict_types = 1 );
 namespace WooCommerce\PayPalCommerce\StoreSync\CartValidation;
 
 use WooCommerce\PayPalCommerce\StoreSync\Schema\PayPalCart;
+use WooCommerce\PayPalCommerce\StoreSync\Validation\StoreValidation;
 use WooCommerce\PayPalCommerce\TestCase;
 
 abstract class ValidationTest extends TestCase {
@@ -26,7 +27,8 @@ abstract class ValidationTest extends TestCase {
 					),
 				),
 				'payment_method' => 'paypal',
-			)
+			),
+			new StoreValidation()
 		);
 	}
 
@@ -42,7 +44,8 @@ abstract class ValidationTest extends TestCase {
 				),
 				'shipping_address' => $address_data,
 				'payment_method'   => 'paypal',
-			)
+			),
+			new StoreValidation()
 		);
 	}
 
@@ -74,7 +77,7 @@ abstract class ValidationTest extends TestCase {
 			);
 		}
 
-		return PayPalCart::from_array( $cart_data );
+		return PayPalCart::from_array( $cart_data, new StoreValidation() );
 	}
 
 	protected function create_cart_with_items( array $items ): PayPalCart {
@@ -96,7 +99,8 @@ abstract class ValidationTest extends TestCase {
 			array(
 				'items'          => $cart_items,
 				'payment_method' => 'paypal',
-			)
+			),
+			new StoreValidation()
 		);
 	}
 

@@ -9,6 +9,7 @@ use Mockery;
 use WC_Order;
 use WooCommerce\PayPalCommerce\StoreSync\Schema\PayPalCart;
 use WooCommerce\PayPalCommerce\StoreSync\StoreSyncTestCase;
+use WooCommerce\PayPalCommerce\StoreSync\Validation\StoreValidation;
 
 /**
  * @covers \WooCommerce\PayPalCommerce\StoreSync\Response\CartResponse
@@ -82,8 +83,13 @@ class CartResponseTest extends StoreSyncTestCase {
 		);
 
 		$wc_cart  = $this->create_mock_wc_cart( 100.0, 10.0 );
-		$cart     = PayPalCart::from_array( $this->make_cart_data( 'TEST-001', 2, '50.00' ) );
-		$response = CartResponse::create( $cart, 'test-cart-id' )->wc_cart( $wc_cart )
+		$cart     = PayPalCart::from_array(
+			$this->make_cart_data( 'TEST-001', 2, '50.00' ), new StoreValidation()
+		);
+		$response = CartResponse::create(
+			$cart, 'test-cart-id', new StoreValidation()
+		)
+			->wc_cart( $wc_cart )
 			->applied_coupons( $applied_coupons );
 
 		$result = $response->to_array();
@@ -106,8 +112,10 @@ class CartResponseTest extends StoreSyncTestCase {
 	 * Then to_array() does not include an applied_coupons key
 	 */
 	public function test_to_array_excludes_applied_coupons_when_empty(): void {
-		$cart     = PayPalCart::from_array( $this->make_cart_data( 'TEST-001', 2, '50.00' ) );
-		$response = CartResponse::create( $cart )
+		$cart     = PayPalCart::from_array(
+			$this->make_cart_data( 'TEST-001', 2, '50.00' ), new StoreValidation()
+		);
+		$response = CartResponse::create( $cart, '', new StoreValidation() )
 			->applied_coupons( array() );
 
 		$result = $response->to_array();
@@ -123,8 +131,10 @@ class CartResponseTest extends StoreSyncTestCase {
 	 * Then to_array() does not include an applied_coupons key
 	 */
 	public function test_to_array_excludes_applied_coupons_when_not_provided(): void {
-		$cart     = PayPalCart::from_array( $this->make_cart_data( 'TEST-001', 2, '50.00' ) );
-		$response = CartResponse::create( $cart );
+		$cart     = PayPalCart::from_array(
+			$this->make_cart_data( 'TEST-001', 2, '50.00' ), new StoreValidation()
+		);
+		$response = CartResponse::create( $cart, '', new StoreValidation() );
 
 		$result = $response->to_array();
 
@@ -152,8 +162,13 @@ class CartResponseTest extends StoreSyncTestCase {
 		);
 
 		$wc_cart  = $this->create_mock_wc_cart( 100.0, 10.0 );
-		$cart     = PayPalCart::from_array( $this->make_cart_data( 'TEST-001', 2, '50.00' ) );
-		$response = CartResponse::create( $cart, 'test-cart-id' )->wc_cart( $wc_cart )
+		$cart     = PayPalCart::from_array(
+			$this->make_cart_data( 'TEST-001', 2, '50.00' ), new StoreValidation()
+		);
+		$response = CartResponse::create(
+			$cart, 'test-cart-id', new StoreValidation()
+		)
+			->wc_cart( $wc_cart )
 			->applied_coupons( $applied_coupons );
 
 		$result = $response->to_array();
@@ -171,8 +186,13 @@ class CartResponseTest extends StoreSyncTestCase {
 	 */
 	public function test_calculate_totals_excludes_discount_field_when_no_coupons(): void {
 		$wc_cart  = $this->create_mock_wc_cart( 100.0 );
-		$cart     = PayPalCart::from_array( $this->make_cart_data( 'TEST-001', 2, '50.00' ) );
-		$response = CartResponse::create( $cart, 'test-cart-id' )->wc_cart( $wc_cart );
+		$cart     = PayPalCart::from_array(
+			$this->make_cart_data( 'TEST-001', 2, '50.00' ), new StoreValidation()
+		);
+		$response = CartResponse::create(
+			$cart, 'test-cart-id', new StoreValidation()
+		)
+			->wc_cart( $wc_cart );
 
 		$result = $response->to_array();
 
@@ -196,8 +216,13 @@ class CartResponseTest extends StoreSyncTestCase {
 		);
 
 		$wc_cart  = $this->create_mock_wc_cart( 100.0, 20.0 );
-		$cart     = PayPalCart::from_array( $this->make_cart_data( 'TEST-001', 2, '50.00' ) );
-		$response = CartResponse::create( $cart, 'test-cart-id' )->wc_cart( $wc_cart )
+		$cart     = PayPalCart::from_array(
+			$this->make_cart_data( 'TEST-001', 2, '50.00' ), new StoreValidation()
+		);
+		$response = CartResponse::create(
+			$cart, 'test-cart-id', new StoreValidation()
+		)
+			->wc_cart( $wc_cart )
 			->applied_coupons( $applied_coupons );
 
 		$result = $response->to_array();
@@ -225,8 +250,11 @@ class CartResponseTest extends StoreSyncTestCase {
 	 */
 	public function test_response_structure_matches_paypal_spec(): void {
 		$wc_cart  = $this->create_mock_wc_cart( 100.0 );
-		$cart     = PayPalCart::from_array( $this->make_cart_data() );
-		$response = CartResponse::create( $cart, 'test-cart-id' )->wc_cart( $wc_cart );
+		$cart     = PayPalCart::from_array( $this->make_cart_data(), new StoreValidation() );
+		$response = CartResponse::create(
+			$cart, 'test-cart-id', new StoreValidation()
+		)
+			->wc_cart( $wc_cart );
 
 		$result = $response->to_array();
 
@@ -275,8 +303,11 @@ class CartResponseTest extends StoreSyncTestCase {
 		);
 
 		$wc_cart  = $this->create_mock_wc_cart( 100.0, 15.0 );
-		$cart     = PayPalCart::from_array( $this->make_cart_data() );
-		$response = CartResponse::create( $cart, 'test-cart-id' )->wc_cart( $wc_cart )
+		$cart     = PayPalCart::from_array( $this->make_cart_data(), new StoreValidation() );
+		$response = CartResponse::create(
+			$cart, 'test-cart-id', new StoreValidation()
+		)
+			->wc_cart( $wc_cart )
 			->applied_coupons( $applied_coupons );
 
 		$result = $response->to_array();
@@ -311,8 +342,13 @@ class CartResponseTest extends StoreSyncTestCase {
 		);
 
 		$wc_cart  = $this->create_mock_wc_cart( 25.0, 24.99 );
-		$cart     = PayPalCart::from_array( $this->make_cart_data( 'SHIRT-001', 1, '25.00' ) );
-		$response = CartResponse::create( $cart, 'test-cart-id' )->wc_cart( $wc_cart )
+		$cart     = PayPalCart::from_array(
+			$this->make_cart_data( 'SHIRT-001', 1, '25.00' ), new StoreValidation()
+		);
+		$response = CartResponse::create(
+			$cart, 'test-cart-id', new StoreValidation()
+		)
+			->wc_cart( $wc_cart )
 			->applied_coupons( $applied_coupons );
 
 		$result = $response->to_array();
@@ -344,8 +380,13 @@ class CartResponseTest extends StoreSyncTestCase {
 		);
 
 		$wc_cart  = $this->create_mock_wc_cart( 50.0, 49.99 );
-		$cart     = PayPalCart::from_array( $this->make_cart_data( 'TEST-001', 1, '50.00' ) );
-		$response = CartResponse::create( $cart, 'test-cart-id' )->wc_cart( $wc_cart )
+		$cart     = PayPalCart::from_array(
+			$this->make_cart_data( 'TEST-001', 1, '50.00' ), new StoreValidation()
+		);
+		$response = CartResponse::create(
+			$cart, 'test-cart-id', new StoreValidation()
+		)
+			->wc_cart( $wc_cart )
 			->applied_coupons( $applied_coupons );
 
 		$result = $response->to_array();
@@ -384,8 +425,13 @@ class CartResponseTest extends StoreSyncTestCase {
 		);
 
 		$wc_cart  = $this->create_mock_wc_cart( 25.0, 24.99 );
-		$cart     = PayPalCart::from_array( $this->make_cart_data( 'SHIRT-001', 1, '25.00' ) );
-		$response = CartResponse::create( $cart, 'test-cart-id' )->wc_cart( $wc_cart )
+		$cart     = PayPalCart::from_array(
+			$this->make_cart_data( 'SHIRT-001', 1, '25.00' ), new StoreValidation()
+		);
+		$response = CartResponse::create(
+			$cart, 'test-cart-id', new StoreValidation()
+		)
+			->wc_cart( $wc_cart )
 			->applied_coupons( $applied_coupons );
 
 		$result = $response->to_array();
@@ -410,8 +456,11 @@ class CartResponseTest extends StoreSyncTestCase {
 		);
 
 		$wc_cart  = $this->create_mock_wc_cart( 100.0, 10.0, 5.0, 8.5 );
-		$cart     = PayPalCart::from_array( $this->make_cart_data() );
-		$response = CartResponse::create( $cart, 'test-cart-id' )->wc_cart( $wc_cart )
+		$cart     = PayPalCart::from_array( $this->make_cart_data(), new StoreValidation() );
+		$response = CartResponse::create(
+			$cart, 'test-cart-id', new StoreValidation()
+		)
+			->wc_cart( $wc_cart )
 			->applied_coupons( $applied_coupons );
 
 		$result = $response->to_array();
@@ -439,8 +488,8 @@ class CartResponseTest extends StoreSyncTestCase {
 	 * Then to_array() does not include an available_shipping_options key
 	 */
 	public function test_to_array_excludes_available_shipping_options_when_setter_not_called(): void {
-		$cart     = PayPalCart::from_array( $this->make_cart_data() );
-		$response = CartResponse::create( $cart );
+		$cart     = PayPalCart::from_array( $this->make_cart_data(), new StoreValidation() );
+		$response = CartResponse::create( $cart, '', new StoreValidation() );
 
 		$result = $response->to_array();
 
@@ -455,8 +504,8 @@ class CartResponseTest extends StoreSyncTestCase {
 	 * Then to_array() does not include an available_shipping_options key
 	 */
 	public function test_to_array_excludes_available_shipping_options_when_empty_array(): void {
-		$cart     = PayPalCart::from_array( $this->make_cart_data() );
-		$response = CartResponse::create( $cart )
+		$cart     = PayPalCart::from_array( $this->make_cart_data(), new StoreValidation() );
+		$response = CartResponse::create( $cart, '', new StoreValidation() )
 			->shipping_options( array() );
 
 		$result = $response->to_array();
@@ -483,8 +532,8 @@ class CartResponseTest extends StoreSyncTestCase {
 			),
 		);
 
-		$cart     = PayPalCart::from_array( $this->make_cart_data() );
-		$response = CartResponse::create( $cart )
+		$cart     = PayPalCart::from_array( $this->make_cart_data(), new StoreValidation() );
+		$response = CartResponse::create( $cart, '', new StoreValidation() )
 			->shipping_options( $shipping_options );
 
 		$result = $response->to_array();
@@ -523,8 +572,8 @@ class CartResponseTest extends StoreSyncTestCase {
 			),
 		);
 
-		$cart     = PayPalCart::from_array( $this->make_cart_data() );
-		$response = CartResponse::create( $cart )
+		$cart     = PayPalCart::from_array( $this->make_cart_data(), new StoreValidation() );
+		$response = CartResponse::create( $cart, '', new StoreValidation() )
 			->shipping_options( $shipping_options );
 
 		$result = $response->to_array();
@@ -571,8 +620,8 @@ class CartResponseTest extends StoreSyncTestCase {
 			),
 		);
 
-		$cart     = PayPalCart::from_array( $this->make_cart_data() );
-		$response = CartResponse::create( $cart )
+		$cart     = PayPalCart::from_array( $this->make_cart_data(), new StoreValidation() );
+		$response = CartResponse::create( $cart, '', new StoreValidation() )
 			->shipping_options( $shipping_options );
 
 		$result = $response->to_array();
@@ -602,8 +651,10 @@ class CartResponseTest extends StoreSyncTestCase {
 	 * Then to_array()['status'] equals 'CREATED'
 	 */
 	public function test_create_new_sets_status_to_created(): void {
-		$cart     = PayPalCart::from_array( $this->make_cart_data() );
-		$response = CartResponse::create_new( $cart, 'new-cart-id', 'tok_abc123' );
+		$cart     = PayPalCart::from_array( $this->make_cart_data(), new StoreValidation() );
+		$response = CartResponse::create_new(
+			$cart, 'new-cart-id', 'tok_abc123', new StoreValidation()
+		);
 
 		$result = $response->to_array();
 
@@ -619,8 +670,8 @@ class CartResponseTest extends StoreSyncTestCase {
 	 */
 	public function test_create_new_includes_payment_method_with_token(): void {
 		$token    = 'tok_xyz789';
-		$cart     = PayPalCart::from_array( $this->make_cart_data() );
-		$response = CartResponse::create_new( $cart, 'new-cart-id', $token );
+		$cart     = PayPalCart::from_array( $this->make_cart_data(), new StoreValidation() );
+		$response = CartResponse::create_new( $cart, 'new-cart-id', $token, new StoreValidation() );
 
 		$result = $response->to_array();
 
@@ -637,8 +688,10 @@ class CartResponseTest extends StoreSyncTestCase {
 	 * Then to_array() does not include a payment_confirmation key
 	 */
 	public function test_create_new_excludes_payment_confirmation(): void {
-		$cart     = PayPalCart::from_array( $this->make_cart_data() );
-		$response = CartResponse::create_new( $cart, 'new-cart-id', 'tok_abc123' );
+		$cart     = PayPalCart::from_array( $this->make_cart_data(), new StoreValidation() );
+		$response = CartResponse::create_new(
+			$cart, 'new-cart-id', 'tok_abc123', new StoreValidation()
+		);
 
 		$result = $response->to_array();
 
@@ -661,8 +714,10 @@ class CartResponseTest extends StoreSyncTestCase {
 	public function test_create_new_id_is_not_overwritten_by_caller_supplied_id(): void {
 		$cart_data       = $this->make_cart_data();
 		$cart_data['id'] = 'client-supplied-id';
-		$cart            = PayPalCart::from_array( $cart_data );
-		$response        = CartResponse::create_new( $cart, 'server-generated-id', 'tok_test' );
+		$cart            = PayPalCart::from_array( $cart_data, new StoreValidation() );
+		$response        = CartResponse::create_new(
+			$cart, 'server-generated-id', 'tok_test', new StoreValidation()
+		);
 
 		$result = $response->to_array();
 
@@ -682,8 +737,10 @@ class CartResponseTest extends StoreSyncTestCase {
 		$wc_order->allows( 'get_checkout_order_received_url' )
 			->andReturn( 'https://example.com/order/42' );
 
-		$cart     = PayPalCart::from_array( $this->make_cart_data() );
-		$response = CartResponse::create_completed( $cart, 'cart-id-paid', $wc_order );
+		$cart     = PayPalCart::from_array( $this->make_cart_data(), new StoreValidation() );
+		$response = CartResponse::create_completed(
+			$cart, 'cart-id-paid', $wc_order, new StoreValidation()
+		);
 
 		$result = $response->to_array();
 
@@ -706,8 +763,10 @@ class CartResponseTest extends StoreSyncTestCase {
 		$wc_order->allows( 'get_id' )->andReturn( $order_id );
 		$wc_order->allows( 'get_checkout_order_received_url' )->andReturn( $review_url );
 
-		$cart     = PayPalCart::from_array( $this->make_cart_data() );
-		$response = CartResponse::create_completed( $cart, 'cart-id-paid', $wc_order );
+		$cart     = PayPalCart::from_array( $this->make_cart_data(), new StoreValidation() );
+		$response = CartResponse::create_completed(
+			$cart, 'cart-id-paid', $wc_order, new StoreValidation()
+		);
 
 		$result = $response->to_array();
 
@@ -730,8 +789,10 @@ class CartResponseTest extends StoreSyncTestCase {
 		$wc_order->allows( 'get_checkout_order_received_url' )
 			->andReturn( 'https://example.com/order/42' );
 
-		$cart     = PayPalCart::from_array( $this->make_cart_data() );
-		$response = CartResponse::create_completed( $cart, 'cart-id-paid', $wc_order );
+		$cart     = PayPalCart::from_array( $this->make_cart_data(), new StoreValidation() );
+		$response = CartResponse::create_completed(
+			$cart, 'cart-id-paid', $wc_order, new StoreValidation()
+		);
 
 		$result = $response->to_array();
 
@@ -751,8 +812,8 @@ class CartResponseTest extends StoreSyncTestCase {
 	 * Then to_array()['status'] equals 'INCOMPLETE'
 	 */
 	public function test_create_sets_status_to_incomplete(): void {
-		$cart     = PayPalCart::from_array( $this->make_cart_data() );
-		$response = CartResponse::create( $cart );
+		$cart     = PayPalCart::from_array( $this->make_cart_data(), new StoreValidation() );
+		$response = CartResponse::create( $cart, '', new StoreValidation() );
 
 		$result = $response->to_array();
 

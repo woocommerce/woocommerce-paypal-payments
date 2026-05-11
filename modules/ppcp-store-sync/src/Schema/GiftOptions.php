@@ -12,7 +12,7 @@ namespace WooCommerce\PayPalCommerce\StoreSync\Schema;
 use DateTime;
 use DateTimeInterface;
 
-use WooCommerce\PayPalCommerce\StoreSync\Validation\ValidationIssue;
+use WooCommerce\PayPalCommerce\StoreSync\Validation\StoreValidation;
 
 /**
  * @see GiftOptionsTest - Unit tests for this class.
@@ -30,7 +30,7 @@ class GiftOptions extends AgenticSchema {
 
 	private ?array $recipient = null;
 
-	protected function parse_fields( array $input, callable $add_issue ): void {
+	protected function parse_fields( array $input, StoreValidation $validation ): void {
 		// Reset all fields.
 		$this->is_gift       = false;
 		$this->gift_wrap     = false;
@@ -53,10 +53,10 @@ class GiftOptions extends AgenticSchema {
 			$gift_message = trim( $input['gift_message'] );
 
 			if ( strlen( $gift_message ) > 500 ) {
-				$add_issue(
-					ValidationIssue::create_invalid_data( 'Gift message too long' )
-						->user_message( 'The gift message must be no longer than 500 characters' )
-						->for_field( 'gift_message' )
+				$validation->add_invalid_data(
+					'gift_message',
+					'Gift message too long',
+					'The gift message must be no longer than 500 characters'
 				);
 			} else {
 				$this->gift_message = $gift_message;
@@ -70,10 +70,10 @@ class GiftOptions extends AgenticSchema {
 			if ( $rfc_date ) {
 				$this->delivery_date = $delivery_date;
 			} else {
-				$add_issue(
-					ValidationIssue::create_invalid_data( 'Invalid delivery date format' )
-						->user_message( 'The delivery date must be in RFC3339 format (e.g., 2024-12-25T09:00:00Z)' )
-						->for_field( 'delivery_date' )
+				$validation->add_invalid_data(
+					'delivery_date',
+					'Invalid delivery date format',
+					'The delivery date must be in RFC3339 format (e.g., 2024-12-25T09:00:00Z)'
 				);
 			}
 		}
@@ -86,10 +86,10 @@ class GiftOptions extends AgenticSchema {
 
 				if ( ! filter_var( $recipient_email, FILTER_VALIDATE_EMAIL ) ) {
 					$recipient_email = null;
-					$add_issue(
-						ValidationIssue::create_invalid_data( 'Invalid recipient email' )
-							->user_message( 'The recipient email is not valid' )
-							->for_field( 'recipient.email' )
+					$validation->add_invalid_data(
+						'recipient.email',
+						'Invalid recipient email',
+						'The recipient email is not valid'
 					);
 				}
 			}

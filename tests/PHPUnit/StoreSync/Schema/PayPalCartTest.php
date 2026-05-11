@@ -3,6 +3,8 @@ declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\StoreSync\Schema;
 
+use WooCommerce\PayPalCommerce\StoreSync\Validation\StoreValidation;
+
 /**
  * @covers \WooCommerce\PayPalCommerce\StoreSync\Schema\AgenticSchema
  * @covers \WooCommerce\PayPalCommerce\StoreSync\Schema\PayPalCart
@@ -162,16 +164,16 @@ class PayPalCartTest extends SchemaTestCase {
 			array(
 				'available_shipping_options' => array(
 					array(
-						'id'         => 'flat_rate:4',
-						'name'       => 'Flat Rate',
-						'price'      => array( 'currency_code' => 'USD', 'value' => '5.00' ),
+						'id'          => 'flat_rate:4',
+						'name'        => 'Flat Rate',
+						'price'       => array( 'currency_code' => 'USD', 'value' => '5.00' ),
 						'is_selected' => true,
 					),
 				),
 			)
 		);
 
-		$cart = PayPalCart::from_array( $input );
+		$cart = PayPalCart::from_array( $input, new StoreValidation() );
 
 		$options = $cart->available_shipping_options();
 		$this->assertNotNull( $options, 'available_shipping_options() must not return null when options are provided' );
@@ -207,9 +209,10 @@ class PayPalCartTest extends SchemaTestCase {
 			'customer' => array( 'email_address' => 'not-provided' ),
 		);
 
-		$testee = PayPalCart::from_array( $multiple_problems );
+		$validation = new StoreValidation();
+		PayPalCart::from_array( $multiple_problems, $validation );
 
-		$issues = $testee->issues();
+		$issues = $validation->all();
 		$this->assertCount( 3, $issues );
 	}
 }

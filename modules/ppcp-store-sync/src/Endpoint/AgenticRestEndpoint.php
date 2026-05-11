@@ -27,6 +27,7 @@ use WooCommerce\PayPalCommerce\StoreSync\Session\AgenticSessionHandler;
 use WooCommerce\PayPalCommerce\StoreSync\CartValidation\CartValidationProcessor;
 use WooCommerce\PayPalCommerce\StoreSync\Helper\PayPalOrderManager;
 use WooCommerce\PayPalCommerce\StoreSync\Helper\AgenticSessionManager;
+use WooCommerce\PayPalCommerce\StoreSync\Validation\StoreValidation;
 
 /**
  * Base class for REST controllers in the agentic commerce module.
@@ -56,6 +57,8 @@ abstract class AgenticRestEndpoint extends WC_REST_Controller {
 
 	protected PayPalOrderManager $order_manager;
 
+	protected StoreValidation $validation;
+
 	public function __construct(
 		AuthServiceProvider $auth_provider,
 		AgenticSessionHandler $session_handler,
@@ -73,6 +76,7 @@ abstract class AgenticRestEndpoint extends WC_REST_Controller {
 		$this->validation_processor = $validation_processor;
 		$this->logger               = $logger;
 		$this->order_manager        = $order_manager;
+		$this->validation           = new StoreValidation();
 	}
 
 	/**
@@ -160,9 +164,11 @@ abstract class AgenticRestEndpoint extends WC_REST_Controller {
 			return $data;
 		}
 
-		$cart = PayPalCart::from_array( $data );
+		$this->validation = new StoreValidation();
+		$cart             = PayPalCart::from_array( $data, $this->validation );
+		$this->validation_processor->validate_cart( $cart, $this->validation );
 
-		return $this->validation_processor->validate_cart( $cart );
+		return $cart;
 	}
 
 	/**

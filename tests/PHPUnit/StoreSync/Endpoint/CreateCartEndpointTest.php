@@ -7,6 +7,7 @@ use WP_REST_Request;
 
 use WooCommerce\PayPalCommerce\StoreSync\Response\CartResponse;
 use WooCommerce\PayPalCommerce\StoreSync\Schema\PayPalCart;
+use WooCommerce\PayPalCommerce\StoreSync\Validation\StoreValidation;
 
 use function Brain\Monkey\Functions\when;
 
@@ -44,7 +45,7 @@ class CreateCartEndpointTest extends AgenticEndpointTestCase {
 
 		// Mock response factory.
 		$response_factory->allows( 'new_cart' )
-			->andReturnUsing( fn( $cart, $cart_id, $ec_token ) => CartResponse::create_new( $cart, $cart_id, $ec_token ) );
+			->andReturnUsing( fn( $cart, $cart_id, $ec_token ) => CartResponse::create_new( $cart, $cart_id, $ec_token, new StoreValidation() ) );
 
 		$endpoint = new CreateCartEndpoint(
 			$mocks['auth_provider'],

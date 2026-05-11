@@ -7,6 +7,7 @@ namespace WooCommerce\PayPalCommerce\StoreSync\CartValidation;
 use Mockery;
 use WooCommerce\PayPalCommerce\StoreSync\Config\IngestionConfiguration;
 use WooCommerce\PayPalCommerce\StoreSync\Helper\ProductManager;
+use WooCommerce\PayPalCommerce\StoreSync\Validation\StoreValidation;
 use WooCommerce\PayPalCommerce\StoreSync\Validation\ValidationIssue;
 
 /**
@@ -50,7 +51,7 @@ class ProductValidatorTest extends ValidationTest {
 
 		$cart = $this->create_cart( 'sku-99', 1, 'Ghost Product' );
 
-		$result = $this->validator->validate( $cart );
+		$result = $this->validator->validate( $cart, new StoreValidation() );
 
 		$this->assertIsArray( $result );
 		$this->assertCount( 1, $result );
@@ -93,7 +94,7 @@ class ProductValidatorTest extends ValidationTest {
 
 		$cart = $this->create_cart( '42', 2, 'Valid Product' );
 
-		$result = $this->validator->validate( $cart );
+		$result = $this->validator->validate( $cart, new StoreValidation() );
 
 		// An empty issues array is a valid "no problems found" result.
 		$this->assertIsArray( $result );
@@ -112,9 +113,10 @@ class ProductValidatorTest extends ValidationTest {
 		$pre_existing_issue =
 			ValidationIssue::create_item_out_of_stock( 'Pre-existing inventory problem' );
 
-		$cart = $this->create_cart()->with_validation_issues( $pre_existing_issue );
+		$validation = new StoreValidation();
+		$validation->add( $pre_existing_issue );
 
-		$result = $this->validator->validate( $cart );
+		$result = $this->validator->validate( $this->create_cart(), $validation );
 
 		$this->assertNull( $result );
 	}

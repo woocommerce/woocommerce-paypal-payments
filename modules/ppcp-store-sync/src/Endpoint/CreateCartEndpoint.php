@@ -70,7 +70,7 @@ class CreateCartEndpoint extends AgenticRestEndpoint {
 		$ec_token = $this->order_manager->create_order( $cart );
 
 		$cart_id  = $this->create_local_cart( $cart, $ec_token );
-		$response = $this->response_factory->new_cart( $cart, $cart_id, $ec_token );
+		$response = $this->response_factory->new_cart( $cart, $cart_id, $ec_token, $this->validation );
 
 		return $this->cart_details( $response, 201 );
 	}

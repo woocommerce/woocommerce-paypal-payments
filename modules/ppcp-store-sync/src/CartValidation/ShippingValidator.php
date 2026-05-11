@@ -26,6 +26,7 @@ use WooCommerce\PayPalCommerce\StoreSync\Helper\ProductManager;
 use WooCommerce\PayPalCommerce\StoreSync\Schema\PayPalCart;
 use WooCommerce\PayPalCommerce\StoreSync\Validation\Context\ShippingErrorContext;
 use WooCommerce\PayPalCommerce\StoreSync\Validation\Resolution\ResolutionOption;
+use WooCommerce\PayPalCommerce\StoreSync\Validation\StoreValidation;
 use WooCommerce\PayPalCommerce\StoreSync\Validation\ValidationIssue;
 use WooCommerce\PayPalCommerce\StoreSync\Schema\Address;
 use WooCommerce\PayPalCommerce\StoreSync\Schema\CartItem;
@@ -44,7 +45,7 @@ class ShippingValidator implements ValidatorInterface {
 		$this->product_manager = $product_manager;
 	}
 
-	public function validate( PayPalCart $cart ) {
+	public function validate( PayPalCart $cart, StoreValidation $validation ) {
 		$shipping_address = $cart->shipping_address();
 		// Scenario 1: Missing Shipping Address.
 		if ( ! $shipping_address ) {

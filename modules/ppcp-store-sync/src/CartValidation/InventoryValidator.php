@@ -16,6 +16,7 @@ use WooCommerce\PayPalCommerce\StoreSync\Schema\PayPalCart;
 use WooCommerce\PayPalCommerce\StoreSync\Schema\CartItem;
 use WooCommerce\PayPalCommerce\StoreSync\Validation\Context\InventoryIssueContext;
 use WooCommerce\PayPalCommerce\StoreSync\Validation\Resolution\ResolutionOption;
+use WooCommerce\PayPalCommerce\StoreSync\Validation\StoreValidation;
 use WooCommerce\PayPalCommerce\StoreSync\Validation\ValidationIssue;
 
 class InventoryValidator implements ValidatorInterface {
@@ -25,9 +26,9 @@ class InventoryValidator implements ValidatorInterface {
 		$this->product_manager = $product_manager;
 	}
 
-	public function validate( PayPalCart $cart ): ?array {
+	public function validate( PayPalCart $cart, StoreValidation $validation ): ?array {
 		// Skip validation if the cart already annotates an inventory issue.
-		if ( $cart->has_validation_issue( ErrorCode::INVENTORY_ISSUE ) ) {
+		if ( $validation->has_issue_with_code( ErrorCode::INVENTORY_ISSUE ) ) {
 			return null;
 		}
 

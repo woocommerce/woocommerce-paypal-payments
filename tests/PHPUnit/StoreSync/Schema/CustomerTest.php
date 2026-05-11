@@ -3,6 +3,8 @@ declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\StoreSync\Schema;
 
+use WooCommerce\PayPalCommerce\StoreSync\Validation\StoreValidation;
+
 /**
  * @covers \WooCommerce\PayPalCommerce\StoreSync\Schema\Customer
  */
@@ -50,7 +52,7 @@ class CustomerTest extends SchemaTestCase {
 		$this->assertOptionalField( 'email_address' );
 
 		// Test optional nested fields.
-		$customer = Customer::from_array( array() );
+		$customer = Customer::from_array( array(), new StoreValidation() );
 
 		$this->assertNull( $customer->name() );
 		$this->assertNull( $customer->phone() );

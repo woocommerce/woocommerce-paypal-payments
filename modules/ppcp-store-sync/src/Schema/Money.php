@@ -9,7 +9,7 @@ declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\StoreSync\Schema;
 
-use WooCommerce\PayPalCommerce\StoreSync\Validation\ValidationIssue;
+use WooCommerce\PayPalCommerce\StoreSync\Validation\StoreValidation;
 
 /**
  * @see MoneyTest - Unit tests for this class.
@@ -19,7 +19,7 @@ class Money extends AgenticSchema {
 
 	private ?float $value = null;
 
-	protected function parse_fields( array $input, callable $add_issue ): void {
+	protected function parse_fields( array $input, StoreValidation $validation ): void {
 		// Reset all fields.
 		$this->currency = null;
 		$this->value    = null;
@@ -31,18 +31,14 @@ class Money extends AgenticSchema {
 			if ( preg_match( '/^[A-Z]{3}$/', $currency ) ) {
 				$this->currency = $currency;
 			} else {
-				$add_issue(
-					ValidationIssue::create_invalid_data( 'Unexpected currency_code' )
-						->user_message( 'Please provide a valid 3-letter currency code.' )
-						->for_field( 'currency_code' )
+				$validation->add_invalid_data(
+					'currency_code',
+					'Unexpected currency_code',
+					'Please provide a valid 3-letter currency code.'
 				);
 			}
 		} else {
-			$add_issue(
-				ValidationIssue::create_missing_field( 'Required field missing' )
-					->user_message( 'Please provide a currency code.' )
-					->for_field( 'currency_code' )
-			);
+			$validation->add_missing_field( 'currency_code', 'Please provide a currency code.' );
 		}
 
 		if ( isset( $input['value'] ) ) {
@@ -53,18 +49,14 @@ class Money extends AgenticSchema {
 			} elseif ( is_string( $value ) && preg_match( '/^-?\d+(\.\d{2,3})?$/', $value ) ) {
 				$this->value = (float) $value;
 			} else {
-				$add_issue(
-					ValidationIssue::create_invalid_data( 'Unexpected money value' )
-						->user_message( 'Please provide a valid numerical value.' )
-						->for_field( 'value' )
+				$validation->add_invalid_data(
+					'value',
+					'Unexpected money value',
+					'Please provide a valid numerical value.'
 				);
 			}
 		} else {
-			$add_issue(
-				ValidationIssue::create_missing_field( 'Required field missing' )
-					->user_message( 'Please provide a value.' )
-					->for_field( 'value' )
-			);
+			$validation->add_missing_field( 'value', 'Please provide a value.' );
 		}
 	}
 
