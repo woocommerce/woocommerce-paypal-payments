@@ -19,7 +19,7 @@ use WooCommerce\PayPalCommerce\StoreSync\CartValidation\ValidatorInterface;
 use WooCommerce\PayPalCommerce\StoreSync\Helper\CartHelper;
 use WooCommerce\PayPalCommerce\StoreSync\Schema\Coupon;
 use WooCommerce\PayPalCommerce\StoreSync\Schema\PayPalCart;
-use WooCommerce\PayPalCommerce\StoreSync\Validation\StoreValidation;
+use WooCommerce\PayPalCommerce\StoreSync\StoreData\StorePayPalCart;
 use WooCommerce\PayPalCommerce\StoreSync\Validation\ValidationIssue;
 
 /**
@@ -146,10 +146,11 @@ class CouponValidator implements ValidatorInterface {
 	/**
 	 * Validates coupons in the cart.
 	 *
-	 * @param PayPalCart $cart The cart to validate.
+	 * @param StorePayPalCart $store_cart The enriched cart to validate.
 	 * @return ValidationIssue[]|null Array of validation issues or null if valid.
 	 */
-	public function validate( PayPalCart $cart, StoreValidation $validation ): ?array {
+	public function validate( StorePayPalCart $store_cart ): ?array {
+		$cart             = $store_cart->paypal_cart();
 		$coupons_to_apply = $this->get_coupons_to_apply( $cart );
 
 		if ( empty( $coupons_to_apply ) ) {

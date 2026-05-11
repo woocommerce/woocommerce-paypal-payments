@@ -51,7 +51,7 @@ class ProductValidatorTest extends ValidationTest {
 
 		$cart = $this->create_cart( 'sku-99', 1, 'Ghost Product' );
 
-		$result = $this->validator->validate( $cart, new StoreValidation() );
+		$result = $this->validator->validate( $this->wrap_in_store_cart( $cart ) );
 
 		$this->assertIsArray( $result );
 		$this->assertCount( 1, $result );
@@ -94,7 +94,7 @@ class ProductValidatorTest extends ValidationTest {
 
 		$cart = $this->create_cart( '42', 2, 'Valid Product' );
 
-		$result = $this->validator->validate( $cart, new StoreValidation() );
+		$result = $this->validator->validate( $this->wrap_in_store_cart( $cart ) );
 
 		// An empty issues array is a valid "no problems found" result.
 		$this->assertIsArray( $result );
@@ -116,7 +116,7 @@ class ProductValidatorTest extends ValidationTest {
 		$validation = new StoreValidation();
 		$validation->add( $pre_existing_issue );
 
-		$result = $this->validator->validate( $this->create_cart(), $validation );
+		$result = $this->validator->validate( $this->wrap_in_store_cart( $this->create_cart(), $validation ) );
 
 		$this->assertNull( $result );
 	}

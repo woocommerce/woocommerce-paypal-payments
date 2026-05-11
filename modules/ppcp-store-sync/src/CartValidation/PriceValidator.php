@@ -14,12 +14,12 @@ use WooCommerce\PayPalCommerce\StoreSync\Enums\ErrorCode;
 use WooCommerce\PayPalCommerce\StoreSync\Enums\Priority;
 use WooCommerce\PayPalCommerce\StoreSync\Helper\CartHelper;
 use WooCommerce\PayPalCommerce\StoreSync\Helper\ProductManager;
-use WooCommerce\PayPalCommerce\StoreSync\Schema\PayPalCart;
 use WooCommerce\PayPalCommerce\StoreSync\Schema\CartItem;
+use WooCommerce\PayPalCommerce\StoreSync\Schema\PayPalCart;
+use WooCommerce\PayPalCommerce\StoreSync\StoreData\StorePayPalCart;
 use WooCommerce\PayPalCommerce\StoreSync\Validation\Resolution\ResolutionOption;
 use WooCommerce\PayPalCommerce\StoreSync\Schema\Money;
 use WooCommerce\PayPalCommerce\StoreSync\Validation\Context\PricingErrorContext;
-use WooCommerce\PayPalCommerce\StoreSync\Validation\StoreValidation;
 use WooCommerce\PayPalCommerce\StoreSync\Validation\ValidationIssue;
 
 class PriceValidator implements ValidatorInterface {
@@ -29,16 +29,17 @@ class PriceValidator implements ValidatorInterface {
 		$this->product_manager = $product_manager;
 	}
 
-	public function validate( PayPalCart $cart, StoreValidation $validation ): ?array {
+	public function validate( StorePayPalCart $store_cart ): ?array {
 		// Skip validation if the cart contains an inventory issue.
-		if ( $validation->has_issue_with_code( ErrorCode::INVENTORY_ISSUE ) ) {
+		if ( $store_cart->validation()->has_issue_with_code( ErrorCode::INVENTORY_ISSUE ) ) {
 			return null;
 		}
 
-		$issues = array();
+		$paypal_cart = $store_cart->paypal_cart();
+		$issues      = array();
 
-		foreach ( $cart->items() as $key => $item ) {
-			$issue = $this->validate_price_matches_store( $key, $item, $cart );
+		foreach ( $paypal_cart->items() as $key => $item ) {
+			$issue = $this->validate_price_matches_store( $key, $item, $paypal_cart );
 
 			if ( $issue ) {
 				$issues[] = $issue;

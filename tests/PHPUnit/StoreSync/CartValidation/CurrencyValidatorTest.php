@@ -32,7 +32,7 @@ class CurrencyValidatorTest extends ValidationTest {
 			)
 		);
 
-		$result = $this->validator->validate( $cart, new StoreValidation() );
+		$result = $this->validator->validate( $this->wrap_in_store_cart( $cart ) );
 
 		$this->assertIsArray( $result );
 		$this->assertEmpty( $result );
@@ -46,7 +46,7 @@ class CurrencyValidatorTest extends ValidationTest {
 			)
 		);
 
-		$result = $this->validator->validate( $cart, new StoreValidation() );
+		$result = $this->validator->validate( $this->wrap_in_store_cart( $cart ) );
 
 		$this->assertIsArray( $result );
 		$this->assertCount( 1, $result );
@@ -63,7 +63,7 @@ class CurrencyValidatorTest extends ValidationTest {
 			)
 		);
 
-		$result = $this->validator->validate( $cart, new StoreValidation() );
+		$result = $this->validator->validate( $this->wrap_in_store_cart( $cart ) );
 
 		$this->assertIsArray( $result );
 		$this->assertCount( 1, $result );
@@ -81,7 +81,7 @@ class CurrencyValidatorTest extends ValidationTest {
 			new StoreValidation()
 		);
 
-		$result = $this->validator->validate( $cart, new StoreValidation() );
+		$result = $this->validator->validate( $this->wrap_in_store_cart( $cart ) );
 
 		$this->assertIsArray( $result );
 		$this->assertEmpty( $result );
@@ -110,7 +110,7 @@ class CurrencyValidatorTest extends ValidationTest {
 		);
 
 		$cart   = PayPalCart::from_array( $cart_data, new StoreValidation() );
-		$result = $this->validator->validate( $cart, new StoreValidation() );
+		$result = $this->validator->validate( $this->wrap_in_store_cart( $cart ) );
 
 		$this->assertIsArray( $result );
 		$this->assertEmpty( $result );
@@ -148,7 +148,7 @@ class CurrencyValidatorTest extends ValidationTest {
 		);
 
 		$cart   = PayPalCart::from_array( $cart_data, new StoreValidation() );
-		$result = $this->validator->validate( $cart, new StoreValidation() );
+		$result = $this->validator->validate( $this->wrap_in_store_cart( $cart ) );
 
 		$this->assertIsArray( $result );
 		$this->assertCount( 1, $result );
@@ -180,7 +180,7 @@ class CurrencyValidatorTest extends ValidationTest {
 		);
 
 		$cart   = PayPalCart::from_array( $cart_data, new StoreValidation() );
-		$result = $this->validator->validate( $cart, new StoreValidation() );
+		$result = $this->validator->validate( $this->wrap_in_store_cart( $cart ) );
 
 		$this->assertIsArray( $result );
 		$this->assertCount( 1, $result );
@@ -201,7 +201,7 @@ class CurrencyValidatorTest extends ValidationTest {
 			)
 		);
 
-		$result = $this->validator->validate( $cart, new StoreValidation() );
+		$result = $this->validator->validate( $this->wrap_in_store_cart( $cart ) );
 
 		$this->assertIsArray( $result );
 		$this->assertCount( 1, $result );

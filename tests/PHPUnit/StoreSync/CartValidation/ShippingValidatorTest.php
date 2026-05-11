@@ -40,7 +40,7 @@ class ShippingValidatorTest extends ValidationTest {
 			)
 		);
 
-		$result = $this->validator->validate( $cart, new StoreValidation() );
+		$result = $this->validator->validate( $this->wrap_in_store_cart( $cart ) );
 
 		$this->assertNull( $result );
 	}
@@ -60,7 +60,7 @@ class ShippingValidatorTest extends ValidationTest {
 			)
 		);
 
-		$result = $this->validator->validate( $cart, new StoreValidation() );
+		$result = $this->validator->validate( $this->wrap_in_store_cart( $cart ) );
 
 		$this->assertIsArray( $result );
 		$this->assertCount( 1, $result );
@@ -96,7 +96,7 @@ class ShippingValidatorTest extends ValidationTest {
 			new StoreValidation()
 		);
 
-		$result = $this->validator->validate( $cart, new StoreValidation() );
+		$result = $this->validator->validate( $this->wrap_in_store_cart( $cart ) );
 
 		$this->assertNull( $result );
 	}
@@ -118,7 +118,7 @@ class ShippingValidatorTest extends ValidationTest {
 			)
 		);
 
-		$result = $this->validator->validate( $cart, new StoreValidation() );
+		$result = $this->validator->validate( $this->wrap_in_store_cart( $cart ) );
 
 		$this->assertNull( $result );
 	}
@@ -139,7 +139,7 @@ class ShippingValidatorTest extends ValidationTest {
 			)
 		);
 
-		$result = $this->validator->validate( $cart, new StoreValidation() );
+		$result = $this->validator->validate( $this->wrap_in_store_cart( $cart ) );
 
 		$this->assertIsArray( $result );
 		$this->assertCount( 1, $result );
@@ -163,7 +163,7 @@ class ShippingValidatorTest extends ValidationTest {
 			)
 		);
 
-		$result = $this->validator->validate( $cart, new StoreValidation() );
+		$result = $this->validator->validate( $this->wrap_in_store_cart( $cart ) );
 
 		$this->assertIsArray( $result );
 		$this->assertCount( 1, $result );
@@ -187,7 +187,7 @@ class ShippingValidatorTest extends ValidationTest {
 			)
 		);
 
-		$result = $this->validator->validate( $cart, new StoreValidation() );
+		$result = $this->validator->validate( $this->wrap_in_store_cart( $cart ) );
 
 		$this->assertIsArray( $result );
 		$this->assertCount( 1, $result );
@@ -209,7 +209,7 @@ class ShippingValidatorTest extends ValidationTest {
 			)
 		);
 
-		$result = $this->validator->validate( $cart, new StoreValidation() );
+		$result = $this->validator->validate( $this->wrap_in_store_cart( $cart ) );
 
 		$this->assertIsArray( $result );
 		$this->assertCount( 3, $result );
@@ -243,7 +243,7 @@ class ShippingValidatorTest extends ValidationTest {
 			)
 		);
 
-		$result = $this->validator->validate( $cart, new StoreValidation() );
+		$result = $this->validator->validate( $this->wrap_in_store_cart( $cart ) );
 
 		$this->assertIsArray( $result );
 		$this->assertCount( 1, $result );
@@ -292,7 +292,7 @@ class ShippingValidatorTest extends ValidationTest {
 			)
 		);
 
-		$result = $this->validator->validate( $cart, new StoreValidation() );
+		$result = $this->validator->validate( $this->wrap_in_store_cart( $cart ) );
 
 		$this->assertNull( $result );
 	}
@@ -313,7 +313,7 @@ class ShippingValidatorTest extends ValidationTest {
 			)
 		);
 
-		$result = $this->validator->validate( $cart, new StoreValidation() );
+		$result = $this->validator->validate( $this->wrap_in_store_cart( $cart ) );
 
 		// Street addresses are always valid for signature-required items
 		$this->assertNull( $result );
@@ -342,7 +342,7 @@ class ShippingValidatorTest extends ValidationTest {
 			)
 		);
 
-		$result = $this->validator->validate( $cart, new StoreValidation() );
+		$result = $this->validator->validate( $this->wrap_in_store_cart( $cart ) );
 
 		$this->assertIsArray( $result );
 		$this->assertCount( 1, $result );
@@ -367,7 +367,7 @@ class ShippingValidatorTest extends ValidationTest {
 			)
 		);
 
-		$result = $this->validator->validate( $cart, new StoreValidation() );
+		$result = $this->validator->validate( $this->wrap_in_store_cart( $cart ) );
 
 		// Should pass because product not found means no signature requirement
 		$this->assertNull( $result );
@@ -400,7 +400,7 @@ class ShippingValidatorTest extends ValidationTest {
 			new StoreValidation()
 		);
 
-		$result = $this->validator->validate( $cart, new StoreValidation() );
+		$result = $this->validator->validate( $this->wrap_in_store_cart( $cart ) );
 
 		$this->assertIsArray( $result );
 		$this->assertCount( 1, $result );
@@ -435,7 +435,7 @@ class ShippingValidatorTest extends ValidationTest {
 			)
 		);
 
-		$result = $this->validator->validate( $cart, new StoreValidation() );
+		$result = $this->validator->validate( $this->wrap_in_store_cart( $cart ) );
 
 		$this->assertIsArray( $result );
 		$this->assertCount( 1, $result );
@@ -469,7 +469,7 @@ class ShippingValidatorTest extends ValidationTest {
 			)
 		);
 
-		$result = $this->validator->validate( $cart, new StoreValidation() );
+		$result = $this->validator->validate( $this->wrap_in_store_cart( $cart ) );
 
 		$this->assertNull( $result );
 	}
@@ -498,7 +498,7 @@ class ShippingValidatorTest extends ValidationTest {
 			)
 		);
 
-		$result = $this->validator->validate( $cart, new StoreValidation() );
+		$result = $this->validator->validate( $this->wrap_in_store_cart( $cart ) );
 
 		$this->assertNull( $result );
 	}
@@ -527,7 +527,7 @@ class ShippingValidatorTest extends ValidationTest {
 			)
 		);
 
-		$result = $this->validator->validate( $cart, new StoreValidation() );
+		$result = $this->validator->validate( $this->wrap_in_store_cart( $cart ) );
 
 		$this->assertIsArray( $result );
 		$this->assertCount( 1, $result );
@@ -563,7 +563,7 @@ class ShippingValidatorTest extends ValidationTest {
 			)
 		);
 
-		$result = $this->validator->validate( $cart, new StoreValidation() );
+		$result = $this->validator->validate( $this->wrap_in_store_cart( $cart ) );
 
 		$this->assertIsArray( $result );
 		$this->assertCount( 1, $result );
@@ -595,7 +595,7 @@ class ShippingValidatorTest extends ValidationTest {
 			)
 		);
 
-		$result = $this->validator->validate( $cart, new StoreValidation() );
+		$result = $this->validator->validate( $this->wrap_in_store_cart( $cart ) );
 
 		$this->assertIsArray( $result );
 
@@ -636,7 +636,7 @@ class ShippingValidatorTest extends ValidationTest {
 			)
 		);
 
-		$result = $this->validator->validate( $cart, new StoreValidation() );
+		$result = $this->validator->validate( $this->wrap_in_store_cart( $cart ) );
 
 		$this->assertIsArray( $result );
 		$this->assertGreaterThanOrEqual( 1, count( $result ) );

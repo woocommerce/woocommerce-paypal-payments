@@ -12,8 +12,7 @@ namespace WooCommerce\PayPalCommerce\StoreSync\CartValidation;
 use Throwable;
 use Psr\Log\LoggerInterface;
 
-use WooCommerce\PayPalCommerce\StoreSync\Schema\PayPalCart;
-use WooCommerce\PayPalCommerce\StoreSync\Validation\StoreValidation;
+use WooCommerce\PayPalCommerce\StoreSync\StoreData\StorePayPalCart;
 use WooCommerce\PayPalCommerce\StoreSync\Validation\ValidationIssue;
 
 class CartValidationProcessor {
@@ -32,14 +31,14 @@ class CartValidationProcessor {
 	}
 
 	/**
-	 * Runs all registered validators and adds any found issues to $validation.
+	 * Runs all registered validators and adds any found issues to the cart's validation collector.
 	 */
-	public function validate_cart( PayPalCart $cart, StoreValidation $validation ): void {
+	public function validate_cart( StorePayPalCart $store_cart ): void {
 		$validators = $this->get_validators();
 
 		foreach ( $validators as $validator ) {
 			try {
-				$issues = $validator->validate( $cart, $validation );
+				$issues = $validator->validate( $store_cart );
 			} catch ( Throwable $error ) {
 				/*
 				 * Internal validators do not throw anything.
@@ -69,7 +68,7 @@ class CartValidationProcessor {
 			$issues = array_filter( $issues, static fn( $issue ) => $issue instanceof ValidationIssue );
 
 			foreach ( $issues as $issue ) {
-				$validation->add( $issue );
+				$store_cart->validation()->add( $issue );
 			}
 		}
 	}

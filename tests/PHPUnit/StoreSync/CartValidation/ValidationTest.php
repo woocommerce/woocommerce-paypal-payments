@@ -4,7 +4,9 @@ declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\StoreSync\CartValidation;
 
+use Mockery;
 use WooCommerce\PayPalCommerce\StoreSync\Schema\PayPalCart;
+use WooCommerce\PayPalCommerce\StoreSync\StoreData\StorePayPalCart;
 use WooCommerce\PayPalCommerce\StoreSync\Validation\StoreValidation;
 use WooCommerce\PayPalCommerce\TestCase;
 
@@ -102,6 +104,20 @@ abstract class ValidationTest extends TestCase {
 			),
 			new StoreValidation()
 		);
+	}
+
+	/**
+	 * Wraps a PayPalCart + optional StoreValidation into a StorePayPalCart mock
+	 * so it can be passed to the new validate( StorePayPalCart $store_cart ) signature.
+	 */
+	protected function wrap_in_store_cart( PayPalCart $paypal_cart, ?StoreValidation $validation = null ): StorePayPalCart {
+		$validation = $validation ?? new StoreValidation();
+
+		$store_cart = Mockery::mock( StorePayPalCart::class );
+		$store_cart->allows( 'paypal_cart' )->andReturn( $paypal_cart );
+		$store_cart->allows( 'validation' )->andReturn( $validation );
+
+		return $store_cart;
 	}
 
 	// ------------------------------------------------------------------------

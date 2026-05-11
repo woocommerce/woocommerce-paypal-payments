@@ -45,7 +45,7 @@ class CouponValidatorTest extends ValidationTest {
 	public function test_validate_returns_null_for_cart_without_coupons(): void {
 		$cart = $this->create_cart_with_coupons( array() );
 
-		$result = $this->validator->validate( $cart, new StoreValidation() );
+		$result = $this->validator->validate( $this->wrap_in_store_cart( $cart ) );
 
 		$this->assertNull( $result );
 	}
@@ -57,7 +57,7 @@ class CouponValidatorTest extends ValidationTest {
 			)
 		);
 
-		$result = $this->validator->validate( $cart, new StoreValidation() );
+		$result = $this->validator->validate( $this->wrap_in_store_cart( $cart ) );
 
 		// REMOVE actions are skipped entirely - no WC_Coupon instantiation needed.
 		$this->assertNull( $result );
@@ -79,7 +79,7 @@ class CouponValidatorTest extends ValidationTest {
 			)
 		);
 
-		$result = $this->validator->validate( $cart, new StoreValidation() );
+		$result = $this->validator->validate( $this->wrap_in_store_cart( $cart ) );
 
 		$this->assertIsArray( $result );
 		$this->assertCount( 1, $result );
@@ -96,7 +96,7 @@ class CouponValidatorTest extends ValidationTest {
 			)
 		);
 
-		$result = $this->validator->validate( $cart, new StoreValidation() );
+		$result = $this->validator->validate( $this->wrap_in_store_cart( $cart ) );
 
 		// All coupons are REMOVE actions, so nothing to validate.
 		$this->assertNull( $result );

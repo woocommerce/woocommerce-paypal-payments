@@ -172,9 +172,10 @@ abstract class AgenticRestEndpoint extends WC_REST_Controller {
 
 		$this->validation = new StoreValidation();
 		$paypal_cart      = PayPalCart::from_array( $data, $this->validation );
-		$this->validation_processor->validate_cart( $paypal_cart, $this->validation );
+		$store_cart       = $this->store_data->create_cart( $paypal_cart, $this->validation );
+		$this->validation_processor->validate_cart( $store_cart );
 
-		return $this->store_data->create_cart( $paypal_cart, $this->validation );
+		return $store_cart;
 	}
 
 	/**
