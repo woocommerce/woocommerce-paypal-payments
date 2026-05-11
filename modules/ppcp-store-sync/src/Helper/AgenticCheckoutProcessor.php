@@ -21,9 +21,11 @@ use WooCommerce\PayPalCommerce\Button\Session\CartData;
 use WooCommerce\PayPalCommerce\Button\Helper\WooCommerceOrderCreator;
 
 use WooCommerce\PayPalCommerce\StoreSync\CartValidation\CouponValidator\AppliedCouponsBuilder;
+use WooCommerce\PayPalCommerce\StoreSync\Schema\Address;
 use WooCommerce\PayPalCommerce\StoreSync\Schema\PayPalCart;
 use WooCommerce\PayPalCommerce\StoreSync\Schema\PaymentMethod;
 use WooCommerce\PayPalCommerce\StoreSync\Schema\ShippingOption;
+use WooCommerce\PayPalCommerce\StoreSync\StoreData\StorePayPalCart;
 
 /**
  * Orchestrates the complete checkout workflow for Agentic Commerce.
@@ -78,16 +80,15 @@ class AgenticCheckoutProcessor {
 	 * 5. Links PayPal order with WC order ID
 	 * 6. Captures the PayPal payment
 	 *
-	 * @param PayPalCart    $cart            The PayPal cart data.
-	 * @param PaymentMethod $payment_method  The payment method data.
-	 * @param string        $paypal_order_id The PayPal Order ID (ec_token).
 	 * @return WC_Order|WP_Error The created order or error.
 	 */
 	public function process(
-		PayPalCart $cart,
+		StorePayPalCart $store_cart,
 		PaymentMethod $payment_method,
 		string $paypal_order_id
 	) {
+
+		$cart = $store_cart->paypal_cart();
 
 		$this->logger->info(
 			'[CHECKOUT] Starting checkout',
@@ -108,7 +109,9 @@ class AgenticCheckoutProcessor {
 				)
 			);
 
-			$total_discount = $this->applied_coupons_builder->calculate_total_discount( $cart );
+			$total_discount = $this->applied_coupons_builder->calculate_total_discount(
+				$store_cart
+			);
 			$this->order_manager->update_order( $paypal_order_id, $cart, $total_discount );
 
 			$this->logger->info(
@@ -278,11 +281,16 @@ class AgenticCheckoutProcessor {
 			),
 		);
 
+		$name      = $cart->customer()?->name();
+		$full_name = $name // todo: should become $cart->customer()->full_name('').
+			? trim( ( $name['given_name'] ?? '' ) . ' ' . ( $name['surname'] ?? '' ) )
+			: '';
+
 		$data = (object) array(
 			'name'    => (object) array(
-				'full_name' => CartHelper::full_customer_name( $cart ),
+				'full_name' => $full_name,
 			),
-			'address' => (object) CartHelper::shipping_address_array( $cart ),
+			'address' => (object) $this->address_array( $cart->shipping_address() ),
 			'options' => array( $option_data ),
 		);
 
@@ -313,7 +321,8 @@ class AgenticCheckoutProcessor {
 		}
 
 		if ( $cart->billing_address() ) {
-			$payer_data['address'] = CartHelper::billing_address_array( $cart );
+			// todo: should become $cart->billing_address()->to_array().
+			$payer_data['address'] = $this->address_array( $cart->billing_address() );
 		}
 
 		return $payer_data;
@@ -330,11 +339,42 @@ class AgenticCheckoutProcessor {
 			return array();
 		}
 
+		$name      = $cart->customer()?->name();
+		$full_name = $name // todo: turn to $cart->customer()->full_name('').
+			? trim( ( $name['given_name'] ?? '' ) . ' ' . ( $name['surname'] ?? '' ) )
+			: '';
+
 		return array(
 			'name'    => array(
-				'full_name' => CartHelper::full_customer_name( $cart ),
+				'full_name' => $full_name,
 			),
-			'address' => CartHelper::shipping_address_array( $cart ),
+			// todo: Should become $shipping_address->to_array().
+			'address' => $this->address_array( $cart->shipping_address() ),
+		);
+	}
+
+	/**
+	 * Todo: move this method/logic into the Address::to_array() method in the next step.
+	 */
+	private function address_array( ?Address $address ): array {
+		if ( ! $address ) {
+			return array(
+				'address_line_1' => '',
+				'address_line_2' => '',
+				'admin_area_2'   => '',
+				'admin_area_1'   => '',
+				'postal_code'    => '',
+				'country_code'   => '',
+			);
+		}
+
+		return array(
+			'address_line_1' => (string) $address->address_line_1( '' ),
+			'address_line_2' => (string) $address->address_line_2( '' ),
+			'admin_area_2'   => (string) $address->admin_area_2( '' ),
+			'admin_area_1'   => (string) $address->admin_area_1( '' ),
+			'postal_code'    => (string) $address->postal_code( '' ),
+			'country_code'   => (string) $address->country_code( '' ),
 		);
 	}
 
