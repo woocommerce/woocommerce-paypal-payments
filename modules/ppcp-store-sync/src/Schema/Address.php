@@ -129,33 +129,33 @@ class Address extends AgenticSchema {
 		}
 	}
 
-	public function country_code(): ?string {
-		return $this->country_code;
+	public function country_code( ?string $default = null ): ?string {
+		return $this->country_code ?? $default;
 	}
 
-	public function address_line_1(): ?string {
-		return $this->address_line_1;
+	public function address_line_1( ?string $default = null ): ?string {
+		return $this->address_line_1 ?? $default;
 	}
 
-	public function address_line_2(): ?string {
-		return $this->address_line_2;
+	public function address_line_2( ?string $default = null ): ?string {
+		return $this->address_line_2 ?? $default;
 	}
 
 	/**
 	 * The city.
 	 */
-	public function admin_area_2(): ?string {
-		return $this->admin_area_2;
+	public function admin_area_2( ?string $default = null ): ?string {
+		return $this->admin_area_2 ?? $default;
 	}
 
 	/**
 	 * The region or state.
 	 */
-	public function admin_area_1(): ?string {
-		return $this->admin_area_1;
+	public function admin_area_1( ?string $default = null ): ?string {
+		return $this->admin_area_1 ?? $default;
 	}
 
-	public function postal_code(): ?string {
-		return $this->postal_code;
+	public function postal_code( ?string $default = null ): ?string {
+		return $this->postal_code ?? $default;
 	}
 }
