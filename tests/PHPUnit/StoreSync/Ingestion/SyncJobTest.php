@@ -3,6 +3,7 @@ declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\StoreSync\Ingestion;
 
+use WooCommerce\PayPalCommerce\StoreSync\Config\StoreCurrencyValue;
 use WooCommerce\PayPalCommerce\TestCase;
 use Psr\Log\LoggerInterface;
 use Exception;
@@ -21,6 +22,11 @@ class SyncJobTest extends TestCase {
 	private $logger;
 
 	/**
+	 * @var StoreCurrencyValue|Mockery\MockInterface
+	 */
+	private $store_currency;
+
+	/**
 	 * @var string
 	 */
 	private $api_endpoint = 'https://api.example.com/sync';
@@ -34,6 +40,9 @@ class SyncJobTest extends TestCase {
 		parent::setUp();
 
 		$this->logger = Mockery::mock( LoggerInterface::class );
+
+		$this->store_currency = Mockery::mock( StoreCurrencyValue::class );
+		$this->store_currency->allows( 'value' )->andReturn( 'USD' );
 
 		// Stub WordPress functions with default values
 		when( 'wp_generate_uuid4' )->justReturn( 'test-batch-id-1234' );
@@ -206,7 +215,8 @@ class SyncJobTest extends TestCase {
 			$this->api_endpoint,
 			'https://example.com',
 			$this->product_ids,
-			$this->logger
+			$this->logger,
+			$this->store_currency
 		);
 
 		$sync_job->execute();
@@ -236,7 +246,8 @@ class SyncJobTest extends TestCase {
 			$this->api_endpoint,
 			'https://example.com',
 			$this->product_ids,
-			$this->logger
+			$this->logger,
+			$this->store_currency
 		);
 
 		$sync_job->execute();
@@ -292,7 +303,8 @@ class SyncJobTest extends TestCase {
 			$this->api_endpoint,
 			'https://example.com',
 			$this->product_ids,
-			$this->logger
+			$this->logger,
+			$this->store_currency
 		);
 
 		$this->expectException( Exception::class );
@@ -348,7 +360,8 @@ class SyncJobTest extends TestCase {
 			$this->api_endpoint,
 			'https://example.com',
 			$this->product_ids,
-			$this->logger
+			$this->logger,
+			$this->store_currency
 		);
 
 		$this->expectException( Exception::class );
@@ -408,7 +421,8 @@ class SyncJobTest extends TestCase {
 			$this->api_endpoint,
 			'https://example.com',
 			$this->product_ids,
-			$this->logger
+			$this->logger,
+			$this->store_currency
 		);
 
 		$sync_job->execute();
@@ -469,8 +483,9 @@ class SyncJobTest extends TestCase {
 		$sync_job = new SyncJob(
 			$this->api_endpoint,
 			'https://example.com',
-            $expectedProductIds,
-			$this->logger
+			$expectedProductIds,
+			$this->logger,
+			$this->store_currency
 		);
 
 		$sync_job->execute();
@@ -497,7 +512,8 @@ class SyncJobTest extends TestCase {
 			$this->api_endpoint,
 			'https://example.com',
 			array(),
-			$this->logger
+			$this->logger,
+			$this->store_currency
 		);
 
 		$sync_job->execute();
@@ -548,8 +564,9 @@ class SyncJobTest extends TestCase {
 		$sync_job = new SyncJob(
 			$this->api_endpoint,
 			'https://example.com',
-            $expectedProductIds,
-			$this->logger
+			$expectedProductIds,
+			$this->logger,
+			$this->store_currency
 		);
 
 		$sync_job->execute();

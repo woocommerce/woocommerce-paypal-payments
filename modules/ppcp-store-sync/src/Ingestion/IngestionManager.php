@@ -9,6 +9,7 @@ use Psr\Log\LoggerInterface;
 
 use WooCommerce\PayPalCommerce\StoreSync\Config\AgenticWebhookConfiguration;
 use WooCommerce\PayPalCommerce\StoreSync\Config\IngestionConfiguration;
+use WooCommerce\PayPalCommerce\StoreSync\Config\StoreCurrencyValue;
 use WooCommerce\PayPalCommerce\StoreSync\Merchant\MerchantMetadataProvider;
 
 use function as_next_scheduled_action;
@@ -24,13 +25,15 @@ class IngestionManager {
 	private AgenticWebhookConfiguration $webhook_urls;
 	private MerchantMetadataProvider $metadata_provider;
 	private LoggerInterface $logger;
+	private StoreCurrencyValue $store_currency;
 
 	public function __construct(
 		IngestionConfiguration $configuration,
 		IngestionBatchProvider $batch_provider,
 		AgenticWebhookConfiguration $webhook_urls,
 		MerchantMetadataProvider $metadata_provider,
-		LoggerInterface $logger
+		LoggerInterface $logger,
+		StoreCurrencyValue $store_currency
 	) {
 
 		$this->configuration     = $configuration;
@@ -38,6 +41,7 @@ class IngestionManager {
 		$this->webhook_urls      = $webhook_urls;
 		$this->metadata_provider = $metadata_provider;
 		$this->logger            = $logger;
+		$this->store_currency    = $store_currency;
 	}
 
 	/**
@@ -138,7 +142,8 @@ class IngestionManager {
 			$this->webhook_urls->get_product_ingestion_url(),
 			$metadata->store_url,
 			$product_ids,
-			$this->logger
+			$this->logger,
+			$this->store_currency
 		);
 	}
 }

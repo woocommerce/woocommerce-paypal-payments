@@ -3,6 +3,7 @@ declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\StoreSync\Ingestion;
 
+use WooCommerce\PayPalCommerce\StoreSync\Config\StoreCurrencyValue;
 use WooCommerce\PayPalCommerce\TestCase;
 use WC_Product;
 use WC_Product_Simple;
@@ -15,6 +16,17 @@ use function Brain\Monkey\Functions\when;
  * @covers \WooCommerce\PayPalCommerce\StoreSync\Ingestion\ProductsPayload
  */
 class ProductsPayloadTest extends TestCase {
+
+	/**
+	 * Returns a StoreCurrencyValue stub that yields 'USD'.
+	 *
+	 * @return StoreCurrencyValue|Mockery\MockInterface
+	 */
+	private function make_currency_stub(): StoreCurrencyValue {
+		$stub = Mockery::mock( StoreCurrencyValue::class );
+		$stub->allows( 'value' )->andReturn( 'USD' );
+		return $stub;
+	}
 
 	public function test_transform_simple_product(): void {
 		$product_id = 123;
@@ -42,7 +54,7 @@ class ProductsPayloadTest extends TestCase {
 		when( 'wp_strip_all_tags' )->returnArg( 1 );
 
 
-		$payload = new ProductsPayload( 'https://example.com', array( $product_id ) );
+		$payload = new ProductsPayload( 'https://example.com', array( $product_id ), $this->make_currency_stub() );
 		$result  = $payload->get_array();
 
 		$this->assertCount( 1, $result );
@@ -146,7 +158,7 @@ class ProductsPayloadTest extends TestCase {
 		when( 'wp_strip_all_tags' )->returnArg( 1 );
 
 
-		$payload = new ProductsPayload( 'https://example.com', array( $parent_id ) );
+		$payload = new ProductsPayload( 'https://example.com', array( $parent_id ), $this->make_currency_stub() );
 		$result  = $payload->get_array();
 
 		$this->assertCount( 2, $result );
@@ -215,7 +227,7 @@ class ProductsPayloadTest extends TestCase {
 		when( 'wc_get_product_category_list' )->justReturn( '' );
 		when( 'wp_strip_all_tags' )->justReturn( '' );
 
-		$payload = new ProductsPayload( 'https://example.com', array( $parent_id ) );
+		$payload = new ProductsPayload( 'https://example.com', array( $parent_id ), $this->make_currency_stub() );
 		$result  = $payload->get_array();
 
 		$this->assertCount( 0, $result );
@@ -224,14 +236,14 @@ class ProductsPayloadTest extends TestCase {
 	public function test_handle_invalid_product_id(): void {
 		when( 'wc_get_product' )->justReturn( false );
 
-		$payload = new ProductsPayload( 'https://example.com', array( 999 ) );
+		$payload = new ProductsPayload( 'https://example.com', array( 999 ), $this->make_currency_stub() );
 		$result  = $payload->get_array();
 
 		$this->assertCount( 0, $result );
 	}
 
 	public function test_handle_empty_product_list(): void {
-		$payload = new ProductsPayload( 'https://example.com', array() );
+		$payload = new ProductsPayload( 'https://example.com', array(), $this->make_currency_stub() );
 		$result  = $payload->get_array();
 
 		$this->assertIsArray( $result );
@@ -261,7 +273,7 @@ class ProductsPayloadTest extends TestCase {
 		when( 'wc_get_product_category_list' )->justReturn( '' );
 		when( 'wp_strip_all_tags' )->justReturn( '' );
 
-		$payload = new ProductsPayload( 'https://example.com', array( $product_id ) );
+		$payload = new ProductsPayload( 'https://example.com', array( $product_id ), $this->make_currency_stub() );
 		$result  = $payload->get_array();
 
 		$this->assertCount( 1, $result );
@@ -296,7 +308,7 @@ class ProductsPayloadTest extends TestCase {
 		when( 'wc_get_product_category_list' )->justReturn( '' );
 		when( 'wp_strip_all_tags' )->justReturn( '' );
 
-		$payload = new ProductsPayload( 'https://example.com', array( $product_id ) );
+		$payload = new ProductsPayload( 'https://example.com', array( $product_id ), $this->make_currency_stub() );
 		$result  = $payload->get_array();
 
 		$this->assertCount( 1, $result );
@@ -335,7 +347,7 @@ class ProductsPayloadTest extends TestCase {
 			when( 'wc_get_product_category_list' )->justReturn( '' );
 			when( 'wp_strip_all_tags' )->justReturn( '' );
 
-			$payload = new ProductsPayload( 'https://example.com', array( $product_id ) );
+			$payload = new ProductsPayload( 'https://example.com', array( $product_id ), $this->make_currency_stub() );
 			$result  = $payload->get_array();
 
 			$this->assertEquals( $expected_availability, $result[0]['availability'] );
@@ -365,7 +377,7 @@ class ProductsPayloadTest extends TestCase {
 		when( 'wc_get_product_category_list' )->justReturn( '' );
 		when( 'wp_strip_all_tags' )->justReturn( '' );
 
-		$payload = new ProductsPayload( 'https://example.com', array( $product_id ) );
+		$payload = new ProductsPayload( 'https://example.com', array( $product_id ), $this->make_currency_stub() );
 		$result  = $payload->get_array();
 
 		$this->assertCount( 1, $result );

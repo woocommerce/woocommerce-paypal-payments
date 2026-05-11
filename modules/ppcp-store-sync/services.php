@@ -308,7 +308,8 @@ return array(
 			$c->get( 'agentic.ingestion-batch-provider' ),
 			$c->get( 'agentic.config.webhook_urls' ),
 			$c->get( 'agentic.merchant.provider' ),
-			$c->get( 'agentic.logger' )
+			$c->get( 'agentic.logger' ),
+			$c->get( 'agentic.config.store-currency' )
 		);
 	},
 
