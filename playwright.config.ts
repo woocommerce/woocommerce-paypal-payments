@@ -8,7 +8,7 @@ import path from 'path';
 /**
  * Internal dependencies
  */
-import { BaseExtend } from './utils';
+import { BaseExtend } from './tests/qa/utils';
 
 const dotenvPath = process.env.CI
 	? path.resolve( __dirname, '.env.ci' )
@@ -18,7 +18,7 @@ dotenv.config( { path: dotenvPath } );
 const viewportSize: ViewportSize = { width: 1280, height: 850 };
 
 export default defineConfig< BaseExtend >( {
-	testDir: 'tests',
+	testDir: 'tests/qa/tests',
 	expect: {
 		timeout: 20 * 1000,
 	},
@@ -50,7 +50,7 @@ export default defineConfig< BaseExtend >( {
 	],
 	/* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
 
-	globalSetup: require.resolve( './global-setup' ),
+	globalSetup: require.resolve( './tests/qa/global-setup' ),
 
 	use: {
 		baseURL: process.env.WP_BASE_URL,

@@ -2,11 +2,7 @@
  * Internal dependencies
  */
 import { test } from '../../utils';
-import {
-	customers,
-	gateways,
-	taxSettings,
-} from '../../resources';
+import { customers, gateways, taxSettings } from '../../resources';
 import {
 	transactionsOnCheckout,
 	transactionsOnPayByLink,

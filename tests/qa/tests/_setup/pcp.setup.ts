@@ -20,7 +20,7 @@ import {
 
 const { payPal, payLater, venmo, acdc, fastlane, googlepay } = gateways;
 
-setup.describe( 'env:reset;', async () => {
+setup.describe( 'e2e:env:reset;', async () => {
 	setup( 'Setup: Reset Environment', async () => {
 		await resetEnvironment();
 	} );
