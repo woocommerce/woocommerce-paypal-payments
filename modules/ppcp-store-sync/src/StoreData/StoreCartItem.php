@@ -11,7 +11,6 @@ namespace WooCommerce\PayPalCommerce\StoreSync\StoreData;
 
 use WC_Product;
 use WooCommerce\PayPalCommerce\StoreSync\Config\StoreCurrencyValue;
-use WooCommerce\PayPalCommerce\StoreSync\Helper\CartHelper;
 use WooCommerce\PayPalCommerce\StoreSync\Schema\CartItem;
 use WooCommerce\PayPalCommerce\StoreSync\Schema\Money;
 
@@ -52,7 +51,7 @@ class StoreCartItem {
 			return true;
 		}
 
-		return CartHelper::format_decimal( $this->real_price() ) === CartHelper::format_decimal( (float) $assumed->value() );
+		return Money::create( $this->real_price(), $this->store_currency->value() )->to_decimal() === $assumed->to_decimal();
 	}
 
 	/**

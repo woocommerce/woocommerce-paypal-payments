@@ -19,6 +19,26 @@ class Money extends AgenticSchema {
 
 	private ?float $value = null;
 
+	/**
+	 * Convenience factory — accepts a param list instead of an array.
+	 *
+	 * Delegates to from_array() so parse_fields() runs identically to the parsed path.
+	 * Validation issues are discarded; the caller is responsible for passing valid inputs.
+	 *
+	 * @param int|float|string $value         The monetary value.
+	 * @param null|string      $currency_code ISO 4217 currency code.
+	 * @return self
+	 */
+	public static function create( $value, ?string $currency_code = null ): self {
+		return self::from_array(
+			array(
+				'currency_code' => $currency_code,
+				'value'         => $value,
+			),
+			new StoreValidation()
+		);
+	}
+
 	protected function parse_fields( array $input, StoreValidation $validation ): void {
 		// Reset all fields.
 		$this->currency = null;
@@ -60,11 +80,41 @@ class Money extends AgenticSchema {
 		}
 	}
 
-	public function currency_code(): ?string {
-		return $this->currency;
+	public function currency_code( ?string $default = null ): ?string {
+		return $this->currency ?? $default;
 	}
 
-	public function value(): ?float {
-		return $this->value;
+	public function value( ?float $default = null ): ?float {
+		return $this->value ?? $default;
+	}
+
+	/**
+	 * Formats the parsed value as a 2-decimal string.
+	 *
+	 * @return string e.g. "10.00"
+	 */
+	public function to_decimal(): string {
+		return number_format( (float) $this->value( 0. ), 2, '.', '' );
+	}
+
+	/**
+	 * Returns the PayPal API money structure.
+	 *
+	 * @return array{currency_code: string, value: string}
+	 */
+	public function to_array(): array {
+		return array(
+			'currency_code' => (string) $this->currency_code( '' ),
+			'value'         => $this->to_decimal(),
+		);
+	}
+
+	/**
+	 * Returns a stable, locale-independent price string for agent-facing messages.
+	 *
+	 * @return string e.g. "10.00 USD"
+	 */
+	public function to_price(): string {
+		return trim( $this->to_decimal() . ' ' . $this->currency_code( '' ) );
 	}
 }

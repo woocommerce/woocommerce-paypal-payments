@@ -12,7 +12,6 @@ declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\StoreSync\Helper;
 
-use WC_Cart;
 use WooCommerce\PayPalCommerce\StoreSync\Schema\PayPalCart;
 use WooCommerce\PayPalCommerce\StoreSync\Schema\CartItem;
 use WooCommerce\PayPalCommerce\StoreSync\Schema\Address;
@@ -152,52 +151,6 @@ class CartHelper {
 			'admin_area_1'   => $address->admin_area_1() ?? '',
 			'postal_code'    => $address->postal_code() ?? '',
 			'country_code'   => $address->country_code() ?? '',
-		);
-	}
-
-	/**
-	 * Calculate cart totals from WooCommerce cart.
-	 *
-	 * @param WC_Cart $wc_cart       The WooCommerce cart.
-	 * @param string  $currency_code The currency code.
-	 * @return array|null The totals array, or null if not calculable.
-	 */
-	public static function calculate_totals( WC_Cart $wc_cart, string $currency_code ): ?array {
-		$item_total     = (float) $wc_cart->get_cart_contents_total();
-		$discount_total = (float) $wc_cart->get_discount_total();
-		$shipping_total = (float) $wc_cart->get_shipping_total();
-		$tax_total      = (float) $wc_cart->get_total_tax();
-		$cart_total     = (float) $wc_cart->get_total( 'edit' );
-
-		if ( ! $currency_code || $item_total <= 0 || $cart_total <= 0 ) {
-			return null;
-		}
-
-		$totals = array(
-			'subtotal' => self::money( $currency_code, $item_total ),
-			'shipping' => self::money( $currency_code, $shipping_total ),
-			'tax'      => self::money( $currency_code, $tax_total ),
-			'total'    => self::money( $currency_code, $cart_total ),
-		);
-
-		if ( $discount_total > 0 ) {
-			$totals['discount'] = self::money( $currency_code, $discount_total );
-		}
-
-		return $totals;
-	}
-
-	/**
-	 * Format a money value for API responses.
-	 *
-	 * @param string $currency_code The currency code.
-	 * @param float  $value         The money value.
-	 * @return array Money object with currency_code and value.
-	 */
-	public static function money( string $currency_code, float $value ): array {
-		return array(
-			'currency_code' => $currency_code,
-			'value'         => self::format_decimal( $value ),
 		);
 	}
 }

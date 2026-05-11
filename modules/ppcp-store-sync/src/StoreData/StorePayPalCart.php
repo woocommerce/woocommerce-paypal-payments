@@ -13,7 +13,8 @@ use WC_Cart;
 use WP_Error;
 use WooCommerce\PayPalCommerce\StoreSync\Config\StoreCurrencyValue;
 use WooCommerce\PayPalCommerce\StoreSync\Helper\AgenticCartBuilder;
-use WooCommerce\PayPalCommerce\StoreSync\Helper\CartHelper;
+use WooCommerce\PayPalCommerce\StoreSync\Schema\Address;
+use WooCommerce\PayPalCommerce\StoreSync\Schema\Money;
 use WooCommerce\PayPalCommerce\StoreSync\Schema\PayPalCart;
 use WooCommerce\PayPalCommerce\StoreSync\Validation\StoreValidation;
 
@@ -94,7 +95,14 @@ class StorePayPalCart {
 	}
 
 	public function customer_name(): string {
-		return CartHelper::full_customer_name( $this->paypal_cart );
+		$customer = $this->paypal_cart->customer();
+		if ( ! $customer || ! $customer->name() ) {
+			return '';
+		}
+		$name  = $customer->name();
+		$first = $name['given_name'] ?? '';
+		$last  = $name['surname'] ?? '';
+		return trim( "$first $last" );
 	}
 
 	/**
@@ -108,7 +116,7 @@ class StorePayPalCart {
 	 * }
 	 */
 	public function shipping_address_array(): array {
-		return CartHelper::shipping_address_array( $this->paypal_cart );
+		return $this->address_array( $this->paypal_cart->shipping_address() );
 	}
 
 	/**
@@ -122,7 +130,7 @@ class StorePayPalCart {
 	 * }
 	 */
 	public function billing_address_array(): array {
-		return CartHelper::billing_address_array( $this->paypal_cart );
+		return $this->address_array( $this->paypal_cart->billing_address() );
 	}
 
 	/**
@@ -137,7 +145,29 @@ class StorePayPalCart {
 			return null;
 		}
 
-		return CartHelper::calculate_totals( $wc_cart, $this->currency() );
+		$currency_code  = $this->currency();
+		$item_total     = (float) $wc_cart->get_cart_contents_total();
+		$discount_total = (float) $wc_cart->get_discount_total();
+		$shipping_total = (float) $wc_cart->get_shipping_total();
+		$tax_total      = (float) $wc_cart->get_total_tax();
+		$cart_total     = (float) $wc_cart->get_total( 'edit' );
+
+		if ( ! $currency_code || $item_total <= 0 || $cart_total <= 0 ) {
+			return null;
+		}
+
+		$totals = array(
+			'subtotal' => Money::create( $item_total, $currency_code )->to_array(),
+			'shipping' => Money::create( $shipping_total, $currency_code )->to_array(),
+			'tax'      => Money::create( $tax_total, $currency_code )->to_array(),
+			'total'    => Money::create( $cart_total, $currency_code )->to_array(),
+		);
+
+		if ( $discount_total > 0 ) {
+			$totals['discount'] = Money::create( $discount_total, $currency_code )->to_array();
+		}
+
+		return $totals;
 	}
 
 	/**
@@ -225,6 +255,38 @@ class StorePayPalCart {
 		return $this->billing_address_array();
 	}
 
+	/**
+	 * @return array{
+	 *     address_line_1: string,
+	 *     address_line_2: string,
+	 *     admin_area_2: string,
+	 *     admin_area_1: string,
+	 *     postal_code: string,
+	 *     country_code: string
+	 * }
+	 */
+	private function address_array( ?Address $address ): array {
+		if ( ! $address ) {
+			return array(
+				'address_line_1' => '',
+				'address_line_2' => '',
+				'admin_area_2'   => '',
+				'admin_area_1'   => '',
+				'postal_code'    => '',
+				'country_code'   => '',
+			);
+		}
+
+		return array(
+			'address_line_1' => $address->address_line_1() ?? '',
+			'address_line_2' => $address->address_line_2() ?? '',
+			'admin_area_2'   => $address->admin_area_2() ?? '',
+			'admin_area_1'   => $address->admin_area_1() ?? '',
+			'postal_code'    => $address->postal_code() ?? '',
+			'country_code'   => $address->country_code() ?? '',
+		);
+	}
+
 	private function get_items_data(): array {
 		$currency = $this->currency();
 
@@ -234,15 +296,12 @@ class StorePayPalCart {
 
 				$data = array(
 					'quantity'            => $schema->quantity(),
-					'price'               => array(
-						'currency_code' => $currency,
-						'value'         => CartHelper::format_decimal( $item->real_price() ),
-					),
+					'price'               => Money::create( $item->real_price(), $currency )->to_array(),
 					'item_id'             => $schema->item_id(),
 					'variant_id'          => $schema->variant_id(),
-					'parent_id'           => $schema->parent_id(),
-					'name'                => $schema->name(),
-					'description'         => $schema->description(),
+					'parent_id'           => $schema->parent_id(), // todo: must be the WC_Product parent!
+					'name'                => $schema->name(), // todo: use the WC_Product title, not input name!
+					'description'         => $schema->description(), // todo: use WC_Product data, not input value!
 					'selected_attributes' => $schema->selected_attributes(),
 				);
 
