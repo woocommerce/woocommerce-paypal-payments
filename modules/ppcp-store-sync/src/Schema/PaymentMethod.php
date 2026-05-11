@@ -54,11 +54,11 @@ class PaymentMethod extends AgenticSchema {
 		return 'paypal';
 	}
 
-	public function token(): ?string {
-		return $this->token;
+	public function token( ?string $default = null ): ?string {
+		return $this->token ?? $default;
 	}
 
-	public function payer_id(): ?string {
-		return $this->payer_id;
+	public function payer_id( ?string $default = null ): ?string {
+		return $this->payer_id ?? $default;
 	}
 }

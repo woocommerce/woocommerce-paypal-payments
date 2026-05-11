@@ -118,19 +118,19 @@ class ShippingOption extends AgenticSchema {
 		return $this->name;
 	}
 
-	public function price(): ?Money {
-		return $this->price;
+	public function price( ?Money $default = null ): ?Money {
+		return $this->price ?? $default;
 	}
 
 	public function is_selected(): bool {
 		return $this->is_selected;
 	}
 
-	public function description(): ?string {
-		return $this->description;
+	public function description( ?string $default = null ): ?string {
+		return $this->description ?? $default;
 	}
 
-	public function estimated_delivery(): ?string {
-		return $this->estimated_delivery;
+	public function estimated_delivery( ?string $default = null ): ?string {
+		return $this->estimated_delivery ?? $default;
 	}
 }

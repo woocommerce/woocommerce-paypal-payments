@@ -112,25 +112,25 @@ class GiftOptions extends AgenticSchema {
 		return $this->gift_wrap;
 	}
 
-	public function sender_name(): ?string {
-		return $this->sender_name;
+	public function sender_name( ?string $default = null ): ?string {
+		return $this->sender_name ?? $default;
 	}
 
-	public function gift_message(): ?string {
-		return $this->gift_message;
+	public function gift_message( ?string $default = null ): ?string {
+		return $this->gift_message ?? $default;
 	}
 
 	/**
 	 * @return string|null The scheduled delivery date, in RFC3339 format, or null.
 	 */
-	public function delivery_date(): ?string {
-		return $this->delivery_date;
+	public function delivery_date( ?string $default = null ): ?string {
+		return $this->delivery_date ?? $default;
 	}
 
 	/**
 	 * @return null|array Recipient as a simple array, no own schema.
 	 */
-	public function recipient(): ?array {
-		return $this->recipient;
+	public function recipient( ?array $default = null ): ?array {
+		return $this->recipient ?? $default;
 	}
 }

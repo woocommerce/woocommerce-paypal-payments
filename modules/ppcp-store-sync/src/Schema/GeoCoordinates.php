@@ -125,19 +125,19 @@ class GeoCoordinates extends AgenticSchema {
 		}
 	}
 
-	public function latitude(): ?float {
-		return $this->latitude;
+	public function latitude( ?float $default = null ): ?float {
+		return $this->latitude ?? $default;
 	}
 
-	public function longitude(): ?float {
-		return $this->longitude;
+	public function longitude( ?float $default = null ): ?float {
+		return $this->longitude ?? $default;
 	}
 
-	public function subdivision(): ?string {
-		return $this->subdivision;
+	public function subdivision( ?string $default = null ): ?string {
+		return $this->subdivision ?? $default;
 	}
 
-	public function country_code(): ?string {
-		return $this->country_code;
+	public function country_code( ?string $default = null ): ?string {
+		return $this->country_code ?? $default;
 	}
 }

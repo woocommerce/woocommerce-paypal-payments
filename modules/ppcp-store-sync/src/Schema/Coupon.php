@@ -48,11 +48,11 @@ class Coupon extends AgenticSchema {
 		}
 	}
 
-	public function code(): ?string {
-		return $this->code;
+	public function code( ?string $default = null ): ?string {
+		return $this->code ?? $default;
 	}
 
-	public function action(): ?string {
-		return $this->action;
+	public function action( ?string $default = null ): ?string {
+		return $this->action ?? $default;
 	}
 }

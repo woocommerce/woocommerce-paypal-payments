@@ -185,39 +185,39 @@ class CartItem extends AgenticSchema {
 		}
 	}
 
-	public function item_id(): ?string {
-		return $this->id;
+	public function item_id( ?string $default = null ): ?string {
+		return $this->id ?? $default;
 	}
 
-	public function variant_id(): ?string {
-		return $this->variant_id;
+	public function variant_id( ?string $default = null ): ?string {
+		return $this->variant_id ?? $default;
 	}
 
-	public function parent_id(): ?string {
-		return $this->parent_id;
+	public function parent_id( ?string $default = null ): ?string {
+		return $this->parent_id ?? $default;
 	}
 
 	public function quantity(): int {
 		return $this->quantity;
 	}
 
-	public function name(): ?string {
-		return $this->name;
+	public function name( ?string $default = null ): ?string {
+		return $this->name ?? $default;
 	}
 
-	public function description(): ?string {
-		return $this->description;
+	public function description( ?string $default = null ): ?string {
+		return $this->description ?? $default;
 	}
 
-	public function price(): ?Money {
-		return $this->price;
+	public function price( ?Money $default = null ): ?Money {
+		return $this->price ?? $default;
 	}
 
-	public function selected_attributes(): ?array {
-		return $this->selected_attributes;
+	public function selected_attributes( ?array $default = null ): ?array {
+		return $this->selected_attributes ?? $default;
 	}
 
-	public function gift_options(): ?GiftOptions {
-		return $this->gift_options;
+	public function gift_options( ?GiftOptions $default = null ): ?GiftOptions {
+		return $this->gift_options ?? $default;
 	}
 }

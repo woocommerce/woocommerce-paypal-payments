@@ -70,19 +70,19 @@ class CheckoutField extends AgenticSchema {
 		}
 	}
 
-	public function type(): ?string {
-		return $this->type;
+	public function type( ?string $default = null ): ?string {
+		return $this->type ?? $default;
 	}
 
 	public function status(): string {
 		return $this->status;
 	}
 
-	public function value(): ?array {
-		return $this->value;
+	public function value( ?array $default = null ): ?array {
+		return $this->value ?? $default;
 	}
 
-	public function context(): ?array {
-		return $this->context;
+	public function context( ?array $default = null ): ?array {
+		return $this->context ?? $default;
 	}
 }

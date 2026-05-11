@@ -39,15 +39,15 @@ class AppliedCoupon extends AgenticSchema {
 		}
 	}
 
-	public function code(): ?string {
-		return $this->code;
+	public function code( ?string $default = null ): ?string {
+		return $this->code ?? $default;
 	}
 
-	public function description(): ?string {
-		return $this->description;
+	public function description( ?string $default = null ): ?string {
+		return $this->description ?? $default;
 	}
 
-	public function discount_amount(): ?Money {
-		return $this->discount_amount;
+	public function discount_amount( ?Money $default = null ): ?Money {
+		return $this->discount_amount ?? $default;
 	}
 }

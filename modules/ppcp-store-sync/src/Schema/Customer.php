@@ -123,21 +123,21 @@ class Customer extends AgenticSchema {
 		}
 	}
 
-	public function email_address(): ?string {
-		return $this->email_address;
+	public function email_address( ?string $default = null ): ?string {
+		return $this->email_address ?? $default;
 	}
 
 	/**
 	 * @return null|array Customer name as an array, no own schema.
 	 */
-	public function name(): ?array {
-		return $this->name;
+	public function name( ?array $default = null ): ?array {
+		return $this->name ?? $default;
 	}
 
 	/**
 	 * @return null|array Phone number as an array, no own schema.
 	 */
-	public function phone(): ?array {
-		return $this->phone;
+	public function phone( ?array $default = null ): ?array {
+		return $this->phone ?? $default;
 	}
 }
