@@ -55,8 +55,8 @@
     "e2e:env:setup:checkout:classic": "npx playwright test --grep=\"setup:checkout:classic;\"",
     "e2e:env:setup:tax:inc": "npx playwright test --grep=\"setup:tax:inc;\"",
     "e2e:env:setup:tax:exc": "npx playwright test --grep=\"setup:tax:exc;\"",
-    "e2e:lint:md:fix": "wp-scripts lint-md-docs --fix ./tests/qa/**/*.md E2E-TESTS.md",
-    "e2e:lint:js:fix": "wp-scripts lint-js --resolve-plugins-relative-to ./tests/qa --fix --ext .ts,.tsx,.mjs ./tests/qa"
+    "e2e:lint:md:fix": "wp-scripts lint-md-docs --fix ./tests/qa/**/*.md ./E2E-TESTS.md",
+    "e2e:lint:js:fix": "wp-scripts lint-js --fix --ext .ts,.tsx,.mjs ./tests/qa"
   },
   "config": {
     "wp_org_slug": "woocommerce-paypal-payments"
@@ -104,19 +104,8 @@
     "jquery": "^3.7.1",
     "@playwright/test": "^1.59.0",
     "@inpsyde/playwright-utils": "^5.1.0",
-    "dotenv": "^16.3.1",
     "yarn": "^1.22.21",
     "@types/node": "^20.8.4",
     "@wordpress/env": "^10.30.0"
-  },
-  "eslintConfig": {
-      "extends": [
-          "plugin:@wordpress/eslint-plugin/recommended"
-      ],
-      "rules": {
-          "@wordpress/dependency-group": "error",
-          "@wordpress/no-unsafe-wp-apis": "off",
-          "no-console": "off"
-      }
   }
 }
