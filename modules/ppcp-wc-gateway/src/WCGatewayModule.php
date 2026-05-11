@@ -995,28 +995,7 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
 	}
 
 	/**
-	 * Forces both the gateway dispatch and the order's stored payment method to PayPal when a
-	 * block-checkout express PayPal/Pay Later payment is processed via Store API.
-	 *
-	 * Reason: when the express PayPal button is clicked while ACDC (or any other PCP gateway)
-	 * is the first enabled gateway in WC Settings → Payments, WC Blocks ends up routing the
-	 * Store API checkout to that gateway. Without this guarding the order's `_payment_method`
-	 * resolves to the wrong gateway and the order edit page renders "Payment via Debit & Credit
-	 * Cards" instead of "Payment via PayPal".
-	 *
-	 * Two hooks together close the loop:
-	 *
-	 * 1. `woocommerce_rest_checkout_process_payment_with_context` at priority 100 — runs before
-	 *    WC's `Legacy::process_legacy_payment` (priority 999), so when a `paypal_order_id` is
-	 *    present in `payment_data` we reroute the gateway dispatch to PayPalGateway and stamp
-	 *    the order with the right gateway/title.
-	 *
-	 * 2. `woocommerce_before_order_object_save` — guards against a concurrent Store API cart
-	 *    request (`AbstractCartRoute::cart_updated` → `OrderController::update_order_from_cart`)
-	 *    that races the checkout POST and resets the order's `_payment_method` to whatever
-	 *    `chosen_payment_method` the WC session held when the cart route started. Once the
-	 *    PayPal-side meta `_ppcp_paypal_order_id` is on the order, we know the order has been
-	 *    paid via PayPal and any save attempting to overwrite the gateway is reverted.
+	 * Ensures PayPal handles block-checkout express payments even when another PCP gateway is sorted first in WC Settings → Payments.
 	 */
 	private function register_block_express_payment_method_handler( ContainerInterface $c ): void {
 		add_action(

@@ -240,11 +240,7 @@ class ApproveOrderEndpoint implements EndpointInterface {
 
 			$this->session_handler->replace_order( $order );
 
-			// Lock the WC session's chosen_payment_method to PayPal before the front-end fires
-			// the Store API checkout (and any concurrent cart batch requests). Otherwise
-			// `OrderController::update_order_from_cart` falls back to the previously chosen
-			// gateway (e.g. ACDC if it's first in WC Settings → Payments) and overwrites
-			// the order's `_payment_method`.
+			// Pin chosen_payment_method to PayPal now so concurrent Store API cart requests can't reset it.
 			if ( WC()->session ) {
 				WC()->session->set( 'chosen_payment_method', PayPalGateway::ID );
 			}
