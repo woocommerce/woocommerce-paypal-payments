@@ -568,16 +568,16 @@ export class PayPalUi {
 	};
 
 	completeOXXOPayment = async ( ...args ) =>
-		console.log( `TODO: completeOXXOPayment for block pages` );
+		console.log( `TODO: completeOXXOPayment for block pages ${ args.length }` );
 
 	completeBcdcPayment = async ( ...args ) =>
-		console.log( `TODO: completeBcdcPayment for block pages` );
+		console.log( `TODO: completeBcdcPayment for block pages ${ args.length }` );
 
 	completeBcdcFundingSourcePayment = async ( ...args ) =>
-		console.log( `TODO: completeBcdcFundingSourcePayment for block pages` );
+		console.log( `TODO: completeBcdcFundingSourcePayment for block pages ${ args.length }` );
 
 	completePayUponInvoicePayment = async ( ...args ) =>
-		console.log( `TODO: completePayUponInvoicePayment for block pages` );
+		console.log( `TODO: completePayUponInvoicePayment for block pages ${ args.length }` );
 
 	/**
 	 * Clicks payment gateway to make visible payment form or buttons
@@ -661,11 +661,8 @@ export class PayPalUi {
 	 * Asserts Pay Later Messaging iframe is visible. Uses retry-with-reload for SDK-loaded content.
 	 * Returns false if not found after retry (caller should test.skip()).
 	 */
-	assertPayLaterMessageVisibleWithContent = async (): Promise<boolean> =>
-		assertIframeWithRetry(
-			this.page,
-			'iframe[title^="PayPal Message"]',			
-		);
+	assertPayLaterMessageVisibleWithContent = async (): Promise< boolean > =>
+		assertIframeWithRetry( this.page, 'iframe[title^="PayPal Message"]' );
 
 	/**
 	 * Asserts Pay Later Messaging iframe is not visible.
@@ -694,6 +691,7 @@ export class PayPalUi {
 
 	/**
 	 * Asserts PayPal buttons have the given label (pay, checkout, buynow, paypal).
+	 * @param label
 	 */
 	assertPayPalButtonsHaveLabel = async (
 		label: 'pay' | 'checkout' | 'buynow' | 'paypal'
@@ -706,6 +704,7 @@ export class PayPalUi {
 
 	/**
 	 * Asserts PayPal buttons have the given layout (vertical, horizontal).
+	 * @param layout
 	 */
 	assertPayPalButtonsHaveLayout = async (
 		layout: 'vertical' | 'horizontal'

@@ -66,6 +66,7 @@ export class WooCommerceOrderEdit extends WooCommerceOrderEditBase {
 	/**
 	 * Performs refund
 	 *
+	 * @param paymentMethod
 	 * @param amount
 	 */
 	makeRefundVia = async ( paymentMethod: string, amount?: string ) => {
@@ -287,33 +288,42 @@ export class WooCommerceOrderEdit extends WooCommerceOrderEditBase {
 		await super.assertRefundData( data );
 
 		if ( payPalFee !== undefined ) {
-			await expect( this.totalPayPalFee(), 'Assert total PayPal fee is expected' ).toHaveText(
-				'- ' + ( await formatMoney( payPalFee, currency ) )
-			);
+			await expect(
+				this.totalPayPalFee(),
+				'Assert total PayPal fee is expected'
+			).toHaveText( '- ' + ( await formatMoney( payPalFee, currency ) ) );
 		}
 
 		if ( payPalRefundFee !== undefined ) {
-			await expect( this.totalPayPalRefundFee(), 'Assert total PayPal refund fee is expected' ).toHaveText(
+			await expect(
+				this.totalPayPalRefundFee(),
+				'Assert total PayPal refund fee is expected'
+			).toHaveText(
 				'- ' + ( await formatMoney( payPalRefundFee, currency ) )
 			);
 		}
 
 		if ( payPalRefunded !== undefined ) {
-			await expect( this.totalPayPalRefunded(), 'Assert total PayPal refunded is expected' ).toHaveText(
+			await expect(
+				this.totalPayPalRefunded(),
+				'Assert total PayPal refunded is expected'
+			).toHaveText(
 				'- ' + ( await formatMoney( payPalRefunded, currency ) )
 			);
 		}
 
 		if ( payPalPayout !== undefined ) {
-			await expect( this.totalPayPalPayout(), 'Assert total PayPal payout is expected' ).toHaveText(
-				await formatMoney( payPalPayout, currency )
-			);
+			await expect(
+				this.totalPayPalPayout(),
+				'Assert total PayPal payout is expected'
+			).toHaveText( await formatMoney( payPalPayout, currency ) );
 		}
 
 		if ( payPalNetTotal !== undefined ) {
-			await expect( this.totalPayPalNetTotal(), 'Assert total PayPal net total is expected' ).toHaveText(
-				await formatMoney( payPalNetTotal, currency )
-			);
+			await expect(
+				this.totalPayPalNetTotal(),
+				'Assert total PayPal net total is expected'
+			).toHaveText( await formatMoney( payPalNetTotal, currency ) );
 		}
 	};
 }

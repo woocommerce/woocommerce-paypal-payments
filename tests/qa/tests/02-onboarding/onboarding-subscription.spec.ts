@@ -63,7 +63,7 @@ test.describe( () => {
 	} );
 
 	test.describe( () => {
-		test.beforeEach( async ( { utils, pcpApi } ) => {
+		test.beforeEach( async ( { pcpApi } ) => {
 			await pcpApi.resetDb();
 		} );
 
@@ -78,8 +78,7 @@ test.describe( () => {
 						pcpSettings,
 						pcpStyling,
 						pcpApi,
-					},
-					testInfo
+					}
 				) => {
 					await pcpOnboarding.visit();
 					await pcpOnboarding.activatePayPalPaymentsButton().click();

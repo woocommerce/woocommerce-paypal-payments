@@ -239,9 +239,8 @@ export class PayPalApi {
 		shopOrder: WooCommerce.ShopOrder
 	) => {
 		const gatewayShortcut = shopOrder.payment.gateway.shortcut;
-		const payPalOrderId = await this.getOrderIdFromWooCommerce(
-			wooCommerceOrderJson
-		);
+		const payPalOrderId =
+			await this.getOrderIdFromWooCommerce( wooCommerceOrderJson );
 
 		await expect
 			.soft(
