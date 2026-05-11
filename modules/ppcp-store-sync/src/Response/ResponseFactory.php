@@ -78,7 +78,7 @@ class ResponseFactory {
 		$validation_status = $store_cart->validation()->is_empty() ? 'VALID' : 'INVALID';
 
 		return $this->applied_coupons_builder->build_applied_coupons_array(
-			$store_cart->paypal_cart(),
+			$store_cart,
 			$validation_status
 		);
 	}
