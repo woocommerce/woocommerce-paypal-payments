@@ -18,11 +18,7 @@ import {
 	ClassicCheckout,
 	OrderReceived,
 } from './frontend';
-import {
-	subscriptionsPlugin,
-	pcpPlugin,
-	ShopConfig,
-} from '../resources';
+import { subscriptionsPlugin, pcpPlugin, ShopConfig } from '../resources';
 import { getCustomerStorageStateName } from './helpers/';
 import urls from './urls';
 

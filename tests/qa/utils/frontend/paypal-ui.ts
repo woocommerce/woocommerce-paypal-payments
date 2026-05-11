@@ -10,7 +10,7 @@ import {
 /**
  * Internal dependencies
  */
-import { PayPalAccount, Pcp, ShopOrder } from '../../resources';
+import { Pcp, ShopOrder } from '../../resources';
 import { PayPalPopup } from './paypal-popup';
 import { GooglePayPopup } from './google-pay-popup';
 import { PayPalApi } from '../paypal-api';
@@ -568,16 +568,24 @@ export class PayPalUi {
 	};
 
 	completeOXXOPayment = async ( ...args ) =>
-		console.log( `TODO: completeOXXOPayment for block pages ${ args.length }` );
+		console.log(
+			`TODO: completeOXXOPayment for block pages ${ args.length }`
+		);
 
 	completeBcdcPayment = async ( ...args ) =>
-		console.log( `TODO: completeBcdcPayment for block pages ${ args.length }` );
+		console.log(
+			`TODO: completeBcdcPayment for block pages ${ args.length }`
+		);
 
 	completeBcdcFundingSourcePayment = async ( ...args ) =>
-		console.log( `TODO: completeBcdcFundingSourcePayment for block pages ${ args.length }` );
+		console.log(
+			`TODO: completeBcdcFundingSourcePayment for block pages ${ args.length }`
+		);
 
 	completePayUponInvoicePayment = async ( ...args ) =>
-		console.log( `TODO: completePayUponInvoicePayment for block pages ${ args.length }` );
+		console.log(
+			`TODO: completePayUponInvoicePayment for block pages ${ args.length }`
+		);
 
 	/**
 	 * Clicks payment gateway to make visible payment form or buttons

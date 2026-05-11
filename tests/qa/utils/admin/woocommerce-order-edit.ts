@@ -94,22 +94,6 @@ export class WooCommerceOrderEdit extends WooCommerceOrderEditBase {
 	};
 
 	/**
-	 * Asserts order note with Address Verification Result for ACDC
-	 *
-	 * @param payment
-	 */
-	assertAddressVerificationResult = async ( payment ) => {
-		// TODO: clarify expected order notes format
-		// await expect(this.cvv2MatchOrderNote()).toBeVisible();
-		// const orderNote = await this.addressVerificationOrderNote();
-		// await expect(orderNote).toContainText(`AVS: Y`);
-		// await expect(orderNote).toContainText(`Address Match: N`);
-		// await expect(orderNote).toContainText(`Postal Match: N`);
-		// await expect(orderNote).toContainText(`Card Brand: ${payment.card_type}`);
-		// await expect(orderNote).toContainText(`Card Last Digits: ${payment.card_number.slice(-4)}`);
-	};
-
-	/**
 	 * Asserts intent authorized state elements on order edit page
 	 */
 	assertIntentAuthorizedState = async () => {
@@ -219,12 +203,6 @@ export class WooCommerceOrderEdit extends WooCommerceOrderEditBase {
 				this.seeOXXOVoucherButton(),
 				'Assert OXXO voucher button is visible'
 			).toBeVisible();
-		}
-
-		if ( orderData.payment.gateway.shortcut === 'acdc' ) {
-			await this.assertAddressVerificationResult(
-				orderData.payment.card
-			);
 		}
 
 		if (

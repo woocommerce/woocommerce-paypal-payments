@@ -31,7 +31,7 @@ const installPluginResolveActiveState = async ( {
 	if ( ! ( await requestUtils.isPluginInstalled( slug ) ) ) {
 		await plugins.installPluginFromFile( zipFilePath );
 	}
-	if( isActive ) {
+	if ( isActive ) {
 		await requestUtils.activatePlugin( slug );
 	} else {
 		await requestUtils.deactivatePlugin( slug );
@@ -181,7 +181,7 @@ export const setupWooCommerce = async () => {
 		const couponItems = {};
 		const couponEntries = Object.entries( coupons );
 		await Promise.all(
-			couponEntries.map( async ( [ _key, coupon ] ) => {
+			couponEntries.map( async ( [ , coupon ] ) => {
 				const createdCoupon =
 					await wooCommerceUtils.createCoupon( coupon );
 				couponItems[ coupon.code ] = { id: createdCoupon.id };
@@ -196,7 +196,7 @@ export const setupWooCommerce = async () => {
 		const cartItems = {};
 		const productEntries = Object.entries( products );
 		await Promise.all(
-			productEntries.map( async ( [ _key, product ] ) => {
+			productEntries.map( async ( [ , product ] ) => {
 				// check if not subscription product - requires Supscriptions plugin
 				if ( product.type !== 'subscription' ) {
 					const createdProduct =

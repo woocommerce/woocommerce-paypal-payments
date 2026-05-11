@@ -71,15 +71,13 @@ test.describe( () => {
 			const { testSummary, optionalPaymentsEnabled } = testData;
 			test(
 				testSummary,
-				async (
-					{
-						pcpOnboarding,
-						pcpPaymentMethods,
-						pcpSettings,
-						pcpStyling,
-						pcpApi,
-					}
-				) => {
+				async ( {
+					pcpOnboarding,
+					pcpPaymentMethods,
+					pcpSettings,
+					pcpStyling,
+					pcpApi,
+				} ) => {
 					await pcpOnboarding.visit();
 					await pcpOnboarding.activatePayPalPaymentsButton().click();
 
