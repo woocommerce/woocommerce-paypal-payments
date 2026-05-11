@@ -2,10 +2,10 @@
  * Internal dependencies
  */
 import { expect, test } from '../../utils';
-import { merchants, storeConfigDefault, products } from '../../resources';
+import { merchants, storeConfigUsa, products } from '../../resources';
 
 test.beforeAll( async ( { utils, pcpApi } ) => {
-	await utils.configureStore( storeConfigDefault );
+	await utils.configureStore( storeConfigUsa );
 	await utils.installAndActivatePcp();
 	await pcpApi.resetDb();
 	await pcpApi.connectMerchant(

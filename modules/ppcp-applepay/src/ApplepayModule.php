@@ -240,7 +240,8 @@ class ApplepayModule implements ServiceModule, ExecutableModule {
 			'ppcp_create_order_request_body_data',
 			static function ( array $data, string $payment_method, array $request ) use ( $c ): array {
 
-				if ( $payment_method !== ApplePayGateway::ID ) {
+				$funding_source = $request['funding_source'] ?? '';
+				if ( $payment_method !== ApplePayGateway::ID && $funding_source !== 'apple_pay' ) {
 					return $data;
 				}
 
