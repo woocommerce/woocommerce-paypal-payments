@@ -38,6 +38,8 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
+        env:
+          NPM_REGISTRY_TOKEN: ${{ secrets.DEPLOYBOT_GITHUB_TOKEN_PACKAGES }}
 
       - name: Run JavaScript unit tests
         run: npm run test:unit-js
