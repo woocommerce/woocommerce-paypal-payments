@@ -26,7 +26,6 @@
     "build": "wp-scripts build",
     "watch-js": "wp-scripts start",
     "e2e:setup:tests": "npm install && npx playwright install",
-    "e2e:setup:utils": "npm run e2e:setup:tests && cd ./playwright-utils && yarn devLocal",
     "e2e:test:plugin-foundation": "npx playwright test --workers=1 --project \"plugin-foundation\"",
     "e2e:test:dev": "npx playwright test --grep=\"@Dev\"",
     "e2e:test:smoke": "npx playwright test --grep=\"@Smoke\"",
@@ -104,7 +103,6 @@
     "jquery": "^3.7.1",
     "@playwright/test": "^1.59.0",
     "@inpsyde/playwright-utils": "^5.1.0",
-    "yarn": "^1.22.21",
     "@types/node": "^20.8.4",
     "@wordpress/env": "^10.30.0"
   }
