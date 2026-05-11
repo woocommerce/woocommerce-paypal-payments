@@ -143,7 +143,7 @@ Detailed information about current test project can be found in [docs](./docs/RE
 
 ## Coding standards
 
-Before commiting changes run following command:
+Before committing changes run following command:
 
 ```bash
 npm run e2e:lint:js:fix
