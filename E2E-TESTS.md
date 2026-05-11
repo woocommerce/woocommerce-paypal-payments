@@ -7,13 +7,13 @@ Detailed information about current test project can be found in [docs](./docs/RE
 ## Table of Content
 
 - [Local installation](#local-installation)
-- [Installation of `node_modules`](#installation-of-node_modules)
-- [Installation of `playwright-utils` for local development](#installation-of-playwright-utils-for-local-development)
-- [Project configuration](#project-configuration)
-- [Run tests](#run-tests)
+- [Project configuration (Devs)](#project-configuration-devs)
+- [Project configuration (QA team)](#project-configuration-qa-team)
+- [Running tests](#running-tests)
     - [Additional options to run tests from command line](#additional-options-to-run-tests-from-command-line)
 - [Autotest Execution workflow](#autotest-execution-workflow)
 - [Coding standards](#coding-standards)
+- [Reset Kinsta env](#reset-kinsta-env)
 - [Automated env setup scripts](#automated-env-setup-scripts)
 
 
@@ -48,6 +48,26 @@ Detailed information about current test project can be found in [docs](./docs/RE
 4. To avoid conflicts make sure any other payment plugins are deleted.
 
 5. Additional website and WooCommerce configuration is done automatically via `setup-woocommerce` dependency project (see [`/tests/_setup/woocommerce.setup.ts`](./tests/_setup/woocommerce.setup.ts)).
+
+### Installation of `playwright-utils` for local development
+
+1. Add `yarn` to `devDependencies` in `package.json`:
+
+	```json
+	"devDependencies": {
+		"yarn": "^1.22.21",
+	```
+
+
+2. Execute steps for local development described [here](https://github.com/inpsyde/playwright-utils/blob/main/README.md#development).
+
+	General one-line `tsc-watch` command is:
+
+	```bash
+	npm run e2e:setup:tests && cd ./playwright-utils && yarn devLocal
+	```
+
+3. After development is finished cleanup `package.json` and regenerate the `package-lock.json`. 
 
 ## Running tests
 
@@ -123,7 +143,7 @@ Detailed information about current test project can be found in [docs](./docs/RE
 
 ## Coding standards
 
-Before commiting changes run following command:
+Before committing changes run following command:
 
 ```bash
 npm run e2e:lint:js:fix
@@ -131,7 +151,7 @@ npm run e2e:lint:js:fix
 
 ## Reset Kinsta env
 
-> **Note:** the staging env on Kinsta should be created and the script to reset env [provided by devops](https://inpsyde.atlassian.net/wiki/spaces/ENG/pages/6240338010/WordPress+hosting+FAQs#How-can-QA-reset-a-test-environment%3F) (if not - create a ticket on [SDO board](https://inpsyde.atlassian.net/jira/software/c/projects/SDO/boards/395)).
+> __Note:__ the staging env on Kinsta should be created and the script to reset env [provided by devops](https://inpsyde.atlassian.net/wiki/spaces/ENG/pages/6240338010/WordPress+hosting+FAQs#How-can-QA-reset-a-test-environment%3F) (if not - create a ticket on [SDO board](https://inpsyde.atlassian.net/jira/software/c/projects/SDO/boards/395)).
 
 Find SSH data in [Kinsta dashboard](https://my.kinsta.com/sites/details) for your tested env. Replace data in the following one-line command and run it in the terminal to reset the env:
 
@@ -151,15 +171,15 @@ Local usage of _automated env setup scripts_ assumes that the following steps ar
 	git clone https://github.com/woocommerce/woocommerce-paypal-payments.git
 	```
 
-	> **Note:** temporary, for migration testing change branch to `dev/qa/migration-tests`: `git checkout dev/qa/migration-tests`.
+	> __Note:__ temporary, for migration testing change branch to `dev/qa/migration-tests`: `git checkout dev/qa/migration-tests`.
 
 2. Copy following packages into `/tests/qa/resources/files`:
 
-	* Configured PayPal plugin package (e.g. v3.4.1) named as `woocommerce-paypal-payments.zip`
+	- Configured PayPal plugin package (e.g. v3.4.1) named as `woocommerce-paypal-payments.zip`
 
-	* Optional: Paypal plugin version to upgrade/downgrade to (e.g. v3.0.0 or v4.0.0) as `woocommerce-paypal-payments-update.zip`.
+	- Optional: Paypal plugin version to upgrade/downgrade to (e.g. v3.0.0 or v4.0.0) as `woocommerce-paypal-payments-update.zip`.
 	
-	* WooCommerce Subscriptions package named as `woocommerce-subscriptions.zip`
+	- WooCommerce Subscriptions package named as `woocommerce-subscriptions.zip`
 
 3. Install Node dependencies and Playwright:
 
@@ -186,26 +206,26 @@ Scripts follow a three-tier naming pattern:
 - Resets the env
 - Configures website permalinks (`%postname%`)
 - Installs plugins and themes:
-	- WooCommerce
-	- Storefront theme
-	- Additional plugins (Disable Nonce, WC Subscriptions, etc.)
+    - WooCommerce
+    - Storefront theme
+    - Additional plugins (Disable Nonce, WC Subscriptions, etc.)
 - Configures WooCommerce for default country (USA):
-	- API keys
-	- Country/currency: USA/USD
-	- Taxes: included, 10% rate
-	- Shipping: flat rate/10 USD and free
-	- Emails: disabled
+    - API keys
+    - Country/currency: USA/USD
+    - Taxes: included, 10% rate
+    - Shipping: flat rate/10 USD and free
+    - Emails: disabled
 - Creates test entities:
-	- Classic cart and checkout
-	- Tested products
-	- Coupons
-	- Registered US customer
+    - Classic cart and checkout
+    - Tested products
+    - Coupons
+    - Registered US customer
 
 ```bash
 npm run e2e:env:reset
 ```
 
-**WooCommerce setup only (no SSH reset):**
+__WooCommerce setup only (no SSH reset):__
 
 ```bash
 npm run e2e:env:setup:wc
@@ -216,19 +236,19 @@ npm run e2e:env:setup:wc
 - Installs PCP plugin (`woocommerce-paypal-payments.zip`).
 - Connects merchant from specified country.
 
-**For USA** — PCP + connected US merchant + ACDC enabled (PayPal and other PMs disabled).
+__For USA__ — PCP + connected US merchant + ACDC enabled (PayPal and other PMs disabled).
 
 | With reset | Without reset |
 |---|---|
 | `npm run e2e:env:reset:pcp:usa` | `npm run e2e:env:setup:pcp:usa` |
 
-**For Germany & PUI (disabled by default)**
+#### __For Germany & PUI (disabled by default)__
 
 | With reset | Without reset |
 |---|---|
 | `npm run e2e:env:reset:pcp:germany` | `npm run e2e:env:setup:pcp:germany` |
 
-**For Mexico & OXXO (disabled by default)**
+#### __For Mexico & OXXO (disabled by default)__
 
 | With reset | Without reset |
 |---|---|
@@ -244,13 +264,13 @@ npm run e2e:env:setup:pcp:update
 
 ### Switch checkout layout (without env reload)
 
-**Enable classic cart/checkout**
+#### __Enable classic cart/checkout__
 
 ```bash
 npm run e2e:env:setup:checkout:classic
 ```
 
-**Enable block cart/checkout**
+#### __Enable block cart/checkout__
 
 ```bash
 npm run e2e:env:setup:checkout:block
@@ -258,13 +278,13 @@ npm run e2e:env:setup:checkout:block
 
 ### Switch tax configuration (without env reload)
 
-**Tax included in prices**
+#### __Tax included in prices__
 
 ```bash
 npm run e2e:env:setup:tax:inc
 ```
 
-**Tax excluded from prices**
+#### __Tax excluded from prices__
 
 ```bash
 npm run e2e:env:setup:tax:exc
