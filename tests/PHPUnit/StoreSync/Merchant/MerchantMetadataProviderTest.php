@@ -91,11 +91,11 @@ class MerchantMetadataProviderTest extends TestCase {
 
 	public function trailing_slash_provider(): array {
 		return [
-			'url with trailing slash' => [
+			'url with trailing slash'            => [
 				'site_url'     => 'https://example.com/',
 				'expected_url' => 'https://example.com',
 			],
-			'url without trailing slash' => [
+			'url without trailing slash'         => [
 				'site_url'     => 'https://example.com',
 				'expected_url' => 'https://example.com',
 			],
@@ -141,12 +141,12 @@ class MerchantMetadataProviderTest extends TestCase {
 				'store_country'    => 'US',
 				'currency'         => 'USD',
 			],
-			'UK merchant with UK store' => [
+			'UK merchant with UK store'       => [
 				'merchant_country' => 'GB',
 				'store_country'    => 'GB',
 				'currency'         => 'GBP',
 			],
-			'German merchant with EU store' => [
+			'German merchant with EU store'   => [
 				'merchant_country' => 'DE',
 				'store_country'    => 'DE',
 				'currency'         => 'EUR',
@@ -203,7 +203,11 @@ class MerchantMetadataProviderTest extends TestCase {
 	): void {
 		$store_currency = Mockery::mock( StoreCurrencyValue::class );
 		$store_currency->allows( 'value' )->andReturn( $currency );
-		$this->testee   = new MerchantMetadataProvider( $this->wc, $this->general_settings, $store_currency );
+		$this->testee = new MerchantMetadataProvider(
+			$this->wc,
+			$this->general_settings,
+			$store_currency
+		);
 
 		when( 'get_bloginfo' )->justReturn( $store_name );
 		when( 'get_site_url' )->justReturn( $site_url );

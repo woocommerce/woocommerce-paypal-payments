@@ -81,7 +81,9 @@ class StoreValidationTest extends TestCase {
 	public function test_add_missing_field_records_issue_with_field_and_user_message(): void {
 		$validation = new StoreValidation();
 
-		$issue = $validation->add_missing_field( 'billing_address', 'Billing address is required.' );
+		$issue = $validation->add_missing_field(
+			'billing_address', 'Billing address is required.'
+		);
 
 		$this->assertInstanceOf( ValidationIssue::class, $issue );
 		$this->assertFalse( $validation->is_empty() );
@@ -107,7 +109,9 @@ class StoreValidationTest extends TestCase {
 	public function test_add_invalid_data_records_issue_with_field_reason_and_user_message(): void {
 		$validation = new StoreValidation();
 
-		$issue = $validation->add_invalid_data( 'email', 'Malformed email address', 'Please enter a valid email.' );
+		$issue = $validation->add_invalid_data(
+			'email', 'Malformed email address', 'Please enter a valid email.'
+		);
 
 		$this->assertInstanceOf( ValidationIssue::class, $issue );
 		$this->assertFalse( $validation->is_empty() );
@@ -144,16 +148,16 @@ class StoreValidationTest extends TestCase {
 
 	public function single_message_factory_provider(): array {
 		return array(
-			'add_coupon_invalid'           => array( 'add_coupon_invalid' ),
-			'add_currency_mismatch'        => array( 'add_currency_mismatch' ),
-			'add_insufficient_quantity'    => array( 'add_insufficient_quantity' ),
-			'add_item_out_of_stock'        => array( 'add_item_out_of_stock' ),
-			'add_price_mismatch'           => array( 'add_price_mismatch' ),
-			'add_shipping_unavailable'     => array( 'add_shipping_unavailable' ),
-			'add_invalid_address'          => array( 'add_invalid_address' ),
-			'add_invalid_product'          => array( 'add_invalid_product' ),
-			'add_business_rule_violation'  => array( 'add_business_rule_violation' ),
-			'add_payment_error'            => array( 'add_payment_error' ),
+			'add_coupon_invalid'          => array( 'add_coupon_invalid' ),
+			'add_currency_mismatch'       => array( 'add_currency_mismatch' ),
+			'add_insufficient_quantity'   => array( 'add_insufficient_quantity' ),
+			'add_item_out_of_stock'       => array( 'add_item_out_of_stock' ),
+			'add_price_mismatch'          => array( 'add_price_mismatch' ),
+			'add_shipping_unavailable'    => array( 'add_shipping_unavailable' ),
+			'add_invalid_address'         => array( 'add_invalid_address' ),
+			'add_invalid_product'         => array( 'add_invalid_product' ),
+			'add_business_rule_violation' => array( 'add_business_rule_violation' ),
+			'add_payment_error'           => array( 'add_payment_error' ),
 		);
 	}
 

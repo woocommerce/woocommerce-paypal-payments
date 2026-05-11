@@ -116,7 +116,9 @@ class ProductValidatorTest extends ValidationTest {
 		$validation = new StoreValidation();
 		$validation->add( $pre_existing_issue );
 
-		$result = $this->validator->validate( $this->wrap_in_store_cart( $this->create_cart(), $validation ) );
+		$result = $this->validator->validate(
+			$this->wrap_in_store_cart( $this->create_cart(), $validation )
+		);
 
 		$this->assertNull( $result );
 	}

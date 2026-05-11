@@ -33,16 +33,17 @@ class StoreCartItemTest extends StoreSyncTestCase {
 	private function make_cart_item_schema( ?Money $price = null ): CartItem {
 		$stub = Mockery::mock( CartItem::class );
 		$stub->allows( 'price' )->andReturn( $price );
+
 		return $stub;
 	}
 
 	/**
 	 * Creates a WC_Product stub returning the given price string and optional extra fields.
 	 *
-	 * @param string      $price_string        The value returned by get_price().
-	 * @param string      $name                The value returned by get_name().
-	 * @param string      $short_description   The value returned by get_short_description().
-	 * @param int         $parent_id           The value returned by get_parent_id().
+	 * @param string $price_string      The value returned by get_price().
+	 * @param string $name              The value returned by get_name().
+	 * @param string $short_description The value returned by get_short_description().
+	 * @param int    $parent_id         The value returned by get_parent_id().
 	 * @return WC_Product&\Mockery\MockInterface
 	 */
 	private function make_product(
@@ -56,6 +57,7 @@ class StoreCartItemTest extends StoreSyncTestCase {
 		$stub->allows( 'get_name' )->andReturn( $name );
 		$stub->allows( 'get_short_description' )->andReturn( $short_description );
 		$stub->allows( 'get_parent_id' )->andReturn( $parent_id );
+
 		return $stub;
 	}
 
@@ -68,6 +70,7 @@ class StoreCartItemTest extends StoreSyncTestCase {
 	private function make_currency( string $currency ): StoreCurrencyValue {
 		$stub = Mockery::mock( StoreCurrencyValue::class );
 		$stub->allows( 'value' )->andReturn( $currency );
+
 		return $stub;
 	}
 
@@ -157,8 +160,8 @@ class StoreCartItemTest extends StoreSyncTestCase {
 	 *
 	 * @dataProvider matching_price_provider
 	 *
-	 * @param string $product_price  The WC_Product get_price() return value.
-	 * @param string $assumed_value  The Money value the agent provided.
+	 * @param string $product_price The WC_Product get_price() return value.
+	 * @param string $assumed_value The Money value the agent provided.
 	 */
 	public function test_is_price_correct_returns_true_when_assumed_price_matches_store_price(
 		string $product_price,
@@ -188,8 +191,8 @@ class StoreCartItemTest extends StoreSyncTestCase {
 	 *
 	 * @dataProvider mismatched_price_provider
 	 *
-	 * @param string $product_price  The WC_Product get_price() return value.
-	 * @param string $assumed_value  The Money value the agent provided.
+	 * @param string $product_price The WC_Product get_price() return value.
+	 * @param string $assumed_value The Money value the agent provided.
 	 */
 	public function test_is_price_correct_returns_false_when_assumed_price_differs_from_store_price(
 		string $product_price,
@@ -205,10 +208,10 @@ class StoreCartItemTest extends StoreSyncTestCase {
 
 	public function mismatched_price_provider(): array {
 		return array(
-			'price raised by one cent'   => array( '10.00', '9.99' ),
-			'price lowered by one cent'  => array( '9.99', '10.00' ),
-			'significantly different'    => array( '49.99', '39.99' ),
-			'zero vs non-zero'           => array( '0.00', '9.99' ),
+			'price raised by one cent'  => array( '10.00', '9.99' ),
+			'price lowered by one cent' => array( '9.99', '10.00' ),
+			'significantly different'   => array( '49.99', '39.99' ),
+			'zero vs non-zero'          => array( '0.00', '9.99' ),
 		);
 	}
 
@@ -301,7 +304,11 @@ class StoreCartItemTest extends StoreSyncTestCase {
 	 */
 	public function test_to_array_price_uses_real_store_price_not_schema_price(): void {
 		$schema  = CartItem::from_array(
-			array( 'quantity' => 2, 'item_id' => 'sku-1', 'price' => array( 'currency_code' => 'USD', 'value' => '5.00' ) ),
+			array(
+				'quantity' => 2,
+				'item_id'  => 'sku-1',
+				'price'    => array( 'currency_code' => 'USD', 'value' => '5.00' ),
+			),
 			new StoreValidation()
 		);
 		$product = $this->make_product( '12.50' );

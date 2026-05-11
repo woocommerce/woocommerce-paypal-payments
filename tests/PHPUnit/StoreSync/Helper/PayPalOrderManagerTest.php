@@ -78,7 +78,7 @@ class PayPalOrderManagerTest extends StoreSyncTestCase {
 	 *      and breakdown with item_total='22.00', shipping='10.00', tax_total='2.56'
 	 */
 	public function test_update_order_sends_correct_amount_patch(): void {
-		$captured = null;
+		$captured       = null;
 		$order_endpoint = Mockery::mock( OrderEndpoint::class );
 		$order_endpoint->allows( 'patch' )
 			->andReturnUsing(

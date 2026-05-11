@@ -41,6 +41,7 @@ class StorePayPalCartTest extends StoreSyncTestCase {
 		$stub->allows( 'payment_method' )->andReturn( $overrides['payment_method'] ?? null );
 		$stub->allows( 'items' )->andReturn( $overrides['items'] ?? array() );
 		$stub->allows( 'to_array' )->andReturn( $overrides['to_array'] ?? array() );
+
 		return $stub;
 	}
 
@@ -53,6 +54,7 @@ class StorePayPalCartTest extends StoreSyncTestCase {
 	private function make_currency( string $currency = 'USD' ): StoreCurrencyValue {
 		$stub = Mockery::mock( StoreCurrencyValue::class );
 		$stub->allows( 'value' )->andReturn( $currency );
+
 		return $stub;
 	}
 
@@ -65,6 +67,7 @@ class StorePayPalCartTest extends StoreSyncTestCase {
 	private function make_cart_builder( $result ): AgenticCartBuilder {
 		$stub = Mockery::mock( AgenticCartBuilder::class );
 		$stub->allows( 'paypal_cart_to_wc_cart' )->andReturn( $result );
+
 		return $stub;
 	}
 
@@ -100,6 +103,7 @@ class StorePayPalCartTest extends StoreSyncTestCase {
 		}
 
 		$stub->allows( 'to_array' )->andReturn( $to_array_result );
+
 		return $stub;
 	}
 
@@ -111,6 +115,7 @@ class StorePayPalCartTest extends StoreSyncTestCase {
 	 */
 	private function make_cart_item_schema( array $input ): CartItem {
 		$validation = new StoreValidation();
+
 		return CartItem::from_array( $input, $validation );
 	}
 
@@ -122,6 +127,7 @@ class StorePayPalCartTest extends StoreSyncTestCase {
 	 */
 	private function make_paypal_cart_schema( array $input ): PayPalCart {
 		$validation = new StoreValidation();
+
 		return PayPalCart::from_array( $input, $validation );
 	}
 
@@ -209,7 +215,9 @@ class StorePayPalCartTest extends StoreSyncTestCase {
 	 */
 	public function test_wc_cart_returns_cart_from_builder_on_success(): void {
 		$wc_cart = Mockery::mock( WC_Cart::class );
-		$sut     = $this->make_sut( array( 'cart_builder' => $this->make_cart_builder( $wc_cart ) ) );
+		$sut     = $this->make_sut(
+			array( 'cart_builder' => $this->make_cart_builder( $wc_cart ) )
+		);
 
 		$this->assertSame( $wc_cart, $sut->wc_cart() );
 	}
@@ -247,7 +255,9 @@ class StorePayPalCartTest extends StoreSyncTestCase {
 	 */
 	public function test_wc_cart_returns_null_when_builder_returns_wp_error(): void {
 		$wp_error = Mockery::mock( WP_Error::class );
-		$sut      = $this->make_sut( array( 'cart_builder' => $this->make_cart_builder( $wp_error ) ) );
+		$sut      = $this->make_sut(
+			array( 'cart_builder' => $this->make_cart_builder( $wp_error ) )
+		);
 
 		$this->assertNull( $sut->wc_cart() );
 	}
@@ -286,9 +296,9 @@ class StorePayPalCartTest extends StoreSyncTestCase {
 		$schema         = $this->make_cart_item_schema( array( 'quantity' => 1 ) );
 
 		$sut = $this->make_sut( array(
-			'paypal_cart'  => $paypal_cart,
-			'validation'   => new StoreValidation(),
-			'store_items'  => array( $this->make_store_item( $schema ) ),
+			'paypal_cart' => $paypal_cart,
+			'validation'  => new StoreValidation(),
+			'store_items' => array( $this->make_store_item( $schema ) ),
 		) );
 
 		$this->assertTrue( $sut->is_ready_for_payment() );
@@ -331,10 +341,26 @@ class StorePayPalCartTest extends StoreSyncTestCase {
 
 	public function not_ready_for_payment_provider(): array {
 		return array(
-			'validation has issues, items present, payment method present'     => array( true, true, true ),
-			'no validation issues, no items, payment method present'           => array( false, false, true ),
-			'no validation issues, items present, no payment method'           => array( false, true, false ),
-			'all conditions missing'                                            => array( true, false, false ),
+			'validation has issues, items present, payment method present' => array(
+				'has_validation_issue' => true,
+				'has_items'            => true,
+				'has_payment_method'   => true,
+			),
+			'no validation issues, no items, payment method present'       => array(
+				'has_validation_issue' => false,
+				'has_items'            => false,
+				'has_payment_method'   => true,
+			),
+			'no validation issues, items present, no payment method'       => array(
+				'has_validation_issue' => false,
+				'has_items'            => true,
+				'has_payment_method'   => false,
+			),
+			'all conditions missing'                                       => array(
+				'has_validation_issue' => true,
+				'has_items'            => false,
+				'has_payment_method'   => false,
+			),
 		);
 	}
 
@@ -349,7 +375,9 @@ class StorePayPalCartTest extends StoreSyncTestCase {
 	 */
 	public function test_totals_returns_null_when_wc_cart_is_null(): void {
 		$wp_error = Mockery::mock( WP_Error::class );
-		$sut      = $this->make_sut( array( 'cart_builder' => $this->make_cart_builder( $wp_error ) ) );
+		$sut      = $this->make_sut(
+			array( 'cart_builder' => $this->make_cart_builder( $wp_error ) )
+		);
 
 		$this->assertNull( $sut->totals() );
 	}
@@ -514,11 +542,11 @@ class StorePayPalCartTest extends StoreSyncTestCase {
 
 	public function item_price_formatting_provider(): array {
 		return array(
-			'integer price formats to two decimals'     => array( 10.0, '10.00' ),
-			'price with one decimal pads to two'        => array( 9.9, '9.90' ),
-			'price already has two decimals'            => array( 12.50, '12.50' ),
-			'price with many decimals is rounded'       => array( 7.999, '8.00' ),
-			'zero price formats correctly'              => array( 0.0, '0.00' ),
+			'integer price formats to two decimals' => array( 10.0, '10.00' ),
+			'price with one decimal pads to two'    => array( 9.9, '9.90' ),
+			'price already has two decimals'        => array( 12.50, '12.50' ),
+			'price with many decimals is rounded'   => array( 7.999, '8.00' ),
+			'zero price formats correctly'          => array( 0.0, '0.00' ),
 		);
 	}
 
@@ -567,9 +595,9 @@ class StorePayPalCartTest extends StoreSyncTestCase {
 	 */
 	public function test_to_array_includes_customer_when_present(): void {
 		$paypal_cart = $this->make_paypal_cart_schema( array(
-			'items'           => array( array( 'quantity' => 1 ) ),
-			'payment_method'  => array( 'type' => 'paypal' ),
-			'customer'        => array(
+			'items'          => array( array( 'quantity' => 1 ) ),
+			'payment_method' => array( 'type' => 'paypal' ),
+			'customer'       => array(
 				'name' => array(
 					'given_name' => 'John',
 					'surname'    => 'Doe',
@@ -617,7 +645,10 @@ class StorePayPalCartTest extends StoreSyncTestCase {
 		$paypal_cart = $this->make_paypal_cart_schema( array(
 			'items'            => array( array( 'quantity' => 1 ) ),
 			'payment_method'   => array( 'type' => 'paypal' ),
-			'shipping_address' => array( 'country_code' => 'US', 'address_line_1' => '123 Main St' ),
+			'shipping_address' => array(
+				'country_code'   => 'US',
+				'address_line_1' => '123 Main St',
+			),
 		) );
 
 		$sut = $this->make_sut( array( 'paypal_cart' => $paypal_cart ) );
@@ -658,7 +689,10 @@ class StorePayPalCartTest extends StoreSyncTestCase {
 		$paypal_cart = $this->make_paypal_cart_schema( array(
 			'items'           => array( array( 'quantity' => 1 ) ),
 			'payment_method'  => array( 'type' => 'paypal' ),
-			'billing_address' => array( 'country_code' => 'DE', 'address_line_1' => 'Musterstr. 1' ),
+			'billing_address' => array(
+				'country_code'   => 'DE',
+				'address_line_1' => 'Musterstr. 1',
+			),
 		) );
 
 		$sut = $this->make_sut( array( 'paypal_cart' => $paypal_cart ) );
@@ -721,7 +755,9 @@ class StorePayPalCartTest extends StoreSyncTestCase {
 	 */
 	public function test_to_array_omits_totals_when_wc_cart_is_null(): void {
 		$wp_error = Mockery::mock( WP_Error::class );
-		$sut      = $this->make_sut( array( 'cart_builder' => $this->make_cart_builder( $wp_error ) ) );
+		$sut      = $this->make_sut(
+			array( 'cart_builder' => $this->make_cart_builder( $wp_error ) )
+		);
 
 		$result = $sut->to_array();
 

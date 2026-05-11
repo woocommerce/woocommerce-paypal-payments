@@ -171,7 +171,15 @@ class AddressTest extends SchemaTestCase {
 	public function test_empty_array_returns_all_six_keys_as_empty_strings(): void {
 		$result = Address::empty_array();
 
-		$expected_keys = array( 'address_line_1', 'address_line_2', 'admin_area_2', 'admin_area_1', 'postal_code', 'country_code' );
+		$expected_keys = array(
+			'address_line_1',
+			'address_line_2',
+			'admin_area_2',
+			'admin_area_1',
+			'postal_code',
+			'country_code',
+		);
+
 		foreach ( $expected_keys as $key ) {
 			$this->assertArrayHasKey( $key, $result, "Key '$key' must be present in empty_array() result" );
 			$this->assertSame( '', $result[ $key ], "Key '$key' must be an empty string in empty_array() result" );

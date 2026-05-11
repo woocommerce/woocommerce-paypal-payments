@@ -257,7 +257,10 @@ class PayPalCartTest extends SchemaTestCase {
 			array(
 				'items'            => array( array( 'quantity' => 1 ) ),
 				'payment_method'   => array( 'type' => 'paypal' ),
-				'shipping_address' => array( 'country_code' => 'us', 'address_line_1' => '123 Main St' ),
+				'shipping_address' => array(
+					'country_code'   => 'us',
+					'address_line_1' => '123 Main St',
+				),
 			),
 			new StoreValidation()
 		);
@@ -276,11 +279,11 @@ class PayPalCartTest extends SchemaTestCase {
 	public function test_to_array_delegates_optional_fields_to_nested_to_array(): void {
 		$cart = PayPalCart::from_array(
 			array(
-				'items'           => array( array( 'quantity' => 1 ) ),
-				'payment_method'  => array( 'type' => 'paypal' ),
-				'customer'        => array( 'email_address' => 'test@example.com' ),
+				'items'            => array( array( 'quantity' => 1 ) ),
+				'payment_method'   => array( 'type' => 'paypal' ),
+				'customer'         => array( 'email_address' => 'test@example.com' ),
 				'shipping_address' => array( 'country_code' => 'DE' ),
-				'billing_address' => array( 'country_code' => 'DE' ),
+				'billing_address'  => array( 'country_code' => 'DE' ),
 			),
 			new StoreValidation()
 		);

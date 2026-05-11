@@ -102,7 +102,10 @@ class CustomerTest extends SchemaTestCase {
 			array(
 				'email_address' => 'jane@example.com',
 				'name'          => array( 'given_name' => 'Jane', 'surname' => 'Doe' ),
-				'phone'         => array( 'country_code' => '1', 'national_number' => '5559876543' ),
+				'phone'         => array(
+					'country_code'    => '1',
+					'national_number' => '5559876543',
+				),
 			),
 			new StoreValidation()
 		);

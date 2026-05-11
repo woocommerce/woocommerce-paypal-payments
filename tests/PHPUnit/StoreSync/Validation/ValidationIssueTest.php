@@ -267,7 +267,7 @@ class ValidationIssueTest extends TestCase {
 
 		$issue = ValidationIssue::create_invalid_data( 'msg' );
 
-		for ( $i = 0; $i < 7; $i++ ) {
+		for ( $i = 0; $i < 7; $i ++ ) {
 			$issue->add_resolution( ResolutionOption::create_remove_item()->label( "Option $i" ) );
 		}
 
@@ -287,10 +287,12 @@ class ValidationIssueTest extends TestCase {
 	private function make_context( array $to_array_data ): IssueContext {
 		return new class( $to_array_data ) extends IssueContext {
 			private array $data;
+
 			public function __construct( array $data ) {
 				parent::__construct( $data['specific_issue'] ?? '' );
 				$this->data = $data;
 			}
+
 			public function to_array(): array {
 				return $this->data;
 			}

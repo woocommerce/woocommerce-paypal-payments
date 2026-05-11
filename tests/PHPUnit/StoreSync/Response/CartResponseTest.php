@@ -4,12 +4,13 @@ declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\StoreSync\Response;
 
-use Brain\Monkey;
 use Mockery;
 use WC_Order;
 use WooCommerce\PayPalCommerce\StoreSync\StoreData\StorePayPalCart;
 use WooCommerce\PayPalCommerce\StoreSync\StoreSyncTestCase;
 use WooCommerce\PayPalCommerce\StoreSync\Validation\StoreValidation;
+
+use function Brain\Monkey\Functions\when;
 
 /**
  * @covers \WooCommerce\PayPalCommerce\StoreSync\Response\CartResponse
@@ -18,7 +19,7 @@ class CartResponseTest extends StoreSyncTestCase {
 
 	public function setUp(): void {
 		parent::setUp();
-		Monkey\Functions\when( 'get_woocommerce_currency' )->justReturn( 'USD' );
+		when( 'get_woocommerce_currency' )->justReturn( 'USD' );
 	}
 
 	// -------------------------------------------------------------------------
@@ -45,11 +46,11 @@ class CartResponseTest extends StoreSyncTestCase {
 	 * Returns a totals array that mirrors what StorePayPalCart::to_array() would
 	 * produce for a cart with the given money values.
 	 *
-	 * @param float  $subtotal  Item total (before discount).
-	 * @param float  $discount  Coupon discount, 0 to omit the key.
-	 * @param float  $shipping  Shipping amount.
-	 * @param float  $tax       Tax amount.
-	 * @param string $currency  Currency code.
+	 * @param float  $subtotal Item total (before discount).
+	 * @param float  $discount Coupon discount, 0 to omit the key.
+	 * @param float  $shipping Shipping amount.
+	 * @param float  $tax      Tax amount.
+	 * @param string $currency Currency code.
 	 * @return array
 	 */
 	private function make_totals(
@@ -59,9 +60,12 @@ class CartResponseTest extends StoreSyncTestCase {
 		float $tax = 0.0,
 		string $currency = 'USD'
 	): array {
-		$total  = $subtotal - $discount + $shipping + $tax;
-		$money  = static function ( float $v ) use ( $currency ): array {
-			return array( 'currency_code' => $currency, 'value' => number_format( $v, 2, '.', '' ) );
+		$total = $subtotal - $discount + $shipping + $tax;
+		$money = static function ( float $v ) use ( $currency ): array {
+			return array(
+				'currency_code' => $currency,
+				'value'         => number_format( $v, 2, '.', '' ),
+			);
 		};
 
 		$totals = array(
@@ -86,7 +90,8 @@ class CartResponseTest extends StoreSyncTestCase {
 	 * GIVEN a cart with a 10 % coupon applied
 	 * WHEN the response is built via create()->applied_coupons()
 	 * THEN to_array() includes an applied_coupons key
-	 * AND that key contains exactly one coupon with the correct code, description, and discount amount
+	 * AND that key contains exactly one coupon with the correct code, description, and discount
+	 * amount
 	 */
 	public function test_to_array_includes_applied_coupons_when_provided(): void {
 		$applied_coupons = array(
@@ -97,7 +102,9 @@ class CartResponseTest extends StoreSyncTestCase {
 			),
 		);
 
-		$store_cart = $this->make_store_cart( array( 'totals' => $this->make_totals( 100.0, 10.0 ) ) );
+		$store_cart = $this->make_store_cart(
+			array( 'totals' => $this->make_totals( 100.0, 10.0 ) )
+		);
 		$response   = CartResponse::create( $store_cart, 'test-cart-id' )
 			->applied_coupons( $applied_coupons );
 
@@ -160,7 +167,9 @@ class CartResponseTest extends StoreSyncTestCase {
 			),
 		);
 
-		$store_cart = $this->make_store_cart( array( 'totals' => $this->make_totals( 100.0, 10.0 ) ) );
+		$store_cart = $this->make_store_cart(
+			array( 'totals' => $this->make_totals( 100.0, 10.0 ) )
+		);
 		$response   = CartResponse::create( $store_cart, 'test-cart-id' )
 			->applied_coupons( $applied_coupons );
 
@@ -198,7 +207,9 @@ class CartResponseTest extends StoreSyncTestCase {
 			),
 		);
 
-		$store_cart = $this->make_store_cart( array( 'totals' => $this->make_totals( 100.0, 20.0 ) ) );
+		$store_cart = $this->make_store_cart(
+			array( 'totals' => $this->make_totals( 100.0, 20.0 ) )
+		);
 		$response   = CartResponse::create( $store_cart, 'test-cart-id' )
 			->applied_coupons( $applied_coupons );
 
@@ -270,7 +281,9 @@ class CartResponseTest extends StoreSyncTestCase {
 			),
 		);
 
-		$store_cart = $this->make_store_cart( array( 'totals' => $this->make_totals( 100.0, 15.0 ) ) );
+		$store_cart = $this->make_store_cart(
+			array( 'totals' => $this->make_totals( 100.0, 15.0 ) )
+		);
 		$response   = CartResponse::create( $store_cart, 'test-cart-id' )
 			->applied_coupons( $applied_coupons );
 
@@ -303,7 +316,9 @@ class CartResponseTest extends StoreSyncTestCase {
 			),
 		);
 
-		$store_cart = $this->make_store_cart( array( 'totals' => $this->make_totals( 25.0, 24.99 ) ) );
+		$store_cart = $this->make_store_cart(
+			array( 'totals' => $this->make_totals( 25.0, 24.99 ) )
+		);
 		$response   = CartResponse::create( $store_cart, 'test-cart-id' )
 			->applied_coupons( $applied_coupons );
 
@@ -333,7 +348,9 @@ class CartResponseTest extends StoreSyncTestCase {
 			),
 		);
 
-		$store_cart = $this->make_store_cart( array( 'totals' => $this->make_totals( 50.0, 49.99 ) ) );
+		$store_cart = $this->make_store_cart(
+			array( 'totals' => $this->make_totals( 50.0, 49.99 ) )
+		);
 		$response   = CartResponse::create( $store_cart, 'test-cart-id' )
 			->applied_coupons( $applied_coupons );
 
@@ -370,7 +387,9 @@ class CartResponseTest extends StoreSyncTestCase {
 			),
 		);
 
-		$store_cart = $this->make_store_cart( array( 'totals' => $this->make_totals( 25.0, 24.99 ) ) );
+		$store_cart = $this->make_store_cart(
+			array( 'totals' => $this->make_totals( 25.0, 24.99 ) )
+		);
 		$response   = CartResponse::create( $store_cart, 'test-cart-id' )
 			->applied_coupons( $applied_coupons );
 
