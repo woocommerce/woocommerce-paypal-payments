@@ -207,8 +207,7 @@ return array(
 	'agentic.validator.coupon.context-builder'     => static function ( ContainerInterface $c ): CouponContextBuilder {
 		return new CouponContextBuilder(
 			$c->get( 'agentic.helper.product-manager' ),
-			$c->get( 'agentic.validator.coupon.discount-calculator' ),
-			$c->get( 'agentic.config.store-currency' )
+			$c->get( 'agentic.validator.coupon.discount-calculator' )
 		);
 	},
 	'agentic.validator.coupon.resolution-builder'  => static function (): CouponResolutionBuilder {
@@ -225,8 +224,7 @@ return array(
 	// Response services.
 	'agentic.response.applied-coupons-builder'     => static function ( ContainerInterface $c ): AppliedCouponsBuilder {
 		return new AppliedCouponsBuilder(
-			$c->get( 'agentic.validator.coupon.discount-calculator' ),
-			$c->get( 'agentic.config.store-currency' )
+			$c->get( 'agentic.validator.coupon.discount-calculator' )
 		);
 	},
 	'agentic.response.factory'                     => static function ( ContainerInterface $c ): ResponseFactory {

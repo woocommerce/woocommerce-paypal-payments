@@ -13,8 +13,7 @@ namespace WooCommerce\PayPalCommerce\StoreSync\CartValidation\CouponValidator;
 
 use WC_Coupon;
 use WooCommerce\PayPalCommerce\StoreSync\Enums\Priority;
-use WooCommerce\PayPalCommerce\StoreSync\Helper\CartHelper;
-use WooCommerce\PayPalCommerce\StoreSync\Schema\PayPalCart;
+use WooCommerce\PayPalCommerce\StoreSync\Schema\Money;
 use WooCommerce\PayPalCommerce\StoreSync\Validation\Resolution\ResolutionOption;
 
 /**
@@ -25,12 +24,6 @@ class CouponResolutionBuilder {
 	/**
 	 * Builds resolutions from config keys, with special handling for stacking.
 	 *
-	 * @param string         $issue_type The issue type.
-	 * @param array          $keys       Resolution keys from config.
-	 * @param string         $code       The coupon code.
-	 * @param array          $context    The context data.
-	 * @param PayPalCart     $cart       The cart context.
-	 * @param WC_Coupon|null $wc_coupon  The WC coupon object.
 	 * @return ResolutionOption[] The resolution options.
 	 */
 	public function build_resolution_options(
@@ -38,17 +31,16 @@ class CouponResolutionBuilder {
 		array $keys,
 		string $code,
 		array $context,
-		PayPalCart $cart,
-		?WC_Coupon $wc_coupon
+		string $currency
 	): array {
 		if ( $issue_type === 'COUPON_STACKING_NOT_ALLOWED' ) {
-			return $this->build_stacking_resolutions( $code, $context, $cart );
+			return $this->build_stacking_resolutions( $code, $context, $currency );
 		}
 
 		$resolutions = array();
 
 		foreach ( $keys as $key ) {
-			$resolution = $this->build_resolution_by_key( $key, $context, $cart );
+			$resolution = $this->build_resolution_by_key( $key, $context, $currency );
 
 			if ( $resolution ) {
 				$resolutions[] = $resolution;
@@ -61,12 +53,9 @@ class CouponResolutionBuilder {
 	/**
 	 * Dispatches to the appropriate resolution factory method.
 	 *
-	 * @param string     $key     The resolution key.
-	 * @param array      $context The context data.
-	 * @param PayPalCart $cart    The cart context.
 	 * @return ResolutionOption|null The resolution option or null if key not recognized.
 	 */
-	private function build_resolution_by_key( string $key, array $context, PayPalCart $cart ): ?ResolutionOption {
+	private function build_resolution_by_key( string $key, array $context, string $currency ): ?ResolutionOption {
 		switch ( $key ) {
 			case 'try_different':
 				return ResolutionOption::create_apply_different_coupon()
@@ -95,7 +84,7 @@ class CouponResolutionBuilder {
 
 			case 'add_items_to_minimum':
 				$formatted_amount = isset( $context['shortage_amount'] )
-					? CartHelper::format_price( $context['shortage_amount'], $cart )
+					? Money::create( $context['shortage_amount'], $currency )->to_price()
 					: '';
 
 				return ResolutionOption::create_modify_cart()
@@ -116,18 +105,15 @@ class CouponResolutionBuilder {
 	/**
 	 * Builds stacking-specific resolutions with savings comparison.
 	 *
-	 * @param string     $code    The coupon code.
-	 * @param array      $context The context data.
-	 * @param PayPalCart $cart    The cart context.
 	 * @return ResolutionOption[] The resolution options.
 	 */
-	private function build_stacking_resolutions( string $code, array $context, PayPalCart $cart ): array {
+	private function build_stacking_resolutions( string $code, array $context, string $currency ): array {
 		$current_discount   = $context['current_discount'] ?? '0.00';
 		$attempted_discount = $context['attempted_discount'] ?? '0.00';
 		$attempted_coupon   = $context['attempted_coupon'] ?? 'other';
 
-		$formatted_current   = CartHelper::format_price( $current_discount, $cart );
-		$formatted_attempted = CartHelper::format_price( $attempted_discount, $cart );
+		$formatted_current   = Money::create( $current_discount, $currency )->to_price();
+		$formatted_attempted = Money::create( $attempted_discount, $currency )->to_price();
 
 		return array(
 			ResolutionOption::create_keep_current_coupon()

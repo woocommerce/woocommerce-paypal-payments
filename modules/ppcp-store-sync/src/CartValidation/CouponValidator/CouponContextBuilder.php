@@ -12,10 +12,11 @@ declare( strict_types = 1 );
 namespace WooCommerce\PayPalCommerce\StoreSync\CartValidation\CouponValidator;
 
 use WC_Coupon;
-use WooCommerce\PayPalCommerce\StoreSync\Config\StoreCurrencyValue;
-use WooCommerce\PayPalCommerce\StoreSync\Helper\CartHelper;
 use WooCommerce\PayPalCommerce\StoreSync\Helper\ProductManager;
+use WooCommerce\PayPalCommerce\StoreSync\Schema\Money;
 use WooCommerce\PayPalCommerce\StoreSync\Schema\PayPalCart;
+use WooCommerce\PayPalCommerce\StoreSync\StoreData\StoreCartItem;
+use WooCommerce\PayPalCommerce\StoreSync\StoreData\StorePayPalCart;
 use WooCommerce\PayPalCommerce\StoreSync\Validation\Context\IssueContext;
 use WooCommerce\PayPalCommerce\StoreSync\Validation\Context\PricingErrorContext;
 
@@ -28,29 +29,20 @@ class CouponContextBuilder {
 
 	private DiscountCalculator $discount_calculator;
 
-	private StoreCurrencyValue $store_currency;
-
-	public function __construct( ProductManager $product_manager, DiscountCalculator $discount_calculator, StoreCurrencyValue $store_currency ) {
+	public function __construct( ProductManager $product_manager, DiscountCalculator $discount_calculator ) {
 		$this->product_manager     = $product_manager;
 		$this->discount_calculator = $discount_calculator;
-		$this->store_currency      = $store_currency;
 	}
 
 	/**
 	 * Builds context by calling declared context builders.
 	 *
-	 * @param string         $issue_type The issue type.
-	 * @param string         $code       The coupon code.
-	 * @param PayPalCart     $cart       The cart context.
-	 * @param WC_Coupon|null $wc_coupon  The WC coupon object.
-	 * @param array          $builders   Array of builder names to call.
-	 * @param array          $extra      Extra context data.
 	 * @return array The built context.
 	 */
 	public function build_coupon_context(
 		string $issue_type,
 		string $code,
-		PayPalCart $cart,
+		StorePayPalCart $store_cart,
 		?WC_Coupon $wc_coupon,
 		array $builders,
 		array $extra = array()
@@ -64,7 +56,7 @@ class CouponContextBuilder {
 			$builder_context = $this->call_builder(
 				$builder,
 				$code,
-				$cart,
+				$store_cart,
 				$wc_coupon,
 				array_merge( $context, $extra )
 			);
@@ -78,31 +70,26 @@ class CouponContextBuilder {
 	/**
 	 * Dispatches to the appropriate builder method.
 	 *
-	 * @param string         $builder   The builder name.
-	 * @param string         $code      The coupon code.
-	 * @param PayPalCart     $cart      The cart context.
-	 * @param WC_Coupon|null $wc_coupon The WC coupon object.
-	 * @param array          $extra     Extra context data.
 	 * @return array The context data from the builder.
 	 */
-	private function call_builder( string $builder, string $code, PayPalCart $cart, ?WC_Coupon $wc_coupon, array $extra ): array {
+	private function call_builder( string $builder, string $code, StorePayPalCart $store_cart, ?WC_Coupon $wc_coupon, array $extra ): array {
 		switch ( $builder ) {
 			case 'alternatives':
-				return $this->build_alternatives( $code, $cart, $wc_coupon, $extra );
+				return $this->build_alternatives( $code, $store_cart, $wc_coupon, $extra );
 			case 'expiration':
-				return $this->build_expiration( $code, $cart, $wc_coupon, $extra );
+				return $this->build_expiration( $code, $store_cart, $wc_coupon, $extra );
 			case 'usage_limits':
-				return $this->build_usage_limits( $code, $cart, $wc_coupon, $extra );
+				return $this->build_usage_limits( $code, $store_cart, $wc_coupon, $extra );
 			case 'minimum_spend':
-				return $this->build_minimum_spend( $code, $cart, $wc_coupon, $extra );
+				return $this->build_minimum_spend( $code, $store_cart, $wc_coupon, $extra );
 			case 'maximum_spend':
-				return $this->build_maximum_spend( $code, $cart, $wc_coupon, $extra );
+				return $this->build_maximum_spend( $code, $store_cart, $wc_coupon, $extra );
 			case 'eligible_items':
-				return $this->build_eligible_items( $code, $cart, $wc_coupon, $extra );
+				return $this->build_eligible_items( $code, $store_cart, $wc_coupon, $extra );
 			case 'stacking':
-				return $this->build_stacking( $code, $cart, $wc_coupon, $extra );
+				return $this->build_stacking( $code, $store_cart, $wc_coupon, $extra );
 			case 'email_restriction':
-				return $this->build_email_restriction( $code, $cart, $wc_coupon, $extra );
+				return $this->build_email_restriction( $code, $store_cart, $wc_coupon, $extra );
 			default:
 				return array();
 		}
@@ -110,18 +97,12 @@ class CouponContextBuilder {
 
 	/**
 	 * Builds alternative coupons context.
-	 *
-	 * @param string         $code      The coupon code.
-	 * @param PayPalCart     $cart      The cart context.
-	 * @param WC_Coupon|null $wc_coupon The WC coupon object.
-	 * @param array          $extra     Extra context data.
-	 * @return array The context data.
 	 */
-	private function build_alternatives( string $code, PayPalCart $cart, ?WC_Coupon $wc_coupon, array $extra ): array {
+	private function build_alternatives( string $code, StorePayPalCart $store_cart, ?WC_Coupon $wc_coupon, array $extra ): array {
 		$alternatives = $this->get_alternative_coupons(
 			$code,
 			$extra['specific_issue'] ?? 'COUPON_INVALID',
-			$cart
+			$store_cart
 		);
 
 		if ( empty( $alternatives ) ) {
@@ -136,14 +117,8 @@ class CouponContextBuilder {
 
 	/**
 	 * Builds expiration context.
-	 *
-	 * @param string         $code      The coupon code.
-	 * @param PayPalCart     $cart      The cart context.
-	 * @param WC_Coupon|null $wc_coupon The WC coupon object.
-	 * @param array          $extra     Extra context data.
-	 * @return array The context data.
 	 */
-	private function build_expiration( string $code, PayPalCart $cart, ?WC_Coupon $wc_coupon, array $extra ): array {
+	private function build_expiration( string $code, StorePayPalCart $store_cart, ?WC_Coupon $wc_coupon, array $extra ): array {
 		if ( ! $wc_coupon ) {
 			return array();
 		}
@@ -160,14 +135,8 @@ class CouponContextBuilder {
 
 	/**
 	 * Builds usage limits context.
-	 *
-	 * @param string         $code      The coupon code.
-	 * @param PayPalCart     $cart      The cart context.
-	 * @param WC_Coupon|null $wc_coupon The WC coupon object.
-	 * @param array          $extra     Extra context data.
-	 * @return array The context data.
 	 */
-	private function build_usage_limits( string $code, PayPalCart $cart, ?WC_Coupon $wc_coupon, array $extra ): array {
+	private function build_usage_limits( string $code, StorePayPalCart $store_cart, ?WC_Coupon $wc_coupon, array $extra ): array {
 		if ( ! $wc_coupon ) {
 			return array();
 		}
@@ -180,71 +149,63 @@ class CouponContextBuilder {
 
 	/**
 	 * Builds minimum spend context.
-	 *
-	 * @param string         $code      The coupon code.
-	 * @param PayPalCart     $cart      The cart context.
-	 * @param WC_Coupon|null $wc_coupon The WC coupon object.
-	 * @param array          $extra     Extra context data.
-	 * @return array The context data.
 	 */
-	private function build_minimum_spend( string $code, PayPalCart $cart, ?WC_Coupon $wc_coupon, array $extra ): array {
+	private function build_minimum_spend( string $code, StorePayPalCart $store_cart, ?WC_Coupon $wc_coupon, array $extra ): array {
 		if ( ! $wc_coupon ) {
 			return array();
 		}
 
-		$subtotal = CartHelper::cart_item_total( $cart );
+		$subtotal = array_reduce(
+			$store_cart->items(),
+			static function ( float $total, StoreCartItem $item ): float {
+				return $total + $item->real_price() * (float) $item->schema()->quantity();
+			},
+			0.0
+		);
 		$minimum  = (float) $wc_coupon->get_minimum_amount();
 		$shortage = max( 0, $minimum - $subtotal );
-		$currency = CartHelper::currency( $cart, $this->store_currency->value() );
 
 		return array(
-			'minimum_required' => CartHelper::format_decimal( $minimum ),
-			'current_subtotal' => CartHelper::format_decimal( $subtotal ),
-			'shortage_amount'  => CartHelper::format_decimal( $shortage ),
-			'currency_code'    => $currency,
+			'minimum_required' => Money::create( $minimum )->to_decimal(),
+			'current_subtotal' => Money::create( $subtotal )->to_decimal(),
+			'shortage_amount'  => Money::create( $shortage )->to_decimal(),
+			'currency_code'    => $store_cart->currency(),
 		);
 	}
 
 	/**
 	 * Builds maximum spend context.
-	 *
-	 * @param string         $code      The coupon code.
-	 * @param PayPalCart     $cart      The cart context.
-	 * @param WC_Coupon|null $wc_coupon The WC coupon object.
-	 * @param array          $extra     Extra context data.
-	 * @return array The context data.
 	 */
-	private function build_maximum_spend( string $code, PayPalCart $cart, ?WC_Coupon $wc_coupon, array $extra ): array {
+	private function build_maximum_spend( string $code, StorePayPalCart $store_cart, ?WC_Coupon $wc_coupon, array $extra ): array {
 		if ( ! $wc_coupon ) {
 			return array();
 		}
 
-		$subtotal = CartHelper::cart_item_total( $cart );
+		$subtotal = array_reduce(
+			$store_cart->items(),
+			static function ( float $total, StoreCartItem $item ): float {
+				return $total + $item->real_price() * (float) $item->schema()->quantity();
+			},
+			0.0
+		);
 		$maximum  = (float) $wc_coupon->get_maximum_amount();
-		$currency = CartHelper::currency( $cart, $this->store_currency->value() );
 
 		return array(
-			'maximum_allowed'  => CartHelper::format_decimal( $maximum ),
-			'current_subtotal' => CartHelper::format_decimal( $subtotal ),
-			'currency_code'    => $currency,
+			'maximum_allowed'  => Money::create( $maximum )->to_decimal(),
+			'current_subtotal' => Money::create( $subtotal )->to_decimal(),
+			'currency_code'    => $store_cart->currency(),
 		);
 	}
 
 	/**
 	 * Builds eligible items context.
-	 *
-	 * @param string         $code      The coupon code.
-	 * @param PayPalCart     $cart      The cart context.
-	 * @param WC_Coupon|null $wc_coupon The WC coupon object.
-	 * @param array          $extra     Extra context data.
-	 * @return array The context data.
 	 */
-	private function build_eligible_items( string $code, PayPalCart $cart, ?WC_Coupon $wc_coupon, array $extra ): array {
+	private function build_eligible_items( string $code, StorePayPalCart $store_cart, ?WC_Coupon $wc_coupon, array $extra ): array {
 		if ( ! $wc_coupon ) {
 			return array();
 		}
 
-		$eligible = $this->get_eligible_items( $wc_coupon, $cart );
+		$eligible = $this->get_eligible_items( $wc_coupon, $store_cart );
 
 		if ( empty( $eligible ) ) {
 			return array();
@@ -255,14 +216,8 @@ class CouponContextBuilder {
 
 	/**
 	 * Builds stacking conflict context.
-	 *
-	 * @param string         $code      The coupon code.
-	 * @param PayPalCart     $cart      The cart context.
-	 * @param WC_Coupon|null $wc_coupon The WC coupon object.
-	 * @param array          $extra     Extra context data.
-	 * @return array The context data.
 	 */
-	private function build_stacking( string $code, PayPalCart $cart, ?WC_Coupon $wc_coupon, array $extra ): array {
+	private function build_stacking( string $code, StorePayPalCart $store_cart, ?WC_Coupon $wc_coupon, array $extra ): array {
 		$other_codes = $extra['other_codes'] ?? array();
 
 		if ( empty( $other_codes ) ) {
@@ -270,7 +225,7 @@ class CouponContextBuilder {
 		}
 
 		$current_discount   = $wc_coupon
-			? $this->discount_calculator->calculate_discount_amount( $wc_coupon, $cart )
+			? $this->discount_calculator->calculate_discount_amount( $wc_coupon, $store_cart->paypal_cart() )
 			: '0.00';
 		$attempted_discount = '0.00';
 
@@ -281,7 +236,7 @@ class CouponContextBuilder {
 		if ( $other_coupon->get_id() ) {
 			$attempted_discount = $this->discount_calculator->calculate_discount_amount(
 				$other_coupon,
-				$cart
+				$store_cart->paypal_cart()
 			);
 		}
 
@@ -296,14 +251,8 @@ class CouponContextBuilder {
 
 	/**
 	 * Builds email restriction context.
-	 *
-	 * @param string         $code      The coupon code.
-	 * @param PayPalCart     $cart      The cart context.
-	 * @param WC_Coupon|null $wc_coupon The WC coupon object.
-	 * @param array          $extra     Extra context data.
-	 * @return array The context data.
 	 */
-	private function build_email_restriction( string $code, PayPalCart $cart, ?WC_Coupon $wc_coupon, array $extra ): array {
+	private function build_email_restriction( string $code, StorePayPalCart $store_cart, ?WC_Coupon $wc_coupon, array $extra ): array {
 		if ( ! $wc_coupon ) {
 			return array();
 		}
@@ -319,19 +268,14 @@ class CouponContextBuilder {
 
 	/**
 	 * Gets alternative coupon suggestions via filter.
-	 *
-	 * @param string     $failed_code The coupon code that failed.
-	 * @param string     $reason      The failure reason.
-	 * @param PayPalCart $cart        The cart context.
-	 * @return array Array of alternative coupon codes.
 	 */
-	private function get_alternative_coupons( string $failed_code, string $reason, PayPalCart $cart ): array {
+	private function get_alternative_coupons( string $failed_code, string $reason, StorePayPalCart $store_cart ): array {
 		return apply_filters(
 			'woocommerce_paypal_payments_store_sync_suggested_alternative_coupons',
 			array(),
 			$failed_code,
 			$reason,
-			$cart
+			$store_cart->paypal_cart()
 		);
 	}
 
@@ -404,15 +348,13 @@ class CouponContextBuilder {
 	 * which handles all coupon restrictions including product IDs, categories,
 	 * excluded items, sale items, and third-party plugin logic.
 	 *
-	 * @param WC_Coupon  $wc_coupon The WC coupon.
-	 * @param PayPalCart $cart      The cart context.
 	 * @return array Array of eligible variant IDs.
 	 */
-	private function get_eligible_items( WC_Coupon $wc_coupon, PayPalCart $cart ): array {
+	private function get_eligible_items( WC_Coupon $wc_coupon, StorePayPalCart $store_cart ): array {
 		$eligible = array();
 
-		foreach ( $cart->items() as $item ) {
-			$product = $this->product_manager->find_product( $item );
+		foreach ( $store_cart->items() as $item ) {
+			$product = $this->product_manager->find_product( $item->schema() );
 
 			if ( ! $product ) {
 				continue;
@@ -421,7 +363,7 @@ class CouponContextBuilder {
 			// Use WooCommerce's native validation which handles all restrictions
 			// including products, categories, exclusions, sale items, and plugin extensions.
 			if ( $wc_coupon->is_valid_for_product( $product, array( 'data' => $product ) ) ) {
-				$eligible[] = $item->variant_id();
+				$eligible[] = $item->schema()->variant_id();
 			}
 		}
 
