@@ -215,4 +215,105 @@ class PayPalCartTest extends SchemaTestCase {
 		$issues = $validation->all();
 		$this->assertCount( 3, $issues );
 	}
+
+	// -------------------------------------------------------------------------
+	// Group — to_array()
+	// -------------------------------------------------------------------------
+
+	/**
+	 * GIVEN a minimal PayPalCart with items and payment_method only
+	 * WHEN to_array() is called
+	 * THEN items and payment_method are present; optional fields are absent
+	 */
+	public function test_to_array_contains_items_and_payment_method_for_minimal_cart(): void {
+		$cart = PayPalCart::from_array(
+			array(
+				'items'          => array( array( 'item_id' => 'SKU-1', 'quantity' => 2 ) ),
+				'payment_method' => array( 'type' => 'paypal' ),
+			),
+			new StoreValidation()
+		);
+
+		$result = $cart->to_array();
+
+		$this->assertArrayHasKey( 'items', $result );
+		$this->assertCount( 1, $result['items'] );
+		$this->assertSame( 'SKU-1', $result['items'][0]['item_id'] );
+		$this->assertSame( 2, $result['items'][0]['quantity'] );
+		$this->assertArrayHasKey( 'payment_method', $result );
+		$this->assertSame( 'paypal', $result['payment_method']['type'] );
+		$this->assertArrayNotHasKey( 'customer', $result );
+		$this->assertArrayNotHasKey( 'shipping_address', $result );
+		$this->assertArrayNotHasKey( 'billing_address', $result );
+	}
+
+	/**
+	 * GIVEN a PayPalCart with a country_code provided as lowercase 'us'
+	 * WHEN to_array() is called
+	 * THEN the shipping_address country_code is normalized to uppercase 'US'
+	 */
+	public function test_to_array_normalizes_country_code_to_uppercase(): void {
+		$cart = PayPalCart::from_array(
+			array(
+				'items'            => array( array( 'quantity' => 1 ) ),
+				'payment_method'   => array( 'type' => 'paypal' ),
+				'shipping_address' => array( 'country_code' => 'us', 'address_line_1' => '123 Main St' ),
+			),
+			new StoreValidation()
+		);
+
+		$result = $cart->to_array();
+
+		$this->assertArrayHasKey( 'shipping_address', $result );
+		$this->assertSame( 'US', $result['shipping_address']['country_code'] );
+	}
+
+	/**
+	 * GIVEN a PayPalCart with customer, shipping_address, and billing_address
+	 * WHEN to_array() is called
+	 * THEN all optional nested objects are delegated to their own to_array() and appear in the result
+	 */
+	public function test_to_array_delegates_optional_fields_to_nested_to_array(): void {
+		$cart = PayPalCart::from_array(
+			array(
+				'items'           => array( array( 'quantity' => 1 ) ),
+				'payment_method'  => array( 'type' => 'paypal' ),
+				'customer'        => array( 'email_address' => 'test@example.com' ),
+				'shipping_address' => array( 'country_code' => 'DE' ),
+				'billing_address' => array( 'country_code' => 'DE' ),
+			),
+			new StoreValidation()
+		);
+
+		$result = $cart->to_array();
+
+		$this->assertArrayHasKey( 'customer', $result );
+		$this->assertSame( 'test@example.com', $result['customer']['email_address'] );
+		$this->assertArrayHasKey( 'shipping_address', $result );
+		$this->assertSame( 'DE', $result['shipping_address']['country_code'] );
+		$this->assertArrayHasKey( 'billing_address', $result );
+		$this->assertSame( 'DE', $result['billing_address']['country_code'] );
+	}
+
+	/**
+	 * GIVEN a PayPalCart with customer whose to_array() returns an empty array
+	 *       (Customer has no fields set, but is present in input)
+	 * WHEN to_array() is called
+	 * THEN customer is absent from the result because an empty array is falsy for array_filter
+	 */
+	public function test_to_array_omits_customer_when_customer_to_array_is_empty(): void {
+		// An empty customer object (no valid fields) produces an empty to_array().
+		$cart = PayPalCart::from_array(
+			array(
+				'items'          => array( array( 'quantity' => 1 ) ),
+				'payment_method' => array( 'type' => 'paypal' ),
+				'customer'       => array(),
+			),
+			new StoreValidation()
+		);
+
+		$result = $cart->to_array();
+
+		$this->assertArrayNotHasKey( 'customer', $result );
+	}
 }

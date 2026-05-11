@@ -7,15 +7,12 @@ declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\StoreSync\StoreData;
 
-use Brain\Monkey\Functions;
 use Mockery;
 use WC_Cart;
 use WP_Error;
 use WooCommerce\PayPalCommerce\StoreSync\Config\StoreCurrencyValue;
 use WooCommerce\PayPalCommerce\StoreSync\Helper\AgenticCartBuilder;
-use WooCommerce\PayPalCommerce\StoreSync\Schema\Address;
 use WooCommerce\PayPalCommerce\StoreSync\Schema\CartItem;
-use WooCommerce\PayPalCommerce\StoreSync\Schema\Customer;
 use WooCommerce\PayPalCommerce\StoreSync\Schema\PaymentMethod;
 use WooCommerce\PayPalCommerce\StoreSync\Schema\PayPalCart;
 use WooCommerce\PayPalCommerce\StoreSync\Validation\StoreValidation;
@@ -43,6 +40,7 @@ class StorePayPalCartTest extends StoreSyncTestCase {
 		$stub->allows( 'billing_address' )->andReturn( $overrides['billing_address'] ?? null );
 		$stub->allows( 'payment_method' )->andReturn( $overrides['payment_method'] ?? null );
 		$stub->allows( 'items' )->andReturn( $overrides['items'] ?? array() );
+		$stub->allows( 'to_array' )->andReturn( $overrides['to_array'] ?? array() );
 		return $stub;
 	}
 
@@ -73,14 +71,35 @@ class StorePayPalCartTest extends StoreSyncTestCase {
 	/**
 	 * Builds a StoreCartItem stub using the given CartItem schema and price.
 	 *
-	 * @param CartItem $schema     The schema to return from schema().
-	 * @param float    $real_price The value to return from real_price().
+	 * @param CartItem   $schema          The schema to return from schema().
+	 * @param float      $real_price      The value to return from real_price().
+	 * @param array|null $to_array_result When provided, returned by to_array(); defaults to a
+	 *                                    minimal array built from the schema and real_price.
 	 * @return StoreCartItem&\Mockery\MockInterface
 	 */
-	private function make_store_item( CartItem $schema, float $real_price = 9.99 ): StoreCartItem {
+	private function make_store_item( CartItem $schema, float $real_price = 9.99, ?array $to_array_result = null ): StoreCartItem {
 		$stub = Mockery::mock( StoreCartItem::class );
 		$stub->allows( 'schema' )->andReturn( $schema );
 		$stub->allows( 'real_price' )->andReturn( $real_price );
+
+		if ( $to_array_result === null ) {
+			// Build a minimal to_array() result from the schema fields and real price.
+			$to_array_result = array_filter(
+				array(
+					'quantity'   => $schema->quantity(),
+					'item_id'    => $schema->item_id(),
+					'variant_id' => $schema->variant_id(),
+					'name'       => $schema->name(),
+					'price'      => array(
+						'currency_code' => 'USD',
+						'value'         => number_format( $real_price, 2, '.', '' ),
+					),
+				),
+				static fn( $v ) => $v !== null
+			);
+		}
+
+		$stub->allows( 'to_array' )->andReturn( $to_array_result );
 		return $stub;
 	}
 
@@ -515,7 +534,14 @@ class StorePayPalCartTest extends StoreSyncTestCase {
 	 */
 	public function test_to_array_currency_appears_in_item_prices(): void {
 		$schema     = $this->make_cart_item_schema( array( 'quantity' => 1 ) );
-		$store_item = $this->make_store_item( $schema, 15.0 );
+		$store_item = $this->make_store_item(
+			$schema,
+			15.0,
+			array(
+				'quantity' => 1,
+				'price'    => array( 'currency_code' => 'EUR', 'value' => '15.00' ),
+			)
+		);
 		$sut        = $this->make_sut(
 			array(
 				'store_currency' => $this->make_currency( 'EUR' ),
@@ -540,15 +566,16 @@ class StorePayPalCartTest extends StoreSyncTestCase {
 	 * AND customer.name contains given_name and surname
 	 */
 	public function test_to_array_includes_customer_when_present(): void {
-		$customer_data = array(
-			'name' => array(
-				'given_name' => 'John',
-				'surname'    => 'Doe',
+		$paypal_cart = $this->make_paypal_cart_schema( array(
+			'items'           => array( array( 'quantity' => 1 ) ),
+			'payment_method'  => array( 'type' => 'paypal' ),
+			'customer'        => array(
+				'name' => array(
+					'given_name' => 'John',
+					'surname'    => 'Doe',
+				),
 			),
-		);
-		$validation    = new StoreValidation();
-		$customer      = Customer::from_array( $customer_data, $validation );
-		$paypal_cart   = $this->make_paypal_cart( array( 'customer' => $customer ) );
+		) );
 
 		$sut = $this->make_sut( array( 'paypal_cart' => $paypal_cart ) );
 
@@ -566,7 +593,10 @@ class StorePayPalCartTest extends StoreSyncTestCase {
 	 * THEN customer is absent from the result
 	 */
 	public function test_to_array_omits_customer_when_absent(): void {
-		$paypal_cart = $this->make_paypal_cart( array( 'customer' => null ) );
+		$paypal_cart = $this->make_paypal_cart_schema( array(
+			'items'          => array( array( 'quantity' => 1 ) ),
+			'payment_method' => array( 'type' => 'paypal' ),
+		) );
 		$sut         = $this->make_sut( array( 'paypal_cart' => $paypal_cart ) );
 
 		$result = $sut->to_array();
@@ -584,9 +614,11 @@ class StorePayPalCartTest extends StoreSyncTestCase {
 	 * THEN shipping_address is present in the result
 	 */
 	public function test_to_array_includes_shipping_address_when_country_code_present(): void {
-		$validation      = new StoreValidation();
-		$address         = Address::from_array( array( 'country_code' => 'US', 'address_line_1' => '123 Main St' ), $validation );
-		$paypal_cart     = $this->make_paypal_cart( array( 'shipping_address' => $address ) );
+		$paypal_cart = $this->make_paypal_cart_schema( array(
+			'items'            => array( array( 'quantity' => 1 ) ),
+			'payment_method'   => array( 'type' => 'paypal' ),
+			'shipping_address' => array( 'country_code' => 'US', 'address_line_1' => '123 Main St' ),
+		) );
 
 		$sut = $this->make_sut( array( 'paypal_cart' => $paypal_cart ) );
 
@@ -602,7 +634,10 @@ class StorePayPalCartTest extends StoreSyncTestCase {
 	 * THEN shipping_address is absent from the result
 	 */
 	public function test_to_array_omits_shipping_address_when_country_code_is_empty(): void {
-		$paypal_cart = $this->make_paypal_cart( array( 'shipping_address' => null ) );
+		$paypal_cart = $this->make_paypal_cart_schema( array(
+			'items'          => array( array( 'quantity' => 1 ) ),
+			'payment_method' => array( 'type' => 'paypal' ),
+		) );
 		$sut         = $this->make_sut( array( 'paypal_cart' => $paypal_cart ) );
 
 		$result = $sut->to_array();
@@ -620,9 +655,11 @@ class StorePayPalCartTest extends StoreSyncTestCase {
 	 * THEN billing_address is present in the result
 	 */
 	public function test_to_array_includes_billing_address_when_country_code_present(): void {
-		$validation  = new StoreValidation();
-		$address     = Address::from_array( array( 'country_code' => 'DE', 'address_line_1' => 'Musterstr. 1' ), $validation );
-		$paypal_cart = $this->make_paypal_cart( array( 'billing_address' => $address ) );
+		$paypal_cart = $this->make_paypal_cart_schema( array(
+			'items'           => array( array( 'quantity' => 1 ) ),
+			'payment_method'  => array( 'type' => 'paypal' ),
+			'billing_address' => array( 'country_code' => 'DE', 'address_line_1' => 'Musterstr. 1' ),
+		) );
 
 		$sut = $this->make_sut( array( 'paypal_cart' => $paypal_cart ) );
 
@@ -638,7 +675,10 @@ class StorePayPalCartTest extends StoreSyncTestCase {
 	 * THEN billing_address is absent from the result
 	 */
 	public function test_to_array_omits_billing_address_when_country_code_is_empty(): void {
-		$paypal_cart = $this->make_paypal_cart( array( 'billing_address' => null ) );
+		$paypal_cart = $this->make_paypal_cart_schema( array(
+			'items'          => array( array( 'quantity' => 1 ) ),
+			'payment_method' => array( 'type' => 'paypal' ),
+		) );
 		$sut         = $this->make_sut( array( 'paypal_cart' => $paypal_cart ) );
 
 		$result = $sut->to_array();

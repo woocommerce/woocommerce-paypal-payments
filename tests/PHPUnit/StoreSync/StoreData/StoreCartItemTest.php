@@ -37,14 +37,25 @@ class StoreCartItemTest extends StoreSyncTestCase {
 	}
 
 	/**
-	 * Creates a WC_Product stub returning the given price string.
+	 * Creates a WC_Product stub returning the given price string and optional extra fields.
 	 *
-	 * @param string $price_string The value returned by get_price().
+	 * @param string      $price_string        The value returned by get_price().
+	 * @param string      $name                The value returned by get_name().
+	 * @param string      $short_description   The value returned by get_short_description().
+	 * @param int         $parent_id           The value returned by get_parent_id().
 	 * @return WC_Product&\Mockery\MockInterface
 	 */
-	private function make_product( string $price_string ): WC_Product {
+	private function make_product(
+		string $price_string,
+		string $name = 'Product Name',
+		string $short_description = '',
+		int $parent_id = 0
+	): WC_Product {
 		$stub = Mockery::mock( WC_Product::class );
 		$stub->allows( 'get_price' )->andReturn( $price_string );
+		$stub->allows( 'get_name' )->andReturn( $name );
+		$stub->allows( 'get_short_description' )->andReturn( $short_description );
+		$stub->allows( 'get_parent_id' )->andReturn( $parent_id );
 		return $stub;
 	}
 
@@ -277,5 +288,139 @@ class StoreCartItemTest extends StoreSyncTestCase {
 		$sut     = new StoreCartItem( $schema, $product, $this->make_currency( 'USD' ) );
 
 		$this->assertSame( $schema, $sut->schema() );
+	}
+
+	// -------------------------------------------------------------------------
+	// Group 6 — to_array()
+	// -------------------------------------------------------------------------
+
+	/**
+	 * GIVEN a StoreCartItem with a real_price that differs from the schema price
+	 * WHEN to_array() is called
+	 * THEN the price in the result reflects the real store price, not the schema price
+	 */
+	public function test_to_array_price_uses_real_store_price_not_schema_price(): void {
+		$schema  = CartItem::from_array(
+			array( 'quantity' => 2, 'item_id' => 'sku-1', 'price' => array( 'currency_code' => 'USD', 'value' => '5.00' ) ),
+			new StoreValidation()
+		);
+		$product = $this->make_product( '12.50' );
+		$sut     = new StoreCartItem( $schema, $product, $this->make_currency( 'USD' ) );
+
+		$result = $sut->to_array();
+
+		$this->assertSame( '12.50', $result['price']['value'] );
+		$this->assertSame( 'USD', $result['price']['currency_code'] );
+	}
+
+	/**
+	 * GIVEN a StoreCartItem whose product has a name
+	 * WHEN to_array() is called
+	 * THEN the name in the result comes from WC_Product::get_name(), not the schema input
+	 */
+	public function test_to_array_name_comes_from_product_not_schema(): void {
+		$schema  = CartItem::from_array(
+			array( 'quantity' => 1, 'name' => 'Schema Name' ),
+			new StoreValidation()
+		);
+		$product = $this->make_product( '9.99', 'Real Product Name' );
+		$sut     = new StoreCartItem( $schema, $product, $this->make_currency( 'USD' ) );
+
+		$result = $sut->to_array();
+
+		$this->assertSame( 'Real Product Name', $result['name'] );
+	}
+
+	/**
+	 * GIVEN a StoreCartItem whose product has a non-empty short description
+	 * WHEN to_array() is called
+	 * THEN description is present and contains the product short description
+	 */
+	public function test_to_array_description_present_when_product_has_short_description(): void {
+		$schema  = CartItem::from_array( array( 'quantity' => 1 ), new StoreValidation() );
+		$product = $this->make_product( '9.99', 'Product', 'A fine item.' );
+		$sut     = new StoreCartItem( $schema, $product, $this->make_currency( 'USD' ) );
+
+		$result = $sut->to_array();
+
+		$this->assertArrayHasKey( 'description', $result );
+		$this->assertSame( 'A fine item.', $result['description'] );
+	}
+
+	/**
+	 * GIVEN a StoreCartItem whose product has an empty short description
+	 * WHEN to_array() is called
+	 * THEN description is absent from the result
+	 */
+	public function test_to_array_description_absent_when_product_has_no_short_description(): void {
+		$schema  = CartItem::from_array( array( 'quantity' => 1 ), new StoreValidation() );
+		$product = $this->make_product( '9.99', 'Product', '' );
+		$sut     = new StoreCartItem( $schema, $product, $this->make_currency( 'USD' ) );
+
+		$result = $sut->to_array();
+
+		$this->assertArrayNotHasKey( 'description', $result );
+	}
+
+	/**
+	 * GIVEN a StoreCartItem whose product has a non-zero parent_id (i.e., a variation)
+	 * WHEN to_array() is called
+	 * THEN parent_id is present in the result as a string
+	 */
+	public function test_to_array_parent_id_present_as_string_when_product_has_parent(): void {
+		$schema  = CartItem::from_array( array( 'quantity' => 1 ), new StoreValidation() );
+		$product = $this->make_product( '9.99', 'Product', '', 42 );
+		$sut     = new StoreCartItem( $schema, $product, $this->make_currency( 'USD' ) );
+
+		$result = $sut->to_array();
+
+		$this->assertArrayHasKey( 'parent_id', $result );
+		$this->assertSame( '42', $result['parent_id'] );
+	}
+
+	/**
+	 * GIVEN a StoreCartItem whose product has a parent_id of zero (i.e., a top-level product)
+	 * WHEN to_array() is called
+	 * THEN parent_id is absent from the result
+	 */
+	public function test_to_array_parent_id_absent_when_product_has_no_parent(): void {
+		$schema  = CartItem::from_array( array( 'quantity' => 1 ), new StoreValidation() );
+		$product = $this->make_product( '9.99', 'Product', '', 0 );
+		$sut     = new StoreCartItem( $schema, $product, $this->make_currency( 'USD' ) );
+
+		$result = $sut->to_array();
+
+		$this->assertArrayNotHasKey( 'parent_id', $result );
+	}
+
+	/**
+	 * GIVEN a StoreCartItem with schema fields like quantity, item_id, variant_id, and
+	 *       selected_attributes
+	 * WHEN to_array() is called
+	 * THEN those fields are preserved from the CartItem schema in the result
+	 */
+	public function test_to_array_preserves_schema_fields_quantity_item_id_variant_id_selected_attributes(): void {
+		$schema  = CartItem::from_array(
+			array(
+				'quantity'            => 3,
+				'item_id'             => 'sku-99',
+				'variant_id'          => 'var-5',
+				'selected_attributes' => array(
+					array( 'name' => 'Size', 'value' => 'L' ),
+				),
+			),
+			new StoreValidation()
+		);
+		$product = $this->make_product( '20.00', 'T-Shirt' );
+		$sut     = new StoreCartItem( $schema, $product, $this->make_currency( 'EUR' ) );
+
+		$result = $sut->to_array();
+
+		$this->assertSame( 3, $result['quantity'] );
+		$this->assertSame( 'sku-99', $result['item_id'] );
+		$this->assertSame( 'var-5', $result['variant_id'] );
+		$this->assertSame( 'Size', $result['selected_attributes'][0]['name'] );
+		$this->assertSame( 'L', $result['selected_attributes'][0]['value'] );
+		$this->assertSame( 'EUR', $result['price']['currency_code'] );
 	}
 }

@@ -174,11 +174,7 @@ class ReplaceCartEndpointTest extends AgenticEndpointTestCase {
 				}
 
 				// Should have NEW shipping info.
-				if ( $cart_array['shipping']['name']['full_name'] !== 'New Name' ) {
-					return false;
-				}
-
-				if ( $cart_array['shipping']['address']['address_line_1'] !== '456 New Ave' ) {
+				if ( ( $cart_array['shipping_address']['address_line_1'] ?? '' ) !== '456 New Ave' ) {
 					return false;
 				}
 
