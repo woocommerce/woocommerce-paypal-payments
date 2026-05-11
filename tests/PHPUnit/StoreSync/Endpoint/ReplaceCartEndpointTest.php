@@ -6,7 +6,6 @@ namespace WooCommerce\PayPalCommerce\StoreSync\Endpoint;
 use Mockery;
 use WP_REST_Request;
 
-use WooCommerce\PayPalCommerce\StoreSync\CartValidation\CouponValidator\AppliedCouponsBuilder;
 use WooCommerce\PayPalCommerce\StoreSync\Response\CartResponse;
 use WooCommerce\PayPalCommerce\StoreSync\Schema\PayPalCart;
 use WooCommerce\PayPalCommerce\StoreSync\Validation\StoreValidation;
@@ -54,11 +53,6 @@ class ReplaceCartEndpointTest extends AgenticEndpointTestCase {
 		$response_factory->allows( 'from_cart' )
 			->andReturnUsing( fn( $cart ) => CartResponse::create( $cart, '', new StoreValidation() ) );
 
-		// Mock AppliedCouponsBuilder.
-		$applied_coupons_builder = Mockery::mock( AppliedCouponsBuilder::class );
-		$applied_coupons_builder->allows( 'calculate_total_discount' )
-			->andReturn( 0.0 );
-
 		// Mock order_manager behavior
 		$order_manager = $mocks['order_manager'];
 		$order_manager->allows( 'update_order' )->andReturn( true );
@@ -75,7 +69,7 @@ class ReplaceCartEndpointTest extends AgenticEndpointTestCase {
 			$validation_processor,
 			$mocks['logger'],
 			$order_manager,
-			$applied_coupons_builder
+			$mocks['store_data']
 		);
 
 		$request = new WP_REST_Request( 'PUT', "/wp-json/paypal/v1/merchant-cart/{$cart_id}" );
@@ -105,9 +99,6 @@ class ReplaceCartEndpointTest extends AgenticEndpointTestCase {
 			->with( $cart_id )
 			->andReturn( null );
 
-		// Mock AppliedCouponsBuilder.
-		$applied_coupons_builder = Mockery::mock( AppliedCouponsBuilder::class );
-
 		$endpoint = new ReplaceCartEndpoint(
 			$mocks['auth_provider'],
 			$session_handler,
@@ -116,7 +107,7 @@ class ReplaceCartEndpointTest extends AgenticEndpointTestCase {
 			$mocks['validation_processor'],
 			$mocks['logger'],
 			$mocks['order_manager'],
-			$applied_coupons_builder
+			$mocks['store_data']
 		);
 
 		$request = new WP_REST_Request( 'PUT', "/wp-json/paypal/v1/merchant-cart/{$cart_id}" );
@@ -199,11 +190,6 @@ class ReplaceCartEndpointTest extends AgenticEndpointTestCase {
 		$response_factory->allows( 'from_cart' )
 			->andReturnUsing( fn( $cart ) => CartResponse::create( $cart, '', new StoreValidation() ) );
 
-		// Mock AppliedCouponsBuilder.
-		$applied_coupons_builder = Mockery::mock( AppliedCouponsBuilder::class );
-		$applied_coupons_builder->allows( 'calculate_total_discount' )
-			->andReturn( 0.0 );
-
 		// Mock order_manager behavior
 		$order_manager = $mocks['order_manager'];
 		$order_manager->allows( 'update_order' )->andReturn( true );
@@ -220,7 +206,7 @@ class ReplaceCartEndpointTest extends AgenticEndpointTestCase {
 			$validation_processor,
 			$mocks['logger'],
 			$order_manager,
-			$applied_coupons_builder
+			$mocks['store_data']
 		);
 
 		$request = new WP_REST_Request( 'PUT', "/wp-json/paypal/v1/merchant-cart/{$cart_id}" );
@@ -266,11 +252,6 @@ class ReplaceCartEndpointTest extends AgenticEndpointTestCase {
 		$session_handler->allows( 'update_cart_session' )
 			->andReturn( false );
 
-		// Mock AppliedCouponsBuilder.
-		$applied_coupons_builder = Mockery::mock( AppliedCouponsBuilder::class );
-		$applied_coupons_builder->allows( 'calculate_total_discount' )
-			->andReturn( 0.0 );
-
 		// Mock order_manager behavior - should succeed since we're testing session update failure
 		$order_manager = $mocks['order_manager'];
 		$order_manager->allows( 'update_order' )->andReturn( true );
@@ -287,7 +268,7 @@ class ReplaceCartEndpointTest extends AgenticEndpointTestCase {
 			$validation_processor,
 			$mocks['logger'],
 			$order_manager,
-			$applied_coupons_builder
+			$mocks['store_data']
 		);
 
 		$request = new WP_REST_Request( 'PUT', "/wp-json/paypal/v1/merchant-cart/{$cart_id}" );

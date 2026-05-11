@@ -67,7 +67,12 @@ class GetCartEndpoint extends AgenticRestEndpoint {
 		}
 
 		// TODO: Validation issues from re-parsing are discarded; will be cleaned up in a future refactor.
-		$response = $this->response_factory->from_cart( $session['cart'], $cart_id, new StoreValidation() );
+		$store_cart = $this->store_data->create_cart( $session['cart'], new StoreValidation() );
+		$response   = $this->response_factory->from_cart(
+			$store_cart->paypal_cart(),
+			$cart_id,
+			$store_cart->validation()
+		);
 
 		return $this->cart_details( $response, 200 );
 	}

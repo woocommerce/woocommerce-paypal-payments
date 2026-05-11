@@ -49,7 +49,8 @@ class GetCartEndpointTest extends AgenticEndpointTestCase {
 			$response_factory,
 			$mocks['validation_processor'],
 			$mocks['logger'],
-			$mocks['order_manager']
+			$mocks['order_manager'],
+			$mocks['store_data']
 		);
 
 		$request = new WP_REST_Request( 'GET', "/wp-json/paypal/v1/merchant-cart/{$cart_id}" );
@@ -83,7 +84,8 @@ class GetCartEndpointTest extends AgenticEndpointTestCase {
 			$mocks['response_factory'],
 			$mocks['validation_processor'],
 			$mocks['logger'],
-			$mocks['order_manager']
+			$mocks['order_manager'],
+			$mocks['store_data']
 		);
 
 		$request = new WP_REST_Request( 'GET', "/wp-json/paypal/v1/merchant-cart/{$cart_id}" );

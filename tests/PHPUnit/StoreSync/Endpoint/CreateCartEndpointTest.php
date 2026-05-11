@@ -54,7 +54,8 @@ class CreateCartEndpointTest extends AgenticEndpointTestCase {
 			$response_factory,
 			$validation_processor,
 			$mocks['logger'],
-			$order_manager
+			$order_manager,
+			$mocks['store_data']
 		);
 
 		$request = new WP_REST_Request( 'POST', '/wp-json/paypal/v1/merchant-cart' );

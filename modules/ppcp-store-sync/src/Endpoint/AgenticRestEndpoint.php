@@ -27,6 +27,8 @@ use WooCommerce\PayPalCommerce\StoreSync\Session\AgenticSessionHandler;
 use WooCommerce\PayPalCommerce\StoreSync\CartValidation\CartValidationProcessor;
 use WooCommerce\PayPalCommerce\StoreSync\Helper\PayPalOrderManager;
 use WooCommerce\PayPalCommerce\StoreSync\Helper\AgenticSessionManager;
+use WooCommerce\PayPalCommerce\StoreSync\StoreData\StoreData;
+use WooCommerce\PayPalCommerce\StoreSync\StoreData\StorePayPalCart;
 use WooCommerce\PayPalCommerce\StoreSync\Validation\StoreValidation;
 
 /**
@@ -59,6 +61,8 @@ abstract class AgenticRestEndpoint extends WC_REST_Controller {
 
 	protected StoreValidation $validation;
 
+	protected StoreData $store_data;
+
 	public function __construct(
 		AuthServiceProvider $auth_provider,
 		AgenticSessionHandler $session_handler,
@@ -66,7 +70,8 @@ abstract class AgenticRestEndpoint extends WC_REST_Controller {
 		ResponseFactory $response_factory,
 		CartValidationProcessor $validation_processor,
 		LoggerInterface $logger,
-		PayPalOrderManager $order_manager
+		PayPalOrderManager $order_manager,
+		StoreData $store_data
 	) {
 
 		$this->auth_provider        = $auth_provider;
@@ -76,6 +81,7 @@ abstract class AgenticRestEndpoint extends WC_REST_Controller {
 		$this->validation_processor = $validation_processor;
 		$this->logger               = $logger;
 		$this->order_manager        = $order_manager;
+		$this->store_data           = $store_data;
 		$this->validation           = new StoreValidation();
 	}
 
@@ -155,7 +161,7 @@ abstract class AgenticRestEndpoint extends WC_REST_Controller {
 	 * Parse and validate cart from request body.
 	 *
 	 * @param WP_REST_Request $request The request object.
-	 * @return PayPalCart|AgenticError Valid cart or error.
+	 * @return StorePayPalCart|AgenticError Enriched cart or error.
 	 */
 	protected function get_cart_from_request( WP_REST_Request $request ) {
 		$data = $this->parse_json_body( $request );
@@ -165,10 +171,10 @@ abstract class AgenticRestEndpoint extends WC_REST_Controller {
 		}
 
 		$this->validation = new StoreValidation();
-		$cart             = PayPalCart::from_array( $data, $this->validation );
-		$this->validation_processor->validate_cart( $cart, $this->validation );
+		$paypal_cart      = PayPalCart::from_array( $data, $this->validation );
+		$this->validation_processor->validate_cart( $paypal_cart, $this->validation );
 
-		return $cart;
+		return $this->store_data->create_cart( $paypal_cart, $this->validation );
 	}
 
 	/**

@@ -247,7 +247,8 @@ return array(
 			$c->get( 'agentic.response.factory' ),
 			$c->get( 'agentic.validation.processor' ),
 			$c->get( 'agentic.logger' ),
-			$c->get( 'agentic.helper.paypal-order-manager' )
+			$c->get( 'agentic.helper.paypal-order-manager' ),
+			$c->get( 'agentic.store.data' )
 		);
 	},
 	'agentic.rest.get_cart'                        => static function ( ContainerInterface $c ): GetCartEndpoint {
@@ -258,7 +259,8 @@ return array(
 			$c->get( 'agentic.response.factory' ),
 			$c->get( 'agentic.validation.processor' ),
 			$c->get( 'agentic.logger' ),
-			$c->get( 'agentic.helper.paypal-order-manager' )
+			$c->get( 'agentic.helper.paypal-order-manager' ),
+			$c->get( 'agentic.store.data' )
 		);
 	},
 	'agentic.rest.replace_cart'                    => static function ( ContainerInterface $c ): ReplaceCartEndpoint {
@@ -269,7 +271,8 @@ return array(
 			$c->get( 'agentic.response.factory' ),
 			$c->get( 'agentic.validation.processor' ),
 			$c->get( 'agentic.logger' ),
-			$c->get( 'agentic.helper.paypal-order-manager' )
+			$c->get( 'agentic.helper.paypal-order-manager' ),
+			$c->get( 'agentic.store.data' )
 		);
 	},
 	'agentic.rest.checkout'                        => static function ( ContainerInterface $c ): CheckoutEndpoint {
@@ -281,6 +284,7 @@ return array(
 			$c->get( 'agentic.validation.processor' ),
 			$c->get( 'agentic.logger' ),
 			$c->get( 'agentic.helper.paypal-order-manager' ),
+			$c->get( 'agentic.store.data' ),
 			$c->get( 'agentic.helper.checkout-processor' )
 		);
 	},

@@ -31,6 +31,7 @@ use WooCommerce\PayPalCommerce\StoreSync\Schema\PayPalCart;
 use WooCommerce\PayPalCommerce\StoreSync\Auth\AuthServiceProvider;
 use WooCommerce\PayPalCommerce\StoreSync\Session\AgenticSessionHandler;
 use WooCommerce\PayPalCommerce\StoreSync\Response\ResponseFactory;
+use WooCommerce\PayPalCommerce\StoreSync\StoreData\StoreData;
 
 /**
  * Checkout REST endpoint.
@@ -57,10 +58,11 @@ class CheckoutEndpoint extends AgenticRestEndpoint {
 		CartValidationProcessor $validation_processor,
 		LoggerInterface $logger,
 		PayPalOrderManager $order_manager,
+		StoreData $store_data,
 		AgenticCheckoutProcessor $checkout_processor
 	) {
 
-		parent::__construct( $auth_provider, $session_handler, $session_manager, $response_factory, $validation_processor, $logger, $order_manager );
+		parent::__construct( $auth_provider, $session_handler, $session_manager, $response_factory, $validation_processor, $logger, $order_manager, $store_data );
 
 		$this->checkout_processor = $checkout_processor;
 	}
@@ -101,7 +103,10 @@ class CheckoutEndpoint extends AgenticRestEndpoint {
 
 		// TODO: Move this into a validator to add a PAYMENT_ERROR, which we can check here.
 		$pm_validation  = new StoreValidation();
-		$payment_method = PaymentMethod::from_array( (array) ( $data['payment_method'] ?? array() ), $pm_validation );
+		$payment_method = PaymentMethod::from_array(
+			(array) ( $data['payment_method'] ?? array() ),
+			$pm_validation
+		);
 
 		if ( ! $pm_validation->is_empty() ) {
 			return $this->error(
@@ -118,34 +123,52 @@ class CheckoutEndpoint extends AgenticRestEndpoint {
 		}
 
 		// Parse the incoming cart data.
-		$cart = $this->get_cart_from_request( $request );
-		if ( $cart instanceof AgenticError ) {
-			return $this->error( $cart );
+		$store_cart = $this->get_cart_from_request( $request );
+		if ( $store_cart instanceof AgenticError ) {
+			return $this->error( $store_cart );
 		}
 
+		$paypal_cart = $store_cart->paypal_cart();
+		$validation  = $store_cart->validation();
+
 		// If the cart has _any_ validation issue, stop here.
-		if ( ! $this->validation->is_empty() ) {
-			$cart_response = $this->response_factory->from_cart( $cart, $cart_id, $this->validation );
+		if ( ! $validation->is_empty() ) {
+			$cart_response = $this->response_factory->from_cart(
+				$paypal_cart,
+				$cart_id,
+				$validation
+			);
 
 			return $this->cart_details( $cart_response, 200 );
 		}
 
-		$order = $this->create_wc_order( $cart, $payment_method, $session['ec_token'] );
+		$order = $this->create_wc_order( $paypal_cart, $payment_method, $session['ec_token'] );
 
 		if ( is_wp_error( $order ) ) {
+			// TODO: Refactor this to use $validation->add_payment_error().
 			$issue = ValidationIssue::create_payment_error( $order->get_error_message() )
 				->add_context(
 					PaymentErrorContext::create_payment_declined()
 						->decline_reason( (string) $order->get_error_code() )
 				);
-			$this->validation->add( $issue );
-			$cart_response = $this->response_factory->from_cart( $cart, $cart_id, $this->validation );
+			$validation->add( $issue );
+			$cart_response = $this->response_factory->from_cart(
+				$paypal_cart,
+				$cart_id,
+				$validation
+			);
+
 			return $this->cart_details( $cart_response, 200 );
 		}
 
 		$this->flush_local_cart( $cart_id );
 
-		$response = $this->response_factory->from_order( $order, $cart, $cart_id, $this->validation );
+		$response = $this->response_factory->from_order(
+			$order,
+			$paypal_cart,
+			$cart_id,
+			$validation
+		);
 
 		return $this->cart_details( $response, 200 );
 	}
