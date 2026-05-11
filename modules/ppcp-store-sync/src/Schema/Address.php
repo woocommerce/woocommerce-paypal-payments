@@ -159,6 +159,9 @@ class Address extends AgenticSchema {
 		return $this->postal_code ?? $default;
 	}
 
+	/**
+	 * @return array{address_line_1: string, address_line_2: string, admin_area_2: string, admin_area_1: string, postal_code: string, country_code: string}
+	 */
 	public function to_array(): array {
 		return array(
 			'address_line_1' => (string) $this->address_line_1( '' ),

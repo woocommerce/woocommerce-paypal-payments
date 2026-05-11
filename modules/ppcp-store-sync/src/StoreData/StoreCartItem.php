@@ -33,6 +33,10 @@ class StoreCartItem {
 		return (float) $this->product->get_price();
 	}
 
+	public function real_price_as_money(): Money {
+		return Money::create( $this->real_price(), $this->store_currency->value() );
+	}
+
 	/**
 	 * The price the agent provided for this item, or null if no price was given.
 	 */
@@ -51,7 +55,7 @@ class StoreCartItem {
 			return true;
 		}
 
-		return Money::create( $this->real_price(), $this->store_currency->value() )->to_decimal() === $assumed->to_decimal();
+		return $this->real_price_as_money()->to_decimal() === $assumed->to_decimal();
 	}
 
 	/**
@@ -77,9 +81,11 @@ class StoreCartItem {
 	public function to_array(): array {
 		$data = $this->schema_item->to_array();
 
-		$data['price'] = Money::create( $this->real_price(), $this->store_currency->value() )->to_array();
+		// WooCommerce always providees the price and product name/description.
+		$data['price'] = $this->real_price_as_money()->to_array();
 		$data['name']  = $this->product->get_name();
 
+		// todo: this logic is different from how Ingestion\ProductsPayload defined description.
 		$description = $this->product->get_short_description();
 		if ( $description ) {
 			$data['description'] = $description;
@@ -87,6 +93,7 @@ class StoreCartItem {
 			unset( $data['description'] );
 		}
 
+		// todo: Verify this logic matches the ingestion behavior. Extract a common data provider class.
 		$parent_id = $this->product->get_parent_id();
 		if ( $parent_id ) {
 			$data['parent_id'] = (string) $parent_id;

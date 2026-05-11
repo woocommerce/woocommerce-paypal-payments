@@ -205,6 +205,7 @@ class StorePayPalCart {
 		// Replace cart contents with WC_Cart enriched data.
 		$data['items'] = array();
 		foreach ( $this->store_items as $item ) {
+			assert( $item instanceof StoreCartItem );
 			$data['items'][] = $item->to_array();
 		}
 
