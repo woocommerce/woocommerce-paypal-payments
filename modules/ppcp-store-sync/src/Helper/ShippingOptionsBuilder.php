@@ -11,6 +11,7 @@ namespace WooCommerce\PayPalCommerce\StoreSync\Helper;
 
 use WC_Cart;
 use WooCommerce\PayPalCommerce\StoreSync\Config\StoreCurrencyValue;
+use WooCommerce\PayPalCommerce\StoreSync\Schema\Money;
 
 class ShippingOptionsBuilder {
 
@@ -75,10 +76,7 @@ class ShippingOptionsBuilder {
 			$options[] = array(
 				'id'          => $rate_id,
 				'name'        => $rate->get_label(),
-				'price'       => array(
-					'currency_code' => $currency,
-					'value'         => CartHelper::format_decimal( $rate->get_cost() ),
-				),
+				'price'       => Money::create( $rate->get_cost(), $currency )->to_array(),
 				'is_selected' => false,
 			);
 		}

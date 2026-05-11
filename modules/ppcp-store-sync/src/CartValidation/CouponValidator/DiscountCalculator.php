@@ -14,8 +14,8 @@ namespace WooCommerce\PayPalCommerce\StoreSync\CartValidation\CouponValidator;
 use WC_Coupon;
 use WC_Discounts;
 use WooCommerce\PayPalCommerce\StoreSync\Helper\ProductManager;
+use WooCommerce\PayPalCommerce\StoreSync\Schema\Money;
 use WooCommerce\PayPalCommerce\StoreSync\Schema\PayPalCart;
-use WooCommerce\PayPalCommerce\StoreSync\Helper\CartHelper;
 
 /**
  * Calculates discount amounts for coupons using WooCommerce's native discount calculation.
@@ -71,7 +71,7 @@ class DiscountCalculator {
 				? array_sum( $totals[ $code ] )
 				: $totals[ $code ];
 
-			return CartHelper::format_decimal( $discount_value );
+			return Money::create( $discount_value )->to_decimal();
 		}
 
 		return '0.00';
