@@ -290,7 +290,7 @@ class AgenticCheckoutProcessor {
 			'name'    => (object) array(
 				'full_name' => $full_name,
 			),
-			'address' => (object) $this->address_array( $cart->shipping_address() ),
+			'address' => (object) ( $cart->shipping_address()?->to_array() ?? Address::empty_array() ),
 			'options' => array( $option_data ),
 		);
 
@@ -321,8 +321,7 @@ class AgenticCheckoutProcessor {
 		}
 
 		if ( $cart->billing_address() ) {
-			// todo: should become $cart->billing_address()->to_array().
-			$payer_data['address'] = $this->address_array( $cart->billing_address() );
+			$payer_data['address'] = $cart->billing_address()->to_array();
 		}
 
 		return $payer_data;
@@ -348,33 +347,7 @@ class AgenticCheckoutProcessor {
 			'name'    => array(
 				'full_name' => $full_name,
 			),
-			// todo: Should become $shipping_address->to_array().
-			'address' => $this->address_array( $cart->shipping_address() ),
-		);
-	}
-
-	/**
-	 * Todo: move this method/logic into the Address::to_array() method in the next step.
-	 */
-	private function address_array( ?Address $address ): array {
-		if ( ! $address ) {
-			return array(
-				'address_line_1' => '',
-				'address_line_2' => '',
-				'admin_area_2'   => '',
-				'admin_area_1'   => '',
-				'postal_code'    => '',
-				'country_code'   => '',
-			);
-		}
-
-		return array(
-			'address_line_1' => (string) $address->address_line_1( '' ),
-			'address_line_2' => (string) $address->address_line_2( '' ),
-			'admin_area_2'   => (string) $address->admin_area_2( '' ),
-			'admin_area_1'   => (string) $address->admin_area_1( '' ),
-			'postal_code'    => (string) $address->postal_code( '' ),
-			'country_code'   => (string) $address->country_code( '' ),
+			'address' => $cart->shipping_address()->to_array(),
 		);
 	}
 

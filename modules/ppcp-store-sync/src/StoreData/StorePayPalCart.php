@@ -102,6 +102,7 @@ class StorePayPalCart {
 		$name  = $customer->name();
 		$first = $name['given_name'] ?? '';
 		$last  = $name['surname'] ?? '';
+
 		return trim( "$first $last" );
 	}
 
@@ -116,7 +117,9 @@ class StorePayPalCart {
 	 * }
 	 */
 	public function shipping_address_array(): array {
-		return $this->address_array( $this->paypal_cart->shipping_address() );
+		$address = $this->paypal_cart->shipping_address();
+
+		return $address ? $address->to_array() : Address::empty_array();
 	}
 
 	/**
@@ -130,7 +133,9 @@ class StorePayPalCart {
 	 * }
 	 */
 	public function billing_address_array(): array {
-		return $this->address_array( $this->paypal_cart->billing_address() );
+		$address = $this->paypal_cart->billing_address();
+
+		return $address ? $address->to_array() : Address::empty_array();
 	}
 
 	/**
@@ -195,119 +200,17 @@ class StorePayPalCart {
 	}
 
 	public function to_array(): array {
-		$data = array(
-			'items'            => $this->get_items_data(),
-			'payment_method'   => $this->get_payment_method_data(),
-			'customer'         => $this->get_customer_data(),
-			'shipping_address' => $this->get_shipping_address_data(),
-			'billing_address'  => $this->get_billing_address_data(),
-			'totals'           => $this->totals(),
-		);
+		$data = $this->paypal_cart->to_array();
+
+		// Replace cart contents with WC_Cart enriched data.
+		$data['items'] = array();
+		foreach ( $this->store_items as $item ) {
+			$data['items'][] = $item->to_array();
+		}
+
+		// Totals is always calculated fresh.
+		$data['totals'] = $this->totals();
 
 		return array_filter( $data, static fn( $v ) => $v !== null );
-	}
-
-	private function get_payment_method_data(): ?array {
-		$payment_method = $this->paypal_cart->payment_method();
-		if ( $payment_method === null ) {
-			return null;
-		}
-
-		$data = array(
-			'type'     => $payment_method->type(),
-			'token'    => $payment_method->token(),
-			'payer_id' => $payment_method->payer_id(),
-		);
-
-		return array_filter( $data, static fn( $v ) => $v !== null );
-	}
-
-	private function get_customer_data(): ?array {
-		$customer = $this->paypal_cart->customer();
-		if ( $customer === null ) {
-			return null;
-		}
-
-		$data = array(
-			'email_address' => $customer->email_address(),
-			'name'          => $customer->name(),
-			'phone'         => $customer->phone(),
-		);
-
-		$data = array_filter( $data, static fn( $v ) => $v !== null );
-
-		return ! empty( $data ) ? $data : null;
-	}
-
-	private function get_shipping_address_data(): ?array {
-		if ( $this->paypal_cart->shipping_address() === null ) {
-			return null;
-		}
-
-		return $this->shipping_address_array();
-	}
-
-	private function get_billing_address_data(): ?array {
-		if ( $this->paypal_cart->billing_address() === null ) {
-			return null;
-		}
-
-		return $this->billing_address_array();
-	}
-
-	/**
-	 * @return array{
-	 *     address_line_1: string,
-	 *     address_line_2: string,
-	 *     admin_area_2: string,
-	 *     admin_area_1: string,
-	 *     postal_code: string,
-	 *     country_code: string
-	 * }
-	 */
-	private function address_array( ?Address $address ): array {
-		if ( ! $address ) {
-			return array(
-				'address_line_1' => '',
-				'address_line_2' => '',
-				'admin_area_2'   => '',
-				'admin_area_1'   => '',
-				'postal_code'    => '',
-				'country_code'   => '',
-			);
-		}
-
-		return array(
-			'address_line_1' => $address->address_line_1() ?? '',
-			'address_line_2' => $address->address_line_2() ?? '',
-			'admin_area_2'   => $address->admin_area_2() ?? '',
-			'admin_area_1'   => $address->admin_area_1() ?? '',
-			'postal_code'    => $address->postal_code() ?? '',
-			'country_code'   => $address->country_code() ?? '',
-		);
-	}
-
-	private function get_items_data(): array {
-		$currency = $this->currency();
-
-		return array_map(
-			static function ( StoreCartItem $item ) use ( $currency ): array {
-				$schema = $item->schema();
-
-				$data = array(
-					'quantity'            => $schema->quantity(),
-					'price'               => Money::create( $item->real_price(), $currency )->to_array(),
-					'item_id'             => $schema->item_id(),
-					'variant_id'          => $schema->variant_id(),
-					'parent_id'           => $schema->parent_id(), // todo: must be the WC_Product parent!
-					'name'                => $schema->name(), // todo: use the WC_Product title, not input name!
-					'description'         => $schema->description(), // todo: use WC_Product data, not input value!
-					'selected_attributes' => $schema->selected_attributes(),
-				);
-
-				return array_filter( $data, static fn( $v ) => $v !== null );
-			},
-			$this->store_items
-		);
 	}
 }

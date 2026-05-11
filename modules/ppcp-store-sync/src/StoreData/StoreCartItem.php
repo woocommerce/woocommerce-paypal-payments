@@ -73,4 +73,27 @@ class StoreCartItem {
 	public function schema(): CartItem {
 		return $this->schema_item;
 	}
+
+	public function to_array(): array {
+		$data = $this->schema_item->to_array();
+
+		$data['price'] = Money::create( $this->real_price(), $this->store_currency->value() )->to_array();
+		$data['name']  = $this->product->get_name();
+
+		$description = $this->product->get_short_description();
+		if ( $description ) {
+			$data['description'] = $description;
+		} else {
+			unset( $data['description'] );
+		}
+
+		$parent_id = $this->product->get_parent_id();
+		if ( $parent_id ) {
+			$data['parent_id'] = (string) $parent_id;
+		} else {
+			unset( $data['parent_id'] );
+		}
+
+		return $data;
+	}
 }
