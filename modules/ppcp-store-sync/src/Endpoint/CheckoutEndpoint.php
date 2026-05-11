@@ -133,13 +133,7 @@ class CheckoutEndpoint extends AgenticRestEndpoint {
 
 		// If the cart has _any_ validation issue, stop here.
 		if ( ! $validation->is_empty() ) {
-			$cart_response = $this->response_factory->from_cart(
-				$paypal_cart,
-				$cart_id,
-				$validation
-			);
-
-			return $this->cart_details( $cart_response, 200 );
+			return $this->cart_details( $this->response_factory->from_cart( $store_cart, $cart_id ), 200 );
 		}
 
 		$order = $this->create_wc_order( $paypal_cart, $payment_method, $session['ec_token'] );
@@ -152,23 +146,13 @@ class CheckoutEndpoint extends AgenticRestEndpoint {
 						->decline_reason( (string) $order->get_error_code() )
 				);
 			$validation->add( $issue );
-			$cart_response = $this->response_factory->from_cart(
-				$paypal_cart,
-				$cart_id,
-				$validation
-			);
 
-			return $this->cart_details( $cart_response, 200 );
+			return $this->cart_details( $this->response_factory->from_cart( $store_cart, $cart_id ), 200 );
 		}
 
 		$this->flush_local_cart( $cart_id );
 
-		$response = $this->response_factory->from_order(
-			$order,
-			$paypal_cart,
-			$cart_id,
-			$validation
-		);
+		$response = $this->response_factory->from_order( $order, $store_cart, $cart_id );
 
 		return $this->cart_details( $response, 200 );
 	}

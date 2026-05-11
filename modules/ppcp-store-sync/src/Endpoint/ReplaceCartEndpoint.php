@@ -90,11 +90,7 @@ class ReplaceCartEndpoint extends AgenticRestEndpoint {
 			);
 		}
 
-		$response = $this->response_factory->from_cart(
-			$paypal_cart,
-			$cart_id,
-			$store_cart->validation()
-		);
+		$response = $this->response_factory->from_cart( $store_cart, $cart_id );
 
 		return $this->cart_details( $response, 200 );
 	}
