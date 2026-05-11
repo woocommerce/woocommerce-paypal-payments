@@ -61,4 +61,14 @@ class PaymentMethod extends AgenticSchema {
 	public function payer_id( ?string $default = null ): ?string {
 		return $this->payer_id ?? $default;
 	}
+
+	public function to_array(): array {
+		$data = array(
+			'type'     => $this->type(),
+			'token'    => $this->token,
+			'payer_id' => $this->payer_id,
+		);
+
+		return array_filter( $data, static fn( $v ) => $v !== null );
+	}
 }

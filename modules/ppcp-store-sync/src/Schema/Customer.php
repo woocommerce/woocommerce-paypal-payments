@@ -140,4 +140,14 @@ class Customer extends AgenticSchema {
 	public function phone( ?array $default = null ): ?array {
 		return $this->phone ?? $default;
 	}
+
+	public function to_array(): array {
+		$data = array(
+			'email_address' => $this->email_address,
+			'name'          => $this->name,
+			'phone'         => $this->phone,
+		);
+
+		return array_filter( $data, static fn( $v ) => $v !== null );
+	}
 }

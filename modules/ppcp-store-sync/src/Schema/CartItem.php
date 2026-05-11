@@ -220,4 +220,19 @@ class CartItem extends AgenticSchema {
 	public function gift_options( ?GiftOptions $default = null ): ?GiftOptions {
 		return $this->gift_options ?? $default;
 	}
+
+	public function to_array(): array {
+		$data = array(
+			'quantity'            => $this->quantity,
+			'price'               => $this->price?->to_array(),
+			'item_id'             => $this->id,
+			'variant_id'          => $this->variant_id,
+			'parent_id'           => $this->parent_id,
+			'name'                => $this->name,
+			'description'         => $this->description,
+			'selected_attributes' => $this->selected_attributes,
+		);
+
+		return array_filter( $data, static fn( $v ) => $v !== null );
+	}
 }

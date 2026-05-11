@@ -93,16 +93,24 @@ class PayPalCart extends AgenticSchema {
 		}
 
 		if ( ! empty( $input['shipping_address'] ) && is_array( $input['shipping_address'] ) ) {
-			$this->shipping_address = Address::from_array( $input['shipping_address'], $validation );
+			$this->shipping_address = Address::from_array(
+				$input['shipping_address'],
+				$validation
+			);
 		}
 
 		if ( ! empty( $input['billing_address'] ) && is_array( $input['billing_address'] ) ) {
-			$this->billing_address = Address::from_array( $input['billing_address'], $validation );
+			$this->billing_address = Address::from_array(
+				$input['billing_address'],
+				$validation
+			);
 		}
 
 		if ( ! empty( $input['geo_coordinates'] ) && is_array( $input['geo_coordinates'] ) ) {
-			$this->geo_coordinates =
-				GeoCoordinates::from_array( $input['geo_coordinates'], $validation );
+			$this->geo_coordinates = GeoCoordinates::from_array(
+				$input['geo_coordinates'],
+				$validation
+			);
 		}
 
 		if ( isset( $input['checkout_fields'] ) && is_array( $input['checkout_fields'] ) ) {
@@ -134,17 +142,30 @@ class PayPalCart extends AgenticSchema {
 			$this->available_shipping_options = array();
 
 			foreach ( $input['available_shipping_options'] as $option ) {
-				$this->available_shipping_options[] = ShippingOption::from_array( $option, $validation );
+				$this->available_shipping_options[] = ShippingOption::from_array(
+					$option,
+					$validation
+				);
 			}
 		}
 	}
 
 	/**
-	 * Returns the raw input array for session/order-manager persistence.
-	 * Not for use in API responses — use getter-based serialization instead.
+	 * Returns a sanitized representation of the cart for session/order-manager persistence.
+	 * Only fields with schema-owned serialization are included; geo_coordinates, checkout_fields,
+	 * coupons, and available_shipping_options are intentionally omitted until their schemas gain
+	 * to_array() methods.
 	 */
 	public function to_array(): array {
-		return $this->raw_data();
+		$data = array(
+			'items'            => array_map( static fn( CartItem $item ) => $item->to_array(), $this->items ),
+			'payment_method'   => $this->payment_method?->to_array() ?: null,
+			'customer'         => $this->customer?->to_array() ?: null,
+			'shipping_address' => $this->shipping_address?->to_array(),
+			'billing_address'  => $this->billing_address?->to_array(),
+		);
+
+		return array_filter( $data, static fn( $v ) => $v !== null );
 	}
 
 	public function items(): array {
