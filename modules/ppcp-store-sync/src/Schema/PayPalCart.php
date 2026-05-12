@@ -28,6 +28,10 @@ class PayPalCart extends \WooCommerce\PayPalCommerce\StoreSync\Schema\AgenticSch
      * @var Coupon[]|null
      */
     private ?array $coupons = null;
+    /**
+     * @var ShippingOption[]|null
+     */
+    private ?array $available_shipping_options = null;
     protected function parse_fields(array $input, callable $add_issue): void
     {
         // Reset all fields.
@@ -39,6 +43,7 @@ class PayPalCart extends \WooCommerce\PayPalCommerce\StoreSync\Schema\AgenticSch
         $this->geo_coordinates = null;
         $this->checkout_fields = null;
         $this->coupons = null;
+        $this->available_shipping_options = null;
         // Parse mandatory fields.
         if (!empty($input['items']) && is_array($input['items'])) {
             $items = $input['items'];
@@ -93,6 +98,12 @@ class PayPalCart extends \WooCommerce\PayPalCommerce\StoreSync\Schema\AgenticSch
                 $this->coupons[] = \WooCommerce\PayPalCommerce\StoreSync\Schema\Coupon::from_array($coupon, $add_issue);
             }
         }
+        if (isset($input['available_shipping_options']) && is_array($input['available_shipping_options'])) {
+            $this->available_shipping_options = array();
+            foreach ($input['available_shipping_options'] as $option) {
+                $this->available_shipping_options[] = \WooCommerce\PayPalCommerce\StoreSync\Schema\ShippingOption::from_array($option, $add_issue);
+            }
+        }
     }
     public function items(): array
     {
@@ -125,5 +136,9 @@ class PayPalCart extends \WooCommerce\PayPalCommerce\StoreSync\Schema\AgenticSch
     public function coupons(): ?array
     {
         return $this->coupons;
+    }
+    public function available_shipping_options(): ?array
+    {
+        return $this->available_shipping_options;
     }
 }

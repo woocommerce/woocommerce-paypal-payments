@@ -54,7 +54,7 @@ class ShippingOptionsBuilder
             if (null === $first_rate_id) {
                 $first_rate_id = $rate_id;
             }
-            $options[] = array('id' => $rate_id, 'label' => $rate->get_label(), 'amount' => \WooCommerce\PayPalCommerce\StoreSync\Helper\CartHelper::format_decimal($rate->get_cost()), 'currency' => $currency, 'is_selected' => \false);
+            $options[] = array('id' => $rate_id, 'name' => $rate->get_label(), 'price' => array('currency_code' => $currency, 'value' => \WooCommerce\PayPalCommerce\StoreSync\Helper\CartHelper::format_decimal($rate->get_cost())), 'is_selected' => \false);
         }
         if (empty($options)) {
             return array();

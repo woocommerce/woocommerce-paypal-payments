@@ -13,11 +13,14 @@ namespace WooCommerce\PayPalCommerce\StoreSync\Helper;
 use WC_Order;
 use WP_Error;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Order as PayPalOrder;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\Shipping;
+use WooCommerce\PayPalCommerce\ApiClient\Factory\ShippingFactory;
 use WooCommerce\PayPalCommerce\Button\Session\CartData;
 use WooCommerce\PayPalCommerce\Button\Helper\WooCommerceOrderCreator;
 use WooCommerce\PayPalCommerce\StoreSync\CartValidation\CouponValidator\AppliedCouponsBuilder;
 use WooCommerce\PayPalCommerce\StoreSync\Schema\PayPalCart;
 use WooCommerce\PayPalCommerce\StoreSync\Schema\PaymentMethod;
+use WooCommerce\PayPalCommerce\StoreSync\Schema\ShippingOption;
 /**
  * Orchestrates the complete checkout workflow for Agentic Commerce.
  *
@@ -35,12 +38,14 @@ class AgenticCheckoutProcessor
     private WooCommerceOrderCreator $wc_order_creator;
     private \WooCommerce\PayPalCommerce\StoreSync\Helper\AgenticCartBuilder $cart_builder;
     private AppliedCouponsBuilder $applied_coupons_builder;
-    public function __construct(\WooCommerce\PayPalCommerce\StoreSync\Helper\PayPalOrderManager $order_manager, WooCommerceOrderCreator $wc_order_creator, \WooCommerce\PayPalCommerce\StoreSync\Helper\AgenticCartBuilder $cart_builder, AppliedCouponsBuilder $applied_coupons_builder)
+    private ShippingFactory $shipping_factory;
+    public function __construct(\WooCommerce\PayPalCommerce\StoreSync\Helper\PayPalOrderManager $order_manager, WooCommerceOrderCreator $wc_order_creator, \WooCommerce\PayPalCommerce\StoreSync\Helper\AgenticCartBuilder $cart_builder, AppliedCouponsBuilder $applied_coupons_builder, ShippingFactory $shipping_factory)
     {
         $this->order_manager = $order_manager;
         $this->wc_order_creator = $wc_order_creator;
         $this->cart_builder = $cart_builder;
         $this->applied_coupons_builder = $applied_coupons_builder;
+        $this->shipping_factory = $shipping_factory;
     }
     /**
      * Process agentic checkout: translate cart, create order, capture payment.
@@ -103,14 +108,50 @@ class AgenticCheckoutProcessor
         if (!empty($shipping_data)) {
             $paypal_data['shipping_address'] = $shipping_data;
         }
-        // Create WooCommerce order.
-        $wc_order = $this->wc_order_creator->create_from_paypal_order($paypal_order, $cart_data, $paypal_data);
+        $provide_shipping_data = fn(): ?Shipping => $this->build_shipping_from_paypal_cart($cart);
+        try {
+            add_filter('woocommerce_paypal_payments_order_creator_get_shipping', $provide_shipping_data);
+            $wc_order = $this->wc_order_creator->create_from_paypal_order($paypal_order, $cart_data, $paypal_data);
+        } finally {
+            remove_filter('woocommerce_paypal_payments_order_creator_get_shipping', $provide_shipping_data);
+        }
         // Mark as agentic commerce order with metadata.
         $wc_order->update_meta_data('_paypal_order_id', $paypal_order_id);
         $wc_order->update_meta_data('_agentic_commerce', '1');
         $wc_order->set_status('on-hold', 'Awaiting PayPal payment capture.');
         $wc_order->save();
         return $wc_order;
+    }
+    /**
+     * Build a synthetic Shipping entity from the cart's selected shipping option.
+     *
+     * Returns null when no option is selected or the cart has no options, allowing
+     * WooCommerceOrderCreator to fall back to its default behaviour.
+     *
+     * @param PayPalCart $cart The PayPal cart.
+     * @return Shipping|null The synthetic shipping entity, or null.
+     */
+    private function build_shipping_from_paypal_cart(PayPalCart $cart): ?Shipping
+    {
+        $options = $cart->available_shipping_options();
+        if (empty($options)) {
+            return null;
+        }
+        $selected = null;
+        $option_price = null;
+        foreach ($options as $option) {
+            if ($option instanceof ShippingOption && $option->is_selected()) {
+                $selected = $option;
+                $option_price = $option->price();
+                break;
+            }
+        }
+        if (null === $selected || null === $option_price) {
+            return null;
+        }
+        $option_data = (object) array('id' => $selected->id(), 'label' => $selected->name(), 'type' => 'SHIPPING', 'selected' => \true, 'amount' => (object) array('currency_code' => $option_price->currency_code(), 'value' => (string) $option_price->value()));
+        $data = (object) array('name' => (object) array('full_name' => \WooCommerce\PayPalCommerce\StoreSync\Helper\CartHelper::full_customer_name($cart)), 'address' => (object) \WooCommerce\PayPalCommerce\StoreSync\Helper\CartHelper::shipping_address_array($cart), 'options' => array($option_data));
+        return $this->shipping_factory->from_paypal_response($data);
     }
     /**
      * Build payer data from PayPal cart.

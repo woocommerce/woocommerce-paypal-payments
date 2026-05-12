@@ -51,20 +51,29 @@ use WooCommerce\PayPalCommerce\StoreSync\CartValidation\CouponValidator\AppliedC
 use WooCommerce\PayPalCommerce\StoreSync\CartValidation\CartValidationProcessor;
 use WooCommerce\PayPalCommerce\StoreSync\Helper\AgenticSessionManager;
 /**
- * Using a different log-source for agentic commerce log entries makes it much easier to inspect
- * agentic behavior, which is fully decoupled from browser sessions.
+ * Separate source keeps high-volume ingestion entries out of the agentic (cart API) log stream:
+ * Ingestion is a cron-driven background process with a constant, predictable output cadence.
+ * The cart API is event-driven and session-contextual. Mixing them into one stream makes both
+ * harder to read.
  *
  * When using log-files, this creates a separate file for agentic log entries
  * When using DB logging, the source makes it easy to filter for agentic entries
  */
-const LOGGER_SOURCE = 'woocommerce-paypal-agentic';
+const LOGGER_SOURCE_DEFAULT = 'woocommerce-paypal-agentic';
+const LOGGER_SOURCE_INGESTION = 'woocommerce-paypal-ingestion';
 return array(
     // Logging.
-    'agentic.logger' => static function (): LoggerInterface {
+    'agentic.logger.default' => static function (): LoggerInterface {
         if (!class_exists(\WC_Logger::class)) {
             return new NullLogger();
         }
-        return new WooCommerceLogger(wc_get_logger(), LOGGER_SOURCE);
+        return new WooCommerceLogger(wc_get_logger(), LOGGER_SOURCE_DEFAULT);
+    },
+    'agentic.logger.ingestion' => static function (): LoggerInterface {
+        if (!class_exists(\WC_Logger::class)) {
+            return new NullLogger();
+        }
+        return new WooCommerceLogger(wc_get_logger(), LOGGER_SOURCE_INGESTION);
     },
     // Configuration.
     'agentic.config.webhook_urls' => static function (ContainerInterface $c): AgenticWebhookConfiguration {
@@ -84,7 +93,7 @@ return array(
         return new RegistrationEligibility($c->get('agentic.merchant.provider'));
     },
     'agentic.registration.handler' => static function (ContainerInterface $c): RegistrationService {
-        return new RegistrationService($c->get('agentic.config.webhook_urls'), $c->get('agentic.merchant.provider'), $c->get('agentic.logger'));
+        return new RegistrationService($c->get('agentic.config.webhook_urls'), $c->get('agentic.merchant.provider'), $c->get('agentic.logger.default'));
     },
     // Authentication services.
     'agentic.auth.key_provider' => static function (): PayPalJwkProvider {
@@ -105,20 +114,20 @@ return array(
         return new AgenticSessionManager($c->get('woocommerce.core'));
     },
     'agentic.helper.cart-builder' => static function (ContainerInterface $c): AgenticCartBuilder {
-        return new AgenticCartBuilder($c->get('woocommerce.core'), $c->get('agentic.helper.product-manager'), $c->get('button.session.factory.card-data'), $c->get('api.factory.purchase-unit'), $c->get('agentic.logger'));
+        return new AgenticCartBuilder($c->get('woocommerce.core'), $c->get('agentic.helper.product-manager'), $c->get('button.session.factory.card-data'), $c->get('api.factory.purchase-unit'), $c->get('agentic.logger.default'));
     },
     'agentic.helper.shipping-options-builder' => static function (): ShippingOptionsBuilder {
         return new ShippingOptionsBuilder();
     },
     'agentic.helper.checkout-processor' => static function (ContainerInterface $c): AgenticCheckoutProcessor {
-        return new AgenticCheckoutProcessor($c->get('agentic.helper.paypal-order-manager'), $c->get('button.helper.wc-order-creator'), $c->get('agentic.helper.cart-builder'), $c->get('agentic.response.applied-coupons-builder'));
+        return new AgenticCheckoutProcessor($c->get('agentic.helper.paypal-order-manager'), $c->get('button.helper.wc-order-creator'), $c->get('agentic.helper.cart-builder'), $c->get('agentic.response.applied-coupons-builder'), $c->get('api.factory.shipping'));
     },
     'agentic.helper.paypal-order-manager' => static function (ContainerInterface $c): PayPalOrderManager {
-        return new PayPalOrderManager($c->get('api.endpoint.order'), $c->get('api.endpoint.orders'), $c->get('agentic.helper.cart-builder'), $c->get('agentic.logger'));
+        return new PayPalOrderManager($c->get('api.endpoint.order'), $c->get('api.endpoint.orders'), $c->get('agentic.helper.cart-builder'), $c->get('agentic.logger.default'));
     },
     // Validation services.
     'agentic.validation.processor' => static function (ContainerInterface $c): CartValidationProcessor {
-        return new CartValidationProcessor($c->get('agentic.logger'));
+        return new CartValidationProcessor($c->get('agentic.logger.default'));
     },
     'agentic.validator.product' => static function (ContainerInterface $c): ProductValidator {
         return new ProductValidator($c->get('agentic.helper.product-manager'), $c->get('agentic.config.ingestion'));
@@ -156,23 +165,23 @@ return array(
     },
     // REST endpoints.
     'agentic.rest.create_cart' => static function (ContainerInterface $c): CreateCartEndpoint {
-        return new CreateCartEndpoint($c->get('agentic.auth.provider'), $c->get('agentic.session.handler'), $c->get('agentic.helper.session-manager'), $c->get('agentic.response.factory'), $c->get('agentic.validation.processor'), $c->get('agentic.logger'), $c->get('agentic.helper.paypal-order-manager'));
+        return new CreateCartEndpoint($c->get('agentic.auth.provider'), $c->get('agentic.session.handler'), $c->get('agentic.helper.session-manager'), $c->get('agentic.response.factory'), $c->get('agentic.validation.processor'), $c->get('agentic.logger.default'), $c->get('agentic.helper.paypal-order-manager'));
     },
     'agentic.rest.get_cart' => static function (ContainerInterface $c): GetCartEndpoint {
-        return new GetCartEndpoint($c->get('agentic.auth.provider'), $c->get('agentic.session.handler'), $c->get('agentic.helper.session-manager'), $c->get('agentic.response.factory'), $c->get('agentic.validation.processor'), $c->get('agentic.logger'), $c->get('agentic.helper.paypal-order-manager'));
+        return new GetCartEndpoint($c->get('agentic.auth.provider'), $c->get('agentic.session.handler'), $c->get('agentic.helper.session-manager'), $c->get('agentic.response.factory'), $c->get('agentic.validation.processor'), $c->get('agentic.logger.default'), $c->get('agentic.helper.paypal-order-manager'));
     },
     'agentic.rest.replace_cart' => static function (ContainerInterface $c): ReplaceCartEndpoint {
-        return new ReplaceCartEndpoint($c->get('agentic.auth.provider'), $c->get('agentic.session.handler'), $c->get('agentic.helper.session-manager'), $c->get('agentic.response.factory'), $c->get('agentic.validation.processor'), $c->get('agentic.logger'), $c->get('agentic.helper.paypal-order-manager'));
+        return new ReplaceCartEndpoint($c->get('agentic.auth.provider'), $c->get('agentic.session.handler'), $c->get('agentic.helper.session-manager'), $c->get('agentic.response.factory'), $c->get('agentic.validation.processor'), $c->get('agentic.logger.default'), $c->get('agentic.helper.paypal-order-manager'));
     },
     'agentic.rest.checkout' => static function (ContainerInterface $c): CheckoutEndpoint {
-        return new CheckoutEndpoint($c->get('agentic.auth.provider'), $c->get('agentic.session.handler'), $c->get('agentic.helper.session-manager'), $c->get('agentic.response.factory'), $c->get('agentic.validation.processor'), $c->get('agentic.logger'), $c->get('agentic.helper.paypal-order-manager'), $c->get('agentic.helper.checkout-processor'));
+        return new CheckoutEndpoint($c->get('agentic.auth.provider'), $c->get('agentic.session.handler'), $c->get('agentic.helper.session-manager'), $c->get('agentic.response.factory'), $c->get('agentic.validation.processor'), $c->get('agentic.logger.default'), $c->get('agentic.helper.paypal-order-manager'), $c->get('agentic.helper.checkout-processor'));
     },
     // Ingestion services.
     'agentic.ingestion-batch-provider' => static function (ContainerInterface $c): IngestionBatchProvider {
         return new IngestionBatchProvider($c->get('agentic.config.ingestion'));
     },
     'agentic.ingestion-manager' => static function (ContainerInterface $c): IngestionManager {
-        return new IngestionManager($c->get('agentic.config.ingestion'), $c->get('agentic.ingestion-batch-provider'), $c->get('agentic.config.webhook_urls'), $c->get('agentic.merchant.provider'), $c->get('agentic.logger'));
+        return new IngestionManager($c->get('agentic.config.ingestion'), $c->get('agentic.ingestion-batch-provider'), $c->get('agentic.config.webhook_urls'), $c->get('agentic.merchant.provider'), $c->get('agentic.logger.ingestion'));
     },
     // Settings.
     'agentic.settings.model' => static function (): AgenticSettingsDataModel {

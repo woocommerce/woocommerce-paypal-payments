@@ -24,6 +24,7 @@ use WooCommerce\PayPalCommerce\StoreSync\Schema\PayPalCart;
 use WooCommerce\PayPalCommerce\StoreSync\Schema\CartItem;
 use WooCommerce\PayPalCommerce\StoreSync\Schema\Customer;
 use WooCommerce\PayPalCommerce\StoreSync\Schema\Coupon;
+use WooCommerce\PayPalCommerce\StoreSync\Schema\ShippingOption;
 class AgenticCartBuilder
 {
     private WooCommerce $wc;
@@ -57,6 +58,7 @@ class AgenticCartBuilder
         $this->apply_coupons($wc_cart, $paypal_cart->coupons());
         $this->set_customer_info($wc_customer, $paypal_cart->customer());
         $this->set_addresses($wc_customer, $paypal_cart);
+        $this->apply_shipping_option($paypal_cart);
         $wc_cart->calculate_totals();
         $this->logger->info('[WC_CART] Converted PayPalCart to WC_Cart', array('cart' => $wc_cart, 'customer' => $wc_customer));
         return $wc_cart;
@@ -110,6 +112,19 @@ class AgenticCartBuilder
             return new WP_Error('no_valid_items', 'No valid products could be added to cart', $errors);
         }
         return \true;
+    }
+    private function apply_shipping_option(PayPalCart $paypal_cart): void
+    {
+        $options = $paypal_cart->available_shipping_options();
+        if (!$options || !$this->wc->session) {
+            return;
+        }
+        foreach ($options as $option) {
+            if ($option instanceof ShippingOption && $option->is_selected()) {
+                $this->wc->session->set('chosen_shipping_methods', array($option->id()));
+                return;
+            }
+        }
     }
     /**
      * @param WC_Cart       $wc_cart The cart to apply coupons to.
