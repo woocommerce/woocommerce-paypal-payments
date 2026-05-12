@@ -252,10 +252,9 @@ class ShippingValidatorTest extends ValidationTest {
 		$issue_data = $result[0]->to_array();
 		$this->assertValidationIssue( $issue_data, 'SHIPPING_ERROR', 'BUSINESS_RULE', 'shipping_address', 'PO Box delivery not available' );
 
-		// Verify context (context is a list of IssueContext::to_array() results)
+		// Verify context (context is a single IssueContext::to_array() result)
 		$this->assertArrayHasKey( 'context', $issue_data );
-		$this->assertCount( 1, $issue_data['context'] );
-		$context = $issue_data['context'][0];
+		$context = $issue_data['context'];
 		$this->assertArrayHasKey( 'restricted_items', $context );
 		$this->assertArrayHasKey( 'restriction_reason', $context );
 		$this->assertArrayHasKey( 'po_box_detected', $context );

@@ -150,36 +150,24 @@ abstract class ValidationTest extends TestCase {
 	}
 
 	/**
-	 * Asserts that a validation issue has a context array containing an entry whose
-	 * `specific_issue` value matches $expected_specific_issue, and returns that entry.
+	 * Asserts that a validation issue has a context object whose `specific_issue` value
+	 * matches $expected_specific_issue, and returns that context object.
 	 *
-	 * @return array The matched context entry (for further assertions by the caller).
+	 * @return array The context object (for further assertions by the caller).
 	 */
 	protected function assertIssueContext( array $actual_issue, string $expected_specific_issue ): array {
 		$this->assertArrayHasKey( 'context', $actual_issue, 'Validation issue has no "context" key' );
-		$this->assertIsArray( $actual_issue['context'], '"context" must be an array' );
-		$this->assertNotEmpty( $actual_issue['context'], '"context" must be a non-empty array' );
-
-		$found_values = array();
-
-		foreach ( $actual_issue['context'] as $entry ) {
-			$this->assertIsArray( $entry, 'Each context entry must be an array' );
-			$this->assertArrayHasKey( 'specific_issue', $entry, 'Each context entry must have a "specific_issue" key' );
-
-			if ( $entry['specific_issue'] === $expected_specific_issue ) {
-				return $entry;
-			}
-
-			$found_values[] = $entry['specific_issue'];
-		}
-
-		$this->fail(
-			sprintf(
-				'No context entry found with specific_issue "%s". Found: [%s]',
-				$expected_specific_issue,
-				implode( ', ', $found_values )
-			)
+		$context = $actual_issue['context'];
+		$this->assertIsArray( $context, '"context" must be an array' );
+		$this->assertNotEmpty( $context, '"context" must be non-empty' );
+		$this->assertArrayHasKey( 'specific_issue', $context, '"context" must have a "specific_issue" key' );
+		$this->assertSame(
+			$expected_specific_issue,
+			$context['specific_issue'],
+			sprintf( 'Expected context specific_issue "%s", got "%s"', $expected_specific_issue, $context['specific_issue'] )
 		);
+
+		return $context;
 	}
 
 	/**

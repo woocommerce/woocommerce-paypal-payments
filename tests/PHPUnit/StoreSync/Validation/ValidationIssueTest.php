@@ -193,11 +193,10 @@ class ValidationIssueTest extends TestCase {
 
 		$data = $issue->to_array();
 		$this->assertArrayHasKey( 'context', $data );
-		$this->assertCount( 1, $data['context'] );
-		$this->assertSame( 'FOO', $data['context'][0]['specific_issue'] );
+		$this->assertSame( array( 'specific_issue' => 'FOO' ), $data['context'] );
 	}
 
-	public function test_add_context_with_array_of_context_objects(): void {
+	public function test_add_context_with_multiple_contexts_only_first_is_serialized(): void {
 		$contexts = array(
 			$this->make_context( array( 'specific_issue' => 'A' ) ),
 			$this->make_context( array( 'specific_issue' => 'B' ) ),
@@ -206,7 +205,7 @@ class ValidationIssueTest extends TestCase {
 		$issue = ValidationIssue::create_invalid_data( 'msg' )
 			->add_context( $contexts );
 
-		$this->assertCount( 2, $issue->to_array()['context'] );
+		$this->assertSame( array( 'specific_issue' => 'A' ), $issue->to_array()['context'] );
 	}
 
 	public function test_add_context_ignores_non_context_values(): void {
