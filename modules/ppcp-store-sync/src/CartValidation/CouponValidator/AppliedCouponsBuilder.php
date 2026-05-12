@@ -11,24 +11,13 @@ declare (strict_types=1);
 namespace WooCommerce\PayPalCommerce\StoreSync\CartValidation\CouponValidator;
 
 use WC_Coupon;
-use WooCommerce\PayPalCommerce\StoreSync\Helper\CartHelper;
-use WooCommerce\PayPalCommerce\StoreSync\Schema\PayPalCart;
+use WooCommerce\PayPalCommerce\StoreSync\StoreData\StorePayPalCart;
 /**
  * Builds applied coupons data for API responses.
  */
 class AppliedCouponsBuilder
 {
-    /**
-     * Discount calculator for coupon amounts.
-     *
-     * @var DiscountCalculator
-     */
     private \WooCommerce\PayPalCommerce\StoreSync\CartValidation\CouponValidator\DiscountCalculator $discount_calculator;
-    /**
-     * Constructor.
-     *
-     * @param DiscountCalculator $discount_calculator Discount calculator instance.
-     */
     public function __construct(\WooCommerce\PayPalCommerce\StoreSync\CartValidation\CouponValidator\DiscountCalculator $discount_calculator)
     {
         $this->discount_calculator = $discount_calculator;
@@ -41,19 +30,17 @@ class AppliedCouponsBuilder
      * - Coupons have APPLY action
      * - WooCommerce classes are available
      *
-     * @param PayPalCart $cart The PayPal cart.
-     * @param string     $validation_status The cart validation status.
      * @return array Array of applied coupon data.
      */
-    public function build_applied_coupons_array(PayPalCart $cart, string $validation_status): array
+    public function build_applied_coupons_array(StorePayPalCart $store_cart, string $validation_status): array
     {
         if ($validation_status !== 'VALID') {
             return array();
         }
-        if (!class_exists('WC_Coupon')) {
+        if (!class_exists(WC_Coupon::class)) {
             return array();
         }
-        $coupons = $cart->coupons();
+        $coupons = $store_cart->paypal_cart()->coupons();
         if (!$coupons) {
             return array();
         }
@@ -63,7 +50,7 @@ class AppliedCouponsBuilder
             return array();
         }
         $applied = array();
-        $currency_code = CartHelper::currency($cart);
+        $currency_code = $store_cart->currency();
         foreach ($apply_coupons as $coupon) {
             $code = $coupon->code();
             // Normalize coupon code to match WooCommerce's case-insensitive behavior.
@@ -73,7 +60,7 @@ class AppliedCouponsBuilder
                 continue;
             }
             // Calculate discount amount.
-            $discount_amount = $this->discount_calculator->calculate_discount_amount($wc_coupon, $cart);
+            $discount_amount = $this->discount_calculator->calculate_discount_amount($wc_coupon, $store_cart->paypal_cart());
             $applied[] = array('code' => $code, 'description' => $wc_coupon->get_description() ?: $wc_coupon->get_discount_type() . ' discount', 'discount_amount' => array('currency_code' => $currency_code, 'value' => $discount_amount));
         }
         return $applied;
@@ -83,13 +70,11 @@ class AppliedCouponsBuilder
      *
      * Used when updating PayPal orders to include the discount in the breakdown.
      *
-     * @param PayPalCart $cart The cart object.
      * @return float Total discount amount.
      */
-    public function calculate_total_discount(PayPalCart $cart): float
+    public function calculate_total_discount(StorePayPalCart $store_cart): float
     {
-        $validation_status = $cart->issues() ? 'INVALID' : 'VALID';
-        $applied_coupons = $this->build_applied_coupons_array($cart, $validation_status);
+        $applied_coupons = $this->build_applied_coupons_array($store_cart, 'VALID');
         return array_reduce($applied_coupons, static function (float $total, array $coupon): float {
             $value = $coupon['discount_amount']['value'] ?? 0;
             return $total + (float) $value;

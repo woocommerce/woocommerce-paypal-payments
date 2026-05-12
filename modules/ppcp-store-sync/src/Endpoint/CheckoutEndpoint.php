@@ -18,16 +18,18 @@ use WooCommerce\PayPalCommerce\Vendor\Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\StoreSync\Errors\AgenticError;
 use WooCommerce\PayPalCommerce\StoreSync\Errors\Http\InternalServerError;
 use WooCommerce\PayPalCommerce\StoreSync\Validation\Context\PaymentErrorContext;
+use WooCommerce\PayPalCommerce\StoreSync\Validation\StoreValidation;
 use WooCommerce\PayPalCommerce\StoreSync\Validation\ValidationIssue;
 use WooCommerce\PayPalCommerce\StoreSync\Schema\PaymentMethod;
 use WooCommerce\PayPalCommerce\StoreSync\Helper\AgenticSessionManager;
 use WooCommerce\PayPalCommerce\StoreSync\Helper\AgenticCheckoutProcessor;
 use WooCommerce\PayPalCommerce\StoreSync\Helper\PayPalOrderManager;
 use WooCommerce\PayPalCommerce\StoreSync\CartValidation\CartValidationProcessor;
-use WooCommerce\PayPalCommerce\StoreSync\Schema\PayPalCart;
 use WooCommerce\PayPalCommerce\StoreSync\Auth\AuthServiceProvider;
 use WooCommerce\PayPalCommerce\StoreSync\Session\AgenticSessionHandler;
 use WooCommerce\PayPalCommerce\StoreSync\Response\ResponseFactory;
+use WooCommerce\PayPalCommerce\StoreSync\StoreData\StoreData;
+use WooCommerce\PayPalCommerce\StoreSync\StoreData\StorePayPalCart;
 /**
  * Checkout REST endpoint.
  */
@@ -42,9 +44,9 @@ class CheckoutEndpoint extends \WooCommerce\PayPalCommerce\StoreSync\Endpoint\Ag
      */
     protected const METHOD = 'POST';
     protected AgenticCheckoutProcessor $checkout_processor;
-    public function __construct(AuthServiceProvider $auth_provider, AgenticSessionHandler $session_handler, AgenticSessionManager $session_manager, ResponseFactory $response_factory, CartValidationProcessor $validation_processor, LoggerInterface $logger, PayPalOrderManager $order_manager, AgenticCheckoutProcessor $checkout_processor)
+    public function __construct(AuthServiceProvider $auth_provider, AgenticSessionHandler $session_handler, AgenticSessionManager $session_manager, ResponseFactory $response_factory, CartValidationProcessor $validation_processor, LoggerInterface $logger, PayPalOrderManager $order_manager, StoreData $store_data, AgenticCheckoutProcessor $checkout_processor)
     {
-        parent::__construct($auth_provider, $session_handler, $session_manager, $response_factory, $validation_processor, $logger, $order_manager);
+        parent::__construct($auth_provider, $session_handler, $session_manager, $response_factory, $validation_processor, $logger, $order_manager, $store_data);
         $this->checkout_processor = $checkout_processor;
     }
     /**
@@ -70,33 +72,35 @@ class CheckoutEndpoint extends \WooCommerce\PayPalCommerce\StoreSync\Endpoint\Ag
             return $this->error($data);
         }
         // TODO: Move this into a validator to add a PAYMENT_ERROR, which we can check here.
-        $payment_method = PaymentMethod::from_array($data['payment_method']);
-        $payment_method_issues = $payment_method->issues();
-        if (!empty($payment_method_issues)) {
-            return $this->error(new InternalServerError('Payment method is required for checkout', $payment_method_issues));
+        $pm_validation = new StoreValidation();
+        $payment_method = PaymentMethod::from_array((array) ($data['payment_method'] ?? array()), $pm_validation);
+        if (!$pm_validation->is_empty()) {
+            return $this->error(new InternalServerError('Payment method is required for checkout', $pm_validation->all()));
         }
         $session = $this->get_stored_cart($cart_id);
         if ($session instanceof AgenticError) {
             return $this->error($session);
         }
         // Parse the incoming cart data.
-        $cart = $this->get_cart_from_request($request);
-        if ($cart instanceof AgenticError) {
-            return $this->error($cart);
+        $store_cart = $this->get_cart_from_request($request);
+        if ($store_cart instanceof AgenticError) {
+            return $this->error($store_cart);
         }
+        $store_cart->set_paypal_order($session['ec_token']);
+        $validation = $store_cart->validation();
         // If the cart has _any_ validation issue, stop here.
-        if ($cart->issues()) {
-            $cart_response = $this->response_factory->from_cart($cart, $cart_id);
-            return $this->cart_details($cart_response, 200);
+        if (!$validation->is_empty()) {
+            return $this->cart_details($this->response_factory->from_cart($store_cart, $cart_id), 200);
         }
-        $order = $this->create_wc_order($cart, $payment_method, $session['ec_token']);
+        $order = $this->create_wc_order($store_cart, $payment_method, $session['ec_token']);
         if (is_wp_error($order)) {
+            // TODO: Refactor this to use $validation->add_payment_error().
             $issue = ValidationIssue::create_payment_error($order->get_error_message())->add_context(PaymentErrorContext::create_payment_declined()->decline_reason((string) $order->get_error_code()));
-            $cart_response = $this->response_factory->from_cart($cart->with_validation_issues($issue), $cart_id);
-            return $this->cart_details($cart_response, 200);
+            $validation->add($issue);
+            return $this->cart_details($this->response_factory->from_cart($store_cart, $cart_id), 200);
         }
         $this->flush_local_cart($cart_id);
-        $response = $this->response_factory->from_order($order, $cart, $cart_id);
+        $response = $this->response_factory->from_order($order, $store_cart, $cart_id);
         return $this->cart_details($response, 200);
     }
     /**
@@ -110,13 +114,13 @@ class CheckoutEndpoint extends \WooCommerce\PayPalCommerce\StoreSync\Endpoint\Ag
      * 5. Capturing payment
      * 6. Cleaning up temporary cart
      *
-     * @param PayPalCart    $cart            The cart data.
-     * @param PaymentMethod $payment_method  The payment method data.
-     * @param string        $paypal_order_id The PayPal Order ID (ec_token).
+     * @param StorePayPalCart $store_cart      The enriched cart data.
+     * @param PaymentMethod   $payment_method  The payment method data.
+     * @param string          $paypal_order_id The PayPal Order ID (ec_token).
      * @return WC_Order|WP_Error The created order or error.
      */
-    private function create_wc_order(PayPalCart $cart, PaymentMethod $payment_method, string $paypal_order_id)
+    private function create_wc_order(StorePayPalCart $store_cart, PaymentMethod $payment_method, string $paypal_order_id)
     {
-        return $this->checkout_processor->process($cart, $payment_method, $paypal_order_id);
+        return $this->checkout_processor->process($store_cart, $payment_method, $paypal_order_id);
     }
 }

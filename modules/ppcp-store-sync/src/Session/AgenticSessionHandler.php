@@ -11,6 +11,7 @@ declare (strict_types=1);
 namespace WooCommerce\PayPalCommerce\StoreSync\Session;
 
 use WooCommerce\PayPalCommerce\StoreSync\Schema\PayPalCart;
+use WooCommerce\PayPalCommerce\StoreSync\Validation\StoreValidation;
 /**
  * Class AgenticSessionHandler
  */
@@ -20,15 +21,7 @@ class AgenticSessionHandler
      * Session key for storing agentic commerce data.
      */
     private const SESSION_KEY = 'ppcp_agentic';
-    /**
-     * The custom session handler.
-     *
-     * @var AgenticWcSession
-     */
     private \WooCommerce\PayPalCommerce\StoreSync\Session\AgenticWcSession $session;
-    /**
-     * Constructor.
-     */
     public function __construct()
     {
         // Include required WC files for REST context.
@@ -84,7 +77,8 @@ class AgenticSessionHandler
             return null;
         }
         try {
-            $cart = PayPalCart::from_array($session_data['cart']);
+            // TODO: Validation issues from re-parsing are discarded; will be cleaned up in a future refactor.
+            $cart = PayPalCart::from_array($session_data['cart'], new StoreValidation());
             return array('cart' => $cart, 'ec_token' => $session_data['ec_token'] ?? '', 'created' => $session_data['created'] ?? time());
         } catch (\Exception $e) {
             return null;

@@ -8,7 +8,7 @@
 declare (strict_types=1);
 namespace WooCommerce\PayPalCommerce\StoreSync\Schema;
 
-use WooCommerce\PayPalCommerce\StoreSync\Validation\ValidationIssue;
+use WooCommerce\PayPalCommerce\StoreSync\Validation\StoreValidation;
 /**
  * @see CartTotalsTest - Unit tests for this class.
  */
@@ -23,7 +23,7 @@ class CartTotals extends \WooCommerce\PayPalCommerce\StoreSync\Schema\AgenticSch
     private ?\WooCommerce\PayPalCommerce\StoreSync\Schema\Money $insurance = null;
     private ?\WooCommerce\PayPalCommerce\StoreSync\Schema\Money $shipping_discount = null;
     private ?\WooCommerce\PayPalCommerce\StoreSync\Schema\Money $custom_charges = null;
-    protected function parse_fields(array $input, callable $add_issue): void
+    protected function parse_fields(array $input, StoreValidation $validation): void
     {
         // Reset all fields.
         $this->total = null;
@@ -37,40 +37,24 @@ class CartTotals extends \WooCommerce\PayPalCommerce\StoreSync\Schema\AgenticSch
         $this->custom_charges = null;
         // Required field: total.
         if (!isset($input['total']) || !is_array($input['total'])) {
-            $add_issue(ValidationIssue::create_missing_field('Total is required')->user_message('Please provide a total amount')->for_field('total'));
+            $validation->add_missing_field('total', 'Please provide a total amount');
         } else {
-            $money = \WooCommerce\PayPalCommerce\StoreSync\Schema\Money::from_array($input['total'], $add_issue);
-            $issues = $money->issues();
-            if (empty($issues)) {
-                $this->total = $money;
-            } else {
-                foreach ($issues as $issue) {
-                    $add_issue($issue);
-                }
-            }
+            $this->total = \WooCommerce\PayPalCommerce\StoreSync\Schema\Money::from_array($input['total'], $validation);
         }
         // Optional Money fields.
-        $this->parse_optional_money_field($input, 'subtotal', $add_issue);
-        $this->parse_optional_money_field($input, 'discount', $add_issue);
-        $this->parse_optional_money_field($input, 'shipping', $add_issue);
-        $this->parse_optional_money_field($input, 'tax', $add_issue);
-        $this->parse_optional_money_field($input, 'handling', $add_issue);
-        $this->parse_optional_money_field($input, 'insurance', $add_issue);
-        $this->parse_optional_money_field($input, 'shipping_discount', $add_issue);
-        $this->parse_optional_money_field($input, 'custom_charges', $add_issue);
+        $this->parse_optional_money_field($input, 'subtotal', $validation);
+        $this->parse_optional_money_field($input, 'discount', $validation);
+        $this->parse_optional_money_field($input, 'shipping', $validation);
+        $this->parse_optional_money_field($input, 'tax', $validation);
+        $this->parse_optional_money_field($input, 'handling', $validation);
+        $this->parse_optional_money_field($input, 'insurance', $validation);
+        $this->parse_optional_money_field($input, 'shipping_discount', $validation);
+        $this->parse_optional_money_field($input, 'custom_charges', $validation);
     }
-    private function parse_optional_money_field(array $input, string $field_name, callable $add_issue): void
+    private function parse_optional_money_field(array $input, string $field_name, StoreValidation $validation): void
     {
         if (isset($input[$field_name]) && is_array($input[$field_name])) {
-            $money = \WooCommerce\PayPalCommerce\StoreSync\Schema\Money::from_array($input[$field_name], $add_issue);
-            $issues = $money->issues();
-            if (empty($issues)) {
-                $this->{$field_name} = $money;
-            } else {
-                foreach ($issues as $issue) {
-                    $add_issue($issue);
-                }
-            }
+            $this->{$field_name} = \WooCommerce\PayPalCommerce\StoreSync\Schema\Money::from_array($input[$field_name], $validation);
         }
     }
     public function total(): ?\WooCommerce\PayPalCommerce\StoreSync\Schema\Money

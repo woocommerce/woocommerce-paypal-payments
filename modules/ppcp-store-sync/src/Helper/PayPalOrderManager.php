@@ -19,19 +19,27 @@ use WooCommerce\PayPalCommerce\ApiClient\Entity\ExperienceContext;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Patch;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PatchCollection;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
+use WooCommerce\PayPalCommerce\ApiClient\Factory\AmountFactory;
+use WooCommerce\PayPalCommerce\StoreSync\Config\StoreCurrencyValue;
+use WooCommerce\PayPalCommerce\StoreSync\Schema\Money;
 use WooCommerce\PayPalCommerce\StoreSync\Schema\PayPalCart;
+use WC_Cart;
 class PayPalOrderManager
 {
     private OrderEndpoint $order_endpoint;
     private Orders $orders_api;
     private \WooCommerce\PayPalCommerce\StoreSync\Helper\AgenticCartBuilder $cart_builder;
     private LoggerInterface $logger;
-    public function __construct(OrderEndpoint $order_endpoint, Orders $orders_api, \WooCommerce\PayPalCommerce\StoreSync\Helper\AgenticCartBuilder $cart_builder, LoggerInterface $logger)
+    private StoreCurrencyValue $store_currency;
+    private AmountFactory $amount_factory;
+    public function __construct(OrderEndpoint $order_endpoint, Orders $orders_api, \WooCommerce\PayPalCommerce\StoreSync\Helper\AgenticCartBuilder $cart_builder, LoggerInterface $logger, StoreCurrencyValue $store_currency, AmountFactory $amount_factory)
     {
         $this->order_endpoint = $order_endpoint;
         $this->orders_api = $orders_api;
         $this->cart_builder = $cart_builder;
         $this->logger = $logger;
+        $this->store_currency = $store_currency;
+        $this->amount_factory = $amount_factory;
     }
     /**
      * Create a new PayPal Order from cart WITHOUT creating a WooCommerce order.
@@ -98,46 +106,40 @@ class PayPalOrderManager
             $this->logger->warning('[ORDER] Cannot update PayPal Order: failed to build WC_Cart', array('order_id' => $order_id, 'error' => $wc_cart->get_error_message()));
             return;
         }
-        $currency_code = \WooCommerce\PayPalCommerce\StoreSync\Helper\CartHelper::currency($cart);
-        $totals = \WooCommerce\PayPalCommerce\StoreSync\Helper\CartHelper::calculate_totals($wc_cart, $currency_code);
-        $items = $this->build_items_for_patch($cart);
-        if (!$totals) {
-            $this->logger->warning('[ORDER] Cannot update PayPal Order: totals not calculable', array('order_id' => $order_id));
-            return;
-        }
-        $this->logger->info('[ORDER] Updating PayPal Order', array('order_id' => $order_id, 'discount' => $discount, 'item_count' => count($items), 'totals' => $totals));
-        // Build the breakdown array.
-        $breakdown = array('item_total' => $totals['item_total'], 'shipping' => $totals['shipping'], 'tax_total' => $totals['tax_total']);
-        // Only include discount in breakdown if there's a discount.
-        if (isset($totals['discount'])) {
-            $breakdown['discount'] = $totals['discount'];
-        }
-        $cart_amount = $totals['amount'];
-        $patches = new PatchCollection(new Patch('replace', "/purchase_units/@reference_id=='default'/items", $items), new Patch('replace', "/purchase_units/@reference_id=='default'/amount", array('currency_code' => $cart_amount['currency_code'], 'value' => $cart_amount['value'], 'breakdown' => $breakdown)));
+        $amount = $this->amount_factory->from_wc_cart($wc_cart);
+        $items = $this->build_items_for_patch($wc_cart);
+        $this->logger->info('[ORDER] Updating PayPal Order', array('order_id' => $order_id, 'discount' => $discount, 'item_count' => count($items), 'amount' => $amount->to_array()));
+        $patches = new PatchCollection(new Patch('replace', "/purchase_units/@reference_id=='default'/items", $items), new Patch('replace', "/purchase_units/@reference_id=='default'/amount", $amount->to_array()));
         try {
             $this->order_endpoint->patch($order_id, $patches);
-            $this->logger->info('[ORDER] PayPal Order updated successfully', array('order_id' => $order_id, 'amount' => $cart_amount['value'], 'item_count' => count($items)));
+            $this->logger->info('[ORDER] PayPal Order updated successfully', array('order_id' => $order_id, 'amount' => $amount->value_str(), 'item_count' => count($items)));
         } catch (RuntimeException $error) {
-            $this->logger->error('[ORDER] PayPal Order update failed', array('order_id' => $order_id, 'error' => $error->getMessage(), 'totals' => $totals));
+            $this->logger->error('[ORDER] PayPal Order update failed', array('order_id' => $order_id, 'error' => $error->getMessage(), 'amount' => $amount->to_array()));
             throw $error;
         }
     }
     /**
      * Build items array for PayPal Order PATCH operation.
      *
-     * @param PayPalCart $cart The cart.
+     * Prices are always taken from the WooCommerce store via StoreData, never from the agent
+     * payload. Items whose product cannot be resolved are silently skipped.
+     *
+     * @param WC_Cart $wc_cart The cart.
      * @return array Items formatted for PayPal API.
      */
-    private function build_items_for_patch(PayPalCart $cart): array
+    private function build_items_for_patch(WC_Cart $wc_cart): array
     {
         $items = array();
-        $currency = \WooCommerce\PayPalCommerce\StoreSync\Helper\CartHelper::currency($cart);
-        foreach ($cart->items() as $item) {
-            $price = $item->price();
-            if (!$price) {
+        $currency = $this->store_currency->value();
+        foreach ($wc_cart->get_cart() as $cart_item) {
+            $product = $cart_item['data'] ?? null;
+            $quantity = (int) ($cart_item['quantity'] ?? 0);
+            if (!$product instanceof \WC_Product || $quantity <= 0) {
                 continue;
             }
-            $items[] = array('name' => substr($item->name() ?? 'Item', 0, 127), 'quantity' => (string) $item->quantity(), 'unit_amount' => array('currency_code' => $currency, 'value' => \WooCommerce\PayPalCommerce\StoreSync\Helper\CartHelper::format_decimal($price->value())));
+            $line_total = (float) ($cart_item['line_subtotal'] ?? 0.0);
+            $unit_price = $line_total / $quantity;
+            $items[] = array('name' => substr($product->get_name() ?? 'Item', 0, 127), 'quantity' => (string) $quantity, 'unit_amount' => Money::create($unit_price, $currency)->to_array());
         }
         return $items;
     }
@@ -148,7 +150,7 @@ class PayPalOrderManager
      * @return WooOrder The PayPal Order.
      * @throws RuntimeException If fetching fails.
      */
-    public function fetch_order(string $order_id)
+    public function fetch_order(string $order_id): WooOrder
     {
         $this->logger->info('[ORDER] Fetching PayPal Order', array('order_id' => $order_id));
         try {
@@ -173,6 +175,9 @@ class PayPalOrderManager
     public function link_wc_order(string $order_id, int $wc_order_id): void
     {
         $this->logger->info('[ORDER] Linking WooCommerce order to PayPal Order', array('order_id' => $order_id, 'wc_order_id' => $wc_order_id));
+        // Intentionally not using the PatchCollection or Patch classes
+        // because they expect an array as value, while this is a string.
+        // todo: could be topic of a future refactoring of the Patch class.
         $patch_data = array(array('op' => 'add', 'path' => '/purchase_units/@reference_id==\'default\'/custom_id', 'value' => (string) $wc_order_id));
         try {
             $this->orders_api->patch_order($order_id, $patch_data);
