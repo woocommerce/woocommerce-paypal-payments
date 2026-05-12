@@ -67,9 +67,11 @@ class ShippingOptionsBuilder {
 
 			$options[] = array(
 				'id'          => $rate_id,
-				'label'       => $rate->get_label(),
-				'amount'      => CartHelper::format_decimal( $rate->get_cost() ),
-				'currency'    => $currency,
+				'name'        => $rate->get_label(),
+				'price'       => array(
+					'currency_code' => $currency,
+					'value'         => CartHelper::format_decimal( $rate->get_cost() ),
+				),
 				'is_selected' => false,
 			);
 		}

@@ -100,15 +100,15 @@ class ShippingOption extends AgenticSchema {
 			}
 		}
 
-		// Required field: isSelected.
-		if ( ! isset( $input['isSelected'] ) ) {
+		// Required field: is_selected.
+		if ( ! isset( $input['is_selected'] ) ) {
 			$add_issue(
 				ValidationIssue::create_missing_field( 'Selection status is required' )
 					->user_message( 'Please specify if this shipping option is selected' )
-					->for_field( 'isSelected' )
+					->for_field( 'is_selected' )
 			);
-		} elseif ( is_bool( $input['isSelected'] ) ) {
-			$this->is_selected = $input['isSelected'];
+		} elseif ( is_bool( $input['is_selected'] ) ) {
+			$this->is_selected = $input['is_selected'];
 		}
 
 		// Optional field: description.
@@ -155,7 +155,7 @@ class ShippingOption extends AgenticSchema {
 		return $this->price;
 	}
 
-	public function isSelected(): bool {
+	public function is_selected(): bool {
 		return $this->is_selected;
 	}
 

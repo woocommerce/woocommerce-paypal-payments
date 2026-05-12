@@ -37,16 +37,22 @@ class PayPalCart extends AgenticSchema {
 	 */
 	private ?array $coupons = null;
 
+	/**
+	 * @var ShippingOption[]|null
+	 */
+	private ?array $available_shipping_options = null;
+
 	protected function parse_fields( array $input, callable $add_issue ): void {
 		// Reset all fields.
-		$this->items            = array();
-		$this->payment_method   = null;
-		$this->customer         = null;
-		$this->shipping_address = null;
-		$this->billing_address  = null;
-		$this->geo_coordinates  = null;
-		$this->checkout_fields  = null;
-		$this->coupons          = null;
+		$this->items                      = array();
+		$this->payment_method             = null;
+		$this->customer                   = null;
+		$this->shipping_address           = null;
+		$this->billing_address            = null;
+		$this->geo_coordinates            = null;
+		$this->checkout_fields            = null;
+		$this->coupons                    = null;
+		$this->available_shipping_options = null;
 
 		// Parse mandatory fields.
 		if ( ! empty( $input['items'] ) && is_array( $input['items'] ) ) {
@@ -131,6 +137,14 @@ class PayPalCart extends AgenticSchema {
 				$this->coupons[] = Coupon::from_array( $coupon, $add_issue );
 			}
 		}
+
+		if ( isset( $input['available_shipping_options'] ) && is_array( $input['available_shipping_options'] ) ) {
+			$this->available_shipping_options = array();
+
+			foreach ( $input['available_shipping_options'] as $option ) {
+				$this->available_shipping_options[] = ShippingOption::from_array( $option, $add_issue );
+			}
+		}
 	}
 
 	public function items(): array {
@@ -163,5 +177,9 @@ class PayPalCart extends AgenticSchema {
 
 	public function coupons(): ?array {
 		return $this->coupons;
+	}
+
+	public function available_shipping_options(): ?array {
+		return $this->available_shipping_options;
 	}
 }

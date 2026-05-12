@@ -122,7 +122,7 @@ class ShippingOptionsBuilderTest extends TestCase {
 	 * And that rate is selected via the session
 	 * When build() is called
 	 * Then exactly one shipping option is returned
-	 * And it has the correct id, label, amount, currency, and is_selected=true
+	 * And it has the correct id, name, price, and isSelected=true
 	 */
 	public function test_build_returns_single_option_for_one_package_one_rate(): void {
 		$rate     = $this->create_shipping_rate_stub( 'flat_rate:1', 'Flat Rate', 5.0 );
@@ -137,9 +137,9 @@ class ShippingOptionsBuilderTest extends TestCase {
 
 		$this->assertCount( 1, $result );
 		$this->assertSame( 'flat_rate:1', $result[0]['id'] );
-		$this->assertSame( 'Flat Rate', $result[0]['label'] );
-		$this->assertSame( '5.00', $result[0]['amount'] );
-		$this->assertSame( 'USD', $result[0]['currency'] );
+		$this->assertSame( 'Flat Rate', $result[0]['name'] );
+		$this->assertSame( '5.00', $result[0]['price']['value'] );
+		$this->assertSame( 'USD', $result[0]['price']['currency_code'] );
 		$this->assertTrue( $result[0]['is_selected'] );
 	}
 
@@ -280,8 +280,8 @@ class ShippingOptionsBuilderTest extends TestCase {
 		$result = $builder->build( $wc_cart );
 
 		$this->assertCount( 1, $result );
-		$this->assertIsString( $result[0]['amount'] );
-		$this->assertSame( $expected_amount, $result[0]['amount'] );
+		$this->assertIsString( $result[0]['price']['value'] );
+		$this->assertSame( $expected_amount, $result[0]['price']['value'] );
 	}
 
 	/**
@@ -325,7 +325,7 @@ class ShippingOptionsBuilderTest extends TestCase {
 		$result = $builder->build( $wc_cart );
 
 		$this->assertCount( 1, $result );
-		$this->assertSame( 'EUR', $result[0]['currency'] );
+		$this->assertSame( 'EUR', $result[0]['price']['currency_code'] );
 	}
 
 	/**
@@ -360,7 +360,7 @@ class ShippingOptionsBuilderTest extends TestCase {
 
 		$this->assertCount( 2, $result );
 		foreach ( $result as $option ) {
-			$this->assertSame( 'GBP', $option['currency'] );
+			$this->assertSame( 'GBP', $option['price']['currency_code'] );
 		}
 	}
 
@@ -373,7 +373,7 @@ class ShippingOptionsBuilderTest extends TestCase {
 	 *
 	 * Given a cart with one shipping package and one rate
 	 * When build() is called
-	 * Then each option array contains id, label, amount, currency, and is_selected
+	 * Then each option array contains id, name, price (with currency_code and value), and isSelected
 	 */
 	public function test_build_option_contains_all_required_keys(): void {
 		$rate     = $this->create_shipping_rate_stub( 'flat_rate:1', 'Flat Rate', 5.0 );
@@ -390,14 +390,15 @@ class ShippingOptionsBuilderTest extends TestCase {
 		$option = $result[0];
 
 		$this->assertArrayHasKey( 'id', $option );
-		$this->assertArrayHasKey( 'label', $option );
-		$this->assertArrayHasKey( 'amount', $option );
-		$this->assertArrayHasKey( 'currency', $option );
+		$this->assertArrayHasKey( 'name', $option );
+		$this->assertArrayHasKey( 'price', $option );
+		$this->assertArrayHasKey( 'currency_code', $option['price'] );
+		$this->assertArrayHasKey( 'value', $option['price'] );
 		$this->assertArrayHasKey( 'is_selected', $option );
 		$this->assertIsBool( $option['is_selected'] );
 		$this->assertIsString( $option['id'] );
-		$this->assertIsString( $option['label'] );
-		$this->assertIsString( $option['amount'] );
-		$this->assertIsString( $option['currency'] );
+		$this->assertIsString( $option['name'] );
+		$this->assertIsString( $option['price']['value'] );
+		$this->assertIsString( $option['price']['currency_code'] );
 	}
 }
