@@ -12,10 +12,10 @@ use WC_Cart;
 use WP_Error;
 use WooCommerce\PayPalCommerce\StoreSync\Config\StoreCurrencyValue;
 use WooCommerce\PayPalCommerce\StoreSync\Helper\AgenticCartBuilder;
-use WooCommerce\PayPalCommerce\StoreSync\Schema\Address;
 use WooCommerce\PayPalCommerce\StoreSync\Schema\Money;
 use WooCommerce\PayPalCommerce\StoreSync\Schema\PayPalCart;
 use WooCommerce\PayPalCommerce\StoreSync\Validation\StoreValidation;
+use WooCommerce\PayPalCommerce\StoreSync\Validation\ValidationIssue;
 /**
  * Output contract for an agentic cart request.
  *
@@ -47,10 +47,6 @@ class StorePayPalCart
     {
         $this->paypal_order = $order_id;
     }
-    public function paypal_order(): string
-    {
-        return $this->paypal_order;
-    }
     public function paypal_cart(): PayPalCart
     {
         return $this->paypal_cart;
@@ -58,7 +54,7 @@ class StorePayPalCart
     /**
      * @return StoreCartItem[]
      */
-    public function items(): array
+    public function cart_items(): array
     {
         return $this->store_items;
     }
@@ -85,73 +81,6 @@ class StorePayPalCart
     {
         return $this->validation;
     }
-    public function customer_name(): string
-    {
-        $customer = $this->paypal_cart->customer();
-        if (!$customer || !$customer->name()) {
-            return '';
-        }
-        $name = $customer->name();
-        $first = $name['given_name'] ?? '';
-        $last = $name['surname'] ?? '';
-        return trim("{$first} {$last}");
-    }
-    /**
-     * @return array{
-     *     address_line_1: string,
-     *     address_line_2: string,
-     *     admin_area_2: string,
-     *     admin_area_1: string,
-     *     postal_code: string,
-     *     country_code: string
-     * }
-     */
-    public function shipping_address_array(): array
-    {
-        $address = $this->paypal_cart->shipping_address();
-        return $address ? $address->to_array() : Address::empty_array();
-    }
-    /**
-     * @return array{
-     *     address_line_1: string,
-     *     address_line_2: string,
-     *     admin_area_2: string,
-     *     admin_area_1: string,
-     *     postal_code: string,
-     *     country_code: string
-     * }
-     */
-    public function billing_address_array(): array
-    {
-        $address = $this->paypal_cart->billing_address();
-        return $address ? $address->to_array() : Address::empty_array();
-    }
-    /**
-     * Calculates cart totals from the WC_Cart if available and no pricing issues exist.
-     *
-     * @return array|null
-     */
-    public function totals(): ?array
-    {
-        $wc_cart = $this->wc_cart();
-        if (!$wc_cart || $this->validation->has_pricing_issue()) {
-            return null;
-        }
-        $currency_code = $this->currency();
-        $item_total = (float) $wc_cart->get_cart_contents_total();
-        $discount_total = (float) $wc_cart->get_discount_total();
-        $shipping_total = (float) $wc_cart->get_shipping_total();
-        $tax_total = (float) $wc_cart->get_total_tax();
-        $cart_total = (float) $wc_cart->get_total('edit');
-        if (!$currency_code || $item_total <= 0 || $cart_total <= 0) {
-            return null;
-        }
-        $totals = array('subtotal' => Money::create($item_total, $currency_code)->to_array(), 'shipping' => Money::create($shipping_total, $currency_code)->to_array(), 'tax' => Money::create($tax_total, $currency_code)->to_array(), 'total' => Money::create($cart_total, $currency_code)->to_array());
-        if ($discount_total > 0) {
-            $totals['discount'] = Money::create($discount_total, $currency_code)->to_array();
-        }
-        return $totals;
-    }
     /**
      * Whether the current cart is ready for a payment attempt.
      *
@@ -167,23 +96,84 @@ class StorePayPalCart
         if (!$this->validation->is_empty()) {
             return \false;
         }
-        // Missing payment method or token, cart is not ready.
-        if ($this->paypal_cart->payment_method() === null) {
+        // Missing payment token, cart is not ready.
+        if (!$this->paypal_cart->payment_method()->token()) {
             return \false;
         }
         return \true;
     }
-    public function to_array(): array
+    // === API RESPONSE FORMAT ===
+    /**
+     * Calculates cart totals from the WC_Cart if available and no pricing issues exist.
+     *
+     * @return array|null
+     */
+    public function get_totals(): ?array
     {
-        $data = $this->paypal_cart->to_array();
-        // Replace cart contents with WC_Cart enriched data.
-        $data['items'] = array();
-        foreach ($this->store_items as $item) {
-            assert($item instanceof \WooCommerce\PayPalCommerce\StoreSync\StoreData\StoreCartItem);
-            $data['items'][] = $item->to_array();
+        $wc_cart = $this->wc_cart();
+        if (!$wc_cart) {
+            return null;
         }
-        // Totals is always calculated fresh.
-        $data['totals'] = $this->totals();
-        return array_filter($data, static fn($v) => $v !== null);
+        $currency_code = $this->currency();
+        $item_total = (float) $wc_cart->get_cart_contents_total();
+        $discount_total = (float) $wc_cart->get_discount_total();
+        $shipping_total = (float) $wc_cart->get_shipping_total();
+        $tax_total = (float) $wc_cart->get_total_tax();
+        $cart_total = (float) $wc_cart->get_total('edit');
+        if ($item_total <= 0 || $cart_total <= 0) {
+            return null;
+        }
+        $totals = array('subtotal' => Money::create($item_total, $currency_code)->to_array(), 'shipping' => Money::create($shipping_total, $currency_code)->to_array(), 'tax' => Money::create($tax_total, $currency_code)->to_array(), 'total' => Money::create($cart_total, $currency_code)->to_array());
+        if ($discount_total > 0) {
+            $totals['discount'] = Money::create($discount_total, $currency_code)->to_array();
+        }
+        return $totals;
+    }
+    /**
+     * An array containing all validation issues for the API response. If no validation
+     * issues were recorded, an empty array is returned.
+     */
+    public function get_validation_issues(): array
+    {
+        return array_map(static fn(ValidationIssue $issue) => $issue->to_array(), $this->validation()->all());
+    }
+    /**
+     * The full "payment_method" schema, including the ec_token (if a paypal_order is set).
+     */
+    public function get_payment_method(): array
+    {
+        $data = $this->paypal_cart->payment_method()->to_array();
+        if ($this->paypal_order) {
+            $data['token'] = $this->paypal_order;
+        }
+        return $data;
+    }
+    public function get_items(): array
+    {
+        return array_map(static fn(\WooCommerce\PayPalCommerce\StoreSync\StoreData\StoreCartItem $item) => $item->to_array(), $this->cart_items());
+    }
+    public function get_customer(): array
+    {
+        $customer = $this->paypal_cart->customer();
+        if (!$customer) {
+            return array();
+        }
+        return $customer->to_array();
+    }
+    public function get_shipping_address(): array
+    {
+        $address = $this->paypal_cart->shipping_address();
+        if ($address->is_empty()) {
+            return array();
+        }
+        return $address->to_array();
+    }
+    public function get_billing_address(): ?array
+    {
+        $address = $this->paypal_cart->billing_address();
+        if (!$address) {
+            return null;
+        }
+        return $address->to_array();
     }
 }

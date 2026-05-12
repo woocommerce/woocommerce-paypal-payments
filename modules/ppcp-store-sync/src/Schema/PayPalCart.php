@@ -120,16 +120,22 @@ class PayPalCart extends \WooCommerce\PayPalCommerce\StoreSync\Schema\AgenticSch
     {
         return $this->items;
     }
-    public function payment_method(): ?\WooCommerce\PayPalCommerce\StoreSync\Schema\PaymentMethod
+    public function payment_method(): \WooCommerce\PayPalCommerce\StoreSync\Schema\PaymentMethod
     {
+        if (!$this->payment_method) {
+            $this->payment_method = \WooCommerce\PayPalCommerce\StoreSync\Schema\PaymentMethod::create_empty();
+        }
         return $this->payment_method;
     }
     public function customer(): ?\WooCommerce\PayPalCommerce\StoreSync\Schema\Customer
     {
         return $this->customer;
     }
-    public function shipping_address(): ?\WooCommerce\PayPalCommerce\StoreSync\Schema\Address
+    public function shipping_address(): \WooCommerce\PayPalCommerce\StoreSync\Schema\Address
     {
+        if (!$this->shipping_address) {
+            $this->shipping_address = \WooCommerce\PayPalCommerce\StoreSync\Schema\Address::create_empty();
+        }
         return $this->shipping_address;
     }
     public function billing_address(): ?\WooCommerce\PayPalCommerce\StoreSync\Schema\Address

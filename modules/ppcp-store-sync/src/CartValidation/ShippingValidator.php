@@ -45,7 +45,7 @@ class ShippingValidator implements \WooCommerce\PayPalCommerce\StoreSync\CartVal
         $cart = $store_cart->paypal_cart();
         $shipping_address = $cart->shipping_address();
         // Scenario 1: Missing Shipping Address.
-        if (!$shipping_address) {
+        if ($shipping_address->is_empty()) {
             if ($this->cart_needs_shipping($cart)) {
                 return array(ValidationIssue::create_missing_field('Shipping address is required')->user_message('Please provide a shipping address to continue.')->for_field('shipping_address')->add_context(ShippingErrorContext::create_missing_shipping_address())->add_resolution(ResolutionOption::create_provide_missing_field()->label('Add shipping address')->priority(Priority::HIGH)->set_meta('field', 'shipping_address')));
             }

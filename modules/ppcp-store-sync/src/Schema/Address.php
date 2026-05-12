@@ -20,6 +20,10 @@ class Address extends \WooCommerce\PayPalCommerce\StoreSync\Schema\AgenticSchema
     private ?string $admin_area_2 = null;
     private ?string $admin_area_1 = null;
     private ?string $postal_code = null;
+    public static function create_empty(): self
+    {
+        return self::from_array(array(), new StoreValidation());
+    }
     protected function parse_fields(array $input, StoreValidation $validation): void
     {
         // Reset all fields.
@@ -119,13 +123,9 @@ class Address extends \WooCommerce\PayPalCommerce\StoreSync\Schema\AgenticSchema
     {
         return array('address_line_1' => (string) $this->address_line_1(''), 'address_line_2' => (string) $this->address_line_2(''), 'admin_area_2' => (string) $this->admin_area_2(''), 'admin_area_1' => (string) $this->admin_area_1(''), 'postal_code' => (string) $this->postal_code(''), 'country_code' => (string) $this->country_code(''));
     }
-    /**
-     * Returns an all-empty address array for callers that need the shape but have no Address instance.
-     *
-     * @return array{address_line_1: string, address_line_2: string, admin_area_2: string, admin_area_1: string, postal_code: string, country_code: string}
-     */
-    public static function empty_array(): array
+    public function is_empty(): bool
     {
-        return array('address_line_1' => '', 'address_line_2' => '', 'admin_area_2' => '', 'admin_area_1' => '', 'postal_code' => '', 'country_code' => '');
+        $data = $this->to_array();
+        return count(array_filter($data, static fn($v) => $v !== '')) === 0;
     }
 }

@@ -115,7 +115,7 @@ class CouponContextBuilder
         if (!$wc_coupon) {
             return array();
         }
-        $subtotal = array_reduce($store_cart->items(), static function (float $total, StoreCartItem $item): float {
+        $subtotal = array_reduce($store_cart->cart_items(), static function (float $total, StoreCartItem $item): float {
             return $total + $item->real_price() * (float) $item->schema()->quantity();
         }, 0.0);
         $minimum = (float) $wc_coupon->get_minimum_amount();
@@ -130,7 +130,7 @@ class CouponContextBuilder
         if (!$wc_coupon) {
             return array();
         }
-        $subtotal = array_reduce($store_cart->items(), static function (float $total, StoreCartItem $item): float {
+        $subtotal = array_reduce($store_cart->cart_items(), static function (float $total, StoreCartItem $item): float {
             return $total + $item->real_price() * (float) $item->schema()->quantity();
         }, 0.0);
         $maximum = (float) $wc_coupon->get_maximum_amount();
@@ -257,7 +257,7 @@ class CouponContextBuilder
     private function get_eligible_items(WC_Coupon $wc_coupon, StorePayPalCart $store_cart): array
     {
         $eligible = array();
-        foreach ($store_cart->items() as $item) {
+        foreach ($store_cart->cart_items() as $item) {
             $product = $this->product_manager->find_product($item->schema());
             if (!$product) {
                 continue;
