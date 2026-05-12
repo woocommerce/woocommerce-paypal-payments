@@ -51,7 +51,7 @@ class ReplaceCartEndpointTest extends AgenticEndpointTestCase {
 
 		// Mock response factory.
 		$response_factory->allows( 'from_cart' )
-			->andReturnUsing( fn( $cart ) => CartResponse::create( $cart, '', new StoreValidation() ) );
+			->andReturnUsing( fn( $cart ) => CartResponse::create( $cart, '' ) );
 
 		// Mock order_manager behavior
 		$order_manager = $mocks['order_manager'];
@@ -184,7 +184,7 @@ class ReplaceCartEndpointTest extends AgenticEndpointTestCase {
 
 		// Mock response factory.
 		$response_factory->allows( 'from_cart' )
-			->andReturnUsing( fn( $cart ) => CartResponse::create( $cart, '', new StoreValidation() ) );
+			->andReturnUsing( fn( $cart ) => CartResponse::create( $cart, '' ) );
 
 		// Mock order_manager behavior
 		$order_manager = $mocks['order_manager'];
