@@ -40,7 +40,7 @@ class AppliedCouponsBuilder {
 			return array();
 		}
 
-		if ( ! class_exists( 'WC_Coupon' ) ) {
+		if ( ! class_exists( WC_Coupon::class ) ) {
 			return array();
 		}
 

@@ -10,6 +10,7 @@ declare( strict_types = 1 );
 namespace WooCommerce\PayPalCommerce\StoreSync;
 
 use Psr\Log\LoggerInterface;
+use WC_Logger;
 use WooCommerce\PayPalCommerce\Assets\AssetGetter;
 use WooCommerce\PayPalCommerce\Assets\AssetGetterFactory;
 use WooCommerce\WooCommerce\Logging\Logger\NullLogger;
@@ -66,7 +67,7 @@ const LOGGER_SOURCE = 'woocommerce-paypal-agentic';
 return array(
 	// Logging.
 	'agentic.logger'                               => static function (): LoggerInterface {
-		if ( ! class_exists( \WC_Logger::class ) ) {
+		if ( ! class_exists( WC_Logger::class ) ) {
 			return new NullLogger();
 		}
 
@@ -145,7 +146,9 @@ return array(
 		);
 	},
 	'agentic.helper.shipping-options-builder'      => static function ( ContainerInterface $c ): ShippingOptionsBuilder {
-		return new ShippingOptionsBuilder( $c->get( 'agentic.config.store-currency' ) );
+		return new ShippingOptionsBuilder(
+			$c->get( 'agentic.config.store-currency' )
+		);
 	},
 	'agentic.helper.checkout-processor'            => static function ( ContainerInterface $c ): AgenticCheckoutProcessor {
 		return new AgenticCheckoutProcessor(

@@ -259,7 +259,7 @@ class PayPalOrderManager {
 	 * @return WooOrder The PayPal Order.
 	 * @throws RuntimeException If fetching fails.
 	 */
-	public function fetch_order( string $order_id ) {
+	public function fetch_order( string $order_id ): WooOrder {
 		$this->logger->info(
 			'[ORDER] Fetching PayPal Order',
 			array( 'order_id' => $order_id )
@@ -277,7 +277,6 @@ class PayPalOrderManager {
 			);
 
 			return $paypal_order;
-
 		} catch ( RuntimeException $error ) {
 			$this->logger->error(
 				'[ORDER] Failed to fetch PayPal Order',
@@ -310,6 +309,9 @@ class PayPalOrderManager {
 			)
 		);
 
+		// Intentionally not using the PatchCollection or Patch classes
+		// because they expect an array as value, while this is a string.
+		// todo: could be topic of a future refactoring of the Patch class.
 		$patch_data = array(
 			array(
 				'op'    => 'add',

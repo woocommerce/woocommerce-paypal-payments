@@ -220,4 +220,6 @@ class StorePayPalCart {
 
 		return $address->to_array();
 	}
+
+	// === END OF API RESPONSE FORMAT ===
 }

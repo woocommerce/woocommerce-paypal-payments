@@ -127,6 +127,8 @@ class CartResponse {
 		return $this;
 	}
 
+	// === API RESPONSE FORMAT ===
+
 	/**
 	 * Convert to array for API response.
 	 *
@@ -197,4 +199,6 @@ class CartResponse {
 			'order_review_page'     => $wc_order->get_checkout_order_received_url(),
 		);
 	}
+
+	// === END OF API RESPONSE FORMAT ===
 }

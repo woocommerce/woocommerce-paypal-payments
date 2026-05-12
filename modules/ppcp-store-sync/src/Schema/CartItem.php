@@ -185,6 +185,9 @@ class CartItem extends AgenticSchema {
 		}
 	}
 
+	/**
+	 * @deprecated Use `variant_id` instead
+	 */
 	public function item_id( ?string $default = null ): ?string {
 		return $this->id ?? $default;
 	}
@@ -231,6 +234,7 @@ class CartItem extends AgenticSchema {
 			'name'                => $this->name,
 			'description'         => $this->description,
 			'selected_attributes' => $this->selected_attributes,
+			'gift_options'        => $this->gift_options,
 		);
 
 		return array_filter( $data, static fn( $v ) => $v !== null );

@@ -30,10 +30,10 @@ class ProductValidator implements ValidatorInterface {
 			return null;
 		}
 
-		return array_values(
-			array_filter(
-				$store_cart->cart_items(),
-				fn( $item ) => $this->validate_product( $item )
+		return array_filter(
+			array_map(
+				fn( StoreCartItem $item ): ?ValidationIssue => $this->validate_product( $item ),
+				$store_cart->cart_items()
 			)
 		);
 	}

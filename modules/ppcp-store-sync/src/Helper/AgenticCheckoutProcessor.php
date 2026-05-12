@@ -12,6 +12,7 @@ declare( strict_types = 1 );
 namespace WooCommerce\PayPalCommerce\StoreSync\Helper;
 
 use WC_Order;
+use Exception;
 use WP_Error;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Order as PayPalOrder;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Shipping;
@@ -176,7 +177,7 @@ class AgenticCheckoutProcessor {
 
 			return $wc_order;
 
-		} catch ( \Exception $e ) {
+		} catch ( Exception $e ) {
 			$this->logger->error(
 				'[CHECKOUT] Checkout failed with exception',
 				array(
