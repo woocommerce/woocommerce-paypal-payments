@@ -1,16 +1,11 @@
 import merge from 'deepmerge';
 import { keysToCamelCase } from './Utils';
 
-// Vault-component path takes precedence over the legacy user-id-token path.
-// The two SDK attributes are mutually exclusive: PayPal's SDK does not accept
-// both `data-sdk-client-token` and `data-user-id-token` on the same script tag.
+// data-sdk-client-token is reserved exclusively for the vault component's own
+// dedicated SDK namespace (ppcpVaultComponent). Shared SDK loads must not carry it.
 const processSdkToken = ( config ) => {
 	if ( config?.user?.is_logged !== true ) {
 		return {};
-	}
-	const sdkClientToken = config?.vault_component?.sdk_client_token;
-	if ( sdkClientToken ) {
-		return { 'data-sdk-client-token': sdkClientToken };
 	}
 	const userIdToken = config?.save_payment_methods?.id_token;
 	if ( userIdToken ) {

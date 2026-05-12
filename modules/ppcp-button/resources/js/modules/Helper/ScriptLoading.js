@@ -69,14 +69,11 @@ export const loadPaypalScript = ( config, onLoaded, onError = null ) => {
 		scriptOptions = merge( scriptOptions, config.script_attributes );
 	}
 
-	// SDK accepts only one of these attributes at a time; vault-component wins,
-	// otherwise fall back to the legacy user-id-token path.
+	// data-sdk-client-token is reserved for the vault component's dedicated SDK
+	// namespace and must not appear on shared SDK script loads.
 	if ( config?.user?.is_logged === true ) {
-		const sdkClientToken = config?.vault_component?.sdk_client_token;
 		const userIdToken = config?.save_payment_methods?.id_token;
-		if ( sdkClientToken ) {
-			scriptOptions[ 'data-sdk-client-token' ] = sdkClientToken;
-		} else if ( userIdToken ) {
+		if ( userIdToken ) {
 			scriptOptions[ 'data-user-id-token' ] = userIdToken;
 		}
 	}

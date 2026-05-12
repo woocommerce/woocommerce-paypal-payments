@@ -1,7 +1,10 @@
 import { useEffect, useRef, useState } from '@wordpress/element';
-import { loadPayPalScript } from '@ppcp-button/Helper/PayPalScriptLoading';
+import { loadScript } from '@paypal/paypal-js';
 
-const namespace = 'ppcpBlocksPaypalExpressButtons';
+const VAULT_NAMESPACE = 'ppcpVaultComponent';
+
+// Module-level cache so re-renders don't trigger duplicate loads.
+let vaultSdkPromise = null;
 
 export const VaultComponent = ( { config, onApproveOrder, onRenderError } ) => {
 	const containerRef = useRef( null );
@@ -11,18 +14,33 @@ export const VaultComponent = ( { config, onApproveOrder, onRenderError } ) => {
 
 	const vaultData = config.scriptData.vault_component;
 
-	// Load SDK if not already loaded.
+	// Load SDK into a dedicated namespace so it does not interfere with the
+	// main ppcpBlocksPaypalExpressButtons SDK or widgetBuilder state.
 	useEffect( () => {
-		const paypal = window[ namespace ];
-		if ( paypal?.SavedPaymentMethods ) {
+		if ( window[ VAULT_NAMESPACE ]?.SavedPaymentMethods ) {
 			setSdkReady( true );
 			return;
 		}
 
-		loadPayPalScript( namespace, config.scriptData )
+		if ( ! vaultSdkPromise ) {
+			const options = {
+				clientId: config.scriptData.client_id,
+				components: 'saved-payment-methods',
+				'data-namespace': VAULT_NAMESPACE,
+				'data-sdk-client-token': vaultData.sdk_client_token,
+			};
+			const sdkBaseUrl = config.scriptData.script_attributes?.sdkBaseUrl;
+			if ( sdkBaseUrl ) {
+				options.sdkBaseUrl = sdkBaseUrl;
+			}
+			vaultSdkPromise = loadScript( options );
+		}
+
+		vaultSdkPromise
 			.then( () => setSdkReady( true ) )
 			.catch( ( error ) => {
 				console.error( 'Failed to load PayPal SDK for Vault:', error );
+				vaultSdkPromise = null;
 				setRenderFailed( true );
 				onRenderError?.();
 			} );
@@ -38,7 +56,7 @@ export const VaultComponent = ( { config, onApproveOrder, onRenderError } ) => {
 			return;
 		}
 
-		const paypal = window[ namespace ];
+		const paypal = window[ VAULT_NAMESPACE ];
 		if ( ! paypal?.SavedPaymentMethods ) {
 			console.error(
 				'PayPal SavedPaymentMethods SDK component not available.'
