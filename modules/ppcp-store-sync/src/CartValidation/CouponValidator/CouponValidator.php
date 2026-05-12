@@ -25,23 +25,8 @@ use WooCommerce\PayPalCommerce\StoreSync\Validation\ValidationIssue;
  */
 class CouponValidator implements ValidatorInterface
 {
-    /**
-     * Context builder for building validation context data.
-     *
-     * @var CouponContextBuilder
-     */
     private \WooCommerce\PayPalCommerce\StoreSync\CartValidation\CouponValidator\CouponContextBuilder $context_builder;
-    /**
-     * Discount calculator for coupon discount amounts.
-     *
-     * @var DiscountCalculator
-     */
     private \WooCommerce\PayPalCommerce\StoreSync\CartValidation\CouponValidator\DiscountCalculator $discount_calculator;
-    /**
-     * Resolution builder for building resolution options.
-     *
-     * @var CouponResolutionBuilder
-     */
     private \WooCommerce\PayPalCommerce\StoreSync\CartValidation\CouponValidator\CouponResolutionBuilder $resolution_builder;
     /**
      * Issue configuration.

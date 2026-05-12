@@ -21,15 +21,7 @@ class AgenticSessionHandler
      * Session key for storing agentic commerce data.
      */
     private const SESSION_KEY = 'ppcp_agentic';
-    /**
-     * The custom session handler.
-     *
-     * @var AgenticWcSession
-     */
     private \WooCommerce\PayPalCommerce\StoreSync\Session\AgenticWcSession $session;
-    /**
-     * Constructor.
-     */
     public function __construct()
     {
         // Include required WC files for REST context.

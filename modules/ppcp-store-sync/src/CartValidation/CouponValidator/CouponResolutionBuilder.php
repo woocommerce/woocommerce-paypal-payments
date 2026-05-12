@@ -10,7 +10,6 @@
 declare (strict_types=1);
 namespace WooCommerce\PayPalCommerce\StoreSync\CartValidation\CouponValidator;
 
-use WC_Coupon;
 use WooCommerce\PayPalCommerce\StoreSync\Enums\Priority;
 use WooCommerce\PayPalCommerce\StoreSync\Schema\Money;
 use WooCommerce\PayPalCommerce\StoreSync\Validation\Resolution\ResolutionOption;

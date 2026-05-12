@@ -16,18 +16,10 @@ use WooCommerce\PayPalCommerce\StoreSync\Validation\StoreValidation;
 abstract class AgenticSchema
 {
     /**
-     * Holds the raw input data passed to the `from_array` factory method.
-     * Used by subclasses that need to re-expose the original payload (e.g. for session storage).
-     */
-    private array $raw_data;
-    /**
      * Private constructor to enforce use of `from_array` factory method.
-     *
-     * @param array $raw_data The raw input data.
      */
-    final private function __construct(array $raw_data)
+    final private function __construct()
     {
-        $this->raw_data = $raw_data;
     }
     /**
      * Performs the data validation during the object construction.
@@ -45,16 +37,8 @@ abstract class AgenticSchema
      */
     final public static function from_array(array $data, StoreValidation $validation): self
     {
-        $instance = new static($data);
+        $instance = new static();
         $instance->parse_fields($data, $validation);
         return $instance;
-    }
-    /**
-     * Exposes the raw input array for subclasses that need it (e.g. for session persistence).
-     * Not for use in API responses — use getter-based serialization instead.
-     */
-    final protected function raw_data(): array
-    {
-        return $this->raw_data;
     }
 }

@@ -13,7 +13,6 @@ namespace WooCommerce\PayPalCommerce\StoreSync\CartValidation\CouponValidator;
 use WC_Coupon;
 use WooCommerce\PayPalCommerce\StoreSync\Helper\ProductManager;
 use WooCommerce\PayPalCommerce\StoreSync\Schema\Money;
-use WooCommerce\PayPalCommerce\StoreSync\Schema\PayPalCart;
 use WooCommerce\PayPalCommerce\StoreSync\StoreData\StoreCartItem;
 use WooCommerce\PayPalCommerce\StoreSync\StoreData\StorePayPalCart;
 use WooCommerce\PayPalCommerce\StoreSync\Validation\Context\IssueContext;
@@ -116,7 +115,7 @@ class CouponContextBuilder
             return array();
         }
         $subtotal = array_reduce($store_cart->cart_items(), static function (float $total, StoreCartItem $item): float {
-            return $total + $item->real_price() * (float) $item->schema()->quantity();
+            return $total + $item->real_price() * (float) $item->paypal_item()->quantity();
         }, 0.0);
         $minimum = (float) $wc_coupon->get_minimum_amount();
         $shortage = max(0, $minimum - $subtotal);
@@ -131,7 +130,7 @@ class CouponContextBuilder
             return array();
         }
         $subtotal = array_reduce($store_cart->cart_items(), static function (float $total, StoreCartItem $item): float {
-            return $total + $item->real_price() * (float) $item->schema()->quantity();
+            return $total + $item->real_price() * (float) $item->paypal_item()->quantity();
         }, 0.0);
         $maximum = (float) $wc_coupon->get_maximum_amount();
         return array('maximum_allowed' => Money::create($maximum)->to_decimal(), 'current_subtotal' => Money::create($subtotal)->to_decimal(), 'currency_code' => $store_cart->currency());
@@ -258,14 +257,14 @@ class CouponContextBuilder
     {
         $eligible = array();
         foreach ($store_cart->cart_items() as $item) {
-            $product = $this->product_manager->find_product($item->schema());
+            $product = $this->product_manager->find_product($item->paypal_item());
             if (!$product) {
                 continue;
             }
             // Use WooCommerce's native validation which handles all restrictions
             // including products, categories, exclusions, sale items, and plugin extensions.
             if ($wc_coupon->is_valid_for_product($product, array('data' => $product))) {
-                $eligible[] = $item->schema()->variant_id();
+                $eligible[] = $item->paypal_item()->variant_id();
             }
         }
         return $eligible;

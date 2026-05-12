@@ -18,11 +18,6 @@ use WooCommerce\PayPalCommerce\StoreSync\StoreData\StorePayPalCart;
 class AppliedCouponsBuilder
 {
     private \WooCommerce\PayPalCommerce\StoreSync\CartValidation\CouponValidator\DiscountCalculator $discount_calculator;
-    /**
-     * Constructor.
-     *
-     * @param DiscountCalculator $discount_calculator Discount calculator instance.
-     */
     public function __construct(\WooCommerce\PayPalCommerce\StoreSync\CartValidation\CouponValidator\DiscountCalculator $discount_calculator)
     {
         $this->discount_calculator = $discount_calculator;
@@ -42,7 +37,7 @@ class AppliedCouponsBuilder
         if ($validation_status !== 'VALID') {
             return array();
         }
-        if (!class_exists('WC_Coupon')) {
+        if (!class_exists(WC_Coupon::class)) {
             return array();
         }
         $coupons = $store_cart->paypal_cart()->coupons();

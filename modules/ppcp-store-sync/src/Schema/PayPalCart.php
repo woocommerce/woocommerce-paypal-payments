@@ -113,7 +113,7 @@ class PayPalCart extends \WooCommerce\PayPalCommerce\StoreSync\Schema\AgenticSch
      */
     public function to_array(): array
     {
-        $data = array('items' => array_map(static fn(\WooCommerce\PayPalCommerce\StoreSync\Schema\CartItem $item) => $item->to_array(), $this->items), 'payment_method' => $this->payment_method?->to_array() ?: null, 'customer' => $this->customer?->to_array() ?: null, 'shipping_address' => $this->shipping_address?->to_array(), 'billing_address' => $this->billing_address?->to_array());
+        $data = array('items' => array_map(static fn(\WooCommerce\PayPalCommerce\StoreSync\Schema\CartItem $item) => $item->to_array(), $this->items), 'payment_method' => $this->payment_method()->to_array(), 'customer' => $this->customer ? $this->customer->to_array() : null, 'shipping_address' => $this->shipping_address()->to_array(), 'billing_address' => $this->billing_address ? $this->billing_address->to_array() : null);
         return array_filter($data, static fn($v) => $v !== null);
     }
     public function items(): array

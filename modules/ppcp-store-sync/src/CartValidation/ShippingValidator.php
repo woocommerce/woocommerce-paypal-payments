@@ -20,7 +20,6 @@ use WC_Validation;
 use WC_Product;
 use WooCommerce\PayPalCommerce\StoreSync\Enums\Priority;
 use WooCommerce\PayPalCommerce\StoreSync\Enums\ShippingIssue;
-use WooCommerce\PayPalCommerce\StoreSync\Helper\ProductManager;
 use WooCommerce\PayPalCommerce\StoreSync\Schema\Address;
 use WooCommerce\PayPalCommerce\StoreSync\Schema\CartItem;
 use WooCommerce\PayPalCommerce\StoreSync\Schema\PayPalCart;
@@ -28,6 +27,7 @@ use WooCommerce\PayPalCommerce\StoreSync\StoreData\StorePayPalCart;
 use WooCommerce\PayPalCommerce\StoreSync\Validation\Context\ShippingErrorContext;
 use WooCommerce\PayPalCommerce\StoreSync\Validation\Resolution\ResolutionOption;
 use WooCommerce\PayPalCommerce\StoreSync\Validation\ValidationIssue;
+use WooCommerce\PayPalCommerce\StoreSync\StoreData\StoreCartItem;
 class ShippingValidator implements \WooCommerce\PayPalCommerce\StoreSync\CartValidation\ValidatorInterface
 {
     /**
@@ -35,21 +35,16 @@ class ShippingValidator implements \WooCommerce\PayPalCommerce\StoreSync\CartVal
      * Managed on plugin-side for extra code and test stability.
      */
     private const PAYPAL_SUPPORTED_COUNTRIES = array('US');
-    private ProductManager $product_manager;
-    public function __construct(ProductManager $product_manager)
-    {
-        $this->product_manager = $product_manager;
-    }
     public function validate(StorePayPalCart $store_cart)
     {
         $cart = $store_cart->paypal_cart();
         $shipping_address = $cart->shipping_address();
         // Scenario 1: Missing Shipping Address.
         if ($shipping_address->is_empty()) {
-            if ($this->cart_needs_shipping($cart)) {
-                return array(ValidationIssue::create_missing_field('Shipping address is required')->user_message('Please provide a shipping address to continue.')->for_field('shipping_address')->add_context(ShippingErrorContext::create_missing_shipping_address())->add_resolution(ResolutionOption::create_provide_missing_field()->label('Add shipping address')->priority(Priority::HIGH)->set_meta('field', 'shipping_address')));
+            if (!$this->cart_needs_shipping($store_cart)) {
+                return null;
             }
-            return null;
+            return array(ValidationIssue::create_missing_field('Shipping address is required')->user_message('Please provide a shipping address to continue.')->for_field('shipping_address')->add_context(ShippingErrorContext::create_missing_shipping_address())->add_resolution(ResolutionOption::create_provide_missing_field()->label('Add shipping address')->priority(Priority::HIGH)->set_meta('field', 'shipping_address')));
         }
         $issues = array();
         // Scenario 2: Invalid Shipping Address.
@@ -58,7 +53,7 @@ class ShippingValidator implements \WooCommerce\PayPalCommerce\StoreSync\CartVal
             $issues = array_merge($issues, $address_issues);
         }
         // Scenario 3: PO Box Restriction.
-        $po_box_issue = $this->validate_po_box_restrictions($cart, $shipping_address);
+        $po_box_issue = $this->validate_po_box_restrictions($store_cart, $shipping_address);
         if ($po_box_issue) {
             $issues[] = $po_box_issue;
         }
@@ -72,14 +67,13 @@ class ShippingValidator implements \WooCommerce\PayPalCommerce\StoreSync\CartVal
     /**
      * Checks if any item in the cart requires shipping.
      *
-     * @param PayPalCart $cart The cart to check.
+     * @param StorePayPalCart $store_cart The cart to check.
      * @return bool True if at least one item needs shipping.
      */
-    private function cart_needs_shipping(PayPalCart $cart): bool
+    private function cart_needs_shipping(StorePayPalCart $store_cart): bool
     {
-        foreach ($cart->items() as $item) {
-            $product = $this->product_manager->find_product($item);
-            if ($product && $product->needs_shipping()) {
+        foreach ($store_cart->cart_items() as $item) {
+            if ($item->product()->needs_shipping()) {
                 return \true;
             }
         }
@@ -124,7 +118,7 @@ class ShippingValidator implements \WooCommerce\PayPalCommerce\StoreSync\CartVal
             return null;
         }
         // Use WooCommerce's native postcode validation.
-        if (!class_exists('WC_Validation')) {
+        if (!class_exists(WC_Validation::class)) {
             return null;
         }
         $is_valid = WC_Validation::is_postcode($postal_code, $country_code);
@@ -136,19 +130,19 @@ class ShippingValidator implements \WooCommerce\PayPalCommerce\StoreSync\CartVal
     /**
      * Scenario 2: Validates PO Box restrictions for items requiring signature delivery.
      *
-     * @param PayPalCart $cart    The cart to validate.
-     * @param Address    $address The shipping address.
+     * @param StorePayPalCart $store_cart The cart to validate.
+     * @param Address         $address    The shipping address.
      * @return ValidationIssue|null Validation issue if PO Box restrictions apply.
      */
-    private function validate_po_box_restrictions(PayPalCart $cart, Address $address): ?ValidationIssue
+    private function validate_po_box_restrictions(StorePayPalCart $store_cart, Address $address): ?ValidationIssue
     {
         $address_line = $address->address_line_1();
         if (!$address_line || !$this->is_po_box($address_line)) {
             return null;
         }
-        $signature_required_items = $this->find_signature_required_items($cart);
+        $signature_required_items = $this->find_signature_required_items($store_cart);
         if (!empty($signature_required_items)) {
-            $restricted_items = array_map(static fn($item): string => $item->item_id() ?? $item->variant_id() ?? '', $signature_required_items);
+            $restricted_items = array_map(static fn($item): string => $item->id(), $signature_required_items);
             return ValidationIssue::create_shipping_unavailable('PO Box delivery not available for this order')->user_message('This order contains items requiring signature confirmation and cannot be delivered to a PO Box.')->for_field('shipping_address')->add_context(ShippingErrorContext::create_shipping_to_po_box_not_allowed()->restricted_items($restricted_items)->restriction_reason('signature_required')->po_box_detected(\true))->add_resolution(ResolutionOption::create_update_address()->label('Use street address instead')->priority(Priority::HIGH))->add_resolution(ResolutionOption::create_remove_item()->label('Remove items requiring signature')->priority(Priority::LOW));
         }
         return null;
@@ -156,12 +150,11 @@ class ShippingValidator implements \WooCommerce\PayPalCommerce\StoreSync\CartVal
     /**
      * Finds items in the cart that require signature delivery.
      *
-     * @param PayPalCart $cart The cart to check.
-     * @return array Array of CartItem objects that require signature.
+     * @return StoreCartItem[] Array of StoreCartItem objects that require signature.
      */
-    private function find_signature_required_items(PayPalCart $cart): array
+    private function find_signature_required_items(StorePayPalCart $store_cart): array
     {
-        return array_values(array_filter($cart->items(), fn($item): bool => $this->item_requires_signature($item)));
+        return array_values(array_filter($store_cart->cart_items(), fn($item): bool => $this->item_requires_signature($item)));
     }
     /**
      * Checks if an item requires signature delivery.
@@ -170,15 +163,11 @@ class ShippingValidator implements \WooCommerce\PayPalCommerce\StoreSync\CartVal
      * This method relies entirely on the filter hook for shipping plugins to indicate
      * signature requirements.
      *
-     * @param CartItem $item The item to check.
+     * @param StoreCartItem $item The item to check.
      * @return bool True if signature is required.
      */
-    private function item_requires_signature(CartItem $item): bool
+    private function item_requires_signature(StoreCartItem $item): bool
     {
-        $product = $this->product_manager->find_product($item);
-        if (!$product) {
-            return \false;
-        }
         /**
          * Filters whether an item requires signature delivery.
          *
@@ -193,7 +182,7 @@ class ShippingValidator implements \WooCommerce\PayPalCommerce\StoreSync\CartVal
          *
          * @return bool True if signature delivery is required.
          */
-        return apply_filters('woocommerce_paypal_payments_store_sync_item_requires_signature', \false, $product, $item);
+        return apply_filters('woocommerce_paypal_payments_store_sync_item_requires_signature', \false, $item->product(), $item->paypal_item());
     }
     /**
      * Checks if an address line represents a PO Box.

@@ -150,7 +150,7 @@ class PayPalOrderManager
      * @return WooOrder The PayPal Order.
      * @throws RuntimeException If fetching fails.
      */
-    public function fetch_order(string $order_id)
+    public function fetch_order(string $order_id): WooOrder
     {
         $this->logger->info('[ORDER] Fetching PayPal Order', array('order_id' => $order_id));
         try {
@@ -175,6 +175,9 @@ class PayPalOrderManager
     public function link_wc_order(string $order_id, int $wc_order_id): void
     {
         $this->logger->info('[ORDER] Linking WooCommerce order to PayPal Order', array('order_id' => $order_id, 'wc_order_id' => $wc_order_id));
+        // Intentionally not using the PatchCollection or Patch classes
+        // because they expect an array as value, while this is a string.
+        // todo: could be topic of a future refactoring of the Patch class.
         $patch_data = array(array('op' => 'add', 'path' => '/purchase_units/@reference_id==\'default\'/custom_id', 'value' => (string) $wc_order_id));
         try {
             $this->orders_api->patch_order($order_id, $patch_data);

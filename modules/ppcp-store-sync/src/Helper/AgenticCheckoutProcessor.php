@@ -11,6 +11,7 @@ declare (strict_types=1);
 namespace WooCommerce\PayPalCommerce\StoreSync\Helper;
 
 use WC_Order;
+use Exception;
 use WP_Error;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Order as PayPalOrder;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Shipping;
@@ -91,7 +92,7 @@ class AgenticCheckoutProcessor
             $this->link_orders($paypal_order_id, $wc_order);
             $this->capture_payment($paypal_order, $wc_order, $paypal_order_id);
             return $wc_order;
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $this->logger->error('[CHECKOUT] Checkout failed with exception', array('order_id' => $paypal_order_id, 'error' => $e->getMessage()));
             return new WP_Error('order_creation_failed', $e->getMessage());
         }
@@ -161,9 +162,9 @@ class AgenticCheckoutProcessor
             return null;
         }
         $option_data = (object) array('id' => $selected->id(), 'label' => $selected->name(), 'type' => 'SHIPPING', 'selected' => \true, 'amount' => (object) array('currency_code' => $option_price->currency_code(), 'value' => (string) $option_price->value()));
-        $name = $cart->customer()?->name();
-        $full_name = $name ? trim(($name['given_name'] ?? '') . ' ' . ($name['surname'] ?? '')) : '';
-        $data = (object) array('name' => (object) array('full_name' => $full_name), 'address' => (object) ($cart->shipping_address()?->to_array() ?? Address::empty_array()), 'options' => array($option_data));
+        $customer = $cart->customer();
+        $full_name = $customer ? $customer->full_name() : '';
+        $data = (object) array('name' => (object) array('full_name' => $full_name), 'address' => (object) $cart->shipping_address()->to_array(), 'options' => array($option_data));
         return $this->shipping_factory->from_paypal_response($data);
     }
     /**
@@ -199,11 +200,11 @@ class AgenticCheckoutProcessor
      */
     private function build_shipping_data(PayPalCart $cart): array
     {
-        if (!$cart->shipping_address()) {
+        if ($cart->shipping_address()->is_empty()) {
             return array();
         }
-        $name = $cart->customer()?->name();
-        $full_name = $name ? trim(($name['given_name'] ?? '') . ' ' . ($name['surname'] ?? '')) : '';
+        $customer = $cart->customer();
+        $full_name = $customer ? $customer->full_name() : '';
         return array('name' => array('full_name' => $full_name), 'address' => $cart->shipping_address()->to_array());
     }
     /**

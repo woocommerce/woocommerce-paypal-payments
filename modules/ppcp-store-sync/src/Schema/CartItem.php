@@ -113,6 +113,9 @@ class CartItem extends \WooCommerce\PayPalCommerce\StoreSync\Schema\AgenticSchem
             }
         }
     }
+    /**
+     * @deprecated Use `variant_id` instead
+     */
     public function item_id(?string $default = null): ?string
     {
         return $this->id ?? $default;
@@ -151,7 +154,7 @@ class CartItem extends \WooCommerce\PayPalCommerce\StoreSync\Schema\AgenticSchem
     }
     public function to_array(): array
     {
-        $data = array('quantity' => $this->quantity, 'price' => $this->price?->to_array(), 'item_id' => $this->id, 'variant_id' => $this->variant_id, 'parent_id' => $this->parent_id, 'name' => $this->name, 'description' => $this->description, 'selected_attributes' => $this->selected_attributes);
+        $data = array('quantity' => $this->quantity, 'price' => $this->price ? $this->price->to_array() : null, 'item_id' => $this->id, 'variant_id' => $this->variant_id, 'parent_id' => $this->parent_id, 'name' => $this->name, 'description' => $this->description, 'selected_attributes' => $this->selected_attributes, 'gift_options' => $this->gift_options);
         return array_filter($data, static fn($v) => $v !== null);
     }
 }

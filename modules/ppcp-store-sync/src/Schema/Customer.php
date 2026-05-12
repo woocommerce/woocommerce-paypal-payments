@@ -100,4 +100,10 @@ class Customer extends \WooCommerce\PayPalCommerce\StoreSync\Schema\AgenticSchem
         $data = array('email_address' => $this->email_address, 'name' => $this->name, 'phone' => $this->phone);
         return array_filter($data, static fn($v) => $v !== null);
     }
+    public function full_name(): string
+    {
+        $first_name = $this->name['given_name'] ?? '';
+        $last_name = $this->name['surname'] ?? '';
+        return trim("{$first_name} {$last_name}");
+    }
 }

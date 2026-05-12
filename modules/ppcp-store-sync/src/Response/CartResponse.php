@@ -77,25 +77,30 @@ class CartResponse
     /**
      * Configures the CartResponse instance - only used by the ResponseFactory.
      *
-     * @param array $coupons Applied coupons data.
+     * @param null|array $coupons Applied coupons data.
      * @return $this
      */
-    public function applied_coupons(array $coupons): self
+    public function applied_coupons(?array $coupons): self
     {
-        $this->applied_coupons = $coupons;
+        if (null !== $coupons) {
+            $this->applied_coupons = $coupons;
+        }
         return $this;
     }
     /**
      * Configures the CartResponse instance - only used by the ResponseFactory.
      *
-     * @param array $options Available shipping options.
+     * @param null|array $options Available shipping options.
      * @return $this
      */
-    public function shipping_options(array $options): self
+    public function shipping_options(?array $options): self
     {
-        $this->shipping_options = $options;
+        if (null !== $options) {
+            $this->shipping_options = $options;
+        }
         return $this;
     }
+    // === API RESPONSE FORMAT ===
     /**
      * Convert to array for API response.
      *
@@ -143,4 +148,5 @@ class CartResponse
         }
         return array('merchant_order_number' => $wc_order->get_id(), 'order_review_page' => $wc_order->get_checkout_order_received_url());
     }
+    // === END OF API RESPONSE FORMAT ===
 }

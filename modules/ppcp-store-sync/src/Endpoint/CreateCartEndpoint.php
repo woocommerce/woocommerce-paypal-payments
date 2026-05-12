@@ -35,11 +35,6 @@ class CreateCartEndpoint extends \WooCommerce\PayPalCommerce\StoreSync\Endpoint\
     {
         register_rest_route(self::NAMESPACE, self::PATH, array('methods' => self::METHOD, 'callback' => fn($request) => $this->with_session(fn() => $this->create_cart($request)), 'permission_callback' => fn($request) => $this->check_permission($request)));
     }
-    public static function endpoint_url(): string
-    {
-        $full_route = '/' . self::NAMESPACE . '/' . trim(self::PATH, '/');
-        return rest_url($full_route);
-    }
     /**
      * Create a new cart.
      *
