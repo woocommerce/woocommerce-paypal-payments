@@ -57,36 +57,31 @@ class ReplaceCartEndpointTest extends IntegrationMockedTestCase {
 	 * AND available_shipping_options is an array when present
 	 */
 	public function test_replace_cart_preserves_ec_token_in_response(): void {
-		$product_id = wc_get_product_id_by_sku( 'DUMMY_SIMPLE_SKU_01' );
-		$currency   = get_woocommerce_currency();
-
 		// Data for create cart.
 		$cart_data_1 = array(
 			'items'          => array(
 				array(
-					'item_id'  => (string) $product_id,
-					'quantity' => 1,
-					'price'    => array(
-						'currency_code' => $currency,
-						'value'         => '10.00',
-					),
+					'variant_id' => 'DUMMY_SIMPLE_SKU_01',
+					'quantity'   => 1,
 				),
 			),
 			'payment_method' => array( 'type' => 'paypal' ),
 		);
-		// Data to update the existing cart (new quantity + include a token)
+		// Data to update the existing cart (new quantity, shipping data + include a token)
 		$cart_data_2 = array(
-			'items'          => array(
+			'items'            => array(
 				array(
-					'item_id'  => (string) $product_id,
-					'quantity' => 2,
-					'price'    => array(
-						'currency_code' => $currency,
-						'value'         => '10.00',
-					),
+					'variant_id' => 'DUMMY_SIMPLE_SKU_01',
+					'quantity'   => 2,
 				),
 			),
-			'payment_method' => array(
+			'shipping_address' => array(
+				'address_line_1' => '456 Fictional St',
+				'admin_area_2'   => 'San Jose',
+				'postal_code'    => '90210',
+				'country_code'   => 'US',
+			),
+			'payment_method'   => array(
 				'type'  => 'paypal',
 				'token' => 'test-passthrough-ec-token',
 			),

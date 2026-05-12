@@ -47,24 +47,24 @@ class CreateCartEndpointTest extends IntegrationMockedTestCase {
 	 * AND the items array is present
 	 */
 	public function test_create_cart_returns_expected_shape_for_valid_cart(): void {
-		$product_id = wc_get_product_id_by_sku( 'DUMMY_SIMPLE_SKU_01' );
-		$currency   = get_woocommerce_currency();
-
-		$body = (string) json_encode(
-			array(
-				'items'          => array(
-					array(
-						'item_id'  => (string) $product_id,
-						'quantity' => 1,
-						'price'    => array(
-							'currency_code' => $currency,
-							'value'         => '10.00',
-						),
-					),
+		// Minimal, valid cart (1 product and shipping address).
+		$cart_data = array(
+			'items'            => array(
+				array(
+					'variant_id' => 'DUMMY_SIMPLE_SKU_01',
+					'quantity'   => 1,
 				),
-				'payment_method' => array( 'type' => 'paypal' ),
-			)
+			),
+			'shipping_address' => array(
+				'address_line_1' => '456 Fictional St',
+				'admin_area_2'   => 'San Jose',
+				'postal_code'    => '90210',
+				'country_code'   => 'US',
+			),
+			'payment_method'   => array( 'type' => 'paypal' ),
 		);
+
+		$body = (string) json_encode( $cart_data );
 
 		$request = new WP_REST_Request( 'POST' );
 		$request->set_body( $body );
