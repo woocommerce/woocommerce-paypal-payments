@@ -45,6 +45,10 @@ class CreateCartEndpointTest extends IntegrationMockedTestCase {
 	 * AND the body contains status CREATED, validation_status VALID, no validation_issues
 	 * AND payment_method.token matches the token returned by the order manager
 	 * AND the items array is present
+	 * AND customer and shipping_address keys exist in the response
+	 * AND available_shipping_options has at least one entry with exactly one selected option
+	 * AND totals subtotal/shipping/tax/total each have a non-empty value
+	 * AND the sum of item price × quantity equals the subtotal (in cents)
 	 */
 	public function test_create_cart_returns_expected_shape_for_valid_cart(): void {
 		// Minimal, valid cart (1 product and shipping address).
@@ -89,5 +93,28 @@ class CreateCartEndpointTest extends IntegrationMockedTestCase {
 
 		$this->assertArrayHasKey( 'items', $data, 'Response must include items' );
 		$this->assertNotEmpty( $data['items'] );
+
+		$this->assertArrayHasKey( 'customer', $data, 'Response must include customer' );
+		$this->assertArrayHasKey( 'shipping_address', $data, 'Response must include shipping_address' );
+
+		$shipping_options = $data['available_shipping_options'] ?? array();
+		$this->assertIsArray( $shipping_options );
+		$this->assertGreaterThanOrEqual( 1, count( $shipping_options ), 'At least one shipping option must be present' );
+		$selected = array_filter( $shipping_options, fn( $opt ) => ( $opt['is_selected'] ?? false ) === true );
+		$this->assertCount( 1, $selected, 'Exactly one shipping option must be selected' );
+
+		foreach ( array( 'subtotal', 'shipping', 'tax', 'total' ) as $key ) {
+			$this->assertArrayHasKey( $key, $data['totals'], "totals must include $key" );
+			$this->assertNotEmpty( $data['totals'][ $key ]['value'] ?? '', "totals.$key.value must not be empty" );
+		}
+
+		$items_subtotal_cents = 0;
+		foreach ( $data['items'] as $item ) {
+			$price    = (float) ( $item['price']['value'] ?? 0 );
+			$quantity = (int) ( $item['quantity'] ?? 0 );
+			$items_subtotal_cents += (int) round( $price * 100 ) * $quantity;
+		}
+		$subtotal_cents = (int) round( (float) ( $data['totals']['subtotal']['value'] ?? 0 ) * 100 );
+		$this->assertSame( $subtotal_cents, $items_subtotal_cents, 'Sum of item price × quantity must equal totals.subtotal' );
 	}
 }

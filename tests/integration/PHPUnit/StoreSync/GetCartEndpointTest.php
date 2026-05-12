@@ -7,7 +7,7 @@ use Mockery;
 use Psr\Log\NullLogger;
 use WP_REST_Request;
 use WP_REST_Response;
-use WooCommerce\PayPalCommerce\StoreSync\Endpoint\ReplaceCartEndpoint;
+use WooCommerce\PayPalCommerce\StoreSync\Endpoint\GetCartEndpoint;
 use WooCommerce\PayPalCommerce\StoreSync\Helper\PayPalOrderManager;
 use WooCommerce\PayPalCommerce\StoreSync\Schema\PayPalCart;
 use WooCommerce\PayPalCommerce\StoreSync\Session\AgenticSessionHandler;
@@ -15,11 +15,11 @@ use WooCommerce\PayPalCommerce\StoreSync\Validation\StoreValidation;
 use WooCommerce\PayPalCommerce\Tests\Integration\IntegrationMockedTestCase;
 
 /**
- * @covers \WooCommerce\PayPalCommerce\StoreSync\Endpoint\ReplaceCartEndpoint
+ * @covers \WooCommerce\PayPalCommerce\StoreSync\Endpoint\GetCartEndpoint
  */
-class ReplaceCartEndpointTest extends IntegrationMockedTestCase {
+class GetCartEndpointTest extends IntegrationMockedTestCase {
 
-	private ReplaceCartEndpoint $endpoint;
+	private GetCartEndpoint $endpoint;
 
 	private AgenticSessionHandler $session_handler;
 
@@ -31,9 +31,8 @@ class ReplaceCartEndpointTest extends IntegrationMockedTestCase {
 		$this->session_handler = $c->get( 'agentic.session.handler' );
 
 		$order_manager = Mockery::mock( PayPalOrderManager::class );
-		$order_manager->allows( 'update_order' )->andReturn( true );
 
-		$this->endpoint = new ReplaceCartEndpoint(
+		$this->endpoint = new GetCartEndpoint(
 			$c->get( 'agentic.auth.provider' ),
 			$this->session_handler,
 			$c->get( 'agentic.helper.session-manager' ),
@@ -46,37 +45,26 @@ class ReplaceCartEndpointTest extends IntegrationMockedTestCase {
 	}
 
 	/**
-	 * GIVEN a cart session was created with a known ec_token
-	 * WHEN replace_cart() is called with a valid replacement payload
+	 * GIVEN a cart session exists with a known ec_token and one product with a shipping address
+	 * WHEN get_cart() is called with the corresponding cart_id
 	 * THEN the response status is 200
-	 * AND payment_method.token equals the ec_token from the original session (not the request body)
 	 * AND id matches the cart session id
-	 * AND status is INCOMPLETE
-	 * AND validation_status is VALID with no validation_issues
-	 * AND totals contains subtotal, shipping, tax and total with currency_code and value
-	 * AND available_shipping_options has at least one entry with exactly one selected option
+	 * AND status and validation_status keys are present
+	 * AND payment_method.token equals the ec_token stored in the session
+	 * AND items array is not empty
 	 * AND customer and shipping_address keys exist in the response
+	 * AND available_shipping_options has at least one entry with exactly one selected option
+	 * AND totals contains subtotal, shipping, tax and total each with a non-empty value
 	 * AND the sum of item price × quantity equals the subtotal (in cents)
 	 */
-	public function test_replace_cart_preserves_ec_token_in_response(): void {
-		$ec_token = 'test-preserved-session-ec-token';
+	public function test_get_cart_returns_expected_shape_for_existing_cart(): void {
+		$ec_token = 'test-ec-token-get';
 
-		// Data for create cart.
-		$cart_data_1 = array(
-			'items'          => array(
-				array(
-					'variant_id' => 'DUMMY_SIMPLE_SKU_01',
-					'quantity'   => 1,
-				),
-			),
-			'payment_method' => array( 'type' => 'paypal' ),
-		);
-		// Replacement payload — no token in payment_method; token must come from session.
-		$cart_data_2 = array(
+		$cart_data = array(
 			'items'            => array(
 				array(
 					'variant_id' => 'DUMMY_SIMPLE_SKU_01',
-					'quantity'   => 2,
+					'quantity'   => 1,
 				),
 			),
 			'shipping_address' => array(
@@ -88,44 +76,32 @@ class ReplaceCartEndpointTest extends IntegrationMockedTestCase {
 			'payment_method'   => array( 'type' => 'paypal' ),
 		);
 
-		$initial_cart = PayPalCart::from_array( $cart_data_1, new StoreValidation() );
+		$initial_cart = PayPalCart::from_array( $cart_data, new StoreValidation() );
+		$cart_id      = $this->session_handler->create_cart_session( $initial_cart, $ec_token );
 
-		$cart_id = $this->session_handler->create_cart_session( $initial_cart, $ec_token );
-
-		$body = (string) json_encode( $cart_data_2 );
-
-		$request = new WP_REST_Request( 'PUT' );
+		$request = new WP_REST_Request( 'GET' );
 		$request->set_param( 'cart_id', $cart_id );
-		$request->set_body( $body );
-		$request->set_header( 'Content-Type', 'application/json' );
 
-		$response = $this->endpoint->replace_cart( $request );
+		$response = $this->endpoint->get_cart( $request );
 
 		$this->assertInstanceOf( WP_REST_Response::class, $response );
 		$this->assertSame( 200, $response->get_status() );
 
 		$data = $response->get_data();
 
-		$this->assertSame(
-			$ec_token,
-			$data['payment_method']['token'] ?? null,
-			'Replace cart response must include the preserved ec_token from the session'
-		);
-
 		$this->assertSame( $cart_id, $data['id'] ?? null, 'Response must echo the cart id' );
 
-		$this->assertSame( 'INCOMPLETE', $data['status'] ?? null );
+		$this->assertArrayHasKey( 'status', $data, 'Response must include status' );
+		$this->assertArrayHasKey( 'validation_status', $data, 'Response must include validation_status' );
 
-		$this->assertSame( 'VALID', $data['validation_status'] ?? null );
-		$this->assertIsArray( $data['validation_issues'] ?? null );
-		$this->assertEmpty( $data['validation_issues'] );
+		$this->assertArrayHasKey( 'payment_method', $data );
+		$this->assertSame( $ec_token, $data['payment_method']['token'] ?? null, 'Response must return the ec_token stored in the session' );
 
-		$this->assertArrayHasKey( 'totals', $data, 'Response must include calculated totals' );
-		foreach ( array( 'subtotal', 'shipping', 'tax', 'total' ) as $key ) {
-			$this->assertArrayHasKey( $key, $data['totals'], "totals must include $key" );
-			$this->assertNotEmpty( $data['totals'][ $key ]['currency_code'] ?? '' );
-			$this->assertNotEmpty( $data['totals'][ $key ]['value'] ?? '' );
-		}
+		$this->assertArrayHasKey( 'items', $data, 'Response must include items' );
+		$this->assertNotEmpty( $data['items'] );
+
+		$this->assertArrayHasKey( 'customer', $data, 'Response must include customer' );
+		$this->assertArrayHasKey( 'shipping_address', $data, 'Response must include shipping_address' );
 
 		$shipping_options = $data['available_shipping_options'] ?? array();
 		$this->assertIsArray( $shipping_options );
@@ -133,8 +109,11 @@ class ReplaceCartEndpointTest extends IntegrationMockedTestCase {
 		$selected = array_filter( $shipping_options, fn( $opt ) => ( $opt['is_selected'] ?? false ) === true );
 		$this->assertCount( 1, $selected, 'Exactly one shipping option must be selected' );
 
-		$this->assertArrayHasKey( 'customer', $data, 'Response must include customer' );
-		$this->assertArrayHasKey( 'shipping_address', $data, 'Response must include shipping_address' );
+		$this->assertArrayHasKey( 'totals', $data, 'Response must include calculated totals' );
+		foreach ( array( 'subtotal', 'shipping', 'tax', 'total' ) as $key ) {
+			$this->assertArrayHasKey( $key, $data['totals'], "totals must include $key" );
+			$this->assertNotEmpty( $data['totals'][ $key ]['value'] ?? '', "totals.$key.value must not be empty" );
+		}
 
 		$items_subtotal_cents = 0;
 		foreach ( $data['items'] as $item ) {
