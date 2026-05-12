@@ -188,6 +188,10 @@ class ApproveOrderEndpoint implements \WooCommerce\PayPalCommerce\Button\Endpoin
             $funding_source = $data['funding_source'] ?? null;
             $this->session_handler->replace_funding_source($funding_source);
             $this->session_handler->replace_order($order);
+            // Pin chosen_payment_method to PayPal now so concurrent Store API cart requests can't reset it.
+            if (WC()->session) {
+                WC()->session->set('chosen_payment_method', PayPalGateway::ID);
+            }
             if (apply_filters('woocommerce_paypal_payments_toggle_final_review_checkbox', \false)) {
                 $this->toggle_final_review_enabled_setting();
             }

@@ -60,7 +60,7 @@ return array('compat.ppec.mock-gateway' => static function ($container) {
 }, 'compat.blueprint.paypal_settings_exporter' => static function (ContainerInterface $container): PayPalSettingsExporter {
     return new PayPalSettingsExporter();
 }, 'compat.blueprint.paypal_settings_importer' => static function (ContainerInterface $container): PayPalSettingsImporter {
-    return new PayPalSettingsImporter();
+    return new PayPalSettingsImporter($container->get('settings.service.sanitizer'));
 }, 'compat.blueprint.bootstrap' => static function (ContainerInterface $container): PayPalBlueprintBootstrap {
     return new PayPalBlueprintBootstrap($container->get('compat.blueprint.paypal_settings_exporter'), $container->get('compat.blueprint.paypal_settings_importer'));
 });
