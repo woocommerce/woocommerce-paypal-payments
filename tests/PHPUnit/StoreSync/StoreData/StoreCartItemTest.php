@@ -14,11 +14,21 @@ use WooCommerce\PayPalCommerce\StoreSync\Schema\CartItem;
 use WooCommerce\PayPalCommerce\StoreSync\Schema\Money;
 use WooCommerce\PayPalCommerce\StoreSync\Validation\StoreValidation;
 use WooCommerce\PayPalCommerce\StoreSync\StoreSyncTestCase;
+use function Brain\Monkey\Functions\when;
 
 /**
  * @covers \WooCommerce\PayPalCommerce\StoreSync\StoreData\StoreCartItem
  */
 class StoreCartItemTest extends StoreSyncTestCase {
+
+	public function setUp(): void {
+		parent::setUp();
+		when( 'wc_get_price_excluding_tax' )->alias(
+			function ( $product ) {
+				return (float) $product->get_price();
+			}
+		);
+	}
 
 	// -------------------------------------------------------------------------
 	// Helpers
