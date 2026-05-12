@@ -178,7 +178,7 @@ class StorePayPalCartTest extends StoreSyncTestCase {
 
 		$sut = $this->make_sut( array( 'store_items' => $items ) );
 
-		$this->assertSame( $items, $sut->items() );
+		$this->assertSame( $items, $sut->cart_items() );
 	}
 
 	/**

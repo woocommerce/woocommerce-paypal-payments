@@ -74,7 +74,7 @@ class StorePayPalCart {
 	/**
 	 * @return StoreCartItem[]
 	 */
-	public function items(): array {
+	public function cart_items(): array {
 		return $this->store_items;
 	}
 

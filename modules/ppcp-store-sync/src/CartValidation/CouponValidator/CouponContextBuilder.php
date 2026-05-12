@@ -156,7 +156,7 @@ class CouponContextBuilder {
 		}
 
 		$subtotal = array_reduce(
-			$store_cart->items(),
+			$store_cart->cart_items(),
 			static function ( float $total, StoreCartItem $item ): float {
 				return $total + $item->real_price() * (float) $item->schema()->quantity();
 			},
@@ -182,7 +182,7 @@ class CouponContextBuilder {
 		}
 
 		$subtotal = array_reduce(
-			$store_cart->items(),
+			$store_cart->cart_items(),
 			static function ( float $total, StoreCartItem $item ): float {
 				return $total + $item->real_price() * (float) $item->schema()->quantity();
 			},
@@ -353,7 +353,7 @@ class CouponContextBuilder {
 	private function get_eligible_items( WC_Coupon $wc_coupon, StorePayPalCart $store_cart ): array {
 		$eligible = array();
 
-		foreach ( $store_cart->items() as $item ) {
+		foreach ( $store_cart->cart_items() as $item ) {
 			$product = $this->product_manager->find_product( $item->schema() );
 
 			if ( ! $product ) {
