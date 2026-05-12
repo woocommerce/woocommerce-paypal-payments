@@ -24,16 +24,8 @@ class AgenticSessionHandler {
 	 */
 	private const SESSION_KEY = 'ppcp_agentic';
 
-	/**
-	 * The custom session handler.
-	 *
-	 * @var AgenticWcSession
-	 */
 	private AgenticWcSession $session;
 
-	/**
-	 * Constructor.
-	 */
 	public function __construct() {
 		// Include required WC files for REST context.
 		if ( defined( 'WC_ABSPATH' ) ) {

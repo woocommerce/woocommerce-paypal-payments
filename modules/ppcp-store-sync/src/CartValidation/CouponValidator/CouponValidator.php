@@ -27,25 +27,10 @@ use WooCommerce\PayPalCommerce\StoreSync\Validation\ValidationIssue;
  */
 class CouponValidator implements ValidatorInterface {
 
-	/**
-	 * Context builder for building validation context data.
-	 *
-	 * @var CouponContextBuilder
-	 */
 	private CouponContextBuilder $context_builder;
 
-	/**
-	 * Discount calculator for coupon discount amounts.
-	 *
-	 * @var DiscountCalculator
-	 */
 	private DiscountCalculator $discount_calculator;
 
-	/**
-	 * Resolution builder for building resolution options.
-	 *
-	 * @var CouponResolutionBuilder
-	 */
 	private CouponResolutionBuilder $resolution_builder;
 
 	/**

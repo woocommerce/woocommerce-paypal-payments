@@ -21,11 +21,6 @@ class AppliedCouponsBuilder {
 
 	private DiscountCalculator $discount_calculator;
 
-	/**
-	 * Constructor.
-	 *
-	 * @param DiscountCalculator $discount_calculator Discount calculator instance.
-	 */
 	public function __construct( DiscountCalculator $discount_calculator ) {
 		$this->discount_calculator = $discount_calculator;
 	}

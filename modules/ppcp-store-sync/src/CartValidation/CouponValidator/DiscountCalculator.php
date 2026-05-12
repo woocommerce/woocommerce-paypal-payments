@@ -22,18 +22,8 @@ use WooCommerce\PayPalCommerce\StoreSync\Schema\PayPalCart;
  */
 class DiscountCalculator {
 
-	/**
-	 * Product manager for resolving cart items.
-	 *
-	 * @var ProductManager
-	 */
 	private ProductManager $product_manager;
 
-	/**
-	 * Constructor.
-	 *
-	 * @param ProductManager $product_manager Product manager instance.
-	 */
 	public function __construct( ProductManager $product_manager ) {
 		$this->product_manager = $product_manager;
 	}
