@@ -81,8 +81,10 @@ class PayPalCart extends AgenticSchema {
 		}
 
 		if ( ! empty( $input['payment_method'] ) && is_array( $input['payment_method'] ) ) {
-			$this->payment_method =
-				PaymentMethod::from_array( $input['payment_method'], $validation );
+			$this->payment_method = PaymentMethod::from_array(
+				$input['payment_method'],
+				$validation
+			);
 		} else {
 			$validation->add_missing_field( 'payment_method', 'No payment_method defined.' );
 		}
@@ -172,7 +174,11 @@ class PayPalCart extends AgenticSchema {
 		return $this->items;
 	}
 
-	public function payment_method(): ?PaymentMethod {
+	public function payment_method(): PaymentMethod {
+		if ( ! $this->payment_method ) {
+			$this->payment_method = PaymentMethod::create_empty();
+		}
+
 		return $this->payment_method;
 	}
 
@@ -180,7 +186,11 @@ class PayPalCart extends AgenticSchema {
 		return $this->customer;
 	}
 
-	public function shipping_address(): ?Address {
+	public function shipping_address(): Address {
+		if ( ! $this->shipping_address ) {
+			$this->shipping_address = Address::create_empty();
+		}
+
 		return $this->shipping_address;
 	}
 

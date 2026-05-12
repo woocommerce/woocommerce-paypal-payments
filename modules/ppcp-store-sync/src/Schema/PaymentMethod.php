@@ -19,6 +19,10 @@ class PaymentMethod extends AgenticSchema {
 
 	private ?string $payer_id = null;
 
+	public static function create_empty(): self {
+		return self::from_array( array(), new StoreValidation() );
+	}
+
 	protected function parse_fields( array $input, StoreValidation $validation ): void {
 		// Reset all fields.
 		$this->token    = null;

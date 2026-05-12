@@ -27,6 +27,10 @@ class Address extends AgenticSchema {
 
 	private ?string $postal_code = null;
 
+	public static function create_empty(): self {
+		return self::from_array( array(), new StoreValidation() );
+	}
+
 	protected function parse_fields( array $input, StoreValidation $validation ): void {
 		// Reset all fields.
 		$this->country_code   = null;
@@ -173,19 +177,9 @@ class Address extends AgenticSchema {
 		);
 	}
 
-	/**
-	 * Returns an all-empty address array for callers that need the shape but have no Address instance.
-	 *
-	 * @return array{address_line_1: string, address_line_2: string, admin_area_2: string, admin_area_1: string, postal_code: string, country_code: string}
-	 */
-	public static function empty_array(): array {
-		return array(
-			'address_line_1' => '',
-			'address_line_2' => '',
-			'admin_area_2'   => '',
-			'admin_area_1'   => '',
-			'postal_code'    => '',
-			'country_code'   => '',
-		);
+	public function is_empty(): bool {
+		$data = $this->to_array();
+
+		return count( array_filter( $data, static fn( $v ) => $v !== '' ) ) === 0;
 	}
 }
