@@ -7,12 +7,15 @@ import { execFileSync } from 'node:child_process';
 
 /**
  * Throw if any of the listed env vars are missing.
+ * @param names
  */
 const checkEnvVars = ( names: string[] ): void => {
 	const missing = names.filter( ( name ) => ! process.env[ name ] );
 	if ( missing.length ) {
 		throw new Error(
-			`Missing required environment variable(s): ${ missing.join( ', ' ) }`
+			`Missing required environment variable(s): ${ missing.join(
+				', '
+			) }`
 		);
 	}
 };
@@ -55,8 +58,10 @@ export const resetEnvironment = async (): Promise< void > => {
 		command = 'ssh';
 		args = [
 			`${ process.env.SSH_LOGIN }@${ process.env.SSH_HOST }`,
-			'-p', process.env.SSH_PORT!,
-			'-o', 'StrictHostKeyChecking=no',
+			'-p',
+			process.env.SSH_PORT!,
+			'-o',
+			'StrictHostKeyChecking=no',
 			remoteCmd,
 		];
 	} else {

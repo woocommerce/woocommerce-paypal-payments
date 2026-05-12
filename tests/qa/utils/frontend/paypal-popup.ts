@@ -31,9 +31,7 @@ export class PayPalPopup {
 	tryAnotherWayLink = () =>
 		this.page
 			.getByRole( 'link', { name: 'Try another way' } )
-			.or( this.page
-				.getByRole( 'button', { name: 'Try another way' } )
-			);
+			.or( this.page.getByRole( 'button', { name: 'Try another way' } ) );
 	loginInput = () => this.page.locator( '[name="login_email"]' );
 	passwordInput = () => this.page.locator( '[name="login_password"]' );
 	nextButton = () =>
@@ -77,7 +75,8 @@ export class PayPalPopup {
 	loanAgreementCheckbox = () =>
 		this.payLaterIframe().locator( 'input[type="checkbox"]' ).first();
 	agreeAndApplyButton = () => this.payLaterIframe().getByTestId( 'apply' );
-	changeUserButton = () => this.page.locator( 'button[aria-label="Change user"]');
+	changeUserButton = () =>
+		this.page.locator( 'button[aria-label="Change user"]' );
 
 	// Actions
 
@@ -109,7 +108,10 @@ export class PayPalPopup {
 		await this.loginButton().click();
 		// Wait for redirect to consent/vaulting page.
 		try {
-			await this.passwordInput().waitFor( { state: 'detached', timeout: 30000 } );
+			await this.passwordInput().waitFor( {
+				state: 'detached',
+				timeout: 30000,
+			} );
 		} catch {}
 		await this.page.waitForLoadState();
 
@@ -124,7 +126,10 @@ export class PayPalPopup {
 
 		// If sandbox redirected to login again, re-submit credentials.
 		try {
-			await this.loginInput().waitFor( { state: 'visible', timeout: 3000 } );
+			await this.loginInput().waitFor( {
+				state: 'visible',
+				timeout: 3000,
+			} );
 			const emailValue = await this.loginInput().inputValue();
 			if ( ! emailValue ) {
 				await this.loginInput().fill( email );
@@ -132,7 +137,10 @@ export class PayPalPopup {
 			await this.passwordInput().fill( password );
 			await this.loginButton().click();
 			try {
-				await this.passwordInput().waitFor( { state: 'detached', timeout: 30000 } );
+				await this.passwordInput().waitFor( {
+					state: 'detached',
+					timeout: 30000,
+				} );
 			} catch {}
 			await this.page.waitForLoadState();
 			// Apply the same redirect fix for the re-login case.
@@ -205,7 +213,10 @@ export class PayPalPopup {
 
 	trySubmitPayment = async () => {
 		await this.page.waitForLoadState();
-		await expect( this.loadSpinnerContainer(), 'Assert load spinner is not visible' ).not.toBeVisible();
+		await expect(
+			this.loadSpinnerContainer(),
+			'Assert load spinner is not visible'
+		).not.toBeVisible();
 
 		while ( ! this.page.isClosed() ) {
 			// Race click with popup closure
@@ -216,7 +227,9 @@ export class PayPalPopup {
 					this.page.waitForEvent( 'close', { timeout: 30 * 1000 } ), // Short timeout to prevent hang
 				] );
 			} catch ( error ) {
-				if ( this.page.isClosed() ) break; // Exit cleanly if popup closed
+				if ( this.page.isClosed() ) {
+					break;
+				} // Exit cleanly if popup closed
 				throw error; // Rethrow unexpected errors
 			}
 
@@ -225,7 +238,7 @@ export class PayPalPopup {
 				await expect(
 					this.loadSpinnerContainer(),
 					'Assert load spinner is visible'
-			 	).toBeVisible( {
+				).toBeVisible( {
 					timeout: 1000,
 				} );
 				await expect(
@@ -277,8 +290,12 @@ export class PayPalPopup {
 		// Click the loan agreement checkbox via JS eval to avoid contentFrame
 		// timing race that causes "Target page, context or browser has been closed".
 		await this.page.evaluate( () => {
-			const iframe = document.querySelector( 'iframe[title="CAP"]' ) as HTMLIFrameElement;
-			const checkbox = iframe?.contentDocument?.querySelector( 'input[type="checkbox"]' ) as HTMLInputElement;
+			const iframe = document.querySelector(
+				'iframe[title="CAP"]'
+			) as HTMLIFrameElement;
+			const checkbox = iframe?.contentDocument?.querySelector(
+				'input[type="checkbox"]'
+			) as HTMLInputElement;
 			if ( checkbox && ! checkbox.checked ) {
 				checkbox.click();
 			}

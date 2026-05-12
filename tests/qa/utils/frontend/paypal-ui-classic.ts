@@ -305,9 +305,9 @@ export class PayPalUiClassic extends PayPalUi {
 	async openPayPalPopup(): Promise< PayPalPopup > {
 		// Select gateway if not on classic-cart page
 		if ( ! this.page.url().includes( 'classic-cart' ) ) {
-			await expect (
+			await expect(
 				this.payPalGateway(),
-				'Assert PayPal gateway is visible',
+				'Assert PayPal gateway is visible'
 			).toBeVisible();
 			await this.payPalGateway().click();
 		}

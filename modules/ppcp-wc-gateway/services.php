@@ -1141,6 +1141,8 @@ return array(
 			CardButtonGateway::ID,
 			OXXOGateway::ID,
 			AxoGateway::ID,
+			GooglePayGateway::ID,
+			ApplePayGateway::ID,
 		);
 	},
 	'wcgateway.gateway-repository'                         => static function ( ContainerInterface $container ): GatewayRepository {
