@@ -54,22 +54,32 @@ use WooCommerce\PayPalCommerce\StoreSync\CartValidation\CartValidationProcessor;
 use WooCommerce\PayPalCommerce\StoreSync\Helper\AgenticSessionManager;
 
 /**
- * Using a different log-source for agentic commerce log entries makes it much easier to inspect
- * agentic behavior, which is fully decoupled from browser sessions.
+ * Separate source keeps high-volume ingestion entries out of the agentic (cart API) log stream:
+ * Ingestion is a cron-driven background process with a constant, predictable output cadence.
+ * The cart API is event-driven and session-contextual. Mixing them into one stream makes both
+ * harder to read.
  *
  * When using log-files, this creates a separate file for agentic log entries
  * When using DB logging, the source makes it easy to filter for agentic entries
  */
-const LOGGER_SOURCE = 'woocommerce-paypal-agentic';
+const LOGGER_SOURCE_DEFAULT   = 'woocommerce-paypal-agentic';
+const LOGGER_SOURCE_INGESTION = 'woocommerce-paypal-ingestion';
 
 return array(
 	// Logging.
-	'agentic.logger'                               => static function (): LoggerInterface {
+	'agentic.logger.default'                       => static function (): LoggerInterface {
 		if ( ! class_exists( \WC_Logger::class ) ) {
 			return new NullLogger();
 		}
 
-		return new WooCommerceLogger( wc_get_logger(), LOGGER_SOURCE );
+		return new WooCommerceLogger( wc_get_logger(), LOGGER_SOURCE_DEFAULT );
+	},
+	'agentic.logger.ingestion'                     => static function (): LoggerInterface {
+		if ( ! class_exists( \WC_Logger::class ) ) {
+			return new NullLogger();
+		}
+
+		return new WooCommerceLogger( wc_get_logger(), LOGGER_SOURCE_INGESTION );
 	},
 
 	// Configuration.
@@ -101,7 +111,7 @@ return array(
 		return new RegistrationService(
 			$c->get( 'agentic.config.webhook_urls' ),
 			$c->get( 'agentic.merchant.provider' ),
-			$c->get( 'agentic.logger' )
+			$c->get( 'agentic.logger.default' )
 		);
 	},
 
@@ -139,7 +149,7 @@ return array(
 			$c->get( 'agentic.helper.product-manager' ),
 			$c->get( 'button.session.factory.card-data' ),
 			$c->get( 'api.factory.purchase-unit' ),
-			$c->get( 'agentic.logger' )
+			$c->get( 'agentic.logger.default' )
 		);
 	},
 	'agentic.helper.shipping-options-builder'      => static function (): ShippingOptionsBuilder {
@@ -159,14 +169,14 @@ return array(
 			$c->get( 'api.endpoint.order' ),
 			$c->get( 'api.endpoint.orders' ),
 			$c->get( 'agentic.helper.cart-builder' ),
-			$c->get( 'agentic.logger' )
+			$c->get( 'agentic.logger.default' )
 		);
 	},
 
 	// Validation services.
 	'agentic.validation.processor'                 => static function ( ContainerInterface $c ): CartValidationProcessor {
 		return new CartValidationProcessor(
-			$c->get( 'agentic.logger' )
+			$c->get( 'agentic.logger.default' )
 		);
 	},
 	'agentic.validator.product'                    => static function ( ContainerInterface $c ): ProductValidator {
@@ -238,7 +248,7 @@ return array(
 			$c->get( 'agentic.helper.session-manager' ),
 			$c->get( 'agentic.response.factory' ),
 			$c->get( 'agentic.validation.processor' ),
-			$c->get( 'agentic.logger' ),
+			$c->get( 'agentic.logger.default' ),
 			$c->get( 'agentic.helper.paypal-order-manager' )
 		);
 	},
@@ -249,7 +259,7 @@ return array(
 			$c->get( 'agentic.helper.session-manager' ),
 			$c->get( 'agentic.response.factory' ),
 			$c->get( 'agentic.validation.processor' ),
-			$c->get( 'agentic.logger' ),
+			$c->get( 'agentic.logger.default' ),
 			$c->get( 'agentic.helper.paypal-order-manager' )
 		);
 	},
@@ -260,7 +270,7 @@ return array(
 			$c->get( 'agentic.helper.session-manager' ),
 			$c->get( 'agentic.response.factory' ),
 			$c->get( 'agentic.validation.processor' ),
-			$c->get( 'agentic.logger' ),
+			$c->get( 'agentic.logger.default' ),
 			$c->get( 'agentic.helper.paypal-order-manager' )
 		);
 	},
@@ -271,7 +281,7 @@ return array(
 			$c->get( 'agentic.helper.session-manager' ),
 			$c->get( 'agentic.response.factory' ),
 			$c->get( 'agentic.validation.processor' ),
-			$c->get( 'agentic.logger' ),
+			$c->get( 'agentic.logger.default' ),
 			$c->get( 'agentic.helper.paypal-order-manager' ),
 			$c->get( 'agentic.helper.checkout-processor' )
 		);
@@ -289,7 +299,7 @@ return array(
 			$c->get( 'agentic.ingestion-batch-provider' ),
 			$c->get( 'agentic.config.webhook_urls' ),
 			$c->get( 'agentic.merchant.provider' ),
-			$c->get( 'agentic.logger' )
+			$c->get( 'agentic.logger.ingestion' )
 		);
 	},
 
