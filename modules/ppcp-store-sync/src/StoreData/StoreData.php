@@ -40,11 +40,16 @@ class StoreData {
 	public function create_cart( PayPalCart $cart, StoreValidation $validation ): StorePayPalCart {
 		$store_items = array();
 
-		foreach ( $cart->items() as $item ) {
+		foreach ( $cart->items() as $index => $item ) {
 			$product = $this->product_manager->find_product( $item );
 
 			if ( $product !== null ) {
-				$store_items[] = new StoreCartItem( $item, $product, $this->store_currency );
+				$store_items[] = new StoreCartItem(
+					$index,
+					$item,
+					$product,
+					$this->store_currency
+				);
 			}
 		}
 

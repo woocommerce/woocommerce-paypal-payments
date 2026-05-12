@@ -16,14 +16,48 @@ use WooCommerce\PayPalCommerce\StoreSync\Schema\Money;
 
 class StoreCartItem {
 
-	private CartItem $schema_item;
+	private int $index;
+	private CartItem $paypal_item;
 	private WC_Product $product;
 	private StoreCurrencyValue $store_currency;
 
-	public function __construct( CartItem $schema_item, WC_Product $product, StoreCurrencyValue $store_currency ) {
-		$this->schema_item    = $schema_item;
+	public function __construct( int $index, CartItem $schema_item, WC_Product $product, StoreCurrencyValue $store_currency ) {
+		$this->index          = $index;
+		$this->paypal_item    = $schema_item;
 		$this->product        = $product;
 		$this->store_currency = $store_currency;
+	}
+
+	/**
+	 * The raw schema item, for access to variant_id, quantity, name, etc.
+	 */
+	public function paypal_item(): CartItem {
+		return $this->paypal_item;
+	}
+
+	public function product(): WC_Product {
+		return $this->product;
+	}
+
+	/**
+	 * The unique identifier of the product variant (color, size, etc.)
+	 */
+	public function id(): string {
+		$assumed_id = $this->paypal_item->variant_id();
+		if ( $assumed_id ) {
+			return $assumed_id;
+		}
+
+		return (string) $this->product->get_id();
+	}
+
+	/**
+	 * Path (in dot-notation) to the current field.
+	 */
+	public function field_path( string $child_path = '' ): string {
+		$child_path = trim( $child_path, '.' );
+
+		return "items[{$this->index}]" . ( $child_path ? ".{$child_path}" : '' );
 	}
 
 	/**
@@ -40,8 +74,20 @@ class StoreCartItem {
 	/**
 	 * The price the agent provided for this item, or null if no price was given.
 	 */
-	public function assumed_price(): ?Money {
-		return $this->schema_item->price();
+	public function assumed_price_as_money(): ?Money {
+		return $this->paypal_item->price();
+	}
+
+	/**
+	 * Currency that was assumed by agent, empty string is no assumption.
+	 */
+	public function assumed_currency(): string {
+		$assumed = $this->assumed_price_as_money();
+		if ( null === $assumed ) {
+			return '';
+		}
+
+		return (string) $assumed->currency_code( '' );
 	}
 
 	/**
@@ -50,7 +96,7 @@ class StoreCartItem {
 	 * Comparison is done on formatted decimals to avoid floating-point precision drift.
 	 */
 	public function is_price_correct(): bool {
-		$assumed = $this->assumed_price();
+		$assumed = $this->assumed_price_as_money();
 		if ( null === $assumed ) {
 			return true;
 		}
@@ -63,23 +109,23 @@ class StoreCartItem {
 	 * matches the store currency.
 	 */
 	public function is_currency_correct(): bool {
-		$assumed = $this->assumed_price();
-		if ( null === $assumed ) {
+		$assumed = $this->assumed_currency();
+		if ( ! $assumed ) {
 			return true;
 		}
 
-		return $assumed->currency_code() === $this->store_currency->value();
+		return $assumed === $this->store_currency->value();
 	}
 
 	/**
-	 * The raw schema item, for access to variant_id, quantity, name, etc.
+	 * Quantity of items in cart, always provided by agent.
 	 */
-	public function schema(): CartItem {
-		return $this->schema_item;
+	public function quantity(): int {
+		return $this->paypal_item->quantity();
 	}
 
 	public function to_array(): array {
-		$data = $this->schema_item->to_array();
+		$data = $this->paypal_item->to_array();
 
 		// WooCommerce always providees the price and product name/description.
 		$data['price'] = $this->real_price_as_money()->to_array();
