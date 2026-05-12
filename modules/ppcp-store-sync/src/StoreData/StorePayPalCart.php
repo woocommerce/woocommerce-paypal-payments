@@ -13,10 +13,10 @@ use WC_Cart;
 use WP_Error;
 use WooCommerce\PayPalCommerce\StoreSync\Config\StoreCurrencyValue;
 use WooCommerce\PayPalCommerce\StoreSync\Helper\AgenticCartBuilder;
-use WooCommerce\PayPalCommerce\StoreSync\Schema\Address;
 use WooCommerce\PayPalCommerce\StoreSync\Schema\Money;
 use WooCommerce\PayPalCommerce\StoreSync\Schema\PayPalCart;
 use WooCommerce\PayPalCommerce\StoreSync\Validation\StoreValidation;
+use WooCommerce\PayPalCommerce\StoreSync\Validation\ValidationIssue;
 
 /**
  * Output contract for an agentic cart request.
@@ -63,10 +63,6 @@ class StorePayPalCart {
 		$this->paypal_order = $order_id;
 	}
 
-	public function paypal_order(): string {
-		return $this->paypal_order;
-	}
-
 	public function paypal_cart(): PayPalCart {
 		return $this->paypal_cart;
 	}
@@ -104,59 +100,41 @@ class StorePayPalCart {
 		return $this->validation;
 	}
 
-	public function customer_name(): string {
-		$customer = $this->paypal_cart->customer();
-		if ( ! $customer || ! $customer->name() ) {
-			return '';
+	/**
+	 * Whether the current cart is ready for a payment attempt.
+	 *
+	 * Verifies if cart items and payment token are present, and no validation issues exist.
+	 */
+	public function is_ready_for_payment(): bool {
+		// An empty cart cannot be paid.
+		if ( empty( $this->store_items ) ) {
+			return false;
 		}
-		$name  = $customer->name();
-		$first = $name['given_name'] ?? '';
-		$last  = $name['surname'] ?? '';
 
-		return trim( "$first $last" );
+		// Any validation issue is a blocker that must be resolved before payment attempt.
+		if ( ! $this->validation->is_empty() ) {
+			return false;
+		}
+
+		// Missing payment token, cart is not ready.
+		if ( ! $this->paypal_cart->payment_method()->token() ) {
+			return false;
+		}
+
+		return true;
 	}
 
-	/**
-	 * @return array{
-	 *     address_line_1: string,
-	 *     address_line_2: string,
-	 *     admin_area_2: string,
-	 *     admin_area_1: string,
-	 *     postal_code: string,
-	 *     country_code: string
-	 * }
-	 */
-	public function shipping_address_array(): array {
-		$address = $this->paypal_cart->shipping_address();
-
-		return $address ? $address->to_array() : Address::empty_array();
-	}
-
-	/**
-	 * @return array{
-	 *     address_line_1: string,
-	 *     address_line_2: string,
-	 *     admin_area_2: string,
-	 *     admin_area_1: string,
-	 *     postal_code: string,
-	 *     country_code: string
-	 * }
-	 */
-	public function billing_address_array(): array {
-		$address = $this->paypal_cart->billing_address();
-
-		return $address ? $address->to_array() : Address::empty_array();
-	}
+	// === API RESPONSE FORMAT ===
 
 	/**
 	 * Calculates cart totals from the WC_Cart if available and no pricing issues exist.
 	 *
 	 * @return array|null
 	 */
-	public function totals(): ?array {
+	public function get_totals(): ?array {
 		$wc_cart = $this->wc_cart();
 
-		if ( ! $wc_cart || $this->validation->has_pricing_issue() ) {
+		if ( ! $wc_cart ) {
 			return null;
 		}
 
@@ -167,7 +145,7 @@ class StorePayPalCart {
 		$tax_total      = (float) $wc_cart->get_total_tax();
 		$cart_total     = (float) $wc_cart->get_total( 'edit' );
 
-		if ( ! $currency_code || $item_total <= 0 || $cart_total <= 0 ) {
+		if ( $item_total <= 0 || $cart_total <= 0 ) {
 			return null;
 		}
 
@@ -186,42 +164,60 @@ class StorePayPalCart {
 	}
 
 	/**
-	 * Whether the current cart is ready for a payment attempt.
-	 *
-	 * Verifies if cart items and payment token are present, and no validation issues exist.
+	 * An array containing all validation issues for the API response. If no validation
+	 * issues were recorded, an empty array is returned.
 	 */
-	public function is_ready_for_payment(): bool {
-		// An empty cart cannot be paid.
-		if ( empty( $this->store_items ) ) {
-			return false;
-		}
-
-		// Any validation issue is a blocker that must be resolved before payment attempt.
-		if ( ! $this->validation->is_empty() ) {
-			return false;
-		}
-
-		// Missing payment method or token, cart is not ready.
-		if ( $this->paypal_cart->payment_method() === null ) {
-			return false;
-		}
-
-		return true;
+	public function get_validation_issues(): array {
+		return array_map(
+			static fn( ValidationIssue $issue ) => $issue->to_array(),
+			$this->validation()->all()
+		);
 	}
 
-	public function to_array(): array {
-		$data = $this->paypal_cart->to_array();
+	/**
+	 * The full "payment_method" schema, including the ec_token (if a paypal_order is set).
+	 */
+	public function get_payment_method(): array {
+		$data = $this->paypal_cart->payment_method()->to_array();
 
-		// Replace cart contents with WC_Cart enriched data.
-		$data['items'] = array();
-		foreach ( $this->store_items as $item ) {
-			assert( $item instanceof StoreCartItem );
-			$data['items'][] = $item->to_array();
+		if ( $this->paypal_order ) {
+			$data['token'] = $this->paypal_order;
 		}
 
-		// Totals is always calculated fresh.
-		$data['totals'] = $this->totals();
+		return $data;
+	}
 
-		return array_filter( $data, static fn( $v ) => $v !== null );
+	public function get_items(): array {
+		return array_map(
+			static fn( StoreCartItem $item ) => $item->to_array(),
+			$this->cart_items()
+		);
+	}
+
+	public function get_customer(): array {
+		$customer = $this->paypal_cart->customer();
+		if ( ! $customer ) {
+			return array();
+		}
+
+		return $customer->to_array();
+	}
+
+	public function get_shipping_address(): array {
+		$address = $this->paypal_cart->shipping_address();
+		if ( $address->is_empty() ) {
+			return array();
+		}
+
+		return $address->to_array();
+	}
+
+	public function get_billing_address(): ?array {
+		$address = $this->paypal_cart->billing_address();
+		if ( ! $address ) {
+			return null;
+		}
+
+		return $address->to_array();
 	}
 }

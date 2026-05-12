@@ -129,40 +129,27 @@ class CartResponse {
 	 * @return array The response array.
 	 */
 	public function to_array(): array {
-		$raw = $this->store_cart->to_array();
-
-		$payment_method = array( 'type' => 'paypal' );
-		$paypal_order   = $this->store_cart->paypal_order();
-		if ( $paypal_order ) {
-			$payment_method['token'] = $paypal_order;
-		}
-
 		$data = array(
 			'id'                         => $this->cart_id,
-			'status'                     => $this->status(),
-			'validation_status'          => $this->validation_status(),
-			'validation_issues'          => array_map(
-				static fn( ValidationIssue $issue ) => $issue->to_array(),
-				$this->store_cart->validation()->all()
-			),
-			'items'                      => $raw['items'] ?? null,
-			'customer'                   => $raw['customer'] ?? null,
-			'shipping_address'           => $raw['shipping_address'] ?? null,
-			'billing_address'            => $raw['billing_address'] ?? null,
-			'available_shipping_options' => ! empty( $this->shipping_options ) ? $this->shipping_options : null,
-			'totals'                     => $raw['totals'] ?? null,
-			'payment_method'             => $payment_method,
-			'applied_coupons'            => ! empty( $this->applied_coupons ) ? $this->applied_coupons : null,
-			'payment_confirmation'       => $this->wc_order ? array(
-				'merchant_order_number' => $this->wc_order->get_id(),
-				'order_review_page'     => $this->wc_order->get_checkout_order_received_url(),
-			) : null,
+			'status'                     => $this->get_status(),
+			'validation_status'          => $this->get_validation_status(),
+			'validation_issues'          => $this->store_cart->get_validation_issues(),
+			'items'                      => $this->store_cart->get_items(),
+			'customer'                   => $this->store_cart->get_customer(),
+			'shipping_address'           => $this->store_cart->get_shipping_address(),
+			'billing_address'            => $this->store_cart->get_billing_address(),
+			'available_shipping_options' => $this->get_available_shipping_options(),
+			'totals'                     => $this->store_cart->get_totals(),
+			'payment_method'             => $this->store_cart->get_payment_method(),
+			'applied_coupons'            => $this->get_applied_coupons(),
+			'payment_confirmation'       => $this->get_payment_confirmation(),
 		);
 
+		// Strip items with `null` value from the response.
 		return array_filter( $data, static fn( $v ) => $v !== null );
 	}
 
-	private function status(): string {
+	private function get_status(): string {
 		if ( in_array( $this->status, self::ALLOWED_STATUS, true ) ) {
 			return $this->status;
 		}
@@ -170,11 +157,40 @@ class CartResponse {
 		return 'INCOMPLETE';
 	}
 
-	private function validation_status(): string {
+	private function get_validation_status(): string {
 		if ( in_array( $this->validation_status, self::ALLOWED_VALIDATION_STATUS, true ) ) {
 			return $this->validation_status;
 		}
 
 		return 'INVALID';
+	}
+
+	private function get_applied_coupons(): ?array {
+		if ( empty( $this->applied_coupons ) ) {
+			return null;
+		}
+
+		return $this->applied_coupons;
+	}
+
+	private function get_available_shipping_options(): ?array {
+		if ( empty( $this->shipping_options ) ) {
+			return null;
+		}
+
+		return $this->shipping_options;
+	}
+
+	private function get_payment_confirmation(): ?array {
+		$wc_order = $this->wc_order;
+
+		if ( ! $wc_order ) {
+			return null;
+		}
+
+		return array(
+			'merchant_order_number' => $wc_order->get_id(),
+			'order_review_page'     => $wc_order->get_checkout_order_received_url(),
+		);
 	}
 }

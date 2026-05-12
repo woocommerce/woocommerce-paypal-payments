@@ -48,8 +48,9 @@ class ShippingValidator implements ValidatorInterface {
 	public function validate( StorePayPalCart $store_cart ) {
 		$cart             = $store_cart->paypal_cart();
 		$shipping_address = $cart->shipping_address();
+
 		// Scenario 1: Missing Shipping Address.
-		if ( ! $shipping_address ) {
+		if ( $shipping_address->is_empty() ) {
 			if ( $this->cart_needs_shipping( $cart ) ) {
 				return array(
 					ValidationIssue::create_missing_field( 'Shipping address is required' )
