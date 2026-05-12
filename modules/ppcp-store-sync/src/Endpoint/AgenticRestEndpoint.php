@@ -164,9 +164,9 @@ abstract class AgenticRestEndpoint extends WC_REST_Controller
     {
         return $this->session_handler->create_cart_session($cart, $ec_token);
     }
-    protected function store_local_cart(string $cart_id, PayPalCart $cart): bool
+    protected function store_local_cart(string $cart_id, PayPalCart $cart, ?string $ec_token = null): bool
     {
-        return $this->session_handler->update_cart_session($cart_id, $cart);
+        return $this->session_handler->update_cart_session($cart_id, $cart, $ec_token);
     }
     protected function flush_local_cart(string $cart_id): bool
     {

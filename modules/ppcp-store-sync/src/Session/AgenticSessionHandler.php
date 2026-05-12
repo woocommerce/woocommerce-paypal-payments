@@ -87,18 +87,19 @@ class AgenticSessionHandler
     /**
      * Update an existing cart session.
      *
-     * @param string     $session_id The session ID.
-     * @param PayPalCart $cart       The updated cart.
+     * @param string      $session_id The session ID.
+     * @param PayPalCart  $cart       The updated cart.
+     * @param string|null $ec_token   Optional new token; when omitted the existing token is kept.
      * @return bool True on success.
      */
-    public function update_cart_session(string $session_id, PayPalCart $cart): bool
+    public function update_cart_session(string $session_id, PayPalCart $cart, ?string $ec_token = null): bool
     {
         // Load the session first.
         $existing = $this->load_cart_session($session_id);
         if (!$existing) {
             return \false;
         }
-        $data = array('cart' => $cart->to_array(), 'ec_token' => $existing['ec_token'], 'created' => $existing['created'], 'modified' => time());
+        $data = array('cart' => $cart->to_array(), 'ec_token' => $ec_token ?? $existing['ec_token'], 'created' => $existing['created'], 'modified' => time());
         $this->session->set(self::SESSION_KEY, $data);
         $this->session->save_data();
         return \true;
