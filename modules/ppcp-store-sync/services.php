@@ -10,6 +10,7 @@ declare( strict_types = 1 );
 namespace WooCommerce\PayPalCommerce\StoreSync;
 
 use Psr\Log\LoggerInterface;
+use WC_Logger;
 use WooCommerce\PayPalCommerce\Assets\AssetGetter;
 use WooCommerce\PayPalCommerce\Assets\AssetGetterFactory;
 use WooCommerce\WooCommerce\Logging\Logger\NullLogger;
@@ -52,6 +53,7 @@ use WooCommerce\PayPalCommerce\StoreSync\CartValidation\CouponValidator\CouponRe
 use WooCommerce\PayPalCommerce\StoreSync\CartValidation\CouponValidator\AppliedCouponsBuilder;
 use WooCommerce\PayPalCommerce\StoreSync\CartValidation\CartValidationProcessor;
 use WooCommerce\PayPalCommerce\StoreSync\Helper\AgenticSessionManager;
+use WooCommerce\PayPalCommerce\StoreSync\StoreData\StoreData;
 
 /**
  * Separate source keeps high-volume ingestion entries out of the agentic (cart API) log stream:
@@ -68,14 +70,14 @@ const LOGGER_SOURCE_INGESTION = 'woocommerce-paypal-ingestion';
 return array(
 	// Logging.
 	'agentic.logger.default'                       => static function (): LoggerInterface {
-		if ( ! class_exists( \WC_Logger::class ) ) {
+		if ( ! class_exists( WC_Logger::class ) ) {
 			return new NullLogger();
 		}
 
 		return new WooCommerceLogger( wc_get_logger(), LOGGER_SOURCE_DEFAULT );
 	},
 	'agentic.logger.ingestion'                     => static function (): LoggerInterface {
-		if ( ! class_exists( \WC_Logger::class ) ) {
+		if ( ! class_exists( WC_Logger::class ) ) {
 			return new NullLogger();
 		}
 
@@ -99,7 +101,8 @@ return array(
 	'agentic.merchant.provider'                    => static function ( ContainerInterface $c ): MerchantMetadataProvider {
 		return new MerchantMetadataProvider(
 			$c->get( 'woocommerce.core' ),
-			$c->get( 'settings.data.general' )
+			$c->get( 'settings.data.general' ),
+			$c->get( 'agentic.config.store-currency' )
 		);
 	},
 	'agentic.registration.eligibility'             => static function ( ContainerInterface $c ): RegistrationEligibility {
@@ -152,8 +155,10 @@ return array(
 			$c->get( 'agentic.logger.default' )
 		);
 	},
-	'agentic.helper.shipping-options-builder'      => static function (): ShippingOptionsBuilder {
-		return new ShippingOptionsBuilder();
+	'agentic.helper.shipping-options-builder'      => static function ( ContainerInterface $c ): ShippingOptionsBuilder {
+		return new ShippingOptionsBuilder(
+			$c->get( 'agentic.config.store-currency' )
+		);
 	},
 	'agentic.helper.checkout-processor'            => static function ( ContainerInterface $c ): AgenticCheckoutProcessor {
 		return new AgenticCheckoutProcessor(
@@ -161,7 +166,8 @@ return array(
 			$c->get( 'button.helper.wc-order-creator' ),
 			$c->get( 'agentic.helper.cart-builder' ),
 			$c->get( 'agentic.response.applied-coupons-builder' ),
-			$c->get( 'api.factory.shipping' )
+			$c->get( 'api.factory.shipping' ),
+			$c->get( 'agentic.logger' )
 		);
 	},
 
@@ -170,7 +176,9 @@ return array(
 			$c->get( 'api.endpoint.order' ),
 			$c->get( 'api.endpoint.orders' ),
 			$c->get( 'agentic.helper.cart-builder' ),
-			$c->get( 'agentic.logger.default' )
+			$c->get( 'agentic.logger.default' ),
+			$c->get( 'agentic.config.store-currency' ),
+			$c->get( 'api.factory.amount' )
 		);
 	},
 
@@ -182,24 +190,19 @@ return array(
 	},
 	'agentic.validator.product'                    => static function ( ContainerInterface $c ): ProductValidator {
 		return new ProductValidator(
-			$c->get( 'agentic.helper.product-manager' ),
 			$c->get( 'agentic.config.ingestion' )
 		);
 	},
-	'agentic.validator.price'                      => static function ( ContainerInterface $c ): PriceValidator {
-		return new PriceValidator(
-			$c->get( 'agentic.helper.product-manager' )
-		);
+	'agentic.validator.price'                      => static function (): PriceValidator {
+		return new PriceValidator();
 	},
 	'agentic.validator.inventory'                  => static function ( ContainerInterface $c ): InventoryValidator {
 		return new InventoryValidator(
 			$c->get( 'agentic.helper.product-manager' )
 		);
 	},
-	'agentic.validator.shipping'                   => static function ( ContainerInterface $c ): ShippingValidator {
-		return new ShippingValidator(
-			$c->get( 'agentic.helper.product-manager' )
-		);
+	'agentic.validator.shipping'                   => static function (): ShippingValidator {
+		return new ShippingValidator();
 	},
 	'agentic.validator.currency'                   => static function (): CurrencyValidator {
 		return new CurrencyValidator();
@@ -234,10 +237,8 @@ return array(
 	},
 	'agentic.response.factory'                     => static function ( ContainerInterface $c ): ResponseFactory {
 		return new ResponseFactory(
-			$c->get( 'agentic.helper.cart-builder' ),
 			$c->get( 'agentic.response.applied-coupons-builder' ),
-			$c->get( 'agentic.helper.shipping-options-builder' ),
-			$c->get( 'agentic.config.store-currency' )
+			$c->get( 'agentic.helper.shipping-options-builder' )
 		);
 	},
 
@@ -250,7 +251,8 @@ return array(
 			$c->get( 'agentic.response.factory' ),
 			$c->get( 'agentic.validation.processor' ),
 			$c->get( 'agentic.logger.default' ),
-			$c->get( 'agentic.helper.paypal-order-manager' )
+			$c->get( 'agentic.helper.paypal-order-manager' ),
+			$c->get( 'agentic.store.data' )
 		);
 	},
 	'agentic.rest.get_cart'                        => static function ( ContainerInterface $c ): GetCartEndpoint {
@@ -261,7 +263,8 @@ return array(
 			$c->get( 'agentic.response.factory' ),
 			$c->get( 'agentic.validation.processor' ),
 			$c->get( 'agentic.logger.default' ),
-			$c->get( 'agentic.helper.paypal-order-manager' )
+			$c->get( 'agentic.helper.paypal-order-manager' ),
+			$c->get( 'agentic.store.data' )
 		);
 	},
 	'agentic.rest.replace_cart'                    => static function ( ContainerInterface $c ): ReplaceCartEndpoint {
@@ -272,7 +275,8 @@ return array(
 			$c->get( 'agentic.response.factory' ),
 			$c->get( 'agentic.validation.processor' ),
 			$c->get( 'agentic.logger.default' ),
-			$c->get( 'agentic.helper.paypal-order-manager' )
+			$c->get( 'agentic.helper.paypal-order-manager' ),
+			$c->get( 'agentic.store.data' )
 		);
 	},
 	'agentic.rest.checkout'                        => static function ( ContainerInterface $c ): CheckoutEndpoint {
@@ -284,7 +288,17 @@ return array(
 			$c->get( 'agentic.validation.processor' ),
 			$c->get( 'agentic.logger.default' ),
 			$c->get( 'agentic.helper.paypal-order-manager' ),
+			$c->get( 'agentic.store.data' ),
 			$c->get( 'agentic.helper.checkout-processor' )
+		);
+	},
+
+	// Store Data Factory.
+	'agentic.store.data'                           => static function ( ContainerInterface $c ): StoreData {
+		return new StoreData(
+			$c->get( 'agentic.helper.product-manager' ),
+			$c->get( 'agentic.config.store-currency' ),
+			$c->get( 'agentic.helper.cart-builder' )
 		);
 	},
 
@@ -300,7 +314,8 @@ return array(
 			$c->get( 'agentic.ingestion-batch-provider' ),
 			$c->get( 'agentic.config.webhook_urls' ),
 			$c->get( 'agentic.merchant.provider' ),
-			$c->get( 'agentic.logger.ingestion' )
+			$c->get( 'agentic.logger.ingestion' ),
+			$c->get( 'agentic.config.store-currency' )
 		);
 	},
 

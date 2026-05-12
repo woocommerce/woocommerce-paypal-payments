@@ -193,11 +193,10 @@ class ValidationIssueTest extends TestCase {
 
 		$data = $issue->to_array();
 		$this->assertArrayHasKey( 'context', $data );
-		$this->assertCount( 1, $data['context'] );
-		$this->assertSame( 'FOO', $data['context'][0]['specific_issue'] );
+		$this->assertSame( array( 'specific_issue' => 'FOO' ), $data['context'] );
 	}
 
-	public function test_add_context_with_array_of_context_objects(): void {
+	public function test_add_context_with_multiple_contexts_only_first_is_serialized(): void {
 		$contexts = array(
 			$this->make_context( array( 'specific_issue' => 'A' ) ),
 			$this->make_context( array( 'specific_issue' => 'B' ) ),
@@ -206,7 +205,7 @@ class ValidationIssueTest extends TestCase {
 		$issue = ValidationIssue::create_invalid_data( 'msg' )
 			->add_context( $contexts );
 
-		$this->assertCount( 2, $issue->to_array()['context'] );
+		$this->assertSame( array( 'specific_issue' => 'A' ), $issue->to_array()['context'] );
 	}
 
 	public function test_add_context_ignores_non_context_values(): void {
@@ -267,7 +266,7 @@ class ValidationIssueTest extends TestCase {
 
 		$issue = ValidationIssue::create_invalid_data( 'msg' );
 
-		for ( $i = 0; $i < 7; $i++ ) {
+		for ( $i = 0; $i < 7; $i ++ ) {
 			$issue->add_resolution( ResolutionOption::create_remove_item()->label( "Option $i" ) );
 		}
 
@@ -287,10 +286,12 @@ class ValidationIssueTest extends TestCase {
 	private function make_context( array $to_array_data ): IssueContext {
 		return new class( $to_array_data ) extends IssueContext {
 			private array $data;
+
 			public function __construct( array $data ) {
 				parent::__construct( $data['specific_issue'] ?? '' );
 				$this->data = $data;
 			}
+
 			public function to_array(): array {
 				return $this->data;
 			}

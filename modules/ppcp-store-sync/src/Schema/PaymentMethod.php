@@ -9,7 +9,7 @@ declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\StoreSync\Schema;
 
-use WooCommerce\PayPalCommerce\StoreSync\Validation\ValidationIssue;
+use WooCommerce\PayPalCommerce\StoreSync\Validation\StoreValidation;
 
 /**
  * @see PaymentMethodTest - Unit tests for this class.
@@ -19,32 +19,28 @@ class PaymentMethod extends AgenticSchema {
 
 	private ?string $payer_id = null;
 
-	protected function parse_fields( array $input, callable $add_issue ): void {
+	public static function create_empty(): self {
+		return self::from_array( array(), new StoreValidation() );
+	}
+
+	protected function parse_fields( array $input, StoreValidation $validation ): void {
 		// Reset all fields.
 		$this->token    = null;
 		$this->payer_id = null;
 
 		// Mandatory fields.
 		if ( ! isset( $input['type'] ) || ! is_string( $input['type'] ) ) {
-			$add_issue(
-				ValidationIssue::create_missing_field( 'Payment method is required' )
-					->user_message( 'No value for the payment method type found' )
-					->for_field( 'type' )
-			);
+			$validation->add_missing_field( 'type', 'No value for the payment method type found' );
 		} else {
 			$type = trim( $input['type'] );
 
 			if ( empty( $type ) ) {
-				$add_issue(
-					ValidationIssue::create_missing_field( 'Payment method is required' )
-						->user_message( 'No value for the payment method type found' )
-						->for_field( 'type' )
-				);
+				$validation->add_missing_field( 'type', 'No value for the payment method type found' );
 			} elseif ( 'paypal' !== $type ) {
-				$add_issue(
-					ValidationIssue::create_invalid_data( 'Unexpected payment method type' )
-						->user_message( 'Only PayPal is supported' )
-						->for_field( 'type' )
+				$validation->add_invalid_data(
+					'type',
+					'Unexpected payment method type',
+					'Only PayPal is supported'
 				);
 			}
 		}
@@ -62,11 +58,21 @@ class PaymentMethod extends AgenticSchema {
 		return 'paypal';
 	}
 
-	public function token(): ?string {
-		return $this->token;
+	public function token( ?string $default = null ): ?string {
+		return $this->token ?? $default;
 	}
 
-	public function payer_id(): ?string {
-		return $this->payer_id;
+	public function payer_id( ?string $default = null ): ?string {
+		return $this->payer_id ?? $default;
+	}
+
+	public function to_array(): array {
+		$data = array(
+			'type'     => $this->type(),
+			'token'    => $this->token,
+			'payer_id' => $this->payer_id,
+		);
+
+		return array_filter( $data, static fn( $v ) => $v !== null );
 	}
 }

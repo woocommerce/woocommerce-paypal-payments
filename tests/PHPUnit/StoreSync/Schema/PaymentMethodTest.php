@@ -62,4 +62,45 @@ class PaymentMethodTest extends SchemaTestCase {
 		$this->assertFieldAcceptsSpecialCharacters( 'token' );
 		$this->assertFieldAcceptsSpecialCharacters( 'payer_id' );
 	}
+
+	// -------------------------------------------------------------------------
+	// Group — to_array()
+	// -------------------------------------------------------------------------
+
+	/**
+	 * GIVEN a PaymentMethod with token and payer_id set
+	 * WHEN to_array() is called
+	 * THEN all three fields (type, token, payer_id) appear in the result
+	 * AND type is always 'paypal'
+	 */
+	public function test_to_array_includes_all_fields_when_token_and_payer_id_are_present(): void {
+		$method = PaymentMethod::from_array(
+			array( 'type' => 'paypal', 'token' => 'EC-123456', 'payer_id' => 'PAYER-789' ),
+			new \WooCommerce\PayPalCommerce\StoreSync\Validation\StoreValidation()
+		);
+
+		$result = $method->to_array();
+
+		$this->assertSame( 'paypal', $result['type'] );
+		$this->assertSame( 'EC-123456', $result['token'] );
+		$this->assertSame( 'PAYER-789', $result['payer_id'] );
+	}
+
+	/**
+	 * GIVEN a PaymentMethod with only the mandatory type field
+	 * WHEN to_array() is called
+	 * THEN only type is present; token and payer_id are absent from the result
+	 */
+	public function test_to_array_omits_absent_optional_fields(): void {
+		$method = PaymentMethod::from_array(
+			array( 'type' => 'paypal' ),
+			new \WooCommerce\PayPalCommerce\StoreSync\Validation\StoreValidation()
+		);
+
+		$result = $method->to_array();
+
+		$this->assertSame( 'paypal', $result['type'] );
+		$this->assertArrayNotHasKey( 'token', $result );
+		$this->assertArrayNotHasKey( 'payer_id', $result );
+	}
 }

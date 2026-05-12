@@ -9,6 +9,8 @@ declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\StoreSync\Schema;
 
+use WooCommerce\PayPalCommerce\StoreSync\Validation\StoreValidation;
+
 /**
  * @see AppliedCouponTest - Unit tests for this class.
  */
@@ -19,7 +21,7 @@ class AppliedCoupon extends AgenticSchema {
 
 	private ?Money $discount_amount = null;
 
-	protected function parse_fields( array $input, callable $add_issue ): void {
+	protected function parse_fields( array $input, StoreValidation $validation ): void {
 		// Reset all fields.
 		$this->code            = null;
 		$this->description     = null;
@@ -33,28 +35,19 @@ class AppliedCoupon extends AgenticSchema {
 			$this->description = trim( $input['description'] );
 		}
 		if ( isset( $input['discount_amount'] ) && is_array( $input['discount_amount'] ) ) {
-			$money  = Money::from_array( $input['discount_amount'], $add_issue );
-			$issues = $money->issues();
-
-			if ( empty( $issues ) ) {
-				$this->discount_amount = $money;
-			} else {
-				foreach ( $issues as $issue ) {
-					$add_issue( $issue );
-				}
-			}
+			$this->discount_amount = Money::from_array( $input['discount_amount'], $validation );
 		}
 	}
 
-	public function code(): ?string {
-		return $this->code;
+	public function code( ?string $default = null ): ?string {
+		return $this->code ?? $default;
 	}
 
-	public function description(): ?string {
-		return $this->description;
+	public function description( ?string $default = null ): ?string {
+		return $this->description ?? $default;
 	}
 
-	public function discount_amount(): ?Money {
-		return $this->discount_amount;
+	public function discount_amount( ?Money $default = null ): ?Money {
+		return $this->discount_amount ?? $default;
 	}
 }

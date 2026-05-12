@@ -7,16 +7,21 @@ namespace WooCommerce\PayPalCommerce\StoreSync\Helper;
 use Brain\Monkey;
 use Mockery;
 use WC_Cart;
-use WooCommerce\PayPalCommerce\TestCase;
+use WooCommerce\PayPalCommerce\StoreSync\Config\StoreCurrencyValue;
+use WooCommerce\PayPalCommerce\StoreSync\StoreSyncTestCase;
 
 /**
  * @covers \WooCommerce\PayPalCommerce\StoreSync\Helper\ShippingOptionsBuilder
  */
-class ShippingOptionsBuilderTest extends TestCase {
+class ShippingOptionsBuilderTest extends StoreSyncTestCase {
+
+	private ShippingOptionsBuilder $sut;
 
 	public function setUp(): void {
 		parent::setUp();
-		Monkey\Functions\when( 'get_woocommerce_currency' )->justReturn( 'USD' );
+		$store_currency = Mockery::mock( StoreCurrencyValue::class );
+		$store_currency->allows( 'value' )->andReturn( 'USD' );
+		$this->sut = new ShippingOptionsBuilder( $store_currency );
 	}
 
 	// -------------------------------------------------------------------------
@@ -81,7 +86,7 @@ class ShippingOptionsBuilderTest extends TestCase {
 	 * Then an empty array is returned without consulting WC() at all
 	 */
 	public function test_build_returns_empty_array_when_cart_is_null(): void {
-		$builder = new ShippingOptionsBuilder();
+		$builder = $this->sut;
 
 		$result = $builder->build( null );
 
@@ -104,7 +109,7 @@ class ShippingOptionsBuilderTest extends TestCase {
 		$this->stub_wc( [], [ 'flat_rate:1' ] );
 
 		$wc_cart = Mockery::mock( WC_Cart::class );
-		$builder = new ShippingOptionsBuilder();
+		$builder = $this->sut;
 
 		$result = $builder->build( $wc_cart );
 
@@ -131,15 +136,14 @@ class ShippingOptionsBuilderTest extends TestCase {
 		$this->stub_wc( $packages, array( 'flat_rate:1' ) );
 
 		$wc_cart = Mockery::mock( WC_Cart::class );
-		$builder = new ShippingOptionsBuilder();
+		$builder = $this->sut;
 
 		$result = $builder->build( $wc_cart );
 
 		$this->assertCount( 1, $result );
 		$this->assertSame( 'flat_rate:1', $result[0]['id'] );
 		$this->assertSame( 'Flat Rate', $result[0]['name'] );
-		$this->assertSame( '5.00', $result[0]['price']['value'] );
-		$this->assertSame( 'USD', $result[0]['price']['currency_code'] );
+		$this->assertMoneyValue( $result[0]['price'], 5.0, 'USD' );
 		$this->assertTrue( $result[0]['is_selected'] );
 	}
 
@@ -173,7 +177,7 @@ class ShippingOptionsBuilderTest extends TestCase {
 		$this->stub_wc( $packages, array( 'free_shipping:1' ) );
 
 		$wc_cart = Mockery::mock( WC_Cart::class );
-		$builder = new ShippingOptionsBuilder();
+		$builder = $this->sut;
 
 		$result = $builder->build( $wc_cart );
 
@@ -218,7 +222,7 @@ class ShippingOptionsBuilderTest extends TestCase {
 		$this->stub_wc( $packages, null );
 
 		$wc_cart = Mockery::mock( WC_Cart::class );
-		$builder = new ShippingOptionsBuilder();
+		$builder = $this->sut;
 
 		$result = $builder->build( $wc_cart );
 
@@ -244,7 +248,7 @@ class ShippingOptionsBuilderTest extends TestCase {
 		$this->stub_wc( $packages, array() );
 
 		$wc_cart = Mockery::mock( WC_Cart::class );
-		$builder = new ShippingOptionsBuilder();
+		$builder = $this->sut;
 
 		$result = $builder->build( $wc_cart );
 
@@ -275,13 +279,12 @@ class ShippingOptionsBuilderTest extends TestCase {
 		$this->stub_wc( $packages, array( 'flat_rate:1' ) );
 
 		$wc_cart = Mockery::mock( WC_Cart::class );
-		$builder = new ShippingOptionsBuilder();
+		$builder = $this->sut;
 
 		$result = $builder->build( $wc_cart );
 
 		$this->assertCount( 1, $result );
-		$this->assertIsString( $result[0]['price']['value'] );
-		$this->assertSame( $expected_amount, $result[0]['price']['value'] );
+		$this->assertMoneyValue( $result[0]['price'], (float) $expected_amount );
 	}
 
 	/**
@@ -311,8 +314,9 @@ class ShippingOptionsBuilderTest extends TestCase {
 	 * Then the currency field of every returned option reflects the store currency
 	 */
 	public function test_build_uses_currency_from_get_woocommerce_currency(): void {
-		// Override the default USD stub set in setUp()
-		Monkey\Functions\when( 'get_woocommerce_currency' )->justReturn( 'EUR' );
+		$store_currency = Mockery::mock( StoreCurrencyValue::class );
+		$store_currency->allows( 'value' )->andReturn( 'EUR' );
+		$builder = new ShippingOptionsBuilder( $store_currency );
 
 		$rate     = $this->create_shipping_rate_stub( 'flat_rate:1', 'Standard', 8.0 );
 		$packages = array( $this->make_package( array( 'flat_rate:1' => $rate ) ) );
@@ -320,7 +324,6 @@ class ShippingOptionsBuilderTest extends TestCase {
 		$this->stub_wc( $packages, array( 'flat_rate:1' ) );
 
 		$wc_cart = Mockery::mock( WC_Cart::class );
-		$builder = new ShippingOptionsBuilder();
 
 		$result = $builder->build( $wc_cart );
 
@@ -337,7 +340,9 @@ class ShippingOptionsBuilderTest extends TestCase {
 	 * Then every returned option has currency equal to GBP
 	 */
 	public function test_build_applies_currency_to_all_options(): void {
-		Monkey\Functions\when( 'get_woocommerce_currency' )->justReturn( 'GBP' );
+		$store_currency = Mockery::mock( StoreCurrencyValue::class );
+		$store_currency->allows( 'value' )->andReturn( 'GBP' );
+		$builder = new ShippingOptionsBuilder( $store_currency );
 
 		$rate_a = $this->create_shipping_rate_stub( 'flat_rate:1', 'Standard', 5.0 );
 		$rate_b = $this->create_shipping_rate_stub( 'express:1', 'Express', 15.0 );
@@ -354,7 +359,6 @@ class ShippingOptionsBuilderTest extends TestCase {
 		$this->stub_wc( $packages, array( 'flat_rate:1' ) );
 
 		$wc_cart = Mockery::mock( WC_Cart::class );
-		$builder = new ShippingOptionsBuilder();
 
 		$result = $builder->build( $wc_cart );
 
@@ -382,7 +386,7 @@ class ShippingOptionsBuilderTest extends TestCase {
 		$this->stub_wc( $packages, array( 'flat_rate:1' ) );
 
 		$wc_cart = Mockery::mock( WC_Cart::class );
-		$builder = new ShippingOptionsBuilder();
+		$builder = $this->sut;
 
 		$result = $builder->build( $wc_cart );
 
@@ -392,13 +396,10 @@ class ShippingOptionsBuilderTest extends TestCase {
 		$this->assertArrayHasKey( 'id', $option );
 		$this->assertArrayHasKey( 'name', $option );
 		$this->assertArrayHasKey( 'price', $option );
-		$this->assertArrayHasKey( 'currency_code', $option['price'] );
-		$this->assertArrayHasKey( 'value', $option['price'] );
+		$this->assertMoneyValue( $option['price'] );
 		$this->assertArrayHasKey( 'is_selected', $option );
 		$this->assertIsBool( $option['is_selected'] );
 		$this->assertIsString( $option['id'] );
 		$this->assertIsString( $option['name'] );
-		$this->assertIsString( $option['price']['value'] );
-		$this->assertIsString( $option['price']['currency_code'] );
 	}
 }

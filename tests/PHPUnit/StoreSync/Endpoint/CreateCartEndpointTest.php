@@ -44,7 +44,7 @@ class CreateCartEndpointTest extends AgenticEndpointTestCase {
 
 		// Mock response factory.
 		$response_factory->allows( 'new_cart' )
-			->andReturnUsing( fn( $cart, $cart_id, $ec_token ) => CartResponse::create_new( $cart, $cart_id, $ec_token ) );
+			->andReturnUsing( fn( $cart, $cart_id ) => CartResponse::create_new( $cart, $cart_id ) );
 
 		$endpoint = new CreateCartEndpoint(
 			$mocks['auth_provider'],
@@ -53,7 +53,8 @@ class CreateCartEndpointTest extends AgenticEndpointTestCase {
 			$response_factory,
 			$validation_processor,
 			$mocks['logger'],
-			$order_manager
+			$order_manager,
+			$mocks['store_data']
 		);
 
 		$request = new WP_REST_Request( 'POST', '/wp-json/paypal/v1/merchant-cart' );

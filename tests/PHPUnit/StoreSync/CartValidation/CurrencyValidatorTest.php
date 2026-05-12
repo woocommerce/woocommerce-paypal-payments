@@ -1,10 +1,12 @@
 <?php
+
 declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\StoreSync\CartValidation;
 
 use WooCommerce\PayPalCommerce\StoreSync\Schema\PayPalCart;
-use function Brain\Monkey\Functions\when;
+use WooCommerce\PayPalCommerce\StoreSync\Validation\StoreValidation;
+use WooCommerce\PayPalCommerce\StoreSync\Validation\ValidationIssue;
 
 /**
  * @covers \WooCommerce\PayPalCommerce\StoreSync\CartValidation\CurrencyValidator
@@ -18,201 +20,113 @@ class CurrencyValidatorTest extends ValidationTest {
 		$this->validator = new CurrencyValidator();
 	}
 
-	public function test_validate_returns_null_for_valid_cart(): void {
-		when( 'get_woocommerce_currency' )->justReturn( 'USD' );
+	/**
+	 * GIVEN a cart whose every item has the correct store currency
+	 * WHEN validate() is called
+	 * THEN an empty array is returned (no issues)
+	 */
+	public function test_validate_returns_empty_array_for_all_matching_currencies(): void {
+		$item_a = $this->make_store_item( 0, null, true, 'USD', '1' );
+		$item_b = $this->make_store_item( 1, null, true, 'USD', '2' );
 
-		$cart = $this->create_cart_with_items(
-			array(
-				array( 'currency' => 'USD', 'value' => 10.0 ),
-				array( 'currency' => 'USD', 'value' => 20.0 ),
-			)
+		$cart   = $this->create_cart();
+		$result = $this->validator->validate(
+			$this->wrap_in_store_cart( $cart, null, array( $item_a, $item_b ), 'USD' )
 		);
-
-		$result = $this->validator->validate( $cart );
 
 		$this->assertIsArray( $result );
 		$this->assertEmpty( $result );
 	}
 
-	public function test_validate_detects_mixed_currencies(): void {
-		when( 'get_woocommerce_currency' )->justReturn( 'USD' );
-
-		$cart = $this->create_cart_with_items(
-			array(
-				array( 'currency' => 'USD', 'value' => 10.0 ),
-				array( 'currency' => 'EUR', 'value' => 20.0 ),
-			)
-		);
-
-		$result = $this->validator->validate( $cart );
-
-		$this->assertIsArray( $result );
-		$this->assertCount( 1, $result );
-
-		$issue_data = $result[0]->to_array();
-		$this->assertValidationIssue( $issue_data, 'PRICING_ERROR', 'BUSINESS_RULE', 'items[1].price.currency_code', 'Mixed currencies detected' );
-	}
-
-	public function test_validate_detects_store_currency_mismatch(): void {
-		when( 'get_woocommerce_currency' )->justReturn( 'USD' );
-
-		$cart = $this->create_cart_with_items(
-			array(
-				array( 'currency' => 'EUR', 'value' => 10.0 ),
-				array( 'currency' => 'EUR', 'value' => 20.0 ),
-			)
-		);
-
-		$result = $this->validator->validate( $cart );
-
-		$this->assertIsArray( $result );
-		$this->assertCount( 1, $result );
-
-		$issue_data = $result[0]->to_array();
-		$this->assertValidationIssue( $issue_data, 'PRICING_ERROR', 'BUSINESS_RULE', 'items[0].price.currency_code', 'Cart currency EUR does not match store currency USD' );
-	}
-
-	public function test_validate_returns_null_for_empty_cart(): void {
-		when( 'get_woocommerce_currency' )->justReturn( 'USD' );
-
+	/**
+	 * GIVEN an empty cart (no items)
+	 * WHEN validate() is called
+	 * THEN an empty array is returned (no issues)
+	 */
+	public function test_validate_returns_empty_array_for_empty_cart(): void {
 		$cart = PayPalCart::from_array(
 			array(
 				'items'          => array(),
 				'payment_method' => 'paypal',
-			)
+			),
+			new StoreValidation()
 		);
 
-		$result = $this->validator->validate( $cart );
+		$result = $this->validator->validate(
+			$this->wrap_in_store_cart( $cart, null, array(), 'USD' )
+		);
 
 		$this->assertIsArray( $result );
 		$this->assertEmpty( $result );
 	}
 
-	public function test_validates_with_some_items_without_prices(): void {
-		when( 'get_woocommerce_currency' )->justReturn( 'USD' );
+	/**
+	 * GIVEN a cart item whose assumed currency (EUR) does not match the store currency (USD)
+	 * WHEN validate() is called
+	 * THEN exactly one ValidationIssue is returned
+	 * AND the issue code is PRICING_ERROR with type BUSINESS_RULE
+	 * AND the issue message mentions EUR and USD
+	 * AND the issue field points to items[0].price.currency_code
+	 * AND a USE_DIFFERENT_CURRENCY resolution option is included
+	 */
+	public function test_validate_detects_currency_mismatch_on_first_item(): void {
+		$item = $this->make_store_item( 0, null, false, 'EUR', '1' );
 
-		$cart_data = array(
-			'items'          => array(
-				array(
-					'item_id'  => '1',
-					'quantity' => 1,
-					'name'     => 'Item with price',
-					'price'    => array(
-						'currency_code' => 'USD',
-						'value'         => 10.0,
-					),
-				),
-				array(
-					'item_id'  => '2',
-					'quantity' => 1,
-					'name'     => 'Item without price',
-					// No price field
-				),
-			),
-			'payment_method' => 'paypal',
+		$cart   = $this->create_cart();
+		$result = $this->validator->validate(
+			$this->wrap_in_store_cart( $cart, null, array( $item ), 'USD' )
 		);
 
-		$cart   = PayPalCart::from_array( $cart_data );
-		$result = $this->validator->validate( $cart );
+		$this->assertIsArray( $result );
+		$this->assertCount( 1, $result );
+		$this->assertInstanceOf( ValidationIssue::class, $result[0] );
+
+		$issue_data = $result[0]->to_array();
+		$this->assertValidationIssue(
+			$issue_data,
+			'PRICING_ERROR',
+			'BUSINESS_RULE',
+			'items[0].price.currency_code',
+			'Cart currency EUR does not match store currency USD'
+		);
+		$this->assertResolutionOption( $issue_data, 'USE_DIFFERENT_CURRENCY' );
+	}
+
+	/**
+	 * GIVEN items where multiple items have the wrong currency
+	 * WHEN validate() is called
+	 * THEN exactly one ValidationIssue is returned (not one per mismatched item)
+	 * AND the user message instructs the customer about the expected currency
+	 */
+	public function test_validate_returns_single_issue_even_with_multiple_currency_mismatches(): void {
+		$item_a = $this->make_store_item( 0, null, false, 'EUR', '1' );
+		$item_b = $this->make_store_item( 1, null, false, 'EUR', '2' );
+
+		$cart   = $this->create_cart();
+		$result = $this->validator->validate(
+			$this->wrap_in_store_cart( $cart, null, array( $item_a, $item_b ), 'USD' )
+		);
+
+		$this->assertIsArray( $result );
+		$this->assertCount( 1, $result );
+	}
+
+	/**
+	 * GIVEN a cart item with no assumed price (currency is correct by default)
+	 * WHEN validate() is called
+	 * THEN an empty array is returned (items without prices are not flagged)
+	 */
+	public function test_validate_ignores_items_without_assumed_currency(): void {
+		// is_currency_correct returns true when no price is assumed
+		$item = $this->make_store_item( 0, null, true, '', '1' );
+
+		$cart   = $this->create_cart();
+		$result = $this->validator->validate(
+			$this->wrap_in_store_cart( $cart, null, array( $item ), 'USD' )
+		);
 
 		$this->assertIsArray( $result );
 		$this->assertEmpty( $result );
-	}
-
-	public function test_detects_mismatch_skipping_empty_items(): void {
-		when( 'get_woocommerce_currency' )->justReturn( 'USD' );
-
-		$cart_data = array(
-			'items'          => array(
-				array(
-					'item_id'  => '1',
-					'quantity' => 1,
-					'name'     => 'Item without price',
-					// No price field
-				),
-				array(
-					'item_id'  => '2',
-					'quantity' => 1,
-					'name'     => 'Item with USD',
-					'price'    => array(
-						'currency_code' => 'USD',
-						'value'         => 10.0,
-					),
-				),
-				array(
-					'item_id'  => '3',
-					'quantity' => 1,
-					'name'     => 'Item with EUR',
-					'price'    => array(
-						'currency_code' => 'EUR',
-						'value'         => 20.0,
-					),
-				),
-			),
-			'payment_method' => 'paypal',
-		);
-
-		$cart   = PayPalCart::from_array( $cart_data );
-		$result = $this->validator->validate( $cart );
-
-		$this->assertIsArray( $result );
-		$this->assertCount( 1, $result );
-
-		$issue_data = $result[0]->to_array();
-		$this->assertValidationIssue( $issue_data, 'PRICING_ERROR', 'BUSINESS_RULE', 'items[2].price.currency_code', 'Mixed currencies detected' );
-	}
-
-	public function test_store_mismatch_points_to_correct_index(): void {
-		when( 'get_woocommerce_currency' )->justReturn( 'USD' );
-
-		$cart_data = array(
-			'items'          => array(
-				array(
-					'item_id'  => '1',
-					'quantity' => 1,
-					'name'     => 'Item without price',
-					// No price field
-				),
-				array(
-					'item_id'  => '2',
-					'quantity' => 1,
-					'name'     => 'Item with EUR',
-					'price'    => array(
-						'currency_code' => 'EUR',
-						'value'         => 10.0,
-					),
-				),
-			),
-			'payment_method' => 'paypal',
-		);
-
-		$cart   = PayPalCart::from_array( $cart_data );
-		$result = $this->validator->validate( $cart );
-
-		$this->assertIsArray( $result );
-		$this->assertCount( 1, $result );
-
-		$issue_data = $result[0]->to_array();
-		$this->assertValidationIssue( $issue_data, 'PRICING_ERROR', 'BUSINESS_RULE', 'items[1].price.currency_code', 'Cart currency EUR does not match store currency USD' );
-	}
-
-	public function test_mixed_currency_prevents_store_check(): void {
-		when( 'get_woocommerce_currency' )->justReturn( 'GBP' );
-
-		$cart = $this->create_cart_with_items(
-			array(
-				array( 'currency' => 'USD', 'value' => 10.0 ),
-				array( 'currency' => 'EUR', 'value' => 20.0 ),
-			)
-		);
-
-		$result = $this->validator->validate( $cart );
-
-		$this->assertIsArray( $result );
-		$this->assertCount( 1, $result );
-
-		$issue = $result[0]->to_array();
-		$this->assertValidationIssue( $issue, 'PRICING_ERROR', 'BUSINESS_RULE', null, 'Mixed currencies detected' );
 	}
 
 }

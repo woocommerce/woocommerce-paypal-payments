@@ -84,29 +84,24 @@ class CartPayloadBuilder {
 	/**
 	 * Add US shipping address.
 	 *
-	 * @param string $full_name Full name.
-	 * @param string $address   Street address.
-	 * @param string $city      City.
-	 * @param string $state     State code.
-	 * @param string $zip       ZIP code.
+	 * @param string $address Street address.
+	 * @param string $city    City.
+	 * @param string $state   State code.
+	 * @param string $zip     ZIP code.
 	 * @return self
 	 */
 	public function with_us_shipping(
-		string $full_name = 'John Doe',
 		string $address = '123 Main St',
 		string $city = 'San Jose',
 		string $state = 'CA',
 		string $zip = '95131'
 	): self {
 		$this->shipping = array(
-			'name'    => array( 'full_name' => $full_name ),
-			'address' => array(
-				'address_line_1' => $address,
-				'admin_area_2'   => $city,
-				'admin_area_1'   => $state,
-				'postal_code'    => $zip,
-				'country_code'   => 'US',
-			),
+			'address_line_1' => $address,
+			'admin_area_2'   => $city,
+			'admin_area_1'   => $state,
+			'postal_code'    => $zip,
+			'country_code'   => 'US',
 		);
 
 		return $this;
@@ -115,29 +110,24 @@ class CartPayloadBuilder {
 	/**
 	 * Add German shipping address.
 	 *
-	 * @param string $full_name Full name.
-	 * @param string $address   Street address.
-	 * @param string $city      City.
-	 * @param string $state     State code.
-	 * @param string $zip       ZIP code.
+	 * @param string $address Street address.
+	 * @param string $city    City.
+	 * @param string $state   State code.
+	 * @param string $zip     ZIP code.
 	 * @return self
 	 */
 	public function with_de_shipping(
-		string $full_name = 'New Name',
 		string $address = '456 New Ave',
 		string $city = 'Berlin',
 		string $state = 'BE',
 		string $zip = '10115'
 	): self {
 		$this->shipping = array(
-			'name'    => array( 'full_name' => $full_name ),
-			'address' => array(
-				'address_line_1' => $address,
-				'admin_area_2'   => $city,
-				'admin_area_1'   => $state,
-				'postal_code'    => $zip,
-				'country_code'   => 'DE',
-			),
+			'address_line_1' => $address,
+			'admin_area_2'   => $city,
+			'admin_area_1'   => $state,
+			'postal_code'    => $zip,
+			'country_code'   => 'DE',
 		);
 
 		return $this;
@@ -152,10 +142,10 @@ class CartPayloadBuilder {
 	public function with_shipping_fixture( string $fixture_name ): self {
 		$fixtures = array(
 			'us_default' => array( 'with_us_shipping', array() ),
-			'us_john'    => array( 'with_us_shipping', array( 'John Doe', '123 Main St' ) ),
-			'us_old'     => array( 'with_us_shipping', array( 'Old Name', '123 Old St' ) ),
+			'us_john'    => array( 'with_us_shipping', array( '123 Main St' ) ),
+			'us_old'     => array( 'with_us_shipping', array( '123 Old St' ) ),
 			'de_default' => array( 'with_de_shipping', array() ),
-			'de_new'     => array( 'with_de_shipping', array( 'New Name', '456 New Ave' ) ),
+			'de_new'     => array( 'with_de_shipping', array( '456 New Ave' ) ),
 		);
 
 		if ( ! isset( $fixtures[ $fixture_name ] ) ) {
@@ -179,7 +169,7 @@ class CartPayloadBuilder {
 		);
 
 		if ( $this->shipping ) {
-			$cart['shipping'] = $this->shipping;
+			$cart['shipping_address'] = $this->shipping;
 		}
 
 		return $cart;

@@ -9,7 +9,7 @@ declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\StoreSync\Schema;
 
-use WooCommerce\PayPalCommerce\StoreSync\Validation\ValidationIssue;
+use WooCommerce\PayPalCommerce\StoreSync\Validation\StoreValidation;
 
 /**
  * @see CheckoutFieldTest - Unit tests for this class.
@@ -30,7 +30,7 @@ class CheckoutField extends AgenticSchema {
 
 	private ?array $context = null;
 
-	protected function parse_fields( array $input, callable $add_issue ): void {
+	protected function parse_fields( array $input, StoreValidation $validation ): void {
 		// Reset all fields.
 		$this->type    = null;
 		$this->status  = 'ERROR';
@@ -41,11 +41,7 @@ class CheckoutField extends AgenticSchema {
 		if ( ! empty( $input['type'] ) && is_string( $input['type'] ) ) {
 			$this->type = strtoupper( trim( $input['type'] ) );
 		} else {
-			$add_issue(
-				ValidationIssue::create_missing_field( 'Type is required' )
-					->user_message( 'The field type is mandatory' )
-					->for_field( 'type' )
-			);
+			$validation->add_missing_field( 'type', 'The field type is mandatory' );
 		}
 
 		if ( ! empty( $input['status'] ) && is_string( $input['status'] ) ) {
@@ -54,18 +50,14 @@ class CheckoutField extends AgenticSchema {
 			if ( in_array( $status, self::VALID_STATUS, true ) ) {
 				$this->status = $status;
 			} else {
-				$add_issue(
-					ValidationIssue::create_invalid_data( 'Status is invalid' )
-					->user_message( 'The status value is not supported' )
-					->for_field( 'status' )
+				$validation->add_invalid_data(
+					'status',
+					'Status is invalid',
+					'The status value is not supported'
 				);
 			}
 		} else {
-			$add_issue(
-				ValidationIssue::create_missing_field( 'Status is required' )
-				->user_message( 'The field status is mandatory' )
-				->for_field( 'status' )
-			);
+			$validation->add_missing_field( 'status', 'The field status is mandatory' );
 		}
 
 		// Parse optional fields.
@@ -78,19 +70,19 @@ class CheckoutField extends AgenticSchema {
 		}
 	}
 
-	public function type(): ?string {
-		return $this->type;
+	public function type( ?string $default = null ): ?string {
+		return $this->type ?? $default;
 	}
 
 	public function status(): string {
 		return $this->status;
 	}
 
-	public function value(): ?array {
-		return $this->value;
+	public function value( ?array $default = null ): ?array {
+		return $this->value ?? $default;
 	}
 
-	public function context(): ?array {
-		return $this->context;
+	public function context( ?array $default = null ): ?array {
+		return $this->context ?? $default;
 	}
 }

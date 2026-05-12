@@ -1,7 +1,7 @@
 <?php
 declare( strict_types = 1 );
 
-namespace WooCommerce\PayPalCommerce\Tests\Integration\AgenticCommerce\Auth;
+namespace WooCommerce\PayPalCommerce\Tests\Integration\StoreSync;
 
 use WooCommerce\PayPalCommerce\StoreSync\Auth\PayPalJwkProvider;
 use WooCommerce\PayPalCommerce\Tests\Integration\TestCase;

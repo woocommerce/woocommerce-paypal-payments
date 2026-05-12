@@ -6,7 +6,8 @@ namespace WooCommerce\PayPalCommerce\StoreSync\Ingestion;
 
 use WC_Product;
 use WC_Product_Variation;
-use WooCommerce\PayPalCommerce\StoreSync\Helper\CartHelper;
+use WooCommerce\PayPalCommerce\StoreSync\Config\StoreCurrencyValue;
+use WooCommerce\PayPalCommerce\StoreSync\Schema\Money;
 
 class ProductsPayload {
 	private string $merchant_store_url;
@@ -16,9 +17,12 @@ class ProductsPayload {
 	 */
 	private array $product_ids;
 
-	public function __construct( string $merchant_store_url, array $product_ids ) {
+	private StoreCurrencyValue $store_currency;
+
+	public function __construct( string $merchant_store_url, array $product_ids, StoreCurrencyValue $store_currency ) {
 		$this->merchant_store_url = $merchant_store_url;
 		$this->product_ids        = $product_ids;
+		$this->store_currency     = $store_currency;
 	}
 
 	public function get_array(): array {
@@ -296,6 +300,6 @@ class ProductsPayload {
 			return '';
 		}
 
-		return CartHelper::format_decimal( $price ) . ' ' . get_woocommerce_currency();
+		return Money::create( $price, $this->store_currency->value() )->to_price();
 	}
 }

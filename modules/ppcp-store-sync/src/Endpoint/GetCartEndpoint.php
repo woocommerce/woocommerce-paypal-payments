@@ -15,6 +15,7 @@ use WP_REST_Request;
 use WP_REST_Response;
 
 use WooCommerce\PayPalCommerce\StoreSync\Errors\AgenticError;
+use WooCommerce\PayPalCommerce\StoreSync\Validation\StoreValidation;
 
 /**
  * Get Cart REST endpoint.
@@ -65,7 +66,10 @@ class GetCartEndpoint extends AgenticRestEndpoint {
 			return $this->error( $session );
 		}
 
-		$response = $this->response_factory->from_cart( $session['cart'], $cart_id );
+		// TODO: Validation issues from re-parsing are discarded; will be cleaned up in a future refactor.
+		$store_cart = $this->store_data->create_cart( $session['cart'], new StoreValidation() );
+		$store_cart->set_paypal_order( $session['ec_token'] );
+		$response = $this->response_factory->from_cart( $store_cart, $cart_id );
 
 		return $this->cart_details( $response, 200 );
 	}

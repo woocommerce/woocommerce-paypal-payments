@@ -4,7 +4,12 @@ declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\StoreSync\CartValidation;
 
+use Mockery;
+use WooCommerce\PayPalCommerce\StoreSync\Schema\CartItem;
 use WooCommerce\PayPalCommerce\StoreSync\Schema\PayPalCart;
+use WooCommerce\PayPalCommerce\StoreSync\StoreData\StoreCartItem;
+use WooCommerce\PayPalCommerce\StoreSync\StoreData\StorePayPalCart;
+use WooCommerce\PayPalCommerce\StoreSync\Validation\StoreValidation;
 use WooCommerce\PayPalCommerce\TestCase;
 
 abstract class ValidationTest extends TestCase {
@@ -26,7 +31,8 @@ abstract class ValidationTest extends TestCase {
 					),
 				),
 				'payment_method' => 'paypal',
-			)
+			),
+			new StoreValidation()
 		);
 	}
 
@@ -42,7 +48,8 @@ abstract class ValidationTest extends TestCase {
 				),
 				'shipping_address' => $address_data,
 				'payment_method'   => 'paypal',
-			)
+			),
+			new StoreValidation()
 		);
 	}
 
@@ -74,7 +81,7 @@ abstract class ValidationTest extends TestCase {
 			);
 		}
 
-		return PayPalCart::from_array( $cart_data );
+		return PayPalCart::from_array( $cart_data, new StoreValidation() );
 	}
 
 	protected function create_cart_with_items( array $items ): PayPalCart {
@@ -96,8 +103,81 @@ abstract class ValidationTest extends TestCase {
 			array(
 				'items'          => $cart_items,
 				'payment_method' => 'paypal',
-			)
+			),
+			new StoreValidation()
 		);
+	}
+
+	/**
+	 * Wraps a PayPalCart + optional StoreValidation + optional store items into a
+	 * StorePayPalCart mock so it can be passed to validate( StorePayPalCart $store_cart ).
+	 *
+	 * @param PayPalCart        $paypal_cart  The PayPal cart schema.
+	 * @param StoreValidation|null $validation Optional pre-existing validation state.
+	 * @param StoreCartItem[]   $store_items  Optional resolved store items (from make_store_item).
+	 * @param string            $currency     Store currency code (default 'USD').
+	 */
+	protected function wrap_in_store_cart(
+		PayPalCart $paypal_cart,
+		?StoreValidation $validation = null,
+		array $store_items = array(),
+		string $currency = 'USD'
+	): StorePayPalCart {
+		$validation = $validation ?? new StoreValidation();
+
+		$store_cart = Mockery::mock( StorePayPalCart::class );
+		$store_cart->allows( 'paypal_cart' )->andReturn( $paypal_cart );
+		$store_cart->allows( 'validation' )->andReturn( $validation );
+		$store_cart->allows( 'cart_items' )->andReturn( $store_items );
+		$store_cart->allows( 'currency' )->andReturn( $currency );
+
+		return $store_cart;
+	}
+
+	/**
+	 * Creates a StoreCartItem Mockery stub with configurable properties.
+	 *
+	 * @param int         $index              Cart position (used by field_path()).
+	 * @param mixed       $product            WC_Product mock; if null, a basic mock is created.
+	 * @param bool        $is_currency_correct Whether the item currency matches the store.
+	 * @param string      $assumed_currency   Currency code the agent assumed.
+	 * @param string      $id                 Item identifier.
+	 * @param int         $quantity           Requested quantity.
+	 * @param mixed       $paypal_item        CartItem mock; if null, a basic mock is created.
+	 * @return \Mockery\MockInterface
+	 */
+	protected function make_store_item(
+		int $index = 0,
+		$product = null,
+		bool $is_currency_correct = true,
+		string $assumed_currency = 'USD',
+		string $id = '1',
+		int $quantity = 1,
+		$paypal_item = null
+	) {
+		if ( $product === null ) {
+			$product = Mockery::mock( 'WC_Product' );
+		}
+
+		if ( $paypal_item === null ) {
+			$paypal_item = Mockery::mock( CartItem::class );
+		}
+
+		$item = Mockery::mock( StoreCartItem::class );
+		$item->allows( 'product' )->andReturn( $product );
+		$item->allows( 'paypal_item' )->andReturn( $paypal_item );
+		$item->allows( 'is_currency_correct' )->andReturn( $is_currency_correct );
+		$item->allows( 'assumed_currency' )->andReturn( $assumed_currency );
+		$item->allows( 'id' )->andReturn( $id );
+		$item->allows( 'quantity' )->andReturn( $quantity );
+		$item->allows( 'field_path' )->andReturnUsing(
+			function ( string $child_path = '' ) use ( $index ): string {
+				$child_path = trim( $child_path, '.' );
+				return "items[{$index}]" . ( $child_path ? ".{$child_path}" : '' );
+			}
+		);
+
+		return $item;
 	}
 
 	// ------------------------------------------------------------------------
@@ -130,36 +210,24 @@ abstract class ValidationTest extends TestCase {
 	}
 
 	/**
-	 * Asserts that a validation issue has a context array containing an entry whose
-	 * `specific_issue` value matches $expected_specific_issue, and returns that entry.
+	 * Asserts that a validation issue has a context object whose `specific_issue` value
+	 * matches $expected_specific_issue, and returns that context object.
 	 *
-	 * @return array The matched context entry (for further assertions by the caller).
+	 * @return array The context object (for further assertions by the caller).
 	 */
 	protected function assertIssueContext( array $actual_issue, string $expected_specific_issue ): array {
 		$this->assertArrayHasKey( 'context', $actual_issue, 'Validation issue has no "context" key' );
-		$this->assertIsArray( $actual_issue['context'], '"context" must be an array' );
-		$this->assertNotEmpty( $actual_issue['context'], '"context" must be a non-empty array' );
-
-		$found_values = array();
-
-		foreach ( $actual_issue['context'] as $entry ) {
-			$this->assertIsArray( $entry, 'Each context entry must be an array' );
-			$this->assertArrayHasKey( 'specific_issue', $entry, 'Each context entry must have a "specific_issue" key' );
-
-			if ( $entry['specific_issue'] === $expected_specific_issue ) {
-				return $entry;
-			}
-
-			$found_values[] = $entry['specific_issue'];
-		}
-
-		$this->fail(
-			sprintf(
-				'No context entry found with specific_issue "%s". Found: [%s]',
-				$expected_specific_issue,
-				implode( ', ', $found_values )
-			)
+		$context = $actual_issue['context'];
+		$this->assertIsArray( $context, '"context" must be an array' );
+		$this->assertNotEmpty( $context, '"context" must be non-empty' );
+		$this->assertArrayHasKey( 'specific_issue', $context, '"context" must have a "specific_issue" key' );
+		$this->assertSame(
+			$expected_specific_issue,
+			$context['specific_issue'],
+			sprintf( 'Expected context specific_issue "%s", got "%s"', $expected_specific_issue, $context['specific_issue'] )
 		);
+
+		return $context;
 	}
 
 	/**

@@ -16,6 +16,8 @@ use WooCommerce\PayPalCommerce\StoreSync\Helper\PayPalOrderManager;
 use WooCommerce\PayPalCommerce\StoreSync\Helper\AgenticSessionManager;
 use WooCommerce\PayPalCommerce\StoreSync\Response\ResponseFactory;
 use WooCommerce\PayPalCommerce\StoreSync\Session\AgenticSessionHandler;
+use WooCommerce\PayPalCommerce\StoreSync\StoreData\StoreData;
+use WooCommerce\PayPalCommerce\StoreSync\StoreData\StorePayPalCart;
 
 /**
  * Base test case for Agentic Commerce endpoint tests.
@@ -38,6 +40,26 @@ abstract class AgenticEndpointTestCase extends TestCase {
 		$logger->allows( 'info' );
 		$logger->allows( 'error' );
 
+		$store_data = Mockery::mock( StoreData::class );
+		$store_data->allows( 'create_cart' )->andReturnUsing(
+			function ( $paypal_cart, $validation ) {
+				$mock = Mockery::mock( StorePayPalCart::class );
+				$mock->allows( 'paypal_cart' )->andReturn( $paypal_cart );
+				$mock->allows( 'validation' )->andReturn( $validation );
+				$mock->allows( 'get_validation_issues' )->andReturn( array() );
+				$mock->allows( 'get_items' )->andReturn( array() );
+				$mock->allows( 'get_customer' )->andReturn( array() );
+				$mock->allows( 'get_shipping_address' )->andReturn( array() );
+				$mock->allows( 'get_billing_address' )->andReturn( null );
+				$mock->allows( 'get_totals' )->andReturn( null );
+				$mock->allows( 'get_payment_method' )->andReturn( array( 'type' => 'paypal' ) );
+				$mock->allows( 'set_paypal_order' );
+				$mock->allows( 'paypal_order' )->andReturn( '' );
+
+				return $mock;
+			}
+		);
+
 		return array(
 			'auth_provider'        => $auth_provider,
 			'session_handler'      => Mockery::mock( AgenticSessionHandler::class ),
@@ -46,6 +68,7 @@ abstract class AgenticEndpointTestCase extends TestCase {
 			'validation_processor' => Mockery::mock( CartValidationProcessor::class ),
 			'logger'               => $logger,
 			'order_manager'        => Mockery::mock( PayPalOrderManager::class ),
+			'store_data'           => $store_data,
 		);
 	}
 

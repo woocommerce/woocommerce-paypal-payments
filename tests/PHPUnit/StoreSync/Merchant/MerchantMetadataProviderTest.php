@@ -7,6 +7,7 @@ use Mockery;
 use WooCommerce;
 use WooCommerce\PayPalCommerce\Settings\Data\GeneralSettings;
 use WooCommerce\PayPalCommerce\Settings\DTO\MerchantConnectionDTO;
+use WooCommerce\PayPalCommerce\StoreSync\Config\StoreCurrencyValue;
 use WooCommerce\PayPalCommerce\TestCase;
 use function Brain\Monkey\Functions\when;
 use stdClass;
@@ -25,7 +26,6 @@ class MerchantMetadataProviderTest extends TestCase {
 
 		$this->wc               = Mockery::mock( WooCommerce::class );
 		$this->general_settings = $this->createStub( GeneralSettings::class );
-		$this->testee           = new MerchantMetadataProvider( $this->wc, $this->general_settings );
 	}
 
 	/**
@@ -91,11 +91,11 @@ class MerchantMetadataProviderTest extends TestCase {
 
 	public function trailing_slash_provider(): array {
 		return [
-			'url with trailing slash' => [
+			'url with trailing slash'            => [
 				'site_url'     => 'https://example.com/',
 				'expected_url' => 'https://example.com',
 			],
-			'url without trailing slash' => [
+			'url without trailing slash'         => [
 				'site_url'     => 'https://example.com',
 				'expected_url' => 'https://example.com',
 			],
@@ -141,12 +141,12 @@ class MerchantMetadataProviderTest extends TestCase {
 				'store_country'    => 'US',
 				'currency'         => 'USD',
 			],
-			'UK merchant with UK store' => [
+			'UK merchant with UK store'       => [
 				'merchant_country' => 'GB',
 				'store_country'    => 'GB',
 				'currency'         => 'GBP',
 			],
-			'German merchant with EU store' => [
+			'German merchant with EU store'   => [
 				'merchant_country' => 'DE',
 				'store_country'    => 'DE',
 				'currency'         => 'EUR',
@@ -201,9 +201,16 @@ class MerchantMetadataProviderTest extends TestCase {
 		string $currency,
 		string $store_country
 	): void {
+		$store_currency = Mockery::mock( StoreCurrencyValue::class );
+		$store_currency->allows( 'value' )->andReturn( $currency );
+		$this->testee = new MerchantMetadataProvider(
+			$this->wc,
+			$this->general_settings,
+			$store_currency
+		);
+
 		when( 'get_bloginfo' )->justReturn( $store_name );
 		when( 'get_site_url' )->justReturn( $site_url );
-		when( 'get_woocommerce_currency' )->justReturn( $currency );
 		when( 'untrailingslashit' )->alias(
 			function ( $url ) {
 				return rtrim( $url, '/' );

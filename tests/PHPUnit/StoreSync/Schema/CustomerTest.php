@@ -3,6 +3,8 @@ declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\StoreSync\Schema;
 
+use WooCommerce\PayPalCommerce\StoreSync\Validation\StoreValidation;
+
 /**
  * @covers \WooCommerce\PayPalCommerce\StoreSync\Schema\Customer
  */
@@ -50,7 +52,7 @@ class CustomerTest extends SchemaTestCase {
 		$this->assertOptionalField( 'email_address' );
 
 		// Test optional nested fields.
-		$customer = Customer::from_array( array() );
+		$customer = Customer::from_array( array(), new StoreValidation() );
 
 		$this->assertNull( $customer->name() );
 		$this->assertNull( $customer->phone() );
@@ -84,5 +86,67 @@ class CustomerTest extends SchemaTestCase {
 		$this->assertFieldFormat( 'email_address', $this->get_email_address_format_cases() );
 		$this->assertFieldFormat( 'phone.country_code', $this->get_phone_country_code_format_cases() );
 		$this->assertFieldFormat( 'phone.national_number', $this->get_phone_national_number_format_cases() );
+	}
+
+	// -------------------------------------------------------------------------
+	// Group — to_array()
+	// -------------------------------------------------------------------------
+
+	/**
+	 * GIVEN a Customer with all three fields (email_address, name, phone) populated
+	 * WHEN to_array() is called
+	 * THEN all three fields appear in the result with the correct values
+	 */
+	public function test_to_array_includes_all_fields_when_all_are_present(): void {
+		$customer = Customer::from_array(
+			array(
+				'email_address' => 'jane@example.com',
+				'name'          => array( 'given_name' => 'Jane', 'surname' => 'Doe' ),
+				'phone'         => array(
+					'country_code'    => '1',
+					'national_number' => '5559876543',
+				),
+			),
+			new StoreValidation()
+		);
+
+		$result = $customer->to_array();
+
+		$this->assertSame( 'jane@example.com', $result['email_address'] );
+		$this->assertSame( 'Jane', $result['name']['given_name'] );
+		$this->assertSame( 'Doe', $result['name']['surname'] );
+		$this->assertSame( '1', $result['phone']['country_code'] );
+		$this->assertSame( '5559876543', $result['phone']['national_number'] );
+	}
+
+	/**
+	 * GIVEN a Customer with no fields set
+	 * WHEN to_array() is called
+	 * THEN the result is an empty array (all optional fields absent)
+	 */
+	public function test_to_array_returns_empty_array_when_no_fields_provided(): void {
+		$customer = Customer::from_array( array(), new StoreValidation() );
+
+		$result = $customer->to_array();
+
+		$this->assertSame( array(), $result );
+	}
+
+	/**
+	 * GIVEN a Customer with only the name field set
+	 * WHEN to_array() is called
+	 * THEN only name is present; email_address and phone are absent
+	 */
+	public function test_to_array_omits_absent_optional_fields(): void {
+		$customer = Customer::from_array(
+			array( 'name' => array( 'given_name' => 'Alice', 'surname' => 'Smith' ) ),
+			new StoreValidation()
+		);
+
+		$result = $customer->to_array();
+
+		$this->assertArrayHasKey( 'name', $result );
+		$this->assertArrayNotHasKey( 'email_address', $result );
+		$this->assertArrayNotHasKey( 'phone', $result );
 	}
 }

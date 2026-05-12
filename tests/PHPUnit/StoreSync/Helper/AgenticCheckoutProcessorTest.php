@@ -15,9 +15,12 @@ use WooCommerce\PayPalCommerce\ApiClient\Factory\ShippingFactory;
 use WooCommerce\PayPalCommerce\Button\Helper\WooCommerceOrderCreator;
 use WooCommerce\PayPalCommerce\Button\Session\CartData;
 use WooCommerce\PayPalCommerce\StoreSync\CartValidation\CouponValidator\AppliedCouponsBuilder;
+use WooCommerce\PayPalCommerce\StoreSync\Schema\Address;
 use WooCommerce\PayPalCommerce\StoreSync\Schema\PaymentMethod;
 use WooCommerce\PayPalCommerce\StoreSync\Schema\PayPalCart;
 use WooCommerce\PayPalCommerce\StoreSync\Schema\ShippingOption;
+use WooCommerce\PayPalCommerce\StoreSync\StoreData\StorePayPalCart;
+use Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\TestCase;
 use function Brain\Monkey\Functions\when;
 
@@ -27,12 +30,18 @@ class AgenticCheckoutProcessorTest extends TestCase {
 		ShippingFactory $shipping_factory,
 		?WooCommerceOrderCreator $wc_order_creator = null
 	): AgenticCheckoutProcessor {
+		$logger = Mockery::mock( LoggerInterface::class );
+		$logger->allows( 'info' );
+		$logger->allows( 'warning' );
+		$logger->allows( 'error' );
+
 		return new AgenticCheckoutProcessor(
 			Mockery::mock( PayPalOrderManager::class ),
 			$wc_order_creator ?? Mockery::mock( WooCommerceOrderCreator::class ),
 			Mockery::mock( AgenticCartBuilder::class ),
 			Mockery::mock( AppliedCouponsBuilder::class ),
-			$shipping_factory
+			$shipping_factory,
+			$logger
 		);
 	}
 
@@ -57,7 +66,7 @@ class AgenticCheckoutProcessorTest extends TestCase {
 		$cart = Mockery::mock( PayPalCart::class );
 		$cart->allows( 'available_shipping_options' )->andReturn( array( $option ) );
 		$cart->allows( 'customer' )->andReturn( null );
-		$cart->allows( 'shipping_address' )->andReturn( null );
+		$cart->allows( 'shipping_address' )->andReturn( Address::create_empty() );
 
 		$expected_shipping = Mockery::mock( Shipping::class );
 		$captured_data     = null;
@@ -163,7 +172,7 @@ class AgenticCheckoutProcessorTest extends TestCase {
 		$cart = Mockery::mock( PayPalCart::class );
 		$cart->allows( 'customer' )->andReturn( null );
 		$cart->allows( 'billing_address' )->andReturn( null );
-		$cart->allows( 'shipping_address' )->andReturn( null );
+		$cart->allows( 'shipping_address' )->andReturn( Address::create_empty() );
 		$cart->allows( 'available_shipping_options' )->andReturn( array() );
 
 		$payment_method = Mockery::mock( PaymentMethod::class );
@@ -190,5 +199,46 @@ class AgenticCheckoutProcessorTest extends TestCase {
 			$remove_filter_hook,
 			'remove_filter must be called with the correct hook even when create_from_paypal_order throws'
 		);
+	}
+
+	/**
+	 * GIVEN a StorePayPalCart wrapping a PayPalCart with no items
+	 * AND PayPalOrderManager::fetch_order() throws a RuntimeException
+	 * WHEN process() is called
+	 * THEN the return value is a WP_Error
+	 * AND $result->get_error_code() equals 'order_creation_failed'
+	 */
+	public function test_process_returns_wp_error_when_fetch_order_throws(): void {
+		$paypal_cart = Mockery::mock( PayPalCart::class );
+		$paypal_cart->allows( 'items' )->andReturn( array() );
+
+		$store_cart = Mockery::mock( StorePayPalCart::class );
+		$store_cart->allows( 'paypal_cart' )->andReturn( $paypal_cart );
+
+		$order_manager = Mockery::mock( PayPalOrderManager::class );
+		$order_manager->expects( 'fetch_order' )
+			->once()
+			->andThrow( new RuntimeException( 'PayPal API unreachable' ) );
+
+		$logger = Mockery::mock( LoggerInterface::class );
+		$logger->allows( 'info' );
+		$logger->allows( 'warning' );
+		$logger->allows( 'error' );
+
+		$sut = new AgenticCheckoutProcessor(
+			$order_manager,
+			Mockery::mock( WooCommerceOrderCreator::class ),
+			Mockery::mock( AgenticCartBuilder::class ),
+			Mockery::mock( AppliedCouponsBuilder::class ),
+			Mockery::mock( ShippingFactory::class ),
+			$logger
+		);
+
+		$payment_method = Mockery::mock( PaymentMethod::class );
+
+		$result = $sut->process( $store_cart, $payment_method, 'ORDER-999' );
+
+		$this->assertInstanceOf( \WP_Error::class, $result );
+		$this->assertSame( 'order_creation_failed', $result->get_error_code() );
 	}
 }

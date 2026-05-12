@@ -110,7 +110,8 @@ class JwtAuthServiceTest extends TestCase {
 	}
 
 	public function invalidTokenProvider(): array {
-		$invalid_jwt = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.invalid_signature';
+		$invalid_jwt =
+			'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.invalid_signature';
 		$expired_jwt = JWT::encode(
 			array(
 				'sub' => '1234567890',
@@ -229,7 +230,9 @@ class JwtAuthServiceTest extends TestCase {
 		int $http_status
 	): void {
 		$token   = $this->create_token( $token_data );
-		$service = $this->create_service( $merchant_id !== null ? $this->create_metadata( $merchant_id ) : null );
+		$service = $this->create_service(
+			$merchant_id !== null ? $this->create_metadata( $merchant_id ) : null
+		);
 
 		$result = $service->verify_claims( $token, array( 'cart' ) );
 

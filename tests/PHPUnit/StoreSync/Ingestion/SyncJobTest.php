@@ -3,6 +3,7 @@ declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\StoreSync\Ingestion;
 
+use WooCommerce\PayPalCommerce\StoreSync\Config\StoreCurrencyValue;
 use WooCommerce\PayPalCommerce\TestCase;
 use Psr\Log\LoggerInterface;
 use Exception;
@@ -21,6 +22,11 @@ class SyncJobTest extends TestCase {
 	private $logger;
 
 	/**
+	 * @var StoreCurrencyValue|Mockery\MockInterface
+	 */
+	private $store_currency;
+
+	/**
 	 * @var string
 	 */
 	private $api_endpoint = 'https://api.example.com/sync';
@@ -34,6 +40,9 @@ class SyncJobTest extends TestCase {
 		parent::setUp();
 
 		$this->logger = Mockery::mock( LoggerInterface::class );
+
+		$this->store_currency = Mockery::mock( StoreCurrencyValue::class );
+		$this->store_currency->allows( 'value' )->andReturn( 'USD' );
 
 		// Stub WordPress functions with default values
 		when( 'wp_generate_uuid4' )->justReturn( 'test-batch-id-1234' );
@@ -127,7 +136,7 @@ class SyncJobTest extends TestCase {
 	/**
 	 * Helper method to stub a successful API response.
 	 */
-	private function stub_successful_api_response($expectedProductIds): void {
+	private function stub_successful_api_response( $expectedProductIds ): void {
 		when( 'wp_remote_post' )->justReturn( array(
 			'response' => array(
 				'code'    => 200,
@@ -135,10 +144,10 @@ class SyncJobTest extends TestCase {
 			),
 			'body'     => '{"success": true}',
 		) );
-        $body = array( 'product_ids' => $expectedProductIds  );
+		$body = array( 'product_ids' => $expectedProductIds );
 		when( 'is_wp_error' )->justReturn( false );
 		when( 'wp_remote_retrieve_response_code' )->justReturn( 200 );
-        when( 'wp_remote_retrieve_body' )->justReturn( json_encode($body) );
+		when( 'wp_remote_retrieve_body' )->justReturn( json_encode( $body ) );
 	}
 
 	/**
@@ -173,7 +182,7 @@ class SyncJobTest extends TestCase {
 		$this->expectNotToPerformAssertions();
 
 		$products = $this->create_products_and_stub_wc_get_product( $this->product_ids, false );
-		$this->stub_successful_api_response($this->product_ids);
+		$this->stub_successful_api_response( $this->product_ids );
 
 		// Verify meta operations for successful sync
 		foreach ( $products as $product ) {
@@ -206,7 +215,8 @@ class SyncJobTest extends TestCase {
 			$this->api_endpoint,
 			'https://example.com',
 			$this->product_ids,
-			$this->logger
+			$this->logger,
+			$this->store_currency
 		);
 
 		$sync_job->execute();
@@ -236,7 +246,8 @@ class SyncJobTest extends TestCase {
 			$this->api_endpoint,
 			'https://example.com',
 			$this->product_ids,
-			$this->logger
+			$this->logger,
+			$this->store_currency
 		);
 
 		$sync_job->execute();
@@ -263,7 +274,7 @@ class SyncJobTest extends TestCase {
 		$this->logger->shouldReceive( 'info' )
 			->once()
 			->with( 'Agentic Sync Job test-batch-id-1234: Started' );
-        when( 'wp_remote_retrieve_body' )->justReturn( '' );
+		when( 'wp_remote_retrieve_body' )->justReturn( '' );
 
 		$this->logger->shouldReceive( 'warning' )
 			->once()
@@ -292,7 +303,8 @@ class SyncJobTest extends TestCase {
 			$this->api_endpoint,
 			'https://example.com',
 			$this->product_ids,
-			$this->logger
+			$this->logger,
+			$this->store_currency
 		);
 
 		$this->expectException( Exception::class );
@@ -348,7 +360,8 @@ class SyncJobTest extends TestCase {
 			$this->api_endpoint,
 			'https://example.com',
 			$this->product_ids,
-			$this->logger
+			$this->logger,
+			$this->store_currency
 		);
 
 		$this->expectException( Exception::class );
@@ -362,12 +375,12 @@ class SyncJobTest extends TestCase {
 	 */
 	public function http_error_provider(): array {
 		return array(
-			'internal server error (500)'       => array(
+			'internal server error (500)' => array(
 				500,
 				'Internal Server Error',
 				'HTTP 500: Internal Server Error',
 			),
-			'service unavailable (503)'         => array(
+			'service unavailable (503)'   => array(
 				503,
 				'Service Temporarily Unavailable',
 				'HTTP 503: Service Temporarily Unavailable',
@@ -403,12 +416,13 @@ class SyncJobTest extends TestCase {
 
 		when( 'is_wp_error' )->justReturn( false );
 		when( 'wp_remote_retrieve_response_code' )->justReturn( 200 );
-        when( 'wp_remote_retrieve_body' )->justReturn( '}' );
+		when( 'wp_remote_retrieve_body' )->justReturn( '}' );
 		$sync_job = new SyncJob(
 			$this->api_endpoint,
 			'https://example.com',
 			$this->product_ids,
-			$this->logger
+			$this->logger,
+			$this->store_currency
 		);
 
 		$sync_job->execute();
@@ -416,7 +430,7 @@ class SyncJobTest extends TestCase {
 		$this->assertSame( $api_endpoint, $captured_request['url'] );
 		$this->assertSame( 30, $captured_request['args']['timeout'] );
 		$this->assertSame( 'application/json', $captured_request['args']['headers']['Content-Type'] );
-        $body = json_decode( $captured_request['args']['body'], true );
+		$body = json_decode( $captured_request['args']['body'], true );
 
 		$this->assertSame( 'https://example.com', $body['merchant_url'] );
 		$this->assertIsArray( $body['products'] );
@@ -438,8 +452,8 @@ class SyncJobTest extends TestCase {
 		when( 'wc_get_product' )->alias( function ( $id ) use ( $valid_product ) {
 			return $id === 1 ? $valid_product : false;
 		} );
-        $expectedProductIds = array(1, 999, 888);
-		$this->stub_successful_api_response($expectedProductIds);
+		$expectedProductIds = array( 1, 999, 888 );
+		$this->stub_successful_api_response( $expectedProductIds );
 		// Verify only the valid product gets synced
 		$valid_product->shouldReceive( 'update_meta_data' )
 			->once()
@@ -459,18 +473,19 @@ class SyncJobTest extends TestCase {
 				Mockery::type( 'array' )
 			);
 
-        $this->logger->shouldReceive( 'info' )
+		$this->logger->shouldReceive( 'info' )
 			->once()
 			->with(
 				'Agentic Sync Job test-batch-id-1234: Successfully synced 3 products',
-				array( 'product_ids' => $expectedProductIds)
+				array( 'product_ids' => $expectedProductIds )
 			);
 
 		$sync_job = new SyncJob(
 			$this->api_endpoint,
 			'https://example.com',
-            $expectedProductIds,
-			$this->logger
+			$expectedProductIds,
+			$this->logger,
+			$this->store_currency
 		);
 
 		$sync_job->execute();
@@ -497,7 +512,8 @@ class SyncJobTest extends TestCase {
 			$this->api_endpoint,
 			'https://example.com',
 			array(),
-			$this->logger
+			$this->logger,
+			$this->store_currency
 		);
 
 		$sync_job->execute();
@@ -517,8 +533,8 @@ class SyncJobTest extends TestCase {
 		when( 'wc_get_product' )->alias( function ( $id ) use ( $product ) {
 			return $id === 42 ? $product : false;
 		} );
-        $expectedProductIds = array(42);
-		$this->stub_successful_api_response($expectedProductIds);
+		$expectedProductIds = array( 42 );
+		$this->stub_successful_api_response( $expectedProductIds );
 
 		$product->shouldReceive( 'update_meta_data' )
 			->once()
@@ -538,18 +554,19 @@ class SyncJobTest extends TestCase {
 				Mockery::type( 'array' )
 			);
 
-        $this->logger->shouldReceive( 'info' )
+		$this->logger->shouldReceive( 'info' )
 			->once()
 			->with(
 				'Agentic Sync Job test-batch-id-1234: Successfully synced 1 products',
-				array( 'product_ids' => $expectedProductIds)
+				array( 'product_ids' => $expectedProductIds )
 			);
 
 		$sync_job = new SyncJob(
 			$this->api_endpoint,
 			'https://example.com',
-            $expectedProductIds,
-			$this->logger
+			$expectedProductIds,
+			$this->logger,
+			$this->store_currency
 		);
 
 		$sync_job->execute();

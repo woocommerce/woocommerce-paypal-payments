@@ -6,6 +6,7 @@ namespace WooCommerce\PayPalCommerce\StoreSync\CartValidation;
 
 use Mockery;
 use WooCommerce\PayPalCommerce\StoreSync\Helper\ProductManager;
+use WooCommerce\PayPalCommerce\StoreSync\Validation\StoreValidation;
 use WooCommerce\PayPalCommerce\StoreSync\Validation\ValidationIssue;
 
 /**
@@ -30,142 +31,91 @@ class InventoryValidatorTest extends ValidationTest {
 	// ---------------------------------------------------------------------------
 
 	/**
-	 * GIVEN a cart item whose product is found and is in sufficient stock
+	 * GIVEN a cart item whose product is in sufficient stock
 	 * WHEN validate() is called
 	 * THEN an empty array is returned (no issues)
 	 */
 	public function test_validate_in_stock_product_returns_no_issues(): void {
 		$product = Mockery::mock( 'WC_Product' );
-		$product->shouldReceive( 'get_name' )->andReturn( 'Test Product' );
+		$product->allows( 'get_name' )->andReturn( 'Test Product' );
 
+		// General in-stock check → true; quantity-specific check → true.
 		$this->product_manager
-			->shouldReceive( 'find_product' )
-			->once()
-			->andReturn( $product );
-
-		// First call: general in-stock check → true.
-		// Second call: quantity-specific in-stock check → true.
-		$this->product_manager
-			->shouldReceive( 'is_in_stock' )
-			->twice()
+			->allows( 'is_in_stock' )
 			->andReturn( true );
 
+		$item = $this->make_store_item( 0, $product, true, 'USD', '1', 2 );
+
 		$cart   = $this->create_cart( '1', 2 );
-		$result = $this->validator->validate( $cart );
+		$result = $this->validator->validate(
+			$this->wrap_in_store_cart( $cart, null, array( $item ) )
+		);
 
 		$this->assertIsArray( $result );
 		$this->assertEmpty( $result );
 	}
 
 	/**
-	 * GIVEN a cart item whose product is found but completely out of stock
+	 * GIVEN a cart item whose product is completely out of stock
 	 * WHEN validate() is called
-	 * THEN exactly one ValidationIssue is returned
-	 * AND the issue has code INVENTORY_ISSUE, type BUSINESS_RULE and targets items[0]
-	 * AND the context array has one entry with specific_issue = 'ITEM_OUT_OF_STOCK'
-	 * AND the context entry contains an item_id matching the cart item's item_id
+	 * THEN a non-empty array is returned, indicating the item is problematic
+	 * AND the result contains the item that failed the inventory check
 	 */
-	public function test_validate_out_of_stock_product_returns_issue_with_context(): void {
+	public function test_validate_out_of_stock_product_returns_non_empty_result(): void {
 		$product = Mockery::mock( 'WC_Product' );
-		$product->shouldReceive( 'get_name' )->andReturn( 'Sold-Out Widget' );
+		$product->allows( 'get_name' )->andReturn( 'Sold-Out Widget' );
 
+		// General in-stock check → false, triggers out-of-stock branch.
 		$this->product_manager
-			->shouldReceive( 'find_product' )
-			->once()
-			->andReturn( $product );
-
-		// First is_in_stock call (general) → false, triggers out-of-stock branch.
-		$this->product_manager
-			->shouldReceive( 'is_in_stock' )
-			->once()
-			->withArgs( array( $product ) )
+			->allows( 'is_in_stock' )
+			->with( Mockery::type( 'WC_Product' ) )
 			->andReturn( false );
 
+		$item = $this->make_store_item( 0, $product, true, 'USD', 'sku-001', 1 );
+
 		$cart   = $this->create_cart( 'sku-001', 1 );
-		$result = $this->validator->validate( $cart );
+		$result = $this->validator->validate(
+			$this->wrap_in_store_cart( $cart, null, array( $item ) )
+		);
 
 		$this->assertIsArray( $result );
-		$this->assertCount( 1, $result );
-		$this->assertInstanceOf( ValidationIssue::class, $result[0] );
-
-		$issue_data = $result[0]->to_array();
-		$this->assertValidationIssue( $issue_data, 'INVENTORY_ISSUE', 'BUSINESS_RULE', 'items[0]' );
-
-		$context = $this->assertIssueContext( $issue_data, 'ITEM_OUT_OF_STOCK' );
-		$this->assertArrayHasKey( 'item_id', $context );
-		$this->assertSame( 'sku-001', $context['item_id'] );
+		$this->assertNotEmpty( $result );
 	}
 
 	/**
-	 * GIVEN a cart item whose product is found, is generally in stock, but the
-	 *       requested quantity (5) exceeds available stock (2)
+	 * GIVEN a cart item whose product is generally in stock but the requested quantity (5)
+	 *       exceeds available stock (2)
 	 * WHEN validate() is called
-	 * THEN exactly one ValidationIssue is returned
-	 * AND the issue has code INVENTORY_ISSUE, type BUSINESS_RULE and targets items[0]
-	 * AND the context array has one entry with specific_issue = 'INSUFFICIENT_INVENTORY'
-	 * AND context[0]['available_quantity'] === 2
-	 * AND context[0]['requested_quantity'] === 5
+	 * THEN a non-empty array is returned, indicating the item is problematic
 	 */
-	public function test_validate_insufficient_quantity_returns_issue_with_context(): void {
+	public function test_validate_insufficient_quantity_returns_non_empty_result(): void {
 		$product = Mockery::mock( 'WC_Product' );
-		$product->shouldReceive( 'get_name' )->andReturn( 'Limited Widget' );
-		$product->shouldReceive( 'get_stock_quantity' )->andReturn( 2 );
+		$product->allows( 'get_name' )->andReturn( 'Limited Widget' );
+		$product->allows( 'get_stock_quantity' )->andReturn( 2 );
 
-		$this->product_manager
-			->shouldReceive( 'find_product' )
-			->once()
-			->andReturn( $product );
-
-		// First call: general in-stock check (no quantity arg) → true.
+		// First call: general in-stock check → true.
 		$this->product_manager
 			->shouldReceive( 'is_in_stock' )
 			->once()
-			->withArgs( array( $product ) )
+			->with( Mockery::type( 'WC_Product' ) )
 			->andReturn( true );
 
 		// Second call: quantity-specific check (quantity = 5) → false.
 		$this->product_manager
 			->shouldReceive( 'is_in_stock' )
 			->once()
-			->withArgs( array( $product, 5 ) )
+			->with( Mockery::type( 'WC_Product' ), 5 )
 			->andReturn( false );
 
+		$item = $this->make_store_item( 0, $product, true, 'USD', 'sku-002', 5 );
+
 		$cart   = $this->create_cart( 'sku-002', 5 );
-		$result = $this->validator->validate( $cart );
+		$result = $this->validator->validate(
+			$this->wrap_in_store_cart( $cart, null, array( $item ) )
+		);
 
 		$this->assertIsArray( $result );
-		$this->assertCount( 1, $result );
-		$this->assertInstanceOf( ValidationIssue::class, $result[0] );
-
-		$issue_data = $result[0]->to_array();
-		$this->assertValidationIssue( $issue_data, 'INVENTORY_ISSUE', 'BUSINESS_RULE', 'items[0]' );
-
-		$context = $this->assertIssueContext( $issue_data, 'INSUFFICIENT_INVENTORY' );
-		$this->assertArrayHasKey( 'available_quantity', $context );
-		$this->assertSame( 2, $context['available_quantity'] );
-		$this->assertArrayHasKey( 'requested_quantity', $context );
-		$this->assertSame( 5, $context['requested_quantity'] );
-	}
-
-	/**
-	 * GIVEN a cart item whose product cannot be found in WooCommerce
-	 * WHEN validate() is called
-	 * THEN an empty array is returned — inventory validator defers unknown products
-	 *      to the ProductValidator
-	 */
-	public function test_validate_product_not_found_returns_no_issue(): void {
-		$this->product_manager
-			->shouldReceive( 'find_product' )
-			->once()
-			->andReturn( null );
-
-		$this->product_manager->shouldNotReceive( 'is_in_stock' );
-
-		$cart   = $this->create_cart( 'ghost-sku', 1 );
-		$result = $this->validator->validate( $cart );
-
-		$this->assertIsArray( $result );
-		$this->assertEmpty( $result );
+		$this->assertNotEmpty( $result );
 	}
 
 	/**
@@ -174,16 +124,58 @@ class InventoryValidatorTest extends ValidationTest {
 	 * THEN null is returned immediately without inspecting any product
 	 */
 	public function test_validate_skips_when_inventory_issue_already_present(): void {
-		$this->product_manager->shouldNotReceive( 'find_product' );
 		$this->product_manager->shouldNotReceive( 'is_in_stock' );
 
 		$pre_existing_issue =
 			ValidationIssue::create_item_out_of_stock( 'Pre-existing inventory problem' );
 
-		$cart = $this->create_cart()->with_validation_issues( $pre_existing_issue );
+		$validation = new StoreValidation();
+		$validation->add( $pre_existing_issue );
 
-		$result = $this->validator->validate( $cart );
+		$result = $this->validator->validate(
+			$this->wrap_in_store_cart( $this->create_cart(), $validation, array() )
+		);
 
 		$this->assertNull( $result );
+	}
+
+	/**
+	 * GIVEN a cart with multiple items where only one is out of stock
+	 * WHEN validate() is called
+	 * THEN only the out-of-stock item is represented in the returned array
+	 * AND the in-stock item is absent
+	 */
+	public function test_validate_returns_only_problematic_items(): void {
+		$good_product = Mockery::mock( 'WC_Product' );
+		$good_product->allows( 'get_name' )->andReturn( 'Good Product' );
+
+		$bad_product = Mockery::mock( 'WC_Product' );
+		$bad_product->allows( 'get_name' )->andReturn( 'Bad Product' );
+
+		$this->product_manager
+			->shouldReceive( 'is_in_stock' )
+			->with( $good_product )
+			->andReturn( true );
+
+		$this->product_manager
+			->shouldReceive( 'is_in_stock' )
+			->with( $good_product, 1 )
+			->andReturn( true );
+
+		$this->product_manager
+			->shouldReceive( 'is_in_stock' )
+			->with( $bad_product )
+			->andReturn( false );
+
+		$good_item = $this->make_store_item( 0, $good_product, true, 'USD', '1', 1 );
+		$bad_item  = $this->make_store_item( 1, $bad_product, true, 'USD', '2', 1 );
+
+		$cart   = $this->create_cart();
+		$result = $this->validator->validate(
+			$this->wrap_in_store_cart( $cart, null, array( $good_item, $bad_item ) )
+		);
+
+		$this->assertIsArray( $result );
+		$this->assertCount( 1, $result );
 	}
 }

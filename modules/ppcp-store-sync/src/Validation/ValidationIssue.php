@@ -292,11 +292,9 @@ class ValidationIssue {
 		if ( $this->item_id ) {
 			$data['item_id'] = $this->item_id;
 		}
-		if ( ! empty( $this->context ) ) {
-			$data['context'] = array_map(
-				static fn( IssueContext $context ) => $context->to_array(),
-				$this->context
-			);
+		$context = $this->get_context();
+		if ( $context !== null ) {
+			$data['context'] = $context;
 		}
 		if ( ! empty( $this->resolution_options ) ) {
 			$data['resolution_options'] = array_map(
@@ -306,5 +304,17 @@ class ValidationIssue {
 		}
 
 		return $data;
+	}
+
+	/**
+	 * Returns the first context as an object for the API response.
+	 * Schema allows exactly one context object per issue; additional contexts are ignored.
+	 */
+	private function get_context(): ?array {
+		if ( empty( $this->context ) ) {
+			return null;
+		}
+
+		return $this->context[0]->to_array();
 	}
 }

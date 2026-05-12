@@ -3,6 +3,9 @@ declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\StoreSync\Schema;
 
+use WooCommerce\PayPalCommerce\StoreSync\Schema\Address;
+use WooCommerce\PayPalCommerce\StoreSync\Validation\StoreValidation;
+
 /**
  * @covers \WooCommerce\PayPalCommerce\StoreSync\Schema\AgenticSchema
  * @covers \WooCommerce\PayPalCommerce\StoreSync\Schema\PayPalCart
@@ -106,13 +109,11 @@ class PayPalCartTest extends SchemaTestCase {
 
 	protected function get_data_types(): array {
 		return array(
-			'customer'         => array( 'type' => 'array', 'valid' => array() ),
-			'shipping_address' => array( 'type' => 'array', 'valid' => array() ),
-			'billing_address'  => array( 'type' => 'array', 'valid' => array() ),
-			'payment_method'   => array( 'type' => 'array', 'valid' => array() ),
-			'checkout_fields'  => array( 'type' => 'array', 'valid' => array() ),
-			'coupons'          => array( 'type' => 'array', 'valid' => array() ),
-			'geo_coordinates'  => array( 'type' => 'array', 'valid' => array() ),
+			'customer'        => array( 'type' => 'array', 'valid' => array() ),
+			'billing_address' => array( 'type' => 'array', 'valid' => array() ),
+			'checkout_fields' => array( 'type' => 'array', 'valid' => array() ),
+			'coupons'         => array( 'type' => 'array', 'valid' => array() ),
+			'geo_coordinates' => array( 'type' => 'array', 'valid' => array() ),
 		);
 	}
 
@@ -130,11 +131,18 @@ class PayPalCartTest extends SchemaTestCase {
 		$this->assertRequiredField( 'payment_method' );
 
 		$this->assertOptionalField( 'customer' );
-		$this->assertOptionalField( 'shipping_address' );
 		$this->assertOptionalField( 'billing_address' );
 		$this->assertOptionalField( 'checkout_fields' );
 		$this->assertOptionalField( 'coupons' );
 		$this->assertOptionalField( 'geo_coordinates' );
+
+		// shipping_address() always returns an Address object (create_empty() when not set).
+		$validation = new StoreValidation();
+		$instance   = PayPalCart::from_array( $this->mandatory_data(), $validation );
+		$address    = $instance->shipping_address();
+		$this->assertInstanceOf( Address::class, $address );
+		$this->assertTrue( $address->is_empty() );
+		$this->assertEmpty( $validation->all() );
 	}
 
 	public function test_array_fields(): void {
@@ -162,16 +170,16 @@ class PayPalCartTest extends SchemaTestCase {
 			array(
 				'available_shipping_options' => array(
 					array(
-						'id'         => 'flat_rate:4',
-						'name'       => 'Flat Rate',
-						'price'      => array( 'currency_code' => 'USD', 'value' => '5.00' ),
+						'id'          => 'flat_rate:4',
+						'name'        => 'Flat Rate',
+						'price'       => array( 'currency_code' => 'USD', 'value' => '5.00' ),
 						'is_selected' => true,
 					),
 				),
 			)
 		);
 
-		$cart = PayPalCart::from_array( $input );
+		$cart = PayPalCart::from_array( $input, new StoreValidation() );
 
 		$options = $cart->available_shipping_options();
 		$this->assertNotNull( $options, 'available_shipping_options() must not return null when options are provided' );
@@ -207,9 +215,118 @@ class PayPalCartTest extends SchemaTestCase {
 			'customer' => array( 'email_address' => 'not-provided' ),
 		);
 
-		$testee = PayPalCart::from_array( $multiple_problems );
+		$validation = new StoreValidation();
+		PayPalCart::from_array( $multiple_problems, $validation );
 
-		$issues = $testee->issues();
+		$issues = $validation->all();
 		$this->assertCount( 3, $issues );
+	}
+
+	// -------------------------------------------------------------------------
+	// Group — to_array()
+	// -------------------------------------------------------------------------
+
+	/**
+	 * GIVEN a minimal PayPalCart with items and payment_method only
+	 * WHEN to_array() is called
+	 * THEN items and payment_method are present; optional fields are absent
+	 */
+	public function test_to_array_contains_items_and_payment_method_for_minimal_cart(): void {
+		$cart = PayPalCart::from_array(
+			array(
+				'items'          => array( array( 'item_id' => 'SKU-1', 'quantity' => 2 ) ),
+				'payment_method' => array( 'type' => 'paypal' ),
+			),
+			new StoreValidation()
+		);
+
+		$result = $cart->to_array();
+
+		// Mandatory/expected keys.
+		$this->assertArrayHasKey( 'items', $result );
+		$this->assertArrayHasKey( 'payment_method', $result );
+		$this->assertArrayHasKey( 'shipping_address', $result );
+
+		// Optional keys, not present in this test.
+		$this->assertArrayNotHasKey( 'customer', $result );
+		$this->assertArrayNotHasKey( 'billing_address', $result );
+
+		$this->assertCount( 1, $result['items'] );
+		$this->assertSame( 'SKU-1', $result['items'][0]['item_id'] );
+		$this->assertSame( 2, $result['items'][0]['quantity'] );
+		$this->assertSame( 'paypal', $result['payment_method']['type'] );
+	}
+
+	/**
+	 * GIVEN a PayPalCart with a country_code provided as lowercase 'us'
+	 * WHEN to_array() is called
+	 * THEN the shipping_address country_code is normalized to uppercase 'US'
+	 */
+	public function test_to_array_normalizes_country_code_to_uppercase(): void {
+		$cart = PayPalCart::from_array(
+			array(
+				'items'            => array( array( 'quantity' => 1 ) ),
+				'payment_method'   => array( 'type' => 'paypal' ),
+				'shipping_address' => array(
+					'country_code'   => 'us',
+					'address_line_1' => '123 Main St',
+				),
+			),
+			new StoreValidation()
+		);
+
+		$result = $cart->to_array();
+
+		$this->assertArrayHasKey( 'shipping_address', $result );
+		$this->assertSame( 'US', $result['shipping_address']['country_code'] );
+	}
+
+	/**
+	 * GIVEN a PayPalCart with customer, shipping_address, and billing_address
+	 * WHEN to_array() is called
+	 * THEN all optional nested objects are delegated to their own to_array() and appear in the result
+	 */
+	public function test_to_array_delegates_optional_fields_to_nested_to_array(): void {
+		$cart = PayPalCart::from_array(
+			array(
+				'items'            => array( array( 'quantity' => 1 ) ),
+				'payment_method'   => array( 'type' => 'paypal' ),
+				'customer'         => array( 'email_address' => 'test@example.com' ),
+				'shipping_address' => array( 'country_code' => 'DE' ),
+				'billing_address'  => array( 'country_code' => 'DE' ),
+			),
+			new StoreValidation()
+		);
+
+		$result = $cart->to_array();
+
+		$this->assertArrayHasKey( 'customer', $result );
+		$this->assertSame( 'test@example.com', $result['customer']['email_address'] );
+		$this->assertArrayHasKey( 'shipping_address', $result );
+		$this->assertSame( 'DE', $result['shipping_address']['country_code'] );
+		$this->assertArrayHasKey( 'billing_address', $result );
+		$this->assertSame( 'DE', $result['billing_address']['country_code'] );
+	}
+
+	/**
+	 * GIVEN a PayPalCart with customer whose to_array() returns an empty array
+	 *       (Customer has no fields set, but is present in input)
+	 * WHEN to_array() is called
+	 * THEN customer is absent from the result because an empty array is falsy for array_filter
+	 */
+	public function test_to_array_omits_customer_when_customer_to_array_is_empty(): void {
+		// An empty customer object (no valid fields) produces an empty to_array().
+		$cart = PayPalCart::from_array(
+			array(
+				'items'          => array( array( 'quantity' => 1 ) ),
+				'payment_method' => array( 'type' => 'paypal' ),
+				'customer'       => array(),
+			),
+			new StoreValidation()
+		);
+
+		$result = $cart->to_array();
+
+		$this->assertArrayNotHasKey( 'customer', $result );
 	}
 }

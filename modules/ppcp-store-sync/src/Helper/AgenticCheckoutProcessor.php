@@ -12,17 +12,21 @@ declare( strict_types = 1 );
 namespace WooCommerce\PayPalCommerce\StoreSync\Helper;
 
 use WC_Order;
+use Exception;
 use WP_Error;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Order as PayPalOrder;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Shipping;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\ShippingFactory;
+use Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\Button\Session\CartData;
 use WooCommerce\PayPalCommerce\Button\Helper\WooCommerceOrderCreator;
 
 use WooCommerce\PayPalCommerce\StoreSync\CartValidation\CouponValidator\AppliedCouponsBuilder;
+use WooCommerce\PayPalCommerce\StoreSync\Schema\Address;
 use WooCommerce\PayPalCommerce\StoreSync\Schema\PayPalCart;
 use WooCommerce\PayPalCommerce\StoreSync\Schema\PaymentMethod;
 use WooCommerce\PayPalCommerce\StoreSync\Schema\ShippingOption;
+use WooCommerce\PayPalCommerce\StoreSync\StoreData\StorePayPalCart;
 
 /**
  * Orchestrates the complete checkout workflow for Agentic Commerce.
@@ -47,12 +51,15 @@ class AgenticCheckoutProcessor {
 
 	private ShippingFactory $shipping_factory;
 
+	private LoggerInterface $logger;
+
 	public function __construct(
 		PayPalOrderManager $order_manager,
 		WooCommerceOrderCreator $wc_order_creator,
 		AgenticCartBuilder $cart_builder,
 		AppliedCouponsBuilder $applied_coupons_builder,
-		ShippingFactory $shipping_factory
+		ShippingFactory $shipping_factory,
+		LoggerInterface $logger
 	) {
 
 		$this->order_manager           = $order_manager;
@@ -60,6 +67,7 @@ class AgenticCheckoutProcessor {
 		$this->cart_builder            = $cart_builder;
 		$this->applied_coupons_builder = $applied_coupons_builder;
 		$this->shipping_factory        = $shipping_factory;
+		$this->logger                  = $logger;
 	}
 
 	/**
@@ -73,30 +81,68 @@ class AgenticCheckoutProcessor {
 	 * 5. Links PayPal order with WC order ID
 	 * 6. Captures the PayPal payment
 	 *
-	 * @param PayPalCart    $cart            The PayPal cart data.
-	 * @param PaymentMethod $payment_method  The payment method data.
-	 * @param string        $paypal_order_id The PayPal Order ID (ec_token).
 	 * @return WC_Order|WP_Error The created order or error.
 	 */
 	public function process(
-		PayPalCart $cart,
+		StorePayPalCart $store_cart,
 		PaymentMethod $payment_method,
 		string $paypal_order_id
 	) {
 
+		$cart = $store_cart->paypal_cart();
+
+		$this->logger->info(
+			'[CHECKOUT] Starting checkout',
+			array(
+				'order_id'   => $paypal_order_id,
+				'item_count' => count( $cart->items() ),
+			)
+		);
+
 		try {
 			$paypal_order = $this->order_manager->fetch_order( $paypal_order_id );
 
-			$total_discount = $this->applied_coupons_builder->calculate_total_discount( $cart );
+			$this->logger->info(
+				'[CHECKOUT] PayPal order fetched',
+				array(
+					'order_id' => $paypal_order_id,
+					'status'   => $paypal_order->status()->name(),
+				)
+			);
+
+			$total_discount = $this->applied_coupons_builder->calculate_total_discount(
+				$store_cart
+			);
 			$this->order_manager->update_order( $paypal_order_id, $cart, $total_discount );
+
+			$this->logger->info(
+				'[CHECKOUT] PayPal order synced with final cart totals',
+				array(
+					'order_id' => $paypal_order_id,
+					'discount' => $total_discount,
+				)
+			);
 
 			$wc_cart = $this->cart_builder->paypal_cart_to_wc_cart( $cart );
 
 			if ( is_wp_error( $wc_cart ) ) {
+				$this->logger->warning(
+					'[CHECKOUT] Failed to build WC_Cart from PayPal cart',
+					array(
+						'order_id' => $paypal_order_id,
+						'error'    => $wc_cart->get_error_message(),
+					)
+				);
+
 				return $wc_cart;
 			}
 
 			$cart_data = $this->cart_builder->wc_cart_to_card_data( $wc_cart );
+
+			$this->logger->info(
+				'[CHECKOUT] Creating WooCommerce order',
+				array( 'order_id' => $paypal_order_id )
+			);
 
 			$wc_order = $this->create_order(
 				$paypal_order,
@@ -107,15 +153,39 @@ class AgenticCheckoutProcessor {
 			);
 
 			if ( is_wp_error( $wc_order ) ) {
+				$this->logger->warning(
+					'[CHECKOUT] WooCommerce order creation failed',
+					array(
+						'order_id' => $paypal_order_id,
+						'error'    => $wc_order->get_error_message(),
+					)
+				);
+
 				return $wc_order;
 			}
+
+			$this->logger->info(
+				'[CHECKOUT] WooCommerce order created',
+				array(
+					'order_id'    => $paypal_order_id,
+					'wc_order_id' => $wc_order->get_id(),
+				)
+			);
 
 			$this->link_orders( $paypal_order_id, $wc_order );
 			$this->capture_payment( $paypal_order, $wc_order, $paypal_order_id );
 
 			return $wc_order;
 
-		} catch ( \Exception $e ) {
+		} catch ( Exception $e ) {
+			$this->logger->error(
+				'[CHECKOUT] Checkout failed with exception',
+				array(
+					'order_id' => $paypal_order_id,
+					'error'    => $e->getMessage(),
+				)
+			);
+
 			return new WP_Error( 'order_creation_failed', $e->getMessage() );
 		}
 	}
@@ -212,11 +282,14 @@ class AgenticCheckoutProcessor {
 			),
 		);
 
+		$customer  = $cart->customer();
+		$full_name = $customer ? $customer->full_name() : '';
+
 		$data = (object) array(
 			'name'    => (object) array(
-				'full_name' => CartHelper::full_customer_name( $cart ),
+				'full_name' => $full_name,
 			),
-			'address' => (object) CartHelper::shipping_address_array( $cart ),
+			'address' => (object) $cart->shipping_address()->to_array(),
 			'options' => array( $option_data ),
 		);
 
@@ -247,7 +320,7 @@ class AgenticCheckoutProcessor {
 		}
 
 		if ( $cart->billing_address() ) {
-			$payer_data['address'] = CartHelper::billing_address_array( $cart );
+			$payer_data['address'] = $cart->billing_address()->to_array();
 		}
 
 		return $payer_data;
@@ -260,15 +333,18 @@ class AgenticCheckoutProcessor {
 	 * @return array Shipping data array.
 	 */
 	private function build_shipping_data( PayPalCart $cart ): array {
-		if ( ! $cart->shipping_address() ) {
+		if ( $cart->shipping_address()->is_empty() ) {
 			return array();
 		}
 
+		$customer  = $cart->customer();
+		$full_name = $customer ? $customer->full_name() : '';
+
 		return array(
 			'name'    => array(
-				'full_name' => CartHelper::full_customer_name( $cart ),
+				'full_name' => $full_name,
 			),
-			'address' => CartHelper::shipping_address_array( $cart ),
+			'address' => $cart->shipping_address()->to_array(),
 		);
 	}
 
@@ -297,12 +373,30 @@ class AgenticCheckoutProcessor {
 	 * @return void
 	 */
 	private function capture_payment( PayPalOrder $paypal_order, WC_Order $wc_order, string $paypal_order_id ): void {
+		$this->logger->info(
+			'[CHECKOUT] Capturing PayPal payment',
+			array(
+				'order_id'    => $paypal_order_id,
+				'wc_order_id' => $wc_order->get_id(),
+			)
+		);
+
 		$capture_result = $this->order_manager->capture_order( $paypal_order_id );
 
 		if ( $capture_result ) {
+			$transaction_id = $capture_result['transaction_id'] ?? $paypal_order_id;
+
+			$this->logger->info(
+				'[CHECKOUT] Payment captured successfully',
+				array(
+					'order_id'       => $paypal_order_id,
+					'wc_order_id'    => $wc_order->get_id(),
+					'transaction_id' => $transaction_id,
+				)
+			);
+
 			$wc_order->payment_complete( $paypal_order_id );
 
-			$transaction_id = $capture_result['transaction_id'] ?? $paypal_order_id;
 			$wc_order->add_order_note(
 				sprintf(
 				/* translators: %s: PayPal transaction ID */
@@ -311,7 +405,14 @@ class AgenticCheckoutProcessor {
 				)
 			);
 			$wc_order->save();
+		} else {
+			$this->logger->warning(
+				'[CHECKOUT] Capture returned null — payment may require manual action or webhook',
+				array(
+					'order_id'    => $paypal_order_id,
+					'wc_order_id' => $wc_order->get_id(),
+				)
+			);
 		}
-		// If capture_result is null, payment can be handled manually or via webhook.
 	}
 }

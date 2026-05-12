@@ -10,8 +10,16 @@ declare( strict_types = 1 );
 namespace WooCommerce\PayPalCommerce\StoreSync\Helper;
 
 use WC_Cart;
+use WooCommerce\PayPalCommerce\StoreSync\Config\StoreCurrencyValue;
+use WooCommerce\PayPalCommerce\StoreSync\Schema\Money;
 
 class ShippingOptionsBuilder {
+
+	private StoreCurrencyValue $store_currency;
+
+	public function __construct( StoreCurrencyValue $store_currency ) {
+		$this->store_currency = $store_currency;
+	}
 
 	/**
 	 * Build shipping options from the WC cart state post calculate_totals().
@@ -49,7 +57,7 @@ class ShippingOptionsBuilder {
 			$chosen_id = $chosen_methods[0];
 		}
 
-		$currency      = get_woocommerce_currency();
+		$currency      = $this->store_currency->value();
 		$options       = array();
 		$all_rates     = $package['rates'] ?? array();
 		$first_rate_id = null;
@@ -68,10 +76,7 @@ class ShippingOptionsBuilder {
 			$options[] = array(
 				'id'          => $rate_id,
 				'name'        => $rate->get_label(),
-				'price'       => array(
-					'currency_code' => $currency,
-					'value'         => CartHelper::format_decimal( $rate->get_cost() ),
-				),
+				'price'       => Money::create( $rate->get_cost(), $currency )->to_array(),
 				'is_selected' => false,
 			);
 		}
