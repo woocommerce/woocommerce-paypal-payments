@@ -150,4 +150,11 @@ class Customer extends AgenticSchema {
 
 		return array_filter( $data, static fn( $v ) => $v !== null );
 	}
+
+	public function full_name(): string {
+		$first_name = $this->name['given_name'] ?? '';
+		$last_name  = $this->name['surname'] ?? '';
+
+		return trim( "$first_name $last_name" );
+	}
 }
