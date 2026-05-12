@@ -46,10 +46,10 @@ class ReplaceCartEndpointTest extends IntegrationMockedTestCase {
 	}
 
 	/**
-	 * GIVEN a cart session exists and the PUT payload includes a payment token
-	 * WHEN replace_cart() is called with a valid cart
+	 * GIVEN a cart session was created with a known ec_token
+	 * WHEN replace_cart() is called with a valid replacement payload
 	 * THEN the response status is 200
-	 * AND payment_method.token echoes the token from the incoming payload unchanged
+	 * AND payment_method.token equals the ec_token from the original session (not the request body)
 	 * AND id matches the cart session id
 	 * AND status is INCOMPLETE
 	 * AND validation_status is VALID with no validation_issues
@@ -57,6 +57,8 @@ class ReplaceCartEndpointTest extends IntegrationMockedTestCase {
 	 * AND available_shipping_options is an array when present
 	 */
 	public function test_replace_cart_preserves_ec_token_in_response(): void {
+		$ec_token = 'test-preserved-session-ec-token';
+
 		// Data for create cart.
 		$cart_data_1 = array(
 			'items'          => array(
@@ -67,7 +69,7 @@ class ReplaceCartEndpointTest extends IntegrationMockedTestCase {
 			),
 			'payment_method' => array( 'type' => 'paypal' ),
 		);
-		// Data to update the existing cart (new quantity, shipping data + include a token)
+		// Replacement payload — no token in payment_method; token must come from session.
 		$cart_data_2 = array(
 			'items'            => array(
 				array(
@@ -81,15 +83,12 @@ class ReplaceCartEndpointTest extends IntegrationMockedTestCase {
 				'postal_code'    => '90210',
 				'country_code'   => 'US',
 			),
-			'payment_method'   => array(
-				'type'  => 'paypal',
-				'token' => 'test-passthrough-ec-token',
-			),
+			'payment_method'   => array( 'type' => 'paypal' ),
 		);
 
 		$initial_cart = PayPalCart::from_array( $cart_data_1, new StoreValidation() );
 
-		$cart_id = $this->session_handler->create_cart_session( $initial_cart, '' );
+		$cart_id = $this->session_handler->create_cart_session( $initial_cart, $ec_token );
 
 		$body = (string) json_encode( $cart_data_2 );
 
@@ -106,9 +105,9 @@ class ReplaceCartEndpointTest extends IntegrationMockedTestCase {
 		$data = $response->get_data();
 
 		$this->assertSame(
-			'test-passthrough-ec-token',
+			$ec_token,
 			$data['payment_method']['token'] ?? null,
-			'Replace cart must echo the incoming payment token unchanged'
+			'Replace cart response must include the preserved ec_token from the session'
 		);
 
 		$this->assertSame( $cart_id, $data['id'] ?? null, 'Response must echo the cart id' );

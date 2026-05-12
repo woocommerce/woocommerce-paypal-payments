@@ -47,6 +47,8 @@ abstract class AgenticEndpointTestCase extends TestCase {
 				$mock->allows( 'paypal_cart' )->andReturn( $paypal_cart );
 				$mock->allows( 'validation' )->andReturn( $validation );
 				$mock->allows( 'to_array' )->andReturn( array() );
+				$mock->allows( 'set_paypal_order' );
+				$mock->allows( 'paypal_order' )->andReturn( '' );
 
 				return $mock;
 			}

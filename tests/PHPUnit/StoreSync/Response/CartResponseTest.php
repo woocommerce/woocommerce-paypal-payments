@@ -33,11 +33,12 @@ class CartResponseTest extends StoreSyncTestCase {
 	 * @param array $cart_data Array returned by to_array().
 	 * @return StorePayPalCart
 	 */
-	private function make_store_cart( array $cart_data = array() ): StorePayPalCart {
+	private function make_store_cart( array $cart_data = array(), string $paypal_order = '' ): StorePayPalCart {
 		$validation = new StoreValidation();
 		$store_cart = Mockery::mock( StorePayPalCart::class );
 		$store_cart->allows( 'to_array' )->andReturn( $cart_data );
 		$store_cart->allows( 'validation' )->andReturn( $validation );
+		$store_cart->allows( 'paypal_order' )->andReturn( $paypal_order );
 
 		return $store_cart;
 	}
@@ -595,7 +596,7 @@ class CartResponseTest extends StoreSyncTestCase {
 	 */
 	public function test_create_new_sets_status_to_created(): void {
 		$store_cart = $this->make_store_cart();
-		$response   = CartResponse::create_new( $store_cart, 'new-cart-id', 'tok_abc123' );
+		$response   = CartResponse::create_new( $store_cart, 'new-cart-id' );
 
 		$result = $response->to_array();
 
@@ -609,8 +610,8 @@ class CartResponseTest extends StoreSyncTestCase {
 	 */
 	public function test_create_new_includes_payment_method_with_token(): void {
 		$token      = 'tok_xyz789';
-		$store_cart = $this->make_store_cart();
-		$response   = CartResponse::create_new( $store_cart, 'new-cart-id', $token );
+		$store_cart = $this->make_store_cart( array(), $token );
+		$response   = CartResponse::create_new( $store_cart, 'new-cart-id' );
 
 		$result = $response->to_array();
 
@@ -626,7 +627,7 @@ class CartResponseTest extends StoreSyncTestCase {
 	 */
 	public function test_create_new_excludes_payment_confirmation(): void {
 		$store_cart = $this->make_store_cart();
-		$response   = CartResponse::create_new( $store_cart, 'new-cart-id', 'tok_abc123' );
+		$response   = CartResponse::create_new( $store_cart, 'new-cart-id' );
 
 		$result = $response->to_array();
 
@@ -646,7 +647,7 @@ class CartResponseTest extends StoreSyncTestCase {
 	public function test_create_new_id_is_not_overwritten_by_caller_supplied_id(): void {
 		// The store_cart to_array() may return an 'id' key from incoming request data.
 		$store_cart = $this->make_store_cart( array( 'id' => 'client-supplied-id' ) );
-		$response   = CartResponse::create_new( $store_cart, 'server-generated-id', 'tok_test' );
+		$response   = CartResponse::create_new( $store_cart, 'server-generated-id' );
 
 		$result = $response->to_array();
 
