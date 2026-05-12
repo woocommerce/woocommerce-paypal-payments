@@ -11,6 +11,7 @@ class VaultRenderer {
 		this.config = config;
 		this.vaultInstance = null;
 		this.rendered = false;
+		this._renderGen = 0;
 	}
 
 	async loadSdk() {
@@ -22,7 +23,7 @@ class VaultRenderer {
 			const vaultData = this.config.vault_component;
 			const options = {
 				clientId: this.config.url_params?.[ 'client-id' ],
-				components: 'saved-payment-methods',
+				components: 'saved-payment-methods,buttons',
 				'data-namespace': VAULT_NAMESPACE,
 				'data-sdk-client-token': vaultData.sdk_client_token,
 			};
@@ -44,7 +45,14 @@ class VaultRenderer {
 			return;
 		}
 
+		// Claim this generation so concurrent calls and stale post-reset calls abort.
+		const gen = ++this._renderGen;
+
 		await this.loadSdk();
+
+		if ( this._renderGen !== gen || this.rendered ) {
+			return;
+		}
 
 		const paypal = window[ VAULT_NAMESPACE ];
 		if ( ! paypal?.SavedPaymentMethods ) {
@@ -110,12 +118,14 @@ class VaultRenderer {
 		this.vaultInstance?.close?.();
 		this.vaultInstance = null;
 		this.rendered = false;
+		this._renderGen++;
 	}
 
 	reset() {
 		this.vaultInstance?.close?.();
 		this.vaultInstance = null;
 		this.rendered = false;
+		this._renderGen++;
 		const container = document.querySelector( CONTAINER_SELECTOR );
 		if ( container ) {
 			container.innerHTML = '';
