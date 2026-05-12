@@ -8,7 +8,7 @@
 declare (strict_types=1);
 namespace WooCommerce\PayPalCommerce\StoreSync\Schema;
 
-use WooCommerce\PayPalCommerce\StoreSync\Validation\ValidationIssue;
+use WooCommerce\PayPalCommerce\StoreSync\Validation\StoreValidation;
 /**
  * @see MoneyTest - Unit tests for this class.
  */
@@ -16,7 +16,21 @@ class Money extends \WooCommerce\PayPalCommerce\StoreSync\Schema\AgenticSchema
 {
     private ?string $currency = null;
     private ?float $value = null;
-    protected function parse_fields(array $input, callable $add_issue): void
+    /**
+     * Convenience factory — accepts a param list instead of an array.
+     *
+     * Delegates to from_array() so parse_fields() runs identically to the parsed path.
+     * Validation issues are discarded; the caller is responsible for passing valid inputs.
+     *
+     * @param int|float|string $value         The monetary value.
+     * @param null|string      $currency_code ISO 4217 currency code.
+     * @return self
+     */
+    public static function create($value, ?string $currency_code = null): self
+    {
+        return self::from_array(array('currency_code' => $currency_code, 'value' => $value), new StoreValidation());
+    }
+    protected function parse_fields(array $input, StoreValidation $validation): void
     {
         // Reset all fields.
         $this->currency = null;
@@ -27,10 +41,10 @@ class Money extends \WooCommerce\PayPalCommerce\StoreSync\Schema\AgenticSchema
             if (preg_match('/^[A-Z]{3}$/', $currency)) {
                 $this->currency = $currency;
             } else {
-                $add_issue(ValidationIssue::create_invalid_data('Unexpected currency_code')->user_message('Please provide a valid 3-letter currency code.')->for_field('currency_code'));
+                $validation->add_invalid_data('currency_code', 'Unexpected currency_code', 'Please provide a valid 3-letter currency code.');
             }
         } else {
-            $add_issue(ValidationIssue::create_missing_field('Required field missing')->user_message('Please provide a currency code.')->for_field('currency_code'));
+            $validation->add_missing_field('currency_code', 'Please provide a currency code.');
         }
         if (isset($input['value'])) {
             $value = $input['value'];
@@ -39,18 +53,45 @@ class Money extends \WooCommerce\PayPalCommerce\StoreSync\Schema\AgenticSchema
             } elseif (is_string($value) && preg_match('/^-?\d+(\.\d{2,3})?$/', $value)) {
                 $this->value = (float) $value;
             } else {
-                $add_issue(ValidationIssue::create_invalid_data('Unexpected money value')->user_message('Please provide a valid numerical value.')->for_field('value'));
+                $validation->add_invalid_data('value', 'Unexpected money value', 'Please provide a valid numerical value.');
             }
         } else {
-            $add_issue(ValidationIssue::create_missing_field('Required field missing')->user_message('Please provide a value.')->for_field('value'));
+            $validation->add_missing_field('value', 'Please provide a value.');
         }
     }
-    public function currency_code(): ?string
+    public function currency_code(?string $default = null): ?string
     {
-        return $this->currency;
+        return $this->currency ?? $default;
     }
-    public function value(): ?float
+    public function value(?float $default = null): ?float
     {
-        return $this->value;
+        return $this->value ?? $default;
+    }
+    /**
+     * Formats the parsed value as a 2-decimal string.
+     *
+     * @return string e.g. "10.00"
+     */
+    public function to_decimal(): string
+    {
+        return number_format((float) $this->value(0.0), 2, '.', '');
+    }
+    /**
+     * Returns the PayPal API money structure.
+     *
+     * @return array{currency_code: string, value: string}
+     */
+    public function to_array(): array
+    {
+        return array('currency_code' => (string) $this->currency_code(''), 'value' => $this->to_decimal());
+    }
+    /**
+     * Returns a stable, locale-independent price string for agent-facing messages.
+     *
+     * @return string e.g. "10.00 USD"
+     */
+    public function to_price(): string
+    {
+        return trim($this->to_decimal() . ' ' . $this->currency_code(''));
     }
 }

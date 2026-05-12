@@ -161,27 +161,27 @@ class AgenticCartBuilder
     }
     private function set_addresses(WC_Customer $wc_customer, PayPalCart $paypal_cart): void
     {
-        if ($paypal_cart->shipping_address()) {
-            $shipping = \WooCommerce\PayPalCommerce\StoreSync\Helper\CartHelper::shipping_address_array($paypal_cart);
+        $shipping = $paypal_cart->shipping_address();
+        if ($shipping) {
             $wc_customer->set_shipping_first_name($wc_customer->get_first_name());
             $wc_customer->set_shipping_last_name($wc_customer->get_last_name());
-            $wc_customer->set_shipping_address_1($shipping['address_line_1']);
-            $wc_customer->set_shipping_address_2($shipping['address_line_2']);
-            $wc_customer->set_shipping_city($shipping['admin_area_2']);
-            $wc_customer->set_shipping_state($shipping['admin_area_1']);
-            $wc_customer->set_shipping_postcode($shipping['postal_code']);
-            $wc_customer->set_shipping_country($shipping['country_code']);
+            $wc_customer->set_shipping_address_1((string) $shipping->address_line_1(''));
+            $wc_customer->set_shipping_address_2((string) $shipping->address_line_2(''));
+            $wc_customer->set_shipping_city((string) $shipping->admin_area_2(''));
+            $wc_customer->set_shipping_state((string) $shipping->admin_area_1(''));
+            $wc_customer->set_shipping_postcode((string) $shipping->postal_code(''));
+            $wc_customer->set_shipping_country((string) $shipping->country_code(''));
         }
-        if ($paypal_cart->billing_address()) {
-            $billing = \WooCommerce\PayPalCommerce\StoreSync\Helper\CartHelper::billing_address_array($paypal_cart);
+        $billing = $paypal_cart->billing_address();
+        if ($billing) {
             $wc_customer->set_billing_first_name($wc_customer->get_first_name());
             $wc_customer->set_billing_last_name($wc_customer->get_last_name());
-            $wc_customer->set_billing_address_1($billing['address_line_1']);
-            $wc_customer->set_billing_address_2($billing['address_line_2']);
-            $wc_customer->set_billing_city($billing['admin_area_2']);
-            $wc_customer->set_billing_state($billing['admin_area_1']);
-            $wc_customer->set_billing_postcode($billing['postal_code']);
-            $wc_customer->set_billing_country($billing['country_code']);
+            $wc_customer->set_billing_address_1((string) $billing->address_line_1(''));
+            $wc_customer->set_billing_address_2((string) $billing->address_line_2(''));
+            $wc_customer->set_billing_city((string) $billing->admin_area_2(''));
+            $wc_customer->set_billing_state((string) $billing->admin_area_1(''));
+            $wc_customer->set_billing_postcode((string) $billing->postal_code(''));
+            $wc_customer->set_billing_country((string) $billing->country_code(''));
         }
     }
     private function wc_cart(): WC_Cart

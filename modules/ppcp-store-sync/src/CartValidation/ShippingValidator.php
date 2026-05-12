@@ -21,12 +21,13 @@ use WC_Product;
 use WooCommerce\PayPalCommerce\StoreSync\Enums\Priority;
 use WooCommerce\PayPalCommerce\StoreSync\Enums\ShippingIssue;
 use WooCommerce\PayPalCommerce\StoreSync\Helper\ProductManager;
+use WooCommerce\PayPalCommerce\StoreSync\Schema\Address;
+use WooCommerce\PayPalCommerce\StoreSync\Schema\CartItem;
 use WooCommerce\PayPalCommerce\StoreSync\Schema\PayPalCart;
+use WooCommerce\PayPalCommerce\StoreSync\StoreData\StorePayPalCart;
 use WooCommerce\PayPalCommerce\StoreSync\Validation\Context\ShippingErrorContext;
 use WooCommerce\PayPalCommerce\StoreSync\Validation\Resolution\ResolutionOption;
 use WooCommerce\PayPalCommerce\StoreSync\Validation\ValidationIssue;
-use WooCommerce\PayPalCommerce\StoreSync\Schema\Address;
-use WooCommerce\PayPalCommerce\StoreSync\Schema\CartItem;
 class ShippingValidator implements \WooCommerce\PayPalCommerce\StoreSync\CartValidation\ValidatorInterface
 {
     /**
@@ -39,8 +40,9 @@ class ShippingValidator implements \WooCommerce\PayPalCommerce\StoreSync\CartVal
     {
         $this->product_manager = $product_manager;
     }
-    public function validate(PayPalCart $cart)
+    public function validate(StorePayPalCart $store_cart)
     {
+        $cart = $store_cart->paypal_cart();
         $shipping_address = $cart->shipping_address();
         // Scenario 1: Missing Shipping Address.
         if (!$shipping_address) {

@@ -8,20 +8,14 @@
 declare (strict_types=1);
 namespace WooCommerce\PayPalCommerce\StoreSync\Response;
 
-use WC_Cart;
 use WC_Order;
-use WooCommerce\PayPalCommerce\StoreSync\Schema\PayPalCart;
+use WooCommerce\PayPalCommerce\StoreSync\StoreData\StorePayPalCart;
 use WooCommerce\PayPalCommerce\StoreSync\Validation\ValidationIssue;
-use WooCommerce\PayPalCommerce\StoreSync\Helper\CartHelper;
-use WooCommerce\PayPalCommerce\StoreSync\Enums\ErrorCode;
-use WooCommerce\PayPalCommerce\StoreSync\Config\StoreCurrencyValue;
 class CartResponse
 {
     private const ALLOWED_STATUS = array('CREATED', 'INCOMPLETE', 'READY', 'COMPLETED');
     private const ALLOWED_VALIDATION_STATUS = array('VALID', 'INVALID', 'REQUIRES_ADDITIONAL_INFORMATION');
-    private PayPalCart $cart;
-    private string $default_currency = '';
-    private ?WC_Cart $wc_cart = null;
+    private StorePayPalCart $store_cart;
     private array $applied_coupons = array();
     private array $shipping_options = array();
     /**
@@ -47,54 +41,42 @@ class CartResponse
      */
     private ?WC_Order $wc_order = null;
     /**
-     * @param PayPalCart $cart    The PayPal cart.
-     * @param string     $cart_id The cart ID.
+     * @param StorePayPalCart $store_cart The enriched cart.
+     * @param string          $cart_id    The cart ID.
      */
-    private function __construct(PayPalCart $cart, string $cart_id = '')
+    private function __construct(StorePayPalCart $store_cart, string $cart_id = '')
     {
-        $this->cart = $cart;
+        $this->store_cart = $store_cart;
         $this->cart_id = $cart_id;
-        if (!$this->cart->issues()) {
+        if ($store_cart->validation()->is_empty()) {
             $this->validation_status = 'VALID';
         }
     }
     /**
      * Create a base cart response (status: INCOMPLETE).
-     *
-     * @param PayPalCart $cart    The PayPal cart.
-     * @param string     $cart_id The cart ID.
-     * @return self
      */
-    public static function create(PayPalCart $cart, string $cart_id = ''): self
+    public static function create(StorePayPalCart $store_cart, string $cart_id, string $token = ''): self
     {
-        return new self($cart, $cart_id);
+        $instance = new self($store_cart, $cart_id);
+        $instance->token = $token;
+        return $instance;
     }
     /**
      * Create a new cart response (status: CREATED).
-     *
-     * @param PayPalCart $cart    The PayPal cart.
-     * @param string     $cart_id The cart ID.
-     * @param string     $token   The EC token.
-     * @return self
      */
-    public static function create_new(PayPalCart $cart, string $cart_id, string $token): self
+    public static function create_new(StorePayPalCart $store_cart, string $cart_id, string $token): self
     {
-        $instance = new self($cart, $cart_id);
+        $instance = new self($store_cart, $cart_id);
         $instance->status = 'CREATED';
         $instance->token = $token;
         return $instance;
     }
     /**
      * Create a completed cart response (status: COMPLETED).
-     *
-     * @param PayPalCart $cart     The PayPal cart.
-     * @param string     $cart_id  The cart ID.
-     * @param WC_Order   $wc_order The WooCommerce order.
-     * @return self
      */
-    public static function create_completed(PayPalCart $cart, string $cart_id, WC_Order $wc_order): self
+    public static function create_completed(StorePayPalCart $store_cart, string $cart_id, WC_Order $wc_order): self
     {
-        $instance = new self($cart, $cart_id);
+        $instance = new self($store_cart, $cart_id);
         $instance->status = 'COMPLETED';
         $instance->wc_order = $wc_order;
         return $instance;
@@ -122,70 +104,19 @@ class CartResponse
         return $this;
     }
     /**
-     * Configures the CartResponse instance - only used by the ResponseFactory.
-     *
-     * @param WC_Cart|null $wc_cart The WooCommerce cart, used to calculate totals.
-     * @return $this
-     */
-    public function wc_cart(?WC_Cart $wc_cart): self
-    {
-        $this->wc_cart = $wc_cart;
-        return $this;
-    }
-    /**
-     * Configures the CartResponse instance - only used by the ResponseFactory.
-     *
-     * @param StoreCurrencyValue $store_currency Resolves the WooCommerce currency code.
-     * @return $this
-     */
-    public function store_currency(StoreCurrencyValue $store_currency): self
-    {
-        $this->default_currency = $store_currency->value();
-        return $this;
-    }
-    /**
      * Convert to array for API response.
      *
      * @return array The response array.
      */
     public function to_array(): array
     {
-        $data = array('id' => $this->cart_id, 'status' => $this->status(), 'validation_status' => $this->validation_status(), 'validation_issues' => array_map(static fn(ValidationIssue $issue) => $issue->to_array(), $this->cart->issues()), 'payment_method' => array('type' => 'paypal'));
-        if (!empty($this->applied_coupons)) {
-            $data['applied_coupons'] = $this->applied_coupons;
-        }
-        $data = array_merge($data, $this->cart->to_array());
-        $data['id'] = $this->cart_id;
-        $totals = $this->calculate_totals();
-        if ($totals) {
-            $data['totals'] = $totals;
-        }
-        if (!empty($this->shipping_options)) {
-            $data['available_shipping_options'] = $this->shipping_options;
-        }
+        $raw = $this->store_cart->to_array();
+        $payment_method = array('type' => 'paypal');
         if ($this->token) {
-            $data['payment_method']['token'] = $this->token;
+            $payment_method['token'] = $this->token;
         }
-        if ($this->wc_order) {
-            $data['payment_confirmation'] = array('merchant_order_number' => $this->wc_order->get_id(), 'order_review_page' => $this->wc_order->get_checkout_order_received_url());
-        }
-        return $data;
-    }
-    /**
-     * Calculate cart totals.
-     *
-     * @return array|null The cart-totals array, or null if not calculable.
-     */
-    private function calculate_totals(): ?array
-    {
-        if (!$this->wc_cart || $this->cart->has_validation_issue(ErrorCode::PRICING_ERROR)) {
-            return null;
-        }
-        return CartHelper::calculate_totals($this->wc_cart, $this->currency_code());
-    }
-    private function currency_code(): string
-    {
-        return CartHelper::currency($this->cart, $this->default_currency);
+        $data = array('id' => $this->cart_id, 'status' => $this->status(), 'validation_status' => $this->validation_status(), 'validation_issues' => array_map(static fn(ValidationIssue $issue) => $issue->to_array(), $this->store_cart->validation()->all()), 'items' => $raw['items'] ?? null, 'customer' => $raw['customer'] ?? null, 'shipping_address' => $raw['shipping_address'] ?? null, 'billing_address' => $raw['billing_address'] ?? null, 'available_shipping_options' => !empty($this->shipping_options) ? $this->shipping_options : null, 'totals' => $raw['totals'] ?? null, 'payment_method' => $payment_method, 'applied_coupons' => !empty($this->applied_coupons) ? $this->applied_coupons : null, 'payment_confirmation' => $this->wc_order ? array('merchant_order_number' => $this->wc_order->get_id(), 'order_review_page' => $this->wc_order->get_checkout_order_received_url()) : null);
+        return array_filter($data, static fn($v) => $v !== null);
     }
     private function status(): string
     {

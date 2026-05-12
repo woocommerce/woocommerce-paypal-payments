@@ -10,7 +10,6 @@ namespace WooCommerce\PayPalCommerce\StoreSync\StoreData;
 
 use WC_Product;
 use WooCommerce\PayPalCommerce\StoreSync\Config\StoreCurrencyValue;
-use WooCommerce\PayPalCommerce\StoreSync\Helper\CartHelper;
 use WooCommerce\PayPalCommerce\StoreSync\Schema\CartItem;
 use WooCommerce\PayPalCommerce\StoreSync\Schema\Money;
 class StoreCartItem
@@ -29,7 +28,11 @@ class StoreCartItem
      */
     public function real_price(): float
     {
-        return (float) $this->product->get_price();
+        return (float) wc_get_price_excluding_tax($this->product);
+    }
+    public function real_price_as_money(): Money
+    {
+        return Money::create($this->real_price(), $this->store_currency->value());
     }
     /**
      * The price the agent provided for this item, or null if no price was given.
@@ -49,7 +52,7 @@ class StoreCartItem
         if (null === $assumed) {
             return \true;
         }
-        return CartHelper::format_decimal($this->real_price()) === CartHelper::format_decimal((float) $assumed->value());
+        return $this->real_price_as_money()->to_decimal() === $assumed->to_decimal();
     }
     /**
      * True when no assumed price was provided (no currency claim), or the assumed currency
@@ -69,5 +72,27 @@ class StoreCartItem
     public function schema(): CartItem
     {
         return $this->schema_item;
+    }
+    public function to_array(): array
+    {
+        $data = $this->schema_item->to_array();
+        // WooCommerce always providees the price and product name/description.
+        $data['price'] = $this->real_price_as_money()->to_array();
+        $data['name'] = $this->product->get_name();
+        // todo: this logic is different from how Ingestion\ProductsPayload defined description.
+        $description = $this->product->get_short_description();
+        if ($description) {
+            $data['description'] = $description;
+        } else {
+            unset($data['description']);
+        }
+        // todo: Verify this logic matches the ingestion behavior. Extract a common data provider class.
+        $parent_id = $this->product->get_parent_id();
+        if ($parent_id) {
+            $data['parent_id'] = (string) $parent_id;
+        } else {
+            unset($data['parent_id']);
+        }
+        return $data;
     }
 }

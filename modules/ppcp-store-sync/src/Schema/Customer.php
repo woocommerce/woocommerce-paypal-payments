@@ -8,7 +8,7 @@
 declare (strict_types=1);
 namespace WooCommerce\PayPalCommerce\StoreSync\Schema;
 
-use WooCommerce\PayPalCommerce\StoreSync\Validation\ValidationIssue;
+use WooCommerce\PayPalCommerce\StoreSync\Validation\StoreValidation;
 /**
  * @see CustomerTest - Unit tests for this class.
  */
@@ -17,7 +17,7 @@ class Customer extends \WooCommerce\PayPalCommerce\StoreSync\Schema\AgenticSchem
     private ?string $email_address = null;
     private ?array $name = null;
     private ?array $phone = null;
-    protected function parse_fields(array $input, callable $add_issue): void
+    protected function parse_fields(array $input, StoreValidation $validation): void
     {
         // Reset all fields.
         $this->email_address = null;
@@ -29,7 +29,7 @@ class Customer extends \WooCommerce\PayPalCommerce\StoreSync\Schema\AgenticSchem
             if (filter_var($email_address, \FILTER_VALIDATE_EMAIL)) {
                 $this->email_address = $email_address;
             } else {
-                $add_issue(ValidationIssue::create_invalid_data('Invalid email')->user_message('The customers email address is not valid')->for_field('email_address'));
+                $validation->add_invalid_data('email_address', 'Invalid email', 'The customers email address is not valid');
             }
         }
         if (isset($input['name']) && is_array($input['name'])) {
@@ -38,14 +38,14 @@ class Customer extends \WooCommerce\PayPalCommerce\StoreSync\Schema\AgenticSchem
             $surname = $input['name']['surname'] ?? null;
             if (is_string($given_name)) {
                 if (strlen($given_name) > 140) {
-                    $add_issue(ValidationIssue::create_invalid_data('Given name too long')->user_message('The customers given name cannot be longer than 140 characters')->for_field('name.given_name'));
+                    $validation->add_invalid_data('name.given_name', 'Given name too long', 'The customers given name cannot be longer than 140 characters');
                 } else {
                     $this->name['given_name'] = trim($given_name);
                 }
             }
             if (is_string($surname)) {
                 if (strlen($surname) > 140) {
-                    $add_issue(ValidationIssue::create_invalid_data('Surname too long')->user_message('The customers surname cannot be longer than 140 characters')->for_field('name.surname'));
+                    $validation->add_invalid_data('name.surname', 'Surname too long', 'The customers surname cannot be longer than 140 characters');
                 } else {
                     $this->name['surname'] = trim($surname);
                 }
@@ -58,9 +58,9 @@ class Customer extends \WooCommerce\PayPalCommerce\StoreSync\Schema\AgenticSchem
             if (is_string($country_code)) {
                 $country_code = trim($country_code);
                 if (!is_numeric($country_code) || '0' === $country_code) {
-                    $add_issue(ValidationIssue::create_invalid_data('Invalid country code format')->user_message('The customers phone country-code must be numeric')->for_field('phone.country_code'));
+                    $validation->add_invalid_data('phone.country_code', 'Invalid country code format', 'The customers phone country-code must be numeric');
                 } elseif (strlen($country_code) > 3) {
-                    $add_issue(ValidationIssue::create_invalid_data('Invalid country code length')->user_message('The customers phone country-code must have between 1 and 3 digits')->for_field('phone.country_code'));
+                    $validation->add_invalid_data('phone.country_code', 'Invalid country code length', 'The customers phone country-code must have between 1 and 3 digits');
                 } else {
                     $this->phone['country_code'] = trim($country_code);
                 }
@@ -68,31 +68,36 @@ class Customer extends \WooCommerce\PayPalCommerce\StoreSync\Schema\AgenticSchem
             if (is_string($national_number)) {
                 $national_number = trim($national_number);
                 if (!is_numeric($national_number)) {
-                    $add_issue(ValidationIssue::create_invalid_data('Invalid national number format')->user_message('The customers phone number must be numeric')->for_field('phone.national_number'));
+                    $validation->add_invalid_data('phone.national_number', 'Invalid national number format', 'The customers phone number must be numeric');
                 } elseif (strlen($national_number) > 14) {
-                    $add_issue(ValidationIssue::create_invalid_data('Invalid national number length')->user_message('The customers phone number must have between 1 and 3 digits')->for_field('phone.national_number'));
+                    $validation->add_invalid_data('phone.national_number', 'Invalid national number length', 'The customers phone number must have between 1 and 3 digits');
                 } else {
                     $this->phone['national_number'] = trim($national_number);
                 }
             }
         }
     }
-    public function email_address(): ?string
+    public function email_address(?string $default = null): ?string
     {
-        return $this->email_address;
+        return $this->email_address ?? $default;
     }
     /**
      * @return null|array Customer name as an array, no own schema.
      */
-    public function name(): ?array
+    public function name(?array $default = null): ?array
     {
-        return $this->name;
+        return $this->name ?? $default;
     }
     /**
      * @return null|array Phone number as an array, no own schema.
      */
-    public function phone(): ?array
+    public function phone(?array $default = null): ?array
     {
-        return $this->phone;
+        return $this->phone ?? $default;
+    }
+    public function to_array(): array
+    {
+        $data = array('email_address' => $this->email_address, 'name' => $this->name, 'phone' => $this->phone);
+        return array_filter($data, static fn($v) => $v !== null);
     }
 }

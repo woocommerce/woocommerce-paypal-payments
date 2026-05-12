@@ -48,14 +48,15 @@ class CreateCartEndpoint extends \WooCommerce\PayPalCommerce\StoreSync\Endpoint\
      */
     public function create_cart(WP_REST_Request $request): WP_REST_Response
     {
-        $cart = $this->get_cart_from_request($request);
-        if ($cart instanceof AgenticError) {
-            return $this->error($cart);
+        $store_cart = $this->get_cart_from_request($request);
+        if ($store_cart instanceof AgenticError) {
+            return $this->error($store_cart);
         }
+        $paypal_cart = $store_cart->paypal_cart();
         // Token might be an empty string, when order creation fails. That's okay.
-        $ec_token = $this->order_manager->create_order($cart);
-        $cart_id = $this->create_local_cart($cart, $ec_token);
-        $response = $this->response_factory->new_cart($cart, $cart_id, $ec_token);
+        $ec_token = $this->order_manager->create_order($paypal_cart);
+        $cart_id = $this->create_local_cart($paypal_cart, $ec_token);
+        $response = $this->response_factory->new_cart($store_cart, $cart_id, $ec_token);
         return $this->cart_details($response, 201);
     }
 }

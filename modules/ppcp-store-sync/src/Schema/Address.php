@@ -8,7 +8,7 @@
 declare (strict_types=1);
 namespace WooCommerce\PayPalCommerce\StoreSync\Schema;
 
-use WooCommerce\PayPalCommerce\StoreSync\Validation\ValidationIssue;
+use WooCommerce\PayPalCommerce\StoreSync\Validation\StoreValidation;
 /**
  * @see AddressTest - Unit tests for this class.
  */
@@ -20,7 +20,7 @@ class Address extends \WooCommerce\PayPalCommerce\StoreSync\Schema\AgenticSchema
     private ?string $admin_area_2 = null;
     private ?string $admin_area_1 = null;
     private ?string $postal_code = null;
-    protected function parse_fields(array $input, callable $add_issue): void
+    protected function parse_fields(array $input, StoreValidation $validation): void
     {
         // Reset all fields.
         $this->country_code = null;
@@ -35,10 +35,10 @@ class Address extends \WooCommerce\PayPalCommerce\StoreSync\Schema\AgenticSchema
             if (preg_match('/^[A-Z]{2}$/', $country_code)) {
                 $this->country_code = $country_code;
             } else {
-                $add_issue(ValidationIssue::create_invalid_data('Unexpected country_code')->user_message('Please provide a valid 2-letter country code.')->for_field('country_code'));
+                $validation->add_invalid_data('country_code', 'Unexpected country_code', 'Please provide a valid 2-letter country code.');
             }
         } else {
-            $add_issue(ValidationIssue::create_invalid_data('Missing required field')->user_message('Please provide a country code.')->for_field('country_code'));
+            $validation->add_invalid_data('country_code', 'Missing required field', 'Please provide a country code.');
         }
         // Parse optional fields.
         if (isset($input['address_line_1']) && is_string($input['address_line_1'])) {
@@ -46,7 +46,7 @@ class Address extends \WooCommerce\PayPalCommerce\StoreSync\Schema\AgenticSchema
             if (strlen($address_line_1) <= 300) {
                 $this->address_line_1 = $address_line_1;
             } else {
-                $add_issue(ValidationIssue::create_invalid_data('Field address_line_1 is too long')->user_message('Please provide a valid address line 1.')->for_field('address_line_1'));
+                $validation->add_invalid_data('address_line_1', 'Field address_line_1 is too long', 'Please provide a valid address line 1.');
             }
         }
         if (isset($input['address_line_2']) && is_string($input['address_line_2'])) {
@@ -54,7 +54,7 @@ class Address extends \WooCommerce\PayPalCommerce\StoreSync\Schema\AgenticSchema
             if (strlen($address_line_2) <= 300) {
                 $this->address_line_2 = $address_line_2;
             } else {
-                $add_issue(ValidationIssue::create_invalid_data('Field address_line_2 is too long')->user_message('Please provide a valid address line 2.')->for_field('address_line_2'));
+                $validation->add_invalid_data('address_line_2', 'Field address_line_2 is too long', 'Please provide a valid address line 2.');
             }
         }
         if (isset($input['admin_area_2']) && is_string($input['admin_area_2'])) {
@@ -62,7 +62,7 @@ class Address extends \WooCommerce\PayPalCommerce\StoreSync\Schema\AgenticSchema
             if (strlen($admin_area_2) <= 120) {
                 $this->admin_area_2 = $admin_area_2;
             } else {
-                $add_issue(ValidationIssue::create_invalid_data('Field admin_area_2 is too long')->user_message('Please provide a valid city.')->for_field('admin_area_2'));
+                $validation->add_invalid_data('admin_area_2', 'Field admin_area_2 is too long', 'Please provide a valid city.');
             }
         }
         if (isset($input['admin_area_1']) && is_string($input['admin_area_1'])) {
@@ -70,7 +70,7 @@ class Address extends \WooCommerce\PayPalCommerce\StoreSync\Schema\AgenticSchema
             if (strlen($admin_area_1) <= 300) {
                 $this->admin_area_1 = $admin_area_1;
             } else {
-                $add_issue(ValidationIssue::create_invalid_data('Field admin_area_1 is too long')->user_message('Please provide a valid region or state.')->for_field('admin_area_1'));
+                $validation->add_invalid_data('admin_area_1', 'Field admin_area_1 is too long', 'Please provide a valid region or state.');
             }
         }
         if (isset($input['postal_code']) && is_string($input['postal_code'])) {
@@ -78,38 +78,54 @@ class Address extends \WooCommerce\PayPalCommerce\StoreSync\Schema\AgenticSchema
             if (strlen($postal_code) <= 60) {
                 $this->postal_code = $postal_code;
             } else {
-                $add_issue(ValidationIssue::create_invalid_data('Field postal_code is too long')->user_message('Please provide a valid postal code.')->for_field('postal_code'));
+                $validation->add_invalid_data('postal_code', 'Field postal_code is too long', 'Please provide a valid postal code.');
             }
         }
     }
-    public function country_code(): ?string
+    public function country_code(?string $default = null): ?string
     {
-        return $this->country_code;
+        return $this->country_code ?? $default;
     }
-    public function address_line_1(): ?string
+    public function address_line_1(?string $default = null): ?string
     {
-        return $this->address_line_1;
+        return $this->address_line_1 ?? $default;
     }
-    public function address_line_2(): ?string
+    public function address_line_2(?string $default = null): ?string
     {
-        return $this->address_line_2;
+        return $this->address_line_2 ?? $default;
     }
     /**
      * The city.
      */
-    public function admin_area_2(): ?string
+    public function admin_area_2(?string $default = null): ?string
     {
-        return $this->admin_area_2;
+        return $this->admin_area_2 ?? $default;
     }
     /**
      * The region or state.
      */
-    public function admin_area_1(): ?string
+    public function admin_area_1(?string $default = null): ?string
     {
-        return $this->admin_area_1;
+        return $this->admin_area_1 ?? $default;
     }
-    public function postal_code(): ?string
+    public function postal_code(?string $default = null): ?string
     {
-        return $this->postal_code;
+        return $this->postal_code ?? $default;
+    }
+    /**
+     * @return array{address_line_1: string, address_line_2: string, admin_area_2: string, admin_area_1: string, postal_code: string, country_code: string}
+     */
+    public function to_array(): array
+    {
+        return array('address_line_1' => (string) $this->address_line_1(''), 'address_line_2' => (string) $this->address_line_2(''), 'admin_area_2' => (string) $this->admin_area_2(''), 'admin_area_1' => (string) $this->admin_area_1(''), 'postal_code' => (string) $this->postal_code(''), 'country_code' => (string) $this->country_code(''));
+    }
+    /**
+     * Returns an all-empty address array for callers that need the shape but have no Address instance.
+     *
+     * @return array{address_line_1: string, address_line_2: string, admin_area_2: string, admin_area_1: string, postal_code: string, country_code: string}
+     */
+    public static function empty_array(): array
+    {
+        return array('address_line_1' => '', 'address_line_2' => '', 'admin_area_2' => '', 'admin_area_1' => '', 'postal_code' => '', 'country_code' => '');
     }
 }

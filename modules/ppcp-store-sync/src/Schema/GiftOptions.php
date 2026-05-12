@@ -10,7 +10,7 @@ namespace WooCommerce\PayPalCommerce\StoreSync\Schema;
 
 use DateTime;
 use DateTimeInterface;
-use WooCommerce\PayPalCommerce\StoreSync\Validation\ValidationIssue;
+use WooCommerce\PayPalCommerce\StoreSync\Validation\StoreValidation;
 /**
  * @see GiftOptionsTest - Unit tests for this class.
  */
@@ -22,7 +22,7 @@ class GiftOptions extends \WooCommerce\PayPalCommerce\StoreSync\Schema\AgenticSc
     private ?string $gift_message = null;
     private ?string $delivery_date = null;
     private ?array $recipient = null;
-    protected function parse_fields(array $input, callable $add_issue): void
+    protected function parse_fields(array $input, StoreValidation $validation): void
     {
         // Reset all fields.
         $this->is_gift = \false;
@@ -44,7 +44,7 @@ class GiftOptions extends \WooCommerce\PayPalCommerce\StoreSync\Schema\AgenticSc
         if (isset($input['gift_message']) && is_string($input['gift_message'])) {
             $gift_message = trim($input['gift_message']);
             if (strlen($gift_message) > 500) {
-                $add_issue(ValidationIssue::create_invalid_data('Gift message too long')->user_message('The gift message must be no longer than 500 characters')->for_field('gift_message'));
+                $validation->add_invalid_data('gift_message', 'Gift message too long', 'The gift message must be no longer than 500 characters');
             } else {
                 $this->gift_message = $gift_message;
             }
@@ -55,7 +55,7 @@ class GiftOptions extends \WooCommerce\PayPalCommerce\StoreSync\Schema\AgenticSc
             if ($rfc_date) {
                 $this->delivery_date = $delivery_date;
             } else {
-                $add_issue(ValidationIssue::create_invalid_data('Invalid delivery date format')->user_message('The delivery date must be in RFC3339 format (e.g., 2024-12-25T09:00:00Z)')->for_field('delivery_date'));
+                $validation->add_invalid_data('delivery_date', 'Invalid delivery date format', 'The delivery date must be in RFC3339 format (e.g., 2024-12-25T09:00:00Z)');
             }
         }
         if (!empty($input['recipient']) && is_array($input['recipient'])) {
@@ -65,7 +65,7 @@ class GiftOptions extends \WooCommerce\PayPalCommerce\StoreSync\Schema\AgenticSc
                 $recipient_email = trim($recipient_email);
                 if (!filter_var($recipient_email, \FILTER_VALIDATE_EMAIL)) {
                     $recipient_email = null;
-                    $add_issue(ValidationIssue::create_invalid_data('Invalid recipient email')->user_message('The recipient email is not valid')->for_field('recipient.email'));
+                    $validation->add_invalid_data('recipient.email', 'Invalid recipient email', 'The recipient email is not valid');
                 }
             }
             if ($recipient_name && is_string($recipient_name)) {
@@ -82,26 +82,26 @@ class GiftOptions extends \WooCommerce\PayPalCommerce\StoreSync\Schema\AgenticSc
     {
         return $this->gift_wrap;
     }
-    public function sender_name(): ?string
+    public function sender_name(?string $default = null): ?string
     {
-        return $this->sender_name;
+        return $this->sender_name ?? $default;
     }
-    public function gift_message(): ?string
+    public function gift_message(?string $default = null): ?string
     {
-        return $this->gift_message;
+        return $this->gift_message ?? $default;
     }
     /**
      * @return string|null The scheduled delivery date, in RFC3339 format, or null.
      */
-    public function delivery_date(): ?string
+    public function delivery_date(?string $default = null): ?string
     {
-        return $this->delivery_date;
+        return $this->delivery_date ?? $default;
     }
     /**
      * @return null|array Recipient as a simple array, no own schema.
      */
-    public function recipient(): ?array
+    public function recipient(?array $default = null): ?array
     {
-        return $this->recipient;
+        return $this->recipient ?? $default;
     }
 }

@@ -21,6 +21,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Entity\PatchCollection;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\AmountFactory;
 use WooCommerce\PayPalCommerce\StoreSync\Config\StoreCurrencyValue;
+use WooCommerce\PayPalCommerce\StoreSync\Schema\Money;
 use WooCommerce\PayPalCommerce\StoreSync\Schema\PayPalCart;
 use WC_Cart;
 class PayPalOrderManager
@@ -138,7 +139,7 @@ class PayPalOrderManager
             }
             $line_total = (float) ($cart_item['line_subtotal'] ?? 0.0);
             $unit_price = $line_total / $quantity;
-            $items[] = array('name' => substr($product->get_name() ?? 'Item', 0, 127), 'quantity' => (string) $quantity, 'unit_amount' => array('currency_code' => $currency, 'value' => \WooCommerce\PayPalCommerce\StoreSync\Helper\CartHelper::format_decimal($unit_price)));
+            $items[] = array('name' => substr($product->get_name() ?? 'Item', 0, 127), 'quantity' => (string) $quantity, 'unit_amount' => Money::create($unit_price, $currency)->to_array());
         }
         return $items;
     }

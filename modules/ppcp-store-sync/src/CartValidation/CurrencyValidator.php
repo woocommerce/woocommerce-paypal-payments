@@ -11,6 +11,7 @@ namespace WooCommerce\PayPalCommerce\StoreSync\CartValidation;
 use WooCommerce\PayPalCommerce\StoreSync\Config\StoreCurrencyValue;
 use WooCommerce\PayPalCommerce\StoreSync\Enums\Priority;
 use WooCommerce\PayPalCommerce\StoreSync\Schema\PayPalCart;
+use WooCommerce\PayPalCommerce\StoreSync\StoreData\StorePayPalCart;
 use WooCommerce\PayPalCommerce\StoreSync\Validation\Resolution\ResolutionOption;
 use WooCommerce\PayPalCommerce\StoreSync\Validation\ValidationIssue;
 class CurrencyValidator implements \WooCommerce\PayPalCommerce\StoreSync\CartValidation\ValidatorInterface
@@ -20,8 +21,9 @@ class CurrencyValidator implements \WooCommerce\PayPalCommerce\StoreSync\CartVal
     {
         $this->store_currency = $store_currency;
     }
-    public function validate(PayPalCart $cart): array
+    public function validate(StorePayPalCart $store_cart): array
     {
+        $cart = $store_cart->paypal_cart();
         $store_currency = $this->store_currency->value();
         $cart_currencies = $this->extract_cart_currencies($cart);
         if (empty($cart_currencies)) {

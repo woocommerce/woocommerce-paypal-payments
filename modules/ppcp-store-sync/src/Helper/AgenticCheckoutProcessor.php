@@ -19,9 +19,11 @@ use WooCommerce\PayPalCommerce\Vendor\Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\Button\Session\CartData;
 use WooCommerce\PayPalCommerce\Button\Helper\WooCommerceOrderCreator;
 use WooCommerce\PayPalCommerce\StoreSync\CartValidation\CouponValidator\AppliedCouponsBuilder;
+use WooCommerce\PayPalCommerce\StoreSync\Schema\Address;
 use WooCommerce\PayPalCommerce\StoreSync\Schema\PayPalCart;
 use WooCommerce\PayPalCommerce\StoreSync\Schema\PaymentMethod;
 use WooCommerce\PayPalCommerce\StoreSync\Schema\ShippingOption;
+use WooCommerce\PayPalCommerce\StoreSync\StoreData\StorePayPalCart;
 /**
  * Orchestrates the complete checkout workflow for Agentic Commerce.
  *
@@ -61,18 +63,16 @@ class AgenticCheckoutProcessor
      * 5. Links PayPal order with WC order ID
      * 6. Captures the PayPal payment
      *
-     * @param PayPalCart    $cart            The PayPal cart data.
-     * @param PaymentMethod $payment_method  The payment method data.
-     * @param string        $paypal_order_id The PayPal Order ID (ec_token).
      * @return WC_Order|WP_Error The created order or error.
      */
-    public function process(PayPalCart $cart, PaymentMethod $payment_method, string $paypal_order_id)
+    public function process(StorePayPalCart $store_cart, PaymentMethod $payment_method, string $paypal_order_id)
     {
+        $cart = $store_cart->paypal_cart();
         $this->logger->info('[CHECKOUT] Starting checkout', array('order_id' => $paypal_order_id, 'item_count' => count($cart->items())));
         try {
             $paypal_order = $this->order_manager->fetch_order($paypal_order_id);
             $this->logger->info('[CHECKOUT] PayPal order fetched', array('order_id' => $paypal_order_id, 'status' => $paypal_order->status()->name()));
-            $total_discount = $this->applied_coupons_builder->calculate_total_discount($cart);
+            $total_discount = $this->applied_coupons_builder->calculate_total_discount($store_cart);
             $this->order_manager->update_order($paypal_order_id, $cart, $total_discount);
             $this->logger->info('[CHECKOUT] PayPal order synced with final cart totals', array('order_id' => $paypal_order_id, 'discount' => $total_discount));
             $wc_cart = $this->cart_builder->paypal_cart_to_wc_cart($cart);
@@ -161,7 +161,9 @@ class AgenticCheckoutProcessor
             return null;
         }
         $option_data = (object) array('id' => $selected->id(), 'label' => $selected->name(), 'type' => 'SHIPPING', 'selected' => \true, 'amount' => (object) array('currency_code' => $option_price->currency_code(), 'value' => (string) $option_price->value()));
-        $data = (object) array('name' => (object) array('full_name' => \WooCommerce\PayPalCommerce\StoreSync\Helper\CartHelper::full_customer_name($cart)), 'address' => (object) \WooCommerce\PayPalCommerce\StoreSync\Helper\CartHelper::shipping_address_array($cart), 'options' => array($option_data));
+        $name = $cart->customer()?->name();
+        $full_name = $name ? trim(($name['given_name'] ?? '') . ' ' . ($name['surname'] ?? '')) : '';
+        $data = (object) array('name' => (object) array('full_name' => $full_name), 'address' => (object) ($cart->shipping_address()?->to_array() ?? Address::empty_array()), 'options' => array($option_data));
         return $this->shipping_factory->from_paypal_response($data);
     }
     /**
@@ -185,7 +187,7 @@ class AgenticCheckoutProcessor
             }
         }
         if ($cart->billing_address()) {
-            $payer_data['address'] = \WooCommerce\PayPalCommerce\StoreSync\Helper\CartHelper::billing_address_array($cart);
+            $payer_data['address'] = $cart->billing_address()->to_array();
         }
         return $payer_data;
     }
@@ -200,7 +202,9 @@ class AgenticCheckoutProcessor
         if (!$cart->shipping_address()) {
             return array();
         }
-        return array('name' => array('full_name' => \WooCommerce\PayPalCommerce\StoreSync\Helper\CartHelper::full_customer_name($cart)), 'address' => \WooCommerce\PayPalCommerce\StoreSync\Helper\CartHelper::shipping_address_array($cart));
+        $name = $cart->customer()?->name();
+        $full_name = $name ? trim(($name['given_name'] ?? '') . ' ' . ($name['surname'] ?? '')) : '';
+        return array('name' => array('full_name' => $full_name), 'address' => $cart->shipping_address()->to_array());
     }
     /**
      * Link PayPal order with WooCommerce order ID.

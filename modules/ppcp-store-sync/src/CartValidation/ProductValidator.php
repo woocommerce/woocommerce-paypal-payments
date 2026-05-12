@@ -11,8 +11,8 @@ namespace WooCommerce\PayPalCommerce\StoreSync\CartValidation;
 use WooCommerce\PayPalCommerce\StoreSync\Enums\ErrorCode;
 use WooCommerce\PayPalCommerce\StoreSync\Enums\Priority;
 use WooCommerce\PayPalCommerce\StoreSync\Helper\ProductManager;
-use WooCommerce\PayPalCommerce\StoreSync\Schema\PayPalCart;
 use WooCommerce\PayPalCommerce\StoreSync\Schema\CartItem;
+use WooCommerce\PayPalCommerce\StoreSync\StoreData\StorePayPalCart;
 use WooCommerce\PayPalCommerce\StoreSync\Validation\Resolution\ResolutionOption;
 use WooCommerce\PayPalCommerce\StoreSync\Validation\Context\DataErrorContext;
 use WooCommerce\PayPalCommerce\StoreSync\Validation\ValidationIssue;
@@ -26,14 +26,15 @@ class ProductValidator implements \WooCommerce\PayPalCommerce\StoreSync\CartVali
         $this->product_manager = $product_manager;
         $this->configuration = $configuration;
     }
-    public function validate(PayPalCart $cart): ?array
+    public function validate(StorePayPalCart $store_cart): ?array
     {
         // Skip validation if the cart already annotates an inventory issue.
-        if ($cart->has_validation_issue(ErrorCode::INVENTORY_ISSUE)) {
+        if ($store_cart->validation()->has_issue_with_code(ErrorCode::INVENTORY_ISSUE)) {
             return null;
         }
+        $paypal_cart = $store_cart->paypal_cart();
         $issues = array();
-        foreach ($cart->items() as $key => $item) {
+        foreach ($paypal_cart->items() as $key => $item) {
             $issue = $this->validate_product($key, $item);
             if ($issue) {
                 $issues[] = $issue;

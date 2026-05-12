@@ -140,7 +140,7 @@ return array(
         return new DiscountCalculator($c->get('agentic.helper.product-manager'));
     },
     'agentic.validator.coupon.context-builder' => static function (ContainerInterface $c): CouponContextBuilder {
-        return new CouponContextBuilder($c->get('agentic.helper.product-manager'), $c->get('agentic.validator.coupon.discount-calculator'), $c->get('agentic.config.store-currency'));
+        return new CouponContextBuilder($c->get('agentic.helper.product-manager'), $c->get('agentic.validator.coupon.discount-calculator'));
     },
     'agentic.validator.coupon.resolution-builder' => static function (): CouponResolutionBuilder {
         return new CouponResolutionBuilder();
@@ -150,34 +150,34 @@ return array(
     },
     // Response services.
     'agentic.response.applied-coupons-builder' => static function (ContainerInterface $c): AppliedCouponsBuilder {
-        return new AppliedCouponsBuilder($c->get('agentic.validator.coupon.discount-calculator'), $c->get('agentic.config.store-currency'));
+        return new AppliedCouponsBuilder($c->get('agentic.validator.coupon.discount-calculator'));
     },
     'agentic.response.factory' => static function (ContainerInterface $c): ResponseFactory {
-        return new ResponseFactory($c->get('agentic.helper.cart-builder'), $c->get('agentic.response.applied-coupons-builder'), $c->get('agentic.helper.shipping-options-builder'), $c->get('agentic.config.store-currency'));
+        return new ResponseFactory($c->get('agentic.response.applied-coupons-builder'), $c->get('agentic.helper.shipping-options-builder'));
     },
     // REST endpoints.
     'agentic.rest.create_cart' => static function (ContainerInterface $c): CreateCartEndpoint {
-        return new CreateCartEndpoint($c->get('agentic.auth.provider'), $c->get('agentic.session.handler'), $c->get('agentic.helper.session-manager'), $c->get('agentic.response.factory'), $c->get('agentic.validation.processor'), $c->get('agentic.logger'), $c->get('agentic.helper.paypal-order-manager'));
+        return new CreateCartEndpoint($c->get('agentic.auth.provider'), $c->get('agentic.session.handler'), $c->get('agentic.helper.session-manager'), $c->get('agentic.response.factory'), $c->get('agentic.validation.processor'), $c->get('agentic.logger'), $c->get('agentic.helper.paypal-order-manager'), $c->get('agentic.store.data'));
     },
     'agentic.rest.get_cart' => static function (ContainerInterface $c): GetCartEndpoint {
-        return new GetCartEndpoint($c->get('agentic.auth.provider'), $c->get('agentic.session.handler'), $c->get('agentic.helper.session-manager'), $c->get('agentic.response.factory'), $c->get('agentic.validation.processor'), $c->get('agentic.logger'), $c->get('agentic.helper.paypal-order-manager'));
+        return new GetCartEndpoint($c->get('agentic.auth.provider'), $c->get('agentic.session.handler'), $c->get('agentic.helper.session-manager'), $c->get('agentic.response.factory'), $c->get('agentic.validation.processor'), $c->get('agentic.logger'), $c->get('agentic.helper.paypal-order-manager'), $c->get('agentic.store.data'));
     },
     'agentic.rest.replace_cart' => static function (ContainerInterface $c): ReplaceCartEndpoint {
-        return new ReplaceCartEndpoint($c->get('agentic.auth.provider'), $c->get('agentic.session.handler'), $c->get('agentic.helper.session-manager'), $c->get('agentic.response.factory'), $c->get('agentic.validation.processor'), $c->get('agentic.logger'), $c->get('agentic.helper.paypal-order-manager'));
+        return new ReplaceCartEndpoint($c->get('agentic.auth.provider'), $c->get('agentic.session.handler'), $c->get('agentic.helper.session-manager'), $c->get('agentic.response.factory'), $c->get('agentic.validation.processor'), $c->get('agentic.logger'), $c->get('agentic.helper.paypal-order-manager'), $c->get('agentic.store.data'));
     },
     'agentic.rest.checkout' => static function (ContainerInterface $c): CheckoutEndpoint {
-        return new CheckoutEndpoint($c->get('agentic.auth.provider'), $c->get('agentic.session.handler'), $c->get('agentic.helper.session-manager'), $c->get('agentic.response.factory'), $c->get('agentic.validation.processor'), $c->get('agentic.logger'), $c->get('agentic.helper.paypal-order-manager'), $c->get('agentic.helper.checkout-processor'));
+        return new CheckoutEndpoint($c->get('agentic.auth.provider'), $c->get('agentic.session.handler'), $c->get('agentic.helper.session-manager'), $c->get('agentic.response.factory'), $c->get('agentic.validation.processor'), $c->get('agentic.logger'), $c->get('agentic.helper.paypal-order-manager'), $c->get('agentic.store.data'), $c->get('agentic.helper.checkout-processor'));
     },
     // Store Data Factory.
     'agentic.store.data' => static function (ContainerInterface $c): StoreData {
-        return new StoreData($c->get('agentic.helper.product-manager'), $c->get('agentic.config.store-currency'));
+        return new StoreData($c->get('agentic.helper.product-manager'), $c->get('agentic.config.store-currency'), $c->get('agentic.helper.cart-builder'));
     },
     // Ingestion services.
     'agentic.ingestion-batch-provider' => static function (ContainerInterface $c): IngestionBatchProvider {
         return new IngestionBatchProvider($c->get('agentic.config.ingestion'));
     },
     'agentic.ingestion-manager' => static function (ContainerInterface $c): IngestionManager {
-        return new IngestionManager($c->get('agentic.config.ingestion'), $c->get('agentic.ingestion-batch-provider'), $c->get('agentic.config.webhook_urls'), $c->get('agentic.merchant.provider'), $c->get('agentic.logger'));
+        return new IngestionManager($c->get('agentic.config.ingestion'), $c->get('agentic.ingestion-batch-provider'), $c->get('agentic.config.webhook_urls'), $c->get('agentic.merchant.provider'), $c->get('agentic.logger'), $c->get('agentic.config.store-currency'));
     },
     // Settings.
     'agentic.settings.model' => static function (): AgenticSettingsDataModel {
