@@ -102,11 +102,13 @@ class CartResponse {
 	/**
 	 * Configures the CartResponse instance - only used by the ResponseFactory.
 	 *
-	 * @param array $coupons Applied coupons data.
+	 * @param null|array $coupons Applied coupons data.
 	 * @return $this
 	 */
-	public function applied_coupons( array $coupons ): self {
-		$this->applied_coupons = $coupons;
+	public function applied_coupons( ?array $coupons ): self {
+		if ( null !== $coupons ) {
+			$this->applied_coupons = $coupons;
+		}
 
 		return $this;
 	}
@@ -114,11 +116,13 @@ class CartResponse {
 	/**
 	 * Configures the CartResponse instance - only used by the ResponseFactory.
 	 *
-	 * @param array $options Available shipping options.
+	 * @param null|array $options Available shipping options.
 	 * @return $this
 	 */
-	public function shipping_options( array $options ): self {
-		$this->shipping_options = $options;
+	public function shipping_options( ?array $options ): self {
+		if ( null !== $options ) {
+			$this->shipping_options = $options;
+		}
 
 		return $this;
 	}
