@@ -75,7 +75,9 @@ class ReplaceCartEndpoint extends AgenticRestEndpoint {
 			return $this->error( $store_cart );
 		}
 
-		$paypal_cart = $store_cart->paypal_cart();
+		$paypal_cart    = $store_cart->paypal_cart();
+		$payment_method = $paypal_cart->payment_method();
+		$token          = $payment_method ? (string) $payment_method->token( '' ) : '';
 
 		// Replace the cart session (preserving ec_token).
 		$update_result = $this->store_local_cart( $cart_id, $paypal_cart );
@@ -90,7 +92,7 @@ class ReplaceCartEndpoint extends AgenticRestEndpoint {
 			);
 		}
 
-		$response = $this->response_factory->from_cart( $store_cart, $cart_id );
+		$response = $this->response_factory->from_cart( $store_cart, $cart_id, $token );
 
 		return $this->cart_details( $response, 200 );
 	}

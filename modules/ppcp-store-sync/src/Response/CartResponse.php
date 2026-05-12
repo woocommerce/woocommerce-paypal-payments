@@ -76,22 +76,17 @@ class CartResponse {
 
 	/**
 	 * Create a base cart response (status: INCOMPLETE).
-	 *
-	 * @param StorePayPalCart $store_cart The enriched cart.
-	 * @param string          $cart_id    The cart ID.
-	 * @return self
 	 */
-	public static function create( StorePayPalCart $store_cart, string $cart_id ): self {
-		return new self( $store_cart, $cart_id );
+	public static function create( StorePayPalCart $store_cart, string $cart_id, string $token = '' ): self {
+		$instance = new self( $store_cart, $cart_id );
+
+		$instance->token = $token;
+
+		return $instance;
 	}
 
 	/**
 	 * Create a new cart response (status: CREATED).
-	 *
-	 * @param StorePayPalCart $store_cart The enriched cart.
-	 * @param string          $cart_id    The cart ID.
-	 * @param string          $token      The EC token.
-	 * @return self
 	 */
 	public static function create_new( StorePayPalCart $store_cart, string $cart_id, string $token ): self {
 		$instance = new self( $store_cart, $cart_id );
@@ -104,11 +99,6 @@ class CartResponse {
 
 	/**
 	 * Create a completed cart response (status: COMPLETED).
-	 *
-	 * @param StorePayPalCart $store_cart The enriched cart.
-	 * @param string          $cart_id    The cart ID.
-	 * @param WC_Order        $wc_order   The WooCommerce order.
-	 * @return self
 	 */
 	public static function create_completed( StorePayPalCart $store_cart, string $cart_id, WC_Order $wc_order ): self {
 		$instance = new self( $store_cart, $cart_id );
