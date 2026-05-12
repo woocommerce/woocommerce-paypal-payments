@@ -331,6 +331,21 @@ class PayPalGateway extends \WC_Payment_Gateway {
 	}
 
 	/**
+	 * Renders payment fields including saved payment method radio buttons when tokenization is active.
+	 */
+	public function payment_fields(): void {
+		if ( $this->supports( 'tokenization' ) && is_checkout() ) {
+			$this->tokenization_script();
+			$this->saved_payment_methods();
+		}
+
+		$description = $this->get_description();
+		if ( $description ) {
+			echo wp_kses_post( wpautop( wptexturize( $description ) ) );
+		}
+	}
+
+	/**
 	 * Whether the Gateway needs to be setup.
 	 *
 	 * @return bool

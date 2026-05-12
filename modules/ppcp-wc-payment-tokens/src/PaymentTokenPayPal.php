@@ -48,4 +48,15 @@ class PaymentTokenPayPal extends WC_Payment_Token {
 	public function set_email( $email ) {
 		$this->add_meta_data( 'email', $email, true );
 	}
+
+	/**
+	 * Returns a display name for the token.
+	 *
+	 * @param string $deprecated Deprecated parameter.
+	 * @return string
+	 */
+	public function get_display_name( $deprecated = '' ): string {
+		$email = $this->get_email();
+		return $email ? 'PayPal / ' . $email : 'PayPal';
+	}
 }
