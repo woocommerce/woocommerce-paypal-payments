@@ -56,15 +56,13 @@ class ReplaceCartEndpoint extends \WooCommerce\PayPalCommerce\StoreSync\Endpoint
         if ($store_cart instanceof AgenticError) {
             return $this->error($store_cart);
         }
-        $paypal_cart = $store_cart->paypal_cart();
-        $payment_method = $paypal_cart->payment_method();
-        $token = $payment_method ? (string) $payment_method->token('') : '';
         // Replace the cart session (preserving ec_token).
-        $update_result = $this->store_local_cart($cart_id, $paypal_cart);
+        $update_result = $this->store_local_cart($cart_id, $store_cart->paypal_cart());
         if (!$update_result) {
             return $this->error_not_found('Failed to replace cart', array('issue' => 'CART_REPLACE_FAILED', 'description' => 'Cart replacement operation failed.'));
         }
-        $response = $this->response_factory->from_cart($store_cart, $cart_id, $token);
+        $store_cart->set_paypal_order($session['ec_token']);
+        $response = $this->response_factory->from_cart($store_cart, $cart_id);
         return $this->cart_details($response, 200);
     }
     private function error_not_found(string $message, array $details): WP_REST_Response

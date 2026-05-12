@@ -33,10 +33,6 @@ class CartResponse
      */
     private string $validation_status = 'INVALID';
     /**
-     * The payment method token, only set for newly created carts.
-     */
-    private string $token = '';
-    /**
      * The WooCommerce order created during checkout, only set for completed carts.
      */
     private ?WC_Order $wc_order = null;
@@ -55,20 +51,17 @@ class CartResponse
     /**
      * Create a base cart response (status: INCOMPLETE).
      */
-    public static function create(StorePayPalCart $store_cart, string $cart_id, string $token = ''): self
+    public static function create(StorePayPalCart $store_cart, string $cart_id): self
     {
-        $instance = new self($store_cart, $cart_id);
-        $instance->token = $token;
-        return $instance;
+        return new self($store_cart, $cart_id);
     }
     /**
      * Create a new cart response (status: CREATED).
      */
-    public static function create_new(StorePayPalCart $store_cart, string $cart_id, string $token): self
+    public static function create_new(StorePayPalCart $store_cart, string $cart_id): self
     {
         $instance = new self($store_cart, $cart_id);
         $instance->status = 'CREATED';
-        $instance->token = $token;
         return $instance;
     }
     /**
@@ -112,8 +105,9 @@ class CartResponse
     {
         $raw = $this->store_cart->to_array();
         $payment_method = array('type' => 'paypal');
-        if ($this->token) {
-            $payment_method['token'] = $this->token;
+        $paypal_order = $this->store_cart->paypal_order();
+        if ($paypal_order) {
+            $payment_method['token'] = $paypal_order;
         }
         $data = array('id' => $this->cart_id, 'status' => $this->status(), 'validation_status' => $this->validation_status(), 'validation_issues' => array_map(static fn(ValidationIssue $issue) => $issue->to_array(), $this->store_cart->validation()->all()), 'items' => $raw['items'] ?? null, 'customer' => $raw['customer'] ?? null, 'shipping_address' => $raw['shipping_address'] ?? null, 'billing_address' => $raw['billing_address'] ?? null, 'available_shipping_options' => !empty($this->shipping_options) ? $this->shipping_options : null, 'totals' => $raw['totals'] ?? null, 'payment_method' => $payment_method, 'applied_coupons' => !empty($this->applied_coupons) ? $this->applied_coupons : null, 'payment_confirmation' => $this->wc_order ? array('merchant_order_number' => $this->wc_order->get_id(), 'order_review_page' => $this->wc_order->get_checkout_order_received_url()) : null);
         return array_filter($data, static fn($v) => $v !== null);

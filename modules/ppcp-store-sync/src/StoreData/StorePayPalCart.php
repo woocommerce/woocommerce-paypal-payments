@@ -34,6 +34,7 @@ class StorePayPalCart
     private StoreCurrencyValue $store_currency;
     private bool $wc_cart_built = \false;
     private ?WC_Cart $wc_cart_cache = null;
+    private string $paypal_order = '';
     public function __construct(PayPalCart $paypal_cart, StoreValidation $validation, array $store_items, AgenticCartBuilder $cart_builder, StoreCurrencyValue $store_currency)
     {
         $this->paypal_cart = $paypal_cart;
@@ -41,6 +42,14 @@ class StorePayPalCart
         $this->store_items = $store_items;
         $this->cart_builder = $cart_builder;
         $this->store_currency = $store_currency;
+    }
+    public function set_paypal_order(string $order_id): void
+    {
+        $this->paypal_order = $order_id;
+    }
+    public function paypal_order(): string
+    {
+        return $this->paypal_order;
     }
     public function paypal_cart(): PayPalCart
     {

@@ -51,6 +51,7 @@ class GetCartEndpoint extends \WooCommerce\PayPalCommerce\StoreSync\Endpoint\Age
         }
         // TODO: Validation issues from re-parsing are discarded; will be cleaned up in a future refactor.
         $store_cart = $this->store_data->create_cart($session['cart'], new StoreValidation());
+        $store_cart->set_paypal_order($session['ec_token']);
         $response = $this->response_factory->from_cart($store_cart, $cart_id);
         return $this->cart_details($response, 200);
     }

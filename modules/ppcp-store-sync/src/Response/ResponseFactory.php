@@ -26,12 +26,11 @@ class ResponseFactory
      *
      * @param StorePayPalCart $store_cart The enriched cart.
      * @param string          $cart_id    The cart ID.
-     * @param string          $token      The payment token.
      * @return CartResponse The response object.
      */
-    public function new_cart(StorePayPalCart $store_cart, string $cart_id, string $token): \WooCommerce\PayPalCommerce\StoreSync\Response\CartResponse
+    public function new_cart(StorePayPalCart $store_cart, string $cart_id): \WooCommerce\PayPalCommerce\StoreSync\Response\CartResponse
     {
-        return \WooCommerce\PayPalCommerce\StoreSync\Response\CartResponse::create_new($store_cart, $cart_id, $token)->applied_coupons($this->build_applied_coupons($store_cart))->shipping_options($this->shipping_options_builder->build($store_cart->wc_cart()));
+        return \WooCommerce\PayPalCommerce\StoreSync\Response\CartResponse::create_new($store_cart, $cart_id)->applied_coupons($this->build_applied_coupons($store_cart))->shipping_options($this->shipping_options_builder->build($store_cart->wc_cart()));
     }
     /**
      * Create a paid cart response.
@@ -50,12 +49,11 @@ class ResponseFactory
      *
      * @param StorePayPalCart $store_cart The enriched cart.
      * @param string          $cart_id    The cart ID.
-     * @param string          $token      Optional payment token to echo back.
      * @return CartResponse The response object.
      */
-    public function from_cart(StorePayPalCart $store_cart, string $cart_id, string $token = ''): \WooCommerce\PayPalCommerce\StoreSync\Response\CartResponse
+    public function from_cart(StorePayPalCart $store_cart, string $cart_id): \WooCommerce\PayPalCommerce\StoreSync\Response\CartResponse
     {
-        return \WooCommerce\PayPalCommerce\StoreSync\Response\CartResponse::create($store_cart, $cart_id, $token)->applied_coupons($this->build_applied_coupons($store_cart))->shipping_options($this->shipping_options_builder->build($store_cart->wc_cart()));
+        return \WooCommerce\PayPalCommerce\StoreSync\Response\CartResponse::create($store_cart, $cart_id)->applied_coupons($this->build_applied_coupons($store_cart))->shipping_options($this->shipping_options_builder->build($store_cart->wc_cart()));
     }
     /**
      * Build applied coupons data for a cart.

@@ -86,6 +86,7 @@ class CheckoutEndpoint extends \WooCommerce\PayPalCommerce\StoreSync\Endpoint\Ag
         if ($store_cart instanceof AgenticError) {
             return $this->error($store_cart);
         }
+        $store_cart->set_paypal_order($session['ec_token']);
         $validation = $store_cart->validation();
         // If the cart has _any_ validation issue, stop here.
         if (!$validation->is_empty()) {
