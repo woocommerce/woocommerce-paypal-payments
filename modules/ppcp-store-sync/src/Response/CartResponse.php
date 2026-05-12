@@ -139,37 +139,36 @@ class CartResponse {
 	 * @return array The response array.
 	 */
 	public function to_array(): array {
-		$data = $this->store_cart->to_array();
+		$raw = $this->store_cart->to_array();
 
-		$data['id']                = $this->cart_id;
-		$data['status']            = $this->status();
-		$data['validation_status'] = $this->validation_status();
-		$data['validation_issues'] = array_map(
-			static fn( ValidationIssue $issue ) => $issue->to_array(),
-			$this->store_cart->validation()->all()
-		);
-		$data['payment_method']    = array( 'type' => 'paypal' );
-
-		if ( ! empty( $this->applied_coupons ) ) {
-			$data['applied_coupons'] = $this->applied_coupons;
-		}
-
-		if ( ! empty( $this->shipping_options ) ) {
-			$data['available_shipping_options'] = $this->shipping_options;
-		}
-
+		$payment_method = array( 'type' => 'paypal' );
 		if ( $this->token ) {
-			$data['payment_method']['token'] = $this->token;
+			$payment_method['token'] = $this->token;
 		}
 
-		if ( $this->wc_order ) {
-			$data['payment_confirmation'] = array(
+		$data = array(
+			'id'                         => $this->cart_id,
+			'status'                     => $this->status(),
+			'validation_status'          => $this->validation_status(),
+			'validation_issues'          => array_map(
+				static fn( ValidationIssue $issue ) => $issue->to_array(),
+				$this->store_cart->validation()->all()
+			),
+			'items'                      => $raw['items'] ?? null,
+			'customer'                   => $raw['customer'] ?? null,
+			'shipping_address'           => $raw['shipping_address'] ?? null,
+			'billing_address'            => $raw['billing_address'] ?? null,
+			'available_shipping_options' => ! empty( $this->shipping_options ) ? $this->shipping_options : null,
+			'totals'                     => $raw['totals'] ?? null,
+			'payment_method'             => $payment_method,
+			'applied_coupons'            => ! empty( $this->applied_coupons ) ? $this->applied_coupons : null,
+			'payment_confirmation'       => $this->wc_order ? array(
 				'merchant_order_number' => $this->wc_order->get_id(),
 				'order_review_page'     => $this->wc_order->get_checkout_order_received_url(),
-			);
-		}
+			) : null,
+		);
 
-		return $data;
+		return array_filter( $data, static fn( $v ) => $v !== null );
 	}
 
 	private function status(): string {
