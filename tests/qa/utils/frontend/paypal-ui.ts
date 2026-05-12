@@ -10,7 +10,7 @@ import {
 /**
  * Internal dependencies
  */
-import { PayPalAccount, Pcp } from '../../resources';
+import { Pcp, ShopOrder } from '../../resources';
 import { PayPalPopup } from './paypal-popup';
 import { GooglePayPopup } from './google-pay-popup';
 import { PayPalApi } from '../paypal-api';
@@ -292,12 +292,14 @@ export class PayPalUi {
 	 * @param data
 	 * @param data.payment
 	 * @param data.merchant
+	 * @param data.customer
 	 */
 	makePayment = async ( data: {
 		payment: Pcp.Payment;
 		merchant?: Pcp.Merchant;
+		customer?: ShopOrder[ 'customer' ];
 	} ) => {
-		const { payment, merchant } = data;
+		const { payment, merchant, customer } = data;
 		const { gateway, payPalAccount } = payment;
 		const { shortcut } = gateway;
 		let popup: PayPalPopup;
@@ -354,15 +356,11 @@ export class PayPalUi {
 				break;
 
 			case 'card':
-				// Standard Card Button
 				if ( gateway.id === 'ppcp-card-button-gateway' ) {
-					await this.completeStandardCardButtonPayment(
-						payment.card
-					);
+					await this.completeBcdcPayment( payment.card, customer );
 					break;
 				}
-				// Debit Or Credit Card
-				await this.completeDebitOrCreditCardPayment( payment.card );
+				await this.completeBcdcFundingSourcePayment( payment.card );
 				break;
 
 			case 'pay_upon_invoice':
@@ -570,18 +568,24 @@ export class PayPalUi {
 	};
 
 	completeOXXOPayment = async ( ...args ) =>
-		console.log( `TODO: completeOXXOPayment for block pages` );
-
-	completeStandardCardButtonPayment = async ( ...args ) =>
 		console.log(
-			`TODO: completeStandardCardButtonPayment for block pages`
+			`TODO: completeOXXOPayment for block pages ${ args.length }`
 		);
 
-	completeDebitOrCreditCardPayment = async ( ...args ) =>
-		console.log( `TODO: completeDebitOrCreditCardPayment for block pages` );
+	completeBcdcPayment = async ( ...args ) =>
+		console.log(
+			`TODO: completeBcdcPayment for block pages ${ args.length }`
+		);
+
+	completeBcdcFundingSourcePayment = async ( ...args ) =>
+		console.log(
+			`TODO: completeBcdcFundingSourcePayment for block pages ${ args.length }`
+		);
 
 	completePayUponInvoicePayment = async ( ...args ) =>
-		console.log( `TODO: completePayUponInvoicePayment for block pages` );
+		console.log(
+			`TODO: completePayUponInvoicePayment for block pages ${ args.length }`
+		);
 
 	/**
 	 * Clicks payment gateway to make visible payment form or buttons
@@ -665,11 +669,8 @@ export class PayPalUi {
 	 * Asserts Pay Later Messaging iframe is visible. Uses retry-with-reload for SDK-loaded content.
 	 * Returns false if not found after retry (caller should test.skip()).
 	 */
-	assertPayLaterMessageVisibleWithContent = async (): Promise<boolean> =>
-		assertIframeWithRetry(
-			this.page,
-			'iframe[title^="PayPal Message"]',			
-		);
+	assertPayLaterMessageVisibleWithContent = async (): Promise< boolean > =>
+		assertIframeWithRetry( this.page, 'iframe[title^="PayPal Message"]' );
 
 	/**
 	 * Asserts Pay Later Messaging iframe is not visible.
@@ -698,6 +699,7 @@ export class PayPalUi {
 
 	/**
 	 * Asserts PayPal buttons have the given label (pay, checkout, buynow, paypal).
+	 * @param label
 	 */
 	assertPayPalButtonsHaveLabel = async (
 		label: 'pay' | 'checkout' | 'buynow' | 'paypal'
@@ -710,6 +712,7 @@ export class PayPalUi {
 
 	/**
 	 * Asserts PayPal buttons have the given layout (vertical, horizontal).
+	 * @param layout
 	 */
 	assertPayPalButtonsHaveLayout = async (
 		layout: 'vertical' | 'horizontal'

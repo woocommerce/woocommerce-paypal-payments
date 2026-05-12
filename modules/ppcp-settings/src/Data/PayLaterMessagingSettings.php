@@ -199,45 +199,19 @@ class PayLaterMessagingSettings extends AbstractDataModel {
 	}
 
 	/**
-	 * Sanitizes Pay Later messaging data.
+	 * Sanitizes Pay Later messaging data, overriding the enabled flag
+	 * based on the current messaging locations list.
 	 *
 	 * @param mixed   $data The messaging data to sanitize.
 	 * @param ?string $location Name of the location.
 	 * @return PayLaterMessagingDTO Sanitized messaging data.
 	 */
 	private function sanitize_paylater_messaging( $data, ?string $location = null ): PayLaterMessagingDTO {
-		if ( $data instanceof PayLaterMessagingDTO ) {
-			if ( $location ) {
-				$data->location = $location;
-			}
-			return $data;
-		}
+		$dto = $this->sanitizer->sanitize_paylater_messaging( $data, $location );
 
-		if ( is_object( $data ) ) {
-			$data = (array) $data;
-		}
+		$dto->enabled = in_array( $dto->location, $this->get_messaging_locations(), true );
 
-		if ( ! is_array( $data ) ) {
-			return new PayLaterMessagingDTO( $location ?? '' );
-		}
-
-		if ( null === $location ) {
-			$location = $data['location'] ?? '';
-		}
-
-		$enabled_locations = $this->get_messaging_locations();
-
-		return new PayLaterMessagingDTO(
-			$location,
-			in_array( $location, $enabled_locations, true ),
-			$this->sanitizer->sanitize_text( $data['layout'] ?? 'text' ),
-			$this->sanitizer->sanitize_text( $data['logo_type'] ?? $data['logo-type'] ?? 'inline' ),
-			$this->sanitizer->sanitize_text( $data['logo_position'] ?? $data['logo-position'] ?? 'left' ),
-			$this->sanitizer->sanitize_text( $data['text_color'] ?? $data['text-color'] ?? 'black' ),
-			$this->sanitizer->sanitize_text( $data['text_size'] ?? $data['text-size'] ?? '12' ),
-			$this->sanitizer->sanitize_text( $data['flex_color'] ?? $data['color'] ?? 'black' ),
-			$this->sanitizer->sanitize_text( $data['flex_ratio'] ?? $data['ratio'] ?? '8x1' )
-		);
+		return $dto;
 	}
 
 	private function maybe_migrate_from_legacy(): void {
