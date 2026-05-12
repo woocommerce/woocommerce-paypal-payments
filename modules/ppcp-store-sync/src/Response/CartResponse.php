@@ -52,11 +52,6 @@ class CartResponse {
 	private string $validation_status = 'INVALID';
 
 	/**
-	 * The payment method token, only set for newly created carts.
-	 */
-	private string $token = '';
-
-	/**
 	 * The WooCommerce order created during checkout, only set for completed carts.
 	 */
 	private ?WC_Order $wc_order = null;
@@ -77,22 +72,17 @@ class CartResponse {
 	/**
 	 * Create a base cart response (status: INCOMPLETE).
 	 */
-	public static function create( StorePayPalCart $store_cart, string $cart_id, string $token = '' ): self {
-		$instance = new self( $store_cart, $cart_id );
-
-		$instance->token = $token;
-
-		return $instance;
+	public static function create( StorePayPalCart $store_cart, string $cart_id ): self {
+		return new self( $store_cart, $cart_id );
 	}
 
 	/**
 	 * Create a new cart response (status: CREATED).
 	 */
-	public static function create_new( StorePayPalCart $store_cart, string $cart_id, string $token ): self {
+	public static function create_new( StorePayPalCart $store_cart, string $cart_id ): self {
 		$instance = new self( $store_cart, $cart_id );
 
 		$instance->status = 'CREATED';
-		$instance->token  = $token;
 
 		return $instance;
 	}
@@ -142,8 +132,9 @@ class CartResponse {
 		$raw = $this->store_cart->to_array();
 
 		$payment_method = array( 'type' => 'paypal' );
-		if ( $this->token ) {
-			$payment_method['token'] = $this->token;
+		$paypal_order   = $this->store_cart->paypal_order();
+		if ( $paypal_order ) {
+			$payment_method['token'] = $paypal_order;
 		}
 
 		$data = array(

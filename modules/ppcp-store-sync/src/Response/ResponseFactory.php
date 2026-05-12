@@ -32,11 +32,10 @@ class ResponseFactory {
 	 *
 	 * @param StorePayPalCart $store_cart The enriched cart.
 	 * @param string          $cart_id    The cart ID.
-	 * @param string          $token      The payment token.
 	 * @return CartResponse The response object.
 	 */
-	public function new_cart( StorePayPalCart $store_cart, string $cart_id, string $token ): CartResponse {
-		return CartResponse::create_new( $store_cart, $cart_id, $token )
+	public function new_cart( StorePayPalCart $store_cart, string $cart_id ): CartResponse {
+		return CartResponse::create_new( $store_cart, $cart_id )
 			->applied_coupons( $this->build_applied_coupons( $store_cart ) )
 			->shipping_options( $this->shipping_options_builder->build( $store_cart->wc_cart() ) );
 	}
@@ -60,11 +59,10 @@ class ResponseFactory {
 	 *
 	 * @param StorePayPalCart $store_cart The enriched cart.
 	 * @param string          $cart_id    The cart ID.
-	 * @param string          $token      Optional payment token to echo back.
 	 * @return CartResponse The response object.
 	 */
-	public function from_cart( StorePayPalCart $store_cart, string $cart_id, string $token = '' ): CartResponse {
-		return CartResponse::create( $store_cart, $cart_id, $token )
+	public function from_cart( StorePayPalCart $store_cart, string $cart_id ): CartResponse {
+		return CartResponse::create( $store_cart, $cart_id )
 			->applied_coupons( $this->build_applied_coupons( $store_cart ) )
 			->shipping_options( $this->shipping_options_builder->build( $store_cart->wc_cart() ) );
 	}

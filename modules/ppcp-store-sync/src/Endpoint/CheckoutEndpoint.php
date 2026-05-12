@@ -128,6 +128,8 @@ class CheckoutEndpoint extends AgenticRestEndpoint {
 			return $this->error( $store_cart );
 		}
 
+		$store_cart->set_paypal_order( $session['ec_token'] );
+
 		$validation = $store_cart->validation();
 
 		// If the cart has _any_ validation issue, stop here.

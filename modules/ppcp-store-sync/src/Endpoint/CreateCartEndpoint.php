@@ -72,8 +72,9 @@ class CreateCartEndpoint extends AgenticRestEndpoint {
 		// Token might be an empty string, when order creation fails. That's okay.
 		$ec_token = $this->order_manager->create_order( $paypal_cart );
 
-		$cart_id  = $this->create_local_cart( $paypal_cart, $ec_token );
-		$response = $this->response_factory->new_cart( $store_cart, $cart_id, $ec_token );
+		$cart_id = $this->create_local_cart( $paypal_cart, $ec_token );
+		$store_cart->set_paypal_order( $ec_token );
+		$response = $this->response_factory->new_cart( $store_cart, $cart_id );
 
 		return $this->cart_details( $response, 201 );
 	}
