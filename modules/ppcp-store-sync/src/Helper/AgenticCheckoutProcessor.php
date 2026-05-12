@@ -334,7 +334,7 @@ class AgenticCheckoutProcessor {
 	 * @return array Shipping data array.
 	 */
 	private function build_shipping_data( PayPalCart $cart ): array {
-		if ( ! $cart->shipping_address() ) {
+		if ( $cart->shipping_address()->is_empty() ) {
 			return array();
 		}
 
