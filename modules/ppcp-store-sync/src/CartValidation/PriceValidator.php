@@ -12,8 +12,6 @@ namespace WooCommerce\PayPalCommerce\StoreSync\CartValidation;
 use WC_Product;
 use WooCommerce\PayPalCommerce\StoreSync\Enums\ErrorCode;
 use WooCommerce\PayPalCommerce\StoreSync\Enums\Priority;
-use WooCommerce\PayPalCommerce\StoreSync\Helper\ProductManager;
-use WooCommerce\PayPalCommerce\StoreSync\Schema\CartItem;
 use WooCommerce\PayPalCommerce\StoreSync\StoreData\StorePayPalCart;
 use WooCommerce\PayPalCommerce\StoreSync\Validation\Resolution\ResolutionOption;
 use WooCommerce\PayPalCommerce\StoreSync\Schema\Money;
@@ -21,11 +19,6 @@ use WooCommerce\PayPalCommerce\StoreSync\Validation\Context\PricingErrorContext;
 use WooCommerce\PayPalCommerce\StoreSync\Validation\ValidationIssue;
 
 class PriceValidator implements ValidatorInterface {
-	private ProductManager $product_manager;
-
-	public function __construct( ProductManager $product_manager ) {
-		$this->product_manager = $product_manager;
-	}
 
 	public function validate( StorePayPalCart $store_cart ): ?array {
 		// Skip validation if the cart contains an inventory issue.
@@ -33,43 +26,28 @@ class PriceValidator implements ValidatorInterface {
 			return null;
 		}
 
-		$paypal_cart = $store_cart->paypal_cart();
-		$currency    = $store_cart->currency();
-		$issues      = array();
+		$issues = array();
 
-		foreach ( $paypal_cart->items() as $key => $item ) {
-			$issue = $this->validate_price_matches_store( $key, $item, $currency );
-
-			if ( $issue ) {
-				$issues[] = $issue;
+		foreach ( $store_cart->cart_items() as $item ) {
+			if ( $item->is_price_correct() ) {
+				continue;
 			}
+
+			$assumed_price = $item->assumed_price_as_money();
+			if ( ! $assumed_price instanceof Money ) {
+				continue;
+			}
+
+			$issues[] = $this->create_price_mismatch_issue(
+				$item->product(),
+				$assumed_price,
+				$item->real_price(),
+				$item->field_path(),
+				$store_cart->currency(),
+			);
 		}
 
 		return $issues;
-	}
-
-	private function validate_price_matches_store( int $key, CartItem $item, string $currency ): ?ValidationIssue {
-		$field = "items[$key]";
-
-		$product = $this->product_manager->find_product( $item );
-
-		if ( ! $product ) {
-			return null;
-		}
-
-		$cart_price = $item->price();
-
-		if ( ! $cart_price ) {
-			return null;
-		}
-
-		$store_price = (float) $product->get_price();
-
-		if ( abs( $cart_price->value() - $store_price ) > 0.01 ) {
-			return $this->create_price_mismatch_issue( $product, $cart_price, $store_price, $field, $currency );
-		}
-
-		return null;
 	}
 
 	private function create_price_mismatch_issue( WC_Product $product, Money $cart_price, float $store_price, string $field, string $currency ): ValidationIssue {
@@ -126,7 +104,12 @@ class PriceValidator implements ValidatorInterface {
 
 		return array(
 			ResolutionOption::create_accept_new_price()
-				->label( sprintf( 'Continue with %s', Money::create( (string) $store_price, $currency )->to_price() ) )
+				->label(
+					sprintf(
+						'Continue with %s',
+						Money::create( (string) $store_price, $currency )->to_price()
+					)
+				)
 				->priority( Priority::HIGH )
 				->set_meta( 'cost_impact', $formatted_difference ),
 			ResolutionOption::create_remove_item()

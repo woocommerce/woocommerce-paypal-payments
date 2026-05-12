@@ -11,6 +11,7 @@ declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\StoreSync\CartValidation\CouponValidator;
 
+use Exception;
 use WC_Coupon;
 use WC_Discounts;
 use WooCommerce\PayPalCommerce\StoreSync\Helper\ProductManager;
@@ -36,7 +37,7 @@ class DiscountCalculator {
 	 * may not be individually valid but we still want to show their discount amounts.
 	 *
 	 * @param WC_Coupon  $wc_coupon The WC coupon object.
-	 * @param PayPalCart $cart The cart context.
+	 * @param PayPalCart $cart      The cart context.
 	 * @return string The discount amount formatted to 2 decimals, or '0.00' if calculation fails.
 	 */
 	public function calculate_discount_amount( WC_Coupon $wc_coupon, PayPalCart $cart ): string {
@@ -44,7 +45,13 @@ class DiscountCalculator {
 
 		// Skip validation - we only want to calculate the discount amount.
 		// Validation is handled separately by CouponValidator.
-		$result = $discounts->apply_coupon( $wc_coupon, false );
+		try {
+			$result = $discounts->apply_coupon( $wc_coupon, false );
+		} catch ( Exception $exception ) {
+			// Should never happen because validation is skipped, adding error handling for
+			// extra safety and future-proofing.
+			return '0.00';
+		}
 
 		if ( is_wp_error( $result ) ) {
 			// If calculation fails even without validation, return 0.00.
@@ -91,7 +98,9 @@ class DiscountCalculator {
 			$std_item->object   = array( 'data' => $product );
 			$std_item->product  = $product;
 			$std_item->quantity = $item->quantity();
-			$std_item->price    = wc_add_number_precision( $item_price * (float) $item->quantity() );
+			$std_item->price    = wc_add_number_precision(
+				$item_price * (float) $item->quantity()
+			);
 
 			$items[ $std_item->key ] = $std_item;
 		}

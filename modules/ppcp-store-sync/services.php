@@ -177,27 +177,22 @@ return array(
 	},
 	'agentic.validator.product'                    => static function ( ContainerInterface $c ): ProductValidator {
 		return new ProductValidator(
-			$c->get( 'agentic.helper.product-manager' ),
 			$c->get( 'agentic.config.ingestion' )
 		);
 	},
-	'agentic.validator.price'                      => static function ( ContainerInterface $c ): PriceValidator {
-		return new PriceValidator(
-			$c->get( 'agentic.helper.product-manager' )
-		);
+	'agentic.validator.price'                      => static function (): PriceValidator {
+		return new PriceValidator();
 	},
 	'agentic.validator.inventory'                  => static function ( ContainerInterface $c ): InventoryValidator {
 		return new InventoryValidator(
 			$c->get( 'agentic.helper.product-manager' )
 		);
 	},
-	'agentic.validator.shipping'                   => static function ( ContainerInterface $c ): ShippingValidator {
-		return new ShippingValidator(
-			$c->get( 'agentic.helper.product-manager' )
-		);
+	'agentic.validator.shipping'                   => static function (): ShippingValidator {
+		return new ShippingValidator();
 	},
-	'agentic.validator.currency'                   => static function ( ContainerInterface $c ): CurrencyValidator {
-		return new CurrencyValidator( $c->get( 'agentic.config.store-currency' ) );
+	'agentic.validator.currency'                   => static function (): CurrencyValidator {
+		return new CurrencyValidator();
 	},
 	'agentic.validator.coupon.discount-calculator' => static function ( ContainerInterface $c ): DiscountCalculator {
 		return new DiscountCalculator(

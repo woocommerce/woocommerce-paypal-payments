@@ -12,11 +12,11 @@ namespace WooCommerce\PayPalCommerce\StoreSync\CartValidation;
 use WooCommerce\PayPalCommerce\StoreSync\Enums\ErrorCode;
 use WooCommerce\PayPalCommerce\StoreSync\Enums\Priority;
 use WooCommerce\PayPalCommerce\StoreSync\Helper\ProductManager;
-use WooCommerce\PayPalCommerce\StoreSync\Schema\CartItem;
 use WooCommerce\PayPalCommerce\StoreSync\StoreData\StorePayPalCart;
 use WooCommerce\PayPalCommerce\StoreSync\Validation\Context\InventoryIssueContext;
 use WooCommerce\PayPalCommerce\StoreSync\Validation\Resolution\ResolutionOption;
 use WooCommerce\PayPalCommerce\StoreSync\Validation\ValidationIssue;
+use WooCommerce\PayPalCommerce\StoreSync\StoreData\StoreCartItem;
 
 class InventoryValidator implements ValidatorInterface {
 	private ProductManager $product_manager;
@@ -31,36 +31,24 @@ class InventoryValidator implements ValidatorInterface {
 			return null;
 		}
 
-		$paypal_cart = $store_cart->paypal_cart();
-		$issues      = array();
-
-		foreach ( $paypal_cart->items() as $key => $item ) {
-			$issue = $this->validate_product( $key, $item );
-
-			if ( $issue ) {
-				$issues[] = $issue;
-			}
-		}
-
-		return $issues;
+		return array_values(
+			array_filter(
+				$store_cart->cart_items(),
+				fn( $item ) => $this->validate_product( $item )
+			)
+		);
 	}
 
-	private function validate_product( int $key, CartItem $item ): ?ValidationIssue {
-		$field = "items[{$key}]";
-
-		$product = $this->product_manager->find_product( $item );
-
-		if ( ! $product ) {
-			return null;
-		}
+	private function validate_product( StoreCartItem $item ): ?ValidationIssue {
+		$product = $item->product();
 
 		if ( ! $this->product_manager->is_in_stock( $product ) ) {
 			return ValidationIssue::create_item_out_of_stock( 'Product is no longer available' )
 				->user_message( sprintf( '%s is currently out of stock.', $product->get_name() ) )
-				->for_field( $field )
+				->for_field( $item->field_path() )
 				->add_context(
 					InventoryIssueContext::create_item_out_of_stock()
-						->item_id( $item->item_id() )
+						->item_id( $item->id() )
 				)
 				->add_resolution(
 					ResolutionOption::create_remove_item()
@@ -82,10 +70,10 @@ class InventoryValidator implements ValidatorInterface {
 						$item->quantity()
 					)
 				)
-				->for_field( $field )
+				->for_field( $item->field_path() )
 				->add_context(
 					InventoryIssueContext::create_insufficient_inventory()
-						->item_id( $item->item_id() )
+						->item_id( $item->id() )
 						->available_quantity( $stock_quantity )
 						->requested_quantity( $item->quantity() )
 				)
