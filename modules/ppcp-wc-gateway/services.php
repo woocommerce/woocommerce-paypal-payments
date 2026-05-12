@@ -590,7 +590,7 @@ return array(
         return $container->get('wcgateway.button.default-locations');
     },
     'wcgateway.ppcp-gateways' => static function (ContainerInterface $container): array {
-        return array(PayPalGateway::ID, CreditCardGateway::ID, PayUponInvoiceGateway::ID, CardButtonGateway::ID, OXXOGateway::ID, AxoGateway::ID);
+        return array(PayPalGateway::ID, CreditCardGateway::ID, PayUponInvoiceGateway::ID, CardButtonGateway::ID, OXXOGateway::ID, AxoGateway::ID, \WooCommerce\PayPalCommerce\WcGateway\GooglePayGateway::ID, \WooCommerce\PayPalCommerce\WcGateway\ApplePayGateway::ID);
     },
     'wcgateway.gateway-repository' => static function (ContainerInterface $container): GatewayRepository {
         return new GatewayRepository($container->get('wcgateway.ppcp-gateways'));

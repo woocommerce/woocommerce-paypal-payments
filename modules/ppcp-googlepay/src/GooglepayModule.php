@@ -182,8 +182,11 @@ class GooglepayModule implements ServiceModule, ExecutableModule
             }
             return $methods;
         });
-        add_action('woocommerce_review_order_after_submit', function () {
-            echo '<div id="ppc-button-' . esc_attr(\WooCommerce\PayPalCommerce\Googlepay\GooglePayGateway::ID) . '"></div>';
+        add_action('wp', static function () {
+            $checkout_hook = (string) apply_filters('woocommerce_paypal_payments_checkout_button_renderer_hook', 'woocommerce_review_order_after_payment');
+            add_action($checkout_hook, static function () {
+                echo '<div id="ppc-button-' . esc_attr(\WooCommerce\PayPalCommerce\Googlepay\GooglePayGateway::ID) . '"></div>';
+            });
         });
         add_action('woocommerce_pay_order_after_submit', function () {
             echo '<div id="ppc-button-' . esc_attr(\WooCommerce\PayPalCommerce\Googlepay\GooglePayGateway::ID) . '"></div>';
