@@ -224,7 +224,7 @@ class CartItem extends AgenticSchema {
 	public function to_array(): array {
 		$data = array(
 			'quantity'            => $this->quantity,
-			'price'               => $this->price?->to_array(),
+			'price'               => $this->price ? $this->price->to_array() : null,
 			'item_id'             => $this->id,
 			'variant_id'          => $this->variant_id,
 			'parent_id'           => $this->parent_id,

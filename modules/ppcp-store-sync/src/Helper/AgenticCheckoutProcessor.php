@@ -281,16 +281,14 @@ class AgenticCheckoutProcessor {
 			),
 		);
 
-		$name      = $cart->customer()?->name();
-		$full_name = $name // todo: should become $cart->customer()->full_name('').
-			? trim( ( $name['given_name'] ?? '' ) . ' ' . ( $name['surname'] ?? '' ) )
-			: '';
+		$customer  = $cart->customer();
+		$full_name = $customer ? $customer->full_name() : '';
 
 		$data = (object) array(
 			'name'    => (object) array(
 				'full_name' => $full_name,
 			),
-			'address' => (object) ( $cart->shipping_address()?->to_array() ?? Address::empty_array() ),
+			'address' => (object) $cart->shipping_address()->to_array(),
 			'options' => array( $option_data ),
 		);
 
@@ -338,10 +336,8 @@ class AgenticCheckoutProcessor {
 			return array();
 		}
 
-		$name      = $cart->customer()?->name();
-		$full_name = $name // todo: turn to $cart->customer()->full_name('').
-			? trim( ( $name['given_name'] ?? '' ) . ' ' . ( $name['surname'] ?? '' ) )
-			: '';
+		$customer  = $cart->customer();
+		$full_name = $customer ? $customer->full_name() : '';
 
 		return array(
 			'name'    => array(
