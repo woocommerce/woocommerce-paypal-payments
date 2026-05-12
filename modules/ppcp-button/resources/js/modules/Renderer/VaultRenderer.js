@@ -1,4 +1,10 @@
+import { loadScript } from '@paypal/paypal-js';
+
+const VAULT_NAMESPACE = 'ppcpVaultComponent';
 const CONTAINER_SELECTOR = '#ppcp-vault-component';
+
+// Module-level cache so repeated render calls don't trigger duplicate loads.
+let vaultSdkPromise = null;
 
 class VaultRenderer {
 	constructor( config ) {
@@ -7,13 +13,40 @@ class VaultRenderer {
 		this.rendered = false;
 	}
 
-	render( onApproveCallback, onCancelCallback ) {
+	async loadSdk() {
+		if ( window[ VAULT_NAMESPACE ]?.SavedPaymentMethods ) {
+			return;
+		}
+
+		if ( ! vaultSdkPromise ) {
+			const vaultData = this.config.vault_component;
+			const options = {
+				clientId: this.config.url_params?.[ 'client-id' ],
+				components: 'saved-payment-methods',
+				'data-namespace': VAULT_NAMESPACE,
+				'data-sdk-client-token': vaultData.sdk_client_token,
+			};
+
+			const sdkBaseUrl = this.config.script_attributes?.sdkBaseUrl;
+			if ( sdkBaseUrl ) {
+				options.sdkBaseUrl = sdkBaseUrl;
+			}
+
+			vaultSdkPromise = loadScript( options );
+		}
+
+		await vaultSdkPromise;
+	}
+
+	async render( onApproveCallback, onCancelCallback ) {
 		const container = document.querySelector( CONTAINER_SELECTOR );
 		if ( ! container || this.rendered ) {
 			return;
 		}
 
-		const paypal = window.paypal;
+		await this.loadSdk();
+
+		const paypal = window[ VAULT_NAMESPACE ];
 		if ( ! paypal?.SavedPaymentMethods ) {
 			console.error(
 				'PayPal SavedPaymentMethods SDK component not available.'
@@ -80,8 +113,13 @@ class VaultRenderer {
 	}
 
 	reset() {
+		this.vaultInstance?.close?.();
 		this.vaultInstance = null;
 		this.rendered = false;
+		const container = document.querySelector( CONTAINER_SELECTOR );
+		if ( container ) {
+			container.innerHTML = '';
+		}
 	}
 
 	isRendered() {
