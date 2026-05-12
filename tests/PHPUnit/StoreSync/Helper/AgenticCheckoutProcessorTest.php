@@ -15,6 +15,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Factory\ShippingFactory;
 use WooCommerce\PayPalCommerce\Button\Helper\WooCommerceOrderCreator;
 use WooCommerce\PayPalCommerce\Button\Session\CartData;
 use WooCommerce\PayPalCommerce\StoreSync\CartValidation\CouponValidator\AppliedCouponsBuilder;
+use WooCommerce\PayPalCommerce\StoreSync\Schema\Address;
 use WooCommerce\PayPalCommerce\StoreSync\Schema\PaymentMethod;
 use WooCommerce\PayPalCommerce\StoreSync\Schema\PayPalCart;
 use WooCommerce\PayPalCommerce\StoreSync\Schema\ShippingOption;
@@ -65,7 +66,7 @@ class AgenticCheckoutProcessorTest extends TestCase {
 		$cart = Mockery::mock( PayPalCart::class );
 		$cart->allows( 'available_shipping_options' )->andReturn( array( $option ) );
 		$cart->allows( 'customer' )->andReturn( null );
-		$cart->allows( 'shipping_address' )->andReturn( null );
+		$cart->allows( 'shipping_address' )->andReturn( Address::create_empty() );
 
 		$expected_shipping = Mockery::mock( Shipping::class );
 		$captured_data     = null;
@@ -171,7 +172,7 @@ class AgenticCheckoutProcessorTest extends TestCase {
 		$cart = Mockery::mock( PayPalCart::class );
 		$cart->allows( 'customer' )->andReturn( null );
 		$cart->allows( 'billing_address' )->andReturn( null );
-		$cart->allows( 'shipping_address' )->andReturn( null );
+		$cart->allows( 'shipping_address' )->andReturn( Address::create_empty() );
 		$cart->allows( 'available_shipping_options' )->andReturn( array() );
 
 		$payment_method = Mockery::mock( PaymentMethod::class );

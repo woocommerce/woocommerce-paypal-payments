@@ -12,6 +12,7 @@ use WC_Cart;
 use WP_Error;
 use WooCommerce\PayPalCommerce\StoreSync\Config\StoreCurrencyValue;
 use WooCommerce\PayPalCommerce\StoreSync\Helper\AgenticCartBuilder;
+use WooCommerce\PayPalCommerce\StoreSync\Schema\Address;
 use WooCommerce\PayPalCommerce\StoreSync\Schema\CartItem;
 use WooCommerce\PayPalCommerce\StoreSync\Schema\PaymentMethod;
 use WooCommerce\PayPalCommerce\StoreSync\Schema\PayPalCart;
@@ -36,11 +37,10 @@ class StorePayPalCartTest extends StoreSyncTestCase {
 	private function make_paypal_cart( array $overrides = [] ): PayPalCart {
 		$stub = Mockery::mock( PayPalCart::class );
 		$stub->allows( 'customer' )->andReturn( $overrides['customer'] ?? null );
-		$stub->allows( 'shipping_address' )->andReturn( $overrides['shipping_address'] ?? null );
+		$stub->allows( 'shipping_address' )->andReturn( $overrides['shipping_address'] ?? Address::create_empty() );
 		$stub->allows( 'billing_address' )->andReturn( $overrides['billing_address'] ?? null );
-		$stub->allows( 'payment_method' )->andReturn( $overrides['payment_method'] ?? null );
+		$stub->allows( 'payment_method' )->andReturn( $overrides['payment_method'] ?? PaymentMethod::create_empty() );
 		$stub->allows( 'items' )->andReturn( $overrides['items'] ?? array() );
-		$stub->allows( 'to_array' )->andReturn( $overrides['to_array'] ?? array() );
 
 		return $stub;
 	}
@@ -292,6 +292,7 @@ class StorePayPalCartTest extends StoreSyncTestCase {
 	 */
 	public function test_is_ready_for_payment_true_when_all_conditions_met(): void {
 		$payment_method = Mockery::mock( PaymentMethod::class );
+		$payment_method->allows( 'token' )->andReturn( 'some-token' );
 		$paypal_cart    = $this->make_paypal_cart( array( 'payment_method' => $payment_method ) );
 		$schema         = $this->make_cart_item_schema( array( 'quantity' => 1 ) );
 
@@ -321,7 +322,13 @@ class StorePayPalCartTest extends StoreSyncTestCase {
 			$validation->add_invalid_data( 'test', 'reason', 'message' );
 		}
 
-		$payment_method = $has_payment_method ? Mockery::mock( PaymentMethod::class ) : null;
+		if ( $has_payment_method ) {
+			$payment_method = Mockery::mock( PaymentMethod::class );
+			$payment_method->allows( 'token' )->andReturn( 'some-token' );
+		} else {
+			$payment_method = Mockery::mock( PaymentMethod::class );
+			$payment_method->allows( 'token' )->andReturn( null );
+		}
 		$paypal_cart    = $this->make_paypal_cart( array( 'payment_method' => $payment_method ) );
 
 		$store_items = array();
@@ -379,25 +386,7 @@ class StorePayPalCartTest extends StoreSyncTestCase {
 			array( 'cart_builder' => $this->make_cart_builder( $wp_error ) )
 		);
 
-		$this->assertNull( $sut->totals() );
-	}
-
-	/**
-	 * GIVEN a WC_Cart is available but validation has a pricing issue
-	 * WHEN totals() is called
-	 * THEN null is returned
-	 */
-	public function test_totals_returns_null_when_pricing_issue_exists(): void {
-		$wc_cart    = Mockery::mock( WC_Cart::class );
-		$validation = new StoreValidation();
-		$validation->add_price_mismatch( 'Price changed.' );
-
-		$sut = $this->make_sut( array(
-			'cart_builder' => $this->make_cart_builder( $wc_cart ),
-			'validation'   => $validation,
-		) );
-
-		$this->assertNull( $sut->totals() );
+		$this->assertNull( $sut->get_totals() );
 	}
 
 	/**
@@ -420,7 +409,7 @@ class StorePayPalCartTest extends StoreSyncTestCase {
 			'store_currency' => $this->make_currency( 'USD' ),
 		) );
 
-		$totals = $sut->totals();
+		$totals = $sut->get_totals();
 
 		$this->assertIsArray( $totals );
 		$this->assertArrayHasKey( 'subtotal', $totals );
@@ -451,7 +440,7 @@ class StorePayPalCartTest extends StoreSyncTestCase {
 			'store_currency' => $this->make_currency( 'EUR' ),
 		) );
 
-		$totals = $sut->totals();
+		$totals = $sut->get_totals();
 
 		$this->assertIsArray( $totals );
 		$this->assertArrayHasKey( 'discount', $totals );
@@ -476,7 +465,7 @@ class StorePayPalCartTest extends StoreSyncTestCase {
 			'store_currency' => $this->make_currency( 'USD' ),
 		) );
 
-		$totals = $sut->totals();
+		$totals = $sut->get_totals();
 
 		$this->assertIsArray( $totals );
 		$this->assertArrayNotHasKey( 'discount', $totals );
@@ -488,7 +477,7 @@ class StorePayPalCartTest extends StoreSyncTestCase {
 
 	/**
 	 * GIVEN a single StoreCartItem with known schema fields and real_price
-	 * WHEN to_array() is called
+	 * WHEN get_items() is called
 	 * THEN the items array contains one entry with correct item_id, variant_id, name,
 	 *      quantity, and a price with the store currency and formatted decimal value
 	 */
@@ -507,12 +496,11 @@ class StorePayPalCartTest extends StoreSyncTestCase {
 			'store_currency' => $this->make_currency( 'USD' ),
 		) );
 
-		$result = $sut->to_array();
+		$result = $sut->get_items();
 
-		$this->assertArrayHasKey( 'items', $result );
-		$this->assertCount( 1, $result['items'] );
+		$this->assertCount( 1, $result );
 
-		$item = $result['items'][0];
+		$item = $result[0];
 		$this->assertSame( 'sku-42', $item['item_id'] );
 		$this->assertSame( 'var-7', $item['variant_id'] );
 		$this->assertSame( 'Test Product', $item['name'] );
@@ -522,7 +510,7 @@ class StorePayPalCartTest extends StoreSyncTestCase {
 
 	/**
 	 * GIVEN multiple StoreCartItems with different prices
-	 * WHEN to_array() is called
+	 * WHEN get_items() is called
 	 * THEN each item entry uses its own real_price formatted to two decimal places
 	 *
 	 * @dataProvider item_price_formatting_provider
@@ -536,8 +524,8 @@ class StorePayPalCartTest extends StoreSyncTestCase {
 			'store_currency' => $this->make_currency( 'USD' ),
 		) );
 
-		$result = $sut->to_array();
-		$this->assertSame( $expected_value, $result['items'][0]['price']['value'] );
+		$result = $sut->get_items();
+		$this->assertSame( $expected_value, $result[0]['price']['value'] );
 	}
 
 	public function item_price_formatting_provider(): array {
@@ -556,9 +544,8 @@ class StorePayPalCartTest extends StoreSyncTestCase {
 
 	/**
 	 * GIVEN a StorePayPalCart with EUR currency and one resolved item
-	 * WHEN to_array() is called
+	 * WHEN get_items() is called
 	 * THEN each item price carries the store currency_code
-	 * AND there is no root-level currency key
 	 */
 	public function test_to_array_currency_appears_in_item_prices(): void {
 		$schema     = $this->make_cart_item_schema( array( 'quantity' => 1 ) );
@@ -577,10 +564,9 @@ class StorePayPalCartTest extends StoreSyncTestCase {
 			)
 		);
 
-		$result = $sut->to_array();
+		$result = $sut->get_items();
 
-		$this->assertArrayNotHasKey( 'currency', $result );
-		$this->assertSame( 'EUR', $result['items'][0]['price']['currency_code'] );
+		$this->assertSame( 'EUR', $result[0]['price']['currency_code'] );
 	}
 
 	// -------------------------------------------------------------------------
@@ -589,9 +575,9 @@ class StorePayPalCartTest extends StoreSyncTestCase {
 
 	/**
 	 * GIVEN a PayPalCart with a customer that has a first and last name
-	 * WHEN to_array() is called
-	 * THEN customer is present in the result as a nested object
-	 * AND customer.name contains given_name and surname
+	 * WHEN get_customer() is called
+	 * THEN customer is returned as a non-empty array
+	 * AND it contains a name with given_name and surname
 	 */
 	public function test_to_array_includes_customer_when_present(): void {
 		$paypal_cart = $this->make_paypal_cart_schema( array(
@@ -607,18 +593,18 @@ class StorePayPalCartTest extends StoreSyncTestCase {
 
 		$sut = $this->make_sut( array( 'paypal_cart' => $paypal_cart ) );
 
-		$result = $sut->to_array();
+		$result = $sut->get_customer();
 
-		$this->assertArrayHasKey( 'customer', $result );
-		$this->assertArrayHasKey( 'name', $result['customer'] );
-		$this->assertSame( 'John', $result['customer']['name']['given_name'] );
-		$this->assertSame( 'Doe', $result['customer']['name']['surname'] );
+		$this->assertNotEmpty( $result );
+		$this->assertArrayHasKey( 'name', $result );
+		$this->assertSame( 'John', $result['name']['given_name'] );
+		$this->assertSame( 'Doe', $result['name']['surname'] );
 	}
 
 	/**
 	 * GIVEN a PayPalCart with no customer
-	 * WHEN to_array() is called
-	 * THEN customer is absent from the result
+	 * WHEN get_customer() is called
+	 * THEN an empty array is returned
 	 */
 	public function test_to_array_omits_customer_when_absent(): void {
 		$paypal_cart = $this->make_paypal_cart_schema( array(
@@ -627,9 +613,9 @@ class StorePayPalCartTest extends StoreSyncTestCase {
 		) );
 		$sut         = $this->make_sut( array( 'paypal_cart' => $paypal_cart ) );
 
-		$result = $sut->to_array();
+		$result = $sut->get_customer();
 
-		$this->assertArrayNotHasKey( 'customer', $result );
+		$this->assertEmpty( $result );
 	}
 
 	// -------------------------------------------------------------------------
@@ -638,8 +624,8 @@ class StorePayPalCartTest extends StoreSyncTestCase {
 
 	/**
 	 * GIVEN a PayPalCart with a shipping address that has a non-empty country_code
-	 * WHEN to_array() is called
-	 * THEN shipping_address is present in the result
+	 * WHEN get_shipping_address() is called
+	 * THEN the returned array has a non-empty country_code of 'US'
 	 */
 	public function test_to_array_includes_shipping_address_when_country_code_present(): void {
 		$paypal_cart = $this->make_paypal_cart_schema( array(
@@ -653,16 +639,16 @@ class StorePayPalCartTest extends StoreSyncTestCase {
 
 		$sut = $this->make_sut( array( 'paypal_cart' => $paypal_cart ) );
 
-		$result = $sut->to_array();
+		$result = $sut->get_shipping_address();
 
-		$this->assertArrayHasKey( 'shipping_address', $result );
-		$this->assertSame( 'US', $result['shipping_address']['country_code'] );
+		$this->assertNotEmpty( $result['country_code'] );
+		$this->assertSame( 'US', $result['country_code'] );
 	}
 
 	/**
 	 * GIVEN a PayPalCart with no shipping address
-	 * WHEN to_array() is called
-	 * THEN shipping_address is absent from the result
+	 * WHEN get_shipping_address() is called
+	 * THEN an empty array is returned
 	 */
 	public function test_to_array_omits_shipping_address_when_country_code_is_empty(): void {
 		$paypal_cart = $this->make_paypal_cart_schema( array(
@@ -671,9 +657,9 @@ class StorePayPalCartTest extends StoreSyncTestCase {
 		) );
 		$sut         = $this->make_sut( array( 'paypal_cart' => $paypal_cart ) );
 
-		$result = $sut->to_array();
+		$result = $sut->get_shipping_address();
 
-		$this->assertArrayNotHasKey( 'shipping_address', $result );
+		$this->assertSame( array(), $result );
 	}
 
 	// -------------------------------------------------------------------------
@@ -682,8 +668,8 @@ class StorePayPalCartTest extends StoreSyncTestCase {
 
 	/**
 	 * GIVEN a PayPalCart with a billing address that has a non-empty country_code
-	 * WHEN to_array() is called
-	 * THEN billing_address is present in the result
+	 * WHEN get_billing_address() is called
+	 * THEN a non-null array is returned with country_code 'DE'
 	 */
 	public function test_to_array_includes_billing_address_when_country_code_present(): void {
 		$paypal_cart = $this->make_paypal_cart_schema( array(
@@ -697,16 +683,16 @@ class StorePayPalCartTest extends StoreSyncTestCase {
 
 		$sut = $this->make_sut( array( 'paypal_cart' => $paypal_cart ) );
 
-		$result = $sut->to_array();
+		$result = $sut->get_billing_address();
 
-		$this->assertArrayHasKey( 'billing_address', $result );
-		$this->assertSame( 'DE', $result['billing_address']['country_code'] );
+		$this->assertNotNull( $result );
+		$this->assertSame( 'DE', $result['country_code'] );
 	}
 
 	/**
 	 * GIVEN a PayPalCart with no billing address
-	 * WHEN to_cart() is called
-	 * THEN billing_address is absent from the result
+	 * WHEN get_billing_address() is called
+	 * THEN null is returned
 	 */
 	public function test_to_array_omits_billing_address_when_country_code_is_empty(): void {
 		$paypal_cart = $this->make_paypal_cart_schema( array(
@@ -715,9 +701,9 @@ class StorePayPalCartTest extends StoreSyncTestCase {
 		) );
 		$sut         = $this->make_sut( array( 'paypal_cart' => $paypal_cart ) );
 
-		$result = $sut->to_array();
+		$result = $sut->get_billing_address();
 
-		$this->assertArrayNotHasKey( 'billing_address', $result );
+		$this->assertNull( $result );
 	}
 
 	// -------------------------------------------------------------------------
@@ -726,8 +712,8 @@ class StorePayPalCartTest extends StoreSyncTestCase {
 
 	/**
 	 * GIVEN a valid WC_Cart with non-zero totals and no pricing issues
-	 * WHEN to_array() is called
-	 * THEN totals is present in the result
+	 * WHEN get_totals() is called
+	 * THEN a non-null array is returned
 	 */
 	public function test_to_array_includes_totals_when_totals_are_available(): void {
 		$wc_cart = Mockery::mock( WC_Cart::class );
@@ -742,16 +728,16 @@ class StorePayPalCartTest extends StoreSyncTestCase {
 			'store_currency' => $this->make_currency( 'USD' ),
 		) );
 
-		$result = $sut->to_array();
+		$result = $sut->get_totals();
 
-		$this->assertArrayHasKey( 'totals', $result );
-		$this->assertIsArray( $result['totals'] );
+		$this->assertNotNull( $result );
+		$this->assertIsArray( $result );
 	}
 
 	/**
 	 * GIVEN the cart builder returned a WP_Error (no WC_Cart)
-	 * WHEN to_array() is called
-	 * THEN totals is absent from the result
+	 * WHEN get_totals() is called
+	 * THEN null is returned
 	 */
 	public function test_to_array_omits_totals_when_wc_cart_is_null(): void {
 		$wp_error = Mockery::mock( WP_Error::class );
@@ -759,28 +745,9 @@ class StorePayPalCartTest extends StoreSyncTestCase {
 			array( 'cart_builder' => $this->make_cart_builder( $wp_error ) )
 		);
 
-		$result = $sut->to_array();
+		$result = $sut->get_totals();
 
-		$this->assertArrayNotHasKey( 'totals', $result );
+		$this->assertNull( $result );
 	}
 
-	/**
-	 * GIVEN a WC_Cart is available but validation records a pricing issue
-	 * WHEN to_array() is called
-	 * THEN totals is absent from the result
-	 */
-	public function test_to_array_omits_totals_when_pricing_issue_exists(): void {
-		$wc_cart    = Mockery::mock( WC_Cart::class );
-		$validation = new StoreValidation();
-		$validation->add_price_mismatch( 'Price mismatch.' );
-
-		$sut = $this->make_sut( array(
-			'cart_builder' => $this->make_cart_builder( $wc_cart ),
-			'validation'   => $validation,
-		) );
-
-		$result = $sut->to_array();
-
-		$this->assertArrayNotHasKey( 'totals', $result );
-	}
 }

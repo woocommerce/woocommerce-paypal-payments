@@ -160,16 +160,17 @@ class AddressTest extends SchemaTestCase {
 	}
 
 	// -------------------------------------------------------------------------
-	// Group — empty_array()
+	// Group — create_empty()
 	// -------------------------------------------------------------------------
 
 	/**
-	 * GIVEN no Address instance (static context)
-	 * WHEN Address::empty_array() is called
-	 * THEN an array with all six keys is returned and every value is an empty string
+	 * GIVEN no input data
+	 * WHEN Address::create_empty() is called
+	 * THEN the resulting Address::to_array() has all six keys with empty string values
 	 */
-	public function test_empty_array_returns_all_six_keys_as_empty_strings(): void {
-		$result = Address::empty_array();
+	public function test_create_empty_returns_address_with_all_fields_as_empty_strings(): void {
+		$address = Address::create_empty();
+		$result  = $address->to_array();
 
 		$expected_keys = array(
 			'address_line_1',
@@ -181,8 +182,8 @@ class AddressTest extends SchemaTestCase {
 		);
 
 		foreach ( $expected_keys as $key ) {
-			$this->assertArrayHasKey( $key, $result, "Key '$key' must be present in empty_array() result" );
-			$this->assertSame( '', $result[ $key ], "Key '$key' must be an empty string in empty_array() result" );
+			$this->assertArrayHasKey( $key, $result, "Key '$key' must be present" );
+			$this->assertSame( '', $result[ $key ], "Key '$key' must be an empty string" );
 		}
 	}
 }

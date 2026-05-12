@@ -46,7 +46,13 @@ abstract class AgenticEndpointTestCase extends TestCase {
 				$mock = Mockery::mock( StorePayPalCart::class );
 				$mock->allows( 'paypal_cart' )->andReturn( $paypal_cart );
 				$mock->allows( 'validation' )->andReturn( $validation );
-				$mock->allows( 'to_array' )->andReturn( array() );
+				$mock->allows( 'get_validation_issues' )->andReturn( array() );
+				$mock->allows( 'get_items' )->andReturn( array() );
+				$mock->allows( 'get_customer' )->andReturn( array() );
+				$mock->allows( 'get_shipping_address' )->andReturn( array() );
+				$mock->allows( 'get_billing_address' )->andReturn( null );
+				$mock->allows( 'get_totals' )->andReturn( null );
+				$mock->allows( 'get_payment_method' )->andReturn( array( 'type' => 'paypal' ) );
 				$mock->allows( 'set_paypal_order' );
 				$mock->allows( 'paypal_order' )->andReturn( '' );
 

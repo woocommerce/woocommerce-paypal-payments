@@ -41,7 +41,7 @@ class AgenticCartBuilderTest extends TestCase {
 		$paypal_cart->allows( 'items' )->andReturn( array() );
 		$paypal_cart->allows( 'coupons' )->andReturn( null );
 		$paypal_cart->allows( 'customer' )->andReturn( null );
-		$paypal_cart->allows( 'shipping_address' )->andReturn( null );
+		$paypal_cart->allows( 'shipping_address' )->andReturn( Address::create_empty() );
 		$paypal_cart->allows( 'billing_address' )->andReturn( null );
 
 		// Arrange: WC session mock — assert that set() is called with the right method.
@@ -56,6 +56,16 @@ class AgenticCartBuilderTest extends TestCase {
 		$wc_cart_mock->allows( 'calculate_totals' );
 
 		$wc_customer_mock = Mockery::mock( 'WC_Customer' );
+		$wc_customer_mock->allows( 'get_first_name' )->andReturn( '' );
+		$wc_customer_mock->allows( 'get_last_name' )->andReturn( '' );
+		$wc_customer_mock->allows( 'set_shipping_first_name' );
+		$wc_customer_mock->allows( 'set_shipping_last_name' );
+		$wc_customer_mock->allows( 'set_shipping_address_1' );
+		$wc_customer_mock->allows( 'set_shipping_address_2' );
+		$wc_customer_mock->allows( 'set_shipping_city' );
+		$wc_customer_mock->allows( 'set_shipping_state' );
+		$wc_customer_mock->allows( 'set_shipping_postcode' );
+		$wc_customer_mock->allows( 'set_shipping_country' );
 
 		$wc_mock           = Mockery::mock( 'WooCommerce' );
 		$wc_mock->cart     = $wc_cart_mock;

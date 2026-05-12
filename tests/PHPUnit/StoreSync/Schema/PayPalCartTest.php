@@ -3,6 +3,7 @@ declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\StoreSync\Schema;
 
+use WooCommerce\PayPalCommerce\StoreSync\Schema\Address;
 use WooCommerce\PayPalCommerce\StoreSync\Validation\StoreValidation;
 
 /**
@@ -108,13 +109,11 @@ class PayPalCartTest extends SchemaTestCase {
 
 	protected function get_data_types(): array {
 		return array(
-			'customer'         => array( 'type' => 'array', 'valid' => array() ),
-			'shipping_address' => array( 'type' => 'array', 'valid' => array() ),
-			'billing_address'  => array( 'type' => 'array', 'valid' => array() ),
-			'payment_method'   => array( 'type' => 'array', 'valid' => array() ),
-			'checkout_fields'  => array( 'type' => 'array', 'valid' => array() ),
-			'coupons'          => array( 'type' => 'array', 'valid' => array() ),
-			'geo_coordinates'  => array( 'type' => 'array', 'valid' => array() ),
+			'customer'        => array( 'type' => 'array', 'valid' => array() ),
+			'billing_address' => array( 'type' => 'array', 'valid' => array() ),
+			'checkout_fields' => array( 'type' => 'array', 'valid' => array() ),
+			'coupons'         => array( 'type' => 'array', 'valid' => array() ),
+			'geo_coordinates' => array( 'type' => 'array', 'valid' => array() ),
 		);
 	}
 
@@ -132,11 +131,18 @@ class PayPalCartTest extends SchemaTestCase {
 		$this->assertRequiredField( 'payment_method' );
 
 		$this->assertOptionalField( 'customer' );
-		$this->assertOptionalField( 'shipping_address' );
 		$this->assertOptionalField( 'billing_address' );
 		$this->assertOptionalField( 'checkout_fields' );
 		$this->assertOptionalField( 'coupons' );
 		$this->assertOptionalField( 'geo_coordinates' );
+
+		// shipping_address() always returns an Address object (create_empty() when not set).
+		$validation = new StoreValidation();
+		$instance   = PayPalCart::from_array( $this->mandatory_data(), $validation );
+		$address    = $instance->shipping_address();
+		$this->assertInstanceOf( Address::class, $address );
+		$this->assertTrue( $address->is_empty() );
+		$this->assertEmpty( $validation->all() );
 	}
 
 	public function test_array_fields(): void {

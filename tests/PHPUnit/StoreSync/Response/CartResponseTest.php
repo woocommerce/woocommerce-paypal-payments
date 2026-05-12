@@ -36,9 +36,20 @@ class CartResponseTest extends StoreSyncTestCase {
 	private function make_store_cart( array $cart_data = array(), string $paypal_order = '' ): StorePayPalCart {
 		$validation = new StoreValidation();
 		$store_cart = Mockery::mock( StorePayPalCart::class );
-		$store_cart->allows( 'to_array' )->andReturn( $cart_data );
 		$store_cart->allows( 'validation' )->andReturn( $validation );
 		$store_cart->allows( 'paypal_order' )->andReturn( $paypal_order );
+		$store_cart->allows( 'get_validation_issues' )->andReturn( array() );
+		$store_cart->allows( 'get_items' )->andReturn( $cart_data['items'] ?? array() );
+		$store_cart->allows( 'get_customer' )->andReturn( $cart_data['customer'] ?? array() );
+		$store_cart->allows( 'get_shipping_address' )->andReturn( $cart_data['shipping_address'] ?? array() );
+		$store_cart->allows( 'get_billing_address' )->andReturn( $cart_data['billing_address'] ?? null );
+		$store_cart->allows( 'get_totals' )->andReturn( $cart_data['totals'] ?? null );
+
+		$payment_method_data = $cart_data['payment_method'] ?? array( 'type' => 'paypal' );
+		if ( $paypal_order ) {
+			$payment_method_data['token'] = $paypal_order;
+		}
+		$store_cart->allows( 'get_payment_method' )->andReturn( $payment_method_data );
 
 		return $store_cart;
 	}
