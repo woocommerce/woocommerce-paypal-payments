@@ -1,9 +1,9 @@
 <?php
+
 declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\StoreSync\CartValidation;
 
-use WooCommerce\PayPalCommerce\StoreSync\Helper\ProductManager;
 use WooCommerce\PayPalCommerce\StoreSync\Schema\PayPalCart;
 use WooCommerce\PayPalCommerce\StoreSync\Validation\StoreValidation;
 use WooCommerce\PayPalCommerce\StoreSync\Validation\ValidationIssue;
@@ -17,12 +17,10 @@ use function Brain\Monkey\Filters\expectApplied;
 class ShippingValidatorTest extends ValidationTest {
 
 	private ShippingValidator $validator;
-	private $product_manager;
 
 	public function setUp(): void {
 		parent::setUp();
-		$this->product_manager = \Mockery::mock( ProductManager::class );
-		$this->validator       = new ShippingValidator( $this->product_manager );
+		$this->validator = new ShippingValidator();
 	}
 
 	public function test_validate_returns_null_for_allowed_country(): void {
@@ -71,6 +69,11 @@ class ShippingValidatorTest extends ValidationTest {
 		$this->assertIssueContext( $issue_data, 'SHIPPING_NOT_AVAILABLE' );
 	}
 
+	/**
+	 * GIVEN a cart with no shipping address and a virtual product (needs_shipping = false)
+	 * WHEN validate() is called
+	 * THEN null is returned (no shipping required)
+	 */
 	public function test_validate_returns_null_for_cart_without_shipping_address(): void {
 		$this->mock_wc_countries(
 			array( 'US' => 'United States' ),
@@ -78,9 +81,9 @@ class ShippingValidatorTest extends ValidationTest {
 		);
 
 		$product = \Mockery::mock( 'WC_Product' );
-		$product->shouldReceive( 'needs_shipping' )->andReturn( false );
-		$this->product_manager->shouldReceive( 'find_product' )
-			->andReturn( $product );
+		$product->allows( 'needs_shipping' )->andReturn( false );
+
+		$item = $this->make_store_item( 0, $product );
 
 		$cart = PayPalCart::from_array(
 			array(
@@ -96,7 +99,9 @@ class ShippingValidatorTest extends ValidationTest {
 			new StoreValidation()
 		);
 
-		$result = $this->validator->validate( $this->wrap_in_store_cart( $cart ) );
+		$result = $this->validator->validate(
+			$this->wrap_in_store_cart( $cart, null, array( $item ) )
+		);
 
 		$this->assertNull( $result );
 	}
@@ -220,15 +225,23 @@ class ShippingValidatorTest extends ValidationTest {
 
 	// Scenario 2: PO Box Restriction Tests
 
+	/**
+	 * GIVEN a cart shipping to a PO Box with an item that requires signature delivery
+	 * WHEN validate() is called
+	 * THEN a SHIPPING_ERROR/BUSINESS_RULE issue is returned for 'shipping_address'
+	 * AND the context indicates a PO Box restriction with signature_required reason
+	 * AND two resolution options are offered: UPDATE_ADDRESS and REMOVE_ITEM
+	 */
 	public function test_validate_detects_po_box_with_signature_required_items(): void {
 		$this->mock_wc_countries(
 			array( 'US' => 'United States' ),
 			array( 'US' => 'United States' )
 		);
 
-		$product = \Mockery::mock( 'WC_Product' );
-		$this->product_manager->shouldReceive( 'find_product' )
-			->andReturn( $product );
+		$product     = \Mockery::mock( 'WC_Product' );
+		$paypal_item = \Mockery::mock( 'WooCommerce\PayPalCommerce\StoreSync\Schema\CartItem' );
+
+		$item = $this->make_store_item( 0, $product, true, 'USD', '1', 1, $paypal_item );
 
 		expectApplied( 'woocommerce_paypal_payments_store_sync_item_requires_signature' )
 			->once()
@@ -243,7 +256,9 @@ class ShippingValidatorTest extends ValidationTest {
 			)
 		);
 
-		$result = $this->validator->validate( $this->wrap_in_store_cart( $cart ) );
+		$result = $this->validator->validate(
+			$this->wrap_in_store_cart( $cart, null, array( $item ) )
+		);
 
 		$this->assertIsArray( $result );
 		$this->assertCount( 1, $result );
@@ -268,15 +283,21 @@ class ShippingValidatorTest extends ValidationTest {
 		$this->assertSame( 'REMOVE_ITEM', $issue_data['resolution_options'][1]['action'] );
 	}
 
+	/**
+	 * GIVEN a cart shipping to a PO Box with no items requiring signature delivery
+	 * WHEN validate() is called
+	 * THEN null is returned (PO Box is acceptable when no signature is needed)
+	 */
 	public function test_validate_accepts_po_box_without_signature_required_items(): void {
 		$this->mock_wc_countries(
 			array( 'US' => 'United States' ),
 			array( 'US' => 'United States' )
 		);
 
-		$product = \Mockery::mock( 'WC_Product' );
-		$this->product_manager->shouldReceive( 'find_product' )
-			->andReturn( $product );
+		$product     = \Mockery::mock( 'WC_Product' );
+		$paypal_item = \Mockery::mock( 'WooCommerce\PayPalCommerce\StoreSync\Schema\CartItem' );
+
+		$item = $this->make_store_item( 0, $product, true, 'USD', '1', 1, $paypal_item );
 
 		expectApplied( 'woocommerce_paypal_payments_store_sync_item_requires_signature' )
 			->once()
@@ -291,7 +312,9 @@ class ShippingValidatorTest extends ValidationTest {
 			)
 		);
 
-		$result = $this->validator->validate( $this->wrap_in_store_cart( $cart ) );
+		$result = $this->validator->validate(
+			$this->wrap_in_store_cart( $cart, null, array( $item ) )
+		);
 
 		$this->assertNull( $result );
 	}
@@ -318,15 +341,22 @@ class ShippingValidatorTest extends ValidationTest {
 		$this->assertNull( $result );
 	}
 
+	/**
+	 * GIVEN a cart shipping to a PO Box written as 'P.O. Box' (with dots and spaces)
+	 * AND an item requires signature delivery
+	 * WHEN validate() is called
+	 * THEN a SHIPPING_ERROR issue is returned (PO Box detection is format-insensitive)
+	 */
 	public function test_validate_detects_po_box_with_dots_and_spaces(): void {
 		$this->mock_wc_countries(
 			array( 'US' => 'United States' ),
 			array( 'US' => 'United States' )
 		);
 
-		$product = \Mockery::mock( 'WC_Product' );
-		$this->product_manager->shouldReceive( 'find_product' )
-			->andReturn( $product );
+		$product     = \Mockery::mock( 'WC_Product' );
+		$paypal_item = \Mockery::mock( 'WooCommerce\PayPalCommerce\StoreSync\Schema\CartItem' );
+
+		$item = $this->make_store_item( 0, $product, true, 'USD', '1', 1, $paypal_item );
 
 		expectApplied( 'woocommerce_paypal_payments_store_sync_item_requires_signature' )
 			->once()
@@ -341,34 +371,40 @@ class ShippingValidatorTest extends ValidationTest {
 			)
 		);
 
-		$result = $this->validator->validate( $this->wrap_in_store_cart( $cart ) );
+		$result = $this->validator->validate(
+			$this->wrap_in_store_cart( $cart, null, array( $item ) )
+		);
 
 		$this->assertIsArray( $result );
 		$this->assertCount( 1, $result );
 		$this->assertValidationIssue( $result[0]->to_array(), 'SHIPPING_ERROR', 'BUSINESS_RULE', 'shipping_address' );
 	}
 
-	public function test_validate_handles_product_not_found_for_signature_check(): void {
+	/**
+	 * GIVEN a cart with a PO Box address and a cart with no items (empty store items)
+	 * WHEN validate() is called
+	 * THEN null is returned (no items means no signature requirement)
+	 */
+	public function test_validate_accepts_po_box_when_cart_has_no_items(): void {
 		$this->mock_wc_countries(
 			array( 'US' => 'United States' ),
 			array( 'US' => 'United States' )
 		);
 
-		$this->product_manager->shouldReceive( 'find_product' )
-			->andReturn( null );
-
 		$cart = $this->create_cart_with_shipping(
 			array(
 				'country_code'   => 'US',
-				'address_line_1' => 'PO Box 123',
+				'address_line_1' => 'PO Box 789',
 				'admin_area_2'   => 'New York',
 				'postal_code'    => '10001',
 			)
 		);
 
-		$result = $this->validator->validate( $this->wrap_in_store_cart( $cart ) );
+		// No store items means no signature-required items are found
+		$result = $this->validator->validate(
+			$this->wrap_in_store_cart( $cart, null, array() )
+		);
 
-		// Should pass because product not found means no signature requirement
 		$this->assertNull( $result );
 	}
 
@@ -381,9 +417,9 @@ class ShippingValidatorTest extends ValidationTest {
 	 */
 	public function test_validate_returns_missing_address_issue_when_cart_needs_shipping(): void {
 		$product = \Mockery::mock( 'WC_Product' );
-		$product->shouldReceive( 'needs_shipping' )->andReturn( true );
-		$this->product_manager->shouldReceive( 'find_product' )
-			->andReturn( $product );
+		$product->allows( 'needs_shipping' )->andReturn( true );
+
+		$item = $this->make_store_item( 0, $product );
 
 		$cart = PayPalCart::from_array(
 			array(
@@ -399,7 +435,9 @@ class ShippingValidatorTest extends ValidationTest {
 			new StoreValidation()
 		);
 
-		$result = $this->validator->validate( $this->wrap_in_store_cart( $cart ) );
+		$result = $this->validator->validate(
+			$this->wrap_in_store_cart( $cart, null, array( $item ) )
+		);
 
 		$this->assertIsArray( $result );
 		$this->assertCount( 1, $result );

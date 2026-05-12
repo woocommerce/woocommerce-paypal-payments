@@ -6,7 +6,6 @@ namespace WooCommerce\PayPalCommerce\StoreSync\CartValidation;
 
 use Mockery;
 use WooCommerce\PayPalCommerce\StoreSync\Config\IngestionConfiguration;
-use WooCommerce\PayPalCommerce\StoreSync\Helper\ProductManager;
 use WooCommerce\PayPalCommerce\StoreSync\Validation\StoreValidation;
 use WooCommerce\PayPalCommerce\StoreSync\Validation\ValidationIssue;
 
@@ -18,72 +17,31 @@ class ProductValidatorTest extends ValidationTest {
 	private ProductValidator $validator;
 
 	/** @var \Mockery\MockInterface */
-	private $product_manager;
-
-	/** @var \Mockery\MockInterface */
 	private $configuration;
 
 	public function setUp(): void {
 		parent::setUp();
 
-		$this->product_manager = Mockery::mock( ProductManager::class );
-		$this->configuration   = Mockery::mock( IngestionConfiguration::class );
-		$this->validator       =
-			new ProductValidator( $this->product_manager, $this->configuration );
+		$this->configuration = Mockery::mock( IngestionConfiguration::class );
+		$this->validator     = new ProductValidator( $this->configuration );
 	}
 
 	/**
-	 * GIVEN a cart containing one item whose product_id does not exist in the WooCommerce catalog
-	 * WHEN validate() is called
-	 * THEN exactly one ValidationIssue is returned
-	 * AND the issue has code INVENTORY_ISSUE, type INVALID_DATA and targets items[0]
-	 * AND the context array contains one entry with specific_issue = 'ITEM_NOT_FOUND'
-	 */
-	public function test_validate_product_not_found_returns_issue_with_item_not_found_context(): void {
-		$this->product_manager
-			->shouldReceive( 'find_product' )
-			->once()
-			->andReturn( null );
-
-		// Configuration must NOT be consulted when the product is not found.
-		$this->configuration
-			->shouldNotReceive( 'get_valid_product_filters' );
-
-		$cart = $this->create_cart( 'sku-99', 1, 'Ghost Product' );
-
-		$result = $this->validator->validate( $this->wrap_in_store_cart( $cart ) );
-
-		$this->assertIsArray( $result );
-		$this->assertCount( 1, $result );
-		$this->assertInstanceOf( ValidationIssue::class, $result[0] );
-
-		$issue_data = $result[0]->to_array();
-		$this->assertValidationIssue( $issue_data, 'INVENTORY_ISSUE', 'INVALID_DATA', 'items[0]' );
-
-		$this->assertIssueContext( $issue_data, 'ITEM_NOT_FOUND' );
-	}
-
-	/**
-	 * GIVEN a cart containing one item whose product is found, purchasable, not downloadable,
-	 *       has a supported type and a valid status
+	 * GIVEN a cart containing one purchasable, valid product
 	 * WHEN validate() is called
 	 * THEN an empty array is returned (no issues)
 	 */
-	public function test_validate_in_stock_valid_product_returns_no_issues(): void {
+	public function test_validate_valid_product_returns_no_issues(): void {
 		$product = Mockery::mock( 'WC_Product' );
-		$product->shouldReceive( 'is_purchasable' )->andReturn( true );
-		$product->shouldReceive( 'is_downloadable' )->andReturn( false );
-		$product->shouldReceive( 'is_type' )->andReturn( true );
-		$product->shouldReceive( 'get_status' )->andReturn( 'publish' );
-
-		$this->product_manager
-			->shouldReceive( 'find_product' )
-			->once()
-			->andReturn( $product );
+		$product->allows( 'is_purchasable' )->andReturn( true );
+		$product->allows( 'is_downloadable' )->andReturn( false );
+		$product->allows( 'is_type' )->andReturn( true );
+		$product->allows( 'get_status' )->andReturn( 'publish' );
+		$product->allows( 'get_name' )->andReturn( 'Valid Product' );
+		$product->allows( 'get_id' )->andReturn( 42 );
 
 		$this->configuration
-			->shouldReceive( 'get_valid_product_filters' )
-			->once()
+			->allows( 'get_valid_product_filters' )
 			->andReturn(
 				array(
 					'downloadable' => false,
@@ -92,13 +50,73 @@ class ProductValidatorTest extends ValidationTest {
 				)
 			);
 
-		$cart = $this->create_cart( '42', 2, 'Valid Product' );
+		$item = $this->make_store_item( 0, $product, true, 'USD', '42', 2 );
 
-		$result = $this->validator->validate( $this->wrap_in_store_cart( $cart ) );
+		$cart   = $this->create_cart( '42', 2, 'Valid Product' );
+		$result = $this->validator->validate(
+			$this->wrap_in_store_cart( $cart, null, array( $item ) )
+		);
 
-		// An empty issues array is a valid "no problems found" result.
 		$this->assertIsArray( $result );
 		$this->assertEmpty( $result );
+	}
+
+	/**
+	 * GIVEN a cart containing a product that is not purchasable
+	 * WHEN validate() is called
+	 * THEN a non-empty array is returned indicating the item is invalid
+	 */
+	public function test_validate_non_purchasable_product_returns_non_empty_result(): void {
+		$product = Mockery::mock( 'WC_Product' );
+		$product->allows( 'is_purchasable' )->andReturn( false );
+		$product->allows( 'get_name' )->andReturn( 'Unavailable Product' );
+		$product->allows( 'get_id' )->andReturn( 99 );
+
+		// Configuration must NOT be consulted when the product is not purchasable.
+		$this->configuration->shouldNotReceive( 'get_valid_product_filters' );
+
+		$item = $this->make_store_item( 0, $product, true, 'USD', '99', 1 );
+
+		$cart   = $this->create_cart( '99', 1, 'Unavailable Product' );
+		$result = $this->validator->validate(
+			$this->wrap_in_store_cart( $cart, null, array( $item ) )
+		);
+
+		$this->assertIsArray( $result );
+		$this->assertNotEmpty( $result );
+	}
+
+	/**
+	 * GIVEN a cart containing a downloadable product when downloads are disabled
+	 * WHEN validate() is called
+	 * THEN a non-empty array is returned indicating the item is invalid
+	 */
+	public function test_validate_downloadable_product_when_not_supported_returns_non_empty_result(): void {
+		$product = Mockery::mock( 'WC_Product' );
+		$product->allows( 'is_purchasable' )->andReturn( true );
+		$product->allows( 'is_downloadable' )->andReturn( true );
+		$product->allows( 'get_name' )->andReturn( 'Digital Goods' );
+		$product->allows( 'get_id' )->andReturn( 55 );
+
+		$this->configuration
+			->allows( 'get_valid_product_filters' )
+			->andReturn(
+				array(
+					'downloadable' => false,
+					'status'       => array( 'publish' ),
+					'type'         => array( 'simple' ),
+				)
+			);
+
+		$item = $this->make_store_item( 0, $product, true, 'USD', '55', 1 );
+
+		$cart   = $this->create_cart( '55', 1, 'Digital Goods' );
+		$result = $this->validator->validate(
+			$this->wrap_in_store_cart( $cart, null, array( $item ) )
+		);
+
+		$this->assertIsArray( $result );
+		$this->assertNotEmpty( $result );
 	}
 
 	/**
@@ -107,7 +125,6 @@ class ProductValidatorTest extends ValidationTest {
 	 * THEN null is returned immediately without inspecting any product
 	 */
 	public function test_validate_skips_when_inventory_issue_already_present(): void {
-		$this->product_manager->shouldNotReceive( 'find_product' );
 		$this->configuration->shouldNotReceive( 'get_valid_product_filters' );
 
 		$pre_existing_issue =
@@ -117,9 +134,53 @@ class ProductValidatorTest extends ValidationTest {
 		$validation->add( $pre_existing_issue );
 
 		$result = $this->validator->validate(
-			$this->wrap_in_store_cart( $this->create_cart(), $validation )
+			$this->wrap_in_store_cart( $this->create_cart(), $validation, array() )
 		);
 
 		$this->assertNull( $result );
+	}
+
+	/**
+	 * GIVEN a cart with multiple items where only one has an unsupported product type
+	 * WHEN validate() is called
+	 * THEN only the invalid item is in the returned array
+	 */
+	public function test_validate_returns_only_invalid_items_from_mixed_cart(): void {
+		$valid_product = Mockery::mock( 'WC_Product' );
+		$valid_product->allows( 'is_purchasable' )->andReturn( true );
+		$valid_product->allows( 'is_downloadable' )->andReturn( false );
+		$valid_product->allows( 'is_type' )->andReturn( true );
+		$valid_product->allows( 'get_status' )->andReturn( 'publish' );
+		$valid_product->allows( 'get_name' )->andReturn( 'Simple Widget' );
+		$valid_product->allows( 'get_id' )->andReturn( 10 );
+
+		$invalid_product = Mockery::mock( 'WC_Product' );
+		$invalid_product->allows( 'is_purchasable' )->andReturn( true );
+		$invalid_product->allows( 'is_downloadable' )->andReturn( false );
+		$invalid_product->allows( 'is_type' )->andReturn( false ); // unsupported type
+		$invalid_product->allows( 'get_status' )->andReturn( 'publish' );
+		$invalid_product->allows( 'get_name' )->andReturn( 'Subscription Box' );
+		$invalid_product->allows( 'get_id' )->andReturn( 20 );
+
+		$this->configuration
+			->allows( 'get_valid_product_filters' )
+			->andReturn(
+				array(
+					'downloadable' => false,
+					'status'       => array( 'publish' ),
+					'type'         => array( 'simple', 'variable', 'variation' ),
+				)
+			);
+
+		$valid_item   = $this->make_store_item( 0, $valid_product, true, 'USD', '10', 1 );
+		$invalid_item = $this->make_store_item( 1, $invalid_product, true, 'USD', '20', 1 );
+
+		$cart   = $this->create_cart();
+		$result = $this->validator->validate(
+			$this->wrap_in_store_cart( $cart, null, array( $valid_item, $invalid_item ) )
+		);
+
+		$this->assertIsArray( $result );
+		$this->assertCount( 1, $result );
 	}
 }

@@ -5,7 +5,9 @@ declare( strict_types = 1 );
 namespace WooCommerce\PayPalCommerce\StoreSync\CartValidation;
 
 use Mockery;
+use WooCommerce\PayPalCommerce\StoreSync\Schema\CartItem;
 use WooCommerce\PayPalCommerce\StoreSync\Schema\PayPalCart;
+use WooCommerce\PayPalCommerce\StoreSync\StoreData\StoreCartItem;
 use WooCommerce\PayPalCommerce\StoreSync\StoreData\StorePayPalCart;
 use WooCommerce\PayPalCommerce\StoreSync\Validation\StoreValidation;
 use WooCommerce\PayPalCommerce\TestCase;
@@ -107,17 +109,75 @@ abstract class ValidationTest extends TestCase {
 	}
 
 	/**
-	 * Wraps a PayPalCart + optional StoreValidation into a StorePayPalCart mock
-	 * so it can be passed to the new validate( StorePayPalCart $store_cart ) signature.
+	 * Wraps a PayPalCart + optional StoreValidation + optional store items into a
+	 * StorePayPalCart mock so it can be passed to validate( StorePayPalCart $store_cart ).
+	 *
+	 * @param PayPalCart        $paypal_cart  The PayPal cart schema.
+	 * @param StoreValidation|null $validation Optional pre-existing validation state.
+	 * @param StoreCartItem[]   $store_items  Optional resolved store items (from make_store_item).
+	 * @param string            $currency     Store currency code (default 'USD').
 	 */
-	protected function wrap_in_store_cart( PayPalCart $paypal_cart, ?StoreValidation $validation = null ): StorePayPalCart {
+	protected function wrap_in_store_cart(
+		PayPalCart $paypal_cart,
+		?StoreValidation $validation = null,
+		array $store_items = array(),
+		string $currency = 'USD'
+	): StorePayPalCart {
 		$validation = $validation ?? new StoreValidation();
 
 		$store_cart = Mockery::mock( StorePayPalCart::class );
 		$store_cart->allows( 'paypal_cart' )->andReturn( $paypal_cart );
 		$store_cart->allows( 'validation' )->andReturn( $validation );
+		$store_cart->allows( 'cart_items' )->andReturn( $store_items );
+		$store_cart->allows( 'currency' )->andReturn( $currency );
 
 		return $store_cart;
+	}
+
+	/**
+	 * Creates a StoreCartItem Mockery stub with configurable properties.
+	 *
+	 * @param int         $index              Cart position (used by field_path()).
+	 * @param mixed       $product            WC_Product mock; if null, a basic mock is created.
+	 * @param bool        $is_currency_correct Whether the item currency matches the store.
+	 * @param string      $assumed_currency   Currency code the agent assumed.
+	 * @param string      $id                 Item identifier.
+	 * @param int         $quantity           Requested quantity.
+	 * @param mixed       $paypal_item        CartItem mock; if null, a basic mock is created.
+	 * @return \Mockery\MockInterface
+	 */
+	protected function make_store_item(
+		int $index = 0,
+		$product = null,
+		bool $is_currency_correct = true,
+		string $assumed_currency = 'USD',
+		string $id = '1',
+		int $quantity = 1,
+		$paypal_item = null
+	) {
+		if ( $product === null ) {
+			$product = Mockery::mock( 'WC_Product' );
+		}
+
+		if ( $paypal_item === null ) {
+			$paypal_item = Mockery::mock( CartItem::class );
+		}
+
+		$item = Mockery::mock( StoreCartItem::class );
+		$item->allows( 'product' )->andReturn( $product );
+		$item->allows( 'paypal_item' )->andReturn( $paypal_item );
+		$item->allows( 'is_currency_correct' )->andReturn( $is_currency_correct );
+		$item->allows( 'assumed_currency' )->andReturn( $assumed_currency );
+		$item->allows( 'id' )->andReturn( $id );
+		$item->allows( 'quantity' )->andReturn( $quantity );
+		$item->allows( 'field_path' )->andReturnUsing(
+			function ( string $child_path = '' ) use ( $index ): string {
+				$child_path = trim( $child_path, '.' );
+				return "items[{$index}]" . ( $child_path ? ".{$child_path}" : '' );
+			}
+		);
+
+		return $item;
 	}
 
 	// ------------------------------------------------------------------------

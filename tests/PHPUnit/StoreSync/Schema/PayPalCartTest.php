@@ -242,15 +242,19 @@ class PayPalCartTest extends SchemaTestCase {
 
 		$result = $cart->to_array();
 
+		// Mandatory/expected keys.
 		$this->assertArrayHasKey( 'items', $result );
+		$this->assertArrayHasKey( 'payment_method', $result );
+		$this->assertArrayHasKey( 'shipping_address', $result );
+
+		// Optional keys, not present in this test.
+		$this->assertArrayNotHasKey( 'customer', $result );
+		$this->assertArrayNotHasKey( 'billing_address', $result );
+
 		$this->assertCount( 1, $result['items'] );
 		$this->assertSame( 'SKU-1', $result['items'][0]['item_id'] );
 		$this->assertSame( 2, $result['items'][0]['quantity'] );
-		$this->assertArrayHasKey( 'payment_method', $result );
 		$this->assertSame( 'paypal', $result['payment_method']['type'] );
-		$this->assertArrayNotHasKey( 'customer', $result );
-		$this->assertArrayNotHasKey( 'shipping_address', $result );
-		$this->assertArrayNotHasKey( 'billing_address', $result );
 	}
 
 	/**

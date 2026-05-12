@@ -82,7 +82,7 @@ class StorePayPalCartTest extends StoreSyncTestCase {
 	 */
 	private function make_store_item( CartItem $schema, float $real_price = 9.99, ?array $to_array_result = null ): StoreCartItem {
 		$stub = Mockery::mock( StoreCartItem::class );
-		$stub->allows( 'schema' )->andReturn( $schema );
+		$stub->allows( 'paypal_item' )->andReturn( $schema );
 		$stub->allows( 'real_price' )->andReturn( $real_price );
 
 		if ( $to_array_result === null ) {
