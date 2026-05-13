@@ -40,7 +40,7 @@ class PaymentTokenPayPal extends WC_Payment_Token
      *
      * @param string $email PayPal account email.
      */
-    public function set_email($email)
+    public function set_email($email): void
     {
         $this->add_meta_data('email', $email, \true);
     }

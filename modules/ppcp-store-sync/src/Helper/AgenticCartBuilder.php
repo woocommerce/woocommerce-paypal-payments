@@ -85,6 +85,7 @@ class AgenticCartBuilder
         foreach ($items as $item) {
             $product = $this->product_manager->find_product($item);
             if (!$product) {
+                // @phpstan-ignore-next-line method.deprecated
                 $variant_or_id = $item->variant_id() ?: $item->item_id();
                 $errors[] = sprintf('Product not found "%s"', (string) $variant_or_id);
                 continue;
@@ -162,16 +163,14 @@ class AgenticCartBuilder
     private function set_addresses(WC_Customer $wc_customer, PayPalCart $paypal_cart): void
     {
         $shipping = $paypal_cart->shipping_address();
-        if ($shipping) {
-            $wc_customer->set_shipping_first_name($wc_customer->get_first_name());
-            $wc_customer->set_shipping_last_name($wc_customer->get_last_name());
-            $wc_customer->set_shipping_address_1((string) $shipping->address_line_1(''));
-            $wc_customer->set_shipping_address_2((string) $shipping->address_line_2(''));
-            $wc_customer->set_shipping_city((string) $shipping->admin_area_2(''));
-            $wc_customer->set_shipping_state((string) $shipping->admin_area_1(''));
-            $wc_customer->set_shipping_postcode((string) $shipping->postal_code(''));
-            $wc_customer->set_shipping_country((string) $shipping->country_code(''));
-        }
+        $wc_customer->set_shipping_first_name($wc_customer->get_first_name());
+        $wc_customer->set_shipping_last_name($wc_customer->get_last_name());
+        $wc_customer->set_shipping_address_1((string) $shipping->address_line_1(''));
+        $wc_customer->set_shipping_address_2((string) $shipping->address_line_2(''));
+        $wc_customer->set_shipping_city((string) $shipping->admin_area_2(''));
+        $wc_customer->set_shipping_state((string) $shipping->admin_area_1(''));
+        $wc_customer->set_shipping_postcode((string) $shipping->postal_code(''));
+        $wc_customer->set_shipping_country((string) $shipping->country_code(''));
         $billing = $paypal_cart->billing_address();
         if ($billing) {
             $wc_customer->set_billing_first_name($wc_customer->get_first_name());
