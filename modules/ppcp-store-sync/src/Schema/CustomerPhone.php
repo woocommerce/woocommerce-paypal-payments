@@ -28,13 +28,13 @@ class CustomerPhone extends AgenticSchema {
 
 			if ( ! is_numeric( $country_code ) || '0' === $country_code ) {
 				$validation->add_invalid_data(
-					'country_code',
+					$this->field( 'country_code' ),
 					'Invalid country code format',
 					'The customers phone country-code must be numeric'
 				);
 			} elseif ( strlen( $country_code ) > 3 ) {
 				$validation->add_invalid_data(
-					'country_code',
+					$this->field( 'country_code' ),
 					'Invalid country code length',
 					'The customers phone country-code must have between 1 and 3 digits'
 				);
@@ -47,13 +47,13 @@ class CustomerPhone extends AgenticSchema {
 
 			if ( ! is_numeric( $national_number ) ) {
 				$validation->add_invalid_data(
-					'national_number',
+					$this->field( 'national_number' ),
 					'Invalid national number format',
 					'The customers phone number must be numeric'
 				);
 			} elseif ( strlen( $national_number ) > 14 ) {
 				$validation->add_invalid_data(
-					'national_number',
+					$this->field( 'national_number' ),
 					'Invalid national number length',
 					'The customers phone number must have between 1 and 3 digits'
 				);

@@ -26,7 +26,7 @@ class CustomerName extends AgenticSchema {
 		if ( is_string( $given_name ) ) {
 			if ( strlen( $given_name ) > 140 ) {
 				$validation->add_invalid_data(
-					'given_name',
+					$this->field( 'given_name' ),
 					'Given name too long',
 					'The customers given name cannot be longer than 140 characters'
 				);
@@ -37,7 +37,7 @@ class CustomerName extends AgenticSchema {
 		if ( is_string( $surname ) ) {
 			if ( strlen( $surname ) > 140 ) {
 				$validation->add_invalid_data(
-					'surname',
+					$this->field( 'surname' ),
 					'Surname too long',
 					'The customers surname cannot be longer than 140 characters'
 				);

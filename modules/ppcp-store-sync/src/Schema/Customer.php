@@ -35,17 +35,25 @@ class Customer extends AgenticSchema {
 				$this->email_address = $email_address;
 			} else {
 				$validation->add_invalid_data(
-					'email_address',
+					$this->field( 'email_address' ),
 					'Invalid email',
 					'The customers email address is not valid'
 				);
 			}
 		}
 		if ( isset( $input['name'] ) && is_array( $input['name'] ) ) {
-			$this->name = CustomerName::from_array( $input['name'], $validation );
+			$this->name = CustomerName::from_array(
+				$input['name'],
+				$validation,
+				$this->field( 'name' )
+			);
 		}
 		if ( isset( $input['phone'] ) && is_array( $input['phone'] ) ) {
-			$this->phone = CustomerPhone::from_array( $input['phone'], $validation );
+			$this->phone = CustomerPhone::from_array(
+				$input['phone'],
+				$validation,
+				$this->field( 'phone' )
+			);
 		}
 	}
 
