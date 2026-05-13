@@ -23,6 +23,15 @@ class PayPalJwkProvider {
 	private const JWKS_URL = 'https://www.paypal.ai/.well-known/jwks.json';
 
 	/**
+	 * The JWKS entry may advertise an "alg" value, but we enforce the
+	 * expected algorithm here as a safety measure in case the jwks.json
+	 * is corrupted or compromised.
+	 */
+	private const EXPECTED_ALGORITHM = 'RS256';
+
+	private const EXPECTED_KEY_TYPE = 'RSA';
+
+	/**
 	 * Returns the first public key from PayPal's JWKS.
 	 *
 	 * @return Key|null The public key, or null on failure.
@@ -121,7 +130,13 @@ class PayPalJwkProvider {
 			$body = wp_remote_retrieve_body( $response );
 			$data = json_decode( $body, true, 512, JSON_THROW_ON_ERROR );
 
-			if ( ! is_array( $data ) || empty( $data['keys'] ) ) {
+			if ( ! is_array( $data ) ) {
+				return null;
+			}
+
+			$data['keys'] = $this->filter_jwks_keys( $data['keys'] ?? array() );
+
+			if ( empty( $data['keys'] ) ) {
 				return null;
 			}
 
@@ -132,6 +147,32 @@ class PayPalJwkProvider {
 	}
 
 	/**
+	 * Strips any key that is not an RSA/RS256 entry before the data reaches the JWT library.
+	 *
+	 * @param array $keys Raw entries from the JWKS "keys" array.
+	 * @return array Filtered entries.
+	 */
+	private function filter_jwks_keys( array $keys ): array {
+		return array_values(
+			array_filter(
+				$keys,
+				function ( $key ): bool {
+					if ( ! is_array( $key ) ) {
+						return false;
+					}
+					if ( ( $key['kty'] ?? '' ) !== self::EXPECTED_KEY_TYPE ) {
+						return false;
+					}
+					if ( isset( $key['alg'] ) && $key['alg'] !== self::EXPECTED_ALGORITHM ) {
+						return false;
+					}
+					return true;
+				}
+			)
+		);
+	}
+
+	/**
 	 * Parses the first key from the JWKS data.
 	 *
 	 * @param array $jwks The JWKS data containing keys array.
@@ -139,9 +180,15 @@ class PayPalJwkProvider {
 	 */
 	private function parse_first_key( array $jwks ): ?Key {
 		try {
-			$keys = JWK::parseKeySet( $jwks );
+			$keys = JWK::parseKeySet( $jwks, self::EXPECTED_ALGORITHM );
 
-			return reset( $keys ) ?: null;
+			foreach ( $keys as $key ) {
+				if ( $key->getAlgorithm() === self::EXPECTED_ALGORITHM ) {
+					return $key;
+				}
+			}
+
+			return null;
 		} catch ( Exception $exception ) {
 			return null;
 		}
