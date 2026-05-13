@@ -35,7 +35,7 @@ class CurrencyValidator implements ValidatorInterface {
 			return null;
 		}
 
-		$field = $mismatch[0];
+		$field = reset( $mismatch );
 
 		return ValidationIssue::create_currency_mismatch(
 			sprintf(
