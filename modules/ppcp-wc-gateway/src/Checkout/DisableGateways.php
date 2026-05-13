@@ -67,6 +67,13 @@ class DisableGateways
         if ($this->card_configuration->use_acdc() && $this->store_country !== 'MX') {
             unset($methods[CardButtonGateway::ID]);
         }
+        $payment_gateways = WC()->payment_gateways;
+        if (isset($methods[CreditCardGateway::ID]) && $this->subscription_helper->cart_contains_paypal_subscription_product() && !is_null($payment_gateways)) {
+            $cc_gateway = $payment_gateways->payment_gateways()[CreditCardGateway::ID] ?? null;
+            if ($cc_gateway && !in_array('subscriptions', $cc_gateway->supports, \true)) {
+                unset($methods[CreditCardGateway::ID]);
+            }
+        }
         if (!$this->needs_to_disable_gateways()) {
             return $methods;
         }
