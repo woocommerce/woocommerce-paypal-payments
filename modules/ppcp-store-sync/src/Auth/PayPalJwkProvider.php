@@ -37,18 +37,26 @@ class PayPalJwkProvider {
 	private const EXPECTED_KEY_TYPE = 'RSA';
 
 	/**
-	 * Returns the first public key from PayPal's JWKS.
+	 * Returns all public keys from PayPal's JWKS, keyed by kid.
 	 *
-	 * @return Key|null The public key, or null on failure.
+	 * Returning the full set (not just the first key) allows JWT::decode to match
+	 * tokens by kid during key rotation, when PayPal publishes old and new keys
+	 * simultaneously.
+	 *
+	 * @return array<string, Key> Parsed keys, or empty array on failure.
 	 */
-	public function keys(): ?Key {
+	public function keys(): array {
 		$jwks = $this->get_jwks_data();
 
 		if ( ! $jwks ) {
-			return null;
+			return array();
 		}
 
-		return $this->parse_first_key( $jwks );
+		try {
+			return JWK::parseKeySet( $jwks, self::EXPECTED_ALGORITHM );
+		} catch ( Exception $e ) {
+			return array();
+		}
 	}
 
 	/**
@@ -166,44 +174,23 @@ class PayPalJwkProvider {
 	 * @return array Filtered entries.
 	 */
 	private function filter_jwks_keys( array $keys ): array {
-		return array_values(
-			array_filter(
-				$keys,
-				function ( $key ): bool {
-					if ( ! is_array( $key ) ) {
-						return false;
-					}
-					if ( ( $key['kty'] ?? '' ) !== self::EXPECTED_KEY_TYPE ) {
-						return false;
-					}
-					if ( isset( $key['alg'] ) && $key['alg'] !== self::EXPECTED_ALGORITHM ) {
-						return false;
-					}
-					return true;
+		$filtered_keys = array_filter(
+			$keys,
+			static function ( $key ): bool {
+				if ( ! is_array( $key ) ) {
+					return false;
 				}
-			)
-		);
-	}
-
-	/**
-	 * Parses the first key from the JWKS data.
-	 *
-	 * @param array $jwks The JWKS data containing keys array.
-	 * @return Key|null The first key, or null if parsing fails.
-	 */
-	private function parse_first_key( array $jwks ): ?Key {
-		try {
-			$keys = JWK::parseKeySet( $jwks, self::EXPECTED_ALGORITHM );
-
-			foreach ( $keys as $key ) {
-				if ( $key->getAlgorithm() === self::EXPECTED_ALGORITHM ) {
-					return $key;
+				if ( ( $key['kty'] ?? '' ) !== self::EXPECTED_KEY_TYPE ) {
+					return false;
 				}
+				if ( isset( $key['alg'] ) && $key['alg'] !== self::EXPECTED_ALGORITHM ) {
+					return false;
+				}
+
+				return true;
 			}
+		);
 
-			return null;
-		} catch ( Exception $exception ) {
-			return null;
-		}
+		return array_values( $filtered_keys );
 	}
 }
