@@ -122,7 +122,7 @@ return array(
         return new ShippingOptionsBuilder($c->get('agentic.config.store-currency'));
     },
     'agentic.helper.checkout-processor' => static function (ContainerInterface $c): AgenticCheckoutProcessor {
-        return new AgenticCheckoutProcessor($c->get('agentic.helper.paypal-order-manager'), $c->get('button.helper.wc-order-creator'), $c->get('agentic.helper.cart-builder'), $c->get('agentic.response.applied-coupons-builder'), $c->get('api.factory.shipping'), $c->get('agentic.logger'));
+        return new AgenticCheckoutProcessor($c->get('agentic.helper.paypal-order-manager'), $c->get('button.helper.wc-order-creator'), $c->get('agentic.helper.cart-builder'), $c->get('agentic.response.applied-coupons-builder'), $c->get('api.factory.shipping'), $c->get('agentic.logger.default'));
     },
     'agentic.helper.paypal-order-manager' => static function (ContainerInterface $c): PayPalOrderManager {
         return new PayPalOrderManager($c->get('api.endpoint.order'), $c->get('api.endpoint.orders'), $c->get('agentic.helper.cart-builder'), $c->get('agentic.logger.default'), $c->get('agentic.config.store-currency'), $c->get('api.factory.amount'));

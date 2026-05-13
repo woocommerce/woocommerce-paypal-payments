@@ -28,7 +28,7 @@ class CurrencyValidator implements \WooCommerce\PayPalCommerce\StoreSync\CartVal
         if (empty($mismatch)) {
             return null;
         }
-        $field = $mismatch[0];
+        $field = reset($mismatch);
         return ValidationIssue::create_currency_mismatch(sprintf('Cart currency %s does not match store currency %s', $field->assumed_currency(), $store_cart->currency()))->user_message(sprintf('This store only accepts payments in %s.', $store_cart->currency()))->for_field($field->field_path('price.currency_code'))->add_resolution(ResolutionOption::create_use_different_currency()->label(sprintf('Change to %s', $store_cart->currency()))->set_meta('expected_currency', $store_cart->currency()));
     }
 }

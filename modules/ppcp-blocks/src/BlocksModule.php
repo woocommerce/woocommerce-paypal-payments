@@ -85,7 +85,7 @@ class BlocksModule implements ServiceModule, ExtendingModule, ExecutableModule
             wp_enqueue_style('wc-ppcp-blocks-editor');
         });
         add_filter('woocommerce_paypal_payments_sdk_components_hook', function (array $components, string $context) {
-            if (str_ends_with($context, '-block')) {
+            if (substr($context, -6) === '-block') {
                 $components[] = 'buttons';
             }
             return $components;

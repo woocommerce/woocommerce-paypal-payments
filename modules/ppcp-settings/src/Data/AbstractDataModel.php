@@ -113,7 +113,7 @@ abstract class AbstractDataModel
         $prefixes_to_strip = array('is_', 'use_', 'has_');
         $stripped_key = $field_key;
         foreach ($prefixes_to_strip as $prefix) {
-            if (str_starts_with($field_key, $prefix)) {
+            if (0 === strpos($field_key, $prefix)) {
                 $stripped_key = substr($field_key, strlen($prefix));
                 break;
             }

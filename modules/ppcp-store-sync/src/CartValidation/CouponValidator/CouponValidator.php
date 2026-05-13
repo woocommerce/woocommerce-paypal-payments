@@ -74,7 +74,8 @@ class CouponValidator implements ValidatorInterface
             return null;
         }
         if (!wc_coupons_enabled()) {
-            return array($this->create_issue('COUPON_NOT_SUPPORTED', $coupons_to_apply[0]->code() ?? '', 'coupons', $store_cart, null));
+            $first_coupon = reset($coupons_to_apply);
+            return array($this->create_issue('COUPON_NOT_SUPPORTED', $first_coupon->code() ?? '', 'coupons', $store_cart, null));
         }
         // Check stacking first (multiple coupons with individual_use).
         $stacking_issue = $this->check_stacking_conflicts($coupons_to_apply, $store_cart);
