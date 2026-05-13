@@ -111,6 +111,14 @@ class PayPalJwkProvider {
 	protected function fetch_jwks_from_remote(): ?array {
 		$remove_user_agent =
 			/**
+			 * Removes the user agent string from the remote request that fetches the
+			 * JWKS metadata from PayPal's domain.
+			 *
+			 * We discovered this requirement by trial and error:
+			 * The user-agent `WordPress/*` is rejected by PayPal's firewall, which returns
+			 * a 403 response. Instead of mocking a browser user agent, we decided to simply
+			 * send an empty user agent to bypass the firewall.
+			 *
 			 * @param mixed|array  $args
 			 * @param mixed|string $url
 			 * @return mixed|array
