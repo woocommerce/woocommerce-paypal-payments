@@ -8,26 +8,10 @@
 declare (strict_types=1);
 namespace WooCommerce\PayPalCommerce\Settings\Endpoint;
 
-use WooCommerce\PayPalCommerce\Axo\Gateway\AxoGateway;
-use WooCommerce\PayPalCommerce\Googlepay\GooglePayGateway;
-use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\BancontactGateway;
-use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\BlikGateway;
-use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\IDealGateway;
-use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\MultibancoGateway;
-use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\MyBankGateway;
-use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\P24Gateway;
-use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\TrustlyGateway;
-use WooCommerce\PayPalCommerce\Settings\Data\PaymentSettings;
-use WooCommerce\PayPalCommerce\WcGateway\Gateway\CardButtonGateway;
-use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
-use WooCommerce\PayPalCommerce\WcGateway\Gateway\OXXO\OXXO;
-use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
-use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayUponInvoice\PayUponInvoiceGateway;
 use WP_REST_Server;
 use WP_REST_Response;
 use WP_REST_Request;
-use WooCommerce\PayPalCommerce\Applepay\ApplePayGateway;
-use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\EPSGateway;
+use WooCommerce\PayPalCommerce\Settings\Data\PaymentSettings;
 use WooCommerce\PayPalCommerce\Settings\Data\Definition\PaymentMethodsDefinition;
 use WooCommerce\PayPalCommerce\Settings\Data\Definition\PaymentMethodsDependenciesDefinition;
 /**

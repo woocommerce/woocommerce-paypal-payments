@@ -346,6 +346,6 @@ class WooCommerceOrderCreator
             $shipping_address_data = json_decode(wp_json_encode($paypal_data['shipping_address']) ?: '');
             $shipping = $this->shipping_factory->from_paypal_response($shipping_address_data);
         }
-        return $shipping;
+        return apply_filters('woocommerce_paypal_payments_order_creator_get_shipping', $shipping, $order, $paypal_data);
     }
 }

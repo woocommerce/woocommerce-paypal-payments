@@ -9,6 +9,7 @@
 declare (strict_types=1);
 namespace WooCommerce\PayPalCommerce\WcGateway;
 
+use WooCommerce;
 use Automattic\WooCommerce\Admin\Notes\Note;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PayUponInvoiceOrderEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
@@ -18,14 +19,13 @@ use WooCommerce\PayPalCommerce\Applepay\ApplePayGateway;
 use WooCommerce\PayPalCommerce\Assets\AssetGetter;
 use WooCommerce\PayPalCommerce\Assets\AssetGetterFactory;
 use WooCommerce\PayPalCommerce\Axo\Gateway\AxoGateway;
+use WooCommerce\PayPalCommerce\Googlepay\GooglePayGateway;
 use WooCommerce\PayPalCommerce\Button\Helper\MessagesApply;
 use WooCommerce\PayPalCommerce\Button\Helper\MessagesDisclaimers;
 use WooCommerce\PayPalCommerce\Common\Pattern\SingletonDecorator;
-use WooCommerce\PayPalCommerce\Googlepay\GooglePayGateway;
 use WooCommerce\PayPalCommerce\Settings\Data\Definition\FeaturesDefinition;
 use WooCommerce\PayPalCommerce\Settings\Data\SettingsModel;
 use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
-use WooCommerce\PayPalCommerce\Settings\SettingsModule;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\WcGateway\Admin\FeesRenderer;
 use WooCommerce\PayPalCommerce\WcGateway\Admin\OrderTablePaymentStatusColumn;
@@ -95,6 +95,9 @@ use WooCommerce\PayPalCommerce\WcGateway\StoreApi\Factory\MoneyFactory;
 use WooCommerce\PayPalCommerce\WcGateway\StoreApi\Factory\ShippingRatesFactory;
 use WooCommerce\PayPalCommerce\Webhooks\WebhookEventStorage;
 return array(
+    'woocommerce.core' => static function (): WooCommerce {
+        return WC();
+    },
     'wcgateway.paypal-gateway' => static function (ContainerInterface $container): PayPalGateway {
         return new PayPalGateway($container->get('wcgateway.funding-source.renderer'), $container->get('wcgateway.order-processor'), $container->get('settings.settings-provider'), $container->get('session.handler'), $container->get('wcgateway.processor.refunds'), $container->get('settings.flag.is-connected'), $container->get('wcgateway.transaction-url-provider'), $container->get('wc-subscriptions.helper'), $container->get('settings.environment'), $container->get('woocommerce.logger.woocommerce'), $container->get('api.shop.country'), $container->get('api.factory.paypal-checkout-url'), $container->get('wcgateway.place-order-button-text'), $container->get('api.endpoint.payment-tokens'), $container->get('wc-payment-tokens.wc-payment-tokens'), $container->get('wcgateway.asset_getter'), $container->get('wcgateway.settings.admin-settings-enabled'), $container->get('wcgateway.endpoint.capture-paypal-payment'), $container->get('api.endpoint.order'), $container->get('api.prefix'));
     },
@@ -360,8 +363,9 @@ return array(
         return new OXXOGateway($container->get('api.endpoint.order'), $container->get('api.factory.purchase-unit'), $container->get('api.factory.shipping-preference'), $container->get('wcgateway.builder.experience-context'), $container->get('wcgateway.asset_getter'), $container->get('wcgateway.transaction-url-provider'), $container->get('settings.environment'), $container->get('woocommerce.logger.woocommerce'));
     },
     'wcgateway.logging.is-enabled' => static function (ContainerInterface $container): bool {
-        $settings_provider = $container->get('settings.settings-provider');
-        $is_enabled = $settings_provider->enable_logging();
+        $settings = $container->get('settings.data.settings');
+        assert($settings instanceof SettingsModel);
+        $is_enabled = $settings->get_enable_logging();
         if (!$is_enabled) {
             $state = $container->get('settings.connection-state');
             assert($state instanceof ConnectionState);
