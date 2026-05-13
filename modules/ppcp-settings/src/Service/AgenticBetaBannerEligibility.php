@@ -66,7 +66,7 @@ class AgenticBetaBannerEligibility
             return (bool) $cached;
         }
         $result = $this->general_settings->is_merchant_connected() && $this->store_country === 'US' && $this->has_us_shipping_zone() && $this->has_enough_products() && $this->has_enough_recent_orders();
-        set_transient(self::TRANSIENT_KEY, (int) $result, 10 * MINUTE_IN_SECONDS);
+        set_transient(self::TRANSIENT_KEY, (int) $result, DAY_IN_SECONDS);
         return $result;
     }
     /**
