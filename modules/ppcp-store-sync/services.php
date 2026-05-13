@@ -317,7 +317,7 @@ return array(
 			$c->get( 'agentic.config.webhook_urls' ),
 			$c->get( 'agentic.merchant.provider' ),
 			$c->get( 'agentic.logger.ingestion' ),
-			$c->get( 'agentic.config.store-currency' )
+			$c->get( 'agentic.helper.product-manager' )
 		);
 	},
 
