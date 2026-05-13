@@ -19,7 +19,8 @@ import {
 const BANNER_ID = 'ppcp-agentic-beta-banner';
 const BANNER_CLASS = 'ppcp-r-settings-banner';
 const BANNER_TITLE_ID = `${ BANNER_ID }-title`;
-const APPLY_URL = 'https://example.com'; // TODO: Replace with the real beta sign-up URL once it is known.
+const APPLY_URL =
+	'https://docs.google.com/forms/d/e/1FAIpQLSeSMEJii54f4GfofEsPt1TbKK40NnOvq_Rs9ezXA6Ck5ZEDvg/viewform';
 
 let isBannerDismissed = false;
 
