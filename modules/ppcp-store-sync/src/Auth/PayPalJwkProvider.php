@@ -23,7 +23,7 @@ class PayPalJwkProvider {
 	 * We keep the TTL low (one hour) for safety: In case the JSON changes, the
 	 * agentic endpoint is not blocked for too long.
 	 */
-	private const TRANSIENT_TTL = 60 * MINUTE_IN_SECONDS;
+	private const TRANSIENT_TTL = HOUR_IN_SECONDS;
 
 	private const JWKS_URL = 'https://www.paypal.ai/.well-known/jwks.json';
 
