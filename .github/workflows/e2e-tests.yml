@@ -64,7 +64,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix: ${{ fromJson(needs.resolve-playwright-matrix.outputs.matrix) }}
-    uses: inpsyde/reusable-workflows/.github/workflows/test-playwright.yml@fix/test-playwright
+    uses: inpsyde/reusable-workflows/.github/workflows/test-playwright.yml@main
     with:
       PLAYWRIGHT_SCRIPT: ${{ matrix.script }}
       PLAYWRIGHT_ARTIFACT_NAME: ${{ matrix.artifact_name }}
