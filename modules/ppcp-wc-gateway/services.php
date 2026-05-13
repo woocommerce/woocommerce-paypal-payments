@@ -15,9 +15,11 @@ use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PayUponInvoiceOrderEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\ReferenceTransactionStatus;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\Cache;
+use WooCommerce\PayPalCommerce\Applepay\ApplePayGateway;
 use WooCommerce\PayPalCommerce\Assets\AssetGetter;
 use WooCommerce\PayPalCommerce\Assets\AssetGetterFactory;
 use WooCommerce\PayPalCommerce\Axo\Gateway\AxoGateway;
+use WooCommerce\PayPalCommerce\Googlepay\GooglePayGateway;
 use WooCommerce\PayPalCommerce\Button\Helper\MessagesApply;
 use WooCommerce\PayPalCommerce\Button\Helper\MessagesDisclaimers;
 use WooCommerce\PayPalCommerce\Common\Pattern\SingletonDecorator;
@@ -590,7 +592,7 @@ return array(
         return $container->get('wcgateway.button.default-locations');
     },
     'wcgateway.ppcp-gateways' => static function (ContainerInterface $container): array {
-        return array(PayPalGateway::ID, CreditCardGateway::ID, PayUponInvoiceGateway::ID, CardButtonGateway::ID, OXXOGateway::ID, AxoGateway::ID, \WooCommerce\PayPalCommerce\WcGateway\GooglePayGateway::ID, \WooCommerce\PayPalCommerce\WcGateway\ApplePayGateway::ID);
+        return array(PayPalGateway::ID, CreditCardGateway::ID, PayUponInvoiceGateway::ID, CardButtonGateway::ID, OXXOGateway::ID, AxoGateway::ID, GooglePayGateway::ID, ApplePayGateway::ID);
     },
     'wcgateway.gateway-repository' => static function (ContainerInterface $container): GatewayRepository {
         return new GatewayRepository($container->get('wcgateway.ppcp-gateways'));
