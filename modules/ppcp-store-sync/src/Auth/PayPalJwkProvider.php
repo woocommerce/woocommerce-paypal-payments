@@ -20,7 +20,7 @@ class PayPalJwkProvider {
 
 	/**
 	 * The JWKS endpoint is lightweight, returning a small JSON object.
-	 * We keep the TTL low (one hour) for safety: In case the JSON changes, the
+	 * We keep the TTL low (30 min) for safety: In case the JSON changes, the
 	 * agentic endpoint is not blocked for too long.
 	 */
 	private const TRANSIENT_TTL = 30 * MINUTE_IN_SECONDS;
