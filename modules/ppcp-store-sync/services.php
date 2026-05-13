@@ -167,7 +167,7 @@ return array(
 			$c->get( 'agentic.helper.cart-builder' ),
 			$c->get( 'agentic.response.applied-coupons-builder' ),
 			$c->get( 'api.factory.shipping' ),
-			$c->get( 'agentic.logger' )
+			$c->get( 'agentic.logger.default' )
 		);
 	},
 
