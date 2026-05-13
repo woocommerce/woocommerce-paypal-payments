@@ -32,6 +32,7 @@ class ProductManager {
 	 */
 	public function find_product( CartItem $item ): ?WC_Product {
 		$variant_id = $item->variant_id();
+		// @phpstan-ignore-next-line method.deprecated
 		$item_id    = $item->item_id();
 		$cache_key  = $this->build_cache_key( $variant_id, $item_id );
 
