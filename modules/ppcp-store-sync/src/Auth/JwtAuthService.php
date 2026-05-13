@@ -4,9 +4,12 @@ declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\StoreSync\Auth;
 
+use DomainException;
 use Exception;
+use InvalidArgumentException;
 use WP_Error;
 use Firebase\JWT\JWT;
+use Firebase\JWT\SignatureInvalidException;
 
 use WooCommerce\PayPalCommerce\StoreSync\Merchant\MerchantMetadataProvider;
 
@@ -46,8 +49,12 @@ class JwtAuthService {
 
 		try {
 			return JWT::decode( $jwt, $keys );
-		} catch ( Exception $exception ) {
-			return new WP_Error( 'invalid_jwt', $exception->getMessage(), array( 'status' => 401 ) );
+		} catch ( InvalidArgumentException $e ) {
+			return $this->key_unavailable( $e->getMessage() );
+		} catch ( DomainException $e ) {
+			return $this->malformed_token( $e->getMessage() );
+		} catch ( SignatureInvalidException | Exception $e ) {
+			return $this->invalid_jwt( $e->getMessage() );
 		}
 	}
 
