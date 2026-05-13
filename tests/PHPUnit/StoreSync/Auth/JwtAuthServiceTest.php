@@ -138,11 +138,11 @@ class JwtAuthServiceTest extends TestCase {
 			'bearer whitespace'      => array( 'Bearer   ', 'missing_token', 401, false ),
 
 			// Format and validation errors (401).
-			'not bearer format'      => array( 'NotBearerFormat', 'invalid_jwt', 401, false ),
+			'not bearer format'      => array( 'NotBearerFormat', 'malformed_token', 401, false ),
 			'invalid signature'      => array( 'Bearer ' . $invalid_jwt, 'invalid_jwt', 401, true ),
-			'malformed (1 segment)'  => array( 'Bearer randomgarbage', 'invalid_jwt', 401, true ),
-			'malformed (2 segments)' => array( 'Bearer invalid.token', 'invalid_jwt', 401, true ),
-			'malformed (4 segments)' => array( 'Bearer a.b.c.d', 'invalid_jwt', 401, true ),
+			'malformed (1 segment)'  => array( 'Bearer randomgarbage', 'malformed_token', 401, true ),
+			'malformed (2 segments)' => array( 'Bearer invalid.token', 'malformed_token', 401, true ),
+			'malformed (4 segments)' => array( 'Bearer a.b.c.d', 'malformed_token', 401, true ),
 			'expired token'          => array( 'Bearer ' . $expired_jwt, 'invalid_jwt', 401, true ),
 			'not yet valid token'    => array( 'Bearer ' . $future_jwt, 'invalid_jwt', 401, true ),
 		);
@@ -245,19 +245,19 @@ class JwtAuthServiceTest extends TestCase {
 			'wrong issuer'            => array(
 				'token_data'  => array( 'iss' => 'evil.com' ),
 				'merchant_id' => null,
-				'error_code'  => 'invalid_issuer',
+				'error_code'  => 'invalid_payload',
 				'http_status' => 401,
 			),
 			'empty issuer'            => array(
 				'token_data'  => array( 'iss' => '' ),
 				'merchant_id' => null,
-				'error_code'  => 'invalid_issuer',
+				'error_code'  => 'invalid_payload',
 				'http_status' => 401,
 			),
 			'issuer subdomain'        => array(
 				'token_data'  => array( 'iss' => 'sub.paypal.com' ),
 				'merchant_id' => null,
-				'error_code'  => 'invalid_issuer',
+				'error_code'  => 'invalid_payload',
 				'http_status' => 401,
 			),
 
@@ -273,13 +273,13 @@ class JwtAuthServiceTest extends TestCase {
 			'scope not array'         => array(
 				'token_data'  => array( 'scope' => 'cart' ),
 				'merchant_id' => null,
-				'error_code'  => 'invalid_token',
+				'error_code'  => 'invalid_payload',
 				'http_status' => 401,
 			),
 			'external_id not array'   => array(
 				'token_data'  => array( 'external_id' => 'PayPal:MERCHANT123' ),
 				'merchant_id' => 'MERCHANT123',
-				'error_code'  => 'invalid_token',
+				'error_code'  => 'invalid_payload',
 				'http_status' => 401,
 			),
 
