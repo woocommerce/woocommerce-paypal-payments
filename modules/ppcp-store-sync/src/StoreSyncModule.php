@@ -102,28 +102,6 @@ class StoreSyncModule implements ServiceModule, ExecutableModule {
 			$this->ensure_registered( $registration_handler );
 		}
 
-		// Add filter for agentic commerce application context.
-		add_filter(
-			'ppcp_create_order_request_body_data',
-			static function ( array $data, string $payment_method ): array {
-				if ( $payment_method === 'agentic-commerce' ) {
-					$data['application_context'] = array(
-						'brand_name'          => get_bloginfo( 'name' ),
-						'locale'              => 'en-US',
-						'landing_page'        => 'NO_PREFERENCE',
-						'shipping_preference' => 'NO_SHIPPING',
-						'user_action'         => 'PAY_NOW',
-						'return_url'          => home_url( '/paypal-return' ),
-						'cancel_url'          => home_url( '/paypal-cancel' ),
-					);
-				}
-
-				return $data;
-			},
-			10,
-			2
-		);
-
 		// Public REST endpoints.
 		add_action(
 			'rest_api_init',
