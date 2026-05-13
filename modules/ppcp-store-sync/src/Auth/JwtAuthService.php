@@ -50,6 +50,9 @@ class JwtAuthService {
 		try {
 			return JWT::decode( $jwt, $keys );
 		} catch ( InvalidArgumentException $e ) {
+			// Key object was empty or malformed — corrupt cache.
+			PayPalJwkProvider::flush();
+
 			return $this->key_unavailable( $e->getMessage() );
 		} catch ( DomainException $e ) {
 			return $this->malformed_token( $e->getMessage() );
