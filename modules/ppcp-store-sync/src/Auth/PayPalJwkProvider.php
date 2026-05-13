@@ -23,6 +23,13 @@ class PayPalJwkProvider {
 	private const JWKS_URL = 'https://www.paypal.ai/.well-known/jwks.json';
 
 	/**
+	 * The JWKS entry may advertise an "alg" value, but we enforce the
+	 * expected algorithm here as a safety measure in case the jwks.json
+	 * is corrupted or compromised.
+	 */
+	private const EXPECTED_ALGORITHM = 'RS256';
+
+	/**
 	 * Returns the first public key from PayPal's JWKS.
 	 *
 	 * @return Key|null The public key, or null on failure.
@@ -139,9 +146,15 @@ class PayPalJwkProvider {
 	 */
 	private function parse_first_key( array $jwks ): ?Key {
 		try {
-			$keys = JWK::parseKeySet( $jwks );
+			$keys = JWK::parseKeySet( $jwks, self::EXPECTED_ALGORITHM );
 
-			return reset( $keys ) ?: null;
+			foreach ( $keys as $key ) {
+				if ( $key->getAlgorithm() === self::EXPECTED_ALGORITHM ) {
+					return $key;
+				}
+			}
+
+			return null;
 		} catch ( Exception $exception ) {
 			return null;
 		}
