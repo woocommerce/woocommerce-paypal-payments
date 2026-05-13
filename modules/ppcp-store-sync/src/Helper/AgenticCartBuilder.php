@@ -205,8 +205,10 @@ class AgenticCartBuilder {
 	}
 
 	private function set_addresses( WC_Customer $wc_customer, PayPalCart $paypal_cart ): void {
+		// The shipping address always returns an object (never null), but the object might
+		// contain no values. We check via `::is_empty()` if we have shipping details.
 		$shipping = $paypal_cart->shipping_address();
-		if ( $shipping ) {
+		if ( ! $shipping->is_empty() ) {
 			$wc_customer->set_shipping_first_name( $wc_customer->get_first_name() );
 			$wc_customer->set_shipping_last_name( $wc_customer->get_last_name() );
 			$wc_customer->set_shipping_address_1( (string) $shipping->address_line_1( '' ) );
@@ -217,6 +219,7 @@ class AgenticCartBuilder {
 			$wc_customer->set_shipping_country( (string) $shipping->country_code( '' ) );
 		}
 
+		// Billing address can be null; when a non-null value is returned, we have address data.
 		$billing = $paypal_cart->billing_address();
 		if ( $billing ) {
 			$wc_customer->set_billing_first_name( $wc_customer->get_first_name() );
