@@ -147,8 +147,10 @@ class CouponValidator implements ValidatorInterface {
 		}
 
 		if ( ! wc_coupons_enabled() ) {
+			$first_coupon = reset( $coupons_to_apply );
+
 			return array(
-				$this->create_issue( 'COUPON_NOT_SUPPORTED', $coupons_to_apply[0]->code() ?? '', 'coupons', $store_cart, null ),
+				$this->create_issue( 'COUPON_NOT_SUPPORTED', $first_coupon->code() ?? '', 'coupons', $store_cart, null ),
 			);
 		}
 
