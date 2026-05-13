@@ -136,8 +136,10 @@ return array(
 	},
 
 	// Helper services.
-	'agentic.helper.product-manager'               => static function (): ProductManager {
-		return new ProductManager();
+	'agentic.helper.product-manager'               => static function ( ContainerInterface $c ): ProductManager {
+		return new ProductManager(
+			$c->get( 'agentic.config.store-currency' )
+		);
 	},
 
 	'agentic.helper.session-manager'               => static function ( ContainerInterface $c ): AgenticSessionManager {
