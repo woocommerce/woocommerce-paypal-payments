@@ -108,6 +108,7 @@ class AgenticCartBuilderTest extends TestCase {
 	public function test_shipping_address_fields_are_applied_to_wc_customer(): void {
 		// Arrange: an Address mock returning known test values for each field.
 		$address = Mockery::mock( Address::class );
+		$address->allows( 'is_empty' )->andReturn( false );
 		$address->allows( 'address_line_1' )->with( '' )->andReturn( '123 Main St' );
 		$address->allows( 'address_line_2' )->with( '' )->andReturn( 'Apt 4B' );
 		$address->allows( 'admin_area_2' )->with( '' )->andReturn( 'Springfield' );
