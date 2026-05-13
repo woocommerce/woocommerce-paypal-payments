@@ -29,6 +29,8 @@ class PayPalJwkProvider {
 	 */
 	private const EXPECTED_ALGORITHM = 'RS256';
 
+	private const EXPECTED_KEY_TYPE = 'RSA';
+
 	/**
 	 * Returns the first public key from PayPal's JWKS.
 	 *
@@ -128,7 +130,13 @@ class PayPalJwkProvider {
 			$body = wp_remote_retrieve_body( $response );
 			$data = json_decode( $body, true, 512, JSON_THROW_ON_ERROR );
 
-			if ( ! is_array( $data ) || empty( $data['keys'] ) ) {
+			if ( ! is_array( $data ) ) {
+				return null;
+			}
+
+			$data['keys'] = $this->filter_jwks_keys( $data['keys'] ?? array() );
+
+			if ( empty( $data['keys'] ) ) {
 				return null;
 			}
 
@@ -136,6 +144,32 @@ class PayPalJwkProvider {
 		} catch ( Exception $exception ) {
 			return null;
 		}
+	}
+
+	/**
+	 * Strips any key that is not an RSA/RS256 entry before the data reaches the JWT library.
+	 *
+	 * @param array $keys Raw entries from the JWKS "keys" array.
+	 * @return array Filtered entries.
+	 */
+	private function filter_jwks_keys( array $keys ): array {
+		return array_values(
+			array_filter(
+				$keys,
+				function ( $key ): bool {
+					if ( ! is_array( $key ) ) {
+						return false;
+					}
+					if ( ( $key['kty'] ?? '' ) !== self::EXPECTED_KEY_TYPE ) {
+						return false;
+					}
+					if ( isset( $key['alg'] ) && $key['alg'] !== self::EXPECTED_ALGORITHM ) {
+						return false;
+					}
+					return true;
+				}
+			)
+		);
 	}
 
 	/**
