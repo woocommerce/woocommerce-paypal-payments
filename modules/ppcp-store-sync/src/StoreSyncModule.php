@@ -128,60 +128,6 @@ class StoreSyncModule implements ServiceModule, ExecutableModule {
 		// Product ingestion.
 		add_action( 'init', static fn() => $ingestion_manager->init() );
 
-		// Handle PayPal return/cancel URLs for approval flow.
-		// In agentic commerce, these are typically not used by AI agents.
-		add_action(
-			'template_redirect',
-			/**
-			 * TODO: Temporary test code. This code will be removed soon.
-			 *
-			 * @psalm-suppress MixedArgument, MixedArrayAccess, MixedAssignment, PossiblyInvalidArgument
-			 */
-			static function (): void {
-				$request_uri = isset( $_SERVER['REQUEST_URI'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REQUEST_URI'] ) ) : '';
-
-				// Handle PayPal return (approval completed).
-				if ( strpos( $request_uri, '/paypal-return' ) !== false ) {
-					// phpcs:disable WordPress.Security.NonceVerification.Recommended
-					$token    = isset( $_GET['token'] ) ? sanitize_text_field( wp_unslash( $_GET['token'] ) ) : '';
-					$payer_id = isset( $_GET['PayerID'] ) ? sanitize_text_field( wp_unslash( $_GET['PayerID'] ) ) : '';
-					// phpcs:enable WordPress.Security.NonceVerification.Recommended
-
-					wp_die(
-						sprintf(
-							'<h1>Payment Approved</h1>
-							<p>Your PayPal payment has been approved.</p>
-							<p><strong>Order ID:</strong> %s</p>
-							<p><strong>Payer ID:</strong> %s</p>
-							<p>This transaction is being handled by the AI agent. You can close this window.</p>',
-							esc_html( $token ),
-							esc_html( $payer_id )
-						),
-						'Payment Approved',
-						array( 'response' => 200 )
-					);
-				}
-
-				// Handle PayPal cancel.
-				if ( strpos( $request_uri, '/paypal-cancel' ) !== false ) {
-					// phpcs:disable WordPress.Security.NonceVerification.Recommended
-					$token = isset( $_GET['token'] ) ? sanitize_text_field( wp_unslash( $_GET['token'] ) ) : '';
-					// phpcs:enable WordPress.Security.NonceVerification.Recommended
-
-					wp_die(
-						sprintf(
-							'<h1>Payment Cancelled</h1>
-							<p>The PayPal payment was cancelled.</p>
-							<p><strong>Order ID:</strong> %s</p>',
-							esc_html( $token )
-						),
-						'Payment Cancelled',
-						array( 'response' => 200 )
-					);
-				}
-			}
-		);
-
 		return true;
 	}
 
