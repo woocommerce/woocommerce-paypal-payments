@@ -21,7 +21,7 @@ class PayPalJwkProvider
      * We keep the TTL low (one hour) for safety: In case the JSON changes, the
      * agentic endpoint is not blocked for too long.
      */
-    private const TRANSIENT_TTL = 60 * MINUTE_IN_SECONDS;
+    private const TRANSIENT_TTL = HOUR_IN_SECONDS;
     private const JWKS_URL = 'https://www.paypal.ai/.well-known/jwks.json';
     /**
      * The JWKS entry may advertise an "alg" value, but we enforce the
@@ -31,17 +31,25 @@ class PayPalJwkProvider
     private const EXPECTED_ALGORITHM = 'RS256';
     private const EXPECTED_KEY_TYPE = 'RSA';
     /**
-     * Returns the first public key from PayPal's JWKS.
+     * Returns all public keys from PayPal's JWKS, keyed by kid.
      *
-     * @return Key|null The public key, or null on failure.
+     * Returning the full set (not just the first key) allows JWT::decode to match
+     * tokens by kid during key rotation, when PayPal publishes old and new keys
+     * simultaneously.
+     *
+     * @return array<string, Key> Parsed keys, or empty array on failure.
      */
-    public function keys(): ?Key
+    public function keys(): array
     {
         $jwks = $this->get_jwks_data();
         if (!$jwks) {
-            return null;
+            return array();
         }
-        return $this->parse_first_key($jwks);
+        try {
+            return JWK::parseKeySet($jwks, self::EXPECTED_ALGORITHM);
+        } catch (Exception $e) {
+            return array();
+        }
     }
     /**
      * Clean up the DB.
@@ -131,7 +139,7 @@ class PayPalJwkProvider
      */
     private function filter_jwks_keys(array $keys): array
     {
-        return array_values(array_filter($keys, function ($key): bool {
+        $filtered_keys = array_filter($keys, static function ($key): bool {
             if (!is_array($key)) {
                 return \false;
             }
@@ -142,26 +150,7 @@ class PayPalJwkProvider
                 return \false;
             }
             return \true;
-        }));
-    }
-    /**
-     * Parses the first key from the JWKS data.
-     *
-     * @param array $jwks The JWKS data containing keys array.
-     * @return Key|null The first key, or null if parsing fails.
-     */
-    private function parse_first_key(array $jwks): ?Key
-    {
-        try {
-            $keys = JWK::parseKeySet($jwks, self::EXPECTED_ALGORITHM);
-            foreach ($keys as $key) {
-                if ($key->getAlgorithm() === self::EXPECTED_ALGORITHM) {
-                    return $key;
-                }
-            }
-            return null;
-        } catch (Exception $exception) {
-            return null;
-        }
+        });
+        return array_values($filtered_keys);
     }
 }
