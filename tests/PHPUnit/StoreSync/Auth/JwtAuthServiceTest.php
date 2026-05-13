@@ -32,8 +32,9 @@ class JwtAuthServiceTest extends TestCase {
 		$jwk_provider      = Mockery::mock( PayPalJwkProvider::class );
 		$metadata_provider = Mockery::mock( MerchantMetadataProvider::class );
 
+		$keys = $jwk_key !== null ? array( 'test-key' => $jwk_key ) : array();
 		$jwk_provider->allows( 'keys' )
-			->andReturn( $jwk_key );
+			->andReturn( $keys );
 		$metadata_provider->allows( 'get_metadata' )
 			->andReturn( $metadata );
 
@@ -158,7 +159,7 @@ class JwtAuthServiceTest extends TestCase {
 		$metadata_provider = Mockery::mock( MerchantMetadataProvider::class );
 
 		$jwk_provider->allows( 'keys' )
-			->andReturn( null );
+			->andReturn( array() );
 
 		$service = new JwtAuthService( $jwk_provider, $metadata_provider );
 		$result  = $service->get_token( 'Bearer some.valid.token' );
@@ -183,7 +184,7 @@ class JwtAuthServiceTest extends TestCase {
 		$key     = new Key( 'test-secret-key', 'HS256' );
 		$service = $this->create_service( null, $key );
 
-		$valid_jwt = JWT::encode( (array) $expected_payload, 'test-secret-key', 'HS256' );
+		$valid_jwt = JWT::encode( (array) $expected_payload, 'test-secret-key', 'HS256', 'test-key' );
 		$token     = $prefix . ' ' . $valid_jwt;
 
 		$result = $service->get_token( $token );
