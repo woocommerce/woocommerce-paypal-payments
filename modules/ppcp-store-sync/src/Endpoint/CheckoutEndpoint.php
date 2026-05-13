@@ -120,14 +120,13 @@ class CheckoutEndpoint extends AgenticRestEndpoint {
 		$order = $this->create_wc_order( $store_cart, $session['ec_token'] );
 
 		if ( is_wp_error( $order ) ) {
-			// TODO: Refactor this to use $validation->add_payment_error().
-			$issue = ValidationIssue::create_payment_error( $order->get_error_message() )
+			$store_cart->validation()->add_payment_error( $order->get_error_message() )
 				->add_context(
 					PaymentErrorContext::create_payment_declined()
 						->decline_reason( (string) $order->get_error_code() )
 				);
-			$store_cart->validation()->add( $issue );
 
+			// TODO: this should return an UnprocessableEntityError.
 			return $this->cart_details( $this->response_factory->from_cart( $store_cart, $cart_id ), 200 );
 		}
 
