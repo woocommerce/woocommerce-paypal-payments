@@ -1,5 +1,5 @@
 <?php
 
 namespace {
-    return array('dependencies' => array('react', 'react-dom', 'wp-a11y', 'wp-api-fetch', 'wp-blob', 'wp-components', 'wp-data', 'wp-element', 'wp-i18n', 'wp-notices', 'wp-primitives', 'wp-url'), 'version' => '6e09f15937bff37cc3d3');
+    return array('dependencies' => array('react', 'react-dom', 'wp-a11y', 'wp-api-fetch', 'wp-blob', 'wp-components', 'wp-data', 'wp-element', 'wp-i18n', 'wp-notices', 'wp-primitives', 'wp-url'), 'version' => 'e16ebc68b2187e1b3f0e');
 }
