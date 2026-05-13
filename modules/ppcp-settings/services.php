@@ -42,6 +42,7 @@ use WooCommerce\PayPalCommerce\Settings\Endpoint\AuthenticationRestEndpoint;
 use WooCommerce\PayPalCommerce\Settings\Endpoint\CommonRestEndpoint;
 use WooCommerce\PayPalCommerce\Settings\Endpoint\FeaturesRestEndpoint;
 use WooCommerce\PayPalCommerce\Settings\Endpoint\LoginLinkRestEndpoint;
+use WooCommerce\PayPalCommerce\Settings\Endpoint\AgenticBetaBannerEndpoint;
 use WooCommerce\PayPalCommerce\Settings\Endpoint\MigrateToAcdcRestEndpoint;
 use WooCommerce\PayPalCommerce\Settings\Endpoint\OnboardingRestEndpoint;
 use WooCommerce\PayPalCommerce\Settings\Endpoint\PayLaterMessagingEndpoint;
@@ -56,6 +57,7 @@ use WooCommerce\PayPalCommerce\Settings\Service\AuthenticationManager;
 use WooCommerce\PayPalCommerce\Settings\Service\BrandedExperience\ActivationDetector;
 use WooCommerce\PayPalCommerce\Settings\Service\BrandedExperience\PathRepository;
 use WooCommerce\PayPalCommerce\Settings\Service\ConnectionUrlGenerator;
+use WooCommerce\PayPalCommerce\Settings\Service\AgenticBetaBannerEligibility;
 use WooCommerce\PayPalCommerce\Settings\Service\FeaturesEligibilityService;
 use WooCommerce\PayPalCommerce\Settings\Service\GatewayRedirectService;
 use WooCommerce\PayPalCommerce\Settings\Service\LoadingScreenService;
@@ -208,6 +210,9 @@ return array(
     'settings.rest.migrate_to_acdc' => static function (ContainerInterface $container): MigrateToAcdcRestEndpoint {
         return new MigrateToAcdcRestEndpoint($container->get('settings.data.payment'));
     },
+    'settings.rest.agentic_beta_banner' => static function (ContainerInterface $container): AgenticBetaBannerEndpoint {
+        return new AgenticBetaBannerEndpoint();
+    },
     'settings.casual-selling.supported-countries' => static function (ContainerInterface $container): array {
         return array('AR', 'AU', 'AT', 'BE', 'BR', 'CA', 'CL', 'CN', 'CY', 'CZ', 'DK', 'EE', 'FI', 'FR', 'GR', 'HU', 'ID', 'IE', 'IT', 'JP', 'LV', 'LI', 'LU', 'MY', 'MT', 'NL', 'NZ', 'NO', 'PH', 'PL', 'PT', 'RO', 'RU', 'SM', 'SA', 'SG', 'SK', 'SI', 'ZA', 'KR', 'ES', 'SE', 'TW', 'GB', 'US', 'VN');
     },
@@ -240,10 +245,13 @@ return array(
     'settings.service.data-manager' => static function (ContainerInterface $container): SettingsDataManager {
         return new SettingsDataManager($container->get('settings.data.definition.methods'), $container->get('settings.data.onboarding'), $container->get('settings.data.general'), $container->get('settings.data.settings'), $container->get('settings.data.styling'), $container->get('settings.data.payment'), $container->get('settings.data.paylater-messaging'), $container->get('settings.data.todos'));
     },
+    'settings.service.agentic-beta-eligibility' => static function (ContainerInterface $container): AgenticBetaBannerEligibility {
+        return new AgenticBetaBannerEligibility($container->get('settings.data.general'), $container->get('wcgateway.store-country'));
+    },
     'settings.service.script-data-handler' => static function (ContainerInterface $container): ScriptDataHandler {
         $check_override = $container->get('settings.migration.bcdc-override-check');
         assert(is_callable($check_override));
-        return new ScriptDataHandler($container->get('settings.asset_getter'), $container->get('paylater-configurator.is-available'), $container->get('wcgateway.store-country'), $container->get('api.partner_merchant_id'), $container->get('wcgateway.wp-paypal-locales-map'), $container->get('api.helper.partner-attribution'), $container->get('settings.settings-provider'), $container->get('api.helpers.paymentLevelEligibility'), $check_override());
+        return new ScriptDataHandler($container->get('settings.asset_getter'), $container->get('paylater-configurator.is-available'), $container->get('wcgateway.store-country'), $container->get('api.partner_merchant_id'), $container->get('wcgateway.wp-paypal-locales-map'), $container->get('api.helper.partner-attribution'), $container->get('settings.settings-provider'), $container->get('api.helpers.paymentLevelEligibility'), $check_override(), $container->get('settings.service.agentic-beta-eligibility'));
     },
     'settings.service.data-migration' => static fn(ContainerInterface $c): MigrationManager => new MigrationManager($c->get('settings.service.data-migration.general-settings'), $c->get('settings.service.data-migration.settings-tab'), $c->get('settings.service.data-migration.styling'), $c->get('settings.service.data-migration.payment-settings'), $c->get('settings.service.data-migration.fastlane'), $c->get('settings.data.onboarding'), $c->get('woocommerce.logger.woocommerce')),
     'settings.service.data-migration.settings-tab' => static fn(ContainerInterface $c): SettingsTabMigration => new SettingsTabMigration((array) get_option('woocommerce-ppcp-settings', array()), $c->get('settings.data.settings')),

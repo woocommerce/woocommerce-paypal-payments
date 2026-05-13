@@ -31,6 +31,14 @@ require $main_plugin_file;
     assert($app_container instanceof ContainerInterface);
     $general_settings = $app_container->get('settings.data.general');
     assert($general_settings instanceof GeneralSettings);
+    /**
+     * Delete the branded flag unconditionally so reinstalling from a different
+     * source (e.g. WordPress.org) does not silently re-enter branded-only mode.
+     * Unlike most settings, this flag must be cleared on every uninstall — even
+     * when the full-reset filter is off — because keeping it prevents merchants
+     * from ever escaping branded-only mode without direct DB intervention.
+     */
+    delete_option('woocommerce_paypal_branded');
     if ($general_settings->reset_installation_path('plugin_uninstall')) {
         $general_settings->save();
     }
