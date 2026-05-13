@@ -199,8 +199,8 @@ class AgenticCartBuilder {
 		}
 
 		if ( $name ) {
-			$wc_customer->set_first_name( $name['given_name'] );
-			$wc_customer->set_last_name( $name['surname'] );
+			$wc_customer->set_first_name( (string) $name->given_name( '' ) );
+			$wc_customer->set_last_name( (string) $name->surname( '' ) );
 		}
 	}
 

@@ -17,9 +17,9 @@ use WooCommerce\PayPalCommerce\StoreSync\Validation\StoreValidation;
 class Customer extends AgenticSchema {
 	private ?string $email_address = null;
 
-	private ?array $name = null;
+	private ?CustomerName $name = null;
 
-	private ?array $phone = null;
+	private ?CustomerPhone $phone = null;
 
 	protected function parse_fields( array $input, StoreValidation $validation ): void {
 		// Reset all fields.
@@ -42,84 +42,10 @@ class Customer extends AgenticSchema {
 			}
 		}
 		if ( isset( $input['name'] ) && is_array( $input['name'] ) ) {
-			$this->name = array(
-				'given_name' => null,
-				'surname'    => null,
-			);
-
-			$given_name = $input['name']['given_name'] ?? null;
-			$surname    = $input['name']['surname'] ?? null;
-
-			if ( is_string( $given_name ) ) {
-				if ( strlen( $given_name ) > 140 ) {
-					$validation->add_invalid_data(
-						'name.given_name',
-						'Given name too long',
-						'The customers given name cannot be longer than 140 characters'
-					);
-				} else {
-					$this->name['given_name'] = trim( $given_name );
-				}
-			}
-			if ( is_string( $surname ) ) {
-				if ( strlen( $surname ) > 140 ) {
-					$validation->add_invalid_data(
-						'name.surname',
-						'Surname too long',
-						'The customers surname cannot be longer than 140 characters'
-					);
-				} else {
-					$this->name['surname'] = trim( $surname );
-				}
-			}
+			$this->name = CustomerName::from_array( $input['name'], $validation );
 		}
 		if ( isset( $input['phone'] ) && is_array( $input['phone'] ) ) {
-			$this->phone = array(
-				'country_code'    => null,
-				'national_number' => null,
-			);
-
-			$country_code    = $input['phone']['country_code'] ?? null;
-			$national_number = $input['phone']['national_number'] ?? null;
-
-			if ( is_string( $country_code ) ) {
-				$country_code = trim( $country_code );
-
-				if ( ! is_numeric( $country_code ) || '0' === $country_code ) {
-					$validation->add_invalid_data(
-						'phone.country_code',
-						'Invalid country code format',
-						'The customers phone country-code must be numeric'
-					);
-				} elseif ( strlen( $country_code ) > 3 ) {
-					$validation->add_invalid_data(
-						'phone.country_code',
-						'Invalid country code length',
-						'The customers phone country-code must have between 1 and 3 digits'
-					);
-				} else {
-					$this->phone['country_code'] = trim( $country_code );
-				}
-			}
-			if ( is_string( $national_number ) ) {
-				$national_number = trim( $national_number );
-
-				if ( ! is_numeric( $national_number ) ) {
-					$validation->add_invalid_data(
-						'phone.national_number',
-						'Invalid national number format',
-						'The customers phone number must be numeric'
-					);
-				} elseif ( strlen( $national_number ) > 14 ) {
-					$validation->add_invalid_data(
-						'phone.national_number',
-						'Invalid national number length',
-						'The customers phone number must have between 1 and 3 digits'
-					);
-				} else {
-					$this->phone['national_number'] = trim( $national_number );
-				}
-			}
+			$this->phone = CustomerPhone::from_array( $input['phone'], $validation );
 		}
 	}
 
@@ -127,34 +53,25 @@ class Customer extends AgenticSchema {
 		return $this->email_address ?? $default;
 	}
 
-	/**
-	 * @return null|array Customer name as an array, no own schema.
-	 */
-	public function name( ?array $default = null ): ?array {
+	public function name( ?CustomerName $default = null ): ?CustomerName {
 		return $this->name ?? $default;
 	}
 
-	/**
-	 * @return null|array Phone number as an array, no own schema.
-	 */
-	public function phone( ?array $default = null ): ?array {
+	public function phone( ?CustomerPhone $default = null ): ?CustomerPhone {
 		return $this->phone ?? $default;
 	}
 
 	public function to_array(): array {
 		$data = array(
-			'email_address' => $this->email_address,
-			'name'          => $this->name,
-			'phone'         => $this->phone,
+			'email_address' => $this->email_address(),
+			'name'          => $this->name ? $this->name->to_array() : null,
+			'phone'         => $this->phone ? $this->phone->to_array() : null,
 		);
 
 		return array_filter( $data, static fn( $v ) => $v !== null );
 	}
 
 	public function full_name(): string {
-		$first_name = $this->name['given_name'] ?? '';
-		$last_name  = $this->name['surname'] ?? '';
-
-		return trim( "$first_name $last_name" );
+		return $this->name ? $this->name->full_name() : '';
 	}
 }
