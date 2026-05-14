@@ -109,6 +109,12 @@ class Abilities_Registrar_Test extends TestCase
 		// classes land in Phase II / Phase III commits.
 		$expected = array(
 			Domain\GetConnectionStatus::class,
+			Domain\GetPaymentMethods::class,
+			Domain\GetSettings::class,
+			Domain\GetWebhookStatus::class,
+			Domain\GetLastWebhookEvent::class,
+			Domain\GetOrderTracking::class,
+			Domain\GetPaypalOrder::class,
 		);
 
 		$this->assertSame($expected, $classes);

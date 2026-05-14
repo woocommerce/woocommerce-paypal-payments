@@ -1,0 +1,42 @@
+<?php
+declare(strict_types=1);
+
+namespace WooCommerce\PayPalCommerce\Abilities\Domain;
+
+use WooCommerce\PayPalCommerce\Abilities\Abilities_Registrar;
+use WooCommerce\PayPalCommerce\TestCase;
+
+/**
+ * Unit tests for the GetWebhookStatus ability shape.
+ *
+ * The delegate→REST→envelope path (which makes a synchronous remote call
+ * to PayPal) is exercised by the Phase V integration harness.
+ */
+class GetWebhookStatusTest extends TestCase
+{
+	public function test_get_name_uses_the_extension_namespace(): void
+	{
+		$this->assertSame(
+			'woocommerce-paypal-payments/get-webhook-status',
+			GetWebhookStatus::get_name()
+		);
+	}
+
+	public function test_registration_args_are_zero_arg_read_only(): void
+	{
+		$args = GetWebhookStatus::get_registration_args();
+
+		$this->assertSame(array( GetWebhookStatus::class, 'execute' ), $args['execute_callback']);
+		$this->assertSame(array( Abilities_Registrar::class, 'can_manage_woocommerce' ), $args['permission_callback']);
+		$this->assertSame(Abilities_Registrar::CATEGORY_SLUG, $args['category']);
+
+		$this->assertSame(array(), $args['input_schema']['properties']);
+		$this->assertFalse($args['input_schema']['additionalProperties']);
+
+		$this->assertTrue($args['meta']['annotations']['readonly']);
+		$this->assertFalse($args['meta']['annotations']['destructive']);
+		$this->assertTrue($args['meta']['annotations']['idempotent']);
+		$this->assertTrue($args['meta']['show_in_rest']);
+		$this->assertTrue($args['meta']['mcp']['public']);
+	}
+}

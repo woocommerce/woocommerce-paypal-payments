@@ -58,6 +58,12 @@ class Abilities_Registrar {
 	 */
 	private const ABILITY_CLASSES = array(
 		Domain\GetConnectionStatus::class,
+		Domain\GetPaymentMethods::class,
+		Domain\GetSettings::class,
+		Domain\GetWebhookStatus::class,
+		Domain\GetLastWebhookEvent::class,
+		Domain\GetOrderTracking::class,
+		Domain\GetPaypalOrder::class,
 	);
 
 	/**
