@@ -12,12 +12,10 @@ declare( strict_types = 1 );
 namespace WooCommerce\PayPalCommerce\Abilities\Domain;
 
 use Automattic\WooCommerce\Abilities\AbilityDefinition;
-use LogicException;
 use Throwable;
-use WooCommerce\PayPalCommerce\Abilities\Abilities_Registrar;
+use WooCommerce\PayPalCommerce\Abilities\AbilitiesRegistrar;
 use WooCommerce\PayPalCommerce\OrderTracking\Endpoint\OrderTrackingEndpoint;
 use WooCommerce\PayPalCommerce\OrderTracking\Shipment\ShipmentInterface;
-use WooCommerce\PayPalCommerce\PPCP;
 
 /**
  * Registers the woocommerce-paypal-payments/get-order-tracking ability.
@@ -68,7 +66,7 @@ class GetOrderTracking extends AbstractPpcpAbility implements AbilityDefinition 
 				'additionalProperties' => false,
 			),
 			'execute_callback'    => array( self::class, 'execute' ),
-			'permission_callback' => array( Abilities_Registrar::class, 'can_manage_woocommerce' ),
+			'permission_callback' => array( AbilitiesRegistrar::class, 'can_manage_woocommerce' ),
 			'meta'                => array(
 				'annotations'  => array(
 					'readonly'    => true,
@@ -107,7 +105,7 @@ class GetOrderTracking extends AbstractPpcpAbility implements AbilityDefinition 
 			);
 		}
 
-		$controller = self::resolve_controller();
+		$controller = self::resolve_service( self::SERVICE_ID, OrderTrackingEndpoint::class );
 		if ( $controller instanceof \WP_Error ) {
 			return $controller;
 		}
@@ -115,9 +113,14 @@ class GetOrderTracking extends AbstractPpcpAbility implements AbilityDefinition 
 		try {
 			$shipments = $controller->list_tracking_information( $wc_order_id );
 		} catch ( Throwable $e ) {
+			// Don't forward $e->getMessage() to the agent — PayPalApiException
+			// appends information_link URLs that can leak internal API
+			// structure into LLM contexts. Log full detail server-side.
+			error_log( '[ppcp-abilities] get-order-tracking lookup threw for wc_order_id=' . $wc_order_id . ': ' . $e->getMessage() );
+
 			return new \WP_Error(
 				'woocommerce_paypal_payments_tracking_lookup_failed',
-				$e->getMessage(),
+				__( 'PayPal tracking lookup failed; see server log for details.', 'woocommerce-paypal-payments' ),
 				array( 'wc_order_id' => $wc_order_id )
 			);
 		}
@@ -149,35 +152,5 @@ class GetOrderTracking extends AbstractPpcpAbility implements AbilityDefinition 
 	 */
 	public static function serialize_shipment( ShipmentInterface $shipment ): array {
 		return $shipment->to_array();
-	}
-
-	/**
-	 * Resolve the OrderTrackingEndpoint service from the plugin container.
-	 *
-	 * @return OrderTrackingEndpoint|\WP_Error
-	 */
-	private static function resolve_controller() {
-		try {
-			$service = PPCP::container()->get( self::SERVICE_ID );
-		} catch ( LogicException $e ) {
-			return new \WP_Error(
-				'woocommerce_paypal_payments_not_initialized',
-				__( 'WooCommerce PayPal Payments is not initialized; order tracking service is unavailable.', 'woocommerce-paypal-payments' )
-			);
-		} catch ( Throwable $e ) {
-			return new \WP_Error(
-				'woocommerce_paypal_payments_service_unavailable',
-				__( 'Order tracking service could not be resolved.', 'woocommerce-paypal-payments' )
-			);
-		}
-
-		if ( ! $service instanceof OrderTrackingEndpoint ) {
-			return new \WP_Error(
-				'woocommerce_paypal_payments_service_unavailable',
-				__( 'Order tracking service returned an unexpected type.', 'woocommerce-paypal-payments' )
-			);
-		}
-
-		return $service;
 	}
 }

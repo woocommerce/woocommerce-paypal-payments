@@ -8,7 +8,7 @@ use function Brain\Monkey\Functions\expect;
 use function Brain\Monkey\Functions\when;
 
 /**
- * Unit tests for Abilities_Registrar.
+ * Unit tests for AbilitiesRegistrar.
  *
  * The plugin's PHPUnit suite uses Brain Monkey for WordPress-function
  * isolation; a real WP runtime is not available. The class_exists() check
@@ -18,7 +18,7 @@ use function Brain\Monkey\Functions\when;
  * The integration harness (Phase V) covers the loader-present path against
  * a real WC 10.9 install.
  */
-class Abilities_Registrar_Test extends TestCase
+class AbilitiesRegistrarTest extends TestCase
 {
 	const FEATURE_FILTER = 'woocommerce_paypal_payments_abilities_enabled';
 	const LOADER_FILTER  = 'woocommerce_ability_definition_classes';
@@ -27,12 +27,12 @@ class Abilities_Registrar_Test extends TestCase
 	{
 		parent::setUp();
 
-		Abilities_Registrar::reset_initialized_for_testing();
+		AbilitiesRegistrar::reset_initialized_for_testing();
 	}
 
 	public function tearDown(): void
 	{
-		Abilities_Registrar::reset_initialized_for_testing();
+		AbilitiesRegistrar::reset_initialized_for_testing();
 
 		parent::tearDown();
 	}
@@ -49,7 +49,7 @@ class Abilities_Registrar_Test extends TestCase
 		expect('add_filter')
 			->never();
 
-		Abilities_Registrar::init();
+		AbilitiesRegistrar::init();
 
 		// Brain Monkey's expectations register at tearDown via Mockery::close();
 		// the explicit assertion below keeps PHPUnit's risky-test detector
@@ -74,7 +74,7 @@ class Abilities_Registrar_Test extends TestCase
 			'Sanity: AbilitiesLoader must be absent in the unit-test environment so this case is meaningful.'
 		);
 
-		Abilities_Registrar::init();
+		AbilitiesRegistrar::init();
 	}
 
 	public function test_init_re_evaluates_gates_when_initialized_guard_not_set(): void
@@ -94,15 +94,15 @@ class Abilities_Registrar_Test extends TestCase
 		expect('add_filter')
 			->never();
 
-		Abilities_Registrar::init();
-		Abilities_Registrar::init();
+		AbilitiesRegistrar::init();
+		AbilitiesRegistrar::init();
 
 		$this->addToAssertionCount(1);
 	}
 
 	public function test_append_classes_round_trip_returns_full_ability_class_list(): void
 	{
-		$classes = Abilities_Registrar::append_classes(array());
+		$classes = AbilitiesRegistrar::append_classes(array());
 
 		// Assert the registrar contributes exactly the Domain classes its
 		// const declares — no more, no fewer. The list grows as Domain
@@ -124,7 +124,7 @@ class Abilities_Registrar_Test extends TestCase
 	{
 		$preexisting = array('Some\\OtherPlugin\\AbilityDefinition');
 
-		$classes = Abilities_Registrar::append_classes($preexisting);
+		$classes = AbilitiesRegistrar::append_classes($preexisting);
 
 		$this->assertSame(
 			$preexisting,
@@ -140,7 +140,7 @@ class Abilities_Registrar_Test extends TestCase
 				return 'manage_woocommerce' === $capability;
 			});
 
-		$this->assertTrue(Abilities_Registrar::can_manage_woocommerce());
+		$this->assertTrue(AbilitiesRegistrar::can_manage_woocommerce());
 	}
 
 	public function test_can_manage_woocommerce_returns_false_when_capability_not_held(): void
@@ -148,7 +148,7 @@ class Abilities_Registrar_Test extends TestCase
 		when('current_user_can')
 			->justReturn(false);
 
-		$this->assertFalse(Abilities_Registrar::can_manage_woocommerce());
+		$this->assertFalse(AbilitiesRegistrar::can_manage_woocommerce());
 	}
 
 	public function test_category_slug_is_the_shared_woocommerce_bucket(): void
@@ -158,6 +158,6 @@ class Abilities_Registrar_Test extends TestCase
 		// `woocommerce` slug is the shared cross-extension bucket Woo Core
 		// owns. Locking this assertion in catches any future refactor that
 		// drifts the registrar away from the shared category.
-		$this->assertSame('woocommerce', Abilities_Registrar::CATEGORY_SLUG);
+		$this->assertSame('woocommerce', AbilitiesRegistrar::CATEGORY_SLUG);
 	}
 }

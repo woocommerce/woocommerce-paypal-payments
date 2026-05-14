@@ -12,7 +12,7 @@ declare( strict_types = 1 );
 namespace WooCommerce\PayPalCommerce\Abilities\Domain;
 
 use Automattic\WooCommerce\Abilities\AbilityDefinition;
-use WooCommerce\PayPalCommerce\Abilities\Abilities_Registrar;
+use WooCommerce\PayPalCommerce\Abilities\AbilitiesRegistrar;
 use WooCommerce\PayPalCommerce\Settings\Endpoint\PaymentRestEndpoint;
 
 /**
@@ -53,7 +53,7 @@ class GetPaymentMethods extends AbstractPpcpAbility implements AbilityDefinition
 				'additionalProperties' => false,
 			),
 			'execute_callback'    => array( self::class, 'execute' ),
-			'permission_callback' => array( Abilities_Registrar::class, 'can_manage_woocommerce' ),
+			'permission_callback' => array( AbilitiesRegistrar::class, 'can_manage_woocommerce' ),
 			// output_schema deliberately omitted — the heterogeneous shape
 			// (gateway map + __meta + flat config keys) is documented by
 			// the audit doc; duplicating it here would couple the ability

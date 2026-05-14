@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\Abilities\Domain;
 
-use WooCommerce\PayPalCommerce\Abilities\Abilities_Registrar;
+use WooCommerce\PayPalCommerce\Abilities\AbilitiesRegistrar;
 use WooCommerce\PayPalCommerce\OrderTracking\Shipment\ShipmentInterface;
 use WooCommerce\PayPalCommerce\TestCase;
 use WP_Error;
@@ -31,8 +31,8 @@ class GetOrderTrackingTest extends TestCase
 		$args = GetOrderTracking::get_registration_args();
 
 		$this->assertSame(array( GetOrderTracking::class, 'execute' ), $args['execute_callback']);
-		$this->assertSame(array( Abilities_Registrar::class, 'can_manage_woocommerce' ), $args['permission_callback']);
-		$this->assertSame(Abilities_Registrar::CATEGORY_SLUG, $args['category']);
+		$this->assertSame(array( AbilitiesRegistrar::class, 'can_manage_woocommerce' ), $args['permission_callback']);
+		$this->assertSame(AbilitiesRegistrar::CATEGORY_SLUG, $args['category']);
 
 		$properties = $args['input_schema']['properties'];
 		$this->assertArrayHasKey('wc_order_id', $properties);

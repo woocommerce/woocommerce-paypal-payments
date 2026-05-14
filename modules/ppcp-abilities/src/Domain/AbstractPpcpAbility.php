@@ -9,6 +9,10 @@ declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\Abilities\Domain;
 
+use LogicException;
+use Throwable;
+use WooCommerce\PayPalCommerce\PPCP;
+
 /**
  * Shared helpers for PayPal Payments ability definitions.
  *
@@ -29,7 +33,7 @@ abstract class AbstractPpcpAbility {
 	 * Hardcoded to `woocommerce` — Woo Core 10.9+ owns this category and
 	 * registers it itself. Plugin ownership lives in the ability namespace
 	 * (`woocommerce-paypal-payments/<name>`), not the category. Mirrors
-	 * Abilities_Registrar::CATEGORY_SLUG so Domain classes can reference
+	 * AbilitiesRegistrar::CATEGORY_SLUG so Domain classes can reference
 	 * `self::CATEGORY_SLUG` without a cross-namespace static call.
 	 */
 	public const CATEGORY_SLUG = 'woocommerce';
@@ -135,5 +139,60 @@ abstract class AbstractPpcpAbility {
 		}
 
 		return $payload;
+	}
+
+	/**
+	 * Resolve a service from the plugin container, asserting its type.
+	 *
+	 * Shape-3 abilities (those that delegate to a PHP service rather than a
+	 * REST route) all need the same resolver: ask the container, distinguish
+	 * "container not initialized" (LogicException) from "container threw
+	 * unexpectedly" (Throwable), assert the resolved value matches the
+	 * expected type, and surface every failure mode as a structured
+	 * WP_Error rather than letting it bubble.
+	 *
+	 * Unexpected exceptions are also written to error_log() so on-call has
+	 * a server-side trace without needing to add instrumentation post-hoc.
+	 * The plugin's PSR-3 logger is not used here because the catch path may
+	 * fire before the container is healthy enough to resolve any service —
+	 * including the logger itself.
+	 *
+	 * Visibility is `protected` so Domain subclasses inherit the helper.
+	 *
+	 * @template T of object
+	 * @param string          $service_id     Container service id.
+	 * @param class-string<T> $expected_class Class the resolved service must implement / extend.
+	 * @return T|\WP_Error
+	 */
+	protected static function resolve_service( string $service_id, string $expected_class ) {
+		try {
+			$service = PPCP::container()->get( $service_id );
+		} catch ( LogicException $e ) {
+			return new \WP_Error(
+				'woocommerce_paypal_payments_not_initialized',
+				/* translators: %s: container service id. */
+				sprintf( __( 'WooCommerce PayPal Payments is not initialized; service %s is unavailable.', 'woocommerce-paypal-payments' ), $service_id )
+			);
+		} catch ( Throwable $e ) {
+			error_log( '[ppcp-abilities] resolve_service(' . $service_id . ') threw: ' . $e->getMessage() );
+
+			return new \WP_Error(
+				'woocommerce_paypal_payments_service_unavailable',
+				/* translators: %s: container service id. */
+				sprintf( __( 'Service %s could not be resolved.', 'woocommerce-paypal-payments' ), $service_id )
+			);
+		}
+
+		if ( ! $service instanceof $expected_class ) {
+			error_log( '[ppcp-abilities] resolve_service(' . $service_id . ') returned unexpected type ' . ( is_object( $service ) ? get_class( $service ) : gettype( $service ) ) );
+
+			return new \WP_Error(
+				'woocommerce_paypal_payments_service_unavailable',
+				/* translators: %s: container service id. */
+				sprintf( __( 'Service %s returned an unexpected type.', 'woocommerce-paypal-payments' ), $service_id )
+			);
+		}
+
+		return $service;
 	}
 }

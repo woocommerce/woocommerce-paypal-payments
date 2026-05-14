@@ -12,7 +12,7 @@ declare( strict_types = 1 );
 namespace WooCommerce\PayPalCommerce\Abilities\Domain;
 
 use Automattic\WooCommerce\Abilities\AbilityDefinition;
-use WooCommerce\PayPalCommerce\Abilities\Abilities_Registrar;
+use WooCommerce\PayPalCommerce\Abilities\AbilitiesRegistrar;
 use WooCommerce\PayPalCommerce\Settings\Endpoint\CommonRestEndpoint;
 
 /**
@@ -27,7 +27,7 @@ use WooCommerce\PayPalCommerce\Settings\Endpoint\CommonRestEndpoint;
  * the admin UI but never to an agent.
  *
  * @internal Only loaded when WooCommerce 10.9+ is active. The
- *           Abilities_Registrar short-circuits before referencing this
+ *           AbilitiesRegistrar short-circuits before referencing this
  *           class on earlier WC versions; PHP's lazy autoload means the
  *           unresolved AbilityDefinition interface FQN never reaches the
  *           parser there.
@@ -72,7 +72,7 @@ class GetConnectionStatus extends AbstractPpcpAbility implements AbilityDefiniti
 				'additionalProperties' => false,
 			),
 			'execute_callback'    => array( self::class, 'execute' ),
-			'permission_callback' => array( Abilities_Registrar::class, 'can_manage_woocommerce' ),
+			'permission_callback' => array( AbilitiesRegistrar::class, 'can_manage_woocommerce' ),
 			// output_schema deliberately omitted — the merchant payload's
 			// shape is defined by the plugin's $merchant_info_map and
 			// duplicating it here would couple the ability to any future

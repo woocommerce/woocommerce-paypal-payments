@@ -12,7 +12,7 @@ declare( strict_types = 1 );
 namespace WooCommerce\PayPalCommerce\Abilities\Domain;
 
 use Automattic\WooCommerce\Abilities\AbilityDefinition;
-use WooCommerce\PayPalCommerce\Abilities\Abilities_Registrar;
+use WooCommerce\PayPalCommerce\Abilities\AbilitiesRegistrar;
 use WooCommerce\PayPalCommerce\Settings\Endpoint\SettingsRestEndpoint;
 
 /**
@@ -46,7 +46,7 @@ class GetSettings extends AbstractPpcpAbility implements AbilityDefinition {
 				'additionalProperties' => false,
 			),
 			'execute_callback'    => array( self::class, 'execute' ),
-			'permission_callback' => array( Abilities_Registrar::class, 'can_manage_woocommerce' ),
+			'permission_callback' => array( AbilitiesRegistrar::class, 'can_manage_woocommerce' ),
 			// output_schema deliberately omitted — see SettingsRestEndpoint
 			// $field_map (modules/ppcp-settings/src/Endpoint/SettingsRestEndpoint.php
 			// lines 47-117) for the canonical key list.

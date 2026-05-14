@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\Abilities\Domain;
 
-use WooCommerce\PayPalCommerce\Abilities\Abilities_Registrar;
+use WooCommerce\PayPalCommerce\Abilities\AbilitiesRegistrar;
 use WooCommerce\PayPalCommerce\TestCase;
 use WP_Error;
 
@@ -36,12 +36,12 @@ class GetConnectionStatusTest extends TestCase
 			'execute_callback must point at the Domain class itself.'
 		);
 		$this->assertSame(
-			array( Abilities_Registrar::class, 'can_manage_woocommerce' ),
+			array( AbilitiesRegistrar::class, 'can_manage_woocommerce' ),
 			$args['permission_callback'],
 			'permission_callback must point at the shared registrar helper, never at __return_true.'
 		);
 		$this->assertSame(
-			Abilities_Registrar::CATEGORY_SLUG,
+			AbilitiesRegistrar::CATEGORY_SLUG,
 			$args['category'],
 			'Category must be the shared `woocommerce` slug owned by Woo Core.'
 		);

@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\Abilities\Domain;
 
-use WooCommerce\PayPalCommerce\Abilities\Abilities_Registrar;
+use WooCommerce\PayPalCommerce\Abilities\AbilitiesRegistrar;
 use WooCommerce\PayPalCommerce\TestCase;
 
 /**
@@ -28,8 +28,8 @@ class GetLastWebhookEventTest extends TestCase
 		$args = GetLastWebhookEvent::get_registration_args();
 
 		$this->assertSame(array( GetLastWebhookEvent::class, 'execute' ), $args['execute_callback']);
-		$this->assertSame(array( Abilities_Registrar::class, 'can_manage_woocommerce' ), $args['permission_callback']);
-		$this->assertSame(Abilities_Registrar::CATEGORY_SLUG, $args['category']);
+		$this->assertSame(array( AbilitiesRegistrar::class, 'can_manage_woocommerce' ), $args['permission_callback']);
+		$this->assertSame(AbilitiesRegistrar::CATEGORY_SLUG, $args['category']);
 
 		$this->assertSame(array(), $args['input_schema']['properties']);
 		$this->assertFalse($args['input_schema']['additionalProperties']);

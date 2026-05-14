@@ -12,10 +12,7 @@ declare( strict_types = 1 );
 namespace WooCommerce\PayPalCommerce\Abilities\Domain;
 
 use Automattic\WooCommerce\Abilities\AbilityDefinition;
-use LogicException;
-use Throwable;
-use WooCommerce\PayPalCommerce\Abilities\Abilities_Registrar;
-use WooCommerce\PayPalCommerce\PPCP;
+use WooCommerce\PayPalCommerce\Abilities\AbilitiesRegistrar;
 use WooCommerce\PayPalCommerce\Webhooks\WebhookEventStorage;
 
 /**
@@ -52,7 +49,7 @@ class GetLastWebhookEvent extends AbstractPpcpAbility implements AbilityDefiniti
 	public static function get_registration_args(): array {
 		return array(
 			'label'               => __( 'Get last PayPal webhook event', 'woocommerce-paypal-payments' ),
-			'description'         => __( 'Returns the id and reception timestamp of the most recent PayPal webhook event the plugin processed, or null when no event has been received. Useful for diagnosing webhook delivery health.', 'woocommerce-paypal-payments' ),
+			'description'         => __( 'Returns the id and reception timestamp of the most recent PayPal webhook event the plugin processed. When no event has been received the response is { received: false }; otherwise { received: true, id, received_time, received_iso }. Useful for diagnosing webhook delivery health.', 'woocommerce-paypal-payments' ),
 			'category'            => self::CATEGORY_SLUG,
 			'input_schema'        => array(
 				'type'                 => 'object',
@@ -61,7 +58,7 @@ class GetLastWebhookEvent extends AbstractPpcpAbility implements AbilityDefiniti
 				'additionalProperties' => false,
 			),
 			'execute_callback'    => array( self::class, 'execute' ),
-			'permission_callback' => array( Abilities_Registrar::class, 'can_manage_woocommerce' ),
+			'permission_callback' => array( AbilitiesRegistrar::class, 'can_manage_woocommerce' ),
 			'meta'                => array(
 				'annotations'  => array(
 					'readonly'    => true,
@@ -88,7 +85,7 @@ class GetLastWebhookEvent extends AbstractPpcpAbility implements AbilityDefiniti
 	public static function execute( $input = null ) {
 		unset( $input );
 
-		$storage = self::resolve_storage();
+		$storage = self::resolve_service( self::SERVICE_ID, WebhookEventStorage::class );
 		if ( $storage instanceof \WP_Error ) {
 			return $storage;
 		}
@@ -122,35 +119,5 @@ class GetLastWebhookEvent extends AbstractPpcpAbility implements AbilityDefiniti
 				? gmdate( 'c', $received_time )
 				: null,
 		);
-	}
-
-	/**
-	 * Resolve the WebhookEventStorage service from the plugin container.
-	 *
-	 * @return WebhookEventStorage|\WP_Error
-	 */
-	private static function resolve_storage() {
-		try {
-			$service = PPCP::container()->get( self::SERVICE_ID );
-		} catch ( LogicException $e ) {
-			return new \WP_Error(
-				'woocommerce_paypal_payments_not_initialized',
-				__( 'WooCommerce PayPal Payments is not initialized; webhook storage is unavailable.', 'woocommerce-paypal-payments' )
-			);
-		} catch ( Throwable $e ) {
-			return new \WP_Error(
-				'woocommerce_paypal_payments_service_unavailable',
-				__( 'Webhook storage service could not be resolved.', 'woocommerce-paypal-payments' )
-			);
-		}
-
-		if ( ! $service instanceof WebhookEventStorage ) {
-			return new \WP_Error(
-				'woocommerce_paypal_payments_service_unavailable',
-				__( 'Webhook storage service returned an unexpected type.', 'woocommerce-paypal-payments' )
-			);
-		}
-
-		return $service;
 	}
 }

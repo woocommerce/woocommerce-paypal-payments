@@ -1,6 +1,6 @@
 <?php
 /**
- * Class Abilities_Registrar
+ * Class AbilitiesRegistrar
  *
  * @package WooCommerce\PayPalCommerce\Abilities
  */
@@ -31,7 +31,7 @@ namespace WooCommerce\PayPalCommerce\Abilities;
  *
  * @internal This class may be modified, moved or removed in future releases.
  */
-class Abilities_Registrar {
+class AbilitiesRegistrar {
 
 	/**
 	 * Category slug used for every PayPal Payments ability.
@@ -74,6 +74,16 @@ class Abilities_Registrar {
 	 * callbacks, and Woo's loader would iterate the duplicate class entries
 	 * causing _doing_it_wrong notices on every already-registered slug.
 	 *
+	 * Hook timing requirement: init() must be invoked AFTER WooCommerce's
+	 * autoloader is warm (WC 10.9 is when AbilitiesLoader becomes
+	 * autoloadable, and WP's plugins_loaded action is the standard
+	 * checkpoint). AbilitiesModule::run() satisfies this — Syde Modularity
+	 * boots modules at the right point. A future change that moves init()
+	 * earlier (e.g. to muplugins_loaded) would let the class_exists() gate
+	 * return false on first call and the guard would never re-arm
+	 * registration even after WC's autoloader catches up. Keep the call
+	 * site at or after plugins_loaded.
+	 *
 	 * @var bool
 	 */
 	private static $initialized = false;
@@ -93,6 +103,15 @@ class Abilities_Registrar {
 		 *
 		 * Default false during rollout — flip per-site to expose the
 		 * abilities surface, or globally to true once the shape stabilizes.
+		 *
+		 * Naming note: this filter uses the underscore-separated form
+		 * `woocommerce_paypal_payments_abilities_enabled` deliberately,
+		 * diverging from the dot-separated `woocommerce.feature-flags.*`
+		 * convention used by the module-level gates in modules.php. The
+		 * abilities feature is a runtime per-ability registration switch
+		 * (operators can flip it without unloading the module), whereas
+		 * the dot-form gates are evaluated once at module-load time.
+		 * Different gate semantics → different filter naming.
 		 *
 		 * @since 4.1.0
 		 *
