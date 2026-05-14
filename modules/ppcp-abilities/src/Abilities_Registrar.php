@@ -57,7 +57,7 @@ class Abilities_Registrar {
 	 * @var array<int, class-string>
 	 */
 	private const ABILITY_CLASSES = array(
-		// Filled in subsequent commits — one Domain\<Name>::class per ability.
+		Domain\GetConnectionStatus::class,
 	);
 
 	/**

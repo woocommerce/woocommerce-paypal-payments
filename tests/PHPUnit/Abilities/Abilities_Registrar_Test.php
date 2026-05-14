@@ -105,9 +105,11 @@ class Abilities_Registrar_Test extends TestCase
 		$classes = Abilities_Registrar::append_classes(array());
 
 		// Assert the registrar contributes exactly the Domain classes its
-		// const declares — no more, no fewer. Phase I lands with an empty
-		// list; subsequent Domain-class commits will extend this assertion.
-		$expected = array();
+		// const declares — no more, no fewer. The list grows as Domain
+		// classes land in Phase II / Phase III commits.
+		$expected = array(
+			Domain\GetConnectionStatus::class,
+		);
 
 		$this->assertSame($expected, $classes);
 	}
