@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\Abilities;
 
+use ReflectionClass;
 use WooCommerce\PayPalCommerce\TestCase;
 use function Brain\Monkey\Functions\expect;
 use function Brain\Monkey\Functions\when;
@@ -51,10 +52,12 @@ class AbilitiesRegistrarTest extends TestCase
 
 		AbilitiesRegistrar::init();
 
-		// Brain Monkey's expectations register at tearDown via Mockery::close();
-		// the explicit assertion below keeps PHPUnit's risky-test detector
-		// from flagging this method as assertion-free.
-		$this->addToAssertionCount(1);
+		// Concrete state assertion that the bail path did NOT latch the
+		// $initialized guard. Prefer this over addToAssertionCount(1) so
+		// that if Brain Monkey's deferred verification ever silently breaks
+		// we still catch the regression rather than report a false-positive
+		// pass with one phantom assertion.
+		$this->assertFalse(self::read_initialized_guard());
 	}
 
 	public function test_init_bails_when_feature_flag_passes_but_loader_absent(): void
@@ -97,7 +100,10 @@ class AbilitiesRegistrarTest extends TestCase
 		AbilitiesRegistrar::init();
 		AbilitiesRegistrar::init();
 
-		$this->addToAssertionCount(1);
+		// Same belt-and-suspenders rationale as the
+		// feature-flag-disabled test: assert the guard wasn't latched
+		// rather than relying on the Brain Monkey expect() count alone.
+		$this->assertFalse(self::read_initialized_guard());
 	}
 
 	public function test_append_classes_round_trip_returns_full_ability_class_list(): void
@@ -105,8 +111,10 @@ class AbilitiesRegistrarTest extends TestCase
 		$classes = AbilitiesRegistrar::append_classes(array());
 
 		// Assert the registrar contributes exactly the Domain classes its
-		// const declares — no more, no fewer. The list grows as Domain
-		// classes land in Phase II / Phase III commits.
+		// const declares — no more, no fewer. Order-insensitive
+		// (assertEqualsCanonicalizing) so adding a Phase II/III ability
+		// only requires a single update to $expected here, never a sort
+		// dance against ABILITY_CLASSES' declaration order.
 		$expected = array(
 			Domain\GetConnectionStatus::class,
 			Domain\GetPaymentMethods::class,
@@ -117,7 +125,8 @@ class AbilitiesRegistrarTest extends TestCase
 			Domain\GetPaypalOrder::class,
 		);
 
-		$this->assertSame($expected, $classes);
+		$this->assertCount(count($expected), $classes);
+		$this->assertEqualsCanonicalizing($expected, $classes);
 	}
 
 	public function test_append_classes_preserves_caller_supplied_classes(): void
@@ -159,5 +168,17 @@ class AbilitiesRegistrarTest extends TestCase
 		// owns. Locking this assertion in catches any future refactor that
 		// drifts the registrar away from the shared category.
 		$this->assertSame('woocommerce', AbilitiesRegistrar::CATEGORY_SLUG);
+	}
+
+	/**
+	 * Read the AbilitiesRegistrar::$initialized private static via
+	 * reflection. Used by the gate-bail tests to assert the guard
+	 * latched / didn't latch as expected, without needing to expose
+	 * additional public methods on the registrar.
+	 */
+	private static function read_initialized_guard(): bool
+	{
+		return (bool) (new ReflectionClass(AbilitiesRegistrar::class))
+			->getStaticPropertyValue('initialized');
 	}
 }

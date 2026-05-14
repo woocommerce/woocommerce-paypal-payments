@@ -116,7 +116,7 @@ class GetOrderTracking extends AbstractPpcpAbility implements AbilityDefinition 
 			// Don't forward $e->getMessage() to the agent — PayPalApiException
 			// appends information_link URLs that can leak internal API
 			// structure into LLM contexts. Log full detail server-side.
-			error_log( '[ppcp-abilities] get-order-tracking lookup threw for wc_order_id=' . $wc_order_id . ': ' . $e->getMessage() );
+			error_log( '[ppcp-abilities] get-order-tracking lookup threw ' . get_class( $e ) . ' for wc_order_id=' . $wc_order_id . ': ' . $e->getMessage() );
 
 			return new \WP_Error(
 				'woocommerce_paypal_payments_tracking_lookup_failed',

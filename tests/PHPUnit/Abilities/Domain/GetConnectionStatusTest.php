@@ -143,14 +143,21 @@ class GetConnectionStatusTest extends TestCase
 	{
 		$payload = array(
 			'success' => false,
-			'message' => 'Some upstream failure.',
+			'message' => 'Some upstream failure with PayPal information_link https://api.paypal.com/v1/notifications/123.',
 		);
 
 		$result = GetConnectionStatus::project_merchant_payload($payload);
 
 		$this->assertInstanceOf(WP_Error::class, $result);
 		$this->assertSame('woocommerce_paypal_payments_endpoint_error', $result->get_error_code());
-		$this->assertSame('Some upstream failure.', $result->get_error_message());
+
+		// The raw upstream message is REDACTED before reaching the agent —
+		// the original is written to error_log, the agent sees a generic
+		// pointer to the server log instead. Lock the redaction in by
+		// asserting the leak vector text does NOT appear in the message.
+		$this->assertStringNotContainsString('information_link', $result->get_error_message());
+		$this->assertStringNotContainsString('paypal.com', $result->get_error_message());
+		$this->assertStringContainsString('see server log', $result->get_error_message());
 	}
 
 	public function test_project_merchant_payload_handles_missing_merchant_subobject(): void

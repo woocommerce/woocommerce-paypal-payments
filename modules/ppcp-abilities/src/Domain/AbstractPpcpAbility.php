@@ -114,21 +114,52 @@ abstract class AbstractPpcpAbility {
 	 * success=false so the failure surfaces structurally rather than
 	 * as a magic `data: null` response.
 	 *
-	 * @param mixed $payload Decoded REST response (array shape from
-	 *                       rest_do_request()).
+	 * The error message in the envelope is REDACTED before it reaches the
+	 * agent payload by default. Backing endpoints frequently call
+	 * `return_error($e->getMessage())` which propagates raw
+	 * `PayPalApiException` text — including PayPal-supplied
+	 * `information_link` URLs that disclose internal API path segments
+	 * and IDs. We log the raw text via error_log() and substitute a
+	 * generic message in the WP_Error returned to the caller. Pass
+	 * `$redact_message = false` only when the caller is sure the
+	 * endpoint's message is safe to surface (none of the current
+	 * Shape-2 abilities meet that bar).
+	 *
+	 * @param mixed $payload         Decoded REST response (array shape
+	 *                               from rest_do_request()).
+	 * @param bool  $redact_message  When true (default), the success=false
+	 *                               envelope's `message` is replaced with
+	 *                               a generic string and the original is
+	 *                               written to error_log().
 	 * @return mixed The inner `data` value, or the original payload when it
 	 *               is not an envelope, or a WP_Error on success=false.
 	 */
-	protected static function unwrap_envelope( $payload ) {
+	protected static function unwrap_envelope( $payload, bool $redact_message = true ) {
 		if ( ! is_array( $payload ) ) {
 			return $payload;
 		}
 
 		if ( array_key_exists( 'success', $payload ) && false === $payload['success'] ) {
+			$raw_message = isset( $payload['message'] ) && is_string( $payload['message'] )
+				? $payload['message']
+				: '';
+
+			if ( $redact_message ) {
+				if ( '' !== $raw_message ) {
+					error_log( '[ppcp-abilities] endpoint returned success=false: ' . $raw_message );
+				}
+
+				return new \WP_Error(
+					'woocommerce_paypal_payments_endpoint_error',
+					__( 'PayPal Payments endpoint returned an error; see server log for details.', 'woocommerce-paypal-payments' ),
+					isset( $payload['details'] ) ? array( 'details' => $payload['details'] ) : array()
+				);
+			}
+
 			return new \WP_Error(
 				'woocommerce_paypal_payments_endpoint_error',
-				isset( $payload['message'] ) && is_string( $payload['message'] )
-					? $payload['message']
+				'' !== $raw_message
+					? $raw_message
 					: __( 'PayPal Payments endpoint returned an error.', 'woocommerce-paypal-payments' ),
 				isset( $payload['details'] ) ? array( 'details' => $payload['details'] ) : array()
 			);
@@ -177,7 +208,7 @@ abstract class AbstractPpcpAbility {
 				sprintf( __( 'WooCommerce PayPal Payments is not initialized; service %s is unavailable.', 'woocommerce-paypal-payments' ), $service_id )
 			);
 		} catch ( Throwable $e ) {
-			error_log( '[ppcp-abilities] resolve_service(' . $service_id . ') threw: ' . $e->getMessage() );
+			error_log( '[ppcp-abilities] resolve_service(' . $service_id . ') threw ' . get_class( $e ) . ': ' . $e->getMessage() );
 
 			return new \WP_Error(
 				'woocommerce_paypal_payments_service_unavailable',

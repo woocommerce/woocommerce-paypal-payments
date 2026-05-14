@@ -153,11 +153,20 @@ class GetConnectionStatus extends AbstractPpcpAbility implements AbilityDefiniti
 	 */
 	public static function project_merchant_payload( array $payload ) {
 		if ( array_key_exists( 'success', $payload ) && false === $payload['success'] ) {
+			$raw_message = isset( $payload['message'] ) && is_string( $payload['message'] )
+				? $payload['message']
+				: '';
+
+			if ( '' !== $raw_message ) {
+				// Redact: backing endpoints frequently call return_error with raw
+				// PayPalApiException::getMessage() text, which can include
+				// information_link URLs that disclose internal API path segments.
+				error_log( '[ppcp-abilities] get-connection-status endpoint returned success=false: ' . $raw_message );
+			}
+
 			return new \WP_Error(
 				'woocommerce_paypal_payments_endpoint_error',
-				isset( $payload['message'] ) && is_string( $payload['message'] )
-					? $payload['message']
-					: __( 'PayPal Payments merchant endpoint returned an error.', 'woocommerce-paypal-payments' )
+				__( 'PayPal Payments merchant endpoint returned an error; see server log for details.', 'woocommerce-paypal-payments' )
 			);
 		}
 

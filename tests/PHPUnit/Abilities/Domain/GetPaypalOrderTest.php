@@ -165,4 +165,33 @@ class GetPaypalOrderTest extends TestCase
 
 		$this->assertSame($payload, $result, 'project_order must be a passthrough when the opt-in flag is true.');
 	}
+
+	public function test_project_order_does_not_leak_synthetic_payment_source(): void
+	{
+		// Defensive regression test: today's Order::to_array() does NOT
+		// emit `payment_source`, so REDACTED_TOP_LEVEL_KEYS includes it
+		// purely as future-proofing. If a Woo Core change ever exposes
+		// payment_source through to_array(), this test asserts that the
+		// projection still strips it before the data reaches the agent
+		// — preventing a silent payer.email_address / name / address leak
+		// through that block.
+		$payload = array(
+			'id'             => 'ORDERID',
+			'status'         => 'COMPLETED',
+			'payment_source' => array(
+				'paypal' => array(
+					'email_address' => 'leaky@example.test',
+					'name'          => array( 'given_name' => 'Should Not Appear' ),
+				),
+			),
+		);
+
+		$result = GetPaypalOrder::project_order($payload, false);
+
+		$this->assertArrayNotHasKey(
+			'payment_source',
+			$result,
+			'project_order must strip payment_source even though Order::to_array() does not emit it today.'
+		);
+	}
 }
