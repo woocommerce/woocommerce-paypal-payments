@@ -16,7 +16,7 @@ const {
 	payPalFreeTrialRenewal,
 } = subscriptionRenewal;
 
-test.beforeAll( async ( { utils, wooCommerceApi, pcpApi } ) => {
+test.beforeAll( async ( { utils, pcpApi } ) => {
 	await pcpApi.updatePcpSettings( {
 		savePaypalAndVenmo: true,
 		saveCardDetails: true,
@@ -26,7 +26,6 @@ test.beforeAll( async ( { utils, wooCommerceApi, pcpApi } ) => {
 		enableSubscriptionsPlugin: true,
 		products: [ products.subscription100, products.subscriptionFreeTrial ],
 	} );
-	await wooCommerceApi.deleteAllOrders();
 } );
 
 for ( const testOrder of vaultingRenewal ) {

@@ -12,13 +12,12 @@ const { vaultingGuest, vaultingCustomer, payPalGuest, payPalCustomer } =
 const { testSubscriptionOrderGuest, testSubscriptionOrderCustomer } =
 	testSubscriptionCheckout;
 
-test.beforeAll( async ( { utils, wooCommerceApi } ) => {
+test.beforeAll( async ( { utils } ) => {
 	await utils.configureStore( {
 		enableClassicPages: false,
 		enableSubscriptionsPlugin: true,
 		products: [ products.subscription100, products.subscriptionFreeTrial ],
 	} );
-	await wooCommerceApi.deleteAllOrders();
 } );
 
 for ( const testOrder of vaultingGuest ) {

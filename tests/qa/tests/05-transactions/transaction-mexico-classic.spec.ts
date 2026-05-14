@@ -23,7 +23,7 @@ import {
 
 const { payPal, bcdc } = gateways;
 
-test.beforeAll( async ( { utils, pcpApi, wooCommerceApi } ) => {
+test.beforeAll( async ( { utils, pcpApi } ) => {
 	await utils.configureStore( {
 		...storeConfigMexico,
 		enableClassicPages: true,
@@ -42,7 +42,6 @@ test.beforeAll( async ( { utils, pcpApi, wooCommerceApi } ) => {
 			enabled: true,
 		},
 	} );
-	await wooCommerceApi.deleteAllOrders();
 } );
 
 for ( const testOrder of bcdcClassicCheckout ) {

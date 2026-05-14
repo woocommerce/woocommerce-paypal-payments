@@ -46,7 +46,7 @@ setup( 'setup:pcp:usa;', async ( { utils, pcpApi } ) => {
 
 setup(
 	'setup:pcp:usa:transactions;',
-	async ( { utils, pcpApi, wooCommerceApi } ) => {
+	async ( { utils, pcpApi } ) => {
 		await utils.configureStore( {
 			...storeConfigUsa,
 			customer: customers.usa,
@@ -64,7 +64,6 @@ setup(
 			[ acdc.id ]: { id: acdc.id, enabled: true },
 			[ fastlane.id ]: { id: fastlane.id, enabled: false },
 		} );
-		await wooCommerceApi.deleteAllOrders();
 	}
 );
 
@@ -83,7 +82,7 @@ setup( 'setup:pcp:usa:refund;', async ( { utils, pcpApi, wooCommerceApi } ) => {
 		[ payPal.id ]: { id: payPal.id, enabled: true },
 		[ acdc.id ]: { id: acdc.id, enabled: true },
 	} );
-	await wooCommerceApi.deleteAllOrders();
+	
 } );
 
 setup(
@@ -108,7 +107,7 @@ setup(
 			[ payPal.id ]: { id: payPal.id, enabled: true },
 			[ acdc.id ]: { id: acdc.id, enabled: true },
 		} );
-		await wooCommerceApi.deleteAllOrders();
+		
 	}
 );
 
@@ -143,7 +142,7 @@ setup(
 			[ payPal.id ]: { id: payPal.id, enabled: true },
 			[ acdc.id ]: { id: acdc.id, enabled: true },
 		} );
-		await wooCommerceApi.deleteAllOrders();
+		
 	}
 );
 
@@ -165,7 +164,7 @@ setup(
 			[ acdc.id ]: { id: acdc.id, enabled: true },
 			[ googlepay.id ]: { id: googlepay.id, enabled: true },
 		} );
-		await wooCommerceApi.deleteAllOrders();
+		
 	}
 );
 
