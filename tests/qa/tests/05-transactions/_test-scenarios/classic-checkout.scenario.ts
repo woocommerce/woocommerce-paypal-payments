@@ -8,8 +8,8 @@ export const transactionsOnClassicCheckout = ( testOrder: ShopOrder ) => {
 	const { title, payment, products, customer, merchant } = testOrder;
 
 	test(
-		testOrder.title,
-		annotateVisitor( testOrder.customer ),
+		title,
+		annotateVisitor( customer ),
 		async ( {
 			classicCheckout,
 			wooCommerceApi,
@@ -18,7 +18,7 @@ export const transactionsOnClassicCheckout = ( testOrder: ShopOrder ) => {
 			wooCommerceOrderEdit,
 			utils,
 		} ) => {
-			await utils.fillVisitorsCart( testOrder.products );
+			await utils.fillVisitorsCart( products );
 			await classicCheckout.visit();
 			await classicCheckout.completeCheckoutDetails( testOrder );
 			await classicCheckout.payPalUi.makePayment( {
@@ -51,36 +51,35 @@ export const transactionsOnClassicCheckoutOxxo = ( testOrder: ShopOrder ) => {
 	const { title, payment, products, customer, merchant } = testOrder;
 
 	test.fixme(
-		testOrder.title,
-		annotateVisitor( testOrder.customer ),
+		title,
+		annotateVisitor( customer ),
 		async ( {
 			classicCheckout,
-			wooCommerceApi,
+			// wooCommerceApi,
 			orderReceived,
-			payPalApi,
-			wooCommerceOrderEdit,
+			// payPalApi,
+			// wooCommerceOrderEdit,
 			utils,
 		} ) => {
-			await utils.fillVisitorsCart( testOrder.products );
+			await utils.fillVisitorsCart( products );
 			await classicCheckout.visit();
 			await classicCheckout.completeCheckoutDetails( testOrder );
 			await classicCheckout.payPalUi.makePayment( { merchant, payment } );
 			await orderReceived.assertOrderDetails( testOrder );
 
-			const orderId = await orderReceived.getOrderNumber();
-			const orderJson = await wooCommerceApi.getOrder( orderId );
+			// const orderId = await orderReceived.getOrderNumber();
+			// const orderJson = await wooCommerceApi.getOrder( orderId );
 
-			const oxxoOrderId = await payPalApi.getOrderIdFromWooCommerce(
-				orderJson
-			);
-			const oxxoOrder = await payPalApi.getOrder(
-				oxxoOrderId,
-				testOrder.merchant
-			);
-			const oxxoPaymentId = await payPalApi.getPaymentIdFromOrder(
-				oxxoOrder,
-				testOrder.payment
-			);
+			// const oxxoOrderId =
+			// 	await payPalApi.getOrderIdFromWooCommerce( orderJson );
+			// const oxxoOrder = await payPalApi.getOrder(
+			// 	oxxoOrderId,
+			// 	testOrder.merchant
+			// );
+			// const oxxoPaymentId = await payPalApi.getPaymentIdFromOrder(
+			// 	oxxoOrder,
+			// 	testOrder.payment
+			// );
 		}
 	);
 };

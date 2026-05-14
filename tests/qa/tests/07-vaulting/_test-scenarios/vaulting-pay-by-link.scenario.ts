@@ -159,9 +159,8 @@ const testVaultedPaymentMethod = ( testOrder: ShopOrder ) => {
 				await customerPaymentMethods.savePaymentMethod( payment );
 
 				// Make tested order:
-				const order = await wooCommerceUtils.createApiOrder(
-					testOrder
-				);
+				const order =
+					await wooCommerceUtils.createApiOrder( testOrder );
 
 				await payForOrder.visit( order.id, order.order_key );
 				await payForOrder.payPalUi.makePayment( { merchant, payment } );

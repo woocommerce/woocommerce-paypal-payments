@@ -1,7 +1,7 @@
 /**
  * Internal dependencies
  */
-import { cards, payments, ShopOrder } from '../../../resources';
+import { ShopOrder } from '../../../resources';
 import { annotateVisitor, expect, test } from '../../../utils';
 
 const testSavePaymentMethod = ( testOrder: ShopOrder ) => {

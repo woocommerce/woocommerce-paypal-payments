@@ -2,10 +2,7 @@
  * Internal dependencies
  */
 import { test } from '../../utils';
-import {
-	disableWebhookVerificationPlugin,
-	products,
-} from '../../resources';
+import { disableWebhookVerificationPlugin, products } from '../../resources';
 import { subscriptionRenewal } from './_test-data';
 import {
 	testFreeTrialSubscriptionRenewal,

@@ -2,12 +2,7 @@
  * Internal dependencies
  */
 import { annotateVisitor, expect, test, PayPalPopup } from '../../utils';
-import {
-	customers,
-	payments,
-	cards,
-	products,
-} from '../../resources';
+import { customers, payments, cards, products } from '../../resources';
 
 const customer = customers.usa;
 const { payPal, acdc } = payments;
