@@ -140,7 +140,6 @@ return array(
 			$container->get( 'settings.environment' ),
 			$container->get( 'api.endpoint.order' ),
 			$container->get( 'wcgateway.endpoint.capture-card-payment' ),
-			$container->get( 'api.prefix' ),
 			$container->get( 'wc-payment-tokens.wc-payment-tokens' ),
 			$container->get( 'woocommerce.logger.woocommerce' )
 		);
