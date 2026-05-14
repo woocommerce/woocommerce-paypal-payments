@@ -100,8 +100,19 @@ class AgenticBetaBannerEligibility {
 			if ( empty( $zone->get_shipping_methods( true ) ) ) {
 				continue;
 			}
-			foreach ( $zone->get_zone_locations() as $location ) {
-				if ( $location->type === 'country' && $location->code === 'US' ) {
+
+			$locations = $zone->get_zone_locations();
+
+			if ( empty( $locations ) ) {
+				return true;
+			}
+
+			foreach ( $locations as $location ) {
+				if (
+					( $location->type === 'continent' && $location->code === 'NA' ) ||
+					( $location->type === 'country' && $location->code === 'US' ) ||
+					( $location->type === 'state' && strncmp( $location->code, 'US:', 3 ) === 0 )
+				) {
 					return true;
 				}
 			}
