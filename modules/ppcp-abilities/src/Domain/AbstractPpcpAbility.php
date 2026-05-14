@@ -159,10 +159,13 @@ abstract class AbstractPpcpAbility {
 	 *
 	 * Visibility is `protected` so Domain subclasses inherit the helper.
 	 *
-	 * @template T of object
-	 * @param string          $service_id     Container service id.
-	 * @param class-string<T> $expected_class Class the resolved service must implement / extend.
-	 * @return T|\WP_Error
+	 * @phpstan-template T of object
+	 * @phpstan-param class-string<T> $expected_class
+	 * @phpstan-return T|\WP_Error
+	 *
+	 * @param string $service_id     Container service id.
+	 * @param string $expected_class Fully-qualified class the resolved service must implement / extend.
+	 * @return object|\WP_Error An instance of $expected_class on success, otherwise WP_Error.
 	 */
 	protected static function resolve_service( string $service_id, string $expected_class ) {
 		try {
