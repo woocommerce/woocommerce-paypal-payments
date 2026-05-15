@@ -435,13 +435,8 @@ export class PayPalUiClassic extends PayPalUi {
 		} );
 		await this.submitOrder();
 		const popup = await popupPromise;
-		const paypal = new PayPalPopup( popup );
-
-		await expect(
-			paypal.page.getByText( 'Successful Payment', { exact: true } ),
-			'Assert OXXO successful payment message is visible in PayPal popup'
-		).toBeVisible();
-
+		// Close without clicking — payment simulation happens from the thank-you page voucher button
+		await popup.waitForLoadState().catch( () => {} );
 		await popup.close();
 	};
 
