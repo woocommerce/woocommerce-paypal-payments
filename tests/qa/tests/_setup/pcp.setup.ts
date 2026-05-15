@@ -18,7 +18,7 @@ import {
 	gateways,
 } from '../../resources';
 
-const { payPal, payLater, venmo, acdc, fastlane, googlepay } = gateways;
+const { payPal, payLater, venmo, acdc, fastlane, googlepay, bcdc, oxxo } = gateways;
 
 setup.describe( 'env:reset;', async () => {
 	setup( 'Setup: Reset Environment', async () => {
@@ -192,6 +192,30 @@ setup( 'setup:pcp:mexico;', async ( { utils, pcpApi } ) => {
 		merchants.mexico.client_secret
 	);
 } );
+
+setup(
+	'setup:pcp:mexico:transactions;',
+	async ( { utils, pcpApi, wooCommerceApi } ) => {
+		await utils.configureStore( {
+			settings: storeConfigMexico.settings,
+			enableSubscriptionsPlugin: false,
+			enableClassicPages: true,
+			customer: customers.mexico,
+		} );
+		await utils.installAndActivatePcp();
+		await pcpApi.resetDb();
+		await pcpApi.connectMerchant(
+			merchants.mexico.client_id,
+			merchants.mexico.client_secret
+		);
+		await pcpApi.updatePcpPaymentMethods( {
+			[ payPal.id ]: { id: payPal.id, enabled: true },
+			[ bcdc.id ]: { id: bcdc.id, enabled: true },
+			[ oxxo.id ]: { id: oxxo.id, enabled: true },
+		} );
+		await wooCommerceApi.deleteAllOrders();
+	}
+);
 
 // --- Plugin update ---
 

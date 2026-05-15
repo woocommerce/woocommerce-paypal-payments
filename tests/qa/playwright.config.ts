@@ -161,6 +161,13 @@ export default defineConfig< BaseExtend >( {
 			fullyParallel: false,
 		},
 		{
+			name: 'setup-pcp-mexico-for-transactions',
+			dependencies: [ 'setup-woocommerce' ],
+			testMatch: /pcp\.setup\.ts/,
+			grep: /setup:pcp:mexico:transactions;/,
+			fullyParallel: false,
+		},
+		{
 			name: 'plugin-foundation',
 			dependencies: [ 'setup-woocommerce' ],
 			testMatch: /plugin-foundation\.spec\.ts/,
@@ -191,6 +198,11 @@ export default defineConfig< BaseExtend >( {
 			name: 'shard:transactions',
 			dependencies: [ 'setup-pcp-usa-for-transactions' ],
 			testMatch: /05-transactions\/transaction-usa.*\.spec\.ts/,
+		},
+		{
+			name: 'shard:transactions-mexico',
+			dependencies: [ 'setup-pcp-mexico-for-transactions' ],
+			testMatch: /05-transactions\/transaction-mexico.*\.spec\.ts/,
 		},
 		{
 			name: 'shard:transactions-googlepay',
