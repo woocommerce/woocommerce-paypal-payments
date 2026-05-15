@@ -133,6 +133,13 @@ export default defineConfig< BaseExtend >( {
 			fullyParallel: false,
 		},
 		{
+			name: 'setup-pcp-mexico-for-transactions',
+			dependencies: [ 'setup-woocommerce' ],
+			testMatch: /pcp\.setup\.ts/,
+			grep: /setup:pcp:mexico:transactions;/,
+			fullyParallel: false,
+		},
+		{
 			name: 'setup-pcp-usa-for-transactions-googlepay',
 			dependencies: [ 'setup-woocommerce' ],
 			testMatch: /pcp\.setup\.ts/,
@@ -188,14 +195,21 @@ export default defineConfig< BaseExtend >( {
 			testMatch: /(02-onboarding|03-plugin-settings)\/.*\.spec\.ts/,
 		},
 		{
-			name: 'shard:transactions',
+			name: 'shard:transactions-usa',
 			dependencies: [ 'setup-pcp-usa-for-transactions' ],
-			testMatch: /05-transactions\/transaction-usa.*\.spec\.ts/,
+			testMatch: [
+				/05-transactions\/transaction-usa.*\.spec\.ts/,
+			],
 		},
 		{
 			name: 'shard:transactions-googlepay',
 			dependencies: [ 'setup-pcp-usa-for-transactions-googlepay' ],
 			testMatch: /05-transactions\/transaction-googlepay\.spec\.ts/,
+		},
+		{
+			name: 'shard:transactions-mexico',
+			dependencies: [ 'setup-pcp-mexico-for-transactions' ],
+			testMatch: /05-transactions\/transaction-mexico.*\.spec\.ts/,
 		},
 		{
 			name: 'shard:refund',

@@ -18,7 +18,7 @@ import {
 	gateways,
 } from '../../resources';
 
-const { payPal, payLater, venmo, acdc, fastlane, googlepay } = gateways;
+const { payPal, payLater, venmo, acdc, bcdc, fastlane, googlepay } = gateways;
 
 setup.describe( 'e2e:env:reset;', async () => {
 	setup( 'Setup: Reset Environment', async () => {
@@ -63,6 +63,27 @@ setup(
 			[ venmo.id ]: { id: venmo.id, enabled: true },
 			[ acdc.id ]: { id: acdc.id, enabled: true },
 			[ fastlane.id ]: { id: fastlane.id, enabled: false },
+		} );
+	}
+);
+
+setup(
+	'setup:pcp:mexico:transactions;',
+	async ( { utils, pcpApi } ) => {
+		await utils.configureStore( {
+			...storeConfigMexico,
+			enableClassicPages: true,
+			customer: customers.mexico,
+		} );
+		await utils.installAndActivatePcp();
+		await pcpApi.resetDb();
+		await pcpApi.connectMerchant(
+			merchants.mexico.client_id,
+			merchants.mexico.client_secret
+		);
+		await pcpApi.updatePcpPaymentMethods( {
+			[ payPal.id ]: { id: payPal.id, enabled: true },
+			[ bcdc.id ]: { id: bcdc.id, enabled: true },
 		} );
 	}
 );
