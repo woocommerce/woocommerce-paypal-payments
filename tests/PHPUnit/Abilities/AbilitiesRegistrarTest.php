@@ -118,8 +118,6 @@ class AbilitiesRegistrarTest extends TestCase
 		$expected = array(
 			Domain\GetConnectionStatus::class,
 			Domain\GetPaymentMethods::class,
-			Domain\GetSettings::class,
-			Domain\GetWebhookStatus::class,
 			Domain\GetLastWebhookEvent::class,
 			Domain\GetOrderTracking::class,
 			Domain\GetPaypalOrder::class,
