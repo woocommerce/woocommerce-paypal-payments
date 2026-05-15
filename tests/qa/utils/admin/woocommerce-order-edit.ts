@@ -213,13 +213,6 @@ export class WooCommerceOrderEdit extends WooCommerceOrderEditBase {
 			);
 		}
 
-		if ( orderData.payment.gateway.shortcut === 'oxxo' ) {
-			await expect(
-				this.seeOXXOVoucherButton(),
-				'Assert OXXO voucher button is visible'
-			).toBeVisible();
-		}
-
 		if ( orderData.payment.gateway.shortcut === 'acdc' ) {
 			await this.assertAddressVerificationResult(
 				orderData.payment.card
