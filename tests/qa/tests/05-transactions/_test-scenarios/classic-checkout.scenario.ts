@@ -2,7 +2,7 @@
  * Internal dependencies
  */
 import { ShopOrder } from '../../../resources';
-import { annotateVisitor, test, expect } from '../../../utils';
+import { annotateVisitor, test, expect, OxxoVoucherPopup } from '../../../utils';
 
 export const transactionsOnClassicCheckout = ( testOrder: ShopOrder ) => {
 	const { title, payment, products, customer, merchant } = testOrder;
@@ -74,24 +74,10 @@ export const transactionsOnClassicCheckoutOxxo = ( testOrder: ShopOrder ) => {
 				orderJson
 			);
 
-			// Open the PayPal sandbox popup via the thank-you page voucher button and simulate payment.
 			const popupPromise = orderReceived.page.waitForEvent( 'popup' );
 			await orderReceived.seeOXXOVoucherButton_1().click();
-			const voucherPopup = await popupPromise;
-
-			// Detach the popup from its opener so PayPal's sandbox JS cannot
-			// redirect the thank-you page via window.opener after the simulation.
-			await voucherPopup.evaluate( () => {
-				window.opener = null;
-			} );
-
-			await voucherPopup
-				.getByRole( 'button', { name: 'Test Successful Payment' } )
-				.click();
-
-			await voucherPopup
-				.waitForEvent( 'close', { timeout: 15_000 } )
-				.catch( () => voucherPopup.close() );
+			const voucherPopup = new OxxoVoucherPopup( await popupPromise );
+			await voucherPopup.simulate();
 
 			// Poll until the real webhook is processed and order status updates
 			await expect.poll(
