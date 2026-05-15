@@ -11,9 +11,9 @@ namespace WooCommerce\PayPalCommerce\Abilities\Domain;
 
 use LogicException;
 use Psr\Log\LoggerInterface;
-use Psr\Log\NullLogger;
 use Throwable;
 use WooCommerce\PayPalCommerce\PPCP;
+use WooCommerce\WooCommerce\Logging\Logger\NullLogger;
 
 /**
  * Shared helpers for PayPal Payments ability definitions.

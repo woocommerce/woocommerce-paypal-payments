@@ -9,10 +9,9 @@ declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\Abilities;
 
-use Psr\Log\LoggerInterface;
-use Psr\Log\NullLogger;
 use Throwable;
 use WooCommerce\PayPalCommerce\Abilities\Domain\AbstractPpcpAbility;
+use WooCommerce\WooCommerce\Logging\Logger\NullLogger;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExecutableModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ModuleClassNameIdTrait;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ServiceModule;
@@ -64,9 +63,7 @@ class AbilitiesModule implements ServiceModule, ExecutableModule {
 			$logger = new NullLogger();
 		}
 
-		if ( $logger instanceof LoggerInterface ) {
-			AbstractPpcpAbility::set_logger( $logger );
-		}
+		AbstractPpcpAbility::set_logger( $logger );
 
 		AbilitiesRegistrar::init();
 

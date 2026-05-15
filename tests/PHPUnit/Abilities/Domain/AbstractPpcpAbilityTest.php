@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\Abilities\Domain;
 
+use WooCommerce\PayPalCommerce\Abilities\_Seams\AbilityTestSeam;
 use WooCommerce\PayPalCommerce\TestCase;
 use WP_Error;
 
@@ -10,22 +11,23 @@ use WP_Error;
  * Unit tests for shared envelope-handling logic in AbstractPpcpAbility.
  *
  * The helpers under test are `protected` so Domain subclasses can inherit
- * them; the {@see _AbilityTestSeam} subclass below re-exposes them as
- * static methods for direct assertion.
+ * them; {@see AbilityTestSeam} (in the `_Seams` sub-namespace to keep it
+ * out of the production `Domain` namespace) re-exposes them as public
+ * statics for direct assertion.
  */
 class AbstractPpcpAbilityTest extends TestCase
 {
 	public function test_envelope_error_or_null_returns_null_on_success(): void
 	{
 		$payload = array( 'success' => true, 'data' => array() );
-		$this->assertNull(_AbilityTestSeam::call_envelope_error_or_null($payload));
+		$this->assertNull(AbilityTestSeam::call_envelope_error_or_null($payload));
 	}
 
 	public function test_envelope_error_or_null_returns_null_when_success_key_is_absent(): void
 	{
 		// Non-envelope payloads (no `success` key) are not the helper's concern.
 		$payload = array( 'merchant' => array() );
-		$this->assertNull(_AbilityTestSeam::call_envelope_error_or_null($payload));
+		$this->assertNull(AbilityTestSeam::call_envelope_error_or_null($payload));
 	}
 
 	public function test_envelope_error_or_null_redacts_message_and_drops_details_by_default(): void
@@ -39,7 +41,7 @@ class AbstractPpcpAbilityTest extends TestCase
 			),
 		);
 
-		$result = _AbilityTestSeam::call_envelope_error_or_null($payload);
+		$result = AbilityTestSeam::call_envelope_error_or_null($payload);
 
 		$this->assertInstanceOf(WP_Error::class, $result);
 		$this->assertSame('woocommerce_paypal_payments_endpoint_error', $result->get_error_code());
@@ -74,33 +76,35 @@ class AbstractPpcpAbilityTest extends TestCase
 			'details' => array( 'route' => '/v2/checkout/orders/X' ),
 		);
 
-		$result = _AbilityTestSeam::call_envelope_error_or_null($payload, false);
+		$result = AbilityTestSeam::call_envelope_error_or_null($payload, false);
 
 		$this->assertInstanceOf(WP_Error::class, $result);
 		$this->assertSame('Verbatim upstream message.', $result->get_error_message());
 		$this->assertSame(array( 'details' => array( 'route' => '/v2/checkout/orders/X' ) ), $result->get_error_data());
 	}
 
-	public function test_envelope_error_or_null_falls_back_to_generic_message_when_message_missing(): void
+	public function test_envelope_error_or_null_falls_back_to_generic_message_when_message_missing_on_redact_off_branch(): void
 	{
 		$payload = array( 'success' => false );
 
-		$result = _AbilityTestSeam::call_envelope_error_or_null($payload, false);
+		$result = AbilityTestSeam::call_envelope_error_or_null($payload, false);
 
 		$this->assertInstanceOf(WP_Error::class, $result);
-		$this->assertNotSame('', $result->get_error_message(), 'Helper must supply a fallback message when the envelope omits one.');
+		$this->assertNotSame('', $result->get_error_message(), 'Redact-off branch must supply a fallback message when the envelope omits one.');
 	}
-}
 
-/**
- * Test seam that re-exposes the protected helpers as public statics.
- *
- * @internal Test-only; never autoloaded by production code.
- */
-class _AbilityTestSeam extends AbstractPpcpAbility
-{
-	public static function call_envelope_error_or_null( array $payload, bool $redact_message = true ): ?\WP_Error
+	public function test_envelope_error_or_null_supplies_non_empty_message_when_message_missing_on_default_redact_branch(): void
 	{
-		return self::envelope_error_or_null($payload, $redact_message);
+		// Companion to the redact-off case above: the default (redact-on) path
+		// must also never return an empty WP_Error message when the envelope
+		// omits `message`. A future change that left the redact branch with an
+		// empty message would otherwise slip through.
+		$payload = array( 'success' => false );
+
+		$result = AbilityTestSeam::call_envelope_error_or_null($payload);
+
+		$this->assertInstanceOf(WP_Error::class, $result);
+		$this->assertNotSame('', $result->get_error_message(), 'Default redact branch must always surface a non-empty WP_Error message.');
+		$this->assertStringContainsString('see server log', $result->get_error_message());
 	}
 }

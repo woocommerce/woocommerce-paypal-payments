@@ -153,9 +153,13 @@ class GetConnectionStatus extends AbstractPpcpAbility implements AbilityDefiniti
 	 *   }
 	 *
 	 * The `success=false` branch is handled by
-	 * {@see AbstractPpcpAbility::unwrap_envelope()} before this projection
-	 * is called. The agent surface is the merchant subobject (with API
-	 * credentials stripped) plus the optional features list.
+	 * {@see AbstractPpcpAbility::envelope_error_or_null()} from inside
+	 * {@see self::execute()} before this projection is called — we cannot
+	 * route through `unwrap_envelope()` because CommonRestEndpoint puts
+	 * `merchant`/`features` alongside `data` at the envelope top level, and
+	 * `unwrap_envelope()` would extract `data` and discard them. The agent
+	 * surface is the merchant subobject (with API credentials stripped)
+	 * plus the optional features list.
 	 *
 	 * Public so unit tests can assert the redaction behaviour without
 	 * standing up a real REST server.
