@@ -139,26 +139,10 @@ class GetConnectionStatusTest extends TestCase
 		$this->assertArrayNotHasKey('features', $result);
 	}
 
-	public function test_project_merchant_payload_returns_wp_error_on_envelope_failure(): void
-	{
-		$payload = array(
-			'success' => false,
-			'message' => 'Some upstream failure with PayPal information_link https://api.paypal.com/v1/notifications/123.',
-		);
-
-		$result = GetConnectionStatus::project_merchant_payload($payload);
-
-		$this->assertInstanceOf(WP_Error::class, $result);
-		$this->assertSame('woocommerce_paypal_payments_endpoint_error', $result->get_error_code());
-
-		// The raw upstream message is REDACTED before reaching the agent —
-		// the original is written to error_log, the agent sees a generic
-		// pointer to the server log instead. Lock the redaction in by
-		// asserting the leak vector text does NOT appear in the message.
-		$this->assertStringNotContainsString('information_link', $result->get_error_message());
-		$this->assertStringNotContainsString('paypal.com', $result->get_error_message());
-		$this->assertStringContainsString('see server log', $result->get_error_message());
-	}
+	// NOTE: envelope-failure redaction is now centralised in
+	// AbstractPpcpAbility::envelope_error_or_null() and covered by
+	// AbstractPpcpAbilityTest::test_envelope_error_or_null_redacts_message_and_drops_details.
+	// project_merchant_payload() now only handles the success-branch shape.
 
 	public function test_project_merchant_payload_handles_missing_merchant_subobject(): void
 	{

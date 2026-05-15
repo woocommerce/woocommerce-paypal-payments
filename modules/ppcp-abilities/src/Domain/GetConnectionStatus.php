@@ -126,14 +126,25 @@ class GetConnectionStatus extends AbstractPpcpAbility implements AbilityDefiniti
 			);
 		}
 
+		// Reuse the shared success=false handler so message/details redaction
+		// stays consistent with the other Shape-2 abilities. CommonRestEndpoint
+		// puts merchant/features at the envelope top level alongside `data`,
+		// so we can't go through unwrap_envelope() (which would extract `data`
+		// and discard those keys). envelope_error_or_null() gives us just the
+		// failure-branch behaviour.
+		$envelope_error = self::envelope_error_or_null( $response );
+		if ( $envelope_error instanceof \WP_Error ) {
+			return $envelope_error;
+		}
+
 		return self::project_merchant_payload( $response );
 	}
 
 	/**
-	 * Project the CommonRestEndpoint response envelope into the
+	 * Project the CommonRestEndpoint success-path response into the
 	 * agent-facing payload.
 	 *
-	 * The endpoint returns:
+	 * The endpoint returns (on success):
 	 *   {
 	 *     success: true,
 	 *     data:    [],
@@ -141,35 +152,18 @@ class GetConnectionStatus extends AbstractPpcpAbility implements AbilityDefiniti
 	 *     features: [...]   // only when connected
 	 *   }
 	 *
-	 * The agent surface is the merchant subobject (with API credentials
-	 * stripped) plus the optional features list.
+	 * The `success=false` branch is handled by
+	 * {@see AbstractPpcpAbility::unwrap_envelope()} before this projection
+	 * is called. The agent surface is the merchant subobject (with API
+	 * credentials stripped) plus the optional features list.
 	 *
 	 * Public so unit tests can assert the redaction behaviour without
 	 * standing up a real REST server.
 	 *
-	 * @param array $payload Decoded REST response array.
-	 * @return array|\WP_Error Agent-facing payload, or WP_Error when the
-	 *                         envelope reports success=false.
+	 * @param array $payload Decoded REST response array (success branch).
+	 * @return array Agent-facing payload.
 	 */
-	public static function project_merchant_payload( array $payload ) {
-		if ( array_key_exists( 'success', $payload ) && false === $payload['success'] ) {
-			$raw_message = isset( $payload['message'] ) && is_string( $payload['message'] )
-				? $payload['message']
-				: '';
-
-			if ( '' !== $raw_message ) {
-				// Redact: backing endpoints frequently call return_error with raw
-				// PayPalApiException::getMessage() text, which can include
-				// information_link URLs that disclose internal API path segments.
-				error_log( '[ppcp-abilities] get-connection-status endpoint returned success=false: ' . $raw_message );
-			}
-
-			return new \WP_Error(
-				'woocommerce_paypal_payments_endpoint_error',
-				__( 'PayPal Payments merchant endpoint returned an error; see server log for details.', 'woocommerce-paypal-payments' )
-			);
-		}
-
+	public static function project_merchant_payload( array $payload ): array {
 		$merchant = isset( $payload['merchant'] ) && is_array( $payload['merchant'] )
 			? $payload['merchant']
 			: array();

@@ -170,6 +170,19 @@ class AbilitiesRegistrarTest extends TestCase
 		$this->assertSame('woocommerce', AbilitiesRegistrar::CATEGORY_SLUG);
 	}
 
+	public function test_category_slug_mirror_on_abstract_ability_stays_in_sync(): void
+	{
+		// AbstractPpcpAbility intentionally redeclares CATEGORY_SLUG so
+		// Domain classes can `self::CATEGORY_SLUG` without a cross-namespace
+		// static reference. The duplication is ergonomic, not a typo —
+		// this assertion fails loudly if either constant drifts.
+		$this->assertSame(
+			AbilitiesRegistrar::CATEGORY_SLUG,
+			Domain\AbstractPpcpAbility::CATEGORY_SLUG,
+			'CATEGORY_SLUG on AbstractPpcpAbility must mirror AbilitiesRegistrar::CATEGORY_SLUG.'
+		);
+	}
+
 	/**
 	 * Read the AbilitiesRegistrar::$initialized private static via
 	 * reflection. Used by the gate-bail tests to assert the guard

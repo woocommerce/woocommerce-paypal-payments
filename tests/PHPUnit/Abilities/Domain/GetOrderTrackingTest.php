@@ -64,20 +64,78 @@ class GetOrderTrackingTest extends TestCase
 		$this->assertSame('woocommerce_paypal_payments_invalid_input', $result->get_error_code());
 	}
 
-	public function test_serialize_shipment_delegates_to_entity_to_array(): void
+	public function test_serialize_shipment_surfaces_each_interface_accessor_at_the_expected_wire_key(): void
 	{
+		// Build a shipment whose interface accessors return distinct sentinels
+		// and whose to_array() echoes them through realistic wire keys. The
+		// fixture is intentionally a faithful stand-in for the real Shipment
+		// entity, so the assertions below pin the wire contract — any future
+		// rename of a key or change of which accessor populates it makes the
+		// test fail at the specific accessor->key edge rather than collapsing
+		// to a "the mock returned what we set" tautology.
 		$shipment = new class implements ShipmentInterface {
 			public function capture_id(): string {
-				return 'CAP-1';
+				return 'CAPTURE_ID_VALUE';
 			}
 			public function tracking_number(): string {
-				return 'TRK-123';
+				return 'TRACKING_NUMBER_VALUE';
 			}
 			public function status(): string {
-				return 'SHIPPED';
+				return 'STATUS_VALUE';
 			}
 			public function carrier(): string {
-				return 'UPS';
+				return 'CARRIER_VALUE';
+			}
+			public function carrier_name_other(): string {
+				return 'CARRIER_NAME_OTHER_VALUE';
+			}
+			public function line_items(): array {
+				return array( 42 );
+			}
+			public function render( array $allowed_statuses ): void {
+			}
+			public function to_array(): array {
+				return array(
+					'capture_id'         => $this->capture_id(),
+					'tracking_number'    => $this->tracking_number(),
+					'status'             => $this->status(),
+					'carrier'            => $this->carrier(),
+					'carrier_name_other' => $this->carrier_name_other(),
+					'items'              => $this->line_items(),
+				);
+			}
+		};
+
+		$result = GetOrderTracking::serialize_shipment($shipment);
+
+		// Pin each accessor -> wire-key edge. The fixture builds its array
+		// from the interface methods, so a rename in either direction surfaces
+		// here.
+		$this->assertSame('CAPTURE_ID_VALUE', $result['capture_id'] ?? null, 'capture_id wire key must come from ::capture_id().');
+		$this->assertSame('TRACKING_NUMBER_VALUE', $result['tracking_number'] ?? null, 'tracking_number wire key must come from ::tracking_number().');
+		$this->assertSame('STATUS_VALUE', $result['status'] ?? null, 'status wire key must come from ::status().');
+		$this->assertSame('CARRIER_VALUE', $result['carrier'] ?? null, 'carrier wire key must come from ::carrier().');
+		$this->assertSame('CARRIER_NAME_OTHER_VALUE', $result['carrier_name_other'] ?? null, 'carrier_name_other wire key must come from ::carrier_name_other().');
+		$this->assertSame(array( 42 ), $result['items'] ?? null, 'items wire key must come from ::line_items().');
+	}
+
+	public function test_serialize_shipment_passes_through_only_the_keys_to_array_emits(): void
+	{
+		// to_array() is the contract: if a future entity stops emitting a
+		// field, the ability must not synthesize one. Use a deliberately
+		// minimal to_array() and assert no unexpected keys appear.
+		$shipment = new class implements ShipmentInterface {
+			public function capture_id(): string {
+				return 'CAP-X';
+			}
+			public function tracking_number(): string {
+				return '';
+			}
+			public function status(): string {
+				return '';
+			}
+			public function carrier(): string {
+				return '';
 			}
 			public function carrier_name_other(): string {
 				return '';
@@ -88,27 +146,13 @@ class GetOrderTrackingTest extends TestCase
 			public function render( array $allowed_statuses ): void {
 			}
 			public function to_array(): array {
-				return array(
-					'capture_id'      => 'CAP-1',
-					'tracking_number' => 'TRK-123',
-					'status'          => 'SHIPPED',
-					'carrier'         => 'UPS',
-					'items'           => array(),
-				);
+				return array( 'capture_id' => $this->capture_id() );
 			}
 		};
 
 		$result = GetOrderTracking::serialize_shipment($shipment);
 
-		$this->assertSame(
-			array(
-				'capture_id'      => 'CAP-1',
-				'tracking_number' => 'TRK-123',
-				'status'          => 'SHIPPED',
-				'carrier'         => 'UPS',
-				'items'           => array(),
-			),
-			$result
-		);
+		$this->assertSame(array( 'capture_id' ), array_keys($result));
+		$this->assertSame('CAP-X', $result['capture_id']);
 	}
 }

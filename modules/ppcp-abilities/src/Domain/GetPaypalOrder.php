@@ -149,8 +149,9 @@ class GetPaypalOrder extends AbstractPpcpAbility implements AbilityDefinition {
 			// Don't forward $e->getMessage() to the agent — PayPalApiException
 			// appends information_link URLs from PayPal's error body that can
 			// leak internal API structure into LLM contexts. Log full detail
-			// (including exception class for triage) server-side instead.
-			error_log( '[ppcp-abilities] get-paypal-order lookup threw ' . get_class( $e ) . ': ' . $e->getMessage() );
+			// (including exception class for triage) server-side through the
+			// plugin's PSR-3 logger.
+			self::logger()->error( '[ppcp-abilities] get-paypal-order lookup threw ' . get_class( $e ) . ': ' . $e->getMessage() );
 
 			return new \WP_Error(
 				'woocommerce_paypal_payments_order_lookup_failed',
