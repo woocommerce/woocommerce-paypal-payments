@@ -98,9 +98,7 @@ class PayPalOrderManager {
 			// Create PayPal Order (application_context filter is registered in StoreSyncModule).
 			$paypal_order = $this->order_endpoint->create(
 				array( $purchase_unit ),
-				ExperienceContext::SHIPPING_PREFERENCE_NO_SHIPPING,
-				null,               // payer.
-				'agentic-commerce'  // payment_method identifier.
+				ExperienceContext::SHIPPING_PREFERENCE_NO_SHIPPING
 			);
 		} catch ( PayPalApiException $error ) {
 			$details = $error->details();
