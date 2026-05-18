@@ -4,6 +4,7 @@ declare( strict_types = 1 );
 namespace WooCommerce\PayPalCommerce\StoreSync\Ingestion;
 
 use WooCommerce\PayPalCommerce\StoreSync\Config\StoreCurrencyValue;
+use WooCommerce\PayPalCommerce\StoreSync\Helper\ProductManager;
 use WooCommerce\PayPalCommerce\TestCase;
 use Psr\Log\LoggerInterface;
 use Exception;
@@ -22,9 +23,9 @@ class SyncJobTest extends TestCase {
 	private $logger;
 
 	/**
-	 * @var StoreCurrencyValue|Mockery\MockInterface
+	 * @var ProductManager
 	 */
-	private $store_currency;
+	private $product_manager;
 
 	/**
 	 * @var string
@@ -41,8 +42,9 @@ class SyncJobTest extends TestCase {
 
 		$this->logger = Mockery::mock( LoggerInterface::class );
 
-		$this->store_currency = Mockery::mock( StoreCurrencyValue::class );
-		$this->store_currency->allows( 'value' )->andReturn( 'USD' );
+		$store_currency = Mockery::mock( StoreCurrencyValue::class );
+		$store_currency->allows( 'value' )->andReturn( 'USD' );
+		$this->product_manager = new ProductManager( $store_currency );
 
 		// Stub WordPress functions with default values
 		when( 'wp_generate_uuid4' )->justReturn( 'test-batch-id-1234' );
@@ -216,7 +218,7 @@ class SyncJobTest extends TestCase {
 			'https://example.com',
 			$this->product_ids,
 			$this->logger,
-			$this->store_currency
+			$this->product_manager
 		);
 
 		$sync_job->execute();
@@ -247,7 +249,7 @@ class SyncJobTest extends TestCase {
 			'https://example.com',
 			$this->product_ids,
 			$this->logger,
-			$this->store_currency
+			$this->product_manager
 		);
 
 		$sync_job->execute();
@@ -304,7 +306,7 @@ class SyncJobTest extends TestCase {
 			'https://example.com',
 			$this->product_ids,
 			$this->logger,
-			$this->store_currency
+			$this->product_manager
 		);
 
 		$this->expectException( Exception::class );
@@ -361,7 +363,7 @@ class SyncJobTest extends TestCase {
 			'https://example.com',
 			$this->product_ids,
 			$this->logger,
-			$this->store_currency
+			$this->product_manager
 		);
 
 		$this->expectException( Exception::class );
@@ -422,7 +424,7 @@ class SyncJobTest extends TestCase {
 			'https://example.com',
 			$this->product_ids,
 			$this->logger,
-			$this->store_currency
+			$this->product_manager
 		);
 
 		$sync_job->execute();
@@ -485,7 +487,7 @@ class SyncJobTest extends TestCase {
 			'https://example.com',
 			$expectedProductIds,
 			$this->logger,
-			$this->store_currency
+			$this->product_manager
 		);
 
 		$sync_job->execute();
@@ -513,7 +515,7 @@ class SyncJobTest extends TestCase {
 			'https://example.com',
 			array(),
 			$this->logger,
-			$this->store_currency
+			$this->product_manager
 		);
 
 		$sync_job->execute();
@@ -566,7 +568,7 @@ class SyncJobTest extends TestCase {
 			'https://example.com',
 			$expectedProductIds,
 			$this->logger,
-			$this->store_currency
+			$this->product_manager
 		);
 
 		$sync_job->execute();

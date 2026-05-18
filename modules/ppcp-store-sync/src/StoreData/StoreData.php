@@ -48,7 +48,8 @@ class StoreData {
 					$index,
 					$item,
 					$product,
-					$this->store_currency
+					$this->store_currency,
+					$this->product_manager
 				);
 			}
 		}
