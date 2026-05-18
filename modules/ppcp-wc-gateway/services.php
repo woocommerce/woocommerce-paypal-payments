@@ -194,7 +194,22 @@ return array(
 		$asset_getter = $container->get( 'wcgateway.asset_getter' );
 		assert( $asset_getter instanceof AssetGetter );
 
-		$url_root   = $asset_getter->get_static_asset_url( 'images/' );
+		$url_root = $asset_getter->get_static_asset_url( 'images/' );
+
+		// Default to all known card types when none are explicitly configured.
+		if ( empty( $icons ) ) {
+			$icons = array_keys( $labels );
+		}
+
+		$disabled = $settings_provider->disabled_cards();
+		if ( ! empty( $disabled ) ) {
+			$icons = array_filter(
+				$icons,
+				static function ( string $icon ) use ( $disabled ): bool {
+					return ! in_array( str_replace( '-dark', '', $icon ), $disabled, true );
+				}
+			);
+		}
 
 		$icons_with_label = array();
 		foreach ( $icons as $icon ) {
