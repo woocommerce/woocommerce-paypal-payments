@@ -44,6 +44,7 @@ const defaultPersistent = Object.freeze( {
 	paypalShowLogo: false,
 	threeDSecure: 'no-3d-secure',
 	cardholderName: false,
+	showCardLogos: false,
 	fastlaneDisplayWatermark: false,
 	puiBrandName: '',
 	puiLogoUrl: '',
