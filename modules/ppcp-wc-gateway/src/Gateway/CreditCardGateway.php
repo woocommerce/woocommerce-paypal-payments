@@ -15,6 +15,7 @@ use WC_Order;
 use WC_Payment_Tokens;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PaymentsEndpoint;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\OrderStatus;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
@@ -474,7 +475,7 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 						if ( $this->subscription_helper->has_subscription( $wc_order->get_id() ) ) {
 							$wc_order->update_meta_data( '_ppcp_captured_vault_webhook', 'false' );
 						}
-					} else {
+					} elseif ( $order->status()->name() === OrderStatus::APPROVED ) {
 						$order = $this->order_endpoint->capture( $order );
 					}
 

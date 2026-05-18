@@ -29,6 +29,7 @@ use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
 use WooCommerce\PayPalCommerce\TestCase;
 use WooCommerce\PayPalCommerce\WcGateway\FraudNet\FraudNet;
+use function Brain\Monkey\Actions\expectDone;
 use function Brain\Monkey\Functions\expect;
 use function Brain\Monkey\Functions\when;
 
@@ -375,6 +376,11 @@ class OrderEndpointTest extends TestCase
             false,
             $fraudnet
         );
+
+        // Regression guard: the before_capture_order action must NOT fire for an
+        // already-completed order (e.g. vaulted ACDC payments that PayPal auto-captures).
+        // Firing it would trigger CardCaptureValidator and throw "Could not capture the PayPal order".
+        expectDone('woocommerce_paypal_payments_before_capture_order')->never();
 
         $result = $testee->capture($orderToCapture);
         $this->assertEquals($orderToCapture, $result);
