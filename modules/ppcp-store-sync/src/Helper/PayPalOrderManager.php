@@ -66,13 +66,7 @@ class PayPalOrderManager
         try {
             add_filter('woocommerce_paypal_payments_order_intent', $set_order_intent);
             // Create PayPal Order (application_context filter is registered in StoreSyncModule).
-            $paypal_order = $this->order_endpoint->create(
-                array($purchase_unit),
-                ExperienceContext::SHIPPING_PREFERENCE_NO_SHIPPING,
-                null,
-                // payer.
-                'agentic-commerce'
-            );
+            $paypal_order = $this->order_endpoint->create(array($purchase_unit), ExperienceContext::SHIPPING_PREFERENCE_NO_SHIPPING);
         } catch (PayPalApiException $error) {
             $details = $error->details();
             $this->logger->error('[ORDER] PayPal order creation failed', array('error' => reset($details), 'item_count' => count($cart->items())));
