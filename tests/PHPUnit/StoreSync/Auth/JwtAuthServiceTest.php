@@ -32,8 +32,9 @@ class JwtAuthServiceTest extends TestCase {
 		$jwk_provider      = Mockery::mock( PayPalJwkProvider::class );
 		$metadata_provider = Mockery::mock( MerchantMetadataProvider::class );
 
+		$keys = $jwk_key !== null ? array( 'test-key' => $jwk_key ) : array();
 		$jwk_provider->allows( 'keys' )
-			->andReturn( $jwk_key );
+			->andReturn( $keys );
 		$metadata_provider->allows( 'get_metadata' )
 			->andReturn( $metadata );
 
@@ -138,11 +139,11 @@ class JwtAuthServiceTest extends TestCase {
 			'bearer whitespace'      => array( 'Bearer   ', 'missing_token', 401, false ),
 
 			// Format and validation errors (401).
-			'not bearer format'      => array( 'NotBearerFormat', 'invalid_jwt', 401, false ),
+			'not bearer format'      => array( 'NotBearerFormat', 'malformed_token', 401, false ),
 			'invalid signature'      => array( 'Bearer ' . $invalid_jwt, 'invalid_jwt', 401, true ),
-			'malformed (1 segment)'  => array( 'Bearer randomgarbage', 'invalid_jwt', 401, true ),
-			'malformed (2 segments)' => array( 'Bearer invalid.token', 'invalid_jwt', 401, true ),
-			'malformed (4 segments)' => array( 'Bearer a.b.c.d', 'invalid_jwt', 401, true ),
+			'malformed (1 segment)'  => array( 'Bearer randomgarbage', 'malformed_token', 401, true ),
+			'malformed (2 segments)' => array( 'Bearer invalid.token', 'malformed_token', 401, true ),
+			'malformed (4 segments)' => array( 'Bearer a.b.c.d', 'malformed_token', 401, true ),
 			'expired token'          => array( 'Bearer ' . $expired_jwt, 'invalid_jwt', 401, true ),
 			'not yet valid token'    => array( 'Bearer ' . $future_jwt, 'invalid_jwt', 401, true ),
 		);
@@ -158,7 +159,7 @@ class JwtAuthServiceTest extends TestCase {
 		$metadata_provider = Mockery::mock( MerchantMetadataProvider::class );
 
 		$jwk_provider->allows( 'keys' )
-			->andReturn( null );
+			->andReturn( array() );
 
 		$service = new JwtAuthService( $jwk_provider, $metadata_provider );
 		$result  = $service->get_token( 'Bearer some.valid.token' );
@@ -183,7 +184,7 @@ class JwtAuthServiceTest extends TestCase {
 		$key     = new Key( 'test-secret-key', 'HS256' );
 		$service = $this->create_service( null, $key );
 
-		$valid_jwt = JWT::encode( (array) $expected_payload, 'test-secret-key', 'HS256' );
+		$valid_jwt = JWT::encode( (array) $expected_payload, 'test-secret-key', 'HS256', 'test-key' );
 		$token     = $prefix . ' ' . $valid_jwt;
 
 		$result = $service->get_token( $token );
@@ -245,19 +246,19 @@ class JwtAuthServiceTest extends TestCase {
 			'wrong issuer'            => array(
 				'token_data'  => array( 'iss' => 'evil.com' ),
 				'merchant_id' => null,
-				'error_code'  => 'invalid_issuer',
+				'error_code'  => 'invalid_payload',
 				'http_status' => 401,
 			),
 			'empty issuer'            => array(
 				'token_data'  => array( 'iss' => '' ),
 				'merchant_id' => null,
-				'error_code'  => 'invalid_issuer',
+				'error_code'  => 'invalid_payload',
 				'http_status' => 401,
 			),
 			'issuer subdomain'        => array(
 				'token_data'  => array( 'iss' => 'sub.paypal.com' ),
 				'merchant_id' => null,
-				'error_code'  => 'invalid_issuer',
+				'error_code'  => 'invalid_payload',
 				'http_status' => 401,
 			),
 
@@ -273,13 +274,13 @@ class JwtAuthServiceTest extends TestCase {
 			'scope not array'         => array(
 				'token_data'  => array( 'scope' => 'cart' ),
 				'merchant_id' => null,
-				'error_code'  => 'invalid_token',
+				'error_code'  => 'invalid_payload',
 				'http_status' => 401,
 			),
 			'external_id not array'   => array(
 				'token_data'  => array( 'external_id' => 'PayPal:MERCHANT123' ),
 				'merchant_id' => 'MERCHANT123',
-				'error_code'  => 'invalid_token',
+				'error_code'  => 'invalid_payload',
 				'http_status' => 401,
 			),
 
