@@ -58,8 +58,15 @@ class AdvancedCardPaymentMethod extends AbstractPaymentMethodType {
 	private array $credit_card_icons;
 
 	/**
-	 * @param SmartButtonInterface|callable                               $smart_button The smart button script loading handler.
-	 * @param array<int, array{type: string, title: string, url: string}> $credit_card_icons Pre-built card icon data.
+	 * @param AssetGetter                   $asset_getter
+	 * @param string                        $version
+	 * @param CreditCardGateway             $gateway
+	 * @param SmartButtonInterface|callable $smart_button The smart button script loading handler.
+	 * @param SettingsProvider              $settings_provider
+	 * @param CardPaymentsConfiguration     $card_payments_configuration
+	 * @param bool                          $save_payment_methods_eligible
+	 * @param PaymentSettings               $payment_settings
+	 * @param array                         $credit_card_icons Pre-built card icon data.
 	 */
 	public function __construct(
 		AssetGetter $asset_getter,
