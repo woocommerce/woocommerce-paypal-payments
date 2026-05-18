@@ -209,10 +209,10 @@ class OrderEndpoint
      */
     public function capture(Order $order): Order
     {
-        do_action('woocommerce_paypal_payments_before_capture_order', $order);
         if ($order->status()->is(OrderStatus::COMPLETED)) {
             return $order;
         }
+        do_action('woocommerce_paypal_payments_before_capture_order', $order);
         $bearer = $this->bearer->bearer();
         $url = trailingslashit($this->host) . 'v2/checkout/orders/' . $order->id() . '/capture';
         $args = array('method' => 'POST', 'headers' => array('Authorization' => 'Bearer ' . $bearer->token(), 'Content-Type' => 'application/json', 'Prefer' => 'return=representation'));

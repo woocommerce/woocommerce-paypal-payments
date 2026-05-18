@@ -656,6 +656,8 @@ class ComposerStaticInit844a779aae516bed9e0beccea9d01fda
         'WooCommerce\\PayPalCommerce\\StoreSync\\Schema\\CheckoutField' => __DIR__ . '/../..' . '/modules/ppcp-store-sync/src/Schema/CheckoutField.php',
         'WooCommerce\\PayPalCommerce\\StoreSync\\Schema\\Coupon' => __DIR__ . '/../..' . '/modules/ppcp-store-sync/src/Schema/Coupon.php',
         'WooCommerce\\PayPalCommerce\\StoreSync\\Schema\\Customer' => __DIR__ . '/../..' . '/modules/ppcp-store-sync/src/Schema/Customer.php',
+        'WooCommerce\\PayPalCommerce\\StoreSync\\Schema\\CustomerName' => __DIR__ . '/../..' . '/modules/ppcp-store-sync/src/Schema/CustomerName.php',
+        'WooCommerce\\PayPalCommerce\\StoreSync\\Schema\\CustomerPhone' => __DIR__ . '/../..' . '/modules/ppcp-store-sync/src/Schema/CustomerPhone.php',
         'WooCommerce\\PayPalCommerce\\StoreSync\\Schema\\Errors\\AgenticError' => __DIR__ . '/../..' . '/modules/ppcp-store-sync/src/Schema/Errors/AgenticError.php',
         'WooCommerce\\PayPalCommerce\\StoreSync\\Schema\\Errors\\AgenticErrorNotFound' => __DIR__ . '/../..' . '/modules/ppcp-store-sync/src/Schema/Errors/AgenticErrorNotFound.php',
         'WooCommerce\\PayPalCommerce\\StoreSync\\Schema\\GeoCoordinates' => __DIR__ . '/../..' . '/modules/ppcp-store-sync/src/Schema/GeoCoordinates.php',
