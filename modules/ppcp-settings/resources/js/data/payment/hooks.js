@@ -132,6 +132,7 @@ export const usePaymentMethodsModal = () => {
 
 	const [ paypalShowLogo ] = usePersistent( 'paypalShowLogo' );
 	const [ cardholderName ] = usePersistent( 'cardholderName' );
+	const [ showCardLogos ] = usePersistent( 'showCardLogos' );
 	const [ fastlaneDisplayWatermark ] = usePersistent(
 		'fastlaneDisplayWatermark'
 	);
@@ -144,6 +145,7 @@ export const usePaymentMethodsModal = () => {
 	return {
 		paypalShowLogo,
 		cardholderName,
+		showCardLogos,
 		fastlaneDisplayWatermark,
 		puiBrandName,
 		puiLogoUrl,
