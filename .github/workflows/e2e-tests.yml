@@ -60,9 +60,9 @@ jobs:
             plugin-foundation
             onboarding
             settings
-            transactions-usa
-            transactions-mexico
-            transactions-googlepay
+            transaction-usa
+            transaction-mexico
+            transaction-googlepay
             refund
             vaulting
             subscription
