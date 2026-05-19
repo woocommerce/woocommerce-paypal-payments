@@ -6,16 +6,22 @@ on:
       TEST_SUITE:
         description: 'Test suite'
         required: true
-        default: 'e2e:test:dev'
+        default: 'smoke:parallel'
         type: choice
         options:
-          - e2e:test:plugin-foundation
-          - e2e:test:dev
-          - e2e:test:smoke
-          - e2e:test:critical
-          - e2e:test:stress
-          - e2e:test:all
-          - e2e:test:all:parallel
+          - all:parallel
+          - smoke:parallel
+          - critical:parallel
+          - shard:plugin-foundation
+          - shard:onboarding
+          - shard:settings
+          - shard:transaction-usa
+          - shard:transaction-mexico
+          - shard:transaction-googlepay
+          - shard:refund
+          - shard:vaulting
+          - shard:subscription
+          - stress
       XRAY_TEST_EXEC_KEY:
         description: 'Xray Test Execution Key'
         required: false
@@ -50,11 +56,52 @@ jobs:
         id: resolve
         shell: bash
         run: |
-          if [[ '${{ inputs.TEST_SUITE }}' == 'e2e:test:all:parallel' ]]; then
-            echo 'matrix={"include":[{"script":"e2e:test:shard:plugin-foundation","name_suffix":" / plugin-foundation","artifact_name":"playwright-artifact-plugin-foundation"},{"script":"e2e:test:shard:onboarding-settings","name_suffix":" / onboarding-settings","artifact_name":"playwright-artifact-onboarding-settings"},{"script":"e2e:test:shard:transactions-usa","name_suffix":" / transactions-usa","artifact_name":"playwright-artifact-transactions-usa"},{"script":"e2e:test:shard:transactions-mexico","name_suffix":" / transactions-mexico","artifact_name":"playwright-artifact-transactions-mexico"},{"script":"e2e:test:shard:transactions-googlepay","name_suffix":" / transactions-googlepay","artifact_name":"playwright-artifact-transactions-googlepay"},{"script":"e2e:test:shard:refund","name_suffix":" / refund","artifact_name":"playwright-artifact-refund"},{"script":"e2e:test:shard:vaulting","name_suffix":" / vaulting","artifact_name":"playwright-artifact-vaulting"},{"script":"e2e:test:shard:subscription","name_suffix":" / subscription","artifact_name":"playwright-artifact-subscription"}]}' >> "$GITHUB_OUTPUT"
-          else
-            echo 'matrix={"include":[{"script":"${{ inputs.TEST_SUITE }}","name_suffix":"","artifact_name":"playwright-artifact"}]}' >> "$GITHUB_OUTPUT"
-          fi
+          SHARDS=(
+            plugin-foundation
+            onboarding
+            settings
+            transactions-usa
+            transactions-mexico
+            transactions-googlepay
+            refund
+            vaulting
+            subscription
+          )
+
+          build_matrix() {
+            local suffix="$1"
+            local items=()
+            for shard in "${SHARDS[@]}"; do
+              items+=("{\"script\":\"e2e:test:shard:${shard}${suffix}\",\"name_suffix\":\" / ${shard}\",\"artifact_name\":\"playwright-artifact-${shard}\"}")
+            done
+            local joined
+            joined=$(IFS=,; echo "${items[*]}")
+            echo "{\"include\":[${joined}]}"
+          }
+
+          case '${{ inputs.TEST_SUITE }}' in
+            all:parallel)
+              echo "matrix=$(build_matrix '')" >> "$GITHUB_OUTPUT"
+              ;;
+            smoke:parallel)
+              echo "matrix=$(build_matrix ':smoke')" >> "$GITHUB_OUTPUT"
+              ;;
+            critical:parallel)
+              echo "matrix=$(build_matrix ':critical')" >> "$GITHUB_OUTPUT"
+              ;;
+            stress)
+              echo 'matrix={"include":[{"script":"e2e:test:stress","name_suffix":" / stress","artifact_name":"playwright-artifact-stress"}]}' >> "$GITHUB_OUTPUT"
+              ;;
+            shard:*)
+              SHARD='${{ inputs.TEST_SUITE }}'
+              SUFFIX="${SHARD#shard:}"
+              echo "matrix=$(jq -nc \
+                --arg s "e2e:test:${SHARD}" \
+                --arg n " / ${SUFFIX}" \
+                --arg a "playwright-artifact-${SUFFIX}" \
+                '{include: [{script:$s, name_suffix:$n, artifact_name:$a}]}')" >> "$GITHUB_OUTPUT"
+              ;;
+          esac
 
   e2e-playwright:
     name: Run Playwright E2E Tests${{ matrix.name_suffix }}
