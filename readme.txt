@@ -161,7 +161,7 @@ If you encounter issues with the PayPal buttons not appearing after an update, p
 
 == Changelog ==
 
-= 4.0.4 - XXXX-XX-XX =
+= 4.0.4 - 2026-05-19 =
 * Enhancement - WooCommerce Blueprints integration to import & export the PayPal Payments configuration #4363
 * Enhancement - PayPal redirect gateway now appears on Block checkout for Subscription-type products #4338
 * Enhancement - updated render hooks for Apple Pay & Google Pay buttons on Classic Checkout to be consistent with PayPal #4350

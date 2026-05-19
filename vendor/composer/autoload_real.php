@@ -35,8 +35,8 @@ class ComposerAutoloaderInit844a779aae516bed9e0beccea9d01fda
 
         $filesToLoad = \Composer\Autoload\ComposerStaticInit844a779aae516bed9e0beccea9d01fda::$files;
         $requireFile = \Closure::bind(static function ($fileIdentifier, $file) {
-            if (empty($GLOBALS['__composer_autoload_files_66976d294213cb3f5da3286a9eee12a5be50f498'][$fileIdentifier])) {
-                $GLOBALS['__composer_autoload_files_66976d294213cb3f5da3286a9eee12a5be50f498'][$fileIdentifier] = true;
+            if (empty($GLOBALS['__composer_autoload_files_929039b9e3bdaa0ca2da2377c7edc6167f45840d'][$fileIdentifier])) {
+                $GLOBALS['__composer_autoload_files_929039b9e3bdaa0ca2da2377c7edc6167f45840d'][$fileIdentifier] = true;
 
                 require $file;
             }
