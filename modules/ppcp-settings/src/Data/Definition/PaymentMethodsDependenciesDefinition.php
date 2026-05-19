@@ -20,7 +20,7 @@ use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\MultibancoGateway;
 use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\MyBankGateway;
 use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\P24Gateway;
 use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\TrustlyGateway;
-use WooCommerce\PayPalCommerce\WcGateway\Gateway\OXXO\OXXO;
+use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\OXXOGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayUponInvoice\PayUponInvoiceGateway;
 
 /**
@@ -52,7 +52,7 @@ class PaymentMethodsDependenciesDefinition {
 			P24Gateway::ID            => array( PayPalGateway::ID ),
 			TrustlyGateway::ID        => array( PayPalGateway::ID ),
 			PayUponInvoiceGateway::ID => array( PayPalGateway::ID ),
-			OXXO::ID                  => array( PayPalGateway::ID ),
+			OXXOGateway::ID                  => array( PayPalGateway::ID ),
 			PWCGateway::ID            => array( PayPalGateway::ID ),
 			'venmo'                   => array( PayPalGateway::ID ),
 			'pay-later'               => array( PayPalGateway::ID ),

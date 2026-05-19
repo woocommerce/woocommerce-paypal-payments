@@ -42,7 +42,6 @@ use WooCommerce\PayPalCommerce\WcGateway\Endpoint\VoidOrderEndpoint;
 use WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\GatewayRepository;
-use WooCommerce\PayPalCommerce\WcGateway\Gateway\OXXO\OXXOGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\CardPaymentsConfiguration;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\DCCProductStatus;
@@ -355,8 +354,6 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
 					( $c->get( 'wcgateway.pay-upon-invoice' ) )->init();
 				}
 
-				( $c->get( 'wcgateway.oxxo' ) )->init();
-
 				$fraudnet_assets = $c->get( 'wcgateway.fraudnet-assets' );
 				assert( $fraudnet_assets instanceof FraudNetAssets );
 				$fraudnet_assets->register_assets();
@@ -588,25 +585,6 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
 			}
 		);
 
-		// Add processing instruction request data for OXXO payment.
-		add_filter(
-			'ppcp_create_order_request_body_data',
-			static function ( array $data, string $payment_method, array $request ): array {
-				if ( $payment_method !== OXXOGateway::ID ) {
-					return $data;
-				}
-
-				$processing_instruction = $request['processing_instruction'] ?? '';
-				if ( $processing_instruction ) {
-					$data['processing_instruction'] = $processing_instruction;
-				}
-
-				return $data;
-			},
-			10,
-			3
-		);
-
 		return true;
 	}
 
@@ -678,10 +656,6 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
 					)
 				) {
 					$methods[] = $container->get( 'wcgateway.pay-upon-invoice-gateway' );
-				}
-
-				if ( 'MX' === $shop_country ) {
-					$methods[] = $container->get( 'wcgateway.oxxo-gateway' );
 				}
 
 				return (array) $methods;

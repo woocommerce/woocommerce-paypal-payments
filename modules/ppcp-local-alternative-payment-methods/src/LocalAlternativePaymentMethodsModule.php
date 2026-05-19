@@ -63,6 +63,8 @@ class LocalAlternativePaymentMethodsModule implements ServiceModule, ExecutableM
 
 		$this->register_pwc_feature_flag_filters();
 
+		$c->get( 'ppcp-local-apms.oxxo.integration' )->init();
+
 		// When Local APMs are disabled, none of the following hooks are needed.
 		if ( ! $this->should_add_local_apm_gateways( $c ) ) {
 			return;

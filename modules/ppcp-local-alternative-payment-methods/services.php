@@ -68,6 +68,11 @@ return array(
 				'countries'  => array( 'PT' ),
 				'currencies' => array( 'EUR' ),
 			),
+			'oxxo'       => array(
+				'id'         => OXXOGateway::ID,
+				'countries'  => array( 'MX' ),
+				'currencies' => array( 'MXN' ),
+			),
 		);
 	},
 	'ppcp-local-apms.product-status'            => static function ( ContainerInterface $container ): LocalApmProductStatus {
@@ -221,6 +226,28 @@ return array(
 			$container->get( 'ppcp-local-apms.asset_getter' ),
 			$container->get( 'ppcp.asset-version' ),
 			$container->get( 'ppcp-local-apms.multibanco.wc-gateway' )
+		);
+	},
+	'ppcp-local-apms.oxxo.wc-gateway'           => static function ( ContainerInterface $container ): OXXOGateway {
+		return new OXXOGateway(
+			$container->get( 'api.endpoint.orders' ),
+			$container->get( 'api.factory.purchase-unit' ),
+			$container->get( 'wcgateway.processor.refunds' ),
+			$container->get( 'wcgateway.transaction-url-provider' ),
+			$container->get( 'wcgateway.builder.experience-context' ),
+			$container->get( 'ppcp-local-apms.asset_getter' )
+		);
+	},
+	'ppcp-local-apms.oxxo.payment-method'       => static function ( ContainerInterface $container ): OXXOPaymentMethod {
+		return new OXXOPaymentMethod(
+			$container->get( 'ppcp-local-apms.asset_getter' ),
+			$container->get( 'ppcp.asset-version' ),
+			$container->get( 'ppcp-local-apms.oxxo.wc-gateway' )
+		);
+	},
+	'ppcp-local-apms.oxxo.integration'          => static function ( ContainerInterface $container ): OXXOIntegration {
+		return new OXXOIntegration(
+			$container->get( 'wcgateway.checkout-helper' )
 		);
 	},
 	'ppcp-local-apms.eligibility.check'         => static function ( ContainerInterface $container ): bool {

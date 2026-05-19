@@ -51,8 +51,6 @@ use WooCommerce\PayPalCommerce\WcGateway\FundingSource\FundingSourceRenderer;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CardButtonGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\GatewayRepository;
-use WooCommerce\PayPalCommerce\WcGateway\Gateway\OXXO\OXXO;
-use WooCommerce\PayPalCommerce\WcGateway\Gateway\OXXO\OXXOGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayUponInvoice\PaymentSourceFactory;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayUponInvoice\PayUponInvoice;
@@ -97,6 +95,7 @@ use WooCommerce\PayPalCommerce\WcGateway\StoreApi\Factory\CartTotalsFactory;
 use WooCommerce\PayPalCommerce\WcGateway\StoreApi\Factory\MoneyFactory;
 use WooCommerce\PayPalCommerce\WcGateway\StoreApi\Factory\ShippingRatesFactory;
 use WooCommerce\PayPalCommerce\Webhooks\WebhookEventStorage;
+use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\OXXOGateway;
 
 return array(
 	'woocommerce.core'                                     => static function (): WooCommerce {
@@ -786,28 +785,6 @@ return array(
 			$container->get( 'wcgateway.checkout-helper' ),
 			$container->get( 'api.factory.capture' ),
 			$container->get( 'settings.data.payment' )
-		);
-	},
-	'wcgateway.oxxo'                                       => static function ( ContainerInterface $container ): OXXO {
-		return new OXXO(
-			$container->get( 'wcgateway.checkout-helper' ),
-			$container->get( 'wcgateway.asset_getter' ),
-			$container->get( 'ppcp.asset-version' ),
-			$container->get( 'api.endpoint.order' ),
-			$container->get( 'woocommerce.logger.woocommerce' ),
-			$container->get( 'api.factory.capture' )
-		);
-	},
-	'wcgateway.oxxo-gateway'                               => static function ( ContainerInterface $container ): OXXOGateway {
-		return new OXXOGateway(
-			$container->get( 'api.endpoint.order' ),
-			$container->get( 'api.factory.purchase-unit' ),
-			$container->get( 'api.factory.shipping-preference' ),
-			$container->get( 'wcgateway.builder.experience-context' ),
-			$container->get( 'wcgateway.asset_getter' ),
-			$container->get( 'wcgateway.transaction-url-provider' ),
-			$container->get( 'settings.environment' ),
-			$container->get( 'woocommerce.logger.woocommerce' )
 		);
 	},
 	'wcgateway.logging.is-enabled'                         => static function ( ContainerInterface $container ): bool {
