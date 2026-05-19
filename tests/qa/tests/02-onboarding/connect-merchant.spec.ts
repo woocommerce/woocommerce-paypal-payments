@@ -10,7 +10,7 @@ test.beforeAll( async ( { utils, pcpApi } ) => {
 	await pcpApi.resetDb();
 } );
 
-test( 'PCP-4362 | Settings - Onboarding - See advanced options - Manually connect with sandbox account @Critical @Smoke', async ( {
+test( 'PCP-4362 | Settings - Onboarding - See advanced options - Manually connect with sandbox account @Critical', async ( {
 	pcpOnboarding,
 	pcpOverview,
 	pcpSettings,

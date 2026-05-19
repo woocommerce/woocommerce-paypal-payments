@@ -16,13 +16,13 @@ const savePaymentMethodData = [
 	{
 		// https://inpsyde.atlassian.net/browse/PCP-4499
 		testKey: 'PCP-4499',
-		testLabel: ' @Dev',
+		testLabel: ' @Smoke',
 		payment: payPal,
 	},
 	{
 		// https://inpsyde.atlassian.net/browse/PCP-4500
 		testKey: 'PCP-4500',
-		testLabel: ' @Dev',
+		testLabel: ' @Smoke',
 		payment: acdc,
 	},
 ];

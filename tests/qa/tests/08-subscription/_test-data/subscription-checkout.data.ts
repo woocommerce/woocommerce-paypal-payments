@@ -18,7 +18,7 @@ const merchant = merchants.usa;
 const vaultingGuest: ShopOrder[] = [
 	{
 		// https://inpsyde.atlassian.net/browse/PCP-4895
-		title: 'PCP-4895 | Vaulting subscription - Transaction - Checkout - PayPal - Order by guest @Critical @Smoke @Dev',
+		title: 'PCP-4895 | Vaulting subscription - Transaction - Checkout - PayPal - Order by guest @Critical @Smoke',
 		...orders.default,
 		payment: payments.payPal,
 		merchant,
@@ -36,7 +36,7 @@ const vaultingGuest: ShopOrder[] = [
 	},
 	{
 		// https://inpsyde.atlassian.net/browse/PCP-4896
-		title: 'PCP-4896 | Vaulting subscription - Transaction - Checkout - ACDC - Order by guest @Critical @Dev',
+		title: 'PCP-4896 | Vaulting subscription - Transaction - Checkout - ACDC - Order by guest @Critical @Smoke',
 		...orders.default,
 		payment: payments.acdc,
 		merchant,
@@ -75,7 +75,7 @@ const vaultingCustomer: ShopOrder[] = [
 	},
 	{
 		// https://inpsyde.atlassian.net/browse/PCP-4898
-		title: 'PCP-4898 | Vaulting subscription - Transaction - Checkout - ACDC - Order by customer @Critical @Smoke',
+		title: 'PCP-4898 | Vaulting subscription - Transaction - Checkout - ACDC - Order by customer @Critical',
 		...orders.default,
 		payment: payments.acdc,
 		merchant,
