@@ -115,115 +115,140 @@ export default defineConfig< BaseExtend >( {
 	},
 
 	projects: [
+		// Manual setup (grep scripts target this — no dependency chain)
+		{
+			name: 'setup',
+			testMatch: /(01-env|02-woocommerce|03-pcp)\.setup\.ts/,
+			fullyParallel: false,
+		},
+		
+		// WooCommerce (dependency target only)
 		{
 			name: 'setup-woocommerce',
-			testMatch: /woocommerce\.setup\.ts/,
+			testMatch: /02-woocommerce\.setup\.ts/,
+			fullyParallel: false,
+		},
+
+		// PCP setups by country (dependency targets)
+		{
+			name: 'setup-pcp-usa',
+			dependencies: [ 'setup-woocommerce' ],
+			testMatch: /03-pcp\.setup\.ts/,
+			grep: /setup:pcp:usa;/,
 			fullyParallel: false,
 		},
 		{
-			name: 'setup-pcp',
-			testMatch: /pcp\.setup\.ts/,
+			name: 'setup-pcp-germany',
+			dependencies: [ 'setup-woocommerce' ],
+			testMatch: /03-pcp\.setup\.ts/,
+			grep: /setup:pcp:germany;/,
 			fullyParallel: false,
 		},
 		{
-			name: 'setup-pcp-usa-for-transactions',
+			name: 'setup-pcp-mexico',
 			dependencies: [ 'setup-woocommerce' ],
-			testMatch: /pcp\.setup\.ts/,
-			grep: /setup:pcp:usa:transactions;/,
+			testMatch: /03-pcp\.setup\.ts/,
+			grep: /setup:pcp:mexico;/,
+			fullyParallel: false,
+		},
+
+		// Setup per test set (dependency targets)
+		{
+			name: 'setup-transaction-usa',
+			dependencies: [ 'setup-pcp-usa' ],
+			testMatch: /03-pcp\.setup\.ts/,
+			grep: /setup:transaction:usa;/,
 			fullyParallel: false,
 		},
 		{
-			name: 'setup-pcp-mexico-for-transactions',
-			dependencies: [ 'setup-woocommerce' ],
-			testMatch: /pcp\.setup\.ts/,
-			grep: /setup:pcp:mexico:transactions;/,
+			name: 'setup-transaction-mexico',
+			dependencies: [ 'setup-pcp-mexico' ],
+			testMatch: /03-pcp\.setup\.ts/,
+			grep: /setup:transaction:mexico;/,
 			fullyParallel: false,
 		},
 		{
-			name: 'setup-pcp-usa-for-transactions-googlepay',
-			dependencies: [ 'setup-woocommerce' ],
-			testMatch: /pcp\.setup\.ts/,
-			grep: /setup:pcp:usa:transactions:googlepay;/,
+			name: 'setup-transaction-googlepay',
+			dependencies: [ 'setup-pcp-usa' ],
+			testMatch: /03-pcp\.setup\.ts/,
+			grep: /setup:transaction:googlepay;/,
 			fullyParallel: false,
 		},
 		{
-			name: 'setup-pcp-usa-for-refund',
-			dependencies: [ 'setup-woocommerce' ],
-			testMatch: /pcp\.setup\.ts/,
-			grep: /setup:pcp:usa:refund;/,
+			name: 'setup-refund',
+			dependencies: [ 'setup-pcp-usa' ],
+			testMatch: /03-pcp\.setup\.ts/,
+			grep: /setup:refund;/,
 			fullyParallel: false,
 		},
 		{
-			name: 'setup-pcp-vaulting',
-			dependencies: [ 'setup-woocommerce' ],
-			testMatch: /pcp\.setup\.ts/,
-			grep: /setup:pcp:usa:vaulting;/,
+			name: 'setup-vaulting',
+			dependencies: [ 'setup-pcp-usa' ],
+			testMatch: /03-pcp\.setup\.ts/,
+			grep: /setup:vaulting;/,
 			fullyParallel: false,
 		},
 		{
-			name: 'setup-pcp-subscription',
-			dependencies: [ 'setup-woocommerce' ],
-			testMatch: /pcp\.setup\.ts/,
-			grep: /setup:pcp:usa:subscription;/,
+			name: 'setup-subscription',
+			dependencies: [ 'setup-pcp-usa' ],
+			testMatch: /03-pcp\.setup\.ts/,
+			grep: /setup:subscription;/,
 			fullyParallel: false,
 		},
-		{
-			name: 'plugin-foundation',
-			dependencies: [ 'setup-woocommerce' ],
-			testMatch: /plugin-foundation\.spec\.ts/,
-		},
-		{
-			name: 'all',
-			dependencies: [ 'setup-woocommerce' ],
-			testIgnore: [ /stress\.spec\.ts/, /plugin-foundation\.spec\.ts/ ],
-		},
+
+		// Test projects
 		{
 			name: 'stress',
 			dependencies: [ 'setup-woocommerce' ],
 			testMatch: /stress\.spec\.ts/,
 		},
 
-		// Parallel CI
+		// =============================================================
+		// Project shards (for parallel/separate executions)
+		// =============================================================
 		{
 			name: 'shard:plugin-foundation',
 			dependencies: [ 'setup-woocommerce' ],
 			testMatch: /01-plugin-foundation\/.*\.spec\.ts/,
 		},
 		{
-			name: 'shard:onboarding-settings',
+			name: 'shard:onboarding',
 			dependencies: [ 'setup-woocommerce' ],
-			testMatch: /(02-onboarding|03-plugin-settings)\/.*\.spec\.ts/,
+			testMatch: /02-onboarding\/.*\.spec\.ts/,
 		},
 		{
-			name: 'shard:transactions-usa',
-			dependencies: [ 'setup-pcp-usa-for-transactions' ],
-			testMatch: [
-				/05-transactions\/transaction-usa.*\.spec\.ts/,
-			],
+			name: 'shard:settings',
+			dependencies: [ 'setup-woocommerce' ],
+			testMatch: /03-plugin-settings\/.*\.spec\.ts/,
 		},
 		{
-			name: 'shard:transactions-googlepay',
-			dependencies: [ 'setup-pcp-usa-for-transactions-googlepay' ],
+			name: 'shard:transaction-usa',
+			dependencies: [ 'setup-transaction-usa' ],
+			testMatch: /05-transactions\/transaction-usa.*\.spec\.ts/,
+		},
+		{
+			name: 'shard:transaction-googlepay',
+			dependencies: [ 'setup-transaction-googlepay' ],
 			testMatch: /05-transactions\/transaction-googlepay\.spec\.ts/,
 		},
 		{
-			name: 'shard:transactions-mexico',
-			dependencies: [ 'setup-pcp-mexico-for-transactions' ],
+			name: 'shard:transaction-mexico',
+			dependencies: [ 'setup-transaction-mexico' ],
 			testMatch: /05-transactions\/transaction-mexico.*\.spec\.ts/,
 		},
 		{
 			name: 'shard:refund',
-			dependencies: [ 'setup-pcp-usa-for-refund' ],
+			dependencies: [ 'setup-refund' ],
 			testMatch: /06-refund\/.*\.spec\.ts/,
 		},
 		{
 			name: 'shard:vaulting',
-			dependencies: [ 'setup-pcp-vaulting' ],
+			dependencies: [ 'setup-vaulting' ],
 			testMatch: /07-vaulting\/.*\.spec\.ts/,
 		},
 		{
 			name: 'shard:subscription',
-			dependencies: [ 'setup-pcp-subscription' ],
+			dependencies: [ 'setup-subscription' ],
 			testMatch: /08-subscription\/.*\.spec\.ts/,
 		},
 	],
