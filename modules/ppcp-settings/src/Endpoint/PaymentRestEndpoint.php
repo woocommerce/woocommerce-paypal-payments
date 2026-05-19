@@ -51,7 +51,7 @@ class PaymentRestEndpoint extends \WooCommerce\PayPalCommerce\Settings\Endpoint\
      *
      * @var array
      */
-    private array $field_map = array('paypal_show_logo' => array('js_name' => 'paypalShowLogo', 'sanitize' => 'to_boolean'), 'cardholder_name' => array('js_name' => 'cardholderName', 'sanitize' => 'to_boolean'), 'fastlane_display_watermark' => array('js_name' => 'fastlaneDisplayWatermark', 'sanitize' => 'to_boolean'), 'pui_brand_name' => array('js_name' => 'puiBrandName', 'sanitize' => 'sanitize_text_field'), 'pui_logo_url' => array('js_name' => 'puiLogoUrl', 'sanitize' => 'esc_url_raw'), 'pui_customer_service_instructions' => array('js_name' => 'puiCustomerServiceInstructions', 'sanitize' => 'sanitize_text_field'));
+    private array $field_map = array('paypal_show_logo' => array('js_name' => 'paypalShowLogo', 'sanitize' => 'to_boolean'), 'cardholder_name' => array('js_name' => 'cardholderName', 'sanitize' => 'to_boolean'), 'show_card_logos' => array('js_name' => 'showCardLogos', 'sanitize' => 'to_boolean'), 'fastlane_display_watermark' => array('js_name' => 'fastlaneDisplayWatermark', 'sanitize' => 'to_boolean'), 'pui_brand_name' => array('js_name' => 'puiBrandName', 'sanitize' => 'sanitize_text_field'), 'pui_logo_url' => array('js_name' => 'puiLogoUrl', 'sanitize' => 'esc_url_raw'), 'pui_customer_service_instructions' => array('js_name' => 'puiCustomerServiceInstructions', 'sanitize' => 'sanitize_text_field'));
     /**
      * Constructor.
      *
@@ -131,6 +131,7 @@ class PaymentRestEndpoint extends \WooCommerce\PayPalCommerce\Settings\Endpoint\
         }
         $gateway_settings['paypalShowLogo'] = $this->payment_settings->get_paypal_show_logo();
         $gateway_settings['cardholderName'] = $this->payment_settings->get_cardholder_name();
+        $gateway_settings['showCardLogos'] = $this->payment_settings->get_show_card_logos();
         $gateway_settings['fastlaneDisplayWatermark'] = $this->payment_settings->get_fastlane_display_watermark();
         $gateway_settings['puiBrandName'] = $this->payment_settings->get_pui_brand_name();
         $gateway_settings['puiLogoUrl'] = $this->payment_settings->get_pui_logo_url();
