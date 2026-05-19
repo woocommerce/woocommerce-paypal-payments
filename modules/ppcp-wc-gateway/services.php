@@ -24,6 +24,7 @@ use WooCommerce\PayPalCommerce\Button\Helper\MessagesApply;
 use WooCommerce\PayPalCommerce\Button\Helper\MessagesDisclaimers;
 use WooCommerce\PayPalCommerce\Common\Pattern\SingletonDecorator;
 use WooCommerce\PayPalCommerce\Settings\Data\Definition\FeaturesDefinition;
+use WooCommerce\PayPalCommerce\Settings\Data\PaymentSettings;
 use WooCommerce\PayPalCommerce\Settings\Data\SettingsModel;
 use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
@@ -108,6 +109,11 @@ return array(
         return array('visa' => _x('Visa', 'Name of credit card', 'woocommerce-paypal-payments'), 'mastercard' => _x('Mastercard', 'Name of credit card', 'woocommerce-paypal-payments'), 'amex' => _x('American Express', 'Name of credit card', 'woocommerce-paypal-payments'), 'discover' => _x('Discover', 'Name of credit card', 'woocommerce-paypal-payments'), 'jcb' => _x('JCB', 'Name of credit card', 'woocommerce-paypal-payments'), 'elo' => _x('Elo', 'Name of credit card', 'woocommerce-paypal-payments'), 'hiper' => _x('Hiper', 'Name of credit card', 'woocommerce-paypal-payments'));
     },
     'wcgateway.credit-card-icons' => static function (ContainerInterface $container): array {
+        $payment_settings = $container->get('settings.data.payment');
+        assert($payment_settings instanceof PaymentSettings);
+        if (!$payment_settings->get_show_card_logos()) {
+            return array();
+        }
         $settings_provider = $container->get('settings.settings-provider');
         assert($settings_provider instanceof SettingsProvider);
         $icons = $settings_provider->card_icons();
@@ -115,6 +121,16 @@ return array(
         $asset_getter = $container->get('wcgateway.asset_getter');
         assert($asset_getter instanceof AssetGetter);
         $url_root = $asset_getter->get_static_asset_url('images/');
+        // Default to all known card types when none are explicitly configured.
+        if (empty($icons)) {
+            $icons = array_keys($labels);
+        }
+        $disabled = $settings_provider->disabled_cards();
+        if (!empty($disabled)) {
+            $icons = array_filter($icons, static function (string $icon) use ($disabled): bool {
+                return !in_array(str_replace('-dark', '', $icon), $disabled, \true);
+            });
+        }
         $icons_with_label = array();
         foreach ($icons as $icon) {
             $type = str_replace('-dark', '', $icon);

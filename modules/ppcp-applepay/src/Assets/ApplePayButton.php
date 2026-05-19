@@ -126,6 +126,10 @@ class ApplePayButton implements ButtonInterface
                 $this->response_templates->response_with_data_errors(array(array('errorCode' => 'addressUnserviceable', 'message' => __('Error processing cart', 'woocommerce-paypal-payments'))));
                 return;
             }
+            if (isset($payment_details['shippingMethods']) && is_array($payment_details['shippingMethods']) && empty($payment_details['shippingMethods'])) {
+                $this->response_templates->response_with_data_errors(array(array('errorCode' => 'addressUnserviceable', 'message' => __('No shipping methods are available for your address.', 'woocommerce-paypal-payments'))));
+                return;
+            }
             $response = $this->response_templates->apple_formatted_response($payment_details);
             $this->response_templates->response_success($response);
         } catch (Exception $e) {
