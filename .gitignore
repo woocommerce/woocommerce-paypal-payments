@@ -24,6 +24,7 @@ tests/inc/inpsyde/
 .vscode
 playwright-utils
 playwright-report*
+snapshots
 playwright/.cache
 storage-states
 test-results

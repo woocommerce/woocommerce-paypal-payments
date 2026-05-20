@@ -8,7 +8,7 @@ const customer = customers.usa;
 const savePaymentMethodData: ShopOrder[] = [
 	{
 		// https://inpsyde.atlassian.net/browse/PCP-5390
-		title: 'PCP-5390 | Vaulting - Transaction - Pay by link - PayPal - Save payment method @Critical @Smoke',
+		title: 'PCP-5390 | Vaulting - Transaction - Pay by link - PayPal - Save payment method @Critical',
 		...orders.default,
 		payment: {
 			...payments.payPal,

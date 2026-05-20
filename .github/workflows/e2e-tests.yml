@@ -6,16 +6,22 @@ on:
       TEST_SUITE:
         description: 'Test suite'
         required: true
-        default: 'e2e:test:dev'
+        default: 'smoke:parallel'
         type: choice
         options:
-          - e2e:test:plugin-foundation
-          - e2e:test:dev
-          - e2e:test:smoke
-          - e2e:test:critical
-          - e2e:test:stress
-          - e2e:test:all
-          - e2e:test:all:parallel
+          - all:parallel
+          - smoke:parallel
+          - critical:parallel
+          - shard:plugin-foundation
+          - shard:onboarding
+          - shard:settings
+          - shard:transaction-usa
+          - shard:transaction-mexico
+          - shard:transaction-googlepay
+          - shard:refund
+          - shard:vaulting
+          - shard:subscription
+          - stress
       XRAY_TEST_EXEC_KEY:
         description: 'Xray Test Execution Key'
         required: false
@@ -50,10 +56,36 @@ jobs:
         id: resolve
         shell: bash
         run: |
-          if [[ '${{ inputs.TEST_SUITE }}' == 'e2e:test:all:parallel' ]]; then
-            echo 'matrix={"include":[{"script":"e2e:test:shard:plugin-foundation","name_suffix":" / plugin-foundation","artifact_name":"playwright-artifact-plugin-foundation"},{"script":"e2e:test:shard:onboarding-settings","name_suffix":" / onboarding-settings","artifact_name":"playwright-artifact-onboarding-settings"},{"script":"e2e:test:shard:transactions","name_suffix":" / transactions","artifact_name":"playwright-artifact-transactions"},{"script":"e2e:test:shard:transactions-googlepay","name_suffix":" / transactions-googlepay","artifact_name":"playwright-artifact-transactions-googlepay"},{"script":"e2e:test:shard:refund","name_suffix":" / refund","artifact_name":"playwright-artifact-refund"},{"script":"e2e:test:shard:vaulting","name_suffix":" / vaulting","artifact_name":"playwright-artifact-vaulting"},{"script":"e2e:test:shard:subscription","name_suffix":" / subscription","artifact_name":"playwright-artifact-subscription"}]}' >> "$GITHUB_OUTPUT"
+          SHARDS=(
+            plugin-foundation
+            onboarding
+            settings
+            transaction-usa
+            transaction-mexico
+            transaction-googlepay
+            refund
+            vaulting
+            subscription
+          )
+
+          if [[ '${{ inputs.TEST_SUITE }}' == *':parallel' ]]; then
+            TAG='${{ inputs.TEST_SUITE }}'
+            SUFFIX=""
+            [[ "$TAG" != "all:parallel" ]] && SUFFIX=":${TAG%:parallel}"
+
+            entry() { echo "{\"script\":\"e2e:test:shard:${1}${SUFFIX}\",\"name_suffix\":\" / ${1}\",\"artifact_name\":\"playwright-artifact-${1}\"}"; }
+
+            ITEMS=()
+            for shard in "${SHARDS[@]}"; do
+              ITEMS+=("$(entry "$shard")")
+            done
+            JOINED=$(IFS=,; echo "${ITEMS[*]}")
+
+            echo "matrix={\"include\":[${JOINED}]}" >> "$GITHUB_OUTPUT"
           else
-            echo 'matrix={"include":[{"script":"${{ inputs.TEST_SUITE }}","name_suffix":"","artifact_name":"playwright-artifact"}]}' >> "$GITHUB_OUTPUT"
+            SUITE='${{ inputs.TEST_SUITE }}'
+            NAME="${SUITE#shard:}"
+            echo "matrix={\"include\":[{\"script\":\"e2e:test:${SUITE}\",\"name_suffix\":\" / ${NAME}\",\"artifact_name\":\"playwright-artifact-${NAME}\"}]}" >> "$GITHUB_OUTPUT"
           fi
 
   e2e-playwright:
