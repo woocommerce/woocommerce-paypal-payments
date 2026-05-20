@@ -74,6 +74,10 @@ export const transactionsOnClassicCheckoutOxxo = ( testOrder: ShopOrder ) => {
 				orderJson
 			);
 
+			await expect(
+				orderReceived.seeOXXOVoucherButton_1(),
+				'Assert OXXO voucher button is visible on order-received page'
+			).toBeVisible();
 			const popupPromise = orderReceived.page.waitForEvent( 'popup' );
 			await orderReceived.seeOXXOVoucherButton_1().click();
 			const voucherPopup = new OxxoVoucherPopup( await popupPromise );

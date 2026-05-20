@@ -1,7 +1,7 @@
 /**
  * External dependencies
  */
-import { Page } from '@playwright/test';
+import { expect, Page } from '@playwright/test';
 
 export class OxxoVoucherPopup {
 	page: Page;
@@ -24,6 +24,10 @@ export class OxxoVoucherPopup {
 			window.opener = null;
 		} );
 
+		await expect(
+			this.testSuccessfulPaymentButton(),
+			'Assert OXXO voucher popup loaded with test payment button'
+		).toBeVisible();
 		await this.testSuccessfulPaymentButton().click();
 
 		await this.page
