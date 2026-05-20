@@ -82,6 +82,11 @@ class CompatModule implements ServiceModule, ExecutableModule {
 
 		add_action( 'woocommerce_paypal_payments_gateway_migrate', static fn() => delete_transient( 'ppcp_has_ppec_subscriptions' ) );
 
+		add_action(
+			'woocommerce_paypal_payments_authenticated_merchant',
+			array( $this, 'disable_legacy_paypal_standard_on_connect' )
+		);
+
 		$this->legacy_ui_card_payment_mapping( $c );
 
 		/**
@@ -571,5 +576,63 @@ class CompatModule implements ServiceModule, ExecutableModule {
 				}
 			}
 		);
+	}
+
+	/**
+	 * Disables the WC core PayPal Standard gateway when a merchant successfully connects PPCP.
+	 *
+	 * PayPal Standard has a '_should_load' persistence flag that survives the enabled toggle —
+	 * both keys must be set to 'no' for the gateway to fully stop loading. This method also
+	 * keeps the IPN handler dormant by clearing _should_load, which prevents residual
+	 * WOOTHEMES_CART BN code volume from appearing in PayPal partner reporting.
+	 *
+	 * Skips the disable (and shows an admin notice instead) when WooCommerce Subscriptions
+	 * detects active subscriptions still billed through PayPal Standard — those renewals
+	 * depend on the IPN endpoint and cannot be silently migrated.
+	 */
+	private function disable_legacy_paypal_standard_on_connect(): void {
+		// If WCS is active and the merchant has live PayPal Standard subscriptions,
+		// disabling would break their renewal flow. Show a notice instead.
+		if ( function_exists( 'wcs_get_subscriptions' ) ) {
+			$active_paypal_subs = wcs_get_subscriptions(
+				array(
+					'payment_method'      => 'paypal',
+					'subscription_status' => array( 'active', 'pending-cancel' ),
+				)
+			);
+
+			if ( ! empty( $active_paypal_subs ) ) {
+				$count = count( $active_paypal_subs );
+				add_action(
+					'admin_notices',
+					static function () use ( $count ) {
+						$subscriptions_url = admin_url( 'edit.php?post_type=shop_subscription&_payment_method=paypal' );
+						printf(
+							'<div class="notice notice-warning"><p>%s</p></div>',
+							wp_kses_post(
+								sprintf(
+									/* translators: 1: number of subscriptions, 2: URL to subscription list */
+									_n(
+										'PayPal Payments is now your active checkout gateway, but <a href="%2$s">%1$d subscription</a> is still billed through the legacy PayPal Standard gateway. Migrate or cancel these subscriptions before disabling PayPal Standard to avoid missed renewals.',
+										'PayPal Payments is now your active checkout gateway, but <a href="%2$s">%1$d subscriptions</a> are still billed through the legacy PayPal Standard gateway. Migrate or cancel these subscriptions before disabling PayPal Standard to avoid missed renewals.',
+										$count,
+										'woocommerce-paypal-payments'
+									),
+									$count,
+									esc_url( $subscriptions_url )
+								)
+							)
+						);
+					}
+				);
+				return;
+			}
+		}
+
+		// Safe to disable — no active PayPal Standard subscriptions detected.
+		$settings               = get_option( 'woocommerce_paypal_settings', array() );
+		$settings['enabled']      = 'no';
+		$settings['_should_load'] = 'no'; // clears the permanent latch; enabled=no alone is insufficient
+		update_option( 'woocommerce_paypal_settings', $settings );
 	}
 }
