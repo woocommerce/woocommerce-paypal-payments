@@ -7,7 +7,10 @@ import urls from '../urls';
 import { Pcp } from '../../resources';
 
 /** Maps ButtonColor label to select value. */
-const COLOR_LABEL_TO_VALUE: Record< Pcp.Admin.Styling.ButtonColor, string > = {
+const COLOR_LABEL_TO_VALUE: Record<
+	Pcp.Admin.Styling.ButtonColor,
+	string
+> = {
 	'Gold (recommended)': 'gold',
 	'Gold (Recommended)': 'gold',
 	Blue: 'blue',
@@ -17,7 +20,7 @@ const COLOR_LABEL_TO_VALUE: Record< Pcp.Admin.Styling.ButtonColor, string > = {
 };
 
 /** Maps ButtonLabel to select value. */
-const LABEL_TO_VALUE: Record< Pcp.Admin.Styling.ButtonLabel, string > = {
+const LABEL_TO_VALUE: Record<Pcp.Admin.Styling.ButtonLabel, string> = {
 	PayPal: 'paypal',
 	Checkout: 'checkout',
 	'PayPal Buy Now': 'buynow',
@@ -25,16 +28,16 @@ const LABEL_TO_VALUE: Record< Pcp.Admin.Styling.ButtonLabel, string > = {
 };
 
 /** Maps ButtonShape to radio value. */
-const SHAPE_TO_VALUE: Record< Pcp.Admin.Styling.ButtonShape, string > = {
+const SHAPE_TO_VALUE: Record<Pcp.Admin.Styling.ButtonShape, string> = {
 	Rectangle: 'rect',
 	Pill: 'pill',
 };
 
 /** Maps ButtonLayout to radio value. */
-// const LAYOUT_TO_VALUE: Record< Pcp.Admin.Styling.ButtonLayout, string > = {
-// 	Vertical: 'vertical',
-// 	Horizontal: 'horizontal',
-// };
+const LAYOUT_TO_VALUE: Record<Pcp.Admin.Styling.ButtonLayout, string> = {
+	Vertical: 'vertical',
+	Horizontal: 'horizontal',
+};
 
 export class PcpStyling extends PcpAdminPage {
 	url = urls.admin.pcp.styling;
@@ -113,7 +116,7 @@ export class PcpStyling extends PcpAdminPage {
 		const value = SHAPE_TO_VALUE[ shape ];
 		await expect(
 			this.buttonShapeRadio( shape ),
-			`Assert button shape is ${ shape }: ${ value }`
+			`Assert button shape is ${ shape }`
 		).toBeChecked();
 	};
 

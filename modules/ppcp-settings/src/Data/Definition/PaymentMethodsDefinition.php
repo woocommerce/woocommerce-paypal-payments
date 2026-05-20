@@ -267,14 +267,6 @@ class PaymentMethodsDefinition {
 							'woocommerce-paypal-payments'
 						),
 					),
-					'showCardLogos'  => array(
-						'type'    => 'toggle',
-						'default' => $this->settings->get_show_card_logos(),
-						'label'   => __(
-							'Show logos of supported cards',
-							'woocommerce-paypal-payments'
-						),
-					),
 				),
 			);
 			$group[] = array(

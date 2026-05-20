@@ -134,7 +134,7 @@ export namespace Pcp {
 				| 'amex'
 				| 'jcb'
 				| 'diners-club'
-			)[];
+			 )[];
 			enableLogging?: boolean;
 			enablePayNow?: boolean;
 			invoicePrefix?: string;

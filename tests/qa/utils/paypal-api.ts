@@ -30,21 +30,20 @@ export class PayPalApi {
 		data?: any
 	) => {
 		try {
-			const token = await this.getToken( merchant );
 			const response = await this.request[ requestType ](
 				this.apiBaseUrl + endPoint,
 				{
-					headers: {
-						Authorization: `Bearer ${ token }`,
-					},
+					headers: createAuthHeader(
+						merchant.client_id,
+						merchant.client_secret
+					),
 					data,
 				}
 			);
 
 			if ( ! ( await response.ok() ) ) {
-				const body = await response.text();
 				throw new Error(
-					`Request failed with status ${ await response.status() } for ${ endPoint }: ${ body }`
+					`Request failed with status ${ await response.status() }`
 				);
 			}
 
@@ -71,11 +70,7 @@ export class PayPalApi {
 				form: { grant_type: 'client_credentials' },
 			}
 		);
-		const json = await response.json();
-		if ( ! response.ok() ) {
-			throw new Error( `getToken failed with status ${ response.status() }: ${ JSON.stringify( json ) }` );
-		}
-		return json.access_token;
+		return ( await response.json() ).access_token;
 	};
 
 	/**
@@ -244,8 +239,9 @@ export class PayPalApi {
 		shopOrder: WooCommerce.ShopOrder
 	) => {
 		const gatewayShortcut = shopOrder.payment.gateway.shortcut;
-		const payPalOrderId =
-			await this.getOrderIdFromWooCommerce( wooCommerceOrderJson );
+		const payPalOrderId = await this.getOrderIdFromWooCommerce(
+			wooCommerceOrderJson
+		);
 
 		await expect
 			.soft(

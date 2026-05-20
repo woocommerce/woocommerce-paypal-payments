@@ -6,22 +6,16 @@ on:
       TEST_SUITE:
         description: 'Test suite'
         required: true
-        default: 'smoke:parallel'
+        default: 'e2e:test:dev'
         type: choice
         options:
-          - all:parallel
-          - smoke:parallel
-          - critical:parallel
-          - shard:plugin-foundation
-          - shard:onboarding
-          - shard:settings
-          - shard:transaction-usa
-          - shard:transaction-mexico
-          - shard:transaction-googlepay
-          - shard:refund
-          - shard:vaulting
-          - shard:subscription
-          - stress
+          - e2e:test:plugin-foundation
+          - e2e:test:dev
+          - e2e:test:smoke
+          - e2e:test:critical
+          - e2e:test:stress
+          - e2e:test:all
+          - e2e:test:all:parallel
       XRAY_TEST_EXEC_KEY:
         description: 'Xray Test Execution Key'
         required: false
@@ -56,36 +50,10 @@ jobs:
         id: resolve
         shell: bash
         run: |
-          SHARDS=(
-            plugin-foundation
-            onboarding
-            settings
-            transaction-usa
-            transaction-mexico
-            transaction-googlepay
-            refund
-            vaulting
-            subscription
-          )
-
-          if [[ '${{ inputs.TEST_SUITE }}' == *':parallel' ]]; then
-            TAG='${{ inputs.TEST_SUITE }}'
-            SUFFIX=""
-            [[ "$TAG" != "all:parallel" ]] && SUFFIX=":${TAG%:parallel}"
-
-            entry() { echo "{\"script\":\"e2e:test:shard:${1}${SUFFIX}\",\"name_suffix\":\" / ${1}\",\"artifact_name\":\"playwright-artifact-${1}\"}"; }
-
-            ITEMS=()
-            for shard in "${SHARDS[@]}"; do
-              ITEMS+=("$(entry "$shard")")
-            done
-            JOINED=$(IFS=,; echo "${ITEMS[*]}")
-
-            echo "matrix={\"include\":[${JOINED}]}" >> "$GITHUB_OUTPUT"
+          if [[ '${{ inputs.TEST_SUITE }}' == 'e2e:test:all:parallel' ]]; then
+            echo 'matrix={"include":[{"script":"e2e:test:shard:plugin-foundation","name_suffix":" / plugin-foundation"},{"script":"e2e:test:shard:onboarding-settings","name_suffix":" / onboarding-settings"},{"script":"e2e:test:shard:transactions","name_suffix":" / transactions"},{"script":"e2e:test:shard:transactions-googlepay","name_suffix":" / transactions-googlepay"},{"script":"e2e:test:shard:refund","name_suffix":" / refund"},{"script":"e2e:test:shard:vaulting","name_suffix":" / vaulting"},{"script":"e2e:test:shard:subscription","name_suffix":" / subscription"}]}' >> "$GITHUB_OUTPUT"
           else
-            SUITE='${{ inputs.TEST_SUITE }}'
-            NAME="${SUITE#shard:}"
-            echo "matrix={\"include\":[{\"script\":\"e2e:test:${SUITE}\",\"name_suffix\":\" / ${NAME}\",\"artifact_name\":\"playwright-artifact-${NAME}\"}]}" >> "$GITHUB_OUTPUT"
+            echo 'matrix={"include":[{"script":"${{ inputs.TEST_SUITE }}","name_suffix":""}]}' >> "$GITHUB_OUTPUT"
           fi
 
   e2e-playwright:
@@ -96,31 +64,35 @@ jobs:
     strategy:
       fail-fast: false
       matrix: ${{ fromJson(needs.resolve-playwright-matrix.outputs.matrix) }}
-    uses: inpsyde/reusable-workflows/.github/workflows/test-playwright.yml@main
+    uses: inpsyde/reusable-workflows/.github/workflows/test-playwright.yml@fix/test-playwright
     with:
+      WORK_DIR: tests/qa
       PLAYWRIGHT_SCRIPT: ${{ matrix.script }}
-      PLAYWRIGHT_ARTIFACT_NAME: ${{ matrix.artifact_name }}
       PLAYWRIGHT_ARTIFACT_PATH: |
-        artifacts/*
-        playwright-report/
-        test-results/
+        tests/qa/artifacts/*
+        tests/qa/playwright-report/
+        tests/qa/test-results/
       PLAYWRIGHT_ARTIFACT_INCLUDE_HIDDEN_FILES: true
       NODE_VERSION: 22
       PLAYWRIGHT_BROWSER_ARGS: 'chromium --with-deps'
       XRAY_TEST_EXEC_KEY: ${{ inputs.XRAY_TEST_EXEC_KEY }}
       PRE_SCRIPT: |
         # 1. Download and unzip the built plugin
-        gh run download ${{ github.run_id }} -p "woocommerce-paypal-payments-*" -D tests/qa/resources/files
-        (
-          cd tests/qa/resources/files
-          mv woocommerce-paypal-payments-*/woocommerce-paypal-payments .
-          zip -rq woocommerce-paypal-payments.zip woocommerce-paypal-payments
-          rm -rf woocommerce-paypal-payments woocommerce-paypal-payments-*/
-        )
+        gh run download ${{ github.run_id }} -p "woocommerce-paypal-payments-*" -D resources/files
+        pushd resources/files
+        mv woocommerce-paypal-payments-*/woocommerce-paypal-payments .
+        zip -r woocommerce-paypal-payments.zip woocommerce-paypal-payments
+        rm -rf woocommerce-paypal-payments woocommerce-paypal-payments-*/
+        popd
 
         # 2. Add private composer repository and download WooCommerce Subscriptions
+        pushd ../../
         composer config repositories.repo-name composer https://repo.packagist.com/inpsyde/payment-gateways/
         composer require inpsyde-mirror/woocommerce-subscriptions
+        popd
+
+        # 3. Setup wp-env
+        npm run e2e:setup:env
     secrets:
       ENV_FILE_DATA: ${{ secrets.QA_ENV_FILE }}
       NPM_REGISTRY_TOKEN: ${{ secrets.DEPLOYBOT_GITHUB_TOKEN_PACKAGES }}

@@ -63,7 +63,7 @@ test.describe( () => {
 	} );
 
 	test.describe( () => {
-		test.beforeEach( async ( { pcpApi } ) => {
+		test.beforeEach( async ( { utils, pcpApi } ) => {
 			await pcpApi.resetDb();
 		} );
 
@@ -71,13 +71,16 @@ test.describe( () => {
 			const { testSummary, optionalPaymentsEnabled } = testData;
 			test(
 				testSummary,
-				async ( {
-					pcpOnboarding,
-					pcpPaymentMethods,
-					pcpSettings,
-					pcpStyling,
-					pcpApi,
-				} ) => {
+				async (
+					{
+						pcpOnboarding,
+						pcpPaymentMethods,
+						pcpSettings,
+						pcpStyling,
+						pcpApi,
+					},
+					testInfo
+				) => {
 					await pcpOnboarding.visit();
 					await pcpOnboarding.activatePayPalPaymentsButton().click();
 

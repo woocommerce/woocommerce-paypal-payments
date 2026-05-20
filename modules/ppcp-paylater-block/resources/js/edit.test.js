@@ -31,9 +31,7 @@ const defaultConfig = {
 	vaultingEnabled: false,
 	placementEnabled: true,
 	payLaterSettingsUrl: '/wp-admin/paylater-settings',
-	ajax: {
-		cart_script_params: { endpoint: '/wp-json/ppcp/cart-script-params' },
-	},
+	ajax: { cart_script_params: { endpoint: '/wp-json/ppcp/cart-script-params' } },
 };
 
 const defaultProps = {
@@ -69,36 +67,32 @@ test( 'shows spinner while script params are loading', () => {
 
 	render( <Edit { ...defaultProps } /> );
 
-	expect(
-		document.querySelector( '.components-spinner' )
-	).toBeInTheDocument();
+	expect( document.querySelector( '.components-spinner' ) ).toBeInTheDocument();
 } );
 
-test( 'shows placeholder after 10 seconds when script params never resolve', () => {
+test( 'shows placeholder after 5 seconds when script params never resolve', () => {
 	useScriptParams.mockReturnValue( null );
 
 	render( <Edit { ...defaultProps } /> );
 
-	act( () => jest.advanceTimersByTime( 10000 ) );
+	act( () => jest.advanceTimersByTime( 5000 ) );
 
 	expect(
 		screen.getByText(
 			'Pay Later messaging preview unavailable in editor. Messaging will display on the frontend when eligibility conditions are met.'
 		)
 	).toBeInTheDocument();
-	expect(
-		document.querySelector( '.components-spinner' )
-	).not.toBeInTheDocument();
+	expect( document.querySelector( '.components-spinner' ) ).not.toBeInTheDocument();
 } );
 
-test( 'shows placeholder after 10 seconds when PayPalMessages never renders', () => {
+test( 'shows placeholder after 5 seconds when PayPalMessages never renders', () => {
 	useScriptParams.mockReturnValue( {
 		url_params: { 'client-id': 'test' },
 	} );
 
 	render( <Edit { ...defaultProps } /> );
 
-	act( () => jest.advanceTimersByTime( 10000 ) );
+	act( () => jest.advanceTimersByTime( 5000 ) );
 
 	expect(
 		screen.getByText(
@@ -107,7 +101,7 @@ test( 'shows placeholder after 10 seconds when PayPalMessages never renders', ()
 	).toBeInTheDocument();
 } );
 
-test( 'does not show placeholder when PayPalMessages renders within 10 seconds', () => {
+test( 'does not show placeholder when PayPalMessages renders within 5 seconds', () => {
 	useScriptParams.mockReturnValue( {
 		url_params: { 'client-id': 'test' },
 	} );
@@ -120,7 +114,7 @@ test( 'does not show placeholder when PayPalMessages renders within 10 seconds',
 
 	render( <Edit { ...defaultProps } /> );
 
-	act( () => jest.advanceTimersByTime( 10000 ) );
+	act( () => jest.advanceTimersByTime( 5000 ) );
 
 	expect(
 		screen.queryByText( /Pay Later messaging preview unavailable/ )

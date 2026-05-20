@@ -300,9 +300,7 @@ export const saveTestResultsToFile = (
 		: {};
 
 	const match = testTitle.match( /\((.*?)\)/ );
-	if ( ! match ) {
-		return;
-	}
+	if ( ! match ) return;
 
 	const testKey = match[ 1 ]; // Extract test key
 

@@ -10,10 +10,11 @@ import SettingsBlock from '@ppcp-settings/Components/ReusableComponents/Settings
 import Accordion from '@ppcp-settings/Components/ReusableComponents/AccordionSection';
 import { SettingsHooks } from '@ppcp-settings/data';
 import SoftDescriptorInput from '@ppcp-settings/Components/ReusableComponents/Controls/SoftdescriptorInput';
-import { useRegisteredSettings, SLOTS } from '@ppcp-settings/extensions';
 
 const PaypalSettings = ( { hasContactModule } ) => {
 	const {
+		savePaypalAndVenmo,
+		setSavePaypalAndVenmo,
 		contactModule,
 		setContactModule,
 		subtotalAdjustment,
@@ -32,9 +33,6 @@ const PaypalSettings = ( { hasContactModule } ) => {
 	const siteData = useSelect( ( select ) => select( 'core' ).getSite(), [] );
 	const siteTitle = siteData?.title;
 	const buttonLanguageChoices = window.ppcpSettings.buttonLanguageChoices;
-
-	// Get registered settings for this slot
-	const footerSettings = useRegisteredSettings( SLOTS.PAYPAL_SETTINGS_END );
 
 	return (
 		<Accordion
@@ -160,11 +158,6 @@ const PaypalSettings = ( { hasContactModule } ) => {
 					) }
 				/>
 			</SettingsBlock>
-
-			{ /* Extension point */ }
-			{ footerSettings.map( ( { component: Component, id } ) => (
-				<Component key={ id } />
-			) ) }
 		</Accordion>
 	);
 };

@@ -2,7 +2,7 @@
  * Internal dependencies
  */
 import { ShopOrder } from '../../../resources';
-import { annotateVisitor, test } from '../../../utils';
+import { annotateVisitor, test, expect, OxxoVoucherPopup } from '../../../utils';
 
 export const transactionsOnClassicCheckout = ( testOrder: ShopOrder ) => {
 	const { title, payment, products, customer, merchant } = testOrder;
@@ -50,15 +50,15 @@ export const transactionsOnClassicCheckout = ( testOrder: ShopOrder ) => {
 export const transactionsOnClassicCheckoutOxxo = ( testOrder: ShopOrder ) => {
 	const { title, payment, products, customer, merchant } = testOrder;
 
-	test.fixme(
+	test(
 		title,
 		annotateVisitor( customer ),
 		async ( {
 			classicCheckout,
-			// wooCommerceApi,
+			wooCommerceApi,
 			orderReceived,
-			// payPalApi,
-			// wooCommerceOrderEdit,
+			payPalApi,
+			wooCommerceOrderEdit,
 			utils,
 		} ) => {
 			await utils.fillVisitorsCart( products );
@@ -67,19 +67,47 @@ export const transactionsOnClassicCheckoutOxxo = ( testOrder: ShopOrder ) => {
 			await classicCheckout.payPalUi.makePayment( { merchant, payment } );
 			await orderReceived.assertOrderDetails( testOrder );
 
-			// const orderId = await orderReceived.getOrderNumber();
-			// const orderJson = await wooCommerceApi.getOrder( orderId );
+			const orderId = await orderReceived.getOrderNumber();
+			const orderJson = await wooCommerceApi.getOrder( orderId );
 
-			// const oxxoOrderId =
-			// 	await payPalApi.getOrderIdFromWooCommerce( orderJson );
-			// const oxxoOrder = await payPalApi.getOrder(
-			// 	oxxoOrderId,
-			// 	testOrder.merchant
-			// );
-			// const oxxoPaymentId = await payPalApi.getPaymentIdFromOrder(
-			// 	oxxoOrder,
-			// 	testOrder.payment
-			// );
+			const oxxoOrderId = await payPalApi.getOrderIdFromWooCommerce(
+				orderJson
+			);
+
+			await expect(
+				orderReceived.seeOXXOVoucherButton_1(),
+				'Assert OXXO voucher button is visible on order-received page'
+			).toBeVisible();
+			const popupPromise = orderReceived.page.waitForEvent( 'popup' );
+			await orderReceived.seeOXXOVoucherButton_1().click();
+			const voucherPopup = new OxxoVoucherPopup( await popupPromise );
+			await voucherPopup.simulate();
+
+			// Poll until the real webhook is processed and order status updates
+			await expect.poll(
+				async () => {
+					const order = await wooCommerceApi.getOrder( orderId );
+					return order.status;
+				},
+				{
+					message: 'Assert OXXO order status is processing after capture webhook',
+					timeout: 60_000,
+					intervals: [ 2_000, 3_000, 5_000 ],
+				}
+			).toEqual( 'processing' );
+
+			const oxxoOrder = await payPalApi.getOrder(
+				oxxoOrderId,
+				testOrder.merchant
+			);
+			const oxxoPaymentId = await payPalApi.getPaymentIdFromOrder(
+				oxxoOrder,
+				testOrder.payment
+			);
+			const pcpData = { transactionId: oxxoPaymentId };
+
+			await wooCommerceOrderEdit.visit( orderId );
+			await wooCommerceOrderEdit.assertOrderDetails( testOrder, pcpData );
 		}
 	);
 };

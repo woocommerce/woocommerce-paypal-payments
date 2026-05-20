@@ -2,7 +2,10 @@
  * Internal dependencies
  */
 import { test } from '../../utils';
-import { disableWebhookVerificationPlugin, products } from '../../resources';
+import {
+	disableWebhookVerificationPlugin,
+	products,
+} from '../../resources';
 import { subscriptionRenewal } from './_test-data';
 import {
 	testFreeTrialSubscriptionRenewal,
@@ -16,7 +19,7 @@ const {
 	payPalFreeTrialRenewal,
 } = subscriptionRenewal;
 
-test.beforeAll( async ( { utils, pcpApi } ) => {
+test.beforeAll( async ( { utils, wooCommerceApi, pcpApi } ) => {
 	await pcpApi.updatePcpSettings( {
 		savePaypalAndVenmo: true,
 		saveCardDetails: true,
@@ -26,6 +29,7 @@ test.beforeAll( async ( { utils, pcpApi } ) => {
 		enableSubscriptionsPlugin: true,
 		products: [ products.subscription100, products.subscriptionFreeTrial ],
 	} );
+	await wooCommerceApi.deleteAllOrders();
 } );
 
 for ( const testOrder of vaultingRenewal ) {

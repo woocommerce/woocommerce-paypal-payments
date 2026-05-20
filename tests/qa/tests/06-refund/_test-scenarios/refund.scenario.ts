@@ -55,18 +55,12 @@ export const testRefund = ( testData: ShopRefund ) => {
 				if ( isApiOrder ) {
 					order = await wooCommerceUtils.createApiOrder( testData );
 					await payForOrder.visit( order.id, order.order_key );
-					await payForOrder.payPalUi.makePayment( {
-						merchant,
-						payment,
-					} );
+					await payForOrder.payPalUi.makePayment( { merchant, payment } );
 				} else {
 					await utils.fillVisitorsCart( products );
 					await classicCheckout.visit();
 					await classicCheckout.completeCheckoutDetails( testData );
-					await classicCheckout.payPalUi.makePayment( {
-						merchant,
-						payment,
-					} );
+					await classicCheckout.payPalUi.makePayment( {merchant, payment } );
 				}
 
 				await orderReceived.page.waitForLoadState();
@@ -95,7 +89,7 @@ export const testRefund = ( testData: ShopRefund ) => {
 				// Assertions before refund
 				await expect(
 					wooCommerceOrderEdit.restockRefundedItemsCheckbox(),
-					'Assert "Restock refunded items" checkbox is visible'
+					'Assert "Restock refunded items" checkbox is visible'				
 				).toBeVisible();
 				await expect(
 					wooCommerceOrderEdit.totalAmountAlreadyRefunded(),
@@ -109,10 +103,7 @@ export const testRefund = ( testData: ShopRefund ) => {
 				);
 
 				// Make refund
-				await wooCommerceOrderEdit.makeRefundVia(
-					payment.gateway.title,
-					refundAmount
-				);
+				await wooCommerceOrderEdit.makeRefundVia( payment.gateway.title, refundAmount );
 				// Assert URL after page is reloaded
 				await wooCommerceOrderEdit.assertUrl( order.id );
 			} );
@@ -153,13 +144,17 @@ export const testRefund = ( testData: ShopRefund ) => {
 				await expect(
 					payPalPayment.status,
 					`Assert PayPal payment status is ${ refundPaymentStatus }`
-				).toEqual( refundPaymentStatus );
+				).toEqual(
+					refundPaymentStatus
+				);
 
 				orderRefund = order.refunds[ 0 ];
 				await expect(
 					orderRefund.total,
 					'Assert refund total is the expected'
-				).toEqual( `-${ Number( refundAmount ).toFixed( 2 ) }` );
+				).toEqual(
+					`-${ Number( refundAmount ).toFixed( 2 ) }`
+				);
 
 				const payPalRefunds = order.meta_data.filter(
 					( el ) => el.key === '_ppcp_refunds'
@@ -177,25 +172,23 @@ export const testRefund = ( testData: ShopRefund ) => {
 
 			await test.step( 'Assert on OrderEdit page that WooCommerce and PayPal refund fields are displayed and have expected values', async () => {
 				await wooCommerceOrderEdit.assertRefundData( {
-					currency,
+					currency: currency,
 					orderStatus: capitalizeFirst( refundOrderStatus ),
 					refundId: orderRefund.id,
 					refundAmount: Number( refundAmount ),
 					refundTotal:
-						payPalRefund.seller_payable_breakdown
-							.total_refunded_amount.value,
+						payPalRefund.seller_payable_breakdown.total_refunded_amount
+							.value,
 					netPayment:
 						parseFloat( order.total ) - parseFloat( refundAmount ),
 					payPalFee:
-						payPalPayment.seller_receivable_breakdown.paypal_fee
-							.value,
+						payPalPayment.seller_receivable_breakdown.paypal_fee.value,
 					payPalRefundFee:
 						payPalRefund.seller_payable_breakdown.paypal_fee.value,
 					payPalRefunded:
 						payPalRefund.seller_payable_breakdown.net_amount.value,
 					payPalPayout:
-						payPalPayment.seller_receivable_breakdown.net_amount
-							.value,
+						payPalPayment.seller_receivable_breakdown.net_amount.value,
 					payPalNetTotal:
 						parseFloat( order.total ) -
 						parseFloat( refundAmount ) -

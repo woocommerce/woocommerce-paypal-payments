@@ -51,7 +51,6 @@ class CartActionHandler {
 	}
 
 	configuration() {
-		const errorHandler = this.errorHandler;
 		const createOrder = () => {
 			const payer = payerData();
 			const bnCode =
@@ -81,9 +80,7 @@ class CartActionHandler {
 				.then( function ( data ) {
 					if ( ! data.success ) {
 						console.error( data );
-						errorHandler.clear();
-						errorHandler.message( data.data.message );
-						throw { type: 'create-order-error' };
+						throw Error( data.data.message );
 					}
 					return data.data.id;
 				} );
@@ -97,10 +94,8 @@ class CartActionHandler {
 					this.config.button.wrapper
 				);
 			},
-			onError: ( err ) => {
-				if ( ! err || err.type !== 'create-order-error' ) {
-					this.errorHandler.genericError();
-				}
+			onError: () => {
+				this.errorHandler.genericError();
 
 				ResumeFlowHelper.reloadButtonsIfRequired(
 					this.config.button.wrapper

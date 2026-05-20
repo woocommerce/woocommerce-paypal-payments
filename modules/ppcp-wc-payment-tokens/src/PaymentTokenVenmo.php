@@ -45,7 +45,7 @@ class PaymentTokenVenmo extends WC_Payment_Token {
 	 *
 	 * @param string $email PayPal account email.
 	 */
-	public function set_email( $email ): void {
+	public function set_email( $email ) {
 		$this->add_meta_data( 'email', $email, true );
 	}
 }

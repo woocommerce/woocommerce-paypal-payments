@@ -1,6 +1,6 @@
 <?php
 
-declare( strict_types = 1 );
+declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\Assets;
 
@@ -31,7 +31,6 @@ class AssetGetter {
 	 */
 	public function get_asset_url( string $asset_name ): string {
 		$compiled_name = $this->get_compiled_asset_name( $asset_name );
-
 		return $this->base_plugin_url . 'assets/' . $compiled_name;
 	}
 
@@ -43,7 +42,6 @@ class AssetGetter {
 	public function get_asset_php_path( string $asset_name ): string {
 		$compiled_name = $this->get_compiled_asset_name( $asset_name );
 		$without_ext   = pathinfo( $compiled_name, PATHINFO_FILENAME );
-
 		return trailingslashit( $this->plugin_folder_path ) . 'assets/' . "$without_ext.asset.php";
 	}
 
@@ -54,10 +52,6 @@ class AssetGetter {
 	 */
 	public function get_static_asset_url( string $asset_name ): string {
 		return $this->base_plugin_url . "modules/{$this->module_name}/assets/$asset_name";
-	}
-
-	public function get_asset_handle( string $suffix ): string {
-		return "{$this->module_name}-$suffix";
 	}
 
 	protected function get_compiled_asset_name( string $asset_name ): string {

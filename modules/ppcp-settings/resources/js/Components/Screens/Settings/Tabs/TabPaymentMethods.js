@@ -42,7 +42,6 @@ const TabPaymentMethods = () => {
 				'paypalShowLogo',
 				'threeDSecure',
 				'cardholderName',
-				'showCardLogos',
 				'fastlaneDisplayWatermark',
 				'puiBrandName',
 				'puiLogoUrl',
@@ -119,7 +118,7 @@ const TabPaymentMethods = () => {
 			{ isBcdcOverrideFlagEnabled && (
 				<MigrationBanner
 					id="ppcp-migration-banner"
-					className="ppcp-r-settings-banner"
+					className="ppcp-r-settings-migration-banner"
 					title={ __(
 						'Unlock Advanced Card Processing',
 						'woocommerce-paypal-payments'

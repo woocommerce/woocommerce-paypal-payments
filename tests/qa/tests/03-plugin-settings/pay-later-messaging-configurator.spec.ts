@@ -20,8 +20,9 @@ test.describe( 'PLM Configurator', () => {
 		pcpPayLaterMessaging,
 		product,
 	} ) => {
-		const { location } =
-			payLaterMessagingData.checkoutLocationSettings[ 'Product page' ];
+		const { location } = payLaterMessagingData.checkoutLocationSettings[
+			'Product page'
+		];
 		const settings =
 			payLaterMessagingData.checkoutLocationSettings[ 'Product page' ]
 				.settings[ 0 ];
@@ -54,8 +55,7 @@ test.describe( 'PLM Configurator', () => {
 	} ) => {
 		await utils.fillVisitorsCart( [ products.simple100 ] );
 
-		const { location } =
-			payLaterMessagingData.checkoutLocationSettings.Cart;
+		const { location } = payLaterMessagingData.checkoutLocationSettings.Cart;
 		const settings =
 			payLaterMessagingData.checkoutLocationSettings.Cart.settings[ 0 ];
 
@@ -101,8 +101,7 @@ test.describe( 'PLM Configurator', () => {
 		const { location } =
 			payLaterMessagingData.checkoutLocationSettings.Checkout;
 		const settings =
-			payLaterMessagingData.checkoutLocationSettings.Checkout
-				.settings[ 0 ];
+			payLaterMessagingData.checkoutLocationSettings.Checkout.settings[ 0 ];
 
 		await pcpPayLaterMessaging.visit();
 		await pcpPayLaterMessaging.enableMessagingForLocation( location );
@@ -211,8 +210,9 @@ test.describe( 'PLM Configurator', () => {
 	test( 'PCP-0007 | PLM - Preview layout buttons (Text/Desktop/Mobile)', async ( {
 		pcpPayLaterMessaging,
 	} ) => {
-		const { location } =
-			payLaterMessagingData.checkoutLocationSettings[ 'Product page' ];
+		const { location } = payLaterMessagingData.checkoutLocationSettings[
+			'Product page'
+		];
 		const settings =
 			payLaterMessagingData.checkoutLocationSettings[ 'Product page' ]
 				.settings[ 0 ];

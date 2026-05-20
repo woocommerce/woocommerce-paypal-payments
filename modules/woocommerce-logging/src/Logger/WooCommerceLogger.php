@@ -50,7 +50,7 @@ class WooCommerceLogger implements LoggerInterface {
 	 *
 	 * @var string
 	 */
-	private static string $prefix = '';
+	private string $prefix;
 
 	/**
 	 * WooCommerceLogger constructor.
@@ -61,10 +61,7 @@ class WooCommerceLogger implements LoggerInterface {
 	public function __construct( \WC_Logger_Interface $wc_logger, string $source ) {
 		$this->wc_logger = $wc_logger;
 		$this->source    = $source;
-
-		if ( ! self::$prefix ) {
-			self::$prefix = sprintf( '#%s - ', wp_rand( 1000, 9999 ) );
-		}
+		$this->prefix    = sprintf( '#%s - ', wp_rand( 1000, 9999 ) );
 
 		// phpcs:disable -- Intentionally not sanitized, for logging purposes.
 		$method      = wp_unslash( $_SERVER['REQUEST_METHOD'] ?? 'CLI' );
@@ -86,17 +83,16 @@ class WooCommerceLogger implements LoggerInterface {
 		if ( ! isset( $context['source'] ) ) {
 			$context['source'] = $this->source;
 		}
-		$prefix = self::$prefix;
 
 		if ( $this->request_info ) {
 			$this->wc_logger->log(
 				'debug',
-				"{$prefix}[New Request] $this->request_info",
+				"{$this->prefix}[New Request] $this->request_info",
 				array( 'source' => $context['source'] )
 			);
 			$this->request_info = '';
 		}
 
-		$this->wc_logger->log( $level, "{$prefix}$message", $context );
+		$this->wc_logger->log( $level, "{$this->prefix}$message", $context );
 	}
 }

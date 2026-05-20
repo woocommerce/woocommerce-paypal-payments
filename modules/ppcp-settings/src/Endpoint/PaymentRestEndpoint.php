@@ -9,10 +9,26 @@ declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\Settings\Endpoint;
 
+use WooCommerce\PayPalCommerce\Axo\Gateway\AxoGateway;
+use WooCommerce\PayPalCommerce\Googlepay\GooglePayGateway;
+use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\BancontactGateway;
+use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\BlikGateway;
+use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\IDealGateway;
+use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\MultibancoGateway;
+use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\MyBankGateway;
+use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\P24Gateway;
+use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\TrustlyGateway;
+use WooCommerce\PayPalCommerce\Settings\Data\PaymentSettings;
+use WooCommerce\PayPalCommerce\WcGateway\Gateway\CardButtonGateway;
+use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
+use WooCommerce\PayPalCommerce\WcGateway\Gateway\OXXO\OXXO;
+use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
+use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayUponInvoice\PayUponInvoiceGateway;
 use WP_REST_Server;
 use WP_REST_Response;
 use WP_REST_Request;
-use WooCommerce\PayPalCommerce\Settings\Data\PaymentSettings;
+use WooCommerce\PayPalCommerce\Applepay\ApplePayGateway;
+use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\EPSGateway;
 use WooCommerce\PayPalCommerce\Settings\Data\Definition\PaymentMethodsDefinition;
 use WooCommerce\PayPalCommerce\Settings\Data\Definition\PaymentMethodsDependenciesDefinition;
 
@@ -63,10 +79,6 @@ class PaymentRestEndpoint extends RestEndpoint {
 		),
 		'cardholder_name'                   => array(
 			'js_name'  => 'cardholderName',
-			'sanitize' => 'to_boolean',
-		),
-		'show_card_logos'                   => array(
-			'js_name'  => 'showCardLogos',
 			'sanitize' => 'to_boolean',
 		),
 		'fastlane_display_watermark'        => array(
@@ -205,7 +217,6 @@ class PaymentRestEndpoint extends RestEndpoint {
 
 		$gateway_settings['paypalShowLogo']                 = $this->payment_settings->get_paypal_show_logo();
 		$gateway_settings['cardholderName']                 = $this->payment_settings->get_cardholder_name();
-		$gateway_settings['showCardLogos']                  = $this->payment_settings->get_show_card_logos();
 		$gateway_settings['fastlaneDisplayWatermark']       = $this->payment_settings->get_fastlane_display_watermark();
 		$gateway_settings['puiBrandName']                   = $this->payment_settings->get_pui_brand_name();
 		$gateway_settings['puiLogoUrl']                     = $this->payment_settings->get_pui_logo_url();

@@ -149,6 +149,6 @@ class CartCheckoutDetector {
 		$page         = get_post( $page_id );
 		$page_content = is_object( $page ) ? $page->post_content : '';
 
-		return strpos( $page_content, $shortcode ) !== false;
+		return str_contains( $page_content, $shortcode );
 	}
 }

@@ -39,7 +39,6 @@ class PaymentSettings extends AbstractDataModel {
 		return array(
 			'paypal_show_logo'                  => false,
 			'cardholder_name'                   => false,
-			'show_card_logos'                   => false,
 			'fastlane_display_watermark'        => false,
 			'venmo_enabled'                     => false,
 			'paylater_enabled'                  => false,
@@ -215,13 +214,6 @@ class PaymentSettings extends AbstractDataModel {
 	}
 
 	/**
-	 * Whether to show card brand logos in the checkout payment method label.
-	 */
-	public function get_show_card_logos(): bool {
-		return (bool) $this->data['show_card_logos'];
-	}
-
-	/**
 	 * Get Fastlane display watermark.
 	 */
 	public function get_fastlane_display_watermark(): bool {
@@ -254,13 +246,6 @@ class PaymentSettings extends AbstractDataModel {
 	 */
 	public function set_cardholder_name( bool $value ): void {
 		$this->data['cardholder_name'] = $value;
-	}
-
-	/**
-	 * @see self::get_show_card_logos()
-	 */
-	public function set_show_card_logos( bool $value ): void {
-		$this->data['show_card_logos'] = $value;
 	}
 
 	/**

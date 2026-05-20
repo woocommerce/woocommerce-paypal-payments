@@ -17,8 +17,9 @@ const {
 	testVaultedPaymentMethod,
 } = testVaultingCheckout;
 
-test.beforeAll( async ( { utils } ) => {
+test.beforeAll( async ( { utils, wooCommerceApi } ) => {
 	await utils.configureStore( { enableClassicPages: false } );
+	await wooCommerceApi.deleteAllOrders();
 } );
 
 for ( const testOrder of savePaymentMethodData ) {

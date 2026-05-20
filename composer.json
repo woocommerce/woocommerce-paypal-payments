@@ -18,8 +18,7 @@
         "psr/log": "^1.1",
         "ralouphie/getallheaders": "^3.0",
         "wikimedia/composer-merge-plugin": "^2.0",
-        "symfony/polyfill-php80": "^1.19",
-        "firebase/php-jwt": "^6"
+        "symfony/polyfill-php80": "^1.19"
     },
     "require-dev": {
         "inpsyde/composer-assets-compiler": "^2.5",
@@ -113,11 +112,6 @@
             "dealerdirect/phpcodesniffer-composer-installer": true,
             "wikimedia/composer-merge-plugin": true,
             "composer/installers": true
-        },
-        "audit": {
-            "ignore": {
-                "PKSA-y2cr-5h3j-g3ys": "Disputed CVE. Only affects applications generating weak keys, which is not relevant for this plugin."
-            }
         }
     }
 }

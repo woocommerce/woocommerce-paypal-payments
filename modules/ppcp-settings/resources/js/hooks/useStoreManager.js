@@ -8,7 +8,6 @@ import {
 	StylingHooks,
 	TodosHooks,
 } from '@ppcp-settings/data';
-import { useExtensionStores } from '../extensions';
 
 export const useStoreManager = () => {
 	const { withActivity } = CommonHooks.useBusyState();
@@ -19,10 +18,7 @@ export const useStoreManager = () => {
 	const todosStore = TodosHooks.useStore();
 	const payLaterStore = PayLaterMessagingHooks.useStore();
 
-	// Get all registered extension stores
-	const extensionStores = useExtensionStores();
-
-	const coreStoreActions = useMemo(
+	const storeActions = useMemo(
 		() => [
 			{
 				key: 'methods',
@@ -53,12 +49,6 @@ export const useStoreManager = () => {
 		[ payLaterStore, paymentStore, settingsStore, stylingStore, todosStore ]
 	);
 
-	// Combine core and extension stores
-	const allStoreActions = useMemo(
-		() => [ ...coreStoreActions, ...extensionStores ],
-		[ coreStoreActions, extensionStores ]
-	);
-
 	const persistAll = useCallback( () => {
 		/**
 		 * Executes onSave on TabPayLaterMessaging component.
@@ -68,16 +58,16 @@ export const useStoreManager = () => {
 		 */
 		document.getElementById( 'configurator-publishButton' )?.click();
 
-		allStoreActions.forEach( ( { key, message, store } ) => {
+		storeActions.forEach( ( { key, message, store } ) => {
 			withActivity( `persist-${ key }`, message, store.persist );
 		} );
-	}, [ allStoreActions, withActivity ] );
+	}, [ storeActions, withActivity ] );
 
 	const refreshAll = useCallback( () => {
-		allStoreActions.forEach( ( { key, message, store } ) => {
+		storeActions.forEach( ( { key, message, store } ) => {
 			withActivity( `refresh-${ key }`, message, store.refresh );
 		} );
-	}, [ allStoreActions, withActivity ] );
+	}, [ storeActions, withActivity ] );
 
 	return {
 		persistAll,

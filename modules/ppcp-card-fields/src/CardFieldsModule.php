@@ -187,15 +187,8 @@ class CardFieldsModule implements ServiceModule, ExecutableModule {
 
 					$logger->warning( "Could not capture order {$order->id()}" );
 
-					// Only set session flag if WC session exists (not in API/agentic context).
-					/**
-					 * Fires to add a delete order flag in WC session.
-					 */
-					if ( apply_filters( 'woocommerce_paypal_payments_force_delete_wc_order_on_failed_capture', true )
-						&& function_exists( 'WC' ) && WC()->session instanceof \WC_Session ) {
-						/**
-						 * Add delete order flag in WC session to force delete on process payment failure handler.
-						 */
+					if ( apply_filters( 'woocommerce_paypal_payments_force_delete_wc_order_on_failed_capture', true ) ) {
+						// Add delete order flag in WC session to force delete on process payment failure handler.
 						WC()->session->set( 'ppcp_delete_wc_order_on_payment_failure', true );
 					}
 

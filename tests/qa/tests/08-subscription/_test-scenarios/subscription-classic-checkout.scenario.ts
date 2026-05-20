@@ -123,10 +123,10 @@ const testSubscriptionOrderCustomer = ( testOrder: ShopOrder ) => {
 				// 	).toBeVisible();
 				// 	await classicCheckout.proceedToPayPalButton().click();
 				// } else {
-				await classicCheckout.payPalUi.makePayment( {
-					merchant,
-					payment,
-				} );
+					await classicCheckout.payPalUi.makePayment( {
+						merchant,
+						payment,
+					} );
 				// }
 				await orderReceived.assertOrderDetails( testOrder );
 

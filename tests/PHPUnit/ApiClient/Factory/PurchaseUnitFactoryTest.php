@@ -438,26 +438,26 @@ class PurchaseUnitFactoryTest extends TestCase
 		$this->assertNull($unit->shipping());
 	}
 
-	public function test_from_paypal_response_uses_default_reference_id_as_fallback()
+	public function test_from_paypal_response_needs_reference_id()
 	{
-		$raw_amount = (object) ['amount' => 1];
-		$amount = Mockery::mock(Amount::class);
-
 		$testee = $this->create_testee(
-			$this->create_amount_factory_mock($amount, 'from_paypal_response', $raw_amount),
+			Mockery::mock(AmountFactory::class),
 			Mockery::mock(ItemFactory::class),
 			Mockery::mock(ShippingFactory::class)
 		);
 
 		$response = (object) [
 			'description' => 'description',
-			'amount' => $raw_amount,
+			'customId' => 'customId',
+			'invoiceId' => 'invoiceId',
+			'softDescriptor' => 'softDescriptor',
+			'amount' => '',
 			'items' => [],
+			'shipping' => '',
 		];
 
-		$unit = $testee->from_paypal_response($response);
-		$this->assertInstanceOf(PurchaseUnit::class, $unit);
-		$this->assertEquals('default', $unit->reference_id());
+		$this->expectException(\WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException::class);
+		$testee->from_paypal_response($response);
 	}
 
 	public function test_from_paypal_response_payments_get_appended()

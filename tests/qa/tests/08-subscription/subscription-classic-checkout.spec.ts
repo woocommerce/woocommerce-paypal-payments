@@ -12,7 +12,7 @@ const { vaultingGuest, vaultingCustomer, payPalGuest, payPalCustomer } =
 const { testSubscriptionOrderGuest, testSubscriptionOrderCustomer } =
 	testSubscriptionClassicCheckout;
 
-test.beforeAll( async ( { utils, pcpApi } ) => {
+test.beforeAll( async ( { utils, wooCommerceApi, pcpApi } ) => {
 	await pcpApi.updatePcpSettings( {
 		savePaypalAndVenmo: true,
 		saveCardDetails: true,
@@ -22,6 +22,7 @@ test.beforeAll( async ( { utils, pcpApi } ) => {
 		enableSubscriptionsPlugin: true,
 		products: [ products.subscription100, products.subscriptionFreeTrial ],
 	} );
+	await wooCommerceApi.deleteAllOrders();
 } );
 
 for ( const testOrder of vaultingGuest ) {

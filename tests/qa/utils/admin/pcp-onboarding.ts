@@ -7,7 +7,7 @@ import urls from '../urls';
 /**
  * External dependencies
  */
-import { expect, Locator } from '@playwright/test';
+import { expect, Locator } from 'playwright/test';
 
 export class PcpOnboarding extends PcpAdminPage {
 	url = urls.admin.pcp.onboarding;
@@ -151,14 +151,8 @@ export class PcpOnboarding extends PcpAdminPage {
 		labelLocator: Locator,
 		enable: boolean
 	) => {
-		await expect(
-			toggleLocator,
-			'Assert connection option toggle is visible'
-		).toBeVisible();
-		await expect(
-			labelLocator,
-			'Assert connection option label is visible'
-		).toBeVisible();
+		await expect( toggleLocator, 'Assert connection option toggle is visible' ).toBeVisible();
+		await expect( labelLocator, 'Assert connection option label is visible' ).toBeVisible();
 
 		const isChecked = await toggleLocator.getAttribute( 'class' );
 		const isToggleChecked = isChecked.includes( 'is-checked' );

@@ -45,7 +45,9 @@ export class PcpOverview extends PcpAdminPage {
 
 	// Locators — Notices (WordPress snackbar rendered by WooCommerce admin layout)
 	successNotice = ( text: string ) =>
-		this.page.locator( '.components-snackbar' ).filter( { hasText: text } );
+		this.page
+			.locator( '.components-snackbar' )
+			.filter( { hasText: text } );
 
 	// Actions
 

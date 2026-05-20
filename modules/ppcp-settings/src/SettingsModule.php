@@ -319,7 +319,6 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 					'pay_later_messaging'    => $container->get( 'settings.rest.pay_later_messaging' ),
 					'features'               => $container->get( 'settings.rest.features' ),
 					'migrate_to_acdc'        => $container->get( 'settings.rest.migrate_to_acdc' ),
-					'agentic_beta_banner'    => $container->get( 'settings.rest.agentic_beta_banner' ),
 				);
 
 				foreach ( $endpoints as $endpoint ) {

@@ -50,10 +50,7 @@ test.describe( () => {
 					const newContext = await browser.newContext();
 					const newPage = await newContext.newPage();
 					try {
-						await newPage.goto( url, {
-							waitUntil: 'domcontentloaded',
-							timeout: 15000,
-						} );
+						await newPage.goto( url, { waitUntil: 'domcontentloaded', timeout: 15000 } );
 						const finalUrl = newPage.url();
 						expect(
 							finalUrl,

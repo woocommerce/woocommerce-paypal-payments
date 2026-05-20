@@ -336,7 +336,6 @@ class WooCommercePaymentTokens {
 	private function first_token_of_type( array $wc_tokens, string $class_name ): ?WC_Payment_Token {
 		foreach ( $wc_tokens as $wc_token ) {
 			if ( $wc_token instanceof $class_name ) {
-				/** @var WC_Payment_Token $wc_token */
 				return $wc_token;
 			}
 		}

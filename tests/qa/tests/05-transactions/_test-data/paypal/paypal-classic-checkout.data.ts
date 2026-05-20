@@ -7,7 +7,7 @@ const { payPal } = payments;
 
 export const payPalClassicCheckout: ShopOrder[] = [
 	{
-		title: 'PCP-1173 | Transaction - Classic checkout - PayPal - Default order @Critical @Smoke',
+		title: 'PCP-1173 | Transaction - Classic checkout - PayPal - Default order @Critical @Smoke @Dev',
 		payment: payPal,
 		...orders.default,
 	},

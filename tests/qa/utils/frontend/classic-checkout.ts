@@ -50,14 +50,8 @@ export class ClassicCheckout extends ClassicCheckoutBase {
 		customer: WooCommerce.CreateCustomer,
 		fastlaneFlow: 'gary' | 'ryan'
 	) => {
-		await expect(
-			this.payPalUi.fastlaneEmailInput(),
-			'Assert fastlane email input is visible'
-		).toBeVisible();
-		await expect(
-			this.payPalUi.fastlaneContinueButton(),
-			'Assert fastlane continue button is visible'
-		).toBeVisible();
+		await expect( this.payPalUi.fastlaneEmailInput(), 'Assert fastlane email input is visible' ).toBeVisible();
+		await expect( this.payPalUi.fastlaneContinueButton(), 'Assert fastlane continue button is visible' ).toBeVisible();
 		await this.payPalUi.fastlaneEmailInput().fill( customer.email );
 		// on classic checkout fastlane popup is triggered when valid email is filled and input loses focus
 		await this.payPalUi.fastlaneEmailInput().press( 'Tab' ); // to trigger make input lose focus
@@ -128,61 +122,25 @@ export class ClassicCheckout extends ClassicCheckoutBase {
 		shipping: WooCommerce.Shipping
 	) => {
 		const shippingAddress = this.fastlaneShippingAddressContainer();
-		await expect(
-			shippingAddress,
-			'Assert shipping address has first name'
-		).toContainText( shipping.first_name );
-		await expect(
-			shippingAddress,
-			'Assert shipping address has last name'
-		).toContainText( shipping.last_name );
-		await expect(
-			shippingAddress,
-			'Assert shipping address has address 1'
-		).toContainText( shipping.address_1 );
-		await expect(
-			shippingAddress,
-			'Assert shipping address has city'
-		).toContainText( shipping.city );
+		await expect( shippingAddress, 'Assert shipping address has first name' ).toContainText( shipping.first_name );
+		await expect( shippingAddress, 'Assert shipping address has last name' ).toContainText( shipping.last_name );
+		await expect( shippingAddress, 'Assert shipping address has address 1' ).toContainText( shipping.address_1 );
+		await expect( shippingAddress, 'Assert shipping address has city' ).toContainText( shipping.city );
 		// await expect( shippingAddress ).toContainText( shipping.state ); // TODO: fix for the full state name
-		await expect(
-			shippingAddress,
-			'Assert shipping address has postcode'
-		).toContainText( shipping.postcode );
-		await expect(
-			shippingAddress,
-			'Assert shipping address has country name'
-		).toContainText( shipping.countryName );
+		await expect( shippingAddress, 'Assert shipping address has postcode' ).toContainText( shipping.postcode );
+		await expect( shippingAddress, 'Assert shipping address has country name' ).toContainText( shipping.countryName );
 	};
 
 	assertBillingAddressIsPopulated = async (
 		billing: WooCommerce.Shipping
 	) => {
 		const billingAddress = this.fastlaneBillingAddressContainer();
-		await expect(
-			billingAddress,
-			'Assert billing address has first name'
-		).toContainText( billing.first_name );
-		await expect(
-			billingAddress,
-			'Assert billing address has last name'
-		).toContainText( billing.last_name );
-		await expect(
-			billingAddress,
-			'Assert billing address has address 1'
-		).toContainText( billing.address_1 );
-		await expect(
-			billingAddress,
-			'Assert billing address has city'
-		).toContainText( billing.city );
+		await expect( billingAddress, 'Assert billing address has first name' ).toContainText( billing.first_name );
+		await expect( billingAddress, 'Assert billing address has last name' ).toContainText( billing.last_name );
+		await expect( billingAddress, 'Assert billing address has address 1' ).toContainText( billing.address_1 );
+		await expect( billingAddress, 'Assert billing address has city' ).toContainText( billing.city );
 		// await expect( billingAddress ).toContainText( billing.state ); // TODO: fix for the full state name
-		await expect(
-			billingAddress,
-			'Assert billing address has postcode'
-		).toContainText( billing.postcode );
-		await expect(
-			billingAddress,
-			'Assert billing address has country name'
-		).toContainText( billing.countryName );
+		await expect( billingAddress, 'Assert billing address has postcode' ).toContainText( billing.postcode );
+		await expect( billingAddress, 'Assert billing address has country name' ).toContainText( billing.countryName );
 	};
 }

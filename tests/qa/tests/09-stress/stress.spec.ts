@@ -59,8 +59,9 @@ for ( let i = 1; i <= 500; i++ ) {
 			wooCommerceApi,
 			orderReceived,
 		} ) => {
-			let orderProduct =
-				await wooCommerceApi.getProductBySlug( productSlug );
+			let orderProduct = await wooCommerceApi.getProductBySlug(
+				productSlug
+			);
 			const expectedProductStock = orderProduct.stock_quantity - 1;
 
 			await product.visit( productSlug );
@@ -81,10 +82,9 @@ for ( let i = 1; i <= 500; i++ ) {
 				transactionId,
 				`Assert transaction ID ${ transactionId } is defined`
 			).toBeDefined();
-			await expect(
-				orderStatus,
-				`Assert order #${ orderId } status is processing`
-			).toBe( 'processing' );
+			await expect( orderStatus, `Assert order #${ orderId } status is processing` ).toBe(
+				'processing'
+			);
 
 			// Verify product stock quantity
 			orderProduct = await wooCommerceApi.getProductBySlug( productSlug );

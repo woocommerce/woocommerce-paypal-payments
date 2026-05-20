@@ -51,7 +51,10 @@ export class PcpPayLaterMessaging extends PcpAdminPage {
 			'button[aria-labelledby^="dropdownMenuButton_Bannersize"]'
 		);
 	comboboxOption = ( optionName: string ) => {
-		const escaped = optionName.replace( /[.*+?^${}()|[\]\\]/g, '\\$&' );
+		const escaped = optionName.replace(
+			/[.*+?^${}()|[\]\\]/g,
+			'\\$&'
+		);
 		return this.page
 			.locator( 'li[id^="smenu_item_"]' )
 			.filter( {
@@ -61,7 +64,8 @@ export class PcpPayLaterMessaging extends PcpAdminPage {
 	};
 	previewContainer = () =>
 		this.page.locator( '#configurator-previewSectionContainer' );
-	previewIframe = () => this.previewContainer().locator( 'iframe' ).first();
+	previewIframe = () =>
+		this.previewContainer().locator( 'iframe' ).first();
 	previewTextButton = () =>
 		this.page.locator(
 			'svg path[d="M5 5a1 1 0 0 0 0 2h14a1 1 0 1 0 0-2H5zm-1 7a1 1 0 0 1 1-1h14a1 1 0 1 1 0 2H5a1 1 0 0 1-1-1zm0 6a1 1 0 0 1 1-1h14a1 1 0 1 1 0 2H5a1 1 0 0 1-1-1z"]'
@@ -90,8 +94,9 @@ export class PcpPayLaterMessaging extends PcpAdminPage {
 	 */
 	expandAccordionSection = async ( location: Pcp.Admin.Plm.Location ) => {
 		// Get the current path data
-		const pathData =
-			await this.accordionButtonSvgPath( location ).getAttribute( 'd' );
+		const pathData = await this.accordionButtonSvgPath(
+			location
+		).getAttribute( 'd' );
 
 		// Expected values (replace with correct ones if needed)
 		const collapsedPath =
@@ -143,9 +148,7 @@ export class PcpPayLaterMessaging extends PcpAdminPage {
 			await expect
 				.poll(
 					() => this.isMessagingForLocationEnabled( location ),
-					`Assert ${ location } checkbox is ${
-						isChecked ? 'enabled' : 'disabled'
-					}`
+					`Assert ${ location } checkbox is ${ isChecked ? 'enabled' : 'disabled' }`
 				)
 				.toBe( isChecked );
 		}
@@ -273,7 +276,6 @@ export class PcpPayLaterMessaging extends PcpAdminPage {
 	/**
 	 * Softly asserts combobox settings for location
 	 *
-	 * @param location
 	 * @param settings
 	 * @param settings.logoType
 	 * @param settings.textColor
