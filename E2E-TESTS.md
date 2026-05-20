@@ -198,7 +198,7 @@ Scripts follow a naming pattern:
 | Prefix 				| Meaning 											| Example 							|
 |-----------------------|---------------------------------------------------|-----------------------------------|
 | `e2e:env:reset` 		| Reset only env 									| `npm run e2e:env:reset`	 		|
-| `e2e:env:reset:wc` 	| Reset only env + WooCommerce						| `npm run e2e:env:reset` 			|
+| `e2e:env:reset:wc` 	| Reset only env + WooCommerce						| `npm run e2e:env:reset:wc`		|
 | `e2e:env:reset:pcp:*` | Reset env + WooCommerce + PCP setup (single run) 	| `npm run e2e:env:reset:pcp:usa` 	|
 | `e2e:env:setup:*` 	| PCP/config setup only, no reset 					| `npm run e2e:env:setup:pcp:usa` 	|
 
