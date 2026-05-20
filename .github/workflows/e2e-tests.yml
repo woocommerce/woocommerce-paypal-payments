@@ -56,52 +56,19 @@ jobs:
         id: resolve
         shell: bash
         run: |
-          SHARDS=(
-            plugin-foundation
-            onboarding
-            settings
-            transaction-usa
-            transaction-mexico
-            transaction-googlepay
-            refund
-            vaulting
-            subscription
-          )
+          if [[ '${{ inputs.TEST_SUITE }}' == *':parallel' ]]; then
+            TAG='${{ inputs.TEST_SUITE }}'
+            SUFFIX=""
+            [[ "$TAG" != "all:parallel" ]] && SUFFIX=":${TAG%:parallel}"
 
-          build_matrix() {
-            local suffix="$1"
-            local items=()
-            for shard in "${SHARDS[@]}"; do
-              items+=("{\"script\":\"e2e:test:shard:${shard}${suffix}\",\"name_suffix\":\" / ${shard}\",\"artifact_name\":\"playwright-artifact-${shard}\"}")
-            done
-            local joined
-            joined=$(IFS=,; echo "${items[*]}")
-            echo "{\"include\":[${joined}]}"
-          }
+            entry() { echo "{\"script\":\"e2e:test:shard:${1}${SUFFIX}\",\"name_suffix\":\" / ${1}\",\"artifact_name\":\"playwright-artifact-${1}\"}"; }
 
-          case '${{ inputs.TEST_SUITE }}' in
-            all:parallel)
-              echo "matrix=$(build_matrix '')" >> "$GITHUB_OUTPUT"
-              ;;
-            smoke:parallel)
-              echo "matrix=$(build_matrix ':smoke')" >> "$GITHUB_OUTPUT"
-              ;;
-            critical:parallel)
-              echo "matrix=$(build_matrix ':critical')" >> "$GITHUB_OUTPUT"
-              ;;
-            stress)
-              echo 'matrix={"include":[{"script":"e2e:test:stress","name_suffix":" / stress","artifact_name":"playwright-artifact-stress"}]}' >> "$GITHUB_OUTPUT"
-              ;;
-            shard:*)
-              SHARD='${{ inputs.TEST_SUITE }}'
-              SUFFIX="${SHARD#shard:}"
-              echo "matrix=$(jq -nc \
-                --arg s "e2e:test:${SHARD}" \
-                --arg n " / ${SUFFIX}" \
-                --arg a "playwright-artifact-${SUFFIX}" \
-                '{include: [{script:$s, name_suffix:$n, artifact_name:$a}]}')" >> "$GITHUB_OUTPUT"
-              ;;
-          esac
+            echo "matrix={\"include\":[$(entry plugin-foundation),$(entry onboarding),$(entry settings),$(entry transactions-usa),$(entry transactions-mexico),$(entry transactions-googlepay),$(entry refund),$(entry vaulting),$(entry subscription)]}" >> "$GITHUB_OUTPUT"
+          else
+            SUITE='${{ inputs.TEST_SUITE }}'
+            NAME="${SUITE#shard:}"
+            echo "matrix={\"include\":[{\"script\":\"e2e:test:${SUITE}\",\"name_suffix\":\" / ${NAME}\",\"artifact_name\":\"playwright-artifact-${NAME}\"}]}" >> "$GITHUB_OUTPUT"
+          fi
 
   e2e-playwright:
     name: Run Playwright E2E Tests${{ matrix.name_suffix }}
