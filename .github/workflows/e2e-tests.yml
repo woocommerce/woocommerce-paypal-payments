@@ -56,6 +56,18 @@ jobs:
         id: resolve
         shell: bash
         run: |
+          SHARDS=(
+            plugin-foundation
+            onboarding
+            settings
+            transaction-usa
+            transaction-mexico
+            transaction-googlepay
+            refund
+            vaulting
+            subscription
+          )
+
           if [[ '${{ inputs.TEST_SUITE }}' == *':parallel' ]]; then
             TAG='${{ inputs.TEST_SUITE }}'
             SUFFIX=""
@@ -63,7 +75,13 @@ jobs:
 
             entry() { echo "{\"script\":\"e2e:test:shard:${1}${SUFFIX}\",\"name_suffix\":\" / ${1}\",\"artifact_name\":\"playwright-artifact-${1}\"}"; }
 
-            echo "matrix={\"include\":[$(entry plugin-foundation),$(entry onboarding),$(entry settings),$(entry transaction-usa),$(entry transaction-mexico),$(entry transaction-googlepay),$(entry refund),$(entry vaulting),$(entry subscription)]}" >> "$GITHUB_OUTPUT"
+            ITEMS=()
+            for shard in "${SHARDS[@]}"; do
+              ITEMS+=("$(entry "$shard")")
+            done
+            JOINED=$(IFS=,; echo "${ITEMS[*]}")
+
+            echo "matrix={\"include\":[${JOINED}]}" >> "$GITHUB_OUTPUT"
           else
             SUITE='${{ inputs.TEST_SUITE }}'
             NAME="${SUITE#shard:}"
