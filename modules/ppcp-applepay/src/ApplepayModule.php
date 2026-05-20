@@ -152,12 +152,9 @@ class ApplepayModule implements ServiceModule, ExecutableModule
             }
             return $methods;
         });
-        add_action('wp', static function () {
-            $checkout_hook = (string) apply_filters('woocommerce_paypal_payments_checkout_button_renderer_hook', 'woocommerce_review_order_after_payment');
-            add_action($checkout_hook, static function () {
-                // Wrapper ID: #ppc-button-ppcp-applepay.
-                echo '<div id="ppc-button-' . esc_attr(\WooCommerce\PayPalCommerce\Applepay\ApplePayGateway::ID) . '"></div>';
-            });
+        add_action('woocommerce_review_order_after_submit', function () {
+            // Wrapper ID: #ppc-button-ppcp-applepay.
+            echo '<div id="ppc-button-' . esc_attr(\WooCommerce\PayPalCommerce\Applepay\ApplePayGateway::ID) . '"></div>';
         });
         add_action('woocommerce_pay_order_after_submit', function () {
             // Wrapper ID: #ppc-button-ppcp-applepay.
@@ -178,8 +175,7 @@ class ApplepayModule implements ServiceModule, ExecutableModule
             return $features;
         });
         add_filter('ppcp_create_order_request_body_data', static function (array $data, string $payment_method, array $request) use ($c): array {
-            $funding_source = $request['funding_source'] ?? '';
-            if ($payment_method !== \WooCommerce\PayPalCommerce\Applepay\ApplePayGateway::ID && $funding_source !== 'apple_pay') {
+            if ($payment_method !== \WooCommerce\PayPalCommerce\Applepay\ApplePayGateway::ID) {
                 return $data;
             }
             $experience_context_builder = $c->get('wcgateway.builder.experience-context');

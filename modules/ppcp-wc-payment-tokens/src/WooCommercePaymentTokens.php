@@ -265,7 +265,6 @@ class WooCommercePaymentTokens
     {
         foreach ($wc_tokens as $wc_token) {
             if ($wc_token instanceof $class_name) {
-                /** @var WC_Payment_Token $wc_token */
                 return $wc_token;
             }
         }
