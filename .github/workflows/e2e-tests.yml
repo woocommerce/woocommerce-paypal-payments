@@ -63,7 +63,7 @@ jobs:
 
             entry() { echo "{\"script\":\"e2e:test:shard:${1}${SUFFIX}\",\"name_suffix\":\" / ${1}\",\"artifact_name\":\"playwright-artifact-${1}\"}"; }
 
-            echo "matrix={\"include\":[$(entry plugin-foundation),$(entry onboarding),$(entry settings),$(entry transactions-usa),$(entry transactions-mexico),$(entry transactions-googlepay),$(entry refund),$(entry vaulting),$(entry subscription)]}" >> "$GITHUB_OUTPUT"
+            echo "matrix={\"include\":[$(entry plugin-foundation),$(entry onboarding),$(entry settings),$(entry transaction-usa),$(entry transaction-mexico),$(entry transaction-googlepay),$(entry refund),$(entry vaulting),$(entry subscription)]}" >> "$GITHUB_OUTPUT"
           else
             SUITE='${{ inputs.TEST_SUITE }}'
             NAME="${SUITE#shard:}"
