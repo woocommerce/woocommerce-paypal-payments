@@ -8,8 +8,8 @@ export const transactionsOnClassicCheckout = ( testOrder: ShopOrder ) => {
 	const { title, payment, products, customer, merchant } = testOrder;
 
 	test(
-		testOrder.title,
-		annotateVisitor( testOrder.customer ),
+		title,
+		annotateVisitor( customer ),
 		async ( {
 			classicCheckout,
 			wooCommerceApi,
@@ -18,7 +18,7 @@ export const transactionsOnClassicCheckout = ( testOrder: ShopOrder ) => {
 			wooCommerceOrderEdit,
 			utils,
 		} ) => {
-			await utils.fillVisitorsCart( testOrder.products );
+			await utils.fillVisitorsCart( products );
 			await classicCheckout.visit();
 			await classicCheckout.completeCheckoutDetails( testOrder );
 			await classicCheckout.payPalUi.makePayment( {
@@ -48,11 +48,11 @@ export const transactionsOnClassicCheckout = ( testOrder: ShopOrder ) => {
 };
 
 export const transactionsOnClassicCheckoutOxxo = ( testOrder: ShopOrder ) => {
-	const { payment, merchant } = testOrder;
+	const { title, payment, products, customer, merchant } = testOrder;
 
 	test(
-		testOrder.title,
-		annotateVisitor( testOrder.customer ),
+		title,
+		annotateVisitor( customer ),
 		async ( {
 			classicCheckout,
 			wooCommerceApi,
@@ -61,7 +61,7 @@ export const transactionsOnClassicCheckoutOxxo = ( testOrder: ShopOrder ) => {
 			wooCommerceOrderEdit,
 			utils,
 		} ) => {
-			await utils.fillVisitorsCart( testOrder.products );
+			await utils.fillVisitorsCart( products );
 			await classicCheckout.visit();
 			await classicCheckout.completeCheckoutDetails( testOrder );
 			await classicCheckout.payPalUi.makePayment( { merchant, payment } );
