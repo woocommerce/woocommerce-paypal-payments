@@ -1,10 +1,7 @@
 /**
  * External dependencies
  */
-import {
-	Product as ProductBase,
-	expect,
-} from '@inpsyde/playwright-utils/build';
+import { Product as ProductBase } from '@inpsyde/playwright-utils/build';
 /**
  * Internal dependencies
  */

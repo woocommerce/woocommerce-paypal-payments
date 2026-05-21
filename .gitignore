@@ -11,8 +11,8 @@ modules/*/assets/*
 *.zip
 !tests/qa/resources/files/*.zip
 !tests/qa-legacy-ui/resources/files/*.zip
-.env
-.env.integration
+.env*
+!.env.example*
 auth.json
 .DS_Store
 tests/.DS_Store
@@ -20,3 +20,14 @@ tests/.DS_Store
 /coverage/
 assets
 tests/inc/inpsyde/
+
+.vscode
+playwright-utils
+playwright-report*
+snapshots
+playwright/.cache
+storage-states
+test-results
+/tests/qa/resources/files/woocommerce-paypal-payments*.zip
+/tests/qa/resources/files/woocommerce-subscriptions*.zip
+.google-session.json

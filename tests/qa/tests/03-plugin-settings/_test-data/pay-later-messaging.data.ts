@@ -25,8 +25,8 @@ type PlmBannerPageData = {
  * One variant per location (per plan).
  */
 export const payLaterMessagingData: {
-	checkoutLocationSettings: Record<string, PlmCheckoutPageData>;
-	bannerLocationSettings: Record<string, PlmBannerPageData>;
+	checkoutLocationSettings: Record< string, PlmCheckoutPageData >;
+	bannerLocationSettings: Record< string, PlmBannerPageData >;
 } = {
 	checkoutLocationSettings: {
 		'Product page': {

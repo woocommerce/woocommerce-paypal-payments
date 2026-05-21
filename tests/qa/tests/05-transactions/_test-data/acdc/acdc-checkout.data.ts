@@ -15,7 +15,7 @@ const guest = guests.usa;
 export const acdcCheckout: ShopOrder[] = [
 	{
 		// https://inpsyde.atlassian.net/browse/PCP-3217
-		title: 'PCP-3217 | Transaction - Checkout - ACDC - Default order @Critical @Smoke @Dev',
+		title: 'PCP-3217 | Transaction - Checkout - ACDC - Default order @Critical @Smoke',
 		...orders.default,
 		payment: payments.acdc,
 		customer: guest,

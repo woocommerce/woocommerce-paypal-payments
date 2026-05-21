@@ -7,7 +7,6 @@ export * from './customer-account';
 export * from './customer-payment-methods';
 export * from './customer-subscriptions';
 export * from './order-received';
-export * from './oxxo-voucher-popup';
 export * from './pay-for-order';
 export * from './google-pay-popup';
 export * from './paypal-popup';

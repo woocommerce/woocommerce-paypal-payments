@@ -2,11 +2,7 @@
  * Internal dependencies
  */
 import { test } from '../../utils';
-import {
-	customers,
-	gateways,
-	taxSettings,
-} from '../../resources';
+import { customers, gateways, taxSettings } from '../../resources';
 import { transactionsOnClassicCheckout } from './_test-scenarios';
 import {
 	payPalClassicCheckout,
@@ -28,12 +24,11 @@ import { fastlaneClassicCheckout } from './_test-data/fastlane';
 
 const { fastlane } = gateways;
 
-test.beforeAll( async ( { utils, wooCommerceApi } ) => {
+test.beforeAll( async ( { utils } ) => {
 	await utils.configureStore( {
 		enableClassicPages: true,
 		customer: customers.usa,
 	} );
-	await wooCommerceApi.deleteAllOrders();
 } );
 
 for ( const testOrder of payPalClassicCheckout ) {
