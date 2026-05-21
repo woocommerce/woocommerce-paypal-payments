@@ -563,7 +563,7 @@ class CreateOrderEndpoint implements EndpointInterface {
 				&& array_filter(
 					$exception->details(),
 					function ( stdClass $detail ): bool {
-						return isset( $detail->field ) && str_contains( (string) $detail->field, 'shipping/address' );
+						return isset( $detail->field ) && strpos( (string) $detail->field, 'shipping/address' ) !== false;
 					}
 				) ) {
 				$this->logger->info( 'Invalid shipping address for order creation, retrying without it.' );

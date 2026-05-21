@@ -78,6 +78,7 @@ const modulesAssets = {
 		'css/gateway-settings.scss',
 		'css/common.scss',
 	],
+	'ppcp-store-sync': [ 'js/settings.js', 'css/style.scss' ]
 };
 
 const entries = {};

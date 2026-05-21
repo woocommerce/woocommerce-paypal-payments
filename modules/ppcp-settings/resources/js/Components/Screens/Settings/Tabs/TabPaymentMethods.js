@@ -118,7 +118,7 @@ const TabPaymentMethods = () => {
 			{ isBcdcOverrideFlagEnabled && (
 				<MigrationBanner
 					id="ppcp-migration-banner"
-					className="ppcp-r-settings-migration-banner"
+					className="ppcp-r-settings-banner"
 					title={ __(
 						'Unlock Advanced Card Processing',
 						'woocommerce-paypal-payments'

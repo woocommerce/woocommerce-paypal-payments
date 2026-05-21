@@ -19,7 +19,6 @@ use WooCommerce\PayPalCommerce\ApiClient\Entity\Authorization;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Capture;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\OrderStatus;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\ReferenceTransactionStatus;
-use WooCommerce\PayPalCommerce\ApiClient\Helper\Cache;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\DccApplies;
 use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\LocalApmProductStatus;
 use WooCommerce\PayPalCommerce\Settings\Data\Definition\FeaturesDefinition;
@@ -91,6 +90,7 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
 		$this->register_payment_gateways( $c );
 		$this->register_order_functionality( $c );
 		$this->register_contact_handlers();
+		$this->register_block_express_payment_method_handler( $c );
 		$this->register_columns( $c );
 		$this->register_checkout_paypal_address_preset( $c );
 		$this->register_wc_tasks( $c );
@@ -163,6 +163,27 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
 
 				// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 				echo $fees_renderer->render( $wc_order );
+			}
+		);
+
+		add_action(
+			'woocommerce_admin_order_totals_after_total',
+			function ( int $order_id ) use ( $c ) {
+				$wc_order = wc_get_order( $order_id );
+				if ( ! $wc_order instanceof WC_Order ) {
+					return;
+				}
+				$fraud_result = $wc_order->get_meta( PayPalGateway::FRAUD_RESULT_META_KEY );
+				if ( empty( $fraud_result['response_code'] ) ) {
+					return;
+				}
+				$fraud = $c->get( 'api.factory.fraud-processor-response' )
+					->from_paypal_response( (object) $fraud_result );
+				printf(
+					'<tr><td class="label">%s:</td><td width="1%%"></td><td class="total">%s</td></tr>',
+					esc_html__( 'Processor Response', 'woocommerce-paypal-payments' ),
+					esc_html( $fraud->get_response_code_message() )
+				);
 			}
 		);
 
@@ -448,13 +469,6 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
 				$pwc_product_status = $c->get( 'wcgateway.pwc-product-status' );
 				if ( $pwc_product_status instanceof PWCProductStatus ) {
 					$pwc_product_status->clear();
-				}
-
-				$reference_transaction_status_cache = $c->get( 'api.reference-transaction-status-cache' );
-				assert( $reference_transaction_status_cache instanceof Cache );
-				// Clear Reference Transaction status.
-				if ( $reference_transaction_status_cache->has( ReferenceTransactionStatus::CACHE_KEY ) ) {
-					$reference_transaction_status_cache->delete( ReferenceTransactionStatus::CACHE_KEY );
 				}
 			}
 		);
@@ -977,6 +991,70 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
 				// so probably no need to add additional checks.
 				$set_order_contacts( $wc_order );
 			}
+		);
+	}
+
+	/**
+	 * Ensures PayPal handles block-checkout express payments even when another PCP gateway is sorted first in WC Settings → Payments.
+	 */
+	private function register_block_express_payment_method_handler( ContainerInterface $c ): void {
+		add_action(
+			'woocommerce_rest_checkout_process_payment_with_context',
+			function ( $context ) use ( $c ): void {
+				$payment_data = (array) ( $context->payment_data ?? array() );
+
+				if ( empty( $payment_data['paypal_order_id'] ) ) {
+					return;
+				}
+
+				if ( ( $context->payment_method ?? '' ) === PayPalGateway::ID ) {
+					return;
+				}
+
+				$available = WC()->payment_gateways->get_available_payment_gateways();
+				if ( ! isset( $available[ PayPalGateway::ID ] ) ) {
+					return;
+				}
+
+				$context->set_payment_method( PayPalGateway::ID );
+
+				$order = $context->order ?? null;
+				if ( $order instanceof WC_Order ) {
+					$order->set_payment_method( PayPalGateway::ID );
+
+					$session_handler         = $c->get( 'session.handler' );
+					$funding_source_renderer = $c->get( 'wcgateway.funding-source.renderer' );
+
+					$funding_source = $payment_data['funding_source']
+						?: ( $session_handler->funding_source() ?: 'paypal' );
+					$order->set_payment_method_title( $funding_source_renderer->render_name( $funding_source ) );
+					$order->save();
+				}
+			},
+			100,
+			1
+		);
+
+		add_action(
+			'woocommerce_before_order_object_save',
+			function ( $order ): void {
+				if ( ! $order instanceof WC_Order ) {
+					return;
+				}
+				if ( ! $order->get_meta( PayPalGateway::ORDER_ID_META_KEY ) ) {
+					return;
+				}
+				$payment_method = $order->get_payment_method();
+				if ( $payment_method && strpos( $payment_method, 'ppcp-' ) === 0 ) {
+					return;
+				}
+				if ( $order->get_payment_method() === CreditCardGateway::ID ) {
+					return;
+				}
+				$order->set_payment_method( PayPalGateway::ID );
+			},
+			10,
+			1
 		);
 	}
 

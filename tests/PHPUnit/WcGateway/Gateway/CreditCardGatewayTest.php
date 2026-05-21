@@ -32,7 +32,6 @@ class CreditCardGatewayTest extends TestCase
 	private $transactionUrlProvider;
 	private $subscriptionHelper;
 	private $captureCardPayment;
-	private $prefix;
 	private $wcPaymentTokens;
 	private $logger;
 	private $paymentsEndpoint;
@@ -53,7 +52,6 @@ class CreditCardGatewayTest extends TestCase
 		$this->transactionUrlProvider = Mockery::mock(TransactionUrlProvider::class);
 		$this->subscriptionHelper = Mockery::mock(SubscriptionHelper::class);
 		$this->captureCardPayment = Mockery::mock(CaptureCardPayment::class);
-		$this->prefix = 'some-prefix';
 		$this->wcPaymentTokens = Mockery::mock(WooCommercePaymentTokens::class);
 		$this->logger = Mockery::mock(LoggerInterface::class);
 		$this->paymentsEndpoint = Mockery::mock(PaymentsEndpoint::class);
@@ -82,7 +80,6 @@ class CreditCardGatewayTest extends TestCase
 			$this->environment,
 			$this->orderEndpoint,
 			$this->captureCardPayment,
-			$this->prefix,
 			$this->wcPaymentTokens,
 			$this->logger
 		);

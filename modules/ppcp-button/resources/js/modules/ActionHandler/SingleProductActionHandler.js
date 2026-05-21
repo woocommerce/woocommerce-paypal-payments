@@ -85,10 +85,7 @@ class SingleProductActionHandler {
 			onError: ( error ) => {
 				this.refreshMiniCart();
 
-				if ( this.isBookingProduct() && error.message ) {
-					this.errorHandler.clear();
-					this.errorHandler.message( error.message );
-				} else {
+				if ( ! error || error.type !== 'create-order-error' ) {
 					this.errorHandler.genericError();
 				}
 
@@ -164,9 +161,10 @@ class SingleProductActionHandler {
 
 	createOrder() {
 		this.cartHelper = null;
+		const errorHandler = this.errorHandler;
 
 		return ( data, actions, options = {} ) => {
-			this.errorHandler.clear();
+			errorHandler.clear();
 
 			const onResolve = ( purchase_units ) => {
 				this.cartHelper = new CartHelper().addFromPurchaseUnits(
@@ -201,7 +199,9 @@ class SingleProductActionHandler {
 					.then( function ( data ) {
 						if ( ! data.success ) {
 							console.error( data );
-							throw Error( data.data.message );
+							errorHandler.clear();
+							errorHandler.message( data.data.message );
+							throw { type: 'create-order-error' };
 						}
 						return data.data.id;
 					} );

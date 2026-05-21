@@ -24,6 +24,7 @@ export const testRefund = ( testData: ShopRefund ) => {
 		currency,
 		isApiOrder,
 		merchant,
+		products,
 	} = testData;
 
 	test(
@@ -32,12 +33,16 @@ export const testRefund = ( testData: ShopRefund ) => {
 		async ( {
 			wooCommerceUtils,
 			utils,
+			classicCheckout,
+			payForOrder,
+			orderReceived,
 			wooCommerceOrderEdit,
 			wooCommerceApi,
 			payPalApi,
 		} ) => {
 			test.setTimeout( 2 * 60_000 );
 			let order: WooCommerce.Order; // TODO: fix type in playwright-utils
+			let orderId: number;
 			const total = await countTotals( testData );
 			const refundAvailable = total.order;
 			const refundAmount = getAmountPercentage(
@@ -49,18 +54,37 @@ export const testRefund = ( testData: ShopRefund ) => {
 			await test.step( 'Precondition: create WooCommerce order', async () => {
 				if ( isApiOrder ) {
 					order = await wooCommerceUtils.createApiOrder( testData );
-					order = await utils.payForApiOrder(
-						order.id,
-						order.order_key,
-						testData
-					);
+					await payForOrder.visit( order.id, order.order_key );
+					await payForOrder.payPalUi.makePayment( {
+						merchant,
+						payment,
+					} );
 				} else {
-					order = await utils.completeOrderOnCheckout( testData );
+					await utils.fillVisitorsCart( products );
+					await classicCheckout.visit();
+					await classicCheckout.completeCheckoutDetails( testData );
+					await classicCheckout.payPalUi.makePayment( {
+						merchant,
+						payment,
+					} );
 				}
-				await expect(
-					order.status,
-					'Assert order status is processing'
-				).toEqual( 'processing' );
+
+				await orderReceived.page.waitForLoadState();
+				orderId = await orderReceived.getOrderNumber();
+				// Assert order status is processing (sometimes takes time to update after payment)
+				await expect
+					.poll(
+						async () => {
+							order = await wooCommerceApi.getOrder( orderId );
+							return order.status;
+						},
+						{
+							message: 'Assert order status is processing',
+							timeout: 30_000,
+							intervals: [ 1_000, 2_000, 3_000 ],
+						}
+					)
+					.toEqual( 'processing' );
 			} );
 
 			// Test
@@ -71,7 +95,7 @@ export const testRefund = ( testData: ShopRefund ) => {
 				// Assertions before refund
 				await expect(
 					wooCommerceOrderEdit.restockRefundedItemsCheckbox(),
-					'Assert "Restock refunded items" checkbox is visible'				
+					'Assert "Restock refunded items" checkbox is visible'
 				).toBeVisible();
 				await expect(
 					wooCommerceOrderEdit.totalAmountAlreadyRefunded(),
@@ -85,7 +109,10 @@ export const testRefund = ( testData: ShopRefund ) => {
 				);
 
 				// Make refund
-				await wooCommerceOrderEdit.makeRefundVia( payment.gateway.title, refundAmount );
+				await wooCommerceOrderEdit.makeRefundVia(
+					payment.gateway.title,
+					refundAmount
+				);
 				// Assert URL after page is reloaded
 				await wooCommerceOrderEdit.assertUrl( order.id );
 			} );
@@ -126,17 +153,13 @@ export const testRefund = ( testData: ShopRefund ) => {
 				await expect(
 					payPalPayment.status,
 					`Assert PayPal payment status is ${ refundPaymentStatus }`
-				).toEqual(
-					refundPaymentStatus
-				);
+				).toEqual( refundPaymentStatus );
 
 				orderRefund = order.refunds[ 0 ];
 				await expect(
 					orderRefund.total,
 					'Assert refund total is the expected'
-				).toEqual(
-					`-${ Number( refundAmount ).toFixed( 2 ) }`
-				);
+				).toEqual( `-${ Number( refundAmount ).toFixed( 2 ) }` );
 
 				const payPalRefunds = order.meta_data.filter(
 					( el ) => el.key === '_ppcp_refunds'
@@ -154,23 +177,25 @@ export const testRefund = ( testData: ShopRefund ) => {
 
 			await test.step( 'Assert on OrderEdit page that WooCommerce and PayPal refund fields are displayed and have expected values', async () => {
 				await wooCommerceOrderEdit.assertRefundData( {
-					currency: currency,
+					currency,
 					orderStatus: capitalizeFirst( refundOrderStatus ),
 					refundId: orderRefund.id,
 					refundAmount: Number( refundAmount ),
 					refundTotal:
-						payPalRefund.seller_payable_breakdown.total_refunded_amount
-							.value,
+						payPalRefund.seller_payable_breakdown
+							.total_refunded_amount.value,
 					netPayment:
 						parseFloat( order.total ) - parseFloat( refundAmount ),
 					payPalFee:
-						payPalPayment.seller_receivable_breakdown.paypal_fee.value,
+						payPalPayment.seller_receivable_breakdown.paypal_fee
+							.value,
 					payPalRefundFee:
 						payPalRefund.seller_payable_breakdown.paypal_fee.value,
 					payPalRefunded:
 						payPalRefund.seller_payable_breakdown.net_amount.value,
 					payPalPayout:
-						payPalPayment.seller_receivable_breakdown.net_amount.value,
+						payPalPayment.seller_receivable_breakdown.net_amount
+							.value,
 					payPalNetTotal:
 						parseFloat( order.total ) -
 						parseFloat( refundAmount ) -

@@ -38,3 +38,10 @@ auth.json
 *.log
 scoper.inc.php
 jsconfig.json
+.eslintignore
+.wp-env.json
+playwright.config.ts
+tsconfig.json
+wp-cli.yml
+.npmrc
+E2E-TESTS.md

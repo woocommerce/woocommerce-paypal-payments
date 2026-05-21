@@ -238,7 +238,7 @@ class PayPalPaymentMethod extends AbstractPaymentMethodType {
 		$smart_buttons_enabled = ! $this->use_place_order
 			&& $this->settings_status->is_smart_button_enabled_for_location( $script_data['context'] ?? 'block-checkout' );
 		$place_order_enabled   = ( $this->use_place_order || $this->add_place_order_method )
-			&& ! $this->subscription_helper->cart_contains_subscription();
+			&& ( ! $this->subscription_helper->cart_contains_subscription() || $script_data['can_save_vault_token'] );
 		$cart                  = WC()->cart;
 
 		return array(

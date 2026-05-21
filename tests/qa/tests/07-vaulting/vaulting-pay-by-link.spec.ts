@@ -2,7 +2,6 @@
  * Internal dependencies
  */
 import { test } from '../../utils';
-import { merchants, storeConfigUsa } from '../../resources';
 import { vaultingPayByLink } from './_test-data';
 import { testVaultingPayByLink } from './_test-scenarios';
 
@@ -18,25 +17,8 @@ const {
 	testVaultedPaymentMethod,
 } = testVaultingPayByLink;
 
-test.beforeAll( async ( { utils, pcpApi, wooCommerceApi } ) => {
-	await utils.configureStore( {
-		...storeConfigUsa,
-		enableClassicPages: false,
-	} );
-	await utils.installAndActivatePcp();
-	await pcpApi.resetDb();
-	await pcpApi.connectMerchant(
-		merchants.usa.client_id,
-		merchants.usa.client_secret,
-		{
-			isCasualSeller: false,
-			areOptionalPaymentMethodsEnabled: true,
-		}
-	);
-	await pcpApi.updatePcpSettings( {
-		savePaypalAndVenmo: true,
-		saveCardDetails: true,
-	} );
+test.beforeAll( async ( { utils, wooCommerceApi } ) => {
+	await utils.configureStore( { enableClassicPages: false } );
 	await wooCommerceApi.deleteAllOrders();
 } );
 
