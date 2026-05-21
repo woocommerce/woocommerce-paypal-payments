@@ -39,7 +39,10 @@ Detailed information about current test project can be found in [docs](./docs/RE
 
 	1.1 Set general variables following [these steps](https://github.com/inpsyde/playwright-utils?tab=readme-ov-file#env-variables).
 	
-	1.2 Set PayPal API keys and test credentials. See `.env.example`. For Google Pay transaction tests, make sure to also set `GOOGLE_PAY_EMAIL` and `GOOGLE_PAY_PASSWORD`. The `.env` content with actual test users' credentials is [stored in 1Password](https://start.1password.com/open/i?a=UL7QZZ6P6JDVBI422AOVJXMEGU&v=uthlbcp4jkori6w6rhgxvsvfoe&i=klejf7rgcip76c7auhsnhvxcbi&h=inpsyde.1password.eu).
+	1.2 Set PayPal API keys and test credentials. See `.env.example`. For Google Pay transaction tests, make sure to also set `GOOGLE_PAY_EMAIL`, `GOOGLE_PAY_PASSWORD`, and `GOOGLE_PAY_TOTP_SECRET` (base32 TOTP secret for the Google account's 2-step verification). The `.env` content with actual test users' credentials is [stored in 1Password](https://start.1password.com/open/i?a=UL7QZZ6P6JDVBI422AOVJXMEGU&v=uthlbcp4jkori6w6rhgxvsvfoe&i=klejf7rgcip76c7auhsnhvxcbi&h=inpsyde.1password.eu).
+
+	> **Google Pay account — 2-step verification (preferred setup)**
+	> Google may block automated sign-in on accounts without 2FA enabled, treating the automated browser as suspicious. The preferred setup is to enable 2-step verification with an **authenticator app (TOTP)** on the Google Pay test account. Once enabled, export the base32 TOTP secret from your authenticator app and set it as `GOOGLE_PAY_TOTP_SECRET`. The test runner generates the 6-digit code automatically at runtime, so no manual interaction is required.
 
 2. Configure `playwright.config.ts` of the project following [these steps](https://github.com/inpsyde/playwright-utils?tab=readme-ov-file#playwright-configuration).
 
