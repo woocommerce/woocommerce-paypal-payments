@@ -8,6 +8,7 @@ import DisconnectButton from './Parts/DisconnectButton';
 import SettingsBlock from '@ppcp-settings/Components/ReusableComponents/SettingsBlock';
 import { ControlStaticValue } from '@ppcp-settings/Components/ReusableComponents/Controls';
 import { CardActions } from '@ppcp-settings/Components/ReusableComponents/Elements';
+import { useRegisteredSettings, SLOTS } from '@ppcp-settings/extensions';
 
 const ConnectionStatus = () => {
 	const merchant = CommonHooks.useMerchant();
@@ -15,6 +16,9 @@ const ConnectionStatus = () => {
 		'ppcp--type-business': merchant.isBusinessSeller,
 		'ppcp--type-casual': merchant.isCasualSeller,
 	} );
+
+	// Get registered settings for connection status
+	const footerSettings = useRegisteredSettings( SLOTS.CONNECTION_STATUS_END );
 
 	return (
 		<SettingsCard
@@ -55,6 +59,11 @@ const ConnectionStatus = () => {
 					showCopy={ true }
 				/>
 			</SettingsBlock>
+
+			{ /* Extension point */ }
+			{ footerSettings.map( ( { component: Component, id } ) => (
+				<Component key={ id } />
+			) ) }
 		</SettingsCard>
 	);
 };
