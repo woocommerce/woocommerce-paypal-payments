@@ -1,6 +1,7 @@
 /**
  * External dependencies
  */
+import crypto from 'crypto';
 import fs from 'fs';
 import path from 'path';
 import { expect, BrowserContext, Cookie, Page } from '@playwright/test';
@@ -166,6 +167,65 @@ export class GooglePayPopup {
 			)
 			.first();
 
+	/** TOTP / authenticator-app code input shown during 2-step verification. */
+	private totpInput = () =>
+		this.page
+			.locator( 'input[name="totpPin"]' )
+			.or( this.page.locator( 'input[id="totpPin"]' ) )
+			.or( this.page.locator( 'input[autocomplete="one-time-code"]' ) )
+			.or(
+				this.page.locator( 'input[type="tel"]' ).filter( {
+					has: this.page.locator( ':scope' ).and(
+						this.page.locator( '[aria-label*="code" i], [aria-label*="verification" i]' )
+					),
+				} )
+			)
+			.first();
+
+	/**
+	 * Generates a TOTP code from a base32 secret (RFC 6238, SHA-1, 30 s step, 6 digits).
+	 */
+	private static generateTOTP( secret: string ): string {
+		const base32 = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
+		const clean = secret.toUpperCase().replace( /[^A-Z2-7]/g, '' );
+
+		// Base32-decode the secret into a byte array.
+		let bits = 0;
+		let acc = 0;
+		const keyBytes: number[] = [];
+		for ( const ch of clean ) {
+			const idx = base32.indexOf( ch );
+			if ( idx < 0 ) continue;
+			acc = ( acc << 5 ) | idx;
+			bits += 5;
+			if ( bits >= 8 ) {
+				keyBytes.push( ( acc >> ( bits - 8 ) ) & 0xff );
+				bits -= 8;
+			}
+		}
+
+		// Current 30-second time step as an 8-byte big-endian counter.
+		const step = Math.floor( Date.now() / 1000 / 30 );
+		const counter = Buffer.alloc( 8 );
+		counter.writeUInt32BE( Math.floor( step / 0x100000000 ), 0 );
+		counter.writeUInt32BE( step >>> 0, 4 );
+
+		// HMAC-SHA1 → dynamic truncation → 6-digit code.
+		const hmac = crypto
+			.createHmac( 'sha1', Buffer.from( keyBytes ) )
+			.update( counter )
+			.digest();
+		const offset = hmac[ hmac.length - 1 ] & 0x0f;
+		const code =
+			( ( ( hmac[ offset ] & 0x7f ) << 24 ) |
+				( ( hmac[ offset + 1 ] & 0xff ) << 16 ) |
+				( ( hmac[ offset + 2 ] & 0xff ) << 8 ) |
+				( hmac[ offset + 3 ] & 0xff ) ) %
+			1_000_000;
+
+		return code.toString().padStart( 6, '0' );
+	}
+
 	private postLoginButton = () =>
 		this.page
 			.getByRole( 'button', {
@@ -228,6 +288,7 @@ export class GooglePayPopup {
 	private signInToGoogle = async () => {
 		const email = process.env.GOOGLE_PAY_EMAIL;
 		const password = process.env.GOOGLE_PAY_PASSWORD;
+		const totpSecret = process.env.GOOGLE_PAY_TOTP_SECRET;
 
 		if ( ! email || ! password ) {
 			throw new Error(
@@ -249,15 +310,83 @@ export class GooglePayPopup {
 		await this.passwordInput().fill( password );
 		await this.nextButton().click();
 
-		// Wait until we've left the sign-in domain entirely.
+		// Handle 2-step verification (TOTP challenge) if Google presents it.
+		await this.handleTwoFactorIfPresent( totpSecret );
+
+		// Wait until we've left all accounts.google.* domains (handles regional
+		// variants like accounts.google.de that appear after 2FA redirects).
 		await this.page.waitForURL(
-			( url ) => ! url.hostname.includes( 'accounts.google.com' ),
+			( url ) => ! url.hostname.includes( 'accounts.google' ),
 			{ timeout: 30_000 }
 		);
 		await this.page.waitForLoadState();
 
 		// Save login cookies so the next test run can skip Google sign-in.
 		await this.saveGoogleSession();
+	};
+
+	/**
+	 * If Google presents a TOTP / authenticator-app challenge after the password
+	 * step, generates the current code from GOOGLE_PAY_TOTP_SECRET and submits it.
+	 *
+	 * Google may also complete 2FA via a device-approval push notification (no input
+	 * required). In that case the challenge page navigates away on its own — we wait
+	 * for that and skip the TOTP entry so the overall sign-in flow is not broken.
+	 */
+	private handleTwoFactorIfPresent = async (
+		totpSecret: string | undefined
+	): Promise< void > => {
+		// Give Google a moment to decide whether to show a 2FA challenge.
+		await this.page.waitForLoadState( 'domcontentloaded' ).catch( () => {} );
+
+		const isOnAccountsGoogle = ( url: string ) =>
+			url.includes( 'accounts.google' );
+
+		const isChallengeUrl = ( url: string ) =>
+			url.includes( 'accounts.google' ) &&
+			( url.includes( '/challenge' ) || url.includes( 'totp' ) );
+
+		if ( ! isChallengeUrl( this.page.url() ) ) {
+			// Not on a challenge page yet — wait a beat in case of redirect.
+			await this.page
+				.waitForURL( ( u ) => isChallengeUrl( u.href ), {
+					timeout: 5_000,
+				} )
+				.catch( () => {} );
+		}
+
+		if ( ! isChallengeUrl( this.page.url() ) ) {
+			return; // No 2FA challenge — nothing to do.
+		}
+
+		// Soft-check: TOTP input may not appear if Google uses a different 2FA
+		// method (device tap, push notification). Use a short timeout here rather
+		// than a hard assertion so we don't fail when Google handles 2FA itself.
+		const hasTotpInput = await this.totpInput()
+			.waitFor( { state: 'visible', timeout: 8_000 } )
+			.then( () => true )
+			.catch( () => false );
+
+		if ( ! hasTotpInput ) {
+			// Google is resolving the challenge via another method (e.g. device
+			// approval). Wait for navigation away from all accounts.google.* pages.
+			await this.page
+				.waitForURL( ( u ) => ! isOnAccountsGoogle( u.href ), {
+					timeout: 30_000,
+				} )
+				.catch( () => {} );
+			return;
+		}
+
+		if ( ! totpSecret ) {
+			throw new Error(
+				'Google presented a TOTP challenge but GOOGLE_PAY_TOTP_SECRET is not set.'
+			);
+		}
+
+		const code = GooglePayPopup.generateTOTP( totpSecret );
+		await this.totpInput().fill( code );
+		await this.nextButton().click();
 	};
 
 	/**
