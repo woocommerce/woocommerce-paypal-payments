@@ -390,7 +390,7 @@ class CreateOrderEndpoint implements \WooCommerce\PayPalCommerce\Button\Endpoint
             // so we cannot make some invalid addresses null in PurchaseUnitFactory,
             // which causes failure e.g. for guests using the button on products pages when the country does not have postal codes.
             if (422 === $exception->status_code() && array_filter($exception->details(), function (stdClass $detail): bool {
-                return isset($detail->field) && str_contains((string) $detail->field, 'shipping/address');
+                return isset($detail->field) && strpos((string) $detail->field, 'shipping/address') !== \false;
             })) {
                 $this->logger->info('Invalid shipping address for order creation, retrying without it.');
                 $this->purchase_unit->set_shipping(null);

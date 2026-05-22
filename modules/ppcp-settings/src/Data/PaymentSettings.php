@@ -33,7 +33,7 @@ class PaymentSettings extends \WooCommerce\PayPalCommerce\Settings\Data\Abstract
      */
     protected function get_defaults(): array
     {
-        return array('paypal_show_logo' => \false, 'cardholder_name' => \false, 'fastlane_display_watermark' => \false, 'venmo_enabled' => \false, 'paylater_enabled' => \false, 'applepay_validated' => \false, 'capture_on_status_change' => \true, 'applepay_checkout_data_mode' => 'use_wc', 'pui_brand_name' => '', 'pui_logo_url' => '', 'pui_customer_service_instructions' => '');
+        return array('paypal_show_logo' => \false, 'cardholder_name' => \false, 'show_card_logos' => \false, 'fastlane_display_watermark' => \false, 'venmo_enabled' => \false, 'paylater_enabled' => \false, 'applepay_validated' => \false, 'capture_on_status_change' => \true, 'applepay_checkout_data_mode' => 'use_wc', 'pui_brand_name' => '', 'pui_logo_url' => '', 'pui_customer_service_instructions' => '');
     }
     /**
      * Saves the model data to WordPress options.
@@ -179,6 +179,13 @@ class PaymentSettings extends \WooCommerce\PayPalCommerce\Settings\Data\Abstract
         return (bool) $this->data['cardholder_name'];
     }
     /**
+     * Whether to show card brand logos in the checkout payment method label.
+     */
+    public function get_show_card_logos(): bool
+    {
+        return (bool) $this->data['show_card_logos'];
+    }
+    /**
      * Get Fastlane display watermark.
      */
     public function get_fastlane_display_watermark(): bool
@@ -212,6 +219,13 @@ class PaymentSettings extends \WooCommerce\PayPalCommerce\Settings\Data\Abstract
     public function set_cardholder_name(bool $value): void
     {
         $this->data['cardholder_name'] = $value;
+    }
+    /**
+     * @see self::get_show_card_logos()
+     */
+    public function set_show_card_logos(bool $value): void
+    {
+        $this->data['show_card_logos'] = $value;
     }
     /**
      * Set Fastlane display watermark.
