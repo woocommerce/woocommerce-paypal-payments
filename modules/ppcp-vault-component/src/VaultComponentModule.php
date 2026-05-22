@@ -40,9 +40,15 @@ class VaultComponentModule implements ServiceModule, ExecutableModule
             assert($endpoint instanceof CreateVaultOrderEndpoint);
             $endpoint->handle_request();
         });
-        add_action('ppcp_end_button_wrapper_ppcp_gateway', static function () {
-            echo '<div id="ppcp-vault-component" style="display:none"></div>';
-        });
+        $vault_injected = \false;
+        add_filter('woocommerce_payment_gateway_get_saved_payment_method_option_html', static function (string $html, WC_Payment_Token $token, $gateway) use (&$vault_injected): string {
+            if ($vault_injected || PayPalGateway::ID !== $gateway->id || !$token instanceof PaymentTokenPayPal) {
+                return $html;
+            }
+            $vault_injected = \true;
+            $html = preg_replace('/<label\b/', '<label style="display:none"', $html, 1);
+            return str_replace('</li>', '<div id="ppcp-vault-component"></div></li>', $html);
+        }, 10, 3);
         add_action('woocommerce_paypal_payments_after_order_processor', function (WC_Order $wc_order, Order $order) {
             $this->maybe_update_token_fi_details($order);
         }, 10, 2);
