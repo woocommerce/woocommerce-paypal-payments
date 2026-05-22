@@ -303,7 +303,7 @@ class SavePaymentMethodsModule implements ServiceModule, ExecutableModule {
 								'subscription_id_to_change_payment' => $is_subscription_change_payment_method_page ? (int) $change_payment_method : 0,
 								'error_message'           => __( 'Could not save payment method.', 'woocommerce-paypal-payments' ),
 								'verification_method'     => $verification_method,
-								'script_attributes'       => array(),
+								'script_attributes'       => (object) array(),
 								'user'                    => array(
 									'is_logged' => is_user_logged_in(),
 								),
