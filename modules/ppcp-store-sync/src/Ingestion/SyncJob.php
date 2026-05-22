@@ -6,7 +6,7 @@ namespace WooCommerce\PayPalCommerce\StoreSync\Ingestion;
 use RuntimeException;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Log\LoggerInterface;
 use JsonException;
-use WooCommerce\PayPalCommerce\StoreSync\Config\StoreCurrencyValue;
+use WooCommerce\PayPalCommerce\StoreSync\Helper\ProductManager;
 /**
  * Represents a sync job for sending product data to the agentic commerce API.
  * This class handles the execution of product synchronization operations,
@@ -20,24 +20,15 @@ class SyncJob
     private string $batch_id;
     private string $api_endpoint;
     private string $merchant_store_url;
-    private StoreCurrencyValue $store_currency;
-    /**
-     * Constructor.
-     *
-     * @param string             $api_endpoint       The API endpoint URL for product synchronization.
-     * @param string             $merchant_store_url Primary key to identify the merchant.
-     * @param array              $product_ids        The product IDs to be synced.
-     * @param LoggerInterface    $logger             The logger instance for logging sync operations.
-     * @param StoreCurrencyValue $store_currency     Store currency resolver.
-     */
-    public function __construct(string $api_endpoint, string $merchant_store_url, array $product_ids, LoggerInterface $logger, StoreCurrencyValue $store_currency)
+    private ProductManager $product_manager;
+    public function __construct(string $api_endpoint, string $merchant_store_url, array $product_ids, LoggerInterface $logger, ProductManager $product_manager)
     {
         $this->api_endpoint = $api_endpoint;
         $this->merchant_store_url = $merchant_store_url;
         $this->product_ids = $product_ids;
         $this->logger = $logger;
         $this->batch_id = wp_generate_uuid4();
-        $this->store_currency = $store_currency;
+        $this->product_manager = $product_manager;
     }
     /**
      * Execute the sync job.
@@ -55,7 +46,7 @@ class SyncJob
     {
         $this->logger->info(sprintf('Agentic Sync Job %s: Started', $this->batch_id));
         // Transform products for API using the factory.
-        $api_products = new \WooCommerce\PayPalCommerce\StoreSync\Ingestion\ProductsPayload($this->merchant_store_url, $this->product_ids, $this->store_currency);
+        $api_products = new \WooCommerce\PayPalCommerce\StoreSync\Ingestion\ProductsPayload($this->merchant_store_url, $this->product_ids, $this->product_manager);
         $api_payload = $api_products->get_array();
         if (empty($api_payload)) {
             $this->logger->info(sprintf('Agentic Sync Job %s: No products', $this->batch_id));

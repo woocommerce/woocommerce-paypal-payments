@@ -109,8 +109,8 @@ return array(
         return new AgenticSessionHandler();
     },
     // Helper services.
-    'agentic.helper.product-manager' => static function (): ProductManager {
-        return new ProductManager();
+    'agentic.helper.product-manager' => static function (ContainerInterface $c): ProductManager {
+        return new ProductManager($c->get('agentic.config.store-currency'));
     },
     'agentic.helper.session-manager' => static function (ContainerInterface $c): AgenticSessionManager {
         return new AgenticSessionManager($c->get('woocommerce.core'));
@@ -187,7 +187,7 @@ return array(
         return new IngestionBatchProvider($c->get('agentic.config.ingestion'));
     },
     'agentic.ingestion-manager' => static function (ContainerInterface $c): IngestionManager {
-        return new IngestionManager($c->get('agentic.config.ingestion'), $c->get('agentic.ingestion-batch-provider'), $c->get('agentic.config.webhook_urls'), $c->get('agentic.merchant.provider'), $c->get('agentic.logger.ingestion'), $c->get('agentic.config.store-currency'));
+        return new IngestionManager($c->get('agentic.config.ingestion'), $c->get('agentic.ingestion-batch-provider'), $c->get('agentic.config.webhook_urls'), $c->get('agentic.merchant.provider'), $c->get('agentic.logger.ingestion'), $c->get('agentic.helper.product-manager'));
     },
     // Settings.
     'agentic.settings.model' => static function (): AgenticSettingsDataModel {

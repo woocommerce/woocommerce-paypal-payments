@@ -7,7 +7,7 @@ use RuntimeException;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\StoreSync\Config\AgenticWebhookConfiguration;
 use WooCommerce\PayPalCommerce\StoreSync\Config\IngestionConfiguration;
-use WooCommerce\PayPalCommerce\StoreSync\Config\StoreCurrencyValue;
+use WooCommerce\PayPalCommerce\StoreSync\Helper\ProductManager;
 use WooCommerce\PayPalCommerce\StoreSync\Merchant\MerchantMetadataProvider;
 use function as_next_scheduled_action;
 use function as_schedule_recurring_action;
@@ -22,15 +22,15 @@ class IngestionManager
     private AgenticWebhookConfiguration $webhook_urls;
     private MerchantMetadataProvider $metadata_provider;
     private LoggerInterface $logger;
-    private StoreCurrencyValue $store_currency;
-    public function __construct(IngestionConfiguration $configuration, \WooCommerce\PayPalCommerce\StoreSync\Ingestion\IngestionBatchProvider $batch_provider, AgenticWebhookConfiguration $webhook_urls, MerchantMetadataProvider $metadata_provider, LoggerInterface $logger, StoreCurrencyValue $store_currency)
+    private ProductManager $product_manager;
+    public function __construct(IngestionConfiguration $configuration, \WooCommerce\PayPalCommerce\StoreSync\Ingestion\IngestionBatchProvider $batch_provider, AgenticWebhookConfiguration $webhook_urls, MerchantMetadataProvider $metadata_provider, LoggerInterface $logger, ProductManager $product_manager)
     {
         $this->configuration = $configuration;
         $this->batch_provider = $batch_provider;
         $this->webhook_urls = $webhook_urls;
         $this->metadata_provider = $metadata_provider;
         $this->logger = $logger;
-        $this->store_currency = $store_currency;
+        $this->product_manager = $product_manager;
     }
     /**
      * Initialize the ingestion manager by registering hooks and scheduling recurring sync.
@@ -115,6 +115,6 @@ class IngestionManager
     private function create_new_sync_job(array $product_ids): \WooCommerce\PayPalCommerce\StoreSync\Ingestion\SyncJob
     {
         $metadata = $this->metadata_provider->get_metadata();
-        return new \WooCommerce\PayPalCommerce\StoreSync\Ingestion\SyncJob($this->webhook_urls->get_product_ingestion_url(), $metadata->store_url, $product_ids, $this->logger, $this->store_currency);
+        return new \WooCommerce\PayPalCommerce\StoreSync\Ingestion\SyncJob($this->webhook_urls->get_product_ingestion_url(), $metadata->store_url, $product_ids, $this->logger, $this->product_manager);
     }
 }

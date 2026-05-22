@@ -36,7 +36,7 @@ class StoreData
         foreach ($cart->items() as $index => $item) {
             $product = $this->product_manager->find_product($item);
             if ($product !== null) {
-                $store_items[] = new \WooCommerce\PayPalCommerce\StoreSync\StoreData\StoreCartItem($index, $item, $product, $this->store_currency);
+                $store_items[] = new \WooCommerce\PayPalCommerce\StoreSync\StoreData\StoreCartItem($index, $item, $product, $this->store_currency, $this->product_manager);
             }
         }
         return new \WooCommerce\PayPalCommerce\StoreSync\StoreData\StorePayPalCart($cart, $validation, $store_items, $this->cart_builder, $this->store_currency);
