@@ -71,24 +71,19 @@ class SettingsModule implements ServiceModule, ExecutableModule
         $loading_screen_service->register();
         add_action('init', fn() => $this->apply_branded_only_limitations($container), 1);
         add_action(
-            'woocommerce_paypal_payments_gateway_migrate_on_update',
+            'woocommerce_paypal_payments_gateway_migrate',
             /**
-             * Auto-trigger settings migration to new UI on plugin update.
+             * Auto-trigger settings migration to new UI when upgrading from a legacy (pre-4.0) version.
              *
-             * This hook executes during plugin updates to automatically migrate existing merchants
-             * from the legacy settings interface to the new settings UI. The migration runs once
-             * per installation.
-             *
-             * Migration process includes:
-             * - Cleaning up legacy UI toggle options (old/new UI preference flags)
-             * - Marking onboarding as completed for existing merchants
-             * - Migrating general settings, styling settings, and payment method configurations
-             * - Syncing gateway states to reflect current settings
-             *
-             * The migration is skipped if:
+             * Migration is skipped when:
+             * - No previous version exists (fresh install — nothing to migrate)
+             * - Previous version is 4.0 or newer (already on the new UI)
              * - OPTION_NAME_MIGRATION_IS_DONE flag is already set (migration completed previously)
              */
-            static function () use ($container): void {
+            static function ($previous_version) use ($container): void {
+                if (!$previous_version || version_compare((string) $previous_version, '4.0', '>=')) {
+                    return;
+                }
                 if (get_option(MigrationManager::OPTION_NAME_MIGRATION_IS_DONE) === '1') {
                     return;
                 }
@@ -239,7 +234,7 @@ class SettingsModule implements ServiceModule, ExecutableModule
             $this->render_content();
         });
         add_action('rest_api_init', static function () use ($container): void {
-            $endpoints = array('onboarding' => $container->get('settings.rest.onboarding'), 'common' => $container->get('settings.rest.common'), 'connect_manual' => $container->get('settings.rest.authentication'), 'login_link' => $container->get('settings.rest.login_link'), 'webhooks' => $container->get('settings.rest.webhooks'), 'refresh_feature_status' => $container->get('settings.rest.refresh_feature_status'), 'payment' => $container->get('settings.rest.payment'), 'settings' => $container->get('settings.rest.settings'), 'styling' => $container->get('settings.rest.styling'), 'todos' => $container->get('settings.rest.todos'), 'pay_later_messaging' => $container->get('settings.rest.pay_later_messaging'), 'features' => $container->get('settings.rest.features'), 'migrate_to_acdc' => $container->get('settings.rest.migrate_to_acdc'));
+            $endpoints = array('onboarding' => $container->get('settings.rest.onboarding'), 'common' => $container->get('settings.rest.common'), 'connect_manual' => $container->get('settings.rest.authentication'), 'login_link' => $container->get('settings.rest.login_link'), 'webhooks' => $container->get('settings.rest.webhooks'), 'refresh_feature_status' => $container->get('settings.rest.refresh_feature_status'), 'payment' => $container->get('settings.rest.payment'), 'settings' => $container->get('settings.rest.settings'), 'styling' => $container->get('settings.rest.styling'), 'todos' => $container->get('settings.rest.todos'), 'pay_later_messaging' => $container->get('settings.rest.pay_later_messaging'), 'features' => $container->get('settings.rest.features'), 'migrate_to_acdc' => $container->get('settings.rest.migrate_to_acdc'), 'agentic_beta_banner' => $container->get('settings.rest.agentic_beta_banner'));
             foreach ($endpoints as $endpoint) {
                 assert($endpoint instanceof RestEndpoint);
                 $endpoint->register_routes();

@@ -310,6 +310,31 @@ class SubscriptionHelper
         return '';
     }
     /**
+     * Whether the cart contains a PayPal-subscription product (subscriptions_api mode).
+     *
+     * @return bool
+     */
+    public function cart_contains_paypal_subscription_product(): bool
+    {
+        if (!$this->plugin_is_active()) {
+            return \false;
+        }
+        $cart = WC()->cart;
+        if (!$cart || empty($cart->cart_contents)) {
+            return \false;
+        }
+        foreach ($cart->get_cart() as $item) {
+            if (!isset($item['data']) || !is_a($item['data'], WC_Product::class)) {
+                continue;
+            }
+            $product = $item['data'];
+            if (in_array($product->get_type(), array('subscription', 'variable-subscription'), \true) && $product->get_meta('_ppcp_enable_subscription_product', \true) === 'yes') {
+                return \true;
+            }
+        }
+        return \false;
+    }
+    /**
      * Checks if any subscription products exist.
      *
      * @return bool

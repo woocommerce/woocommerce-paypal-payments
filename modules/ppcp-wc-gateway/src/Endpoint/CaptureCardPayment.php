@@ -62,20 +62,13 @@ class CaptureCardPayment
      *
      * @throws RuntimeException When request fails.
      */
-    public function create_order(string $vault_id, string $custom_id, string $invoice_id, WC_Order $wc_order): Order
+    public function create_order(string $vault_id, WC_Order $wc_order): Order
     {
         $intent = strtoupper($this->settings_provider->payment_intent()) === 'AUTHORIZE' ? 'AUTHORIZE' : 'CAPTURE';
-        $items = array($this->purchase_unit_factory->from_wc_cart(null, \false, $wc_order->get_payment_method()));
-        // phpcs:disable WordPress.Security.NonceVerification
-        $pay_for_order = wc_clean(wp_unslash($_GET['pay_for_order'] ?? ''));
-        $order_key = wc_clean(wp_unslash($_GET['key'] ?? ''));
-        // phpcs:enable
-        if ($pay_for_order && $order_key === $wc_order->get_order_key()) {
-            $items = array($this->purchase_unit_factory->from_wc_order($wc_order));
-        }
+        $items = array($this->purchase_unit_factory->from_wc_order($wc_order));
         $data = array('intent' => $intent, 'purchase_units' => array_map(static function (PurchaseUnit $item): array {
             return $item->to_array();
-        }, $items), 'payment_source' => array('card' => array('vault_id' => $vault_id, 'stored_credential' => array('payment_initiator' => 'CUSTOMER', 'payment_type' => 'UNSCHEDULED', 'usage' => 'SUBSEQUENT'))), 'custom_id' => $custom_id, 'invoice_id' => $invoice_id);
+        }, $items), 'payment_source' => array('card' => array('vault_id' => $vault_id, 'stored_credential' => array('payment_initiator' => 'CUSTOMER', 'payment_type' => 'UNSCHEDULED', 'usage' => 'SUBSEQUENT'))));
         $bearer = $this->bearer->bearer();
         $url = trailingslashit($this->host) . 'v2/checkout/orders';
         $args = array('method' => 'POST', 'headers' => array('Authorization' => 'Bearer ' . $bearer->token(), 'Content-Type' => 'application/json', 'PayPal-Request-Id' => uniqid('ppcp-', \true)), 'body' => wp_json_encode($data));

@@ -4,7 +4,7 @@ Tags: woocommerce, paypal, payments, ecommerce, credit card
 Requires at least: 6.5
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 4.0.3
+Stable tag: 4.0.4
 License: GPLv2
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -160,6 +160,22 @@ If you encounter issues with the PayPal buttons not appearing after an update, p
 ⚠️ Major Update — This release includes significant changes. Please back up your site before updating.
 
 == Changelog ==
+
+= 4.0.4 - 2026-05-19 =
+* Enhancement - WooCommerce Blueprints integration to import & export the PayPal Payments configuration #4363
+* Enhancement - PayPal redirect gateway now appears on Block checkout for Subscription-type products #4338
+* Enhancement - updated render hooks for Apple Pay & Google Pay buttons on Classic Checkout to be consistent with PayPal #4350
+* Enhancement - Improved error message for reCAPTCHA v2 challenge failures #4342
+* Enhancement - Added ACDC card decline responses to WooCommerce order notes & checkout #4314
+* Fix - Intermittent "Please choose product options..." error when adding variable product to the cart #4315
+* Fix - Placeholder for Pay Later messaging in Block checkout editor when messaging failed to load #4302
+* Fix - Error "Debit & Credit Cards is not available for this order" on Block checkout when buying PayPal Subscription #4351
+* Fix - Unsuccessful payment for PayPal Subscriptions from Block cart & checkout #4343
+* Fix - Branded-only mode persisted after uninstalling the plugin #4337
+* Fix - Wrong payment method displayed on order edit page in some cases #4349
+* Fix - Incorrect asset path for PayPalInsightsLoader.js caused console error #4293
+* Fix - Auto-capture on status change did not work for non-express payments #4352
+* Fix - Things to do next showed "Register Domain for Apple Pay" action item in branded-only mode #4296
 
 = 4.0.3 - 2026-04-27 =
 * Enhancement – consolidate disabled funding sources card decision #4216

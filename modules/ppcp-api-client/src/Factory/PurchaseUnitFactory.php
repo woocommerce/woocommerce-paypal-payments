@@ -173,9 +173,7 @@ class PurchaseUnitFactory
      */
     public function from_paypal_response(\stdClass $data): ?PurchaseUnit
     {
-        if (!isset($data->reference_id) || !is_string($data->reference_id)) {
-            throw new RuntimeException('No reference ID given.');
-        }
+        $reference_id = isset($data->reference_id) && is_string($data->reference_id) ? $data->reference_id : 'default';
         $amount_data = $data->amount ?? null;
         $amount = $this->amount_factory->from_paypal_response($amount_data);
         if (null === $amount) {
@@ -207,7 +205,7 @@ class PurchaseUnitFactory
         } catch (RuntimeException $error) {
             $payments = null;
         }
-        $purchase_unit = new PurchaseUnit($amount, $items, $shipping, $data->reference_id, $description, $custom_id, $invoice_id, $soft_descriptor, $payments);
+        $purchase_unit = new PurchaseUnit($amount, $items, $shipping, $reference_id, $description, $custom_id, $invoice_id, $soft_descriptor, $payments);
         $this->init_purchase_unit($purchase_unit);
         return $purchase_unit;
     }
