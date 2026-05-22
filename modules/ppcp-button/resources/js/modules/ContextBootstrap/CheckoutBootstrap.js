@@ -229,10 +229,7 @@ class CheckoutBootstrap {
 		const hasVaultedPaypal =
 			!! PayPalCommerceGateway.vaulted_paypal_email;
 		const useSmartButtons = this.renderer.useSmartButtons ?? true;
-		const showVaultComponent =
-			!! this.vaultRenderer &&
-			isPaypal &&
-			this.isSavedPayPalTokenSelected();
+		const showVaultComponent = !! this.vaultRenderer && isPaypal;
 
 		const paypalButtonWrappers = {
 			...Object.entries( PayPalCommerceGateway.separate_buttons ).reduce(
@@ -249,7 +246,7 @@ class CheckoutBootstrap {
 				isNotOurGateway ||
 				isSavedCard ||
 				( isPaypal && ! useSmartButtons ) ||
-				showVaultComponent,
+				( showVaultComponent && ! this.isNewPaymentMethodSelected() ),
 			'ppcp-hidden'
 		);
 		setVisible( '.ppcp-vaulted-paypal-details', isPaypal );
@@ -257,10 +254,8 @@ class CheckoutBootstrap {
 			this.gateway.button.wrapper,
 			isPaypal &&
 				! ( isFreeTrial && hasVaultedPaypal ) &&
-				! showVaultComponent
+				this.isNewPaymentMethodSelected()
 		);
-		setVisible( '#ppcp-vault-component', showVaultComponent );
-
 		if ( showVaultComponent && ! this.vaultRenderer.isRendered() ) {
 			this.vaultRenderer.render(
 				( orderID ) => {
@@ -365,6 +360,13 @@ class CheckoutBootstrap {
 			checkedRadio.value &&
 			checkedRadio.value !== 'new'
 		);
+	}
+
+	isNewPaymentMethodSelected() {
+		const checkedRadio = document.querySelector(
+			'input[name="wc-ppcp-gateway-payment-token"]:checked'
+		);
+		return checkedRadio?.value === 'new';
 	}
 
 	injectVaultOrderIdInput( orderID ) {

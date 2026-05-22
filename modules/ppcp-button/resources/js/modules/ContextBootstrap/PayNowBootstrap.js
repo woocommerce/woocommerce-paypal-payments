@@ -1,6 +1,5 @@
 import CheckoutBootstrap from './CheckoutBootstrap';
 import { isChangePaymentPage } from '../Helper/Subscriptions';
-import { setVisible } from '../Helper/Hiding';
 
 class PayNowBootstrap extends CheckoutBootstrap {
 	constructor( gateway, renderer, spinner, errorHandler ) {
@@ -10,7 +9,6 @@ class PayNowBootstrap extends CheckoutBootstrap {
 	updateUi() {
 		if ( isChangePaymentPage() ) {
 			if ( this.vaultRenderer && this.isSavedPayPalTokenSelected() ) {
-				setVisible( '#ppcp-vault-component', true );
 				if ( ! this.vaultRenderer.isRendered() ) {
 					this.vaultRenderer.render(
 						( orderID ) => {
@@ -24,7 +22,6 @@ class PayNowBootstrap extends CheckoutBootstrap {
 					);
 				}
 			} else if ( this.vaultRenderer ) {
-				setVisible( '#ppcp-vault-component', false );
 				this.vaultRenderer.close();
 				this.removeVaultOrderIdInput();
 			}
