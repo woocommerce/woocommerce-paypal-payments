@@ -10,6 +10,7 @@ namespace WooCommerce\PayPalCommerce\StoreSync\StoreData;
 use Mockery;
 use WC_Product;
 use WooCommerce\PayPalCommerce\StoreSync\Config\StoreCurrencyValue;
+use WooCommerce\PayPalCommerce\StoreSync\Helper\ProductManager;
 use WooCommerce\PayPalCommerce\StoreSync\Schema\CartItem;
 use WooCommerce\PayPalCommerce\StoreSync\Schema\Money;
 use WooCommerce\PayPalCommerce\StoreSync\Validation\StoreValidation;
@@ -21,6 +22,8 @@ use function Brain\Monkey\Functions\when;
  */
 class StoreCartItemTest extends StoreSyncTestCase {
 
+	private ProductManager $product_manager;
+
 	public function setUp(): void {
 		parent::setUp();
 		when( 'wc_get_price_excluding_tax' )->alias(
@@ -28,6 +31,11 @@ class StoreCartItemTest extends StoreSyncTestCase {
 				return (float) $product->get_price();
 			}
 		);
+		when( 'wp_strip_all_tags' )->returnArg( 1 );
+
+		$currency              = Mockery::mock( StoreCurrencyValue::class );
+		$currency->allows( 'value' )->andReturn( 'USD' );
+		$this->product_manager = new ProductManager( $currency );
 	}
 
 	// -------------------------------------------------------------------------
@@ -65,6 +73,7 @@ class StoreCartItemTest extends StoreSyncTestCase {
 		$stub = Mockery::mock( WC_Product::class );
 		$stub->allows( 'get_price' )->andReturn( $price_string );
 		$stub->allows( 'get_name' )->andReturn( $name );
+		$stub->allows( 'get_description' )->andReturn( '' );
 		$stub->allows( 'get_short_description' )->andReturn( $short_description );
 		$stub->allows( 'get_parent_id' )->andReturn( $parent_id );
 
@@ -82,6 +91,10 @@ class StoreCartItemTest extends StoreSyncTestCase {
 		$stub->allows( 'value' )->andReturn( $currency );
 
 		return $stub;
+	}
+
+	private function make_product_manager(): ProductManager {
+		return $this->product_manager;
 	}
 
 	/**
@@ -110,7 +123,7 @@ class StoreCartItemTest extends StoreSyncTestCase {
 	public function test_real_price_returns_float_from_product_get_price(): void {
 		$schema  = $this->make_cart_item_schema();
 		$product = $this->make_product( '19.99' );
-		$sut     = new StoreCartItem( 0, $schema, $product, $this->make_currency( 'USD' ) );
+		$sut     = new StoreCartItem( 0, $schema, $product, $this->make_currency( 'USD' ), $this->make_product_manager() );
 
 		$this->assertSame( 19.99, $sut->real_price() );
 	}
@@ -127,7 +140,7 @@ class StoreCartItemTest extends StoreSyncTestCase {
 	public function test_assumed_price_returns_null_when_schema_has_no_price(): void {
 		$schema  = $this->make_cart_item_schema( null );
 		$product = $this->make_product( '9.99' );
-		$sut     = new StoreCartItem( 0, $schema, $product, $this->make_currency( 'USD' ) );
+		$sut     = new StoreCartItem( 0, $schema, $product, $this->make_currency( 'USD' ), $this->make_product_manager() );
 
 		$this->assertNull( $sut->assumed_price_as_money() );
 	}
@@ -141,7 +154,7 @@ class StoreCartItemTest extends StoreSyncTestCase {
 		$money   = $this->make_money( '9.99', 'USD' );
 		$schema  = $this->make_cart_item_schema( $money );
 		$product = $this->make_product( '9.99' );
-		$sut     = new StoreCartItem( 0, $schema, $product, $this->make_currency( 'USD' ) );
+		$sut     = new StoreCartItem( 0, $schema, $product, $this->make_currency( 'USD' ), $this->make_product_manager() );
 
 		$this->assertSame( $money, $sut->assumed_price_as_money() );
 	}
@@ -158,7 +171,7 @@ class StoreCartItemTest extends StoreSyncTestCase {
 	public function test_is_price_correct_returns_true_when_no_assumed_price(): void {
 		$schema  = $this->make_cart_item_schema( null );
 		$product = $this->make_product( '9.99' );
-		$sut     = new StoreCartItem( 0, $schema, $product, $this->make_currency( 'USD' ) );
+		$sut     = new StoreCartItem( 0, $schema, $product, $this->make_currency( 'USD' ), $this->make_product_manager() );
 
 		$this->assertTrue( $sut->is_price_correct() );
 	}
@@ -180,7 +193,7 @@ class StoreCartItemTest extends StoreSyncTestCase {
 		$money   = $this->make_money( $assumed_value, 'USD' );
 		$schema  = $this->make_cart_item_schema( $money );
 		$product = $this->make_product( $product_price );
-		$sut     = new StoreCartItem( 0, $schema, $product, $this->make_currency( 'USD' ) );
+		$sut     = new StoreCartItem( 0, $schema, $product, $this->make_currency( 'USD' ), $this->make_product_manager() );
 
 		$this->assertTrue( $sut->is_price_correct() );
 	}
@@ -211,7 +224,7 @@ class StoreCartItemTest extends StoreSyncTestCase {
 		$money   = $this->make_money( $assumed_value, 'USD' );
 		$schema  = $this->make_cart_item_schema( $money );
 		$product = $this->make_product( $product_price );
-		$sut     = new StoreCartItem( 0, $schema, $product, $this->make_currency( 'USD' ) );
+		$sut     = new StoreCartItem( 0, $schema, $product, $this->make_currency( 'USD' ), $this->make_product_manager() );
 
 		$this->assertFalse( $sut->is_price_correct() );
 	}
@@ -236,7 +249,7 @@ class StoreCartItemTest extends StoreSyncTestCase {
 		$money   = $this->make_money( '0.30', 'USD' );
 		$schema  = $this->make_cart_item_schema( $money );
 		$product = $this->make_product( '0.30' );
-		$sut     = new StoreCartItem( 0, $schema, $product, $this->make_currency( 'USD' ) );
+		$sut     = new StoreCartItem( 0, $schema, $product, $this->make_currency( 'USD' ), $this->make_product_manager() );
 
 		$this->assertTrue( $sut->is_price_correct() );
 	}
@@ -253,7 +266,7 @@ class StoreCartItemTest extends StoreSyncTestCase {
 	public function test_is_currency_correct_returns_true_when_no_assumed_price(): void {
 		$schema  = $this->make_cart_item_schema( null );
 		$product = $this->make_product( '9.99' );
-		$sut     = new StoreCartItem( 0, $schema, $product, $this->make_currency( 'USD' ) );
+		$sut     = new StoreCartItem( 0, $schema, $product, $this->make_currency( 'USD' ), $this->make_product_manager() );
 
 		$this->assertTrue( $sut->is_currency_correct() );
 	}
@@ -267,7 +280,7 @@ class StoreCartItemTest extends StoreSyncTestCase {
 		$money   = $this->make_money( '9.99', 'EUR' );
 		$schema  = $this->make_cart_item_schema( $money );
 		$product = $this->make_product( '9.99' );
-		$sut     = new StoreCartItem( 0, $schema, $product, $this->make_currency( 'EUR' ) );
+		$sut     = new StoreCartItem( 0, $schema, $product, $this->make_currency( 'EUR' ), $this->make_product_manager() );
 
 		$this->assertTrue( $sut->is_currency_correct() );
 	}
@@ -281,7 +294,7 @@ class StoreCartItemTest extends StoreSyncTestCase {
 		$money   = $this->make_money( '9.99', 'USD' );
 		$schema  = $this->make_cart_item_schema( $money );
 		$product = $this->make_product( '9.99' );
-		$sut     = new StoreCartItem( 0, $schema, $product, $this->make_currency( 'EUR' ) );
+		$sut     = new StoreCartItem( 0, $schema, $product, $this->make_currency( 'EUR' ), $this->make_product_manager() );
 
 		$this->assertFalse( $sut->is_currency_correct() );
 	}
@@ -298,7 +311,7 @@ class StoreCartItemTest extends StoreSyncTestCase {
 	public function test_schema_returns_injected_cart_item(): void {
 		$schema  = $this->make_cart_item_schema();
 		$product = $this->make_product( '9.99' );
-		$sut     = new StoreCartItem( 0, $schema, $product, $this->make_currency( 'USD' ) );
+		$sut     = new StoreCartItem( 0, $schema, $product, $this->make_currency( 'USD' ), $this->make_product_manager() );
 
 		$this->assertSame( $schema, $sut->paypal_item() );
 	}
@@ -322,7 +335,7 @@ class StoreCartItemTest extends StoreSyncTestCase {
 			new StoreValidation()
 		);
 		$product = $this->make_product( '12.50' );
-		$sut     = new StoreCartItem( 0, $schema, $product, $this->make_currency( 'USD' ) );
+		$sut     = new StoreCartItem( 0, $schema, $product, $this->make_currency( 'USD' ), $this->make_product_manager() );
 
 		$result = $sut->to_array();
 
@@ -341,7 +354,7 @@ class StoreCartItemTest extends StoreSyncTestCase {
 			new StoreValidation()
 		);
 		$product = $this->make_product( '9.99', 'Real Product Name' );
-		$sut     = new StoreCartItem( 0, $schema, $product, $this->make_currency( 'USD' ) );
+		$sut     = new StoreCartItem( 0, $schema, $product, $this->make_currency( 'USD' ), $this->make_product_manager() );
 
 		$result = $sut->to_array();
 
@@ -356,7 +369,7 @@ class StoreCartItemTest extends StoreSyncTestCase {
 	public function test_to_array_description_present_when_product_has_short_description(): void {
 		$schema  = CartItem::from_array( array( 'quantity' => 1 ), new StoreValidation() );
 		$product = $this->make_product( '9.99', 'Product', 'A fine item.' );
-		$sut     = new StoreCartItem( 0, $schema, $product, $this->make_currency( 'USD' ) );
+		$sut     = new StoreCartItem( 0, $schema, $product, $this->make_currency( 'USD' ), $this->make_product_manager() );
 
 		$result = $sut->to_array();
 
@@ -372,7 +385,7 @@ class StoreCartItemTest extends StoreSyncTestCase {
 	public function test_to_array_description_absent_when_product_has_no_short_description(): void {
 		$schema  = CartItem::from_array( array( 'quantity' => 1 ), new StoreValidation() );
 		$product = $this->make_product( '9.99', 'Product', '' );
-		$sut     = new StoreCartItem( 0, $schema, $product, $this->make_currency( 'USD' ) );
+		$sut     = new StoreCartItem( 0, $schema, $product, $this->make_currency( 'USD' ), $this->make_product_manager() );
 
 		$result = $sut->to_array();
 
@@ -387,7 +400,7 @@ class StoreCartItemTest extends StoreSyncTestCase {
 	public function test_to_array_parent_id_present_as_string_when_product_has_parent(): void {
 		$schema  = CartItem::from_array( array( 'quantity' => 1 ), new StoreValidation() );
 		$product = $this->make_product( '9.99', 'Product', '', 42 );
-		$sut     = new StoreCartItem( 0, $schema, $product, $this->make_currency( 'USD' ) );
+		$sut     = new StoreCartItem( 0, $schema, $product, $this->make_currency( 'USD' ), $this->make_product_manager() );
 
 		$result = $sut->to_array();
 
@@ -403,7 +416,7 @@ class StoreCartItemTest extends StoreSyncTestCase {
 	public function test_to_array_parent_id_absent_when_product_has_no_parent(): void {
 		$schema  = CartItem::from_array( array( 'quantity' => 1 ), new StoreValidation() );
 		$product = $this->make_product( '9.99', 'Product', '', 0 );
-		$sut     = new StoreCartItem( 0, $schema, $product, $this->make_currency( 'USD' ) );
+		$sut     = new StoreCartItem( 0, $schema, $product, $this->make_currency( 'USD' ), $this->make_product_manager() );
 
 		$result = $sut->to_array();
 
@@ -429,7 +442,7 @@ class StoreCartItemTest extends StoreSyncTestCase {
 			new StoreValidation()
 		);
 		$product = $this->make_product( '20.00', 'T-Shirt' );
-		$sut     = new StoreCartItem( 0, $schema, $product, $this->make_currency( 'EUR' ) );
+		$sut     = new StoreCartItem( 0, $schema, $product, $this->make_currency( 'EUR' ), $this->make_product_manager() );
 
 		$result = $sut->to_array();
 
