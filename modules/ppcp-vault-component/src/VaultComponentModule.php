@@ -115,9 +115,10 @@ class VaultComponentModule implements ServiceModule, ExecutableModule {
 		$vault_id      = (string) $primary_token->get_token();
 
 		$localized_script_data['vault_component'] = array(
-			'is_eligible' => true,
-			'token_id'    => $vault_id,
-			'ajax'        => array(
+			'is_eligible'  => true,
+			'token_id'     => $vault_id,
+			'wc_token_id'  => (string) $primary_token->get_id(),
+			'ajax'         => array(
 				'create_order' => array(
 					'endpoint' => \WC_AJAX::get_endpoint( CreateVaultOrderEndpoint::ENDPOINT ),
 					'nonce'    => wp_create_nonce( CreateVaultOrderEndpoint::nonce() ),

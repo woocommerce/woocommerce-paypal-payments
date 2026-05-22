@@ -1,5 +1,25 @@
-import { useEffect, useState, useCallback } from '@wordpress/element';
+import {
+	useEffect,
+	useLayoutEffect,
+	useState,
+	useCallback,
+	createPortal,
+} from '@wordpress/element';
 import { VaultComponent } from './vault-component';
+
+const VAULT_CONTAINER_ID = 'ppcp-vault-component';
+
+const findSavedTokenRow = ( wcTokenId ) => {
+	if ( ! wcTokenId ) {
+		return null;
+	}
+	const input = document.querySelector(
+		`input[name="radio-control-wc-payment-method-saved-tokens"][value="${ wcTokenId }"]`
+	);
+	return (
+		input?.closest( '.wc-block-components-radio-control__option' ) ?? null
+	);
+};
 
 export const PayPalSavedToken = ( {
 	config,
@@ -11,6 +31,7 @@ export const PayPalSavedToken = ( {
 	const { responseTypes } = emitResponse;
 	const [ approvedOrderId, setApprovedOrderId ] = useState( null );
 	const [ vaultRenderFailed, setVaultRenderFailed ] = useState( false );
+	const [ portalTarget, setPortalTarget ] = useState( null );
 
 	const vaultData = config?.scriptData?.vault_component;
 	const isVaultEligible = vaultData?.is_eligible === true;
@@ -46,15 +67,51 @@ export const PayPalSavedToken = ( {
 		[ onPaymentSetup, responseTypes, approvedOrderId ]
 	);
 
-	if ( ! shouldShowVaultComponent ) {
+	useLayoutEffect( () => {
+		if ( ! shouldShowVaultComponent ) {
+			setPortalTarget( null );
+			return undefined;
+		}
+
+		const row = findSavedTokenRow( vaultData?.wc_token_id );
+		if ( ! row ) {
+			setPortalTarget( null );
+			return undefined;
+		}
+
+		const label =
+			row.querySelector(
+				'.wc-block-components-radio-control__option-layout'
+			) ??
+			row.querySelector( '.wc-block-components-radio-control__label' );
+		const previousLabelDisplay = label?.style.display ?? '';
+		if ( label ) {
+			label.style.display = 'none';
+		}
+
+		const container = document.createElement( 'div' );
+		container.id = VAULT_CONTAINER_ID;
+		row.appendChild( container );
+		setPortalTarget( container );
+
+		return () => {
+			if ( label ) {
+				label.style.display = previousLabelDisplay;
+			}
+			container.remove();
+		};
+	}, [ shouldShowVaultComponent, vaultData?.wc_token_id ] );
+
+	if ( ! shouldShowVaultComponent || ! portalTarget ) {
 		return null;
 	}
 
-	return (
+	return createPortal(
 		<VaultComponent
 			config={ config }
 			onApproveOrder={ handleApproveOrder }
 			onRenderError={ handleVaultRenderError }
-		/>
+		/>,
+		portalTarget
 	);
 };
