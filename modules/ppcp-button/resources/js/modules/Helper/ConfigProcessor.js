@@ -7,6 +7,9 @@ const processSdkToken = ( config ) => {
 	if ( config?.user?.is_logged !== true ) {
 		return {};
 	}
+	if ( config?.vault_component?.is_eligible ) {
+		return {};
+	}
 	const userIdToken = config?.save_payment_methods?.id_token;
 	if ( userIdToken ) {
 		return { 'data-user-id-token': userIdToken };
