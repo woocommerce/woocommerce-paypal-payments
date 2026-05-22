@@ -311,8 +311,10 @@ class AgenticCheckoutProcessor {
 
 		$customer = $cart->customer();
 		if ( $customer ) {
-			// Note: name is an array with items 'given_name' and 'surname', which can be string or null.
-			$payer_data['name'] = $customer->name();
+			$customer_name = $customer->name();
+			if ( $customer_name ) {
+				$payer_data['name'] = $customer_name->to_array();
+			}
 
 			if ( $customer->email_address() ) {
 				$payer_data['email_address'] = $customer->email_address();

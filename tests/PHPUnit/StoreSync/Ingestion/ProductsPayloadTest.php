@@ -4,6 +4,7 @@ declare( strict_types = 1 );
 namespace WooCommerce\PayPalCommerce\StoreSync\Ingestion;
 
 use WooCommerce\PayPalCommerce\StoreSync\Config\StoreCurrencyValue;
+use WooCommerce\PayPalCommerce\StoreSync\Helper\ProductManager;
 use WooCommerce\PayPalCommerce\TestCase;
 use WC_Product;
 use WC_Product_Simple;
@@ -17,16 +18,11 @@ use function Brain\Monkey\Functions\when;
  */
 class ProductsPayloadTest extends TestCase {
 
-	/**
-	 * Returns a StoreCurrencyValue stub that yields 'USD'.
-	 *
-	 * @return StoreCurrencyValue|Mockery\MockInterface
-	 */
-	private function make_currency_stub(): StoreCurrencyValue {
-		$stub = Mockery::mock( StoreCurrencyValue::class );
-		$stub->allows( 'value' )->andReturn( 'USD' );
+	private function make_product_manager_stub(): ProductManager {
+		$currency = Mockery::mock( StoreCurrencyValue::class );
+		$currency->allows( 'value' )->andReturn( 'USD' );
 
-		return $stub;
+		return new ProductManager( $currency );
 	}
 
 	public function test_transform_simple_product(): void {
@@ -58,7 +54,7 @@ class ProductsPayloadTest extends TestCase {
 		$payload = new ProductsPayload(
 			'https://example.com',
 			array( $product_id ),
-			$this->make_currency_stub()
+			$this->make_product_manager_stub()
 		);
 		$result  = $payload->get_array();
 
@@ -166,7 +162,7 @@ class ProductsPayloadTest extends TestCase {
 		$payload = new ProductsPayload(
 			'https://example.com',
 			array( $parent_id ),
-			$this->make_currency_stub()
+			$this->make_product_manager_stub()
 		);
 		$result  = $payload->get_array();
 
@@ -239,7 +235,7 @@ class ProductsPayloadTest extends TestCase {
 		$payload = new ProductsPayload(
 			'https://example.com',
 			array( $parent_id ),
-			$this->make_currency_stub()
+			$this->make_product_manager_stub()
 		);
 		$result  = $payload->get_array();
 
@@ -251,7 +247,7 @@ class ProductsPayloadTest extends TestCase {
 
 		$payload = new ProductsPayload( 'https://example.com',
 			array( 999 ),
-			$this->make_currency_stub()
+			$this->make_product_manager_stub()
 		);
 		$result  = $payload->get_array();
 
@@ -262,7 +258,7 @@ class ProductsPayloadTest extends TestCase {
 		$payload = new ProductsPayload(
 			'https://example.com',
 			array(),
-			$this->make_currency_stub()
+			$this->make_product_manager_stub()
 		);
 		$result  = $payload->get_array();
 
@@ -296,7 +292,7 @@ class ProductsPayloadTest extends TestCase {
 		$payload = new ProductsPayload(
 			'https://example.com',
 			array( $product_id ),
-			$this->make_currency_stub()
+			$this->make_product_manager_stub()
 		);
 		$result  = $payload->get_array();
 
@@ -335,7 +331,7 @@ class ProductsPayloadTest extends TestCase {
 		$payload = new ProductsPayload(
 			'https://example.com',
 			array( $product_id ),
-			$this->make_currency_stub()
+			$this->make_product_manager_stub()
 		);
 		$result  = $payload->get_array();
 
@@ -378,7 +374,7 @@ class ProductsPayloadTest extends TestCase {
 			$payload = new ProductsPayload(
 				'https://example.com',
 				array( $product_id ),
-				$this->make_currency_stub()
+				$this->make_product_manager_stub()
 			);
 			$result  = $payload->get_array();
 
@@ -412,7 +408,7 @@ class ProductsPayloadTest extends TestCase {
 		$payload = new ProductsPayload(
 			'https://example.com',
 			array( $product_id ),
-			$this->make_currency_stub()
+			$this->make_product_manager_stub()
 		);
 		$result  = $payload->get_array();
 

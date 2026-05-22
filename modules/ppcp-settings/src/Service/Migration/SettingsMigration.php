@@ -46,6 +46,10 @@ class SettingsMigration implements SettingsMigrationInterface {
 		$this->seller_type_resolver = $seller_type_resolver;
 	}
 
+	public function is_merchant_connected(): bool {
+		return $this->general_settings->is_merchant_connected();
+	}
+
 	public function migrate(): void {
 		if ( empty( $this->settings['client_id'] )
 			|| empty( $this->settings['client_secret'] )

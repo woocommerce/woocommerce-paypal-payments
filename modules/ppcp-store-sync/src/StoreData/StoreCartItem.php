@@ -11,6 +11,7 @@ namespace WooCommerce\PayPalCommerce\StoreSync\StoreData;
 
 use WC_Product;
 use WooCommerce\PayPalCommerce\StoreSync\Config\StoreCurrencyValue;
+use WooCommerce\PayPalCommerce\StoreSync\Helper\ProductManager;
 use WooCommerce\PayPalCommerce\StoreSync\Schema\CartItem;
 use WooCommerce\PayPalCommerce\StoreSync\Schema\Money;
 
@@ -20,12 +21,21 @@ class StoreCartItem {
 	private CartItem $paypal_item;
 	private WC_Product $product;
 	private StoreCurrencyValue $store_currency;
+	private ProductManager $product_manager;
 
-	public function __construct( int $index, CartItem $schema_item, WC_Product $product, StoreCurrencyValue $store_currency ) {
-		$this->index          = $index;
-		$this->paypal_item    = $schema_item;
-		$this->product        = $product;
-		$this->store_currency = $store_currency;
+	public function __construct(
+		int $index,
+		CartItem $schema_item,
+		WC_Product $product,
+		StoreCurrencyValue $store_currency,
+		ProductManager $product_manager
+	) {
+
+		$this->index           = $index;
+		$this->paypal_item     = $schema_item;
+		$this->product         = $product;
+		$this->store_currency  = $store_currency;
+		$this->product_manager = $product_manager;
 	}
 
 	/**
@@ -127,19 +137,20 @@ class StoreCartItem {
 	public function to_array(): array {
 		$data = $this->paypal_item->to_array();
 
-		// WooCommerce always providees the price and product name/description.
+		// WooCommerce always provides the price and product name/description.
 		$data['price'] = $this->real_price_as_money()->to_array();
-		$data['name']  = $this->product->get_name();
+		$data['name']  = $this->product_manager->get_product_title( $this->product );
 
-		// todo: this logic is different from how Ingestion\ProductsPayload defined description.
-		$description = $this->product->get_short_description();
+		$description = $this->product_manager->get_product_description(
+			$this->product,
+			$this->product->get_short_description()
+		);
 		if ( $description ) {
 			$data['description'] = $description;
 		} else {
 			unset( $data['description'] );
 		}
 
-		// todo: Verify this logic matches the ingestion behavior. Extract a common data provider class.
 		$parent_id = $this->product->get_parent_id();
 		if ( $parent_id ) {
 			$data['parent_id'] = (string) $parent_id;
