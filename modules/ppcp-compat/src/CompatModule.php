@@ -86,6 +86,7 @@ class CompatModule implements ServiceModule, ExecutableModule {
 			'woocommerce_paypal_payments_authenticated_merchant',
 			array( $this, 'disable_legacy_paypal_standard_on_connect' )
 		);
+		add_action( 'admin_notices', array( $this, 'maybe_show_wps_subscriptions_notice' ) );
 
 		$this->legacy_ui_card_payment_mapping( $c );
 
@@ -586,45 +587,31 @@ class CompatModule implements ServiceModule, ExecutableModule {
 	 * keeps the IPN handler dormant by clearing _should_load, which prevents residual
 	 * WOOTHEMES_CART BN code volume from appearing in PayPal partner reporting.
 	 *
-	 * Skips the disable (and shows an admin notice instead) when WooCommerce Subscriptions
-	 * detects active subscriptions still billed through PayPal Standard — those renewals
-	 * depend on the IPN endpoint and cannot be silently migrated.
+	 * When WooCommerce Subscriptions detects active subscriptions billed through PayPal Standard
+	 * or the restoration plugin, stores a transient instead of disabling — those renewals
+	 * depend on the IPN endpoint and cannot be silently migrated. The notice is rendered on the
+	 * next admin page load via maybe_show_wps_subscriptions_notice().
 	 */
-	private function disable_legacy_paypal_standard_on_connect(): void {
-		// If WCS is active and the merchant has live PayPal Standard subscriptions,
-		// disabling would break their renewal flow. Show a notice instead.
+	protected function disable_legacy_paypal_standard_on_connect(): void {
 		if ( function_exists( 'wcs_get_subscriptions' ) ) {
-			$active_paypal_subs = wcs_get_subscriptions(
-				array(
-					'payment_method'      => 'paypal',
-					'subscription_status' => array( 'active', 'pending-cancel' ),
-				)
-			);
-
-			if ( ! empty( $active_paypal_subs ) ) {
-				$count = count( $active_paypal_subs );
-				add_action(
-					'admin_notices',
-					static function () use ( $count ) {
-						$subscriptions_url = admin_url( 'edit.php?post_type=shop_subscription&_payment_method=paypal' );
-						printf(
-							'<div class="notice notice-warning"><p>%s</p></div>',
-							wp_kses_post(
-								sprintf(
-									/* translators: 1: number of subscriptions, 2: URL to subscription list */
-									_n(
-										'PayPal Payments is now your active checkout gateway, but <a href="%2$s">%1$d subscription</a> is still billed through the legacy PayPal Standard gateway. Migrate or cancel these subscriptions before disabling PayPal Standard to avoid missed renewals.',
-										'PayPal Payments is now your active checkout gateway, but <a href="%2$s">%1$d subscriptions</a> are still billed through the legacy PayPal Standard gateway. Migrate or cancel these subscriptions before disabling PayPal Standard to avoid missed renewals.',
-										$count,
-										'woocommerce-paypal-payments'
-									),
-									$count,
-									esc_url( $subscriptions_url )
-								)
-							)
-						);
-					}
+			// Check both native WPS and the restoration plugin gateway for active subscriptions.
+			$total_count = 0;
+			foreach ( array( 'paypal', 'restore_paypal_standard' ) as $gateway_id ) {
+				$total_count += count(
+					wcs_get_subscriptions(
+						array(
+							'payment_method'         => $gateway_id,
+							'subscription_status'    => array( 'active', 'pending-cancel' ),
+							'subscriptions_per_page' => -1,
+						)
+					)
 				);
+			}
+
+			if ( $total_count > 0 ) {
+				// Persist count to a transient so the notice survives the AJAX connect request
+				// and appears on the next admin page load.
+				set_transient( 'ppcp_wps_standard_subs_notice', $total_count, 30 * DAY_IN_SECONDS );
 				return;
 			}
 		}
@@ -645,5 +632,37 @@ class CompatModule implements ServiceModule, ExecutableModule {
 			$rpsfw['enabled'] = 'no';
 			update_option( 'woocommerce_restore_paypal_standard_settings', $rpsfw );
 		}
+	}
+
+	/**
+	 * Renders an admin notice when disable_legacy_paypal_standard_on_connect() detected active
+	 * PayPal Standard subscriptions and stored a transient instead of disabling the gateway.
+	 *
+	 * Fires on admin_notices. Uses a transient to bridge the AJAX merchant-connect request
+	 * and the next admin page load.
+	 */
+	protected function maybe_show_wps_subscriptions_notice(): void {
+		$count = get_transient( 'ppcp_wps_standard_subs_notice' );
+		if ( false === $count ) {
+			return;
+		}
+		delete_transient( 'ppcp_wps_standard_subs_notice' );
+		$subscriptions_url = admin_url( 'edit.php?post_type=shop_subscription&payment_method=paypal' );
+		printf(
+			'<div class="notice notice-warning"><p>%s</p></div>',
+			wp_kses_post(
+				sprintf(
+					/* translators: 1: number of subscriptions, 2: URL to subscription list */
+					_n(
+						'PayPal Payments is now your active checkout gateway, but <a href="%2$s">%1$d subscription</a> is still billed through the legacy PayPal Standard gateway. Migrate or cancel these subscriptions before disabling PayPal Standard to avoid missed renewals.',
+						'PayPal Payments is now your active checkout gateway, but <a href="%2$s">%1$d subscriptions</a> are still billed through the legacy PayPal Standard gateway. Migrate or cancel these subscriptions before disabling PayPal Standard to avoid missed renewals.',
+						(int) $count,
+						'woocommerce-paypal-payments'
+					),
+					(int) $count,
+					esc_url( $subscriptions_url )
+				)
+			)
+		);
 	}
 }
