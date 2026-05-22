@@ -217,6 +217,17 @@ class SavePaymentMethodsModule implements ServiceModule, ExecutableModule {
 												$token_id
 											);
 											break;
+										case 'card':
+											$wc_payment_tokens->create_payment_token_card(
+												$wc_order->get_customer_id(),
+												(object) array(
+													'id' => $token_id,
+													'payment_source' => (object) array(
+														'card' => $payment_source->properties(),
+													),
+												)
+											);
+											break;
 										case 'paypal':
 										default:
 											$wc_payment_tokens->create_payment_token_paypal(

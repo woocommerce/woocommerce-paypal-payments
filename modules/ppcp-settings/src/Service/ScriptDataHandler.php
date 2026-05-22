@@ -225,5 +225,7 @@ class ScriptDataHandler {
 		);
 		// Dequeue the PayPal Subscription script.
 		wp_dequeue_script( 'ppcp-paypal-subscription' );
+
+		do_action( 'woocommerce_paypal_payments_settings_scripts_enqueued' );
 	}
 }
