@@ -25,7 +25,7 @@ export const VaultComponent = ( { config, onApproveOrder, onRenderError } ) => {
 		if ( ! vaultSdkPromise ) {
 			const options = {
 				clientId: config.scriptData.client_id,
-				components: 'saved-payment-methods',
+				components: 'saved-payment-methods,buttons',
 				'data-namespace': VAULT_NAMESPACE,
 				'data-sdk-client-token': vaultData.sdk_client_token,
 			};
