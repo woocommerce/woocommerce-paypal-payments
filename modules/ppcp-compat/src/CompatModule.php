@@ -634,5 +634,16 @@ class CompatModule implements ServiceModule, ExecutableModule {
 		$settings['enabled']      = 'no';
 		$settings['_should_load'] = 'no'; // clears the permanent latch; enabled=no alone is insufficient
 		update_option( 'woocommerce_paypal_settings', $settings );
+
+		// Also disable restore-paypal-standard-for-woocommerce if installed.
+		// That plugin registers gateway ID `restore_paypal_standard` with option key
+		// `woocommerce_restore_paypal_standard_settings` — a dark pool that sends no BN code.
+		// enable-standard-paypal-for-woocommerce uses the native `woocommerce_paypal_settings` key
+		// above, so it is already covered by the write above.
+		$rpsfw = get_option( 'woocommerce_restore_paypal_standard_settings', array() );
+		if ( ! empty( $rpsfw ) ) {
+			$rpsfw['enabled'] = 'no';
+			update_option( 'woocommerce_restore_paypal_standard_settings', $rpsfw );
+		}
 	}
 }
