@@ -418,7 +418,7 @@ class LocalAlternativePaymentMethodsModule implements ServiceModule, ExecutableM
     {
         // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         $request_uri = wp_unslash($_SERVER['REQUEST_URI'] ?? '');
-        return str_contains($request_uri, '/wp-json/wc/');
+        return is_string($request_uri) && strpos($request_uri, '/wp-json/wc/') !== \false;
     }
     /**
      * Check if PWC (Pay with Crypto) feature flag is enabled.

@@ -4,7 +4,7 @@
 
 namespace Composer\Autoload;
 
-class ComposerStaticInita39f67516f6df923b6f79368c7def9e4
+class ComposerStaticInit844a779aae516bed9e0beccea9d01fda
 {
     public static $files = array (
         '7b11c4dc42b3b3023073cb14e519683c' => __DIR__ . '/..' . '/ralouphie/getallheaders/src/getallheaders.php',
@@ -24,6 +24,7 @@ class ComposerStaticInita39f67516f6df923b6f79368c7def9e4
             'WooCommerce\\PayPalCommerce\\Vendor\\' => 34,
             'WooCommerce\\PayPalCommerce\\VaultComponent\\' => 42,
             'WooCommerce\\PayPalCommerce\\Uninstall\\' => 37,
+            'WooCommerce\\PayPalCommerce\\StoreSync\\' => 37,
             'WooCommerce\\PayPalCommerce\\StatusReport\\' => 40,
             'WooCommerce\\PayPalCommerce\\Settings\\' => 36,
             'WooCommerce\\PayPalCommerce\\Session\\' => 35,
@@ -52,6 +53,10 @@ class ComposerStaticInita39f67516f6df923b6f79368c7def9e4
         'S' =>
         array (
             'Symfony\\Polyfill\\Php80\\' => 23,
+        ),
+        'F' =>
+        array (
+            'Firebase\\JWT\\' => 13,
         ),
     );
 
@@ -91,6 +96,10 @@ class ComposerStaticInita39f67516f6df923b6f79368c7def9e4
         'WooCommerce\\PayPalCommerce\\Uninstall\\' =>
         array (
             0 => __DIR__ . '/../..' . '/modules/ppcp-uninstall/src',
+        ),
+        'WooCommerce\\PayPalCommerce\\StoreSync\\' =>
+        array (
+            0 => __DIR__ . '/../..' . '/modules/ppcp-store-sync/src',
         ),
         'WooCommerce\\PayPalCommerce\\StatusReport\\' =>
         array (
@@ -192,10 +201,22 @@ class ComposerStaticInita39f67516f6df923b6f79368c7def9e4
         array (
             0 => __DIR__ . '/..' . '/symfony/polyfill-php80',
         ),
+        'Firebase\\JWT\\' =>
+        array (
+            0 => __DIR__ . '/..' . '/firebase/php-jwt/src',
+        ),
     );
 
     public static $classMap = array (
         'Composer\\InstalledVersions' => __DIR__ . '/..' . '/composer/InstalledVersions.php',
+        'Firebase\\JWT\\BeforeValidException' => __DIR__ . '/..' . '/firebase/php-jwt/src/BeforeValidException.php',
+        'Firebase\\JWT\\CachedKeySet' => __DIR__ . '/..' . '/firebase/php-jwt/src/CachedKeySet.php',
+        'Firebase\\JWT\\ExpiredException' => __DIR__ . '/..' . '/firebase/php-jwt/src/ExpiredException.php',
+        'Firebase\\JWT\\JWK' => __DIR__ . '/..' . '/firebase/php-jwt/src/JWK.php',
+        'Firebase\\JWT\\JWT' => __DIR__ . '/..' . '/firebase/php-jwt/src/JWT.php',
+        'Firebase\\JWT\\JWTExceptionWithPayloadInterface' => __DIR__ . '/..' . '/firebase/php-jwt/src/JWTExceptionWithPayloadInterface.php',
+        'Firebase\\JWT\\Key' => __DIR__ . '/..' . '/firebase/php-jwt/src/Key.php',
+        'Firebase\\JWT\\SignatureInvalidException' => __DIR__ . '/..' . '/firebase/php-jwt/src/SignatureInvalidException.php',
         'Stringable' => __DIR__ . '/..' . '/symfony/polyfill-php80/Resources/stubs/Stringable.php',
         'Symfony\\Polyfill\\Php80\\Php80' => __DIR__ . '/..' . '/symfony/polyfill-php80/Php80.php',
         'Symfony\\Polyfill\\Php80\\PhpToken' => __DIR__ . '/..' . '/symfony/polyfill-php80/PhpToken.php',
@@ -542,6 +563,9 @@ class ComposerStaticInita39f67516f6df923b6f79368c7def9e4
         'WooCommerce\\PayPalCommerce\\Settings\\Enum\\InstallationPathEnum' => __DIR__ . '/../..' . '/modules/ppcp-settings/src/Enum/InstallationPathEnum.php',
         'WooCommerce\\PayPalCommerce\\Settings\\Enum\\ProductChoicesEnum' => __DIR__ . '/../..' . '/modules/ppcp-settings/src/Enum/ProductChoicesEnum.php',
         'WooCommerce\\PayPalCommerce\\Settings\\Enum\\SellerTypeEnum' => __DIR__ . '/../..' . '/modules/ppcp-settings/src/Enum/SellerTypeEnum.php',
+        'WooCommerce\\PayPalCommerce\\Settings\\Extension\\ExtensionDataModel' => __DIR__ . '/../..' . '/modules/ppcp-settings/src/Extension/ExtensionDataModel.php',
+        'WooCommerce\\PayPalCommerce\\Settings\\Extension\\ExtensionRestEndpoint' => __DIR__ . '/../..' . '/modules/ppcp-settings/src/Extension/ExtensionRestEndpoint.php',
+        'WooCommerce\\PayPalCommerce\\Settings\\Extension\\ExtensionSettingsModule' => __DIR__ . '/../..' . '/modules/ppcp-settings/src/Extension/ExtensionSettingsModule.php',
         'WooCommerce\\PayPalCommerce\\Settings\\Handler\\ConnectionListener' => __DIR__ . '/../..' . '/modules/ppcp-settings/src/Handler/ConnectionListener.php',
         'WooCommerce\\PayPalCommerce\\Settings\\Service\\AgenticBetaBannerEligibility' => __DIR__ . '/../..' . '/modules/ppcp-settings/src/Service/AgenticBetaBannerEligibility.php',
         'WooCommerce\\PayPalCommerce\\Settings\\Service\\AuthenticationManager' => __DIR__ . '/../..' . '/modules/ppcp-settings/src/Service/AuthenticationManager.php',
@@ -571,6 +595,101 @@ class ComposerStaticInita39f67516f6df923b6f79368c7def9e4
         'WooCommerce\\PayPalCommerce\\Settings\\SettingsModule' => __DIR__ . '/../..' . '/modules/ppcp-settings/src/SettingsModule.php',
         'WooCommerce\\PayPalCommerce\\StatusReport\\Renderer' => __DIR__ . '/../..' . '/modules/ppcp-status-report/src/Renderer.php',
         'WooCommerce\\PayPalCommerce\\StatusReport\\StatusReportModule' => __DIR__ . '/../..' . '/modules/ppcp-status-report/src/StatusReportModule.php',
+        'WooCommerce\\PayPalCommerce\\StoreSync\\Auth\\AuthServiceProvider' => __DIR__ . '/../..' . '/modules/ppcp-store-sync/src/Auth/AuthServiceProvider.php',
+        'WooCommerce\\PayPalCommerce\\StoreSync\\Auth\\JwtAuthService' => __DIR__ . '/../..' . '/modules/ppcp-store-sync/src/Auth/JwtAuthService.php',
+        'WooCommerce\\PayPalCommerce\\StoreSync\\Auth\\PayPalJwkProvider' => __DIR__ . '/../..' . '/modules/ppcp-store-sync/src/Auth/PayPalJwkProvider.php',
+        'WooCommerce\\PayPalCommerce\\StoreSync\\Auth\\SandboxAuthService' => __DIR__ . '/../..' . '/modules/ppcp-store-sync/src/Auth/SandboxAuthService.php',
+        'WooCommerce\\PayPalCommerce\\StoreSync\\CartValidation\\CartValidationProcessor' => __DIR__ . '/../..' . '/modules/ppcp-store-sync/src/CartValidation/CartValidationProcessor.php',
+        'WooCommerce\\PayPalCommerce\\StoreSync\\CartValidation\\CouponValidator\\AppliedCouponsBuilder' => __DIR__ . '/../..' . '/modules/ppcp-store-sync/src/CartValidation/CouponValidator/AppliedCouponsBuilder.php',
+        'WooCommerce\\PayPalCommerce\\StoreSync\\CartValidation\\CouponValidator\\CouponContextBuilder' => __DIR__ . '/../..' . '/modules/ppcp-store-sync/src/CartValidation/CouponValidator/CouponContextBuilder.php',
+        'WooCommerce\\PayPalCommerce\\StoreSync\\CartValidation\\CouponValidator\\CouponResolutionBuilder' => __DIR__ . '/../..' . '/modules/ppcp-store-sync/src/CartValidation/CouponValidator/CouponResolutionBuilder.php',
+        'WooCommerce\\PayPalCommerce\\StoreSync\\CartValidation\\CouponValidator\\CouponValidator' => __DIR__ . '/../..' . '/modules/ppcp-store-sync/src/CartValidation/CouponValidator/CouponValidator.php',
+        'WooCommerce\\PayPalCommerce\\StoreSync\\CartValidation\\CouponValidator\\DiscountCalculator' => __DIR__ . '/../..' . '/modules/ppcp-store-sync/src/CartValidation/CouponValidator/DiscountCalculator.php',
+        'WooCommerce\\PayPalCommerce\\StoreSync\\CartValidation\\CurrencyValidator' => __DIR__ . '/../..' . '/modules/ppcp-store-sync/src/CartValidation/CurrencyValidator.php',
+        'WooCommerce\\PayPalCommerce\\StoreSync\\CartValidation\\InventoryValidator' => __DIR__ . '/../..' . '/modules/ppcp-store-sync/src/CartValidation/InventoryValidator.php',
+        'WooCommerce\\PayPalCommerce\\StoreSync\\CartValidation\\PriceValidator' => __DIR__ . '/../..' . '/modules/ppcp-store-sync/src/CartValidation/PriceValidator.php',
+        'WooCommerce\\PayPalCommerce\\StoreSync\\CartValidation\\ProductValidator' => __DIR__ . '/../..' . '/modules/ppcp-store-sync/src/CartValidation/ProductValidator.php',
+        'WooCommerce\\PayPalCommerce\\StoreSync\\CartValidation\\ShippingValidator' => __DIR__ . '/../..' . '/modules/ppcp-store-sync/src/CartValidation/ShippingValidator.php',
+        'WooCommerce\\PayPalCommerce\\StoreSync\\CartValidation\\ValidatorInterface' => __DIR__ . '/../..' . '/modules/ppcp-store-sync/src/CartValidation/ValidatorInterface.php',
+        'WooCommerce\\PayPalCommerce\\StoreSync\\Config\\AgenticWebhookConfiguration' => __DIR__ . '/../..' . '/modules/ppcp-store-sync/src/Config/AgenticWebhookConfiguration.php',
+        'WooCommerce\\PayPalCommerce\\StoreSync\\Config\\IngestionConfiguration' => __DIR__ . '/../..' . '/modules/ppcp-store-sync/src/Config/IngestionConfiguration.php',
+        'WooCommerce\\PayPalCommerce\\StoreSync\\Config\\StoreCurrencyValue' => __DIR__ . '/../..' . '/modules/ppcp-store-sync/src/Config/StoreCurrencyValue.php',
+        'WooCommerce\\PayPalCommerce\\StoreSync\\Endpoint\\AgenticRestEndpoint' => __DIR__ . '/../..' . '/modules/ppcp-store-sync/src/Endpoint/AgenticRestEndpoint.php',
+        'WooCommerce\\PayPalCommerce\\StoreSync\\Endpoint\\CheckoutEndpoint' => __DIR__ . '/../..' . '/modules/ppcp-store-sync/src/Endpoint/CheckoutEndpoint.php',
+        'WooCommerce\\PayPalCommerce\\StoreSync\\Endpoint\\CreateCartEndpoint' => __DIR__ . '/../..' . '/modules/ppcp-store-sync/src/Endpoint/CreateCartEndpoint.php',
+        'WooCommerce\\PayPalCommerce\\StoreSync\\Endpoint\\GetCartEndpoint' => __DIR__ . '/../..' . '/modules/ppcp-store-sync/src/Endpoint/GetCartEndpoint.php',
+        'WooCommerce\\PayPalCommerce\\StoreSync\\Endpoint\\ReplaceCartEndpoint' => __DIR__ . '/../..' . '/modules/ppcp-store-sync/src/Endpoint/ReplaceCartEndpoint.php',
+        'WooCommerce\\PayPalCommerce\\StoreSync\\Enums\\CheckoutFieldType' => __DIR__ . '/../..' . '/modules/ppcp-store-sync/src/Enums/CheckoutFieldType.php',
+        'WooCommerce\\PayPalCommerce\\StoreSync\\Enums\\ContextBusinessRuleIssue' => __DIR__ . '/../..' . '/modules/ppcp-store-sync/src/Enums/ContextBusinessRuleIssue.php',
+        'WooCommerce\\PayPalCommerce\\StoreSync\\Enums\\ContextDataIssue' => __DIR__ . '/../..' . '/modules/ppcp-store-sync/src/Enums/ContextDataIssue.php',
+        'WooCommerce\\PayPalCommerce\\StoreSync\\Enums\\ContextInventoryIssue' => __DIR__ . '/../..' . '/modules/ppcp-store-sync/src/Enums/ContextInventoryIssue.php',
+        'WooCommerce\\PayPalCommerce\\StoreSync\\Enums\\ContextPaymentIssue' => __DIR__ . '/../..' . '/modules/ppcp-store-sync/src/Enums/ContextPaymentIssue.php',
+        'WooCommerce\\PayPalCommerce\\StoreSync\\Enums\\ContextPricingIssue' => __DIR__ . '/../..' . '/modules/ppcp-store-sync/src/Enums/ContextPricingIssue.php',
+        'WooCommerce\\PayPalCommerce\\StoreSync\\Enums\\ContextShippingIssue' => __DIR__ . '/../..' . '/modules/ppcp-store-sync/src/Enums/ContextShippingIssue.php',
+        'WooCommerce\\PayPalCommerce\\StoreSync\\Enums\\ErrorCode' => __DIR__ . '/../..' . '/modules/ppcp-store-sync/src/Enums/ErrorCode.php',
+        'WooCommerce\\PayPalCommerce\\StoreSync\\Enums\\ErrorType' => __DIR__ . '/../..' . '/modules/ppcp-store-sync/src/Enums/ErrorType.php',
+        'WooCommerce\\PayPalCommerce\\StoreSync\\Enums\\HttpErrorName' => __DIR__ . '/../..' . '/modules/ppcp-store-sync/src/Enums/HttpErrorName.php',
+        'WooCommerce\\PayPalCommerce\\StoreSync\\Enums\\Priority' => __DIR__ . '/../..' . '/modules/ppcp-store-sync/src/Enums/Priority.php',
+        'WooCommerce\\PayPalCommerce\\StoreSync\\Enums\\ResolutionAction' => __DIR__ . '/../..' . '/modules/ppcp-store-sync/src/Enums/ResolutionAction.php',
+        'WooCommerce\\PayPalCommerce\\StoreSync\\Errors\\AgenticError' => __DIR__ . '/../..' . '/modules/ppcp-store-sync/src/Errors/AgenticError.php',
+        'WooCommerce\\PayPalCommerce\\StoreSync\\Errors\\Http\\BadRequestError' => __DIR__ . '/../..' . '/modules/ppcp-store-sync/src/Errors/Http/BadRequestError.php',
+        'WooCommerce\\PayPalCommerce\\StoreSync\\Errors\\Http\\InternalServerError' => __DIR__ . '/../..' . '/modules/ppcp-store-sync/src/Errors/Http/InternalServerError.php',
+        'WooCommerce\\PayPalCommerce\\StoreSync\\Errors\\Http\\NotFoundError' => __DIR__ . '/../..' . '/modules/ppcp-store-sync/src/Errors/Http/NotFoundError.php',
+        'WooCommerce\\PayPalCommerce\\StoreSync\\Errors\\Http\\UnprocessableEntityError' => __DIR__ . '/../..' . '/modules/ppcp-store-sync/src/Errors/Http/UnprocessableEntityError.php',
+        'WooCommerce\\PayPalCommerce\\StoreSync\\Helper\\AgenticCartBuilder' => __DIR__ . '/../..' . '/modules/ppcp-store-sync/src/Helper/AgenticCartBuilder.php',
+        'WooCommerce\\PayPalCommerce\\StoreSync\\Helper\\AgenticCheckoutProcessor' => __DIR__ . '/../..' . '/modules/ppcp-store-sync/src/Helper/AgenticCheckoutProcessor.php',
+        'WooCommerce\\PayPalCommerce\\StoreSync\\Helper\\AgenticSessionManager' => __DIR__ . '/../..' . '/modules/ppcp-store-sync/src/Helper/AgenticSessionManager.php',
+        'WooCommerce\\PayPalCommerce\\StoreSync\\Helper\\PayPalOrderManager' => __DIR__ . '/../..' . '/modules/ppcp-store-sync/src/Helper/PayPalOrderManager.php',
+        'WooCommerce\\PayPalCommerce\\StoreSync\\Helper\\ProductManager' => __DIR__ . '/../..' . '/modules/ppcp-store-sync/src/Helper/ProductManager.php',
+        'WooCommerce\\PayPalCommerce\\StoreSync\\Helper\\ShippingOptionsBuilder' => __DIR__ . '/../..' . '/modules/ppcp-store-sync/src/Helper/ShippingOptionsBuilder.php',
+        'WooCommerce\\PayPalCommerce\\StoreSync\\Ingestion\\IngestionBatchProvider' => __DIR__ . '/../..' . '/modules/ppcp-store-sync/src/Ingestion/IngestionBatchProvider.php',
+        'WooCommerce\\PayPalCommerce\\StoreSync\\Ingestion\\IngestionManager' => __DIR__ . '/../..' . '/modules/ppcp-store-sync/src/Ingestion/IngestionManager.php',
+        'WooCommerce\\PayPalCommerce\\StoreSync\\Ingestion\\ProductsPayload' => __DIR__ . '/../..' . '/modules/ppcp-store-sync/src/Ingestion/ProductsPayload.php',
+        'WooCommerce\\PayPalCommerce\\StoreSync\\Ingestion\\SyncJob' => __DIR__ . '/../..' . '/modules/ppcp-store-sync/src/Ingestion/SyncJob.php',
+        'WooCommerce\\PayPalCommerce\\StoreSync\\Merchant\\MerchantMetadata' => __DIR__ . '/../..' . '/modules/ppcp-store-sync/src/Merchant/MerchantMetadata.php',
+        'WooCommerce\\PayPalCommerce\\StoreSync\\Merchant\\MerchantMetadataProvider' => __DIR__ . '/../..' . '/modules/ppcp-store-sync/src/Merchant/MerchantMetadataProvider.php',
+        'WooCommerce\\PayPalCommerce\\StoreSync\\Registration\\RegistrationEligibility' => __DIR__ . '/../..' . '/modules/ppcp-store-sync/src/Registration/RegistrationEligibility.php',
+        'WooCommerce\\PayPalCommerce\\StoreSync\\Registration\\RegistrationResult' => __DIR__ . '/../..' . '/modules/ppcp-store-sync/src/Registration/RegistrationResult.php',
+        'WooCommerce\\PayPalCommerce\\StoreSync\\Registration\\RegistrationService' => __DIR__ . '/../..' . '/modules/ppcp-store-sync/src/Registration/RegistrationService.php',
+        'WooCommerce\\PayPalCommerce\\StoreSync\\Response\\CartResponse' => __DIR__ . '/../..' . '/modules/ppcp-store-sync/src/Response/CartResponse.php',
+        'WooCommerce\\PayPalCommerce\\StoreSync\\Response\\ResponseFactory' => __DIR__ . '/../..' . '/modules/ppcp-store-sync/src/Response/ResponseFactory.php',
+        'WooCommerce\\PayPalCommerce\\StoreSync\\Schema\\Address' => __DIR__ . '/../..' . '/modules/ppcp-store-sync/src/Schema/Address.php',
+        'WooCommerce\\PayPalCommerce\\StoreSync\\Schema\\AgenticSchema' => __DIR__ . '/../..' . '/modules/ppcp-store-sync/src/Schema/AgenticSchema.php',
+        'WooCommerce\\PayPalCommerce\\StoreSync\\Schema\\AppliedCoupon' => __DIR__ . '/../..' . '/modules/ppcp-store-sync/src/Schema/AppliedCoupon.php',
+        'WooCommerce\\PayPalCommerce\\StoreSync\\Schema\\CartItem' => __DIR__ . '/../..' . '/modules/ppcp-store-sync/src/Schema/CartItem.php',
+        'WooCommerce\\PayPalCommerce\\StoreSync\\Schema\\CartTotals' => __DIR__ . '/../..' . '/modules/ppcp-store-sync/src/Schema/CartTotals.php',
+        'WooCommerce\\PayPalCommerce\\StoreSync\\Schema\\CheckoutField' => __DIR__ . '/../..' . '/modules/ppcp-store-sync/src/Schema/CheckoutField.php',
+        'WooCommerce\\PayPalCommerce\\StoreSync\\Schema\\Coupon' => __DIR__ . '/../..' . '/modules/ppcp-store-sync/src/Schema/Coupon.php',
+        'WooCommerce\\PayPalCommerce\\StoreSync\\Schema\\Customer' => __DIR__ . '/../..' . '/modules/ppcp-store-sync/src/Schema/Customer.php',
+        'WooCommerce\\PayPalCommerce\\StoreSync\\Schema\\CustomerName' => __DIR__ . '/../..' . '/modules/ppcp-store-sync/src/Schema/CustomerName.php',
+        'WooCommerce\\PayPalCommerce\\StoreSync\\Schema\\CustomerPhone' => __DIR__ . '/../..' . '/modules/ppcp-store-sync/src/Schema/CustomerPhone.php',
+        'WooCommerce\\PayPalCommerce\\StoreSync\\Schema\\Errors\\AgenticError' => __DIR__ . '/../..' . '/modules/ppcp-store-sync/src/Schema/Errors/AgenticError.php',
+        'WooCommerce\\PayPalCommerce\\StoreSync\\Schema\\Errors\\AgenticErrorNotFound' => __DIR__ . '/../..' . '/modules/ppcp-store-sync/src/Schema/Errors/AgenticErrorNotFound.php',
+        'WooCommerce\\PayPalCommerce\\StoreSync\\Schema\\GeoCoordinates' => __DIR__ . '/../..' . '/modules/ppcp-store-sync/src/Schema/GeoCoordinates.php',
+        'WooCommerce\\PayPalCommerce\\StoreSync\\Schema\\GiftOptions' => __DIR__ . '/../..' . '/modules/ppcp-store-sync/src/Schema/GiftOptions.php',
+        'WooCommerce\\PayPalCommerce\\StoreSync\\Schema\\Money' => __DIR__ . '/../..' . '/modules/ppcp-store-sync/src/Schema/Money.php',
+        'WooCommerce\\PayPalCommerce\\StoreSync\\Schema\\PayPalCart' => __DIR__ . '/../..' . '/modules/ppcp-store-sync/src/Schema/PayPalCart.php',
+        'WooCommerce\\PayPalCommerce\\StoreSync\\Schema\\PaymentMethod' => __DIR__ . '/../..' . '/modules/ppcp-store-sync/src/Schema/PaymentMethod.php',
+        'WooCommerce\\PayPalCommerce\\StoreSync\\Schema\\ShippingOption' => __DIR__ . '/../..' . '/modules/ppcp-store-sync/src/Schema/ShippingOption.php',
+        'WooCommerce\\PayPalCommerce\\StoreSync\\Session\\AgenticSessionHandler' => __DIR__ . '/../..' . '/modules/ppcp-store-sync/src/Session/AgenticSessionHandler.php',
+        'WooCommerce\\PayPalCommerce\\StoreSync\\Session\\AgenticWcSession' => __DIR__ . '/../..' . '/modules/ppcp-store-sync/src/Session/AgenticWcSession.php',
+        'WooCommerce\\PayPalCommerce\\StoreSync\\Setting\\AgenticSettingsDataModel' => __DIR__ . '/../..' . '/modules/ppcp-store-sync/src/Setting/AgenticSettingsDataModel.php',
+        'WooCommerce\\PayPalCommerce\\StoreSync\\Setting\\AgenticSettingsEndpoint' => __DIR__ . '/../..' . '/modules/ppcp-store-sync/src/Setting/AgenticSettingsEndpoint.php',
+        'WooCommerce\\PayPalCommerce\\StoreSync\\Setting\\AgenticSettingsModule' => __DIR__ . '/../..' . '/modules/ppcp-store-sync/src/Setting/AgenticSettingsModule.php',
+        'WooCommerce\\PayPalCommerce\\StoreSync\\StoreData\\StoreCartItem' => __DIR__ . '/../..' . '/modules/ppcp-store-sync/src/StoreData/StoreCartItem.php',
+        'WooCommerce\\PayPalCommerce\\StoreSync\\StoreData\\StoreData' => __DIR__ . '/../..' . '/modules/ppcp-store-sync/src/StoreData/StoreData.php',
+        'WooCommerce\\PayPalCommerce\\StoreSync\\StoreData\\StorePayPalCart' => __DIR__ . '/../..' . '/modules/ppcp-store-sync/src/StoreData/StorePayPalCart.php',
+        'WooCommerce\\PayPalCommerce\\StoreSync\\StoreSyncModule' => __DIR__ . '/../..' . '/modules/ppcp-store-sync/src/StoreSyncModule.php',
+        'WooCommerce\\PayPalCommerce\\StoreSync\\Validation\\Context\\BusinessRuleErrorContext' => __DIR__ . '/../..' . '/modules/ppcp-store-sync/src/Validation/Context/BusinessRuleErrorContext.php',
+        'WooCommerce\\PayPalCommerce\\StoreSync\\Validation\\Context\\DataErrorContext' => __DIR__ . '/../..' . '/modules/ppcp-store-sync/src/Validation/Context/DataErrorContext.php',
+        'WooCommerce\\PayPalCommerce\\StoreSync\\Validation\\Context\\InventoryIssueContext' => __DIR__ . '/../..' . '/modules/ppcp-store-sync/src/Validation/Context/InventoryIssueContext.php',
+        'WooCommerce\\PayPalCommerce\\StoreSync\\Validation\\Context\\IssueContext' => __DIR__ . '/../..' . '/modules/ppcp-store-sync/src/Validation/Context/IssueContext.php',
+        'WooCommerce\\PayPalCommerce\\StoreSync\\Validation\\Context\\PaymentErrorContext' => __DIR__ . '/../..' . '/modules/ppcp-store-sync/src/Validation/Context/PaymentErrorContext.php',
+        'WooCommerce\\PayPalCommerce\\StoreSync\\Validation\\Context\\PricingErrorContext' => __DIR__ . '/../..' . '/modules/ppcp-store-sync/src/Validation/Context/PricingErrorContext.php',
+        'WooCommerce\\PayPalCommerce\\StoreSync\\Validation\\Context\\ShippingErrorContext' => __DIR__ . '/../..' . '/modules/ppcp-store-sync/src/Validation/Context/ShippingErrorContext.php',
+        'WooCommerce\\PayPalCommerce\\StoreSync\\Validation\\Resolution\\ResolutionOption' => __DIR__ . '/../..' . '/modules/ppcp-store-sync/src/Validation/Resolution/ResolutionOption.php',
+        'WooCommerce\\PayPalCommerce\\StoreSync\\Validation\\StoreValidation' => __DIR__ . '/../..' . '/modules/ppcp-store-sync/src/Validation/StoreValidation.php',
+        'WooCommerce\\PayPalCommerce\\StoreSync\\Validation\\ValidationIssue' => __DIR__ . '/../..' . '/modules/ppcp-store-sync/src/Validation/ValidationIssue.php',
         'WooCommerce\\PayPalCommerce\\Uninstall\\ClearDatabase' => __DIR__ . '/../..' . '/modules/ppcp-uninstall/src/ClearDatabase.php',
         'WooCommerce\\PayPalCommerce\\Uninstall\\UninstallModule' => __DIR__ . '/../..' . '/modules/ppcp-uninstall/src/UninstallModule.php',
         'WooCommerce\\PayPalCommerce\\VaultComponent\\Authentication\\VaultClientToken' => __DIR__ . '/../..' . '/modules/ppcp-vault-component/src/Authentication/VaultClientToken.php',
@@ -743,9 +862,9 @@ class ComposerStaticInita39f67516f6df923b6f79368c7def9e4
     public static function getInitializer(ClassLoader $loader)
     {
         return \Closure::bind(function () use ($loader) {
-            $loader->prefixLengthsPsr4 = ComposerStaticInita39f67516f6df923b6f79368c7def9e4::$prefixLengthsPsr4;
-            $loader->prefixDirsPsr4 = ComposerStaticInita39f67516f6df923b6f79368c7def9e4::$prefixDirsPsr4;
-            $loader->classMap = ComposerStaticInita39f67516f6df923b6f79368c7def9e4::$classMap;
+            $loader->prefixLengthsPsr4 = ComposerStaticInit844a779aae516bed9e0beccea9d01fda::$prefixLengthsPsr4;
+            $loader->prefixDirsPsr4 = ComposerStaticInit844a779aae516bed9e0beccea9d01fda::$prefixDirsPsr4;
+            $loader->classMap = ComposerStaticInit844a779aae516bed9e0beccea9d01fda::$classMap;
 
         }, null, ClassLoader::class);
     }

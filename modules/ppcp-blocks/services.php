@@ -25,7 +25,7 @@ return array('blocks.asset_getter' => static function (ContainerInterface $conta
 }, 'blocks.advanced-card-method' => static function (ContainerInterface $container): \WooCommerce\PayPalCommerce\Blocks\AdvancedCardPaymentMethod {
     return new \WooCommerce\PayPalCommerce\Blocks\AdvancedCardPaymentMethod($container->get('blocks.asset_getter'), $container->get('ppcp.asset-version'), $container->get('wcgateway.credit-card-gateway'), function () use ($container): SmartButtonInterface {
         return $container->get('button.smart-button');
-    }, $container->get('settings.settings-provider'), $container->get('wcgateway.configuration.card-configuration'), $container->get('save-payment-methods.eligible'));
+    }, $container->get('settings.settings-provider'), $container->get('wcgateway.configuration.card-configuration'), $container->get('save-payment-methods.eligible'), $container->get('settings.data.payment'), $container->get('wcgateway.credit-card-icons'));
 }, 'blocks.settings.final_review_enabled' => static function (ContainerInterface $container): bool {
     $settings_provider = $container->get('settings.settings-provider');
     assert($settings_provider instanceof SettingsProvider);

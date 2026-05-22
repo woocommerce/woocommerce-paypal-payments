@@ -141,4 +141,33 @@ class Orders
         }
         return $response;
     }
+    /**
+     * Patch a PayPal order.
+     *
+     * @param string $id PayPal order ID.
+     * @param array  $patch_data The PATCH operations array.
+     * @return array
+     * @throws RuntimeException If something went wrong with the request.
+     * @throws PayPalApiException If something went wrong with the PayPal API request.
+     */
+    public function patch_order(string $id, array $patch_data): array
+    {
+        $bearer = $this->bearer->bearer();
+        $url = trailingslashit($this->host) . 'v2/checkout/orders/' . $id;
+        $args = array('method' => 'PATCH', 'headers' => array('Authorization' => 'Bearer ' . $bearer->token(), 'Content-Type' => 'application/json', 'PayPal-Request-Id' => uniqid('ppcp-', \true)), 'body' => wp_json_encode($patch_data));
+        $response = $this->request($url, $args);
+        if ($response instanceof WP_Error) {
+            throw new RuntimeException($response->get_error_message());
+        }
+        $status_code = (int) wp_remote_retrieve_response_code($response);
+        if ($status_code !== 204) {
+            $body = json_decode($response['body']);
+            $message = $body->details[0]->description ?? '';
+            if ($message) {
+                throw new RuntimeException($message);
+            }
+            throw new PayPalApiException($body, $status_code);
+        }
+        return $response;
+    }
 }

@@ -57,10 +57,6 @@ class MigrationManager implements \WooCommerce\PayPalCommerce\Settings\Service\M
          * - "woocommerce_ppcp-settings-should-use-old-ui" (OPTION_NAME_SHOULD_USE_OLD_UI)
          * - "woocommerce-ppcp-is-new-merchant"
          */
-        $this->onboarding_profile->set_completed(\true);
-        $this->onboarding_profile->set_gateways_refreshed(\true);
-        $this->onboarding_profile->set_gateways_synced(\true, \true);
-        $this->onboarding_profile->save();
         // General settings migration is critical — it resolves the seller type
         // via the PayPal API. If it fails, abort so migration retries on next load.
         try {
@@ -76,6 +72,12 @@ class MigrationManager implements \WooCommerce\PayPalCommerce\Settings\Service\M
             } catch (Exception $error) {
                 $this->logger->warning("Settings migration failed for '{$name}' during transition to new UI", array('error_message' => $error->getMessage(), 'error_code' => $error->getCode(), 'trace' => $error->getTraceAsString()));
             }
+        }
+        if ($this->general_settings_migration->is_merchant_connected()) {
+            $this->onboarding_profile->set_completed(\true);
+            $this->onboarding_profile->set_gateways_refreshed(\true);
+            $this->onboarding_profile->set_gateways_synced(\true, \true);
+            $this->onboarding_profile->save();
         }
         update_option(self::OPTION_NAME_MIGRATION_IS_DONE, \true);
         /**
