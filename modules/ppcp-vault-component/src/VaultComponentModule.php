@@ -74,7 +74,7 @@ class VaultComponentModule implements ServiceModule, ExecutableModule
         }
         $primary_token = reset($paypal_tokens);
         $vault_id = (string) $primary_token->get_token();
-        $localized_script_data['vault_component'] = array('is_eligible' => \true, 'token_id' => $vault_id, 'ajax' => array('create_order' => array('endpoint' => \WC_AJAX::get_endpoint(CreateVaultOrderEndpoint::ENDPOINT), 'nonce' => wp_create_nonce(CreateVaultOrderEndpoint::nonce()))));
+        $localized_script_data['vault_component'] = array('is_eligible' => \true, 'token_id' => $vault_id, 'wc_token_id' => (string) $primary_token->get_id(), 'ajax' => array('create_order' => array('endpoint' => \WC_AJAX::get_endpoint(CreateVaultOrderEndpoint::ENDPOINT), 'nonce' => wp_create_nonce(CreateVaultOrderEndpoint::nonce()))));
         try {
             $client_token = $c->get('vault-component.auth.client-token');
             assert($client_token instanceof VaultClientToken);
