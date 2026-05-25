@@ -328,12 +328,47 @@ export class GooglePayPopup {
 		// Handle 2-step verification (TOTP challenge) if Google presents it.
 		await this.handleTwoFactorIfPresent( totpSecret );
 
-		// Wait until we've left all accounts.google.* domains (handles regional
-		// variants like accounts.google.de that appear after 2FA redirects).
-		await this.page.waitForURL(
-			( url ) => ! url.hostname.includes( 'accounts.google' ),
-			{ timeout: 30_000 }
-		);
+		// After 2FA Google may show additional pages on accounts.google (recovery
+		// prompts, consent dialogs, "Continue" buttons) before redirecting to the
+		// payment flow. Loop until we leave the accounts.google domain, clicking
+		// through any prompts that appear and re-running 2FA handling when needed.
+		const deadline = Date.now() + 90_000;
+		while ( this.page.url().includes( 'accounts.google' ) ) {
+			if ( Date.now() > deadline ) {
+				throw new Error(
+					'Timed out (90 s) waiting to leave accounts.google after sign-in'
+				);
+			}
+			await this.page
+				.waitForLoadState( 'domcontentloaded' )
+				.catch( () => {} );
+			if ( ! this.page.url().includes( 'accounts.google' ) ) break;
+
+			// Re-run 2FA handler in case Google presented a second challenge.
+			await this.handleTwoFactorIfPresent( totpSecret );
+			if ( ! this.page.url().includes( 'accounts.google' ) ) break;
+
+			// Click any "Continue", "Not now", "Skip" etc. prompt if visible.
+			const btn = this.postLoginButton();
+			if (
+				await btn
+					.isVisible( { timeout: 2_000 } )
+					.catch( () => false )
+			) {
+				await btn.click().catch( () => {} );
+				await this.page
+					.waitForLoadState( 'domcontentloaded' )
+					.catch( () => {} );
+				continue;
+			}
+
+			// Wait briefly for a navigation event before polling again.
+			await this.page
+				.waitForURL( ( u ) => u.href !== this.page.url(), {
+					timeout: 3_000,
+				} )
+				.catch( () => {} );
+		}
 		await this.page.waitForLoadState();
 
 		// Save login cookies so the next test run can skip Google sign-in.
