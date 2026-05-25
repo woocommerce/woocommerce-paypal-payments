@@ -182,6 +182,21 @@ export class GooglePayPopup {
 			)
 			.first();
 
+	/** "Try another way" link shown on 2FA challenge pages to switch auth method. */
+	private tryAnotherWayLink = () =>
+		this.page
+			.getByRole( 'link', { name: /try another way/i } )
+			.or( this.page.getByRole( 'button', { name: /try another way/i } ) )
+			.first();
+
+	/** Authenticator-app option shown after clicking "Try another way". */
+	private authenticatorAppOption = () =>
+		this.page
+			.getByRole( 'link', { name: /authenticator app/i } )
+			.or( this.page.getByRole( 'button', { name: /authenticator app/i } ) )
+			.or( this.page.locator( '[data-authtype="33"]' ) )
+			.first();
+
 	/**
 	 * Generates a TOTP code from a base32 secret (RFC 6238, SHA-1, 30 s step, 6 digits).
 	 */
@@ -368,8 +383,48 @@ export class GooglePayPopup {
 			.catch( () => false );
 
 		if ( ! hasTotpInput ) {
-			// Google is resolving the challenge via another method (e.g. device
-			// approval). Wait for navigation away from all accounts.google.* pages.
+			// Google may be defaulting to device-approval or another 2FA method.
+			// If we have a TOTP secret, try switching to the authenticator app via
+			// "Try another way" before falling back to waiting for device approval.
+			if ( totpSecret ) {
+				const canTryAnother = await this.tryAnotherWayLink()
+					.waitFor( { state: 'visible', timeout: 5_000 } )
+					.then( () => true )
+					.catch( () => false );
+
+				if ( canTryAnother ) {
+					await this.tryAnotherWayLink().click();
+					await this.page
+						.waitForLoadState( 'domcontentloaded' )
+						.catch( () => {} );
+
+					const hasAuthenticator = await this.authenticatorAppOption()
+						.waitFor( { state: 'visible', timeout: 5_000 } )
+						.then( () => true )
+						.catch( () => false );
+
+					if ( hasAuthenticator ) {
+						await this.authenticatorAppOption().click();
+						await this.page
+							.waitForLoadState( 'domcontentloaded' )
+							.catch( () => {} );
+
+						const hasTotpNow = await this.totpInput()
+							.waitFor( { state: 'visible', timeout: 8_000 } )
+							.then( () => true )
+							.catch( () => false );
+
+						if ( hasTotpNow ) {
+							const code = GooglePayPopup.generateTOTP( totpSecret );
+							await this.totpInput().fill( code );
+							await this.nextButton().click();
+							return;
+						}
+					}
+				}
+			}
+
+			// No TOTP path available — wait for device approval or other auto-navigation.
 			await this.page
 				.waitForURL( ( u ) => ! isOnAccountsGoogle( u.href ), {
 					timeout: 30_000,
