@@ -4,8 +4,8 @@ declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\Compat\Tests;
 
-use PHPUnit\Framework\MockObject\MockObject;
-use PHPUnit\Framework\TestCase;
+use function Brain\Monkey\Functions\when;
+use WooCommerce\PayPalCommerce\TestCase;
 use WooCommerce\PayPalCommerce\Compat\CompatModule;
 
 /**
@@ -29,17 +29,78 @@ class TestableCompatModule extends CompatModule {
  */
 class DisableLegacyPaypalStandardTest extends TestCase {
 
-	/** @var TestableCompatModule */
 	private TestableCompatModule $sut;
 
-	protected function setUp(): void {
-		parent::setUp();
-		$this->sut = new TestableCompatModule();
+	/** In-memory option store — shared with Brain\Monkey closures via reference. */
+	private array $options = [];
 
-		// Reset option state between tests.
-		delete_option( 'woocommerce_paypal_settings' );
-		delete_option( 'woocommerce_restore_paypal_standard_settings' );
-		delete_transient( 'ppcp_wps_standard_subs_notice' );
+	/** In-memory transient store — shared with Brain\Monkey closures via reference. */
+	private array $transients = [];
+
+	public function setUp(): void {
+		parent::setUp(); // initialises Brain\Monkey + registers project-wide stubs
+
+		$this->options    = [];
+		$this->transients = [];
+
+		// Capture by reference so closures see the same array that the test mutates.
+		$options    = &$this->options;
+		$transients = &$this->transients;
+
+		// Stateful option stubs — override the project TestCase's simpler stubs.
+		when( 'get_option' )->alias(
+			static function ( $key, $default = false ) use ( &$options ) {
+				return $options[ $key ] ?? $default;
+			}
+		);
+		when( 'update_option' )->alias(
+			static function ( $key, $value ) use ( &$options ) {
+				$options[ $key ] = $value;
+				return true;
+			}
+		);
+		when( 'delete_option' )->alias(
+			static function ( $key ) use ( &$options ) {
+				unset( $options[ $key ] );
+				return true;
+			}
+		);
+
+		// Stateful transient stubs — override the project TestCase's returnArg stubs.
+		when( 'get_transient' )->alias(
+			static function ( $key ) use ( &$transients ) {
+				return $transients[ $key ] ?? false;
+			}
+		);
+		when( 'set_transient' )->alias(
+			static function ( $key, $value, $ttl = 0 ) use ( &$transients ) {
+				$transients[ $key ] = $value;
+				return true;
+			}
+		);
+		when( 'delete_transient' )->alias(
+			static function ( $key ) use ( &$transients ) {
+				unset( $transients[ $key ] );
+				return true;
+			}
+		);
+
+		when( 'admin_url' )->alias(
+			static function ( $path = '' ) {
+				return 'http://example.com/wp-admin/' . ltrim( $path, '/' );
+			}
+		);
+		when( '_n' )->alias(
+			static function ( $single, $plural, $n, $domain = '' ) {
+				return ( (int) $n === 1 ) ? $single : $plural;
+			}
+		);
+
+		if ( ! defined( 'DAY_IN_SECONDS' ) ) {
+			define( 'DAY_IN_SECONDS', 86400 );
+		}
+
+		$this->sut = new TestableCompatModule();
 	}
 
 	// ── disable_legacy_paypal_standard_on_connect ──────────────────────────
@@ -52,7 +113,6 @@ class DisableLegacyPaypalStandardTest extends TestCase {
 	 * THEN  WPS is disabled unconditionally (both enabled and _should_load set to 'no')
 	 */
 	public function test_disables_wps_when_wcs_not_installed(): void {
-		// function_exists('wcs_get_subscriptions') returns false in this env.
 		update_option( 'woocommerce_paypal_settings', array( 'enabled' => 'yes', '_should_load' => 'yes' ) );
 
 		$this->sut->call_disable_legacy_paypal_standard_on_connect();
@@ -77,7 +137,6 @@ class DisableLegacyPaypalStandardTest extends TestCase {
 
 		update_option( 'woocommerce_paypal_settings', array( 'enabled' => 'yes', '_should_load' => 'yes' ) );
 
-		// wcs_get_subscriptions returns empty for both gateway IDs.
 		$this->sut->call_disable_legacy_paypal_standard_on_connect();
 
 		$settings = get_option( 'woocommerce_paypal_settings' );
@@ -99,17 +158,14 @@ class DisableLegacyPaypalStandardTest extends TestCase {
 			$this->markTestSkipped( 'WooCommerce Subscriptions not available.' );
 		}
 
-		// Seed WCS with active native PayPal subscriptions.
 		$this->seed_wcs_subscriptions( 'paypal', $count );
 		update_option( 'woocommerce_paypal_settings', array( 'enabled' => 'yes', '_should_load' => 'yes' ) );
 
 		$this->sut->call_disable_legacy_paypal_standard_on_connect();
 
-		// Transient must be set.
 		$stored = get_transient( 'ppcp_wps_standard_subs_notice' );
 		$this->assertSame( $count, (int) $stored );
 
-		// Options must NOT be touched.
 		$settings = get_option( 'woocommerce_paypal_settings' );
 		$this->assertSame( 'yes', $settings['enabled'] );
 	}
@@ -117,7 +173,7 @@ class DisableLegacyPaypalStandardTest extends TestCase {
 	/** @return array<string, array{int}> */
 	public static function active_native_paypal_sub_counts(): array {
 		return array(
-			'one subscription'      => array( 1 ),
+			'one subscription'       => array( 1 ),
 			'multiple subscriptions' => array( 5 ),
 		);
 	}
@@ -125,7 +181,7 @@ class DisableLegacyPaypalStandardTest extends TestCase {
 	/**
 	 * @test
 	 *
-	 * GIVEN WCS is active with an active restore_paypal_standard subscription (no native WPS subs)
+	 * GIVEN WCS is active with active restore_paypal_standard subscriptions (no native WPS subs)
 	 * WHEN  the merchant connects PPCP
 	 * THEN  WPS is NOT disabled and a transient is stored
 	 */
@@ -144,6 +200,27 @@ class DisableLegacyPaypalStandardTest extends TestCase {
 
 		$settings = get_option( 'woocommerce_paypal_settings' );
 		$this->assertSame( 'yes', $settings['enabled'] );
+	}
+
+	/**
+	 * @test
+	 *
+	 * GIVEN WCS has active subs on both gateway IDs (2 native + 3 restoration)
+	 * WHEN  the merchant connects PPCP
+	 * THEN  the transient count is the sum across both gateways (5)
+	 */
+	public function test_transient_count_aggregates_both_gateway_ids(): void {
+		if ( ! function_exists( 'wcs_get_subscriptions' ) ) {
+			$this->markTestSkipped( 'WooCommerce Subscriptions not available.' );
+		}
+
+		$this->seed_wcs_subscriptions( 'paypal', 2 );
+		$this->seed_wcs_subscriptions( 'restore_paypal_standard', 3 );
+		update_option( 'woocommerce_paypal_settings', array( 'enabled' => 'yes', '_should_load' => 'yes' ) );
+
+		$this->sut->call_disable_legacy_paypal_standard_on_connect();
+
+		$this->assertSame( 5, (int) get_transient( 'ppcp_wps_standard_subs_notice' ) );
 	}
 
 	/**
@@ -216,16 +293,32 @@ class DisableLegacyPaypalStandardTest extends TestCase {
 
 		$this->assertStringContainsString( 'notice notice-warning', $output );
 		$this->assertStringContainsString( $expected_fragment, $output );
-		// Transient must be deleted after display.
 		$this->assertFalse( get_transient( 'ppcp_wps_standard_subs_notice' ) );
 	}
 
 	/** @return array<string, array{int, string}> */
 	public static function subscription_count_notice_cases(): array {
 		return array(
-			'singular — 1 subscription'  => array( 1, '1 subscription</a> is still billed' ),
-			'plural — 5 subscriptions'   => array( 5, '5 subscriptions</a> are still billed' ),
+			'singular — 1 subscription' => array( 1, '1 subscription</a> is still billed' ),
+			'plural — 5 subscriptions'  => array( 5, '5 subscriptions</a> are still billed' ),
 		);
+	}
+
+	/**
+	 * @test
+	 *
+	 * GIVEN a subscription count transient is set
+	 * WHEN  admin_notices fires
+	 * THEN  the notice URL links to all subscriptions, not just native WPS
+	 */
+	public function test_notice_url_links_to_all_subscriptions_not_just_native_wps(): void {
+		set_transient( 'ppcp_wps_standard_subs_notice', 3, 30 * DAY_IN_SECONDS );
+
+		$output = $this->sut->call_maybe_show_wps_subscriptions_notice();
+
+		$this->assertStringContainsString( 'post_type=shop_subscription', $output );
+		// URL must NOT filter by payment_method — it would hide restore_paypal_standard subs.
+		$this->assertStringNotContainsString( 'payment_method=', $output );
 	}
 
 	// ── helpers ───────────────────────────────────────────────────────────

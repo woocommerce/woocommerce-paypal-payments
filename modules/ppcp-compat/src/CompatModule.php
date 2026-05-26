@@ -594,21 +594,38 @@ class CompatModule implements ServiceModule, ExecutableModule {
 	 */
 	protected function disable_legacy_paypal_standard_on_connect(): void {
 		if ( function_exists( 'wcs_get_subscriptions' ) ) {
-			// Check both native WPS and the restoration plugin gateway for active subscriptions.
-			$total_count = 0;
-			foreach ( array( 'paypal', 'restore_paypal_standard' ) as $gateway_id ) {
-				$total_count += count(
-					wcs_get_subscriptions(
-						array(
-							'payment_method'         => $gateway_id,
-							'subscription_status'    => array( 'active', 'pending-cancel' ),
-							'subscriptions_per_page' => -1,
-						)
+			$gateway_ids = array( 'paypal', 'restore_paypal_standard' );
+
+			// Existence check first: limit-1 avoids loading all subscription objects into memory
+			// on stores with no active WPS subs (the common path after PPCP onboarding).
+			$has_subs = false;
+			foreach ( $gateway_ids as $gateway_id ) {
+				if ( ! empty( wcs_get_subscriptions(
+					array(
+						'payment_method'         => $gateway_id,
+						'subscription_status'    => array( 'active', 'pending-cancel' ),
+						'subscriptions_per_page' => 1,
 					)
-				);
+				) ) ) {
+					$has_subs = true;
+					break;
+				}
 			}
 
-			if ( $total_count > 0 ) {
+			if ( $has_subs ) {
+				// At least one sub found — do a full count for the notice (runs only when needed).
+				$total_count = 0;
+				foreach ( $gateway_ids as $gateway_id ) {
+					$total_count += count(
+						wcs_get_subscriptions(
+							array(
+								'payment_method'         => $gateway_id,
+								'subscription_status'    => array( 'active', 'pending-cancel' ),
+								'subscriptions_per_page' => -1,
+							)
+						)
+					);
+				}
 				// Persist count to a transient so the notice survives the AJAX connect request
 				// and appears on the next admin page load.
 				set_transient( 'ppcp_wps_standard_subs_notice', $total_count, 30 * DAY_IN_SECONDS );
@@ -647,7 +664,7 @@ class CompatModule implements ServiceModule, ExecutableModule {
 			return;
 		}
 		delete_transient( 'ppcp_wps_standard_subs_notice' );
-		$subscriptions_url = admin_url( 'edit.php?post_type=shop_subscription&payment_method=paypal' );
+		$subscriptions_url = admin_url( 'edit.php?post_type=shop_subscription' );
 		printf(
 			'<div class="notice notice-warning"><p>%s</p></div>',
 			wp_kses_post(
