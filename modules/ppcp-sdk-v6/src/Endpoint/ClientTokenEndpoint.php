@@ -11,8 +11,11 @@ namespace WooCommerce\PayPalCommerce\SdkV6\Endpoint;
 
 use Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\ApiClient\Authentication\SdkClientToken;
+use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
+use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\Button\Endpoint\EndpointInterface;
 use WooCommerce\PayPalCommerce\Button\Endpoint\RequestData;
+use WooCommerce\PayPalCommerce\Button\Exception\NonceValidationException;
 use WooCommerce\PayPalCommerce\SdkV6\Helper\RateLimiter;
 
 /**
@@ -27,28 +30,28 @@ class ClientTokenEndpoint implements EndpointInterface {
 	 *
 	 * @var RequestData
 	 */
-	private RequestData $request_data; // @phpstan-ignore property.onlyWritten
+	private RequestData $request_data;
 
 	/**
 	 * The logger.
 	 *
 	 * @var LoggerInterface
 	 */
-	private LoggerInterface $logger; // @phpstan-ignore property.onlyWritten
+	private LoggerInterface $logger;
 
 	/**
 	 * The SDK client token generator.
 	 *
 	 * @var SdkClientToken
 	 */
-	private SdkClientToken $sdk_client_token; // @phpstan-ignore property.onlyWritten
+	private SdkClientToken $sdk_client_token;
 
 	/**
 	 * The rate limiter.
 	 *
 	 * @var RateLimiter
 	 */
-	private RateLimiter $rate_limiter; // @phpstan-ignore property.onlyWritten
+	private RateLimiter $rate_limiter;
 
 	/**
 	 * ClientTokenEndpoint constructor.
@@ -81,6 +84,36 @@ class ClientTokenEndpoint implements EndpointInterface {
 	 * {@inheritDoc}
 	 */
 	public function handle_request(): void {
-		wp_send_json_error( 'Not implemented.', 501 );
+		try {
+			$this->request_data->read_request( $this->nonce() );
+		} catch ( NonceValidationException $error ) {
+			wp_send_json_error( array( 'message' => $error->getMessage() ), 400 );
+		}
+
+		if ( $this->rate_limiter->is_limited() ) {
+			$this->logger->warning( 'SDK v6 client token rate limit exceeded.' );
+			wp_send_json_error(
+				array( 'message' => 'Rate limit exceeded. Please try again later.' ),
+				429
+			);
+		}
+
+		$this->rate_limiter->hit();
+
+		try {
+			$token = $this->sdk_client_token->sdk_client_token();
+
+			wp_send_json_success(
+				array(
+					'client_token' => $token,
+				)
+			);
+		} catch ( PayPalApiException $exception ) {
+			$this->logger->error( 'SDK v6 client token PayPal API error: ' . $exception->getMessage() );
+			wp_send_json_error( array( 'message' => 'Failed to generate client token.' ), 500 );
+		} catch ( RuntimeException $exception ) {
+			$this->logger->error( 'SDK v6 client token runtime error: ' . $exception->getMessage() );
+			wp_send_json_error( array( 'message' => 'Failed to generate client token.' ), 500 );
+		}
 	}
 }
