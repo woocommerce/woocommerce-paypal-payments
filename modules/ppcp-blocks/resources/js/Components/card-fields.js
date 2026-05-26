@@ -101,7 +101,7 @@ export function CardFields( { config, eventRegistration, emitResponse } ) {
 					{ config.name_on_card === 'yes' && (
 						<PayPalNameField
 							placeholder={ __(
-								'Cardholder Name (optional)',
+								'Cardholder Name as shown on card',
 								'woocommerce-paypal-payments'
 							) }
 						/>
