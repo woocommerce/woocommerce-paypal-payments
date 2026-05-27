@@ -20,7 +20,7 @@
 		margin: 0 0 24px 0;
 	}
 
-	.client-id-error {
+	.manual-credentials-error {
 		@include font(11, 16, 450);
 		margin: -16px 0 24px;
 		color: var(--color-error);

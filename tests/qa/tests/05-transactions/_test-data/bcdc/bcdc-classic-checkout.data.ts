@@ -22,7 +22,7 @@ const merchant = merchants.mexico;
 export const bcdcClassicCheckout: ShopOrder[] = [
 	{
 		// https://inpsyde.atlassian.net/browse/PCP-1211
-		title: 'PCP-1211 | Transaction - Classic checkout - BCDC - Default order @Critical',
+		title: 'PCP-1211 | Transaction - Classic checkout - BCDC - Default order @Critical @Smoke',
 		...orders.default,
 		payment: payments.bcdc,
 		customer: guest,

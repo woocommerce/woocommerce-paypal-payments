@@ -1018,7 +1018,11 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
 				if ( ! $order->get_meta( PayPalGateway::ORDER_ID_META_KEY ) ) {
 					return;
 				}
-				if ( $order->get_payment_method() === PayPalGateway::ID ) {
+				$payment_method = $order->get_payment_method();
+				if ( $payment_method && strpos( $payment_method, 'ppcp-' ) === 0 ) {
+					return;
+				}
+				if ( $order->get_payment_method() === CreditCardGateway::ID ) {
 					return;
 				}
 				$order->set_payment_method( PayPalGateway::ID );

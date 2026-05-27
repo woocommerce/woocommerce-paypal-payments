@@ -74,24 +74,20 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 		add_action( 'init', fn() => $this->apply_branded_only_limitations( $container ), 1 );
 
 		add_action(
-			'woocommerce_paypal_payments_gateway_migrate_on_update',
+			'woocommerce_paypal_payments_gateway_migrate',
 			/**
-			 * Auto-trigger settings migration to new UI on plugin update.
+			 * Auto-trigger settings migration to new UI when upgrading from a legacy (pre-4.0) version.
 			 *
-			 * This hook executes during plugin updates to automatically migrate existing merchants
-			 * from the legacy settings interface to the new settings UI. The migration runs once
-			 * per installation.
-			 *
-			 * Migration process includes:
-			 * - Cleaning up legacy UI toggle options (old/new UI preference flags)
-			 * - Marking onboarding as completed for existing merchants
-			 * - Migrating general settings, styling settings, and payment method configurations
-			 * - Syncing gateway states to reflect current settings
-			 *
-			 * The migration is skipped if:
+			 * Migration is skipped when:
+			 * - No previous version exists (fresh install — nothing to migrate)
+			 * - Previous version is 4.0 or newer (already on the new UI)
 			 * - OPTION_NAME_MIGRATION_IS_DONE flag is already set (migration completed previously)
 			 */
-			static function () use ( $container ): void {
+			static function ( $previous_version ) use ( $container ): void {
+				if ( ! $previous_version || version_compare( (string) $previous_version, '4.0', '>=' ) ) {
+					return;
+				}
+
 				if ( get_option( MigrationManager::OPTION_NAME_MIGRATION_IS_DONE ) === '1' ) {
 					return;
 				}

@@ -8,22 +8,21 @@ const customer = customers.usa;
 const { payPal, acdc } = payments;
 const acdc2 = { ...acdc, card: cards.visa2 };
 
-test.beforeAll( async ( { utils, wooCommerceApi } ) => {
+test.beforeAll( async ( { utils } ) => {
 	await utils.configureStore( { enableClassicPages: true } );
-	await wooCommerceApi.deleteAllOrders();
 } );
 
 const savePaymentMethodData = [
 	{
 		// https://inpsyde.atlassian.net/browse/PCP-4499
 		testKey: 'PCP-4499',
-		testLabel: ' @Dev',
+		testLabel: ' @Smoke',
 		payment: payPal,
 	},
 	{
 		// https://inpsyde.atlassian.net/browse/PCP-4500
 		testKey: 'PCP-4500',
-		testLabel: ' @Dev',
+		testLabel: ' @Smoke',
 		payment: acdc,
 	},
 ];

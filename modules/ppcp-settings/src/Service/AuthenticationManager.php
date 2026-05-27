@@ -182,8 +182,8 @@ class AuthenticationManager {
 			throw new RuntimeException( 'No client ID provided.' );
 		}
 
-		// Exactly 80 alphanumeric, underscore, or hyphen characters.
-		if ( 1 !== preg_match( '/^[\w-]{80}$/', $client_id ) ) {
+		// 70-90 alphanumeric, underscore, or hyphen characters.
+		if ( 1 !== preg_match( '/^[\w-]{70,90}$/', $client_id ) ) {
 			throw new RuntimeException( 'Invalid client ID provided.' );
 		}
 
@@ -191,8 +191,8 @@ class AuthenticationManager {
 			throw new RuntimeException( 'No client secret provided.' );
 		}
 
-		// Exactly 80 alphanumeric, underscore, or hyphen characters.
-		if ( 1 !== preg_match( '/^[\w-]{80}$/', $client_secret ) ) {
+		// 70-90 alphanumeric, underscore, or hyphen characters.
+		if ( 1 !== preg_match( '/^[\w-]{70,90}$/', $client_secret ) ) {
 			throw new RuntimeException( 'Invalid client secret provided.' );
 		}
 	}

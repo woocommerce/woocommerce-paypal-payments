@@ -193,13 +193,14 @@ Local usage of _automated env setup scripts_ assumes that the following steps ar
 
 ### Script naming convention
 
-Scripts follow a three-tier naming pattern:
+Scripts follow a naming pattern:
 
-| Prefix | Meaning | Example |
-|---|---|---|
-| `e2e:env:reset` | Reset only env + WooCommerce | `npm run e2e:env:reset` |
-| `e2e:env:reset:pcp:*` | Reset env + PCP setup (single run) | `npm run e2e:env:reset:pcp:usa` |
-| `e2e:env:setup:*` | PCP/config setup only, no reset | `npm run e2e:env:setup:pcp:usa` |
+| Prefix 				| Meaning 											| Example 							|
+|-----------------------|---------------------------------------------------|-----------------------------------|
+| `e2e:env:reset` 		| Reset only env 									| `npm run e2e:env:reset`	 		|
+| `e2e:env:reset:wc` 	| Reset only env + WooCommerce						| `npm run e2e:env:reset:wc`		|
+| `e2e:env:reset:pcp:*` | Reset env + WooCommerce + PCP setup (single run) 	| `npm run e2e:env:reset:pcp:usa` 	|
+| `e2e:env:setup:*` 	| PCP/config setup only, no reset 					| `npm run e2e:env:setup:pcp:usa` 	|
 
 ### Reset env and WooCommerce setup
 
@@ -222,7 +223,11 @@ Scripts follow a three-tier naming pattern:
     - Registered US customer
 
 ```bash
-npm run e2e:env:reset
+# Reset env only
+npm run env:reset
+
+# Reset env, WooCommerce
+npm run env:reset:wc
 ```
 
 __WooCommerce setup only (no SSH reset):__
@@ -238,21 +243,21 @@ npm run e2e:env:setup:wc
 
 __For USA__ — PCP + connected US merchant + ACDC enabled (PayPal and other PMs disabled).
 
-| With reset | Without reset |
-|---|---|
-| `npm run e2e:env:reset:pcp:usa` | `npm run e2e:env:setup:pcp:usa` |
+| With reset 						| Without reset 					|
+|-----------------------------------|-----------------------------------|
+| `npm run e2e:env:reset:pcp:usa` 	| `npm run e2e:env:setup:pcp:usa` 	|
 
 #### __For Germany & PUI (disabled by default)__
 
-| With reset | Without reset |
-|---|---|
-| `npm run e2e:env:reset:pcp:germany` | `npm run e2e:env:setup:pcp:germany` |
+| With reset 							| Without reset 						|
+|---------------------------------------|---------------------------------------|
+| `npm run e2e:env:reset:pcp:germany` 	| `npm run e2e:env:setup:pcp:germany` 	|
 
 #### __For Mexico & OXXO (disabled by default)__
 
-| With reset | Without reset |
-|---|---|
-| `npm run e2e:env:reset:pcp:mexico` | `npm run e2e:env:setup:pcp:mexico` |
+| With reset 							| Without reset 						|
+|---------------------------------------|---------------------------------------|
+| `npm run e2e:env:reset:pcp:mexico` 	| `npm run e2e:env:setup:pcp:mexico` 	|
 
 ### Upgrade PCP (without env reload)
 

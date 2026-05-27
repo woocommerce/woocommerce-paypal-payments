@@ -24,12 +24,11 @@ import { fastlaneClassicCheckout } from './_test-data/fastlane';
 
 const { fastlane } = gateways;
 
-test.beforeAll( async ( { utils, wooCommerceApi } ) => {
+test.beforeAll( async ( { utils } ) => {
 	await utils.configureStore( {
 		enableClassicPages: true,
 		customer: customers.usa,
 	} );
-	await wooCommerceApi.deleteAllOrders();
 } );
 
 for ( const testOrder of payPalClassicCheckout ) {
