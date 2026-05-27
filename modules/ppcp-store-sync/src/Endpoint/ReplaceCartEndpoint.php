@@ -108,10 +108,7 @@ class ReplaceCartEndpoint extends AgenticRestEndpoint {
 			);
 		}
 
-		// Only inject the token into the response when a new one was created.
-		if ( $new_token ) {
-			$store_cart->set_paypal_order( $new_token );
-		}
+		$store_cart->set_paypal_order( $new_token ?? ( $existing_token ?: null ) );
 
 		$response = $this->response_factory->from_cart( $store_cart, $cart_id );
 
