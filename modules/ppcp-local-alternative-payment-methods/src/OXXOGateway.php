@@ -3,13 +3,13 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods;
 
+use Exception;
 use WC_Order;
 use WC_Payment_Gateway;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\Orders;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\ExperienceContextBuilder;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PurchaseUnitFactory;
 use WooCommerce\PayPalCommerce\Assets\AssetGetter;
-use WooCommerce\PayPalCommerce\Button\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\Settings\Data\Definition\PaymentMethodsDefinition;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\TransactionUrlProvider;
@@ -160,7 +160,7 @@ class OXXOGateway extends WC_Payment_Gateway {
 				'redirect' => esc_url( $payer_action ),
 			);
 
-		} catch ( RuntimeException $exception ) {
+		} catch ( Exception $exception ) {
 			$wc_order->update_status(
 				'failed',
 				$exception->getMessage()
