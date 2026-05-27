@@ -156,8 +156,8 @@ class AgenticCartBuilder
             $wc_customer->set_billing_email($email);
         }
         if ($name) {
-            $wc_customer->set_first_name($name['given_name']);
-            $wc_customer->set_last_name($name['surname']);
+            $wc_customer->set_first_name((string) $name->given_name(''));
+            $wc_customer->set_last_name((string) $name->surname(''));
         }
     }
     private function set_addresses(WC_Customer $wc_customer, PayPalCart $paypal_cart): void

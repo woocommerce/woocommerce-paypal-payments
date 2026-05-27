@@ -462,6 +462,8 @@ return array(
     'WooCommerce\\PayPalCommerce\\StoreSync\\Schema\\CheckoutField' => $baseDir . '/modules/ppcp-store-sync/src/Schema/CheckoutField.php',
     'WooCommerce\\PayPalCommerce\\StoreSync\\Schema\\Coupon' => $baseDir . '/modules/ppcp-store-sync/src/Schema/Coupon.php',
     'WooCommerce\\PayPalCommerce\\StoreSync\\Schema\\Customer' => $baseDir . '/modules/ppcp-store-sync/src/Schema/Customer.php',
+    'WooCommerce\\PayPalCommerce\\StoreSync\\Schema\\CustomerName' => $baseDir . '/modules/ppcp-store-sync/src/Schema/CustomerName.php',
+    'WooCommerce\\PayPalCommerce\\StoreSync\\Schema\\CustomerPhone' => $baseDir . '/modules/ppcp-store-sync/src/Schema/CustomerPhone.php',
     'WooCommerce\\PayPalCommerce\\StoreSync\\Schema\\Errors\\AgenticError' => $baseDir . '/modules/ppcp-store-sync/src/Schema/Errors/AgenticError.php',
     'WooCommerce\\PayPalCommerce\\StoreSync\\Schema\\Errors\\AgenticErrorNotFound' => $baseDir . '/modules/ppcp-store-sync/src/Schema/Errors/AgenticErrorNotFound.php',
     'WooCommerce\\PayPalCommerce\\StoreSync\\Schema\\GeoCoordinates' => $baseDir . '/modules/ppcp-store-sync/src/Schema/GeoCoordinates.php',
