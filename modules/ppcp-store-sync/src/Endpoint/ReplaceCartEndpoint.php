@@ -60,21 +60,20 @@ class ReplaceCartEndpoint extends \WooCommerce\PayPalCommerce\StoreSync\Endpoint
         if ($store_cart instanceof AgenticError) {
             return $this->error($store_cart);
         }
-        // Determine if we need to create a new PayPal order.
-        $existing_token = $session['ec_token'] ?? '';
         $new_token = null;
-        if (empty($existing_token) && $store_cart->validation()->is_empty()) {
+        $store_cart->set_paypal_order($session['ec_token']);
+        // Determine if we need to create a new PayPal order.
+        if (empty($session['ec_token']) && $store_cart->validation()->is_empty()) {
             $new_token = $this->order_manager->create_order($store_cart->paypal_cart()) ?: null;
             $this->logger->info('[REST] PUT created new PayPal order', array('cart_id' => $cart_id, 'new_token' => $new_token ?? '(none - order creation failed)'));
+            if ($new_token) {
+                $store_cart->set_paypal_order($new_token);
+            }
         }
         // Update the cart session, passing new token when one was created.
         $update_result = $this->store_local_cart($cart_id, $store_cart->paypal_cart(), $new_token);
         if (!$update_result) {
             return $this->error_not_found('Failed to replace cart', array('issue' => 'CART_REPLACE_FAILED', 'description' => 'Cart replacement operation failed.'));
-        }
-        // Only inject the token into the response when a new one was created.
-        if ($new_token) {
-            $store_cart->set_paypal_order($new_token);
         }
         $response = $this->response_factory->from_cart($store_cart, $cart_id);
         return $this->cart_details($response, 200);

@@ -52,30 +52,22 @@ use WooCommerce\PayPalCommerce\StoreSync\CartValidation\CouponValidator\AppliedC
 use WooCommerce\PayPalCommerce\StoreSync\CartValidation\CartValidationProcessor;
 use WooCommerce\PayPalCommerce\StoreSync\Helper\AgenticSessionManager;
 use WooCommerce\PayPalCommerce\StoreSync\StoreData\StoreData;
-/**
- * Separate source keeps high-volume ingestion entries out of the agentic (cart API) log stream:
- * Ingestion is a cron-driven background process with a constant, predictable output cadence.
- * The cart API is event-driven and session-contextual. Mixing them into one stream makes both
- * harder to read.
- *
- * When using log-files, this creates a separate file for agentic log entries
- * When using DB logging, the source makes it easy to filter for agentic entries
- */
-const LOGGER_SOURCE_DEFAULT = 'woocommerce-paypal-agentic';
-const LOGGER_SOURCE_INGESTION = 'woocommerce-paypal-ingestion';
 return array(
     // Logging.
+    // Separate sources keep high-volume ingestion entries out of the agentic (cart API) log
+    // stream. When using log-files this creates separate files; with DB logging it allows
+    // easy filtering per stream.
     'agentic.logger.default' => static function (): LoggerInterface {
         if (!class_exists(WC_Logger::class)) {
             return new NullLogger();
         }
-        return new WooCommerceLogger(wc_get_logger(), LOGGER_SOURCE_DEFAULT);
+        return new WooCommerceLogger(wc_get_logger(), 'woocommerce-paypal-agentic');
     },
     'agentic.logger.ingestion' => static function (): LoggerInterface {
         if (!class_exists(WC_Logger::class)) {
             return new NullLogger();
         }
-        return new WooCommerceLogger(wc_get_logger(), LOGGER_SOURCE_INGESTION);
+        return new WooCommerceLogger(wc_get_logger(), 'woocommerce-paypal-ingestion');
     },
     // Configuration.
     'agentic.config.webhook_urls' => static function (ContainerInterface $c): AgenticWebhookConfiguration {
