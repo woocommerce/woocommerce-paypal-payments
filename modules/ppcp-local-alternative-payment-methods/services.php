@@ -72,10 +72,10 @@ return array(
 	},
 	'ppcp-local-apms.product-status'            => static function ( ContainerInterface $container ): LocalApmProductStatus {
 		return new LocalApmProductStatus(
-			$container->get( 'wcgateway.settings' ),
-			$container->get( 'api.endpoint.partners' ),
 			$container->get( 'settings.flag.is-connected' ),
-			$container->get( 'api.helper.failure-registry' )
+			$container->get( 'api.endpoint.partners' ),
+			$container->get( 'api.helper.failure-registry' ),
+			$container->get( 'api.helper.product-status-result-cache' )
 		);
 	},
 	'ppcp-local-apms.pwc.wc-gateway'            => static function ( ContainerInterface $container ): PWCGateway {
@@ -84,7 +84,6 @@ return array(
 			$container->get( 'api.endpoint.orders' ),
 			$container->get( 'api.factory.purchase-unit' ),
 			$container->get( 'wcgateway.processor.refunds' ),
-			$container->get( 'api.factory.shipping-preference' ),
 			$container->get( 'wcgateway.transaction-url-provider' ),
 			$container->get( 'wcgateway.builder.experience-context' )
 		);
@@ -238,5 +237,14 @@ return array(
 	},
 	'ppcp-local-apms.pwc.eligibility.check'     => static function ( ContainerInterface $container ): bool {
 		return $container->get( 'ppcp-local-apms.eligibility.check' ) && $container->get( 'ppcp-local-apms.pwc.currency.check' );
+	},
+	'ppcp-local-apms.pui.country.check'         => static function ( ContainerInterface $container ): bool {
+		return 'DE' === $container->get( 'api.merchant.country' );
+	},
+	'ppcp-local-apms.pui.currency.check'        => static function ( ContainerInterface $container ): bool {
+		return 'EUR' === $container->get( 'api.shop.currency.getter' )->get();
+	},
+	'ppcp-local-apms.pui.eligibility.check'     => static function ( ContainerInterface $container ): bool {
+		return $container->get( 'ppcp-local-apms.pui.country.check' ) && $container->get( 'ppcp-local-apms.pui.currency.check' );
 	},
 );

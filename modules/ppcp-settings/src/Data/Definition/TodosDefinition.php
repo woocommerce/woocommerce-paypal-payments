@@ -9,8 +9,8 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\Settings\Data\Definition;
 
-use WooCommerce\PayPalCommerce\Settings\Ajax\SwitchSettingsUiEndpoint;
 use WooCommerce\PayPalCommerce\Settings\Data\TodosModel;
+use WooCommerce\PayPalCommerce\Settings\Service\Migration\MigrationManager;
 use WooCommerce\PayPalCommerce\Settings\Service\TodosEligibilityService;
 use WooCommerce\PayPalCommerce\Settings\Data\GeneralSettings;
 
@@ -267,8 +267,8 @@ class TodosDefinition {
 				'priority'    => 16,
 			),
 			'enable_recaptcha_protection'          => array(
-				'title'       => __( 'Activate PayPal fraud management', 'woocommerce-paypal-payments' ),
-				'description' => __( 'PayPal detected increased suspicious card activity in market. Please enable fraud protection in your PayPal Payment settings by enabling CAPTCHA for PayPal Payments.', 'woocommerce-paypal-payments' ),
+				'title'       => __( 'Enable required fraud protection for PayPal Payments', 'woocommerce-paypal-payments' ),
+				'description' => __( 'Help protect your store and maintain compliance. Enable reCAPTCHA →', 'woocommerce-paypal-payments' ),
 				'isEligible'  => $eligibility_checks['enable_recaptcha_protection'],
 				'action'      => array(
 					'type' => 'external',
@@ -298,7 +298,7 @@ class TodosDefinition {
 	 * @return bool True if the migration is marked as done, false otherwise.
 	 */
 	protected function is_settings_migration_done(): bool {
-		return '1' === get_option( SwitchSettingsUiEndpoint::OPTION_NAME_MIGRATION_IS_DONE );
+		return '1' === get_option( MigrationManager::OPTION_NAME_MIGRATION_IS_DONE );
 	}
 
 	/**

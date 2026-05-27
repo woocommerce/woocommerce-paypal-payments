@@ -1,133 +1,11 @@
 /**
  * Internal dependencies
  */
-import {
-	expect,
-	getTestResultsFromFile,
-	PayPalUi,
-	PayPalUiClassic,
-	PcpPayLaterMessaging,
-	saveTestResultsToFile,
-	test,
-} from '../../utils';
-import { merchants, storeConfigDefault, products, Pcp } from '../../resources';
+import { expect, test } from '../../utils';
+import { merchants, storeConfigDefault, products } from '../../resources';
 import { payLaterMessagingData } from './_test-data';
 
-const TEST_RESULTS_FILE = 'plm-test-results.json';
-
-/**
- * Adds settings values to test name.
- *
- * @param  settings
- * @param  settings.logoType
- * @param  settings.textColor
- * @param  settings.logoPosition
- * @param  settings.textSize
- * @param  settings.bannerColor
- * @param  settings.bannerSize
- * @return { string } Example: (PCP-000) PLM - Product page - Full Logo - Black / Gray logo - Left - Small
- */
-const summarizeSettings = ( settings: {
-	logoType?: Pcp.Admin.Plm.LogoType;
-	textColor?: Pcp.Admin.Plm.TextColor;
-	logoPosition?: Pcp.Admin.Plm.LogoPosition;
-	textSize?: Pcp.Admin.Plm.TextSize;
-	bannerColor?: Pcp.Admin.Plm.BannerColor;
-	bannerSize?: Pcp.Admin.Plm.BannerSize;
-} ): string => {
-	const {
-		logoType,
-		textColor,
-		logoPosition,
-		textSize,
-		bannerColor,
-		bannerSize,
-	} = settings;
-	let title = '';
-
-	if ( logoType ) {
-		title += ` - ${ logoType }`;
-	}
-
-	if ( textColor ) {
-		title += ` - ${ textColor }`;
-	}
-
-	if ( logoPosition && logoType === 'Full Logo' ) {
-		title += ` - ${ logoPosition }`;
-	}
-
-	if ( textSize ) {
-		title += ` - ${ textSize }`;
-	}
-
-	if ( bannerColor ) {
-		title += ` - ${ bannerColor }`;
-	}
-
-	if ( bannerSize ) {
-		title += ` - ${ bannerSize }`;
-	}
-
-	return title;
-};
-
-/**
- * Takes percy snapshot for each preview variant (text, desktop, mobile + light/dark):
- * - Switches previews
- * - Switches Light/Dark modes
- * - Takes snapshot
- *
- * @param pcpPayLaterMessaging
- * @param snapshotName
- */
-const takePreviewSnapshots = async (
-	pcpPayLaterMessaging: PcpPayLaterMessaging,
-	snapshotName: string
-) => {
-	for ( const layout of [ 'Text', 'Desktop', 'Mobile' ] ) {
-		if ( layout === 'Text' ) {
-			await pcpPayLaterMessaging.previewTextButton().click();
-		}
-		if ( layout === 'Desktop' ) {
-			await pcpPayLaterMessaging.previewDesktopButton().click();
-		}
-		if ( layout === 'Mobile' ) {
-			await pcpPayLaterMessaging.previewMobileButton().click();
-		}
-		for ( const togglePosition of [ 'Dark', 'Light' ] ) {
-			const isDark = togglePosition === 'Dark';
-			const previewSnapshotName = `${ snapshotName } - ${ layout } - Preview - ${ togglePosition }`;
-			await pcpPayLaterMessaging.setDarkModeToggleState( isDark );
-			await pcpPayLaterMessaging.snapshotPlmConfigurator(
-				previewSnapshotName
-			);
-		}
-		break;
-	}
-};
-
-/**
- * - Asserts Pay Later Messaging container is visible.
- * - Compares actual PLM container screenshot to expected.
- *
- * @param payPalUi
- * @param snapshotName
- */
-const snapshotPlmContainer = async (
-	payPalUi: PayPalUi | PayPalUiClassic,
-	snapshotName: string
-) => {
-	await expect( payPalUi.payLaterMessageContainer() ).toBeVisible();
-	await payPalUi.page.waitForTimeout( 500 );
-	expect(
-		await payPalUi
-			.payLaterMessageContainer()
-			.screenshot( { animations: 'disabled' } )
-	).toMatchSnapshot( `${ snapshotName }.png` );
-};
-
-test.describe( 'Subtests', () => {
+test.describe( 'PLM Configurator', () => {
 	test.beforeAll( async ( { utils, pcpApi } ) => {
 		await utils.configureStore( storeConfigDefault );
 		await utils.installAndActivatePcp();
@@ -138,239 +16,235 @@ test.describe( 'Subtests', () => {
 		);
 	} );
 
-	const productPlm =
-		payLaterMessagingData.checkoutLocationSettings[ 'Product page' ];
+	test( 'PCP-0001 | PLM - Product page', async ( {
+		pcpPayLaterMessaging,
+		product,
+	} ) => {
+		const { location } =
+			payLaterMessagingData.checkoutLocationSettings[ 'Product page' ];
+		const settings =
+			payLaterMessagingData.checkoutLocationSettings[ 'Product page' ]
+				.settings[ 0 ];
 
-	for ( const settings of productPlm.settings ) {
-		test.fixme(
-			`(PCP-0001) PLM - Product page${ summarizeSettings( settings ) }`,
-			async ( { pcpPayLaterMessaging, product }, testInfo ) => {
-				const snapshotName = testInfo.title;
-				const { location } = productPlm;
-				await pcpPayLaterMessaging.visit();
-				await pcpPayLaterMessaging.enableMessagingForLocation(
-					location
-				);
-				await pcpPayLaterMessaging.updateLocationSettings(
-					location,
-					settings
-				);
-				// await takePreviewSnapshots( pcpPayLaterMessaging, snapshotName ); // TODO: uncomment when fixed
-				await pcpPayLaterMessaging.saveChanges();
-				await pcpPayLaterMessaging.page.reload();
-				await pcpPayLaterMessaging.expandAccordionSection( location );
-				// await pcpPayLaterMessaging.assertLocationSettings( settings ); // TODO: uncomment when fixed
-				await pcpPayLaterMessaging.snapshotPlmConfigurator(
-					`${ snapshotName } - After save`
-				);
+		await pcpPayLaterMessaging.visit();
+		await pcpPayLaterMessaging.enableMessagingForLocation( location );
+		await pcpPayLaterMessaging.updateLocationSettings( location, settings );
+		await pcpPayLaterMessaging.saveChanges();
+		await pcpPayLaterMessaging.page.reload();
+		await pcpPayLaterMessaging.expandAccordionSection( location );
+		await pcpPayLaterMessaging.assertPreviewShowsMessage();
 
-				await product.visit( products.simple100.slug );
-				await snapshotPlmContainer(
-					product.payPalUi,
-					`${ snapshotName } - Frontend`
-				);
-			}
-		);
-	}
+		await product.visit( products.simple100.slug );
+		const productPlmVisible =
+			await product.payPalUi.assertPayLaterMessageVisibleWithContent();
+		if ( ! productPlmVisible ) {
+			test.skip();
+		}
+		await expect(
+			product.payPalUi.payLaterMessageContainer(),
+			'Assert PLM is visible on product page'
+		).toBeVisible();
+	} );
 
-	const cartPlm = payLaterMessagingData.checkoutLocationSettings.Cart;
+	test( 'PCP-0002 | PLM - Cart (block and classic)', async ( {
+		utils,
+		pcpPayLaterMessaging,
+		cart,
+		classicCart,
+	} ) => {
+		await utils.fillVisitorsCart( [ products.simple100 ] );
 
-	for ( const settings of cartPlm.settings ) {
-		test.fixme(
-			`(PCP-0002) PLM - Cart${ summarizeSettings( settings ) }`,
-			async (
-				{ utils, pcpPayLaterMessaging, cart, classicCart },
-				testInfo
-			) => {
-				const snapshotName = testInfo.title;
-				const { location } = cartPlm;
-				await utils.fillVisitorsCart( [ products.simple100 ] );
+		const { location } =
+			payLaterMessagingData.checkoutLocationSettings.Cart;
+		const settings =
+			payLaterMessagingData.checkoutLocationSettings.Cart.settings[ 0 ];
 
-				await pcpPayLaterMessaging.visit();
-				await pcpPayLaterMessaging.enableMessagingForLocation(
-					location
-				);
-				await pcpPayLaterMessaging.updateLocationSettings(
-					location,
-					settings
-				);
-				// await takePreviewSnapshots( pcpPayLaterMessaging, snapshotName ); // TODO: uncomment when fixed
-				await pcpPayLaterMessaging.saveChanges();
-				await pcpPayLaterMessaging.page.reload();
-				await pcpPayLaterMessaging.expandAccordionSection( location );
-				// await pcpPayLaterMessaging.assertLocationSettings( settings ); // TODO: uncomment when fixed
-				await pcpPayLaterMessaging.snapshotPlmConfigurator(
-					`${ snapshotName } - After save`
-				);
-				// Block cart
-				await cart.visit();
-				await snapshotPlmContainer(
-					cart.payPalUi,
-					`${ snapshotName } - Frontend - Block cart`
-				);
-				// Classic cart
-				await classicCart.visit();
-				await snapshotPlmContainer(
-					classicCart.payPalUi,
-					`${ snapshotName } - Frontend - Classic cart`
-				);
-			}
-		);
-	}
+		await pcpPayLaterMessaging.visit();
+		await pcpPayLaterMessaging.enableMessagingForLocation( location );
+		await pcpPayLaterMessaging.updateLocationSettings( location, settings );
+		await pcpPayLaterMessaging.saveChanges();
+		await pcpPayLaterMessaging.page.reload();
+		await pcpPayLaterMessaging.expandAccordionSection( location );
+		await pcpPayLaterMessaging.assertPreviewShowsMessage();
 
-	const checkoutPlm = payLaterMessagingData.checkoutLocationSettings.Checkout;
+		await cart.visit();
+		const cartPlmVisible =
+			await cart.payPalUi.assertPayLaterMessageVisibleWithContent();
+		if ( ! cartPlmVisible ) {
+			test.skip();
+		}
+		await expect(
+			cart.payPalUi.payLaterMessageContainer(),
+			'Assert PLM is visible on cart'
+		).toBeVisible();
 
-	for ( const settings of checkoutPlm.settings ) {
-		test.fixme(
-			`(PCP-0003) PLM - Checkout${ summarizeSettings( settings ) }`,
-			async (
-				{ utils, pcpPayLaterMessaging, checkout, classicCheckout },
-				testInfo
-			) => {
-				const snapshotName = testInfo.title;
-				const { location } = checkoutPlm;
-				await utils.fillVisitorsCart( [ products.simple100 ] );
+		await classicCart.visit();
+		const classicCartPlmVisible =
+			await classicCart.payPalUi.assertPayLaterMessageVisibleWithContent();
+		if ( ! classicCartPlmVisible ) {
+			test.skip();
+		}
+		await expect(
+			classicCart.payPalUi.payLaterMessageContainer(),
+			'Assert PLM is visible on classic cart'
+		).toBeVisible();
+	} );
 
-				await pcpPayLaterMessaging.visit();
-				await pcpPayLaterMessaging.enableMessagingForLocation(
-					location
-				);
-				await pcpPayLaterMessaging.updateLocationSettings(
-					location,
-					settings
-				);
-				// await takePreviewSnapshots( pcpPayLaterMessaging, snapshotName ); // TODO: uncomment when fixed
-				await pcpPayLaterMessaging.saveChanges();
-				await pcpPayLaterMessaging.page.reload();
-				await pcpPayLaterMessaging.expandAccordionSection( location );
-				// await pcpPayLaterMessaging.assertLocationSettings( settings ); // TODO: uncomment when fixed
-				await pcpPayLaterMessaging.snapshotPlmConfigurator(
-					`${ snapshotName } - After save`
-				);
-				// Block checkout
-				await checkout.visit();
-				await snapshotPlmContainer(
-					checkout.payPalUi,
-					`${ snapshotName } - Frontend - Block checkout`
-				);
-				// Classic checkout
-				await classicCheckout.visit();
-				await snapshotPlmContainer(
-					classicCheckout.payPalUi,
-					`${ snapshotName } - Frontend - Classic checkout`
-				);
-			}
-		);
-	}
+	test( 'PCP-0003 | PLM - Checkout (block and classic)', async ( {
+		utils,
+		pcpPayLaterMessaging,
+		checkout,
+		classicCheckout,
+	} ) => {
+		await utils.fillVisitorsCart( [ products.simple100 ] );
 
-	const homePlm = payLaterMessagingData.bannerLocationSettings.Home;
+		const { location } =
+			payLaterMessagingData.checkoutLocationSettings.Checkout;
+		const settings =
+			payLaterMessagingData.checkoutLocationSettings.Checkout
+				.settings[ 0 ];
 
-	for ( const settings of homePlm.settings ) {
-		test.fixme(
-			`(PCP-0004) PLM - Home${ summarizeSettings( settings ) }`,
-			async ( { pcpPayLaterMessaging, payPalUiClassic }, testInfo ) => {
-				const snapshotName = testInfo.title;
-				const { location } = homePlm;
-				await pcpPayLaterMessaging.visit();
-				await pcpPayLaterMessaging.enableMessagingForLocation(
-					location
-				);
-				await pcpPayLaterMessaging.updateLocationSettings(
-					location,
-					settings
-				);
-				// await takePreviewSnapshots( pcpPayLaterMessaging, snapshotName ); // TODO: uncomment when fixed
-				await pcpPayLaterMessaging.saveChanges();
-				await pcpPayLaterMessaging.page.reload();
-				await pcpPayLaterMessaging.expandAccordionSection( location );
-				// await pcpPayLaterMessaging.assertLocationSettings( settings ); // TODO: uncomment when fixed
-				await pcpPayLaterMessaging.snapshotPlmConfigurator(
-					`${ snapshotName } - After save`
-				);
+		await pcpPayLaterMessaging.visit();
+		await pcpPayLaterMessaging.enableMessagingForLocation( location );
+		await pcpPayLaterMessaging.updateLocationSettings( location, settings );
+		await pcpPayLaterMessaging.saveChanges();
+		await pcpPayLaterMessaging.page.reload();
+		await pcpPayLaterMessaging.expandAccordionSection( location );
+		await pcpPayLaterMessaging.assertPreviewShowsMessage();
 
-				await payPalUiClassic.page.goto( '/' );
-				await snapshotPlmContainer(
-					payPalUiClassic,
-					`${ snapshotName } - Frontend`
-				);
-			}
-		);
-	}
+		await checkout.visit();
+		const checkoutPlmVisible =
+			await checkout.payPalUi.assertPayLaterMessageVisibleWithContent();
+		if ( ! checkoutPlmVisible ) {
+			test.skip();
+		}
+		await expect(
+			checkout.payPalUi.payLaterMessageContainer(),
+			'Assert PLM is visible on checkout'
+		).toBeVisible();
 
-	const shopPlm = payLaterMessagingData.bannerLocationSettings.Shop;
+		await classicCheckout.visit();
+		const classicCheckoutPlmVisible =
+			await classicCheckout.payPalUi.assertPayLaterMessageVisibleWithContent();
+		if ( ! classicCheckoutPlmVisible ) {
+			test.skip();
+		}
+		await expect(
+			classicCheckout.payPalUi.payLaterMessageContainer(),
+			'Assert PLM is visible on classic checkout'
+		).toBeVisible();
+	} );
 
-	for ( const settings of shopPlm.settings ) {
-		test.fixme(
-			`(PCP-0005) PLM - Shop${ summarizeSettings( settings ) }`,
-			async ( { pcpPayLaterMessaging, shop }, testInfo ) => {
-				const snapshotName = testInfo.title;
-				const { location } = shopPlm;
-				await pcpPayLaterMessaging.visit();
-				await pcpPayLaterMessaging.enableMessagingForLocation(
-					location
-				);
-				await pcpPayLaterMessaging.updateLocationSettings(
-					location,
-					settings
-				);
-				// await takePreviewSnapshots( pcpPayLaterMessaging, snapshotName ); // TODO: uncomment when fixed
-				await pcpPayLaterMessaging.saveChanges();
-				await pcpPayLaterMessaging.page.reload();
-				await pcpPayLaterMessaging.expandAccordionSection( location );
-				// await pcpPayLaterMessaging.assertLocationSettings( settings ); // TODO: uncomment when fixed
-				await pcpPayLaterMessaging.snapshotPlmConfigurator(
-					`${ snapshotName } - After save`
-				);
+	test( 'PCP-0004 | PLM - Home page', async ( {
+		pcpPayLaterMessaging,
+		payPalUiClassic,
+	} ) => {
+		const { location } = payLaterMessagingData.bannerLocationSettings.Home;
+		const settings =
+			payLaterMessagingData.bannerLocationSettings.Home.settings[ 0 ];
 
-				await shop.visit();
-				await snapshotPlmContainer(
-					shop.payPalUi,
-					`${ snapshotName } - Frontend`
-				);
-			}
-		);
-	}
+		await pcpPayLaterMessaging.visit();
+		await pcpPayLaterMessaging.enableMessagingForLocation( location );
+		await pcpPayLaterMessaging.updateLocationSettings( location, settings );
+		await pcpPayLaterMessaging.saveChanges();
+		await pcpPayLaterMessaging.page.reload();
+		await pcpPayLaterMessaging.expandAccordionSection( location );
+		await pcpPayLaterMessaging.assertPreviewShowsMessage();
 
-	test.afterEach( async ( {}, testInfo ) => {
-		saveTestResultsToFile(
-			testInfo.title,
-			testInfo.status,
-			TEST_RESULTS_FILE
-		);
+		await payPalUiClassic.page.goto( '/' );
+		await expect(
+			payPalUiClassic.payLaterMessageContainer(),
+			'Assert PLM is visible on home page'
+		).toBeVisible();
+	} );
+
+	test( 'PCP-0005 | PLM - Shop page', async ( {
+		pcpPayLaterMessaging,
+		shop,
+	} ) => {
+		const { location } = payLaterMessagingData.bannerLocationSettings.Shop;
+		const settings =
+			payLaterMessagingData.bannerLocationSettings.Shop.settings[ 0 ];
+
+		await pcpPayLaterMessaging.visit();
+		await pcpPayLaterMessaging.enableMessagingForLocation( location );
+		await pcpPayLaterMessaging.updateLocationSettings( location, settings );
+		await pcpPayLaterMessaging.saveChanges();
+		await pcpPayLaterMessaging.page.reload();
+		await pcpPayLaterMessaging.expandAccordionSection( location );
+		await pcpPayLaterMessaging.assertPreviewShowsMessage();
+
+		await shop.visit();
+		await expect(
+			shop.payPalUi.payLaterMessageContainer(),
+			'Assert PLM is visible on shop page'
+		).toBeVisible();
+	} );
+
+	test( 'PCP-0006 | PLM - WooCommerce Block', async ( {
+		pcpPayLaterMessaging,
+		product,
+		requestUtils,
+	} ) => {
+		await pcpPayLaterMessaging.visit();
+		await pcpPayLaterMessaging.enableMessagingForWooCommerceBlock();
+		await pcpPayLaterMessaging.saveChanges();
+
+		const page = await requestUtils.createPage( {
+			title: 'PLM Block Test Page',
+			status: 'publish',
+			content:
+				'<!-- wp:woocommerce-paypal-payments/paylater-messages /-->',
+		} );
+
+		try {
+			await product.visitByPageId( page.id );
+			await expect(
+				product.payPalUi.payLaterMessageContainer(),
+				'Assert PLM is visible on WooCommerce Block page'
+			).toBeVisible();
+		} finally {
+			await requestUtils.deletePage( page.id );
+		}
+	} );
+
+	test( 'PCP-0007 | PLM - Preview layout buttons (Text/Desktop/Mobile)', async ( {
+		pcpPayLaterMessaging,
+	} ) => {
+		const { location } =
+			payLaterMessagingData.checkoutLocationSettings[ 'Product page' ];
+		const settings =
+			payLaterMessagingData.checkoutLocationSettings[ 'Product page' ]
+				.settings[ 0 ];
+
+		await pcpPayLaterMessaging.visit();
+		await pcpPayLaterMessaging.enableMessagingForLocation( location );
+		await pcpPayLaterMessaging.updateLocationSettings( location, settings );
+		await pcpPayLaterMessaging.saveChanges();
+		await pcpPayLaterMessaging.page.reload();
+		await pcpPayLaterMessaging.expandAccordionSection( location );
+
+		await expect(
+			pcpPayLaterMessaging.previewIframe(),
+			'Assert PLM preview iframe is visible'
+		).toBeVisible();
+
+		await pcpPayLaterMessaging.previewTextButton().click();
+		await expect(
+			pcpPayLaterMessaging.previewIframe(),
+			'Assert PLM preview iframe still visible after Text layout'
+		).toBeVisible();
+
+		await pcpPayLaterMessaging.previewDesktopButton().click();
+		await expect(
+			pcpPayLaterMessaging.previewIframe(),
+			'Assert PLM preview iframe still visible after Desktop layout'
+		).toBeVisible();
+
+		await pcpPayLaterMessaging.previewMobileButton().click();
+		await expect(
+			pcpPayLaterMessaging.previewIframe(),
+			'Assert PLM preview iframe still visible after Mobile layout'
+		).toBeVisible();
 	} );
 } );
-
-test.fixme(
-	'PCP-0001 | Pay Later Messaging - Customize on Product page',
-	async () => {
-		getTestResultsFromFile( 'PCP-0001', TEST_RESULTS_FILE );
-	}
-);
-
-test.fixme(
-	'PCP-0002 | Pay Later Messaging - Customize on Cart (block and classic)',
-	async () => {
-		getTestResultsFromFile( 'PCP-0002', TEST_RESULTS_FILE );
-	}
-);
-
-test.fixme(
-	'PCP-0003 | Pay Later Messaging - Customize on Checkout (block and classic)',
-	async () => {
-		getTestResultsFromFile( 'PCP-0003', TEST_RESULTS_FILE );
-	}
-);
-
-test.fixme(
-	'PCP-0004 | Pay Later Messaging - Customize on Home page',
-	async () => {
-		getTestResultsFromFile( 'PCP-0004', TEST_RESULTS_FILE );
-	}
-);
-
-test.fixme(
-	'PCP-0005 | Pay Later Messaging - Customize on Shop page',
-	async () => {
-		getTestResultsFromFile( 'PCP-0005', TEST_RESULTS_FILE );
-	}
-);

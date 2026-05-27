@@ -4,7 +4,10 @@
 import { Pcp } from '../../resources';
 import { PcpAdminPage } from './pcp-admin-page';
 import urls from '../urls';
-import { expect, Locator } from 'playwright/test';
+/**
+ * External dependencies
+ */
+import { expect, Locator } from '@playwright/test';
 
 export class PcpOnboarding extends PcpAdminPage {
 	url = urls.admin.pcp.onboarding;
@@ -19,6 +22,8 @@ export class PcpOnboarding extends PcpAdminPage {
 		this.page.locator(
 			'.ppcp-r-container.ppcp-r-container--card.ppcp-r-container--onboarding'
 		);
+	sendOnlyMessageHeading = () =>
+		this.page.getByRole( 'heading', { name: '"Send-only" Country' } );
 	activatePayPalPaymentsButton = () =>
 		this.page.getByRole( 'button', { name: 'Activate PayPal Payments' } );
 
@@ -28,7 +33,7 @@ export class PcpOnboarding extends PcpAdminPage {
 			name: 'See advanced options',
 		} );
 	advancedOptionsContent = () =>
-		this.advancedOptionsSection().locator( '.ppcp-r-accordion__content' );
+		this.advancedOptionsSection().locator( '.ppcp--accordion-content' );
 
 	selectBoxContentContainer = () => this.page.locator( '.ppcp--box-content' );
 	selectBoxContentDetail = () =>
@@ -77,10 +82,11 @@ export class PcpOnboarding extends PcpAdminPage {
 	enableSandboxModeLabel = () => this.page.getByText( 'Enable Sandbox Mode' );
 	enableSandboxModeToggle = () =>
 		this.page.locator( '.components-form-toggle' ).first();
+	/** First pricing badge on the page (PayPal Checkout: checkout % + fixed fee from countryPriceInfo). */
 	badgeContainer = () =>
 		this.page
-			.locator( 'span.ppcp-r-title-badge.ppcp-r-title-badge--info' )
-			.last();
+			.locator( 'span.ppcp-r-title-badge.ppcp-r-title-badge--pricing' )
+			.first();
 	welcomeDocsContainer = () =>
 		this.page.locator( '.ppcp-r-welcome-docs__wrapper' ).last();
 	checkoutAlternativeOptionsContainer = () =>
@@ -104,14 +110,21 @@ export class PcpOnboarding extends PcpAdminPage {
 	};
 
 	openAdvancedOptions = async () => {
-		await expect( this.seeAdvancedOptionsButton() ).toBeVisible();
+		await expect(
+			this.seeAdvancedOptionsButton(),
+			'Assert See advanced options button is visible'
+		).toBeVisible();
 		if ( ! ( await this.advancedOptionsContent().isVisible() ) ) {
 			await this.seeAdvancedOptionsButton().click();
+			await this.advancedOptionsContent().waitFor( { state: 'visible' } );
 		}
 	};
 
 	closeAdvancedOptions = async () => {
-		await expect( this.seeAdvancedOptionsButton() ).toBeVisible();
+		await expect(
+			this.seeAdvancedOptionsButton(),
+			'Assert See advanced options button is visible'
+		).toBeVisible();
 		if ( await this.advancedOptionsContent().isVisible() ) {
 			await this.seeAdvancedOptionsButton().click();
 		}
@@ -138,8 +151,14 @@ export class PcpOnboarding extends PcpAdminPage {
 		labelLocator: Locator,
 		enable: boolean
 	) => {
-		await expect( toggleLocator ).toBeVisible();
-		await expect( labelLocator ).toBeVisible();
+		await expect(
+			toggleLocator,
+			'Assert connection option toggle is visible'
+		).toBeVisible();
+		await expect(
+			labelLocator,
+			'Assert connection option label is visible'
+		).toBeVisible();
 
 		const isChecked = await toggleLocator.getAttribute( 'class' );
 		const isToggleChecked = isChecked.includes( 'is-checked' );

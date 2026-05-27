@@ -33,9 +33,8 @@ const OnboardingScreen = () => {
 			<Container page="onboarding">
 				<div className="ppcp-r-card">
 					<currentStep.StepComponent
-						setStep={ setStep }
-						currentStep={ step }
-						stepperOrder={ Steps }
+						onNext={ handleNext }
+						onPrev={ handlePrev }
 					/>
 				</div>
 			</Container>

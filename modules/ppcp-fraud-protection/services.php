@@ -6,6 +6,7 @@ namespace WooCommerce\PayPalCommerce\FraudProtection;
 
 use WooCommerce\PayPalCommerce\Assets\AssetGetter;
 use WooCommerce\PayPalCommerce\Assets\AssetGetterFactory;
+use WooCommerce\PayPalCommerce\Axo\Gateway\AxoGateway;
 use WooCommerce\PayPalCommerce\FraudProtection\Recaptcha\Recaptcha;
 use WooCommerce\PayPalCommerce\FraudProtection\Recaptcha\RecaptchaIntegration;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
@@ -41,6 +42,7 @@ return array(
 				PayPalGateway::ID,
 				CreditCardGateway::ID,
 				CardButtonGateway::ID,
+				AxoGateway::ID,
 			)
 		);
 	},
@@ -58,8 +60,8 @@ return array(
 		return array(
 			array(
 				'id'           => 'ppcp-recaptcha-protection-task',
-				'title'        => __( 'Activate PayPal fraud management', 'woocommerce-paypal-payments' ),
-				'description'  => __( 'PayPal detected increased suspicious card activity in market. Please enable fraud protection in your PayPal Payment settings by enabling CAPTCHA for PayPal Payments.', 'woocommerce-paypal-payments' ),
+				'title'        => __( 'Enable required fraud protection for PayPal Payments', 'woocommerce-paypal-payments' ),
+				'description'  => __( 'Help protect your store and maintain compliance.', 'woocommerce-paypal-payments' ),
 				'redirect_url' => admin_url( 'admin.php?page=wc-settings&tab=integration&section=ppcp-recaptcha' ),
 			),
 		);

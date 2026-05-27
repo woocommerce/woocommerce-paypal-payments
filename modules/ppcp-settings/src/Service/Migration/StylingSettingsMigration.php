@@ -34,6 +34,10 @@ class StylingSettingsMigration implements SettingsMigrationInterface {
 	}
 
 	public function migrate(): void {
+		if ( empty( $this->settings ) || ! isset( $this->settings['smart_button_locations'] ) ) {
+			return;
+		}
+
 		$location_styles = array();
 
 		$styling_per_location = ! empty( $this->settings['smart_button_enable_styling_per_location'] );

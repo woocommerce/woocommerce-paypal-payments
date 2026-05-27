@@ -55,19 +55,19 @@ const fastlaneRyan: Pcp.Payment = {
 	card: cards.visaFastlane,
 };
 
-const debitOrCreditCard: Pcp.Payment = {
-	gateway: gateways.debitOrCreditCard,
-	card: cards.visa,
-};
-
-const standardCardButton: Pcp.Payment = {
-	gateway: gateways.standardCardButton,
+const bcdc: Pcp.Payment = {
+	gateway: gateways.bcdc,
 	card: cards.visa,
 };
 
 const payUponInvoice: Pcp.Payment = {
 	gateway: gateways.payUponInvoice,
 	birthDate: '01.01.1991',
+};
+
+const googlePay: Pcp.Payment = {
+	gateway: gateways.googlepay,
+	card: cards.visa,
 };
 
 export const payments = {
@@ -80,7 +80,7 @@ export const payments = {
 	acdc3ds,
 	fastlaneGary,
 	fastlaneRyan,
-	debitOrCreditCard,
-	standardCardButton,
+	bcdc,
 	payUponInvoice,
+	googlePay,
 };

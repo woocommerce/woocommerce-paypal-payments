@@ -11,6 +11,7 @@ namespace WooCommerce\PayPalCommerce\PayLaterWCBlocks;
 
 use WooCommerce\PayPalCommerce\Assets\AssetGetter;
 use WooCommerce\PayPalCommerce\Assets\AssetGetterFactory;
+use WooCommerce\PayPalCommerce\Settings\Data\PayLaterMessagingSettings;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 
 return array(
@@ -22,32 +23,36 @@ return array(
 	},
 
 	'paylater-wc-blocks.cart-renderer'     => static function ( ContainerInterface $container ): PayLaterWCBlocksRenderer {
-		$settings = $container->get( 'wcgateway.settings' );
+		$paylater_settings = $container->get( 'settings.data.paylater-messaging-settings' );
+		assert( $paylater_settings instanceof PayLaterMessagingSettings );
+		$cart = $paylater_settings->get_cart();
 		return new PayLaterWCBlocksRenderer(
 			array(
 				'placement'  => 'cart',
-				'layout'     => $settings->has( 'pay_later_cart_message_layout' ) ? $settings->get( 'pay_later_cart_message_layout' ) : '',
-				'position'   => $settings->has( 'pay_later_cart_message_position' ) ? $settings->get( 'pay_later_cart_message_position' ) : '',
-				'logo'       => $settings->has( 'pay_later_cart_message_logo' ) ? $settings->get( 'pay_later_cart_message_logo' ) : '',
-				'text_size'  => $settings->has( 'pay_later_cart_message_text_size' ) ? $settings->get( 'pay_later_cart_message_text_size' ) : '',
-				'color'      => $settings->has( 'pay_later_cart_message_color' ) ? $settings->get( 'pay_later_cart_message_color' ) : '',
-				'flex_color' => $settings->has( 'pay_later_cart_message_flex_color' ) ? $settings->get( 'pay_later_cart_message_flex_color' ) : '',
-				'flex_ratio' => $settings->has( 'pay_later_cart_message_flex_ratio' ) ? $settings->get( 'pay_later_cart_message_flex_ratio' ) : '',
+				'layout'     => $cart->layout,
+				'position'   => $cart->logo_position,
+				'logo'       => $cart->logo_type,
+				'text_size'  => $cart->text_size,
+				'color'      => $cart->text_color,
+				'flex_color' => $cart->flex_color,
+				'flex_ratio' => $cart->flex_ratio,
 			)
 		);
 	},
 	'paylater-wc-blocks.checkout-renderer' => static function ( ContainerInterface $container ): PayLaterWCBlocksRenderer {
-		$settings = $container->get( 'wcgateway.settings' );
+		$paylater_settings = $container->get( 'settings.data.paylater-messaging-settings' );
+		assert( $paylater_settings instanceof PayLaterMessagingSettings );
+		$checkout = $paylater_settings->get_checkout();
 		return new PayLaterWCBlocksRenderer(
 			array(
-				'payment',
-				'layout'     => $settings->has( 'pay_later_checkout_message_layout' ) ? $settings->get( 'pay_later_checkout_message_layout' ) : '',
-				'position'   => $settings->has( 'pay_later_checkout_message_position' ) ? $settings->get( 'pay_later_checkout_message_position' ) : '',
-				'logo'       => $settings->has( 'pay_later_checkout_message_logo' ) ? $settings->get( 'pay_later_checkout_message_logo' ) : '',
-				'text_size'  => $settings->has( 'pay_later_checkout_message_text_size' ) ? $settings->get( 'pay_later_checkout_message_text_size' ) : '',
-				'color'      => $settings->has( 'pay_later_checkout_message_color' ) ? $settings->get( 'pay_later_checkout_message_color' ) : '',
-				'flex_color' => $settings->has( 'pay_later_checkout_message_flex_color' ) ? $settings->get( 'pay_later_checkout_message_flex_color' ) : '',
-				'flex_ratio' => $settings->has( 'pay_later_checkout_message_flex_ratio' ) ? $settings->get( 'pay_later_checkout_message_flex_ratio' ) : '',
+				'placement'  => 'payment',
+				'layout'     => $checkout->layout,
+				'position'   => $checkout->logo_position,
+				'logo'       => $checkout->logo_type,
+				'text_size'  => $checkout->text_size,
+				'color'      => $checkout->text_color,
+				'flex_color' => $checkout->flex_color,
+				'flex_ratio' => $checkout->flex_ratio,
 			)
 		);
 	},

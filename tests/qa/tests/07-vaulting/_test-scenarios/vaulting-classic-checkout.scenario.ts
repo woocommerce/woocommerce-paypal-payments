@@ -26,7 +26,8 @@ const testSavePaymentMethod = ( testOrder: ShopOrder ) => {
 				// Preconditions
 				await customerPaymentMethods.visit();
 				await expect(
-					customerPaymentMethods.noSavedMethodsMessage()
+					customerPaymentMethods.noSavedMethodsMessage(),
+					'Assert no saved payment methods message is visible'
 				).toBeVisible();
 
 				// Make tested order (testOrder.payment.saveToAccount = true):
@@ -185,8 +186,8 @@ const testVaultedPaymentMethod = ( testOrder: ShopOrder ) => {
 				);
 				const pcpData = { transactionId, payPalFee, payPalPayout };
 
+				await wooCommerceOrderEdit.visit( orderId );
 				await wooCommerceOrderEdit.assertOrderDetails(
-					orderId,
 					testOrder,
 					pcpData
 				);

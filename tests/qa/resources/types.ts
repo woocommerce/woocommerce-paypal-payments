@@ -1,3 +1,16 @@
+export type ShopConfig = {
+	enableWpDebugging?: boolean; // Is WP Debugging plugin activated
+	enableSubscriptionsPlugin?: boolean; // Is WC Subscriptions plugin activated
+	enableClassicPages?: boolean; // Are classic cart and checkout pages set in WC > Settings > Advanced
+	settings?: WooCommerce.Settings; // WooCommerce settings by tabs (general, advanced, etc.)
+	taxes?: {
+		options: WooCommerce.Settings; // Tax settings in WC > Settings > General tab
+		rates: WooCommerce.CreateTax[]; // Tax rates to be active in WC > Settings > Taxes > Tax rates tab
+	};
+	customer?: WooCommerce.CreateCustomer; // Registered customer to be created
+	products?: WooCommerce.CreateProduct[]; // Products to be created if not existing
+};
+
 export type PayPalAccount = {
 	email: string;
 	password: string;
@@ -71,7 +84,8 @@ export namespace Pcp {
 			minAmount?: string;
 			maxAmount?: string;
 			titleInWcSettings?: string; // gateway title on WooCommerce > Settings > Payments tab
-			titleInPcpSettings?: string; // gateway title on PCP Settings > Payment Methods tab
+			titleInPcpSettings?: string; // gateway title in PCP Settings > Payment Methods
+			titleInModal?: string; // title shown in the PCP Settings > Payment Methods modal
 			hasSettingsButton?: boolean; // gateway has Settings icon on PCP Settings > Payment Methods tab
 			dependsOn?: GatewayShortcut; // gateway can be enabled if leading gateway is enabled on PCP Settings > Payment Methods tab
 		};
@@ -120,7 +134,7 @@ export namespace Pcp {
 				| 'amex'
 				| 'jcb'
 				| 'diners-club'
-			 )[];
+			)[];
 			enableLogging?: boolean;
 			enablePayNow?: boolean;
 			invoicePrefix?: string;
@@ -189,13 +203,14 @@ export namespace Pcp {
 			export type ButtonShape = 'Rectangle' | 'Pill';
 
 			export type ButtonLabel =
-				| 'Paypal'
+				| 'PayPal'
 				| 'Checkout'
 				| 'PayPal Buy Now'
 				| 'Pay with PayPal';
 
 			export type ButtonColor =
 				| 'Gold (recommended)'
+				| 'Gold (Recommended)'
 				| 'Blue'
 				| 'Silver'
 				| 'Black'
@@ -219,10 +234,11 @@ export namespace Pcp {
 				| 'Cart'
 				| 'Checkout'
 				| 'Home'
-				| 'Shop';
+				| 'Shop'
+				| 'WooCommerce Block';
 
 			export type LogoType =
-				| 'Full Logo'
+				| 'Full logo'
 				| 'Monogram'
 				| 'Inline'
 				| 'Message only';

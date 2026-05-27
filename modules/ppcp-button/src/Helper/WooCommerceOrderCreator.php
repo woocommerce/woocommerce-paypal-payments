@@ -62,7 +62,8 @@ class WooCommerceOrderCreator {
 
 	protected CartDataFactory $cart_data_factory;
 
-	protected $shipping_factory;
+	protected ShippingFactory $shipping_factory;
+
 	protected PayerFactory $payer_factory;
 
 	public function __construct(
@@ -175,8 +176,8 @@ class WooCommerceOrderCreator {
 				$sign_up_fee        = WC_Subscriptions_Product::get_sign_up_fee( $product );
 				$subscription_total = (float) $subtotal + (float) $sign_up_fee;
 
-				$item->set_subtotal( $subscription_total );
-				$item->set_total( $subscription_total );
+				$item->set_subtotal( (string) $subscription_total );
+				$item->set_total( (string) $subscription_total );
 
 				$subscription->add_product( $product );
 				$this->configure_addresses( $subscription, $payer, $shipping, $cart_data->needs_shipping() );
@@ -355,7 +356,7 @@ class WooCommerceOrderCreator {
 		$taxes     = WC_Tax::calc_tax( $subtotal, $tax_rates, true );
 
 		$item->set_tax_class( $product->get_tax_class() );
-		$item->set_total_tax( (float) array_sum( $taxes ) );
+		$item->set_total_tax( (string) array_sum( $taxes ) );
 	}
 
 	/**
@@ -442,6 +443,11 @@ class WooCommerceOrderCreator {
 			$shipping                                   = $this->shipping_factory->from_paypal_response( $shipping_address_data );
 		}
 
-		return $shipping;
+		return apply_filters(
+			'woocommerce_paypal_payments_order_creator_get_shipping',
+			$shipping,
+			$order,
+			$paypal_data
+		);
 	}
 }

@@ -3,7 +3,7 @@
  * Plugin Name: WooCommerce PayPal Payments
  * Plugin URI:  https://woocommerce.com/products/woocommerce-paypal-payments/
  * Description: PayPal's latest complete payments processing solution. Accept PayPal, Pay Later, credit/debit cards, alternative digital wallets local payment types and bank accounts. Turn on only PayPal options or process a full suite of payment methods. Enable global transaction with extensive currency and country coverage.
- * Version:     3.3.1
+ * Version:     4.0.4
  * Author:      PayPal
  * Author URI:  https://paypal.com/
  * License:     GPL-2.0
@@ -11,7 +11,7 @@
  * Requires Plugins: woocommerce
  * Requires at least: 6.5
  * WC requires at least: 9.6
- * WC tested up to: 10.3
+ * WC tested up to: 10.7
  * Text Domain: woocommerce-paypal-payments
  *
  * @package WooCommerce\PayPalCommerce
@@ -21,13 +21,11 @@ declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce;
 
-use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
-
 define( 'PAYPAL_API_URL', 'https://api-m.paypal.com' );
 define( 'PAYPAL_URL', 'https://www.paypal.com' );
 define( 'PAYPAL_SANDBOX_API_URL', 'https://api-m.sandbox.paypal.com' );
 define( 'PAYPAL_SANDBOX_URL', 'https://www.sandbox.paypal.com' );
-define( 'PAYPAL_INTEGRATION_DATE', '2025-12-04' );
+define( 'PAYPAL_INTEGRATION_DATE', '2026-05-14' );
 define( 'PPCP_PAYPAL_BN_CODE', 'Woo_PPCP' );
 
 ! defined( 'CONNECT_WOO_CLIENT_ID' ) && define( 'CONNECT_WOO_CLIENT_ID', 'AcCAsWta_JTL__OfpjspNyH7c1GGHH332fLwonA5CwX4Y10mhybRZmHLA0GdRbwKwjQIhpDQy0pluX_P' );
@@ -37,9 +35,9 @@ define( 'PPCP_PAYPAL_BN_CODE', 'Woo_PPCP' );
 ! defined( 'CONNECT_WOO_URL' ) && define( 'CONNECT_WOO_URL', 'https://api.woocommerce.com/integrations/ppc' );
 ! defined( 'CONNECT_WOO_SANDBOX_URL' ) && define( 'CONNECT_WOO_SANDBOX_URL', 'https://api.woocommerce.com/integrations/ppcsandbox' );
 
-( function () {
+( static function () {
 	$autoload_filepath = __DIR__ . '/vendor/autoload.php';
-	if ( file_exists( $autoload_filepath ) && ! class_exists( '\WooCommerce\PayPalCommerce\PluginModule' ) ) {
+	if ( ! class_exists( '\WooCommerce\PayPalCommerce\PluginModule' ) && file_exists( $autoload_filepath ) ) {
 		require $autoload_filepath;
 	}
 
@@ -54,14 +52,8 @@ define( 'PPCP_PAYPAL_BN_CODE', 'Woo_PPCP' );
 	 *                                  Should echo/print the notice markup directly.
 	 * @param bool     $auto_deactivate Optional. Whether to automatically deactivate the plugin
 	 *                                  after displaying the notice. Default true.
-	 *
-	 * @return void
 	 */
 	function show_admin_notice_and_deactivate( callable $notice_callback, bool $auto_deactivate = true ): void {
-		if ( ! is_callable( $notice_callback ) ) {
-			return;
-		}
-
 		$admin_notice_hooks = array( 'admin_notices', 'network_admin_notices' );
 
 		foreach ( $admin_notice_hooks as $hook ) {
@@ -82,8 +74,8 @@ define( 'PPCP_PAYPAL_BN_CODE', 'Woo_PPCP' );
 	/**
 	 * Initialize the plugin and its modules.
 	 */
-	function init(): void {
-		$root_dir = __DIR__;
+	function init(): bool {
+		static $initialized = false;
 
 		if ( ! is_woocommerce_activated() ) {
 			show_admin_notice_and_deactivate(
@@ -113,7 +105,7 @@ define( 'PPCP_PAYPAL_BN_CODE', 'Woo_PPCP' );
 				)
 			);
 
-			return;
+			return $initialized;
 		}
 		if ( version_compare( PHP_VERSION, '7.4', '<' ) ) {
 			show_admin_notice_and_deactivate(
@@ -127,11 +119,11 @@ define( 'PPCP_PAYPAL_BN_CODE', 'Woo_PPCP' );
 				)
 			);
 
-			return;
+			return $initialized;
 		}
 
-		static $initialized;
 		if ( ! $initialized ) {
+			$root_dir  = __DIR__;
 			$bootstrap = require "$root_dir/bootstrap.php";
 
 			$app_container = $bootstrap( $root_dir );
@@ -144,20 +136,26 @@ define( 'PPCP_PAYPAL_BN_CODE', 'Woo_PPCP' );
 			 */
 			do_action( 'woocommerce_paypal_payments_built_container', $app_container );
 		}
+
+		return $initialized;
 	}
 
 	add_action(
 		'plugins_loaded',
-		function () {
-			init();
+		static function () {
+			// Skip full bootstrap during manual plugin updates to prevent class-mismatch
+			// fatals when old in-memory code autoloads new files from disk.
+			if ( 'update.php' === ( $GLOBALS['pagenow'] ?? '' ) ) {
+				return;
+			}
 
-			if ( ! is_woocommerce_activated() ) {
+			if ( ! init() ) {
 				return;
 			}
 
 			add_action(
 				'init',
-				function () {
+				static function () {
 					$current_plugin_version   = PPCP::container()->get( 'ppcp.plugin-version' );
 					$installed_plugin_version = get_option( 'woocommerce-ppcp-version' );
 					if ( $installed_plugin_version !== $current_plugin_version ) {
@@ -182,7 +180,7 @@ define( 'PPCP_PAYPAL_BN_CODE', 'Woo_PPCP' );
 	);
 	register_activation_hook(
 		__FILE__,
-		function () {
+		static function () {
 			init();
 			/**
 			 * The hook fired in register_activation_hook.
@@ -192,7 +190,7 @@ define( 'PPCP_PAYPAL_BN_CODE', 'Woo_PPCP' );
 	);
 	register_deactivation_hook(
 		__FILE__,
-		function () {
+		static function () {
 			init();
 			/**
 			 * The hook fired in register_deactivation_hook.
@@ -209,7 +207,7 @@ define( 'PPCP_PAYPAL_BN_CODE', 'Woo_PPCP' );
 		 * @param array $links
 		 * @return array
 		 */
-		function ( $links ) {
+		static function ( $links ) {
 			if ( ! is_woocommerce_activated() ) {
 				return $links;
 			}
@@ -218,7 +216,7 @@ define( 'PPCP_PAYPAL_BN_CODE', 'Woo_PPCP' );
 				$links,
 				sprintf(
 					'<a href="%1$s">%2$s</a>',
-					admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway&ppcp-tab=' . Settings::CONNECTION_TAB_ID ),
+					admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway' ),
 					__( 'Settings', 'woocommerce-paypal-payments' )
 				)
 			);
@@ -236,7 +234,7 @@ define( 'PPCP_PAYPAL_BN_CODE', 'Woo_PPCP' );
 		 * @param string $file
 		 * @return array
 		 */
-		function ( $links, $file ) {
+		static function ( $links, $file ) {
 			if ( plugin_basename( __FILE__ ) !== $file ) {
 				return $links;
 			}
@@ -273,7 +271,7 @@ define( 'PPCP_PAYPAL_BN_CODE', 'Woo_PPCP' );
 
 	add_action(
 		'before_woocommerce_init',
-		function () {
+		static function () {
 			if ( class_exists( '\Automattic\WooCommerce\Utilities\FeaturesUtil' ) ) {
 				/**
 				 * Skip WC class check.
@@ -293,22 +291,4 @@ define( 'PPCP_PAYPAL_BN_CODE', 'Woo_PPCP' );
 	function is_woocommerce_activated(): bool {
 		return class_exists( 'woocommerce' );
 	}
-
-	add_action(
-		'woocommerce_paypal_payments_gateway_migrate',
-		/**
-		 * Set new merchant flag on plugin install.
-		 *
-		 * When installing the plugin for the first time, we direct the user to
-		 * the new UI without a data migration, and fully hide the #legacy-ui.
-		 *
-		 * @param string|false $version String with previous installed plugin version.
-		 *                              Boolean false on first installation on a new site.
-		 */
-		static function ( $version ) {
-			if ( ! $version ) {
-				update_option( 'woocommerce-ppcp-is-new-merchant', '1' );
-			}
-		}
-	);
 } )();

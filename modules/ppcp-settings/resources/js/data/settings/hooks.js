@@ -89,6 +89,13 @@ export const useSettings = () => {
 
 	const [ threeDSecure, setThreeDSecure ] = usePersistent( 'threeDSecure' );
 
+	const [ paymentLevelProcessing, setPaymentLevelProcessing ] = usePersistent(
+		'paymentLevelProcessing'
+	);
+	const [ shipsFromPostalCode, setShipsFromPostalCode ] = usePersistent(
+		'shipsFromPostalCode'
+	);
+
 	return {
 		invoicePrefix,
 		setInvoicePrefix,
@@ -124,5 +131,9 @@ export const useSettings = () => {
 		setDisabledCards,
 		threeDSecure,
 		setThreeDSecure,
+		paymentLevelProcessing,
+		setPaymentLevelProcessing,
+		shipsFromPostalCode,
+		setShipsFromPostalCode,
 	};
 };

@@ -9,5 +9,12 @@
 	},
 	"rules": {
 		"no-console": ["error", { "allow": ["warn", "error"] }]
+	},
+	"settings": {
+		"import/resolver": {
+			"webpack": {
+				"config": "./webpack.config.js"
+			}
+		}
 	}
 }

@@ -76,6 +76,13 @@ class FeaturesEligibilityService {
 	private bool $is_pwc_eligibility_checked;
 
 	/**
+	 * Whether Pay upon Invoice is eligible.
+	 *
+	 * @var bool
+	 */
+	private bool $is_pui_eligible;
+
+	/**
 	 * Constructor.
 	 *
 	 * @param bool     $is_save_paypal_eligible If saving PayPal and Venmo is eligible.
@@ -86,6 +93,7 @@ class FeaturesEligibilityService {
 	 * @param bool     $is_pay_later_eligible If Pay Later is eligible.
 	 * @param bool     $is_installments_eligible If Installments is eligible.
 	 * @param bool     $is_pwc_eligibility_checked If Pay With Crypto eligibility has been checked.
+	 * @param bool     $is_pui_eligible If Pay upon Invoice is eligible.
 	 */
 	public function __construct(
 		bool $is_save_paypal_eligible,
@@ -95,7 +103,8 @@ class FeaturesEligibilityService {
 		callable $check_apple_pay_eligible,
 		bool $is_pay_later_eligible,
 		bool $is_installments_eligible,
-		bool $is_pwc_eligibility_checked
+		bool $is_pwc_eligibility_checked,
+		bool $is_pui_eligible
 	) {
 		$this->is_save_paypal_eligible    = $is_save_paypal_eligible;
 		$this->check_acdc_eligible        = $check_acdc_eligible;
@@ -105,6 +114,7 @@ class FeaturesEligibilityService {
 		$this->is_pay_later_eligible      = $is_pay_later_eligible;
 		$this->is_installments_eligible   = $is_installments_eligible;
 		$this->is_pwc_eligibility_checked = $is_pwc_eligibility_checked;
+		$this->is_pui_eligible            = $is_pui_eligible;
 	}
 
 	/**
@@ -117,11 +127,12 @@ class FeaturesEligibilityService {
 			FeaturesDefinition::FEATURE_SAVE_PAYPAL_AND_VENMO => fn() => $this->is_save_paypal_eligible,
 			FeaturesDefinition::FEATURE_ADVANCED_CREDIT_AND_DEBIT_CARDS => $this->check_acdc_eligible,
 			FeaturesDefinition::FEATURE_ALTERNATIVE_PAYMENT_METHODS => fn() => $this->is_apm_eligible,
-			FeaturesDefinition::FEATURE_GOOGLE_PAY      => $this->check_google_pay_eligible,
-			FeaturesDefinition::FEATURE_APPLE_PAY       => $this->check_apple_pay_eligible,
+			FeaturesDefinition::FEATURE_GOOGLE_PAY       => $this->check_google_pay_eligible,
+			FeaturesDefinition::FEATURE_APPLE_PAY        => $this->check_apple_pay_eligible,
 			FeaturesDefinition::FEATURE_PAY_LATER_MESSAGING => fn() => $this->is_pay_later_eligible,
-			FeaturesDefinition::FEATURE_INSTALLMENTS    => fn() => $this->is_installments_eligible,
-			FeaturesDefinition::FEATURE_PAY_WITH_CRYPTO => fn() => $this->is_pwc_eligibility_checked,
+			FeaturesDefinition::FEATURE_INSTALLMENTS     => fn() => $this->is_installments_eligible,
+			FeaturesDefinition::FEATURE_PAY_WITH_CRYPTO  => fn() => $this->is_pwc_eligibility_checked,
+			FeaturesDefinition::FEATURE_PAY_UPON_INVOICE => fn() => $this->is_pui_eligible,
 		);
 	}
 }

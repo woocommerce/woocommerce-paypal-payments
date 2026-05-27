@@ -77,7 +77,7 @@ class CheckoutPaymentApprovalReversed implements RequestHandler {
 		}
 
 		foreach ( $wc_orders as $wc_order ) {
-			if ( in_array( $wc_order->get_status(), array( 'pending', 'on-hold' ), true ) ) {
+			if ( ! $wc_order->is_paid() ) {
 				$error_message = sprintf(
 					'Failed to capture order %1$s through PayPal.',
 					(string) $wc_order->get_id()

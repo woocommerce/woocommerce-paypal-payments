@@ -12,50 +12,61 @@ import { PaymentHooks } from '@ppcp-settings/data';
 
 const Modal = ( { method, setModalIsVisible, onSave } ) => {
 	const { all: paymentMethods } = PaymentHooks.usePaymentMethods();
-	const { paypalShowLogo, cardholderName, fastlaneDisplayWatermark } =
-		PaymentHooks.usePaymentMethodsModal();
+	const persistentValues = PaymentHooks.usePaymentMethodsModal();
+
+	const methodConfig = paymentMethods.find( ( i ) => i.id === method?.id );
+
+	// Build a unified value map from all sources.
+	// Persistent store values cover fields like paypalShowLogo, puiBrandName, etc.
+	// Method-level values cover checkout page title and description.
+	const currentValues = {
+		...persistentValues,
+		checkoutPageTitle: methodConfig?.title,
+		checkoutPageDescription: methodConfig?.description,
+	};
 
 	const [ settings, setSettings ] = useState( () => {
-		if ( ! method?.id ) {
-			return {};
-		}
-
-		const methodConfig = paymentMethods.find( ( i ) => i.id === method.id );
 		if ( ! methodConfig?.fields ) {
 			return {};
 		}
 
-		const initialSettings = {};
+		const initial = {};
 		Object.entries( methodConfig.fields ).forEach( ( [ key, field ] ) => {
-			switch ( key ) {
-				case 'checkoutPageTitle':
-					initialSettings[ key ] = methodConfig.title;
-					break;
-				case 'checkoutPageDescription':
-					initialSettings[ key ] = methodConfig.description;
-					break;
-				default:
-					initialSettings[ key ] = field.default;
-			}
+			initial[ key ] = currentValues[ key ] ?? field.default;
 		} );
-
-		initialSettings.paypalShowLogo = paypalShowLogo;
-		initialSettings.cardholderName = cardholderName;
-		initialSettings.fastlaneDisplayWatermark = fastlaneDisplayWatermark;
-
-		return initialSettings;
+		return initial;
 	} );
 
-	if ( ! method?.id ) {
+	if ( ! method?.id || ! methodConfig?.fields ) {
 		return null;
 	}
 
-	const methodConfig = paymentMethods.find( ( i ) => i.id === method.id );
-	if ( ! methodConfig?.fields ) {
-		return null;
-	}
+	/**
+	 * Check if all required fields have non-empty values.
+	 *
+	 * @return {boolean} True if all required fields are filled.
+	 */
+	const areRequiredFieldsValid = () => {
+		return Object.entries( methodConfig.fields ).every(
+			( [ key, field ] ) => {
+				if ( ! field.required ) {
+					return true;
+				}
+				const value = settings[ key ];
+				return typeof value === 'string'
+					? value.trim() !== ''
+					: value != null;
+			}
+		);
+	};
+
+	const updateSetting = ( key, value ) => {
+		setSettings( ( prev ) => ( { ...prev, [ key ]: value } ) );
+	};
 
 	const renderField = ( key, field ) => {
+		const fieldLabel = field.required ? `${ field.label } *` : field.label;
+
 		switch ( field.type ) {
 			case 'text':
 				return (
@@ -63,13 +74,11 @@ const Modal = ( { method, setModalIsVisible, onSave } ) => {
 						<TextControl
 							__nextHasNoMarginBottom
 							className="ppcp-r-vertical-text-control"
-							label={ field.label }
+							label={ fieldLabel }
+							help={ field.description }
 							value={ settings[ key ] }
 							onChange={ ( value ) =>
-								setSettings( ( prev ) => ( {
-									...prev,
-									[ key ]: value,
-								} ) )
+								updateSetting( key, value )
 							}
 						/>
 					</div>
@@ -83,10 +92,7 @@ const Modal = ( { method, setModalIsVisible, onSave } ) => {
 							label={ field.label }
 							checked={ settings[ key ] }
 							onChange={ ( value ) =>
-								setSettings( ( prev ) => ( {
-									...prev,
-									[ key ]: value,
-								} ) )
+								updateSetting( key, value )
 							}
 						/>
 					</div>
@@ -110,10 +116,7 @@ const Modal = ( { method, setModalIsVisible, onSave } ) => {
 								selected={ settings[ key ] }
 								options={ field.options }
 								onChange={ ( value ) =>
-									setSettings( ( prev ) => ( {
-										...prev,
-										[ key ]: value,
-									} ) )
+									updateSetting( key, value )
 								}
 							/>
 						</div>
@@ -126,6 +129,9 @@ const Modal = ( { method, setModalIsVisible, onSave } ) => {
 	};
 
 	const handleSave = () => {
+		if ( ! areRequiredFieldsValid() ) {
+			return;
+		}
 		onSave?.( method.id, settings );
 		setModalIsVisible( false );
 	};
@@ -142,7 +148,11 @@ const Modal = ( { method, setModalIsVisible, onSave } ) => {
 				) }
 
 				<div className="ppcp-r-modal__field-row ppcp-r-modal__field-row--save">
-					<Button variant="primary" onClick={ handleSave }>
+					<Button
+						variant="primary"
+						onClick={ handleSave }
+						disabled={ ! areRequiredFieldsValid() }
+					>
 						{ __( 'Save changes', 'woocommerce-paypal-payments' ) }
 					</Button>
 				</div>

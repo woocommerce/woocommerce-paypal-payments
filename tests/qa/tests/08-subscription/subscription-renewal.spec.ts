@@ -2,12 +2,7 @@
  * Internal dependencies
  */
 import { test } from '../../utils';
-import {
-	disableWebhookVerifivationPlugin,
-	merchants,
-	products,
-	storeConfigUsa,
-} from '../../resources';
+import { disableWebhookVerificationPlugin, products } from '../../resources';
 import { subscriptionRenewal } from './_test-data';
 import {
 	testFreeTrialSubscriptionRenewal,
@@ -21,30 +16,16 @@ const {
 	payPalFreeTrialRenewal,
 } = subscriptionRenewal;
 
-test.beforeAll( async ( { utils, pcpApi, wooCommerceApi } ) => {
+test.beforeAll( async ( { utils, pcpApi } ) => {
+	await pcpApi.updatePcpSettings( {
+		savePaypalAndVenmo: true,
+		saveCardDetails: true,
+	} );
 	await utils.configureStore( {
-		...storeConfigUsa,
-		wpDebugging: false,
-		classicPages: false,
-		subscription: true,
+		enableClassicPages: false,
+		enableSubscriptionsPlugin: true,
 		products: [ products.subscription100, products.subscriptionFreeTrial ],
 	} );
-	await utils.installAndActivatePcp();
-	await pcpApi.resetDb();
-	await pcpApi.connectMerchant(
-		merchants.usa.client_id,
-		merchants.usa.client_secret,
-		{
-			isCasualSeller: false,
-			areOptionalPaymentMethodsEnabled: true,
-			products: [ 'physical', 'virtual', 'subscriptions' ],
-		}
-	);
-} );
-
-test.afterAll( async ( { wooCommerceApi } ) => {
-	await wooCommerceApi.deleteAllSubscriptions();
-	await wooCommerceApi.deleteAllOrders();
 } );
 
 for ( const testOrder of vaultingRenewal ) {
@@ -67,15 +48,19 @@ test.describe( 'PayPal Subscription', () => {
 				products.subscriptionPayPalFreeTrial,
 			],
 		} );
-		await requestUtils.activatePlugin(
-			disableWebhookVerifivationPlugin.slug
-		);
+		if ( ! process.env.CI ) {
+			await requestUtils.activatePlugin(
+				disableWebhookVerificationPlugin.slug
+			);
+		}
 	} );
 
 	test.afterAll( async ( { requestUtils } ) => {
-		await requestUtils.deactivatePlugin(
-			disableWebhookVerifivationPlugin.slug
-		);
+		if ( ! process.env.CI ) {
+			await requestUtils.deactivatePlugin(
+				disableWebhookVerificationPlugin.slug
+			);
+		}
 	} );
 
 	for ( const testOrder of payPalRenewal ) {

@@ -132,13 +132,23 @@ export const usePaymentMethodsModal = () => {
 
 	const [ paypalShowLogo ] = usePersistent( 'paypalShowLogo' );
 	const [ cardholderName ] = usePersistent( 'cardholderName' );
+	const [ showCardLogos ] = usePersistent( 'showCardLogos' );
 	const [ fastlaneDisplayWatermark ] = usePersistent(
 		'fastlaneDisplayWatermark'
+	);
+	const [ puiBrandName ] = usePersistent( 'puiBrandName' );
+	const [ puiLogoUrl ] = usePersistent( 'puiLogoUrl' );
+	const [ puiCustomerServiceInstructions ] = usePersistent(
+		'puiCustomerServiceInstructions'
 	);
 
 	return {
 		paypalShowLogo,
 		cardholderName,
+		showCardLogos,
 		fastlaneDisplayWatermark,
+		puiBrandName,
+		puiLogoUrl,
+		puiCustomerServiceInstructions,
 	};
 };

@@ -12,7 +12,7 @@ namespace WooCommerce\PayPalCommerce\OrderTracking;
 use WooCommerce\PayPalCommerce\Assets\AssetGetter;
 use WooCommerce\PayPalCommerce\Assets\AssetGetterFactory;
 use WooCommerce\PayPalCommerce\OrderTracking\Integration\DhlShipmentIntegration;
-use WooCommerce\PayPalCommerce\OrderTracking\Integration\GermanizedShipmentIntegration;
+use WooCommerce\PayPalCommerce\OrderTracking\Integration\ShiptasticIntegration;
 use WooCommerce\PayPalCommerce\OrderTracking\Integration\ShipmentTrackingIntegration;
 use WooCommerce\PayPalCommerce\OrderTracking\Integration\ShipStationIntegration;
 use WooCommerce\PayPalCommerce\OrderTracking\Integration\WcShippingTaxIntegration;
@@ -41,7 +41,8 @@ return array(
 			$container->get( 'button.request-data' ),
 			$container->get( 'order-tracking.shipment.factory' ),
 			$container->get( 'order-tracking.allowed-shipping-statuses' ),
-			$container->get( 'order-tracking.should-use-second-version-of-api' )
+			$container->get( 'order-tracking.should-use-second-version-of-api' ),
+			$container->get( 'api.endpoint.order.cached' )
 		);
 	},
 	'order-tracking.asset_getter'                     => static function ( ContainerInterface $container ): AssetGetter {
@@ -79,7 +80,7 @@ return array(
 		$selected_country_carriers = $allowed_carriers[ $api_shop_country ] ?? array();
 
 		return array(
-			$api_shop_country => $selected_country_carriers ?? array(),
+			$api_shop_country => $selected_country_carriers ?? array(), // @phpstan-ignore nullCoalesce.variable
 			'global'          => $allowed_carriers['global'] ?? array(),
 			'other'           => array(
 				'name'  => 'Other',
@@ -113,7 +114,7 @@ return array(
 		$logger           = $container->get( 'woocommerce.logger.woocommerce' );
 		$endpoint         = $container->get( 'order-tracking.endpoint.controller' );
 
-		$is_gzd_active             = $container->get( 'compat.gzd.is_supported_plugin_version_active' );
+		$is_shiptastic_active      = $container->get( 'compat.shiptastic.is_supported_plugin_version_active' );
 		$is_wc_shipment_active     = $container->get( 'compat.wc_shipment_tracking.is_supported_plugin_version_active' );
 		$is_yith_ywot_active       = $container->get( 'compat.ywot.is_supported_plugin_version_active' );
 		$is_dhl_de_active          = $container->get( 'compat.dhl.is_supported_plugin_version_active' );
@@ -122,8 +123,8 @@ return array(
 
 		$integrations = array();
 
-		if ( $is_gzd_active ) {
-			$integrations[] = new GermanizedShipmentIntegration( $shipment_factory, $logger, $endpoint );
+		if ( $is_shiptastic_active ) {
+			$integrations[] = new ShiptasticIntegration( $shipment_factory, $logger, $endpoint );
 		}
 
 		if ( $is_wc_shipment_active ) {

@@ -8,9 +8,9 @@ import FormHelper from '../Helper/FormHelper';
 import ResumeFlowHelper from '../Helper/ResumeFlowHelper';
 
 class SingleProductActionHandler {
-	constructor( config, updateCart, formElement, errorHandler ) {
+	constructor( config, cartUpdater, formElement, errorHandler ) {
 		this.config = config;
-		this.updateCart = updateCart;
+		this.cartUpdater = cartUpdater;
 		this.formElement = formElement;
 		this.errorHandler = errorHandler;
 		this.cartHelper = null;
@@ -85,10 +85,7 @@ class SingleProductActionHandler {
 			onError: ( error ) => {
 				this.refreshMiniCart();
 
-				if ( this.isBookingProduct() && error.message ) {
-					this.errorHandler.clear();
-					this.errorHandler.message( error.message );
-				} else {
+				if ( ! error || error.type !== 'create-order-error' ) {
 					this.errorHandler.genericError();
 				}
 
@@ -164,9 +161,10 @@ class SingleProductActionHandler {
 
 	createOrder() {
 		this.cartHelper = null;
+		const errorHandler = this.errorHandler;
 
 		return ( data, actions, options = {} ) => {
-			this.errorHandler.clear();
+			errorHandler.clear();
 
 			const onResolve = ( purchase_units ) => {
 				this.cartHelper = new CartHelper().addFromPurchaseUnits(
@@ -201,18 +199,28 @@ class SingleProductActionHandler {
 					.then( function ( data ) {
 						if ( ! data.success ) {
 							console.error( data );
-							throw Error( data.data.message );
+							errorHandler.clear();
+							errorHandler.message( data.data.message );
+							throw { type: 'create-order-error' };
 						}
 						return data.data.id;
 					} );
 			};
 
-			return this.updateCart.update(
+			return this.cartUpdater.update(
 				onResolve,
 				this.getProducts(),
 				options.updateCartOptions || {}
 			);
 		};
+	}
+
+	updateCart( updateCartOptions ) {
+		return this.cartUpdater.update(
+			( data ) => data,
+			this.getProducts(),
+			updateCartOptions
+		);
 	}
 
 	variations() {

@@ -81,7 +81,7 @@ class ShipStationIntegration implements Integration {
 						return;
 					}
 
-					if ( ! is_a( $wc_order, WC_Order::class ) ) {
+					if ( ! ( $wc_order instanceof WC_Order ) ) {
 						return;
 					}
 

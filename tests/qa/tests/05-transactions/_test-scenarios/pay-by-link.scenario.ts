@@ -25,7 +25,8 @@ export const transactionsOnPayByLink = ( testOrder: ShopOrder ) => {
 			await orderReceived.assertOrderDetails( testOrder );
 
 			await expect( order.id ).toEqual(
-				await orderReceived.getOrderNumber()
+				await orderReceived.getOrderNumber(),
+				`Assert order number on order received page matches ${ order.id }`
 			);
 			const { transaction_id: transactionId } =
 				await wooCommerceApi.getOrder( order.id );
@@ -39,11 +40,8 @@ export const transactionsOnPayByLink = ( testOrder: ShopOrder ) => {
 			);
 			const pcpData = { transactionId, payPalFee, payPalPayout };
 
-			await wooCommerceOrderEdit.assertOrderDetails(
-				order.id,
-				testOrder,
-				pcpData
-			);
+			await wooCommerceOrderEdit.visit( order.id );
+			await wooCommerceOrderEdit.assertOrderDetails( testOrder, pcpData );
 		}
 	);
 };

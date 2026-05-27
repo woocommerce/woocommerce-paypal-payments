@@ -27,7 +27,7 @@ class SettingsModel extends AbstractDataModel {
 	 *
 	 * @var string
 	 */
-	protected const OPTION_KEY = 'woocommerce-ppcp-data-settings';
+	public const OPTION_KEY = 'woocommerce-ppcp-data-settings';
 
 	/**
 	 * Valid options for subtotal adjustment.
@@ -86,29 +86,32 @@ class SettingsModel extends AbstractDataModel {
 	protected function get_defaults(): array {
 		return array(
 			// Free-form string values.
-			'invoice_prefix'         => $this->invoice_prefix,
-			'brand_name'             => '',
-			'soft_descriptor'        => '',
+			'invoice_prefix'           => $this->invoice_prefix,
+			'brand_name'               => '',
+			'soft_descriptor'          => '',
+			'ships_from_postal_code'   => '',
 
 			// Enum-type string values.
-			'subtotal_adjustment'    => 'correction', // Options: [correction|no_details].
-			'landing_page'           => 'any',          // Options: [any|login|guest_checkout].
-			'button_language'        => '',             // empty or a language locale code.
-			'three_d_secure'         => 'no-3d-secure', // Options: [no-3d-secure|only-required-3d-secure|always-3d-secure].
+			'subtotal_adjustment'      => 'correction', // Options: [correction|no_details].
+			'landing_page'             => 'any',          // Options: [any|login|guest_checkout].
+			'button_language'          => '',             // empty or a language locale code.
+			'three_d_secure'           => 'no-3d-secure', // Options: [no-3d-secure|only-required-3d-secure|always-3d-secure].
 
 			// Boolean flags.
-			'authorize_only'         => false,
-			'capture_virtual_orders' => false,
+			'authorize_only'           => false,
+			'capture_virtual_orders'   => false,
 			FeaturesDefinition::FEATURE_SAVE_PAYPAL_AND_VENMO => false,
-			'instant_payments_only'  => false,
-			'enable_contact_module'  => true,
-			'save_card_details'      => false,
-			'enable_pay_now'         => false,
-			'enable_logging'         => false,
-			'stay_updated'           => true,
+			'instant_payments_only'    => false,
+			'enable_contact_module'    => true,
+			'save_card_details'        => false,
+			'enable_pay_now'           => false,
+			'enable_logging'           => false,
+			'stay_updated'             => true,
+			'payment_level_processing' => true,
 
 			// Array of string values.
-			'disabled_cards'         => array(),
+			'disabled_cards'           => array(),
+			'card_icons'               => array(), // todo: not implemented.
 		);
 	}
 
@@ -206,6 +209,23 @@ class SettingsModel extends AbstractDataModel {
 	}
 
 	/**
+	 * Converts the landing page setting value to the corresponding API enum string.
+	 *
+	 * @return string The corresponding API enum string ('NO_PREFERENCE', 'LOGIN', 'GUEST_CHECKOUT').
+	 */
+	public function get_landing_page_enum(): string {
+		$landing_page = $this->get_landing_page();
+
+		$map = array(
+			'any'            => 'NO_PREFERENCE',
+			'login'          => 'LOGIN',
+			'guest_checkout' => 'GUEST_CHECKOUT',
+		);
+
+		return $map[ $landing_page ] ?? 'NO_PREFERENCE';
+	}
+
+	/**
 	 * Gets the button language setting.
 	 *
 	 * @return string The button language.
@@ -263,12 +283,30 @@ class SettingsModel extends AbstractDataModel {
 	}
 
 	/**
+	 * Gets the Ship-from ZIP code.
+	 *
+	 * @return string The Ship-from ZIP code.
+	 */
+	public function get_ships_from_postal_code(): string {
+		return ! empty( $this->data['ships_from_postal_code'] ) ? $this->data['ships_from_postal_code'] : get_option( 'woocommerce_store_postcode', '' );
+	}
+
+	/**
+	 * Sets the Ship-from ZIP code.
+	 *
+	 * @param string $zip_code The Ship-from ZIP code to set.
+	 */
+	public function set_ships_from_postal_code( string $zip_code ): void {
+		$this->data['ships_from_postal_code'] = $this->sanitizer->sanitize_text( $zip_code );
+	}
+
+	/**
 	 * Gets the authorize only setting.
 	 *
 	 * @return bool True if authorize only is enabled, false otherwise.
 	 */
 	public function get_authorize_only(): bool {
-		return $this->data['authorize_only'];
+		return $this->sanitizer->sanitize_bool( $this->data['authorize_only'] ?? false );
 	}
 
 	/**
@@ -286,7 +324,7 @@ class SettingsModel extends AbstractDataModel {
 	 * @return bool True if capturing virtual orders is enabled, false otherwise.
 	 */
 	public function get_capture_virtual_orders(): bool {
-		return $this->data['capture_virtual_orders'];
+		return $this->sanitizer->sanitize_bool( $this->data['capture_virtual_orders'] ?? false );
 	}
 
 	/**
@@ -304,7 +342,9 @@ class SettingsModel extends AbstractDataModel {
 	 * @return bool True if saving PayPal and Venmo is enabled, false otherwise.
 	 */
 	public function get_save_paypal_and_venmo(): bool {
-		return $this->data[ FeaturesDefinition::FEATURE_SAVE_PAYPAL_AND_VENMO ];
+		return $this->sanitizer->sanitize_bool(
+			$this->data[ FeaturesDefinition::FEATURE_SAVE_PAYPAL_AND_VENMO ] ?? false
+		);
 	}
 
 	/**
@@ -322,7 +362,7 @@ class SettingsModel extends AbstractDataModel {
 	 * @return bool True if instant payments only setting is enabled, false otherwise.
 	 */
 	public function get_instant_payments_only(): bool {
-		return $this->data['instant_payments_only'];
+		return $this->sanitizer->sanitize_bool( $this->data['instant_payments_only'] ?? false );
 	}
 
 	/**
@@ -340,7 +380,7 @@ class SettingsModel extends AbstractDataModel {
 	 * @return bool True if the contact module feature is enabled, false otherwise.
 	 */
 	public function get_enable_contact_module(): bool {
-		return $this->data['enable_contact_module'];
+		return $this->sanitizer->sanitize_bool( $this->data['enable_contact_module'] ?? true );
 	}
 
 	/**
@@ -358,7 +398,7 @@ class SettingsModel extends AbstractDataModel {
 	 * @return bool True if saving card details is enabled, false otherwise.
 	 */
 	public function get_save_card_details(): bool {
-		return $this->data['save_card_details'];
+		return $this->sanitizer->sanitize_bool( $this->data['save_card_details'] ?? false );
 	}
 
 	/**
@@ -376,7 +416,7 @@ class SettingsModel extends AbstractDataModel {
 	 * @return bool True if Pay Now is enabled, false otherwise.
 	 */
 	public function get_enable_pay_now(): bool {
-		return $this->data['enable_pay_now'];
+		return $this->sanitizer->sanitize_bool( $this->data['enable_pay_now'] ?? false );
 	}
 
 	/**
@@ -394,7 +434,7 @@ class SettingsModel extends AbstractDataModel {
 	 * @return bool True if logging is enabled, false otherwise.
 	 */
 	public function get_enable_logging(): bool {
-		return $this->data['enable_logging'];
+		return $this->sanitizer->sanitize_bool( $this->data['enable_logging'] ?? false );
 	}
 
 	/**
@@ -428,12 +468,33 @@ class SettingsModel extends AbstractDataModel {
 	}
 
 	/**
+	 * Gets the card icons.
+	 *
+	 * @return array The array of card icons.
+	 */
+	public function get_card_icons(): array {
+		return $this->data['card_icons'];
+	}
+
+	/**
+	 * Sets the card icons.
+	 *
+	 * @param array $icons The array of card icons.
+	 */
+	public function set_card_icons( array $icons ): void {
+		$this->data['card_icons'] = array_map(
+			array( $this->sanitizer, 'sanitize_text' ),
+			$icons
+		);
+	}
+
+	/**
 	 * Gets the Stay Updated setting.
 	 *
 	 * @return bool True if Stay Updated is enabled, false otherwise.
 	 */
 	public function get_stay_updated(): bool {
-		return $this->data['stay_updated'];
+		return $this->sanitizer->sanitize_bool( $this->data['stay_updated'] ?? true );
 	}
 
 	/**
@@ -443,5 +504,24 @@ class SettingsModel extends AbstractDataModel {
 	 */
 	public function set_stay_updated( bool $save ): void {
 		$this->data['stay_updated'] = $this->sanitizer->sanitize_bool( $save );
+	}
+
+	/**
+	 * Get payment level processing.
+	 *
+	 * @return bool
+	 */
+	public function get_payment_level_processing(): bool {
+		return $this->sanitizer->sanitize_bool( $this->data['payment_level_processing'] ?? true );
+	}
+
+	/**
+	 * Set payment level processing.
+	 *
+	 * @param bool $save Whether to save the payment level processing.
+	 * @return void
+	 */
+	public function set_payment_level_processing( bool $save ): void {
+		$this->data['payment_level_processing'] = $this->sanitizer->sanitize_bool( $save );
 	}
 }

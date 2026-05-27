@@ -59,12 +59,12 @@ class WebhookEventFactory {
 		return new WebhookEvent(
 			(string) $data->id,
 			$create_time,
-			(string) $data->resource_type ?? '',
-			(string) $data->event_version ?? '',
+			(string) ( $data->resource_type ?? '' ),
+			(string) ( $data->event_version ?? '' ),
 			(string) $data->event_type,
-			(string) $data->summary ?? '',
-			(string) $data->resource_version ?? '',
-			(object) $data->resource ?? ( new stdClass() )
+			(string) ( $data->summary ?? '' ),
+			(string) ( $data->resource_version ?? '' ),
+			(object) ( $data->resource ?? ( new stdClass() ) )
 		);
 	}
 }

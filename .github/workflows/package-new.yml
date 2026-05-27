@@ -1,4 +1,4 @@
-name: Build package (New)
+name: Build package (old)
 
 on:
   workflow_dispatch:

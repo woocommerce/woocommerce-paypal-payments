@@ -22,7 +22,11 @@ const EXPECTED_PAYMENT_METHODS = [
 		[ 'PayWithPayPal', 'PayLater' ],
 		[ 'CardFields', 'DigitalWallets', 'APMs', 'Fastlane' ],
 	],
-	[ 'MX', [ 'PayWithPayPal', 'PayLater' ], [ 'CreditDebitCards', 'APMs' ] ],
+	[
+		'MX',
+		[ 'PayWithPayPal', 'PayLater' ],
+		[ 'CardFields', 'DigitalWallets', 'APMs', 'Fastlane' ],
+	],
 ];
 
 describe( 'usePaymentConfig hook', () => {
@@ -31,7 +35,7 @@ describe( 'usePaymentConfig hook', () => {
 			'Country %s should have valid methods',
 			( country, includedMethods, optionalMethods ) => {
 				const { result } = renderHook( () =>
-					usePaymentConfig( country, true, true, false )
+					usePaymentConfig( country, true, true, true, false )
 				);
 
 				expect( result.current.includedMethods ).toHaveLength(
@@ -54,7 +58,7 @@ describe( 'usePaymentConfig hook', () => {
 			'Country %s should contain Fastlane method if hasFastlane is true',
 			( country ) => {
 				const { result } = renderHook( () =>
-					usePaymentConfig( country, true, true, false )
+					usePaymentConfig( country, true, true, true, false )
 				);
 				const methodNames = result.current.optionalMethods.map(
 					( method ) => method.name
@@ -67,7 +71,7 @@ describe( 'usePaymentConfig hook', () => {
 			'Country %s should NOT contain Fastlane method if hasFastlane is false',
 			( country ) => {
 				const { result } = renderHook( () =>
-					usePaymentConfig( country, true, false, false )
+					usePaymentConfig( country, true, true, false, false )
 				);
 				const methodNames = result.current.optionalMethods.map(
 					( method ) => method.name
@@ -80,7 +84,7 @@ describe( 'usePaymentConfig hook', () => {
 			'Country %s should contain only ACDC methods when canUseCardPayments is false',
 			( country ) => {
 				const { result } = renderHook( () =>
-					usePaymentConfig( country, false, false, false )
+					usePaymentConfig( country, false, false, false, false )
 				);
 				const methodNames = result.current.optionalMethods.map(
 					( method ) => method.name
@@ -93,7 +97,7 @@ describe( 'usePaymentConfig hook', () => {
 			'Country %s should NOT contain ACDC methods when canUseCardPayments is true',
 			( country ) => {
 				const { result } = renderHook( () =>
-					usePaymentConfig( country, true, false, false )
+					usePaymentConfig( country, true, true, false, false )
 				);
 				const methodNames = result.current.optionalMethods.map(
 					( method ) => method.name
@@ -106,7 +110,7 @@ describe( 'usePaymentConfig hook', () => {
 			'Country %s should contain only OwnBrand methods when ownBrandOnly is true',
 			( country ) => {
 				const { result } = renderHook( () =>
-					usePaymentConfig( country, true, true, true )
+					usePaymentConfig( country, true, true, true, true )
 				);
 
 				expect(
@@ -117,26 +121,68 @@ describe( 'usePaymentConfig hook', () => {
 			}
 		);
 
-		test( 'Country MX should contain non ACDC methods when canUseCardPayments is true', () => {
+		test( 'Country MX should contain ACDC methods when canUseCardPayments is true', () => {
 			const { result } = renderHook( () =>
-				usePaymentConfig( 'MX', true, false, false )
+				usePaymentConfig( 'MX', true, true, false, false )
 			);
 			const methodNames = result.current.optionalMethods.map(
 				( method ) => method.name
 			);
-			expect( methodNames ).toContain( 'CreditDebitCards' );
+			expect( methodNames ).toContain( 'CardFields' );
+			expect( methodNames ).toContain( 'DigitalWallets' );
 			expect( methodNames ).toContain( 'APMs' );
 		} );
 
 		test( 'Country MX should contain non ACDC methods when canUseCardPayments is false', () => {
 			const { result } = renderHook( () =>
-				usePaymentConfig( 'MX', false, false, false )
+				usePaymentConfig( 'MX', false, false, false, false )
 			);
 			const methodNames = result.current.optionalMethods.map(
 				( method ) => method.name
 			);
 			expect( methodNames ).toContain( 'CreditDebitCards' );
-			expect( methodNames ).toContain( 'APMs' );
+			expect( methodNames ).not.toContain( 'APMs' );
+		} );
+	} );
+
+	describe( 'Digital wallets decoupled from ACDC', () => {
+		test.each( [ 'US', 'GB', 'AU' ] )(
+			'Country %s should show DigitalWallets but not CardFields when canUseCardPayments=false, canUseDigitalWallets=true',
+			( country ) => {
+				const { result } = renderHook( () =>
+					usePaymentConfig( country, false, true, false, false )
+				);
+				const methodNames = result.current.optionalMethods.map(
+					( method ) => method.name
+				);
+				expect( methodNames ).toContain( 'DigitalWallets' );
+				expect( methodNames ).toContain( 'CreditDebitCards' );
+				expect( methodNames ).not.toContain( 'CardFields' );
+			}
+		);
+
+		test.each( [ 'US', 'GB', 'AU' ] )(
+			'Country %s should show CardFields but not DigitalWallets when canUseCardPayments=true, canUseDigitalWallets=false',
+			( country ) => {
+				const { result } = renderHook( () =>
+					usePaymentConfig( country, true, false, false, false )
+				);
+				const methodNames = result.current.optionalMethods.map(
+					( method ) => method.name
+				);
+				expect( methodNames ).toContain( 'CardFields' );
+				expect( methodNames ).not.toContain( 'DigitalWallets' );
+			}
+		);
+
+		test( 'Mexico should show DigitalWallets when canUseDigitalWallets is true', () => {
+			const { result } = renderHook( () =>
+				usePaymentConfig( 'MX', false, true, false, false )
+			);
+			const methodNames = result.current.optionalMethods.map(
+				( method ) => method.name
+			);
+			expect( methodNames ).toContain( 'DigitalWallets' );
 		} );
 	} );
 } );

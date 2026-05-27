@@ -14,16 +14,17 @@ use Psr\Log\LoggerInterface;
 use stdClass;
 use WC_Order;
 use WooCommerce\PayPalCommerce\ApiClient\Authentication\Bearer;
+use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\RequestTrait;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\Button\Endpoint\RequestData;
+use WooCommerce\PayPalCommerce\Button\Exception\NonceValidationException;
 use WooCommerce\PayPalCommerce\OrderTracking\OrderTrackingModule;
 use WooCommerce\PayPalCommerce\OrderTracking\Shipment\ShipmentFactoryInterface;
 use WooCommerce\PayPalCommerce\OrderTracking\Shipment\ShipmentInterface;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\TransactionIdHandlingTrait;
-use function WooCommerce\PayPalCommerce\Api\ppcp_get_paypal_order;
 
 /**
  * The OrderTrackingEndpoint.
@@ -95,9 +96,9 @@ class OrderTrackingEndpoint {
 	 */
 	protected $should_use_new_api;
 
+	protected OrderEndpoint $order_endpoint;
+
 	/**
-	 * PartnersEndpoint constructor.
-	 *
 	 * @param string                   $host The host.
 	 * @param Bearer                   $bearer The bearer.
 	 * @param LoggerInterface          $logger The logger.
@@ -105,6 +106,7 @@ class OrderTrackingEndpoint {
 	 * @param ShipmentFactoryInterface $shipment_factory The ShipmentFactory.
 	 * @param string[]                 $allowed_statuses Allowed shipping statuses.
 	 * @param bool                     $should_use_new_api Whether new API should be used.
+	 * @param OrderEndpoint            $order_endpoint The OrderEndpoint.
 	 */
 	public function __construct(
 		string $host,
@@ -113,7 +115,8 @@ class OrderTrackingEndpoint {
 		RequestData $request_data,
 		ShipmentFactoryInterface $shipment_factory,
 		array $allowed_statuses,
-		bool $should_use_new_api
+		bool $should_use_new_api,
+		OrderEndpoint $order_endpoint
 	) {
 		$this->host               = $host;
 		$this->bearer             = $bearer;
@@ -122,6 +125,7 @@ class OrderTrackingEndpoint {
 		$this->shipment_factory   = $shipment_factory;
 		$this->allowed_statuses   = $allowed_statuses;
 		$this->should_use_new_api = $should_use_new_api;
+		$this->order_endpoint     = $order_endpoint;
 	}
 
 	/**
@@ -130,7 +134,6 @@ class OrderTrackingEndpoint {
 	public function handle_request(): void {
 		if ( ! current_user_can( 'manage_woocommerce' ) ) {
 			wp_send_json_error( 'Not admin.', 403 );
-			return;
 		}
 
 		try {
@@ -159,6 +162,8 @@ class OrderTrackingEndpoint {
 					'shipment' => $shipment_html,
 				)
 			);
+		} catch ( NonceValidationException $error ) {
+			wp_send_json_error( array( 'message' => $error->getMessage() ), 400 );
 		} catch ( Exception $error ) {
 			wp_send_json_error( array( 'message' => $error->getMessage() ), 500 );
 		}
@@ -275,7 +280,7 @@ class OrderTrackingEndpoint {
 		}
 
 		$host         = trailingslashit( $this->host );
-		$paypal_order = ppcp_get_paypal_order( $wc_order );
+		$paypal_order = $this->order_endpoint->order( $wc_order );
 		$capture_id   = $this->get_paypal_order_transaction_id( $paypal_order ) ?? '';
 		$tracker_id   = $this->find_tracker_id( $capture_id, $tracking_number );
 		$url          = "{$host}v1/shipping/trackers/{$tracker_id}";
@@ -324,7 +329,7 @@ class OrderTrackingEndpoint {
 		}
 
 		$host         = trailingslashit( $this->host );
-		$paypal_order = ppcp_get_paypal_order( $wc_order );
+		$paypal_order = $this->order_endpoint->order( $wc_order );
 		$capture_id   = $this->get_paypal_order_transaction_id( $paypal_order );
 		$url          = "{$host}v1/shipping/trackers?transaction_id={$capture_id}";
 

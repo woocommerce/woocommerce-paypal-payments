@@ -2,7 +2,7 @@
  * Internal dependencies
  */
 import { test } from '../../utils';
-import { merchants, products, storeConfigUsa } from '../../resources';
+import { products } from '../../resources';
 import { subscriptionCheckout } from './_test-data';
 import { testSubscriptionCheckout } from './_test-scenarios';
 
@@ -12,29 +12,12 @@ const { vaultingGuest, vaultingCustomer, payPalGuest, payPalCustomer } =
 const { testSubscriptionOrderGuest, testSubscriptionOrderCustomer } =
 	testSubscriptionCheckout;
 
-test.beforeAll( async ( { utils, pcpApi } ) => {
+test.beforeAll( async ( { utils } ) => {
 	await utils.configureStore( {
-		...storeConfigUsa,
-		classicPages: false,
-		subscription: true,
+		enableClassicPages: false,
+		enableSubscriptionsPlugin: true,
 		products: [ products.subscription100, products.subscriptionFreeTrial ],
 	} );
-	await utils.installAndActivatePcp();
-	await pcpApi.resetDb();
-	await pcpApi.connectMerchant(
-		merchants.usa.client_id,
-		merchants.usa.client_secret,
-		{
-			isCasualSeller: false,
-			areOptionalPaymentMethodsEnabled: true,
-			products: [ 'physical', 'virtual', 'subscriptions' ],
-		}
-	);
-} );
-
-test.afterAll( async ( { wooCommerceApi } ) => {
-	await wooCommerceApi.deleteAllSubscriptions();
-	await wooCommerceApi.deleteAllOrders();
 } );
 
 for ( const testOrder of vaultingGuest ) {

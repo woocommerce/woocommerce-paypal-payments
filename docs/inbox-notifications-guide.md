@@ -18,7 +18,7 @@ Inbox notes are defined as service configurations in `modules/ppcp-wc-gateway/se
 - `name`: Unique identifier for the note
 - `status`: Note status (e.g., `Note::E_WC_ADMIN_NOTE_UNACTIONED`)
 - `is_enabled`: Boolean function to control visibility
-- `action`: An `InboxNoteAction` object for user interactions
+- `actions`: `InboxNoteAction` objects for user interactions
 
 ### 2. Create Inbox Note Objects
 

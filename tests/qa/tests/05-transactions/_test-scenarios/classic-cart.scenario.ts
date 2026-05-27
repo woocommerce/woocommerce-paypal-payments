@@ -46,11 +46,8 @@ export const transactionsOnClassicCart = ( testOrder: ShopOrder ) => {
 			);
 			const pcpData = { transactionId, payPalFee, payPalPayout };
 
-			await wooCommerceOrderEdit.assertOrderDetails(
-				orderId,
-				testOrder,
-				pcpData
-			);
+			await wooCommerceOrderEdit.visit( orderId );
+			await wooCommerceOrderEdit.assertOrderDetails( testOrder, pcpData );
 		}
 	);
 };

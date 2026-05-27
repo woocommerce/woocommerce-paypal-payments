@@ -10,9 +10,9 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\WcGateway\Admin;
 
+use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\AuthorizedPaymentsProcessor;
-use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 
 /**
  * Class OrderTablePaymentStatusColumn
@@ -23,20 +23,10 @@ class OrderTablePaymentStatusColumn {
 	const INTENT           = 'authorize';
 	const AFTER_COLUMN_KEY = 'order_status';
 
-	/**
-	 * The settings.
-	 *
-	 * @var Settings
-	 */
-	private $settings;
+	private SettingsProvider $settings_provider;
 
-	/**
-	 * OrderTablePaymentStatusColumn constructor.
-	 *
-	 * @param Settings $settings The Settings.
-	 */
-	public function __construct( Settings $settings ) {
-		$this->settings = $settings;
+	public function __construct( SettingsProvider $settings_provider ) {
+		$this->settings_provider = $settings_provider;
 	}
 
 	/**
@@ -47,7 +37,7 @@ class OrderTablePaymentStatusColumn {
 	 * @return array
 	 */
 	public function register( array $columns ): array {
-		if ( ! $this->settings->has( 'intent' ) || $this->settings->get( 'intent' ) !== self::INTENT ) {
+		if ( $this->settings_provider->payment_intent() !== self::INTENT ) {
 			return $columns;
 		}
 
@@ -72,7 +62,7 @@ class OrderTablePaymentStatusColumn {
 	 * @param int    $wc_order_id The id or the WooCommerce order.
 	 */
 	public function render( string $column, int $wc_order_id ) {
-		if ( ! $this->settings->has( 'intent' ) || $this->settings->get( 'intent' ) !== self::INTENT ) {
+		if ( $this->settings_provider->payment_intent() !== self::INTENT ) {
 			return;
 		}
 
@@ -82,7 +72,7 @@ class OrderTablePaymentStatusColumn {
 
 		$wc_order = wc_get_order( $wc_order_id );
 
-		if ( ! is_a( $wc_order, \WC_Order::class ) || ! $this->should_render_for_order( $wc_order ) ) {
+		if ( ! ( $wc_order instanceof \WC_Order ) || ! $this->should_render_for_order( $wc_order ) ) {
 			return;
 		}
 

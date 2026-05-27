@@ -3,35 +3,21 @@ name: CI
 on: [push]
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
+  coding-standards-analysis-php:
+    uses: inpsyde/reusable-workflows/.github/workflows/coding-standards-php.yml@main
+    with:
+      PHP_VERSION: '8.0'
+      PHPCS_ARGS: '--report-full --runtime-set ignore_warnings_on_exit 1'
+  static-code-analysis-php:
+    uses: inpsyde/reusable-workflows/.github/workflows/static-analysis-php.yml@main
+    with:
+      PHP_VERSION: '8.0'
+      PHPSTAN_ARGS: '--no-progress --memory-limit=2G'
+  tests-unit-php:
     strategy:
       matrix:
-        php-versions: ['7.4', '8.0', '8.1', '8.2', '8.3', '8.4']
-
-    name: PHP ${{ matrix.php-versions }}
-    steps:
-    - uses: actions/checkout@v2
-
-    - name: Setup PHP
-      uses: shivammathur/setup-php@0f7f1d08e3e32076e51cae65eb0b0c871405b16e # v2.34.1
-      with:
-        php-version: ${{ matrix.php-versions }}
-
-    - name: Validate composer.json and composer.lock
-      run: composer validate
-
-    - name: Install dependencies
-      uses: ramsey/composer-install@a7320a0581dcd0432930c48a0e7ced67e6ec17e8 # v1.3.0
-      with:
-        composer-options: "--prefer-dist"
-
-    - name: Run PHPUnit
-      run: vendor/bin/phpunit
-
-    - name: Psalm
-      if: ${{ matrix.php-versions == '7.4' }}
-      run: ./vendor/bin/psalm --show-info=false --threads=8 --diff
-
-    - name: Run PHPCS
-      run: ./vendor/bin/phpcs --runtime-set ignore_warnings_on_exit 1 src modules woocommerce-paypal-payments.php --extensions=php
+        php: ['7.4', '8.0', '8.1', '8.2', '8.3', '8.4']
+    uses: inpsyde/reusable-workflows/.github/workflows/tests-unit-php.yml@main
+    with:
+      PHPUNIT_ARGS: ''
+      PHP_VERSION: ${{ matrix.php }}

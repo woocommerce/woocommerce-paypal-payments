@@ -2,24 +2,8 @@
  * Internal dependencies
  */
 import { test } from '../../utils';
-import {
-	merchants,
-	storeConfigUsa,
-	gateways,
-	taxSettings,
-	wpDebuggingPlugin,
-	customers,
-} from '../../resources';
-import {
-	transactionsOnClassicCart,
-	transactionsOnClassicCheckout,
-	transactionsOnClassicProduct,
-} from './_test-scenarios';
-import {
-	venmoClassicCartUsa,
-	venmoClassicCheckoutUsa,
-	venmoClassicProductUsa,
-} from './_test-data/venmo';
+import { customers, gateways, taxSettings } from '../../resources';
+import { transactionsOnClassicCheckout } from './_test-scenarios';
 import {
 	payPalClassicCheckout,
 	payPalClassicCheckoutExcludingTax,
@@ -38,31 +22,13 @@ import {
 } from './_test-data/acdc';
 import { fastlaneClassicCheckout } from './_test-data/fastlane';
 
-const { payPal, payLater, venmo, acdc, fastlane } = gateways;
+const { fastlane } = gateways;
 
-test.beforeAll( async ( { utils, pcpApi } ) => {
+test.beforeAll( async ( { utils } ) => {
 	await utils.configureStore( {
-		...storeConfigUsa,
-		classicPages: true,
+		enableClassicPages: true,
 		customer: customers.usa,
 	} );
-	await utils.installAndActivatePcp();
-	await pcpApi.resetDb();
-	await pcpApi.connectMerchant(
-		merchants.usa.client_id,
-		merchants.usa.client_secret
-	);
-	await pcpApi.updatePcpPaymentMethods( {
-		[ payPal.id ]: { id: payPal.id, enabled: true },
-		[ payLater.id ]: { id: payLater.id, enabled: true },
-		[ venmo.id ]: { id: venmo.id, enabled: true },
-		[ acdc.id ]: { id: acdc.id, enabled: true },
-		[ fastlane.id ]: { id: fastlane.id, enabled: false },
-	} );
-} );
-
-test.afterAll( async ( { wooCommerceApi } ) => {
-	await wooCommerceApi.deleteAllOrders();
 } );
 
 for ( const testOrder of payPalClassicCheckout ) {

@@ -9,8 +9,6 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\WcGateway\Helper;
 
-use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
-
 /**
  * Class CartCheckoutDetector
  */
@@ -40,6 +38,7 @@ class CartCheckoutDetector {
 			$widgets_list = array();
 
 			foreach ( $output_array as $found ) {
+				/** @phpstan-ignore isset.offset */
 				if ( ! isset( $found[1] ) ) {
 					continue;
 				}
@@ -150,6 +149,6 @@ class CartCheckoutDetector {
 		$page         = get_post( $page_id );
 		$page_content = is_object( $page ) ? $page->post_content : '';
 
-		return str_contains( $page_content, $shortcode );
+		return strpos( $page_content, $shortcode ) !== false;
 	}
 }

@@ -1,0 +1,883 @@
+parameters:
+	ignoreErrors:
+		-
+			message: '#^Binary operation "\." between non\-falsy\-string and array\<string\>\|string\|null results in an error\.$#'
+			identifier: binaryOp.invalid
+			count: 1
+			path: modules/ppcp-api-client/src/Authentication/SdkClientToken.php
+
+		-
+			message: '#^Method WooCommerce\\PayPalCommerce\\ApiClient\\Endpoint\\LoginSeller\:\:credentials_for\(\) should return stdClass but returns object\.$#'
+			identifier: return.type
+			count: 1
+			path: modules/ppcp-api-client/src/Endpoint/LoginSeller.php
+
+		-
+			message: '#^Parameter \#1 \$response of class WooCommerce\\PayPalCommerce\\ApiClient\\Exception\\PayPalApiException constructor expects stdClass\|null, object given\.$#'
+			identifier: argument.type
+			count: 2
+			path: modules/ppcp-api-client/src/Endpoint/LoginSeller.php
+
+		-
+			message: '#^Cannot call method authorizations\(\) on WooCommerce\\PayPalCommerce\\ApiClient\\Entity\\Payments\|null\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: modules/ppcp-api-client/src/Endpoint/OrderEndpoint.php
+
+		-
+			message: '#^Cannot call method captures\(\) on WooCommerce\\PayPalCommerce\\ApiClient\\Entity\\Payments\|null\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: modules/ppcp-api-client/src/Endpoint/OrderEndpoint.php
+
+		-
+			message: '#^Parameter \#1 \$name of class WooCommerce\\PayPalCommerce\\ApiClient\\Entity\\PaymentSource constructor expects string, int\<min, \-1\>\|int\<1, max\>\|string given\.$#'
+			identifier: argument.type
+			count: 1
+			path: modules/ppcp-api-client/src/Endpoint/PaymentTokensEndpoint.php
+
+		-
+			message: '#^Access to an undefined property object\:\:\$id\.$#'
+			identifier: property.notFound
+			count: 2
+			path: modules/ppcp-api-client/src/Endpoint/PaymentsEndpoint.php
+
+		-
+			message: '#^Cannot access offset ''body'' on array\|WP_Error\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 3
+			path: modules/ppcp-api-client/src/Endpoint/PaymentsEndpoint.php
+
+		-
+			message: '#^Parameter \#1 \$json of function json_decode expects string, string\|false given\.$#'
+			identifier: argument.type
+			count: 1
+			path: modules/ppcp-api-client/src/Endpoint/WebhookEndpoint.php
+
+		-
+			message: '#^Access to an undefined property object\:\:\$created\.$#'
+			identifier: property.notFound
+			count: 3
+			path: modules/ppcp-api-client/src/Entity/Token.php
+
+		-
+			message: '#^Access to an undefined property object\:\:\$expires_in\.$#'
+			identifier: property.notFound
+			count: 2
+			path: modules/ppcp-api-client/src/Entity/Token.php
+
+		-
+			message: '#^Access to an undefined property object\:\:\$token\.$#'
+			identifier: property.notFound
+			count: 1
+			path: modules/ppcp-api-client/src/Entity/Token.php
+
+		-
+			message: '#^Method WooCommerce\\PayPalCommerce\\ApiClient\\Entity\\Token\:\:as_json\(\) should return string but returns string\|false\.$#'
+			identifier: return.type
+			count: 1
+			path: modules/ppcp-api-client/src/Entity/Token.php
+
+		-
+			message: '#^Access to an undefined property object\:\:\$name\.$#'
+			identifier: property.notFound
+			count: 1
+			path: modules/ppcp-api-client/src/Entity/Webhook.php
+
+		-
+			message: '#^Access to an undefined property object\:\:\$href\.$#'
+			identifier: property.notFound
+			count: 1
+			path: modules/ppcp-api-client/src/Exception/PayPalApiException.php
+
+		-
+			message: '#^Parameter \#2 \$array of function array_map expects array, array\|string given\.$#'
+			identifier: argument.type
+			count: 1
+			path: modules/ppcp-api-client/src/Factory/ItemFactory.php
+
+		-
+			message: '#^Parameter \#1 \$string of function substr expects string, string\|null given\.$#'
+			identifier: argument.type
+			count: 2
+			path: modules/ppcp-api-client/src/Factory/PayerFactory.php
+
+		-
+			message: '#^Parameter \#5 \$birthdate of class WooCommerce\\PayPalCommerce\\ApiClient\\Entity\\Payer constructor expects DateTime\|null, DateTime\|false\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: modules/ppcp-api-client/src/Factory/PayerFactory.php
+
+		-
+			message: '#^Access to an undefined property object\:\:\$source\.$#'
+			identifier: property.notFound
+			count: 1
+			path: modules/ppcp-api-client/src/Factory/PaymentTokenFactory.php
+
+		-
+			message: '#^Parameter \#1 \$haystack of function strpos expects string, array\|string given\.$#'
+			identifier: argument.type
+			count: 3
+			path: modules/ppcp-applepay/services.php
+
+		-
+			message: '#^Method WooCommerce\\PayPalCommerce\\Applepay\\ApplePayGateway\:\:init_form_fields\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: modules/ppcp-applepay/src/ApplePayGateway.php
+
+		-
+			message: '#^Parameter \#2 \$total of method WooCommerce\\PayPalCommerce\\Applepay\\Assets\\ApplePayButton\:\:getShippingPackages\(\) expects float, float\|string given\.$#'
+			identifier: argument.type
+			count: 1
+			path: modules/ppcp-applepay/src/Assets/ApplePayButton.php
+
+		-
+			message: '#^Parameter \#1 \$json of function json_decode expects string, array\|string given\.$#'
+			identifier: argument.type
+			count: 1
+			path: modules/ppcp-applepay/src/Assets/ApplePayDataObjectHttp.php
+
+		-
+			message: '#^Method WooCommerce\\PayPalCommerce\\Applepay\\Assets\\BlocksPaymentMethod\:\:initialize\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: modules/ppcp-applepay/src/Assets/BlocksPaymentMethod.php
+
+		-
+			message: '#^Method WooCommerce\\PayPalCommerce\\AxoBlock\\AxoBlockPaymentMethod\:\:initialize\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: modules/ppcp-axo-block/src/AxoBlockPaymentMethod.php
+
+		-
+			message: '#^Access to an undefined property object\:\:\$code\.$#'
+			identifier: property.notFound
+			count: 1
+			path: modules/ppcp-axo/services.php
+
+		-
+			message: '#^Method WooCommerce\\PayPalCommerce\\Axo\\Gateway\\AxoGateway\:\:get_user_friendly_error_message\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: modules/ppcp-axo/src/Gateway/AxoGateway.php
+
+		-
+			message: '#^Method WooCommerce\\PayPalCommerce\\Axo\\Gateway\\AxoGateway\:\:init_form_fields\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: modules/ppcp-axo/src/Gateway/AxoGateway.php
+
+		-
+			message: '#^Parameter \#2 \$payment_token of method WooCommerce\\PayPalCommerce\\Axo\\Gateway\\AxoGateway\:\:create_paypal_order\(\) expects string, array\|string given\.$#'
+			identifier: argument.type
+			count: 1
+			path: modules/ppcp-axo/src/Gateway/AxoGateway.php
+
+		-
+			message: '#^Parameter \#2 \$token of method WooCommerce\\PayPalCommerce\\Axo\\Gateway\\AxoGateway\:\:process_3ds_return\(\) expects string, array\|string given\.$#'
+			identifier: argument.type
+			count: 1
+			path: modules/ppcp-axo/src/Gateway/AxoGateway.php
+
+		-
+			message: '#^Method WooCommerce\\PayPalCommerce\\Blocks\\AdvancedCardPaymentMethod\:\:initialize\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: modules/ppcp-blocks/src/AdvancedCardPaymentMethod.php
+
+		-
+			message: '#^Method WooCommerce\\PayPalCommerce\\Blocks\\PayPalPaymentMethod\:\:initialize\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: modules/ppcp-blocks/src/PayPalPaymentMethod.php
+
+		-
+			message: '#^Method WooCommerce\\PayPalCommerce\\Button\\Assets\\SmartButton\:\:button_renderer\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: modules/ppcp-button/src/Assets/SmartButton.php
+
+		-
+			message: '#^Method WooCommerce\\PayPalCommerce\\Button\\Assets\\SmartButton\:\:dcc_renderer\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: modules/ppcp-button/src/Assets/SmartButton.php
+
+		-
+			message: '#^Parameter \#1 \$str of function sanitize_text_field expects string, array\|string given\.$#'
+			identifier: argument.type
+			count: 1
+			path: modules/ppcp-button/src/ButtonModule.php
+
+		-
+			message: '#^Method WooCommerce\\PayPalCommerce\\Button\\Endpoint\\CreateOrderEndpoint\:\:set_bn_code\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: modules/ppcp-button/src/Endpoint/CreateOrderEndpoint.php
+
+		-
+			message: '#^Parameter \#1 \$json of function json_decode expects string, string\|false given\.$#'
+			identifier: argument.type
+			count: 1
+			path: modules/ppcp-button/src/Endpoint/CreateOrderEndpoint.php
+
+		-
+			message: '#^Parameter \#1 \$wc_order of method WooCommerce\\PayPalCommerce\\ApiClient\\Factory\\PayerFactory\:\:from_wc_order\(\) expects WC_Order, WC_Order\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: modules/ppcp-button/src/Endpoint/CreateOrderEndpoint.php
+
+		-
+			message: '#^Method WooCommerce\\PayPalCommerce\\Button\\Endpoint\\RequestData\:\:dequeue_nonce_fix\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: modules/ppcp-button/src/Endpoint/RequestData.php
+
+		-
+			message: '#^Method WooCommerce\\PayPalCommerce\\Button\\Endpoint\\RequestData\:\:enqueue_nonce_fix\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: modules/ppcp-button/src/Endpoint/RequestData.php
+
+		-
+			message: '#^Parameter \#1 \$json of function json_decode expects string, string\|false given\.$#'
+			identifier: argument.type
+			count: 1
+			path: modules/ppcp-button/src/Endpoint/RequestData.php
+
+		-
+			message: '#^Parameter \#1 \$str of function sanitize_text_field expects string, array\|string given\.$#'
+			identifier: argument.type
+			count: 1
+			path: modules/ppcp-button/src/Helper/EarlyOrderHandler.php
+
+		-
+			message: '#^Parameter \#1 \$price of static method WC_Tax\:\:calc_tax\(\) expects float, float\|string given\.$#'
+			identifier: argument.type
+			count: 1
+			path: modules/ppcp-button/src/Helper/WooCommerceOrderCreator.php
+
+		-
+			message: '#^Parameter \#2 \$all_locations of method WooCommerce\\PayPalCommerce\\Compat\\CompatModule\:\:selected_locations\(\) expects array\<string\>, list\<int\|string\> given\.$#'
+			identifier: argument.type
+			count: 3
+			path: modules/ppcp-compat/src/CompatModule.php
+
+		-
+			message: '#^Method WooCommerce\\PayPalCommerce\\Compat\\PPEC\\SubscriptionsHandler\:\:use_billing_agreement_as_token\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: modules/ppcp-compat/src/PPEC/SubscriptionsHandler.php
+
+		-
+			message: '#^Method WooCommerce\\PayPalCommerce\\Compat\\PPEC\\SubscriptionsHandler\:\:use_billing_agreement_as_token\(\) has parameter \$customer with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: modules/ppcp-compat/src/PPEC/SubscriptionsHandler.php
+
+		-
+			message: '#^Method WooCommerce\\PayPalCommerce\\Compat\\PPEC\\SubscriptionsHandler\:\:use_billing_agreement_as_token\(\) has parameter \$order with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: modules/ppcp-compat/src/PPEC/SubscriptionsHandler.php
+
+		-
+			message: '#^Method WooCommerce\\PayPalCommerce\\Compat\\PPEC\\SubscriptionsHandler\:\:use_billing_agreement_as_token\(\) has parameter \$token with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: modules/ppcp-compat/src/PPEC/SubscriptionsHandler.php
+
+		-
+			message: '#^Cannot cast array\|string to string\.$#'
+			identifier: cast.string
+			count: 1
+			path: modules/ppcp-fraud-protection/src/Recaptcha/Recaptcha.php
+
+		-
+			message: '#^Parameter \#1 \$str of function sanitize_text_field expects string, array\|string given\.$#'
+			identifier: argument.type
+			count: 5
+			path: modules/ppcp-fraud-protection/src/Recaptcha/Recaptcha.php
+
+		-
+			message: '#^Parameter \#1 \$url of function sanitize_url expects string, array\|string given\.$#'
+			identifier: argument.type
+			count: 1
+			path: modules/ppcp-fraud-protection/src/Recaptcha/Recaptcha.php
+
+		-
+			message: '#^Method WooCommerce\\PayPalCommerce\\FraudProtection\\Recaptcha\\RecaptchaIntegration\:\:init_form_fields\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: modules/ppcp-fraud-protection/src/Recaptcha/RecaptchaIntegration.php
+
+		-
+			message: '#^Method WooCommerce\\PayPalCommerce\\Googlepay\\Assets\\BlocksPaymentMethod\:\:initialize\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: modules/ppcp-googlepay/src/Assets/BlocksPaymentMethod.php
+
+		-
+			message: '#^Method WooCommerce\\PayPalCommerce\\Googlepay\\GooglePayGateway\:\:init_form_fields\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: modules/ppcp-googlepay/src/GooglePayGateway.php
+
+		-
+			message: '#^Method WooCommerce\\PayPalCommerce\\LocalAlternativePaymentMethods\\BancontactGateway\:\:init_form_fields\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: modules/ppcp-local-alternative-payment-methods/src/BancontactGateway.php
+
+		-
+			message: '#^Method WooCommerce\\PayPalCommerce\\LocalAlternativePaymentMethods\\BancontactPaymentMethod\:\:initialize\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: modules/ppcp-local-alternative-payment-methods/src/BancontactPaymentMethod.php
+
+		-
+			message: '#^Method WooCommerce\\PayPalCommerce\\LocalAlternativePaymentMethods\\BlikGateway\:\:init_form_fields\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: modules/ppcp-local-alternative-payment-methods/src/BlikGateway.php
+
+		-
+			message: '#^Method WooCommerce\\PayPalCommerce\\LocalAlternativePaymentMethods\\BlikPaymentMethod\:\:initialize\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: modules/ppcp-local-alternative-payment-methods/src/BlikPaymentMethod.php
+
+		-
+			message: '#^Method WooCommerce\\PayPalCommerce\\LocalAlternativePaymentMethods\\EPSGateway\:\:init_form_fields\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: modules/ppcp-local-alternative-payment-methods/src/EPSGateway.php
+
+		-
+			message: '#^Method WooCommerce\\PayPalCommerce\\LocalAlternativePaymentMethods\\EPSPaymentMethod\:\:initialize\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: modules/ppcp-local-alternative-payment-methods/src/EPSPaymentMethod.php
+
+		-
+			message: '#^Method WooCommerce\\PayPalCommerce\\LocalAlternativePaymentMethods\\IDealGateway\:\:init_form_fields\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: modules/ppcp-local-alternative-payment-methods/src/IDealGateway.php
+
+		-
+			message: '#^Method WooCommerce\\PayPalCommerce\\LocalAlternativePaymentMethods\\IDealPaymentMethod\:\:initialize\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: modules/ppcp-local-alternative-payment-methods/src/IDealPaymentMethod.php
+
+		-
+			message: '#^Parameter \#1 \$haystack of function str_contains expects string\|null, array\|string given\.$#'
+			identifier: argument.type
+			count: 1
+			path: modules/ppcp-local-alternative-payment-methods/src/LocalAlternativePaymentMethodsModule.php
+
+		-
+			message: '#^Parameter \#1 \$url of function esc_url_raw expects string, array\|string given\.$#'
+			identifier: argument.type
+			count: 3
+			path: modules/ppcp-local-alternative-payment-methods/src/LocalAlternativePaymentMethodsModule.php
+
+		-
+			message: '#^Method WooCommerce\\PayPalCommerce\\LocalAlternativePaymentMethods\\MultibancoGateway\:\:init_form_fields\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: modules/ppcp-local-alternative-payment-methods/src/MultibancoGateway.php
+
+		-
+			message: '#^Method WooCommerce\\PayPalCommerce\\LocalAlternativePaymentMethods\\MultibancoPaymentMethod\:\:initialize\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: modules/ppcp-local-alternative-payment-methods/src/MultibancoPaymentMethod.php
+
+		-
+			message: '#^Method WooCommerce\\PayPalCommerce\\LocalAlternativePaymentMethods\\MyBankGateway\:\:init_form_fields\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: modules/ppcp-local-alternative-payment-methods/src/MyBankGateway.php
+
+		-
+			message: '#^Method WooCommerce\\PayPalCommerce\\LocalAlternativePaymentMethods\\MyBankPaymentMethod\:\:initialize\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: modules/ppcp-local-alternative-payment-methods/src/MyBankPaymentMethod.php
+
+		-
+			message: '#^Method WooCommerce\\PayPalCommerce\\LocalAlternativePaymentMethods\\P24Gateway\:\:init_form_fields\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: modules/ppcp-local-alternative-payment-methods/src/P24Gateway.php
+
+		-
+			message: '#^Method WooCommerce\\PayPalCommerce\\LocalAlternativePaymentMethods\\P24PaymentMethod\:\:initialize\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: modules/ppcp-local-alternative-payment-methods/src/P24PaymentMethod.php
+
+		-
+			message: '#^Method WooCommerce\\PayPalCommerce\\LocalAlternativePaymentMethods\\TrustlyGateway\:\:init_form_fields\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: modules/ppcp-local-alternative-payment-methods/src/TrustlyGateway.php
+
+		-
+			message: '#^Method WooCommerce\\PayPalCommerce\\LocalAlternativePaymentMethods\\TrustlyPaymentMethod\:\:initialize\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: modules/ppcp-local-alternative-payment-methods/src/TrustlyPaymentMethod.php
+
+		-
+			message: '#^Cannot access offset ''body'' on array\|WP_Error\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 2
+			path: modules/ppcp-order-tracking/src/Endpoint/OrderTrackingEndpoint.php
+
+		-
+			message: '#^Parameter \#2 \$data of method WooCommerce\\PayPalCommerce\\OrderTracking\\Endpoint\\OrderTrackingEndpoint\:\:create_shipment\(\) expects array\{capture_id\: string, status\: ''CANCELLED''\|''DELIVERED''\|''ON_HOLD''\|''SHIPPED'', tracking_number\: string, carrier\: string, items\?\: array, carrier_name_other\?\: string\}, array given\.$#'
+			identifier: argument.type
+			count: 2
+			path: modules/ppcp-order-tracking/src/Endpoint/OrderTrackingEndpoint.php
+
+		-
+			message: '#^Parameter \#2 \$data of method WooCommerce\\PayPalCommerce\\OrderTracking\\Endpoint\\OrderTrackingEndpoint\:\:create_shipment\(\) expects array\{capture_id\: string, status\: ''CANCELLED''\|''DELIVERED''\|''ON_HOLD''\|''SHIPPED'', tracking_number\: string, carrier\: string, items\?\: array, carrier_name_other\?\: string\}, array\<mixed, mixed\> given\.$#'
+			identifier: argument.type
+			count: 1
+			path: modules/ppcp-order-tracking/src/Endpoint/OrderTrackingEndpoint.php
+
+		-
+			message: '#^Method WooCommerce\\PayPalCommerce\\OrderTracking\\Shipment\\Shipment\:\:line_items\(\) should return array\<int, array\{name\: string, unit_amount\: array\{currency_code\: string, value\: string\}, quantity\: int, description\: string, sku\: string, category\: string, tax\?\: array\{currency_code\: string, value\: string\}, tax_rate\?\: string\}\> but returns array\<int, array\>\.$#'
+			identifier: return.type
+			count: 1
+			path: modules/ppcp-order-tracking/src/Shipment/Shipment.php
+
+		-
+			message: '#^Cannot cast array\|string to string\.$#'
+			identifier: cast.string
+			count: 1
+			path: modules/ppcp-paypal-subscriptions/src/PayPalSubscriptionsModule.php
+
+		-
+			message: '#^Parameter \#1 \$str of function sanitize_text_field expects string, array\|string given\.$#'
+			identifier: argument.type
+			count: 1
+			path: modules/ppcp-session/src/Cancellation/CancelController.php
+
+		-
+			message: '#^Method WooCommerce\\PayPalCommerce\\Session\\MemoryWcSession\:\:forget_session\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: modules/ppcp-session/src/MemoryWcSession.php
+
+		-
+			message: '#^Method WooCommerce\\PayPalCommerce\\Session\\MemoryWcSession\:\:init_session_cookie\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: modules/ppcp-session/src/MemoryWcSession.php
+
+		-
+			message: '#^Property WC_Session\:\:\$_customer_id \(string\) does not accept int\|string\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: modules/ppcp-session/src/MemoryWcSession.php
+
+		-
+			message: '#^Parameter \#1 \$key of function sanitize_key expects string, array\|string given\.$#'
+			identifier: argument.type
+			count: 1
+			path: modules/ppcp-settings/src/Data/GeneralSettings.php
+
+		-
+			message: '#^Method WooCommerce\\PayPalCommerce\\Settings\\Endpoint\\RestEndpoint\:\:return_error\(\) should return WP_REST_Response but returns WP_Error\|WP_REST_Response\.$#'
+			identifier: return.type
+			count: 1
+			path: modules/ppcp-settings/src/Endpoint/RestEndpoint.php
+
+		-
+			message: '#^Method WooCommerce\\PayPalCommerce\\Settings\\Endpoint\\RestEndpoint\:\:return_success\(\) should return WP_REST_Response but returns WP_Error\|WP_REST_Response\.$#'
+			identifier: return.type
+			count: 1
+			path: modules/ppcp-settings/src/Endpoint/RestEndpoint.php
+
+		-
+			message: '#^Parameter \#1 \$callback of function array_map expects \(callable\(object\)\: mixed\)\|null, Closure\(stdClass\)\: lowercase\-string given\.$#'
+			identifier: argument.type
+			count: 1
+			path: modules/ppcp-settings/src/Endpoint/WebhookSettingsEndpoint.php
+
+		-
+			message: '#^Parameter \#1 \$str of function sanitize_text_field expects string, array\|string given\.$#'
+			identifier: argument.type
+			count: 1
+			path: modules/ppcp-settings/src/Handler/ConnectionListener.php
+
+		-
+			message: '#^Instanceof between WooCommerce\\PayPalCommerce\\StoreSync\\Validation\\ValidationIssue and WooCommerce\\PayPalCommerce\\StoreSync\\Validation\\ValidationIssue will always evaluate to true\.$#'
+			identifier: instanceof.alwaysTrue
+			count: 1
+			path: modules/ppcp-store-sync/src/CartValidation/CartValidationProcessor.php
+
+		-
+			message: '#^Method WooCommerce\\PayPalCommerce\\StoreSync\\CartValidation\\PriceValidator\:\:build_mismatch_context\(\) has parameter \$cart_price with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: modules/ppcp-store-sync/src/CartValidation/PriceValidator.php
+
+		-
+			message: '#^Method WooCommerce\\PayPalCommerce\\StoreSync\\CartValidation\\PriceValidator\:\:build_resolution_options\(\) has parameter \$cart_price with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: modules/ppcp-store-sync/src/CartValidation/PriceValidator.php
+
+		-
+			message: '#^Method WooCommerce\\PayPalCommerce\\StoreSync\\CartValidation\\PriceValidator\:\:create_price_mismatch_issue\(\) has parameter \$cart_price with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: modules/ppcp-store-sync/src/CartValidation/PriceValidator.php
+
+		-
+			message: '#^Method WooCommerce\\PayPalCommerce\\StoreSync\\CartValidation\\PriceValidator\:\:create_price_mismatch_issue\(\) has parameter \$product with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: modules/ppcp-store-sync/src/CartValidation/PriceValidator.php
+
+		-
+			message: '#^Property WooCommerce\\PayPalCommerce\\StoreSync\\Errors\\AgenticError\:\:\$debug_id \(string\|null\) is never assigned null so it can be removed from the property type\.$#'
+			identifier: property.unusedType
+			count: 1
+			path: modules/ppcp-store-sync/src/Errors/AgenticError.php
+
+		-
+			message: '#^Unsafe call to private method WooCommerce\\PayPalCommerce\\StoreSync\\Errors\\AgenticError\:\:extract_wp_error_details\(\) through static\:\:\.$#'
+			identifier: staticClassAccess.privateMethod
+			count: 1
+			path: modules/ppcp-store-sync/src/Errors/AgenticError.php
+
+		-
+			message: '#^Unsafe usage of new static\(\)\.$#'
+			identifier: new.static
+			count: 1
+			path: modules/ppcp-store-sync/src/Errors/AgenticError.php
+
+		-
+			message: '#^Method WooCommerce\\PayPalCommerce\\StoreSync\\Helper\\AgenticCheckoutProcessor\:\:create_order\(\) never returns WP_Error so it can be removed from the return type\.$#'
+			identifier: return.unusedType
+			count: 1
+			path: modules/ppcp-store-sync/src/Helper/AgenticCheckoutProcessor.php
+
+		-
+			message: '#^Property WooCommerce\:\:\$session \(WC_Session\) does not accept WC_Session\|null\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: modules/ppcp-store-sync/src/Helper/AgenticSessionManager.php
+
+		-
+			message: '#^Method WooCommerce\\PayPalCommerce\\StoreSync\\Helper\\CartHelper\:\:billing_address_array\(\) should return array\{address_line_1\: string, address_line_2\: string, admin_area_2\: string, admin_area_1\: string, postal_code\: string, country_code\: string\} but returns array\.$#'
+			identifier: return.type
+			count: 1
+			path: modules/ppcp-store-sync/src/Helper/CartHelper.php
+
+		-
+			message: '#^Method WooCommerce\\PayPalCommerce\\StoreSync\\Helper\\CartHelper\:\:shipping_address_array\(\) should return array\{address_line_1\: string, address_line_2\: string, admin_area_2\: string, admin_area_1\: string, postal_code\: string, country_code\: string\} but returns array\.$#'
+			identifier: return.type
+			count: 1
+			path: modules/ppcp-store-sync/src/Helper/CartHelper.php
+
+		-
+			message: '#^Parameter \#2 \$value of method WC_Data\:\:update_meta_data\(\) expects array\|string, int\|string given\.$#'
+			identifier: argument.type
+			count: 2
+			path: modules/ppcp-store-sync/src/Ingestion/SyncJob.php
+
+		-
+			message: '#^Parameter \#1 \$nonce of function wp_verify_nonce expects string, array\|string given\.$#'
+			identifier: argument.type
+			count: 1
+			path: modules/ppcp-store-sync/src/Inspector/InspectionFormHandler.php
+
+		-
+			message: '#^Parameter \#1 \$str of function sanitize_text_field expects string, array\|string given\.$#'
+			identifier: argument.type
+			count: 1
+			path: modules/ppcp-store-sync/src/Inspector/InspectionFormHandler.php
+
+		-
+			message: '#^Unable to resolve the template type T in call to function wp_die$#'
+			identifier: argument.templateType
+			count: 2
+			path: modules/ppcp-store-sync/src/Inspector/InspectionFormHandler.php
+
+		-
+			message: '#^Parameter \#1 \$data of function maybe_unserialize expects string, array\|string given\.$#'
+			identifier: argument.type
+			count: 1
+			path: modules/ppcp-store-sync/src/Inspector/InspectionSessionData.php
+
+		-
+			message: '#^Parameter \#1 \$str of function sanitize_text_field expects string, array\|string given\.$#'
+			identifier: argument.type
+			count: 2
+			path: modules/ppcp-store-sync/src/Inspector/Page/CartSessionSection.php
+
+		-
+			message: '#^Parameter \#1 \$str of function sanitize_text_field expects string, array\|string given\.$#'
+			identifier: argument.type
+			count: 1
+			path: modules/ppcp-store-sync/src/Inspector/Page/RegistrationStatusSection.php
+
+		-
+			message: '#^Cannot call method format\(\) on DateTime\|false\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: modules/ppcp-store-sync/src/Schema/ShippingOption.php
+
+		-
+			message: '#^Parameter \#1 \$customer_id of method WC_Session_Handler\:\:delete_session\(\) expects int, string given\.$#'
+			identifier: argument.type
+			count: 1
+			path: modules/ppcp-store-sync/src/Session/AgenticSessionHandler.php
+
+		-
+			message: '#^Parameter \#1 \$str of function sanitize_text_field expects string, array\|string given\.$#'
+			identifier: argument.type
+			count: 4
+			path: modules/ppcp-store-sync/src/StoreSyncModule.php
+
+		-
+			message: '#^Unable to resolve the template type T in call to function wp_die$#'
+			identifier: argument.templateType
+			count: 2
+			path: modules/ppcp-store-sync/src/StoreSyncModule.php
+
+		-
+			message: '#^Parameter \#1 \$haystack of function str_contains expects string\|null, int\<min, \-1\>\|int\<1, max\>\|string given\.$#'
+			identifier: argument.type
+			count: 1
+			path: modules/ppcp-vaulting/src/CustomerApprovalListener.php
+
+		-
+			message: '#^Method WooCommerce\\PayPalCommerce\\Vaulting\\PaymentTokenHelper\:\:first_token_of_type\(\) should return WC_Payment_Token\|null but returns object\.$#'
+			identifier: return.type
+			count: 1
+			path: modules/ppcp-vaulting/src/PaymentTokenHelper.php
+
+		-
+			message: '#^Method WooCommerce\\PayPalCommerce\\Vaulting\\PaymentTokenPayPal\:\:set_email\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: modules/ppcp-vaulting/src/PaymentTokenPayPal.php
+
+		-
+			message: '#^Method WooCommerce\\PayPalCommerce\\Vaulting\\PaymentTokenVenmo\:\:set_email\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: modules/ppcp-vaulting/src/PaymentTokenVenmo.php
+
+		-
+			message: '#^Parameter \#1 \$str of function sanitize_text_field expects string, array\|string given\.$#'
+			identifier: argument.type
+			count: 2
+			path: modules/ppcp-wc-gateway/services.php
+
+		-
+			message: '#^Parameter \#1 \$price of function wc_price expects float, float\|string given\.$#'
+			identifier: argument.type
+			count: 1
+			path: modules/ppcp-wc-gateway/src/Admin/FeesRenderer.php
+
+		-
+			message: '#^Method WooCommerce\\PayPalCommerce\\WcGateway\\Admin\\OrderTablePaymentStatusColumn\:\:render\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: modules/ppcp-wc-gateway/src/Admin/OrderTablePaymentStatusColumn.php
+
+		-
+			message: '#^Method WooCommerce\\PayPalCommerce\\WcGateway\\Admin\\OrderTablePaymentStatusColumn\:\:render_completed_status\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: modules/ppcp-wc-gateway/src/Admin/OrderTablePaymentStatusColumn.php
+
+		-
+			message: '#^Method WooCommerce\\PayPalCommerce\\WcGateway\\Admin\\OrderTablePaymentStatusColumn\:\:render_incomplete_status\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: modules/ppcp-wc-gateway/src/Admin/OrderTablePaymentStatusColumn.php
+
+		-
+			message: '#^Method WooCommerce\\PayPalCommerce\\WcGateway\\Admin\\PaymentStatusOrderDetail\:\:render\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: modules/ppcp-wc-gateway/src/Admin/PaymentStatusOrderDetail.php
+
+		-
+			message: '#^Cannot call method given_name\(\) on WooCommerce\\PayPalCommerce\\ApiClient\\Entity\\PayerName\|null\.$#'
+			identifier: method.nonObject
+			count: 2
+			path: modules/ppcp-wc-gateway/src/Checkout/CheckoutPayPalAddressPreset.php
+
+		-
+			message: '#^Cannot call method surname\(\) on WooCommerce\\PayPalCommerce\\ApiClient\\Entity\\PayerName\|null\.$#'
+			identifier: method.nonObject
+			count: 2
+			path: modules/ppcp-wc-gateway/src/Checkout/CheckoutPayPalAddressPreset.php
+
+		-
+			message: '#^Parameter \#1 \$str of function sanitize_text_field expects string, array\|string given\.$#'
+			identifier: argument.type
+			count: 1
+			path: modules/ppcp-wc-gateway/src/Endpoint/ReturnUrlEndpoint.php
+
+		-
+			message: '#^Method WooCommerce\\PayPalCommerce\\WcGateway\\Gateway\\CardButtonGateway\:\:init_form_fields\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: modules/ppcp-wc-gateway/src/Gateway/CardButtonGateway.php
+
+		-
+			message: '#^Method WooCommerce\\PayPalCommerce\\WcGateway\\Gateway\\CreditCardGateway\:\:form\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: modules/ppcp-wc-gateway/src/Gateway/CreditCardGateway.php
+
+		-
+			message: '#^Method WooCommerce\\PayPalCommerce\\WcGateway\\Gateway\\CreditCardGateway\:\:init_form_fields\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: modules/ppcp-wc-gateway/src/Gateway/CreditCardGateway.php
+
+		-
+			message: '#^Parameter \#1 \$saved_credit_card of method WooCommerce\\PayPalCommerce\\Vaulting\\VaultedCreditCardHandler\:\:handle_payment\(\) expects string, array\|string given\.$#'
+			identifier: argument.type
+			count: 1
+			path: modules/ppcp-wc-gateway/src/Gateway/CreditCardGateway.php
+
+		-
+			message: '#^Method WooCommerce\\PayPalCommerce\\WcGateway\\Gateway\\OXXO\\OXXOGateway\:\:init_form_fields\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: modules/ppcp-wc-gateway/src/Gateway/OXXO/OXXOGateway.php
+
+		-
+			message: '#^Parameter \#1 \$id of method WooCommerce\\PayPalCommerce\\WcGateway\\FundingSource\\FundingSourceRenderer\:\:render_name\(\) expects string, array\|string given\.$#'
+			identifier: argument.type
+			count: 1
+			path: modules/ppcp-wc-gateway/src/Gateway/PayPalGateway.php
+
+		-
+			message: '#^Parameter \#2 \$subject of function preg_match expects string, array\<string\>\|string given\.$#'
+			identifier: argument.type
+			count: 1
+			path: modules/ppcp-wc-gateway/src/Gateway/PayUponInvoice/PayUponInvoice.php
+
+		-
+			message: '#^Method WooCommerce\\PayPalCommerce\\WcGateway\\Gateway\\PayUponInvoice\\PayUponInvoiceGateway\:\:init_form_fields\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: modules/ppcp-wc-gateway/src/Gateway/PayUponInvoice/PayUponInvoiceGateway.php
+
+		-
+			message: '#^Parameter \#1 \$date of method WooCommerce\\PayPalCommerce\\WcGateway\\Helper\\CheckoutHelper\:\:validate_birth_date\(\) expects string, array\|string given\.$#'
+			identifier: argument.type
+			count: 1
+			path: modules/ppcp-wc-gateway/src/Gateway/PayUponInvoice/PayUponInvoiceGateway.php
+
+		-
+			message: '#^Parameter \#1 \$value of method WC_Order\:\:set_billing_phone\(\) expects string, array\|string given\.$#'
+			identifier: argument.type
+			count: 1
+			path: modules/ppcp-wc-gateway/src/Gateway/PayUponInvoice/PayUponInvoiceGateway.php
+
+		-
+			message: '#^Parameter \#2 \$birth_date of method WooCommerce\\PayPalCommerce\\WcGateway\\Gateway\\PayUponInvoice\\PaymentSourceFactory\:\:from_wc_order\(\) expects string, array\|string given\.$#'
+			identifier: argument.type
+			count: 1
+			path: modules/ppcp-wc-gateway/src/Gateway/PayUponInvoice/PayUponInvoiceGateway.php
+
+		-
+			message: '#^Method WooCommerce\\PayPalCommerce\\WcGateway\\Notice\\AuthorizeOrderActionNotice\:\:display_message\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: modules/ppcp-wc-gateway/src/Notice/AuthorizeOrderActionNotice.php
+
+		-
+			message: '#^Parameter \#3 \$amount of method WooCommerce\\PayPalCommerce\\WcGateway\\Processor\\RefundProcessor\:\:refund\(\) expects float, float\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: modules/ppcp-wc-gateway/src/Processor/RefundProcessor.php
+
+		-
+			message: '#^Method WooCommerce\\PayPalCommerce\\WcGateway\\Settings\\Settings\:\:persist\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: modules/ppcp-wc-gateway/src/Settings/Settings.php
+
+		-
+			message: '#^Method WooCommerce\\PayPalCommerce\\WcGateway\\Settings\\Settings\:\:set\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: modules/ppcp-wc-gateway/src/Settings/Settings.php
+
+		-
+			message: '#^Method WooCommerce\\PayPalCommerce\\WcGateway\\WCGatewayModule\:\:register_checkout_paypal_address_preset\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: modules/ppcp-wc-gateway/src/WCGatewayModule.php
+
+		-
+			message: '#^Method WooCommerce\\PayPalCommerce\\WcGateway\\WCGatewayModule\:\:register_columns\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: modules/ppcp-wc-gateway/src/WCGatewayModule.php
+
+		-
+			message: '#^Method WooCommerce\\PayPalCommerce\\WcGateway\\WCGatewayModule\:\:register_order_functionality\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: modules/ppcp-wc-gateway/src/WCGatewayModule.php
+
+		-
+			message: '#^Method WooCommerce\\PayPalCommerce\\WcGateway\\WCGatewayModule\:\:register_payment_gateways\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: modules/ppcp-wc-gateway/src/WCGatewayModule.php
+
+		-
+			message: '#^Cannot access offset ''variation_id'' on array\|WC_Product_Variation\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: modules/ppcp-wc-subscriptions/src/Helper/SubscriptionHelper.php
+
+		-
+			message: '#^Parameter \#1 \$search of function str_replace expects array\<string\>\|string, int\<min, \-1\>\|int\<1, max\>\|string given\.$#'
+			identifier: argument.type
+			count: 1
+			path: modules/ppcp-webhooks/src/IncomingWebhookEndpoint.php
+
+		-
+			message: '#^Parameter \#1 \$url of function wp_parse_url expects string, array\|string given\.$#'
+			identifier: argument.type
+			count: 1
+			path: modules/woocommerce-logging/src/Logger/WooCommerceLogger.php
+
+		-
+			message: '#^Part \$method \(array\|string\) of encapsed string cannot be cast to string\.$#'
+			identifier: encapsedStringPart.nonString
+			count: 1
+			path: modules/woocommerce-logging/src/Logger/WooCommerceLogger.php
+
+		-
+			message: '#^Function is_woocommerce_activated not found\.$#'
+			identifier: function.notFound
+			count: 3
+			path: woocommerce-paypal-payments.php
+
+		-
+			message: '#^Function show_admin_notice_and_deactivate not found\.$#'
+			identifier: function.notFound
+			count: 2
+			path: woocommerce-paypal-payments.php

@@ -96,13 +96,8 @@ class VoidButtonAssets {
 			return false;
 		}
 
-		$order_id = $theorder->get_meta( PayPalGateway::ORDER_ID_META_KEY );
-		if ( ! $order_id ) {
-			return false;
-		}
-
 		try {
-			$order = $this->order_endpoint->order( $order_id );
+			$order = $this->order_endpoint->order( $theorder );
 
 			if ( $this->refund_processor->determine_refund_mode( $order ) !== RefundProcessor::REFUND_MODE_VOID ) {
 				return false;

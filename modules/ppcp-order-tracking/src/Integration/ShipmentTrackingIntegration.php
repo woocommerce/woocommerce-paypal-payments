@@ -82,7 +82,7 @@ class ShipmentTrackingIntegration implements Integration {
 
 					$order_id = (int) wc_clean( wp_unslash( $_POST['order_id'] ?? '' ) );
 					$wc_order = wc_get_order( $order_id );
-					if ( ! is_a( $wc_order, WC_Order::class ) ) {
+					if ( ! ( $wc_order instanceof WC_Order ) ) {
 						return;
 					}
 
@@ -123,7 +123,7 @@ class ShipmentTrackingIntegration implements Integration {
 
 					$order_id = $tracking_item['order_id'] ?? 0;
 					$wc_order = wc_get_order( $order_id );
-					if ( ! is_a( $wc_order, WC_Order::class ) ) {
+					if ( ! ( $wc_order instanceof WC_Order ) ) {
 						return $response;
 					}
 

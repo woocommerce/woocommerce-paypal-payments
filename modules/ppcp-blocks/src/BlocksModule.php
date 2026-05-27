@@ -18,8 +18,6 @@ use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExtendingModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ModuleClassNameIdTrait;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ServiceModule;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
-use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
-use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
 
 /**
  * Class BlocksModule
@@ -71,10 +69,6 @@ class BlocksModule implements ServiceModule, ExtendingModule, ExecutableModule {
 			'woocommerce_blocks_payment_method_type_registration',
 			function ( PaymentMethodRegistry $payment_method_registry ) use ( $c ): void {
 				$payment_method_registry->register( $c->get( 'blocks.method' ) );
-
-				$settings = $c->get( 'wcgateway.settings' );
-				assert( $settings instanceof Settings );
-
 				$payment_method_registry->register( $c->get( 'blocks.advanced-card-method' ) );
 			}
 		);
@@ -149,7 +143,7 @@ class BlocksModule implements ServiceModule, ExtendingModule, ExecutableModule {
 		add_filter(
 			'woocommerce_paypal_payments_sdk_components_hook',
 			function ( array $components, string $context ) {
-				if ( str_ends_with( $context, '-block' ) ) {
+				if ( substr( $context, -6 ) === '-block' ) {
 					$components[] = 'buttons';
 				}
 

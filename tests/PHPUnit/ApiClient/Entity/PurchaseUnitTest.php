@@ -565,7 +565,7 @@ class PurchaseUnitTest extends TestCase
 			$items
 		);
 
-		$testee->set_sanitizer(new PurchaseUnitSanitizer(PurchaseUnitSanitizer::MODE_EXTRA_LINE, $expected['extra_line_name'] ?? null));
+		$testee->set_sanitizer(new PurchaseUnitSanitizer(PurchaseUnitSanitizer::MODE_EXTRA_LINE ));
 
 		$countItemsBefore = count($items);
 		$array = $testee->to_array();
@@ -574,7 +574,7 @@ class PurchaseUnitTest extends TestCase
 
 		$this->assertEquals($countItemsBefore + 1, $countItemsAfter, $message);
 		$this->assertEquals($expected['extra_line_value'], $extraItem['unit_amount']['value'], $message);
-		$this->assertEquals($expected['extra_line_name'] ?? PurchaseUnitSanitizer::EXTRA_LINE_NAME, $extraItem['name'], $message);
+		$this->assertEquals(PurchaseUnitSanitizer::EXTRA_LINE_NAME, $extraItem['name'], $message);
 
 		foreach ($array['items'] as $i => $item) {
 			$this->assertEquals($expected['item_value'][$i], $item['unit_amount']['value'], $message);

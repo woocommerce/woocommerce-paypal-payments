@@ -11,16 +11,16 @@ use WooCommerce\PayPalCommerce\WcGateway\Processor\OrderProcessor;
 
 class CreateOrderForWcOrderTest extends ModularTestCase
 {
-	private $orderProcesor;
+	private $orderProcessor;
 
 	public function setUp(): void {
 		parent::setUp();
 
-		$this->orderProcesor = Mockery::mock(OrderProcessor::class);
+		$this->orderProcessor = Mockery::mock(OrderProcessor::class);
 
 		$this->bootstrapModule([
 			'wcgateway.order-processor' => function () {
-				return $this->orderProcesor;
+				return $this->orderProcessor;
 			},
 		]);
 	}
@@ -28,7 +28,7 @@ class CreateOrderForWcOrderTest extends ModularTestCase
 	public function testSuccess(): void {
 		$wcOrder = Mockery::mock(WC_Order::class);
 		$ret = Mockery::mock(Order::class);
-		$this->orderProcesor
+		$this->orderProcessor
 			->expects('create_order')
 			->with($wcOrder)
 			->andReturn($ret)
@@ -39,7 +39,7 @@ class CreateOrderForWcOrderTest extends ModularTestCase
 
 	public function testFailure(): void {
 		$wcOrder = Mockery::mock(WC_Order::class);
-		$this->orderProcesor
+		$this->orderProcessor
 			->expects('create_order')
 			->with($wcOrder)
 			->andThrow(new RuntimeException())

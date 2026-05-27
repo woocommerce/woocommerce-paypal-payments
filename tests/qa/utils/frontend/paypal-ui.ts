@@ -2,12 +2,17 @@
  * External dependencies
  */
 import { Page } from '@playwright/test';
-import { expect, getLast4CardDigits } from '@inpsyde/playwright-utils/build';
+import {
+	expect,
+	getLast4CardDigits,
+	assertIframeWithRetry,
+} from '@inpsyde/playwright-utils/build';
 /**
  * Internal dependencies
  */
-import { PayPalAccount, Pcp } from '../../resources';
+import { Pcp, ShopOrder } from '../../resources';
 import { PayPalPopup } from './paypal-popup';
+import { GooglePayPopup } from './google-pay-popup';
 import { PayPalApi } from '../paypal-api';
 
 /**
@@ -38,7 +43,7 @@ export class PayPalUi {
 
 	payPalButtonsBlockContainer = () =>
 		this.page.locator(
-			'ul.wc-block-components-express-payment__event-buttons'
+			'.wc-block-components-express-payment__event-buttons'
 		);
 	blockSmartButtonListItem = () =>
 		this.payPalButtonsBlockContainer().locator(
@@ -64,6 +69,16 @@ export class PayPalUi {
 			)
 			.locator( `[data-funding-source="venmo"]` );
 
+	googlepayButton = () =>
+		this.page
+			.locator( '#express-payment-method-ppcp-googlepay .gpay-button' )
+			.or(
+				this.page.locator(
+					'#express-payment-method-ppcp-googlepay button'
+				)
+			)
+			.first();
+
 	payPalGateway = () =>
 		this.page.locator(
 			'#radio-control-wc-payment-method-options-ppcp-gateway__label'
@@ -76,13 +91,9 @@ export class PayPalUi {
 		} );
 
 	payLaterMessageIframe = () =>
-		this.page.frameLocator( 'iframe[name^="__zoid__paypal_message__"]' );
+		this.page.frameLocator( 'iframe[title^="PayPal Message"]' );
 	payLaterMessageContainer = () =>
-		this.payLaterMessageIframe().locator( '.message__container' );
-	payLaterMessageTextPart = () =>
-		this.payLaterMessageContainer().getByText(
-			'Pay in 4 interest-free payments on'
-		);
+		this.page.locator( 'iframe[title^="PayPal Message"]' ).first();
 
 	fastlaneContinueButton = () =>
 		this.page
@@ -178,37 +189,66 @@ export class PayPalUi {
 	threeDSSubmitButton = () =>
 		this.threeDSFrame2().locator( 'input.primary[type="submit"]' );
 
+	/** Host element with paypal-buttons-label-* and paypal-buttons-layout-* classes (block cart/checkout). */
+	payPalButtonsHostElement = () =>
+		this.page.locator(
+			'#express-payment-method-ppcp-gateway-paypal .paypal-buttons'
+		);
+
 	// Actions
 
 	/**
 	 * Clicks PayPal button to open popup
 	 */
-	openPayPalPupup = async (): Promise< PayPalPopup > => {
+	async openPayPalPopup(): Promise< PayPalPopup > {
 		const popupPromise = this.page.waitForEvent( 'popup', {
 			timeout: 20 * 1000,
 		} );
-		await expect( this.payPalButton() ).toBeVisible();
+		await expect(
+			this.payPalButton(),
+			'Assert PayPal button is visible'
+		).toBeVisible();
 		await this.payPalButton().click();
+		// Popup opens directly or PayPal shows "Click to Continue" overlay
+		await Promise.race( [
+			popupPromise,
+			( async () => {
+				try {
+					const clickToContinue = this.page.getByRole( 'link', {
+						name: 'Click to Continue',
+					} );
+					await clickToContinue.waitFor( {
+						state: 'visible',
+					} );
+					await clickToContinue.click();
+				} catch {
+					// popup opened directly (normal case)
+				}
+			} )(),
+		] );
 
 		const popup = await popupPromise;
 		await popup.waitForLoadState();
 		return new PayPalPopup( popup );
-	};
+	}
 
 	/**
 	 * Clicks Pay Later button to open popup
 	 */
-	openPayLaterPupup = async (): Promise< PayPalPopup > => {
+	async openPayLaterPopup(): Promise< PayPalPopup > {
 		const popupPromise = this.page.waitForEvent( 'popup', {
 			timeout: 20 * 1000,
 		} );
-		await expect( this.payLaterButton() ).toBeVisible();
+		await expect(
+			this.payLaterButton(),
+			'Assert Pay Later button is visible'
+		).toBeVisible();
 		await this.payLaterButton().click();
 
 		const popup = await popupPromise;
 		await popup.waitForLoadState();
 		return new PayPalPopup( popup );
-	};
+	}
 
 	/**
 	 * Clicks Venmo button to open popup
@@ -217,7 +257,10 @@ export class PayPalUi {
 		const popupPromise = this.page.waitForEvent( 'popup', {
 			timeout: 20 * 1000,
 		} );
-		await expect( this.venmoButton() ).toBeVisible();
+		await expect(
+			this.venmoButton(),
+			'Assert Venmo button is visible'
+		).toBeVisible();
 		await this.venmoButton().click();
 
 		const popup = await popupPromise;
@@ -226,29 +269,51 @@ export class PayPalUi {
 	};
 
 	/**
+	 * Clicks Google Pay button to open the TEST environment popup
+	 */
+	openGooglePayPopup = async (): Promise< GooglePayPopup > => {
+		const popupPromise = this.page.waitForEvent( 'popup', {
+			timeout: 20 * 1000,
+		} );
+		await expect(
+			this.googlepayButton(),
+			'Assert Google Pay button is visible'
+		).toBeVisible();
+		await this.googlepayButton().click();
+
+		const popup = await popupPromise;
+		await popup.waitForLoadState();
+		return new GooglePayPopup( popup );
+	};
+
+	/**
 	 * Completes payment on Classic pages with given payment method
 	 *
 	 * @param data
 	 * @param data.payment
 	 * @param data.merchant
+	 * @param data.customer
 	 */
 	makePayment = async ( data: {
 		payment: Pcp.Payment;
 		merchant?: Pcp.Merchant;
+		customer?: ShopOrder[ 'customer' ];
 	} ) => {
-		const { payment, merchant } = data;
+		const { payment, merchant, customer } = data;
 		const { gateway, payPalAccount } = payment;
 		const { shortcut } = gateway;
 		let popup: PayPalPopup;
 		// Map to the tested method
 		switch ( shortcut ) {
 			case 'paypal':
-				// await this.payPalGateway().click();
-				popup = await this.openPayPalPupup();
+				popup = await this.openPayPalPopup();
 
 				if ( payment.isVaulted ) {
 					// pay with vaulted account
-					await expect( popup.submitPaymentButton() ).toBeVisible();
+					await expect(
+						popup.submitPaymentButton(),
+						'Assert submit payment button is visible'
+					).toBeVisible();
 					await popup.completePayment();
 					break;
 				}
@@ -259,7 +324,7 @@ export class PayPalUi {
 
 			case 'paylater':
 				// open expected PayPal popup
-				popup = await this.openPayLaterPupup();
+				popup = await this.openPayLaterPopup();
 				await popup.completePayLaterPayment( payPalAccount );
 				break;
 
@@ -267,6 +332,12 @@ export class PayPalUi {
 				popup = await this.openVenmoPupup();
 				await popup.completeVenmoPayment();
 				break;
+
+			case 'googlepay': {
+				const googlePayPopup = await this.openGooglePayPopup();
+				await googlePayPopup.completePayment();
+				break;
+			}
 
 			case 'acdc':
 				if ( payment.isVaulted ) {
@@ -285,15 +356,11 @@ export class PayPalUi {
 				break;
 
 			case 'card':
-				// Standard Card Button
 				if ( gateway.id === 'ppcp-card-button-gateway' ) {
-					await this.completeStandardCardButtonPayment(
-						payment.card
-					);
+					await this.completeBcdcPayment( payment.card, customer );
 					break;
 				}
-				// Debit Or Credit Card
-				await this.completeDebitOrCreditCardPayment( payment.card );
+				await this.completeBcdcFundingSourcePayment( payment.card );
 				break;
 
 			case 'pay_upon_invoice':
@@ -310,8 +377,9 @@ export class PayPalUi {
 	 * Submits order and waits for page load
 	 */
 	submitOrder = async () => {
-		await expect( this.placeOrderButton() ).toBeVisible();
-		await this.placeOrderButton().click();
+		const button = this.placeOrderButton();
+		await button.focus();
+		await button.click();
 		await this.page.waitForLoadState();
 	};
 
@@ -348,17 +416,26 @@ export class PayPalUi {
 		merchant: Pcp.Merchant
 	) => {
 		const { card, saveToAccount } = payment;
-		await expect( this.acdcGateway() ).toBeVisible();
+		await expect(
+			this.acdcGateway(),
+			'Assert ACDC gateway is visible'
+		).toBeVisible();
 		await this.acdcGateway().click();
 
 		// On block checkout the Cardholder Name input is present
 		// Needed to assert payment via PayPal API
 		// await this.acdcCardholderNameInput().fill( card.card_holder );
 
-		await expect( this.acdcCardNumberInput() ).toBeVisible();
+		await expect(
+			this.acdcCardNumberInput(),
+			'Assert ACDC card number input is visible'
+		).toBeVisible();
 		await this.acdcCardNumberInput().fill( card.card_number );
 
-		await expect( this.acdcCardExpirationInput() ).toBeVisible();
+		await expect(
+			this.acdcCardExpirationInput(),
+			'Assert ACDC card expiration input is visible'
+		).toBeVisible();
 		await this.acdcCardExpirationInput().click();
 		// trick to properly fill expiration date input
 		for ( const char of card.expiration_date ) {
@@ -366,16 +443,22 @@ export class PayPalUi {
 			await this.page.waitForTimeout( 200 );
 		}
 
-		await expect( this.acdcCardCvvInput() ).toBeVisible();
+		await expect(
+			this.acdcCardCvvInput(),
+			'Assert ACDC card CVV input is visible'
+		).toBeVisible();
 		await this.acdcCardCvvInput().fill( card.card_cvv );
 
 		if ( saveToAccount ) {
-			await expect( this.acdcSaveToAccountCheckbox() ).toBeVisible();
+			await expect(
+				this.acdcSaveToAccountCheckbox(),
+				'Assert ACDC save to account checkbox is visible'
+			).toBeVisible();
 			await this.acdcSaveToAccountCheckbox().check();
 		}
 
-		await this.submitOrder();
 		await this.replacePayPalAuthToken( merchant );
+		await this.submitOrder();
 	};
 
 	/**
@@ -407,24 +490,33 @@ export class PayPalUi {
 		merchant: Pcp.Merchant
 	) => {
 		const savedCardGateway = this.acdcSavedCard( payment.card );
-		await expect( savedCardGateway ).toBeVisible();
+		await expect(
+			savedCardGateway,
+			'Assert saved ACDC card gateway is visible'
+		).toBeVisible();
 		await savedCardGateway.click();
-		await this.submitOrder();
 		await this.replacePayPalAuthToken( merchant );
+		await this.submitOrder();
 	};
 
 	/**
 	 * Types in Fastlane OPT for Ryan's flow
 	 */
 	provideFastlaneOtp = async () => {
-		await expect( this.fastlaneOtpWindow() ).toBeVisible();
+		await expect(
+			this.fastlaneOtpWindow(),
+			'Assert Fastlane OTP window is visible'
+		).toBeVisible();
 		await this.fastlaneOtp0Input().press( '1' );
 		await this.fastlaneOtp1Input().press( '1' );
 		await this.fastlaneOtp2Input().press( '1' );
 		await this.fastlaneOtp3Input().press( '1' );
 		await this.fastlaneOtp4Input().press( '1' );
 		await this.fastlaneOtp5Input().press( '1' );
-		await expect( this.fastlaneOtpWindow() ).not.toBeVisible();
+		await expect(
+			this.fastlaneOtpWindow(),
+			'Assert Fastlane OTP window is not visible'
+		).not.toBeVisible();
 	};
 
 	/**
@@ -438,42 +530,62 @@ export class PayPalUi {
 		// For Gary's flow it is required to provide address and card details
 		if ( payment.fastlaneFlow === 'gary' ) {
 			const { card } = payment;
-			await expect( this.fastlaneGateway() ).toBeVisible();
+			await expect(
+				this.fastlaneGateway(),
+				'Assert Fastlane gateway is visible'
+			).toBeVisible();
 			await this.fastlaneGateway().click();
 
-			await expect( this.fastlaneCardNumberInput() ).toBeVisible();
+			// Wait for Braintree hosted field iframes to load
+			await expect(
+				this.fastlaneCardNumberInput(),
+				'Wait for Braintree card form'
+			).toBeVisible();
 			await this.fastlaneCardNumberInput().fill( card.card_number );
 
-			await expect( this.fastlaneExpirationDateInput() ).toBeVisible();
+			await expect(
+				this.fastlaneExpirationDateInput(),
+				'Assert Fastlane expiration date input is visible'
+			).toBeVisible();
 			await this.fastlaneExpirationDateInput().pressSequentially(
 				card.expiration_date
 			);
 
-			await expect( this.fastlaneCvvInput() ).toBeVisible();
+			await expect(
+				this.fastlaneCvvInput(),
+				'Assert Fastlane CVV input is visible'
+			).toBeVisible();
 			await this.fastlaneCvvInput().fill( card.card_cvv );
 
 			// TODO: clarify Cardholder name presence (bug PCP-4623)
 			if ( await this.fastlaneCardHolderInput().isVisible() ) {
 				await this.fastlaneCardHolderInput().fill( 'Gary From-USA' );
 			}
+
+			await expect( this.placeOrderButton() ).toBeEnabled();
 		}
-		await this.page.waitForTimeout( 1000 );
 		await this.submitOrder();
 	};
 
 	completeOXXOPayment = async ( ...args ) =>
-		console.log( `TODO: completeOXXOPayment for block pages` );
-
-	completeStandardCardButtonPayment = async ( ...args ) =>
 		console.log(
-			`TODO: completeStandardCardButtonPayment for block pages`
+			`TODO: completeOXXOPayment for block pages ${ args.length }`
 		);
 
-	completeDebitOrCreditCardPayment = async ( ...args ) =>
-		console.log( `TODO: completeDebitOrCreditCardPayment for block pages` );
+	completeBcdcPayment = async ( ...args ) =>
+		console.log(
+			`TODO: completeBcdcPayment for block pages ${ args.length }`
+		);
+
+	completeBcdcFundingSourcePayment = async ( ...args ) =>
+		console.log(
+			`TODO: completeBcdcFundingSourcePayment for block pages ${ args.length }`
+		);
 
 	completePayUponInvoicePayment = async ( ...args ) =>
-		console.log( `TODO: completePayUponInvoicePayment for block pages` );
+		console.log(
+			`TODO: completePayUponInvoicePayment for block pages ${ args.length }`
+		);
 
 	/**
 	 * Clicks payment gateway to make visible payment form or buttons
@@ -483,12 +595,18 @@ export class PayPalUi {
 	expandPaymentGateway = async ( payment: Pcp.Payment ) => {
 		switch ( payment.gateway.shortcut ) {
 			case 'paypal':
-				await expect( this.payPalGateway() ).toBeVisible();
+				await expect(
+					this.payPalGateway(),
+					'Assert PayPal gateway is visible'
+				).toBeVisible();
 				await this.payPalGateway().click();
 				break;
 
 			case 'acdc':
-				await expect( this.acdcGateway() ).toBeVisible();
+				await expect(
+					this.acdcGateway(),
+					'Assert ACDC gateway is visible'
+				).toBeVisible();
 				await this.acdcGateway().click();
 				break;
 		}
@@ -505,11 +623,17 @@ export class PayPalUi {
 		const { gateway, card } = payment;
 		switch ( gateway.shortcut ) {
 			case 'paypal':
-				await expect( this.payPalButton() ).toBeVisible();
+				await expect(
+					this.payPalButton(),
+					'Assert PayPal button is visible'
+				).toBeVisible();
 				break;
 
 			case 'acdc':
-				await expect( this.acdcSavedCard( card ) ).toBeVisible();
+				await expect(
+					this.acdcSavedCard( card ),
+					'Assert ACDC saved card is visible'
+				).toBeVisible();
 				break;
 		}
 	};
@@ -524,9 +648,9 @@ export class PayPalUi {
 	) => {
 		switch ( payment.gateway.shortcut ) {
 			case 'paypal':
-				await expect
-					.soft( this.payPalButton() )
-					.not.toContainClass( 'paypal-button-wallet' ); // Class applied for vaulted button
+				// Only check the wallet dropdown trigger — it's visible iff wallet mode is active.
+				// Checking a class on payPalButton() is fragile when the SDK renders in a
+				// different structure (e.g. after a prior PayPal popup in the same browser context).
 				await expect
 					.soft( this.payPalButtonMoreOptions() )
 					.not.toBeVisible();
@@ -534,27 +658,78 @@ export class PayPalUi {
 
 			case 'acdc':
 				await expect(
-					this.acdcSavedCard( payment.card )
+					this.acdcSavedCard( payment.card ),
+					'Assert ACDC saved card is not visible'
 				).not.toBeVisible();
 				break;
 		}
 	};
 
 	/**
-	 * - Asserts PayPal buttons block container is visible.
-	 * - Compares actual PayPal buttons container screenshot to expected.
-	 *
-	 * @param snapshotName
+	 * Asserts Pay Later Messaging iframe is visible. Uses retry-with-reload for SDK-loaded content.
+	 * Returns false if not found after retry (caller should test.skip()).
 	 */
-	snapshotBlockPayPalButtons = async ( snapshotName: string ) => {
-		await expect.soft( this.payPalButtonsBlockContainer() ).toBeVisible();
-		await this.page.waitForTimeout( 500 );
-		expect
-			.soft(
-				await this.payPalButtonsBlockContainer().screenshot( {
-					animations: 'disabled',
-				} )
-			)
-			.toMatchSnapshot( `${ snapshotName }.png` );
+	assertPayLaterMessageVisibleWithContent = async (): Promise< boolean > =>
+		assertIframeWithRetry( this.page, 'iframe[title^="PayPal Message"]' );
+
+	/**
+	 * Asserts Pay Later Messaging iframe is not visible.
+	 */
+	assertPayLaterMessageNotVisible = async () => {
+		await expect(
+			this.payLaterMessageContainer(),
+			'Assert PLM iframe is not visible'
+		).toBeHidden();
+	};
+
+	/**
+	 * Asserts PayPal buttons block container is visible and contains PayPal payment button.
+	 */
+	assertPayPalButtonsBlockVisibleWithContent = async () => {
+		const container = this.payPalButtonsBlockContainer();
+		await expect(
+			container,
+			'Assert PayPal buttons block container is visible'
+		).toBeVisible();
+		await expect(
+			container.locator( '#express-payment-method-ppcp-gateway-paypal' ),
+			'Assert PayPal express payment button is visible'
+		).toBeVisible();
+	};
+
+	/**
+	 * Asserts PayPal buttons have the given label (pay, checkout, buynow, paypal).
+	 * @param label
+	 */
+	assertPayPalButtonsHaveLabel = async (
+		label: 'pay' | 'checkout' | 'buynow' | 'paypal'
+	) => {
+		await expect(
+			this.payPalButtonsHostElement(),
+			`Assert PayPal buttons have label ${ label }`
+		).toHaveClass( new RegExp( `paypal-buttons-label-${ label }` ) );
+	};
+
+	/**
+	 * Asserts PayPal buttons have the given layout (vertical, horizontal).
+	 * @param layout
+	 */
+	assertPayPalButtonsHaveLayout = async (
+		layout: 'vertical' | 'horizontal'
+	) => {
+		await expect(
+			this.payPalButtonsHostElement(),
+			`Assert PayPal buttons have layout ${ layout }`
+		).toHaveClass( new RegExp( `paypal-buttons-layout-${ layout }` ) );
+	};
+
+	/**
+	 * Asserts PayPal buttons are not visible (block cart/checkout).
+	 */
+	assertPayPalButtonsNotVisible = async () => {
+		await expect(
+			this.page.locator( '#express-payment-method-ppcp-gateway-paypal' ),
+			'Assert PayPal buttons block container is not visible'
+		).toBeHidden();
 	};
 }

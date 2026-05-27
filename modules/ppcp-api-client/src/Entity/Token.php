@@ -87,13 +87,11 @@ class Token {
 	 * Returns a Token based off a JSON string.
 	 *
 	 * @param string $json The JSON string.
-	 *
-	 * @return static
 	 */
-	public static function from_json( string $json ): self {
+	public static function from_json( string $json ): Token {
 		$json = (object) json_decode( $json );
 		if ( isset( $json->access_token ) || isset( $json->client_token ) ) {
-			$json->token = isset( $json->access_token ) ? $json->access_token : $json->client_token;
+			$json->token = $json->access_token ?? $json->client_token;
 		}
 
 		return new Token( $json );

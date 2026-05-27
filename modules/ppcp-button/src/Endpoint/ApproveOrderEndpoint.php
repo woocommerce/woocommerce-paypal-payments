@@ -18,13 +18,15 @@ use WooCommerce\PayPalCommerce\ApiClient\Entity\OrderStatus;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\DccApplies;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\OrderHelper;
+use WooCommerce\PayPalCommerce\Button\Exception\NonceValidationException;
 use WooCommerce\PayPalCommerce\Button\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\Button\Helper\Context;
 use WooCommerce\PayPalCommerce\Button\Helper\ThreeDSecure;
 use WooCommerce\PayPalCommerce\Button\Helper\WooCommerceOrderCreator;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
-use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
+use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
+use WooCommerce\PayPalCommerce\Settings\Data\SettingsModel;
 
 /**
  * Class ApproveOrderEndpoint
@@ -68,12 +70,9 @@ class ApproveOrderEndpoint implements EndpointInterface {
 	 */
 	private $threed_secure;
 
-	/**
-	 * The settings.
-	 *
-	 * @var Settings
-	 */
-	private $settings;
+	private SettingsProvider $settings_provider;
+
+	private SettingsModel $settings_model;
 
 	/**
 	 * The DCC applies object.
@@ -124,7 +123,8 @@ class ApproveOrderEndpoint implements EndpointInterface {
 	 * @param OrderEndpoint           $order_endpoint       The order endpoint.
 	 * @param SessionHandler          $session_handler      The session handler.
 	 * @param ThreeDSecure            $three_d_secure       The 3d secure helper object.
-	 * @param Settings                $settings             The settings.
+	 * @param SettingsProvider        $settings_provider    The settings provider.
+	 * @param SettingsModel           $settings_model       The settings model.
 	 * @param DccApplies              $dcc_applies          The DCC applies object.
 	 * @param OrderHelper             $order_helper         The order helper.
 	 * @param bool                    $final_review_enabled Whether the final review is enabled.
@@ -137,7 +137,8 @@ class ApproveOrderEndpoint implements EndpointInterface {
 		OrderEndpoint $order_endpoint,
 		SessionHandler $session_handler,
 		ThreeDSecure $three_d_secure,
-		Settings $settings,
+		SettingsProvider $settings_provider,
+		SettingsModel $settings_model,
 		DccApplies $dcc_applies,
 		OrderHelper $order_helper,
 		bool $final_review_enabled,
@@ -151,7 +152,8 @@ class ApproveOrderEndpoint implements EndpointInterface {
 		$this->api_endpoint         = $order_endpoint;
 		$this->session_handler      = $session_handler;
 		$this->threed_secure        = $three_d_secure;
-		$this->settings             = $settings;
+		$this->settings_provider    = $settings_provider;
+		$this->settings_model       = $settings_model;
 		$this->dcc_applies          = $dcc_applies;
 		$this->order_helper         = $order_helper;
 		$this->final_review_enabled = $final_review_enabled;
@@ -173,10 +175,9 @@ class ApproveOrderEndpoint implements EndpointInterface {
 	/**
 	 * Handles the request.
 	 *
-	 * @return bool
 	 * @throws RuntimeException When order not found or handling failed.
 	 */
-	public function handle_request(): bool {
+	public function handle_request(): void {
 		try {
 			$data = $this->request_data->read_request( self::nonce() );
 			if ( ! isset( $data['order_id'] ) ) {
@@ -190,9 +191,9 @@ class ApproveOrderEndpoint implements EndpointInterface {
 			$payment_source = $order->payment_source();
 
 			if ( $payment_source && $payment_source->name() === 'card' ) {
-				if ( $this->settings->has( 'disable_cards' ) ) {
-					$disabled_cards = (array) $this->settings->get( 'disable_cards' );
-					$card           = strtolower( $payment_source->properties()->brand ?? '' );
+				$disabled_cards = $this->settings_provider->disabled_cards();
+				if ( ! empty( $disabled_cards ) ) {
+					$card = strtolower( $payment_source->properties()->brand ?? '' );
 					if ( 'master_card' === $card ) {
 						$card = 'mastercard';
 					}
@@ -239,6 +240,11 @@ class ApproveOrderEndpoint implements EndpointInterface {
 
 			$this->session_handler->replace_order( $order );
 
+			// Pin chosen_payment_method to PayPal now so concurrent Store API cart requests can't reset it.
+			if ( WC()->session ) {
+				WC()->session->set( 'chosen_payment_method', PayPalGateway::ID );
+			}
+
 			if ( apply_filters( 'woocommerce_paypal_payments_toggle_final_review_checkbox', false ) ) {
 				$this->toggle_final_review_enabled_setting();
 			}
@@ -253,20 +259,20 @@ class ApproveOrderEndpoint implements EndpointInterface {
 			}
 			wp_send_json_success();
 
-			return true;
+		} catch ( NonceValidationException $error ) {
+			wp_send_json_error( array( 'message' => $error->getMessage() ), 400 );
 		} catch ( Exception $error ) {
 			$this->logger->error( 'Order approve failed: ' . $error->getMessage() );
 
 			wp_send_json_error(
 				array(
-					'name'    => is_a( $error, PayPalApiException::class ) ? $error->name() : '',
+					'name'    => $error instanceof PayPalApiException ? $error->name() : '',
 					'message' => $error->getMessage(),
 					'code'    => $error->getCode(),
-					'details' => is_a( $error, PayPalApiException::class ) ? $error->details() : array(),
+					'details' => $error instanceof PayPalApiException ? $error->details() : array(),
 				)
 			);
 
-			return false;
 		}
 	}
 
@@ -276,10 +282,9 @@ class ApproveOrderEndpoint implements EndpointInterface {
 	 * @return void
 	 */
 	protected function toggle_final_review_enabled_setting(): void {
-		// TODO new-ux: This flag must also be updated in the new settings.
-		$final_review_enabled_setting = $this->settings->has( 'blocks_final_review_enabled' ) && $this->settings->get( 'blocks_final_review_enabled' );
-		$this->settings->set( 'blocks_final_review_enabled', ! $final_review_enabled_setting );
-		$this->settings->persist();
+		$enable_pay_now = $this->settings_provider->enable_pay_now();
+		$this->settings_model->set_enable_pay_now( ! $enable_pay_now );
+		$this->settings_model->save();
 	}
 
 	/**

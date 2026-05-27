@@ -37,4 +37,3 @@ export const payPalPayByLinkIntentAuthorized: ShopOrder[] = [
 		orderStatus: 'on-hold',
 	},
 ];
-

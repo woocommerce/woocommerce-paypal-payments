@@ -2,18 +2,23 @@
 /**
  * PayPal Commerce Provider Class
  *
- * The goal of the class is to have all new settings UI classes injected and serve as settings provider from one single place.
- * Modules would use this SettingsProvider class to update the code from using the legacy Settings class to use the new settings.
+ * The goal of the class is to have all new settings UI classes injected and serve as settings
+ * provider from one single place. Modules would use this SettingsProvider class to update the code
+ * from using the legacy Settings class to use the new settings.
  *
  * @package WooCommerce\PayPalCommerce\Settings\Data
  */
 
-declare( strict_types=1 );
+declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\Settings\Data;
 
 use WooCommerce\PayPalCommerce\Settings\DTO\LocationStylingDTO;
 use WooCommerce\PayPalCommerce\Settings\DTO\MerchantConnectionDTO;
+use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
+use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
+use WooCommerce\PayPalCommerce\Googlepay\GooglePayGateway;
+use WooCommerce\PayPalCommerce\Applepay\ApplePayGateway;
 
 class SettingsProvider {
 	private GeneralSettings $general_settings;
@@ -21,19 +26,25 @@ class SettingsProvider {
 	private PaymentSettings $payment_settings;
 	private SettingsModel $settings_model;
 	private StylingSettings $styling_settings;
+	private FastlaneSettings $fastlane_settings;
+	private PayLaterMessagingSettings $paylater_messaging_settings;
 
 	public function __construct(
 		GeneralSettings $general_settings,
 		OnboardingProfile $onboarding_profile,
 		PaymentSettings $payment_settings,
 		SettingsModel $settings_model,
-		StylingSettings $styling_settings
+		StylingSettings $styling_settings,
+		FastlaneSettings $fastlane_settings,
+		PayLaterMessagingSettings $paylater_messaging_settings
 	) {
-		$this->general_settings   = $general_settings;
-		$this->onboarding_profile = $onboarding_profile;
-		$this->payment_settings   = $payment_settings;
-		$this->settings_model     = $settings_model;
-		$this->styling_settings   = $styling_settings;
+		$this->general_settings            = $general_settings;
+		$this->onboarding_profile          = $onboarding_profile;
+		$this->payment_settings            = $payment_settings;
+		$this->settings_model              = $settings_model;
+		$this->styling_settings            = $styling_settings;
+		$this->fastlane_settings           = $fastlane_settings;
+		$this->paylater_messaging_settings = $paylater_messaging_settings;
 	}
 
 	/**
@@ -133,6 +144,24 @@ class SettingsProvider {
 	}
 
 	/**
+	 * Gets the client ID for the connected PayPal account.
+	 *
+	 * @return string
+	 */
+	public function client_id(): string {
+		return $this->merchant_data()->client_id;
+	}
+
+	/**
+	 * Gets the client secret for the connected PayPal account.
+	 *
+	 * @return string
+	 */
+	public function client_secret(): string {
+		return $this->merchant_data()->client_secret;
+	}
+
+	/**
 	 * Whether the plugin is in the branded-experience mode and shows/enables only
 	 * payment methods that are PayPal's own brand.
 	 *
@@ -150,6 +179,7 @@ class SettingsProvider {
 	public function installation_path(): string {
 		return $this->general_settings->get_installation_path();
 	}
+
 	/**
 	 * Gets the Onboarding 'completed' flag.
 	 *
@@ -268,6 +298,15 @@ class SettingsProvider {
 	}
 
 	/**
+	 * Gets the PayPal gateway title as configured in WooCommerce settings.
+	 *
+	 * @return string The gateway title, defaults to 'PayPal' if not set.
+	 */
+	public function paypal_gateway_title(): string {
+		return $this->payment_settings->get_method_title( PayPalGateway::ID, 'PayPal' );
+	}
+
+	/**
 	 * Gets the invoice prefix.
 	 *
 	 * @return string The invoice prefix.
@@ -313,6 +352,15 @@ class SettingsProvider {
 	}
 
 	/**
+	 * Gets the landing page setting as API enum value.
+	 *
+	 * @return string The landing page API enum ('NO_PREFERENCE', 'LOGIN', 'GUEST_CHECKOUT').
+	 */
+	public function landing_page_enum(): string {
+		return $this->settings_model->get_landing_page_enum();
+	}
+
+	/**
 	 * Gets the button language setting.
 	 *
 	 * @return string The button language.
@@ -328,6 +376,23 @@ class SettingsProvider {
 	 */
 	public function three_d_secure(): string {
 		return $this->settings_model->get_three_d_secure();
+	}
+
+	public function is_payment_level_processing_enabled(): bool {
+		return $this->settings_model->get_payment_level_processing();
+	}
+
+	public function ships_from_postal_code(): string {
+		return $this->settings_model->get_ships_from_postal_code();
+	}
+
+	/**
+	 * Gets the 3D Secure setting as API enum value.
+	 *
+	 * @return string The 3D Secure API enum ('NO_3D_SECURE', 'SCA_WHEN_REQUIRED', 'SCA_ALWAYS').
+	 */
+	public function three_d_secure_enum(): string {
+		return $this->settings_model->get_three_d_secure_enum();
 	}
 
 	/**
@@ -385,32 +450,34 @@ class SettingsProvider {
 	}
 
 	/**
-	 * Gets the enable Pay Now setting.
-	 *
-	 * @return bool True if Pay Now is enabled, false otherwise.
+	 * Whether the "Pay Now" setting is enabled.
 	 */
 	public function enable_pay_now(): bool {
 		return $this->settings_model->get_enable_pay_now();
 	}
 
 	/**
-	 * Gets the enable logging setting.
-	 *
-	 * @return bool True if logging is enabled, false otherwise.
+	 * Whether logging is enabled for the plugin.
 	 */
 	public function enable_logging(): bool {
 		return $this->settings_model->get_enable_logging();
 	}
 
 	/**
-	 * Gets the disabled cards.
-	 *
-	 * @return array The array of disabled cards.
+	 * Returns a string-list of disabled card providers.
 	 */
 	public function disabled_cards(): array {
 		return $this->settings_model->get_disabled_cards();
 	}
 
+	/**
+	 * Gets the card icons.
+	 *
+	 * @return array The array of card icons.
+	 */
+	public function card_icons(): array {
+		return $this->settings_model->get_card_icons();
+	}
 
 	/**
 	 * Gets the Stay Updated setting.
@@ -422,9 +489,36 @@ class SettingsProvider {
 	}
 
 	/**
+	 * Returns the styling options for a specified location. The location name recognizes
+	 * legacy and modern naming.
+	 */
+	public function button_styling( string $location ): LocationStylingDTO {
+		switch ( $location ) {
+			case 'product':
+				return clone $this->styling_product();
+
+			case 'cart':
+			case 'cart-block':
+				return clone $this->styling_cart();
+
+			case 'mini-cart':
+			case 'mini_cart':
+				return clone $this->styling_mini_cart();
+
+			case 'checkout-block':
+			case 'express_checkout':
+				return clone $this->styling_express_checkout();
+
+			case 'checkout':
+			case 'classic_checkout':
+			case 'pay-now':
+			default:
+				return clone $this->styling_classic_checkout();
+		}
+	}
+
+	/**
 	 * Get styling details for Cart and Block Cart.
-	 *
-	 * @return LocationStylingDTO
 	 */
 	public function styling_cart(): LocationStylingDTO {
 		return $this->styling_settings->get_cart();
@@ -432,8 +526,6 @@ class SettingsProvider {
 
 	/**
 	 * Get styling details for Classic Checkout.
-	 *
-	 * @return LocationStylingDTO
 	 */
 	public function styling_classic_checkout(): LocationStylingDTO {
 		return $this->styling_settings->get_classic_checkout();
@@ -441,8 +533,6 @@ class SettingsProvider {
 
 	/**
 	 * Get styling details for Express Checkout.
-	 *
-	 * @return LocationStylingDTO
 	 */
 	public function styling_express_checkout(): LocationStylingDTO {
 		return $this->styling_settings->get_express_checkout();
@@ -450,8 +540,6 @@ class SettingsProvider {
 
 	/**
 	 * Get styling details for Mini Cart
-	 *
-	 * @return LocationStylingDTO
 	 */
 	public function styling_mini_cart(): LocationStylingDTO {
 		return $this->styling_settings->get_mini_cart();
@@ -459,10 +547,210 @@ class SettingsProvider {
 
 	/**
 	 * Get styling details for Product Page.
-	 *
-	 * @return LocationStylingDTO
 	 */
 	public function styling_product(): LocationStylingDTO {
 		return $this->styling_settings->get_product();
+	}
+
+	/**
+	 * Get Fastlane name on card setting.
+	 */
+	public function fastlane_name_on_card(): string {
+		return $this->fastlane_settings->get_name_on_card();
+	}
+
+	/**
+	 * Get Fastlane root styles.
+	 */
+	public function fastlane_root_styles(): array {
+		return $this->fastlane_settings->get_root_styles();
+	}
+
+	/**
+	 * Get Fastlane input styles.
+	 */
+	public function fastlane_input_styles(): array {
+		return $this->fastlane_settings->get_input_styles();
+	}
+
+	/**
+	 * Checks if the provided payment method is enabled.
+	 *
+	 * @param string $method_id ID of the payment method.
+	 * @return bool True if the method is enabled, false otherwise.
+	 */
+	public function is_method_enabled( string $method_id ): bool {
+		return $this->payment_settings->is_method_enabled( $method_id );
+	}
+
+	// ----- APPLE PAY -----
+
+	/**
+	 * Whether the plugin accepts payments via Apple Pay.
+	 */
+	public function applepay_enabled(): bool {
+		return $this->payment_settings->is_method_enabled( ApplePayGateway::ID );
+	}
+
+	/**
+	 * Whether the domain verification for ApplePay completed successfully.
+	 */
+	public function applepay_validated(): bool {
+		return $this->payment_settings->get_applepay_validated();
+	}
+
+	public function applepay_styles( string $location = 'checkout' ): LocationStylingDTO {
+		return apply_filters( 'woocommerce_paypal_payments_applepay_button_styles', $this->button_styling( $location ) );
+	}
+
+	public function applepay_button_language(): string {
+		return apply_filters( 'woocommerce_paypal_payments_applepay_button_language', $this->button_language() );
+	}
+
+	/**
+	 * Get Apple Pay checkout data mode.
+	 */
+	public function applepay_checkout_data_mode(): string {
+		return $this->payment_settings->get_applepay_checkout_data_mode();
+	}
+
+	// ----- GOOGLE PAY -----
+
+	/**
+	 * Whether the plugin accepts payments via Google Pay.
+	 */
+	public function googlepay_enabled(): bool {
+		return $this->payment_settings->is_method_enabled( GooglePayGateway::ID );
+	}
+
+	public function googlepay_styles( string $location = 'checkout' ): LocationStylingDTO {
+		return apply_filters( 'woocommerce_paypal_payments_googlepay_button_styles', $this->button_styling( $location ) );
+	}
+
+	public function googlepay_button_language(): string {
+		return apply_filters( 'woocommerce_paypal_payments_googlepay_button_language', $this->button_language() );
+	}
+
+	// ----- PAY LATER -----
+
+	/**
+	 * Whether the given gateway is enabled.
+	 */
+	public function gateway_enabled( string $method_id ): bool {
+		return $this->payment_settings->is_method_enabled( $method_id );
+	}
+
+	/**
+	 * The default payment intent.
+	 *
+	 * @return string ['authorize'|'capture']
+	 */
+	public function payment_intent(): string {
+		return $this->authorize_only() ? 'authorize' : 'capture';
+	}
+
+	/**
+	 * Gets Pay Later messaging style settings for a given location.
+	 *
+	 * @param string $location The location (general, cart, checkout, product, etc.).
+	 * @return array The messaging style settings.
+	 */
+	public function pay_later_messaging_style( string $location ): array {
+		$method_map = array(
+			'cart'             => 'get_cart',
+			'checkout'         => 'get_checkout',
+			'product'          => 'get_product',
+			'shop'             => 'get_shop',
+			'home'             => 'get_home',
+			'custom_placement' => 'get_custom_placement',
+		);
+
+		if ( isset( $method_map[ $location ] ) ) {
+			$method = $method_map[ $location ];
+			$dto    = $this->paylater_messaging_settings->$method();
+
+			return array(
+				'layout'        => $dto->layout,
+				'logo_type'     => $dto->logo_type,
+				'logo_position' => $dto->logo_position,
+				'text_color'    => $dto->text_color,
+				'flex_color'    => $dto->flex_color,
+				'ratio'         => $dto->flex_ratio,
+				'text_size'     => $dto->text_size,
+			);
+		}
+
+		return array(
+			'layout'        => 'text',
+			'logo_type'     => 'primary',
+			'logo_position' => 'left',
+			'text_color'    => 'black',
+			'flex_color'    => 'blue',
+			'ratio'         => '1x1',
+			'text_size'     => '12',
+		);
+	}
+
+	public function pay_later_messaging_locations(): array {
+		return $this->paylater_messaging_settings->get_messaging_locations();
+	}
+
+	public function paypal_gateway_description(): string {
+		return $this->payment_settings->get_method_description(
+			PayPalGateway::ID,
+			__( 'Pay via PayPal.', 'woocommerce-paypal-payments' )
+		);
+	}
+
+	public function acdc_gateway_title(): string {
+		return $this->payment_settings->get_method_title(
+			CreditCardGateway::ID,
+			__( 'Debit & Credit Cards', 'woocommerce-paypal-payments' )
+		);
+	}
+
+	public function acdc_gateway_description(): string {
+		return $this->payment_settings->get_method_description(
+			CreditCardGateway::ID,
+			__( 'Pay with your credit card.', 'woocommerce-paypal-payments' )
+		);
+	}
+
+	public function smart_button_locations(): array {
+		return $this->styling_settings->get_smart_button_locations();
+	}
+
+	public function pay_later_button_locations(): array {
+		return $this->styling_settings->get_pay_later_button_locations();
+	}
+
+	public function pay_later_button_enabled(): bool {
+		return $this->payment_settings->get_paylater_enabled();
+	}
+
+	public function pay_later_messaging_enabled(): bool {
+		return $this->paylater_messaging_settings->get_messaging_enabled();
+	}
+
+	/**
+	 * Whether to show the cardholder name field in the ACDC (Advanced Card Processing) payment
+	 * form.
+	 *
+	 * @return string 'yes' to show the field, 'no' to hide it.
+	 */
+	public function acdc_show_name_on_card(): string {
+		$name_on_card = $this->fastlane_settings->get_name_on_card();
+		if ( ! empty( $name_on_card ) ) {
+			return $name_on_card;
+		}
+
+		return $this->payment_settings->get_cardholder_name() ? 'yes' : 'no';
+	}
+
+	public function capture_on_status_change(): bool {
+		return apply_filters(
+			'woocommerce_paypal_payments_capture_on_status_change',
+			$this->payment_settings->get_capture_on_status_change()
+		);
 	}
 }

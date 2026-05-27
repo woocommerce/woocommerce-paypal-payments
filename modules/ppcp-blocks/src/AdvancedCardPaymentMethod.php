@@ -12,9 +12,10 @@ namespace WooCommerce\PayPalCommerce\Blocks;
 use Automattic\WooCommerce\Blocks\Payments\Integrations\AbstractPaymentMethodType;
 use WooCommerce\PayPalCommerce\Assets\AssetGetter;
 use WooCommerce\PayPalCommerce\Button\Assets\SmartButtonInterface;
+use WooCommerce\PayPalCommerce\Settings\Data\PaymentSettings;
+use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\CardPaymentsConfiguration;
-use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 
 /**
  * Class AdvancedCardPaymentMethod
@@ -43,38 +44,51 @@ class AdvancedCardPaymentMethod extends AbstractPaymentMethodType {
 	 */
 	private $smart_button;
 
-	/**
-	 * The settings.
-	 *
-	 * @var Settings
-	 */
-	protected $plugin_settings;
+	protected SettingsProvider $plugin_settings;
 
 	protected CardPaymentsConfiguration $card_payments_configuration;
 
+	protected bool $save_payment_methods_eligible;
+
+	private PaymentSettings $payment_settings;
+
+	/**
+	 * @var array<int, array{type: string, title: string, url: string}>
+	 */
+	private array $credit_card_icons;
+
 	/**
 	 * @param AssetGetter                   $asset_getter
-	 * @param string                        $version The assets version.
+	 * @param string                        $version
 	 * @param CreditCardGateway             $gateway
 	 * @param SmartButtonInterface|callable $smart_button The smart button script loading handler.
-	 * @param Settings                      $settings
+	 * @param SettingsProvider              $settings_provider
 	 * @param CardPaymentsConfiguration     $card_payments_configuration
+	 * @param bool                          $save_payment_methods_eligible
+	 * @param PaymentSettings               $payment_settings
+	 * @param array                         $credit_card_icons Pre-built card icon data.
 	 */
 	public function __construct(
 		AssetGetter $asset_getter,
 		string $version,
 		CreditCardGateway $gateway,
 		$smart_button,
-		Settings $settings,
-		CardPaymentsConfiguration $card_payments_configuration
+		SettingsProvider $settings_provider,
+		CardPaymentsConfiguration $card_payments_configuration,
+		bool $save_payment_methods_eligible,
+		PaymentSettings $payment_settings,
+		array $credit_card_icons
 	) {
-		$this->name                        = CreditCardGateway::ID;
-		$this->asset_getter                = $asset_getter;
-		$this->version                     = $version;
-		$this->gateway                     = $gateway;
-		$this->smart_button                = $smart_button;
-		$this->plugin_settings             = $settings;
-		$this->card_payments_configuration = $card_payments_configuration;
+		$this->name                          = CreditCardGateway::ID;
+		$this->asset_getter                  = $asset_getter;
+		$this->version                       = $version;
+		$this->gateway                       = $gateway;
+		$this->smart_button                  = $smart_button;
+		$this->plugin_settings               = $settings_provider;
+		$this->card_payments_configuration   = $card_payments_configuration;
+		$this->save_payment_methods_eligible = $save_payment_methods_eligible;
+		$this->payment_settings              = $payment_settings;
+		$this->credit_card_icons             = $credit_card_icons;
 	}
 
 	/**
@@ -123,9 +137,32 @@ class AdvancedCardPaymentMethod extends AbstractPaymentMethodType {
 			'scriptData'          => $script_data,
 			'supports'            => $this->gateway->supports,
 			'save_card_text'      => esc_html__( 'Save your card', 'woocommerce-paypal-payments' ),
-			'is_vaulting_enabled' => $this->plugin_settings->has( 'vault_enabled_dcc' ) && $this->plugin_settings->get( 'vault_enabled_dcc' ),
-			'card_icons'          => $this->plugin_settings->has( 'card_icons' ) ? (array) $this->plugin_settings->get( 'card_icons' ) : array(),
+			'is_vaulting_enabled' => $this->save_payment_methods_eligible && $this->plugin_settings->save_card_details(),
+			'card_icons'          => $this->build_card_icons(),
 			'name_on_card'        => $this->card_payments_configuration->show_name_on_card(),
+		);
+	}
+
+	/**
+	 * Returns card icons in the {id, alt, src} format expected by PaymentMethodIcons,
+	 * or an empty array when the merchant has disabled logo display.
+	 *
+	 * @return array<int, array{id: string, alt: string, src: string}>
+	 */
+	private function build_card_icons(): array {
+		if ( ! $this->payment_settings->get_show_card_logos() ) {
+			return array();
+		}
+
+		return array_map(
+			static function ( array $icon ): array {
+				return array(
+					'id'  => $icon['type'],
+					'alt' => $icon['title'],
+					'src' => $icon['url'],
+				);
+			},
+			$this->credit_card_icons
 		);
 	}
 

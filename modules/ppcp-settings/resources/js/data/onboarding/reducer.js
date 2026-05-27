@@ -23,6 +23,7 @@ const defaultTransient = Object.freeze( {
 		canUseCasualSelling: false,
 		canUseVaulting: false,
 		canUseCardPayments: false,
+		canUseDigitalWallets: false,
 		canUseSubscriptions: false,
 		shouldSkipPaymentMethods: false,
 		canUseFastlane: false,

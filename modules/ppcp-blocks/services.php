@@ -12,6 +12,7 @@ namespace WooCommerce\PayPalCommerce\Blocks;
 use WooCommerce\PayPalCommerce\Assets\AssetGetter;
 use WooCommerce\PayPalCommerce\Assets\AssetGetterFactory;
 use WooCommerce\PayPalCommerce\Blocks\Endpoint\UpdateShippingEndpoint;
+use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\Button\Assets\SmartButtonInterface;
 
@@ -29,7 +30,7 @@ return array(
 			function () use ( $container ): SmartButtonInterface {
 				return $container->get( 'button.smart-button' );
 			},
-			$container->get( 'wcgateway.settings' ),
+			$container->get( 'settings.settings-provider' ),
 			$container->get( 'wcgateway.settings.status' ),
 			$container->get( 'wcgateway.paypal-gateway' ),
 			$container->get( 'blocks.settings.final_review_enabled' ),
@@ -51,17 +52,18 @@ return array(
 			function () use ( $container ): SmartButtonInterface {
 				return $container->get( 'button.smart-button' );
 			},
-			$container->get( 'wcgateway.settings' ),
-			$container->get( 'wcgateway.configuration.card-configuration' )
+			$container->get( 'settings.settings-provider' ),
+			$container->get( 'wcgateway.configuration.card-configuration' ),
+			$container->get( 'save-payment-methods.eligible' ),
+			$container->get( 'settings.data.payment' ),
+			$container->get( 'wcgateway.credit-card-icons' )
 		);
 	},
 	'blocks.settings.final_review_enabled' => static function ( ContainerInterface $container ): bool {
-		$settings = $container->get( 'wcgateway.settings' );
-		assert( $settings instanceof ContainerInterface );
+		$settings_provider = $container->get( 'settings.settings-provider' );
+		assert( $settings_provider instanceof SettingsProvider );
 
-		return $settings->has( 'blocks_final_review_enabled' ) ?
-			(bool) $settings->get( 'blocks_final_review_enabled' ) :
-			true;
+		return ! $settings_provider->enable_pay_now();
 	},
 
 	'blocks.endpoint.update-shipping'      => static function ( ContainerInterface $container ): UpdateShippingEndpoint {

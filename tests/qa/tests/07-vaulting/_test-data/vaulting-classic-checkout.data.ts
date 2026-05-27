@@ -8,7 +8,7 @@ const customer = customers.usa;
 const savePaymentMethodData: ShopOrder[] = [
 	{
 		// https://inpsyde.atlassian.net/browse/PCP-5389
-		title: 'PCP-5389 | Vaulting - Transaction - Classic checkout - PayPal - Save payment method @Critical',
+		title: 'PCP-5389 | Vaulting - Transaction - Classic checkout - PayPal - Save payment method @Critical @Smoke',
 		...orders.default,
 		payment: {
 			...payments.payPal,
@@ -18,7 +18,7 @@ const savePaymentMethodData: ShopOrder[] = [
 	},
 	{
 		// https://inpsyde.atlassian.net/browse/PCP-1204
-		title: 'PCP-1204 | Vaulting - Transaction - Classic checkout - ACDC - Save payment method @Critical',
+		title: 'PCP-1204 | Vaulting - Transaction - Classic checkout - ACDC - Save payment method @Critical @Smoke',
 		...orders.default,
 		payment: {
 			...payments.acdc,
@@ -73,7 +73,6 @@ const vaultedPaymentMethodData: ShopOrder[] = [
 		customer,
 	},
 	{
-		// Fail: _ppcp_paypal_order_id is missing in meta data, bug https://inpsyde.atlassian.net/browse/PCP-4788
 		// https://inpsyde.atlassian.net/browse/PCP-1206
 		title: 'PCP-1206 | Vaulting - Transaction - Classic checkout - ACDC - Pay with saved card',
 		...orders.default,

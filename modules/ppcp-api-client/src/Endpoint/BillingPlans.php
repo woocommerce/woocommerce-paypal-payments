@@ -15,7 +15,6 @@ use WooCommerce\PayPalCommerce\ApiClient\Entity\BillingCycle;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Plan;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
-use WooCommerce\PayPalCommerce\ApiClient\Factory\BillingCycleFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PlanFactory;
 
 /**
@@ -40,13 +39,6 @@ class BillingPlans {
 	private $bearer;
 
 	/**
-	 * Billing cycle factory
-	 *
-	 * @var BillingCycleFactory
-	 */
-	private $billing_cycle_factory;
-
-	/**
 	 * Plan factory
 	 *
 	 * @var PlanFactory
@@ -60,27 +52,16 @@ class BillingPlans {
 	 */
 	private $logger;
 
-	/**
-	 * BillingPlans constructor.
-	 *
-	 * @param string              $host The host.
-	 * @param Bearer              $bearer The bearer.
-	 * @param BillingCycleFactory $billing_cycle_factory Billing cycle factory.
-	 * @param PlanFactory         $plan_factory Plan factory.
-	 * @param LoggerInterface     $logger The logger.
-	 */
 	public function __construct(
 		string $host,
 		Bearer $bearer,
-		BillingCycleFactory $billing_cycle_factory,
 		PlanFactory $plan_factory,
 		LoggerInterface $logger
 	) {
-		$this->host                  = $host;
-		$this->bearer                = $bearer;
-		$this->billing_cycle_factory = $billing_cycle_factory;
-		$this->plan_factory          = $plan_factory;
-		$this->logger                = $logger;
+		$this->host         = $host;
+		$this->bearer       = $bearer;
+		$this->plan_factory = $plan_factory;
+		$this->logger       = $logger;
 	}
 
 	/**

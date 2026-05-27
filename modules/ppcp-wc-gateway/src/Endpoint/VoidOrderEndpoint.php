@@ -17,6 +17,7 @@ use WC_Order_Item_Product;
 use WC_Order_Item_Shipping;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
 use WooCommerce\PayPalCommerce\Button\Endpoint\RequestData;
+use WooCommerce\PayPalCommerce\Button\Exception\NonceValidationException;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\RefundProcessor;
 
@@ -86,7 +87,11 @@ class VoidOrderEndpoint {
 	 * Handles the incoming request.
 	 */
 	public function handle_request(): void {
-		$request = $this->request_data->read_request( self::nonce() );
+		try {
+			$request = $this->request_data->read_request( self::nonce() );
+		} catch ( NonceValidationException $error ) {
+			wp_send_json_error( array( 'message' => $error->getMessage() ), 400 );
+		}
 
 		if ( ! current_user_can( 'manage_woocommerce' ) ) {
 			wp_send_json_error(
@@ -94,7 +99,6 @@ class VoidOrderEndpoint {
 					'message' => 'Invalid request.',
 				)
 			);
-			return;
 		}
 
 		$wc_order_id = (int) $request['wc_order_id'];
@@ -106,7 +110,6 @@ class VoidOrderEndpoint {
 					'message' => 'WC order not found.',
 				)
 			);
-			return;
 		}
 		$order_id = $wc_order->get_meta( PayPalGateway::ORDER_ID_META_KEY );
 		if ( ! $order_id ) {
@@ -115,7 +118,6 @@ class VoidOrderEndpoint {
 					'message' => 'PayPal order ID not found in meta.',
 				)
 			);
-			return;
 		}
 
 		try {
@@ -125,13 +127,12 @@ class VoidOrderEndpoint {
 
 			$this->make_refunded( $wc_order );
 		} catch ( Exception $exception ) {
+			$this->logger->error( 'Void failed. ' . $exception->getMessage() );
 			wp_send_json_error(
 				array(
 					'message' => 'Void failed. ' . $exception->getMessage(),
 				)
 			);
-			$this->logger->error( 'Void failed. ' . $exception->getMessage() );
-			return;
 		}
 
 		wp_send_json_success();

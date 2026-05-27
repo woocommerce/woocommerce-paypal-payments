@@ -82,7 +82,7 @@ trait ProcessPaymentTrait {
 	 */
 	protected function format_exception( Throwable $exception ): string {
 		$message = $exception->getMessage();
-		if ( is_a( $exception, PayPalApiException::class ) ) {
+		if ( $exception instanceof PayPalApiException ) {
 			$message = $exception->get_details( $message );
 		}
 

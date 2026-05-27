@@ -7,6 +7,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Authentication\SdkClientToken;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 use WooCommerce\PayPalCommerce\Button\Endpoint\EndpointInterface;
 use WooCommerce\PayPalCommerce\Button\Endpoint\RequestData;
+use WooCommerce\PayPalCommerce\Button\Exception\NonceValidationException;
 use WooCommerce\PayPalCommerce\Button\Helper\Context;
 
 /**
@@ -40,8 +41,12 @@ class AxoScriptAttributes implements EndpointInterface {
 		return self::ENDPOINT;
 	}
 
-	public function handle_request(): bool {
-		$this->request_data->read_request( $this->nonce() );
+	public function handle_request(): void {
+		try {
+			$this->request_data->read_request( $this->nonce() );
+		} catch ( NonceValidationException $error ) {
+			wp_send_json_error( array( 'message' => $error->getMessage() ), 400 );
+		}
 
 		if (
 			! $this->axo_eligible
@@ -49,7 +54,6 @@ class AxoScriptAttributes implements EndpointInterface {
 			|| $this->context->is_paypal_continuation()
 		) {
 			wp_send_json_error( 'Failed to load axo script attributes.' );
-			return false;
 		}
 
 		try {
@@ -57,7 +61,6 @@ class AxoScriptAttributes implements EndpointInterface {
 		} catch ( PayPalApiException $exception ) {
 			$this->logger->error( $exception->getMessage() );
 			wp_send_json_error( $exception->getMessage() );
-			return false;
 		}
 
 		wp_send_json_success(
@@ -65,7 +68,5 @@ class AxoScriptAttributes implements EndpointInterface {
 				'sdk_client_token' => $token,
 			)
 		);
-
-		return true;
 	}
 }

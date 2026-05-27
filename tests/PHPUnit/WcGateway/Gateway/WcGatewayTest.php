@@ -10,19 +10,19 @@ use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PaymentTokensEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\OrderStatus;
 use WooCommerce\PayPalCommerce\Assets\AssetGetter;
+use WooCommerce\PayPalCommerce\WcGateway\Endpoint\CapturePayPalPayment;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
-use WooCommerce\PayPalCommerce\Vaulting\WooCommercePaymentTokens;
+use WooCommerce\PayPalCommerce\WcPaymentTokens\WooCommercePaymentTokens;
 use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
 use WooCommerce\PayPalCommerce\TestCase;
-use WooCommerce\PayPalCommerce\Vaulting\PaymentTokenRepository;
+use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
 use WooCommerce\PayPalCommerce\WcGateway\FundingSource\FundingSourceRenderer;
 use WooCommerce\PayPalCommerce\WcGateway\Notice\AuthorizeOrderActionNotice;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\AuthorizedPaymentsProcessor;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\OrderProcessor;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\RefundProcessor;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
-use WooCommerce\PayPalCommerce\WcGateway\Settings\SettingsRenderer;
 use Mockery;
 use function Brain\Monkey\Functions\expect;
 use function Brain\Monkey\Functions\when;
@@ -33,21 +33,18 @@ class WcGatewayTest extends TestCase
 	private $sessionHandler;
 	private $fundingSource = null;
 
-	private $settingsRenderer;
 	private $funding_source_renderer;
 	private $orderProcessor;
 	private $settings;
+	private $settingsProvider;
 	private $refundProcessor;
 	private $isConnected;
 	private $transactionUrlProvider;
 	private $subscriptionHelper;
 	private $environment;
-	private $paymentTokenRepository;
 	private $logger;
 	private $apiShopCountry;
-	private $orderEndpoint;
 	private $paymentTokensEndpoint;
-	private $vaultV3Enabled;
 	private $wcPaymentTokens;
 	private $assetGetter;
 
@@ -59,23 +56,24 @@ class WcGatewayTest extends TestCase
 		});
 		when('wc_clean')->returnArg();
 
-		$this->settingsRenderer = Mockery::mock(SettingsRenderer::class);
 		$this->orderProcessor = Mockery::mock(OrderProcessor::class);
 		$this->settings = Mockery::mock(Settings::class);
+		$this->settingsProvider = Mockery::mock(SettingsProvider::class);
 		$this->sessionHandler = Mockery::mock(SessionHandler::class);
 		$this->refundProcessor = Mockery::mock(RefundProcessor::class);
 		$this->isConnected = true;
 		$this->transactionUrlProvider = Mockery::mock(TransactionUrlProvider::class);
 		$this->subscriptionHelper = Mockery::mock(SubscriptionHelper::class);
 		$this->environment = Mockery::mock(Environment::class);
-		$this->paymentTokenRepository = Mockery::mock(PaymentTokenRepository::class);
 		$this->logger = Mockery::mock(LoggerInterface::class);
+		$this->settingsProvider->shouldReceive('paypal_gateway_title')->andReturn('PayPal');
+		$this->settingsProvider->shouldReceive('paypal_gateway_description')->andReturn('Pay via PayPal.');
+		$this->settingsProvider->shouldReceive('merchant_email')->andReturn('');
 		$this->funding_source_renderer = new FundingSourceRenderer(
-			$this->settings,
+			$this->settingsProvider,
 			['venmo' => 'Venmo', 'paylater' => 'Pay Later', 'blik' => 'BLIK']
 		);
 		$this->apiShopCountry = 'DE';
-		$this->orderEndpoint = Mockery::mock(OrderEndpoint::class);
 		$this->assetGetter = new AssetGetter('http://example.com', '/plugin/', 'module');
 
 		$this->sessionHandler
@@ -95,37 +93,32 @@ class WcGatewayTest extends TestCase
 		$this->logger->shouldReceive('error');
 
 		$this->paymentTokensEndpoint = Mockery::mock(PaymentTokensEndpoint::class);
-		$this->vaultV3Enabled = true;
 		$this->wcPaymentTokens = Mockery::mock(WooCommercePaymentTokens::class);
 	}
 
 	private function createGateway()
 	{
 		return new PayPalGateway(
-			$this->settingsRenderer,
 			$this->funding_source_renderer,
 			$this->orderProcessor,
-			$this->settings,
+			$this->settingsProvider,
 			$this->sessionHandler,
 			$this->refundProcessor,
 			$this->isConnected,
 			$this->transactionUrlProvider,
 			$this->subscriptionHelper,
-			PayPalGateway::ID,
 			$this->environment,
-			$this->paymentTokenRepository,
 			$this->logger,
 			$this->apiShopCountry,
-			$this->orderEndpoint,
-			function ($id) {
-				return 'checkoutnow=' . $id;
-			},
+			static fn ($id) => 'checkoutnow=' . $id,
 			'Pay via PayPal',
 			$this->paymentTokensEndpoint,
-			$this->vaultV3Enabled,
 			$this->wcPaymentTokens,
 			$this->assetGetter,
-			false
+			false,
+			Mockery::mock(CapturePayPalPayment::class),
+			Mockery::mock(OrderEndpoint::class),
+			'WC-'
 		);
 	}
 

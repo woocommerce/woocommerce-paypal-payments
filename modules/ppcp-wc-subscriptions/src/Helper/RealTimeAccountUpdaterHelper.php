@@ -27,7 +27,7 @@ class RealTimeAccountUpdaterHelper {
 	 */
 	public function update_wc_card_token( string $expiry, string $last_digits, WC_Payment_Token $token ): void {
 		if (
-			! is_a( $token, WC_Payment_Token_CC::class )
+			! ( $token instanceof WC_Payment_Token_CC )
 			|| $token->get_type() !== 'CC'
 			|| ! in_array( $token->get_card_type(), array( 'VISA', 'MASTERCARD' ), true )
 		) {

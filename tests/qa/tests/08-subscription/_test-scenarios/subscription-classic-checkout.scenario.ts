@@ -9,10 +9,7 @@ const testSubscriptionOrderGuest = ( testOrder: ShopOrder ) => {
 
 	test.describe( () => {
 		// Delete guest since he becomes registered customer in subscription tests
-		test.beforeAll( async ( { wooCommerceApi, wooCommerceUtils } ) => {
-			// Remove any stored subscriptions data related to tested guest and payPalAccount
-			await wooCommerceApi.deleteAllSubscriptions();
-			await wooCommerceApi.deleteAllOrders();
+		test.beforeAll( async ( { wooCommerceUtils } ) => {
 			const previousEmails = [
 				guest.email,
 				payment.payPalAccount?.email,
@@ -32,10 +29,12 @@ const testSubscriptionOrderGuest = ( testOrder: ShopOrder ) => {
 				orderReceived,
 				customerSubscriptions,
 			} ) => {
-				test.setTimeout( 2 * 60 * 1000 );
+				test.setTimeout( 2 * 60_000 );
 				await utils.fillVisitorsCart( products );
 				await classicCheckout.visit();
 				await classicCheckout.completeCheckoutDetails( testOrder );
+
+				// Add excepton for free trial subscription paid with PayPal
 				await classicCheckout.payPalUi.makePayment( {
 					merchant,
 					payment,
@@ -47,7 +46,8 @@ const testSubscriptionOrderGuest = ( testOrder: ShopOrder ) => {
 				await customerSubscriptions.visit( subscriptionId );
 				await customerSubscriptions.assertUrl( subscriptionId );
 				await expect(
-					customerSubscriptions.paymentMethod()
+					customerSubscriptions.paymentMethod(),
+					'Assert payment method on customer subscription details page'
 				).toHaveText( new RegExp( payment.gateway.title ) );
 				// TODO: additional assertions?
 
@@ -85,9 +85,7 @@ const testSubscriptionOrderCustomer = ( testOrder: ShopOrder ) => {
 	test.describe( () => {
 		// Restore customer and his storage state to remove vaulted payment methods.
 		// Placed in beforeAll for each test to be able to use storate state in a test.
-		test.beforeAll( async ( { utils, wooCommerceApi } ) => {
-			await wooCommerceApi.deleteAllSubscriptions();
-			await wooCommerceApi.deleteAllOrders();
+		test.beforeAll( async ( { utils } ) => {
 			await utils.restoreCustomer( customer );
 		} );
 
@@ -101,7 +99,7 @@ const testSubscriptionOrderCustomer = ( testOrder: ShopOrder ) => {
 				orderReceived,
 				customerSubscriptions,
 			} ) => {
-				test.setTimeout( 2 * 60 * 1000 );
+				test.setTimeout( 2 * 60_000 );
 				// Preconditions
 				await customerPaymentMethods.visit();
 				await customerPaymentMethods.assertIsNotSavedPaymentMethod(
@@ -112,10 +110,24 @@ const testSubscriptionOrderCustomer = ( testOrder: ShopOrder ) => {
 				await utils.fillVisitorsCart( products );
 				await classicCheckout.visit();
 				await classicCheckout.completeCheckoutDetails( testOrder );
+
+				// Add excepton for free trial subscription paid with PayPal
+				// if (
+				// 	products[ 0 ].slug.includes( 'free-trial' ) &&
+				// 	payment.gateway.title === 'PayPal'
+				// ) {
+				// 	// In case of free product "Proceed to PayPal" black button is displayed instead of PayPal yellow button
+				// 	await expect(
+				// 		classicCheckout.proceedToPayPalButton(),
+				// 		'Assert Proceed to PayPal button is visible'
+				// 	).toBeVisible();
+				// 	await classicCheckout.proceedToPayPalButton().click();
+				// } else {
 				await classicCheckout.payPalUi.makePayment( {
 					merchant,
 					payment,
 				} );
+				// }
 				await orderReceived.assertOrderDetails( testOrder );
 
 				const subscriptionId =
@@ -123,7 +135,8 @@ const testSubscriptionOrderCustomer = ( testOrder: ShopOrder ) => {
 				await customerSubscriptions.visit( subscriptionId );
 				await customerSubscriptions.assertUrl( subscriptionId );
 				await expect(
-					customerSubscriptions.paymentMethod()
+					customerSubscriptions.paymentMethod(),
+					`Assert payment method is ${ payment.gateway.title }`
 				).toHaveText( new RegExp( payment.gateway.title ) );
 				// TODO: additional assertions?
 

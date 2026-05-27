@@ -85,6 +85,9 @@ class OnboardingRestEndpoint extends RestEndpoint {
 		'can_use_card_payments'       => array(
 			'js_name' => 'canUseCardPayments',
 		),
+		'can_use_digital_wallets'     => array(
+			'js_name' => 'canUseDigitalWallets',
+		),
 		'can_use_subscriptions'       => array(
 			'js_name' => 'canUseSubscriptions',
 		),

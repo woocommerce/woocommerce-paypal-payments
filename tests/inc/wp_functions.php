@@ -1,6 +1,6 @@
 <?php
 
-if ( ! file_exists( 'wp_normalize_path' ) ) {
+if ( ! function_exists( 'wp_is_stream' ) ) {
 	function wp_is_stream( $path ) {
 		$scheme_separator = strpos( $path, '://' );
 
@@ -15,7 +15,7 @@ if ( ! file_exists( 'wp_normalize_path' ) ) {
 	}
 }
 
-if ( ! file_exists( 'wp_normalize_path' ) ) {
+if ( ! function_exists( 'wp_normalize_path' ) ) {
 	function wp_normalize_path( $path ) {
 		$wrapper = '';
 

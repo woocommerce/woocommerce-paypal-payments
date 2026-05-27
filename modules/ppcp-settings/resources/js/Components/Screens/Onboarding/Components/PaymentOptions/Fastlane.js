@@ -7,9 +7,7 @@ const Fastlane = ( { learnMore = '' } ) => {
 		<BadgeBox
 			title={ __( '', 'woocommerce-paypal-payments' ) }
 			imageBadge={ [ 'icon-payment-method-fastlane-small.svg' ] }
-			textBadge={
-				<PricingTitleBadge item="fast country currency=storeCurrency=storeCountrylane" />
-			}
+			textBadge={ <PricingTitleBadge item="axo" /> }
 			description={ __(
 				"Speed up guest checkout with Fastlane. Link a customer's email address to their payment details.",
 				'woocommerce-paypal-payments'

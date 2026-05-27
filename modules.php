@@ -10,8 +10,9 @@ namespace WooCommerce\PayPalCommerce;
 use WooCommerce\PayPalCommerce\PayLaterBlock\PayLaterBlockModule;
 use WooCommerce\PayPalCommerce\PayLaterWCBlocks\PayLaterWCBlocksModule;
 use WooCommerce\PayPalCommerce\PayLaterConfigurator\PayLaterConfiguratorModule;
+use WooCommerce\PayPalCommerce\Settings\SettingsModule;
 
-return function ( string $root_dir ): iterable {
+return static function ( string $root_dir ): iterable {
 	$modules_dir = "$root_dir/modules";
 
 	$modules = array(
@@ -21,13 +22,12 @@ return function ( string $root_dir ): iterable {
 		( require "$modules_dir/ppcp-api-client/module.php" )(),
 		( require "$modules_dir/ppcp-compat/module.php" )(),
 		( require "$modules_dir/ppcp-button/module.php" )(),
-		( require "$modules_dir/ppcp-onboarding/module.php" )(),
 		( require "$modules_dir/ppcp-session/module.php" )(),
 		( require "$modules_dir/ppcp-status-report/module.php" )(),
 		( require "$modules_dir/ppcp-wc-subscriptions/module.php" )(),
 		( require "$modules_dir/ppcp-wc-gateway/module.php" )(),
 		( require "$modules_dir/ppcp-webhooks/module.php" )(),
-		( require "$modules_dir/ppcp-vaulting/module.php" )(),
+		( require "$modules_dir/ppcp-wc-payment-tokens/module.php" )(),
 		( require "$modules_dir/ppcp-order-tracking/module.php" )(),
 		( require "$modules_dir/ppcp-uninstall/module.php" )(),
 		( require "$modules_dir/ppcp-blocks/module.php" )(),
@@ -84,6 +84,13 @@ return function ( string $root_dir ): iterable {
 	) ) {
 		$modules[] = ( require "$modules_dir/ppcp-axo/module.php" )();
 		$modules[] = ( require "$modules_dir/ppcp-axo-block/module.php" )();
+	}
+
+	if ( apply_filters(
+		'woocommerce.feature-flags.woocommerce_paypal_payments.store_sync_enabled',
+		getenv( 'PCP_STORE_SYNC_ENABLED' ) === '1'
+	) ) {
+		$modules[] = ( require "$modules_dir/ppcp-store-sync/module.php" )();
 	}
 
 	return $modules;

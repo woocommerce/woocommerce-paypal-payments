@@ -90,6 +90,7 @@ class Order {
 	 * @param string             $intent The intent.
 	 * @param DateTime|null      $create_time The create time.
 	 * @param DateTime|null      $update_time The update time.
+	 * @param mixed|null         $links
 	 */
 	public function __construct(
 		string $id,

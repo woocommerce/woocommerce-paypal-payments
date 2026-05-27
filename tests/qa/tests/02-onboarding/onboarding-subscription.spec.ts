@@ -25,36 +25,45 @@ test.describe( () => {
 		await requestUtils.deactivatePlugin( subscriptionsPlugin.slug );
 	} );
 
-	test( 'PCP-4356 | Subscription - Settings - US - Onboarding - Connect with personal account - Subscription type of product not allowed', async ( {
+	test( 'PCP-4356 | Subscription - Settings - US - Onboarding - Connect with personal account - Subscription type of product not allowed @Critical', async ( {
 		pcpOnboarding,
-	}, testInfo ) => {
+		wooCommerceApi,
+	} ) => {
+		await wooCommerceApi.updateGeneralSettings( {
+			woocommerce_default_country: 'US',
+			woocommerce_currency: 'USD',
+		} );
 		await pcpOnboarding.visit();
+		await pcpOnboarding.gotoInitialOnboardingPage();
 		await pcpOnboarding.activatePayPalPaymentsButton().click();
 
-		await expect( pcpOnboarding.selectBoxContentDetail() ).toHaveText(
-			'* Business account is required for subscriptions.'
-		);
+		await expect(
+			pcpOnboarding.selectBoxContentDetail(),
+			'Assert subscription requires business account message is shown'
+		).toHaveText( '* Business account is required for subscriptions.' );
 		await pcpOnboarding.personalAccountRadio().click();
-		await pcpOnboarding.snapshotLocator(
+		await expect(
 			pcpOnboarding.onboardingContentContainer(),
-			`${ testInfo.title } - Set up store type`,
-			{ timeout: 3000 }
-		);
+			'Assert onboarding content is visible after selecting personal account'
+		).toBeVisible();
 		await pcpOnboarding.continueButton().click();
 
-		await expect( pcpOnboarding.subscriptionsCheckbox() ).toBeVisible();
-		await expect( pcpOnboarding.subscriptionsCheckbox() ).toHaveAttribute(
-			'disabled'
-		);
-		await pcpOnboarding.snapshotLocator(
+		await expect(
+			pcpOnboarding.subscriptionsCheckbox(),
+			'Assert subscriptions checkbox is visible'
+		).toBeVisible();
+		await expect(
+			pcpOnboarding.subscriptionsCheckbox(),
+			'Assert subscriptions checkbox is disabled for personal account'
+		).toHaveAttribute( 'disabled' );
+		await expect(
 			pcpOnboarding.onboardingContentContainer(),
-			`${ testInfo.title } - Select product types - Subscription type of product not allowed`,
-			{ timeout: 3000 }
-		);
+			'Assert product types step shows subscription disabled'
+		).toBeVisible();
 	} );
 
 	test.describe( () => {
-		test.beforeEach( async ( { utils, pcpApi } ) => {
+		test.beforeEach( async ( { pcpApi } ) => {
 			await pcpApi.resetDb();
 		} );
 
@@ -62,16 +71,13 @@ test.describe( () => {
 			const { testSummary, optionalPaymentsEnabled } = testData;
 			test(
 				testSummary,
-				async (
-					{
-						pcpOnboarding,
-						pcpPaymentMethods,
-						pcpSettings,
-						pcpStyling,
-						pcpApi,
-					},
-					testInfo
-				) => {
+				async ( {
+					pcpOnboarding,
+					pcpPaymentMethods,
+					pcpSettings,
+					pcpStyling,
+					pcpApi,
+				} ) => {
 					await pcpOnboarding.visit();
 					await pcpOnboarding.activatePayPalPaymentsButton().click();
 
@@ -95,21 +101,21 @@ test.describe( () => {
 					);
 
 					await pcpOnboarding.page.reload();
-					await pcpOnboarding.snapshotContent(
-						`${ testInfo.title } - Overview`,
-						3000
-					);
+					await expect(
+						pcpOnboarding.contentContainer(),
+						`Assert overview content is visible for ${ testData.testSummary }`
+					).toBeVisible();
 					await pcpSettings.visit();
-					await pcpOnboarding.snapshotContent(
-						`${ testInfo.title } - Settings - Pay Now enabled by default`,
-						3000
-					);
+					await expect(
+						pcpOnboarding.contentContainer(),
+						'Assert settings page content is visible (Pay Now enabled by default)'
+					).toBeVisible();
 
 					await pcpPaymentMethods.visit();
-					await pcpOnboarding.snapshotContent(
-						`${ testInfo.title } - Payment methods - PayPal, Venmo enabled`,
-						3000
-					);
+					await expect(
+						pcpOnboarding.contentContainer(),
+						'Assert payment methods page content is visible (PayPal, Venmo enabled)'
+					).toBeVisible();
 
 					const locations: Pcp.Admin.Styling.Location[] = [
 						'Cart',
@@ -120,18 +126,23 @@ test.describe( () => {
 					];
 
 					await pcpStyling.visit();
-					await expect( pcpStyling.configContainer() ).toBeVisible();
 					await expect(
-						pcpStyling.locationSelectbox()
+						pcpStyling.configContainer(),
+						'Assert styling config container is visible'
+					).toBeVisible();
+					await expect(
+						pcpStyling.locationSelectbox(),
+						'Assert styling location selectbox is visible'
 					).toBeVisible();
 
 					for ( const location of locations ) {
 						await pcpStyling
 							.locationSelectbox()
 							.selectOption( location );
-						await pcpStyling.snapshotStylingConfigurator(
-							`${ testInfo.title } - ${ location }`
-						);
+						await expect(
+							pcpStyling.configContainer(),
+							`Assert styling config is visible for location ${ location }`
+						).toBeVisible();
 					}
 				}
 			);

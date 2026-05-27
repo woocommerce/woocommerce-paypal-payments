@@ -11,6 +11,7 @@ const payPal: Pcp.Gateway = {
 	id: 'ppcp-gateway',
 	description: '',
 	title: 'PayPal',
+	titleInModal: 'PayPal',
 	titleInPcpSettings: 'PayPal',
 	titleInWcSettings: 'PayPal',
 	hasSettingsButton: true,
@@ -27,6 +28,7 @@ const venmo: Pcp.Gateway = {
 	id: 'venmo',
 	description: '',
 	title: 'Venmo',
+	titleInModal: 'Venmo',
 	titleInPcpSettings: 'Venmo',
 	titleInWcSettings: 'Venmo',
 	hasSettingsButton: false,
@@ -41,6 +43,7 @@ const payLater: Pcp.Gateway = {
 	id: 'pay-later',
 	description: '',
 	title: 'PayPal Pay Later',
+	titleInModal: 'PayPal Pay Later',
 	titleInPcpSettings: 'Pay Later',
 	hasSettingsButton: false,
 	enabled: false,
@@ -55,6 +58,7 @@ const acdc: Pcp.Gateway = {
 	description: '',
 	title: 'Debit & Credit Cards',
 	titleInPcpSettings: 'Advanced Credit and Debit Card Payments',
+	titleInModal: 'Debit & Credit Cards',
 	titleInWcSettings: 'Advanced Card Processing',
 	hasSettingsButton: true,
 	enabled: false,
@@ -76,6 +80,7 @@ const fastlane: Pcp.Gateway = {
 	description: '',
 	title: 'Fastlane',
 	titleInPcpSettings: 'Fastlane by PayPal',
+	titleInModal: 'Debit & Credit Cards',
 	titleInWcSettings: 'Fastlane Debit & Credit Cards',
 	hasSettingsButton: true,
 	dependsOn: 'acdc',
@@ -93,6 +98,7 @@ const applepay: Pcp.Gateway = {
 	id: 'ppcp-applepay',
 	description: '',
 	title: 'Apple Pay',
+	titleInModal: 'Apple Pay',
 	titleInPcpSettings: 'Apple Pay',
 	titleInWcSettings: 'Apple Pay (via PayPal)',
 	hasSettingsButton: true,
@@ -108,6 +114,7 @@ const googlepay: Pcp.Gateway = {
 	id: 'ppcp-googlepay',
 	description: '',
 	title: 'Google Pay',
+	titleInModal: 'Google Pay',
 	titleInPcpSettings: 'Google Pay',
 	titleInWcSettings: ' (via PayPal)',
 	hasSettingsButton: true,
@@ -124,10 +131,12 @@ const bancontact: Pcp.Gateway = {
 	id: 'ppcp-bancontact',
 	description: '',
 	title: 'Bancontact',
+	titleInModal: 'Bancontact',
 	titleInPcpSettings: 'Bancontact',
 	titleInWcSettings: 'Bancontact (via PayPal)',
 	hasSettingsButton: true,
-	enabled: true,
+	// Disabled by default after a fresh connect; enabled only in country-specific test setups.
+	enabled: false,
 };
 
 const blik: Pcp.Gateway = {
@@ -138,11 +147,13 @@ const blik: Pcp.Gateway = {
 
 	id: 'ppcp-blik',
 	description: '',
-	title: 'BLIK',
-	titleInPcpSettings: 'BLIK',
+	title: 'Blik',
+	titleInModal: 'Blik',
+	titleInPcpSettings: 'Blik',
 	titleInWcSettings: ' (via PayPal)',
 	hasSettingsButton: true,
-	enabled: true,
+	// Disabled by default after a fresh connect; enabled only in country-specific test setups.
+	enabled: false,
 };
 
 const eps: Pcp.Gateway = {
@@ -153,11 +164,13 @@ const eps: Pcp.Gateway = {
 
 	id: 'ppcp-eps',
 	description: '',
-	title: 'eps',
-	titleInPcpSettings: 'eps',
+	title: 'EPS',
+	titleInModal: 'EPS',
+	titleInPcpSettings: 'EPS',
 	titleInWcSettings: 'EPS (via PayPal)',
 	hasSettingsButton: true,
-	enabled: true,
+	// Disabled by default after a fresh connect; enabled only in country-specific test setups.
+	enabled: false,
 };
 
 const ideal: Pcp.Gateway = {
@@ -168,11 +181,13 @@ const ideal: Pcp.Gateway = {
 
 	id: 'ppcp-ideal',
 	description: '',
-	title: 'iDEAL',
-	titleInPcpSettings: 'iDEAL',
+	title: 'iDeal',
+	titleInModal: 'iDeal',
+	titleInPcpSettings: 'iDeal',
 	titleInWcSettings: ' (via PayPal)',
 	hasSettingsButton: true,
-	enabled: true,
+	// Disabled by default after a fresh connect; enabled only in country-specific test setups.
+	enabled: false,
 };
 
 const mybank: Pcp.Gateway = {
@@ -183,10 +198,12 @@ const mybank: Pcp.Gateway = {
 	id: 'ppcp-mybank',
 	description: '',
 	title: 'MyBank',
+	titleInModal: 'MyBank',
 	titleInPcpSettings: 'MyBank',
 	titleInWcSettings: ' (via PayPal)',
 	hasSettingsButton: true,
-	enabled: true,
+	// Disabled by default after a fresh connect; enabled only in country-specific test setups.
+	enabled: false,
 };
 
 const przelewy24: Pcp.Gateway = {
@@ -197,10 +214,12 @@ const przelewy24: Pcp.Gateway = {
 	id: 'ppcp-p24',
 	description: '',
 	title: 'Przelewy24',
+	titleInModal: 'Przelewy24',
 	titleInPcpSettings: 'Przelewy24',
 	titleInWcSettings: ' (via PayPal)',
 	hasSettingsButton: true,
-	enabled: true,
+	// Disabled by default after a fresh connect; enabled only in country-specific test setups.
+	enabled: false,
 };
 
 const trustly: Pcp.Gateway = {
@@ -212,10 +231,12 @@ const trustly: Pcp.Gateway = {
 	id: 'ppcp-trustly',
 	description: '',
 	title: 'Trustly',
+	titleInModal: 'Trustly',
 	titleInPcpSettings: 'Trustly',
 	titleInWcSettings: 'Trustly (via PayPal)',
 	hasSettingsButton: true,
-	enabled: true,
+	// Disabled by default after a fresh connect; enabled only in country-specific test setups.
+	enabled: false,
 };
 
 const multibanco: Pcp.Gateway = {
@@ -226,10 +247,12 @@ const multibanco: Pcp.Gateway = {
 	id: 'ppcp-multibanco',
 	description: '',
 	title: 'Multibanco',
+	titleInModal: 'Multibanco',
 	titleInPcpSettings: 'Multibanco',
 	titleInWcSettings: 'Multibanco (via PayPal)',
 	hasSettingsButton: true,
-	enabled: true,
+	// Disabled by default after a fresh connect; enabled only in country-specific test setups.
+	enabled: false,
 };
 
 const oxxo: Pcp.Gateway = {
@@ -240,10 +263,12 @@ const oxxo: Pcp.Gateway = {
 	id: 'ppcp-oxxo-gateway',
 	description: '',
 	title: 'OXXO',
+	titleInModal: 'OXXO',
 	titleInPcpSettings: 'OXXO',
 	titleInWcSettings: 'OXXO (via PayPal)',
 	hasSettingsButton: true,
-	enabled: true,
+	// Disabled by default after a fresh connect; enabled only in country-specific test setups.
+	enabled: false,
 };
 
 const payUponInvoice: Pcp.Gateway = {
@@ -256,27 +281,15 @@ const payUponInvoice: Pcp.Gateway = {
 	id: 'ppcp-pay-upon-invoice-gateway',
 	description: '',
 	title: 'Pay upon Invoice',
+	titleInModal: 'Pay upon Invoice',
 	titleInPcpSettings: 'Pay upon Invoice',
 	titleInWcSettings: 'Pay upon Invoice',
 	hasSettingsButton: true,
-	enabled: true,
+	// Disabled by default after a fresh connect; enabled only in country-specific test setups.
+	enabled: false,
 };
 
-const debitOrCreditCard: Pcp.Gateway = {
-	shortcut: 'card',
-	country: 'usa',
-	currency: 'USD',
-
-	id: 'ppcp-gateway',
-	description: '',
-	title: 'Credit or debit cards (via PayPal)',
-	titleInPcpSettings: 'Credit or debit cards',
-	titleInWcSettings: 'Credit or debit cards (via PayPal)',
-	hasSettingsButton: true,
-	enabled: true,
-};
-
-const standardCardButton: Pcp.Gateway = {
+const bcdc: Pcp.Gateway = {
 	shortcut: 'card',
 	country: 'usa',
 	currency: 'USD',
@@ -284,6 +297,7 @@ const standardCardButton: Pcp.Gateway = {
 	id: 'ppcp-card-button-gateway',
 	description: '',
 	title: 'Debit & Credit Cards',
+	titleInModal: 'Debit & Credit Cards',
 	titleInPcpSettings: 'Debit & Credit Cards',
 	titleInWcSettings: 'Debit & Credit Cards',
 	hasSettingsButton: true,
@@ -311,6 +325,5 @@ export const gateways = {
 	multibanco,
 	oxxo,
 	payUponInvoice,
-	debitOrCreditCard,
-	standardCardButton,
+	bcdc,
 };

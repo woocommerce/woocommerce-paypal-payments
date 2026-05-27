@@ -2,7 +2,7 @@
  * External dependencies
  */
 import { expect, WpPage } from '@inpsyde/playwright-utils/build';
-import { Locator, LocatorScreenshotOptions } from 'playwright';
+import { Locator, LocatorScreenshotOptions } from '@playwright/test';
 
 export class PcpAdminPage extends WpPage {
 	// Locators
@@ -37,7 +37,10 @@ export class PcpAdminPage extends WpPage {
 	stylingTab = () =>
 		this.page.getByRole( 'tab', { name: 'Styling', exact: true } );
 	payLaterMessagingTab = () =>
-		this.page.getByRole( 'tab', { name: 'Pay Later Messaging', exact: true } );
+		this.page.getByRole( 'tab', {
+			name: 'Pay Later Messaging',
+			exact: true,
+		} );
 
 	// Actions
 

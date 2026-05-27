@@ -30,7 +30,7 @@ export const transactionsOnCart = ( testOrder: ShopOrder ) => {
 
 			await checkout.fillCheckoutForm( customer );
 			await checkout.placeOrder();
-			
+
 			await orderReceived.assertOrderDetails( testOrder );
 
 			const orderId = await orderReceived.getOrderNumber();
@@ -45,12 +45,8 @@ export const transactionsOnCart = ( testOrder: ShopOrder ) => {
 				testOrder
 			);
 			const pcpData = { transactionId, payPalFee, payPalPayout };
-
-			await wooCommerceOrderEdit.assertOrderDetails(
-				orderId,
-				testOrder,
-				pcpData
-			);
+			await wooCommerceOrderEdit.visit( orderId );
+			await wooCommerceOrderEdit.assertOrderDetails( testOrder, pcpData );
 		}
 	);
 };

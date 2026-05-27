@@ -39,7 +39,7 @@ trait OrderMetaTrait {
 		$wc_order->update_meta_data( PayPalGateway::INTENT_META_KEY, $order->intent() );
 		$wc_order->update_meta_data(
 			PayPalGateway::ORDER_PAYMENT_MODE_META_KEY,
-			$environment->current_environment_is( Environment::SANDBOX ) ? 'sandbox' : 'live'
+			$environment->is_sandbox() ? 'sandbox' : 'live'
 		);
 		$payment_source = $this->get_payment_source( $order );
 		if ( $payment_source ) {

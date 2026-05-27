@@ -17,7 +17,6 @@ import {
 } from './modules/Helper/CheckoutMethodState';
 import { setVisibleByClass } from './modules/Helper/Hiding';
 import { isChangePaymentPage } from './modules/Helper/Subscriptions';
-import FreeTrialHandler from './VaultV2/FreeTrialHandler';
 import MultistepCheckoutHelper from './modules/Helper/MultistepCheckoutHelper';
 import FormSaver from './modules/Helper/FormSaver';
 import FormValidator from './modules/Helper/FormValidator';
@@ -58,14 +57,6 @@ const bootstrap = () => {
 			  )
 			: null;
 
-	const freeTrialHandler = new FreeTrialHandler(
-		PayPalCommerceGateway,
-		checkoutFormSelector,
-		formSaver,
-		formValidator,
-		spinner,
-		errorHandler
-	);
 
 	new MultistepCheckoutHelper( checkoutFormSelector );
 
@@ -186,17 +177,6 @@ const bootstrap = () => {
 				'beforeend',
 				`<input type="hidden" name="ppcp-funding-source" value="${ data.fundingSource }" id="ppcp-funding-source-form-input">`
 			);
-		}
-
-		const isFreeTrial = PayPalCommerceGateway.is_free_trial_cart;
-		if (
-			isFreeTrial &&
-			data.fundingSource !== 'card' &&
-			! PayPalCommerceGateway.subscription_plan_id &&
-			! PayPalCommerceGateway.vault_v3_enabled
-		) {
-			freeTrialHandler.handle();
-			return actions.reject();
 		}
 
 		if ( context === 'checkout' ) {
@@ -366,7 +346,7 @@ document.addEventListener( 'DOMContentLoaded', () => {
 			) ||
 			isChangePaymentPage() ||
 			( PayPalCommerceGateway.is_free_trial_cart &&
-				PayPalCommerceGateway.vaulted_paypal_email !== '' )
+				!! PayPalCommerceGateway.vaulted_paypal_email )
 		) {
 			return;
 		}

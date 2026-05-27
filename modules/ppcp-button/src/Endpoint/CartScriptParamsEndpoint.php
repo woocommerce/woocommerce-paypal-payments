@@ -61,17 +61,14 @@ class CartScriptParamsEndpoint implements EndpointInterface {
 
 	/**
 	 * Handles the request.
-	 *
-	 * @return bool
 	 */
-	public function handle_request(): bool {
+	public function handle_request(): void {
 		try {
 			if ( ! $this->smart_button instanceof SmartButton ) {
 				wp_send_json_error();
-				return false;
 			}
 
-			if ( is_callable( 'wc_maybe_define_constant' ) ) {
+			if ( is_callable( 'wc_maybe_define_constant' ) ) { // @phpstan-ignore function.alreadyNarrowedType
 				wc_maybe_define_constant( 'WOOCOMMERCE_CART', true );
 			}
 
@@ -81,7 +78,6 @@ class CartScriptParamsEndpoint implements EndpointInterface {
 			$script_data = $this->smart_button->script_data();
 			if ( ! $script_data ) {
 				wp_send_json_error();
-				return false;
 			}
 
 			$total = (float) WC()->cart->get_total( 'numeric' );
@@ -108,12 +104,10 @@ class CartScriptParamsEndpoint implements EndpointInterface {
 			}
 
 			wp_send_json_success( $response );
-			return true;
 		} catch ( Throwable $error ) {
 			$this->logger->error( "CartScriptParamsEndpoint execution failed. {$error->getMessage()} {$error->getFile()}:{$error->getLine()}" );
 
 			wp_send_json_error();
-			return false;
 		}
 	}
 

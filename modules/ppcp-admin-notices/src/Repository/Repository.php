@@ -39,7 +39,7 @@ class Repository implements RepositoryInterface {
 					return ! $element->is_muted();
 				}
 
-				return is_a( $element, Message::class );
+				return $element instanceof Message;
 			}
 		);
 	}

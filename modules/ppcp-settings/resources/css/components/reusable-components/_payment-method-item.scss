@@ -291,6 +291,10 @@
 		visibility: visible;
 		pointer-events: auto;
 	}
+
+	&--error svg {
+		color: $color-error-red;
+	}
 }
 
 // For RTL support

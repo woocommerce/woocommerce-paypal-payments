@@ -11,12 +11,8 @@ namespace WooCommerce\PayPalCommerce\AxoBlock;
 
 use Automattic\WooCommerce\Blocks\Payments\PaymentMethodRegistry;
 use Psr\Log\LoggerInterface;
-use WooCommerce\PayPalCommerce\ApiClient\Authentication\SdkClientToken;
-use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
-use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\Assets\AssetGetter;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExecutableModule;
-use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExtendingModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ModuleClassNameIdTrait;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ServiceModule;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
@@ -24,7 +20,7 @@ use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 /**
  * Class AxoBlockModule
  */
-class AxoBlockModule implements ServiceModule, ExtendingModule, ExecutableModule {
+class AxoBlockModule implements ServiceModule, ExecutableModule {
 	use ModuleClassNameIdTrait;
 
 	/**
@@ -37,14 +33,11 @@ class AxoBlockModule implements ServiceModule, ExtendingModule, ExecutableModule
 	/**
 	 * {@inheritDoc}
 	 */
-	public function extensions(): array {
-		return require __DIR__ . '/../extensions.php';
-	}
-
-	/**
-	 * {@inheritDoc}
-	 */
 	public function run( ContainerInterface $c ): bool {
+		if ( ! $c->has( 'axo.eligible' ) || ! $c->get( 'axo.eligible' ) ) {
+			return true;
+		}
+
 		if (
 			! class_exists( 'Automattic\WooCommerce\Blocks\Payments\Integrations\AbstractPaymentMethodType' )
 			|| ! function_exists( 'woocommerce_store_api_register_payment_requirements' )
@@ -154,7 +147,7 @@ class AxoBlockModule implements ServiceModule, ExtendingModule, ExecutableModule
 
 		wp_register_script(
 			'wc-ppcp-paypal-insights',
-			$asset_getter->get_asset_url( 'PayPalInsightsLoader.js' ),
+			$asset_getter->get_asset_url( 'plugins/PayPalInsightsLoader.js' ),
 			array( 'wp-plugins', 'wp-data', 'wp-element', 'wc-blocks-registry' ),
 			$asset_version,
 			true

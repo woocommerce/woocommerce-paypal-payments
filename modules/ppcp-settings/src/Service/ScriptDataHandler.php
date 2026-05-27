@@ -8,80 +8,50 @@
 namespace WooCommerce\PayPalCommerce\Settings\Service;
 
 use WooCommerce\PayPalCommerce\ApiClient\Helper\PartnerAttribution;
+use WooCommerce\PayPalCommerce\ApiClient\Helper\PaymentLevelEligibility;
 use WooCommerce\PayPalCommerce\Assets\AssetGetter;
-use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
+use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
+use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
+use WooCommerce\PayPalCommerce\Settings\Service\AgenticBetaBannerEligibility;
 
 /**
- * Class ScriptDataHandler
  * This class is responsible for localizing the scripts and styles for the settings page.
  */
 class ScriptDataHandler {
 
-	/**
-	 * The settings object.
-	 *
-	 * @var Settings
-	 */
-	protected Settings $settings;
-
 	private AssetGetter $asset_getter;
-
-	/**
-	 * Whether the pay later configurator is available.
-	 *
-	 * @var bool
-	 */
 	protected bool $paylater_is_available;
-	/**
-	 * The store country.
-	 *
-	 * @var string
-	 */
 	protected string $store_country;
-	/**
-	 * The merchant ID.
-	 *
-	 * @var string
-	 */
 	protected string $merchant_id;
-	/**
-	 * The button language choices.
-	 *
-	 * @var array
-	 */
 	protected array $button_language_choices;
-	/**
-	 * The partner attribution object.
-	 *
-	 * @var PartnerAttribution
-	 */
 	protected PartnerAttribution $partner_attribution;
+	protected SettingsProvider $settings_provider;
+	protected PaymentLevelEligibility $payment_level_eligibility;
+	private bool $is_bcdc_override_flag_enabled;
+	private AgenticBetaBannerEligibility $agentic_beta_banner_eligibility;
 
-	/**
-	 * @param Settings           $settings The settings object.
-	 * @param AssetGetter        $asset_getter
-	 * @param bool               $paylater_is_available Whether the pay later configurator is available.
-	 * @param string             $store_country The store country.
-	 * @param string             $merchant_id The merchant ID.
-	 * @param array              $button_language_choices The button language choices.
-	 * @param PartnerAttribution $partner_attribution The partner attribution object.
-	 */
 	public function __construct(
-		Settings $settings,
 		AssetGetter $asset_getter,
 		bool $paylater_is_available,
 		string $store_country,
 		string $merchant_id,
 		array $button_language_choices,
-		PartnerAttribution $partner_attribution
+		PartnerAttribution $partner_attribution,
+		SettingsProvider $settings_provider,
+		PaymentLevelEligibility $payment_level_eligibility,
+		bool $is_bcdc_override_flag_enabled,
+		AgenticBetaBannerEligibility $agentic_beta_banner_eligibility
 	) {
-		$this->settings                = $settings;
-		$this->asset_getter            = $asset_getter;
-		$this->paylater_is_available   = $paylater_is_available;
-		$this->store_country           = $store_country;
-		$this->merchant_id             = $merchant_id;
-		$this->button_language_choices = $button_language_choices;
-		$this->partner_attribution     = $partner_attribution;
+		$this->asset_getter                    = $asset_getter;
+		$this->paylater_is_available           = $paylater_is_available;
+		$this->store_country                   = $store_country;
+		$this->merchant_id                     = $merchant_id;
+		$this->button_language_choices         = $button_language_choices;
+		$this->partner_attribution             = $partner_attribution;
+		$this->settings_provider               = $settings_provider;
+		$this->payment_level_eligibility       = $payment_level_eligibility;
+		$this->is_bcdc_override_flag_enabled   = $is_bcdc_override_flag_enabled;
+		$this->agentic_beta_banner_eligibility = $agentic_beta_banner_eligibility;
 	}
 
 	/**
@@ -206,17 +176,25 @@ class ScriptDataHandler {
 		);
 
 		$script_data = array(
-			'assets'                          => array(
+			'assets'                              => array(
 				'imagesUrl' => $this->asset_getter->get_static_asset_url( 'images/' ),
 			),
-			'wcPaymentsTabUrl'                => admin_url( 'admin.php?page=wc-settings&tab=checkout' ),
-			'pluginSettingsUrl'               => admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway' ),
-			'debug'                           => defined( 'WP_DEBUG' ) && WP_DEBUG,
-			'isPayLaterConfiguratorAvailable' => $is_pay_later_configurator_available,
-			'storeCountry'                    => $this->store_country,
-			'buttonLanguageChoices'           => $transformed_button_choices,
-			'disabledCardsChoices'            => $disabled_cards_choices,
-			'threeDSecureOptions'             => $three_d_secure_options,
+			'wcPaymentsTabUrl'                    => admin_url( 'admin.php?page=wc-settings&tab=checkout' ),
+			'pluginSettingsUrl'                   => admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway' ),
+			'debug'                               => defined( 'WP_DEBUG' ) && WP_DEBUG, // @phpstan-ignore booleanAnd.rightAlwaysFalse
+			'isPayLaterConfiguratorAvailable'     => $is_pay_later_configurator_available,
+			'storeCountry'                        => $this->store_country,
+			'storePostcode'                       => get_option( 'woocommerce_store_postcode', '' ),
+			'buttonLanguageChoices'               => $transformed_button_choices,
+			'disabledCardsChoices'                => $disabled_cards_choices,
+			'threeDSecureOptions'                 => $three_d_secure_options,
+			'isEligibleForPaymentLevelProcessing' => $this->payment_level_eligibility->is_eligible( CreditCardGateway::ID ),
+			'isBcdcOverrideFlagEnabled'           => $this->is_bcdc_override_flag_enabled,
+			'isAgenticBetaBannerEligible'         => $this->agentic_beta_banner_eligibility->is_eligible(),
+			'blueprint'                           => array(
+				'isActive'  => 'yes' === get_option( 'woocommerce_feature_blueprint_enabled', 'no' ),
+				'importUrl' => admin_url( 'admin.php?page=wc-settings&tab=advanced&section=blueprint' ),
+			),
 		);
 
 		if ( $is_pay_later_configurator_available ) {
@@ -234,7 +212,7 @@ class ScriptDataHandler {
 			);
 			$script_data['PcpPayLaterConfigurator'] = array(
 				'config'           => array(),
-				'merchantClientId' => $this->settings->get( 'client_id' ),
+				'merchantClientId' => $this->settings_provider->merchant_data()->client_id,
 				'partnerClientId'  => $this->merchant_id,
 				'bnCode'           => $this->partner_attribution->get_bn_code(),
 			);
@@ -247,5 +225,7 @@ class ScriptDataHandler {
 		);
 		// Dequeue the PayPal Subscription script.
 		wp_dequeue_script( 'ppcp-paypal-subscription' );
+
+		do_action( 'woocommerce_paypal_payments_settings_scripts_enqueued' );
 	}
 }

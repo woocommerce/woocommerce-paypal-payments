@@ -5,10 +5,7 @@ import FeatureItem from './FeatureItem';
 import FeatureDescription from './FeatureDescription';
 import { ContentWrapper } from '@ppcp-settings/Components/ReusableComponents/Elements';
 import SettingsCard from '@ppcp-settings/Components/ReusableComponents/SettingsCard';
-import {
-	useMerchantInfo,
-	useWooSettings,
-} from '@ppcp-settings/data/common/hooks';
+import { useMerchantInfo } from '@ppcp-settings/data/common/hooks';
 import { STORE_NAME as COMMON_STORE_NAME } from '@ppcp-settings/data/common';
 import { useFeatures } from '@ppcp-settings/data/features/hooks';
 import useNotices from '@ppcp-settings/hooks/useNotices';
@@ -16,7 +13,6 @@ import useNotices from '@ppcp-settings/hooks/useNotices';
 const Features = () => {
 	const [ isRefreshing, setIsRefreshing ] = useState( false );
 	const { merchant } = useMerchantInfo();
-	const { storeCountry } = useWooSettings();
 	const { features, fetchFeatures } = useFeatures();
 	const { refreshFeatureStatuses } = useDispatch( COMMON_STORE_NAME );
 	const { createSuccessNotice, createErrorNotice } = useNotices();
@@ -24,13 +20,6 @@ const Features = () => {
 	if ( ! features || features.length === 0 ) {
 		return null;
 	}
-
-	// Filter out ACDC for Mexico (when disabled).
-	const filteredFeatures = features.filter(
-		( feature ) =>
-			feature.id !== 'advanced_credit_and_debit_cards' ||
-			storeCountry !== 'MX'
-	);
 
 	const refreshHandler = async () => {
 		setIsRefreshing( true );
@@ -84,7 +73,7 @@ const Features = () => {
 			aria-busy={ isRefreshing }
 		>
 			<ContentWrapper>
-				{ filteredFeatures.map( ( { id, enabled, ...feature } ) => (
+				{ features.map( ( { id, enabled, ...feature } ) => (
 					<FeatureItem
 						key={ id }
 						isBusy={ isRefreshing }

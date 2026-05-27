@@ -172,13 +172,6 @@ document.addEventListener( 'DOMContentLoaded', () => {
 		renderPreview( settingsCallback, render );
 	}
 
-	function currentTabId() {
-		const params = new URLSearchParams( location.search );
-		return params.has( 'ppcp-tab' )
-			? params.get( 'ppcp-tab' )
-			: params.get( 'section' );
-	}
-
 	function shouldShowPayLaterButton() {
 		const payLaterButtonLocations = document.querySelector(
 			'[name="ppcp[pay_later_button_locations][]"]'

@@ -13,6 +13,7 @@ use Exception;
 use Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\Button\Endpoint\EndpointInterface;
 use WooCommerce\PayPalCommerce\Button\Endpoint\RequestData;
+use WooCommerce\PayPalCommerce\Button\Exception\NonceValidationException;
 
 /**
  * Class FrontendLoggerEndpoint
@@ -58,11 +59,15 @@ class FrontendLogger implements EndpointInterface {
 	/**
 	 * Handles the request.
 	 *
-	 * @return bool
 	 * @throws Exception On Error.
 	 */
-	public function handle_request(): bool {
-		$data  = $this->request_data->read_request( $this->nonce() );
+	public function handle_request(): void {
+		try {
+			$data = $this->request_data->read_request( $this->nonce() );
+		} catch ( NonceValidationException $error ) {
+			wp_send_json_error( array( 'message' => $error->getMessage() ), 400 );
+		}
+
 		$level = $data['log']['level'] ?? 'info';
 
 		switch ( $level ) {
@@ -75,6 +80,5 @@ class FrontendLogger implements EndpointInterface {
 		}
 
 		wp_send_json_success();
-		return true;
 	}
 }

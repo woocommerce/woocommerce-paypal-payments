@@ -3,18 +3,18 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\ApiClient\Endpoint;
 
-use Hamcrest\Matchers;
-use Requests_Utility_CaseInsensitiveDictionary;
+use InvalidArgumentException;
+use WC_Order;
 use WooCommerce\PayPalCommerce\ApiClient\Authentication\Bearer;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Address;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Capture;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\CaptureStatus;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\FraudProcessorResponse;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\ExperienceContext;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\OrderStatus;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PatchCollection;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Payer;
-use WooCommerce\PayPalCommerce\ApiClient\Entity\PayerName;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Payments;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PurchaseUnit;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Shipping;
@@ -25,9 +25,11 @@ use WooCommerce\PayPalCommerce\ApiClient\Factory\PatchCollectionFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\ErrorResponse;
 use Mockery;
 use Psr\Log\LoggerInterface;
+use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
 use WooCommerce\PayPalCommerce\TestCase;
 use WooCommerce\PayPalCommerce\WcGateway\FraudNet\FraudNet;
+use function Brain\Monkey\Actions\expectDone;
 use function Brain\Monkey\Functions\expect;
 use function Brain\Monkey\Functions\when;
 
@@ -42,10 +44,26 @@ class OrderEndpointTest extends TestCase
 		$this->shipping = new Shipping('shipping', new Address('US', 'street', '', 'CA', '', '12345'));
 	}
 
-	public function testOrderDefault()
+	public static function orderValidInputsDataProvider(): array
+	{
+		$wcOrder = Mockery::mock(WC_Order::class);
+		$wcOrder
+			->shouldReceive('get_meta')
+			->with(PayPalGateway::ORDER_ID_META_KEY)
+			->andReturn('abc123');
+
+		return [
+			['abc123', 'abc123'],
+			[$wcOrder, 'abc123'],
+		];
+	}
+
+	/**
+	 * @dataProvider orderValidInputsDataProvider
+	 */
+	public function testOrderDefault($input, string $orderId)
     {
 	    expect('wp_json_encode')->andReturnUsing('json_encode');
-        $orderId = 'id';
         $host = 'https://example.com/';
         $token = Mockery::mock(Token::class);
         $token
@@ -103,8 +121,44 @@ class OrderEndpointTest extends TestCase
         expect('is_wp_error')->with($rawResponse)->andReturn(false);
         expect('wp_remote_retrieve_response_code')->with($rawResponse)->andReturn(200);
 
-        $result = $testee->order($orderId);
+        $result = $testee->order($input);
         $this->assertEquals($order, $result);
+    }
+
+	public static function orderInvalidInputsDataProvider(): array
+	{
+		$wcOrder = Mockery::mock(WC_Order::class);
+		$wcOrder
+			->shouldReceive('get_meta')
+			->with(PayPalGateway::ORDER_ID_META_KEY)
+			->andReturnFalse();
+
+		return [
+			[123],
+			[$wcOrder],
+		];
+	}
+
+	/**
+	 * @dataProvider orderInvalidInputsDataProvider
+	 */
+	public function testOrderInvalidInput($input)
+    {
+		$testee = new OrderEndpoint(
+			'https://example.com/',
+			Mockery::mock(Bearer::class),
+			Mockery::mock(OrderFactory::class),
+			Mockery::mock(PatchCollectionFactory::class),
+			'CAPTURE',
+			Mockery::mock(LoggerInterface::class),
+			Mockery::mock(SubscriptionHelper::class),
+			false,
+			Mockery::mock(FraudNet::class)
+		);
+
+		$this->expectException(InvalidArgumentException::class);
+
+        $testee->order($input);
     }
 
     public function testOrderResponseIsWpError()
@@ -322,6 +376,11 @@ class OrderEndpointTest extends TestCase
             false,
             $fraudnet
         );
+
+        // Regression guard: the before_capture_order action must NOT fire for an
+        // already-completed order (e.g. vaulted ACDC payments that PayPal auto-captures).
+        // Firing it would trigger CardCaptureValidator and throw "Could not capture the PayPal order".
+        expectDone('woocommerce_paypal_payments_before_capture_order')->never();
 
         $result = $testee->capture($orderToCapture);
         $this->assertEquals($orderToCapture, $result);
@@ -1149,6 +1208,188 @@ class OrderEndpointTest extends TestCase
         $payer->expects('email_address')->andReturn('email@email.com');
         $payer->expects('to_array')->andReturn(['payer']);
         $testee->create([$purchaseUnit], ExperienceContext::SHIPPING_PREFERENCE_GET_FROM_FILE, $payer);
+    }
+
+    public function testCaptureDeclinedWithFraudResponseCodeThrowsDetailedMessage(): void
+    {
+        expect('wp_json_encode')->andReturnUsing('json_encode');
+        $orderId = 'id';
+        $orderToCaptureStatus = Mockery::mock(OrderStatus::class);
+        $orderToCaptureStatus->expects('is')->with('COMPLETED')->andReturn(false);
+        $orderToCapture = Mockery::mock(Order::class);
+        $orderToCapture->expects('status')->andReturn($orderToCaptureStatus);
+        $orderToCapture->expects('id')->andReturn($orderId);
+        $headers = Mockery::mock(Requests_Utility_CaseInsensitiveDictionary::class);
+        $headers->shouldReceive('getAll');
+        $rawResponse = [
+            'body'    => '{"id":"order123"}',
+            'headers' => $headers,
+        ];
+        $expectedOrder = Mockery::mock(Order::class);
+        $host          = 'https://example.com/';
+        $token         = Mockery::mock(Token::class);
+        $token->expects('token')->andReturn('bearer');
+        $bearer = Mockery::mock(Bearer::class);
+        $bearer->expects('bearer')->andReturn($token);
+        $orderFactory = Mockery::mock(OrderFactory::class);
+        $orderFactory->expects('from_paypal_response')->andReturn($expectedOrder);
+        $patchCollectionFactory = Mockery::mock(PatchCollectionFactory::class);
+        $logger = Mockery::mock(LoggerInterface::class);
+        $logger->shouldNotReceive('warning');
+        $logger->shouldReceive('debug');
+        $subscription_helper = Mockery::mock(SubscriptionHelper::class);
+        $fraudnet            = Mockery::mock(FraudNet::class);
+
+        $testee = new OrderEndpoint(
+            $host,
+            $bearer,
+            $orderFactory,
+            $patchCollectionFactory,
+            'CAPTURE',
+            $logger,
+            $subscription_helper,
+            false,
+            $fraudnet
+        );
+
+        expect('wp_remote_get')->andReturn($rawResponse);
+        expect('is_wp_error')->with($rawResponse)->andReturn(false);
+        expect('wp_remote_retrieve_response_code')->with($rawResponse)->andReturn(201);
+
+        $fraud        = new FraudProcessorResponse(null, null, '9500');
+        $purchaseUnit = Mockery::mock(PurchaseUnit::class);
+        $payment      = Mockery::mock(Payments::class);
+        $capture      = Mockery::mock(Capture::class);
+        $expectedOrder->shouldReceive('purchase_units')->once()->andReturn([$purchaseUnit]);
+        $purchaseUnit->shouldReceive('payments')->once()->andReturn($payment);
+        $payment->shouldReceive('captures')->once()->andReturn([$capture]);
+        $capture->shouldReceive('status')->once()->andReturn(new CaptureStatus(CaptureStatus::DECLINED));
+        $capture->shouldReceive('fraud_processor_response')->once()->andReturn($fraud);
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessageMatches('/9500: Suspected Fraud/');
+        $testee->capture($orderToCapture);
+    }
+
+    public function testCaptureDeclinedWithNullFraudThrowsGenericMessage(): void
+    {
+        expect('wp_json_encode')->andReturnUsing('json_encode');
+        $orderId = 'id';
+        $orderToCaptureStatus = Mockery::mock(OrderStatus::class);
+        $orderToCaptureStatus->expects('is')->with('COMPLETED')->andReturn(false);
+        $orderToCapture = Mockery::mock(Order::class);
+        $orderToCapture->expects('status')->andReturn($orderToCaptureStatus);
+        $orderToCapture->expects('id')->andReturn($orderId);
+        $headers = Mockery::mock(Requests_Utility_CaseInsensitiveDictionary::class);
+        $headers->shouldReceive('getAll');
+        $rawResponse = [
+            'body'    => '{"id":"order123"}',
+            'headers' => $headers,
+        ];
+        $expectedOrder = Mockery::mock(Order::class);
+        $host          = 'https://example.com/';
+        $token         = Mockery::mock(Token::class);
+        $token->expects('token')->andReturn('bearer');
+        $bearer = Mockery::mock(Bearer::class);
+        $bearer->expects('bearer')->andReturn($token);
+        $orderFactory = Mockery::mock(OrderFactory::class);
+        $orderFactory->expects('from_paypal_response')->andReturn($expectedOrder);
+        $patchCollectionFactory = Mockery::mock(PatchCollectionFactory::class);
+        $logger = Mockery::mock(LoggerInterface::class);
+        $logger->shouldNotReceive('warning');
+        $logger->shouldReceive('debug');
+        $subscription_helper = Mockery::mock(SubscriptionHelper::class);
+        $fraudnet            = Mockery::mock(FraudNet::class);
+
+        $testee = new OrderEndpoint(
+            $host,
+            $bearer,
+            $orderFactory,
+            $patchCollectionFactory,
+            'CAPTURE',
+            $logger,
+            $subscription_helper,
+            false,
+            $fraudnet
+        );
+
+        expect('wp_remote_get')->andReturn($rawResponse);
+        expect('is_wp_error')->with($rawResponse)->andReturn(false);
+        expect('wp_remote_retrieve_response_code')->with($rawResponse)->andReturn(201);
+
+        $purchaseUnit = Mockery::mock(PurchaseUnit::class);
+        $payment      = Mockery::mock(Payments::class);
+        $capture      = Mockery::mock(Capture::class);
+        $expectedOrder->shouldReceive('purchase_units')->once()->andReturn([$purchaseUnit]);
+        $purchaseUnit->shouldReceive('payments')->once()->andReturn($payment);
+        $payment->shouldReceive('captures')->once()->andReturn([$capture]);
+        $capture->shouldReceive('status')->once()->andReturn(new CaptureStatus(CaptureStatus::DECLINED));
+        $capture->shouldReceive('fraud_processor_response')->once()->andReturn(null);
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('Payment provider declined the payment, please use a different payment method.');
+        $testee->capture($orderToCapture);
+    }
+
+    public function testCaptureDeclinedWithEmptyResponseCodeThrowsGenericMessage(): void
+    {
+        expect('wp_json_encode')->andReturnUsing('json_encode');
+        $orderId = 'id';
+        $orderToCaptureStatus = Mockery::mock(OrderStatus::class);
+        $orderToCaptureStatus->expects('is')->with('COMPLETED')->andReturn(false);
+        $orderToCapture = Mockery::mock(Order::class);
+        $orderToCapture->expects('status')->andReturn($orderToCaptureStatus);
+        $orderToCapture->expects('id')->andReturn($orderId);
+        $headers = Mockery::mock(Requests_Utility_CaseInsensitiveDictionary::class);
+        $headers->shouldReceive('getAll');
+        $rawResponse = [
+            'body'    => '{"id":"order123"}',
+            'headers' => $headers,
+        ];
+        $expectedOrder = Mockery::mock(Order::class);
+        $host          = 'https://example.com/';
+        $token         = Mockery::mock(Token::class);
+        $token->expects('token')->andReturn('bearer');
+        $bearer = Mockery::mock(Bearer::class);
+        $bearer->expects('bearer')->andReturn($token);
+        $orderFactory = Mockery::mock(OrderFactory::class);
+        $orderFactory->expects('from_paypal_response')->andReturn($expectedOrder);
+        $patchCollectionFactory = Mockery::mock(PatchCollectionFactory::class);
+        $logger = Mockery::mock(LoggerInterface::class);
+        $logger->shouldNotReceive('warning');
+        $logger->shouldReceive('debug');
+        $subscription_helper = Mockery::mock(SubscriptionHelper::class);
+        $fraudnet            = Mockery::mock(FraudNet::class);
+
+        $testee = new OrderEndpoint(
+            $host,
+            $bearer,
+            $orderFactory,
+            $patchCollectionFactory,
+            'CAPTURE',
+            $logger,
+            $subscription_helper,
+            false,
+            $fraudnet
+        );
+
+        expect('wp_remote_get')->andReturn($rawResponse);
+        expect('is_wp_error')->with($rawResponse)->andReturn(false);
+        expect('wp_remote_retrieve_response_code')->with($rawResponse)->andReturn(201);
+
+        $fraud        = new FraudProcessorResponse(null, null, null);
+        $purchaseUnit = Mockery::mock(PurchaseUnit::class);
+        $payment      = Mockery::mock(Payments::class);
+        $capture      = Mockery::mock(Capture::class);
+        $expectedOrder->shouldReceive('purchase_units')->once()->andReturn([$purchaseUnit]);
+        $purchaseUnit->shouldReceive('payments')->once()->andReturn($payment);
+        $payment->shouldReceive('captures')->once()->andReturn([$capture]);
+        $capture->shouldReceive('status')->once()->andReturn(new CaptureStatus(CaptureStatus::DECLINED));
+        $capture->shouldReceive('fraud_processor_response')->once()->andReturn($fraud);
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('Payment provider declined the payment, please use a different payment method.');
+        $testee->capture($orderToCapture);
     }
 }
 

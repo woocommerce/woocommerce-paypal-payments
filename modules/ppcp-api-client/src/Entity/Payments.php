@@ -44,19 +44,19 @@ class Payments {
 	 */
 	public function __construct( array $authorizations, array $captures, array $refunds = array() ) {
 		foreach ( $authorizations as $key => $authorization ) {
-			if ( is_a( $authorization, Authorization::class ) ) {
+			if ( $authorization instanceof Authorization ) {
 				continue;
 			}
 			unset( $authorizations[ $key ] );
 		}
 		foreach ( $captures as $key => $capture ) {
-			if ( is_a( $capture, Capture::class ) ) {
+			if ( $capture instanceof Capture ) {
 				continue;
 			}
 			unset( $captures[ $key ] );
 		}
 		foreach ( $refunds as $key => $refund ) {
-			if ( is_a( $refund, Refund::class ) ) {
+			if ( $refund instanceof Refund ) {
 				continue;
 			}
 			unset( $refunds[ $key ] );

@@ -52,11 +52,6 @@ const modulesAssets = {
 		'js/pwc-payment-method.js',
 		'css/gateway.scss',
 	],
-	'ppcp-onboarding': [
-		'js/settings.js',
-		'js/onboarding.js',
-		'css/onboarding.scss',
-	],
 	'ppcp-order-tracking': [
 		'js/order-edit-page.js',
 		'css/order-edit-page.scss',
@@ -73,12 +68,7 @@ const modulesAssets = {
 	],
 	'ppcp-paypal-subscriptions': [ 'js/paypal-subscription.js' ],
 	'ppcp-save-payment-methods': [ 'js/add-payment-method.js' ],
-	'ppcp-settings': [
-		'js/index.js',
-		'js/switchSettingsUi.js',
-		'css/styles.scss',
-	],
-	'ppcp-uninstall': [ 'js/ppcp-clear-db.js' ],
+	'ppcp-settings': [ 'js/index.js', 'css/styles.scss' ],
 	'ppcp-wc-gateway': [
 		'js/common.js',
 		'js/gateway-settings.js',
@@ -88,7 +78,7 @@ const modulesAssets = {
 		'css/gateway-settings.scss',
 		'css/common.scss',
 	],
-	'ppcp-webhooks': [ 'js/status-page.js', 'css/status-page.scss' ],
+	'ppcp-store-sync': [ 'js/settings.js', 'css/style.scss' ]
 };
 
 const entries = {};

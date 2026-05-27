@@ -12,5 +12,6 @@ const TitleBadge = ( { text, type } ) => {
 
 export const TITLE_BADGE_POSITIVE = 'positive';
 export const TITLE_BADGE_NEGATIVE = 'negative';
+export const TITLE_BADGE_PRICING = 'pricing';
 export const TITLE_BADGE_INFO = 'info';
 export default TitleBadge;

@@ -7,6 +7,7 @@ import {
 	Plugins,
 	WooCommerceUtils,
 	restLogin,
+	WpCli,
 } from '@inpsyde/playwright-utils/build';
 /**
  * Internal dependencies
@@ -17,13 +18,8 @@ import {
 	ClassicCheckout,
 	OrderReceived,
 } from './frontend';
-import {
-	subscriptionsPlugin,
-	wpDebuggingPlugin,
-	pcpPlugin,
-	ShopOrder,
-} from '../resources';
-import { getCustomerStorageStateName } from './helpers';
+import { subscriptionsPlugin, pcpPlugin, ShopConfig } from '../resources';
+import { getCustomerStorageStateName } from './helpers/';
 import urls from './urls';
 
 export class Utils {
@@ -36,6 +32,7 @@ export class Utils {
 	checkout: Checkout;
 	classicCheckout: ClassicCheckout;
 	orderReceived: OrderReceived;
+	cli: WpCli;
 
 	constructor( {
 		requestUtils,
@@ -47,6 +44,7 @@ export class Utils {
 		checkout,
 		classicCheckout,
 		orderReceived,
+		cli,
 	} ) {
 		this.requestUtils = requestUtils;
 		this.wooCommerceApi = wooCommerceApi;
@@ -57,6 +55,7 @@ export class Utils {
 		this.checkout = checkout;
 		this.classicCheckout = classicCheckout;
 		this.orderReceived = orderReceived;
+		this.cli = cli;
 	}
 
 	/**
@@ -67,14 +66,6 @@ export class Utils {
 	 */
 	restoreCustomer = async ( customer: WooCommerce.CreateCustomer ) => {
 		await this.wooCommerceUtils.deleteCustomer( customer );
-		if ( customer.username ) {
-			const user = await this.requestUtils.getUserByName(
-				customer.username
-			);
-			if ( user.length ) {
-				await this.requestUtils.deleteUser( user[ 0 ].id );
-			}
-		}
 		await this.wooCommerceUtils.createCustomer( customer );
 		const storageStateName = getCustomerStorageStateName( customer );
 		const storageStatePath = `${ process.env.STORAGE_STATE_PATH }/${ storageStateName }.json`;
@@ -93,30 +84,6 @@ export class Utils {
 	};
 
 	/**
-	 * Pays for order created via API (dashboard order).
-	 * May be used for testing refunds/vaulting/subscriptions.
-	 *
-	 * @param orderId
-	 * @param orderKey
-	 * @param order
-	 */
-	payForApiOrder = async (
-		orderId: number,
-		orderKey: string,
-		order: ShopOrder
-	) => {
-		await this.payForOrder.visit( orderId, orderKey );
-		await this.payForOrder.payPalUi.makePayment( {
-			merchant: order.merchant,
-			payment: order.payment,
-		} );
-		return await this.wooCommerceApi.getOrderByIdAndStatus(
-			orderId,
-			'processing'
-		);
-	};
-
-	/**
 	 * Fills cart with array of products.
 	 *
 	 * - Creates WooCommerce.CartProduct from WooCommerce.CreateProduct (or gets CartProduct from process.env).
@@ -126,50 +93,10 @@ export class Utils {
 	 * @param products
 	 */
 	fillVisitorsCart = async ( products: WooCommerce.CreateProduct[] ) => {
-		const cartProducts = await this.wooCommerceUtils.createCartProducts(
-			products
-		);
+		const cartProducts =
+			await this.wooCommerceUtils.createCartProducts( products );
 		await this.visitorWooCommerceApi.clearCart();
 		await this.visitorWooCommerceApi.addProductsToCart( cartProducts );
-	};
-
-	/**
-	 * Pays for order on checkout page
-	 *
-	 * @param shopOrder
-	 */
-	completeOrderOnCheckout = async ( shopOrder: ShopOrder ) => {
-		const { payment, products, merchant } = shopOrder;
-		await this.fillVisitorsCart( products );
-		await this.checkout.visit();
-		await this.checkout.completeCheckoutDetails( shopOrder );
-		await this.checkout.payPalUi.makePayment( { merchant, payment } );
-		const orderId = await this.orderReceived.getOrderNumber();
-		return await this.wooCommerceApi.getOrderByIdAndStatus(
-			orderId,
-			'processing'
-		);
-	};
-
-	/**
-	 * Pays for order on classic checkout page
-	 *
-	 * @param shopOrder
-	 */
-	completeOrderOnClassicCheckout = async ( shopOrder: ShopOrder ) => {
-		const { payment, products, merchant } = shopOrder;
-		await this.fillVisitorsCart( products );
-		await this.classicCheckout.visit();
-		await this.classicCheckout.completeCheckoutDetails( shopOrder );
-		await this.classicCheckout.payPalUi.makePayment( {
-			merchant,
-			payment,
-		} );
-		const orderId = await this.orderReceived.getOrderNumber();
-		return await this.wooCommerceApi.getOrderByIdAndStatus(
-			orderId,
-			'processing'
-		);
 	};
 
 	/**
@@ -232,63 +159,46 @@ export class Utils {
 	 * taxes: Tax settings in WC > Settings > General tab and Taxes > Tax rates tab
 	 * customer: Registered customer to be created
 	 *
-	 * @param {Object} data               see also /resources/woocommerce-config.ts
-	 * @param          data.wpDebugging
-	 * @param          data.subscription
-	 * @param          data.classicPages
-	 * @param          data.settings
-	 * @param          data.taxes
-	 * @param          data.taxes.options
-	 * @param          data.taxes.rates
-	 * @param          data.customer
-	 * @param          data.products
+	 * @param { ShopConfig } data see also /resources/woocommerce-config.ts
 	 */
-	configureStore = async ( data: {
-		wpDebugging?: boolean; // Is WP Debugging plugin activated
-		subscription?: boolean; // Is WC Subscriptions plugin activated
-		classicPages?: boolean; // Are classic cart and checkout pages set in WC > Settings > Advanced
-		settings?: WooCommerce.Settings; // WooCommerce settings by tabs (general, advanced, etc.)
-		taxes?: {
-			options: WooCommerce.Settings; // Tax settings in WC > Settings > General tab
-			rates: WooCommerce.CreateTax[]; // Tax rates to be active in WC > Settings > Taxes > Tax rates tab
-		};
-		customer?: WooCommerce.CreateCustomer; // Registered customer to be created
-		products?: WooCommerce.CreateProduct[]; // Products to be created if not existing
-	} ) => {
+	configureStore = async ( data: ShopConfig ) => {
 		const {
-			wpDebugging,
-			subscription,
-			classicPages,
+			enableWpDebugging,
+			enableSubscriptionsPlugin,
+			enableClassicPages,
 			settings,
 			taxes,
 			customer,
 			products,
-		} = data;
+		}: ShopConfig = data;
 
-		if ( subscription === true ) {
+		if ( enableSubscriptionsPlugin === true ) {
 			await this.requestUtils.activatePlugin( subscriptionsPlugin.slug );
 		}
 
-		if ( subscription === false ) {
+		if ( enableSubscriptionsPlugin === false ) {
 			await this.requestUtils.deactivatePlugin(
 				subscriptionsPlugin.slug
 			);
 		}
 
-		if ( wpDebugging === true ) {
-			await this.requestUtils.activatePlugin( wpDebuggingPlugin.slug );
+		if ( enableWpDebugging === true ) {
+			await this.cli.setWpConst( { WP_DEBUG: true, SCRIPT_DEBUG: true } );
 		}
 
-		if ( wpDebugging === false ) {
-			await this.requestUtils.deactivatePlugin( wpDebuggingPlugin.slug );
+		if ( enableWpDebugging === false ) {
+			await this.cli.setWpConst( {
+				WP_DEBUG: false,
+				SCRIPT_DEBUG: false,
+			} );
 		}
 
-		if ( classicPages === true ) {
+		if ( enableClassicPages === true ) {
 			await this.wooCommerceUtils.activateClassicCartPage();
 			await this.wooCommerceUtils.activateClassicCheckoutPage();
 		}
 
-		if ( classicPages === false ) {
+		if ( enableClassicPages === false ) {
 			await this.wooCommerceUtils.activateBlockCartPage();
 			await this.wooCommerceUtils.activateBlockCheckoutPage();
 		}

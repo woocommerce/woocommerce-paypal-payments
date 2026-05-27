@@ -104,14 +104,14 @@ class PaymentMethodsEligibilityService {
 	 */
 	public function get_eligibility_checks(): array {
 		return array(
-			BancontactGateway::ID     => fn() => ! $this->is_mexico_merchant() && $this->is_apm_eligible,
-			BlikGateway::ID           => fn() => ! $this->is_mexico_merchant() && $this->is_apm_eligible,
-			EPSGateway::ID            => fn() => ! $this->is_mexico_merchant() && $this->is_apm_eligible,
-			IDealGateway::ID          => fn() => ! $this->is_mexico_merchant() && $this->is_apm_eligible,
-			MyBankGateway::ID         => fn() => ! $this->is_mexico_merchant() && $this->is_apm_eligible,
-			P24Gateway::ID            => fn() => ! $this->is_mexico_merchant() && $this->is_apm_eligible,
-			TrustlyGateway::ID        => fn() => ! $this->is_mexico_merchant() && $this->is_apm_eligible,
-			MultibancoGateway::ID     => fn() => ! $this->is_mexico_merchant() && $this->is_apm_eligible,
+			BancontactGateway::ID     => fn() => $this->is_apm_eligible,
+			BlikGateway::ID           => fn() => $this->is_apm_eligible,
+			EPSGateway::ID            => fn() => $this->is_apm_eligible,
+			IDealGateway::ID          => fn() => $this->is_apm_eligible,
+			MyBankGateway::ID         => fn() => $this->is_apm_eligible,
+			P24Gateway::ID            => fn() => $this->is_apm_eligible,
+			TrustlyGateway::ID        => fn() => $this->is_apm_eligible,
+			MultibancoGateway::ID     => fn() => $this->is_apm_eligible,
 			OXXO::ID                  => fn() => $this->is_mexico_merchant() && $this->is_apm_eligible,
 			PWCGateway::ID            => fn() => $this->has_pwc_capability() && $this->is_apm_eligible,
 			PayUponInvoiceGateway::ID => fn() => $this->merchant_country === 'DE',

@@ -150,6 +150,10 @@ class Recaptcha {
 		);
 	}
 	public function render_v2_container(): string {
+		if ( ! $this->should_use_recaptcha() ) {
+			return '';
+		}
+
 		return '<div id="' . esc_attr( self::V2_CONTAINER_ID ) . '" style="margin:20px 0;"></div>';
 	}
 
@@ -180,7 +184,6 @@ class Recaptcha {
 				),
 				400
 			);
-			exit;
 		}
 
 		$success = ( $version === 'v3' )
@@ -211,7 +214,6 @@ class Recaptcha {
 				),
 				403
 			);
-			exit;
 		}
 	}
 

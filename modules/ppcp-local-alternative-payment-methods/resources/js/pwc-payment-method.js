@@ -4,22 +4,24 @@ const config = wc.wcSettings.getSetting( 'ppcp-pwc_data' );
 
 registerPaymentMethod( {
 	name: config.id,
-	label: <div dangerouslySetInnerHTML={ { __html: config.title } } />,
+	label: (
+		<>
+			<div dangerouslySetInnerHTML={ { __html: config.title } } />
+			{ config.icon && (
+				<img
+					className={ `wc-block-components-payment-method-icon wc-block-components-payment-method-icon--${ config.id }` }
+					src={ config.icon }
+					alt={ config.title }
+				/>
+			) }
+		</>
+	),
 	content: (
 		<>
 			{ config.description && (
 				<div
 					dangerouslySetInnerHTML={ { __html: config.description } }
 				/>
-			) }
-			{ config.icon && (
-				<div className="wc-block-components-payment-method-icons wc-block-components-payment-method-icons--align-right">
-					<img
-						className={ `wc-block-components-payment-method-icon wc-block-components-payment-method-icon--${ config.id }` }
-						src={ config.icon }
-						alt={ config.title }
-					/>
-				</div>
 			) }
 		</>
 	),
