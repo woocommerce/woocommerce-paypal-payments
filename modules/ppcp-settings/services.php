@@ -80,7 +80,7 @@ use WooCommerce\PayPalCommerce\Settings\Data\Definition\PaymentMethodsDefinition
 use WooCommerce\PayPalCommerce\PayLaterConfigurator\Factory\ConfigFactory;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CardButtonGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
-use WooCommerce\PayPalCommerce\WcGateway\Gateway\OXXO\OXXO;
+use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\OXXOGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayUponInvoice\PayUponInvoiceGateway;
 use WooCommerce\PayPalCommerce\PayLaterConfigurator\Endpoint\SaveConfig;
@@ -475,7 +475,7 @@ return array(
      * @returns string[] The list of all gateway IDs.
      */
     'settings.config.all-gateway-ids' => static function (): array {
-        return array(PayPalGateway::ID, CardButtonGateway::ID, CreditCardGateway::ID, AxoGateway::ID, ApplePayGateway::ID, GooglePayGateway::ID, PWCGateway::ID, BancontactGateway::ID, BlikGateway::ID, EPSGateway::ID, IDealGateway::ID, MyBankGateway::ID, P24Gateway::ID, TrustlyGateway::ID, MultibancoGateway::ID, PayUponInvoiceGateway::ID, OXXO::ID);
+        return array(PayPalGateway::ID, CardButtonGateway::ID, CreditCardGateway::ID, AxoGateway::ID, ApplePayGateway::ID, GooglePayGateway::ID, PWCGateway::ID, BancontactGateway::ID, BlikGateway::ID, EPSGateway::ID, IDealGateway::ID, MyBankGateway::ID, P24Gateway::ID, TrustlyGateway::ID, MultibancoGateway::ID, PayUponInvoiceGateway::ID, OXXOGateway::ID);
     },
     'settings.service.branded-experience.activation-detector' => static function (): ActivationDetector {
         return new ActivationDetector();

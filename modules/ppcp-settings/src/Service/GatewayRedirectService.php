@@ -22,7 +22,7 @@ use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\PWCGateway;
 use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\TrustlyGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CardButtonGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
-use WooCommerce\PayPalCommerce\WcGateway\Gateway\OXXO\OXXO;
+use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\OXXOGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayUponInvoice\PayUponInvoiceGateway;
 /**
  * GatewayRedirectService class. Handles redirects from individual gateway
@@ -41,7 +41,7 @@ class GatewayRedirectService
      */
     public function __construct()
     {
-        $this->gateways = array(AxoGateway::ID, GooglePayGateway::ID, ApplePayGateway::ID, CreditCardGateway::ID, CardButtonGateway::ID, BancontactGateway::ID, BlikGateway::ID, EPSGateway::ID, IDealGateway::ID, MyBankGateway::ID, P24Gateway::ID, TrustlyGateway::ID, MultibancoGateway::ID, OXXO::ID, PayUponInvoiceGateway::ID, PWCGateway::ID);
+        $this->gateways = array(AxoGateway::ID, GooglePayGateway::ID, ApplePayGateway::ID, CreditCardGateway::ID, CardButtonGateway::ID, BancontactGateway::ID, BlikGateway::ID, EPSGateway::ID, IDealGateway::ID, MyBankGateway::ID, P24Gateway::ID, TrustlyGateway::ID, MultibancoGateway::ID, OXXOGateway::ID, PayUponInvoiceGateway::ID, PWCGateway::ID);
     }
     /**
      * Register hooks.
