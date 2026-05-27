@@ -23,7 +23,7 @@ class VaultRenderer {
 			const vaultData = this.config.vault_component;
 			const options = {
 				clientId: this.config.url_params?.[ 'client-id' ],
-				components: 'saved-payment-methods,buttons',
+				components: 'saved-payment-methods,buttons,messages',
 				'data-namespace': VAULT_NAMESPACE,
 				'data-sdk-client-token': vaultData.sdk_client_token,
 			};
