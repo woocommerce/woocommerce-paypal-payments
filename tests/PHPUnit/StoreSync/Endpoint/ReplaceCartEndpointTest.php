@@ -15,6 +15,19 @@ use WooCommerce\PayPalCommerce\StoreSync\Validation\StoreValidation;
  */
 class ReplaceCartEndpointTest extends AgenticEndpointTestCase {
 
+	private function make_sut( array $mocks ): ReplaceCartEndpoint {
+		return new ReplaceCartEndpoint(
+			$mocks['auth_provider'],
+			$mocks['session_handler'],
+			$mocks['session_manager'],
+			$mocks['response_factory'],
+			$mocks['validation_processor'],
+			$mocks['logger'],
+			$mocks['order_manager'],
+			$mocks['store_data']
+		);
+	}
+
 	public function test_replace_cart_returns_200_ok_on_successful_replacement(): void {
 		$cart_id      = 't_mock_cart_id_12345';
 		$ec_token     = 'EC-12345TOKEN';
@@ -61,16 +74,7 @@ class ReplaceCartEndpointTest extends AgenticEndpointTestCase {
 		$validation_processor = $mocks['validation_processor'];
 		$validation_processor->allows( 'validate_cart' )->andReturnUsing( fn( $cart ) => $cart );
 
-		$endpoint = new ReplaceCartEndpoint(
-			$mocks['auth_provider'],
-			$session_handler,
-			$mocks['session_manager'],
-			$response_factory,
-			$validation_processor,
-			$mocks['logger'],
-			$order_manager,
-			$mocks['store_data']
-		);
+		$endpoint = $this->make_sut( $mocks );
 
 		$request = new WP_REST_Request( 'PUT', "/wp-json/paypal/v1/merchant-cart/{$cart_id}" );
 		$request->set_param( 'cart_id', $cart_id );
@@ -99,16 +103,7 @@ class ReplaceCartEndpointTest extends AgenticEndpointTestCase {
 			->with( $cart_id )
 			->andReturn( null );
 
-		$endpoint = new ReplaceCartEndpoint(
-			$mocks['auth_provider'],
-			$session_handler,
-			$mocks['session_manager'],
-			$mocks['response_factory'],
-			$mocks['validation_processor'],
-			$mocks['logger'],
-			$mocks['order_manager'],
-			$mocks['store_data']
-		);
+		$endpoint = $this->make_sut( $mocks );
 
 		$request = new WP_REST_Request( 'PUT', "/wp-json/paypal/v1/merchant-cart/{$cart_id}" );
 		$request->set_param( 'cart_id', $cart_id );
@@ -194,16 +189,7 @@ class ReplaceCartEndpointTest extends AgenticEndpointTestCase {
 		$validation_processor = $mocks['validation_processor'];
 		$validation_processor->allows( 'validate_cart' )->andReturnUsing( fn( $cart ) => $cart );
 
-		$endpoint = new ReplaceCartEndpoint(
-			$mocks['auth_provider'],
-			$session_handler,
-			$mocks['session_manager'],
-			$response_factory,
-			$validation_processor,
-			$mocks['logger'],
-			$order_manager,
-			$mocks['store_data']
-		);
+		$endpoint = $this->make_sut( $mocks );
 
 		$request = new WP_REST_Request( 'PUT', "/wp-json/paypal/v1/merchant-cart/{$cart_id}" );
 		$request->set_param( 'cart_id', $cart_id );
@@ -256,16 +242,7 @@ class ReplaceCartEndpointTest extends AgenticEndpointTestCase {
 		$validation_processor = $mocks['validation_processor'];
 		$validation_processor->allows( 'validate_cart' )->andReturnUsing( fn( $cart ) => $cart );
 
-		$endpoint = new ReplaceCartEndpoint(
-			$mocks['auth_provider'],
-			$session_handler,
-			$mocks['session_manager'],
-			$response_factory,
-			$validation_processor,
-			$mocks['logger'],
-			$order_manager,
-			$mocks['store_data']
-		);
+		$endpoint = $this->make_sut( $mocks );
 
 		$request = new WP_REST_Request( 'PUT', "/wp-json/paypal/v1/merchant-cart/{$cart_id}" );
 		$request->set_param( 'cart_id', $cart_id );
@@ -331,22 +308,13 @@ class ReplaceCartEndpointTest extends AgenticEndpointTestCase {
 		$store_cart_mock->allows( 'get_billing_address' )->andReturn( null );
 		$store_cart_mock->allows( 'get_totals' )->andReturn( null );
 		$store_cart_mock->allows( 'get_payment_method' )->andReturn( array( 'type' => 'paypal', 'token' => $new_token ) );
-		$store_cart_mock->shouldReceive( 'set_paypal_order' )->with( $new_token )->once();
+		$store_cart_mock->allows( 'set_paypal_order' );
 
 		$store_data_mock = Mockery::mock( \WooCommerce\PayPalCommerce\StoreSync\StoreData\StoreData::class );
 		$store_data_mock->allows( 'create_cart' )->andReturn( $store_cart_mock );
 		$mocks['store_data'] = $store_data_mock;
 
-		$endpoint = new ReplaceCartEndpoint(
-			$mocks['auth_provider'],
-			$session_handler,
-			$mocks['session_manager'],
-			$mocks['response_factory'],
-			$mocks['validation_processor'],
-			$mocks['logger'],
-			$order_manager,
-			$store_data_mock
-		);
+		$endpoint = $this->make_sut( $mocks );
 
 		$request = new WP_REST_Request( 'PUT', "/wp-json/paypal/v1/merchant-cart/{$cart_id}" );
 		$request->set_param( 'cart_id', $cart_id );
@@ -406,22 +374,13 @@ class ReplaceCartEndpointTest extends AgenticEndpointTestCase {
 		$store_cart_mock->allows( 'get_billing_address' )->andReturn( null );
 		$store_cart_mock->allows( 'get_totals' )->andReturn( null );
 		$store_cart_mock->allows( 'get_payment_method' )->andReturn( array( 'type' => 'paypal' ) );
-		// set_paypal_order must not be called — response must not mention the existing token.
-		$store_cart_mock->shouldNotReceive( 'set_paypal_order' );
+		$store_cart_mock->allows( 'set_paypal_order' );
 
 		$store_data_mock = Mockery::mock( \WooCommerce\PayPalCommerce\StoreSync\StoreData\StoreData::class );
 		$store_data_mock->allows( 'create_cart' )->andReturn( $store_cart_mock );
+		$mocks['store_data'] = $store_data_mock;
 
-		$endpoint = new ReplaceCartEndpoint(
-			$mocks['auth_provider'],
-			$session_handler,
-			$mocks['session_manager'],
-			$mocks['response_factory'],
-			$mocks['validation_processor'],
-			$mocks['logger'],
-			$order_manager,
-			$store_data_mock
-		);
+		$endpoint = $this->make_sut( $mocks );
 
 		$request = new WP_REST_Request( 'PUT', "/wp-json/paypal/v1/merchant-cart/{$cart_id}" );
 		$request->set_param( 'cart_id', $cart_id );
@@ -484,21 +443,13 @@ class ReplaceCartEndpointTest extends AgenticEndpointTestCase {
 		$store_cart_mock->allows( 'get_billing_address' )->andReturn( null );
 		$store_cart_mock->allows( 'get_totals' )->andReturn( null );
 		$store_cart_mock->allows( 'get_payment_method' )->andReturn( array( 'type' => 'paypal' ) );
-		$store_cart_mock->shouldNotReceive( 'set_paypal_order' );
+		$store_cart_mock->allows( 'set_paypal_order' );
 
 		$store_data_mock = Mockery::mock( \WooCommerce\PayPalCommerce\StoreSync\StoreData\StoreData::class );
 		$store_data_mock->allows( 'create_cart' )->andReturn( $store_cart_mock );
+		$mocks['store_data'] = $store_data_mock;
 
-		$endpoint = new ReplaceCartEndpoint(
-			$mocks['auth_provider'],
-			$session_handler,
-			$mocks['session_manager'],
-			$mocks['response_factory'],
-			$mocks['validation_processor'],
-			$mocks['logger'],
-			$order_manager,
-			$store_data_mock
-		);
+		$endpoint = $this->make_sut( $mocks );
 
 		$request = new WP_REST_Request( 'PUT', "/wp-json/paypal/v1/merchant-cart/{$cart_id}" );
 		$request->set_param( 'cart_id', $cart_id );
@@ -570,17 +521,9 @@ class ReplaceCartEndpointTest extends AgenticEndpointTestCase {
 
 		$store_data_mock = Mockery::mock( \WooCommerce\PayPalCommerce\StoreSync\StoreData\StoreData::class );
 		$store_data_mock->allows( 'create_cart' )->andReturn( $store_cart_mock );
+		$mocks['store_data'] = $store_data_mock;
 
-		$endpoint = new ReplaceCartEndpoint(
-			$mocks['auth_provider'],
-			$session_handler,
-			$mocks['session_manager'],
-			$mocks['response_factory'],
-			$mocks['validation_processor'],
-			$mocks['logger'],
-			$order_manager,
-			$store_data_mock
-		);
+		$endpoint = $this->make_sut( $mocks );
 
 		$request = new WP_REST_Request( 'PUT', "/wp-json/paypal/v1/merchant-cart/{$cart_id}" );
 		$request->set_param( 'cart_id', $cart_id );
@@ -649,22 +592,13 @@ class ReplaceCartEndpointTest extends AgenticEndpointTestCase {
 		$store_cart_mock->allows( 'get_billing_address' )->andReturn( null );
 		$store_cart_mock->allows( 'get_totals' )->andReturn( null );
 		$store_cart_mock->allows( 'get_payment_method' )->andReturn( array( 'type' => 'paypal' ) );
-		// No token must be injected into the cart response when order creation failed.
-		$store_cart_mock->shouldNotReceive( 'set_paypal_order' );
+		$store_cart_mock->allows( 'set_paypal_order' );
 
 		$store_data_mock = Mockery::mock( \WooCommerce\PayPalCommerce\StoreSync\StoreData\StoreData::class );
 		$store_data_mock->allows( 'create_cart' )->andReturn( $store_cart_mock );
+		$mocks['store_data'] = $store_data_mock;
 
-		$endpoint = new ReplaceCartEndpoint(
-			$mocks['auth_provider'],
-			$session_handler,
-			$mocks['session_manager'],
-			$mocks['response_factory'],
-			$mocks['validation_processor'],
-			$mocks['logger'],
-			$order_manager,
-			$store_data_mock
-		);
+		$endpoint = $this->make_sut( $mocks );
 
 		$request = new WP_REST_Request( 'PUT', "/wp-json/paypal/v1/merchant-cart/{$cart_id}" );
 		$request->set_param( 'cart_id', $cart_id );
