@@ -25,7 +25,7 @@ use WooCommerce\PayPalCommerce\Settings\Data\PaymentSettings;
 use WooCommerce\PayPalCommerce\Settings\Data\GeneralSettings;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CardButtonGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
-use WooCommerce\PayPalCommerce\WcGateway\Gateway\OXXO\OXXO;
+use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\OXXOGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayUponInvoice\PayUponInvoiceGateway;
 
@@ -379,7 +379,7 @@ class PaymentMethodsDefinition {
 				'title'              => __( 'Pay upon Invoice', 'woocommerce-paypal-payments' ),
 				'description'        => '',
 			),
-			OXXO::ID                  => array(
+			OXXOGateway::ID                  => array(
 				'method_title'       => __( 'OXXO', 'woocommerce-paypal-payments' ),
 				'method_description' => __( 'OXXO is a Mexican chain of convenience stores. *Get PayPal account permission to use OXXO payment functionality by contacting us at (+52) 800–925–0304', 'woocommerce-paypal-payments' ),
 				'title'              => __( 'OXXO', 'woocommerce-paypal-payments' ),
@@ -482,9 +482,9 @@ class PaymentMethodsDefinition {
 				'warningSeverity' => 'error',
 			),
 			array(
-				'id'          => OXXO::ID,
-				'title'       => $defaults[ OXXO::ID ]['title'],
-				'description' => $defaults[ OXXO::ID ]['method_description'],
+				'id'          => OXXOGateway::ID,
+				'title'       => $defaults[ OXXOGateway::ID ]['title'],
+				'description' => $defaults[ OXXOGateway::ID ]['method_description'],
 				'icon'        => 'payment-method-oxxo',
 			),
 		);

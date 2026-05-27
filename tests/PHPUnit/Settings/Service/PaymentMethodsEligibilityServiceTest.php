@@ -13,6 +13,7 @@ use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\EPSGateway;
 use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\IDealGateway;
 use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\MultibancoGateway;
 use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\MyBankGateway;
+use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\OXXOGateway;
 use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\P24Gateway;
 use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\PWCGateway;
 use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\TrustlyGateway;
@@ -21,7 +22,6 @@ use WooCommerce\PayPalCommerce\Settings\Service\PaymentMethodsEligibilityService
 use WooCommerce\PayPalCommerce\TestCase;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CardButtonGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
-use WooCommerce\PayPalCommerce\WcGateway\Gateway\OXXO\OXXO;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayUponInvoice\PayUponInvoiceGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\DCCProductStatus;
 use Mockery;
@@ -32,7 +32,7 @@ class PaymentMethodsEligibilityServiceTest extends TestCase {
 		$service = $this->get_service( 'MX' );
 		$eligibility_checks = $service->get_eligibility_checks();
 
-		$this->assertTrue( $eligibility_checks[ OXXO::ID ]() );
+		$this->assertTrue( $eligibility_checks[ OXXOGateway::ID ]() );
 		$this->assertFalse( $eligibility_checks[ PWCGateway::ID ]() );
 		$this->assertTrue( $eligibility_checks[ BancontactGateway::ID ]() );
 		$this->assertTrue( $eligibility_checks[ BlikGateway::ID ]() );
@@ -48,7 +48,7 @@ class PaymentMethodsEligibilityServiceTest extends TestCase {
 		$service = $this->get_service( 'US' );
 		$eligibility_checks = $service->get_eligibility_checks();
 
-		$this->assertFalse( $eligibility_checks[ OXXO::ID ]() );
+		$this->assertFalse( $eligibility_checks[ OXXOGateway::ID ]() );
 		$this->assertFalse( $eligibility_checks[ PWCGateway::ID ]() );
 		$this->assertTrue( $eligibility_checks[ BancontactGateway::ID ]() );
 		$this->assertTrue( $eligibility_checks[ BlikGateway::ID ]() );
@@ -64,7 +64,7 @@ class PaymentMethodsEligibilityServiceTest extends TestCase {
 		$service = $this->get_service( 'US', false );
 		$eligibility_checks = $service->get_eligibility_checks();
 
-		$this->assertFalse( $eligibility_checks[ OXXO::ID ]() );
+		$this->assertFalse( $eligibility_checks[ OXXOGateway::ID]() );
 		$this->assertFalse( $eligibility_checks[ PWCGateway::ID ]() );
 		$this->assertFalse( $eligibility_checks[ BancontactGateway::ID ]() );
 		$this->assertFalse( $eligibility_checks[ BlikGateway::ID ]() );

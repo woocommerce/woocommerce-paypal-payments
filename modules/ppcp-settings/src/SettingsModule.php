@@ -35,7 +35,7 @@ use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ServiceModule;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CardButtonGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
-use WooCommerce\PayPalCommerce\WcGateway\Gateway\OXXO\OXXO;
+use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\OXXOGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayUponInvoice\PayUponInvoiceGateway;
 use WooCommerce\PayPalCommerce\Settings\Service\SettingsDataManager;
@@ -654,7 +654,7 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 					}
 
 					// For OXXO: enable ONLY if merchant is in Mexico.
-					if ( OXXO::ID === $method['id'] ) {
+					if ( OXXOGateway::ID === $method['id'] ) {
 						if ( 'MX' === $merchant_country ) {
 							$payment_methods->toggle_method_state( $method['id'], true );
 						}
