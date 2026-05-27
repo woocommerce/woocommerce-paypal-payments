@@ -17,7 +17,7 @@ use WooCommerce\PayPalCommerce\WcGateway\Processor\RefundProcessor;
 
 class OXXOGateway extends WC_Payment_Gateway {
 
-	const ID = 'ppcp-oxxo-gateway';
+	public const ID = 'ppcp-oxxo-gateway';
 
 	private Orders $orders_endpoint;
 	private PurchaseUnitFactory $purchase_unit_factory;
@@ -145,6 +145,7 @@ class OXXOGateway extends WC_Payment_Gateway {
 			foreach ( $body->links as $link ) {
 				if ( $link->rel === 'payer-action' ) {
 					$payer_action = $link->href;
+					break;
 				}
 			}
 
