@@ -51,6 +51,7 @@ const modulesAssets = {
 		'js/multibanco-payment-method.js',
 		'js/pwc-payment-method.js',
 		'js/oxxo-payment-method.js',
+		'js/pui-payment-method.js',
 		'css/gateway.scss',
 	],
 	'ppcp-order-tracking': [
@@ -78,7 +79,7 @@ const modulesAssets = {
 		'css/gateway-settings.scss',
 		'css/common.scss',
 	],
-	'ppcp-store-sync': [ 'js/settings.js', 'css/style.scss' ]
+	'ppcp-store-sync': [ 'js/settings.js', 'css/style.scss' ],
 };
 
 const entries = {};
