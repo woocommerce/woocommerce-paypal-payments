@@ -38,9 +38,4 @@ const StoreSyncSettings = () => {
 	);
 };
 
-registerSetting(
-	SLOTS.PAYPAL_SETTINGS_END,
-	MODULE_ID,
-	StoreSyncSettings,
-	10
-);
+registerSetting( SLOTS.PAYPAL_SETTINGS_END, MODULE_ID, StoreSyncSettings, 10 );

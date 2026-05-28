@@ -10,7 +10,6 @@ import merge from 'deepmerge';
 import ResumeFlowHelper from '@ppcp-button/Helper/ResumeFlowHelper';
 import { debounce } from '@ppcp-blocks/Helper/debounce';
 
-
 class SingleProductBootstrap {
 	constructor( gateway, renderer, errorHandler ) {
 		this.gateway = gateway;

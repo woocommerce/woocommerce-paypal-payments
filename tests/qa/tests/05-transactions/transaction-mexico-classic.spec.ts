@@ -2,10 +2,7 @@
  * Internal dependencies
  */
 import { test } from '../../utils';
-import {
-	taxSettings,
-	customers,
-} from '../../resources';
+import { taxSettings, customers } from '../../resources';
 import { transactionsOnClassicCheckout } from './_test-scenarios';
 import {
 	bcdcClassicCheckout,

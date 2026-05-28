@@ -44,12 +44,15 @@ class CardFieldsRenderer {
 		if ( hideDccGateway ) {
 			hideDccGateway.parentNode.removeChild( hideDccGateway );
 		}
-        const dccGatewayLi = document.querySelector(
-            '.wc_payment_method.payment_method_ppcp-credit-card-gateway'
-        );
-        if (dccGatewayLi.style.display === 'none' || dccGatewayLi.style.display === '') {
-            dccGatewayLi.style.display = 'block';
-        }
+		const dccGatewayLi = document.querySelector(
+			'.wc_payment_method.payment_method_ppcp-credit-card-gateway'
+		);
+		if (
+			dccGatewayLi.style.display === 'none' ||
+			dccGatewayLi.style.display === ''
+		) {
+			dccGatewayLi.style.display = 'block';
+		}
 
 		const cardFields = paypal.CardFields( {
 			createOrder: contextConfig.createOrder,
@@ -57,8 +60,8 @@ class CardFieldsRenderer {
 				return contextConfig.onApprove( data );
 			},
 			onError: ( error ) => {
-                console.error( error );
-                this.spinner.unblock();
+				console.error( error );
+				this.spinner.unblock();
 			},
 		} );
 
@@ -105,13 +108,14 @@ class CardFieldsRenderer {
 				}
 
 				cardFields.submit().catch( ( error ) => {
-                    this.spinner.unblock();
-                    if (!error.type || error.type !== 'create-order-error') {
-                        console.error( error );
-                        this.errorHandler.message(
-                            this.defaultConfig.hosted_fields.labels.fields_not_valid
-                        );
-                    }
+					this.spinner.unblock();
+					if ( ! error.type || error.type !== 'create-order-error' ) {
+						console.error( error );
+						this.errorHandler.message(
+							this.defaultConfig.hosted_fields.labels
+								.fields_not_valid
+						);
+					}
 				} );
 			} );
 	}

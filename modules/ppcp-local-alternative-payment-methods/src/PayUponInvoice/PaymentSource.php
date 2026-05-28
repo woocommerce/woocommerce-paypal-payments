@@ -2,12 +2,12 @@
 /**
  * PUI payment source.
  *
- * @package WooCommerce\PayPalCommerce\WcGateway\Gateway\PayUponInvoice
+ * @package WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\PayUponInvoice
  */
 
 declare(strict_types=1);
 
-namespace WooCommerce\PayPalCommerce\WcGateway\Gateway\PayUponInvoice;
+namespace WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\PayUponInvoice;
 
 /**
  * Class PaymentSource.

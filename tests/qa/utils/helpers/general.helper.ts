@@ -17,7 +17,7 @@ const TEST_RESULTS_DIR = join( process.cwd(), 'test-results' ); // Root 'test-re
  * Only one customer per country is used.
  * customer-germany - is a name of storage state file to use in the test.
  *
- * @default {} - empty annotation for guest
+ * @default
  * @param customer
  * @return object with test annotation
  */

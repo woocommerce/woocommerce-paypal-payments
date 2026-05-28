@@ -7,7 +7,8 @@ import { getSettingsTabs } from './Tabs';
 const SettingsScreen = ( { activePanel, setActivePanel } ) => {
 	const tabs = getSettingsTabs();
 	const { Component } = tabs.find( ( tab ) => tab.name === activePanel );
-	const isAgenticBetaBannerEligible = window.ppcpSettings?.isAgenticBetaBannerEligible;
+	const isAgenticBetaBannerEligible =
+		window.ppcpSettings?.isAgenticBetaBannerEligible;
 
 	return (
 		<>

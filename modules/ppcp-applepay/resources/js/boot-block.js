@@ -119,7 +119,10 @@ const ApplePayComponent = ( { isEditing, buttonAttributes } ) => {
 				return;
 			}
 
-			if ( totals.total_price !== previousTotal && previousTotal !== null ) {
+			if (
+				totals.total_price !== previousTotal &&
+				previousTotal !== null
+			) {
 				previousTotal = totals.total_price;
 				manager.reinit();
 			} else if ( previousTotal === null ) {

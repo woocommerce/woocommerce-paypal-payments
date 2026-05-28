@@ -4,7 +4,9 @@ document.addEventListener( 'DOMContentLoaded', () => {
 	const orderTrackingContainerId = 'ppcp_order-tracking';
 	const orderTrackingContainerSelector =
 		'#ppcp_order-tracking .ppcp-tracking-column.shipments';
-	const shiptasticSaveButton = document.getElementById( 'order-shipments-save' );
+	const shiptasticSaveButton = document.getElementById(
+		'order-shipments-save'
+	);
 	const loadLocation =
 		location.href + ' ' + orderTrackingContainerSelector + '>*';
 	const shiptasticSyncEnabled = config.shiptastic_sync_enabled;

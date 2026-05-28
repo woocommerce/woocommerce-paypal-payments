@@ -79,9 +79,7 @@ export default defineConfig< BaseExtend >( {
 
 		viewport: viewportSize,
 
-		trace: process.env.CI
-			? 'off'
-			: 'retain-on-failure', //process.env.CI ? 'off' : 'on-first-retry',//'on',//
+		trace: process.env.CI ? 'off' : 'retain-on-failure', //process.env.CI ? 'off' : 'on-first-retry',//'on',//
 
 		screenshot: {
 			mode: 'only-on-failure',
@@ -98,9 +96,9 @@ export default defineConfig< BaseExtend >( {
 		recordVideoOptions: process.env.CI
 			? undefined
 			: {
-				mode: 'retain-on-failure',
-				size: viewportSize,
-			},
+					mode: 'retain-on-failure',
+					size: viewportSize,
+			  },
 
 		cliConfig: {
 			envType: process.env.WPCLI_ENV_TYPE as WpCliEnvType,
@@ -121,7 +119,7 @@ export default defineConfig< BaseExtend >( {
 			testMatch: /(01-env|02-woocommerce|03-pcp)\.setup\.ts/,
 			fullyParallel: false,
 		},
-		
+
 		// WooCommerce (dependency target only)
 		{
 			name: 'setup-woocommerce',

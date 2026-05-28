@@ -129,13 +129,13 @@ class Renderer {
 				style,
 				...contextConfig,
 				onClick: ( data, actions ) => {
-                    let result;
+					let result;
 					if ( this.onSmartButtonClick ) {
 						result = this.onSmartButtonClick( data, actions );
 					}
 
 					venmoButtonClicked = data.fundingSource === 'venmo';
-                    return result;
+					return result;
 				},
 				onInit: ( data, actions ) => {
 					if ( this.onSmartButtonsInit ) {

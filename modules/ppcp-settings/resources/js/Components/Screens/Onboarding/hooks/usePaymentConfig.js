@@ -147,9 +147,7 @@ const getUIText = ( country, canUseCardPayments, onlyBranded ) => {
 	// Base text configuration for all countries.
 	const texts = {
 		paypalCheckoutDescription: CORE_DESCRIPTIONS.DEFAULT_CHECKOUT,
-		optionalTitle: canUseCardPayments
-			? TITLES.EXPANDED
-			: TITLES.OPTIONAL,
+		optionalTitle: canUseCardPayments ? TITLES.EXPANDED : TITLES.OPTIONAL,
 		optionalDescription: OPTIONAL_DESCRIPTIONS.WITH_APPLICATION,
 	};
 
@@ -197,12 +195,8 @@ const getRelevantIcons = (
 
 			// Digital wallet icons are independent of ACDC.
 			if ( isDigitalWallet ) {
-				return (
-					includeDigitalWallets &&
-					( ! onlyBranded || isOwnBrand )
-				);
+				return includeDigitalWallets && ( ! onlyBranded || isOwnBrand );
 			}
-
 
 			if ( onlyBranded && ! isOwnBrand ) {
 				return false;
@@ -265,8 +259,7 @@ export const usePaymentConfig = (
 			config.extendedMethods,
 			[
 				// Digital wallets are independent of ACDC.
-				( method ) =>
-					! method.isDigitalWallet || canUseDigitalWallets,
+				( method ) => ! method.isDigitalWallet || canUseDigitalWallets,
 				// Include ACDC methods when card payments available, non-ACDC otherwise.
 				( method ) =>
 					method.isDigitalWallet ||

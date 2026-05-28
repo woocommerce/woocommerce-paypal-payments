@@ -501,9 +501,7 @@ export default function Edit( { attributes, clientId, setAttributes } ) {
 				<div className="ppcp-overlay-child ppcp-unclicable-overlay">
 					{ ' ' }
 					{ /* make the message not clickable */ }
-					{ ! loaded && (
-						<PreviewPlaceholder timedOut={ timedOut } />
-					) }
+					{ ! loaded && <PreviewPlaceholder timedOut={ timedOut } /> }
 				</div>
 			</div>
 		</>

@@ -1,7 +1,4 @@
-import {
-	hide,
-	show,
-} from '@ppcp-button/Helper/Hiding';
+import { hide, show } from '@ppcp-button/Helper/Hiding';
 
 document.addEventListener( 'DOMContentLoaded', function () {
 	const refundButton = document.querySelector( 'button.refund-items' );
@@ -40,10 +37,10 @@ document.addEventListener( 'DOMContentLoaded', function () {
 		const data = await res.json();
 
 		if ( ! data.success ) {
-            hide( voidButton );
+			hide( voidButton );
 			show( refundButton );
 
-            alert( PcpVoidButton.error_text );
+			alert( PcpVoidButton.error_text );
 
 			throw Error( data.data.message );
 		}

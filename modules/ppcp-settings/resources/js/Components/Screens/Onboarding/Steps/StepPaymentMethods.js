@@ -99,9 +99,7 @@ const OptionalMethodDescription = () => {
 		<PaymentFlow
 			onlyOptional={ true }
 			useAcdc={ ! isCasualSeller && canUseCardPayments }
-			useDigitalWallets={
-				! isCasualSeller && canUseDigitalWallets
-			}
+			useDigitalWallets={ ! isCasualSeller && canUseDigitalWallets }
 			isFastlane={ canUseFastlane }
 			isPayLater={ true }
 			ownBrandOnly={ ownBrandOnly }

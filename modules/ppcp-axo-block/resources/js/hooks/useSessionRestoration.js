@@ -1,6 +1,9 @@
 import { useEffect, useRef } from '@wordpress/element';
 import { useDispatch } from '@wordpress/data';
-import { setIsEmailLookupCompleted, STORE_NAME } from '@ppcp-axo-block/stores/axoStore';
+import {
+	setIsEmailLookupCompleted,
+	STORE_NAME,
+} from '@ppcp-axo-block/stores/axoStore';
 import { log } from '@ppcp-axo/Helper/Debug';
 
 /**

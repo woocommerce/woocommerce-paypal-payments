@@ -91,7 +91,7 @@ class CheckoutActionHandler {
 					bn_code: bnCode,
 					context: this.config.context,
 					order_id: this.config.order_id,
-                    order_key: this.config.order_key,
+					order_key: this.config.order_key,
 					payment_method: paymentMethod,
 					funding_source: fundingSource,
 					// send as urlencoded string to handle complex fields via PHP functions the same as normal form submit

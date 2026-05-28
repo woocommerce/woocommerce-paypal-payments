@@ -152,13 +152,13 @@ describe( 'SavePaymentMethods', () => {
 			).toBeInTheDocument();
 		} );
 
-        it( 'renders when save_paypal_and_venmo feature is enabled and OwnBrand is false', () => {
-            mockUseMerchantInfo.features.save_paypal_and_venmo.enabled = true;
+		it( 'renders when save_paypal_and_venmo feature is enabled and OwnBrand is false', () => {
+			mockUseMerchantInfo.features.save_paypal_and_venmo.enabled = true;
 
 			render( <SavePaymentMethods ownBrandOnly={ true } /> );
 
 			expect(
-                screen.getByTestId( 'settings-block' )
+				screen.getByTestId( 'settings-block' )
 			).toBeInTheDocument();
 		} );
 	} );

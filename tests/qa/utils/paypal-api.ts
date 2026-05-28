@@ -73,7 +73,11 @@ export class PayPalApi {
 		);
 		const json = await response.json();
 		if ( ! response.ok() ) {
-			throw new Error( `getToken failed with status ${ response.status() }: ${ JSON.stringify( json ) }` );
+			throw new Error(
+				`getToken failed with status ${ response.status() }: ${ JSON.stringify(
+					json
+				) }`
+			);
 		}
 		return json.access_token;
 	};

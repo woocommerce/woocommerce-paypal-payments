@@ -57,7 +57,6 @@ const bootstrap = () => {
 			  )
 			: null;
 
-
 	new MultistepCheckoutHelper( checkoutFormSelector );
 
 	jQuery( 'form.woocommerce-checkout input' ).on( 'keydown', ( e ) => {
