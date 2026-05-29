@@ -250,8 +250,14 @@ class LocalAlternativePaymentMethodsModule implements ServiceModule, ExecutableM
 				 */
 				$payment_methods = apply_filters( 'woocommerce_paypal_payments_local_apm_payment_methods', $payment_methods );
 
-				$default_disable_funding               = $data['url_params']['disable-funding'] ?? '';
-				$disable_funding                       = array_merge( array_keys( $payment_methods ), array_filter( explode( ',', $default_disable_funding ) ) );
+				$default_disable_funding = $data['url_params']['disable-funding'] ?? '';
+				$funding_keys            = array_keys(
+					array_filter(
+						$payment_methods,
+						fn( array $m ) => ( $m['disable_funding'] ?? true ) !== false
+					)
+				);
+				$disable_funding                       = array_merge( $funding_keys, array_filter( explode( ',', $default_disable_funding ) ) );
 				$data['url_params']['disable-funding'] = implode( ',', array_unique( $disable_funding ) );
 
 				return $data;

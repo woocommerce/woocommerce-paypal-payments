@@ -79,9 +79,10 @@ return array(
 				'currencies' => array( 'MXN' ),
 			),
 			'pui'        => array(
-				'id'         => PayUponInvoiceGateway::ID,
-				'countries'  => array( 'DE' ),
-				'currencies' => array( 'EUR' ),
+				'id'              => PayUponInvoiceGateway::ID,
+				'countries'       => array( 'DE' ),
+				'currencies'      => array( 'EUR' ),
+				'disable_funding' => false,
 			),
 		);
 	},
