@@ -52,6 +52,15 @@ const PuiContent = ( { eventRegistration, emitResponse } ) => {
 					dangerouslySetInnerHTML={ { __html: config.description } }
 				/>
 			) }
+			{ config.icon && (
+				<div className="wc-block-components-payment-method-icons wc-block-components-payment-method-icons--align-right">
+					<img
+						className={ `wc-block-components-payment-method-icon wc-block-components-payment-method-icon--${ config.id }` }
+						src={ config.icon }
+						alt={ config.title }
+					/>
+				</div>
+			) }
 			<p className="form-row form-row-wide">
 				<label htmlFor="ppcp-pui-birth-date">
 					{ isGerman ? 'Geburtsdatum' : 'Birth date' }
