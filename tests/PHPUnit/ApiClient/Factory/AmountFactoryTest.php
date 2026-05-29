@@ -401,6 +401,53 @@ class AmountFactoryTest extends TestCase
 		$this->assertNull( $result->breakdown()->discount() );
 	}
 
+	/**
+	 * A manually created order with a negative fee
+	 * must not be undercharged on the PayPal side. The negative fee is surfaced as
+	 * a discount AND filtered out of the items sent to PayPal, so it must not also
+	 * be netted out of item_total — otherwise it is counted twice.
+	 *
+	 * Order: product $100, fee -$10 → real total $90.
+	 */
+	public function testFromWcOrderNegativeFeeNotDoubleCounted(): void
+	{
+		$order = Mockery::mock( \WC_Order::class );
+
+		$positiveAmount = Mockery::mock( Money::class );
+		$positiveAmount->shouldReceive( 'value' )->andReturn( 100.0 );
+		$positiveItem = Mockery::mock( Item::class );
+		$positiveItem->shouldReceive( 'quantity' )->andReturn( 1 );
+		$positiveItem->shouldReceive( 'unit_amount' )->andReturn( $positiveAmount );
+
+		$negativeAmount = Mockery::mock( Money::class );
+		$negativeAmount->shouldReceive( 'value' )->andReturn( -10.0 );
+		$negativeItem = Mockery::mock( Item::class );
+		$negativeItem->shouldReceive( 'quantity' )->andReturn( 1 );
+		$negativeItem->shouldReceive( 'unit_amount' )->andReturn( $negativeAmount );
+
+		$this->itemFactory
+			->expects( 'from_wc_order' )
+			->with( $order )
+			->andReturn( [ $positiveItem, $negativeItem ] );
+
+		$order->shouldReceive( 'get_payment_method' )->andReturn( PayPalGateway::ID );
+		$order->shouldReceive( 'get_meta' )->andReturn( null );
+		$order->shouldReceive( 'get_currency' )->andReturn( $this->currency );
+		$order->shouldReceive( 'get_subtotal' )->andReturn( 100.0 );
+		$order->shouldReceive( 'get_total_fees' )->andReturn( -10.0 );
+		$order->shouldReceive( 'get_shipping_total' )->andReturn( 0.0 );
+		$order->shouldReceive( 'get_total_tax' )->andReturn( 0.0 );
+		$order->shouldReceive( 'get_total_discount' )->andReturn( 0.0 );
+
+		$result = $this->testee->from_wc_order( $order );
+
+		// item_total must match the positive item actually sent to PayPal ($100),
+		// the negative fee is represented solely as a $10 discount, total stays $90.
+		$this->assertSame( '100.00', $result->breakdown()->item_total()->value_str() );
+		$this->assertSame( '10.00', $result->breakdown()->discount()->value_str() );
+		$this->assertSame( '90.00', $result->value_str() );
+	}
+
     /**
      * @dataProvider dataFromPayPalResponse
      * @param $response

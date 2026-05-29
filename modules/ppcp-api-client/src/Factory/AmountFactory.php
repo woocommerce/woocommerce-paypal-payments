@@ -161,18 +161,25 @@ class AmountFactory {
 		$currency = $order->get_currency();
 		$items    = $this->item_factory->from_wc_order( $order );
 
+		$items_discount = $this->discounts_from_items( $items );
+
 		$discount_value = array_sum(
 			array(
 				(float) $order->get_total_discount(), // Only coupons.
-				$this->discounts_from_items( $items ),
+				$items_discount,
 			)
 		);
-		$discount = null;
+		$discount       = null;
 		if ( $discount_value ) {
 			$discount = new Money( (float) $discount_value, $currency );
 		}
 
-		$item_total_val = (float) $order->get_subtotal() + (float) $order->get_total_fees();
+		// Negative items (e.g. a negative fee) are surfaced as `discount`, and the
+		// negative-amount items are filtered out by PurchaseUnitFactory before being
+		// sent to PayPal. Add them back here so item_total reflects the positive items
+		// actually sent and the negative fee is not counted twice (once in get_total_fees()
+		// and again in discount), which would otherwise undercharge the PayPal total.
+		$item_total_val = (float) $order->get_subtotal() + (float) $order->get_total_fees() + $items_discount;
 		$shipping_val   = (float) $order->get_shipping_total();
 		$taxes_val      = (float) $order->get_total_tax();
 
