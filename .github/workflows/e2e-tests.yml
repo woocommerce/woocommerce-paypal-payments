@@ -37,22 +37,6 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  build:
-    name: Build tested plugin package
-    if: >-
-      github.event_name == 'workflow_dispatch' ||
-      (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success')
-    uses: inpsyde/reusable-workflows/.github/workflows/build-and-distribute.yml@main
-    secrets:
-      GITHUB_USER_EMAIL: ${{ secrets.DEPLOYBOT_EMAIL }}
-      GITHUB_USER_NAME: ${{ secrets.DEPLOYBOT_USER }}
-      GITHUB_USER_SSH_KEY: ${{ secrets.DEPLOYBOT_SSH_PRIVATE_KEY }}
-      GITHUB_USER_SSH_PUBLIC_KEY: ${{ secrets.DEPLOYBOT_SSH_PUBLIC_KEY }}
-      NPM_REGISTRY_TOKEN: ${{ secrets.DEPLOYBOT_GITHUB_TOKEN_PACKAGES }}
-    with:
-      PACKAGE_NAME: woocommerce-paypal-payments
-      NODE_VERSION: 22
-
   resolve-playwright-matrix:
     name: Resolve Playwright matrix
     runs-on: ubuntu-latest
@@ -101,12 +85,11 @@ jobs:
   e2e-playwright:
     name: Run Playwright E2E Tests${{ matrix.name_suffix }}
     needs:
-      - build
       - resolve-playwright-matrix
     strategy:
       fail-fast: false
       matrix: ${{ fromJson(needs.resolve-playwright-matrix.outputs.matrix) }}
-    uses: inpsyde/reusable-workflows/.github/workflows/test-playwright.yml@main
+    uses: inpsyde/reusable-workflows/.github/workflows/test-playwright.yml@feature/reuse-built-artifact
     with:
       PLAYWRIGHT_SCRIPT: ${{ matrix.script }}
       PLAYWRIGHT_ARTIFACT_NAME: ${{ matrix.artifact_name }}
@@ -118,17 +101,8 @@ jobs:
       NODE_VERSION: 22
       PLAYWRIGHT_BROWSER_ARGS: 'chromium --with-deps'
       XRAY_TEST_EXEC_KEY: ${{ inputs.XRAY_TEST_EXEC_KEY }}
+      TESTED_ARTIFACT_SLUG: 'woocommerce-paypal-payments'
       PRE_SCRIPT: |
-        # 1. Download and unzip the built plugin
-        gh run download ${{ github.run_id }} -p "woocommerce-paypal-payments-*" -D tests/qa/resources/files
-        (
-          cd tests/qa/resources/files
-          mv woocommerce-paypal-payments-*/woocommerce-paypal-payments .
-          zip -rq woocommerce-paypal-payments.zip woocommerce-paypal-payments
-          rm -rf woocommerce-paypal-payments woocommerce-paypal-payments-*/
-        )
-
-        # 2. Add private composer repository and download WooCommerce Subscriptions
         composer config repositories.repo-name composer https://repo.packagist.com/inpsyde/payment-gateways/
         composer require inpsyde-mirror/woocommerce-subscriptions
     secrets:
