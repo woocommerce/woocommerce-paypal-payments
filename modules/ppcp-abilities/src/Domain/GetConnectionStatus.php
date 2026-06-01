@@ -16,21 +16,14 @@ use WooCommerce\PayPalCommerce\Abilities\AbilitiesRegistrar;
 use WooCommerce\PayPalCommerce\Settings\Endpoint\CommonRestEndpoint;
 
 /**
- * Registers the woocommerce-paypal-payments/get-connection-status ability.
+ * Registers woocommerce-paypal-payments/get-connection-status.
  *
- * Reference ability for the migration: zero-arg, read-only, answers the
- * highest-leverage question an agent has about a PayPal Payments install
- * ("is this store connected to PayPal and as which account?") in a single
- * call. Backs onto the CommonRestEndpoint::get_merchant_details route,
- * unwraps the plugin's envelope, and STRIPS the API credentials
- * (clientId, clientSecret) before returning — those fields are useful to
- * the admin UI but never to an agent.
+ * Reference ability: zero-arg, read-only. Backs onto
+ * CommonRestEndpoint::get_merchant_details and STRIPS the API credentials
+ * (clientId, clientSecret) before returning.
  *
- * @internal Only loaded when WooCommerce 10.9+ is active. The
- *           AbilitiesRegistrar short-circuits before referencing this
- *           class on earlier WC versions; PHP's lazy autoload means the
- *           unresolved AbilityDefinition interface FQN never reaches the
- *           parser there.
+ * @internal Only loaded on WC 10.9+; the registrar short-circuits before
+ *           referencing this class (and the AbilityDefinition FQN) on older WC.
  */
 class GetConnectionStatus extends AbstractPpcpAbility implements AbilityDefinition {
 
@@ -42,15 +35,9 @@ class GetConnectionStatus extends AbstractPpcpAbility implements AbilityDefiniti
 	private const REST_ROUTE = '/wc/v3/wc_paypal/common/merchant';
 
 	/**
-	 * Fields the projection MUST drop before returning to the agent.
-	 *
-	 * The plugin's $merchant_info_map at
-	 * modules/ppcp-settings/src/Endpoint/CommonRestEndpoint.php line 78
-	 * exposes both clientId and clientSecret — the OAuth API credentials
-	 * the plugin uses to talk to PayPal. They are admin-only by intent;
-	 * surfacing them through an ability would let an agent log them
-	 * verbatim. The PayPal merchant id (`id`) and email stay because
-	 * agents legitimately need them to reason about the account.
+	 * Fields dropped before returning to the agent. clientId/clientSecret are
+	 * the OAuth API credentials (admin-only); an agent could log them verbatim.
+	 * The merchant `id`/email stay — agents need them to reason about the account.
 	 *
 	 * @var array<int, string>
 	 */
@@ -73,11 +60,8 @@ class GetConnectionStatus extends AbstractPpcpAbility implements AbilityDefiniti
 			),
 			'execute_callback'    => array( self::class, 'execute' ),
 			'permission_callback' => array( AbilitiesRegistrar::class, 'can_manage_woocommerce' ),
-			// output_schema deliberately omitted — the merchant payload's
-			// shape is defined by the plugin's $merchant_info_map and
-			// duplicating it here would couple the ability to any future
-			// settings-data refactor. The projection method documents
-			// the contract instead.
+			// output_schema omitted — the merchant shape is defined by the
+			// plugin's $merchant_info_map; the projection documents the contract.
 			'meta'                => array(
 				'annotations'  => array(
 					'readonly'    => true,
@@ -93,18 +77,11 @@ class GetConnectionStatus extends AbstractPpcpAbility implements AbilityDefiniti
 	}
 
 	/**
-	 * Execute callback.
+	 * Delegate to CommonRestEndpoint::get_merchant_details (Shape 2) and
+	 * project to the agent-facing shape via {@see self::project_merchant_payload()}.
 	 *
-	 * Delegates to CommonRestEndpoint::get_merchant_details (Shape 2 — REST
-	 * delegate) and projects the response into the agent-facing shape via
-	 * {@see self::project_merchant_payload()}.
-	 *
-	 * @param mixed $input Optional; this ability accepts no input but the
-	 *                     parameter is kept to match the Abilities API
-	 *                     execute_callback signature for forward
-	 *                     compatibility.
-	 * @return array|\WP_Error Agent-facing connection-status payload or
-	 *                         WP_Error on remote/transport failure.
+	 * @param mixed $input Unused; kept for the execute_callback signature.
+	 * @return array|\WP_Error
 	 */
 	public static function execute( $input = null ) {
 		unset( $input );
@@ -126,12 +103,9 @@ class GetConnectionStatus extends AbstractPpcpAbility implements AbilityDefiniti
 			);
 		}
 
-		// Reuse the shared success=false handler so message/details redaction
-		// stays consistent with the other Shape-2 abilities. CommonRestEndpoint
-		// puts merchant/features at the envelope top level alongside `data`,
-		// so we can't go through unwrap_envelope() (which would extract `data`
-		// and discard those keys). envelope_error_or_null() gives us just the
-		// failure-branch behaviour.
+		// CommonRestEndpoint puts merchant/features at the envelope top level
+		// alongside `data`, so unwrap_envelope() (which extracts `data`) would
+		// drop them — use the failure-branch handler only.
 		$envelope_error = self::envelope_error_or_null( $response );
 		if ( $envelope_error instanceof \WP_Error ) {
 			return $envelope_error;
@@ -141,28 +115,9 @@ class GetConnectionStatus extends AbstractPpcpAbility implements AbilityDefiniti
 	}
 
 	/**
-	 * Project the CommonRestEndpoint success-path response into the
-	 * agent-facing payload.
-	 *
-	 * The endpoint returns (on success):
-	 *   {
-	 *     success: true,
-	 *     data:    [],
-	 *     merchant: { isConnected, isSandbox, id, email, sellerType, clientId, clientSecret, isSendOnlyCountry },
-	 *     features: [...]   // only when connected
-	 *   }
-	 *
-	 * The `success=false` branch is handled by
-	 * {@see AbstractPpcpAbility::envelope_error_or_null()} from inside
-	 * {@see self::execute()} before this projection is called — we cannot
-	 * route through `unwrap_envelope()` because CommonRestEndpoint puts
-	 * `merchant`/`features` alongside `data` at the envelope top level, and
-	 * `unwrap_envelope()` would extract `data` and discard them. The agent
-	 * surface is the merchant subobject (with API credentials stripped)
-	 * plus the optional features list.
-	 *
-	 * Public so unit tests can assert the redaction behaviour without
-	 * standing up a real REST server.
+	 * Project the CommonRestEndpoint success response to the agent payload:
+	 * the merchant subobject (API credentials stripped) plus optional features.
+	 * Public so tests can assert redaction without a REST server.
 	 *
 	 * @param array $payload Decoded REST response array (success branch).
 	 * @return array Agent-facing payload.

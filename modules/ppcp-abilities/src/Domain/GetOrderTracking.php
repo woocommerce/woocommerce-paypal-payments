@@ -19,26 +19,18 @@ use WooCommerce\PayPalCommerce\OrderTracking\Endpoint\OrderTrackingEndpoint;
 use WooCommerce\PayPalCommerce\OrderTracking\Shipment\ShipmentInterface;
 
 /**
- * Registers the woocommerce-paypal-payments/get-order-tracking ability.
+ * Registers woocommerce-paypal-payments/get-order-tracking.
  *
- * Lists shipment tracking entries (carrier, tracking number, status) for
- * a WooCommerce order so an agent can answer "what carriers and tracking
- * numbers are on order X?" Backed by
- * OrderTrackingEndpoint::list_tracking_information(int $wc_order_id)
- * (Shape 3 — direct service call).
- *
- * The backing service issues two synchronous remote PayPal calls per
- * invocation (PayPal order lookup to extract the capture id, then a
- * trackers list against PayPal's /v1/shipping/trackers).
+ * Lists shipment tracking entries for a WooCommerce order. Backed by
+ * OrderTrackingEndpoint::list_tracking_information() (Shape 3), which issues
+ * two synchronous PayPal API calls per invocation.
  *
  * @internal
  */
 class GetOrderTracking extends AbstractPpcpAbility implements AbilityDefinition {
 
 	/**
-	 * Container service id for the OrderTrackingEndpoint.
-	 *
-	 * Cross-referenced at modules/ppcp-order-tracking/services.php line 36.
+	 * Container service id; see modules/ppcp-order-tracking/services.php.
 	 *
 	 * @var string
 	 */
@@ -106,12 +98,9 @@ class GetOrderTracking extends AbstractPpcpAbility implements AbilityDefinition 
 			);
 		}
 
-		// Pre-validate that the order exists before delegating. The backing
-		// OrderTrackingEndpoint::list_tracking_information() returns an empty
-		// array for an unknown order — indistinguishable from "order exists
-		// but has no trackers" — so an agent could not tell a typo'd order ID
-		// from a genuinely untracked one. Surface the missing order as a
-		// structured not_found here, mirroring GetPaypalOrder::extract_identifier().
+		// Pre-validate the order: the backing endpoint returns [] for an unknown
+		// order, indistinguishable from "exists but untracked". Surface a
+		// not_found instead, mirroring GetPaypalOrder::extract_identifier().
 		if ( ! wc_get_order( $wc_order_id ) instanceof WC_Order ) {
 			return new \WP_Error(
 				'woocommerce_paypal_payments_not_found',
@@ -128,10 +117,8 @@ class GetOrderTracking extends AbstractPpcpAbility implements AbilityDefinition 
 		try {
 			$shipments = $controller->list_tracking_information( $wc_order_id );
 		} catch ( Throwable $e ) {
-			// Don't forward $e->getMessage() to the agent — PayPalApiException
-			// appends information_link URLs that can leak internal API
-			// structure into LLM contexts. Log full detail server-side through
-			// the plugin's PSR-3 logger.
+			// Don't forward $e->getMessage() — PayPalApiException leaks
+			// information_link URLs into LLM context. Log full detail server-side.
 			self::logger()->error( '[ppcp-abilities] get-order-tracking lookup threw ' . get_class( $e ) . ' for wc_order_id=' . $wc_order_id . ': ' . $e->getMessage() );
 
 			return new \WP_Error(
@@ -141,13 +128,9 @@ class GetOrderTracking extends AbstractPpcpAbility implements AbilityDefinition 
 			);
 		}
 
-		// list_tracking_information() returns null on any non-200 from PayPal's
-		// /v1/shipping/trackers endpoint — most commonly the 404 "no trackers
-		// registered yet" response for an order that simply hasn't shipped.
-		// Treat that as an empty shipment list, matching how the order-tracking
-		// meta box renders the same null (MetaBoxRenderer::render() coerces it
-		// via `?? array()`). Genuine transport failures throw above and surface
-		// as woocommerce_paypal_payments_tracking_lookup_failed.
+		// list_tracking_information() returns null on any non-200 (commonly the
+		// 404 "no trackers yet"). Treat as empty, matching MetaBoxRenderer's
+		// `?? array()`. Genuine transport failures throw above.
 		$shipments = $shipments ?? array();
 
 		return array(
@@ -157,12 +140,8 @@ class GetOrderTracking extends AbstractPpcpAbility implements AbilityDefinition 
 	}
 
 	/**
-	 * Serialize a ShipmentInterface to a plain array for the agent payload.
-	 *
-	 * Delegates to the entity's own to_array() so the wire shape stays in
-	 * sync with however ShipmentFactory chooses to represent shipments.
-	 * Public so unit tests can assert the serialization shape without
-	 * standing up the plugin container.
+	 * Serialize a ShipmentInterface for the agent payload via its own
+	 * to_array(). Public so tests can assert the shape without the container.
 	 *
 	 * @param ShipmentInterface $shipment The shipment entity.
 	 * @return array<string, mixed>

@@ -19,56 +19,34 @@ use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpointCached;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
 
 /**
- * Registers the woocommerce-paypal-payments/get-paypal-order ability.
+ * Registers woocommerce-paypal-payments/get-paypal-order.
  *
- * Looks up the PayPal order (id, intent, status, purchase_units,
- * create_time, update_time, links, plus payments — captures /
- * authorizations / refunds — embedded under each purchase_unit) for a
- * given PayPal order id OR a WooCommerce order id (which is resolved to
- * the PayPal id via the order's meta) so an agent can answer "what's
- * the PayPal-side state of order X — captured? authorized only?
- * declined?" for support and reconciliation. Backed by
- * OrderEndpointCached::order() (Shape 3 — direct service call); the
- * cached endpoint is preferred over the non-cached one to amortize cost
- * when the same ability is invoked multiple times in a session.
+ * Looks up a PayPal order (id, intent, status, purchase units with embedded
+ * captures/authorizations/refunds, timestamps, links) by PayPal order ID OR
+ * WooCommerce order ID. Backed by OrderEndpointCached::order() (Shape 3);
+ * cached to amortize repeat lookups in a session.
  *
- * Two PII surfaces in the response:
- *   - top-level `payer` block (email_address, name, address, payer_id,
- *     phone, tax_info, birth_date) — emitted by Order::to_array() when
- *     a payer is present.
- *   - per-purchase-unit `shipping` (name, address, email_address,
- *     phone_number) — emitted by PurchaseUnit::to_array() when shipping
- *     details are present.
- *
- * Both are STRIPPED by default; callers that genuinely need payer or
- * shipping identity must opt in by passing `include_payer_pii: true`.
- * Note: `payment_source` is intentionally NOT in the current response
- * shape — Order::to_array() does not serialize it. If a future Woo
- * Core change exposes payment_source through to_array(), the
- * test_project_order_does_not_leak_synthetic_payment_source regression
- * test asserts the projection still strips it.
+ * Security: payer PII (top-level `payer`) and per-purchase-unit `shipping`
+ * are STRIPPED unless include_payer_pii is true. `payment_source` is stripped
+ * defensively — Order::to_array() does not serialize it today, but a future
+ * change that did would leak through the denylist gap (pinned by
+ * test_project_order_does_not_leak_synthetic_payment_source).
  *
  * @internal
  */
 class GetPaypalOrder extends AbstractPpcpAbility implements AbilityDefinition {
 
 	/**
-	 * Container service id for the cached OrderEndpoint.
-	 *
-	 * Cross-referenced at modules/ppcp-api-client/services.php line 272.
+	 * Container service id; see modules/ppcp-api-client/services.php.
 	 *
 	 * @var string
 	 */
 	private const SERVICE_ID = 'api.endpoint.order.cached';
 
 	/**
-	 * Format a valid PayPal v2 order ID must match.
-	 *
-	 * PayPal v2 order IDs are alphanumeric uppercase tokens (e.g.
-	 * "8XR43025NW123456A"). Constraining the input prevents path
-	 * traversal-style payloads (e.g. "ORDERID/../refunds") from being
-	 * interpolated into the API URL by OrderEndpoint::order(), which
-	 * concatenates the id without rawurlencode().
+	 * Valid PayPal v2 order ID format. Constraining the input blocks
+	 * path-traversal payloads (e.g. "ID/../refunds") from reaching
+	 * OrderEndpoint::order(), which concatenates the id without rawurlencode().
 	 *
 	 * @var string
 	 */
@@ -121,11 +99,8 @@ class GetPaypalOrder extends AbstractPpcpAbility implements AbilityDefinition {
 	}
 
 	/**
-	 * Execute callback.
-	 *
-	 * Accepts EITHER paypal_order_id OR wc_order_id (exactly one must be
-	 * present). When wc_order_id is supplied, the PayPal order endpoint
-	 * resolves the PayPal id from order meta internally.
+	 * Execute callback. Accepts EITHER paypal_order_id OR wc_order_id (exactly
+	 * one); with wc_order_id the endpoint resolves the PayPal id from order meta.
 	 *
 	 * @param mixed $input Expected shape: { paypal_order_id?: string, wc_order_id?: int, include_payer_pii?: bool }.
 	 * @return array|\WP_Error
@@ -146,11 +121,8 @@ class GetPaypalOrder extends AbstractPpcpAbility implements AbilityDefinition {
 		try {
 			$order = $endpoint->order( $identifier );
 		} catch ( Throwable $e ) {
-			// Don't forward $e->getMessage() to the agent — PayPalApiException
-			// appends information_link URLs from PayPal's error body that can
-			// leak internal API structure into LLM contexts. Log full detail
-			// (including exception class for triage) server-side through the
-			// plugin's PSR-3 logger.
+			// Don't forward $e->getMessage() — PayPalApiException leaks
+			// information_link URLs into LLM context. Log full detail server-side.
 			self::logger()->error( '[ppcp-abilities] get-paypal-order lookup threw ' . get_class( $e ) . ': ' . $e->getMessage() );
 
 			return new \WP_Error(
@@ -173,33 +145,21 @@ class GetPaypalOrder extends AbstractPpcpAbility implements AbilityDefinition {
 	}
 
 	/**
-	 * Top-level PayPal Order keys that may carry payer- or
-	 * customer-shipping-linked PII. The projection drops every entry in
-	 * this list when the caller has not opted in via include_payer_pii.
-	 *
-	 * `payer` is the only top-level key Order::to_array() emits today
-	 * that contains payer identity. `payment_source` is listed defensively
-	 * — Woo Core's current Order::to_array() does NOT serialize it, but a
-	 * future change that does would silently leak email/name/address to
-	 * agents through the denylist gap if we did not strip it here. The
-	 * test_project_order_does_not_leak_synthetic_payment_source unit
-	 * test pins this guard.
+	 * Top-level keys stripped unless include_payer_pii. `payer` is the only one
+	 * Order::to_array() emits today; `payment_source` is defensive against a
+	 * future serialization change (pinned by the synthetic-payment-source test).
 	 *
 	 * @var array<int, string>
 	 */
 	private const REDACTED_TOP_LEVEL_KEYS = array( 'payer', 'payment_source' );
 
 	/**
-	 * Project the PayPal Order entity payload into the agent-facing shape.
-	 *
-	 * When `$include_payer_pii` is false (default), the payer block, any
-	 * future payment_source block, and per-purchase-unit shipping
-	 * addresses are removed before returning. Public so unit tests can
-	 * assert the redaction behavior without standing up the plugin
-	 * container.
+	 * Project the PayPal Order payload to the agent shape, stripping the payer
+	 * block, payment_source, and per-purchase-unit shipping unless
+	 * $include_payer_pii. Public so tests can assert redaction without the container.
 	 *
 	 * @param array $payload           Decoded PayPal Order payload.
-	 * @param bool  $include_payer_pii When true, the payer + shipping fields are passed through.
+	 * @param bool  $include_payer_pii Pass payer + shipping through when true.
 	 * @return array
 	 */
 	public static function project_order( array $payload, bool $include_payer_pii ): array {
@@ -223,10 +183,8 @@ class GetPaypalOrder extends AbstractPpcpAbility implements AbilityDefinition {
 	}
 
 	/**
-	 * Extract the identifier the OrderEndpoint expects from the ability input.
-	 *
-	 * Returns a string PayPal order id, a WC_Order, or a WP_Error when
-	 * neither identifier resolves.
+	 * Extract the identifier OrderEndpoint expects: a string PayPal order id,
+	 * a WC_Order, or WP_Error when neither resolves.
 	 *
 	 * @param array<string, mixed> $input
 	 * @return string|WC_Order|\WP_Error

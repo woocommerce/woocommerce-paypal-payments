@@ -18,54 +18,31 @@ use WooCommerce\WooCommerce\Logging\Logger\NullLogger;
 /**
  * Shared helpers for PayPal Payments ability definitions.
  *
- * Mirrors the shape of Woo Core's
- * `Internal\Abilities\Domain\AbstractDomainAbility` (introduced in WC 10.9
- * via PR #64606) without coupling this plugin to that class — Woo Core's
- * lives under `Internal\`, which we treat as off-limits for cross-plugin
- * reuse. Update this base in sync if Woo Core's helper shape meaningfully
- * diverges.
+ * Mirrors Woo Core's `Internal\Abilities\Domain\AbstractDomainAbility`
+ * (WC 10.9) without coupling to it — that class lives under `Internal\`.
  *
  * @internal
  */
 abstract class AbstractPpcpAbility {
 
 	/**
-	 * Ability category slug shared across every PayPal Payments Domain ability.
-	 *
-	 * Hardcoded to `woocommerce` — Woo Core 10.9+ owns this category and
-	 * registers it itself. Plugin ownership lives in the ability namespace
-	 * (`woocommerce-paypal-payments/<name>`), not the category. Mirrors
-	 * AbilitiesRegistrar::CATEGORY_SLUG so Domain classes can reference
-	 * `self::CATEGORY_SLUG` without a cross-namespace static call.
+	 * Ability category slug. `woocommerce` is owned/registered by Woo Core
+	 * 10.9+; plugin ownership lives in the ability namespace, not here.
+	 * Mirrors AbilitiesRegistrar::CATEGORY_SLUG.
 	 */
 	public const CATEGORY_SLUG = 'woocommerce';
 
 	/**
-	 * Shared PSR-3 logger for runtime error paths.
-	 *
-	 * Wired by AbilitiesModule::run() once container bootstrap is complete.
-	 * Static because the Abilities API protocol requires callable arrays
-	 * (`array(self::class, 'execute')`), which forces every Domain class
-	 * onto static methods — there is no per-instance hook on which to
-	 * inject dependencies. NullLogger default keeps the runtime safe if a
-	 * helper is exercised before AbilitiesModule::run() fires (e.g. in
-	 * tests that don't go through Modularity).
-	 *
-	 * Reserved for paths that run AFTER the container is healthy. The
-	 * resolve_service() Throwable branch deliberately does NOT use this
-	 * logger — its docblock explains why: the failure mode that path
-	 * catches is "container not healthy enough to resolve services,"
-	 * including the logger itself.
+	 * Shared PSR-3 logger for runtime error paths. Static because the
+	 * Abilities API requires callable arrays, forcing static methods with no
+	 * per-instance DI hook. Wired by AbilitiesModule::run().
 	 *
 	 * @var LoggerInterface|null
 	 */
 	private static $logger = null;
 
 	/**
-	 * Inject the plugin's PSR-3 logger.
-	 *
-	 * Called from {@see \WooCommerce\PayPalCommerce\Abilities\AbilitiesModule::run()}
-	 * once the container is bootstrapped.
+	 * Inject the plugin's PSR-3 logger. Called from AbilitiesModule::run().
 	 *
 	 * @internal
 	 * @param LoggerInterface $logger The PSR-3 logger.
@@ -76,11 +53,7 @@ abstract class AbstractPpcpAbility {
 	}
 
 	/**
-	 * Resolve the runtime logger, falling back to a NullLogger if the
-	 * injection seam has not yet fired (defensive — production code paths
-	 * always run after AbilitiesModule::run()).
-	 *
-	 * Visibility is `protected` so Domain subclasses inherit the helper.
+	 * Resolve the runtime logger, falling back to a NullLogger.
 	 *
 	 * @return LoggerInterface
 	 */
@@ -93,9 +66,6 @@ abstract class AbstractPpcpAbility {
 	}
 
 	/**
-	 * Test-only seam: clear the injected logger so cross-test state does
-	 * not bleed between assertions.
-	 *
 	 * @internal Test-isolation helper. Not part of the public API.
 	 * @return void
 	 */
@@ -104,23 +74,15 @@ abstract class AbstractPpcpAbility {
 	}
 
 	/**
-	 * Execute a backing REST controller route and return its unwrapped response.
+	 * Dispatch a backing REST route via rest_do_request() and return its
+	 * unwrapped data (or the WP_REST_Response when $return_response, so
+	 * callers can read pagination headers).
 	 *
-	 * Used by Domain classes that delegate to one of the plugin's existing
-	 * wc/v3/wc_paypal/* REST routes. The helper builds a WP_REST_Request,
-	 * dispatches it via rest_do_request(), and returns the inner data
-	 * payload (or the WP_REST_Response on `$return_response`, so callers
-	 * can read pagination headers).
-	 *
-	 * Visibility is `protected` so Domain subclasses inherit the helper.
-	 *
-	 * @param string $controller_class Fully-qualified backing controller class
-	 *                                 (informational; surfaces a clear error when not loaded).
+	 * @param string $controller_class FQCN of the backing controller (surfaces a clear error when not loaded).
 	 * @param string $method           HTTP method (GET, POST, PUT, DELETE).
 	 * @param string $route            Resolved route path.
 	 * @param array  $params           Request parameters.
-	 * @param bool   $return_response  When true, return the WP_REST_Response object
-	 *                                 so callers can read response headers (e.g. X-WP-Total).
+	 * @param bool   $return_response  Return the WP_REST_Response instead of its data.
 	 * @return array|\WP_REST_Response|\WP_Error
 	 */
 	protected static function delegate_to_rest_controller(
@@ -170,43 +132,18 @@ abstract class AbstractPpcpAbility {
 	}
 
 	/**
-	 * Unwrap the plugin's standard `{ success: bool, data: …, …extras }`
-	 * REST response envelope to the inner `data` payload.
+	 * Unwrap the plugin's `{ success, data, … }` REST envelope to `data`.
+	 * Returns a WP_Error on success=false.
 	 *
-	 * Every wc/v3/wc_paypal/* endpoint returns this envelope via
-	 * RestEndpoint::return_success(). Agents care about the inner payload,
-	 * not the wrapper. Returns a WP_Error when the envelope reports
-	 * success=false so the failure surfaces structurally rather than
-	 * as a magic `data: null` response.
+	 * Security: with $redact_message (default), the envelope `message` and
+	 * `details` are logged server-side and replaced with a generic string —
+	 * backing endpoints propagate raw PayPalApiException text, whose
+	 * information_link URLs disclose internal API paths. Pass false only when
+	 * the message is known-safe.
 	 *
-	 * The error message in the envelope is REDACTED before it reaches the
-	 * agent payload by default. Backing endpoints frequently call
-	 * `return_error($e->getMessage())` which propagates raw
-	 * `PayPalApiException` text — including PayPal-supplied
-	 * `information_link` URLs that disclose internal API path segments
-	 * and IDs. We log the raw text through the plugin's PSR-3 logger and
-	 * substitute a generic message in the WP_Error returned to the caller.
-	 * Pass `$redact_message = false` only when the caller is sure the
-	 * endpoint's message is safe to surface (none of the current
-	 * Shape-2 abilities meet that bar).
-	 *
-	 * Same philosophy applies to the envelope's optional `details` key:
-	 * when `$redact_message = true`, `details` is DROPPED from the
-	 * returned WP_Error data (it could carry structured PayPal API error
-	 * bodies). When `$redact_message = false`, `details` passes through —
-	 * the caller has already attested the response is safe. Future backing
-	 * endpoints populating `details` with caller-facing structured error
-	 * data must continue to call this helper with the redact default on.
-	 *
-	 * @param mixed $payload         Decoded REST response (array shape
-	 *                               from rest_do_request()).
-	 * @param bool  $redact_message  When true (default), the success=false
-	 *                               envelope's `message` is replaced with
-	 *                               a generic string and the original is
-	 *                               written through the plugin's PSR-3
-	 *                               logger.
-	 * @return mixed The inner `data` value, or the original payload when it
-	 *               is not an envelope, or a WP_Error on success=false.
+	 * @param mixed $payload        Decoded REST response.
+	 * @param bool  $redact_message Redact + log the error message/details (default true).
+	 * @return mixed Inner `data`, the original payload, or WP_Error on success=false.
 	 */
 	protected static function unwrap_envelope( $payload, bool $redact_message = true ) {
 		if ( ! is_array( $payload ) ) {
@@ -226,19 +163,14 @@ abstract class AbstractPpcpAbility {
 	}
 
 	/**
-	 * Inspect a REST envelope for the `success=false` failure case.
+	 * The success=false branch of unwrap_envelope(), extracted so callers
+	 * whose endpoint returns extra top-level keys (e.g. CommonRestEndpoint's
+	 * merchant/features) can reuse the redaction without having those keys
+	 * discarded by `data` extraction.
 	 *
-	 * Extracted from {@see self::unwrap_envelope()} so callers whose
-	 * backing endpoint returns extra top-level keys alongside `data`
-	 * (e.g. CommonRestEndpoint, which puts `merchant` and `features` at the
-	 * top level) can reuse the redaction logic without having
-	 * `unwrap_envelope()` discard those extras by extracting only `data`.
-	 *
-	 * @param array $payload         Decoded REST envelope.
-	 * @param bool  $redact_message  See {@see self::unwrap_envelope()}.
-	 * @return \WP_Error|null WP_Error when the envelope reports
-	 *                        success=false; null on success or when the
-	 *                        payload is not an envelope.
+	 * @param array $payload        Decoded REST envelope.
+	 * @param bool  $redact_message See unwrap_envelope().
+	 * @return \WP_Error|null WP_Error on success=false; null otherwise.
 	 */
 	protected static function envelope_error_or_null( array $payload, bool $redact_message = true ): ?\WP_Error {
 		if ( ! array_key_exists( 'success', $payload ) || false !== $payload['success'] ) {
@@ -254,10 +186,7 @@ abstract class AbstractPpcpAbility {
 				self::logger()->warning( '[ppcp-abilities] endpoint returned success=false: ' . $raw_message );
 			}
 			if ( isset( $payload['details'] ) ) {
-				// Mirror message redaction: log `details` server-side instead
-				// of forwarding to the agent. Future endpoints populating
-				// `details` with PayPal API error bodies must rely on this
-				// helper to keep them out of the agent payload.
+				// Redact `details` like the message: log server-side, keep out of the agent payload.
 				self::logger()->warning( '[ppcp-abilities] endpoint returned success=false details: ' . wp_json_encode( $payload['details'] ) );
 			}
 
@@ -279,39 +208,18 @@ abstract class AbstractPpcpAbility {
 	/**
 	 * Resolve a service from the plugin container, asserting its type.
 	 *
-	 * Shape-3 abilities (those that delegate to a PHP service rather than a
-	 * REST route) all need the same resolver: ask the container, distinguish
-	 * "container not initialized" (LogicException) from "service could not be
-	 * resolved" (Throwable), assert the resolved value matches the expected
-	 * type, and surface every failure mode as a structured WP_Error rather
-	 * than letting it bubble.
-	 *
-	 * The "not initialized" catch is deliberately scoped to PPCP::container()
-	 * only — that call is the single intended source of the not-initialized
-	 * LogicException (see PPCP::container()). The ->get() factory invocation
-	 * sits in its own try so a service-factory LogicException (a validation or
-	 * contract bug inside the factory) falls to the service_unavailable branch
-	 * and is logged, instead of being mislabeled as "PayPal Payments is not
-	 * initialized" and masking the real bug at triage.
-	 *
-	 * Unexpected exceptions are also written to error_log() so on-call has
-	 * a server-side trace without needing to add instrumentation post-hoc.
-	 * The plugin's PSR-3 logger is INTENTIONALLY not used here because the
-	 * catch path may fire before the container is healthy enough to resolve
-	 * any service — including the logger itself. The runtime error paths in
-	 * unwrap_envelope() / GetOrderTracking::execute() / GetPaypalOrder::execute()
-	 * DO flow through {@see self::logger()} because they always run after
-	 * the container is warm; resolve_service() is the one bootstrap-stage
-	 * exception, and the divergence is deliberate.
-	 *
-	 * Visibility is `protected` so Domain subclasses inherit the helper.
+	 * Distinguishes "container not initialized" (LogicException from
+	 * PPCP::container()) from "service unresolvable" (Throwable from ->get())
+	 * so a factory bug is not mislabeled "not initialized". Uses error_log(),
+	 * NOT self::logger(): this path can fire before the container can resolve
+	 * the logger itself.
 	 *
 	 * @phpstan-template T of object
 	 * @phpstan-param class-string<T> $expected_class
 	 * @phpstan-return T|\WP_Error
 	 *
 	 * @param string $service_id     Container service id.
-	 * @param string $expected_class Fully-qualified class the resolved service must implement / extend.
+	 * @param string $expected_class FQCN the resolved service must satisfy.
 	 * @return object|\WP_Error An instance of $expected_class on success, otherwise WP_Error.
 	 */
 	protected static function resolve_service( string $service_id, string $expected_class ) {

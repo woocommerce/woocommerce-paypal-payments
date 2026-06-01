@@ -16,20 +16,12 @@ use WooCommerce\PayPalCommerce\Abilities\AbilitiesRegistrar;
 use WooCommerce\PayPalCommerce\Settings\Endpoint\PaymentRestEndpoint;
 
 /**
- * Registers the woocommerce-paypal-payments/get-payment-methods ability.
+ * Registers woocommerce-paypal-payments/get-payment-methods.
  *
- * Lists every PayPal payment gateway (PayPal, Pay Later, Card Fields/ACDC,
- * Apple Pay, Google Pay, Venmo, Fastlane, APMs) with enabled state,
- * dependency edges, and warning messages so an agent can answer "which
- * payment methods are active and are any of them blocked?" in one zero-arg
- * call. Backs onto PaymentRestEndpoint::get_details (Shape 2 — REST delegate).
- *
- * The response shape is heterogeneous: per-gateway records keyed by
- * gateway id, plus a special `__meta` key, plus top-level convenience
- * flags (paypalShowLogo, cardholderName, fastlaneDisplayWatermark, PUI
- * fields). The output is also passed through the
- * `woocommerce_paypal_payments_payment_methods` filter so third-party
- * extensions can mutate it.
+ * Lists every PayPal payment gateway with enabled state, dependency edges,
+ * and warnings. Backs onto PaymentRestEndpoint::get_details (Shape 2). The
+ * heterogeneous output (gateway map + `__meta` + flat config flags) passes
+ * through the `woocommerce_paypal_payments_payment_methods` filter.
  *
  * @internal
  */
@@ -54,10 +46,8 @@ class GetPaymentMethods extends AbstractPpcpAbility implements AbilityDefinition
 			),
 			'execute_callback'    => array( self::class, 'execute' ),
 			'permission_callback' => array( AbilitiesRegistrar::class, 'can_manage_woocommerce' ),
-			// output_schema deliberately omitted — the heterogeneous shape
-			// (gateway map + __meta + flat config keys) is documented by
-			// the audit doc; duplicating it here would couple the ability
-			// to the filterable output of the REST endpoint.
+			// output_schema omitted — the heterogeneous shape is documented in
+			// the audit doc; duplicating it would couple to the filterable output.
 			'meta'                => array(
 				'annotations'  => array(
 					'readonly'    => true,

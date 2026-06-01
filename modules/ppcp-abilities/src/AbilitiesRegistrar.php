@@ -12,47 +12,29 @@ declare( strict_types = 1 );
 namespace WooCommerce\PayPalCommerce\Abilities;
 
 /**
- * Registers WooCommerce PayPal Payments abilities with the WordPress Abilities API.
- *
- * Thin coordinator: holds the ABILITY_CLASSES list and the
- * can_manage_woocommerce() capability helper that mirrors the load-bearing
- * read gate resolved by every wc/v3/wc_paypal/* REST controller (the shared
- * RestEndpoint base class returns current_user_can('manage_woocommerce')).
- *
- * Gated by the `woocommerce_paypal_payments_abilities_enabled` filter
- * (default false) so registration scaffolding can ship without committing
- * to a final ability shape. Operators flip the filter on per-site to enable
- * the surface; the default flips to true once the surface stabilizes.
- *
- * Registration pattern: abilities are registered exclusively via Woo
- * Core's `woocommerce_ability_definition_classes` loader filter
- * (introduced in WC 10.9). On stores running WC < 10.9 the feature
- * silently no-ops — see {@see self::woo_abilities_loader_available()}.
+ * Registers PayPal Payments abilities via Woo Core's
+ * `woocommerce_ability_definition_classes` loader filter (WC 10.9+). On
+ * WC < 10.9 the feature silently no-ops. Gated by the
+ * `woocommerce_paypal_payments_abilities_enabled` filter (default false) so
+ * scaffolding can ship without committing to a final ability shape.
  *
  * @internal This class may be modified, moved or removed in future releases.
  */
 class AbilitiesRegistrar {
 
 	/**
-	 * Category slug used for every PayPal Payments ability.
-	 *
-	 * The `woocommerce` category is owned and registered by WooCommerce
-	 * Core (10.9+); plugin ownership lives in the ability namespace, not
-	 * the category. Mirrored on Domain\AbstractPpcpAbility::CATEGORY_SLUG so
-	 * Domain classes can reference `self::CATEGORY_SLUG` without a
-	 * cross-namespace static call.
+	 * Category slug. `woocommerce` is owned/registered by Woo Core 10.9+;
+	 * plugin ownership lives in the ability namespace. Mirrored on
+	 * Domain\AbstractPpcpAbility::CATEGORY_SLUG.
 	 *
 	 * @var string
 	 */
 	public const CATEGORY_SLUG = 'woocommerce';
 
 	/**
-	 * Ability definition classes registered through the WC 10.9 loader.
-	 *
-	 * Every PayPal Payments ability is listed here. The ::class constants
-	 * are compile-time strings — referencing them does NOT autoload the
-	 * classes. They resolve only when Woo's loader iterates the filter
-	 * return value on WC 10.9+.
+	 * Ability classes registered through the WC 10.9 loader. The ::class
+	 * constants don't autoload; they resolve only when Woo's loader iterates
+	 * them on WC 10.9+.
 	 *
 	 * @var array<int, class-string>
 	 */
@@ -64,22 +46,10 @@ class AbilitiesRegistrar {
 	);
 
 	/**
-	 * Whether init() has already wired its action callbacks.
-	 *
-	 * Without this guard, repeated calls to init() while the feature filter
-	 * is true would each append a fresh add_filter() for the registrar
-	 * callbacks, and Woo's loader would iterate the duplicate class entries
-	 * causing _doing_it_wrong notices on every already-registered slug.
-	 *
-	 * Hook timing requirement: init() must be invoked AFTER WooCommerce's
-	 * autoloader is warm (WC 10.9 is when AbilitiesLoader becomes
-	 * autoloadable, and WP's plugins_loaded action is the standard
-	 * checkpoint). AbilitiesModule::run() satisfies this — Syde Modularity
-	 * boots modules at the right point. A future change that moves init()
-	 * earlier (e.g. to muplugins_loaded) would let the class_exists() gate
-	 * return false on first call and the guard would never re-arm
-	 * registration even after WC's autoloader catches up. Keep the call
-	 * site at or after plugins_loaded.
+	 * Guards against init() re-arming its filter on repeat calls (duplicate
+	 * class entries → _doing_it_wrong on every registered slug). init() must
+	 * run at/after plugins_loaded so WC 10.9's autoloader is warm before the
+	 * class_exists() gate runs.
 	 *
 	 * @var bool
 	 */
@@ -96,19 +66,11 @@ class AbilitiesRegistrar {
 		}
 
 		/**
-		 * Filter whether WooCommerce PayPal Payments' Abilities API registrations are active.
+		 * Filter whether PayPal Payments' Abilities API registrations are active.
 		 *
-		 * Default false during rollout — flip per-site to expose the
-		 * abilities surface, or globally to true once the shape stabilizes.
-		 *
-		 * Naming note: this filter uses the underscore-separated form
-		 * `woocommerce_paypal_payments_abilities_enabled` deliberately,
-		 * diverging from the dot-separated `woocommerce.feature-flags.*`
-		 * convention used by the module-level gates in modules.php. The
-		 * abilities feature is a runtime per-ability registration switch
-		 * (operators can flip it without unloading the module), whereas
-		 * the dot-form gates are evaluated once at module-load time.
-		 * Different gate semantics → different filter naming.
+		 * Default false during rollout. Uses the underscore form (a runtime
+		 * per-ability switch operators can flip without unloading the module),
+		 * not the dot-form `woocommerce.feature-flags.*` module-load gates.
 		 *
 		 * @since 4.1.0
 		 *
@@ -119,8 +81,7 @@ class AbilitiesRegistrar {
 		}
 
 		if ( ! self::woo_abilities_loader_available() ) {
-			// Abilities feature requires WC 10.9. Silently no-op on older
-			// versions; the feature flag is the rollout safety net.
+			// Abilities require WC 10.9; silently no-op on older versions.
 			return;
 		}
 
@@ -141,11 +102,8 @@ class AbilitiesRegistrar {
 	}
 
 	/**
-	 * Whether WC 10.9's AbilitiesLoader is available.
-	 *
-	 * Used as a hard gate: on WC < 10.9 the abilities feature silently
-	 * no-ops. WC 10.9 also depends on WP 6.9, so wp_register_ability() is
-	 * implicitly available wherever the loader exists.
+	 * Whether WC 10.9's AbilitiesLoader is available (hard gate; WC 10.9 also
+	 * implies WP 6.9 / wp_register_ability()).
 	 *
 	 * @return bool
 	 */
@@ -154,8 +112,6 @@ class AbilitiesRegistrar {
 	}
 
 	/**
-	 * Append PayPal Payments ability classes to Woo Core's loader.
-	 *
 	 * Filter callback for `woocommerce_ability_definition_classes`.
 	 *
 	 * @param array $classes Class names accumulated by the loader.
@@ -166,12 +122,9 @@ class AbilitiesRegistrar {
 	}
 
 	/**
-	 * Permission callback for read abilities.
-	 *
-	 * Mirrors the wc/v3/wc_paypal/* REST controllers' resolved read gate.
-	 * The shared base class
-	 * WooCommerce\PayPalCommerce\Settings\Endpoint\RestEndpoint::check_permission()
-	 * returns current_user_can('manage_woocommerce') verbatim.
+	 * Permission callback for read abilities. Mirrors the wc/v3/wc_paypal/*
+	 * controllers' gate (RestEndpoint::check_permission() returns
+	 * current_user_can('manage_woocommerce')).
 	 *
 	 * @return bool
 	 */
