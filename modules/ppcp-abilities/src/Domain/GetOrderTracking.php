@@ -141,13 +141,14 @@ class GetOrderTracking extends AbstractPpcpAbility implements AbilityDefinition 
 			);
 		}
 
-		if ( null === $shipments ) {
-			return new \WP_Error(
-				'woocommerce_paypal_payments_tracking_lookup_failed',
-				__( 'PayPal tracking lookup returned an unexpected response.', 'woocommerce-paypal-payments' ),
-				array( 'wc_order_id' => $wc_order_id )
-			);
-		}
+		// list_tracking_information() returns null on any non-200 from PayPal's
+		// /v1/shipping/trackers endpoint — most commonly the 404 "no trackers
+		// registered yet" response for an order that simply hasn't shipped.
+		// Treat that as an empty shipment list, matching how the order-tracking
+		// meta box renders the same null (MetaBoxRenderer::render() coerces it
+		// via `?? array()`). Genuine transport failures throw above and surface
+		// as woocommerce_paypal_payments_tracking_lookup_failed.
+		$shipments = $shipments ?? array();
 
 		return array(
 			'wc_order_id' => $wc_order_id,
