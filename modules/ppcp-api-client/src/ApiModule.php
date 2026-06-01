@@ -84,7 +84,7 @@ class ApiModule implements ServiceModule, FactoryModule, ExecutableModule
          * Flushes the API client caches.
          */
         add_action('woocommerce_paypal_payments_flush_api_cache', static function () use ($c) {
-            $caches = array('api.paypal-bearer-cache', 'api.client-credentials-cache', 'settings.service.signup-link-cache');
+            $caches = array('api.paypal-bearer-cache', 'api.client-credentials-cache', 'api.token-rate-limiter-cache', 'settings.service.signup-link-cache');
             $logger = $c->get('woocommerce.logger.woocommerce');
             assert($logger instanceof LoggerInterface);
             $logger->info('Flushing API caches...');
