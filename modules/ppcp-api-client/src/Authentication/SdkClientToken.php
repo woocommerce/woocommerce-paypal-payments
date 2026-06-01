@@ -63,6 +63,11 @@ class SdkClientToken
         $url = trailingslashit($this->host) . 'v1/oauth2/token?grant_type=client_credentials&response_type=client_token&intent=sdk_init&domains[]=' . $domain;
         $args = array('method' => 'POST', 'headers' => array('Authorization' => $this->client_credentials->credentials(), 'Content-Type' => 'application/x-www-form-urlencoded'));
         $response = $this->request($url, $args);
+        // Retry once on a connection error (a momentary blip) before giving up, so a
+        // single network hiccup doesn't arm the cool-down.
+        if ($response instanceof WP_Error) {
+            $response = $this->request($url, $args);
+        }
         if ($response instanceof WP_Error) {
             $this->rate_limiter->register_failure(self::RATE_LIMIT_SCOPE, 0, $response);
             throw new RuntimeException($response->get_error_message());
