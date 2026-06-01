@@ -1,0 +1,117 @@
+<?php
+declare(strict_types=1);
+
+namespace WooCommerce\PayPalCommerce\ApiClient\Authentication;
+
+use Mockery;
+use Psr\Log\LoggerInterface;
+use Requests_Utility_CaseInsensitiveDictionary;
+use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
+use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
+use WooCommerce\PayPalCommerce\ApiClient\Helper\Cache;
+use WooCommerce\PayPalCommerce\TestCase;
+use function Brain\Monkey\Functions\expect;
+
+class SdkClientTokenTest extends TestCase
+{
+    private $host;
+    private $logger;
+    private $credentials;
+    private $cache;
+    private $rateLimiter;
+    private $sut;
+
+    public function setUp(): void
+    {
+        parent::setUp();
+
+        $this->host = 'https://example.com';
+        $this->logger = Mockery::mock(LoggerInterface::class);
+        $this->logger->shouldReceive('debug');
+        $this->credentials = Mockery::mock(ClientCredentials::class);
+        $this->cache = Mockery::mock(Cache::class);
+        $this->rateLimiter = Mockery::mock(TokenRateLimiter::class);
+        $this->sut = new SdkClientToken(
+            $this->host,
+            $this->logger,
+            $this->credentials,
+            $this->cache,
+            $this->rateLimiter
+        );
+    }
+
+    private function headers()
+    {
+        $headers = Mockery::mock(Requests_Utility_CaseInsensitiveDictionary::class);
+        $headers->shouldReceive('getAll');
+
+        return $headers;
+    }
+
+    public function testCachedTokenReturnedWithoutRequest()
+    {
+        $this->cache->shouldReceive('has')->with(SdkClientToken::CACHE_KEY)->andReturn(true);
+        $this->cache->shouldReceive('get')->with(SdkClientToken::CACHE_KEY)->andReturn('cached-token');
+
+        expect('wp_remote_get')->never();
+
+        $this->assertSame('cached-token', $this->sut->sdk_client_token());
+    }
+
+    public function testEmptyCredentialsShortCircuit()
+    {
+        $this->cache->shouldReceive('has')->andReturn(false);
+        $this->credentials->shouldReceive('is_empty')->andReturn(true);
+
+        expect('wp_remote_get')->never();
+
+        $this->expectException(RuntimeException::class);
+        $this->sut->sdk_client_token();
+    }
+
+    public function testBlockedReturnsFastWithoutRequest()
+    {
+        $this->cache->shouldReceive('has')->andReturn(false);
+        $this->credentials->shouldReceive('is_empty')->andReturn(false);
+        $this->rateLimiter->shouldReceive('retry_after_seconds')->with('sdk-client-token')->andReturn(60);
+
+        expect('wp_remote_get')->never();
+
+        $this->expectException(RuntimeException::class);
+        $this->sut->sdk_client_token();
+    }
+
+    public function test429RegistersFailureAndThrows()
+    {
+        $this->cache->shouldReceive('has')->andReturn(false);
+        $this->credentials->shouldReceive('is_empty')->andReturn(false);
+        $this->credentials->shouldReceive('credentials')->andReturn('Basic xxx');
+        $this->rateLimiter->shouldReceive('retry_after_seconds')->andReturn(null);
+        $this->rateLimiter->expects('register_failure')->with('sdk-client-token', 429, Mockery::any());
+
+        $headers = $this->headers();
+        expect('trailingslashit')->andReturn($this->host . '/');
+        expect('wp_remote_get')->once()->andReturn(['body' => '{"error":"rate"}', 'headers' => $headers]);
+        expect('wp_remote_retrieve_response_code')->andReturn(429);
+
+        $this->expectException(PayPalApiException::class);
+        $this->sut->sdk_client_token();
+    }
+
+    public function testSuccess()
+    {
+        $this->cache->shouldReceive('has')->andReturn(false);
+        $this->credentials->shouldReceive('is_empty')->andReturn(false);
+        $this->credentials->shouldReceive('credentials')->andReturn('Basic xxx');
+        $this->rateLimiter->shouldReceive('retry_after_seconds')->andReturn(null);
+        $this->rateLimiter->expects('clear')->with('sdk-client-token');
+        $this->cache->expects('set')->with(SdkClientToken::CACHE_KEY, 'tok', 3600);
+
+        $headers = $this->headers();
+        expect('trailingslashit')->andReturn($this->host . '/');
+        expect('wp_remote_get')->andReturn(['body' => '{"access_token":"tok","expires_in":3600}', 'headers' => $headers]);
+        expect('wp_remote_retrieve_response_code')->andReturn(200);
+
+        $this->assertSame('tok', $this->sut->sdk_client_token());
+    }
+}
