@@ -281,10 +281,18 @@ abstract class AbstractPpcpAbility {
 	 *
 	 * Shape-3 abilities (those that delegate to a PHP service rather than a
 	 * REST route) all need the same resolver: ask the container, distinguish
-	 * "container not initialized" (LogicException) from "container threw
-	 * unexpectedly" (Throwable), assert the resolved value matches the
-	 * expected type, and surface every failure mode as a structured
-	 * WP_Error rather than letting it bubble.
+	 * "container not initialized" (LogicException) from "service could not be
+	 * resolved" (Throwable), assert the resolved value matches the expected
+	 * type, and surface every failure mode as a structured WP_Error rather
+	 * than letting it bubble.
+	 *
+	 * The "not initialized" catch is deliberately scoped to PPCP::container()
+	 * only — that call is the single intended source of the not-initialized
+	 * LogicException (see PPCP::container()). The ->get() factory invocation
+	 * sits in its own try so a service-factory LogicException (a validation or
+	 * contract bug inside the factory) falls to the service_unavailable branch
+	 * and is logged, instead of being mislabeled as "PayPal Payments is not
+	 * initialized" and masking the real bug at triage.
 	 *
 	 * Unexpected exceptions are also written to error_log() so on-call has
 	 * a server-side trace without needing to add instrumentation post-hoc.
@@ -308,13 +316,17 @@ abstract class AbstractPpcpAbility {
 	 */
 	protected static function resolve_service( string $service_id, string $expected_class ) {
 		try {
-			$service = PPCP::container()->get( $service_id );
+			$container = PPCP::container();
 		} catch ( LogicException $e ) {
 			return new \WP_Error(
 				'woocommerce_paypal_payments_not_initialized',
 				/* translators: %s: container service id. */
 				sprintf( __( 'WooCommerce PayPal Payments is not initialized; service %s is unavailable.', 'woocommerce-paypal-payments' ), $service_id )
 			);
+		}
+
+		try {
+			$service = $container->get( $service_id );
 		} catch ( Throwable $e ) {
 			error_log( '[ppcp-abilities] resolve_service(' . $service_id . ') threw ' . get_class( $e ) . ': ' . $e->getMessage() );
 
