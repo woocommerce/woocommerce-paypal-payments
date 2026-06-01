@@ -13,6 +13,7 @@ namespace WooCommerce\PayPalCommerce\Abilities\Domain;
 
 use Automattic\WooCommerce\Abilities\AbilityDefinition;
 use Throwable;
+use WC_Order;
 use WooCommerce\PayPalCommerce\Abilities\AbilitiesRegistrar;
 use WooCommerce\PayPalCommerce\OrderTracking\Endpoint\OrderTrackingEndpoint;
 use WooCommerce\PayPalCommerce\OrderTracking\Shipment\ShipmentInterface;
@@ -102,6 +103,20 @@ class GetOrderTracking extends AbstractPpcpAbility implements AbilityDefinition 
 			return new \WP_Error(
 				'woocommerce_paypal_payments_invalid_input',
 				__( 'wc_order_id must be a positive integer.', 'woocommerce-paypal-payments' )
+			);
+		}
+
+		// Pre-validate that the order exists before delegating. The backing
+		// OrderTrackingEndpoint::list_tracking_information() returns an empty
+		// array for an unknown order — indistinguishable from "order exists
+		// but has no trackers" — so an agent could not tell a typo'd order ID
+		// from a genuinely untracked one. Surface the missing order as a
+		// structured not_found here, mirroring GetPaypalOrder::extract_identifier().
+		if ( ! wc_get_order( $wc_order_id ) instanceof WC_Order ) {
+			return new \WP_Error(
+				'woocommerce_paypal_payments_not_found',
+				__( 'WooCommerce order not found.', 'woocommerce-paypal-payments' ),
+				array( 'wc_order_id' => $wc_order_id )
 			);
 		}
 

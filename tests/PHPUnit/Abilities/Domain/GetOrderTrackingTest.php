@@ -7,6 +7,7 @@ use WooCommerce\PayPalCommerce\Abilities\AbilitiesRegistrar;
 use WooCommerce\PayPalCommerce\OrderTracking\Shipment\ShipmentInterface;
 use WooCommerce\PayPalCommerce\TestCase;
 use WP_Error;
+use function Brain\Monkey\Functions\when;
 
 /**
  * Unit tests for the GetOrderTracking ability.
@@ -62,6 +63,19 @@ class GetOrderTrackingTest extends TestCase
 
 		$this->assertInstanceOf(WP_Error::class, $result);
 		$this->assertSame('woocommerce_paypal_payments_invalid_input', $result->get_error_code());
+	}
+
+	public function test_execute_returns_not_found_when_wc_order_does_not_exist(): void
+	{
+		// A missing order short-circuits before the container is touched, so the
+		// agent gets a structured not_found rather than the empty shipment list
+		// the backing service returns for an unknown order id.
+		when('wc_get_order')->justReturn(false);
+
+		$result = GetOrderTracking::execute(array( 'wc_order_id' => 999 ));
+
+		$this->assertInstanceOf(WP_Error::class, $result);
+		$this->assertSame('woocommerce_paypal_payments_not_found', $result->get_error_code());
 	}
 
 	public function test_serialize_shipment_surfaces_each_interface_accessor_at_the_expected_wire_key(): void
