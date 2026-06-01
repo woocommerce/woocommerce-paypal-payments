@@ -102,4 +102,27 @@ class UserIdTokenTest extends TestCase
 
         $this->assertSame('idtok', $this->sut->id_token());
     }
+
+    public function testRetriesOnceOnConnectionError()
+    {
+        $this->credentials->shouldReceive('is_empty')->andReturn(false);
+        $this->credentials->shouldReceive('credentials')->andReturn('Basic xxx');
+        $this->rateLimiter->shouldReceive('retry_after_seconds')->andReturn(null);
+        $this->rateLimiter->expects('clear')->with('id-token');
+        // A blip that recovers on retry must NOT arm the cool-down.
+        $this->rateLimiter->shouldNotReceive('register_failure');
+
+        $headers = $this->headers();
+        $wpError = Mockery::mock('WP_Error');
+        $wpError->shouldReceive('get_error_messages')->andReturn(['blip']);
+        expect('trailingslashit')->andReturn($this->host . '/');
+        // First attempt: connection error; retry: success.
+        expect('wp_remote_get')->twice()->andReturn(
+            $wpError,
+            ['body' => '{"id_token":"idtok"}', 'headers' => $headers]
+        );
+        expect('wp_remote_retrieve_response_code')->andReturn(200);
+
+        $this->assertSame('idtok', $this->sut->id_token());
+    }
 }

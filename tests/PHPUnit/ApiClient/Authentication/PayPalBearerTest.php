@@ -369,4 +369,39 @@ class PayPalBearerTest extends TestCase
         $token = $bearer->bearer();
         $this->assertEquals('abc', $token->token());
     }
+
+    public function testRetriesOnceOnConnectionError()
+    {
+        expect('wp_json_encode')->andReturnUsing('json_encode');
+        $json = '{"access_token":"abc","expires_in":100, "created":' . time() . '}';
+        $cache = Mockery::mock(Cache::class);
+        $cache->expects('get')->andReturn('');
+        $cache->expects('set');
+        $host = 'https://example.com';
+        $logger = Mockery::mock(LoggerInterface::class);
+        $logger->shouldReceive('debug');
+        $settings = $this->settings();
+        $headers = $this->headers();
+        $rateLimiter = Mockery::mock(TokenRateLimiter::class);
+        $rateLimiter->shouldReceive('retry_after_seconds')->andReturn(null);
+        $rateLimiter->shouldReceive('clear');
+        // A blip that recovers on retry must NOT arm the cool-down.
+        $rateLimiter->shouldNotReceive('register_failure');
+
+        $bearer = new PayPalBearer($cache, $host, 'key', 'secret', $logger, $settings, $rateLimiter);
+
+        // First attempt: connection error; retry: success.
+        $wpError = Mockery::mock('WP_Error');
+        $wpError->shouldReceive('get_error_messages')->andReturn(['blip']);
+        expect('is_wp_error')->twice()->andReturn(true, false);
+        expect('trailingslashit')->andReturn($host . '/');
+        expect('wp_remote_retrieve_response_code')->andReturn(200);
+        expect('wp_remote_get')->twice()->andReturn(
+            $wpError,
+            ['body' => $json, 'headers' => $headers]
+        );
+
+        $token = $bearer->bearer();
+        $this->assertEquals('abc', $token->token());
+    }
 }

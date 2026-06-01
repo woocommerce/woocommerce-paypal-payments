@@ -179,6 +179,12 @@ class PayPalBearer implements Bearer {
 		);
 		$response = $this->request( $url, $args );
 
+		// A connection error (no response received) may be a momentary blip; retry
+		// once so a single network hiccup doesn't arm the cool-down.
+		if ( is_wp_error( $response ) ) {
+			$response = $this->request( $url, $args );
+		}
+
 		if ( is_wp_error( $response ) || wp_remote_retrieve_response_code( $response ) !== 200 ) {
 			$status_code = is_wp_error( $response ) ? 0 : (int) wp_remote_retrieve_response_code( $response );
 			$this->rate_limiter->register_failure( self::RATE_LIMIT_SCOPE, $status_code, $response );

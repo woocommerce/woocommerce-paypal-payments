@@ -114,4 +114,29 @@ class SdkClientTokenTest extends TestCase
 
         $this->assertSame('tok', $this->sut->sdk_client_token());
     }
+
+    public function testRetriesOnceOnConnectionError()
+    {
+        $this->cache->shouldReceive('has')->andReturn(false);
+        $this->credentials->shouldReceive('is_empty')->andReturn(false);
+        $this->credentials->shouldReceive('credentials')->andReturn('Basic xxx');
+        $this->rateLimiter->shouldReceive('retry_after_seconds')->andReturn(null);
+        $this->rateLimiter->expects('clear')->with('sdk-client-token');
+        // A blip that recovers on retry must NOT arm the cool-down.
+        $this->rateLimiter->shouldNotReceive('register_failure');
+        $this->cache->expects('set')->with(SdkClientToken::CACHE_KEY, 'tok', 3600);
+
+        $headers = $this->headers();
+        $wpError = Mockery::mock('WP_Error');
+        $wpError->shouldReceive('get_error_messages')->andReturn(['blip']);
+        expect('trailingslashit')->andReturn($this->host . '/');
+        // First attempt: connection error; retry: success.
+        expect('wp_remote_get')->twice()->andReturn(
+            $wpError,
+            ['body' => '{"access_token":"tok","expires_in":3600}', 'headers' => $headers]
+        );
+        expect('wp_remote_retrieve_response_code')->andReturn(200);
+
+        $this->assertSame('tok', $this->sut->sdk_client_token());
+    }
 }
