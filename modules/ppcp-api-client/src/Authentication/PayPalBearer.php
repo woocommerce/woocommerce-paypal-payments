@@ -26,6 +26,11 @@ class PayPalBearer implements Bearer {
 	const CACHE_KEY = 'ppcp-bearer';
 
 	/**
+	 * The rate-limiter scope key for the client-credentials token.
+	 */
+	const RATE_LIMIT_SCOPE = 'bearer';
+
+	/**
 	 * The settings.
 	 *
 	 * @var ?SettingsProvider
@@ -67,31 +72,25 @@ class PayPalBearer implements Bearer {
 	 */
 	private $logger;
 
-	/**
-	 * PayPalBearer constructor.
-	 *
-	 * @param Cache             $cache The cache.
-	 * @param string            $host The host.
-	 * @param string            $key The key.
-	 * @param string            $secret The secret.
-	 * @param LoggerInterface   $logger The logger.
-	 * @param ?SettingsProvider $settings The settings.
-	 */
+	private TokenRateLimiter $rate_limiter;
+
 	public function __construct(
 		Cache $cache,
 		string $host,
 		string $key,
 		string $secret,
 		LoggerInterface $logger,
-		?SettingsProvider $settings
+		?SettingsProvider $settings,
+		TokenRateLimiter $rate_limiter
 	) {
 
-		$this->cache    = $cache;
-		$this->host     = $host;
-		$this->key      = $key;
-		$this->secret   = $secret;
-		$this->logger   = $logger;
-		$this->settings = $settings;
+		$this->cache        = $cache;
+		$this->host         = $host;
+		$this->key          = $key;
+		$this->secret       = $secret;
+		$this->logger       = $logger;
+		$this->settings     = $settings;
+		$this->rate_limiter = $rate_limiter;
 	}
 
 	/**
@@ -101,13 +100,21 @@ class PayPalBearer implements Bearer {
 	 * @throws RuntimeException When request fails.
 	 */
 	public function bearer(): Token {
-		try {
-			$bearer = Token::from_json( (string) $this->cache->get( self::CACHE_KEY ) );
+		$cached = (string) $this->cache->get( self::CACHE_KEY );
 
-			return ( $bearer->is_valid() ) ? $bearer : $this->newBearer();
-		} catch ( RuntimeException $error ) {
-			return $this->newBearer();
+		if ( '' !== $cached ) {
+			try {
+				$bearer = Token::from_json( $cached );
+				if ( $bearer->is_valid() ) {
+					return $bearer;
+				}
+			} catch ( RuntimeException $error ) {
+				// Cached token is corrupt/unparsable; discard it and fetch a fresh one.
+				$this->logger->debug( 'Discarding unparsable cached PayPal bearer token: ' . $error->getMessage() );
+			}
 		}
+
+		return $this->newBearer();
 	}
 
 	/**
@@ -147,7 +154,21 @@ class PayPalBearer implements Bearer {
 	private function newBearer(): Token {
 		$key    = $this->get_key();
 		$secret = $this->get_secret();
-		$url    = trailingslashit( $this->host ) . 'v1/oauth2/token?grant_type=client_credentials';
+
+		if ( '' === $key || '' === $secret ) {
+			throw new RuntimeException(
+				'Cannot request a PayPal access token without a client ID and secret.'
+			);
+		}
+
+		$wait = $this->rate_limiter->retry_after_seconds( self::RATE_LIMIT_SCOPE );
+		if ( null !== $wait ) {
+			throw new RuntimeException(
+				sprintf( 'PayPal token requests are paused for %d more seconds after a previous failure.', $wait )
+			);
+		}
+
+		$url = trailingslashit( $this->host ) . 'v1/oauth2/token?grant_type=client_credentials';
 
 		$args     = array(
 			'method'  => 'POST',
@@ -158,10 +179,17 @@ class PayPalBearer implements Bearer {
 		);
 		$response = $this->request( $url, $args );
 
+		// A connection error (no response received) may be a momentary blip; retry
+		// once so a single network hiccup doesn't arm the cool-down.
+		if ( is_wp_error( $response ) ) {
+			$response = $this->request( $url, $args );
+		}
+
 		if ( is_wp_error( $response ) || wp_remote_retrieve_response_code( $response ) !== 200 ) {
-			$error = new RuntimeException(
-				__( 'Could not create token.', 'woocommerce-paypal-payments' )
-			);
+			$status_code = is_wp_error( $response ) ? 0 : (int) wp_remote_retrieve_response_code( $response );
+			$this->rate_limiter->register_failure( self::RATE_LIMIT_SCOPE, $status_code, $response );
+
+			$error = new RuntimeException( 'Could not create token.' );
 			$this->logger->warning(
 				$error->getMessage(),
 				array(
@@ -174,6 +202,7 @@ class PayPalBearer implements Bearer {
 
 		$token = Token::from_json( $response['body'] );
 		$this->cache->set( self::CACHE_KEY, $token->as_json() );
+		$this->rate_limiter->clear( self::RATE_LIMIT_SCOPE );
 
 		return $token;
 	}

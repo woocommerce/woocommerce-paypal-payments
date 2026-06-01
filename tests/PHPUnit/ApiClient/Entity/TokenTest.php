@@ -52,6 +52,26 @@ class TokenTest extends TestCase
         $this->assertFalse($token->is_valid());
     }
 
+    public function testIsValidAppliesSafetyMargin()
+    {
+        // Within the safety margin of true expiry: treated as already invalid,
+        // so it is refreshed proactively instead of racing the expiry.
+        $within_margin = new Token((object) [
+            'created' => time(),
+            'expires_in' => Token::EXPIRATION_SAFETY_MARGIN - 30,
+            'token' => 'abc',
+        ]);
+        $this->assertFalse($within_margin->is_valid());
+
+        // Comfortably before expiry: still valid.
+        $beyond_margin = new Token((object) [
+            'created' => time(),
+            'expires_in' => Token::EXPIRATION_SAFETY_MARGIN + 60,
+            'token' => 'abc',
+        ]);
+        $this->assertTrue($beyond_margin->is_valid());
+    }
+
     public function testFromBearerJson()
     {
         $data = json_encode([

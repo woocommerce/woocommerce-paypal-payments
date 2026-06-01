@@ -120,6 +120,7 @@ class ApiModule implements ServiceModule, FactoryModule, ExecutableModule {
 				$caches = array(
 					'api.paypal-bearer-cache',
 					'api.client-credentials-cache',
+					'api.token-rate-limiter-cache',
 					'settings.service.signup-link-cache',
 				);
 
