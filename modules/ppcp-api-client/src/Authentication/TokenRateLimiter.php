@@ -169,7 +169,7 @@ class TokenRateLimiter {
 	 * Parses the `Retry-After` response header into seconds-from-now.
 	 *
 	 * Handles both the integer-seconds form and the HTTP-date form. Returns null
-	 * when the header is absent or unparseable.
+	 * when the header is absent or unparsable.
 	 *
 	 * @param array|WP_Error $response The response.
 	 */
