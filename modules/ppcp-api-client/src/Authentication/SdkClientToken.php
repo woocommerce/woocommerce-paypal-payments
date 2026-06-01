@@ -65,6 +65,10 @@ class SdkClientToken {
 			return $this->cache->get( self::CACHE_KEY );
 		}
 
+		if ( $this->client_credentials->is_empty() ) {
+			throw new RuntimeException( 'Cannot request a PayPal client token without a client ID and secret.' );
+		}
+
 		$wait = $this->rate_limiter->retry_after_seconds( self::RATE_LIMIT_SCOPE );
 		if ( null !== $wait ) {
 			throw new RuntimeException( sprintf( 'PayPal token requests are paused for %d more seconds after a previous failure.', $wait ) );

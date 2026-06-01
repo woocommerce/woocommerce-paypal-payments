@@ -67,6 +67,10 @@ class UserIdToken {
 			return $this->cache->get( self::CACHE_KEY . (string) $session_customer_id );
 		}
 
+		if ( $this->client_credentials->is_empty() ) {
+			throw new RuntimeException( 'Cannot request a PayPal user ID token without a client ID and secret.' );
+		}
+
 		$wait = $this->rate_limiter->retry_after_seconds( self::RATE_LIMIT_SCOPE );
 		if ( null !== $wait ) {
 			throw new RuntimeException( sprintf( 'PayPal token requests are paused for %d more seconds after a previous failure.', $wait ) );
