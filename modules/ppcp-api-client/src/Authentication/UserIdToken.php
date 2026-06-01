@@ -1,9 +1,4 @@
 <?php
-/**
- * Generates user ID token for payer.
- *
- * @package WooCommerce\PayPalCommerce\ApiClient\Authentication
- */
 
 namespace WooCommerce\PayPalCommerce\ApiClient\Authentication;
 
@@ -15,7 +10,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Helper\Cache;
 use WP_Error;
 
 /**
- * Class UserIdToken
+ * Generates user ID token for payer.
  */
 class UserIdToken {
 
@@ -24,51 +19,32 @@ class UserIdToken {
 	const CACHE_KEY = 'id-token-key';
 
 	/**
-	 * The host.
-	 *
-	 * @var string
+	 * The rate-limiter scope key for the user ID token.
 	 */
-	private $host;
+	const RATE_LIMIT_SCOPE = 'id-token';
 
-	/**
-	 * The logger.
-	 *
-	 * @var LoggerInterface
-	 */
-	private $logger;
+	private string $host;
 
-	/**
-	 * The client credentials.
-	 *
-	 * @var ClientCredentials
-	 */
-	private $client_credentials;
+	private LoggerInterface $logger;
 
-	/**
-	 * The cache.
-	 *
-	 * @var Cache
-	 */
-	private $cache;
+	private ClientCredentials $client_credentials;
 
-	/**
-	 * UserIdToken constructor.
-	 *
-	 * @param string            $host The host.
-	 * @param LoggerInterface   $logger The logger.
-	 * @param ClientCredentials $client_credentials The client credentials.
-	 * @param Cache             $cache The cache.
-	 */
+	private Cache $cache;
+
+	private TokenRateLimiter $rate_limiter;
+
 	public function __construct(
 		string $host,
 		LoggerInterface $logger,
 		ClientCredentials $client_credentials,
-		Cache $cache
+		Cache $cache,
+		TokenRateLimiter $rate_limiter
 	) {
 		$this->host               = $host;
 		$this->logger             = $logger;
 		$this->client_credentials = $client_credentials;
 		$this->cache              = $cache;
+		$this->rate_limiter       = $rate_limiter;
 	}
 
 	/**
@@ -91,6 +67,11 @@ class UserIdToken {
 			return $this->cache->get( self::CACHE_KEY . (string) $session_customer_id );
 		}
 
+		$wait = $this->rate_limiter->retry_after_seconds( self::RATE_LIMIT_SCOPE );
+		if ( null !== $wait ) {
+			throw new RuntimeException( sprintf( 'PayPal token requests are paused for %d more seconds after a previous failure.', $wait ) );
+		}
+
 		$url = trailingslashit( $this->host ) . 'v1/oauth2/token?grant_type=client_credentials&response_type=id_token';
 		if ( $target_customer_id ) {
 			$url = add_query_arg(
@@ -111,12 +92,14 @@ class UserIdToken {
 
 		$response = $this->request( $url, $args );
 		if ( $response instanceof WP_Error ) {
+			$this->rate_limiter->register_failure( self::RATE_LIMIT_SCOPE, 0, $response );
 			throw new RuntimeException( $response->get_error_message() );
 		}
 
 		$json        = json_decode( $response['body'] );
 		$status_code = (int) wp_remote_retrieve_response_code( $response );
 		if ( 200 !== $status_code ) {
+			$this->rate_limiter->register_failure( self::RATE_LIMIT_SCOPE, $status_code, $response );
 			throw new PayPalApiException( $json, $status_code );
 		}
 
@@ -125,6 +108,8 @@ class UserIdToken {
 		if ( $session_customer_id ) {
 			$this->cache->set( self::CACHE_KEY . (string) $session_customer_id, $id_token, 5 );
 		}
+
+		$this->rate_limiter->clear( self::RATE_LIMIT_SCOPE );
 
 		return $id_token;
 	}

@@ -14,6 +14,7 @@ use JsonException;
 use Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\ApiClient\Authentication\PayPalBearer;
+use WooCommerce\PayPalCommerce\ApiClient\Authentication\TokenRateLimiter;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\LoginSeller;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\Orders;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\InMemoryCache;
@@ -439,7 +440,8 @@ class AuthenticationManager {
 			$client_id,
 			$client_secret,
 			$this->logger,
-			null
+			null,
+			new TokenRateLimiter( new InMemoryCache(), $this->logger )
 		);
 
 		$orders = new Orders(
