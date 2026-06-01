@@ -6,7 +6,7 @@ extend-exclude = [
 	"stubs/",
 	"tests/",
 	# German
-	"modules/ppcp-wc-gateway/src/Gateway/PayUponInvoice/PayUponInvoice.php",
+	"modules/ppcp-local-alternative-payment-methods/src/PayUponInvoice/",
 	# Files outside the repository
 	"node_modules/",
 	"vendor/",
