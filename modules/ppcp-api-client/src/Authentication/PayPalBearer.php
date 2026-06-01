@@ -100,13 +100,21 @@ class PayPalBearer implements Bearer {
 	 * @throws RuntimeException When request fails.
 	 */
 	public function bearer(): Token {
-		try {
-			$bearer = Token::from_json( (string) $this->cache->get( self::CACHE_KEY ) );
+		$cached = (string) $this->cache->get( self::CACHE_KEY );
 
-			return ( $bearer->is_valid() ) ? $bearer : $this->newBearer();
-		} catch ( RuntimeException $error ) {
-			return $this->newBearer();
+		if ( '' !== $cached ) {
+			try {
+				$bearer = Token::from_json( $cached );
+				if ( $bearer->is_valid() ) {
+					return $bearer;
+				}
+			} catch ( RuntimeException $error ) {
+				// Cached token is corrupt/unparseable; discard it and fetch a fresh one.
+				$this->logger->debug( 'Discarding unparseable cached PayPal bearer token: ' . $error->getMessage() );
+			}
 		}
+
+		return $this->newBearer();
 	}
 
 	/**
