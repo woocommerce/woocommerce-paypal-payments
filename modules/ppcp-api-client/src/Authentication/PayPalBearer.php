@@ -88,8 +88,8 @@ class PayPalBearer implements \WooCommerce\PayPalCommerce\ApiClient\Authenticati
                     return $bearer;
                 }
             } catch (RuntimeException $error) {
-                // Cached token is corrupt/unparseable; discard it and fetch a fresh one.
-                $this->logger->debug('Discarding unparseable cached PayPal bearer token: ' . $error->getMessage());
+                // Cached token is corrupt/unparsable; discard it and fetch a fresh one.
+                $this->logger->debug('Discarding unparsable cached PayPal bearer token: ' . $error->getMessage());
             }
         }
         return $this->newBearer();
