@@ -24,7 +24,7 @@ use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\TrustlyGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CardButtonGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\OXXOGateway;
-use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayUponInvoice\PayUponInvoiceGateway;
+use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\PayUponInvoice\PayUponInvoiceGateway;
 
 /**
  * GatewayRedirectService class. Handles redirects from individual gateway
