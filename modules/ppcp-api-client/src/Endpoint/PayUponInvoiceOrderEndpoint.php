@@ -11,29 +11,20 @@ namespace WooCommerce\PayPalCommerce\ApiClient\Endpoint;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Log\LoggerInterface;
 use RuntimeException;
 use stdClass;
-use WC_Customer;
 use WC_Order;
-use WC_Order_Item_Fee;
-use WC_Order_Item_Product;
-use WC_Product;
-use WC_Tax;
 use WooCommerce\PayPalCommerce\ApiClient\Authentication\Bearer;
-use WooCommerce\PayPalCommerce\ApiClient\Endpoint\RequestTrait;
-use WooCommerce\PayPalCommerce\ApiClient\Entity\Item;
-use WooCommerce\PayPalCommerce\ApiClient\Entity\Money;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PurchaseUnit;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\OrderFactory;
 use WooCommerce\PayPalCommerce\WcGateway\FraudNet\FraudNet;
-use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayUponInvoice\PaymentSource;
 use WP_Error;
 /**
  * Class OrderEndpoint.
  */
 class PayUponInvoiceOrderEndpoint
 {
-    use RequestTrait;
+    use \WooCommerce\PayPalCommerce\ApiClient\Endpoint\RequestTrait;
     /**
      * The host.
      *
@@ -85,19 +76,19 @@ class PayUponInvoiceOrderEndpoint
      * Creates an order.
      *
      * @param PurchaseUnit[] $items The purchase unit items for the order.
-     * @param PaymentSource  $payment_source The payment source.
+     * @param array          $payment_source_data The pay_upon_invoice payment source data.
      * @param WC_Order       $wc_order The WC order.
      * @return Order
      * @throws RuntimeException When there is a problem with the payment source.
      * @throws PayPalApiException When there is a problem creating the order.
      */
-    public function create(array $items, PaymentSource $payment_source, WC_Order $wc_order): Order
+    public function create(array $items, array $payment_source_data, WC_Order $wc_order): Order
     {
         $data = array('intent' => 'CAPTURE', 'processing_instruction' => 'ORDER_COMPLETE_ON_PAYMENT_APPROVAL', 'purchase_units' => array_map(static function (PurchaseUnit $item): array {
             return $item->to_array(\true, \false);
-        }, $items), 'payment_source' => array('pay_upon_invoice' => $payment_source->to_array()));
+        }, $items), 'payment_source' => array('pay_upon_invoice' => $payment_source_data));
         $data = $this->ensure_taxes($wc_order, $data);
-        $data = $this->ensure_shipping($data, $payment_source->to_array());
+        $data = $this->ensure_shipping($data, $payment_source_data);
         $bearer = $this->bearer->bearer();
         $url = trailingslashit($this->host) . 'v2/checkout/orders';
         $args = array('method' => 'POST', 'headers' => array('Authorization' => 'Bearer ' . $bearer->token(), 'Content-Type' => 'application/json', 'Prefer' => 'return=representation', 'PayPal-Client-Metadata-Id' => $this->fraudnet->session_id(), 'PayPal-Request-Id' => uniqid('ppcp-', \true)), 'body' => wp_json_encode($data));

@@ -11,7 +11,6 @@ namespace WooCommerce\PayPalCommerce\WcGateway;
 
 use WooCommerce;
 use Automattic\WooCommerce\Admin\Notes\Note;
-use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PayUponInvoiceOrderEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\ReferenceTransactionStatus;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\Cache;
@@ -50,9 +49,7 @@ use WooCommerce\PayPalCommerce\WcGateway\Gateway\CardButtonGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\GatewayRepository;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
-use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayUponInvoice\PaymentSourceFactory;
-use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayUponInvoice\PayUponInvoice;
-use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayUponInvoice\PayUponInvoiceGateway;
+use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\PayUponInvoice\PayUponInvoiceGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\TransactionUrlProvider;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\CardPaymentsConfiguration;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\CartCheckoutDetector;
@@ -63,8 +60,8 @@ use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\FeesUpdater;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\InstallmentsProductStatus;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\MerchantDetails;
-use WooCommerce\PayPalCommerce\WcGateway\Helper\PayUponInvoiceHelper;
-use WooCommerce\PayPalCommerce\WcGateway\Helper\PayUponInvoiceProductStatus;
+use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\PayUponInvoice\PayUponInvoiceHelper;
+use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\PayUponInvoice\PayUponInvoiceProductStatus;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\PWCProductStatus;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\RefundFeesUpdater;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\SettingsStatus;
@@ -340,15 +337,6 @@ return array(
     'wcgateway.checkout-helper' => static function (ContainerInterface $container): CheckoutHelper {
         return new CheckoutHelper();
     },
-    'wcgateway.pay-upon-invoice-order-endpoint' => static function (ContainerInterface $container): PayUponInvoiceOrderEndpoint {
-        return new PayUponInvoiceOrderEndpoint($container->get('api.host'), $container->get('api.bearer'), $container->get('api.factory.order'), $container->get('wcgateway.fraudnet'), $container->get('woocommerce.logger.woocommerce'));
-    },
-    'wcgateway.pay-upon-invoice-payment-source-factory' => static function (ContainerInterface $container): PaymentSourceFactory {
-        return new PaymentSourceFactory($container->get('settings.data.payment'));
-    },
-    'wcgateway.pay-upon-invoice-gateway' => static function (ContainerInterface $container): PayUponInvoiceGateway {
-        return new PayUponInvoiceGateway($container->get('wcgateway.pay-upon-invoice-order-endpoint'), $container->get('api.factory.purchase-unit'), $container->get('wcgateway.pay-upon-invoice-payment-source-factory'), $container->get('settings.environment'), $container->get('wcgateway.transaction-url-provider'), $container->get('woocommerce.logger.woocommerce'), $container->get('wcgateway.pay-upon-invoice-helper'), $container->get('wcgateway.checkout-helper'), $container->get('settings.flag.is-connected'), $container->get('wcgateway.processor.refunds'), $container->get('wcgateway.asset_getter'));
-    },
     'wcgateway.fraudnet-source-website-id' => static function (ContainerInterface $container): FraudNetSourceWebsiteId {
         return new FraudNetSourceWebsiteId($container->get('api.merchant_id'));
     },
@@ -367,9 +355,6 @@ return array(
     },
     'wcgateway.pwc-product-status' => static function (ContainerInterface $container): PWCProductStatus {
         return new PWCProductStatus($container->get('settings.flag.is-connected'), $container->get('api.endpoint.partners'), $container->get('api.helper.failure-registry'), $container->get('api.helper.product-status-result-cache'));
-    },
-    'wcgateway.pay-upon-invoice' => static function (ContainerInterface $container): PayUponInvoice {
-        return new PayUponInvoice($container->get('wcgateway.pay-upon-invoice-order-endpoint'), $container->get('woocommerce.logger.woocommerce'), $container->get('settings.flag.is-connected'), $container->get('wcgateway.is-plugin-settings-page'), $container->get('wcgateway.pay-upon-invoice-product-status'), $container->get('wcgateway.pay-upon-invoice-helper'), $container->get('wcgateway.checkout-helper'), $container->get('api.factory.capture'), $container->get('settings.data.payment'));
     },
     'wcgateway.logging.is-enabled' => static function (ContainerInterface $container): bool {
         $settings = $container->get('settings.data.settings');
