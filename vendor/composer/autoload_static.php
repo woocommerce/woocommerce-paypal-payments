@@ -46,6 +46,7 @@ class ComposerStaticInit844a779aae516bed9e0beccea9d01fda
             'WooCommerce\\PayPalCommerce\\Applepay\\' => 36,
             'WooCommerce\\PayPalCommerce\\ApiClient\\' => 37,
             'WooCommerce\\PayPalCommerce\\AdminNotices\\' => 40,
+            'WooCommerce\\PayPalCommerce\\Abilities\\' => 37,
             'WooCommerce\\PayPalCommerce\\' => 27,
             'Wikimedia\\Composer\\Merge\\V2\\' => 28,
         ),
@@ -184,6 +185,10 @@ class ComposerStaticInit844a779aae516bed9e0beccea9d01fda
         array (
             0 => __DIR__ . '/../..' . '/modules/ppcp-admin-notices/src',
         ),
+        'WooCommerce\\PayPalCommerce\\Abilities\\' =>
+        array (
+            0 => __DIR__ . '/../..' . '/modules/ppcp-abilities/src',
+        ),
         'WooCommerce\\PayPalCommerce\\' =>
         array (
             0 => __DIR__ . '/../..' . '/src',
@@ -223,6 +228,13 @@ class ComposerStaticInit844a779aae516bed9e0beccea9d01fda
         'Wikimedia\\Composer\\Merge\\V2\\NestedArray' => __DIR__ . '/..' . '/wikimedia/composer-merge-plugin/src/NestedArray.php',
         'Wikimedia\\Composer\\Merge\\V2\\PluginState' => __DIR__ . '/..' . '/wikimedia/composer-merge-plugin/src/PluginState.php',
         'Wikimedia\\Composer\\Merge\\V2\\StabilityFlags' => __DIR__ . '/..' . '/wikimedia/composer-merge-plugin/src/StabilityFlags.php',
+        'WooCommerce\\PayPalCommerce\\Abilities\\AbilitiesModule' => __DIR__ . '/../..' . '/modules/ppcp-abilities/src/AbilitiesModule.php',
+        'WooCommerce\\PayPalCommerce\\Abilities\\AbilitiesRegistrar' => __DIR__ . '/../..' . '/modules/ppcp-abilities/src/AbilitiesRegistrar.php',
+        'WooCommerce\\PayPalCommerce\\Abilities\\Domain\\AbstractPpcpAbility' => __DIR__ . '/../..' . '/modules/ppcp-abilities/src/Domain/AbstractPpcpAbility.php',
+        'WooCommerce\\PayPalCommerce\\Abilities\\Domain\\GetConnectionStatus' => __DIR__ . '/../..' . '/modules/ppcp-abilities/src/Domain/GetConnectionStatus.php',
+        'WooCommerce\\PayPalCommerce\\Abilities\\Domain\\GetOrderTracking' => __DIR__ . '/../..' . '/modules/ppcp-abilities/src/Domain/GetOrderTracking.php',
+        'WooCommerce\\PayPalCommerce\\Abilities\\Domain\\GetPaymentMethods' => __DIR__ . '/../..' . '/modules/ppcp-abilities/src/Domain/GetPaymentMethods.php',
+        'WooCommerce\\PayPalCommerce\\Abilities\\Domain\\GetPaypalOrder' => __DIR__ . '/../..' . '/modules/ppcp-abilities/src/Domain/GetPaypalOrder.php',
         'WooCommerce\\PayPalCommerce\\AdminNotices\\AdminNotices' => __DIR__ . '/../..' . '/modules/ppcp-admin-notices/src/AdminNotices.php',
         'WooCommerce\\PayPalCommerce\\AdminNotices\\Endpoint\\MuteMessageEndpoint' => __DIR__ . '/../..' . '/modules/ppcp-admin-notices/src/Endpoint/MuteMessageEndpoint.php',
         'WooCommerce\\PayPalCommerce\\AdminNotices\\Entity\\Message' => __DIR__ . '/../..' . '/modules/ppcp-admin-notices/src/Entity/Message.php',
