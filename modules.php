@@ -35,6 +35,7 @@ return static function ( string $root_dir ): iterable {
 		( require "$modules_dir/ppcp-local-alternative-payment-methods/module.php" )(),
 		( require "$modules_dir/ppcp-settings/module.php" )(),
 		( require "$modules_dir/ppcp-fraud-protection/module.php" )(),
+		( require "$modules_dir/ppcp-abilities/module.php" )(),
 	);
 	// phpcs:disable WordPress.NamingConventions.ValidHookName.UseUnderscores
 

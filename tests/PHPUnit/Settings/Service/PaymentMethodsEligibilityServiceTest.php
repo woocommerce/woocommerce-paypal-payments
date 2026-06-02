@@ -22,7 +22,7 @@ use WooCommerce\PayPalCommerce\Settings\Service\PaymentMethodsEligibilityService
 use WooCommerce\PayPalCommerce\TestCase;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CardButtonGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
-use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayUponInvoice\PayUponInvoiceGateway;
+use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\PayUponInvoice\PayUponInvoiceGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\DCCProductStatus;
 use Mockery;
 

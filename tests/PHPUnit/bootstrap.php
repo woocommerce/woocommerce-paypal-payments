@@ -26,5 +26,6 @@ require_once TESTS_ROOT_DIR . '/stubs/WC_REST_Controller.php';
 require_once TESTS_ROOT_DIR . '/stubs/WC_Product.php';
 require_once TESTS_ROOT_DIR . '/stubs/WC_Countries.php';
 require_once TESTS_ROOT_DIR . '/stubs/WC_Validation.php';
+require_once TESTS_ROOT_DIR . '/stubs/AbilityDefinition.php';
 
 Hamcrest\Util::registerGlobalFunctions();

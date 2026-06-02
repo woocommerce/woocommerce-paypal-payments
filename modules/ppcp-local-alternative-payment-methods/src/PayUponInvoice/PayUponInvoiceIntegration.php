@@ -2,12 +2,12 @@
 /**
  * PUI integration.
  *
- * @package WooCommerce\PayPalCommerce\WcGateway\Gateway\PayUponInvoice
+ * @package WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\PayUponInvoice
  */
 
 declare(strict_types=1);
 
-namespace WooCommerce\PayPalCommerce\WcGateway\Gateway\PayUponInvoice;
+namespace WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\PayUponInvoice;
 
 use Automattic\WooCommerce\Internal\DataStores\Orders\CustomOrdersTableController;
 use Psr\Log\LoggerInterface;
@@ -16,18 +16,16 @@ use WC_Order;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PayUponInvoiceOrderEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\CaptureFactory;
 use WooCommerce\PayPalCommerce\Button\Exception\RuntimeException;
+use WooCommerce\PayPalCommerce\Settings\Data\PaymentSettings;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\CheckoutHelper;
-use WooCommerce\PayPalCommerce\Settings\Data\PaymentSettings;
-use WooCommerce\PayPalCommerce\WcGateway\Helper\PayUponInvoiceHelper;
-use WooCommerce\PayPalCommerce\WcGateway\Helper\PayUponInvoiceProductStatus;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\TransactionIdHandlingTrait;
 use WP_Error;
 
 /**
- * Class PayUponInvoice.
+ * Class PayUponInvoiceIntegration.
  */
-class PayUponInvoice {
+class PayUponInvoiceIntegration {
 
 	use TransactionIdHandlingTrait;
 
@@ -35,13 +33,11 @@ class PayUponInvoice {
 
 	protected LoggerInterface $logger;
 
-	protected PayUponInvoiceHelper $pui_helper;
-
 	protected bool $is_connected;
 
-	protected bool $is_settings_page;
-
 	protected PayUponInvoiceProductStatus $pui_product_status;
+
+	protected PayUponInvoiceHelper $pui_helper;
 
 	protected CheckoutHelper $checkout_helper;
 
@@ -50,38 +46,35 @@ class PayUponInvoice {
 	protected PaymentSettings $payment_settings;
 
 	/**
-	 * PayUponInvoice constructor.
+	 * PayUponInvoiceIntegration constructor.
 	 *
 	 * @param PayUponInvoiceOrderEndpoint $pui_order_endpoint The PUI order endpoint.
 	 * @param LoggerInterface             $logger The logger.
-	 * @param bool                        $is_connected Whether onboarding was completed.
-	 * @param bool                        $is_settings_page Whether current page is the settings page.
 	 * @param PayUponInvoiceProductStatus $pui_product_status The PUI product status.
 	 * @param PayUponInvoiceHelper        $pui_helper The PUI helper.
 	 * @param CheckoutHelper              $checkout_helper The checkout helper.
 	 * @param CaptureFactory              $capture_factory The capture factory.
 	 * @param PaymentSettings             $payment_settings The payment settings.
+	 * @param bool                        $is_connected Whether onboarding was completed.
 	 */
 	public function __construct(
 		PayUponInvoiceOrderEndpoint $pui_order_endpoint,
 		LoggerInterface $logger,
-		bool $is_connected,
-		bool $is_settings_page,
 		PayUponInvoiceProductStatus $pui_product_status,
 		PayUponInvoiceHelper $pui_helper,
 		CheckoutHelper $checkout_helper,
 		CaptureFactory $capture_factory,
-		PaymentSettings $payment_settings
+		PaymentSettings $payment_settings,
+		bool $is_connected
 	) {
 		$this->pui_order_endpoint = $pui_order_endpoint;
 		$this->logger             = $logger;
-		$this->is_connected       = $is_connected;
-		$this->is_settings_page   = $is_settings_page;
 		$this->pui_product_status = $pui_product_status;
 		$this->pui_helper         = $pui_helper;
 		$this->checkout_helper    = $checkout_helper;
 		$this->capture_factory    = $capture_factory;
 		$this->payment_settings   = $payment_settings;
+		$this->is_connected       = $is_connected;
 	}
 
 	/**
@@ -306,6 +299,7 @@ class PayUponInvoice {
 
 				// phpcs:ignore WordPress.Security.NonceVerification.Missing
 				$national_number = wc_clean( wp_unslash( $_POST['billing_phone'] ?? '' ) );
+				$national_number = is_string( $national_number ) ? $national_number : '';
 				if ( ! $national_number ) {
 					$errors->add( 'validation', __( 'Phone field cannot be empty.', 'woocommerce-paypal-payments' ) );
 				}
