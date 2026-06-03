@@ -80,6 +80,8 @@ class AmountFactory {
 		$taxes_val      = (float) $cart->get_total_tax();
 		$discount_val   = (float) $cart->get_discount_total();
 
+		$discount_val += $this->extra_discount( 'woocommerce_paypal_payments_cart_extra_discount', $cart );
+
 		$item_total = new Money( $item_total_val, $this->currency->get() );
 		$shipping   = new Money( $shipping_val, $this->currency->get() );
 		$taxes      = new Money( $taxes_val, $this->currency->get() );
@@ -169,7 +171,10 @@ class AmountFactory {
 				$items_discount,
 			)
 		);
-		$discount       = null;
+
+		$discount_value += $this->extra_discount( 'woocommerce_paypal_payments_order_extra_discount', $order );
+
+		$discount = null;
 		if ( $discount_value ) {
 			$discount = new Money( (float) $discount_value, $currency );
 		}
@@ -285,6 +290,25 @@ class AmountFactory {
 		}
 
 		return new AmountBreakdown( ...$money );
+	}
+
+	/**
+	 * Returns any extra discount contributed via a filter hook.
+	 *
+	 * Some plugins (e.g. WooCommerce Gift Cards) reduce the WC total directly via
+	 * WC_Cart::set_total() / WC_Order::set_total() without registering a coupon or fee,
+	 * making their discount invisible to the standard breakdown getters. This method
+	 * applies the given filter so those plugins can surface their amount here.
+	 *
+	 * @param string $filter_name The filter hook name.
+	 * @param mixed  $context     The cart or order passed as context to the filter.
+	 * @return float
+	 */
+	private function extra_discount( string $filter_name, $context ): float {
+		/**
+		 * Filters extra discount amounts not captured by standard WC discount/fee getters.
+		 */
+		return (float) apply_filters( $filter_name, 0.0, $context );
 	}
 
 	/**
