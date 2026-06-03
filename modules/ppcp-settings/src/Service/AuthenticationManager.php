@@ -13,6 +13,7 @@ use JsonException;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\ApiClient\Authentication\PayPalBearer;
+use WooCommerce\PayPalCommerce\ApiClient\Authentication\TokenRateLimiter;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\LoginSeller;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\Orders;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\InMemoryCache;
@@ -154,17 +155,17 @@ class AuthenticationManager
         if (empty($client_id)) {
             throw new RuntimeException('No client ID provided.');
         }
-        // Exactly 80 alphanumeric, underscore, or hyphen characters.
-        // if ( 1 !== preg_match( '/^[\w-]{80}$/', $client_id ) ) {
-        // 	throw new RuntimeException( 'Invalid client ID provided.' );
-        // }
+        // 70-90 alphanumeric, underscore, or hyphen characters.
+        if (1 !== preg_match('/^[\w-]{70,90}$/', $client_id)) {
+            throw new RuntimeException('Invalid client ID provided.');
+        }
         if (empty($client_secret)) {
             throw new RuntimeException('No client secret provided.');
         }
-        // Exactly 80 alphanumeric, underscore, or hyphen characters.
-        // if ( 1 !== preg_match( '/^[\w-]{80}$/', $client_secret ) ) {
-        // 	throw new RuntimeException( 'Invalid client secret provided.' );
-        // }
+        // 70-90 alphanumeric, underscore, or hyphen characters.
+        if (1 !== preg_match('/^[\w-]{70,90}$/', $client_secret)) {
+            throw new RuntimeException('Invalid client secret provided.');
+        }
     }
     /**
      * Disconnects the current merchant, and then attempts to connect to a
@@ -339,7 +340,7 @@ class AuthenticationManager
     private function request_payee(string $client_id, string $client_secret, bool $use_sandbox): array
     {
         $host = $this->connection_host->get_value($use_sandbox);
-        $bearer = new PayPalBearer(new InMemoryCache(), $host, $client_id, $client_secret, $this->logger, null);
+        $bearer = new PayPalBearer(new InMemoryCache(), $host, $client_id, $client_secret, $this->logger, null, new TokenRateLimiter(new InMemoryCache(), $this->logger));
         $orders = new Orders($host, $bearer, $this->logger);
         $request_body = array('intent' => 'CAPTURE', 'purchase_units' => array(array('amount' => array('currency_code' => 'USD', 'value' => 1.0))));
         try {
@@ -447,14 +448,14 @@ class AuthenticationManager
             $this->logger->info('Merchant successfully connected to PayPal');
             // Update the connection status and set the environment flags.
             $this->connection_state->connect($connection->is_sandbox);
-            // At this point, we can use the PayPal API to get more details about the seller.
-            $this->enrich_merchant_details();
             /**
              * Request to flush caches before authenticating the merchant, to
              * ensure the new merchant does not use stale data from previous
              * connections.
              */
             do_action('woocommerce_paypal_payments_flush_api_cache');
+            // At this point, we can use the PayPal API to get more details about the seller.
+            $this->enrich_merchant_details();
             /**
              * Broadcast that the plugin connected to a new PayPal merchant account.
              * This is the right time to initialize merchant relative flags for the

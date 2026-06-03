@@ -286,7 +286,7 @@ class SettingsModel extends \WooCommerce\PayPalCommerce\Settings\Data\AbstractDa
      */
     public function get_authorize_only(): bool
     {
-        return $this->data['authorize_only'];
+        return $this->sanitizer->sanitize_bool($this->data['authorize_only'] ?? \false);
     }
     /**
      * Sets the authorize only setting.
@@ -304,7 +304,7 @@ class SettingsModel extends \WooCommerce\PayPalCommerce\Settings\Data\AbstractDa
      */
     public function get_capture_virtual_orders(): bool
     {
-        return $this->data['capture_virtual_orders'];
+        return $this->sanitizer->sanitize_bool($this->data['capture_virtual_orders'] ?? \false);
     }
     /**
      * Sets the capture virtual orders setting.
@@ -322,7 +322,7 @@ class SettingsModel extends \WooCommerce\PayPalCommerce\Settings\Data\AbstractDa
      */
     public function get_save_paypal_and_venmo(): bool
     {
-        return $this->data[FeaturesDefinition::FEATURE_SAVE_PAYPAL_AND_VENMO];
+        return $this->sanitizer->sanitize_bool($this->data[FeaturesDefinition::FEATURE_SAVE_PAYPAL_AND_VENMO] ?? \false);
     }
     /**
      * Sets the save PayPal and Venmo setting.
@@ -340,7 +340,7 @@ class SettingsModel extends \WooCommerce\PayPalCommerce\Settings\Data\AbstractDa
      */
     public function get_instant_payments_only(): bool
     {
-        return $this->data['instant_payments_only'] ?? \false;
+        return $this->sanitizer->sanitize_bool($this->data['instant_payments_only'] ?? \false);
     }
     /**
      * Sets the instant payments only setting.
@@ -358,7 +358,7 @@ class SettingsModel extends \WooCommerce\PayPalCommerce\Settings\Data\AbstractDa
      */
     public function get_enable_contact_module(): bool
     {
-        return $this->data['enable_contact_module'];
+        return $this->sanitizer->sanitize_bool($this->data['enable_contact_module'] ?? \true);
     }
     /**
      * Sets the custom-shipping-contact flag ("Contact Module").
@@ -376,7 +376,7 @@ class SettingsModel extends \WooCommerce\PayPalCommerce\Settings\Data\AbstractDa
      */
     public function get_save_card_details(): bool
     {
-        return $this->data['save_card_details'];
+        return $this->sanitizer->sanitize_bool($this->data['save_card_details'] ?? \false);
     }
     /**
      * Sets the save card details setting.
@@ -394,7 +394,7 @@ class SettingsModel extends \WooCommerce\PayPalCommerce\Settings\Data\AbstractDa
      */
     public function get_enable_pay_now(): bool
     {
-        return $this->data['enable_pay_now'];
+        return $this->sanitizer->sanitize_bool($this->data['enable_pay_now'] ?? \false);
     }
     /**
      * Sets the enable Pay Now setting.
@@ -412,7 +412,7 @@ class SettingsModel extends \WooCommerce\PayPalCommerce\Settings\Data\AbstractDa
      */
     public function get_enable_logging(): bool
     {
-        return $this->data['enable_logging'];
+        return $this->sanitizer->sanitize_bool($this->data['enable_logging'] ?? \false);
     }
     /**
      * Sets the enable logging setting.
@@ -466,7 +466,7 @@ class SettingsModel extends \WooCommerce\PayPalCommerce\Settings\Data\AbstractDa
      */
     public function get_stay_updated(): bool
     {
-        return $this->data['stay_updated'];
+        return $this->sanitizer->sanitize_bool($this->data['stay_updated'] ?? \true);
     }
     /**
      * Sets the Stay Updated setting.
@@ -484,7 +484,7 @@ class SettingsModel extends \WooCommerce\PayPalCommerce\Settings\Data\AbstractDa
      */
     public function get_payment_level_processing(): bool
     {
-        return (bool) $this->data['payment_level_processing'];
+        return $this->sanitizer->sanitize_bool($this->data['payment_level_processing'] ?? \true);
     }
     /**
      * Set payment level processing.

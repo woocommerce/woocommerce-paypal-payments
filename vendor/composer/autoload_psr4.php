@@ -38,6 +38,7 @@ return array(
     'WooCommerce\\PayPalCommerce\\Applepay\\' => array($baseDir . '/modules/ppcp-applepay/src'),
     'WooCommerce\\PayPalCommerce\\ApiClient\\' => array($baseDir . '/modules/ppcp-api-client/src'),
     'WooCommerce\\PayPalCommerce\\AdminNotices\\' => array($baseDir . '/modules/ppcp-admin-notices/src'),
+    'WooCommerce\\PayPalCommerce\\Abilities\\' => array($baseDir . '/modules/ppcp-abilities/src'),
     'WooCommerce\\PayPalCommerce\\' => array($baseDir . '/src'),
     'Wikimedia\\Composer\\Merge\\V2\\' => array($vendorDir . '/wikimedia/composer-merge-plugin/src'),
     'Symfony\\Polyfill\\Php80\\' => array($vendorDir . '/symfony/polyfill-php80'),

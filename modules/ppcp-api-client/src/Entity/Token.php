@@ -15,6 +15,12 @@ use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 class Token
 {
     /**
+     * Safety margin (in seconds) subtracted from the real expiry, so a token that
+     * is about to expire is refreshed proactively instead of being used for a
+     * request that would race the expiry and fail with a 401.
+     */
+    const EXPIRATION_SAFETY_MARGIN = 60;
+    /**
      * The Token data.
      *
      * @var object
@@ -67,7 +73,7 @@ class Token
      */
     public function is_valid(): bool
     {
-        return time() < $this->json->created + $this->json->expires_in;
+        return time() < $this->json->created + $this->json->expires_in - self::EXPIRATION_SAFETY_MARGIN;
     }
     /**
      * Returns the Token as JSON string.
