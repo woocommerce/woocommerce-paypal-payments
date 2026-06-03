@@ -13,6 +13,7 @@ return array(
     'WooCommerce\\PayPalCommerce\\WcGateway\\' => array($baseDir . '/modules/ppcp-wc-gateway/src'),
     'WooCommerce\\PayPalCommerce\\Vendor\\Psr\\Log\\' => array($vendorDir . '/psr/log/Psr/Log'),
     'WooCommerce\\PayPalCommerce\\Vendor\\' => array($baseDir . '/lib/packages'),
+    'WooCommerce\\PayPalCommerce\\VaultComponent\\' => array($baseDir . '/modules/ppcp-vault-component/src'),
     'WooCommerce\\PayPalCommerce\\Uninstall\\' => array($baseDir . '/modules/ppcp-uninstall/src'),
     'WooCommerce\\PayPalCommerce\\StoreSync\\' => array($baseDir . '/modules/ppcp-store-sync/src'),
     'WooCommerce\\PayPalCommerce\\StatusReport\\' => array($baseDir . '/modules/ppcp-status-report/src'),
