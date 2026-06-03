@@ -58,7 +58,7 @@ class VaultComponentModule implements ServiceModule, ExecutableModule {
 					return $html;
 				}
 				$vault_injected = true;
-				$html           = preg_replace( '/<label\b/', '<label style="display:none"', $html, 1 );
+				$html           = preg_replace( '/<label\b/', '<label style="display:none"', $html, 1 ) ?? $html;
 				return str_replace( '</li>', '<div id="ppcp-vault-component"></div></li>', $html );
 			},
 			10,
