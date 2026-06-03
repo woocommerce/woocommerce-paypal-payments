@@ -62,6 +62,8 @@ class CompatModule implements ServiceModule, ExecutableModule {
 			}
 		);
 
+		( new WcGiftCardsCompat() )->register();
+
 		$this->migrate_pay_later_settings( $c );
 		$this->migrate_smart_button_settings( $c );
 		$this->migrate_three_d_secure_setting();
