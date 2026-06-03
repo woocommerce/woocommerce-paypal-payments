@@ -24,8 +24,8 @@ use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\TrustlyGateway;
 use WooCommerce\PayPalCommerce\Settings\Data\Definition\FeaturesDefinition;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CardButtonGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
-use WooCommerce\PayPalCommerce\WcGateway\Gateway\OXXO\OXXO;
-use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayUponInvoice\PayUponInvoiceGateway;
+use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\OXXOGateway;
+use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\PayUponInvoice\PayUponInvoiceGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\DCCProductStatus;
 
 /**
@@ -112,7 +112,7 @@ class PaymentMethodsEligibilityService {
 			P24Gateway::ID            => fn() => $this->is_apm_eligible,
 			TrustlyGateway::ID        => fn() => $this->is_apm_eligible,
 			MultibancoGateway::ID     => fn() => $this->is_apm_eligible,
-			OXXO::ID                  => fn() => $this->is_mexico_merchant() && $this->is_apm_eligible,
+			OXXOGateway::ID                  => fn() => $this->is_mexico_merchant() && $this->is_apm_eligible,
 			PWCGateway::ID            => fn() => $this->has_pwc_capability() && $this->is_apm_eligible,
 			PayUponInvoiceGateway::ID => fn() => $this->merchant_country === 'DE',
 			CreditCardGateway::ID     => fn() => $this->is_mexico_merchant() || $this->is_card_fields_supported(),

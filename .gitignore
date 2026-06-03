@@ -18,7 +18,8 @@ auth.json
 tests/.DS_Store
 .composer_compiled_assets
 /coverage/
-assets
+/assets
+!modules/ppcp-local-alternative-payment-methods/assets/images
 tests/inc/inpsyde/
 
 .vscode
