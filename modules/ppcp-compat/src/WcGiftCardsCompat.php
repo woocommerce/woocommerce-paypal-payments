@@ -40,12 +40,6 @@ class WcGiftCardsCompat {
 			10,
 			2
 		);
-		add_filter(
-			'woocommerce_paypal_payments_order_extra_discount',
-			array( $this, 'order_extra_discount' ),
-			10,
-			2
-		);
 	}
 
 	/**
@@ -81,23 +75,5 @@ class WcGiftCardsCompat {
 		$gc_discount = (float) ( WC()->session->get( self::SESSION_KEY ) ?? 0.0 );
 
 		return $extra + ( $gc_discount ?: 0.0 );
-	}
-
-	/**
-	 * Returns the total WC Gift Cards discount applied to the order.
-	 *
-	 * @param float     $extra Current extra discount accumulated by other hooks.
-	 * @param \WC_Order $order The WooCommerce order.
-	 * @return float
-	 */
-	public function order_extra_discount( float $extra, \WC_Order $order ): float {
-		if ( ! function_exists( 'WC_GC' ) || ! WC_GC()->order ) {
-			return $extra;
-		}
-
-		$gift_cards = WC_GC()->order->get_gift_cards( $order );
-		$extra     += (float) ( $gift_cards['total'] ?? 0.0 );
-
-		return $extra;
 	}
 }
