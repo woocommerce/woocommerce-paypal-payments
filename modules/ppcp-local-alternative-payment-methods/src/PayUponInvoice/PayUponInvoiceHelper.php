@@ -2,17 +2,18 @@
 /**
  * Helper methods for PUI.
  *
- * @package WooCommerce\PayPalCommerce\WcGateway\Helper
+ * @package WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\PayUponInvoice
  */
 
 declare( strict_types=1 );
 
-namespace WooCommerce\PayPalCommerce\WcGateway\Helper;
+namespace WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\PayUponInvoice;
 
 use WC_Customer;
 use WC_Order;
 use WC_Order_Item_Product;
 use WooCommerce\PayPalCommerce\Settings\Data\PaymentSettings;
+use WooCommerce\PayPalCommerce\WcGateway\Helper\CheckoutHelper;
 
 /**
  * Class PayUponInvoiceHelper

@@ -1,13 +1,13 @@
 <?php
 /**
- * The Pay upon invoice Gateway
+ * The Pay upon Invoice gateway.
  *
- * @package WooCommerce\PayPalCommerce\WcGateway\Gateway
+ * @package WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\PayUponInvoice
  */
 
 declare(strict_types=1);
 
-namespace WooCommerce\PayPalCommerce\WcGateway\Gateway\PayUponInvoice;
+namespace WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\PayUponInvoice;
 
 use Psr\Log\LoggerInterface;
 use RuntimeException;
@@ -17,10 +17,10 @@ use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PayUponInvoiceOrderEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PurchaseUnitFactory;
 use WooCommerce\PayPalCommerce\Assets\AssetGetter;
-use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
+use WooCommerce\PayPalCommerce\Settings\Data\Definition\PaymentMethodsDefinition;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\TransactionUrlProvider;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\CheckoutHelper;
-use WooCommerce\PayPalCommerce\WcGateway\Helper\PayUponInvoiceHelper;
+use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\OrderMetaTrait;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\RefundProcessor;
 
@@ -31,140 +31,17 @@ class PayUponInvoiceGateway extends WC_Payment_Gateway {
 
 	use OrderMetaTrait;
 
-	const ID = 'ppcp-pay-upon-invoice-gateway';
+	public const ID = 'ppcp-pay-upon-invoice-gateway';
 
-	/**
-	 * The order endpoint.
-	 *
-	 * @var PayUponInvoiceOrderEndpoint
-	 */
-	protected $order_endpoint;
+	private PayUponInvoiceOrderEndpoint $order_endpoint;
+	private PurchaseUnitFactory $purchase_unit_factory;
+	private PaymentSourceFactory $payment_source_factory;
+	private Environment $environment;
+	private TransactionUrlProvider $transaction_url_provider;
+	private LoggerInterface $logger;
+	private CheckoutHelper $checkout_helper;
+	private RefundProcessor $refund_processor;
 
-	/**
-	 * The purchase unit factory.
-	 *
-	 * @var PurchaseUnitFactory
-	 */
-	protected $purchase_unit_factory;
-
-	/**
-	 * The payment source factory.
-	 *
-	 * @var PaymentSourceFactory
-	 */
-	protected $payment_source_factory;
-
-	/**
-	 * The environment.
-	 *
-	 * @var Environment
-	 */
-	protected $environment;
-
-	/**
-	 * The transaction url provider.
-	 *
-	 * @var TransactionUrlProvider
-	 */
-	protected $transaction_url_provider;
-
-	/**
-	 * The logger interface.
-	 *
-	 * @var LoggerInterface
-	 */
-	protected $logger;
-
-	/**
-	 * The PUI helper.
-	 *
-	 * @var PayUponInvoiceHelper
-	 */
-	protected $pui_helper;
-
-	/**
-	 * The checkout helper.
-	 *
-	 * @var CheckoutHelper
-	 */
-	protected $checkout_helper;
-
-	/**
-	 * The refund processor.
-	 *
-	 * @var RefundProcessor
-	 */
-	protected $refund_processor;
-
-	/**
-	 * ID of the class extending the settings API. Used in option names.
-	 *
-	 * @var string
-	 */
-	public $id;
-
-	/**
-	 * Gateway title.
-	 *
-	 * @var string
-	 */
-	public $method_title = '';
-
-	/**
-	 * Gateway description.
-	 *
-	 * @var string
-	 */
-	public $method_description = '';
-
-	/**
-	 * Payment method title for the frontend.
-	 *
-	 * @var string
-	 */
-	public $title;
-
-	/**
-	 * Payment method description for the frontend.
-	 *
-	 * @var string
-	 */
-	public $description;
-
-	/**
-	 * Form option fields.
-	 *
-	 * @var array
-	 */
-	public $form_fields = array();
-
-	/**
-	 * Icon for the gateway.
-	 *
-	 * @var string
-	 */
-	public $icon;
-
-	/**
-	 * Supported features such as 'default_credit_card_form', 'refunds'.
-	 *
-	 * @var array
-	 */
-	public $supports = array( 'products' );
-
-	/**
-	 * @param PayUponInvoiceOrderEndpoint $order_endpoint The order endpoint.
-	 * @param PurchaseUnitFactory         $purchase_unit_factory The purchase unit factory.
-	 * @param PaymentSourceFactory        $payment_source_factory The payment source factory.
-	 * @param Environment                 $environment The environment.
-	 * @param TransactionUrlProvider      $transaction_url_provider The transaction URL provider.
-	 * @param LoggerInterface             $logger The logger.
-	 * @param PayUponInvoiceHelper        $pui_helper The PUI helper.
-	 * @param CheckoutHelper              $checkout_helper The checkout helper.
-	 * @param bool                        $is_connected Whether the onboarding was completed.
-	 * @param RefundProcessor             $refund_processor The refund processor.
-	 * @param AssetGetter                 $asset_getter
-	 */
 	public function __construct(
 		PayUponInvoiceOrderEndpoint $order_endpoint,
 		PurchaseUnitFactory $purchase_unit_factory,
@@ -172,7 +49,6 @@ class PayUponInvoiceGateway extends WC_Payment_Gateway {
 		Environment $environment,
 		TransactionUrlProvider $transaction_url_provider,
 		LoggerInterface $logger,
-		PayUponInvoiceHelper $pui_helper,
 		CheckoutHelper $checkout_helper,
 		bool $is_connected,
 		RefundProcessor $refund_processor,
@@ -180,23 +56,20 @@ class PayUponInvoiceGateway extends WC_Payment_Gateway {
 	) {
 		$this->id = self::ID;
 
-		$this->method_title       = __( 'Pay upon Invoice', 'woocommerce-paypal-payments' );
-		$this->method_description = __( 'Pay upon Invoice is an invoice payment method in Germany. It is a local buy now, pay later payment method that allows the buyer to place an order, receive the goods, try them, verify they are in good order, and then pay the invoice within 30 days.', 'woocommerce-paypal-payments' );
+		$this->init_apm_defaults();
 
-		$gateway_settings  = get_option( 'woocommerce_ppcp-pay-upon-invoice-gateway_settings' );
-		$this->title       = $gateway_settings['title'] ?? $this->method_title;
-		$this->description = $gateway_settings['description'] ?? __( 'Once you place an order, pay within 30 days. Our payment partner Ratepay will send you payment instructions.', 'woocommerce-paypal-payments' );
+		$gateway_settings  = get_option( 'woocommerce_' . self::ID . '_settings' );
+		$this->title       = is_array( $gateway_settings ) && isset( $gateway_settings['title'] )
+			? $gateway_settings['title']
+			: $this->method_title;
+		$this->description = is_array( $gateway_settings ) && isset( $gateway_settings['description'] )
+			? $gateway_settings['description']
+			: __( 'Once you place an order, pay within 30 days. Our payment partner Ratepay will send you payment instructions.', 'woocommerce-paypal-payments' );
 
 		$this->init_form_fields();
 		$this->init_settings();
 
-		add_action(
-			'woocommerce_update_options_payment_gateways_' . $this->id,
-			array(
-				$this,
-				'process_admin_options',
-			)
-		);
+		add_action( 'woocommerce_update_options_payment_gateways_' . $this->id, array( $this, 'process_admin_options' ) );
 
 		$this->order_endpoint           = $order_endpoint;
 		$this->purchase_unit_factory    = $purchase_unit_factory;
@@ -204,23 +77,20 @@ class PayUponInvoiceGateway extends WC_Payment_Gateway {
 		$this->logger                   = $logger;
 		$this->environment              = $environment;
 		$this->transaction_url_provider = $transaction_url_provider;
-		$this->pui_helper               = $pui_helper;
 		$this->checkout_helper          = $checkout_helper;
+		$this->refund_processor         = $refund_processor;
 		$this->icon                     = apply_filters(
 			'woocommerce_paypal_payments_pay_upon_invoice_gateway_icon',
 			$asset_getter->get_static_asset_url( 'images/ratepay.svg' )
 		);
 
-		if ( $is_connected ) {
-			$this->supports = array( 'refunds' );
-		}
-		$this->refund_processor = $refund_processor;
+		$this->supports = $is_connected ? array( 'refunds' ) : array( 'products' );
 	}
 
 	/**
 	 * Initialize the form fields.
 	 */
-	public function init_form_fields() {
+	public function init_form_fields(): void {
 		$this->form_fields = array(
 			'enabled'                       => array(
 				'title'       => __( 'Enable/Disable', 'woocommerce-paypal-payments' ),
@@ -306,6 +176,7 @@ class PayUponInvoiceGateway extends WC_Payment_Gateway {
 		}
 		// phpcs:disable WordPress.Security.NonceVerification
 		$birth_date    = wc_clean( wp_unslash( $_POST['billing_birth_date'] ?? '' ) );
+		$birth_date    = is_string( $birth_date ) ? $birth_date : '';
 		$pay_for_order = wc_clean( wp_unslash( $_GET['pay_for_order'] ?? '' ) );
 		if ( 'true' === $pay_for_order ) {
 			if ( ! $this->checkout_helper->validate_birth_date( $birth_date ) ) {
@@ -317,17 +188,18 @@ class PayUponInvoiceGateway extends WC_Payment_Gateway {
 		}
 
 		$phone_number = wc_clean( wp_unslash( $_POST['billing_phone'] ?? '' ) );
+		$phone_number = is_string( $phone_number ) ? $phone_number : '';
 		// phpcs:enable WordPress.Security.NonceVerification
 		if ( $phone_number ) {
 			$wc_order->set_billing_phone( $phone_number );
 			$wc_order->save();
 		}
 
-		$purchase_unit  = $this->purchase_unit_factory->from_wc_order( $wc_order );
-		$payment_source = $this->payment_source_factory->from_wc_order( $wc_order, $birth_date );
+		$purchase_unit       = $this->purchase_unit_factory->from_wc_order( $wc_order );
+		$payment_source_data = $this->payment_source_factory->from_wc_order( $wc_order, $birth_date );
 
 		try {
-			$order = $this->order_endpoint->create( array( $purchase_unit ), $payment_source, $wc_order );
+			$order = $this->order_endpoint->create( array( $purchase_unit ), $payment_source_data, $wc_order );
 			$this->add_paypal_meta( $wc_order, $order, $this->environment );
 			$wc_order->update_status( 'on-hold', __( 'Awaiting Pay upon Invoice payment.', 'woocommerce-paypal-payments' ) );
 
@@ -387,12 +259,18 @@ class PayUponInvoiceGateway extends WC_Payment_Gateway {
 	 * Return transaction url for this gateway and given order.
 	 *
 	 * @param WC_Order $order WC order to get transaction url by.
-	 *
 	 * @return string
 	 */
 	public function get_transaction_url( $order ): string {
 		$this->view_transaction_url = $this->transaction_url_provider->get_transaction_url_base( $order );
 
 		return parent::get_transaction_url( $order );
+	}
+
+	private function init_apm_defaults(): void {
+		$defaults = PaymentMethodsDefinition::get_apm_defaults()[ self::ID ];
+
+		$this->method_title       = $defaults['method_title'];
+		$this->method_description = $defaults['method_description'];
 	}
 }
