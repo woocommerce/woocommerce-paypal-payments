@@ -13,6 +13,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Authentication\ClientCredentials;
 use WooCommerce\PayPalCommerce\ApiClient\Authentication\ConnectBearer;
 use WooCommerce\PayPalCommerce\ApiClient\Authentication\PayPalBearer;
 use WooCommerce\PayPalCommerce\ApiClient\Authentication\SdkClientToken;
+use WooCommerce\PayPalCommerce\ApiClient\Authentication\TokenRateLimiter;
 use WooCommerce\PayPalCommerce\ApiClient\Authentication\UserIdToken;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\BillingPlans;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\BillingSubscriptions;
@@ -134,7 +135,13 @@ return array(
         if (!$is_connected) {
             return new ConnectBearer();
         }
-        return new PayPalBearer($container->get('api.paypal-bearer-cache'), $container->get('api.host'), $container->get('api.key'), $container->get('api.secret'), $container->get('woocommerce.logger.woocommerce'), $container->get('settings.settings-provider'));
+        return new PayPalBearer($container->get('api.paypal-bearer-cache'), $container->get('api.host'), $container->get('api.key'), $container->get('api.secret'), $container->get('woocommerce.logger.woocommerce'), $container->get('settings.settings-provider'), $container->get('api.token-rate-limiter'));
+    },
+    'api.token-rate-limiter' => static function (ContainerInterface $container): TokenRateLimiter {
+        return new TokenRateLimiter($container->get('api.token-rate-limiter-cache'), $container->get('woocommerce.logger.woocommerce'));
+    },
+    'api.token-rate-limiter-cache' => static function (ContainerInterface $container): Cache {
+        return new Cache('ppcp-token-rate-limiter');
     },
     'api.endpoint.partners' => static function (ContainerInterface $container): PartnersEndpoint {
         return new PartnersEndpoint($container->get('api.host'), $container->get('api.bearer'), $container->get('woocommerce.logger.woocommerce'), $container->get('api.factory.sellerstatus'), $container->get('api.partner_merchant_id'), $container->get('api.merchant_id'), $container->get('api.helper.failure-registry'), $container->get('api.partners-seller-status-cache'));
@@ -475,10 +482,10 @@ return array(
         return new Cache('ppcp-id-token-cache');
     },
     'api.user-id-token' => static function (ContainerInterface $container): UserIdToken {
-        return new UserIdToken($container->get('api.host'), $container->get('woocommerce.logger.woocommerce'), $container->get('api.client-credentials'), $container->get('api.user-id-token-cache'));
+        return new UserIdToken($container->get('api.host'), $container->get('woocommerce.logger.woocommerce'), $container->get('api.client-credentials'), $container->get('api.user-id-token-cache'), $container->get('api.token-rate-limiter'));
     },
     'api.sdk-client-token' => static function (ContainerInterface $container): SdkClientToken {
-        return new SdkClientToken($container->get('api.host'), $container->get('woocommerce.logger.woocommerce'), $container->get('api.client-credentials'), $container->get('api.client-credentials-cache'));
+        return new SdkClientToken($container->get('api.host'), $container->get('woocommerce.logger.woocommerce'), $container->get('api.client-credentials'), $container->get('api.client-credentials-cache'), $container->get('api.token-rate-limiter'));
     },
     'api.paypal-host-production' => static function (ContainerInterface $container): string {
         return PAYPAL_API_URL;

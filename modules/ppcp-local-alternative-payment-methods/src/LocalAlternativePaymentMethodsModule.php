@@ -10,6 +10,7 @@ namespace WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods;
 
 use WC_Order;
 use Automattic\WooCommerce\Blocks\Payments\PaymentMethodRegistry;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\OrderStatus;
 use WooCommerce\PayPalCommerce\Assets\AssetGetter;
 use WooCommerce\PayPalCommerce\Settings\Data\Definition\FeaturesDefinition;
 use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
@@ -58,6 +59,26 @@ class LocalAlternativePaymentMethodsModule implements ServiceModule, ExecutableM
     {
         $this->payment_methods = $c->get('ppcp-local-apms.payment-methods');
         $this->register_pwc_feature_flag_filters();
+        $c->get('ppcp-local-apms.oxxo.integration')->init();
+        if ('DE' === $c->get('api.shop.country')) {
+            $c->get('ppcp-local-apms.pui.integration')->init();
+        }
+        add_action('woocommerce_paypal_payments_check_pui_payment_captured', function (int $wc_order_id, string $order_id) use ($c) {
+            $order_endpoint = $c->get('api.endpoint.order');
+            $logger = $c->get('woocommerce.logger.woocommerce');
+            $order = $order_endpoint->order($order_id);
+            $order_status = $order->status();
+            $logger->info("Checking payment captured webhook for WC order #{$wc_order_id}, PayPal order status: " . $order_status->name());
+            $wc_order = wc_get_order($wc_order_id);
+            if (!$wc_order instanceof WC_Order || $wc_order->get_status() !== 'on-hold') {
+                return;
+            }
+            if ($order_status->name() !== OrderStatus::COMPLETED) {
+                $message = __('Could not process WC order because PAYMENT.CAPTURE.COMPLETED webhook not received.', 'woocommerce-paypal-payments');
+                $logger->error($message);
+                $wc_order->update_status('failed', $message);
+            }
+        }, 10, 2);
         // When Local APMs are disabled, none of the following hooks are needed.
         if (!$this->should_add_local_apm_gateways($c)) {
             return;
@@ -174,7 +195,8 @@ class LocalAlternativePaymentMethodsModule implements ServiceModule, ExecutableM
              */
             $payment_methods = apply_filters('woocommerce_paypal_payments_local_apm_payment_methods', $payment_methods);
             $default_disable_funding = $data['url_params']['disable-funding'] ?? '';
-            $disable_funding = array_merge(array_keys($payment_methods), array_filter(explode(',', $default_disable_funding)));
+            $funding_keys = array_keys(array_filter($payment_methods, fn(array $m) => ($m['disable_funding'] ?? \true) !== \false));
+            $disable_funding = array_merge($funding_keys, array_filter(explode(',', $default_disable_funding)));
             $data['url_params']['disable-funding'] = implode(',', array_unique($disable_funding));
             return $data;
         });

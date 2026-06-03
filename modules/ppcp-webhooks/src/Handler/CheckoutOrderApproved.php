@@ -15,11 +15,11 @@ use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\OrderStatus;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
+use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\OXXOGateway;
 use WooCommerce\PayPalCommerce\Session\MemoryWcSession;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
 use WooCommerce\PayPalCommerce\WcGateway\FundingSource\FundingSourceRenderer;
-use WooCommerce\PayPalCommerce\WcGateway\Gateway\OXXO\OXXOGateway;
-use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayUponInvoice\PayUponInvoiceGateway;
+use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\PayUponInvoice\PayUponInvoiceGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\OrderProcessor;
 /**
  * Class CheckoutOrderApproved

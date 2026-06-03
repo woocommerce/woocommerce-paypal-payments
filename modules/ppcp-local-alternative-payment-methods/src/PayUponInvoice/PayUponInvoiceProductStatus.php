@@ -3,10 +3,10 @@
 /**
  * Manage the Seller status.
  *
- * @package WooCommerce\PayPalCommerce\WcGateway\Helper
+ * @package WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\PayUponInvoice
  */
 declare (strict_types=1);
-namespace WooCommerce\PayPalCommerce\WcGateway\Helper;
+namespace WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\PayUponInvoice;
 
 use WooCommerce\PayPalCommerce\ApiClient\Entity\SellerStatusProduct;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\ProductStatus;
