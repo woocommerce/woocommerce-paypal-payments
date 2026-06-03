@@ -191,6 +191,7 @@ describe( 'add-payment-method', () => {
 						'merchant-id': 'test-merchant-id',
 						components: 'buttons,card-fields',
 					},
+					script_attributes: {},
 					save_payment_methods: {
 						id_token: 'test-id-token',
 					},

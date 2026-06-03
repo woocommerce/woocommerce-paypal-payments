@@ -1,11 +1,20 @@
 import merge from 'deepmerge';
 import { keysToCamelCase } from './Utils';
 
-const processUserIdToken = ( config ) => {
+// data-sdk-client-token is reserved exclusively for the vault component's own
+// dedicated SDK namespace (ppcpVaultComponent). Shared SDK loads must not carry it.
+const processSdkToken = ( config ) => {
+	if ( config?.user?.is_logged !== true ) {
+		return {};
+	}
+	if ( config?.vault_component?.is_eligible ) {
+		return {};
+	}
 	const userIdToken = config?.save_payment_methods?.id_token;
-	return userIdToken && config?.user?.is_logged === true
-		? { 'data-user-id-token': userIdToken }
-		: {};
+	if ( userIdToken ) {
+		return { 'data-user-id-token': userIdToken };
+	}
+	return {};
 };
 
 export const processConfig = ( config ) => {
@@ -14,7 +23,7 @@ export const processConfig = ( config ) => {
 		scriptOptions = merge( scriptOptions, config.script_attributes );
 	}
 
-	const userIdTokenOptions = processUserIdToken( config );
+	const sdkTokenOptions = processSdkToken( config );
 
-	return merge.all( [ scriptOptions, userIdTokenOptions ] );
+	return merge.all( [ scriptOptions, sdkTokenOptions ] );
 };
