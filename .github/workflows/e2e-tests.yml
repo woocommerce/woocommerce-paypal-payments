@@ -101,7 +101,7 @@ jobs:
       NODE_VERSION: 22
       PLAYWRIGHT_BROWSER_ARGS: 'chromium --with-deps'
       XRAY_TEST_EXEC_KEY: ${{ inputs.XRAY_TEST_EXEC_KEY }}
-      TESTED_ARTIFACT_SLUG: 'woocommerce-paypal-payments'
+      ARTIFACT_NAME: 'woocommerce-paypal-payments'
       PRE_SCRIPT: |
         composer config repositories.repo-name composer https://repo.packagist.com/inpsyde/payment-gateways/
         composer require inpsyde-mirror/woocommerce-subscriptions
