@@ -23,10 +23,10 @@ use WooCommerce\PayPalCommerce\Button\Helper\Context;
  *    regardless of whether WC recalculates, guaranteeing the session is reset to 0
  *    when the customer is on the cart page with WC_GC UI disabled.
  *
- * 2. store_cart_discount() via woocommerce_after_calculate_totals — runs only when
- *    WC actually recalculates, stores the live discount from WC_GC.
- *    Skipped in AJAX so the session always reflects the
- *    last real page load.
+ * 2. store_cart_discount() via woocommerce_after_calculate_totals — stores the live
+ *    discount from WC_GC when in a checkout context.
+ *    Skipped outside of checkout when the GC UI is disabled on the cart page,
+ *    since the discount is not shown there and should not be charged.
  */
 class WcGiftCardsCompat
 {
