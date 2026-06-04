@@ -448,6 +448,48 @@ class AmountFactoryTest extends TestCase
 		$this->assertSame( '90.00', $result->value_str() );
 	}
 
+	/**
+	 * Plugins like WooCommerce Gift Cards apply discounts via WC_Cart::set_total() rather
+	 * than coupons or fees. The filter lets them contribute the missing amount so the
+	 * PayPal order total matches the actual WC cart total.
+	 */
+	public function testFromWcCartAppliesExtraDiscountFilter(): void
+	{
+		$cart = Mockery::mock( \WC_Cart::class );
+		$cart->shouldReceive( 'get_subtotal' )->andReturn( 100.0 );
+		$cart->shouldReceive( 'get_fee_total' )->andReturn( 0.0 );
+		$cart->shouldReceive( 'get_discount_total' )->andReturn( 0.0 );
+		$cart->shouldReceive( 'get_shipping_total' )->andReturn( 10.0 );
+		$cart->shouldReceive( 'get_total_tax' )->andReturn( 0.0 );
+
+		$woocommerce          = Mockery::mock( \WooCommerce::class );
+		$session              = Mockery::mock( \WC_Session::class );
+		$woocommerce->session = $session;
+		when( 'WC' )->justReturn( $woocommerce );
+		$session->shouldReceive( 'get' )->andReturn( [] );
+
+		\Brain\Monkey\Filters\expectApplied( 'woocommerce_paypal_payments_cart_extra_discount' )
+			->once()
+			->with( 0.0, $cart )
+			->andReturn( 25.0 );
+
+		$result    = $this->testee->from_wc_cart( $cart );
+		$breakdown = $result->breakdown();
+
+		$this->assertSame( '85.00', $result->value_str() );
+		$this->assertSame( '25.00', $breakdown->discount()->value_str() );
+		$this->assertSame(
+			$result->value_str(),
+			number_format(
+				(float) $breakdown->item_total()->value_str()
+				+ (float) $breakdown->shipping()->value_str()
+				+ (float) $breakdown->tax_total()->value_str()
+				- (float) $breakdown->discount()->value_str(),
+				2, '.', ''
+			)
+		);
+	}
+
     /**
      * @dataProvider dataFromPayPalResponse
      * @param $response
