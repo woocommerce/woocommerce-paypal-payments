@@ -27,7 +27,7 @@ use WooCommerce\PayPalCommerce\Button\Helper\Context;
  *
  * 2. store_cart_discount() via woocommerce_after_calculate_totals — runs only when
  *    WC actually recalculates, stores the live discount from WC_GC.
- * 	  Skipped in AJAX so the session always reflects the
+ *    Skipped in AJAX so the session always reflects the
  *    last real page load.
  */
 class WcGiftCardsCompat {
@@ -93,9 +93,8 @@ class WcGiftCardsCompat {
 	}
 
 	/**
-	 * Runs after WC_GC (priority 999) has set the cart total. Computes the gap
-	 * between the standard breakdown total and the actual cart total and stores
-	 * it in the WC session so it is available in subsequent AJAX requests.
+	 * Stores the applied gift card discount when WC recalculates on the checkout
+	 * page. Skips this outside of checkout when gift cards are disabled on cart.
 	 *
 	 * @param \WC_Cart $cart The WooCommerce cart.
 	 */
