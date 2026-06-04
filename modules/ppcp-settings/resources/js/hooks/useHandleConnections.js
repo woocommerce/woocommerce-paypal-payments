@@ -19,6 +19,10 @@ const MESSAGES = {
 		'Login was not successful. Please try again.',
 		'woocommerce-paypal-payments'
 	),
+	ONBOARDING_URL_ERROR: __(
+		'Could not load the PayPal connection. Please try again.',
+		'woocommerce-paypal-payments'
+	),
 };
 
 const ACTIVITIES = {
@@ -38,6 +42,7 @@ export const useHandleOnboardingButton = ( isSandbox ) => {
 	);
 	const { startActivity } = CommonHooks.useBusyState();
 	const { authenticateWithOAuth } = CommonHooks.useAuthentication();
+	const { createErrorNotice } = useNotices();
 	const [ onboardingUrlState, setOnboardingUrl ] = useState( '' );
 	const [ scriptLoaded, setScriptLoaded ] = useState( false );
 	const timerRef = useRef( null );
@@ -49,12 +54,18 @@ export const useHandleOnboardingButton = ( isSandbox ) => {
 			if ( res.success && res.data ) {
 				setOnboardingUrl( res.data );
 			} else {
-				console.error( 'Failed to fetch onboarding URL' );
+				console.error( 'Failed to fetch onboarding URL', res );
+
+				// Stable id so a re-fetch replaces the notice instead of stacking.
+				createErrorNotice(
+					res?.message ?? MESSAGES.ONBOARDING_URL_ERROR,
+					{ id: 'ppcp-onboarding-url-error' }
+				);
 			}
 		};
 
 		fetchOnboardingUrl();
-	}, [ isSandbox, products, options, onboardingUrl ] );
+	}, [ isSandbox, products, options, onboardingUrl, createErrorNotice ] );
 
 	useEffect( () => {
 		/**
