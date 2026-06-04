@@ -19,9 +19,16 @@ use WooCommerce\PayPalCommerce\Button\Helper\Context;
  * supplies the missing amounts to the PayPal order amount breakdown via the
  * extra-discount filters.
  *
- * For the cart, the discount is captured right after WC_GC sets the cart total
- * (priority 1000, after WC_GC at 999) and stored in the WC session so it is
- * available across AJAX requests.
+ * Two complementary hooks manage the WC session value:
+ *
+ * 1. clear_on_cart_page() via template_redirect — fires on every real page load
+ *    regardless of whether WC recalculates, guaranteeing the session is reset to 0
+ *    when the customer is on the cart page with WC_GC UI disabled.
+ *
+ * 2. store_cart_discount() via woocommerce_after_calculate_totals — runs only when
+ *    WC actually recalculates, stores the live discount from WC_GC.
+ * 	  Skipped in AJAX so the session always reflects the
+ *    last real page load.
  */
 class WcGiftCardsCompat {
 
