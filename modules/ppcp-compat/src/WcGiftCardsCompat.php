@@ -9,6 +9,8 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\Compat;
 
+use WooCommerce\PayPalCommerce\Button\Helper\Context;
+
 /**
  * Provides WooCommerce Gift Cards plugin compatibility.
  *
@@ -24,6 +26,18 @@ namespace WooCommerce\PayPalCommerce\Compat;
 class WcGiftCardsCompat {
 
 	private const SESSION_KEY = 'ppcp_gc_cart_discount';
+
+	/**
+	 * @var Context
+	 */
+	private Context $context;
+
+	/**
+	 * @param Context $context The button context helper.
+	 */
+	public function __construct( Context $context ) {
+		$this->context = $context;
+	}
 
 	/**
 	 * Registers the hooks.
@@ -57,6 +71,10 @@ class WcGiftCardsCompat {
 	 */
 	public function store_cart_discount( \WC_Cart $cart ): void {
 		if ( ! function_exists( 'WC_GC' ) || ! WC_GC()->cart || ! WC()->session ) {
+			return;
+		}
+
+		if ( ! $this->context->is_checkout() ) {
 			return;
 		}
 
