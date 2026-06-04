@@ -264,6 +264,7 @@ return array(
 	'settings.rest.login_link'                            => static function ( ContainerInterface $container ): LoginLinkRestEndpoint {
 		return new LoginLinkRestEndpoint(
 			$container->get( 'settings.service.connection-url-generator' ),
+			$container->get( 'woocommerce.logger.woocommerce' )
 		);
 	},
 	'settings.rest.webhooks'                              => static function ( ContainerInterface $container ): WebhookSettingsEndpoint {
