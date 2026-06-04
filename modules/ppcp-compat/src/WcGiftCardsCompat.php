@@ -86,7 +86,7 @@ class WcGiftCardsCompat {
 
 		$context = $this->context->context();
 		if ( in_array( $context, array( 'cart', 'cart-block' ), true )
-			&& 'no' !== get_option( 'wc_gc_disable_cart_ui', 'yes' )
+			&& $this->is_gc_disabled_on_cart()
 		) {
 			WC()->session->set( self::SESSION_KEY, 0.0 );
 		}
@@ -104,7 +104,7 @@ class WcGiftCardsCompat {
 			return;
 		}
 
-		if ( ! $this->context->is_checkout() ) {
+		if ( ! $this->context->is_checkout() && $this->is_gc_disabled_on_cart() ) {
 			return;
 		}
 
@@ -129,6 +129,17 @@ class WcGiftCardsCompat {
 		$gc_discount = (float) ( WC()->session->get( self::SESSION_KEY ) ?? 0.0 );
 
 		return $extra + ( $gc_discount ?: 0.0 );
+	}
+
+	/**
+	 * Whether the WC Gift Cards UI is disabled on the cart page (the default).
+	 * When disabled, the discount is not shown there and should not be applied
+	 * to a PayPal order created from the cart page.
+	 *
+	 * @return bool
+	 */
+	private function is_gc_disabled_on_cart(): bool {
+		return 'no' !== get_option( 'wc_gc_disable_cart_ui', 'yes' );
 	}
 
 	/**
