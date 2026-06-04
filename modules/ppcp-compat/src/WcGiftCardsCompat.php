@@ -8,6 +8,7 @@
 declare (strict_types=1);
 namespace WooCommerce\PayPalCommerce\Compat;
 
+use WooCommerce\PayPalCommerce\Button\Helper\Context;
 /**
  * Provides WooCommerce Gift Cards plugin compatibility.
  *
@@ -16,32 +17,69 @@ namespace WooCommerce\PayPalCommerce\Compat;
  * supplies the missing amounts to the PayPal order amount breakdown via the
  * extra-discount filters.
  *
- * For the cart, the discount is captured right after WC_GC sets the cart total
- * (priority 1000, after WC_GC at 999) and stored in the WC session so it is
- * available across AJAX requests.
+ * Two complementary hooks manage the WC session value:
+ *
+ * 1. clear_on_cart_page() via template_redirect — fires on every real page load
+ *    regardless of whether WC recalculates, guaranteeing the session is reset to 0
+ *    when the customer is on the cart page with WC_GC UI disabled.
+ *
+ * 2. store_cart_discount() via woocommerce_after_calculate_totals — runs only when
+ *    WC actually recalculates, stores the live discount from WC_GC.
+ *    Skipped in AJAX so the session always reflects the
+ *    last real page load.
  */
 class WcGiftCardsCompat
 {
     private const SESSION_KEY = 'ppcp_gc_cart_discount';
     /**
+     * @var Context
+     */
+    private Context $context;
+    /**
+     * @param Context $context The button context helper.
+     */
+    public function __construct(Context $context)
+    {
+        $this->context = $context;
+    }
+    /**
      * Registers the hooks.
      */
     public function register(): void
     {
+        add_action('template_redirect', array($this, 'clear_on_cart_page'));
         add_action('woocommerce_after_calculate_totals', array($this, 'store_cart_discount'), 1000);
         add_filter('woocommerce_paypal_payments_cart_extra_discount', array($this, 'cart_extra_discount'), 10, 2);
         add_filter('woocommerce_paypal_payments_order_extra_discount', array($this, 'order_extra_discount'), 10, 2);
     }
     /**
-     * Runs after WC_GC (priority 999) has set the cart total. Computes the gap
-     * between the standard breakdown total and the actual cart total and stores
-     * it in the WC session so it is available in subsequent AJAX requests.
+     * Clears the stored discount on every cart page load (template_redirect fires
+     * unconditionally, even when WC uses cached totals). This guarantees the session
+     * reflects the full price the customer sees when WC_GC is configured to hide its
+     * discount on the cart page.
+     */
+    public function clear_on_cart_page(): void
+    {
+        if (!function_exists('WC_GC') || !WC()->session) {
+            return;
+        }
+        $context = $this->context->context();
+        if (in_array($context, array('cart', 'cart-block'), \true) && $this->is_gc_disabled_on_cart()) {
+            WC()->session->set(self::SESSION_KEY, 0.0);
+        }
+    }
+    /**
+     * Stores the applied gift card discount when WC recalculates on the checkout
+     * page. Skips this outside of checkout when gift cards are disabled on cart.
      *
      * @param \WC_Cart $cart The WooCommerce cart.
      */
     public function store_cart_discount(\WC_Cart $cart): void
     {
         if (!function_exists('WC_GC') || !WC_GC()->cart || !WC()->session) {
+            return;
+        }
+        if (!$this->context->is_checkout() && $this->is_gc_disabled_on_cart()) {
             return;
         }
         $totals = WC_GC()->cart->get_account_totals_breakdown();
@@ -62,6 +100,17 @@ class WcGiftCardsCompat
         }
         $gc_discount = (float) (WC()->session->get(self::SESSION_KEY) ?? 0.0);
         return $extra + ($gc_discount ?: 0.0);
+    }
+    /**
+     * Whether the WC Gift Cards UI is disabled on the cart page (the default).
+     * When disabled, the discount is not shown there and should not be applied
+     * to a PayPal order created from the cart page.
+     *
+     * @return bool
+     */
+    private function is_gc_disabled_on_cart(): bool
+    {
+        return 'no' !== get_option('wc_gc_disable_cart_ui', 'yes');
     }
     /**
      * Returns the total WC Gift Cards discount applied to the order.
