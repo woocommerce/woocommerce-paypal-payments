@@ -3,15 +3,16 @@
 /**
  * Helper methods for PUI.
  *
- * @package WooCommerce\PayPalCommerce\WcGateway\Helper
+ * @package WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\PayUponInvoice
  */
 declare (strict_types=1);
-namespace WooCommerce\PayPalCommerce\WcGateway\Helper;
+namespace WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\PayUponInvoice;
 
 use WC_Customer;
 use WC_Order;
 use WC_Order_Item_Product;
 use WooCommerce\PayPalCommerce\Settings\Data\PaymentSettings;
+use WooCommerce\PayPalCommerce\WcGateway\Helper\CheckoutHelper;
 /**
  * Class PayUponInvoiceHelper
  */
@@ -42,7 +43,7 @@ class PayUponInvoiceHelper
      * @param string          $api_shop_country The api shop country.
      * @param PaymentSettings $payment_settings The payment settings.
      */
-    public function __construct(\WooCommerce\PayPalCommerce\WcGateway\Helper\CheckoutHelper $checkout_helper, string $api_shop_country, PaymentSettings $payment_settings)
+    public function __construct(CheckoutHelper $checkout_helper, string $api_shop_country, PaymentSettings $payment_settings)
     {
         $this->checkout_helper = $checkout_helper;
         $this->api_shop_country = $api_shop_country;

@@ -15,8 +15,8 @@ use WooCommerce\PayPalCommerce\Googlepay\GooglePayGateway;
 use WooCommerce\PayPalCommerce\Settings\Data\PaymentSettings;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CardButtonGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
-use WooCommerce\PayPalCommerce\WcGateway\Gateway\OXXO\OXXO;
-use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayUponInvoice\PayUponInvoiceGateway;
+use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\OXXOGateway;
+use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\PayUponInvoice\PayUponInvoiceGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\CardPaymentsConfiguration;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\DCCProductStatus;
 /**
@@ -53,7 +53,7 @@ class PaymentSettingsMigration implements \WooCommerce\PayPalCommerce\Settings\S
         $this->dcc_configuration = $dcc_configuration;
         $pui_option = get_option('woocommerce_' . PayUponInvoiceGateway::ID . '_settings', array());
         $this->legacy_pui_enabled = is_array($pui_option) && ($pui_option['enabled'] ?? 'no') === 'yes';
-        $oxxo_option = get_option('woocommerce_' . OXXO::ID . '_settings', array());
+        $oxxo_option = get_option('woocommerce_' . OXXOGateway::ID . '_settings', array());
         $this->legacy_oxxo_enabled = is_array($oxxo_option) && ($oxxo_option['enabled'] ?? 'no') === 'yes';
     }
     public function migrate(): void
@@ -95,7 +95,7 @@ class PaymentSettingsMigration implements \WooCommerce\PayPalCommerce\Settings\S
             $this->payment_settings->toggle_method_state(PayUponInvoiceGateway::ID, \true);
         }
         if ($this->legacy_oxxo_enabled) {
-            $this->payment_settings->toggle_method_state(OXXO::ID, \true);
+            $this->payment_settings->toggle_method_state(OXXOGateway::ID, \true);
         }
         if (isset($this->settings['dcc_name_on_card'])) {
             $this->payment_settings->set_cardholder_name($this->settings['dcc_name_on_card'] === 'yes');

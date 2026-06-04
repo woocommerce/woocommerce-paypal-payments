@@ -22,6 +22,10 @@ class PayPalBearer implements \WooCommerce\PayPalCommerce\ApiClient\Authenticati
     use RequestTrait;
     const CACHE_KEY = 'ppcp-bearer';
     /**
+     * The rate-limiter scope key for the client-credentials token.
+     */
+    const RATE_LIMIT_SCOPE = 'bearer';
+    /**
      * The settings.
      *
      * @var ?SettingsProvider
@@ -57,17 +61,8 @@ class PayPalBearer implements \WooCommerce\PayPalCommerce\ApiClient\Authenticati
      * @var LoggerInterface
      */
     private $logger;
-    /**
-     * PayPalBearer constructor.
-     *
-     * @param Cache             $cache The cache.
-     * @param string            $host The host.
-     * @param string            $key The key.
-     * @param string            $secret The secret.
-     * @param LoggerInterface   $logger The logger.
-     * @param ?SettingsProvider $settings The settings.
-     */
-    public function __construct(Cache $cache, string $host, string $key, string $secret, LoggerInterface $logger, ?SettingsProvider $settings)
+    private \WooCommerce\PayPalCommerce\ApiClient\Authentication\TokenRateLimiter $rate_limiter;
+    public function __construct(Cache $cache, string $host, string $key, string $secret, LoggerInterface $logger, ?SettingsProvider $settings, \WooCommerce\PayPalCommerce\ApiClient\Authentication\TokenRateLimiter $rate_limiter)
     {
         $this->cache = $cache;
         $this->host = $host;
@@ -75,6 +70,7 @@ class PayPalBearer implements \WooCommerce\PayPalCommerce\ApiClient\Authenticati
         $this->secret = $secret;
         $this->logger = $logger;
         $this->settings = $settings;
+        $this->rate_limiter = $rate_limiter;
     }
     /**
      * Returns a bearer token.
@@ -84,12 +80,19 @@ class PayPalBearer implements \WooCommerce\PayPalCommerce\ApiClient\Authenticati
      */
     public function bearer(): Token
     {
-        try {
-            $bearer = Token::from_json((string) $this->cache->get(self::CACHE_KEY));
-            return $bearer->is_valid() ? $bearer : $this->newBearer();
-        } catch (RuntimeException $error) {
-            return $this->newBearer();
+        $cached = (string) $this->cache->get(self::CACHE_KEY);
+        if ('' !== $cached) {
+            try {
+                $bearer = Token::from_json($cached);
+                if ($bearer->is_valid()) {
+                    return $bearer;
+                }
+            } catch (RuntimeException $error) {
+                // Cached token is corrupt/unparsable; discard it and fetch a fresh one.
+                $this->logger->debug('Discarding unparsable cached PayPal bearer token: ' . $error->getMessage());
+            }
         }
+        return $this->newBearer();
     }
     /**
      * Retrieves the client key for authentication.
@@ -127,19 +130,34 @@ class PayPalBearer implements \WooCommerce\PayPalCommerce\ApiClient\Authenticati
     {
         $key = $this->get_key();
         $secret = $this->get_secret();
+        if ('' === $key || '' === $secret) {
+            throw new RuntimeException('Cannot request a PayPal access token without a client ID and secret.');
+        }
+        $wait = $this->rate_limiter->retry_after_seconds(self::RATE_LIMIT_SCOPE);
+        if (null !== $wait) {
+            throw new RuntimeException(sprintf('PayPal token requests are paused for %d more seconds after a previous failure.', $wait));
+        }
         $url = trailingslashit($this->host) . 'v1/oauth2/token?grant_type=client_credentials';
         $args = array('method' => 'POST', 'headers' => array(
             // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode
             'Authorization' => 'Basic ' . base64_encode($key . ':' . $secret),
         ));
         $response = $this->request($url, $args);
+        // A connection error (no response received) may be a momentary blip; retry
+        // once so a single network hiccup doesn't arm the cool-down.
+        if (is_wp_error($response)) {
+            $response = $this->request($url, $args);
+        }
         if (is_wp_error($response) || wp_remote_retrieve_response_code($response) !== 200) {
-            $error = new RuntimeException(__('Could not create token.', 'woocommerce-paypal-payments'));
+            $status_code = is_wp_error($response) ? 0 : (int) wp_remote_retrieve_response_code($response);
+            $this->rate_limiter->register_failure(self::RATE_LIMIT_SCOPE, $status_code, $response);
+            $error = new RuntimeException('Could not create token.');
             $this->logger->warning($error->getMessage(), array('args' => $args, 'response' => $response));
             throw $error;
         }
         $token = Token::from_json($response['body']);
         $this->cache->set(self::CACHE_KEY, $token->as_json());
+        $this->rate_limiter->clear(self::RATE_LIMIT_SCOPE);
         return $token;
     }
 }

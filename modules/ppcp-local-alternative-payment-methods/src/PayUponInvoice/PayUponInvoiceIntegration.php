@@ -3,10 +3,10 @@
 /**
  * PUI integration.
  *
- * @package WooCommerce\PayPalCommerce\WcGateway\Gateway\PayUponInvoice
+ * @package WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\PayUponInvoice
  */
 declare (strict_types=1);
-namespace WooCommerce\PayPalCommerce\WcGateway\Gateway\PayUponInvoice;
+namespace WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\PayUponInvoice;
 
 use Automattic\WooCommerce\Internal\DataStores\Orders\CustomOrdersTableController;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Log\LoggerInterface;
@@ -15,52 +15,47 @@ use WC_Order;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PayUponInvoiceOrderEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\CaptureFactory;
 use WooCommerce\PayPalCommerce\Button\Exception\RuntimeException;
+use WooCommerce\PayPalCommerce\Settings\Data\PaymentSettings;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\CheckoutHelper;
-use WooCommerce\PayPalCommerce\Settings\Data\PaymentSettings;
-use WooCommerce\PayPalCommerce\WcGateway\Helper\PayUponInvoiceHelper;
-use WooCommerce\PayPalCommerce\WcGateway\Helper\PayUponInvoiceProductStatus;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\TransactionIdHandlingTrait;
 use WP_Error;
 /**
- * Class PayUponInvoice.
+ * Class PayUponInvoiceIntegration.
  */
-class PayUponInvoice
+class PayUponInvoiceIntegration
 {
     use TransactionIdHandlingTrait;
     protected PayUponInvoiceOrderEndpoint $pui_order_endpoint;
     protected LoggerInterface $logger;
-    protected PayUponInvoiceHelper $pui_helper;
     protected bool $is_connected;
-    protected bool $is_settings_page;
-    protected PayUponInvoiceProductStatus $pui_product_status;
+    protected \WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\PayUponInvoice\PayUponInvoiceProductStatus $pui_product_status;
+    protected \WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\PayUponInvoice\PayUponInvoiceHelper $pui_helper;
     protected CheckoutHelper $checkout_helper;
     protected CaptureFactory $capture_factory;
     protected PaymentSettings $payment_settings;
     /**
-     * PayUponInvoice constructor.
+     * PayUponInvoiceIntegration constructor.
      *
      * @param PayUponInvoiceOrderEndpoint $pui_order_endpoint The PUI order endpoint.
      * @param LoggerInterface             $logger The logger.
-     * @param bool                        $is_connected Whether onboarding was completed.
-     * @param bool                        $is_settings_page Whether current page is the settings page.
      * @param PayUponInvoiceProductStatus $pui_product_status The PUI product status.
      * @param PayUponInvoiceHelper        $pui_helper The PUI helper.
      * @param CheckoutHelper              $checkout_helper The checkout helper.
      * @param CaptureFactory              $capture_factory The capture factory.
      * @param PaymentSettings             $payment_settings The payment settings.
+     * @param bool                        $is_connected Whether onboarding was completed.
      */
-    public function __construct(PayUponInvoiceOrderEndpoint $pui_order_endpoint, LoggerInterface $logger, bool $is_connected, bool $is_settings_page, PayUponInvoiceProductStatus $pui_product_status, PayUponInvoiceHelper $pui_helper, CheckoutHelper $checkout_helper, CaptureFactory $capture_factory, PaymentSettings $payment_settings)
+    public function __construct(PayUponInvoiceOrderEndpoint $pui_order_endpoint, LoggerInterface $logger, \WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\PayUponInvoice\PayUponInvoiceProductStatus $pui_product_status, \WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\PayUponInvoice\PayUponInvoiceHelper $pui_helper, CheckoutHelper $checkout_helper, CaptureFactory $capture_factory, PaymentSettings $payment_settings, bool $is_connected)
     {
         $this->pui_order_endpoint = $pui_order_endpoint;
         $this->logger = $logger;
-        $this->is_connected = $is_connected;
-        $this->is_settings_page = $is_settings_page;
         $this->pui_product_status = $pui_product_status;
         $this->pui_helper = $pui_helper;
         $this->checkout_helper = $checkout_helper;
         $this->capture_factory = $capture_factory;
         $this->payment_settings = $payment_settings;
+        $this->is_connected = $is_connected;
     }
     /**
      * Initializes PUI integration.
@@ -69,7 +64,7 @@ class PayUponInvoice
     {
         add_action('woocommerce_paypal_payments_payment_capture_completed_webhook_handler', function (WC_Order $wc_order, string $order_id) {
             try {
-                if ($wc_order->get_payment_method() !== \WooCommerce\PayPalCommerce\WcGateway\Gateway\PayUponInvoice\PayUponInvoiceGateway::ID) {
+                if ($wc_order->get_payment_method() !== \WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\PayUponInvoice\PayUponInvoiceGateway::ID) {
                     return;
                 }
                 $order = $this->pui_order_endpoint->order($order_id);
@@ -101,7 +96,7 @@ class PayUponInvoice
              * @psalm-suppress MissingClosureParamType
              */
             function (WC_Order $order, bool $sent_to_admin, bool $plain_text, $email) {
-                if (!$sent_to_admin && \WooCommerce\PayPalCommerce\WcGateway\Gateway\PayUponInvoice\PayUponInvoiceGateway::ID === $order->get_payment_method() && $order->has_status('processing') && $email instanceof WC_Email && $email->id === 'customer_processing_order') {
+                if (!$sent_to_admin && \WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\PayUponInvoice\PayUponInvoiceGateway::ID === $order->get_payment_method() && $order->has_status('processing') && $email instanceof WC_Email && $email->id === 'customer_processing_order') {
                     $this->logger->info("Adding Ratepay payment instructions to email for order #{$order->get_id()}.");
                     $instructions = $order->get_meta('ppcp_ratepay_payment_instructions_payment_reference');
                     $merchant_name = $this->payment_settings->get_pui_brand_name();
@@ -155,7 +150,7 @@ class PayUponInvoice
                 if (!is_string($description) || !is_string($id)) {
                     return $description;
                 }
-                if (\WooCommerce\PayPalCommerce\WcGateway\Gateway\PayUponInvoice\PayUponInvoiceGateway::ID === $id) {
+                if (\WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\PayUponInvoice\PayUponInvoiceGateway::ID === $id) {
                     ob_start();
                     $site_country_code = explode('-', get_bloginfo('language'))[0] ?? '';
                     echo '<div style="padding: 20px 0;">';
@@ -202,7 +197,7 @@ class PayUponInvoice
                 }
                 // phpcs:ignore WordPress.Security.NonceVerification.Missing
                 $payment_method = wc_clean(wp_unslash($_POST['payment_method'] ?? ''));
-                if (\WooCommerce\PayPalCommerce\WcGateway\Gateway\PayUponInvoice\PayUponInvoiceGateway::ID !== $payment_method) {
+                if (\WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\PayUponInvoice\PayUponInvoiceGateway::ID !== $payment_method) {
                     return;
                 }
                 if ('DE' !== $fields['billing_country']) {
@@ -215,6 +210,7 @@ class PayUponInvoice
                 }
                 // phpcs:ignore WordPress.Security.NonceVerification.Missing
                 $national_number = wc_clean(wp_unslash($_POST['billing_phone'] ?? ''));
+                $national_number = is_string($national_number) ? $national_number : '';
                 if (!$national_number) {
                     $errors->add('validation', __('Phone field cannot be empty.', 'woocommerce-paypal-payments'));
                 }
@@ -240,16 +236,16 @@ class PayUponInvoice
                     return $methods;
                 }
                 if (!$this->pui_product_status->is_active() || !$this->pui_helper->is_checkout_ready_for_pui()) {
-                    unset($methods[\WooCommerce\PayPalCommerce\WcGateway\Gateway\PayUponInvoice\PayUponInvoiceGateway::ID]);
+                    unset($methods[\WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\PayUponInvoice\PayUponInvoiceGateway::ID]);
                 }
                 if (isset($_GET['pay_for_order']) && $_GET['pay_for_order'] === 'true' && !$this->pui_helper->is_pay_for_order_ready_for_pui()) {
-                    unset($methods[\WooCommerce\PayPalCommerce\WcGateway\Gateway\PayUponInvoice\PayUponInvoiceGateway::ID]);
+                    unset($methods[\WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\PayUponInvoice\PayUponInvoiceGateway::ID]);
                 }
                 return $methods;
             }
         );
         add_action('woocommerce_update_options_checkout_ppcp-pay-upon-invoice-gateway', function () {
-            $gateway = WC()->payment_gateways()->payment_gateways()[\WooCommerce\PayPalCommerce\WcGateway\Gateway\PayUponInvoice\PayUponInvoiceGateway::ID];
+            $gateway = WC()->payment_gateways()->payment_gateways()[\WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\PayUponInvoice\PayUponInvoiceGateway::ID];
             if ($gateway && $gateway->get_option('customer_service_instructions') === '') {
                 $gateway->update_option('enabled', 'no');
             }
@@ -266,7 +262,7 @@ class PayUponInvoice
                 // phpcs:ignore WordPress.Security.NonceVerification.Recommended
                 $post_id = wc_clean(wp_unslash($_GET['id'] ?? $_GET['post'] ?? ''));
                 $order = wc_get_order($post_id);
-                if ($order instanceof WC_Order && $order->get_payment_method() === \WooCommerce\PayPalCommerce\WcGateway\Gateway\PayUponInvoice\PayUponInvoiceGateway::ID) {
+                if ($order instanceof WC_Order && $order->get_payment_method() === \WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\PayUponInvoice\PayUponInvoiceGateway::ID) {
                     $instructions = $order->get_meta('ppcp_ratepay_payment_instructions_payment_reference');
                     if ($instructions) {
                         add_meta_box('ppcp_pui_ratepay_payment_instructions', __('RatePay payment instructions', 'woocommerce-paypal-payments'), function () use ($instructions) {

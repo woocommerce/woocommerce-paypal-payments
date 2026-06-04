@@ -8,6 +8,8 @@
 declare (strict_types=1);
 namespace WooCommerce\PayPalCommerce\Settings\Endpoint;
 
+use Exception;
+use WooCommerce\PayPalCommerce\Vendor\Psr\Log\LoggerInterface;
 use WP_REST_Server;
 use WP_REST_Response;
 use WP_REST_Request;
@@ -26,24 +28,14 @@ class LoginLinkRestEndpoint extends \WooCommerce\PayPalCommerce\Settings\Endpoin
 {
     /**
      * The base path for this REST controller.
-     *
-     * @var string
      */
     protected $rest_base = 'login_link';
-    /**
-     * Login-URL generator.
-     *
-     * @var ConnectionUrlGenerator
-     */
     protected ConnectionUrlGenerator $url_generator;
-    /**
-     * Constructor.
-     *
-     * @param ConnectionUrlGenerator $url_generator Login-URL generator.
-     */
-    public function __construct(ConnectionUrlGenerator $url_generator)
+    protected LoggerInterface $logger;
+    public function __construct(ConnectionUrlGenerator $url_generator, LoggerInterface $logger)
     {
         $this->url_generator = $url_generator;
+        $this->logger = $logger;
     }
     /**
      * Configure REST API routes.
@@ -78,8 +70,9 @@ class LoginLinkRestEndpoint extends \WooCommerce\PayPalCommerce\Settings\Endpoin
         try {
             $url = $this->url_generator->generate($products, $flags, $use_sandbox);
             return $this->return_success($url);
-        } catch (\Exception $e) {
-            return $this->return_error($e->getMessage());
+        } catch (Exception $e) {
+            $this->logger->error('Failed to generate onboarding URL: ' . $e->getMessage());
+            return $this->return_error(__('Could not start the PayPal connection. Please try again or check logs.', 'woocommerce-paypal-payments'));
         }
     }
 }

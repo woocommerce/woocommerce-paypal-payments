@@ -16,7 +16,6 @@ use WooCommerce\PayPalCommerce\Session\SessionHandler;
 use WooCommerce\PayPalCommerce\WcGateway\FraudNet\FraudNet;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\GatewayRepository;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
-use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayUponInvoice\PayUponInvoiceGateway;
 /**
  * Class FraudNetAssets
  */
@@ -101,9 +100,10 @@ class FraudNetAssets
         if (empty($this->enabled_ppcp_gateways())) {
             return \false;
         }
-        $is_pui_gateway_enabled = in_array(PayUponInvoiceGateway::ID, $this->enabled_ppcp_gateways(), \true);
+        $is_pui_gateway_enabled = in_array('ppcp-pay-upon-invoice-gateway', $this->enabled_ppcp_gateways(), \true);
         $is_only_standard_gateway_enabled = $this->enabled_ppcp_gateways() === array(PayPalGateway::ID);
-        if ($this->context->context() !== 'checkout' || $is_only_standard_gateway_enabled) {
+        $is_checkout_context = in_array($this->context->context(), array('checkout', 'checkout-block'), \true);
+        if (!$is_checkout_context || $is_only_standard_gateway_enabled) {
             return $this->is_fraudnet_enabled && $this->are_buttons_enabled_for_context();
         }
         return $is_pui_gateway_enabled ? \true : $this->is_fraudnet_enabled;

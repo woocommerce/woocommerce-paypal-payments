@@ -1,79 +1,18 @@
 <?php
 
-/**
- * OXXO integration.
- *
- * @package WooCommerce\PayPalCommerce\WcGateway\Gateway\OXXO
- */
 declare (strict_types=1);
-namespace WooCommerce\PayPalCommerce\WcGateway\Gateway\OXXO;
+namespace WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods;
 
 use Automattic\WooCommerce\Internal\DataStores\Orders\CustomOrdersTableController;
-use WooCommerce\PayPalCommerce\Vendor\Psr\Log\LoggerInterface;
 use WC_Order;
-use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
-use WooCommerce\PayPalCommerce\ApiClient\Factory\CaptureFactory;
-use WooCommerce\PayPalCommerce\Assets\AssetGetter;
-use WooCommerce\PayPalCommerce\Button\Exception\RuntimeException;
-use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\CheckoutHelper;
-/**
- * Class OXXO.
- */
-class OXXO
+class OXXOIntegration
 {
-    public const ID = 'ppcp-oxxo-gateway';
-    /**
-     * The checkout helper.
-     *
-     * @var CheckoutHelper
-     */
-    protected $checkout_helper;
-    private AssetGetter $asset_getter;
-    /**
-     * The asset version.
-     *
-     * @var string
-     */
-    protected $asset_version;
-    /**
-     * The order endpoint.
-     *
-     * @var OrderEndpoint
-     */
-    protected $order_endpoint;
-    /**
-     * The logger.
-     *
-     * @var LoggerInterface
-     */
-    protected $logger;
-    /**
-     * The capture factory.
-     *
-     * @var CaptureFactory
-     */
-    protected $capture_factory;
-    /**
-     * @param CheckoutHelper  $checkout_helper The checkout helper.
-     * @param AssetGetter     $asset_getter
-     * @param string          $asset_version The asset version.
-     * @param OrderEndpoint   $order_endpoint The order endpoint.
-     * @param LoggerInterface $logger The logger.
-     * @param CaptureFactory  $capture_factory The capture factory.
-     */
-    public function __construct(CheckoutHelper $checkout_helper, AssetGetter $asset_getter, string $asset_version, OrderEndpoint $order_endpoint, LoggerInterface $logger, CaptureFactory $capture_factory)
+    private CheckoutHelper $checkout_helper;
+    public function __construct(CheckoutHelper $checkout_helper)
     {
         $this->checkout_helper = $checkout_helper;
-        $this->asset_getter = $asset_getter;
-        $this->asset_version = $asset_version;
-        $this->order_endpoint = $order_endpoint;
-        $this->logger = $logger;
-        $this->capture_factory = $capture_factory;
     }
-    /**
-     * Initializes OXXO integration.
-     */
     public function init(): void
     {
         add_filter(
@@ -88,12 +27,11 @@ class OXXO
                     return $methods;
                 }
                 if (!$this->checkout_allowed_for_oxxo()) {
-                    unset($methods[\WooCommerce\PayPalCommerce\WcGateway\Gateway\OXXO\OXXOGateway::ID]);
+                    unset($methods[\WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\OXXOGateway::ID]);
                 }
                 return $methods;
             }
         );
-        add_action('wp_enqueue_scripts', array($this, 'register_assets'));
         add_filter(
             'woocommerce_thankyou_order_received_text',
             /**
@@ -108,7 +46,7 @@ class OXXO
                 $payer_action = $order->get_meta('ppcp_oxxo_payer_action') ?? '';
                 $button = '';
                 if ($payer_action) {
-                    $button = '<p><a id="ppcp-oxxo-payer-action" class="button" href="' . $payer_action . '" target="_blank">' . esc_html__('See OXXO voucher', 'woocommerce-paypal-payments') . '</a></p>';
+                    $button = '<p><a id="ppcp-oxxo-payer-action" class="button" href="' . esc_url($payer_action) . '" target="_blank">' . esc_html__('See OXXO voucher', 'woocommerce-paypal-payments') . '</a></p>';
                 }
                 return $message . ' ' . $button;
             },
@@ -126,7 +64,7 @@ class OXXO
                 if (!$order instanceof WC_Order || !is_bool($sent_to_admin)) {
                     return;
                 }
-                if (!$sent_to_admin && $order->get_payment_method() === \WooCommerce\PayPalCommerce\WcGateway\Gateway\OXXO\OXXOGateway::ID && $order->has_status('on-hold')) {
+                if (!$sent_to_admin && $order->get_payment_method() === \WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\OXXOGateway::ID && $order->has_status('on-hold')) {
                     $payer_action = $order->get_meta('ppcp_oxxo_payer_action') ?? '';
                     if ($payer_action) {
                         echo '<p><a class="button" href="' . esc_url($payer_action) . '" target="_blank">' . esc_html__('See OXXO voucher', 'woocommerce-paypal-payments') . '</a></p>';
@@ -137,7 +75,7 @@ class OXXO
             2
         );
         add_filter('ppcp_payment_capture_reversed_webhook_update_status_note', function (string $note, WC_Order $wc_order, string $event_type): string {
-            if ($wc_order->get_payment_method() === \WooCommerce\PayPalCommerce\WcGateway\Gateway\OXXO\OXXOGateway::ID && $event_type === 'PAYMENT.CAPTURE.DENIED') {
+            if ($wc_order->get_payment_method() === \WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\OXXOGateway::ID && $event_type === 'PAYMENT.CAPTURE.DENIED') {
                 $note = __('OXXO voucher has expired or the buyer didn\'t complete the payment successfully.', 'woocommerce-paypal-payments');
             }
             return $note;
@@ -154,7 +92,7 @@ class OXXO
                 // phpcs:ignore WordPress.Security.NonceVerification.Recommended
                 $post_id = wc_clean(wp_unslash($_GET['id'] ?? $_GET['post'] ?? ''));
                 $order = wc_get_order($post_id);
-                if ($order instanceof WC_Order && $order->get_payment_method() === \WooCommerce\PayPalCommerce\WcGateway\Gateway\OXXO\OXXOGateway::ID) {
+                if ($order instanceof WC_Order && $order->get_payment_method() === \WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\OXXOGateway::ID) {
                     $payer_action = $order->get_meta('ppcp_oxxo_payer_action');
                     if ($payer_action) {
                         add_meta_box('ppcp_oxxo_payer_action', __('OXXO Voucher/Ticket', 'woocommerce-paypal-payments'), function () use ($payer_action) {
@@ -165,48 +103,14 @@ class OXXO
             }
         });
         add_action('woocommerce_order_details_before_order_table_items', function (WC_Order $order) {
-            if ($order->get_payment_method() === \WooCommerce\PayPalCommerce\WcGateway\Gateway\OXXO\OXXOGateway::ID) {
+            if ($order->get_payment_method() === \WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\OXXOGateway::ID) {
                 $payer_action = $order->get_meta('ppcp_oxxo_payer_action');
                 if ($payer_action) {
                     echo '<p><a class="button" href="' . esc_url($payer_action) . '" target="_blank">' . esc_html__('See OXXO voucher', 'woocommerce-paypal-payments') . '</a></p>';
                 }
             }
         });
-        /**
-         * Process PayPal fees
-         */
-        add_action('woocommerce_paypal_payments_payment_capture_completed_webhook_handler', function (WC_Order $wc_order, string $order_id) {
-            try {
-                if ($wc_order->get_payment_method() !== \WooCommerce\PayPalCommerce\WcGateway\Gateway\OXXO\OXXO::ID) {
-                    return;
-                }
-                $order = $this->order_endpoint->order($order_id);
-                $payments = $order->purchase_units()[0]->payments();
-                if (!$payments) {
-                    return;
-                }
-                $capture = $payments->captures()[0] ?? null;
-                if ($capture) {
-                    $breakdown = $capture->seller_receivable_breakdown();
-                    if ($breakdown) {
-                        $wc_order->update_meta_data(PayPalGateway::FEES_META_KEY, $breakdown->to_array());
-                        $paypal_fee = $breakdown->paypal_fee();
-                        if ($paypal_fee) {
-                            $wc_order->update_meta_data('PayPal Transaction Fee', (string) $paypal_fee->value());
-                        }
-                        $wc_order->save_meta_data();
-                    }
-                }
-            } catch (RuntimeException $exception) {
-                $this->logger->error($exception->getMessage());
-            }
-        }, 10, 2);
     }
-    /**
-     * Checks if checkout is allowed for OXXO.
-     *
-     * @return bool
-     */
     private function checkout_allowed_for_oxxo(): bool
     {
         if ('MXN' !== get_woocommerce_currency()) {
@@ -221,16 +125,5 @@ class OXXO
             return \false;
         }
         return \true;
-    }
-    /**
-     * Register OXXO assets.
-     */
-    public function register_assets(): void
-    {
-        $gateway_settings = get_option('woocommerce_ppcp-oxxo-gateway_settings');
-        $gateway_enabled = $gateway_settings['enabled'] ?? '';
-        if ($gateway_enabled === 'yes' && is_checkout()) {
-            wp_enqueue_script('ppcp-oxxo', $this->asset_getter->get_asset_url('oxxo.js'), array(), $this->asset_version, \true);
-        }
     }
 }

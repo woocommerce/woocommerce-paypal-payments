@@ -3,10 +3,10 @@
 /**
  * PUI payment source factory.
  *
- * @package WooCommerce\PayPalCommerce\WcGateway\Gateway\PayUponInvoice
+ * @package WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\PayUponInvoice
  */
 declare (strict_types=1);
-namespace WooCommerce\PayPalCommerce\WcGateway\Gateway\PayUponInvoice;
+namespace WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\PayUponInvoice;
 
 use WC_Order;
 use WooCommerce\PayPalCommerce\Settings\Data\PaymentSettings;
@@ -31,13 +31,13 @@ class PaymentSourceFactory
         $this->payment_settings = $payment_settings;
     }
     /**
-     * Create a PUI payment source from a WC order.
+     * Create the pay_upon_invoice payment source data from a WC order.
      *
      * @param WC_Order $order The WC order.
      * @param string   $birth_date The birth date.
-     * @return PaymentSource
+     * @return array
      */
-    public function from_wc_order(WC_Order $order, string $birth_date)
+    public function from_wc_order(WC_Order $order, string $birth_date): array
     {
         $address = $order->get_address();
         // phpcs:ignore WordPress.Security.NonceVerification.Missing
@@ -55,6 +55,7 @@ class PaymentSourceFactory
         $merchant_name = $this->payment_settings->get_pui_brand_name();
         $logo_url = $this->payment_settings->get_pui_logo_url();
         $customer_service_instructions = $this->payment_settings->get_pui_customer_service_instructions();
-        return new \WooCommerce\PayPalCommerce\WcGateway\Gateway\PayUponInvoice\PaymentSource($address['first_name'] ?? '', $address['last_name'] ?? '', $address['email'] ?? '', $birth_date, preg_replace('/[^0-9]/', '', $phone) ?? '', $phone_country_code, $address['address_1'] ?? '', $address['city'] ?? '', $address['postcode'] ?? '', $address['country'] ?? '', 'de-DE', $merchant_name, $logo_url, array($customer_service_instructions));
+        $payment_source = new \WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\PayUponInvoice\PaymentSource($address['first_name'] ?? '', $address['last_name'] ?? '', $address['email'] ?? '', $birth_date, preg_replace('/[^0-9]/', '', $phone) ?? '', $phone_country_code, $address['address_1'] ?? '', $address['city'] ?? '', $address['postcode'] ?? '', $address['country'] ?? '', 'de-DE', $merchant_name, $logo_url, array($customer_service_instructions));
+        return $payment_source->to_array();
     }
 }
