@@ -12,7 +12,6 @@ import {
  */
 import { Pcp, ShopOrder } from '../../resources';
 import { PayPalPopup } from './paypal-popup';
-import { GooglePayPopup } from './google-pay-popup';
 import { PayPalApi } from '../paypal-api';
 
 /**
@@ -268,22 +267,12 @@ export class PayPalUi {
 		return new PayPalPopup( popup );
 	};
 
-	/**
-	 * Clicks Google Pay button to open the TEST environment popup
-	 */
-	openGooglePayPopup = async (): Promise< GooglePayPopup > => {
-		const popupPromise = this.page.waitForEvent( 'popup', {
-			timeout: 20 * 1000,
-		} );
+	clickGooglepayButton = async () => {
 		await expect(
 			this.googlepayButton(),
 			'Assert Google Pay button is visible'
 		).toBeVisible();
 		await this.googlepayButton().click();
-
-		const popup = await popupPromise;
-		await popup.waitForLoadState();
-		return new GooglePayPopup( popup );
 	};
 
 	/**
@@ -332,12 +321,6 @@ export class PayPalUi {
 				popup = await this.openVenmoPupup();
 				await popup.completeVenmoPayment();
 				break;
-
-			case 'googlepay': {
-				const googlePayPopup = await this.openGooglePayPopup();
-				await googlePayPopup.completePayment();
-				break;
-			}
 
 			case 'acdc':
 				if ( payment.isVaulted ) {

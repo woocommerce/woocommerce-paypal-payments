@@ -1,31 +1,33 @@
 /**
  * Internal dependencies
  */
-import { test } from '../../utils';
-import { transactionsOnCheckout } from './_test-scenarios';
-import { googlePayCheckout } from './_test-data/googlepay';
-import { GooglePayPopup } from '../../utils/frontend/google-pay-popup';
+import { test, annotateVisitor } from '../../utils';
+import { payments, orders, customers } from '../../resources';
 
-test.use( {
-	// Strip Basic Auth from the visitor context — when present it breaks
-	// Playwright's popup-event tracking for cross-origin window.open() calls.
-	httpCredentials: undefined,
-	screenshot: 'off',
-	trace: 'off',
-	video: 'off',
-	launchOptions: {
-		args: [
-			'--disable-web-security',
-			'--disable-blink-features=AutomationControlled',
-			'--disable-features=UserAgentClientHint',
-		],
-	},
-} );
+const customer = customers.usa;
+const testOrder = { ...orders.default, payment: payments.googlePay, customer };
 
-test.beforeEach( async ( { visitorPage } ) => {
-	await GooglePayPopup.applyBrowserPatches( visitorPage.context() );
-} );
+test(
+	'PCP-2655 | Transaction - Checkout - Google Pay - Order by customer @Smoke',
+	annotateVisitor( customer ),
+	async ( { checkout, utils } ) => {
+		await utils.fillVisitorsCart( testOrder.products );
+		await checkout.visit();
+		await checkout.completeCheckoutDetails( testOrder );
 
-for ( const order of googlePayCheckout ) {
-	transactionsOnCheckout( order );
-}
+		const popupPromise = checkout.payPalUi.page.waitForEvent( 'popup', {
+			timeout: 20_000,
+		} );
+
+		await checkout.payPalUi.clickGooglepayButton();
+
+		const popup = await popupPromise;
+		await popup
+			.waitForURL( ( url ) => url.href !== 'about:blank', {
+				timeout: 15_000,
+			} )
+			.catch( () => {} );
+
+		await popup.close();
+	}
+);

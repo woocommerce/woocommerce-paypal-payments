@@ -8,7 +8,6 @@ export * from './customer-payment-methods';
 export * from './customer-subscriptions';
 export * from './order-received';
 export * from './pay-for-order';
-export * from './google-pay-popup';
 export * from './paypal-popup';
 export * from './paypal-ui';
 export * from './paypal-ui-classic';

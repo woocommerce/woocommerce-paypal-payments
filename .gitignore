@@ -31,4 +31,12 @@ storage-states
 test-results
 /tests/qa/resources/files/woocommerce-paypal-payments*.zip
 /tests/qa/resources/files/woocommerce-subscriptions*.zip
+/tests/qa/resources/plugins/woocommerce/
+/tests/qa/resources/plugins/woocommerce-paypal-payments/
+/tests/qa/resources/plugins/woocommerce-paypal-payments.zip
+/tests/qa/resources/plugins/woocommerce-subscriptions/
+/tests/qa/resources/plugins/disable-nonce/
+/tests/qa/resources/plugins/disable-wc-setup-wizard/
+/tests/qa/resources/plugins/disable-webhook-verification/
+/tests/qa/.claude/
 .google-session.json
