@@ -163,11 +163,12 @@ class AmountFactory
             $taxes = new Money($taxes_val, $currency);
             $total = new Money(1.0, $currency);
         } else {
-            $wc_total_cents = (int) round((float) $order->get_total() * 100);
+            $wc_total = (float) $order->get_total();
+            $wc_total_cents = (int) round($wc_total * 100);
             $component_total_cents = (int) round($item_total_val * 100) + (int) round($shipping_val * 100) + (int) round($taxes_val * 100) - (int) round($discount_value * 100);
             $taxes_cents = (int) round($taxes_val * 100) + ($wc_total_cents - $component_total_cents);
             $taxes = new Money($taxes_cents / 100, $currency);
-            $total = new Money((float) $order->get_total(), $currency);
+            $total = new Money($wc_total, $currency);
         }
         $breakdown = new AmountBreakdown(
             $item_total,
