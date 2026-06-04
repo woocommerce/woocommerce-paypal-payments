@@ -63,7 +63,11 @@ class CompatModule implements ServiceModule, ExecutableModule {
 			}
 		);
 
-		( new WcGiftCardsCompat() )->register();
+		if ( function_exists( 'WC_GC' ) ) {
+			$context = $c->get( 'button.helper.context' );
+			assert( $context instanceof Context );
+			( new WcGiftCardsCompat( $context ) )->register();
+		}
 
 		$this->migrate_pay_later_settings( $c );
 		$this->migrate_smart_button_settings( $c );
