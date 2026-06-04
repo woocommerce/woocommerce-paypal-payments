@@ -23,7 +23,7 @@ namespace WooCommerce\PayPalCommerce\Compat;
  */
 class WcGiftCardsCompat {
 
-	const SESSION_KEY = 'ppcp_gc_cart_discount';
+	private const SESSION_KEY = 'ppcp_gc_cart_discount';
 
 	/**
 	 * Registers the hooks.
