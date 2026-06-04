@@ -308,7 +308,7 @@ class AmountFactory {
 		/**
 		 * Filters extra discount amounts not captured by standard WC discount/fee getters.
 		 */
-		return (float) apply_filters( $filter_name, 0.0, $context );
+		return max( 0.0, (float) apply_filters( $filter_name, 0.0, $context ) );
 	}
 
 	/**
