@@ -115,6 +115,12 @@ class AmountFactory
         $shipping_minor = (int) $cart_totals->total_shipping()->value();
         $tax_minor = (int) $cart_totals->total_tax()->value();
         $discount_minor = (int) $cart_totals->total_discount()->value();
+        /**
+         * Some plugins (e.g. WooCommerce Gift Cards) reduce cart->total via WC_Cart::set_total()
+         * without registering a coupon or fee. Allow them to contribute their discount amount here.
+         * The value must be an integer in the cart currency's minor unit (e.g. cents for USD).
+         */
+        $discount_minor += max(0, (int) apply_filters('woocommerce_paypal_payments_store_api_cart_extra_discount', 0, $cart_totals));
         $total_minor = $items_minor + $shipping_minor + $tax_minor - $discount_minor;
         $currency = $cart_totals->total_price()->currency_code();
         $minor_unit = $cart_totals->total_price()->currency_minor_unit();
