@@ -44,6 +44,10 @@ class WcGiftCardsCompat {
 	 */
 	public function register(): void {
 		add_action(
+			'template_redirect',
+			array( $this, 'clear_on_cart_page' )
+		);
+		add_action(
 			'woocommerce_after_calculate_totals',
 			array( $this, 'store_cart_discount' ),
 			1000
@@ -60,6 +64,25 @@ class WcGiftCardsCompat {
 			10,
 			2
 		);
+	}
+
+	/**
+	 * Clears the stored discount on every cart page load (template_redirect fires
+	 * unconditionally, even when WC uses cached totals). This guarantees the session
+	 * reflects the full price the customer sees when WC_GC is configured to hide its
+	 * discount on the cart page.
+	 */
+	public function clear_on_cart_page(): void {
+		if ( ! function_exists( 'WC_GC' ) || ! WC()->session ) {
+			return;
+		}
+
+		$context = $this->context->context();
+		if ( in_array( $context, array( 'cart', 'cart-block' ), true )
+			&& 'no' !== get_option( 'wc_gc_disable_cart_ui', 'yes' )
+		) {
+			WC()->session->set( self::SESSION_KEY, 0.0 );
+		}
 	}
 
 	/**
