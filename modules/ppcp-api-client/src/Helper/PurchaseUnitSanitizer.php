@@ -151,25 +151,17 @@ class PurchaseUnitSanitizer
     {
         $item_mismatch = $this->calculate_item_mismatch();
         if ($this->mode === self::MODE_EXTRA_LINE) {
-            // Floor item amounts until they no longer sum to more than item_total, so the
-            // remaining positive mismatch can be absorbed by an extra line below instead of
-            // ditching the basket. A single pass is not always enough (e.g. several small
-            // qty-1 items), so repeat while items can still be reduced.
-            while ($item_mismatch < 0) {
-                $reduced = \false;
+            if ($item_mismatch < 0) {
+                // Do floors on item amounts so item_mismatch is a positive value.
                 foreach ($this->purchase_unit['items'] as $index => $item) {
+                    // Get a more intelligent adjustment mechanism.
                     $increment = (new \WooCommerce\PayPalCommerce\ApiClient\Helper\MoneyFormatter())->minimum_increment($item['unit_amount']['currency_code']);
-                    // Do not floor items that would become negative.
+                    // not floor items that will be negative then.
                     if ((float) $item['unit_amount']['value'] < $increment) {
                         continue;
                     }
                     $this->purchase_unit['items'][$index]['unit_amount'] = (new Money((float) $item['unit_amount']['value'] - $increment, $item['unit_amount']['currency_code']))->to_array();
-                    $reduced = \true;
                 }
-                if (!$reduced) {
-                    break;
-                }
-                $item_mismatch = $this->calculate_item_mismatch();
             }
             $item_mismatch = $this->calculate_item_mismatch();
             if ($item_mismatch > 0) {
