@@ -8,7 +8,10 @@ const AUTO_DISMISS_DELAY = 5000;
 
 /**
  * Hook for creating notices with snackbar type by default.
- * Notices show a dismiss button and auto-dismiss after 5 seconds.
+ *
+ * Notices show a dismiss button. Auto-dismiss after 5 seconds is configurable per
+ * call via the `autoDismiss` option and defaults to `true` for success/error
+ * notices and `false` for info notices (which stay until the user closes them or removeNotice is called).
  *
  * @return {Object} Notice functions.
  */
@@ -43,7 +46,8 @@ const useNotices = () => {
 
 	const successNotice = useCallback(
 		( message, options = {} ) => {
-			const id = options.id || `ppcp-success-${ Date.now() }`;
+			const { autoDismiss = true, ...rest } = options;
+			const id = rest.id || `ppcp-success-${ Date.now() }`;
 
 			createSuccessNotice( message, {
 				id,
@@ -51,17 +55,20 @@ const useNotices = () => {
 				icon: SuccessIcon,
 				explicitDismiss: true,
 				speak: true,
-				...options,
+				...rest,
 			} );
 
-			scheduleAutoDismiss( id );
+			if ( autoDismiss ) {
+				scheduleAutoDismiss( id );
+			}
 		},
 		[ createSuccessNotice, scheduleAutoDismiss ]
 	);
 
 	const errorNotice = useCallback(
 		( message, options = {} ) => {
-			const id = options.id || `ppcp-error-${ Date.now() }`;
+			const { autoDismiss = true, ...rest } = options;
+			const id = rest.id || `ppcp-error-${ Date.now() }`;
 
 			createErrorNotice( message, {
 				id,
@@ -69,27 +76,32 @@ const useNotices = () => {
 				icon: ErrorIcon,
 				explicitDismiss: true,
 				speak: true,
-				...options,
+				...rest,
 			} );
 
-			scheduleAutoDismiss( id );
+			if ( autoDismiss ) {
+				scheduleAutoDismiss( id );
+			}
 		},
 		[ createErrorNotice, scheduleAutoDismiss ]
 	);
 
 	const infoNotice = useCallback(
 		( message, options = {} ) => {
-			const id = options.id || `ppcp-info-${ Date.now() }`;
+			const { autoDismiss = false, ...rest } = options;
+			const id = rest.id || `ppcp-info-${ Date.now() }`;
 
 			createInfoNotice( message, {
 				id,
 				type: 'snackbar',
 				explicitDismiss: true,
 				speak: true,
-				...options,
+				...rest,
 			} );
 
-			scheduleAutoDismiss( id );
+			if ( autoDismiss ) {
+				scheduleAutoDismiss( id );
+			}
 		},
 		[ createInfoNotice, scheduleAutoDismiss ]
 	);
