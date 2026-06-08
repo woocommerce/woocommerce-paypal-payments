@@ -61,12 +61,7 @@ class PaymentMethodTitleEnricher
         if (\false !== strpos($title, $detail)) {
             return $title;
         }
-        return sprintf(
-            /* translators: %1$s: payment method title, %2$s: contextual detail (payer email or card). */
-            __('%1$s (%2$s)', 'woocommerce-paypal-payments'),
-            $title,
-            $detail
-        );
+        return sprintf('%1$s (%2$s)', $title, $detail);
     }
     /**
      * Builds the contextual detail string for the order, or an empty string when unavailable.
