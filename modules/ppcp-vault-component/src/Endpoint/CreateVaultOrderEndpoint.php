@@ -6,6 +6,7 @@ namespace WooCommerce\PayPalCommerce\VaultComponent\Endpoint;
 use Psr\Log\LoggerInterface;
 use WC_Payment_Tokens;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\ExperienceContext;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentSource;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PurchaseUnitFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\ShippingPreferenceFactory;
@@ -81,6 +82,7 @@ class CreateVaultOrderEndpoint implements EndpointInterface {
 				'experience_context' => (object) array(
 					'return_url'               => $return_url,
 					'cancel_url'               => $return_url,
+					'user_action'              => ExperienceContext::USER_ACTION_CONTINUE,
 					'preferred_payment_source' => (object) array(
 						'vault_id' => $vault_id,
 					),
