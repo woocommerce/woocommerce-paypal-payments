@@ -10,7 +10,6 @@ namespace WooCommerce\PayPalCommerce\StoreSync\Response;
 
 use WC_Order;
 use WooCommerce\PayPalCommerce\StoreSync\StoreData\StorePayPalCart;
-use WooCommerce\PayPalCommerce\StoreSync\Validation\ValidationIssue;
 class CartResponse
 {
     private const ALLOWED_STATUS = array('CREATED', 'INCOMPLETE', 'READY', 'COMPLETED');
@@ -99,6 +98,14 @@ class CartResponse
             $this->shipping_options = $options;
         }
         return $this;
+    }
+    public function cart_id(): string
+    {
+        return $this->cart_id;
+    }
+    public function store_cart(): StorePayPalCart
+    {
+        return $this->store_cart;
     }
     // === API RESPONSE FORMAT ===
     /**

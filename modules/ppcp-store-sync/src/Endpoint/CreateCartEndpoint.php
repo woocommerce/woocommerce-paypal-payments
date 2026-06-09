@@ -26,6 +26,8 @@ class CreateCartEndpoint extends \WooCommerce\PayPalCommerce\StoreSync\Endpoint\
      * The expected HTTP method.
      */
     private const METHOD = 'POST';
+    protected const ACTION_NAME_SUCCESS = 'woocommerce_paypal_payments_store_sync_create';
+    protected const ACTION_NAME_ERROR = 'woocommerce_paypal_payments_store_sync_create_error';
     /**
      * Register REST API routes.
      *

@@ -27,6 +27,8 @@ class GetCartEndpoint extends \WooCommerce\PayPalCommerce\StoreSync\Endpoint\Age
      * The expected HTTP method.
      */
     private const METHOD = 'GET';
+    protected const ACTION_NAME_SUCCESS = 'woocommerce_paypal_payments_store_sync_get';
+    protected const ACTION_NAME_ERROR = 'woocommerce_paypal_payments_store_sync_get_error';
     /**
      * Register REST API routes.
      *
