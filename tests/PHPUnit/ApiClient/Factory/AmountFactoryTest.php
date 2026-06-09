@@ -615,6 +615,7 @@ class AmountFactoryTest extends TestCase
 		$order->shouldReceive( 'get_shipping_total' )->andReturn( 10.0 );
 		$order->shouldReceive( 'get_total_tax' )->andReturn( 0.0 );
 		$order->shouldReceive( 'get_total_discount' )->andReturn( 0.0 );
+		$order->shouldReceive( 'get_total' )->andReturn( 85.0 );
 		$this->itemFactory->shouldReceive( 'from_wc_order' )->andReturn( [] );
 
 		\Brain\Monkey\Filters\expectApplied( 'woocommerce_paypal_payments_order_extra_discount' )
