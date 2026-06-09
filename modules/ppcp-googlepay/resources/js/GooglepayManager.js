@@ -74,11 +74,7 @@ class GooglepayManager {
 			}
 
 			if ( ! this.transactionInfo ) {
-				try {
-					this.transactionInfo = await this.fetchTransactionInfo();
-				} catch ( error ) {
-					console.debug( 'Failed to fetch transaction info:', error );
-				}
+				this.transactionInfo = await this.fetchTransactionInfo();
 			}
 
 			if ( ! this.googlePayConfig ) {
@@ -100,9 +96,14 @@ class GooglepayManager {
 
 	async fetchTransactionInfo() {
 		if ( ! this.contextHandler ) {
-			throw new Error( 'ContextHandler is not initialized' );
+			return null;
 		}
-		return await this.contextHandler.transactionInfo();
+		try {
+			return await this.contextHandler.transactionInfo();
+		} catch ( error ) {
+			console.debug( 'Failed to fetch transaction info:', error );
+			return null;
+		}
 	}
 
 	reinit() {
