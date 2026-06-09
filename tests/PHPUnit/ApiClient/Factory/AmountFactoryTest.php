@@ -309,6 +309,9 @@ class AmountFactoryTest extends TestCase
         $order
             ->shouldReceive('get_meta')
             ->andReturn(null);
+        $order
+            ->shouldReceive('get_total')
+            ->andReturn(10.0);
 
         $result = $this->testee->from_wc_order($order);
         $this->assertEquals((float) 3, $result->breakdown()->discount()->value());
@@ -367,29 +370,32 @@ class AmountFactoryTest extends TestCase
 		$order
 			->shouldReceive('get_meta')
 			->andReturn(null);
+		$order
+			->shouldReceive('get_total')
+			->andReturn(9.0);
 
         $result = $this->testee->from_wc_order($order);
         $this->assertNull($result->breakdown()->discount());
     }
 
 	/**
-	 * Proves that from_wc_order() derives the total from breakdown components
-	 * and never calls get_total(). Mirrors the equivalent from_wc_cart() test.
+	 * When get_total() matches the component sum, amount.value equals both and the
+	 * breakdown is unchanged. get_total() must be called exactly once.
 	 */
-	public function testFromWcOrderTotalDerivesFromComponentsNotGetTotal(): void
+	public function testFromWcOrderUsesGetTotalWhenComponentsMatch(): void
 	{
 		$order = Mockery::mock( \WC_Order::class );
-		// Enforce get_total() is never consulted.
-		$order->shouldNotReceive( 'get_total' );
-		$order->shouldReceive( 'get_payment_method' )->andReturn( PayPalGateway::ID );
-		$order->shouldReceive( 'get_meta' )->andReturn( null );
-		$order->shouldReceive( 'get_currency' )->andReturn( $this->currency );
-		// subtotal=$13.33, fees=0, shipping=$5.00, tax=$1.07 → total should be $19.40.
+		// Components sum to $19.40 (1333 + 500 + 107 = 1940 cents).
 		$order->shouldReceive( 'get_subtotal' )->andReturn( 13.33 );
 		$order->shouldReceive( 'get_total_fees' )->andReturn( 0.0 );
 		$order->shouldReceive( 'get_shipping_total' )->andReturn( 5.00 );
 		$order->shouldReceive( 'get_total_tax' )->andReturn( 1.07 );
 		$order->shouldReceive( 'get_total_discount' )->andReturn( 0.0 );
+		// get_total() matches the sum — no adjustment needed.
+		$order->shouldReceive( 'get_total' )->once()->andReturn( 19.40 );
+		$order->shouldReceive( 'get_payment_method' )->andReturn( PayPalGateway::ID );
+		$order->shouldReceive( 'get_meta' )->andReturn( null );
+		$order->shouldReceive( 'get_currency' )->andReturn( $this->currency );
 		$this->itemFactory->shouldReceive( 'from_wc_order' )->andReturn( [] );
 
 		$result = $this->testee->from_wc_order( $order );
@@ -399,6 +405,113 @@ class AmountFactoryTest extends TestCase
 		$this->assertSame( '5.00', $result->breakdown()->shipping()->value_str() );
 		$this->assertSame( '1.07', $result->breakdown()->tax_total()->value_str() );
 		$this->assertNull( $result->breakdown()->discount() );
+	}
+
+	/**
+	 * The core regression fix: when get_total() differs from the component sum by
+	 * $0.01 (inclusive-tax rounding), amount.value must equal get_total() and the
+	 * tax breakdown component must absorb the delta so sum(breakdown) still holds.
+	 *
+	 * Concrete case: subtotal=13.90, tax=2.65 (components) → sum=16.55,
+	 * but WooCommerce stored get_total()=16.54. PayPal must capture 16.54 so that
+	 * a full refund of 16.54 is accepted without REFUND_AMOUNT_EXCEEDED.
+	 */
+	public function testFromWcOrderAdjustsTaxBreakdownWhenGetTotalDiffersFromComponentSum(): void
+	{
+		$order = Mockery::mock( \WC_Order::class );
+		$order->shouldReceive( 'get_subtotal' )->andReturn( 13.90 );
+		$order->shouldReceive( 'get_total_fees' )->andReturn( 0.0 );
+		$order->shouldReceive( 'get_shipping_total' )->andReturn( 0.0 );
+		$order->shouldReceive( 'get_total_tax' )->andReturn( 2.65 );  // component value
+		$order->shouldReceive( 'get_total_discount' )->andReturn( 0.0 );
+		// WooCommerce stored 16.54 — one cent less than the component sum.
+		$order->shouldReceive( 'get_total' )->once()->andReturn( 16.54 );
+		$order->shouldReceive( 'get_payment_method' )->andReturn( PayPalGateway::ID );
+		$order->shouldReceive( 'get_meta' )->andReturn( null );
+		$order->shouldReceive( 'get_currency' )->andReturn( $this->currency );
+		$this->itemFactory->shouldReceive( 'from_wc_order' )->andReturn( [] );
+
+		$result    = $this->testee->from_wc_order( $order );
+		$breakdown = $result->breakdown();
+
+		// amount.value must be the WooCommerce total, not the component sum.
+		$this->assertSame( '16.54', $result->value_str(), 'amount.value must equal get_total()' );
+		// Tax absorbs the -1 cent delta (2.65 → 2.64).
+		$this->assertSame( '2.64', $breakdown->tax_total()->value_str(), 'tax adjusted down by 1 cent' );
+		// Other components unchanged.
+		$this->assertSame( '13.90', $breakdown->item_total()->value_str() );
+		$this->assertSame( '0.00', $breakdown->shipping()->value_str() );
+		// Breakdown invariant: sum must equal amount.value.
+		$sum = (float) $breakdown->item_total()->value_str()
+			+ (float) $breakdown->shipping()->value_str()
+			+ (float) $breakdown->tax_total()->value_str();
+		$this->assertSame( $result->value_str(), number_format( $sum, 2, '.', '' ), 'breakdown invariant' );
+	}
+
+	/**
+	 * Parametrised invariant: for any combination of components, sum(breakdown)
+	 * must always equal get_total() after the tax adjustment.
+	 *
+	 * @dataProvider dataOrderBreakdownInvariantCases
+	 */
+	public function testFromWcOrderBreakdownAlwaysSumsToGetTotal(
+		float $subtotal,
+		float $fees,
+		float $shipping,
+		float $tax,
+		float $discount,
+		float $wc_total
+	): void {
+		$order = Mockery::mock( \WC_Order::class );
+		$order->shouldReceive( 'get_subtotal' )->andReturn( $subtotal );
+		$order->shouldReceive( 'get_total_fees' )->andReturn( $fees );
+		$order->shouldReceive( 'get_shipping_total' )->andReturn( $shipping );
+		$order->shouldReceive( 'get_total_tax' )->andReturn( $tax );
+		$order->shouldReceive( 'get_total_discount' )->andReturn( $discount );
+		$order->shouldReceive( 'get_total' )->andReturn( $wc_total );
+		$order->shouldReceive( 'get_payment_method' )->andReturn( PayPalGateway::ID );
+		$order->shouldReceive( 'get_meta' )->andReturn( null );
+		$order->shouldReceive( 'get_currency' )->andReturn( $this->currency );
+		$this->itemFactory->shouldReceive( 'from_wc_order' )->andReturn( [] );
+
+		$result    = $this->testee->from_wc_order( $order );
+		$breakdown = $result->breakdown();
+
+		$this->assertSame(
+			number_format( $wc_total, 2, '.', '' ),
+			$result->value_str(),
+			'amount.value must equal get_total()'
+		);
+
+		$sum = (float) $breakdown->item_total()->value_str()
+			+ (float) $breakdown->shipping()->value_str()
+			+ (float) $breakdown->tax_total()->value_str();
+		if ( $breakdown->discount() ) {
+			$sum -= (float) $breakdown->discount()->value_str();
+		}
+		$this->assertSame(
+			$result->value_str(),
+			number_format( $sum, 2, '.', '' ),
+			'breakdown invariant: sum(breakdown) must equal amount.value'
+		);
+	}
+
+	public function dataOrderBreakdownInvariantCases(): array
+	{
+		return [
+			// Delta = 0: components already match get_total().
+			'no_delta'            => [ 13.33, 0.0, 5.00, 1.07, 0.0, 19.40 ],
+			// Delta = +1 cent: get_total() is 1 cent higher than component sum.
+			'delta_plus_one'      => [ 13.90, 0.0, 0.0, 2.65, 0.0, 16.56 ],
+			// Delta = -1 cent: get_total() is 1 cent lower than component sum.
+			'delta_minus_one'     => [ 13.90, 0.0, 0.0, 2.65, 0.0, 16.54 ],
+			// With discount, zero delta.
+			'with_discount'       => [ 20.00, 2.00, 3.50, 2.25, 1.75, 26.00 ],
+			// With discount, 1 cent delta.
+			'with_discount_delta' => [ 20.00, 2.00, 3.50, 2.26, 1.75, 26.00 ],
+			// Fees present, delta = -1 cent.
+			'with_fees_delta'     => [ 15.50, 4.50, 6.00, 2.60, 0.0, 28.59 ],
+		];
 	}
 
 	/**
@@ -438,6 +551,7 @@ class AmountFactoryTest extends TestCase
 		$order->shouldReceive( 'get_shipping_total' )->andReturn( 0.0 );
 		$order->shouldReceive( 'get_total_tax' )->andReturn( 0.0 );
 		$order->shouldReceive( 'get_total_discount' )->andReturn( 0.0 );
+		$order->shouldReceive( 'get_total' )->andReturn( 90.0 );
 
 		$result = $this->testee->from_wc_order( $order );
 
@@ -446,6 +560,84 @@ class AmountFactoryTest extends TestCase
 		$this->assertSame( '100.00', $result->breakdown()->item_total()->value_str() );
 		$this->assertSame( '10.00', $result->breakdown()->discount()->value_str() );
 		$this->assertSame( '90.00', $result->value_str() );
+	}
+
+	/**
+	 * Plugins like WooCommerce Gift Cards apply discounts via WC_Cart::set_total() rather
+	 * than coupons or fees. The filter lets them contribute the missing amount so the
+	 * PayPal order total matches the actual WC cart total.
+	 */
+	public function testFromWcCartAppliesExtraDiscountFilter(): void
+	{
+		$cart = Mockery::mock( \WC_Cart::class );
+		$cart->shouldReceive( 'get_subtotal' )->andReturn( 100.0 );
+		$cart->shouldReceive( 'get_fee_total' )->andReturn( 0.0 );
+		$cart->shouldReceive( 'get_discount_total' )->andReturn( 0.0 );
+		$cart->shouldReceive( 'get_shipping_total' )->andReturn( 10.0 );
+		$cart->shouldReceive( 'get_total_tax' )->andReturn( 0.0 );
+
+		$woocommerce          = Mockery::mock( \WooCommerce::class );
+		$session              = Mockery::mock( \WC_Session::class );
+		$woocommerce->session = $session;
+		when( 'WC' )->justReturn( $woocommerce );
+		$session->shouldReceive( 'get' )->andReturn( [] );
+
+		\Brain\Monkey\Filters\expectApplied( 'woocommerce_paypal_payments_cart_extra_discount' )
+			->once()
+			->with( 0.0, $cart )
+			->andReturn( 25.0 );
+
+		$result    = $this->testee->from_wc_cart( $cart );
+		$breakdown = $result->breakdown();
+
+		$this->assertSame( '85.00', $result->value_str() );
+		$this->assertSame( '25.00', $breakdown->discount()->value_str() );
+		$this->assertSame(
+			$result->value_str(),
+			number_format(
+				(float) $breakdown->item_total()->value_str()
+				+ (float) $breakdown->shipping()->value_str()
+				+ (float) $breakdown->tax_total()->value_str()
+				- (float) $breakdown->discount()->value_str(),
+				2, '.', ''
+			)
+		);
+	}
+
+	public function testFromWcOrderAppliesExtraDiscountFilter(): void
+	{
+		$order = Mockery::mock( \WC_Order::class );
+		$order->shouldReceive( 'get_payment_method' )->andReturn( PayPalGateway::ID );
+		$order->shouldReceive( 'get_meta' )->andReturn( null );
+		$order->shouldReceive( 'get_currency' )->andReturn( $this->currency );
+		$order->shouldReceive( 'get_subtotal' )->andReturn( 100.0 );
+		$order->shouldReceive( 'get_total_fees' )->andReturn( 0.0 );
+		$order->shouldReceive( 'get_shipping_total' )->andReturn( 10.0 );
+		$order->shouldReceive( 'get_total_tax' )->andReturn( 0.0 );
+		$order->shouldReceive( 'get_total_discount' )->andReturn( 0.0 );
+		$order->shouldReceive( 'get_total' )->andReturn( 85.0 );
+		$this->itemFactory->shouldReceive( 'from_wc_order' )->andReturn( [] );
+
+		\Brain\Monkey\Filters\expectApplied( 'woocommerce_paypal_payments_order_extra_discount' )
+			->once()
+			->with( 0.0, $order )
+			->andReturn( 25.0 );
+
+		$result    = $this->testee->from_wc_order( $order );
+		$breakdown = $result->breakdown();
+
+		$this->assertSame( '85.00', $result->value_str() );
+		$this->assertSame( '25.00', $breakdown->discount()->value_str() );
+		$this->assertSame(
+			$result->value_str(),
+			number_format(
+				(float) $breakdown->item_total()->value_str()
+				+ (float) $breakdown->shipping()->value_str()
+				+ (float) $breakdown->tax_total()->value_str()
+				- (float) $breakdown->discount()->value_str(),
+				2, '.', ''
+			)
+		);
 	}
 
     /**

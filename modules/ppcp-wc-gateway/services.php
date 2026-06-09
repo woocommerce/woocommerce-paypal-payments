@@ -62,6 +62,7 @@ use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\FeesUpdater;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\InstallmentsProductStatus;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\MerchantDetails;
+use WooCommerce\PayPalCommerce\WcGateway\Helper\PaymentMethodTitleEnricher;
 use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\PayUponInvoice\PayUponInvoiceHelper;
 use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\PayUponInvoice\PayUponInvoiceProductStatus;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\PWCProductStatus;
@@ -644,7 +645,11 @@ return array(
 		$sandbox_url_base = $container->get( 'wcgateway.transaction-url-sandbox' );
 		$live_url_base    = $container->get( 'wcgateway.transaction-url-live' );
 
-		return new TransactionUrlProvider( $sandbox_url_base, $live_url_base );
+		return new TransactionUrlProvider(
+			$sandbox_url_base,
+			$live_url_base,
+			$container->get( 'settings.environment' )
+		);
 	},
 
 	'wcgateway.configuration.card-configuration'           => static function ( ContainerInterface $container ): CardPaymentsConfiguration {
@@ -695,6 +700,10 @@ return array(
 				$container->get( 'wcgateway.extra-funding-sources' )
 			)
 		);
+	},
+
+	'wcgateway.payment-method-title-enricher'              => static function ( ContainerInterface $container ): PaymentMethodTitleEnricher {
+		return new PaymentMethodTitleEnricher();
 	},
 
 	'wcgateway.checkout-helper'                            => static function ( ContainerInterface $container ): CheckoutHelper {

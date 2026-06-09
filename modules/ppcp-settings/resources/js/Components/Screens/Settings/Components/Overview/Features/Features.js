@@ -1,26 +1,21 @@
 import { __, sprintf } from '@wordpress/i18n';
 import { useState } from '@wordpress/element';
 import { useDispatch } from '@wordpress/data';
-import { store as noticesStore } from '@wordpress/notices';
 import FeatureItem from './FeatureItem';
 import FeatureDescription from './FeatureDescription';
 import { ContentWrapper } from '@ppcp-settings/Components/ReusableComponents/Elements';
 import SettingsCard from '@ppcp-settings/Components/ReusableComponents/SettingsCard';
 import { useMerchantInfo } from '@ppcp-settings/data/common/hooks';
 import { STORE_NAME as COMMON_STORE_NAME } from '@ppcp-settings/data/common';
-import {
-	NOTIFICATION_ERROR,
-	NOTIFICATION_SUCCESS,
-} from '@ppcp-settings/Components/ReusableComponents/Icons';
 import { useFeatures } from '@ppcp-settings/data/features/hooks';
+import useNotices from '@ppcp-settings/hooks/useNotices';
 
 const Features = () => {
 	const [ isRefreshing, setIsRefreshing ] = useState( false );
 	const { merchant } = useMerchantInfo();
 	const { features, fetchFeatures } = useFeatures();
 	const { refreshFeatureStatuses } = useDispatch( COMMON_STORE_NAME );
-	const { createSuccessNotice, createErrorNotice } =
-		useDispatch( noticesStore );
+	const { createSuccessNotice, createErrorNotice } = useNotices();
 
 	if ( ! features || features.length === 0 ) {
 		return null;
@@ -42,11 +37,7 @@ const Features = () => {
 					__(
 						'Features refreshed successfully.',
 						'woocommerce-paypal-payments'
-					),
-					{
-						icon: NOTIFICATION_SUCCESS,
-						speak: true,
-					}
+					)
 				);
 			} else {
 				throw new Error(
@@ -60,11 +51,7 @@ const Features = () => {
 					__( 'Operation failed: %s', 'woocommerce-paypal-payments' ),
 					error.message ||
 						__( 'Unknown error', 'woocommerce-paypal-payments' )
-				),
-				{
-					icon: NOTIFICATION_ERROR,
-					speak: true,
-				}
+				)
 			);
 		} finally {
 			setIsRefreshing( false );

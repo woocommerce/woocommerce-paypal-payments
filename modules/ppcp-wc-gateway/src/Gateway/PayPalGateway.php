@@ -61,6 +61,10 @@ class PayPalGateway extends \WC_Payment_Gateway {
 	public const THREE_D_AUTH_RESULT_META_KEY  = '_ppcp_paypal_3DS_auth_result';
 	public const FRAUD_RESULT_META_KEY         = '_ppcp_paypal_fraud_result';
 
+	// Used to enrich the payment method title.
+	public const ORDER_CARD_BRAND_META_KEY       = '_ppcp_paypal_card_brand';
+	public const ORDER_CARD_LAST_DIGITS_META_KEY = '_ppcp_paypal_card_last_digits';
+
 	// Used by the Contact Module integration.
 	public const CONTACT_EMAIL_META_KEY = '_ppcp_paypal_contact_email';
 	public const CONTACT_PHONE_META_KEY = '_ppcp_paypal_contact_phone';
