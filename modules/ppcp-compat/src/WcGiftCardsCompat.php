@@ -71,6 +71,12 @@ class WcGiftCardsCompat {
 			10,
 			2
 		);
+		add_filter(
+			'woocommerce_paypal_payments_store_api_cart_extra_discount',
+			array( $this, 'store_api_cart_extra_discount' ),
+			10,
+			2
+		);
 	}
 
 	/**
@@ -139,6 +145,26 @@ class WcGiftCardsCompat {
 	 */
 	private function is_gc_disabled_on_cart(): bool {
 		return 'no' !== get_option( 'wc_gc_disable_cart_ui', 'yes' );
+	}
+
+	/**
+	 * Returns the WC Gift Cards discount for the Store API (shipping callback on address change).
+	 * Must return an integer in minor units (e.g. cents for USD) to match the filter contract.
+	 *
+	 * @param int $extra Current extra discount in minor units.
+	 * @return int
+	 */
+	public function store_api_cart_extra_discount( int $extra ): int {
+		if ( ! function_exists( 'WC_GC' ) || ! WC()->session ) {
+			return $extra;
+		}
+
+		$gc_discount = (float) ( WC()->session->get( self::SESSION_KEY ) ?? 0.0 );
+		if ( $gc_discount <= 0.0 ) {
+			return $extra;
+		}
+
+		return $extra + (int) round( $gc_discount * 10 ** wc_get_price_decimals() );
 	}
 
 	/**
