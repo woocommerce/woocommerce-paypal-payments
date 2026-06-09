@@ -372,7 +372,6 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC
                     try {
                         $created_order = $this->capture_card_payment->create_order($token->get_token(), $wc_order);
                         $order = $this->order_endpoint->order($created_order->id());
-                        $this->logger->debug(sprintf('Vaulted card order %1$s returned PayPal status "%2$s" (intent %3$s).', $created_order->id(), $order->status()->name(), $order->intent()));
                         $this->add_paypal_meta($wc_order, $created_order, $this->environment);
                         $wc_order->add_payment_token($token);
                         if ($order->intent() === 'AUTHORIZE') {
