@@ -67,6 +67,7 @@ use WooCommerce\PayPalCommerce\Settings\Service\Migration\PaymentSettingsMigrati
 use WooCommerce\PayPalCommerce\Settings\Service\Migration\SettingsTabMigration;
 use WooCommerce\PayPalCommerce\Settings\Service\Migration\StylingSettingsMigration;
 use WooCommerce\PayPalCommerce\Settings\Service\Migration\FastlaneSettingsMigration;
+use WooCommerce\PayPalCommerce\Settings\Service\OnboardingNotices;
 use WooCommerce\PayPalCommerce\Settings\Service\OnboardingUrlManager;
 use WooCommerce\PayPalCommerce\Settings\Service\SellerTypeResolver;
 use WooCommerce\PayPalCommerce\Settings\Service\PaymentMethodsEligibilityService;
@@ -181,7 +182,7 @@ return array(
         return new OnboardingRestEndpoint($container->get('settings.data.onboarding'));
     },
     'settings.rest.common' => static function (ContainerInterface $container): CommonRestEndpoint {
-        return new CommonRestEndpoint($container->get('settings.data.general'), $container->get('api.endpoint.partners'));
+        return new CommonRestEndpoint($container->get('settings.data.general'), $container->get('api.endpoint.partners'), $container->get('settings.service.onboarding-notices'));
     },
     'settings.rest.payment' => static function (ContainerInterface $container): PaymentRestEndpoint {
         return new PaymentRestEndpoint($container->get('settings.data.payment'), $container->get('settings.data.definition.methods'), $container->get('settings.data.definition.method_dependencies'));
@@ -196,7 +197,7 @@ return array(
         return new AuthenticationRestEndpoint($container->get('settings.service.authentication_manager'), $container->get('settings.service.data-manager'), $container->get('woocommerce.logger.woocommerce'));
     },
     'settings.rest.login_link' => static function (ContainerInterface $container): LoginLinkRestEndpoint {
-        return new LoginLinkRestEndpoint($container->get('settings.service.connection-url-generator'));
+        return new LoginLinkRestEndpoint($container->get('settings.service.connection-url-generator'), $container->get('woocommerce.logger.woocommerce'));
     },
     'settings.rest.webhooks' => static function (ContainerInterface $container): WebhookSettingsEndpoint {
         return new WebhookSettingsEndpoint($container->get('api.endpoint.webhook'), $container->get('webhook.registrar'), $container->get('webhook.status.simulation'));
@@ -222,7 +223,10 @@ return array(
         return in_array($country, $eligible_countries, \true);
     },
     'settings.handler.connection-listener' => static function (ContainerInterface $container): ConnectionListener {
-        return new ConnectionListener($container->get('wcgateway.is-plugin-settings-page'), $container->get('settings.service.onboarding-url-manager'), $container->get('settings.service.authentication_manager'), $container->get('http.redirector'), $container->get('woocommerce.logger.woocommerce'));
+        return new ConnectionListener($container->get('wcgateway.is-plugin-settings-page'), $container->get('settings.service.onboarding-url-manager'), $container->get('settings.service.authentication_manager'), $container->get('http.redirector'), $container->get('settings.service.onboarding-notices'), $container->get('woocommerce.logger.woocommerce'));
+    },
+    'settings.service.onboarding-notices' => static function (ContainerInterface $container): OnboardingNotices {
+        return new OnboardingNotices();
     },
     'settings.service.signup-link-cache' => static function (ContainerInterface $container): Cache {
         return new Cache('ppcp-paypal-signup-link');

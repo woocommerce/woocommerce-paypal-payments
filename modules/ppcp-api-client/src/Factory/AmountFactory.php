@@ -161,16 +161,22 @@ class AmountFactory
         $taxes_val = (float) $order->get_total_tax();
         $item_total = new Money($item_total_val, $currency);
         $shipping = new Money($shipping_val, $currency);
-        $taxes = new Money($taxes_val, $currency);
         // Free trial orders charge a fixed $1.00 regardless of cart contents —
-        // preserve that override. For all other orders derive the total from
-        // breakdown components so amount.value always equals the breakdown sum.
+        // preserve that override. For all other orders use get_total() as the
+        // authoritative amount and adjust the tax breakdown by any rounding delta
+        // (typically ±1 cent from inclusive-tax rounding) so that PayPal's
+        // invariant — amount.value === sum(breakdown) — always holds while the
+        // total still matches what WooCommerce stored on the order.
         if ((in_array($order->get_payment_method(), array(CreditCardGateway::ID, CardButtonGateway::ID), \true) || PayPalGateway::ID === $order->get_payment_method() && 'card' === $order->get_meta(PayPalGateway::ORDER_PAYMENT_SOURCE_META_KEY)) && $this->is_free_trial_order($order)) {
+            $taxes = new Money($taxes_val, $currency);
             $total = new Money(1.0, $currency);
         } else {
-            $total_cents = (int) round($item_total_val * 100) + (int) round($shipping_val * 100) + (int) round($taxes_val * 100) - (int) round($discount_value * 100);
-            $total_str = number_format($total_cents / 100, 2, '.', '');
-            $total = new Money((float) $total_str, $currency);
+            $wc_total = (float) $order->get_total();
+            $wc_total_cents = (int) round($wc_total * 100);
+            $component_total_cents = (int) round($item_total_val * 100) + (int) round($shipping_val * 100) + (int) round($taxes_val * 100) - (int) round($discount_value * 100);
+            $taxes_cents = (int) round($taxes_val * 100) + ($wc_total_cents - $component_total_cents);
+            $taxes = new Money($taxes_cents / 100, $currency);
+            $total = new Money($wc_total, $currency);
         }
         $breakdown = new AmountBreakdown(
             $item_total,
