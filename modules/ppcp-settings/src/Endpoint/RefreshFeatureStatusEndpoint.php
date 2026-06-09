@@ -13,7 +13,11 @@ use WP_REST_Server;
 use WP_REST_Response;
 use WP_REST_Request;
 use Psr\Log\LoggerInterface;
+use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PartnersEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\Cache;
+use WooCommerce\PayPalCommerce\ApiClient\Helper\FailureRegistry;
+use WooCommerce\PayPalCommerce\Settings\Data\GeneralSettings;
+use WooCommerce\PayPalCommerce\Settings\Service\SellerTypeResolver;
 
 /**
  * REST controller for refreshing feature status.
@@ -54,9 +58,48 @@ class RefreshFeatureStatusEndpoint extends RestEndpoint {
 	 */
 	protected LoggerInterface $logger;
 
-	public function __construct( Cache $cache, LoggerInterface $logger ) {
-		$this->cache  = $cache;
-		$this->logger = $logger;
+	/**
+	 * The seller type resolver.
+	 *
+	 * @var SellerTypeResolver
+	 */
+	protected SellerTypeResolver $seller_type_resolver;
+
+	/**
+	 * The general settings.
+	 *
+	 * @var GeneralSettings
+	 */
+	protected GeneralSettings $general_settings;
+
+	/**
+	 * The partners endpoint.
+	 *
+	 * @var PartnersEndpoint
+	 */
+	protected PartnersEndpoint $partners_endpoint;
+
+	/**
+	 * The failure registry.
+	 *
+	 * @var FailureRegistry
+	 */
+	protected FailureRegistry $failure_registry;
+
+	public function __construct(
+		Cache $cache,
+		LoggerInterface $logger,
+		SellerTypeResolver $seller_type_resolver,
+		GeneralSettings $general_settings,
+		PartnersEndpoint $partners_endpoint,
+		FailureRegistry $failure_registry
+	) {
+		$this->cache                = $cache;
+		$this->logger               = $logger;
+		$this->seller_type_resolver = $seller_type_resolver;
+		$this->general_settings     = $general_settings;
+		$this->partners_endpoint    = $partners_endpoint;
+		$this->failure_registry     = $failure_registry;
 	}
 
 	/**
@@ -100,7 +143,18 @@ class RefreshFeatureStatusEndpoint extends RestEndpoint {
 
 		$this->cache->set( self::CACHE_KEY, $now, self::TIMEOUT );
 
+		/**
+		 * Clears the seller-status cache and failure registry (see ApiModule),
+		 * so the re-resolution below performs a fresh lookup.
+		 */
 		do_action( 'woocommerce_paypal_payments_clear_apm_product_status' );
+
+		$this->seller_type_resolver->resolve_unknown_seller_type(
+			$this->failure_registry,
+			$this->general_settings,
+			$this->partners_endpoint,
+			$this->logger
+		);
 
 		$this->logger->info( 'Feature status refreshed successfully' );
 

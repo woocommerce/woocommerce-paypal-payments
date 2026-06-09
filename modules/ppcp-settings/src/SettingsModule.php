@@ -11,6 +11,8 @@ namespace WooCommerce\PayPalCommerce\Settings;
 
 use WC_Payment_Gateway;
 use Psr\Log\LoggerInterface;
+use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PartnersEndpoint;
+use WooCommerce\PayPalCommerce\ApiClient\Helper\FailureRegistry;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\PartnerAttribution;
 use WooCommerce\PayPalCommerce\Applepay\ApplePayGateway;
 use WooCommerce\PayPalCommerce\Axo\Gateway\AxoGateway;
@@ -145,23 +147,6 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 						}
 					);
 				}
-			}
-		);
-
-		// Resolve unknown seller type on all pages (not just admin), so frontend
-		// page loads after migration also fix the seller_type saved as 'unknown'.
-		add_action(
-			'init',
-			static function () use ( $container ): void {
-				$seller_type_resolver = $container->get( 'settings.service.seller-type-resolver' );
-				assert( $seller_type_resolver instanceof SellerTypeResolver );
-
-				$seller_type_resolver->resolve_unknown_seller_type(
-					$container->get( 'api.helper.failure-registry' ),
-					$container->get( 'settings.data.general' ),
-					$container->get( 'api.endpoint.partners' ),
-					$container->get( 'woocommerce.logger.woocommerce' )
-				);
 			}
 		);
 
@@ -368,6 +353,27 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 				assert( $logger instanceof LoggerInterface );
 				$logger->info( 'Merchant connected, complete onboarding and set defaults.' );
 
+				$general_settings = $container->get( 'settings.data.general' );
+				assert( $general_settings instanceof GeneralSettings );
+
+				// Resolve an unknown seller type once, at connect time.
+				// Clear any stale failure first: fresh credentials warrant
+				// a fresh attempt. Only does work when seller_type is 'unknown'.
+				$failure_registry     = $container->get( 'api.helper.failure-registry' );
+				$partners_endpoint    = $container->get( 'api.endpoint.partners' );
+				$seller_type_resolver = $container->get( 'settings.service.seller-type-resolver' );
+				assert( $failure_registry instanceof FailureRegistry );
+				assert( $partners_endpoint instanceof PartnersEndpoint );
+				assert( $seller_type_resolver instanceof SellerTypeResolver );
+
+				$failure_registry->clear_failures( FailureRegistry::SELLER_STATUS_KEY );
+				$seller_type_resolver->resolve_unknown_seller_type(
+					$failure_registry,
+					$general_settings,
+					$partners_endpoint,
+					$logger
+				);
+
 				$onboarding_profile = $container->get( 'settings.data.onboarding' );
 				assert( $onboarding_profile instanceof OnboardingProfile );
 
@@ -377,9 +383,6 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 				// Try to apply a default configuration for the current store.
 				$data_manager = $container->get( 'settings.service.data-manager' );
 				assert( $data_manager instanceof SettingsDataManager );
-
-				$general_settings = $container->get( 'settings.data.general' );
-				assert( $general_settings instanceof GeneralSettings );
 
 				$flags = new ConfigurationFlagsDTO();
 
