@@ -9,7 +9,6 @@ use WP_REST_Response;
 use Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PartnersEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\Cache;
-use WooCommerce\PayPalCommerce\ApiClient\Helper\FailureRegistry;
 use WooCommerce\PayPalCommerce\Settings\Data\GeneralSettings;
 use WooCommerce\PayPalCommerce\Settings\Endpoint\RefreshFeatureStatusEndpoint;
 use WooCommerce\PayPalCommerce\Settings\Service\SellerTypeResolver;
@@ -35,22 +34,20 @@ class RefreshFeatureStatusEndpointTest extends TestCase {
 		$resolver          = Mockery::mock( SellerTypeResolver::class );
 		$general_settings  = Mockery::mock( GeneralSettings::class );
 		$partners_endpoint = Mockery::mock( PartnersEndpoint::class );
-		$failure_registry  = Mockery::mock( FailureRegistry::class );
 		$logger            = Mockery::mock( LoggerInterface::class );
 		$logger->shouldReceive( 'info' );
 
 		// The whole point of the change: refresh re-resolves the seller type.
 		$resolver->shouldReceive( 'resolve_unknown_seller_type' )
 			->once()
-			->with( $failure_registry, $general_settings, $partners_endpoint, $logger );
+			->with( $general_settings, $partners_endpoint, $logger );
 
 		$endpoint = new RefreshFeatureStatusEndpoint(
 			$cache,
 			$logger,
 			$resolver,
 			$general_settings,
-			$partners_endpoint,
-			$failure_registry
+			$partners_endpoint
 		);
 
 		$response = $endpoint->refresh_status( new WP_REST_Request( 'POST', '/refresh-features' ) );
@@ -67,7 +64,6 @@ class RefreshFeatureStatusEndpointTest extends TestCase {
 		$resolver          = Mockery::mock( SellerTypeResolver::class );
 		$general_settings  = Mockery::mock( GeneralSettings::class );
 		$partners_endpoint = Mockery::mock( PartnersEndpoint::class );
-		$failure_registry  = Mockery::mock( FailureRegistry::class );
 		$logger            = Mockery::mock( LoggerInterface::class );
 
 		// Within the throttle window, no resolution (and thus no API call) happens.
@@ -78,8 +74,7 @@ class RefreshFeatureStatusEndpointTest extends TestCase {
 			$logger,
 			$resolver,
 			$general_settings,
-			$partners_endpoint,
-			$failure_registry
+			$partners_endpoint
 		);
 
 		$response = $endpoint->refresh_status( new WP_REST_Request( 'POST', '/refresh-features' ) );

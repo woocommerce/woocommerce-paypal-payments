@@ -254,8 +254,7 @@ return array(
 			$container->get( 'woocommerce.logger.woocommerce' ),
 			$container->get( 'settings.service.seller-type-resolver' ),
 			$container->get( 'settings.data.general' ),
-			$container->get( 'api.endpoint.partners' ),
-			$container->get( 'api.helper.failure-registry' )
+			$container->get( 'api.endpoint.partners' )
 		);
 	},
 	'settings.rest.authentication'                        => static function ( ContainerInterface $container ): AuthenticationRestEndpoint {
