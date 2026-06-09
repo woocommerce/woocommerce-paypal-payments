@@ -450,6 +450,7 @@ class ComposerStaticInit844a779aae516bed9e0beccea9d01fda
         'WooCommerce\\PayPalCommerce\\Compat\\PPEC\\MockGateway' => __DIR__ . '/../..' . '/modules/ppcp-compat/src/PPEC/MockGateway.php',
         'WooCommerce\\PayPalCommerce\\Compat\\PPEC\\PPECHelper' => __DIR__ . '/../..' . '/modules/ppcp-compat/src/PPEC/PPECHelper.php',
         'WooCommerce\\PayPalCommerce\\Compat\\PPEC\\SubscriptionsHandler' => __DIR__ . '/../..' . '/modules/ppcp-compat/src/PPEC/SubscriptionsHandler.php',
+        'WooCommerce\\PayPalCommerce\\Compat\\WcGiftCardsCompat' => __DIR__ . '/../..' . '/modules/ppcp-compat/src/WcGiftCardsCompat.php',
         'WooCommerce\\PayPalCommerce\\Compat\\WooCommerceBlueprint\\PayPalBlueprintBootstrap' => __DIR__ . '/../..' . '/modules/ppcp-compat/src/WooCommerceBlueprint/PayPalBlueprintBootstrap.php',
         'WooCommerce\\PayPalCommerce\\Compat\\WooCommerceBlueprint\\PayPalBlueprintOptions' => __DIR__ . '/../..' . '/modules/ppcp-compat/src/WooCommerceBlueprint/PayPalBlueprintOptions.php',
         'WooCommerce\\PayPalCommerce\\Compat\\WooCommerceBlueprint\\PayPalSettingsExporter' => __DIR__ . '/../..' . '/modules/ppcp-compat/src/WooCommerceBlueprint/PayPalSettingsExporter.php',

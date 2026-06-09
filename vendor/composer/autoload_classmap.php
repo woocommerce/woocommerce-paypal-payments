@@ -248,6 +248,7 @@ return array(
     'WooCommerce\\PayPalCommerce\\Compat\\PPEC\\MockGateway' => $baseDir . '/modules/ppcp-compat/src/PPEC/MockGateway.php',
     'WooCommerce\\PayPalCommerce\\Compat\\PPEC\\PPECHelper' => $baseDir . '/modules/ppcp-compat/src/PPEC/PPECHelper.php',
     'WooCommerce\\PayPalCommerce\\Compat\\PPEC\\SubscriptionsHandler' => $baseDir . '/modules/ppcp-compat/src/PPEC/SubscriptionsHandler.php',
+    'WooCommerce\\PayPalCommerce\\Compat\\WcGiftCardsCompat' => $baseDir . '/modules/ppcp-compat/src/WcGiftCardsCompat.php',
     'WooCommerce\\PayPalCommerce\\Compat\\WooCommerceBlueprint\\PayPalBlueprintBootstrap' => $baseDir . '/modules/ppcp-compat/src/WooCommerceBlueprint/PayPalBlueprintBootstrap.php',
     'WooCommerce\\PayPalCommerce\\Compat\\WooCommerceBlueprint\\PayPalBlueprintOptions' => $baseDir . '/modules/ppcp-compat/src/WooCommerceBlueprint/PayPalBlueprintOptions.php',
     'WooCommerce\\PayPalCommerce\\Compat\\WooCommerceBlueprint\\PayPalSettingsExporter' => $baseDir . '/modules/ppcp-compat/src/WooCommerceBlueprint/PayPalSettingsExporter.php',
