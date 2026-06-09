@@ -27,14 +27,16 @@ class VaultComponentModule implements ServiceModule, ExecutableModule {
 	}
 
 	public function run( ContainerInterface $c ): bool {
+		// The eligibility check performs a (cached) PayPal API call, so it must be
+		// evaluated lazily at request time inside each callback, never during boot.
 		$eligibility_check = $c->get( 'vault-component.eligibility.check' );
-		if ( ! $eligibility_check() ) {
-			return true;
-		}
 
 		add_filter(
 			'woocommerce_paypal_payments_sdk_components_hook',
-			static function ( array $components ): array {
+			static function ( array $components ) use ( $eligibility_check ): array {
+				if ( ! $eligibility_check() ) {
+					return $components;
+				}
 				$components[] = 'saved-payment-methods';
 				return $components;
 			}
@@ -42,7 +44,10 @@ class VaultComponentModule implements ServiceModule, ExecutableModule {
 
 		add_action(
 			'wc_ajax_' . CreateVaultOrderEndpoint::ENDPOINT,
-			static function () use ( $c ) {
+			static function () use ( $c, $eligibility_check ) {
+				if ( ! $eligibility_check() ) {
+					return;
+				}
 				$endpoint = $c->get( 'vault-component.endpoint.create-order' );
 				assert( $endpoint instanceof CreateVaultOrderEndpoint );
 
@@ -53,8 +58,11 @@ class VaultComponentModule implements ServiceModule, ExecutableModule {
 		$vault_injected = false;
 		add_filter(
 			'woocommerce_payment_gateway_get_saved_payment_method_option_html',
-			static function ( string $html, WC_Payment_Token $token, $gateway ) use ( &$vault_injected ): string {
+			static function ( string $html, WC_Payment_Token $token, $gateway ) use ( &$vault_injected, $eligibility_check ): string {
 				if ( $vault_injected || PayPalGateway::ID !== $gateway->id || ! $token instanceof PaymentTokenPayPal ) {
+					return $html;
+				}
+				if ( ! $eligibility_check() ) {
 					return $html;
 				}
 				$vault_injected = true;
@@ -67,7 +75,10 @@ class VaultComponentModule implements ServiceModule, ExecutableModule {
 
 		add_action(
 			'woocommerce_paypal_payments_after_order_processor',
-			function ( WC_Order $wc_order, Order $order ) {
+			function ( WC_Order $wc_order, Order $order ) use ( $eligibility_check ) {
+				if ( ! $eligibility_check() ) {
+					return;
+				}
 				$this->maybe_update_token_fi_details( $order );
 			},
 			10,
@@ -76,10 +87,13 @@ class VaultComponentModule implements ServiceModule, ExecutableModule {
 
 		add_action(
 			'after_setup_theme',
-			function () use ( $c ) {
+			function () use ( $c, $eligibility_check ) {
 				add_filter(
 					'woocommerce_paypal_payments_localized_script_data',
-					function ( array $localized_script_data ) use ( $c ): array {
+					function ( array $localized_script_data ) use ( $c, $eligibility_check ): array {
+						if ( ! $eligibility_check() ) {
+							return $localized_script_data;
+						}
 						return $this->maybe_add_vault_component_data( $localized_script_data, $c );
 					}
 				);
