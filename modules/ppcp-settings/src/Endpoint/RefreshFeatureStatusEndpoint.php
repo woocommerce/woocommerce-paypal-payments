@@ -58,32 +58,12 @@ class RefreshFeatureStatusEndpoint extends RestEndpoint {
 	 */
 	protected LoggerInterface $logger;
 
-	/**
-	 * The seller type resolver.
-	 *
-	 * @var SellerTypeResolver
-	 */
 	protected SellerTypeResolver $seller_type_resolver;
 
-	/**
-	 * The general settings.
-	 *
-	 * @var GeneralSettings
-	 */
 	protected GeneralSettings $general_settings;
 
-	/**
-	 * The partners endpoint.
-	 *
-	 * @var PartnersEndpoint
-	 */
 	protected PartnersEndpoint $partners_endpoint;
 
-	/**
-	 * The failure registry.
-	 *
-	 * @var FailureRegistry
-	 */
 	protected FailureRegistry $failure_registry;
 
 	public function __construct(
