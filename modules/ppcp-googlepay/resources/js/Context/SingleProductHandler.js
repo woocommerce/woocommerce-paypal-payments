@@ -14,6 +14,14 @@ class SingleProductHandler extends BaseHandler {
 	}
 
 	transactionInfo() {
+		const variationIdInput = form()?.querySelector(
+			'input[name="variation_id"]'
+		);
+		if ( variationIdInput && ! parseInt( variationIdInput.value ) ) {
+			return Promise.reject( new Error( 'No variation selected.' ) );
+		}
+
+
 		const errorHandler = new ErrorHandler(
 			this.ppcpConfig.labels.error.generic,
 			document.querySelector( '.woocommerce-notices-wrapper' )
