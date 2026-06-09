@@ -42,21 +42,17 @@ class SingleProductHandler extends BaseHandler {
 			? actionHandler.getSubscriptionProducts()
 			: actionHandler.getProducts();
 
-		return new Promise( ( resolve, reject ) => {
-			new SimulateCart(
-				this.ppcpConfig.ajax.simulate_cart.endpoint,
-				this.ppcpConfig.ajax.simulate_cart.nonce
-			).simulate( ( data ) => {
-				const transaction = new TransactionInfo(
-					data.total,
-					data.shipping_fee,
-					data.currency_code,
-					data.country_code
-				);
-
-				resolve( transaction );
-			}, products );
-		} );
+		return new SimulateCart(
+			this.ppcpConfig.ajax.simulate_cart.endpoint,
+			this.ppcpConfig.ajax.simulate_cart.nonce
+		).simulate( ( data ) => {
+			return new TransactionInfo(
+				data.total,
+				data.shipping_fee,
+				data.currency_code,
+				data.country_code
+			);
+		}, products );
 	}
 
 	validateForm() {
