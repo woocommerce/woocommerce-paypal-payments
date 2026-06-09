@@ -11,7 +11,6 @@ namespace WooCommerce\PayPalCommerce\Settings;
 use WC_Payment_Gateway;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PartnersEndpoint;
-use WooCommerce\PayPalCommerce\ApiClient\Helper\FailureRegistry;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\PartnerAttribution;
 use WooCommerce\PayPalCommerce\Applepay\ApplePayGateway;
 use WooCommerce\PayPalCommerce\Axo\Gateway\AxoGateway;
@@ -266,16 +265,15 @@ class SettingsModule implements ServiceModule, ExecutableModule
             $general_settings = $container->get('settings.data.general');
             assert($general_settings instanceof GeneralSettings);
             // Resolve an unknown seller type once, at connect time.
-            // Clear any stale failure first: fresh credentials warrant
-            // a fresh attempt. Only does work when seller_type is 'unknown'.
-            $failure_registry = $container->get('api.helper.failure-registry');
+            // Clear the stale seller-status cache and failure registry first:
+            // fresh credentials warrant a fresh lookup. Only does work when
+            // seller_type is 'unknown'.
             $partners_endpoint = $container->get('api.endpoint.partners');
             $seller_type_resolver = $container->get('settings.service.seller-type-resolver');
-            assert($failure_registry instanceof FailureRegistry);
             assert($partners_endpoint instanceof PartnersEndpoint);
             assert($seller_type_resolver instanceof SellerTypeResolver);
-            $failure_registry->clear_failures(FailureRegistry::SELLER_STATUS_KEY);
-            $seller_type_resolver->resolve_unknown_seller_type($failure_registry, $general_settings, $partners_endpoint, $logger);
+            do_action('woocommerce_paypal_payments_clear_apm_product_status');
+            $seller_type_resolver->resolve_unknown_seller_type($general_settings, $partners_endpoint, $logger);
             $onboarding_profile = $container->get('settings.data.onboarding');
             assert($onboarding_profile instanceof OnboardingProfile);
             $onboarding_profile->set_completed(\true);

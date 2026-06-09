@@ -190,7 +190,7 @@ return array(
         return new StylingRestEndpoint($container->get('settings.data.styling'), $container->get('settings.service.sanitizer'));
     },
     'settings.rest.refresh_feature_status' => static function (ContainerInterface $container): RefreshFeatureStatusEndpoint {
-        return new RefreshFeatureStatusEndpoint(new Cache('ppcp-timeout'), $container->get('woocommerce.logger.woocommerce'), $container->get('settings.service.seller-type-resolver'), $container->get('settings.data.general'), $container->get('api.endpoint.partners'), $container->get('api.helper.failure-registry'));
+        return new RefreshFeatureStatusEndpoint(new Cache('ppcp-timeout'), $container->get('woocommerce.logger.woocommerce'), $container->get('settings.service.seller-type-resolver'), $container->get('settings.data.general'), $container->get('api.endpoint.partners'));
     },
     'settings.rest.authentication' => static function (ContainerInterface $container): AuthenticationRestEndpoint {
         return new AuthenticationRestEndpoint($container->get('settings.service.authentication_manager'), $container->get('settings.service.data-manager'), $container->get('woocommerce.logger.woocommerce'));

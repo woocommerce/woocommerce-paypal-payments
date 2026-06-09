@@ -14,7 +14,6 @@ use WP_REST_Request;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PartnersEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\Cache;
-use WooCommerce\PayPalCommerce\ApiClient\Helper\FailureRegistry;
 use WooCommerce\PayPalCommerce\Settings\Data\GeneralSettings;
 use WooCommerce\PayPalCommerce\Settings\Service\SellerTypeResolver;
 /**
@@ -55,15 +54,13 @@ class RefreshFeatureStatusEndpoint extends \WooCommerce\PayPalCommerce\Settings\
     protected SellerTypeResolver $seller_type_resolver;
     protected GeneralSettings $general_settings;
     protected PartnersEndpoint $partners_endpoint;
-    protected FailureRegistry $failure_registry;
-    public function __construct(Cache $cache, LoggerInterface $logger, SellerTypeResolver $seller_type_resolver, GeneralSettings $general_settings, PartnersEndpoint $partners_endpoint, FailureRegistry $failure_registry)
+    public function __construct(Cache $cache, LoggerInterface $logger, SellerTypeResolver $seller_type_resolver, GeneralSettings $general_settings, PartnersEndpoint $partners_endpoint)
     {
         $this->cache = $cache;
         $this->logger = $logger;
         $this->seller_type_resolver = $seller_type_resolver;
         $this->general_settings = $general_settings;
         $this->partners_endpoint = $partners_endpoint;
-        $this->failure_registry = $failure_registry;
     }
     /**
      * Configure REST API routes.
@@ -99,7 +96,7 @@ class RefreshFeatureStatusEndpoint extends \WooCommerce\PayPalCommerce\Settings\
          * so the re-resolution below performs a fresh lookup.
          */
         do_action('woocommerce_paypal_payments_clear_apm_product_status');
-        $this->seller_type_resolver->resolve_unknown_seller_type($this->failure_registry, $this->general_settings, $this->partners_endpoint, $this->logger);
+        $this->seller_type_resolver->resolve_unknown_seller_type($this->general_settings, $this->partners_endpoint, $this->logger);
         $this->logger->info('Feature status refreshed successfully');
         return $this->return_success(array('message' => __('Feature status refreshed successfully.', 'woocommerce-paypal-payments')));
     }
