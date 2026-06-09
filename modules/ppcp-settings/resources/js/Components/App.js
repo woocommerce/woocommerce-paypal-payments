@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState } from '@wordpress/element';
 import classNames from 'classnames';
 
 import { OnboardingHooks, CommonHooks } from '@ppcp-settings/data';
+import Notifications from './ReusableComponents/Notifications';
+import FlashNotices from './ReusableComponents/FlashNotices';
 import SpinnerOverlay from './ReusableComponents/SpinnerOverlay';
 import SendOnlyMessage from './Screens/SendOnlyMessage';
 import OnboardingScreen from './Screens/Onboarding';
@@ -81,7 +83,13 @@ const SettingsApp = () => {
 		activePanel,
 	] );
 
-	return <div className={ wrapperClass }>{ Content }</div>;
+	return (
+		<div className={ wrapperClass }>
+			{ Content }
+			<Notifications />
+			<FlashNotices />
+		</div>
+	);
 };
 
 export default SettingsApp;
