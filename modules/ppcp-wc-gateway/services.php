@@ -645,7 +645,11 @@ return array(
 		$sandbox_url_base = $container->get( 'wcgateway.transaction-url-sandbox' );
 		$live_url_base    = $container->get( 'wcgateway.transaction-url-live' );
 
-		return new TransactionUrlProvider( $sandbox_url_base, $live_url_base );
+		return new TransactionUrlProvider(
+			$sandbox_url_base,
+			$live_url_base,
+			$container->get( 'settings.environment' )
+		);
 	},
 
 	'wcgateway.configuration.card-configuration'           => static function ( ContainerInterface $container ): CardPaymentsConfiguration {
