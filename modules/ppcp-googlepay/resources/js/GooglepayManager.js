@@ -51,13 +51,13 @@ class GooglepayManager {
 				button.init();
 			};
 
-			// Initialize button only if googlePayConfig and transactionInfo are already fetched.
-			if ( this.googlePayConfig && this.transactionInfo ) {
+			// Initialize button only if googlePayConfig is already fetched.
+			if ( this.googlePayConfig ) {
 				initButton();
 			} else {
 				await this.init();
 
-				if ( this.googlePayConfig && this.transactionInfo ) {
+				if ( this.googlePayConfig ) {
 					initButton();
 				}
 			}
@@ -74,13 +74,15 @@ class GooglepayManager {
 			}
 
 			if ( ! this.transactionInfo ) {
-				this.transactionInfo = await this.fetchTransactionInfo();
+				try {
+					this.transactionInfo = await this.fetchTransactionInfo();
+				} catch ( error ) {
+					console.error( 'Failed to fetch transaction info:', error );
+				}
 			}
 
 			if ( ! this.googlePayConfig ) {
 				console.error( 'No GooglePayConfig received during init' );
-			} else if ( ! this.transactionInfo ) {
-				console.error( 'No transactionInfo found during init' );
 			} else {
 				for ( const button of this.buttons ) {
 					button.configure(

@@ -299,11 +299,6 @@ class GooglepayButton extends PaymentButton {
 		);
 
 		invalidIf(
-			() => ! this.transactionInfo,
-			'No transactionInfo - missing configure() call?'
-		);
-
-		invalidIf(
 			() => ! this.contextHandler?.validateContext(),
 			`Invalid context handler.`
 		);
