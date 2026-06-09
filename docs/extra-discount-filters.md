@@ -51,17 +51,18 @@ add_filter(
 
 ### `woocommerce_paypal_payments_store_api_cart_extra_discount`
 
-Same as `woocommerce_paypal_payments_cart_extra_discount` but for the WooCommerce Blocks (Store API)
-checkout path (`AmountFactory::from_store_api_cart()`). The second argument is a `CartTotals`
-object instead of `WC_Cart`. Because the Store API works entirely in **minor units** (e.g. cents),
-the returned value must also be in minor units — the filter user is responsible for any conversion.
+Same as `woocommerce_paypal_payments_cart_extra_discount` but for the Store API path
+(`AmountFactory::from_store_api_cart()`), used during the PayPal express button shipping callback.
+The second argument is a `CartTotals` object instead of `WC_Cart`. Unlike the other filters,
+the value must be in the currency's
+**minor unit** (e.g. cents for USD) because the Store API works entirely in minor units.
 
 ```php
 add_filter(
     'woocommerce_paypal_payments_store_api_cart_extra_discount',
     function ( int $discount, CartTotals $cart_totals ): int {
         // Return cents (minor units), not dollars.
-        return $discount + my_plugin_get_cart_discount_cents();
+        return $discount + my_plugin_get_cart_discount_cents( $cart_totals );
     },
     10,
     2
@@ -73,10 +74,9 @@ add_filter(
 - Each filter receives the currently accumulated extra discount as its first argument and must
   return it unchanged if your plugin has nothing to contribute.
 - The cart and order filters return a `float` in the currency's major unit (e.g. dollars).
-  The Store API filter returns an `int` in minor units (e.g. cents) — the conversion is the
-  caller's responsibility.
+  The Store API filter returns an `int` in minor units (e.g. cents for USD).
 - Negative values are clamped to `0` by the factory.
 - The WooCommerce Gift Cards plugin (`woocommerce-gift-cards`) is handled automatically via
-  `WcGiftCardsCompat` for the classic cart/checkout and order paths. The Store API path
-  (`woocommerce_paypal_payments_store_api_cart_extra_discount`) is not hooked by
-  `WcGiftCardsCompat` because the Store API totals already reflect the gift card discount.
+  `WcGiftCardsCompat` for the classic cart/checkout, express button shipping callback, and order
+  paths. No manual
+  integration is needed for that plugin.
