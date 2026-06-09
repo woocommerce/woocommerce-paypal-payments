@@ -85,6 +85,7 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
     {
         $this->register_payment_gateways($c);
         $this->register_order_functionality($c);
+        $this->register_payment_method_title_enrichment($c);
         $this->register_contact_handlers();
         $this->register_block_express_payment_method_handler($c);
         $this->register_columns($c);
@@ -602,6 +603,20 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
             return \false;
         }
         return \false === strpos($order->get_payment_method_title(), '(via PayPal)');
+    }
+    /**
+     * Enriches the payment method title with payment details
+     * (payer email or card brand + last 4 digits) for supported gateways.
+     */
+    private function register_payment_method_title_enrichment(ContainerInterface $c): void
+    {
+        add_filter('woocommerce_order_get_payment_method_title', static function ($title, $order) use ($c) {
+            if (!is_string($title) || !$order instanceof WC_Order) {
+                return $title;
+            }
+            $enricher = $c->get('wcgateway.payment-method-title-enricher');
+            return $enricher->enrich($title, $order);
+        }, 10, 2);
     }
     /**
      * Overwrite WC order email/phone.

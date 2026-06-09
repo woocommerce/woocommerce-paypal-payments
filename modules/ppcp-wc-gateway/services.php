@@ -60,6 +60,7 @@ use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\FeesUpdater;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\InstallmentsProductStatus;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\MerchantDetails;
+use WooCommerce\PayPalCommerce\WcGateway\Helper\PaymentMethodTitleEnricher;
 use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\PayUponInvoice\PayUponInvoiceHelper;
 use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\PayUponInvoice\PayUponInvoiceProductStatus;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\PWCProductStatus;
@@ -333,6 +334,9 @@ return array(
     },
     'wcgateway.funding-source.renderer' => function (ContainerInterface $container): FundingSourceRenderer {
         return new FundingSourceRenderer($container->get('settings.settings-provider'), array_merge($container->get('wcgateway.all-funding-sources'), $container->get('wcgateway.extra-funding-sources')));
+    },
+    'wcgateway.payment-method-title-enricher' => static function (ContainerInterface $container): PaymentMethodTitleEnricher {
+        return new PaymentMethodTitleEnricher();
     },
     'wcgateway.checkout-helper' => static function (ContainerInterface $container): CheckoutHelper {
         return new CheckoutHelper();

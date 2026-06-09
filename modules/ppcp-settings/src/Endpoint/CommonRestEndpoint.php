@@ -13,6 +13,7 @@ use WP_REST_Server;
 use WP_REST_Response;
 use WP_REST_Request;
 use WooCommerce\PayPalCommerce\Settings\Data\GeneralSettings;
+use WooCommerce\PayPalCommerce\Settings\Service\OnboardingNotices;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PartnersEndpoint;
 /**
  * REST controller for "common" settings, which are used and modified by
@@ -46,6 +47,10 @@ class CommonRestEndpoint extends \WooCommerce\PayPalCommerce\Settings\Endpoint\R
      */
     protected PartnersEndpoint $partners_endpoint;
     /**
+     * Pending user-facing onboarding notices, surfaced to the settings app.
+     */
+    protected OnboardingNotices $notices;
+    /**
      * Field mapping for request to profile transformation.
      *
      * @var array
@@ -71,13 +76,15 @@ class CommonRestEndpoint extends \WooCommerce\PayPalCommerce\Settings\Endpoint\R
     /**
      * Constructor.
      *
-     * @param GeneralSettings  $settings          The settings instance.
-     * @param PartnersEndpoint $partners_endpoint Partners-API to get merchant details from PayPal.
+     * @param GeneralSettings   $settings          The settings instance.
+     * @param PartnersEndpoint  $partners_endpoint Partners-API to get merchant details from PayPal.
+     * @param OnboardingNotices $notices           Pending user-facing onboarding notices.
      */
-    public function __construct(GeneralSettings $settings, PartnersEndpoint $partners_endpoint)
+    public function __construct(GeneralSettings $settings, PartnersEndpoint $partners_endpoint, OnboardingNotices $notices)
     {
         $this->settings = $settings;
         $this->partners_endpoint = $partners_endpoint;
+        $this->notices = $notices;
     }
     /**
      * Returns the path to the "Get Seller Account Details" REST route.
@@ -128,6 +135,8 @@ class CommonRestEndpoint extends \WooCommerce\PayPalCommerce\Settings\Endpoint\R
         $js_data = $this->sanitize_for_javascript($this->settings->to_array(), $this->field_map);
         $extra_data = $this->add_woo_settings(array());
         $extra_data = $this->add_merchant_info($extra_data);
+        // One-shot: pending onboarding notices are returned once, then cleared.
+        $extra_data['onboardingNotices'] = $this->notices->pull();
         return $this->return_success($js_data, $extra_data);
     }
     /**
