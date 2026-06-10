@@ -42,6 +42,7 @@ use WooCommerce\PayPalCommerce\Settings\Endpoint\AuthenticationRestEndpoint;
 use WooCommerce\PayPalCommerce\Settings\Endpoint\CommonRestEndpoint;
 use WooCommerce\PayPalCommerce\Settings\Endpoint\FeaturesRestEndpoint;
 use WooCommerce\PayPalCommerce\Settings\Endpoint\LoginLinkRestEndpoint;
+use WooCommerce\PayPalCommerce\Settings\Endpoint\AgenticBetaBannerEndpoint;
 use WooCommerce\PayPalCommerce\Settings\Endpoint\MigrateToAcdcRestEndpoint;
 use WooCommerce\PayPalCommerce\Settings\Endpoint\OnboardingRestEndpoint;
 use WooCommerce\PayPalCommerce\Settings\Endpoint\PayLaterMessagingEndpoint;
@@ -56,6 +57,7 @@ use WooCommerce\PayPalCommerce\Settings\Service\AuthenticationManager;
 use WooCommerce\PayPalCommerce\Settings\Service\BrandedExperience\ActivationDetector;
 use WooCommerce\PayPalCommerce\Settings\Service\BrandedExperience\PathRepository;
 use WooCommerce\PayPalCommerce\Settings\Service\ConnectionUrlGenerator;
+use WooCommerce\PayPalCommerce\Settings\Service\AgenticBetaBannerEligibility;
 use WooCommerce\PayPalCommerce\Settings\Service\FeaturesEligibilityService;
 use WooCommerce\PayPalCommerce\Settings\Service\GatewayRedirectService;
 use WooCommerce\PayPalCommerce\Settings\Service\LoadingScreenService;
@@ -65,6 +67,7 @@ use WooCommerce\PayPalCommerce\Settings\Service\Migration\PaymentSettingsMigrati
 use WooCommerce\PayPalCommerce\Settings\Service\Migration\SettingsTabMigration;
 use WooCommerce\PayPalCommerce\Settings\Service\Migration\StylingSettingsMigration;
 use WooCommerce\PayPalCommerce\Settings\Service\Migration\FastlaneSettingsMigration;
+use WooCommerce\PayPalCommerce\Settings\Service\OnboardingNotices;
 use WooCommerce\PayPalCommerce\Settings\Service\OnboardingUrlManager;
 use WooCommerce\PayPalCommerce\Settings\Service\SellerTypeResolver;
 use WooCommerce\PayPalCommerce\Settings\Service\PaymentMethodsEligibilityService;
@@ -78,9 +81,9 @@ use WooCommerce\PayPalCommerce\Settings\Data\Definition\PaymentMethodsDefinition
 use WooCommerce\PayPalCommerce\PayLaterConfigurator\Factory\ConfigFactory;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CardButtonGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
-use WooCommerce\PayPalCommerce\WcGateway\Gateway\OXXO\OXXO;
+use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\OXXOGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
-use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayUponInvoice\PayUponInvoiceGateway;
+use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\PayUponInvoice\PayUponInvoiceGateway;
 use WooCommerce\PayPalCommerce\PayLaterConfigurator\Endpoint\SaveConfig;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\ConnectionState;
@@ -179,7 +182,7 @@ return array(
         return new OnboardingRestEndpoint($container->get('settings.data.onboarding'));
     },
     'settings.rest.common' => static function (ContainerInterface $container): CommonRestEndpoint {
-        return new CommonRestEndpoint($container->get('settings.data.general'), $container->get('api.endpoint.partners'));
+        return new CommonRestEndpoint($container->get('settings.data.general'), $container->get('api.endpoint.partners'), $container->get('settings.service.onboarding-notices'));
     },
     'settings.rest.payment' => static function (ContainerInterface $container): PaymentRestEndpoint {
         return new PaymentRestEndpoint($container->get('settings.data.payment'), $container->get('settings.data.definition.methods'), $container->get('settings.data.definition.method_dependencies'));
@@ -194,7 +197,7 @@ return array(
         return new AuthenticationRestEndpoint($container->get('settings.service.authentication_manager'), $container->get('settings.service.data-manager'), $container->get('woocommerce.logger.woocommerce'));
     },
     'settings.rest.login_link' => static function (ContainerInterface $container): LoginLinkRestEndpoint {
-        return new LoginLinkRestEndpoint($container->get('settings.service.connection-url-generator'));
+        return new LoginLinkRestEndpoint($container->get('settings.service.connection-url-generator'), $container->get('woocommerce.logger.woocommerce'));
     },
     'settings.rest.webhooks' => static function (ContainerInterface $container): WebhookSettingsEndpoint {
         return new WebhookSettingsEndpoint($container->get('api.endpoint.webhook'), $container->get('webhook.registrar'), $container->get('webhook.status.simulation'));
@@ -208,6 +211,9 @@ return array(
     'settings.rest.migrate_to_acdc' => static function (ContainerInterface $container): MigrateToAcdcRestEndpoint {
         return new MigrateToAcdcRestEndpoint($container->get('settings.data.payment'));
     },
+    'settings.rest.agentic_beta_banner' => static function (ContainerInterface $container): AgenticBetaBannerEndpoint {
+        return new AgenticBetaBannerEndpoint();
+    },
     'settings.casual-selling.supported-countries' => static function (ContainerInterface $container): array {
         return array('AR', 'AU', 'AT', 'BE', 'BR', 'CA', 'CL', 'CN', 'CY', 'CZ', 'DK', 'EE', 'FI', 'FR', 'GR', 'HU', 'ID', 'IE', 'IT', 'JP', 'LV', 'LI', 'LU', 'MY', 'MT', 'NL', 'NZ', 'NO', 'PH', 'PL', 'PT', 'RO', 'RU', 'SM', 'SA', 'SG', 'SK', 'SI', 'ZA', 'KR', 'ES', 'SE', 'TW', 'GB', 'US', 'VN');
     },
@@ -217,7 +223,10 @@ return array(
         return in_array($country, $eligible_countries, \true);
     },
     'settings.handler.connection-listener' => static function (ContainerInterface $container): ConnectionListener {
-        return new ConnectionListener($container->get('wcgateway.is-plugin-settings-page'), $container->get('settings.service.onboarding-url-manager'), $container->get('settings.service.authentication_manager'), $container->get('http.redirector'), $container->get('woocommerce.logger.woocommerce'));
+        return new ConnectionListener($container->get('wcgateway.is-plugin-settings-page'), $container->get('settings.service.onboarding-url-manager'), $container->get('settings.service.authentication_manager'), $container->get('http.redirector'), $container->get('settings.service.onboarding-notices'), $container->get('woocommerce.logger.woocommerce'));
+    },
+    'settings.service.onboarding-notices' => static function (ContainerInterface $container): OnboardingNotices {
+        return new OnboardingNotices();
     },
     'settings.service.signup-link-cache' => static function (ContainerInterface $container): Cache {
         return new Cache('ppcp-paypal-signup-link');
@@ -240,10 +249,13 @@ return array(
     'settings.service.data-manager' => static function (ContainerInterface $container): SettingsDataManager {
         return new SettingsDataManager($container->get('settings.data.definition.methods'), $container->get('settings.data.onboarding'), $container->get('settings.data.general'), $container->get('settings.data.settings'), $container->get('settings.data.styling'), $container->get('settings.data.payment'), $container->get('settings.data.paylater-messaging'), $container->get('settings.data.todos'));
     },
+    'settings.service.agentic-beta-eligibility' => static function (ContainerInterface $container): AgenticBetaBannerEligibility {
+        return new AgenticBetaBannerEligibility($container->get('settings.data.general'), $container->get('wcgateway.store-country'));
+    },
     'settings.service.script-data-handler' => static function (ContainerInterface $container): ScriptDataHandler {
         $check_override = $container->get('settings.migration.bcdc-override-check');
         assert(is_callable($check_override));
-        return new ScriptDataHandler($container->get('settings.asset_getter'), $container->get('paylater-configurator.is-available'), $container->get('wcgateway.store-country'), $container->get('api.partner_merchant_id'), $container->get('wcgateway.wp-paypal-locales-map'), $container->get('api.helper.partner-attribution'), $container->get('settings.settings-provider'), $container->get('api.helpers.paymentLevelEligibility'), $check_override());
+        return new ScriptDataHandler($container->get('settings.asset_getter'), $container->get('paylater-configurator.is-available'), $container->get('wcgateway.store-country'), $container->get('api.partner_merchant_id'), $container->get('wcgateway.wp-paypal-locales-map'), $container->get('api.helper.partner-attribution'), $container->get('settings.settings-provider'), $container->get('api.helpers.paymentLevelEligibility'), $check_override(), $container->get('settings.service.agentic-beta-eligibility'));
     },
     'settings.service.data-migration' => static fn(ContainerInterface $c): MigrationManager => new MigrationManager($c->get('settings.service.data-migration.general-settings'), $c->get('settings.service.data-migration.settings-tab'), $c->get('settings.service.data-migration.styling'), $c->get('settings.service.data-migration.payment-settings'), $c->get('settings.service.data-migration.fastlane'), $c->get('settings.data.onboarding'), $c->get('woocommerce.logger.woocommerce')),
     'settings.service.data-migration.settings-tab' => static fn(ContainerInterface $c): SettingsTabMigration => new SettingsTabMigration((array) get_option('woocommerce-ppcp-settings', array()), $c->get('settings.data.settings')),
@@ -366,7 +378,7 @@ return array(
             // Add PayPal buttons to block checkout.
             !$button_locations['product_enabled'],
             // Add PayPal buttons to product.
-            $container->get('applepay.eligible') && $capabilities[FeaturesDefinition::FEATURE_APPLE_PAY],
+            $container->get('applepay.eligible') && $capabilities[FeaturesDefinition::FEATURE_APPLE_PAY] && !$container->get('applepay.is_validated'),
             // Register Domain for Apple Pay.
             $capabilities[FeaturesDefinition::FEATURE_ADVANCED_CREDIT_AND_DEBIT_CARDS] && !($capabilities[FeaturesDefinition::FEATURE_APPLE_PAY] && $capabilities[FeaturesDefinition::FEATURE_GOOGLE_PAY]),
             // Add digital wallets to your account.
@@ -467,7 +479,7 @@ return array(
      * @returns string[] The list of all gateway IDs.
      */
     'settings.config.all-gateway-ids' => static function (): array {
-        return array(PayPalGateway::ID, CardButtonGateway::ID, CreditCardGateway::ID, AxoGateway::ID, ApplePayGateway::ID, GooglePayGateway::ID, PWCGateway::ID, BancontactGateway::ID, BlikGateway::ID, EPSGateway::ID, IDealGateway::ID, MyBankGateway::ID, P24Gateway::ID, TrustlyGateway::ID, MultibancoGateway::ID, PayUponInvoiceGateway::ID, OXXO::ID);
+        return array(PayPalGateway::ID, CardButtonGateway::ID, CreditCardGateway::ID, AxoGateway::ID, ApplePayGateway::ID, GooglePayGateway::ID, PWCGateway::ID, BancontactGateway::ID, BlikGateway::ID, EPSGateway::ID, IDealGateway::ID, MyBankGateway::ID, P24Gateway::ID, TrustlyGateway::ID, MultibancoGateway::ID, PayUponInvoiceGateway::ID, OXXOGateway::ID);
     },
     'settings.service.branded-experience.activation-detector' => static function (): ActivationDetector {
         return new ActivationDetector();

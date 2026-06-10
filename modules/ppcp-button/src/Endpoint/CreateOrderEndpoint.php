@@ -28,6 +28,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Factory\PayerFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PurchaseUnitFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\ReturnUrlFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\ShippingPreferenceFactory;
+use WooCommerce\PayPalCommerce\Button\Exception\NonceValidationException;
 use WooCommerce\PayPalCommerce\Button\Exception\ValidationException;
 use WooCommerce\PayPalCommerce\Button\Session\CartDataFactory;
 use WooCommerce\PayPalCommerce\Button\Session\CartDataTransientStorage;
@@ -304,6 +305,8 @@ class CreateOrderEndpoint implements \WooCommerce\PayPalCommerce\Button\Endpoint
                 do_action('woocommerce_paypal_payments_woocommerce_order_created', $wc_order, $order);
             }
             wp_send_json_success($this->make_response($order));
+        } catch (NonceValidationException $error) {
+            wp_send_json_error(array('message' => $error->getMessage()), 400);
         } catch (ValidationException $error) {
             $response = array('message' => $error->getMessage(), 'errors' => $error->errors(), 'refresh' => isset(WC()->session->refresh_totals));
             unset(WC()->session->refresh_totals);
@@ -387,7 +390,7 @@ class CreateOrderEndpoint implements \WooCommerce\PayPalCommerce\Button\Endpoint
             // so we cannot make some invalid addresses null in PurchaseUnitFactory,
             // which causes failure e.g. for guests using the button on products pages when the country does not have postal codes.
             if (422 === $exception->status_code() && array_filter($exception->details(), function (stdClass $detail): bool {
-                return isset($detail->field) && str_contains((string) $detail->field, 'shipping/address');
+                return isset($detail->field) && strpos((string) $detail->field, 'shipping/address') !== \false;
             })) {
                 $this->logger->info('Invalid shipping address for order creation, retrying without it.');
                 $this->purchase_unit->set_shipping(null);

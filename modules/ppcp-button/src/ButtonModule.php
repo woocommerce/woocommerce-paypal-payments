@@ -25,7 +25,6 @@ use WooCommerce\PayPalCommerce\Button\Endpoint\ValidateCheckoutEndpoint;
 use WooCommerce\PayPalCommerce\Button\Helper\EarlyOrderHandler;
 use WooCommerce\PayPalCommerce\Button\Helper\WooCommerceOrderCreator;
 use WooCommerce\PayPalCommerce\Button\Session\CartDataTransientStorage;
-use WooCommerce\PayPalCommerce\Button\VaultV2\StartPayPalVaultingEndpoint;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExecutableModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ModuleClassNameIdTrait;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ServiceModule;
@@ -159,14 +158,6 @@ class ButtonModule implements ServiceModule, ExecutableModule
         add_action('wc_ajax_' . GetOrderEndpoint::ENDPOINT, static function () use ($container) {
             $endpoint = $container->get('button.endpoint.get-order');
             assert($endpoint instanceof GetOrderEndpoint);
-            $endpoint->handle_request();
-        });
-        /**
-         * Vault v2 ajax handler, would be removed when vault v3 becomes the default for all merchants.
-         */
-        add_action('wc_ajax_' . StartPayPalVaultingEndpoint::ENDPOINT, static function () use ($container) {
-            $endpoint = $container->get('button.vault-v2.endpoint.vault-paypal');
-            assert($endpoint instanceof StartPayPalVaultingEndpoint);
             $endpoint->handle_request();
         });
     }

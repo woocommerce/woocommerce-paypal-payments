@@ -34,9 +34,9 @@ use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ServiceModule;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CardButtonGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
-use WooCommerce\PayPalCommerce\WcGateway\Gateway\OXXO\OXXO;
+use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\OXXOGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
-use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayUponInvoice\PayUponInvoiceGateway;
+use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\PayUponInvoice\PayUponInvoiceGateway;
 use WooCommerce\PayPalCommerce\Settings\Service\SettingsDataManager;
 use WooCommerce\PayPalCommerce\Settings\DTO\ConfigurationFlagsDTO;
 use WooCommerce\PayPalCommerce\Settings\DTO\MerchantConnectionDTO;
@@ -71,24 +71,19 @@ class SettingsModule implements ServiceModule, ExecutableModule
         $loading_screen_service->register();
         add_action('init', fn() => $this->apply_branded_only_limitations($container), 1);
         add_action(
-            'woocommerce_paypal_payments_gateway_migrate_on_update',
+            'woocommerce_paypal_payments_gateway_migrate',
             /**
-             * Auto-trigger settings migration to new UI on plugin update.
+             * Auto-trigger settings migration to new UI when upgrading from a legacy (pre-4.0) version.
              *
-             * This hook executes during plugin updates to automatically migrate existing merchants
-             * from the legacy settings interface to the new settings UI. The migration runs once
-             * per installation.
-             *
-             * Migration process includes:
-             * - Cleaning up legacy UI toggle options (old/new UI preference flags)
-             * - Marking onboarding as completed for existing merchants
-             * - Migrating general settings, styling settings, and payment method configurations
-             * - Syncing gateway states to reflect current settings
-             *
-             * The migration is skipped if:
+             * Migration is skipped when:
+             * - No previous version exists (fresh install — nothing to migrate)
+             * - Previous version is 4.0 or newer (already on the new UI)
              * - OPTION_NAME_MIGRATION_IS_DONE flag is already set (migration completed previously)
              */
-            static function () use ($container): void {
+            static function ($previous_version) use ($container): void {
+                if (!$previous_version || version_compare((string) $previous_version, '4.0', '>=')) {
+                    return;
+                }
                 if (get_option(MigrationManager::OPTION_NAME_MIGRATION_IS_DONE) === '1') {
                     return;
                 }
@@ -239,7 +234,7 @@ class SettingsModule implements ServiceModule, ExecutableModule
             $this->render_content();
         });
         add_action('rest_api_init', static function () use ($container): void {
-            $endpoints = array('onboarding' => $container->get('settings.rest.onboarding'), 'common' => $container->get('settings.rest.common'), 'connect_manual' => $container->get('settings.rest.authentication'), 'login_link' => $container->get('settings.rest.login_link'), 'webhooks' => $container->get('settings.rest.webhooks'), 'refresh_feature_status' => $container->get('settings.rest.refresh_feature_status'), 'payment' => $container->get('settings.rest.payment'), 'settings' => $container->get('settings.rest.settings'), 'styling' => $container->get('settings.rest.styling'), 'todos' => $container->get('settings.rest.todos'), 'pay_later_messaging' => $container->get('settings.rest.pay_later_messaging'), 'features' => $container->get('settings.rest.features'), 'migrate_to_acdc' => $container->get('settings.rest.migrate_to_acdc'));
+            $endpoints = array('onboarding' => $container->get('settings.rest.onboarding'), 'common' => $container->get('settings.rest.common'), 'connect_manual' => $container->get('settings.rest.authentication'), 'login_link' => $container->get('settings.rest.login_link'), 'webhooks' => $container->get('settings.rest.webhooks'), 'refresh_feature_status' => $container->get('settings.rest.refresh_feature_status'), 'payment' => $container->get('settings.rest.payment'), 'settings' => $container->get('settings.rest.settings'), 'styling' => $container->get('settings.rest.styling'), 'todos' => $container->get('settings.rest.todos'), 'pay_later_messaging' => $container->get('settings.rest.pay_later_messaging'), 'features' => $container->get('settings.rest.features'), 'migrate_to_acdc' => $container->get('settings.rest.migrate_to_acdc'), 'agentic_beta_banner' => $container->get('settings.rest.agentic_beta_banner'));
             foreach ($endpoints as $endpoint) {
                 assert($endpoint instanceof RestEndpoint);
                 $endpoint->register_routes();
@@ -451,7 +446,7 @@ class SettingsModule implements ServiceModule, ExecutableModule
                     continue;
                 }
                 // For OXXO: enable ONLY if merchant is in Mexico.
-                if (OXXO::ID === $method['id']) {
+                if (OXXOGateway::ID === $method['id']) {
                     if ('MX' === $merchant_country) {
                         $payment_methods->toggle_method_state($method['id'], \true);
                     }
@@ -487,24 +482,6 @@ class SettingsModule implements ServiceModule, ExecutableModule
             if (!$own_brand_only && $installation_path !== InstallationPathEnum::DIRECT) {
                 $partner_attribution->initialize_bn_code(InstallationPathEnum::DIRECT, \true);
             }
-        });
-        /**
-         * Implement the mutually exclusive BCDC or ACDC rule:
-         * If the current merchant is _not BCDC eligible_, we disable the "card" funding source.
-         * This effectively hides the black Standard Card button from the express payment block
-         * and the PayPal smart button stack in classic checkout.
-         */
-        add_filter('woocommerce_paypal_payments_sdk_disabled_funding_hook', static function (array $disable_funding) use ($container) {
-            // Already disabled, no correction needed.
-            if (in_array('card', $disable_funding, \true)) {
-                return $disable_funding;
-            }
-            $dcc_configuration = $container->get('wcgateway.configuration.card-configuration');
-            assert($dcc_configuration instanceof CardPaymentsConfiguration);
-            if (!$dcc_configuration->is_bcdc_enabled()) {
-                $disable_funding[] = 'card';
-            }
-            return $disable_funding;
         });
         add_action(
             'woocommerce_paypal_payments_gateway_migrate',
@@ -685,28 +662,6 @@ class SettingsModule implements ServiceModule, ExecutableModule
         if (!$settings->own_brand_only()) {
             return;
         }
-        /**
-         * Ensure BCDC remains functional in branded-only mode.
-         *
-         * In branded-only mode, white-label payment methods (ACDC, Apple Pay, Google Pay)
-         * are disabled, but the PayPal-branded card button (BCDC) should remain functional.
-         *
-         * BCDC requires the 'card' funding source to be enabled. This filter prevents 'card'
-         * from being added to the disabled funding sources list on checkout pages, ensuring
-         * the BCDC button remains clickable and functional for merchants using branded-only mode.
-         */
-        add_filter('woocommerce_paypal_payments_sdk_disabled_funding_hook', static function (array $disable_funding, array $flags) use ($container) {
-            $allowed_context = array('checkout-block', 'checkout');
-            if (!in_array($flags['context'], $allowed_context, \true)) {
-                return $disable_funding;
-            }
-            $payment_settings = $container->get('settings.data.payment');
-            assert($payment_settings instanceof PaymentSettings);
-            if (!$payment_settings->is_method_enabled(CardButtonGateway::ID)) {
-                return $disable_funding;
-            }
-            return array_filter($disable_funding, static fn(string $funding_source) => $funding_source !== 'card');
-        }, 10, 2);
         /**
          * Prevent white-label payment methods from being enabled during onboarding.
          *

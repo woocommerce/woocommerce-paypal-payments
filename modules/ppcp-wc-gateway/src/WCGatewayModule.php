@@ -16,9 +16,7 @@ use WooCommerce\PayPalCommerce\AdminNotices\Entity\Message;
 use WooCommerce\PayPalCommerce\AdminNotices\Repository\Repository;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Authorization;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Capture;
-use WooCommerce\PayPalCommerce\ApiClient\Entity\OrderStatus;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\ReferenceTransactionStatus;
-use WooCommerce\PayPalCommerce\ApiClient\Helper\Cache;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\DccApplies;
 use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\LocalApmProductStatus;
 use WooCommerce\PayPalCommerce\Settings\Data\Definition\FeaturesDefinition;
@@ -42,12 +40,11 @@ use WooCommerce\PayPalCommerce\WcGateway\Endpoint\VoidOrderEndpoint;
 use WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\GatewayRepository;
-use WooCommerce\PayPalCommerce\WcGateway\Gateway\OXXO\OXXOGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\CardPaymentsConfiguration;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\DCCProductStatus;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\InstallmentsProductStatus;
-use WooCommerce\PayPalCommerce\WcGateway\Helper\PayUponInvoiceProductStatus;
+use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\PayUponInvoice\PayUponInvoiceProductStatus;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\PWCProductStatus;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\SettingsStatus;
 use WooCommerce\PayPalCommerce\WcGateway\Notice\ConnectAdminNotice;
@@ -88,7 +85,9 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
     {
         $this->register_payment_gateways($c);
         $this->register_order_functionality($c);
+        $this->register_payment_method_title_enrichment($c);
         $this->register_contact_handlers();
+        $this->register_block_express_payment_method_handler($c);
         $this->register_columns($c);
         $this->register_checkout_paypal_address_preset($c);
         $this->register_wc_tasks($c);
@@ -140,6 +139,18 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
             }
             // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
             echo $fees_renderer->render($wc_order);
+        });
+        add_action('woocommerce_admin_order_totals_after_total', function (int $order_id) use ($c) {
+            $wc_order = wc_get_order($order_id);
+            if (!$wc_order instanceof WC_Order) {
+                return;
+            }
+            $fraud_result = $wc_order->get_meta(PayPalGateway::FRAUD_RESULT_META_KEY);
+            if (empty($fraud_result['response_code'])) {
+                return;
+            }
+            $fraud = $c->get('api.factory.fraud-processor-response')->from_paypal_response((object) $fraud_result);
+            printf('<tr><td class="label">%s:</td><td width="1%%"></td><td class="total">%s</td></tr>', esc_html__('Processor Response', 'woocommerce-paypal-payments'), esc_html($fraud->get_response_code_message()));
         });
         add_action('admin_enqueue_scripts', function () use ($c) {
             if (!is_admin() || wp_doing_ajax()) {
@@ -239,30 +250,10 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
             $pui_status->is_active();
         }, 20);
         add_action('wp_loaded', function () use ($c) {
-            if ('DE' === $c->get('api.shop.country')) {
-                $c->get('wcgateway.pay-upon-invoice')->init();
-            }
-            $c->get('wcgateway.oxxo')->init();
             $fraudnet_assets = $c->get('wcgateway.fraudnet-assets');
             assert($fraudnet_assets instanceof FraudNetAssets);
             $fraudnet_assets->register_assets();
         });
-        add_action('woocommerce_paypal_payments_check_pui_payment_captured', function (int $wc_order_id, string $order_id) use ($c) {
-            $order_endpoint = $c->get('api.endpoint.order');
-            $logger = $c->get('woocommerce.logger.woocommerce');
-            $order = $order_endpoint->order($order_id);
-            $order_status = $order->status();
-            $logger->info("Checking payment captured webhook for WC order #{$wc_order_id}, PayPal order status: " . $order_status->name());
-            $wc_order = wc_get_order($wc_order_id);
-            if (!$wc_order instanceof WC_Order || $wc_order->get_status() !== 'on-hold') {
-                return;
-            }
-            if ($order_status->name() !== OrderStatus::COMPLETED) {
-                $message = __('Could not process WC order because PAYMENT.CAPTURE.COMPLETED webhook not received.', 'woocommerce-paypal-payments');
-                $logger->error($message);
-                $wc_order->update_status('failed', $message);
-            }
-        }, 10, 2);
         add_action('woocommerce_order_status_changed', static function (int $order_id, string $from, string $to) use ($c) {
             $wc_order = wc_get_order($order_id);
             if (!$wc_order instanceof WC_Order) {
@@ -320,12 +311,6 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
             $pwc_product_status = $c->get('wcgateway.pwc-product-status');
             if ($pwc_product_status instanceof PWCProductStatus) {
                 $pwc_product_status->clear();
-            }
-            $reference_transaction_status_cache = $c->get('api.reference-transaction-status-cache');
-            assert($reference_transaction_status_cache instanceof Cache);
-            // Clear Reference Transaction status.
-            if ($reference_transaction_status_cache->has(ReferenceTransactionStatus::CACHE_KEY)) {
-                $reference_transaction_status_cache->delete(ReferenceTransactionStatus::CACHE_KEY);
             }
         });
         /**
@@ -386,17 +371,6 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
             assert($endpoint instanceof ShippingCallbackEndpoint);
             $endpoint->register();
         });
-        // Add processing instruction request data for OXXO payment.
-        add_filter('ppcp_create_order_request_body_data', static function (array $data, string $payment_method, array $request): array {
-            if ($payment_method !== OXXOGateway::ID) {
-                return $data;
-            }
-            $processing_instruction = $request['processing_instruction'] ?? '';
-            if ($processing_instruction) {
-                $data['processing_instruction'] = $processing_instruction;
-            }
-            return $data;
-        }, 10, 3);
         return \true;
     }
     /**
@@ -414,7 +388,6 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
             $settings = $container->get('wcgateway.settings');
             assert($settings instanceof ContainerInterface);
             $is_our_page = $container->get('wcgateway.is-plugin-settings-page');
-            $is_gateways_list_page = $container->get('wcgateway.is-wc-gateways-list-page');
             $is_connected = $container->get('settings.flag.is-connected');
             if (!$is_connected) {
                 return $methods;
@@ -435,15 +408,6 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
             }
             if ($paypal_gateway_enabled && apply_filters('woocommerce_paypal_payments_card_button_gateway_should_register_gateway', $container->get('wcgateway.settings.allow_card_button_gateway'))) {
                 $methods[] = $container->get('wcgateway.card-button-gateway');
-            }
-            $pui_product_status = $container->get('wcgateway.pay-upon-invoice-product-status');
-            assert($pui_product_status instanceof PayUponInvoiceProductStatus);
-            $shop_country = $container->get('api.shop.country');
-            if ('DE' === $shop_country && ($is_our_page || $is_gateways_list_page || $pui_product_status->is_active())) {
-                $methods[] = $container->get('wcgateway.pay-upon-invoice-gateway');
-            }
-            if ('MX' === $shop_country) {
-                $methods[] = $container->get('wcgateway.oxxo-gateway');
             }
             return (array) $methods;
         });
@@ -641,6 +605,20 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
         return \false === strpos($order->get_payment_method_title(), '(via PayPal)');
     }
     /**
+     * Enriches the payment method title with payment details
+     * (payer email or card brand + last 4 digits) for supported gateways.
+     */
+    private function register_payment_method_title_enrichment(ContainerInterface $c): void
+    {
+        add_filter('woocommerce_order_get_payment_method_title', static function ($title, $order) use ($c) {
+            if (!is_string($title) || !$order instanceof WC_Order) {
+                return $title;
+            }
+            $enricher = $c->get('wcgateway.payment-method-title-enricher');
+            return $enricher->enrich($title, $order);
+        }, 10, 2);
+    }
+    /**
      * Overwrite WC order email/phone.
      *
      * The contact module can provide a custom email and phone number.
@@ -668,6 +646,51 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
             // so probably no need to add additional checks.
             $set_order_contacts($wc_order);
         });
+    }
+    /**
+     * Ensures PayPal handles block-checkout express payments even when another PCP gateway is sorted first in WC Settings → Payments.
+     */
+    private function register_block_express_payment_method_handler(ContainerInterface $c): void
+    {
+        add_action('woocommerce_rest_checkout_process_payment_with_context', function ($context) use ($c): void {
+            $payment_data = (array) ($context->payment_data ?? array());
+            if (empty($payment_data['paypal_order_id'])) {
+                return;
+            }
+            if (($context->payment_method ?? '') === PayPalGateway::ID) {
+                return;
+            }
+            $available = WC()->payment_gateways->get_available_payment_gateways();
+            if (!isset($available[PayPalGateway::ID])) {
+                return;
+            }
+            $context->set_payment_method(PayPalGateway::ID);
+            $order = $context->order ?? null;
+            if ($order instanceof WC_Order) {
+                $order->set_payment_method(PayPalGateway::ID);
+                $session_handler = $c->get('session.handler');
+                $funding_source_renderer = $c->get('wcgateway.funding-source.renderer');
+                $funding_source = $payment_data['funding_source'] ?: ($session_handler->funding_source() ?: 'paypal');
+                $order->set_payment_method_title($funding_source_renderer->render_name($funding_source));
+                $order->save();
+            }
+        }, 100, 1);
+        add_action('woocommerce_before_order_object_save', function ($order): void {
+            if (!$order instanceof WC_Order) {
+                return;
+            }
+            if (!$order->get_meta(PayPalGateway::ORDER_ID_META_KEY)) {
+                return;
+            }
+            $payment_method = $order->get_payment_method();
+            if ($payment_method && strpos($payment_method, 'ppcp-') === 0) {
+                return;
+            }
+            if ($order->get_payment_method() === CreditCardGateway::ID) {
+                return;
+            }
+            $order->set_payment_method(PayPalGateway::ID);
+        }, 10, 1);
     }
     /**
      * Inserts custom fields into the order-detail view.

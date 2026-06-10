@@ -56,7 +56,7 @@ class PayerFactory
                 $phone = new PhoneWithType('HOME', new Phone($national_number));
             }
         }
-        return new Payer(new PayerName($wc_order->get_billing_first_name(), $wc_order->get_billing_last_name()), $wc_order->get_billing_email(), $payer_id, $this->address_factory->from_wc_order($wc_order), $birthdate, $phone);
+        return new Payer(new PayerName($wc_order->get_billing_first_name(), $wc_order->get_billing_last_name()), $wc_order->get_billing_email(), $payer_id, $this->address_factory->from_wc_order($wc_order, 'billing'), $birthdate, $phone);
     }
     /**
      * Returns a Payer object based off a WooCommerce customer.

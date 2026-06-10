@@ -12,6 +12,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Helper\PaymentLevelEligibility;
 use WooCommerce\PayPalCommerce\Assets\AssetGetter;
 use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
+use WooCommerce\PayPalCommerce\Settings\Service\AgenticBetaBannerEligibility;
 /**
  * This class is responsible for localizing the scripts and styles for the settings page.
  */
@@ -26,7 +27,8 @@ class ScriptDataHandler
     protected SettingsProvider $settings_provider;
     protected PaymentLevelEligibility $payment_level_eligibility;
     private bool $is_bcdc_override_flag_enabled;
-    public function __construct(AssetGetter $asset_getter, bool $paylater_is_available, string $store_country, string $merchant_id, array $button_language_choices, PartnerAttribution $partner_attribution, SettingsProvider $settings_provider, PaymentLevelEligibility $payment_level_eligibility, bool $is_bcdc_override_flag_enabled)
+    private AgenticBetaBannerEligibility $agentic_beta_banner_eligibility;
+    public function __construct(AssetGetter $asset_getter, bool $paylater_is_available, string $store_country, string $merchant_id, array $button_language_choices, PartnerAttribution $partner_attribution, SettingsProvider $settings_provider, PaymentLevelEligibility $payment_level_eligibility, bool $is_bcdc_override_flag_enabled, AgenticBetaBannerEligibility $agentic_beta_banner_eligibility)
     {
         $this->asset_getter = $asset_getter;
         $this->paylater_is_available = $paylater_is_available;
@@ -37,6 +39,7 @@ class ScriptDataHandler
         $this->settings_provider = $settings_provider;
         $this->payment_level_eligibility = $payment_level_eligibility;
         $this->is_bcdc_override_flag_enabled = $is_bcdc_override_flag_enabled;
+        $this->agentic_beta_banner_eligibility = $agentic_beta_banner_eligibility;
     }
     /**
      * Localize scripts.
@@ -87,6 +90,8 @@ class ScriptDataHandler
             'threeDSecureOptions' => $three_d_secure_options,
             'isEligibleForPaymentLevelProcessing' => $this->payment_level_eligibility->is_eligible(CreditCardGateway::ID),
             'isBcdcOverrideFlagEnabled' => $this->is_bcdc_override_flag_enabled,
+            'isAgenticBetaBannerEligible' => $this->agentic_beta_banner_eligibility->is_eligible(),
+            'blueprint' => array('isActive' => 'yes' === get_option('woocommerce_feature_blueprint_enabled', 'no'), 'importUrl' => admin_url('admin.php?page=wc-settings&tab=advanced&section=blueprint')),
         );
         if ($is_pay_later_configurator_available) {
             wp_enqueue_script('ppcp-paylater-configurator-lib', 'https://www.paypalobjects.com/merchant-library/merchant-configurator.js', array('wp-i18n'), $script_asset_file['version'], \true);
@@ -96,5 +101,6 @@ class ScriptDataHandler
         wp_localize_script('ppcp-admin-settings', 'ppcpSettings', $script_data);
         // Dequeue the PayPal Subscription script.
         wp_dequeue_script('ppcp-paypal-subscription');
+        do_action('woocommerce_paypal_payments_settings_scripts_enqueued');
     }
 }

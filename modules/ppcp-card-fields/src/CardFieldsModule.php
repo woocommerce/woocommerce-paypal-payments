@@ -65,18 +65,6 @@ class CardFieldsModule implements ServiceModule, ExecutableModule
             // Ensure the older "hosted-fields" component is not loaded.
             return array_filter($components, static fn(string $component) => $component !== 'hosted-fields');
         });
-        add_filter('woocommerce_paypal_payments_sdk_disabled_funding_hook', static function (array $disable_funding, array $flags) use ($c) {
-            if (\true === $flags['is_block_context']) {
-                return $disable_funding;
-            }
-            $dcc_config = $c->get('wcgateway.configuration.card-configuration');
-            assert($dcc_config instanceof CardPaymentsConfiguration);
-            if (!$dcc_config->is_acdc_enabled()) {
-                return $disable_funding;
-            }
-            // For ACDC payments we need the funding source "card"!
-            return array_filter($disable_funding, static fn(string $funding_source) => $funding_source !== 'card');
-        }, 10, 2);
         add_filter(
             'woocommerce_credit_card_form_fields',
             /**
@@ -141,8 +129,14 @@ class CardFieldsModule implements ServiceModule, ExecutableModule
                 $logger = $c->get('woocommerce.logger.woocommerce');
                 assert($logger instanceof LoggerInterface);
                 $logger->warning("Could not capture order {$order->id()}");
-                if (apply_filters('woocommerce_paypal_payments_force_delete_wc_order_on_failed_capture', \true)) {
-                    // Add delete order flag in WC session to force delete on process payment failure handler.
+                // Only set session flag if WC session exists (not in API/agentic context).
+                /**
+                 * Fires to add a delete order flag in WC session.
+                 */
+                if (apply_filters('woocommerce_paypal_payments_force_delete_wc_order_on_failed_capture', \true) && function_exists('WC') && WC()->session instanceof \WC_Session) {
+                    /**
+                     * Add delete order flag in WC session to force delete on process payment failure handler.
+                     */
                     WC()->session->set('ppcp_delete_wc_order_on_payment_failure', \true);
                 }
                 throw new DomainException(esc_html__('Could not capture the PayPal order.', 'woocommerce-paypal-payments'));

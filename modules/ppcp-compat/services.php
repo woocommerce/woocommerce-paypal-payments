@@ -11,6 +11,9 @@ namespace WooCommerce\PayPalCommerce\Compat;
 use WooCommerce\PayPalCommerce\Assets\AssetGetter;
 use WooCommerce\PayPalCommerce\Assets\AssetGetterFactory;
 use WooCommerce\PayPalCommerce\Compat\Assets\CompatAssets;
+use WooCommerce\PayPalCommerce\Compat\WooCommerceBlueprint\PayPalBlueprintBootstrap;
+use WooCommerce\PayPalCommerce\Compat\WooCommerceBlueprint\PayPalSettingsExporter;
+use WooCommerce\PayPalCommerce\Compat\WooCommerceBlueprint\PayPalSettingsImporter;
 use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 return array('compat.ppec.mock-gateway' => static function ($container) {
@@ -25,9 +28,9 @@ return array('compat.ppec.mock-gateway' => static function ($container) {
 }, 'compat.ppec.billing-agreement-converter' => static function (ContainerInterface $container) {
     return new \WooCommerce\PayPalCommerce\Compat\PPEC\BillingAgreementTokenConverter($container->get('api.endpoint.payment-method-tokens'), $container->get('api.repository.customer'), $container->get('woocommerce.logger.woocommerce'));
 }, 'compat.ppec.subscriptions-handler' => static function (ContainerInterface $container) {
-    return new \WooCommerce\PayPalCommerce\Compat\PPEC\SubscriptionsHandler($container->get('wc-subscriptions.renewal-handler'), $container->get('compat.ppec.mock-gateway'), $container->get('compat.ppec.billing-agreement-converter'), $container->get('woocommerce.logger.woocommerce'), $container->get('vaulting.vault-v3-enabled'));
+    return new \WooCommerce\PayPalCommerce\Compat\PPEC\SubscriptionsHandler($container->get('wc-subscriptions.renewal-handler'), $container->get('compat.ppec.mock-gateway'), $container->get('compat.ppec.billing-agreement-converter'), $container->get('woocommerce.logger.woocommerce'));
 }, 'compat.plugin-script-names' => static function (ContainerInterface $container): array {
-    return array('ppcp-smart-button', 'ppcp-oxxo', 'ppcp-pay-upon-invoice', 'ppcp-vaulting-myaccount-payments', 'ppcp-gateway-settings', 'ppcp-webhooks-status-page', 'ppcp-tracking', 'ppcp-fraudnet', 'ppcp-tracking-compat');
+    return array('ppcp-smart-button', 'ppcp-pay-upon-invoice', 'ppcp-wc-payment-tokens-myaccount-payments', 'ppcp-gateway-settings', 'ppcp-webhooks-status-page', 'ppcp-tracking', 'ppcp-fraudnet', 'ppcp-tracking-compat');
 }, 'compat.plugin-script-file-names' => static function (ContainerInterface $container): array {
     return array('button.js', 'gateway-settings.js', 'order-edit-page.js', 'fraudnet.js', 'tracking-compat.js');
 }, 'compat.shiptastic.is_supported_plugin_version_active' => function (): bool {
@@ -52,4 +55,12 @@ return array('compat.ppec.mock-gateway' => static function ($container) {
     return $factory->for_module('ppcp-compat');
 }, 'compat.assets' => function (ContainerInterface $container): CompatAssets {
     return new CompatAssets($container->get('compat.asset_getter'), $container->get('ppcp.asset-version'), $container->get('compat.shiptastic.is_supported_plugin_version_active'), $container->get('compat.wc_shipment_tracking.is_supported_plugin_version_active'), $container->get('compat.wc_shipping_tax.is_supported_plugin_version_active'), $container->get('api.bearer'));
+}, 'compat.blueprint.is_available' => function (): bool {
+    return interface_exists('Automattic\WooCommerce\Blueprint\Exporters\StepExporter');
+}, 'compat.blueprint.paypal_settings_exporter' => static function (ContainerInterface $container): PayPalSettingsExporter {
+    return new PayPalSettingsExporter();
+}, 'compat.blueprint.paypal_settings_importer' => static function (ContainerInterface $container): PayPalSettingsImporter {
+    return new PayPalSettingsImporter($container->get('settings.service.sanitizer'));
+}, 'compat.blueprint.bootstrap' => static function (ContainerInterface $container): PayPalBlueprintBootstrap {
+    return new PayPalBlueprintBootstrap($container->get('compat.blueprint.paypal_settings_exporter'), $container->get('compat.blueprint.paypal_settings_importer'));
 });

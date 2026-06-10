@@ -63,9 +63,9 @@ class Cache
     /**
      * Caches a value.
      *
-     * @param string $key        The key under which the value should be cached.
-     * @param mixed  $value      The value to cache.
-     * @param int    $expiration Time until expiration in seconds.
+     * @param string                  $key        The key under which the value should be cached.
+     * @param string|array|int|object $value      The value to cache. Must be scalar or serializable, cannot be bool.
+     * @param int                     $expiration Time until expiration in seconds.
      *
      * @return bool
      */

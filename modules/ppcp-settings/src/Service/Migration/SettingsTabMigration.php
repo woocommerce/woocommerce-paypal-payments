@@ -63,6 +63,21 @@ class SettingsTabMigration implements \WooCommerce\PayPalCommerce\Settings\Servi
                     $old_to_new_3d_secure_map = array_flip(self::THREE_D_SECURE_VALUES_MAP);
                     $data[$new_key] = $old_to_new_3d_secure_map[$value] ?? 'NO_3D_SECURE';
                     break;
+                case 'vault_enabled':
+                    /*
+                     * Legacy classic-WooCommerce settings stored vault_enabled as
+                     * the string "yes" or "no". The new target slot
+                     * SettingsModel::save_paypal_and_venmo is typed bool and its
+                     * setter declares `bool $save`, so any non-bool value flowing
+                     * through from_array() either throws a TypeError (strict
+                     * mode) or persists the wrong value (weak mode, where every
+                     * non-empty non-"0" string casts to true -- including "no").
+                     *
+                     * Coerce explicitly here so the migration is correct
+                     * regardless of how the legacy option was stored.
+                     */
+                    $data[$new_key] = filter_var($this->settings[$old_key], \FILTER_VALIDATE_BOOLEAN);
+                    break;
                 default:
                     $data[$new_key] = $this->settings[$old_key];
             }

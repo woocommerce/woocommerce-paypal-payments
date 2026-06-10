@@ -9,6 +9,7 @@ declare (strict_types=1);
 namespace WooCommerce\PayPalCommerce\Settings\Service;
 
 use WooCommerce\PayPalCommerce\Settings\DTO\LocationStylingDTO;
+use WooCommerce\PayPalCommerce\Settings\DTO\PayLaterMessagingDTO;
 /**
  * DataSanitizer service. Generally used by REST endpoints (sanitize input data)
  * and data models (sanitize data during DB access)
@@ -47,6 +48,32 @@ class DataSanitizer
         $tagline = $this->sanitize_bool($data['tagline'] ?? \false);
         $methods = $this->sanitize_array($data['methods'] ?? array(), array($this, 'sanitize_text'));
         return new LocationStylingDTO($location, $is_enabled, $methods, $shape, $label, $color, $layout, $tagline);
+    }
+    /**
+     * Sanitizes the provided Pay Later messaging data.
+     *
+     * @param mixed   $data     The messaging data to sanitize.
+     * @param ?string $location Name of the location.
+     * @return PayLaterMessagingDTO Messaging data.
+     */
+    public function sanitize_paylater_messaging($data, ?string $location = null): PayLaterMessagingDTO
+    {
+        if ($data instanceof PayLaterMessagingDTO) {
+            if ($location) {
+                $data->location = $location;
+            }
+            return $data;
+        }
+        if (is_object($data)) {
+            $data = (array) $data;
+        }
+        if (!is_array($data)) {
+            return new PayLaterMessagingDTO($location ?? '');
+        }
+        if (null === $location) {
+            $location = $data['location'] ?? '';
+        }
+        return new PayLaterMessagingDTO($location, $this->sanitize_bool($data['enabled'] ?? \false), $this->sanitize_text($data['layout'] ?? 'text'), $this->sanitize_text($data['logo_type'] ?? $data['logo-type'] ?? 'inline'), $this->sanitize_text($data['logo_position'] ?? $data['logo-position'] ?? 'left'), $this->sanitize_text($data['text_color'] ?? $data['text-color'] ?? 'black'), $this->sanitize_text($data['text_size'] ?? $data['text-size'] ?? '12'), $this->sanitize_text($data['flex_color'] ?? $data['color'] ?? 'black'), $this->sanitize_text($data['flex_ratio'] ?? $data['ratio'] ?? '8x1'));
     }
     /**
      * Helper. Ensures the value is a string.
