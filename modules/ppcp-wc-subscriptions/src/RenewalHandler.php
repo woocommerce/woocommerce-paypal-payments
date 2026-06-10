@@ -17,18 +17,16 @@ use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PaymentTokensEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentSource;
-use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentToken;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\ExperienceContextBuilder;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PayerFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PurchaseUnitFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\ShippingPreferenceFactory;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
-use WooCommerce\PayPalCommerce\Vaulting\PaymentTokenApplePay;
-use WooCommerce\PayPalCommerce\Vaulting\PaymentTokenPayPal;
-use WooCommerce\PayPalCommerce\Vaulting\PaymentTokenRepository;
-use WooCommerce\PayPalCommerce\Vaulting\PaymentTokenVenmo;
-use WooCommerce\PayPalCommerce\Vaulting\WooCommercePaymentTokens;
+use WooCommerce\PayPalCommerce\WcPaymentTokens\PaymentTokenApplePay;
+use WooCommerce\PayPalCommerce\WcPaymentTokens\PaymentTokenPayPal;
+use WooCommerce\PayPalCommerce\WcPaymentTokens\PaymentTokenVenmo;
+use WooCommerce\PayPalCommerce\WcPaymentTokens\WooCommercePaymentTokens;
 use WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException;
 use WooCommerce\PayPalCommerce\WcGateway\FundingSource\FundingSourceRenderer;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
@@ -56,13 +54,6 @@ class RenewalHandler {
 	 * @var LoggerInterface
 	 */
 	private $logger;
-
-	/**
-	 * The payment token repository.
-	 *
-	 * @var PaymentTokenRepository
-	 */
-	private $repository;
 
 	/**
 	 * The order endpoint.
@@ -148,7 +139,6 @@ class RenewalHandler {
 
 	/**
 	 * @param LoggerInterface              $logger The logger.
-	 * @param PaymentTokenRepository       $repository The payment token repository.
 	 * @param OrderEndpoint                $order_endpoint The order endpoint.
 	 * @param PurchaseUnitFactory          $purchase_unit_factory The purchase unit factory.
 	 * @param ShippingPreferenceFactory    $shipping_preference_factory The shipping_preference factory.
@@ -164,7 +154,6 @@ class RenewalHandler {
 	 */
 	public function __construct(
 		LoggerInterface $logger,
-		PaymentTokenRepository $repository,
 		OrderEndpoint $order_endpoint,
 		PurchaseUnitFactory $purchase_unit_factory,
 		ShippingPreferenceFactory $shipping_preference_factory,
@@ -180,7 +169,6 @@ class RenewalHandler {
 	) {
 
 		$this->logger                           = $logger;
-		$this->repository                       = $repository;
 		$this->order_endpoint                   = $order_endpoint;
 		$this->purchase_unit_factory            = $purchase_unit_factory;
 		$this->shipping_preference_factory      = $shipping_preference_factory;
@@ -372,11 +360,11 @@ class RenewalHandler {
 			return;
 		}
 
-		// Vault v2.
+		// PPEC compat: allow filters to provide a token for legacy billing agreement renewals.
 		$token = $this->get_token_for_customer( $customer, $wc_order );
 		if ( $token ) {
 			if ( $payment_method === CreditCardGateway::ID ) {
-				$payment_source = $this->card_payment_source( $token->id(), $wc_order );
+				$card_payment_source = $this->card_payment_source( $token->id(), $wc_order );
 
 				$order = $this->order_endpoint->create(
 					array( $purchase_unit ),
@@ -384,7 +372,7 @@ class RenewalHandler {
 					$payer,
 					'',
 					array(),
-					$payment_source
+					$card_payment_source
 				);
 
 				$this->handle_paypal_order( $wc_order, $order );
@@ -422,12 +410,12 @@ class RenewalHandler {
 	}
 
 	/**
-	 * Returns a payment token for a customer.
+	 * Returns a payment token for a customer via filter (used by PPEC compat).
 	 *
 	 * @param \WC_Customer $customer The customer.
 	 * @param \WC_Order    $wc_order The current WooCommerce order we want to process.
 	 *
-	 * @return PaymentToken|false
+	 * @return \WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentToken|false
 	 */
 	private function get_token_for_customer( \WC_Customer $customer, \WC_Order $wc_order ) {
 		/**
@@ -438,24 +426,7 @@ class RenewalHandler {
 			return $token;
 		}
 
-		$tokens = $this->repository->all_for_user_id( (int) $customer->get_id() );
-		if ( ! $tokens ) {
-			return false;
-		}
-
-		$subscription = function_exists( 'wcs_get_subscription' ) ? wcs_get_subscription( $wc_order->get_meta( '_subscription_renewal' ) ) : null;
-		if ( $subscription ) {
-			$token_id = $subscription->get_meta( 'payment_token_id' );
-			if ( $token_id ) {
-				foreach ( $tokens as $token ) {
-					if ( $token_id === $token->id() ) {
-						return $token;
-					}
-				}
-			}
-		}
-
-		return current( $tokens );
+		return false;
 	}
 
 	/**

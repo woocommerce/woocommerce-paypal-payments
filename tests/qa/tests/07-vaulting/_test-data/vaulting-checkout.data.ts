@@ -7,9 +7,8 @@ const customer = customers.usa;
 
 const savePaymentMethodData: ShopOrder[] = [
 	{
-		// FAIL: vaulted PayPal button is not displayed, "Saved token for ppcp-gateway" is displayed.
 		// https://inpsyde.atlassian.net/browse/PCP-5382
-		title: 'PCP-5382 | Vaulting - Transaction - Checkout - PayPal - Save payment method @Critical',
+		title: 'PCP-5382 | Vaulting - Transaction - Checkout - PayPal - Save payment method @Critical @Smoke',
 		...orders.default,
 		payment: {
 			...payments.payPal,
@@ -19,7 +18,7 @@ const savePaymentMethodData: ShopOrder[] = [
 	},
 	{
 		// https://inpsyde.atlassian.net/browse/PCP-3234
-		title: 'PCP-3234 | Vaulting - Transaction - Checkout - ACDC - Save payment method @Critical',
+		title: 'PCP-3234 | Vaulting - Transaction - Checkout - ACDC - Save payment method @Critical @Smoke',
 		...orders.default,
 		payment: {
 			...payments.acdc,
@@ -74,7 +73,6 @@ const vaultedPaymentMethodData: ShopOrder[] = [
 		customer,
 	},
 	{
-		// FAIL: payment is not accepted. Errors in console. https://inpsyde.atlassian.net/browse/PCP-5059
 		// https://inpsyde.atlassian.net/browse/PCP-3235
 		title: 'PCP-3235 | Vaulting - Transaction - Checkout - ACDC - Pay with saved card @Critical',
 		...orders.default,

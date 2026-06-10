@@ -18,6 +18,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Entity\OrderStatus;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\DccApplies;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\OrderHelper;
+use WooCommerce\PayPalCommerce\Button\Exception\NonceValidationException;
 use WooCommerce\PayPalCommerce\Button\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\Button\Helper\Context;
 use WooCommerce\PayPalCommerce\Button\Helper\ThreeDSecure;
@@ -239,6 +240,11 @@ class ApproveOrderEndpoint implements EndpointInterface {
 
 			$this->session_handler->replace_order( $order );
 
+			// Pin chosen_payment_method to PayPal now so concurrent Store API cart requests can't reset it.
+			if ( WC()->session ) {
+				WC()->session->set( 'chosen_payment_method', PayPalGateway::ID );
+			}
+
 			if ( apply_filters( 'woocommerce_paypal_payments_toggle_final_review_checkbox', false ) ) {
 				$this->toggle_final_review_enabled_setting();
 			}
@@ -253,6 +259,8 @@ class ApproveOrderEndpoint implements EndpointInterface {
 			}
 			wp_send_json_success();
 
+		} catch ( NonceValidationException $error ) {
+			wp_send_json_error( array( 'message' => $error->getMessage() ), 400 );
 		} catch ( Exception $error ) {
 			$this->logger->error( 'Order approve failed: ' . $error->getMessage() );
 

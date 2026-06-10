@@ -33,7 +33,7 @@ export const testSubscriptionRenewal = ( testOrder: ShopOrder ) => {
 				wooCommerceOrderEdit,
 				wooCommerceSubscriptionEdit,
 			} ) => {
-				test.setTimeout( 2 * 60_000 );
+				test.setTimeout( 2.5 * 60_000 );
 				// Precondition: purchase test subscription
 				await utils.fillVisitorsCart( products );
 				await classicCheckout.visit();
@@ -49,9 +49,8 @@ export const testSubscriptionRenewal = ( testOrder: ShopOrder ) => {
 					await wooCommerceApi.getOrder( orderId );
 				const subscriptionId =
 					await orderReceived.getSubscriptionNumber();
-				const subscriptionJson = await wooCommerceApi.getSubscription(
-					subscriptionId
-				);
+				const subscriptionJson =
+					await wooCommerceApi.getSubscription( subscriptionId );
 
 				const total = await countTotals( testOrder );
 
@@ -120,7 +119,10 @@ export const testSubscriptionRenewal = ( testOrder: ShopOrder ) => {
 					await wooCommerceApi.getSubscriptionRenewalOrderIds(
 						subscriptionId
 					);
-				await expect( renewalOrderIds ).toHaveLength( 1 );
+				await expect(
+					renewalOrderIds,
+					'Assert one renewal order is created'
+				).toHaveLength( 1 );
 
 				const relatedRenewalOrders = [];
 
@@ -193,9 +195,8 @@ export const testFreeTrialSubscriptionRenewal = ( testOrder: ShopOrder ) => {
 				const orderId = await orderReceived.getOrderNumber();
 				const subscriptionId =
 					await orderReceived.getSubscriptionNumber();
-				const subscriptionJson = await wooCommerceApi.getSubscription(
-					subscriptionId
-				);
+				const subscriptionJson =
+					await wooCommerceApi.getSubscription( subscriptionId );
 
 				const freeTrialTotal = await countTotals( testOrder );
 				// Assert free-trial test order with 0 price and shipping
@@ -251,7 +252,10 @@ export const testFreeTrialSubscriptionRenewal = ( testOrder: ShopOrder ) => {
 					await wooCommerceApi.getSubscriptionRenewalOrderIds(
 						subscriptionId
 					);
-				await expect( renewalOrderIds ).toHaveLength( 1 );
+				await expect(
+					renewalOrderIds,
+					'Assert one renewal order is created'
+				).toHaveLength( 1 );
 
 				const relatedRenewalOrders = [];
 

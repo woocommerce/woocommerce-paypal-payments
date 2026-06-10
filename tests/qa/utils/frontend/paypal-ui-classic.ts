@@ -5,7 +5,7 @@ import { expect, getLast4CardDigits } from '@inpsyde/playwright-utils/build';
 /**
  * Internal dependencies
  */
-import { Pcp } from '../../resources';
+import { Pcp, ShopOrder } from '../../resources';
 import { PayPalPopup } from './paypal-popup';
 import { PayPalUi } from './paypal-ui';
 
@@ -32,7 +32,7 @@ export class PayPalUiClassic extends PayPalUi {
 	sepaButton = () => this.fundingSourceButton( 'sepa' );
 	giropayButton = () => this.fundingSourceButton( 'giropay' );
 	sofortButton = () => this.fundingSourceButton( 'sofort' );
-	debitOrCreditCardButton = () => this.fundingSourceButton( 'card' );
+	bcdcFundingSourceButton = () => this.fundingSourceButton( 'card' );
 	venmoButton = () => this.fundingSourceButton( 'venmo' );
 
 	fundingSourceButtonLabelText = ( name ) =>
@@ -50,7 +50,7 @@ export class PayPalUiClassic extends PayPalUi {
 		this.page.locator( 'li.payment_method_ppcp-credit-card-gateway' );
 	debitCreditCardsGateway = () =>
 		this.page.locator( 'li.payment_method_ppcp-credit-card-gateway' );
-	standardCardButtonGateway = () =>
+	bcdcGateway = () =>
 		this.page.locator( 'li.payment_method_ppcp-card-button-gateway' );
 	oxxoGateway = () =>
 		this.page.locator( 'li.payment_method_ppcp-oxxo-gateway' );
@@ -135,113 +135,93 @@ export class PayPalUiClassic extends PayPalUi {
 		this.miniCartButtonIframe().locator( '.paypal-button' );
 	miniCartPayPalButton = () => this.miniCartFundingSourceButton( 'paypal' );
 
-	debitOrCreditCardIframe = () =>
+	bcdcFundingSourceIframe = () =>
 		this.payPalIframe().frameLocator( 'iframe.zoid-visible' );
-	debitOrCreditCardNumberInput = () =>
-		this.debitOrCreditCardIframe().locator( '#credit-card-number' );
-	debitOrCreditCardExpirationInput = () =>
-		this.debitOrCreditCardIframe().locator( '#expiry-date' );
-	debitOrCreditCardCSCInput = () =>
-		this.debitOrCreditCardIframe().locator( '#credit-card-security' );
-	debitOrCreditCardBuyNowButton = () =>
-		this.debitOrCreditCardIframe().locator( '#submit-button' );
-	debitOrCreditCardFirstNameInput = () =>
-		this.debitOrCreditCardIframe().locator(
+	bcdcFundingSourceNumberInput = () =>
+		this.bcdcFundingSourceIframe().locator( '#credit-card-number' );
+	bcdcFundingSourceExpirationInput = () =>
+		this.bcdcFundingSourceIframe().locator( '#expiry-date' );
+	bcdcFundingSourceCSCInput = () =>
+		this.bcdcFundingSourceIframe().locator( '#credit-card-security' );
+	bcdcFundingSourceBuyNowButton = () =>
+		this.bcdcFundingSourceIframe().locator( '#submit-button' );
+	bcdcFundingSourceFirstNameInput = () =>
+		this.bcdcFundingSourceIframe().locator(
 			'[id="billingAddress.givenName"]'
 		);
-	debitOrCreditCardLastNameInput = () =>
-		this.debitOrCreditCardIframe().locator(
+	bcdcFundingSourceLastNameInput = () =>
+		this.bcdcFundingSourceIframe().locator(
 			'[id="billingAddress.familyName"]'
 		);
-	debitOrCreditCardStreetInput = () =>
-		this.debitOrCreditCardIframe().locator( '[id="billingAddress.line1"]' );
-	debitOrCreditCardApartmentInput = () =>
-		this.debitOrCreditCardIframe().locator( '[id="billingAddress.line2"]' );
-	debitOrCreditCardCityInput = () =>
-		this.debitOrCreditCardIframe().locator( '[id="billingAddress.city"]' );
-	debitOrCreditCardStateInput = () =>
-		this.debitOrCreditCardIframe().locator( '[id="billingAddress.state"]' );
-	debitOrCreditCardZipCodeInput = () =>
-		this.debitOrCreditCardIframe().locator(
+	bcdcFundingSourceStreetInput = () =>
+		this.bcdcFundingSourceIframe().locator( '[id="billingAddress.line1"]' );
+	bcdcFundingSourceApartmentInput = () =>
+		this.bcdcFundingSourceIframe().locator( '[id="billingAddress.line2"]' );
+	bcdcFundingSourceCityInput = () =>
+		this.bcdcFundingSourceIframe().locator( '[id="billingAddress.city"]' );
+	bcdcFundingSourceStateInput = () =>
+		this.bcdcFundingSourceIframe().locator( '[id="billingAddress.state"]' );
+	bcdcFundingSourceZipCodeInput = () =>
+		this.bcdcFundingSourceIframe().locator(
 			'[id="billingAddress.postcode"]'
 		);
-	debitOrCreditCardPhoneInput = () =>
-		this.debitOrCreditCardIframe().locator( '#phone' );
-	debitOrCreditCardEmailInput = () =>
-		this.debitOrCreditCardIframe().locator( '#email' );
-	debitOrCreditCardPayNowButton = () =>
-		this.debitOrCreditCardIframe().locator( '#submit-button' );
-	debitOrCreditCardTagline = () =>
+	bcdcFundingSourcePhoneInput = () =>
+		this.bcdcFundingSourceIframe().locator( '#phone' );
+	bcdcFundingSourceEmailInput = () =>
+		this.bcdcFundingSourceIframe().locator( '#email' );
+	bcdcFundingSourcePayNowButton = () =>
+		this.bcdcFundingSourceIframe().locator( '#submit-button' );
+	bcdcFundingSourceTagline = () =>
 		this.page
 			.frameLocator( 'iframe[name^="__zoid__paypal_buttons__"]' )
 			.locator( '.paypal-powered-by' );
-	debitOrCreditCardPoweredByText = () =>
-		this.debitOrCreditCardTagline().getByText( 'Powered by' );
-	debitOrCreditCardPoweredByLogo = () =>
-		this.debitOrCreditCardTagline().locator( '.paypal-logo' );
+	bcdcFundingSourcePoweredByText = () =>
+		this.bcdcFundingSourceTagline().getByText( 'Powered by' );
+	bcdcFundingSourcePoweredByLogo = () =>
+		this.bcdcFundingSourceTagline().locator( '.paypal-logo' );
 
-	standardCardButtonIframe = () =>
+	bcdcIframe = () =>
 		this.page.frameLocator(
 			'#ppc-button-ppcp-card-button-gateway .component-frame'
 		);
-	standardCardButton = () =>
-		this.standardCardButtonIframe().locator(
-			`[data-funding-source="card"]`
-		);
-	standardCardButtonDetailsIframe = () =>
-		this.standardCardButtonIframe().frameLocator( 'iframe.zoid-visible' );
-	standardCardButtonNumberInput = () =>
-		this.standardCardButtonDetailsIframe().locator( '#credit-card-number' );
-	standardCardButtonExpirationInput = () =>
-		this.standardCardButtonDetailsIframe().locator( '#expiry-date' );
-	standardCardButtonCSCInput = () =>
-		this.standardCardButtonDetailsIframe().locator(
-			'#credit-card-security'
-		);
-	standardCardButtonBuyNowButton = () =>
-		this.standardCardButtonDetailsIframe().locator( '#submit-button' );
-	standardCardButtonFirstNameInput = () =>
-		this.standardCardButtonDetailsIframe().locator(
-			'[id="billingAddress.givenName"]'
-		);
-	standardCardButtonLastNameInput = () =>
-		this.standardCardButtonDetailsIframe().locator(
-			'[id="billingAddress.familyName"]'
-		);
-	standardCardButtonStreetInput = () =>
-		this.standardCardButtonDetailsIframe().locator(
-			'[id="billingAddress.line1"]'
-		);
-	standardCardButtonApartmentInput = () =>
-		this.standardCardButtonDetailsIframe().locator(
-			'[id="billingAddress.line2"]'
-		);
-	standardCardButtonCityInput = () =>
-		this.standardCardButtonDetailsIframe().locator(
-			'[id="billingAddress.city"]'
-		);
-	standardCardButtonStateInput = () =>
-		this.standardCardButtonDetailsIframe().locator(
-			'[id="billingAddress.state"]'
-		);
-	standardCardButtonZipCodeInput = () =>
-		this.standardCardButtonDetailsIframe().locator(
-			'[id="billingAddress.postcode"]'
-		);
-	standardCardButtonPhoneInput = () =>
-		this.standardCardButtonDetailsIframe().locator( '#phone' );
-	standardCardButtonEmailInput = () =>
-		this.standardCardButtonDetailsIframe().locator( '#email' );
-	standardCardButtonPayNowButton = () =>
-		this.standardCardButtonDetailsIframe().locator( '#submit-button' );
-	standardCardButtonTagline = () =>
+	bcdcButton = () =>
+		this.bcdcIframe().locator( `[data-funding-source="card"]` );
+	bcdcDetailsIframe = () =>
+		this.bcdcIframe().frameLocator( 'iframe.zoid-visible' );
+	bcdcNumberInput = () =>
+		this.bcdcDetailsIframe().locator( '#credit-card-number' );
+	bcdcExpirationInput = () =>
+		this.bcdcDetailsIframe().locator( '#expiry-date' );
+	bcdcCSCInput = () =>
+		this.bcdcDetailsIframe().locator( '#credit-card-security' );
+	bcdcBuyNowButton = () =>
+		this.bcdcDetailsIframe().locator( '#submit-button' );
+	bcdcFirstNameInput = () =>
+		this.bcdcDetailsIframe().locator( '[id="billingAddress.givenName"]' );
+	bcdcLastNameInput = () =>
+		this.bcdcDetailsIframe().locator( '[id="billingAddress.familyName"]' );
+	bcdcStreetInput = () =>
+		this.bcdcDetailsIframe().locator( '[id="billingAddress.line1"]' );
+	bcdcApartmentInput = () =>
+		this.bcdcDetailsIframe().locator( '[id="billingAddress.line2"]' );
+	bcdcCityInput = () =>
+		this.bcdcDetailsIframe().locator( '[id="billingAddress.city"]' );
+	bcdcCountryInput = () =>
+		this.bcdcDetailsIframe().locator( '[id="billingAddress.country"]' );
+	bcdcStateInput = () =>
+		this.bcdcDetailsIframe().locator( '[id="billingAddress.state"]' );
+	bcdcZipCodeInput = () =>
+		this.bcdcDetailsIframe().locator( '[id="billingAddress.postcode"]' );
+	bcdcPhoneInput = () => this.bcdcDetailsIframe().locator( '#phone' );
+	bcdcEmailInput = () => this.bcdcDetailsIframe().locator( '#email' );
+	bcdcPayNowButton = () =>
+		this.bcdcDetailsIframe().locator( '#submit-button' );
+	bcdcTagline = () =>
 		this.page
 			.frameLocator( 'iframe[name^="__zoid__paypal_buttons__"]' )
 			.locator( '.paypal-powered-by' );
-	standardCardButtonPoweredByText = () =>
-		this.standardCardButtonTagline().getByText( 'Powered by' );
-	standardCardButtonPoweredByLogo = () =>
-		this.standardCardButtonTagline().locator( '.paypal-logo' );
+	bcdcPoweredByText = () => this.bcdcTagline().getByText( 'Powered by' );
+	bcdcPoweredByLogo = () => this.bcdcTagline().locator( '.paypal-logo' );
 
 	acdcCardsIcons = () =>
 		this.page.locator(
@@ -285,7 +265,7 @@ export class PayPalUiClassic extends PayPalUi {
 
 	payPalButtonMoreOptions = () =>
 		this.payPalIframe().locator(
-			'.paypal-button-wallet-menu .menu-button'
+			'.paypal-button-wallet-menu .menu-button, [aria-label="More options"]'
 		);
 	payPalMenuIframe = () =>
 		this.page.frameLocator( 'iframe[name^="__zoid__paypal_menu__"]' );
@@ -325,6 +305,10 @@ export class PayPalUiClassic extends PayPalUi {
 	async openPayPalPopup(): Promise< PayPalPopup > {
 		// Select gateway if not on classic-cart page
 		if ( ! this.page.url().includes( 'classic-cart' ) ) {
+			await expect(
+				this.payPalGateway(),
+				'Assert PayPal gateway is visible'
+			).toBeVisible();
 			await this.payPalGateway().click();
 		}
 		return await super.openPayPalPopup();
@@ -353,7 +337,10 @@ export class PayPalUiClassic extends PayPalUi {
 		merchant: Pcp.Merchant
 	) => {
 		const { card, saveToAccount, isVaulted } = payment;
-		await expect( this.acdcGateway() ).toBeVisible();
+		await expect(
+			this.acdcGateway(),
+			'Assert ACDC gateway is visible'
+		).toBeVisible();
 		await this.acdcGateway().click();
 
 		//if some cards are already stored then "Use a new payment method" radio should be checked
@@ -364,10 +351,16 @@ export class PayPalUiClassic extends PayPalUi {
 			await this.acdcUseNewPaymentRadio().check();
 		}
 
-		await expect( this.acdcCardNumberInput() ).toBeVisible();
+		await expect(
+			this.acdcCardNumberInput(),
+			'Assert ACDC card number input is visible'
+		).toBeVisible();
 		await this.acdcCardNumberInput().fill( card.card_number );
 
-		await expect( this.acdcCardExpirationInput() ).toBeVisible();
+		await expect(
+			this.acdcCardExpirationInput(),
+			'Assert ACDC card expiration input is visible'
+		).toBeVisible();
 		// trick to properly fill expiration date input
 		await this.acdcCardExpirationInput().click();
 		for ( const char of card.expiration_date ) {
@@ -375,16 +368,22 @@ export class PayPalUiClassic extends PayPalUi {
 			await this.page.waitForTimeout( 200 );
 		}
 
-		await expect( this.acdcCardCvvInput() ).toBeVisible();
+		await expect(
+			this.acdcCardCvvInput(),
+			'Assert ACDC card CVV input is visible'
+		).toBeVisible();
 		await this.acdcCardCvvInput().fill( card.card_cvv );
 
 		if ( saveToAccount ) {
-			await expect( this.acdcSaveToAccountCheckbox() ).toBeVisible();
+			await expect(
+				this.acdcSaveToAccountCheckbox(),
+				'Assert ACDC save to account checkbox is visible'
+			).toBeVisible();
 			await this.acdcSaveToAccountCheckbox().check();
 		}
 
-		await this.submitOrder();
 		await this.replacePayPalAuthToken( merchant );
+		await this.submitOrder();
 	};
 
 	/**
@@ -398,27 +397,37 @@ export class PayPalUiClassic extends PayPalUi {
 		merchant: Pcp.Merchant
 	) => {
 		const acdcGateway = this.acdcGateway();
-		await expect( acdcGateway ).toBeVisible();
+		await expect(
+			acdcGateway,
+			'Assert ACDC gateway is visible'
+		).toBeVisible();
 		await acdcGateway.click();
 
 		const savedCard = this.acdcSavedCard( payment.card );
-		await expect( savedCard ).toBeVisible();
+		await expect(
+			savedCard,
+			'Assert saved ACDC card is visible'
+		).toBeVisible();
 		await savedCard.click();
 
-		await this.submitOrder();
 		await this.replacePayPalAuthToken( merchant );
+		await this.submitOrder();
 	};
 
 	/**
 	 * Completes payment with OXXO (vaulting disabled)
 	 */
 	completeOXXOPayment = async () => {
-		await expect( this.oxxoGateway() ).toBeVisible();
+		await expect(
+			this.oxxoGateway(),
+			'Assert OXXO gateway is visible'
+		).toBeVisible();
 		await this.oxxoGateway().click();
 		await expect(
 			this.page.getByText(
 				'OXXO allows you to pay bills and online purchases in-store with cash.'
-			)
+			),
+			'Assert OXXO description is visible'
 		).toBeVisible();
 
 		const popupPromise = this.page.waitForEvent( 'popup', {
@@ -429,65 +438,157 @@ export class PayPalUiClassic extends PayPalUi {
 		const paypal = new PayPalPopup( popup );
 
 		await expect(
-			paypal.page.getByText( 'Successful Payment', { exact: true } )
+			paypal.page.getByText( 'Successful Payment', { exact: true } ),
+			'Assert OXXO successful payment message is visible in PayPal popup'
 		).toBeVisible();
 
 		await popup.close();
 	};
 
 	/**
-	 * Completes payment with Debit Or Credit Card (vaulting disabled)
+	 * Completes payment with BCDC funding source (vaulting disabled)
 	 *
 	 * @param card
 	 */
-	completeDebitOrCreditCardPayment = async (
+	completeBcdcFundingSourcePayment = async (
 		card: WooCommerce.CreditCard
 	) => {
-		await expect( this.debitOrCreditCardButton() ).toBeVisible();
-		await this.debitOrCreditCardButton().click();
+		await expect(
+			this.bcdcFundingSourceButton(),
+			'Assert BCDC funding source button is visible'
+		).toBeVisible();
+		await this.bcdcFundingSourceButton().click();
 
-		await expect( this.debitOrCreditCardNumberInput() ).toBeVisible();
-		await this.debitOrCreditCardNumberInput().fill( card.card_number );
+		await expect(
+			this.bcdcFundingSourceNumberInput(),
+			'Assert BCDC funding source number input is visible'
+		).toBeVisible();
+		await this.bcdcFundingSourceNumberInput().fill( card.card_number );
 
-		await expect( this.debitOrCreditCardExpirationInput() ).toBeVisible();
-		await this.debitOrCreditCardExpirationInput().fill(
+		await expect(
+			this.bcdcFundingSourceExpirationInput(),
+			'Assert BCDC funding source expiration input is visible'
+		).toBeVisible();
+		await this.bcdcFundingSourceExpirationInput().fill(
 			card.expiration_date
 		);
 
-		await expect( this.debitOrCreditCardCSCInput() ).toBeVisible();
-		await this.debitOrCreditCardCSCInput().fill( card.card_cvv );
+		await expect(
+			this.bcdcFundingSourceCSCInput(),
+			'Assert BCDC funding source CSC input is visible'
+		).toBeVisible();
+		await this.bcdcFundingSourceCSCInput().fill( card.card_cvv );
 
-		await expect( this.debitOrCreditCardPayNowButton() ).toBeVisible();
-		await this.debitOrCreditCardPayNowButton().click();
+		await expect(
+			this.bcdcFundingSourcePayNowButton(),
+			'Assert BCDC funding source pay now button is visible'
+		).toBeVisible();
+		await this.bcdcFundingSourcePayNowButton().click();
 	};
 
 	/**
-	 * Completes payment with Standard Card Button (vaulting disabled)
+	 * Completes payment with BCDC (vaulting disabled)
 	 *
 	 * @param card
+	 * @param customer
 	 */
-	completeStandardCardButtonPayment = async (
-		card: WooCommerce.CreditCard
+	completeBcdcPayment = async (
+		card: WooCommerce.CreditCard,
+		customer?: ShopOrder[ 'customer' ]
 	) => {
-		await expect( this.standardCardButtonGateway() ).toBeVisible();
-		await this.standardCardButtonGateway().click();
+		await expect(
+			this.bcdcGateway(),
+			'Assert BCDC gateway is visible'
+		).toBeVisible();
+		await this.bcdcGateway().click();
 
-		await expect( this.standardCardButton() ).toBeVisible();
-		await this.standardCardButton().click();
+		await expect(
+			this.bcdcButton(),
+			'Assert BCDC button is visible'
+		).toBeVisible();
+		await this.bcdcButton().click();
 
-		await expect( this.standardCardButtonNumberInput() ).toBeVisible();
-		await this.standardCardButtonNumberInput().fill( card.card_number );
+		await expect(
+			this.bcdcNumberInput(),
+			'Assert BCDC number input is visible'
+		).toBeVisible();
+		await this.bcdcNumberInput().fill( card.card_number );
 
-		await expect( this.standardCardButtonExpirationInput() ).toBeVisible();
-		await this.standardCardButtonExpirationInput().fill(
-			card.expiration_date
-		);
+		await expect(
+			this.bcdcExpirationInput(),
+			'Assert BCDC expiration input is visible'
+		).toBeVisible();
+		await this.bcdcExpirationInput().fill( card.expiration_date );
 
-		await expect( this.standardCardButtonCSCInput() ).toBeVisible();
-		await this.standardCardButtonCSCInput().fill( card.card_cvv );
+		await expect(
+			this.bcdcCSCInput(),
+			'Assert BCDC CSC input is visible'
+		).toBeVisible();
+		await this.bcdcCSCInput().fill( card.card_cvv );
 
-		await expect( this.standardCardButtonPayNowButton() ).toBeVisible();
-		await this.standardCardButtonPayNowButton().click();
+		// Latin America (Mexico) uses minimal mode: PayPal shows its own billing form inside the modal.
+		const firstNameInput = this.bcdcFirstNameInput();
+		if ( ( await firstNameInput.isVisible() ) && customer?.billing ) {
+			const { billing } = customer;
+			const countryInput = this.bcdcCountryInput();
+			const stateInput = this.bcdcStateInput();
+			await stateInput.waitFor( { state: 'visible', timeout: 30000 } );
+
+			if ( billing.country ) {
+				await countryInput.selectOption(
+					{ value: billing.country },
+					{ force: true }
+				);
+			}
+
+			await firstNameInput.fill( billing.first_name );
+			await this.bcdcLastNameInput().fill( billing.last_name );
+			await this.bcdcStreetInput().fill( billing.address_1 );
+			await this.bcdcCityInput().fill( billing.city );
+			await this.bcdcZipCodeInput().fill( billing.postcode );
+			if ( billing.email ) {
+				const emailInput = this.bcdcEmailInput();
+				if ( await emailInput.isVisible() ) {
+					await emailInput.fill( billing.email );
+				}
+			}
+			if ( billing.phone ) {
+				const phoneInput = this.bcdcPhoneInput();
+				if ( await phoneInput.isVisible() ) {
+					await phoneInput.fill( billing.phone );
+				}
+			}
+
+			const stateOptions = await stateInput.evaluate(
+				( el: HTMLSelectElement ) =>
+					el.tagName.toLowerCase() === 'select'
+						? Array.from( el.options )
+								.filter( ( o ) => o.value )
+								.map( ( o ) => ( { v: o.value, t: o.text } ) )
+						: []
+			);
+			const stateCode = billing.state?.trim() ?? '';
+			if ( stateOptions.length > 0 ) {
+				const match =
+					stateOptions.find( ( o ) => o.v === stateCode ) ||
+					stateOptions.find( ( o ) =>
+						o.t.toLowerCase().includes( stateCode.toLowerCase() )
+					) ||
+					stateOptions[ 0 ];
+				await stateInput.selectOption(
+					{ value: match.v },
+					{ force: true }
+				);
+			} else if ( stateCode ) {
+				await stateInput.fill( stateCode );
+			}
+		}
+
+		await expect(
+			this.bcdcPayNowButton(),
+			'Assert BCDC pay now button is visible'
+		).toBeVisible();
+		await this.bcdcPayNowButton().click();
 	};
 
 	/**
@@ -496,10 +597,16 @@ export class PayPalUiClassic extends PayPalUi {
 	 * @param birthDate
 	 */
 	completePayUponInvoicePayment = async ( birthDate: string ) => {
-		await expect( this.payUponInvoiceGateway() ).toBeVisible();
+		await expect(
+			this.payUponInvoiceGateway(),
+			'Assert pay upon invoice gateway is visible'
+		).toBeVisible();
 		await this.payUponInvoiceGateway().click();
 
-		await expect( this.payUponInvoiceBirthDateInput() ).toBeVisible();
+		await expect(
+			this.payUponInvoiceBirthDateInput(),
+			'Assert pay upon invoice birth date input is visible'
+		).toBeVisible();
 		await this.payUponInvoiceBirthDateInput().click();
 		await this.page.keyboard.type( birthDate ); // Trick to properly fill date
 
@@ -508,20 +615,35 @@ export class PayPalUiClassic extends PayPalUi {
 
 	addCardPaymentMethod = async ( payment: Pcp.Payment ) => {
 		const { card } = payment;
-		await expect( this.debitCreditCardsGateway() ).toBeVisible();
+		await expect(
+			this.debitCreditCardsGateway(),
+			'Assert debit credit cards gateway is visible'
+		).toBeVisible();
 		await this.debitCreditCardsGateway().click();
 
-		await expect( this.acdcCardNumberInput() ).toBeVisible();
+		await expect(
+			this.acdcCardNumberInput(),
+			'Assert ACDC card number input is visible'
+		).toBeVisible();
 		await this.acdcCardNumberInput().fill( card.card_number );
 
-		await expect( this.acdcCardExpirationInput() ).toBeVisible();
+		await expect(
+			this.acdcCardExpirationInput(),
+			'Assert ACDC card expiration input is visible'
+		).toBeVisible();
 		await this.acdcCardExpirationInput().click();
 		await this.page.keyboard.type( card.expiration_date ); // Trick to properly fill date
 
-		await expect( this.acdcCardCvvInput() ).toBeVisible();
+		await expect(
+			this.acdcCardCvvInput(),
+			'Assert ACDC card CVV input is visible'
+		).toBeVisible();
 		await this.acdcCardCvvInput().fill( card.card_cvv );
 
-		await expect( this.addPaymentMethodButton() ).toBeVisible();
+		await expect(
+			this.addPaymentMethodButton(),
+			'Assert add payment method button is visible'
+		).toBeVisible();
 		await this.addPaymentMethodButton().click();
 	};
 

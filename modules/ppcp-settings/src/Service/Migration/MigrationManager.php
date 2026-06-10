@@ -71,11 +71,6 @@ class MigrationManager implements SettingsMigrationInterface {
 		 * - "woocommerce-ppcp-is-new-merchant"
 		 */
 
-		$this->onboarding_profile->set_completed( true );
-		$this->onboarding_profile->set_gateways_refreshed( true );
-		$this->onboarding_profile->set_gateways_synced( true, true );
-		$this->onboarding_profile->save();
-
 		// General settings migration is critical — it resolves the seller type
 		// via the PayPal API. If it fails, abort so migration retries on next load.
 		try {
@@ -112,6 +107,13 @@ class MigrationManager implements SettingsMigrationInterface {
 					)
 				);
 			}
+		}
+
+		if ( $this->general_settings_migration->is_merchant_connected() ) {
+			$this->onboarding_profile->set_completed( true );
+			$this->onboarding_profile->set_gateways_refreshed( true );
+			$this->onboarding_profile->set_gateways_synced( true, true );
+			$this->onboarding_profile->save();
 		}
 
 		update_option( self::OPTION_NAME_MIGRATION_IS_DONE, true );

@@ -14,6 +14,7 @@ use JsonException;
 use Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\ApiClient\Authentication\PayPalBearer;
+use WooCommerce\PayPalCommerce\ApiClient\Authentication\TokenRateLimiter;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\LoginSeller;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\Orders;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\InMemoryCache;
@@ -182,8 +183,8 @@ class AuthenticationManager {
 			throw new RuntimeException( 'No client ID provided.' );
 		}
 
-		// Exactly 80 alphanumeric, underscore, or hyphen characters.
-		if ( 1 !== preg_match( '/^[\w-]{80}$/', $client_id ) ) {
+		// 70-90 alphanumeric, underscore, or hyphen characters.
+		if ( 1 !== preg_match( '/^[\w-]{70,90}$/', $client_id ) ) {
 			throw new RuntimeException( 'Invalid client ID provided.' );
 		}
 
@@ -191,8 +192,8 @@ class AuthenticationManager {
 			throw new RuntimeException( 'No client secret provided.' );
 		}
 
-		// Exactly 80 alphanumeric, underscore, or hyphen characters.
-		if ( 1 !== preg_match( '/^[\w-]{80}$/', $client_secret ) ) {
+		// 70-90 alphanumeric, underscore, or hyphen characters.
+		if ( 1 !== preg_match( '/^[\w-]{70,90}$/', $client_secret ) ) {
 			throw new RuntimeException( 'Invalid client secret provided.' );
 		}
 	}
@@ -439,7 +440,8 @@ class AuthenticationManager {
 			$client_id,
 			$client_secret,
 			$this->logger,
-			null
+			null,
+			new TokenRateLimiter( new InMemoryCache(), $this->logger )
 		);
 
 		$orders = new Orders(
@@ -610,15 +612,15 @@ class AuthenticationManager {
 			// Update the connection status and set the environment flags.
 			$this->connection_state->connect( $connection->is_sandbox );
 
-			// At this point, we can use the PayPal API to get more details about the seller.
-			$this->enrich_merchant_details();
-
 			/**
 			 * Request to flush caches before authenticating the merchant, to
 			 * ensure the new merchant does not use stale data from previous
 			 * connections.
 			 */
 			do_action( 'woocommerce_paypal_payments_flush_api_cache' );
+
+			// At this point, we can use the PayPal API to get more details about the seller.
+			$this->enrich_merchant_details();
 
 			/**
 			 * Broadcast that the plugin connected to a new PayPal merchant account.

@@ -1,10 +1,4 @@
-import {
-	useCallback,
-	useEffect,
-	useMemo,
-	useRef,
-	useState,
-} from '@wordpress/element';
+import { useCallback, useMemo, useRef, useState } from '@wordpress/element';
 import { Button, TextControl } from '@wordpress/components';
 import { __, sprintf } from '@wordpress/i18n';
 import classNames from 'classnames';
@@ -28,15 +22,11 @@ const FORM_ERRORS = {
 		'Please enter your Secret Key',
 		'woocommerce-paypal-payments'
 	),
-	invalidClientId: __(
-		'Please enter a valid Client ID',
-		'woocommerce-paypal-payments'
-	),
 };
 
 const ManualConnectionForm = () => {
-	const [ clientValid, setClientValid ] = useState( false );
-	const [ secretValid, setSecretValid ] = useState( false );
+	const [ clientIdError, setClientIdError ] = useState( '' );
+	const [ clientSecretError, setClientSecretError ] = useState( '' );
 	const { isSandboxMode } = useSandboxConnection();
 	const {
 		manualClientId,
@@ -59,29 +49,30 @@ const ManualConnectionForm = () => {
 
 	// Form data validation and sanitation.
 	const getManualConnectionDetails = useCallback( () => {
+		setClientIdError( '' );
+		setClientSecretError( '' );
+
 		const checks = [
 			{
 				ref: refClientId,
 				valid: () => manualClientId,
+				setError: setClientIdError,
 				errorMessage: FORM_ERRORS.noClientId,
 			},
 			{
-				ref: refClientId,
-				valid: () => clientValid,
-				errorMessage: FORM_ERRORS.invalidClientId,
-			},
-			{
 				ref: refClientSecret,
-				valid: () => manualClientSecret && secretValid,
+				valid: () => manualClientSecret,
+				setError: setClientSecretError,
 				errorMessage: FORM_ERRORS.noClientSecret,
 			},
 		];
 
-		for ( const { ref, valid, errorMessage } of checks ) {
+		for ( const { ref, valid, setError, errorMessage } of checks ) {
 			if ( valid() ) {
 				continue;
 			}
 
+			setError( errorMessage );
 			ref?.current?.focus();
 			throw new Error( errorMessage );
 		}
@@ -91,21 +82,7 @@ const ManualConnectionForm = () => {
 			clientSecret: manualClientSecret,
 			isSandbox: isSandboxMode,
 		};
-	}, [
-		manualClientId,
-		manualClientSecret,
-		isSandboxMode,
-		clientValid,
-		secretValid,
-	] );
-
-	// On-the-fly form validation.
-	useEffect( () => {
-		setClientValid(
-			! manualClientId || /^A[\w-]{79}$/.test( manualClientId )
-		);
-		setSecretValid( manualClientSecret && manualClientSecret.length > 0 );
-	}, [ manualClientId, manualClientSecret ] );
+	}, [ manualClientId, manualClientSecret, isSandboxMode ] );
 
 	// Environment-specific field labels.
 	const clientIdLabel = useMemo(
@@ -162,15 +139,20 @@ const ManualConnectionForm = () => {
 					ref={ refClientId }
 					label={ clientIdLabel }
 					value={ manualClientId }
-					onChange={ setManualClientId }
+					onChange={ ( value ) => {
+						setManualClientId( value );
+						if ( clientIdError ) {
+							setClientIdError( '' );
+						}
+					} }
 					onConfirm={ handleManualConnect }
 					className={ classNames( {
-						'ppcp--has-error': ! clientValid,
+						'ppcp--has-error': !! clientIdError,
 					} ) }
 				/>
-				{ clientValid || (
-					<p className="client-id-error">
-						{ FORM_ERRORS.invalidClientId }
+				{ clientIdError && (
+					<p className="manual-credentials-error">
+						{ clientIdError }
 					</p>
 				) }
 				<DataStoreControl
@@ -179,10 +161,23 @@ const ManualConnectionForm = () => {
 					ref={ refClientSecret }
 					label={ secretKeyLabel }
 					value={ manualClientSecret }
-					onChange={ setManualClientSecret }
+					onChange={ ( value ) => {
+						setManualClientSecret( value );
+						if ( clientSecretError ) {
+							setClientSecretError( '' );
+						}
+					} }
 					onConfirm={ handleManualConnect }
 					type="password"
+					className={ classNames( {
+						'ppcp--has-error': !! clientSecretError,
+					} ) }
 				/>
+				{ clientSecretError && (
+					<p className="manual-credentials-error">
+						{ clientSecretError }
+					</p>
+				) }
 				<Button
 					variant="secondary"
 					className="small-button"

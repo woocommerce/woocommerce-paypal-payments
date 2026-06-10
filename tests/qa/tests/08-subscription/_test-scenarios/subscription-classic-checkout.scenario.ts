@@ -123,10 +123,10 @@ const testSubscriptionOrderCustomer = ( testOrder: ShopOrder ) => {
 				// 	).toBeVisible();
 				// 	await classicCheckout.proceedToPayPalButton().click();
 				// } else {
-					await classicCheckout.payPalUi.makePayment( {
-						merchant,
-						payment,
-					} );
+				await classicCheckout.payPalUi.makePayment( {
+					merchant,
+					payment,
+				} );
 				// }
 				await orderReceived.assertOrderDetails( testOrder );
 
@@ -135,7 +135,8 @@ const testSubscriptionOrderCustomer = ( testOrder: ShopOrder ) => {
 				await customerSubscriptions.visit( subscriptionId );
 				await customerSubscriptions.assertUrl( subscriptionId );
 				await expect(
-					customerSubscriptions.paymentMethod()
+					customerSubscriptions.paymentMethod(),
+					`Assert payment method is ${ payment.gateway.title }`
 				).toHaveText( new RegExp( payment.gateway.title ) );
 				// TODO: additional assertions?
 

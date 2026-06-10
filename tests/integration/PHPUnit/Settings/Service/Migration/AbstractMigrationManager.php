@@ -11,6 +11,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Entity\SellerStatus;
 use WooCommerce\PayPalCommerce\Settings\Service\Migration\SettingsTabMigration;
 use WooCommerce\PayPalCommerce\Settings\Service\Migration\StylingSettingsMigration;
 use WooCommerce\PayPalCommerce\Settings\Service\Migration\PaymentSettingsMigration;
+use WooCommerce\PayPalCommerce\Settings\Service\Migration\FastlaneSettingsMigration;
 
 abstract class AbstractMigrationManager extends TestCase {
 
@@ -62,6 +63,7 @@ abstract class AbstractMigrationManager extends TestCase {
 		delete_option( self::NEW_DATA_SETTINGS_OPTION );
 		delete_option( self::NEW_STYLING_OPTION );
 		delete_option( self::NEW_PAYMENT_OPTION );
+		delete_option( MigrationManager::OPTION_NAME_MIGRATION_IS_DONE );
 	}
 
 	protected function createMigrationManager( $container ): MigrationManager {
@@ -71,7 +73,10 @@ abstract class AbstractMigrationManager extends TestCase {
 			$this->createSettingsMigration( $container, $old_settings ),
 			$this->createSettingsTabMigration( $container, $old_settings ),
 			$this->createStylingSettingsMigration( $container, $old_settings ),
-			$this->createPaymentSettingsMigration( $container, $old_settings )
+			$this->createPaymentSettingsMigration( $container, $old_settings ),
+			$this->createFastlaneSettingsMigration( $container, $old_settings ),
+			$container->get( 'settings.data.onboarding' ),
+			$container->get( 'woocommerce.logger.woocommerce' )
 		);
 	}
 
@@ -84,15 +89,16 @@ abstract class AbstractMigrationManager extends TestCase {
 		return new SettingsMigration(
 			$old_settings,
 			$container->get( 'settings.data.general' ),
-			$partners_endpoint
+			$partners_endpoint,
+			$container->get( 'woocommerce.logger.woocommerce' ),
+			$container->get( 'settings.service.seller-type-resolver' )
 		);
 	}
 
 	protected function createSettingsTabMigration( $container, $old_settings ) {
 		return new SettingsTabMigration(
 			$old_settings,
-			$container->get( 'settings.data.settings' ),
-			$container->get( 'compat.settings.settings_tab_map_helper' )
+			$container->get( 'settings.data.settings' )
 		);
 	}
 
@@ -111,6 +117,13 @@ abstract class AbstractMigrationManager extends TestCase {
 			$container->get( 'wcgateway.helper.dcc-product-status' ),
 			$container->get( 'wcgateway.configuration.card-configuration' ),
 			$container->get( 'ppcp-local-apms.payment-methods' )
+		);
+	}
+
+	protected function createFastlaneSettingsMigration( $container, $old_settings ) {
+		return new FastlaneSettingsMigration(
+			$old_settings,
+			$container->get( 'settings.data.fastlane' )
 		);
 	}
 

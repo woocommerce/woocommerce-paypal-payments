@@ -100,7 +100,11 @@ const test = base.extend< BaseExtend >( {
 	pcpApi: async ( { request, requestUtils }, use ) => {
 		await use( new PcpApi( { request, requestUtils } ) );
 	},
-	visitorPage: async ( { browser, recordVideoOptions }, use, testInfo ) => {
+	visitorPage: async (
+		{ browser, recordVideoOptions, httpCredentials },
+		use,
+		testInfo
+	) => {
 		// check if visitor is specified in test otherwise use guest
 		const storageStateName =
 			testInfo.annotations?.find( ( el ) => el.type === 'visitor' )
@@ -109,6 +113,8 @@ const test = base.extend< BaseExtend >( {
 		// apply current visitor's storage state to the context
 		const context = await browser.newContext( {
 			...testInfo.project.use, // Spread project's use config
+			// Allow per-test overrides (e.g. `test.use({ httpCredentials: undefined })`)
+			httpCredentials,
 			storageState: fs.existsSync( storageStatePath )
 				? storageStatePath
 				: undefined,
@@ -177,9 +183,7 @@ const test = base.extend< BaseExtend >( {
 		await use( new WooCommerceOrderEdit( { page } ) );
 	},
 	wooCommerceSubscriptionEdit: async ( { page, requestUtils }, use ) => {
-		await use(
-			new WooCommerceSubscriptionEdit( { page, requestUtils } )
-		);
+		await use( new WooCommerceSubscriptionEdit( { page, requestUtils } ) );
 	},
 
 	// WooCommerce front end

@@ -17,7 +17,7 @@ const currency = process.env.WC_DEFAULT_CURRENCY;
 const vaultingRenewal: ShopOrder[] = [
 	{
 		// https://inpsyde.atlassian.net/browse/PCP-2505
-		title: 'PCP-2505 | Vaulting subscription - PayPal - Order renewal @Critical',
+		title: 'PCP-2505 | Vaulting subscription - PayPal - Order renewal @Critical @Smoke',
 		...orders.default,
 		payment: payments.payPal,
 		merchant,
@@ -27,7 +27,7 @@ const vaultingRenewal: ShopOrder[] = [
 	},
 	{
 		// https://inpsyde.atlassian.net/browse/PCP-2514
-		title: 'PCP-2514 | Vaulting subscription - ACDC - Order renewal @Critical',
+		title: 'PCP-2514 | Vaulting subscription - ACDC - Order renewal @Critical @Smoke',
 		...orders.default,
 		payment: payments.acdc,
 		merchant,
@@ -75,7 +75,6 @@ const payPalRenewal: ShopOrder[] = [
 
 const payPalFreeTrialRenewal: ShopOrder[] = [
 	{
-		// Fail: https://inpsyde.atlassian.net/browse/PCP-4980
 		// https://inpsyde.atlassian.net/browse/PCP-4915
 		title: 'PCP-4915 | PayPal subscription - Free trial order renewal',
 		...orders.default,

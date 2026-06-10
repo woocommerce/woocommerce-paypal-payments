@@ -4,14 +4,22 @@ declare(strict_types=1);
 namespace PHPUnit\PpcpSettings\Data;
 
 use WooCommerce\PayPalCommerce\Settings\Data\GeneralSettings;
+use WooCommerce\PayPalCommerce\Settings\Enum\InstallationPathEnum;
 use WooCommerce\PayPalCommerce\Settings\Enum\SellerTypeEnum;
 use WooCommerce\PayPalCommerce\TestCase;
 use function Brain\Monkey\Functions\expect;
+use function Brain\Monkey\Functions\when;
 
 class GeneralSettingsTest extends TestCase
 {
+	public function setUp(): void
+	{
+		parent::setUp();
+		when('sanitize_key')->returnArg();
+	}
+
 	// -----------------------------------------------------------------------
-	// Factory helper
+	// Factory helpers
 	// -----------------------------------------------------------------------
 
 	/**
@@ -31,6 +39,22 @@ class GeneralSettingsTest extends TestCase
 			->andReturn(['seller_type' => $seller_type]);
 
 		return new GeneralSettings('US', 'USD', false);
+	}
+
+	/**
+	 * Instantiate GeneralSettings with a specific installation path and country.
+	 *
+	 * @param string $installation_path One of InstallationPathEnum constants.
+	 * @param string $country           WooCommerce store country code.
+	 */
+	private function make_settings_with_path(string $installation_path, string $country = 'US'): GeneralSettings
+	{
+		expect('get_option')
+			->once()
+			->with('woocommerce-ppcp-data-common', [])
+			->andReturn(['wc_installation_path' => $installation_path]);
+
+		return new GeneralSettings($country, 'USD', false);
 	}
 
 	// -----------------------------------------------------------------------
@@ -91,6 +115,69 @@ class GeneralSettingsTest extends TestCase
 			$is_casual,
 			$settings->is_casual_seller(),
 			"is_casual_seller() should return {$this->bool_label($is_casual)} for seller_type '{$seller_type}'"
+		);
+	}
+
+	// -----------------------------------------------------------------------
+	// Data providers
+	// -----------------------------------------------------------------------
+
+	/**
+	 * @return array<string, array{installation_path: string, country: string, expected: bool}>
+	 */
+	public function own_brand_only_provider(): array
+	{
+		return [
+			'core-profiler path + WCPay country → branded-only' => [
+				'installation_path' => InstallationPathEnum::CORE_PROFILER,
+				'country'           => 'US',
+				'expected'          => true,
+			],
+			'payment-settings path + WCPay country → branded-only' => [
+				'installation_path' => InstallationPathEnum::PAYMENT_SETTINGS,
+				'country'           => 'US',
+				'expected'          => true,
+			],
+			'direct path + WCPay country → not branded-only' => [
+				'installation_path' => InstallationPathEnum::DIRECT,
+				'country'           => 'US',
+				'expected'          => false,
+			],
+			'core-profiler path + non-WCPay country → not branded-only' => [
+				'installation_path' => InstallationPathEnum::CORE_PROFILER,
+				'country'           => 'JP',
+				'expected'          => false,
+			],
+		];
+	}
+
+	// -----------------------------------------------------------------------
+	// Tests
+	// -----------------------------------------------------------------------
+
+	/**
+	 * GIVEN a store installed via a specific path in a given country
+	 * WHEN own_brand_only() is called
+	 * THEN it returns true only for branded installation paths in WCPay-eligible countries.
+	 *
+	 * This guards the "Register Apple Domain" (and other ACDC/wallet) todos: capabilities
+	 * for Apple Pay, Google Pay, and ACDC are set to false when own_brand_only() is true,
+	 * so those todos never appear in branded-only mode.
+	 *
+	 * @dataProvider own_brand_only_provider
+	 */
+	public function testOwnBrandOnlyReflectsInstallationPathAndCountry(
+		string $installation_path,
+		string $country,
+		bool $expected
+	): void {
+		$settings = $this->make_settings_with_path($installation_path, $country);
+
+		$this->assertSame(
+			$expected,
+			$settings->own_brand_only(),
+			"own_brand_only() should return {$this->bool_label($expected)} "
+			. "for path '{$installation_path}' and country '{$country}'"
 		);
 	}
 

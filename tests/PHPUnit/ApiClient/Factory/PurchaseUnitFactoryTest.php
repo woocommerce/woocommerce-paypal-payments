@@ -37,84 +37,37 @@ class PurchaseUnitFactoryTest extends TestCase
 		]);
 	}
 
-	public function testWcOrderDefault()
-    {
-        $wcOrder = Mockery::mock(\WC_Order::class);
-        $wcOrder->expects('get_order_number')->andReturn($this->wcOrderNumber);
-        $wcOrder->expects('get_id')->andReturn($this->wcOrderId);
-	    $wcOrder->shouldReceive('get_payment_method')->andReturn(PayPalGateway::ID);
-        $amount = Mockery::mock(Amount::class);
-        $amountFactory = Mockery::mock(AmountFactory::class);
-        $amountFactory
-            ->shouldReceive('from_wc_order')
-            ->with($wcOrder)
-            ->andReturn($amount);
-        $itemFactory = Mockery::mock(ItemFactory::class);
-        $itemFactory
-            ->shouldReceive('from_wc_order')
-            ->with($wcOrder)
-            ->andReturn([$this->item]);
-
-        $address = Mockery::mock(Address::class);
-        $address
-            ->shouldReceive('country_code')
-            ->andReturn('DE');
-        $address
-            ->shouldReceive('postal_code')
-            ->andReturn('12345');
-		$address->shouldReceive('address_line_1')->andReturn('Berlin Street');
-        $shipping = Mockery::mock(Shipping::class);
-        $shipping
-            ->shouldReceive('address')
-            ->andReturn($address);
-        $shippingFactory = Mockery::mock(ShippingFactory::class);
-        $shippingFactory
-            ->shouldReceive('from_wc_order')
-            ->with($wcOrder)
-            ->andReturn($shipping);
-        $paymentsFacory = Mockery::mock(PaymentsFactory::class);
-
-	    $paymentLevelEligibility = Mockery::mock(PaymentLevelEligibility::class);
-	    $paymentLevelEligibility
-		    ->shouldReceive('is_eligible')
-		    ->with(PayPalGateway::ID)
-		    ->andReturn(false);
-
-        $testee = new PurchaseUnitFactory(
-            $amountFactory,
-            $itemFactory,
-            $shippingFactory,
-            $paymentsFacory,
-	        Mockery::mock(PaymentLevelHelper::class),
-	        $paymentLevelEligibility,
-	        Mockery::mock(SettingsProvider::class)
-        );
-
-        $unit = $testee->from_wc_order($wcOrder);
-        $this->assertTrue(is_a($unit, PurchaseUnit::class));
-        $this->assertEquals('', $unit->description());
-        $this->assertEquals('default', $unit->reference_id());
-        $this->assertEquals($this->wcOrderId, $unit->custom_id());
-        $this->assertEquals('', $unit->soft_descriptor());
-        $this->assertEquals('WC-' . $this->wcOrderNumber, $unit->invoice_id());
-        $this->assertEquals([$this->item], $unit->items());
-        $this->assertEquals($amount, $unit->amount());
-        $this->assertEquals($shipping, $unit->shipping());
-    }
-
-	public function testWcOrderWithNegativeFees()
+	public function test_wc_order_default()
 	{
-		$wcOrder = Mockery::mock(\WC_Order::class);
-		$wcOrder->expects('get_order_number')->andReturn($this->wcOrderNumber);
-		$wcOrder->expects('get_id')->andReturn($this->wcOrderId);
-		$wcOrder->shouldReceive('get_payment_method')->andReturn(PayPalGateway::ID);
-
+		$wc_order = $this->create_wc_order_mock();
 		$amount = Mockery::mock(Amount::class);
-		$amountFactory = Mockery::mock(AmountFactory::class);
-		$amountFactory
-			->shouldReceive('from_wc_order')
-			->with($wcOrder)
-			->andReturn($amount);
+		$shipping = $this->create_shipping_mock($this->create_address_mock());
+
+		$shipping_factory = Mockery::mock(ShippingFactory::class);
+		$shipping_factory->shouldReceive('from_wc_order')->with($wc_order)->andReturn($shipping);
+
+		$testee = $this->create_testee(
+			$this->create_amount_factory_mock($amount, 'from_wc_order', $wc_order),
+			$this->create_item_factory_mock([$this->item], 'from_wc_order', $wc_order),
+			$shipping_factory
+		);
+
+		$unit = $testee->from_wc_order($wc_order);
+		$this->assertInstanceOf(PurchaseUnit::class, $unit);
+		$this->assertEquals('', $unit->description());
+		$this->assertEquals('default', $unit->reference_id());
+		$this->assertEquals($this->wcOrderId, $unit->custom_id());
+		$this->assertEquals('', $unit->soft_descriptor());
+		$this->assertEquals('WC-' . $this->wcOrderNumber, $unit->invoice_id());
+		$this->assertEquals([$this->item], $unit->items());
+		$this->assertEquals($amount, $unit->amount());
+		$this->assertEquals($shipping, $unit->shipping());
+	}
+
+	public function test_wc_order_with_negative_fees()
+	{
+		$wc_order = $this->create_wc_order_mock();
+		$amount = Mockery::mock(Amount::class);
 
 		$fee = Mockery::mock(Item::class, [
 			'category' => Item::DIGITAL_GOODS,
@@ -124,1250 +77,982 @@ class PurchaseUnitFactoryTest extends TestCase
 			'unit_amount' => new Money(-5, 'USD'),
 		]);
 
-		$itemFactory = Mockery::mock(ItemFactory::class);
-		$itemFactory
-			->shouldReceive('from_wc_order')
-			->with($wcOrder)
-			->andReturn([$this->item, $fee, $discount]);
+		$shipping = $this->create_shipping_mock($this->create_address_mock());
+		$shipping_factory = Mockery::mock(ShippingFactory::class);
+		$shipping_factory->shouldReceive('from_wc_order')->with($wc_order)->andReturn($shipping);
 
-		$address = Mockery::mock(Address::class);
-		$address->shouldReceive('country_code')->andReturn('DE');
-		$address->shouldReceive('postal_code')->andReturn('12345');
-		$address->shouldReceive('address_line_1')->andReturn('Berlin Street');
-
-		$shipping = Mockery::mock(Shipping::class);
-		$shipping->shouldReceive('address')->andReturn($address);
-		$shippingFactory = Mockery::mock(ShippingFactory::class);
-		$shippingFactory
-			->shouldReceive('from_wc_order')
-			->with($wcOrder)
-			->andReturn($shipping);
-		$paymentsFacory = Mockery::mock(PaymentsFactory::class);
-
-		$paymentLevelEligibility = Mockery::mock(PaymentLevelEligibility::class);
-		$paymentLevelEligibility
-			->shouldReceive('is_eligible')
-			->with(PayPalGateway::ID)
-			->andReturn(false);
-
-		$testee = new PurchaseUnitFactory(
-			$amountFactory,
-			$itemFactory,
-			$shippingFactory,
-			$paymentsFacory,
-			Mockery::mock(PaymentLevelHelper::class),
-			$paymentLevelEligibility,
-			Mockery::mock(SettingsProvider::class)
+		$testee = $this->create_testee(
+			$this->create_amount_factory_mock($amount, 'from_wc_order', $wc_order),
+			$this->create_item_factory_mock([$this->item, $fee, $discount], 'from_wc_order', $wc_order),
+			$shipping_factory
 		);
 
-		$unit = $testee->from_wc_order($wcOrder);
-		$this->assertTrue(is_a($unit, PurchaseUnit::class));
+		$unit = $testee->from_wc_order($wc_order);
+		$this->assertInstanceOf(PurchaseUnit::class, $unit);
 		$this->assertEquals([$this->item, $fee], $unit->items());
 	}
 
-    public function testWcOrderShippingGetsDroppedWhenNoPostalCode()
-    {
-        $wcOrder = Mockery::mock(\WC_Order::class);
-        $wcOrder->expects('get_order_number')->andReturn($this->wcOrderNumber);
-        $wcOrder->expects('get_id')->andReturn($this->wcOrderId);
-	    $wcOrder->shouldReceive('get_payment_method')->andReturn(PayPalGateway::ID);
-        $amount = Mockery::mock(Amount::class);
-        $amountFactory = Mockery::mock(AmountFactory::class);
-        $amountFactory
-            ->expects('from_wc_order')
-            ->with($wcOrder)
-            ->andReturn($amount);
-        $itemFactory = Mockery::mock(ItemFactory::class);
-        $itemFactory
-            ->expects('from_wc_order')
-            ->with($wcOrder)
-            ->andReturn([$this->item]);
-
-        $address = Mockery::mock(Address::class);
-        $address
-            ->expects('country_code')
-            ->twice()
-            ->andReturn('DE');
-        $address
-            ->expects('postal_code')
-            ->andReturn('');
-	    $address->shouldReceive('address_line_1')->andReturn('Berlin Street');
-
-	    $shipping = Mockery::mock(Shipping::class);
-        $shipping
-            ->expects('address')
-            ->andReturn($address);
-        $shippingFactory = Mockery::mock(ShippingFactory::class);
-        $shippingFactory
-            ->expects('from_wc_order')
-            ->with($wcOrder)
-            ->andReturn($shipping);
-        $paymentsFacory = Mockery::mock(PaymentsFactory::class);
-
-	    $paymentLevelEligibility = Mockery::mock(PaymentLevelEligibility::class);
-	    $paymentLevelEligibility
-		    ->shouldReceive('is_eligible')
-		    ->with(PayPalGateway::ID)
-		    ->andReturn(false);
-
-        $testee = new PurchaseUnitFactory(
-            $amountFactory,
-            $itemFactory,
-            $shippingFactory,
-            $paymentsFacory,
-	        Mockery::mock(PaymentLevelHelper::class),
-	        $paymentLevelEligibility,
-	        Mockery::mock(SettingsProvider::class)
-        );
-
-        $unit = $testee->from_wc_order($wcOrder);
-        $this->assertEquals(null, $unit->shipping());
-    }
-
-    public function testWcOrderShippingGetsDroppedWhenNoCountryCode()
-    {
-        $wcOrder = Mockery::mock(\WC_Order::class);
-        $wcOrder->expects('get_order_number')->andReturn($this->wcOrderNumber);
-        $wcOrder->expects('get_id')->andReturn($this->wcOrderId);
-	    $wcOrder->shouldReceive('get_payment_method')->andReturn(PayPalGateway::ID);
-        $amount = Mockery::mock(Amount::class);
-        $amountFactory = Mockery::mock(AmountFactory::class);
-        $amountFactory
-            ->expects('from_wc_order')
-            ->with($wcOrder)
-            ->andReturn($amount);
-        $itemFactory = Mockery::mock(ItemFactory::class);
-        $itemFactory
-            ->expects('from_wc_order')
-            ->with($wcOrder)
-            ->andReturn([$this->item]);
-
-        $address = Mockery::mock(Address::class);
-        $address
-            ->expects('country_code')
-            ->andReturn('');
-        $shipping = Mockery::mock(Shipping::class);
-        $shipping
-            ->expects('address')
-            ->andReturn($address);
-        $shippingFactory = Mockery::mock(ShippingFactory::class);
-        $shippingFactory
-            ->expects('from_wc_order')
-            ->with($wcOrder)
-            ->andReturn($shipping);
-        $paymentsFacory = Mockery::mock(PaymentsFactory::class);
-
-	    $paymentLevelEligibility = Mockery::mock(PaymentLevelEligibility::class);
-	    $paymentLevelEligibility
-		    ->shouldReceive('is_eligible')
-		    ->with(PayPalGateway::ID)
-		    ->andReturn(false);
-
-        $testee = new PurchaseUnitFactory(
-            $amountFactory,
-            $itemFactory,
-            $shippingFactory,
-            $paymentsFacory,
-	        Mockery::mock(PaymentLevelHelper::class),
-	        $paymentLevelEligibility,
-	        Mockery::mock(SettingsProvider::class)
-        );
-
-        $unit = $testee->from_wc_order($wcOrder);
-        $this->assertEquals(null, $unit->shipping());
-    }
-
-	public function testWcOrderShippingGetsDroppedWhenNoAddressLine1()
+	public function test_wc_order_shipping_gets_dropped_when_no_postal_code()
 	{
-		$wcOrder = Mockery::mock(\WC_Order::class);
-		$wcOrder->expects('get_order_number')->andReturn($this->wcOrderNumber);
-		$wcOrder->expects('get_id')->andReturn($this->wcOrderId);
-		$wcOrder->shouldReceive('get_payment_method')->andReturn(PayPalGateway::ID);
+		$wc_order = $this->create_wc_order_mock();
 		$amount = Mockery::mock(Amount::class);
-		$amountFactory = Mockery::mock(AmountFactory::class);
-		$amountFactory
-			->expects('from_wc_order')
-			->with($wcOrder)
-			->andReturn($amount);
-		$itemFactory = Mockery::mock(ItemFactory::class);
-		$itemFactory
-			->expects('from_wc_order')
-			->with($wcOrder)
-			->andReturn([$this->item]);
 
 		$address = Mockery::mock(Address::class);
-		$address
-			->expects('country_code')
-			->andReturn('DE');
+		$address->expects('country_code')->twice()->andReturn('DE');
+		$address->expects('postal_code')->andReturn('');
+		$address->shouldReceive('address_line_1')->andReturn('Berlin Street');
+		$address->shouldReceive('admin_area_2')->andReturn('Berlin');
+
+		$shipping = Mockery::mock(Shipping::class);
+		$shipping->expects('address')->andReturn($address);
+		$shipping_factory = Mockery::mock(ShippingFactory::class);
+		$shipping_factory->expects('from_wc_order')->with($wc_order)->andReturn($shipping);
+
+		$testee = $this->create_testee(
+			$this->create_amount_factory_mock($amount, 'from_wc_order', $wc_order),
+			$this->create_item_factory_mock([$this->item], 'from_wc_order', $wc_order),
+			$shipping_factory
+		);
+
+		$unit = $testee->from_wc_order($wc_order);
+		$this->assertNull($unit->shipping());
+	}
+
+	public function test_wc_order_shipping_gets_dropped_when_no_country_code()
+	{
+		$wc_order = $this->create_wc_order_mock();
+		$amount = Mockery::mock(Amount::class);
+
+		// Address only stubs country_code — short-circuit drops shipping before other fields are read.
+		$address = Mockery::mock(Address::class);
+		$address->expects('country_code')->andReturn('');
+
+		$shipping = Mockery::mock(Shipping::class);
+		$shipping->expects('address')->andReturn($address);
+		$shipping_factory = Mockery::mock(ShippingFactory::class);
+		$shipping_factory->expects('from_wc_order')->with($wc_order)->andReturn($shipping);
+
+		$testee = $this->create_testee(
+			$this->create_amount_factory_mock($amount, 'from_wc_order', $wc_order),
+			$this->create_item_factory_mock([$this->item], 'from_wc_order', $wc_order),
+			$shipping_factory
+		);
+
+		$unit = $testee->from_wc_order($wc_order);
+		$this->assertNull($unit->shipping());
+	}
+
+	public function test_wc_order_shipping_gets_dropped_when_no_address_line_1()
+	{
+		$wc_order = $this->create_wc_order_mock();
+		$amount = Mockery::mock(Amount::class);
+
+		// Short-circuit on empty address_line_1 stops before admin_area_2 is read.
+		$address = Mockery::mock(Address::class);
+		$address->expects('country_code')->andReturn('DE');
 		$address->shouldReceive('postal_code')->andReturn('12345');
 		$address->shouldReceive('address_line_1')->andReturn('');
 
 		$shipping = Mockery::mock(Shipping::class);
-		$shipping
-			->expects('address')
-			->andReturn($address);
-		$shippingFactory = Mockery::mock(ShippingFactory::class);
-		$shippingFactory
-			->expects('from_wc_order')
-			->with($wcOrder)
-			->andReturn($shipping);
-		$paymentsFacory = Mockery::mock(PaymentsFactory::class);
+		$shipping->expects('address')->andReturn($address);
+		$shipping_factory = Mockery::mock(ShippingFactory::class);
+		$shipping_factory->expects('from_wc_order')->with($wc_order)->andReturn($shipping);
 
-		$paymentLevelEligibility = Mockery::mock(PaymentLevelEligibility::class);
-		$paymentLevelEligibility
-			->shouldReceive('is_eligible')
-			->with(PayPalGateway::ID)
-			->andReturn(false);
-
-		$testee = new PurchaseUnitFactory(
-			$amountFactory,
-			$itemFactory,
-			$shippingFactory,
-			$paymentsFacory,
-			Mockery::mock(PaymentLevelHelper::class),
-			$paymentLevelEligibility,
-			Mockery::mock(SettingsProvider::class)
+		$testee = $this->create_testee(
+			$this->create_amount_factory_mock($amount, 'from_wc_order', $wc_order),
+			$this->create_item_factory_mock([$this->item], 'from_wc_order', $wc_order),
+			$shipping_factory
 		);
 
-		$unit = $testee->from_wc_order($wcOrder);
-		$this->assertEquals(null, $unit->shipping());
+		$unit = $testee->from_wc_order($wc_order);
+		$this->assertNull($unit->shipping());
 	}
 
-    public function testWcCartDefault()
-    {
-        $wcCustomer = Mockery::mock(\WC_Customer::class);
-        expect('WC')
-            ->andReturn((object) ['customer' => $wcCustomer, 'session' => null]);
-
-        $wcCart = Mockery::mock(\WC_Cart::class);
-        $amount = Mockery::mock(Amount::class);
-        $amountFactory = Mockery::mock(AmountFactory::class);
-        $amountFactory
-            ->expects('from_wc_cart')
-            ->with($wcCart)
-            ->andReturn($amount);
-
-        $itemFactory = Mockery::mock(ItemFactory::class);
-        $itemFactory
-            ->expects('from_wc_cart')
-            ->with($wcCart)
-            ->andReturn([$this->item]);
-
-        $address = Mockery::mock(Address::class);
-        $address
-            ->shouldReceive('country_code')
-            ->andReturn('DE');
-        $address
-            ->shouldReceive('postal_code')
-            ->andReturn('12345');
-        $shipping = Mockery::mock(Shipping::class);
-        $shipping
-            ->shouldReceive('address')
-            ->zeroOrMoreTimes()
-            ->andReturn($address);
-        $shippingFactory = Mockery::mock(ShippingFactory::class);
-        $shippingFactory
-            ->expects('from_wc_customer')
-            ->with($wcCustomer, false)
-            ->andReturn($shipping);
-        $paymentsFacory = Mockery::mock(PaymentsFactory::class);
-
-	    $paymentLevelEligibility = Mockery::mock(PaymentLevelEligibility::class);
-	    $paymentLevelEligibility
-		    ->shouldReceive('is_eligible')
-		    ->with('')
-		    ->andReturn(false);
-
-        $testee = new PurchaseUnitFactory(
-            $amountFactory,
-            $itemFactory,
-            $shippingFactory,
-            $paymentsFacory,
-	        Mockery::mock(PaymentLevelHelper::class),
-	        $paymentLevelEligibility,
-	        Mockery::mock(SettingsProvider::class)
-        );
-
-        $unit = $testee->from_wc_cart($wcCart);
-        $this->assertTrue(is_a($unit, PurchaseUnit::class));
-        $this->assertEquals('', $unit->description());
-        $this->assertEquals('default', $unit->reference_id());
-        $this->assertEquals('', $unit->custom_id());
-        $this->assertEquals('', $unit->soft_descriptor());
-        $this->assertEquals('', $unit->invoice_id());
-        $this->assertEquals([$this->item], $unit->items());
-        $this->assertEquals($amount, $unit->amount());
-        $this->assertEquals($shipping, $unit->shipping());
-    }
-
-    public function testWcCartShippingGetsDroppedWhenNoCustomer()
-    {
-        expect('WC')
-            ->andReturn((object) ['customer' => null, 'session' => null]);
-
-        $wcCart = Mockery::mock(\WC_Cart::class);
-        $amount = Mockery::mock(Amount::class);
-        $amountFactory = Mockery::mock(AmountFactory::class);
-        $amountFactory
-            ->expects('from_wc_cart')
-            ->with($wcCart)
-            ->andReturn($amount);
-
-        $itemFactory = Mockery::mock(ItemFactory::class);
-        $itemFactory
-            ->expects('from_wc_cart')
-            ->with($wcCart)
-            ->andReturn([$this->item]);
-        $shippingFactory = Mockery::mock(ShippingFactory::class);
-        $paymentsFacory = Mockery::mock(PaymentsFactory::class);
-
-	    $paymentLevelEligibility = Mockery::mock(PaymentLevelEligibility::class);
-	    $paymentLevelEligibility
-		    ->shouldReceive('is_eligible')
-		    ->with('')
-		    ->andReturn(false);
-
-        $testee = new PurchaseUnitFactory(
-            $amountFactory,
-            $itemFactory,
-            $shippingFactory,
-            $paymentsFacory,
-	        Mockery::mock(PaymentLevelHelper::class),
-	        $paymentLevelEligibility,
-	        Mockery::mock(SettingsProvider::class)
-        );
-
-        $unit = $testee->from_wc_cart($wcCart);
-        $this->assertNull($unit->shipping());
-    }
-
-    public function testWcCartShippingGetsDroppedWhenNoCountryCode()
-    {
-        expect('WC')
-            ->andReturn((object) ['customer' => Mockery::mock(\WC_Customer::class), 'session' => null]);
-
-        $wcCart = Mockery::mock(\WC_Cart::class);
-        $amount = Mockery::mock(Amount::class);
-        $amountFactory = Mockery::mock(AmountFactory::class);
-        $amountFactory
-            ->expects('from_wc_cart')
-            ->with($wcCart)
-            ->andReturn($amount);
-        $itemFactory = Mockery::mock(ItemFactory::class);
-        $itemFactory
-            ->expects('from_wc_cart')
-            ->with($wcCart)
-            ->andReturn([$this->item]);
-
-        $address = Mockery::mock(Address::class);
-        $address
-            ->shouldReceive('country_code')
-            ->andReturn('');
-        $shipping = Mockery::mock(Shipping::class);
-        $shipping
-            ->shouldReceive('address')
-            ->andReturn($address);
-        $shippingFactory = Mockery::mock(ShippingFactory::class);
-        $shippingFactory
-            ->expects('from_wc_customer')
-            ->andReturn($shipping);
-        $paymentsFacory = Mockery::mock(PaymentsFactory::class);
-
-	    $paymentLevelEligibility = Mockery::mock(PaymentLevelEligibility::class);
-	    $paymentLevelEligibility
-		    ->shouldReceive('is_eligible')
-		    ->with('')
-		    ->andReturn(false);
-
-        $testee = new PurchaseUnitFactory(
-            $amountFactory,
-            $itemFactory,
-            $shippingFactory,
-            $paymentsFacory,
-	        Mockery::mock(PaymentLevelHelper::class),
-	        $paymentLevelEligibility,
-	        Mockery::mock(SettingsProvider::class)
-        );
-
-        $unit = $testee->from_wc_cart($wcCart);
-        $this->assertNull($unit->shipping());
-    }
-
-    public function testFromPayPalResponseDefault()
-    {
-        $rawItem = (object) ['items' => 1];
-        $rawAmount =  (object) ['amount' => 1];
-        $rawShipping = (object) ['shipping' => 1];
-        $amountFactory = Mockery::mock(AmountFactory::class);
-        $amount = Mockery::mock(Amount::class);
-        $amountFactory->expects('from_paypal_response')->with($rawAmount)->andReturn($amount);
-        $itemFactory = Mockery::mock(ItemFactory::class);
-        $itemFactory->expects('from_paypal_response')->with($rawItem)->andReturn($this->item);
-        $shippingFactory = Mockery::mock(ShippingFactory::class);
-        $shipping = Mockery::mock(Shipping::class);
-        $shippingFactory->expects('from_paypal_response')->with($rawShipping)->andReturn($shipping);
-        $paymentsFacory = Mockery::mock(PaymentsFactory::class);
-        $testee = new PurchaseUnitFactory(
-            $amountFactory,
-            $itemFactory,
-            $shippingFactory,
-            $paymentsFacory,
-	        Mockery::mock(PaymentLevelHelper::class),
-	        Mockery::mock(PaymentLevelEligibility::class),
-	        Mockery::mock(SettingsProvider::class)
-        );
-
-        $response = (object) [
-            'reference_id' => 'default',
-            'description' => 'description',
-            'custom_id' => 'customId',
-            'invoice_id' => 'invoiceId',
-            'soft_descriptor' => 'softDescriptor',
-            'amount' => $rawAmount,
-            'items' => [$rawItem],
-            'shipping' => $rawShipping,
-        ];
-
-        $unit = $testee->from_paypal_response($response);
-        $this->assertTrue(is_a($unit, PurchaseUnit::class));
-        $this->assertEquals('description', $unit->description());
-        $this->assertEquals('default', $unit->reference_id());
-        $this->assertEquals('customId', $unit->custom_id());
-        $this->assertEquals('softDescriptor', $unit->soft_descriptor());
-        $this->assertEquals('invoiceId', $unit->invoice_id());
-        $this->assertEquals([$this->item], $unit->items());
-        $this->assertEquals($amount, $unit->amount());
-        $this->assertEquals($shipping, $unit->shipping());
-    }
-
-    public function testFromPayPalResponseShippingIsNull()
-    {
-        $rawItem = (object) ['items' => 1];
-        $rawAmount =  (object) ['amount' => 1];
-        $amountFactory = Mockery::mock(AmountFactory::class);
-        $amount = Mockery::mock(Amount::class);
-        $amountFactory->expects('from_paypal_response')->with($rawAmount)->andReturn($amount);
-        $itemFactory = Mockery::mock(ItemFactory::class);
-        $itemFactory->expects('from_paypal_response')->with($rawItem)->andReturn($this->item);
-        $shippingFactory = Mockery::mock(ShippingFactory::class);
-        $paymentsFacory = Mockery::mock(PaymentsFactory::class);
-        $testee = new PurchaseUnitFactory(
-            $amountFactory,
-            $itemFactory,
-            $shippingFactory,
-            $paymentsFacory,
-	        Mockery::mock(PaymentLevelHelper::class),
-	        Mockery::mock(PaymentLevelEligibility::class),
-	        Mockery::mock(SettingsProvider::class)
-        );
-
-        $response = (object) [
-            'reference_id' => 'default',
-            'description' => 'description',
-            'customId' => 'customId',
-            'invoiceId' => 'invoiceId',
-            'softDescriptor' => 'softDescriptor',
-            'amount' => $rawAmount,
-            'items' => [$rawItem],
-        ];
-
-        $unit = $testee->from_paypal_response($response);
-        $this->assertNull($unit->shipping());
-    }
-
-    public function testFromPayPalResponseNeedsReferenceId()
-    {
-        $amountFactory = Mockery::mock(AmountFactory::class);
-        $itemFactory = Mockery::mock(ItemFactory::class);
-        $shippingFactory = Mockery::mock(ShippingFactory::class);
-        $paymentsFacory = Mockery::mock(PaymentsFactory::class);
-        $testee = new PurchaseUnitFactory(
-            $amountFactory,
-            $itemFactory,
-            $shippingFactory,
-            $paymentsFacory,
-	        Mockery::mock(PaymentLevelHelper::class),
-	        Mockery::mock(PaymentLevelEligibility::class),
-	        Mockery::mock(SettingsProvider::class)
-        );
-
-        $response = (object) [
-            'description' => 'description',
-            'customId' => 'customId',
-            'invoiceId' => 'invoiceId',
-            'softDescriptor' => 'softDescriptor',
-            'amount' => '',
-            'items' => [],
-            'shipping' => '',
-        ];
-
-        $this->expectException(\WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException::class);
-        $testee->from_paypal_response($response);
-    }
-
-    public function testFromPayPalResponsePaymentsGetAppended()
-    {
-        $rawItem = (object)['items' => 1];
-        $rawAmount = (object)['amount' => 1];
-        $rawShipping = (object)['shipping' => 1];
-        $rawPayments = (object)['payments' => 1];
-
-        $amountFactory = Mockery::mock(AmountFactory::class);
-        $amount = Mockery::mock(Amount::class);
-        $amountFactory->expects('from_paypal_response')->with($rawAmount)->andReturn($amount);
-        $itemFactory = Mockery::mock(ItemFactory::class);
-        $item = Mockery::mock(Item::class, ['category' => Item::PHYSICAL_GOODS]);
-        $itemFactory->expects('from_paypal_response')->with($rawItem)->andReturn($item);
-        $shippingFactory = Mockery::mock(ShippingFactory::class);
-        $shipping = Mockery::mock(Shipping::class);
-        $shippingFactory->expects('from_paypal_response')->with($rawShipping)->andReturn($shipping);
-
-        $paymentsFactory = Mockery::mock(PaymentsFactory::class);
-        $payments = Mockery::mock(Payments::class);
-        $paymentsFactory->expects('from_paypal_response')->with($rawPayments)->andReturn($payments);
-
-        $testee = new PurchaseUnitFactory(
-            $amountFactory,
-            $itemFactory,
-            $shippingFactory,
-            $paymentsFactory,
-	        Mockery::mock(PaymentLevelHelper::class),
-	        Mockery::mock(PaymentLevelEligibility::class),
-	        Mockery::mock(SettingsProvider::class)
-        );
-
-        $response = (object)[
-            'reference_id' => 'default',
-            'description' => 'description',
-            'customId' => 'customId',
-            'invoiceId' => 'invoiceId',
-            'softDescriptor' => 'softDescriptor',
-            'amount' => $rawAmount,
-            'items' => [$rawItem],
-            'shipping' => $rawShipping,
-            'payments' => $rawPayments,
-        ];
-
-        $unit = $testee->from_paypal_response($response);
-        $this->assertEquals($payments, $unit->payments());
-    }
-
-    public function testFromPayPalResponsePaymentsIsNull()
-    {
-        $rawItem = (object)['items' => 1];
-        $rawAmount = (object)['amount' => 1];
-        $rawShipping = (object)['shipping' => 1];
-        $rawPayments = (object)['payments' => 1];
-
-        $amountFactory = Mockery::mock(AmountFactory::class);
-        $amount = Mockery::mock(Amount::class);
-        $amountFactory->expects('from_paypal_response')->with($rawAmount)->andReturn($amount);
-        $itemFactory = Mockery::mock(ItemFactory::class);
-        $item = Mockery::mock(Item::class, ['category' => Item::PHYSICAL_GOODS]);
-        $itemFactory->expects('from_paypal_response')->with($rawItem)->andReturn($item);
-        $shippingFactory = Mockery::mock(ShippingFactory::class);
-        $shipping = Mockery::mock(Shipping::class);
-        $shippingFactory->expects('from_paypal_response')->with($rawShipping)->andReturn($shipping);
-
-        $paymentsFactory = Mockery::mock(PaymentsFactory::class);
-
-        $testee = new PurchaseUnitFactory(
-            $amountFactory,
-            $itemFactory,
-            $shippingFactory,
-            $paymentsFactory,
-	        Mockery::mock(PaymentLevelHelper::class),
-	        Mockery::mock(PaymentLevelEligibility::class),
-	        Mockery::mock(SettingsProvider::class)
-        );
-
-        $response = (object)[
-            'reference_id' => 'default',
-            'description' => 'description',
-            'customId' => 'customId',
-            'invoiceId' => 'invoiceId',
-            'softDescriptor' => 'softDescriptor',
-            'amount' => $rawAmount,
-            'items' => [$rawItem],
-            'shipping' => $rawShipping,
-        ];
-
-        $unit = $testee->from_paypal_response($response);
-        $this->assertNull($unit->payments());
-    }
-
-	public function testWcOrderWithLevel2Processing()
+	public function test_wc_order_shipping_gets_dropped_when_no_city()
 	{
-		$wcOrder = Mockery::mock(\WC_Order::class);
-		$wcOrder->expects('get_order_number')->andReturn($this->wcOrderNumber);
-		$wcOrder->expects('get_id')->andReturn($this->wcOrderId);
-		$wcOrder->shouldReceive('get_payment_method')->andReturn(CreditCardGateway::ID);
+		$wc_order = $this->create_wc_order_mock();
+		$amount = Mockery::mock(Amount::class);
+		$shipping = $this->create_shipping_mock(
+			$this->create_address_mock('DE', '12345', 'Berlin Street', '')
+		);
+		$shipping_factory = Mockery::mock(ShippingFactory::class);
+		$shipping_factory->expects('from_wc_order')->with($wc_order)->andReturn($shipping);
 
-		// Mock Amount with to_array() expectation
+		$testee = $this->create_testee(
+			$this->create_amount_factory_mock($amount, 'from_wc_order', $wc_order),
+			$this->create_item_factory_mock([$this->item], 'from_wc_order', $wc_order),
+			$shipping_factory
+		);
+
+		$unit = $testee->from_wc_order($wc_order);
+		$this->assertNull($unit->shipping());
+	}
+
+	public function test_wc_order_shipping_gets_dropped_when_no_city_in_postal_code_exempt_country()
+	{
+		$wc_order = $this->create_wc_order_mock();
+		$amount = Mockery::mock(Amount::class);
+		$shipping = $this->create_shipping_mock(
+			$this->create_address_mock('IE', '', 'Some Street', '')
+		);
+		$shipping_factory = Mockery::mock(ShippingFactory::class);
+		$shipping_factory->expects('from_wc_order')->with($wc_order)->andReturn($shipping);
+
+		$testee = $this->create_testee(
+			$this->create_amount_factory_mock($amount, 'from_wc_order', $wc_order),
+			$this->create_item_factory_mock([$this->item], 'from_wc_order', $wc_order),
+			$shipping_factory
+		);
+
+		$unit = $testee->from_wc_order($wc_order);
+		$this->assertNull($unit->shipping());
+	}
+
+	public function test_wc_cart_default()
+	{
+		$wc_customer = Mockery::mock(\WC_Customer::class);
+		expect('WC')->andReturn((object) ['customer' => $wc_customer, 'session' => null]);
+
+		$wc_cart = Mockery::mock(\WC_Cart::class);
+		$amount = Mockery::mock(Amount::class);
+		$shipping = $this->create_shipping_mock($this->create_address_mock());
+
+		$shipping_factory = Mockery::mock(ShippingFactory::class);
+		$shipping_factory->expects('from_wc_customer')->with($wc_customer, false)->andReturn($shipping);
+
+		$testee = $this->create_testee(
+			$this->create_amount_factory_mock($amount, 'from_wc_cart', $wc_cart),
+			$this->create_item_factory_mock([$this->item], 'from_wc_cart', $wc_cart),
+			$shipping_factory,
+			null,
+			null,
+			$this->create_payment_level_eligibility_mock('', false)
+		);
+
+		$unit = $testee->from_wc_cart($wc_cart);
+		$this->assertInstanceOf(PurchaseUnit::class, $unit);
+		$this->assertEquals('', $unit->description());
+		$this->assertEquals('default', $unit->reference_id());
+		$this->assertEquals('', $unit->custom_id());
+		$this->assertEquals('', $unit->soft_descriptor());
+		$this->assertEquals('', $unit->invoice_id());
+		$this->assertEquals([$this->item], $unit->items());
+		$this->assertEquals($amount, $unit->amount());
+		$this->assertEquals($shipping, $unit->shipping());
+	}
+
+	public function test_wc_cart_shipping_gets_dropped_when_no_customer()
+	{
+		expect('WC')->andReturn((object) ['customer' => null, 'session' => null]);
+
+		$wc_cart = Mockery::mock(\WC_Cart::class);
+		$amount = Mockery::mock(Amount::class);
+
+		$testee = $this->create_testee(
+			$this->create_amount_factory_mock($amount, 'from_wc_cart', $wc_cart),
+			$this->create_item_factory_mock([$this->item], 'from_wc_cart', $wc_cart),
+			Mockery::mock(ShippingFactory::class),
+			null,
+			null,
+			$this->create_payment_level_eligibility_mock('', false)
+		);
+
+		$unit = $testee->from_wc_cart($wc_cart);
+		$this->assertNull($unit->shipping());
+	}
+
+	public function test_wc_cart_shipping_gets_dropped_when_no_country_code()
+	{
+		expect('WC')->andReturn((object) ['customer' => Mockery::mock(\WC_Customer::class), 'session' => null]);
+
+		$wc_cart = Mockery::mock(\WC_Cart::class);
+		$amount = Mockery::mock(Amount::class);
+
+		// Address only stubs country_code — short-circuit stops before other fields are read.
+		$address = Mockery::mock(Address::class);
+		$address->shouldReceive('country_code')->andReturn('');
+		$shipping = Mockery::mock(Shipping::class);
+		$shipping->shouldReceive('address')->andReturn($address);
+
+		$shipping_factory = Mockery::mock(ShippingFactory::class);
+		$shipping_factory->expects('from_wc_customer')->andReturn($shipping);
+
+		$testee = $this->create_testee(
+			$this->create_amount_factory_mock($amount, 'from_wc_cart', $wc_cart),
+			$this->create_item_factory_mock([$this->item], 'from_wc_cart', $wc_cart),
+			$shipping_factory,
+			null,
+			null,
+			$this->create_payment_level_eligibility_mock('', false)
+		);
+
+		$unit = $testee->from_wc_cart($wc_cart);
+		$this->assertNull($unit->shipping());
+	}
+
+	public function test_wc_cart_shipping_gets_dropped_when_no_address_line_1()
+	{
+		$wc_customer = Mockery::mock(\WC_Customer::class);
+		expect('WC')->andReturn((object) ['customer' => $wc_customer, 'session' => null]);
+
+		$wc_cart = Mockery::mock(\WC_Cart::class);
+		$amount = Mockery::mock(Amount::class);
+		$shipping = $this->create_shipping_mock(
+			$this->create_address_mock('DE', '12345', '', 'Berlin')
+		);
+
+		$shipping_factory = Mockery::mock(ShippingFactory::class);
+		$shipping_factory->expects('from_wc_customer')->with($wc_customer, false)->andReturn($shipping);
+
+		$testee = $this->create_testee(
+			$this->create_amount_factory_mock($amount, 'from_wc_cart', $wc_cart),
+			$this->create_item_factory_mock([$this->item], 'from_wc_cart', $wc_cart),
+			$shipping_factory,
+			null,
+			null,
+			$this->create_payment_level_eligibility_mock('', false)
+		);
+
+		$unit = $testee->from_wc_cart($wc_cart);
+		$this->assertNull($unit->shipping());
+	}
+
+	public function test_wc_cart_shipping_gets_dropped_when_no_city()
+	{
+		$wc_customer = Mockery::mock(\WC_Customer::class);
+		expect('WC')->andReturn((object) ['customer' => $wc_customer, 'session' => null]);
+
+		$wc_cart = Mockery::mock(\WC_Cart::class);
+		$amount = Mockery::mock(Amount::class);
+		$shipping = $this->create_shipping_mock(
+			$this->create_address_mock('IE', '', 'Some Street', '')
+		);
+
+		$shipping_factory = Mockery::mock(ShippingFactory::class);
+		$shipping_factory->expects('from_wc_customer')->with($wc_customer, false)->andReturn($shipping);
+
+		$testee = $this->create_testee(
+			$this->create_amount_factory_mock($amount, 'from_wc_cart', $wc_cart),
+			$this->create_item_factory_mock([$this->item], 'from_wc_cart', $wc_cart),
+			$shipping_factory,
+			null,
+			null,
+			$this->create_payment_level_eligibility_mock('', false)
+		);
+
+		$unit = $testee->from_wc_cart($wc_cart);
+		$this->assertNull($unit->shipping());
+	}
+
+	public function test_wc_cart_shipping_kept_when_ireland_has_city_no_postal_code()
+	{
+		$wc_customer = Mockery::mock(\WC_Customer::class);
+		expect('WC')->andReturn((object) ['customer' => $wc_customer, 'session' => null]);
+
+		$wc_cart = Mockery::mock(\WC_Cart::class);
+		$amount = Mockery::mock(Amount::class);
+		$shipping = $this->create_shipping_mock(
+			$this->create_address_mock('IE', '', 'Some Street', 'Dublin')
+		);
+
+		$shipping_factory = Mockery::mock(ShippingFactory::class);
+		$shipping_factory->expects('from_wc_customer')->with($wc_customer, false)->andReturn($shipping);
+
+		$testee = $this->create_testee(
+			$this->create_amount_factory_mock($amount, 'from_wc_cart', $wc_cart),
+			$this->create_item_factory_mock([$this->item], 'from_wc_cart', $wc_cart),
+			$shipping_factory,
+			null,
+			null,
+			$this->create_payment_level_eligibility_mock('', false)
+		);
+
+		$unit = $testee->from_wc_cart($wc_cart);
+		$this->assertEquals($shipping, $unit->shipping());
+	}
+
+	public function test_from_paypal_response_default()
+	{
+		$raw_item = (object) ['items' => 1];
+		$raw_amount = (object) ['amount' => 1];
+		$raw_shipping = (object) ['shipping' => 1];
+
+		$amount = Mockery::mock(Amount::class);
+		$shipping = Mockery::mock(Shipping::class);
+
+		$shipping_factory = Mockery::mock(ShippingFactory::class);
+		$shipping_factory->expects('from_paypal_response')->with($raw_shipping)->andReturn($shipping);
+
+		$testee = $this->create_testee(
+			$this->create_amount_factory_mock($amount, 'from_paypal_response', $raw_amount),
+			$this->create_item_factory_from_response($raw_item),
+			$shipping_factory
+		);
+
+		$response = (object) [
+			'reference_id' => 'default',
+			'description' => 'description',
+			'custom_id' => 'customId',
+			'invoice_id' => 'invoiceId',
+			'soft_descriptor' => 'softDescriptor',
+			'amount' => $raw_amount,
+			'items' => [$raw_item],
+			'shipping' => $raw_shipping,
+		];
+
+		$unit = $testee->from_paypal_response($response);
+		$this->assertInstanceOf(PurchaseUnit::class, $unit);
+		$this->assertEquals('description', $unit->description());
+		$this->assertEquals('default', $unit->reference_id());
+		$this->assertEquals('customId', $unit->custom_id());
+		$this->assertEquals('softDescriptor', $unit->soft_descriptor());
+		$this->assertEquals('invoiceId', $unit->invoice_id());
+		$this->assertEquals([$this->item], $unit->items());
+		$this->assertEquals($amount, $unit->amount());
+		$this->assertEquals($shipping, $unit->shipping());
+	}
+
+	public function test_from_paypal_response_shipping_is_null()
+	{
+		$raw_item = (object) ['items' => 1];
+		$raw_amount = (object) ['amount' => 1];
+		$amount = Mockery::mock(Amount::class);
+
+		$testee = $this->create_testee(
+			$this->create_amount_factory_mock($amount, 'from_paypal_response', $raw_amount),
+			$this->create_item_factory_from_response($raw_item),
+			Mockery::mock(ShippingFactory::class)
+		);
+
+		$response = (object) [
+			'reference_id' => 'default',
+			'description' => 'description',
+			'customId' => 'customId',
+			'invoiceId' => 'invoiceId',
+			'softDescriptor' => 'softDescriptor',
+			'amount' => $raw_amount,
+			'items' => [$raw_item],
+		];
+
+		$unit = $testee->from_paypal_response($response);
+		$this->assertNull($unit->shipping());
+	}
+
+	public function test_from_paypal_response_uses_default_reference_id_as_fallback()
+	{
+		$raw_amount = (object) ['amount' => 1];
+		$amount = Mockery::mock(Amount::class);
+
+		$testee = $this->create_testee(
+			$this->create_amount_factory_mock($amount, 'from_paypal_response', $raw_amount),
+			Mockery::mock(ItemFactory::class),
+			Mockery::mock(ShippingFactory::class)
+		);
+
+		$response = (object) [
+			'description' => 'description',
+			'amount' => $raw_amount,
+			'items' => [],
+		];
+
+		$unit = $testee->from_paypal_response($response);
+		$this->assertInstanceOf(PurchaseUnit::class, $unit);
+		$this->assertEquals('default', $unit->reference_id());
+	}
+
+	public function test_from_paypal_response_payments_get_appended()
+	{
+		$raw_item = (object) ['items' => 1];
+		$raw_amount = (object) ['amount' => 1];
+		$raw_shipping = (object) ['shipping' => 1];
+		$raw_payments = (object) ['payments' => 1];
+
+		$amount = Mockery::mock(Amount::class);
+		$item = Mockery::mock(Item::class, ['category' => Item::PHYSICAL_GOODS]);
+		$shipping = Mockery::mock(Shipping::class);
+		$payments = Mockery::mock(Payments::class);
+
+		$item_factory = Mockery::mock(ItemFactory::class);
+		$item_factory->expects('from_paypal_response')->with($raw_item)->andReturn($item);
+
+		$shipping_factory = Mockery::mock(ShippingFactory::class);
+		$shipping_factory->expects('from_paypal_response')->with($raw_shipping)->andReturn($shipping);
+
+		$payments_factory = Mockery::mock(PaymentsFactory::class);
+		$payments_factory->expects('from_paypal_response')->with($raw_payments)->andReturn($payments);
+
+		$testee = $this->create_testee(
+			$this->create_amount_factory_mock($amount, 'from_paypal_response', $raw_amount),
+			$item_factory,
+			$shipping_factory,
+			$payments_factory
+		);
+
+		$response = (object) [
+			'reference_id' => 'default',
+			'description' => 'description',
+			'customId' => 'customId',
+			'invoiceId' => 'invoiceId',
+			'softDescriptor' => 'softDescriptor',
+			'amount' => $raw_amount,
+			'items' => [$raw_item],
+			'shipping' => $raw_shipping,
+			'payments' => $raw_payments,
+		];
+
+		$unit = $testee->from_paypal_response($response);
+		$this->assertEquals($payments, $unit->payments());
+	}
+
+	public function test_from_paypal_response_payments_is_null()
+	{
+		$raw_item = (object) ['items' => 1];
+		$raw_amount = (object) ['amount' => 1];
+		$raw_shipping = (object) ['shipping' => 1];
+
+		$amount = Mockery::mock(Amount::class);
+		$item = Mockery::mock(Item::class, ['category' => Item::PHYSICAL_GOODS]);
+		$shipping = Mockery::mock(Shipping::class);
+
+		$item_factory = Mockery::mock(ItemFactory::class);
+		$item_factory->expects('from_paypal_response')->with($raw_item)->andReturn($item);
+
+		$shipping_factory = Mockery::mock(ShippingFactory::class);
+		$shipping_factory->expects('from_paypal_response')->with($raw_shipping)->andReturn($shipping);
+
+		$testee = $this->create_testee(
+			$this->create_amount_factory_mock($amount, 'from_paypal_response', $raw_amount),
+			$item_factory,
+			$shipping_factory
+		);
+
+		$response = (object) [
+			'reference_id' => 'default',
+			'description' => 'description',
+			'customId' => 'customId',
+			'invoiceId' => 'invoiceId',
+			'softDescriptor' => 'softDescriptor',
+			'amount' => $raw_amount,
+			'items' => [$raw_item],
+			'shipping' => $raw_shipping,
+		];
+
+		$unit = $testee->from_paypal_response($response);
+		$this->assertNull($unit->payments());
+	}
+
+	public function test_wc_order_with_level_2_processing()
+	{
+		$wc_order = $this->create_wc_order_mock(CreditCardGateway::ID);
+
 		$amount = Mockery::mock(Amount::class);
 		$amount->shouldReceive('to_array')->andReturn([
 			'currency_code' => 'USD',
-			'value' => '100.00'
+			'value' => '100.00',
 		]);
 
-		$amountFactory = Mockery::mock(AmountFactory::class);
-		$amountFactory
-			->shouldReceive('from_wc_order')
-			->with($wcOrder)
-			->andReturn($amount);
-
-		// Mock Item with to_array() expectation
 		$item = Mockery::mock(Item::class);
 		$item->shouldReceive('to_array')->andReturn([
 			'name' => 'Test Item',
 			'unit_amount' => ['currency_code' => 'USD', 'value' => '100.00'],
-			'quantity' => '1'
+			'quantity' => '1',
 		]);
 		$item->shouldReceive('unit_amount')->andReturn(new Money(100.0, 'USD'));
 		$item->shouldReceive('category')->andReturn(Item::PHYSICAL_GOODS);
 
-		$itemFactory = Mockery::mock(ItemFactory::class);
-		$itemFactory
-			->shouldReceive('from_wc_order')
-			->with($wcOrder)
-			->andReturn([$item]);
-
-		$address = Mockery::mock(Address::class);
-		$address->shouldReceive('country_code')->andReturn('US');
-		$address->shouldReceive('postal_code')->andReturn('12345');
-		$address->shouldReceive('address_line_1')->andReturn('123 Main St');
+		$address = $this->create_address_mock('US', '12345', '123 Main St', 'Anytown');
 		$address->shouldReceive('to_array')->andReturn([
 			'country_code' => 'US',
 			'postal_code' => '12345',
-			'address_line_1' => '123 Main St'
+			'address_line_1' => '123 Main St',
 		]);
 
-		$shipping = Mockery::mock(Shipping::class);
-		$shipping->shouldReceive('address')->andReturn($address);
+		$shipping = $this->create_shipping_mock($address);
 		$shipping->shouldReceive('to_array')->andReturn([
 			'address' => [
 				'country_code' => 'US',
 				'postal_code' => '12345',
-				'address_line_1' => '123 Main St'
-			]
+				'address_line_1' => '123 Main St',
+			],
 		]);
 
-		$shippingFactory = Mockery::mock(ShippingFactory::class);
-		$shippingFactory
-			->shouldReceive('from_wc_order')
-			->with($wcOrder)
-			->andReturn($shipping);
+		$shipping_factory = Mockery::mock(ShippingFactory::class);
+		$shipping_factory->shouldReceive('from_wc_order')->with($wc_order)->andReturn($shipping);
 
-		$paymentsFactory = Mockery::mock(PaymentsFactory::class);
-
-		// Mock Level 2 processing to return true
-		$paymentLevelEligibility = Mockery::mock(PaymentLevelEligibility::class);
-		$paymentLevelEligibility
-			->shouldReceive('is_eligible')
-			->with(CreditCardGateway::ID)
-			->andReturn(true);
-
-		// Mock Level 2 data structure
-		$level2Data = [
+		$level_2_data = [
 			'supplementary_data' => [
 				'card' => [
 					'level_2' => [
 						'invoice_id' => 'INV_12345',
-						'tax_total' => [
-							'currency_code' => 'USD',
-							'value' => '8.50'
-						]
-					]
-				]
-			]
+						'tax_total' => ['currency_code' => 'USD', 'value' => '8.50'],
+					],
+				],
+			],
 		];
 
-		$paymentLevelHelper = Mockery::mock(PaymentLevelHelper::class);
-		$paymentLevelHelper
-			->shouldReceive('build')
-			->with($amount, [$item], $shipping)
-			->andReturn($level2Data);
+		$payment_level_helper = Mockery::mock(PaymentLevelHelper::class);
+		$payment_level_helper->shouldReceive('build')->with($amount, [$item], $shipping)->andReturn($level_2_data);
 
 		$settings = Mockery::mock(SettingsProvider::class);
-		$settings
-			->shouldReceive('is_payment_level_processing_enabled')
-			->andReturn(true);
+		$settings->shouldReceive('is_payment_level_processing_enabled')->andReturn(true);
 
-		$testee = new PurchaseUnitFactory(
-			$amountFactory,
-			$itemFactory,
-			$shippingFactory,
-			$paymentsFactory,
-			$paymentLevelHelper,
-			$paymentLevelEligibility,
+		$testee = $this->create_testee(
+			$this->create_amount_factory_mock($amount, 'from_wc_order', $wc_order),
+			$this->create_item_factory_mock([$item], 'from_wc_order', $wc_order),
+			$shipping_factory,
+			null,
+			$payment_level_helper,
+			$this->create_payment_level_eligibility_mock(CreditCardGateway::ID, true),
 			$settings
 		);
 
-		$unit = $testee->from_wc_order($wcOrder);
+		$unit = $testee->from_wc_order($wc_order);
+		$this->assertInstanceOf(PurchaseUnit::class, $unit);
 
-		// Assert that the purchase unit was created
-		$this->assertTrue(is_a($unit, PurchaseUnit::class));
-
-		// Assert that supplementary_data is present in the array output
-		$unitArray = $unit->to_array();
-		$this->assertArrayHasKey('supplementary_data', $unitArray);
-		$this->assertArrayHasKey('card', $unitArray['supplementary_data']);
-		$this->assertArrayHasKey('level_2', $unitArray['supplementary_data']['card']);
-		$this->assertEquals('INV_12345', $unitArray['supplementary_data']['card']['level_2']['invoice_id']);
-		$this->assertEquals('USD', $unitArray['supplementary_data']['card']['level_2']['tax_total']['currency_code']);
-		$this->assertEquals('8.50', $unitArray['supplementary_data']['card']['level_2']['tax_total']['value']);
+		$unit_array = $unit->to_array();
+		$this->assertArrayHasKey('supplementary_data', $unit_array);
+		$this->assertArrayHasKey('card', $unit_array['supplementary_data']);
+		$this->assertArrayHasKey('level_2', $unit_array['supplementary_data']['card']);
+		$this->assertEquals('INV_12345', $unit_array['supplementary_data']['card']['level_2']['invoice_id']);
+		$this->assertEquals('USD', $unit_array['supplementary_data']['card']['level_2']['tax_total']['currency_code']);
+		$this->assertEquals('8.50', $unit_array['supplementary_data']['card']['level_2']['tax_total']['value']);
 	}
 
-	public function testWcOrderWithoutLevel2ProcessingWhenNotEligible()
+	public function test_wc_order_without_level_2_processing_when_not_eligible()
 	{
-		$wcOrder = Mockery::mock(\WC_Order::class);
-		$wcOrder->expects('get_order_number')->andReturn($this->wcOrderNumber);
-		$wcOrder->expects('get_id')->andReturn($this->wcOrderId);
-		$wcOrder->shouldReceive('get_payment_method')->andReturn(PayPalGateway::ID);
+		$wc_order = $this->create_wc_order_mock();
 
-		// Mock Amount with to_array() expectation
 		$amount = Mockery::mock(Amount::class);
 		$amount->shouldReceive('to_array')->andReturn([
 			'currency_code' => 'EUR',
-			'value' => '100.00'
+			'value' => '100.00',
 		]);
 
-		$amountFactory = Mockery::mock(AmountFactory::class);
-		$amountFactory
-			->shouldReceive('from_wc_order')
-			->with($wcOrder)
-			->andReturn($amount);
-
-		// Mock Item with to_array() expectation
 		$item = Mockery::mock(Item::class);
 		$item->shouldReceive('to_array')->andReturn([
 			'name' => 'Test Item',
 			'unit_amount' => ['currency_code' => 'EUR', 'value' => '100.00'],
-			'quantity' => '1'
+			'quantity' => '1',
 		]);
 		$item->shouldReceive('unit_amount')->andReturn(new Money(100.0, 'EUR'));
 		$item->shouldReceive('category')->andReturn(Item::PHYSICAL_GOODS);
 
-		$itemFactory = Mockery::mock(ItemFactory::class);
-		$itemFactory
-			->shouldReceive('from_wc_order')
-			->with($wcOrder)
-			->andReturn([$item]);
-
-		$address = Mockery::mock(Address::class);
-		$address->shouldReceive('country_code')->andReturn('DE');
-		$address->shouldReceive('postal_code')->andReturn('12345');
-		$address->shouldReceive('address_line_1')->andReturn('Berlin Street');
+		$address = $this->create_address_mock();
 		$address->shouldReceive('to_array')->andReturn([
 			'country_code' => 'DE',
 			'postal_code' => '12345',
-			'address_line_1' => 'Berlin Street'
+			'address_line_1' => 'Berlin Street',
 		]);
 
-		$shipping = Mockery::mock(Shipping::class);
-		$shipping->shouldReceive('address')->andReturn($address);
+		$shipping = $this->create_shipping_mock($address);
 		$shipping->shouldReceive('to_array')->andReturn([
 			'address' => [
 				'country_code' => 'DE',
 				'postal_code' => '12345',
-				'address_line_1' => 'Berlin Street'
-			]
+				'address_line_1' => 'Berlin Street',
+			],
 		]);
 
-		$shippingFactory = Mockery::mock(ShippingFactory::class);
-		$shippingFactory
-			->shouldReceive('from_wc_order')
-			->with($wcOrder)
-			->andReturn($shipping);
+		$shipping_factory = Mockery::mock(ShippingFactory::class);
+		$shipping_factory->shouldReceive('from_wc_order')->with($wc_order)->andReturn($shipping);
 
-		$paymentsFactory = Mockery::mock(PaymentsFactory::class);
+		$payment_level_helper = Mockery::mock(PaymentLevelHelper::class);
+		$payment_level_helper->shouldNotReceive('build');
 
-		// Mock Level 2 processing to return false (not eligible)
-		$paymentLevelEligibility = Mockery::mock(PaymentLevelEligibility::class);
-		$paymentLevelEligibility
-			->shouldReceive('is_eligible')
-			->with(PayPalGateway::ID)
-			->andReturn(false);
-
-		$paymentLevelHelper = Mockery::mock(PaymentLevelHelper::class);
-		// build() should NOT be called when not eligible
-		$paymentLevelHelper->shouldNotReceive('build');
-
-		$testee = new PurchaseUnitFactory(
-			$amountFactory,
-			$itemFactory,
-			$shippingFactory,
-			$paymentsFactory,
-			$paymentLevelHelper,
-			$paymentLevelEligibility,
-			Mockery::mock(SettingsProvider::class)
+		$testee = $this->create_testee(
+			$this->create_amount_factory_mock($amount, 'from_wc_order', $wc_order),
+			$this->create_item_factory_mock([$item], 'from_wc_order', $wc_order),
+			$shipping_factory,
+			null,
+			$payment_level_helper
 		);
 
-		$unit = $testee->from_wc_order($wcOrder);
+		$unit = $testee->from_wc_order($wc_order);
+		$this->assertInstanceOf(PurchaseUnit::class, $unit);
 
-		// Assert that the purchase unit was created
-		$this->assertTrue(is_a($unit, PurchaseUnit::class));
-
-		// Assert that supplementary_data is NOT present
-		$unitArray = $unit->to_array();
-		$this->assertArrayNotHasKey('supplementary_data', $unitArray);
+		$unit_array = $unit->to_array();
+		$this->assertArrayNotHasKey('supplementary_data', $unit_array);
 	}
 
-	public function testWcOrderWithLevel3Processing()
+	public function test_wc_order_with_level_3_processing()
 	{
-		$wcOrder = Mockery::mock(\WC_Order::class);
-		$wcOrder->expects('get_order_number')->andReturn($this->wcOrderNumber);
-		$wcOrder->expects('get_id')->andReturn($this->wcOrderId);
-		$wcOrder->shouldReceive('get_payment_method')->andReturn(CreditCardGateway::ID);
+		$wc_order = $this->create_wc_order_mock(CreditCardGateway::ID);
 
 		$amount = Mockery::mock(Amount::class);
 		$amount->shouldReceive('to_array')->andReturn([
 			'currency_code' => 'USD',
-			'value' => '115.00'
+			'value' => '115.00',
 		]);
-
-		$amountFactory = Mockery::mock(AmountFactory::class);
-		$amountFactory
-			->shouldReceive('from_wc_order')
-			->with($wcOrder)
-			->andReturn($amount);
 
 		$item = Mockery::mock(Item::class);
 		$item->shouldReceive('to_array')->andReturn([
 			'name' => 'Test Product',
 			'unit_amount' => ['currency_code' => 'USD', 'value' => '100.00'],
-			'quantity' => '1'
+			'quantity' => '1',
 		]);
 		$item->shouldReceive('unit_amount')->andReturn(new Money(100.0, 'USD'));
 		$item->shouldReceive('category')->andReturn(Item::PHYSICAL_GOODS);
 
-		$itemFactory = Mockery::mock(ItemFactory::class);
-		$itemFactory
-			->shouldReceive('from_wc_order')
-			->with($wcOrder)
-			->andReturn([$item]);
-
-		$address = Mockery::mock(Address::class);
-		$address->shouldReceive('country_code')->andReturn('US');
-		$address->shouldReceive('postal_code')->andReturn('94102');
-		$address->shouldReceive('address_line_1')->andReturn('123 Market St');
+		$address = $this->create_address_mock('US', '94102', '123 Market St', 'San Francisco');
 		$address->shouldReceive('to_array')->andReturn([
 			'country_code' => 'US',
 			'postal_code' => '94102',
-			'address_line_1' => '123 Market St'
+			'address_line_1' => '123 Market St',
 		]);
 
-		$shipping = Mockery::mock(Shipping::class);
-		$shipping->shouldReceive('address')->andReturn($address);
+		$shipping = $this->create_shipping_mock($address);
 		$shipping->shouldReceive('to_array')->andReturn([
 			'address' => [
 				'country_code' => 'US',
 				'postal_code' => '94102',
-				'address_line_1' => '123 Market St'
-			]
+				'address_line_1' => '123 Market St',
+			],
 		]);
 
-		$shippingFactory = Mockery::mock(ShippingFactory::class);
-		$shippingFactory
-			->shouldReceive('from_wc_order')
-			->with($wcOrder)
-			->andReturn($shipping);
+		$shipping_factory = Mockery::mock(ShippingFactory::class);
+		$shipping_factory->shouldReceive('from_wc_order')->with($wc_order)->andReturn($shipping);
 
-		$paymentsFactory = Mockery::mock(PaymentsFactory::class);
-
-		$paymentLevelEligibility = Mockery::mock(PaymentLevelEligibility::class);
-		$paymentLevelEligibility
-			->shouldReceive('is_eligible')
-			->with(CreditCardGateway::ID)
-			->andReturn(true);
-
-		// Mock Level 3 data structure
-		$level3Data = [
+		$level_3_data = [
 			'supplementary_data' => [
 				'card' => [
-					'level_2' => [
-						'invoice_id' => 'INV_12345'
-					],
+					'level_2' => ['invoice_id' => 'INV_12345'],
 					'level_3' => [
-						'shipping_amount' => [
-							'currency_code' => 'USD',
-							'value' => '10.00'
-						],
-						'discount_amount' => [
-							'currency_code' => 'USD',
-							'value' => '5.00'
-						],
+						'shipping_amount' => ['currency_code' => 'USD', 'value' => '10.00'],
+						'discount_amount' => ['currency_code' => 'USD', 'value' => '5.00'],
 						'shipping_address' => [
 							'country_code' => 'US',
 							'postal_code' => '94102',
-							'address_line_1' => '123 Market St'
+							'address_line_1' => '123 Market St',
 						],
 						'ships_from_postal_code' => '12345',
 						'line_items' => [
 							[
 								'name' => 'Test Product',
 								'quantity' => '1',
-								'unit_amount' => [
-									'currency_code' => 'USD',
-									'value' => '100.00'
-								],
-								'total_amount' => [
-									'currency_code' => 'USD',
-									'value' => '100.00'
-								],
+								'unit_amount' => ['currency_code' => 'USD', 'value' => '100.00'],
+								'total_amount' => ['currency_code' => 'USD', 'value' => '100.00'],
 								'commodity_code' => 'SKU-123',
-								'unit_of_measure' => 'POUND_GB_US'
-							]
-						]
-					]
-				]
-			]
+								'unit_of_measure' => 'POUND_GB_US',
+							],
+						],
+					],
+				],
+			],
 		];
 
-		$paymentLevelHelper = Mockery::mock(PaymentLevelHelper::class);
-		$paymentLevelHelper
-			->shouldReceive('build')
-			->with($amount, [$item], $shipping)
-			->andReturn($level3Data);
+		$payment_level_helper = Mockery::mock(PaymentLevelHelper::class);
+		$payment_level_helper->shouldReceive('build')->with($amount, [$item], $shipping)->andReturn($level_3_data);
 
 		$settings = Mockery::mock(SettingsProvider::class);
-		$settings
-			->shouldReceive('is_payment_level_processing_enabled')
-			->andReturn(true);
+		$settings->shouldReceive('is_payment_level_processing_enabled')->andReturn(true);
 
-		$testee = new PurchaseUnitFactory(
-			$amountFactory,
-			$itemFactory,
-			$shippingFactory,
-			$paymentsFactory,
-			$paymentLevelHelper,
-			$paymentLevelEligibility,
+		$testee = $this->create_testee(
+			$this->create_amount_factory_mock($amount, 'from_wc_order', $wc_order),
+			$this->create_item_factory_mock([$item], 'from_wc_order', $wc_order),
+			$shipping_factory,
+			null,
+			$payment_level_helper,
+			$this->create_payment_level_eligibility_mock(CreditCardGateway::ID, true),
 			$settings
 		);
 
-		$unit = $testee->from_wc_order($wcOrder);
+		$unit = $testee->from_wc_order($wc_order);
+		$this->assertInstanceOf(PurchaseUnit::class, $unit);
 
-		$this->assertTrue(is_a($unit, PurchaseUnit::class));
+		$unit_array = $unit->to_array();
+		$this->assertArrayHasKey('supplementary_data', $unit_array);
+		$this->assertArrayHasKey('card', $unit_array['supplementary_data']);
+		$this->assertArrayHasKey('level_3', $unit_array['supplementary_data']['card']);
 
-		$unitArray = $unit->to_array();
-		$this->assertArrayHasKey('supplementary_data', $unitArray);
-		$this->assertArrayHasKey('card', $unitArray['supplementary_data']);
-
-		// Verify Level 3 data is present
-		$this->assertArrayHasKey('level_3', $unitArray['supplementary_data']['card']);
-		$level3 = $unitArray['supplementary_data']['card']['level_3'];
-
-		$this->assertArrayHasKey('shipping_amount', $level3);
-		$this->assertEquals('10.00', $level3['shipping_amount']['value']);
-
-		$this->assertArrayHasKey('discount_amount', $level3);
-		$this->assertEquals('5.00', $level3['discount_amount']['value']);
-
-		$this->assertArrayHasKey('shipping_address', $level3);
-		$this->assertEquals('US', $level3['shipping_address']['country_code']);
-
-		$this->assertArrayHasKey('ships_from_postal_code', $level3);
-		$this->assertEquals('12345', $level3['ships_from_postal_code']);
-
-		$this->assertArrayHasKey('line_items', $level3);
-		$this->assertCount(1, $level3['line_items']);
-		$this->assertEquals('Test Product', $level3['line_items'][0]['name']);
-		$this->assertEquals('SKU-123', $level3['line_items'][0]['commodity_code']);
+		$level_3 = $unit_array['supplementary_data']['card']['level_3'];
+		$this->assertArrayHasKey('shipping_amount', $level_3);
+		$this->assertEquals('10.00', $level_3['shipping_amount']['value']);
+		$this->assertArrayHasKey('discount_amount', $level_3);
+		$this->assertEquals('5.00', $level_3['discount_amount']['value']);
+		$this->assertArrayHasKey('shipping_address', $level_3);
+		$this->assertEquals('US', $level_3['shipping_address']['country_code']);
+		$this->assertArrayHasKey('ships_from_postal_code', $level_3);
+		$this->assertEquals('12345', $level_3['ships_from_postal_code']);
+		$this->assertArrayHasKey('line_items', $level_3);
+		$this->assertCount(1, $level_3['line_items']);
+		$this->assertEquals('Test Product', $level_3['line_items'][0]['name']);
+		$this->assertEquals('SKU-123', $level_3['line_items'][0]['commodity_code']);
 	}
 
-	public function testWcOrderWithBothLevel2AndLevel3Processing()
+	public function test_wc_order_with_both_level_2_and_level_3_processing()
 	{
-		$wcOrder = Mockery::mock(\WC_Order::class);
-		$wcOrder->expects('get_order_number')->andReturn($this->wcOrderNumber);
-		$wcOrder->expects('get_id')->andReturn($this->wcOrderId);
-		$wcOrder->shouldReceive('get_payment_method')->andReturn(CreditCardGateway::ID);
+		$wc_order = $this->create_wc_order_mock(CreditCardGateway::ID);
 
 		$amount = Mockery::mock(Amount::class);
 		$amount->shouldReceive('to_array')->andReturn([
 			'currency_code' => 'USD',
-			'value' => '118.50'
+			'value' => '118.50',
 		]);
-
-		$amountFactory = Mockery::mock(AmountFactory::class);
-		$amountFactory
-			->shouldReceive('from_wc_order')
-			->with($wcOrder)
-			->andReturn($amount);
 
 		$item = Mockery::mock(Item::class);
 		$item->shouldReceive('to_array')->andReturn([
 			'name' => 'Premium Widget',
 			'unit_amount' => ['currency_code' => 'USD', 'value' => '100.00'],
-			'quantity' => '1'
+			'quantity' => '1',
 		]);
 		$item->shouldReceive('unit_amount')->andReturn(new Money(100.0, 'USD'));
 		$item->shouldReceive('category')->andReturn(Item::PHYSICAL_GOODS);
 
-		$itemFactory = Mockery::mock(ItemFactory::class);
-		$itemFactory
-			->shouldReceive('from_wc_order')
-			->with($wcOrder)
-			->andReturn([$item]);
-
-		$address = Mockery::mock(Address::class);
-		$address->shouldReceive('country_code')->andReturn('US');
-		$address->shouldReceive('postal_code')->andReturn('10001');
-		$address->shouldReceive('address_line_1')->andReturn('350 5th Ave');
+		$address = $this->create_address_mock('US', '10001', '350 5th Ave', 'New York');
 		$address->shouldReceive('to_array')->andReturn([
 			'country_code' => 'US',
 			'postal_code' => '10001',
-			'address_line_1' => '350 5th Ave'
+			'address_line_1' => '350 5th Ave',
 		]);
 
-		$shipping = Mockery::mock(Shipping::class);
-		$shipping->shouldReceive('address')->andReturn($address);
+		$shipping = $this->create_shipping_mock($address);
 		$shipping->shouldReceive('to_array')->andReturn([
 			'address' => [
 				'country_code' => 'US',
 				'postal_code' => '10001',
-				'address_line_1' => '350 5th Ave'
-			]
+				'address_line_1' => '350 5th Ave',
+			],
 		]);
 
-		$shippingFactory = Mockery::mock(ShippingFactory::class);
-		$shippingFactory
-			->shouldReceive('from_wc_order')
-			->with($wcOrder)
-			->andReturn($shipping);
+		$shipping_factory = Mockery::mock(ShippingFactory::class);
+		$shipping_factory->shouldReceive('from_wc_order')->with($wc_order)->andReturn($shipping);
 
-		$paymentsFactory = Mockery::mock(PaymentsFactory::class);
-
-		$paymentLevelEligibility = Mockery::mock(PaymentLevelEligibility::class);
-		$paymentLevelEligibility
-			->shouldReceive('is_eligible')
-			->with(CreditCardGateway::ID)
-			->andReturn(true);
-
-		// Mock combined Level 2 + Level 3 data structure
-		$combinedData = [
+		$combined_data = [
 			'supplementary_data' => [
 				'card' => [
 					'level_2' => [
 						'invoice_id' => 'INV_COMBINED_789',
-						'tax_total' => [
-							'currency_code' => 'USD',
-							'value' => '8.50'
-						]
+						'tax_total' => ['currency_code' => 'USD', 'value' => '8.50'],
 					],
 					'level_3' => [
-						'shipping_amount' => [
-							'currency_code' => 'USD',
-							'value' => '10.00'
-						],
-						'discount_amount' => [
-							'currency_code' => 'USD',
-							'value' => '0.00'
-						],
-						'duty_amount' => [
-							'currency_code' => 'USD',
-							'value' => '2.50'
-						],
+						'shipping_amount' => ['currency_code' => 'USD', 'value' => '10.00'],
+						'discount_amount' => ['currency_code' => 'USD', 'value' => '0.00'],
+						'duty_amount' => ['currency_code' => 'USD', 'value' => '2.50'],
 						'shipping_address' => [
 							'country_code' => 'US',
 							'postal_code' => '10001',
-							'address_line_1' => '350 5th Ave'
+							'address_line_1' => '350 5th Ave',
 						],
 						'ships_from_postal_code' => '94102',
 						'line_items' => [
 							[
 								'name' => 'Premium Widget',
 								'quantity' => '1',
-								'unit_amount' => [
-									'currency_code' => 'USD',
-									'value' => '100.00'
-								],
-								'total_amount' => [
-									'currency_code' => 'USD',
-									'value' => '100.00'
-								],
+								'unit_amount' => ['currency_code' => 'USD', 'value' => '100.00'],
+								'total_amount' => ['currency_code' => 'USD', 'value' => '100.00'],
 								'description' => 'High quality widget',
 								'commodity_code' => 'WIDGET-001',
-								'upc' => [
-									'type' => 'UPC-A',
-									'code' => '012345678905'
-								],
-								'tax' => [
-									'currency_code' => 'USD',
-									'value' => '8.50'
-								],
-								'unit_of_measure' => 'KILOGRAM'
-							]
-						]
-					]
-				]
-			]
+								'upc' => ['type' => 'UPC-A', 'code' => '012345678905'],
+								'tax' => ['currency_code' => 'USD', 'value' => '8.50'],
+								'unit_of_measure' => 'KILOGRAM',
+							],
+						],
+					],
+				],
+			],
 		];
 
-		$paymentLevelHelper = Mockery::mock(PaymentLevelHelper::class);
-		$paymentLevelHelper
-			->shouldReceive('build')
-			->with($amount, [$item], $shipping)
-			->andReturn($combinedData);
+		$payment_level_helper = Mockery::mock(PaymentLevelHelper::class);
+		$payment_level_helper->shouldReceive('build')->with($amount, [$item], $shipping)->andReturn($combined_data);
 
 		$settings = Mockery::mock(SettingsProvider::class);
-		$settings
-			->shouldReceive('is_payment_level_processing_enabled')
-			->andReturn(true);
+		$settings->shouldReceive('is_payment_level_processing_enabled')->andReturn(true);
 
-		$testee = new PurchaseUnitFactory(
-			$amountFactory,
-			$itemFactory,
-			$shippingFactory,
-			$paymentsFactory,
-			$paymentLevelHelper,
-			$paymentLevelEligibility,
+		$testee = $this->create_testee(
+			$this->create_amount_factory_mock($amount, 'from_wc_order', $wc_order),
+			$this->create_item_factory_mock([$item], 'from_wc_order', $wc_order),
+			$shipping_factory,
+			null,
+			$payment_level_helper,
+			$this->create_payment_level_eligibility_mock(CreditCardGateway::ID, true),
 			$settings
 		);
 
-		$unit = $testee->from_wc_order($wcOrder);
+		$unit = $testee->from_wc_order($wc_order);
+		$this->assertInstanceOf(PurchaseUnit::class, $unit);
 
-		$this->assertTrue(is_a($unit, PurchaseUnit::class));
+		$unit_array = $unit->to_array();
+		$this->assertArrayHasKey('supplementary_data', $unit_array);
+		$this->assertArrayHasKey('card', $unit_array['supplementary_data']);
+		$this->assertArrayHasKey('level_2', $unit_array['supplementary_data']['card']);
+		$this->assertArrayHasKey('level_3', $unit_array['supplementary_data']['card']);
 
-		$unitArray = $unit->to_array();
-		$this->assertArrayHasKey('supplementary_data', $unitArray);
-		$this->assertArrayHasKey('card', $unitArray['supplementary_data']);
+		$level_2 = $unit_array['supplementary_data']['card']['level_2'];
+		$this->assertEquals('INV_COMBINED_789', $level_2['invoice_id']);
+		$this->assertEquals('USD', $level_2['tax_total']['currency_code']);
+		$this->assertEquals('8.50', $level_2['tax_total']['value']);
 
-		// Verify both Level 2 and Level 3 are present
-		$this->assertArrayHasKey('level_2', $unitArray['supplementary_data']['card']);
-		$this->assertArrayHasKey('level_3', $unitArray['supplementary_data']['card']);
+		$level_3 = $unit_array['supplementary_data']['card']['level_3'];
+		$this->assertEquals('10.00', $level_3['shipping_amount']['value']);
+		$this->assertEquals('2.50', $level_3['duty_amount']['value']);
+		$this->assertEquals('94102', $level_3['ships_from_postal_code']);
 
-		// Verify Level 2 data
-		$level2 = $unitArray['supplementary_data']['card']['level_2'];
-		$this->assertEquals('INV_COMBINED_789', $level2['invoice_id']);
-		$this->assertEquals('USD', $level2['tax_total']['currency_code']);
-		$this->assertEquals('8.50', $level2['tax_total']['value']);
-
-		// Verify Level 3 data
-		$level3 = $unitArray['supplementary_data']['card']['level_3'];
-		$this->assertEquals('10.00', $level3['shipping_amount']['value']);
-		$this->assertEquals('2.50', $level3['duty_amount']['value']);
-		$this->assertEquals('94102', $level3['ships_from_postal_code']);
-
-		// Verify line items with all fields
-		$this->assertCount(1, $level3['line_items']);
-		$lineItem = $level3['line_items'][0];
-		$this->assertEquals('Premium Widget', $lineItem['name']);
-		$this->assertEquals('WIDGET-001', $lineItem['commodity_code']);
-		$this->assertArrayHasKey('upc', $lineItem);
-		$this->assertEquals('UPC-A', $lineItem['upc']['type']);
-		$this->assertEquals('012345678905', $lineItem['upc']['code']);
-		$this->assertEquals('8.50', $lineItem['tax']['value']);
-		$this->assertEquals('KILOGRAM', $lineItem['unit_of_measure']);
+		$this->assertCount(1, $level_3['line_items']);
+		$line_item = $level_3['line_items'][0];
+		$this->assertEquals('Premium Widget', $line_item['name']);
+		$this->assertEquals('WIDGET-001', $line_item['commodity_code']);
+		$this->assertArrayHasKey('upc', $line_item);
+		$this->assertEquals('UPC-A', $line_item['upc']['type']);
+		$this->assertEquals('012345678905', $line_item['upc']['code']);
+		$this->assertEquals('8.50', $line_item['tax']['value']);
+		$this->assertEquals('KILOGRAM', $line_item['unit_of_measure']);
 	}
 
-	public function testWcCartWithLevel2Processing()
+	public function test_wc_cart_with_level_2_processing()
 	{
-		$wcCustomer = Mockery::mock(\WC_Customer::class);
-		expect('WC')
-			->andReturn((object) ['customer' => $wcCustomer, 'session' => null]);
+		$wc_customer = Mockery::mock(\WC_Customer::class);
+		expect('WC')->andReturn((object) ['customer' => $wc_customer, 'session' => null]);
 
-		$wcCart = Mockery::mock(\WC_Cart::class);
+		$wc_cart = Mockery::mock(\WC_Cart::class);
 
 		$amount = Mockery::mock(Amount::class);
 		$amount->shouldReceive('to_array')->andReturn([
 			'currency_code' => 'USD',
-			'value' => '58.50'
+			'value' => '58.50',
 		]);
-
-		$amountFactory = Mockery::mock(AmountFactory::class);
-		$amountFactory
-			->expects('from_wc_cart')
-			->with($wcCart)
-			->andReturn($amount);
 
 		$item = Mockery::mock(Item::class);
 		$item->shouldReceive('to_array')->andReturn([
 			'name' => 'Cart Item',
 			'unit_amount' => ['currency_code' => 'USD', 'value' => '50.00'],
-			'quantity' => '1'
+			'quantity' => '1',
 		]);
 		$item->shouldReceive('unit_amount')->andReturn(new Money(50.0, 'USD'));
 		$item->shouldReceive('category')->andReturn(Item::PHYSICAL_GOODS);
 
-		$itemFactory = Mockery::mock(ItemFactory::class);
-		$itemFactory
-			->expects('from_wc_cart')
-			->with($wcCart)
-			->andReturn([$item]);
-
-		$address = Mockery::mock(Address::class);
-		$address->shouldReceive('country_code')->andReturn('US');
-		$address->shouldReceive('postal_code')->andReturn('90210');
-
-		$shipping = Mockery::mock(Shipping::class);
-		$shipping->shouldReceive('address')->andReturn($address);
+		$address = $this->create_address_mock('US', '90210', 'Berlin Street', 'Beverly Hills');
+		$shipping = $this->create_shipping_mock($address);
 		$shipping->shouldReceive('to_array')->andReturn([
 			'address' => [
 				'country_code' => 'US',
-				'postal_code' => '90210'
-			]
+				'postal_code' => '90210',
+			],
 		]);
 
-		$shippingFactory = Mockery::mock(ShippingFactory::class);
-		$shippingFactory
-			->expects('from_wc_customer')
-			->with($wcCustomer, false)
-			->andReturn($shipping);
+		$shipping_factory = Mockery::mock(ShippingFactory::class);
+		$shipping_factory->expects('from_wc_customer')->with($wc_customer, false)->andReturn($shipping);
 
-		$paymentsFactory = Mockery::mock(PaymentsFactory::class);
-
-		$paymentLevelEligibility = Mockery::mock(PaymentLevelEligibility::class);
-		$paymentLevelEligibility
-			->shouldReceive('is_eligible')
-			->with('')
-			->andReturn(true);
-
-		$level2Data = [
+		$level_2_data = [
 			'supplementary_data' => [
 				'card' => [
 					'level_2' => [
 						'invoice_id' => 'INV_CART_456',
-						'tax_total' => [
-							'currency_code' => 'USD',
-							'value' => '4.50'
-						]
-					]
-				]
-			]
+						'tax_total' => ['currency_code' => 'USD', 'value' => '4.50'],
+					],
+				],
+			],
 		];
 
-		$paymentLevelHelper = Mockery::mock(PaymentLevelHelper::class);
-		$paymentLevelHelper
-			->shouldReceive('build')
-			->with($amount, [$item], $shipping)
-			->andReturn($level2Data);
+		$payment_level_helper = Mockery::mock(PaymentLevelHelper::class);
+		$payment_level_helper->shouldReceive('build')->with($amount, [$item], $shipping)->andReturn($level_2_data);
 
 		$settings = Mockery::mock(SettingsProvider::class);
-		$settings
-			->shouldReceive('is_payment_level_processing_enabled')
-			->andReturn(true);
+		$settings->shouldReceive('is_payment_level_processing_enabled')->andReturn(true);
 
-		$testee = new PurchaseUnitFactory(
-			$amountFactory,
-			$itemFactory,
-			$shippingFactory,
-			$paymentsFactory,
-			$paymentLevelHelper,
-			$paymentLevelEligibility,
+		$testee = $this->create_testee(
+			$this->create_amount_factory_mock($amount, 'from_wc_cart', $wc_cart),
+			$this->create_item_factory_mock([$item], 'from_wc_cart', $wc_cart),
+			$shipping_factory,
+			null,
+			$payment_level_helper,
+			$this->create_payment_level_eligibility_mock('', true),
 			$settings
 		);
 
-		$unit = $testee->from_wc_cart($wcCart);
+		$unit = $testee->from_wc_cart($wc_cart);
+		$this->assertInstanceOf(PurchaseUnit::class, $unit);
 
-		$this->assertTrue(is_a($unit, PurchaseUnit::class));
+		$unit_array = $unit->to_array();
+		$this->assertArrayHasKey('supplementary_data', $unit_array);
+		$this->assertArrayHasKey('card', $unit_array['supplementary_data']);
+		$this->assertArrayHasKey('level_2', $unit_array['supplementary_data']['card']);
 
-		$unitArray = $unit->to_array();
-		$this->assertArrayHasKey('supplementary_data', $unitArray);
-		$this->assertArrayHasKey('card', $unitArray['supplementary_data']);
-		$this->assertArrayHasKey('level_2', $unitArray['supplementary_data']['card']);
+		$level_2 = $unit_array['supplementary_data']['card']['level_2'];
+		$this->assertEquals('INV_CART_456', $level_2['invoice_id']);
+		$this->assertEquals('4.50', $level_2['tax_total']['value']);
+	}
 
-		$level2 = $unitArray['supplementary_data']['card']['level_2'];
-		$this->assertEquals('INV_CART_456', $level2['invoice_id']);
-		$this->assertEquals('4.50', $level2['tax_total']['value']);
+	// ---------------------------------------------------------------------
+	// Private mock builders
+	// ---------------------------------------------------------------------
+
+	private function create_address_mock(
+		string $country_code = 'DE',
+		string $postal_code = '12345',
+		string $address_line_1 = 'Berlin Street',
+		string $admin_area_2 = 'Berlin'
+	): Address {
+		$address = Mockery::mock(Address::class);
+		$address->shouldReceive('country_code')->andReturn($country_code);
+		$address->shouldReceive('postal_code')->andReturn($postal_code);
+		$address->shouldReceive('address_line_1')->andReturn($address_line_1);
+		$address->shouldReceive('admin_area_2')->andReturn($admin_area_2);
+		return $address;
+	}
+
+	private function create_shipping_mock(Address $address): Shipping
+	{
+		$shipping = Mockery::mock(Shipping::class);
+		$shipping->shouldReceive('address')->zeroOrMoreTimes()->andReturn($address);
+		return $shipping;
+	}
+
+	private function create_amount_factory_mock(Amount $amount, string $source_method, $with): AmountFactory
+	{
+		$factory = Mockery::mock(AmountFactory::class);
+		$factory->shouldReceive($source_method)->with($with)->andReturn($amount);
+		return $factory;
+	}
+
+	private function create_item_factory_mock(array $items, string $source_method, $with): ItemFactory
+	{
+		$factory = Mockery::mock(ItemFactory::class);
+		$factory->shouldReceive($source_method)->with($with)->andReturn($items);
+		return $factory;
+	}
+
+	private function create_item_factory_from_response($raw_item): ItemFactory
+	{
+		$factory = Mockery::mock(ItemFactory::class);
+		$factory->expects('from_paypal_response')->with($raw_item)->andReturn($this->item);
+		return $factory;
+	}
+
+	private function create_payment_level_eligibility_mock(
+		string $gateway_id = PayPalGateway::ID,
+		bool $eligible = false
+	): PaymentLevelEligibility {
+		$mock = Mockery::mock(PaymentLevelEligibility::class);
+		$mock->shouldReceive('is_eligible')->with($gateway_id)->andReturn($eligible);
+		return $mock;
+	}
+
+	private function create_wc_order_mock(string $payment_method = PayPalGateway::ID): \WC_Order
+	{
+		$order = Mockery::mock(\WC_Order::class);
+		$order->shouldReceive('get_order_number')->andReturn($this->wcOrderNumber);
+		$order->shouldReceive('get_id')->andReturn($this->wcOrderId);
+		$order->shouldReceive('get_payment_method')->andReturn($payment_method);
+		return $order;
+	}
+
+	private function create_testee(
+		AmountFactory $amount_factory,
+		ItemFactory $item_factory,
+		ShippingFactory $shipping_factory,
+		?PaymentsFactory $payments_factory = null,
+		?PaymentLevelHelper $payment_level_helper = null,
+		?PaymentLevelEligibility $payment_level_eligibility = null,
+		?SettingsProvider $settings = null
+	): PurchaseUnitFactory {
+		return new PurchaseUnitFactory(
+			$amount_factory,
+			$item_factory,
+			$shipping_factory,
+			$payments_factory ?? Mockery::mock(PaymentsFactory::class),
+			$payment_level_helper ?? Mockery::mock(PaymentLevelHelper::class),
+			$payment_level_eligibility ?? $this->create_payment_level_eligibility_mock(),
+			$settings ?? Mockery::mock(SettingsProvider::class)
+		);
 	}
 }

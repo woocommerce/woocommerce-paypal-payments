@@ -1,0 +1,95 @@
+.ppcp-r-notifications {
+	position: fixed;
+	bottom: 0;
+	left: 160px;
+	width: calc(100% - 160px);
+	pointer-events: none;
+	z-index: 100001;
+
+	// Collapsed sidebar
+	.folded & {
+		left: 36px;
+		width: calc(100% - 36px);
+	}
+
+	// Auto-fold breakpoint
+	@media screen and (max-width: 960px) {
+		left: 36px;
+		width: calc(100% - 36px);
+	}
+
+	// Mobile - no sidebar
+	@media screen and (max-width: 782px) {
+		left: 0;
+		width: 100%;
+	}
+
+	.components-snackbar-list__notice-container {
+		position: absolute;
+		left: 16px;
+		bottom: 12px;
+		pointer-events: auto;
+	}
+	
+	.components-snackbar.components-snackbar {
+		backdrop-filter: blur(16px) saturate(180%);
+		background: #000000d9;
+		border-radius: 4px;
+		box-shadow:
+			0 1px 2px #0000000d,
+			0 2px 3px #0000000a,
+			0 6px 6px #00000008,
+			0 8px 8px #00000005;
+		box-sizing: border-box;
+		color: #fff;
+		cursor: pointer;
+		font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
+		font-size: 13px;
+		line-height: 1.4;
+		max-width: 600px;
+		padding: 12px 20px;
+		width: 100%;
+
+		@media (min-width: 600px) {
+			width: fit-content;
+		}
+
+		&.components-snackbar-explicit-dismiss {
+			cursor: default;
+		}
+
+		.components-snackbar__content {
+			display: flex;
+			align-items: center;
+			white-space: pre-line;
+			font-family: inherit;
+			font-size: inherit;
+			line-height: inherit;
+		}
+
+		.components-snackbar__content-with-icon {
+			padding-left: 0;
+			margin-left: 0;
+		}
+
+		.components-snackbar__icon {
+			position: static;
+			display: flex;
+			flex-shrink: 0;
+			margin-right: 8px;
+		}
+
+		.components-snackbar__dismiss-button {
+			margin-left: 32px;
+			cursor: pointer;
+			background: none;
+			border: none;
+			padding: 0;
+			color: #fff;
+			font-family: inherit;
+			font-size: 13px;
+			font-weight: 400;
+			line-height: 1;
+		}
+	}
+}

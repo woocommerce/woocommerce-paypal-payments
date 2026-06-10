@@ -18,6 +18,8 @@ const defaultTransient = Object.freeze( {
 	activeModal: '',
 	activeHighlight: '',
 
+	onboardingNotices: [],
+
 	// Read only values, provided by the server via hydrate.
 	merchant: Object.freeze( {
 		isConnected: false,
@@ -144,6 +146,10 @@ const commonReducer = createReducer( defaultTransient, defaultPersistent, {
 				} );
 			}
 		);
+
+		newState.onboardingNotices = Array.isArray( payload.onboardingNotices )
+			? payload.onboardingNotices
+			: [];
 
 		return newState;
 	},

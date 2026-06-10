@@ -17,7 +17,6 @@ use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\OrderStatus;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
-use WooCommerce\PayPalCommerce\WcGateway\Gateway\OXXO\OXXOGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 
 /**
@@ -69,10 +68,10 @@ class ReturnUrlEndpoint {
 		SessionHandler $session_handler,
 		LoggerInterface $logger
 	) {
-		$this->gateway             = $gateway;
-		$this->order_endpoint      = $order_endpoint;
-		$this->session_handler     = $session_handler;
-		$this->logger              = $logger;
+		$this->gateway         = $gateway;
+		$this->order_endpoint  = $order_endpoint;
+		$this->session_handler = $session_handler;
+		$this->logger          = $logger;
 	}
 
 	/**
@@ -141,7 +140,7 @@ class ReturnUrlEndpoint {
 			exit();
 		}
 
-		if ( $wc_order->get_payment_method() === OXXOGateway::ID ) {
+		if ( $wc_order->get_payment_method() === 'ppcp-oxxo-gateway' ) {
 			$this->session_handler->destroy_session_data();
 			wp_safe_redirect( wc_get_checkout_url() );
 			exit();

@@ -14,6 +14,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Authentication\ClientCredentials;
 use WooCommerce\PayPalCommerce\ApiClient\Authentication\ConnectBearer;
 use WooCommerce\PayPalCommerce\ApiClient\Authentication\PayPalBearer;
 use WooCommerce\PayPalCommerce\ApiClient\Authentication\SdkClientToken;
+use WooCommerce\PayPalCommerce\ApiClient\Authentication\TokenRateLimiter;
 use WooCommerce\PayPalCommerce\ApiClient\Authentication\UserIdToken;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\BillingPlans;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\BillingSubscriptions;
@@ -46,8 +47,6 @@ use WooCommerce\PayPalCommerce\ApiClient\Factory\PayeeFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PayerFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PaymentPreferencesFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PaymentsFactory;
-use WooCommerce\PayPalCommerce\ApiClient\Factory\PaymentTokenActionLinksFactory;
-use WooCommerce\PayPalCommerce\ApiClient\Factory\PaymentTokenFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PlanFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PlatformFeeFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\ProductFactory;
@@ -79,7 +78,6 @@ use WooCommerce\PayPalCommerce\ApiClient\Repository\CustomerRepository;
 use WooCommerce\PayPalCommerce\ApiClient\Repository\OrderRepository;
 use WooCommerce\PayPalCommerce\ApiClient\Repository\PartnerReferralsData;
 use WooCommerce\PayPalCommerce\ApiClient\Repository\PayeeRepository;
-use WooCommerce\PayPalCommerce\ApiClient\VaultV2\PaymentTokenEndpoint;
 use WooCommerce\PayPalCommerce\Common\Pattern\SingletonDecorator;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
 use WooCommerce\PayPalCommerce\Settings\Data\SettingsModel;
@@ -149,8 +147,18 @@ return array(
 			$container->get( 'api.key' ),
 			$container->get( 'api.secret' ),
 			$container->get( 'woocommerce.logger.woocommerce' ),
-			$container->get( 'settings.settings-provider' )
+			$container->get( 'settings.settings-provider' ),
+			$container->get( 'api.token-rate-limiter' )
 		);
+	},
+	'api.token-rate-limiter'                         => static function ( ContainerInterface $container ): TokenRateLimiter {
+		return new TokenRateLimiter(
+			$container->get( 'api.token-rate-limiter-cache' ),
+			$container->get( 'woocommerce.logger.woocommerce' )
+		);
+	},
+	'api.token-rate-limiter-cache'                   => static function ( ContainerInterface $container ): Cache {
+		return new Cache( 'ppcp-token-rate-limiter' );
 	},
 	'api.endpoint.partners'                          => static function ( ContainerInterface $container ): PartnersEndpoint {
 		return new PartnersEndpoint(
@@ -169,16 +177,6 @@ return array(
 	},
 	'api.factory.sellerstatus'                       => static function ( ContainerInterface $container ): SellerStatusFactory {
 		return new SellerStatusFactory();
-	},
-	'vault-v2.endpoint.payment-token'                => static function ( ContainerInterface $container ): PaymentTokenEndpoint {
-		return new PaymentTokenEndpoint(
-			$container->get( 'api.host' ),
-			$container->get( 'api.bearer' ),
-			$container->get( 'api.factory.payment-token' ),
-			$container->get( 'api.factory.payment-token-action-links' ),
-			$container->get( 'woocommerce.logger.woocommerce' ),
-			$container->get( 'api.repository.customer' )
-		);
 	},
 	'api.endpoint.payment-tokens'                    => static function ( ContainerInterface $container ): PaymentTokensEndpoint {
 		return new PaymentTokensEndpoint(
@@ -313,8 +311,7 @@ return array(
 		);
 	},
 	'api.reference-transaction-status'               => static fn ( ContainerInterface $container ): ReferenceTransactionStatus => new ReferenceTransactionStatus(
-		$container->get( 'api.endpoint.partners' ),
-		$container->get( 'api.reference-transaction-status-cache' )
+		$container->get( 'api.endpoint.partners' )
 	),
 	'api.endpoint.catalog-products'                  => static function ( ContainerInterface $container ): CatalogProducts {
 		return new CatalogProducts(
@@ -381,12 +378,6 @@ return array(
 			$contact_module_active,
 			$container->get( 'settings.merchant-details' )
 		);
-	},
-	'api.factory.payment-token'                      => static function ( ContainerInterface $container ): PaymentTokenFactory {
-		return new PaymentTokenFactory();
-	},
-	'api.factory.payment-token-action-links'         => static function ( ContainerInterface $container ): PaymentTokenActionLinksFactory {
-		return new PaymentTokenActionLinksFactory();
 	},
 	'api.factory.webhook'                            => static function ( ContainerInterface $container ): WebhookFactory {
 		return new WebhookFactory();
@@ -864,8 +855,14 @@ return array(
 			$settings  = $container->get( 'settings.settings-provider' );
 			assert( $settings instanceof SettingsProvider );
 
-			$subtotal_adjustment = $settings->subtotal_adjustment();
-			return new PurchaseUnitSanitizer( $subtotal_adjustment );
+			// Map the stored setting value ('correction'/'no_details') to the sanitizer
+			// mode. Without this, the value never matches a valid mode and the sanitizer
+			// always falls back to ditching items, so "Add a correction" has no effect.
+			$mode = 'correction' === $settings->subtotal_adjustment()
+				? PurchaseUnitSanitizer::MODE_EXTRA_LINE
+				: PurchaseUnitSanitizer::MODE_DITCH;
+
+			return new PurchaseUnitSanitizer( $mode );
 		}
 	),
 	'api.helper.product-status-result-cache'         => static function (): ProductStatusResultCache {
@@ -885,15 +882,13 @@ return array(
 	'api.user-id-token-cache'                        => static function ( ContainerInterface $container ): Cache {
 		return new Cache( 'ppcp-id-token-cache' );
 	},
-	'api.reference-transaction-status-cache'         => static function ( ContainerInterface $container ): Cache {
-		return new Cache( 'ppcp-reference-transaction-status-cache' );
-	},
 	'api.user-id-token'                              => static function ( ContainerInterface $container ): UserIdToken {
 		return new UserIdToken(
 			$container->get( 'api.host' ),
 			$container->get( 'woocommerce.logger.woocommerce' ),
 			$container->get( 'api.client-credentials' ),
-			$container->get( 'api.user-id-token-cache' )
+			$container->get( 'api.user-id-token-cache' ),
+			$container->get( 'api.token-rate-limiter' )
 		);
 	},
 	'api.sdk-client-token'                           => static function ( ContainerInterface $container ): SdkClientToken {
@@ -901,7 +896,8 @@ return array(
 			$container->get( 'api.host' ),
 			$container->get( 'woocommerce.logger.woocommerce' ),
 			$container->get( 'api.client-credentials' ),
-			$container->get( 'api.client-credentials-cache' )
+			$container->get( 'api.client-credentials-cache' ),
+			$container->get( 'api.token-rate-limiter' )
 		);
 	},
 	'api.paypal-host-production'                     => static function ( ContainerInterface $container ): string {

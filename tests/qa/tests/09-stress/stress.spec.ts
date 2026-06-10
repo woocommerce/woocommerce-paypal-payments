@@ -59,9 +59,8 @@ for ( let i = 1; i <= 500; i++ ) {
 			wooCommerceApi,
 			orderReceived,
 		} ) => {
-			let orderProduct = await wooCommerceApi.getProductBySlug(
-				productSlug
-			);
+			let orderProduct =
+				await wooCommerceApi.getProductBySlug( productSlug );
 			const expectedProductStock = orderProduct.stock_quantity - 1;
 
 			await product.visit( productSlug );
@@ -80,17 +79,19 @@ for ( let i = 1; i <= 500; i++ ) {
 
 			await expect(
 				transactionId,
-				`Transaction ID ${ transactionId }`
+				`Assert transaction ID ${ transactionId } is defined`
 			).toBeDefined();
-			await expect( orderStatus, `Order #${ orderId } status` ).toBe(
-				'processing'
-			);
+			await expect(
+				orderStatus,
+				`Assert order #${ orderId } status is processing`
+			).toBe( 'processing' );
 
 			// Verify product stock quantity
 			orderProduct = await wooCommerceApi.getProductBySlug( productSlug );
-			await expect( orderProduct.stock_quantity ).toBe(
-				expectedProductStock
-			);
+			await expect(
+				orderProduct.stock_quantity,
+				`Assert product stock quantity for ${ productSlug } is ${ expectedProductStock }`
+			).toBe( expectedProductStock );
 
 			// Verify order notes
 			const orderNotes = await wooCommerceApi.getOrderNotes( orderId );
@@ -106,11 +107,11 @@ for ( let i = 1; i <= 500; i++ ) {
 			);
 			await expect(
 				paymentViaNote.length,
-				'Payment via order notes quantity'
+				'Assert payment via order notes quantity is 1'
 			).toBe( 1 );
 			await expect(
 				transactionNote.length,
-				'Transaction order notes quantity'
+				'Assert transaction order notes quantity is 1'
 			).toBe( 1 );
 		}
 	);

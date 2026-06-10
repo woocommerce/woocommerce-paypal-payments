@@ -7,7 +7,7 @@ import urls from '../urls';
 /**
  * External dependencies
  */
-import { expect, Locator } from 'playwright/test';
+import { expect, Locator } from '@playwright/test';
 
 export class PcpOnboarding extends PcpAdminPage {
 	url = urls.admin.pcp.onboarding;
@@ -85,7 +85,7 @@ export class PcpOnboarding extends PcpAdminPage {
 	/** First pricing badge on the page (PayPal Checkout: checkout % + fixed fee from countryPriceInfo). */
 	badgeContainer = () =>
 		this.page
-			.locator( 'span.ppcp-r-title-badge.ppcp-r-title-badge--info' )
+			.locator( 'span.ppcp-r-title-badge.ppcp-r-title-badge--pricing' )
 			.first();
 	welcomeDocsContainer = () =>
 		this.page.locator( '.ppcp-r-welcome-docs__wrapper' ).last();
@@ -110,7 +110,10 @@ export class PcpOnboarding extends PcpAdminPage {
 	};
 
 	openAdvancedOptions = async () => {
-		await expect( this.seeAdvancedOptionsButton() ).toBeVisible();
+		await expect(
+			this.seeAdvancedOptionsButton(),
+			'Assert See advanced options button is visible'
+		).toBeVisible();
 		if ( ! ( await this.advancedOptionsContent().isVisible() ) ) {
 			await this.seeAdvancedOptionsButton().click();
 			await this.advancedOptionsContent().waitFor( { state: 'visible' } );
@@ -118,7 +121,10 @@ export class PcpOnboarding extends PcpAdminPage {
 	};
 
 	closeAdvancedOptions = async () => {
-		await expect( this.seeAdvancedOptionsButton() ).toBeVisible();
+		await expect(
+			this.seeAdvancedOptionsButton(),
+			'Assert See advanced options button is visible'
+		).toBeVisible();
 		if ( await this.advancedOptionsContent().isVisible() ) {
 			await this.seeAdvancedOptionsButton().click();
 		}
@@ -145,8 +151,14 @@ export class PcpOnboarding extends PcpAdminPage {
 		labelLocator: Locator,
 		enable: boolean
 	) => {
-		await expect( toggleLocator ).toBeVisible();
-		await expect( labelLocator ).toBeVisible();
+		await expect(
+			toggleLocator,
+			'Assert connection option toggle is visible'
+		).toBeVisible();
+		await expect(
+			labelLocator,
+			'Assert connection option label is visible'
+		).toBeVisible();
 
 		const isChecked = await toggleLocator.getAttribute( 'class' );
 		const isToggleChecked = isChecked.includes( 'is-checked' );

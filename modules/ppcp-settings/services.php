@@ -43,6 +43,7 @@ use WooCommerce\PayPalCommerce\Settings\Endpoint\AuthenticationRestEndpoint;
 use WooCommerce\PayPalCommerce\Settings\Endpoint\CommonRestEndpoint;
 use WooCommerce\PayPalCommerce\Settings\Endpoint\FeaturesRestEndpoint;
 use WooCommerce\PayPalCommerce\Settings\Endpoint\LoginLinkRestEndpoint;
+use WooCommerce\PayPalCommerce\Settings\Endpoint\AgenticBetaBannerEndpoint;
 use WooCommerce\PayPalCommerce\Settings\Endpoint\MigrateToAcdcRestEndpoint;
 use WooCommerce\PayPalCommerce\Settings\Endpoint\OnboardingRestEndpoint;
 use WooCommerce\PayPalCommerce\Settings\Endpoint\PayLaterMessagingEndpoint;
@@ -57,6 +58,7 @@ use WooCommerce\PayPalCommerce\Settings\Service\AuthenticationManager;
 use WooCommerce\PayPalCommerce\Settings\Service\BrandedExperience\ActivationDetector;
 use WooCommerce\PayPalCommerce\Settings\Service\BrandedExperience\PathRepository;
 use WooCommerce\PayPalCommerce\Settings\Service\ConnectionUrlGenerator;
+use WooCommerce\PayPalCommerce\Settings\Service\AgenticBetaBannerEligibility;
 use WooCommerce\PayPalCommerce\Settings\Service\FeaturesEligibilityService;
 use WooCommerce\PayPalCommerce\Settings\Service\GatewayRedirectService;
 use WooCommerce\PayPalCommerce\Settings\Service\LoadingScreenService;
@@ -66,6 +68,7 @@ use WooCommerce\PayPalCommerce\Settings\Service\Migration\PaymentSettingsMigrati
 use WooCommerce\PayPalCommerce\Settings\Service\Migration\SettingsTabMigration;
 use WooCommerce\PayPalCommerce\Settings\Service\Migration\StylingSettingsMigration;
 use WooCommerce\PayPalCommerce\Settings\Service\Migration\FastlaneSettingsMigration;
+use WooCommerce\PayPalCommerce\Settings\Service\OnboardingNotices;
 use WooCommerce\PayPalCommerce\Settings\Service\OnboardingUrlManager;
 use WooCommerce\PayPalCommerce\Settings\Service\SellerTypeResolver;
 use WooCommerce\PayPalCommerce\Settings\Service\PaymentMethodsEligibilityService;
@@ -79,9 +82,9 @@ use WooCommerce\PayPalCommerce\Settings\Data\Definition\PaymentMethodsDefinition
 use WooCommerce\PayPalCommerce\PayLaterConfigurator\Factory\ConfigFactory;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CardButtonGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
-use WooCommerce\PayPalCommerce\WcGateway\Gateway\OXXO\OXXO;
+use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\OXXOGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
-use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayUponInvoice\PayUponInvoiceGateway;
+use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\PayUponInvoice\PayUponInvoiceGateway;
 use WooCommerce\PayPalCommerce\PayLaterConfigurator\Endpoint\SaveConfig;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\ConnectionState;
@@ -230,7 +233,8 @@ return array(
 	'settings.rest.common'                                => static function ( ContainerInterface $container ): CommonRestEndpoint {
 		return new CommonRestEndpoint(
 			$container->get( 'settings.data.general' ),
-			$container->get( 'api.endpoint.partners' )
+			$container->get( 'api.endpoint.partners' ),
+			$container->get( 'settings.service.onboarding-notices' )
 		);
 	},
 	'settings.rest.payment'                               => static function ( ContainerInterface $container ): PaymentRestEndpoint {
@@ -262,6 +266,7 @@ return array(
 	'settings.rest.login_link'                            => static function ( ContainerInterface $container ): LoginLinkRestEndpoint {
 		return new LoginLinkRestEndpoint(
 			$container->get( 'settings.service.connection-url-generator' ),
+			$container->get( 'woocommerce.logger.woocommerce' )
 		);
 	},
 	'settings.rest.webhooks'                              => static function ( ContainerInterface $container ): WebhookSettingsEndpoint {
@@ -286,6 +291,9 @@ return array(
 		return new MigrateToAcdcRestEndpoint(
 			$container->get( 'settings.data.payment' )
 		);
+	},
+	'settings.rest.agentic_beta_banner'                   => static function ( ContainerInterface $container ): AgenticBetaBannerEndpoint {
+		return new AgenticBetaBannerEndpoint();
 	},
 	'settings.casual-selling.supported-countries'         => static function ( ContainerInterface $container ): array {
 		return array(
@@ -349,8 +357,12 @@ return array(
 			$container->get( 'settings.service.onboarding-url-manager' ),
 			$container->get( 'settings.service.authentication_manager' ),
 			$container->get( 'http.redirector' ),
+			$container->get( 'settings.service.onboarding-notices' ),
 			$container->get( 'woocommerce.logger.woocommerce' )
 		);
+	},
+	'settings.service.onboarding-notices'                 => static function ( ContainerInterface $container ): OnboardingNotices {
+		return new OnboardingNotices();
 	},
 	'settings.service.signup-link-cache'                  => static function ( ContainerInterface $container ): Cache {
 		return new Cache( 'ppcp-paypal-signup-link' );
@@ -400,6 +412,12 @@ return array(
 			$container->get( 'settings.data.todos' ),
 		);
 	},
+	'settings.service.agentic-beta-eligibility'           => static function ( ContainerInterface $container ): AgenticBetaBannerEligibility {
+		return new AgenticBetaBannerEligibility(
+			$container->get( 'settings.data.general' ),
+			$container->get( 'wcgateway.store-country' )
+		);
+	},
 	'settings.service.script-data-handler'                => static function ( ContainerInterface $container ): ScriptDataHandler {
 		$check_override = $container->get( 'settings.migration.bcdc-override-check' );
 		assert( is_callable( $check_override ) );
@@ -413,7 +431,8 @@ return array(
 			$container->get( 'api.helper.partner-attribution' ),
 			$container->get( 'settings.settings-provider' ),
 			$container->get( 'api.helpers.paymentLevelEligibility' ),
-			$check_override()
+			$check_override(),
+			$container->get( 'settings.service.agentic-beta-eligibility' )
 		);
 	},
 	'settings.service.data-migration'                     => static fn( ContainerInterface $c ): MigrationManager => new MigrationManager(
@@ -625,7 +644,7 @@ return array(
 			! $button_locations['cart_enabled'],                                                          // Add PayPal buttons to cart.
 			! $button_locations['block_checkout_enabled'],                                                // Add PayPal buttons to block checkout.
 			! $button_locations['product_enabled'],                                                       // Add PayPal buttons to product.
-			$container->get( 'applepay.eligible' ) && $capabilities[ FeaturesDefinition::FEATURE_APPLE_PAY ],  // Register Domain for Apple Pay.
+			$container->get( 'applepay.eligible' ) && $capabilities[ FeaturesDefinition::FEATURE_APPLE_PAY ] && ! $container->get( 'applepay.is_validated' ),  // Register Domain for Apple Pay.
 			$capabilities[ FeaturesDefinition::FEATURE_ADVANCED_CREDIT_AND_DEBIT_CARDS ] && ! ( $capabilities[ FeaturesDefinition::FEATURE_APPLE_PAY ] && $capabilities[ FeaturesDefinition::FEATURE_GOOGLE_PAY ] ),     // Add digital wallets to your account.
 			$container->get( 'applepay.eligible' ) && $capabilities[ FeaturesDefinition::FEATURE_ADVANCED_CREDIT_AND_DEBIT_CARDS ] && ! $capabilities[ FeaturesDefinition::FEATURE_APPLE_PAY ],                                        // Add Apple Pay to your account.
 			$container->get( 'googlepay.eligible' ) && $capabilities[ FeaturesDefinition::FEATURE_ADVANCED_CREDIT_AND_DEBIT_CARDS ] && ! $capabilities[ FeaturesDefinition::FEATURE_GOOGLE_PAY ],                                       // Add Google Pay to your account.
@@ -769,7 +788,7 @@ return array(
 			TrustlyGateway::ID,
 			MultibancoGateway::ID,
 			PayUponInvoiceGateway::ID,
-			OXXO::ID,
+			OXXOGateway::ID,
 		);
 	},
 	'settings.service.branded-experience.activation-detector' => static function (): ActivationDetector {

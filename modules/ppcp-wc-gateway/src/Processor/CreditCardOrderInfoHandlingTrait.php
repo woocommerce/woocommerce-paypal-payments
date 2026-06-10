@@ -106,7 +106,18 @@ trait CreditCardOrderInfoHandlingTrait {
             <li>%1$s</li>
             <li>%2$s</li>
             <li>%3$s</li>
+            %4$s
         </ul>';
+		$response_code_item                = $fraud->response_code()
+			? sprintf(
+				'<li>%s</li>',
+				sprintf(
+					/* translators: %s is processor response code and description */
+					esc_html__( 'Response Code: %s', 'woocommerce-paypal-payments' ),
+					esc_html( $fraud->get_response_code_message() )
+				)
+			)
+			: '';
 		$response_order_note_result        = sprintf(
 			$response_order_note_result_format,
 			/* translators: %1$s is card brand and %2$s card last 4 digits */
@@ -115,6 +126,7 @@ trait CreditCardOrderInfoHandlingTrait {
 			sprintf( __( 'AVS: %s', 'woocommerce-paypal-payments' ), $fraud->get_avs_code_message() ),
 			/* translators: %s is fraud CVV message */
 			sprintf( __( 'CVV: %s', 'woocommerce-paypal-payments' ), $fraud->get_cvv2_code_message() ),
+			$response_code_item,
 		);
 		$response_order_note = sprintf(
 			$response_order_note_format,

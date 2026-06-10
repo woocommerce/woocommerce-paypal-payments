@@ -19,6 +19,7 @@ use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExecutableModule
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ModuleClassNameIdTrait;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ServiceModule;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
+use WooCommerce\PayPalCommerce\Button\Helper\Context;
 use WooCommerce\PayPalCommerce\Compat\Assets\CompatAssets;
 use WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
@@ -62,6 +63,12 @@ class CompatModule implements ServiceModule, ExecutableModule {
 			}
 		);
 
+		if ( function_exists( 'WC_GC' ) ) {
+			$context = $c->get( 'button.helper.context' );
+			assert( $context instanceof Context );
+			( new WcGiftCardsCompat( $context ) )->register();
+		}
+
 		$this->migrate_pay_later_settings( $c );
 		$this->migrate_smart_button_settings( $c );
 		$this->migrate_three_d_secure_setting();
@@ -79,6 +86,8 @@ class CompatModule implements ServiceModule, ExecutableModule {
 		if ( $is_wc_bookings_active ) {
 			$this->initialize_wc_bookings_compat_layer( $c );
 		}
+
+		$this->initialize_blueprint_compat_layer( $c );
 
 		add_action( 'woocommerce_paypal_payments_gateway_migrate', static fn() => delete_transient( 'ppcp_has_ppec_subscriptions' ) );
 
@@ -541,6 +550,22 @@ class CompatModule implements ServiceModule, ExecutableModule {
 			10,
 			2
 		);
+	}
+
+	/**
+	 * Sets up the WooCommerce Blueprint compatibility layer.
+	 *
+	 * @param ContainerInterface $container The Container.
+	 * @return void
+	 */
+	private function initialize_blueprint_compat_layer( ContainerInterface $container ): void {
+		$is_blueprint_available = $container->get( 'compat.blueprint.is_available' );
+		if ( ! $is_blueprint_available ) {
+			return;
+		}
+
+		$blueprint_bootstrap = $container->get( 'compat.blueprint.bootstrap' );
+		$blueprint_bootstrap->init();
 	}
 
 	/**

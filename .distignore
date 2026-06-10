@@ -32,9 +32,16 @@ patchwork.json
 README.md
 AGENTS.md
 CLAUDE.md
+E2E-TESTS.md
 wordpress_org_assets*
 .DS_Store
 auth.json
 *.log
 scoper.inc.php
 jsconfig.json
+.eslintignore
+.wp-env.json
+playwright.config.ts
+tsconfig.json
+wp-cli.yml
+.npmrc
