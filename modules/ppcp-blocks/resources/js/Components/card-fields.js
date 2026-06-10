@@ -19,8 +19,19 @@ import {
 import { cartHasSubscriptionProducts } from '../Helper/Subscription';
 import { __ } from '@wordpress/i18n';
 
+const CHECKOUT_FIELDS_NOT_VALID_MESSAGE = __(
+	'Please complete all required checkout fields before continuing with payment.',
+	'woocommerce-paypal-payments'
+);
+
+function hasCheckoutValidationErrors() {
+	const validationStore = wp?.data?.select?.( 'wc/store/validation' );
+
+	return validationStore?.hasValidationErrors?.() || false;
+}
+
 export function CardFields( { config, eventRegistration, emitResponse } ) {
-	const { onPaymentSetup } = eventRegistration;
+	const { onPaymentSetup, onCheckoutValidation } = eventRegistration;
 	const { responseTypes } = emitResponse;
 
 	const [ cardFieldsForm, setCardFieldsForm ] = useState();
@@ -44,9 +55,52 @@ export function CardFields( { config, eventRegistration, emitResponse } ) {
 	}, [ hasSubscriptionProducts ] );
 
 	useEffect(
+		() => {
+			if ( typeof onCheckoutValidation !== 'function' ) {
+				return undefined;
+			}
+
+			return onCheckoutValidation(
+				() => {
+					if ( hasCheckoutValidationErrors() ) {
+						return {
+							type: responseTypes.ERROR,
+							message: CHECKOUT_FIELDS_NOT_VALID_MESSAGE,
+						};
+					}
+
+					return true;
+				},
+				99
+			);
+		},
+		[ onCheckoutValidation, responseTypes.ERROR ]
+	);
+
+	useEffect(
 		() =>
 			onPaymentSetup( () => {
 				async function handlePaymentProcessing() {
+					if ( hasCheckoutValidationErrors() ) {
+						return {
+							type: responseTypes.ERROR,
+							message: CHECKOUT_FIELDS_NOT_VALID_MESSAGE,
+						};
+					}
+
+					if (
+						! cardFieldsForm ||
+						typeof cardFieldsForm.submit !== 'function'
+					) {
+						return {
+							type: responseTypes.ERROR,
+							message: __(
+								'Payment form is not ready. Please try again.',
+								'woocommerce-paypal-payments'
+							),
+						};
+					}
+
 					try {
 						await cardFieldsForm.submit();
 					} catch ( error ) {
