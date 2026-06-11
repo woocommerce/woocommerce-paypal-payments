@@ -88,6 +88,13 @@ return static function ( string $root_dir ): iterable {
 	}
 
 	if ( apply_filters(
+		'woocommerce.feature-flags.woocommerce_paypal_payments.vault_component_enabled',
+		getenv( 'PCP_VAULT_COMPONENT_ENABLED' ) !== '0'
+	) ) {
+		$modules[] = ( require "$modules_dir/ppcp-vault-component/module.php" )();
+	}
+
+	if ( apply_filters(
 		'woocommerce.feature-flags.woocommerce_paypal_payments.store_sync_enabled',
 		getenv( 'PCP_STORE_SYNC_ENABLED' ) === '1'
 	) ) {

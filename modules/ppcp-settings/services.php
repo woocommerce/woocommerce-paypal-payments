@@ -68,6 +68,7 @@ use WooCommerce\PayPalCommerce\Settings\Service\Migration\PaymentSettingsMigrati
 use WooCommerce\PayPalCommerce\Settings\Service\Migration\SettingsTabMigration;
 use WooCommerce\PayPalCommerce\Settings\Service\Migration\StylingSettingsMigration;
 use WooCommerce\PayPalCommerce\Settings\Service\Migration\FastlaneSettingsMigration;
+use WooCommerce\PayPalCommerce\Settings\Service\OnboardingNotices;
 use WooCommerce\PayPalCommerce\Settings\Service\OnboardingUrlManager;
 use WooCommerce\PayPalCommerce\Settings\Service\SellerTypeResolver;
 use WooCommerce\PayPalCommerce\Settings\Service\PaymentMethodsEligibilityService;
@@ -232,7 +233,8 @@ return array(
 	'settings.rest.common'                                => static function ( ContainerInterface $container ): CommonRestEndpoint {
 		return new CommonRestEndpoint(
 			$container->get( 'settings.data.general' ),
-			$container->get( 'api.endpoint.partners' )
+			$container->get( 'api.endpoint.partners' ),
+			$container->get( 'settings.service.onboarding-notices' )
 		);
 	},
 	'settings.rest.payment'                               => static function ( ContainerInterface $container ): PaymentRestEndpoint {
@@ -267,6 +269,7 @@ return array(
 	'settings.rest.login_link'                            => static function ( ContainerInterface $container ): LoginLinkRestEndpoint {
 		return new LoginLinkRestEndpoint(
 			$container->get( 'settings.service.connection-url-generator' ),
+			$container->get( 'woocommerce.logger.woocommerce' )
 		);
 	},
 	'settings.rest.webhooks'                              => static function ( ContainerInterface $container ): WebhookSettingsEndpoint {
@@ -357,8 +360,12 @@ return array(
 			$container->get( 'settings.service.onboarding-url-manager' ),
 			$container->get( 'settings.service.authentication_manager' ),
 			$container->get( 'http.redirector' ),
+			$container->get( 'settings.service.onboarding-notices' ),
 			$container->get( 'woocommerce.logger.woocommerce' )
 		);
+	},
+	'settings.service.onboarding-notices'                 => static function ( ContainerInterface $container ): OnboardingNotices {
+		return new OnboardingNotices();
 	},
 	'settings.service.signup-link-cache'                  => static function ( ContainerInterface $container ): Cache {
 		return new Cache( 'ppcp-paypal-signup-link' );
