@@ -107,6 +107,14 @@ class SavePaymentMethodsModule implements ServiceModule, ExecutableModule {
 						$settings_provider = $c->get( 'settings.settings-provider' );
 						assert( $settings_provider instanceof SettingsProvider );
 
+						// If the merchant's access token lacks the vault scope, PayPal rejects
+						// any store-in-vault request with 403 NOT_AUTHORIZED. Skip adding vault
+						// attributes so the payment can still be captured without a hard
+						// checkout failure (renewals then fail gracefully with a clear message).
+						if ( ! $c->get( 'wcgateway.helper.vaulting-scope' ) ) {
+							return $data;
+						}
+
 						$new_attributes = array(
 							'vault' => array(
 								'store_in_vault' => 'ON_SUCCESS',

@@ -493,7 +493,21 @@ class PayPalGateway extends \WC_Payment_Gateway {
 
 			$customer_id = get_user_meta( $wc_order->get_customer_id(), '_ppcp_target_customer_id', true );
 			if ( $customer_id ) {
-				$customer_tokens = $this->payment_tokens_endpoint->payment_tokens_for_customer( $customer_id );
+				try {
+					$customer_tokens = $this->payment_tokens_endpoint->payment_tokens_for_customer( $customer_id );
+				} catch ( RuntimeException $exception ) {
+					// A failure here (e.g. the access token lacks the vault scope and
+					// PayPal returns 403 NOT_AUTHORIZED) must not bubble up as a fatal
+					// error; fall through to the "no saved PayPal account" failure below.
+					$this->logger->error(
+						sprintf(
+							'Could not retrieve saved payment methods for customer %1$s: %2$s',
+							$customer_id,
+							$exception->getMessage()
+						)
+					);
+					$customer_tokens = array();
+				}
 				foreach ( $customer_tokens as $token ) {
 					$payment_source_name = $token['payment_source']->name() ?? '';
 					if ( $payment_source_name === 'paypal' || $payment_source_name === 'venmo' ) {
