@@ -102,6 +102,15 @@ class RefreshFeatureStatusEndpoint extends RestEndpoint {
 
 		do_action( 'woocommerce_paypal_payments_clear_apm_product_status' );
 
+		/**
+		 * Flush the API caches so a fresh access token is issued with the
+		 * merchant's current scopes. Refreshing features is exactly when newly
+		 * granted capabilities (e.g. Advanced Vaulting) should take effect, and
+		 * a token cached before the change would otherwise keep failing Vault
+		 * calls with 403 NOT_AUTHORIZED until it expires.
+		 */
+		do_action( 'woocommerce_paypal_payments_flush_api_cache' );
+
 		$this->logger->info( 'Feature status refreshed successfully' );
 
 		return $this->return_success(
