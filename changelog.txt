@@ -1,5 +1,28 @@
 *** Changelog ***
 
+= 4.1.0 - XXXX-XX-XX =
+* Enhancement - Vault Management Component #4421
+* Enhancement - PUI - Extract + Block Checkout #4405
+* Enhancement - OXXO - Extract + Block Checkout #4381
+* Enhancement - Show account or card last digits in payment method #4427
+* Fix - Vaulting subscription - Unsuccessfully payment with acdc from block checkout #4437
+* Fix - Free trial vaulting subscription - Unsuccessfully payment with acdc and PayPal #4439
+* Fix - PartnersEndpoint::seller_status() floods PayPal merchant-integrations endpoint with 403s #4430
+* Fix - Fix PayPal amount mismatch from inclusive-tax rounding #4425
+* Fix - Vaulted ACDC saved-card checkout stuck in "payment pending" #4431
+* Fix - Negative fee on manually created order influence on wrong total amount on PayPal side #4409
+* Fix - Avoid spamming OAuth requests when auth fails #4414
+* Fix - Gift cards ignored on paypal payment page #4422
+* Fix - Google Pay not rendered on variable product page #4433
+* Fix - Simplify manual client ID validation #4397
+* Fix - Mismatch line item not delivered to PayPal overview transaction page #4426
+* Fix - APM-S - Transaction link open paypal.com instead of sandbox.paypal.com #4418
+* Fix - Coerce stored values in typed-bool getters and vault_enabled migration #4393
+* Fix - Fix type casting for customer unique ID in session MD5 hash #4333
+* Fix - Apple pay fails on single product page when no shipping option is available #4375
+* Fix - Settings notifications #4034
+* Fix - Add "Show logos of supported cards" setting #4380
+
 = 4.0.4 - 2026-05-19 =
 * Enhancement - WooCommerce Blueprints integration to import & export the PayPal Payments configuration #4363
 * Enhancement - PayPal redirect gateway now appears on Block checkout for Subscription-type products #4338
