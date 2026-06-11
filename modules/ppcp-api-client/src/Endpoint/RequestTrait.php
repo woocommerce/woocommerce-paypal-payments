@@ -41,7 +41,62 @@ trait RequestTrait
         if ($this->is_request_logging_enabled) {
             $this->logger->debug($this->request_response_string($url, $args, $response));
         }
+        if ($this->should_retry_after_auth_failure($url, $args, $response)) {
+            /**
+             * Filters the request args before a single retry that follows an
+             * authentication failure. Listeners are expected to refresh the
+             * cached access token and rebuild the `Authorization` header so the
+             * retry uses a token with the current scopes.
+             *
+             * @param array  $args The request arguments.
+             * @param string $url  The request URL.
+             */
+            $args = apply_filters('ppcp_retry_request_args', $args, $url);
+            $response = wp_remote_get($url, $args);
+            if ($this->is_request_logging_enabled) {
+                $this->logger->debug($this->request_response_string($url, $args, $response));
+            }
+        }
         return $response;
+    }
+    /**
+     * Determines whether a request should be retried once after an
+     * authentication failure.
+     *
+     * A cached access token can outlive a change in the merchant's granted
+     * scopes (for example, vaulting being enabled after the token was issued),
+     * which surfaces as HTTP 401, or HTTP 403 with `NOT_AUTHORIZED`. Retrying
+     * once with a freshly issued token recovers from that state instead of
+     * failing for up to the token's lifetime.
+     *
+     * @param string         $url The request URL.
+     * @param array          $args The request arguments.
+     * @param array|WP_Error $response The response.
+     * @return bool
+     */
+    private function should_retry_after_auth_failure(string $url, array $args, $response): bool
+    {
+        if ($response instanceof WP_Error) {
+            return \false;
+        }
+        // Never retry the token request itself; that would risk a request loop.
+        if (\false !== strpos($url, 'v1/oauth2/token')) {
+            return \false;
+        }
+        // Only Bearer-authenticated requests can be recovered by a token refresh.
+        $authorization = $args['headers']['Authorization'] ?? '';
+        if (!is_string($authorization) || 0 !== strpos($authorization, 'Bearer ')) {
+            return \false;
+        }
+        $status_code = (int) ($response['response']['code'] ?? 0);
+        if (401 === $status_code) {
+            return \true;
+        }
+        if (403 === $status_code) {
+            $body = json_decode((string) ($response['body'] ?? ''));
+            return isset($body->name) && 'NOT_AUTHORIZED' === $body->name;
+        }
+        return \false;
     }
     /**
      * Returns request and response information as string.

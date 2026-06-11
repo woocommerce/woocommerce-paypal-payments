@@ -70,6 +70,7 @@ class AmountFactory
         $shipping_val = (float) $cart->get_shipping_total();
         $taxes_val = (float) $cart->get_total_tax();
         $discount_val = (float) $cart->get_discount_total();
+        $discount_val += $this->extra_discount('woocommerce_paypal_payments_cart_extra_discount', $cart);
         $item_total = new Money($item_total_val, $this->currency->get());
         $shipping = new Money($shipping_val, $this->currency->get());
         $taxes = new Money($taxes_val, $this->currency->get());
@@ -114,6 +115,12 @@ class AmountFactory
         $shipping_minor = (int) $cart_totals->total_shipping()->value();
         $tax_minor = (int) $cart_totals->total_tax()->value();
         $discount_minor = (int) $cart_totals->total_discount()->value();
+        /**
+         * Some plugins (e.g. WooCommerce Gift Cards) reduce cart->total via WC_Cart::set_total()
+         * without registering a coupon or fee. Allow them to contribute their discount amount here.
+         * The value must be an integer in the cart currency's minor unit (e.g. cents for USD).
+         */
+        $discount_minor += max(0, (int) apply_filters('woocommerce_paypal_payments_store_api_cart_extra_discount', 0, $cart_totals));
         $total_minor = $items_minor + $shipping_minor + $tax_minor - $discount_minor;
         $currency = $cart_totals->total_price()->currency_code();
         $minor_unit = $cart_totals->total_price()->currency_minor_unit();
@@ -139,6 +146,7 @@ class AmountFactory
             // Only coupons.
             $items_discount,
         ));
+        $discount_value += $this->extra_discount('woocommerce_paypal_payments_order_extra_discount', $order);
         $discount = null;
         if ($discount_value) {
             $discount = new Money((float) $discount_value, $currency);
@@ -230,6 +238,25 @@ class AmountFactory
             $money[] = new Money((float) $item->value, $item->currency_code);
         }
         return new AmountBreakdown(...$money);
+    }
+    /**
+     * Returns any extra discount contributed via a filter hook.
+     *
+     * Some plugins (e.g. WooCommerce Gift Cards) reduce the WC total directly via
+     * WC_Cart::set_total() / WC_Order::set_total() without registering a coupon or fee,
+     * making their discount invisible to the standard breakdown getters. This method
+     * applies the given filter so those plugins can surface their amount here.
+     *
+     * @param string $filter_name The filter hook name.
+     * @param mixed  $context     The cart or order passed as context to the filter.
+     * @return float
+     */
+    private function extra_discount(string $filter_name, $context): float
+    {
+        /**
+         * Filters extra discount amounts not captured by standard WC discount/fee getters.
+         */
+        return max(0.0, (float) apply_filters($filter_name, 0.0, $context));
     }
     /**
      * Returns the sum of items with negative amount;

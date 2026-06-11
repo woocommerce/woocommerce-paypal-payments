@@ -16,6 +16,8 @@ use WooCommerce\PayPalCommerce\ApiClient\Entity\ExperienceContext;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\OrderStatus;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentSource;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\PurchaseUnit;
+use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\ExperienceContextBuilder;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\OrderFactory;
@@ -192,14 +194,60 @@ class OrderProcessor
      * @param Order    $order The PayPal order.
      *
      * @return Order
+     * @throws PayPalApiException When PayPal rejects the patch and it cannot be safely skipped.
      */
     public function patch_order(WC_Order $wc_order, Order $order): Order
     {
         $this->apply_outbound_order_filters($wc_order);
         $updated_order = $this->order_factory->from_wc_order($wc_order, $order);
         $this->restore_order_from_filters($wc_order);
-        $order = $this->order_endpoint->patch_order_with($order, $updated_order);
+        try {
+            $order = $this->order_endpoint->patch_order_with($order, $updated_order);
+        } catch (PayPalApiException $exception) {
+            /*
+             * An order that vaults a card against an existing PayPal customer becomes
+             * immutable once its payment source is confirmed. On block checkout that
+             * confirmation happens before the WooCommerce order exists, so this patch
+             * runs afterwards and PayPal rejects it with 422 VALIDATION_ERROR. The patch
+             * here only syncs metadata (custom_id/invoice_id); the amount was already
+             * final when the order was created from the cart. When the amount is
+             * unchanged it is therefore safe to skip the patch and capture the order
+             * as-is. Any other failure (including an actual amount change) is re-thrown.
+             */
+            if ($exception->status_code() !== 422 || !$this->order_amount_unchanged($order, $updated_order)) {
+                throw $exception;
+            }
+            $this->logger->warning(sprintf('Skipping order patch for order #%1$d: PayPal rejected it because the order is locked after confirming a vaulted payment, and the amount is unchanged so capture can proceed. %2$s', $wc_order->get_id(), $exception->getMessage()));
+        }
         return $order;
+    }
+    /**
+     * Determines whether the purchase unit amounts of two orders are identical,
+     * meaning a rejected patch would only have changed metadata (not the charge).
+     *
+     * @param Order $current The order as it currently exists at PayPal.
+     * @param Order $updated The order built from the WooCommerce order.
+     * @return bool
+     */
+    private function order_amount_unchanged(Order $current, Order $updated): bool
+    {
+        $current_units = $current->purchase_units();
+        $updated_units = $updated->purchase_units();
+        if (count($current_units) !== count($updated_units)) {
+            return \false;
+        }
+        foreach ($updated_units as $index => $updated_unit) {
+            $current_unit = $current_units[$index] ?? null;
+            if (!$current_unit instanceof PurchaseUnit) {
+                return \false;
+            }
+            $current_amount = $current_unit->amount();
+            $updated_amount = $updated_unit->amount();
+            if ($current_amount->currency_code() !== $updated_amount->currency_code() || $current_amount->value_str() !== $updated_amount->value_str()) {
+                return \false;
+            }
+        }
+        return \true;
     }
     /**
      * Verifies whether the order can be processed.

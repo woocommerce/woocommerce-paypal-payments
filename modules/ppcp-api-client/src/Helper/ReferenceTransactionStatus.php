@@ -9,7 +9,6 @@ declare (strict_types=1);
 namespace WooCommerce\PayPalCommerce\ApiClient\Helper;
 
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PartnersEndpoint;
-use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 /**
  * Class ReferenceTransactionStatus
  *
@@ -38,7 +37,7 @@ class ReferenceTransactionStatus
                     return \true;
                 }
             }
-        } catch (RuntimeException $exception) {
+        } catch (\Throwable $exception) {
             return \false;
         }
         return \false;
