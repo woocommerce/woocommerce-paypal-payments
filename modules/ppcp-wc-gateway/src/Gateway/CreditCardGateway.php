@@ -371,27 +371,39 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC
                 if ($token->get_id() === (int) $card_payment_token_id) {
                     try {
                         $created_order = $this->capture_card_payment->create_order($token->get_token(), $wc_order);
+                        $order = $this->order_endpoint->order($created_order->id());
+                        $this->add_paypal_meta($wc_order, $created_order, $this->environment);
+                        $wc_order->add_payment_token($token);
+                        if ($order->intent() === 'AUTHORIZE') {
+                            $order = $this->order_endpoint->authorize($order);
+                            $wc_order->update_meta_data(AuthorizedPaymentsProcessor::CAPTURED_META_KEY, 'false');
+                            if ($this->subscription_helper->has_subscription($wc_order->get_id())) {
+                                $wc_order->update_meta_data('_ppcp_captured_vault_webhook', 'false');
+                            }
+                        } elseif ($order->status()->is(OrderStatus::APPROVED) || $order->status()->is(OrderStatus::CREATED)) {
+                            // A vaulted-card order is created in CREATED status and must be
+                            // captured explicitly; without this it never leaves "pending payment".
+                            $order = $this->order_endpoint->capture($order);
+                        }
+                        $transaction_id = $this->get_paypal_order_transaction_id($order);
+                        if ($transaction_id) {
+                            $this->update_transaction_id($transaction_id, $wc_order);
+                        }
+                        $this->handle_new_order_status($order, $wc_order);
                     } catch (RuntimeException $exception) {
                         $this->logger->error($exception->getMessage());
                         return $this->handle_payment_failure($wc_order, $exception);
                     }
-                    $order = $this->order_endpoint->order($created_order->id());
-                    $this->add_paypal_meta($wc_order, $created_order, $this->environment);
-                    $wc_order->add_payment_token($token);
-                    if ($order->intent() === 'AUTHORIZE') {
-                        $order = $this->order_endpoint->authorize($order);
-                        $wc_order->update_meta_data(AuthorizedPaymentsProcessor::CAPTURED_META_KEY, 'false');
-                        if ($this->subscription_helper->has_subscription($wc_order->get_id())) {
-                            $wc_order->update_meta_data('_ppcp_captured_vault_webhook', 'false');
-                        }
-                    } elseif ($order->status()->name() === OrderStatus::APPROVED) {
-                        $order = $this->order_endpoint->capture($order);
+                    /**
+                     * Safety net: if nothing transitioned the order into a handled state
+                     * (e.g. PayPal returned PAYER_ACTION_REQUIRED and produced no capture or
+                     * authorization), fail cleanly instead of leaving the order silently
+                     * stuck in "pending payment".
+                     */
+                    if (!$wc_order->has_status(array('processing', 'completed', 'on-hold'))) {
+                        $this->logger->error(sprintf('Vaulted card payment for WC order %1$d did not reach a handled state (PayPal order %2$s, status %3$s); failing the payment.', $wc_order->get_id(), $created_order->id(), $order->status()->name()));
+                        return $this->handle_payment_failure($wc_order, new RuntimeException(__('This saved card could not be charged. Please try another payment method.', 'woocommerce-paypal-payments')));
                     }
-                    $transaction_id = $this->get_paypal_order_transaction_id($order);
-                    if ($transaction_id) {
-                        $this->update_transaction_id($transaction_id, $wc_order);
-                    }
-                    $this->handle_new_order_status($order, $wc_order);
                     return $this->handle_payment_success($wc_order);
                 }
             }
