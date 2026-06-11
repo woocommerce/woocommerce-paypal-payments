@@ -22,6 +22,7 @@ class ComposerStaticInit844a779aae516bed9e0beccea9d01fda
             'WooCommerce\\PayPalCommerce\\WcGateway\\' => 37,
             'WooCommerce\\PayPalCommerce\\Vendor\\Psr\\Log\\' => 42,
             'WooCommerce\\PayPalCommerce\\Vendor\\' => 34,
+            'WooCommerce\\PayPalCommerce\\VaultComponent\\' => 42,
             'WooCommerce\\PayPalCommerce\\Uninstall\\' => 37,
             'WooCommerce\\PayPalCommerce\\StoreSync\\' => 37,
             'WooCommerce\\PayPalCommerce\\StatusReport\\' => 40,
@@ -88,6 +89,10 @@ class ComposerStaticInit844a779aae516bed9e0beccea9d01fda
         'WooCommerce\\PayPalCommerce\\Vendor\\' =>
         array (
             0 => __DIR__ . '/../..' . '/lib/packages',
+        ),
+        'WooCommerce\\PayPalCommerce\\VaultComponent\\' =>
+        array (
+            0 => __DIR__ . '/../..' . '/modules/ppcp-vault-component/src',
         ),
         'WooCommerce\\PayPalCommerce\\Uninstall\\' =>
         array (
@@ -712,6 +717,11 @@ class ComposerStaticInit844a779aae516bed9e0beccea9d01fda
         'WooCommerce\\PayPalCommerce\\StoreSync\\Validation\\ValidationIssue' => __DIR__ . '/../..' . '/modules/ppcp-store-sync/src/Validation/ValidationIssue.php',
         'WooCommerce\\PayPalCommerce\\Uninstall\\ClearDatabase' => __DIR__ . '/../..' . '/modules/ppcp-uninstall/src/ClearDatabase.php',
         'WooCommerce\\PayPalCommerce\\Uninstall\\UninstallModule' => __DIR__ . '/../..' . '/modules/ppcp-uninstall/src/UninstallModule.php',
+        'WooCommerce\\PayPalCommerce\\VaultComponent\\Authentication\\VaultClientToken' => __DIR__ . '/../..' . '/modules/ppcp-vault-component/src/Authentication/VaultClientToken.php',
+        'WooCommerce\\PayPalCommerce\\VaultComponent\\Endpoint\\CreateVaultOrderEndpoint' => __DIR__ . '/../..' . '/modules/ppcp-vault-component/src/Endpoint/CreateVaultOrderEndpoint.php',
+        'WooCommerce\\PayPalCommerce\\VaultComponent\\Helper\\VaultComponentApplies' => __DIR__ . '/../..' . '/modules/ppcp-vault-component/src/Helper/VaultComponentApplies.php',
+        'WooCommerce\\PayPalCommerce\\VaultComponent\\VaultComponentData' => __DIR__ . '/../..' . '/modules/ppcp-vault-component/src/VaultComponentData.php',
+        'WooCommerce\\PayPalCommerce\\VaultComponent\\VaultComponentModule' => __DIR__ . '/../..' . '/modules/ppcp-vault-component/src/VaultComponentModule.php',
         'WooCommerce\\PayPalCommerce\\Vendor\\Inpsyde\\Modularity\\Container\\ContainerConfigurator' => __DIR__ . '/../..' . '/lib/packages/Inpsyde/Modularity/Container/ContainerConfigurator.php',
         'WooCommerce\\PayPalCommerce\\Vendor\\Inpsyde\\Modularity\\Container\\PackageProxyContainer' => __DIR__ . '/../..' . '/lib/packages/Inpsyde/Modularity/Container/PackageProxyContainer.php',
         'WooCommerce\\PayPalCommerce\\Vendor\\Inpsyde\\Modularity\\Container\\ReadOnlyContainer' => __DIR__ . '/../..' . '/lib/packages/Inpsyde/Modularity/Container/ReadOnlyContainer.php',
