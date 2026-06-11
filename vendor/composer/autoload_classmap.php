@@ -513,6 +513,7 @@ return array(
     'WooCommerce\\PayPalCommerce\\VaultComponent\\Authentication\\VaultClientToken' => $baseDir . '/modules/ppcp-vault-component/src/Authentication/VaultClientToken.php',
     'WooCommerce\\PayPalCommerce\\VaultComponent\\Endpoint\\CreateVaultOrderEndpoint' => $baseDir . '/modules/ppcp-vault-component/src/Endpoint/CreateVaultOrderEndpoint.php',
     'WooCommerce\\PayPalCommerce\\VaultComponent\\Helper\\VaultComponentApplies' => $baseDir . '/modules/ppcp-vault-component/src/Helper/VaultComponentApplies.php',
+    'WooCommerce\\PayPalCommerce\\VaultComponent\\VaultComponentData' => $baseDir . '/modules/ppcp-vault-component/src/VaultComponentData.php',
     'WooCommerce\\PayPalCommerce\\VaultComponent\\VaultComponentModule' => $baseDir . '/modules/ppcp-vault-component/src/VaultComponentModule.php',
     'WooCommerce\\PayPalCommerce\\Vendor\\Inpsyde\\Modularity\\Container\\ContainerConfigurator' => $baseDir . '/lib/packages/Inpsyde/Modularity/Container/ContainerConfigurator.php',
     'WooCommerce\\PayPalCommerce\\Vendor\\Inpsyde\\Modularity\\Container\\PackageProxyContainer' => $baseDir . '/lib/packages/Inpsyde/Modularity/Container/PackageProxyContainer.php',

@@ -720,6 +720,7 @@ class ComposerStaticInit844a779aae516bed9e0beccea9d01fda
         'WooCommerce\\PayPalCommerce\\VaultComponent\\Authentication\\VaultClientToken' => __DIR__ . '/../..' . '/modules/ppcp-vault-component/src/Authentication/VaultClientToken.php',
         'WooCommerce\\PayPalCommerce\\VaultComponent\\Endpoint\\CreateVaultOrderEndpoint' => __DIR__ . '/../..' . '/modules/ppcp-vault-component/src/Endpoint/CreateVaultOrderEndpoint.php',
         'WooCommerce\\PayPalCommerce\\VaultComponent\\Helper\\VaultComponentApplies' => __DIR__ . '/../..' . '/modules/ppcp-vault-component/src/Helper/VaultComponentApplies.php',
+        'WooCommerce\\PayPalCommerce\\VaultComponent\\VaultComponentData' => __DIR__ . '/../..' . '/modules/ppcp-vault-component/src/VaultComponentData.php',
         'WooCommerce\\PayPalCommerce\\VaultComponent\\VaultComponentModule' => __DIR__ . '/../..' . '/modules/ppcp-vault-component/src/VaultComponentModule.php',
         'WooCommerce\\PayPalCommerce\\Vendor\\Inpsyde\\Modularity\\Container\\ContainerConfigurator' => __DIR__ . '/../..' . '/lib/packages/Inpsyde/Modularity/Container/ContainerConfigurator.php',
         'WooCommerce\\PayPalCommerce\\Vendor\\Inpsyde\\Modularity\\Container\\PackageProxyContainer' => __DIR__ . '/../..' . '/lib/packages/Inpsyde/Modularity/Container/PackageProxyContainer.php',
