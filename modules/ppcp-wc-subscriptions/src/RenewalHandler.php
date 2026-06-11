@@ -18,6 +18,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PaymentTokensEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentSource;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
+use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\ExperienceContextBuilder;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PayerFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PurchaseUnitFactory;
@@ -227,7 +228,7 @@ class RenewalHandler {
 	 *
 	 * @param \WC_Order $wc_order The WooCommerce order.
 	 *
-	 * @throws \Exception If customer cannot be read/found.
+	 * @throws RuntimeException When no saved payment method is available to process the renewal.
 	 */
 	private function process_order( \WC_Order $wc_order ): void {
 		$user_id  = (int) $wc_order->get_customer_id();
@@ -405,8 +406,19 @@ class RenewalHandler {
 						$wc_order->get_id()
 					)
 				);
+
+				return;
 			}
 		}
+
+		// Reaching this point means no saved payment method (vaulted token or legacy
+		// billing agreement) could be used. This commonly happens when the PayPal
+		// access token lacks the vault scope and the token lookup returned nothing.
+		// Throw so renew() marks the order failed with an actionable message instead
+		// of silently completing without taking a payment.
+		throw new RuntimeException(
+			'No saved payment method is available to process this renewal. The PayPal account may need to be reconnected with vaulting enabled.'
+		);
 	}
 
 	/**
