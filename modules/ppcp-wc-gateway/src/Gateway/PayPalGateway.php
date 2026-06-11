@@ -338,7 +338,11 @@ class PayPalGateway extends \WC_Payment_Gateway {
 	 * Renders payment fields including saved payment method radio buttons when tokenization is active.
 	 */
 	public function payment_fields(): void {
-		if ( $this->supports( 'tokenization' ) && is_checkout() ) {
+		// `supports( 'tokenization' )` only reflects the static capability; saved PayPal
+		// methods must additionally be gated on the merchant's "save PayPal and Venmo"
+		// setting, mirroring how CreditCardGateway gates on `save_card_details()`.
+		$vaulting_enabled = $this->supports( 'tokenization' ) && $this->settings_provider->save_paypal_and_venmo();
+		if ( $vaulting_enabled && is_checkout() ) {
 			$this->tokenization_script();
 			$this->saved_payment_methods();
 		}

@@ -26,33 +26,10 @@ class VaultClientToken {
 
 	const CACHE_KEY_PREFIX = 'vault-client-token-key:';
 
-	/**
-	 * The host.
-	 *
-	 * @var string
-	 */
-	private $host;
-
-	/**
-	 * The logger.
-	 *
-	 * @var LoggerInterface
-	 */
-	private $logger;
-
-	/**
-	 * The client credentials.
-	 *
-	 * @var ClientCredentials
-	 */
-	private $client_credentials;
-
-	/**
-	 * The cache.
-	 *
-	 * @var Cache
-	 */
-	private $cache;
+	private string $host;
+	private LoggerInterface $logger;
+	private ClientCredentials $client_credentials;
+	private Cache $cache;
 
 	/**
 	 * VaultClientToken constructor.
@@ -115,11 +92,19 @@ class VaultClientToken {
 
 		$json        = json_decode( $response['body'] );
 		$status_code = (int) wp_remote_retrieve_response_code( $response );
+
+		// A non-object body means the response could not be decoded (e.g. an HTML
+		// error page or empty body). Guard against dereferencing null below.
+		if ( ! $json instanceof \stdClass ) {
+			$this->logger->error( 'Vault client_token request returned an undecodable response body.' );
+			throw new RuntimeException( 'Could not parse the vault client_token response.' );
+		}
+
 		if ( 200 !== $status_code ) {
 			throw new PayPalApiException( $json, $status_code );
 		}
 
-		$access_token = (string) $json->access_token;
+		$access_token = (string) ( $json->access_token ?? '' );
 		$expires_in   = (int) ( $json->expires_in ?? 0 );
 
 		if ( $expires_in > 0 ) {

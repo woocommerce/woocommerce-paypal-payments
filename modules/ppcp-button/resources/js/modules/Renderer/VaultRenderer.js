@@ -1,3 +1,5 @@
+// TODO (next iteration): relocate to the ppcp-vault-component module once it has a
+// JS build entry. This renderer has no dependencies on other ppcp-button components.
 import { loadScript } from '@paypal/paypal-js';
 
 const VAULT_NAMESPACE = 'ppcpVaultComponent';

@@ -7,22 +7,31 @@ use WooCommerce\PayPalCommerce\ApiClient\Helper\ReferenceTransactionStatus;
 
 class VaultComponentApplies {
 
-	private array $allowed_countries;
 	private string $country;
 	private ReferenceTransactionStatus $reference_transaction_status;
 
 	public function __construct(
-		array $allowed_countries,
 		string $country,
 		ReferenceTransactionStatus $reference_transaction_status
 	) {
-		$this->allowed_countries            = $allowed_countries;
 		$this->country                      = $country;
 		$this->reference_transaction_status = $reference_transaction_status;
 	}
 
 	public function for_country(): bool {
-		return in_array( $this->country, $this->allowed_countries, true );
+		return in_array( $this->country, $this->supported_countries(), true );
+	}
+
+	/**
+	 * The countries where the vault component is supported.
+	 *
+	 * @return string[]
+	 */
+	private function supported_countries(): array {
+		return apply_filters(
+			'woocommerce_paypal_payments_vault_component_supported_countries',
+			array( 'US' )
+		);
 	}
 
 	/**

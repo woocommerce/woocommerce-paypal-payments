@@ -107,27 +107,11 @@ class CreateVaultOrderEndpoint implements EndpointInterface {
 			// their funding instrument. We hint the buyer's existing vault via
 			// `payment_source.paypal.experience_context.preferred_payment_source.vault_id`
 			// (added through OrderEndpoint::create's $payment_source argument) — that
-			// shape does NOT auto-capture. We must still strip any `payment_source.paypal.token`
-			// (which would auto-capture and skip the paysheet) and the payer/items/etc.
-			// fields that can trigger Orders v2 5xx errors here.
-			$strip_body = static function ( array $data ): array {
-				if ( isset( $data['purchase_units'][0]['amount'] ) ) {
-					$data['purchase_units'] = array(
-						array( 'amount' => $data['purchase_units'][0]['amount'] ),
-					);
-				}
-				unset( $data['payer'] );
-				if ( isset( $data['payment_source']['paypal'] ) ) {
-					$paypal = $data['payment_source']['paypal'];
-					if ( is_array( $paypal ) && isset( $paypal['token'] ) ) {
-						unset( $data['payment_source']['paypal']['token'] );
-					} elseif ( is_object( $paypal ) && isset( $paypal->token ) ) {
-						unset( $data['payment_source']['paypal']->token );
-					}
-				}
-				return $data;
-			};
-			add_filter( 'ppcp_create_order_request_body_data', $strip_body, 99 );
+			// shape does NOT auto-capture. `strip_request_body()` still removes any
+			// `payment_source.paypal.token` (which would auto-capture and skip the
+			// paysheet) and the payer/items/etc. fields that can trigger Orders v2 5xx
+			// errors here.
+			add_filter( 'ppcp_create_order_request_body_data', array( $this, 'strip_request_body' ), 99 );
 
 			try {
 				$order = $this->order_endpoint->create(
@@ -139,7 +123,7 @@ class CreateVaultOrderEndpoint implements EndpointInterface {
 					$payment_source
 				);
 			} finally {
-				remove_filter( 'ppcp_create_order_request_body_data', $strip_body, 99 );
+				remove_filter( 'ppcp_create_order_request_body_data', array( $this, 'strip_request_body' ), 99 );
 			}
 
 			wp_send_json_success( array( 'id' => $order->id() ) );
@@ -150,5 +134,34 @@ class CreateVaultOrderEndpoint implements EndpointInterface {
 				array( 'message' => $exception->getMessage() )
 			);
 		}
+	}
+
+	/**
+	 * Strips fields from the create-order request body that would either auto-capture
+	 * the order or trigger Orders v2 5xx errors for the vault "change FI" flow.
+	 *
+	 * Keeps only the amount of the first purchase unit, removes the payer, and removes
+	 * any `payment_source.paypal.token` (supporting both array and object shapes).
+	 *
+	 * @param array $data The create-order request body data.
+	 *
+	 * @return array
+	 */
+	public function strip_request_body( array $data ): array {
+		if ( isset( $data['purchase_units'][0]['amount'] ) ) {
+			$data['purchase_units'] = array(
+				array( 'amount' => $data['purchase_units'][0]['amount'] ),
+			);
+		}
+		unset( $data['payer'] );
+		if ( isset( $data['payment_source']['paypal'] ) ) {
+			$paypal = $data['payment_source']['paypal'];
+			if ( is_array( $paypal ) && isset( $paypal['token'] ) ) {
+				unset( $data['payment_source']['paypal']['token'] );
+			} elseif ( is_object( $paypal ) && isset( $paypal->token ) ) {
+				unset( $data['payment_source']['paypal']->token );
+			}
+		}
+		return $data;
 	}
 }

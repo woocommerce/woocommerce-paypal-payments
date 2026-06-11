@@ -69,9 +69,15 @@ export const loadPaypalScript = ( config, onLoaded, onError = null ) => {
 		scriptOptions = merge( scriptOptions, config.script_attributes );
 	}
 
-	// data-sdk-client-token is reserved for the vault component's dedicated SDK
-	// namespace and must not appear on shared SDK script loads.
-	if ( config?.user?.is_logged === true && ! config?.vault_component?.is_eligible ) {
+	// Legacy save-payment-methods fallback: for logged-in buyers whose merchant is
+	// NOT eligible for the new vault component, attach data-user-id-token so the old
+	// vaulting flow keeps working. When the vault component is eligible it loads its
+	// own SDK (with data-sdk-client-token) separately, so this token must be omitted
+	// from the shared SDK script to avoid conflicting buyer-scoped tokens.
+	if (
+		config?.user?.is_logged === true &&
+		! config?.vault_component?.is_eligible
+	) {
 		const userIdToken = config?.save_payment_methods?.id_token;
 		if ( userIdToken ) {
 			scriptOptions[ 'data-user-id-token' ] = userIdToken;

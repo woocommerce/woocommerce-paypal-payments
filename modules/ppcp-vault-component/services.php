@@ -26,15 +26,8 @@ return array(
 		assert( $reference_transaction_status instanceof ReferenceTransactionStatus );
 
 		return new VaultComponentApplies(
-			$container->get( 'vault-component.supported-countries' ),
 			$container->get( 'api.merchant.country' ),
 			$reference_transaction_status
-		);
-	},
-	'vault-component.supported-countries'             => static function ( ContainerInterface $container ): array {
-		return apply_filters(
-			'woocommerce_paypal_payments_vault_component_supported_countries',
-			array( 'US' )
 		);
 	},
 	'vault-component.auth.client-token-cache'         => static function ( ContainerInterface $container ): Cache {
@@ -56,6 +49,15 @@ return array(
 			$client_credentials,
 			$cache
 		);
+	},
+	'vault-component.data'                            => static function ( ContainerInterface $container ): VaultComponentData {
+		$client_token = $container->get( 'vault-component.auth.client-token' );
+		assert( $client_token instanceof VaultClientToken );
+
+		$logger = $container->get( 'woocommerce.logger.woocommerce' );
+		assert( $logger instanceof LoggerInterface );
+
+		return new VaultComponentData( $client_token, $logger );
 	},
 	'vault-component.endpoint.create-order'           => static function ( ContainerInterface $container ): CreateVaultOrderEndpoint {
 		return new CreateVaultOrderEndpoint(

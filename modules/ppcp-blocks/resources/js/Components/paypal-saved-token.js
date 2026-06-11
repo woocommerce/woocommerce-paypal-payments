@@ -1,3 +1,5 @@
+// TODO (next iteration): relocate to the ppcp-vault-component module once it has a
+// JS build entry.
 import {
 	useEffect,
 	useLayoutEffect,
