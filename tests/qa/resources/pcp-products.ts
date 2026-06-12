@@ -3,6 +3,78 @@
  */
 import { products as baseProducts } from '@inpsyde/playwright-utils/build';
 
+const variationNotSelected100: WooCommerce.CreateProduct = {
+	name: 'Variable T-Shirt',
+	slug: 'variable-t-shirt',
+	type: 'variable',
+	regular_price: '100.00',
+	description:
+		'A comfortable t-shirt available in multiple colors and sizes.',
+	short_description: 'Variable t-shirt with color and size options.',
+	attributes: [
+		{
+			name: 'Color',
+			variation: true,
+			options: [ 'Gray', 'Red' ],
+		},
+		{
+			name: 'Size',
+			variation: true,
+			options: [ 'M', 'L' ],
+		},
+	],
+	default_attributes: [],
+	variations: [
+		{
+			attributes: [
+				{ name: 'Color', option: 'Gray' },
+				{ name: 'Size', option: 'M' },
+			],
+			regular_price: '100.00',
+			stock_status: 'instock',
+			manage_stock: false,
+		},
+		{
+			attributes: [
+				{ name: 'Color', option: 'Gray' },
+				{ name: 'Size', option: 'L' },
+			],
+			regular_price: '100.00',
+			stock_status: 'instock',
+			manage_stock: false,
+		},
+		{
+			attributes: [
+				{ name: 'Color', option: 'Red' },
+				{ name: 'Size', option: 'M' },
+			],
+			regular_price: '100.00',
+			stock_status: 'instock',
+			manage_stock: false,
+		},
+		{
+			attributes: [
+				{ name: 'Color', option: 'Red' },
+				{ name: 'Size', option: 'L' },
+			],
+			regular_price: '100.00',
+			stock_status: 'instock',
+			manage_stock: false,
+		},
+	],
+	images: [
+		{
+			src: 'https://woocommercecore.mystagingwebsite.com/wp-content/uploads/2017/12/vneck-tee-2.jpg',
+		},
+		{
+			src: 'https://woocommercecore.mystagingwebsite.com/wp-content/uploads/2017/12/tshirt-2.jpg',
+		},
+		{
+			src: 'https://woocommercecore.mystagingwebsite.com/wp-content/uploads/2017/12/t-shirt-with-logo-1.jpg',
+		},
+	],
+};
+
 const subscriptionPayPal: WooCommerce.CreateProduct = {
 	name: 'PayPal Subscription Test Product',
 	slug: 'paypal-subscription-test-product',
@@ -73,6 +145,7 @@ export const products: {
 	[ key: string ]: WooCommerce.CreateProduct;
 } = {
 	...baseProducts,
+	variationNotSelected100,
 	subscriptionPayPal,
 	subscriptionPayPalFreeTrial,
 	simpleWithStock,
