@@ -17,11 +17,11 @@ export class PayPalUiClassic extends PayPalUi {
 	// Locators
 	cartMenu = () => this.page.locator( '#site-header-cart' );
 
+	payPalGatewayContainer = () =>
+		this.page.locator( '#ppc-button-ppcp-gateway' );
 	payPalIframe = () =>
-		this.page.frameLocator(
-			// unified selector for My Account and checkout pages
-			'[id^="ppc-button-ppcp-gateway"] iframe[name^="__zoid__paypal_buttons__"]'
-		);
+		this.payPalGatewayContainer()
+			.frameLocator( 'iframe[name^="__zoid__paypal_buttons__"]' );
 	payPalButtonsClassicContainer = () =>
 		this.payPalIframe().locator( '#buttons-container' );
 	fundingSourceButton = ( name ) =>
@@ -304,7 +304,7 @@ export class PayPalUiClassic extends PayPalUi {
 	 */
 	async openPayPalPopup(): Promise< PayPalPopup > {
 		// Select gateway if not on classic-cart page
-		if ( ! this.page.url().includes( 'classic-cart' ) ) {
+		if ( this.page.url().includes( 'classic-checkout' ) ) {
 			await expect(
 				this.payPalGateway(),
 				'Assert PayPal gateway is visible'

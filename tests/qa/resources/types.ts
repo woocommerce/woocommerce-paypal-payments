@@ -9,6 +9,7 @@ export type ShopConfig = {
 	};
 	customer?: WooCommerce.CreateCustomer; // Registered customer to be created
 	products?: WooCommerce.CreateProduct[]; // Products to be created if not existing
+	isPayNowEnabled?: boolean; // Is Pay Now Experience option enabled in PCP Settings > Payment Methods
 };
 
 export type PayPalAccount = {
