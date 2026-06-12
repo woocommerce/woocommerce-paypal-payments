@@ -10,6 +10,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Helper\ReferenceTransactionStatus;
 use WooCommerce\PayPalCommerce\VaultComponent\Authentication\VaultClientToken;
 use WooCommerce\PayPalCommerce\VaultComponent\Endpoint\CreateVaultOrderEndpoint;
 use WooCommerce\PayPalCommerce\VaultComponent\Helper\VaultComponentApplies;
+use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 
 return array(
@@ -17,8 +18,13 @@ return array(
 		$vault_component_applies = $container->get( 'vault-component.helpers.vault-component-applies' );
 		assert( $vault_component_applies instanceof VaultComponentApplies );
 
-		return static function () use ( $vault_component_applies ): bool {
-			return $vault_component_applies->for_country() && $vault_component_applies->for_merchant();
+		$settings_provider = $container->get( 'settings.settings-provider' );
+		assert( $settings_provider instanceof SettingsProvider );
+
+		return static function () use ( $vault_component_applies, $settings_provider ): bool {
+			return $settings_provider->save_paypal_and_venmo()
+				&& $vault_component_applies->for_country()
+				&& $vault_component_applies->for_merchant();
 		};
 	},
 	'vault-component.helpers.vault-component-applies' => static function ( ContainerInterface $container ): VaultComponentApplies {
