@@ -6,6 +6,7 @@ import { customers, gateways, taxSettings } from '../../resources';
 import {
 	transactionsOnCheckout,
 	transactionsOnPayByLink,
+	transactionsOnProduct,
 } from './_test-scenarios';
 import {
 	payPalCheckout,
@@ -14,6 +15,7 @@ import {
 	payPalPayByLink,
 	payPalPayByLinkExcludingTax,
 	payPalPayByLinkIntentAuthorized,
+	payPalProduct,
 } from './_test-data/paypal';
 import {
 	payLaterCheckout,
@@ -59,6 +61,10 @@ for ( const testOrder of payPalPayByLink ) {
 
 for ( const testOrder of acdcPayByLink ) {
 	transactionsOnPayByLink( testOrder );
+}
+
+for ( const testOrder of payPalProduct ) {
+	transactionsOnProduct( testOrder );
 }
 
 // Excluding Tax
