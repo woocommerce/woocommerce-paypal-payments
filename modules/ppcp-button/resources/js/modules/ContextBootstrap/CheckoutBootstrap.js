@@ -363,6 +363,15 @@ class CheckoutBootstrap {
 	}
 
 	isNewPaymentMethodSelected() {
+		const radios = document.querySelectorAll(
+			'input[name="wc-ppcp-gateway-payment-token"]'
+		);
+		// No saved-token selector on the page (guest checkout or vaulting
+		// disabled) means there is nothing to choose from, so the payment is
+		// always a "new" one and the smart button must be shown.
+		if ( radios.length === 0 ) {
+			return true;
+		}
 		const checkedRadio = document.querySelector(
 			'input[name="wc-ppcp-gateway-payment-token"]:checked'
 		);
