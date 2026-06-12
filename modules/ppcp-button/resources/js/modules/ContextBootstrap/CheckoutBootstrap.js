@@ -249,6 +249,7 @@ class CheckoutBootstrap {
 				( showVaultComponent && ! this.isNewPaymentMethodSelected() ),
 			'ppcp-hidden'
 		);
+		this.updatePlaceOrderButtonText( showVaultComponent );
 		setVisible( '.ppcp-vaulted-paypal-details', isPaypal );
 		setVisible(
 			this.gateway.button.wrapper,
@@ -360,6 +361,26 @@ class CheckoutBootstrap {
 			checkedRadio.value &&
 			checkedRadio.value !== 'new'
 		);
+	}
+
+	updatePlaceOrderButtonText( showVaultComponent ) {
+		const $placeOrder = jQuery( this.standardOrderButtonSelector );
+		if ( ! $placeOrder.length ) {
+			return;
+		}
+
+		if ( showVaultComponent && ! this.isNewPaymentMethodSelected() ) {
+			// The saved-token vault flow approves the order in-page, so the
+			// standard "Place order" label fits — clicking does not redirect.
+			$placeOrder.text( $placeOrder.data( 'value' ) );
+			return;
+		}
+
+		// Replicate WooCommerce core: gateway-specific label, else default.
+		const gatewayButtonText = jQuery(
+			'input[name="payment_method"]:checked'
+		).data( 'order_button_text' );
+		$placeOrder.text( gatewayButtonText || $placeOrder.data( 'value' ) );
 	}
 
 	isNewPaymentMethodSelected() {
