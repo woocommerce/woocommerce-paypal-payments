@@ -2,6 +2,7 @@ import { loadScript } from '@paypal/paypal-js';
 import widgetBuilder from '../Renderer/WidgetBuilder';
 import merge from 'deepmerge';
 import { keysToCamelCase } from './Utils';
+import { getUserIdToken } from './ConfigProcessor';
 
 // This component may be used by multiple modules. This assures that options are shared between all instances.
 const scriptOptionsMap = {};
@@ -69,19 +70,14 @@ export const loadPaypalScript = ( config, onLoaded, onError = null ) => {
 		scriptOptions = merge( scriptOptions, config.script_attributes );
 	}
 
-	// Legacy save-payment-methods fallback: for logged-in buyers whose merchant is
-	// NOT eligible for the new vault component, attach data-user-id-token so the old
-	// vaulting flow keeps working. When the vault component is eligible it loads its
-	// own SDK (with data-sdk-client-token) separately, so this token must be omitted
-	// from the shared SDK script to avoid conflicting buyer-scoped tokens.
-	if (
-		config?.user?.is_logged === true &&
-		! config?.vault_component?.is_eligible
-	) {
-		const userIdToken = config?.save_payment_methods?.id_token;
-		if ( userIdToken ) {
-			scriptOptions[ 'data-user-id-token' ] = userIdToken;
-		}
+	// Legacy save-payment-methods fallback: attach data-user-id-token so the old
+	// vaulting flow keeps working. The token is omitted only on contexts where the
+	// vault component renders and loads its own data-sdk-client-token SDK
+	// (checkout); on express contexts (product, cart, mini-cart) it must stay.
+	// See getUserIdToken in ConfigProcessor for the shared rule.
+	const userIdToken = getUserIdToken( config );
+	if ( userIdToken ) {
+		scriptOptions[ 'data-user-id-token' ] = userIdToken;
 	}
 
 	// Adds data-namespace to script options.
