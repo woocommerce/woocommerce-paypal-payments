@@ -50,8 +50,10 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 	const ID = 'ppcp-credit-card-gateway';
 
 	/**
-	 * Order meta flag marking a vaulted-card payment that is awaiting the buyer
-	 * to complete a 3D Secure challenge before it can be captured.
+	 * Order meta key holding the one-time, per-attempt random nonce for a
+	 * vaulted-card payment that is awaiting the buyer to complete a 3D Secure
+	 * challenge. The same value is embedded in the PayPal return URL and must
+	 * match on return before the capture is resumed; it is cleared once used.
 	 *
 	 * @var string
 	 */
@@ -459,11 +461,15 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 
 		/**
 		 * Resume a vaulted-card payment after the buyer completed a 3D Secure
-		 * challenge and returned via the PayPal return URL (ppc-return-url). At
-		 * this point no payment token is posted; the PayPal order id is read from
-		 * the meta stored before the redirect.
+		 * challenge and returned via the PayPal return URL (ppc-return-url). The
+		 * resume only proceeds when the one-time nonce in the return URL matches
+		 * the nonce stored on the order, so a manually crafted return URL cannot
+		 * trigger it. The nonce is cleared immediately, making it single-use.
 		 */
-		if ( $wc_order->get_meta( self::THREE_DS_RESUME_META ) && ! $card_payment_token_id ) {
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		$provided_resume_nonce = isset( $_GET['ppcp_resume_nonce'] ) ? sanitize_text_field( wp_unslash( $_GET['ppcp_resume_nonce'] ) ) : '';
+		$stored_resume_nonce   = (string) $wc_order->get_meta( self::THREE_DS_RESUME_META );
+		if ( $stored_resume_nonce && $provided_resume_nonce && hash_equals( $stored_resume_nonce, $provided_resume_nonce ) ) {
 			$wc_order->delete_meta_data( self::THREE_DS_RESUME_META );
 			$wc_order->save();
 
@@ -488,7 +494,8 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 			foreach ( $tokens as $token ) {
 				if ( $token->get_id() === (int) $card_payment_token_id ) {
 					try {
-						$created_order = $this->capture_card_payment->create_order( $token->get_token(), $wc_order );
+						$resume_nonce  = wp_generate_password( 20, false );
+						$created_order = $this->capture_card_payment->create_order( $token->get_token(), $wc_order, $resume_nonce );
 
 						$order = $this->order_endpoint->order( $created_order->id() );
 
@@ -500,13 +507,14 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 						 * complete a 3D Secure challenge before this vaulted card can be
 						 * charged. PayPal returns the order in CREATED (or
 						 * PAYER_ACTION_REQUIRED) status with that link; a frictionless
-						 * charge has no such link. Persist the resume flag and redirect to
-						 * the payer-action URL; the capture resumes when the buyer returns
-						 * via the PayPal return URL.
+						 * charge has no such link. Store this attempt's one-time nonce and
+						 * redirect to the payer-action URL; the capture resumes when the
+						 * buyer returns with the matching nonce. A later attempt overwrites
+						 * the nonce, so only the most recent challenge can be confirmed.
 						 */
 						$payer_action = $this->payer_action_url( $created_order );
 						if ( $payer_action ) {
-							$wc_order->update_meta_data( self::THREE_DS_RESUME_META, '1' );
+							$wc_order->update_meta_data( self::THREE_DS_RESUME_META, $resume_nonce );
 							$wc_order->save();
 
 							return array(

@@ -89,7 +89,7 @@ class CaptureCardPayment {
 	 *
 	 * @throws RuntimeException When request fails.
 	 */
-	public function create_order( string $vault_id, WC_Order $wc_order ): Order {
+	public function create_order( string $vault_id, WC_Order $wc_order, string $resume_nonce = '' ): Order {
 		$intent = strtoupper( $this->settings_provider->payment_intent() ) === 'AUTHORIZE' ? 'AUTHORIZE' : 'CAPTURE';
 		$items  = array( $this->purchase_unit_factory->from_wc_order( $wc_order ) );
 
@@ -97,12 +97,16 @@ class CaptureCardPayment {
 		 * PayPal's vaulted-card 3D Secure return hits the return URL WITHOUT the
 		 * order token (it appends liability_shift/code/state instead), so
 		 * ReturnUrlEndpoint cannot identify the order by token. Encode the WC order
-		 * id in the return URL so the capture can be resumed on return. A cancelled
-		 * challenge returns to the checkout URL and the order stays unpaid.
+		 * id plus a per-order resume nonce in the return URL: the order id locates
+		 * the order, and the nonce (matched against the order meta on return)
+		 * prevents the resume from being triggered by a manually crafted URL. A
+		 * cancelled challenge returns to the checkout URL and the order stays unpaid.
 		 */
 		$card_3ds_return_url = add_query_arg(
-			'ppcp_resume_wc_order',
-			$wc_order->get_id(),
+			array(
+				'ppcp_resume_wc_order' => $wc_order->get_id(),
+				'ppcp_resume_nonce'    => $resume_nonce,
+			),
 			home_url( WC_AJAX::get_endpoint( ReturnUrlEndpoint::ENDPOINT ) )
 		);
 
