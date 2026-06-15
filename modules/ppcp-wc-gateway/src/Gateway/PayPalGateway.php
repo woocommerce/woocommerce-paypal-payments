@@ -438,11 +438,21 @@ class PayPalGateway extends \WC_Payment_Gateway {
 		// phpcs:ignore WordPress.Security.NonceVerification.Missing
 		$vault_approved_order_id = wc_clean( wp_unslash( $_POST['paypal_order_id'] ?? '' ) );
 
-		// Skip saved token handling when an approved order exists (Vault Component Path A).
+		// Skip saved token handling when an approved order exists.
 		if ( $paypal_payment_token_id && 'new' !== $paypal_payment_token_id && ! $vault_approved_order_id ) {
 			$tokens = WC_Payment_Tokens::get_customer_tokens( get_current_user_id() );
 			foreach ( $tokens as $token ) {
 				if ( $token->get_id() === (int) $paypal_payment_token_id ) {
+					// Free trial orders have a $0.00 total; sending a $0 capture order to
+					// PayPal fails with CANNOT_BE_ZERO_OR_NEGATIVE. Skip the API call and
+					// just associate the vaulted token for future renewals, mirroring the
+					// CreditCardGateway saved-token free trial handling.
+					if ( $this->is_free_trial_order( $wc_order ) ) {
+						$wc_order->add_payment_token( $token );
+						$wc_order->payment_complete();
+						return $this->handle_payment_success( $wc_order );
+					}
+
 					$payment_source_name = $token instanceof PaymentTokenVenmo ? 'venmo' : 'paypal';
 					$custom_id           = (string) $wc_order->get_id();
 					$invoice_id          = $this->prefix . $wc_order->get_order_number();
