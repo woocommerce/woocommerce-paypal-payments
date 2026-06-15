@@ -82,6 +82,34 @@ class CaptureCardPayment {
 		$intent = strtoupper( $this->settings_provider->payment_intent() ) === 'AUTHORIZE' ? 'AUTHORIZE' : 'CAPTURE';
 		$items  = array( $this->purchase_unit_factory->from_wc_order( $wc_order ) );
 
+		$card = array(
+			'vault_id'          => $vault_id,
+			'stored_credential' => array(
+				'payment_initiator' => 'CUSTOMER',
+				'payment_type'      => 'UNSCHEDULED',
+				'usage'             => 'SUBSEQUENT',
+			),
+		);
+
+		/**
+		 * Request 3D Secure for the vaulted card charge so cards whose issuer
+		 * mandates Strong Customer Authentication can authenticate and produce a
+		 * liability shift. Without it such captures are rejected. Mirrors the
+		 * contingency the fresh-card flow applies via
+		 * `ppcp_create_order_request_body_data`.
+		 */
+		$three_d_secure_contingency = $this->settings_provider->three_d_secure_enum()
+			? apply_filters( 'woocommerce_paypal_payments_three_d_secure_contingency', $this->settings_provider->three_d_secure_enum() )
+			: '';
+
+		if ( in_array( $three_d_secure_contingency, array( 'SCA_ALWAYS', 'SCA_WHEN_REQUIRED' ), true ) ) {
+			$card['attributes'] = array(
+				'verification' => array(
+					'method' => $three_d_secure_contingency,
+				),
+			);
+		}
+
 		$data = array(
 			'intent'         => $intent,
 			'purchase_units' => array_map(
@@ -91,14 +119,7 @@ class CaptureCardPayment {
 				$items
 			),
 			'payment_source' => array(
-				'card' => array(
-					'vault_id'          => $vault_id,
-					'stored_credential' => array(
-						'payment_initiator' => 'CUSTOMER',
-						'payment_type'      => 'UNSCHEDULED',
-						'usage'             => 'SUBSEQUENT',
-					),
-				),
+				'card' => $card,
 			),
 		);
 
