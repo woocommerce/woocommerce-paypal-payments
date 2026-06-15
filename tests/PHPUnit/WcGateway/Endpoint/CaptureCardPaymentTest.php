@@ -32,7 +32,7 @@ class CaptureCardPaymentTest extends TestCase {
 		$bearer->shouldReceive( 'bearer' )->andReturn( $token );
 
 		$purchase_unit = Mockery::mock( PurchaseUnit::class );
-		$purchase_unit->shouldReceive( 'to_array' )->andReturn( [] );
+		$purchase_unit->shouldReceive( 'to_array' )->andReturn( array() );
 
 		$purchase_unit_factory = Mockery::mock( PurchaseUnitFactory::class );
 		$purchase_unit_factory->shouldReceive( 'from_wc_order' )->andReturn( $purchase_unit );
@@ -59,7 +59,7 @@ class CaptureCardPaymentTest extends TestCase {
 
 		// RequestTrait::request_response_string() calls $response['headers']->getAll(), so headers must be an object.
 		$headers_stub = Mockery::mock( \Requests_Utility_CaseInsensitiveDictionary::class );
-		$headers_stub->shouldReceive( 'getAll' )->andReturn( [] );
+		$headers_stub->shouldReceive( 'getAll' )->andReturn( array() );
 
 		expect( 'wp_remote_get' )->andReturnUsing(
 			function ( string $url, array $args ) use ( &$captured_body, $headers_stub ): array {
@@ -93,7 +93,7 @@ class CaptureCardPaymentTest extends TestCase {
 	public function test_create_order_includes_vault_id_and_stored_credential(
 		string $three_d_secure_enum
 	): void {
-		$captured_body = [];
+		$captured_body = array();
 		$testee        = $this->make_testee( $three_d_secure_enum, $captured_body );
 		$wc_order      = Mockery::mock( WC_Order::class );
 
@@ -122,7 +122,7 @@ class CaptureCardPaymentTest extends TestCase {
 		string $three_d_secure_enum,
 		string $expected_method
 	): void {
-		$captured_body = [];
+		$captured_body = array();
 		$testee        = $this->make_testee( $three_d_secure_enum, $captured_body );
 		$wc_order      = Mockery::mock( WC_Order::class );
 
@@ -141,7 +141,7 @@ class CaptureCardPaymentTest extends TestCase {
 	 * THEN payment_source.card has no 'attributes' key (no verification sent)
 	 */
 	public function test_create_order_omits_attributes_when_3ds_disabled(): void {
-		$captured_body = [];
+		$captured_body = array();
 		$testee        = $this->make_testee( '', $captured_body );
 		$wc_order      = Mockery::mock( WC_Order::class );
 
@@ -178,17 +178,17 @@ class CaptureCardPaymentTest extends TestCase {
 	}
 
 	public function three_d_secure_enum_provider(): array {
-		return [
-			'SCA_WHEN_REQUIRED setting' => [ 'SCA_WHEN_REQUIRED' ],
-			'SCA_ALWAYS setting'        => [ 'SCA_ALWAYS' ],
-			'No 3DS setting'            => [ '' ],
-		];
+		return array(
+			'SCA_WHEN_REQUIRED setting' => array( 'SCA_WHEN_REQUIRED' ),
+			'SCA_ALWAYS setting'        => array( 'SCA_ALWAYS' ),
+			'No 3DS setting'            => array( '' ),
+		);
 	}
 
 	public function three_d_secure_enum_with_verification_provider(): array {
-		return [
-			'SCA_WHEN_REQUIRED maps to verification method SCA_WHEN_REQUIRED' => [ 'SCA_WHEN_REQUIRED', 'SCA_WHEN_REQUIRED' ],
-			'SCA_ALWAYS maps to verification method SCA_ALWAYS'               => [ 'SCA_ALWAYS', 'SCA_ALWAYS' ],
-		];
+		return array(
+			'SCA_WHEN_REQUIRED maps to verification method SCA_WHEN_REQUIRED' => array( 'SCA_WHEN_REQUIRED', 'SCA_WHEN_REQUIRED' ),
+			'SCA_ALWAYS maps to verification method SCA_ALWAYS'               => array( 'SCA_ALWAYS', 'SCA_ALWAYS' ),
+		);
 	}
 }
