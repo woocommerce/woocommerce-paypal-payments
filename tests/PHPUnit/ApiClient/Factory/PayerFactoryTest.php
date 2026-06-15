@@ -201,7 +201,7 @@ class PayerFactoryTest extends TestCase
         $this->assertEquals($data->payer_id, $payer->payer_id());
         $this->assertEquals($data->name->given_name, $payer->name()->given_name());
         $this->assertEquals($data->name->surname, $payer->name()->surname());
-        if (isset($data->phone)) {
+        if (isset($data->phone->phone_number->national_number)) {
             $this->assertEquals($data->phone->phone_type, $payer->phone()->type());
             $this->assertEquals($data->phone->phone_number->national_number, $payer->phone()->phone()->national_number());
         } else {
@@ -252,6 +252,28 @@ class PayerFactoryTest extends TestCase
                     'name' => (object)[
                         'given_name' => 'given_name',
                         'surname' => 'surname',
+                    ],
+                    'tax_info' => (object)[
+                        'tax_id' => 'tax_id',
+                        'tax_id_type' => 'BR_CPF',
+                    ],
+                    'birth_date' => '1970-01-01',
+                    'email_address' => 'email_address',
+                    'payer_id' => 'payer_id',
+                ],
+            ],
+            'phone_with_null_national_number' => [
+                (object)[
+                    'address' => new \stdClass(),
+                    'name' => (object)[
+                        'given_name' => 'given_name',
+                        'surname' => 'surname',
+                    ],
+                    'phone' => (object)[
+                        'phone_type' => 'HOME',
+                        'phone_number' => (object)[
+                            'national_number' => null,
+                        ],
                     ],
                     'tax_info' => (object)[
                         'tax_id' => 'tax_id',
