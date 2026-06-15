@@ -183,6 +183,7 @@ If you encounter issues with the PayPal buttons not appearing after an update, p
 * Fix - Apple pay fails on single product page when no shipping option is available #4375
 * Fix - Settings notifications #4034
 * Fix - Add "Show logos of supported cards" setting #4380
+* Fix - Null phone_number->national_number check #4448
 
 = 4.0.4 - 2026-05-19 =
 * Enhancement - WooCommerce Blueprints integration to import & export the PayPal Payments configuration #4363
