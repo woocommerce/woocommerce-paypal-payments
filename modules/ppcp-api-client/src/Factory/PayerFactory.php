@@ -96,7 +96,7 @@ class PayerFactory
         }
         $payer_name = new PayerName(isset($data->name->given_name) ? (string) $data->name->given_name : '', isset($data->name->surname) ? (string) $data->name->surname : '');
         // TODO deal with phones without type instead of passing a invalid type.
-        $phone = isset($data->phone) ? new PhoneWithType(isset($data->phone->phone_type) ? $data->phone->phone_type : 'undefined', new Phone($data->phone->phone_number->national_number)) : null;
+        $phone = isset($data->phone->phone_number->national_number) ? new PhoneWithType(isset($data->phone->phone_type) ? $data->phone->phone_type : 'undefined', new Phone($data->phone->phone_number->national_number)) : null;
         $tax_info = isset($data->tax_info) ? new PayerTaxInfo($data->tax_info->tax_id, $data->tax_info->tax_id_type) : null;
         $birth_date = isset($data->birth_date) ? \DateTime::createFromFormat('Y-m-d', $data->birth_date) : null;
         return new Payer($payer_name, isset($data->email_address) ? $data->email_address : '', isset($data->payer_id) ? $data->payer_id : '', $address, $birth_date, $phone, $tax_info);
