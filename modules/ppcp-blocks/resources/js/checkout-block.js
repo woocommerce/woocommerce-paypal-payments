@@ -79,6 +79,11 @@ if ( blockEnabled ) {
 			placeOrderButtonLabel: config.placeOrderButtonText,
 			ariaLabel: config.title,
 			canMakePayment: ( cartData ) => {
+				// Free-trial subscriptions have a $0 total today but still
+				// require a payment method to be vaulted for future renewals.
+				if ( config.scriptData.is_free_trial_cart ) {
+					return true;
+				}
 				const total = cartData?.cartTotals?.total_price;
 				return parseInt( total ) > 0;
 			},
