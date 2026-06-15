@@ -7,8 +7,10 @@ use Mockery;
 use Psr\Log\LoggerInterface;
 use WC_Order;
 use WooCommerce\PayPalCommerce\ApiClient\Authentication\Bearer;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\ExperienceContext;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PurchaseUnit;
+use WooCommerce\PayPalCommerce\ApiClient\Factory\ExperienceContextBuilder;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\OrderFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PurchaseUnitFactory;
 use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
@@ -46,9 +48,29 @@ class CaptureCardPaymentTest extends TestCase {
 		$settings_provider->shouldReceive( 'payment_intent' )->andReturn( 'capture' );
 		$settings_provider->shouldReceive( 'three_d_secure_enum' )->andReturn( $three_d_secure_enum );
 
+		$experience_context = Mockery::mock( ExperienceContext::class );
+		$experience_context->shouldReceive( 'to_array' )->andReturn(
+			array(
+				'return_url' => 'https://example.com/return',
+				'cancel_url' => 'https://example.com/cancel',
+			)
+		);
+
+		$experience_context_builder = Mockery::mock( ExperienceContextBuilder::class );
+		$experience_context_builder->shouldReceive( 'with_custom_return_url' )->andReturnSelf();
+		$experience_context_builder->shouldReceive( 'with_custom_cancel_url' )->andReturnSelf();
+		$experience_context_builder->shouldReceive( 'build' )->andReturn( $experience_context );
+
 		$logger = Mockery::mock( LoggerInterface::class );
 		$logger->shouldReceive( 'debug' )->zeroOrMoreTimes();
 
+		when( 'home_url' )->alias( function ( string $path = '' ): string {
+			return 'https://example.com' . $path;
+		} );
+		when( 'add_query_arg' )->alias( function ( string $key, $value, string $url ): string {
+			return $url . '&' . $key . '=' . $value;
+		} );
+		when( 'wc_get_checkout_url' )->justReturn( 'https://example.com/checkout/' );
 		when( 'trailingslashit' )->alias( function ( string $value ): string {
 			return rtrim( $value, '/' ) . '/';
 		} );
@@ -78,6 +100,7 @@ class CaptureCardPaymentTest extends TestCase {
 			$order_factory,
 			$purchase_unit_factory,
 			$settings_provider,
+			$experience_context_builder,
 			$logger
 		);
 	}
@@ -96,6 +119,7 @@ class CaptureCardPaymentTest extends TestCase {
 		$captured_body = array();
 		$testee        = $this->make_testee( $three_d_secure_enum, $captured_body );
 		$wc_order      = Mockery::mock( WC_Order::class );
+		$wc_order->shouldReceive( 'get_id' )->andReturn( 1 );
 
 		$testee->create_order( 'vault-abc-123', $wc_order );
 
@@ -125,6 +149,7 @@ class CaptureCardPaymentTest extends TestCase {
 		$captured_body = array();
 		$testee        = $this->make_testee( $three_d_secure_enum, $captured_body );
 		$wc_order      = Mockery::mock( WC_Order::class );
+		$wc_order->shouldReceive( 'get_id' )->andReturn( 1 );
 
 		$testee->create_order( 'vault-abc-123', $wc_order );
 
@@ -144,6 +169,7 @@ class CaptureCardPaymentTest extends TestCase {
 		$captured_body = array();
 		$testee        = $this->make_testee( '', $captured_body );
 		$wc_order      = Mockery::mock( WC_Order::class );
+		$wc_order->shouldReceive( 'get_id' )->andReturn( 1 );
 
 		$testee->create_order( 'vault-abc-123', $wc_order );
 
@@ -164,6 +190,7 @@ class CaptureCardPaymentTest extends TestCase {
 		$captured_body = array();
 		$testee        = $this->make_testee( 'SCA_WHEN_REQUIRED', $captured_body );
 		$wc_order      = Mockery::mock( WC_Order::class );
+		$wc_order->shouldReceive( 'get_id' )->andReturn( 1 );
 
 		$testee->create_order( 'vault-abc-123', $wc_order );
 
