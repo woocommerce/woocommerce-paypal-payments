@@ -67,8 +67,8 @@ class CaptureCardPaymentTest extends TestCase {
 		when( 'home_url' )->alias( function ( string $path = '' ): string {
 			return 'https://example.com' . $path;
 		} );
-		when( 'add_query_arg' )->alias( function ( string $key, $value, string $url ): string {
-			return $url . '&' . $key . '=' . $value;
+		when( 'add_query_arg' )->alias( function ( $args, string $url ): string {
+			return $url;
 		} );
 		when( 'wc_get_checkout_url' )->justReturn( 'https://example.com/checkout/' );
 		when( 'trailingslashit' )->alias( function ( string $value ): string {
