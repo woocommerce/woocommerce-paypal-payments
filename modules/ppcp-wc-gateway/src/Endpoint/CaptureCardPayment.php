@@ -6,11 +6,13 @@ namespace WooCommerce\PayPalCommerce\WcGateway\Endpoint;
 
 use Psr\Log\LoggerInterface;
 use RuntimeException;
+use WC_AJAX;
 use WC_Order;
 use WooCommerce\PayPalCommerce\ApiClient\Authentication\Bearer;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\RequestTrait;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PurchaseUnit;
+use WooCommerce\PayPalCommerce\ApiClient\Factory\ExperienceContextBuilder;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\OrderFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PurchaseUnitFactory;
 use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
@@ -51,6 +53,13 @@ class CaptureCardPayment {
 	private SettingsProvider $settings_provider;
 
 	/**
+	 * The experience context builder.
+	 *
+	 * @var ExperienceContextBuilder
+	 */
+	private $experience_context_builder;
+
+	/**
 	 * The logger.
 	 *
 	 * @var LoggerInterface
@@ -63,14 +72,16 @@ class CaptureCardPayment {
 		OrderFactory $order_factory,
 		PurchaseUnitFactory $purchase_unit_factory,
 		SettingsProvider $settings_provider,
+		ExperienceContextBuilder $experience_context_builder,
 		LoggerInterface $logger
 	) {
-		$this->host                  = $host;
-		$this->bearer                = $bearer;
-		$this->order_factory         = $order_factory;
-		$this->purchase_unit_factory = $purchase_unit_factory;
-		$this->settings_provider     = $settings_provider;
-		$this->logger                = $logger;
+		$this->host                       = $host;
+		$this->bearer                     = $bearer;
+		$this->order_factory              = $order_factory;
+		$this->purchase_unit_factory      = $purchase_unit_factory;
+		$this->settings_provider          = $settings_provider;
+		$this->experience_context_builder = $experience_context_builder;
+		$this->logger                     = $logger;
 	}
 
 	/**
@@ -82,13 +93,31 @@ class CaptureCardPayment {
 		$intent = strtoupper( $this->settings_provider->payment_intent() ) === 'AUTHORIZE' ? 'AUTHORIZE' : 'CAPTURE';
 		$items  = array( $this->purchase_unit_factory->from_wc_order( $wc_order ) );
 
+		/**
+		 * PayPal's vaulted-card 3D Secure return hits the return URL WITHOUT the
+		 * order token (it appends liability_shift/code/state instead), so
+		 * ReturnUrlEndpoint cannot identify the order by token. Encode the WC order
+		 * id in the return URL so the capture can be resumed on return. A cancelled
+		 * challenge returns to the checkout URL and the order stays unpaid.
+		 */
+		$card_3ds_return_url = add_query_arg(
+			'ppcp_resume_wc_order',
+			$wc_order->get_id(),
+			home_url( WC_AJAX::get_endpoint( ReturnUrlEndpoint::ENDPOINT ) )
+		);
+
 		$card = array(
-			'vault_id'          => $vault_id,
-			'stored_credential' => array(
+			'vault_id'           => $vault_id,
+			'stored_credential'  => array(
 				'payment_initiator' => 'CUSTOMER',
 				'payment_type'      => 'UNSCHEDULED',
 				'usage'             => 'SUBSEQUENT',
 			),
+			'experience_context' => $this->experience_context_builder
+				->with_custom_return_url( $card_3ds_return_url )
+				->with_custom_cancel_url( wc_get_checkout_url() )
+				->build()
+				->to_array(),
 		);
 
 		/**
