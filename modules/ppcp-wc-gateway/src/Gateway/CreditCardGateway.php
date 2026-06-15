@@ -341,7 +341,7 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC
         }
         // phpcs:ignore WordPress.Security.NonceVerification.Missing
         $card_payment_token_id = wc_clean(wp_unslash($_POST['wc-ppcp-credit-card-gateway-payment-token'] ?? ''));
-        if ($this->is_free_trial_order($wc_order) && $card_payment_token_id) {
+        if ($this->is_free_trial_order($wc_order) && $card_payment_token_id && 'new' !== $card_payment_token_id) {
             $customer_tokens = $this->wc_payment_tokens->customer_tokens(get_current_user_id());
             foreach ($customer_tokens as $token) {
                 if ($token['payment_source']->name() === 'card') {
