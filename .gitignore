@@ -13,7 +13,6 @@ modules/*/assets/*
 !tests/qa-legacy-ui/resources/files/*.zip
 .env*
 !.env.example*
-auth.json
 .DS_Store
 tests/.DS_Store
 .composer_compiled_assets
@@ -32,3 +31,7 @@ test-results
 /tests/qa/resources/files/woocommerce-paypal-payments*.zip
 /tests/qa/resources/files/woocommerce-subscriptions*.zip
 .google-session.json
+
+# Do not track private authentication details
+auth.json
+.npmrc
