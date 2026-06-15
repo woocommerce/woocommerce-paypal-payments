@@ -58,6 +58,8 @@ trait OrderMetaTrait {
 			}
 		}
 
+		$this->add_card_details_meta( $wc_order, $order );
+
 		$this->add_contact_details_to_wc_order( $wc_order, $order );
 
 		$wc_order->save();
@@ -141,5 +143,29 @@ trait OrderMetaTrait {
 		}
 
 		return null;
+	}
+
+	/**
+	 * Persists the card brand and last 4 digits for card-backed payment sources.
+	 */
+	private function add_card_details_meta( WC_Order $wc_order, Order $order ): void {
+		$payment_source = $order->payment_source();
+		if ( ! $payment_source ) {
+			return;
+		}
+
+		$properties = $payment_source->properties();
+		// Wallets nest the card details under "card"; the direct card source exposes them at the top level.
+		$card = isset( $properties->card ) ? $properties->card : $properties;
+
+		$brand       = isset( $card->brand ) ? (string) $card->brand : '';
+		$last_digits = isset( $card->last_digits ) ? (string) $card->last_digits : '';
+
+		if ( $brand !== '' ) {
+			$wc_order->update_meta_data( PayPalGateway::ORDER_CARD_BRAND_META_KEY, $brand );
+		}
+		if ( $last_digits !== '' ) {
+			$wc_order->update_meta_data( PayPalGateway::ORDER_CARD_LAST_DIGITS_META_KEY, $last_digits );
+		}
 	}
 }

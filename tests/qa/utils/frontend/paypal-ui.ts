@@ -137,6 +137,10 @@ export class PayPalUi {
 		this.page.locator(
 			'#radio-control-wc-payment-method-options-ppcp-credit-card-gateway__label'
 		);
+	oxxoGateway = () =>
+		this.page.locator(
+			'#radio-control-wc-payment-method-options-ppcp-oxxo-gateway__label'
+		);
 	acdcContainer = () =>
 		this.paymentOptionsContainers().filter( {
 			has: this.acdcGateway(),
@@ -550,10 +554,27 @@ export class PayPalUi {
 		await this.submitOrder();
 	};
 
-	completeOXXOPayment = async ( ...args ) =>
-		console.log(
-			`TODO: completeOXXOPayment for block pages ${ args.length }`
-		);
+	completeOXXOPayment = async () => {
+		await expect(
+			this.oxxoGateway(),
+			'Assert OXXO gateway is visible'
+		).toBeVisible();
+		await this.oxxoGateway().click();
+
+		const popupPromise = this.page.waitForEvent( 'popup', {
+			timeout: 20 * 1000,
+		} );
+		await this.submitOrder();
+		const popup = await popupPromise;
+
+		await expect(
+			popup.getByRole( 'button', { name: 'Test Successful Payment' } ),
+			'Assert OXXO PayPal popup loaded with payment simulation options'
+		).toBeVisible();
+
+		// Close without clicking — payment simulation happens from the thank-you page voucher button
+		await popup.close();
+	};
 
 	completeBcdcPayment = async ( ...args ) =>
 		console.log(

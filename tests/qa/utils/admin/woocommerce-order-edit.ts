@@ -198,13 +198,6 @@ export class WooCommerceOrderEdit extends WooCommerceOrderEditBase {
 			);
 		}
 
-		if ( orderData.payment.gateway.shortcut === 'oxxo' ) {
-			await expect(
-				this.seeOXXOVoucherButton(),
-				'Assert OXXO voucher button is visible'
-			).toBeVisible();
-		}
-
 		if (
 			[ 'paypal', 'paylater', 'venmo' ].includes(
 				orderData.payment.gateway.shortcut

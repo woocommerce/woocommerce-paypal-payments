@@ -17,7 +17,6 @@ use WooCommerce\PayPalCommerce\AdminNotices\Entity\Message;
 use WooCommerce\PayPalCommerce\AdminNotices\Repository\Repository;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Authorization;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Capture;
-use WooCommerce\PayPalCommerce\ApiClient\Entity\OrderStatus;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\ReferenceTransactionStatus;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\DccApplies;
 use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\LocalApmProductStatus;
@@ -46,7 +45,7 @@ use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\CardPaymentsConfiguration;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\DCCProductStatus;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\InstallmentsProductStatus;
-use WooCommerce\PayPalCommerce\WcGateway\Helper\PayUponInvoiceProductStatus;
+use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\PayUponInvoice\PayUponInvoiceProductStatus;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\PWCProductStatus;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\SettingsStatus;
 use WooCommerce\PayPalCommerce\WcGateway\Notice\ConnectAdminNotice;
@@ -88,6 +87,7 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
 	public function run( ContainerInterface $c ): bool {
 		$this->register_payment_gateways( $c );
 		$this->register_order_functionality( $c );
+		$this->register_payment_method_title_enrichment( $c );
 		$this->register_contact_handlers();
 		$this->register_block_express_payment_method_handler( $c );
 		$this->register_columns( $c );
@@ -350,41 +350,10 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
 		add_action(
 			'wp_loaded',
 			function () use ( $c ) {
-				if ( 'DE' === $c->get( 'api.shop.country' ) ) {
-					( $c->get( 'wcgateway.pay-upon-invoice' ) )->init();
-				}
-
 				$fraudnet_assets = $c->get( 'wcgateway.fraudnet-assets' );
 				assert( $fraudnet_assets instanceof FraudNetAssets );
 				$fraudnet_assets->register_assets();
 			}
-		);
-
-		add_action(
-			'woocommerce_paypal_payments_check_pui_payment_captured',
-			function ( int $wc_order_id, string $order_id ) use ( $c ) {
-				$order_endpoint = $c->get( 'api.endpoint.order' );
-				$logger         = $c->get( 'woocommerce.logger.woocommerce' );
-				$order          = $order_endpoint->order( $order_id );
-				$order_status   = $order->status();
-				$logger->info( "Checking payment captured webhook for WC order #{$wc_order_id}, PayPal order status: " . $order_status->name() );
-
-				$wc_order = wc_get_order( $wc_order_id );
-				if ( ! ( $wc_order instanceof WC_Order ) || $wc_order->get_status() !== 'on-hold' ) {
-					return;
-				}
-
-				if ( $order_status->name() !== OrderStatus::COMPLETED ) {
-					$message = __(
-						'Could not process WC order because PAYMENT.CAPTURE.COMPLETED webhook not received.',
-						'woocommerce-paypal-payments'
-					);
-					$logger->error( $message );
-					$wc_order->update_status( 'failed', $message );
-				}
-			},
-			10,
-			2
 		);
 
 		add_action(
@@ -608,9 +577,8 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
 				$settings = $container->get( 'wcgateway.settings' );
 				assert( $settings instanceof ContainerInterface );
 
-				$is_our_page           = $container->get( 'wcgateway.is-plugin-settings-page' );
-				$is_gateways_list_page = $container->get( 'wcgateway.is-wc-gateways-list-page' );
-				$is_connected          = $container->get( 'settings.flag.is-connected' );
+				$is_our_page  = $container->get( 'wcgateway.is-plugin-settings-page' );
+				$is_connected = $container->get( 'settings.flag.is-connected' );
 
 				if ( ! $is_connected ) {
 					return $methods;
@@ -642,20 +610,6 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
 
 				if ( $paypal_gateway_enabled && apply_filters( 'woocommerce_paypal_payments_card_button_gateway_should_register_gateway', $container->get( 'wcgateway.settings.allow_card_button_gateway' ) ) ) {
 					$methods[] = $container->get( 'wcgateway.card-button-gateway' );
-				}
-
-				$pui_product_status = $container->get( 'wcgateway.pay-upon-invoice-product-status' );
-				assert( $pui_product_status instanceof PayUponInvoiceProductStatus );
-
-				$shop_country = $container->get( 'api.shop.country' );
-
-				if ( 'DE' === $shop_country &&
-					( $is_our_page ||
-						$is_gateways_list_page ||
-						$pui_product_status->is_active()
-					)
-				) {
-					$methods[] = $container->get( 'wcgateway.pay-upon-invoice-gateway' );
 				}
 
 				return (array) $methods;
@@ -929,6 +883,26 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
 		}
 
 		return false === strpos( $order->get_payment_method_title(), '(via PayPal)' );
+	}
+
+	/**
+	 * Enriches the payment method title with payment details
+	 * (payer email or card brand + last 4 digits) for supported gateways.
+	 */
+	private function register_payment_method_title_enrichment( ContainerInterface $c ): void {
+		add_filter(
+			'woocommerce_order_get_payment_method_title',
+			static function ( $title, $order ) use ( $c ) {
+				if ( ! is_string( $title ) || ! $order instanceof WC_Order ) {
+					return $title;
+				}
+
+				$enricher = $c->get( 'wcgateway.payment-method-title-enricher' );
+				return $enricher->enrich( $title, $order );
+			},
+			10,
+			2
+		);
 	}
 
 	/**

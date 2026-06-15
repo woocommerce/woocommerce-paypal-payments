@@ -35,6 +35,7 @@ return static function ( string $root_dir ): iterable {
 		( require "$modules_dir/ppcp-local-alternative-payment-methods/module.php" )(),
 		( require "$modules_dir/ppcp-settings/module.php" )(),
 		( require "$modules_dir/ppcp-fraud-protection/module.php" )(),
+		( require "$modules_dir/ppcp-abilities/module.php" )(),
 	);
 	// phpcs:disable WordPress.NamingConventions.ValidHookName.UseUnderscores
 
@@ -84,6 +85,13 @@ return static function ( string $root_dir ): iterable {
 	) ) {
 		$modules[] = ( require "$modules_dir/ppcp-axo/module.php" )();
 		$modules[] = ( require "$modules_dir/ppcp-axo-block/module.php" )();
+	}
+
+	if ( apply_filters(
+		'woocommerce.feature-flags.woocommerce_paypal_payments.vault_component_enabled',
+		getenv( 'PCP_VAULT_COMPONENT_ENABLED' ) !== '0'
+	) ) {
+		$modules[] = ( require "$modules_dir/ppcp-vault-component/module.php" )();
 	}
 
 	if ( apply_filters(

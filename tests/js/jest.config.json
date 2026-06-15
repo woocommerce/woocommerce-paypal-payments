@@ -9,7 +9,8 @@
         "^@ppcp-settings/(.*)$": "<rootDir>/modules/ppcp-settings/resources/js/$1",
         "^@ppcp-blocks/(.*)$": "<rootDir>/modules/ppcp-blocks/resources/js/$1",
         "^@ppcp-card-fields/(.*)$": "<rootDir>/modules/ppcp-card-fields/resources/js/$1",
-        "^@ppcp-paylater-block/(.*)$": "<rootDir>/modules/ppcp-paylater-block/resources/js/$1"
+        "^@ppcp-paylater-block/(.*)$": "<rootDir>/modules/ppcp-paylater-block/resources/js/$1",
+        "^@ppcp-googlepay/(.*)$": "<rootDir>/modules/ppcp-googlepay/resources/js/$1"
     },
     "testPathIgnorePatterns": [
         "<rootDir>/tests/",

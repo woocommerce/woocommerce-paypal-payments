@@ -1,0 +1,16 @@
+{
+    "name": "woocommerce/ppcp-vault-component",
+    "type": "dhii-mod",
+    "description": "Vault Component module for PPCP",
+    "license": "GPL-2.0",
+    "require": {
+        "php": "^7.4 | ^8.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "WooCommerce\\PayPalCommerce\\VaultComponent\\": "src"
+        }
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true
+}

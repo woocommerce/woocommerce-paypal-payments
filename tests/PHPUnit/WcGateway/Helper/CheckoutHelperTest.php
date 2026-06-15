@@ -4,10 +4,9 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\WcGateway\Helper;
 
 use DateTime;
-use Mockery;
 use WooCommerce\PayPalCommerce\TestCase;
 
-class PayUponInvoiceHelperTest extends TestCase
+class CheckoutHelperTest extends TestCase
 {
 	/**
 	 * @dataProvider datesProvider
