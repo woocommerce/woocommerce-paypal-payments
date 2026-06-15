@@ -320,7 +320,7 @@ export class PayPalUiClassic extends PayPalUi {
 	 */
 	async openPayLaterPopup(): Promise< PayPalPopup > {
 		// Select gateway if not on classic-cart page
-		if ( ! this.page.url().includes( 'classic-cart' ) ) {
+		if ( this.page.url().includes( 'classic-checkout' ) ) {
 			await this.payPalGateway().click();
 		}
 		return await super.openPayLaterPopup();

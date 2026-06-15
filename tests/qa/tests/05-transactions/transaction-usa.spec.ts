@@ -21,6 +21,7 @@ import {
 	payLaterCheckout,
 	payLaterCheckoutExcludingTax,
 	payLaterCheckoutIntentAuthorized,
+	payLaterProduct,
 } from './_test-data/pay-later';
 import {
 	acdcCheckout,
@@ -64,6 +65,10 @@ for ( const testOrder of acdcPayByLink ) {
 }
 
 for ( const testOrder of payPalProduct ) {
+	transactionsOnProduct( testOrder );
+}
+
+for ( const testOrder of payLaterProduct ) {
 	transactionsOnProduct( testOrder );
 }
 
