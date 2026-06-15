@@ -154,6 +154,29 @@ class CaptureCardPaymentTest extends TestCase {
 		);
 	}
 
+	/**
+	 * GIVEN a vaulted card charge is built by create_order
+	 * WHEN the request body is inspected
+	 * THEN payment_source.card.experience_context exists and is a non-empty array
+	 * AND experience_context.return_url is a non-empty string
+	 */
+	public function test_create_order_includes_experience_context_with_return_url(): void {
+		$captured_body = array();
+		$testee        = $this->make_testee( 'SCA_WHEN_REQUIRED', $captured_body );
+		$wc_order      = Mockery::mock( WC_Order::class );
+
+		$testee->create_order( 'vault-abc-123', $wc_order );
+
+		$this->assertTrue(
+			array_key_exists( 'experience_context', $captured_body['payment_source']['card'] ),
+			'create_order() must include payment_source.card.experience_context with a return_url'
+		);
+		$this->assertNotEmpty(
+			$captured_body['payment_source']['card']['experience_context']['return_url'] ?? null,
+			'create_order() must include payment_source.card.experience_context with a return_url'
+		);
+	}
+
 	public function three_d_secure_enum_provider(): array {
 		return [
 			'SCA_WHEN_REQUIRED setting' => [ 'SCA_WHEN_REQUIRED' ],
