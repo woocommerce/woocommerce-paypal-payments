@@ -61,6 +61,7 @@ setup( 'setup:transaction:usa;', async ( { utils, pcpApi } ) => {
 		[ payLater.id ]: { id: payLater.id, enabled: true },
 		[ venmo.id ]: { id: venmo.id, enabled: true },
 		[ acdc.id ]: { id: acdc.id, enabled: true },
+		[ googlepay.id ]: { id: googlepay.id, enabled: true },
 		[ fastlane.id ]: { id: fastlane.id, enabled: false },
 	} );
 } );
@@ -73,27 +74,6 @@ setup( 'setup:transaction:mexico;', async ( { utils, pcpApi } ) => {
 	await pcpApi.updatePcpPaymentMethods( {
 		[ payPal.id ]: { id: payPal.id, enabled: true },
 		[ bcdc.id ]: { id: bcdc.id, enabled: true },
-	} );
-} );
-
-setup( 'setup:transaction:googlepay;', async ( { utils, pcpApi } ) => {
-	await utils.configureStore( {
-		enableClassicPages: false,
-		customer: customers.usa,
-	} );
-	await pcpApi.updatePcpPaymentMethods( {
-		[ acdc.id ]: { id: acdc.id, enabled: true },
-		[ googlepay.id ]: { id: googlepay.id, enabled: true },
-	} );
-} );
-
-// --- Refund ---
-
-setup( 'setup:refund;', async ( { utils, pcpApi } ) => {
-	await utils.configureStore( { customer: customers.usa } );
-	await pcpApi.updatePcpPaymentMethods( {
-		[ payPal.id ]: { id: payPal.id, enabled: true },
-		[ acdc.id ]: { id: acdc.id, enabled: true },
 	} );
 } );
 

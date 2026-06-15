@@ -21,7 +21,6 @@ on:
           - shard:settings
           - shard:transaction-usa
           - shard:transaction-mexico
-          # - shard:transaction-googlepay - temporarily disabled due to instability in CI
           - shard:refund
           - shard:vaulting
           - shard:subscription
@@ -72,7 +71,6 @@ jobs:
             settings
             transaction-usa
             transaction-mexico
-            # transaction-googlepay - temporarily disabled due to instability in CI
             refund
             vaulting
             subscription

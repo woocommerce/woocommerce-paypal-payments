@@ -26,6 +26,6 @@ test.beforeEach( async ( { visitorPage } ) => {
 	await GooglePayPopup.applyBrowserPatches( visitorPage.context() );
 } );
 
-for ( const order of googlePayCheckout ) {
-	transactionsOnCheckout( order );
+for ( const testOrder of googlePayCheckout ) {
+	transactionsOnCheckout( testOrder );
 }
