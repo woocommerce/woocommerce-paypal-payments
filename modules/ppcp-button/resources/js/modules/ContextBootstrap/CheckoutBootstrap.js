@@ -229,7 +229,11 @@ class CheckoutBootstrap {
 		const hasVaultedPaypal =
 			!! PayPalCommerceGateway.vaulted_paypal_email;
 		const useSmartButtons = this.renderer.useSmartButtons ?? true;
-		const showVaultComponent = !! this.vaultRenderer && isPaypal;
+		// A zero-total subscription cart (free trial or 100% coupon) must use the
+		// save-without-purchase flow. The Vault Component is order-based and would
+		// create a $0 order, which PayPal rejects with CANNOT_BE_ZERO_OR_NEGATIVE.
+		const showVaultComponent =
+			!! this.vaultRenderer && isPaypal && ! isFreeTrial;
 
 		const paypalButtonWrappers = {
 			...Object.entries( PayPalCommerceGateway.separate_buttons ).reduce(
