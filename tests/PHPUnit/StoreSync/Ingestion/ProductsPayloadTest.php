@@ -382,6 +382,46 @@ class ProductsPayloadTest extends TestCase {
 		}
 	}
 
+	/**
+	 * GIVEN a simple product (no variants) with id 123
+	 * WHEN its payload entry is built by ProductsPayload
+	 * THEN the entry MUST contain an `item_group_id` key equal to the product's own id ('123')
+	 */
+	public function test_simple_product_includes_item_group_id_equal_to_id(): void {
+		$product_id = 123;
+		$product    = Mockery::mock( WC_Product_Simple::class );
+
+		$product->shouldReceive( 'get_id' )->andReturn( $product_id );
+		$product->shouldReceive( 'get_type' )->andReturn( 'simple' );
+		$product->shouldReceive( 'is_type' )->with( 'variable' )->andReturn( false );
+		$product->shouldReceive( 'get_name' )->andReturn( 'Test Product' );
+		$product->shouldReceive( 'get_permalink' )->andReturn( 'https://example.com/product/test' );
+		$product->shouldReceive( 'get_image_id' )->andReturn( 456 );
+		$product->shouldReceive( 'get_description' )->andReturn( 'Full description' );
+		$product->shouldReceive( 'get_short_description' )->andReturn( 'Short description' );
+		$product->shouldReceive( 'get_price' )->andReturn( '29.99' );
+		$product->shouldReceive( 'get_stock_status' )->andReturn( 'instock' );
+		$product->shouldReceive( 'get_sku' )->andReturn( 'SKU-123' );
+		$product->shouldReceive( 'get_sale_price' )->andReturn( '19.99' );
+
+		when( 'wc_get_product' )->justReturn( $product );
+		when( 'wp_get_attachment_image_url' )->justReturn( 'https://example.com/image.jpg' );
+		when( 'get_woocommerce_currency' )->justReturn( 'USD' );
+		when( 'wc_get_product_category_list' )->justReturn( 'Electronics, Gadgets' );
+		when( 'wp_strip_all_tags' )->returnArg( 1 );
+
+		$payload = new ProductsPayload(
+			'https://example.com',
+			array( $product_id ),
+			$this->make_product_manager_stub()
+		);
+		$result  = $payload->get_array();
+
+		$this->assertCount( 1, $result );
+		$this->assertArrayHasKey( 'item_group_id', $result[0] );
+		$this->assertSame( '123', $result[0]['item_group_id'] );
+	}
+
 	public function test_product_with_all_optional_fields_missing(): void {
 		$product_id = 123;
 		$product    = Mockery::mock( WC_Product_Simple::class );
