@@ -64,6 +64,16 @@ setup( 'setup:transaction:usa;', async ( { utils, pcpApi } ) => {
 		[ googlepay.id ]: { id: googlepay.id, enabled: true },
 		[ fastlane.id ]: { id: fastlane.id, enabled: false },
 	} );
+	await pcpApi.updatePcpStyling( {
+		cart: {
+			enabled: true,
+			methods: [ payPal.id, payLater.id, venmo.id, googlepay.id ],
+		},
+		product: {
+			enabled: true,
+			methods: [ payPal.id, payLater.id, venmo.id, googlepay.id ],
+		},
+	} );
 } );
 
 setup( 'setup:transaction:mexico;', async ( { utils, pcpApi } ) => {

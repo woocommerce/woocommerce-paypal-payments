@@ -2,8 +2,8 @@
  * Internal dependencies
  */
 import { test } from '../../utils';
-import { transactionsOnCheckout } from './_test-scenarios';
-import { googlePayCheckout } from './_test-data/googlepay';
+import { transactionsOnCheckout, transactionsOnProduct } from './_test-scenarios';
+import { googlePayCheckout, googlePayProduct } from './_test-data/googlepay';
 import { GooglePayPopup } from '../../utils/frontend/google-pay-popup';
 
 test.use( {
@@ -28,4 +28,8 @@ test.beforeEach( async ( { visitorPage } ) => {
 
 for ( const testOrder of googlePayCheckout ) {
 	transactionsOnCheckout( testOrder );
+}
+
+for ( const testOrder of googlePayProduct ) {
+	transactionsOnProduct( testOrder );
 }

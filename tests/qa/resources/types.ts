@@ -145,6 +145,65 @@ export namespace Pcp {
 			softDescriptor?: string;
 			subtotalAdjustment?: string;
 		};
+
+		export namespace Styling {
+			// Top-level styling keys (camelCase) — addresses each location's config
+			export type LocationPageKey =
+				| 'cart'
+				| 'classicCheckout'
+				| 'expressCheckout'
+				| 'miniCart'
+				| 'product';
+
+			// Value echoed in the `location` field of a styling block (snake_case)
+			export type LocationPageSlug =
+				| 'cart'
+				| 'classic_checkout'
+				| 'express_checkout'
+				| 'mini_cart'
+				| 'product';
+
+			// API value of Admin.Styling.ButtonLayout
+			export type ButtonLayout = 'vertical' | 'horizontal';
+
+			// API value of Admin.Styling.ButtonShape
+			export type ButtonShape = 'rect' | 'pill';
+
+			// API value of Admin.Styling.ButtonLabel
+			// 'paypal' = PayPal, 'checkout' = Checkout, 'buynow' = PayPal Buy Now, 'pay' = Pay with PayPal
+			export type ButtonLabel = 'paypal' | 'checkout' | 'buynow' | 'pay';
+
+			// API value of Admin.Styling.ButtonColor
+			export type ButtonColor =
+				| 'gold'
+				| 'blue'
+				| 'silver'
+				| 'black'
+				| 'white';
+
+			// Per-location styling block (mirrors Admin.Styling.Config)
+			export type LocationPageConfig = {
+				enabled?: boolean;
+				methods?: Extract <
+					GatewayId,
+					| 'ppcp-gateway'
+					| 'pay-later'
+					| 'venmo'
+					| 'ppcp-googlepay'
+					| 'ppcp-applepay'
+				>[];
+				label?: ButtonLabel;
+				shape?: ButtonShape;
+				color?: ButtonColor;
+				location?: LocationPageSlug;
+				layout?: ButtonLayout;
+				tagline?: boolean;
+			};
+
+			export type Settings = Partial <
+				Record < LocationPageKey, LocationPageConfig >
+			>;
+		}
 	}
 
 	export namespace Admin {
@@ -185,7 +244,7 @@ export namespace Pcp {
 		};
 
 		export namespace Styling {
-			export type Location =
+			export type LocationPage =
 				| 'Cart'
 				| 'Classic Checkout'
 				| 'Express Checkout'
@@ -217,8 +276,8 @@ export namespace Pcp {
 				| 'Black'
 				| 'White';
 
-			export type Config = {
-				location?: Location;
+			export type LocationPageConfig = {
+				location?: LocationPage;
 				enablePaymentMethodsInLocation?: boolean;
 				paymentMethods?: PaymentMethods;
 				buttonLayout?: ButtonLayout;
@@ -295,7 +354,7 @@ export namespace Pcp {
 			merchant?: Merchant;
 			paymentMethods?: Gateway[];
 			settings?: Settings;
-			styling?: Styling.Config;
+			styling?: Styling.LocationPageConfig;
 			payLaterMessaging?: Plm.Config;
 		};
 	}

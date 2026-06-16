@@ -23,7 +23,7 @@ export const transactionsOnProduct = ( testOrder: ShopOrder ) => {
 			await test.step( `Visit product page and assert ${ gatewayTitle } button visibility`, async () => {
 				await product.visit( products[ 0 ].slug );
 				await expect(
-					product.payPalUi.fundingSourceButton( gatewayShortcut ),
+					getTestedGatewayButton( product, gatewayShortcut ),
 					`Assert ${ gatewayTitle } button is visible on product page`,
 				).toBeVisible();
 			} );
@@ -71,6 +71,19 @@ export const transactionsOnProduct = ( testOrder: ShopOrder ) => {
 		}
 	);
 };
+
+const getTestedGatewayContainer = ( product: Product, gatewayShortcut: string ) => {
+	return gatewayShortcut === 'googlepay'
+		? product.payPalUi.googlePayGatewayContainer()
+		: product.payPalUi.payPalGatewayContainer();
+}
+
+const getTestedGatewayButton = ( product: Product, gatewayShortcut: string ) => {
+	return gatewayShortcut === 'googlepay'
+		? product.payPalUi.googlePayButton()
+		: product.payPalUi.fundingSourceButton( gatewayShortcut );
+}
+
 const assertPaymentBlockedBeforeVariationSelected = async (
 	product: Product,
 	gatewayTitle: string,
@@ -78,9 +91,9 @@ const assertPaymentBlockedBeforeVariationSelected = async (
 ) => {
 	await test.step( `Assert payment impossible with ${ gatewayTitle } before selecting variations`, async () => {
 		await expect(
-			product.payPalUi.payPalGatewayContainer(),
+			getTestedGatewayContainer( product, gatewayShortcut ),
 			'Assert PayPal gateway container is disabled before selecting variations',
-		).toHaveClass( 'ppcp-disabled' );
+		).toContainClass( 'ppcp-disabled' );
 
 		product.page.once( 'dialog', async ( dialog ) => {
 			expect(
@@ -91,7 +104,7 @@ const assertPaymentBlockedBeforeVariationSelected = async (
 			);
 			await dialog.accept();
 		} );
-		await product.payPalUi.fundingSourceButton( gatewayShortcut ).click( { force: true } );
+		await getTestedGatewayButton( product, gatewayShortcut ).click( { force: true } );
 	} );
 };
 
@@ -105,12 +118,12 @@ const assertPaymentEnabledAfterVariationSelected = async (
 		await product.selectVariation( variationToSelect );
 
 		await expect(
-			product.payPalUi.payPalGatewayContainer(),
+			getTestedGatewayContainer( product, gatewayShortcut ),
 			'Assert PayPal gateway container is enabled after selecting variations',
-		).not.toHaveClass( 'ppcp-disabled' );
+		).not.toContainClass( 'ppcp-disabled' );
 
 		await expect(
-			product.payPalUi.fundingSourceButton( gatewayShortcut ),
+			getTestedGatewayButton( product, gatewayShortcut ),
 			`Assert ${ gatewayTitle } button is visible after selecting variations`,
 		).toBeVisible();
 	} );

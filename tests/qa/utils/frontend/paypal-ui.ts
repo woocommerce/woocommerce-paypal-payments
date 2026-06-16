@@ -69,7 +69,7 @@ export class PayPalUi {
 			)
 			.locator( `[data-funding-source="venmo"]` );
 
-	googlepayButton = () =>
+	googlePayButton = () =>
 		this.page
 			.locator( '#express-payment-method-ppcp-googlepay .gpay-button' )
 			.or(
@@ -276,10 +276,10 @@ export class PayPalUi {
 			timeout: 20 * 1000,
 		} );
 		await expect(
-			this.googlepayButton(),
+			this.googlePayButton(),
 			'Assert Google Pay button is visible'
 		).toBeVisible();
-		await this.googlepayButton().click();
+		await this.googlePayButton().click();
 
 		const popup = await popupPromise;
 		await popup.waitForLoadState();

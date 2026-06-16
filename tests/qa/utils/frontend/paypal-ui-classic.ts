@@ -19,6 +19,9 @@ export class PayPalUiClassic extends PayPalUi {
 
 	payPalGatewayContainer = () =>
 		this.page.locator( '#ppc-button-ppcp-gateway' );
+
+	googlePayGatewayContainer = () =>
+		this.page.locator( '#ppc-button-googlepay-container' );
 	payPalIframe = () =>
 		this.payPalGatewayContainer()
 			.frameLocator( 'iframe[name^="__zoid__paypal_buttons__"]' );
@@ -34,6 +37,7 @@ export class PayPalUiClassic extends PayPalUi {
 	sofortButton = () => this.fundingSourceButton( 'sofort' );
 	bcdcFundingSourceButton = () => this.fundingSourceButton( 'card' );
 	venmoButton = () => this.fundingSourceButton( 'venmo' );
+	googlePayButton = () => this.page.locator( '#gpay-button-online-api-id' );
 
 	fundingSourceButtonLabelText = ( name ) =>
 		this.fundingSourceButton( name ).locator( '.paypal-button-text' ); // additional text on paypal buttons
