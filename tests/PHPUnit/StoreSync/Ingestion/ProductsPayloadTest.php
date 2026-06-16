@@ -6,6 +6,7 @@ namespace WooCommerce\PayPalCommerce\StoreSync\Ingestion;
 use WooCommerce\PayPalCommerce\StoreSync\Config\StoreCurrencyValue;
 use WooCommerce\PayPalCommerce\StoreSync\Helper\ProductManager;
 use WooCommerce\PayPalCommerce\TestCase;
+use WooCommerce\PayPalCommerce\StoreSync\Ingestion\ProductDTO;
 use WC_Product;
 use WC_Product_Simple;
 use WC_Product_Variable;
@@ -56,11 +57,17 @@ class ProductsPayloadTest extends TestCase {
 			array( $product_id ),
 			$this->make_product_manager_stub()
 		);
-		$result  = $payload->get_array();
+		$result  = array_map(
+			static function ( ProductDTO $dto ): array {
+				return $dto->to_array();
+			},
+			$payload->get_products()
+		);
 
 		$this->assertCount( 1, $result );
 		$this->assertEquals( array(
 			'id'               => '123',
+			'item_group_id'    => '123',
 			'title'            => 'Test Product',
 			'link'             => 'https://example.com/product/test',
 			'image_link'       => 'https://example.com/image.jpg',
@@ -164,7 +171,12 @@ class ProductsPayloadTest extends TestCase {
 			array( $parent_id ),
 			$this->make_product_manager_stub()
 		);
-		$result  = $payload->get_array();
+		$result  = array_map(
+			static function ( ProductDTO $dto ): array {
+				return $dto->to_array();
+			},
+			$payload->get_products()
+		);
 
 		$this->assertCount( 2, $result );
 
@@ -237,7 +249,12 @@ class ProductsPayloadTest extends TestCase {
 			array( $parent_id ),
 			$this->make_product_manager_stub()
 		);
-		$result  = $payload->get_array();
+		$result  = array_map(
+			static function ( ProductDTO $dto ): array {
+				return $dto->to_array();
+			},
+			$payload->get_products()
+		);
 
 		$this->assertCount( 0, $result );
 	}
@@ -249,7 +266,12 @@ class ProductsPayloadTest extends TestCase {
 			array( 999 ),
 			$this->make_product_manager_stub()
 		);
-		$result  = $payload->get_array();
+		$result  = array_map(
+			static function ( ProductDTO $dto ): array {
+				return $dto->to_array();
+			},
+			$payload->get_products()
+		);
 
 		$this->assertCount( 0, $result );
 	}
@@ -260,7 +282,12 @@ class ProductsPayloadTest extends TestCase {
 			array(),
 			$this->make_product_manager_stub()
 		);
-		$result  = $payload->get_array();
+		$result  = array_map(
+			static function ( ProductDTO $dto ): array {
+				return $dto->to_array();
+			},
+			$payload->get_products()
+		);
 
 		$this->assertIsArray( $result );
 		$this->assertCount( 0, $result );
@@ -294,7 +321,12 @@ class ProductsPayloadTest extends TestCase {
 			array( $product_id ),
 			$this->make_product_manager_stub()
 		);
-		$result  = $payload->get_array();
+		$result  = array_map(
+			static function ( ProductDTO $dto ): array {
+				return $dto->to_array();
+			},
+			$payload->get_products()
+		);
 
 		$this->assertCount( 1, $result );
 		// Based on the implementation, image_link is always set (empty string if no image)
@@ -333,7 +365,12 @@ class ProductsPayloadTest extends TestCase {
 			array( $product_id ),
 			$this->make_product_manager_stub()
 		);
-		$result  = $payload->get_array();
+		$result  = array_map(
+			static function ( ProductDTO $dto ): array {
+				return $dto->to_array();
+			},
+			$payload->get_products()
+		);
 
 		$this->assertCount( 1, $result );
 		// Based on actual implementation, empty price returns empty string
@@ -376,7 +413,12 @@ class ProductsPayloadTest extends TestCase {
 				array( $product_id ),
 				$this->make_product_manager_stub()
 			);
-			$result  = $payload->get_array();
+			$result  = array_map(
+				static function ( ProductDTO $dto ): array {
+					return $dto->to_array();
+				},
+				$payload->get_products()
+			);
 
 			$this->assertEquals( $expected_availability, $result[0]['availability'] );
 		}
@@ -415,7 +457,12 @@ class ProductsPayloadTest extends TestCase {
 			array( $product_id ),
 			$this->make_product_manager_stub()
 		);
-		$result  = $payload->get_array();
+		$result  = array_map(
+			static function ( ProductDTO $dto ): array {
+				return $dto->to_array();
+			},
+			$payload->get_products()
+		);
 
 		$this->assertCount( 1, $result );
 		$this->assertArrayHasKey( 'item_group_id', $result[0] );
@@ -450,7 +497,12 @@ class ProductsPayloadTest extends TestCase {
 			array( $product_id ),
 			$this->make_product_manager_stub()
 		);
-		$result  = $payload->get_array();
+		$result  = array_map(
+			static function ( ProductDTO $dto ): array {
+				return $dto->to_array();
+			},
+			$payload->get_products()
+		);
 
 		$this->assertCount( 1, $result );
 		// Check required fields are present
