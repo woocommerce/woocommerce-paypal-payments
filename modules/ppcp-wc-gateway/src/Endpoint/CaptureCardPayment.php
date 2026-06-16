@@ -97,10 +97,8 @@ class CaptureCardPayment {
 		 * PayPal's vaulted-card 3D Secure return hits the return URL WITHOUT the
 		 * order token (it appends liability_shift/code/state instead), so
 		 * ReturnUrlEndpoint cannot identify the order by token. Encode the WC order
-		 * id plus a per-order resume nonce in the return URL: the order id locates
-		 * the order, and the nonce (matched against the order meta on return)
-		 * prevents the resume from being triggered by a manually crafted URL. A
-		 * cancelled challenge returns to the checkout URL and the order stays unpaid.
+		 * id plus a per-order resume nonce in the return URL so the return handler
+		 * can locate and authenticate the order.
 		 */
 		$card_3ds_return_url = add_query_arg(
 			array(

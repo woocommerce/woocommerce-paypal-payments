@@ -461,10 +461,8 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 
 		/**
 		 * Resume a vaulted-card payment after the buyer completed a 3D Secure
-		 * challenge and returned via the PayPal return URL (ppc-return-url). The
-		 * resume only proceeds when the one-time nonce in the return URL matches
-		 * the nonce stored on the order, so a manually crafted return URL cannot
-		 * trigger it. The nonce is cleared immediately, making it single-use.
+		 * challenge. The one-time nonce in the return URL must match the value
+		 * stored on the order; it is cleared on use, so the resume is single-use.
 		 */
 		// wp_unslash() can return an array, so the value is sanitized on the next line behind an is_string() guard.
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
