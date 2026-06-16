@@ -373,13 +373,13 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC
         }
         /**
          * Resume a vaulted-card payment after the buyer completed a 3D Secure
-         * challenge and returned via the PayPal return URL (ppc-return-url). The
-         * resume only proceeds when the one-time nonce in the return URL matches
-         * the nonce stored on the order, so a manually crafted return URL cannot
-         * trigger it. The nonce is cleared immediately, making it single-use.
+         * challenge. The one-time nonce in the return URL must match the value
+         * stored on the order; it is cleared on use, so the resume is single-use.
          */
-        // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-        $provided_resume_nonce = isset($_GET['ppcp_resume_nonce']) ? sanitize_text_field(wp_unslash($_GET['ppcp_resume_nonce'])) : '';
+        // wp_unslash() can return an array, so the value is sanitized on the next line behind an is_string() guard.
+        // phpcs:ignore WordPress.Security.NonceVerification.Recommended, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+        $provided_resume_nonce = wp_unslash($_GET['ppcp_resume_nonce'] ?? '');
+        $provided_resume_nonce = is_string($provided_resume_nonce) ? sanitize_text_field($provided_resume_nonce) : '';
         $stored_resume_nonce = (string) $wc_order->get_meta(self::THREE_DS_RESUME_META);
         if ($stored_resume_nonce && $provided_resume_nonce && hash_equals($stored_resume_nonce, $provided_resume_nonce)) {
             $wc_order->delete_meta_data(self::THREE_DS_RESUME_META);

@@ -149,19 +149,18 @@ class ReturnUrlEndpoint
      *
      * PayPal returns from a vaulted-card 3DS challenge without the order token, so
      * the order is identified by the WC order id that CaptureCardPayment encoded
-     * in the return URL. The accompanying one-time nonce must match the value
-     * stored on the order, otherwise the request is ignored — both the order id
-     * and the nonce travel in public query arguments, so the nonce is what makes a
-     * manually crafted return URL unable to trigger processing. Re-runs the
-     * gateway's payment processing, which captures the now-authenticated order and
-     * completes it. Exits on a handled success; returns so the caller can fall
-     * back to the error redirect otherwise.
+     * in the return URL. Re-runs the gateway's payment processing, which captures
+     * the now-authenticated order and completes it. Exits on a handled success;
+     * returns so the caller can fall back to the error redirect otherwise.
      */
     private function maybe_resume_card_3ds(): void
     {
         // phpcs:disable WordPress.Security.NonceVerification.Recommended
         $wc_order_id = isset($_GET['ppcp_resume_wc_order']) ? absint(wp_unslash($_GET['ppcp_resume_wc_order'])) : 0;
-        $provided_nonce = isset($_GET['ppcp_resume_nonce']) ? sanitize_text_field(wp_unslash($_GET['ppcp_resume_nonce'])) : '';
+        // wp_unslash() can return an array, so the value is sanitized on the next line behind an is_string() guard.
+        // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+        $provided_nonce = wp_unslash($_GET['ppcp_resume_nonce'] ?? '');
+        $provided_nonce = is_string($provided_nonce) ? sanitize_text_field($provided_nonce) : '';
         // phpcs:enable WordPress.Security.NonceVerification.Recommended
         if (!$wc_order_id || !$provided_nonce) {
             return;
