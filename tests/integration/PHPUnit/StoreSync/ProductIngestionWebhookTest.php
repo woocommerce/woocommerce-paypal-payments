@@ -55,6 +55,7 @@ class ProductIngestionWebhookTest extends TestCase {
 		$products = array(
 			array(
 				'id'               => 'ITEM-1',
+				'item_group_id'    => 'ITEM-1',
 				'title'            => 'Whiskey-Tumblers (4pcs)',
 				'link'             => 'https://wc-pp.ddev.site/products/item-1',
 				'image_link'       => 'no-image',
@@ -65,6 +66,7 @@ class ProductIngestionWebhookTest extends TestCase {
 			),
 			array(
 				'id'               => 'ITEM-2',
+				'item_group_id'    => 'ITEM-2',
 				'title'            => 'Sencha Tea-Ceremony Set',
 				'link'             => 'https://wc-pp.ddev.site/products/item-2',
 				'image_link'       => 'no-image',
@@ -75,6 +77,7 @@ class ProductIngestionWebhookTest extends TestCase {
 			),
 			array(
 				'id'               => 'ITEM-3',
+				'item_group_id'    => 'ITEM-3',
 				'title'            => 'Surprise bag',
 				'link'             => 'https://wc-pp.ddev.site/products/item-3',
 				'image_link'       => 'it-is-a-surprise!',
