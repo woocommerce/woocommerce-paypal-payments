@@ -18,6 +18,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\OrderStatus;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 use WooCommerce\PayPalCommerce\Assets\AssetGetter;
+use WooCommerce\PayPalCommerce\Button\Helper\Context;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
 use WooCommerce\PayPalCommerce\WcPaymentTokens\WooCommercePaymentTokens;
@@ -122,6 +123,13 @@ class PayPalGateway extends \WC_Payment_Gateway {
 	private string $prefix;
 
 	/**
+	 * The context helper, used to detect the PayPal continuation flow.
+	 *
+	 * @var Context
+	 */
+	private Context $context;
+
+	/**
 	 * ID of the class extending the settings API. Used in option names.
 	 *
 	 * @var string
@@ -206,6 +214,7 @@ class PayPalGateway extends \WC_Payment_Gateway {
 	 * @param CapturePayPalPayment     $capture_paypal_payment The PayPal vault payment capture endpoint.
 	 * @param OrderEndpoint            $order_endpoint The order endpoint.
 	 * @param string                   $prefix The invoice prefix.
+	 * @param Context                  $context The context helper.
 	 */
 	public function __construct(
 		FundingSourceRenderer $funding_source_renderer,
@@ -227,7 +236,8 @@ class PayPalGateway extends \WC_Payment_Gateway {
 		bool $admin_settings_enabled,
 		CapturePayPalPayment $capture_paypal_payment,
 		OrderEndpoint $order_endpoint,
-		string $prefix
+		string $prefix,
+		Context $context
 	) {
 		$this->id                          = self::ID;
 		$this->funding_source_renderer     = $funding_source_renderer;
@@ -250,6 +260,7 @@ class PayPalGateway extends \WC_Payment_Gateway {
 		$this->capture_paypal_payment      = $capture_paypal_payment;
 		$this->order_endpoint              = $order_endpoint;
 		$this->prefix                      = $prefix;
+		$this->context                     = $context;
 
 		$default_support = array(
 			'products',
