@@ -403,7 +403,6 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC
                     try {
                         $resume_nonce = wp_generate_password(20, \false);
                         $created_order = $this->capture_card_payment->create_order($token->get_token(), $wc_order, $resume_nonce);
-                        $order = $this->order_endpoint->order($created_order->id());
                         $this->add_paypal_meta($wc_order, $created_order, $this->environment);
                         $wc_order->add_payment_token($token);
                         /**
@@ -422,6 +421,7 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC
                             $wc_order->save();
                             return array('result' => 'success', 'redirect' => $payer_action);
                         }
+                        $order = $this->order_endpoint->order($created_order->id());
                         return $this->finalize_vaulted_card_order($wc_order, $order);
                     } catch (RuntimeException $exception) {
                         $this->logger->error($exception->getMessage());

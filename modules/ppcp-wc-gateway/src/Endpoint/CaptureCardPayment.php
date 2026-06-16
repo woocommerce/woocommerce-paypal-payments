@@ -85,7 +85,7 @@ class CaptureCardPayment
          * cancelled challenge returns to the checkout URL and the order stays unpaid.
          */
         $card_3ds_return_url = add_query_arg(array('ppcp_resume_wc_order' => $wc_order->get_id(), 'ppcp_resume_nonce' => $resume_nonce), home_url(WC_AJAX::get_endpoint(\WooCommerce\PayPalCommerce\WcGateway\Endpoint\ReturnUrlEndpoint::ENDPOINT)));
-        $card = array('vault_id' => $vault_id, 'stored_credential' => array('payment_initiator' => 'CUSTOMER', 'payment_type' => 'UNSCHEDULED', 'usage' => 'SUBSEQUENT'), 'experience_context' => $this->experience_context_builder->with_custom_return_url($card_3ds_return_url)->with_custom_cancel_url(wc_get_checkout_url())->build()->to_array());
+        $card = array('vault_id' => $vault_id, 'stored_credential' => array('payment_initiator' => 'CUSTOMER', 'payment_type' => 'UNSCHEDULED', 'usage' => 'SUBSEQUENT'), 'experience_context' => $this->experience_context_builder->with_current_locale()->with_current_brand_name()->with_custom_return_url($card_3ds_return_url)->with_custom_cancel_url(wc_get_checkout_url())->build()->to_array());
         /**
          * Request 3D Secure for the vaulted card charge so cards whose issuer
          * mandates Strong Customer Authentication can authenticate and produce a
