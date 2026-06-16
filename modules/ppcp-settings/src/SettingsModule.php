@@ -72,7 +72,11 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 		assert( $loading_screen_service instanceof LoadingScreenService );
 		$loading_screen_service->register();
 
-		add_action( 'init', fn() => $this->apply_branded_only_limitations( $container ), 1 );
+		// Deferred to 'wp_loaded' (not 'init') so the store-currency resolution this
+		// performs cannot fire a third-party 'woocommerce_currency' filter before
+		// textdomains are loaded, which triggers "translation triggered too early"
+		// notices in WordPress 6.7+. See #4103.
+		add_action( 'wp_loaded', fn() => $this->apply_branded_only_limitations( $container ) );
 
 		add_action(
 			'woocommerce_paypal_payments_gateway_migrate',
