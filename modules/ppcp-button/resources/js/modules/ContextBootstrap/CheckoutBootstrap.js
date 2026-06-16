@@ -247,6 +247,12 @@ class CheckoutBootstrap {
 		setVisibleByClass(
 			this.standardOrderButtonSelector,
 			( isPaypal && isFreeTrial && hasVaultedPaypal ) ||
+				// On a zero-total cart the Vault Component is disabled, so selecting a
+				// saved PayPal token must show the standard "Place order" button. The
+				// saved token completes via process_payment's free-trial short-circuit.
+				( isPaypal &&
+					isFreeTrial &&
+					this.isSavedPayPalTokenSelected() ) ||
 				isNotOurGateway ||
 				isSavedCard ||
 				( isPaypal && ! useSmartButtons ) ||
