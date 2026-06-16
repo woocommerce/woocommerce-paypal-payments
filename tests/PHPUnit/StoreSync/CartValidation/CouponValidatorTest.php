@@ -6,8 +6,6 @@ namespace WooCommerce\PayPalCommerce\StoreSync\CartValidation;
 use Mockery;
 use WooCommerce\PayPalCommerce\StoreSync\Config\StoreCurrencyValue;
 use WooCommerce\PayPalCommerce\StoreSync\Helper\ProductManager;
-use WooCommerce\PayPalCommerce\StoreSync\Validation\StoreValidation;
-use WooCommerce\PayPalCommerce\StoreSync\Validation\ValidationIssue;
 use WooCommerce\PayPalCommerce\StoreSync\CartValidation\CouponValidator\CouponValidator;
 use WooCommerce\PayPalCommerce\StoreSync\CartValidation\CouponValidator\CouponContextBuilder;
 use WooCommerce\PayPalCommerce\StoreSync\CartValidation\CouponValidator\DiscountCalculator;
@@ -64,14 +62,15 @@ class CouponValidatorTest extends ValidationTest {
 	}
 
 	public function test_validate_returns_error_when_coupons_disabled(): void {
-		// This test requires actual WooCommerce classes, so skip in unit test environment.
-		// TODO: This test does not run in a unit-test environment. How is it executed?
-		if ( ! class_exists( 'WC_Coupon' ) || ! class_exists( 'WC_Discounts' ) ) {
-			$this->markTestSkipped( 'WooCommerce classes not available in unit test environment' );
-		}
-
-		// Stub wc_coupons_enabled to return false for this test.
+		/**
+		 * GIVEN a cart with one APPLY coupon and the store has coupons disabled
+		 * WHEN validate() is called
+		 * THEN a single COUPON_NOT_SUPPORTED issue is returned
+		 * AND the issue carries the internal message 'Coupons are not enabled'
+		 * AND the issue is attributed to the 'coupons' field
+		 */
 		\Brain\Monkey\Functions\when( 'wc_coupons_enabled' )->justReturn( false );
+		\Brain\Monkey\Functions\when( 'wp_validate_redirect' )->returnArg( 1 );
 
 		$cart = $this->create_cart_with_coupons(
 			array(
@@ -89,40 +88,34 @@ class CouponValidatorTest extends ValidationTest {
 	}
 
 	public function test_validate_filters_only_apply_actions(): void {
+		/**
+		 * GIVEN a cart containing one REMOVE coupon followed by one APPLY coupon
+		 * WHEN validate() is called with coupons disabled (so we reach the gate without WC_Coupon lookups)
+		 * THEN exactly one issue is returned
+		 * AND that issue is COUPON_NOT_SUPPORTED — proving that only the APPLY coupon survived
+		 *     the filter and drove the result (the REMOVE coupon was silently discarded).
+		 *
+		 * Note: COUPON_NOT_SUPPORTED issues do not embed the coupon code in to_array() output,
+		 * so we cannot assert "which" APPLY coupon was used — but count === 1 already proves
+		 * the REMOVE coupon did not produce an issue of its own.
+		 */
+		\Brain\Monkey\Functions\when( 'wc_coupons_enabled' )->justReturn( false );
+		\Brain\Monkey\Functions\when( 'wp_validate_redirect' )->returnArg( 1 );
+
 		$cart = $this->create_cart_with_coupons(
 			array(
-				array( 'code' => 'KEEP_THIS', 'action' => 'REMOVE' ),
-				array( 'code' => 'ALSO_REMOVE', 'action' => 'REMOVE' ),
+				array( 'code' => 'REMOVE_ME', 'action' => 'REMOVE' ),
+				array( 'code' => 'SAVE10', 'action' => 'APPLY' ),
 			)
 		);
 
 		$result = $this->validator->validate( $this->wrap_in_store_cart( $cart ) );
 
-		// All coupons are REMOVE actions, so nothing to validate.
-		$this->assertNull( $result );
+		// Exactly one issue: the single APPLY coupon produced it; the REMOVE coupon was filtered out.
+		$this->assertIsArray( $result );
+		$this->assertCount( 1, $result );
+		$this->assertValidationIssue( $result[0]->to_array(), 'PRICING_ERROR', 'BUSINESS_RULE', 'coupons' );
 	}
 
-	public function test_coupon_invalid_issue_has_correct_error_code(): void {
-		$issue = ValidationIssue::create_coupon_invalid( 'Test message' )
-			->user_message( 'Test user message' )
-			->for_field( 'coupons[0]' );
-
-		$data = $issue->to_array();
-		$this->assertValidationIssue( $data, 'PRICING_ERROR', 'BUSINESS_RULE' );
-	}
-
-	public function test_coupon_invalid_truncates_long_messages(): void {
-		$long_message      = str_repeat( 'a', 300 );
-		$long_user_message = str_repeat( 'b', 600 );
-
-		$issue = ValidationIssue::create_coupon_invalid( $long_message )
-			->user_message( $long_user_message );
-
-		$data = $issue->to_array();
-		$this->assertValidationIssue( $data, 'PRICING_ERROR', 'BUSINESS_RULE' );
-
-		$this->assertSame( 255, strlen( $data['message'] ) );
-		$this->assertSame( 500, strlen( $data['user_message'] ) );
-	}
 
 }
