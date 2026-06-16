@@ -118,6 +118,8 @@ class CaptureCardPayment {
 				'usage'             => 'SUBSEQUENT',
 			),
 			'experience_context' => $this->experience_context_builder
+				->with_current_locale()
+				->with_current_brand_name()
 				->with_custom_return_url( $card_3ds_return_url )
 				->with_custom_cancel_url( wc_get_checkout_url() )
 				->build()
