@@ -52,12 +52,7 @@ class CaptureCardPayment {
 
 	private SettingsProvider $settings_provider;
 
-	/**
-	 * The experience context builder.
-	 *
-	 * @var ExperienceContextBuilder
-	 */
-	private $experience_context_builder;
+	private ExperienceContextBuilder $experience_context_builder;
 
 	/**
 	 * The logger.
