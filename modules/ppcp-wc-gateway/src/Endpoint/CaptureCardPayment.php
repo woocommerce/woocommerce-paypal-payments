@@ -11,6 +11,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Authentication\Bearer;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\RequestTrait;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PurchaseUnit;
+use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\OrderFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PurchaseUnitFactory;
 use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
@@ -120,6 +121,22 @@ class CaptureCardPayment {
 		}
 
 		$decoded_response = json_decode( $response['body'] );
+		$status_code      = (int) wp_remote_retrieve_response_code( $response );
+		if ( ! in_array( $status_code, array( 200, 201 ), true ) ) {
+			$error = new PayPalApiException(
+				$decoded_response,
+				$status_code
+			);
+
+			$this->logger->warning(
+				sprintf(
+					'Failed to create order from card vault. PayPal API response: %1$s',
+					$error->getMessage()
+				)
+			);
+
+			throw $error;
+		}
 
 		return $this->order_factory->from_paypal_response( $decoded_response );
 	}
