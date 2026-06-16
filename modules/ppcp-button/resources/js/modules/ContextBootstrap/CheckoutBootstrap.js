@@ -61,6 +61,12 @@ class CheckoutBootstrap {
 			this.render();
 			this.handleButtonStatus();
 
+			// The free-trial flag is localized once at page load. Applying a coupon that
+			// turns a subscription cart into a $0 total (or removing it) happens via AJAX
+			// without a reload, leaving the flag stale and the button on the wrong flow.
+			// Re-fetch it and re-render the button when it changed.
+			this.refreshFreeTrialState();
+
 			if (
 				this.shouldShowMessages() &&
 				document.querySelector( this.gateway.messages.wrapper )
@@ -360,6 +366,38 @@ class CheckoutBootstrap {
 		);
 		jQuery( '#ppcp-credit-card-vault' ).attr( 'disabled', true );
 		this.renderer.disableCreditCardFields();
+	}
+
+	/**
+	 * Re-fetches the free-trial state for the current cart and, if it changed since the
+	 * page loaded (e.g. a 100% coupon zeroed a subscription cart, or was removed),
+	 * updates the flag and re-renders the PayPal button so it switches between the
+	 * normal order flow and the save-without-purchase (setup-token) flow.
+	 */
+	refreshFreeTrialState() {
+		const endpoint = this.gateway?.ajax?.cart_script_params?.endpoint;
+		if ( ! endpoint ) {
+			return;
+		}
+
+		fetch( endpoint, { method: 'GET', credentials: 'same-origin' } )
+			.then( ( result ) => result.json() )
+			.then( ( result ) => {
+				if ( ! result.success ) {
+					return;
+				}
+
+				const fresh = result.data?.is_free_trial_cart === true;
+				if ( fresh === ( PayPalCommerceGateway.is_free_trial_cart === true ) ) {
+					return;
+				}
+
+				PayPalCommerceGateway.is_free_trial_cart = fresh;
+				this.renderer.resetRenderedButtons( this.gateway.button.wrapper );
+				this.render();
+				this.updateUi();
+			} )
+			.catch( () => {} );
 	}
 
 	isSavedPayPalTokenSelected() {
