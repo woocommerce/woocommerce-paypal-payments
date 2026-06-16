@@ -1186,6 +1186,7 @@ return array(
 			$container->get( 'api.factory.order' ),
 			$container->get( 'api.factory.purchase-unit' ),
 			$container->get( 'settings.settings-provider' ),
+			$container->get( 'wcgateway.builder.experience-context' ),
 			$container->get( 'woocommerce.logger.woocommerce' )
 		);
 	},
