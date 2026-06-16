@@ -191,9 +191,14 @@ class ReturnUrlEndpoint {
 	 */
 	private function maybe_resume_card_3ds(): void {
 		// phpcs:disable WordPress.Security.NonceVerification.Recommended
-		$wc_order_id    = isset( $_GET['ppcp_resume_wc_order'] ) ? absint( wp_unslash( $_GET['ppcp_resume_wc_order'] ) ) : 0;
-		$provided_nonce = isset( $_GET['ppcp_resume_nonce'] ) ? sanitize_text_field( wp_unslash( $_GET['ppcp_resume_nonce'] ) ) : '';
+		$wc_order_id = isset( $_GET['ppcp_resume_wc_order'] ) ? absint( wp_unslash( $_GET['ppcp_resume_wc_order'] ) ) : 0;
+
+		// wp_unslash() can return an array, so the value is sanitized on the next line behind an is_string() guard.
+		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+		$provided_nonce = wp_unslash( $_GET['ppcp_resume_nonce'] ?? '' );
+		$provided_nonce = is_string( $provided_nonce ) ? sanitize_text_field( $provided_nonce ) : '';
 		// phpcs:enable WordPress.Security.NonceVerification.Recommended
+
 		if ( ! $wc_order_id || ! $provided_nonce ) {
 			return;
 		}
