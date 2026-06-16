@@ -57,12 +57,14 @@ class CaptureCardPaymentTest extends TestCase {
 		);
 
 		$experience_context_builder = Mockery::mock( ExperienceContextBuilder::class );
-		$experience_context_builder->shouldReceive( 'with_custom_return_url' )->andReturnSelf();
-		$experience_context_builder->shouldReceive( 'with_custom_cancel_url' )->andReturnSelf();
-		$experience_context_builder->shouldReceive( 'build' )->andReturn( $experience_context );
+		$experience_context_builder->allows( 'with_custom_return_url' )->andReturnSelf();
+		$experience_context_builder->allows( 'with_custom_cancel_url' )->andReturnSelf();
+		$experience_context_builder->allows( 'with_current_locale' )->andReturnSelf();
+		$experience_context_builder->allows( 'with_current_brand_name' )->andReturnSelf();
+		$experience_context_builder->allows( 'build' )->andReturn( $experience_context );
 
 		$logger = Mockery::mock( LoggerInterface::class );
-		$logger->shouldReceive( 'debug' )->zeroOrMoreTimes();
+		$logger->allows( 'debug' );
 
 		when( 'home_url' )->alias( function ( string $path = '' ): string {
 			return 'https://example.com' . $path;

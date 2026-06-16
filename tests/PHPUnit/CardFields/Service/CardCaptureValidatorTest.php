@@ -91,9 +91,10 @@ class CardCaptureValidatorTest extends TestCase {
 
 	public function card_liability_shift_provider(): array {
 		return [
-			'empty liability_shift blocks capture' => [ '', false ],
-			'NO liability_shift blocks capture'    => [ 'NO', false ],
-			'YES liability_shift allows capture'   => [ 'YES', true ],
+			'empty liability_shift blocks capture'    => [ '', false ],
+			'NO liability_shift blocks capture'       => [ 'NO', false ],
+			'YES liability_shift allows capture'      => [ 'YES', true ],
+			'POSSIBLE liability_shift allows capture' => [ 'POSSIBLE', true ],
 		];
 	}
 
