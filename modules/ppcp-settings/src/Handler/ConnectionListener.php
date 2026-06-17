@@ -14,6 +14,7 @@ use Psr\Log\LoggerInterface;
 use Exception;
 use RuntimeException;
 use WooCommerce\PayPalCommerce\Settings\Service\AuthenticationManager;
+use WooCommerce\PayPalCommerce\Settings\Service\OnboardingNotices;
 use WooCommerce\PayPalCommerce\Settings\Service\OnboardingUrlManager;
 use WooCommerce\WooCommerce\Logging\Logger\NullLogger;
 use WooCommerce\PayPalCommerce\Http\RedirectorInterface;
@@ -60,6 +61,11 @@ class ConnectionListener {
 	private RedirectorInterface $redirector;
 
 	/**
+	 * Queues user-facing notices that are shown after the redirect.
+	 */
+	private OnboardingNotices $notices;
+
+	/**
 	 * Logger instance, mainly used for debugging purposes.
 	 */
 	private LoggerInterface $logger;
@@ -83,6 +89,7 @@ class ConnectionListener {
 	 * @param OnboardingUrlManager  $url_manager            Get OnboardingURL instances.
 	 * @param AuthenticationManager $authentication_manager Authentication manager service.
 	 * @param RedirectorInterface   $redirector             Redirect-handler.
+	 * @param OnboardingNotices     $notices                Queues user-facing notices.
 	 * @param ?LoggerInterface      $logger                 The logger, for debugging purposes.
 	 */
 	public function __construct(
@@ -90,12 +97,14 @@ class ConnectionListener {
 		OnboardingUrlManager $url_manager,
 		AuthenticationManager $authentication_manager,
 		RedirectorInterface $redirector,
+		OnboardingNotices $notices,
 		?LoggerInterface $logger = null
 	) {
 		$this->is_settings_page       = $is_settings_page;
 		$this->url_manager            = $url_manager;
 		$this->authentication_manager = $authentication_manager;
 		$this->redirector             = $redirector;
+		$this->notices                = $notices;
 		$this->logger                 = $logger ?: new NullLogger();
 	}
 
@@ -166,6 +175,12 @@ class ConnectionListener {
 
 		if ( ! $this->url_manager->validate_token_and_delete( $token, $this->user_id ) ) {
 			$this->logger->error( 'Token validation failed', array( 'token' => $log_token ) );
+			$this->notices->add(
+				__(
+					'We couldn’t verify your PayPal connection. Please try connecting again.',
+					'woocommerce-paypal-payments'
+				)
+			);
 
 			return;
 		}
@@ -173,6 +188,12 @@ class ConnectionListener {
 		$data = $this->extract_data();
 		if ( ! $data ) {
 			$this->logger->error( 'Failed to extract merchant data from request' );
+			$this->notices->add(
+				__(
+					'PayPal didn’t return the expected account details. Please try connecting again.',
+					'woocommerce-paypal-payments'
+				)
+			);
 
 			return;
 		}
@@ -185,6 +206,12 @@ class ConnectionListener {
 			$this->authentication_manager->handle_oauth_authentication( $data );
 		} catch ( Exception $e ) {
 			$this->logger->error( 'Failed to complete authentication: ' . $e->getMessage() );
+			$this->notices->add(
+				__(
+					'We couldn’t complete the connection to PayPal. Please try again.',
+					'woocommerce-paypal-payments'
+				)
+			);
 		}
 
 		$this->set_token_state( $token, self::TOKEN_STATE_PROCESSED );

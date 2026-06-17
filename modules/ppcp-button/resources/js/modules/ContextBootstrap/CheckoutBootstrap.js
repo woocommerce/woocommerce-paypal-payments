@@ -14,6 +14,7 @@ import {
 	ButtonEvents,
 	dispatchButtonEvent,
 } from '../Helper/PaymentButtonHelpers';
+import VaultRenderer from '../Renderer/VaultRenderer';
 
 class CheckoutBootstrap {
 	constructor( gateway, renderer, spinner, errorHandler ) {
@@ -23,6 +24,11 @@ class CheckoutBootstrap {
 		this.errorHandler = errorHandler;
 
 		this.standardOrderButtonSelector = ORDER_BUTTON_SELECTOR;
+
+		this.vaultRenderer = PayPalCommerceGateway.vault_component?.is_eligible
+			? new VaultRenderer( PayPalCommerceGateway )
+			: null;
+		this.approvedVaultOrderId = null;
 
 		this.renderer.onButtonsInit(
 			this.gateway.button.wrapper,
@@ -46,8 +52,20 @@ class CheckoutBootstrap {
 		);
 
 		jQuery( document.body ).on( 'updated_checkout', () => {
+			if ( this.vaultRenderer ) {
+				this.vaultRenderer.reset();
+				this.approvedVaultOrderId = null;
+				this.removeVaultOrderIdInput();
+			}
+
 			this.render();
 			this.handleButtonStatus();
+
+			// The free-trial flag is localized once at page load. Applying a coupon that
+			// turns a subscription cart into a $0 total (or removing it) happens via AJAX
+			// without a reload, leaving the flag stale and the button on the wrong flow.
+			// Re-fetch it and re-render the button when it changed.
+			this.refreshFreeTrialState();
 
 			if (
 				this.shouldShowMessages() &&
@@ -85,6 +103,14 @@ class CheckoutBootstrap {
 				this.updateUi();
 			} );
 		} );
+
+		jQuery( document ).on(
+			'change',
+			'input[name="wc-ppcp-gateway-payment-token"]',
+			() => {
+				this.updateUi();
+			}
+		);
 
 		jQuery( document ).on( 'ppcp_should_show_messages', ( e, data ) => {
 			if ( ! this.shouldShowMessages() ) {
@@ -209,6 +235,11 @@ class CheckoutBootstrap {
 		const hasVaultedPaypal =
 			!! PayPalCommerceGateway.vaulted_paypal_email;
 		const useSmartButtons = this.renderer.useSmartButtons ?? true;
+		// A zero-total subscription cart (free trial or 100% coupon) must use the
+		// save-without-purchase flow. The Vault Component is order-based and would
+		// create a $0 order, which PayPal rejects with CANNOT_BE_ZERO_OR_NEGATIVE.
+		const showVaultComponent =
+			!! this.vaultRenderer && isPaypal && ! isFreeTrial;
 
 		const paypalButtonWrappers = {
 			...Object.entries( PayPalCommerceGateway.separate_buttons ).reduce(
@@ -222,16 +253,42 @@ class CheckoutBootstrap {
 		setVisibleByClass(
 			this.standardOrderButtonSelector,
 			( isPaypal && isFreeTrial && hasVaultedPaypal ) ||
+				// On a zero-total cart the Vault Component is disabled, so selecting a
+				// saved PayPal token must show the standard "Place order" button. The
+				// saved token completes via process_payment's free-trial short-circuit.
+				( isPaypal &&
+					isFreeTrial &&
+					this.isSavedPayPalTokenSelected() ) ||
 				isNotOurGateway ||
 				isSavedCard ||
-				( isPaypal && ! useSmartButtons ),
+				( isPaypal && ! useSmartButtons ) ||
+				( showVaultComponent && ! this.isNewPaymentMethodSelected() ),
 			'ppcp-hidden'
 		);
+		this.updatePlaceOrderButtonText( showVaultComponent );
 		setVisible( '.ppcp-vaulted-paypal-details', isPaypal );
 		setVisible(
 			this.gateway.button.wrapper,
-			isPaypal && ! ( isFreeTrial && hasVaultedPaypal )
+			isPaypal &&
+				! ( isFreeTrial && hasVaultedPaypal ) &&
+				this.isNewPaymentMethodSelected()
 		);
+		if ( showVaultComponent && ! this.vaultRenderer.isRendered() ) {
+			this.vaultRenderer.render(
+				( orderID ) => {
+					this.approvedVaultOrderId = orderID;
+					this.injectVaultOrderIdInput( orderID );
+				},
+				() => {
+					this.approvedVaultOrderId = null;
+					this.removeVaultOrderIdInput();
+				}
+			);
+		} else if ( ! showVaultComponent && this.vaultRenderer ) {
+			this.vaultRenderer.close();
+			this.approvedVaultOrderId = null;
+			this.removeVaultOrderIdInput();
+		}
 		setVisible(
 			this.gateway.hosted_fields.wrapper,
 			isCard && ! isSavedCard
@@ -309,6 +366,112 @@ class CheckoutBootstrap {
 		);
 		jQuery( '#ppcp-credit-card-vault' ).attr( 'disabled', true );
 		this.renderer.disableCreditCardFields();
+	}
+
+	/**
+	 * Re-fetches the free-trial state for the current cart and, if it changed since the
+	 * page loaded (e.g. a 100% coupon zeroed a subscription cart, or was removed),
+	 * updates the flag and re-renders the PayPal button so it switches between the
+	 * normal order flow and the save-without-purchase (setup-token) flow.
+	 */
+	refreshFreeTrialState() {
+		const endpoint = this.gateway?.ajax?.cart_script_params?.endpoint;
+		if ( ! endpoint ) {
+			return;
+		}
+
+		fetch( endpoint, { method: 'GET', credentials: 'same-origin' } )
+			.then( ( result ) => result.json() )
+			.then( ( result ) => {
+				if ( ! result.success ) {
+					return;
+				}
+
+				const fresh = result.data?.is_free_trial_cart === true;
+				if ( fresh === ( PayPalCommerceGateway.is_free_trial_cart === true ) ) {
+					return;
+				}
+
+				PayPalCommerceGateway.is_free_trial_cart = fresh;
+				this.renderer.resetRenderedButtons( this.gateway.button.wrapper );
+				this.render();
+				this.updateUi();
+			} )
+			.catch( () => {} );
+	}
+
+	isSavedPayPalTokenSelected() {
+		const checkedRadio = document.querySelector(
+			'input[name="wc-ppcp-gateway-payment-token"]:checked'
+		);
+		return (
+			checkedRadio &&
+			checkedRadio.value &&
+			checkedRadio.value !== 'new'
+		);
+	}
+
+	updatePlaceOrderButtonText( showVaultComponent ) {
+		const $placeOrder = jQuery( this.standardOrderButtonSelector );
+		if ( ! $placeOrder.length ) {
+			return;
+		}
+
+		if ( showVaultComponent && ! this.isNewPaymentMethodSelected() ) {
+			// The saved-token vault flow approves the order in-page, so the
+			// standard "Place order" label fits — clicking does not redirect.
+			$placeOrder.text( $placeOrder.data( 'value' ) );
+			return;
+		}
+
+		// Replicate WooCommerce core: gateway-specific label, else default.
+		const gatewayButtonText = jQuery(
+			'input[name="payment_method"]:checked'
+		).data( 'order_button_text' );
+		$placeOrder.text( gatewayButtonText || $placeOrder.data( 'value' ) );
+	}
+
+	isNewPaymentMethodSelected() {
+		const radios = document.querySelectorAll(
+			'input[name="wc-ppcp-gateway-payment-token"]'
+		);
+		// No saved-token selector on the page (guest checkout or vaulting
+		// disabled) means there is nothing to choose from, so the payment is
+		// always a "new" one and the smart button must be shown.
+		if ( radios.length === 0 ) {
+			return true;
+		}
+		const checkedRadio = document.querySelector(
+			'input[name="wc-ppcp-gateway-payment-token"]:checked'
+		);
+		return checkedRadio?.value === 'new';
+	}
+
+	injectVaultOrderIdInput( orderID ) {
+		const form =
+			document.querySelector( 'form.checkout' ) ||
+			document.querySelector( 'form#order_review' );
+		if ( ! form ) {
+			return;
+		}
+
+		let input = form.querySelector( 'input[name="paypal_order_id"]' );
+		if ( ! input ) {
+			input = document.createElement( 'input' );
+			input.type = 'hidden';
+			input.name = 'paypal_order_id';
+			form.appendChild( input );
+		}
+		input.value = orderID;
+	}
+
+	removeVaultOrderIdInput() {
+		const input = document.querySelector(
+			'input[name="paypal_order_id"]'
+		);
+		if ( input ) {
+			input.remove();
+		}
 	}
 
 	enableCreditCardFields() {

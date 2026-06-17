@@ -84,6 +84,14 @@ class CardFieldsFreeTrialRenderer {
 				this.spinner.block();
 				this.errorHandler.clear();
 
+				const paymentToken = document.querySelector(
+					'input[name="wc-ppcp-credit-card-gateway-payment-token"]:checked'
+				)?.value;
+				if ( paymentToken && paymentToken !== 'new' ) {
+					document.querySelector( '#place_order' ).click();
+					return;
+				}
+
 				cardFields.submit().catch( ( error ) => {
 					console.error( error );
 				} );

@@ -19,6 +19,17 @@
 }
 
 // Prevents spacing after button group.
+.woocommerce-SavedPaymentMethods-token:has(#ppcp-vault-component) {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+
+	#ppcp-vault-component {
+		flex: 1;
+		overflow: hidden;
+	}
+}
+
 #ppc-button-ppcp-gateway {
 	line-height: 0;
 

@@ -8,6 +8,24 @@ class PayNowBootstrap extends CheckoutBootstrap {
 
 	updateUi() {
 		if ( isChangePaymentPage() ) {
+			if ( this.vaultRenderer && this.isSavedPayPalTokenSelected() ) {
+				if ( ! this.vaultRenderer.isRendered() ) {
+					this.vaultRenderer.render(
+						( orderID ) => {
+							this.approvedVaultOrderId = orderID;
+							this.injectVaultOrderIdInput( orderID );
+						},
+						() => {
+							this.approvedVaultOrderId = null;
+							this.removeVaultOrderIdInput();
+						}
+					);
+				}
+			} else if ( this.vaultRenderer ) {
+				this.vaultRenderer.close();
+				this.removeVaultOrderIdInput();
+			}
+
 			return;
 		}
 

@@ -2,12 +2,12 @@
 /**
  * PUI payment source factory.
  *
- * @package WooCommerce\PayPalCommerce\WcGateway\Gateway\PayUponInvoice
+ * @package WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\PayUponInvoice
  */
 
 declare(strict_types=1);
 
-namespace WooCommerce\PayPalCommerce\WcGateway\Gateway\PayUponInvoice;
+namespace WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\PayUponInvoice;
 
 use WC_Order;
 use WooCommerce\PayPalCommerce\Settings\Data\PaymentSettings;
@@ -34,13 +34,13 @@ class PaymentSourceFactory {
 	}
 
 	/**
-	 * Create a PUI payment source from a WC order.
+	 * Create the pay_upon_invoice payment source data from a WC order.
 	 *
 	 * @param WC_Order $order The WC order.
 	 * @param string   $birth_date The birth date.
-	 * @return PaymentSource
+	 * @return array
 	 */
-	public function from_wc_order( WC_Order $order, string $birth_date ) {
+	public function from_wc_order( WC_Order $order, string $birth_date ): array {
 		$address = $order->get_address();
 		// phpcs:ignore WordPress.Security.NonceVerification.Missing
 		$phone = wc_clean( wp_unslash( $_POST['billing_phone'] ?? '' ) );
@@ -59,7 +59,7 @@ class PaymentSourceFactory {
 		$logo_url                      = $this->payment_settings->get_pui_logo_url();
 		$customer_service_instructions = $this->payment_settings->get_pui_customer_service_instructions();
 
-		return new PaymentSource(
+		$payment_source = new PaymentSource(
 			$address['first_name'] ?? '',
 			$address['last_name'] ?? '',
 			$address['email'] ?? '',
@@ -75,5 +75,7 @@ class PaymentSourceFactory {
 			$logo_url,
 			array( $customer_service_instructions )
 		);
+
+		return $payment_source->to_array();
 	}
 }
