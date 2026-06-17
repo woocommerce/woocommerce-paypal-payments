@@ -18,6 +18,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\OrderStatus;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 use WooCommerce\PayPalCommerce\Assets\AssetGetter;
+use WooCommerce\PayPalCommerce\Button\Helper\Context;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
 use WooCommerce\PayPalCommerce\WcPaymentTokens\WooCommercePaymentTokens;
@@ -121,6 +122,8 @@ class PayPalGateway extends \WC_Payment_Gateway {
 
 	private string $prefix;
 
+	private Context $context;
+
 	/**
 	 * ID of the class extending the settings API. Used in option names.
 	 *
@@ -206,6 +209,7 @@ class PayPalGateway extends \WC_Payment_Gateway {
 	 * @param CapturePayPalPayment     $capture_paypal_payment The PayPal vault payment capture endpoint.
 	 * @param OrderEndpoint            $order_endpoint The order endpoint.
 	 * @param string                   $prefix The invoice prefix.
+	 * @param Context                  $context The context helper.
 	 */
 	public function __construct(
 		FundingSourceRenderer $funding_source_renderer,
@@ -227,7 +231,8 @@ class PayPalGateway extends \WC_Payment_Gateway {
 		bool $admin_settings_enabled,
 		CapturePayPalPayment $capture_paypal_payment,
 		OrderEndpoint $order_endpoint,
-		string $prefix
+		string $prefix,
+		Context $context
 	) {
 		$this->id                          = self::ID;
 		$this->funding_source_renderer     = $funding_source_renderer;
@@ -250,6 +255,7 @@ class PayPalGateway extends \WC_Payment_Gateway {
 		$this->capture_paypal_payment      = $capture_paypal_payment;
 		$this->order_endpoint              = $order_endpoint;
 		$this->prefix                      = $prefix;
+		$this->context                     = $context;
 
 		$default_support = array(
 			'products',
@@ -338,11 +344,14 @@ class PayPalGateway extends \WC_Payment_Gateway {
 	 * Renders payment fields including saved payment method radio buttons when tokenization is active.
 	 */
 	public function payment_fields(): void {
-		// `supports( 'tokenization' )` only reflects the static capability; saved PayPal
-		// methods must additionally be gated on the merchant's "save PayPal and Venmo"
-		// setting, mirroring how CreditCardGateway gates on `save_card_details()`.
+		// Saved methods require tokenization support plus the merchant's "save PayPal and Venmo" setting.
 		$vaulting_enabled = $this->supports( 'tokenization' ) && $this->settings_provider->save_paypal_and_venmo();
-		if ( $vaulting_enabled && is_checkout() ) {
+
+		// In a continuation the payment source is already chosen on PayPal's side, so the saved-method
+		// selector would only render stray radio buttons on the classic checkout.
+		$is_continuation = $this->context->is_paypal_continuation();
+
+		if ( ! $is_continuation && $vaulting_enabled && is_checkout() ) {
 			$this->tokenization_script();
 			$this->saved_payment_methods();
 		}

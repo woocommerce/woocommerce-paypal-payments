@@ -10,6 +10,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PaymentTokensEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\OrderStatus;
 use WooCommerce\PayPalCommerce\Assets\AssetGetter;
+use WooCommerce\PayPalCommerce\Button\Helper\Context;
 use WooCommerce\PayPalCommerce\WcGateway\Endpoint\CapturePayPalPayment;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
@@ -47,6 +48,7 @@ class WcGatewayTest extends TestCase
 	private $paymentTokensEndpoint;
 	private $wcPaymentTokens;
 	private $assetGetter;
+	private $context;
 
 	public function setUp(): void {
 		parent::setUp();
@@ -94,6 +96,7 @@ class WcGatewayTest extends TestCase
 
 		$this->paymentTokensEndpoint = Mockery::mock(PaymentTokensEndpoint::class);
 		$this->wcPaymentTokens = Mockery::mock(WooCommercePaymentTokens::class);
+		$this->context = Mockery::mock(Context::class);
 	}
 
 	private function createGateway()
@@ -118,7 +121,35 @@ class WcGatewayTest extends TestCase
 			false,
 			Mockery::mock(CapturePayPalPayment::class),
 			Mockery::mock(OrderEndpoint::class),
-			'WC-'
+			'WC-',
+			$this->context
+		);
+	}
+
+	private function createSpyGateway(): SpyablePayPalGateway
+	{
+		return new SpyablePayPalGateway(
+			$this->funding_source_renderer,
+			$this->orderProcessor,
+			$this->settingsProvider,
+			$this->sessionHandler,
+			$this->refundProcessor,
+			$this->isConnected,
+			$this->transactionUrlProvider,
+			$this->subscriptionHelper,
+			$this->environment,
+			$this->logger,
+			$this->apiShopCountry,
+			static fn ($id) => 'checkoutnow=' . $id,
+			'Pay via PayPal',
+			$this->paymentTokensEndpoint,
+			$this->wcPaymentTokens,
+			$this->assetGetter,
+			false,
+			Mockery::mock(CapturePayPalPayment::class),
+			Mockery::mock(OrderEndpoint::class),
+			'WC-',
+			$this->context
 		);
 	}
 
@@ -301,4 +332,116 @@ class WcGatewayTest extends TestCase
     		['qwerty', 'PayPal', 'Pay via PayPal.'],
 	    ];
     }
+
+	/**
+	 * GIVEN a customer has already initiated PayPal payment (continuation flow)
+	 * WHEN payment_fields() is rendered on the checkout page
+	 * THEN the saved-method UI (tokenization_script + saved_payment_methods) must NOT be rendered
+	 * AND the payment fields render without the vault UI to avoid double-render during continuation
+	 */
+	public function test_payment_fields_during_continuation_flow_suppresses_saved_method_ui(): void
+	{
+		$this->context->shouldReceive('is_paypal_continuation')->andReturn(true);
+		$this->settingsProvider->shouldReceive('save_paypal_and_venmo')->andReturn(true);
+
+		when('is_checkout')->justReturn(true);
+		when('wp_kses_post')->returnArg();
+		when('wpautop')->returnArg();
+		when('wptexturize')->returnArg();
+		when('apply_filters')->returnArg(2);
+
+		$gateway = $this->createSpyGateway();
+		$gateway->set_test_supports(['tokenization']);
+
+		$gateway->payment_fields();
+
+		$this->assertSame(0, $gateway->tokenization_script_call_count, 'tokenization_script() must not be called during PayPal continuation flow');
+		$this->assertSame(0, $gateway->saved_payment_methods_call_count, 'saved_payment_methods() must not be called during PayPal continuation flow');
+	}
+
+	/**
+	 * GIVEN a normal checkout (no PayPal continuation in progress) with vaulting enabled
+	 * WHEN payment_fields() is rendered on the checkout page
+	 * THEN the saved-method UI (tokenization_script + saved_payment_methods) IS rendered
+	 */
+	public function test_payment_fields_on_normal_checkout_renders_saved_method_ui(): void
+	{
+		$this->context->shouldReceive('is_paypal_continuation')->andReturn(false);
+		$this->settingsProvider->shouldReceive('save_paypal_and_venmo')->andReturn(true);
+
+		when('is_checkout')->justReturn(true);
+		when('wp_kses_post')->returnArg();
+		when('wpautop')->returnArg();
+		when('wptexturize')->returnArg();
+		when('apply_filters')->returnArg(2);
+
+		$gateway = $this->createSpyGateway();
+		$gateway->set_test_supports(['tokenization']);
+
+		$gateway->payment_fields();
+
+		$this->assertSame(1, $gateway->tokenization_script_call_count, 'tokenization_script() must be called on a normal checkout with vaulting enabled');
+		$this->assertSame(1, $gateway->saved_payment_methods_call_count, 'saved_payment_methods() must be called on a normal checkout with vaulting enabled');
+	}
+
+	/**
+	 * GIVEN vaulting is disabled (save_paypal_and_venmo returns false)
+	 * WHEN payment_fields() is rendered on the checkout page
+	 * THEN the saved-method UI is NOT rendered regardless of continuation state
+	 */
+	public function test_payment_fields_with_vaulting_disabled_suppresses_saved_method_ui(): void
+	{
+		$this->context->shouldReceive('is_paypal_continuation')->andReturn(false);
+		$this->settingsProvider->shouldReceive('save_paypal_and_venmo')->andReturn(false);
+
+		when('is_checkout')->justReturn(true);
+		when('wp_kses_post')->returnArg();
+		when('wpautop')->returnArg();
+		when('wptexturize')->returnArg();
+		when('apply_filters')->returnArg(2);
+
+		$gateway = $this->createSpyGateway();
+		$gateway->set_test_supports(['tokenization']);
+
+		$gateway->payment_fields();
+
+		$this->assertSame(0, $gateway->tokenization_script_call_count, 'tokenization_script() must not be called when vaulting is disabled');
+		$this->assertSame(0, $gateway->saved_payment_methods_call_count, 'saved_payment_methods() must not be called when vaulting is disabled');
+	}
+}
+
+/**
+ * Testable subclass that replaces the WC parent's side-effectful
+ * saved-payment-method methods with simple call-count spies.
+ */
+class SpyablePayPalGateway extends PayPalGateway
+{
+	public int $saved_payment_methods_call_count = 0;
+	public int $tokenization_script_call_count   = 0;
+
+	/** @param string[] $supports */
+	public function set_test_supports(array $supports): void
+	{
+		$this->supports = $supports;
+	}
+
+	public function supports($feature): bool
+	{
+		return in_array($feature, $this->supports, true);
+	}
+
+	public function saved_payment_methods(): void
+	{
+		$this->saved_payment_methods_call_count++;
+	}
+
+	public function tokenization_script(): void
+	{
+		$this->tokenization_script_call_count++;
+	}
+
+	public function get_description(): string
+	{
+		return '';
+	}
 }
