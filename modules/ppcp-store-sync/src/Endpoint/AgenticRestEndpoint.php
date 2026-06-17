@@ -41,6 +41,8 @@ abstract class AgenticRestEndpoint extends WC_REST_Controller
      * JWT scope(s) required for the endpoint.
      */
     protected const REQUIRED_SCOPES = array('cart');
+    protected const ACTION_NAME_SUCCESS = 'woocommerce_paypal_payments_store_sync';
+    protected const ACTION_NAME_ERROR = 'woocommerce_paypal_payments_store_sync_error';
     private AuthServiceProvider $auth_provider;
     private AgenticSessionHandler $session_handler;
     private AgenticSessionManager $session_manager;
@@ -96,6 +98,7 @@ abstract class AgenticRestEndpoint extends WC_REST_Controller
     protected function cart_details(CartResponse $cart, int $status_code): WP_REST_Response
     {
         $this->logger->info("[REST] {$status_code} Response", $cart->to_array());
+        do_action(static::ACTION_NAME_SUCCESS, $cart->cart_id(), $cart->store_cart(), $status_code);
         return new WP_REST_Response($cart->to_array(), $status_code);
     }
     /**
@@ -108,6 +111,7 @@ abstract class AgenticRestEndpoint extends WC_REST_Controller
     {
         $error_id = $error->get_debug_id();
         $this->logger->error("[REST] Error - {$error_id}", $error->to_array());
+        do_action(static::ACTION_NAME_ERROR, $error);
         return new WP_REST_Response($error->to_array(), $error->get_status_code());
     }
     /**

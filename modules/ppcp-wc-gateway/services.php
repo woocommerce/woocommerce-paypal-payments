@@ -11,7 +11,6 @@ namespace WooCommerce\PayPalCommerce\WcGateway;
 
 use WooCommerce;
 use Automattic\WooCommerce\Admin\Notes\Note;
-use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PayUponInvoiceOrderEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\ReferenceTransactionStatus;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\Cache;
@@ -50,9 +49,7 @@ use WooCommerce\PayPalCommerce\WcGateway\Gateway\CardButtonGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\GatewayRepository;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
-use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayUponInvoice\PaymentSourceFactory;
-use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayUponInvoice\PayUponInvoice;
-use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayUponInvoice\PayUponInvoiceGateway;
+use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\PayUponInvoice\PayUponInvoiceGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\TransactionUrlProvider;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\CardPaymentsConfiguration;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\CartCheckoutDetector;
@@ -63,8 +60,9 @@ use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\FeesUpdater;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\InstallmentsProductStatus;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\MerchantDetails;
-use WooCommerce\PayPalCommerce\WcGateway\Helper\PayUponInvoiceHelper;
-use WooCommerce\PayPalCommerce\WcGateway\Helper\PayUponInvoiceProductStatus;
+use WooCommerce\PayPalCommerce\WcGateway\Helper\PaymentMethodTitleEnricher;
+use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\PayUponInvoice\PayUponInvoiceHelper;
+use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\PayUponInvoice\PayUponInvoiceProductStatus;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\PWCProductStatus;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\RefundFeesUpdater;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\SettingsStatus;
@@ -99,7 +97,7 @@ return array(
         return WC();
     },
     'wcgateway.paypal-gateway' => static function (ContainerInterface $container): PayPalGateway {
-        return new PayPalGateway($container->get('wcgateway.funding-source.renderer'), $container->get('wcgateway.order-processor'), $container->get('settings.settings-provider'), $container->get('session.handler'), $container->get('wcgateway.processor.refunds'), $container->get('settings.flag.is-connected'), $container->get('wcgateway.transaction-url-provider'), $container->get('wc-subscriptions.helper'), $container->get('settings.environment'), $container->get('woocommerce.logger.woocommerce'), $container->get('api.shop.country'), $container->get('api.factory.paypal-checkout-url'), $container->get('wcgateway.place-order-button-text'), $container->get('api.endpoint.payment-tokens'), $container->get('wc-payment-tokens.wc-payment-tokens'), $container->get('wcgateway.asset_getter'), $container->get('wcgateway.settings.admin-settings-enabled'), $container->get('wcgateway.endpoint.capture-paypal-payment'), $container->get('api.endpoint.order'), $container->get('api.prefix'));
+        return new PayPalGateway($container->get('wcgateway.funding-source.renderer'), $container->get('wcgateway.order-processor'), $container->get('settings.settings-provider'), $container->get('session.handler'), $container->get('wcgateway.processor.refunds'), $container->get('settings.flag.is-connected'), $container->get('wcgateway.transaction-url-provider'), $container->get('wc-subscriptions.helper'), $container->get('settings.environment'), $container->get('woocommerce.logger.woocommerce'), $container->get('api.shop.country'), $container->get('api.factory.paypal-checkout-url'), $container->get('wcgateway.place-order-button-text'), $container->get('api.endpoint.payment-tokens'), $container->get('wc-payment-tokens.wc-payment-tokens'), $container->get('wcgateway.asset_getter'), $container->get('wcgateway.settings.admin-settings-enabled'), $container->get('wcgateway.endpoint.capture-paypal-payment'), $container->get('api.endpoint.order'), $container->get('api.prefix'), $container->get('button.helper.context'));
     },
     'wcgateway.credit-card-gateway' => static function (ContainerInterface $container): CreditCardGateway {
         return new CreditCardGateway($container->get('wcgateway.order-processor'), $container->get('wcgateway.settings'), $container->get('wcgateway.configuration.card-configuration'), $container->get('wcgateway.credit-card-icons'), $container->get('session.handler'), $container->get('wcgateway.processor.refunds'), $container->get('wcgateway.transaction-url-provider'), $container->get('wc-subscriptions.helper'), $container->get('api.endpoint.payments'), $container->get('settings.environment'), $container->get('api.endpoint.order'), $container->get('wcgateway.endpoint.capture-card-payment'), $container->get('wc-payment-tokens.wc-payment-tokens'), $container->get('woocommerce.logger.woocommerce'));
@@ -315,7 +313,7 @@ return array(
     'wcgateway.transaction-url-provider' => static function (ContainerInterface $container): TransactionUrlProvider {
         $sandbox_url_base = $container->get('wcgateway.transaction-url-sandbox');
         $live_url_base = $container->get('wcgateway.transaction-url-live');
-        return new TransactionUrlProvider($sandbox_url_base, $live_url_base);
+        return new TransactionUrlProvider($sandbox_url_base, $live_url_base, $container->get('settings.environment'));
     },
     'wcgateway.configuration.card-configuration' => static function (ContainerInterface $container): CardPaymentsConfiguration {
         return new CardPaymentsConfiguration($container->get('settings.connection-state'), $container->get('settings.settings-provider'), $container->get('api.helpers.dccapplies'), $container->get('wcgateway.helper.dcc-product-status'), $container->get('api.shop.country'));
@@ -337,17 +335,11 @@ return array(
     'wcgateway.funding-source.renderer' => function (ContainerInterface $container): FundingSourceRenderer {
         return new FundingSourceRenderer($container->get('settings.settings-provider'), array_merge($container->get('wcgateway.all-funding-sources'), $container->get('wcgateway.extra-funding-sources')));
     },
+    'wcgateway.payment-method-title-enricher' => static function (ContainerInterface $container): PaymentMethodTitleEnricher {
+        return new PaymentMethodTitleEnricher();
+    },
     'wcgateway.checkout-helper' => static function (ContainerInterface $container): CheckoutHelper {
         return new CheckoutHelper();
-    },
-    'wcgateway.pay-upon-invoice-order-endpoint' => static function (ContainerInterface $container): PayUponInvoiceOrderEndpoint {
-        return new PayUponInvoiceOrderEndpoint($container->get('api.host'), $container->get('api.bearer'), $container->get('api.factory.order'), $container->get('wcgateway.fraudnet'), $container->get('woocommerce.logger.woocommerce'));
-    },
-    'wcgateway.pay-upon-invoice-payment-source-factory' => static function (ContainerInterface $container): PaymentSourceFactory {
-        return new PaymentSourceFactory($container->get('settings.data.payment'));
-    },
-    'wcgateway.pay-upon-invoice-gateway' => static function (ContainerInterface $container): PayUponInvoiceGateway {
-        return new PayUponInvoiceGateway($container->get('wcgateway.pay-upon-invoice-order-endpoint'), $container->get('api.factory.purchase-unit'), $container->get('wcgateway.pay-upon-invoice-payment-source-factory'), $container->get('settings.environment'), $container->get('wcgateway.transaction-url-provider'), $container->get('woocommerce.logger.woocommerce'), $container->get('wcgateway.pay-upon-invoice-helper'), $container->get('wcgateway.checkout-helper'), $container->get('settings.flag.is-connected'), $container->get('wcgateway.processor.refunds'), $container->get('wcgateway.asset_getter'));
     },
     'wcgateway.fraudnet-source-website-id' => static function (ContainerInterface $container): FraudNetSourceWebsiteId {
         return new FraudNetSourceWebsiteId($container->get('api.merchant_id'));
@@ -367,9 +359,6 @@ return array(
     },
     'wcgateway.pwc-product-status' => static function (ContainerInterface $container): PWCProductStatus {
         return new PWCProductStatus($container->get('settings.flag.is-connected'), $container->get('api.endpoint.partners'), $container->get('api.helper.failure-registry'), $container->get('api.helper.product-status-result-cache'));
-    },
-    'wcgateway.pay-upon-invoice' => static function (ContainerInterface $container): PayUponInvoice {
-        return new PayUponInvoice($container->get('wcgateway.pay-upon-invoice-order-endpoint'), $container->get('woocommerce.logger.woocommerce'), $container->get('settings.flag.is-connected'), $container->get('wcgateway.is-plugin-settings-page'), $container->get('wcgateway.pay-upon-invoice-product-status'), $container->get('wcgateway.pay-upon-invoice-helper'), $container->get('wcgateway.checkout-helper'), $container->get('api.factory.capture'), $container->get('settings.data.payment'));
     },
     'wcgateway.logging.is-enabled' => static function (ContainerInterface $container): bool {
         $settings = $container->get('settings.data.settings');
@@ -616,7 +605,7 @@ return array(
         return apply_filters('woocommerce_paypal_payments_button_locales', array('' => __('Browser language', 'woocommerce-paypal-payments'), 'ar_DZ' => __('Arabic (Algeria)', 'woocommerce-paypal-payments'), 'ar_BH' => __('Arabic (Bahrain)', 'woocommerce-paypal-payments'), 'ar_EG' => __('Arabic (Egypt)', 'woocommerce-paypal-payments'), 'ar_JO' => __('Arabic (Jordan)', 'woocommerce-paypal-payments'), 'ar_KW' => __('Arabic (Kuwait)', 'woocommerce-paypal-payments'), 'ar_MA' => __('Arabic (Morocco)', 'woocommerce-paypal-payments'), 'ar_SA' => __('Arabic (Saudi Arabia)', 'woocommerce-paypal-payments'), 'cs_CZ' => __('Czech', 'woocommerce-paypal-payments'), 'zh_CN' => __('Chinese (Simplified)', 'woocommerce-paypal-payments'), 'zh_HK' => __('Chinese (Hong Kong)', 'woocommerce-paypal-payments'), 'zh_TW' => __('Chinese (Traditional)', 'woocommerce-paypal-payments'), 'da_DK' => __('Danish', 'woocommerce-paypal-payments'), 'nl_NL' => __('Dutch', 'woocommerce-paypal-payments'), 'en_AU' => __('English (Australia)', 'woocommerce-paypal-payments'), 'en_GB' => __('English (United Kingdom)', 'woocommerce-paypal-payments'), 'en_US' => __('English (United States)', 'woocommerce-paypal-payments'), 'fi_FI' => __('Finnish', 'woocommerce-paypal-payments'), 'fr_CA' => __('French (Canada)', 'woocommerce-paypal-payments'), 'fr_FR' => __('French (France)', 'woocommerce-paypal-payments'), 'de_DE' => __('German (Germany)', 'woocommerce-paypal-payments'), 'de_CH' => __('German (Switzerland)', 'woocommerce-paypal-payments'), 'de_AT' => __('German (Austria)', 'woocommerce-paypal-payments'), 'de_LU' => __('German (Luxembourg)', 'woocommerce-paypal-payments'), 'el_GR' => __('Greek', 'woocommerce-paypal-payments'), 'he_IL' => __('Hebrew', 'woocommerce-paypal-payments'), 'hu_HU' => __('Hungarian', 'woocommerce-paypal-payments'), 'id_ID' => __('Indonesian', 'woocommerce-paypal-payments'), 'it_IT' => __('Italian', 'woocommerce-paypal-payments'), 'ja_JP' => __('Japanese', 'woocommerce-paypal-payments'), 'ko_KR' => __('Korean', 'woocommerce-paypal-payments'), 'no_NO' => __('Norwegian', 'woocommerce-paypal-payments'), 'es_ES' => __('Spanish (Spain)', 'woocommerce-paypal-payments'), 'es_MX' => __('Spanish (Mexico)', 'woocommerce-paypal-payments'), 'pl_PL' => __('Polish', 'woocommerce-paypal-payments'), 'pt_BR' => __('Portuguese (Brazil)', 'woocommerce-paypal-payments'), 'pt_PT' => __('Portuguese (Portugal)', 'woocommerce-paypal-payments'), 'ru_RU' => __('Russian', 'woocommerce-paypal-payments'), 'sk_SK' => __('Slovak', 'woocommerce-paypal-payments'), 'sv_SE' => __('Swedish', 'woocommerce-paypal-payments'), 'th_TH' => __('Thai', 'woocommerce-paypal-payments')));
     },
     'wcgateway.endpoint.capture-card-payment' => static function (ContainerInterface $container): CaptureCardPayment {
-        return new CaptureCardPayment($container->get('api.host'), $container->get('api.bearer'), $container->get('api.factory.order'), $container->get('api.factory.purchase-unit'), $container->get('settings.settings-provider'), $container->get('woocommerce.logger.woocommerce'));
+        return new CaptureCardPayment($container->get('api.host'), $container->get('api.bearer'), $container->get('api.factory.order'), $container->get('api.factory.purchase-unit'), $container->get('settings.settings-provider'), $container->get('wcgateway.builder.experience-context'), $container->get('woocommerce.logger.woocommerce'));
     },
     'wcgateway.endpoint.capture-paypal-payment' => static function (ContainerInterface $container): CapturePayPalPayment {
         return new CapturePayPalPayment($container->get('api.host'), $container->get('api.bearer'), $container->get('api.factory.order'), $container->get('api.factory.purchase-unit'), $container->get('settings.settings-provider'), $container->get('woocommerce.logger.woocommerce'));

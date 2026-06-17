@@ -463,8 +463,11 @@ return array(
     'api.helper.purchase-unit-sanitizer' => SingletonDecorator::make(static function (ContainerInterface $container): PurchaseUnitSanitizer {
         $settings = $container->get('settings.settings-provider');
         assert($settings instanceof SettingsProvider);
-        $subtotal_adjustment = $settings->subtotal_adjustment();
-        return new PurchaseUnitSanitizer($subtotal_adjustment);
+        // Map the stored setting value ('correction'/'no_details') to the sanitizer
+        // mode. Without this, the value never matches a valid mode and the sanitizer
+        // always falls back to ditching items, so "Add a correction" has no effect.
+        $mode = 'correction' === $settings->subtotal_adjustment() ? PurchaseUnitSanitizer::MODE_EXTRA_LINE : PurchaseUnitSanitizer::MODE_DITCH;
+        return new PurchaseUnitSanitizer($mode);
     }),
     'api.helper.product-status-result-cache' => static function (): ProductStatusResultCache {
         return new ProductStatusResultCache();

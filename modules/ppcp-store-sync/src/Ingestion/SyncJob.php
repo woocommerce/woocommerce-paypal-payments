@@ -15,6 +15,7 @@ use WooCommerce\PayPalCommerce\StoreSync\Helper\ProductManager;
  */
 class SyncJob
 {
+    private const ACTION_NAME_COMPLETED = 'woocommerce_paypal_payments_store_sync_ingestion_completed';
     private array $product_ids;
     private LoggerInterface $logger;
     private string $batch_id;
@@ -45,14 +46,16 @@ class SyncJob
     public function execute(): void
     {
         $this->logger->info(sprintf('Agentic Sync Job %s: Started', $this->batch_id));
-        // Transform products for API using the factory.
-        $api_products = new \WooCommerce\PayPalCommerce\StoreSync\Ingestion\ProductsPayload($this->merchant_store_url, $this->product_ids, $this->product_manager);
-        $api_payload = $api_products->get_array();
-        if (empty($api_payload)) {
+        // Transform products into DTOs.
+        $payload_container = new \WooCommerce\PayPalCommerce\StoreSync\Ingestion\ProductsPayload($this->merchant_store_url, $this->product_ids, $this->product_manager);
+        $products = $payload_container->get_products();
+        if (empty($products)) {
             $this->logger->info(sprintf('Agentic Sync Job %s: No products', $this->batch_id));
+            $this->fire_completed_action('empty', 0, 0, 0);
             return;
         }
-        $body = array('merchant_url' => $this->merchant_store_url, 'products' => $api_payload);
+        // Compose the API payload, serialising each product DTO to its wire format.
+        $body = array('merchant_url' => $this->merchant_store_url, 'products' => array_map(static fn(\WooCommerce\PayPalCommerce\StoreSync\Ingestion\ProductDTO $product): array => $product->to_array(), $products));
         // Send payload to API.
         $response = wp_remote_post($this->api_endpoint, array('timeout' => 30, 'headers' => array('Content-Type' => 'application/json'), 'body' => (string) wp_json_encode($body)));
         $this->logger->debug("Start Sync {$this->batch_id}...", $body);
@@ -92,10 +95,15 @@ class SyncJob
             $this->logger->error('Invalid JSON response', array('response' => $response_body, 'error' => $e->getMessage()));
             return;
         }
+        $validation_errors = array();
         if ($contains_errors && $error_message) {
             $validation_errors = $this->extract_product_errors($error_message);
             $this->mark_products_by_validation_result($validation_errors);
         }
+        $pushed = count($this->product_ids);
+        $failed = count($validation_errors);
+        $status = $failed > 0 ? 'validation_errors' : 'success';
+        $this->fire_completed_action($status, $pushed, $pushed - $failed, $failed, $error_message);
     }
     /**
      * Extract product IDs that failed validation from error message.
@@ -158,7 +166,22 @@ class SyncJob
             $product->update_meta_data('_ppcp_agentic_sync_error', $error_message);
             $product->save_meta_data();
         }
+        $pushed = count($product_ids);
+        $this->fire_completed_action('api_error', $pushed, 0, $pushed, $error_message);
         throw new RuntimeException(sprintf('Agentic sync failed: %s', $error_message));
+    }
+    /**
+     * Fires the ingestion-completed action so other modules/plugins can monitor sync activity.
+     *
+     * @param string $status        One of: success, validation_errors, api_error, empty.
+     * @param int    $pushed        Number of products sent in the request payload.
+     * @param int    $synced        Number of products successfully synced (no validation errors).
+     * @param int    $failed        Number of products that failed (validation or API error).
+     * @param string $error_message Optional error message for failure cases.
+     */
+    private function fire_completed_action(string $status, int $pushed, int $synced, int $failed, string $error_message = ''): void
+    {
+        do_action(self::ACTION_NAME_COMPLETED, array('batch_id' => $this->batch_id, 'status' => $status, 'pushed' => $pushed, 'synced' => $synced, 'failed' => $failed, 'error_message' => $error_message));
     }
     /**
      * Mark a single product as synced successfully.

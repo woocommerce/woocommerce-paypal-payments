@@ -62,6 +62,11 @@ class FeaturesDefinition
      * Whether Pay upon Invoice (PUI) is supported. Available for merchants in Germany.
      */
     public const FEATURE_PAY_UPON_INVOICE = 'pay_upon_invoice';
+    /**
+     * Whether the Vault Component feature is enabled.
+     * Renders paypal.Vault() inline on checkout for returning customers.
+     */
+    public const FEATURE_VAULT_COMPONENT = 'vault_component';
     protected FeaturesEligibilityService $eligibilities;
     protected GeneralSettings $settings;
     /**

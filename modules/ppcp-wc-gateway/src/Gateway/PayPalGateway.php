@@ -17,6 +17,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\OrderStatus;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 use WooCommerce\PayPalCommerce\Assets\AssetGetter;
+use WooCommerce\PayPalCommerce\Button\Helper\Context;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
 use WooCommerce\PayPalCommerce\WcPaymentTokens\WooCommercePaymentTokens;
@@ -57,6 +58,9 @@ class PayPalGateway extends \WC_Payment_Gateway
     public const REFUNDS_META_KEY = '_ppcp_refunds';
     public const THREE_D_AUTH_RESULT_META_KEY = '_ppcp_paypal_3DS_auth_result';
     public const FRAUD_RESULT_META_KEY = '_ppcp_paypal_fraud_result';
+    // Used to enrich the payment method title.
+    public const ORDER_CARD_BRAND_META_KEY = '_ppcp_paypal_card_brand';
+    public const ORDER_CARD_LAST_DIGITS_META_KEY = '_ppcp_paypal_card_last_digits';
     // Used by the Contact Module integration.
     public const CONTACT_EMAIL_META_KEY = '_ppcp_paypal_contact_email';
     public const CONTACT_PHONE_META_KEY = '_ppcp_paypal_contact_phone';
@@ -91,6 +95,7 @@ class PayPalGateway extends \WC_Payment_Gateway
     private CapturePayPalPayment $capture_paypal_payment;
     private OrderEndpoint $order_endpoint;
     private string $prefix;
+    private Context $context;
     /**
      * ID of the class extending the settings API. Used in option names.
      *
@@ -167,8 +172,9 @@ class PayPalGateway extends \WC_Payment_Gateway
      * @param CapturePayPalPayment     $capture_paypal_payment The PayPal vault payment capture endpoint.
      * @param OrderEndpoint            $order_endpoint The order endpoint.
      * @param string                   $prefix The invoice prefix.
+     * @param Context                  $context The context helper.
      */
-    public function __construct(FundingSourceRenderer $funding_source_renderer, OrderProcessor $order_processor, SettingsProvider $config, SessionHandler $session_handler, RefundProcessor $refund_processor, bool $is_connected, \WooCommerce\PayPalCommerce\WcGateway\Gateway\TransactionUrlProvider $transaction_url_provider, SubscriptionHelper $subscription_helper, Environment $environment, LoggerInterface $logger, string $api_shop_country, callable $paypal_checkout_url_factory, string $place_order_button_text, PaymentTokensEndpoint $payment_tokens_endpoint, WooCommercePaymentTokens $wc_payment_tokens, AssetGetter $asset_getter, bool $admin_settings_enabled, CapturePayPalPayment $capture_paypal_payment, OrderEndpoint $order_endpoint, string $prefix)
+    public function __construct(FundingSourceRenderer $funding_source_renderer, OrderProcessor $order_processor, SettingsProvider $config, SessionHandler $session_handler, RefundProcessor $refund_processor, bool $is_connected, \WooCommerce\PayPalCommerce\WcGateway\Gateway\TransactionUrlProvider $transaction_url_provider, SubscriptionHelper $subscription_helper, Environment $environment, LoggerInterface $logger, string $api_shop_country, callable $paypal_checkout_url_factory, string $place_order_button_text, PaymentTokensEndpoint $payment_tokens_endpoint, WooCommercePaymentTokens $wc_payment_tokens, AssetGetter $asset_getter, bool $admin_settings_enabled, CapturePayPalPayment $capture_paypal_payment, OrderEndpoint $order_endpoint, string $prefix, Context $context)
     {
         $this->id = self::ID;
         $this->funding_source_renderer = $funding_source_renderer;
@@ -191,6 +197,7 @@ class PayPalGateway extends \WC_Payment_Gateway
         $this->capture_paypal_payment = $capture_paypal_payment;
         $this->order_endpoint = $order_endpoint;
         $this->prefix = $prefix;
+        $this->context = $context;
         $default_support = array('products', 'refunds', 'tokenization', 'add_payment_method');
         $this->supports = array_merge($default_support, apply_filters('woocommerce_paypal_payments_paypal_gateway_supports', array()));
         $this->method_title = $this->define_method_title();
@@ -251,6 +258,25 @@ class PayPalGateway extends \WC_Payment_Gateway
         return apply_filters('woocommerce_paypal_payments_gateway_description', wp_kses_post($description), $this);
     }
     /**
+     * Renders payment fields including saved payment method radio buttons when tokenization is active.
+     */
+    public function payment_fields(): void
+    {
+        // Saved methods require tokenization support plus the merchant's "save PayPal and Venmo" setting.
+        $vaulting_enabled = $this->supports('tokenization') && $this->settings_provider->save_paypal_and_venmo();
+        // In a continuation the payment source is already chosen on PayPal's side, so the saved-method
+        // selector would only render stray radio buttons on the classic checkout.
+        $is_continuation = $this->context->is_paypal_continuation();
+        if (!$is_continuation && $vaulting_enabled && is_checkout()) {
+            $this->tokenization_script();
+            $this->saved_payment_methods();
+        }
+        $description = $this->get_description();
+        if ($description) {
+            echo wp_kses_post(wpautop(wptexturize($description)));
+        }
+    }
+    /**
      * Whether the Gateway needs to be setup.
      *
      * @return bool
@@ -308,10 +334,22 @@ class PayPalGateway extends \WC_Payment_Gateway
         }
         // phpcs:ignore WordPress.Security.NonceVerification.Missing
         $paypal_payment_token_id = wc_clean(wp_unslash($_POST['wc-ppcp-gateway-payment-token'] ?? ''));
-        if ($paypal_payment_token_id && 'new' !== $paypal_payment_token_id) {
+        // phpcs:ignore WordPress.Security.NonceVerification.Missing
+        $vault_approved_order_id = wc_clean(wp_unslash($_POST['paypal_order_id'] ?? ''));
+        // Skip saved token handling when an approved order exists.
+        if ($paypal_payment_token_id && 'new' !== $paypal_payment_token_id && !$vault_approved_order_id) {
             $tokens = WC_Payment_Tokens::get_customer_tokens(get_current_user_id());
             foreach ($tokens as $token) {
                 if ($token->get_id() === (int) $paypal_payment_token_id) {
+                    // Free trial orders have a $0.00 total; sending a $0 capture order to
+                    // PayPal fails with CANNOT_BE_ZERO_OR_NEGATIVE. Skip the API call and
+                    // just associate the vaulted token for future renewals, mirroring the
+                    // CreditCardGateway saved-token free trial handling.
+                    if ($this->is_free_trial_order($wc_order)) {
+                        $wc_order->add_payment_token($token);
+                        $wc_order->payment_complete();
+                        return $this->handle_payment_success($wc_order);
+                    }
                     $payment_source_name = $token instanceof PaymentTokenVenmo ? 'venmo' : 'paypal';
                     $custom_id = (string) $wc_order->get_id();
                     $invoice_id = $this->prefix . $wc_order->get_order_number();
@@ -361,7 +399,15 @@ class PayPalGateway extends \WC_Payment_Gateway
             }
             $customer_id = get_user_meta($wc_order->get_customer_id(), '_ppcp_target_customer_id', \true);
             if ($customer_id) {
-                $customer_tokens = $this->payment_tokens_endpoint->payment_tokens_for_customer($customer_id);
+                try {
+                    $customer_tokens = $this->payment_tokens_endpoint->payment_tokens_for_customer($customer_id);
+                } catch (RuntimeException $exception) {
+                    // A failure here (e.g. the access token lacks the vault scope and
+                    // PayPal returns 403 NOT_AUTHORIZED) must not bubble up as a fatal
+                    // error; fall through to the "no saved PayPal account" failure below.
+                    $this->logger->error(sprintf('Could not retrieve saved payment methods for customer %1$s: %2$s', $customer_id, $exception->getMessage()));
+                    $customer_tokens = array();
+                }
                 foreach ($customer_tokens as $token) {
                     $payment_source_name = $token['payment_source']->name() ?? '';
                     if ($payment_source_name === 'paypal' || $payment_source_name === 'venmo') {

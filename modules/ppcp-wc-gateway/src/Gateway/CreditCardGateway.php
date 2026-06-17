@@ -14,6 +14,7 @@ use WC_Order;
 use WC_Payment_Tokens;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PaymentsEndpoint;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\OrderStatus;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
@@ -44,6 +45,15 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC
     use FreeTrialHandlerTrait;
     use OrderMetaTrait;
     const ID = 'ppcp-credit-card-gateway';
+    /**
+     * Order meta key holding the one-time, per-attempt random nonce for a
+     * vaulted-card payment that is awaiting the buyer to complete a 3D Secure
+     * challenge. The same value is embedded in the PayPal return URL and must
+     * match on return before the capture is resumed; it is cleared once used.
+     *
+     * @var string
+     */
+    const THREE_DS_RESUME_META = '_ppcp_card_3ds_resume';
     /**
      * The processor for orders.
      *
@@ -341,7 +351,7 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC
         }
         // phpcs:ignore WordPress.Security.NonceVerification.Missing
         $card_payment_token_id = wc_clean(wp_unslash($_POST['wc-ppcp-credit-card-gateway-payment-token'] ?? ''));
-        if ($this->is_free_trial_order($wc_order) && $card_payment_token_id) {
+        if ($this->is_free_trial_order($wc_order) && $card_payment_token_id && 'new' !== $card_payment_token_id) {
             $customer_tokens = $this->wc_payment_tokens->customer_tokens(get_current_user_id());
             foreach ($customer_tokens as $token) {
                 if ($token['payment_source']->name() === 'card') {
@@ -362,6 +372,27 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC
             }
         }
         /**
+         * Resume a vaulted-card payment after the buyer completed a 3D Secure
+         * challenge. The one-time nonce in the return URL must match the value
+         * stored on the order; it is cleared on use, so the resume is single-use.
+         */
+        // wp_unslash() can return an array, so the value is sanitized on the next line behind an is_string() guard.
+        // phpcs:ignore WordPress.Security.NonceVerification.Recommended, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+        $provided_resume_nonce = wp_unslash($_GET['ppcp_resume_nonce'] ?? '');
+        $provided_resume_nonce = is_string($provided_resume_nonce) ? sanitize_text_field($provided_resume_nonce) : '';
+        $stored_resume_nonce = (string) $wc_order->get_meta(self::THREE_DS_RESUME_META);
+        if ($stored_resume_nonce && $provided_resume_nonce && hash_equals($stored_resume_nonce, $provided_resume_nonce)) {
+            $wc_order->delete_meta_data(self::THREE_DS_RESUME_META);
+            $wc_order->save();
+            try {
+                $order = $this->order_endpoint->order((string) $wc_order->get_meta(\WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway::ORDER_ID_META_KEY));
+                return $this->finalize_vaulted_card_order($wc_order, $order);
+            } catch (RuntimeException $exception) {
+                $this->logger->error($exception->getMessage());
+                return $this->handle_payment_failure($wc_order, $exception);
+            }
+        }
+        /**
          * Vault v3 (save payment methods).
          * If customer has chosen a saved credit card payment from checkout page.
          */
@@ -370,29 +401,32 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC
             foreach ($tokens as $token) {
                 if ($token->get_id() === (int) $card_payment_token_id) {
                     try {
-                        $created_order = $this->capture_card_payment->create_order($token->get_token(), $wc_order);
+                        $resume_nonce = wp_generate_password(20, \false);
+                        $created_order = $this->capture_card_payment->create_order($token->get_token(), $wc_order, $resume_nonce);
+                        $this->add_paypal_meta($wc_order, $created_order, $this->environment);
+                        $wc_order->add_payment_token($token);
+                        /**
+                         * Step-up: when PayPal returns a payer-action link the buyer must
+                         * complete a 3D Secure challenge before this vaulted card can be
+                         * charged. PayPal returns the order in CREATED (or
+                         * PAYER_ACTION_REQUIRED) status with that link; a frictionless
+                         * charge has no such link. Store this attempt's one-time nonce and
+                         * redirect to the payer-action URL; the capture resumes when the
+                         * buyer returns with the matching nonce. A later attempt overwrites
+                         * the nonce, so only the most recent challenge can be confirmed.
+                         */
+                        $payer_action = $this->payer_action_url($created_order);
+                        if ($payer_action) {
+                            $wc_order->update_meta_data(self::THREE_DS_RESUME_META, $resume_nonce);
+                            $wc_order->save();
+                            return array('result' => 'success', 'redirect' => $payer_action);
+                        }
+                        $order = $this->order_endpoint->order($created_order->id());
+                        return $this->finalize_vaulted_card_order($wc_order, $order);
                     } catch (RuntimeException $exception) {
                         $this->logger->error($exception->getMessage());
                         return $this->handle_payment_failure($wc_order, $exception);
                     }
-                    $order = $this->order_endpoint->order($created_order->id());
-                    $this->add_paypal_meta($wc_order, $created_order, $this->environment);
-                    $wc_order->add_payment_token($token);
-                    if ($order->intent() === 'AUTHORIZE') {
-                        $order = $this->order_endpoint->authorize($order);
-                        $wc_order->update_meta_data(AuthorizedPaymentsProcessor::CAPTURED_META_KEY, 'false');
-                        if ($this->subscription_helper->has_subscription($wc_order->get_id())) {
-                            $wc_order->update_meta_data('_ppcp_captured_vault_webhook', 'false');
-                        }
-                    } elseif ($order->status()->name() === OrderStatus::APPROVED) {
-                        $order = $this->order_endpoint->capture($order);
-                    }
-                    $transaction_id = $this->get_paypal_order_transaction_id($order);
-                    if ($transaction_id) {
-                        $this->update_transaction_id($transaction_id, $wc_order);
-                    }
-                    $this->handle_new_order_status($order, $wc_order);
-                    return $this->handle_payment_success($wc_order);
                 }
             }
         }
@@ -424,6 +458,68 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC
         } catch (Exception $error) {
             return $this->handle_payment_failure($wc_order, $error);
         }
+    }
+    /**
+     * Authorizes or captures a vaulted-card PayPal order, records the transaction
+     * id, transitions the WC order and returns the WC payment result. Shared by
+     * the initial saved-card charge and the resume step after a 3D Secure
+     * challenge; the status checks keep it idempotent whether or not the order
+     * was already captured during the return.
+     *
+     * @param WC_Order $wc_order The WC order.
+     * @param Order    $order    The PayPal order to finalize.
+     * @return array The WC payment result.
+     * @throws RuntimeException When an API request fails.
+     */
+    private function finalize_vaulted_card_order(WC_Order $wc_order, Order $order): array
+    {
+        if ($order->intent() === 'AUTHORIZE') {
+            $order = $this->order_endpoint->authorize($order);
+            $wc_order->update_meta_data(AuthorizedPaymentsProcessor::CAPTURED_META_KEY, 'false');
+            if ($this->subscription_helper->has_subscription($wc_order->get_id())) {
+                $wc_order->update_meta_data('_ppcp_captured_vault_webhook', 'false');
+            }
+        } elseif ($order->status()->is(OrderStatus::APPROVED) || $order->status()->is(OrderStatus::CREATED)) {
+            // A vaulted-card order is created in CREATED status and must be
+            // captured explicitly; without this it never leaves "pending payment".
+            $order = $this->order_endpoint->capture($order);
+        }
+        $transaction_id = $this->get_paypal_order_transaction_id($order);
+        if ($transaction_id) {
+            $this->update_transaction_id($transaction_id, $wc_order);
+        }
+        $this->handle_new_order_status($order, $wc_order);
+        /**
+         * Safety net: if nothing transitioned the order into a handled state
+         * (e.g. PayPal returned PAYER_ACTION_REQUIRED and produced no capture or
+         * authorization), fail cleanly instead of leaving the order silently
+         * stuck in "pending payment".
+         */
+        if (!$wc_order->has_status(array('processing', 'completed', 'on-hold'))) {
+            $this->logger->error(sprintf('Vaulted card payment for WC order %1$d did not reach a handled state (PayPal order %2$s, status %3$s); failing the payment.', $wc_order->get_id(), $order->id(), $order->status()->name()));
+            return $this->handle_payment_failure($wc_order, new RuntimeException(__('This saved card could not be charged. Please try another payment method.', 'woocommerce-paypal-payments')));
+        }
+        return $this->handle_payment_success($wc_order);
+    }
+    /**
+     * Returns the payer-action URL from a PayPal order's HATEOAS links, or an
+     * empty string when none is present.
+     *
+     * @param Order $order The PayPal order.
+     * @return string
+     */
+    private function payer_action_url(Order $order): string
+    {
+        $links = $order->links();
+        if (!is_array($links)) {
+            return '';
+        }
+        foreach ($links as $link) {
+            if (is_object($link) && isset($link->rel, $link->href) && 'payer-action' === $link->rel) {
+                return (string) $link->href;
+            }
+        }
+        return '';
     }
     /**
      * Process refund.
