@@ -77,6 +77,24 @@ class WidgetBuilder {
 		}
 	}
 
+	/**
+	 * Forgets every registered button belonging to the given wrapper so it can be
+	 * re-registered with a different configuration (e.g. switching the checkout
+	 * button between the order and the save-without-purchase flow).
+	 *
+	 * @param {string} wrapper The wrapper selector.
+	 */
+	removeButtons( wrapper ) {
+		for ( const [ key, entry ] of this.buttons ) {
+			const entryWrapper = Array.isArray( entry.wrapper )
+				? entry.wrapper[ 0 ]
+				: entry.wrapper;
+			if ( entryWrapper === wrapper ) {
+				this.buttons.delete( key );
+			}
+		}
+	}
+
 	registerMessages( wrapper, options ) {
 		this.messages.set( wrapper, {
 			wrapper,
