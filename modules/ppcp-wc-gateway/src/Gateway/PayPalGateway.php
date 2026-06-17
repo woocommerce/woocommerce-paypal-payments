@@ -353,7 +353,10 @@ class PayPalGateway extends \WC_Payment_Gateway {
 		// methods must additionally be gated on the merchant's "save PayPal and Venmo"
 		// setting, mirroring how CreditCardGateway gates on `save_card_details()`.
 		$vaulting_enabled = $this->supports( 'tokenization' ) && $this->settings_provider->save_paypal_and_venmo();
-		if ( $vaulting_enabled && is_checkout() ) {
+		// During a PayPal continuation the payment source is already chosen on PayPal's
+		// side, so the saved-method selector must not be rendered (it would otherwise show
+		// stray radio buttons on the classic checkout).
+		if ( $vaulting_enabled && is_checkout() && ! $this->context->is_paypal_continuation() ) {
 			$this->tokenization_script();
 			$this->saved_payment_methods();
 		}
