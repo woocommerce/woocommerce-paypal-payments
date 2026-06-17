@@ -184,6 +184,9 @@ If you encounter issues with the PayPal buttons not appearing after an update, p
 * Fix - Settings notifications #4034
 * Fix - Add "Show logos of supported cards" setting #4380
 * Fix - Null phone_number->national_number check #4448
+* Fix - Vaulting subscriptions fail with 100% discount coupons (CANNOT_BE_ZERO_OR_NEGATIVE) #4452
+* Fix - Bug in continuation mode #4457
+* Fix - Vaulted card payments #4450
 
 = 4.0.4 - 2026-05-19 =
 * Enhancement - WooCommerce Blueprints integration to import & export the PayPal Payments configuration #4363
