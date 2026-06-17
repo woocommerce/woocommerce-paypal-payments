@@ -11,14 +11,21 @@ use WooCommerce\PayPalCommerce\VaultComponent\Authentication\VaultClientToken;
 use WooCommerce\PayPalCommerce\VaultComponent\Endpoint\CreateVaultOrderEndpoint;
 use WooCommerce\PayPalCommerce\VaultComponent\Helper\VaultComponentApplies;
 use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
+use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\FreeTrialSubscriptionHelper;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 return array('vault-component.eligibility.check' => static function (ContainerInterface $container): callable {
     $vault_component_applies = $container->get('vault-component.helpers.vault-component-applies');
     assert($vault_component_applies instanceof VaultComponentApplies);
     $settings_provider = $container->get('settings.settings-provider');
     assert($settings_provider instanceof SettingsProvider);
-    return static function () use ($vault_component_applies, $settings_provider): bool {
-        return $settings_provider->save_paypal_and_venmo() && $vault_component_applies->for_country() && $vault_component_applies->for_merchant();
+    $free_trial_helper = $container->get('wc-subscriptions.free-trial-subscription-helper');
+    assert($free_trial_helper instanceof FreeTrialSubscriptionHelper);
+    return static function () use ($vault_component_applies, $settings_provider, $free_trial_helper): bool {
+        // A zero-total subscription cart (free trial or 100% coupon) uses the
+        // save-without-purchase flow. The order-based Vault Component would
+        // create a $0 order (rejected by PayPal with CANNOT_BE_ZERO_OR_NEGATIVE)
+        // and only renders an empty paysheet, so disable it entirely here.
+        return $settings_provider->save_paypal_and_venmo() && !$free_trial_helper->is_free_trial_cart() && $vault_component_applies->for_country() && $vault_component_applies->for_merchant();
     };
 }, 'vault-component.helpers.vault-component-applies' => static function (ContainerInterface $container): VaultComponentApplies {
     $reference_transaction_status = $container->get('api.reference-transaction-status');

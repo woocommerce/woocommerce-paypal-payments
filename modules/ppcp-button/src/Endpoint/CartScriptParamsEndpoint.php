@@ -75,7 +75,20 @@ class CartScriptParamsEndpoint implements \WooCommerce\PayPalCommerce\Button\End
             $base_location = wc_get_base_location();
             $shop_country_code = $base_location['country'] ?? '';
             $currency_code = get_woocommerce_currency();
-            $response = array('url_params' => $script_data['url_params'], 'button' => $script_data['button'], 'messages' => $script_data['messages'], 'amount' => WC()->cart->get_total('raw'), 'total' => $total, 'total_str' => (new Money($total, $currency_code))->value_str(), 'currency_code' => $currency_code, 'country_code' => $shop_country_code);
+            $response = array(
+                'url_params' => $script_data['url_params'],
+                'button' => $script_data['button'],
+                'messages' => $script_data['messages'],
+                'amount' => WC()->cart->get_total('raw'),
+                // Recomputed against the current cart so the client can re-route the
+                // button to the save-without-purchase flow when a coupon turns a
+                // subscription cart into a $0 total after the page has loaded.
+                'is_free_trial_cart' => (bool) ($script_data['is_free_trial_cart'] ?? \false),
+                'total' => $total,
+                'total_str' => (new Money($total, $currency_code))->value_str(),
+                'currency_code' => $currency_code,
+                'country_code' => $shop_country_code,
+            );
             if ($include_shipping) {
                 $response = $this->append_shipping_data($response, $currency_code);
             }
