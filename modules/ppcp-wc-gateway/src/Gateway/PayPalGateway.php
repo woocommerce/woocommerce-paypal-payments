@@ -122,11 +122,6 @@ class PayPalGateway extends \WC_Payment_Gateway {
 
 	private string $prefix;
 
-	/**
-	 * The context helper, used to detect the PayPal continuation flow.
-	 *
-	 * @var Context
-	 */
 	private Context $context;
 
 	/**
