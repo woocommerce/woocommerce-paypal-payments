@@ -42,29 +42,53 @@ export const transactionsOnProduct = ( testOrder: ShopOrder ) => {
 				);
 			}
 			
-			await test.step( `Make payment with ${ gatewayTitle } assert order completed`, async () => {
+			await test.step( `Complete payment with ${ gatewayTitle }`, async () => {
 				await product.payPalUi.makePayment( { merchant, payment } );
 				if( isPayNowEnabled === false ) {
 					await checkout.completeOrderFromProduct( testOrder );
 				}
-				await orderReceived.assertOrderDetails( testOrder );
 			} );
-			
-			
-			await test.step( `Assert details on order edit page`, async () => {
-				const orderId = await orderReceived.getOrderNumber();
-				const { transaction_id: transactionId } =
-					await wooCommerceApi.getOrder( orderId );
-				const payPalFee = await payPalApi.getFee(
-					transactionId,
-					testOrder
-				);
-				const payPalPayout = await payPalApi.getPayout(
-					transactionId,
-					testOrder
-				);
-				const pcpData = { transactionId, payPalFee, payPalPayout };
+				
+			let orderId: number;
+			let pcpData: {
+				transactionId: string;
+				payPalTotal: string;
+				payPalFee: string;
+				payPalPayout: string;
+			};
 
+			await test.step( `Assert order received`, async () => {
+				await orderReceived.assertOrderDetails( testOrder );
+				await orderReceived.assertNoErrors();
+
+				orderId = await orderReceived.getOrderNumber();				
+				const transactionId =
+						( await wooCommerceApi.getOrder( orderId ) ).transaction_id;
+
+				const payPalSellerReceivableBreakdown =
+					await payPalApi.getSellerReceivableBreakdown(
+						transactionId,
+						testOrder
+					);
+					
+				const payPalTotal = payPalSellerReceivableBreakdown?.gross_amount?.value;
+				const payPalFee = payPalSellerReceivableBreakdown?.paypal_fee?.value;
+				const payPalPayout = payPalSellerReceivableBreakdown?.net_amount?.value;
+
+				pcpData = {
+					transactionId,
+					payPalTotal,
+					payPalFee,
+					payPalPayout,
+				};
+
+				
+				if( payPalTotal ) { // can be 0 for free trial or free orders
+					await orderReceived.assertTotalEqualsPayPalTotal( payPalTotal, testOrder.currency );
+				}
+			} );
+
+			await test.step( `Assert details on order edit page`, async () => {
 				await wooCommerceOrderEdit.visit( orderId );
 				await wooCommerceOrderEdit.assertOrderDetails( testOrder, pcpData );
 			} );
@@ -72,19 +96,19 @@ export const transactionsOnProduct = ( testOrder: ShopOrder ) => {
 	);
 };
 
-const getTestedGatewayContainer = ( product: Product, gatewayShortcut: string ) => {
+export const getTestedGatewayContainer = ( product: Product, gatewayShortcut: string ) => {
 	return gatewayShortcut === 'googlepay'
 		? product.payPalUi.googlePayGatewayContainer()
 		: product.payPalUi.payPalGatewayContainer();
 }
 
-const getTestedGatewayButton = ( product: Product, gatewayShortcut: string ) => {
+export const getTestedGatewayButton = ( product: Product, gatewayShortcut: string ) => {
 	return gatewayShortcut === 'googlepay'
 		? product.payPalUi.googlePayButton()
 		: product.payPalUi.fundingSourceButton( gatewayShortcut );
 }
 
-const assertPaymentBlockedBeforeVariationSelected = async (
+export const assertPaymentBlockedBeforeVariationSelected = async (
 	product: Product,
 	gatewayTitle: string,
 	gatewayShortcut: string,
@@ -108,7 +132,7 @@ const assertPaymentBlockedBeforeVariationSelected = async (
 	} );
 };
 
-const assertPaymentEnabledAfterVariationSelected = async (
+export const assertPaymentEnabledAfterVariationSelected = async (
 	product: Product,
 	gatewayTitle: string,
 	gatewayShortcut: string,
