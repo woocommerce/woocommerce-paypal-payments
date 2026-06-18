@@ -111,6 +111,15 @@ export function refresh() {
 	};
 }
 
+export function addDismissedTodo( todoId ) {
+	return async ( { select, dispatch } ) => {
+		const current = select.getDismissedTodos() || [];
+		if ( ! current.includes( todoId ) ) {
+			await dispatch.setDismissedTodos( [ ...current, todoId ] );
+		}
+	};
+}
+
 export function resetDismissedTodos() {
 	return async ( { dispatch } ) => {
 		try {
