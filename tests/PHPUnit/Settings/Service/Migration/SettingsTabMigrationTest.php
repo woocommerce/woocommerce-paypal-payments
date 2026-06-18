@@ -153,4 +153,64 @@ class SettingsTabMigrationTest extends TestCase {
 			'missing legacy key is not migrated' => array( '__missing__', null ),
 		);
 	}
+
+	/**
+	 * Same problem as vault_enabled: legacy classic-WooCommerce settings stored
+	 * vault_enabled_dcc as the string "yes" or "no", while the new
+	 * SettingsModel::save_card_details slot is a typed bool. The migration must
+	 * coerce the value before it reaches the typed setter, otherwise a stored
+	 * string aborts the whole migration with an uncaught TypeError.
+	 *
+	 * @dataProvider vault_enabled_dcc_cases
+	 *
+	 * @param mixed     $legacy_value Legacy vault_enabled_dcc value, in any of the
+	 *                                shapes the option has historically held.
+	 * @param bool|null $expected     Expected save_card_details after migration,
+	 *                                or null if the key should be absent from the
+	 *                                captured payload.
+	 */
+	public function test_vault_enabled_dcc_migration( $legacy_value, ?bool $expected ): void {
+		$legacy_settings = ( $legacy_value === '__missing__' )
+			? array()
+			: array( 'vault_enabled_dcc' => $legacy_value );
+
+		$captured_data  = null;
+		$settings_model = Mockery::mock( SettingsModel::class );
+		$settings_model->shouldReceive( 'from_array' )
+			->once()
+			->withArgs( function ( array $data ) use ( &$captured_data ) {
+				$captured_data = $data;
+
+				return true;
+			} );
+		$settings_model->shouldReceive( 'save' )->once();
+
+		$migration = new SettingsTabMigration( $legacy_settings, $settings_model );
+		$migration->migrate();
+
+		if ( $expected === null ) {
+			$this->assertArrayNotHasKey( 'save_card_details', $captured_data );
+
+			return;
+		}
+
+		$this->assertArrayHasKey( 'save_card_details', $captured_data );
+		$this->assertSame( $expected, $captured_data['save_card_details'] );
+		$this->assertIsBool( $captured_data['save_card_details'] );
+	}
+
+	public function vault_enabled_dcc_cases(): array {
+		return array(
+			'legacy string yes coerces to true'  => array( 'yes', true ),
+			'legacy string no coerces to false'  => array( 'no', false ),
+			'legacy string 1 coerces to true'    => array( '1', true ),
+			'legacy string 0 coerces to false'   => array( '0', false ),
+			'empty string coerces to false'      => array( '', false ),
+			'real boolean true passes through'   => array( true, true ),
+			'real boolean false passes through'  => array( false, false ),
+			'integer 1 coerces to true'          => array( 1, true ),
+			'integer 0 coerces to false'         => array( 0, false ),
+			'missing legacy key is not migrated' => array( '__missing__', null ),
+		);
+	}
 }

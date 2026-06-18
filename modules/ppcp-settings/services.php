@@ -253,7 +253,10 @@ return array(
 	'settings.rest.refresh_feature_status'                => static function ( ContainerInterface $container ): RefreshFeatureStatusEndpoint {
 		return new RefreshFeatureStatusEndpoint(
 			new Cache( 'ppcp-timeout' ),
-			$container->get( 'woocommerce.logger.woocommerce' )
+			$container->get( 'woocommerce.logger.woocommerce' ),
+			$container->get( 'settings.service.seller-type-resolver' ),
+			$container->get( 'settings.data.general' ),
+			$container->get( 'api.endpoint.partners' )
 		);
 	},
 	'settings.rest.authentication'                        => static function ( ContainerInterface $container ): AuthenticationRestEndpoint {

@@ -10,6 +10,8 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\ApiClient;
 
 use WC_Order;
+use WooCommerce\PayPalCommerce\ApiClient\Authentication\PayPalBearer;
+use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\Cache;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PartnersEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\FailureRegistry;
@@ -134,6 +136,41 @@ class ApiModule implements ServiceModule, FactoryModule, ExecutableModule {
 
 					$cache->flush();
 				}
+			}
+		);
+
+		/**
+		 * Refreshes the access token before a request is retried after an
+		 * authentication failure (see {@see RequestTrait::should_retry_after_auth_failure()}).
+		 *
+		 * A cached bearer token can outlive a change in the merchant's granted
+		 * scopes (e.g. vaulting enabled after the token was issued), causing
+		 * Vault and other calls to fail with 401 / 403 NOT_AUTHORIZED for up to
+		 * the token's lifetime. Discarding the cached token here forces a fresh
+		 * one to be issued with the current scopes for the retry.
+		 */
+		add_filter(
+			'ppcp_retry_request_args',
+			static function ( array $args ) use ( $c ): array {
+				$authorization = $args['headers']['Authorization'] ?? '';
+				if ( ! is_string( $authorization ) || 0 !== strpos( $authorization, 'Bearer ' ) ) {
+					return $args;
+				}
+
+				$bearer_cache = $c->get( 'api.paypal-bearer-cache' );
+				assert( $bearer_cache instanceof Cache );
+				$bearer_cache->delete( PayPalBearer::CACHE_KEY );
+
+				try {
+					$bearer                           = $c->get( 'api.bearer' );
+					$args['headers']['Authorization'] = 'Bearer ' . $bearer->bearer()->token();
+				} catch ( RuntimeException $exception ) {
+					$logger = $c->get( 'woocommerce.logger.woocommerce' );
+					assert( $logger instanceof LoggerInterface );
+					$logger->warning( 'Could not refresh the access token for request retry: ' . $exception->getMessage() );
+				}
+
+				return $args;
 			}
 		);
 
