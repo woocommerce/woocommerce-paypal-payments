@@ -17,20 +17,21 @@ import { Pcp } from '../resources';
 
 export class PayPalApi {
 	request: APIRequestContext;
-	apiBaseUrl = 'https://api-m.sandbox.paypal.com/v2';
+	private sandboxBaseUrl = 'https://api-m.sandbox.paypal.com';
+	private apiBaseUrl = `${ this.sandboxBaseUrl }/v2`;
 
 	constructor( { request } ) {
 		this.request = request;
 	}
 
 	private apiRequest = async (
-		requestType: string,
+		requestType: 'get' | 'post' | 'put' | 'delete',
 		endPoint: string,
 		merchant: Pcp.Merchant,
 		data?: any
 	) => {
 		try {
-			const token = await this.getToken( merchant );
+			const token = await this.getAuthToken( merchant );
 			const response = await this.request[ requestType ](
 				this.apiBaseUrl + endPoint,
 				{
@@ -60,9 +61,9 @@ export class PayPalApi {
 	 *
 	 * @param merchant - { client_id: '...', client_secret: '...' }
 	 */
-	getToken = async ( merchant: Pcp.Merchant ) => {
+	getAuthToken = async ( merchant: Pcp.Merchant ) => {
 		const response = await this.request.post(
-			'https://api.sandbox.paypal.com/v1/oauth2/token',
+			`${ this.sandboxBaseUrl }/v1/oauth2/token`,
 			{
 				headers: createAuthHeader(
 					merchant.client_id,
@@ -73,7 +74,7 @@ export class PayPalApi {
 		);
 		const json = await response.json();
 		if ( ! response.ok() ) {
-			throw new Error( `getToken failed with status ${ response.status() }: ${ JSON.stringify( json ) }` );
+			throw new Error( `getAuthToken failed with status ${ response.status() }: ${ JSON.stringify( json ) }` );
 		}
 		return json.access_token;
 	};
@@ -181,55 +182,72 @@ export class PayPalApi {
 	};
 
 	/**
-	 * Gets payment from PayPal API
+	 * Fetches a payment (capture or authorization) from the PayPal API.
 	 *
-	 * @param paymentId
-	 * @param shopOrder
+	 * @param paymentId    PayPal capture/authorization resource id.
+	 * @param merchant     Credentials of the merchant that owns the resource.
+	 * @param isAuthorized When true, query the authorizations endpoint instead of captures.
 	 */
-	getPayment = async (
+	getPayment = (
 		paymentId: string,
-		shopOrder: WooCommerce.ShopOrder
-	) => {
-		if ( shopOrder.payment.isAuthorized ) {
-			return await this.getAuthorizedPayment(
-				paymentId,
-				shopOrder.merchant
-			);
-		}
-		return await this.getCapturedPayment( paymentId, shopOrder.merchant );
-	};
+		merchant: Pcp.Merchant,
+		isAuthorized = false,
+	) =>
+		isAuthorized
+			? this.getAuthorizedPayment( paymentId, merchant )
+			: this.getCapturedPayment( paymentId, merchant );
 
 	/**
 	 *
 	 * @param resourceId
 	 * @param shopOrder
 	 */
-	getFee = async ( resourceId: string, shopOrder: WooCommerce.ShopOrder ) => {
-		const fundingSource = shopOrder.payment.gateway.shortcut;
+	getSellerReceivableBreakdown = async (
+		resourceId: string,
+		shopOrder: WooCommerce.ShopOrder,
+	) => {
+		const { merchant, payment } = shopOrder;
+		const fundingSource = payment.gateway.shortcut;
 		if (
 			[ 'pay_upon_invoice', 'oxxo' ].includes( fundingSource ) ||
-			shopOrder.payment.isAuthorized
+			payment.isAuthorized
 		) {
-			return;
+			// PUI and OXXO are not authorized by default
+			return undefined;
 		}
-		const payment = await this.getPayment( resourceId, shopOrder );
-		return payment.seller_receivable_breakdown.paypal_fee.value;
+		const payPalPayment = await this.getPayment( resourceId, merchant );
+		return payPalPayment.seller_receivable_breakdown;
 	};
 
-	getPayout = async (
-		resourceId: string,
-		shopOrder: WooCommerce.ShopOrder
-	) => {
-		const fundingSource = shopOrder.payment.gateway.shortcut;
-		if (
-			[ 'pay_upon_invoice', 'oxxo' ].includes( fundingSource ) ||
-			shopOrder.payment.isAuthorized
-		) {
-			return;
-		}
-		const payment = await this.getPayment( resourceId, shopOrder );
-		return payment.seller_receivable_breakdown.net_amount.value;
-	};
+	/**
+	 * Gets PayPal payment fee for given payment ID and shop order
+	 * 
+	 * @param resourceId 
+	 * @param shopOrder 
+	 * @returns 
+	 */
+	getPaymentFee = async ( resourceId: string, shopOrder: WooCommerce.ShopOrder ) =>
+		( await this.getSellerReceivableBreakdown( resourceId, shopOrder ) )?.paypal_fee.value;
+
+	/**
+	 * Gets PayPal payment payout for given payment ID and shop order
+	 * 
+	 * @param resourceId 
+	 * @param shopOrder 
+	 * @returns 
+	 */
+	getPaymentPayout = async ( resourceId: string, shopOrder: WooCommerce.ShopOrder ) =>
+		( await this.getSellerReceivableBreakdown( resourceId, shopOrder ) )?.net_amount.value;
+
+	/**
+	 * Gets PayPal payment gross (total) amount for given payment ID and shop order
+	 * 
+	 * @param resourceId 
+	 * @param shopOrder 
+	 * @returns 
+	 */
+	getPaymentTotal = async ( resourceId: string, shopOrder: WooCommerce.ShopOrder ) =>
+		( await this.getSellerReceivableBreakdown( resourceId, shopOrder ) )?.gross_amount.value;
 
 	// Assertions
 
@@ -243,7 +261,8 @@ export class PayPalApi {
 		wooCommerceOrderJson: WooCommerce.Order,
 		shopOrder: WooCommerce.ShopOrder
 	) => {
-		const gatewayShortcut = shopOrder.payment.gateway.shortcut;
+		const { merchant, payment, customer } = shopOrder;
+		const fundingSource = payment.gateway.shortcut;
 		const payPalOrderId =
 			await this.getOrderIdFromWooCommerce( wooCommerceOrderJson );
 
@@ -262,37 +281,38 @@ export class PayPalApi {
 
 		const payPalOrder = await this.getOrder(
 			payPalOrderId,
-			shopOrder.merchant
+			merchant
 		);
 
-		if ( gatewayShortcut !== 'oxxo' ) {
+		if ( fundingSource !== 'oxxo' ) {
 			const payPalPaymentId = await this.getPaymentIdFromOrder(
 				payPalOrder,
-				shopOrder.payment
+				payment
 			);
 			await expect
 				.soft( String( wooCommerceOrderJson.transaction_id ) )
 				.toEqual( String( payPalPaymentId ) );
 		}
 
-		const expectedIntent = shopOrder.payment.isAuthorized
+		const expectedIntent = payment.isAuthorized
 			? 'AUTHORIZE'
 			: 'CAPTURE';
 		await expect.soft( payPalOrder.intent ).toEqual( expectedIntent );
 
-		switch ( gatewayShortcut ) {
-			case 'oxxo':
+		switch ( fundingSource ) {
+			case 'oxxo': {
 				await expect.soft( payPalOrder.status ).toEqual( 'COMPLETED' );
 				await expect
 					.soft( payPalOrder.payment_source )
 					.toHaveProperty( 'oxxo' );
 				await expect
 					.soft( payPalOrder.payment_source.oxxo.email )
-					.toEqual( shopOrder.customer.email );
+					.toEqual( customer.email );
 				break;
+			}
 
 			case 'acdc':
-			case 'fastlane':
+			case 'fastlane': {
 				await expect.soft( payPalOrder.status ).toEqual( 'COMPLETED' );
 				await expect
 					.soft( payPalOrder.payment_source )
@@ -300,9 +320,10 @@ export class PayPalApi {
 				await expect
 					.soft( payPalOrder.payment_source.card.last_digits )
 					.toEqual(
-						getLast4CardDigits( shopOrder.payment.card.card_number )
+						getLast4CardDigits( payment.card.card_number )
 					);
 				break;
+			}	
 
 			case 'card':
 				await expect.soft( payPalOrder.status ).toEqual( 'COMPLETED' );
@@ -311,20 +332,20 @@ export class PayPalApi {
 					.toHaveProperty( 'paypal' );
 				await expect
 					.soft( payPalOrder.payment_source.paypal.email_address )
-					.toEqual( shopOrder.customer.email );
+					.toEqual( customer.email );
 				await expect
 					.soft( payPalOrder.payment_source.paypal.name.given_name )
-					.toEqual( shopOrder.customer.first_name );
+					.toEqual( customer.first_name );
 				await expect
 					.soft( payPalOrder.payment_source.paypal.name.surname )
-					.toEqual( shopOrder.customer.last_name );
+					.toEqual( customer.last_name );
 				break;
 
-			case 'pay_upon_invoice':
+			case 'pay_upon_invoice': {
 				await expect
 					.soft( payPalOrder.status )
 					.toEqual( 'PENDING_APPROVAL' );
-				const birthDate = shopOrder.payment.birthDate.split( '.' );
+				const birthDate = payment.birthDate.split( '.' );
 				await expect
 					.soft( payPalOrder.payment_source )
 					.toHaveProperty( 'pay_upon_invoice' );
@@ -336,13 +357,14 @@ export class PayPalApi {
 						`${ birthDate[ 2 ] }-${ birthDate[ 1 ] }-${ birthDate[ 0 ] }`
 					);
 				break;
+			}
 
-			default:
+			default: {
 				await expect.soft( payPalOrder.status ).toEqual( 'COMPLETED' );
 				await expect
 					.soft( payPalOrder.payment_source )
 					.toHaveProperty( 'paypal' );
-				if ( shopOrder.payment.isVaulted ) {
+				if ( payment.isVaulted ) {
 					await expect
 						.soft( payPalOrder.payment_source.paypal )
 						.toHaveProperty( 'attributes' );
@@ -359,7 +381,8 @@ export class PayPalApi {
 				}
 				await expect
 					.soft( payPalOrder.payment_source.paypal.email_address )
-					.toEqual( shopOrder.payment.payPalAccount.email );
+					.toEqual( payment.payPalAccount.email );
+			}
 		}
 	};
 
@@ -373,24 +396,25 @@ export class PayPalApi {
 		paymentId: string,
 		shopOrder: WooCommerce.ShopOrder
 	) => {
-		const fundingSource = shopOrder.payment.gateway.shortcut;
+		const { payment, merchant } = shopOrder;
+		const fundingSource = payment.gateway.shortcut;
 
 		if ( fundingSource === 'pay_upon_invoice' ) {
 			return;
 		}
 
-		const payment = await this.getPayment( paymentId, shopOrder );
+		const payPalPayment = await this.getPayment( paymentId, merchant, payment.isAuthorized );
 
 		if ( fundingSource === 'oxxo' ) {
-			await expect.soft( payment.status ).toEqual( 'PENDING' );
+			await expect.soft( payPalPayment.status ).toEqual( 'PENDING' );
 			return;
 		}
 
-		if ( shopOrder.payment.isAuthorized ) {
-			await expect.soft( payment.status ).toEqual( 'CREATED' );
+		if ( payment.isAuthorized ) {
+			await expect.soft( payPalPayment.status ).toEqual( 'CREATED' );
 			return;
 		}
 
-		await expect.soft( payment.status ).toEqual( 'COMPLETED' );
+		await expect.soft( payPalPayment.status ).toEqual( 'COMPLETED' );
 	};
 }
