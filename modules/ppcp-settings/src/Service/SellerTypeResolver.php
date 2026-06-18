@@ -7,7 +7,6 @@ use Exception;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PartnersEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\SellerStatus;
-use WooCommerce\PayPalCommerce\ApiClient\Helper\FailureRegistry;
 use WooCommerce\PayPalCommerce\Settings\Data\GeneralSettings;
 use WooCommerce\PayPalCommerce\Settings\DTO\MerchantConnectionDTO;
 use WooCommerce\PayPalCommerce\Settings\Enum\SellerTypeEnum;
@@ -42,14 +41,13 @@ class SellerTypeResolver
      * during migration), this retries the seller status call and persists the
      * resolved type. Also backfills empty merchant_country.
      *
-     * @param FailureRegistry  $failure_registry  The failure registry.
      * @param GeneralSettings  $general_settings  The general settings.
      * @param PartnersEndpoint $partners_endpoint The partners endpoint.
      * @param LoggerInterface  $logger            The logger.
      */
-    public function resolve_unknown_seller_type(FailureRegistry $failure_registry, GeneralSettings $general_settings, PartnersEndpoint $partners_endpoint, LoggerInterface $logger): void
+    public function resolve_unknown_seller_type(GeneralSettings $general_settings, PartnersEndpoint $partners_endpoint, LoggerInterface $logger): void
     {
-        if (!$this->needs_seller_type_resolution($failure_registry, $general_settings)) {
+        if (!$this->needs_seller_type_resolution($general_settings)) {
             return;
         }
         try {
@@ -61,26 +59,19 @@ class SellerTypeResolver
                 $general_settings->set_merchant_data($connection);
                 $general_settings->save();
                 do_action('woocommerce_paypal_payments_clear_apm_product_status');
-                return;
             }
         } catch (Exception $e) {
-            $logger->debug('Seller type resolution deferred; will retry in 1 hour.', array('error' => $e->getMessage()));
+            $logger->debug('Seller type resolution deferred.', array('error' => $e->getMessage()));
         }
-        // Seller type still unknown — throttle retries to once per hour.
-        $failure_registry->add_failure(FailureRegistry::SELLER_STATUS_KEY);
     }
     /**
      * Checks whether seller type resolution is needed.
      *
-     * @param FailureRegistry $failure_registry The failure registry.
      * @param GeneralSettings $general_settings The general settings.
      * @return bool True if the merchant is connected but has an unknown seller type.
      */
-    public function needs_seller_type_resolution(FailureRegistry $failure_registry, GeneralSettings $general_settings): bool
+    public function needs_seller_type_resolution(GeneralSettings $general_settings): bool
     {
-        if ($failure_registry->has_failure_in_timeframe(FailureRegistry::SELLER_STATUS_KEY, HOUR_IN_SECONDS)) {
-            return \false;
-        }
         if (!$general_settings->is_merchant_connected()) {
             return \false;
         }
