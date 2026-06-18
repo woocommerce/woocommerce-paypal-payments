@@ -1,0 +1,36 @@
+# Card vaulting & vaulted checkout: testing notes
+
+PayPal publishes separate test-card tables for "**purchase flow**" and "**save payment methods**" (vaulting). They are **not interchangeable**.
+
+Vaulting a purchase-flow card can mint a token PayPal will not honor: every request returns `2xx`, but a later charge fails with `403 PERMISSION_DENIED`. Always vault with the "Save payment methods" cards.
+
+Reference:
+- [Cards for "Purchase flow"](https://developer.paypal.com/docs/checkout/advanced/customize/3d-secure/test/#test-cases-and-card-details-for-purchase-flows)
+- [Cards for "Save payment methods"](https://developer.paypal.com/docs/checkout/advanced/customize/3d-secure/test/#test-cases-and-card-details-for-save-payment-methods)
+
+## Sandbox setup
+
+To exercise the 3DS path at all, set the plugin's **3D Secure** option to **ALWAYS**. The sandbox does not require 3DS by default, so with any other setting the test cards below authenticate without triggering the flow you want to test.
+
+## Cards to use for vaulting tests
+
+Current "Save payment methods" table (expiry = `01/current year + 3`).
+
+| Network    | No-challenge (frictionless) | Challenge (step-up) |
+|------------|-----------------------------|---------------------|
+| Visa       | `4000000000002701`          | `4000000000002503`  |
+| Mastercard | `5200000000002235`          | `5200000000002151`  |
+
+Do **not** use purchase-flow cards (e.g. `4868719196829038`,
+`4868719166101368`, `5329879707824603`) for vaulting.
+
+## Test coverage
+
+The 3DS authentication itself runs in the browser SDK and on PayPal's servers, so the end-to-end save + 3DS + charge flow can only be verified **manually** (real browser, with the sandbox setup and save-flow cards above). A live-API integration test would be non-deterministic.
+
+The surrounding plugin logic is covered by automated tests that mock the PayPal HTTP boundary and assert what our code sends and does with responses:
+
+- `tests/integration/PHPUnit/Transaction/VaultedCard3dsTransactionTest.php`: resume-nonce / capture / authorize state machine (uses a `payer-action` link to represent "3DS required").
+- `tests/integration/PHPUnit/Vaulting/WooCommercePaymentTokensTest.php`: response → `WC_Payment_Token_CC` persistence.
+- `tests/PHPUnit/WcGateway/Endpoint/CaptureCardPaymentTest.php`: vaulted-charge order-body construction.
+- `tests/PHPUnit/SavePaymentMethods/Endpoint/CreateSetupTokenTest.php` and `CreatePaymentTokenTest.php`: vault-token setup-request body and exchange-response handling.
