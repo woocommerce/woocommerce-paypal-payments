@@ -2,8 +2,16 @@
  * Internal dependencies
  */
 import { test } from '../../utils';
-import { transactionsOnCheckout, transactionsOnProduct } from './_test-scenarios';
-import { googlePayCheckout, googlePayProduct } from './_test-data/googlepay';
+import {
+	transactionsOnCheckout,
+	transactionsOnPayByLink,
+	transactionsOnProduct,
+} from './_test-scenarios';
+import {
+	googlePayCheckout,
+	googlePayProduct,
+	googlePayPayByLink,
+} from './_test-data/googlepay';
 import { GooglePayPopup } from '../../utils/frontend/google-pay-popup';
 
 test.use( {
@@ -32,4 +40,8 @@ for ( const testOrder of googlePayCheckout ) {
 
 for ( const testOrder of googlePayProduct ) {
 	transactionsOnProduct( testOrder );
+}
+
+for ( const testOrder of googlePayPayByLink ) {
+	transactionsOnPayByLink( testOrder );
 }
