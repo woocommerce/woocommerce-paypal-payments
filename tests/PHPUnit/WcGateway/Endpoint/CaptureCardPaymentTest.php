@@ -95,6 +95,11 @@ class CaptureCardPaymentTest extends TestCase {
 				);
 			}
 		);
+		when( 'wp_remote_retrieve_response_code' )->alias(
+			function ( $response ): int {
+				return (int) ( $response['response']['code'] ?? 0 );
+			}
+		);
 
 		return new CaptureCardPayment(
 			'https://api.paypal.com',

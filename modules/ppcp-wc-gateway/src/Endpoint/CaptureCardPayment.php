@@ -12,6 +12,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Authentication\Bearer;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\RequestTrait;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PurchaseUnit;
+use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\ExperienceContextBuilder;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\OrderFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PurchaseUnitFactory;
@@ -168,8 +169,14 @@ class CaptureCardPayment {
 			throw new RuntimeException( $response->get_error_message() );
 		}
 
-		$decoded_response = json_decode( $response['body'] );
+		$json        = json_decode( $response['body'] );
+		$status_code = (int) wp_remote_retrieve_response_code( $response );
+		if ( ! in_array( $status_code, array( 200, 201 ), true ) ) {
+			$error = new PayPalApiException( $json, $status_code );
+			$this->logger->warning( $error->getMessage() );
+			throw $error;
+		}
 
-		return $this->order_factory->from_paypal_response( $decoded_response );
+		return $this->order_factory->from_paypal_response( $json );
 	}
 }
