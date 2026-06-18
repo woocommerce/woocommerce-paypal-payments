@@ -7,6 +7,7 @@ import {
 	expect,
 	formatMoney,
 } from '@inpsyde/playwright-utils/build';
+import { PayPalPaymentDetails, ShopOrder } from '../../resources';
 
 export class WooCommerceOrderEdit extends WooCommerceOrderEditBase {
 	// Locators
@@ -116,20 +117,11 @@ export class WooCommerceOrderEdit extends WooCommerceOrderEditBase {
 	 * Asserts order edit page including PayPal related fields
 	 *
 	 * @param orderData
-	 * @param pcpData
-	 * @param pcpData.transactionId
-	 * @param pcpData.payPalTotal
-	 * @param pcpData.payPalFee
-	 * @param pcpData.payPalPayout
+	 * @param payPalPaymentDetails
 	 */
 	assertOrderDetails = async (
-		orderData: WooCommerce.ShopOrder,
-		pcpData?: {
-			transactionId?: string;
-			payPalTotal?: string;
-			payPalFee?: string;
-			payPalPayout?: string;
-		}
+		orderData: ShopOrder,
+		payPalPaymentDetails?: PayPalPaymentDetails
 	) => {
 		await super.assertOrderDetails( orderData );
 
@@ -137,11 +129,16 @@ export class WooCommerceOrderEdit extends WooCommerceOrderEditBase {
 		const { payment, currency } = orderData;
 		const fundingSource = payment.gateway.shortcut;
 
-		if ( ! pcpData || Object.keys( pcpData ).length === 0 ) {
+		if ( ! payPalPaymentDetails || Object.keys( payPalPaymentDetails ).length === 0 ) {
 			return;
 		}
 
-		const { transactionId, payPalTotal, payPalFee, payPalPayout } = pcpData;
+		const {
+			transactionId,
+			amount: payPalAmount,
+			payPalFee,
+			netAmount: payPalPayout
+		} = payPalPaymentDetails;
 
 		// For example: Payment via PayPal
 		await expect(
@@ -164,7 +161,7 @@ export class WooCommerceOrderEdit extends WooCommerceOrderEditBase {
 				'Assert WooCommerce order total order is equal to PayPal payment total'
 			).toHaveText(
 				await formatMoney(
-					Number( payPalTotal ),
+					Number( payPalAmount ),
 					currency,
 				)
 			);

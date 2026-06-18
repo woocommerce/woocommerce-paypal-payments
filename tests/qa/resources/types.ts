@@ -359,3 +359,12 @@ export namespace Pcp {
 		};
 	}
 }
+
+export type PayPalPaymentDetails = {
+	transactionId?: string;
+	currency?: string;
+	amount?: string;
+	grossAmount?: string;
+	payPalFee?: string;
+	netAmount?: string;
+};

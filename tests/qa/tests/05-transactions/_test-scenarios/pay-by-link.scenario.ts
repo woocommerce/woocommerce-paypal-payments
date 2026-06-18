@@ -1,7 +1,7 @@
 /**
  * Internal dependencies
  */
-import { ShopOrder } from '../../../resources';
+import { PayPalPaymentDetails, ShopOrder } from '../../../resources';
 import { test, expect, annotateVisitor } from '../../../utils';
 
 export const transactionsOnPayByLink = ( testOrder: ShopOrder ) => {
@@ -30,12 +30,7 @@ export const transactionsOnPayByLink = ( testOrder: ShopOrder ) => {
 				await payForOrder.payPalUi.makePayment( { merchant, payment } );
 			} );
 
-			let pcpData: {
-				transactionId: string;
-				payPalTotal: string;
-				payPalFee: string;
-				payPalPayout: string;
-			};
+			let payPalPaymentDetails: PayPalPaymentDetails;
 
 			await test.step( `Assert order received`, async () => {
 				await orderReceived.assertOrderDetails( testOrder );
@@ -50,32 +45,22 @@ export const transactionsOnPayByLink = ( testOrder: ShopOrder ) => {
 				const transactionId =
 						( await wooCommerceApi.getOrder( order.id ) ).transaction_id;
 
-				const payPalSellerReceivableBreakdown =
-					await payPalApi.getSellerReceivableBreakdown(
-						transactionId,
-						testOrder
-					);
-					
-				const payPalTotal = payPalSellerReceivableBreakdown?.gross_amount?.value;
-				const payPalFee = payPalSellerReceivableBreakdown?.paypal_fee?.value;
-				const payPalPayout = payPalSellerReceivableBreakdown?.net_amount?.value;
-
-				pcpData = {
+				payPalPaymentDetails = await payPalApi.getPayPalPaymentDetails(
 					transactionId,
-					payPalTotal,
-					payPalFee,
-					payPalPayout,
-				};
+					testOrder,
+				);
 
-				
-				if( payPalTotal ) { // can be 0 for free trial or free orders
-					await orderReceived.assertTotalEqualsPayPalTotal( payPalTotal, testOrder.currency );
+				if( payPalPaymentDetails.amount !== '0' ) { // can be 0 for free trial or free orders
+					await orderReceived.assertTotalEqualsPayPalTotal(
+						payPalPaymentDetails.amount,
+						testOrder.currency
+					);
 				}
 			} );
 
 			await test.step( `Assert details on order edit page`, async () => {
 				await wooCommerceOrderEdit.visit( order.id );
-				await wooCommerceOrderEdit.assertOrderDetails( testOrder, pcpData );
+				await wooCommerceOrderEdit.assertOrderDetails( testOrder, payPalPaymentDetails );
 			} );
 		}
 	);

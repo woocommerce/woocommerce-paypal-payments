@@ -9,7 +9,7 @@ import {
 /**
  * Internal dependencies
  */
-import { Pcp } from '../resources';
+import { PayPalPaymentDetails, Pcp, ShopOrder } from '../resources';
 
 /**
  * Class for PayPal API
@@ -202,52 +202,26 @@ export class PayPalApi {
 	 * @param resourceId
 	 * @param shopOrder
 	 */
-	getSellerReceivableBreakdown = async (
+	getPayPalPaymentDetails = async (
 		resourceId: string,
-		shopOrder: WooCommerce.ShopOrder,
-	) => {
+		shopOrder: ShopOrder,
+	): Promise< PayPalPaymentDetails > => {
 		const { merchant, payment } = shopOrder;
 		const fundingSource = payment.gateway.shortcut;
-		if (
-			[ 'pay_upon_invoice', 'oxxo' ].includes( fundingSource ) ||
-			payment.isAuthorized
-		) {
+		if ( [ 'pay_upon_invoice', 'oxxo' ].includes( fundingSource ) ) {
 			// PUI and OXXO are not authorized by default
 			return undefined;
 		}
-		const payPalPayment = await this.getPayment( resourceId, merchant );
-		return payPalPayment.seller_receivable_breakdown;
+		const payPalPayment = await this.getPayment( resourceId, merchant, payment.isAuthorized );
+		return {
+			transactionId: resourceId,
+			currency: payPalPayment.amount.currency_code,
+			amount: payPalPayment.amount.value,
+			grossAmount: payPalPayment.seller_receivable_breakdown?.gross_amount?.value,
+			payPalFee: payPalPayment.seller_receivable_breakdown?.paypal_fee?.value,
+			netAmount: payPalPayment.seller_receivable_breakdown?.net_amount?.value,
+		};
 	};
-
-	/**
-	 * Gets PayPal payment fee for given payment ID and shop order
-	 * 
-	 * @param resourceId 
-	 * @param shopOrder 
-	 * @returns 
-	 */
-	getPaymentFee = async ( resourceId: string, shopOrder: WooCommerce.ShopOrder ) =>
-		( await this.getSellerReceivableBreakdown( resourceId, shopOrder ) )?.paypal_fee.value;
-
-	/**
-	 * Gets PayPal payment payout for given payment ID and shop order
-	 * 
-	 * @param resourceId 
-	 * @param shopOrder 
-	 * @returns 
-	 */
-	getPaymentPayout = async ( resourceId: string, shopOrder: WooCommerce.ShopOrder ) =>
-		( await this.getSellerReceivableBreakdown( resourceId, shopOrder ) )?.net_amount.value;
-
-	/**
-	 * Gets PayPal payment gross (total) amount for given payment ID and shop order
-	 * 
-	 * @param resourceId 
-	 * @param shopOrder 
-	 * @returns 
-	 */
-	getPaymentTotal = async ( resourceId: string, shopOrder: WooCommerce.ShopOrder ) =>
-		( await this.getSellerReceivableBreakdown( resourceId, shopOrder ) )?.gross_amount.value;
 
 	// Assertions
 
@@ -259,7 +233,7 @@ export class PayPalApi {
 	 */
 	assertOrder = async (
 		wooCommerceOrderJson: WooCommerce.Order,
-		shopOrder: WooCommerce.ShopOrder
+		shopOrder: ShopOrder
 	) => {
 		const { merchant, payment, customer } = shopOrder;
 		const fundingSource = payment.gateway.shortcut;
@@ -394,7 +368,7 @@ export class PayPalApi {
 	 */
 	assertPayment = async (
 		paymentId: string,
-		shopOrder: WooCommerce.ShopOrder
+		shopOrder: ShopOrder
 	) => {
 		const { payment, merchant } = shopOrder;
 		const fundingSource = payment.gateway.shortcut;
