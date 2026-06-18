@@ -394,7 +394,7 @@ export class PayPalUi {
 		await this.page.route(
 			'https://www.sandbox.paypal.com/v2/checkout/orders/**/*',
 			async ( route ) => {
-				const token = await this.payPalApi.getToken( merchant );
+				const token = await this.payPalApi.getAuthToken( merchant );
 				const originalHeaders = route.request().headers();
 				const updatedHeaders = {
 					...originalHeaders,
