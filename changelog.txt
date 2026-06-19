@@ -5,6 +5,7 @@
 * Enhancement - PUI - Extract + Block Checkout #4405
 * Enhancement - OXXO - Extract + Block Checkout #4381
 * Enhancement - Show account or card last digits in payment method #4427
+* Enhancement - Disable legacy WC PayPal Standard gateway on PPCP merchant connect #4463
 * Fix - Vaulting subscription - Unsuccessfully payment with acdc from block checkout #4437
 * Fix - Free trial vaulting subscription - Unsuccessfully payment with acdc and PayPal #4439
 * Fix - PartnersEndpoint::seller_status() floods PayPal merchant-integrations endpoint with 403s #4430
