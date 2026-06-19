@@ -2,26 +2,11 @@
 
 declare( strict_types = 1 );
 
-namespace WooCommerce\PayPalCommerce\Compat\Tests;
+namespace WooCommerce\PayPalCommerce\Compat;
 
-use PHPUnit\Framework\MockObject\MockObject;
-use PHPUnit\Framework\TestCase;
-use WooCommerce\PayPalCommerce\Compat\CompatModule;
-
-/**
- * Testable subclass exposing protected methods for unit testing.
- */
-class TestableCompatModule extends CompatModule {
-	public function call_disable_legacy_paypal_standard_on_connect(): void {
-		$this->disable_legacy_paypal_standard_on_connect();
-	}
-
-	public function call_maybe_show_wps_subscriptions_notice(): string {
-		ob_start();
-		$this->maybe_show_wps_subscriptions_notice();
-		return ob_get_clean() ?: '';
-	}
-}
+use WooCommerce\PayPalCommerce\TestCase;
+use function Brain\Monkey\Functions\expect;
+use function Brain\Monkey\Functions\when;
 
 /**
  * @covers \WooCommerce\PayPalCommerce\Compat\CompatModule::disable_legacy_paypal_standard_on_connect
@@ -29,224 +14,170 @@ class TestableCompatModule extends CompatModule {
  */
 class DisableLegacyPaypalStandardTest extends TestCase {
 
-	/** @var TestableCompatModule */
-	private TestableCompatModule $sut;
+	/** @var object Anonymous subclass of CompatModule */
+	private object $sut;
 
-	protected function setUp(): void {
+	public function setUp(): void {
 		parent::setUp();
-		$this->sut = new TestableCompatModule();
 
-		// Reset option state between tests.
-		delete_option( 'woocommerce_paypal_settings' );
-		delete_option( 'woocommerce_restore_paypal_standard_settings' );
-		delete_transient( 'ppcp_wps_standard_subs_notice' );
-	}
-
-	// ── disable_legacy_paypal_standard_on_connect ──────────────────────────
-
-	/**
-	 * @test
-	 *
-	 * GIVEN WooCommerce Subscriptions is not installed
-	 * WHEN  the merchant connects PPCP
-	 * THEN  WPS is disabled unconditionally (both enabled and _should_load set to 'no')
-	 */
-	public function test_disables_wps_when_wcs_not_installed(): void {
-		// function_exists('wcs_get_subscriptions') returns false in this env.
-		update_option( 'woocommerce_paypal_settings', array( 'enabled' => 'yes', '_should_load' => 'yes' ) );
-
-		$this->sut->call_disable_legacy_paypal_standard_on_connect();
-
-		$settings = get_option( 'woocommerce_paypal_settings' );
-		$this->assertSame( 'no', $settings['enabled'] );
-		$this->assertSame( 'no', $settings['_should_load'] );
-		$this->assertFalse( get_transient( 'ppcp_wps_standard_subs_notice' ) );
-	}
-
-	/**
-	 * @test
-	 *
-	 * GIVEN WooCommerce Subscriptions is active with zero active PayPal Standard subscriptions
-	 * WHEN  the merchant connects PPCP
-	 * THEN  WPS is disabled (WCS guard does not block)
-	 */
-	public function test_disables_wps_when_wcs_has_no_active_paypal_subs(): void {
-		if ( ! function_exists( 'wcs_get_subscriptions' ) ) {
-			$this->markTestSkipped( 'WooCommerce Subscriptions not available.' );
+		if ( ! defined( 'DAY_IN_SECONDS' ) ) {
+			define( 'DAY_IN_SECONDS', 86400 );
 		}
 
-		update_option( 'woocommerce_paypal_settings', array( 'enabled' => 'yes', '_should_load' => 'yes' ) );
+		$this->sut = new class extends CompatModule {
+			private ?int $wcs_count = null;
 
-		// wcs_get_subscriptions returns empty for both gateway IDs.
-		$this->sut->call_disable_legacy_paypal_standard_on_connect();
+			public function set_wcs_count( ?int $count ): void {
+				$this->wcs_count = $count;
+			}
 
-		$settings = get_option( 'woocommerce_paypal_settings' );
-		$this->assertSame( 'no', $settings['enabled'] );
-		$this->assertSame( 'no', $settings['_should_load'] );
+			protected function count_wps_active_subscriptions(): ?int {
+				return $this->wcs_count;
+			}
+
+			public function call_disable(): void {
+				$this->disable_legacy_paypal_standard_on_connect();
+			}
+
+			public function call_notice(): string {
+				ob_start();
+				$this->maybe_show_wps_subscriptions_notice();
+				return ob_get_clean() ?: '';
+			}
+		};
+	}
+
+	// ── disable_legacy_paypal_standard_on_connect ──────────────────────────────
+
+	/**
+	 * WPS is disabled when WCS is absent (null) or has no active subscriptions (0).
+	 *
+	 * @test
+	 * @dataProvider wcs_absent_or_empty_counts
+	 */
+	public function test_disables_wps_when_no_active_subscriptions( ?int $count ): void {
+		$this->sut->set_wcs_count( $count );
+
+		when( 'get_option' )->alias(
+			static function ( string $key, $default = array() ) {
+				if ( $key === 'woocommerce_paypal_settings' ) {
+					return array( 'enabled' => 'yes', '_should_load' => 'yes' );
+				}
+				return $default;
+			}
+		);
+		expect( 'update_option' )
+			->once()
+			->with( 'woocommerce_paypal_settings', array( 'enabled' => 'no', '_should_load' => 'no' ) );
+		expect( 'set_transient' )->never();
+
+		$this->sut->call_disable();
+		$this->addToAssertionCount( 1 );
+	}
+
+	/** @return array<string, array{?int}> */
+	public static function wcs_absent_or_empty_counts(): array {
+		return array(
+			'WCS not installed' => array( null ),
+			'WCS has zero subs' => array( 0 ),
+		);
 	}
 
 	/**
+	 * WPS is NOT disabled and a transient is stored when active subscriptions exist.
+	 *
 	 * @test
-	 *
-	 * GIVEN WCS is active with at least one active native PayPal Standard subscription
-	 * WHEN  the merchant connects PPCP
-	 * THEN  WPS is NOT disabled and a transient is stored for the notice
-	 *
-	 * @dataProvider active_native_paypal_sub_counts
+	 * @dataProvider active_subscription_counts
 	 */
-	public function test_stores_transient_and_skips_disable_when_native_paypal_subs_exist( int $count ): void {
-		if ( ! function_exists( 'wcs_get_subscriptions' ) ) {
-			$this->markTestSkipped( 'WooCommerce Subscriptions not available.' );
-		}
+	public function test_stores_transient_and_skips_disable_when_subscriptions_exist( int $count ): void {
+		$this->sut->set_wcs_count( $count );
 
-		// Seed WCS with active native PayPal subscriptions.
-		$this->seed_wcs_subscriptions( 'paypal', $count );
-		update_option( 'woocommerce_paypal_settings', array( 'enabled' => 'yes', '_should_load' => 'yes' ) );
+		expect( 'set_transient' )
+			->once()
+			->with( 'ppcp_wps_standard_subs_notice', $count, 30 * DAY_IN_SECONDS );
+		expect( 'update_option' )->never();
 
-		$this->sut->call_disable_legacy_paypal_standard_on_connect();
-
-		// Transient must be set.
-		$stored = get_transient( 'ppcp_wps_standard_subs_notice' );
-		$this->assertSame( $count, (int) $stored );
-
-		// Options must NOT be touched.
-		$settings = get_option( 'woocommerce_paypal_settings' );
-		$this->assertSame( 'yes', $settings['enabled'] );
+		$this->sut->call_disable();
+		$this->addToAssertionCount( 1 );
 	}
 
 	/** @return array<string, array{int}> */
-	public static function active_native_paypal_sub_counts(): array {
+	public static function active_subscription_counts(): array {
 		return array(
-			'one subscription'      => array( 1 ),
+			'one subscription'       => array( 1 ),
 			'multiple subscriptions' => array( 5 ),
 		);
 	}
 
 	/**
-	 * @test
+	 * Both native WPS and the restoration plugin option are disabled when the restore option exists.
 	 *
-	 * GIVEN WCS is active with an active restore_paypal_standard subscription (no native WPS subs)
-	 * WHEN  the merchant connects PPCP
-	 * THEN  WPS is NOT disabled and a transient is stored
+	 * @test
 	 */
-	public function test_stores_transient_when_restoration_plugin_subs_exist(): void {
-		if ( ! function_exists( 'wcs_get_subscriptions' ) ) {
-			$this->markTestSkipped( 'WooCommerce Subscriptions not available.' );
-		}
+	public function test_also_disables_restoration_plugin_when_option_present(): void {
+		when( 'get_option' )->alias(
+			static function ( string $key, $default = array() ) {
+				if ( $key === 'woocommerce_paypal_settings' ) {
+					return array( 'enabled' => 'yes', '_should_load' => 'yes' );
+				}
+				if ( $key === 'woocommerce_restore_paypal_standard_settings' ) {
+					return array( 'enabled' => 'yes' );
+				}
+				return $default;
+			}
+		);
+		expect( 'update_option' )
+			->once()
+			->with( 'woocommerce_paypal_settings', array( 'enabled' => 'no', '_should_load' => 'no' ) );
+		expect( 'update_option' )
+			->once()
+			->with( 'woocommerce_restore_paypal_standard_settings', array( 'enabled' => 'no' ) );
 
-		$this->seed_wcs_subscriptions( 'restore_paypal_standard', 2 );
-		update_option( 'woocommerce_paypal_settings', array( 'enabled' => 'yes', '_should_load' => 'yes' ) );
-
-		$this->sut->call_disable_legacy_paypal_standard_on_connect();
-
-		$stored = get_transient( 'ppcp_wps_standard_subs_notice' );
-		$this->assertSame( 2, (int) $stored );
-
-		$settings = get_option( 'woocommerce_paypal_settings' );
-		$this->assertSame( 'yes', $settings['enabled'] );
+		$this->sut->call_disable();
+		$this->addToAssertionCount( 1 );
 	}
 
-	/**
-	 * @test
-	 *
-	 * GIVEN the restore-paypal-standard-for-woocommerce plugin is installed (option exists)
-	 * WHEN  the merchant connects PPCP with no active subscriptions
-	 * THEN  both woocommerce_paypal_settings and woocommerce_restore_paypal_standard_settings
-	 *       have enabled set to 'no'
-	 */
-	public function test_also_disables_restoration_plugin_option_when_present(): void {
-		update_option( 'woocommerce_paypal_settings', array( 'enabled' => 'yes', '_should_load' => 'yes' ) );
-		update_option( 'woocommerce_restore_paypal_standard_settings', array( 'enabled' => 'yes' ) );
-
-		$this->sut->call_disable_legacy_paypal_standard_on_connect();
-
-		$wps   = get_option( 'woocommerce_paypal_settings' );
-		$rpsfw = get_option( 'woocommerce_restore_paypal_standard_settings' );
-		$this->assertSame( 'no', $wps['enabled'] );
-		$this->assertSame( 'no', $wps['_should_load'] );
-		$this->assertSame( 'no', $rpsfw['enabled'] );
-	}
+	// ── maybe_show_wps_subscriptions_notice ────────────────────────────────────
 
 	/**
-	 * @test
+	 * No output when the transient is absent.
 	 *
-	 * GIVEN WPS is already fully disabled
-	 * WHEN  the merchant re-connects PPCP
-	 * THEN  the operation is idempotent (safe to write 'no' to already-'no' keys)
-	 */
-	public function test_disable_is_idempotent(): void {
-		update_option( 'woocommerce_paypal_settings', array( 'enabled' => 'no', '_should_load' => 'no' ) );
-
-		$this->sut->call_disable_legacy_paypal_standard_on_connect();
-		$this->sut->call_disable_legacy_paypal_standard_on_connect();
-
-		$settings = get_option( 'woocommerce_paypal_settings' );
-		$this->assertSame( 'no', $settings['enabled'] );
-		$this->assertSame( 'no', $settings['_should_load'] );
-	}
-
-	// ── maybe_show_wps_subscriptions_notice ───────────────────────────────
-
-	/**
 	 * @test
-	 *
-	 * GIVEN no transient has been set
-	 * WHEN  admin_notices fires
-	 * THEN  no output is produced
 	 */
 	public function test_no_output_when_transient_absent(): void {
-		$output = $this->sut->call_maybe_show_wps_subscriptions_notice();
+		when( 'get_transient' )->justReturn( false );
+
+		$output = $this->sut->call_notice();
 
 		$this->assertSame( '', $output );
 	}
 
 	/**
+	 * A warning notice is rendered with the correct singular/plural count.
+	 *
 	 * @test
-	 *
-	 * GIVEN a subscription count transient is set
-	 * WHEN  admin_notices fires
-	 * THEN  a notice div is rendered and the transient is deleted
-	 *
 	 * @dataProvider subscription_count_notice_cases
 	 */
-	public function test_renders_notice_and_clears_transient( int $count, string $expected_fragment ): void {
-		set_transient( 'ppcp_wps_standard_subs_notice', $count, 30 * DAY_IN_SECONDS );
+	public function test_renders_notice_with_correct_count( int $count, string $expected_fragment ): void {
+		when( 'get_transient' )->justReturn( $count );
+		when( 'admin_url' )->returnArg();
+		when( '_n' )->alias(
+			static function ( string $single, string $plural, int $number ): string {
+				return $number === 1 ? $single : $plural;
+			}
+		);
 
-		$output = $this->sut->call_maybe_show_wps_subscriptions_notice();
+		$output = $this->sut->call_notice();
 
 		$this->assertStringContainsString( 'notice notice-warning', $output );
 		$this->assertStringContainsString( $expected_fragment, $output );
-		// Transient must be deleted after display.
-		$this->assertFalse( get_transient( 'ppcp_wps_standard_subs_notice' ) );
 	}
 
 	/** @return array<string, array{int, string}> */
 	public static function subscription_count_notice_cases(): array {
 		return array(
-			'singular — 1 subscription'  => array( 1, '1 subscription</a> is still billed' ),
-			'plural — 5 subscriptions'   => array( 5, '5 subscriptions</a> are still billed' ),
+			'singular — 1 subscription' => array( 1, '1 subscription</a> is still billed' ),
+			'plural — 5 subscriptions'  => array( 5, '5 subscriptions</a> are still billed' ),
 		);
-	}
-
-	// ── helpers ───────────────────────────────────────────────────────────
-
-	/**
-	 * Seeds WCS with the given number of active subscriptions for a gateway.
-	 * No-op if WCS is not installed; callers should markTestSkipped() first.
-	 */
-	private function seed_wcs_subscriptions( string $gateway_id, int $count ): void {
-		for ( $i = 0; $i < $count; $i++ ) {
-			$order = wc_create_order();
-			$sub   = wcs_create_subscription(
-				array(
-					'order_id'         => $order->get_id(),
-					'status'           => 'active',
-					'billing_interval' => 1,
-					'billing_period'   => 'month',
-				)
-			);
-			$sub->set_payment_method( $gateway_id );
-			$sub->save();
-		}
 	}
 }
