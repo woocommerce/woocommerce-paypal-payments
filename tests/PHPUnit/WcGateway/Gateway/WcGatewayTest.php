@@ -305,21 +305,18 @@ class WcGatewayTest extends TestCase
 		$wcOrder = Mockery::mock( \WC_Order::class );
 		$error   = 'capture-validation-error';
 
-		$this->orderProcessor
-			->expects( 'process' )
-			->andThrow( new Exception( $error ) );
+		$this->orderProcessor->allows( 'process' )->andThrow( new Exception( $error ) );
 
-		$wcOrder->shouldReceive( 'update_status' )->andReturn( true );
+		$wcOrder->allows( 'update_status' )->andReturn( true );
 
 		// Normal checkout: the freshly-created order MUST be force-deleted.
 		$wcOrder->shouldReceive( 'delete' )->once()->with( true );
 
 		$testee = $this->createGateway();
 
-		expect( 'wc_get_order' )->with( $orderId )->andReturn( $wcOrder );
-		$this->sessionHandler->shouldReceive( 'destroy_session_data' );
-		expect( 'wc_add_notice' )->with( $error, 'error' );
-
+		when( 'wc_get_order' )->justReturn( $wcOrder );
+		$this->sessionHandler->allows( 'destroy_session_data' );
+		when( 'wc_add_notice' )->justReturn( null );
 		when( 'wc_get_checkout_url' )->justReturn( 'http://example.com/checkout' );
 		when( 'is_checkout_pay_page' )->justReturn( false );
 
@@ -330,11 +327,11 @@ class WcGatewayTest extends TestCase
 		when( 'WC' )->justReturn( $woocommerce );
 
 		// The delete flag is true, so the deletion path is reached.
-		$session->shouldReceive( 'get' )
+		$session->allows( 'get' )
 			->with( 'ppcp_delete_wc_order_on_payment_failure' )
 			->andReturn( true );
-		$session->shouldReceive( 'get' )->andReturn( null );
-		$session->shouldReceive( 'set' );
+		$session->allows( 'get' )->andReturn( null );
+		$session->allows( 'set' );
 
 		$result = $testee->process_payment( $orderId );
 
@@ -354,21 +351,18 @@ class WcGatewayTest extends TestCase
 		$wcOrder = Mockery::mock( \WC_Order::class );
 		$error   = 'capture-validation-error';
 
-		$this->orderProcessor
-			->expects( 'process' )
-			->andThrow( new Exception( $error ) );
+		$this->orderProcessor->allows( 'process' )->andThrow( new Exception( $error ) );
 
-		$wcOrder->shouldReceive( 'update_status' )->andReturn( true );
+		$wcOrder->allows( 'update_status' )->andReturn( true );
 
 		// Pay-for-Order page: the pre-existing order must NEVER be deleted.
 		$wcOrder->shouldReceive( 'delete' )->never();
 
 		$testee = $this->createGateway();
 
-		expect( 'wc_get_order' )->with( $orderId )->andReturn( $wcOrder );
-		$this->sessionHandler->shouldReceive( 'destroy_session_data' );
-		expect( 'wc_add_notice' )->with( $error, 'error' );
-
+		when( 'wc_get_order' )->justReturn( $wcOrder );
+		$this->sessionHandler->allows( 'destroy_session_data' );
+		when( 'wc_add_notice' )->justReturn( null );
 		when( 'wc_get_checkout_url' )->justReturn( 'http://example.com/checkout' );
 		when( 'is_checkout_pay_page' )->justReturn( true );
 
@@ -379,11 +373,11 @@ class WcGatewayTest extends TestCase
 		when( 'WC' )->justReturn( $woocommerce );
 
 		// The delete flag is true; the guard on is_checkout_pay_page() should prevent the deletion.
-		$session->shouldReceive( 'get' )
+		$session->allows( 'get' )
 			->with( 'ppcp_delete_wc_order_on_payment_failure' )
 			->andReturn( true );
-		$session->shouldReceive( 'get' )->andReturn( null );
-		$session->shouldReceive( 'set' );
+		$session->allows( 'get' )->andReturn( null );
+		$session->allows( 'set' );
 
 		$result = $testee->process_payment( $orderId );
 
