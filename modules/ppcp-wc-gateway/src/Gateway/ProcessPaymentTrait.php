@@ -5,7 +5,7 @@
  * @package WooCommerce\PayPalCommerce\WcGateway\Gateway
  */
 
-declare( strict_types=1 );
+declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\WcGateway\Gateway;
 
@@ -35,7 +35,13 @@ trait ProcessPaymentTrait {
 				$this->format_exception( $error )
 			);
 
-			if ( WC()->session->get( 'ppcp_delete_wc_order_on_payment_failure' ) ?? false ) {
+			// Whether the failed-capture handler flagged this order for cleanup.
+			$is_flagged_for_deletion = WC()->session->get( 'ppcp_delete_wc_order_on_payment_failure' ) ?? false;
+
+			// Pre-existing orders paid via the "Pay for Order" page must never be deleted.
+			$is_disposable_checkout_order = ! is_checkout_pay_page();
+
+			if ( $is_flagged_for_deletion && $is_disposable_checkout_order ) {
 				$wc_order->delete( true );
 			}
 		}
