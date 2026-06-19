@@ -269,6 +269,7 @@ class WcGatewayTest extends TestCase
 
 		when('wc_get_checkout_url')
 			->justReturn($redirectUrl);
+		when('is_checkout_pay_page')->justReturn(false);
 
 		$woocommerce = Mockery::mock(\WooCommerce::class);
 		when('WC')->justReturn($woocommerce);
