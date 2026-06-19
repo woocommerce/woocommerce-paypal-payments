@@ -1,5 +1,5 @@
 <?php
-declare(strict_types=1);
+declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\WcGateway\Gateway;
 
@@ -291,6 +291,114 @@ class WcGatewayTest extends TestCase
 		);
     }
 
+	/**
+	 * GIVEN a freshly-created order exists in WooCommerce (normal checkout flow)
+	 *   AND the session flag `ppcp_delete_wc_order_on_payment_failure` is set to true
+	 *   AND the current page is NOT the Pay-for-Order page
+	 * WHEN capture validation throws an exception during process_payment()
+	 * THEN the order is force-deleted from the database to clean up the transient checkout order
+	 *   AND a failure result is returned to the caller
+	 */
+	public function testProcessPaymentFailureDeletesFreshOrderDuringCheckout(): void {
+		$orderId = 1;
+		$wcOrder = Mockery::mock( \WC_Order::class );
+		$error   = 'capture-validation-error';
+
+		$this->orderProcessor
+			->expects( 'process' )
+			->andThrow( new Exception( $error ) );
+		$this->subscriptionHelper->shouldReceive( 'has_subscription' )
+			->with( $orderId )
+			->andReturn( false );
+		$this->subscriptionHelper->shouldReceive( 'is_subscription_change_payment' )
+			->andReturn( false );
+
+		$wcOrder->shouldReceive( 'update_status' )->andReturn( true );
+
+		// Normal checkout: the freshly-created order MUST be force-deleted.
+		$wcOrder->shouldReceive( 'delete' )->once()->with( true );
+
+		$testee = $this->createGateway();
+
+		expect( 'wc_get_order' )->with( $orderId )->andReturn( $wcOrder );
+		$this->sessionHandler->shouldReceive( 'destroy_session_data' );
+		expect( 'wc_add_notice' )->with( $error, 'error' );
+
+		when( 'wc_get_checkout_url' )->justReturn( 'http://example.com/checkout' );
+		when( 'is_checkout_pay_page' )->justReturn( false );
+
+		$woocommerce = Mockery::mock( \WooCommerce::class );
+		$session     = Mockery::mock( \WC_Session::class );
+
+		$woocommerce->session = $session;
+		when( 'WC' )->justReturn( $woocommerce );
+
+		// The delete flag is true, so the deletion path is reached.
+		$session->shouldReceive( 'get' )
+			->with( 'ppcp_delete_wc_order_on_payment_failure' )
+			->andReturn( true );
+		$session->shouldReceive( 'get' )->andReturn( null );
+		$session->shouldReceive( 'set' );
+
+		$result = $testee->process_payment( $orderId );
+
+		$this->assertSame( 'failure', $result['result'] );
+	}
+
+	/**
+	 * GIVEN a pre-existing WooCommerce order opened on the Pay-for-Order page
+	 *   AND the session flag `ppcp_delete_wc_order_on_payment_failure` is set to true
+	 *   AND the current page IS the Pay-for-Order page (`is_checkout_pay_page()` returns true)
+	 * WHEN capture validation throws an exception during process_payment()
+	 * THEN the pre-existing order is NOT deleted — it is marked as failed so the customer can retry
+	 *   AND a failure result is returned to the caller
+	 */
+	public function testProcessPaymentFailureKeepsOrderOnPayForOrderPage(): void {
+		$orderId = 1;
+		$wcOrder = Mockery::mock( \WC_Order::class );
+		$error   = 'capture-validation-error';
+
+		$this->orderProcessor
+			->expects( 'process' )
+			->andThrow( new Exception( $error ) );
+		$this->subscriptionHelper->shouldReceive( 'has_subscription' )
+			->with( $orderId )
+			->andReturn( false );
+		$this->subscriptionHelper->shouldReceive( 'is_subscription_change_payment' )
+			->andReturn( false );
+
+		$wcOrder->shouldReceive( 'update_status' )->andReturn( true );
+
+		// Pay-for-Order page: the pre-existing order must NEVER be deleted.
+		$wcOrder->shouldReceive( 'delete' )->never();
+
+		$testee = $this->createGateway();
+
+		expect( 'wc_get_order' )->with( $orderId )->andReturn( $wcOrder );
+		$this->sessionHandler->shouldReceive( 'destroy_session_data' );
+		expect( 'wc_add_notice' )->with( $error, 'error' );
+
+		when( 'wc_get_checkout_url' )->justReturn( 'http://example.com/checkout' );
+		when( 'is_checkout_pay_page' )->justReturn( true );
+
+		$woocommerce = Mockery::mock( \WooCommerce::class );
+		$session     = Mockery::mock( \WC_Session::class );
+
+		$woocommerce->session = $session;
+		when( 'WC' )->justReturn( $woocommerce );
+
+		// The delete flag is true; the guard on is_checkout_pay_page() should prevent the deletion.
+		$session->shouldReceive( 'get' )
+			->with( 'ppcp_delete_wc_order_on_payment_failure' )
+			->andReturn( true );
+		$session->shouldReceive( 'get' )->andReturn( null );
+		$session->shouldReceive( 'set' );
+
+		$result = $testee->process_payment( $orderId );
+
+		$this->assertSame( 'failure', $result['result'] );
+	}
+
     /**
      * @dataProvider dataForFundingSource
      */
@@ -298,65 +406,63 @@ class WcGatewayTest extends TestCase
     {
 		$this->fundingSource = $fundingSource;
 
-    	$testee = $this->createGateway();
+		$testee = $this->createGateway();
 
-		self::assertEquals($title, $testee->title);
-		self::assertEquals($description, $testee->description);
-    }
+		self::assertEquals( $title, $testee->title );
+		self::assertEquals( $description, $testee->description );
+	}
 
-    public function dataForTestCaptureAuthorizedPaymentNoActionableFailures() : array
-    {
-        return [
-            'inaccessible' => [
-                AuthorizedPaymentsProcessor::INACCESSIBLE,
-                AuthorizeOrderActionNotice::NO_INFO,
-            ],
-            'not_found' => [
-                AuthorizedPaymentsProcessor::NOT_FOUND,
-                AuthorizeOrderActionNotice::NOT_FOUND,
-            ],
-            'not_mapped' => [
-                'some-other-failure',
-                AuthorizeOrderActionNotice::FAILED,
-            ],
-        ];
-    }
+	public function dataForTestCaptureAuthorizedPaymentNoActionableFailures(): array {
+		return [
+			'inaccessible' => [
+				AuthorizedPaymentsProcessor::INACCESSIBLE,
+				AuthorizeOrderActionNotice::NO_INFO,
+			],
+			'not_found'    => [
+				AuthorizedPaymentsProcessor::NOT_FOUND,
+				AuthorizeOrderActionNotice::NOT_FOUND,
+			],
+			'not_mapped'   => [
+				'some-other-failure',
+				AuthorizeOrderActionNotice::FAILED,
+			],
+		];
+	}
 
-    public function dataForFundingSource(): array
-    {
-    	return [
-    		[null, 'PayPal', 'Pay via PayPal.'],
-    		['venmo', 'Venmo', 'Pay via Venmo.'],
-    		['paylater', 'Pay Later', 'Pay via Pay Later.'],
-    		['blik', 'BLIK (via PayPal)', 'Pay via BLIK.'],
-    		['qwerty', 'PayPal', 'Pay via PayPal.'],
-	    ];
-    }
+	public function dataForFundingSource(): array {
+		return [
+			[ null, 'PayPal', 'Pay via PayPal.' ],
+			[ 'venmo', 'Venmo', 'Pay via Venmo.' ],
+			[ 'paylater', 'Pay Later', 'Pay via Pay Later.' ],
+			[ 'blik', 'BLIK (via PayPal)', 'Pay via BLIK.' ],
+			[ 'qwerty', 'PayPal', 'Pay via PayPal.' ],
+		];
+	}
 
 	/**
 	 * GIVEN a customer has already initiated PayPal payment (continuation flow)
 	 * WHEN payment_fields() is rendered on the checkout page
 	 * THEN the saved-method UI (tokenization_script + saved_payment_methods) must NOT be rendered
-	 * AND the payment fields render without the vault UI to avoid double-render during continuation
+	 *   AND the payment fields render without the vault UI to avoid double-render during
+	 *   continuation
 	 */
-	public function test_payment_fields_during_continuation_flow_suppresses_saved_method_ui(): void
-	{
-		$this->context->shouldReceive('is_paypal_continuation')->andReturn(true);
-		$this->settingsProvider->shouldReceive('save_paypal_and_venmo')->andReturn(true);
+	public function test_payment_fields_during_continuation_flow_suppresses_saved_method_ui(): void {
+		$this->context->shouldReceive( 'is_paypal_continuation' )->andReturn( true );
+		$this->settingsProvider->shouldReceive( 'save_paypal_and_venmo' )->andReturn( true );
 
-		when('is_checkout')->justReturn(true);
-		when('wp_kses_post')->returnArg();
-		when('wpautop')->returnArg();
-		when('wptexturize')->returnArg();
-		when('apply_filters')->returnArg(2);
+		when( 'is_checkout' )->justReturn( true );
+		when( 'wp_kses_post' )->returnArg();
+		when( 'wpautop' )->returnArg();
+		when( 'wptexturize' )->returnArg();
+		when( 'apply_filters' )->returnArg( 2 );
 
 		$gateway = $this->createSpyGateway();
-		$gateway->set_test_supports(['tokenization']);
+		$gateway->set_test_supports( [ 'tokenization' ] );
 
 		$gateway->payment_fields();
 
-		$this->assertSame(0, $gateway->tokenization_script_call_count, 'tokenization_script() must not be called during PayPal continuation flow');
-		$this->assertSame(0, $gateway->saved_payment_methods_call_count, 'saved_payment_methods() must not be called during PayPal continuation flow');
+		$this->assertSame( 0, $gateway->tokenization_script_call_count, 'tokenization_script() must not be called during PayPal continuation flow' );
+		$this->assertSame( 0, $gateway->saved_payment_methods_call_count, 'saved_payment_methods() must not be called during PayPal continuation flow' );
 	}
 
 	/**
@@ -364,24 +470,23 @@ class WcGatewayTest extends TestCase
 	 * WHEN payment_fields() is rendered on the checkout page
 	 * THEN the saved-method UI (tokenization_script + saved_payment_methods) IS rendered
 	 */
-	public function test_payment_fields_on_normal_checkout_renders_saved_method_ui(): void
-	{
-		$this->context->shouldReceive('is_paypal_continuation')->andReturn(false);
-		$this->settingsProvider->shouldReceive('save_paypal_and_venmo')->andReturn(true);
+	public function test_payment_fields_on_normal_checkout_renders_saved_method_ui(): void {
+		$this->context->shouldReceive( 'is_paypal_continuation' )->andReturn( false );
+		$this->settingsProvider->shouldReceive( 'save_paypal_and_venmo' )->andReturn( true );
 
-		when('is_checkout')->justReturn(true);
-		when('wp_kses_post')->returnArg();
-		when('wpautop')->returnArg();
-		when('wptexturize')->returnArg();
-		when('apply_filters')->returnArg(2);
+		when( 'is_checkout' )->justReturn( true );
+		when( 'wp_kses_post' )->returnArg();
+		when( 'wpautop' )->returnArg();
+		when( 'wptexturize' )->returnArg();
+		when( 'apply_filters' )->returnArg( 2 );
 
 		$gateway = $this->createSpyGateway();
-		$gateway->set_test_supports(['tokenization']);
+		$gateway->set_test_supports( [ 'tokenization' ] );
 
 		$gateway->payment_fields();
 
-		$this->assertSame(1, $gateway->tokenization_script_call_count, 'tokenization_script() must be called on a normal checkout with vaulting enabled');
-		$this->assertSame(1, $gateway->saved_payment_methods_call_count, 'saved_payment_methods() must be called on a normal checkout with vaulting enabled');
+		$this->assertSame( 1, $gateway->tokenization_script_call_count, 'tokenization_script() must be called on a normal checkout with vaulting enabled' );
+		$this->assertSame( 1, $gateway->saved_payment_methods_call_count, 'saved_payment_methods() must be called on a normal checkout with vaulting enabled' );
 	}
 
 	/**
@@ -389,24 +494,23 @@ class WcGatewayTest extends TestCase
 	 * WHEN payment_fields() is rendered on the checkout page
 	 * THEN the saved-method UI is NOT rendered regardless of continuation state
 	 */
-	public function test_payment_fields_with_vaulting_disabled_suppresses_saved_method_ui(): void
-	{
-		$this->context->shouldReceive('is_paypal_continuation')->andReturn(false);
-		$this->settingsProvider->shouldReceive('save_paypal_and_venmo')->andReturn(false);
+	public function test_payment_fields_with_vaulting_disabled_suppresses_saved_method_ui(): void {
+		$this->context->shouldReceive( 'is_paypal_continuation' )->andReturn( false );
+		$this->settingsProvider->shouldReceive( 'save_paypal_and_venmo' )->andReturn( false );
 
-		when('is_checkout')->justReturn(true);
-		when('wp_kses_post')->returnArg();
-		when('wpautop')->returnArg();
-		when('wptexturize')->returnArg();
-		when('apply_filters')->returnArg(2);
+		when( 'is_checkout' )->justReturn( true );
+		when( 'wp_kses_post' )->returnArg();
+		when( 'wpautop' )->returnArg();
+		when( 'wptexturize' )->returnArg();
+		when( 'apply_filters' )->returnArg( 2 );
 
 		$gateway = $this->createSpyGateway();
-		$gateway->set_test_supports(['tokenization']);
+		$gateway->set_test_supports( [ 'tokenization' ] );
 
 		$gateway->payment_fields();
 
-		$this->assertSame(0, $gateway->tokenization_script_call_count, 'tokenization_script() must not be called when vaulting is disabled');
-		$this->assertSame(0, $gateway->saved_payment_methods_call_count, 'saved_payment_methods() must not be called when vaulting is disabled');
+		$this->assertSame( 0, $gateway->tokenization_script_call_count, 'tokenization_script() must not be called when vaulting is disabled' );
+		$this->assertSame( 0, $gateway->saved_payment_methods_call_count, 'saved_payment_methods() must not be called when vaulting is disabled' );
 	}
 }
 
@@ -414,34 +518,28 @@ class WcGatewayTest extends TestCase
  * Testable subclass that replaces the WC parent's side-effectful
  * saved-payment-method methods with simple call-count spies.
  */
-class SpyablePayPalGateway extends PayPalGateway
-{
+class SpyablePayPalGateway extends PayPalGateway {
 	public int $saved_payment_methods_call_count = 0;
-	public int $tokenization_script_call_count   = 0;
+	public int $tokenization_script_call_count = 0;
 
 	/** @param string[] $supports */
-	public function set_test_supports(array $supports): void
-	{
+	public function set_test_supports( array $supports ): void {
 		$this->supports = $supports;
 	}
 
-	public function supports($feature): bool
-	{
-		return in_array($feature, $this->supports, true);
+	public function supports( $feature ): bool {
+		return in_array( $feature, $this->supports, true );
 	}
 
-	public function saved_payment_methods(): void
-	{
-		$this->saved_payment_methods_call_count++;
+	public function saved_payment_methods(): void {
+		$this->saved_payment_methods_call_count ++;
 	}
 
-	public function tokenization_script(): void
-	{
-		$this->tokenization_script_call_count++;
+	public function tokenization_script(): void {
+		$this->tokenization_script_call_count ++;
 	}
 
-	public function get_description(): string
-	{
+	public function get_description(): string {
 		return '';
 	}
 }
