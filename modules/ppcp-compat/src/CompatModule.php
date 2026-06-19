@@ -612,6 +612,36 @@ class CompatModule implements ServiceModule, ExecutableModule {
 	}
 
 	/**
+	 * Returns the total count of active/pending-cancel PayPal Standard subscriptions via WCS.
+	 *
+	 * Checks both the native WPS gateway ID and the restoration plugin gateway ID.
+	 * Returns null when WooCommerce Subscriptions is not installed, so callers can
+	 * distinguish "WCS absent" from "WCS present but zero subscriptions".
+	 *
+	 * @return int|null  null = WCS not installed; int = total active subscription count.
+	 */
+	protected function count_wps_active_subscriptions(): ?int {
+		if ( ! function_exists( 'wcs_get_subscriptions' ) ) {
+			return null;
+		}
+
+		$total = 0;
+		foreach ( array( 'paypal', 'restore_paypal_standard' ) as $gateway_id ) {
+			$total += count(
+				wcs_get_subscriptions(
+					array(
+						'payment_method'         => $gateway_id,
+						'subscription_status'    => array( 'active', 'pending-cancel' ),
+						'subscriptions_per_page' => -1,
+					)
+				)
+			);
+		}
+
+		return $total;
+	}
+
+	/**
 	 * Disables the WC core PayPal Standard gateway when a merchant successfully connects PPCP.
 	 *
 	 * PayPal Standard has a '_should_load' persistence flag that survives the enabled toggle —
@@ -625,33 +655,19 @@ class CompatModule implements ServiceModule, ExecutableModule {
 	 * next admin page load via maybe_show_wps_subscriptions_notice().
 	 */
 	protected function disable_legacy_paypal_standard_on_connect(): void {
-		if ( function_exists( 'wcs_get_subscriptions' ) ) {
-			// Check both native WPS and the restoration plugin gateway for active subscriptions.
-			$total_count = 0;
-			foreach ( array( 'paypal', 'restore_paypal_standard' ) as $gateway_id ) {
-				$total_count += count(
-					wcs_get_subscriptions(
-						array(
-							'payment_method'         => $gateway_id,
-							'subscription_status'    => array( 'active', 'pending-cancel' ),
-							'subscriptions_per_page' => -1,
-						)
-					)
-				);
-			}
+		$sub_count = $this->count_wps_active_subscriptions();
 
-			if ( $total_count > 0 ) {
-				// Persist count to a transient so the notice survives the AJAX connect request
-				// and appears on the next admin page load.
-				set_transient( 'ppcp_wps_standard_subs_notice', $total_count, 30 * DAY_IN_SECONDS );
-				return;
-			}
+		if ( $sub_count !== null && $sub_count > 0 ) {
+			// Persist count to a transient so the notice survives the AJAX connect request
+			// and appears on the next admin page load.
+			set_transient( 'ppcp_wps_standard_subs_notice', $sub_count, 30 * DAY_IN_SECONDS );
+			return;
 		}
 
 		// Safe to disable — no active PayPal Standard subscriptions detected.
-		$settings               = get_option( 'woocommerce_paypal_settings', array() );
+		$settings                 = get_option( 'woocommerce_paypal_settings', array() );
 		$settings['enabled']      = 'no';
-		$settings['_should_load'] = 'no'; // clears the permanent latch; enabled=no alone is insufficient
+		$settings['_should_load'] = 'no'; // Clears the permanent latch; enabled=no alone is insufficient.
 		update_option( 'woocommerce_paypal_settings', $settings );
 
 		// Also disable restore-paypal-standard-for-woocommerce if installed.
