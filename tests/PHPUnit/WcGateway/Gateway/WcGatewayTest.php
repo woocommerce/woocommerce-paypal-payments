@@ -308,11 +308,6 @@ class WcGatewayTest extends TestCase
 		$this->orderProcessor
 			->expects( 'process' )
 			->andThrow( new Exception( $error ) );
-		$this->subscriptionHelper->shouldReceive( 'has_subscription' )
-			->with( $orderId )
-			->andReturn( false );
-		$this->subscriptionHelper->shouldReceive( 'is_subscription_change_payment' )
-			->andReturn( false );
 
 		$wcOrder->shouldReceive( 'update_status' )->andReturn( true );
 
@@ -362,11 +357,6 @@ class WcGatewayTest extends TestCase
 		$this->orderProcessor
 			->expects( 'process' )
 			->andThrow( new Exception( $error ) );
-		$this->subscriptionHelper->shouldReceive( 'has_subscription' )
-			->with( $orderId )
-			->andReturn( false );
-		$this->subscriptionHelper->shouldReceive( 'is_subscription_change_payment' )
-			->andReturn( false );
 
 		$wcOrder->shouldReceive( 'update_status' )->andReturn( true );
 
