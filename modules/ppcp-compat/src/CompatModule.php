@@ -93,9 +93,16 @@ class CompatModule implements ServiceModule, ExecutableModule {
 
 		add_action(
 			'woocommerce_paypal_payments_authenticated_merchant',
-			array( $this, 'disable_legacy_paypal_standard_on_connect' )
+			function () {
+				$this->disable_legacy_paypal_standard_on_connect();
+			}
 		);
-		add_action( 'admin_notices', array( $this, 'maybe_show_wps_subscriptions_notice' ) );
+		add_action(
+			'admin_notices',
+			function () {
+				$this->maybe_show_wps_subscriptions_notice();
+			}
+		);
 
 		$this->legacy_ui_card_payment_mapping( $c );
 
