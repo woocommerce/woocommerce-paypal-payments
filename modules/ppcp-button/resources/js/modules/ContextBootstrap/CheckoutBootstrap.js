@@ -253,19 +253,18 @@ class CheckoutBootstrap {
 		setVisibleByClass(
 			this.standardOrderButtonSelector,
 			( isPaypal && isFreeTrial && hasVaultedPaypal ) ||
-				// On a zero-total cart the Vault Component is disabled, so selecting a
-				// saved PayPal token must show the standard "Place order" button. The
-				// saved token completes via process_payment's free-trial short-circuit.
-				( isPaypal &&
-					isFreeTrial &&
-					this.isSavedPayPalTokenSelected() ) ||
 				isNotOurGateway ||
 				isSavedCard ||
 				( isPaypal && ! useSmartButtons ) ||
-				( showVaultComponent && ! this.isNewPaymentMethodSelected() ),
+				// Selecting a saved PayPal token always uses the standard "Place order"
+				// button, regardless of merchant country. For US merchants the Vault
+				// Component additionally renders its in-page approval; for everyone else
+				// process_payment charges the saved token server-side (reference
+				// transaction, or the free-trial short-circuit on a zero-total cart).
+				( isPaypal && this.isSavedPayPalTokenSelected() ),
 			'ppcp-hidden'
 		);
-		this.updatePlaceOrderButtonText( showVaultComponent );
+		this.updatePlaceOrderButtonText();
 		setVisible( '.ppcp-vaulted-paypal-details', isPaypal );
 		setVisible(
 			this.gateway.button.wrapper,
@@ -411,15 +410,16 @@ class CheckoutBootstrap {
 		);
 	}
 
-	updatePlaceOrderButtonText( showVaultComponent ) {
+	updatePlaceOrderButtonText() {
 		const $placeOrder = jQuery( this.standardOrderButtonSelector );
 		if ( ! $placeOrder.length ) {
 			return;
 		}
 
-		if ( showVaultComponent && ! this.isNewPaymentMethodSelected() ) {
-			// The saved-token vault flow approves the order in-page, so the
-			// standard "Place order" label fits — clicking does not redirect.
+		if ( this.isSavedPayPalTokenSelected() ) {
+			// A saved PayPal token completes in-page (Vault Component approval) or
+			// server-side (reference transaction), never via redirect, so the
+			// standard "Place order" label fits in every case.
 			$placeOrder.text( $placeOrder.data( 'value' ) );
 			return;
 		}
