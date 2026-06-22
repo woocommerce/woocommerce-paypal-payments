@@ -7,7 +7,8 @@ const { googlePay } = payments;
 
 export const googlePayProduct: ShopOrder[] = [
 	{
-		title: 'PCP-0000 | Transaction - Product - Google Pay - Variable product with two not selected attributes @Critical',
+		// https://inpsyde.atlassian.net/browse/PCP-6589
+		title: 'PCP-6589 | Transaction - Product - Google Pay - Variable product with two not selected attributes @Critical',
 		...orders.default,
 		payment: googlePay,
 		products: [
