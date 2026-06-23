@@ -11,20 +11,11 @@ const country = process.env.WC_DEFAULT_COUNTRY || 'usa';
 const currency = process.env.WC_DEFAULT_CURRENCY || 'USD';
 const merchant = merchants[ country ];
 
-orders.negative12PercentFee = {
+orders.negative12Fee = {
 	...orders.default,
 	fees: [ {
-		name: 'negative12PercentFee',
+		name: 'negative12Fee',
 		total: '-12.00',
-		type: 'percent',
-	} ],
-};
-
-orders.negative15FixedFee = {
-	...orders.default,
-	fees: [ {
-		name: 'negative15FixedFee',
-		total: '-15.00',
 		type: 'fixed',
 	} ],
 };

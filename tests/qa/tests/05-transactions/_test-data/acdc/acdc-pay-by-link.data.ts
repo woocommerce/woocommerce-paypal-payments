@@ -31,29 +31,15 @@ export const acdcPayByLink: ShopOrder[] = [
 	},
 	{
 		// https://inpsyde.atlassian.net/browse/PCP-6494
-		title: 'PCP-6494 | Transaction - Pay by link - ACDC - Customer - Order with negative fixed fee',
-		...orders.negative15FixedFee,
-		payment: acdc,
-		customer,
-	},
-	{
-		// https://inpsyde.atlassian.net/browse/PCP-6575
-		title: 'PCP-6575 | Transaction - Pay by link - ACDC - Customer - Order with negative percentage fee',
-		...orders.negative12PercentFee,
+		title: 'PCP-6494 | Transaction - Pay by link - ACDC - Customer - Order with negative fee',
+		...orders.negative12Fee,
 		payment: acdc,
 		customer,
 	},
 	{
 		// https://inpsyde.atlassian.net/browse/PCP-6495
-		title: 'PCP-6495 | Transaction - Pay by link - ACDC - Guest - Order with negative fixed fee',
-		...orders.negative15FixedFee,
-		payment: acdc,
-		customer: guest,
-	},
-	{
-		// https://inpsyde.atlassian.net/browse/PCP-6576
-		title: 'PCP-6576 | Transaction - Pay by link - ACDC - Guest - Order with negative percentage fee',
-		...orders.negative12PercentFee,
+		title: 'PCP-6495 | Transaction - Pay by link - ACDC - Guest - Order with negative fee',
+		...orders.negative12Fee,
 		payment: acdc,
 		customer: guest,
 	},

@@ -25,29 +25,15 @@ export const payPalPayByLink: ShopOrder[] = [
 	},
 	{
 		// https://inpsyde.atlassian.net/browse/PCP-6460
-		title: 'PCP-6460 | Transaction - Pay by link - PayPal - Customer - Order with negative fixed fee',
-		...orders.negative15FixedFee,
-		payment: payPal,
-		customer,
-	},
-	{
-		// https://inpsyde.atlassian.net/browse/PCP-6568
-		title: 'PCP-6568 | Transaction - Pay by link - PayPal - Customer - Order with negative percentage fee',
-		...orders.negative12PercentFee,
+		title: 'PCP-6460 | Transaction - Pay by link - PayPal - Customer - Order with negative fee',
+		...orders.negative12Fee,
 		payment: payPal,
 		customer,
 	},
 	{
 		// https://inpsyde.atlassian.net/browse/PCP-6485
-		title: 'PCP-6485 | Transaction - Pay by link - PayPal - Guest - Order with negative fixed fee',
-		...orders.negative15FixedFee,
-		payment: payPal,
-		customer: guest,
-	},
-	{
-		// https://inpsyde.atlassian.net/browse/PCP-6569
-		title: 'PCP-6569 | Transaction - Pay by link - PayPal - Guest - Order with negative percentage fee',
-		...orders.negative12PercentFee,
+		title: 'PCP-6485 | Transaction - Pay by link - PayPal - Guest - Order with negative fee',
+		...orders.negative12Fee,
 		payment: payPal,
 		customer: guest,
 	},
