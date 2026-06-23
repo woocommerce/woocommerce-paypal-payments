@@ -154,10 +154,11 @@ class ConnectionUrlGenerator
         $query_args = array('displayMode' => 'minibrowser');
         $onboarding_url->init();
         $onboarding_token = $onboarding_url->onboarding_token();
+        $seller_nonce = $onboarding_url->seller_nonce();
         if (!$onboarding_token) {
             throw new RuntimeException('Could not generate an onboarding token for: ' . $cache_key);
         }
-        $data = $this->prepare_referral_data($products, $flags, $onboarding_token);
+        $data = $this->prepare_referral_data($products, $flags, $onboarding_token, $seller_nonce);
         try {
             $referral = $this->partner_referrals->get_value($for_sandbox);
             $url = $referral->signup_link($data);
@@ -175,9 +176,9 @@ class ConnectionUrlGenerator
      *
      * @return array The prepared referral data.
      */
-    protected function prepare_referral_data(array $products, array $flags, string $onboarding_token): array
+    protected function prepare_referral_data(array $products, array $flags, string $onboarding_token, string $seller_nonce = ''): array
     {
-        return $this->referrals_data->data($products, $onboarding_token, (bool) ($flags['useSubscriptions'] ?? \false), (bool) ($flags['useCardPayments'] ?? \false));
+        return $this->referrals_data->data($products, $onboarding_token, (bool) ($flags['useSubscriptions'] ?? \false), (bool) ($flags['useCardPayments'] ?? \false), $seller_nonce);
     }
     /**
      * Persists the generated URL.

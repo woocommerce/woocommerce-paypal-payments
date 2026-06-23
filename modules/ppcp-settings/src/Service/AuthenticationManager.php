@@ -17,7 +17,6 @@ use WooCommerce\PayPalCommerce\ApiClient\Authentication\TokenRateLimiter;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\LoginSeller;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\Orders;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\InMemoryCache;
-use WooCommerce\PayPalCommerce\ApiClient\Repository\PartnerReferralsData;
 use WooCommerce\PayPalCommerce\Settings\Data\GeneralSettings;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\EnvironmentConfig;
 use WooCommerce\WooCommerce\Logging\Logger\NullLogger;
@@ -61,12 +60,6 @@ class AuthenticationManager
      */
     private EnvironmentConfig $login_endpoint;
     /**
-     * Onboarding referrals data.
-     *
-     * @var PartnerReferralsData
-     */
-    private PartnerReferralsData $referrals_data;
-    /**
      * The connection state manager.
      *
      * @var ConnectionState
@@ -84,19 +77,17 @@ class AuthenticationManager
      * @param GeneralSettings                $common_settings  Data model that stores the connection details.
      * @param EnvironmentConfig<string>      $connection_host  API host for direct authentication.
      * @param EnvironmentConfig<LoginSeller> $login_endpoint   API handler to fetch merchant credentials.
-     * @param PartnerReferralsData           $referrals_data   Partner referrals data.
      * @param ConnectionState                $connection_state Connection state manager.
      * @param InternalRestService            $rest_service     Allows calling internal REST endpoints.
      * @param ?LoggerInterface               $logger           Logging instance.
      *
      * phpcs:disable Squiz.Commenting.FunctionComment.IncorrectTypeHint
      */
-    public function __construct(GeneralSettings $common_settings, EnvironmentConfig $connection_host, EnvironmentConfig $login_endpoint, PartnerReferralsData $referrals_data, ConnectionState $connection_state, \WooCommerce\PayPalCommerce\Settings\Service\InternalRestService $rest_service, ?LoggerInterface $logger = null)
+    public function __construct(GeneralSettings $common_settings, EnvironmentConfig $connection_host, EnvironmentConfig $login_endpoint, ConnectionState $connection_state, \WooCommerce\PayPalCommerce\Settings\Service\InternalRestService $rest_service, ?LoggerInterface $logger = null)
     {
         $this->common_settings = $common_settings;
         $this->connection_host = $connection_host;
         $this->login_endpoint = $login_endpoint;
-        $this->referrals_data = $referrals_data;
         $this->connection_state = $connection_state;
         $this->rest_service = $rest_service;
         $this->logger = $logger ?: new NullLogger();
@@ -266,10 +257,10 @@ class AuthenticationManager
      * @return MerchantConnectionDTO A DTO containing the connection details.
      * @throws RuntimeException When failed to retrieve payee.
      */
-    private function authenticate_via_oauth(bool $use_sandbox, string $shared_id, string $auth_code): MerchantConnectionDTO
+    private function authenticate_via_oauth(bool $use_sandbox, string $shared_id, string $auth_code, string $seller_nonce): MerchantConnectionDTO
     {
         $this->logger->info('Attempting OAuth login to PayPal...', array('sandbox' => $use_sandbox, 'shared_id' => $shared_id));
-        $credentials = $this->get_credentials($shared_id, $auth_code, $use_sandbox);
+        $credentials = $this->get_credentials($shared_id, $auth_code, $use_sandbox, $seller_nonce);
         /**
          * Some details are set by `ConnectionListener`. That listener
          * is invoked during the page reload, once the user clicks the blue
@@ -302,15 +293,19 @@ class AuthenticationManager
         $merchant_id = $request_data['merchant_id'] ?? '';
         $merchant_email = $request_data['merchant_email'] ?? '';
         $seller_type = $request_data['seller_type'] ?? '';
+        $seller_nonce = $request_data['seller_nonce'] ?? '';
         // 1. Verify the request details.
         if (empty($merchant_id) || empty($merchant_email)) {
             throw new RuntimeException('Missing merchant ID or email in request');
+        }
+        if (empty($seller_nonce)) {
+            throw new RuntimeException('Missing seller nonce in request');
         }
         // 2. Retrieve and validate the oauth connection.
         $oauth_connection = $this->retrieve_oauth_connection_details();
         $this->validate_id_and_auth_code($oauth_connection->shared_id, $oauth_connection->auth_token);
         // 3. Trade oauth connection details to permanent client credentials.
-        $connection = $this->authenticate_via_oauth($oauth_connection->is_sandbox, $oauth_connection->shared_id, $oauth_connection->auth_token);
+        $connection = $this->authenticate_via_oauth($oauth_connection->is_sandbox, $oauth_connection->shared_id, $oauth_connection->auth_token, $seller_nonce);
         // 4. Complete the authentication checks and persist details.
         if ($connection->merchant_id && $connection->merchant_id !== $merchant_id) {
             throw new RuntimeException('Unexpected merchant ID in request');
@@ -376,11 +371,10 @@ class AuthenticationManager
      * @return array
      * @throws RuntimeException When failed to fetch credentials.
      */
-    private function get_credentials(string $shared_id, string $auth_code, bool $use_sandbox): array
+    private function get_credentials(string $shared_id, string $auth_code, bool $use_sandbox, string $seller_nonce): array
     {
         $login_handler = $this->login_endpoint->get_value($use_sandbox);
-        $nonce = $this->referrals_data->nonce();
-        $response = $login_handler->credentials_for($shared_id, $auth_code, $nonce);
+        $response = $login_handler->credentials_for($shared_id, $auth_code, $seller_nonce);
         return array('client_id' => (string) ($response->client_id ?? ''), 'client_secret' => (string) ($response->client_secret ?? ''), 'merchant_id' => (string) ($response->payer_id ?? ''));
     }
     /**

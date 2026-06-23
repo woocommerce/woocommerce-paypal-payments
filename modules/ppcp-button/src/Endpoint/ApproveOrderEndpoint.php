@@ -26,6 +26,7 @@ use WooCommerce\PayPalCommerce\Session\SessionHandler;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
 use WooCommerce\PayPalCommerce\Settings\Data\SettingsModel;
+use WooCommerce\PayPalCommerce\Webhooks\CustomIds;
 /**
  * Class ApproveOrderEndpoint
  */
@@ -155,6 +156,21 @@ class ApproveOrderEndpoint implements \WooCommerce\PayPalCommerce\Button\Endpoin
             }
             do_action('woocommerce_paypal_payments_approve_order_request_started', $data);
             $order = $this->api_endpoint->order($data['order_id']);
+            $purchase_units = $order->purchase_units();
+            if (!empty($purchase_units)) {
+                $custom_id = $purchase_units[0]->custom_id();
+                $prefix_len = strlen(CustomIds::CUSTOMER_ID_PREFIX);
+                if (strpos($custom_id, CustomIds::CUSTOMER_ID_PREFIX) === 0) {
+                    $order_session_id = substr($custom_id, $prefix_len);
+                    $wc_session = WC()->session;
+                    if ($wc_session instanceof \WC_Session_Handler) {
+                        $current_session_id = (string) $wc_session->get_customer_unique_id();
+                        if ($order_session_id !== $current_session_id) {
+                            throw new RuntimeException(__('Order validation failed.', 'woocommerce-paypal-payments'));
+                        }
+                    }
+                }
+            }
             $payment_source = $order->payment_source();
             if ($payment_source && $payment_source->name() === 'card') {
                 $disabled_cards = $this->settings_provider->disabled_cards();

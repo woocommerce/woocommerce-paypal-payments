@@ -6,6 +6,7 @@ namespace WooCommerce\PayPalCommerce\WcGateway\Endpoint;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\ShippingOption;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\AmountFactory;
+use WooCommerce\PayPalCommerce\Button\Session\CartDataTransientStorage;
 use WooCommerce\PayPalCommerce\WcGateway\StoreApi\Endpoint\CartEndpoint;
 use WooCommerce\PayPalCommerce\WcGateway\StoreApi\Factory\ShippingRate;
 use WP_REST_Response;
@@ -19,11 +20,13 @@ class ShippingCallbackEndpoint
     private CartEndpoint $cart_endpoint;
     private AmountFactory $amount_factory;
     private LoggerInterface $logger;
-    public function __construct(CartEndpoint $cart_endpoint, AmountFactory $amount_factory, LoggerInterface $logger)
+    private CartDataTransientStorage $cart_data_storage;
+    public function __construct(CartEndpoint $cart_endpoint, AmountFactory $amount_factory, LoggerInterface $logger, CartDataTransientStorage $cart_data_storage)
     {
         $this->cart_endpoint = $cart_endpoint;
         $this->amount_factory = $amount_factory;
         $this->logger = $logger;
+        $this->cart_data_storage = $cart_data_storage;
     }
     /**
      * Registers the endpoint.
@@ -34,7 +37,12 @@ class ShippingCallbackEndpoint
     }
     public function verify_request(\WP_REST_Request $request): bool
     {
-        return \true;
+        $cart_token = (string) $request->get_param('cart_token');
+        $paypal_order_id = (string) $request->get_param('id');
+        if (empty($cart_token) || empty($paypal_order_id)) {
+            return \false;
+        }
+        return $this->cart_data_storage->get_by_paypal_order_id($paypal_order_id) !== null;
     }
     public function handle_request(\WP_REST_Request $request): WP_REST_Response
     {

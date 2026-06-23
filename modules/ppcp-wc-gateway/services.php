@@ -21,6 +21,7 @@ use WooCommerce\PayPalCommerce\Axo\Gateway\AxoGateway;
 use WooCommerce\PayPalCommerce\Googlepay\GooglePayGateway;
 use WooCommerce\PayPalCommerce\Button\Helper\MessagesApply;
 use WooCommerce\PayPalCommerce\Button\Helper\MessagesDisclaimers;
+use WooCommerce\PayPalCommerce\Button\Session\CartDataTransientStorage;
 use WooCommerce\PayPalCommerce\Common\Pattern\SingletonDecorator;
 use WooCommerce\PayPalCommerce\Settings\Data\Definition\FeaturesDefinition;
 use WooCommerce\PayPalCommerce\Settings\Data\PaymentSettings;
@@ -798,7 +799,7 @@ return array(
         return new MoneyFactory();
     },
     'wcgateway.shipping.callback.endpoint' => static function (ContainerInterface $container): ShippingCallbackEndpoint {
-        return new ShippingCallbackEndpoint($container->get('wcgateway.store-api.endpoint.cart'), $container->get('api.factory.amount'), $container->get('woocommerce.logger.woocommerce'));
+        return new ShippingCallbackEndpoint($container->get('wcgateway.store-api.endpoint.cart'), $container->get('api.factory.amount'), $container->get('woocommerce.logger.woocommerce'), $container->get('button.session.storage.card-data.transient'));
     },
     'wcgateway.shipping.callback.factory.url' => static function (ContainerInterface $container): ShippingCallbackUrlFactory {
         return new ShippingCallbackUrlFactory($container->get('wcgateway.store-api.endpoint.cart'), $container->get('wcgateway.shipping.callback.endpoint'));

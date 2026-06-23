@@ -238,7 +238,7 @@ return array(
         return new ConnectionUrlGenerator($container->get('api.env.endpoint.partner-referrals'), $container->get('api.repository.partner-referrals-data'), $container->get('settings.service.onboarding-url-manager'), $container->get('woocommerce.logger.woocommerce'));
     },
     'settings.service.authentication_manager' => static function (ContainerInterface $container): AuthenticationManager {
-        return new AuthenticationManager($container->get('settings.data.general'), $container->get('api.env.paypal-host'), $container->get('api.env.endpoint.login-seller'), $container->get('api.repository.partner-referrals-data'), $container->get('settings.connection-state'), $container->get('settings.service.rest-service'), $container->get('woocommerce.logger.woocommerce'));
+        return new AuthenticationManager($container->get('settings.data.general'), $container->get('api.env.paypal-host'), $container->get('api.env.endpoint.login-seller'), $container->get('settings.connection-state'), $container->get('settings.service.rest-service'), $container->get('woocommerce.logger.woocommerce'));
     },
     'settings.service.rest-service' => static function (ContainerInterface $container): InternalRestService {
         return new InternalRestService($container->get('woocommerce.logger.woocommerce'));

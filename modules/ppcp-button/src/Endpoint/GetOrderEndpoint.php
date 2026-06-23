@@ -44,14 +44,25 @@ class GetOrderEndpoint implements \WooCommerce\PayPalCommerce\Button\Endpoint\En
             if (empty($order_id)) {
                 wp_send_json_error(array('message' => __('Order ID is required', 'woocommerce-paypal-payments')));
             }
-            // Security: Verify that CartData transient exists for this PayPal order ID.
-            // We cannot rely on session data (lost in cross-browser AppSwitch flows)
-            // or query/hash parameters (technical limitations). Instead, we verify
-            // a CartData transient exists for this order, which indicates it was
-            // created recently through our system and serves as a layer of protection
-            // against unauthorized access to order details.
-            if (!$this->cart_data_storage->get_by_paypal_order_id($order_id)) {
+            $cart_data = $this->cart_data_storage->get_by_paypal_order_id($order_id);
+            if (!$cart_data) {
                 $this->logger->warning(sprintf('Unauthorized GetOrder attempt for PayPal order %s. No CartData found.', $order_id));
+                wp_send_json_error(array('message' => __('Invalid or expired order access', 'woocommerce-paypal-payments')));
+            }
+            $stored_user_id = $cart_data->user_id();
+            $current_user_id = get_current_user_id();
+            $authorized = \false;
+            if ($stored_user_id !== 0 && $current_user_id === $stored_user_id) {
+                $authorized = \true;
+            } elseif ($stored_user_id === 0 && $current_user_id === 0) {
+                $stored_session = $cart_data->session_customer_id();
+                $current_session = WC()->session ? (string) WC()->session->get_customer_id() : null;
+                if ($stored_session !== null && $current_session === $stored_session) {
+                    $authorized = \true;
+                }
+            }
+            if (!$authorized) {
+                $this->logger->warning(sprintf('Unauthorized GetOrder attempt for PayPal order %s. Session mismatch.', $order_id));
                 wp_send_json_error(array('message' => __('Invalid or expired order access', 'woocommerce-paypal-payments')));
             }
             $order = $this->api_endpoint->order($order_id);
