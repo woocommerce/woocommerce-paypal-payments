@@ -14,6 +14,7 @@ class CartActionHandler {
 			createSubscription: ( data, actions ) => {
 				return actions.subscription.create( {
 					plan_id: subscriptionPlanId,
+					custom_id: this.config.subscription_custom_id,
 				} );
 			},
 			onApprove: ( data ) => {

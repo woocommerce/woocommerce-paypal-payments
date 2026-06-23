@@ -5,7 +5,6 @@ namespace PHPUnit\PpcpSettings\Service;
 
 use Mockery;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
-use WooCommerce\PayPalCommerce\ApiClient\Repository\PartnerReferralsData;
 use WooCommerce\PayPalCommerce\Settings\Data\GeneralSettings;
 use WooCommerce\PayPalCommerce\Settings\Service\AuthenticationManager;
 use WooCommerce\PayPalCommerce\Settings\Service\InternalRestService;
@@ -23,7 +22,6 @@ class AuthenticationManagerValidationTest extends TestCase {
 			Mockery::mock( GeneralSettings::class ),
 			Mockery::mock( EnvironmentConfig::class ),
 			Mockery::mock( EnvironmentConfig::class ),
-			Mockery::mock( PartnerReferralsData::class ),
 			Mockery::mock( ConnectionState::class ),
 			Mockery::mock( InternalRestService::class )
 		);

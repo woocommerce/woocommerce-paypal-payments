@@ -23,6 +23,7 @@ class CheckoutActionHandler {
 
 				return actions.subscription.create( {
 					plan_id: subscription_plan_id,
+					custom_id: this.config.subscription_custom_id,
 				} );
 			},
 			onApprove: ( data, actions ) => {

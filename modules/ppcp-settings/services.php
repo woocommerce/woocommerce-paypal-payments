@@ -389,7 +389,6 @@ return array(
 			$container->get( 'settings.data.general' ),
 			$container->get( 'api.env.paypal-host' ),
 			$container->get( 'api.env.endpoint.login-seller' ),
-			$container->get( 'api.repository.partner-referrals-data' ),
 			$container->get( 'settings.connection-state' ),
 			$container->get( 'settings.service.rest-service' ),
 			$container->get( 'woocommerce.logger.woocommerce' )

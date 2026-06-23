@@ -173,6 +173,13 @@ class ConnectionListener {
 			exit;
 		}
 
+		$seller_nonce = $this->url_manager->get_seller_nonce_for_token( $token, $this->user_id );
+		if ( ! $seller_nonce ) {
+			$this->logger->error( 'Could not retrieve seller nonce for token', array( 'token' => $log_token ) );
+
+			return;
+		}
+
 		if ( ! $this->url_manager->validate_token_and_delete( $token, $this->user_id ) ) {
 			$this->logger->error( 'Token validation failed', array( 'token' => $log_token ) );
 			$this->notices->add(
@@ -197,6 +204,8 @@ class ConnectionListener {
 
 			return;
 		}
+
+		$data['seller_nonce'] = $seller_nonce;
 
 		$this->logger->info( 'Found OAuth merchant data in request', $data );
 
