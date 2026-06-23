@@ -161,7 +161,7 @@ If you encounter issues with the PayPal buttons not appearing after an update, p
 
 == Changelog ==
 
-= 4.1.0 - XXXX-XX-XX =
+= 4.1.0 - 2026-06-23 =
 * Enhancement - New Vault Management Component for buyers with saved PayPal accounts to update funding instrument #4421
 * Enhancement - Pay upon Invoice support for Block Checkout #4405
 * Enhancement - OXXO support for Block Checkout #4381
