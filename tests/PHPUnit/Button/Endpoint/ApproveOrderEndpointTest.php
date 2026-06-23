@@ -136,8 +136,8 @@ class ApproveOrderEndpointTest extends TestCase
 
 		$this->request_data->shouldReceive( 'read_request' )
 			->with( ApproveOrderEndpoint::nonce() )
-			->andReturn( array( 'order_id' => 'ATTACKER-ORDER', 'funding_source' => null, 'should_create_wc_order' => false ) );
-		$this->api_endpoint->shouldReceive( 'order' )->with( 'ATTACKER-ORDER' )->andReturn( $order );
+			->andReturn( array( 'order_id' => 'ORDER', 'funding_source' => null, 'should_create_wc_order' => false ) );
+		$this->api_endpoint->shouldReceive( 'order' )->with( 'ORDER' )->andReturn( $order );
 		$this->session_handler->shouldReceive( 'replace_order' )->never();
 		$this->gateway->shouldReceive( 'process_payment' )->never();
 		$this->logger->shouldReceive( 'error' )->once();
@@ -171,8 +171,8 @@ class ApproveOrderEndpointTest extends TestCase
 
 		$this->request_data->shouldReceive( 'read_request' )
 			->with( ApproveOrderEndpoint::nonce() )
-			->andReturn( array( 'order_id' => 'ATTACKER-ORDER', 'funding_source' => null, 'should_create_wc_order' => false ) );
-		$this->api_endpoint->shouldReceive( 'order' )->with( 'ATTACKER-ORDER' )->andReturn( $order );
+			->andReturn( array( 'order_id' => 'ORDER', 'funding_source' => null, 'should_create_wc_order' => false ) );
+		$this->api_endpoint->shouldReceive( 'order' )->with( 'ORDER' )->andReturn( $order );
 		$this->logger->shouldReceive( 'error' )->once();
 
 		$wc_session  = Mockery::mock( \WC_Session_Handler::class );

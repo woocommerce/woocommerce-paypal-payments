@@ -128,12 +128,12 @@ class AxoGatewayTest extends TestCase
 		$wc_order->shouldReceive( 'get_currency' )->andReturn( 'USD' );
 
 		$paypal_order = $this->create_completed_paypal_order( '999', '100.00', 'USD' );
-		$this->order_endpoint->shouldReceive( 'order' )->with( 'attacker-token' )->andReturn( $paypal_order );
+		$this->order_endpoint->shouldReceive( 'order' )->with( 'token' )->andReturn( $paypal_order );
 		$this->order_processor->shouldReceive( 'process_captured_and_authorized' )->never();
 		$this->logger->shouldReceive( 'error' )->once();
 
 		// When
-		$result = $this->sut->process_3ds_return_exposed( $wc_order, 'attacker-token' );
+		$result = $this->sut->process_3ds_return_exposed( $wc_order, 'token' );
 
 		// Then
 		$this->assertSame( 'failure', $result['result'] );
@@ -261,7 +261,7 @@ class AxoGatewayTest extends TestCase
 		$wc_order->shouldReceive( 'get_currency' )->andReturn( 'USD' );
 
 		$paypal_order = $this->create_completed_paypal_order( '999', '100.00', 'USD' );
-		$this->order_endpoint->shouldReceive( 'order' )->with( 'attacker-token' )->andReturn( $paypal_order );
+		$this->order_endpoint->shouldReceive( 'order' )->with( 'token' )->andReturn( $paypal_order );
 		$this->order_processor->shouldReceive( 'process_captured_and_authorized' )->never();
 
 		$this->logger
@@ -272,13 +272,13 @@ class AxoGatewayTest extends TestCase
 					static function ( string $message ): bool {
 						return strpos( $message, '999' ) !== false
 							&& strpos( $message, '1' ) !== false
-							&& strpos( $message, 'attacker-token' ) !== false;
+							&& strpos( $message, 'token' ) !== false;
 					}
 				)
 			);
 
 		// When
-		$this->sut->process_3ds_return_exposed( $wc_order, 'attacker-token' );
+		$this->sut->process_3ds_return_exposed( $wc_order, 'token' );
 
 		// Then — Mockery verifies logger->error() call in tearDown(); count it as an assertion
 		$this->addToAssertionCount( 1 );
