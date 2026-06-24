@@ -14,6 +14,12 @@ class SingleProductHandler extends BaseHandler {
 	}
 
 	transactionInfo() {
+		// Simulation is this method's only mechanism for fetching product data;
+		// reject early to avoid a pointless AJAX call.
+		if ( ! isSimulateCartEnabled( this.ppcpConfig ) ) {
+			return Promise.reject( new Error( 'Cart simulation is disabled.' ) );
+		}
+
 		const form = document.querySelector( 'form.cart' );
 		const variationIdInput = form?.querySelector(
 			'input[name="variation_id"]'
