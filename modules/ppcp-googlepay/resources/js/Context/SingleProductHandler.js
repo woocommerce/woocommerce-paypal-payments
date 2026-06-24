@@ -1,5 +1,5 @@
 import SingleProductActionHandler from '@ppcp-button/ActionHandler/SingleProductActionHandler';
-import SimulateCart from '@ppcp-button/Helper/SimulateCart';
+import SimulateCart, { isSimulateCartEnabled } from '@ppcp-button/Helper/SimulateCart';
 import ErrorHandler from '@ppcp-button/ErrorHandler';
 import UpdateCart from '@ppcp-button/Helper/UpdateCart';
 import BaseHandler from './BaseHandler';
