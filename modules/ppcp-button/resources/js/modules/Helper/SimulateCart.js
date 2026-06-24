@@ -1,3 +1,7 @@
+export const isSimulateCartEnabled = ( ppcpConfig ) =>
+    //Fallback to true because it preserves behavior existing earlier, and misconfigured state fails loudly at the AJAX call.
+	ppcpConfig?.simulate_cart?.enabled ?? true;
+
 class SimulateCart {
 	constructor( endpoint, nonce ) {
 		this.endpoint = endpoint;
