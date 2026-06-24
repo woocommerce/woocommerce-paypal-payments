@@ -43,19 +43,17 @@ class SingleProductHandler extends BaseHandler {
 			? actionHandler.getSubscriptionProducts()
 			: actionHandler.getProducts();
 
-		return new Promise( ( resolve, reject ) => {
-			new SimulateCart(
-				this.ppcpConfig.ajax.simulate_cart.endpoint,
-				this.ppcpConfig.ajax.simulate_cart.nonce
-			).simulate( ( data ) => {
-				resolve( {
-					countryCode: data.country_code,
-					currencyCode: data.currency_code,
-					totalPriceStatus: 'FINAL',
-					totalPrice: data.total,
-				} );
-			}, products );
-		} );
+		return new SimulateCart(
+			this.ppcpConfig.ajax?.simulate_cart?.endpoint,
+			this.ppcpConfig.ajax?.simulate_cart?.nonce
+		).simulate( ( data ) => {
+			return {
+				countryCode: data.country_code,
+				currencyCode: data.currency_code,
+				totalPriceStatus: 'FINAL',
+				totalPrice: data.total,
+			};
+		}, products );
 	}
 
 	createOrder() {
