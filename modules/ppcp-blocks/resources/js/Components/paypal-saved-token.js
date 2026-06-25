@@ -38,8 +38,15 @@ export const PayPalSavedToken = ( {
 	const vaultData = config?.scriptData?.vault_component;
 	const isVaultEligible = vaultData?.is_eligible === true;
 	const isSavedTokenSelected = token && token !== '0' && token !== 0;
+	// A zero-total subscription cart (free trial or 100% coupon) must use the
+	// save-without-purchase flow. The Vault Component is order-based and would
+	// create a $0 order, which PayPal rejects with CANNOT_BE_ZERO_OR_NEGATIVE.
+	const isFreeTrial = config?.scriptData?.is_free_trial_cart === true;
 	const shouldShowVaultComponent =
-		isVaultEligible && isSavedTokenSelected && ! vaultRenderFailed;
+		isVaultEligible &&
+		isSavedTokenSelected &&
+		! isFreeTrial &&
+		! vaultRenderFailed;
 
 	const handleVaultRenderError = useCallback( () => {
 		setVaultRenderFailed( true );

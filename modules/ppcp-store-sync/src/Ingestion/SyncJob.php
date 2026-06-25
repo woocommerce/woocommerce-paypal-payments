@@ -58,15 +58,16 @@ class SyncJob {
 			sprintf( 'Agentic Sync Job %s: Started', $this->batch_id )
 		);
 
-		// Transform products for API using the factory.
-		$api_products = new ProductsPayload(
+		// Transform products into DTOs.
+		$payload_container = new ProductsPayload(
 			$this->merchant_store_url,
 			$this->product_ids,
 			$this->product_manager
 		);
-		$api_payload  = $api_products->get_array();
 
-		if ( empty( $api_payload ) ) {
+		$products = $payload_container->get_products();
+
+		if ( empty( $products ) ) {
 			$this->logger->info(
 				sprintf( 'Agentic Sync Job %s: No products', $this->batch_id )
 			);
@@ -76,9 +77,13 @@ class SyncJob {
 			return;
 		}
 
+		// Compose the API payload, serialising each product DTO to its wire format.
 		$body = array(
 			'merchant_url' => $this->merchant_store_url,
-			'products'     => $api_payload,
+			'products'     => array_map(
+				static fn ( ProductDTO $product ): array => $product->to_array(),
+				$products
+			),
 		);
 
 		// Send payload to API.

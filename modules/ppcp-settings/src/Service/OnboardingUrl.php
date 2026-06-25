@@ -35,6 +35,11 @@ class OnboardingUrl {
 	 */
 	private ?string $url = null;
 
+	/**
+	 * The cryptographically random seller nonce (PKCE code_verifier)
+	 */
+	private ?string $nonce = null;
+
 	private Cache $cache;
 
 	private string $cache_key_prefix;
@@ -165,6 +170,7 @@ class OnboardingUrl {
 		$this->secret = $cached_data['secret'];
 		$this->time   = $cached_data['time'];
 		$this->url    = $cached_data['url'];
+		$this->nonce  = $cached_data['nonce'];
 
 		return true;
 	}
@@ -172,8 +178,10 @@ class OnboardingUrl {
 	public function init(): void {
 		try {
 			$this->secret = bin2hex( random_bytes( 16 ) );
+			$this->nonce  = bin2hex( random_bytes( 32 ) );
 		} catch ( Throwable $e ) {
 			$this->secret = wp_generate_password( 16 );
+			$this->nonce  = wp_generate_password( 64, false );
 		}
 
 		$this->time = time();
@@ -187,6 +195,7 @@ class OnboardingUrl {
 			|| ! ( $cache_data['secret'] ?? false )
 			|| ! ( $cache_data['time'] ?? false )
 			|| ! ( $cache_data['url'] ?? false )
+			|| ! ( $cache_data['nonce'] ?? false )
 		) {
 			return false;
 		}
@@ -259,7 +268,7 @@ class OnboardingUrl {
 	 * @return void
 	 */
 	public function persist(): void {
-		if ( null === $this->secret || null === $this->time || null === $this->url ) {
+		if ( null === $this->secret || null === $this->time || null === $this->url || null === $this->nonce ) {
 			return;
 		}
 
@@ -271,9 +280,14 @@ class OnboardingUrl {
 				'time'       => $this->time,
 				'user_id'    => $this->user_id,
 				'url'        => $this->url,
+				'nonce'      => $this->nonce,
 			),
 			$this->cache_ttl
 		);
+	}
+
+	public function seller_nonce(): string {
+		return $this->nonce ?? '';
 	}
 
 	/**

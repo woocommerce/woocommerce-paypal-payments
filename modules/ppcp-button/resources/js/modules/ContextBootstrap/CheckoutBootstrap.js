@@ -61,6 +61,12 @@ class CheckoutBootstrap {
 			this.render();
 			this.handleButtonStatus();
 
+			// The free-trial flag is localized once at page load. Applying a coupon that
+			// turns a subscription cart into a $0 total (or removing it) happens via AJAX
+			// without a reload, leaving the flag stale and the button on the wrong flow.
+			// Re-fetch it and re-render the button when it changed.
+			this.refreshFreeTrialState();
+
 			if (
 				this.shouldShowMessages() &&
 				document.querySelector( this.gateway.messages.wrapper )
@@ -229,7 +235,11 @@ class CheckoutBootstrap {
 		const hasVaultedPaypal =
 			!! PayPalCommerceGateway.vaulted_paypal_email;
 		const useSmartButtons = this.renderer.useSmartButtons ?? true;
-		const showVaultComponent = !! this.vaultRenderer && isPaypal;
+		// A zero-total subscription cart (free trial or 100% coupon) must use the
+		// save-without-purchase flow. The Vault Component is order-based and would
+		// create a $0 order, which PayPal rejects with CANNOT_BE_ZERO_OR_NEGATIVE.
+		const showVaultComponent =
+			!! this.vaultRenderer && isPaypal && ! isFreeTrial;
 
 		const paypalButtonWrappers = {
 			...Object.entries( PayPalCommerceGateway.separate_buttons ).reduce(
@@ -246,9 +256,15 @@ class CheckoutBootstrap {
 				isNotOurGateway ||
 				isSavedCard ||
 				( isPaypal && ! useSmartButtons ) ||
-				( showVaultComponent && ! this.isNewPaymentMethodSelected() ),
+				// Selecting a saved PayPal token always uses the standard "Place order"
+				// button, regardless of merchant country. For US merchants the Vault
+				// Component additionally renders its in-page approval; for everyone else
+				// process_payment charges the saved token server-side (reference
+				// transaction, or the free-trial short-circuit on a zero-total cart).
+				( isPaypal && this.isSavedPayPalTokenSelected() ),
 			'ppcp-hidden'
 		);
+		this.updatePlaceOrderButtonText();
 		setVisible( '.ppcp-vaulted-paypal-details', isPaypal );
 		setVisible(
 			this.gateway.button.wrapper,
@@ -351,6 +367,38 @@ class CheckoutBootstrap {
 		this.renderer.disableCreditCardFields();
 	}
 
+	/**
+	 * Re-fetches the free-trial state for the current cart and, if it changed since the
+	 * page loaded (e.g. a 100% coupon zeroed a subscription cart, or was removed),
+	 * updates the flag and re-renders the PayPal button so it switches between the
+	 * normal order flow and the save-without-purchase (setup-token) flow.
+	 */
+	refreshFreeTrialState() {
+		const endpoint = this.gateway?.ajax?.cart_script_params?.endpoint;
+		if ( ! endpoint ) {
+			return;
+		}
+
+		fetch( endpoint, { method: 'GET', credentials: 'same-origin' } )
+			.then( ( result ) => result.json() )
+			.then( ( result ) => {
+				if ( ! result.success ) {
+					return;
+				}
+
+				const fresh = result.data?.is_free_trial_cart === true;
+				if ( fresh === ( PayPalCommerceGateway.is_free_trial_cart === true ) ) {
+					return;
+				}
+
+				PayPalCommerceGateway.is_free_trial_cart = fresh;
+				this.renderer.resetRenderedButtons( this.gateway.button.wrapper );
+				this.render();
+				this.updateUi();
+			} )
+			.catch( () => {} );
+	}
+
 	isSavedPayPalTokenSelected() {
 		const checkedRadio = document.querySelector(
 			'input[name="wc-ppcp-gateway-payment-token"]:checked'
@@ -360,6 +408,27 @@ class CheckoutBootstrap {
 			checkedRadio.value &&
 			checkedRadio.value !== 'new'
 		);
+	}
+
+	updatePlaceOrderButtonText() {
+		const $placeOrder = jQuery( this.standardOrderButtonSelector );
+		if ( ! $placeOrder.length ) {
+			return;
+		}
+
+		if ( this.isSavedPayPalTokenSelected() ) {
+			// A saved PayPal token completes in-page (Vault Component approval) or
+			// server-side (reference transaction), never via redirect, so the
+			// standard "Place order" label fits in every case.
+			$placeOrder.text( $placeOrder.data( 'value' ) );
+			return;
+		}
+
+		// Replicate WooCommerce core: gateway-specific label, else default.
+		const gatewayButtonText = jQuery(
+			'input[name="payment_method"]:checked'
+		).data( 'order_button_text' );
+		$placeOrder.text( gatewayButtonText || $placeOrder.data( 'value' ) );
 	}
 
 	isNewPaymentMethodSelected() {

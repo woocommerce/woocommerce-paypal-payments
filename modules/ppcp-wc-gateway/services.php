@@ -23,6 +23,7 @@ use WooCommerce\PayPalCommerce\Axo\Gateway\AxoGateway;
 use WooCommerce\PayPalCommerce\Googlepay\GooglePayGateway;
 use WooCommerce\PayPalCommerce\Button\Helper\MessagesApply;
 use WooCommerce\PayPalCommerce\Button\Helper\MessagesDisclaimers;
+use WooCommerce\PayPalCommerce\Button\Session\CartDataTransientStorage;
 use WooCommerce\PayPalCommerce\Common\Pattern\SingletonDecorator;
 use WooCommerce\PayPalCommerce\Settings\Data\Definition\FeaturesDefinition;
 use WooCommerce\PayPalCommerce\Settings\Data\PaymentSettings;
@@ -121,7 +122,8 @@ return array(
 			$container->get( 'wcgateway.settings.admin-settings-enabled' ),
 			$container->get( 'wcgateway.endpoint.capture-paypal-payment' ),
 			$container->get( 'api.endpoint.order' ),
-			$container->get( 'api.prefix' )
+			$container->get( 'api.prefix' ),
+			$container->get( 'button.helper.context' )
 		);
 	},
 	'wcgateway.credit-card-gateway'                        => static function ( ContainerInterface $container ): CreditCardGateway {
@@ -1186,6 +1188,7 @@ return array(
 			$container->get( 'api.factory.order' ),
 			$container->get( 'api.factory.purchase-unit' ),
 			$container->get( 'settings.settings-provider' ),
+			$container->get( 'wcgateway.builder.experience-context' ),
 			$container->get( 'woocommerce.logger.woocommerce' )
 		);
 	},
@@ -1505,7 +1508,8 @@ return array(
 		return new ShippingCallbackEndpoint(
 			$container->get( 'wcgateway.store-api.endpoint.cart' ),
 			$container->get( 'api.factory.amount' ),
-			$container->get( 'woocommerce.logger.woocommerce' )
+			$container->get( 'woocommerce.logger.woocommerce' ),
+			$container->get( 'button.session.storage.card-data.transient' )
 		);
 	},
 

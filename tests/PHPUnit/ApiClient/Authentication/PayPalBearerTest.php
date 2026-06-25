@@ -370,6 +370,153 @@ class PayPalBearerTest extends TestCase
         $this->assertEquals('abc', $token->token());
     }
 
+    public function testLoggedContextDoesNotContainAuthorizationValueOnWpError()
+    {
+        $cache = Mockery::mock(Cache::class);
+        $cache->expects('get')->andReturn('');
+        $host = 'https://example.com';
+        $key = 'key';
+        $secret = 'secret';
+        $capturedContext = null;
+        $logger = Mockery::mock(LoggerInterface::class);
+        $logger->shouldReceive('warning')->andReturnUsing(function ($msg, $context) use (&$capturedContext) {
+            $capturedContext = $context;
+        });
+        $logger->shouldReceive('debug');
+        $settings = $this->settings($key, $secret);
+        $headers = $this->headers();
+        $rateLimiter = Mockery::mock(TokenRateLimiter::class);
+        $rateLimiter->shouldReceive('retry_after_seconds')->andReturn(null);
+        $rateLimiter->shouldReceive('register_failure');
+
+        $bearer = new PayPalBearer($cache, $host, $key, $secret, $logger, $settings, $rateLimiter);
+
+        expect('trailingslashit')->andReturn($host . '/');
+        expect('is_wp_error')->andReturn(true);
+        expect('wp_remote_get')->andReturn(['body' => '', 'headers' => $headers]);
+
+        $this->expectException(RuntimeException::class);
+        try {
+            $bearer->bearer();
+        } finally {
+            $this->assertNotNull($capturedContext);
+            $authValue = $capturedContext['args']['headers']['Authorization'] ?? null;
+            $this->assertNotEquals(base64_encode($key . ':' . $secret), $authValue);
+            $this->assertStringNotContainsString(base64_encode($key . ':' . $secret), (string) $authValue);
+        }
+    }
+
+    public function testNon2xxLoggedContextReplacesAuthorizationWithRedactedPlaceholder()
+    {
+        $cache = Mockery::mock(Cache::class);
+        $cache->expects('get')->andReturn('');
+        $host = 'https://example.com';
+        $key = 'key';
+        $secret = 'secret';
+        $capturedContext = null;
+        $logger = Mockery::mock(LoggerInterface::class);
+        $logger->shouldReceive('warning')->andReturnUsing(function ($msg, $context) use (&$capturedContext) {
+            $capturedContext = $context;
+        });
+        $logger->shouldReceive('debug');
+        $settings = $this->settings($key, $secret);
+        $headers = $this->headers();
+        $rateLimiter = Mockery::mock(TokenRateLimiter::class);
+        $rateLimiter->shouldReceive('retry_after_seconds')->andReturn(null);
+        $rateLimiter->shouldReceive('register_failure');
+
+        $bearer = new PayPalBearer($cache, $host, $key, $secret, $logger, $settings, $rateLimiter);
+
+        expect('trailingslashit')->andReturn($host . '/');
+        expect('is_wp_error')->andReturn(false);
+        expect('wp_remote_retrieve_response_code')->andReturn(500);
+        expect('wp_remote_get')->andReturn(['body' => '', 'headers' => $headers]);
+
+        $this->expectException(RuntimeException::class);
+        try {
+            $bearer->bearer();
+        } finally {
+            $this->assertNotNull($capturedContext);
+            $this->assertEquals('[REDACTED]', $capturedContext['args']['headers']['Authorization']);
+            $this->assertEquals('POST', $capturedContext['args']['method']);
+        }
+    }
+
+    public function testBase64CredentialsAbsentFromLogsOnVariousTokenRequestFailures()
+    {
+        $cache = Mockery::mock(Cache::class);
+        $cache->expects('get')->andReturn('');
+        $host = 'https://example.com';
+        $key = 'key';
+        $secret = 'secret';
+        $capturedContext = null;
+        $logger = Mockery::mock(LoggerInterface::class);
+        $logger->shouldReceive('warning')->andReturnUsing(function ($msg, $context) use (&$capturedContext) {
+            $capturedContext = $context;
+        });
+        $logger->shouldReceive('debug');
+        $settings = $this->settings($key, $secret);
+        $headers = $this->headers();
+        $rateLimiter = Mockery::mock(TokenRateLimiter::class);
+        $rateLimiter->shouldReceive('retry_after_seconds')->andReturn(null);
+        $rateLimiter->shouldReceive('register_failure');
+
+        $bearer = new PayPalBearer($cache, $host, $key, $secret, $logger, $settings, $rateLimiter);
+
+        expect('trailingslashit')->andReturn($host . '/');
+        expect('is_wp_error')->andReturn(false);
+        expect('wp_remote_retrieve_response_code')->andReturn(429);
+        expect('wp_remote_get')->andReturn(['body' => '', 'headers' => $headers]);
+
+        $this->expectException(RuntimeException::class);
+        try {
+            $bearer->bearer();
+        } finally {
+            $this->assertNotNull($capturedContext);
+            $authValue = $capturedContext['args']['headers']['Authorization'] ?? null;
+            $this->assertStringNotContainsString(base64_encode($key . ':' . $secret), (string) $authValue);
+        }
+    }
+
+    public function testAllCredentialBearingHeaderValuesAreRedactedBeforeLogging()
+    {
+        $cache = Mockery::mock(Cache::class);
+        $cache->expects('get')->andReturn('');
+        $host = 'https://example.com';
+        $key = 'key';
+        $secret = 'secret';
+        $capturedContext = null;
+        $logger = Mockery::mock(LoggerInterface::class);
+        $logger->shouldReceive('warning')->andReturnUsing(function ($msg, $context) use (&$capturedContext) {
+            $capturedContext = $context;
+        });
+        $logger->shouldReceive('debug');
+        $settings = $this->settings($key, $secret);
+        $headers = $this->headers();
+        $rateLimiter = Mockery::mock(TokenRateLimiter::class);
+        $rateLimiter->shouldReceive('retry_after_seconds')->andReturn(null);
+        $rateLimiter->shouldReceive('register_failure');
+
+        $bearer = new PayPalBearer($cache, $host, $key, $secret, $logger, $settings, $rateLimiter);
+
+        expect('trailingslashit')->andReturn($host . '/');
+        expect('is_wp_error')->andReturn(false);
+        expect('wp_remote_retrieve_response_code')->andReturn(503);
+        expect('wp_remote_get')->andReturn(['body' => '', 'headers' => $headers]);
+
+        $this->expectException(RuntimeException::class);
+        try {
+            $bearer->bearer();
+        } finally {
+            $this->assertNotNull($capturedContext);
+            foreach (array_keys($capturedContext['args']['headers'] ?? []) as $headerName) {
+                if (preg_match('/authorization|signature/i', $headerName)) {
+                    $this->assertEquals('[REDACTED]', $capturedContext['args']['headers'][$headerName]);
+                }
+            }
+        }
+    }
+
     public function testRetriesOnceOnConnectionError()
     {
         expect('wp_json_encode')->andReturnUsing('json_encode');

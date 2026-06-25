@@ -199,10 +199,7 @@ const bootstrap = () => {
 		spinner
 	);
 	if ( typeof paypal.CardFields !== 'undefined' ) {
-		if (
-			PayPalCommerceGateway.is_free_trial_cart &&
-			PayPalCommerceGateway.user?.has_wc_card_payment_tokens !== true
-		) {
+		if ( PayPalCommerceGateway.is_free_trial_cart ) {
 			creditCardRenderer = new CardFieldsFreeTrialRenderer(
 				PayPalCommerceGateway,
 				errorHandler,
