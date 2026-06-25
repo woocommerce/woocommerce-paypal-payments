@@ -88,6 +88,7 @@ class CreditCardGatewayTest extends TestCase
 	public function testProcessPayment()
 	{
 		$wc_order = Mockery::mock(WC_Order::class);
+		$wc_order->shouldReceive('get_meta')->andReturn('');
 		when('wc_get_order')->justReturn($wc_order);
 
 		$woocommerce = Mockery::mock(\WooCommerce::class);

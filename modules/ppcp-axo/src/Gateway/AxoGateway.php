@@ -296,6 +296,7 @@ class AxoGateway extends WC_Payment_Gateway {
 			}
 		} catch ( Exception $exception ) {
 			$this->logger->error( '[AXO] Payment processing failed: ' . $exception->getMessage() );
+
 			return array(
 				'result'  => 'failure',
 				'message' => $this->get_user_friendly_error_message( $exception ),
@@ -330,6 +331,47 @@ class AxoGateway extends WC_Payment_Gateway {
 				);
 			}
 
+			$purchase_units = $paypal_order->purchase_units();
+			$purchase_unit  = $purchase_units[0] ?? null;
+
+			if ( null === $purchase_unit ) {
+				$this->logger->error(
+					sprintf(
+						'[AXO] 3DS return validation failed: PayPal order has no purchase units. WC order ID: %s',
+						$wc_order->get_id(),
+					)
+				);
+
+				return array(
+					'result'  => 'failure',
+					'message' => __( 'Payment validation failed. Please try again.', 'woocommerce-paypal-payments' ),
+				);
+			}
+
+			/*
+			 * If the custom_id === order_id condition is true, we know that the PayPal order
+			 * and our WC order match, and there's no need for other checks.
+			 *
+			 * Specifically, we do not compare the WC_Order total amount against the
+			 * purchase unit's value, as the PU value can deviate from the WC order total, which
+			 * might reject legitimate payments.
+			 */
+			if ( $purchase_unit->custom_id() !== (string) $wc_order->get_id() ) {
+				$this->logger->error(
+					sprintf(
+						'[AXO] 3DS return validation failed: custom_id mismatch. Token: %s, WC order ID: %s, PayPal custom_id: %s',
+						$token,
+						$wc_order->get_id(),
+						$purchase_unit->custom_id()
+					)
+				);
+
+				return array(
+					'result'  => 'failure',
+					'message' => __( 'Payment validation failed. Please try again.', 'woocommerce-paypal-payments' ),
+				);
+			}
+
 			/**
 			 * This filter controls if the method 'process()' from OrderProcessor will be called.
 			 * So you can implement your own for example on subscriptions
@@ -344,6 +386,7 @@ class AxoGateway extends WC_Payment_Gateway {
 			}
 		} catch ( Exception $exception ) {
 			$this->logger->error( '[AXO] 3DS return processing failed: ' . $exception->getMessage() );
+
 			return array(
 				'result'  => 'failure',
 				'message' => $this->get_user_friendly_error_message( $exception ),
@@ -453,7 +496,7 @@ class AxoGateway extends WC_Payment_Gateway {
 			'single_use_token' => $payment_token,
 		);
 
-			$three_d_secure = $this->settings_model->get_three_d_secure_enum();
+		$three_d_secure = $this->settings_model->get_three_d_secure_enum();
 
 		if ( 'SCA_ALWAYS' === $three_d_secure || 'SCA_WHEN_REQUIRED' === $three_d_secure ) {
 			$properties['attributes'] = array(
@@ -482,7 +525,7 @@ class AxoGateway extends WC_Payment_Gateway {
 
 		$data['experience_context'] = $experience_context->to_array();
 
-			$three_d_secure = $this->settings_model->get_three_d_secure_enum();
+		$three_d_secure = $this->settings_model->get_three_d_secure_enum();
 
 		if ( $three_d_secure === 'SCA_ALWAYS' || $three_d_secure === 'SCA_WHEN_REQUIRED' ) {
 			$data['transaction_context'] = array(

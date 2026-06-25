@@ -21,6 +21,7 @@ class SingleProductActionHandler {
 			createSubscription: ( data, actions ) => {
 				return actions.subscription.create( {
 					plan_id: subscription_plan,
+					custom_id: this.config.subscription_custom_id,
 				} );
 			},
 			onApprove: ( data, actions ) => {

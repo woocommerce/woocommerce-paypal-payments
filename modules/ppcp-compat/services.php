@@ -53,7 +53,6 @@ return array(
 	'compat.plugin-script-names'                           => static function ( ContainerInterface $container ): array {
 		return array(
 			'ppcp-smart-button',
-			'ppcp-oxxo',
 			'ppcp-pay-upon-invoice',
 			'ppcp-wc-payment-tokens-myaccount-payments',
 			'ppcp-gateway-settings',

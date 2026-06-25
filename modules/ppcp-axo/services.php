@@ -111,7 +111,7 @@ return array(
 		$session_id = '';
 		if ( isset( WC()->session ) && method_exists( WC()->session, 'get_customer_unique_id' ) ) {
 			$session_id = substr(
-				md5( WC()->session->get_customer_unique_id() ),
+				md5( (string) WC()->session->get_customer_unique_id() ),
 				0,
 				16
 			);

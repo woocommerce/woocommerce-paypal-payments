@@ -7,8 +7,8 @@ const customer = customers.usa;
 
 export const googlePayCheckout: ShopOrder[] = [
 	{
-		// https://inpsyde.atlassian.net/browse/PCP-26555
-		title: 'PCP-26555 | Transaction - Checkout - Google Pay - Order by customer',
+		// https://inpsyde.atlassian.net/browse/PCP-2655
+		title: 'PCP-2655 | Transaction - Checkout - Google Pay - Order by customer @Critical',
 		...orders.default,
 		payment: payments.googlePay,
 		customer,

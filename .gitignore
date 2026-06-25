@@ -1,29 +1,37 @@
+# Do not track private authentication details
+auth.json
+.npmrc
+.env*
+
+# Exclude runtime artifacts by file types
+*.cache
+*.bak
+*.log
+*.zip
+.DS_Store
+
+# Ignore IDE settings
+/.idea/
+.vscode
+
 /vendor/
 /build/
-/.idea/
 node_modules
-.phpunit.result.cache
-phpunit.xml.dist.bak
-yarn-error.log
 modules/*/vendor/*
 modules/*/assets/*
 !modules/ppcp-wc-gateway/assets/images
-*.zip
 !tests/qa/resources/files/*.zip
 !tests/qa-legacy-ui/resources/files/*.zip
-.env*
 !.env.example*
-auth.json
-.DS_Store
-tests/.DS_Store
 .composer_compiled_assets
 /coverage/
-assets
+/assets
+!modules/ppcp-local-alternative-payment-methods/assets/images
 tests/inc/inpsyde/
 
-.vscode
 playwright-utils
 playwright-report*
+snapshots
 playwright/.cache
 storage-states
 test-results

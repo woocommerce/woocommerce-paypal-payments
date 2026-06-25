@@ -13,7 +13,6 @@ namespace WooCommerce\PayPalCommerce\WcGateway;
 
 use WooCommerce;
 use Automattic\WooCommerce\Admin\Notes\Note;
-use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PayUponInvoiceOrderEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\ReferenceTransactionStatus;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\Cache;
@@ -24,8 +23,10 @@ use WooCommerce\PayPalCommerce\Axo\Gateway\AxoGateway;
 use WooCommerce\PayPalCommerce\Googlepay\GooglePayGateway;
 use WooCommerce\PayPalCommerce\Button\Helper\MessagesApply;
 use WooCommerce\PayPalCommerce\Button\Helper\MessagesDisclaimers;
+use WooCommerce\PayPalCommerce\Button\Session\CartDataTransientStorage;
 use WooCommerce\PayPalCommerce\Common\Pattern\SingletonDecorator;
 use WooCommerce\PayPalCommerce\Settings\Data\Definition\FeaturesDefinition;
+use WooCommerce\PayPalCommerce\Settings\Data\PaymentSettings;
 use WooCommerce\PayPalCommerce\Settings\Data\SettingsModel;
 use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
@@ -50,12 +51,8 @@ use WooCommerce\PayPalCommerce\WcGateway\FundingSource\FundingSourceRenderer;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CardButtonGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\GatewayRepository;
-use WooCommerce\PayPalCommerce\WcGateway\Gateway\OXXO\OXXO;
-use WooCommerce\PayPalCommerce\WcGateway\Gateway\OXXO\OXXOGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
-use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayUponInvoice\PaymentSourceFactory;
-use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayUponInvoice\PayUponInvoice;
-use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayUponInvoice\PayUponInvoiceGateway;
+use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\PayUponInvoice\PayUponInvoiceGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\TransactionUrlProvider;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\CardPaymentsConfiguration;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\CartCheckoutDetector;
@@ -66,8 +63,9 @@ use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\FeesUpdater;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\InstallmentsProductStatus;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\MerchantDetails;
-use WooCommerce\PayPalCommerce\WcGateway\Helper\PayUponInvoiceHelper;
-use WooCommerce\PayPalCommerce\WcGateway\Helper\PayUponInvoiceProductStatus;
+use WooCommerce\PayPalCommerce\WcGateway\Helper\PaymentMethodTitleEnricher;
+use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\PayUponInvoice\PayUponInvoiceHelper;
+use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\PayUponInvoice\PayUponInvoiceProductStatus;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\PWCProductStatus;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\RefundFeesUpdater;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\SettingsStatus;
@@ -96,6 +94,7 @@ use WooCommerce\PayPalCommerce\WcGateway\StoreApi\Factory\CartTotalsFactory;
 use WooCommerce\PayPalCommerce\WcGateway\StoreApi\Factory\MoneyFactory;
 use WooCommerce\PayPalCommerce\WcGateway\StoreApi\Factory\ShippingRatesFactory;
 use WooCommerce\PayPalCommerce\Webhooks\WebhookEventStorage;
+use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\OXXOGateway;
 
 return array(
 	'woocommerce.core'                                     => static function (): WooCommerce {
@@ -123,7 +122,8 @@ return array(
 			$container->get( 'wcgateway.settings.admin-settings-enabled' ),
 			$container->get( 'wcgateway.endpoint.capture-paypal-payment' ),
 			$container->get( 'api.endpoint.order' ),
-			$container->get( 'api.prefix' )
+			$container->get( 'api.prefix' ),
+			$container->get( 'button.helper.context' )
 		);
 	},
 	'wcgateway.credit-card-gateway'                        => static function ( ContainerInterface $container ): CreditCardGateway {
@@ -184,6 +184,13 @@ return array(
 		);
 	},
 	'wcgateway.credit-card-icons'                          => static function ( ContainerInterface $container ): array {
+		$payment_settings = $container->get( 'settings.data.payment' );
+		assert( $payment_settings instanceof PaymentSettings );
+
+		if ( ! $payment_settings->get_show_card_logos() ) {
+			return array();
+		}
+
 		$settings_provider = $container->get( 'settings.settings-provider' );
 		assert( $settings_provider instanceof SettingsProvider );
 
@@ -193,7 +200,22 @@ return array(
 		$asset_getter = $container->get( 'wcgateway.asset_getter' );
 		assert( $asset_getter instanceof AssetGetter );
 
-		$url_root   = $asset_getter->get_static_asset_url( 'images/' );
+		$url_root = $asset_getter->get_static_asset_url( 'images/' );
+
+		// Default to all known card types when none are explicitly configured.
+		if ( empty( $icons ) ) {
+			$icons = array_keys( $labels );
+		}
+
+		$disabled = $settings_provider->disabled_cards();
+		if ( ! empty( $disabled ) ) {
+			$icons = array_filter(
+				$icons,
+				static function ( string $icon ) use ( $disabled ): bool {
+					return ! in_array( str_replace( '-dark', '', $icon ), $disabled, true );
+				}
+			);
+		}
 
 		$icons_with_label = array();
 		foreach ( $icons as $icon ) {
@@ -625,7 +647,11 @@ return array(
 		$sandbox_url_base = $container->get( 'wcgateway.transaction-url-sandbox' );
 		$live_url_base    = $container->get( 'wcgateway.transaction-url-live' );
 
-		return new TransactionUrlProvider( $sandbox_url_base, $live_url_base );
+		return new TransactionUrlProvider(
+			$sandbox_url_base,
+			$live_url_base,
+			$container->get( 'settings.environment' )
+		);
 	},
 
 	'wcgateway.configuration.card-configuration'           => static function ( ContainerInterface $container ): CardPaymentsConfiguration {
@@ -678,37 +704,12 @@ return array(
 		);
 	},
 
+	'wcgateway.payment-method-title-enricher'              => static function ( ContainerInterface $container ): PaymentMethodTitleEnricher {
+		return new PaymentMethodTitleEnricher();
+	},
+
 	'wcgateway.checkout-helper'                            => static function ( ContainerInterface $container ): CheckoutHelper {
 		return new CheckoutHelper();
-	},
-	'wcgateway.pay-upon-invoice-order-endpoint'            => static function ( ContainerInterface $container ): PayUponInvoiceOrderEndpoint {
-		return new PayUponInvoiceOrderEndpoint(
-			$container->get( 'api.host' ),
-			$container->get( 'api.bearer' ),
-			$container->get( 'api.factory.order' ),
-			$container->get( 'wcgateway.fraudnet' ),
-			$container->get( 'woocommerce.logger.woocommerce' )
-		);
-	},
-	'wcgateway.pay-upon-invoice-payment-source-factory'    => static function ( ContainerInterface $container ): PaymentSourceFactory {
-		return new PaymentSourceFactory(
-			$container->get( 'settings.data.payment' )
-		);
-	},
-	'wcgateway.pay-upon-invoice-gateway'                   => static function ( ContainerInterface $container ): PayUponInvoiceGateway {
-		return new PayUponInvoiceGateway(
-			$container->get( 'wcgateway.pay-upon-invoice-order-endpoint' ),
-			$container->get( 'api.factory.purchase-unit' ),
-			$container->get( 'wcgateway.pay-upon-invoice-payment-source-factory' ),
-			$container->get( 'settings.environment' ),
-			$container->get( 'wcgateway.transaction-url-provider' ),
-			$container->get( 'woocommerce.logger.woocommerce' ),
-			$container->get( 'wcgateway.pay-upon-invoice-helper' ),
-			$container->get( 'wcgateway.checkout-helper' ),
-			$container->get( 'settings.flag.is-connected' ),
-			$container->get( 'wcgateway.processor.refunds' ),
-			$container->get( 'wcgateway.asset_getter' )
-		);
 	},
 	'wcgateway.fraudnet-source-website-id'                 => static function ( ContainerInterface $container ): FraudNetSourceWebsiteId {
 		return new FraudNetSourceWebsiteId( $container->get( 'api.merchant_id' ) );
@@ -749,41 +750,6 @@ return array(
 			$container->get( 'api.endpoint.partners' ),
 			$container->get( 'api.helper.failure-registry' ),
 			$container->get( 'api.helper.product-status-result-cache' )
-		);
-	},
-	'wcgateway.pay-upon-invoice'                           => static function ( ContainerInterface $container ): PayUponInvoice {
-		return new PayUponInvoice(
-			$container->get( 'wcgateway.pay-upon-invoice-order-endpoint' ),
-			$container->get( 'woocommerce.logger.woocommerce' ),
-			$container->get( 'settings.flag.is-connected' ),
-			$container->get( 'wcgateway.is-plugin-settings-page' ),
-			$container->get( 'wcgateway.pay-upon-invoice-product-status' ),
-			$container->get( 'wcgateway.pay-upon-invoice-helper' ),
-			$container->get( 'wcgateway.checkout-helper' ),
-			$container->get( 'api.factory.capture' ),
-			$container->get( 'settings.data.payment' )
-		);
-	},
-	'wcgateway.oxxo'                                       => static function ( ContainerInterface $container ): OXXO {
-		return new OXXO(
-			$container->get( 'wcgateway.checkout-helper' ),
-			$container->get( 'wcgateway.asset_getter' ),
-			$container->get( 'ppcp.asset-version' ),
-			$container->get( 'api.endpoint.order' ),
-			$container->get( 'woocommerce.logger.woocommerce' ),
-			$container->get( 'api.factory.capture' )
-		);
-	},
-	'wcgateway.oxxo-gateway'                               => static function ( ContainerInterface $container ): OXXOGateway {
-		return new OXXOGateway(
-			$container->get( 'api.endpoint.order' ),
-			$container->get( 'api.factory.purchase-unit' ),
-			$container->get( 'api.factory.shipping-preference' ),
-			$container->get( 'wcgateway.builder.experience-context' ),
-			$container->get( 'wcgateway.asset_getter' ),
-			$container->get( 'wcgateway.transaction-url-provider' ),
-			$container->get( 'settings.environment' ),
-			$container->get( 'woocommerce.logger.woocommerce' )
 		);
 	},
 	'wcgateway.logging.is-enabled'                         => static function ( ContainerInterface $container ): bool {
@@ -1222,6 +1188,7 @@ return array(
 			$container->get( 'api.factory.order' ),
 			$container->get( 'api.factory.purchase-unit' ),
 			$container->get( 'settings.settings-provider' ),
+			$container->get( 'wcgateway.builder.experience-context' ),
 			$container->get( 'woocommerce.logger.woocommerce' )
 		);
 	},
@@ -1541,7 +1508,8 @@ return array(
 		return new ShippingCallbackEndpoint(
 			$container->get( 'wcgateway.store-api.endpoint.cart' ),
 			$container->get( 'api.factory.amount' ),
-			$container->get( 'woocommerce.logger.woocommerce' )
+			$container->get( 'woocommerce.logger.woocommerce' ),
+			$container->get( 'button.session.storage.card-data.transient' )
 		);
 	},
 

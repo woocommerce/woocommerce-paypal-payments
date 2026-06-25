@@ -42,6 +42,7 @@ const TabPaymentMethods = () => {
 				'paypalShowLogo',
 				'threeDSecure',
 				'cardholderName',
+				'showCardLogos',
 				'fastlaneDisplayWatermark',
 				'puiBrandName',
 				'puiLogoUrl',

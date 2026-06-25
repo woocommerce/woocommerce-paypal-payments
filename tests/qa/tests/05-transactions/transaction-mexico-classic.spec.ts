@@ -3,46 +3,29 @@
  */
 import { test } from '../../utils';
 import {
-	merchants,
-	storeConfigMexico,
-	gateways,
 	taxSettings,
 	customers,
 } from '../../resources';
-import { transactionsOnClassicCheckout } from './_test-scenarios';
+import {
+	transactionsOnClassicCheckout,
+	transactionsOnClassicCheckoutOxxo,
+} from './_test-scenarios';
 import {
 	bcdcClassicCheckout,
 	bcdcClassicCheckoutExcludingTax,
 	bcdcClassicCheckoutIntentAuthorized,
 } from './_test-data/bcdc';
+import { oxxoClassicCheckout } from './_test-data/oxxo';
 
 /**
- * BCDC
  * BCDC is classic-checkout only — block checkout is not supported.
  */
 
-const { payPal, bcdc } = gateways;
-
-test.beforeAll( async ( { utils, pcpApi, wooCommerceApi } ) => {
+test.beforeAll( async ( { utils } ) => {
 	await utils.configureStore( {
-		...storeConfigMexico,
 		enableClassicPages: true,
 		customer: customers.mexico,
 	} );
-	await utils.installAndActivatePcp();
-	await pcpApi.resetDb();
-	await pcpApi.connectMerchant(
-		merchants.mexico.client_id,
-		merchants.mexico.client_secret
-	);
-	await pcpApi.updatePcpPaymentMethods( {
-		[ payPal.id ]: { id: payPal.id, enabled: true },
-		[ bcdc.id ]: {
-			id: bcdc.id,
-			enabled: true,
-		},
-	} );
-	await wooCommerceApi.deleteAllOrders();
 } );
 
 for ( const testOrder of bcdcClassicCheckout ) {
@@ -78,3 +61,10 @@ test.describe( () => {
 		await pcpApi.updatePcpSettings( { authorizeOnly: false } );
 	} );
 } );
+
+/**
+ * OXXO — Mexico cash payment via classic checkout
+ */
+for ( const testOrder of oxxoClassicCheckout ) {
+	transactionsOnClassicCheckoutOxxo( testOrder );
+}

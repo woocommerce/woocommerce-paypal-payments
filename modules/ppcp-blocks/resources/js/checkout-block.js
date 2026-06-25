@@ -13,6 +13,7 @@ import { PayPalComponent } from './Components/paypal';
 import { BlockEditorPayPalComponent } from './Components/block-editor-paypal';
 import { PaypalLabel } from './Components/paypal-label';
 import { PayPalPlaceOrderContent } from './Components/paypal-place-order-content';
+import { PayPalSavedToken } from './Components/paypal-saved-token';
 const namespace = 'ppcpBlocksPaypalExpressButtons';
 const config = wc.wcSettings.getSetting( 'ppcp-gateway_data' );
 
@@ -60,12 +61,14 @@ if ( blockEnabled ) {
 			label: <PaypalLabel config={ config } />,
 			content: (
 				<PayPalPlaceOrderContent
+					config={ config }
 					description={ config.description }
 					placeOrderButtonDescription={
 						config.placeOrderButtonDescription
 					}
 				/>
 			),
+			savedTokenComponent: <PayPalSavedToken config={ config } />,
 			edit: (
 				<div
 					dangerouslySetInnerHTML={ {
@@ -76,6 +79,11 @@ if ( blockEnabled ) {
 			placeOrderButtonLabel: config.placeOrderButtonText,
 			ariaLabel: config.title,
 			canMakePayment: ( cartData ) => {
+				// Free-trial subscriptions have a $0 total today but still
+				// require a payment method to be vaulted for future renewals.
+				if ( config.scriptData.is_free_trial_cart ) {
+					return true;
+				}
 				const total = cartData?.cartTotals?.total_price;
 				return parseInt( total ) > 0;
 			},

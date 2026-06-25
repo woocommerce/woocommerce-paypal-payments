@@ -10,6 +10,7 @@ declare( strict_types = 1 );
 namespace WooCommerce\PayPalCommerce\Settings\Service;
 
 use Exception;
+use RuntimeException;
 use Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PartnerReferrals;
 use WooCommerce\PayPalCommerce\ApiClient\Repository\PartnerReferralsData;
@@ -85,6 +86,7 @@ class ConnectionUrlGenerator {
 	 * @param bool  $use_sandbox Whether to generate a sandbox URL.
 	 *
 	 * @return string The generated PayPal onboarding URL.
+	 * @throws RuntimeException If a new onboarding URL cannot be generated.
 	 */
 	public function generate( array $products = array(), array $flags = array(), bool $use_sandbox = false ): string {
 		$cache_key      = $this->cache_key( $products, $flags, $use_sandbox );
@@ -171,28 +173,26 @@ class ConnectionUrlGenerator {
 	 * @param OnboardingUrl $onboarding_url The OnboardingUrl object.
 	 * @param string        $cache_key      The cache key.
 	 *
-	 * @return string The generated URL or an empty string on failure.
+	 * @return string The generated URL.
+	 * @throws RuntimeException If the onboarding token or signup URL cannot be generated.
 	 */
 	protected function generate_new_url( bool $for_sandbox, array $products, array $flags, OnboardingUrl $onboarding_url, string $cache_key ): string {
 		$query_args = array( 'displayMode' => 'minibrowser' );
 		$onboarding_url->init();
 		$onboarding_token = $onboarding_url->onboarding_token();
+		$seller_nonce     = $onboarding_url->seller_nonce();
 
 		if ( ! $onboarding_token ) {
-			$this->logger->warning( 'Could not generate an onboarding token for: ' . $cache_key );
-
-			return '';
+			throw new RuntimeException( 'Could not generate an onboarding token for: ' . $cache_key );
 		}
 
-		$data = $this->prepare_referral_data( $products, $flags, $onboarding_token );
+		$data = $this->prepare_referral_data( $products, $flags, $onboarding_token, $seller_nonce );
 
 		try {
 			$referral = $this->partner_referrals->get_value( $for_sandbox );
 			$url      = $referral->signup_link( $data );
 		} catch ( Exception $e ) {
-			$this->logger->warning( 'Could not generate an onboarding URL for: ' . $cache_key );
-
-			return '';
+			throw new RuntimeException( 'Could not generate an onboarding URL for: ' . $cache_key . ': ' . $e->getMessage(), 0, $e );
 		}
 
 		return add_query_arg( $query_args, $url );
@@ -207,12 +207,13 @@ class ConnectionUrlGenerator {
 	 *
 	 * @return array The prepared referral data.
 	 */
-	protected function prepare_referral_data( array $products, array $flags, string $onboarding_token ): array {
+	protected function prepare_referral_data( array $products, array $flags, string $onboarding_token, string $seller_nonce = '' ): array {
 		return $this->referrals_data->data(
 			$products,
 			$onboarding_token,
 			(bool) ( $flags['useSubscriptions'] ?? false ),
-			(bool) ( $flags['useCardPayments'] ?? false )
+			(bool) ( $flags['useCardPayments'] ?? false ),
+			$seller_nonce
 		);
 	}
 

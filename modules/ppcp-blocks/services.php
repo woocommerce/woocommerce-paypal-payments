@@ -54,7 +54,9 @@ return array(
 			},
 			$container->get( 'settings.settings-provider' ),
 			$container->get( 'wcgateway.configuration.card-configuration' ),
-			$container->get( 'save-payment-methods.eligible' )
+			$container->get( 'save-payment-methods.eligible' ),
+			$container->get( 'settings.data.payment' ),
+			$container->get( 'wcgateway.credit-card-icons' )
 		);
 	},
 	'blocks.settings.final_review_enabled' => static function ( ContainerInterface $container ): bool {

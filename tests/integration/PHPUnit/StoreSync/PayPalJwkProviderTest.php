@@ -36,16 +36,14 @@ class PayPalJwkProviderTest extends TestCase {
 	/**
 	 * GIVEN PayPal's JWKS endpoint is accessible
 	 * WHEN keys() is called
-	 * THEN should fetch and parse real PayPal public key
+	 * THEN should return a non-empty array of Firebase\JWT\Key instances keyed by kid
 	 */
 	public function test_fetches_real_paypal_jwks(): void {
 		$result = $this->provider->keys();
 
-		$this->assertInstanceOf(
-			Key::class,
-			$result,
-			'Failed to fetch and parse real PayPal JWKS. Check if https://www.paypal.ai/.well-known/jwks.json is accessible.'
-		);
+		$this->assertIsArray( $result, 'Failed to fetch and parse real PayPal JWKS. Check if https://www.paypal.ai/.well-known/jwks.json is accessible.' );
+		$this->assertNotEmpty( $result, 'JWKS result must contain at least one key.' );
+		$this->assertContainsOnlyInstancesOf( Key::class, $result );
 	}
 
 	/**
@@ -78,18 +76,20 @@ class PayPalJwkProviderTest extends TestCase {
 	/**
 	 * GIVEN JWKS was cached from previous fetch
 	 * WHEN keys() is called again within cache TTL
-	 * THEN should return key from cache without new HTTP request
+	 * THEN should return keys from cache without new HTTP request
 	 */
 	public function test_uses_cache_on_subsequent_calls(): void {
 		// First call - fetches from remote.
 		$result1 = $this->provider->keys();
-		$this->assertInstanceOf( Key::class, $result1 );
+		$this->assertNotEmpty( $result1 );
+		$this->assertContainsOnlyInstancesOf( Key::class, $result1 );
 
 		$cached_before = get_transient( $this->transient_name );
 
 		// Second call - should use cache.
 		$result2 = $this->provider->keys();
-		$this->assertInstanceOf( Key::class, $result2 );
+		$this->assertNotEmpty( $result2 );
+		$this->assertContainsOnlyInstancesOf( Key::class, $result2 );
 
 		$cached_after = get_transient( $this->transient_name );
 
@@ -109,7 +109,7 @@ class PayPalJwkProviderTest extends TestCase {
 	public function test_refetches_after_cache_clear(): void {
 		// Initial fetch.
 		$result1 = $this->provider->keys();
-		$this->assertInstanceOf( Key::class, $result1 );
+		$this->assertNotEmpty( $result1 );
 
 		// Clear cache.
 		delete_transient( $this->transient_name );
@@ -117,7 +117,8 @@ class PayPalJwkProviderTest extends TestCase {
 
 		// Should refetch successfully.
 		$result2 = $this->provider->keys();
-		$this->assertInstanceOf( Key::class, $result2 );
+		$this->assertNotEmpty( $result2 );
+		$this->assertContainsOnlyInstancesOf( Key::class, $result2 );
 
 		// Verify cache was repopulated.
 		$this->assertNotFalse( get_transient( $this->transient_name ) );
@@ -125,18 +126,21 @@ class PayPalJwkProviderTest extends TestCase {
 
 	/**
 	 * GIVEN PayPal returns valid key material
-	 * WHEN parsing the key
-	 * THEN the parsed Key object should have RS256 algorithm
+	 * WHEN parsing the keys
+	 * THEN every parsed Key object should have RS256 algorithm
 	 */
 	public function test_parsed_key_has_correct_algorithm(): void {
-		$key = $this->provider->keys();
+		$keys = $this->provider->keys();
 
-		$this->assertInstanceOf( Key::class, $key );
-		$this->assertEquals(
-			'RS256',
-			$key->getAlgorithm(),
-			'Parsed key should use RS256 algorithm'
-		);
+		$this->assertNotEmpty( $keys );
+		foreach ( $keys as $key ) {
+			$this->assertInstanceOf( Key::class, $key );
+			$this->assertEquals(
+				'RS256',
+				$key->getAlgorithm(),
+				'Parsed key should use RS256 algorithm'
+			);
+		}
 	}
 
 	/**
@@ -151,11 +155,8 @@ class PayPalJwkProviderTest extends TestCase {
 		// Should still work by refetching.
 		$result = $this->provider->keys();
 
-		$this->assertInstanceOf(
-			Key::class,
-			$result,
-			'Should recover from corrupted cache by refetching'
-		);
+		$this->assertNotEmpty( $result, 'Should recover from corrupted cache by refetching' );
+		$this->assertContainsOnlyInstancesOf( Key::class, $result );
 
 		// Verify cache was fixed.
 		$cached = get_transient( $this->transient_name );

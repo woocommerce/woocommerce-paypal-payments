@@ -73,6 +73,17 @@ Minimal instructions for coding agents working in this repository.
 - Changing module load order/feature flags without validating side effects.
 - Assuming `.ddev.site` URLs always resolve locally.
 
+## Working in `modules/ppcp-abilities/`
+
+When you change the code path behind a registered ability (the backing
+REST controller, service method, or response shape), audit the
+ability's registration for required updates — annotations, input/output
+schema, description, and the redaction list on `GetConnectionStatus`.
+Drift between the ability and its backing is the failure mode the
+`woocommerce_paypal_payments_abilities_enabled` feature flag exists to
+contain; surface the change in the PR rather than letting the
+abilities surface go stale.
+
 ## Verification Matrix
 
 - PHP-only change: `npm run unit-tests && npm run lint`

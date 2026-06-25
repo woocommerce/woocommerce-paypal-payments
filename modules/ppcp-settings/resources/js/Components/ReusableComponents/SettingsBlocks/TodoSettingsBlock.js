@@ -1,4 +1,4 @@
-import { selectTab, TAB_IDS } from '@ppcp-settings/utils/tabSelector';
+import { useSelectTab, TAB_IDS } from '@ppcp-settings/utils/tabSelector';
 import { useEffect, useState } from '@wordpress/element';
 import { useDispatch, useSelect } from '@wordpress/data';
 import { STORE_NAME as TODOS_STORE_NAME } from '@ppcp-settings/data/todos';
@@ -21,6 +21,7 @@ const TodoSettingsBlock = ( {
 	);
 
 	const { completeOnClick } = useDispatch( TODOS_STORE_NAME );
+	const selectTab = useSelectTab();
 
 	useEffect( () => {
 		if ( dismissedTodos.length === 0 ) {

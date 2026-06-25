@@ -3,13 +3,12 @@ import { useState } from '@wordpress/element';
 import { Button, Icon } from '@wordpress/components';
 import { useDispatch } from '@wordpress/data';
 import { reusableBlock } from '@wordpress/icons';
-import { store as noticesStore } from '@wordpress/notices';
 import { TodoSettingsBlock } from '@ppcp-settings/Components/ReusableComponents/SettingsBlocks';
 import SettingsCard from '@ppcp-settings/Components/ReusableComponents/SettingsCard';
 import { useTodos } from '@ppcp-settings/data/todos/hooks';
 import { STORE_NAME as COMMON_STORE_NAME } from '@ppcp-settings/data/common';
 import { STORE_NAME as TODOS_STORE_NAME } from '@ppcp-settings/data/todos';
-import { NOTIFICATION_SUCCESS } from '@ppcp-settings/Components/ReusableComponents/Icons';
+import useNotices from '@ppcp-settings/hooks/useNotices';
 
 const Todos = () => {
 	const [ isResetting, setIsResetting ] = useState( false );
@@ -18,7 +17,7 @@ const Todos = () => {
 	const { setActiveModal } = useDispatch( COMMON_STORE_NAME );
 	const { resetDismissedTodos, setDismissedTodos } =
 		useDispatch( TODOS_STORE_NAME );
-	const { createSuccessNotice } = useDispatch( noticesStore );
+	const { createSuccessNotice } = useNotices();
 
 	const showTodos = areTodosReady && todos.length > 0;
 
@@ -32,11 +31,7 @@ const Todos = () => {
 				__(
 					'Dismissed items restored successfully.',
 					'woocommerce-paypal-payments'
-				),
-				{
-					icon: NOTIFICATION_SUCCESS,
-					speak: true,
-				}
+				)
 			);
 		} finally {
 			setIsResetting( false );

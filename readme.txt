@@ -4,7 +4,7 @@ Tags: woocommerce, paypal, payments, ecommerce, credit card
 Requires at least: 6.5
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 4.0.4
+Stable tag: 4.1.0
 License: GPLv2
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -160,6 +160,34 @@ If you encounter issues with the PayPal buttons not appearing after an update, p
 ⚠️ Major Update — This release includes significant changes. Please back up your site before updating.
 
 == Changelog ==
+
+= 4.1.0 - 2026-06-23 =
+* Enhancement - New Vault Management Component for buyers with saved PayPal accounts to update funding instrument #4421
+* Enhancement - Pay upon Invoice support for Block Checkout #4405
+* Enhancement - OXXO support for Block Checkout #4381
+* Enhancement - Show PayPal account or last card digits in payment method on order confirmation page & emails #4427
+* Enhancement - Disable legacy "PayPal Standard" gateway when merchant account is connected to PayPal Payments #4463
+* Fix - Third-party plugin gift cards not calculated on PayPal payment modal #4422
+* Fix - Fix PayPal amount mismatch from inclusive-tax rounding #4425
+* Fix - Negative fee calculation may result in a mismatch PayPal between the WooCommerce order total and the total amount paid via PayPal #4409
+* Fix - Unsuccessful payment for vaulting subscription with ACDC from Block Checkout #4437
+* Fix - Unsuccessful payment for vaulting subscriptions with 100% discount coupons (CANNOT_BE_ZERO_OR_NEGATIVE) #4452
+* Fix - Unsuccessful payment for free trial vaulting subscription with acdc and PayPal #4439
+* Fix - Vaulted ACDC saved-card checkout stuck in "payment pending" #4431
+* Fix - PartnersEndpoint::seller_status() floods PayPal merchant-integrations endpoint with 403s #4430
+* Fix - Avoid spamming OAuth requests when auth fails #4414
+* Fix - Google Pay not rendered on variable product page #4433
+* Fix - Simplify manual client ID validation to accommodate new Client ID format #4397
+* Fix - Mismatch line item not delivered to PayPal overview transaction page #4426
+* Fix - APM transaction links open paypal.com instead of sandbox.paypal.com in Sandbox mode #4418
+* Fix - Coerce stored values in typed-bool getters and vault_enabled migration #4393
+* Fix - Fix type casting for customer unique ID in session MD5 hash #4333
+* Fix - Apple Pay fails on single product page when no shipping option is available #4375
+* Fix - Settings notifications do not display on the PayPal Payments settings pages #4034
+* Fix - Add missing "Show logos of supported cards" setting in the ACDC options #4380
+* Fix - Phone number verification may fail #4448
+* Fix - Saved payment methods display in continuation mode #4457
+* Fix - Card payments with saved cards may fail in certain cases #4450
 
 = 4.0.4 - 2026-05-19 =
 * Enhancement - WooCommerce Blueprints integration to import & export the PayPal Payments configuration #4363
