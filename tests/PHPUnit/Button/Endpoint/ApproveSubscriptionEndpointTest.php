@@ -11,6 +11,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Endpoint\BillingSubscriptions;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Payer;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\PurchaseUnit;
 use WooCommerce\PayPalCommerce\Button\Helper\Context;
 use WooCommerce\PayPalCommerce\Button\Helper\WooCommerceOrderCreator;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
@@ -75,7 +76,8 @@ class ApproveSubscriptionEndpointTest extends TestCase
 		$session_id   = 'shopper-session';
 		$subscription = $this->subscription( $session_id, 'PAYER-A' );
 
-		$order = $this->order_with_payer( 'PAYER-B' );
+		// The order is bound to this session (custom_id passes) but approved by a different payer.
+		$order = $this->order_with_payer( 'PAYER-B', 'pcp_customer_' . $session_id );
 
 		$this->request_data->shouldReceive( 'read_request' )
 			->with( ApproveSubscriptionEndpoint::nonce() )
@@ -89,6 +91,41 @@ class ApproveSubscriptionEndpointTest extends TestCase
 		$this->subscription_helper->shouldReceive( 'paypal_subscription_variation_from_cart' )->andReturn( '' );
 		$this->subscription_helper->shouldReceive( 'paypal_subscription_id' )->andReturn( 'PLAN-1' );
 		$this->order_endpoint->shouldReceive( 'order' )->with( 'ORDER-OTHER' )->andReturn( $order );
+		$this->session_handler->shouldReceive( 'replace_order' )->never();
+		$this->gateway->shouldReceive( 'process_payment' )->never();
+		$this->logger->shouldReceive( 'error' )->once();
+
+		$this->mock_wc_session( $session_id );
+		expect( 'wp_send_json_error' )->once();
+
+		$this->sut->handle_request();
+	}
+
+	/**
+	 * @scenario The shopper keeps their own valid subscription_id and a same-payer order_id, but
+	 *           the swapped order is bound to a different session. The order is rejected before
+	 *           replace_order().
+	 */
+	public function test_order_bound_to_other_session_is_rejected(): void
+	{
+		$session_id   = 'shopper-session';
+		$subscription = $this->subscription( $session_id, 'PAYER-A' );
+
+		// Same payer as the subscription, but the order belongs to a different session.
+		$order = $this->order_with_payer( 'PAYER-A', 'pcp_customer_other-session' );
+
+		$this->request_data->shouldReceive( 'read_request' )
+			->with( ApproveSubscriptionEndpoint::nonce() )
+			->andReturn(
+				array(
+					'order_id'        => 'ORDER-OTHER-SESSION',
+					'subscription_id' => 'SUB-1',
+				)
+			);
+		$this->billing_subscriptions->shouldReceive( 'subscription' )->with( 'SUB-1' )->andReturn( $subscription );
+		$this->subscription_helper->shouldReceive( 'paypal_subscription_variation_from_cart' )->andReturn( '' );
+		$this->subscription_helper->shouldReceive( 'paypal_subscription_id' )->andReturn( 'PLAN-1' );
+		$this->order_endpoint->shouldReceive( 'order' )->with( 'ORDER-OTHER-SESSION' )->andReturn( $order );
 		$this->session_handler->shouldReceive( 'replace_order' )->never();
 		$this->gateway->shouldReceive( 'process_payment' )->never();
 		$this->logger->shouldReceive( 'error' )->once();
@@ -135,7 +172,7 @@ class ApproveSubscriptionEndpointTest extends TestCase
 		$session_id   = 'shopper-session';
 		$subscription = $this->subscription( $session_id, 'PAYER-A' );
 
-		$order = $this->order_with_payer( 'PAYER-A' );
+		$order = $this->order_with_payer( 'PAYER-A', 'pcp_customer_' . $session_id );
 
 		$this->request_data->shouldReceive( 'read_request' )
 			->with( ApproveSubscriptionEndpoint::nonce() )
@@ -172,15 +209,20 @@ class ApproveSubscriptionEndpointTest extends TestCase
 	}
 
 	/**
-	 * Builds a PayPal order mock whose payer carries the given payer id.
+	 * Builds a PayPal order mock whose payer carries the given payer id and whose first
+	 * purchase unit carries the given custom_id.
 	 */
-	private function order_with_payer( string $payer_id ): Order
+	private function order_with_payer( string $payer_id, string $custom_id = '' ): Order
 	{
 		$payer = Mockery::mock( Payer::class );
 		$payer->shouldReceive( 'payer_id' )->andReturn( $payer_id );
 
+		$purchase_unit = Mockery::mock( PurchaseUnit::class );
+		$purchase_unit->shouldReceive( 'custom_id' )->andReturn( $custom_id );
+
 		$order = Mockery::mock( Order::class );
 		$order->shouldReceive( 'payer' )->andReturn( $payer );
+		$order->shouldReceive( 'purchase_units' )->andReturn( array( $purchase_unit ) );
 
 		return $order;
 	}

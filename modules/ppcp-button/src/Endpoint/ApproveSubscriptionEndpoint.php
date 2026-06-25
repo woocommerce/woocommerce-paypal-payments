@@ -139,15 +139,17 @@ class ApproveSubscriptionEndpoint implements EndpointInterface {
 
 			// Ensure the PayPal order belongs to the current session before it is stored.
 			$order = $this->order_endpoint->order( $data['order_id'] );
+
+			// Always bind the supplied PayPal order to the current shopper session.
+			$purchase_units = $order->purchase_units();
+			if ( ! empty( $purchase_units ) ) {
+				$this->validate_custom_id_ownership( (string) $purchase_units[0]->custom_id() );
+			}
+
 			if ( $subscription ) {
-				// Bind the order to the validated subscription: the order must have been
-				// approved by the same payer that owns the subscription.
+				// Additionally require the order to have been approved by the
+				// payer that owns the subscription.
 				$this->validate_order_belongs_to_subscriber( $order, $subscription );
-			} else {
-				$purchase_units = $order->purchase_units();
-				if ( ! empty( $purchase_units ) ) {
-					$this->validate_custom_id_ownership( (string) $purchase_units[0]->custom_id() );
-				}
 			}
 
 			$this->session_handler->replace_order( $order );
