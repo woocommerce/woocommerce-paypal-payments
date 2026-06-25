@@ -1,7 +1,10 @@
 /**
  * Internal dependencies
  */
-import { payments, orders, ShopOrder } from '../../../../resources';
+import { payments, orders, ShopOrder, customers, guests } from '../../../../resources';
+
+const customer = customers.usa;
+const guest = guests.usa;
 
 const { payLater } = payments;
 
@@ -43,5 +46,22 @@ export const payLaterClassicCheckoutHorizontalButton: ShopOrder[] = [
 		title: 'PCP-1200 | Transaction - Classic checkout - Pay Later - Horizontal button layout @Critical',
 		...orders.default,
 		payment: payLater,
+	},
+];
+
+export const payLaterClassicCheckoutNegativeFee: ShopOrder[] = [
+	{
+		// https://inpsyde.atlassian.net/browse/PCP-6606
+		title: 'PCP-6606 | Transaction - Classic checkout - Pay Later - Customer - Order with negative fee snippet',
+		...orders.negative12Fee,
+		payment: payLater,
+		customer,
+	},
+	{
+		// https://inpsyde.atlassian.net/browse/PCP-6607
+		title: 'PCP-6607 | Transaction - Classic checkout - Pay Later - Guest - Order with negative fee snippet',
+		...orders.negative12Fee,
+		payment: payLater,
+		customer: guest,
 	},
 ];

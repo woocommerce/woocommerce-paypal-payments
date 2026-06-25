@@ -79,3 +79,20 @@ export const acdcClassicCheckout3ds: ShopOrder[] = [
 		customer: guest,
 	},
 ];
+
+export const acdcClassicCheckoutNegativeFee: ShopOrder[] = [
+	{
+		// https://inpsyde.atlassian.net/browse/PCP-6608
+		title: 'PCP-6608 | Transaction - Classic checkout - ACDC - Customer - Order with negative fee snippet',
+		...orders.negative12Fee,
+		payment: payments.acdc,
+		customer,
+	},
+	{
+		// https://inpsyde.atlassian.net/browse/PCP-6609
+		title: 'PCP-6609 | Transaction - Classic checkout - ACDC - Guest - Order with negative fee snippet',
+		...orders.negative12Fee,
+		payment: payments.acdc,
+		customer: guest,
+	},
+];

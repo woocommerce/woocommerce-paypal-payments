@@ -1,7 +1,10 @@
 /**
  * Internal dependencies
  */
-import { payments, orders, ShopOrder } from '../../../../resources';
+import { payments, orders, ShopOrder, customers, guests } from '../../../../resources';
+
+const customer = customers.usa;
+const guest = guests.usa;
 
 const { payLater } = payments;
 
@@ -35,5 +38,22 @@ export const payLaterCheckoutIntentAuthorized: ShopOrder[] = [
 		},
 		...orders.default,
 		orderStatus: 'on-hold',
+	},
+];
+
+export const payLaterCheckoutNegativeFee: ShopOrder[] = [
+	{
+		// https://inpsyde.atlassian.net/browse/PCP-6571
+		title: 'PCP-6571 | Transaction - Checkout - Pay Later - Customer - Order with negative fee snippet',
+		...orders.negative12Fee,
+		payment: payLater,
+		customer,
+	},
+	{
+		// https://inpsyde.atlassian.net/browse/PCP-6572
+		title: 'PCP-6572 | Transaction - Checkout - Pay Later - Guest - Order with negative fee snippet',
+		...orders.negative12Fee,
+		payment: payLater,
+		customer: guest,
 	},
 ];
