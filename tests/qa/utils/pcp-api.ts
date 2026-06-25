@@ -128,6 +128,19 @@ export class PcpApi extends WooCommerceApiBase {
 		return response;
 	};
 
+	/**
+	 * Updates Settings tab via REST API.
+	 *
+	 * @param data
+	 */
+	updatePcpStyling = async ( data: Pcp.Api.Styling.Settings ) => {
+		const response = await this.wcRequest( 'post', `wc_paypal/styling`, {
+			...data,
+			_locale: 'user',
+		} );
+		return response;
+	};
+
 	isPayPalSubscription( subscription: WooCommerce.Subscription ): boolean {
 		return !! subscription?.meta_data?.some(
 			( meta ) => meta.key === 'ppcp_subscription'

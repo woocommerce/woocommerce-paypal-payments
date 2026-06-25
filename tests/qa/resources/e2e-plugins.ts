@@ -35,3 +35,9 @@ export const subscriptionsPlugin = {
 	slug: 'woocommerce-subscriptions',
 	zipFilePath: `${ filePath }/woocommerce-subscriptions.zip`,
 };
+
+export const negative12FeePlugin = {
+	name: 'Negative 12 Fee',
+	slug: 'negative-12-fee',
+	zipFilePath: `${ filePath }/negative-12-fee.zip`,
+};

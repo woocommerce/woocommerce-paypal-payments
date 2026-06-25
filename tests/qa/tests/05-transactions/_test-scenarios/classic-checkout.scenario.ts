@@ -1,7 +1,7 @@
 /**
  * Internal dependencies
  */
-import { ShopOrder } from '../../../resources';
+import { PayPalPaymentDetails, ShopOrder } from '../../../resources';
 import { annotateVisitor, test, expect, OxxoVoucherPopup } from '../../../utils';
 
 export const transactionsOnClassicCheckout = ( testOrder: ShopOrder ) => {
@@ -18,31 +18,46 @@ export const transactionsOnClassicCheckout = ( testOrder: ShopOrder ) => {
 			wooCommerceOrderEdit,
 			utils,
 		} ) => {
-			await utils.fillVisitorsCart( products );
-			await classicCheckout.visit();
-			await classicCheckout.completeCheckoutDetails( testOrder );
-			await classicCheckout.payPalUi.makePayment( {
-				merchant,
-				payment,
-				customer,
+			const { title: gatewayTitle } = payment.gateway;
+
+			await test.step( `Add product(s) to the cart`, async () => {
+				await utils.fillVisitorsCart( products );
 			} );
-			await orderReceived.assertOrderDetails( testOrder );
 
-			const orderId = await orderReceived.getOrderNumber();
-			const { transaction_id: transactionId } =
-				await wooCommerceApi.getOrder( orderId );
-			const payPalFee = await payPalApi.getFee(
-				transactionId,
-				testOrder
-			);
-			const payPalPayout = await payPalApi.getPayout(
-				transactionId,
-				testOrder
-			);
-			const pcpData = { transactionId, payPalFee, payPalPayout };
+			await test.step( `Visit Classic Checkout, make payment with ${ gatewayTitle }`, async () => {
+				await classicCheckout.visit();
+				await classicCheckout.completeCheckoutDetails( testOrder );
+				await classicCheckout.payPalUi.makePayment( { merchant, payment, customer } );
+			} );
+				
+			let orderId: number;
+			let payPalPaymentDetails: PayPalPaymentDetails;
 
-			await wooCommerceOrderEdit.visit( orderId );
-			await wooCommerceOrderEdit.assertOrderDetails( testOrder, pcpData );
+			await test.step( `Assert order received`, async () => {
+				await orderReceived.assertOrderDetails( testOrder );
+				await orderReceived.assertNoErrors();
+
+				orderId = await orderReceived.getOrderNumber();				
+				const transactionId =
+						( await wooCommerceApi.getOrder( orderId ) ).transaction_id;
+
+				payPalPaymentDetails = await payPalApi.getPayPalPaymentDetails(
+					transactionId,
+					testOrder,
+				);
+
+				if( payPalPaymentDetails.amount !== '0' ) { // can be 0 for free trial or free orders
+					await orderReceived.assertTotalEqualsPayPalTotal(
+						payPalPaymentDetails.amount,
+						testOrder.currency
+					);
+				}
+			} );
+
+			await test.step( `Assert details on order edit page`, async () => {
+				await wooCommerceOrderEdit.visit( orderId );
+				await wooCommerceOrderEdit.assertOrderDetails( testOrder, payPalPaymentDetails );
+			} );
 		}
 	);
 };

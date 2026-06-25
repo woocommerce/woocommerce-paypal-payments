@@ -3,9 +3,11 @@
  */
 import {
 	WooCommerceOrderEdit as WooCommerceOrderEditBase,
+	countTotals,
 	expect,
 	formatMoney,
 } from '@inpsyde/playwright-utils/build';
+import { PayPalPaymentDetails, ShopOrder } from '../../resources';
 
 export class WooCommerceOrderEdit extends WooCommerceOrderEditBase {
 	// Locators
@@ -115,101 +117,98 @@ export class WooCommerceOrderEdit extends WooCommerceOrderEditBase {
 	 * Asserts order edit page including PayPal related fields
 	 *
 	 * @param orderData
-	 * @param pcpData
-	 * @param pcpData.transactionId
-	 * @param pcpData.payPalFee
-	 * @param pcpData.payPalPayout
-	 * @param pcpData.paymentMethod
-	 * @param pcpData.itemsSubtotal
-	 * @param pcpData.totalCoupons
-	 * @param pcpData.totalFees
-	 * @param pcpData.totalShipping
-	 * @param pcpData.orderTotal
-	 * @param pcpData.currency
+	 * @param payPalPaymentDetails
 	 */
 	assertOrderDetails = async (
-		orderData: WooCommerce.ShopOrder,
-		pcpData?: {
-			transactionId?: string;
-			payPalFee?: string;
-			payPalPayout?: string;
-			paymentMethod?: string;
-			itemsSubtotal?: string;
-			totalCoupons?: string;
-			totalFees?: string;
-			totalShipping?: string;
-			orderTotal?: string;
-			currency?: string;
-		}
+		orderData: ShopOrder,
+		payPalPaymentDetails?: PayPalPaymentDetails
 	) => {
 		await super.assertOrderDetails( orderData );
 
-		if ( ! pcpData || Object.keys( pcpData ).length === 0 ) {
+		const total = await countTotals( orderData );
+		const { payment, currency } = orderData;
+		const fundingSource = payment.gateway.shortcut;
+
+		if ( ! payPalPaymentDetails || Object.keys( payPalPaymentDetails ).length === 0 ) {
 			return;
 		}
 
-		// Transaction ID
-		if (
-			pcpData.transactionId !== undefined &&
-			pcpData.orderTotal !== undefined
-		) {
-			await expect(
-				this.transactionIdLink( pcpData.transactionId ),
-				`Assert transaction ID link with ID ${ pcpData.transactionId } is visible`
-			).toBeVisible();
-		}
+		const {
+			transactionId,
+			amount: payPalAmount,
+			payPalFee,
+			netAmount: payPalPayout
+		} = payPalPaymentDetails;
 
 		// For example: Payment via PayPal
 		await expect(
-			this.paymentVia( orderData?.payment?.gateway?.titleInModal ),
+			this.paymentVia( payment?.gateway?.titleInModal ),
 			`Assert payment via text is visible`
 		).toBeVisible();
 
-		// PayPal fees
-		if (
-			pcpData.payPalFee !== undefined &&
-			pcpData.orderTotal !== undefined
-		) {
-			await expect(
-				this.totalPayPalFee(),
-				'Assert total PayPal fee is expected'
-			).toHaveText(
-				'- ' +
-					( await formatMoney(
-						Number( pcpData.payPalFee ),
-						orderData.currency
-					) )
-			);
-		}
+		if ( total.order > 0 ) {
+			// Transaction ID
+			if ( transactionId ) {
+				await expect(
+					this.transactionIdLink( transactionId ),
+					`Assert transaction ID link with ID ${ transactionId } is visible`
+				).toBeVisible();
+			}
 
-		//PayPal payout
-		if (
-			pcpData.payPalPayout !== undefined &&
-			pcpData.orderTotal !== undefined
-		) {
+			// WooCommerce order total should equal to PayPal total
 			await expect(
-				this.totalPayPalPayout(),
-				'Assert total PayPal payout is expected'
+				this.orderTotal(),
+				'Assert WooCommerce order total order is equal to PayPal payment total'
 			).toHaveText(
 				await formatMoney(
-					Number( pcpData.payPalPayout ),
-					orderData.currency
+					Number( payPalAmount ),
+					currency,
 				)
 			);
+
+			// PayPal fees
+			if ( payPalFee ) {
+				await expect(
+					this.totalPayPalFee(),
+					'Assert total PayPal fee is expected'
+				).toHaveText(
+					'- ' +
+						( await formatMoney(
+							Number( payPalFee ),
+							currency
+						) )
+				);
+			}
+
+			// PayPal payout
+			if ( payPalPayout ) {
+				await expect(
+					this.totalPayPalPayout(),
+					'Assert total PayPal payout is expected'
+				).toHaveText(
+					await formatMoney(
+						Number( payPalPayout ),
+						currency
+					)
+				);
+			}
 		}
 
-		if (
-			[ 'paypal', 'paylater', 'venmo' ].includes(
-				orderData.payment.gateway.shortcut
-			)
-		) {
+		if ( fundingSource === 'oxxo' ) {
+			await expect(
+				this.seeOXXOVoucherButton(),
+				'Assert OXXO voucher button is visible'
+			).toBeVisible();
+		}
+
+		if ( [ 'paypal', 'paylater', 'venmo' ].includes( fundingSource ) ) {
 			await this.assertPayPalEmailAddress(
-				orderData.payment.payPalAccount.email
+				payment.payPalAccount.email
 			);
 		}
 
 		// Intent Authorization assertions
-		if ( orderData.payment.isAuthorized ) {
+		if ( payment.isAuthorized ) {
 			await this.assertIntentAuthorizedState();
 		}
 	};

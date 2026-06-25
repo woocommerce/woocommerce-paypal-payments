@@ -1,9 +1,10 @@
 /**
  * Internal dependencies
  */
-import { payments, orders, customers, ShopOrder } from '../../../../resources';
+import { payments, orders, ShopOrder, customers, guests } from '../../../../resources';
 
 const customer = customers.usa;
+const guest = guests.usa;
 
 export const googlePayCheckout: ShopOrder[] = [
 	{
@@ -12,5 +13,22 @@ export const googlePayCheckout: ShopOrder[] = [
 		...orders.default,
 		payment: payments.googlePay,
 		customer,
+	},
+];
+
+export const googlePayCheckoutNegativeFee: ShopOrder[] = [
+	{
+		// https://inpsyde.atlassian.net/browse/PCP-6577
+		title: 'PCP-6577 | Transaction - Checkout - Google Pay - Customer - Order with negative fee snippet',
+		...orders.negative12Fee,
+		payment: payments.googlePay,
+		customer,
+	},
+	{
+		// https://inpsyde.atlassian.net/browse/PCP-6578
+		title: 'PCP-6578 | Transaction - Checkout - Google Pay - Guest - Order with negative fee snippet',
+		...orders.negative12Fee,
+		payment: payments.googlePay,
+		customer: guest,
 	},
 ];

@@ -1,11 +1,16 @@
 /**
  * Internal dependencies
  */
-import { ShopOrder } from '../../../resources';
-import { annotateVisitor, test } from '../../../utils';
+import { PayPalPaymentDetails, ShopOrder } from '../../../resources';
+import { annotateVisitor, test, expect } from '../../../utils';
+import {
+	getTestedGatewayButton,
+	assertPaymentBlockedBeforeVariationSelected,
+	assertPaymentEnabledAfterVariationSelected,
+} from './product.scenario'
 
 export const transactionsOnClassicProduct = ( testOrder: ShopOrder ) => {
-	const { products, payment, merchant } = testOrder;
+	const { products, payment, merchant, isPayNowEnabled } = testOrder;
 
 	test(
 		testOrder.title,
@@ -18,26 +23,65 @@ export const transactionsOnClassicProduct = ( testOrder: ShopOrder ) => {
 			payPalApi,
 			wooCommerceOrderEdit,
 		} ) => {
-			await product.visit( products[ 0 ].slug );
-			await product.payPalUi.makePayment( { merchant, payment } );
-			await classicCheckout.completeOrderFromProduct( testOrder );
-			await orderReceived.assertOrderDetails( testOrder );
+			const { type: productType, variationToSelect } = products[ 0 ];
+			const { title: gatewayTitle, shortcut: gatewayShortcut } = payment.gateway;
+			await test.step( `Visit product page and assert ${ gatewayTitle } button visibility`, async () => {
+				await product.visit( products[ 0 ].slug );
+				await expect(
+					getTestedGatewayButton( product, gatewayShortcut ),
+					`Assert ${ gatewayTitle } button is visible on product page`,
+				).toBeVisible();
+			} );
 
-			const orderId = await orderReceived.getOrderNumber();
-			const { transaction_id: transactionId } =
-				await wooCommerceApi.getOrder( orderId );
-			const payPalFee = await payPalApi.getFee(
-				transactionId,
-				testOrder
-			);
-			const payPalPayout = await payPalApi.getPayout(
-				transactionId,
-				testOrder
-			);
-			const pcpData = { transactionId, payPalFee, payPalPayout };
+			if ( productType === 'variable' && variationToSelect ) {
+				await assertPaymentBlockedBeforeVariationSelected(
+					product,
+					gatewayTitle,
+					gatewayShortcut,
+				);
+				await assertPaymentEnabledAfterVariationSelected(
+					product,
+					gatewayTitle,
+					gatewayShortcut,
+					variationToSelect
+				);
+			}
+			
+			await test.step( `Complete payment with ${ gatewayTitle }`, async () => {
+				await product.payPalUi.makePayment( { merchant, payment } );
+				if( isPayNowEnabled === false ) {
+					await classicCheckout.completeOrderFromProduct( testOrder );
+				}
+			} );
+				
+			let orderId: number;
+			let payPalPaymentDetails: PayPalPaymentDetails;
 
-			await wooCommerceOrderEdit.visit( orderId );
-			await wooCommerceOrderEdit.assertOrderDetails( testOrder, pcpData );
+			await test.step( `Assert order received`, async () => {
+				await orderReceived.assertOrderDetails( testOrder );
+				await orderReceived.assertNoErrors();
+
+				orderId = await orderReceived.getOrderNumber();				
+				const transactionId =
+						( await wooCommerceApi.getOrder( orderId ) ).transaction_id;
+
+				payPalPaymentDetails = await payPalApi.getPayPalPaymentDetails(
+					transactionId,
+					testOrder,
+				);
+
+				if( payPalPaymentDetails.amount !== '0' ) { // can be 0 for free trial or free orders
+					await orderReceived.assertTotalEqualsPayPalTotal(
+						payPalPaymentDetails.amount,
+						testOrder.currency
+					);
+				}
+			} );
+
+			await test.step( `Assert details on order edit page`, async () => {
+				await wooCommerceOrderEdit.visit( orderId );
+				await wooCommerceOrderEdit.assertOrderDetails( testOrder, payPalPaymentDetails );
+			} );
 		}
 	);
 };

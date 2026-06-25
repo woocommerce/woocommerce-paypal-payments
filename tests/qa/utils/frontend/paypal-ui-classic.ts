@@ -8,6 +8,7 @@ import { expect, getLast4CardDigits } from '@inpsyde/playwright-utils/build';
 import { Pcp, ShopOrder } from '../../resources';
 import { PayPalPopup } from './paypal-popup';
 import { PayPalUi } from './paypal-ui';
+import { GooglePayPopup } from './google-pay-popup';
 
 /**
  * Class for common dashboard locators, actions, assertions
@@ -17,11 +18,14 @@ export class PayPalUiClassic extends PayPalUi {
 	// Locators
 	cartMenu = () => this.page.locator( '#site-header-cart' );
 
+	payPalGatewayContainer = () =>
+		this.page.locator( '#ppc-button-ppcp-gateway' );
+
+	googlePayGatewayContainer = () =>
+		this.page.locator( '#ppc-button-googlepay-container' );
 	payPalIframe = () =>
-		this.page.frameLocator(
-			// unified selector for My Account and checkout pages
-			'[id^="ppc-button-ppcp-gateway"] iframe[name^="__zoid__paypal_buttons__"]'
-		);
+		this.payPalGatewayContainer()
+			.frameLocator( 'iframe[name^="__zoid__paypal_buttons__"]' );
 	payPalButtonsClassicContainer = () =>
 		this.payPalIframe().locator( '#buttons-container' );
 	fundingSourceButton = ( name ) =>
@@ -34,6 +38,7 @@ export class PayPalUiClassic extends PayPalUi {
 	sofortButton = () => this.fundingSourceButton( 'sofort' );
 	bcdcFundingSourceButton = () => this.fundingSourceButton( 'card' );
 	venmoButton = () => this.fundingSourceButton( 'venmo' );
+	googlePayButton = () => this.page.locator( '#gpay-button-online-api-id' );
 
 	fundingSourceButtonLabelText = ( name ) =>
 		this.fundingSourceButton( name ).locator( '.paypal-button-text' ); // additional text on paypal buttons
@@ -45,17 +50,18 @@ export class PayPalUiClassic extends PayPalUi {
 	iframePayPalButtonText = () =>
 		this.payPalIframe().locator( '.paypal-button-text.true' );
 
-	payPalGateway = () => this.page.locator( 'li.payment_method_ppcp-gateway' );
+	fundingSourceGateway = ( name: Pcp.GatewayId ) =>
+		this.page.locator( `li.payment_method_${ name }` );
+	payPalGateway = () => this.fundingSourceGateway( 'ppcp-gateway' );
 	acdcGateway = () =>
-		this.page.locator( 'li.payment_method_ppcp-credit-card-gateway' );
-	debitCreditCardsGateway = () =>
-		this.page.locator( 'li.payment_method_ppcp-credit-card-gateway' );
+		this.fundingSourceGateway( 'ppcp-credit-card-gateway' );
 	bcdcGateway = () =>
-		this.page.locator( 'li.payment_method_ppcp-card-button-gateway' );
+		this.fundingSourceGateway( 'ppcp-card-button-gateway' );
 	oxxoGateway = () =>
-		this.page.locator( 'li.payment_method_ppcp-oxxo-gateway' );
+		this.fundingSourceGateway( 'ppcp-oxxo-gateway' );
 	payUponInvoiceGateway = () =>
-		this.page.locator( 'li.payment_method_ppcp-pay-upon-invoice-gateway' );
+		this.fundingSourceGateway( 'ppcp-pay-upon-invoice-gateway' );
+	googlePayGateway = () => this.fundingSourceGateway( 'ppcp-googlepay' );
 
 	taglineText = () => this.payPalIframe().locator( '.paypal-button-tagline' );
 	payPalGatewayText = () =>
@@ -304,7 +310,10 @@ export class PayPalUiClassic extends PayPalUi {
 	 */
 	async openPayPalPopup(): Promise< PayPalPopup > {
 		// Select gateway if not on classic-cart page
-		if ( ! this.page.url().includes( 'classic-cart' ) ) {
+		if (
+			this.page.url().includes( 'classic-checkout' ) ||
+			this.page.url().includes( 'pay_for_order' )
+		) {
 			await expect(
 				this.payPalGateway(),
 				'Assert PayPal gateway is visible'
@@ -320,11 +329,46 @@ export class PayPalUiClassic extends PayPalUi {
 	 */
 	async openPayLaterPopup(): Promise< PayPalPopup > {
 		// Select gateway if not on classic-cart page
-		if ( ! this.page.url().includes( 'classic-cart' ) ) {
+		if (
+			this.page.url().includes( 'classic-checkout' ) ||
+			this.page.url().includes( 'pay_for_order' )
+		) {
+			await expect(
+				this.payPalGateway(),
+				'Assert PayPal gateway is visible'
+			).toBeVisible();
 			await this.payPalGateway().click();
 		}
 		return await super.openPayLaterPopup();
 	}
+	
+	/**
+	 * Clicks Google Pay button to open the TEST environment popup
+	 */
+	openGooglePayPopup = async (): Promise< GooglePayPopup > => {
+		if(
+			this.page.url().includes( 'classic-checkout' ) ||
+			this.page.url().includes( 'pay_for_order' )
+		) {
+			await expect(
+				this.googlePayGateway(),
+				'Assert Google Pay gateway is visible'
+			).toBeVisible();
+			await this.googlePayGateway().click();
+		}
+		await expect(
+			this.googlePayButton(),
+			'Assert Google Pay button is visible'
+		).toBeVisible();
+		const popupPromise = this.page.waitForEvent( 'popup', {
+			timeout: 20 * 1000,
+		} );
+		await this.googlePayButton().click();
+
+		const popup = await popupPromise;
+		await popup.waitForLoadState();
+		return new GooglePayPopup( popup );
+	};
 
 	/**
 	 * Completes payment with ACDC
@@ -606,40 +650,6 @@ export class PayPalUiClassic extends PayPalUi {
 		await this.page.keyboard.type( birthDate ); // Trick to properly fill date
 
 		await this.submitOrder();
-	};
-
-	addCardPaymentMethod = async ( payment: Pcp.Payment ) => {
-		const { card } = payment;
-		await expect(
-			this.debitCreditCardsGateway(),
-			'Assert debit credit cards gateway is visible'
-		).toBeVisible();
-		await this.debitCreditCardsGateway().click();
-
-		await expect(
-			this.acdcCardNumberInput(),
-			'Assert ACDC card number input is visible'
-		).toBeVisible();
-		await this.acdcCardNumberInput().fill( card.card_number );
-
-		await expect(
-			this.acdcCardExpirationInput(),
-			'Assert ACDC card expiration input is visible'
-		).toBeVisible();
-		await this.acdcCardExpirationInput().click();
-		await this.page.keyboard.type( card.expiration_date ); // Trick to properly fill date
-
-		await expect(
-			this.acdcCardCvvInput(),
-			'Assert ACDC card CVV input is visible'
-		).toBeVisible();
-		await this.acdcCardCvvInput().fill( card.card_cvv );
-
-		await expect(
-			this.addPaymentMethodButton(),
-			'Assert add payment method button is visible'
-		).toBeVisible();
-		await this.addPaymentMethodButton().click();
 	};
 
 	// Assertions

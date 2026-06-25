@@ -14,7 +14,8 @@ test.beforeAll( async ( { utils, pcpApi } ) => {
 	);
 } );
 
-test( 'PCP-0000 | Settings - Pay Later Messaging - Default UI', async ( {
+// https://inpsyde.atlassian.net/browse/PCP-4336
+test( 'PCP-4336 | Settings - Pay Later Messaging - Default UI', async ( {
 	utils,
 	payPalUi,
 	pcpPayLaterMessaging,
@@ -107,7 +108,8 @@ test( 'PCP-0000 | Settings - Pay Later Messaging - Default UI', async ( {
 	).not.toBeVisible();
 } );
 
-test( 'PCP-0000 | Settings - Pay Later Messaging - Disabled on all pages', async ( {
+// https://inpsyde.atlassian.net/browse/PCP-4337
+test( 'PCP-4337 | Settings - Pay Later Messaging - Disabled on all pages', async ( {
 	utils,
 	payPalUi,
 	pcpPayLaterMessaging,

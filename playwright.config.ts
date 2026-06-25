@@ -168,20 +168,6 @@ export default defineConfig< BaseExtend >( {
 			fullyParallel: false,
 		},
 		{
-			name: 'setup-transaction-googlepay',
-			dependencies: [ 'setup-pcp-usa' ],
-			testMatch: /03-pcp\.setup\.ts/,
-			grep: /setup:transaction:googlepay;/,
-			fullyParallel: false,
-		},
-		{
-			name: 'setup-refund',
-			dependencies: [ 'setup-pcp-usa' ],
-			testMatch: /03-pcp\.setup\.ts/,
-			grep: /setup:refund;/,
-			fullyParallel: false,
-		},
-		{
 			name: 'setup-vaulting',
 			dependencies: [ 'setup-pcp-usa' ],
 			testMatch: /03-pcp\.setup\.ts/,
@@ -227,18 +213,13 @@ export default defineConfig< BaseExtend >( {
 			testMatch: /05-transactions\/transaction-usa.*\.spec\.ts/,
 		},
 		{
-			name: 'shard:transaction-googlepay',
-			dependencies: [ 'setup-transaction-googlepay' ],
-			testMatch: /05-transactions\/transaction-googlepay\.spec\.ts/,
-		},
-		{
 			name: 'shard:transaction-mexico',
 			dependencies: [ 'setup-transaction-mexico' ],
 			testMatch: /05-transactions\/transaction-mexico.*\.spec\.ts/,
 		},
 		{
 			name: 'shard:refund',
-			dependencies: [ 'setup-refund' ],
+			dependencies: [ 'setup-transaction-usa' ],
 			testMatch: /06-refund\/.*\.spec\.ts/,
 		},
 		{
