@@ -29,6 +29,10 @@ class OnboardingUrl
      * The "action_url" from /v2/customer/partner-referrals
      */
     private ?string $url = null;
+    /**
+     * The cryptographically random seller nonce (PKCE code_verifier)
+     */
+    private ?string $nonce = null;
     private Cache $cache;
     private string $cache_key_prefix;
     private int $cache_ttl = MONTH_IN_SECONDS;
@@ -140,21 +144,24 @@ class OnboardingUrl
         $this->secret = $cached_data['secret'];
         $this->time = $cached_data['time'];
         $this->url = $cached_data['url'];
+        $this->nonce = $cached_data['nonce'];
         return \true;
     }
     public function init(): void
     {
         try {
             $this->secret = bin2hex(random_bytes(16));
+            $this->nonce = bin2hex(random_bytes(32));
         } catch (Throwable $e) {
             $this->secret = wp_generate_password(16);
+            $this->nonce = wp_generate_password(64, \false);
         }
         $this->time = time();
         $this->url = null;
     }
     private function validate_cache_data(array $cache_data): bool
     {
-        if (!($cache_data['user_id'] ?? \false) || !($cache_data['hash_check'] ?? \false) || !($cache_data['secret'] ?? \false) || !($cache_data['time'] ?? \false) || !($cache_data['url'] ?? \false)) {
+        if (!($cache_data['user_id'] ?? \false) || !($cache_data['hash_check'] ?? \false) || !($cache_data['secret'] ?? \false) || !($cache_data['time'] ?? \false) || !($cache_data['url'] ?? \false) || !($cache_data['nonce'] ?? \false)) {
             return \false;
         }
         if ($cache_data['user_id'] !== $this->user_id) {
@@ -199,7 +206,7 @@ class OnboardingUrl
      */
     public function persist(): void
     {
-        if (null === $this->secret || null === $this->time || null === $this->url) {
+        if (null === $this->secret || null === $this->time || null === $this->url || null === $this->nonce) {
             return;
         }
         $this->cache->set($this->cache_key(), array(
@@ -209,7 +216,12 @@ class OnboardingUrl
             'time' => $this->time,
             'user_id' => $this->user_id,
             'url' => $this->url,
+            'nonce' => $this->nonce,
         ), $this->cache_ttl);
+    }
+    public function seller_nonce(): string
+    {
+        return $this->nonce ?? '';
     }
     /**
      * Deletes the token from cache

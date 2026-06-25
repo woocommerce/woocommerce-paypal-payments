@@ -152,7 +152,13 @@ class PayPalBearer implements \WooCommerce\PayPalCommerce\ApiClient\Authenticati
             $status_code = is_wp_error($response) ? 0 : (int) wp_remote_retrieve_response_code($response);
             $this->rate_limiter->register_failure(self::RATE_LIMIT_SCOPE, $status_code, $response);
             $error = new RuntimeException('Could not create token.');
-            $this->logger->warning($error->getMessage(), array('args' => $args, 'response' => $response));
+            $log_args = $args;
+            foreach (array_keys($log_args['headers']) as $header_name) {
+                if (preg_match('/authorization|signature/i', $header_name)) {
+                    $log_args['headers'][$header_name] = '[REDACTED]';
+                }
+            }
+            $this->logger->warning($error->getMessage(), array('args' => $log_args, 'response' => $response));
             throw $error;
         }
         $token = Token::from_json($response['body']);

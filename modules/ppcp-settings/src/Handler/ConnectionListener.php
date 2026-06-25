@@ -144,6 +144,11 @@ class ConnectionListener
             wp_safe_redirect($current_url);
             exit;
         }
+        $seller_nonce = $this->url_manager->get_seller_nonce_for_token($token, $this->user_id);
+        if (!$seller_nonce) {
+            $this->logger->error('Could not retrieve seller nonce for token', array('token' => $log_token));
+            return;
+        }
         if (!$this->url_manager->validate_token_and_delete($token, $this->user_id)) {
             $this->logger->error('Token validation failed', array('token' => $log_token));
             $this->notices->add(__('We couldn’t verify your PayPal connection. Please try connecting again.', 'woocommerce-paypal-payments'));
@@ -155,6 +160,7 @@ class ConnectionListener
             $this->notices->add(__('PayPal didn’t return the expected account details. Please try connecting again.', 'woocommerce-paypal-payments'));
             return;
         }
+        $data['seller_nonce'] = $seller_nonce;
         $this->logger->info('Found OAuth merchant data in request', $data);
         try {
             $this->set_token_state($token, self::TOKEN_STATE_PROCESSING);

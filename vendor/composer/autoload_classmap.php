@@ -462,6 +462,7 @@ return array(
     'WooCommerce\\PayPalCommerce\\StoreSync\\Helper\\ShippingOptionsBuilder' => $baseDir . '/modules/ppcp-store-sync/src/Helper/ShippingOptionsBuilder.php',
     'WooCommerce\\PayPalCommerce\\StoreSync\\Ingestion\\IngestionBatchProvider' => $baseDir . '/modules/ppcp-store-sync/src/Ingestion/IngestionBatchProvider.php',
     'WooCommerce\\PayPalCommerce\\StoreSync\\Ingestion\\IngestionManager' => $baseDir . '/modules/ppcp-store-sync/src/Ingestion/IngestionManager.php',
+    'WooCommerce\\PayPalCommerce\\StoreSync\\Ingestion\\ProductDTO' => $baseDir . '/modules/ppcp-store-sync/src/Ingestion/ProductDTO.php',
     'WooCommerce\\PayPalCommerce\\StoreSync\\Ingestion\\ProductsPayload' => $baseDir . '/modules/ppcp-store-sync/src/Ingestion/ProductsPayload.php',
     'WooCommerce\\PayPalCommerce\\StoreSync\\Ingestion\\SyncJob' => $baseDir . '/modules/ppcp-store-sync/src/Ingestion/SyncJob.php',
     'WooCommerce\\PayPalCommerce\\StoreSync\\Merchant\\MerchantMetadata' => $baseDir . '/modules/ppcp-store-sync/src/Merchant/MerchantMetadata.php',

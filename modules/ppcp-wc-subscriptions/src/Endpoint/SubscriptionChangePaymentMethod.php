@@ -52,18 +52,27 @@ class SubscriptionChangePaymentMethod implements EndpointInterface
     public function handle_request(): void
     {
         try {
+            if (!get_current_user_id()) {
+                wp_send_json_error(array(), 403);
+            }
             $data = $this->request_data->read_request($this->nonce());
             $subscription = wcs_get_subscription($data['subscription_id']);
-            if ($subscription instanceof WC_Order) {
-                $subscription->set_payment_method($data['payment_method']);
-                $wc_payment_token = WC_Payment_Tokens::get($data['wc_payment_token_id']);
-                if ($wc_payment_token) {
-                    $subscription->add_payment_token($wc_payment_token);
-                    $subscription->save();
-                }
-                wp_send_json_success();
+            if (!$subscription instanceof WC_Order) {
+                wp_send_json_error();
             }
-            wp_send_json_error();
+            if ((int) $subscription->get_customer_id() !== (int) get_current_user_id()) {
+                wp_send_json_error(array('message' => __('You do not have permission to modify this subscription.', 'woocommerce-paypal-payments')), 403);
+            }
+            $wc_payment_token = WC_Payment_Tokens::get($data['wc_payment_token_id']);
+            if ($wc_payment_token && $wc_payment_token->get_user_id() !== (int) get_current_user_id()) {
+                wp_send_json_error(array('message' => __('You do not have permission to use this payment token.', 'woocommerce-paypal-payments')), 403);
+            }
+            $subscription->set_payment_method($data['payment_method']);
+            if ($wc_payment_token) {
+                $subscription->add_payment_token($wc_payment_token);
+            }
+            $subscription->save();
+            wp_send_json_success();
         } catch (NonceValidationException $error) {
             wp_send_json_error(array('message' => $error->getMessage()), 400);
         } catch (Exception $exception) {

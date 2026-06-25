@@ -20,10 +20,16 @@ class ProductsPayload
         $this->product_ids = $product_ids;
         $this->product_manager = $product_manager;
     }
-    public function get_array(): array
+    /**
+     * @return ProductDTO[]
+     */
+    public function get_products(): array
     {
         return $this->transform_products($this->product_ids);
     }
+    /**
+     * @return ProductDTO[]
+     */
     private function transform_products(array $product_ids): array
     {
         $api_products = array();
@@ -46,22 +52,13 @@ class ProductsPayload
                 continue;
             }
             // For all other product types (simple, grouped, etc.).
-            $api_product = array('id' => (string) $product->get_id(), 'title' => $this->product_manager->get_product_title($product), 'link' => $this->product_manager->get_product_link($product), 'image_link' => $this->product_manager->get_product_image($product), 'description' => $this->product_manager->get_product_description($product, $product->get_short_description()), 'price' => $this->product_manager->format_price($product->get_price()), 'availability' => $this->product_manager->get_product_availability($product), 'merchantStoreUrl' => $this->merchant_store_url);
-            // Add optional fields.
-            if ($product->get_sku()) {
-                $api_product['mpn'] = $product->get_sku();
-            }
-            if ($product->get_sale_price()) {
-                $api_product['sale_price'] = $this->product_manager->format_price($product->get_sale_price());
-            }
-            $product_type = $this->product_manager->get_product_type($product);
-            if ($product_type) {
-                $api_product['product_type'] = $product_type;
-            }
-            $api_products[] = $api_product;
+            $api_products[] = new \WooCommerce\PayPalCommerce\StoreSync\Ingestion\ProductDTO($this->merchant_store_url, (string) $product->get_id(), (string) $product->get_id(), $this->product_manager->get_product_title($product), $this->product_manager->get_product_link($product), $this->product_manager->get_product_image($product), $this->product_manager->get_product_description($product, $product->get_short_description()), $this->product_manager->format_price($product->get_price()), $this->product_manager->get_product_availability($product), $product->get_sku() ?: null, $product->get_sale_price() ? $this->product_manager->format_price($product->get_sale_price()) : null, $this->product_manager->get_product_type($product) ?: null);
         }
         return $api_products;
     }
+    /**
+     * @return ProductDTO[]
+     */
     private function get_product_variants(WC_Product $variable_product): array
     {
         $variants = array();
@@ -72,27 +69,28 @@ class ProductsPayload
             if (!$variation instanceof WC_Product_Variation || !$variation->is_purchasable()) {
                 continue;
             }
-            $variant = array('id' => (string) $variation->get_id(), 'item_group_id' => (string) $variable_product->get_id(), 'title' => $this->product_manager->get_product_title($variation), 'link' => $this->product_manager->get_product_link($variation), 'image_link' => $this->product_manager->get_product_image($variation, wp_get_attachment_image_url((int) $variable_product->get_image_id(), 'full') ?: ''), 'description' => $this->product_manager->get_product_description($variation, $variable_product->get_description()), 'price' => $this->product_manager->format_price($variation->get_price()), 'availability' => $this->product_manager->get_product_availability($variation), 'merchantStoreUrl' => $this->merchant_store_url);
-            // Add variant attributes using WooCommerce methods.
-            $attributes = $variation->get_variation_attributes();
-            foreach ($attributes as $attribute => $value) {
-                $clean_attr = str_replace(array('attribute_pa_', 'attribute_'), '', $attribute);
-                if (in_array($clean_attr, array('color', 'size', 'gender'), \true)) {
-                    $variant[$clean_attr] = $value;
-                }
-            }
-            if ($variation->get_sku()) {
-                $variant['mpn'] = $variation->get_sku();
-            }
-            if ($variation->get_sale_price()) {
-                $variant['sale_price'] = $this->product_manager->format_price($variation->get_sale_price());
-            }
-            // Add the parent product.
-            if ($product_type) {
-                $variant['product_type'] = $product_type;
-            }
-            $variants[] = $variant;
+            $attributes = $this->extract_variant_attributes($variation);
+            $variants[] = new \WooCommerce\PayPalCommerce\StoreSync\Ingestion\ProductDTO($this->merchant_store_url, (string) $variation->get_id(), (string) $variable_product->get_id(), $this->product_manager->get_product_title($variation), $this->product_manager->get_product_link($variation), $this->product_manager->get_product_image($variation, wp_get_attachment_image_url((int) $variable_product->get_image_id(), 'full') ?: ''), $this->product_manager->get_product_description($variation, $variable_product->get_description()), $this->product_manager->format_price($variation->get_price()), $this->product_manager->get_product_availability($variation), $variation->get_sku() ?: null, $variation->get_sale_price() ? $this->product_manager->format_price($variation->get_sale_price()) : null, $product_type ?: null, $attributes['color'] ?? null, $attributes['size'] ?? null, $attributes['gender'] ?? null);
         }
         return $variants;
+    }
+    /**
+     * Extracts the color/size/gender attributes from a variation.
+     *
+     * WooCommerce prefixes attribute keys with `attribute_pa_` (taxonomy) or
+     * `attribute_` (custom); both are stripped before matching.
+     *
+     * @return array<string, string> Map of the recognised attribute names to their values.
+     */
+    private function extract_variant_attributes(WC_Product_Variation $variation): array
+    {
+        $attributes = array();
+        foreach ($variation->get_variation_attributes() as $attribute => $value) {
+            $clean_attr = str_replace(array('attribute_pa_', 'attribute_'), '', $attribute);
+            if (in_array($clean_attr, array('color', 'size', 'gender'), \true)) {
+                $attributes[$clean_attr] = (string) $value;
+            }
+        }
+        return $attributes;
     }
 }

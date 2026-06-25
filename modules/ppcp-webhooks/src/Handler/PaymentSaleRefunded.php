@@ -95,6 +95,11 @@ class PaymentSaleRefunded implements \WooCommerce\PayPalCommerce\Webhooks\Handle
             return $this->failure_response();
         }
         foreach ($wc_orders as $wc_order) {
+            $already_added_refunds = $this->get_refunds_meta($wc_order);
+            if (in_array($refund_id, $already_added_refunds, \true)) {
+                $this->logger->info("Refund {$refund_id} is already handled.");
+                continue;
+            }
             $refund = wc_create_refund(array('order_id' => $wc_order->get_id(), 'amount' => $total_refunded_amount));
             if ($refund instanceof WP_Error) {
                 $message = sprintf('Order %s could not be refunded. %s', (string) $wc_order->get_id(), $refund->get_error_message());

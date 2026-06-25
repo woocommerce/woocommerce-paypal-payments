@@ -21,6 +21,7 @@ class CartData
     protected int $user_id;
     protected string $cart_hash;
     protected ?string $paypal_order_id = null;
+    protected ?string $session_customer_id = null;
     /**
      * @param array<string, array<string, mixed>> $items The cart items like in $cart->get_cart_for_session() or $cart->get_cart().
      * @param string[]                            $coupons
@@ -86,14 +87,23 @@ class CartData
     {
         return $this->paypal_order_id;
     }
+    public function set_session_customer_id(?string $session_customer_id): void
+    {
+        $this->session_customer_id = $session_customer_id;
+    }
+    public function session_customer_id(): ?string
+    {
+        return $this->session_customer_id;
+    }
     public function to_array(): array
     {
-        return array('items' => $this->items, 'coupons' => $this->coupons, 'needs_shipping' => $this->needs_shipping, 'user_id' => $this->user_id, 'cart_hash' => $this->cart_hash, 'paypal_order_id' => $this->paypal_order_id);
+        return array('items' => $this->items, 'coupons' => $this->coupons, 'needs_shipping' => $this->needs_shipping, 'user_id' => $this->user_id, 'cart_hash' => $this->cart_hash, 'paypal_order_id' => $this->paypal_order_id, 'session_customer_id' => $this->session_customer_id);
     }
     public static function from_array(array $data, ?string $key = null): \WooCommerce\PayPalCommerce\Button\Session\CartData
     {
         $cart_data = new \WooCommerce\PayPalCommerce\Button\Session\CartData($data['items'] ?? array(), $data['coupons'] ?? array(), (bool) ($data['needs_shipping'] ?? \false), (int) ($data['user_id'] ?? 0), $data['cart_hash'] ?? '');
         $cart_data->paypal_order_id = $data['paypal_order_id'] ?? null;
+        $cart_data->session_customer_id = $data['session_customer_id'] ?? null;
         $cart_data->key = $key;
         return $cart_data;
     }

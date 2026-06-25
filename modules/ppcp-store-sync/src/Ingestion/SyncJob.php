@@ -46,15 +46,16 @@ class SyncJob
     public function execute(): void
     {
         $this->logger->info(sprintf('Agentic Sync Job %s: Started', $this->batch_id));
-        // Transform products for API using the factory.
-        $api_products = new \WooCommerce\PayPalCommerce\StoreSync\Ingestion\ProductsPayload($this->merchant_store_url, $this->product_ids, $this->product_manager);
-        $api_payload = $api_products->get_array();
-        if (empty($api_payload)) {
+        // Transform products into DTOs.
+        $payload_container = new \WooCommerce\PayPalCommerce\StoreSync\Ingestion\ProductsPayload($this->merchant_store_url, $this->product_ids, $this->product_manager);
+        $products = $payload_container->get_products();
+        if (empty($products)) {
             $this->logger->info(sprintf('Agentic Sync Job %s: No products', $this->batch_id));
             $this->fire_completed_action('empty', 0, 0, 0);
             return;
         }
-        $body = array('merchant_url' => $this->merchant_store_url, 'products' => $api_payload);
+        // Compose the API payload, serialising each product DTO to its wire format.
+        $body = array('merchant_url' => $this->merchant_store_url, 'products' => array_map(static fn(\WooCommerce\PayPalCommerce\StoreSync\Ingestion\ProductDTO $product): array => $product->to_array(), $products));
         // Send payload to API.
         $response = wp_remote_post($this->api_endpoint, array('timeout' => 30, 'headers' => array('Content-Type' => 'application/json'), 'body' => (string) wp_json_encode($body)));
         $this->logger->debug("Start Sync {$this->batch_id}...", $body);
