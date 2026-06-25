@@ -3,15 +3,11 @@
  */
 import { test } from '../../utils';
 import {
-	transactionsOnCheckout,
-	transactionsOnPayByLink,
-	transactionsOnProduct,
+	transactionsOnClassicCheckout,
 } from './_test-scenarios';
 import {
-	googlePayCheckout,
-	googlePayProduct,
-	googlePayPayByLink,
-	googlePayCheckoutNegativeFee,
+	googlePayClassicCheckout,
+	googlePayClassicCheckoutNegativeFee,
 } from './_test-data/googlepay';
 import { GooglePayPopup } from '../../utils/frontend/google-pay-popup';
 import { customers, negative12FeePlugin } from '../../resources';
@@ -34,7 +30,7 @@ test.use( {
 
 test.beforeAll( async ( { utils } ) => {
 	await utils.configureStore( {
-		enableClassicPages: false,
+		enableClassicPages: true,
 		customer: customers.usa,
 	} );
 } );
@@ -43,16 +39,8 @@ test.beforeEach( async ( { visitorPage } ) => {
 	await GooglePayPopup.applyBrowserPatches( visitorPage.context() );
 } );
 
-for ( const testOrder of googlePayCheckout ) {
-	transactionsOnCheckout( testOrder );
-}
-
-for ( const testOrder of googlePayProduct ) {
-	transactionsOnProduct( testOrder );
-}
-
-for ( const testOrder of googlePayPayByLink ) {
-	transactionsOnPayByLink( testOrder );
+for ( const testOrder of googlePayClassicCheckout ) {
+	transactionsOnClassicCheckout( testOrder );
 }
 
 /**
@@ -64,8 +52,8 @@ test.describe( () => {
 		await requestUtils.activatePlugin( negative12FeePlugin.slug );
 	} );
 
-	for ( const testOrder of googlePayCheckoutNegativeFee ) {
-		transactionsOnCheckout( testOrder );
+	for ( const testOrder of googlePayClassicCheckoutNegativeFee ) {
+		transactionsOnClassicCheckout( testOrder );
 	}
 	
 	test.afterAll( async ( { requestUtils } ) => {

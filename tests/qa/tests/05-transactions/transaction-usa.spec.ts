@@ -2,7 +2,7 @@
  * Internal dependencies
  */
 import { test } from '../../utils';
-import { customers, gateways, taxSettings } from '../../resources';
+import { customers, gateways, negative12FeePlugin, taxSettings } from '../../resources';
 import {
 	transactionsOnCheckout,
 	transactionsOnPayByLink,
@@ -12,6 +12,7 @@ import {
 	payPalCheckout,
 	payPalCheckoutExcludingTax,
 	payPalCheckoutIntentAuthorized,
+	payPalCheckoutNegativeFee,
 	payPalPayByLink,
 	payPalPayByLinkExcludingTax,
 	payPalPayByLinkIntentAuthorized,
@@ -23,6 +24,7 @@ import {
 	payLaterCheckoutIntentAuthorized,
 	payLaterProduct,
 	payLaterPayByLink,
+	payLaterCheckoutNegativeFee,
 } from './_test-data/pay-later';
 import {
 	acdcCheckout,
@@ -33,6 +35,7 @@ import {
 	acdcPayByLink3ds,
 	acdcPayByLinkExcludingTax,
 	acdcPayByLinkIntentAuthorized,
+	acdcCheckoutNegativeFee,
 } from './_test-data/acdc';
 import { fastlaneCheckout } from './_test-data/fastlane';
 
@@ -181,5 +184,31 @@ test.describe( () => {
 		await pcpApi.updatePcpPaymentMethods( {
 			[ fastlane.id ]: { id: fastlane.id, enabled: false },
 		} );
+	} );
+} );
+
+/**
+ * Negative fee snippet
+ */
+
+test.describe( () => {
+	test.beforeAll( async ( { requestUtils } ) => {
+		await requestUtils.activatePlugin( negative12FeePlugin.slug );
+	} );
+
+	for ( const testOrder of payPalCheckoutNegativeFee ) {
+		transactionsOnCheckout( testOrder );
+	}
+
+	for ( const testOrder of payLaterCheckoutNegativeFee ) {
+		transactionsOnCheckout( testOrder );
+	}
+
+	for ( const testOrder of acdcCheckoutNegativeFee ) {
+		transactionsOnCheckout( testOrder );
+	}
+
+	test.afterAll( async ( { requestUtils } ) => {
+		await requestUtils.deactivatePlugin( negative12FeePlugin.slug );
 	} );
 } );

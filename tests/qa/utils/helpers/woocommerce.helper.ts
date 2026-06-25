@@ -17,6 +17,7 @@ import {
 	subscriptionsPlugin,
 	disableWcSetupWizard,
 	disableWebhookVerificationPlugin,
+	negative12FeePlugin,
 } from '../../resources';
 
 const country = process.env.WC_DEFAULT_COUNTRY || 'usa';
@@ -57,7 +58,19 @@ export const setupWooCommerce = async () => {
 		);
 
 		setup(
-			'Setup Disable Webhook Verification plugin (inactive)',
+			'Setup Negative 12 Fee plugin (inactive)',
+			async ( { requestUtils, plugins } ) => {
+				await installPluginResolveActiveState( {
+					requestUtils,
+					plugins,
+					...negative12FeePlugin,
+					isActive: false,
+				} );
+			}
+		);
+
+		setup(
+			'Setup Disable Webhook Verification plugin (active)',
 			async ( { plugins, requestUtils } ) => {
 				await installPluginResolveActiveState( {
 					requestUtils,
