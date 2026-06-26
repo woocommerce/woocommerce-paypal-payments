@@ -71,6 +71,7 @@ return array(
 			$container->get( 'button.request-data' ),
 			$container->get( 'api.endpoint.order' ),
 			$container->get( 'api.factory.purchase-unit' ),
+			$container->get( 'session.handler' ),
 			$container->get( 'woocommerce.logger.woocommerce' )
 		);
 	},
