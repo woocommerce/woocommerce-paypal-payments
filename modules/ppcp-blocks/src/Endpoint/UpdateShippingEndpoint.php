@@ -21,57 +21,16 @@ use WooCommerce\PayPalCommerce\Button\Endpoint\RequestData;
 use WooCommerce\PayPalCommerce\Button\Exception\NonceValidationException;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
 
-/**
- * Class UpdateShippingEndpoint
- */
 class UpdateShippingEndpoint implements EndpointInterface {
 	const ENDPOINT              = 'ppc-update-shipping';
 	const WC_STORE_API_ENDPOINT = '/wp-json/wc/store/v1/cart/';
 
-	/**
-	 * The Request Data Helper.
-	 *
-	 * @var RequestData
-	 */
-	private $request_data;
+	private RequestData $request_data;
+	private OrderEndpoint $order_endpoint;
+	private PurchaseUnitFactory $purchase_unit_factory;
+	private SessionHandler $session_handler;
+	protected LoggerInterface $logger;
 
-	/**
-	 * The order endpoint.
-	 *
-	 * @var OrderEndpoint
-	 */
-	private $order_endpoint;
-
-	/**
-	 * The purchase unit factory.
-	 *
-	 * @var PurchaseUnitFactory
-	 */
-	private $purchase_unit_factory;
-
-	/**
-	 * The session handler.
-	 *
-	 * @var SessionHandler
-	 */
-	private $session_handler;
-
-	/**
-	 * The logger.
-	 *
-	 * @var LoggerInterface
-	 */
-	protected $logger;
-
-	/**
-	 * UpdateShippingEndpoint constructor.
-	 *
-	 * @param RequestData         $request_data The Request Data Helper.
-	 * @param OrderEndpoint       $order_endpoint The order endpoint.
-	 * @param PurchaseUnitFactory $purchase_unit_factory The purchase unit factory.
-	 * @param SessionHandler      $session_handler The session handler.
-	 * @param LoggerInterface     $logger The logger.
-	 */
 	public function __construct(
 		RequestData $request_data,
 		OrderEndpoint $order_endpoint,
