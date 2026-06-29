@@ -65,6 +65,7 @@ class PUIPaymentMethodTest extends TestCase
 		);
 		$wc = Mockery::mock();
 		$wc->shouldReceive('checkout')->andReturn($checkout);
+		$wc->cart = Mockery::mock(\WC_Cart::class);
 		when('WC')->justReturn($wc);
 
 		$sut  = new PUIPaymentMethod($this->asset_getter, '1.0.0', $this->gateway);
@@ -106,11 +107,42 @@ class PUIPaymentMethodTest extends TestCase
 		);
 		$wc = Mockery::mock();
 		$wc->shouldReceive('checkout')->andReturn($checkout);
+		$wc->cart = Mockery::mock(\WC_Cart::class);
 		when('WC')->justReturn($wc);
 
 		$sut  = new PUIPaymentMethod($this->asset_getter, '1.0.0', $this->gateway);
 		$data = $sut->get_payment_method_data();
 
 		$this->assertFalse($data['requiresPhone']);
+	}
+
+	public function testGetPaymentMethodDataSkipsCheckoutFieldsWithoutCartContext(): void
+	{
+		$this->gateway->title       = 'Pay upon Invoice';
+		$this->gateway->description = 'Pay within 30 days';
+		$this->gateway->icon        = 'https://example.test/ratepay.svg';
+
+		when('get_bloginfo')->justReturn('de-DE');
+		when('apply_filters')->alias(function ($hook, $value) {
+			return $value;
+		});
+
+		// The Mini-Cart block enqueues payment method data on every page, where
+		// WC()->cart is not initialised. requires_phone() must not build the
+		// checkout fields in that context (which would run the whole
+		// woocommerce_checkout_fields filter chain and can fatal in third-party
+		// callbacks that assume a cart exists).
+		$checkout = Mockery::mock();
+		$checkout->shouldNotReceive('get_checkout_fields');
+		$wc = Mockery::mock();
+		$wc->shouldReceive('checkout')->andReturn($checkout);
+		$wc->cart = null;
+		when('WC')->justReturn($wc);
+
+		$sut  = new PUIPaymentMethod($this->asset_getter, '1.0.0', $this->gateway);
+		$data = $sut->get_payment_method_data();
+
+		// Falls back to the default (PUI collects the phone itself).
+		$this->assertTrue($data['requiresPhone']);
 	}
 }
