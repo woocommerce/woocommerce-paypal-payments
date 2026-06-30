@@ -25,6 +25,7 @@ export class WooCommerceOrderEdit extends WooCommerceOrderEditBase {
 
 	totalPayPalFee = () => this.totalsTableRow( 'PayPal Fee:' );
 	totalPayPalPayout = () => this.totalsTableRow( 'PayPal Payout' );
+	processorResponseRow = () => this.totalsTableRow( 'Processor Response:' );
 
 	refundViaButton = ( paymentMethod ) =>
 		this.page.locator( '.do-api-refund', {
@@ -192,6 +193,13 @@ export class WooCommerceOrderEdit extends WooCommerceOrderEditBase {
 					)
 				);
 			}
+		}
+
+		if ( fundingSource === 'acdc' ) {
+			await expect(
+				this.processorResponseRow(),
+				'Assert Processor Response row is not visible for approved ACDC orders'
+			).not.toBeVisible();
 		}
 
 		if ( fundingSource === 'oxxo' ) {
