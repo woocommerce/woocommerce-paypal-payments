@@ -1,7 +1,12 @@
 /* global describe, test, expect, jest, beforeEach */
 
 jest.mock( '@ppcp-button/ActionHandler/SingleProductActionHandler' );
-jest.mock( '@ppcp-button/Helper/SimulateCart' );
+jest.mock( '@ppcp-button/Helper/SimulateCart', () => {
+	const { isSimulateCartEnabled } = jest.requireActual(
+		'@ppcp-button/Helper/SimulateCart'
+	);
+	return { __esModule: true, default: jest.fn(), isSimulateCartEnabled };
+} );
 jest.mock( '@ppcp-button/ErrorHandler', () => jest.fn() );
 jest.mock( '@ppcp-button/Helper/UpdateCart', () => jest.fn() );
 jest.mock( '@ppcp-googlepay/Helper/TransactionInfo' );
@@ -20,6 +25,9 @@ describe( 'SingleProductHandler', () => {
 
 	const ppcpConfig = {
 		labels: { error: { generic: 'An error occurred.' } },
+		simulate_cart: {
+			enabled: true,
+		},
 		ajax: {
 			simulate_cart: {
 				endpoint: '/ppcp/simulate-cart',
@@ -74,6 +82,36 @@ describe( 'SingleProductHandler', () => {
 	} );
 
 	describe( 'transactionInfo()', () => {
+		describe( 'simulate_cart.enabled guard', () => {
+			test( 'rejects immediately when simulate_cart is disabled', async () => {
+				const disabledHandler = new SingleProductHandler(
+					{},
+					{ ...ppcpConfig, simulate_cart: { enabled: false } },
+					null
+				);
+
+				await expect( disabledHandler.transactionInfo() ).rejects.toThrow(
+					'Cart simulation is disabled.'
+				);
+				expect( mockSimulate ).not.toHaveBeenCalled();
+			} );
+
+			test( 'proceeds when simulate_cart key is absent (defaults to enabled)', async () => {
+				const { simulate_cart: _, ...configWithoutKey } = ppcpConfig;
+				const defaultHandler = new SingleProductHandler(
+					{},
+					configWithoutKey,
+					null
+				);
+				document.body.innerHTML = `<form class="cart"></form>`;
+				mockSimulate.mockResolvedValue( {} );
+
+				await defaultHandler.transactionInfo();
+
+				expect( mockSimulate ).toHaveBeenCalled();
+			} );
+		} );
+
 		describe( 'variation_id guard', () => {
 			test( 'rejects immediately when variation_id is empty', async () => {
 				document.body.innerHTML = `
