@@ -97,17 +97,45 @@ class CaptureCardPayment
         $bearer = $this->bearer->bearer();
         $url = trailingslashit($this->host) . 'v2/checkout/orders';
         $args = array('method' => 'POST', 'headers' => array('Authorization' => 'Bearer ' . $bearer->token(), 'Content-Type' => 'application/json', 'PayPal-Request-Id' => uniqid('ppcp-', \true)), 'body' => wp_json_encode($data));
-        $response = $this->request($url, $args);
-        if ($response instanceof WP_Error) {
-            throw new RuntimeException($response->get_error_message());
-        }
-        $json = json_decode($response['body']);
-        $status_code = (int) wp_remote_retrieve_response_code($response);
-        if (!in_array($status_code, array(200, 201), \true)) {
-            $error = new PayPalApiException($json, $status_code);
-            $this->logger->warning($error->getMessage());
-            throw $error;
-        }
+        $json = $this->execute_order_request($url, $args);
         return $this->order_factory->from_paypal_response($json);
+    }
+    /**
+     * Executes the order creation request, retrying once on an incomplete response.
+     *
+     * PayPal's v2/checkout/orders endpoint intermittently returns a success status
+     * with a response body missing the required id field. A single retry with a new
+     * idempotency key recovers from this transient issue.
+     *
+     * @param string $url  The request URL.
+     * @param array  $args The request arguments.
+     * @return \stdClass Decoded response with a valid id.
+     *
+     * @throws RuntimeException When the response is incomplete after retry or PayPal returns a non-success status.
+     */
+    private function execute_order_request(string $url, array $args): \stdClass
+    {
+        for ($attempt = 0; $attempt < 2; $attempt++) {
+            if ($attempt > 0) {
+                $this->logger->info('Retrying PayPal order creation after incomplete response.');
+                $args['headers']['PayPal-Request-Id'] = uniqid('ppcp-', \true);
+            }
+            $response = $this->request($url, $args);
+            if ($response instanceof WP_Error) {
+                throw new RuntimeException($response->get_error_message());
+            }
+            $json = json_decode($response['body']);
+            $status_code = (int) wp_remote_retrieve_response_code($response);
+            if (!in_array($status_code, array(200, 201), \true)) {
+                $error = new PayPalApiException($json, $status_code);
+                $this->logger->warning($error->getMessage());
+                throw $error;
+            }
+            if ($json instanceof \stdClass && isset($json->id)) {
+                return $json;
+            }
+            $this->logger->warning('PayPal order response missing id.', array('status_code' => $status_code, 'response_body' => $response['body']));
+        }
+        throw new RuntimeException('PayPal order response missing id after retry.');
     }
 }
