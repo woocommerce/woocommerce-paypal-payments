@@ -19,6 +19,7 @@ return array(
     'WooCommerce\\PayPalCommerce\\StatusReport\\' => array($baseDir . '/modules/ppcp-status-report/src'),
     'WooCommerce\\PayPalCommerce\\Settings\\' => array($baseDir . '/modules/ppcp-settings/src'),
     'WooCommerce\\PayPalCommerce\\Session\\' => array($baseDir . '/modules/ppcp-session/src'),
+    'WooCommerce\\PayPalCommerce\\SdkV6\\' => array($baseDir . '/modules/ppcp-sdk-v6/src'),
     'WooCommerce\\PayPalCommerce\\SavePaymentMethods\\' => array($baseDir . '/modules/ppcp-save-payment-methods/src'),
     'WooCommerce\\PayPalCommerce\\PayPalSubscriptions\\' => array($baseDir . '/modules/ppcp-paypal-subscriptions/src'),
     'WooCommerce\\PayPalCommerce\\PayLaterWCBlocks\\' => array($baseDir . '/modules/ppcp-paylater-wc-blocks/src'),

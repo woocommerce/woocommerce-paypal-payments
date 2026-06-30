@@ -28,6 +28,7 @@ class ComposerStaticInit844a779aae516bed9e0beccea9d01fda
             'WooCommerce\\PayPalCommerce\\StatusReport\\' => 40,
             'WooCommerce\\PayPalCommerce\\Settings\\' => 36,
             'WooCommerce\\PayPalCommerce\\Session\\' => 35,
+            'WooCommerce\\PayPalCommerce\\SdkV6\\' => 33,
             'WooCommerce\\PayPalCommerce\\SavePaymentMethods\\' => 46,
             'WooCommerce\\PayPalCommerce\\PayPalSubscriptions\\' => 47,
             'WooCommerce\\PayPalCommerce\\PayLaterWCBlocks\\' => 44,
@@ -113,6 +114,10 @@ class ComposerStaticInit844a779aae516bed9e0beccea9d01fda
         'WooCommerce\\PayPalCommerce\\Session\\' =>
         array (
             0 => __DIR__ . '/../..' . '/modules/ppcp-session/src',
+        ),
+        'WooCommerce\\PayPalCommerce\\SdkV6\\' =>
+        array (
+            0 => __DIR__ . '/../..' . '/modules/ppcp-sdk-v6/src',
         ),
         'WooCommerce\\PayPalCommerce\\SavePaymentMethods\\' =>
         array (
@@ -543,6 +548,10 @@ class ComposerStaticInit844a779aae516bed9e0beccea9d01fda
         'WooCommerce\\PayPalCommerce\\SavePaymentMethods\\Helper\\SavePaymentMethodsApplies' => __DIR__ . '/../..' . '/modules/ppcp-save-payment-methods/src/Helper/SavePaymentMethodsApplies.php',
         'WooCommerce\\PayPalCommerce\\SavePaymentMethods\\SavePaymentMethodsModule' => __DIR__ . '/../..' . '/modules/ppcp-save-payment-methods/src/SavePaymentMethodsModule.php',
         'WooCommerce\\PayPalCommerce\\SavePaymentMethods\\Service\\PaymentMethodTokensChecker' => __DIR__ . '/../..' . '/modules/ppcp-save-payment-methods/src/Service/PaymentMethodTokensChecker.php',
+        'WooCommerce\\PayPalCommerce\\SdkV6\\Assets\\SdkV6Manager' => __DIR__ . '/../..' . '/modules/ppcp-sdk-v6/src/Assets/SdkV6Manager.php',
+        'WooCommerce\\PayPalCommerce\\SdkV6\\Endpoint\\ClientTokenEndpoint' => __DIR__ . '/../..' . '/modules/ppcp-sdk-v6/src/Endpoint/ClientTokenEndpoint.php',
+        'WooCommerce\\PayPalCommerce\\SdkV6\\Helper\\RateLimiter' => __DIR__ . '/../..' . '/modules/ppcp-sdk-v6/src/Helper/RateLimiter.php',
+        'WooCommerce\\PayPalCommerce\\SdkV6\\SdkV6Module' => __DIR__ . '/../..' . '/modules/ppcp-sdk-v6/src/SdkV6Module.php',
         'WooCommerce\\PayPalCommerce\\Session\\Cancellation\\CancelController' => __DIR__ . '/../..' . '/modules/ppcp-session/src/Cancellation/CancelController.php',
         'WooCommerce\\PayPalCommerce\\Session\\Cancellation\\CancelView' => __DIR__ . '/../..' . '/modules/ppcp-session/src/Cancellation/CancelView.php',
         'WooCommerce\\PayPalCommerce\\Session\\MemoryWcSession' => __DIR__ . '/../..' . '/modules/ppcp-session/src/MemoryWcSession.php',

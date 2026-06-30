@@ -46,5 +46,8 @@ return static function (string $root_dir): iterable {
     if (apply_filters('woocommerce.feature-flags.woocommerce_paypal_payments.store_sync_enabled', getenv('PCP_STORE_SYNC_ENABLED') === '1')) {
         $modules[] = (require "{$modules_dir}/ppcp-store-sync/module.php")();
     }
+    if (apply_filters('woocommerce.feature-flags.woocommerce_paypal_payments.sdk_v6_enabled', getenv('PCP_SDK_V6_ENABLED') === '1')) {
+        $modules[] = (require "{$modules_dir}/ppcp-sdk-v6/module.php")();
+    }
     return $modules;
 };
