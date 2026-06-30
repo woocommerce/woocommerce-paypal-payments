@@ -127,11 +127,8 @@ class PUIPaymentMethodTest extends TestCase
 			return $value;
 		});
 
-		// The Mini-Cart block enqueues payment method data on every page, where
-		// WC()->cart is not initialised. requires_phone() must not build the
-		// checkout fields in that context (which would run the whole
-		// woocommerce_checkout_fields filter chain and can fatal in third-party
-		// callbacks that assume a cart exists).
+		// No cart context (e.g. Mini-Cart enqueue off-checkout): the checkout
+		// fields must not be built.
 		$checkout = Mockery::mock();
 		$checkout->shouldNotReceive('get_checkout_fields');
 		$wc = Mockery::mock();
