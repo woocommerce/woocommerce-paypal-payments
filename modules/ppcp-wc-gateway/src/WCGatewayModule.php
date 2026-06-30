@@ -146,7 +146,7 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
                 return;
             }
             $fraud_result = $wc_order->get_meta(PayPalGateway::FRAUD_RESULT_META_KEY);
-            if (empty($fraud_result['response_code'])) {
+            if (empty($fraud_result['response_code']) || $fraud_result['response_code'] === '0000') {
                 return;
             }
             $fraud = $c->get('api.factory.fraud-processor-response')->from_paypal_response((object) $fraud_result);
