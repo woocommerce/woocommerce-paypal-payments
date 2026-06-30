@@ -92,6 +92,17 @@ if ( blockEnabled ) {
 				showSavedCards: true,
 			},
 		} );
+
+		const { registerCheckoutFilters } = window.wc.blocksCheckout;
+		registerCheckoutFilters( config.id, {
+			placeOrderButtonLabel: ( value ) => {
+				const store = window.wp?.data?.select( 'wc/store/payment' );
+				if ( store?.getActivePaymentMethod() === config.id ) {
+					return config.placeOrderButtonText;
+				}
+				return value;
+			},
+		} );
 	}
 
 	if ( config.scriptData.continuation ) {
