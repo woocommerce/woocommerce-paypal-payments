@@ -379,11 +379,11 @@ class PaymentMethodsDefinition {
 				'title'              => __( 'Pay upon Invoice', 'woocommerce-paypal-payments' ),
 				'description'        => '',
 			),
-			OXXOGateway::ID                  => array(
+			OXXOGateway::ID           => array(
 				'method_title'       => __( 'OXXO', 'woocommerce-paypal-payments' ),
 				'method_description' => __( 'OXXO is a Mexican chain of convenience stores. *Get PayPal account permission to use OXXO payment functionality by contacting us at (+52) 800–925–0304', 'woocommerce-paypal-payments' ),
 				'title'              => __( 'OXXO', 'woocommerce-paypal-payments' ),
-				'description'        => '',
+				'description'        => __( 'OXXO allows you to pay bills and online purchases in-store with cash.', 'woocommerce-paypal-payments' ),
 			),
 		);
 	}
