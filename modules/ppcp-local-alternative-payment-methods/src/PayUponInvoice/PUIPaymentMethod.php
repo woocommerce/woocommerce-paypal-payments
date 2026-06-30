@@ -87,14 +87,7 @@ class PUIPaymentMethod extends AbstractPaymentMethodType {
 			return true;
 		}
 
-		// The Mini-Cart block enqueues payment method data on every page via
-		// PaymentMethodRegistry::get_all_registered_script_data(), where the cart
-		// is not necessarily initialized. Building the checkout fields here runs
-		// the full woocommerce_checkout_fields filter chain on every front-end
-		// request, which is wasteful and unsafe for third-party callbacks that
-		// assume a cart exists. The phone requirement is only consumed when PUI
-		// is rendered at checkout, where the cart is always present, so fall back
-		// to the default when there is no cart context.
+		// The Mini-Cart block enqueues this on every page where the cart may be absent; skip the costly checkout-fields build (and its filter chain) outside checkout.
 		if ( ! WC()->cart instanceof \WC_Cart ) {
 			return true;
 		}
