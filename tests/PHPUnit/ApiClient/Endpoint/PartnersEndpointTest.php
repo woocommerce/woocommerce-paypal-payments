@@ -164,6 +164,12 @@ class PartnersEndpointTest extends TestCase
 				PartnersEndpoint::SELLER_STATUS_CACHE_TTL
 			);
 
+		$this->failure_registry
+			->shouldReceive('has_failure_in_timeframe')
+			->once()
+			->with(FailureRegistry::SELLER_STATUS_KEY, PartnersEndpoint::SELLER_STATUS_CACHE_TTL)
+			->andReturn(false);
+
 		$this->seller_status_factory
 			->shouldReceive('from_paypal_response')
 			->once()
@@ -202,6 +208,12 @@ class PartnersEndpointTest extends TestCase
 		$this->cache
 			->shouldReceive('set')
 			->never();
+
+		$this->failure_registry
+			->shouldReceive('has_failure_in_timeframe')
+			->once()
+			->with(FailureRegistry::SELLER_STATUS_KEY, PartnersEndpoint::SELLER_STATUS_CACHE_TTL)
+			->andReturn(false);
 
 		$this->failure_registry
 			->shouldReceive('add_failure')
@@ -248,6 +260,12 @@ class PartnersEndpointTest extends TestCase
 			);
 
 		$this->failure_registry
+			->shouldReceive('has_failure_in_timeframe')
+			->once()
+			->with(FailureRegistry::SELLER_STATUS_KEY, PartnersEndpoint::SELLER_STATUS_CACHE_TTL)
+			->andReturn(false);
+
+		$this->failure_registry
 			->shouldReceive('add_failure')
 			->once()
 			->with(FailureRegistry::SELLER_STATUS_KEY);
@@ -261,6 +279,102 @@ class PartnersEndpointTest extends TestCase
 		when('wp_remote_get')->justReturn($raw_response);
 		when('is_wp_error')->justReturn(false);
 		when('wp_remote_retrieve_response_code')->justReturn(500);
+
+		$result = $this->make_endpoint()->seller_status();
+
+		$this->assertSame($fallback, $result);
+	}
+
+	// -----------------------------------------------------------------------
+	// Tests: seller_status() failure backoff
+	// -----------------------------------------------------------------------
+
+	/**
+	 * GIVEN the transient cache is empty
+	 * AND a recent failure is registered within the backoff window
+	 * WHEN seller_status() is called
+	 * THEN no HTTP request is made to the PayPal API
+	 * AND no additional failure is registered
+	 * AND a RuntimeException is thrown (no fallback configured)
+	 */
+	public function testSellerStatusBacksOffWhenRecentFailureRegistered(): void
+	{
+		$this->cache
+			->shouldReceive('get')
+			->once()
+			->with(PartnersEndpoint::SELLER_STATUS_CACHE_KEY)
+			->andReturn(false);
+
+		$this->cache
+			->shouldReceive('set')
+			->never();
+
+		$this->failure_registry
+			->shouldReceive('has_failure_in_timeframe')
+			->once()
+			->with(FailureRegistry::SELLER_STATUS_KEY, PartnersEndpoint::SELLER_STATUS_CACHE_TTL)
+			->andReturn(true);
+
+		$this->failure_registry
+			->shouldReceive('add_failure')
+			->never();
+
+		when('apply_filters')->alias(function (string $hook, ...$args) {
+			return $args[0] ?? null;
+		});
+
+		expect('wp_remote_get')->never();
+
+		$this->expectException(\RuntimeException::class);
+
+		$this->make_endpoint()->seller_status();
+	}
+
+	/**
+	 * GIVEN the transient cache is empty
+	 * AND a recent failure is registered within the backoff window
+	 * AND the fallback filter returns a SellerStatus
+	 * WHEN seller_status() is called
+	 * THEN no HTTP request is made to the PayPal API
+	 * AND the fallback is returned and stored in the cache
+	 */
+	public function testSellerStatusBackoffUsesFallbackWhenConfigured(): void
+	{
+		$fallback = Mockery::mock(SellerStatus::class);
+
+		$this->cache
+			->shouldReceive('get')
+			->once()
+			->with(PartnersEndpoint::SELLER_STATUS_CACHE_KEY)
+			->andReturn(false);
+
+		$this->cache
+			->shouldReceive('set')
+			->once()
+			->with(
+				PartnersEndpoint::SELLER_STATUS_CACHE_KEY,
+				$fallback,
+				PartnersEndpoint::SELLER_STATUS_CACHE_TTL
+			);
+
+		$this->failure_registry
+			->shouldReceive('has_failure_in_timeframe')
+			->once()
+			->with(FailureRegistry::SELLER_STATUS_KEY, PartnersEndpoint::SELLER_STATUS_CACHE_TTL)
+			->andReturn(true);
+
+		$this->failure_registry
+			->shouldReceive('add_failure')
+			->never();
+
+		when('apply_filters')->alias(function (string $hook, ...$args) use ($fallback) {
+			if ($hook === 'woocommerce_paypal_payments_seller_status_fallback') {
+				return $fallback;
+			}
+			return $args[0] ?? null;
+		});
+
+		expect('wp_remote_get')->never();
 
 		$result = $this->make_endpoint()->seller_status();
 
