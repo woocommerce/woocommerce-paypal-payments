@@ -269,7 +269,7 @@ class ApproveOrderEndpoint implements EndpointInterface {
 			}
 
 			$should_create_wc_order = $data['should_create_wc_order'] ?? false;
-			$is_express_checkout    = in_array( $funding_source, array( 'applepay', 'apple_pay', 'googlepay' ), true );
+			$is_express_checkout    = in_array( $funding_source, array( 'apple_pay', 'googlepay' ), true );
 			if ( ( ! $this->final_review_enabled || $is_express_checkout ) && ! $this->context->is_checkout() && $should_create_wc_order ) {
 				$wc_order = $this->wc_order_creator->create_from_paypal_order( $order, WC()->cart, $data );
 				$this->gateway->process_payment( $wc_order->get_id() );
