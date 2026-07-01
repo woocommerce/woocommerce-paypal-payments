@@ -162,6 +162,8 @@ If you encounter issues with the PayPal buttons not appearing after an update, p
 == Changelog ==
 
 = 4.1.1 - XXXX-XX-XX =
+* Enhancement - Skip PUI checkout-field build when no cart context #4483
+* Enhancement - API spam on merchant-integrations endpoint for merchants missing MANAGE_SUBSCRIPTIONS scope #4490
 
 = 4.1.0 - 2026-06-23 =
 * Enhancement - New Vault Management Component for buyers with saved PayPal accounts to update funding instrument #4421
