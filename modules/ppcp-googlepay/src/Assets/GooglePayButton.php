@@ -63,9 +63,12 @@ class GooglePayButton implements ButtonInterface {
 			return false;
 		}
 
-		$methods = $this->settings->button_styling( $this->context->context() )->methods;
+		$styling = $this->settings->button_styling( $this->context->context() );
+		if ( ! $styling->enabled ) {
+			return false;
+		}
 
-		return in_array( GooglePayGateway::ID, $methods, true );
+		return in_array( GooglePayGateway::ID, $styling->methods, true );
 	}
 
 	/**
