@@ -1,12 +1,11 @@
 <?php
+
 /**
  * The Applepay module services.
  *
  * @package WooCommerce\PayPalCommerce\Applepay
  */
-
-declare(strict_types=1);
-
+declare (strict_types=1);
 namespace WooCommerce\PayPalCommerce\Applepay;
 
 use Automattic\WooCommerce\Blocks\Payments\PaymentMethodTypeInterface;
@@ -23,308 +22,282 @@ use WooCommerce\PayPalCommerce\Assets\AssetGetterFactory;
 use WooCommerce\PayPalCommerce\Common\Pattern\SingletonDecorator;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
-
 return array(
-	// @deprecated - use `applepay.eligibility.check` instead.
-	'applepay.eligible'                        => static function ( ContainerInterface $container ): bool {
-		$eligibility_check = $container->get( 'applepay.eligibility.check' );
-
-		return $eligibility_check();
-	},
-	'applepay.eligibility.check'               => static function ( ContainerInterface $container ): callable {
-		$apm_applies = $container->get( 'applepay.helpers.apm-applies' );
-		assert( $apm_applies instanceof ApmApplies );
-
-		return static function () use ( $apm_applies ): bool {
-			return $apm_applies->for_country() && $apm_applies->for_currency() && $apm_applies->for_merchant();
-		};
-	},
-	'applepay.helpers.apm-applies'             => static function ( ContainerInterface $container ): ApmApplies {
-		return new ApmApplies(
-			$container->get( 'applepay.supported-countries' ),
-			$container->get( 'applepay.supported-currencies' ),
-			$container->get( 'api.shop.currency.getter' ),
-			$container->get( 'api.merchant.country' )
-		);
-	},
-	'applepay.status-cache'                    => static function ( ContainerInterface $container ): Cache {
-		return new Cache( 'ppcp-paypal-apple-status-cache' );
-	},
-
-	// We assume it's a referral if we can check product status without API request failures.
-	'applepay.is_referral'                     => static function ( ContainerInterface $container ): bool {
-		$status = $container->get( 'applepay.apple-product-status' );
-		assert( $status instanceof AppleProductStatus );
-
-		return ! $status->has_request_failure();
-	},
-
-	'applepay.availability_notice'             => static function ( ContainerInterface $container ): AvailabilityNotice {
-		return new AvailabilityNotice(
-			$container->get( 'applepay.apple-product-status' ),
-			$container->get( 'wcgateway.is-wc-gateways-list-page' ),
-			$container->get( 'wcgateway.is-plugin-settings-page' ),
-			$container->get( 'applepay.available' ) || ( ! $container->get( 'applepay.is_referral' ) ),
-			$container->get( 'applepay.server_supported' ),
-			$container->get( 'settings.settings-provider' ),
-			$container->get( 'applepay.button' )
-		);
-	},
-
-	'applepay.has_validated'                   => static function ( ContainerInterface $container ): bool {
-		$cache = $container->get( 'applepay.status-cache' );
-		assert( $cache instanceof Cache );
-		return $cache->has( AppleProductStatus::KEY );
-	},
-
-	'applepay.is_validated'                    => static function ( ContainerInterface $container ): bool {
-		$settings = $container->get( 'settings.settings-provider' );
-		return $settings->applepay_validated();
-	},
-
-	'applepay.apple-product-status'            => SingletonDecorator::make(
-		static function ( ContainerInterface $container ): AppleProductStatus {
-			return new AppleProductStatus(
-				$container->get( 'settings.flag.is-connected' ),
-				$container->get( 'api.endpoint.partners' ),
-				$container->get( 'api.helper.failure-registry' ),
-				$container->get( 'api.helper.product-status-result-cache' )
-			);
-		}
-	),
-	'applepay.available'                       => static function ( ContainerInterface $container ): bool {
-		if ( apply_filters( 'woocommerce_paypal_payments_applepay_validate_product_status', true ) ) {
-			$status = $container->get( 'applepay.apple-product-status' );
-			assert( $status instanceof AppleProductStatus );
-			/**
-			 * If merchant isn't onboarded via /v1/customer/partner-referrals this returns false as the API call fails.
-			 */
-			return apply_filters( 'woocommerce_paypal_payments_applepay_product_status', $status->is_active() );
-		}
-		return true;
-	},
-	'applepay.server_supported'                => static function ( ContainerInterface $container ): bool {
-		return ! empty( $_SERVER['HTTPS'] ) && $_SERVER['HTTPS'] !== 'off';
-	},
-	'applepay.is_browser_supported'            => static function ( ContainerInterface $container ): bool {
-		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
-		$user_agent = wp_unslash( $_SERVER['HTTP_USER_AGENT'] ?? '' );
-		if ( $user_agent ) {
-			foreach ( PropertiesDictionary::DISALLOWED_USER_AGENTS as $disallowed_agent ) {
-				if ( strpos( $user_agent, $disallowed_agent ) !== false ) {
-					return false;
-				}
-			}
-
-			$browser_allowed = false;
-			foreach ( PropertiesDictionary::ALLOWED_USER_BROWSERS as $allowed_browser ) {
-				if ( strpos( $user_agent, $allowed_browser ) !== false ) {
-					$browser_allowed = true;
-					break;
-				}
-			}
-
-			$device_allowed = false;
-			foreach ( PropertiesDictionary::ALLOWED_USER_DEVICES as $allowed_devices ) {
-				if ( strpos( $user_agent, $allowed_devices ) !== false ) {
-					$device_allowed = true;
-					break;
-				}
-			}
-
-			return $browser_allowed && $device_allowed;
-		}
-		return false;
-	},
-	'applepay.asset_getter'                    => static function ( ContainerInterface $container ): AssetGetter {
-		$factory = $container->get( 'assets.asset_getter_factory' );
-		assert( $factory instanceof AssetGetterFactory );
-
-		return $factory->for_module( 'ppcp-applepay' );
-	},
-	'applepay.sdk_script_url'                  => static function ( ContainerInterface $container ): string {
-		return 'https://applepay.cdn-apple.com/jsapi/v1/apple-pay-sdk.js';
-	},
-	'applepay.data_to_scripts'                 => static function ( ContainerInterface $container ): DataToAppleButtonScripts {
-		return new DataToAppleButtonScripts( $container->get( 'applepay.sdk_script_url' ), $container->get( 'settings.settings-provider' ) );
-	},
-	'applepay.button'                          => static function ( ContainerInterface $container ): ApplePayButton {
-		return new ApplePayButton(
-			$container->get( 'settings.settings-provider' ),
-			$container->get( 'settings.data.payment' ),
-			$container->get( 'woocommerce.logger.woocommerce' ),
-			$container->get( 'wcgateway.order-processor' ),
-			$container->get( 'applepay.asset_getter' ),
-			$container->get( 'ppcp.asset-version' ),
-			$container->get( 'applepay.data_to_scripts' ),
-			$container->get( 'button.helper.cart-products' ),
-			$container->get( 'button.helper.context' ),
-			$container->get( 'wc-subscriptions.helper' )
-		);
-	},
-	'applepay.blocks-payment-method'           => static function ( ContainerInterface $container ): PaymentMethodTypeInterface {
-		return new BlocksPaymentMethod(
-			'ppcp-applepay',
-			$container->get( 'applepay.asset_getter' ),
-			$container->get( 'ppcp.asset-version' ),
-			$container->get( 'applepay.button' ),
-			$container->get( 'blocks.method' ),
-			$container->get( 'button.helper.context' ),
-			$container->get( 'settings.settings-provider' )
-		);
-	},
-
-	/**
-	 * The list of which countries can be used for ApplePay.
-	 */
-	'applepay.supported-countries'             => static function ( ContainerInterface $container ): array {
-		/**
-		 * Returns which countries can be used for ApplePay.
-		 */
-		return apply_filters(
-			'woocommerce_paypal_payments_applepay_supported_countries',
-			// phpcs:disable Squiz.Commenting.InlineComment
-			array(
-				'AU', // Australia
-				'AT', // Austria
-				'BE', // Belgium
-				'BG', // Bulgaria
-				'CA', // Canada
-				'CN', // China
-				'C2', // China (PayPal)
-				'CY', // Cyprus
-				'CZ', // Czech Republic
-				'DK', // Denmark
-				'EE', // Estonia
-				'FI', // Finland
-				'FR', // France
-				'DE', // Germany
-				'GR', // Greece
-				'HK', // Hong Kong
-				'HU', // Hungary
-				'IE', // Ireland
-				'IT', // Italy
-				'LV', // Latvia
-				'LI', // Liechtenstein
-				'LT', // Lithuania
-				'LU', // Luxembourg
-				'MT', // Malta
-				'MX', // Mexico
-				'NL', // Netherlands
-				'NO', // Norway
-				'PL', // Poland
-				'PT', // Portugal
-				'RO', // Romania
-				'SG', // Singapore
-				'SK', // Slovakia
-				'SI', // Slovenia
-				'ES', // Spain
-				'SE', // Sweden
-				'US', // United States
-				'GB', // United Kingdom
-				'YT', // Mayotte
-				'RE', // Reunion
-				'GP', // Guadelope
-				'GF', // French Guiana
-				'MQ', // Martinique
-			)
-			// phpcs:enable Squiz.Commenting.InlineComment
-		);
-	},
-
-	/**
-	 * The list of which currencies can be used for ApplePay.
-	 */
-	'applepay.supported-currencies'            => static function ( ContainerInterface $container ): array {
-		/**
-		 * Returns which currencies can be used for ApplePay.
-		 */
-		return apply_filters(
-			'woocommerce_paypal_payments_applepay_supported_currencies',
-			// phpcs:disable Squiz.Commenting.InlineComment
-			array(
-				'AUD', // Australian Dollar
-				'BRL', // Brazilian Real
-				'CAD', // Canadian Dollar
-				'CHF', // Swiss Franc
-				'CZK', // Czech Koruna
-				'DKK', // Danish Krone
-				'EUR', // Euro
-				'HKD', // Hong Kong Dollar
-				'GBP', // British Pound Sterling
-				'HUF', // Hungarian Forint
-				'ILS', // Israeli New Shekel
-				'JPY', // Japanese Yen
-				'MXN', // Mexican Peso
-				'NOK', // Norwegian Krone
-				'NZD', // New Zealand Dollar
-				'PHP', // Philippine Peso
-				'PLN', // Polish Zloty
-				'SGD', // Singapur-Dollar
-				'SEK', // Swedish Krona
-				'THB', // Thai Baht
-				'TWD', // New Taiwan Dollar
-				'USD',  // United States Dollar
-			)
-			// phpcs:enable Squiz.Commenting.InlineComment
-		);
-	},
-
-	'applepay.enable-url-sandbox'              => static function ( ContainerInterface $container ): string {
-		return 'https://www.sandbox.paypal.com/bizsignup/add-product?product=payment_methods&capabilities=APPLE_PAY';
-	},
-
-	'applepay.enable-url-live'                 => static function ( ContainerInterface $container ): string {
-		return 'https://www.paypal.com/bizsignup/add-product?product=payment_methods&capabilities=APPLE_PAY';
-	},
-
-	'applepay.settings.connection.status-text' => static function ( ContainerInterface $container ): string {
-		$is_connected = $container->get( 'settings.flag.is-connected' );
-		if ( ! $is_connected ) {
-			return '';
-		}
-
-		$product_status = $container->get( 'applepay.apple-product-status' );
-		assert( $product_status instanceof AppleProductStatus );
-
-		$environment = $container->get( 'settings.environment' );
-		assert( $environment instanceof Environment );
-
-		$enabled = $product_status->is_active();
-
-		$enabled_status_text  = esc_html__( 'Status: Available', 'woocommerce-paypal-payments' );
-		$disabled_status_text = esc_html__( 'Status: Not yet enabled', 'woocommerce-paypal-payments' );
-
-		$button_text = $enabled
-			? esc_html__( 'Settings', 'woocommerce-paypal-payments' )
-			: esc_html__( 'Enable Apple Pay', 'woocommerce-paypal-payments' );
-
-		$enable_url = $environment->is_production()
-			? $container->get( 'applepay.enable-url-live' )
-			: $container->get( 'applepay.enable-url-sandbox' );
-
-		$button_url = $enabled
-			? admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway&ppcp-tab=ppcp-credit-card-gateway#ppcp-applepay_button_enabled' )
-			: $enable_url;
-
-		return sprintf(
-			'<p>%1$s %2$s</p><p><a target="%3$s" href="%4$s" class="button">%5$s</a></p>',
-			$enabled ? $enabled_status_text : $disabled_status_text,
-			$enabled ? '<span class="dashicons dashicons-yes"></span>' : '<span class="dashicons dashicons-no"></span>',
-			$enabled ? '_self' : '_blank',
-			esc_url( $button_url ),
-			esc_html( $button_text )
-		);
-	},
-	'applepay.wc-gateway'                      => static function ( ContainerInterface $container ): ApplePayGateway {
-		return new ApplePayGateway(
-			$container->get( 'wcgateway.order-processor' ),
-			$container->get( 'api.factory.paypal-checkout-url' ),
-			$container->get( 'wcgateway.processor.refunds' ),
-			$container->get( 'wcgateway.transaction-url-provider' ),
-			$container->get( 'session.handler' ),
-			$container->get( 'applepay.asset_getter' ),
-			$container->get( 'woocommerce.logger.woocommerce' )
-		);
-	},
+    // @deprecated - use `applepay.eligibility.check` instead.
+    'applepay.eligible' => static function (ContainerInterface $container): bool {
+        $eligibility_check = $container->get('applepay.eligibility.check');
+        return $eligibility_check();
+    },
+    'applepay.eligibility.check' => static function (ContainerInterface $container): callable {
+        $apm_applies = $container->get('applepay.helpers.apm-applies');
+        assert($apm_applies instanceof ApmApplies);
+        return static function () use ($apm_applies): bool {
+            return $apm_applies->for_country() && $apm_applies->for_currency() && $apm_applies->for_merchant();
+        };
+    },
+    'applepay.helpers.apm-applies' => static function (ContainerInterface $container): ApmApplies {
+        return new ApmApplies($container->get('applepay.supported-countries'), $container->get('applepay.supported-currencies'), $container->get('api.shop.currency.getter'), $container->get('api.merchant.country'));
+    },
+    'applepay.status-cache' => static function (ContainerInterface $container): Cache {
+        return new Cache('ppcp-paypal-apple-status-cache');
+    },
+    // We assume it's a referral if we can check product status without API request failures.
+    'applepay.is_referral' => static function (ContainerInterface $container): bool {
+        $status = $container->get('applepay.apple-product-status');
+        assert($status instanceof AppleProductStatus);
+        return !$status->has_request_failure();
+    },
+    'applepay.availability_notice' => static function (ContainerInterface $container): AvailabilityNotice {
+        return new AvailabilityNotice($container->get('applepay.apple-product-status'), $container->get('wcgateway.is-wc-gateways-list-page'), $container->get('wcgateway.is-plugin-settings-page'), $container->get('applepay.available') || !$container->get('applepay.is_referral'), $container->get('applepay.server_supported'), $container->get('settings.settings-provider'), $container->get('applepay.button'));
+    },
+    'applepay.has_validated' => static function (ContainerInterface $container): bool {
+        $cache = $container->get('applepay.status-cache');
+        assert($cache instanceof Cache);
+        return $cache->has(AppleProductStatus::KEY);
+    },
+    'applepay.is_validated' => static function (ContainerInterface $container): bool {
+        $settings = $container->get('settings.settings-provider');
+        return $settings->applepay_validated();
+    },
+    'applepay.apple-product-status' => SingletonDecorator::make(static function (ContainerInterface $container): AppleProductStatus {
+        return new AppleProductStatus($container->get('settings.flag.is-connected'), $container->get('api.endpoint.partners'), $container->get('api.helper.failure-registry'), $container->get('api.helper.product-status-result-cache'));
+    }),
+    'applepay.available' => static function (ContainerInterface $container): bool {
+        if (apply_filters('woocommerce_paypal_payments_applepay_validate_product_status', \true)) {
+            $status = $container->get('applepay.apple-product-status');
+            assert($status instanceof AppleProductStatus);
+            /**
+             * If merchant isn't onboarded via /v1/customer/partner-referrals this returns false as the API call fails.
+             */
+            return apply_filters('woocommerce_paypal_payments_applepay_product_status', $status->is_active());
+        }
+        return \true;
+    },
+    'applepay.server_supported' => static function (ContainerInterface $container): bool {
+        return !empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off';
+    },
+    'applepay.is_browser_supported' => static function (ContainerInterface $container): bool {
+        // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+        $user_agent = wp_unslash($_SERVER['HTTP_USER_AGENT'] ?? '');
+        if ($user_agent) {
+            foreach (PropertiesDictionary::DISALLOWED_USER_AGENTS as $disallowed_agent) {
+                if (strpos($user_agent, $disallowed_agent) !== \false) {
+                    return \false;
+                }
+            }
+            $browser_allowed = \false;
+            foreach (PropertiesDictionary::ALLOWED_USER_BROWSERS as $allowed_browser) {
+                if (strpos($user_agent, $allowed_browser) !== \false) {
+                    $browser_allowed = \true;
+                    break;
+                }
+            }
+            $device_allowed = \false;
+            foreach (PropertiesDictionary::ALLOWED_USER_DEVICES as $allowed_devices) {
+                if (strpos($user_agent, $allowed_devices) !== \false) {
+                    $device_allowed = \true;
+                    break;
+                }
+            }
+            return $browser_allowed && $device_allowed;
+        }
+        return \false;
+    },
+    'applepay.asset_getter' => static function (ContainerInterface $container): AssetGetter {
+        $factory = $container->get('assets.asset_getter_factory');
+        assert($factory instanceof AssetGetterFactory);
+        return $factory->for_module('ppcp-applepay');
+    },
+    'applepay.sdk_script_url' => static function (ContainerInterface $container): string {
+        return 'https://applepay.cdn-apple.com/jsapi/v1/apple-pay-sdk.js';
+    },
+    'applepay.data_to_scripts' => static function (ContainerInterface $container): DataToAppleButtonScripts {
+        return new DataToAppleButtonScripts($container->get('applepay.sdk_script_url'), $container->get('settings.settings-provider'));
+    },
+    'applepay.button' => static function (ContainerInterface $container): ApplePayButton {
+        return new ApplePayButton($container->get('settings.settings-provider'), $container->get('settings.data.payment'), $container->get('woocommerce.logger.woocommerce'), $container->get('wcgateway.order-processor'), $container->get('applepay.asset_getter'), $container->get('ppcp.asset-version'), $container->get('applepay.data_to_scripts'), $container->get('button.helper.cart-products'), $container->get('button.helper.context'), $container->get('wc-subscriptions.helper'));
+    },
+    'applepay.blocks-payment-method' => static function (ContainerInterface $container): PaymentMethodTypeInterface {
+        return new BlocksPaymentMethod('ppcp-applepay', $container->get('applepay.asset_getter'), $container->get('ppcp.asset-version'), $container->get('applepay.button'), $container->get('blocks.method'), $container->get('button.helper.context'), $container->get('settings.settings-provider'));
+    },
+    /**
+     * The list of which countries can be used for ApplePay.
+     */
+    'applepay.supported-countries' => static function (ContainerInterface $container): array {
+        /**
+         * Returns which countries can be used for ApplePay.
+         */
+        return apply_filters(
+            'woocommerce_paypal_payments_applepay_supported_countries',
+            // phpcs:disable Squiz.Commenting.InlineComment
+            array(
+                'AU',
+                // Australia
+                'AT',
+                // Austria
+                'BE',
+                // Belgium
+                'BG',
+                // Bulgaria
+                'CA',
+                // Canada
+                'CN',
+                // China
+                'C2',
+                // China (PayPal)
+                'CY',
+                // Cyprus
+                'CZ',
+                // Czech Republic
+                'DK',
+                // Denmark
+                'EE',
+                // Estonia
+                'FI',
+                // Finland
+                'FR',
+                // France
+                'DE',
+                // Germany
+                'GR',
+                // Greece
+                'HK',
+                // Hong Kong
+                'HU',
+                // Hungary
+                'IE',
+                // Ireland
+                'IT',
+                // Italy
+                'LV',
+                // Latvia
+                'LI',
+                // Liechtenstein
+                'LT',
+                // Lithuania
+                'LU',
+                // Luxembourg
+                'MT',
+                // Malta
+                'MX',
+                // Mexico
+                'NL',
+                // Netherlands
+                'NO',
+                // Norway
+                'PL',
+                // Poland
+                'PT',
+                // Portugal
+                'RO',
+                // Romania
+                'SG',
+                // Singapore
+                'SK',
+                // Slovakia
+                'SI',
+                // Slovenia
+                'ES',
+                // Spain
+                'SE',
+                // Sweden
+                'US',
+                // United States
+                'GB',
+                // United Kingdom
+                'YT',
+                // Mayotte
+                'RE',
+                // Reunion
+                'GP',
+                // Guadelope
+                'GF',
+                // French Guiana
+                'MQ',
+            )
+        );
+    },
+    /**
+     * The list of which currencies can be used for ApplePay.
+     */
+    'applepay.supported-currencies' => static function (ContainerInterface $container): array {
+        /**
+         * Returns which currencies can be used for ApplePay.
+         */
+        return apply_filters(
+            'woocommerce_paypal_payments_applepay_supported_currencies',
+            // phpcs:disable Squiz.Commenting.InlineComment
+            array(
+                'AUD',
+                // Australian Dollar
+                'BRL',
+                // Brazilian Real
+                'CAD',
+                // Canadian Dollar
+                'CHF',
+                // Swiss Franc
+                'CZK',
+                // Czech Koruna
+                'DKK',
+                // Danish Krone
+                'EUR',
+                // Euro
+                'HKD',
+                // Hong Kong Dollar
+                'GBP',
+                // British Pound Sterling
+                'HUF',
+                // Hungarian Forint
+                'ILS',
+                // Israeli New Shekel
+                'JPY',
+                // Japanese Yen
+                'MXN',
+                // Mexican Peso
+                'NOK',
+                // Norwegian Krone
+                'NZD',
+                // New Zealand Dollar
+                'PHP',
+                // Philippine Peso
+                'PLN',
+                // Polish Zloty
+                'SGD',
+                // Singapur-Dollar
+                'SEK',
+                // Swedish Krona
+                'THB',
+                // Thai Baht
+                'TWD',
+                // New Taiwan Dollar
+                'USD',
+            )
+        );
+    },
+    'applepay.enable-url-sandbox' => static function (ContainerInterface $container): string {
+        return 'https://www.sandbox.paypal.com/bizsignup/add-product?product=payment_methods&capabilities=APPLE_PAY';
+    },
+    'applepay.enable-url-live' => static function (ContainerInterface $container): string {
+        return 'https://www.paypal.com/bizsignup/add-product?product=payment_methods&capabilities=APPLE_PAY';
+    },
+    'applepay.settings.connection.status-text' => static function (ContainerInterface $container): string {
+        $is_connected = $container->get('settings.flag.is-connected');
+        if (!$is_connected) {
+            return '';
+        }
+        $product_status = $container->get('applepay.apple-product-status');
+        assert($product_status instanceof AppleProductStatus);
+        $environment = $container->get('settings.environment');
+        assert($environment instanceof Environment);
+        $enabled = $product_status->is_active();
+        $enabled_status_text = esc_html__('Status: Available', 'woocommerce-paypal-payments');
+        $disabled_status_text = esc_html__('Status: Not yet enabled', 'woocommerce-paypal-payments');
+        $button_text = $enabled ? esc_html__('Settings', 'woocommerce-paypal-payments') : esc_html__('Enable Apple Pay', 'woocommerce-paypal-payments');
+        $enable_url = $environment->is_production() ? $container->get('applepay.enable-url-live') : $container->get('applepay.enable-url-sandbox');
+        $button_url = $enabled ? admin_url('admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway&ppcp-tab=ppcp-credit-card-gateway#ppcp-applepay_button_enabled') : $enable_url;
+        return sprintf('<p>%1$s %2$s</p><p><a target="%3$s" href="%4$s" class="button">%5$s</a></p>', $enabled ? $enabled_status_text : $disabled_status_text, $enabled ? '<span class="dashicons dashicons-yes"></span>' : '<span class="dashicons dashicons-no"></span>', $enabled ? '_self' : '_blank', esc_url($button_url), esc_html($button_text));
+    },
+    'applepay.wc-gateway' => static function (ContainerInterface $container): \WooCommerce\PayPalCommerce\Applepay\ApplePayGateway {
+        return new \WooCommerce\PayPalCommerce\Applepay\ApplePayGateway($container->get('wcgateway.order-processor'), $container->get('api.factory.paypal-checkout-url'), $container->get('wcgateway.processor.refunds'), $container->get('wcgateway.transaction-url-provider'), $container->get('session.handler'), $container->get('applepay.asset_getter'), $container->get('woocommerce.logger.woocommerce'));
+    },
 );
