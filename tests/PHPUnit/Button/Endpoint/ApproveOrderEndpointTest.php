@@ -307,7 +307,7 @@ class ApproveOrderEndpointTest extends TestCase
 	}
 
 	/**
-	 * @scenario When final_review_enabled=true (Pay Now disabled) and funding_source is 'applepay',
+	 * @scenario When final_review_enabled=true (Pay Now disabled) and funding_source is express checkout,
 	 *           the express checkout bypass should create a WC order and process payment.
 	 *
 	 * @dataProvider express_checkout_funding_sources
