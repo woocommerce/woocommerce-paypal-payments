@@ -7,7 +7,7 @@ import BaseHandler from '@ppcp-applepay/Context/BaseHandler';
 class SingleProductHandler extends BaseHandler {
 	validateContext() {
 		if ( this.ppcpConfig?.locations_with_subscription_product?.product ) {
-			return this.isVaultV3Mode();
+			return false;
 		}
 		return true;
 	}

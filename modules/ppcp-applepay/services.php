@@ -158,7 +158,8 @@ return array(
 			$container->get( 'ppcp.asset-version' ),
 			$container->get( 'applepay.data_to_scripts' ),
 			$container->get( 'button.helper.cart-products' ),
-			$container->get( 'button.helper.context' )
+			$container->get( 'button.helper.context' ),
+			$container->get( 'wc-subscriptions.helper' )
 		);
 	},
 	'applepay.blocks-payment-method'           => static function ( ContainerInterface $container ): PaymentMethodTypeInterface {

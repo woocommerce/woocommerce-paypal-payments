@@ -63,6 +63,15 @@ describe( 'SingleProductHandler', () => {
 		test( 'returns true by default', () => {
 			expect( handler.validateContext() ).toBe( true );
 		} );
+
+		test( 'returns false when the product is a subscription', () => {
+			const subscriptionHandler = new SingleProductHandler( {}, {
+				...ppcpConfig,
+				locations_with_subscription_product: { product: true },
+			} );
+
+			expect( subscriptionHandler.validateContext() ).toBe( false );
+		} );
 	} );
 
 	describe( 'transactionInfo()', () => {

@@ -7,17 +7,9 @@ class BaseHandler {
 		this.ppcpConfig = ppcpConfig;
 	}
 
-	isVaultV3Mode() {
-		return (
-			this.ppcpConfig?.save_payment_methods?.id_token && // vault v3
-			! this.ppcpConfig?.data_client_id?.paypal_subscriptions_enabled && // not PayPal Subscriptions mode
-			this.ppcpConfig?.can_save_vault_token
-		); // vault is enabled
-	}
-
 	validateContext() {
 		if ( this.ppcpConfig?.locations_with_subscription_product?.cart ) {
-			return this.isVaultV3Mode();
+			return false;
 		}
 		return true;
 	}

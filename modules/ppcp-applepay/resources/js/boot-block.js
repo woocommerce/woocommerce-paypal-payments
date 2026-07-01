@@ -2,9 +2,7 @@ import { useEffect, useRef, useState } from '@wordpress/element';
 import { registerExpressPaymentMethod } from '@woocommerce/blocks-registry';
 import { __ } from '@wordpress/i18n';
 import { loadPayPalScript } from '@ppcp-button/Helper/PayPalScriptLoading';
-import { cartHasSubscriptionProducts } from '@ppcp-blocks/Helper/Subscription';
 import { loadCustomScript } from '@paypal/paypal-js';
-import CheckoutHandler from './Context/CheckoutHandler';
 import ApplePayManager from './ApplepayManager';
 import ApplePayManagerBlockEditor from './ApplepayManagerBlockEditor';
 import { debounce } from '@ppcp-blocks/Helper/debounce';
@@ -153,13 +151,6 @@ const ApplePayComponent = ( { isEditing, buttonAttributes } ) => {
 };
 
 const features = [ 'products' ];
-
-if (
-	cartHasSubscriptionProducts( ppcpConfig ) &&
-	new CheckoutHandler( buttonConfig, ppcpConfig ).isVaultV3Mode()
-) {
-	features.push( 'subscriptions' );
-}
 
 if ( buttonConfig?.is_enabled ) {
 	registerExpressPaymentMethod( {

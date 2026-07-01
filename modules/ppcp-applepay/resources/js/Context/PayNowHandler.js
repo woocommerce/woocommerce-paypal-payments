@@ -5,7 +5,7 @@ import CheckoutActionHandler from '@ppcp-button/ActionHandler/CheckoutActionHand
 class PayNowHandler extends BaseHandler {
 	validateContext() {
 		if ( this.ppcpConfig?.locations_with_subscription_product?.payorder ) {
-			return this.isVaultV3Mode();
+			return false;
 		}
 		return true;
 	}

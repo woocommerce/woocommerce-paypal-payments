@@ -20,6 +20,7 @@ use WooCommerce\PayPalCommerce\Button\Helper\Context;
 use WooCommerce\PayPalCommerce\Settings\Data\PaymentSettings;
 use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\OrderProcessor;
+use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
 use WooCommerce\PayPalCommerce\Webhooks\Handler\RequestHandlerTrait;
 
 class ApplePayButton implements ButtonInterface {
@@ -40,6 +41,7 @@ class ApplePayButton implements ButtonInterface {
 	private DataToAppleButtonScripts $script_data;
 	protected CartProductsHelper $cart_products;
 	private Context $context;
+	private SubscriptionHelper $subscription_helper;
 
 	public function __construct(
 		SettingsProvider $settings_provider,
@@ -50,20 +52,22 @@ class ApplePayButton implements ButtonInterface {
 		string $version,
 		DataToAppleButtonScripts $data,
 		CartProductsHelper $cart_products,
-		Context $context
+		Context $context,
+		SubscriptionHelper $subscription_helper
 	) {
-		$this->settings_provider  = $settings_provider;
-		$this->payment_settings   = $payment_settings;
-		$this->response_templates = new ResponsesToApple();
-		$this->logger             = $logger;
-		$this->id                 = 'applepay';
-		$this->method_title       = __( 'Apple Pay', 'woocommerce-paypal-payments' );
-		$this->order_processor    = $order_processor;
-		$this->asset_getter       = $asset_getter;
-		$this->version            = $version;
-		$this->script_data        = $data;
-		$this->cart_products      = $cart_products;
-		$this->context            = $context;
+		$this->settings_provider   = $settings_provider;
+		$this->payment_settings    = $payment_settings;
+		$this->response_templates  = new ResponsesToApple();
+		$this->logger              = $logger;
+		$this->id                  = 'applepay';
+		$this->method_title        = __( 'Apple Pay', 'woocommerce-paypal-payments' );
+		$this->order_processor     = $order_processor;
+		$this->asset_getter        = $asset_getter;
+		$this->version             = $version;
+		$this->script_data         = $data;
+		$this->cart_products       = $cart_products;
+		$this->context             = $context;
+		$this->subscription_helper = $subscription_helper;
 	}
 
 	public function initialize(): void {
@@ -781,6 +785,21 @@ class ApplePayButton implements ButtonInterface {
 	public function render(): bool {
 		if ( ! $this->is_enabled() ) {
 			return false;
+		}
+
+		if (
+			$this->subscription_helper->plugin_is_active()
+			&& ! $this->subscription_helper->accept_manual_renewals()
+		) {
+			if ( is_product() && $this->subscription_helper->current_product_is_subscription() ) {
+				return false;
+			}
+			if ( $this->subscription_helper->order_pay_contains_subscription() ) {
+				return false;
+			}
+			if ( $this->subscription_helper->cart_contains_subscription() ) {
+				return false;
+			}
 		}
 
 		add_filter(
