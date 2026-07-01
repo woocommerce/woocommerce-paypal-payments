@@ -78,7 +78,7 @@ jobs:
       GITHUB_USER_SSH_PUBLIC_KEY: ${{ secrets.DEPLOYBOT_SSH_PUBLIC_KEY }}
     with:
       # PACKAGE_VERSION: ${{ needs.create-tag.outputs.weekly_tag }}  # TEMPORARILY DISABLED FOR CI TESTING
-      PACKAGE_VERSION: 0.0.0-citest  # TEMPORARY value for CI testing
+      PACKAGE_VERSION: 0.0.0-alpha1  # TEMPORARY value for CI testing
       NODE_VERSION: 22
 
   # TEMPORARILY DISABLED FOR CI TESTING — restore before merging
