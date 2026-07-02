@@ -25,7 +25,7 @@ concurrency:
 
 jobs:
   build-and-distribute:
-    uses: inpsyde/reusable-workflows/.github/workflows/build-and-distribute.yml@main
+    uses: inpsyde/reusable-workflows/.github/workflows/build-and-distribute.yml@feature/artifact-workflow-output
     secrets:
       GITHUB_USER_EMAIL: ${{ secrets.DEPLOYBOT_EMAIL }}
       GITHUB_USER_NAME: ${{ secrets.DEPLOYBOT_USER }}
