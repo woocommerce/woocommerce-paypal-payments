@@ -31,11 +31,11 @@ class FeaturesRestEndpoint extends RestEndpoint {
 	protected $rest_base = 'features';
 
 	/**
-	 * The features definition instance.
+	 * Factory for the features definition instance.
 	 *
-	 * @var FeaturesDefinition
+	 * @var callable
 	 */
-	protected FeaturesDefinition $features_definition;
+	protected $features_definition_factory;
 
 	/**
 	 * The settings endpoint instance.
@@ -47,15 +47,15 @@ class FeaturesRestEndpoint extends RestEndpoint {
 	/**
 	 * FeaturesRestEndpoint constructor.
 	 *
-	 * @param FeaturesDefinition   $features_definition The features definition instance.
-	 * @param SettingsRestEndpoint $settings The settings endpoint instance.
+	 * @param callable             $features_definition_factory Factory for the features definition instance.
+	 * @param SettingsRestEndpoint $settings                     The settings endpoint instance.
 	 */
 	public function __construct(
-		FeaturesDefinition $features_definition,
+		callable $features_definition_factory,
 		SettingsRestEndpoint $settings
 	) {
-		$this->features_definition = $features_definition;
-		$this->settings            = $settings;
+		$this->features_definition_factory = $features_definition_factory;
+		$this->settings                    = $settings;
 	}
 
 	/**
@@ -82,8 +82,11 @@ class FeaturesRestEndpoint extends RestEndpoint {
 	 * @return WP_REST_Response The response containing features data.
 	 */
 	public function get_features(): WP_REST_Response {
+		$features_definition = ( $this->features_definition_factory )();
+		assert( $features_definition instanceof FeaturesDefinition );
+
 		$features = array();
-		foreach ( $this->features_definition->eligible_features() as $id => $feature ) {
+		foreach ( $features_definition->eligible_features() as $id => $feature ) {
 			$features[] = array_merge(
 				array( 'id' => $id ),
 				$feature

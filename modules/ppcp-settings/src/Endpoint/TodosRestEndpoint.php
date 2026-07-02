@@ -42,11 +42,11 @@ class TodosRestEndpoint extends RestEndpoint {
 	protected TodosModel $todos;
 
 	/**
-	 * The todos definition instance.
+	 * Factory for the todos definition instance.
 	 *
-	 * @var TodosDefinition
+	 * @var callable
 	 */
-	protected TodosDefinition $todos_definition;
+	protected $todos_definition_factory;
 
 	/**
 	 * The settings endpoint instance.
@@ -56,30 +56,30 @@ class TodosRestEndpoint extends RestEndpoint {
 	protected SettingsRestEndpoint $settings;
 
 	/**
-	 * The todos sorting service.
+	 * Factory for the todos sorting service.
 	 *
-	 * @var TodosSortingAndFilteringService
+	 * @var callable
 	 */
-	protected TodosSortingAndFilteringService $sorting_service;
+	protected $sorting_service_factory;
 
 	/**
 	 * TodosRestEndpoint constructor.
 	 *
-	 * @param TodosModel                      $todos The todos model instance.
-	 * @param TodosDefinition                 $todos_definition The todos definition instance.
-	 * @param SettingsRestEndpoint            $settings The settings endpoint instance.
-	 * @param TodosSortingAndFilteringService $sorting_service The todos sorting service.
+	 * @param TodosModel           $todos                    The todos model instance.
+	 * @param callable             $todos_definition_factory Factory for the todos definition instance.
+	 * @param SettingsRestEndpoint $settings                 The settings endpoint instance.
+	 * @param callable             $sorting_service_factory  Factory for the todos sorting service.
 	 */
 	public function __construct(
 		TodosModel $todos,
-		TodosDefinition $todos_definition,
+		callable $todos_definition_factory,
 		SettingsRestEndpoint $settings,
-		TodosSortingAndFilteringService $sorting_service
+		callable $sorting_service_factory
 	) {
-		$this->todos            = $todos;
-		$this->todos_definition = $todos_definition;
-		$this->settings         = $settings;
-		$this->sorting_service  = $sorting_service;
+		$this->todos                    = $todos;
+		$this->todos_definition_factory = $todos_definition_factory;
+		$this->settings                 = $settings;
+		$this->sorting_service_factory  = $sorting_service_factory;
 	}
 
 	/**
@@ -133,12 +133,18 @@ class TodosRestEndpoint extends RestEndpoint {
 	 * @return WP_REST_Response The response containing todos data.
 	 */
 	public function get_todos(): WP_REST_Response {
+		$todos_definition = ( $this->todos_definition_factory )();
+		assert( $todos_definition instanceof TodosDefinition );
+
+		$sorting_service = ( $this->sorting_service_factory )();
+		assert( $sorting_service instanceof TodosSortingAndFilteringService );
+
 		$todos_data            = $this->todos->get_todos_data();
 		$dismissed_ids         = $todos_data['dismissedTodos'];
 		$completed_onclick_ids = $todos_data['completedOnClickTodos'];
 
 		$todos = array();
-		foreach ( $this->todos_definition->get() as $id => $todo ) {
+		foreach ( $todos_definition->get() as $id => $todo ) {
 			// Skip if todo has completeOnClick flag and is in completed list.
 			if (
 				in_array( $id, $completed_onclick_ids, true ) &&
@@ -157,7 +163,7 @@ class TodosRestEndpoint extends RestEndpoint {
 			}
 		}
 
-		$filtered_todos = $this->sorting_service->apply_all_priority_filters( $todos );
+		$filtered_todos = $sorting_service->apply_all_priority_filters( $todos );
 
 		return $this->return_success(
 			array(

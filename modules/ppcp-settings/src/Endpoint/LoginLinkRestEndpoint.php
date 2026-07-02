@@ -32,13 +32,18 @@ class LoginLinkRestEndpoint extends RestEndpoint {
 	 */
 	protected $rest_base = 'login_link';
 
-	protected ConnectionUrlGenerator $url_generator;
+	/**
+	 * Factory for the connection URL generator.
+	 *
+	 * @var callable
+	 */
+	protected $url_generator_factory;
 
 	protected LoggerInterface $logger;
 
-	public function __construct( ConnectionUrlGenerator $url_generator, LoggerInterface $logger ) {
-		$this->url_generator = $url_generator;
-		$this->logger        = $logger;
+	public function __construct( callable $url_generator_factory, LoggerInterface $logger ) {
+		$this->url_generator_factory = $url_generator_factory;
+		$this->logger                = $logger;
 	}
 
 	/**
@@ -103,7 +108,10 @@ class LoginLinkRestEndpoint extends RestEndpoint {
 		$flags       = (array) $request->get_param( 'options' );
 
 		try {
-			$url = $this->url_generator->generate( $products, $flags, $use_sandbox );
+			$url_generator = ( $this->url_generator_factory )();
+			assert( $url_generator instanceof ConnectionUrlGenerator );
+
+			$url = $url_generator->generate( $products, $flags, $use_sandbox );
 
 			return $this->return_success( $url );
 		} catch ( Exception $e ) {

@@ -268,7 +268,7 @@ return array(
 	},
 	'settings.rest.login_link'                            => static function ( ContainerInterface $container ): LoginLinkRestEndpoint {
 		return new LoginLinkRestEndpoint(
-			$container->get( 'settings.service.connection-url-generator' ),
+			static fn(): ConnectionUrlGenerator => $container->get( 'settings.service.connection-url-generator' ),
 			$container->get( 'woocommerce.logger.woocommerce' )
 		);
 	},
@@ -477,9 +477,9 @@ return array(
 	'settings.rest.todos'                                 => static function ( ContainerInterface $container ): TodosRestEndpoint {
 		return new TodosRestEndpoint(
 			$container->get( 'settings.data.todos' ),
-			$container->get( 'settings.data.definition.todos' ),
+			static fn(): TodosDefinition => $container->get( 'settings.data.definition.todos' ),
 			$container->get( 'settings.rest.settings' ),
-			$container->get( 'settings.service.todos_sorting' )
+			static fn(): TodosSortingAndFilteringService => $container->get( 'settings.service.todos_sorting' )
 		);
 	},
 	'settings.data.todos'                                 => static function ( ContainerInterface $container ): TodosModel {
@@ -661,7 +661,7 @@ return array(
 	},
 	'settings.rest.features'                              => static function ( ContainerInterface $container ): FeaturesRestEndpoint {
 		return new FeaturesRestEndpoint(
-			$container->get( 'settings.data.definition.features' ),
+			static fn(): FeaturesDefinition => $container->get( 'settings.data.definition.features' ),
 			$container->get( 'settings.rest.settings' )
 		);
 	},
