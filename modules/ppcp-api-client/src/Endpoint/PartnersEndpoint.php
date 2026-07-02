@@ -87,6 +87,11 @@ class PartnersEndpoint {
 	public const SELLER_STATUS_CACHE_TTL = 600; // 10 minutes.
 
 	/**
+	 * Retry timeout after a failed seller status request, in seconds.
+	 */
+	public const SELLER_STATUS_FAILURE_RETRY_TIMEOUT = 60;
+
+	/**
 	 * Cache key for the seller status response.
 	 */
 	public const SELLER_STATUS_CACHE_KEY = 'seller_status';
@@ -141,6 +146,10 @@ class PartnersEndpoint {
 			 * @param SellerStatus $status The seller status (from cache or API).
 			 */
 			return apply_filters( 'woocommerce_paypal_payments_seller_status', $cached );
+		}
+
+		if ( $this->failure_registry->has_failure_in_timeframe( FailureRegistry::SELLER_STATUS_KEY, self::SELLER_STATUS_FAILURE_RETRY_TIMEOUT ) ) {
+			throw new RuntimeException( 'Timeout for seller status re-check not reached yet.' );
 		}
 
 		try {

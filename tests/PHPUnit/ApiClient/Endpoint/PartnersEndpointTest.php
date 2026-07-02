@@ -10,6 +10,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Authentication\Bearer;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\SellerStatus;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Token;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
+use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\SellerStatusFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\Cache;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\FailureRegistry;
@@ -65,6 +66,12 @@ class PartnersEndpointTest extends TestCase
 		$this->seller_status_factory = Mockery::mock(SellerStatusFactory::class);
 		$this->failure_registry      = Mockery::mock(FailureRegistry::class);
 		$this->cache                 = Mockery::mock(Cache::class);
+
+		$this->failure_registry
+			->shouldReceive('has_failure_in_timeframe')
+			->byDefault()
+			->with(FailureRegistry::SELLER_STATUS_KEY, PartnersEndpoint::SELLER_STATUS_FAILURE_RETRY_TIMEOUT)
+			->andReturn(false);
 
 		when('trailingslashit')->alias(function (string $url): string {
 			return rtrim($url, '/') . '/';
@@ -179,6 +186,34 @@ class PartnersEndpointTest extends TestCase
 		$result = $this->make_endpoint()->seller_status();
 
 		$this->assertSame($seller_status, $result);
+	}
+
+	/**
+	 * GIVEN the transient cache is empty
+	 * AND the seller status API failed recently
+	 * WHEN seller_status() is called
+	 * THEN no PayPal API request is made
+	 * AND a RuntimeException is thrown
+	 */
+	public function testSellerStatusWithRecentFailureDoesNotMakeHttpCall(): void
+	{
+		$this->cache
+			->shouldReceive('get')
+			->once()
+			->with(PartnersEndpoint::SELLER_STATUS_CACHE_KEY)
+			->andReturn(false);
+
+		$this->failure_registry
+			->shouldReceive('has_failure_in_timeframe')
+			->once()
+			->with(FailureRegistry::SELLER_STATUS_KEY, PartnersEndpoint::SELLER_STATUS_FAILURE_RETRY_TIMEOUT)
+			->andReturn(true);
+
+		expect('wp_remote_get')->never();
+
+		$this->expectException(RuntimeException::class);
+
+		$this->make_endpoint()->seller_status();
 	}
 
 	/**
