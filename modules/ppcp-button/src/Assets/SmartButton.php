@@ -1112,6 +1112,7 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
 			'variable_paypal_subscription_variation_from_cart' => $this->subscription_helper->paypal_subscription_variation_from_cart(),
 			'subscription_product_allowed'            => $this->subscription_helper->checkout_subscription_product_allowed(),
 			'locations_with_subscription_product'     => $this->subscription_helper->locations_with_subscription_product(),
+			'subscriptions_accept_manual_renewals'    => $this->subscription_helper->accept_manual_renewals(),
 			'enforce_vault'                           => $this->has_subscriptions(),
 			'can_save_vault_token'                    => $this->can_save_vault_token(),
 			'is_free_trial_cart'                      => $is_free_trial_cart,
