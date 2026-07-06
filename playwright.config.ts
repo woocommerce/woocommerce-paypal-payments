@@ -226,7 +226,7 @@ export default defineConfig< BaseExtend >( {
 		},
 		{
 			name: 'shard:transaction-germany',
-			// dependencies: [ 'setup-transaction-germany' ],
+			dependencies: [ 'setup-transaction-germany' ],
 			testMatch: /05-transactions\/transaction-germany.*\.spec\.ts/,
 		},
 		{
