@@ -198,6 +198,17 @@ export class PayPalUi {
 		this.page.locator(
 			'#express-payment-method-ppcp-gateway-paypal .paypal-buttons'
 		);
+	
+	puiGateway = () =>
+		this.page.locator(
+			'#radio-control-wc-payment-method-options-ppcp-pay-upon-invoice-gateway__label'
+		);
+	puiBirthDateInput = () =>
+		this.page.locator( '#ppcp-pui-birth-date' );
+	puiPhoneInput = () =>
+		this.page.locator( '#ppcp-pui-phone' );
+
+		
 
 	// Actions
 
@@ -368,7 +379,7 @@ export class PayPalUi {
 				break;
 
 			case 'pay_upon_invoice':
-				await this.completePayUponInvoicePayment( payment.birthDate );
+				await this.completePuiPayment( payment );
 				break;
 
 			case 'fastlane':
@@ -603,10 +614,36 @@ export class PayPalUi {
 			`TODO: completeBcdcFundingSourcePayment for block pages ${ args.length }`
 		);
 
-	completePayUponInvoicePayment = async ( ...args ) =>
-		console.log(
-			`TODO: completePayUponInvoicePayment for block pages ${ args.length }`
-		);
+	
+
+	/**
+	 * Completes payment with Pay upon Invoice (vaulting disabled)
+	 *
+	 * @param birthDate
+	 */
+	completePuiPayment = async ( payment: Pcp.Payment ) => {
+		const { birthDate, phone } = payment;
+		await expect(
+			this.puiGateway(),
+			'Assert pay upon invoice gateway is visible'
+		).toBeVisible();
+		await this.puiGateway().click();
+
+		await expect(
+			this.puiBirthDateInput(),
+			'Assert pay upon invoice birth date input is visible'
+		).toBeVisible();
+		await this.puiBirthDateInput().click();
+		await this.page.keyboard.type( birthDate ); // Trick to properly fill date
+
+		await expect(
+			this.puiPhoneInput(),
+			'Assert pay upon invoice phone input is visible'
+		).toBeVisible();
+		await this.puiPhoneInput().fill( phone ); // Trick to properly fill date
+
+		await this.submitOrder();
+	};
 
 	/**
 	 * Clicks payment gateway to make visible payment form or buttons
