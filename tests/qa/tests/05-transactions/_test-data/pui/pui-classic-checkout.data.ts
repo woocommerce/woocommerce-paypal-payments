@@ -1,0 +1,60 @@
+/**
+ * Internal dependencies
+ */
+import {
+	payments,
+	orders,
+	customers,
+	guests,
+	ShopOrder,
+} from '../../../../resources';
+
+const customer = customers.germany;
+const guest = guests.germany;
+const currency = 'EUR';
+const { pui } = payments;
+
+export const puiClassicCheckout: ShopOrder[] = [
+	{
+		// https://inpsyde.atlassian.net/browse/PCP-1216
+		title: 'PCP-1216 | Transaction - Classic checkout - Pay upon Invoice - Germany - Guest - Default order @Critical',
+		...orders.default,
+		payment: pui,
+		customer: guest,
+		orderStatus: 'on-hold',
+		currency,
+	},
+	{
+		// https://inpsyde.atlassian.net/browse/PCP-2751
+		title: 'PCP-2751 | Transaction - Classic checkout - Pay upon Invoice - Germany - Customer - Default order @Critical',
+		...orders.default,
+		payment: pui,
+		customer,
+		orderStatus: 'on-hold',
+		currency,
+	},
+];
+
+export const puiClassicCheckoutExcludingTax: ShopOrder[] = [
+	{
+		// https://inpsyde.atlassian.net/browse/PCP-1246
+		title: 'PCP-1246 | Transaction - Classic checkout - Pay upon Invoice - Germany - Guest - Order with price excluding tax',
+		...orders.excludingTax,
+		payment: pui,
+		customer: guest,
+		orderStatus: 'on-hold',
+		currency,
+	},
+];
+
+export const puiClassicCheckoutNegativeFee: ShopOrder[] = [
+	{
+		// https://inpsyde.atlassian.net/browse/PCP-6642
+		title: 'PCP-6642 | Transaction - Classic checkout - Pay upon Invoice - Germany - Guest - Order with negative fee snippet',
+		...orders.negative12Fee,
+		payment: pui,
+		customer: guest,
+		orderStatus: 'on-hold',
+		currency,
+	},
+];
