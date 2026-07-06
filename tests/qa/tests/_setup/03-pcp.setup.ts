@@ -12,7 +12,7 @@ import {
 	gateways,
 } from '../../resources';
 
-const { payPal, payLater, venmo, acdc, bcdc, fastlane, googlepay, oxxo } = gateways;
+const { payPal, payLater, venmo, acdc, bcdc, fastlane, googlepay, oxxo, pui } = gateways;
 
 // =====================================================================
 // Layer 2 — PCP country: configureStore + installPcp + resetDb + connect
@@ -85,6 +85,20 @@ setup( 'setup:transaction:mexico;', async ( { utils, pcpApi } ) => {
 		[ payPal.id ]: { id: payPal.id, enabled: true },
 		[ bcdc.id ]: { id: bcdc.id, enabled: true },
 		[ oxxo.id ]: { id: oxxo.id, enabled: true },
+	} );
+} );
+
+setup( 'setup:transaction:germany;', async ( { utils, pcpApi } ) => {
+	await utils.configureStore( {
+		enableClassicPages: true,
+		customer: customers.germany,
+	} );
+	await pcpApi.updatePcpPaymentMethods( {
+		[ payPal.id ]: { id: payPal.id, enabled: true },
+		[ pui.id ]: { id: pui.id, enabled: true },
+		puiBrandName: 'PUI Test',
+		puiCustomerServiceInstructions: 'Test PUI',
+		puiLogoUrl: 'www.logo-test.com',
 	} );
 } );
 
