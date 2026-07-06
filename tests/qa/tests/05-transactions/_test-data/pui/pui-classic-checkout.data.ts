@@ -21,7 +21,6 @@ export const puiClassicCheckout: ShopOrder[] = [
 		...orders.default,
 		payment: pui,
 		customer: guest,
-		orderStatus: 'on-hold',
 		currency,
 	},
 	{
@@ -30,7 +29,6 @@ export const puiClassicCheckout: ShopOrder[] = [
 		...orders.default,
 		payment: pui,
 		customer,
-		orderStatus: 'on-hold',
 		currency,
 	},
 ];
@@ -42,7 +40,6 @@ export const puiClassicCheckoutExcludingTax: ShopOrder[] = [
 		...orders.excludingTax,
 		payment: pui,
 		customer: guest,
-		orderStatus: 'on-hold',
 		currency,
 	},
 ];
@@ -54,7 +51,6 @@ export const puiClassicCheckoutNegativeFee: ShopOrder[] = [
 		...orders.negative12Fee,
 		payment: pui,
 		customer: guest,
-		orderStatus: 'on-hold',
 		currency,
 	},
 ];

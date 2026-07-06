@@ -21,7 +21,6 @@ export const puiPayByLink: ShopOrder[] = [
 		...orders.default,
 		payment: pui,
 		customer: guest,
-		orderStatus: 'on-hold',
 		currency,
 	},
 	{
@@ -30,7 +29,6 @@ export const puiPayByLink: ShopOrder[] = [
 		...orders.default,
 		payment: pui,
 		customer,
-		orderStatus: 'on-hold',
 		currency,
 	},
 ];
