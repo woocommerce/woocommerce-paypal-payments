@@ -60,9 +60,10 @@ const bcdc: Pcp.Payment = {
 	card: cards.visa,
 };
 
-const payUponInvoice: Pcp.Payment = {
-	gateway: gateways.payUponInvoice,
+const pui: Pcp.Payment = {
+	gateway: gateways.pui,
 	birthDate: '01.01.1991',
+	phone: '+39123456789',
 };
 
 const googlePay: Pcp.Payment = {
@@ -81,6 +82,6 @@ export const payments = {
 	fastlaneGary,
 	fastlaneRyan,
 	bcdc,
-	payUponInvoice,
+	pui,
 	googlePay,
 };
