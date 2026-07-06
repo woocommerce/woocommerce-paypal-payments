@@ -8,7 +8,6 @@ const guest = guests.usa;
 
 export const googlePayClassicCheckout: ShopOrder[] = [
 	{
-		// https://inpsyde.atlassian.net/browse/PCP-2969
 		title: 'PCP-2969 | Transaction - Classic checkout - Google Pay - Order by customer @Critical',
 		...orders.default,
 		payment: payments.googlePay,
@@ -18,14 +17,12 @@ export const googlePayClassicCheckout: ShopOrder[] = [
 
 export const googlePayClassicCheckoutNegativeFee: ShopOrder[] = [
 	{
-		// https://inpsyde.atlassian.net/browse/PCP-6610
 		title: 'PCP-6610 | Transaction - Classic checkout - Google Pay - Customer - Order with negative fee snippet',
 		...orders.negative12Fee,
 		payment: payments.googlePay,
 		customer,
 	},
 	{
-		// https://inpsyde.atlassian.net/browse/PCP-6611
 		title: 'PCP-6611 | Transaction - Classic checkout - Google Pay - Guest - Order with negative fee snippet',
 		...orders.negative12Fee,
 		payment: payments.googlePay,

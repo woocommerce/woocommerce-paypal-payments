@@ -16,7 +16,6 @@ const { pui } = payments;
 
 export const puiClassicCheckout: ShopOrder[] = [
 	{
-		// https://inpsyde.atlassian.net/browse/PCP-1216
 		title: 'PCP-1216 | Transaction - Classic checkout - Pay upon Invoice - Germany - Guest - Default order @Critical',
 		...orders.default,
 		payment: pui,
@@ -24,7 +23,6 @@ export const puiClassicCheckout: ShopOrder[] = [
 		currency,
 	},
 	{
-		// https://inpsyde.atlassian.net/browse/PCP-2751
 		title: 'PCP-2751 | Transaction - Classic checkout - Pay upon Invoice - Germany - Customer - Default order @Critical',
 		...orders.default,
 		payment: pui,
@@ -35,7 +33,6 @@ export const puiClassicCheckout: ShopOrder[] = [
 
 export const puiClassicCheckoutExcludingTax: ShopOrder[] = [
 	{
-		// https://inpsyde.atlassian.net/browse/PCP-1246
 		title: 'PCP-1246 | Transaction - Classic checkout - Pay upon Invoice - Germany - Guest - Order with price excluding tax',
 		...orders.excludingTax,
 		payment: pui,
@@ -46,7 +43,6 @@ export const puiClassicCheckoutExcludingTax: ShopOrder[] = [
 
 export const puiClassicCheckoutNegativeFee: ShopOrder[] = [
 	{
-		// https://inpsyde.atlassian.net/browse/PCP-6642
 		title: 'PCP-6642 | Transaction - Classic checkout - Pay upon Invoice - Germany - Guest - Order with negative fee snippet',
 		...orders.negative12Fee,
 		payment: pui,
