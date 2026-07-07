@@ -61,8 +61,12 @@ class SdkClientToken {
 	 * @throws RuntimeException If something unexpected happens.
 	 */
 	public function sdk_client_token(): string {
-		if ( $this->cache->has( self::CACHE_KEY ) ) {
-			return $this->cache->get( self::CACHE_KEY );
+		$domain    = wp_parse_url( home_url(), PHP_URL_HOST ) ?? '';
+		$domain    = preg_replace( '/^www\./', '', $domain );
+		$cache_key = self::CACHE_KEY . '-' . $domain;
+
+		if ( $this->cache->has( $cache_key ) ) {
+			return $this->cache->get( $cache_key );
 		}
 
 		if ( $this->client_credentials->is_empty() ) {
@@ -74,11 +78,7 @@ class SdkClientToken {
 			throw new RuntimeException( sprintf( 'PayPal token requests are paused for %d more seconds after a previous failure.', $wait ) );
 		}
 
-		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
-		$domain = wp_unslash( $_SERVER['HTTP_HOST'] ?? '' );
-		$domain = preg_replace( '/^www\./', '', $domain );
-
-		$url = trailingslashit( $this->host ) . 'v1/oauth2/token?grant_type=client_credentials&response_type=client_token&intent=sdk_init&domains[]=' . $domain;
+		$url = trailingslashit( $this->host ) . 'v1/oauth2/token?grant_type=client_credentials&response_type=client_token&intent=sdk_init&domains[]=' . rawurlencode( $domain );
 
 		$args = array(
 			'method'  => 'POST',
@@ -111,7 +111,7 @@ class SdkClientToken {
 		$access_token = $json->access_token;
 		$expires_in   = (int) $json->expires_in;
 
-		$this->cache->set( self::CACHE_KEY, $access_token, $expires_in );
+		$this->cache->set( $cache_key, $access_token, $expires_in );
 		$this->rate_limiter->clear( self::RATE_LIMIT_SCOPE );
 
 		return $access_token;
