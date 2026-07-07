@@ -161,7 +161,7 @@ If you encounter issues with the PayPal buttons not appearing after an update, p
 
 == Changelog ==
 
-= 4.1.1 - XXXX-XX-XX =
+= 4.1.1 - 2026-07-07 =
 * Fix - Fix Pay upon Invoice gateway enqueued outside of checkout context with Block Mini Cart #4483
 * Fix - Too many requests to merchant-integrations API endpoint #4490
 
