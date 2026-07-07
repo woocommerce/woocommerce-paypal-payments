@@ -638,7 +638,7 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC
     private function add_payment_token_to_order(WC_Order $wc_order, int $wc_payment_token_id, string $return_url, SessionHandler $session_handler): array
     {
         $payment_token = WC_Payment_Tokens::get($wc_payment_token_id);
-        if ($payment_token) {
+        if ($payment_token && (int) $payment_token->get_user_id() === get_current_user_id()) {
             $wc_order->add_payment_token($payment_token);
             $wc_order->save();
             $session_handler->destroy_session_data();
