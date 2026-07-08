@@ -61,8 +61,8 @@ class SdkClientToken {
 	 * @throws RuntimeException If something unexpected happens.
 	 */
 	public function sdk_client_token(): string {
-		$domain    = wp_parse_url( home_url(), PHP_URL_HOST ) ?? '';
-		$domain    = preg_replace( '/^www\./', '', $domain );
+		$domain    = (string) wp_parse_url( home_url(), PHP_URL_HOST );
+		$domain    = (string) preg_replace( '/^www\./', '', $domain );
 		$cache_key = self::CACHE_KEY . '-' . $domain;
 
 		if ( $this->cache->has( $cache_key ) ) {
