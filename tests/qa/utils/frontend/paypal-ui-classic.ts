@@ -59,7 +59,7 @@ export class PayPalUiClassic extends PayPalUi {
 		this.fundingSourceGateway( 'ppcp-card-button-gateway' );
 	oxxoGateway = () =>
 		this.fundingSourceGateway( 'ppcp-oxxo-gateway' );
-	payUponInvoiceGateway = () =>
+	puiGateway = () =>
 		this.fundingSourceGateway( 'ppcp-pay-upon-invoice-gateway' );
 	googlePayGateway = () => this.fundingSourceGateway( 'ppcp-googlepay' );
 
@@ -250,14 +250,16 @@ export class PayPalUiClassic extends PayPalUi {
 	acdcUseNewPaymentRadio = () =>
 		this.page.locator( '.woocommerce-SavedPaymentMethods-new > input' );
 
-	payUponInvoiceBirthDateInput = () =>
-		this.page.locator( '#billing_birth_date' );
-	payUponInvoiceGatewayTitle = () =>
-		this.page.locator(
+	puiBirthDateInput = () =>
+		this.puiGateway().locator( '#billing_birth_date' );
+	puiPhoneInput = () =>
+		this.puiGateway().locator( '#billing_phone' );
+	puiGatewayTitle = () =>
+		this.puiGateway().locator(
 			'label[for="payment_method_ppcp-pay-upon-invoice-gateway"]'
 		);
-	payUponInvoiceGatewayDescription = () =>
-		this.payUponInvoiceGateway().locator(
+	puiGatewayDescription = () =>
+		this.puiGateway().locator(
 			'div.payment_method_ppcp-pay-upon-invoice-gateway>p'
 		);
 
@@ -628,28 +630,6 @@ export class PayPalUiClassic extends PayPalUi {
 			'Assert BCDC pay now button is visible'
 		).toBeVisible();
 		await this.bcdcPayNowButton().click();
-	};
-
-	/**
-	 * Completes payment with Pay upon Invoice (vaulting disabled)
-	 *
-	 * @param birthDate
-	 */
-	completePayUponInvoicePayment = async ( birthDate: string ) => {
-		await expect(
-			this.payUponInvoiceGateway(),
-			'Assert pay upon invoice gateway is visible'
-		).toBeVisible();
-		await this.payUponInvoiceGateway().click();
-
-		await expect(
-			this.payUponInvoiceBirthDateInput(),
-			'Assert pay upon invoice birth date input is visible'
-		).toBeVisible();
-		await this.payUponInvoiceBirthDateInput().click();
-		await this.page.keyboard.type( birthDate ); // Trick to properly fill date
-
-		await this.submitOrder();
 	};
 
 	// Assertions

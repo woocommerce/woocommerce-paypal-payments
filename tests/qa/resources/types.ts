@@ -74,6 +74,10 @@ export namespace Pcp {
 			| 'no-3d-secure'
 			| 'only-required-3d-secure'
 			| 'always-3d-secure';
+		puiBrandName?: string;
+		puiCustomerServiceInstructions?: string;
+		puiLogoUrl?: string;
+		showCardLogos?: boolean;
 	};
 
 	export type Gateway = WooCommerce.PaymentGateway &
@@ -99,6 +103,7 @@ export namespace Pcp {
 		card?: WooCommerce.CreditCard;
 		isVaulted?: boolean;
 		birthDate?: string;
+		phone?: string;
 		useNotVaultedAccount?: PayPalAccount;
 		isAuthorized?: boolean;
 		saveToAccount?: boolean;

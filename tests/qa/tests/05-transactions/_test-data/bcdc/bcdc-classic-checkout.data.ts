@@ -21,7 +21,6 @@ const merchant = merchants.mexico;
 
 export const bcdcClassicCheckout: ShopOrder[] = [
 	{
-		// https://inpsyde.atlassian.net/browse/PCP-1211
 		title: 'PCP-1211 | Transaction - Classic checkout - BCDC - Default order @Critical @Smoke',
 		...orders.default,
 		payment: payments.bcdc,
@@ -29,7 +28,6 @@ export const bcdcClassicCheckout: ShopOrder[] = [
 		merchant,
 	},
 	{
-		// https://inpsyde.atlassian.net/browse/PCP-2747
 		title: 'PCP-2747 | Transaction - Classic checkout - BCDC - Order by customer',
 		...orders.default,
 		payment: payments.bcdc,
@@ -40,7 +38,6 @@ export const bcdcClassicCheckout: ShopOrder[] = [
 
 export const bcdcClassicCheckoutExcludingTax: ShopOrder[] = [
 	{
-		// https://inpsyde.atlassian.net/browse/PCP-1253
 		title: 'PCP-1253 | Transaction - Classic checkout - BCDC - Order with price excluding tax',
 		...orders.excludingTax,
 		payment: payments.bcdc,
@@ -51,7 +48,6 @@ export const bcdcClassicCheckoutExcludingTax: ShopOrder[] = [
 
 export const bcdcClassicCheckoutIntentAuthorized: ShopOrder[] = [
 	{
-		// https://inpsyde.atlassian.net/browse/PCP-2759
 		title: 'PCP-2759 | Transaction - Classic checkout - BCDC - Order with Intent Authorized',
 		...orders.default,
 		payment: {
