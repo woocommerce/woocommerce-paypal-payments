@@ -129,7 +129,7 @@ class PayLaterWCBlocksModule implements ServiceModule, ExecutableModule {
 						),
 						'config'                      => $config_factory->from_settings( $paylater_settings ),
 						'settingsUrl'                 => admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway' ),
-						'payLaterDisabledByVaulting'  => $settings_provider->save_paypal_and_venmo(),
+						'payLaterDisabledByVaulting'  => $settings_provider->pay_later_disabled_by_vaulting(),
 						'placementEnabled'            => self::is_placement_enabled( $c->get( 'wcgateway.settings.status' ), 'cart' ),
 						'payLaterSettingsUrl'         => admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway' ),
 						'underTotalsPlacementEnabled' => self::is_under_cart_totals_placement_enabled(),
@@ -157,7 +157,7 @@ class PayLaterWCBlocksModule implements ServiceModule, ExecutableModule {
 						),
 						'config'                     => $config_factory->from_settings( $paylater_settings ),
 						'settingsUrl'                => admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway' ),
-						'payLaterDisabledByVaulting' => $settings_provider->save_paypal_and_venmo(),
+						'payLaterDisabledByVaulting' => $settings_provider->pay_later_disabled_by_vaulting(),
 						'placementEnabled'           => self::is_placement_enabled( $c->get( 'wcgateway.settings.status' ), 'checkout' ),
 						'payLaterSettingsUrl'        => admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway' ),
 					)

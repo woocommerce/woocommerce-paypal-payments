@@ -55,6 +55,10 @@ class SettingsStatus {
 	 * @return bool true if is enabled, otherwise false.
 	 */
 	public function is_pay_later_button_enabled(): bool {
+		if ( $this->settings_provider->pay_later_disabled_by_vaulting() ) {
+			return false;
+		}
+
 		$pay_later_button_enabled = $this->settings_provider->pay_later_button_enabled();
 		$selected_locations       = $this->settings_provider->pay_later_button_locations();
 

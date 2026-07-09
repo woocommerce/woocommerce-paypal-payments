@@ -501,7 +501,9 @@ return array(
 		);
 	},
 	'settings.data.definition.method_dependencies'        => static function ( ContainerInterface $container ): PaymentMethodsDependenciesDefinition {
-		return new PaymentMethodsDependenciesDefinition();
+		return new PaymentMethodsDependenciesDefinition(
+			$container->get( 'settings.settings-provider' )
+		);
 	},
 	'settings.service.pay_later_status'                   => static function ( ContainerInterface $container ): array {
 		$pay_later_endpoint = $container->get( 'settings.rest.pay_later_messaging' );
@@ -714,8 +716,8 @@ return array(
 			$container->get( 'settings.service.features_eligibilities' ),
 			$container->get( 'settings.data.general' ),
 			$merchant_capabilities,
-			$container->get( 'settings.data.settings' ),
-			$container->get( 'woocommerce.logger.woocommerce' )
+			$container->get( 'woocommerce.logger.woocommerce' ),
+			$container->get( 'settings.settings-provider' )
 		);
 	},
 	'settings.service.features_eligibilities'             => static function ( ContainerInterface $container ): FeaturesEligibilityService {

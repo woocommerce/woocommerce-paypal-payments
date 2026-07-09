@@ -18,6 +18,7 @@ use WooCommerce\PayPalCommerce\Axo\Gateway\AxoGateway;
 use WooCommerce\PayPalCommerce\Googlepay\GooglePayGateway;
 use WooCommerce\PayPalCommerce\Settings\Data\OnboardingProfile;
 use WooCommerce\PayPalCommerce\Settings\Data\SettingsModel;
+use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
 use WooCommerce\PayPalCommerce\Settings\Data\TodosModel;
 use WooCommerce\PayPalCommerce\Settings\Endpoint\RestEndpoint;
 use WooCommerce\PayPalCommerce\Settings\Enum\InstallationPathEnum;
@@ -683,14 +684,16 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 		assert( $gateway_redirect_service instanceof GatewayRedirectService );
 		$gateway_redirect_service->register();
 
-		// Do not render Pay Later messaging if the "Save PayPal and Venmo" setting is enabled.
+		// Do not render Pay Later messaging while vaulting ("Save PayPal and Venmo") is
+		// active, unless a whitelisted merchant opted in via the filter. Otherwise the
+		// incoming value is left untouched so other filters keep working.
 		add_filter(
 			'woocommerce_paypal_payments_should_render_pay_later_messaging',
-			static function () use ( $container ): bool {
-				$settings_model = $container->get( 'settings.data.settings' );
-				assert( $settings_model instanceof SettingsModel );
+			static function ( bool $should_render ) use ( $container ): bool {
+				$settings_provider = $container->get( 'settings.settings-provider' );
+				assert( $settings_provider instanceof SettingsProvider );
 
-				return ! $settings_model->get_save_paypal_and_venmo();
+				return $settings_provider->pay_later_disabled_by_vaulting() ? false : $should_render;
 			}
 		);
 
