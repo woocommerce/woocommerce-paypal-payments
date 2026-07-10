@@ -165,6 +165,11 @@ class IncomingWebhookEndpoint {
 			return false;
 		}
 
+		// We only want to use the request body for retrieving the webhook parameters,
+		// so clear other sources of parameters so that we never fall back to them.
+		$request->set_query_params( array() );
+		$request->set_url_params( array() );
+
 		if ( ! $this->verify_request ) {
 			return true;
 		}
