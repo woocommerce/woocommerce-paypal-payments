@@ -13,6 +13,7 @@ use WooCommerce\PayPalCommerce\Assets\AssetGetter;
 use WooCommerce\PayPalCommerce\Assets\AssetGetterFactory;
 use WooCommerce\PayPalCommerce\SdkV6\Assets\SdkV6Manager;
 use WooCommerce\PayPalCommerce\SdkV6\Endpoint\ClientTokenEndpoint;
+use WooCommerce\PayPalCommerce\SdkV6\Helper\ButtonStyleMapper;
 use WooCommerce\PayPalCommerce\SdkV6\Helper\RateLimiter;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 
@@ -25,11 +26,19 @@ return array(
 		return $factory->for_module( 'ppcp-sdk-v6' );
 	},
 
+	'sdk-v6.button-style-mapper'   => static function ( ContainerInterface $container ): ButtonStyleMapper {
+		return new ButtonStyleMapper(
+			$container->get( 'wcgateway.settings' )
+		);
+	},
+
 	'sdk-v6.manager'               => static function ( ContainerInterface $container ): SdkV6Manager {
 		return new SdkV6Manager(
 			$container->get( 'sdk-v6.asset-getter' ),
 			$container->get( 'ppcp.asset-version' ),
-			$container->get( 'settings.environment' )
+			$container->get( 'settings.environment' ),
+			$container->get( 'sdk-v6.button-style-mapper' ),
+			$container->get( 'button.handle-shipping-in-paypal' )
 		);
 	},
 
