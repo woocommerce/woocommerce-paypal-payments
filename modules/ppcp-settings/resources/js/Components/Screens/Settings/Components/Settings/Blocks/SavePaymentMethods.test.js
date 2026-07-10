@@ -11,9 +11,17 @@ const mockUseSettings = {
 	setSaveCardDetails: jest.fn(),
 };
 
+const mockPayLaterVaultingDependency = {
+	isReady: true,
+	payLaterDependsOnVaulting: true,
+};
+
 jest.mock( '@ppcp-settings/data', () => ( {
 	SettingsHooks: {
 		useSettings: () => mockUseSettings,
+	},
+	PaymentHooks: {
+		usePayLaterVaultingDependency: () => mockPayLaterVaultingDependency,
 	},
 } ) );
 
@@ -68,6 +76,8 @@ describe( 'SavePaymentMethods', () => {
 		mockUseSettings.savePaypalAndVenmo = false;
 		mockUseSettings.saveCardDetails = false;
 		mockUseMerchantInfo.features.save_paypal_and_venmo.enabled = true;
+		mockPayLaterVaultingDependency.isReady = true;
+		mockPayLaterVaultingDependency.payLaterDependsOnVaulting = true;
 	} );
 
 	describe( 'Rendering', () => {
@@ -256,6 +266,36 @@ describe( 'SavePaymentMethods', () => {
 				expect.stringContaining( 'Pay Later' ),
 				'https://woocommerce.com/document/woocommerce-paypal-payments/#pay-later'
 			);
+		} );
+	} );
+
+	describe( 'Pay Later disable notice', () => {
+		it( 'shows the notice when Pay Later depends on vaulting', () => {
+			const { container } = render( <SavePaymentMethods /> );
+
+			expect( container.innerHTML ).toContain( 'This will disable' );
+		} );
+
+		it( 'omits the notice when Pay Later does not depend on vaulting', () => {
+			mockPayLaterVaultingDependency.payLaterDependsOnVaulting = false;
+
+			const { container } = render( <SavePaymentMethods /> );
+
+			expect( container.innerHTML ).not.toContain( 'This will disable' );
+			expect(
+				screen.getByText(
+					/Securely store your customers' PayPal accounts/
+				)
+			).toBeInTheDocument();
+		} );
+
+		it( 'shows the notice while payment data is still loading', () => {
+			mockPayLaterVaultingDependency.isReady = false;
+			mockPayLaterVaultingDependency.payLaterDependsOnVaulting = false;
+
+			const { container } = render( <SavePaymentMethods /> );
+
+			expect( container.innerHTML ).toContain( 'This will disable' );
 		} );
 	} );
 
