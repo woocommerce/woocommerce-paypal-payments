@@ -1,15 +1,22 @@
 /**
  * PayPal SDK v6 Bootstrap.
  *
- * Loads the PayPal JS SDK v6 core, fetches a browser-safe client token
- * from the backend, and creates the SDK instance.
+ * Loads the SDK, checks eligibility, creates payment sessions,
+ * and renders Web Component buttons.
  *
  * @package
  */
 
-/**
- * @param {Object} config Localized script data from wc_ppcp_sdk_v6.
- */
+import { loadSdkV6, getSdkInstance } from './sdkLoader';
+import { checkEligibility } from './eligibility';
+import { createPayPalSession } from './sessions/paypalSession';
+import { createVenmoSession } from './sessions/venmoSession';
+import { createPayLaterSession } from './sessions/payLaterSession';
+import { renderButtons } from './components/buttonRenderer';
+import { detectContext } from './utils/contextDetector';
+import { createOrder } from './utils/orderDataBuilder';
+import { handleError } from './utils/errorHandler';
+
 ( function ( config ) {
 	'use strict';
 
@@ -18,85 +25,80 @@
 	}
 
 	/**
-	 * Fetches the browser-safe client token from the WC AJAX endpoint.
+	 * Renders buttons for the given context.
 	 *
-	 * @return {Promise<string>} Resolves to the client token string.
+	 * @param {Object} sdk     - The SDK instance.
+	 * @param {string} context - The page context.
 	 */
-	async function fetchClientToken() {
-		const response = await fetch( config.ajax.client_token.endpoint, {
-			method: 'POST',
-			credentials: 'same-origin',
-			headers: {
-				'Content-Type': 'application/json',
-			},
-			body: JSON.stringify( {
-				nonce: config.ajax.client_token.nonce,
-			} ),
+	async function renderForContext( sdk, context ) {
+		const eligibility = await checkEligibility( sdk, {
+			currencyCode: config.currency,
+			countryCode: config.buyer_country,
 		} );
 
-		const json = await response.json();
-
-		if ( ! json.success ) {
-			throw new Error(
-				json.data?.message || 'Failed to fetch client token.'
-			);
+		const sessions = {};
+		if ( eligibility.paypal ) {
+			sessions.paypal = createPayPalSession( sdk, config );
+		}
+		if ( eligibility.venmo ) {
+			sessions.venmo = createVenmoSession( sdk, config );
+		}
+		if ( eligibility.payLater ) {
+			sessions.payLater = createPayLaterSession( sdk, config );
 		}
 
-		return json.data.client_token;
-	}
+		const createOrderForFunding = ( fundingSource ) => () =>
+			createOrder( config.ajax.create_order, context, fundingSource );
 
-	/**
-	 * Dynamically loads the PayPal SDK v6 core script.
-	 *
-	 * @return {Promise<void>} Resolves when the script is loaded.
-	 */
-	function loadSdkScript() {
-		return new Promise( ( resolve, reject ) => {
-			if ( document.querySelector( 'script[src*="web-sdk/v6/core"]' ) ) {
-				resolve();
-				return;
-			}
+		const styles =
+			config.button_styles[ context ] ||
+			config.button_styles.checkout ||
+			{};
 
-			const script = document.createElement( 'script' );
-			script.src = config.sdk_url;
-			script.async = true;
-			script.onload = resolve;
-			script.onerror = () =>
-				reject( new Error( 'Failed to load PayPal SDK v6 script.' ) );
-			document.head.appendChild( script );
+		renderButtons( {
+			wrapperSelector: config.wrapper,
+			eligibility,
+			sessions,
+			styles,
+			createOrderForFunding,
+			payLaterDetails: eligibility.payLaterDetails,
 		} );
 	}
 
 	/**
-	 * Initializes the PayPal SDK v6 instance.
+	 * Main initialization.
 	 */
 	async function init() {
 		try {
-			const [ , clientToken ] = await Promise.all( [
-				loadSdkScript(),
-				fetchClientToken(),
-			] );
+			const sdk = await loadSdkV6( config );
 
-			if ( ! window.paypal?.createInstance ) {
-				throw new Error(
-					'PayPal SDK v6 global not found after script load.'
-				);
+			const context = config.page_context || detectContext();
+			if ( ! context ) {
+				return;
 			}
 
-			const sdkInstance = await window.paypal.createInstance( {
-				clientToken,
-			} );
+			await renderForContext( sdk, context );
 
-			window.ppcpSdkV6Instance = sdkInstance;
-
+			// Notify other modules that the SDK v6 is ready.
 			document.dispatchEvent(
 				new CustomEvent( 'ppcp-sdk-v6-ready', {
-					detail: { sdkInstance },
+					detail: { sdkInstance: sdk },
 				} )
 			);
+
+			// Re-render on WC cart/checkout updates.
+			if ( typeof jQuery !== 'undefined' ) {
+				const reinit = () => {
+					const cachedSdk = getSdkInstance();
+					if ( cachedSdk ) {
+						renderForContext( cachedSdk, context );
+					}
+				};
+				jQuery( document.body ).on( 'updated_cart_totals', reinit );
+				jQuery( document.body ).on( 'updated_checkout', reinit );
+			}
 		} catch ( error ) {
-			// eslint-disable-next-line no-console
-			console.error( '[PPCP SDK v6]', error );
+			handleError( error );
 		}
 	}
 
