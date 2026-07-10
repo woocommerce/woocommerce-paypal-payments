@@ -24,6 +24,9 @@ class SettingsStatus
      */
     public function is_pay_later_messaging_enabled(): bool
     {
+        if ($this->settings_provider->pay_later_disabled_by_vaulting()) {
+            return \false;
+        }
         return $this->settings_provider->pay_later_messaging_enabled();
     }
     /**
