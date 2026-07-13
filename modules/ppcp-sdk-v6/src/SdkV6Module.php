@@ -73,7 +73,7 @@ class SdkV6Module implements ServiceModule, ExecutableModule {
 		// so the shipping-update endpoint can validate order ownership in
 		// non-checkout contexts (v5 only stores it for checkout).
 		add_action(
-			'woocommerce_paypal_payments_paypal_order_created',
+			'woocommerce_paypal_payments_create_order_endpoint_order_created',
 			static function ( Order $order, array $data ) use ( $c ) {
 				if ( empty( $data['save_order_in_session'] ) ) {
 					return;
