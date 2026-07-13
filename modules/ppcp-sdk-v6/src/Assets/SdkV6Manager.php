@@ -217,7 +217,10 @@ class SdkV6Manager {
 	 *
 	 * Also used to scope the v5 suppression: v5 must only be disabled on
 	 * pages where v6 loads (both SDKs claim window.paypal), and keep
-	 * running everywhere else (block cart/checkout, pay-now).
+	 * running everywhere else (block cart/checkout, pay-now). That
+	 * scoping is migration-phase only — see extensions.php; at release
+	 * the suppression becomes unconditional and only the merchant
+	 * location-settings gating in this method remains meaningful.
 	 *
 	 * @return bool
 	 */
