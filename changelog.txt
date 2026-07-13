@@ -1,5 +1,9 @@
 *** Changelog ***
 
+= 4.1.1 - 2026-07-07 =
+* Fix - Fix Pay upon Invoice gateway enqueued outside of checkout context with Block Mini Cart #4483
+* Fix - Too many requests to merchant-integrations API endpoint #4490
+
 = 4.1.0 - 2026-06-23 =
 * Enhancement - New Vault Management Component for buyers with saved PayPal accounts to update funding instrument #4421
 * Enhancement - Pay upon Invoice support for Block Checkout #4405
