@@ -83,17 +83,17 @@ class UpdateShippingEndpointTest extends TestCase
 	}
 
 	/**
-	 * @scenario When the request order_id belongs to a different session (IDOR attack),
+	 * @scenario When the request order_id does not match the session's stored order,
 	 *           no PATCH is issued and an error response is returned.
 	 */
 	public function test_patch_is_rejected_when_order_id_does_not_match_session(): void
 	{
 		$session_order = Mockery::mock( Order::class );
-		$session_order->shouldReceive( 'id' )->andReturn( 'ORDER-VICTIM' );
+		$session_order->shouldReceive( 'id' )->andReturn( 'ORDER-SESSION' );
 
 		$this->request_data->shouldReceive( 'read_request' )
 			->with( UpdateShippingEndpoint::nonce() )
-			->andReturn( array( 'order_id' => 'ORDER-ATTACKER' ) );
+			->andReturn( array( 'order_id' => 'ORDER-REQUEST' ) );
 
 		$this->session_handler->shouldReceive( 'order' )->andReturn( $session_order );
 
