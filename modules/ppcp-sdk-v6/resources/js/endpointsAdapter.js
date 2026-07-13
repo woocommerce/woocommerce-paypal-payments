@@ -1,0 +1,127 @@
+/**
+ * Adapter for the existing (v5) WC AJAX order endpoints.
+ *
+ * All v6 knowledge of the v5 endpoint contract lives here:
+ * ppc-change-cart, ppc-create-order, ppc-approve-order, ppc-update-shipping.
+ * Keep the request/response shapes in sync with the endpoint contract tests.
+ *
+ * @package
+ */
+
+import { postJson } from './utils/api';
+
+/**
+ * Collects products from the single product form for ppc-change-cart.
+ *
+ * @return {Object[]} Products in the { id, quantity, variations } shape.
+ * @throws {Error} When the product form or product id cannot be found.
+ */
+function getProductsFromForm() {
+	const form = document.querySelector( 'form.cart' );
+	if ( ! form ) {
+		throw new Error( 'Product form not found.' );
+	}
+
+	// The add-to-cart control is usually a submit button, so it is
+	// excluded from FormData; query the element directly instead.
+	const idElement =
+		form.querySelector( '[name="add-to-cart"]' ) ||
+		form.querySelector( '[name="product_id"]' );
+	const id = parseInt( idElement?.value ?? '0', 10 );
+
+	if ( ! id ) {
+		throw new Error( 'Product id not found.' );
+	}
+
+	const quantity =
+		parseInt( form.querySelector( '[name="quantity"]' )?.value, 10 ) || 1;
+
+	const variations = Array.from(
+		form.querySelectorAll( '[name^="attribute_"]' )
+	).map( ( element ) => ( {
+		name: element.name,
+		value: element.value,
+	} ) );
+
+	return [ { id, quantity, variations } ];
+}
+
+/**
+ * Creates a PayPal order via the existing WC AJAX endpoints.
+ *
+ * On product pages the viewed product is first added to the cart
+ * (ppc-change-cart), matching the v5 flow; ppc-create-order then
+ * builds the purchase unit from the WC cart.
+ *
+ * @param {Object} config        - The wc_ppcp_sdk_v6 config object.
+ * @param {string} context       - The page context.
+ * @param {string} fundingSource - The funding source (paypal, venmo, paylater).
+ * @return {Promise<{orderId: string}>} The created PayPal order id.
+ */
+export async function createOrder( config, context, fundingSource ) {
+	if ( context === 'product' ) {
+		await postJson( config.ajax.change_cart, {
+			products: getProductsFromForm(),
+		} );
+	}
+
+	const data = await postJson( config.ajax.create_order, {
+		context,
+		payment_method: 'ppcp-gateway',
+		funding_source: fundingSource || 'paypal',
+		save_order_in_session: 1,
+	} );
+
+	return { orderId: data.id };
+}
+
+/**
+ * Approves the order and completes the purchase.
+ *
+ * Mirrors the v5 completion flow: on non-checkout contexts the endpoint
+ * creates the WC order (should_create_wc_order) and returns the
+ * order-received URL, unless the final-review setting is enabled, in
+ * which case the buyer is sent to checkout to confirm. On classic
+ * checkout the WC checkout form is submitted after approval.
+ *
+ * @param {Object} config        - The wc_ppcp_sdk_v6 config object.
+ * @param {string} context       - The page context.
+ * @param {string} fundingSource - The funding source used for payment.
+ * @param {string} orderId       - The PayPal order ID.
+ */
+export async function approveOrder( config, context, fundingSource, orderId ) {
+	const data = await postJson( config.ajax.approve_order, {
+		order_id: orderId,
+		funding_source: fundingSource,
+		should_create_wc_order: context !== 'checkout',
+	} );
+
+	if ( data?.order_received_url ) {
+		window.location.assign( data.order_received_url );
+		return;
+	}
+
+	if ( context === 'checkout' && typeof jQuery !== 'undefined' ) {
+		const checkoutForm = jQuery( 'form.checkout' );
+		if ( checkoutForm.length ) {
+			checkoutForm.trigger( 'submit' );
+			return;
+		}
+	}
+
+	// Final review enabled: the buyer confirms the order on the checkout page.
+	window.location.assign( config.urls.checkout );
+}
+
+/**
+ * Patches the PayPal order with totals recalculated from the WC cart.
+ *
+ * @param {Object} config  - The wc_ppcp_sdk_v6 config object.
+ * @param {string} orderId - The PayPal order ID.
+ * @return {Promise<void>} Resolves when the order has been patched.
+ */
+export async function updateShipping( config, orderId ) {
+	await postJson( config.ajax.update_shipping, {
+		order_id: orderId,
+	} );
+}

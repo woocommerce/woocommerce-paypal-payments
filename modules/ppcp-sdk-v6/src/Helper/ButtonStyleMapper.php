@@ -35,6 +35,9 @@ class ButtonStyleMapper {
 		'rect' => '4px',
 	);
 
+	private const MIN_HEIGHT = 25;
+	private const MAX_HEIGHT = 55;
+
 	/**
 	 * The settings.
 	 *
@@ -58,14 +61,13 @@ class ButtonStyleMapper {
 	 * @return array{colorClass: string, borderRadius: string, height: string}
 	 */
 	public function styles_for_context( string $context ): array {
-		$enable_per_location = $this->settings->has( 'smart_button_enable_styling_per_location' )
-			&& $this->settings->get( 'smart_button_enable_styling_per_location' );
+		$color  = (string) $this->style_for_context( 'color', $context, 'gold' );
+		$shape  = (string) $this->style_for_context( 'shape', $context, 'pill' );
+		$height = (int) $this->style_for_context( 'height', $context, 0 );
 
-		$settings_context = $enable_per_location ? $context : 'general';
-
-		$color  = $this->get_setting( "button_{$settings_context}_color", 'gold' );
-		$shape  = $this->get_setting( "button_{$settings_context}_shape", 'pill' );
-		$height = $this->get_setting( "button_{$settings_context}_height", 0 );
+		if ( $height ) {
+			$height = max( self::MIN_HEIGHT, min( self::MAX_HEIGHT, $height ) );
+		}
 
 		return array(
 			'colorClass'   => self::COLOR_MAP[ $color ] ?? 'paypal-gold',
@@ -75,20 +77,30 @@ class ButtonStyleMapper {
 	}
 
 	/**
-	 * Gets a setting value with fallback.
+	 * Determines the style value for a property in a given context.
 	 *
-	 * @param string $key The setting key.
+	 * Follows the same key scheme as the v5 SmartButton: the per-context
+	 * key button_{context}_{style} applies when per-location styling is
+	 * enabled, with button_{style} as the general fallback.
+	 *
+	 * @param string $style The style property (color, shape, height).
+	 * @param string $context The page context.
 	 * @param mixed  $default The default value.
 	 * @return mixed
 	 */
-	private function get_setting( string $key, $default ) {
-		if ( $this->settings->has( $key ) ) {
-			return $this->settings->get( $key );
+	private function style_for_context( string $style, string $context, $default ) {
+		$per_location = $this->settings->has( 'smart_button_enable_styling_per_location' )
+			&& $this->settings->get( 'smart_button_enable_styling_per_location' );
+
+		if ( $per_location ) {
+			$context_key = "button_{$context}_{$style}";
+			if ( $this->settings->has( $context_key ) ) {
+				return $this->settings->get( $context_key );
+			}
 		}
 
-		// Fallback to general if context-specific not found.
-		$general_key = preg_replace( '/button_[a-z-]+_/', 'button_general_', $key );
-		if ( $general_key && $this->settings->has( $general_key ) ) {
+		$general_key = "button_{$style}";
+		if ( $this->settings->has( $general_key ) ) {
 			return $this->settings->get( $general_key );
 		}
 

@@ -7,15 +7,13 @@
  * @package
  */
 
-import { loadSdkV6, getSdkInstance } from './sdkLoader';
+import { loadSdkV6 } from './sdkLoader';
 import { checkEligibility } from './eligibility';
-import { createPayPalSession } from './sessions/paypalSession';
-import { createVenmoSession } from './sessions/venmoSession';
-import { createPayLaterSession } from './sessions/payLaterSession';
+import { createSession } from './sessions/createSession';
 import { renderButtons } from './components/buttonRenderer';
 import { detectContext } from './utils/contextDetector';
-import { createOrder } from './utils/orderDataBuilder';
-import { handleError } from './utils/errorHandler';
+import { createOrder } from './endpointsAdapter';
+import { setErrorLabels } from './utils/errorHandler';
 
 ( function ( config ) {
 	'use strict';
@@ -24,87 +22,106 @@ import { handleError } from './utils/errorHandler';
 		return;
 	}
 
+	setErrorLabels( config.labels );
+
+	const context = config.page_context || detectContext();
+	if ( ! context ) {
+		return;
+	}
+
+	const wrapperSelector =
+		context === 'mini-cart' ? config.mini_cart_wrapper : config.wrapper;
+
+	const styles =
+		config.button_styles[ context ] || config.button_styles.checkout || {};
+
+	const createOrderForFunding = ( fundingSource ) => () =>
+		createOrder( config, context, fundingSource );
+
+	// SDK, eligibility and sessions are created once and reused across
+	// re-renders; only the Web Components are rebuilt when WC replaces
+	// the surrounding DOM.
+	let sessions = null;
+
 	/**
-	 * Renders buttons for the given context.
+	 * Creates the sessions on first use.
 	 *
-	 * @param {Object} sdk     - The SDK instance.
-	 * @param {string} context - The page context.
+	 * @return {Promise<Object>} Sessions keyed by method.
 	 */
-	async function renderForContext( sdk, context ) {
+	async function ensureSessions() {
+		if ( sessions ) {
+			return sessions;
+		}
+
+		const sdk = await loadSdkV6( config, context );
+
+		document.dispatchEvent(
+			new CustomEvent( 'ppcp-sdk-v6-ready', {
+				detail: { sdkInstance: sdk },
+			} )
+		);
+
 		const eligibility = await checkEligibility( sdk, {
 			currencyCode: config.currency,
 			countryCode: config.buyer_country,
 		} );
 
-		const sessions = {};
-		if ( eligibility.paypal ) {
-			sessions.paypal = createPayPalSession( sdk, config );
-		}
-		if ( eligibility.venmo ) {
-			sessions.venmo = createVenmoSession( sdk, config );
-		}
-		if ( eligibility.payLater ) {
-			sessions.payLater = createPayLaterSession( sdk, config );
+		sessions = { payLaterDetails: eligibility.payLaterDetails, map: {} };
+		for ( const method of [ 'paypal', 'venmo', 'paylater' ] ) {
+			if ( eligibility[ method ] ) {
+				sessions.map[ method ] = createSession(
+					sdk,
+					method,
+					config,
+					context
+				);
+			}
 		}
 
-		const createOrderForFunding = ( fundingSource ) => () =>
-			createOrder( config.ajax.create_order, context, fundingSource );
-
-		const styles =
-			config.button_styles[ context ] ||
-			config.button_styles.checkout ||
-			{};
-
-		renderButtons( {
-			wrapperSelector: config.wrapper,
-			eligibility,
-			sessions,
-			styles,
-			createOrderForFunding,
-			payLaterDetails: eligibility.payLaterDetails,
-		} );
+		return sessions;
 	}
 
 	/**
-	 * Main initialization.
+	 * Renders buttons if the wrapper is present in the DOM.
+	 *
+	 * The SDK and client token are only loaded once a wrapper exists,
+	 * so pages without buttons never hit the token endpoint.
 	 */
-	async function init() {
-		try {
-			const sdk = await loadSdkV6( config );
-
-			const context = config.page_context || detectContext();
-			if ( ! context ) {
-				return;
-			}
-
-			await renderForContext( sdk, context );
-
-			// Notify other modules that the SDK v6 is ready.
-			document.dispatchEvent(
-				new CustomEvent( 'ppcp-sdk-v6-ready', {
-					detail: { sdkInstance: sdk },
-				} )
-			);
-
-			// Re-render on WC cart/checkout updates.
-			if ( typeof jQuery !== 'undefined' ) {
-				const reinit = () => {
-					const cachedSdk = getSdkInstance();
-					if ( cachedSdk ) {
-						renderForContext( cachedSdk, context );
-					}
-				};
-				jQuery( document.body ).on( 'updated_cart_totals', reinit );
-				jQuery( document.body ).on( 'updated_checkout', reinit );
-			}
-		} catch ( error ) {
-			handleError( error );
+	async function render() {
+		if ( ! document.querySelector( wrapperSelector ) ) {
+			return;
 		}
+
+		const { map, payLaterDetails } = await ensureSessions();
+
+		renderButtons( {
+			wrapper: document.querySelector( wrapperSelector ),
+			sessions: map,
+			styles,
+			createOrderForFunding,
+			payLaterDetails,
+		} );
+	}
+
+	function tryRender() {
+		render().catch( ( error ) => {
+			// eslint-disable-next-line no-console
+			console.error( '[PPCP SDK v6]', error );
+		} );
 	}
 
 	if ( document.readyState === 'loading' ) {
-		document.addEventListener( 'DOMContentLoaded', init );
+		document.addEventListener( 'DOMContentLoaded', tryRender );
 	} else {
-		init();
+		tryRender();
+	}
+
+	// Re-render when WC replaces the surrounding DOM: cart/checkout AJAX
+	// updates and mini-cart fragment refreshes.
+	if ( typeof jQuery !== 'undefined' ) {
+		jQuery( document.body ).on(
+			'updated_cart_totals updated_checkout wc_fragments_loaded wc_fragments_refreshed added_to_cart',
+			tryRender
+		);
 	}
 } )( window.wc_ppcp_sdk_v6 );
