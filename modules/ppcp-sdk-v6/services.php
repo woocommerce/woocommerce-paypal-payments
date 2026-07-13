@@ -28,8 +28,7 @@ return array(
 
 	'sdk-v6.button-style-mapper'   => static function ( ContainerInterface $container ): ButtonStyleMapper {
 		return new ButtonStyleMapper(
-			$container->get( 'settings.settings-provider' ),
-			$container->get( 'wcgateway.settings' )
+			$container->get( 'settings.settings-provider' )
 		);
 	},
 
@@ -40,7 +39,8 @@ return array(
 			$container->get( 'settings.environment' ),
 			$container->get( 'sdk-v6.button-style-mapper' ),
 			$container->get( 'button.handle-shipping-in-paypal' ),
-			$container->get( 'wcgateway.settings.status' )
+			$container->get( 'wcgateway.settings.status' ),
+			$container->get( 'button.helper.context' )
 		);
 	},
 
