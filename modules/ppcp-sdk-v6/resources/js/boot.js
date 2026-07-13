@@ -64,6 +64,7 @@ import { setErrorLabels } from './utils/errorHandler';
 		const eligibility = await checkEligibility( sdk, {
 			currencyCode: config.currency,
 			countryCode: config.buyer_country,
+			amount: config.amount,
 		} );
 
 		sessions = { payLaterDetails: eligibility.payLaterDetails, map: {} };
