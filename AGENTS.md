@@ -9,7 +9,24 @@ Minimal instructions for coding agents working in this repository.
 - CRITICAL: Do not edit WordPress core, `vendor/`, or `node_modules/`.
 - CRITICAL: For frontend work, edit `modules/*/resources/*`.
 - CRITICAL: Never revert unrelated local changes.
+- CRITICAL: Any signature change to public or externally exposed code is high-risk — state its backward-compatibility impact in the PR (see [Backward Compatibility](#backward-compatibility)).
 - MUST: Run relevant lint/tests before claiming completion.
+
+## Backward Compatibility
+
+Any change to a **public or externally exposed** class, interface, function, method, or hook signature is **high-risk** and **must state its backward-compatibility impact in the PR description** — regardless of which module or namespace the symbol lives in. Being under `WooCommerce\PayPalCommerce\...`, an `Internal` sub-namespace, or a module's `src/` is not a guarantee that a symbol is safe to change: extensions, themes, and other plugins implement and consume some of these contracts in practice.
+
+Treat a symbol as **externally exposed** when it is implemented or consumed outside this plugin - by extensions, other plugins, or themes. This includes:
+
+- WordPress actions and filters this plugin fires or documents (e.g. `ppcp_*`, `woocommerce_paypal_payments_*`) - their names, argument counts, and argument types are a public contract.
+- Public classes, interfaces, and methods reachable via the module container, `services.php`/`factories.php`/`extensions.php` wiring, or returned from public APIs.
+- Any interface external code can implement, and any class external code can extend or instantiate.
+
+When in doubt, assume it is exposed and state the BC impact.
+
+**Adding a method to an interface that external code can implement is a backward-incompatible change** and must be flagged explicitly: existing implementers fatal on load because they no longer satisfy the contract. Removing a required interface method is likewise breaking for existing implementers. Prefer a non-breaking alternative - add the method to the concrete class rather than the interface, introduce a separate new interface, or supply a default via an abstract base class.
+
+**Deprecate, don't rename.** For existing public symbols (classes, interfaces, methods, constants, hooks), never rename or remove them in place. Mark the old symbol `@deprecated`, introduce the replacement alongside it, and keep both working through a deprecation window so external consumers have time to migrate.
 
 ## Project Knowledge
 
