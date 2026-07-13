@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\SdkV6\Helper;
 
+use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 
 /**
@@ -17,7 +18,7 @@ use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 class ButtonStyleMapper {
 
 	/**
-	 * Maps v5 color names to v6 CSS class names.
+	 * Maps admin color names to v6 CSS class names.
 	 */
 	private const COLOR_MAP = array(
 		'gold'   => 'paypal-gold',
@@ -28,7 +29,7 @@ class ButtonStyleMapper {
 	);
 
 	/**
-	 * Maps v5 shape names to v6 border-radius values.
+	 * Maps admin shape names to v6 border-radius values.
 	 */
 	private const SHAPE_MAP = array(
 		'pill' => '24px',
@@ -39,7 +40,14 @@ class ButtonStyleMapper {
 	private const MAX_HEIGHT = 55;
 
 	/**
-	 * The settings.
+	 * The styling settings provider (current source of truth for color/shape).
+	 *
+	 * @var SettingsProvider
+	 */
+	private SettingsProvider $settings_provider;
+
+	/**
+	 * The legacy settings (height only exists there).
 	 *
 	 * @var Settings
 	 */
@@ -48,23 +56,30 @@ class ButtonStyleMapper {
 	/**
 	 * ButtonStyleMapper constructor.
 	 *
-	 * @param Settings $settings The settings.
+	 * @param SettingsProvider $settings_provider The styling settings provider.
+	 * @param Settings         $settings The legacy settings.
 	 */
-	public function __construct( Settings $settings ) {
-		$this->settings = $settings;
+	public function __construct( SettingsProvider $settings_provider, Settings $settings ) {
+		$this->settings_provider = $settings_provider;
+		$this->settings          = $settings;
 	}
 
 	/**
 	 * Returns v6-compatible styles for a given context.
 	 *
+	 * Color and shape come from the styling DTOs (the same source the v5
+	 * SmartButton reads); height has no DTO field, so it is read from the
+	 * legacy per-context/general settings keys and clamped like v5 does.
+	 *
 	 * @param string $context The page context (product, cart, checkout, mini-cart).
 	 * @return array{colorClass: string, borderRadius: string, height: string}
 	 */
 	public function styles_for_context( string $context ): array {
-		$color  = (string) $this->style_for_context( 'color', $context, 'gold' );
-		$shape  = (string) $this->style_for_context( 'shape', $context, 'pill' );
-		$height = (int) $this->style_for_context( 'height', $context, 0 );
+		$styling = $this->settings_provider->button_styling( $context );
+		$color   = $styling->color ?: 'gold';
+		$shape   = $styling->shape ?: 'pill';
 
+		$height = (int) $this->legacy_setting( 'height', $context, 0 );
 		if ( $height ) {
 			$height = max( self::MIN_HEIGHT, min( self::MAX_HEIGHT, $height ) );
 		}
@@ -77,18 +92,18 @@ class ButtonStyleMapper {
 	}
 
 	/**
-	 * Determines the style value for a property in a given context.
+	 * Determines a legacy style value for a property in a given context.
 	 *
 	 * Follows the same key scheme as the v5 SmartButton: the per-context
 	 * key button_{context}_{style} applies when per-location styling is
 	 * enabled, with button_{style} as the general fallback.
 	 *
-	 * @param string $style The style property (color, shape, height).
+	 * @param string $style The style property.
 	 * @param string $context The page context.
 	 * @param mixed  $default The default value.
 	 * @return mixed
 	 */
-	private function style_for_context( string $style, string $context, $default ) {
+	private function legacy_setting( string $style, string $context, $default ) {
 		$per_location = $this->settings->has( 'smart_button_enable_styling_per_location' )
 			&& $this->settings->get( 'smart_button_enable_styling_per_location' );
 
