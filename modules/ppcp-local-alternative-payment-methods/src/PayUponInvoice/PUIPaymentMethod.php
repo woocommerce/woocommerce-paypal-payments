@@ -58,6 +58,10 @@ class PUIPaymentMethod extends AbstractPaymentMethodType
         if (!function_exists('WC') || !WC()->checkout()) {
             return \true;
         }
+        // The Mini-Cart block enqueues this on every page where the cart may be absent; skip the costly checkout-fields build (and its filter chain) outside checkout.
+        if (!WC()->cart instanceof \WC_Cart) {
+            return \true;
+        }
         $checkout_fields = WC()->checkout()->get_checkout_fields();
         $billing_fields = $checkout_fields['billing'] ?? array();
         $phone_required = $billing_fields['billing_phone']['required'] ?? \false;

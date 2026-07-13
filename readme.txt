@@ -4,7 +4,7 @@ Tags: woocommerce, paypal, payments, ecommerce, credit card
 Requires at least: 6.5
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 4.1.0
+Stable tag: 4.1.1
 License: GPLv2
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -160,6 +160,10 @@ If you encounter issues with the PayPal buttons not appearing after an update, p
 ⚠️ Major Update — This release includes significant changes. Please back up your site before updating.
 
 == Changelog ==
+
+= 4.1.1 - 2026-07-07 =
+* Fix - Fix Pay upon Invoice gateway enqueued outside of checkout context with Block Mini Cart #4483
+* Fix - Too many requests to merchant-integrations API endpoint #4490
 
 = 4.1.0 - 2026-06-23 =
 * Enhancement - New Vault Management Component for buyers with saved PayPal accounts to update funding instrument #4421
