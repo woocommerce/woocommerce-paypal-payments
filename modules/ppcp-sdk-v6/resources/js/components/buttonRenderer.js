@@ -4,6 +4,8 @@
  * @package
  */
 
+import { handleError } from '../utils/errorHandler';
+
 /**
  * @typedef {() => Promise<{orderId: string}>} OrderCreator
  * A function resolving to the created PayPal order id.
@@ -56,8 +58,7 @@ function createButton( wrapper, tagName, styles, session, createOrderFn ) {
 				createOrderFn()
 			);
 		} catch ( error ) {
-			// eslint-disable-next-line no-console
-			console.error( `${ tagName } payment start error:`, error );
+			handleError( error );
 		}
 	} );
 
