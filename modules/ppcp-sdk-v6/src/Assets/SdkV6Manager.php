@@ -112,7 +112,7 @@ class SdkV6Manager {
 	 * @return void
 	 */
 	public function enqueue(): void {
-		if ( ! $this->should_enqueue() ) {
+		if ( ! $this->should_load_on_current_page() ) {
 			return;
 		}
 
@@ -207,7 +207,7 @@ class SdkV6Manager {
 	}
 
 	/**
-	 * Whether the scripts should be enqueued on the current page.
+	 * Whether the v6 SDK loads on the current page.
 	 *
 	 * Follows the v5 SmartButton gating: each WC page type requires its
 	 * location to be enabled in the button settings, and an enabled
@@ -215,15 +215,24 @@ class SdkV6Manager {
 	 * widget can appear anywhere). The bootstrap only loads the SDK once
 	 * a button wrapper exists in the DOM.
 	 *
+	 * Also used to scope the v5 suppression: v5 must only be disabled on
+	 * pages where v6 loads (both SDKs claim window.paypal), and keep
+	 * running everywhere else (block cart/checkout, pay-now).
+	 *
 	 * @return bool
 	 */
-	private function should_enqueue(): bool {
+	public function should_load_on_current_page(): bool {
 		$page_location = $this->get_page_context();
 		if ( $page_location && $this->settings_status->is_smart_button_enabled_for_location( $page_location ) ) {
 			return true;
 		}
 
-		return $this->settings_status->is_smart_button_enabled_for_location( 'mini-cart' );
+		// The mini-cart case only applies when the classic widget is in
+		// use; block-theme mini-carts are out of this module's scope, and
+		// loading (and suppressing v5) sitewide without a widget would
+		// break the v5-rendered block express buttons for nothing.
+		return $this->settings_status->is_smart_button_enabled_for_location( 'mini-cart' )
+			&& is_active_widget( false, false, 'woocommerce_widget_cart' );
 	}
 
 	/**
