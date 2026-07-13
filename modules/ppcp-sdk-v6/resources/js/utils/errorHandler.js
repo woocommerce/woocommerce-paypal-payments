@@ -1,8 +1,14 @@
 /**
  * Centralized error handling.
  *
+ * Delegates notice rendering to the shared v5 ErrorHandler so notices
+ * look and behave the same across both button stacks (container
+ * creation, role="alert", scroll-to-notice).
+ *
  * @package
  */
+
+import ErrorHandler from '@ppcp-button/ErrorHandler';
 
 let errorLabels = {};
 
@@ -18,30 +24,33 @@ export function setErrorLabels( labels ) {
 /**
  * Handles a payment error by logging and showing a WC notice.
  *
+ * Server-provided messages (marked isUserFacing by the AJAX helper) are
+ * shown verbatim; internal errors fall back to the translated generic
+ * label so hardcoded English strings never reach shoppers.
+ *
  * @param {Object|Error} error - The error object.
  */
 export function handleError( error ) {
 	// eslint-disable-next-line no-console
 	console.error( '[PPCP SDK v6]', error );
 
-	const message = error?.message || errorLabels.generic_error || '';
-	if ( ! message ) {
+	const wrapper =
+		document.querySelector( '.woocommerce-notices-wrapper' ) ||
+		document.querySelector( '.woocommerce' ) ||
+		document.body;
+
+	const handler = new ErrorHandler(
+		errorLabels.generic_error || '',
+		wrapper
+	);
+
+	if ( error?.isUserFacing && error.message ) {
+		handler.clear();
+		handler.message( error.message );
 		return;
 	}
 
-	const wrapper = document.querySelector( '.woocommerce-notices-wrapper' );
-	if ( ! wrapper ) {
-		return;
+	if ( errorLabels.generic_error ) {
+		handler.genericError();
 	}
-
-	const ul = document.createElement( 'ul' );
-	ul.className = 'woocommerce-error';
-	ul.setAttribute( 'role', 'alert' );
-	const li = document.createElement( 'li' );
-	li.textContent = message;
-	ul.appendChild( li );
-
-	// Append rather than replace, to preserve existing WC notices.
-	wrapper.appendChild( ul );
-	ul.scrollIntoView( { behavior: 'smooth', block: 'center' } );
 }

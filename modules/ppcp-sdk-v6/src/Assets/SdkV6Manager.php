@@ -14,6 +14,7 @@ use WooCommerce\PayPalCommerce\Blocks\Endpoint\UpdateShippingEndpoint;
 use WooCommerce\PayPalCommerce\Button\Endpoint\ApproveOrderEndpoint;
 use WooCommerce\PayPalCommerce\Button\Endpoint\ChangeCartEndpoint;
 use WooCommerce\PayPalCommerce\Button\Endpoint\CreateOrderEndpoint;
+use WooCommerce\PayPalCommerce\Button\Helper\Context;
 use WooCommerce\PayPalCommerce\SdkV6\Endpoint\ClientTokenEndpoint;
 use WooCommerce\PayPalCommerce\SdkV6\Helper\ButtonStyleMapper;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
@@ -70,6 +71,13 @@ class SdkV6Manager {
 	private SettingsStatus $settings_status;
 
 	/**
+	 * The page context helper.
+	 *
+	 * @var Context
+	 */
+	private Context $context;
+
+	/**
 	 * SdkV6Manager constructor.
 	 *
 	 * @param AssetGetter       $asset_getter The asset getter.
@@ -78,6 +86,7 @@ class SdkV6Manager {
 	 * @param ButtonStyleMapper $style_mapper The button style mapper.
 	 * @param bool              $should_handle_shipping Whether to handle shipping in PayPal.
 	 * @param SettingsStatus    $settings_status The settings status helper.
+	 * @param Context           $context The page context helper.
 	 */
 	public function __construct(
 		AssetGetter $asset_getter,
@@ -85,7 +94,8 @@ class SdkV6Manager {
 		Environment $environment,
 		ButtonStyleMapper $style_mapper,
 		bool $should_handle_shipping,
-		SettingsStatus $settings_status
+		SettingsStatus $settings_status,
+		Context $context
 	) {
 		$this->asset_getter           = $asset_getter;
 		$this->version                = $version;
@@ -93,6 +103,7 @@ class SdkV6Manager {
 		$this->style_mapper           = $style_mapper;
 		$this->should_handle_shipping = $should_handle_shipping;
 		$this->settings_status        = $settings_status;
+		$this->context                = $context;
 	}
 
 	/**
@@ -136,6 +147,11 @@ class SdkV6Manager {
 	 * @return void
 	 */
 	public function register_render_hooks(): void {
+		// Activate is_cart()/is_checkout() on classic-shortcode block pages;
+		// otherwise this only happens as a side effect of constructing the
+		// (discarded) v5 SmartButton.
+		$this->context->init_context();
+
 		if ( $this->settings_status->is_smart_button_enabled_for_location( 'product' ) ) {
 			add_action(
 				'woocommerce_single_product_summary',
@@ -225,13 +241,23 @@ class SdkV6Manager {
 			$buyer_country = wc_get_base_location()['country'] ?? '';
 		}
 
-		$shipping_enabled = $this->should_handle_shipping && ! is_checkout();
+		$page_context = $this->get_page_context();
+
+		$shipping_enabled = $this->should_handle_shipping && 'checkout' !== $page_context;
 
 		$store_api_base = rtrim( rest_url( 'wc/store/v1/cart' ), '/' );
 
+		$button_styles = array();
+		if ( $page_context ) {
+			$button_styles[ $page_context ] = $this->style_mapper->styles_for_context( $page_context );
+		}
+		if ( $this->settings_status->is_smart_button_enabled_for_location( 'mini-cart' ) ) {
+			$button_styles['mini-cart'] = $this->style_mapper->styles_for_context( 'mini-cart' );
+		}
+
 		return array(
 			'sdk_url'           => $base_url . '/web-sdk/v6/core',
-			'page_context'      => $this->get_page_context(),
+			'page_context'      => $page_context,
 			'currency'          => get_woocommerce_currency(),
 			'amount'            => $this->transaction_amount(),
 			'buyer_country'     => $buyer_country,
@@ -258,6 +284,7 @@ class SdkV6Manager {
 					'nonce'    => wp_create_nonce( UpdateShippingEndpoint::nonce() ),
 				),
 				'wc_store_api'    => array(
+					'cart'                 => $store_api_base,
 					'select_shipping_rate' => $store_api_base . '/select-shipping-rate',
 					'update_customer'      => $store_api_base . '/update-customer',
 					'nonce'                => wp_create_nonce( 'wc_store_api' ),
@@ -276,12 +303,7 @@ class SdkV6Manager {
 				'handle_in_paypal' => $shipping_enabled,
 				'need_shipping'    => $this->need_shipping(),
 			),
-			'button_styles'     => array(
-				'product'   => $this->style_mapper->styles_for_context( 'product' ),
-				'cart'      => $this->style_mapper->styles_for_context( 'cart' ),
-				'checkout'  => $this->style_mapper->styles_for_context( 'checkout' ),
-				'mini-cart' => $this->style_mapper->styles_for_context( 'mini-cart' ),
-			),
+			'button_styles'     => $button_styles,
 			'wrapper'           => '#' . self::WRAPPER_ID,
 			'mini_cart_wrapper' => '#' . self::MINI_CART_WRAPPER_ID,
 		);
@@ -326,17 +348,17 @@ class SdkV6Manager {
 	/**
 	 * Returns the page context for the current WC page.
 	 *
+	 * Resolves through the shared Context helper (which handles
+	 * classic-shortcode block pages) and narrows to the contexts this
+	 * module supports; block cart/checkout and pay-now are out of scope.
+	 *
 	 * @return string
 	 */
 	private function get_page_context(): string {
-		if ( is_product() ) {
-			return 'product';
-		}
-		if ( is_cart() ) {
-			return 'cart';
-		}
-		if ( is_checkout() ) {
-			return 'checkout';
+		$context = $this->context->context();
+
+		if ( in_array( $context, array( 'product', 'cart', 'checkout' ), true ) ) {
+			return $context;
 		}
 
 		return '';

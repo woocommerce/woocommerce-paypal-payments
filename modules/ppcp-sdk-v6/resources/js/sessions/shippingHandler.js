@@ -18,9 +18,10 @@ import { updateShipping } from '../endpointsAdapter';
 function paypalAddressToWc( address = {} ) {
 	return {
 		country: address.countryCode || '',
-		state: address.state || '',
+		// v6 uses Orders-v2 naming: adminArea1 = state, adminArea2 = city.
+		state: address.adminArea1 || address.state || '',
 		postcode: address.postalCode || '',
-		city: address.city || '',
+		city: address.adminArea2 || address.city || '',
 	};
 }
 

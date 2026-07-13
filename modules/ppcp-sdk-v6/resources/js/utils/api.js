@@ -27,7 +27,11 @@ export async function postJson( { endpoint, nonce }, body = {} ) {
 	const json = await response.json();
 
 	if ( ! json.success ) {
-		throw new Error( json.data?.message || '' );
+		const error = new Error( json.data?.message || '' );
+		// Server-provided messages are translated and shopper-appropriate;
+		// the error handler shows them verbatim, unlike internal messages.
+		error.isUserFacing = Boolean( json.data?.message );
+		throw error;
 	}
 
 	return json.data;
