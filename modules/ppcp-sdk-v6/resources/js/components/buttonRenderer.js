@@ -5,13 +5,29 @@
  */
 
 /**
+ * @typedef {() => Promise<{orderId: string}>} OrderCreator
+ * A function resolving to the created PayPal order id.
+ */
+
+/**
+ * @typedef {(fundingSource: string) => OrderCreator} OrderCreatorFactory
+ * Builds an OrderCreator for a funding source.
+ */
+
+const BUTTON_TAGS = {
+	paypal: 'paypal-button',
+	venmo: 'venmo-button',
+	paylater: 'paylater-button',
+};
+
+/**
  * Creates and appends a button Web Component.
  *
- * @param {HTMLElement} wrapper - The container element.
- * @param {string} tagName - The web component tag (paypal-button, venmo-button, etc).
- * @param {Object} styles - Style config from ButtonStyleMapper.
- * @param {Object} session - The payment session.
- * @param {Function} createOrderFn - Function returning a promise with { orderId }.
+ * @param {HTMLElement}  wrapper       - The container element.
+ * @param {string}       tagName       - The web component tag.
+ * @param {Object}       styles        - Style config from ButtonStyleMapper.
+ * @param {Object}       session       - The payment session.
+ * @param {OrderCreator} createOrderFn - Returns the created order id.
  * @return {HTMLElement} The created button element.
  */
 function createButton( wrapper, tagName, styles, session, createOrderFn ) {
@@ -50,77 +66,50 @@ function createButton( wrapper, tagName, styles, session, createOrderFn ) {
 }
 
 /**
- * Renders all eligible buttons into the wrapper.
+ * Renders a button for every created session into the wrapper.
  *
- * @param {Object} options - Render options.
- * @param {string} options.wrapperSelector - CSS selector for the button container.
- * @param {Object} options.eligibility - Result from checkEligibility().
- * @param {Object} options.sessions - { paypal, venmo, payLater } session objects.
- * @param {Object} options.styles - Button styles for the current context.
- * @param {Function} options.createOrderForFunding - Function(fundingSource) returning a createOrderFn.
- * @param {Object} [options.payLaterDetails] - Pay Later product details.
+ * @param {Object}              options                       - Render options.
+ * @param {HTMLElement}         options.wrapper               - The button container element.
+ * @param {Object}              options.sessions              - Sessions keyed by method (paypal, venmo, paylater).
+ * @param {Object}              options.styles                - Button styles for the current context.
+ * @param {OrderCreatorFactory} options.createOrderForFunding - Builds a createOrder function per funding source.
+ * @param {Object}              [options.payLaterDetails]     - Pay Later product details.
  * @return {HTMLElement[]} Array of rendered button elements.
  */
 export function renderButtons( {
-	wrapperSelector,
-	eligibility,
+	wrapper,
 	sessions,
 	styles,
 	createOrderForFunding,
 	payLaterDetails,
 } ) {
-	const wrapper = document.querySelector( wrapperSelector );
-	if ( ! wrapper ) {
-		return [];
-	}
-
 	wrapper.innerHTML = '';
 
 	const rendered = [];
 
-	if ( eligibility.paypal && sessions.paypal ) {
-		rendered.push(
-			createButton(
-				wrapper,
-				'paypal-button',
-				styles,
-				sessions.paypal,
-				createOrderForFunding( 'paypal' )
-			)
-		);
-	}
+	for ( const [ method, tagName ] of Object.entries( BUTTON_TAGS ) ) {
+		if ( ! sessions[ method ] ) {
+			continue;
+		}
 
-	if ( eligibility.venmo && sessions.venmo ) {
-		rendered.push(
-			createButton(
-				wrapper,
-				'venmo-button',
-				styles,
-				sessions.venmo,
-				createOrderForFunding( 'venmo' )
-			)
-		);
-	}
-
-	if ( eligibility.payLater && sessions.payLater ) {
-		const payLaterBtn = createButton(
+		const button = createButton(
 			wrapper,
-			'paylater-button',
+			tagName,
 			styles,
-			sessions.payLater,
-			createOrderForFunding( 'paylater' )
+			sessions[ method ],
+			createOrderForFunding( method )
 		);
 
-		if ( payLaterDetails ) {
+		if ( method === 'paylater' && payLaterDetails ) {
 			if ( payLaterDetails.productCode ) {
-				payLaterBtn.productCode = payLaterDetails.productCode;
+				button.productCode = payLaterDetails.productCode;
 			}
 			if ( payLaterDetails.countryCode ) {
-				payLaterBtn.countryCode = payLaterDetails.countryCode;
+				button.countryCode = payLaterDetails.countryCode;
 			}
 		}
 
-		rendered.push( payLaterBtn );
+		rendered.push( button );
 	}
 
 	return rendered;

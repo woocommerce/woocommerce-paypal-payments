@@ -11,7 +11,7 @@
  * @param {Object} options               - Eligibility options.
  * @param {string} options.currencyCode  - ISO 4217 currency code.
  * @param {string} [options.countryCode] - ISO 3166-1 alpha-2 country code.
- * @return {Promise<Object>} Eligibility result.
+ * @return {Promise<Object>} Eligibility keyed by method, plus payLaterDetails.
  */
 export async function checkEligibility(
 	sdkInstance,
@@ -27,11 +27,11 @@ export async function checkEligibility(
 	const result = {
 		paypal: methods.isEligible( 'paypal' ),
 		venmo: methods.isEligible( 'venmo' ),
-		payLater: methods.isEligible( 'paylater' ),
+		paylater: methods.isEligible( 'paylater' ),
 		payLaterDetails: null,
 	};
 
-	if ( result.payLater ) {
+	if ( result.paylater ) {
 		try {
 			result.payLaterDetails = methods.getDetails( 'paylater' );
 		} catch ( e ) {

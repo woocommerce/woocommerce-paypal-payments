@@ -370,6 +370,14 @@ class CreateOrderEndpoint implements EndpointInterface {
 				throw $exception;
 			}
 
+			/**
+			 * Fires after the PayPal order has been created via the create-order endpoint.
+			 *
+			 * @param \WooCommerce\PayPalCommerce\ApiClient\Entity\Order $order The created PayPal order.
+			 * @param array                                              $data The request data.
+			 */
+			do_action( 'woocommerce_paypal_payments_paypal_order_created', $order, $data );
+
 			if ( 'checkout' === $data['context'] ) {
 				if ( $payment_method === PayPalGateway::ID && ! in_array( $funding_source, $this->funding_sources_without_redirect, true ) ) {
 					$this->session_handler->replace_order( $order );
