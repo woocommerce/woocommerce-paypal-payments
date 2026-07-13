@@ -28,6 +28,7 @@ return array(
 
 	'sdk-v6.button-style-mapper'   => static function ( ContainerInterface $container ): ButtonStyleMapper {
 		return new ButtonStyleMapper(
+			$container->get( 'settings.settings-provider' ),
 			$container->get( 'wcgateway.settings' )
 		);
 	},

@@ -215,6 +215,7 @@ class SdkV6Manager {
 			'sdk_url'           => $base_url . '/web-sdk/v6/core',
 			'page_context'      => $this->get_page_context(),
 			'currency'          => get_woocommerce_currency(),
+			'amount'            => $this->transaction_amount(),
 			'buyer_country'     => $buyer_country,
 			'locale'            => str_replace( '_', '-', get_locale() ),
 			'ajax'              => array(
@@ -276,6 +277,32 @@ class SdkV6Manager {
 	private function need_shipping(): bool {
 		$cart = WC()->cart;
 		return $cart && $cart->needs_shipping();
+	}
+
+	/**
+	 * Returns the expected transaction amount for eligibility checks
+	 * (affects Pay Later thresholds): the cart total, or the product
+	 * price on product pages while the cart is empty.
+	 *
+	 * @return string The amount as a decimal string, or empty when unknown.
+	 */
+	private function transaction_amount(): string {
+		$cart = WC()->cart;
+		if ( $cart && ! $cart->is_empty() ) {
+			return number_format( (float) $cart->get_total( 'edit' ), 2, '.', '' );
+		}
+
+		if ( is_product() ) {
+			$product = wc_get_product( get_the_ID() );
+			if ( $product ) {
+				$price = (float) wc_get_price_including_tax( $product );
+				if ( $price ) {
+					return number_format( $price, 2, '.', '' );
+				}
+			}
+		}
+
+		return '';
 	}
 
 	/**
