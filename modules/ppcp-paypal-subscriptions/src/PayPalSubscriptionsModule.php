@@ -305,6 +305,41 @@ class PayPalSubscriptionsModule implements ServiceModule, ExecutableModule {
 			}
 		);
 
+		/**
+		 * Surfaces the silent renewal failure: a PayPal-managed subscription (billed by PayPal on
+		 * its own schedule) should only move to on-hold via a PayPal notification, never because
+		 * WooCommerce suspended it while waiting for a renewal. Logging the transition makes the
+		 * lost renewal visible instead of failing silently.
+		 */
+		add_action(
+			'woocommerce_subscription_status_active_to_on-hold',
+			/**
+			 * Param types removed to avoid third-party issues.
+			 *
+			 * @psalm-suppress MissingClosureParamType
+			 */
+			function ( $subscription ) use ( $c ) {
+				if ( ! ( $subscription instanceof WC_Subscription ) ) {
+					return;
+				}
+
+				$subscription_id = $subscription->get_meta( 'ppcp_subscription' ) ?? '';
+				if ( ! $subscription_id ) {
+					return;
+				}
+
+				$logger = $c->get( 'woocommerce.logger.woocommerce' );
+				assert( $logger instanceof LoggerInterface );
+				$logger->warning(
+					sprintf(
+						'PayPal-managed subscription #%1$s (PayPal subscription %2$s) moved to on-hold. In PayPal Subscriptions mode renewals are recorded from the PAYMENT.SALE.COMPLETED webhook, so this usually means a renewal payment was not received/matched. Verify the webhook delivery and the subscription\'s "ppcp_subscription" meta.',
+						(string) $subscription->get_id(),
+						$subscription_id
+					)
+				);
+			}
+		);
+
 		add_action(
 			'woocommerce_subscription_before_actions',
 			/**
