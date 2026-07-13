@@ -80,7 +80,7 @@ class BillingPlanUpdated implements RequestHandler {
 
 			if ( is_array( $products ) ) {
 				foreach ( $products as $product ) {
-					if ( $product->meta_exists( 'ppcp_subscription_plan' ) ) {
+					if ( $product->get_meta( 'ppcp_subscription_plan' )['id'] === $plan_id ) {
 						$plan_name = wc_clean( wp_unslash( $request['resource']['name'] ?? '' ) );
 						if ( $plan_name !== $product->get_meta( '_ppcp_subscription_plan_name' ) ) {
 							$product->update_meta_data( '_ppcp_subscription_plan_name', $plan_name );
