@@ -1,8 +1,13 @@
 /**
  * Handles shipping address and option changes inside the PayPal popup.
  *
+ * Failures are thrown (not swallowed) so the rejected promise reaches
+ * the SDK and the popup can surface the problem to the buyer.
+ *
  * @package
  */
+
+import { updateShipping } from '../endpointsAdapter';
 
 /**
  * Converts a PayPal v6 shipping address to WC format.
@@ -10,7 +15,7 @@
  * @param {Object} address - The PayPal shipping address.
  * @return {Object} WC-formatted address fields.
  */
-function paypalAddressToWc( address ) {
+function paypalAddressToWc( address = {} ) {
 	return {
 		country: address.countryCode || '',
 		state: address.state || '',
@@ -20,55 +25,47 @@ function paypalAddressToWc( address ) {
 }
 
 /**
- * Updates the WC customer shipping address via the Store API,
- * then patches the PayPal order with recalculated totals.
+ * Posts to a WC Store API endpoint.
  *
- * @param {Object} data   - The v6 onShippingAddressChange data.
- * @param {Object} config - The wc_ppcp_sdk_v6 config object.
+ * @param {Object} storeApi - The wc_store_api config (urls + nonce).
+ * @param {string} url      - The endpoint URL.
+ * @param {Object} body     - The request body.
+ * @throws {Error} When the response is not OK.
  */
-export async function handleShippingAddressChange( data, config ) {
-	const storeApi = config.ajax.wc_store_api;
-	const address = paypalAddressToWc( data.shippingAddress );
-
-	// Fetch current cart data from Store API.
-	const cartRes = await fetch( storeApi.cart, {
-		credentials: 'same-origin',
-	} );
-	const cartData = await cartRes.json();
-
-	// Merge the new address into the cart shipping address.
-	cartData.shipping_address.country = address.country;
-	cartData.shipping_address.state = address.state;
-	cartData.shipping_address.postcode = address.postcode;
-	cartData.shipping_address.city = address.city;
-
-	// Update customer via Store API.
-	await fetch( storeApi.update_customer, {
+async function postStoreApi( storeApi, url, body ) {
+	const response = await fetch( url, {
 		method: 'POST',
 		credentials: 'same-origin',
 		headers: {
 			'Content-Type': 'application/json',
 			Nonce: storeApi.nonce,
 		},
-		body: JSON.stringify( {
-			shipping_address: cartData.shipping_address,
-		} ),
+		body: JSON.stringify( body ),
 	} );
 
-	// Patch the PayPal order with recalculated totals.
-	const res = await fetch( config.ajax.update_shipping.endpoint, {
-		method: 'POST',
-		credentials: 'same-origin',
-		body: JSON.stringify( {
-			nonce: config.ajax.update_shipping.nonce,
-			order_id: data.orderId,
-		} ),
-	} );
-
-	const json = await res.json();
-	if ( ! json.success ) {
-		data.errors.addError( json.data?.message || 'Shipping update failed.' );
+	if ( ! response.ok ) {
+		throw new Error( 'Store API request failed.' );
 	}
+}
+
+/**
+ * Updates the WC customer shipping address via the Store API,
+ * then patches the PayPal order with recalculated totals.
+ *
+ * The Store API merges partial addresses server-side, so the new
+ * fields are posted directly without fetching the cart first.
+ *
+ * @param {Object} data   - The v6 onShippingAddressChange data.
+ * @param {Object} config - The wc_ppcp_sdk_v6 config object.
+ */
+export async function handleShippingAddressChange( data, config ) {
+	const storeApi = config.ajax.wc_store_api;
+
+	await postStoreApi( storeApi, storeApi.update_customer, {
+		shipping_address: paypalAddressToWc( data.shippingAddress ),
+	} );
+
+	await updateShipping( config, data.orderId );
 }
 
 /**
@@ -80,35 +77,13 @@ export async function handleShippingAddressChange( data, config ) {
  */
 export async function handleShippingOptionsChange( data, config ) {
 	const storeApi = config.ajax.wc_store_api;
-	const shippingOptionId = data.selectedShippingOption?.id;
+	const rateId = data.selectedShippingOption?.id;
 
-	if ( shippingOptionId ) {
-		// Select the shipping rate via Store API.
-		await fetch( storeApi.select_shipping_rate, {
-			method: 'POST',
-			credentials: 'same-origin',
-			headers: {
-				'Content-Type': 'application/json',
-				Nonce: storeApi.nonce,
-			},
-			body: JSON.stringify( {
-				rate_id: shippingOptionId,
-			} ),
+	if ( rateId ) {
+		await postStoreApi( storeApi, storeApi.select_shipping_rate, {
+			rate_id: rateId,
 		} );
 	}
 
-	// Patch the PayPal order with recalculated totals.
-	const res = await fetch( config.ajax.update_shipping.endpoint, {
-		method: 'POST',
-		credentials: 'same-origin',
-		body: JSON.stringify( {
-			nonce: config.ajax.update_shipping.nonce,
-			order_id: data.orderId,
-		} ),
-	} );
-
-	const json = await res.json();
-	if ( ! json.success ) {
-		data.errors.addError( json.data?.message || 'Shipping update failed.' );
-	}
+	await updateShipping( config, data.orderId );
 }

@@ -4,36 +4,16 @@
  * @package
  */
 
+import { postJson } from './utils/api';
+
 let sdkInstance = null;
 
-/**
- * Fetches a browser-safe client token from the server.
- *
- * @param {Object} tokenConfig          - Token endpoint configuration.
- * @param {string} tokenConfig.endpoint - The AJAX endpoint URL.
- * @param {string} tokenConfig.nonce    - The nonce for the request.
- * @return {Promise<string>} The client token.
- */
-async function fetchClientToken( { endpoint, nonce } ) {
-	const response = await fetch( endpoint, {
-		method: 'POST',
-		credentials: 'same-origin',
-		headers: {
-			'Content-Type': 'application/json',
-		},
-		body: JSON.stringify( { nonce } ),
-	} );
-
-	const json = await response.json();
-
-	if ( ! json.success ) {
-		throw new Error(
-			json.data?.message || 'Failed to fetch client token.'
-		);
-	}
-
-	return json.data.client_token;
-}
+const PAGE_TYPE_MAP = {
+	product: 'product-details',
+	cart: 'cart',
+	checkout: 'checkout',
+	'mini-cart': 'mini-cart',
+};
 
 /**
  * Dynamically loads the PayPal SDK v6 core script.
@@ -61,34 +41,28 @@ function loadSdkScript( sdkUrl ) {
 /**
  * Loads the SDK script and creates an instance.
  *
- * @param {Object} config - The wc_ppcp_sdk_v6 config object.
+ * @param {Object} config  - The wc_ppcp_sdk_v6 config object.
+ * @param {string} context - The resolved page context.
  * @return {Promise<Object>} The SDK instance.
  */
-export async function loadSdkV6( config ) {
+export async function loadSdkV6( config, context ) {
 	if ( sdkInstance ) {
 		return sdkInstance;
 	}
 
-	const [ , clientToken ] = await Promise.all( [
+	const [ , tokenData ] = await Promise.all( [
 		loadSdkScript( config.sdk_url ),
-		fetchClientToken( config.ajax.client_token ),
+		postJson( config.ajax.client_token ),
 	] );
 
 	if ( ! window.paypal?.createInstance ) {
 		throw new Error( 'PayPal SDK v6 global not found after script load.' );
 	}
 
-	const pageTypeMap = {
-		product: 'product-details',
-		cart: 'cart',
-		checkout: 'checkout',
-		'mini-cart': 'cart',
-	};
-
 	sdkInstance = await window.paypal.createInstance( {
-		clientToken,
+		clientToken: tokenData.client_token,
 		components: [ 'paypal-payments', 'venmo-payments' ],
-		pageType: pageTypeMap[ config.page_context ] || 'checkout',
+		pageType: PAGE_TYPE_MAP[ context ] || 'checkout',
 		locale: config.locale,
 	} );
 
