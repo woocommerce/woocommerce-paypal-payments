@@ -22,6 +22,15 @@ return array(
 	 * the v5 stack keeps running: the blocks, applepay, googlepay and
 	 * axo modules consume this service's script_data() and would break
 	 * under a blanket disable.
+	 *
+	 * MIGRATION-PHASE ONLY: this per-page handoff exists so the site and
+	 * the test suites stay fully functional while the v6 migration
+	 * stories (PCP-5781–5788) land one surface at a time. Once every
+	 * surface is v6-owned and the epic is release-ready, replace this
+	 * with an unconditional swap (or stop loading the v5 modules
+	 * entirely) — the final state is a whole-flow flag flip, not
+	 * per-page coexistence. Do not extend this mechanism with further
+	 * per-surface toggles or compatibility shims.
 	 */
 	'button.smart-button' => static function ( SmartButtonInterface $smart_button, ContainerInterface $container ): SmartButtonInterface {
 		$manager = $container->get( 'sdk-v6.manager' );
