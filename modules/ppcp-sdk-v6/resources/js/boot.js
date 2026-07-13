@@ -40,19 +40,26 @@ import { setErrorLabels } from './utils/errorHandler';
 
 	// SDK, eligibility and sessions are created once and reused across
 	// re-renders; only the Web Components are rebuilt when WC replaces
-	// the surrounding DOM.
-	let sessions = null;
+	// the surrounding DOM. The in-flight promise is cached so concurrent
+	// render triggers share one initialization (and one client token).
+	let sessionsPromise = null;
+
+	function ensureSessions() {
+		if ( ! sessionsPromise ) {
+			sessionsPromise = createSessions().catch( ( error ) => {
+				sessionsPromise = null;
+				throw error;
+			} );
+		}
+		return sessionsPromise;
+	}
 
 	/**
-	 * Creates the sessions on first use.
+	 * Loads the SDK, checks eligibility and creates the sessions.
 	 *
 	 * @return {Promise<Object>} Sessions keyed by method.
 	 */
-	async function ensureSessions() {
-		if ( sessions ) {
-			return sessions;
-		}
-
+	async function createSessions() {
 		const sdk = await loadSdkV6( config, context );
 
 		document.dispatchEvent(
@@ -67,7 +74,10 @@ import { setErrorLabels } from './utils/errorHandler';
 			amount: config.amount,
 		} );
 
-		sessions = { payLaterDetails: eligibility.payLaterDetails, map: {} };
+		const sessions = {
+			payLaterDetails: eligibility.payLaterDetails,
+			map: {},
+		};
 		for ( const method of [ 'paypal', 'venmo', 'paylater' ] ) {
 			if ( eligibility[ method ] ) {
 				sessions.map[ method ] = createSession(

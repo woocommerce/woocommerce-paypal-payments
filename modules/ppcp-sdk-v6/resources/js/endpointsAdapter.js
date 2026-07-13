@@ -17,17 +17,17 @@ import { postJson } from './utils/api';
  * @throws {Error} When the product form or product id cannot be found.
  */
 function getProductsFromForm() {
-	const form = document.querySelector( 'form.cart' );
+	// Locate the form via the add-to-cart field: classic themes render
+	// form.cart, block themes form.wc-block-add-to-cart-with-options.
+	const idElement =
+		document.querySelector( 'form [name="add-to-cart"]' ) ||
+		document.querySelector( 'form [name="product_id"]' );
+	const form = idElement?.closest( 'form' );
 	if ( ! form ) {
 		throw new Error( 'Product form not found.' );
 	}
 
-	// The add-to-cart control is usually a submit button, so it is
-	// excluded from FormData; query the element directly instead.
-	const idElement =
-		form.querySelector( '[name="add-to-cart"]' ) ||
-		form.querySelector( '[name="product_id"]' );
-	const id = parseInt( idElement?.value ?? '0', 10 );
+	const id = parseInt( idElement.value ?? '0', 10 );
 
 	if ( ! id ) {
 		throw new Error( 'Product id not found.' );
