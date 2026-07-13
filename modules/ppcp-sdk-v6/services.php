@@ -39,7 +39,8 @@ return array(
 			$container->get( 'ppcp.asset-version' ),
 			$container->get( 'settings.environment' ),
 			$container->get( 'sdk-v6.button-style-mapper' ),
-			$container->get( 'button.handle-shipping-in-paypal' )
+			$container->get( 'button.handle-shipping-in-paypal' ),
+			$container->get( 'wcgateway.settings.status' )
 		);
 	},
 

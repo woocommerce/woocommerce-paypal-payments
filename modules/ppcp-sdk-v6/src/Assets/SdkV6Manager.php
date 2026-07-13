@@ -17,6 +17,7 @@ use WooCommerce\PayPalCommerce\Button\Endpoint\CreateOrderEndpoint;
 use WooCommerce\PayPalCommerce\SdkV6\Endpoint\ClientTokenEndpoint;
 use WooCommerce\PayPalCommerce\SdkV6\Helper\ButtonStyleMapper;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
+use WooCommerce\PayPalCommerce\WcGateway\Helper\SettingsStatus;
 
 /**
  * Class SdkV6Manager
@@ -62,6 +63,13 @@ class SdkV6Manager {
 	private bool $should_handle_shipping;
 
 	/**
+	 * The settings status helper (per-location button enablement).
+	 *
+	 * @var SettingsStatus
+	 */
+	private SettingsStatus $settings_status;
+
+	/**
 	 * SdkV6Manager constructor.
 	 *
 	 * @param AssetGetter       $asset_getter The asset getter.
@@ -69,19 +77,22 @@ class SdkV6Manager {
 	 * @param Environment       $environment The environment object.
 	 * @param ButtonStyleMapper $style_mapper The button style mapper.
 	 * @param bool              $should_handle_shipping Whether to handle shipping in PayPal.
+	 * @param SettingsStatus    $settings_status The settings status helper.
 	 */
 	public function __construct(
 		AssetGetter $asset_getter,
 		string $version,
 		Environment $environment,
 		ButtonStyleMapper $style_mapper,
-		bool $should_handle_shipping
+		bool $should_handle_shipping,
+		SettingsStatus $settings_status
 	) {
 		$this->asset_getter           = $asset_getter;
 		$this->version                = $version;
 		$this->environment            = $environment;
 		$this->style_mapper           = $style_mapper;
 		$this->should_handle_shipping = $should_handle_shipping;
+		$this->settings_status        = $settings_status;
 	}
 
 	/**
@@ -125,41 +136,49 @@ class SdkV6Manager {
 	 * @return void
 	 */
 	public function register_render_hooks(): void {
-		add_action(
-			'woocommerce_single_product_summary',
-			function (): void {
-				$this->render_wrapper();
-			},
-			31
-		);
+		if ( $this->settings_status->is_smart_button_enabled_for_location( 'product' ) ) {
+			add_action(
+				'woocommerce_single_product_summary',
+				function (): void {
+					$this->render_wrapper();
+				},
+				31
+			);
+		}
 
-		add_action(
-			'woocommerce_proceed_to_checkout',
-			function (): void {
-				if ( ! is_cart() ) {
-					return;
+		if ( $this->settings_status->is_smart_button_enabled_for_location( 'cart' ) ) {
+			add_action(
+				'woocommerce_proceed_to_checkout',
+				function (): void {
+					if ( ! is_cart() ) {
+						return;
+					}
+					$this->render_wrapper();
+				},
+				20
+			);
+		}
+
+		if ( $this->settings_status->is_smart_button_enabled_for_location( 'checkout' ) ) {
+			add_action(
+				'woocommerce_review_order_after_payment',
+				function (): void {
+					$this->render_wrapper();
 				}
-				$this->render_wrapper();
-			},
-			20
-		);
+			);
+		}
 
-		add_action(
-			'woocommerce_review_order_after_payment',
-			function (): void {
-				$this->render_wrapper();
-			}
-		);
-
-		add_action(
-			'woocommerce_widget_shopping_cart_after_buttons',
-			function (): void {
-				echo '<p class="woocommerce-mini-cart__buttons buttons">';
-				echo '<span id="' . esc_attr( self::MINI_CART_WRAPPER_ID ) . '"></span>';
-				echo '</p>';
-			},
-			30
-		);
+		if ( $this->settings_status->is_smart_button_enabled_for_location( 'mini-cart' ) ) {
+			add_action(
+				'woocommerce_widget_shopping_cart_after_buttons',
+				function (): void {
+					echo '<p class="woocommerce-mini-cart__buttons buttons">';
+					echo '<span id="' . esc_attr( self::MINI_CART_WRAPPER_ID ) . '"></span>';
+					echo '</p>';
+				},
+				30
+			);
+		}
 	}
 
 	/**
@@ -174,22 +193,21 @@ class SdkV6Manager {
 	/**
 	 * Whether the scripts should be enqueued on the current page.
 	 *
-	 * Mini-cart can appear on any frontend page, so the script is also
-	 * enqueued when the classic cart widget is active; the bootstrap
-	 * only loads the SDK once a button wrapper exists in the DOM.
+	 * Follows the v5 SmartButton gating: each WC page type requires its
+	 * location to be enabled in the button settings, and an enabled
+	 * mini-cart location enqueues on every page (the classic mini-cart
+	 * widget can appear anywhere). The bootstrap only loads the SDK once
+	 * a button wrapper exists in the DOM.
 	 *
 	 * @return bool
 	 */
 	private function should_enqueue(): bool {
-		if ( is_product() || is_checkout() || is_cart() ) {
+		$page_location = $this->get_page_context();
+		if ( $page_location && $this->settings_status->is_smart_button_enabled_for_location( $page_location ) ) {
 			return true;
 		}
 
-		if ( is_active_widget( false, false, 'woocommerce_widget_cart' ) ) {
-			return true;
-		}
-
-		return false;
+		return $this->settings_status->is_smart_button_enabled_for_location( 'mini-cart' );
 	}
 
 	/**
