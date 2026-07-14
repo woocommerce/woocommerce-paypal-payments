@@ -12,29 +12,37 @@ import { handleError } from '../utils/errorHandler';
  */
 
 /**
- * @typedef {(fundingSource: string) => OrderCreator} OrderCreatorFactory
+ * @typedef {(fundingSource: string) => OrderCreatorFactory} OrderCreatorFactory
  * Builds an OrderCreator for a funding source.
  */
 
-const BUTTON_TAGS = {
-	paypal: 'paypal-button',
-	venmo: 'venmo-button',
-	paylater: 'paylater-button',
+// Element names per the SDK core's custom-element registry (the shipped
+// core names the Pay Later element paypal-pay-later-button; it carries
+// its own localized label and takes no type attribute).
+const BUTTON_ELEMENTS = {
+	paypal: { tagName: 'paypal-button', type: 'pay' },
+	venmo: { tagName: 'venmo-button', type: 'pay' },
+	paylater: { tagName: 'paypal-pay-later-button', type: '' },
 };
 
 /**
- * Creates and appends a button Web Component.
+ * Creates a fully configured button Web Component, not yet in the DOM.
  *
- * @param {HTMLElement}  wrapper       - The container element.
+ * Components read their configuration when they connect, so every
+ * attribute and property must be in place before insertion.
+ *
  * @param {string}       tagName       - The web component tag.
+ * @param {string}       type          - The button type attribute.
  * @param {Object}       styles        - Style config from ButtonStyleMapper.
  * @param {Object}       session       - The payment session.
  * @param {OrderCreator} createOrderFn - Returns the created order id.
- * @return {HTMLElement} The created button element.
+ * @return {HTMLElement} The configured button element.
  */
-function createButton( wrapper, tagName, styles, session, createOrderFn ) {
+function createButton( tagName, type, styles, session, createOrderFn ) {
 	const button = document.createElement( tagName );
-	button.setAttribute( 'type', 'pay' );
+	if ( type ) {
+		button.setAttribute( 'type', type );
+	}
 
 	if ( styles.colorClass ) {
 		button.className = styles.colorClass;
@@ -62,7 +70,6 @@ function createButton( wrapper, tagName, styles, session, createOrderFn ) {
 		}
 	} );
 
-	wrapper.appendChild( button );
 	return button;
 }
 
@@ -88,28 +95,33 @@ export function renderButtons( {
 
 	const rendered = [];
 
-	for ( const [ method, tagName ] of Object.entries( BUTTON_TAGS ) ) {
+	for ( const [ method, element ] of Object.entries( BUTTON_ELEMENTS ) ) {
 		if ( ! sessions[ method ] ) {
 			continue;
 		}
 
+		// Pay Later requires the product details from eligibility.
+		if ( method === 'paylater' && ! payLaterDetails?.productCode ) {
+			continue;
+		}
+
 		const button = createButton(
-			wrapper,
-			tagName,
+			element.tagName,
+			element.type,
 			styles,
 			sessions[ method ],
 			createOrderForFunding( method )
 		);
 
-		if ( method === 'paylater' && payLaterDetails ) {
-			if ( payLaterDetails.productCode ) {
-				button.productCode = payLaterDetails.productCode;
-			}
+		if ( method === 'paylater' ) {
+			button.productCode = payLaterDetails.productCode;
 			if ( payLaterDetails.countryCode ) {
 				button.countryCode = payLaterDetails.countryCode;
 			}
 		}
 
+		// Insert only after full configuration.
+		wrapper.appendChild( button );
 		rendered.push( button );
 	}
 
