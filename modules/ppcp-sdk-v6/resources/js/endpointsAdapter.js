@@ -12,6 +12,14 @@ import SingleProductActionHandler from '@ppcp-button/ActionHandler/SingleProduct
 import { postJson } from './utils/api';
 
 /**
+ * Navigation seam: window.location is not mockable under jsdom, so
+ * redirects go through this indirection to stay unit-testable.
+ */
+export const navigation = {
+	assign: ( url ) => window.location.assign( url ),
+};
+
+/**
  * Collects products from the single product form for ppc-change-cart.
  *
  * Reuses the v5 product collection, which handles simple, variable,
@@ -110,7 +118,7 @@ export async function approveOrder( config, context, fundingSource, orderId ) {
 	}
 
 	// Continuation: the buyer completes the order on the checkout page.
-	window.location.assign( config.urls.checkout );
+	navigation.assign( config.urls.checkout );
 }
 
 /**
