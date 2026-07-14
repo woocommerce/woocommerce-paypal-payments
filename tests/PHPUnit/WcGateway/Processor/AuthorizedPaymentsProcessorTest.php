@@ -284,7 +284,7 @@ class AuthorizedPaymentsProcessorTest extends TestCase
 		$this->wcOrder->shouldNotReceive('add_order_note');
 
 		$this->expectException(RuntimeException::class);
-		$this->expectExceptionMessageMatches('/9500: Suspected Fraud/');
+		$this->expectExceptionMessageMatches('/your bank was unable to approve this transaction/');
 		$this->testee->capture_authorized_payment($this->wcOrder);
 	}
 

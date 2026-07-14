@@ -27,6 +27,7 @@ use WooCommerce\PayPalCommerce\Session\SessionHandler;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
 use WooCommerce\PayPalCommerce\Settings\Data\SettingsModel;
+use WooCommerce\PayPalCommerce\Webhooks\CustomIds;
 
 /**
  * Class ApproveOrderEndpoint
@@ -188,6 +189,24 @@ class ApproveOrderEndpoint implements EndpointInterface {
 
 			$order = $this->api_endpoint->order( $data['order_id'] );
 
+			$purchase_units = $order->purchase_units();
+			if ( ! empty( $purchase_units ) ) {
+				$custom_id  = $purchase_units[0]->custom_id();
+				$prefix_len = strlen( CustomIds::CUSTOMER_ID_PREFIX );
+				if ( strpos( $custom_id, CustomIds::CUSTOMER_ID_PREFIX ) === 0 ) {
+					$order_session_id = substr( $custom_id, $prefix_len );
+					$wc_session       = WC()->session;
+					if ( $wc_session instanceof \WC_Session_Handler ) {
+						$current_session_id = (string) $wc_session->get_customer_unique_id();
+						if ( $order_session_id !== $current_session_id ) {
+							throw new RuntimeException(
+								__( 'Order validation failed.', 'woocommerce-paypal-payments' )
+							);
+						}
+					}
+				}
+			}
+
 			$payment_source = $order->payment_source();
 
 			if ( $payment_source && $payment_source->name() === 'card' ) {
@@ -250,7 +269,8 @@ class ApproveOrderEndpoint implements EndpointInterface {
 			}
 
 			$should_create_wc_order = $data['should_create_wc_order'] ?? false;
-			if ( ! $this->final_review_enabled && ! $this->context->is_checkout() && $should_create_wc_order ) {
+			$is_express_checkout    = in_array( $funding_source, array( 'apple_pay', 'googlepay' ), true );
+			if ( ( ! $this->final_review_enabled || $is_express_checkout ) && ! $this->context->is_checkout() && $should_create_wc_order ) {
 				$wc_order = $this->wc_order_creator->create_from_paypal_order( $order, WC()->cart, $data );
 				$this->gateway->process_payment( $wc_order->get_id() );
 				$order_received_url = $wc_order->get_checkout_order_received_url();

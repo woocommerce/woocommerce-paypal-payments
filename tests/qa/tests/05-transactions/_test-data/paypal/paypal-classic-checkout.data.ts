@@ -43,14 +43,12 @@ export const payPalClassicCheckoutIntentAuthorized: ShopOrder[] = [
 
 export const payPalClassicCheckoutNegativeFee: ShopOrder[] = [
 	{
-		// https://inpsyde.atlassian.net/browse/PCP-6604
 		title: 'PCP-6604 | Transaction - Classic checkout - PayPal - Customer - Order with negative fee snippet',
 		...orders.negative12Fee,
 		payment: payPal,
 		customer,
 	},
 	{
-		// https://inpsyde.atlassian.net/browse/PCP-6605
 		title: 'PCP-6605 | Transaction - Classic checkout - PayPal - Guest - Order with negative fee snippet',
 		...orders.negative12Fee,
 		payment: payPal,

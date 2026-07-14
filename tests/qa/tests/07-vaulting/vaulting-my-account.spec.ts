@@ -14,13 +14,11 @@ test.beforeAll( async ( { utils } ) => {
 
 const savePaymentMethodData = [
 	{
-		// https://inpsyde.atlassian.net/browse/PCP-4499
 		testKey: 'PCP-4499',
 		testLabel: ' @Smoke',
 		payment: payPal,
 	},
 	{
-		// https://inpsyde.atlassian.net/browse/PCP-4500
 		testKey: 'PCP-4500',
 		testLabel: ' @Smoke',
 		payment: acdc,
@@ -68,13 +66,11 @@ for ( const testData of savePaymentMethodData ) {
 
 const deletePaymentMethodData = [
 	{
-		// Fail: Deleting Payment Token in WC does not delete it on PayPal bug https://inpsyde.atlassian.net/browse/PCP-4782
-		// https://inpsyde.atlassian.net/browse/PCP-1732
+		// Fail: Deleting Payment Token in WC does not delete it on PayPal bug PCP-4782
 		testKey: 'PCP-1732',
 		payment: payPal,
 	},
 	{
-		// https://inpsyde.atlassian.net/browse/PCP-1371
 		testKey: 'PCP-1371',
 		payment: acdc,
 	},

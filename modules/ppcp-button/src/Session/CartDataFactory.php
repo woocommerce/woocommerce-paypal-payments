@@ -24,12 +24,18 @@ class CartDataFactory {
 			}
 		}
 
-		return new CartData(
+		$cart_data = new CartData(
 			$cart->get_cart_for_session(),
 			$cart->get_applied_coupons(),
 			$cart->needs_shipping(),
 			get_current_user_id(),
 			$cart->get_cart_hash()
 		);
+
+		if ( WC()->session ) {
+			$cart_data->set_session_customer_id( (string) WC()->session->get_customer_id() );
+		}
+
+		return $cart_data;
 	}
 }

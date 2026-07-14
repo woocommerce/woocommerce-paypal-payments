@@ -168,6 +168,13 @@ export default defineConfig< BaseExtend >( {
 			fullyParallel: false,
 		},
 		{
+			name: 'setup-transaction-germany',
+			dependencies: [ 'setup-pcp-germany' ],
+			testMatch: /03-pcp\.setup\.ts/,
+			grep: /setup:transaction:germany;/,
+			fullyParallel: false,
+		},
+		{
 			name: 'setup-vaulting',
 			dependencies: [ 'setup-pcp-usa' ],
 			testMatch: /03-pcp\.setup\.ts/,
@@ -216,6 +223,11 @@ export default defineConfig< BaseExtend >( {
 			name: 'shard:transaction-mexico',
 			dependencies: [ 'setup-transaction-mexico' ],
 			testMatch: /05-transactions\/transaction-mexico.*\.spec\.ts/,
+		},
+		{
+			name: 'shard:transaction-germany',
+			dependencies: [ 'setup-transaction-germany' ],
+			testMatch: /05-transactions\/transaction-germany.*\.spec\.ts/,
 		},
 		{
 			name: 'shard:refund',

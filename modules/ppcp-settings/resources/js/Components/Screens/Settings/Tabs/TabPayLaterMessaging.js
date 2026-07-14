@@ -1,4 +1,4 @@
-import { PayLaterMessagingHooks } from '@ppcp-settings/data';
+import { PayLaterMessagingHooks, CommonHooks } from '@ppcp-settings/data';
 import { useEffect } from '@wordpress/element';
 
 const TabPayLaterMessaging = () => {
@@ -11,6 +11,7 @@ const TabPayLaterMessaging = () => {
 		setHome,
 		setCustom_placement,
 	} = PayLaterMessagingHooks.usePayLaterMessaging();
+	const { clientId: merchantClientId } = CommonHooks.useMerchant();
 	const PcpPayLaterConfigurator =
 		window.ppcpSettings?.PcpPayLaterConfigurator;
 
@@ -18,7 +19,7 @@ const TabPayLaterMessaging = () => {
 		if ( window.merchantConfigurators && PcpPayLaterConfigurator ) {
 			window.merchantConfigurators.Messaging( {
 				config,
-				merchantClientId: PcpPayLaterConfigurator.merchantClientId,
+				merchantClientId,
 				partnerClientId: PcpPayLaterConfigurator.partnerClientId,
 				partnerName: 'WooCommerce',
 				bnCode: PcpPayLaterConfigurator.bnCode,
@@ -45,7 +46,7 @@ const TabPayLaterMessaging = () => {
 				},
 			} );
 		}
-	}, [ PcpPayLaterConfigurator, config ] );
+	}, [ PcpPayLaterConfigurator, config, merchantClientId ] );
 
 	return (
 		<div

@@ -1,11 +1,14 @@
 /**
  * External dependencies
  */
-import { updateDotenv } from '@inpsyde/playwright-utils/build';
+import {
+	updateDotenv,
+	WooCommerceApi,
+} from '@inpsyde/playwright-utils/build';
 /**
  * Internal dependencies
  */
-import { test as setup } from '..';
+import { test as setup, expect } from '..';
 import {
 	shopSettings,
 	shippingZones,
@@ -228,4 +231,31 @@ export const setupWooCommerce = async () => {
 		await wooCommerceUtils.publishClassicCartPage();
 		await wooCommerceUtils.publishClassicCheckoutPage();
 	} );
+};
+
+export const waitForOrderStatus = async (
+	wooCommerceApi: WooCommerceApi,
+	orderId: number,
+	{
+		expectedStatus = 'processing',
+		timeout = 60_000,
+	}: { expectedStatus?: string; timeout?: number } = {}
+) => {
+	let order: WooCommerce.Order;
+
+	await expect
+		.poll(
+			async () => {
+				order = await wooCommerceApi.getOrder( orderId );
+				return order.status;
+			},
+			{
+				message: `Assert order #${ orderId } status is "${ expectedStatus }"`,
+				timeout,
+				intervals: [ 1_000, 2_500, 5_000, 10_000 ],
+			}
+		)
+		.toEqual( expectedStatus );
+
+	return order;
 };

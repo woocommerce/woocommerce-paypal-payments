@@ -22,7 +22,6 @@ test.beforeAll( async ( { utils, pcpApi } ) => {
 	);
 } );
 
-// https://inpsyde.atlassian.net/browse/PCP-4747
 test( 'PCP-4747 | Settings - US- Styling - Default UI', async ( {
 	utils,
 	pcpStyling,

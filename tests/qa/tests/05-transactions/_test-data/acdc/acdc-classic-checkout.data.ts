@@ -14,14 +14,12 @@ const guest = guests.usa;
 
 export const acdcClassicCheckout: ShopOrder[] = [
 	{
-		// https://inpsyde.atlassian.net/browse/PCP-1202
 		title: 'PCP-1202 | Transaction - Classic checkout - ACDC - Default order @Critical @Smoke',
 		...orders.default,
 		payment: payments.acdc,
 		customer: guest,
 	},
 	{
-		// https://inpsyde.atlassian.net/browse/PCP-2743
 		title: 'PCP-2743 | Transaction - Classic checkout - ACDC - Order by customer',
 		...orders.default,
 		payment: payments.acdc,
@@ -31,7 +29,6 @@ export const acdcClassicCheckout: ShopOrder[] = [
 
 export const acdcClassicCheckoutExcludingTax: ShopOrder[] = [
 	{
-		// https://inpsyde.atlassian.net/browse/PCP-1259
 		title: 'PCP-1259 | Transaction - Classic checkout - ACDC - Order with price excluding tax',
 		...orders.excludingTax,
 		payment: payments.acdc,
@@ -40,7 +37,6 @@ export const acdcClassicCheckoutExcludingTax: ShopOrder[] = [
 
 export const acdcClassicCheckoutIntentAuthorized: ShopOrder[] = [
 	{
-		// https://inpsyde.atlassian.net/browse/PCP-5740
 		title: 'PCP-5740 | Transaction - Classic checkout - ACDC - Customer - Order with intent Authorize',
 		...orders.default,
 		payment: {
@@ -51,7 +47,6 @@ export const acdcClassicCheckoutIntentAuthorized: ShopOrder[] = [
 		customer,
 	},
 	{
-		// https://inpsyde.atlassian.net/browse/PCP-5741
 		title: 'PCP-5741 | Transaction - Classic checkout - ACDC - Guest - Order with intent Authorize',
 		...orders.default,
 		payment: {
@@ -65,14 +60,12 @@ export const acdcClassicCheckoutIntentAuthorized: ShopOrder[] = [
 
 export const acdcClassicCheckout3ds: ShopOrder[] = [
 	{
-		// https://inpsyde.atlassian.net/browse/PCP-5429
 		title: 'PCP-5429 | Transaction - Classic checkout - ACDC - Contingency for 3D Secure = Always trigger 3D secure',
 		...orders.default,
 		payment: payments.acdc3ds,
 		customer: guest,
 	},
 	{
-		// https://inpsyde.atlassian.net/browse/PCP-1209
 		title: 'PCP-1209 | Transaction - Classic checkout - ACDC - Order paid with card requiring 3DS',
 		...orders.default,
 		payment: payments.acdc3ds,
@@ -82,14 +75,12 @@ export const acdcClassicCheckout3ds: ShopOrder[] = [
 
 export const acdcClassicCheckoutNegativeFee: ShopOrder[] = [
 	{
-		// https://inpsyde.atlassian.net/browse/PCP-6608
 		title: 'PCP-6608 | Transaction - Classic checkout - ACDC - Customer - Order with negative fee snippet',
 		...orders.negative12Fee,
 		payment: payments.acdc,
 		customer,
 	},
 	{
-		// https://inpsyde.atlassian.net/browse/PCP-6609
 		title: 'PCP-6609 | Transaction - Classic checkout - ACDC - Guest - Order with negative fee snippet',
 		...orders.negative12Fee,
 		payment: payments.acdc,

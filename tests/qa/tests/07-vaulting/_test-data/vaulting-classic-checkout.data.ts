@@ -7,7 +7,6 @@ const customer = customers.usa;
 
 const savePaymentMethodData: ShopOrder[] = [
 	{
-		// https://inpsyde.atlassian.net/browse/PCP-5389
 		title: 'PCP-5389 | Vaulting - Transaction - Classic checkout - PayPal - Save payment method @Critical @Smoke',
 		...orders.default,
 		payment: {
@@ -17,7 +16,6 @@ const savePaymentMethodData: ShopOrder[] = [
 		customer,
 	},
 	{
-		// https://inpsyde.atlassian.net/browse/PCP-1204
 		title: 'PCP-1204 | Vaulting - Transaction - Classic checkout - ACDC - Save payment method @Critical @Smoke',
 		...orders.default,
 		payment: {
@@ -27,7 +25,6 @@ const savePaymentMethodData: ShopOrder[] = [
 		customer,
 	},
 	{
-		// https://inpsyde.atlassian.net/browse/PCP-5388
 		title: 'PCP-5388 | Vaulting - Transaction - Classic checkout - ACDC - Do not save payment method',
 		...orders.default,
 		payment: {
@@ -40,7 +37,6 @@ const savePaymentMethodData: ShopOrder[] = [
 
 const acdcAdditionalCardData: ShopOrder[] = [
 	{
-		// https://inpsyde.atlassian.net/browse/PCP-5387
 		title: 'PCP-5387 | Vaulting - Transaction - Classic checkout - ACDC - Pay with card other then saved and do not save it',
 		...orders.default,
 		payment: {
@@ -50,7 +46,6 @@ const acdcAdditionalCardData: ShopOrder[] = [
 		customer,
 	},
 	{
-		// https://inpsyde.atlassian.net/browse/PCP-5386
 		title: 'PCP-5386 | Vaulting - Transaction - Classic checkout - ACDC - Pay with card other then saved and save it',
 		...orders.default,
 		payment: {
@@ -63,7 +58,6 @@ const acdcAdditionalCardData: ShopOrder[] = [
 
 const vaultedPaymentMethodData: ShopOrder[] = [
 	{
-		// https://inpsyde.atlassian.net/browse/PCP-1378
 		title: 'PCP-1378 | Vaulting - Transaction - Classic checkout - PayPal - Pay with vaulted account',
 		...orders.default,
 		payment: {
@@ -73,7 +67,6 @@ const vaultedPaymentMethodData: ShopOrder[] = [
 		customer,
 	},
 	{
-		// https://inpsyde.atlassian.net/browse/PCP-1206
 		title: 'PCP-1206 | Vaulting - Transaction - Classic checkout - ACDC - Pay with saved card',
 		...orders.default,
 		payment: {

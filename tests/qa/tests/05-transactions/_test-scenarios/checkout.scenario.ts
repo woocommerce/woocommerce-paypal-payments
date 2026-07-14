@@ -2,10 +2,10 @@
  * Internal dependencies
  */
 import { PayPalPaymentDetails, ShopOrder } from '../../../resources';
-import { annotateVisitor, test } from '../../../utils';
+import { annotateVisitor, test, waitForOrderStatus } from '../../../utils';
 
 export const transactionsOnCheckout = ( testOrder: ShopOrder ) => {
-	const { title, payment, products, customer, merchant } = testOrder;
+	const { title, payment, products, customer, merchant, orderStatus } = testOrder;
 
 	test(
 		title,
@@ -19,6 +19,10 @@ export const transactionsOnCheckout = ( testOrder: ShopOrder ) => {
 			utils,
 		} ) => {
 			const { title: gatewayTitle } = payment.gateway;
+
+			if( gatewayTitle === 'Pay upon Invoice' ) {
+				test.setTimeout( 3 * 60_000 ); // 3 minutes for PUI
+			}
 
 			await test.step( `Add product(s) to the cart`, async () => {
 				await utils.fillVisitorsCart( products );
@@ -37,7 +41,10 @@ export const transactionsOnCheckout = ( testOrder: ShopOrder ) => {
 				await orderReceived.assertOrderDetails( testOrder );
 				await orderReceived.assertNoErrors();
 
-				orderId = await orderReceived.getOrderNumber();				
+				orderId = await orderReceived.getOrderNumber();
+				await waitForOrderStatus( wooCommerceApi, orderId, {
+					expectedStatus: orderStatus,
+				} );
 				const transactionId =
 						( await wooCommerceApi.getOrder( orderId ) ).transaction_id;
 
@@ -46,7 +53,7 @@ export const transactionsOnCheckout = ( testOrder: ShopOrder ) => {
 					testOrder,
 				);
 
-				if( payPalPaymentDetails.amount !== '0' ) { // can be 0 for free trial or free orders
+				if ( payPalPaymentDetails && payPalPaymentDetails.amount !== '0' ) { // can be 0 for free trial or free orders, OXXO, PUI
 					await orderReceived.assertTotalEqualsPayPalTotal(
 						payPalPaymentDetails.amount,
 						testOrder.currency

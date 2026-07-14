@@ -51,14 +51,12 @@ export const payLaterClassicCheckoutHorizontalButton: ShopOrder[] = [
 
 export const payLaterClassicCheckoutNegativeFee: ShopOrder[] = [
 	{
-		// https://inpsyde.atlassian.net/browse/PCP-6606
 		title: 'PCP-6606 | Transaction - Classic checkout - Pay Later - Customer - Order with negative fee snippet',
 		...orders.negative12Fee,
 		payment: payLater,
 		customer,
 	},
 	{
-		// https://inpsyde.atlassian.net/browse/PCP-6607
 		title: 'PCP-6607 | Transaction - Classic checkout - Pay Later - Guest - Order with negative fee snippet',
 		...orders.negative12Fee,
 		payment: payLater,

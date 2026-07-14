@@ -43,14 +43,12 @@ export const payLaterCheckoutIntentAuthorized: ShopOrder[] = [
 
 export const payLaterCheckoutNegativeFee: ShopOrder[] = [
 	{
-		// https://inpsyde.atlassian.net/browse/PCP-6571
 		title: 'PCP-6571 | Transaction - Checkout - Pay Later - Customer - Order with negative fee snippet',
 		...orders.negative12Fee,
 		payment: payLater,
 		customer,
 	},
 	{
-		// https://inpsyde.atlassian.net/browse/PCP-6572
 		title: 'PCP-6572 | Transaction - Checkout - Pay Later - Guest - Order with negative fee snippet',
 		...orders.negative12Fee,
 		payment: payLater,
