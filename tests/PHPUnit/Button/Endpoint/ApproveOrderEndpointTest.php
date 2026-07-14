@@ -240,4 +240,133 @@ class ApproveOrderEndpointTest extends TestCase
 
 		// Then — replace_order called with the correct order and success response sent
 	}
+
+	/**
+	 * Creates a SUT instance with final_review_enabled set to true (Pay Now disabled).
+	 */
+	private function create_sut_with_final_review( bool $final_review_enabled ): ApproveOrderEndpoint
+	{
+		return new ApproveOrderEndpoint(
+			$this->request_data,
+			$this->api_endpoint,
+			$this->session_handler,
+			$this->threed_secure,
+			$this->settings_provider,
+			$this->settings_model,
+			$this->dcc_applies,
+			$this->order_helper,
+			$final_review_enabled,
+			$this->gateway,
+			$this->wc_order_creator,
+			$this->logger,
+			$this->context
+		);
+	}
+
+	/**
+	 * Sets up common mocks for the WC order creation flow tests.
+	 *
+	 * @return Order&\Mockery\MockInterface
+	 */
+	private function arrange_order_creation_flow( string $order_id, string $funding_source, bool $should_create_wc_order ): Order
+	{
+		$session_id    = 'test-session';
+		$purchase_unit = Mockery::mock( PurchaseUnit::class );
+		$purchase_unit->shouldReceive( 'custom_id' )->andReturn( 'pcp_customer_' . $session_id );
+
+		$order_status = Mockery::mock( OrderStatus::class );
+		$order_status->shouldReceive( 'is' )->andReturn( true );
+
+		$order = Mockery::mock( Order::class );
+		$order->shouldReceive( 'purchase_units' )->andReturn( array( $purchase_unit ) );
+		$order->shouldReceive( 'payment_source' )->andReturn( null );
+		$order->shouldReceive( 'status' )->andReturn( $order_status );
+
+		$this->request_data->shouldReceive( 'read_request' )
+			->with( ApproveOrderEndpoint::nonce() )
+			->andReturn( array(
+				'order_id'              => $order_id,
+				'funding_source'        => $funding_source,
+				'should_create_wc_order' => $should_create_wc_order,
+			) );
+		$this->api_endpoint->shouldReceive( 'order' )->with( $order_id )->andReturn( $order );
+		$this->session_handler->shouldReceive( 'replace_funding_source' )->once();
+		$this->session_handler->shouldReceive( 'replace_order' )->once();
+		$this->context->shouldReceive( 'is_checkout' )->andReturn( false );
+
+		$wc_session = Mockery::mock( \WC_Session_Handler::class );
+		$wc_session->shouldReceive( 'get_customer_unique_id' )->andReturn( $session_id );
+		$wc_session->shouldReceive( 'set' );
+		$wc_cart     = Mockery::mock( \WC_Cart::class );
+		$wc          = Mockery::mock();
+		$wc->session = $wc_session;
+		$wc->cart    = $wc_cart;
+		when( 'WC' )->justReturn( $wc );
+
+		return $order;
+	}
+
+	/**
+	 * @scenario When final_review_enabled=true (Pay Now disabled) and funding_source is express checkout,
+	 *           the express checkout bypass should create a WC order and process payment.
+	 *
+	 * @dataProvider express_checkout_funding_sources
+	 */
+	public function test_express_checkout_creates_wc_order_even_with_final_review_enabled( string $funding_source ): void
+	{
+		// Arrange
+		$sut   = $this->create_sut_with_final_review( true );
+		$order = $this->arrange_order_creation_flow( 'EXPRESS-ORDER', $funding_source, true );
+
+		$wc_order = Mockery::mock( \WC_Order::class );
+		$wc_order->shouldReceive( 'get_id' )->andReturn( 42 );
+		$wc_order->shouldReceive( 'get_checkout_order_received_url' )->andReturn( 'https://example.com/order-received/42' );
+
+		$this->wc_order_creator->shouldReceive( 'create_from_paypal_order' )->once()->andReturn( $wc_order );
+		$this->gateway->shouldReceive( 'process_payment' )->once()->with( 42 );
+
+		expect( 'wp_send_json_success' )->once()->with(
+			Mockery::on( static function ( $data ) {
+				return isset( $data['order_received_url'] );
+			} )
+		);
+
+		// When
+		$sut->handle_request();
+
+		// Then — WC order created and payment processed despite final_review_enabled=true
+	}
+
+	/**
+	 * Data provider for express checkout funding sources.
+	 */
+	public static function express_checkout_funding_sources(): array
+	{
+		return array(
+			'Apple Pay'  => array( 'apple_pay' ),
+			'Google Pay' => array( 'googlepay' ),
+		);
+	}
+
+	/**
+	 * @scenario When final_review_enabled=true and funding_source is 'paypal' (standard flow),
+	 *           no WC order should be created — the user must complete checkout manually.
+	 */
+	public function test_standard_paypal_does_not_create_wc_order_when_final_review_enabled(): void
+	{
+		// Arrange
+		$sut = $this->create_sut_with_final_review( true );
+		$this->arrange_order_creation_flow( 'PAYPAL-ORDER', 'paypal', true );
+
+		$this->wc_order_creator->shouldReceive( 'create_from_paypal_order' )->never();
+		$this->gateway->shouldReceive( 'process_payment' )->never();
+
+		expect( 'wp_send_json_success' )->once();
+
+		// When
+		$sut->handle_request();
+
+		// Then — no WC order creation, standard continuation flow
+	}
+
 }
