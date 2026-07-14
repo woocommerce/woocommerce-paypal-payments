@@ -430,6 +430,12 @@ export class PayPalUi {
 		// On block checkout
 		if(	this.page.url().includes( '/checkout/' ) ) {
 			await this.assertVaultedPaymentMethodIsDisplayed( payment );
+			if ( payment.isFreeTrialSubscription ) {
+				// Free trial cart: no vault component is rendered, just the plain saved-token radio.
+				await this.payPalVaultedGateway().click();
+				await this.submitOrder();
+				return;
+			}
 			await this.payPalVaultComponent().click();
 			await this.submitOrder();
 			const sandboxPage = new PayPalPopup( this.page );
@@ -713,6 +719,16 @@ export class PayPalUi {
 			case 'paypal':
 				// On block checkout
 				if( this.page.url().includes( '/checkout/' ) ) {
+					if ( payment.isFreeTrialSubscription ) {
+						// Free trial cart: PayPal doesn't render the vault component
+						// (see FreeTrialSubscriptionHelper::is_free_trial_cart()), only
+						// the plain saved-token radio.
+						await expect(
+							this.payPalVaultedGateway(),
+							'Assert PayPal vaulted gateway is visible'
+						).toBeVisible();
+						break;
+					}
 					await expect(
 						this.payPalVaultComponent(),
 						'Assert PayPal vault component is visible'

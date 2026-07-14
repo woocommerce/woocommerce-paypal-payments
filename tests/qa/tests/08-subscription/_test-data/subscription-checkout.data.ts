@@ -29,7 +29,7 @@ const vaultingGuest: ShopOrder[] = [
 		// https://inpsyde.atlassian.net/browse/PCP-4897
 		title: 'PCP-4897 | Vaulting subscription - Transaction - Checkout - PayPal - Free trial order by guest @Smoke',
 		...orders.default,
-		payment: payments.payPal,
+		payment: { ...payments.payPal, isFreeTrialSubscription: true },
 		merchant,
 		customer: guest,
 		products: [ products.subscriptionFreeTrial ],
@@ -64,7 +64,7 @@ const vaultingCustomer: ShopOrder[] = [
 	{
 		title: 'PCP-4899 | Vaulting subscription - Transaction - Checkout - PayPal - Free trial order by customer',
 		...orders.default,
-		payment: payments.payPal,
+		payment: { ...payments.payPal, isFreeTrialSubscription: true },
 		merchant,
 		customer,
 		products: [ products.subscriptionFreeTrial ],

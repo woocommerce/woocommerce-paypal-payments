@@ -685,10 +685,15 @@ export class PayPalUiClassic extends PayPalUi {
 						'Assert PayPal buttons are NOT visible',
 					).not.toBeVisible();
 
-					await expect(
-						this.payPalVaultComponent(),
-						'Assert PayPal vault component is visible',
-					).toBeVisible();
+					if ( ! payment.isFreeTrialSubscription ) {
+						// Free trial cart: PayPal doesn't render the vault component
+						// (see FreeTrialSubscriptionHelper::is_free_trial_cart()), only
+						// the plain saved-token radio.
+						await expect(
+							this.payPalVaultComponent(),
+							'Assert PayPal vault component is visible',
+						).toBeVisible();
+					}
 
 					await expect(
 						this.payPalVaultedPaymentMethodRadio(),

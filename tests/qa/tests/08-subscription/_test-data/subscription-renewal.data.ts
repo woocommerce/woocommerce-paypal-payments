@@ -39,7 +39,7 @@ const vaultingFreeTrialRenewal: ShopOrder[] = [
 	{
 		title: 'PCP-4913 | Vaulting subscription - PayPal - Free trial order renewal',
 		...orders.default,
-		payment: payments.payPal,
+		payment: { ...payments.payPal, isFreeTrialSubscription: true },
 		merchant,
 		customer,
 		products: [ products.subscriptionFreeTrial ],
