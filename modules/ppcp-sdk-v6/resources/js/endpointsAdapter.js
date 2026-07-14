@@ -69,13 +69,16 @@ export async function createOrder( config, context, fundingSource ) {
 }
 
 /**
- * Approves the order and completes the purchase.
+ * Approves the order and continues the purchase.
  *
- * Mirrors the v5 completion flow: on non-checkout contexts the endpoint
- * creates the WC order (should_create_wc_order) and returns the
- * order-received URL, unless the final-review setting is enabled, in
- * which case the buyer is sent to checkout to confirm. On classic
- * checkout the WC checkout form is submitted after approval.
+ * Mirrors the v5 classic continuation flow (onApproveForContinue): the
+ * endpoint stores the approved order in the WC session, and on
+ * product/cart contexts the buyer is redirected to checkout, where the
+ * gateway processes the session order on Place Order. (Creating the WC
+ * order directly, should_create_wc_order, is the blocks express flow —
+ * it requires a shipping option selected inside the popup, which a
+ * One-Touch approval may never provide.) On classic checkout the WC
+ * checkout form is submitted after approval instead.
  *
  * @param {Object} config        - The wc_ppcp_sdk_v6 config object.
  * @param {string} context       - The page context.
@@ -83,16 +86,10 @@ export async function createOrder( config, context, fundingSource ) {
  * @param {string} orderId       - The PayPal order ID.
  */
 export async function approveOrder( config, context, fundingSource, orderId ) {
-	const data = await postJson( config.ajax.approve_order, {
+	await postJson( config.ajax.approve_order, {
 		order_id: orderId,
 		funding_source: fundingSource,
-		should_create_wc_order: context !== 'checkout',
 	} );
-
-	if ( data?.order_received_url ) {
-		window.location.assign( data.order_received_url );
-		return;
-	}
 
 	if ( context === 'checkout' && typeof jQuery !== 'undefined' ) {
 		const checkoutForm = jQuery( 'form.checkout' );
@@ -112,7 +109,7 @@ export async function approveOrder( config, context, fundingSource, orderId ) {
 		}
 	}
 
-	// Final review enabled: the buyer confirms the order on the checkout page.
+	// Continuation: the buyer completes the order on the checkout page.
 	window.location.assign( config.urls.checkout );
 }
 
