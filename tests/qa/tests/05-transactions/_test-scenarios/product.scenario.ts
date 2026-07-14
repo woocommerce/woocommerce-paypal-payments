@@ -84,7 +84,7 @@ export const transactionsOnProduct = ( testOrder: ShopOrder ) => {
 export const getTestedGatewayContainer = ( product: Product, gatewayShortcut: string ) => {
 	return gatewayShortcut === 'googlepay'
 		? product.payPalUi.googlePayGatewayContainer()
-		: product.payPalUi.payPalGatewayContainer();
+		: product.payPalUi.payPalButtonsContainer();
 }
 
 export const getTestedGatewayButton = ( product: Product, gatewayShortcut: string ) => {
