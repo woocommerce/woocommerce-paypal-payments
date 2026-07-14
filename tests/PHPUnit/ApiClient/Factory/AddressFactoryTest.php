@@ -219,4 +219,38 @@ class AddressFactoryTest extends TestCase
             ],
         ];
     }
+
+    /**
+     * PayPal sometimes serializes an empty address object as a JSON array
+     * (`[]`), which json_decode() turns into an empty PHP array rather than
+     * an stdClass. Previously this fataled with a TypeError since the method
+     * was type-hinted to accept only \stdClass.
+     */
+    public function testFromPayPalResponseWithEmptyArrayReturnsEmptyAddress()
+    {
+        $testee = new AddressFactory();
+
+        $result = $testee->from_paypal_response([]);
+
+        $this->assertEquals('', $result->country_code());
+        $this->assertEquals('', $result->address_line_1());
+        $this->assertEquals('', $result->address_line_2());
+        $this->assertEquals('', $result->admin_area_1());
+        $this->assertEquals('', $result->admin_area_2());
+        $this->assertEquals('', $result->postal_code());
+    }
+
+    public function testFromPayPalResponseWithNonEmptyArrayIsCastToObject()
+    {
+        $testee = new AddressFactory();
+
+        $result = $testee->from_paypal_response([
+            'country_code' => 'shipping_country',
+            'address_line_1' => 'shipping_address_1',
+        ]);
+
+        $this->assertEquals('shipping_country', $result->country_code());
+        $this->assertEquals('shipping_address_1', $result->address_line_1());
+        $this->assertEquals('', $result->postal_code());
+    }
 }

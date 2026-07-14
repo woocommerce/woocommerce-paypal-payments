@@ -186,6 +186,32 @@ class PayerFactoryTest extends TestCase
     }
 
     /**
+     * PayPal sometimes serializes an empty payer address as a JSON array
+     * (`[]`) instead of an object (`{}`), which previously fataled with
+     * "AddressFactory::from_paypal_response(): Argument #1 ($data) must be
+     * of type stdClass, array given" because PayerFactory passed the
+     * decoded array straight through without normalizing it.
+     */
+    public function testFromPayPalResponseWithArrayAddressDoesNotFatal()
+    {
+        $data = (object)[
+            'address' => [],
+            'name' => (object)[
+                'given_name' => 'given_name',
+                'surname' => 'surname',
+            ],
+            'email_address' => 'email_address',
+            'payer_id' => 'payer_id',
+        ];
+
+        $testee = new PayerFactory(new AddressFactory());
+        $payer = $testee->from_paypal_response($data);
+
+        $this->assertInstanceOf(Address::class, $payer->address());
+        $this->assertEquals('', $payer->address()->country_code());
+    }
+
+    /**
      * @dataProvider dataForTestFromPayPalResponse
      */
     public function testFromPayPalResponse($data)
@@ -298,6 +324,17 @@ class PayerFactoryTest extends TestCase
                         ],
                     ],
                     'birth_date' => '1970-01-01',
+                    'email_address' => 'email_address',
+                    'payer_id' => 'payer_id',
+                ],
+            ],
+            'empty_array_address' => [
+                (object)[
+                    'address' => [],
+                    'name' => (object)[
+                        'given_name' => 'given_name',
+                        'surname' => 'surname',
+                    ],
                     'email_address' => 'email_address',
                     'payer_id' => 'payer_id',
                 ],
