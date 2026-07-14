@@ -176,11 +176,7 @@ export const PayPalComponent = ( {
 	};
 
 	const beginExpressPaymentIfDeferred = () => {
-		if (
-			! isInlineExpressFundingSource(
-				window.ppcpFundingSource ?? fundingSource
-			)
-		) {
+		if ( ! isInlineExpressFundingSource( fundingSource ) ) {
 			return;
 		}
 
