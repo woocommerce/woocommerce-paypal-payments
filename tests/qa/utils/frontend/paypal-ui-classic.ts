@@ -17,15 +17,14 @@ import { GooglePayPopup } from './google-pay-popup';
 export class PayPalUiClassic extends PayPalUi {
 	// Locators
 	cartMenu = () => this.page.locator( '#site-header-cart' );
-
-	payPalGatewayContainer = () =>
+	
+	payPalButtonsContainer = () =>
 		this.page.locator( '#ppc-button-ppcp-gateway' );
 
 	googlePayGatewayContainer = () =>
 		this.page.locator( '#ppc-button-googlepay-container' );
 	payPalIframe = () =>
-		this.payPalGatewayContainer()
-			.frameLocator( 'iframe[name^="__zoid__paypal_buttons__"]' );
+		this.page.frameLocator( 'iframe[name^="__zoid__paypal_buttons__"]' );
 	payPalButtonsClassicContainer = () =>
 		this.payPalIframe().locator( '#buttons-container' );
 	fundingSourceButton = ( name ) =>
@@ -53,6 +52,13 @@ export class PayPalUiClassic extends PayPalUi {
 	fundingSourceGateway = ( name: Pcp.GatewayId ) =>
 		this.page.locator( `li.payment_method_${ name }` );
 	payPalGateway = () => this.fundingSourceGateway( 'ppcp-gateway' );
+	payPalVaultedPaymentMethodRadio = () =>
+		this.page.locator(
+			'input[id^="wc-ppcp-gateway-payment-token-"]:not([id="wc-ppcp-gateway-payment-token-new"])'
+		);
+	payPalNewPaymentMethodRadio = () =>
+		this.page.locator( 'input#wc-ppcp-gateway-payment-token-new' );
+
 	acdcGateway = () =>
 		this.fundingSourceGateway( 'ppcp-credit-card-gateway' );
 	bcdcGateway = () =>
@@ -235,7 +241,7 @@ export class PayPalUiClassic extends PayPalUi {
 		);
 	acdcStoredCredentialsText = () =>
 		this.page.locator(
-			'#wc-ppcp-credit-card-gateway-payment-token-3 > label'
+			'[id^="wc-ppcp-credit-card-gateway-payment-token-"] > label'
 		);
 	acdcSaveToAccountCheckbox = () =>
 		this.page.locator( '#wc-ppcp-credit-card-gateway-new-payment-method' );
@@ -371,6 +377,25 @@ export class PayPalUiClassic extends PayPalUi {
 	};
 
 	/**
+	 * Completes payment with vaulted PayPal account
+	 */
+	async completePayPalVaultedPayment( payment: Pcp.Payment ) {
+		const url = this.page.url();
+		// On classic checkout, pay for order pages
+		if (
+			url.includes( '/classic-checkout/' ) ||
+			url.includes( '/pay_for_order/' )
+		) {
+			await this.assertVaultedPaymentMethodIsDisplayed( payment );
+			await this.payPalVaultedPaymentMethodRadio().click();
+			await this.submitOrder();
+			return;
+		}
+		// On classic cart, product pages
+		return super.completePayPalVaultedPayment( payment );
+	}
+
+	/**
 	 * Completes payment with ACDC
 	 *
 	 * @param payment
@@ -459,7 +484,7 @@ export class PayPalUiClassic extends PayPalUi {
 	};
 
 	/**
-	 * Completes payment with OXXO (vaulting disabled)
+	 * Completes payment with OXXO
 	 */
 	completeOXXOPayment = async () => {
 		await expect(
@@ -655,6 +680,135 @@ export class PayPalUiClassic extends PayPalUi {
 	// Assertions
 
 	/**
+	 * Asserts the saved payment method is visible
+	 *
+	 * @param payment
+	 */
+	assertVaultedPaymentMethodIsDisplayed = async ( payment: Pcp.Payment ) => {
+		const { gateway, card } = payment;
+		switch ( gateway.shortcut ) {
+			case 'paypal':
+				const url = this.page.url();
+				if (
+					url.includes( '/classic-checkout/' ) ||
+					url.includes( '/pay_for_order/' )
+				) {
+					// On Classic checkout, Pay for order pages
+					await expect(
+						this.payPalGateway(),
+						'Assert PayPal gateway is visible',
+					).toBeVisible();
+					await this.payPalGateway().click( { position: { x: 10, y: 10 } } );
+
+					await expect(
+						this.payPalButtonsContainer(),
+						'Assert PayPal buttons are NOT visible',
+					).not.toBeVisible();
+
+					await expect(
+						this.payPalVaultComponent(),
+						'Assert PayPal vault component is visible',
+					).toBeVisible();
+
+					await expect(
+						this.payPalVaultedPaymentMethodRadio(),
+						'Assert vaulted PayPal radio button is visible',
+					).toBeVisible();
+
+					await expect(
+						this.payPalNewPaymentMethodRadio(),
+						'Assert new PayPal payment method radio button is visible',
+					).toBeVisible();
+					
+					await expect(
+						this.placeOrderButton(),
+						'Assert Place Order button is visible',
+					).toBeVisible();
+					break;
+				}
+				// On classic cart, product pages:
+				await expect(
+					this.payPalButton(),
+					'Assert PayPal button is visible'
+				).toBeVisible();
+				await expect
+					.soft( this.payPalButtonMoreOptions() )
+					.toBeVisible();
+				break;
+
+			case 'acdc':
+				await expect(
+					this.acdcGateway(),
+					'Assert ACDC gateway is visible',
+				).toBeVisible();
+				await this.acdcGateway().click();
+
+				await expect(
+					this.acdcSavedCard( card ),
+					'Assert ACDC saved card is visible'
+				).toBeVisible();
+				break;
+		}
+	};
+
+	/**
+	 * Asserts the saved payment method is not visible
+	 *
+	 * @param payment
+	 */
+	assertVaultedPaymentMethodIsNotDisplayed = async (
+		payment: Pcp.Payment
+	) => {
+		switch ( payment.gateway.shortcut ) {
+			case 'paypal':
+				await expect(
+					this.payPalGateway(),
+					'Assert PayPal gateway is visible',
+				).toBeVisible();
+				await this.payPalGateway().click();
+
+				await expect(
+					this.payPalVaultComponent(),
+					'Assert PayPal vault component is NOT visible',
+				).not.toBeVisible();
+
+				await expect(
+					this.payPalVaultedPaymentMethodRadio(),
+					'Assert vaulted PayPal radio button is NOT visible',
+				).not.toBeVisible();
+
+				await expect(
+					this.payPalNewPaymentMethodRadio(),
+					'Assert new PayPal payment method radio button is NOT visible',
+				).not.toBeVisible();
+
+				await expect(
+					this.payPalButtonsContainer(),
+					'Assert PayPal buttons are visible',
+				).toBeVisible();
+				
+				await expect(
+					this.placeOrderButton(),
+					'Assert Place Order button is NOT visible',
+				).not.toBeVisible();
+				break;
+
+			case 'acdc':
+				await expect(
+					this.acdcGateway(),
+					'Assert ACDC gateway is visible',
+				).toBeVisible();
+				await this.acdcGateway().click();
+
+				await expect(
+					this.acdcSavedCard( payment.card ),
+					'Assert ACDC saved card is NOT visible'
+				).not.toBeVisible();
+				break;
+		}
+	};
+
+	/**
 	 * Asserts PayPal buttons gateway container is visible and contains PayPal button (product, classic cart, classic checkout).
 	 */
 	assertPayPalButtonsGatewayVisibleWithContent = async () => {
@@ -666,63 +820,5 @@ export class PayPalUiClassic extends PayPalUi {
 			this.payPalButton(),
 			'Assert PayPal button is visible'
 		).toBeVisible();
-	};
-
-	/**
-	 * Asserts PayPal buttons have the given label (pay, checkout, buynow, paypal).
-	 *
-	 * @param label   - Expected label value
-	 * @param context - 'gateway' for product/cart/checkout, 'minicart' for mini cart
-	 */
-	assertPayPalButtonsHaveLabel = async (
-		label: 'pay' | 'checkout' | 'buynow' | 'paypal',
-		context: 'gateway' | 'minicart' = 'gateway'
-	) => {
-		const host =
-			context === 'minicart'
-				? this.minicartPayPalButtonsHostElement()
-				: this.payPalButtonsHostElement();
-		await expect(
-			host,
-			`Assert PayPal buttons have label ${ label }`
-		).toHaveClass( new RegExp( `paypal-buttons-label-${ label }` ) );
-	};
-
-	/**
-	 * Asserts PayPal buttons have the given layout (vertical, horizontal).
-	 *
-	 * @param layout  - Expected layout value
-	 * @param context - 'gateway' for product/cart/checkout, 'minicart' for mini cart
-	 */
-	assertPayPalButtonsHaveLayout = async (
-		layout: 'vertical' | 'horizontal',
-		context: 'gateway' | 'minicart' = 'gateway'
-	) => {
-		const host =
-			context === 'minicart'
-				? this.minicartPayPalButtonsHostElement()
-				: this.payPalButtonsHostElement();
-		await expect(
-			host,
-			`Assert PayPal buttons have layout ${ layout }`
-		).toHaveClass( new RegExp( `paypal-buttons-layout-${ layout }` ) );
-	};
-
-	/**
-	 * Asserts PayPal buttons are not visible.
-	 *
-	 * @param context - 'gateway' for product/cart/checkout, 'minicart' for mini cart
-	 */
-	assertPayPalButtonsNotVisible = async (
-		context: 'gateway' | 'minicart' = 'gateway'
-	) => {
-		const selector =
-			context === 'minicart'
-				? '#ppc-button-minicart .paypal-buttons'
-				: '#ppc-button-ppcp-gateway .paypal-buttons';
-		await expect(
-			this.page.locator( selector ),
-			`Assert PayPal buttons (${ context }) are not visible`
-		).toBeHidden();
 	};
 }
