@@ -25,9 +25,10 @@ const vaultingGuest: ShopOrder[] = [
 		customer: guest,
 		products: [ products.subscription100 ],
 	},
+	// TODO: add test for Vaulting subscription + 100% coupon
 	{
 		// https://inpsyde.atlassian.net/browse/PCP-4897
-		title: 'PCP-4897 | Vaulting subscription - Transaction - Checkout - PayPal - Free trial order by guest',
+		title: 'PCP-4897 | Vaulting subscription - Transaction - Checkout - PayPal - Free trial order by guest @Smoke',
 		...orders.default,
 		payment: payments.payPal,
 		merchant,
