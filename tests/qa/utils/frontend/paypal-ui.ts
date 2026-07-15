@@ -583,12 +583,21 @@ export class PayPalUi {
 		await this.submitOrder();
 	};
 
+	/**
+	 * Completes payment with OXXO (vaulting disabled)
+	 */
 	completeOxxoPayment = async () => {
 		await expect(
 			this.oxxoGateway(),
 			'Assert OXXO gateway is visible'
 		).toBeVisible();
 		await this.oxxoGateway().click();
+		await expect.soft(
+			this.page.getByText(
+				'OXXO allows you to pay bills and online purchases in-store with cash.'
+			),
+			'Assert OXXO description is visible'
+		).toBeVisible();
 
 		await this.submitOrder();
 
