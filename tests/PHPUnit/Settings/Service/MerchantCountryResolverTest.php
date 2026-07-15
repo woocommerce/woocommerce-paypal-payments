@@ -1,5 +1,5 @@
 <?php
-declare( strict_types=1 );
+declare( strict_types = 1 );
 
 namespace PHPUnit\Settings\Service;
 
@@ -65,7 +65,8 @@ class MerchantCountryResolverTest extends TestCase {
 	 */
 	public function test_needs_resolution_is_false_when_country_already_known(): void {
 		$this->general_settings->shouldReceive( 'is_merchant_connected' )->andReturn( true );
-		$this->general_settings->shouldReceive( 'get_merchant_data' )->andReturn( $this->merchant_data( 'DE' ) );
+		$this->general_settings->shouldReceive( 'get_merchant_data' )
+			->andReturn( $this->merchant_data( 'DE' ) );
 
 		$resolver = $this->create_resolver();
 
@@ -79,7 +80,8 @@ class MerchantCountryResolverTest extends TestCase {
 	 */
 	public function test_needs_resolution_is_true_when_country_is_empty(): void {
 		$this->general_settings->shouldReceive( 'is_merchant_connected' )->andReturn( true );
-		$this->general_settings->shouldReceive( 'get_merchant_data' )->andReturn( $this->merchant_data( '' ) );
+		$this->general_settings->shouldReceive( 'get_merchant_data' )
+			->andReturn( $this->merchant_data( '' ) );
 
 		$resolver = $this->create_resolver();
 
@@ -109,7 +111,8 @@ class MerchantCountryResolverTest extends TestCase {
 	 */
 	public function test_ensure_country_resolved_persists_country_on_success(): void {
 		$this->general_settings->shouldReceive( 'is_merchant_connected' )->andReturn( true );
-		$this->general_settings->shouldReceive( 'get_merchant_data' )->andReturn( $this->merchant_data( '' ) );
+		$this->general_settings->shouldReceive( 'get_merchant_data' )
+			->andReturn( $this->merchant_data( '' ) );
 
 		$this->partners_endpoint->shouldReceive( 'seller_status' )->once()->andReturn(
 			new SellerStatus( array(), array(), 'DE' )
@@ -134,7 +137,8 @@ class MerchantCountryResolverTest extends TestCase {
 	 */
 	public function test_ensure_country_resolved_schedules_retry_when_country_is_empty(): void {
 		$this->general_settings->shouldReceive( 'is_merchant_connected' )->andReturn( true );
-		$this->general_settings->shouldReceive( 'get_merchant_data' )->andReturn( $this->merchant_data( '' ) );
+		$this->general_settings->shouldReceive( 'get_merchant_data' )
+			->andReturn( $this->merchant_data( '' ) );
 
 		$this->partners_endpoint->shouldReceive( 'seller_status' )->once()->andReturn(
 			new SellerStatus( array(), array(), '' )
@@ -158,9 +162,12 @@ class MerchantCountryResolverTest extends TestCase {
 	 */
 	public function test_ensure_country_resolved_schedules_retry_when_api_call_throws(): void {
 		$this->general_settings->shouldReceive( 'is_merchant_connected' )->andReturn( true );
-		$this->general_settings->shouldReceive( 'get_merchant_data' )->andReturn( $this->merchant_data( '' ) );
+		$this->general_settings->shouldReceive( 'get_merchant_data' )
+			->andReturn( $this->merchant_data( '' ) );
 
-		$this->partners_endpoint->shouldReceive( 'seller_status' )->once()->andThrow( new RuntimeException( '403' ) );
+		$this->partners_endpoint->shouldReceive( 'seller_status' )
+			->once()
+			->andThrow( new RuntimeException( '403' ) );
 
 		$this->general_settings->shouldNotReceive( 'save' );
 		expect( 'as_schedule_single_action' )->once()->with(
@@ -194,7 +201,8 @@ class MerchantCountryResolverTest extends TestCase {
 	 */
 	public function test_handle_retry_persists_country_on_success(): void {
 		$this->general_settings->shouldReceive( 'is_merchant_connected' )->andReturn( true );
-		$this->general_settings->shouldReceive( 'get_merchant_data' )->andReturn( $this->merchant_data( '' ) );
+		$this->general_settings->shouldReceive( 'get_merchant_data' )
+			->andReturn( $this->merchant_data( '' ) );
 
 		$this->partners_endpoint->shouldReceive( 'seller_status' )->once()->andReturn(
 			new SellerStatus( array(), array(), 'DE' )
@@ -219,7 +227,8 @@ class MerchantCountryResolverTest extends TestCase {
 	 */
 	public function test_handle_retry_schedules_next_attempt_on_failure(): void {
 		$this->general_settings->shouldReceive( 'is_merchant_connected' )->andReturn( true );
-		$this->general_settings->shouldReceive( 'get_merchant_data' )->andReturn( $this->merchant_data( '' ) );
+		$this->general_settings->shouldReceive( 'get_merchant_data' )
+			->andReturn( $this->merchant_data( '' ) );
 
 		$this->partners_endpoint->shouldReceive( 'seller_status' )->once()->andReturn(
 			new SellerStatus( array(), array(), '' )
@@ -242,7 +251,8 @@ class MerchantCountryResolverTest extends TestCase {
 	 */
 	public function test_handle_retry_does_not_reschedule_beyond_max_attempts(): void {
 		$this->general_settings->shouldReceive( 'is_merchant_connected' )->andReturn( true );
-		$this->general_settings->shouldReceive( 'get_merchant_data' )->andReturn( $this->merchant_data( '' ) );
+		$this->general_settings->shouldReceive( 'get_merchant_data' )
+			->andReturn( $this->merchant_data( '' ) );
 
 		$this->partners_endpoint->shouldReceive( 'seller_status' )->once()->andReturn(
 			new SellerStatus( array(), array(), '' )
@@ -261,7 +271,8 @@ class MerchantCountryResolverTest extends TestCase {
 	 */
 	public function test_ensure_country_resolved_does_not_duplicate_pending_retry(): void {
 		$this->general_settings->shouldReceive( 'is_merchant_connected' )->andReturn( true );
-		$this->general_settings->shouldReceive( 'get_merchant_data' )->andReturn( $this->merchant_data( '' ) );
+		$this->general_settings->shouldReceive( 'get_merchant_data' )
+			->andReturn( $this->merchant_data( '' ) );
 
 		$this->partners_endpoint->shouldReceive( 'seller_status' )->once()->andReturn(
 			new SellerStatus( array(), array(), '' )
