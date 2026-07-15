@@ -57,12 +57,22 @@ class ItemFactory {
 				$product       = $item['data'];
 				$cart_item_key = $item['key'] ?? null;
 
-				$quantity = (int) $item['quantity'];
-				$image    = wp_get_attachment_image_src( (int) $product->get_image_id(), 'full' );
+				$wc_quantity = (float) $item['quantity'];
+				/**
+				 * PayPal requires an integer quantity of at least 1. WooCommerce allows
+				 * fractional quantities (e.g. 0.3, via plugins like Measurement Price
+				 * Calculator), which would otherwise truncate to 0 and be rejected by
+				 * the PayPal API. Normalize such lines to a single unit priced at the
+				 * full line subtotal, instead of truncating the quantity to 0.
+				 */
+				$is_fractional_unit = $wc_quantity > 0 && $wc_quantity < 1;
+				$quantity           = $is_fractional_unit ? 1 : (int) $wc_quantity;
+				$image              = wp_get_attachment_image_src( (int) $product->get_image_id(), 'full' );
 
-				$price    = (float) $item['line_subtotal'] / (float) $item['quantity'];
-				$line_tax = isset( $item['line_tax'] ) ? (float) $item['line_tax'] : 0.0;
-				$unit_tax = $quantity > 0 ? $line_tax / (float) $quantity : 0.0;
+				$line_subtotal = (float) $item['line_subtotal'];
+				$price         = $is_fractional_unit ? $line_subtotal : $line_subtotal / $wc_quantity;
+				$line_tax      = isset( $item['line_tax'] ) ? (float) $item['line_tax'] : 0.0;
+				$unit_tax      = $is_fractional_unit ? $line_tax : ( $quantity > 0 ? $line_tax / (float) $quantity : 0.0 );
 
 				return new Item(
 					$this->prepare_item_string( $product->get_name() ),
@@ -137,14 +147,23 @@ class ItemFactory {
 	 * @return Item
 	 */
 	private function from_wc_order_line_item( \WC_Order_Item_Product $item, \WC_Order $order ): Item {
-		$product                   = $item->get_product();
-		$currency                  = $order->get_currency();
-		$quantity                  = (int) $item->get_quantity();
-		$price_without_tax         = (float) $order->get_item_subtotal( $item, false );
+		$product     = $item->get_product();
+		$currency    = $order->get_currency();
+		$wc_quantity = (float) $item->get_quantity();
+		/**
+		 * PayPal requires an integer quantity of at least 1. WooCommerce allows
+		 * fractional quantities (e.g. 0.3, via plugins like Measurement Price
+		 * Calculator), which would otherwise truncate to 0 and be rejected by
+		 * the PayPal API. Normalize such lines to a single unit priced at the
+		 * full line subtotal, instead of truncating the quantity to 0.
+		 */
+		$is_fractional_unit        = $wc_quantity > 0 && $wc_quantity < 1;
+		$quantity                  = $is_fractional_unit ? 1 : (int) $wc_quantity;
+		$price_without_tax         = $is_fractional_unit ? (float) $item->get_subtotal() : (float) $order->get_item_subtotal( $item, false );
 		$price_without_tax_rounded = round( $price_without_tax, 2 );
 		$image                     = $product instanceof WC_Product ? wp_get_attachment_image_src( (int) $product->get_image_id(), 'full' ) : '';
 		$line_tax                  = (float) $item->get_total_tax();
-		$unit_tax                  = $quantity > 0 ? $line_tax / (float) $quantity : 0.0;
+		$unit_tax                  = $is_fractional_unit ? $line_tax : ( $quantity > 0 ? $line_tax / (float) $quantity : 0.0 );
 
 		return new Item(
 			$this->prepare_item_string( $item->get_name() ),
