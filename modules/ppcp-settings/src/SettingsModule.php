@@ -374,7 +374,7 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 
 				$country_resolver = $container->get( 'settings.service.merchant-country-resolver' );
 				assert( $country_resolver instanceof MerchantCountryResolver );
-				$country_resolver->ensure_country_resolved();
+				$country_resolver->schedule_after_connect();
 
 				$onboarding_profile = $container->get( 'settings.data.onboarding' );
 				assert( $onboarding_profile instanceof OnboardingProfile );

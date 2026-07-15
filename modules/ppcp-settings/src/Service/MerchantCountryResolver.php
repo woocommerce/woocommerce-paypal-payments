@@ -16,23 +16,18 @@ use WooCommerce\WooCommerce\Logging\Logger\NullLogger;
 use WooCommerce\PayPalCommerce\Settings\Data\GeneralSettings;
 
 /**
- * Resolves and stores the raw PayPal-account country (`merchant_country`), which
- * is only available from PartnersEndpoint::seller_status().
+ * Resolves and stores the raw PayPal-account country (`merchant_country`), only
+ * available from PartnersEndpoint::seller_status().
  *
- * The seller_status() is called directly, in-process (no loopback/cookies), so it
- * works in any request context. The seller-status failure back-off is never
- * cleared here: that throttle is the primary flood protection, and a hard retry
- * cap is the secondary safeguard, so a merchant whose country cannot be resolved
- * (e.g. a persistent 403) is not retried forever.
- *
- * Triggers must stay one-shot (connect, plugin upgrade). Hooking this to a
- * per-request event like `admin_init` would re-trigger the lookup on every page
- * load for an unresolvable merchant.
+ * The seller-status back-off is deliberately never cleared here: it is the primary
+ * flood protection and the retry cap is the backstop, so an unresolvable merchant
+ * (e.g. a persistent 403) is not retried forever. Triggers must stay one-shot; a
+ * per-request hook like `admin_init` would re-run the lookup on every page load.
  */
 class MerchantCountryResolver {
 
 	/**
-	 * ActionScheduler hook for the background retry.
+	 * ActionScheduler hook for the deferred resolution attempts.
 	 */
 	public const RETRY_HOOK = 'woocommerce_paypal_payments_resolve_merchant_country';
 
@@ -42,8 +37,8 @@ class MerchantCountryResolver {
 	private const MAX_ATTEMPTS = 3;
 
 	/**
-	 * Base retry delay. Grows linearly per attempt and sits past the seller-status
-	 * back-off window (10 minutes), so a retry is not short-circuited by it.
+	 * Base retry delay, grown linearly per attempt. Exceeds the 10-minute
+	 * seller-status back-off window so a retry is not short-circuited by it.
 	 */
 	private const RETRY_DELAY = 15 * MINUTE_IN_SECONDS;
 
@@ -64,7 +59,7 @@ class MerchantCountryResolver {
 	}
 
 	/**
-	 * One-shot entry point (connect + upgrade): resolve now, else schedule a retry.
+	 * Inline entry point (upgrade/backfill): resolve now, else schedule a retry.
 	 */
 	public function ensure_country_resolved(): void {
 		if ( ! $this->needs_resolution() ) {
@@ -76,6 +71,29 @@ class MerchantCountryResolver {
 		}
 
 		$this->schedule_retry( 1 );
+	}
+
+	/**
+	 * Connect-time entry point. The connecting request holds a login-bearer API
+	 * client that cannot call seller_status(), so defer the first attempt to a
+	 * fresh, fully-connected request via an immediate async action.
+	 */
+	public function schedule_after_connect(): void {
+		if ( ! $this->needs_resolution() ) {
+			return;
+		}
+
+		if ( ! function_exists( 'as_enqueue_async_action' ) || ! function_exists( 'as_next_scheduled_action' ) ) {
+			return;
+		}
+
+		$args = array( 'attempt' => 1 );
+
+		if ( as_next_scheduled_action( self::RETRY_HOOK, $args ) ) {
+			return;
+		}
+
+		as_enqueue_async_action( self::RETRY_HOOK, $args );
 	}
 
 	/**
@@ -110,8 +128,8 @@ class MerchantCountryResolver {
 	}
 
 	/**
-	 * Fetches the country from seller_status() and persists it. Respects the
-	 * back-off: a backed-off or failed call returns false without an API hit.
+	 * Fetches the country from seller_status() and persists it. A backed-off or
+	 * failed call returns false without persisting.
 	 *
 	 * @return bool True when a non-empty country was fetched and stored.
 	 */

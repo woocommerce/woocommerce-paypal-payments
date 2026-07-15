@@ -284,4 +284,71 @@ class MerchantCountryResolverTest extends TestCase {
 		$resolver = $this->create_resolver();
 		$this->assertNull( $resolver->ensure_country_resolved() );
 	}
+
+	/**
+	 * GIVEN a merchant that is not connected to PayPal
+	 * WHEN schedule_after_connect() runs
+	 * THEN no async action is enqueued
+	 */
+	public function test_schedule_after_connect_does_nothing_when_merchant_is_not_connected(): void {
+		$this->general_settings->shouldReceive( 'is_merchant_connected' )->andReturn( false );
+		$this->general_settings->shouldNotReceive( 'get_merchant_data' );
+
+		expect( 'as_enqueue_async_action' )->never();
+
+		$resolver = $this->create_resolver();
+		$this->assertNull( $resolver->schedule_after_connect() );
+	}
+
+	/**
+	 * GIVEN a connected merchant whose country is already known
+	 * WHEN schedule_after_connect() runs
+	 * THEN no async action is enqueued
+	 */
+	public function test_schedule_after_connect_does_nothing_when_country_already_known(): void {
+		$this->general_settings->shouldReceive( 'is_merchant_connected' )->andReturn( true );
+		$this->general_settings->shouldReceive( 'get_merchant_data' )
+			->andReturn( $this->merchant_data( 'DE' ) );
+
+		expect( 'as_enqueue_async_action' )->never();
+
+		$resolver = $this->create_resolver();
+		$this->assertNull( $resolver->schedule_after_connect() );
+	}
+
+	/**
+	 * GIVEN a connected merchant with an unresolved country and no pending retry
+	 * WHEN schedule_after_connect() runs
+	 * THEN an immediate async action is enqueued for attempt 1
+	 */
+	public function test_schedule_after_connect_enqueues_async_first_attempt_when_country_is_empty(): void {
+		$this->general_settings->shouldReceive( 'is_merchant_connected' )->andReturn( true );
+		$this->general_settings->shouldReceive( 'get_merchant_data' )
+			->andReturn( $this->merchant_data( '' ) );
+
+		expect( 'as_enqueue_async_action' )->once()->with(
+			MerchantCountryResolver::RETRY_HOOK,
+			array( 'attempt' => 1 )
+		);
+
+		$resolver = $this->create_resolver();
+		$this->assertNull( $resolver->schedule_after_connect() );
+	}
+
+	/**
+	 * GIVEN a connected merchant with an unresolved country and a retry already pending
+	 * WHEN schedule_after_connect() runs
+	 * THEN no duplicate async action is enqueued
+	 */
+	public function test_schedule_after_connect_does_not_enqueue_when_retry_already_pending(): void {
+		$this->general_settings->shouldReceive( 'is_merchant_connected' )->andReturn( true );
+		$this->general_settings->shouldReceive( 'get_merchant_data' )
+			->andReturn( $this->merchant_data( '' ) );
+
+		when( 'as_next_scheduled_action' )->justReturn( true );
+		expect( 'as_enqueue_async_action' )->never();
+
+		$resolver = $this->create_resolver();
+		$this->assertNull( $resolver->schedule_after_connect() );
+	}
 }
