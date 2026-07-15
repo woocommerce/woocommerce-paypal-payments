@@ -88,7 +88,6 @@ use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\PayUponInvoice\Pay
 use WooCommerce\PayPalCommerce\PayLaterConfigurator\Endpoint\SaveConfig;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\ConnectionState;
-use WooCommerce\PayPalCommerce\Settings\Service\InternalRestService;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\MerchantDetails;
 
 return array(
@@ -390,12 +389,6 @@ return array(
 			$container->get( 'api.env.paypal-host' ),
 			$container->get( 'api.env.endpoint.login-seller' ),
 			$container->get( 'settings.connection-state' ),
-			$container->get( 'settings.service.rest-service' ),
-			$container->get( 'woocommerce.logger.woocommerce' )
-		);
-	},
-	'settings.service.rest-service'                       => static function ( ContainerInterface $container ): InternalRestService {
-		return new InternalRestService(
 			$container->get( 'woocommerce.logger.woocommerce' )
 		);
 	},

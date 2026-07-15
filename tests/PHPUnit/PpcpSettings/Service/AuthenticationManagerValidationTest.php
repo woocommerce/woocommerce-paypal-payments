@@ -7,7 +7,6 @@ use Mockery;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\Settings\Data\GeneralSettings;
 use WooCommerce\PayPalCommerce\Settings\Service\AuthenticationManager;
-use WooCommerce\PayPalCommerce\Settings\Service\InternalRestService;
 use WooCommerce\PayPalCommerce\TestCase;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\ConnectionState;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\EnvironmentConfig;
@@ -22,8 +21,7 @@ class AuthenticationManagerValidationTest extends TestCase {
 			Mockery::mock( GeneralSettings::class ),
 			Mockery::mock( EnvironmentConfig::class ),
 			Mockery::mock( EnvironmentConfig::class ),
-			Mockery::mock( ConnectionState::class ),
-			Mockery::mock( InternalRestService::class )
+			Mockery::mock( ConnectionState::class )
 		);
 	}
 
