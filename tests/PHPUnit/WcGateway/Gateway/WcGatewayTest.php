@@ -5,10 +5,12 @@ namespace WooCommerce\PayPalCommerce\WcGateway\Gateway;
 
 use Exception;
 use Psr\Log\LoggerInterface;
+use stdClass;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PaymentTokensEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\OrderStatus;
+use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 use WooCommerce\PayPalCommerce\Assets\AssetGetter;
 use WooCommerce\PayPalCommerce\Button\Helper\Context;
 use WooCommerce\PayPalCommerce\WcGateway\Endpoint\CapturePayPalPayment;
@@ -32,6 +34,7 @@ class WcGatewayTest extends TestCase
 {
 	private $isAdmin = false;
 	private $sessionHandler;
+		private $sessionOrder;
 	private $fundingSource = null;
 
 	private $funding_source_renderer;
@@ -83,11 +86,13 @@ class WcGatewayTest extends TestCase
 			->andReturnUsing(function () {
 				return $this->fundingSource;
 			});
-		$order = Mockery::mock(Order::class);
-		$order->shouldReceive('status')->andReturn(new OrderStatus(OrderStatus::APPROVED));
+		$this->sessionOrder = Mockery::mock(Order::class);
+		$this->sessionOrder->shouldReceive('status')->andReturn(new OrderStatus(OrderStatus::APPROVED));
 		$this->sessionHandler
 			->shouldReceive('order')
-			->andReturn($order);
+			->andReturnUsing(function () {
+				return $this->sessionOrder;
+			});
 
 		$this->settings->shouldReceive('has')->andReturnFalse();
 
@@ -152,6 +157,33 @@ class WcGatewayTest extends TestCase
 			$this->context
 		);
 	}
+
+		private function createRetryError( string $issue, string $description ): PayPalApiException {
+				$response                          = new stdClass();
+				$response->name                    = 'UNPROCESSABLE_ENTITY';
+				$response->message                 = 'API error';
+				$response->details                 = array();
+				$response->links                   = array();
+				$response->details[0]              = new stdClass();
+				$response->details[0]->issue       = $issue;
+				$response->details[0]->description = $description;
+
+				return new PayPalApiException( $response, 422 );
+		}
+
+		private function mockCheckoutFailureEnvironment( string $redirect_url = 'http://example.com/checkout' ): void {
+				when( 'wc_get_checkout_url' )->justReturn( $redirect_url );
+				when( 'is_checkout_pay_page' )->justReturn( false );
+
+				$woocommerce = Mockery::mock( \WooCommerce::class );
+				$session     = Mockery::mock( \WC_Session::class );
+
+				$woocommerce->session = $session;
+				when( 'WC' )->justReturn( $woocommerce );
+
+				$session->shouldReceive( 'get' )->andReturn( null );
+				$session->shouldReceive( 'set' );
+		}
 
 	public function testProcessPaymentSuccess() {
         $orderId = 1;
@@ -291,6 +323,170 @@ class WcGatewayTest extends TestCase
 			$result
 		);
     }
+
+		/**
+		 * @dataProvider payerActionRequiredRetryProvider
+		 */
+		public function testProcessPaymentWithPayerActionRequiredKeepsOrderPendingAndRedirects( int $retry_tries ): void {
+				$orderId            = 1;
+				$wcOrder            = Mockery::mock( \WC_Order::class );
+				$retryDescription   = 'Payer needs to perform the following action before proceeding with payment.';
+				$retryMessage       = 'Payer action required, possibly overcharge. ' . $retryDescription;
+				$paypalRetryError   = $this->createRetryError( 'PAYER_ACTION_REQUIRED', $retryDescription );
+				$sessionPayPalOrder = Mockery::mock( Order::class );
+
+				$sessionPayPalOrder->shouldReceive( 'id' )->andReturn( 'PP-ORDER-123' );
+				$this->sessionOrder = $sessionPayPalOrder;
+				$this->orderProcessor->expects( 'process' )->andThrow( $paypalRetryError );
+				$this->subscriptionHelper->shouldReceive( 'has_subscription' )->with( $orderId )->andReturn( true );
+				$this->subscriptionHelper->shouldReceive( 'is_subscription_change_payment' )->andReturn( true );
+				$this->sessionHandler->shouldReceive( 'increment_insufficient_funding_tries' )->once();
+				$this->sessionHandler->shouldReceive( 'insufficient_funding_tries' )->once()->andReturn( $retry_tries );
+
+				$wcOrder->shouldReceive( 'add_order_note' )->once()->with( $retryMessage );
+				$wcOrder->shouldReceive( 'update_status' )->never();
+
+				$testee = $this->createGateway();
+
+				expect( 'wc_get_order' )
+						->with( $orderId )
+						->andReturn( $wcOrder );
+
+				$result = $testee->process_payment( $orderId );
+
+				$this->assertSame( 'success', $result['result'] );
+				$this->assertSame( 'checkoutnow=PP-ORDER-123', $result['redirect'] );
+		}
+
+		public function payerActionRequiredRetryProvider(): array {
+				return array(
+						'first attempt'  => array( 1 ),
+						'second attempt' => array( 2 ),
+				);
+		}
+
+		public function testProcessPaymentWithPayerActionRequiredFailsOnThirdAttempt(): void {
+				$orderId          = 1;
+				$wcOrder          = Mockery::mock( \WC_Order::class );
+				$retryDescription = 'Payer needs to perform the following action before proceeding with payment.';
+				$retryMessage     = 'Payer action required, possibly overcharge. ' . $retryDescription;
+				$paypalRetryError = $this->createRetryError( 'PAYER_ACTION_REQUIRED', $retryDescription );
+
+				$this->orderProcessor->expects( 'process' )->andThrow( $paypalRetryError );
+				$this->subscriptionHelper->shouldReceive( 'has_subscription' )->with( $orderId )->andReturn( true );
+				$this->subscriptionHelper->shouldReceive( 'is_subscription_change_payment' )->andReturn( true );
+				$this->sessionHandler->shouldReceive( 'increment_insufficient_funding_tries' )->once();
+				$this->sessionHandler->shouldReceive( 'insufficient_funding_tries' )->once()->andReturn( 3 );
+				$this->sessionHandler->shouldReceive( 'destroy_session_data' )->once();
+
+				$wcOrder->shouldReceive( 'update_status' )->once()->with( 'failed', $retryMessage )->andReturn( true );
+				$wcOrder->shouldReceive( 'add_order_note' )->never();
+
+				$testee = $this->createGateway();
+
+				expect( 'wc_get_order' )
+						->with( $orderId )
+						->andReturn( $wcOrder );
+				expect( 'wc_add_notice' )
+						->with( 'Please use a different payment method.', 'error' );
+
+				$this->mockCheckoutFailureEnvironment();
+
+				$result = $testee->process_payment( $orderId );
+
+				$this->assertArrayHasKey( 'errorMessage', $result );
+				unset( $result['errorMessage'] );
+
+				$this->assertSame(
+						array(
+								'result'   => 'failure',
+								'redirect' => 'http://example.com/checkout',
+						),
+						$result
+				);
+		}
+
+		public function testProcessPaymentWithPayerActionRequiredFailsWhenSessionExpires(): void {
+				$orderId          = 1;
+				$wcOrder          = Mockery::mock( \WC_Order::class );
+				$retryDescription = 'Payer needs to perform the following action before proceeding with payment.';
+				$paypalRetryError = $this->createRetryError( 'PAYER_ACTION_REQUIRED', $retryDescription );
+
+				$this->sessionOrder = null;
+				$this->orderProcessor->expects( 'process' )->andThrow( $paypalRetryError );
+				$this->subscriptionHelper->shouldReceive( 'has_subscription' )->with( $orderId )->andReturn( true );
+				$this->subscriptionHelper->shouldReceive( 'is_subscription_change_payment' )->andReturn( true );
+				$this->sessionHandler->shouldReceive( 'increment_insufficient_funding_tries' )->once();
+				$this->sessionHandler->shouldReceive( 'insufficient_funding_tries' )->once()->andReturn( 1 );
+				$this->sessionHandler->shouldReceive( 'destroy_session_data' )->once();
+
+				$wcOrder->shouldReceive( 'update_status' )
+						->once()
+						->with(
+								'failed',
+								Mockery::on(
+										static function ( string $message ): bool {
+												return strpos( $message, 'Payment session expired. Please try again.' ) !== false;
+										}
+								)
+						)
+						->andReturn( true );
+				$wcOrder->shouldReceive( 'add_order_note' )->never();
+
+				$testee = $this->createGateway();
+
+				expect( 'wc_get_order' )
+						->with( $orderId )
+						->andReturn( $wcOrder );
+				expect( 'wc_add_notice' )
+						->with( 'Payment session expired. Please try again.', 'error' );
+
+				$this->mockCheckoutFailureEnvironment();
+
+				$result = $testee->process_payment( $orderId );
+
+				$this->assertArrayHasKey( 'errorMessage', $result );
+				unset( $result['errorMessage'] );
+
+				$this->assertSame(
+						array(
+								'result'   => 'failure',
+								'redirect' => 'http://example.com/checkout',
+						),
+						$result
+				);
+		}
+
+		public function testProcessPaymentWithInstrumentDeclinedKeepsCurrentBehavior(): void {
+				$orderId            = 1;
+				$wcOrder            = Mockery::mock( \WC_Order::class );
+				$retryDescription   = 'Instrument declined by the payment provider.';
+				$retryMessage       = 'Instrument declined. ' . $retryDescription;
+				$paypalRetryError   = $this->createRetryError( 'INSTRUMENT_DECLINED', $retryDescription );
+				$sessionPayPalOrder = Mockery::mock( Order::class );
+
+				$sessionPayPalOrder->shouldReceive( 'id' )->andReturn( 'PP-ORDER-999' );
+				$this->sessionOrder = $sessionPayPalOrder;
+				$this->orderProcessor->expects( 'process' )->andThrow( $paypalRetryError );
+				$this->subscriptionHelper->shouldReceive( 'has_subscription' )->with( $orderId )->andReturn( true );
+				$this->subscriptionHelper->shouldReceive( 'is_subscription_change_payment' )->andReturn( true );
+				$this->sessionHandler->shouldReceive( 'increment_insufficient_funding_tries' )->once();
+				$this->sessionHandler->shouldReceive( 'insufficient_funding_tries' )->once()->andReturn( 1 );
+
+				$wcOrder->shouldReceive( 'update_status' )->once()->with( 'failed', $retryMessage )->andReturn( true );
+				$wcOrder->shouldReceive( 'add_order_note' )->never();
+
+				$testee = $this->createGateway();
+
+				expect( 'wc_get_order' )
+						->with( $orderId )
+						->andReturn( $wcOrder );
+
+				$result = $testee->process_payment( $orderId );
+
+				$this->assertSame( 'success', $result['result'] );
+				$this->assertSame( 'checkoutnow=PP-ORDER-999', $result['redirect'] );
+		}
 
 	/**
 	 * GIVEN a freshly-created order exists in WooCommerce (normal checkout flow)
