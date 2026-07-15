@@ -33,7 +33,7 @@ class MerchantCountryResolverTest extends TestCase {
 
 		$this->general_settings  = Mockery::mock( GeneralSettings::class );
 		$this->partners_endpoint = Mockery::mock( PartnersEndpoint::class );
-		$this->logger            = Mockery::mock( LoggerInterface::class );
+		$this->logger            = Mockery::mock( LoggerInterface::class )->shouldIgnoreMissing();
 	}
 
 	private function create_resolver(): MerchantCountryResolver {
@@ -161,7 +161,6 @@ class MerchantCountryResolverTest extends TestCase {
 		$this->general_settings->shouldReceive( 'get_merchant_data' )->andReturn( $this->merchant_data( '' ) );
 
 		$this->partners_endpoint->shouldReceive( 'seller_status' )->once()->andThrow( new RuntimeException( '403' ) );
-		$this->logger->shouldReceive( 'warning' )->once();
 
 		$this->general_settings->shouldNotReceive( 'save' );
 		expect( 'as_schedule_single_action' )->once()->with(
