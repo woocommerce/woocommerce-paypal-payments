@@ -6,10 +6,7 @@ import {
 	taxSettings,
 	customers,
 } from '../../resources';
-import {
-	transactionsOnClassicCheckout,
-	transactionsOnClassicCheckoutOxxo,
-} from './_test-scenarios';
+import { transactionsOnClassicCheckout } from './_test-scenarios';
 import {
 	bcdcClassicCheckout,
 	bcdcClassicCheckoutExcludingTax,
@@ -66,5 +63,5 @@ test.describe( () => {
  * OXXO — Mexico cash payment via classic checkout
  */
 for ( const testOrder of oxxoClassicCheckout ) {
-	transactionsOnClassicCheckoutOxxo( testOrder );
+	transactionsOnClassicCheckout( testOrder );
 }
