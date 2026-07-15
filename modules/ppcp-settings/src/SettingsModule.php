@@ -40,7 +40,7 @@ use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\OXXOGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\PayUponInvoice\PayUponInvoiceGateway;
 use WooCommerce\PayPalCommerce\Settings\Service\SettingsDataManager;
-use WooCommerce\PayPalCommerce\Settings\Service\MerchantCountryResolver;
+use WooCommerce\PayPalCommerce\Settings\Service\MerchantDataResolver;
 use WooCommerce\PayPalCommerce\Settings\DTO\ConfigurationFlagsDTO;
 use WooCommerce\PayPalCommerce\Settings\DTO\MerchantConnectionDTO;
 use WooCommerce\PayPalCommerce\Settings\Enum\ProductChoicesEnum;
@@ -372,8 +372,8 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 					$logger
 				);
 
-				$country_resolver = $container->get( 'settings.service.merchant-country-resolver' );
-				assert( $country_resolver instanceof MerchantCountryResolver );
+				$country_resolver = $container->get( 'settings.service.merchant-data-resolver' );
+				assert( $country_resolver instanceof MerchantDataResolver );
 				$country_resolver->schedule_after_connect();
 
 				$onboarding_profile = $container->get( 'settings.data.onboarding' );
@@ -720,10 +720,10 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 
 		// Runs the deferred merchant-country resolution retry (bounded, in-process).
 		add_action(
-			MerchantCountryResolver::RETRY_HOOK,
+			MerchantDataResolver::RETRY_HOOK,
 			static function ( $attempt = 1 ) use ( $container ): void {
-				$country_resolver = $container->get( 'settings.service.merchant-country-resolver' );
-				assert( $country_resolver instanceof MerchantCountryResolver );
+				$country_resolver = $container->get( 'settings.service.merchant-data-resolver' );
+				assert( $country_resolver instanceof MerchantDataResolver );
 
 				$country_resolver->handle_retry( (int) $attempt );
 			}
@@ -738,8 +738,8 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 		add_action(
 			'woocommerce_paypal_payments_gateway_migrate_on_update',
 			static function () use ( $container ): void {
-				$country_resolver = $container->get( 'settings.service.merchant-country-resolver' );
-				assert( $country_resolver instanceof MerchantCountryResolver );
+				$country_resolver = $container->get( 'settings.service.merchant-data-resolver' );
+				assert( $country_resolver instanceof MerchantDataResolver );
 
 				$country_resolver->ensure_country_resolved();
 			}

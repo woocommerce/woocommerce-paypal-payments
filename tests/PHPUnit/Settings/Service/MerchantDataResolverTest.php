@@ -10,15 +10,15 @@ use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PartnersEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\SellerStatus;
 use WooCommerce\PayPalCommerce\Settings\Data\GeneralSettings;
 use WooCommerce\PayPalCommerce\Settings\DTO\MerchantConnectionDTO;
-use WooCommerce\PayPalCommerce\Settings\Service\MerchantCountryResolver;
+use WooCommerce\PayPalCommerce\Settings\Service\MerchantDataResolver;
 use WooCommerce\PayPalCommerce\TestCase;
 use function Brain\Monkey\Functions\when;
 use function Brain\Monkey\Functions\expect;
 
 /**
- * @covers \WooCommerce\PayPalCommerce\Settings\Service\MerchantCountryResolver
+ * @covers \WooCommerce\PayPalCommerce\Settings\Service\MerchantDataResolver
  */
-class MerchantCountryResolverTest extends TestCase {
+class MerchantDataResolverTest extends TestCase {
 
 	private $general_settings;
 	private $partners_endpoint;
@@ -36,8 +36,8 @@ class MerchantCountryResolverTest extends TestCase {
 		$this->logger            = Mockery::mock( LoggerInterface::class )->shouldIgnoreMissing();
 	}
 
-	private function create_resolver(): MerchantCountryResolver {
-		return new MerchantCountryResolver( $this->general_settings, $this->partners_endpoint, $this->logger );
+	private function create_resolver(): MerchantDataResolver {
+		return new MerchantDataResolver( $this->general_settings, $this->partners_endpoint, $this->logger );
 	}
 
 	private function merchant_data( string $merchant_country ): MerchantConnectionDTO {
@@ -147,7 +147,7 @@ class MerchantCountryResolverTest extends TestCase {
 		$this->general_settings->shouldNotReceive( 'save' );
 		expect( 'as_schedule_single_action' )->once()->with(
 			Mockery::type( 'int' ),
-			MerchantCountryResolver::RETRY_HOOK,
+			MerchantDataResolver::RETRY_HOOK,
 			array( 'attempt' => 1 )
 		);
 
@@ -172,7 +172,7 @@ class MerchantCountryResolverTest extends TestCase {
 		$this->general_settings->shouldNotReceive( 'save' );
 		expect( 'as_schedule_single_action' )->once()->with(
 			Mockery::type( 'int' ),
-			MerchantCountryResolver::RETRY_HOOK,
+			MerchantDataResolver::RETRY_HOOK,
 			array( 'attempt' => 1 )
 		);
 
@@ -236,7 +236,7 @@ class MerchantCountryResolverTest extends TestCase {
 
 		expect( 'as_schedule_single_action' )->once()->with(
 			Mockery::type( 'int' ),
-			MerchantCountryResolver::RETRY_HOOK,
+			MerchantDataResolver::RETRY_HOOK,
 			array( 'attempt' => 3 )
 		);
 
@@ -327,7 +327,7 @@ class MerchantCountryResolverTest extends TestCase {
 			->andReturn( $this->merchant_data( '' ) );
 
 		expect( 'as_enqueue_async_action' )->once()->with(
-			MerchantCountryResolver::RETRY_HOOK,
+			MerchantDataResolver::RETRY_HOOK,
 			array( 'attempt' => 1 )
 		);
 

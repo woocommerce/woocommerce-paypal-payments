@@ -24,12 +24,12 @@ use WooCommerce\PayPalCommerce\Settings\Data\GeneralSettings;
  * (e.g. a persistent 403) is not retried forever. Triggers must stay one-shot; a
  * per-request hook like `admin_init` would re-run the lookup on every page load.
  */
-class MerchantCountryResolver {
+class MerchantDataResolver {
 
 	/**
 	 * ActionScheduler hook for the deferred resolution attempts.
 	 */
-	public const RETRY_HOOK = 'woocommerce_paypal_payments_resolve_merchant_country';
+	public const RETRY_HOOK = 'woocommerce_paypal_payments_resolve_merchant_data';
 
 	/**
 	 * Maximum deferred retries before giving up permanently.
@@ -115,9 +115,6 @@ class MerchantCountryResolver {
 
 	/**
 	 * Whether the connected merchant still has an empty country to resolve.
-	 *
-	 * Note: if any other details are extracted from the PayPal API in the
-	 * future we need to update the conditions in this method.
 	 */
 	public function needs_resolution(): bool {
 		if ( ! $this->settings->is_merchant_connected() ) {
