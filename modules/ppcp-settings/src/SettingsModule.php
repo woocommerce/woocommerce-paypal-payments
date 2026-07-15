@@ -40,6 +40,7 @@ use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\OXXOGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\PayUponInvoice\PayUponInvoiceGateway;
 use WooCommerce\PayPalCommerce\Settings\Service\SettingsDataManager;
+use WooCommerce\PayPalCommerce\Settings\Service\MerchantCountryResolver;
 use WooCommerce\PayPalCommerce\Settings\DTO\ConfigurationFlagsDTO;
 use WooCommerce\PayPalCommerce\Settings\DTO\MerchantConnectionDTO;
 use WooCommerce\PayPalCommerce\Settings\Enum\ProductChoicesEnum;
@@ -370,6 +371,10 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 					$partners_endpoint,
 					$logger
 				);
+
+				$country_resolver = $container->get( 'settings.service.merchant-country-resolver' );
+				assert( $country_resolver instanceof MerchantCountryResolver );
+				$country_resolver->ensure_country_resolved();
 
 				$onboarding_profile = $container->get( 'settings.data.onboarding' );
 				assert( $onboarding_profile instanceof OnboardingProfile );

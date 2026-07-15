@@ -71,6 +71,7 @@ use WooCommerce\PayPalCommerce\Settings\Service\Migration\FastlaneSettingsMigrat
 use WooCommerce\PayPalCommerce\Settings\Service\OnboardingNotices;
 use WooCommerce\PayPalCommerce\Settings\Service\OnboardingUrlManager;
 use WooCommerce\PayPalCommerce\Settings\Service\SellerTypeResolver;
+use WooCommerce\PayPalCommerce\Settings\Service\MerchantCountryResolver;
 use WooCommerce\PayPalCommerce\Settings\Service\PaymentMethodsEligibilityService;
 use WooCommerce\PayPalCommerce\Settings\Service\ScriptDataHandler;
 use WooCommerce\PayPalCommerce\Settings\Service\TodosEligibilityService;
@@ -456,6 +457,11 @@ return array(
 		$c->get( 'ppcp-local-apms.payment-methods' ),
 	),
 	'settings.service.seller-type-resolver'               => static fn(): SellerTypeResolver => new SellerTypeResolver(),
+	'settings.service.merchant-country-resolver'          => static fn( ContainerInterface $container ): MerchantCountryResolver => new MerchantCountryResolver(
+		$container->get( 'settings.data.general' ),
+		$container->get( 'api.endpoint.partners' ),
+		$container->get( 'woocommerce.logger.woocommerce' )
+	),
 	'settings.service.data-migration.general-settings'    => static fn( ContainerInterface $c ): SettingsMigration => new SettingsMigration(
 		(array) get_option( 'woocommerce-ppcp-settings', array() ),
 		$c->get( 'settings.data.general' ),
