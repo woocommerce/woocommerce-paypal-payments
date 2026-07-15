@@ -97,13 +97,16 @@ class MerchantCountryResolver {
 
 	/**
 	 * Whether the connected merchant still has an empty country to resolve.
+	 *
+	 * Note: if any other details are extracted from the PayPal API in the
+	 * future we need to update the conditions in this method.
 	 */
 	public function needs_resolution(): bool {
 		if ( ! $this->settings->is_merchant_connected() ) {
 			return false;
 		}
 
-		return '' === trim( (string) $this->settings->get_merchant_data()->merchant_country );
+		return '' === $this->settings->get_merchant_data()->merchant_country;
 	}
 
 	/**
@@ -117,7 +120,7 @@ class MerchantCountryResolver {
 			$country = $this->partners_endpoint->seller_status()->country();
 		} catch ( Throwable $exception ) {
 			$this->logger->warning(
-				'Could not resolve merchant country: ' . $exception->getMessage()
+				'[MerchantDataResolver] Could not resolve merchant country: ' . $exception->getMessage()
 			);
 
 			return false;
@@ -127,7 +130,8 @@ class MerchantCountryResolver {
 			return false;
 		}
 
-		$connection                   = $this->settings->get_merchant_data();
+		$connection = $this->settings->get_merchant_data();
+
 		$connection->merchant_country = $country;
 
 		$this->settings->set_merchant_data( $connection );
@@ -143,6 +147,10 @@ class MerchantCountryResolver {
 	 */
 	private function schedule_retry( int $attempt ): void {
 		if ( $attempt > self::MAX_ATTEMPTS ) {
+			$this->logger->warning(
+				'[MerchantDataResolver] Stop trying to schedule retry after max attempts.'
+			);
+
 			return;
 		}
 
