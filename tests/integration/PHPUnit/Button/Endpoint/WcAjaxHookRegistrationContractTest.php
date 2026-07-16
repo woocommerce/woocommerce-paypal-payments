@@ -9,14 +9,12 @@ use WooCommerce\PayPalCommerce\Tests\Integration\TestCase;
  * Pins the browser-facing WC-AJAX registration of the shared order endpoints:
  * the wc_ajax_ppc-* action names both SDK frontends POST to.
  *
- * Note: ppc-update-shipping is currently registered by the ppcp-blocks module
- * and only when WC Blocks is available (BlocksModule::run() returns early
- * otherwise) — the relocation ticket moves it to a neutral module. This test
- * asserts the names under a normal boot; renaming an ENDPOINT constant or
- * dropping a registration breaks it.
+ * All four endpoints are registered unconditionally by the neutral
+ * ppcp-order-endpoints module (PCP-6677) — ppc-update-shipping no longer
+ * depends on WC Blocks availability. Renaming an ENDPOINT constant or
+ * dropping a registration breaks this test.
  *
- * @covers \WooCommerce\PayPalCommerce\Button\ButtonModule
- * @covers \WooCommerce\PayPalCommerce\Blocks\BlocksModule
+ * @covers \WooCommerce\PayPalCommerce\OrderEndpoints\OrderEndpointsModule
  */
 class WcAjaxHookRegistrationContractTest extends TestCase {
 

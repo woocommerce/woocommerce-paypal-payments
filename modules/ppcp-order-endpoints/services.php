@@ -14,6 +14,7 @@ use WooCommerce\PayPalCommerce\OrderEndpoints\Endpoint\ApproveOrderEndpoint;
 use WooCommerce\PayPalCommerce\OrderEndpoints\Endpoint\ChangeCartEndpoint;
 use WooCommerce\PayPalCommerce\OrderEndpoints\Endpoint\CreateOrderEndpoint;
 use WooCommerce\PayPalCommerce\OrderEndpoints\Endpoint\RequestData;
+use WooCommerce\PayPalCommerce\OrderEndpoints\Endpoint\UpdateShippingEndpoint;
 use WooCommerce\PayPalCommerce\OrderEndpoints\Helper\CartProductsHelper;
 use WooCommerce\PayPalCommerce\OrderEndpoints\Helper\EarlyOrderHandler;
 use WooCommerce\PayPalCommerce\OrderEndpoints\Helper\WooCommerceOrderCreator;
@@ -98,6 +99,15 @@ return array(
 			$wc_order_creator,
 			$logger,
 			$context
+		);
+	},
+	'order-endpoints.endpoint.update-shipping'    => static function ( ContainerInterface $container ): UpdateShippingEndpoint {
+		return new UpdateShippingEndpoint(
+			$container->get( 'order-endpoints.request-data' ),
+			$container->get( 'api.endpoint.order' ),
+			$container->get( 'api.factory.purchase-unit' ),
+			$container->get( 'session.handler' ),
+			$container->get( 'woocommerce.logger.woocommerce' )
 		);
 	},
 	'order-endpoints.is-logged-in'                => static function ( ContainerInterface $container ): bool {

@@ -2,12 +2,12 @@
 /**
  * Updates PayPal order with the current shipping methods.
  *
- * @package WooCommerce\PayPalCommerce\Button\Endpoint
+ * @package WooCommerce\PayPalCommerce\OrderEndpoints\Endpoint
  */
 
 declare(strict_types=1);
 
-namespace WooCommerce\PayPalCommerce\Blocks\Endpoint;
+namespace WooCommerce\PayPalCommerce\OrderEndpoints\Endpoint;
 
 use Exception;
 use Psr\Log\LoggerInterface;
@@ -17,7 +17,6 @@ use WooCommerce\PayPalCommerce\ApiClient\Entity\Patch;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PatchCollection;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PurchaseUnitFactory;
 use WooCommerce\PayPalCommerce\Button\Endpoint\EndpointInterface;
-use WooCommerce\PayPalCommerce\OrderEndpoints\Endpoint\RequestData;
 use WooCommerce\PayPalCommerce\Button\Exception\NonceValidationException;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
 
