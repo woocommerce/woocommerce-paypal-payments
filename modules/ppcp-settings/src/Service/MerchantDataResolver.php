@@ -74,29 +74,6 @@ class MerchantDataResolver {
 	}
 
 	/**
-	 * Connect-time entry point. The connecting request holds a login-bearer API
-	 * client that cannot call seller_status(), so defer the first attempt to a
-	 * fresh, fully-connected request via an immediate async action.
-	 */
-	public function schedule_after_connect(): void {
-		if ( ! $this->needs_resolution() ) {
-			return;
-		}
-
-		if ( ! function_exists( 'as_enqueue_async_action' ) || ! function_exists( 'as_next_scheduled_action' ) ) {
-			return;
-		}
-
-		$args = array( 'attempt' => 1 );
-
-		if ( as_next_scheduled_action( self::RETRY_HOOK, $args ) ) {
-			return;
-		}
-
-		as_enqueue_async_action( self::RETRY_HOOK, $args );
-	}
-
-	/**
 	 * ActionScheduler retry handler.
 	 *
 	 * @param int $attempt Current attempt number (1-based).
