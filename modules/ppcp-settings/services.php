@@ -390,6 +390,7 @@ return array(
 			$container->get( 'api.env.paypal-host' ),
 			$container->get( 'api.env.endpoint.login-seller' ),
 			$container->get( 'settings.connection-state' ),
+			$container->get( 'api.factory.paypal-bearer' ),
 			$container->get( 'woocommerce.logger.woocommerce' )
 		);
 	},
@@ -459,7 +460,7 @@ return array(
 	'settings.service.seller-type-resolver'               => static fn(): SellerTypeResolver => new SellerTypeResolver(),
 	'settings.service.merchant-data-resolver'             => static fn( ContainerInterface $container ): MerchantDataResolver => new MerchantDataResolver(
 		$container->get( 'settings.data.general' ),
-		$container->get( 'api.endpoint.partners' ),
+		$container->get( 'api.factory.partners-endpoint' ),
 		$container->get( 'woocommerce.logger.woocommerce' )
 	),
 	'settings.service.data-migration.general-settings'    => static fn( ContainerInterface $c ): SettingsMigration => new SettingsMigration(

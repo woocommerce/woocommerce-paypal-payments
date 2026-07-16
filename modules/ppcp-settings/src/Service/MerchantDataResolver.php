@@ -11,8 +11,8 @@ namespace WooCommerce\PayPalCommerce\Settings\Service;
 
 use Throwable;
 use Psr\Log\LoggerInterface;
-use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PartnersEndpoint;
 use WooCommerce\WooCommerce\Logging\Logger\NullLogger;
+use WooCommerce\PayPalCommerce\ApiClient\Factory\PartnersEndpointFactory;
 use WooCommerce\PayPalCommerce\Settings\Data\GeneralSettings;
 
 /**
@@ -44,18 +44,18 @@ class MerchantDataResolver {
 
 	private GeneralSettings $settings;
 
-	private PartnersEndpoint $partners_endpoint;
+	private PartnersEndpointFactory $partners_endpoint_factory;
 
 	private LoggerInterface $logger;
 
 	public function __construct(
 		GeneralSettings $settings,
-		PartnersEndpoint $partners_endpoint,
+		PartnersEndpointFactory $partners_endpoint_factory,
 		?LoggerInterface $logger = null
 	) {
-		$this->settings          = $settings;
-		$this->partners_endpoint = $partners_endpoint;
-		$this->logger            = $logger ?: new NullLogger();
+		$this->settings                  = $settings;
+		$this->partners_endpoint_factory = $partners_endpoint_factory;
+		$this->logger                    = $logger ?: new NullLogger();
 	}
 
 	/**
@@ -131,8 +131,15 @@ class MerchantDataResolver {
 	 * @return bool True when a non-empty country was fetched and stored.
 	 */
 	private function resolve(): bool {
+		$connection = $this->settings->get_merchant_data();
+
 		try {
-			$country = $this->partners_endpoint->seller_status()->country();
+			$country = $this->partners_endpoint_factory->create(
+				$connection->is_sandbox,
+				$connection->client_id,
+				$connection->client_secret,
+				$connection->merchant_id
+			)->seller_status()->country();
 		} catch ( Throwable $exception ) {
 			$this->logger->warning(
 				'[MerchantDataResolver] Could not resolve merchant country: ' . $exception->getMessage()
@@ -144,8 +151,6 @@ class MerchantDataResolver {
 		if ( '' === $country ) {
 			return false;
 		}
-
-		$connection = $this->settings->get_merchant_data();
 
 		$connection->merchant_country = $country;
 

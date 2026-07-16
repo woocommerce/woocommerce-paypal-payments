@@ -5,6 +5,7 @@ namespace PHPUnit\PpcpSettings\Service;
 
 use Mockery;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
+use WooCommerce\PayPalCommerce\ApiClient\Factory\PayPalBearerFactory;
 use WooCommerce\PayPalCommerce\Settings\Data\GeneralSettings;
 use WooCommerce\PayPalCommerce\Settings\Service\AuthenticationManager;
 use WooCommerce\PayPalCommerce\TestCase;
@@ -21,7 +22,8 @@ class AuthenticationManagerValidationTest extends TestCase {
 			Mockery::mock( GeneralSettings::class ),
 			Mockery::mock( EnvironmentConfig::class ),
 			Mockery::mock( EnvironmentConfig::class ),
-			Mockery::mock( ConnectionState::class )
+			Mockery::mock( ConnectionState::class ),
+			Mockery::mock( PayPalBearerFactory::class )
 		);
 	}
 

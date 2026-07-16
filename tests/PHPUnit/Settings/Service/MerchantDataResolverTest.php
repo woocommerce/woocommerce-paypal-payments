@@ -11,6 +11,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Entity\SellerStatus;
 use WooCommerce\PayPalCommerce\Settings\Data\GeneralSettings;
 use WooCommerce\PayPalCommerce\Settings\DTO\MerchantConnectionDTO;
 use WooCommerce\PayPalCommerce\Settings\Service\MerchantDataResolver;
+use WooCommerce\PayPalCommerce\ApiClient\Factory\PartnersEndpointFactory;
 use WooCommerce\PayPalCommerce\TestCase;
 use function Brain\Monkey\Functions\when;
 use function Brain\Monkey\Functions\expect;
@@ -22,6 +23,7 @@ class MerchantDataResolverTest extends TestCase {
 
 	private $general_settings;
 	private $partners_endpoint;
+	private $partners_endpoint_factory;
 	private $logger;
 
 	public function setUp(): void {
@@ -33,11 +35,13 @@ class MerchantDataResolverTest extends TestCase {
 
 		$this->general_settings  = Mockery::mock( GeneralSettings::class );
 		$this->partners_endpoint = Mockery::mock( PartnersEndpoint::class );
+		$this->partners_endpoint_factory = Mockery::mock( PartnersEndpointFactory::class );
+		$this->partners_endpoint_factory->shouldReceive( 'create' )->andReturn( $this->partners_endpoint );
 		$this->logger            = Mockery::mock( LoggerInterface::class )->shouldIgnoreMissing();
 	}
 
 	private function create_resolver(): MerchantDataResolver {
-		return new MerchantDataResolver( $this->general_settings, $this->partners_endpoint, $this->logger );
+		return new MerchantDataResolver( $this->general_settings, $this->partners_endpoint_factory, $this->logger );
 	}
 
 	private function merchant_data( string $merchant_country ): MerchantConnectionDTO {
