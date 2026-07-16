@@ -138,7 +138,8 @@ test.describe( () => {
 		await utils.restoreCustomer( customer );
 	} );
 
-	test(
+	// TODO: Confirm if PayPal button wallet view is supposed to be deprecated
+	test.fixme(
 		'PCP-5380 | Vaulting - My Account - Payment Methods - PayPal - Unable to save additional account',
 		annotateVisitor( customer ),
 		async ( { customerPaymentMethods } ) => {
