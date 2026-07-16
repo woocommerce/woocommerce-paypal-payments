@@ -49,9 +49,7 @@ class PartnersEndpointFactoryTest extends TestCase
 	 * GIVEN merchant credentials and a per-environment host resolved from the environment config
 	 * WHEN create() is called for either the sandbox or the live environment
 	 * THEN it returns a PartnersEndpoint instance
-	 * AND it requests a full API bearer from the bearer factory, using the resolved host,
-	 *     the given credentials, and forcing the "true" override so the ambient connection
-	 *     state is never consulted
+	 * AND it delegates to the bearer factory with the resolved host and given credentials
 	 *
 	 * @dataProvider environment_provider
 	 */
@@ -67,7 +65,7 @@ class PartnersEndpointFactoryTest extends TestCase
 		$bearer_factory = Mockery::mock(PayPalBearerFactory::class);
 		$bearer_factory->shouldReceive('create')
 			->once()
-			->with($expected_host, 'client-id', 'client-secret', true)
+			->with($expected_host, 'client-id', 'client-secret')
 			->andReturn($bearer);
 
 		$result = $this->sut($paypal_host, $partner_id, $bearer_factory)->create(

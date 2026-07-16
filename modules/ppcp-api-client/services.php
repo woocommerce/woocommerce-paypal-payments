@@ -179,7 +179,6 @@ return array(
 	 */
 	'api.factory.paypal-bearer'                      => static function ( ContainerInterface $container ): PayPalBearerFactory {
 		return new PayPalBearerFactory(
-			$container->get( 'settings.connection-state' ),
 			$container->get( 'api.token-rate-limiter' ),
 			$container->get( 'woocommerce.logger.woocommerce' )
 		);

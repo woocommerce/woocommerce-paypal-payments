@@ -426,9 +426,9 @@ class AuthenticationManager {
 	): array {
 		$host = $this->connection_host->get_value( $use_sandbox );
 
-		// Verification runs before the merchant is connected, so force the API
-		// bearer for the credentials being verified instead of reading the state.
-		$bearer = $this->bearer_factory->create( $host, $client_id, $client_secret, true );
+		// The credentials being verified are non-empty, so the factory yields an
+		// authenticated bearer even though the merchant is not connected yet.
+		$bearer = $this->bearer_factory->create( $host, $client_id, $client_secret );
 
 		$orders = new Orders(
 			$host,
