@@ -1,4 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!-- stderr: keep stdout clean so headers_sent() stays false and code under test
+     can send status codes/cookies (asserted by the WC-AJAX endpoint contract tests). -->
 <phpunit
     bootstrap="PHPUnit/bootstrap.php"
     backupGlobals="false"
@@ -6,6 +8,7 @@
     convertErrorsToExceptions="true"
     convertNoticesToExceptions="true"
     convertWarningsToExceptions="true"
+    stderr="true"
     >
     <testsuites>
         <testsuite name="unit">
