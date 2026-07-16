@@ -14,6 +14,8 @@ import { Pcp, ShopOrder } from '../../resources';
 import { PayPalPopup } from './paypal-popup';
 import { GooglePayPopup } from './google-pay-popup';
 import { ApmHostedCheckout } from './apm-hosted-checkout';
+// TODO: get resolution about OXXO voucher popup
+// import { OxxoVoucherPopup } from './oxxo-voucher-popup';
 import { PayPalApi } from '../paypal-api';
 
 /**
@@ -604,6 +606,21 @@ export class PayPalUi {
 		await apmHostedCheckout.testSuccessfulPaymentButton().click();
 
 		await this.page.waitForURL( /order-received/, { timeout: 30_000 } );
+		// TODO: get resolution about OXXO voucher popup
+		// // Generating the voucher only creates the order (status stays "pending"/"on-hold").
+		// // The actual cash payment — and the webhook that flips the order to "processing" —
+		// // is simulated separately via the voucher popup on the thank-you page.
+		// const seeOxxoVoucherButton = this.page
+		// 	.getByRole( 'link', { name: 'See OXXO voucher' } )
+		// 	.first();
+		// await expect(
+		// 	seeOxxoVoucherButton,
+		// 	'Assert See OXXO voucher button is visible'
+		// ).toBeVisible();
+		// const popupPromise = this.page.waitForEvent( 'popup' );
+		// await seeOxxoVoucherButton.click();
+		// const voucherPopup = new OxxoVoucherPopup( await popupPromise );
+		// await voucherPopup.simulate();
 	};
 
 	completeBcdcPayment = async ( ...args ) =>
