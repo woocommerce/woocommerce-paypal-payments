@@ -3,12 +3,12 @@
  * Endpoint to verify if an order has been approved. An approved order
  * will be stored in the current session.
  *
- * @package WooCommerce\PayPalCommerce\Button\Endpoint
+ * @package WooCommerce\PayPalCommerce\OrderEndpoints\Endpoint
  */
 
 declare( strict_types = 1 );
 
-namespace WooCommerce\PayPalCommerce\Button\Endpoint;
+namespace WooCommerce\PayPalCommerce\OrderEndpoints\Endpoint;
 
 use Exception;
 use Psr\Log\LoggerInterface;
@@ -28,7 +28,7 @@ use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
 use WooCommerce\PayPalCommerce\Settings\Data\SettingsModel;
 use WooCommerce\PayPalCommerce\Webhooks\CustomIds;
-use WooCommerce\PayPalCommerce\OrderEndpoints\Endpoint\RequestData;
+use WooCommerce\PayPalCommerce\Button\Endpoint\EndpointInterface;
 
 /**
  * Class ApproveOrderEndpoint
