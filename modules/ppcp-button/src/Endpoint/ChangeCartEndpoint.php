@@ -13,7 +13,8 @@ use Exception;
 use Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PurchaseUnitFactory;
 use WooCommerce\PayPalCommerce\Button\Exception\NonceValidationException;
-use WooCommerce\PayPalCommerce\Button\Helper\CartProductsHelper;
+use WooCommerce\PayPalCommerce\OrderEndpoints\Helper\CartProductsHelper;
+use WooCommerce\PayPalCommerce\OrderEndpoints\Endpoint\RequestData;
 
 /**
  * Class ChangeCartEndpoint

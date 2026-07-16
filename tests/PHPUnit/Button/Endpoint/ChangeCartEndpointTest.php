@@ -7,11 +7,12 @@ namespace WooCommerce\PayPalCommerce\Button\Endpoint;
 use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PurchaseUnit;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PurchaseUnitFactory;
-use WooCommerce\PayPalCommerce\Button\Helper\CartProductsHelper;
+use WooCommerce\PayPalCommerce\OrderEndpoints\Helper\CartProductsHelper;
 use WooCommerce\PayPalCommerce\TestCase;
 use Mockery;
 use WooCommerce\WooCommerce\Logging\Logger\NullLogger;
 use function Brain\Monkey\Functions\expect;
+use WooCommerce\PayPalCommerce\OrderEndpoints\Endpoint\RequestData;
 
 class ChangeCartEndpointTest extends TestCase
 {

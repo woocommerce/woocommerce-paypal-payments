@@ -14,7 +14,7 @@ use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
  * endpoints: the JSON body read from php://input, the nonce field, and the
  * guest-session nonce fix.
  *
- * @covers \WooCommerce\PayPalCommerce\Button\Endpoint\RequestData
+ * @covers \WooCommerce\PayPalCommerce\OrderEndpoints\Endpoint\RequestData
  */
 class RequestDataContractTest extends WcAjaxEndpointTestCase {
 
