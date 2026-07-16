@@ -74,9 +74,7 @@ class PartnersEndpointFactory
     public function create(bool $is_sandbox, string $client_id, string $client_secret, string $merchant_id): PartnersEndpoint
     {
         $host = (string) $this->paypal_host->get_value($is_sandbox);
-        // The partners endpoint always needs a full API bearer for the given
-        // credentials, independent of the ambient connection state.
-        $bearer = $this->bearer_factory->create($host, $client_id, $client_secret, \true);
+        $bearer = $this->bearer_factory->create($host, $client_id, $client_secret);
         return new PartnersEndpoint($host, $bearer, $this->logger, $this->seller_status_factory, (string) $this->partner_id->get_value($is_sandbox), $merchant_id, $this->failure_registry, $this->cache);
     }
 }
