@@ -6,6 +6,7 @@ namespace WooCommerce\PayPalCommerce\Button\Helper;
 use Exception;
 use Psr\Log\LoggerInterface;
 use WC_Cart;
+use WooCommerce\PayPalCommerce\OrderEndpoints\Helper\CartProductsHelper;
 
 /**
  * Fallback calculator for complex product types (bookings, bundles, composites) that
