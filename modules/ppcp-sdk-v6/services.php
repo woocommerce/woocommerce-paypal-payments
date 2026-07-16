@@ -38,7 +38,7 @@ return array(
 			$container->get( 'ppcp.asset-version' ),
 			$container->get( 'settings.environment' ),
 			$container->get( 'sdk-v6.button-style-mapper' ),
-			$container->get( 'button.handle-shipping-in-paypal' ),
+			$container->get( 'order-endpoints.handle-shipping-in-paypal' ),
 			$container->get( 'wcgateway.settings.status' ),
 			$container->get( 'button.helper.context' ),
 			$container->get( 'settings.settings-provider' )->save_paypal_and_venmo()
@@ -47,7 +47,7 @@ return array(
 
 	'sdk-v6.endpoint.client-token' => static function ( ContainerInterface $container ): ClientTokenEndpoint {
 		return new ClientTokenEndpoint(
-			$container->get( 'button.request-data' ),
+			$container->get( 'order-endpoints.request-data' ),
 			$container->get( 'woocommerce.logger.woocommerce' ),
 			$container->get( 'api.sdk-client-token' ),
 			$container->get( 'sdk-v6.rate-limiter' )
