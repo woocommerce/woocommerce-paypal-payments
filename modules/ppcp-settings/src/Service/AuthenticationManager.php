@@ -12,11 +12,9 @@ use Throwable;
 use JsonException;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
-use WooCommerce\PayPalCommerce\ApiClient\Authentication\PayPalBearer;
-use WooCommerce\PayPalCommerce\ApiClient\Authentication\TokenRateLimiter;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\LoginSeller;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\Orders;
-use WooCommerce\PayPalCommerce\ApiClient\Helper\InMemoryCache;
+use WooCommerce\PayPalCommerce\ApiClient\Factory\PayPalBearerFactory;
 use WooCommerce\PayPalCommerce\Settings\Data\GeneralSettings;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\EnvironmentConfig;
 use WooCommerce\WooCommerce\Logging\Logger\NullLogger;
@@ -65,22 +63,30 @@ class AuthenticationManager
      */
     private ConnectionState $connection_state;
     /**
+     * Builds bearers for explicit credentials.
+     *
+     * @var PayPalBearerFactory
+     */
+    private PayPalBearerFactory $bearer_factory;
+    /**
      * Constructor.
      *
      * @param GeneralSettings                $common_settings  Data model that stores the connection details.
      * @param EnvironmentConfig<string>      $connection_host  API host for direct authentication.
      * @param EnvironmentConfig<LoginSeller> $login_endpoint   API handler to fetch merchant credentials.
      * @param ConnectionState                $connection_state Connection state manager.
+     * @param PayPalBearerFactory            $bearer_factory   Builds bearers for explicit credentials.
      * @param ?LoggerInterface               $logger           Logging instance.
      *
      * phpcs:disable Squiz.Commenting.FunctionComment.IncorrectTypeHint
      */
-    public function __construct(GeneralSettings $common_settings, EnvironmentConfig $connection_host, EnvironmentConfig $login_endpoint, ConnectionState $connection_state, ?LoggerInterface $logger = null)
+    public function __construct(GeneralSettings $common_settings, EnvironmentConfig $connection_host, EnvironmentConfig $login_endpoint, ConnectionState $connection_state, PayPalBearerFactory $bearer_factory, ?LoggerInterface $logger = null)
     {
         $this->common_settings = $common_settings;
         $this->connection_host = $connection_host;
         $this->login_endpoint = $login_endpoint;
         $this->connection_state = $connection_state;
+        $this->bearer_factory = $bearer_factory;
         $this->logger = $logger ?: new NullLogger();
     }
     /**
@@ -326,7 +332,9 @@ class AuthenticationManager
     private function request_payee(string $client_id, string $client_secret, bool $use_sandbox): array
     {
         $host = $this->connection_host->get_value($use_sandbox);
-        $bearer = new PayPalBearer(new InMemoryCache(), $host, $client_id, $client_secret, $this->logger, null, new TokenRateLimiter(new InMemoryCache(), $this->logger));
+        // Verification runs before the merchant is connected, so force the API
+        // bearer for the credentials being verified instead of reading the state.
+        $bearer = $this->bearer_factory->create($host, $client_id, $client_secret, \true);
         $orders = new Orders($host, $bearer, $this->logger);
         $request_body = array('intent' => 'CAPTURE', 'purchase_units' => array(array('amount' => array('currency_code' => 'USD', 'value' => 1.0))));
         try {

@@ -39,7 +39,7 @@ use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\OXXOGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\PayUponInvoice\PayUponInvoiceGateway;
 use WooCommerce\PayPalCommerce\Settings\Service\SettingsDataManager;
-use WooCommerce\PayPalCommerce\Settings\Service\MerchantCountryResolver;
+use WooCommerce\PayPalCommerce\Settings\Service\MerchantDataResolver;
 use WooCommerce\PayPalCommerce\Settings\DTO\ConfigurationFlagsDTO;
 use WooCommerce\PayPalCommerce\Settings\DTO\MerchantConnectionDTO;
 use WooCommerce\PayPalCommerce\Settings\Enum\ProductChoicesEnum;
@@ -275,8 +275,8 @@ class SettingsModule implements ServiceModule, ExecutableModule
             assert($seller_type_resolver instanceof SellerTypeResolver);
             do_action('woocommerce_paypal_payments_clear_apm_product_status');
             $seller_type_resolver->resolve_unknown_seller_type($general_settings, $partners_endpoint, $logger);
-            $country_resolver = $container->get('settings.service.merchant-country-resolver');
-            assert($country_resolver instanceof MerchantCountryResolver);
+            $country_resolver = $container->get('settings.service.merchant-data-resolver');
+            assert($country_resolver instanceof MerchantDataResolver);
             $country_resolver->ensure_country_resolved();
             $onboarding_profile = $container->get('settings.data.onboarding');
             assert($onboarding_profile instanceof OnboardingProfile);
@@ -492,9 +492,9 @@ class SettingsModule implements ServiceModule, ExecutableModule
             }
         });
         // Runs the deferred merchant-country resolution retry (bounded, in-process).
-        add_action(MerchantCountryResolver::RETRY_HOOK, static function ($attempt = 1) use ($container): void {
-            $country_resolver = $container->get('settings.service.merchant-country-resolver');
-            assert($country_resolver instanceof MerchantCountryResolver);
+        add_action(MerchantDataResolver::RETRY_HOOK, static function ($attempt = 1) use ($container): void {
+            $country_resolver = $container->get('settings.service.merchant-data-resolver');
+            assert($country_resolver instanceof MerchantDataResolver);
             $country_resolver->handle_retry((int) $attempt);
         });
         /**
@@ -504,8 +504,8 @@ class SettingsModule implements ServiceModule, ExecutableModule
          * bounded (no-op once the country is set or the merchant is disconnected).
          */
         add_action('woocommerce_paypal_payments_gateway_migrate_on_update', static function () use ($container): void {
-            $country_resolver = $container->get('settings.service.merchant-country-resolver');
-            assert($country_resolver instanceof MerchantCountryResolver);
+            $country_resolver = $container->get('settings.service.merchant-data-resolver');
+            assert($country_resolver instanceof MerchantDataResolver);
             $country_resolver->ensure_country_resolved();
         });
         add_action(
