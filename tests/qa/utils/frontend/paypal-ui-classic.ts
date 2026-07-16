@@ -461,32 +461,6 @@ export class PayPalUiClassic extends PayPalUi {
 	};
 
 	/**
-	 * Completes payment with OXXO (vaulting disabled)
-	 */
-	completeOXXOPayment = async () => {
-		await expect(
-			this.oxxoGateway(),
-			'Assert OXXO gateway is visible'
-		).toBeVisible();
-		await this.oxxoGateway().click();
-		await expect(
-			this.page.getByText(
-				'OXXO allows you to pay bills and online purchases in-store with cash.'
-			),
-			'Assert OXXO description is visible'
-		).toBeVisible();
-
-		const popupPromise = this.page.waitForEvent( 'popup', {
-			timeout: 20 * 1000,
-		} );
-		await this.submitOrder();
-		const popup = await popupPromise;
-		// Close without clicking — payment simulation happens from the thank-you page voucher button
-		await popup.waitForLoadState().catch( () => {} );
-		await popup.close();
-	};
-
-	/**
 	 * Completes payment with BCDC funding source (vaulting disabled)
 	 *
 	 * @param card

@@ -21,6 +21,7 @@ export const oxxoClassicCheckout: ShopOrder[] = [
 		payment: payments.oxxo,
 		customer: guest,
 		merchant,
+		orderStatus: 'processing',
 	},
 	{
 		title: 'PCP-2755 | Transaction - Classic checkout - OXXO - Mexico - Order by customer',
@@ -28,5 +29,6 @@ export const oxxoClassicCheckout: ShopOrder[] = [
 		payment: payments.oxxo,
 		customer,
 		merchant,
+		orderStatus: 'processing',
 	},
 ];

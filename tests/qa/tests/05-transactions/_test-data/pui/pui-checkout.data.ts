@@ -23,7 +23,7 @@ export const puiCheckout: ShopOrder[] = [
 		currency,
 	},
 	{
-		title: 'PCP-6641 | Transaction - Checkout - Pay upon Invoice - Germany - Customer - Default order @Critical',
+		title: 'PCP-6641 | Transaction - Checkout - Pay upon Invoice - Germany - Customer - Default order @Critical @Smoke',
 		...orders.default,
 		payment: pui,
 		customer,

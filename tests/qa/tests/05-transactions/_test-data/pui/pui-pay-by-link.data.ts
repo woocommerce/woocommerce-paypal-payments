@@ -23,7 +23,7 @@ export const puiPayByLink: ShopOrder[] = [
 		currency,
 	},
 	{
-		title: 'PCP-1328 | Transaction - Pay by Link - Pay upon Invoice - Germany - Customer - Default order @Critical',
+		title: 'PCP-1328 | Transaction - Pay by Link - Pay upon Invoice - Germany - Customer - Default order @Critical @Smoke',
 		...orders.default,
 		payment: pui,
 		customer,
