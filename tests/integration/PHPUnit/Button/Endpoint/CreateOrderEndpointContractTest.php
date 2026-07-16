@@ -13,7 +13,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Entity\PurchaseUnit;
  * Contract tests for the ppc-create-order WC-AJAX endpoint, shared by the
  * v5 and v6 SDK frontends.
  *
- * @covers \WooCommerce\PayPalCommerce\Button\Endpoint\CreateOrderEndpoint
+ * @covers \WooCommerce\PayPalCommerce\OrderEndpoints\Endpoint\CreateOrderEndpoint
  */
 class CreateOrderEndpointContractTest extends WcAjaxEndpointTestCase {
 

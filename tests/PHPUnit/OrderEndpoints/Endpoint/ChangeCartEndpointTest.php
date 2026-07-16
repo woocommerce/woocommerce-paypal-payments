@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-namespace WooCommerce\PayPalCommerce\Button\Endpoint;
+namespace WooCommerce\PayPalCommerce\OrderEndpoints\Endpoint;
 
 
 use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;

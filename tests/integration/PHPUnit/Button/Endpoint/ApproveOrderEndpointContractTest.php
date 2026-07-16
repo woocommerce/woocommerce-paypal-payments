@@ -13,7 +13,7 @@ use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
  * Contract tests for the ppc-approve-order WC-AJAX endpoint, shared by the
  * v5 and v6 SDK frontends.
  *
- * @covers \WooCommerce\PayPalCommerce\Button\Endpoint\ApproveOrderEndpoint
+ * @covers \WooCommerce\PayPalCommerce\OrderEndpoints\Endpoint\ApproveOrderEndpoint
  */
 class ApproveOrderEndpointContractTest extends WcAjaxEndpointTestCase {
 

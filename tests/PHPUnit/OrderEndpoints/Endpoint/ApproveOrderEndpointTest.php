@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace WooCommerce\PayPalCommerce\Button\Endpoint;
+namespace WooCommerce\PayPalCommerce\OrderEndpoints\Endpoint;
 
 use Mockery;
 use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
@@ -26,7 +26,7 @@ use function Brain\Monkey\Functions\when;
 use WooCommerce\PayPalCommerce\OrderEndpoints\Endpoint\RequestData;
 
 /**
- * @covers \WooCommerce\PayPalCommerce\Button\Endpoint\ApproveOrderEndpoint
+ * @covers \WooCommerce\PayPalCommerce\OrderEndpoints\Endpoint\ApproveOrderEndpoint
  */
 class ApproveOrderEndpointTest extends TestCase
 {

@@ -211,22 +211,22 @@ parameters:
 			path: modules/ppcp-button/src/ButtonModule.php
 
 		-
-			message: '#^Method WooCommerce\\PayPalCommerce\\Button\\Endpoint\\CreateOrderEndpoint\:\:set_bn_code\(\) has no return type specified\.$#'
+			message: '#^Method WooCommerce\\PayPalCommerce\\OrderEndpoints\\Endpoint\\CreateOrderEndpoint\:\:set_bn_code\(\) has no return type specified\.$#'
 			identifier: missingType.return
 			count: 1
-			path: modules/ppcp-button/src/Endpoint/CreateOrderEndpoint.php
+			path: modules/ppcp-order-endpoints/src/Endpoint/CreateOrderEndpoint.php
 
 		-
 			message: '#^Parameter \#1 \$json of function json_decode expects string, string\|false given\.$#'
 			identifier: argument.type
 			count: 1
-			path: modules/ppcp-button/src/Endpoint/CreateOrderEndpoint.php
+			path: modules/ppcp-order-endpoints/src/Endpoint/CreateOrderEndpoint.php
 
 		-
 			message: '#^Parameter \#1 \$wc_order of method WooCommerce\\PayPalCommerce\\ApiClient\\Factory\\PayerFactory\:\:from_wc_order\(\) expects WC_Order, WC_Order\|null given\.$#'
 			identifier: argument.type
 			count: 1
-			path: modules/ppcp-button/src/Endpoint/CreateOrderEndpoint.php
+			path: modules/ppcp-order-endpoints/src/Endpoint/CreateOrderEndpoint.php
 
 		-
 			message: '#^Method WooCommerce\\PayPalCommerce\\OrderEndpoints\\Endpoint\\RequestData\:\:dequeue_nonce_fix\(\) has no return type specified\.$#'

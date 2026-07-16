@@ -2,19 +2,18 @@
 /**
  * Endpoint to update the cart.
  *
- * @package WooCommerce\PayPalCommerce\Button\Endpoint
+ * @package WooCommerce\PayPalCommerce\OrderEndpoints\Endpoint
  */
 
 declare(strict_types=1);
 
-namespace WooCommerce\PayPalCommerce\Button\Endpoint;
+namespace WooCommerce\PayPalCommerce\OrderEndpoints\Endpoint;
 
 use Exception;
 use Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PurchaseUnitFactory;
 use WooCommerce\PayPalCommerce\Button\Exception\NonceValidationException;
 use WooCommerce\PayPalCommerce\OrderEndpoints\Helper\CartProductsHelper;
-use WooCommerce\PayPalCommerce\OrderEndpoints\Endpoint\RequestData;
 
 /**
  * Class ChangeCartEndpoint
