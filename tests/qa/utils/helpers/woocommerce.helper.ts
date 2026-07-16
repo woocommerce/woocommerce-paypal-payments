@@ -61,18 +61,6 @@ export const setupWooCommerce = async () => {
 		);
 
 		setup(
-			'Setup Negative 12 Fee plugin (inactive)',
-			async ( { requestUtils, plugins } ) => {
-				await installPluginResolveActiveState( {
-					requestUtils,
-					plugins,
-					...negative12FeePlugin,
-					isActive: false,
-				} );
-			}
-		);
-
-		setup(
 			'Setup Disable Webhook Verification plugin (active)',
 			async ( { plugins, requestUtils } ) => {
 				await installPluginResolveActiveState( {
@@ -133,6 +121,20 @@ export const setupWooCommerce = async () => {
 			}
 		);
 	}
+
+	// Installed (inactive) in every environment — specs activate it themselves
+	// via requestUtils.activatePlugin/deactivatePlugin in their own beforeAll/afterAll.
+	setup(
+		'Setup Negative 12 Fee plugin (inactive)',
+		async ( { requestUtils, plugins } ) => {
+			await installPluginResolveActiveState( {
+				requestUtils,
+				plugins,
+				...negative12FeePlugin,
+				isActive: false,
+			} );
+		}
+	);
 
 	setup( 'Setup WooCommerce API keys', async ( { wooCommerceUtils } ) => {
 		if ( ! ( await wooCommerceUtils.apiKeysExist() ) ) {

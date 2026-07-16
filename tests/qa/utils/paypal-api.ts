@@ -208,8 +208,8 @@ export class PayPalApi {
 	): Promise< PayPalPaymentDetails > => {
 		const { merchant, payment } = shopOrder;
 		const fundingSource = payment.gateway.shortcut;
-		if ( [ 'pay_upon_invoice', 'oxxo' ].includes( fundingSource ) ) {
-			// PUI and OXXO are not authorized by default
+		if ( fundingSource === 'pay_upon_invoice' ) {
+			// PUI is not captured via PayPal payments endpoints
 			return undefined;
 		}
 		const payPalPayment = await this.getPayment( resourceId, merchant, payment.isAuthorized );
