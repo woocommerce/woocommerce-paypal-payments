@@ -521,8 +521,8 @@ class PayPalGateway extends \WC_Payment_Gateway
     /**
      * Check whether customer is changing subscription payment.
      *
-     * @param SubscriptionHelper $subscription_helper Subscription helper.
-     * @param WC_Order           $wc_order WC order.
+     * @param SubscriptionHelper $subscription_helper
+     * @param WC_Order           $wc_order
      * @return bool
      */
     private function is_customer_changing_subscription_payment(SubscriptionHelper $subscription_helper, WC_Order $wc_order): bool
@@ -533,10 +533,10 @@ class PayPalGateway extends \WC_Payment_Gateway
     /**
      * Adds the given WC payment token into the given WC Order.
      *
-     * @param WC_Order       $wc_order WC order.
-     * @param int            $wc_payment_token_id WC payment token ID.
-     * @param string         $return_url Return url.
-     * @param SessionHandler $session_handler Session handler.
+     * @param WC_Order       $wc_order
+     * @param int            $wc_payment_token_id
+     * @param string         $return_url
+     * @param SessionHandler $session_handler
      * @return array{result: string, redirect: string, errorMessage?: string}
      */
     private function add_payment_token_to_order(WC_Order $wc_order, int $wc_payment_token_id, string $return_url, SessionHandler $session_handler): array
