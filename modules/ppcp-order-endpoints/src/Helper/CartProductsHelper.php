@@ -2,12 +2,12 @@
 /**
  * Handles the adding of products to WooCommerce cart.
  *
- * @package WooCommerce\PayPalCommerce\Button\Helper
+ * @package WooCommerce\PayPalCommerce\OrderEndpoints\Helper
  */
 
 declare(strict_types=1);
 
-namespace WooCommerce\PayPalCommerce\Button\Helper;
+namespace WooCommerce\PayPalCommerce\OrderEndpoints\Helper;
 
 use Exception;
 use WC_Cart;

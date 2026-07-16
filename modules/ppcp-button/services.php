@@ -21,20 +21,20 @@ use WooCommerce\PayPalCommerce\Button\Endpoint\ChangeCartEndpoint;
 use WooCommerce\PayPalCommerce\Button\Endpoint\CreateOrderEndpoint;
 use WooCommerce\PayPalCommerce\Button\Endpoint\DataClientIdEndpoint;
 use WooCommerce\PayPalCommerce\Button\Endpoint\GetOrderEndpoint;
-use WooCommerce\PayPalCommerce\Button\Endpoint\RequestData;
+use WooCommerce\PayPalCommerce\OrderEndpoints\Endpoint\RequestData;
 use WooCommerce\PayPalCommerce\Button\Endpoint\SaveCheckoutFormEndpoint;
 use WooCommerce\PayPalCommerce\Button\Endpoint\SimulateCartEndpoint;
 use WooCommerce\PayPalCommerce\Button\Endpoint\ValidateCheckoutEndpoint;
 use WooCommerce\PayPalCommerce\Button\Exception\RuntimeException;
-use WooCommerce\PayPalCommerce\Button\Helper\CartProductsHelper;
+use WooCommerce\PayPalCommerce\OrderEndpoints\Helper\CartProductsHelper;
 use WooCommerce\PayPalCommerce\Button\Helper\CheckoutFormSaver;
 use WooCommerce\PayPalCommerce\Button\Helper\Context;
 use WooCommerce\PayPalCommerce\Button\Helper\DisabledFundingSources;
-use WooCommerce\PayPalCommerce\Button\Helper\EarlyOrderHandler;
+use WooCommerce\PayPalCommerce\OrderEndpoints\Helper\EarlyOrderHandler;
 use WooCommerce\PayPalCommerce\Button\Helper\IsolatedCartSimulator;
 use WooCommerce\PayPalCommerce\Button\Helper\MessagesApply;
 use WooCommerce\PayPalCommerce\Button\Helper\ThreeDSecure;
-use WooCommerce\PayPalCommerce\Button\Helper\WooCommerceOrderCreator;
+use WooCommerce\PayPalCommerce\OrderEndpoints\Helper\WooCommerceOrderCreator;
 use WooCommerce\PayPalCommerce\Button\Session\CartDataFactory;
 use WooCommerce\PayPalCommerce\Button\Session\CartDataTransientStorage;
 use WooCommerce\PayPalCommerce\Button\Validation\CheckoutFormValidator;
@@ -170,7 +170,7 @@ return array(
 		return $defaults;
 	},
 	'button.request-data'                         => static function ( ContainerInterface $container ): RequestData {
-		return new RequestData();
+		return $container->get( 'order-endpoints.request-data' );
 	},
 	'button.endpoint.simulate-cart'               => static function ( ContainerInterface $container ): SimulateCartEndpoint {
 		return new SimulateCartEndpoint(
@@ -228,11 +228,7 @@ return array(
 		);
 	},
 	'button.helper.early-order-handler'           => static function ( ContainerInterface $container ): EarlyOrderHandler {
-		return new EarlyOrderHandler(
-			$container->get( 'settings.flag.is-connected' ),
-			$container->get( 'wcgateway.order-processor' ),
-			$container->get( 'session.handler' )
-		);
+		return $container->get( 'order-endpoints.helper.early-order-handler' );
 	},
 	'button.endpoint.approve-order'               => static function ( ContainerInterface $container ): ApproveOrderEndpoint {
 		$request_data         = $container->get( 'button.request-data' );
@@ -333,8 +329,7 @@ return array(
 		);
 	},
 	'button.helper.cart-products'                 => static function ( ContainerInterface $container ): CartProductsHelper {
-		$data_store = \WC_Data_Store::load( 'product' );
-		return new CartProductsHelper( $data_store );
+		return $container->get( 'order-endpoints.helper.cart-products' );
 	},
 	'button.helper.isolated-cart-simulator'       => static function ( ContainerInterface $container ): IsolatedCartSimulator {
 		return new IsolatedCartSimulator(
@@ -424,14 +419,7 @@ return array(
 	},
 
 	'button.helper.wc-order-creator'              => static function ( ContainerInterface $container ): WooCommerceOrderCreator {
-		return new WooCommerceOrderCreator(
-			$container->get( 'wcgateway.funding-source.renderer' ),
-			$container->get( 'session.handler' ),
-			$container->get( 'wc-subscriptions.helper' ),
-			$container->get( 'button.session.factory.card-data' ),
-			$container->get( 'api.factory.shipping' ),
-			$container->get( 'api.factory.payer' )
-		);
+		return $container->get( 'order-endpoints.helper.wc-order-creator' );
 	},
 
 	'button.session.factory.card-data'            => static function ( ContainerInterface $container ): CartDataFactory {

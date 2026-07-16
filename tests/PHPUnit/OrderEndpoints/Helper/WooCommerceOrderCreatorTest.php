@@ -1,7 +1,7 @@
 <?php
 declare( strict_types = 1 );
 
-namespace WooCommerce\PayPalCommerce\Button\Helper;
+namespace WooCommerce\PayPalCommerce\OrderEndpoints\Helper;
 
 use Mockery;
 use ReflectionMethod;

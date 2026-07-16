@@ -2,12 +2,12 @@
 /**
  * Helper to read request data for the endpoints.
  *
- * @package WooCommerce\PayPalCommerce\Button\Endpoint
+ * @package WooCommerce\PayPalCommerce\OrderEndpoints\Endpoint
  */
 
 declare(strict_types=1);
 
-namespace WooCommerce\PayPalCommerce\Button\Endpoint;
+namespace WooCommerce\PayPalCommerce\OrderEndpoints\Endpoint;
 
 use WooCommerce\PayPalCommerce\Button\Exception\NonceValidationException;
 
