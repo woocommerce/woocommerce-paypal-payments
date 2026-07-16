@@ -12,7 +12,7 @@ use WooCommerce\PayPalCommerce\Tests\Integration\Fixtures\PayPalOrderPresets;
  * Contract tests for the ppc-update-shipping WC-AJAX endpoint, shared by the
  * v5 and v6 SDK frontends.
  *
- * @covers \WooCommerce\PayPalCommerce\Blocks\Endpoint\UpdateShippingEndpoint
+ * @covers \WooCommerce\PayPalCommerce\OrderEndpoints\Endpoint\UpdateShippingEndpoint
  */
 class UpdateShippingEndpointContractTest extends WcAjaxEndpointTestCase {
 

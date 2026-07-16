@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace WooCommerce\PayPalCommerce\Blocks\Endpoint;
+namespace WooCommerce\PayPalCommerce\OrderEndpoints\Endpoint;
 
 use Mockery;
 use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
@@ -17,7 +17,7 @@ use WooCommerce\PayPalCommerce\TestCase;
 use function Brain\Monkey\Functions\expect;
 
 /**
- * @covers \WooCommerce\PayPalCommerce\Blocks\Endpoint\UpdateShippingEndpoint
+ * @covers \WooCommerce\PayPalCommerce\OrderEndpoints\Endpoint\UpdateShippingEndpoint
  */
 class UpdateShippingEndpointTest extends TestCase
 {
