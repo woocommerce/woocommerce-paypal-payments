@@ -12,6 +12,9 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\OrderEndpoints;
 
+use WooCommerce\PayPalCommerce\OrderEndpoints\Endpoint\ApproveOrderEndpoint;
+use WooCommerce\PayPalCommerce\OrderEndpoints\Endpoint\ChangeCartEndpoint;
+use WooCommerce\PayPalCommerce\OrderEndpoints\Endpoint\CreateOrderEndpoint;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExecutableModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ModuleClassNameIdTrait;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ServiceModule;
@@ -34,6 +37,45 @@ class OrderEndpointsModule implements ServiceModule, ExecutableModule {
 	 * {@inheritDoc}
 	 */
 	public function run( ContainerInterface $c ): bool {
+		add_action(
+			'wc_ajax_' . ChangeCartEndpoint::ENDPOINT,
+			static function () use ( $c ) {
+				$endpoint = $c->get( 'order-endpoints.endpoint.change-cart' );
+				/**
+				 * The Change Cart Endpoint.
+				 *
+				 * @var ChangeCartEndpoint $endpoint
+				 */
+				$endpoint->handle_request();
+			}
+		);
+
+		add_action(
+			'wc_ajax_' . ApproveOrderEndpoint::ENDPOINT,
+			static function () use ( $c ) {
+				$endpoint = $c->get( 'order-endpoints.endpoint.approve-order' );
+				/**
+				 * The Approve Order Endpoint.
+				 *
+				 * @var ApproveOrderEndpoint $endpoint
+				 */
+				$endpoint->handle_request();
+			}
+		);
+
+		add_action(
+			'wc_ajax_' . CreateOrderEndpoint::ENDPOINT,
+			static function () use ( $c ) {
+				$endpoint = $c->get( 'order-endpoints.endpoint.create-order' );
+				/**
+				 * The Create Order Endpoint.
+				 *
+				 * @var CreateOrderEndpoint $endpoint
+				 */
+				$endpoint->handle_request();
+			}
+		);
+
 		return true;
 	}
 }

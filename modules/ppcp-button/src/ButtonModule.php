@@ -13,11 +13,9 @@ use WC_Order;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\ReturnUrlFactory;
 use WooCommerce\PayPalCommerce\Button\Assets\SmartButtonInterface;
-use WooCommerce\PayPalCommerce\Button\Endpoint\ApproveOrderEndpoint;
 use WooCommerce\PayPalCommerce\Button\Endpoint\ApproveSubscriptionEndpoint;
 use WooCommerce\PayPalCommerce\Button\Endpoint\CartScriptParamsEndpoint;
-use WooCommerce\PayPalCommerce\Button\Endpoint\ChangeCartEndpoint;
-use WooCommerce\PayPalCommerce\Button\Endpoint\CreateOrderEndpoint;
+use WooCommerce\PayPalCommerce\OrderEndpoints\Endpoint\CreateOrderEndpoint;
 use WooCommerce\PayPalCommerce\Button\Endpoint\DataClientIdEndpoint;
 use WooCommerce\PayPalCommerce\Button\Endpoint\GetOrderEndpoint;
 use WooCommerce\PayPalCommerce\Button\Endpoint\SaveCheckoutFormEndpoint;
@@ -134,50 +132,11 @@ class ButtonModule implements ServiceModule, ExecutableModule {
 		);
 
 		add_action(
-			'wc_ajax_' . ChangeCartEndpoint::ENDPOINT,
-			static function () use ( $container ) {
-				$endpoint = $container->get( 'button.endpoint.change-cart' );
-				/**
-				 * The Change Cart Endpoint.
-				 *
-				 * @var ChangeCartEndpoint $endpoint
-				 */
-				$endpoint->handle_request();
-			}
-		);
-
-		add_action(
-			'wc_ajax_' . ApproveOrderEndpoint::ENDPOINT,
-			static function () use ( $container ) {
-				$endpoint = $container->get( 'button.endpoint.approve-order' );
-				/**
-				 * The Approve Order Endpoint.
-				 *
-				 * @var ApproveOrderEndpoint $endpoint
-				 */
-				$endpoint->handle_request();
-			}
-		);
-
-		add_action(
 			'wc_ajax_' . ApproveSubscriptionEndpoint::ENDPOINT,
 			static function () use ( $container ) {
 				$endpoint = $container->get( 'button.endpoint.approve-subscription' );
 				assert( $endpoint instanceof ApproveSubscriptionEndpoint );
 
-				$endpoint->handle_request();
-			}
-		);
-
-		add_action(
-			'wc_ajax_' . CreateOrderEndpoint::ENDPOINT,
-			static function () use ( $container ) {
-				$endpoint = $container->get( 'button.endpoint.create-order' );
-				/**
-				 * The Create Order Endpoint.
-				 *
-				 * @var CreateOrderEndpoint $endpoint
-				 */
 				$endpoint->handle_request();
 			}
 		);

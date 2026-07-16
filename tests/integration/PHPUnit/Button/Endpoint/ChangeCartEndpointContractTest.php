@@ -3,13 +3,13 @@ declare( strict_types=1 );
 
 namespace WooCommerce\PayPalCommerce\Tests\Integration\Button\Endpoint;
 
-use WooCommerce\PayPalCommerce\Button\Endpoint\ChangeCartEndpoint;
+use WooCommerce\PayPalCommerce\OrderEndpoints\Endpoint\ChangeCartEndpoint;
 
 /**
  * Contract tests for the ppc-change-cart WC-AJAX endpoint, shared by the
  * v5 and v6 SDK frontends.
  *
- * @covers \WooCommerce\PayPalCommerce\Button\Endpoint\ChangeCartEndpoint
+ * @covers \WooCommerce\PayPalCommerce\OrderEndpoints\Endpoint\ChangeCartEndpoint
  */
 class ChangeCartEndpointContractTest extends WcAjaxEndpointTestCase {
 
