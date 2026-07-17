@@ -49,6 +49,7 @@ class WcGatewayTest extends TestCase
 	private $wcPaymentTokens;
 	private $assetGetter;
 	private $context;
+	private $capturePayPalPayment;
 
 	public function setUp(): void {
 		parent::setUp();
@@ -97,6 +98,7 @@ class WcGatewayTest extends TestCase
 		$this->paymentTokensEndpoint = Mockery::mock(PaymentTokensEndpoint::class);
 		$this->wcPaymentTokens = Mockery::mock(WooCommercePaymentTokens::class);
 		$this->context = Mockery::mock(Context::class);
+		$this->capturePayPalPayment = Mockery::mock(CapturePayPalPayment::class);
 	}
 
 	private function createGateway()
@@ -119,7 +121,7 @@ class WcGatewayTest extends TestCase
 			$this->wcPaymentTokens,
 			$this->assetGetter,
 			false,
-			Mockery::mock(CapturePayPalPayment::class),
+			$this->capturePayPalPayment,
 			Mockery::mock(OrderEndpoint::class),
 			'WC-',
 			$this->context
@@ -146,7 +148,34 @@ class WcGatewayTest extends TestCase
 			$this->wcPaymentTokens,
 			$this->assetGetter,
 			false,
-			Mockery::mock(CapturePayPalPayment::class),
+			$this->capturePayPalPayment,
+			Mockery::mock(OrderEndpoint::class),
+			'WC-',
+			$this->context
+		);
+	}
+
+	private function createReturnUrlStubGateway(): PayPalGatewayReturnUrlStub
+	{
+		return new PayPalGatewayReturnUrlStub(
+			$this->funding_source_renderer,
+			$this->orderProcessor,
+			$this->settingsProvider,
+			$this->sessionHandler,
+			$this->refundProcessor,
+			$this->isConnected,
+			$this->transactionUrlProvider,
+			$this->subscriptionHelper,
+			$this->environment,
+			$this->logger,
+			$this->apiShopCountry,
+			static fn ($id) => 'checkoutnow=' . $id,
+			'Pay via PayPal',
+			$this->paymentTokensEndpoint,
+			$this->wcPaymentTokens,
+			$this->assetGetter,
+			false,
+			$this->capturePayPalPayment,
 			Mockery::mock(OrderEndpoint::class),
 			'WC-',
 			$this->context
@@ -496,6 +525,97 @@ class WcGatewayTest extends TestCase
 
 		$this->assertSame( 0, $gateway->tokenization_script_call_count, 'tokenization_script() must not be called when vaulting is disabled' );
 		$this->assertSame( 0, $gateway->saved_payment_methods_call_count, 'saved_payment_methods() must not be called when vaulting is disabled' );
+	}
+
+	/**
+	 * @runInSeparateProcess
+	 * @preserveGlobalState disabled
+	 * @scenario Current user changes their subscription payment to a saved PayPal
+	 * token they own. The token must be attached to the order without attempting a
+	 * $0 capture (WC Subscriptions zeroes the order total during change-payment
+	 * requests, and PayPal rejects $0 create-order calls with
+	 * CANNOT_BE_ZERO_OR_NEGATIVE).
+	 */
+	public function test_process_payment_attaches_token_when_ownership_check_passes_for_change_payment(): void {
+		$orderId = 1;
+		$_POST['woocommerce_change_payment'] = '1';
+		$_POST['wc-ppcp-gateway-payment-token'] = '99';
+
+		$this->subscriptionHelper->shouldReceive('has_subscription')->with($orderId)->andReturn(true);
+		$this->subscriptionHelper->shouldReceive('is_subscription_change_payment')->andReturn(true);
+
+		$wcOrder = Mockery::mock(\WC_Order::class);
+		$wcOrder->shouldReceive('get_id')->andReturn($orderId);
+		$wcOrder->shouldReceive('get_meta')->andReturn('');
+		when('wc_get_order')->justReturn($wcOrder);
+
+		$tokens = Mockery::mock('alias:WC_Payment_Tokens');
+		$payment_token = Mockery::mock(\WC_Payment_Token::class);
+		$payment_token->shouldReceive('get_user_id')->andReturn(1);
+		$tokens->shouldReceive('get')->with(99)->andReturn($payment_token);
+
+		when('get_current_user_id')->justReturn(1);
+
+		$wcOrder->shouldReceive('add_payment_token')->once()->with($payment_token);
+		$wcOrder->shouldReceive('save')->once();
+		$this->sessionHandler->shouldReceive('destroy_session_data')->once();
+
+		$this->capturePayPalPayment->shouldNotReceive('create_order');
+
+		$result = $this->createReturnUrlStubGateway()->process_payment($orderId);
+
+		$this->assertEquals('success', $result['result']);
+	}
+
+	/**
+	 * @runInSeparateProcess
+	 * @preserveGlobalState disabled
+	 * @scenario Current user supplies a token id belonging to a different user while
+	 * changing their subscription payment. The token must not be attached, the
+	 * change must fail, and no $0 capture must be attempted either.
+	 */
+	public function test_process_payment_rejects_token_owned_by_different_user_during_change_payment(): void {
+		$orderId = 1;
+		$_POST['woocommerce_change_payment'] = '1';
+		$_POST['wc-ppcp-gateway-payment-token'] = '99';
+
+		$this->subscriptionHelper->shouldReceive('has_subscription')->with($orderId)->andReturn(true);
+		$this->subscriptionHelper->shouldReceive('is_subscription_change_payment')->andReturn(true);
+
+		$wcOrder = Mockery::mock(\WC_Order::class);
+		$wcOrder->shouldReceive('get_id')->andReturn($orderId);
+		$wcOrder->shouldReceive('get_meta')->andReturn('');
+		when('wc_get_order')->justReturn($wcOrder);
+
+		$tokens = Mockery::mock('alias:WC_Payment_Tokens');
+		$payment_token = Mockery::mock(\WC_Payment_Token::class);
+		$payment_token->shouldReceive('get_user_id')->andReturn(2);
+		$tokens->shouldReceive('get')->with(99)->andReturn($payment_token);
+
+		when('get_current_user_id')->justReturn(1);
+		when('wc_add_notice')->justReturn(null);
+		when('wc_get_checkout_url')->justReturn('http://example.test/checkout');
+
+		$wcOrder->shouldNotReceive('add_payment_token');
+		$wcOrder->shouldNotReceive('save');
+		$this->sessionHandler->shouldNotReceive('destroy_session_data');
+		$this->capturePayPalPayment->shouldNotReceive('create_order');
+
+		$result = $this->createReturnUrlStubGateway()->process_payment($orderId);
+
+		$this->assertEquals('failure', $result['result']);
+	}
+}
+
+/**
+ * Test double that returns a string return URL. The shared WC_Payment_Gateway
+ * stub returns the order object, which would violate the string type hint of
+ * PayPalGateway::add_payment_token_to_order().
+ */
+class PayPalGatewayReturnUrlStub extends PayPalGateway
+{
+	protected function get_return_url( $order = null ) {
+		return 'http://example.test/return';
 	}
 }
 
