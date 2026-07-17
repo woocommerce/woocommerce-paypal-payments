@@ -97,7 +97,7 @@ describe( 'createOrder', () => {
 } );
 
 describe( 'approveOrder', () => {
-	test( 'product context approves without should_create_wc_order and continues on checkout', async () => {
+	test( 'product context requests should_create_wc_order and continues on checkout without order_received_url', async () => {
 		postJson.mockResolvedValueOnce( {} );
 		const assign = jest
 			.spyOn( navigation, 'assign' )
@@ -108,6 +108,43 @@ describe( 'approveOrder', () => {
 		expect( postJson ).toHaveBeenCalledWith( config.ajax.approve_order, {
 			order_id: 'ORDER1',
 			funding_source: 'paypal',
+			should_create_wc_order: true,
+		} );
+		expect( assign ).toHaveBeenCalledWith( '/checkout/' );
+	} );
+
+	test( 'redirects to order_received_url when the server creates the WC order (Pay Now)', async () => {
+		postJson.mockResolvedValueOnce( {
+			order_received_url: '/checkout/order-received/123/?key=wc_abc',
+		} );
+		const assign = jest
+			.spyOn( navigation, 'assign' )
+			.mockImplementation( () => {} );
+
+		await approveOrder( config, 'product', 'paypal', 'ORDER1' );
+
+		expect( assign ).toHaveBeenCalledWith(
+			'/checkout/order-received/123/?key=wc_abc'
+		);
+	} );
+
+	test( 'does not request a WC order for Venmo when vaulting is enabled', async () => {
+		postJson.mockResolvedValueOnce( {} );
+		const assign = jest
+			.spyOn( navigation, 'assign' )
+			.mockImplementation( () => {} );
+
+		await approveOrder(
+			{ ...config, vaulting_enabled: true },
+			'product',
+			'venmo',
+			'ORDER1'
+		);
+
+		expect( postJson ).toHaveBeenCalledWith( config.ajax.approve_order, {
+			order_id: 'ORDER1',
+			funding_source: 'venmo',
+			should_create_wc_order: false,
 		} );
 		expect( assign ).toHaveBeenCalledWith( '/checkout/' );
 	} );
