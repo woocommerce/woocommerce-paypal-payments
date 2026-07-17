@@ -8,6 +8,7 @@
  */
 
 import { updateShipping } from '../endpointsAdapter';
+import { postStoreApi } from '../utils/api';
 
 /**
  * Converts a PayPal v6 shipping address to WC format.
@@ -23,30 +24,6 @@ function paypalAddressToWc( address = {} ) {
 		postcode: address.postalCode || '',
 		city: address.adminArea2 || address.city || '',
 	};
-}
-
-/**
- * Posts to a WC Store API endpoint.
- *
- * @param {Object} storeApi - The wc_store_api config (urls + nonce).
- * @param {string} url      - The endpoint URL.
- * @param {Object} body     - The request body.
- * @throws {Error} When the response is not OK.
- */
-async function postStoreApi( storeApi, url, body ) {
-	const response = await fetch( url, {
-		method: 'POST',
-		credentials: 'same-origin',
-		headers: {
-			'Content-Type': 'application/json',
-			Nonce: storeApi.nonce,
-		},
-		body: JSON.stringify( body ),
-	} );
-
-	if ( ! response.ok ) {
-		throw new Error( 'Store API request failed.' );
-	}
 }
 
 /**

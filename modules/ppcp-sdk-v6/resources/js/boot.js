@@ -17,6 +17,7 @@ import { checkEligibility } from './eligibility';
 import { createSession } from './sessions/createSession';
 import { renderButtons } from './components/buttonRenderer';
 import { createOrder, fetchCartTotal } from './endpointsAdapter';
+import { hasJQuery } from './utils/api';
 import { setErrorLabels } from './utils/errorHandler';
 
 ( function ( config ) {
@@ -188,7 +189,7 @@ import { setErrorLabels } from './utils/errorHandler';
 		renderAll();
 	}
 
-	if ( typeof jQuery !== 'undefined' ) {
+	if ( hasJQuery() ) {
 		// DOM-replacing updates: wrappers arrive empty and need re-rendering.
 		jQuery( document.body ).on(
 			'updated_checkout wc_fragments_loaded wc_fragments_refreshed',
