@@ -386,7 +386,7 @@ export class PayPalUiClassic extends PayPalUi {
 		// On classic checkout, pay for order pages
 		if (
 			url.includes( '/classic-checkout/' ) ||
-			url.includes( '/pay_for_order/' )
+			url.includes( '/order-pay/' )
 		) {
 			await this.assertVaultedPaymentMethodIsDisplayed( payment );
 			await this.payPalVaultedPaymentMethodRadio().click();
@@ -645,7 +645,7 @@ export class PayPalUiClassic extends PayPalUi {
 				const url = this.page.url();
 				if (
 					url.includes( '/classic-checkout/' ) ||
-					url.includes( '/pay_for_order/' )
+					url.includes( '/order-pay/' )
 				) {
 					// On Classic checkout, Pay for order pages
 					await expect(
