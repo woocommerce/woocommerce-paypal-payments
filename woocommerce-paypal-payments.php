@@ -1,22 +1,23 @@
 <?php
 
 /**
- * Plugin Name: WooCommerce PayPal Payments
- * Plugin URI:  https://woocommerce.com/products/woocommerce-paypal-payments/
- * Description: PayPal's latest complete payments processing solution. Accept PayPal, Pay Later, credit/debit cards, alternative digital wallets local payment types and bank accounts. Turn on only PayPal options or process a full suite of payment methods. Enable global transaction with extensive currency and country coverage.
- * Version:     4.1.1
- * Author:      PayPal
- * Author URI:  https://paypal.com/
- * License:     GPL-2.0
- * Requires PHP: 7.4
- * Requires Plugins: woocommerce
- * Requires at least: 6.5
- * WC requires at least: 9.6
- * WC tested up to: 10.9
- * Text Domain: woocommerce-paypal-payments
- *
- * @package WooCommerce\PayPalCommerce
- */
+* Plugin Name: WooCommerce PayPal Payments
+* Plugin URI:  https://woocommerce.com/products/woocommerce-paypal-payments/
+* Description: PayPal's latest complete payments processing solution. Accept PayPal, Pay Later, credit/debit cards, alternative digital wallets local payment types and bank accounts. Turn on only PayPal options or process a full suite of payment methods. Enable global transaction with extensive currency and country coverage.
+* Version: 0.0.0+develop.025cb77
+SHA: 025cb7760cf72efc01605e288b6999e4a5f3e354
+* Author:      PayPal
+* Author URI:  https://paypal.com/
+* License:     GPL-2.0
+* Requires PHP: 7.4
+* Requires Plugins: woocommerce
+* Requires at least: 6.5
+* WC requires at least: 9.6
+* WC tested up to: 10.9
+* Text Domain: woocommerce-paypal-payments
+*
+* @package WooCommerce\PayPalCommerce
+*/
 declare (strict_types=1);
 namespace WooCommerce\PayPalCommerce;
 
