@@ -40,7 +40,8 @@ return array(
 			$container->get( 'sdk-v6.button-style-mapper' ),
 			$container->get( 'button.handle-shipping-in-paypal' ),
 			$container->get( 'wcgateway.settings.status' ),
-			$container->get( 'button.helper.context' )
+			$container->get( 'button.helper.context' ),
+			$container->get( 'settings.settings-provider' )->save_paypal_and_venmo()
 		);
 	},
 

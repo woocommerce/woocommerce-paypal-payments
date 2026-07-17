@@ -78,6 +78,13 @@ class SdkV6Manager {
 	private Context $context;
 
 	/**
+	 * Whether PayPal/Venmo vaulting is enabled.
+	 *
+	 * @var bool
+	 */
+	private bool $vaulting_enabled;
+
+	/**
 	 * SdkV6Manager constructor.
 	 *
 	 * @param AssetGetter       $asset_getter The asset getter.
@@ -87,6 +94,7 @@ class SdkV6Manager {
 	 * @param bool              $should_handle_shipping Whether to handle shipping in PayPal.
 	 * @param SettingsStatus    $settings_status The settings status helper.
 	 * @param Context           $context The page context helper.
+	 * @param bool              $vaulting_enabled Whether PayPal/Venmo vaulting is enabled.
 	 */
 	public function __construct(
 		AssetGetter $asset_getter,
@@ -95,7 +103,8 @@ class SdkV6Manager {
 		ButtonStyleMapper $style_mapper,
 		bool $should_handle_shipping,
 		SettingsStatus $settings_status,
-		Context $context
+		Context $context,
+		bool $vaulting_enabled = false
 	) {
 		$this->asset_getter           = $asset_getter;
 		$this->version                = $version;
@@ -104,6 +113,7 @@ class SdkV6Manager {
 		$this->should_handle_shipping = $should_handle_shipping;
 		$this->settings_status        = $settings_status;
 		$this->context                = $context;
+		$this->vaulting_enabled       = $vaulting_enabled;
 	}
 
 	/**
@@ -274,6 +284,7 @@ class SdkV6Manager {
 			'amount'            => $this->transaction_amount(),
 			'buyer_country'     => $buyer_country,
 			'locale'            => str_replace( '_', '-', get_locale() ),
+			'vaulting_enabled'  => $this->vaulting_enabled,
 			'ajax'              => array(
 				'client_token'    => array(
 					'endpoint' => \WC_AJAX::get_endpoint( ClientTokenEndpoint::ENDPOINT ),
