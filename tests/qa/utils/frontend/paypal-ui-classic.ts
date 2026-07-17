@@ -318,10 +318,7 @@ export class PayPalUiClassic extends PayPalUi {
 	 */
 	async openPayPalPopup(): Promise< PayPalPopup > {
 		// Select gateway if not on classic-cart page
-		if (
-			this.page.url().includes( 'classic-checkout' ) ||
-			this.page.url().includes( 'pay_for_order' )
-		) {
+		if ( this.isClassicCheckoutPage() || this.isPayForOrderPage() ) {
 			await expect(
 				this.payPalGateway(),
 				'Assert PayPal gateway is visible'
@@ -337,10 +334,7 @@ export class PayPalUiClassic extends PayPalUi {
 	 */
 	async openPayLaterPopup(): Promise< PayPalPopup > {
 		// Select gateway if not on classic-cart page
-		if (
-			this.page.url().includes( 'classic-checkout' ) ||
-			this.page.url().includes( 'pay_for_order' )
-		) {
+		if ( this.isClassicCheckoutPage() || this.isPayForOrderPage() ) {
 			await expect(
 				this.payPalGateway(),
 				'Assert PayPal gateway is visible'
@@ -354,10 +348,7 @@ export class PayPalUiClassic extends PayPalUi {
 	 * Clicks Google Pay button to open the TEST environment popup
 	 */
 	openGooglePayPopup = async (): Promise< GooglePayPopup > => {
-		if(
-			this.page.url().includes( 'classic-checkout' ) ||
-			this.page.url().includes( 'pay_for_order' )
-		) {
+		if ( this.isClassicCheckoutPage() || this.isPayForOrderPage() ) {
 			await expect(
 				this.googlePayGateway(),
 				'Assert Google Pay gateway is visible'
@@ -382,12 +373,8 @@ export class PayPalUiClassic extends PayPalUi {
 	 * Completes payment with vaulted PayPal account
 	 */
 	async completePayPalVaultedPayment( payment: Pcp.Payment ) {
-		const url = this.page.url();
 		// On classic checkout, pay for order pages
-		if (
-			url.includes( '/classic-checkout/' ) ||
-			url.includes( '/order-pay/' )
-		) {
+		if ( this.isClassicCheckoutPage() || this.isPayForOrderPage() ) {
 			await this.assertVaultedPaymentMethodIsDisplayed( payment );
 			await this.payPalVaultedPaymentMethodRadio().click();
 			await this.submitOrder();
@@ -642,11 +629,7 @@ export class PayPalUiClassic extends PayPalUi {
 		const { gateway, card } = payment;
 		switch ( gateway.shortcut ) {
 			case 'paypal':
-				const url = this.page.url();
-				if (
-					url.includes( '/classic-checkout/' ) ||
-					url.includes( '/order-pay/' )
-				) {
+				if ( this.isClassicCheckoutPage() || this.isPayForOrderPage() ) {
 					// On Classic checkout, Pay for order pages
 					await expect(
 						this.payPalGateway(),

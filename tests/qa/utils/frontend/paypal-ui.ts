@@ -219,7 +219,19 @@ export class PayPalUi {
 	puiPhoneInput = () =>
 		this.page.locator( '#ppcp-pui-phone' );
 
-		
+	// Page checks — based on the current URL. Pay for order nests under both
+	// /checkout/ and /classic-checkout/ (e.g. /checkout/order-pay/123/), so
+	// isCheckoutPage/isClassicCheckoutPage explicitly exclude it to stay
+	// mutually exclusive with isPayForOrderPage.
+	isProductPage = () => this.page.url().includes( '/product/' );
+	isCartPage = () => this.page.url().includes( '/cart/' );
+	isClassicCartPage = () => this.page.url().includes( '/classic-cart/' );
+	isPayForOrderPage = () => this.page.url().includes( '/order-pay/' );
+	isCheckoutPage = () =>
+		this.page.url().includes( '/checkout/' ) && ! this.isPayForOrderPage();
+	isClassicCheckoutPage = () =>
+		this.page.url().includes( '/classic-checkout/' ) &&
+		! this.isPayForOrderPage();
 
 	// Actions
 
@@ -431,7 +443,7 @@ export class PayPalUi {
 	 */
 	async completePayPalVaultedPayment( payment: Pcp.Payment ) {
 		// On block checkout
-		if(	this.page.url().includes( '/checkout/' ) ) {
+		if ( this.isCheckoutPage() ) {
 			await this.assertVaultedPaymentMethodIsDisplayed( payment );
 			if ( payment.isFreeTrialSubscription ) {
 				// Free trial cart: no vault component is rendered, just the plain saved-token radio.
@@ -737,7 +749,7 @@ export class PayPalUi {
 		switch ( gateway.shortcut ) {
 			case 'paypal':
 				// On block checkout
-				if( this.page.url().includes( '/checkout/' ) ) {
+				if ( this.isCheckoutPage() ) {
 					if ( payment.isFreeTrialSubscription ) {
 						// Free trial cart: PayPal doesn't render the vault component
 						// (see FreeTrialSubscriptionHelper::is_free_trial_cart()), only
