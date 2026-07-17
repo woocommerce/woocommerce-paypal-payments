@@ -27,7 +27,7 @@ const vaultingGuest: ShopOrder[] = [
 	{
 		title: 'PCP-2944 | Vaulting subscription - Transaction - Classic checkout - PayPal - Free trial order by guest',
 		...orders.default,
-		payment: payments.payPal,
+		payment: { ...payments.payPal, isFreeTrialSubscription: true },
 		merchant,
 		customer: guest,
 		products: [ products.subscriptionFreeTrial ],
@@ -62,7 +62,7 @@ const vaultingCustomer: ShopOrder[] = [
 	{
 		title: 'PCP-2945 | Vaulting subscription - Transaction - Classic checkout - PayPal - Free trial order by customer',
 		...orders.default,
-		payment: payments.payPal,
+		payment: { ...payments.payPal, isFreeTrialSubscription: true },
 		merchant,
 		customer,
 		products: [ products.subscriptionFreeTrial ],

@@ -129,8 +129,11 @@ jobs:
         )
 
         # 2. Add private composer repository and download WooCommerce Subscriptions
+        # Pinned below 9.0.0: that release folded "All Products for Subscriptions" into
+        # core and replaced the legacy `type: subscription` + `_subscription_*` meta
+        # product-creation API our test data relies on with a plan-based model.
         composer config repositories.repo-name composer https://repo.packagist.com/inpsyde/payment-gateways/
-        composer require inpsyde-mirror/woocommerce-subscriptions
+        composer require "inpsyde-mirror/woocommerce-subscriptions:<9.0"
     secrets:
       ENV_FILE_DATA: ${{ secrets.QA_ENV_FILE }}
       NPM_REGISTRY_TOKEN: ${{ secrets.DEPLOYBOT_GITHUB_TOKEN_PACKAGES }}
