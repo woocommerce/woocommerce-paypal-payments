@@ -9,6 +9,7 @@ import {
 	handleShippingAddressChange,
 	handleShippingOptionsChange,
 } from './shippingHandler';
+import { hasJQuery } from '../utils/api';
 import { handleError } from '../utils/errorHandler';
 
 const SESSION_FACTORIES = {
@@ -16,6 +17,21 @@ const SESSION_FACTORIES = {
 	venmo: 'createVenmoOneTimePaymentSession',
 	paylater: 'createPayLaterOneTimePaymentSession',
 };
+
+/**
+ * Refreshes the cart UI after an abandoned or failed session.
+ *
+ * Mirrors the v5 product handler: the button click added the product to
+ * the real cart, so the mini-cart fragments must reflect that even when
+ * the buyer does not complete the purchase.
+ *
+ * @param {string} context - The page context.
+ */
+function refreshCartUi( context ) {
+	if ( context === 'product' && hasJQuery() ) {
+		jQuery( document.body ).trigger( 'wc_fragment_refresh' );
+	}
+}
 
 /**
  * Creates a one-time payment session for the given method.
@@ -37,10 +53,11 @@ export function createSession( sdkInstance, method, config, context ) {
 		},
 
 		onCancel() {
-			// Buyer closed the popup — no action needed.
+			refreshCartUi( context );
 		},
 
 		onError( error ) {
+			refreshCartUi( context );
 			handleError( error );
 		},
 	};

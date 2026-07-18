@@ -9,6 +9,7 @@
  */
 
 import ErrorHandler from '@ppcp-button/ErrorHandler';
+import { hasJQuery } from './api';
 
 let errorLabels = {};
 
@@ -43,6 +44,18 @@ export function handleError( error ) {
 		errorLabels.generic_error || '',
 		wrapper
 	);
+
+	// Expired-session validation failures need recalculated totals,
+	// like in v5.
+	if ( error?.refresh && hasJQuery() ) {
+		jQuery( document.body ).trigger( 'update_checkout' );
+	}
+
+	if ( Array.isArray( error?.errors ) && error.errors.length ) {
+		handler.clear();
+		handler.messages( error.errors );
+		return;
+	}
 
 	if ( error?.isUserFacing && error.message ) {
 		handler.clear();

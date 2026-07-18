@@ -9,6 +9,7 @@
  */
 
 import SingleProductActionHandler from '@ppcp-button/ActionHandler/SingleProductActionHandler';
+import { payerData } from '@ppcp-button/Helper/PayerData';
 import { postJson } from './utils/api';
 
 /**
@@ -65,13 +66,34 @@ export async function createOrder( config, context, fundingSource ) {
 		} );
 	}
 
-	const data = await postJson( config.ajax.create_order, {
+	const body = {
 		context,
 		purchase_units: purchaseUnits,
 		payment_method: 'ppcp-gateway',
 		funding_source: fundingSource || 'paypal',
 		save_order_in_session: 1,
-	} );
+	};
+
+	if ( context === 'checkout' ) {
+		// Mirrors the v5 CheckoutActionHandler: the serialized form lets
+		// the server run the early WC checkout validation before creating
+		// the order, so the buyer sees form errors before approving.
+		const form = document.querySelector( 'form.checkout' );
+		if ( form ) {
+			body.form_encoded = new URLSearchParams(
+				new FormData( form )
+			).toString();
+			body.createaccount = !! form.querySelector( '#createaccount' )
+				?.checked;
+		}
+
+		const payer = payerData();
+		if ( payer ) {
+			body.payer = payer;
+		}
+	}
+
+	const data = await postJson( config.ajax.create_order, body );
 
 	return { orderId: data.id };
 }
