@@ -31,6 +31,10 @@ export async function postJson( { endpoint, nonce }, body = {} ) {
 		// Server-provided messages are translated and shopper-appropriate;
 		// the error handler shows them verbatim, unlike internal messages.
 		error.isUserFacing = Boolean( json.data?.message );
+		// Validation responses carry a message list and a refresh flag
+		// (expired session); forwarded for v5-parity error rendering.
+		error.errors = json.data?.errors;
+		error.refresh = Boolean( json.data?.refresh );
 		throw error;
 	}
 

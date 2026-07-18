@@ -9,6 +9,16 @@ jest.mock(
 	{ virtual: true }
 );
 
+const mockPayerData = jest.fn( () => null );
+
+jest.mock(
+	'@ppcp-button/Helper/PayerData',
+	() => ( {
+		payerData: () => mockPayerData(),
+	} ),
+	{ virtual: true }
+);
+
 jest.mock( '../utils/api', () => ( {
 	postJson: jest.fn(),
 } ) );
@@ -85,6 +95,30 @@ describe( 'createOrder', () => {
 			payment_method: 'ppcp-gateway',
 			funding_source: 'venmo',
 			save_order_in_session: 1,
+		} );
+	} );
+
+	test( 'checkout context serializes the form for early validation and sends the payer', async () => {
+		document.body.innerHTML =
+			'<form class="checkout">' +
+			'<input name="billing_email" value="a@b.com" />' +
+			'<input type="checkbox" id="createaccount" name="createaccount" checked /></form>';
+		mockPayerData.mockReturnValueOnce( {
+			email_address: 'a@b.com',
+		} );
+		postJson.mockResolvedValueOnce( { id: 'PAYPAL3' } );
+
+		await createOrder( config, 'checkout', 'paypal' );
+
+		expect( postJson ).toHaveBeenCalledWith( config.ajax.create_order, {
+			context: 'checkout',
+			purchase_units: [],
+			payment_method: 'ppcp-gateway',
+			funding_source: 'paypal',
+			save_order_in_session: 1,
+			form_encoded: 'billing_email=a%40b.com&createaccount=on',
+			createaccount: true,
+			payer: { email_address: 'a@b.com' },
 		} );
 	} );
 
