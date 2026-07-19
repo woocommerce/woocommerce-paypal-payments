@@ -121,11 +121,25 @@ export async function approveOrder( config, context, fundingSource, orderId ) {
 	const canCreateOrder =
 		! config.vaulting_enabled || fundingSource !== 'venmo';
 
-	const data = await postJson( config.ajax.approve_order, {
-		order_id: orderId,
-		funding_source: fundingSource,
-		should_create_wc_order: canCreateOrder,
-	} );
+	let data;
+	try {
+		data = await postJson( config.ajax.approve_order, {
+			order_id: orderId,
+			funding_source: fundingSource,
+			should_create_wc_order: canCreateOrder,
+		} );
+	} catch ( error ) {
+		if ( ! canCreateOrder ) {
+			throw error;
+		}
+		// e.g. One-Touch approval without a shipping option; fall back
+		// to the classic continuation on checkout.
+		data = await postJson( config.ajax.approve_order, {
+			order_id: orderId,
+			funding_source: fundingSource,
+			should_create_wc_order: false,
+		} );
+	}
 
 	if ( data?.order_received_url ) {
 		navigation.assign( data.order_received_url );
