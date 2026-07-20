@@ -61,9 +61,9 @@ class IngestionConfiguration {
 		/**
 		 * Filters the number of products included in one sync batch.
 		 *
-		 * @param int $batch_size The sync batch size. Must be a positive integer; a
-		 *                        value of 0 or less flips the underlying product query
-		 *                        to unlimited (the entire catalog in one batch).
+		 * @param int $batch_size The sync batch size. A value of 0 (or less) yields an
+		 *                        empty batch, which effectively pauses ingestion without
+		 *                        unscheduling the recurring sync.
 		 */
 		return (int) apply_filters(
 			'woocommerce_paypal_payments_store_sync_batch_size',
