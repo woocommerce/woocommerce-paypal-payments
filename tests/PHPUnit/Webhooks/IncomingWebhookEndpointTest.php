@@ -61,10 +61,10 @@ class IncomingWebhookEndpointTest extends TestCase
 	}
 
 	/**
-	 * @scenario A request whose Content-Type is not application/json (the replay-with-altered-Content-Type
-	 * attack) is rejected before any dispatch and the PayPal signature verifier is never consulted.
+	 * @scenario A request whose Content-Type is not application/json is rejected before any
+	 * dispatch and the PayPal webhook verification is never consulted.
 	 */
-	public function test_rejects_non_json_content_type_and_never_verifies_signature(): void
+	public function test_rejects_non_json_content_type(): void
 	{
 		// Arrange
 		$request = Mockery::mock( 'WP_REST_Request, ArrayAccess' );
@@ -99,7 +99,7 @@ class IncomingWebhookEndpointTest extends TestCase
 
 	/**
 	 * @scenario An application/json request has its query-string and URL parameter slots cleared so the
-	 * signature-verified body is the only source of parameters, and a valid signature passes.
+	 * request body is the only source of parameters, and a valid request passes.
 	 */
 	public function test_accepts_application_json_and_clears_query_and_url_params(): void
 	{
