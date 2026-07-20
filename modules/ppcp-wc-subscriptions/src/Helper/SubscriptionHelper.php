@@ -70,6 +70,21 @@ class SubscriptionHelper
         return \false;
     }
     /**
+     * Whether the cart contains a subscription renewal payment (e.g., a customer manually
+     * renewing a subscription), as opposed to a new subscription being purchased. WooCommerce
+     * Subscriptions may route a manual renewal through the cart/Checkout block instead of the
+     * classic order-pay endpoint, so this can't be inferred from the URL alone.
+     *
+     * @return bool
+     */
+    public function cart_contains_renewal(): bool
+    {
+        if (!$this->plugin_is_active() || !function_exists('wcs_cart_contains_renewal')) {
+            return \false;
+        }
+        return (bool) wcs_cart_contains_renewal();
+    }
+    /**
      * Whether pay for order contains subscriptions.
      *
      * @return bool
@@ -250,7 +265,8 @@ class SubscriptionHelper
      */
     public function locations_with_subscription_product(): array
     {
-        return array('product' => is_product() && $this->current_product_is_subscription(), 'payorder' => is_wc_endpoint_url('order-pay') && $this->order_pay_contains_subscription(), 'cart' => $this->cart_contains_subscription());
+        $cart_contains_renewal = $this->cart_contains_renewal();
+        return array('product' => is_product() && $this->current_product_is_subscription(), 'payorder' => is_wc_endpoint_url('order-pay') && $this->order_pay_contains_subscription() || $cart_contains_renewal, 'cart' => $this->cart_contains_subscription() && !$cart_contains_renewal);
     }
     /**
      * Returns previous order transaction from the given subscription.
