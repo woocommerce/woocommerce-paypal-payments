@@ -25,8 +25,14 @@ require_once TESTS_ROOT_DIR . '/stubs/WP_REST_Response.php';
 require_once TESTS_ROOT_DIR . '/stubs/WP_REST_Controller.php';
 require_once TESTS_ROOT_DIR . '/stubs/WC_REST_Controller.php';
 require_once TESTS_ROOT_DIR . '/stubs/WC_Product.php';
+require_once TESTS_ROOT_DIR . '/stubs/WC_Coupon.php';
+require_once TESTS_ROOT_DIR . '/stubs/WC_Discounts.php';
 require_once TESTS_ROOT_DIR . '/stubs/WC_Countries.php';
 require_once TESTS_ROOT_DIR . '/stubs/WC_Validation.php';
 require_once TESTS_ROOT_DIR . '/stubs/AbilityDefinition.php';
+require_once TESTS_ROOT_DIR . '/stubs/StepExporter.php';
+require_once TESTS_ROOT_DIR . '/stubs/HasAlias.php';
+require_once TESTS_ROOT_DIR . '/stubs/StepProcessor.php';
+require_once TESTS_ROOT_DIR . '/stubs/Step.php';
 
 Hamcrest\Util::registerGlobalFunctions();
