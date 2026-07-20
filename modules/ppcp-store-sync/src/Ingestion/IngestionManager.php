@@ -128,8 +128,8 @@ class IngestionManager {
 			return;
 		}
 
-		$product->delete_meta_data( '_ppcp_agentic_last_sync' );
-		$product->save_meta_data();
+		// An edit may change eligibility or completeness: re-evaluate at first priority.
+		$this->product_filter->release( $product );
 	}
 
 	/**
