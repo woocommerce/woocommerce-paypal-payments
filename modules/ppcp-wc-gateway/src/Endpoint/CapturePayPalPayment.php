@@ -52,12 +52,15 @@ class CapturePayPalPayment {
 	/**
 	 * Creates PayPal order from the given PayPal/Venmo vault ID.
 	 *
+	 * custom_id/invoice_id are not accepted as parameters here: the PayPal
+	 * Orders v2 API only reads those fields from inside a purchase unit,
+	 * never from the request root, so from_wc_order() populates them
+	 * directly on the purchase unit built above.
+	 *
 	 * @throws RuntimeException When request fails.
 	 */
 	public function create_order(
 		string $vault_id,
-		string $custom_id,
-		string $invoice_id,
 		WC_Order $wc_order,
 		string $payment_source_name = 'paypal'
 	): Order {
@@ -80,8 +83,6 @@ class CapturePayPalPayment {
 					),
 				),
 			),
-			'custom_id'      => $custom_id,
-			'invoice_id'     => $invoice_id,
 		);
 
 		$bearer = $this->bearer->bearer();

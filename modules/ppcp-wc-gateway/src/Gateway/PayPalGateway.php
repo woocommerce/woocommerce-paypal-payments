@@ -477,11 +477,9 @@ class PayPalGateway extends \WC_Payment_Gateway {
 					}
 
 					$payment_source_name = $token instanceof PaymentTokenVenmo ? 'venmo' : 'paypal';
-					$custom_id           = (string) $wc_order->get_id();
-					$invoice_id          = $this->prefix . $wc_order->get_order_number();
 
 					try {
-						$created_order = $this->capture_paypal_payment->create_order( $token->get_token(), $custom_id, $invoice_id, $wc_order, $payment_source_name );
+						$created_order = $this->capture_paypal_payment->create_order( $token->get_token(), $wc_order, $payment_source_name );
 					} catch ( RuntimeException $exception ) {
 						$this->logger->error( $exception->getMessage() );
 						return $this->handle_payment_failure( $wc_order, $exception );
