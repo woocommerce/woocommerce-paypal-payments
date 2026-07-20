@@ -289,8 +289,8 @@ class SyncJob {
 	 * Handle API or network errors by logging and throwing exception for retry.
 	 *
 	 * This method handles actual API failures (not validation errors) that should
-	 * trigger retry logic. Products are marked with error metadata, and an exception
-	 * is thrown to signal Action Scheduler to retry.
+	 * trigger retry logic. The error is logged and an exception is thrown to signal
+	 * Action Scheduler to retry; products are left unmarked so they are retried.
 	 *
 	 * @param array  $product_ids   Product IDs that failed to sync.
 	 * @param string $error_message The error message.
@@ -304,17 +304,6 @@ class SyncJob {
 				'product_ids'   => $product_ids,
 			)
 		);
-
-		foreach ( $product_ids as $product_id ) {
-			$product = wc_get_product( $product_id );
-
-			if ( ! $product ) {
-				continue;
-			}
-
-			$product->update_meta_data( '_ppcp_agentic_sync_error', $error_message );
-			$product->save_meta_data();
-		}
 
 		$pushed = count( $product_ids );
 		$this->fire_completed_action( 'api_error', $pushed, 0, $pushed, $error_message );
@@ -358,16 +347,13 @@ class SyncJob {
 		}
 
 		$this->product_filter->mark_processed( $product );
-
-		$product->delete_meta_data( '_ppcp_agentic_sync_error' );
-		$product->save_meta_data();
 	}
 
 	/**
 	 * Mark a single product with validation error.
 	 *
 	 * Products with validation errors are still considered "processed" (the sync
-	 * attempt was made), but store the validation error for merchant visibility.
+	 * attempt was made); the validation error is routed to the log via mark_processed().
 	 *
 	 * @param int    $product_id    Product ID.
 	 * @param string $error_message Validation error message.
@@ -380,9 +366,6 @@ class SyncJob {
 		}
 
 		$this->product_filter->mark_processed( $product, $error_message );
-
-		$product->update_meta_data( '_ppcp_agentic_sync_error', $error_message );
-		$product->save_meta_data();
 	}
 
 	/**
