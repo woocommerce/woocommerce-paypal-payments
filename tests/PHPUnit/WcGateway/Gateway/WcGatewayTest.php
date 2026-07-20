@@ -123,7 +123,6 @@ class WcGatewayTest extends TestCase
 			false,
 			$this->capturePayPalPayment,
 			Mockery::mock(OrderEndpoint::class),
-			'WC-',
 			$this->context
 		);
 	}
@@ -150,7 +149,6 @@ class WcGatewayTest extends TestCase
 			false,
 			$this->capturePayPalPayment,
 			Mockery::mock(OrderEndpoint::class),
-			'WC-',
 			$this->context
 		);
 	}
@@ -177,7 +175,6 @@ class WcGatewayTest extends TestCase
 			false,
 			$this->capturePayPalPayment,
 			Mockery::mock(OrderEndpoint::class),
-			'WC-',
 			$this->context
 		);
 	}
