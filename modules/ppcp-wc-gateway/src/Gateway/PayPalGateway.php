@@ -94,7 +94,6 @@ class PayPalGateway extends \WC_Payment_Gateway
     private bool $admin_settings_enabled;
     private CapturePayPalPayment $capture_paypal_payment;
     private OrderEndpoint $order_endpoint;
-    private string $prefix;
     private Context $context;
     /**
      * ID of the class extending the settings API. Used in option names.
@@ -171,10 +170,9 @@ class PayPalGateway extends \WC_Payment_Gateway
      * @param bool                     $admin_settings_enabled Whether settings module is enabled.
      * @param CapturePayPalPayment     $capture_paypal_payment The PayPal vault payment capture endpoint.
      * @param OrderEndpoint            $order_endpoint The order endpoint.
-     * @param string                   $prefix The invoice prefix.
      * @param Context                  $context The context helper.
      */
-    public function __construct(FundingSourceRenderer $funding_source_renderer, OrderProcessor $order_processor, SettingsProvider $config, SessionHandler $session_handler, RefundProcessor $refund_processor, bool $is_connected, \WooCommerce\PayPalCommerce\WcGateway\Gateway\TransactionUrlProvider $transaction_url_provider, SubscriptionHelper $subscription_helper, Environment $environment, LoggerInterface $logger, string $api_shop_country, callable $paypal_checkout_url_factory, string $place_order_button_text, PaymentTokensEndpoint $payment_tokens_endpoint, WooCommercePaymentTokens $wc_payment_tokens, AssetGetter $asset_getter, bool $admin_settings_enabled, CapturePayPalPayment $capture_paypal_payment, OrderEndpoint $order_endpoint, string $prefix, Context $context)
+    public function __construct(FundingSourceRenderer $funding_source_renderer, OrderProcessor $order_processor, SettingsProvider $config, SessionHandler $session_handler, RefundProcessor $refund_processor, bool $is_connected, \WooCommerce\PayPalCommerce\WcGateway\Gateway\TransactionUrlProvider $transaction_url_provider, SubscriptionHelper $subscription_helper, Environment $environment, LoggerInterface $logger, string $api_shop_country, callable $paypal_checkout_url_factory, string $place_order_button_text, PaymentTokensEndpoint $payment_tokens_endpoint, WooCommercePaymentTokens $wc_payment_tokens, AssetGetter $asset_getter, bool $admin_settings_enabled, CapturePayPalPayment $capture_paypal_payment, OrderEndpoint $order_endpoint, Context $context)
     {
         $this->id = self::ID;
         $this->funding_source_renderer = $funding_source_renderer;
@@ -196,7 +194,6 @@ class PayPalGateway extends \WC_Payment_Gateway
         $this->admin_settings_enabled = $admin_settings_enabled;
         $this->capture_paypal_payment = $capture_paypal_payment;
         $this->order_endpoint = $order_endpoint;
-        $this->prefix = $prefix;
         $this->context = $context;
         $default_support = array('products', 'refunds', 'tokenization', 'add_payment_method');
         $this->supports = array_merge($default_support, apply_filters('woocommerce_paypal_payments_paypal_gateway_supports', array()));
@@ -360,10 +357,8 @@ class PayPalGateway extends \WC_Payment_Gateway
                         return $this->handle_payment_success($wc_order);
                     }
                     $payment_source_name = $token instanceof PaymentTokenVenmo ? 'venmo' : 'paypal';
-                    $custom_id = (string) $wc_order->get_id();
-                    $invoice_id = $this->prefix . $wc_order->get_order_number();
                     try {
-                        $created_order = $this->capture_paypal_payment->create_order($token->get_token(), $custom_id, $invoice_id, $wc_order, $payment_source_name);
+                        $created_order = $this->capture_paypal_payment->create_order($token->get_token(), $wc_order, $payment_source_name);
                     } catch (RuntimeException $exception) {
                         $this->logger->error($exception->getMessage());
                         return $this->handle_payment_failure($wc_order, $exception);
