@@ -52,25 +52,20 @@ class CapturePayPalPayment {
 	/**
 	 * Creates PayPal order from the given PayPal/Venmo vault ID.
 	 *
+	 * The custom_id/invoice_id fields are not accepted as parameters here:
+	 * the PayPal Orders v2 API only reads them from inside a purchase
+	 * unit, never from the request root, so from_wc_order() populates
+	 * them directly on the purchase unit built above.
+	 *
 	 * @throws RuntimeException When request fails.
 	 */
 	public function create_order(
 		string $vault_id,
-		string $custom_id,
-		string $invoice_id,
 		WC_Order $wc_order,
 		string $payment_source_name = 'paypal'
 	): Order {
 		$intent = strtoupper( $this->settings_provider->payment_intent() ) === 'AUTHORIZE' ? 'AUTHORIZE' : 'CAPTURE';
-		$items  = array( $this->purchase_unit_factory->from_wc_cart( null, false, $wc_order->get_payment_method() ) );
-
-		// phpcs:disable WordPress.Security.NonceVerification
-		$pay_for_order = wc_clean( wp_unslash( $_GET['pay_for_order'] ?? '' ) );
-		$order_key     = wc_clean( wp_unslash( $_GET['key'] ?? '' ) );
-		// phpcs:enable
-		if ( $pay_for_order && $order_key === $wc_order->get_order_key() ) {
-			$items = array( $this->purchase_unit_factory->from_wc_order( $wc_order ) );
-		}
+		$items  = array( $this->purchase_unit_factory->from_wc_order( $wc_order ) );
 
 		$data = array(
 			'intent'         => $intent,
@@ -88,8 +83,6 @@ class CapturePayPalPayment {
 					),
 				),
 			),
-			'custom_id'      => $custom_id,
-			'invoice_id'     => $invoice_id,
 		);
 
 		$bearer = $this->bearer->bearer();
