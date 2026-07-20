@@ -277,7 +277,7 @@ return array(
         return new PaymentMethodsDefinition($container->get('settings.data.payment'), $container->get('settings.data.general'), $container->get('axo.checkout-config-notice.raw'), $container->get('axo.incompatible-plugins-notice.raw'));
     },
     'settings.data.definition.method_dependencies' => static function (ContainerInterface $container): PaymentMethodsDependenciesDefinition {
-        return new PaymentMethodsDependenciesDefinition();
+        return new PaymentMethodsDependenciesDefinition($container->get('settings.settings-provider'));
     },
     'settings.service.pay_later_status' => static function (ContainerInterface $container): array {
         $pay_later_endpoint = $container->get('settings.rest.pay_later_messaging');
@@ -430,7 +430,7 @@ return array(
             // Pay with Crypto eligibility.
             FeaturesDefinition::FEATURE_PAY_UPON_INVOICE => $capabilities[FeaturesDefinition::FEATURE_PAY_UPON_INVOICE],
         );
-        return new FeaturesDefinition($container->get('settings.service.features_eligibilities'), $container->get('settings.data.general'), $merchant_capabilities, $container->get('settings.data.settings'), $container->get('woocommerce.logger.woocommerce'));
+        return new FeaturesDefinition($container->get('settings.service.features_eligibilities'), $container->get('settings.data.general'), $merchant_capabilities, $container->get('woocommerce.logger.woocommerce'), $container->get('settings.settings-provider'));
     },
     'settings.service.features_eligibilities' => static function (ContainerInterface $container): FeaturesEligibilityService {
         $messages_apply = $container->get('button.helper.messages-apply');
