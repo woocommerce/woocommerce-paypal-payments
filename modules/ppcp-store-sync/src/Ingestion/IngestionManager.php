@@ -65,6 +65,12 @@ class IngestionManager {
 		// Handle re-sync on product update.
 		add_action( 'woocommerce_update_product', array( $this, 'mark_product_for_sync' ) );
 		add_action( 'woocommerce_product_set_stock', array( $this, 'mark_product_for_sync' ) );
+
+		// Public fast path: release every parked product for immediate re-evaluation.
+		add_action(
+			'woocommerce_paypal_payments_store_sync_invalidate_eligibility',
+			array( $this->product_filter, 'invalidate_all' )
+		);
 	}
 
 	/**
