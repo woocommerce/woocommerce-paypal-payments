@@ -314,7 +314,8 @@ return array(
 			$c->get( 'agentic.config.webhook_urls' ),
 			$c->get( 'agentic.merchant.provider' ),
 			$c->get( 'agentic.logger.ingestion' ),
-			$c->get( 'agentic.helper.product-manager' )
+			$c->get( 'agentic.helper.product-manager' ),
+			$c->get( 'agentic.ingestion.product-filter' )
 		);
 	},
 

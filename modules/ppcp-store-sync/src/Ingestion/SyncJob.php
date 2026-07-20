@@ -24,13 +24,15 @@ class SyncJob {
 	private string $api_endpoint;
 	private string $merchant_store_url;
 	private ProductManager $product_manager;
+	private ProductFilter $product_filter;
 
 	public function __construct(
 		string $api_endpoint,
 		string $merchant_store_url,
 		array $product_ids,
 		LoggerInterface $logger,
-		ProductManager $product_manager
+		ProductManager $product_manager,
+		ProductFilter $product_filter
 	) {
 
 		$this->api_endpoint       = $api_endpoint;
@@ -39,6 +41,7 @@ class SyncJob {
 		$this->logger             = $logger;
 		$this->batch_id           = wp_generate_uuid4();
 		$this->product_manager    = $product_manager;
+		$this->product_filter     = $product_filter;
 	}
 
 	/**
@@ -67,6 +70,9 @@ class SyncJob {
 
 		$products = $payload_container->get_products();
 
+		// Drop entries the webhook would reject for missing data; park their products.
+		$products = $this->drop_incomplete_products( $products );
+
 		if ( empty( $products ) ) {
 			$this->logger->info(
 				sprintf( 'Agentic Sync Job %s: No products', $this->batch_id )
@@ -81,7 +87,7 @@ class SyncJob {
 		$body = array(
 			'merchant_url' => $this->merchant_store_url,
 			'products'     => array_map(
-				static fn ( ProductDTO $product ): array => $product->to_array(),
+				static fn( ProductDTO $product ): array => $product->to_array(),
 				$products
 			),
 		);
@@ -116,6 +122,57 @@ class SyncJob {
 
 		// Log the error message and throw an Exception.
 		$this->handle_api_error( $this->product_ids, "HTTP {$status_code}: {$response_body}" );
+	}
+
+	private function drop_incomplete_products( array $products ): array {
+		$complete = array();
+
+		foreach ( $products as $product ) {
+			$data = $product->to_array();
+
+			if ( $this->has_complete_sync_data( $data ) ) {
+				$complete[] = $product;
+				continue;
+			}
+
+			// The item_group_id is always a WC_Product, even for variants.
+			$entry_id = (int) $data['item_group_id'];
+
+			if ( in_array( $entry_id, $this->product_ids, true ) ) {
+				$this->product_ids = array_values(
+					array_diff( $this->product_ids, array( $entry_id ) )
+				);
+
+				$wc_product = wc_get_product( $entry_id );
+				if ( $wc_product ) {
+					$this->product_filter->mark_processed( $wc_product, 'Incomplete payload' );
+				}
+			}
+		}
+
+		return $complete;
+	}
+
+	private function has_complete_sync_data( array $data ): bool {
+		$required_fields = array(
+			'id',
+			'item_group_id',
+			'title',
+			'link',
+			'image_link',
+			'description',
+			'price',
+			'availability',
+			'merchantStoreUrl',
+		);
+
+		foreach ( $required_fields as $field ) {
+			if ( '' === ( $data[ $field ] ?? '' ) ) {
+				return false;
+			}
+		}
+
+		return true;
 	}
 
 	/**
@@ -300,8 +357,8 @@ class SyncJob {
 			return;
 		}
 
-		$timestamp = current_time( 'mysql' );
-		$product->update_meta_data( '_ppcp_agentic_last_sync', $timestamp );
+		$this->product_filter->mark_processed( $product );
+
 		$product->delete_meta_data( '_ppcp_agentic_sync_error' );
 		$product->save_meta_data();
 	}
@@ -309,7 +366,7 @@ class SyncJob {
 	/**
 	 * Mark a single product with validation error.
 	 *
-	 * Products with validation errors are still considered "synced" (the sync
+	 * Products with validation errors are still considered "processed" (the sync
 	 * attempt was made), but store the validation error for merchant visibility.
 	 *
 	 * @param int    $product_id    Product ID.
@@ -322,8 +379,8 @@ class SyncJob {
 			return;
 		}
 
-		$timestamp = current_time( 'mysql' );
-		$product->update_meta_data( '_ppcp_agentic_last_sync', $timestamp );
+		$this->product_filter->mark_processed( $product, $error_message );
+
 		$product->update_meta_data( '_ppcp_agentic_sync_error', $error_message );
 		$product->save_meta_data();
 	}
