@@ -180,9 +180,9 @@ class ApplepayModule implements ServiceModule, ExecutableModule {
 				$settings = $c->get( 'settings.settings-provider' );
 				assert( $settings instanceof SettingsProvider );
 
-				$page_methods = $settings->button_styling( $current_context )->methods;
+				$styling = $settings->button_styling( $current_context );
 
-				if ( ! in_array( ApplePayGateway::ID, $page_methods, true ) ) {
+				if ( ! $styling->enabled || ! in_array( ApplePayGateway::ID, $styling->methods, true ) ) {
 					unset( $methods[ ApplePayGateway::ID ] );
 				}
 
