@@ -28,6 +28,7 @@ use WooCommerce\PayPalCommerce\StoreSync\Endpoint\ReplaceCartEndpoint;
 use WooCommerce\PayPalCommerce\StoreSync\Endpoint\CheckoutEndpoint;
 use WooCommerce\PayPalCommerce\StoreSync\Ingestion\IngestionBatchProvider;
 use WooCommerce\PayPalCommerce\StoreSync\Ingestion\IngestionManager;
+use WooCommerce\PayPalCommerce\StoreSync\Ingestion\ProductFilter;
 use WooCommerce\PayPalCommerce\StoreSync\Response\ResponseFactory;
 use WooCommerce\PayPalCommerce\StoreSync\Session\AgenticSessionHandler;
 use WooCommerce\PayPalCommerce\StoreSync\Setting\AgenticSettingsEndpoint;
@@ -296,6 +297,11 @@ return array(
 	},
 
 	// Ingestion services.
+	'agentic.ingestion.product-filter'             => static function ( ContainerInterface $c ): ProductFilter {
+		return new ProductFilter(
+			$c->get( 'agentic.logger.ingestion' )
+		);
+	},
 	'agentic.ingestion-batch-provider'             => static function ( ContainerInterface $c ): IngestionBatchProvider {
 		return new IngestionBatchProvider(
 			$c->get( 'agentic.config.ingestion' )
