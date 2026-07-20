@@ -103,16 +103,28 @@ class SdkV6Module implements ServiceModule, ExtendingModule, ExecutableModule {
 		$places = $manager->determine_render_places();
 
 		if ( $places['product'] ) {
-			add_action(
-				'woocommerce_single_product_summary',
-				static fn() => $manager->render_wrapper(),
-				31
+			/**
+			 * The action name that the PayPal buttons use for rendering on the single product page.
+			 * Shared with the v5 SmartButton so a single override relocates both stacks.
+			 */
+			$hook = (string) apply_filters(
+				'woocommerce_paypal_payments_single_product_renderer_hook',
+				'woocommerce_single_product_summary'
 			);
+			add_action( $hook, static fn() => $manager->render_wrapper(), 31 );
 		}
 
 		if ( $places['cart'] ) {
+			/**
+			 * The action name that the PayPal buttons use for rendering next to the cart's Proceed to Checkout button.
+			 * Shared with the v5 SmartButton so a single override relocates both stacks.
+			 */
+			$hook = (string) apply_filters(
+				'woocommerce_paypal_payments_proceed_to_checkout_button_renderer_hook',
+				'woocommerce_proceed_to_checkout'
+			);
 			add_action(
-				'woocommerce_proceed_to_checkout',
+				$hook,
 				static function () use ( $manager ): void {
 					if ( ! is_cart() ) {
 						return;
@@ -124,18 +136,27 @@ class SdkV6Module implements ServiceModule, ExtendingModule, ExecutableModule {
 		}
 
 		if ( $places['checkout'] ) {
-			add_action(
-				'woocommerce_review_order_after_payment',
-				static fn() => $manager->render_wrapper()
+			/**
+			 * The action name that the PayPal buttons use for rendering on the checkout page.
+			 * Shared with the v5 SmartButton so a single override relocates both stacks.
+			 */
+			$hook = (string) apply_filters(
+				'woocommerce_paypal_payments_checkout_button_renderer_hook',
+				'woocommerce_review_order_after_payment'
 			);
+			add_action( $hook, static fn() => $manager->render_wrapper() );
 		}
 
 		if ( $places['mini-cart'] ) {
-			add_action(
-				'woocommerce_widget_shopping_cart_after_buttons',
-				static fn() => $manager->render_mini_cart_wrapper(),
-				30
+			/**
+			 * The action name that the PayPal buttons use for rendering in the mini-cart widget.
+			 * Shared with the v5 SmartButton so a single override relocates both stacks.
+			 */
+			$hook = (string) apply_filters(
+				'woocommerce_paypal_payments_mini_cart_button_renderer_hook',
+				'woocommerce_widget_shopping_cart_after_buttons'
 			);
+			add_action( $hook, static fn() => $manager->render_mini_cart_wrapper(), 30 );
 		}
 	}
 }
