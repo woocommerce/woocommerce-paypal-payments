@@ -304,7 +304,8 @@ return array(
 	},
 	'agentic.ingestion-batch-provider'             => static function ( ContainerInterface $c ): IngestionBatchProvider {
 		return new IngestionBatchProvider(
-			$c->get( 'agentic.config.ingestion' )
+			$c->get( 'agentic.config.ingestion' ),
+			$c->get( 'agentic.ingestion.product-filter' )
 		);
 	},
 	'agentic.ingestion-manager'                    => static function ( ContainerInterface $c ): IngestionManager {
