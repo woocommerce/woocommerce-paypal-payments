@@ -23,23 +23,14 @@ use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 class SdkV6Module implements ServiceModule, ExtendingModule, ExecutableModule
 {
     use ModuleClassNameIdTrait;
-    /**
-     * {@inheritDoc}
-     */
     public function services(): array
     {
         return require __DIR__ . '/../services.php';
     }
-    /**
-     * {@inheritDoc}
-     */
     public function extensions(): array
     {
         return require __DIR__ . '/../extensions.php';
     }
-    /**
-     * {@inheritDoc}
-     */
     public function run(ContainerInterface $c): bool
     {
         add_action('wc_ajax_' . ClientTokenEndpoint::ENDPOINT, static function () use ($c) {
@@ -52,13 +43,13 @@ class SdkV6Module implements ServiceModule, ExtendingModule, ExecutableModule
             assert($manager instanceof SdkV6Manager);
             $manager->enqueue();
         });
-        add_action('wp', static function () use ($c) {
+        add_action('wp', function () use ($c) {
             if (is_admin()) {
                 return;
             }
             $manager = $c->get('sdk-v6.manager');
             assert($manager instanceof SdkV6Manager);
-            $manager->register_render_hooks();
+            $this->register_render_hooks($manager);
         });
         // Store the created PayPal order in the WC session for v6 requests,
         // so the shipping-update endpoint can validate order ownership in
@@ -72,5 +63,35 @@ class SdkV6Module implements ServiceModule, ExtendingModule, ExecutableModule
             $session_handler->replace_order($order);
         }, 10, 2);
         return \true;
+    }
+    /**
+     * Registers the render hooks that output the button wrapper elements.
+     *
+     * Uses the same theme hooks as the v5 SmartButton so v6 buttons appear
+     * in the same locations.
+     *
+     * @param SdkV6Manager $manager The SDK v6 manager.
+     * @return void
+     */
+    private function register_render_hooks(SdkV6Manager $manager): void
+    {
+        $places = $manager->determine_render_places();
+        if ($places['product']) {
+            add_action('woocommerce_single_product_summary', static fn() => $manager->render_wrapper(), 31);
+        }
+        if ($places['cart']) {
+            add_action('woocommerce_proceed_to_checkout', static function () use ($manager): void {
+                if (!is_cart()) {
+                    return;
+                }
+                $manager->render_wrapper();
+            }, 20);
+        }
+        if ($places['checkout']) {
+            add_action('woocommerce_review_order_after_payment', static fn() => $manager->render_wrapper());
+        }
+        if ($places['mini-cart']) {
+            add_action('woocommerce_widget_shopping_cart_after_buttons', static fn() => $manager->render_mini_cart_wrapper(), 30);
+        }
     }
 }

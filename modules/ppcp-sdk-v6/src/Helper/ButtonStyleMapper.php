@@ -9,9 +9,6 @@ declare (strict_types=1);
 namespace WooCommerce\PayPalCommerce\SdkV6\Helper;
 
 use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
-/**
- * Class ButtonStyleMapper
- */
 class ButtonStyleMapper
 {
     /**
@@ -22,17 +19,7 @@ class ButtonStyleMapper
      * Maps admin shape names to v6 border-radius values.
      */
     private const SHAPE_MAP = array('pill' => '24px', 'rect' => '4px');
-    /**
-     * The styling settings provider.
-     *
-     * @var SettingsProvider
-     */
     private SettingsProvider $settings_provider;
-    /**
-     * ButtonStyleMapper constructor.
-     *
-     * @param SettingsProvider $settings_provider The styling settings provider.
-     */
     public function __construct(SettingsProvider $settings_provider)
     {
         $this->settings_provider = $settings_provider;
