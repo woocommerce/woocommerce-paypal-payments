@@ -172,8 +172,7 @@ class FeaturesDefinition {
 		$feature_items = array(
 			self::FEATURE_PAY_WITH_CRYPTO                 => array(
 				'title'       => __( 'Pay with Crypto', 'woocommerce-paypal-payments' ),
-				'description' => __( 'Enable customers to pay with cryptocurrency, and receive payments in USD in your PayPal balance.', 'woocommerce-paypal-payments' )
-					. '<p>' . __( 'Promotional processing rate of 0.99% through July 31, 2026.', 'woocommerce-paypal-payments' ) . '</p>',
+				'description' => __( 'Enable customers to pay with cryptocurrency, and receive payments in USD in your PayPal balance.', 'woocommerce-paypal-payments' ),
 				'enabled'     => $this->merchant_capabilities[ self::FEATURE_PAY_WITH_CRYPTO ],
 				'buttons'     => array(
 					array(
