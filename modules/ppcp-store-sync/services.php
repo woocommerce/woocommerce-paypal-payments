@@ -184,7 +184,7 @@ return array(
 	},
 	'agentic.validator.product'                    => static function ( ContainerInterface $c ): ProductValidator {
 		return new ProductValidator(
-			$c->get( 'agentic.config.ingestion' )
+			$c->get( 'agentic.ingestion.product-filter' )
 		);
 	},
 	'agentic.validator.price'                      => static function (): PriceValidator {
