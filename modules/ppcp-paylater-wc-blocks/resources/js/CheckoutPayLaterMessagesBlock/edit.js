@@ -50,7 +50,7 @@ export default function Edit( { attributes, clientId, setAttributes } ) {
 
 	let classes = [ 'ppcp-paylater-block-preview', 'ppcp-overlay-parent' ];
 	if (
-		PcpCheckoutPayLaterBlock.vaultingEnabled ||
+		PcpCheckoutPayLaterBlock.payLaterDisabledByVaulting ||
 		! PcpCheckoutPayLaterBlock.placementEnabled
 	) {
 		classes = [
@@ -67,7 +67,7 @@ export default function Edit( { attributes, clientId, setAttributes } ) {
 		}
 	}, [ ppcpId, clientId ] );
 
-	if ( PcpCheckoutPayLaterBlock.vaultingEnabled ) {
+	if ( PcpCheckoutPayLaterBlock.payLaterDisabledByVaulting ) {
 		return (
 			<div { ...props }>
 				<div className={ 'block-editor-warning__contents' }>

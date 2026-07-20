@@ -10,7 +10,7 @@ declare( strict_types=1 );
 namespace WooCommerce\PayPalCommerce\Settings\Data\Definition;
 
 use Psr\Log\LoggerInterface;
-use WooCommerce\PayPalCommerce\Settings\Data\SettingsModel;
+use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
 use WooCommerce\PayPalCommerce\Settings\Service\FeaturesEligibilityService;
 use WooCommerce\PayPalCommerce\Settings\Data\GeneralSettings;
 
@@ -90,21 +90,21 @@ class FeaturesDefinition {
 	 * @var array
 	 */
 	protected array $merchant_capabilities;
-	protected SettingsModel $plugin_settings;
 	protected LoggerInterface $logger;
+	protected SettingsProvider $settings_provider;
 
 	public function __construct(
 		FeaturesEligibilityService $eligibilities,
 		GeneralSettings $settings,
 		array $merchant_capabilities,
-		SettingsModel $plugin_settings,
-		LoggerInterface $logger
+		LoggerInterface $logger,
+		SettingsProvider $settings_provider
 	) {
 		$this->eligibilities         = $eligibilities;
 		$this->settings              = $settings;
 		$this->merchant_capabilities = $merchant_capabilities;
-		$this->plugin_settings       = $plugin_settings;
 		$this->logger                = $logger;
+		$this->settings_provider     = $settings_provider;
 	}
 
 	/**
@@ -167,7 +167,7 @@ class FeaturesDefinition {
 
 		$store_country                  = $this->settings->get_woo_settings()['country'];
 		$paylater_docs_country_location = in_array( $store_country, $paylater_documentation_supported_countries, true ) ? strtolower( $store_country ) : 'us';
-		$save_paypal_and_venmo          = $this->plugin_settings->get_save_paypal_and_venmo();
+		$pay_later_disabled_by_vaulting = $this->settings_provider->pay_later_disabled_by_vaulting();
 
 		$feature_items = array(
 			self::FEATURE_PAY_WITH_CRYPTO                 => array(
@@ -391,7 +391,7 @@ class FeaturesDefinition {
 					'Help grow sales with Pay Later messaging. Let customers know they have flexible payment options as they browse, shop, and check out.',
 					'woocommerce-paypal-payments'
 				),
-				'enabled'     => $this->merchant_capabilities[ self::FEATURE_PAY_LATER_MESSAGING ] && ! $save_paypal_and_venmo,
+				'enabled'     => $this->merchant_capabilities[ self::FEATURE_PAY_LATER_MESSAGING ] && ! $pay_later_disabled_by_vaulting,
 				'buttons'     => array(
 					array(
 						'type'     => 'secondary',

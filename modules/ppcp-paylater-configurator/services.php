@@ -53,9 +53,7 @@ return array(
 		$dcc_product_status = $container->get( 'wcgateway.helper.dcc-product-status' );
 		assert( $dcc_product_status instanceof DCCProductStatus );
 
-		$vault_enabled = $settings_provider->save_paypal_and_venmo();
-
-		return ! $vault_enabled && $messages_apply->for_country();
+		return ! $settings_provider->pay_later_disabled_by_vaulting() && $messages_apply->for_country();
 	},
 	'paylater-configurator.messaging-locations'  => static function ( ContainerInterface $container ): array {
 		$settings_provider = $container->get( 'settings.settings-provider' );
