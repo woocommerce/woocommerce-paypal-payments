@@ -62,15 +62,7 @@ class CapturePayPalPayment {
 		string $payment_source_name = 'paypal'
 	): Order {
 		$intent = strtoupper( $this->settings_provider->payment_intent() ) === 'AUTHORIZE' ? 'AUTHORIZE' : 'CAPTURE';
-		$items  = array( $this->purchase_unit_factory->from_wc_cart( null, false, $wc_order->get_payment_method() ) );
-
-		// phpcs:disable WordPress.Security.NonceVerification
-		$pay_for_order = wc_clean( wp_unslash( $_GET['pay_for_order'] ?? '' ) );
-		$order_key     = wc_clean( wp_unslash( $_GET['key'] ?? '' ) );
-		// phpcs:enable
-		if ( $pay_for_order && $order_key === $wc_order->get_order_key() ) {
-			$items = array( $this->purchase_unit_factory->from_wc_order( $wc_order ) );
-		}
+		$items  = array( $this->purchase_unit_factory->from_wc_order( $wc_order ) );
 
 		$data = array(
 			'intent'         => $intent,
