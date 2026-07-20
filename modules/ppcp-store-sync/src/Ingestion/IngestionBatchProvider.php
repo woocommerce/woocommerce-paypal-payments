@@ -76,11 +76,12 @@ class IngestionBatchProvider {
 		$items_in_batch  = count( $current_batch );
 		$remaining_items = $batch_size - $items_in_batch;
 		$collected       = array();
+		$seen            = array();
 
 		while ( $remaining_items > 0 ) {
 			$candidates = $this->query_candidates(
 				$meta_query,
-				array_merge( $current_batch, $collected ),
+				array_merge( $current_batch, $seen ),
 				$remaining_items,
 				$order_by_meta
 			);
@@ -90,6 +91,11 @@ class IngestionBatchProvider {
 			}
 
 			foreach ( $candidates as $product_id ) {
+				// Excluding every seen candidate (not just collected ones)
+				// guarantees the pool shrinks each pass, so the loop always
+				// terminates even when a product cannot be loaded or parked.
+				$seen[] = (int) $product_id;
+
 				$product = wc_get_product( $product_id );
 				if ( ! $product ) {
 					continue;
