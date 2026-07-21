@@ -114,7 +114,9 @@ class IngestionManager {
 		$product_ids = $this->batch_provider->get_batch();
 
 		if ( empty( $product_ids ) ) {
-			return; // Nothing to sync.
+			$this->logger->info( '[Sync] Empty batch - no products need syncing' );
+
+			return;
 		}
 
 		$sync_job = $this->create_new_sync_job( $product_ids );
