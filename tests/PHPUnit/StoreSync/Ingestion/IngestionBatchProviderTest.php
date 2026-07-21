@@ -83,12 +83,12 @@ class IngestionBatchProviderTest extends TestCase {
 		} );
 
 		when( 'wc_get_products' )->alias( function ( $args ) use ( $never_synced_ids, $stale_ids ) {
-			if ( 'NOT EXISTS' === $args['meta_query'][0]['compare'] ) {
+			if ( ! isset( $args['orderby'] ) ) { // Fresh pass (the stale pass sets orderby).
 				$available = array_values( array_diff( $never_synced_ids, $args['exclude'] ) );
 				return array_slice( $available, 0, $args['limit'] );
 			}
 
-			if ( '<' === $args['meta_query'][0]['compare'] ) {
+			if ( isset( $args['orderby'] ) ) { // Stale pass (orders by the processed-at meta).
 				$available = array_values( array_diff( $stale_ids, $args['exclude'] ) );
 				return array_slice( $available, 0, $args['limit'] );
 			}
@@ -119,7 +119,7 @@ class IngestionBatchProviderTest extends TestCase {
 		} );
 
 		when( 'wc_get_products' )->alias( function ( $args ) use ( $never_synced_ids ) {
-			if ( 'NOT EXISTS' === $args['meta_query'][0]['compare'] ) {
+			if ( ! isset( $args['orderby'] ) ) { // Fresh pass (the stale pass sets orderby).
 				$available = array_values( array_diff( $never_synced_ids, $args['exclude'] ) );
 				return array_slice( $available, 0, $args['limit'] );
 			}
@@ -146,7 +146,7 @@ class IngestionBatchProviderTest extends TestCase {
 		} );
 
 		when( 'wc_get_products' )->alias( function ( $args ) use ( $stale_product_ids ) {
-			if ( '<' === $args['meta_query'][0]['compare'] ) {
+			if ( isset( $args['orderby'] ) ) { // Stale pass (orders by the processed-at meta).
 				$available = array_values( array_diff( $stale_product_ids, $args['exclude'] ) );
 				return array_slice( $available, 0, $args['limit'] );
 			}
@@ -192,12 +192,12 @@ class IngestionBatchProviderTest extends TestCase {
 		} );
 
 		when( 'wc_get_products' )->alias( function ( $args ) use ( $fresh_pool, $stale_pool ) {
-			if ( 'NOT EXISTS' === $args['meta_query'][0]['compare'] ) {
+			if ( ! isset( $args['orderby'] ) ) { // Fresh pass (the stale pass sets orderby).
 				$available = array_values( array_diff( $fresh_pool, $args['exclude'] ) );
 				return array_slice( $available, 0, $args['limit'] );
 			}
 
-			if ( '<' === $args['meta_query'][0]['compare'] ) {
+			if ( isset( $args['orderby'] ) ) { // Stale pass (orders by the processed-at meta).
 				$available = array_values( array_diff( $stale_pool, $args['exclude'] ) );
 				return array_slice( $available, 0, $args['limit'] );
 			}
@@ -230,7 +230,7 @@ class IngestionBatchProviderTest extends TestCase {
 		} );
 
 		when( 'wc_get_products' )->alias( function ( $args ) use ( $fresh_pool ) {
-			if ( 'NOT EXISTS' === $args['meta_query'][0]['compare'] ) {
+			if ( ! isset( $args['orderby'] ) ) { // Fresh pass (the stale pass sets orderby).
 				$available = array_values( array_diff( $fresh_pool, $args['exclude'] ) );
 				return array_slice( $available, 0, $args['limit'] );
 			}
@@ -273,7 +273,7 @@ class IngestionBatchProviderTest extends TestCase {
 		when( 'wc_get_products' )->alias( function ( $args ) use ( $fresh_pool, &$call_count ) {
 			$call_count++;
 
-			if ( 'NOT EXISTS' === $args['meta_query'][0]['compare'] ) {
+			if ( ! isset( $args['orderby'] ) ) { // Fresh pass (the stale pass sets orderby).
 				$available = array_values( array_diff( $fresh_pool, $args['exclude'] ) );
 				return array_slice( $available, 0, $args['limit'] );
 			}
@@ -330,7 +330,7 @@ class IngestionBatchProviderTest extends TestCase {
 		$fresh_pool = array( 1, 2, 3 );
 
 		when( 'wc_get_products' )->alias( function ( $args ) use ( $fresh_pool ) {
-			if ( 'NOT EXISTS' === $args['meta_query'][0]['compare'] ) {
+			if ( ! isset( $args['orderby'] ) ) { // Fresh pass (the stale pass sets orderby).
 				$available = array_values( array_diff( $fresh_pool, $args['exclude'] ) );
 				return array_slice( $available, 0, $args['limit'] );
 			}
