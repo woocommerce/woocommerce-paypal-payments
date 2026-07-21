@@ -955,7 +955,7 @@ class ApplePayButton extends PaymentButton {
 							token: event.payment.token,
 							shipping_method: shippingMethod,
 							'woocommerce-process-checkout-nonce': this.nonce,
-							funding_source: 'applepay',
+							funding_source: 'apple_pay',
 							_wp_http_referer: '/?wc-ajax=update_order_review',
 							paypal_order_id: data.paypal_order_id,
 						};
