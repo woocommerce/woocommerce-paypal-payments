@@ -20,7 +20,6 @@ use WooCommerce\PayPalCommerce\Googlepay\Endpoint\UpdatePaymentDataEndpoint;
 use WooCommerce\PayPalCommerce\Googlepay\GooglePayGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
 use WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException;
-use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
 use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
 class GooglePayButton implements ButtonInterface
 {
@@ -30,13 +29,11 @@ class GooglePayButton implements ButtonInterface
     private string $version;
     private SettingsProvider $settings;
     private Environment $environment;
-    private SubscriptionHelper $subscription_helper;
-    public function __construct(AssetGetter $asset_getter, string $sdk_url, string $version, SubscriptionHelper $subscription_helper, SettingsProvider $settings, Environment $environment, Context $context)
+    public function __construct(AssetGetter $asset_getter, string $sdk_url, string $version, SettingsProvider $settings, Environment $environment, Context $context)
     {
         $this->asset_getter = $asset_getter;
         $this->sdk_url = $sdk_url;
         $this->version = $version;
-        $this->subscription_helper = $subscription_helper;
         $this->settings = $settings;
         $this->environment = $environment;
         $this->context = $context;
@@ -52,8 +49,11 @@ class GooglePayButton implements ButtonInterface
         if (!$this->settings->googlepay_enabled()) {
             return \false;
         }
-        $methods = $this->settings->button_styling($this->context->context())->methods;
-        return in_array(GooglePayGateway::ID, $methods, \true);
+        $styling = $this->settings->button_styling($this->context->context());
+        if (!$styling->enabled) {
+            return \false;
+        }
+        return in_array(GooglePayGateway::ID, $styling->methods, \true);
     }
     /**
      * Registers the necessary action hooks to render the HTML depending on the settings.
@@ -66,17 +66,6 @@ class GooglePayButton implements ButtonInterface
     {
         if (!$this->is_enabled()) {
             return \false;
-        }
-        if ($this->subscription_helper->plugin_is_active() && !$this->subscription_helper->accept_manual_renewals()) {
-            if (is_product() && $this->subscription_helper->current_product_is_subscription()) {
-                return \false;
-            }
-            if ($this->subscription_helper->order_pay_contains_subscription()) {
-                return \false;
-            }
-            if ($this->subscription_helper->cart_contains_subscription()) {
-                return \false;
-            }
         }
         /**
          * Param types removed to avoid third-party issues.

@@ -17,6 +17,7 @@ use WooCommerce\PayPalCommerce\Axo\Gateway\AxoGateway;
 use WooCommerce\PayPalCommerce\Googlepay\GooglePayGateway;
 use WooCommerce\PayPalCommerce\Settings\Data\OnboardingProfile;
 use WooCommerce\PayPalCommerce\Settings\Data\SettingsModel;
+use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
 use WooCommerce\PayPalCommerce\Settings\Data\TodosModel;
 use WooCommerce\PayPalCommerce\Settings\Endpoint\RestEndpoint;
 use WooCommerce\PayPalCommerce\Settings\Enum\InstallationPathEnum;
@@ -39,6 +40,7 @@ use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\OXXOGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\PayUponInvoice\PayUponInvoiceGateway;
 use WooCommerce\PayPalCommerce\Settings\Service\SettingsDataManager;
+use WooCommerce\PayPalCommerce\Settings\Service\MerchantDataResolver;
 use WooCommerce\PayPalCommerce\Settings\DTO\ConfigurationFlagsDTO;
 use WooCommerce\PayPalCommerce\Settings\DTO\MerchantConnectionDTO;
 use WooCommerce\PayPalCommerce\Settings\Enum\ProductChoicesEnum;
@@ -274,6 +276,9 @@ class SettingsModule implements ServiceModule, ExecutableModule
             assert($seller_type_resolver instanceof SellerTypeResolver);
             do_action('woocommerce_paypal_payments_clear_apm_product_status');
             $seller_type_resolver->resolve_unknown_seller_type($general_settings, $partners_endpoint, $logger);
+            $country_resolver = $container->get('settings.service.merchant-data-resolver');
+            assert($country_resolver instanceof MerchantDataResolver);
+            $country_resolver->ensure_country_resolved();
             $onboarding_profile = $container->get('settings.data.onboarding');
             assert($onboarding_profile instanceof OnboardingProfile);
             $onboarding_profile->set_completed(\true);
@@ -469,11 +474,13 @@ class SettingsModule implements ServiceModule, ExecutableModule
         $gateway_redirect_service = $container->get('settings.service.gateway-redirect');
         assert($gateway_redirect_service instanceof GatewayRedirectService);
         $gateway_redirect_service->register();
-        // Do not render Pay Later messaging if the "Save PayPal and Venmo" setting is enabled.
-        add_filter('woocommerce_paypal_payments_should_render_pay_later_messaging', static function () use ($container): bool {
-            $settings_model = $container->get('settings.data.settings');
-            assert($settings_model instanceof SettingsModel);
-            return !$settings_model->get_save_paypal_and_venmo();
+        // Do not render Pay Later messaging while vaulting ("Save PayPal and Venmo") is
+        // active, unless a whitelisted merchant opted in via the filter. Otherwise the
+        // incoming value is left untouched so other filters keep working.
+        add_filter('woocommerce_paypal_payments_should_render_pay_later_messaging', static function (bool $should_render) use ($container): bool {
+            $settings_provider = $container->get('settings.settings-provider');
+            assert($settings_provider instanceof SettingsProvider);
+            return $settings_provider->pay_later_disabled_by_vaulting() ? \false : $should_render;
         });
         // Migration code to update BN code of merchants that are on whitelabel mode (own_brand_only false) to use the whitelabel BN code (direct).
         add_action('woocommerce_paypal_payments_gateway_migrate_on_update', static function () use ($container) {
@@ -486,6 +493,23 @@ class SettingsModule implements ServiceModule, ExecutableModule
             if (!$own_brand_only && $installation_path !== InstallationPathEnum::DIRECT) {
                 $partner_attribution->initialize_bn_code(InstallationPathEnum::DIRECT, \true);
             }
+        });
+        // Runs the deferred merchant-country resolution retry (bounded, in-process).
+        add_action(MerchantDataResolver::RETRY_HOOK, static function ($attempt = 1) use ($container): void {
+            $country_resolver = $container->get('settings.service.merchant-data-resolver');
+            assert($country_resolver instanceof MerchantDataResolver);
+            $country_resolver->handle_retry((int) $attempt);
+        });
+        /**
+         * Backfill the merchant country for merchants that onboarded before the
+         * resolution fix, whose merchant_country was left empty by the seller-status
+         * back-off. One-shot per upgrade; the resolver is naturally idempotent and
+         * bounded (no-op once the country is set or the merchant is disconnected).
+         */
+        add_action('woocommerce_paypal_payments_gateway_migrate_on_update', static function () use ($container): void {
+            $country_resolver = $container->get('settings.service.merchant-data-resolver');
+            assert($country_resolver instanceof MerchantDataResolver);
+            $country_resolver->ensure_country_resolved();
         });
         add_action(
             'woocommerce_paypal_payments_gateway_migrate',

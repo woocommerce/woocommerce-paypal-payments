@@ -176,8 +176,8 @@ class GooglepayModule implements ServiceModule, ExecutableModule
             }
             $settings = $c->get('settings.settings-provider');
             assert($settings instanceof SettingsProvider);
-            $page_methods = $settings->button_styling($current_context)->methods;
-            if (!in_array(\WooCommerce\PayPalCommerce\Googlepay\GooglePayGateway::ID, $page_methods, \true)) {
+            $styling = $settings->button_styling($current_context);
+            if (!$styling->enabled || !in_array(\WooCommerce\PayPalCommerce\Googlepay\GooglePayGateway::ID, $styling->methods, \true)) {
                 unset($methods[\WooCommerce\PayPalCommerce\Googlepay\GooglePayGateway::ID]);
             }
             return $methods;

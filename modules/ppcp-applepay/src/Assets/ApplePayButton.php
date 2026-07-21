@@ -653,7 +653,10 @@ class ApplePayButton implements ButtonInterface
         if (!$this->settings_provider->applepay_enabled()) {
             return \false;
         }
-        $methods = $this->settings_provider->button_styling($this->context->context())->methods;
-        return in_array(ApplePayGateway::ID, $methods, \true);
+        $styling = $this->settings_provider->button_styling($this->context->context());
+        if (!$styling->enabled) {
+            return \false;
+        }
+        return in_array(ApplePayGateway::ID, $styling->methods, \true);
     }
 }

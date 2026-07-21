@@ -215,7 +215,7 @@ return array(
         );
     },
     'googlepay.button' => static function (ContainerInterface $container): ButtonInterface {
-        return new GooglePayButton($container->get('googlepay.asset_getter'), $container->get('googlepay.sdk_url'), $container->get('ppcp.asset-version'), $container->get('wc-subscriptions.helper'), $container->get('settings.settings-provider'), $container->get('settings.environment'), $container->get('button.helper.context'));
+        return new GooglePayButton($container->get('googlepay.asset_getter'), $container->get('googlepay.sdk_url'), $container->get('ppcp.asset-version'), $container->get('settings.settings-provider'), $container->get('settings.environment'), $container->get('button.helper.context'));
     },
     'googlepay.blocks-payment-method' => static function (ContainerInterface $container): PaymentMethodTypeInterface {
         return new BlocksPaymentMethod('ppcp-googlepay', $container->get('googlepay.asset_getter'), $container->get('ppcp.asset-version'), $container->get('googlepay.button'), $container->get('blocks.method'), $container->get('button.helper.context'), $container->get('settings.settings-provider'));
