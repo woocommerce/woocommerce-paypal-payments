@@ -47,7 +47,8 @@ class MiniCartBootstrap {
 			wp.data.subscribe(
 				debounce( () => {
 					this._handleStoreCartChange();
-				}, 300 )
+				}, 300 ),
+				'wc/store/cart'
 			);
 		}
 
