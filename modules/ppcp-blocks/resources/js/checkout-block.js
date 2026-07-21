@@ -5,7 +5,7 @@ import {
 import { __ } from '@wordpress/i18n';
 import {
 	cartHasSubscriptionProducts,
-	isPayPalSubscription,
+	paypalSubscriptionButtonAllowed,
 } from './Helper/Subscription';
 import { loadPayPalScript } from '../../../ppcp-button/resources/js/modules/Helper/PayPalScriptLoading';
 import BlockCheckoutMessagesBootstrap from './Bootstrap/BlockCheckoutMessagesBootstrap';
@@ -25,31 +25,9 @@ const features = [ 'products' ];
 let blockEnabled = true;
 
 if ( cartHasSubscriptionProducts( config.scriptData ) ) {
-	// Don't show buttons on block cart page if user is not logged in and cart contains free trial product
-	if (
-		! config.scriptData.user.is_logged &&
-		config.scriptData.context === 'cart-block' &&
-		cartHasSubscriptionProducts( config.scriptData ) &&
-		config.scriptData.is_free_trial_cart
-	) {
-		blockEnabled = false;
-	}
-
-	// Don't render if vaulting disabled and is in vault subscription mode
-	if (
-		! isPayPalSubscription( config.scriptData ) &&
-		! config.scriptData.can_save_vault_token
-	) {
-		blockEnabled = false;
-	}
-
-	// Don't render buttons if in subscription mode and product not associated with a PayPal subscription
-	if (
-		isPayPalSubscription( config.scriptData ) &&
-		! config.scriptData.subscription_product_allowed
-	) {
-		blockEnabled = false;
-	}
+	// Show the button only for subscription carts PayPal can process
+	// (shared rule used by the classic cart and mini-cart as well).
+	blockEnabled = paypalSubscriptionButtonAllowed( config.scriptData );
 
 	features.push( 'subscriptions' );
 }
