@@ -58,7 +58,8 @@ class SyncJob {
 	 */
 	public function execute(): void {
 		$this->logger->info(
-			sprintf( 'Agentic Sync Job %s: Started', $this->batch_id )
+			'[Sync] Started',
+			$this->build_log_context()
 		);
 
 		// Transform products into DTOs.
@@ -75,7 +76,8 @@ class SyncJob {
 
 		if ( empty( $products ) ) {
 			$this->logger->info(
-				sprintf( 'Agentic Sync Job %s: No products', $this->batch_id )
+				'[Sync] No products',
+				$this->build_log_context()
 			);
 
 			$this->fire_completed_action( 'empty', 0, 0, 0 );
@@ -104,7 +106,7 @@ class SyncJob {
 			)
 		);
 
-		$this->logger->debug( "Start Sync {$this->batch_id}...", $body );
+		$this->logger->debug( '[Sync] Started...', $this->build_log_context( $body ) );
 
 		if ( is_wp_error( $response ) ) {
 			// Log the error message and throw an Exception.
@@ -195,11 +197,10 @@ class SyncJob {
 
 			$this->logger->info(
 				sprintf(
-					'Agentic Sync Job %s: Successfully synced %d products',
-					$this->batch_id,
+					'[Sync] Successfully synced %d products',
 					count( $this->product_ids )
 				),
-				$response_data
+				$this->build_log_context( $response_data )
 			);
 
 			$contains_errors = false === ( $response_data['success'] ?? false );
@@ -279,11 +280,8 @@ class SyncJob {
 	 */
 	private function mark_products_by_validation_result( array $validation_errors ): void {
 		$this->logger->warning(
-			sprintf(
-				'Agentic Sync Job %s: Validation errors',
-				$this->batch_id
-			),
-			$validation_errors
+			'[Sync] Validation errors',
+			$this->build_log_context( $validation_errors )
 		);
 
 		foreach ( $validation_errors as $product_id => $error_message ) {
@@ -304,10 +302,12 @@ class SyncJob {
 	 */
 	private function handle_api_error( array $product_ids, string $error_message ): void {
 		$this->logger->warning(
-			sprintf( 'Agentic Sync Job %s: API Error - %s', $this->batch_id, $error_message ),
-			array(
-				'product_count' => count( $product_ids ),
-				'product_ids'   => $product_ids,
+			sprintf( '[Sync] API Error - %s', $error_message ),
+			$this->build_log_context(
+				array(
+					'product_count' => count( $product_ids ),
+					'product_ids'   => $product_ids,
+				)
 			)
 		);
 
@@ -383,5 +383,23 @@ class SyncJob {
 		foreach ( $product_ids as $product_id ) {
 			$this->mark_product_synced( $product_id );
 		}
+	}
+
+	/**
+	 * @param mixed $context The log data - an array or any other value to log.
+	 * @return array
+	 */
+	private function build_log_context( $context = array() ): array {
+		$log_context = array( 'job' => $this->batch_id );
+
+		if ( ! is_array( $context ) ) {
+			if ( null === $context ) {
+				$context = array();
+			} else {
+				$context = array( 'raw' => $context );
+			}
+		}
+
+		return array_merge( $log_context, $context );
 	}
 }
