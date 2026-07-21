@@ -174,6 +174,31 @@ class SubscriptionHelper
         return \true;
     }
     /**
+     * Whether the PayPal button is allowed for the current (subscription) cart.
+     *
+     * This is the single, mode-aware rule shared by the classic cart, block cart
+     * and mini-cart so the button is displayed (or hidden) consistently:
+     * - A non-subscription cart is always allowed.
+     * - In PayPal Subscriptions mode the product must be allowed
+     *   (has a PayPal plan and the cart contains a single item).
+     * - In vaulting mode a vault token must be savable.
+     *
+     * @param bool $is_paypal_subscription Whether PayPal Subscriptions mode applies.
+     * @param bool $can_save_vault_token   Whether a vault token can be saved.
+     * @return bool
+     * @throws NotFoundException If setting is not found.
+     */
+    public function paypal_subscription_button_allowed(bool $is_paypal_subscription, bool $can_save_vault_token): bool
+    {
+        if (!$this->cart_contains_subscription()) {
+            return \true;
+        }
+        if ($is_paypal_subscription) {
+            return $this->checkout_subscription_product_allowed();
+        }
+        return $can_save_vault_token;
+    }
+    /**
      * Returns PayPal subscription plan id from WC subscription product.
      *
      * @return string

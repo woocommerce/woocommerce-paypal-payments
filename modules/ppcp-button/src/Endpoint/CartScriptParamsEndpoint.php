@@ -84,6 +84,11 @@ class CartScriptParamsEndpoint implements \WooCommerce\PayPalCommerce\Button\End
                 // button to the save-without-purchase flow when a coupon turns a
                 // subscription cart into a $0 total after the page has loaded.
                 'is_free_trial_cart' => (bool) ($script_data['is_free_trial_cart'] ?? \false),
+                // Recomputed against the current cart so the client can hide the
+                // button when a cart change makes the subscription cart one that
+                // PayPal cannot process (e.g. a second subscription is removed/added).
+                'subscription_button_allowed' => (bool) ($script_data['subscription_button_allowed'] ?? \true),
+                'locations_with_subscription_product' => $script_data['locations_with_subscription_product'] ?? array(),
                 'total' => $total,
                 'total_str' => (new Money($total, $currency_code))->value_str(),
                 'currency_code' => $currency_code,
