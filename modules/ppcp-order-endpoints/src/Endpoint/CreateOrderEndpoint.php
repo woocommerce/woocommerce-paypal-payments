@@ -3,10 +3,10 @@
 /**
  * The endpoint to create an PayPal order.
  *
- * @package WooCommerce\PayPalCommerce\Button\Endpoint
+ * @package WooCommerce\PayPalCommerce\OrderEndpoints\Endpoint
  */
 declare (strict_types=1);
-namespace WooCommerce\PayPalCommerce\Button\Endpoint;
+namespace WooCommerce\PayPalCommerce\OrderEndpoints\Endpoint;
 
 use Exception;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Log\LoggerInterface;
@@ -33,7 +33,7 @@ use WooCommerce\PayPalCommerce\Button\Exception\ValidationException;
 use WooCommerce\PayPalCommerce\Button\Session\CartDataFactory;
 use WooCommerce\PayPalCommerce\Button\Session\CartDataTransientStorage;
 use WooCommerce\PayPalCommerce\Button\Validation\CheckoutFormValidator;
-use WooCommerce\PayPalCommerce\Button\Helper\EarlyOrderHandler;
+use WooCommerce\PayPalCommerce\OrderEndpoints\Helper\EarlyOrderHandler;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
 use WooCommerce\PayPalCommerce\WcSubscriptions\FreeTrialHandlerTrait;
 use WooCommerce\PayPalCommerce\WcGateway\CardBillingMode;
@@ -42,10 +42,11 @@ use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\ContactPreferenceFactory;
+use WooCommerce\PayPalCommerce\Button\Endpoint\EndpointInterface;
 /**
  * Class CreateOrderEndpoint
  */
-class CreateOrderEndpoint implements \WooCommerce\PayPalCommerce\Button\Endpoint\EndpointInterface
+class CreateOrderEndpoint implements EndpointInterface
 {
     use FreeTrialHandlerTrait;
     const ENDPOINT = 'ppc-create-order';
@@ -193,7 +194,7 @@ class CreateOrderEndpoint implements \WooCommerce\PayPalCommerce\Button\Endpoint
      * @param string[]                  $funding_sources_without_redirect The sources that do not cause issues about redirecting (on mobile, ...) and sometimes not returning back.
      * @param LoggerInterface           $logger The logger.
      */
-    public function __construct(\WooCommerce\PayPalCommerce\Button\Endpoint\RequestData $request_data, PurchaseUnitFactory $purchase_unit_factory, ShippingPreferenceFactory $shipping_preference_factory, ReturnUrlFactory $return_url_factory, ContactPreferenceFactory $contact_preference_factory, ExperienceContextBuilder $experience_context_builder, OrderEndpoint $order_endpoint, PayerFactory $payer_factory, SessionHandler $session_handler, SettingsProvider $settings_provider, EarlyOrderHandler $early_order_handler, CartDataFactory $cart_data_factory, CartDataTransientStorage $cart_data_transient_storage, bool $registration_needed, string $card_billing_data_mode, bool $early_validation_enabled, array $pay_now_contexts, bool $handle_shipping_in_paypal, bool $server_side_shipping_callback_enabled, array $funding_sources_without_redirect, LoggerInterface $logger)
+    public function __construct(\WooCommerce\PayPalCommerce\OrderEndpoints\Endpoint\RequestData $request_data, PurchaseUnitFactory $purchase_unit_factory, ShippingPreferenceFactory $shipping_preference_factory, ReturnUrlFactory $return_url_factory, ContactPreferenceFactory $contact_preference_factory, ExperienceContextBuilder $experience_context_builder, OrderEndpoint $order_endpoint, PayerFactory $payer_factory, SessionHandler $session_handler, SettingsProvider $settings_provider, EarlyOrderHandler $early_order_handler, CartDataFactory $cart_data_factory, CartDataTransientStorage $cart_data_transient_storage, bool $registration_needed, string $card_billing_data_mode, bool $early_validation_enabled, array $pay_now_contexts, bool $handle_shipping_in_paypal, bool $server_side_shipping_callback_enabled, array $funding_sources_without_redirect, LoggerInterface $logger)
     {
         $this->request_data = $request_data;
         $this->purchase_unit_factory = $purchase_unit_factory;

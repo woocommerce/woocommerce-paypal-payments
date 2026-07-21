@@ -3,20 +3,20 @@
 /**
  * Endpoint to update the cart.
  *
- * @package WooCommerce\PayPalCommerce\Button\Endpoint
+ * @package WooCommerce\PayPalCommerce\OrderEndpoints\Endpoint
  */
 declare (strict_types=1);
-namespace WooCommerce\PayPalCommerce\Button\Endpoint;
+namespace WooCommerce\PayPalCommerce\OrderEndpoints\Endpoint;
 
 use Exception;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PurchaseUnitFactory;
 use WooCommerce\PayPalCommerce\Button\Exception\NonceValidationException;
-use WooCommerce\PayPalCommerce\Button\Helper\CartProductsHelper;
+use WooCommerce\PayPalCommerce\OrderEndpoints\Helper\CartProductsHelper;
 /**
  * Class ChangeCartEndpoint
  */
-class ChangeCartEndpoint extends \WooCommerce\PayPalCommerce\Button\Endpoint\AbstractCartEndpoint
+class ChangeCartEndpoint extends \WooCommerce\PayPalCommerce\OrderEndpoints\Endpoint\AbstractCartEndpoint
 {
     const ENDPOINT = 'ppc-change-cart';
     /**
@@ -41,7 +41,7 @@ class ChangeCartEndpoint extends \WooCommerce\PayPalCommerce\Button\Endpoint\Abs
      * @param CartProductsHelper  $cart_products The cart products helper.
      * @param LoggerInterface     $logger The logger.
      */
-    public function __construct(\WC_Cart $cart, \WC_Shipping $shipping, \WooCommerce\PayPalCommerce\Button\Endpoint\RequestData $request_data, PurchaseUnitFactory $purchase_unit_factory, CartProductsHelper $cart_products, LoggerInterface $logger)
+    public function __construct(\WC_Cart $cart, \WC_Shipping $shipping, \WooCommerce\PayPalCommerce\OrderEndpoints\Endpoint\RequestData $request_data, PurchaseUnitFactory $purchase_unit_factory, CartProductsHelper $cart_products, LoggerInterface $logger)
     {
         $this->cart = $cart;
         $this->shipping = $shipping;

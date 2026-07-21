@@ -3,10 +3,10 @@
 /**
  * Updates PayPal order with the current shipping methods.
  *
- * @package WooCommerce\PayPalCommerce\Button\Endpoint
+ * @package WooCommerce\PayPalCommerce\OrderEndpoints\Endpoint
  */
 declare (strict_types=1);
-namespace WooCommerce\PayPalCommerce\Blocks\Endpoint;
+namespace WooCommerce\PayPalCommerce\OrderEndpoints\Endpoint;
 
 use Exception;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Log\LoggerInterface;
@@ -16,19 +16,18 @@ use WooCommerce\PayPalCommerce\ApiClient\Entity\Patch;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PatchCollection;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PurchaseUnitFactory;
 use WooCommerce\PayPalCommerce\Button\Endpoint\EndpointInterface;
-use WooCommerce\PayPalCommerce\Button\Endpoint\RequestData;
 use WooCommerce\PayPalCommerce\Button\Exception\NonceValidationException;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
 class UpdateShippingEndpoint implements EndpointInterface
 {
     const ENDPOINT = 'ppc-update-shipping';
     const WC_STORE_API_ENDPOINT = '/wp-json/wc/store/v1/cart/';
-    private RequestData $request_data;
+    private \WooCommerce\PayPalCommerce\OrderEndpoints\Endpoint\RequestData $request_data;
     private OrderEndpoint $order_endpoint;
     private PurchaseUnitFactory $purchase_unit_factory;
     private SessionHandler $session_handler;
     protected LoggerInterface $logger;
-    public function __construct(RequestData $request_data, OrderEndpoint $order_endpoint, PurchaseUnitFactory $purchase_unit_factory, SessionHandler $session_handler, LoggerInterface $logger)
+    public function __construct(\WooCommerce\PayPalCommerce\OrderEndpoints\Endpoint\RequestData $request_data, OrderEndpoint $order_endpoint, PurchaseUnitFactory $purchase_unit_factory, SessionHandler $session_handler, LoggerInterface $logger)
     {
         $this->request_data = $request_data;
         $this->order_endpoint = $order_endpoint;

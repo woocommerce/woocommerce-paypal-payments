@@ -4,10 +4,10 @@
  * Endpoint to verify if an order has been approved. An approved order
  * will be stored in the current session.
  *
- * @package WooCommerce\PayPalCommerce\Button\Endpoint
+ * @package WooCommerce\PayPalCommerce\OrderEndpoints\Endpoint
  */
 declare (strict_types=1);
-namespace WooCommerce\PayPalCommerce\Button\Endpoint;
+namespace WooCommerce\PayPalCommerce\OrderEndpoints\Endpoint;
 
 use Exception;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Log\LoggerInterface;
@@ -21,16 +21,17 @@ use WooCommerce\PayPalCommerce\Button\Exception\NonceValidationException;
 use WooCommerce\PayPalCommerce\Button\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\Button\Helper\Context;
 use WooCommerce\PayPalCommerce\Button\Helper\ThreeDSecure;
-use WooCommerce\PayPalCommerce\Button\Helper\WooCommerceOrderCreator;
+use WooCommerce\PayPalCommerce\OrderEndpoints\Helper\WooCommerceOrderCreator;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
 use WooCommerce\PayPalCommerce\Settings\Data\SettingsModel;
 use WooCommerce\PayPalCommerce\Webhooks\CustomIds;
+use WooCommerce\PayPalCommerce\Button\Endpoint\EndpointInterface;
 /**
  * Class ApproveOrderEndpoint
  */
-class ApproveOrderEndpoint implements \WooCommerce\PayPalCommerce\Button\Endpoint\EndpointInterface
+class ApproveOrderEndpoint implements EndpointInterface
 {
     const ENDPOINT = 'ppc-approve-order';
     /**
@@ -117,7 +118,7 @@ class ApproveOrderEndpoint implements \WooCommerce\PayPalCommerce\Button\Endpoin
      * @param WooCommerceOrderCreator $wc_order_creator     The WooCommerce order creator.
      * @param LoggerInterface         $logger               The logger.
      */
-    public function __construct(\WooCommerce\PayPalCommerce\Button\Endpoint\RequestData $request_data, OrderEndpoint $order_endpoint, SessionHandler $session_handler, ThreeDSecure $three_d_secure, SettingsProvider $settings_provider, SettingsModel $settings_model, DccApplies $dcc_applies, OrderHelper $order_helper, bool $final_review_enabled, PayPalGateway $gateway, WooCommerceOrderCreator $wc_order_creator, LoggerInterface $logger, Context $context)
+    public function __construct(\WooCommerce\PayPalCommerce\OrderEndpoints\Endpoint\RequestData $request_data, OrderEndpoint $order_endpoint, SessionHandler $session_handler, ThreeDSecure $three_d_secure, SettingsProvider $settings_provider, SettingsModel $settings_model, DccApplies $dcc_applies, OrderHelper $order_helper, bool $final_review_enabled, PayPalGateway $gateway, WooCommerceOrderCreator $wc_order_creator, LoggerInterface $logger, Context $context)
     {
         $this->request_data = $request_data;
         $this->api_endpoint = $order_endpoint;

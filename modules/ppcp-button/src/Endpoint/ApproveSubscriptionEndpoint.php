@@ -18,11 +18,12 @@ use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 use WooCommerce\PayPalCommerce\Button\Exception\NonceValidationException;
 use WooCommerce\PayPalCommerce\Button\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\Button\Helper\Context;
-use WooCommerce\PayPalCommerce\Button\Helper\WooCommerceOrderCreator;
+use WooCommerce\PayPalCommerce\OrderEndpoints\Helper\WooCommerceOrderCreator;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
 use WooCommerce\PayPalCommerce\Webhooks\CustomIds;
+use WooCommerce\PayPalCommerce\OrderEndpoints\Endpoint\RequestData;
 /**
  * Class ApproveSubscriptionEndpoint
  */
@@ -75,7 +76,7 @@ class ApproveSubscriptionEndpoint implements \WooCommerce\PayPalCommerce\Button\
     private BillingSubscriptions $billing_subscriptions;
     private LoggerInterface $logger;
     private SubscriptionHelper $subscription_helper;
-    public function __construct(\WooCommerce\PayPalCommerce\Button\Endpoint\RequestData $request_data, OrderEndpoint $order_endpoint, SessionHandler $session_handler, bool $final_review_enabled, WooCommerceOrderCreator $wc_order_creator, PayPalGateway $gateway, Context $context, BillingSubscriptions $billing_subscriptions, LoggerInterface $logger, SubscriptionHelper $subscription_helper)
+    public function __construct(RequestData $request_data, OrderEndpoint $order_endpoint, SessionHandler $session_handler, bool $final_review_enabled, WooCommerceOrderCreator $wc_order_creator, PayPalGateway $gateway, Context $context, BillingSubscriptions $billing_subscriptions, LoggerInterface $logger, SubscriptionHelper $subscription_helper)
     {
         $this->request_data = $request_data;
         $this->order_endpoint = $order_endpoint;
