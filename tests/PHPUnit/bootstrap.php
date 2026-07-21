@@ -19,6 +19,7 @@ require_once TESTS_ROOT_DIR . '/stubs/DefaultPaymentGateways.php';
 require_once TESTS_ROOT_DIR . '/stubs/NoteTraits.php';
 require_once TESTS_ROOT_DIR . '/stubs/AbstractPaymentMethodType.php';
 require_once TESTS_ROOT_DIR . '/stubs/ProductStatus.php';
+require_once TESTS_ROOT_DIR . '/stubs/ProductType.php';
 require_once TESTS_ROOT_DIR . '/stubs/WP_Error.php';
 require_once TESTS_ROOT_DIR . '/stubs/WP_REST_Request.php';
 require_once TESTS_ROOT_DIR . '/stubs/WP_REST_Response.php';
