@@ -160,6 +160,10 @@ class Recaptcha {
 			return '';
 		}
 
+		if ( ! $this->should_enqueue_for_current_location() ) {
+			return '';
+		}
+
 		return '<div id="' . esc_attr( self::V2_CONTAINER_ID ) . '" style="margin:20px 0;"></div>';
 	}
 
