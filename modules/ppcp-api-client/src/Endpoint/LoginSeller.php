@@ -141,8 +141,8 @@ class LoginSeller {
 		string $seller_nonce
 	): string {
 
-		$url      = trailingslashit( $this->host ) . 'v1/oauth2/token/';
-		$args     = array(
+		$url  = trailingslashit( $this->host ) . 'v1/oauth2/token/';
+		$args = array(
 			'method'  => 'POST',
 			'headers' => array(
 				// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode

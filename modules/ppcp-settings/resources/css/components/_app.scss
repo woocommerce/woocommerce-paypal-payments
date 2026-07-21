@@ -2,6 +2,10 @@
  * Global app-level styles
  */
 
+.ppcp-r-app {
+	position: relative;
+}
+
 .ppcp-r-app.loading {
 	.ppcp-r-spinner-overlay {
 		display: flex;

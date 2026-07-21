@@ -1,22 +1,7 @@
-import { useEffect } from '@wordpress/element';
-
 export const PayPalPlaceOrderContent = ( {
 	description,
 	placeOrderButtonDescription,
-	eventRegistration,
-	emitResponse,
 } ) => {
-	const { onPaymentSetup } = eventRegistration;
-	const { responseTypes } = emitResponse;
-
-	useEffect(
-		() =>
-			onPaymentSetup( () => {
-				return { type: responseTypes.SUCCESS };
-			} ),
-		[ onPaymentSetup, responseTypes ]
-	);
-
 	if ( placeOrderButtonDescription ) {
 		return (
 			<div>

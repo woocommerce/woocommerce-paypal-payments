@@ -85,15 +85,15 @@ class PayLaterBlockModule implements ServiceModule, ExecutableModule {
 					$script_handle,
 					'PcpPayLaterBlock',
 					array(
-						'ajax'                => array(
+						'ajax'                       => array(
 							'cart_script_params' => array(
 								'endpoint' => \WC_AJAX::get_endpoint( CartScriptParamsEndpoint::ENDPOINT ),
 							),
 						),
-						'settingsUrl'         => admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway' ),
-						'vaultingEnabled'     => $settings_provider->save_paypal_and_venmo(),
-						'placementEnabled'    => self::is_block_enabled( $c->get( 'wcgateway.settings.status' ) ),
-						'payLaterSettingsUrl' => admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway' ),
+						'settingsUrl'                => admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway' ),
+						'payLaterDisabledByVaulting' => $settings_provider->pay_later_disabled_by_vaulting(),
+						'placementEnabled'           => self::is_block_enabled( $c->get( 'wcgateway.settings.status' ) ),
+						'payLaterSettingsUrl'        => admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway' ),
 					)
 				);
 

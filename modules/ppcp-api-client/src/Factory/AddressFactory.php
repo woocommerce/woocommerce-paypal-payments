@@ -63,12 +63,23 @@ class AddressFactory {
 	/**
 	 * Creates an Address object based off a PayPal Response.
 	 *
-	 * @param \stdClass $data The JSON object.
+	 * PayPal sometimes serializes an empty address object as a JSON array
+	 * (`[]`) instead of an object (`{}`), which decodes to an empty PHP array
+	 * rather than stdClass. Normalize that here instead of at every call site.
+	 *
+	 * @param mixed $data The JSON object.
 	 *
 	 * @return Address
 	 * @throws RuntimeException When JSON object is malformed.
 	 */
-	public function from_paypal_response( \stdClass $data ): Address {
+	public function from_paypal_response( $data ): Address {
+		if ( is_array( $data ) ) {
+			$data = (object) $data;
+		}
+		if ( ! $data instanceof \stdClass ) {
+			$data = new \stdClass();
+		}
+
 		return new Address(
 			( isset( $data->country_code ) ) ? $data->country_code : '',
 			( isset( $data->address_line_1 ) ) ? $data->address_line_1 : '',

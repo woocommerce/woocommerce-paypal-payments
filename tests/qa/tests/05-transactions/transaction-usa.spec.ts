@@ -2,29 +2,29 @@
  * Internal dependencies
  */
 import { test } from '../../utils';
-import {
-	merchants,
-	storeConfigUsa,
-	gateways,
-	taxSettings,
-	customers,
-} from '../../resources';
+import { customers, gateways, negative12FeePlugin, taxSettings } from '../../resources';
 import {
 	transactionsOnCheckout,
 	transactionsOnPayByLink,
+	transactionsOnProduct,
 } from './_test-scenarios';
 import {
 	payPalCheckout,
 	payPalCheckoutExcludingTax,
 	payPalCheckoutIntentAuthorized,
+	payPalCheckoutNegativeFee,
 	payPalPayByLink,
 	payPalPayByLinkExcludingTax,
 	payPalPayByLinkIntentAuthorized,
+	payPalProduct,
 } from './_test-data/paypal';
 import {
 	payLaterCheckout,
 	payLaterCheckoutExcludingTax,
 	payLaterCheckoutIntentAuthorized,
+	payLaterProduct,
+	payLaterPayByLink,
+	payLaterCheckoutNegativeFee,
 } from './_test-data/pay-later';
 import {
 	acdcCheckout,
@@ -35,28 +35,16 @@ import {
 	acdcPayByLink3ds,
 	acdcPayByLinkExcludingTax,
 	acdcPayByLinkIntentAuthorized,
+	acdcCheckoutNegativeFee,
 } from './_test-data/acdc';
 import { fastlaneCheckout } from './_test-data/fastlane';
 
-const { payPal, payLater, venmo, acdc, fastlane } = gateways;
+const { fastlane } = gateways;
 
-test.beforeAll( async ( { utils, pcpApi, wooCommerceApi } ) => {
+test.beforeAll( async ( { utils } ) => {
 	await utils.configureStore( {
-		...storeConfigUsa,
+		enableClassicPages: false,
 		customer: customers.usa,
-	} );
-	await utils.installAndActivatePcp();
-	await pcpApi.resetDb();
-	await pcpApi.connectMerchant(
-		merchants.usa.client_id,
-		merchants.usa.client_secret
-	);
-	await pcpApi.updatePcpPaymentMethods( {
-		[ payPal.id ]: { id: payPal.id, enabled: true },
-		[ payLater.id ]: { id: payLater.id, enabled: true },
-		[ venmo.id ]: { id: venmo.id, enabled: true },
-		[ acdc.id ]: { id: acdc.id, enabled: true },
-		[ fastlane.id ]: { id: fastlane.id, enabled: false },
 	} );
 } );
 
@@ -78,6 +66,18 @@ for ( const testOrder of payPalPayByLink ) {
 
 for ( const testOrder of acdcPayByLink ) {
 	transactionsOnPayByLink( testOrder );
+}
+
+for ( const testOrder of payLaterPayByLink ) {
+	transactionsOnPayByLink( testOrder );
+}
+
+for ( const testOrder of payPalProduct ) {
+	transactionsOnProduct( testOrder );
+}
+
+for ( const testOrder of payLaterProduct ) {
+	transactionsOnProduct( testOrder );
 }
 
 // Excluding Tax
@@ -184,5 +184,31 @@ test.describe( () => {
 		await pcpApi.updatePcpPaymentMethods( {
 			[ fastlane.id ]: { id: fastlane.id, enabled: false },
 		} );
+	} );
+} );
+
+/**
+ * Negative fee snippet
+ */
+
+test.describe( () => {
+	test.beforeAll( async ( { requestUtils } ) => {
+		await requestUtils.activatePlugin( negative12FeePlugin.slug );
+	} );
+
+	for ( const testOrder of payPalCheckoutNegativeFee ) {
+		transactionsOnCheckout( testOrder );
+	}
+
+	for ( const testOrder of payLaterCheckoutNegativeFee ) {
+		transactionsOnCheckout( testOrder );
+	}
+
+	for ( const testOrder of acdcCheckoutNegativeFee ) {
+		transactionsOnCheckout( testOrder );
+	}
+
+	test.afterAll( async ( { requestUtils } ) => {
+		await requestUtils.deactivatePlugin( negative12FeePlugin.slug );
 	} );
 } );

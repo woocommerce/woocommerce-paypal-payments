@@ -1,15 +1,19 @@
 /**
  * Internal dependencies
  */
-import { ShopOrder } from '../../../resources';
-import { annotateVisitor, test } from '../../../utils';
+import { PayPalPaymentDetails, ShopOrder } from '../../../resources';
+import {
+	annotateVisitor,
+	test,
+	waitForOrderStatus,
+} from '../../../utils';
 
 export const transactionsOnClassicCheckout = ( testOrder: ShopOrder ) => {
-	const { title, payment, products, customer, merchant } = testOrder;
+	const { title, payment, products, customer, merchant, orderStatus } = testOrder;
 
 	test(
-		testOrder.title,
-		annotateVisitor( testOrder.customer ),
+		title,
+		annotateVisitor( customer ),
 		async ( {
 			classicCheckout,
 			wooCommerceApi,
@@ -18,65 +22,70 @@ export const transactionsOnClassicCheckout = ( testOrder: ShopOrder ) => {
 			wooCommerceOrderEdit,
 			utils,
 		} ) => {
-			await utils.fillVisitorsCart( testOrder.products );
-			await classicCheckout.visit();
-			await classicCheckout.completeCheckoutDetails( testOrder );
-			await classicCheckout.payPalUi.makePayment( { merchant, payment } );
-			await orderReceived.assertOrderDetails( testOrder );
+			const { title: gatewayTitle } = payment.gateway;
+			const isAsyncCaptureGateway =
+				gatewayTitle === 'Pay upon Invoice' || gatewayTitle === 'OXXO';
 
-			const orderId = await orderReceived.getOrderNumber();
-			const { transaction_id: transactionId } =
-				await wooCommerceApi.getOrder( orderId );
-			const payPalFee = await payPalApi.getFee(
-				transactionId,
-				testOrder
-			);
-			const payPalPayout = await payPalApi.getPayout(
-				transactionId,
-				testOrder
-			);
-			const pcpData = { transactionId, payPalFee, payPalPayout };
+			if ( isAsyncCaptureGateway ) {
+				test.setTimeout( 3 * 60_000 ); // 3 minutes for PUI/OXXO async capture
+			}
 
-			await wooCommerceOrderEdit.visit( orderId );
-			await wooCommerceOrderEdit.assertOrderDetails( testOrder, pcpData );
-		}
-	);
-};
+			// PUI/OXXO capture completion relies on an async PayPal webhook, which
+			// can't reach the ephemeral CI environment. In CI, skip waiting for it
+			// and finish the assertions with the order still in its synchronous,
+			// pre-capture status.
+			const skipCaptureWait = isAsyncCaptureGateway && !! process.env.CI;
+			const syncOrderStatus = gatewayTitle === 'OXXO' ? 'pending' : 'on-hold';
 
-export const transactionsOnClassicCheckoutOxxo = ( testOrder: ShopOrder ) => {
-	const { title, payment, products, customer, merchant } = testOrder;
+			await test.step( `Add product(s) to the cart`, async () => {
+				await utils.fillVisitorsCart( products );
+			} );
 
-	test.fixme(
-		testOrder.title,
-		annotateVisitor( testOrder.customer ),
-		async ( {
-			classicCheckout,
-			wooCommerceApi,
-			orderReceived,
-			payPalApi,
-			wooCommerceOrderEdit,
-			utils,
-		} ) => {
-			await utils.fillVisitorsCart( testOrder.products );
-			await classicCheckout.visit();
-			await classicCheckout.completeCheckoutDetails( testOrder );
-			await classicCheckout.payPalUi.makePayment( { merchant, payment } );
-			await orderReceived.assertOrderDetails( testOrder );
+			await test.step( `Visit Classic Checkout, make payment with ${ gatewayTitle }`, async () => {
+				await classicCheckout.visit();
+				await classicCheckout.completeCheckoutDetails( testOrder );
+				await classicCheckout.payPalUi.makePayment( { merchant, payment, customer } );
+			} );
+				
+			let orderId: number;
+			let payPalPaymentDetails: PayPalPaymentDetails;
 
-			const orderId = await orderReceived.getOrderNumber();
-			const orderJson = await wooCommerceApi.getOrder( orderId );
+			await test.step( `Assert order received`, async () => {
+				await orderReceived.assertOrderDetails( testOrder );
+				await orderReceived.assertNoErrors();
 
-			const oxxoOrderId = await payPalApi.getOrderIdFromWooCommerce(
-				orderJson
-			);
-			const oxxoOrder = await payPalApi.getOrder(
-				oxxoOrderId,
-				testOrder.merchant
-			);
-			const oxxoPaymentId = await payPalApi.getPaymentIdFromOrder(
-				oxxoOrder,
-				testOrder.payment
-			);
+				orderId = await orderReceived.getOrderNumber();
+
+				if ( skipCaptureWait ) {
+					return;
+				}
+
+				await waitForOrderStatus( wooCommerceApi, orderId, {
+					expectedStatus: orderStatus,
+				} );
+				const transactionId =
+						( await wooCommerceApi.getOrder( orderId ) ).transaction_id;
+
+				payPalPaymentDetails = await payPalApi.getPayPalPaymentDetails(
+					transactionId,
+					testOrder,
+				);
+
+				if ( payPalPaymentDetails && payPalPaymentDetails.amount !== '0' ) { // can be 0 for free trial or free orders; undefined for PUI
+					await orderReceived.assertTotalEqualsPayPalTotal(
+						payPalPaymentDetails.amount,
+						testOrder.currency
+					);
+				}
+			} );
+
+			await test.step( `Assert details on order edit page`, async () => {
+				await wooCommerceOrderEdit.visit( orderId );
+				const orderEditData = skipCaptureWait
+					? { ...testOrder, orderStatus: syncOrderStatus }
+					: testOrder;
+				await wooCommerceOrderEdit.assertOrderDetails( orderEditData, payPalPaymentDetails );
+			} );
 		}
 	);
 };

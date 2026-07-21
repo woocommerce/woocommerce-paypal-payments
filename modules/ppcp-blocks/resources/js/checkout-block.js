@@ -5,7 +5,7 @@ import {
 import { __ } from '@wordpress/i18n';
 import {
 	cartHasSubscriptionProducts,
-	isPayPalSubscription,
+	paypalSubscriptionButtonAllowed,
 } from './Helper/Subscription';
 import { loadPayPalScript } from '../../../ppcp-button/resources/js/modules/Helper/PayPalScriptLoading';
 import BlockCheckoutMessagesBootstrap from './Bootstrap/BlockCheckoutMessagesBootstrap';
@@ -13,6 +13,7 @@ import { PayPalComponent } from './Components/paypal';
 import { BlockEditorPayPalComponent } from './Components/block-editor-paypal';
 import { PaypalLabel } from './Components/paypal-label';
 import { PayPalPlaceOrderContent } from './Components/paypal-place-order-content';
+import { PayPalSavedToken } from './Components/paypal-saved-token';
 const namespace = 'ppcpBlocksPaypalExpressButtons';
 const config = wc.wcSettings.getSetting( 'ppcp-gateway_data' );
 
@@ -24,31 +25,9 @@ const features = [ 'products' ];
 let blockEnabled = true;
 
 if ( cartHasSubscriptionProducts( config.scriptData ) ) {
-	// Don't show buttons on block cart page if user is not logged in and cart contains free trial product
-	if (
-		! config.scriptData.user.is_logged &&
-		config.scriptData.context === 'cart-block' &&
-		cartHasSubscriptionProducts( config.scriptData ) &&
-		config.scriptData.is_free_trial_cart
-	) {
-		blockEnabled = false;
-	}
-
-	// Don't render if vaulting disabled and is in vault subscription mode
-	if (
-		! isPayPalSubscription( config.scriptData ) &&
-		! config.scriptData.can_save_vault_token
-	) {
-		blockEnabled = false;
-	}
-
-	// Don't render buttons if in subscription mode and product not associated with a PayPal subscription
-	if (
-		isPayPalSubscription( config.scriptData ) &&
-		! config.scriptData.subscription_product_allowed
-	) {
-		blockEnabled = false;
-	}
+	// Show the button only for subscription carts PayPal can process
+	// (shared rule used by the classic cart and mini-cart as well).
+	blockEnabled = paypalSubscriptionButtonAllowed( config.scriptData );
 
 	features.push( 'subscriptions' );
 }
@@ -60,12 +39,14 @@ if ( blockEnabled ) {
 			label: <PaypalLabel config={ config } />,
 			content: (
 				<PayPalPlaceOrderContent
+					config={ config }
 					description={ config.description }
 					placeOrderButtonDescription={
 						config.placeOrderButtonDescription
 					}
 				/>
 			),
+			savedTokenComponent: <PayPalSavedToken config={ config } />,
 			edit: (
 				<div
 					dangerouslySetInnerHTML={ {
@@ -76,12 +57,28 @@ if ( blockEnabled ) {
 			placeOrderButtonLabel: config.placeOrderButtonText,
 			ariaLabel: config.title,
 			canMakePayment: ( cartData ) => {
+				// Free-trial subscriptions have a $0 total today but still
+				// require a payment method to be vaulted for future renewals.
+				if ( config.scriptData.is_free_trial_cart ) {
+					return true;
+				}
 				const total = cartData?.cartTotals?.total_price;
 				return parseInt( total ) > 0;
 			},
 			supports: {
 				features,
 				showSavedCards: true,
+			},
+		} );
+
+		const { registerCheckoutFilters } = window.wc.blocksCheckout;
+		registerCheckoutFilters( config.id, {
+			placeOrderButtonLabel: ( value ) => {
+				const store = window.wp?.data?.select( 'wc/store/payment' );
+				if ( store?.getActivePaymentMethod() === config.id ) {
+					return config.placeOrderButtonText;
+				}
+				return value;
 			},
 		} );
 	}

@@ -264,6 +264,27 @@ class Renderer {
 		return this.renderedSources.has( wrapper + ( fundingSource ?? '' ) );
 	}
 
+	/**
+	 * Clears the rendered state for a wrapper (across all funding sources) and empties
+	 * its DOM so a subsequent render() rebuilds the buttons with a fresh configuration.
+	 * Used when the cart changes the button flow, e.g. a coupon turning a subscription
+	 * cart into a $0 total that must switch to the save-without-purchase flow.
+	 *
+	 * @param {string} wrapper The wrapper selector.
+	 */
+	resetRenderedButtons( wrapper ) {
+		for ( const key of [ ...this.renderedSources ] ) {
+			if ( key === wrapper || key.startsWith( wrapper ) ) {
+				this.renderedSources.delete( key );
+			}
+		}
+		widgetBuilder.removeButtons( wrapper );
+		const element = document.querySelector( wrapper );
+		if ( element ) {
+			element.innerHTML = '';
+		}
+	}
+
 	disableCreditCardFields() {
 		this.creditCardRenderer.disableFields();
 	}

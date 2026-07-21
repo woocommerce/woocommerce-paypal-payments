@@ -76,6 +76,7 @@ export function CardFields( { config, eventRegistration, emitResponse } ) {
 					clientId: config.scriptData.client_id,
 					components: 'card-fields',
 					dataNamespace: 'ppcp-block-card-fields',
+					sdkBaseUrl: config.scriptData.script_attributes?.sdkBaseUrl,
 				} }
 			>
 				<PayPalCardFieldsProvider

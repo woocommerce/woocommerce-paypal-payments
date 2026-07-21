@@ -7,7 +7,8 @@ export const TAB_IDS = {
 	PAY_LATER_MESSAGING: 'tab-panel-0-pay-later-messaging',
 };
 
-import { scrollAndHighlight } from './scrollAndHighlight';
+import { useCallback } from '@wordpress/element';
+import { useScrollTo } from '@ppcp-settings/hooks/useScrollHighlight';
 
 /**
  * Select a tab by simulating a click event and scroll to specified element,
@@ -15,25 +16,27 @@ import { scrollAndHighlight } from './scrollAndHighlight';
  *
  * TODO: Once the TabPanel gets migrated to Tabs (TabPanel v2) we need to remove this in favor of programmatic tab switching: https://github.com/WordPress/gutenberg/issues/52997
  *
- * @param {string}  tabId        - The ID of the tab to select
- * @param {string}  [scrollToId] - Optional ID of the element to scroll to
- * @param {boolean} highlight    - Whether to highlight the element after scrolling to it
- * @return {Promise}           - Resolves when tab switch and scroll are complete
+ * @return {Function} selectTab(tabId, scrollToId?, highlight?) function
  */
-export const selectTab = ( tabId, scrollToId, highlight = false ) => {
-	return new Promise( ( resolve ) => {
-		const tab = document.getElementById( tabId );
-		if ( tab ) {
-			tab.click();
-			setTimeout( () => {
-				const targetId = scrollToId || 'ppcp-settings-container';
-				scrollAndHighlight( targetId, highlight ).then( resolve );
-			}, 100 );
-		} else {
-			console.error(
-				`Failed to select tab: Tab with ID "${ tabId }" not found`
-			);
-			resolve();
-		}
-	} );
+export const useSelectTab = () => {
+	const scrollTo = useScrollTo();
+
+	return useCallback(
+		( tabId, scrollToId, highlight = false ) => {
+			return new Promise( ( resolve ) => {
+				const tab = document.getElementById( tabId );
+				if ( tab ) {
+					tab.click();
+					setTimeout( () => {
+						const targetId =
+							scrollToId || 'ppcp-settings-container';
+						scrollTo( targetId, highlight ).then( resolve );
+					}, 100 );
+				} else {
+					resolve();
+				}
+			} );
+		},
+		[ scrollTo ]
+	);
 };

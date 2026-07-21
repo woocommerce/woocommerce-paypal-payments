@@ -25,9 +25,9 @@ use WooCommerce\PayPalCommerce\Settings\Data\PaymentSettings;
 use WooCommerce\PayPalCommerce\Settings\Data\GeneralSettings;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CardButtonGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
-use WooCommerce\PayPalCommerce\WcGateway\Gateway\OXXO\OXXO;
+use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\OXXOGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
-use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayUponInvoice\PayUponInvoiceGateway;
+use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\PayUponInvoice\PayUponInvoiceGateway;
 
 /**
  * Class PaymentMethodsDefinition
@@ -267,6 +267,14 @@ class PaymentMethodsDefinition {
 							'woocommerce-paypal-payments'
 						),
 					),
+					'showCardLogos'  => array(
+						'type'    => 'toggle',
+						'default' => $this->settings->get_show_card_logos(),
+						'label'   => __(
+							'Show logos of supported cards',
+							'woocommerce-paypal-payments'
+						),
+					),
 				),
 			);
 			$group[] = array(
@@ -313,7 +321,7 @@ class PaymentMethodsDefinition {
 		return array(
 			PWCGateway::ID            => array(
 				'method_title'       => __( 'Pay with Crypto', 'woocommerce-paypal-payments' ),
-				'method_description' => __( 'A PayPal-powered checkout option letting customers pay with cryptocurrency. You receive funds in USD, settled directly to your PayPal balance — no crypto exposure, no chargeback risk. Promotional processing rate of 0.99% through July 31, 2026.', 'woocommerce-paypal-payments' ),
+				'method_description' => __( 'A PayPal-powered checkout option letting customers pay with cryptocurrency. You receive funds in USD, settled directly to your PayPal balance — no crypto exposure, no chargeback risk.', 'woocommerce-paypal-payments' ),
 				'title'              => __( 'Pay with Crypto', 'woocommerce-paypal-payments' ),
 				'description'        => __( 'Pay with top wallets and coins.', 'woocommerce-paypal-payments' ),
 			),
@@ -371,11 +379,11 @@ class PaymentMethodsDefinition {
 				'title'              => __( 'Pay upon Invoice', 'woocommerce-paypal-payments' ),
 				'description'        => '',
 			),
-			OXXO::ID                  => array(
+			OXXOGateway::ID           => array(
 				'method_title'       => __( 'OXXO', 'woocommerce-paypal-payments' ),
 				'method_description' => __( 'OXXO is a Mexican chain of convenience stores. *Get PayPal account permission to use OXXO payment functionality by contacting us at (+52) 800–925–0304', 'woocommerce-paypal-payments' ),
 				'title'              => __( 'OXXO', 'woocommerce-paypal-payments' ),
-				'description'        => '',
+				'description'        => __( 'OXXO allows you to pay bills and online purchases in-store with cash.', 'woocommerce-paypal-payments' ),
 			),
 		);
 	}
@@ -474,9 +482,9 @@ class PaymentMethodsDefinition {
 				'warningSeverity' => 'error',
 			),
 			array(
-				'id'          => OXXO::ID,
-				'title'       => $defaults[ OXXO::ID ]['title'],
-				'description' => $defaults[ OXXO::ID ]['method_description'],
+				'id'          => OXXOGateway::ID,
+				'title'       => $defaults[ OXXOGateway::ID ]['title'],
+				'description' => $defaults[ OXXOGateway::ID ]['method_description'],
 				'icon'        => 'payment-method-oxxo',
 			),
 		);

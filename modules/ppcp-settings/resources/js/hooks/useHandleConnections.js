@@ -1,10 +1,10 @@
 import { __ } from '@wordpress/i18n';
 import { useDispatch } from '@wordpress/data';
 import { useState, useEffect, useCallback, useRef } from '@wordpress/element';
-import { store as noticesStore } from '@wordpress/notices';
 
 import { CommonHooks, OnboardingHooks } from '@ppcp-settings/data';
 import { useStoreManager } from './useStoreManager';
+import useNotices from './useNotices';
 
 const PAYPAL_PARTNER_SDK_URL =
 	'https://www.paypal.com/webapps/merchantboarding/js/lib/lightbox/partner.js';
@@ -17,6 +17,10 @@ const MESSAGES = {
 	),
 	LOGIN_FAILED: __(
 		'Login was not successful. Please try again.',
+		'woocommerce-paypal-payments'
+	),
+	ONBOARDING_URL_ERROR: __(
+		'Could not load the PayPal connection. Please try again.',
 		'woocommerce-paypal-payments'
 	),
 };
@@ -38,6 +42,7 @@ export const useHandleOnboardingButton = ( isSandbox ) => {
 	);
 	const { startActivity } = CommonHooks.useBusyState();
 	const { authenticateWithOAuth } = CommonHooks.useAuthentication();
+	const { createErrorNotice } = useNotices();
 	const [ onboardingUrlState, setOnboardingUrl ] = useState( '' );
 	const [ scriptLoaded, setScriptLoaded ] = useState( false );
 	const timerRef = useRef( null );
@@ -49,12 +54,18 @@ export const useHandleOnboardingButton = ( isSandbox ) => {
 			if ( res.success && res.data ) {
 				setOnboardingUrl( res.data );
 			} else {
-				console.error( 'Failed to fetch onboarding URL' );
+				console.error( 'Failed to fetch onboarding URL', res );
+
+				// Stable id so a re-fetch replaces the notice instead of stacking.
+				createErrorNotice(
+					res?.message ?? MESSAGES.ONBOARDING_URL_ERROR,
+					{ id: 'ppcp-onboarding-url-error' }
+				);
 			}
 		};
 
 		fetchOnboardingUrl();
-	}, [ isSandbox, products, options, onboardingUrl ] );
+	}, [ isSandbox, products, options, onboardingUrl, createErrorNotice ] );
 
 	useEffect( () => {
 		/**
@@ -158,8 +169,7 @@ export const useHandleOnboardingButton = ( isSandbox ) => {
 // Base connection is only used for API login (manual connection).
 const useConnectionBase = () => {
 	const { setCompleted } = OnboardingHooks.useSteps();
-	const { createSuccessNotice, createErrorNotice } =
-		useDispatch( noticesStore );
+	const { createSuccessNotice, createErrorNotice } = useNotices();
 	const { verifyLoginStatus } = CommonHooks.useMerchantInfo();
 	const { withActivity } = CommonHooks.useBusyState();
 	const { refreshAll } = useStoreManager();

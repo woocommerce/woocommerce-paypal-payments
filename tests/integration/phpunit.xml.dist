@@ -12,4 +12,8 @@
             <directory suffix="Test.php">./PHPUnit</directory>
         </testsuite>
     </testsuites>
+    <php>
+		<!-- Manually enable feature flags to load all modules -->
+        <env name="PCP_STORE_SYNC_ENABLED" value="1"/>
+    </php>
 </phpunit>

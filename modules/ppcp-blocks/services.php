@@ -54,7 +54,9 @@ return array(
 			},
 			$container->get( 'settings.settings-provider' ),
 			$container->get( 'wcgateway.configuration.card-configuration' ),
-			$container->get( 'save-payment-methods.eligible' )
+			$container->get( 'save-payment-methods.eligible' ),
+			$container->get( 'settings.data.payment' ),
+			$container->get( 'wcgateway.credit-card-icons' )
 		);
 	},
 	'blocks.settings.final_review_enabled' => static function ( ContainerInterface $container ): bool {
@@ -69,6 +71,7 @@ return array(
 			$container->get( 'button.request-data' ),
 			$container->get( 'api.endpoint.order' ),
 			$container->get( 'api.factory.purchase-unit' ),
+			$container->get( 'session.handler' ),
 			$container->get( 'woocommerce.logger.woocommerce' )
 		);
 	},

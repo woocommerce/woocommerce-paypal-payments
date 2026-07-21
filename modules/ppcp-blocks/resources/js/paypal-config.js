@@ -193,6 +193,7 @@ export const createSubscription = async ( data, actions, config ) => {
 
 	return actions.subscription.create( {
 		plan_id: planId,
+		custom_id: config.scriptData.subscription_custom_id,
 	} );
 };
 

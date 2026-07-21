@@ -18,6 +18,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\OrderStatus;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 use WooCommerce\PayPalCommerce\Assets\AssetGetter;
+use WooCommerce\PayPalCommerce\Button\Helper\Context;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
 use WooCommerce\PayPalCommerce\WcPaymentTokens\WooCommercePaymentTokens;
@@ -60,6 +61,10 @@ class PayPalGateway extends \WC_Payment_Gateway {
 	public const REFUNDS_META_KEY              = '_ppcp_refunds';
 	public const THREE_D_AUTH_RESULT_META_KEY  = '_ppcp_paypal_3DS_auth_result';
 	public const FRAUD_RESULT_META_KEY         = '_ppcp_paypal_fraud_result';
+
+	// Used to enrich the payment method title.
+	public const ORDER_CARD_BRAND_META_KEY       = '_ppcp_paypal_card_brand';
+	public const ORDER_CARD_LAST_DIGITS_META_KEY = '_ppcp_paypal_card_last_digits';
 
 	// Used by the Contact Module integration.
 	public const CONTACT_EMAIL_META_KEY = '_ppcp_paypal_contact_email';
@@ -115,7 +120,7 @@ class PayPalGateway extends \WC_Payment_Gateway {
 
 	private OrderEndpoint $order_endpoint;
 
-	private string $prefix;
+	private Context $context;
 
 	/**
 	 * ID of the class extending the settings API. Used in option names.
@@ -201,7 +206,7 @@ class PayPalGateway extends \WC_Payment_Gateway {
 	 * @param bool                     $admin_settings_enabled Whether settings module is enabled.
 	 * @param CapturePayPalPayment     $capture_paypal_payment The PayPal vault payment capture endpoint.
 	 * @param OrderEndpoint            $order_endpoint The order endpoint.
-	 * @param string                   $prefix The invoice prefix.
+	 * @param Context                  $context The context helper.
 	 */
 	public function __construct(
 		FundingSourceRenderer $funding_source_renderer,
@@ -223,7 +228,7 @@ class PayPalGateway extends \WC_Payment_Gateway {
 		bool $admin_settings_enabled,
 		CapturePayPalPayment $capture_paypal_payment,
 		OrderEndpoint $order_endpoint,
-		string $prefix
+		Context $context
 	) {
 		$this->id                          = self::ID;
 		$this->funding_source_renderer     = $funding_source_renderer;
@@ -245,7 +250,7 @@ class PayPalGateway extends \WC_Payment_Gateway {
 		$this->admin_settings_enabled      = $admin_settings_enabled;
 		$this->capture_paypal_payment      = $capture_paypal_payment;
 		$this->order_endpoint              = $order_endpoint;
-		$this->prefix                      = $prefix;
+		$this->context                     = $context;
 
 		$default_support = array(
 			'products',
@@ -331,6 +336,28 @@ class PayPalGateway extends \WC_Payment_Gateway {
 	}
 
 	/**
+	 * Renders payment fields including saved payment method radio buttons when tokenization is active.
+	 */
+	public function payment_fields(): void {
+		// Saved methods require tokenization support plus the merchant's "save PayPal and Venmo" setting.
+		$vaulting_enabled = $this->supports( 'tokenization' ) && $this->settings_provider->save_paypal_and_venmo();
+
+		// In a continuation the payment source is already chosen on PayPal's side, so the saved-method
+		// selector would only render stray radio buttons on the classic checkout.
+		$is_continuation = $this->context->is_paypal_continuation();
+
+		if ( ! $is_continuation && $vaulting_enabled && is_checkout() ) {
+			$this->tokenization_script();
+			$this->saved_payment_methods();
+		}
+
+		$description = $this->get_description();
+		if ( $description ) {
+			echo wp_kses_post( wpautop( wptexturize( $description ) ) );
+		}
+	}
+
+	/**
 	 * Whether the Gateway needs to be setup.
 	 *
 	 * @return bool
@@ -412,17 +439,42 @@ class PayPalGateway extends \WC_Payment_Gateway {
 
 		// phpcs:ignore WordPress.Security.NonceVerification.Missing
 		$paypal_payment_token_id = wc_clean( wp_unslash( $_POST['wc-ppcp-gateway-payment-token'] ?? '' ) );
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing
+		$vault_approved_order_id = wc_clean( wp_unslash( $_POST['paypal_order_id'] ?? '' ) );
 
-		if ( $paypal_payment_token_id && 'new' !== $paypal_payment_token_id ) {
+		/**
+		 * WC Subscriptions zeroes the order total during a change-payment request, so
+		 * attempting a real capture here would send a $0 create-order request to PayPal
+		 * (rejected with CANNOT_BE_ZERO_OR_NEGATIVE). Just attach the saved token instead,
+		 * mirroring CreditCardGateway's saved-token change-payment handling.
+		 */
+		if (
+			$paypal_payment_token_id
+			&& 'new' !== $paypal_payment_token_id
+			&& $this->is_customer_changing_subscription_payment( $this->subscription_helper, $wc_order )
+		) {
+			return $this->add_payment_token_to_order( $wc_order, (int) $paypal_payment_token_id, $this->get_return_url( $wc_order ), $this->session_handler );
+		}
+
+		// Skip saved token handling when an approved order exists.
+		if ( $paypal_payment_token_id && 'new' !== $paypal_payment_token_id && ! $vault_approved_order_id ) {
 			$tokens = WC_Payment_Tokens::get_customer_tokens( get_current_user_id() );
 			foreach ( $tokens as $token ) {
 				if ( $token->get_id() === (int) $paypal_payment_token_id ) {
+					// Free trial orders have a $0.00 total; sending a $0 capture order to
+					// PayPal fails with CANNOT_BE_ZERO_OR_NEGATIVE. Skip the API call and
+					// just associate the vaulted token for future renewals, mirroring the
+					// CreditCardGateway saved-token free trial handling.
+					if ( $this->is_free_trial_order( $wc_order ) ) {
+						$wc_order->add_payment_token( $token );
+						$wc_order->payment_complete();
+						return $this->handle_payment_success( $wc_order );
+					}
+
 					$payment_source_name = $token instanceof PaymentTokenVenmo ? 'venmo' : 'paypal';
-					$custom_id           = (string) $wc_order->get_id();
-					$invoice_id          = $this->prefix . $wc_order->get_order_number();
 
 					try {
-						$created_order = $this->capture_paypal_payment->create_order( $token->get_token(), $custom_id, $invoice_id, $wc_order, $payment_source_name );
+						$created_order = $this->capture_paypal_payment->create_order( $token->get_token(), $wc_order, $payment_source_name );
 					} catch ( RuntimeException $exception ) {
 						$this->logger->error( $exception->getMessage() );
 						return $this->handle_payment_failure( $wc_order, $exception );
@@ -489,7 +541,21 @@ class PayPalGateway extends \WC_Payment_Gateway {
 
 			$customer_id = get_user_meta( $wc_order->get_customer_id(), '_ppcp_target_customer_id', true );
 			if ( $customer_id ) {
-				$customer_tokens = $this->payment_tokens_endpoint->payment_tokens_for_customer( $customer_id );
+				try {
+					$customer_tokens = $this->payment_tokens_endpoint->payment_tokens_for_customer( $customer_id );
+				} catch ( RuntimeException $exception ) {
+					// A failure here (e.g. the access token lacks the vault scope and
+					// PayPal returns 403 NOT_AUTHORIZED) must not bubble up as a fatal
+					// error; fall through to the "no saved PayPal account" failure below.
+					$this->logger->error(
+						sprintf(
+							'Could not retrieve saved payment methods for customer %1$s: %2$s',
+							$customer_id,
+							$exception->getMessage()
+						)
+					);
+					$customer_tokens = array();
+				}
 				foreach ( $customer_tokens as $token ) {
 					$payment_source_name = $token['payment_source']->name() ?? '';
 					if ( $payment_source_name === 'paypal' || $payment_source_name === 'venmo' ) {
@@ -638,5 +704,54 @@ class PayPalGateway extends \WC_Payment_Gateway {
 		}
 
 		do_action( 'woocommerce_paypal_payments_gateway_admin_options_wrapper', $this );
+	}
+
+	/**
+	 * Check whether customer is changing subscription payment.
+	 *
+	 * @param SubscriptionHelper $subscription_helper
+	 * @param WC_Order           $wc_order
+	 * @return bool
+	 */
+	private function is_customer_changing_subscription_payment( SubscriptionHelper $subscription_helper, WC_Order $wc_order ): bool {
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing
+		return isset( $_POST['woocommerce_change_payment'] ) && $subscription_helper->has_subscription( $wc_order->get_id() ) && $subscription_helper->is_subscription_change_payment();
+	}
+
+	/**
+	 * Adds the given WC payment token into the given WC Order.
+	 *
+	 * @param WC_Order       $wc_order
+	 * @param int            $wc_payment_token_id
+	 * @param string         $return_url
+	 * @param SessionHandler $session_handler
+	 * @return array{result: string, redirect: string, errorMessage?: string}
+	 */
+	private function add_payment_token_to_order(
+		WC_Order $wc_order,
+		int $wc_payment_token_id,
+		string $return_url,
+		SessionHandler $session_handler
+	): array {
+		$payment_token = WC_Payment_Tokens::get( $wc_payment_token_id );
+		if ( $payment_token && (int) $payment_token->get_user_id() === get_current_user_id() ) {
+			$wc_order->add_payment_token( $payment_token );
+			$wc_order->save();
+
+			$session_handler->destroy_session_data();
+
+			return array(
+				'result'   => 'success',
+				'redirect' => $return_url,
+			);
+		}
+
+		wc_add_notice( __( 'Could not change payment.', 'woocommerce-paypal-payments' ), 'error' );
+
+		return array(
+			'result'       => 'failure',
+			'redirect'     => wc_get_checkout_url(),
+			'errorMessage' => __( 'Could not change payment.', 'woocommerce-paypal-payments' ),
+		);
 	}
 }

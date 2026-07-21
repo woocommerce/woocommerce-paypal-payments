@@ -13,3 +13,14 @@ li[id^="express-payment-method-ppcp-"] {
 	@include apm-button.button;
 }
 
+.wc-block-components-radio-control__option:has(#ppcp-vault-component) {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+
+	#ppcp-vault-component {
+		flex: 1;
+		overflow: hidden;
+	}
+}
+

@@ -17,8 +17,7 @@ const merchant = merchants.usa;
 
 const vaultingGuest: ShopOrder[] = [
 	{
-		// https://inpsyde.atlassian.net/browse/PCP-1498
-		title: 'PCP-1498 | Vaulting subscription - Transaction - Classic checkout - PayPal - Order by guest @Critical @Dev',
+		title: 'PCP-1498 | Vaulting subscription - Transaction - Classic checkout - PayPal - Order by guest @Critical @Smoke',
 		...orders.default,
 		payment: payments.payPal,
 		merchant,
@@ -26,17 +25,15 @@ const vaultingGuest: ShopOrder[] = [
 		products: [ products.subscription100 ],
 	},
 	{
-		// https://inpsyde.atlassian.net/browse/PCP-2944
 		title: 'PCP-2944 | Vaulting subscription - Transaction - Classic checkout - PayPal - Free trial order by guest',
 		...orders.default,
-		payment: payments.payPal,
+		payment: { ...payments.payPal, isFreeTrialSubscription: true },
 		merchant,
 		customer: guest,
 		products: [ products.subscriptionFreeTrial ],
 	},
 	{
-		// https://inpsyde.atlassian.net/browse/PCP-2504
-		title: 'PCP-2504 | Vaulting subscription - Transaction - Classic checkout - ACDC - Order by guest @Critical @Dev',
+		title: 'PCP-2504 | Vaulting subscription - Transaction - Classic checkout - ACDC - Order by guest @Critical @Smoke',
 		...orders.default,
 		payment: payments.acdc,
 		merchant,
@@ -44,7 +41,6 @@ const vaultingGuest: ShopOrder[] = [
 		products: [ products.subscription100 ],
 	},
 	{
-		// https://inpsyde.atlassian.net/browse/PCP-2947
 		title: 'PCP-2947 | Vaulting subscription - Transaction - Classic checkout - ACDC - Free trial order by guest',
 		...orders.default,
 		payment: payments.acdc,
@@ -56,7 +52,6 @@ const vaultingGuest: ShopOrder[] = [
 
 const vaultingCustomer: ShopOrder[] = [
 	{
-		// https://inpsyde.atlassian.net/browse/PCP-2889
 		title: 'PCP-2889 | Vaulting subscription - Transaction - Classic checkout - PayPal - Order by customer @Critical',
 		...orders.default,
 		payment: payments.payPal,
@@ -65,17 +60,15 @@ const vaultingCustomer: ShopOrder[] = [
 		products: [ products.subscription100 ],
 	},
 	{
-		// https://inpsyde.atlassian.net/browse/PCP-2945
 		title: 'PCP-2945 | Vaulting subscription - Transaction - Classic checkout - PayPal - Free trial order by customer',
 		...orders.default,
-		payment: payments.payPal,
+		payment: { ...payments.payPal, isFreeTrialSubscription: true },
 		merchant,
 		customer,
 		products: [ products.subscriptionFreeTrial ],
 	},
 	{
-		// https://inpsyde.atlassian.net/browse/PCP-4892
-		title: 'PCP-4892 | Vaulting subscription - Transaction - Classic checkout - ACDC - Order by customer @Critical @Smoke',
+		title: 'PCP-4892 | Vaulting subscription - Transaction - Classic checkout - ACDC - Order by customer @Critical',
 		...orders.default,
 		payment: payments.acdc,
 		merchant,
@@ -83,7 +76,6 @@ const vaultingCustomer: ShopOrder[] = [
 		products: [ products.subscription100 ],
 	},
 	{
-		// https://inpsyde.atlassian.net/browse/PCP-2948
 		title: 'PCP-2948 | Vaulting subscription - Transaction - Classic checkout - ACDC - Free trial order by customer',
 		...orders.default,
 		payment: payments.acdc,
@@ -95,7 +87,6 @@ const vaultingCustomer: ShopOrder[] = [
 
 const payPalGuest: ShopOrder[] = [
 	{
-		// https://inpsyde.atlassian.net/browse/PCP-2531
 		title: 'PCP-2531 | PayPal subscription - Transaction - Classic checkout - Order by guest @Critical',
 		...orders.default,
 		payment: {
@@ -107,7 +98,6 @@ const payPalGuest: ShopOrder[] = [
 		products: [ products.subscriptionPayPal ],
 	},
 	{
-		// https://inpsyde.atlassian.net/browse/PCP-4893
 		title: 'PCP-4893 | PayPal subscription - Transaction - Classic checkout - Free trial order by guest',
 		...orders.default,
 		payment: {
@@ -122,8 +112,7 @@ const payPalGuest: ShopOrder[] = [
 
 const payPalCustomer: ShopOrder[] = [
 	{
-		// https://inpsyde.atlassian.net/browse/PCP-2642
-		title: 'PCP-2642 | PayPal subscription - Transaction - Classic checkout - Order by customer @Critical @Smoke',
+		title: 'PCP-2642 | PayPal subscription - Transaction - Classic checkout - Order by customer @Critical',
 		...orders.default,
 		payment: {
 			...payments.payPal,
@@ -134,7 +123,6 @@ const payPalCustomer: ShopOrder[] = [
 		products: [ products.subscriptionPayPal ],
 	},
 	{
-		// https://inpsyde.atlassian.net/browse/PCP-4894
 		title: 'PCP-4894 | PayPal subscription - Transaction - Classic checkout - Free trial order by customer',
 		...orders.default,
 		payment: {

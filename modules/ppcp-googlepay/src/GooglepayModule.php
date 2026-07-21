@@ -235,9 +235,9 @@ class GooglepayModule implements ServiceModule, ExecutableModule {
 				$settings = $c->get( 'settings.settings-provider' );
 				assert( $settings instanceof SettingsProvider );
 
-				$page_methods = $settings->button_styling( $current_context )->methods;
+				$styling = $settings->button_styling( $current_context );
 
-				if ( ! in_array( GooglePayGateway::ID, $page_methods, true ) ) {
+				if ( ! $styling->enabled || ! in_array( GooglePayGateway::ID, $styling->methods, true ) ) {
 					unset( $methods[ GooglePayGateway::ID ] );
 				}
 
@@ -246,9 +246,18 @@ class GooglepayModule implements ServiceModule, ExecutableModule {
 		);
 
 		add_action(
-			'woocommerce_review_order_after_submit',
-			function () {
-				echo '<div id="ppc-button-' . esc_attr( GooglePayGateway::ID ) . '"></div>';
+			'wp',
+			static function () {
+				$checkout_hook = (string) apply_filters(
+					'woocommerce_paypal_payments_checkout_button_renderer_hook',
+					'woocommerce_review_order_after_payment'
+				);
+				add_action(
+					$checkout_hook,
+					static function () {
+						echo '<div id="ppc-button-' . esc_attr( GooglePayGateway::ID ) . '"></div>';
+					}
+				);
 			}
 		);
 

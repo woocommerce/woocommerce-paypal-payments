@@ -10,6 +10,11 @@ class BaseHandler {
 	}
 
 	validateContext() {
+		// Google Pay doesn't support vaulting, so the only case where it's allowed on a
+		// subscription is paying to manually renew an existing one.
+		if ( this.ppcpConfig?.locations_with_subscription_product?.payorder ) {
+			return !! this.ppcpConfig?.subscriptions_accept_manual_renewals;
+		}
 		if ( this.ppcpConfig?.locations_with_subscription_product?.cart ) {
 			return false;
 		}

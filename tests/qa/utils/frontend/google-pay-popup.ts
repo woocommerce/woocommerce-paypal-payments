@@ -1,9 +1,7 @@
 /**
  * External dependencies
  */
-import fs from 'fs';
-import path from 'path';
-import { expect, BrowserContext, Cookie, Page } from '@playwright/test';
+import { expect, BrowserContext, Page } from '@playwright/test';
 
 /**
  * Handles the Google Pay TEST-environment popup.
@@ -23,62 +21,60 @@ export class GooglePayPopup {
 		this.page = page;
 	}
 
-	/**
-	 * Path to the cached Google session cookies file
-	 */
-	private static readonly SESSION_PATH = path.join(
-		__dirname,
-		'../../.google-session.json'
-	);
-
-	/**
-	 * Loads previously saved Google cookies into the browser context
-	 */
-	private static loadGoogleSession = async (
-		context: BrowserContext
-	): Promise< void > => {
-		try {
-			if ( ! fs.existsSync( GooglePayPopup.SESSION_PATH ) ) return;
-			const { cookies } = JSON.parse(
-				fs.readFileSync( GooglePayPopup.SESSION_PATH, 'utf-8' )
-			) as { cookies: Cookie[] };
-			if ( Array.isArray( cookies ) && cookies.length > 0 ) {
-				await context.addCookies( cookies );
-			}
-		} catch {}
-	};
-
-	/**
-	 * Saves this popup's google.com cookies to disk so they can be reused later.
-	 */
-	private saveGoogleSession = async (): Promise< void > => {
-		try {
-			const all = await this.page.context().cookies();
-			const googleCookies = all.filter(
-				( c ) =>
-					c.domain === 'google.com' ||
-					c.domain.endsWith( '.google.com' )
-			);
-			fs.writeFileSync(
-				GooglePayPopup.SESSION_PATH,
-				JSON.stringify( { cookies: googleCookies }, null, 2 )
-			);
-		} catch {}
-	};
-
 	// -------------------------------------------------------------------------
-	// Browser-level patches — call once on the context before the test runs
+	// Locators — Google Sign-in (accounts.google.com)
+	// -------------------------------------------------------------------------
+
+	emailInput = () => this.page
+		.locator( 'input[type="email"]' )
+		.or(
+			this.page.getByRole( 'textbox', { name: 'Email or phone' } )
+		);
+
+	passwordInput = () =>
+		this.page
+			.locator(
+				'input[type="password"]:not([aria-hidden="true"]):not([tabindex="-1"])'
+			)
+			.or( this.page.locator( 'input[type="password"][name="Passwd"]' ) )
+			.first();
+
+	nextButton = () =>
+		this.page
+			.getByRole( 'button', { name: 'Next' } )
+			.or(
+				this.page
+					.locator( '[jsname="LgbsSe"]' )
+					.filter( { hasText: /Next/i } )
+			)
+			.first();
+
+	private postLoginButton = () =>
+		this.page
+			.getByRole( 'button', {
+				name: /^(Continue|I agree|Confirm|Not now|Skip|Yes|Got it)$/i,
+			} )
+			.first();
+	private buyflowFrame = () =>
+		this.page.frameLocator( 'iframe[src*="buyflow2"]' );
+
+	confirmButton = () =>
+		this.buyflowFrame()
+			.getByRole( 'button', {
+				name: /^(Continue|Pay now|Pay|Confirm)$/i,
+			} );
+			
+	// -------------------------------------------------------------------------
+	// Actions
 	// -------------------------------------------------------------------------
 
 	/**
 	 * Registers init scripts on the Playwright browser context that prevent
 	 * Google from detecting the automated browser and blocking sign-in.
 	 * Call this in beforeEach, before any page navigation.
+	 * @param context
 	 */
 	static applyBrowserPatches = async ( context: BrowserContext ) => {
-		// Restore a cached Google session from disk
-		await GooglePayPopup.loadGoogleSession( context );
-
 		await context.addInitScript( () => {
 			// Google Pay requires a secure context. On a local http:// dev site it
 			// throws DEVELOPER_ERROR without this patch.
@@ -109,7 +105,10 @@ export class GooglePayPopup {
 					Object.defineProperty( window, 'chrome', {
 						value: {
 							runtime: {
-								onMessage: { addListener: () => {}, removeListener: () => {} },
+								onMessage: {
+									addListener: () => {},
+									removeListener: () => {},
+								},
 								connect: () => {},
 								sendMessage: () => {},
 							},
@@ -134,71 +133,6 @@ export class GooglePayPopup {
 		} );
 	};
 
-	// -------------------------------------------------------------------------
-	// Locators — Google Sign-in (accounts.google.com)
-	// -------------------------------------------------------------------------
-
-	emailInput = () => this.page.locator( 'input[type="email"]' );
-
-	passwordInput = () =>
-		this.page
-			.locator( 'input[type="password"]:not([aria-hidden="true"]):not([tabindex="-1"])' )
-			.or( this.page.locator( 'input[type="password"][name="Passwd"]' ) )
-			.first();
-
-	/** "Next" button shared by the email step and the password step. */
-	nextButton = () =>
-		this.page
-			.getByRole( 'button', { name: 'Next' } )
-			.or( this.page.locator( '[jsname="LgbsSe"]' ).filter( { hasText: /Next/i } ) )
-			.first();
-
-	private postLoginButton = () =>
-		this.page
-			.getByRole( 'button', { name: /^(Continue|I agree|Confirm|Not now|Skip|Yes|Got it)$/i } )
-			.first();
-
-	// -------------------------------------------------------------------------
-	// Locators — Google Pay payment sheet (pay.google.com)
-	// -------------------------------------------------------------------------
-
-	/** The confirm button lives inside the cross-origin buyflow2 iframe. */
-	private buyflowFrame = () => this.page.frameLocator( 'iframe[src*="buyflow2"]' );
-
-	confirmButton = () =>
-		this.buyflowFrame()
-			.getByRole( 'button', { name: /^(Continue|Pay now|Pay|Confirm)$/i } )
-			.or( this.buyflowFrame().locator( 'button[jsname="LgbsSe"]' ).last() );
-
-	// -------------------------------------------------------------------------
-	// Actions
-	// -------------------------------------------------------------------------
-
-	private waitForContent = async () => {
-		// The popup can sit at about:blank briefly while the SDK prepares the redirect.
-		await this.page
-			.waitForURL( ( url ) => url.href !== 'about:blank', { timeout: 15_000 } )
-			.catch( () => {} );
-
-		// Reload only when still on about:blank; reloading during Google's redirect can break sign-in.
-		if ( this.page.url() === 'about:blank' || this.page.url() === '' ) {
-			await this.page.reload( { waitUntil: 'domcontentloaded' } ).catch( () => {} );
-		}
-
-		// Wait until the pay.google loading step finishes so we land on sign-in or the pay screen before other checks run.
-		await this.page
-			.waitForURL(
-				( url ) =>
-					url.hostname.includes( 'accounts.google.com' ) ||
-					( url.hostname.includes( 'pay.google.com' ) &&
-						! url.pathname.startsWith( '/gp/p/loading' ) ),
-				{ timeout: 20_000 }
-			)
-			.catch( () => {} );
-
-		await this.page.waitForLoadState( 'domcontentloaded' ).catch( () => {} );
-	};
-
 	private signInToGoogle = async () => {
 		const email = process.env.GOOGLE_PAY_EMAIL;
 		const password = process.env.GOOGLE_PAY_PASSWORD;
@@ -209,25 +143,31 @@ export class GooglePayPopup {
 			);
 		}
 
-		await expect( this.emailInput(), 'Google email input is visible' )
-			.toBeVisible( { timeout: 15_000 } );
+		await expect(
+			this.emailInput(),
+			'Assert Google email input is visible'
+		).toBeVisible();
 		await this.emailInput().fill( email );
+		
+		await expect(
+			this.nextButton(),
+			'Assert next button (email) is visible'
+		).toBeVisible();
 		await this.nextButton().click();
 
-		await expect( this.passwordInput(), 'Google password input is visible' )
-			.toBeVisible( { timeout: 15_000 } );
+		await expect(
+			this.passwordInput(),
+			'Assert Google password input is visible'
+		).toBeVisible();
 		await this.passwordInput().fill( password );
+		
+		await expect(
+			this.nextButton(),
+			'Assert next button (password) is visible'
+		).toBeVisible();
 		await this.nextButton().click();
 
-		// Wait until we've left the sign-in domain entirely.
-		await this.page.waitForURL(
-			( url ) => ! url.hostname.includes( 'accounts.google.com' ),
-			{ timeout: 30_000 }
-		);
 		await this.page.waitForLoadState();
-
-		// Save login cookies so the next test run can skip Google sign-in.
-		await this.saveGoogleSession();
 	};
 
 	/**
@@ -238,19 +178,29 @@ export class GooglePayPopup {
 		for ( let attempt = 0; attempt < 10; attempt++ ) {
 			await this.page.waitForLoadState( 'domcontentloaded' );
 
-			if ( this.page.url().includes( 'pay.google.com' ) ) return;
+			if ( this.page.url().includes( 'pay.google.com' ) ) {
+				return;
+			}
 
 			// Recovery-options prompt — Cancel follows the `continue` param back.
 			if ( this.page.url().includes( 'gds.google.com' ) ) {
-				const cancel = this.page.getByRole( 'button', { name: 'Cancel' } );
-				if ( await cancel.isVisible( { timeout: 4_000 } ).catch( () => false ) ) {
+				const cancel = this.page.getByRole( 'button', {
+					name: 'Cancel',
+				} );
+				if (
+					await cancel
+						.isVisible( { timeout: 4_000 } )
+						.catch( () => false )
+				) {
 					await cancel.click();
 					continue;
 				}
 			}
 
 			const btn = this.postLoginButton();
-			if ( await btn.isVisible( { timeout: 3_000 } ).catch( () => false ) ) {
+			if (
+				await btn.isVisible( { timeout: 3_000 } ).catch( () => false )
+			) {
 				await btn.click();
 				continue;
 			}
@@ -259,29 +209,42 @@ export class GooglePayPopup {
 		}
 	};
 
-	/** Signs in if needed, then confirms payment on the Google Pay sheet. */
+	/**
+	 * Signs in if needed, then confirms payment on the Google Pay sheet.
+	 */
 	completePayment = async () => {
-		await this.waitForContent();
-
-		if ( this.page.url().includes( 'accounts.google.com' ) ) {
-			await this.signInToGoogle();
-			await this.skipPostLoginPrompts();
-		}
-
-		await this.page.waitForURL(
-			( url ) => url.hostname.includes( 'pay.google.com' ),
-			{ timeout: 60_000 }
-		);
+		await this.signInToGoogle();
+		await this.skipPostLoginPrompts();
 		await this.page.waitForLoadState();
+		await this.tryClickConfirmButton();
+	};
 
-		await expect( this.confirmButton(), 'Google Pay confirm button is visible' )
-			.toBeVisible( { timeout: 30_000 } );
+	tryClickConfirmButton = async () => {
+		await expect(
+			this.confirmButton(),
+			'Assert Google Pay confirm button is visible'
+		).toBeVisible();
 
-		await this.saveGoogleSession();
-
-		await Promise.all( [
-			this.page.waitForEvent( 'close' ),
-			this.confirmButton().click(),
-		] );
+		await expect
+			.poll(
+				async () => {
+					if ( this.page.isClosed() ) {
+						return true;
+					}
+					// Swallow click errors caused by the popup tearing down
+					// mid-click; the popup closing is the success signal and is
+					// detected on the next poll via isClosed(). A genuinely broken
+					// selector surfaces as a poll timeout, since the page never closes.
+					await this.confirmButton().click().catch( () => {} );
+					return this.page.isClosed();
+				},
+				{
+					message:
+						'Payment was not confirmed: the Google Pay popup did not close within the timeout',
+					timeout: 30_000,
+					intervals: [ 3000 ],
+				}
+			)
+			.toBe( true );
 	};
 }

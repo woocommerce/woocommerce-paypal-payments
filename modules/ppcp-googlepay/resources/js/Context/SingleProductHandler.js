@@ -1,5 +1,5 @@
 import SingleProductActionHandler from '@ppcp-button/ActionHandler/SingleProductActionHandler';
-import SimulateCart from '@ppcp-button/Helper/SimulateCart';
+import SimulateCart, { isSimulateCartEnabled } from '@ppcp-button/Helper/SimulateCart';
 import ErrorHandler from '@ppcp-button/ErrorHandler';
 import UpdateCart from '@ppcp-button/Helper/UpdateCart';
 import BaseHandler from './BaseHandler';
@@ -14,19 +14,29 @@ class SingleProductHandler extends BaseHandler {
 	}
 
 	transactionInfo() {
+		// Simulation is this method's only mechanism for fetching product data;
+		// reject early to avoid a pointless AJAX call.
+		if ( ! isSimulateCartEnabled( this.ppcpConfig ) ) {
+			return Promise.reject( new Error( 'Cart simulation is disabled.' ) );
+		}
+
+		const form = document.querySelector( 'form.cart' );
+		const variationIdInput = form?.querySelector(
+			'input[name="variation_id"]'
+		);
+		if ( variationIdInput && ! parseInt( variationIdInput.value ) ) {
+			return Promise.reject( new Error( 'No variation selected.' ) );
+		}
+
 		const errorHandler = new ErrorHandler(
 			this.ppcpConfig.labels.error.generic,
 			document.querySelector( '.woocommerce-notices-wrapper' )
 		);
 
-		function form() {
-			return document.querySelector( 'form.cart' );
-		}
-
 		const actionHandler = new SingleProductActionHandler(
 			null,
 			null,
-			form(),
+			form,
 			errorHandler
 		);
 
@@ -38,21 +48,17 @@ class SingleProductHandler extends BaseHandler {
 			? actionHandler.getSubscriptionProducts()
 			: actionHandler.getProducts();
 
-		return new Promise( ( resolve, reject ) => {
-			new SimulateCart(
-				this.ppcpConfig.ajax.simulate_cart.endpoint,
-				this.ppcpConfig.ajax.simulate_cart.nonce
-			).simulate( ( data ) => {
-				const transaction = new TransactionInfo(
-					data.total,
-					data.shipping_fee,
-					data.currency_code,
-					data.country_code
-				);
-
-				resolve( transaction );
-			}, products );
-		} );
+		return new SimulateCart(
+			this.ppcpConfig.ajax.simulate_cart.endpoint,
+			this.ppcpConfig.ajax.simulate_cart.nonce
+		).simulate( ( data ) => {
+			return new TransactionInfo(
+				data.total,
+				data.shipping_fee,
+				data.currency_code,
+				data.country_code
+			);
+		}, products );
 	}
 
 	validateForm() {

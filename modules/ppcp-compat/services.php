@@ -12,6 +12,9 @@ namespace WooCommerce\PayPalCommerce\Compat;
 use WooCommerce\PayPalCommerce\Assets\AssetGetter;
 use WooCommerce\PayPalCommerce\Assets\AssetGetterFactory;
 use WooCommerce\PayPalCommerce\Compat\Assets\CompatAssets;
+use WooCommerce\PayPalCommerce\Compat\WooCommerceBlueprint\PayPalBlueprintBootstrap;
+use WooCommerce\PayPalCommerce\Compat\WooCommerceBlueprint\PayPalSettingsExporter;
+use WooCommerce\PayPalCommerce\Compat\WooCommerceBlueprint\PayPalSettingsImporter;
 use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 
@@ -50,7 +53,6 @@ return array(
 	'compat.plugin-script-names'                           => static function ( ContainerInterface $container ): array {
 		return array(
 			'ppcp-smart-button',
-			'ppcp-oxxo',
 			'ppcp-pay-upon-invoice',
 			'ppcp-wc-payment-tokens-myaccount-payments',
 			'ppcp-gateway-settings',
@@ -113,6 +115,24 @@ return array(
 			$container->get( 'compat.wc_shipment_tracking.is_supported_plugin_version_active' ),
 			$container->get( 'compat.wc_shipping_tax.is_supported_plugin_version_active' ),
 			$container->get( 'api.bearer' )
+		);
+	},
+
+	'compat.blueprint.is_available'                        => function (): bool {
+		return interface_exists( 'Automattic\WooCommerce\Blueprint\Exporters\StepExporter' );
+	},
+	'compat.blueprint.paypal_settings_exporter'            => static function ( ContainerInterface $container ): PayPalSettingsExporter {
+		return new PayPalSettingsExporter();
+	},
+	'compat.blueprint.paypal_settings_importer'            => static function ( ContainerInterface $container ): PayPalSettingsImporter {
+		return new PayPalSettingsImporter(
+			$container->get( 'settings.service.sanitizer' )
+		);
+	},
+	'compat.blueprint.bootstrap'                           => static function ( ContainerInterface $container ): PayPalBlueprintBootstrap {
+		return new PayPalBlueprintBootstrap(
+			$container->get( 'compat.blueprint.paypal_settings_exporter' ),
+			$container->get( 'compat.blueprint.paypal_settings_importer' )
 		);
 	},
 );

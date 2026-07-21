@@ -50,6 +50,8 @@ const modulesAssets = {
 		'js/trustly-payment-method.js',
 		'js/multibanco-payment-method.js',
 		'js/pwc-payment-method.js',
+		'js/oxxo-payment-method.js',
+		'js/pui-payment-method.js',
 		'css/gateway.scss',
 	],
 	'ppcp-order-tracking': [
@@ -68,16 +70,17 @@ const modulesAssets = {
 	],
 	'ppcp-paypal-subscriptions': [ 'js/paypal-subscription.js' ],
 	'ppcp-save-payment-methods': [ 'js/add-payment-method.js' ],
+	'ppcp-sdk-v6': [ 'js/boot.js' ],
 	'ppcp-settings': [ 'js/index.js', 'css/styles.scss' ],
 	'ppcp-wc-gateway': [
 		'js/common.js',
 		'js/gateway-settings.js',
 		'js/fraudnet.js',
-		'js/oxxo.js',
 		'js/void-button.js',
 		'css/gateway-settings.scss',
 		'css/common.scss',
 	],
+	'ppcp-store-sync': [ 'js/settings.js', 'css/style.scss' ],
 };
 
 const entries = {};

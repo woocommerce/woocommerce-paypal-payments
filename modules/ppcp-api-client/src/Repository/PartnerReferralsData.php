@@ -31,15 +31,6 @@ class PartnerReferralsData {
 	}
 
 	/**
-	 * Returns a nonce.
-	 *
-	 * @return string
-	 */
-	public function nonce(): string {
-		return 'a1233wtergfsdt4365tzrshgfbaewa36AGa1233wtergfsdt4365tzrshgfbaewa36AG';
-	}
-
-	/**
 	 * Returns the data.
 	 *
 	 * @param string[] $products          The list of products to use ('PPCP', 'EXPRESS_CHECKOUT').
@@ -47,13 +38,15 @@ class PartnerReferralsData {
 	 * @param string   $onboarding_token  A security token to finalize the onboarding process.
 	 * @param bool     $use_subscriptions If the merchant requires subscription features.
 	 * @param bool     $use_card_payments If the merchant wants to process credit card payments.
+	 * @param string   $seller_nonce      The PKCE code_verifier for the OAuth flow.
 	 * @return array
 	 */
 	public function data(
 		array $products = array(),
 		string $onboarding_token = '',
 		?bool $use_subscriptions = null,
-		bool $use_card_payments = true
+		bool $use_card_payments = true,
+		string $seller_nonce = ''
 	): array {
 		$in_acdc_country = $this->dcc_applies->for_country_currency(); // @phpstan-ignore property.deprecated
 
@@ -129,7 +122,7 @@ class PartnerReferralsData {
 							'integration_type'    => 'FIRST_PARTY',
 							'first_party_details' => array(
 								'features'     => $first_party_features,
-								'seller_nonce' => $this->nonce(),
+								'seller_nonce' => $seller_nonce,
 							),
 						),
 					),

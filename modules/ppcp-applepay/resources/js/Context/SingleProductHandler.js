@@ -1,5 +1,5 @@
 import SingleProductActionHandler from '@ppcp-button/ActionHandler/SingleProductActionHandler';
-import SimulateCart from '@ppcp-button/Helper/SimulateCart';
+import SimulateCart, { isSimulateCartEnabled } from '@ppcp-button/Helper/SimulateCart';
 import ErrorHandler from '@ppcp-button/ErrorHandler';
 import UpdateCart from '@ppcp-button/Helper/UpdateCart';
 import BaseHandler from '@ppcp-applepay/Context/BaseHandler';
@@ -13,6 +13,12 @@ class SingleProductHandler extends BaseHandler {
 	}
 
 	transactionInfo() {
+		// Simulation is this method's only mechanism for fetching product data;
+		// reject early to avoid a pointless AJAX call.
+		if ( ! isSimulateCartEnabled( this.ppcpConfig ) ) {
+			return Promise.reject( new Error( 'Cart simulation is disabled.' ) );
+		}
+
 		const errorHandler = new ErrorHandler(
 			this.ppcpConfig.labels.error.generic,
 			document.querySelector( '.woocommerce-notices-wrapper' )
@@ -37,19 +43,17 @@ class SingleProductHandler extends BaseHandler {
 			? actionHandler.getSubscriptionProducts()
 			: actionHandler.getProducts();
 
-		return new Promise( ( resolve, reject ) => {
-			new SimulateCart(
-				this.ppcpConfig.ajax.simulate_cart.endpoint,
-				this.ppcpConfig.ajax.simulate_cart.nonce
-			).simulate( ( data ) => {
-				resolve( {
-					countryCode: data.country_code,
-					currencyCode: data.currency_code,
-					totalPriceStatus: 'FINAL',
-					totalPrice: data.total,
-				} );
-			}, products );
-		} );
+		return new SimulateCart(
+			this.ppcpConfig.ajax?.simulate_cart?.endpoint,
+			this.ppcpConfig.ajax?.simulate_cart?.nonce
+		).simulate( ( data ) => {
+			return {
+				countryCode: data.country_code,
+				currencyCode: data.currency_code,
+				totalPriceStatus: 'FINAL',
+				totalPrice: data.total,
+			};
+		}, products );
 	}
 
 	createOrder() {
