@@ -88,8 +88,8 @@ class IngestionManager
         // Get products needing sync using WooCommerce APIs.
         $product_ids = $this->batch_provider->get_batch();
         if (empty($product_ids)) {
+            $this->logger->info('[Sync] Empty batch - no products need syncing');
             return;
-            // Nothing to sync.
         }
         $sync_job = $this->create_new_sync_job($product_ids);
         $sync_job->execute();

@@ -100,7 +100,7 @@ class IngestionBatchProvider
     private function query_candidates(array $meta_query, array $exclude, int $limit, bool $order_by_meta): array
     {
         // phpcs:disable WordPress.DB.SlowDBQuery -- intentionally using the meta_query here.
-        $args = array('limit' => $limit, 'return' => 'ids', 'meta_query' => array($meta_query), 'exclude' => $exclude);
+        $args = array('limit' => $limit, 'return' => 'ids', 'exclude' => $exclude);
         // Add ordering for stale products (oldest first).
         if ($order_by_meta && isset($meta_query['key'])) {
             $args['orderby'] = 'meta_value_num';
@@ -109,7 +109,20 @@ class IngestionBatchProvider
         }
         // Constrain to the coarse eligibility criteria (status/type/downloadable).
         $args = array_merge($args, $this->product_filter->query_filters());
-        $products = wc_get_products($args);
+        // wc_get_products() silently discards a raw 'meta_query' argument
+        // (WC_Data_Store_WP::get_wp_query_args() skips it), so the freshness clause
+        // is injected into the underlying WP_Query args through WooCommerce's own
+        // query filter instead.
+        $inject_meta_query = static function (array $wp_query_args) use ($meta_query): array {
+            $wp_query_args['meta_query'][] = $meta_query;
+            return $wp_query_args;
+        };
+        add_filter('woocommerce_product_data_store_cpt_get_products_query', $inject_meta_query);
+        try {
+            $products = wc_get_products($args);
+        } finally {
+            remove_filter('woocommerce_product_data_store_cpt_get_products_query', $inject_meta_query);
+        }
         // phpcs:enable WordPress.DB.SlowDBQuery
         assert(is_array($products));
         return $products;
