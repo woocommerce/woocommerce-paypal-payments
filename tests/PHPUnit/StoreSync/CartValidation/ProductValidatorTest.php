@@ -24,8 +24,8 @@ class ProductValidatorTest extends ValidationTest {
 		parent::setUp();
 
 		$this->product_filter = Mockery::mock( ProductFilter::class );
-		$this->product_filter->allows( 'criteria_violation' )->andReturn( null );
-		$this->product_filter->allows( 'passes_exclusion_filter' )->andReturn( true );
+		$this->product_filter->allows( 'criteria_violation' )->andReturn( null )->byDefault();
+		$this->product_filter->allows( 'passes_exclusion_filter' )->andReturn( true )->byDefault();
 
 		$this->validator = new ProductValidator( $this->product_filter );
 	}
