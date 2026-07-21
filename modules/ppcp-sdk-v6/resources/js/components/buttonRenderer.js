@@ -74,6 +74,54 @@ function createButton( tagName, type, styles, session, createOrderFn ) {
 }
 
 /**
+ * Creates a fully configured button element for one funding method, not
+ * yet in the DOM. Returns null when the method is unknown or Pay Later
+ * lacks the product details it needs to render.
+ *
+ * @param {Object}       options                 - Button options.
+ * @param {string}       options.method          - The funding method (paypal, venmo, paylater).
+ * @param {Object}       options.styles          - Button styles for the current context.
+ * @param {Object}       options.session         - The payment session.
+ * @param {OrderCreator} options.createOrderFn   - Returns the created order id.
+ * @param {Object}       [options.payLaterDetails] - Pay Later product details.
+ * @return {?HTMLElement} The configured button element, or null.
+ */
+export function createMethodButton( {
+	method,
+	styles,
+	session,
+	createOrderFn,
+	payLaterDetails,
+} ) {
+	const element = BUTTON_ELEMENTS[ method ];
+	if ( ! element ) {
+		return null;
+	}
+
+	// Pay Later requires the product details from eligibility.
+	if ( method === 'paylater' && ! payLaterDetails?.productCode ) {
+		return null;
+	}
+
+	const button = createButton(
+		element.tagName,
+		element.type,
+		styles,
+		session,
+		createOrderFn
+	);
+
+	if ( method === 'paylater' ) {
+		button.productCode = payLaterDetails.productCode;
+		if ( payLaterDetails.countryCode ) {
+			button.countryCode = payLaterDetails.countryCode;
+		}
+	}
+
+	return button;
+}
+
+/**
  * Renders a button for every created session into the wrapper.
  *
  * @param {Object}              options                       - Render options.
@@ -95,29 +143,20 @@ export function renderButtons( {
 
 	const rendered = [];
 
-	for ( const [ method, element ] of Object.entries( BUTTON_ELEMENTS ) ) {
+	for ( const method of Object.keys( BUTTON_ELEMENTS ) ) {
 		if ( ! sessions[ method ] ) {
 			continue;
 		}
 
-		// Pay Later requires the product details from eligibility.
-		if ( method === 'paylater' && ! payLaterDetails?.productCode ) {
-			continue;
-		}
-
-		const button = createButton(
-			element.tagName,
-			element.type,
+		const button = createMethodButton( {
+			method,
 			styles,
-			sessions[ method ],
-			createOrderForFunding( method )
-		);
-
-		if ( method === 'paylater' ) {
-			button.productCode = payLaterDetails.productCode;
-			if ( payLaterDetails.countryCode ) {
-				button.countryCode = payLaterDetails.countryCode;
-			}
+			session: sessions[ method ],
+			createOrderFn: createOrderForFunding( method ),
+			payLaterDetails,
+		} );
+		if ( ! button ) {
+			continue;
 		}
 
 		// Insert only after full configuration.
