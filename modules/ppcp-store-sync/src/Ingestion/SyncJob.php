@@ -47,14 +47,14 @@ class SyncJob
      */
     public function execute(): void
     {
-        $this->logger->info(sprintf('Agentic Sync Job %s: Started', $this->batch_id));
+        $this->logger->info('[Sync] Started', $this->build_log_context());
         // Transform products into DTOs.
         $payload_container = new \WooCommerce\PayPalCommerce\StoreSync\Ingestion\ProductsPayload($this->merchant_store_url, $this->product_ids, $this->product_manager);
         $products = $payload_container->get_products();
         // Drop entries the webhook would reject for missing data; park their products.
         $products = $this->drop_incomplete_products($products);
         if (empty($products)) {
-            $this->logger->info(sprintf('Agentic Sync Job %s: No products', $this->batch_id));
+            $this->logger->info('[Sync] No products', $this->build_log_context());
             $this->fire_completed_action('empty', 0, 0, 0);
             return;
         }
@@ -62,7 +62,7 @@ class SyncJob
         $body = array('merchant_url' => $this->merchant_store_url, 'products' => array_map(static fn(\WooCommerce\PayPalCommerce\StoreSync\Ingestion\ProductDTO $product): array => $product->to_array(), $products));
         // Send payload to API.
         $response = wp_remote_post($this->api_endpoint, array('timeout' => 30, 'headers' => array('Content-Type' => 'application/json'), 'body' => (string) wp_json_encode($body)));
-        $this->logger->debug("Start Sync {$this->batch_id}...", $body);
+        $this->logger->debug('[Sync] Started...', $this->build_log_context($body));
         if (is_wp_error($response)) {
             // Log the error message and throw an Exception.
             $this->handle_api_error($this->product_ids, $response->get_error_message());
@@ -124,7 +124,7 @@ class SyncJob
         // Check for validation issues from the response and document them in product-meta fields.
         try {
             $response_data = json_decode($response_body, \true, 512, \JSON_THROW_ON_ERROR);
-            $this->logger->info(sprintf('Agentic Sync Job %s: Successfully synced %d products', $this->batch_id, count($this->product_ids)), $response_data);
+            $this->logger->info(sprintf('[Sync] Successfully synced %d products', count($this->product_ids)), $this->build_log_context($response_data));
             $contains_errors = \false === ($response_data['success'] ?? \false);
             $error_message = $response_data['message'] ?? '';
         } catch (JsonException $e) {
@@ -179,7 +179,7 @@ class SyncJob
      */
     private function mark_products_by_validation_result(array $validation_errors): void
     {
-        $this->logger->warning(sprintf('Agentic Sync Job %s: Validation errors', $this->batch_id), $validation_errors);
+        $this->logger->warning('[Sync] Validation errors', $this->build_log_context($validation_errors));
         foreach ($validation_errors as $product_id => $error_message) {
             $this->mark_product_with_validation_error($product_id, $error_message);
         }
@@ -197,7 +197,7 @@ class SyncJob
      */
     private function handle_api_error(array $product_ids, string $error_message): void
     {
-        $this->logger->warning(sprintf('Agentic Sync Job %s: API Error - %s', $this->batch_id, $error_message), array('product_count' => count($product_ids), 'product_ids' => $product_ids));
+        $this->logger->warning(sprintf('[Sync] API Error - %s', $error_message), $this->build_log_context(array('product_count' => count($product_ids), 'product_ids' => $product_ids)));
         $pushed = count($product_ids);
         $this->fire_completed_action('api_error', $pushed, 0, $pushed, $error_message);
         throw new RuntimeException(sprintf('Agentic sync failed: %s', $error_message));
@@ -255,5 +255,21 @@ class SyncJob
         foreach ($product_ids as $product_id) {
             $this->mark_product_synced($product_id);
         }
+    }
+    /**
+     * @param mixed $context The log data - an array or any other value to log.
+     * @return array
+     */
+    private function build_log_context($context = array()): array
+    {
+        $log_context = array('job' => $this->batch_id);
+        if (!is_array($context)) {
+            if (null === $context) {
+                $context = array();
+            } else {
+                $context = array('raw' => $context);
+            }
+        }
+        return array_merge($log_context, $context);
     }
 }

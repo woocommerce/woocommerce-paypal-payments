@@ -88,7 +88,11 @@ class ProductFilter
     {
         $product->update_meta_data(self::META_KEY, (string) time());
         $product->save_meta_data();
-        $this->logger->debug(sprintf('Agentic ProductFilter: marked product %d processed', $product->get_id()), array('info' => $log_info));
+        $context = array();
+        if ('' !== $log_info) {
+            $context['log_info'] = $log_info;
+        }
+        $this->logger->debug(sprintf('[ProductFilter] Marked product %d processed', $product->get_id()), $context);
     }
     /**
      * Releases a product so it is re-evaluated on the next run (first priority).
@@ -114,6 +118,6 @@ class ProductFilter
          * re-evaluates each product again.
          */
         do_action('woocommerce_paypal_payments_store_sync_eligibility_invalidated');
-        $this->logger->info('Agentic ProductFilter: invalidated all processed markers');
+        $this->logger->info('[ProductFilter] Invalidated all processed markers');
     }
 }
