@@ -21,22 +21,13 @@ use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ModuleClassNameI
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ServiceModule;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 
-/**
- * Class OrderEndpointsModule
- */
 class OrderEndpointsModule implements ServiceModule, ExecutableModule {
 	use ModuleClassNameIdTrait;
 
-	/**
-	 * {@inheritDoc}
-	 */
 	public function services(): array {
 		return require __DIR__ . '/../services.php';
 	}
 
-	/**
-	 * {@inheritDoc}
-	 */
 	public function run( ContainerInterface $c ): bool {
 		add_action(
 			'wc_ajax_' . ChangeCartEndpoint::ENDPOINT,
