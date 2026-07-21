@@ -42,11 +42,8 @@ class OrderEndpointsModule implements ServiceModule, ExecutableModule {
 			'wc_ajax_' . ChangeCartEndpoint::ENDPOINT,
 			static function () use ( $c ) {
 				$endpoint = $c->get( 'order-endpoints.endpoint.change-cart' );
-				/**
-				 * The Change Cart Endpoint.
-				 *
-				 * @var ChangeCartEndpoint $endpoint
-				 */
+				assert( $endpoint instanceof ChangeCartEndpoint );
+
 				$endpoint->handle_request();
 			}
 		);
@@ -55,11 +52,8 @@ class OrderEndpointsModule implements ServiceModule, ExecutableModule {
 			'wc_ajax_' . ApproveOrderEndpoint::ENDPOINT,
 			static function () use ( $c ) {
 				$endpoint = $c->get( 'order-endpoints.endpoint.approve-order' );
-				/**
-				 * The Approve Order Endpoint.
-				 *
-				 * @var ApproveOrderEndpoint $endpoint
-				 */
+				assert( $endpoint instanceof ApproveOrderEndpoint );
+
 				$endpoint->handle_request();
 			}
 		);
@@ -68,11 +62,8 @@ class OrderEndpointsModule implements ServiceModule, ExecutableModule {
 			'wc_ajax_' . CreateOrderEndpoint::ENDPOINT,
 			static function () use ( $c ) {
 				$endpoint = $c->get( 'order-endpoints.endpoint.create-order' );
-				/**
-				 * The Create Order Endpoint.
-				 *
-				 * @var CreateOrderEndpoint $endpoint
-				 */
+				assert( $endpoint instanceof CreateOrderEndpoint );
+
 				$endpoint->handle_request();
 			}
 		);
