@@ -70,6 +70,7 @@ use WooCommerce\PayPalCommerce\Settings\Service\Migration\FastlaneSettingsMigrat
 use WooCommerce\PayPalCommerce\Settings\Service\OnboardingNotices;
 use WooCommerce\PayPalCommerce\Settings\Service\OnboardingUrlManager;
 use WooCommerce\PayPalCommerce\Settings\Service\SellerTypeResolver;
+use WooCommerce\PayPalCommerce\Settings\Service\MerchantDataResolver;
 use WooCommerce\PayPalCommerce\Settings\Service\PaymentMethodsEligibilityService;
 use WooCommerce\PayPalCommerce\Settings\Service\ScriptDataHandler;
 use WooCommerce\PayPalCommerce\Settings\Service\TodosEligibilityService;
@@ -87,7 +88,6 @@ use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\PayUponInvoice\Pay
 use WooCommerce\PayPalCommerce\PayLaterConfigurator\Endpoint\SaveConfig;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\ConnectionState;
-use WooCommerce\PayPalCommerce\Settings\Service\InternalRestService;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\MerchantDetails;
 return array(
     'settings.asset_getter' => static function (ContainerInterface $container): AssetGetter {
@@ -238,10 +238,7 @@ return array(
         return new ConnectionUrlGenerator($container->get('api.env.endpoint.partner-referrals'), $container->get('api.repository.partner-referrals-data'), $container->get('settings.service.onboarding-url-manager'), $container->get('woocommerce.logger.woocommerce'));
     },
     'settings.service.authentication_manager' => static function (ContainerInterface $container): AuthenticationManager {
-        return new AuthenticationManager($container->get('settings.data.general'), $container->get('api.env.paypal-host'), $container->get('api.env.endpoint.login-seller'), $container->get('settings.connection-state'), $container->get('settings.service.rest-service'), $container->get('woocommerce.logger.woocommerce'));
-    },
-    'settings.service.rest-service' => static function (ContainerInterface $container): InternalRestService {
-        return new InternalRestService($container->get('woocommerce.logger.woocommerce'));
+        return new AuthenticationManager($container->get('settings.data.general'), $container->get('api.env.paypal-host'), $container->get('api.env.endpoint.login-seller'), $container->get('settings.connection-state'), $container->get('api.factory.paypal-bearer'), $container->get('woocommerce.logger.woocommerce'));
     },
     'settings.service.sanitizer' => static function (ContainerInterface $container): DataSanitizer {
         return new DataSanitizer();
@@ -262,6 +259,7 @@ return array(
     'settings.service.data-migration.styling' => static fn(ContainerInterface $c): StylingSettingsMigration => new StylingSettingsMigration((array) get_option('woocommerce-ppcp-settings', array()), $c->get('settings.data.styling')),
     'settings.service.data-migration.payment-settings' => static fn(ContainerInterface $c): PaymentSettingsMigration => new PaymentSettingsMigration((array) get_option('woocommerce-ppcp-settings', array()), $c->get('settings.data.payment'), $c->get('api.helpers.dccapplies'), $c->get('wcgateway.helper.dcc-product-status'), $c->get('wcgateway.configuration.card-configuration'), $c->get('ppcp-local-apms.payment-methods')),
     'settings.service.seller-type-resolver' => static fn(): SellerTypeResolver => new SellerTypeResolver(),
+    'settings.service.merchant-data-resolver' => static fn(ContainerInterface $container): MerchantDataResolver => new MerchantDataResolver($container->get('settings.data.general'), $container->get('api.factory.partners-endpoint'), $container->get('woocommerce.logger.woocommerce')),
     'settings.service.data-migration.general-settings' => static fn(ContainerInterface $c): SettingsMigration => new SettingsMigration((array) get_option('woocommerce-ppcp-settings', array()), $c->get('settings.data.general'), $c->get('api.endpoint.partners'), $c->get('woocommerce.logger.woocommerce'), $c->get('settings.service.seller-type-resolver')),
     'settings.service.data-migration.fastlane' => static fn(ContainerInterface $c): FastlaneSettingsMigration => new FastlaneSettingsMigration((array) get_option('woocommerce-ppcp-settings', array()), $c->get('settings.data.fastlane')),
     'settings.rest.todos' => static function (ContainerInterface $container): TodosRestEndpoint {
