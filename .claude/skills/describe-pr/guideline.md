@@ -49,6 +49,11 @@ The entry inside the backticks follows the project's `readme.txt` changelog form
   for an external contributor.
 - Use a plain hyphen `-`.
 
+**No user-facing change?** For a PR that touches only internal tooling, CI, tests, build, or docs -
+nothing a plugin user would notice and nothing that lands in `readme.txt` - do not invent an entry.
+Write `*Changelog:* (none - <short reason>)` instead, e.g. `*Changelog:* (none - internal Claude
+tooling)`. Never dress up an internal change as a user-facing one just to fill the line.
+
 |                                               | Entry                                                                            |
 |-----------------------------------------------|----------------------------------------------------------------------------------|
 | Good (user-facing)                            | `Fix - Google Pay now correctly updates WooCommerce shipping address #3798`      |

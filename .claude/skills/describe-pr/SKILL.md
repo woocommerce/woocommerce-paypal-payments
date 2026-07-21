@@ -42,7 +42,7 @@ Collect context to ground the draft. Pull from all that apply:
 
 Follow [guideline.md](guideline.md) for the title rule, the mandatory changelog first line, the heading catalog, tone, writing style, and a worked example. Read it before drafting.
 
-Draft both: a reviewer-focused **title** ending in the Jira number in parentheses (e.g. `(6288)`), and the **body** starting with the mandatory `*Changelog:*` line above `# Description`.
+Draft both: a reviewer-focused **title** ending in the Jira number in parentheses (e.g. `(6288)`), and the **body** starting with the mandatory `*Changelog:*` line above `# Description`. For a PR with no plugin-user-facing change (tooling, CI, tests, build, docs), use the `*Changelog:* (none - <reason>)` form instead of inventing an entry - see guideline.md.
 
 **Keep the first draft short.** Reviewers skim, and an over-long draft is the usual complaint. Include only sections that tell the reviewer something they cannot get from the title or the code - most PRs do not need a 50-line description.
 
