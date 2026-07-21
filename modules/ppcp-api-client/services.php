@@ -37,6 +37,8 @@ use WooCommerce\PayPalCommerce\ApiClient\Factory\CaptureFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\CardAuthenticationResultFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\ContactPreferenceFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\ExchangeRateFactory;
+use WooCommerce\PayPalCommerce\ApiClient\Factory\PartnersEndpointFactory;
+use WooCommerce\PayPalCommerce\ApiClient\Factory\PayPalBearerFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\FraudProcessorResponseFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\ItemFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\MoneyFactory;
@@ -145,6 +147,20 @@ return array(
     },
     'api.endpoint.partners' => static function (ContainerInterface $container): PartnersEndpoint {
         return new PartnersEndpoint($container->get('api.host'), $container->get('api.bearer'), $container->get('woocommerce.logger.woocommerce'), $container->get('api.factory.sellerstatus'), $container->get('api.partner_merchant_id'), $container->get('api.merchant_id'), $container->get('api.helper.failure-registry'), $container->get('api.partners-seller-status-cache'));
+    },
+    /**
+     * Factory for connection-aware bearers authenticated with explicit credentials.
+     */
+    'api.factory.paypal-bearer' => static function (ContainerInterface $container): PayPalBearerFactory {
+        return new PayPalBearerFactory($container->get('api.token-rate-limiter'), $container->get('woocommerce.logger.woocommerce'));
+    },
+    /**
+     * Factory for PartnersEndpoint instances.
+     * Creates a fresh bearer on every call to reflect the current connection and
+     * environment state.
+     */
+    'api.factory.partners-endpoint' => static function (ContainerInterface $container): PartnersEndpointFactory {
+        return new PartnersEndpointFactory($container->get('api.env.paypal-host'), $container->get('api.env.partner-id'), $container->get('api.factory.sellerstatus'), $container->get('api.helper.failure-registry'), $container->get('api.partners-seller-status-cache'), $container->get('api.factory.paypal-bearer'), $container->get('woocommerce.logger.woocommerce'));
     },
     'api.partners-seller-status-cache' => static function (ContainerInterface $container): Cache {
         return new Cache('ppcp-seller-status-');
@@ -521,6 +537,14 @@ return array(
          * @type EnvironmentConfig<string>
          */
         return EnvironmentConfig::create('string', $container->get('api.paypal-host-production'), $container->get('api.paypal-host-sandbox'));
+    },
+    'api.env.partner-id' => static function (ContainerInterface $container): EnvironmentConfig {
+        /**
+         * Environment specific partner ID.
+         *
+         * @type EnvironmentConfig<string>
+         */
+        return EnvironmentConfig::create('string', $container->get('api.partner_merchant_id-production'), $container->get('api.partner_merchant_id-sandbox'));
     },
     'api.env.endpoint.login-seller' => static function (ContainerInterface $container): EnvironmentConfig {
         /**
