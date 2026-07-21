@@ -115,7 +115,7 @@ class SyncJob {
 		$response_body = wp_remote_retrieve_body( $response );
 
 		if ( $status_code >= 200 && $status_code < 422 ) {
-			$this->handle_successful_response( $response_body );
+			$this->handle_successful_response( $response_body, $products );
 
 			return;
 		}
@@ -181,9 +181,11 @@ class SyncJob {
 	 * Parses the response to check for individual product validation errors,
 	 * marks products accordingly, and logs the result.
 	 *
-	 * @param string $response_body The API response body.
+	 * @param string       $response_body    The API response body.
+	 * @param ProductDTO[] $payload_products The product entries sent in the request, in
+	 *                                       payload order (used to resolve per-item errors).
 	 */
-	private function handle_successful_response( string $response_body ): void {
+	private function handle_successful_response( string $response_body, array $payload_products ): void {
 		// First, mark all products as synced to avoid re-syncing them in the next batch.
 		$this->mark_products_synced( $this->product_ids );
 
@@ -218,7 +220,7 @@ class SyncJob {
 		$validation_errors = array();
 
 		if ( $contains_errors && $error_message ) {
-			$validation_errors = $this->extract_product_errors( $error_message );
+			$validation_errors = $this->extract_product_errors( $error_message, $payload_products );
 
 			$this->mark_products_by_validation_result( $validation_errors );
 		}
@@ -236,10 +238,12 @@ class SyncJob {
 	 * Parses error messages like "data/products/0/image_link must pass..." to
 	 * identify which products in the batch actually failed validation.
 	 *
-	 * @param string $error_message The error message to parse.
+	 * @param string       $error_message    The error message to parse.
+	 * @param ProductDTO[] $payload_products The product entries sent in the request, in payload
+	 *                                       order.
 	 * @return array Array of product IDs (keys) and the relevant validation error (values).
 	 */
-	private function extract_product_errors( string $error_message ): array {
+	private function extract_product_errors( string $error_message, array $payload_products ): array {
 		$errors = array();
 
 		// Pattern: data/products/{index} followed by error text until comma or end.
@@ -252,11 +256,13 @@ class SyncJob {
 
 		foreach ( $matches as $match ) {
 			$index = (int) $match[1];
-			$id    = $this->product_ids[ $index ] ?? null;
+			$entry = $payload_products[ $index ] ?? null;
 
-			if ( is_null( $id ) ) {
+			if ( null === $entry ) {
 				continue;
 			}
+
+			$id            = (int) $entry->to_array()['item_group_id'];
 			$errors[ $id ] = trim( $match[2] );
 		}
 
