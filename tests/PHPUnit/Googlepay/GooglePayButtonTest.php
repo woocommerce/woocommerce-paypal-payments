@@ -11,7 +11,6 @@ use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
 use WooCommerce\PayPalCommerce\Settings\DTO\LocationStylingDTO;
 use WooCommerce\PayPalCommerce\TestCase;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
-use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
 
 /**
  * @covers \WooCommerce\PayPalCommerce\Googlepay\Assets\GooglePayButton
@@ -33,7 +32,6 @@ class GooglePayButtonTest extends TestCase
 			Mockery::mock(AssetGetter::class),
 			'https://example.test/sdk.js',
 			'1.0.0',
-			Mockery::mock(SubscriptionHelper::class),
 			$this->settings,
 			Mockery::mock(Environment::class),
 			$this->context
