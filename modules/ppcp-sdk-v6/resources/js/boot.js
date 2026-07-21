@@ -1,15 +1,25 @@
 /**
  * PayPal SDK v6 Bootstrap.
  *
- * Loads the PayPal JS SDK v6 core, fetches a browser-safe client token
- * from the backend, and creates the SDK instance.
+ * Loads the SDK, checks eligibility, creates payment sessions,
+ * and renders Web Component buttons.
+ *
+ * Renders into independent targets: the page-context wrapper (product,
+ * cart, checkout) and the mini-cart wrapper, which can coexist on the
+ * same page. The SDK instance and client token are created once; the
+ * amount-sensitive eligibility is refreshed when the cart total changes.
  *
  * @package
  */
 
-/**
- * @param {Object} config Localized script data from wc_ppcp_sdk_v6.
- */
+import { loadSdkV6 } from './sdkLoader';
+import { checkEligibility } from './eligibility';
+import { createSession } from './sessions/createSession';
+import { renderButtons } from './components/buttonRenderer';
+import { createOrder, fetchCartTotal } from './endpointsAdapter';
+import { hasJQuery } from './utils/api';
+import { setErrorLabels } from './utils/errorHandler';
+
 ( function ( config ) {
 	'use strict';
 
@@ -17,92 +27,184 @@
 		return;
 	}
 
-	/**
-	 * Fetches the browser-safe client token from the WC AJAX endpoint.
-	 *
-	 * @return {Promise<string>} Resolves to the client token string.
-	 */
-	async function fetchClientToken() {
-		const response = await fetch( config.ajax.client_token.endpoint, {
-			method: 'POST',
-			credentials: 'same-origin',
-			headers: {
-				'Content-Type': 'application/json',
-			},
-			body: JSON.stringify( {
-				nonce: config.ajax.client_token.nonce,
-			} ),
+	setErrorLabels( config.labels );
+
+	// The page-context and mini-cart wrappers are independent render
+	// targets; PHP only prints wrappers for enabled locations, so target
+	// selection is gated by wrapper presence at render time.
+	const targets = [];
+	if ( config.page_context ) {
+		targets.push( {
+			context: config.page_context,
+			wrapperSelector: config.wrapper,
 		} );
+	}
+	targets.push( {
+		context: 'mini-cart',
+		wrapperSelector: config.mini_cart_wrapper,
+	} );
 
-		const json = await response.json();
+	const sdkPageType = config.page_context || 'mini-cart';
 
-		if ( ! json.success ) {
-			throw new Error(
-				json.data?.message || 'Failed to fetch client token.'
+	let amount = config.amount;
+	let eligibilityPromise = null;
+	const sessionPromises = {};
+
+	function ensureEligibility() {
+		if ( ! eligibilityPromise ) {
+			eligibilityPromise = ( async () => {
+				const sdk = await loadSdkV6( config, sdkPageType );
+				return checkEligibility( sdk, {
+					currencyCode: config.currency,
+					countryCode: config.buyer_country,
+					amount,
+				} );
+			} )().catch( ( error ) => {
+				eligibilityPromise = null;
+				throw error;
+			} );
+		}
+		return eligibilityPromise;
+	}
+
+	function ensureSessions( context ) {
+		if ( ! sessionPromises[ context ] ) {
+			sessionPromises[ context ] = createSessions( context ).catch(
+				( error ) => {
+					delete sessionPromises[ context ];
+					throw error;
+				}
 			);
 		}
-
-		return json.data.client_token;
+		return sessionPromises[ context ];
 	}
 
 	/**
-	 * Dynamically loads the PayPal SDK v6 core script.
+	 * Creates the payment sessions for one render target.
 	 *
-	 * @return {Promise<void>} Resolves when the script is loaded.
+	 * @param {string} context - The target context.
+	 * @return {Promise<Object>} Sessions keyed by method, plus payLaterDetails.
 	 */
-	function loadSdkScript() {
-		return new Promise( ( resolve, reject ) => {
-			if ( document.querySelector( 'script[src*="web-sdk/v6/core"]' ) ) {
-				resolve();
-				return;
-			}
+	async function createSessions( context ) {
+		const sdk = await loadSdkV6( config, sdkPageType );
+		const eligibility = await ensureEligibility();
 
-			const script = document.createElement( 'script' );
-			script.src = config.sdk_url;
-			script.async = true;
-			script.onload = resolve;
-			script.onerror = () =>
-				reject( new Error( 'Failed to load PayPal SDK v6 script.' ) );
-			document.head.appendChild( script );
-		} );
-	}
-
-	/**
-	 * Initializes the PayPal SDK v6 instance.
-	 */
-	async function init() {
-		try {
-			const [ , clientToken ] = await Promise.all( [
-				loadSdkScript(),
-				fetchClientToken(),
-			] );
-
-			if ( ! window.paypal?.createInstance ) {
-				throw new Error(
-					'PayPal SDK v6 global not found after script load.'
+		const sessions = {
+			payLaterDetails: eligibility.payLaterDetails,
+			map: {},
+		};
+		for ( const method of [ 'paypal', 'venmo', 'paylater' ] ) {
+			if ( eligibility[ method ] ) {
+				sessions.map[ method ] = createSession(
+					sdk,
+					method,
+					config,
+					context
 				);
 			}
-
-			const sdkInstance = await window.paypal.createInstance( {
-				clientToken,
-			} );
-
-			window.ppcpSdkV6Instance = sdkInstance;
-
-			document.dispatchEvent(
-				new CustomEvent( 'ppcp-sdk-v6-ready', {
-					detail: { sdkInstance },
-				} )
-			);
-		} catch ( error ) {
-			// eslint-disable-next-line no-console
-			console.error( '[PPCP SDK v6]', error );
 		}
+
+		return sessions;
+	}
+
+	/**
+	 * Renders buttons into a target if its wrapper is present and empty.
+	 *
+	 * The SDK and client token are only loaded once a wrapper exists, so
+	 * pages without buttons never hit the token endpoint. Wrappers that
+	 * still contain buttons are left alone (WC AJAX updates that replace
+	 * the surrounding DOM deliver the wrapper empty again).
+	 *
+	 * @param {Object} target - The render target.
+	 */
+	async function render( target ) {
+		const wrapper = document.querySelector( target.wrapperSelector );
+		if ( ! wrapper || wrapper.childElementCount > 0 ) {
+			return;
+		}
+
+		const { map, payLaterDetails } = await ensureSessions( target.context );
+
+		renderButtons( {
+			wrapper,
+			sessions: map,
+			styles: config.button_styles[ target.context ] || {},
+			createOrderForFunding: ( fundingSource ) => () =>
+				createOrder( config, target.context, fundingSource ),
+			payLaterDetails,
+		} );
+	}
+
+	function renderAll() {
+		for ( const target of targets ) {
+			render( target ).catch( ( error ) => {
+				// eslint-disable-next-line no-console
+				console.error( '[PPCP SDK v6]', error );
+			} );
+		}
+	}
+
+	/**
+	 * Re-checks eligibility with a fresh cart total and re-renders.
+	 *
+	 * Pay Later eligibility is amount-sensitive, so cached sessions go
+	 * stale when the cart total changes. The SDK instance and client
+	 * token stay cached; only eligibility and sessions are rebuilt, and
+	 * buttons are redrawn only when the eligible method set changed.
+	 */
+	async function refreshEligibility() {
+		const previous = eligibilityPromise
+			? await eligibilityPromise.catch( () => null )
+			: null;
+
+		amount = ( await fetchCartTotal( config ) ) || amount;
+		eligibilityPromise = null;
+		const current = await ensureEligibility();
+
+		const methods = [ 'paypal', 'venmo', 'paylater' ];
+		const changed =
+			! previous ||
+			methods.some( ( m ) => previous[ m ] !== current[ m ] );
+
+		if ( changed ) {
+			for ( const key of Object.keys( sessionPromises ) ) {
+				delete sessionPromises[ key ];
+			}
+			for ( const target of targets ) {
+				const wrapper = document.querySelector(
+					target.wrapperSelector
+				);
+				if ( wrapper ) {
+					wrapper.innerHTML = '';
+				}
+			}
+		}
+
+		renderAll();
 	}
 
 	if ( document.readyState === 'loading' ) {
-		document.addEventListener( 'DOMContentLoaded', init );
+		document.addEventListener( 'DOMContentLoaded', renderAll );
 	} else {
-		init();
+		renderAll();
+	}
+
+	if ( hasJQuery() ) {
+		// DOM-replacing updates: wrappers arrive empty and need re-rendering.
+		jQuery( document.body ).on(
+			'updated_checkout wc_fragments_loaded wc_fragments_refreshed',
+			renderAll
+		);
+
+		// Total-changing updates: eligibility must be re-checked too.
+		jQuery( document.body ).on(
+			'updated_cart_totals added_to_cart removed_from_cart',
+			() => {
+				refreshEligibility().catch( ( error ) => {
+					// eslint-disable-next-line no-console
+					console.error( '[PPCP SDK v6]', error );
+				} );
+			}
+		);
 	}
 } )( window.wc_ppcp_sdk_v6 );
