@@ -681,6 +681,7 @@ class ComposerStaticInit844a779aae516bed9e0beccea9d01fda
         'WooCommerce\\PayPalCommerce\\StoreSync\\Ingestion\\IngestionBatchProvider' => __DIR__ . '/../..' . '/modules/ppcp-store-sync/src/Ingestion/IngestionBatchProvider.php',
         'WooCommerce\\PayPalCommerce\\StoreSync\\Ingestion\\IngestionManager' => __DIR__ . '/../..' . '/modules/ppcp-store-sync/src/Ingestion/IngestionManager.php',
         'WooCommerce\\PayPalCommerce\\StoreSync\\Ingestion\\ProductDTO' => __DIR__ . '/../..' . '/modules/ppcp-store-sync/src/Ingestion/ProductDTO.php',
+        'WooCommerce\\PayPalCommerce\\StoreSync\\Ingestion\\ProductFilter' => __DIR__ . '/../..' . '/modules/ppcp-store-sync/src/Ingestion/ProductFilter.php',
         'WooCommerce\\PayPalCommerce\\StoreSync\\Ingestion\\ProductsPayload' => __DIR__ . '/../..' . '/modules/ppcp-store-sync/src/Ingestion/ProductsPayload.php',
         'WooCommerce\\PayPalCommerce\\StoreSync\\Ingestion\\SyncJob' => __DIR__ . '/../..' . '/modules/ppcp-store-sync/src/Ingestion/SyncJob.php',
         'WooCommerce\\PayPalCommerce\\StoreSync\\Merchant\\MerchantMetadata' => __DIR__ . '/../..' . '/modules/ppcp-store-sync/src/Merchant/MerchantMetadata.php',

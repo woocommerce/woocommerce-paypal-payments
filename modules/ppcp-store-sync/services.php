@@ -26,6 +26,7 @@ use WooCommerce\PayPalCommerce\StoreSync\Endpoint\ReplaceCartEndpoint;
 use WooCommerce\PayPalCommerce\StoreSync\Endpoint\CheckoutEndpoint;
 use WooCommerce\PayPalCommerce\StoreSync\Ingestion\IngestionBatchProvider;
 use WooCommerce\PayPalCommerce\StoreSync\Ingestion\IngestionManager;
+use WooCommerce\PayPalCommerce\StoreSync\Ingestion\ProductFilter;
 use WooCommerce\PayPalCommerce\StoreSync\Response\ResponseFactory;
 use WooCommerce\PayPalCommerce\StoreSync\Session\AgenticSessionHandler;
 use WooCommerce\PayPalCommerce\StoreSync\Setting\AgenticSettingsEndpoint;
@@ -124,7 +125,7 @@ return array(
         return new CartValidationProcessor($c->get('agentic.logger.default'));
     },
     'agentic.validator.product' => static function (ContainerInterface $c): ProductValidator {
-        return new ProductValidator($c->get('agentic.config.ingestion'));
+        return new ProductValidator($c->get('agentic.ingestion.product-filter'));
     },
     'agentic.validator.price' => static function (): PriceValidator {
         return new PriceValidator();
@@ -175,11 +176,14 @@ return array(
         return new StoreData($c->get('agentic.helper.product-manager'), $c->get('agentic.config.store-currency'), $c->get('agentic.helper.cart-builder'));
     },
     // Ingestion services.
+    'agentic.ingestion.product-filter' => static function (ContainerInterface $c): ProductFilter {
+        return new ProductFilter($c->get('agentic.logger.ingestion'));
+    },
     'agentic.ingestion-batch-provider' => static function (ContainerInterface $c): IngestionBatchProvider {
-        return new IngestionBatchProvider($c->get('agentic.config.ingestion'));
+        return new IngestionBatchProvider($c->get('agentic.config.ingestion'), $c->get('agentic.ingestion.product-filter'));
     },
     'agentic.ingestion-manager' => static function (ContainerInterface $c): IngestionManager {
-        return new IngestionManager($c->get('agentic.config.ingestion'), $c->get('agentic.ingestion-batch-provider'), $c->get('agentic.config.webhook_urls'), $c->get('agentic.merchant.provider'), $c->get('agentic.logger.ingestion'), $c->get('agentic.helper.product-manager'));
+        return new IngestionManager($c->get('agentic.config.ingestion'), $c->get('agentic.ingestion-batch-provider'), $c->get('agentic.config.webhook_urls'), $c->get('agentic.merchant.provider'), $c->get('agentic.logger.ingestion'), $c->get('agentic.helper.product-manager'), $c->get('agentic.ingestion.product-filter'));
     },
     // Settings.
     'agentic.settings.model' => static function (): AgenticSettingsDataModel {
