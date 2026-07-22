@@ -10,6 +10,8 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\Compat\PluginDetector;
 
 /**
+ * Detects active plugins that may customize products
+ *
  * @see self::scan() for the plugins list.
  */
 class PluginDetector {
