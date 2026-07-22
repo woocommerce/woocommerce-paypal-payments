@@ -99,6 +99,14 @@ sources), following the existing JS suite's conventions. Dispatched manually.
 
 Source: [agents/js-unit-test-writer.md](../agents/js-unit-test-writer.md)
 
+### `copy-editor`
+
+Haiku, read-only. Canonicalizes a user-facing string (sentence case, brand capitalization,
+concision) against the copy guidelines and returns a suggestion. The caller passes the draft plus
+its context; a human still has the final word. Dispatch when writing or changing UI copy.
+
+Source: [agents/copy-editor.md](../agents/copy-editor.md)
+
 ---
 
 ## Hooks
