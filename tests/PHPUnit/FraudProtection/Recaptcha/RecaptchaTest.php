@@ -30,14 +30,18 @@ class RecaptchaTest extends TestCase {
 
 		when( 'is_user_logged_in' )->justReturn( false );
 		when( 'has_block' )->justReturn( false );
+		when( 'is_add_payment_method_page' )->justReturn( false );
 	}
 
 	/**
 	 * Builds a Recaptcha instance configured so should_use_recaptcha() is true
 	 * (valid v2/v3 keys, integration enabled), so tests only need to control
 	 * the location-gating logic under test.
+	 *
+	 * @param string[] $payment_methods The gateway IDs reCAPTCHA protects, mirroring the
+	 *                                  `fraud-protection.recaptcha.payment-methods` service.
 	 */
-	private function make_testee( SettingsStatus $settings_status ): Recaptcha {
+	private function make_testee( SettingsStatus $settings_status, array $payment_methods = array() ): Recaptcha {
 		$integration = Mockery::mock( RecaptchaIntegration::class );
 		$integration->enabled = 'yes';
 		$integration->shouldReceive( 'get_option' )->andReturnUsing(
@@ -54,13 +58,31 @@ class RecaptchaTest extends TestCase {
 
 		return new Recaptcha(
 			$integration,
-			array(),
+			$payment_methods,
 			$asset_getter,
 			'1.0.0',
 			$logger,
 			$rejection_counter,
 			$settings_status
 		);
+	}
+
+	/**
+	 * Stubs WC()->payment_gateways->get_available_payment_gateways() to return the given
+	 * gateway IDs as available, for has_protected_gateway_on_current_page() to check against.
+	 *
+	 * @param string[] $available_gateway_ids
+	 */
+	private function stub_available_gateways( array $available_gateway_ids = array() ): void {
+		$payment_gateways = Mockery::mock();
+		$payment_gateways->shouldReceive( 'get_available_payment_gateways' )->andReturn(
+			array_fill_keys( $available_gateway_ids, true )
+		);
+
+		$woocommerce = Mockery::mock();
+		$woocommerce->payment_gateways = $payment_gateways;
+
+		when( 'WC' )->justReturn( $woocommerce );
 	}
 
 	public function test_enqueue_scripts_skips_on_unsupported_page(): void {
@@ -124,6 +146,8 @@ class RecaptchaTest extends TestCase {
 		when( 'is_cart' )->justReturn( false );
 		when( 'is_checkout' )->justReturn( true );
 		when( 'has_block' )->justReturn( true );
+
+		$this->stub_available_gateways();
 
 		$settings_status = Mockery::mock( SettingsStatus::class );
 		$settings_status->shouldReceive( 'is_smart_button_enabled_for_location' )

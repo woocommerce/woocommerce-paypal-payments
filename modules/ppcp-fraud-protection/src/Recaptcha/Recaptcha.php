@@ -200,8 +200,10 @@ class Recaptcha {
 	private function should_enqueue_for_current_location(): bool {
 		$location = $this->current_smart_button_location();
 
-		$should_enqueue = null !== $location
+		$enabled_for_location = null !== $location
 			&& $this->settings_status->is_smart_button_enabled_for_location( $location );
+
+		$should_enqueue = $enabled_for_location || $this->has_protected_gateway_on_current_page();
 
 		/**
 		 * Filters whether reCAPTCHA assets and markup should be enqueued or
@@ -215,6 +217,26 @@ class Recaptcha {
 			$should_enqueue,
 			$location
 		);
+	}
+
+	/**
+	 * True when a reCAPTCHA-protected gateway (ACDC card fields, AXO, card button,
+	 * standard PayPal) is available on a checkout / order-pay / add-payment-method
+	 * page — surfaces whose availability is independent of the smart-button location.
+	 */
+	private function has_protected_gateway_on_current_page(): bool {
+		if ( ! is_checkout() && ! is_add_payment_method_page() ) {
+			return false;
+		}
+
+		$available = WC()->payment_gateways->get_available_payment_gateways();
+		foreach ( $this->payment_methods as $id ) {
+			if ( isset( $available[ $id ] ) ) {
+				return true;
+			}
+		}
+
+		return false;
 	}
 
 	public function intercept_paypal_ajax( array $request_data ): void {
