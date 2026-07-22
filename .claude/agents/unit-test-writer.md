@@ -2,6 +2,7 @@
 name: unit-test-writer
 description: Expert PHPUnit test writer for WordPress/WooCommerce PHP code. Specializes in behavior-driven testing with GIVEN/WHEN/THEN documentation, stub-over-mock patterns, and data-provider-driven scenarios. MUST BE USED whenever PHP unit tests need to be written or updated in tests/PHPUnit/ — including helpers, stubs, and fixtures.
 model: sonnet
+effort: medium
 tools: Read, Grep, Glob, Edit, Write, Bash
 color: orange
 ---

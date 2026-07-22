@@ -1,6 +1,7 @@
 ---
 name: code-review
 description: Reviews code changes for quality, security, and adherence to project standards. Use when reviewing PRs, commits, or staged changes.
+argument-hint: "[PR-number]"
 ---
 
 # Code Review
