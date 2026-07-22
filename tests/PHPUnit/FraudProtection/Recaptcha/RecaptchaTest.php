@@ -9,6 +9,7 @@ use Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\Assets\AssetGetter;
 use WooCommerce\PayPalCommerce\FraudProtection\PersistentCounter;
 use WooCommerce\PayPalCommerce\TestCase;
+use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\SettingsStatus;
 use function Brain\Monkey\Functions\expect;
 use function Brain\Monkey\Functions\when;
@@ -161,6 +162,90 @@ class RecaptchaTest extends TestCase {
 		expect( 'wp_enqueue_script' )->never();
 
 		$this->make_testee( $settings_status )->enqueue_scripts();
+	}
+
+	/**
+	 * GIVEN the smart-button location is disabled for checkout (no wallet button)
+	 * WHEN a reCAPTCHA-protected gateway (e.g. ACDC) is still available as a
+	 *      selectable WC payment gateway at checkout
+	 * THEN reCAPTCHA must still enqueue, since ACDC's availability is independent
+	 *      of the smart-button location setting.
+	 */
+	public function test_enqueue_scripts_runs_when_protected_gateway_available_despite_disabled_location(): void {
+		when( 'is_product' )->justReturn( false );
+		when( 'is_cart' )->justReturn( false );
+		when( 'is_checkout' )->justReturn( true );
+		when( 'has_block' )->justReturn( false );
+
+		$this->stub_available_gateways( array( CreditCardGateway::ID ) );
+
+		$settings_status = Mockery::mock( SettingsStatus::class );
+		$settings_status->shouldReceive( 'is_smart_button_enabled_for_location' )
+			->with( 'checkout' )
+			->andReturn( false );
+
+		expect( 'apply_filters' )
+			->once()
+			->with( 'woocommerce_paypal_payments_recaptcha_should_enqueue', true, 'checkout' )
+			->andReturn( true );
+		expect( 'wp_enqueue_script' )->twice();
+		expect( 'wp_localize_script' )->once();
+
+		$this->make_testee( $settings_status, array( CreditCardGateway::ID ) )->enqueue_scripts();
+	}
+
+	/**
+	 * GIVEN the smart-button location is disabled for checkout
+	 * WHEN no reCAPTCHA-protected gateway is available there either (e.g. only BACS)
+	 * THEN reCAPTCHA must not enqueue.
+	 */
+	public function test_enqueue_scripts_skips_at_checkout_when_no_protected_gateway_available(): void {
+		when( 'is_product' )->justReturn( false );
+		when( 'is_cart' )->justReturn( false );
+		when( 'is_checkout' )->justReturn( true );
+		when( 'has_block' )->justReturn( false );
+
+		$this->stub_available_gateways( array( 'bacs' ) );
+
+		$settings_status = Mockery::mock( SettingsStatus::class );
+		$settings_status->shouldReceive( 'is_smart_button_enabled_for_location' )
+			->with( 'checkout' )
+			->andReturn( false );
+
+		expect( 'apply_filters' )
+			->once()
+			->with( 'woocommerce_paypal_payments_recaptcha_should_enqueue', false, 'checkout' )
+			->andReturn( false );
+		expect( 'wp_enqueue_script' )->never();
+
+		$this->make_testee( $settings_status, array( CreditCardGateway::ID ) )->enqueue_scripts();
+	}
+
+	/**
+	 * GIVEN the current page is the My Account "Add payment method" page (no smart-button
+	 *       location applies there at all)
+	 * WHEN a reCAPTCHA-protected gateway is available there (e.g. AXO rendering can_render_dcc())
+	 * THEN reCAPTCHA must still enqueue.
+	 */
+	public function test_enqueue_scripts_runs_on_add_payment_method_page_when_protected_gateway_available(): void {
+		when( 'is_product' )->justReturn( false );
+		when( 'is_cart' )->justReturn( false );
+		when( 'is_checkout' )->justReturn( false );
+		when( 'is_add_payment_method_page' )->justReturn( true );
+
+		$this->stub_available_gateways( array( 'ppcp-axo-gateway' ) );
+
+		$settings_status = Mockery::mock( SettingsStatus::class );
+		$settings_status->shouldNotReceive( 'is_smart_button_enabled_for_location' );
+
+		expect( 'apply_filters' )
+			->once()
+			->with( 'woocommerce_paypal_payments_recaptcha_should_enqueue', true, null )
+			->andReturn( true );
+		expect( 'wp_enqueue_script' )->twice();
+		expect( 'wp_localize_script' )->once();
+
+		$this->make_testee( $settings_status, array( 'ppcp-axo-gateway' ) )->enqueue_scripts();
 	}
 
 	public function test_enqueue_scripts_checks_classic_checkout_location(): void {
