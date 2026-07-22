@@ -100,11 +100,11 @@ return array(
 		return class_exists( 'WC_Bookings' );
 	},
 
-	'compat.plugin-detector'                               => static function (): PluginDetector\PluginDetectorInterface {
+	'compat.plugin-detector'                               => static function (): PluginDetector\PluginDetector {
 		return new PluginDetector\PluginDetector();
 	},
 
-	'compat.product-customization-detector'                => static function ( ContainerInterface $container ): PluginDetector\ProductCustomizationDetectorInterface {
+	'compat.product-customization-detector'                => static function ( ContainerInterface $container ): PluginDetector\ProductCustomizationDetector {
 		return new PluginDetector\ProductCustomizationDetector(
 			$container->get( 'compat.plugin-detector' ),
 			$container->get( 'woocommerce.logger.woocommerce' )

@@ -14,7 +14,7 @@ use WooCommerce\PayPalCommerce\TestCase;
 class ProductCustomizationDetectorTest extends TestCase {
 
 	/**
-	 * @var PluginDetectorInterface|Mockery\MockInterface
+	 * @var PluginDetector|Mockery\MockInterface
 	 */
 	private $plugin_detector;
 
@@ -28,7 +28,7 @@ class ProductCustomizationDetectorTest extends TestCase {
 	public function setUp(): void {
 		parent::setUp();
 
-		$this->plugin_detector = Mockery::mock( PluginDetectorInterface::class );
+		$this->plugin_detector = Mockery::mock( PluginDetector::class );
 		$this->logger          = Mockery::mock( LoggerInterface::class );
 
 		$this->sut = new ProductCustomizationDetector( $this->plugin_detector, $this->logger );

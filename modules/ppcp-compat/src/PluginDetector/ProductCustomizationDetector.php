@@ -14,14 +14,14 @@ use Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\Compat\Exception\PluginApiChangedException;
 
 /**
- * Class ProductCustomizationDetector
+ * @see self::scan() for the plugins list.
  */
-class ProductCustomizationDetector implements ProductCustomizationDetectorInterface {
+class ProductCustomizationDetector {
 
 	/**
-	 * @var PluginDetectorInterface
+	 * @var PluginDetector
 	 */
-	private PluginDetectorInterface $plugin_detector;
+	private PluginDetector $plugin_detector;
 
 	/**
 	 * @var LoggerInterface
@@ -37,16 +37,18 @@ class ProductCustomizationDetector implements ProductCustomizationDetectorInterf
 	private ?array $active_plugins = null;
 
 	/**
-	 * @param PluginDetectorInterface $plugin_detector The plugin presence detector.
-	 * @param LoggerInterface         $logger The logger.
+	 * @param PluginDetector  $plugin_detector The plugin presence detector.
+	 * @param LoggerInterface $logger The logger.
 	 */
-	public function __construct( PluginDetectorInterface $plugin_detector, LoggerInterface $logger ) {
+	public function __construct( PluginDetector $plugin_detector, LoggerInterface $logger ) {
 		$this->plugin_detector = $plugin_detector;
 		$this->logger          = $logger;
 	}
 
 	/**
-	 * @inheritDoc
+	 * @param \WC_Product $product The product to check.
+	 * @return array<string, bool> List of plugins check was made for,
+	 *      boolean shows whether the plugin has customized the product.
 	 */
 	public function scan( \WC_Product $product ): array {
 		if ( null === $this->active_plugins ) {

@@ -10,12 +10,13 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\Compat\PluginDetector;
 
 /**
- * Class PluginDetector
+ * @see self::scan() for the plugins list.
  */
-class PluginDetector implements PluginDetectorInterface {
+class PluginDetector {
 
 	/**
-	 * @inheritDoc
+	 * @return array<string, bool> List of plugins check was made for,
+	 *      boolean shows whether the plugin is active
 	 */
 	public function scan(): array {
 		return array(
