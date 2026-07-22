@@ -12,11 +12,9 @@ use Throwable;
 use JsonException;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
-use WooCommerce\PayPalCommerce\ApiClient\Authentication\PayPalBearer;
-use WooCommerce\PayPalCommerce\ApiClient\Authentication\TokenRateLimiter;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\LoginSeller;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\Orders;
-use WooCommerce\PayPalCommerce\ApiClient\Helper\InMemoryCache;
+use WooCommerce\PayPalCommerce\ApiClient\Factory\PayPalBearerFactory;
 use WooCommerce\PayPalCommerce\Settings\Data\GeneralSettings;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\EnvironmentConfig;
 use WooCommerce\WooCommerce\Logging\Logger\NullLogger;
@@ -25,7 +23,6 @@ use WooCommerce\PayPalCommerce\Settings\DTO\OAuthConnectionDTO;
 use WooCommerce\PayPalCommerce\Webhooks\WebhookRegistrar;
 use WooCommerce\PayPalCommerce\Settings\Enum\SellerTypeEnum;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\ConnectionState;
-use WooCommerce\PayPalCommerce\Settings\Endpoint\CommonRestEndpoint;
 /**
  * Class that manages the connection to PayPal.
  */
@@ -66,11 +63,11 @@ class AuthenticationManager
      */
     private ConnectionState $connection_state;
     /**
-     * Internal REST service, to consume own REST handlers in a separate request.
+     * Builds bearers for explicit credentials.
      *
-     * @var InternalRestService
+     * @var PayPalBearerFactory
      */
-    private \WooCommerce\PayPalCommerce\Settings\Service\InternalRestService $rest_service;
+    private PayPalBearerFactory $bearer_factory;
     /**
      * Constructor.
      *
@@ -78,18 +75,18 @@ class AuthenticationManager
      * @param EnvironmentConfig<string>      $connection_host  API host for direct authentication.
      * @param EnvironmentConfig<LoginSeller> $login_endpoint   API handler to fetch merchant credentials.
      * @param ConnectionState                $connection_state Connection state manager.
-     * @param InternalRestService            $rest_service     Allows calling internal REST endpoints.
+     * @param PayPalBearerFactory            $bearer_factory   Builds bearers for explicit credentials.
      * @param ?LoggerInterface               $logger           Logging instance.
      *
      * phpcs:disable Squiz.Commenting.FunctionComment.IncorrectTypeHint
      */
-    public function __construct(GeneralSettings $common_settings, EnvironmentConfig $connection_host, EnvironmentConfig $login_endpoint, ConnectionState $connection_state, \WooCommerce\PayPalCommerce\Settings\Service\InternalRestService $rest_service, ?LoggerInterface $logger = null)
+    public function __construct(GeneralSettings $common_settings, EnvironmentConfig $connection_host, EnvironmentConfig $login_endpoint, ConnectionState $connection_state, PayPalBearerFactory $bearer_factory, ?LoggerInterface $logger = null)
     {
         $this->common_settings = $common_settings;
         $this->connection_host = $connection_host;
         $this->login_endpoint = $login_endpoint;
         $this->connection_state = $connection_state;
-        $this->rest_service = $rest_service;
+        $this->bearer_factory = $bearer_factory;
         $this->logger = $logger ?: new NullLogger();
     }
     /**
@@ -335,7 +332,9 @@ class AuthenticationManager
     private function request_payee(string $client_id, string $client_secret, bool $use_sandbox): array
     {
         $host = $this->connection_host->get_value($use_sandbox);
-        $bearer = new PayPalBearer(new InMemoryCache(), $host, $client_id, $client_secret, $this->logger, null, new TokenRateLimiter(new InMemoryCache(), $this->logger));
+        // The credentials being verified are non-empty, so the factory yields an
+        // authenticated bearer even though the merchant is not connected yet.
+        $bearer = $this->bearer_factory->create($host, $client_id, $client_secret);
         $orders = new Orders($host, $bearer, $this->logger);
         $request_body = array('intent' => 'CAPTURE', 'purchase_units' => array(array('amount' => array('currency_code' => 'USD', 'value' => 1.0))));
         try {
@@ -378,56 +377,6 @@ class AuthenticationManager
         return array('client_id' => (string) ($response->client_id ?? ''), 'client_secret' => (string) ($response->client_secret ?? ''), 'merchant_id' => (string) ($response->payer_id ?? ''));
     }
     /**
-     * Fetches additional details about the connected merchant from PayPal
-     * and stores them in the DB.
-     *
-     * This process only works after persisting basic connection details.
-     *
-     * @return void
-     */
-    private function enrich_merchant_details(): void
-    {
-        if (!$this->common_settings->is_merchant_connected()) {
-            return;
-        }
-        try {
-            $endpoint = CommonRestEndpoint::seller_account_route(\true);
-            $response = $this->rest_service->get_response($endpoint);
-            if (!$response['success']) {
-                $this->enrichment_failed('Server failed to provide data', $response);
-                return;
-            }
-            $details = $response['data'];
-        } catch (Throwable $exception) {
-            $this->enrichment_failed($exception->getMessage());
-            return;
-        }
-        if (!isset($details['country'])) {
-            $this->enrichment_failed('Missing country in merchant details');
-            return;
-        }
-        // Request the merchant details via a PayPal API request.
-        $connection = $this->common_settings->get_merchant_data();
-        // Enrich the connection details with additional details.
-        $connection->merchant_country = $details['country'];
-        // Persist the changes.
-        $this->common_settings->set_merchant_data($connection);
-        $this->common_settings->save();
-    }
-    /**
-     * When the `enrich_merchant_details()` call fails, this method might
-     * set up a cron task to retry the attempt after some time.
-     *
-     * @param string $reason  Reason for the failure, will be logged.
-     * @param mixed  $details Optional. Additional details to log.
-     * @return void
-     */
-    private function enrichment_failed(string $reason, $details = null): void
-    {
-        $this->logger->warning('Failed to enrich merchant details: ' . $reason, array('reason' => $reason, 'details' => $details));
-        // TODO: Schedule a cron task to retry the enrichment, e.g. with wp_schedule_single_event().
-    }
-    /**
      * Stores the provided details in the data model.
      *
      * @param MerchantConnectionDTO $connection Connection details to persist.
@@ -448,10 +397,10 @@ class AuthenticationManager
              * connections.
              */
             do_action('woocommerce_paypal_payments_flush_api_cache');
-            // At this point, we can use the PayPal API to get more details about the seller.
-            $this->enrich_merchant_details();
             /**
              * Broadcast that the plugin connected to a new PayPal merchant account.
+             * The `authenticated_merchant` handler resolves the merchant country
+             * and seller type via a direct (in-process) seller-status lookup.
              * This is the right time to initialize merchant relative flags for the
              * first time.
              */
