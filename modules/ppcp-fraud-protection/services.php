@@ -17,7 +17,7 @@ return array('fraud-protection.asset_getter' => static function (ContainerInterf
     assert($factory instanceof AssetGetterFactory);
     return $factory->for_module('ppcp-fraud-protection');
 }, 'fraud-protection.recaptcha' => static function (ContainerInterface $container): Recaptcha {
-    return new Recaptcha($container->get('fraud-protection.recaptcha.integration'), $container->get('fraud-protection.recaptcha.payment-methods'), $container->get('fraud-protection.asset_getter'), $container->get('ppcp.asset-version'), $container->get('woocommerce.logger.woocommerce'), $container->get('fraud-protection.recaptcha.rejection-counter'));
+    return new Recaptcha($container->get('fraud-protection.recaptcha.integration'), $container->get('fraud-protection.recaptcha.payment-methods'), $container->get('fraud-protection.asset_getter'), $container->get('ppcp.asset-version'), $container->get('woocommerce.logger.woocommerce'), $container->get('fraud-protection.recaptcha.rejection-counter'), $container->get('wcgateway.settings.status'));
 }, 'fraud-protection.recaptcha.integration' => static function (): RecaptchaIntegration {
     return new RecaptchaIntegration();
 }, 'fraud-protection.recaptcha.payment-methods' => static function (): array {
