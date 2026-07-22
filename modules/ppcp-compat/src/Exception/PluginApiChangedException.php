@@ -9,8 +9,8 @@ declare (strict_types=1);
 namespace WooCommerce\PayPalCommerce\Compat\Exception;
 
 /**
- * Class RuntimeException
+ * Thrown when an API method of a plugin doesn't exist although that plugin is active.
  */
-class RuntimeException extends \RuntimeException
+class PluginApiChangedException extends \RuntimeException
 {
 }

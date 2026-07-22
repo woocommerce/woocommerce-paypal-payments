@@ -10,16 +10,16 @@ declare (strict_types=1);
 namespace WooCommerce\PayPalCommerce\Compat\PluginDetector;
 
 use WooCommerce\PayPalCommerce\Vendor\Psr\Log\LoggerInterface;
-use WooCommerce\PayPalCommerce\Compat\Exception\RuntimeException;
+use WooCommerce\PayPalCommerce\Compat\Exception\PluginApiChangedException;
 /**
- * Class ProductCustomizationDetector
+ * @see self::scan() for the plugins list.
  */
-class ProductCustomizationDetector implements \WooCommerce\PayPalCommerce\Compat\PluginDetector\ProductCustomizationDetectorInterface
+class ProductCustomizationDetector
 {
     /**
-     * @var PluginDetectorInterface
+     * @var PluginDetector
      */
-    private \WooCommerce\PayPalCommerce\Compat\PluginDetector\PluginDetectorInterface $plugin_detector;
+    private \WooCommerce\PayPalCommerce\Compat\PluginDetector\PluginDetector $plugin_detector;
     /**
      * @var LoggerInterface
      */
@@ -32,16 +32,18 @@ class ProductCustomizationDetector implements \WooCommerce\PayPalCommerce\Compat
      */
     private ?array $active_plugins = null;
     /**
-     * @param PluginDetectorInterface $plugin_detector The plugin presence detector.
-     * @param LoggerInterface         $logger The logger.
+     * @param PluginDetector  $plugin_detector The plugin presence detector.
+     * @param LoggerInterface $logger The logger.
      */
-    public function __construct(\WooCommerce\PayPalCommerce\Compat\PluginDetector\PluginDetectorInterface $plugin_detector, LoggerInterface $logger)
+    public function __construct(\WooCommerce\PayPalCommerce\Compat\PluginDetector\PluginDetector $plugin_detector, LoggerInterface $logger)
     {
         $this->plugin_detector = $plugin_detector;
         $this->logger = $logger;
     }
     /**
-     * @inheritDoc
+     * @param \WC_Product $product The product to check.
+     * @return array<string, bool> List of plugins check was made for,
+     *      boolean shows whether the plugin has customized the product.
      */
     public function scan(\WC_Product $product): array
     {
@@ -60,7 +62,7 @@ class ProductCustomizationDetector implements \WooCommerce\PayPalCommerce\Compat
                 // Checks that read meta directly (min/max quantities, per-product shipping)
                 // have no class/method to assert against, so they stay unprotected here.
                 $result[$plugin] = (bool) call_user_func($check, $product);
-            } catch (RuntimeException $exception) {
+            } catch (PluginApiChangedException $exception) {
                 $this->logger->warning("Product customization check for \"{$plugin}\" failed: " . $exception->getMessage());
                 $result[$plugin] = \false;
             }
@@ -74,12 +76,12 @@ class ProductCustomizationDetector implements \WooCommerce\PayPalCommerce\Compat
      *
      * @param string $class The fully qualified class name.
      * @param string $method The method name.
-     * @throws RuntimeException If the class or method does not exist.
+     * @throws PluginApiChangedException If the class or method does not exist.
      */
     private function assert_method_exists(string $class, string $method): void
     {
         if (!method_exists($class, $method)) {
-            throw new RuntimeException("{$class}::{$method}() does not exist even though the plugin was detected as active. Its API may have changed.");
+            throw new PluginApiChangedException("{$class}::{$method}() does not exist even though the plugin was detected as active. Its API may have changed.");
         }
     }
     /**

@@ -49,9 +49,9 @@ return array('compat.ppec.mock-gateway' => static function ($container) {
     return function_exists('wc_nyp_init');
 }, 'compat.wc_bookings.is_supported_plugin_version_active' => function (): bool {
     return class_exists('WC_Bookings');
-}, 'compat.plugin-detector' => static function (): \WooCommerce\PayPalCommerce\Compat\PluginDetector\PluginDetectorInterface {
+}, 'compat.plugin-detector' => static function (): \WooCommerce\PayPalCommerce\Compat\PluginDetector\PluginDetector {
     return new \WooCommerce\PayPalCommerce\Compat\PluginDetector\PluginDetector();
-}, 'compat.product-customization-detector' => static function (ContainerInterface $container): \WooCommerce\PayPalCommerce\Compat\PluginDetector\ProductCustomizationDetectorInterface {
+}, 'compat.product-customization-detector' => static function (ContainerInterface $container): \WooCommerce\PayPalCommerce\Compat\PluginDetector\ProductCustomizationDetector {
     return new \WooCommerce\PayPalCommerce\Compat\PluginDetector\ProductCustomizationDetector($container->get('compat.plugin-detector'), $container->get('woocommerce.logger.woocommerce'));
 }, 'compat.asset_getter' => static function (ContainerInterface $container): AssetGetter {
     $factory = $container->get('assets.asset_getter_factory');
