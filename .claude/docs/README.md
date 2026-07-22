@@ -1,0 +1,145 @@
+# `.claude/` tooling
+
+Team reference for the custom Claude Code tooling in this repo: the slash-command **skills**, the
+**agents** they dispatch, the **hooks** that fire automatically, the auto-loaded **rules**, and the
+shared coding **standards**.
+
+> Claude tooling is shared via the repo.
+> On first use after pulling, Claude Code asks each teammate to approve the hooks (workspace trust).
+> The hook scripts need `jq`; without it, they degrade to no-ops rather than breaking.
+
+---
+
+## Typical workflows
+
+**Finishing your own change**
+
+1. Edit PHP. The hooks auto-run php-review and Claude applies cleanliness fixes.
+2. `/pr-readiness` for the readiness gate.
+3. `/describe-pr` to draft and (on approval) publish the PR description.
+
+**Reviewing a teammate's PR:** `/code-review <PR-number>`, then your manual review on top.
+
+**Writing tests:** the unit-test-writer agent owns `tests/PHPUnit/`; the test rule routes work to it
+automatically.
+
+
+---
+
+## Skills
+
+_Slash-commands that we manually invoke._
+
+> Claude Docs: https://code.claude.com/docs/en/skills
+
+### `/pr-readiness`
+
+Run on **your own** branch before opening a PR. Args: `[JIRA-ID] [base-branch]`, both optional.
+
+Dispatches the pr-readiness agent to check test coverage, docs, and code quality, then give a ready
+or not-ready verdict. Does not write the PR description.
+
+Source: [skills/pr-readiness/SKILL.md](../skills/pr-readiness/SKILL.md)
+
+### `/describe-pr`
+
+Run after `/pr-readiness`. Args: `[PR-number] [JIRA-ID]`, both optional.
+
+Drafts a reviewer-focused PR title and description, and updates the PR via `gh pr edit` only after
+you approve.
+
+Source: [skills/describe-pr/SKILL.md](../skills/describe-pr/SKILL.md)
+
+### `/code-review`
+
+Run on **someone else's** PR, before your manual review. Arg: `[PR-number]`.
+
+Automated first pass against the shared quality standard, plus bug and test notes. Writes a report
+to `./temp/code-reviews`.
+
+Source: [skills/code-review/SKILL.md](../skills/code-review/SKILL.md)
+
+---
+
+## Agents
+
+_Automatically invoked by skills or hooks; can also be manually dispatched ("Use agent X for TASK")._
+
+> Claude Docs: https://code.claude.com/docs/en/sub-agents
+
+### `php-review`
+
+Haiku, read-only. Dispatched by the Stop hook or manually.
+
+Reviews the PHP lines you changed this session for cleanliness (function focus, comment noise,
+coupling, over-engineering) and returns fixes. Never edits.
+
+Source: [agents/php-review.md](../agents/php-review.md)
+
+### `pr-readiness`
+
+Sonnet, read-only. Dispatched only by the `/pr-readiness` skill.
+
+Audits the branch diff. Shares its name with the skill on purpose: the skill gathers context, the
+agent reviews.
+
+Source: [agents/pr-readiness.md](../agents/pr-readiness.md)
+
+### `unit-test-writer`
+
+Writes and updates PHPUnit tests in `tests/PHPUnit/`, following the project's conventions.
+Dispatched manually or via the test rule below.
+
+Source: [agents/unit-test-writer.md](../agents/unit-test-writer.md)
+
+---
+
+## Hooks
+
+_Fire automatically when Claude performs certain actions._
+
+> Claude Docs: https://code.claude.com/docs/en/hooks  
+> Registered in [settings.json](../settings.json)
+
+### `php-review-track.sh`
+
+PostToolUse (Edit / Write). Records which PHP files you touch this session, so only those become
+review candidates. Pre-existing files are left alone.
+
+Source: [hooks/php-review-track.sh](../hooks/php-review-track.sh)
+
+### `php-review-stop.sh`
+
+Stop. When your turn settles, asks Claude to review each touched PHP file whose content changed
+since its last review. Each state is reviewed once, so the loop terminates.
+
+Source: [hooks/php-review-stop.sh](../hooks/php-review-stop.sh)
+
+---
+
+## Rules
+
+_Autoloaded by Claude, passive context._
+
+> Claude Docs:
+> [https://code.claude.com/docs/en/memory](https://code.claude.com/docs/en/memory#organize-rules-with-claude/rules/)
+
+### `unit-test-conventions.md`
+
+Loads on first read of a `tests/PHPUnit/**/*.php` file. Routes all test writing through the
+unit-test-writer agent instead of inline test code.
+
+Source: [rules/unit-test-conventions.md](../rules/unit-test-conventions.md)
+
+---
+
+## Standards
+
+_Our conventions, not a regular Claude Code folder._
+
+### code-quality.md
+
+The shared code-quality rules. Single source of truth for `/code-review` and `/pr-readiness`. The
+php-review agent keeps a tuned subset inline and does not read this file.
+
+Source: [code-quality.md](./code-quality.md)
