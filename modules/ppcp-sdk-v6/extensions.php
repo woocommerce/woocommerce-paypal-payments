@@ -17,11 +17,15 @@ use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 return array(
 	/**
 	 * Both SDKs claim the window.paypal global, so the v5 smart-button
-	 * script must not load on pages where the v6 SDK loads. On all other
-	 * pages (block cart/checkout, pay-now — out of this module's scope)
-	 * the v5 stack keeps running: the blocks, applepay, googlepay and
-	 * axo modules consume this service's script_data() and would break
-	 * under a blanket disable.
+	 * script must not load on pages where the v6 SDK loads. On pages v6
+	 * owns (classic product/cart/checkout, block cart/checkout) every
+	 * v5 surface consuming this service's script_data() goes dark,
+	 * including block card fields and the regular block method: that is
+	 * accepted migration-state breakage until their own stories migrate
+	 * them (PCP-5781, PCP-5782). On the pages v6 does not own (pay-now,
+	 * add-payment-method) the v5 stack keeps running: the blocks,
+	 * applepay, googlepay and axo modules would break under a blanket
+	 * disable.
 	 *
 	 * MIGRATION-PHASE ONLY: this per-page handoff exists so the site and
 	 * the test suites stay fully functional while the v6 migration

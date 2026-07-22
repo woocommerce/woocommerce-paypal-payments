@@ -60,7 +60,11 @@ class SdkV6Manager {
 	 * @return void
 	 */
 	public function enqueue(): void {
-		if ( ! $this->should_load_on_current_page() ) {
+		// The classic bootstrap renders into PHP-printed wrappers that do
+		// not exist on block pages; those are served by the block payment
+		// method script instead. v5 is still suppressed there (v6 owns the
+		// page) via should_load_on_current_page().
+		if ( ! $this->should_load_on_current_page() || $this->is_block_context() ) {
 			return;
 		}
 
@@ -134,11 +138,14 @@ class SdkV6Manager {
 	 * widget can appear anywhere). The bootstrap only loads the SDK once
 	 * a button wrapper exists in the DOM.
 	 *
-	 * Also used to scope the v5 suppression: v5 must only be disabled on
-	 * pages where v6 loads (both SDKs claim window.paypal), and keep
-	 * running everywhere else (block cart/checkout, pay-now). That
-	 * scoping is migration-phase only — see extensions.php; at release
-	 * the suppression becomes unconditional and only the merchant
+	 * Also used to scope the v5 suppression: v5 is disabled on every
+	 * page v6 owns (both SDKs claim window.paypal), including block
+	 * cart/checkout, where not-yet-migrated v5 surfaces (block card
+	 * fields, the regular block method) intentionally go dark until
+	 * their own migration stories land. v5 keeps running on the pages
+	 * v6 does not own (pay-now, add-payment-method). That scoping is
+	 * migration-phase only — see extensions.php; at release the
+	 * suppression becomes unconditional and only the merchant
 	 * location-settings gating in this method remains meaningful.
 	 *
 	 * @return bool
@@ -282,17 +289,35 @@ class SdkV6Manager {
 	 *
 	 * Resolves through the shared Context helper (which handles
 	 * classic-shortcode block pages) and narrows to the contexts this
-	 * module supports; block cart/checkout and pay-now are out of scope.
+	 * module supports: classic product/cart/checkout and block
+	 * cart/checkout. pay-now and the block editor stay out of scope.
 	 *
 	 * @return string
 	 */
 	private function get_page_context(): string {
 		$context = $this->context->context();
 
-		if ( in_array( $context, array( 'product', 'cart', 'checkout' ), true ) ) {
+		if ( in_array(
+			$context,
+			array( 'product', 'cart', 'checkout', 'cart-block', 'checkout-block' ),
+			true
+		) ) {
 			return $context;
 		}
 
 		return '';
+	}
+
+	/**
+	 * Whether the current page is a WooCommerce Blocks (React) page.
+	 *
+	 * @return bool
+	 */
+	private function is_block_context(): bool {
+		return in_array(
+			$this->get_page_context(),
+			array( 'cart-block', 'checkout-block' ),
+			true
+		);
 	}
 }
