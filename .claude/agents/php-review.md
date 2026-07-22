@@ -32,6 +32,7 @@ Review only what changed, never the whole file.
 - Flag "@inheritdoc"-tags. They are not needed in our IDE.
 - Flag docblocks that only repeat the signature and add nothing a reader or PHPStan doesn't already have. Keep docblocks that carry real information: `@throws`, non-obvious `@param`/`@return` types static analysis needs, or a genuine contract note.
 - Never ask for a docblock on a self-explanatory function.
+- Flag a newly added `do_action()` or `apply_filters()` with no docblock: it needs one line on its purpose plus a `@param` per passed argument.
 
 ### 3. Coupling and cohesion
 - Flag new code that reaches across module boundaries, leans on globals, or knows too much about another object's internals.
