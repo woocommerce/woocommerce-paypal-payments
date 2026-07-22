@@ -122,7 +122,6 @@ return array(
 			$container->get( 'wcgateway.settings.admin-settings-enabled' ),
 			$container->get( 'wcgateway.endpoint.capture-paypal-payment' ),
 			$container->get( 'api.endpoint.order' ),
-			$container->get( 'api.prefix' ),
 			$container->get( 'button.helper.context' )
 		);
 	},

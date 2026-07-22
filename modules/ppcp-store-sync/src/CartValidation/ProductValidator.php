@@ -14,14 +14,14 @@ use WooCommerce\PayPalCommerce\StoreSync\Enums\Priority;
 use WooCommerce\PayPalCommerce\StoreSync\StoreData\StorePayPalCart;
 use WooCommerce\PayPalCommerce\StoreSync\Validation\Resolution\ResolutionOption;
 use WooCommerce\PayPalCommerce\StoreSync\Validation\ValidationIssue;
-use WooCommerce\PayPalCommerce\StoreSync\Config\IngestionConfiguration;
+use WooCommerce\PayPalCommerce\StoreSync\Ingestion\ProductFilter;
 use WooCommerce\PayPalCommerce\StoreSync\StoreData\StoreCartItem;
 
 class ProductValidator implements ValidatorInterface {
-	private IngestionConfiguration $configuration;
+	private ProductFilter $product_filter;
 
-	public function __construct( IngestionConfiguration $configuration ) {
-		$this->configuration = $configuration;
+	public function __construct( ProductFilter $product_filter ) {
+		$this->product_filter = $product_filter;
 	}
 
 	public function validate( StorePayPalCart $store_cart ): ?array {
@@ -56,28 +56,47 @@ class ProductValidator implements ValidatorInterface {
 				->add_resolution( ResolutionOption::create_suggest_alternative() );
 		}
 
-		$filter_args = $this->configuration->get_valid_product_filters();
-
-		$support_downloads = (bool) ( $filter_args['downloadable'] ?? false );
-		$valid_status      = (array) ( $filter_args['status'] ?? array() );
-		$valid_types       = (array) ( $filter_args['type'] ?? array() );
-
-		if ( ! $support_downloads && $product->is_downloadable() ) {
-			return ValidationIssue::create_invalid_product( "Downloadable product '{$identifier}' is not supported" )
+		$violation = $this->product_filter->criteria_violation( $product );
+		if ( null !== $violation ) {
+			return ValidationIssue::create_invalid_product( $this->criteria_message( $violation, $identifier ) )
 				->user_message( "'{$product_name}' cannot be purchased at this time" )
 				->for_field( $field );
 		}
-		if ( ! $product->is_type( $valid_types ) ) {
-			return ValidationIssue::create_invalid_product( "Product '{$identifier}' is not supported (unsupported product type)" )
+
+		if ( ! $this->product_filter->passes_exclusion_filter( $product ) ) {
+			// Additive write-through: heal the ingestion feed faster. Never release here.
+			$this->product_filter->mark_processed( $product );
+
+			return ValidationIssue::create_invalid_product( "Product '{$identifier}' is not supported" )
 				->user_message( "'{$product_name}' cannot be purchased at this time" )
-				->for_field( $field );
-		}
-		if ( ! in_array( $product->get_status(), $valid_status, true ) ) {
-			return ValidationIssue::create_invalid_product( "Product '{$identifier}' is not supported (product has an unsupported status)" )
-				->user_message( "'{$product_name}' cannot be purchased at this time" )
-				->for_field( $field );
+				->for_field( $field )
+				->add_resolution(
+					ResolutionOption::create_remove_item()
+						->label( 'Remove from cart' )
+						->priority( Priority::HIGH )
+				);
 		}
 
 		return null;
+	}
+
+	/**
+	 * Maps a coarse-criteria violation slug to its developer-facing message.
+	 *
+	 * @param string $violation  One of 'downloadable' | 'type' | 'status'.
+	 * @param string $identifier The cart item identifier.
+	 */
+	private function criteria_message( string $violation, string $identifier ): string {
+		switch ( $violation ) {
+			case 'downloadable':
+				return "Downloadable product '{$identifier}' is not supported";
+
+			case 'type':
+				return "Product '{$identifier}' is not supported (unsupported product type)";
+
+			case 'status':
+			default:
+				return "Product '{$identifier}' is not supported (product has an unsupported status)";
+		}
 	}
 }

@@ -1267,7 +1267,7 @@ class OrderEndpointTest extends TestCase
         $capture->shouldReceive('fraud_processor_response')->once()->andReturn($fraud);
 
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessageMatches('/9500: Suspected Fraud/');
+        $this->expectExceptionMessageMatches('/your bank was unable to approve this transaction/');
         $testee->capture($orderToCapture);
     }
 

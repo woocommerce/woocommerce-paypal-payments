@@ -46,7 +46,10 @@ test.describe( () => {
 	} );
 } );
 
-// Intent Authorized
+/**
+ * Negative fee snippet
+ */
+
 test.describe( () => {
 	test.beforeAll( async ( { requestUtils } ) => {
 		await requestUtils.activatePlugin( negative12FeePlugin.slug );
@@ -55,8 +58,8 @@ test.describe( () => {
 	for ( const testOrder of puiClassicCheckoutNegativeFee ) {
 		transactionsOnClassicCheckout( testOrder );
 	}
-	
-	test.beforeAll( async ( { requestUtils } ) => {
+
+	test.afterAll( async ( { requestUtils } ) => {
 		await requestUtils.deactivatePlugin( negative12FeePlugin.slug );
 	} );
 } );

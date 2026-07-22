@@ -43,9 +43,11 @@ export class PcpOverview extends PcpAdminPage {
 			.filter( { hasText: featureName } )
 			.getByRole( 'button', { name: 'Configure' } );
 
-	// Locators — Notices (WordPress snackbar rendered by WooCommerce admin layout)
 	successNotice = ( text: string ) =>
-		this.page.locator( '.components-snackbar' ).filter( { hasText: text } );
+		this.page
+			// .getByTestId( 'snackbar' )
+			.locator( '.ppcp-r-notifications .components-snackbar' )
+			.filter( { hasText: text } );
 
 	// Actions
 

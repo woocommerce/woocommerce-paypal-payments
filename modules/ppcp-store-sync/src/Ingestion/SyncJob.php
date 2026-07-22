@@ -24,13 +24,15 @@ class SyncJob {
 	private string $api_endpoint;
 	private string $merchant_store_url;
 	private ProductManager $product_manager;
+	private ProductFilter $product_filter;
 
 	public function __construct(
 		string $api_endpoint,
 		string $merchant_store_url,
 		array $product_ids,
 		LoggerInterface $logger,
-		ProductManager $product_manager
+		ProductManager $product_manager,
+		ProductFilter $product_filter
 	) {
 
 		$this->api_endpoint       = $api_endpoint;
@@ -39,6 +41,7 @@ class SyncJob {
 		$this->logger             = $logger;
 		$this->batch_id           = wp_generate_uuid4();
 		$this->product_manager    = $product_manager;
+		$this->product_filter     = $product_filter;
 	}
 
 	/**
@@ -55,7 +58,8 @@ class SyncJob {
 	 */
 	public function execute(): void {
 		$this->logger->info(
-			sprintf( 'Agentic Sync Job %s: Started', $this->batch_id )
+			'[Sync] Started',
+			$this->build_log_context()
 		);
 
 		// Transform products into DTOs.
@@ -67,9 +71,13 @@ class SyncJob {
 
 		$products = $payload_container->get_products();
 
+		// Drop entries the webhook would reject for missing data; park their products.
+		$products = $this->drop_incomplete_products( $products );
+
 		if ( empty( $products ) ) {
 			$this->logger->info(
-				sprintf( 'Agentic Sync Job %s: No products', $this->batch_id )
+				'[Sync] No products',
+				$this->build_log_context()
 			);
 
 			$this->fire_completed_action( 'empty', 0, 0, 0 );
@@ -81,7 +89,7 @@ class SyncJob {
 		$body = array(
 			'merchant_url' => $this->merchant_store_url,
 			'products'     => array_map(
-				static fn ( ProductDTO $product ): array => $product->to_array(),
+				static fn( ProductDTO $product ): array => $product->to_array(),
 				$products
 			),
 		);
@@ -98,7 +106,7 @@ class SyncJob {
 			)
 		);
 
-		$this->logger->debug( "Start Sync {$this->batch_id}...", $body );
+		$this->logger->debug( '[Sync] Started...', $this->build_log_context( $body ) );
 
 		if ( is_wp_error( $response ) ) {
 			// Log the error message and throw an Exception.
@@ -109,7 +117,7 @@ class SyncJob {
 		$response_body = wp_remote_retrieve_body( $response );
 
 		if ( $status_code >= 200 && $status_code < 422 ) {
-			$this->handle_successful_response( $response_body );
+			$this->handle_successful_response( $response_body, $products );
 
 			return;
 		}
@@ -118,15 +126,68 @@ class SyncJob {
 		$this->handle_api_error( $this->product_ids, "HTTP {$status_code}: {$response_body}" );
 	}
 
+	private function drop_incomplete_products( array $products ): array {
+		$complete = array();
+
+		foreach ( $products as $product ) {
+			$data = $product->to_array();
+
+			if ( $this->has_complete_sync_data( $data ) ) {
+				$complete[] = $product;
+				continue;
+			}
+
+			// The item_group_id is always a WC_Product, even for variants.
+			$entry_id = (int) $data['item_group_id'];
+
+			if ( in_array( $entry_id, $this->product_ids, true ) ) {
+				$this->product_ids = array_values(
+					array_diff( $this->product_ids, array( $entry_id ) )
+				);
+
+				$wc_product = wc_get_product( $entry_id );
+				if ( $wc_product ) {
+					$this->product_filter->mark_processed( $wc_product, 'Incomplete payload' );
+				}
+			}
+		}
+
+		return $complete;
+	}
+
+	private function has_complete_sync_data( array $data ): bool {
+		$required_fields = array(
+			'id',
+			'item_group_id',
+			'title',
+			'link',
+			'image_link',
+			'description',
+			'price',
+			'availability',
+			'merchantStoreUrl',
+		);
+
+		foreach ( $required_fields as $field ) {
+			if ( '' === ( $data[ $field ] ?? '' ) ) {
+				return false;
+			}
+		}
+
+		return true;
+	}
+
 	/**
 	 * Handle successful API response.
 	 *
 	 * Parses the response to check for individual product validation errors,
 	 * marks products accordingly, and logs the result.
 	 *
-	 * @param string $response_body The API response body.
+	 * @param string       $response_body    The API response body.
+	 * @param ProductDTO[] $payload_products The product entries sent in the request, in
+	 *                                       payload order (used to resolve per-item errors).
 	 */
-	private function handle_successful_response( string $response_body ): void {
+	private function handle_successful_response( string $response_body, array $payload_products ): void {
 		// First, mark all products as synced to avoid re-syncing them in the next batch.
 		$this->mark_products_synced( $this->product_ids );
 
@@ -136,11 +197,10 @@ class SyncJob {
 
 			$this->logger->info(
 				sprintf(
-					'Agentic Sync Job %s: Successfully synced %d products',
-					$this->batch_id,
+					'[Sync] Successfully synced %d products',
 					count( $this->product_ids )
 				),
-				$response_data
+				$this->build_log_context( $response_data )
 			);
 
 			$contains_errors = false === ( $response_data['success'] ?? false );
@@ -161,7 +221,7 @@ class SyncJob {
 		$validation_errors = array();
 
 		if ( $contains_errors && $error_message ) {
-			$validation_errors = $this->extract_product_errors( $error_message );
+			$validation_errors = $this->extract_product_errors( $error_message, $payload_products );
 
 			$this->mark_products_by_validation_result( $validation_errors );
 		}
@@ -179,10 +239,12 @@ class SyncJob {
 	 * Parses error messages like "data/products/0/image_link must pass..." to
 	 * identify which products in the batch actually failed validation.
 	 *
-	 * @param string $error_message The error message to parse.
+	 * @param string       $error_message    The error message to parse.
+	 * @param ProductDTO[] $payload_products The product entries sent in the request, in payload
+	 *                                       order.
 	 * @return array Array of product IDs (keys) and the relevant validation error (values).
 	 */
-	private function extract_product_errors( string $error_message ): array {
+	private function extract_product_errors( string $error_message, array $payload_products ): array {
 		$errors = array();
 
 		// Pattern: data/products/{index} followed by error text until comma or end.
@@ -195,11 +257,13 @@ class SyncJob {
 
 		foreach ( $matches as $match ) {
 			$index = (int) $match[1];
-			$id    = $this->product_ids[ $index ] ?? null;
+			$entry = $payload_products[ $index ] ?? null;
 
-			if ( is_null( $id ) ) {
+			if ( null === $entry ) {
 				continue;
 			}
+
+			$id            = (int) $entry->to_array()['item_group_id'];
 			$errors[ $id ] = trim( $match[2] );
 		}
 
@@ -216,11 +280,8 @@ class SyncJob {
 	 */
 	private function mark_products_by_validation_result( array $validation_errors ): void {
 		$this->logger->warning(
-			sprintf(
-				'Agentic Sync Job %s: Validation errors',
-				$this->batch_id
-			),
-			$validation_errors
+			'[Sync] Validation errors',
+			$this->build_log_context( $validation_errors )
 		);
 
 		foreach ( $validation_errors as $product_id => $error_message ) {
@@ -232,8 +293,8 @@ class SyncJob {
 	 * Handle API or network errors by logging and throwing exception for retry.
 	 *
 	 * This method handles actual API failures (not validation errors) that should
-	 * trigger retry logic. Products are marked with error metadata, and an exception
-	 * is thrown to signal Action Scheduler to retry.
+	 * trigger retry logic. The error is logged and an exception is thrown to signal
+	 * Action Scheduler to retry; products are left unmarked so they are retried.
 	 *
 	 * @param array  $product_ids   Product IDs that failed to sync.
 	 * @param string $error_message The error message.
@@ -241,23 +302,14 @@ class SyncJob {
 	 */
 	private function handle_api_error( array $product_ids, string $error_message ): void {
 		$this->logger->warning(
-			sprintf( 'Agentic Sync Job %s: API Error - %s', $this->batch_id, $error_message ),
-			array(
-				'product_count' => count( $product_ids ),
-				'product_ids'   => $product_ids,
+			sprintf( '[Sync] API Error - %s', $error_message ),
+			$this->build_log_context(
+				array(
+					'product_count' => count( $product_ids ),
+					'product_ids'   => $product_ids,
+				)
 			)
 		);
-
-		foreach ( $product_ids as $product_id ) {
-			$product = wc_get_product( $product_id );
-
-			if ( ! $product ) {
-				continue;
-			}
-
-			$product->update_meta_data( '_ppcp_agentic_sync_error', $error_message );
-			$product->save_meta_data();
-		}
 
 		$pushed = count( $product_ids );
 		$this->fire_completed_action( 'api_error', $pushed, 0, $pushed, $error_message );
@@ -300,17 +352,14 @@ class SyncJob {
 			return;
 		}
 
-		$timestamp = current_time( 'mysql' );
-		$product->update_meta_data( '_ppcp_agentic_last_sync', $timestamp );
-		$product->delete_meta_data( '_ppcp_agentic_sync_error' );
-		$product->save_meta_data();
+		$this->product_filter->mark_processed( $product );
 	}
 
 	/**
 	 * Mark a single product with validation error.
 	 *
-	 * Products with validation errors are still considered "synced" (the sync
-	 * attempt was made), but store the validation error for merchant visibility.
+	 * Products with validation errors are still considered "processed" (the sync
+	 * attempt was made); the validation error is routed to the log via mark_processed().
 	 *
 	 * @param int    $product_id    Product ID.
 	 * @param string $error_message Validation error message.
@@ -322,10 +371,7 @@ class SyncJob {
 			return;
 		}
 
-		$timestamp = current_time( 'mysql' );
-		$product->update_meta_data( '_ppcp_agentic_last_sync', $timestamp );
-		$product->update_meta_data( '_ppcp_agentic_sync_error', $error_message );
-		$product->save_meta_data();
+		$this->product_filter->mark_processed( $product, $error_message );
 	}
 
 	/**
@@ -337,5 +383,23 @@ class SyncJob {
 		foreach ( $product_ids as $product_id ) {
 			$this->mark_product_synced( $product_id );
 		}
+	}
+
+	/**
+	 * @param mixed $context The log data - an array or any other value to log.
+	 * @return array
+	 */
+	private function build_log_context( $context = array() ): array {
+		$log_context = array( 'job' => $this->batch_id );
+
+		if ( ! is_array( $context ) ) {
+			if ( null === $context ) {
+				$context = array();
+			} else {
+				$context = array( 'raw' => $context );
+			}
+		}
+
+		return array_merge( $log_context, $context );
 	}
 }

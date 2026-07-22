@@ -2,7 +2,7 @@ import { __, sprintf } from '@wordpress/i18n';
 
 import SettingsBlock from '@ppcp-settings/Components/ReusableComponents/SettingsBlock';
 import { ControlToggleButton } from '@ppcp-settings/Components/ReusableComponents/Controls';
-import { SettingsHooks } from '@ppcp-settings/data';
+import { SettingsHooks, PaymentHooks } from '@ppcp-settings/data';
 import { useMerchantInfo } from '@ppcp-settings/data/common/hooks';
 
 const SavePaymentMethods = ( { ownBrandOnly } ) => {
@@ -14,6 +14,27 @@ const SavePaymentMethods = ( { ownBrandOnly } ) => {
 	} = SettingsHooks.useSettings();
 
 	const { features } = useMerchantInfo();
+
+	const { isReady, payLaterDependsOnVaulting } =
+		PaymentHooks.usePayLaterVaultingDependency();
+
+	// Until the payment data is loaded, assume the default behavior
+	// (vaulting disables Pay Later).
+	const vaultingDisablesPayLater = ! isReady || payLaterDependsOnVaulting;
+
+	const savePaypalAndVenmoDescription = vaultingDisablesPayLater
+		? sprintf(
+				/* translators: 1: URL to Pay Later documentation */
+				__(
+					'Securely store your customers\' PayPal accounts for a seamless checkout experience. <br />This will disable the <a target="_blank" rel="noreferrer" href="%1$s">Pay Later</a> payment method on your site.',
+					'woocommerce-paypal-payments'
+				),
+				'https://woocommerce.com/document/woocommerce-paypal-payments/#pay-later'
+		  )
+		: __(
+				"Securely store your customers' PayPal accounts for a seamless checkout experience.",
+				'woocommerce-paypal-payments'
+		  );
 
 	if ( ! features.save_paypal_and_venmo.enabled ) {
 		return null;
@@ -37,14 +58,7 @@ const SavePaymentMethods = ( { ownBrandOnly } ) => {
 					'Save PayPal and Venmo',
 					'woocommerce-paypal-payments'
 				) }
-				description={ sprintf(
-					/* translators: 1: URL to Pay Later documentation */
-					__(
-						'Securely store your customers\' PayPal accounts for a seamless checkout experience. <br />This will disable the <a target="_blank" rel="noreferrer" href="%1$s">Pay Later</a> payment method on your site.',
-						'woocommerce-paypal-payments'
-					),
-					'https://woocommerce.com/document/woocommerce-paypal-payments/#pay-later'
-				) }
+				description={ savePaypalAndVenmoDescription }
 				value={
 					features.save_paypal_and_venmo.enabled
 						? savePaypalAndVenmo
