@@ -26,6 +26,7 @@ class IngestionManager {
 	private MerchantMetadataProvider $metadata_provider;
 	private LoggerInterface $logger;
 	private ProductManager $product_manager;
+	private ProductFilter $product_filter;
 
 	public function __construct(
 		IngestionConfiguration $configuration,
@@ -33,7 +34,8 @@ class IngestionManager {
 		AgenticWebhookConfiguration $webhook_urls,
 		MerchantMetadataProvider $metadata_provider,
 		LoggerInterface $logger,
-		ProductManager $product_manager
+		ProductManager $product_manager,
+		ProductFilter $product_filter
 	) {
 
 		$this->configuration     = $configuration;
@@ -42,6 +44,7 @@ class IngestionManager {
 		$this->metadata_provider = $metadata_provider;
 		$this->logger            = $logger;
 		$this->product_manager   = $product_manager;
+		$this->product_filter    = $product_filter;
 	}
 
 	/**
@@ -62,6 +65,12 @@ class IngestionManager {
 		// Handle re-sync on product update.
 		add_action( 'woocommerce_update_product', array( $this, 'mark_product_for_sync' ) );
 		add_action( 'woocommerce_product_set_stock', array( $this, 'mark_product_for_sync' ) );
+
+		// Public fast path: release every parked product for immediate re-evaluation.
+		add_action(
+			'woocommerce_paypal_payments_store_sync_invalidate_eligibility',
+			array( $this->product_filter, 'invalidate_all' )
+		);
 	}
 
 	/**
@@ -105,7 +114,9 @@ class IngestionManager {
 		$product_ids = $this->batch_provider->get_batch();
 
 		if ( empty( $product_ids ) ) {
-			return; // Nothing to sync.
+			$this->logger->info( '[Sync] Empty batch - no products need syncing' );
+
+			return;
 		}
 
 		$sync_job = $this->create_new_sync_job( $product_ids );
@@ -125,8 +136,8 @@ class IngestionManager {
 			return;
 		}
 
-		$product->delete_meta_data( '_ppcp_agentic_last_sync' );
-		$product->save_meta_data();
+		// An edit may change eligibility or completeness: re-evaluate at first priority.
+		$this->product_filter->release( $product );
 	}
 
 	/**
@@ -143,7 +154,8 @@ class IngestionManager {
 			$metadata->store_url,
 			$product_ids,
 			$this->logger,
-			$this->product_manager
+			$this->product_manager,
+			$this->product_filter
 		);
 	}
 }
