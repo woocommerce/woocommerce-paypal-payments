@@ -11,7 +11,7 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\Compat\PluginDetector;
 
 use Psr\Log\LoggerInterface;
-use WooCommerce\PayPalCommerce\Compat\Exception\RuntimeException;
+use WooCommerce\PayPalCommerce\Compat\Exception\PluginApiChangedException;
 
 /**
  * Class ProductCustomizationDetector
@@ -76,7 +76,7 @@ class ProductCustomizationDetector implements ProductCustomizationDetectorInterf
 				// Checks that read meta directly (min/max quantities, per-product shipping)
 				// have no class/method to assert against, so they stay unprotected here.
 				$result[ $plugin ] = (bool) call_user_func( $check, $product );
-			} catch ( RuntimeException $exception ) {
+			} catch ( PluginApiChangedException $exception ) {
 				$this->logger->warning( "Product customization check for \"{$plugin}\" failed: " . $exception->getMessage() );
 				$result[ $plugin ] = false;
 			}
@@ -92,11 +92,11 @@ class ProductCustomizationDetector implements ProductCustomizationDetectorInterf
 	 *
 	 * @param string $class The fully qualified class name.
 	 * @param string $method The method name.
-	 * @throws RuntimeException If the class or method does not exist.
+	 * @throws PluginApiChangedException If the class or method does not exist.
 	 */
 	private function assert_method_exists( string $class, string $method ): void {
 		if ( ! method_exists( $class, $method ) ) {
-			throw new RuntimeException(
+			throw new PluginApiChangedException(
 				"{$class}::{$method}() does not exist even though the plugin was detected as active. Its API may have changed."
 			);
 		}
