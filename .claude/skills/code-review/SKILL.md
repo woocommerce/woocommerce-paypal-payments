@@ -19,7 +19,7 @@ When invoked, perform a thorough code review following these steps:
 
 - Read the PR description and comments for context
 - For each file with changes, evaluate:
-  - Code Quality: see [code-quality.md](code-quality.md)
+  - Code Quality: see [code-quality.md](../../docs/code-quality.md)
   - Check if there is any bug in the changes of the PR
   - Testing Considerations
 

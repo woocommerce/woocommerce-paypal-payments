@@ -1,5 +1,7 @@
 # Code Quality
 
+Shared code-quality rules for Claude skills and agents this repo. Only the `php-review` agent keeps a tuned, line-level subset of these rules inline by design and doesn't read this file.
+
 ## Table of Contents
 
 - [Design Principles](#design-principles)

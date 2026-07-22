@@ -10,6 +10,8 @@ permissionMode: manual
 
 Review recently changed PHP for **code cleanliness** - the structural quality choices a linter cannot catch. Only read files and report findings, never modify files.
 
+These checks are the line-level, per-edit subset of the repo's shared quality rules in `.claude/docs/code-quality.md`. They are tuned and kept inline here on purpose - do not read that file; apply the rules below as written.
+
 ## Scope: changed lines only
 
 Review only what changed, never the whole file.
