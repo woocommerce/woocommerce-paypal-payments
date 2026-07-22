@@ -92,6 +92,13 @@ Dispatched manually or via the test rule below.
 
 Source: [agents/unit-test-writer.md](../agents/unit-test-writer.md)
 
+### `js-unit-test-writer`
+
+Writes and updates Jest tests (the colocated `*.test.js` files next to module `resources/js`
+sources), following the existing JS suite's conventions. Dispatched manually.
+
+Source: [agents/js-unit-test-writer.md](../agents/js-unit-test-writer.md)
+
 ---
 
 ## Hooks
@@ -130,6 +137,13 @@ Loads on first read of a `tests/PHPUnit/**/*.php` file. Routes all test writing 
 unit-test-writer agent instead of inline test code.
 
 Source: [rules/unit-test-conventions.md](../rules/unit-test-conventions.md)
+
+### `js-test-conventions.md`
+
+Loads on first read of a `modules/**/*.test.js` file. Routes all JS test writing through the
+js-unit-test-writer agent instead of inline test code.
+
+Source: [rules/js-test-conventions.md](../rules/js-test-conventions.md)
 
 ---
 
