@@ -4,6 +4,8 @@
  * Detects whether a product has been customized by a first-party
  * WooCommerce extension (product type change or plugin-specific meta).
  *
+ * @see self::scan() for the plugins list.
+ *
  * @package WooCommerce\PayPalCommerce\Compat\PluginDetector
  */
 declare (strict_types=1);
@@ -11,18 +13,9 @@ namespace WooCommerce\PayPalCommerce\Compat\PluginDetector;
 
 use WooCommerce\PayPalCommerce\Vendor\Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\Compat\Exception\PluginApiChangedException;
-/**
- * @see self::scan() for the plugins list.
- */
 class ProductCustomizationDetector
 {
-    /**
-     * @var PluginDetector
-     */
     private \WooCommerce\PayPalCommerce\Compat\PluginDetector\PluginDetector $plugin_detector;
-    /**
-     * @var LoggerInterface
-     */
     private LoggerInterface $logger;
     /**
      * Cached result of $plugin_detector->scan(), since plugin activation
@@ -31,10 +24,6 @@ class ProductCustomizationDetector
      * @var array<string, bool>|null
      */
     private ?array $active_plugins = null;
-    /**
-     * @param PluginDetector  $plugin_detector The plugin presence detector.
-     * @param LoggerInterface $logger The logger.
-     */
     public function __construct(\WooCommerce\PayPalCommerce\Compat\PluginDetector\PluginDetector $plugin_detector, LoggerInterface $logger)
     {
         $this->plugin_detector = $plugin_detector;
