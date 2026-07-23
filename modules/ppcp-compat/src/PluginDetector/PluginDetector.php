@@ -12,13 +12,21 @@ namespace WooCommerce\PayPalCommerce\Compat\PluginDetector;
 
 class PluginDetector
 {
+    public const SUBSCRIPTIONS = 'woocommerce-subscriptions';
+    public const GIFT_CARDS = 'woocommerce-gift-cards';
+    public const PRODUCT_BUNDLES = 'woocommerce-product-bundles';
+    public const PRODUCT_ADDONS = 'woocommerce-product-addons';
+    public const MIN_MAX_QUANTITIES = 'woocommerce-min-max-quantities';
+    public const COMPOSITE_PRODUCTS = 'woocommerce-composite-products';
+    public const SHIPPING_PER_PRODUCT = 'woocommerce-shipping-per-product';
+    public const DEPOSITS = 'woocommerce-deposits';
     /**
      * @return array<string, bool> List of plugins check was made for,
      *      boolean shows whether the plugin is active
      */
     public function scan(): array
     {
-        return array('woocommerce-subscriptions' => $this->is_woocommerce_subscriptions_active(), 'woocommerce-gift-cards' => $this->is_woocommerce_gift_cards_active(), 'woocommerce-product-bundles' => $this->is_woocommerce_product_bundles_active(), 'woocommerce-product-addons' => $this->is_woocommerce_product_addons_active(), 'woocommerce-min-max-quantities' => $this->is_woocommerce_min_max_quantities_active(), 'woocommerce-composite-products' => $this->is_woocommerce_composite_products_active(), 'woocommerce-shipping-per-product' => $this->is_woocommerce_shipping_per_product_active(), 'woocommerce-deposits' => $this->is_woocommerce_deposits_active());
+        return array(self::SUBSCRIPTIONS => $this->is_woocommerce_subscriptions_active(), self::GIFT_CARDS => $this->is_woocommerce_gift_cards_active(), self::PRODUCT_BUNDLES => $this->is_woocommerce_product_bundles_active(), self::PRODUCT_ADDONS => $this->is_woocommerce_product_addons_active(), self::MIN_MAX_QUANTITIES => $this->is_woocommerce_min_max_quantities_active(), self::COMPOSITE_PRODUCTS => $this->is_woocommerce_composite_products_active(), self::SHIPPING_PER_PRODUCT => $this->is_woocommerce_shipping_per_product_active(), self::DEPOSITS => $this->is_woocommerce_deposits_active());
     }
     private function is_woocommerce_subscriptions_active(): bool
     {

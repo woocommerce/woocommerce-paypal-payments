@@ -39,7 +39,7 @@ class ProductCustomizationDetector
         if (null === $this->active_plugins) {
             $this->active_plugins = $this->plugin_detector->scan();
         }
-        $checks = array('woocommerce-subscriptions' => array($this, 'is_customized_by_subscriptions'), 'woocommerce-gift-cards' => array($this, 'is_customized_by_gift_cards'), 'woocommerce-product-bundles' => array($this, 'is_customized_by_product_bundles'), 'woocommerce-product-addons' => array($this, 'is_customized_by_product_addons'), 'woocommerce-min-max-quantities' => array($this, 'is_customized_by_min_max_quantities'), 'woocommerce-composite-products' => array($this, 'is_customized_by_composite_products'), 'woocommerce-shipping-per-product' => array($this, 'is_customized_by_shipping_per_product'), 'woocommerce-deposits' => array($this, 'is_customized_by_deposits'));
+        $checks = array(\WooCommerce\PayPalCommerce\Compat\PluginDetector\PluginDetector::SUBSCRIPTIONS => array($this, 'is_customized_by_subscriptions'), \WooCommerce\PayPalCommerce\Compat\PluginDetector\PluginDetector::GIFT_CARDS => array($this, 'is_customized_by_gift_cards'), \WooCommerce\PayPalCommerce\Compat\PluginDetector\PluginDetector::PRODUCT_BUNDLES => array($this, 'is_customized_by_product_bundles'), \WooCommerce\PayPalCommerce\Compat\PluginDetector\PluginDetector::PRODUCT_ADDONS => array($this, 'is_customized_by_product_addons'), \WooCommerce\PayPalCommerce\Compat\PluginDetector\PluginDetector::MIN_MAX_QUANTITIES => array($this, 'is_customized_by_min_max_quantities'), \WooCommerce\PayPalCommerce\Compat\PluginDetector\PluginDetector::COMPOSITE_PRODUCTS => array($this, 'is_customized_by_composite_products'), \WooCommerce\PayPalCommerce\Compat\PluginDetector\PluginDetector::SHIPPING_PER_PRODUCT => array($this, 'is_customized_by_shipping_per_product'), \WooCommerce\PayPalCommerce\Compat\PluginDetector\PluginDetector::DEPOSITS => array($this, 'is_customized_by_deposits'));
         $result = array();
         foreach ($checks as $plugin => $check) {
             if (empty($this->active_plugins[$plugin])) {
@@ -120,7 +120,7 @@ class ProductCustomizationDetector
     {
         $this->assert_method_exists(\WC_Product_Addons_Helper::class, 'get_product_addons');
         $addons = \WC_Product_Addons_Helper::get_product_addons($product->get_id(), \false, \false, \false);
-        return array() !== $addons;
+        return !empty($addons);
     }
     /**
      * Checks whether the product has its own WooCommerce Min/Max Quantities rules.
