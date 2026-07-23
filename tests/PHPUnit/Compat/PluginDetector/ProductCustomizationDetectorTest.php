@@ -39,14 +39,14 @@ class ProductCustomizationDetectorTest extends TestCase {
 	 */
 	private function all_inactive(): array {
 		return array(
-			'woocommerce-subscriptions'        => false,
-			'woocommerce-gift-cards'           => false,
-			'woocommerce-product-bundles'      => false,
-			'woocommerce-product-addons'       => false,
-			'woocommerce-min-max-quantities'   => false,
-			'woocommerce-composite-products'   => false,
-			'woocommerce-shipping-per-product' => false,
-			'woocommerce-deposits'             => false,
+			PluginDetector::SUBSCRIPTIONS        => false,
+			PluginDetector::GIFT_CARDS           => false,
+			PluginDetector::PRODUCT_BUNDLES      => false,
+			PluginDetector::PRODUCT_ADDONS       => false,
+			PluginDetector::MIN_MAX_QUANTITIES   => false,
+			PluginDetector::COMPOSITE_PRODUCTS   => false,
+			PluginDetector::SHIPPING_PER_PRODUCT => false,
+			PluginDetector::DEPOSITS             => false,
 		);
 	}
 
@@ -100,10 +100,10 @@ class ProductCustomizationDetectorTest extends TestCase {
 	 */
 	public static function api_based_plugins(): array {
 		return array(
-			'subscriptions'   => array( 'woocommerce-subscriptions' ),
-			'gift cards'      => array( 'woocommerce-gift-cards' ),
-			'product add-ons' => array( 'woocommerce-product-addons' ),
-			'deposits'        => array( 'woocommerce-deposits' ),
+			'subscriptions'   => array( PluginDetector::SUBSCRIPTIONS ),
+			'gift cards'      => array( PluginDetector::GIFT_CARDS ),
+			'product add-ons' => array( PluginDetector::PRODUCT_ADDONS ),
+			'deposits'        => array( PluginDetector::DEPOSITS ),
 		);
 	}
 
@@ -133,10 +133,10 @@ class ProductCustomizationDetectorTest extends TestCase {
 	 */
 	public static function type_based_plugins(): array {
 		return array(
-			'bundle - matches'        => array( 'woocommerce-product-bundles', 'bundle', true, true ),
-			'bundle - does not match' => array( 'woocommerce-product-bundles', 'bundle', false, false ),
-			'composite - matches'     => array( 'woocommerce-composite-products', 'composite', true, true ),
-			'composite - no match'    => array( 'woocommerce-composite-products', 'composite', false, false ),
+			'bundle - matches'        => array( PluginDetector::PRODUCT_BUNDLES, 'bundle', true, true ),
+			'bundle - does not match' => array( PluginDetector::PRODUCT_BUNDLES, 'bundle', false, false ),
+			'composite - matches'     => array( PluginDetector::COMPOSITE_PRODUCTS, 'composite', true, true ),
+			'composite - no match'    => array( PluginDetector::COMPOSITE_PRODUCTS, 'composite', false, false ),
 		);
 	}
 

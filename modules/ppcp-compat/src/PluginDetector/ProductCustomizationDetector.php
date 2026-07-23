@@ -45,14 +45,14 @@ class ProductCustomizationDetector {
 		}
 
 		$checks = array(
-			'woocommerce-subscriptions'        => array( $this, 'is_customized_by_subscriptions' ),
-			'woocommerce-gift-cards'           => array( $this, 'is_customized_by_gift_cards' ),
-			'woocommerce-product-bundles'      => array( $this, 'is_customized_by_product_bundles' ),
-			'woocommerce-product-addons'       => array( $this, 'is_customized_by_product_addons' ),
-			'woocommerce-min-max-quantities'   => array( $this, 'is_customized_by_min_max_quantities' ),
-			'woocommerce-composite-products'   => array( $this, 'is_customized_by_composite_products' ),
-			'woocommerce-shipping-per-product' => array( $this, 'is_customized_by_shipping_per_product' ),
-			'woocommerce-deposits'             => array( $this, 'is_customized_by_deposits' ),
+			PluginDetector::SUBSCRIPTIONS        => array( $this, 'is_customized_by_subscriptions' ),
+			PluginDetector::GIFT_CARDS           => array( $this, 'is_customized_by_gift_cards' ),
+			PluginDetector::PRODUCT_BUNDLES      => array( $this, 'is_customized_by_product_bundles' ),
+			PluginDetector::PRODUCT_ADDONS       => array( $this, 'is_customized_by_product_addons' ),
+			PluginDetector::MIN_MAX_QUANTITIES   => array( $this, 'is_customized_by_min_max_quantities' ),
+			PluginDetector::COMPOSITE_PRODUCTS   => array( $this, 'is_customized_by_composite_products' ),
+			PluginDetector::SHIPPING_PER_PRODUCT => array( $this, 'is_customized_by_shipping_per_product' ),
+			PluginDetector::DEPOSITS             => array( $this, 'is_customized_by_deposits' ),
 		);
 
 		$result = array();

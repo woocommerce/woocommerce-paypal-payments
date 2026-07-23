@@ -30,14 +30,14 @@ class PluginDetectorTest extends TestCase {
 
 		$this->assertSame(
 			array(
-				'woocommerce-subscriptions',
-				'woocommerce-gift-cards',
-				'woocommerce-product-bundles',
-				'woocommerce-product-addons',
-				'woocommerce-min-max-quantities',
-				'woocommerce-composite-products',
-				'woocommerce-shipping-per-product',
-				'woocommerce-deposits',
+				PluginDetector::SUBSCRIPTIONS,
+				PluginDetector::GIFT_CARDS,
+				PluginDetector::PRODUCT_BUNDLES,
+				PluginDetector::PRODUCT_ADDONS,
+				PluginDetector::MIN_MAX_QUANTITIES,
+				PluginDetector::COMPOSITE_PRODUCTS,
+				PluginDetector::SHIPPING_PER_PRODUCT,
+				PluginDetector::DEPOSITS,
 			),
 			array_keys( $result )
 		);
