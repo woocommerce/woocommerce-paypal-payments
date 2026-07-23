@@ -145,8 +145,8 @@ class ProductCustomizationDetectorTest extends TestCase {
 	 * @dataProvider shipping_per_product_meta_values
 	 */
 	public function test_shipping_per_product_requires_yes_value( string $meta_value, bool $expected ): void {
-		$active_plugins                                     = $this->all_inactive();
-		$active_plugins['woocommerce-shipping-per-product'] = true;
+		$active_plugins                                       = $this->all_inactive();
+		$active_plugins[ PluginDetector::SHIPPING_PER_PRODUCT ] = true;
 
 		$this->plugin_detector->shouldReceive( 'scan' )->once()->andReturn( $active_plugins );
 
@@ -155,7 +155,7 @@ class ProductCustomizationDetectorTest extends TestCase {
 
 		$result = $this->sut->scan( $product );
 
-		$this->assertSame( $expected, $result['woocommerce-shipping-per-product'] );
+		$this->assertSame( $expected, $result[ PluginDetector::SHIPPING_PER_PRODUCT ] );
 	}
 
 	/** @return array<string, array{string, bool}> */
@@ -172,8 +172,8 @@ class ProductCustomizationDetectorTest extends TestCase {
 	 * @dataProvider min_max_quantity_meta_combinations
 	 */
 	public function test_min_max_quantities_for_simple_products( string $minimum, string $maximum, string $group, bool $expected ): void {
-		$active_plugins                                   = $this->all_inactive();
-		$active_plugins['woocommerce-min-max-quantities'] = true;
+		$active_plugins                                     = $this->all_inactive();
+		$active_plugins[ PluginDetector::MIN_MAX_QUANTITIES ] = true;
 
 		$this->plugin_detector->shouldReceive( 'scan' )->once()->andReturn( $active_plugins );
 
@@ -184,7 +184,7 @@ class ProductCustomizationDetectorTest extends TestCase {
 
 		$result = $this->sut->scan( $product );
 
-		$this->assertSame( $expected, $result['woocommerce-min-max-quantities'] );
+		$this->assertSame( $expected, $result[ PluginDetector::MIN_MAX_QUANTITIES ] );
 	}
 
 	/** @return array<string, array{string, string, string, bool}> */
@@ -205,8 +205,8 @@ class ProductCustomizationDetectorTest extends TestCase {
 	 * @test
 	 */
 	public function test_min_max_quantities_ignores_plain_keys_for_variations(): void {
-		$active_plugins                                   = $this->all_inactive();
-		$active_plugins['woocommerce-min-max-quantities'] = true;
+		$active_plugins                                     = $this->all_inactive();
+		$active_plugins[ PluginDetector::MIN_MAX_QUANTITIES ] = true;
 
 		$this->plugin_detector->shouldReceive( 'scan' )->once()->andReturn( $active_plugins );
 
@@ -219,7 +219,7 @@ class ProductCustomizationDetectorTest extends TestCase {
 
 		$result = $this->sut->scan( $product );
 
-		$this->assertFalse( $result['woocommerce-min-max-quantities'] );
+		$this->assertFalse( $result[ PluginDetector::MIN_MAX_QUANTITIES ] );
 	}
 
 	/**
@@ -238,7 +238,7 @@ class ProductCustomizationDetectorTest extends TestCase {
 
 		$result = $this->sut->scan( $product );
 
-		$this->assertTrue( $result['woocommerce-min-max-quantities'] );
+		$this->assertTrue( $result[ PluginDetector::MIN_MAX_QUANTITIES ] );
 	}
 
 	/**
