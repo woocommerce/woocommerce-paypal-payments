@@ -8,6 +8,7 @@ import {
 	paypalSubscriptionButtonAllowed,
 } from './Helper/Subscription';
 import { loadPayPalScript } from '../../../ppcp-button/resources/js/modules/Helper/PayPalScriptLoading';
+import { initCartFragmentSync } from '../../../ppcp-button/resources/js/modules/Helper/CartFragmentSync';
 import BlockCheckoutMessagesBootstrap from './Bootstrap/BlockCheckoutMessagesBootstrap';
 import { PayPalComponent } from './Components/paypal';
 import { BlockEditorPayPalComponent } from './Components/block-editor-paypal';
@@ -18,6 +19,11 @@ const namespace = 'ppcpBlocksPaypalExpressButtons';
 const config = wc.wcSettings.getSetting( 'ppcp-gateway_data' );
 
 window.ppcpFundingSource = config.fundingSource;
+
+// Keep the classic header mini-cart count in sync with the block cart/checkout,
+// which mutate the Store API cart instead of firing WooCommerce's jQuery cart
+// fragment events. Idempotent with the same call in the button bundle.
+initCartFragmentSync();
 
 let paypalScriptPromise = null;
 
