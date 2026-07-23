@@ -36,9 +36,17 @@ const BUTTON_ELEMENTS = {
  * @param {Object}       styles        - Style config from ButtonStyleMapper.
  * @param {Object}       session       - The payment session.
  * @param {OrderCreator} createOrderFn - Returns the created order id.
+ * @param {() => void}   [onClick]     - Called on click before the session starts.
  * @return {HTMLElement} The configured button element.
  */
-function createButton( tagName, type, styles, session, createOrderFn ) {
+function createButton(
+	tagName,
+	type,
+	styles,
+	session,
+	createOrderFn,
+	onClick
+) {
 	const button = document.createElement( tagName );
 	if ( type ) {
 		button.setAttribute( 'type', type );
@@ -61,6 +69,11 @@ function createButton( tagName, type, styles, session, createOrderFn ) {
 
 	button.addEventListener( 'click', async () => {
 		try {
+			// Blocks express uses this to signal the start of the express
+			// flow (sets the active payment method); classic passes nothing.
+			if ( onClick ) {
+				onClick();
+			}
 			await session.start(
 				{ presentationMode: 'auto' },
 				createOrderFn()
@@ -78,12 +91,13 @@ function createButton( tagName, type, styles, session, createOrderFn ) {
  * yet in the DOM. Returns null when the method is unknown or Pay Later
  * lacks the product details it needs to render.
  *
- * @param {Object}       options                 - Button options.
- * @param {string}       options.method          - The funding method (paypal, venmo, paylater).
- * @param {Object}       options.styles          - Button styles for the current context.
- * @param {Object}       options.session         - The payment session.
- * @param {OrderCreator} options.createOrderFn   - Returns the created order id.
+ * @param {Object}       options                   - Button options.
+ * @param {string}       options.method            - The funding method (paypal, venmo, paylater).
+ * @param {Object}       options.styles            - Button styles for the current context.
+ * @param {Object}       options.session           - The payment session.
+ * @param {OrderCreator} options.createOrderFn     - Returns the created order id.
  * @param {Object}       [options.payLaterDetails] - Pay Later product details.
+ * @param {() => void}   [options.onClick]         - Called on click before the session starts.
  * @return {?HTMLElement} The configured button element, or null.
  */
 export function createMethodButton( {
@@ -92,6 +106,7 @@ export function createMethodButton( {
 	session,
 	createOrderFn,
 	payLaterDetails,
+	onClick,
 } ) {
 	const element = BUTTON_ELEMENTS[ method ];
 	if ( ! element ) {
@@ -108,7 +123,8 @@ export function createMethodButton( {
 		element.type,
 		styles,
 		session,
-		createOrderFn
+		createOrderFn,
+		onClick
 	);
 
 	if ( method === 'paylater' ) {

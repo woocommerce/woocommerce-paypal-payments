@@ -83,8 +83,8 @@ export async function createOrder( config, context, fundingSource ) {
 			body.form_encoded = new URLSearchParams(
 				new FormData( form )
 			).toString();
-			body.createaccount = !! form.querySelector( '#createaccount' )
-				?.checked;
+			body.createaccount =
+				!! form.querySelector( '#createaccount' )?.checked;
 		}
 
 		const payer = payerData();
@@ -166,6 +166,43 @@ export async function approveOrder( config, context, fundingSource, orderId ) {
 
 	// Continuation: the buyer completes the order on the checkout page.
 	navigation.assign( config.urls.checkout );
+}
+
+/**
+ * Fetches the full PayPal order (ppc-get-order).
+ *
+ * Used by the block express flow to read the buyer's PayPal address,
+ * which the v6 session onApprove does not provide.
+ *
+ * @param {Object} config  - The wc_ppcp_sdk_v6 config object.
+ * @param {string} orderId - The PayPal order ID.
+ * @return {Promise<Object>} The PayPal order (Orders v2 shape).
+ */
+export async function getOrder( config, orderId ) {
+	return postJson( config.ajax.get_order, {
+		order_id: orderId,
+	} );
+}
+
+/**
+ * Approves the order and stores it in the WC session without creating the
+ * WC order or redirecting.
+ *
+ * The block checkout submit creates the WC order through the gateway using
+ * the paypal_order_id, so unlike the classic approveOrder this must not
+ * create the order itself or navigate away.
+ *
+ * @param {Object} config        - The wc_ppcp_sdk_v6 config object.
+ * @param {string} fundingSource - The funding source used for payment.
+ * @param {string} orderId       - The PayPal order ID.
+ * @return {Promise<void>} Resolves when the order has been approved.
+ */
+export async function approveOrderInSession( config, fundingSource, orderId ) {
+	await postJson( config.ajax.approve_order, {
+		order_id: orderId,
+		funding_source: fundingSource,
+		should_create_wc_order: false,
+	} );
 }
 
 /**
