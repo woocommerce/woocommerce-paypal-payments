@@ -3,7 +3,12 @@
         "allow": [
             "Bash(git log:*)",
             "Bash(git diff *)",
-            "Bash(git status *)"
+            "Bash(git status *)",
+            "Read(.claude/notes/**)",
+            "Glob(.claude/notes/**)",
+            "Grep(.claude/notes/**)",
+            "Edit(.claude/notes/**)",
+            "Write(.claude/notes/**)"
         ],
         "deny": [],
         "ask": []

@@ -39,8 +39,8 @@ Run **before** starting a complex task, to research an area and capture what you
 
 Recalls any existing notes, researches the code, cross-references your assumptions against it,
 offers
-an optional interview, then dispatches `notes-keeper` to file durable facts and task context under
-`/notes/*.local.md`.
+an optional interview, then dispatches `notes-keeper` to file durable facts and task context as
+local notes.
 
 Source: [skills/understand/SKILL.md](../skills/understand/SKILL.md)
 
@@ -143,6 +143,14 @@ concision) against the copy guidelines and returns a suggestion. The caller pass
 its context; a human still has the final word. Dispatch when writing or changing UI copy.
 
 Source: [agents/copy-editor.md](../agents/copy-editor.md)
+
+### `notes-keeper`
+
+Sonnet. A reusable notes API: reads and writes the developer's local research notes and owns their
+conventions - crisp canonical knowledge per module/topic, plus throwaway per-task context.
+Dispatched by `/understand`, by other skills, or manually to recall or record a note.
+
+Source: [agents/notes-keeper.md](../agents/notes-keeper.md)
 
 ---
 
