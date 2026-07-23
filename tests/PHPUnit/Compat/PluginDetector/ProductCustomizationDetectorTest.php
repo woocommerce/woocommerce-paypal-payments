@@ -226,8 +226,8 @@ class ProductCustomizationDetectorTest extends TestCase {
 	 * @test
 	 */
 	public function test_min_max_quantities_detects_variation_specific_override(): void {
-		$active_plugins                                   = $this->all_inactive();
-		$active_plugins['woocommerce-min-max-quantities'] = true;
+		$active_plugins                                     = $this->all_inactive();
+		$active_plugins[ PluginDetector::MIN_MAX_QUANTITIES ] = true;
 
 		$this->plugin_detector->shouldReceive( 'scan' )->once()->andReturn( $active_plugins );
 
