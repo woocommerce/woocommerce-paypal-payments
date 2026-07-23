@@ -143,7 +143,7 @@ class ProductCustomizationDetector {
 
 		$addons = \WC_Product_Addons_Helper::get_product_addons( $product->get_id(), false, false, false );
 
-		return array() !== $addons;
+		return ! empty( $addons );
 	}
 
 	/**
