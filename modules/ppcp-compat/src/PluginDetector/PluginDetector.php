@@ -7,7 +7,7 @@
  * @package WooCommerce\PayPalCommerce\Compat\PluginDetector
  */
 
-declare(strict_types=1);
+declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\Compat\PluginDetector;
 
