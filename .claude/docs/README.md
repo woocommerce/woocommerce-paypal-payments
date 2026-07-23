@@ -32,6 +32,18 @@ _Slash-commands that we manually invoke._
 
 > Claude Docs: https://code.claude.com/docs/en/skills
 
+### `/understand`
+
+Run **before** starting a complex task, to research an area and capture what you learn. Args:
+`[module-or-topic] [JIRA-ID]`, both optional.
+
+Recalls any existing notes, researches the code, cross-references your assumptions against it,
+offers
+an optional interview, then dispatches `notes-keeper` to file durable facts and task context under
+`/notes/*.local.md`.
+
+Source: [skills/understand/SKILL.md](../skills/understand/SKILL.md)
+
 ### `/pr-readiness`
 
 Run on **your own** branch before opening a PR. Args: `[JIRA-ID] [base-branch]`, both optional.
@@ -59,11 +71,36 @@ to `./temp/code-reviews`.
 
 Source: [skills/code-review/SKILL.md](../skills/code-review/SKILL.md)
 
+### Disabling skills you don't use
+
+Every listed skill's name and description is fed into Claude's context each session, which costs a
+few tokens per skill. To trim skills you don't use, add a `skillOverrides` map to your personal
+`.claude/settings.local.json` (gitignored, so it stays yours and does not affect the team):
+
+```json
+{
+	"skillOverrides": {
+		"code-review": "off",
+		"pr-readiness": "name-only"
+	}
+}
+```
+
+| Value                 | In context                | Manual `/name` | Claude can invoke |
+|-----------------------|---------------------------|----------------|-------------------|
+| `on` (default)        | name + description        | yes            | yes               |
+| `name-only`           | name only, no description | yes            | yes               |
+| `user-invocable-only` | nothing                   | yes            | no                |
+| `off`                 | nothing                   | no             | no                |
+
+Keys are skill names (e.g. `understand`, `describe-pr`), not paths. Omit a skill to leave it `on`.
+
 ---
 
 ## Agents
 
-_Automatically invoked by skills or hooks; can also be manually dispatched ("Use agent X for TASK")._
+_Automatically invoked by skills or hooks; can also be manually dispatched ("Use agent X for
+TASK")._
 
 > Claude Docs: https://code.claude.com/docs/en/sub-agents
 
