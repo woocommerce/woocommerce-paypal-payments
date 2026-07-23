@@ -14,6 +14,7 @@ use WooCommerce\PayPalCommerce\OrderEndpoints\Endpoint\UpdateShippingEndpoint;
 use WooCommerce\PayPalCommerce\OrderEndpoints\Endpoint\ApproveOrderEndpoint;
 use WooCommerce\PayPalCommerce\OrderEndpoints\Endpoint\ChangeCartEndpoint;
 use WooCommerce\PayPalCommerce\OrderEndpoints\Endpoint\CreateOrderEndpoint;
+use WooCommerce\PayPalCommerce\Button\Endpoint\GetOrderEndpoint;
 use WooCommerce\PayPalCommerce\Button\Helper\Context;
 use WooCommerce\PayPalCommerce\SdkV6\Endpoint\ClientTokenEndpoint;
 use WooCommerce\PayPalCommerce\SdkV6\Helper\ButtonStyleMapper;
@@ -167,9 +168,13 @@ class SdkV6Manager {
 	/**
 	 * The configuration data for the SDK v6 bootstrap script.
 	 *
+	 * Also consumed by the block payment method (V6PaymentMethod), which
+	 * exposes it under `wcSettings.paymentMethodData['ppcp-sdk-v6']` for the
+	 * React entry.
+	 *
 	 * @return array
 	 */
-	private function script_data(): array {
+	public function script_data(): array {
 		$base_url = $this->environment->is_sandbox()
 			? 'https://www.sandbox.paypal.com'
 			: 'https://www.paypal.com';
@@ -217,6 +222,10 @@ class SdkV6Manager {
 				'approve_order'   => array(
 					'endpoint' => \WC_AJAX::get_endpoint( ApproveOrderEndpoint::ENDPOINT ),
 					'nonce'    => wp_create_nonce( ApproveOrderEndpoint::nonce() ),
+				),
+				'get_order'       => array(
+					'endpoint' => \WC_AJAX::get_endpoint( GetOrderEndpoint::ENDPOINT ),
+					'nonce'    => wp_create_nonce( GetOrderEndpoint::nonce() ),
 				),
 				'update_shipping' => array(
 					'endpoint' => \WC_AJAX::get_endpoint( UpdateShippingEndpoint::ENDPOINT ),
@@ -313,7 +322,7 @@ class SdkV6Manager {
 	 *
 	 * @return bool
 	 */
-	private function is_block_context(): bool {
+	public function is_block_context(): bool {
 		return in_array(
 			$this->get_page_context(),
 			array( 'cart-block', 'checkout-block' ),

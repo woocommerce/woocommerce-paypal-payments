@@ -12,10 +12,12 @@ namespace WooCommerce\PayPalCommerce\SdkV6;
 use WooCommerce\PayPalCommerce\Assets\AssetGetter;
 use WooCommerce\PayPalCommerce\Assets\AssetGetterFactory;
 use WooCommerce\PayPalCommerce\SdkV6\Assets\SdkV6Manager;
+use WooCommerce\PayPalCommerce\SdkV6\Blocks\V6PaymentMethod;
 use WooCommerce\PayPalCommerce\SdkV6\Endpoint\ClientTokenEndpoint;
 use WooCommerce\PayPalCommerce\SdkV6\Helper\ButtonStyleMapper;
 use WooCommerce\PayPalCommerce\SdkV6\Helper\RateLimiter;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
+use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 
 return array(
 
@@ -59,6 +61,15 @@ return array(
 			'ppcp_sdk_v6_rl_',
 			10,
 			60
+		);
+	},
+
+	'sdk-v6.blocks.payment-method' => static function ( ContainerInterface $container ): V6PaymentMethod {
+		return new V6PaymentMethod(
+			$container->get( 'sdk-v6.manager' ),
+			$container->get( 'sdk-v6.asset-getter' ),
+			$container->get( 'ppcp.asset-version' ),
+			$container->get( 'wcgateway.paypal-gateway' )
 		);
 	},
 

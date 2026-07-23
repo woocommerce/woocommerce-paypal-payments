@@ -9,8 +9,10 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\SdkV6;
 
+use Automattic\WooCommerce\Blocks\Payments\PaymentMethodRegistry;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
 use WooCommerce\PayPalCommerce\SdkV6\Assets\SdkV6Manager;
+use WooCommerce\PayPalCommerce\SdkV6\Blocks\V6PaymentMethod;
 use WooCommerce\PayPalCommerce\SdkV6\Endpoint\ClientTokenEndpoint;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExecutableModule;
@@ -85,6 +87,47 @@ class SdkV6Module implements ServiceModule, ExtendingModule, ExecutableModule {
 			},
 			10,
 			2
+		);
+
+		// Register the v6 express buttons with the WC Blocks pipeline. v5's
+		// PayPalPaymentMethod stays registered (it provides the ppcp-gateway
+		// type and processing); on v6-owned block pages its script_data is
+		// empty so it registers no express buttons, and v6 supplies them.
+		//
+		// Extends the v5 handoff (see extensions.php) to the block wallet
+		// methods. On v6-owned block pages the Google Pay and Apple Pay block
+		// boots read v5's now-empty PayPal config and throw during React
+		// render, which tears down the whole checkout block (v6 buttons
+		// included) instead of failing quietly. The registration action fires
+		// on init (priority 5), before is_checkout()/is_cart() resolve, so the
+		// page context is unknown here; capture the registry and defer the
+		// suppression to wp_enqueue_scripts, where the context is known and
+		// the block scripts are not yet enqueued. The wallets migrate under
+		// their own story (PCP-5782).
+		add_action(
+			'woocommerce_blocks_payment_method_type_registration',
+			function ( PaymentMethodRegistry $payment_method_registry ) use ( $c ): void {
+				$payment_method_registry->register( $c->get( 'sdk-v6.blocks.payment-method' ) );
+
+				add_action(
+					'wp_enqueue_scripts',
+					function () use ( $c, $payment_method_registry ): void {
+						$manager = $c->get( 'sdk-v6.manager' );
+						assert( $manager instanceof SdkV6Manager );
+
+						if ( ! $manager->should_load_on_current_page() || ! $manager->is_block_context() ) {
+							return;
+						}
+
+						foreach ( array( 'ppcp-googlepay', 'ppcp-applepay' ) as $wallet_method ) {
+							if ( $payment_method_registry->is_registered( $wallet_method ) ) {
+								$payment_method_registry->unregister( $wallet_method );
+							}
+						}
+					},
+					5
+				);
+			}
 		);
 
 		return true;
