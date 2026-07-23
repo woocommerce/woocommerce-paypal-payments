@@ -25,6 +25,7 @@ import { createMethodButton } from '../components/buttonRenderer';
  * @param {Object}                            props.styles            - Button styles for the current context.
  * @param {() => Promise<{orderId: string}>}  props.createOrderFn     - Returns the created order id.
  * @param {Object}                            [props.payLaterDetails] - Pay Later product details.
+ * @param {() => void}                        [props.onClick]         - Called on click before the session starts.
  * @return {Object} The container element.
  */
 export function V6ButtonContainer( {
@@ -33,8 +34,14 @@ export function V6ButtonContainer( {
 	styles,
 	createOrderFn,
 	payLaterDetails,
+	onClick,
 } ) {
 	const containerRef = useRef( null );
+	// onClick identity changes every render (the Blocks registry passes a
+	// fresh callback); read it through a ref so it does not recreate the
+	// button, which must stay tied to the session identity only.
+	const onClickRef = useRef( null );
+	onClickRef.current = onClick;
 
 	useEffect( () => {
 		const container = containerRef.current;
@@ -48,6 +55,7 @@ export function V6ButtonContainer( {
 			session,
 			createOrderFn,
 			payLaterDetails,
+			onClick: () => onClickRef.current?.(),
 		} );
 		if ( ! button ) {
 			return undefined;
