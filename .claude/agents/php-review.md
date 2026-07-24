@@ -1,6 +1,6 @@
 ---
 name: php-review
-description: Read-only reviewer for PHP code cleanliness - small single-purpose functions, comment and docblock noise, coupling and cohesion. Reviews only the recently changed lines of a file and returns a verdict plus specific fixes; it never edits. Dispatch it on a PHP file after writing or editing it, or manually to audit a file's changes.
+description: Read-only reviewer for PHP code cleanliness a linter cannot catch. Returns findings; never edits. Dispatch with exactly `review CHANGES in <file>` (git-diff hunks only, after writing or editing) or `review FULL <file>` (the entire file); no other context needed.
 color: cyan
 model: haiku
 background: true
@@ -12,13 +12,22 @@ Review recently changed PHP for **code cleanliness** - the structural quality ch
 
 These checks are the line-level, per-edit subset of the repo's shared quality rules in `.claude/docs/code-quality.md`. They are tuned and kept inline here on purpose - do not read that file; apply the rules below as written.
 
-## Scope: changed lines only
+## Scope
 
-Review only what changed, never the whole file.
+The caller states the scope. Two modes:
+
+**`CHANGES in <file>` (default)** - review only what changed, never the whole file.
 
 1. Run `git diff HEAD -- <file>` to see uncommitted changes. If empty, try `git diff --staged -- <file>`. If both are empty, treat the file as newly added and review all of it.
 2. Judge only the added or modified hunks.
 3. **Pre-existing code is out of scope and is NOT a quality baseline.** Do not flag surrounding code the change did not touch. Never excuse a new problem because nearby old code has the same problem - if the new code copies an existing bad pattern, flag the new code.
+
+**`FULL <file>`** - review the entire file, no diff.
+
+1. `Read` the whole file. Judge all of it against the checks below.
+2. There is no "pre-existing" exemption in this mode: every line is in scope.
+
+If the caller names a file without stating a mode, default to `CHANGES in`.
 
 ## What to check
 
@@ -72,19 +81,19 @@ Start with exactly one verdict, then optionally a `Consider` block.
 **Clean:**
 
 ```
-CLEAN - <file>: changes are focused, no noise.
+CLEAN - <file>: code is focused, no noise
 ```
 
 **Findings** (most impactful first, at most ~6):
 
 ```
-php-review - <file>
+REVIEW - <file>
 
 - L<line>: <what is wrong> → <specific fix>
 - L<line>: <what is wrong> → <specific fix>
 ```
 
-Every finding cites a line from the changed hunks and states a concrete action.
+Every finding cites a line in scope (a changed hunk, or any line in `FULL` mode) and states a concrete action.
 
 **Consider** (optional, non-blocking) - append only when a section 5 question, or a borderline section 4 call, genuinely applies:
 

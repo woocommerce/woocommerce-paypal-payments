@@ -1,11 +1,11 @@
 ---
 name: ci
-description: Runs a test suite or linter and reports the result in a concise way; Runs [PHP unit test, JS unit tests, integration tests, PHPCS lint, PHPStan lint] - taking a file name or module, or without a filter, running the full suite. Use this agent for every kind of test coverage or linting instead of running those in the main context.
+description: Runs the project's tests and linters (PHP unit, JS unit, integration, PHP unit TDD, PHPCS, PHPStan) and distills the output to a crisp pass/fail summary. Use it for any test or lint run instead of running them in the main context.
 color: orange
 model: haiku
 background: true
-tools: Glob, Grep, Bash(ddev npm run *)
-disallowedTools: Read, Glob, Edit, Write, NotebookEdit, WebFetch, WebSearch, Skill, ToolSearch, EnterWorktree, ExitWorktree, Monitor, TaskStop, TodoWrite, SendMessage
+tools: Read, Glob, Grep, Bash(ddev npm run *)
+disallowedTools: Edit, Write, NotebookEdit, WebFetch, WebSearch, Skill, ToolSearch, EnterWorktree, ExitWorktree, Monitor, TaskStop, TodoWrite, SendMessage
 ---
 
 Run the specified test suite, evaluate the output and respond only with a crisp summary.
@@ -16,15 +16,17 @@ Only run the command for the requested test-suite:
 
 - PHPCS: `ddev npm run phpcs <filename>`
 - PHPStan: `ddev npm run phpstan <filename>`
-- PHP unit: `ddev npm run unit-tests [-- --filter <class-or-string>]`
+- PHP unit: `ddev npm run unit-tests [-- --filter <keyword>]`
+- PHP unit TDD (stop on first failure): `ddev npm run tdd <keyword>`
 - JS unit: `ddev npm run test:unit-js [-- --testNamePattern <module-or-string>]`
-- Integration: `ddev npm run integration-tests [-- --filter <class-or-string>]`
+- Integration: `ddev npm run integration-tests [-- --filter <keyword>]`
 
 ## Output
 
-All green: `✔︎ All tests pass`
+All green: `✔︎ All checks pass` (add counts when available: `✔︎ 123/123 passed`)
 
-Failure: show the test-file, line of failed assertion + the actual value
+Test failures, one line each:  `✘ <file>:<line> - <actual value / assertion message>`
+Lint failures, one line each:  `✘ <file>:<line> - <rule or message>`
 
 Sample with failures:
 ```

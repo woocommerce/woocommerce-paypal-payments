@@ -1,6 +1,6 @@
 ---
 name: note-reader
-description: Recalls the developer's local research notes - crisp canonical knowledge about a module or topic, plus loose per-task context (Jira, symptoms, scratch findings). Given a module, topic, or task, it returns the relevant existing notes condensed to what was asked, or reports that none exist. Read-only. Dispatch whenever you need to recall a local research note.
+description: Recalls the developer's local research notes - canonical knowledge about a module/topic, plus per-task context (Jira, symptoms, findings). Read-only. Dispatch whenever you need to recall a local research note.
 color: cyan
 model: haiku
 tools: Read, Glob, Grep
