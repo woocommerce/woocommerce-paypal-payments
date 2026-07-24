@@ -39,7 +39,7 @@ Run **before** starting a complex task, to research an area and capture what you
 
 Recalls any existing notes, researches the code, cross-references your assumptions against it,
 offers
-an optional interview, then dispatches `notes-keeper` to file durable facts and task context as
+an optional interview, then dispatches `note-taker` to file durable facts and task context as
 local notes.
 
 Source: [skills/understand/SKILL.md](../skills/understand/SKILL.md)
@@ -144,13 +144,22 @@ its context; a human still has the final word. Dispatch when writing or changing
 
 Source: [agents/copy-editor.md](../agents/copy-editor.md)
 
-### `notes-keeper`
+### `note-reader`
 
-Sonnet. A reusable notes API: reads and writes the developer's local research notes and owns their
-conventions - crisp canonical knowledge per module/topic, plus throwaway per-task context.
-Dispatched by `/understand`, by other skills, or manually to recall or record a note.
+Haiku, read-only. Recalls the developer's local research notes - crisp canonical knowledge per
+module/topic, plus throwaway per-task context. Returns the relevant notes or reports none exist.
+Dispatched by `/understand`, by other skills, or manually to recall a note.
 
-Source: [agents/notes-keeper.md](../agents/notes-keeper.md)
+Source: [agents/note-reader.md](../agents/note-reader.md)
+
+### `note-taker`
+
+Sonnet. Records an insight into the developer's local research notes and owns their conventions:
+files durable facts into a crisp per-module/topic domain note (deduped and pruned), and loose per-task
+context into a throwaway task note. Dispatched by `/understand`, by other skills, or manually to
+record a note.
+
+Source: [agents/note-taker.md](../agents/note-taker.md)
 
 ---
 
