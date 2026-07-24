@@ -29,10 +29,17 @@ modules/*/assets/*
 !modules/ppcp-local-alternative-payment-methods/assets/images
 tests/inc/inpsyde/
 
+# Track Claude Code configuration.
+!.claude
+
+# Ignore all kind of local files - settings.local.json, CLAUDE.local.md, skill.local/
+*.local.*
+**/*.local/
+
+# QA and tests
 playwright-utils
 playwright-report*
 snapshots
-playwright/.cache
 storage-states
 test-results
 /tests/qa/resources/files/woocommerce-paypal-payments*.zip
