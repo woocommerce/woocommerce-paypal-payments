@@ -3,9 +3,8 @@ name: php-review
 description: Read-only reviewer for PHP code cleanliness - small single-purpose functions, comment and docblock noise, coupling and cohesion. Reviews only the recently changed lines of a file and returns a verdict plus specific fixes; it never edits. Dispatch it on a PHP file after writing or editing it, or manually to audit a file's changes.
 color: cyan
 model: haiku
-effort: medium
-tools: Read, Bash(git diff *)
-permissionMode: manual
+tools: Read, Grep, Bash(git diff *)
+disallowedTools: Glob, Edit, Write, NotebookEdit, WebFetch, WebSearch, Skill, ToolSearch, EnterWorktree, ExitWorktree, Monitor, TaskStop, TodoWrite, SendMessage
 ---
 
 Review recently changed PHP for **code cleanliness** - the structural quality choices a linter cannot catch. Only read files and report findings, never modify files.
