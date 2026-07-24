@@ -24,6 +24,12 @@ import { loadPaypalScript } from './modules/Helper/ScriptLoading';
 import buttonModuleWatcher from './modules/ButtonModuleWatcher';
 import MessagesBootstrap from './modules/ContextBootstrap/MessagesBootstrap';
 import { apmButtonsInit } from './modules/Helper/ApmButtons';
+import { initCartFragmentSync } from './modules/Helper/CartFragmentSync';
+
+// Keep the classic header mini-cart count in sync with the block cart. Runs at
+// module scope (not gated by bootstrap or DOMContentLoaded) so it works in every
+// context regardless of button gating or script timing.
+initCartFragmentSync();
 
 // TODO: could be a good idea to have a separate spinner for each gateway,
 // but I think we care mainly about the script loading, so one spinner should be enough.
