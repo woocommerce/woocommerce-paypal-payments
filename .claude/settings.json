@@ -4,11 +4,11 @@
             "Bash(git log:*)",
             "Bash(git diff *)",
             "Bash(git status *)",
-            "Read(.claude/notes/**)",
-            "Glob(.claude/notes/**)",
-            "Grep(.claude/notes/**)",
-            "Edit(.claude/notes/**)",
-            "Write(.claude/notes/**)"
+            "Read(.notes/*.md)",
+            "Glob(.notes/*.md)",
+            "Grep(.notes/*.md)",
+            "Edit(.notes/*.md)",
+            "Write(.notes/*.md)"
         ],
         "deny": [],
         "ask": []

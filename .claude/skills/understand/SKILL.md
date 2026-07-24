@@ -9,7 +9,8 @@ invocation: user
 
 You research a module, folder, or problem so the developer starts implementation with a clear
 picture, and you capture what is learned as local notes for reuse. You do the research and reasoning
-yourself; the `notes-keeper` agent owns all note I/O - you never read or write the note directly.
+yourself; the `note-reader` and `note-taker` agents own all note I/O - you never read or write the
+note directly.
 
 The goal is understanding, not a deliverable document. Keep the session interactive and let the
 developer steer what matters.
@@ -19,12 +20,12 @@ capture the picture, stop and hand back to the developer. Beginning the implemen
 explicit decision they make; never slide from understanding into editing code.
 
 **This skill writes files, so it cannot run in plan mode.** The notes are its whole output, and plan
-mode blocks every write - including the `notes-keeper` agent's. If plan mode is active, say so up
+mode blocks every write - including the `note-taker` agent's. If plan mode is active, say so up
 front and ask the developer to exit it (or approve the plan) before you research; never take the
 developer through the whole session only to finish with nothing written.
 
 **Write notes as you go, not at the end.** The moment an insight crystallizes - during research,
-cross-referencing, or the interview - record it via `notes-keeper` so the developer watches the
+cross-referencing, or the interview - record it via `note-taker` so the developer watches the
 `domain.` and `task.` notes grow. Never batch note-taking into a single final step: a session that
 reaches its conclusion with no notes written has failed its one job.
 
@@ -41,13 +42,11 @@ If no target is given, ask the developer what to focus on before proceeding.
 
 ### 1. Recall existing context
 
-Before researching, dispatch the `notes-keeper` agent with a READ payload to pull any notes that
-already exist for the target. Use what it returns to seed your understanding - do not re-derive what
-is already recorded. Also read any notes the developer references explicitly.
+Before researching, dispatch the `note-reader` agent to pull any notes that already exist for the
+target. Use what it returns to seed your understanding - do not re-derive what is already recorded.
+Also read any notes the developer references explicitly.
 
 ````payload-template
-READ
-
 Target: {module / topic / problem the developer named}
 Looking for: existing domain and task notes relevant to this work.
 ````
@@ -69,7 +68,7 @@ Check the developer's stated assumptions against the actual code and surface con
 explicitly, e.g. "your code cancels the whole Order, but you said partial cancellation is possible -
 which is right?" Present a condensed understanding of how the area works and where the task fits.
 
-As soon as the picture is solid enough to be useful, dispatch `notes-keeper` to file a first pass
+As soon as the picture is solid enough to be useful, dispatch `note-taker` to file a first pass
 (see step 6). Do not wait for the interview to finish - the note should already exist and then grow.
 
 ### 5. Optional interview
@@ -83,7 +82,7 @@ As each question resolves, update the relevant note immediately rather than savi
 ### 6. Persist (throughout, not only here)
 
 Record insights the moment they crystallize during steps 2-5 - not batched into this step. Each time,
-dispatch `notes-keeper` with a WRITE payload:
+dispatch `note-taker`:
 
 - Durable, canonical architecture facts -> `domain:<topic>` (kept crisp by the agent).
 - Task-specific context - Jira, symptoms, scratch findings -> `task:<name>`.
@@ -92,8 +91,6 @@ When the domain/task split is ambiguous, confirm it with the developer before fi
 finish, do a final sweep so every insight from the session is captured in a note.
 
 ````payload-template
-WRITE
-
 Target: domain:{topic}   # or task:{name}
 Insight:
 {the crisp fact(s) to record, or the task context to append}
@@ -101,8 +98,8 @@ Insight:
 
 ### 7. Report
 
-Tell the developer exactly which files were written or updated, using the one-line confirmations the
-agent returned. Do not paste the full note content back.
+Tell the developer which notes were written or updated, using the one-line confirmations `note-taker`
+returned. Do not paste the full note content back.
 
 Then stop. Do not begin implementing the change - if the developer wants to proceed to
 implementation, that is a new, separate instruction from them.
