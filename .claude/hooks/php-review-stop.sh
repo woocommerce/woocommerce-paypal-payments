@@ -12,13 +12,16 @@
 # unchanged file is never nudged twice and the loop terminates cleanly once edits
 # stop changing content. Silent (exit 0) when there is nothing new to review.
 
-# Local opt-out: hooks/config.local.json maps each hook filename to a boolean.
-# A script set to false here bails immediately. No config file (the default) or a
+# Everything below parses JSON with jq. Without it, bail silently.
+command -v jq >/dev/null 2>&1 || exit 0
+
+# Local opt-out: hooks/config.local.json maps each "feature" to a boolean.
+# A disabled feature bails immediately. No config file (the default) or a
 # missing key means enabled.
+feature="php-review"
 config="$(dirname "$0")/config.local.json"
 if [ -f "$config" ]; then
-	self="$(basename "$0")"
-	enabled=$(jq -r --arg k "$self" 'if has($k) then .[$k] else true end' "$config" 2>/dev/null)
+	enabled=$(jq -r --arg k "$feature" 'if has($k) then .[$k] else true end' "$config" 2>/dev/null)
 	[ "$enabled" = "false" ] && exit 0
 fi
 
@@ -41,6 +44,8 @@ content_hash() {
 list=""
 for marker in "$dir"/touched-*; do
 	[ -e "$marker" ] || continue
+	# The glob also matches the ".reviewed" sidecars we write below; skip them.
+	case "$marker" in *.reviewed) continue ;; esac
 	file=$(cat "$marker" 2>/dev/null)
 	[ -n "$file" ] && [ -f "$file" ] || continue
 
@@ -55,6 +60,6 @@ done
 
 [ -n "$list" ] || exit 0
 
-reason="Before finishing this turn, review your PHP changes. Dispatch the \`php-review\` agent once for each file below (in parallel is fine), then apply any fixes it reports. Files needing review:${list}"
+reason="Before finishing this turn, review your PHP changes. Dispatch the \`php-review\` agent once for each file below (in parallel is fine), each with the prompt \`review CHANGES in <file>\`, then apply any fixes it reports. Files needing review:${list}"
 
 jq -n --arg r "$reason" '{decision: "block", reason: $r}'

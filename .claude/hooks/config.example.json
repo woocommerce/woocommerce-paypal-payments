@@ -1,5 +1,6 @@
 {
-	"_comment": "Copy this file to config.local.json to disable individual hooks locally. config.local.json is gitignored. Each key is a hook script filename; set it to false to bail that hook. Any hook not listed (or with no config file at all) is enabled.",
-	"php-review-track.sh": true,
-	"php-review-stop.sh": true
+	"_comment": "Copy this file to config.local.json to disable individual hooks locally.",
+
+	"_info-php-review": "Disable the hooks that trigger a code review after editing PHP files.",
+	"php-review": true
 }

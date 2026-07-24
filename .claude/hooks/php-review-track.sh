@@ -8,13 +8,16 @@
 # here get reviewed later, so pre-existing dirty files the session never edited
 # are left alone.
 
-# Local opt-out: hooks/config.local.json maps each hook filename to a boolean.
-# A script set to false here bails immediately. No config file (the default) or a
+# Everything below parses JSON with jq. Without it, bail silently.
+command -v jq >/dev/null 2>&1 || exit 0
+
+# Local opt-out: hooks/config.local.json maps each "feature" to a boolean.
+# A disabled feature bails immediately. No config file (the default) or a
 # missing key means enabled.
+feature="php-review"
 config="$(dirname "$0")/config.local.json"
 if [ -f "$config" ]; then
-	self="$(basename "$0")"
-	enabled=$(jq -r --arg k "$self" 'if has($k) then .[$k] else true end' "$config" 2>/dev/null)
+	enabled=$(jq -r --arg k "$feature" 'if has($k) then .[$k] else true end' "$config" 2>/dev/null)
 	[ "$enabled" = "false" ] && exit 0
 fi
 
