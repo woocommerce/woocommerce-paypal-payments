@@ -53,7 +53,7 @@ class ReconciliationService {
 			return;
 		}
 
-		// Integration is enabled, let's check te auto-register flag before acting.
+		// Integration is enabled, let's check the auto-register flag before acting.
 		if ( $this->should_auto_register() ) {
 			$this->register();
 		}
