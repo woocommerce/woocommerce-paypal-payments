@@ -25,9 +25,11 @@ through public APIs only.
 
 ## Core principles
 
-- Test behavior through public APIs only — never private methods, never implementation details.
+- Test behavior through public APIs only - never private methods, never implementation details.
 - Document every test with `GIVEN/WHEN/THEN` in business language.
-- Stubs by default. Mock only when the interaction IS the test (e.g., logging, event firing).
+- Stubs by default. Mock a collaborator only when its return value drives the behavior you assert.
+- Never test that a hook, action, or filter fired, or that a method delegated. Test the observable outcome it produces; if there is none to assert, there is nothing worth testing.
+- Never test logging. Do not assert a logger was called (`shouldReceive('warning')`, `allows('error')`). It is a side effect, not behavior. Use the logger stub below.
 - Test naming: `test_what_when_expected_result()`.
 - Group related cases via `@dataProvider` with descriptive string keys.
 
@@ -65,6 +67,16 @@ When a mock is the only expectation that is tested, the test must mark this as p
 via `$this->addToAssertionCount(1);`
 
 ## Required patterns
+
+### Logger stub (catch-all, in `setUp`)
+
+A `LoggerInterface` is a constructor argument almost everywhere but is never the behavior under test. Give it a catch-all stub in `setUp`:
+
+```php
+$this->logger = Mockery::mock( LoggerInterface::class )->shouldIgnoreMissing();
+```
+
+`shouldIgnoreMissing()` swallows every call. Do not write `$logger->allows( 'warning' )` or `->shouldReceive( 'error' )` - naming a level couples the test to which method the code happens to use. Never assert on the logger.
 
 ### Stateful fixture via closure
 
@@ -124,17 +136,20 @@ class TestablePaymentGateway extends PaymentGateway {
 
 ## Coverage priority
 
-1. **Happy path first** — one test that exercises the most common business path end-to-end as a
+1. **Happy path first** - one test that exercises the most common business path end-to-end as a
    smoke test.
-2. **Business logic** — rules, state transitions, validation, calculations, transformations.
-3. **Edge cases** — null, empty, zero, negative, boundary values, exception paths.
-4. **Integration points** — WordPress hooks/actions, event firing, meta persistence, permission
-   checks.
+2. **Business logic** - rules, state transitions, validation, calculations, transformations.
+3. **Edge cases** - null, empty, zero, negative, boundary values, exception paths.
+4. **Observable side effects** - meta persistence, permission checks, and the *result* a hook
+   handler produces (the changed state), not the fact that a hook or action fired.
 
-Skip: third-party library internals, framework behavior, trivial getters/setters.
+Skip: third-party library internals, framework behavior, trivial getters/setters, hook/action/filter
+registration, pure delegation, and logging.
 
 ## Anti-patterns (hard no)
 
+- A test whose only assertion is that an action/filter fired or that a call was delegated - with no business outcome verified.
+- Asserting on the logger (`shouldReceive`/`allows` on a `LoggerInterface`).
 - Asserting method call sequences instead of resulting state.
 - Separate test methods for cases that belong in one data provider.
 - Testing private methods directly.
@@ -150,10 +165,11 @@ Skip: third-party library internals, framework behavior, trivial getters/setters
 - [ ] Every test has a `GIVEN/WHEN/THEN` doc block.
 - [ ] Comments are concise and evergreen.
 - [ ] Each test has a single, focused purpose.
-- [ ] Specific assertions used (`assertSame`, `assertEquals` — not `assertTrue`).
+- [ ] Specific assertions used (`assertSame`, `assertEquals` - not `assertTrue`).
 - [ ] No shared state between tests.
 - [ ] Related cases grouped via data provider with descriptive keys.
 - [ ] Stubs by default; mocks only where justified.
+- [ ] Minimal side-effect expectations (prefer `->shouldIgnoreMissing()`).
 - [ ] Test names and provider keys read as business sentences.
 - [ ] Tests verify observable behavior, not implementation.
 - [ ] Every test has 1 or more assertions.

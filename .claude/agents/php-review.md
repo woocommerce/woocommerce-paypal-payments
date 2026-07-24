@@ -30,6 +30,8 @@ Review only what changed, never the whole file.
 - Flag comments that restate what the code already says (`// increment counter` above `$i++`). Comments justify *why*, not *what*.
 - Flag "@inheritdoc"-tags. They are not needed in our IDE.
 - Flag docblocks that only repeat the signature and add nothing a reader or PHPStan doesn't already have. Keep docblocks that carry real information: `@throws`, non-obvious `@param`/`@return` types static analysis needs, or a genuine contract note.
+- Flag a `@param`/`@return` tag whose type the signature already declares (`@param bool $flag` when the hint is `bool $flag`). Keep a type tag only when it adds what the signature cannot: an array shape (`array<string, Foo>`), `iterable<T>`, or a callable/mixed contract.
+- Flag a docblock longer than the information it carries: a multi-line block that restates the method name, narrates the body, or pads with obvious `@param` lines should collapse to one summary line or go. State the single line it should become.
 - Never ask for a docblock on a self-explanatory function.
 - Flag a newly added `do_action()` or `apply_filters()` with no docblock: it needs one line on its purpose plus a `@param` per passed argument.
 
@@ -93,3 +95,15 @@ Consider:
 These are open questions for the developer to weigh, NOT fixes to apply. Do not resolve them yourself.
 
 No preamble, no severity theater, no summary paragraph. If nothing in the change warrants attention, return CLEAN - and do not manufacture findings or questions.
+
+## Checklist
+
+- Functions are small and focused
+- No deep code nesting
+- All comments are strictly needed to understand the code
+- No repetitive code explanation comments like @param array or @inheritdoc
+- No transactional comments
+- Hooks have a concise docblock
+- High cohesion, low coupling
+- Code is simple and minimal
+- All abstractions are strictly needed
