@@ -27,7 +27,13 @@ initCartFragmentSync();
 
 let paypalScriptPromise = null;
 
-const features = [ 'products' ];
+// Mirror the gateway's server-side (mode-aware) `supports` so WooCommerce Blocks
+// does not filter the PayPal method out when the cart requires a feature the
+// gateway actually supports — notably `multiple_subscriptions` when the cart holds
+// two or more subscriptions. Falls back to the previous hard-coded list.
+const features = Array.isArray( config.supportedFeatures )
+	? [ ...config.supportedFeatures ]
+	: [ 'products' ];
 let blockEnabled = true;
 
 if ( cartHasSubscriptionProducts( config.scriptData ) ) {
@@ -35,7 +41,9 @@ if ( cartHasSubscriptionProducts( config.scriptData ) ) {
 	// (shared rule used by the classic cart and mini-cart as well).
 	blockEnabled = paypalSubscriptionButtonAllowed( config.scriptData );
 
-	features.push( 'subscriptions' );
+	if ( ! Array.isArray( config.supportedFeatures ) ) {
+		features.push( 'subscriptions' );
+	}
 }
 
 if ( blockEnabled ) {
