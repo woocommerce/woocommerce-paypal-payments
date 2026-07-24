@@ -19,6 +19,7 @@ use WooCommerce\PayPalCommerce\StoreSync\Endpoint\AgenticRestEndpoint;
 use WooCommerce\PayPalCommerce\StoreSync\Setting\AgenticSettingsModule;
 use WooCommerce\PayPalCommerce\StoreSync\Registration\RegistrationService;
 use WooCommerce\PayPalCommerce\StoreSync\Registration\RegistrationEligibility;
+use WooCommerce\PayPalCommerce\StoreSync\Registration\ReconciliationService;
 use WooCommerce\PayPalCommerce\StoreSync\Setting\AgenticSettingsDataModel;
 use WooCommerce\PayPalCommerce\StoreSync\CartValidation\CartValidationProcessor;
 use WooCommerce\PayPalCommerce\StoreSync\CartValidation\ValidatorInterface;
@@ -78,6 +79,9 @@ class StoreSyncModule implements ServiceModule, ExecutableModule {
 		$ingestion_manager = $container->get( 'agentic.ingestion-manager' );
 		assert( $ingestion_manager instanceof IngestionManager );
 
+		$reconciler = $container->get( 'agentic.registration.reconciler' );
+		assert( $reconciler instanceof ReconciliationService );
+
 		// Settings extension always available (merchants need to see the toggle).
 		$settings_module = $container->get( 'agentic.settings.module' );
 		assert( $settings_module instanceof AgenticSettingsModule );
@@ -88,6 +92,18 @@ class StoreSyncModule implements ServiceModule, ExecutableModule {
 
 		// Sync eligibility cache on init (when WC is available).
 		$this->sync_eligibility_cache( $agentic_settings, $eligibility_check );
+
+		// Reconcile the registration state whenever the agentic settings are saved.
+		add_action(
+			'woocommerce_paypal_payments_settings_saved',
+			static function ( $model ) use ( $reconciler ): void {
+				if ( ! $model instanceof AgenticSettingsDataModel ) {
+					return;
+				}
+
+				$reconciler->reconcile();
+			}
+		);
 
 		// Early exit if features should not be initialized.
 		if ( ! $agentic_settings->should_initialize_features() ) {
