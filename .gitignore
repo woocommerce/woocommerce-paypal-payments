@@ -32,8 +32,9 @@ tests/inc/inpsyde/
 # Track Claude Code configuration.
 !.claude
 
-# Ignore all kind of local files - settings.local.json, CLAUDE.local.md, ...
+# Ignore all kind of local files - settings.local.json, CLAUDE.local.md, skill.local/
 *.local.*
+**/*.local/
 
 # QA and tests
 playwright-utils
