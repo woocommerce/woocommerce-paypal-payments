@@ -31,6 +31,24 @@ const ACTIVITIES = {
 	API_VERIFY: 'auth/verify-login',
 };
 
+/**
+ * Environment ('sandbox' | 'production') of the connection button the merchant
+ * actually clicked.
+ *
+ * PayPal's partner.js exposes a single global onOnboardComplete callback, but the
+ * onboarding step mounts a live and a sandbox button at the same time. This
+ * module-level value lets the shared completion handler authenticate against the
+ * environment the merchant chose, rather than whichever button registered its
+ * handler first.
+ *
+ * @type {?string}
+ */
+let clickedEnvironment = null;
+
+export const setClickedEnvironment = ( environment ) => {
+	clickedEnvironment = environment;
+};
+
 export const useHandleOnboardingButton = ( isSandbox ) => {
 	const { onboardingUrl } = isSandbox
 		? CommonHooks.useSandbox()
@@ -110,44 +128,41 @@ export const useHandleOnboardingButton = ( isSandbox ) => {
 		};
 	}, [ onboardingUrlState ] );
 
-	const setCompleteHandler = useCallback(
-		( environment ) => {
-			const onComplete = async ( authCode, sharedId ) => {
-				/**
-				 * Until now, the full page is blocked by PayPal's semi-transparent, black overlay.
-				 * But at this point, the overlay is removed, while we process the sharedId and
-				 * authCode via a REST call.
-				 *
-				 * Note: The REST response is irrelevant, since PayPal will most likely refresh this
-				 * frame before the REST endpoint returns a value. Using "withActivity" is more of a
-				 * visual cue to the user that something is still processing in the background.
-				 */
-				startActivity(
-					ACTIVITIES.OAUTH_VERIFY,
-					'Validating the connection details'
-				);
+	const setCompleteHandler = useCallback( () => {
+		const onComplete = async ( authCode, sharedId ) => {
+			/**
+			 * Until now, the full page is blocked by PayPal's semi-transparent, black overlay.
+			 * But at this point, the overlay is removed, while we process the sharedId and
+			 * authCode via a REST call.
+			 *
+			 * Note: The REST response is irrelevant, since PayPal will most likely refresh this
+			 * frame before the REST endpoint returns a value. Using "withActivity" is more of a
+			 * visual cue to the user that something is still processing in the background.
+			 */
+			startActivity(
+				ACTIVITIES.OAUTH_VERIFY,
+				'Validating the connection details'
+			);
 
-				await authenticateWithOAuth(
-					sharedId,
-					authCode,
-					environment === 'sandbox'
-				);
-			};
+			await authenticateWithOAuth(
+				sharedId,
+				authCode,
+				clickedEnvironment === 'sandbox'
+			);
+		};
 
-			const addHandler = () => {
-				const MiniBrowser = window.PAYPAL?.apps?.Signup?.MiniBrowser;
-				if ( ! MiniBrowser || MiniBrowser.onOnboardComplete ) {
-					return;
-				}
+		const addHandler = () => {
+			const MiniBrowser = window.PAYPAL?.apps?.Signup?.MiniBrowser;
+			if ( ! MiniBrowser || MiniBrowser.onOnboardComplete ) {
+				return;
+			}
 
-				MiniBrowser.onOnboardComplete = onComplete;
-			};
+			MiniBrowser.onOnboardComplete = onComplete;
+		};
 
-			// Ensure the onComplete handler is not removed by a PayPal init script.
-			timerRef.current = setInterval( addHandler, 250 );
-		},
-		[ authenticateWithOAuth, startActivity ]
-	);
+		// Ensure the onComplete handler is not removed by a PayPal init script.
+		timerRef.current = setInterval( addHandler, 250 );
+	}, [ authenticateWithOAuth, startActivity ] );
 
 	const removeCompleteHandler = useCallback( () => {
 		if ( timerRef.current ) {

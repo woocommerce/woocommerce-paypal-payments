@@ -3,7 +3,10 @@ import { useEffect, useCallback } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
 import classNames from 'classnames';
 import { OpenSignup } from '@ppcp-settings/Components/ReusableComponents/Icons';
-import { useHandleOnboardingButton } from '@ppcp-settings/hooks/useHandleConnections';
+import {
+	useHandleOnboardingButton,
+	setClickedEnvironment,
+} from '@ppcp-settings/hooks/useHandleConnections';
 import { OnboardingHooks } from '@ppcp-settings/data/onboarding/hooks';
 import BusyStateWrapper from '@ppcp-settings/Components/ReusableComponents/BusyStateWrapper';
 import { Notice } from '@ppcp-settings/Components/ReusableComponents/Elements';
@@ -88,7 +91,11 @@ const ConnectionButton = ( {
 
 	const handleButtonClick = useCallback( () => {
 		setConnectionButtonClicked( true );
-	}, [ setConnectionButtonClicked ] );
+
+		// Record which environment the merchant clicked so the shared
+		// onOnboardComplete handler authenticates against the right account.
+		setClickedEnvironment( environment );
+	}, [ setConnectionButtonClicked, environment ] );
 
 	// Reset button clicked state when onboardingUrl becomes available.
 	useEffect( () => {
@@ -100,7 +107,7 @@ const ConnectionButton = ( {
 	useEffect( () => {
 		if ( scriptLoaded && onboardingUrl ) {
 			window.PAYPAL.apps.Signup.render();
-			setCompleteHandler( environment );
+			setCompleteHandler();
 		}
 
 		return () => {
@@ -109,7 +116,6 @@ const ConnectionButton = ( {
 	}, [
 		scriptLoaded,
 		onboardingUrl,
-		environment,
 		setCompleteHandler,
 		removeCompleteHandler,
 	] );
