@@ -12,6 +12,16 @@
 # unchanged file is never nudged twice and the loop terminates cleanly once edits
 # stop changing content. Silent (exit 0) when there is nothing new to review.
 
+# Local opt-out: hooks/config.local.json maps each hook filename to a boolean.
+# A script set to false here bails immediately. No config file (the default) or a
+# missing key means enabled.
+config="$(dirname "$0")/config.local.json"
+if [ -f "$config" ]; then
+	self="$(basename "$0")"
+	enabled=$(jq -r --arg k "$self" 'if has($k) then .[$k] else true end' "$config" 2>/dev/null)
+	[ "$enabled" = "false" ] && exit 0
+fi
+
 input=$(cat)
 
 session=$(printf '%s' "$input" | jq -r '.session_id // "nosession"' 2>/dev/null)

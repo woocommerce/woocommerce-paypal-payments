@@ -8,6 +8,16 @@
 # here get reviewed later, so pre-existing dirty files the session never edited
 # are left alone.
 
+# Local opt-out: hooks/config.local.json maps each hook filename to a boolean.
+# A script set to false here bails immediately. No config file (the default) or a
+# missing key means enabled.
+config="$(dirname "$0")/config.local.json"
+if [ -f "$config" ]; then
+	self="$(basename "$0")"
+	enabled=$(jq -r --arg k "$self" 'if has($k) then .[$k] else true end' "$config" 2>/dev/null)
+	[ "$enabled" = "false" ] && exit 0
+fi
+
 input=$(cat)
 
 file=$(printf '%s' "$input" | jq -r '.tool_input.file_path // empty' 2>/dev/null)
@@ -15,6 +25,11 @@ file=$(printf '%s' "$input" | jq -r '.tool_input.file_path // empty' 2>/dev/null
 case "$file" in
 	*.php) ;;
 	*) exit 0 ;;
+esac
+
+# Test files are out of scope for cleanliness review.
+case "$file" in
+	*/tests/*|*/test/*) exit 0 ;;
 esac
 
 session=$(printf '%s' "$input" | jq -r '.session_id // "nosession"' 2>/dev/null)
