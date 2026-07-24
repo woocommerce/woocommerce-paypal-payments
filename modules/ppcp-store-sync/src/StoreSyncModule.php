@@ -91,16 +91,10 @@ class StoreSyncModule implements ServiceModule, ExecutableModule {
 
 		// Early exit if features should not be initialized.
 		if ( ! $agentic_settings->should_initialize_features() ) {
-			$this->ensure_deregistered( $registration_handler );
-
 			return true;
 		}
 
 		// Feature is active and merchant is eligible: Initialize everything.
-
-		if ( $this->should_auto_register() ) {
-			$this->ensure_registered( $registration_handler );
-		}
 
 		// Public REST endpoints.
 		add_action(
@@ -172,32 +166,5 @@ class StoreSyncModule implements ServiceModule, ExecutableModule {
 				$settings->save();
 			}
 		);
-	}
-
-	private function ensure_registered( RegistrationService $registration_service ): void {
-		if ( $registration_service->is_registered() ) {
-			return;
-		}
-		add_action( 'init', static fn() => $registration_service->register() );
-	}
-
-	private function ensure_deregistered( RegistrationService $registration_service ): void {
-		if ( ! $registration_service->is_registered() ) {
-			return;
-		}
-		add_action( 'init', static fn() => $registration_service->deregister() );
-	}
-
-	/**
-	 * Whether the auto-registration is enabled for this site.
-	 *
-	 * By default, the plugin automatically registers when the merchant is eligible and the feature
-	 * is enabled. For testing or troubleshooting, this behavior can be disabled by adding the
-	 * following constant to wp-config.php:
-	 *
-	 *   define( 'PPCP_AGENTIC_AUTO_REGISTER', false );
-	 */
-	private function should_auto_register(): bool {
-		return ! defined( 'PPCP_AGENTIC_AUTO_REGISTER' ) || PPCP_AGENTIC_AUTO_REGISTER;
 	}
 }
