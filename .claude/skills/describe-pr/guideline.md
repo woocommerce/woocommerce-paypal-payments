@@ -120,9 +120,12 @@ happens" / "The fix" onto it produces filler.
 - **Inline code:** backticks for file paths, class names, method names, hook names, config keys, JS
   globals.
 - **Bold:** one use per section max, for the single most important term or outcome.
-- **Lists:** prefer bullets over prose when there are 3+ parallel items.
+- **Lists:** prefer bullets to prose when there are 3+ parallel items.
 - **Avoid AI lingo** like "awkward", "scrutinize", "delve".
 - No em-dashes, direct and active tone.
+- **No soft wrapping.** Write each paragraph and each bullet as one continuous line, however long.
+  Insert a line break only for a functional reason: a new paragraph, or a new list item. GitHub
+  renders manual breaks as hard line breaks in the description.
 
 ## Visual proof
 

@@ -33,7 +33,7 @@ Also resolve the **Jira number** for the title suffix: the Jira ID (from the arg
 
 Collect context to ground the draft. Pull from all that apply:
 
-- **The current conversation** - if this session already investigated the bug or built the fix, that understanding is often the richest source of "the problem" and "why it happens." Use it.
+- **The current conversation** - if this session already investigated the bug or built the fix, that understanding is often the richest source of "the problem" and "why it happens." Use it for the *reasoning*, but do not transcribe the investigation. Dead ends, intermediate hypotheses, commands you ran, files you inspected, and back-and-forth that led to the fix are noise to a reviewer. Keep only the conclusion they need to review the final change.
 - **Existing PR body** - `gh pr view <n> --json body,title,baseRefName`. Treat it as a starting point to refine, not something to blindly discard.
 - **Optional Jira** - if a Jira ID was given, or one is embedded in the branch name (`[A-Z]+-\d+`), fetch it via the connected Atlassian MCP for problem framing. If the fetch fails, note it in one line and continue.
 - **Diff + commits** - `git diff <base>...HEAD` and `git log <base>..HEAD --oneline` (use the PR's `baseRefName`). This is the substance you reason *about* - do not transcribe it into the description.
