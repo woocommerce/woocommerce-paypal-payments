@@ -41,12 +41,21 @@ class ReconciliationService {
 		$desired = $this->settings->should_initialize_features();
 		$actual  = $this->registration->is_registered();
 
-		if ( $desired && ! $actual ) {
-			if ( $this->should_auto_register() ) {
-				$this->register();
-			}
-		} elseif ( ! $desired && $actual ) {
+		// State has not changed, do nothing.
+		if ( $desired === $actual ) {
+			return;
+		}
+
+		// Integration was disabled, clean up and unregister.
+		if ( ! $desired ) {
 			$this->registration->deregister();
+
+			return;
+		}
+
+		// Integration is enabled, let's check te auto-register flag before acting.
+		if ( $this->should_auto_register() ) {
+			$this->register();
 		}
 	}
 
