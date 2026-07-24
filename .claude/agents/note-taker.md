@@ -4,6 +4,7 @@ description: Records an insight into the developer's local research notes and ow
 color: cyan
 model: sonnet
 effort: low
+background: true
 tools: Read, Write, Edit, Glob
 disallowedTools: Bash, PowerShell, NotebookEdit, WebFetch, WebSearch, Skill, ToolSearch, EnterWorktree, ExitWorktree, Monitor, TaskStop, TodoWrite, SendMessage
 ---

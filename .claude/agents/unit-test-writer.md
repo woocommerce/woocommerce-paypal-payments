@@ -4,6 +4,7 @@ description: Expert PHPUnit test writer for WordPress/WooCommerce PHP code. Spec
 color: orange
 model: sonnet
 effort: medium
+background: true
 tools: Read, Grep, Glob, Edit, Write, Bash
 disallowedTools: NotebookEdit, WebFetch, WebSearch, Skill, ToolSearch, EnterWorktree, ExitWorktree, Monitor, TaskStop, TodoWrite, SendMessage
 ---

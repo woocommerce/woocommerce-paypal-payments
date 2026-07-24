@@ -4,6 +4,7 @@ description: Expert Jest test writer for the plugin's JavaScript/TypeScript (Rea
 color: orange
 model: sonnet
 effort: medium
+background: true
 tools: Read, Grep, Glob, Edit, Write, Bash
 disallowedTools: NotebookEdit, WebFetch, WebSearch, Skill, ToolSearch, EnterWorktree, ExitWorktree, Monitor, TaskStop, TodoWrite, SendMessage
 ---
