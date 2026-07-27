@@ -58,12 +58,11 @@ class ReconciliationServiceTest extends TestCase {
 			->andReturn( new RegistrationResult( true, 'Registered', null ) );
 
 		$this->settings->shouldNotReceive( 'set_active' );
-		$this->settings->shouldNotReceive( 'set_last_registration_error' );
 		$this->settings->shouldNotReceive( 'save' );
 
 		$this->create_testee()->reconcile();
 
-		$this->addToAssertionCount( 4 );
+		$this->addToAssertionCount( 3 );
 	}
 
 	/**
