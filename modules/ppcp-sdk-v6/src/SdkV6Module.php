@@ -94,16 +94,18 @@ class SdkV6Module implements ServiceModule, ExtendingModule, ExecutableModule {
 		// type and processing); on v6-owned block pages its script_data is
 		// empty so it registers no express buttons, and v6 supplies them.
 		//
-		// Extends the v5 handoff (see extensions.php) to the block wallet
-		// methods. On v6-owned block pages the Google Pay and Apple Pay block
-		// boots read v5's now-empty PayPal config and throw during React
-		// render, which tears down the whole checkout block (v6 buttons
-		// included) instead of failing quietly. The registration action fires
-		// on init (priority 5), before is_checkout()/is_cart() resolve, so the
-		// page context is unknown here; capture the registry and defer the
-		// suppression to wp_enqueue_scripts, where the context is known and
-		// the block scripts are not yet enqueued. The wallets migrate under
-		// their own story (PCP-5782).
+		// Extends the v5 handoff (see extensions.php) to the other v5 PayPal
+		// block methods. On v6-owned block pages they read v5's now-empty
+		// PayPal config and misbehave: the Google Pay / Apple Pay boots throw
+		// during React render (tearing down the whole checkout block), and the
+		// Fastlane (AXO) boot runs its field-restoration/cleanup against the
+		// checkout, which can clobber the express submission. Unregister them
+		// so they go dark cleanly; they migrate under their own stories
+		// (wallets PCP-5782, card fields PCP-5781). The registration action
+		// fires on init (priority 5), before is_checkout()/is_cart() resolve,
+		// so the page context is unknown here; capture the registry and defer
+		// the suppression to wp_enqueue_scripts, where the context is known and
+		// the block scripts are not yet enqueued.
 		add_action(
 			'woocommerce_blocks_payment_method_type_registration',
 			function ( PaymentMethodRegistry $payment_method_registry ) use ( $c ): void {
@@ -119,9 +121,17 @@ class SdkV6Module implements ServiceModule, ExtendingModule, ExecutableModule {
 							return;
 						}
 
-						foreach ( array( 'ppcp-googlepay', 'ppcp-applepay' ) as $wallet_method ) {
-							if ( $payment_method_registry->is_registered( $wallet_method ) ) {
-								$payment_method_registry->unregister( $wallet_method );
+						// PayPal-owned block methods only; never third-party or
+						// core gateways. ppcp-gateway (regular PayPal) self-
+						// suppresses with empty script_data, so it is left as is.
+						$v5_methods = array(
+							'ppcp-googlepay',
+							'ppcp-applepay',
+							'ppcp-axo-gateway',
+						);
+						foreach ( $v5_methods as $method ) {
+							if ( $payment_method_registry->is_registered( $method ) ) {
+								$payment_method_registry->unregister( $method );
 							}
 						}
 					},
