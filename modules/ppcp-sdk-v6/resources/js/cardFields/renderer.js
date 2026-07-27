@@ -9,9 +9,9 @@
  * through to capture it via the existing CreditCardGateway::process_payment().
  *
  * Scope: fresh card, one-time payment only. Saving a new card, paying with
- * an already-saved card, and the $0 free-trial variant are separate
- * tickets and untouched here — this defers to the native submit whenever
- * a saved token is selected.
+ * an already-saved card, and the $0 free-trial variant are untouched
+ * here — this defers to the native submit whenever a saved token is
+ * selected.
  *
  * @package
  */
