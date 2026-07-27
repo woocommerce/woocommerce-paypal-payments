@@ -186,6 +186,14 @@ class ValidationIssue {
 	}
 
 	/**
+	 * Returns the field, which caused the issue, in a dot-notation.
+	 * For example "shipping_address.postal_code"
+	 */
+	public function field(): string {
+		return $this->field;
+	}
+
+	/**
 	 * Sets the field that triggered the issue.
 	 *
 	 * @param string $field Field path, e.g. "shipping_address.postal_code".
