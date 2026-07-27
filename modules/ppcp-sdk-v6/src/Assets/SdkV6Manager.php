@@ -17,6 +17,8 @@ use WooCommerce\PayPalCommerce\OrderEndpoints\Endpoint\CreateOrderEndpoint;
 use WooCommerce\PayPalCommerce\Button\Helper\Context;
 use WooCommerce\PayPalCommerce\SdkV6\Endpoint\ClientTokenEndpoint;
 use WooCommerce\PayPalCommerce\SdkV6\Helper\ButtonStyleMapper;
+use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
+use WooCommerce\PayPalCommerce\WcGateway\Helper\CardPaymentsConfiguration;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\SettingsStatus;
 
@@ -24,6 +26,15 @@ class SdkV6Manager {
 
 	public const WRAPPER_ID           = 'ppc-button-ppcp-gateway-v6';
 	public const MINI_CART_WRAPPER_ID = 'ppc-button-minicart-v6';
+
+	// Existing WC credit-card-form field IDs (see CardFieldsModule's
+	// woocommerce_credit_card_form_fields filter and WC core's own
+	// card-number/expiry/cvc fields) that the v6 card fields mount into,
+	// replacing v5's paypal.CardFields()-rendered inputs in the same slots.
+	private const CARD_FIELD_NAME_ID   = 'ppcp-credit-card-gateway-card-name';
+	private const CARD_FIELD_NUMBER_ID = 'ppcp-credit-card-gateway-card-number';
+	private const CARD_FIELD_EXPIRY_ID = 'ppcp-credit-card-gateway-card-expiry';
+	private const CARD_FIELD_CVV_ID    = 'ppcp-credit-card-gateway-card-cvc';
 
 	private AssetGetter $asset_getter;
 	private string $version;
@@ -33,6 +44,7 @@ class SdkV6Manager {
 	private SettingsStatus $settings_status;
 	private Context $context;
 	private bool $vaulting_enabled;
+	private CardPaymentsConfiguration $card_payments_configuration;
 
 	public function __construct(
 		AssetGetter $asset_getter,
@@ -42,16 +54,18 @@ class SdkV6Manager {
 		bool $should_handle_shipping,
 		SettingsStatus $settings_status,
 		Context $context,
-		bool $vaulting_enabled = false
+		bool $vaulting_enabled,
+		CardPaymentsConfiguration $card_payments_configuration
 	) {
-		$this->asset_getter           = $asset_getter;
-		$this->version                = $version;
-		$this->environment            = $environment;
-		$this->style_mapper           = $style_mapper;
-		$this->should_handle_shipping = $should_handle_shipping;
-		$this->settings_status        = $settings_status;
-		$this->context                = $context;
-		$this->vaulting_enabled       = $vaulting_enabled;
+		$this->asset_getter                = $asset_getter;
+		$this->version                     = $version;
+		$this->environment                 = $environment;
+		$this->style_mapper                = $style_mapper;
+		$this->should_handle_shipping      = $should_handle_shipping;
+		$this->settings_status             = $settings_status;
+		$this->context                     = $context;
+		$this->vaulting_enabled            = $vaulting_enabled;
+		$this->card_payments_configuration = $card_payments_configuration;
 	}
 
 	/**
@@ -141,11 +155,21 @@ class SdkV6Manager {
 	 * the suppression becomes unconditional and only the merchant
 	 * location-settings gating in this method remains meaningful.
 	 *
+	 * Card fields (ACDC) are independent of the smart-button location: the
+	 * card gateway is a regular WC payment method that can be selectable
+	 * at checkout even when the wallet button is disabled there, so it
+	 * gets its own OR'd condition rather than being folded into the
+	 * location check above.
+	 *
 	 * @return bool
 	 */
 	public function should_load_on_current_page(): bool {
 		$page_location = $this->get_page_context();
 		if ( $page_location && $this->settings_status->is_smart_button_enabled_for_location( $page_location ) ) {
+			return true;
+		}
+
+		if ( 'checkout' === $page_location && $this->card_payments_configuration->is_acdc_enabled() ) {
 			return true;
 		}
 
@@ -185,6 +209,8 @@ class SdkV6Manager {
 		if ( $this->settings_status->is_smart_button_enabled_for_location( 'mini-cart' ) ) {
 			$button_styles['mini-cart'] = $this->style_mapper->styles_for_context( 'mini-cart' );
 		}
+
+		$card_fields_enabled = 'checkout' === $page_context && $this->card_payments_configuration->is_acdc_enabled();
 
 		return array(
 			'sdk_url'           => $base_url . '/web-sdk/v6/core',
@@ -238,6 +264,17 @@ class SdkV6Manager {
 			'button_styles'     => $button_styles,
 			'wrapper'           => '#' . self::WRAPPER_ID,
 			'mini_cart_wrapper' => '#' . self::MINI_CART_WRAPPER_ID,
+			'card_fields'       => array(
+				'enabled'        => $card_fields_enabled,
+				'payment_method' => CreditCardGateway::ID,
+				'funding_source' => 'card',
+				'fields'         => array(
+					'name'   => '#' . self::CARD_FIELD_NAME_ID,
+					'number' => '#' . self::CARD_FIELD_NUMBER_ID,
+					'expiry' => '#' . self::CARD_FIELD_EXPIRY_ID,
+					'cvv'    => '#' . self::CARD_FIELD_CVV_ID,
+				),
+			),
 		);
 	}
 
