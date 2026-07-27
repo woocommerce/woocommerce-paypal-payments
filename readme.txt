@@ -161,7 +161,7 @@ If you encounter issues with the PayPal buttons not appearing after an update, p
 
 == Changelog ==
 
-= 4.1.2 - 2026-08-04 =
+= 4.1.2 - XXXX-XX-XX =
 * Enhancement - Advanced onboarding options for onboarding wizard #4496
 * Enhancement - Improved buyer-facing card decline reason display #4509
 * Enhancement - Add filter to allow Pay Later button and messaging when Vaulting is enabled #4508
