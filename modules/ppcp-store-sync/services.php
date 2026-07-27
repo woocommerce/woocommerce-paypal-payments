@@ -35,6 +35,7 @@ use WooCommerce\PayPalCommerce\StoreSync\Setting\AgenticSettingsModule;
 use WooCommerce\PayPalCommerce\StoreSync\Merchant\MerchantMetadataProvider;
 use WooCommerce\PayPalCommerce\StoreSync\Registration\RegistrationService;
 use WooCommerce\PayPalCommerce\StoreSync\Registration\RegistrationEligibility;
+use WooCommerce\PayPalCommerce\StoreSync\Registration\ReconciliationService;
 use WooCommerce\PayPalCommerce\StoreSync\Helper\AgenticCheckoutProcessor;
 use WooCommerce\PayPalCommerce\StoreSync\Helper\ShippingOptionsBuilder;
 use WooCommerce\PayPalCommerce\StoreSync\Helper\PayPalOrderManager;
@@ -89,6 +90,9 @@ return array(
     },
     'agentic.registration.handler' => static function (ContainerInterface $c): RegistrationService {
         return new RegistrationService($c->get('agentic.config.webhook_urls'), $c->get('agentic.merchant.provider'), $c->get('agentic.logger.default'));
+    },
+    'agentic.registration.reconciler' => static function (ContainerInterface $c): ReconciliationService {
+        return new ReconciliationService($c->get('agentic.settings.model'), $c->get('agentic.registration.handler'), $c->get('agentic.logger.default'));
     },
     // Authentication services.
     'agentic.auth.key_provider' => static function (): PayPalJwkProvider {

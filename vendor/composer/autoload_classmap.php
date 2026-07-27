@@ -474,6 +474,7 @@ return array(
     'WooCommerce\\PayPalCommerce\\StoreSync\\Ingestion\\SyncJob' => $baseDir . '/modules/ppcp-store-sync/src/Ingestion/SyncJob.php',
     'WooCommerce\\PayPalCommerce\\StoreSync\\Merchant\\MerchantMetadata' => $baseDir . '/modules/ppcp-store-sync/src/Merchant/MerchantMetadata.php',
     'WooCommerce\\PayPalCommerce\\StoreSync\\Merchant\\MerchantMetadataProvider' => $baseDir . '/modules/ppcp-store-sync/src/Merchant/MerchantMetadataProvider.php',
+    'WooCommerce\\PayPalCommerce\\StoreSync\\Registration\\ReconciliationService' => $baseDir . '/modules/ppcp-store-sync/src/Registration/ReconciliationService.php',
     'WooCommerce\\PayPalCommerce\\StoreSync\\Registration\\RegistrationEligibility' => $baseDir . '/modules/ppcp-store-sync/src/Registration/RegistrationEligibility.php',
     'WooCommerce\\PayPalCommerce\\StoreSync\\Registration\\RegistrationResult' => $baseDir . '/modules/ppcp-store-sync/src/Registration/RegistrationResult.php',
     'WooCommerce\\PayPalCommerce\\StoreSync\\Registration\\RegistrationService' => $baseDir . '/modules/ppcp-store-sync/src/Registration/RegistrationService.php',
