@@ -17,6 +17,7 @@ import { checkEligibility } from './eligibility';
 import { createSession } from './sessions/createSession';
 import { renderButtons } from './components/buttonRenderer';
 import { createOrder, fetchCartTotal } from './endpointsAdapter';
+import { initCardFields } from './cardFields/renderer';
 import { hasJQuery } from './utils/api';
 import { setErrorLabels } from './utils/errorHandler';
 
@@ -28,6 +29,20 @@ import { setErrorLabels } from './utils/errorHandler';
 	}
 
 	setErrorLabels( config.labels );
+
+	/**
+	 * Advanced Card Fields (ACDC): independent of the button render loop
+	 * below — it mounts into the existing WC card-form inputs rather than
+	 * a button wrapper, and only actually does anything when the card
+	 * gateway is enabled on this (checkout) page. Deferred the same way
+	 * as renderAll(), since it also queries checkout-form DOM elements.
+	 */
+	function initCardFieldsSafely() {
+		initCardFields( config ).catch( ( error ) => {
+			// eslint-disable-next-line no-console
+			console.error( '[PPCP SDK v6]', error );
+		} );
+	}
 
 	// The page-context and mini-cart wrappers are independent render
 	// targets; PHP only prints wrappers for enabled locations, so target
@@ -183,10 +198,15 @@ import { setErrorLabels } from './utils/errorHandler';
 		renderAll();
 	}
 
-	if ( document.readyState === 'loading' ) {
-		document.addEventListener( 'DOMContentLoaded', renderAll );
-	} else {
+	function initialRender() {
 		renderAll();
+		initCardFieldsSafely();
+	}
+
+	if ( document.readyState === 'loading' ) {
+		document.addEventListener( 'DOMContentLoaded', initialRender );
+	} else {
+		initialRender();
 	}
 
 	if ( hasJQuery() ) {
