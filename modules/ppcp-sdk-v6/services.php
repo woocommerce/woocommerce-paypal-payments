@@ -41,7 +41,8 @@ return array(
 			$container->get( 'order-endpoints.handle-shipping-in-paypal' ),
 			$container->get( 'wcgateway.settings.status' ),
 			$container->get( 'button.helper.context' ),
-			$container->get( 'settings.settings-provider' )->save_paypal_and_venmo()
+			$container->get( 'settings.settings-provider' )->save_paypal_and_venmo(),
+			$container->get( 'wcgateway.configuration.card-configuration' )
 		);
 	},
 
