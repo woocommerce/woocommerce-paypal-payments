@@ -111,7 +111,9 @@ function paypalPayerToWc( payer ) {
  */
 export function paypalOrderToWcAddresses( order ) {
 	const shippingAddress = paypalOrderToWcShippingAddress( order );
-	let billingAddress = shippingAddress;
+	// A copy, not the same reference: callers dispatch these as separate
+	// billing/shipping payloads and must be able to treat them independently.
+	let billingAddress = { ...shippingAddress };
 
 	if ( order?.payer ) {
 		billingAddress = paypalPayerToWc( order.payer );
