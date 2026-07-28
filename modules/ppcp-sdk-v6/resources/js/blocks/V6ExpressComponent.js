@@ -171,26 +171,37 @@ export function V6ExpressComponent( {
 		[ config, shippingData ]
 	);
 
-	callbacksRef.current = {
-		onApprove: approve,
-		onError: failFlow,
-		onCancel: () => {
-			if ( onClose ) {
-				onClose();
-			}
-		},
-		// Read live by the session handlers: shippingData carries the Blocks
-		// setters, whose identities change across renders.
-		shippingHandlers,
-	};
+	// Assigned in an effect rather than during render: mutating a ref while
+	// rendering is unsafe under concurrent React. Safe to defer because the
+	// session only reads these on buyer interaction, long after mount.
+	useEffect( () => {
+		callbacksRef.current = {
+			onApprove: approve,
+			onError: failFlow,
+			onCancel: () => {
+				if ( onClose ) {
+					onClose();
+				}
+			},
+			// Read live by the session handlers: shippingData carries the Blocks
+			// setters, whose identities change across renders.
+			shippingHandlers,
+		};
+	} );
 
 	// A primitive, so it only changes when the cart's shipping requirement
 	// actually flips — unlike the shippingData object identity.
 	const needsShipping = Boolean( shippingData?.needsShipping );
 
-	const session = useMemo( () => {
+	// createSession() calls into the PayPal SDK, so it must not run during
+	// render: useMemo offers no once-only guarantee and a discarded render would
+	// leave an orphaned SDK session behind. Created in an effect and held in
+	// state instead.
+	const [ session, setSession ] = useState( null );
+
+	useEffect( () => {
 		if ( ! sdk ) {
-			return null;
+			return;
 		}
 
 		const handlers = {
@@ -204,7 +215,7 @@ export function V6ExpressComponent( {
 		// handlers; classic fetch handlers must not run on block pages).
 		// Attaching these tells the SDK to collect shipping, so the
 		// needsShipping check must gate attachment, not just the body — hence
-		// it is a memo dependency rather than a live ref read.
+		// it is an effect dependency rather than a live ref read.
 		if (
 			method === 'paypal' &&
 			needsShipping &&
@@ -220,12 +231,12 @@ export function V6ExpressComponent( {
 				);
 		}
 
-		return createSession( sdk, method, config, context, handlers );
-		// Rebuilt only when the SDK, method or shipping requirement changes;
-		// the handler bodies are read live through the ref, so changing Blocks
+		const created = createSession( sdk, method, config, context, handlers );
+		setSession( created );
+		// Rebuilt only when the SDK, method or shipping requirement changes; the
+		// handler bodies are read live through the ref, so changing Blocks
 		// callback identities do not churn the session or remount the button.
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [ sdk, method, needsShipping ] );
+	}, [ sdk, method, needsShipping, config, context ] );
 
 	// Provide the approved order to the checkout processing step.
 	useEffect( () => {

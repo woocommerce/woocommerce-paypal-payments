@@ -39,9 +39,13 @@ export function V6ButtonContainer( {
 	const containerRef = useRef( null );
 	// onClick identity changes every render (the Blocks registry passes a
 	// fresh callback); read it through a ref so it does not recreate the
-	// button, which must stay tied to the session identity only.
+	// button, which must stay tied to the session identity only. Assigned in an
+	// effect rather than during render — mutating a ref while rendering is
+	// unsafe under concurrent React, and the button only reads this on click.
 	const onClickRef = useRef( null );
-	onClickRef.current = onClick;
+	useEffect( () => {
+		onClickRef.current = onClick;
+	} );
 
 	useEffect( () => {
 		const container = containerRef.current;
