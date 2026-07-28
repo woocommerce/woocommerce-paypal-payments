@@ -76,32 +76,35 @@ if ( config && config.page_context && config.continuation ) {
 		},
 	} );
 } else if ( config && config.page_context ) {
-	// Eligibility depends on the amount (Pay Later thresholds), so cache the
-	// SDK lookup per amount; loadSdkV6 is promise-memoized across amounts.
-	const eligibilityByAmount = {};
+	// Eligibility depends on the amount (Pay Later thresholds). WooCommerce
+	// re-invokes canMakePayment on every cart update, so the current amount is
+	// cached to avoid a lookup per funding source per update — but only the
+	// current one: a map keyed by amount would grow for the page's lifetime,
+	// and a stale amount is never asked for again.
+	let cached = { amount: null, eligibility: null };
 	const getEligibility = ( amount ) => {
-		if ( ! eligibilityByAmount[ amount ] ) {
-			eligibilityByAmount[ amount ] = loadSdkV6(
-				config,
-				config.page_context
-			)
-				.then( ( sdk ) =>
-					checkEligibility( sdk, {
-						currencyCode: config.currency,
-						countryCode: config.buyer_country,
-						amount,
-					} )
-				)
-				.catch( ( error ) => {
-					// eslint-disable-next-line no-console
-					console.error(
-						'[ppcp-sdk-v6] eligibility check failed',
-						error
-					);
-					return {};
-				} );
+		if ( cached.amount !== amount ) {
+			cached = {
+				amount,
+				eligibility: loadSdkV6( config, config.page_context )
+					.then( ( sdk ) =>
+						checkEligibility( sdk, {
+							currencyCode: config.currency,
+							countryCode: config.buyer_country,
+							amount,
+						} )
+					)
+					.catch( ( error ) => {
+						// eslint-disable-next-line no-console
+						console.error(
+							'[ppcp-sdk-v6] eligibility check failed',
+							error
+						);
+						return {};
+					} ),
+			};
 		}
-		return eligibilityByAmount[ amount ];
+		return cached.eligibility;
 	};
 
 	for ( const fundingSource of FUNDING_SOURCES ) {
