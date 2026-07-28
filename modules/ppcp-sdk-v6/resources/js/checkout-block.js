@@ -18,14 +18,10 @@ import { loadSdkV6 } from './sdkLoader';
 import { checkEligibility } from './eligibility';
 import { V6ExpressComponent } from './blocks/V6ExpressComponent';
 import { V6EditorPreview } from './blocks/V6EditorPreview';
+import { fundingSourceLabel } from './utils/fundingSources';
+import { minorUnitsToDecimal } from './utils/amount';
 
 const FUNDING_SOURCES = [ 'paypal', 'venmo', 'paylater' ];
-
-const LABELS = {
-	paypal: 'PayPal',
-	venmo: 'Venmo',
-	paylater: 'Pay Later',
-};
 
 // WooCommerce exposes each block payment method's get_payment_method_data()
 // under the wcSettings `paymentMethodData` container, keyed by the method's
@@ -41,12 +37,10 @@ const config = paymentMethodData[ 'ppcp-sdk-v6' ];
  * @return {string} The amount as a decimal string, or '' when unknown.
  */
 function amountFromCartTotals( cartTotals ) {
-	const minor = parseInt( cartTotals?.total_price, 10 );
-	if ( isNaN( minor ) ) {
-		return '';
-	}
-	const minorUnit = cartTotals?.currency_minor_unit ?? 2;
-	return ( minor / Math.pow( 10, minorUnit ) ).toFixed( minorUnit );
+	return minorUnitsToDecimal(
+		cartTotals?.total_price,
+		cartTotals?.currency_minor_unit
+	);
 }
 
 if ( config && config.page_context ) {
@@ -88,8 +82,12 @@ if ( config && config.page_context ) {
 			),
 			gatewayId: 'ppcp-gateway',
 			paymentMethodId: 'ppcp-gateway',
-			label: createElement( 'div', null, LABELS[ fundingSource ] ),
-			ariaLabel: LABELS[ fundingSource ],
+			label: createElement(
+				'div',
+				null,
+				fundingSourceLabel( fundingSource )
+			),
+			ariaLabel: fundingSourceLabel( fundingSource ),
 			content: createElement( V6ExpressComponent, {
 				config,
 				fundingSource,

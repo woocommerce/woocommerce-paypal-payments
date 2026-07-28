@@ -11,6 +11,7 @@
 import SingleProductActionHandler from '@ppcp-button/ActionHandler/SingleProductActionHandler';
 import { payerData } from '@ppcp-button/Helper/PayerData';
 import { postJson } from './utils/api';
+import { minorUnitsToDecimal } from './utils/amount';
 
 /**
  * Navigation seam: window.location is not mockable under jsdom, so
@@ -231,14 +232,11 @@ export async function fetchCartTotal( config ) {
 			credentials: 'same-origin',
 		} );
 		const cart = await response.json();
-		const minorUnit = cart?.totals?.currency_minor_unit ?? 2;
-		const totalPrice = parseInt( cart?.totals?.total_price, 10 );
 
-		if ( isNaN( totalPrice ) ) {
-			return '';
-		}
-
-		return ( totalPrice / Math.pow( 10, minorUnit ) ).toFixed( minorUnit );
+		return minorUnitsToDecimal(
+			cart?.totals?.total_price,
+			cart?.totals?.currency_minor_unit
+		);
 	} catch ( error ) {
 		return '';
 	}

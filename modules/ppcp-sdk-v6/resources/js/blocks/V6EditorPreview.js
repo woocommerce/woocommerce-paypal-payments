@@ -10,12 +10,7 @@
 
 import { createElement } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
-
-const LABELS = {
-	paypal: 'PayPal',
-	venmo: 'Venmo',
-	paylater: 'Pay Later',
-};
+import { fundingSourceLabel } from '../utils/fundingSources';
 
 /**
  * @param {Object} props               - Component props.
@@ -23,7 +18,7 @@ const LABELS = {
  * @return {Object} The placeholder element.
  */
 export function V6EditorPreview( { fundingSource } ) {
-	const label = LABELS[ fundingSource ] || 'PayPal';
+	const label = fundingSourceLabel( fundingSource );
 
 	return createElement(
 		'div',

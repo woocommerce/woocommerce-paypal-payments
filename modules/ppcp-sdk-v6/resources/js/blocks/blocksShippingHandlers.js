@@ -11,22 +11,7 @@
  */
 
 import { updateShipping } from '../endpointsAdapter';
-
-/**
- * Converts a PayPal v6 shipping address to WC customer-data fields.
- *
- * @param {Object} address - The v6 onShippingAddressChange address.
- * @return {Object} WC address fields.
- */
-function paypalAddressToWc( address = {} ) {
-	return {
-		country: address.countryCode || '',
-		// v6 uses Orders-v2 naming: adminArea1 = state, adminArea2 = city.
-		state: address.adminArea1 || address.state || '',
-		postcode: address.postalCode || '',
-		city: address.adminArea2 || address.city || '',
-	};
-}
+import { sdkShippingAddressToWc } from '../utils/sdkAddress';
 
 /**
  * Builds the block-aware onShippingAddressChange / onShippingOptionsChange
@@ -39,7 +24,7 @@ function paypalAddressToWc( address = {} ) {
 export function buildBlocksShippingHandlers( config, shippingData ) {
 	return {
 		onShippingAddressChange: async ( data ) => {
-			const address = paypalAddressToWc( data.shippingAddress );
+			const address = sdkShippingAddressToWc( data.shippingAddress );
 
 			await wp.data
 				.dispatch( 'wc/store/cart' )
