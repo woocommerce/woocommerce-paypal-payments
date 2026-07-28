@@ -24,7 +24,9 @@ import {
 	approveOrderInSession,
 	createOrder,
 	getOrder,
+	navigation,
 } from '../endpointsAdapter';
+import { continuationRedirectUrl } from '../utils/continuation';
 import { paypalOrderToWcAddresses } from './address';
 import { buildBlocksShippingHandlers } from './blocksShippingHandlers';
 import { V6ButtonContainer } from './V6ButtonContainer';
@@ -142,6 +144,17 @@ export function V6ExpressComponent( {
 			await approveOrderInSession( config, fundingSource, data.orderId );
 
 			setPaypalOrder( order );
+
+			// The v5 fork (paypal-config.js handleApprove): with the final
+			// review enabled the buyer confirms on the checkout page instead of
+			// the order being placed straight from the express flow. The reload
+			// is what builds the review surface — the server only emits the
+			// continuation payload once the approved order is in the session.
+			if ( config.final_review ) {
+				navigation.assign( continuationRedirectUrl( config ) );
+				return;
+			}
+
 			onSubmit();
 		} catch ( error ) {
 			failFlow( error );

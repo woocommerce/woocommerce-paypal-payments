@@ -18,6 +18,9 @@ use WooCommerce\PayPalCommerce\Button\Endpoint\GetOrderEndpoint;
 use WooCommerce\PayPalCommerce\Button\Helper\Context;
 use WooCommerce\PayPalCommerce\SdkV6\Endpoint\ClientTokenEndpoint;
 use WooCommerce\PayPalCommerce\SdkV6\Helper\ButtonStyleMapper;
+use WooCommerce\PayPalCommerce\Session\Cancellation\CancelController;
+use WooCommerce\PayPalCommerce\Session\Cancellation\CancelView;
+use WooCommerce\PayPalCommerce\Session\SessionHandler;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\SettingsStatus;
 
@@ -33,6 +36,9 @@ class SdkV6Manager {
 	private bool $should_handle_shipping;
 	private SettingsStatus $settings_status;
 	private Context $context;
+	private SessionHandler $session_handler;
+	private CancelView $cancel_view;
+	private bool $final_review_enabled;
 	private bool $vaulting_enabled;
 
 	public function __construct(
@@ -43,6 +49,9 @@ class SdkV6Manager {
 		bool $should_handle_shipping,
 		SettingsStatus $settings_status,
 		Context $context,
+		SessionHandler $session_handler,
+		CancelView $cancel_view,
+		bool $final_review_enabled,
 		bool $vaulting_enabled = false
 	) {
 		$this->asset_getter           = $asset_getter;
@@ -52,6 +61,9 @@ class SdkV6Manager {
 		$this->should_handle_shipping = $should_handle_shipping;
 		$this->settings_status        = $settings_status;
 		$this->context                = $context;
+		$this->session_handler        = $session_handler;
+		$this->cancel_view            = $cancel_view;
+		$this->final_review_enabled   = $final_review_enabled;
 		$this->vaulting_enabled       = $vaulting_enabled;
 	}
 
@@ -202,7 +214,7 @@ class SdkV6Manager {
 			$button_styles['mini-cart'] = $this->style_mapper->styles_for_context( 'mini-cart' );
 		}
 
-		return array(
+		$data = array(
 			'sdk_url'           => $base_url . '/web-sdk/v6/core',
 			'page_context'      => $page_context,
 			'currency'          => get_woocommerce_currency(),
@@ -210,6 +222,10 @@ class SdkV6Manager {
 			'buyer_country'     => $buyer_country,
 			'locale'            => str_replace( '_', '-', get_locale() ),
 			'vaulting_enabled'  => $this->vaulting_enabled,
+			// Drives the post-approval fork: with the final review enabled the
+			// buyer returns to checkout to confirm instead of the order being
+			// placed straight from the express flow.
+			'final_review'      => $this->final_review_enabled,
 			'ajax'              => array(
 				'client_token'    => array(
 					'endpoint' => \WC_AJAX::get_endpoint( ClientTokenEndpoint::ENDPOINT ),
@@ -258,6 +274,67 @@ class SdkV6Manager {
 			'button_styles'     => $button_styles,
 			'wrapper'           => '#' . self::WRAPPER_ID,
 			'mini_cart_wrapper' => '#' . self::MINI_CART_WRAPPER_ID,
+		);
+
+		$continuation = $this->continuation_data();
+		if ( $continuation ) {
+			$data['continuation'] = $continuation;
+		}
+
+		return $data;
+	}
+
+	/**
+	 * Whether the buyer is returning from an approved PayPal order and should
+	 * see the order review instead of the express buttons.
+	 *
+	 * @return bool
+	 */
+	public function is_continuation(): bool {
+		return $this->context->is_paypal_continuation();
+	}
+
+	/**
+	 * The continuation payload, or null when the buyer is not returning from
+	 * an approved PayPal order.
+	 *
+	 * Mirrors the v5 split: the smart button supplies `order_id`, and the
+	 * blocks payment method enriches it with the full order (for form
+	 * prefill) and the cancel link. The cancel link is load-bearing, not
+	 * decoration: while an approved order sits in the session the express
+	 * buttons are suppressed everywhere, so it is the buyer's only way out.
+	 * The `ppcp-cancel` request itself is handled by CancelController, which
+	 * the session module registers on `woocommerce_init` for every page.
+	 *
+	 * @return array|null
+	 */
+	private function continuation_data(): ?array {
+		if ( ! $this->context->is_paypal_continuation() ) {
+			return null;
+		}
+
+		$order = $this->session_handler->order();
+		if ( ! $order ) {
+			return null;
+		}
+
+		$cancel_url = add_query_arg(
+			array( CancelController::NONCE => wp_create_nonce( CancelController::NONCE ) ),
+			wc_get_checkout_url()
+		);
+
+		return array(
+			'order_id'       => $order->id(),
+			'order'          => $order->to_array(),
+			// v5 reads this from a window global; carried in the payload here so
+			// the gateway is told which source approved the order.
+			'funding_source' => $this->session_handler->funding_source(),
+			'cancel'         => array(
+				'html' => $this->cancel_view->render_session_cancellation(
+					$cancel_url,
+					$this->session_handler->funding_source()
+				),
+			),
 		);
 	}
 

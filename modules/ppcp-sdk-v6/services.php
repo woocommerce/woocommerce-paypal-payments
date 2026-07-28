@@ -43,6 +43,11 @@ return array(
 			$container->get( 'order-endpoints.handle-shipping-in-paypal' ),
 			$container->get( 'wcgateway.settings.status' ),
 			$container->get( 'button.helper.context' ),
+			$container->get( 'session.handler' ),
+			$container->get( 'session.cancellation.view' ),
+			// Computed here rather than reusing blocks.settings.final_review_enabled
+			// so this module does not depend on the ppcp-blocks module it replaces.
+			! $container->get( 'settings.settings-provider' )->enable_pay_now(),
 			$container->get( 'settings.settings-provider' )->save_paypal_and_venmo()
 		);
 	},

@@ -89,6 +89,31 @@ class SdkV6Module implements ServiceModule, ExtendingModule, ExecutableModule {
 			2
 		);
 
+		// While an approved PayPal order sits in the session the buyer must not
+		// be able to pay by another means — the order is already authorized at
+		// PayPal. Declaring the requirement on the cart makes WooCommerce offer
+		// only methods whose supports.features include it, which is v6's
+		// continuation method alone.
+		//
+		// v5 registers an equivalent callback from its blocks module, but that
+		// one reads the (suppressed) v5 smart-button data and always reports no
+		// continuation on v6-owned pages, so v6 cannot rely on it. Both
+		// callbacks coexist harmlessly: the requirements are unioned.
+		if ( function_exists( 'woocommerce_store_api_register_payment_requirements' ) ) {
+			woocommerce_store_api_register_payment_requirements(
+				array(
+					'data_callback' => static function () use ( $c ): array {
+						$manager = $c->get( 'sdk-v6.manager' );
+						assert( $manager instanceof SdkV6Manager );
+
+						return $manager->is_continuation()
+							? array( 'ppcp_continuation' )
+							: array();
+					},
+				)
+			);
+		}
+
 		// Register the v6 express buttons with the WC Blocks pipeline. v5's
 		// PayPalPaymentMethod stays registered (it provides the ppcp-gateway
 		// type and processing); on v6-owned block pages its script_data is
@@ -122,13 +147,33 @@ class SdkV6Module implements ServiceModule, ExtendingModule, ExecutableModule {
 						}
 
 						// PayPal-owned block methods only; never third-party or
-						// core gateways. ppcp-gateway (regular PayPal) self-
-						// suppresses with empty script_data, so it is left as is.
+						// core gateways.
 						$v5_methods = array(
 							'ppcp-googlepay',
 							'ppcp-applepay',
 							'ppcp-axo-gateway',
 						);
+
+						// In continuation mode v6 owns the ppcp-gateway block
+						// method: it renders the order review for the
+						// already-approved order. v5 registers that same name
+						// (its place-order branch — its script_data is
+						// suppressed, so it never sees the continuation state),
+						// and WooCommerce's registerPaymentMethod is a silent
+						// last-one-wins assignment with no duplicate warning.
+						// Leaving both registered would make the review surface
+						// depend on script execution order, and would leave v5's
+						// placeOrderButtonLabel filter relabelling the confirm
+						// button "Proceed to PayPal" — wrong for a step that
+						// places an already-approved order.
+						//
+						// Outside continuation, v5's place-order method is left
+						// alone on purpose: it is a server-side redirect flow
+						// that never loads the JS SDK, so it keeps working
+						// through the migration.
+						if ( $manager->is_continuation() ) {
+							$v5_methods[] = 'ppcp-gateway';
+						}
 						foreach ( $v5_methods as $method ) {
 							if ( $payment_method_registry->is_registered( $method ) ) {
 								$payment_method_registry->unregister( $method );

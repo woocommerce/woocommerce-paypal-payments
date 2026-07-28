@@ -23,11 +23,13 @@ const mockGetOrder = jest.fn();
 const mockApproveInSession = jest.fn();
 const mockCreateOrder = jest.fn();
 const mockUpdateShipping = jest.fn();
+const mockAssign = jest.fn();
 jest.mock( '../../endpointsAdapter', () => ( {
 	getOrder: ( ...args ) => mockGetOrder( ...args ),
 	approveOrderInSession: ( ...args ) => mockApproveInSession( ...args ),
 	createOrder: ( ...args ) => mockCreateOrder( ...args ),
 	updateShipping: ( ...args ) => mockUpdateShipping( ...args ),
+	navigation: { assign: ( ...args ) => mockAssign( ...args ) },
 } ) );
 
 const mockButtonContainer = jest.fn( () => null );
@@ -58,6 +60,7 @@ const config = {
 		create_order: { endpoint: '', nonce: '' },
 		update_shipping: { endpoint: '', nonce: '' },
 	},
+	urls: { checkout: '/checkout/' },
 };
 
 let onPaymentSetup;
@@ -100,6 +103,7 @@ beforeEach( () => {
 	mockApproveInSession.mockReset().mockResolvedValue( undefined );
 	mockCreateOrder.mockReset();
 	mockButtonContainer.mockClear();
+	mockAssign.mockReset();
 	mockBuildShippingHandlers.mockReset().mockReturnValue( {
 		onShippingAddressChange: jest.fn(),
 		onShippingOptionsChange: jest.fn(),
@@ -293,6 +297,45 @@ describe( 'V6ExpressComponent', () => {
 			);
 			expect( amounts ).toContain( '150.00' );
 		} );
+	} );
+
+	test( 'redirects to the review page instead of submitting when the final review is on', async () => {
+		mockGetOrder.mockResolvedValue( { id: 'PPORDER' } );
+		const onSubmit = jest.fn();
+
+		renderComponent( {
+			config: { ...config, final_review: true },
+			onSubmit,
+		} );
+		await waitFor( () => expect( mockCreateSession ).toHaveBeenCalled() );
+
+		await act( async () => {
+			await capturedHandlers.onApprove( { orderId: 'ORDER1' } );
+		} );
+
+		// The order must still be approved in the session — the review page is
+		// built from it on the next render.
+		expect( mockApproveInSession ).toHaveBeenCalledTimes( 1 );
+		expect( onSubmit ).not.toHaveBeenCalled();
+		expect( mockAssign ).toHaveBeenCalledTimes( 1 );
+		expect( mockAssign.mock.calls[ 0 ][ 0 ] ).toContain(
+			'ppcp-continuation-redirect='
+		);
+	} );
+
+	test( 'submits directly when the final review is off', async () => {
+		mockGetOrder.mockResolvedValue( { id: 'PPORDER' } );
+		const onSubmit = jest.fn();
+
+		renderComponent( { onSubmit } );
+		await waitFor( () => expect( mockCreateSession ).toHaveBeenCalled() );
+
+		await act( async () => {
+			await capturedHandlers.onApprove( { orderId: 'ORDER1' } );
+		} );
+
+		expect( onSubmit ).toHaveBeenCalledTimes( 1 );
+		expect( mockAssign ).not.toHaveBeenCalled();
 	} );
 
 	test( 'a failed approval reports the error and releases the express UI', async () => {
