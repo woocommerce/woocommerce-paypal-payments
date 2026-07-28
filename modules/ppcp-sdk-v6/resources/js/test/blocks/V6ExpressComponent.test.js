@@ -35,6 +35,12 @@ jest.mock( '../../blocks/V6ButtonContainer', () => ( {
 	V6ButtonContainer: ( props ) => mockButtonContainer( props ),
 } ) );
 
+const mockBuildShippingHandlers = jest.fn();
+jest.mock( '../../blocks/blocksShippingHandlers', () => ( {
+	buildBlocksShippingHandlers: ( ...args ) =>
+		mockBuildShippingHandlers( ...args ),
+} ) );
+
 import { render, waitFor, act } from '@testing-library/react';
 import { createElement } from '@wordpress/element';
 import { V6ExpressComponent } from '../../blocks/V6ExpressComponent';
@@ -94,6 +100,10 @@ beforeEach( () => {
 	mockApproveInSession.mockReset().mockResolvedValue( undefined );
 	mockCreateOrder.mockReset();
 	mockButtonContainer.mockClear();
+	mockBuildShippingHandlers.mockReset().mockReturnValue( {
+		onShippingAddressChange: jest.fn(),
+		onShippingOptionsChange: jest.fn(),
+	} );
 
 	onPaymentSetup = jest.fn( ( cb ) => {
 		paymentSetupCb = cb;
@@ -283,5 +293,119 @@ describe( 'V6ExpressComponent', () => {
 			);
 			expect( amounts ).toContain( '150.00' );
 		} );
+	} );
+
+	test( 'a failed approval reports the error and releases the express UI', async () => {
+		mockGetOrder.mockRejectedValue( new Error( 'nonce expired' ) );
+		const onError = jest.fn();
+		const onClose = jest.fn();
+		const onSubmit = jest.fn();
+
+		renderComponent( { onError, onClose, onSubmit } );
+		await waitFor( () => expect( mockCreateSession ).toHaveBeenCalled() );
+
+		await act( async () => {
+			await capturedHandlers.onApprove( { orderId: 'ORDER1' } );
+		} );
+
+		// Without this the buyer is stuck in a blocked express state.
+		expect( onError ).toHaveBeenCalledWith( 'nonce expired' );
+		expect( onClose ).toHaveBeenCalledTimes( 1 );
+		expect( onSubmit ).not.toHaveBeenCalled();
+	} );
+
+	test( 'attaches shipping handlers once the cart starts needing shipping', async () => {
+		const props = {
+			config: {
+				...config,
+				shipping: { handle_in_paypal: true, need_shipping: true },
+			},
+			fundingSource: 'paypal',
+			onClick: jest.fn(),
+			onClose: jest.fn(),
+			onError: jest.fn(),
+			onSubmit: jest.fn(),
+			eventRegistration: { onPaymentSetup, onCheckoutFail },
+			emitResponse: {
+				responseTypes: { SUCCESS: 'success', ERROR: 'error' },
+			},
+			activePaymentMethod: 'ppcp-gateway-paypal',
+			shippingData: { needsShipping: false },
+		};
+
+		const { rerender } = render(
+			createElement( V6ExpressComponent, props )
+		);
+		await waitFor( () => expect( mockCreateSession ).toHaveBeenCalled() );
+		expect( capturedHandlers.onShippingAddressChange ).toBeUndefined();
+
+		rerender(
+			createElement( V6ExpressComponent, {
+				...props,
+				shippingData: { needsShipping: true },
+			} )
+		);
+
+		await waitFor( () =>
+			expect( capturedHandlers.onShippingAddressChange ).toBeDefined()
+		);
+	} );
+
+	test( 'shipping handlers read the current shippingData, not the mount-time one', async () => {
+		const first = jest.fn();
+		const second = jest.fn();
+		mockBuildShippingHandlers
+			.mockReturnValueOnce( {
+				onShippingAddressChange: first,
+				onShippingOptionsChange: jest.fn(),
+			} )
+			.mockReturnValue( {
+				onShippingAddressChange: second,
+				onShippingOptionsChange: jest.fn(),
+			} );
+
+		const props = {
+			config: {
+				...config,
+				shipping: { handle_in_paypal: true, need_shipping: true },
+			},
+			fundingSource: 'paypal',
+			onClick: jest.fn(),
+			onClose: jest.fn(),
+			onError: jest.fn(),
+			onSubmit: jest.fn(),
+			eventRegistration: { onPaymentSetup, onCheckoutFail },
+			emitResponse: {
+				responseTypes: { SUCCESS: 'success', ERROR: 'error' },
+			},
+			activePaymentMethod: 'ppcp-gateway-paypal',
+			shippingData: { needsShipping: true, setShippingAddress: jest.fn() },
+		};
+
+		const { rerender } = render(
+			createElement( V6ExpressComponent, props )
+		);
+		await waitFor( () =>
+			expect( capturedHandlers.onShippingAddressChange ).toBeDefined()
+		);
+
+		// A fresh shippingData identity (what Blocks hands us on cart updates)
+		// must reach the already-created session.
+		rerender(
+			createElement( V6ExpressComponent, {
+				...props,
+				shippingData: {
+					needsShipping: true,
+					setShippingAddress: jest.fn(),
+				},
+			} )
+		);
+
+		await act( async () => {
+			await capturedHandlers.onShippingAddressChange( { orderId: 'O1' } );
+		} );
+
+		expect( second ).toHaveBeenCalledTimes( 1 );
+		expect( first ).not.toHaveBeenCalled();
 	} );
 } );

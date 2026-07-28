@@ -186,7 +186,11 @@ class SdkV6Manager {
 
 		$page_context = $this->get_page_context();
 
-		$shipping_enabled = $this->should_handle_shipping && 'checkout' !== $page_context;
+		// Never handle shipping in the PayPal popup on a checkout page: the
+		// buyer fills the address in the checkout form there. Applies to the
+		// block checkout as well as the classic one.
+		$shipping_enabled = $this->should_handle_shipping
+			&& ! in_array( $page_context, array( 'checkout', 'checkout-block' ), true );
 
 		$store_api_base = rtrim( rest_url( 'wc/store/v1/cart' ), '/' );
 

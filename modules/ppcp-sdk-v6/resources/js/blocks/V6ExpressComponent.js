@@ -28,6 +28,7 @@ import {
 import { paypalOrderToWcAddresses } from './address';
 import { buildBlocksShippingHandlers } from './blocksShippingHandlers';
 import { V6ButtonContainer } from './V6ButtonContainer';
+import { minorUnitsToDecimal } from '../utils/amount';
 
 /**
  * Derives a decimal amount string from the Blocks billing prop.
@@ -36,12 +37,10 @@ import { V6ButtonContainer } from './V6ButtonContainer';
  * @return {string} The amount as a decimal string, or '' when unknown.
  */
 function amountFromBilling( billing ) {
-	const minor = parseInt( billing?.cartTotal?.value, 10 );
-	if ( isNaN( minor ) ) {
-		return '';
-	}
-	const minorUnit = billing?.currency?.minorUnit ?? 2;
-	return ( minor / Math.pow( 10, minorUnit ) ).toFixed( minorUnit );
+	return minorUnitsToDecimal(
+		billing?.cartTotal?.value,
+		billing?.currency?.minorUnit
+	);
 }
 
 /**
@@ -116,48 +115,65 @@ export function V6ExpressComponent( {
 		};
 	}, [ config, context, amount ] );
 
-	const approve = async ( data ) => {
-		const order = await getOrder( config, data.orderId );
-
-		if ( order?.purchase_units?.[ 0 ]?.shipping?.address ) {
-			const addresses = paypalOrderToWcAddresses( order );
-			await wp.data.dispatch( 'wc/store/cart' ).updateCustomerData( {
-				billing_address: addresses.billingAddress,
-				shipping_address: addresses.shippingAddress,
-			} );
+	// Surfaces the failure to the Blocks registry and releases the express UI,
+	// mirroring the v5 handleApprove failure path. Without this the buyer is
+	// left in a blocked express state with no message.
+	const failFlow = ( error ) => {
+		if ( onError ) {
+			onError( error?.message || '' );
 		}
+		if ( onClose ) {
+			onClose();
+		}
+	};
 
-		await approveOrderInSession( config, fundingSource, data.orderId );
+	const approve = async ( data ) => {
+		try {
+			const order = await getOrder( config, data.orderId );
 
-		setPaypalOrder( order );
-		onSubmit();
+			if ( order?.purchase_units?.[ 0 ]?.shipping?.address ) {
+				const addresses = paypalOrderToWcAddresses( order );
+				await wp.data.dispatch( 'wc/store/cart' ).updateCustomerData( {
+					billing_address: addresses.billingAddress,
+					shipping_address: addresses.shippingAddress,
+				} );
+			}
+
+			await approveOrderInSession( config, fundingSource, data.orderId );
+
+			setPaypalOrder( order );
+			onSubmit();
+		} catch ( error ) {
+			failFlow( error );
+		}
 	};
 
 	// Session handlers close over props (onSubmit, shippingData, ...) whose
-	// identity changes across renders. Route them through a ref so the
-	// session can stay tied to [sdk, method] while the handlers stay current.
+	// identity changes across renders. Route them through a ref so the session
+	// survives those changes while the handlers stay current.
 	const callbacksRef = useRef( {} );
-	callbacksRef.current = {
-		onApprove: approve,
-		onError: ( error ) => {
-			if ( onError ) {
-				onError( error?.message || '' );
-			}
-			if ( onClose ) {
-				onClose();
-			}
-		},
-		onCancel: () => {
-			if ( onClose ) {
-				onClose();
-			}
-		},
-	};
 
 	const shippingHandlers = useMemo(
 		() => buildBlocksShippingHandlers( config, shippingData ),
 		[ config, shippingData ]
 	);
+
+	callbacksRef.current = {
+		onApprove: approve,
+		onError: failFlow,
+		onCancel: () => {
+			if ( onClose ) {
+				onClose();
+			}
+		},
+		// Read live by the session handlers: shippingData carries the Blocks
+		// setters, whose identities change across renders.
+		shippingHandlers,
+	};
+
+	// A primitive, so it only changes when the cart's shipping requirement
+	// actually flips — unlike the shippingData object identity.
+	const needsShipping = Boolean( shippingData?.needsShipping );
 
 	const session = useMemo( () => {
 		if ( ! sdk ) {
@@ -173,22 +189,30 @@ export function V6ExpressComponent( {
 		// Shipping in the popup only for PayPal when the cart needs it and
 		// the merchant handles shipping in PayPal (blocks store-based
 		// handlers; classic fetch handlers must not run on block pages).
+		// Attaching these tells the SDK to collect shipping, so the
+		// needsShipping check must gate attachment, not just the body — hence
+		// it is a memo dependency rather than a live ref read.
 		if (
 			method === 'paypal' &&
-			shippingData?.needsShipping &&
+			needsShipping &&
 			config.shipping?.handle_in_paypal
 		) {
-			handlers.onShippingAddressChange =
-				shippingHandlers.onShippingAddressChange;
-			handlers.onShippingOptionsChange =
-				shippingHandlers.onShippingOptionsChange;
+			handlers.onShippingAddressChange = ( data ) =>
+				callbacksRef.current.shippingHandlers.onShippingAddressChange(
+					data
+				);
+			handlers.onShippingOptionsChange = ( data ) =>
+				callbacksRef.current.shippingHandlers.onShippingOptionsChange(
+					data
+				);
 		}
 
 		return createSession( sdk, method, config, context, handlers );
-		// The session is intentionally rebuilt only when the SDK or method
-		// changes; handlers are read live through refs / stable memos.
+		// Rebuilt only when the SDK, method or shipping requirement changes;
+		// the handler bodies are read live through the ref, so changing Blocks
+		// callback identities do not churn the session or remount the button.
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [ sdk, method ] );
+	}, [ sdk, method, needsShipping ] );
 
 	// Provide the approved order to the checkout processing step.
 	useEffect( () => {
