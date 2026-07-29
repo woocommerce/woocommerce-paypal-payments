@@ -219,7 +219,10 @@ class SubscriptionsHandler
         $order_id = wc_clean(wp_unslash($_GET['id'] ?? $_GET['post'] ?? $_POST['post_ID'] ?? ''));
         if ($order_id) {
             $order = wc_get_order($order_id);
-            return $order && \WooCommerce\PayPalCommerce\Compat\PPEC\PPECHelper::PPEC_GATEWAY_ID === $order->get_payment_method();
+            if (!$order instanceof \WC_Order) {
+                return \false;
+            }
+            return \WooCommerce\PayPalCommerce\Compat\PPEC\PPECHelper::PPEC_GATEWAY_ID === $order->get_payment_method();
         }
         // Are we on the WC > Subscriptions screen?
         /**
