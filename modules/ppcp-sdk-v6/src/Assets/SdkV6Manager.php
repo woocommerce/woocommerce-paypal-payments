@@ -287,29 +287,22 @@ class SdkV6Manager {
 	/**
 	 * Whether the buyer is returning from an approved PayPal order and should
 	 * see the order review instead of the express buttons.
-	 *
-	 * @return bool
 	 */
 	public function is_continuation(): bool {
 		return $this->context->is_paypal_continuation();
 	}
 
 	/**
-	 * The continuation payload, or null when the buyer is not returning from
-	 * an approved PayPal order.
+	 * The continuation payload, or null when there is no approved order.
 	 *
-	 * Mirrors the v5 split: the smart button supplies `order_id`, and the
-	 * blocks payment method enriches it with the full order (for form
-	 * prefill) and the cancel link. The cancel link is load-bearing, not
-	 * decoration: while an approved order sits in the session the express
-	 * buttons are suppressed everywhere, so it is the buyer's only way out.
-	 * The `ppcp-cancel` request itself is handled by CancelController, which
-	 * the session module registers on `woocommerce_init` for every page.
+	 * The cancel link is load-bearing, not decoration: while an approved order
+	 * sits in the session the express buttons are suppressed everywhere, so it
+	 * is the buyer's only way out.
 	 *
 	 * @return array|null
 	 */
 	private function continuation_data(): ?array {
-		if ( ! $this->context->is_paypal_continuation() ) {
+		if ( ! $this->is_continuation() ) {
 			return null;
 		}
 

@@ -90,15 +90,10 @@ class SdkV6Module implements ServiceModule, ExtendingModule, ExecutableModule {
 		);
 
 		// While an approved PayPal order sits in the session the buyer must not
-		// be able to pay by another means — the order is already authorized at
-		// PayPal. Declaring the requirement on the cart makes WooCommerce offer
-		// only methods whose supports.features include it, which is v6's
-		// continuation method alone.
-		//
-		// v5 registers an equivalent callback from its blocks module, but that
-		// one reads the (suppressed) v5 smart-button data and always reports no
-		// continuation on v6-owned pages, so v6 cannot rely on it. Both
-		// callbacks coexist harmlessly: the requirements are unioned.
+		// be able to pay by another means. Declaring the requirement narrows the
+		// offered methods to those advertising it — v6's continuation method
+		// alone. v5's equivalent callback reads its suppressed script_data and
+		// never reports continuation on v6 pages, so v6 needs its own.
 		if ( function_exists( 'woocommerce_store_api_register_payment_requirements' ) ) {
 			woocommerce_store_api_register_payment_requirements(
 				array(
@@ -154,23 +149,12 @@ class SdkV6Module implements ServiceModule, ExtendingModule, ExecutableModule {
 							'ppcp-axo-gateway',
 						);
 
-						// In continuation mode v6 owns the ppcp-gateway block
-						// method: it renders the order review for the
-						// already-approved order. v5 registers that same name
-						// (its place-order branch — its script_data is
-						// suppressed, so it never sees the continuation state),
-						// and WooCommerce's registerPaymentMethod is a silent
-						// last-one-wins assignment with no duplicate warning.
-						// Leaving both registered would make the review surface
-						// depend on script execution order, and would leave v5's
-						// placeOrderButtonLabel filter relabelling the confirm
-						// button "Proceed to PayPal" — wrong for a step that
-						// places an already-approved order.
-						//
-						// Outside continuation, v5's place-order method is left
-						// alone on purpose: it is a server-side redirect flow
-						// that never loads the JS SDK, so it keeps working
-						// through the migration.
+						// In continuation mode v6 renders the order review under
+						// this name too, and registerPaymentMethod is a silent
+						// last-one-wins assignment — leaving both registered
+						// would make the review surface depend on script order.
+						// Outside continuation v5's place-order method is left
+						// alone: it never loads the JS SDK, so it still works.
 						if ( $manager->is_continuation() ) {
 							$v5_methods[] = 'ppcp-gateway';
 						}
