@@ -59,8 +59,14 @@ if ( config && config.page_context && config.continuation ) {
 	// express buttons, no SDK load — the buyer's order is already approved.
 	registerPaymentMethod( {
 		name: 'ppcp-gateway',
-		label: createElement( 'div', null, fundingSourceLabel( 'paypal' ) ),
-		ariaLabel: fundingSourceLabel( 'paypal' ),
+		// The session's actual funding source, so the label cannot contradict
+		// the server-rendered cancel text ("You are currently paying with X").
+		label: createElement(
+			'div',
+			null,
+			fundingSourceLabel( config.continuation.funding_source )
+		),
+		ariaLabel: fundingSourceLabel( config.continuation.funding_source ),
 		content: createElement( V6ContinuationComponent, { config } ),
 		edit: createElement( V6EditorPreview, { fundingSource: 'paypal' } ),
 		// The order is already approved; this click places it. Set explicitly so
@@ -72,7 +78,12 @@ if ( config && config.page_context && config.continuation ) {
 		),
 		canMakePayment: () => true,
 		supports: {
-			features: [ 'products', 'ppcp_continuation' ],
+			// The order is already authorized at PayPal, so this method has to
+			// remain available whatever the cart declares — WooCommerce hides
+			// any method whose features do not cover every cart requirement,
+			// and v5's ppcp-gateway is unregistered in this mode, so a missing
+			// feature here leaves the buyer with no way to pay or cancel.
+			features: [ 'products', 'subscriptions', 'ppcp_continuation' ],
 		},
 	} );
 } else if ( config && config.page_context ) {

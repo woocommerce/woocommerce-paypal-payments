@@ -21,8 +21,10 @@ export function minorUnitsToDecimal( value, minorUnit ) {
 		return '';
 	}
 
-	// Guards against a null/absent exponent, not just an undefined one.
-	const exponent = Number.isInteger( minorUnit ) ? minorUnit : 2;
+	// parseInt so a numeric string exponent still works: 3-decimal currencies
+	// (BHD, KWD, OMR, TND) would otherwise silently fall back to 2.
+	const parsed = parseInt( minorUnit, 10 );
+	const exponent = isNaN( parsed ) ? 2 : parsed;
 
 	return ( minor / Math.pow( 10, exponent ) ).toFixed( exponent );
 }

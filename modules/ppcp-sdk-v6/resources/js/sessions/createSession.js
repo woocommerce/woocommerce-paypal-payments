@@ -78,8 +78,14 @@ export function createSession(
 			} ),
 	};
 
+	// The default handlers post to the Store API directly, which desynchronises
+	// the React cart UI — block surfaces must supply their own or go without.
+	const isBlockContext =
+		context === 'cart-block' || context === 'checkout-block';
+
 	const shouldHandleShipping =
 		method === 'paypal' &&
+		! isBlockContext &&
 		config.shipping?.handle_in_paypal &&
 		( config.shipping?.need_shipping || context === 'product' );
 

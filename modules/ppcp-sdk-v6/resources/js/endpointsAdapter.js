@@ -12,6 +12,7 @@ import SingleProductActionHandler from '@ppcp-button/ActionHandler/SingleProduct
 import { payerData } from '@ppcp-button/Helper/PayerData';
 import { postJson } from './utils/api';
 import { minorUnitsToDecimal } from './utils/amount';
+import { continuationRedirectUrl } from './utils/continuation';
 
 /**
  * Navigation seam: window.location is not mockable under jsdom, so
@@ -165,8 +166,11 @@ export async function approveOrder( config, context, fundingSource, orderId ) {
 		}
 	}
 
-	// Continuation: the buyer completes the order on the checkout page.
-	navigation.assign( config.urls.checkout );
+	// Continuation: the buyer completes the order on the checkout page. Uses the
+	// cache-busted URL for the same reason the block path does — a cached
+	// checkout page would carry no continuation payload and show the express
+	// buttons again for an order that is already approved.
+	navigation.assign( continuationRedirectUrl( config ) );
 }
 
 /**
