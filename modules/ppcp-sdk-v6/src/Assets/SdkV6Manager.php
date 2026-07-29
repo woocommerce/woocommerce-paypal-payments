@@ -198,11 +198,16 @@ class SdkV6Manager {
 
 		$page_context = $this->get_page_context();
 
-		// Never handle shipping in the PayPal popup on a checkout page: the
-		// buyer fills the address in the checkout form there. Applies to the
-		// block checkout as well as the classic one.
-		$shipping_enabled = $this->should_handle_shipping
-			&& ! in_array( $page_context, array( 'checkout', 'checkout-block' ), true );
+		// Must stay in lockstep with ShippingPreferenceFactory: it marks only
+		// 'checkout' and 'pay-now' as fixed-address contexts (SET_PROVIDED_ADDRESS,
+		// so the buyer cannot change the address in the popup and no callbacks are
+		// needed). Every other context, 'checkout-block' included, gets
+		// GET_FROM_FILE — PayPal offers the buyer's own addresses there, so the
+		// popup callbacks must stay attached to sync the choice back to the cart.
+		// 'checkout-block' is deliberately absent from this list: block express
+		// buttons sit above the checkout form, so the buyer has not necessarily
+		// entered an address, which is why the server treats them cart-like.
+		$shipping_enabled = $this->should_handle_shipping && 'checkout' !== $page_context;
 
 		$store_api_base = rtrim( rest_url( 'wc/store/v1/cart' ), '/' );
 
