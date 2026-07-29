@@ -10,13 +10,7 @@
  * @package
  */
 
-import {
-	createElement,
-	useEffect,
-	useMemo,
-	useRef,
-	useState,
-} from '@wordpress/element';
+import { createElement, useEffect, useRef, useState } from '@wordpress/element';
 import { loadSdkV6 } from '../sdkLoader';
 import { checkEligibility } from '../eligibility';
 import { createSession } from '../sessions/createSession';
@@ -28,6 +22,7 @@ import {
 } from '../endpointsAdapter';
 import { continuationRedirectUrl } from '../utils/continuation';
 import { paypalOrderToWcAddresses } from './address';
+import { prefillFromPayPalOrder } from './prefillAddresses';
 import { buildBlocksShippingHandlers } from './blocksShippingHandlers';
 import { V6ButtonContainer } from './V6ButtonContainer';
 import { minorUnitsToDecimal } from '../utils/amount';
@@ -134,23 +129,24 @@ export function V6ExpressComponent( {
 			const order = await getOrder( config, data.orderId );
 
 			if ( order?.purchase_units?.[ 0 ]?.shipping?.address ) {
-				const addresses = paypalOrderToWcAddresses( order );
-				await wp.data.dispatch( 'wc/store/cart' ).updateCustomerData( {
-					billing_address: addresses.billingAddress,
-					shipping_address: addresses.shippingAddress,
-				} );
+				await prefillFromPayPalOrder( order, { needsShipping } );
 			}
 
 			await approveOrderInSession( config, fundingSource, data.orderId );
 
 			setPaypalOrder( order );
 
-			// The v5 fork (paypal-config.js handleApprove): with the final
-			// review enabled the buyer confirms on the checkout page instead of
-			// the order being placed straight from the express flow. The reload
-			// is what builds the review surface — the server only emits the
+			// Mirrors v5's shouldskipFinalConfirmation(): the buyer confirms on
+			// the checkout page instead of the order being placed straight from
+			// the express flow. Venmo with vaulting always takes the review
+			// path, whatever the merchant's Pay Now setting. The reload is what
+			// builds the review surface — the server only emits the
 			// continuation payload once the approved order is in the session.
-			if ( config.final_review ) {
+			const requiresReview =
+				config.final_review ||
+				( fundingSource === 'venmo' && config.vaulting_enabled );
+
+			if ( requiresReview ) {
 				navigation.assign( continuationRedirectUrl( config ) );
 				return;
 			}
@@ -158,22 +154,18 @@ export function V6ExpressComponent( {
 			onSubmit();
 		} catch ( error ) {
 			failFlow( error );
+			// Rethrown so the SDK learns the approval failed and leaves the
+			// popup in a retryable state; v5's handleApprove does the same.
+			throw error;
 		}
 	};
 
-	// Session handlers close over props (onSubmit, shippingData, ...) whose
-	// identity changes across renders. Route them through a ref so the session
-	// survives those changes while the handlers stay current.
+	// Session handlers close over props whose identity changes every render, so
+	// the session reads them through a ref instead of being rebuilt. Assigned in
+	// an effect because mutating a ref during render is unsafe under concurrent
+	// React, and safe to defer since nothing reads it before buyer interaction.
 	const callbacksRef = useRef( {} );
 
-	const shippingHandlers = useMemo(
-		() => buildBlocksShippingHandlers( config, shippingData ),
-		[ config, shippingData ]
-	);
-
-	// Assigned in an effect rather than during render: mutating a ref while
-	// rendering is unsafe under concurrent React. Safe to defer because the
-	// session only reads these on buyer interaction, long after mount.
 	useEffect( () => {
 		callbacksRef.current = {
 			onApprove: approve,
@@ -183,25 +175,24 @@ export function V6ExpressComponent( {
 					onClose();
 				}
 			},
-			// Read live by the session handlers: shippingData carries the Blocks
-			// setters, whose identities change across renders.
-			shippingHandlers,
+			shippingHandlers: buildBlocksShippingHandlers(
+				config,
+				shippingData
+			),
 		};
 	} );
 
-	// A primitive, so it only changes when the cart's shipping requirement
-	// actually flips — unlike the shippingData object identity.
+	// A primitive, so it only changes when the requirement actually flips —
+	// unlike the shippingData object identity.
 	const needsShipping = Boolean( shippingData?.needsShipping );
 
 	// createSession() calls into the PayPal SDK, so it must not run during
-	// render: useMemo offers no once-only guarantee and a discarded render would
-	// leave an orphaned SDK session behind. Created in an effect and held in
-	// state instead.
+	// render — useMemo offers no once-only guarantee.
 	const [ session, setSession ] = useState( null );
 
 	useEffect( () => {
 		if ( ! sdk ) {
-			return;
+			return undefined;
 		}
 
 		const handlers = {
@@ -210,12 +201,8 @@ export function V6ExpressComponent( {
 			onCancel: () => callbacksRef.current.onCancel(),
 		};
 
-		// Shipping in the popup only for PayPal when the cart needs it and
-		// the merchant handles shipping in PayPal (blocks store-based
-		// handlers; classic fetch handlers must not run on block pages).
-		// Attaching these tells the SDK to collect shipping, so the
-		// needsShipping check must gate attachment, not just the body — hence
-		// it is an effect dependency rather than a live ref read.
+		// Attaching these tells the SDK to collect shipping, so needsShipping
+		// has to gate attachment rather than the handler body.
 		if (
 			method === 'paypal' &&
 			needsShipping &&
@@ -231,11 +218,12 @@ export function V6ExpressComponent( {
 				);
 		}
 
-		const created = createSession( sdk, method, config, context, handlers );
-		setSession( created );
-		// Rebuilt only when the SDK, method or shipping requirement changes; the
-		// handler bodies are read live through the ref, so changing Blocks
-		// callback identities do not churn the session or remount the button.
+		setSession( createSession( sdk, method, config, context, handlers ) );
+
+		// No teardown: the v6 SDK exposes no documented way to dispose a
+		// one-time payment session, so a rebuild abandons the previous one.
+		// That is why the dependency list is kept as narrow as it is — every
+		// entry here costs an abandoned session and remounts the button.
 	}, [ sdk, method, needsShipping, config, context ] );
 
 	// Provide the approved order to the checkout processing step.

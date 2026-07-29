@@ -121,6 +121,14 @@ beforeEach( () => {
 			dispatch: () => ( {
 				updateCustomerData: mockUpdateCustomerData,
 				selectShippingRate: jest.fn( () => Promise.resolve() ),
+				setBillingAddress: jest.fn(),
+				setShippingAddress: jest.fn(),
+			} ),
+			select: () => ( {
+				getCustomerData: () => ( {
+					billingAddress: {},
+					shippingAddress: {},
+				} ),
 			} ),
 		},
 	};
@@ -348,10 +356,13 @@ describe( 'V6ExpressComponent', () => {
 		await waitFor( () => expect( mockCreateSession ).toHaveBeenCalled() );
 
 		await act( async () => {
-			await capturedHandlers.onApprove( { orderId: 'ORDER1' } );
+			// Rethrown so the SDK is told the approval failed, as v5 does.
+			await expect(
+				capturedHandlers.onApprove( { orderId: 'ORDER1' } )
+			).rejects.toThrow( 'nonce expired' );
 		} );
 
-		// Without this the buyer is stuck in a blocked express state.
+		// Without these the buyer is stuck in a blocked express state.
 		expect( onError ).toHaveBeenCalledWith( 'nonce expired' );
 		expect( onClose ).toHaveBeenCalledTimes( 1 );
 		expect( onSubmit ).not.toHaveBeenCalled();

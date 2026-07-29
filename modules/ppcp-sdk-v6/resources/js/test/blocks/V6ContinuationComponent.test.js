@@ -33,6 +33,7 @@ let paymentSetupCb;
 let mockUpdateCustomerData;
 let mockSetBillingAddress;
 let mockSetShippingAddress;
+let savedCustomerData;
 
 function renderComponent( overrides = {} ) {
 	return render(
@@ -58,12 +59,16 @@ beforeEach( () => {
 	mockUpdateCustomerData = jest.fn( () => Promise.resolve() );
 	mockSetBillingAddress = jest.fn();
 	mockSetShippingAddress = jest.fn();
+	savedCustomerData = { billingAddress: {}, shippingAddress: {} };
 	global.wp = {
 		data: {
 			dispatch: () => ( {
 				updateCustomerData: mockUpdateCustomerData,
 				setBillingAddress: mockSetBillingAddress,
 				setShippingAddress: mockSetShippingAddress,
+			} ),
+			select: () => ( {
+				getCustomerData: () => savedCustomerData,
 			} ),
 		},
 	};
@@ -87,6 +92,27 @@ describe( 'V6ContinuationComponent', () => {
 			expect( mockSetBillingAddress ).toHaveBeenCalledTimes( 1 )
 		);
 		expect( mockSetShippingAddress ).toHaveBeenCalledTimes( 1 );
+	} );
+
+	test( 'keeps saved customer fields the PayPal order does not carry', async () => {
+		// PayPal supplies no company or phone; the buyer's stored values must
+		// survive rather than being blanked out.
+		savedCustomerData = {
+			billingAddress: { company: 'Acme GmbH', phone: '+4930123' },
+			shippingAddress: { company: 'Acme GmbH' },
+		};
+
+		renderComponent();
+
+		await waitFor( () =>
+			expect( mockUpdateCustomerData ).toHaveBeenCalledTimes( 1 )
+		);
+
+		const sent = mockUpdateCustomerData.mock.calls[ 0 ][ 0 ];
+		expect( sent.billing_address.company ).toBe( 'Acme GmbH' );
+		expect( sent.billing_address.phone ).toBe( '+4930123' );
+		// The PayPal-supplied fields still win.
+		expect( sent.shipping_address.address_1 ).toBe( 'WooVille 12' );
 	} );
 
 	test( 'does not set the shipping address for a cart that does not ship', async () => {

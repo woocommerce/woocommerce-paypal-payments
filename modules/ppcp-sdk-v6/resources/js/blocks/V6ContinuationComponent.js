@@ -13,7 +13,7 @@
  */
 
 import { createElement, useEffect, useRef } from '@wordpress/element';
-import { paypalOrderToWcAddresses } from './address';
+import { prefillFromPayPalOrder } from './prefillAddresses';
 
 /**
  * @param {Object} props                    - Props from the Blocks registry.
@@ -43,28 +43,17 @@ export function V6ContinuationComponent( {
 		}
 		prefilled.current = true;
 
-		const addresses = paypalOrderToWcAddresses( continuation.order );
-
-		const cartStore = wp.data.dispatch( 'wc/store/cart' );
-
-		// Persist server-side, then reflect in the UI. setShippingAddress is
-		// skipped for carts that do not ship, matching v5.
-		cartStore
-			.updateCustomerData( {
-				billing_address: addresses.billingAddress,
-				shipping_address: addresses.shippingAddress,
-			} )
-			.then( () => {
-				cartStore.setBillingAddress( addresses.billingAddress );
-				if ( shippingData?.needsShipping ) {
-					cartStore.setShippingAddress( addresses.shippingAddress );
-				}
-			} )
-			.catch( ( error ) => {
-				// Non-fatal: the buyer can still fill the form by hand.
-				// eslint-disable-next-line no-console
-				console.error( '[ppcp-sdk-v6] continuation prefill failed', error );
-			} );
+		prefillFromPayPalOrder( continuation.order, {
+			needsShipping: Boolean( shippingData?.needsShipping ),
+			reflectInUi: true,
+		} ).catch( ( error ) => {
+			// Non-fatal: the buyer can still fill the form by hand.
+			// eslint-disable-next-line no-console
+			console.error(
+				'[ppcp-sdk-v6] continuation prefill failed',
+				error
+			);
+		} );
 	}, [ continuation, shippingData ] );
 
 	// Hand the already-approved order to the gateway on Place Order.
