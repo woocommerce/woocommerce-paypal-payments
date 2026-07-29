@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\Compat\PPEC;
 
+use Automattic\WooCommerce\Utilities\OrderUtil;
 use Psr\Log\LoggerInterface;
 use stdClass;
 use WooCommerce\PayPalCommerce\WcSubscriptions\RenewalHandler;
@@ -80,7 +81,7 @@ class SubscriptionsHandler {
 	 * @return array
 	 */
 	public function add_mock_ppec_gateway( $gateways ) {
-		if ( ! isset( $gateways[ PPECHelper::PPEC_GATEWAY_ID ] ) ) {
+		if ( ! isset( $gateways[ PPECHelper::PPEC_GATEWAY_ID ] ) && $this->should_mock_ppec_gateway() ) {
 			$gateways[ PPECHelper::PPEC_GATEWAY_ID ] = $this->mock_gateway;
 		}
 
@@ -209,5 +210,80 @@ class SubscriptionsHandler {
 		}
 
 		return null;
+	}
+
+	/**
+	 * Checks whether the mock PPEC gateway should be used or not.
+	 *
+	 * @return bool
+	 */
+	private function should_mock_ppec_gateway() {
+		// Are we processing a renewal?
+		if ( doing_action( 'woocommerce_scheduled_subscription_payment' ) ) {
+			return true;
+		}
+
+		// My Account > Subscriptions.
+		if ( is_wc_endpoint_url( 'subscriptions' ) ) {
+			return true;
+		}
+
+		// phpcs:disable WordPress.Security.NonceVerification
+
+		// Checks that require Subscriptions.
+		if ( class_exists( \WC_Subscriptions::class ) ) {
+			// My Account > Subscriptions > (Subscription).
+			if ( wcs_is_view_subscription_page() ) {
+				$subscription = wcs_get_subscription( absint( get_query_var( 'view-subscription' ) ) );
+
+				return ( $subscription && PPECHelper::PPEC_GATEWAY_ID === $subscription->get_payment_method() );
+			}
+
+			// Changing payment method?
+			if ( is_wc_endpoint_url( 'order-pay' ) && isset( $_GET['change_payment_method'] ) ) {
+				$subscription = wcs_get_subscription( absint( get_query_var( 'order-pay' ) ) );
+
+				return ( $subscription && PPECHelper::PPEC_GATEWAY_ID === $subscription->get_payment_method() );
+			}
+
+			// Early renew (via modal).
+			if ( isset( $_GET['process_early_renewal'], $_GET['subscription_id'] ) ) {
+				$subscription = wcs_get_subscription( absint( $_GET['subscription_id'] ) );
+
+				return ( $subscription && PPECHelper::PPEC_GATEWAY_ID === $subscription->get_payment_method() );
+			}
+		}
+
+		// Admin-only from here onwards.
+		if ( ! is_admin() ) {
+			return false;
+		}
+
+		// Are we saving metadata for a subscription?
+		if ( doing_action( 'woocommerce_process_shop_order_meta' ) ) {
+			return true;
+		}
+
+		// Are we editing an order or subscription tied to PPEC?
+		$order_id = wc_clean( wp_unslash( $_GET['id'] ?? $_GET['post'] ?? $_POST['post_ID'] ?? '' ) );
+		if ( $order_id ) {
+			$order = wc_get_order( $order_id );
+			return ( $order && PPECHelper::PPEC_GATEWAY_ID === $order->get_payment_method() );
+		}
+
+		// Are we on the WC > Subscriptions screen?
+		/**
+		 * Class exist in WooCommerce.
+		 *
+		 * @psalm-suppress UndefinedClass
+		 */
+		$post_type_or_page = class_exists( OrderUtil::class ) && OrderUtil::custom_orders_table_usage_is_enabled()
+			? wc_clean( wp_unslash( $_GET['page'] ?? '' ) )
+			: wc_clean( wp_unslash( $_GET['post_type'] ?? $_POST['post_type'] ?? '' ) );
+		if ( $post_type_or_page === 'shop_subscription' || $post_type_or_page === 'wc-orders--shop_subscription' ) {
+			return true;
+		}
+
+		return false;
 	}
 }
