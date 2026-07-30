@@ -162,16 +162,23 @@ class SubscriptionHelper {
 	 * @return bool
 	 */
 	public function need_subscription_intent( string $subscription_mode ): bool {
-		if ( $subscription_mode === 'subscriptions_api' ) {
-			if (
-				$this->current_product_is_subscription()
-				|| ( ( is_cart() || is_checkout() ) && $this->cart_contains_subscription() )
-			) {
-				return true;
-			}
+		if ( $subscription_mode !== 'subscriptions_api' ) {
+			return false;
 		}
 
-		return false;
+		if ( $this->current_product_is_subscription() ) {
+			// Manual renewals mean no PayPal subscription plan is required for
+			// this product, so the standard (non-subscription) checkout flow
+			// is used instead - the SDK must not be forced into subscription
+			// intent in that case.
+			if ( $this->accept_manual_renewals() && ! $this->paypal_subscription_id() ) {
+				return false;
+			}
+
+			return true;
+		}
+
+		return ( is_cart() || is_checkout() ) && $this->cart_contains_subscription();
 	}
 
 	/**
