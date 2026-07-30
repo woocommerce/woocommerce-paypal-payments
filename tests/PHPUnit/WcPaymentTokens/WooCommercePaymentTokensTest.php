@@ -11,13 +11,11 @@ use WooCommerce\PayPalCommerce\TestCase;
 use function Brain\Monkey\Functions\when;
 
 /**
- * @scenario Regression test for PCP-6731. customer_tokens() looked up the PayPal customer
- *           id from usermeta but never checked whether it actually found one before
- *           calling payment_tokens_for_customer(), so a user missing both meta keys (e.g.
- *           after the usermeta row was deleted) triggered a doomed
- *           GET .../v3/vault/payment-tokens?customer_id= request that PayPal rejects with
- *           400. It now bails out early, matching the same guard already used at the other
- *           two call sites of payment_tokens_for_customer() (PayPalGateway,
+ * @scenario customer_tokens() looks up the PayPal customer id from usermeta and must not
+ *           call payment_tokens_for_customer() when neither meta key holds one (e.g. after
+ *           the usermeta row was deleted) — PayPal always rejects that request with 400. It
+ *           bails out early instead, matching the same guard already used at the other two
+ *           call sites of payment_tokens_for_customer() (PayPalGateway,
  *           PaymentMethodTokensChecker).
  */
 class WooCommercePaymentTokensTest extends TestCase
