@@ -43,6 +43,7 @@ use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\CardPaymentsConfiguration;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\SettingsStatus;
+use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
 
 return array(
 	'button.client_id'                            => static function ( ContainerInterface $container ): string {
@@ -406,12 +407,16 @@ return array(
 			);
 
 			if ( $subscription_mode_disabled ) {
-				return 'disable_paypal_subscriptions';
+				return SubscriptionHelper::SUBSCRIPTION_MODE_VALUE_DISABLED;
+			}
+
+			if ( $subscription_helper->accept_manual_renewals() && ! $settings_provider->save_paypal_and_venmo() ) {
+				return SubscriptionHelper::SUBSCRIPTION_MODE_VALUE_DISABLED;
 			}
 
 			return $settings_provider->save_paypal_and_venmo()
-				? 'vaulting_api'
-				: 'subscriptions_api';
+				? SubscriptionHelper::SUBSCRIPTION_MODE_VALUE_VAULTING
+				: SubscriptionHelper::SUBSCRIPTION_MODE_VALUE_SUBSCRIPTIONS;
 		};
 	},
 

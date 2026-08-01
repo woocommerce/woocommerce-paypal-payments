@@ -199,7 +199,9 @@ class SubscriptionHelper {
 	 * - A non-subscription cart is always allowed.
 	 * - In PayPal Subscriptions mode the product must be allowed
 	 *   (has a PayPal plan and the cart contains a single item).
-	 * - In vaulting mode a vault token must be savable.
+	 * - A manual-renewal-only subscription (Accept Manual Renewals enabled) is always
+	 *   allowed, since it is processed as a plain Orders API payment.
+	 * - Otherwise (vaulting mode) a vault token must be savable.
 	 *
 	 * @param bool $is_paypal_subscription Whether PayPal Subscriptions mode applies.
 	 * @param bool $can_save_vault_token   Whether a vault token can be saved.
@@ -213,6 +215,10 @@ class SubscriptionHelper {
 
 		if ( $is_paypal_subscription ) {
 			return $this->checkout_subscription_product_allowed();
+		}
+
+		if ( $this->accept_manual_renewals() ) {
+			return true;
 		}
 
 		return $can_save_vault_token;

@@ -321,11 +321,15 @@ class WcSubscriptionsModule implements ServiceModule, ExecutableModule {
 		);
 
 		if ( $subscription_mode_disabled ) {
-			return 'disable_paypal_subscriptions';
+			return SubscriptionHelper::SUBSCRIPTION_MODE_VALUE_DISABLED;
+		}
+
+		if ( $subscription_helper->accept_manual_renewals() && ! $settings_provider->save_paypal_and_venmo() ) {
+			return SubscriptionHelper::SUBSCRIPTION_MODE_VALUE_DISABLED;
 		}
 
 		return $settings_provider->save_paypal_and_venmo()
-			? 'vaulting_api'
-			: 'subscriptions_api';
+			? SubscriptionHelper::SUBSCRIPTION_MODE_VALUE_VAULTING
+			: SubscriptionHelper::SUBSCRIPTION_MODE_VALUE_SUBSCRIPTIONS;
 	}
 }

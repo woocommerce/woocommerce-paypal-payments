@@ -826,11 +826,18 @@ class PayPalSubscriptionsModule implements ServiceModule, ExecutableModule {
 		$settings_provider = $container->get( 'settings.settings-provider' );
 		assert( $settings_provider instanceof SettingsProvider );
 
-		$vaulting                = $settings_provider->save_paypal_and_venmo();
-		$subscription_mode_value = $vaulting ? 'vaulting_api' : 'subscriptions_api';
-
 		$subscription_mode_disabled = (bool) apply_filters( 'woocommerce_paypal_payments_subscription_mode_disabled', false );
 
-		return $subscription_mode_disabled ? 'disable_paypal_subscriptions' : $subscription_mode_value;
+		if ( $subscription_mode_disabled ) {
+			return SubscriptionHelper::SUBSCRIPTION_MODE_VALUE_DISABLED;
+		}
+
+		if ( $subscription_helper->accept_manual_renewals() && ! $settings_provider->save_paypal_and_venmo() ) {
+			return SubscriptionHelper::SUBSCRIPTION_MODE_VALUE_DISABLED;
+		}
+
+		return $settings_provider->save_paypal_and_venmo()
+			? SubscriptionHelper::SUBSCRIPTION_MODE_VALUE_VAULTING
+			: SubscriptionHelper::SUBSCRIPTION_MODE_VALUE_SUBSCRIPTIONS;
 	}
 }
