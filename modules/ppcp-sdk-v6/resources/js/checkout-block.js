@@ -147,6 +147,10 @@ if ( config && config.page_context && config.continuation ) {
 			},
 			supports: {
 				features: [ 'products' ],
+				// Exposes the express-payments block's height and corner-radius
+				// controls; the values arrive as the buttonAttributes prop,
+				// which the component merges over the plugin-settings styles.
+				style: [ 'height', 'borderRadius' ],
 			},
 		} );
 	}

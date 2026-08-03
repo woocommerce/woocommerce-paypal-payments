@@ -53,6 +53,7 @@ function amountFromBilling( billing ) {
  * @param {string}                    props.activePaymentMethod - The active express method id.
  * @param {Object}                    props.shippingData        - The Blocks shipping data.
  * @param {Object}                    props.billing             - The Blocks billing data (cart totals).
+ * @param {Object}                    [props.buttonAttributes]  - Height/borderRadius from the express block.
  * @return {?Object} The button element, or null before the SDK is ready.
  */
 export function V6ExpressComponent( {
@@ -67,6 +68,7 @@ export function V6ExpressComponent( {
 	activePaymentMethod,
 	shippingData,
 	billing,
+	buttonAttributes,
 } ) {
 	const { onPaymentSetup, onCheckoutFail, onCheckoutValidation } =
 		eventRegistration;
@@ -310,10 +312,23 @@ export function V6ExpressComponent( {
 		return null;
 	}
 
+	// The block's own sizing controls win over the plugin settings. They arrive
+	// as unitless numbers, while ButtonStyleMapper emits CSS strings, so both
+	// are converted here rather than in the renderer.
+	const styles = {
+		...( config.button_styles?.[ context ] || {} ),
+		...( buttonAttributes?.height && {
+			height: `${ Number( buttonAttributes.height ) }px`,
+		} ),
+		...( buttonAttributes?.borderRadius && {
+			borderRadius: `${ Number( buttonAttributes.borderRadius ) }px`,
+		} ),
+	};
+
 	return createElement( V6ButtonContainer, {
 		method,
 		session,
-		styles: config.button_styles?.[ context ] || {},
+		styles,
 		createOrderFn: () => createOrder( config, context, fundingSource ),
 		payLaterDetails: eligibility?.payLaterDetails,
 		onClick,

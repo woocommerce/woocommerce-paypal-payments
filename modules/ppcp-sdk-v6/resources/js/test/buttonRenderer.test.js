@@ -25,6 +25,25 @@ describe( 'createMethodButton', () => {
 		expect( button.isConnected ).toBe( false );
 	} );
 
+	test( 'applies colour, height and border radius to the element', () => {
+		const button = createMethodButton( {
+			method: 'paypal',
+			styles: {
+				colorClass: 'paypal-blue',
+				height: '48px',
+				borderRadius: '8px',
+			},
+			session: {},
+			createOrderFn: noop,
+		} );
+
+		expect( button.className ).toBe( 'paypal-blue' );
+		expect( button.style.height ).toBe( '48px' );
+		expect(
+			button.style.getPropertyValue( '--paypal-button-border-radius' )
+		).toBe( '8px' );
+	} );
+
 	test( 'returns null for pay later without product details', () => {
 		const button = createMethodButton( {
 			method: 'paylater',

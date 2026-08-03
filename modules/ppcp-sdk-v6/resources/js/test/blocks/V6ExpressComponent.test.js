@@ -252,6 +252,45 @@ describe( 'V6ExpressComponent', () => {
 		);
 	} );
 
+	test( 'lets the express block sizing attributes override the settings styles', async () => {
+		renderComponent( {
+			config: {
+				...config,
+				button_styles: {
+					'checkout-block': {
+						colorClass: 'paypal-gold',
+						borderRadius: '24px',
+					},
+				},
+			},
+			buttonAttributes: { height: '48', borderRadius: '8' },
+		} );
+		await waitFor( () => expect( mockButtonContainer ).toHaveBeenCalled() );
+
+		const { styles } = mockButtonContainer.mock.calls.at( -1 )[ 0 ];
+		// Unitless block attributes become CSS strings; the settings colour is
+		// untouched and the settings radius is overridden.
+		expect( styles.height ).toBe( '48px' );
+		expect( styles.borderRadius ).toBe( '8px' );
+		expect( styles.colorClass ).toBe( 'paypal-gold' );
+	} );
+
+	test( 'keeps the settings styles when the block sets no sizing attributes', async () => {
+		renderComponent( {
+			config: {
+				...config,
+				button_styles: {
+					'checkout-block': { borderRadius: '24px' },
+				},
+			},
+		} );
+		await waitFor( () => expect( mockButtonContainer ).toHaveBeenCalled() );
+
+		const { styles } = mockButtonContainer.mock.calls.at( -1 )[ 0 ];
+		expect( styles.borderRadius ).toBe( '24px' );
+		expect( styles.height ).toBeUndefined();
+	} );
+
 	test( 'keeps one session and one button across re-renders with new callback identities', async () => {
 		const { rerender } = renderComponent();
 		await waitFor( () => expect( mockButtonContainer ).toHaveBeenCalled() );
