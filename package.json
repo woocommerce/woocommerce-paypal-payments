@@ -135,5 +135,12 @@
     "babel-plugin-explicit-exports-references": "^1.0.2",
     "eslint-import-resolver-webpack": "^0.13.10",
     "jquery": "^3.7.1"
+  },
+  "overrides": {
+    "@wordpress/scripts": {
+      "adm-zip": "^0.6.0",
+      "markdownlint-cli": "^0.49.1",
+      "serialize-javascript": "^7.0.7"
+    }
   }
 }
