@@ -467,7 +467,13 @@ class AxoManager {
 		const $shippingFields = this.$(
 			'.woocommerce-shipping-fields .form-row:visible'
 		);
-		const $shippingHeaders = this.$( '.woocommerce-shipping-fields h3' );
+		// The "Ship to a different address?" toggle is itself an <h3> inside
+		// .woocommerce-shipping-fields, but it is the control that reveals the
+		// (collapsed) shipping fields rather than a section title. Excluding it
+		// avoids hiding the only control that could make those fields visible.
+		const $shippingHeaders = this.$(
+			'.woocommerce-shipping-fields h3'
+		).not( '#ship-to-different-address' );
 		if ( $shippingFields.length ) {
 			$shippingHeaders.show();
 		} else {
