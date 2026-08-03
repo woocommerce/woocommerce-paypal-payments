@@ -130,7 +130,7 @@
     "@wordpress/notices": "^5.40.0",
     "@wordpress/plugins": "^7.40.0",
     "@wordpress/primitives": "^4.40.0",
-    "@wordpress/scripts": "^31.2.0",
+    "@wordpress/scripts": "^34.0.0",
     "@wordpress/url": "^4.40.0",
     "babel-plugin-explicit-exports-references": "^1.0.2",
     "eslint-import-resolver-webpack": "^0.13.10",
