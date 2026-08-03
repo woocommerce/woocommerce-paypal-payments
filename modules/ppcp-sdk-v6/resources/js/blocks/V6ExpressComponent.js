@@ -68,7 +68,8 @@ export function V6ExpressComponent( {
 	shippingData,
 	billing,
 } ) {
-	const { onPaymentSetup, onCheckoutFail } = eventRegistration;
+	const { onPaymentSetup, onCheckoutFail, onCheckoutValidation } =
+		eventRegistration;
 	const { responseTypes } = emitResponse;
 
 	const method = fundingSource;
@@ -124,6 +125,14 @@ export function V6ExpressComponent( {
 		}
 	};
 
+	// Set once the Pay Now path has approved the order in the WC session and
+	// handed off to the Blocks submit. From that point a failed submit must land
+	// the buyer on the review page, mirroring v5's gotoContinuationOnError: the
+	// approved order in the session activates the ppcp_continuation payment
+	// requirement, which hides every express method on the next cart refresh, so
+	// staying here can leave the buyer with no way to pay at all.
+	const continuationOnErrorRef = useRef( false );
+
 	const approve = async ( data ) => {
 		try {
 			const order = await getOrder( config, data.orderId );
@@ -151,6 +160,7 @@ export function V6ExpressComponent( {
 				return;
 			}
 
+			continuationOnErrorRef.current = true;
 			onSubmit();
 		} catch ( error ) {
 			failFlow( error );
@@ -258,6 +268,28 @@ export function V6ExpressComponent( {
 		responseTypes,
 	] );
 
+	// Validation errors after a Pay Now approval must send the buyer to the
+	// review page rather than leaving them on a checkout whose express methods
+	// are about to disappear. Only the instance whose approve() ran carries the
+	// flag, so no active-method gate is needed here.
+	useEffect(
+		() =>
+			onCheckoutValidation( () => {
+				if (
+					continuationOnErrorRef.current &&
+					wp.data
+						.select( 'wc/store/validation' )
+						.hasValidationErrors()
+				) {
+					navigation.assign( continuationRedirectUrl( config ) );
+					return { type: responseTypes.ERROR };
+				}
+
+				return true;
+			} ),
+		[ onCheckoutValidation, config, responseTypes ]
+	);
+
 	useEffect( () => {
 		if ( activePaymentMethod !== methodId ) {
 			return undefined;
@@ -267,9 +299,12 @@ export function V6ExpressComponent( {
 			if ( onClose ) {
 				onClose();
 			}
+			if ( continuationOnErrorRef.current ) {
+				navigation.assign( continuationRedirectUrl( config ) );
+			}
 			return true;
 		} );
-	}, [ onCheckoutFail, onClose, activePaymentMethod, methodId ] );
+	}, [ onCheckoutFail, onClose, activePaymentMethod, methodId, config ] );
 
 	if ( ! session ) {
 		return null;

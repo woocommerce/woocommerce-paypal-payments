@@ -65,7 +65,12 @@ const config = {
 
 let onPaymentSetup;
 let onCheckoutFail;
+let onCheckoutValidation;
 let paymentSetupCb;
+let checkoutFailCb;
+let checkoutValidationCb;
+let hasValidationErrors;
+let eventRegistration;
 let mockUpdateCustomerData;
 
 function renderComponent( overrides = {} ) {
@@ -77,7 +82,7 @@ function renderComponent( overrides = {} ) {
 			onClose: jest.fn(),
 			onError: jest.fn(),
 			onSubmit: jest.fn(),
-			eventRegistration: { onPaymentSetup, onCheckoutFail },
+			eventRegistration,
 			emitResponse: {
 				responseTypes: { SUCCESS: 'success', ERROR: 'error' },
 			},
@@ -91,6 +96,8 @@ function renderComponent( overrides = {} ) {
 beforeEach( () => {
 	capturedHandlers = null;
 	paymentSetupCb = null;
+	checkoutFailCb = null;
+	checkoutValidationCb = null;
 	mockLoadSdkV6.mockReset().mockResolvedValue( { sdk: true } );
 	mockCheckEligibility.mockReset().mockResolvedValue( {
 		paypal: true,
@@ -113,9 +120,22 @@ beforeEach( () => {
 		paymentSetupCb = cb;
 		return () => {};
 	} );
-	onCheckoutFail = jest.fn( () => () => {} );
+	onCheckoutFail = jest.fn( ( cb ) => {
+		checkoutFailCb = cb;
+		return () => {};
+	} );
+	onCheckoutValidation = jest.fn( ( cb ) => {
+		checkoutValidationCb = cb;
+		return () => {};
+	} );
+	eventRegistration = {
+		onPaymentSetup,
+		onCheckoutFail,
+		onCheckoutValidation,
+	};
 
 	mockUpdateCustomerData = jest.fn( () => Promise.resolve() );
+	hasValidationErrors = false;
 	global.wp = {
 		data: {
 			dispatch: () => ( {
@@ -124,12 +144,20 @@ beforeEach( () => {
 				setBillingAddress: jest.fn(),
 				setShippingAddress: jest.fn(),
 			} ),
-			select: () => ( {
-				getCustomerData: () => ( {
-					billingAddress: {},
-					shippingAddress: {},
-				} ),
-			} ),
+			select: ( store ) => {
+				if ( store === 'wc/store/validation' ) {
+					return {
+						hasValidationErrors: () => hasValidationErrors,
+					};
+				}
+
+				return {
+					getCustomerData: () => ( {
+						billingAddress: {},
+						shippingAddress: {},
+					} ),
+				};
+			},
 		},
 	};
 } );
@@ -240,7 +268,7 @@ describe( 'V6ExpressComponent', () => {
 				onClose: jest.fn(),
 				onError: jest.fn(),
 				onSubmit: jest.fn(),
-				eventRegistration: { onPaymentSetup, onCheckoutFail },
+				eventRegistration,
 				emitResponse: {
 					responseTypes: { SUCCESS: 'success', ERROR: 'error' },
 				},
@@ -267,7 +295,7 @@ describe( 'V6ExpressComponent', () => {
 			onClose: jest.fn(),
 			onError: jest.fn(),
 			onSubmit: jest.fn(),
-			eventRegistration: { onPaymentSetup, onCheckoutFail },
+			eventRegistration,
 			emitResponse: {
 				responseTypes: { SUCCESS: 'success', ERROR: 'error' },
 			},
@@ -346,6 +374,89 @@ describe( 'V6ExpressComponent', () => {
 		expect( mockAssign ).not.toHaveBeenCalled();
 	} );
 
+	test( 'a failed checkout after a Pay Now approval lands the buyer on the review page', async () => {
+		mockGetOrder.mockResolvedValue( { id: 'PPORDER' } );
+		const onClose = jest.fn();
+
+		renderComponent( { onClose } );
+		await waitFor( () => expect( mockCreateSession ).toHaveBeenCalled() );
+		await waitFor( () => expect( checkoutFailCb ).not.toBeNull() );
+
+		await act( async () => {
+			await capturedHandlers.onApprove( { orderId: 'ORDER1' } );
+		} );
+		expect( mockAssign ).not.toHaveBeenCalled();
+
+		// The approved order now sits in the WC session, so the express methods
+		// are about to be filtered out — staying on this page strands the buyer.
+		expect( checkoutFailCb() ).toBe( true );
+
+		expect( onClose ).toHaveBeenCalled();
+		expect( mockAssign ).toHaveBeenCalledTimes( 1 );
+		expect( mockAssign.mock.calls[ 0 ][ 0 ] ).toContain(
+			'ppcp-continuation-redirect='
+		);
+	} );
+
+	test( 'validation errors after a Pay Now approval land the buyer on the review page', async () => {
+		mockGetOrder.mockResolvedValue( { id: 'PPORDER' } );
+
+		renderComponent();
+		await waitFor( () => expect( mockCreateSession ).toHaveBeenCalled() );
+		await waitFor( () => expect( checkoutValidationCb ).not.toBeNull() );
+
+		await act( async () => {
+			await capturedHandlers.onApprove( { orderId: 'ORDER1' } );
+		} );
+
+		hasValidationErrors = true;
+
+		expect( checkoutValidationCb() ).toEqual( { type: 'error' } );
+		expect( mockAssign ).toHaveBeenCalledTimes( 1 );
+		expect( mockAssign.mock.calls[ 0 ][ 0 ] ).toContain(
+			'ppcp-continuation-redirect='
+		);
+	} );
+
+	test( 'does not redirect on failure or validation errors before any approval', async () => {
+		const onClose = jest.fn();
+
+		renderComponent( { onClose } );
+		await waitFor( () => expect( mockCreateSession ).toHaveBeenCalled() );
+		await waitFor( () => expect( checkoutFailCb ).not.toBeNull() );
+
+		// No approval happened, so there is no order in the session and the
+		// ordinary Blocks error handling must be left to do its job.
+		expect( checkoutFailCb() ).toBe( true );
+		expect( onClose ).toHaveBeenCalled();
+
+		hasValidationErrors = true;
+		expect( checkoutValidationCb() ).toBe( true );
+
+		expect( mockAssign ).not.toHaveBeenCalled();
+	} );
+
+	test( 'does not redirect twice when the review path already redirected', async () => {
+		mockGetOrder.mockResolvedValue( { id: 'PPORDER' } );
+
+		renderComponent( { config: { ...config, final_review: true } } );
+		await waitFor( () => expect( mockCreateSession ).toHaveBeenCalled() );
+		await waitFor( () => expect( checkoutFailCb ).not.toBeNull() );
+
+		await act( async () => {
+			await capturedHandlers.onApprove( { orderId: 'ORDER1' } );
+		} );
+		expect( mockAssign ).toHaveBeenCalledTimes( 1 );
+
+		// The review path never hands off to the Blocks submit, so a later
+		// checkout failure must not trigger a second redirect.
+		checkoutFailCb();
+		hasValidationErrors = true;
+		expect( checkoutValidationCb() ).toBe( true );
+
+		expect( mockAssign ).toHaveBeenCalledTimes( 1 );
+	} );
+
 	test( 'a failed approval reports the error and releases the express UI', async () => {
 		mockGetOrder.mockRejectedValue( new Error( 'nonce expired' ) );
 		const onError = jest.fn();
@@ -379,7 +490,7 @@ describe( 'V6ExpressComponent', () => {
 			onClose: jest.fn(),
 			onError: jest.fn(),
 			onSubmit: jest.fn(),
-			eventRegistration: { onPaymentSetup, onCheckoutFail },
+			eventRegistration,
 			emitResponse: {
 				responseTypes: { SUCCESS: 'success', ERROR: 'error' },
 			},
@@ -428,7 +539,7 @@ describe( 'V6ExpressComponent', () => {
 			onClose: jest.fn(),
 			onError: jest.fn(),
 			onSubmit: jest.fn(),
-			eventRegistration: { onPaymentSetup, onCheckoutFail },
+			eventRegistration,
 			emitResponse: {
 				responseTypes: { SUCCESS: 'success', ERROR: 'error' },
 			},
