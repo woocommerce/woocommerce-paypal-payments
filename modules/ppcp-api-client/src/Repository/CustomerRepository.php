@@ -59,4 +59,22 @@ class CustomerRepository {
 
 		return get_user_meta( $user_id, 'ppcp_customer_id', true ) ?: $this->prefix . (string) $user_id;
 	}
+
+	/**
+	 * Returns the real, PayPal-generated customer ID for the given user, or an
+	 * empty string when the user has never been vaulted with PayPal.
+	 *
+	 * Unlike customer_id_for_user(), this never fabricates a local prefix-based
+	 * ID: PayPal does not recognize such IDs, so callers that pass the result to
+	 * the PayPal API should treat an empty string as "let PayPal assign one".
+	 */
+	public function paypal_customer_id_for_user( int $user_id ): string {
+		if ( 0 === $user_id ) {
+			return '';
+		}
+
+		$customer_id = get_user_meta( $user_id, 'ppcp_customer_id', true );
+
+		return is_string( $customer_id ) ? $customer_id : '';
+	}
 }
