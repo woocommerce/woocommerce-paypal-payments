@@ -414,26 +414,28 @@ class WcGatewayTest extends TestCase
 	}
 
 	/**
-	 * GIVEN a capture attempt throws a PayPalApiException carrying a PAYER_ACTION_REQUIRED detail
+	 * GIVEN a capture attempt throws a PayPalApiException carrying a recoverable retry issue
 	 *   AND the retry attempt count is still below the give-up threshold
 	 *   AND a PayPal order is still present in the session to retry against
 	 * WHEN process_payment() handles the exception
-	 * THEN the order is NOT marked failed, since the payer action/retry is still recoverable
+	 * THEN the order is NOT marked failed, since the retry is still recoverable
 	 *   AND an order note records the reason instead
 	 *   AND the customer is redirected back to PayPal to complete the action
+	 *
+	 * @dataProvider dataForRetryErrorIssue
 	 */
-	public function test_process_payment_keeps_order_pending_on_recoverable_payer_action_required(): void {
+	public function test_process_payment_keeps_order_pending_on_recoverable_retry_issue( string $issue, string $expectedMessage ): void {
 		$orderId = 1;
 		$wcOrder = Mockery::mock( \WC_Order::class );
 
 		$response          = new \stdClass();
-		$response->details = array( (object) array( 'issue' => 'PAYER_ACTION_REQUIRED', 'description' => 'Additional action needed.' ) );
+		$response->details = array( (object) array( 'issue' => $issue, 'description' => 'Additional action needed.' ) );
 		$exception         = new PayPalApiException( $response, 422 );
 
 		$this->orderProcessor->expects( 'process' )->andThrow( $exception );
 
 		$wcOrder->shouldNotReceive( 'update_status' );
-		$wcOrder->shouldReceive( 'add_order_note' )->once();
+		$wcOrder->shouldReceive( 'add_order_note' )->once()->with( Mockery::pattern( '/' . preg_quote( $expectedMessage, '/' ) . '/' ) );
 
 		$this->sessionHandler->shouldReceive( 'increment_insufficient_funding_tries' )->once();
 		$this->sessionHandler->shouldReceive( 'insufficient_funding_tries' )->andReturn( 1 );
@@ -453,22 +455,24 @@ class WcGatewayTest extends TestCase
 	}
 
 	/**
-	 * GIVEN a capture attempt throws a PayPalApiException carrying a PAYER_ACTION_REQUIRED detail
+	 * GIVEN a capture attempt throws a PayPalApiException carrying a recoverable retry issue
 	 *   AND the retry attempt count has already reached the give-up threshold (3 attempts)
 	 * WHEN process_payment() handles the exception
 	 * THEN the order IS marked failed, since the retry is now considered exhausted
+	 *
+	 * @dataProvider dataForRetryErrorIssue
 	 */
-	public function test_process_payment_fails_order_when_payer_action_retries_exhausted(): void {
+	public function test_process_payment_fails_order_when_retry_issue_retries_exhausted( string $issue, string $expectedMessage ): void {
 		$orderId = 1;
 		$wcOrder = Mockery::mock( \WC_Order::class );
 
 		$response          = new \stdClass();
-		$response->details = array( (object) array( 'issue' => 'PAYER_ACTION_REQUIRED', 'description' => 'Additional action needed.' ) );
+		$response->details = array( (object) array( 'issue' => $issue, 'description' => 'Additional action needed.' ) );
 		$exception         = new PayPalApiException( $response, 422 );
 
 		$this->orderProcessor->expects( 'process' )->andThrow( $exception );
 
-		$wcOrder->shouldReceive( 'update_status' )->once()->with( 'failed', Mockery::type( 'string' ) );
+		$wcOrder->shouldReceive( 'update_status' )->once()->with( 'failed', Mockery::pattern( '/' . preg_quote( $expectedMessage, '/' ) . '/' ) );
 
 		$this->sessionHandler->shouldReceive( 'increment_insufficient_funding_tries' )->once();
 		$this->sessionHandler->shouldReceive( 'insufficient_funding_tries' )->andReturn( 3 );
@@ -494,22 +498,24 @@ class WcGatewayTest extends TestCase
 	}
 
 	/**
-	 * GIVEN a capture attempt throws a PayPalApiException carrying a PAYER_ACTION_REQUIRED detail
+	 * GIVEN a capture attempt throws a PayPalApiException carrying a recoverable retry issue
 	 *   AND no PayPal order remains in the session to retry against (session expired)
 	 * WHEN process_payment() handles the exception
 	 * THEN the order IS marked failed, since there is no way left to recover this attempt
+	 *
+	 * @dataProvider dataForRetryErrorIssue
 	 */
-	public function test_process_payment_fails_order_when_payer_action_session_order_missing(): void {
+	public function test_process_payment_fails_order_when_retry_issue_session_order_missing( string $issue, string $expectedMessage ): void {
 		$orderId = 1;
 		$wcOrder = Mockery::mock( \WC_Order::class );
 
 		$response          = new \stdClass();
-		$response->details = array( (object) array( 'issue' => 'PAYER_ACTION_REQUIRED', 'description' => 'Additional action needed.' ) );
+		$response->details = array( (object) array( 'issue' => $issue, 'description' => 'Additional action needed.' ) );
 		$exception         = new PayPalApiException( $response, 422 );
 
 		$this->orderProcessor->expects( 'process' )->andThrow( $exception );
 
-		$wcOrder->shouldReceive( 'update_status' )->once()->with( 'failed', Mockery::type( 'string' ) );
+		$wcOrder->shouldReceive( 'update_status' )->once()->with( 'failed', Mockery::pattern( '/' . preg_quote( $expectedMessage, '/' ) . '/' ) );
 
 		$this->sessionHandler->shouldReceive( 'increment_insufficient_funding_tries' )->once();
 		$this->sessionHandler->shouldReceive( 'insufficient_funding_tries' )->andReturn( 1 );
@@ -533,6 +539,13 @@ class WcGatewayTest extends TestCase
 		$result = $testee->process_payment( $orderId );
 
 		$this->assertEquals( 'failure', $result['result'] );
+	}
+
+	public function dataForRetryErrorIssue(): array {
+		return array(
+			'instrument declined'   => array( 'INSTRUMENT_DECLINED', 'Instrument declined.' ),
+			'payer action required' => array( 'PAYER_ACTION_REQUIRED', 'Payer action required, possibly overcharge.' ),
+		);
 	}
 
     /**
