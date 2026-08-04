@@ -5,6 +5,7 @@ import {
 import { __ } from '@wordpress/i18n';
 import {
 	cartHasSubscriptionProducts,
+	paypalPaymentMethodAllowed,
 	paypalSubscriptionButtonAllowed,
 } from './Helper/Subscription';
 import { loadPayPalScript } from '../../../ppcp-button/resources/js/modules/Helper/PayPalScriptLoading';
@@ -56,15 +57,8 @@ if ( blockEnabled ) {
 			),
 			placeOrderButtonLabel: config.placeOrderButtonText,
 			ariaLabel: config.title,
-			canMakePayment: ( cartData ) => {
-				// Free-trial subscriptions have a $0 total today but still
-				// require a payment method to be vaulted for future renewals.
-				if ( config.scriptData.is_free_trial_cart ) {
-					return true;
-				}
-				const total = cartData?.cartTotals?.total_price;
-				return parseInt( total ) > 0;
-			},
+			canMakePayment: ( cartData ) =>
+				paypalPaymentMethodAllowed( config.scriptData, cartData ),
 			supports: {
 				features,
 				showSavedCards: true,
