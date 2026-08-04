@@ -24,8 +24,10 @@ use WC_Tax;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Payer;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Shipping;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\ShippingOption;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PayerFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\ShippingFactory;
+use WooCommerce\PayPalCommerce\ApiClient\Factory\ShippingOptionFactory;
 use WooCommerce\PayPalCommerce\Button\Session\CartData;
 use WooCommerce\PayPalCommerce\Button\Session\CartDataFactory;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
@@ -66,13 +68,16 @@ class WooCommerceOrderCreator {
 
 	protected PayerFactory $payer_factory;
 
+	protected ShippingOptionFactory $shipping_option_factory;
+
 	public function __construct(
 		FundingSourceRenderer $funding_source_renderer,
 		SessionHandler $session_handler,
 		SubscriptionHelper $subscription_helper,
 		CartDataFactory $cart_data_factory,
 		ShippingFactory $shipping_factory,
-		PayerFactory $payer_factory
+		PayerFactory $payer_factory,
+		ShippingOptionFactory $shipping_option_factory
 	) {
 		$this->funding_source_renderer = $funding_source_renderer;
 		$this->session_handler         = $session_handler;
@@ -80,6 +85,7 @@ class WooCommerceOrderCreator {
 		$this->cart_data_factory       = $cart_data_factory;
 		$this->shipping_factory        = $shipping_factory;
 		$this->payer_factory           = $payer_factory;
+		$this->shipping_option_factory = $shipping_option_factory;
 	}
 
 	/**
@@ -104,13 +110,18 @@ class WooCommerceOrderCreator {
 		}
 
 		try {
-			$payer    = $this->get_payer( $order, $paypal_data );
-			$shipping = $this->get_shipping( $order, $paypal_data );
+			$payer           = $this->get_payer( $order, $paypal_data );
+			$shipping        = $this->get_shipping( $order, $paypal_data );
+			$shipping_option = $this->resolve_shipping_option(
+				$shipping,
+				$cart_data->needs_shipping(),
+				$cart instanceof WC_Cart
+			);
 
 			$this->configure_payment_source( $wc_order );
 			$this->configure_customer( $wc_order, $cart_data );
-			$this->configure_line_items( $wc_order, $cart_data, $payer, $shipping );
-			$this->configure_addresses( $wc_order, $payer, $shipping, $cart_data->needs_shipping() );
+			$this->configure_line_items( $wc_order, $cart_data, $payer, $shipping, $shipping_option );
+			$this->configure_addresses( $wc_order, $payer, $shipping, $cart_data->needs_shipping(), $shipping_option );
 			$this->configure_coupons( $wc_order, $cart_data->coupons() );
 
 			$wc_order->calculate_totals();
@@ -130,7 +141,7 @@ class WooCommerceOrderCreator {
 	 *
 	 * @psalm-suppress InvalidScalarArgument
 	 */
-	protected function configure_line_items( WC_Order $wc_order, CartData $cart_data, ?Payer $payer, ?Shipping $shipping ): void {
+	protected function configure_line_items( WC_Order $wc_order, CartData $cart_data, ?Payer $payer, ?Shipping $shipping, ?ShippingOption $shipping_option = null ): void {
 		foreach ( $cart_data->items() as $cart_item ) {
 			$product_id           = $cart_item['product_id'] ?? 0;
 			$variation_id         = $cart_item['variation_id'] ?? 0;
@@ -180,7 +191,7 @@ class WooCommerceOrderCreator {
 				$item->set_total( (string) $subscription_total );
 
 				$subscription->add_product( $product );
-				$this->configure_addresses( $subscription, $payer, $shipping, $cart_data->needs_shipping() );
+				$this->configure_addresses( $subscription, $payer, $shipping, $cart_data->needs_shipping(), $shipping_option );
 				$this->configure_payment_source( $subscription );
 				$this->configure_coupons( $subscription, $cart_data->coupons() );
 
@@ -205,15 +216,15 @@ class WooCommerceOrderCreator {
 	 * @throws WC_Data_Exception|RuntimeException When failing to configure shipping.
 	 * @psalm-suppress RedundantConditionGivenDocblockType
 	 */
-	protected function configure_addresses( WC_Order $wc_order, ?Payer $payer, ?Shipping $shipping, bool $needs_shipping ): void {
+	protected function configure_addresses( WC_Order $wc_order, ?Payer $payer, ?Shipping $shipping, bool $needs_shipping, ?ShippingOption $shipping_option = null ): void {
 		$shipping_address = null;
 		$billing_address  = null;
-		$shipping_options = null;
 		$wc_customer      = WC()->customer;
 
 		if ( ! $shipping && $needs_shipping ) {
 			if ( $wc_customer instanceof WC_Customer ) {
-				$shipping = $this->shipping_factory->from_wc_customer( $wc_customer, true );
+				// Only the address is used here, the shipping method is resolved by resolve_shipping_option().
+				$shipping = $this->shipping_factory->from_wc_customer( $wc_customer, false );
 			}
 		}
 
@@ -257,11 +268,9 @@ class WooCommerceOrderCreator {
 					'country'    => $address->country_code(),
 				);
 			}
-
-			$shipping_options = $shipping->options()[0] ?? '';
 		}
 
-		if ( $needs_shipping && empty( $shipping_options ) ) {
+		if ( $needs_shipping && ! $shipping_option ) {
 			throw new RuntimeException( 'No shipping method has been selected.' );
 		}
 
@@ -273,11 +282,11 @@ class WooCommerceOrderCreator {
 			$wc_order->set_billing_address( $billing_address ?: $shipping_address );
 		}
 
-		if ( $shipping_options ) {
-			$shipping = new WC_Order_Item_Shipping();
-			$shipping->set_method_title( $shipping_options->label() );
-			$shipping->set_method_id( $shipping_options->id() );
-			$shipping->set_total( $shipping_options->amount()->value_str() );
+		if ( $shipping_option ) {
+			$shipping_item = new WC_Order_Item_Shipping();
+			$shipping_item->set_method_title( $shipping_option->label() );
+			$shipping_item->set_method_id( $shipping_option->id() );
+			$shipping_item->set_total( $shipping_option->amount()->value_str() );
 
 			$items            = $wc_order->get_items();
 			$items_in_package = array();
@@ -285,9 +294,9 @@ class WooCommerceOrderCreator {
 				$items_in_package[] = $item->get_name() . ' &times; ' . (string) $item->get_quantity();
 			}
 
-			$shipping->add_meta_data( __( 'Items', 'woocommerce-paypal-payments' ), implode( ', ', $items_in_package ) );
+			$shipping_item->add_meta_data( __( 'Items', 'woocommerce-paypal-payments' ), implode( ', ', $items_in_package ) );
 
-			$wc_order->add_item( $shipping );
+			$wc_order->add_item( $shipping_item );
 		}
 
 		$wc_order->calculate_totals();
@@ -449,5 +458,73 @@ class WooCommerceOrderCreator {
 			$order,
 			$paypal_data
 		);
+	}
+
+	/**
+	 * Returns the shipping method that should be added to the WC order.
+	 *
+	 * Prefers the option that PayPal reports as selected. When the PayPal order carries no
+	 * shipping options at all — Google Pay and Apple Pay collect the shipping method in their
+	 * own payment sheet, so it is never sent to PayPal — the method chosen in WooCommerce is used.
+	 *
+	 * @param Shipping|null $shipping           The shipping information of the PayPal order.
+	 * @param bool          $needs_shipping     Whether the cart needs shipping.
+	 * @param bool          $is_current_wc_cart Whether the order is created from the live WC cart.
+	 *
+	 * @return ShippingOption|null The shipping option, or null when none is available.
+	 */
+	private function resolve_shipping_option( ?Shipping $shipping, bool $needs_shipping, bool $is_current_wc_cart ): ?ShippingOption {
+		if ( ! $needs_shipping ) {
+			return null;
+		}
+
+		$paypal_option = $this->select_shipping_option( $shipping ? $shipping->options() : array() );
+		if ( $paypal_option ) {
+			return $paypal_option;
+		}
+
+		/**
+		 * PayPal knows the address but no methods: only the live cart can be trusted here, a
+		 * restored or foreign cart (app switch, agentic checkout) may hold different items.
+		 */
+		if ( $shipping && ! $is_current_wc_cart ) {
+			return null;
+		}
+
+		return $this->wc_shipping_option();
+	}
+
+	/**
+	 * Returns the shipping method chosen in WooCommerce, or null when it cannot be determined.
+	 *
+	 * @return ShippingOption|null
+	 */
+	private function wc_shipping_option(): ?ShippingOption {
+		// Without a cart and session the factory would raise an Error, which the caller does not catch.
+		if ( ! WC()->cart || ! WC()->session ) {
+			return null;
+		}
+
+		return $this->select_shipping_option( $this->shipping_option_factory->from_wc_cart() );
+	}
+
+	/**
+	 * Returns the selected option of the given list, falling back to the first one.
+	 *
+	 * @param ShippingOption[] $options The shipping options.
+	 *
+	 * @return ShippingOption|null The shipping option, or null when the list is empty.
+	 */
+	private function select_shipping_option( array $options ): ?ShippingOption {
+		foreach ( $options as $option ) {
+			if ( $option->selected() ) {
+				return $option;
+			}
+		}
+
+		// The factories do not guarantee a zero-indexed list.
+		$first = reset( $options );
+
+		return $first instanceof ShippingOption ? $first : null;
 	}
 }
