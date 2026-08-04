@@ -17,6 +17,9 @@ use WooCommerce\PayPalCommerce\Button\Endpoint\GetOrderEndpoint;
 use WooCommerce\PayPalCommerce\Button\Helper\Context;
 use WooCommerce\PayPalCommerce\SdkV6\Endpoint\ClientTokenEndpoint;
 use WooCommerce\PayPalCommerce\SdkV6\Helper\ButtonStyleMapper;
+use WooCommerce\PayPalCommerce\Session\Cancellation\CancelController;
+use WooCommerce\PayPalCommerce\Session\Cancellation\CancelView;
+use WooCommerce\PayPalCommerce\Session\SessionHandler;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\SettingsStatus;
 class SdkV6Manager
@@ -30,8 +33,11 @@ class SdkV6Manager
     private bool $should_handle_shipping;
     private SettingsStatus $settings_status;
     private Context $context;
+    private SessionHandler $session_handler;
+    private CancelView $cancel_view;
+    private bool $final_review_enabled;
     private bool $vaulting_enabled;
-    public function __construct(AssetGetter $asset_getter, string $version, Environment $environment, ButtonStyleMapper $style_mapper, bool $should_handle_shipping, SettingsStatus $settings_status, Context $context, bool $vaulting_enabled = \false)
+    public function __construct(AssetGetter $asset_getter, string $version, Environment $environment, ButtonStyleMapper $style_mapper, bool $should_handle_shipping, SettingsStatus $settings_status, Context $context, SessionHandler $session_handler, CancelView $cancel_view, bool $final_review_enabled, bool $vaulting_enabled = \false)
     {
         $this->asset_getter = $asset_getter;
         $this->version = $version;
@@ -40,6 +46,9 @@ class SdkV6Manager
         $this->should_handle_shipping = $should_handle_shipping;
         $this->settings_status = $settings_status;
         $this->context = $context;
+        $this->session_handler = $session_handler;
+        $this->cancel_view = $cancel_view;
+        $this->final_review_enabled = $final_review_enabled;
         $this->vaulting_enabled = $vaulting_enabled;
     }
     /**
@@ -147,6 +156,15 @@ class SdkV6Manager
             $buyer_country = wc_get_base_location()['country'] ?? '';
         }
         $page_context = $this->get_page_context();
+        // Must stay in lockstep with ShippingPreferenceFactory: it marks only
+        // 'checkout' and 'pay-now' as fixed-address contexts (SET_PROVIDED_ADDRESS,
+        // so the buyer cannot change the address in the popup and no callbacks are
+        // needed). Every other context, 'checkout-block' included, gets
+        // GET_FROM_FILE — PayPal offers the buyer's own addresses there, so the
+        // popup callbacks must stay attached to sync the choice back to the cart.
+        // 'checkout-block' is deliberately absent from this list: block express
+        // buttons sit above the checkout form, so the buyer has not necessarily
+        // entered an address, which is why the server treats them cart-like.
         $shipping_enabled = $this->should_handle_shipping && 'checkout' !== $page_context;
         $store_api_base = rtrim(rest_url('wc/store/v1/cart'), '/');
         $button_styles = array();
@@ -156,7 +174,67 @@ class SdkV6Manager
         if ($this->settings_status->is_smart_button_enabled_for_location('mini-cart')) {
             $button_styles['mini-cart'] = $this->style_mapper->styles_for_context('mini-cart');
         }
-        return array('sdk_url' => $base_url . '/web-sdk/v6/core', 'page_context' => $page_context, 'currency' => get_woocommerce_currency(), 'amount' => $this->transaction_amount(), 'buyer_country' => $buyer_country, 'locale' => str_replace('_', '-', get_locale()), 'vaulting_enabled' => $this->vaulting_enabled, 'ajax' => array('client_token' => array('endpoint' => \WC_AJAX::get_endpoint(ClientTokenEndpoint::ENDPOINT), 'nonce' => wp_create_nonce(ClientTokenEndpoint::nonce())), 'change_cart' => array('endpoint' => \WC_AJAX::get_endpoint(ChangeCartEndpoint::ENDPOINT), 'nonce' => wp_create_nonce(ChangeCartEndpoint::nonce())), 'create_order' => array('endpoint' => \WC_AJAX::get_endpoint(CreateOrderEndpoint::ENDPOINT), 'nonce' => wp_create_nonce(CreateOrderEndpoint::nonce())), 'approve_order' => array('endpoint' => \WC_AJAX::get_endpoint(ApproveOrderEndpoint::ENDPOINT), 'nonce' => wp_create_nonce(ApproveOrderEndpoint::nonce())), 'get_order' => array('endpoint' => \WC_AJAX::get_endpoint(GetOrderEndpoint::ENDPOINT), 'nonce' => wp_create_nonce(GetOrderEndpoint::nonce())), 'update_shipping' => array('endpoint' => \WC_AJAX::get_endpoint(UpdateShippingEndpoint::ENDPOINT), 'nonce' => wp_create_nonce(UpdateShippingEndpoint::nonce())), 'wc_store_api' => array('cart' => $store_api_base, 'select_shipping_rate' => $store_api_base . '/select-shipping-rate', 'update_customer' => $store_api_base . '/update-customer', 'nonce' => wp_create_nonce('wc_store_api'))), 'urls' => array('checkout' => wc_get_checkout_url()), 'labels' => array('generic_error' => __('Something went wrong. Please try again or choose another payment source.', 'woocommerce-paypal-payments')), 'shipping' => array('handle_in_paypal' => $shipping_enabled, 'need_shipping' => $this->need_shipping()), 'button_styles' => $button_styles, 'wrapper' => '#' . self::WRAPPER_ID, 'mini_cart_wrapper' => '#' . self::MINI_CART_WRAPPER_ID);
+        $data = array(
+            'sdk_url' => $base_url . '/web-sdk/v6/core',
+            'page_context' => $page_context,
+            'currency' => get_woocommerce_currency(),
+            'amount' => $this->transaction_amount(),
+            'buyer_country' => $buyer_country,
+            'locale' => str_replace('_', '-', get_locale()),
+            'vaulting_enabled' => $this->vaulting_enabled,
+            // Drives the post-approval fork: with the final review enabled the
+            // buyer returns to checkout to confirm instead of the order being
+            // placed straight from the express flow.
+            'final_review' => $this->final_review_enabled,
+            'ajax' => array('client_token' => array('endpoint' => \WC_AJAX::get_endpoint(ClientTokenEndpoint::ENDPOINT), 'nonce' => wp_create_nonce(ClientTokenEndpoint::nonce())), 'change_cart' => array('endpoint' => \WC_AJAX::get_endpoint(ChangeCartEndpoint::ENDPOINT), 'nonce' => wp_create_nonce(ChangeCartEndpoint::nonce())), 'create_order' => array('endpoint' => \WC_AJAX::get_endpoint(CreateOrderEndpoint::ENDPOINT), 'nonce' => wp_create_nonce(CreateOrderEndpoint::nonce())), 'approve_order' => array('endpoint' => \WC_AJAX::get_endpoint(ApproveOrderEndpoint::ENDPOINT), 'nonce' => wp_create_nonce(ApproveOrderEndpoint::nonce())), 'get_order' => array('endpoint' => \WC_AJAX::get_endpoint(GetOrderEndpoint::ENDPOINT), 'nonce' => wp_create_nonce(GetOrderEndpoint::nonce())), 'update_shipping' => array('endpoint' => \WC_AJAX::get_endpoint(UpdateShippingEndpoint::ENDPOINT), 'nonce' => wp_create_nonce(UpdateShippingEndpoint::nonce())), 'wc_store_api' => array('cart' => $store_api_base, 'select_shipping_rate' => $store_api_base . '/select-shipping-rate', 'update_customer' => $store_api_base . '/update-customer', 'nonce' => wp_create_nonce('wc_store_api'))),
+            'urls' => array('checkout' => wc_get_checkout_url()),
+            'labels' => array('generic_error' => __('Something went wrong. Please try again or choose another payment source.', 'woocommerce-paypal-payments')),
+            'shipping' => array('handle_in_paypal' => $shipping_enabled, 'need_shipping' => $this->need_shipping()),
+            'button_styles' => $button_styles,
+            'wrapper' => '#' . self::WRAPPER_ID,
+            'mini_cart_wrapper' => '#' . self::MINI_CART_WRAPPER_ID,
+        );
+        $continuation = $this->continuation_data();
+        if ($continuation) {
+            $data['continuation'] = $continuation;
+        }
+        return $data;
+    }
+    /**
+     * Whether the buyer is returning from an approved PayPal order and should
+     * see the order review instead of the express buttons.
+     */
+    public function is_continuation(): bool
+    {
+        return $this->context->is_paypal_continuation();
+    }
+    /**
+     * The continuation payload, or null when there is no approved order.
+     *
+     * The cancel link is load-bearing, not decoration: while an approved order
+     * sits in the session the express buttons are suppressed everywhere, so it
+     * is the buyer's only way out.
+     *
+     * @return array|null
+     */
+    private function continuation_data(): ?array
+    {
+        if (!$this->is_continuation()) {
+            return null;
+        }
+        $order = $this->session_handler->order();
+        if (!$order) {
+            return null;
+        }
+        $cancel_url = add_query_arg(array(CancelController::NONCE => wp_create_nonce(CancelController::NONCE)), wc_get_checkout_url());
+        return array(
+            'order_id' => $order->id(),
+            'order' => $order->to_array(),
+            // v5 reads this from a window global; carried in the payload here so
+            // the gateway is told which source approved the order.
+            'funding_source' => $this->session_handler->funding_source(),
+            'cancel' => array('html' => $this->cancel_view->render_session_cancellation($cancel_url, $this->session_handler->funding_source())),
+        );
     }
     /**
      * Whether the current cart needs shipping.
