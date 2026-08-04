@@ -120,12 +120,13 @@ class SdkV6Module implements ServiceModule, ExtendingModule, ExecutableModule {
 		// during React render (tearing down the whole checkout block), and the
 		// Fastlane (AXO) boot runs its field-restoration/cleanup against the
 		// checkout, which can clobber the express submission. Unregister them
-		// so they go dark cleanly; they migrate under their own stories
-		// (wallets PCP-5782, card fields PCP-5781). The registration action
-		// fires on init (priority 5), before is_checkout()/is_cart() resolve,
-		// so the page context is unknown here; capture the registry and defer
-		// the suppression to wp_enqueue_scripts, where the context is known and
-		// the block scripts are not yet enqueued.
+		// so they go dark cleanly; the wallets and card fields migrate under
+		// their own stories.
+		//
+		// The registration action fires on init (priority 5), before
+		// is_checkout()/is_cart() resolve, so the page context is unknown here;
+		// capture the registry and defer the suppression to wp_enqueue_scripts,
+		// where the context is known and the block scripts are not yet enqueued.
 		add_action(
 			'woocommerce_blocks_payment_method_type_registration',
 			function ( PaymentMethodRegistry $payment_method_registry ) use ( $c ): void {
