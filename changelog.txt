@@ -1,6 +1,6 @@
 *** Changelog ***
 
-= 4.1.2 - XXXX-XX-XX =
+= 4.1.2 - 2026-08-04 =
 * Enhancement - Advanced onboarding options for onboarding wizard #4496
 * Enhancement - Improved buyer-facing card decline reason display #4509
 * Enhancement - Add filter to allow Pay Later button and messaging when Vaulting is enabled #4508
