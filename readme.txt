@@ -183,7 +183,6 @@ If you encounter issues with the PayPal buttons not appearing after an update, p
 * Fix - Advanced Card Processing orders fail with "Order does not contain an id" error #4482
 * Fix - Mexico Enable Installments not visible on Overview tab in Features section #4461
 * Fix - Pay Later messaging tab merchant_identifier error showing until page reload when connecting manually #4459
-* Fix - Apple Pay continuation met when Pay Now and shipping are disabled #4493
 * Fix - Duplicated WooCommerce orders #4387
 * Fix - Google Pay / Apple Pay (Safari) button visible on PayPal gateway when Classic checkout removed from smart button location #4491
 * Fix - Manual renewal subscription from frontend block express checkout renders empty Apple Pay and Google Pay div #4497
