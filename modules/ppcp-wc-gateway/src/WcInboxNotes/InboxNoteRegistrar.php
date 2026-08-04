@@ -27,6 +27,12 @@ class InboxNoteRegistrar {
 	}
 
 	public function register(): void {
+		// Inbox notes are only rendered on admin screens, never in AJAX responses.
+		// Avoid a note-existence query for every note on each admin AJAX request.
+		if ( wp_doing_ajax() ) {
+			return;
+		}
+
 		foreach ( $this->inbox_notes as $inbox_note ) {
 			$inbox_note_name = $inbox_note->name();
 			$existing_note   = Notes::get_note_by_name( $inbox_note_name );
