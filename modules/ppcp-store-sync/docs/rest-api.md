@@ -76,7 +76,7 @@ Set correct values for those:
 
 | Variable              | Value                                                          |
 |-----------------------|----------------------------------------------------------------|
-| `base_url`            | `https://wp-test-site.ddev.site/wp-json/wc/v3/agentic`         |
+| `base_url`            | `https://wc-pp.ddev.site/wp-json/wc/v3/agentic`                |
 | `is_sandbox`          | `true`                                                         |
 | `item_variant_id`     | An existing WooCommerce product ID                             |
 | `jwt_merchant_id`     | ID of the onboarded merchant                                   |
