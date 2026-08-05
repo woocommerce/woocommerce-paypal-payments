@@ -70,8 +70,7 @@ class SdkV6Module implements ServiceModule, ExtendingModule, ExecutableModule {
 			}
 		);
 
-		// Store the created PayPal order in the WC session for v6 requests,
-		// so the shipping-update endpoint can validate order ownership in
+		// Lets the shipping-update endpoint validate order ownership in
 		// non-checkout contexts (v5 only stores it for checkout).
 		add_action(
 			'woocommerce_paypal_payments_create_order_endpoint_order_created',
@@ -89,11 +88,9 @@ class SdkV6Module implements ServiceModule, ExtendingModule, ExecutableModule {
 			2
 		);
 
-		// While an approved PayPal order sits in the session the buyer must not
-		// be able to pay by another means. Declaring the requirement narrows the
-		// offered methods to those advertising it — v6's continuation method
-		// alone. v5's equivalent callback reads its suppressed script_data and
-		// never reports continuation on v6 pages, so v6 needs its own.
+		// While an approved order sits in the session the buyer must not be able
+		// to pay by another means. v5's equivalent callback reads its suppressed
+		// script_data and never reports continuation on v6 pages.
 		if ( function_exists( 'woocommerce_store_api_register_payment_requirements' ) ) {
 			woocommerce_store_api_register_payment_requirements(
 				array(
@@ -109,24 +106,20 @@ class SdkV6Module implements ServiceModule, ExtendingModule, ExecutableModule {
 			);
 		}
 
-		// Register the v6 express buttons with the WC Blocks pipeline. v5's
-		// PayPalPaymentMethod stays registered (it provides the ppcp-gateway
-		// type and processing); on v6-owned block pages its script_data is
-		// empty so it registers no express buttons, and v6 supplies them.
+		// v5's PayPalPaymentMethod stays registered (it provides the
+		// ppcp-gateway type and processing); on v6-owned block pages its
+		// script_data is empty so it registers no express buttons.
 		//
 		// Extends the v5 handoff (see extensions.php) to the other v5 PayPal
-		// block methods. On v6-owned block pages they read v5's now-empty
-		// PayPal config and misbehave: the Google Pay / Apple Pay boots throw
-		// during React render (tearing down the whole checkout block), and the
-		// Fastlane (AXO) boot runs its field-restoration/cleanup against the
-		// checkout, which can clobber the express submission. Unregister them
-		// so they go dark cleanly; the wallets and card fields migrate under
-		// their own stories.
+		// block methods, which misbehave against v5's now-empty config: the
+		// Google Pay / Apple Pay boots throw during React render, tearing down
+		// the whole checkout block, and the Fastlane (AXO) field restoration
+		// can clobber the express submission. The wallets and card fields
+		// migrate under their own stories.
 		//
 		// The registration action fires on init (priority 5), before
 		// is_checkout()/is_cart() resolve, so the page context is unknown here;
-		// capture the registry and defer the suppression to wp_enqueue_scripts,
-		// where the context is known and the block scripts are not yet enqueued.
+		// capture the registry and defer the suppression to wp_enqueue_scripts.
 		add_action(
 			'woocommerce_blocks_payment_method_type_registration',
 			function ( PaymentMethodRegistry $payment_method_registry ) use ( $c ): void {
@@ -150,12 +143,12 @@ class SdkV6Module implements ServiceModule, ExtendingModule, ExecutableModule {
 							'ppcp-axo-gateway',
 						);
 
-						// In continuation mode v6 renders the order review under
-						// this name too, and registerPaymentMethod is a silent
-						// last-one-wins assignment — leaving both registered
-						// would make the review surface depend on script order.
-						// Outside continuation v5's place-order method is left
-						// alone: it never loads the JS SDK, so it still works.
+						// v6 renders the order review under this name too, and
+						// registerPaymentMethod is a silent last-one-wins
+						// assignment, so leaving both registered would make the
+						// review surface depend on script order. Outside
+						// continuation v5's place-order method is left alone: it
+						// never loads the JS SDK, so it still works.
 						if ( $manager->is_continuation() ) {
 							$v5_methods[] = 'ppcp-gateway';
 						}

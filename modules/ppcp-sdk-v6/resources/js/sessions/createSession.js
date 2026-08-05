@@ -21,9 +21,8 @@ const SESSION_FACTORIES = {
 /**
  * Refreshes the cart UI after an abandoned or failed session.
  *
- * Mirrors the v5 product handler: the button click added the product to
- * the real cart, so the mini-cart fragments must reflect that even when
- * the buyer does not complete the purchase.
+ * The button click added the product to the real cart, so the mini-cart
+ * fragments must reflect that even when the buyer does not complete.
  *
  * @param {string} context - The page context.
  */
@@ -36,12 +35,10 @@ function refreshCartUi( context ) {
 /**
  * Creates a one-time payment session for the given method.
  *
- * The default handlers implement the classic-page flow (approve then
- * continuation, cart-UI refresh on cancel/error, fetch-based shipping).
- * Surfaces with a different completion flow (e.g. WooCommerce Blocks)
- * supply overrides in `handlers`: each provided key replaces the matching
- * default, and provided shipping handlers attach regardless of the
- * classic shipping condition.
+ * The defaults implement the classic-page flow. Surfaces with a different
+ * completion flow (e.g. WooCommerce Blocks) supply overrides in `handlers`:
+ * each key replaces the matching default, and provided shipping handlers
+ * attach regardless of the classic shipping condition.
  *
  * @param {Object} sdkInstance - The PayPal SDK v6 instance.
  * @param {string} method      - The payment method (paypal, venmo, paylater).

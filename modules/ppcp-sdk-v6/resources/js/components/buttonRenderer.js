@@ -16,9 +16,8 @@ import { handleError } from '../utils/errorHandler';
  * Builds an OrderCreator for a funding source.
  */
 
-// Element names per the SDK core's custom-element registry (the shipped
-// core names the Pay Later element paypal-pay-later-button; it carries
-// its own localized label and takes no type attribute).
+// Element names per the SDK core's custom-element registry. The Pay Later
+// element carries its own localized label and takes no type attribute.
 const BUTTON_ELEMENTS = {
 	paypal: { tagName: 'paypal-button', type: 'pay' },
 	venmo: { tagName: 'venmo-button', type: 'pay' },
@@ -69,8 +68,8 @@ function createButton(
 
 	button.addEventListener( 'click', async () => {
 		try {
-			// Blocks express uses this to signal the start of the express
-			// flow (sets the active payment method); classic passes nothing.
+			// Blocks express uses this to set the active payment method;
+			// classic passes nothing.
 			if ( onClick ) {
 				onClick();
 			}

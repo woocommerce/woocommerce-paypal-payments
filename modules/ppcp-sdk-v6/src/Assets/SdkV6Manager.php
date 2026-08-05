@@ -151,15 +151,10 @@ class SdkV6Manager {
 	 * widget can appear anywhere). The bootstrap only loads the SDK once
 	 * a button wrapper exists in the DOM.
 	 *
-	 * Also used to scope the v5 suppression: v5 is disabled on every
-	 * page v6 owns (both SDKs claim window.paypal), including block
-	 * cart/checkout, where not-yet-migrated v5 surfaces (block card
-	 * fields, the regular block method) intentionally go dark until
-	 * their own migration stories land. v5 keeps running on the pages
-	 * v6 does not own (pay-now, add-payment-method). That scoping is
-	 * migration-phase only — see extensions.php; at release the
-	 * suppression becomes unconditional and only the merchant
-	 * location-settings gating in this method remains meaningful.
+	 * Also scopes the v5 suppression: v5 is disabled on every page v6 owns
+	 * (both SDKs claim window.paypal) and keeps running on the pages v6 does
+	 * not own (pay-now, add-payment-method). Migration-phase only — see
+	 * extensions.php.
 	 *
 	 * @return bool
 	 */
@@ -169,10 +164,9 @@ class SdkV6Manager {
 			return true;
 		}
 
-		// The mini-cart case only applies when the classic widget is in
-		// use; block-theme mini-carts are out of this module's scope, and
-		// loading (and suppressing v5) sitewide without a widget would
-		// break the v5-rendered block express buttons for nothing.
+		// Only when the classic widget is in use: loading (and suppressing v5)
+		// sitewide without a widget would break the v5-rendered block express
+		// buttons for nothing.
 		return $this->settings_status->is_smart_button_enabled_for_location( 'mini-cart' )
 			&& is_active_widget( false, false, 'woocommerce_widget_cart' );
 	}
@@ -198,15 +192,11 @@ class SdkV6Manager {
 
 		$page_context = $this->get_page_context();
 
-		// Must stay in lockstep with ShippingPreferenceFactory: it marks only
-		// 'checkout' and 'pay-now' as fixed-address contexts (SET_PROVIDED_ADDRESS,
-		// so the buyer cannot change the address in the popup and no callbacks are
-		// needed). Every other context, 'checkout-block' included, gets
-		// GET_FROM_FILE — PayPal offers the buyer's own addresses there, so the
-		// popup callbacks must stay attached to sync the choice back to the cart.
-		// 'checkout-block' is deliberately absent from this list: block express
-		// buttons sit above the checkout form, so the buyer has not necessarily
-		// entered an address, which is why the server treats them cart-like.
+		// Must stay in lockstep with ShippingPreferenceFactory, which marks only
+		// 'checkout' and 'pay-now' as fixed-address (SET_PROVIDED_ADDRESS, no
+		// callbacks needed). Every other context, 'checkout-block' included,
+		// gets GET_FROM_FILE, where PayPal offers the buyer's own addresses and
+		// the popup callbacks must stay attached to sync the choice back.
 		$shipping_enabled = $this->should_handle_shipping && 'checkout' !== $page_context;
 
 		$store_api_base = rtrim( rest_url( 'wc/store/v1/cart' ), '/' );
@@ -300,9 +290,9 @@ class SdkV6Manager {
 	/**
 	 * The continuation payload, or null when there is no approved order.
 	 *
-	 * The cancel link is load-bearing, not decoration: while an approved order
-	 * sits in the session the express buttons are suppressed everywhere, so it
-	 * is the buyer's only way out.
+	 * The cancel link is load-bearing: while an approved order sits in the
+	 * session the express buttons are suppressed everywhere, so it is the
+	 * buyer's only way out.
 	 *
 	 * @return array|null
 	 */

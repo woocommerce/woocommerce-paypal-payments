@@ -1,9 +1,8 @@
 /**
  * Bridges a v6 Web Component button into React.
  *
- * React only ever renders an empty container div; the Web Component is
- * created, configured and appended imperatively, and removed on cleanup.
- * React must never reconcile the custom element's subtree, so nothing is
+ * React renders an empty container and must never reconcile the custom
+ * element's subtree, so the button is appended imperatively and nothing is
  * rendered as a child of the container.
  *
  * @package
@@ -15,8 +14,7 @@ import { createMethodButton } from '../components/buttonRenderer';
 /**
  * Mounts one funding-method button into a container div.
  *
- * The button is recreated only when the payment session changes (a new
- * session appears only when eligibility changes), so ordinary React
+ * The button is recreated only when the session changes, so ordinary React
  * re-renders leave the mounted Web Component untouched.
  *
  * @param {Object}                            props                   - Component props.
@@ -37,11 +35,9 @@ export function V6ButtonContainer( {
 	onClick,
 } ) {
 	const containerRef = useRef( null );
-	// onClick identity changes every render (the Blocks registry passes a
-	// fresh callback); read it through a ref so it does not recreate the
-	// button, which must stay tied to the session identity only. Assigned in an
-	// effect rather than during render — mutating a ref while rendering is
-	// unsafe under concurrent React, and the button only reads this on click.
+	// The registry passes a fresh onClick every render; read it through a ref so
+	// the button stays tied to the session identity alone. Written in an effect:
+	// ref mutation during render is unsafe.
 	const onClickRef = useRef( null );
 	useEffect( () => {
 		onClickRef.current = onClick;
@@ -70,9 +66,7 @@ export function V6ButtonContainer( {
 		return () => {
 			button.remove();
 		};
-		// Recreate only when the method or its session changes. styles,
-		// createOrderFn and payLaterDetails are captured at mount; they
-		// only change alongside a new session (new eligibility), so
+		// styles, createOrderFn and payLaterDetails are captured at mount:
 		// depending on them would recreate the button on every render.
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [ method, session ] );

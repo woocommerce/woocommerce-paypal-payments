@@ -2,9 +2,8 @@
  * Converts a PayPal order (Orders v2 shape, as returned by ppc-get-order)
  * into WooCommerce billing/shipping address objects.
  *
- * Ported from the v5 blocks Helper/Address so the v6 module does not
- * source-depend on the ppcp-blocks module it replaces. Kept in sync with
- * the ppc-get-order response contract (the same shape v5 consumes).
+ * Ported from the v5 blocks Helper/Address so this module does not
+ * source-depend on the ppcp-blocks module it replaces.
  *
  * @package
  */
@@ -112,14 +111,14 @@ function paypalPayerToWc( payer ) {
 export function paypalOrderToWcAddresses( order ) {
 	const shippingAddress = paypalOrderToWcShippingAddress( order );
 	// A copy, not the same reference: callers dispatch these as separate
-	// billing/shipping payloads and must be able to treat them independently.
+	// billing/shipping payloads.
 	let billingAddress = { ...shippingAddress };
 
 	if ( order?.payer ) {
 		billingAddress = paypalPayerToWc( order.payer );
-		// No billing address (e.g. billing retrieval not allowed): keep the
-		// shipping address, overlaid with any non-empty payer fields so an
-		// empty payer country does not blank out the shipping country.
+		// No billing address (e.g. retrieval not allowed): keep the shipping
+		// one, overlaid with non-empty payer fields so an empty payer country
+		// does not blank out the shipping country.
 		if ( ! billingAddress.address_1 ) {
 			const payerFields = Object.fromEntries(
 				Object.entries( billingAddress ).filter(

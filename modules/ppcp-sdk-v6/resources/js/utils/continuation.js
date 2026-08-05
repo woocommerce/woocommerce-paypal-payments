@@ -7,9 +7,9 @@
 /**
  * The URL to send the buyer to after approval when a review step is required.
  *
- * The timestamp is a cache-buster, not decoration: the continuation payload is
- * assembled server-side on the next render, so a cached page would drop the
- * buyer back into the express flow.
+ * The timestamp is a cache-buster: the continuation payload is assembled
+ * server-side on the next render, so a cached page would drop the buyer back
+ * into the express flow.
  *
  * @param {Object} config - The wc_ppcp_sdk_v6 config object.
  * @return {string} The redirect URL.

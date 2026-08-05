@@ -9,9 +9,8 @@ import { paypalOrderToWcAddresses } from './address';
 /**
  * Merges incoming fields over existing ones, ignoring empty incoming values.
  *
- * paypalOrderToWcAddresses() returns a full field set padded with empty
- * strings, so a straight overwrite would blank a stored company or phone the
- * PayPal order simply does not carry.
+ * paypalOrderToWcAddresses() pads with empty strings, so a straight overwrite
+ * would blank a stored company or phone the PayPal order does not carry.
  *
  * @param {Object} existing - The current WC address.
  * @param {Object} incoming - The PayPal-derived address.

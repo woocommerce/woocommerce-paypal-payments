@@ -1,13 +1,8 @@
 /**
  * The post-approval order review surface (continuation mode).
  *
- * Rendered instead of the express buttons when the buyer has an approved
- * PayPal order in the WC session. Unlike the express component this is a
- * *regular* block payment method: WooCommerce renders its own Place Order
- * button, and this component only has to prefill the checkout from the PayPal
- * order, offer the cancel link, and hand the order id to the gateway.
- *
- * Mirrors v5's PayPalComponent continuation branch.
+ * A *regular* block payment method, so WooCommerce renders its own Place Order
+ * button. Mirrors v5's PayPalComponent continuation branch.
  *
  * @package
  */
@@ -33,8 +28,8 @@ export function V6ContinuationComponent( {
 	const { responseTypes } = emitResponse;
 	const continuation = config.continuation;
 
-	// The prefill must run once. A re-render (or a cart update) must not
-	// overwrite edits the buyer has since made to the checkout form.
+	// Once only: a re-render or cart update must not overwrite edits the buyer
+	// has since made to the form.
 	const prefilled = useRef( false );
 
 	useEffect( () => {
@@ -56,7 +51,6 @@ export function V6ContinuationComponent( {
 		} );
 	}, [ continuation, shippingData ] );
 
-	// Hand the already-approved order to the gateway on Place Order.
 	useEffect(
 		() =>
 			onPaymentSetup( () => ( {
@@ -71,10 +65,9 @@ export function V6ContinuationComponent( {
 		[ onPaymentSetup, continuation, responseTypes ]
 	);
 
-	// The cancel link is the only way out of continuation mode while the
-	// approved order lives in the session — express buttons stay suppressed
-	// until it is cleared. Server-rendered so the wording and the nonce stay
-	// owned by CancelView/CancelController.
+	// The only way out of continuation mode: express buttons stay suppressed
+	// until the session order is cleared. Server-rendered so the wording and
+	// nonce stay owned by CancelView/CancelController.
 	return createElement( 'div', {
 		dangerouslySetInnerHTML: { __html: continuation?.cancel?.html || '' },
 	} );

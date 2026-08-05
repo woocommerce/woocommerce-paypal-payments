@@ -1,11 +1,9 @@
 /**
  * Popup shipping handlers for the WooCommerce Blocks express flow.
  *
- * Unlike the classic handlers (which post to the WC Store API directly),
- * these route through the Blocks data store so the React checkout UI stays
- * in sync. Each then patches the PayPal order with recalculated totals.
- * Failures throw so the rejected promise reaches the SDK and the popup
- * surfaces the problem to the buyer.
+ * Unlike the classic handlers (which post to the Store API directly), these
+ * route through the Blocks data store so the React checkout UI stays in sync.
+ * Failures throw so the rejection reaches the SDK and the popup surfaces it.
  *
  * @package
  */
