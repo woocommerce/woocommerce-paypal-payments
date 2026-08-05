@@ -26,16 +26,7 @@ export function V6EditorPreview( { fundingSource } ) {
 
 	return createElement(
 		'div',
-		{
-			className: 'ppcp-sdk-v6-editor-preview',
-			style: {
-				padding: '12px',
-				textAlign: 'center',
-				border: '1px dashed #c3c4c7',
-				borderRadius: '4px',
-				color: '#50575e',
-			},
-		},
+		{ className: 'ppcp-sdk-v6-editor-preview' },
 		sprintf(
 			// translators: %s is the funding source name (PayPal, Venmo, Pay Later).
 			__( '%s button', 'woocommerce-paypal-payments' ),
