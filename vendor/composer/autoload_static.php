@@ -686,6 +686,7 @@ class ComposerStaticInit844a779aae516bed9e0beccea9d01fda
         'WooCommerce\\PayPalCommerce\\StoreSync\\Ingestion\\SyncJob' => __DIR__ . '/../..' . '/modules/ppcp-store-sync/src/Ingestion/SyncJob.php',
         'WooCommerce\\PayPalCommerce\\StoreSync\\Merchant\\MerchantMetadata' => __DIR__ . '/../..' . '/modules/ppcp-store-sync/src/Merchant/MerchantMetadata.php',
         'WooCommerce\\PayPalCommerce\\StoreSync\\Merchant\\MerchantMetadataProvider' => __DIR__ . '/../..' . '/modules/ppcp-store-sync/src/Merchant/MerchantMetadataProvider.php',
+        'WooCommerce\\PayPalCommerce\\StoreSync\\Registration\\ReconciliationService' => __DIR__ . '/../..' . '/modules/ppcp-store-sync/src/Registration/ReconciliationService.php',
         'WooCommerce\\PayPalCommerce\\StoreSync\\Registration\\RegistrationEligibility' => __DIR__ . '/../..' . '/modules/ppcp-store-sync/src/Registration/RegistrationEligibility.php',
         'WooCommerce\\PayPalCommerce\\StoreSync\\Registration\\RegistrationResult' => __DIR__ . '/../..' . '/modules/ppcp-store-sync/src/Registration/RegistrationResult.php',
         'WooCommerce\\PayPalCommerce\\StoreSync\\Registration\\RegistrationService' => __DIR__ . '/../..' . '/modules/ppcp-store-sync/src/Registration/RegistrationService.php',

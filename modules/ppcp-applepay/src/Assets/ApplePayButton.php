@@ -308,6 +308,7 @@ class ApplePayButton implements ButtonInterface
         $base_location = wc_get_base_location();
         $shop_country_code = $base_location['country'];
         WC()->customer->set_shipping_country($address['country'] ?? $shop_country_code);
+        WC()->customer->set_shipping_state($address['state'] ?? '');
         WC()->customer->set_billing_country($address['country'] ?? $shop_country_code);
         WC()->customer->set_shipping_postcode($address['postcode'] ?? '');
         WC()->customer->set_shipping_city($address['city'] ?? '');
@@ -360,7 +361,7 @@ class ApplePayButton implements ButtonInterface
         $packages[0]['contents_cost'] = $total;
         $packages[0]['applied_coupons'] = WC()->session->applied_coupon;
         $packages[0]['destination']['country'] = $customer_address['country'] ?? '';
-        $packages[0]['destination']['state'] = '';
+        $packages[0]['destination']['state'] = $customer_address['state'] ?? '';
         $packages[0]['destination']['postcode'] = $customer_address['postcode'] ?? '';
         $packages[0]['destination']['city'] = $customer_address['city'] ?? '';
         $packages[0]['destination']['address'] = '';

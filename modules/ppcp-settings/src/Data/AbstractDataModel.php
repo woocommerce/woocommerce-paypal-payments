@@ -24,6 +24,11 @@ abstract class AbstractDataModel
      */
     protected array $data = array();
     /**
+     * Whether the "saved" action is currently being dispatched, used to
+     * prevent infinite-loops when an action handler calls save() again.
+     */
+    private bool $firing_saved_action = \false;
+    /**
      * Option key for WordPress storage.
      * Must be overridden by the child class!
      */
@@ -63,6 +68,27 @@ abstract class AbstractDataModel
     public function save(): void
     {
         update_option($this->get_option_key(), $this->data);
+        $this->fire_saved_action();
+    }
+    /**
+     * Notifies listeners that this model was saved.
+     */
+    protected function fire_saved_action(): void
+    {
+        if ($this->firing_saved_action) {
+            return;
+        }
+        $this->firing_saved_action = \true;
+        try {
+            /**
+             * Fires after a settings model has been saved to the database.
+             *
+             * @param AbstractDataModel $model The settings model that was saved.
+             */
+            do_action('woocommerce_paypal_payments_settings_saved', $this);
+        } finally {
+            $this->firing_saved_action = \false;
+        }
     }
     /**
      * Deletes the settings entry from the WordPress database.

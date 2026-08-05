@@ -317,7 +317,7 @@ class ApplePayDataObjectHttp
         if (!$this->address_has_required_fields_values($contact_info, $required, \WooCommerce\PayPalCommerce\Applepay\Assets\PropertiesDictionary::SHIPPING_CONTACT_INVALID)) {
             return array();
         }
-        return array('city' => $contact_info['locality'], 'postcode' => $contact_info['postalCode'], 'country' => strtoupper($contact_info['countryCode']));
+        return array('city' => $contact_info['locality'], 'state' => $contact_info['administrativeArea'] ?? '', 'postcode' => $contact_info['postalCode'], 'country' => strtoupper($contact_info['countryCode']));
     }
     /**
      * Checks if the address array contains all required fields and if those
