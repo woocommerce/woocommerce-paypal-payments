@@ -4,13 +4,13 @@ Context for contributors and for debugging.
 
 ## Onboarding handshake
 
-The store introduces itself to PayPal once. `RegistrationEligibility` decides whether it may, `RegistrationService` performs the call, and the resulting token is stored in option `ppcp_agentic_registration_token`.
+The store introduces itself to PayPal once. [`RegistrationEligibility`](https://github.com/woocommerce/woocommerce-paypal-payments/blob/dev/develop/modules/ppcp-store-sync/src/Registration/RegistrationEligibility.php) decides whether it may, [`RegistrationService`](https://github.com/woocommerce/woocommerce-paypal-payments/blob/dev/develop/modules/ppcp-store-sync/src/Registration/RegistrationService.php) performs the call, and the resulting token is stored in option `ppcp_agentic_registration_token`.
 
-The token is a JWT the store builds itself, signed with a dummy key, because PayPal does not verify the signature on this call. It identifies the store rather than authenticating it. Store identity in the payload comes from `MerchantMetadataProvider`.
+The token is a JWT the store builds itself, signed with a dummy key, because PayPal does not verify the signature on this call. It identifies the store rather than authenticating it. Store identity in the payload comes from [`MerchantMetadataProvider`](https://github.com/woocommerce/woocommerce-paypal-payments/blob/dev/develop/modules/ppcp-store-sync/src/Merchant/MerchantMetadataProvider.php).
 
 ## Outbound endpoints
 
-Sandbox merchants use `d-staging.joinhoney.com`, everyone else uses `d.joinhoney.com`. `AgenticWebhookConfiguration` picks the host.
+Sandbox merchants use `d-staging.joinhoney.com`, everyone else uses `d.joinhoney.com`. [`AgenticWebhookConfiguration`](https://github.com/woocommerce/woocommerce-paypal-payments/blob/dev/develop/modules/ppcp-store-sync/src/Config/AgenticWebhookConfiguration.php) picks the host.
 
 | Purpose            | Path                     |
 |--------------------|--------------------------|
@@ -18,7 +18,7 @@ Sandbox merchants use `d-staging.joinhoney.com`, everyone else uses `d.joinhoney
 | Deregister         | `/webhooks/ws/uninstall` |
 | Product feed       | `/webhooks/products`     |
 
-One further outbound call is unrelated to these: PayPal's public verification keys are fetched from `www.paypal.ai`, by `PayPalJwkProvider`.
+One further outbound call is unrelated to these: PayPal's public verification keys are fetched from `www.paypal.ai`, by [`PayPalJwkProvider`](https://github.com/woocommerce/woocommerce-paypal-payments/blob/dev/develop/modules/ppcp-store-sync/src/Auth/PayPalJwkProvider.php).
 
 ## Deregistration
 
@@ -36,7 +36,7 @@ Every product carries the timestamp of the last time the module dealt with it, i
 | Older than the threshold | Processed long ago. Re-evaluate and re-sync  |
 | Newer than the threshold | Handled recently. Skip                       |
 
-`IngestionBatchProvider` fills a batch by taking never-processed products before stale ones, and runs each candidate through `ProductFilter` before accepting it.
+[`IngestionBatchProvider`](https://github.com/woocommerce/woocommerce-paypal-payments/blob/dev/develop/modules/ppcp-store-sync/src/Ingestion/IngestionBatchProvider.php) fills a batch by taking never-processed products before stale ones, and runs each candidate through [`ProductFilter`](https://github.com/woocommerce/woocommerce-paypal-payments/blob/dev/develop/modules/ppcp-store-sync/src/Ingestion/ProductFilter.php) before accepting it.
 
 Consequences that surprise people. A product that was excluded is marked exactly like a product that was synced, because the marker records "we dealt with this", not "this is in the catalog". And marking a product dirty means *deleting* the meta, not writing to it.
 
@@ -44,17 +44,17 @@ The threshold is computed live from the catalog lifespan, never stored, so chang
 
 ## How a cart request is served
 
-Every endpoint follows the same path, defined in `AgenticRestEndpoint`:
+Every endpoint follows the same path, defined in [`AgenticRestEndpoint`](https://github.com/woocommerce/woocommerce-paypal-payments/blob/dev/develop/modules/ppcp-store-sync/src/Endpoint/AgenticRestEndpoint.php):
 
 1. Authenticate the JWT, and reject before any cart work happens.
-2. Parse the body into `PayPalCart`, the input contract. Malformed content, such as a missing item ID, becomes a validation issue rather than an exception.
-3. Build `StorePayPalCart`, which resolves real products and store-authoritative prices alongside what the agent claimed.
-4. Run `CartValidationProcessor`, collecting issues onto the cart.
-5. Assemble a `CartResponse` through `ResponseFactory`.
+2. Parse the body into [`PayPalCart`](https://github.com/woocommerce/woocommerce-paypal-payments/blob/dev/develop/modules/ppcp-store-sync/src/Schema/PayPalCart.php), the input contract. Malformed content, such as a missing item ID, becomes a validation issue rather than an exception.
+3. Build [`StorePayPalCart`](https://github.com/woocommerce/woocommerce-paypal-payments/blob/dev/develop/modules/ppcp-store-sync/src/StoreData/StorePayPalCart.php), which resolves real products and store-authoritative prices alongside what the agent claimed.
+4. Run [`CartValidationProcessor`](https://github.com/woocommerce/woocommerce-paypal-payments/blob/dev/develop/modules/ppcp-store-sync/src/CartValidation/CartValidationProcessor.php), collecting issues onto the cart.
+5. Assemble a [`CartResponse`](https://github.com/woocommerce/woocommerce-paypal-payments/blob/dev/develop/modules/ppcp-store-sync/src/Response/CartResponse.php) through [`ResponseFactory`](https://github.com/woocommerce/woocommerce-paypal-payments/blob/dev/develop/modules/ppcp-store-sync/src/Response/ResponseFactory.php).
 
 ## Session isolation
 
-Agent requests must not touch a shopper's cart, so `AgenticSessionManager` swaps the WooCommerce session for a throwaway one and blocks `WC_Cart_Session` from initializing, restoring both afterward.
+Agent requests must not touch a shopper's cart, so [`AgenticSessionManager`](https://github.com/woocommerce/woocommerce-paypal-payments/blob/dev/develop/modules/ppcp-store-sync/src/Helper/AgenticSessionManager.php) swaps the WooCommerce session for a throwaway one and blocks `WC_Cart_Session` from initializing, restoring both afterward.
 
 This is why code that assumes a logged-in customer or a persisted cart behaves differently inside these endpoints than on the storefront.
 
@@ -95,4 +95,4 @@ add_action(
 );
 ```
 
-Source: https://github.com/woocommerce/woocommerce-paypal-payments/blob/dev/develop/modules/ppcp-store-sync/src/Registration/RegistrationService.php
+Source: [`src/Registration/RegistrationService.php`](https://github.com/woocommerce/woocommerce-paypal-payments/blob/dev/develop/modules/ppcp-store-sync/src/Registration/RegistrationService.php)

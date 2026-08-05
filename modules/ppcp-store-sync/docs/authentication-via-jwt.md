@@ -72,7 +72,7 @@ Additional checks performed by our code:
 
 ## Implementation classes
 
-### JwtAuthService
+### [JwtAuthService](https://github.com/woocommerce/woocommerce-paypal-payments/blob/dev/develop/modules/ppcp-store-sync/src/Auth/JwtAuthService.php)
 
 Handles token parsing and validation:
 
@@ -84,7 +84,7 @@ $token = $auth_service->get_token( $bearer_token );
 $result = $auth_service->verify_claims( $token, ['cart'] );
 ```
 
-### AgenticRestEndpoint
+### [AgenticRestEndpoint](https://github.com/woocommerce/woocommerce-paypal-payments/blob/dev/develop/modules/ppcp-store-sync/src/Endpoint/AgenticRestEndpoint.php)
 
 Base class for all agentic endpoints. Orchestrates authentication in `check_permission()`:
 
@@ -126,7 +126,7 @@ class CheckoutEndpoint extends AgenticRestEndpoint {
 
 ## Local development
 
-The relaxed authentication service `SandboxAuthService` is a drop-in replacement to unlock REST endpoints on a local or dev environment without providing a cryptographically valid JWT token.
+The relaxed authentication service [`SandboxAuthService`](https://github.com/woocommerce/woocommerce-paypal-payments/blob/dev/develop/modules/ppcp-store-sync/src/Auth/SandboxAuthService.php) is a drop-in replacement to unlock REST endpoints on a local or dev environment without providing a cryptographically valid JWT token.
 
 This drop-in is automatically enabled when connected using a PayPal sandbox merchant.
 

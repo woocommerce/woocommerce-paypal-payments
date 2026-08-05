@@ -23,7 +23,7 @@ Every request needs a JWT in the `Authorization` header. The cart endpoints requ
 
 ## Response shape
 
-`CartResponse::to_array()` assembles the body. Keys that resolve to `null` are dropped, so a response only carries what applies.
+[`CartResponse::to_array()`](https://github.com/woocommerce/woocommerce-paypal-payments/blob/dev/develop/modules/ppcp-store-sync/src/Response/CartResponse.php) assembles the body. Keys that resolve to `null` are dropped, so a response only carries what applies.
 
 | Key                          | Contents                                                             |
 |------------------------------|----------------------------------------------------------------------|
@@ -49,7 +49,7 @@ Both fields are whitelisted on the way out. An unrecognized value silently becom
 
 ## When a cart can be paid
 
-`StorePayPalCart::is_ready_for_payment()` requires all of these: the cart has items, no validation issues were detected, and a payment token is present. Checkout will not proceed while any of them is missing.
+[`StorePayPalCart::is_ready_for_payment()`](https://github.com/woocommerce/woocommerce-paypal-payments/blob/dev/develop/modules/ppcp-store-sync/src/StoreData/StorePayPalCart.php) requires all of these: the cart has items, no validation issues were detected, and a payment token is present. Checkout will not proceed while any of them is missing.
 
 ## Errors
 
@@ -62,7 +62,7 @@ Errors replace the cart body with an envelope of `name` and `message`, plus `deb
 | `UNPROCESSABLE_ENTITY`  | 422    |
 | `INTERNAL_SERVER_ERROR` | 500    |
 
-`HttpErrorName` lists further names used for payment and order failures. Authentication failures are produced before an endpoint runs and are covered in [JWT authentication](authentication-via-jwt.md).
+[`HttpErrorName`](https://github.com/woocommerce/woocommerce-paypal-payments/blob/dev/develop/modules/ppcp-store-sync/src/Enums/HttpErrorName.php) lists further names used for payment and order failures. Authentication failures are produced before an endpoint runs and are covered in [JWT authentication](authentication-via-jwt.md).
 
 ## Trying it out
 
@@ -116,7 +116,7 @@ add_action(
 );
 ```
 
-Source: https://github.com/woocommerce/woocommerce-paypal-payments/blob/dev/develop/modules/ppcp-store-sync/src/Endpoint/
+Source: [`src/Endpoint`](https://github.com/woocommerce/woocommerce-paypal-payments/tree/dev/develop/modules/ppcp-store-sync/src/Endpoint/)
 
 ### Error indicators
 
@@ -137,4 +137,4 @@ add_action(
 );
 ```
 
-Source: https://github.com/woocommerce/woocommerce-paypal-payments/blob/dev/develop/modules/ppcp-store-sync/src/Endpoint/
+Source: [`src/Endpoint`](https://github.com/woocommerce/woocommerce-paypal-payments/tree/dev/develop/modules/ppcp-store-sync/src/Endpoint/)

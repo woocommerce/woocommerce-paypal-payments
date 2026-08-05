@@ -15,7 +15,7 @@ The store pushes batches of products to PayPal on a schedule, so agents know wha
 
 ## Which products appear
 
-`ProductFilter` owns the baseline rules and they are not filterable. It drops unpublished products, for example, and only supports a subset of WooCommerce product types.
+[`ProductFilter`](https://github.com/woocommerce/woocommerce-paypal-payments/blob/dev/develop/modules/ppcp-store-sync/src/Ingestion/ProductFilter.php) owns the baseline rules and they are not filterable. It drops unpublished products, for example, and only supports a subset of WooCommerce product types.
 
 Everything that passes goes through an exclusion filter, which is yours:
 
@@ -32,7 +32,7 @@ add_filter(
 
 The filter reduces only. Returning `false` cannot bring back a product that failed the rules above.
 
-Exclusion is not cosmetic. The same filter runs during cart validation (`ProductValidator`), so an excluded product cannot be bought through the agent API either, not merely hidden from the feed.
+Exclusion is not cosmetic. The same filter runs during cart validation ([`ProductValidator`](https://github.com/woocommerce/woocommerce-paypal-payments/blob/dev/develop/modules/ppcp-store-sync/src/CartValidation/ProductValidator.php)), so an excluded product cannot be bought through the agent API either, not merely hidden from the feed.
 
 ## Changing product fields
 
@@ -47,11 +47,11 @@ Each field sent to PayPal passes through a filter, and they all take `( string $
 | `woocommerce_paypal_payments_store_sync_item_availability` | `in stock`, `out of stock`, or `backorder` |
 | `woocommerce_paypal_payments_store_sync_item_product_type` | Category list, as plain text               |
 
-Returning an empty string does not send a blank field. Most of these are required, and a product missing a required field is dropped from the batch and marked as processed, so it silently disappears from the catalog instead of syncing with a gap. See `SyncJob::has_complete_sync_data()` for the required set.
+Returning an empty string does not send a blank field. Most of these are required, and a product missing a required field is dropped from the batch and marked as processed, so it silently disappears from the catalog instead of syncing with a gap. See [`SyncJob::has_complete_sync_data()`](https://github.com/woocommerce/woocommerce-paypal-payments/blob/dev/develop/modules/ppcp-store-sync/src/Ingestion/SyncJob.php) for the required set.
 
 ## Variants
 
-A variable product is never sent itself. Its purchasable variations are sent as individual items, grouped under the parent through `item_group_id`. Only the `color`, `size`, and `gender` attributes are recognized. See `ProductsPayload` for the assembly and `ProductDTO` for the wire format.
+A variable product is never sent itself. Its purchasable variations are sent as individual items, grouped under the parent through `item_group_id`. Only the `color`, `size`, and `gender` attributes are recognized. See [`ProductsPayload`](https://github.com/woocommerce/woocommerce-paypal-payments/blob/dev/develop/modules/ppcp-store-sync/src/Ingestion/ProductsPayload.php) for the assembly and [`ProductDTO`](https://github.com/woocommerce/woocommerce-paypal-payments/blob/dev/develop/modules/ppcp-store-sync/src/Ingestion/ProductDTO.php) for the wire format.
 
 ## Forcing a re-sync
 
@@ -80,7 +80,7 @@ add_filter(
 );
 ```
 
-Source: https://github.com/woocommerce/woocommerce-paypal-payments/blob/dev/develop/modules/ppcp-store-sync/src/Ingestion/ProductFilter.php
+Source: [`src/Ingestion/ProductFilter.php`](https://github.com/woocommerce/woocommerce-paypal-payments/blob/dev/develop/modules/ppcp-store-sync/src/Ingestion/ProductFilter.php)
 
 ### Configuration filters
 
@@ -116,7 +116,7 @@ add_filter(
 );
 ```
 
-Source: https://github.com/woocommerce/woocommerce-paypal-payments/blob/dev/develop/modules/ppcp-store-sync/src/Config/IngestionConfiguration.php
+Source: [`src/Config/IngestionConfiguration.php`](https://github.com/woocommerce/woocommerce-paypal-payments/blob/dev/develop/modules/ppcp-store-sync/src/Config/IngestionConfiguration.php)
 
 ### Product field filters
 
@@ -144,7 +144,7 @@ add_filter(
 );
 ```
 
-Source: https://github.com/woocommerce/woocommerce-paypal-payments/blob/dev/develop/modules/ppcp-store-sync/src/Helper/ProductManager.php
+Source: [`src/Helper/ProductManager.php`](https://github.com/woocommerce/woocommerce-paypal-payments/blob/dev/develop/modules/ppcp-store-sync/src/Helper/ProductManager.php)
 
 ### Actions
 
@@ -161,7 +161,7 @@ add_action(
 );
 ```
 
-Source: https://github.com/woocommerce/woocommerce-paypal-payments/blob/dev/develop/modules/ppcp-store-sync/src/Ingestion/SyncJob.php
+Source: [`src/Ingestion/SyncJob.php`](https://github.com/woocommerce/woocommerce-paypal-payments/blob/dev/develop/modules/ppcp-store-sync/src/Ingestion/SyncJob.php)
 
 ```php
 /**
@@ -173,6 +173,4 @@ add_action(
 );
 ```
 
-Source: https://github.com/woocommerce/woocommerce-paypal-payments/blob/dev/develop/modules/ppcp-store-sync/src/Ingestion/ProductFilter.php
-
-`woocommerce_paypal_payments_store_sync_invalidate_eligibility` is the one action you fire yourself, see [Forcing a re-sync](#forcing-a-re-sync).
+Source: [`src/Ingestion/ProductFilter.php`](https://github.com/woocommerce/woocommerce-paypal-payments/blob/dev/develop/modules/ppcp-store-sync/src/Ingestion/ProductFilter.php)

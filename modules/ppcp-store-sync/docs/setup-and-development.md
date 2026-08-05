@@ -4,9 +4,9 @@ Store sync only runs for a merchant it supports, and only while the merchant lea
 
 ## When store sync runs
 
-**The merchant must be eligible.** `RegistrationEligibility` requires a connected PayPal account and checks the store and merchant countries against the markets PayPal supports for agentic commerce. That list is narrow while the feature rolls out, so read the class for what currently qualifies. Eligibility is evaluated on `init` and cached in the settings, because the answer is needed earlier in the request than the PayPal connection data becomes available.
+**The merchant must be eligible.** [`RegistrationEligibility`](https://github.com/woocommerce/woocommerce-paypal-payments/blob/dev/develop/modules/ppcp-store-sync/src/Registration/RegistrationEligibility.php) requires a connected PayPal account and checks the store and merchant countries against the markets PayPal supports for agentic commerce. That list is narrow while the feature rolls out, so read the class for what currently qualifies. Eligibility is evaluated on `init` and cached in the settings, because the answer is needed earlier in the request than the PayPal connection data becomes available.
 
-**The feature must be active.** The merchant toggle lives in option `woocommerce-ppcp-ext-agentic`, with keys `active` (on by default) and `eligible` (the cached eligibility result). `AgenticSettingsDataModel::should_initialize_features()` combines them, and the module stops early when it returns `false`.
+**The feature must be active.** The merchant toggle lives in option `woocommerce-ppcp-ext-agentic`, with keys `active` (on by default) and `eligible` (the cached eligibility result). [`AgenticSettingsDataModel::should_initialize_features()`](https://github.com/woocommerce/woocommerce-paypal-payments/blob/dev/develop/modules/ppcp-store-sync/src/Setting/AgenticSettingsDataModel.php) combines them, and the module stops early when it returns `false`.
 
 ## Loading the module before general availability
 

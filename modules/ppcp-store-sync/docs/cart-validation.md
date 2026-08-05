@@ -17,13 +17,13 @@ interface ValidatorInterface {
 }
 ```
 
-Return `null` or an empty array when everything is fine. `InventoryValidator` is the reference implementation: it shows the issue-building chain, a context object, and resolution options.
+Return `null` or an empty array when everything is fine. [`InventoryValidator`](https://github.com/woocommerce/woocommerce-paypal-payments/blob/dev/develop/modules/ppcp-store-sync/src/CartValidation/InventoryValidator.php) is the reference implementation: it shows the issue-building chain, a context object, and resolution options.
 
 Validators see the issues that earlier validators already reported, so you can skip work that is already covered. `InventoryValidator` opens with `has_issue_with_code( ErrorCode::INVENTORY_ISSUE )` and bails out for exactly that reason.
 
 ## What the cart object gives you
 
-`PayPalCart` is what the agent claimed. `StorePayPalCart` is what the store knows. Validation is mostly the business of comparing the two, so `StoreCartItem` exposes both sides: `real_price()` against `assumed_price_as_money()`, plus ready-made comparisons like `is_price_correct()` and `is_currency_correct()`.
+[`PayPalCart`](https://github.com/woocommerce/woocommerce-paypal-payments/blob/dev/develop/modules/ppcp-store-sync/src/Schema/PayPalCart.php) is what the agent claimed. [`StorePayPalCart`](https://github.com/woocommerce/woocommerce-paypal-payments/blob/dev/develop/modules/ppcp-store-sync/src/StoreData/StorePayPalCart.php) is what the store knows. Validation is mostly the business of comparing the two, so [`StoreCartItem`](https://github.com/woocommerce/woocommerce-paypal-payments/blob/dev/develop/modules/ppcp-store-sync/src/StoreData/StoreCartItem.php) exposes both sides: `real_price()` against `assumed_price_as_money()`, plus ready-made comparisons like `is_price_correct()` and `is_currency_correct()`.
 
 | Method          | Returns                                                                         |
 |-----------------|---------------------------------------------------------------------------------|
@@ -46,7 +46,7 @@ add_action(
 );
 ```
 
-The action fires once per request, just before the first validation. Built-in validators register on the same hook and usually run first, in the order listed in `StoreSyncModule::CART_VALIDATION_SERVICES`.
+The action fires once per request, just before the first validation. Built-in validators register on the same hook and usually run first, in the order listed in [`StoreSyncModule::CART_VALIDATION_SERVICES`](https://github.com/woocommerce/woocommerce-paypal-payments/blob/dev/develop/modules/ppcp-store-sync/src/StoreSyncModule.php).
 
 1. Validators are stored **keyed by class name**. Registering a second instance of the same class replaces the first rather than adding it.
 2. Exceptions are **caught and logged**, then that validator is skipped. A validator that throws will not break the endpoint, but it also will not tell you it failed unless you read the log.
@@ -63,9 +63,9 @@ return ValidationIssue::create_item_out_of_stock( 'Product is no longer availabl
 	->add_resolution( ResolutionOption::create_remove_item()->label( 'Remove from cart' )->priority( Priority::HIGH ) );
 ```
 
-`ValidationIssue` holds the available factories, each documented with when to use it. `ResolutionOption` holds one factory per action in `ResolutionAction`. Context classes live in `src/Validation/Context/`, one per error category.
+[`ValidationIssue`](https://github.com/woocommerce/woocommerce-paypal-payments/blob/dev/develop/modules/ppcp-store-sync/src/Validation/ValidationIssue.php) holds the available factories, each documented with when to use it. [`ResolutionOption`](https://github.com/woocommerce/woocommerce-paypal-payments/blob/dev/develop/modules/ppcp-store-sync/src/Validation/Resolution/ResolutionOption.php) holds one factory per action in [`ResolutionAction`](https://github.com/woocommerce/woocommerce-paypal-payments/blob/dev/develop/modules/ppcp-store-sync/src/Enums/ResolutionAction.php). Context classes live in [`src/Validation/Context/`](https://github.com/woocommerce/woocommerce-paypal-payments/tree/dev/develop/modules/ppcp-store-sync/src/Validation/Context), one per error category.
 
-Inside a validator you may also use the `add_*()` shortcuts on `StoreValidation` instead of returning the issue.
+Inside a validator you may also use the `add_*()` shortcuts on [`StoreValidation`](https://github.com/woocommerce/woocommerce-paypal-payments/blob/dev/develop/modules/ppcp-store-sync/src/Validation/StoreValidation.php) instead of returning the issue.
 
 ## Schema limits
 
@@ -86,7 +86,7 @@ Contributors adding one work outward from the enum: add the `specific_issue` con
 
 ## Coupons
 
-`CouponValidator` delegates to WooCommerce and translates the outcome. One detail is worth knowing before touching it: WooCommerce coupon error messages are translated, so the validator captures the numeric error code through `woocommerce_coupon_error` and maps that instead of matching message text. Pattern matching would silently stop working on any non-English store.
+[`CouponValidator`](https://github.com/woocommerce/woocommerce-paypal-payments/blob/dev/develop/modules/ppcp-store-sync/src/CartValidation/CouponValidator/CouponValidator.php) delegates to WooCommerce and translates the outcome. One detail is worth knowing before touching it: WooCommerce coupon error messages are translated, so the validator captures the numeric error code through `woocommerce_coupon_error` and maps that instead of matching message text. Pattern matching would silently stop working on any non-English store.
 
 Suggested alternative coupons are off by default, because the module cannot know which coupons a store is willing to reveal.
 
@@ -107,7 +107,7 @@ add_filter(
 );
 ```
 
-Source: https://github.com/woocommerce/woocommerce-paypal-payments/blob/dev/develop/modules/ppcp-store-sync/src/CartValidation/ShippingValidator.php
+Source: [`src/CartValidation/ShippingValidator.php`](https://github.com/woocommerce/woocommerce-paypal-payments/blob/dev/develop/modules/ppcp-store-sync/src/CartValidation/ShippingValidator.php)
 
 ```php
 /**
@@ -133,7 +133,7 @@ add_filter(
 );
 ```
 
-Source: https://github.com/woocommerce/woocommerce-paypal-payments/blob/dev/develop/modules/ppcp-store-sync/src/CartValidation/CouponValidator/CouponValidator.php
+Source: [`src/CartValidation/CouponValidator/CouponValidator.php`](https://github.com/woocommerce/woocommerce-paypal-payments/blob/dev/develop/modules/ppcp-store-sync/src/CartValidation/CouponValidator/CouponValidator.php)
 
 ```php
 /**
@@ -148,7 +148,7 @@ add_filter(
 );
 ```
 
-Source: https://github.com/woocommerce/woocommerce-paypal-payments/blob/dev/develop/modules/ppcp-store-sync/src/CartValidation/CouponValidator/CouponContextBuilder.php
+Source: [`src/CartValidation/CouponValidator/CouponContextBuilder.php`](https://github.com/woocommerce/woocommerce-paypal-payments/blob/dev/develop/modules/ppcp-store-sync/src/CartValidation/CouponValidator/CouponContextBuilder.php)
 
 ### Actions
 
@@ -162,4 +162,4 @@ add_action(
 );
 ```
 
-Source: https://github.com/woocommerce/woocommerce-paypal-payments/blob/dev/develop/modules/ppcp-store-sync/src/CartValidation/CartValidationProcessor.php
+Source: [`src/CartValidation/CartValidationProcessor.php`](https://github.com/woocommerce/woocommerce-paypal-payments/blob/dev/develop/modules/ppcp-store-sync/src/CartValidation/CartValidationProcessor.php)
