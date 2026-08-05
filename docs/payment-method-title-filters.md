@@ -16,7 +16,7 @@ detail from order meta written at capture time:
   (`_ppcp_paypal_card_brand`, `_ppcp_paypal_card_last_digits`). Both must be present.
 - Any other payment source produces no detail, and the title is left unchanged.
 
-Three filters let you control the result. They are useful when you render orders yourself — custom
+Four filters let you control the result. They are useful when you render orders yourself — custom
 order views, emails, PDF invoices or export integrations — and need a different format.
 
 ## Filters
@@ -68,6 +68,56 @@ Notable behavior:
   when you want to add a detail the plugin does not produce — Venmo or other alternative payment
   method sources, or card orders whose brand/last-digits meta is missing.
 
+### `woocommerce_paypal_payments_payment_method_title_icon`
+
+Opts into an icon in front of the detail. It defaults to an empty string, so no icon is rendered
+unless you return markup. The second argument is the URL of the bundled SVG for this order's payment
+source and card brand, already resolved for you.
+
+```php
+add_filter(
+    'woocommerce_paypal_payments_payment_method_title_icon',
+    function ( string $icon_html, string $icon_url ): string {
+        // Only render markup where it is safe to do so.
+        if ( ! is_order_received_page() || '' === $icon_url ) {
+            return $icon_html;
+        }
+
+        return '<img class="my-pm-icon" src="' . esc_url( $icon_url ) . '" alt="">';
+    },
+    10,
+    2
+);
+
+add_action(
+    'wp_head',
+    function (): void {
+        if ( ! is_order_received_page() ) {
+            return;
+        }
+
+        echo '<style>.my-pm-icon{display:inline;height:1em;vertical-align:middle}</style>';
+    }
+);
+```
+
+**The payment method title may be used in contexts where markup is unsafe** — plain-text emails, PDF
+invoices, REST responses, CSV exports etc. That is why the default is no icon: your
+callback is responsible for the context check, as in the `is_order_received_page()` gate above.
+
+Notable behavior:
+
+- Front-end order views print the title through `wp_kses_post()`, which filters the `style`
+  attribute against a fixed CSS property allow-list, which removes some properties, such as `display`.
+  To avoid this, style the icon with a `class` rather than inline CSS.
+- The markup is prepended inside the parentheses, separated by a space, and becomes part of the
+  `$detail` argument that `woocommerce_paypal_payments_enriched_payment_method_title` receives.
+- `$icon_url` is empty unless the brand has a bundled icon. Covered are Visa, Mastercard, American
+  Express, Discover, JCB, Elo, Hiper, PayPal and Venmo.
+- Apple Pay and Google Pay orders resolve to the icon of the underlying card brand.
+- `PaymentMethodTitleEnricher::get_icon_url( string $source, string $brand ): string` is public, so
+  you can resolve a different brand than the order's if you need to.
+
 ### `woocommerce_paypal_payments_enriched_payment_method_title`
 
 Filters the fully assembled title, so you can change the separator, drop the parentheses or add
@@ -88,7 +138,8 @@ add_filter(
 Notable behavior:
 
 - `$title` is the original gateway title and `$detail` is the detail after
-  `woocommerce_paypal_payments_payment_method_title_detail` has been applied.
+  `woocommerce_paypal_payments_payment_method_title_detail` and any icon markup from
+  `woocommerce_paypal_payments_payment_method_title_icon` have been applied.
 - It runs only when a detail is actually appended — never when enrichment was switched off, the
   gateway is unsupported, there is no detail, or the title already contains the detail.
 

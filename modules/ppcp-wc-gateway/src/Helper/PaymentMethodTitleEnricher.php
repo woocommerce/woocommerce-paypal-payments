@@ -6,6 +6,7 @@ namespace WooCommerce\PayPalCommerce\WcGateway\Helper;
 
 use WC_Order;
 use WooCommerce\PayPalCommerce\Applepay\ApplePayGateway;
+use WooCommerce\PayPalCommerce\Assets\AssetGetter;
 use WooCommerce\PayPalCommerce\Googlepay\GooglePayGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
@@ -55,6 +56,40 @@ class PaymentMethodTitleEnricher {
 	);
 
 	/**
+	 * Maps PayPal card brand identifiers to the bundled icon file name.
+	 *
+	 * Brands without a bundled icon are intentionally absent.
+	 *
+	 * @var array<string, string>
+	 */
+	private const BRAND_ICONS = array(
+		'VISA'             => 'visa',
+		'MASTERCARD'       => 'mastercard',
+		'AMEX'             => 'amex',
+		'AMERICAN_EXPRESS' => 'amex',
+		'DISCOVER'         => 'discover',
+		'JCB'              => 'jcb',
+		'ELO'              => 'elo',
+		'HIPER'            => 'hiper',
+	);
+
+	/**
+	 * Maps payment sources that have their own logo to the bundled icon file name.
+	 *
+	 * @var array<string, string>
+	 */
+	private const SOURCE_ICONS = array(
+		'paypal' => 'paypal',
+		'venmo'  => 'venmo',
+	);
+
+	private AssetGetter $asset_getter;
+
+	public function __construct( AssetGetter $asset_getter ) {
+		$this->asset_getter = $asset_getter;
+	}
+
+	/**
 	 * Returns the payment method title enriched with contextual payment details,
 	 * or the original title when enrichment is disabled or no details are available.
 	 *
@@ -99,6 +134,39 @@ class PaymentMethodTitleEnricher {
 			return $title;
 		}
 
+		$source = $this->payment_source( $order );
+		$brand  = $this->card_brand( $order );
+
+		/**
+		 * HTML for an icon prepended to the payment method title detail.
+		 *
+		 * Defaults to an empty string, so no icon is rendered unless a callback opts in.
+		 *
+		 * Note that the payment method title may be used in contexts where markup is unsafe —
+		 * plain-text emails, PDF invoices, REST responses, ... — so a callback is responsible
+		 * for checking the context. Front-end order views also run the title through
+		 * wp_kses_post(), which strips disallowed inline CSS properties, so prefer a class
+		 * over inline styles.
+		 *
+		 * @param string   $icon_html The icon markup. Default empty string.
+		 * @param string   $icon_url  URL of the bundled icon for this source and brand, or empty.
+		 * @param string   $source    The raw payment source meta value, e.g. "paypal" or "card".
+		 * @param string   $brand     The raw card brand, e.g. "VISA". Empty for non-card sources.
+		 * @param WC_Order $order     The order the title belongs to.
+		 */
+		$icon_html = (string) apply_filters(
+			'woocommerce_paypal_payments_payment_method_title_icon',
+			'',
+			$this->get_icon_url( $source, $brand ),
+			$source,
+			$brand,
+			$order
+		);
+
+		if ( $icon_html !== '' ) {
+			$detail = $icon_html . ' ' . $detail;
+		}
+
 		$enriched = sprintf( '%1$s (%2$s)', $title, $detail );
 
 		/**
@@ -122,21 +190,44 @@ class PaymentMethodTitleEnricher {
 	}
 
 	/**
+	 * Returns the URL of the bundled icon for the given payment source and card brand,
+	 * or an empty string when no icon is bundled for them.
+	 *
+	 * @param string $source The payment source, e.g. "paypal" or "card".
+	 * @param string $brand  The card brand, e.g. "VISA". Ignored for non-card sources.
+	 */
+	public function get_icon_url( string $source, string $brand ): string {
+		if ( isset( self::SOURCE_ICONS[ $source ] ) ) {
+			return $this->asset_getter->get_static_asset_url( 'images/' . self::SOURCE_ICONS[ $source ] . '.svg' );
+		}
+
+		if ( in_array( $source, self::CARD_SOURCES, true ) ) {
+			$file = self::BRAND_ICONS[ strtoupper( $brand ) ] ?? '';
+
+			return $file === ''
+				? ''
+				: $this->asset_getter->get_static_asset_url( "images/$file.svg" );
+		}
+
+		return '';
+	}
+
+	/**
 	 * Builds the contextual detail string for the order, or an empty string when unavailable.
 	 */
 	private function build_detail( WC_Order $order ): string {
-		$source = (string) $order->get_meta( PayPalGateway::ORDER_PAYMENT_SOURCE_META_KEY );
+		$source = $this->payment_source( $order );
 
-		if ( 'paypal' === $source ) {
+		if ( $source === 'paypal' ) {
 			$email = sanitize_email( (string) $order->get_meta( PayPalGateway::ORDER_PAYER_EMAIL_META_KEY ) );
 			return $email;
 		}
 
 		if ( in_array( $source, self::CARD_SOURCES, true ) ) {
-			$brand       = (string) $order->get_meta( PayPalGateway::ORDER_CARD_BRAND_META_KEY );
+			$brand       = $this->card_brand( $order );
 			$last_digits = (string) $order->get_meta( PayPalGateway::ORDER_CARD_LAST_DIGITS_META_KEY );
 
-			if ( '' === $brand || '' === $last_digits ) {
+			if ( $brand === '' || $last_digits === '' ) {
 				return '';
 			}
 
@@ -149,6 +240,20 @@ class PaymentMethodTitleEnricher {
 		}
 
 		return '';
+	}
+
+	/**
+	 * Returns the payment source stored on the order, e.g. "paypal" or "card".
+	 */
+	private function payment_source( WC_Order $order ): string {
+		return (string) $order->get_meta( PayPalGateway::ORDER_PAYMENT_SOURCE_META_KEY );
+	}
+
+	/**
+	 * Returns the raw card brand stored on the order, e.g. "VISA", or an empty string.
+	 */
+	private function card_brand( WC_Order $order ): string {
+		return (string) $order->get_meta( PayPalGateway::ORDER_CARD_BRAND_META_KEY );
 	}
 
 	/**
