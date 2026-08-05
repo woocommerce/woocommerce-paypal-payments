@@ -30,7 +30,7 @@ Reading the option is not sufficient on its own. `active` can be `true` while th
 
 ## Logs
 
-The module writes to two WooCommerce log sources, so high-volume feed entries stay out of the cart API stream:
+The module writes to separate WooCommerce log sources, so high-volume feed entries stay out of the cart API stream:
 
 | Source                         | Contains                           |
 |--------------------------------|------------------------------------|

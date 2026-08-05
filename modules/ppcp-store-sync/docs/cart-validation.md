@@ -17,7 +17,7 @@ interface ValidatorInterface {
 }
 ```
 
-Return `null` or an empty array when everything is fine. `InventoryValidator` is the reference implementation: it shows the issue-building chain, a context object, and two resolution options.
+Return `null` or an empty array when everything is fine. `InventoryValidator` is the reference implementation: it shows the issue-building chain, a context object, and resolution options.
 
 Validators see the issues that earlier validators already reported, so you can skip work that is already covered. `InventoryValidator` opens with `has_issue_with_code( ErrorCode::INVENTORY_ISSUE )` and bails out for exactly that reason.
 
@@ -53,7 +53,7 @@ The action fires once per request, just before the first validation. Built-in va
 
 ## Reporting an issue
 
-An issue combines a code and type (fixed by the factory you choose), a shopper-facing message, an optional context object carrying machine-readable detail, and up to five resolution options describing what the agent may offer:
+An issue combines a code and type (fixed by the factory you choose), a shopper-facing message, an optional context object carrying machine-readable detail, and resolution options describing what the agent may offer:
 
 ```php
 return ValidationIssue::create_item_out_of_stock( 'Product is no longer available' )
@@ -92,10 +92,74 @@ Suggested alternative coupons are off by default, because the module cannot know
 
 ## Hooks
 
-| Hook                                                                    | Type   | Arguments                                                                                                                           | Source                                                            |
-|-------------------------------------------------------------------------|--------|-------------------------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------|
-| `woocommerce_paypal_payments_store_sync_validators`                     | action | `CartValidationProcessor $processor`                                                                                                | `src/CartValidation/CartValidationProcessor.php:87`               |
-| `woocommerce_paypal_payments_store_sync_item_requires_signature`        | filter | `bool $required`, `WC_Product $product`, `CartItem $item`                                                                           | `src/CartValidation/ShippingValidator.php:304`                    |
-| `woocommerce_paypal_payments_store_sync_coupon_validation_user_message` | filter | `string $message`, `string $issue_type`, `string $code`, `?WC_Coupon $coupon`, `PayPalCart $cart`, `array $context`                 | `src/CartValidation/CouponValidator/CouponValidator.php:400`      |
-| `woocommerce_paypal_payments_store_sync_coupon_validation_resolutions`  | filter | `ResolutionOption[] $resolutions`, `string $issue_type`, `string $code`, `?WC_Coupon $coupon`, `PayPalCart $cart`, `array $context` | `src/CartValidation/CouponValidator/CouponValidator.php:483`      |
-| `woocommerce_paypal_payments_store_sync_suggested_alternative_coupons`  | filter | `string[] $codes`, `string $failed_code`, `string $reason`, `PayPalCart $cart`                                                      | `src/CartValidation/CouponValidator/CouponContextBuilder.php:273` |
+### Filters
+
+```php
+/**
+ * Whether delivery of an item requires a signature, which drives PO box validation.
+ */
+add_filter(
+	'woocommerce_paypal_payments_store_sync_item_requires_signature',
+	function ( bool $required, WC_Product $product, CartItem $item ): bool {
+		return false;
+	},
+	10, 3
+);
+```
+
+Source: https://github.com/woocommerce/woocommerce-paypal-payments/blob/dev/develop/modules/ppcp-store-sync/src/CartValidation/ShippingValidator.php
+
+```php
+/**
+ * The shopper-facing message on a coupon issue.
+ */
+add_filter(
+	'woocommerce_paypal_payments_store_sync_coupon_validation_user_message',
+	function ( string $message, string $issue_type, string $code, ?WC_Coupon $coupon, PayPalCart $cart, array $context ): string {
+		return $message;
+	},
+	10, 6
+);
+
+/**
+ * The resolution options offered to the agent for a coupon issue.
+ */
+add_filter(
+	'woocommerce_paypal_payments_store_sync_coupon_validation_resolutions',
+	function ( array $resolutions, string $issue_type, string $code, ?WC_Coupon $coupon, PayPalCart $cart, array $context ): array {
+		return $resolutions;
+	},
+	10, 6
+);
+```
+
+Source: https://github.com/woocommerce/woocommerce-paypal-payments/blob/dev/develop/modules/ppcp-store-sync/src/CartValidation/CouponValidator/CouponValidator.php
+
+```php
+/**
+ * Coupon codes to suggest after one was rejected. Empty by default.
+ */
+add_filter(
+	'woocommerce_paypal_payments_store_sync_suggested_alternative_coupons',
+	function ( array $codes, string $failed_code, string $reason, PayPalCart $cart ): array {
+		return $codes;
+	},
+	10, 4
+);
+```
+
+Source: https://github.com/woocommerce/woocommerce-paypal-payments/blob/dev/develop/modules/ppcp-store-sync/src/CartValidation/CouponValidator/CouponContextBuilder.php
+
+### Actions
+
+```php
+/**
+ * Fires once per request, before the first validation. See "Registering a validator" above.
+ */
+add_action(
+	'woocommerce_paypal_payments_store_sync_validators',
+	function ( CartValidationProcessor $processor ): void {}
+);
+```
+
+Source: https://github.com/woocommerce/woocommerce-paypal-payments/blob/dev/develop/modules/ppcp-store-sync/src/CartValidation/CartValidationProcessor.php

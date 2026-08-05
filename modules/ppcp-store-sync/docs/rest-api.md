@@ -1,6 +1,6 @@
 # REST endpoints (Cart API)
 
-PayPal agents drive a cart through four endpoints. PayPal owns the schema, so this page covers the routes, what the store puts in a response, and how failures come back.
+PayPal agents drive a cart through the endpoints below. PayPal owns the schema, so this page covers the routes, what the store puts in a response, and how failures come back.
 
 ## Endpoints
 
@@ -19,7 +19,7 @@ Requests do not run in a normal customer session. The module builds a throwaway 
 
 ## Authentication
 
-Every request needs a JWT in the `Authorization` header, and every endpoint requires the same `cart` scope. See [JWT authentication](authentication-via-jwt.md).
+Every request needs a JWT in the `Authorization` header. The cart endpoints require the `cart` scope, checkout additionally requires `checkout`. See [JWT authentication](authentication-via-jwt.md).
 
 ## Response shape
 
@@ -49,7 +49,7 @@ Both fields are whitelisted on the way out. An unrecognized value silently becom
 
 ## When a cart can be paid
 
-`StorePayPalCart::is_ready_for_payment()` requires all three: (1) the cart has items, (2) no validation issues detected, and (3) a payment token is present. Checkout will not proceed while any of them is missing.
+`StorePayPalCart::is_ready_for_payment()` requires all of these: the cart has items, no validation issues were detected, and a payment token is present. Checkout will not proceed while any of them is missing.
 
 ## Errors
 
@@ -96,17 +96,45 @@ All other values can be left empty.
 
 Each endpoint fires one action on success and one on failure. They observe only; the response is already built and cannot be changed.
 
-Success handlers receive `( string $cart_id, StorePayPalCart $store_cart, int $status_code )`, error handlers receive `( AgenticError $error )`.
+### Success indicators
 
-| Hook                                                    | Type   | Fires when              | Source                                    |
-|---------------------------------------------------------|--------|-------------------------|-------------------------------------------|
-| `woocommerce_paypal_payments_store_sync_create`         | action | A cart was created      | `src/Endpoint/CreateCartEndpoint.php:34`  |
-| `woocommerce_paypal_payments_store_sync_create_error`   | action | Creating a cart failed  | `src/Endpoint/CreateCartEndpoint.php:35`  |
-| `woocommerce_paypal_payments_store_sync_get`            | action | A cart was read         | `src/Endpoint/GetCartEndpoint.php:34`     |
-| `woocommerce_paypal_payments_store_sync_get_error`      | action | Reading a cart failed   | `src/Endpoint/GetCartEndpoint.php:35`     |
-| `woocommerce_paypal_payments_store_sync_replace`        | action | A cart was replaced     | `src/Endpoint/ReplaceCartEndpoint.php:36` |
-| `woocommerce_paypal_payments_store_sync_replace_error`  | action | Replacing a cart failed | `src/Endpoint/ReplaceCartEndpoint.php:37` |
-| `woocommerce_paypal_payments_store_sync_checkout`       | action | Checkout completed      | `src/Endpoint/CheckoutEndpoint.php:51`    |
-| `woocommerce_paypal_payments_store_sync_checkout_error` | action | Checkout failed         | `src/Endpoint/CheckoutEndpoint.php:52`    |
+- `woocommerce_paypal_payments_store_sync_create`
+- `woocommerce_paypal_payments_store_sync_get`
+- `woocommerce_paypal_payments_store_sync_replace`
+- `woocommerce_paypal_payments_store_sync_checkout`
 
-`AgenticRestEndpoint` also defines the fallback pair `woocommerce_paypal_payments_store_sync` and `..._store_sync_error`, used by any endpoint that does not declare its own.
+Sample:
+
+```php
+/**
+ * A cart was created, read, replaced, or paid for.
+ */
+add_action(
+	'woocommerce_paypal_payments_store_sync_create',
+	function ( string $cart_id, StorePayPalCart $store_cart, int $status_code ): void {},
+	10, 3
+);
+```
+
+Source: https://github.com/woocommerce/woocommerce-paypal-payments/blob/dev/develop/modules/ppcp-store-sync/src/Endpoint/
+
+### Error indicators
+
+- `woocommerce_paypal_payments_store_sync_create_error`
+- `woocommerce_paypal_payments_store_sync_get_error`
+- `woocommerce_paypal_payments_store_sync_replace_error`
+- `woocommerce_paypal_payments_store_sync_checkout_error`
+
+Sample:
+
+```php
+/**
+ * A cart request failed.
+ */
+add_action(
+	'woocommerce_paypal_payments_store_sync_create_error',
+	function ( AgenticError $error ): void {}
+);
+```
+
+Source: https://github.com/woocommerce/woocommerce-paypal-payments/blob/dev/develop/modules/ppcp-store-sync/src/Endpoint/
