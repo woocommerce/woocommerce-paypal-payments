@@ -48,6 +48,8 @@ class CheckoutEndpoint extends AgenticRestEndpoint {
 	 */
 	protected const METHOD = 'POST';
 
+	protected const REQUIRED_SCOPES = array( 'cart', 'checkout' );
+
 	protected const ACTION_NAME_SUCCESS = 'woocommerce_paypal_payments_store_sync_checkout';
 	protected const ACTION_NAME_ERROR   = 'woocommerce_paypal_payments_store_sync_checkout_error';
 
