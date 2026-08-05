@@ -1,4 +1,4 @@
-# REST Endpoints (Cart API)
+# REST endpoints (Cart API)
 
 PayPal agents drive a cart through four endpoints. PayPal owns the schema, so this page covers the routes, what the store puts in a response, and how failures come back.
 
@@ -74,13 +74,14 @@ Sandbox merchants get relaxed authentication, so requests work without a properl
 
 Set correct values for those:
 
-| Variable          | Value                                                  |
-|-------------------|--------------------------------------------------------|
-| `base_url`        | `https://wp-test-site.ddev.site/wp-json/wc/v3/agentic` |
-| `is_sandbox`      | `true`                                                 |
-| `item_variant_id` | _An existing WooCommerce product ID_                   |
-| `jwt_merchant_id` | _ID of the onboarded merchant_                         |
-| `payer_id`        | _See note below_                                       |
+| Variable              | Value                                                          |
+|-----------------------|----------------------------------------------------------------|
+| `base_url`            | `https://wp-test-site.ddev.site/wp-json/wc/v3/agentic`         |
+| `is_sandbox`          | `true`                                                         |
+| `item_variant_id`     | An existing WooCommerce product ID                             |
+| `jwt_merchant_id`     | ID of the onboarded merchant                                   |
+| `jwt_private_key_pem` | Run `openssl genrsa 2048` locally and paste it into that field |
+| `payer_id`            | See note below                                                 |
 
 All other values can be left empty.
 
@@ -97,11 +98,15 @@ Each endpoint fires one action on success and one on failure. They observe only;
 
 Success handlers receive `( string $cart_id, StorePayPalCart $store_cart, int $status_code )`, error handlers receive `( AgenticError $error )`.
 
-| Endpoint | Success                                           | Error                           |
-|----------|---------------------------------------------------|---------------------------------|
-| Create   | `woocommerce_paypal_payments_store_sync_create`   | `..._store_sync_create_error`   |
-| Read     | `woocommerce_paypal_payments_store_sync_get`      | `..._store_sync_get_error`      |
-| Replace  | `woocommerce_paypal_payments_store_sync_replace`  | `..._store_sync_replace_error`  |
-| Checkout | `woocommerce_paypal_payments_store_sync_checkout` | `..._store_sync_checkout_error` |
+| Hook                                                    | Type   | Fires when              | Source                                    |
+|---------------------------------------------------------|--------|-------------------------|-------------------------------------------|
+| `woocommerce_paypal_payments_store_sync_create`         | action | A cart was created      | `src/Endpoint/CreateCartEndpoint.php:34`  |
+| `woocommerce_paypal_payments_store_sync_create_error`   | action | Creating a cart failed  | `src/Endpoint/CreateCartEndpoint.php:35`  |
+| `woocommerce_paypal_payments_store_sync_get`            | action | A cart was read         | `src/Endpoint/GetCartEndpoint.php:34`     |
+| `woocommerce_paypal_payments_store_sync_get_error`      | action | Reading a cart failed   | `src/Endpoint/GetCartEndpoint.php:35`     |
+| `woocommerce_paypal_payments_store_sync_replace`        | action | A cart was replaced     | `src/Endpoint/ReplaceCartEndpoint.php:36` |
+| `woocommerce_paypal_payments_store_sync_replace_error`  | action | Replacing a cart failed | `src/Endpoint/ReplaceCartEndpoint.php:37` |
+| `woocommerce_paypal_payments_store_sync_checkout`       | action | Checkout completed      | `src/Endpoint/CheckoutEndpoint.php:51`    |
+| `woocommerce_paypal_payments_store_sync_checkout_error` | action | Checkout failed         | `src/Endpoint/CheckoutEndpoint.php:52`    |
 
-Both are fired in `src/Endpoint/AgenticRestEndpoint.php:128` and `:143`; each endpoint sets its own names near the top of its class. The base names `woocommerce_paypal_payments_store_sync` and `..._store_sync_error` apply to any endpoint that does not override them.
+`AgenticRestEndpoint` also defines the fallback pair `woocommerce_paypal_payments_store_sync` and `..._store_sync_error`, used by any endpoint that does not declare its own.

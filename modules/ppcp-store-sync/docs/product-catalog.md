@@ -4,17 +4,18 @@ The store pushes batches of products to PayPal on a schedule, so agents know wha
 
 ## Settings
 
-| Setting            | Default                               | Filter                                                             |
-|--------------------|---------------------------------------|--------------------------------------------------------------------|
-| Sync interval      | 15 minutes                            | `woocommerce_paypal_payments_store_sync_interval`                  |
-| Products per batch | 50                                    | `woocommerce_paypal_payments_store_sync_batch_size`                |
-| Stale threshold    | 5 days, minus a 5-cycle safety margin | `woocommerce_paypal_payments_store_sync_expired_product_timestamp` |
+| Setting            | Default        | Filter                                                             |
+|--------------------|----------------|--------------------------------------------------------------------|
+| Sync interval      | 15 minutes     | `woocommerce_paypal_payments_store_sync_interval`                  |
+| Products per batch | 50             | `woocommerce_paypal_payments_store_sync_batch_size`                |
+| Stale threshold    | Roughly 5 days | `woocommerce_paypal_payments_store_sync_expired_product_timestamp` |
 
-Two caveats. The interval is only read when the recurring job is first scheduled, so changing it later has no effect until the job is unscheduled. A batch size of `0` or less produces an empty batch, which pauses the feed without unscheduling it.
+1. The interval is only read when the recurring job is first scheduled, so changing it later has no effect until the job is unscheduled.
+2. A batch size of `0` or less produces an empty batch, which pauses the feed without unscheduling it.
 
 ## Which products appear
 
-A product must be published, be a simple or variable product, and not be downloadable. `ProductFilter` owns these rules and they are not filterable.
+`ProductFilter` owns the baseline rules and they are not filterable. It drops unpublished products, for example, and only supports a subset of WooCommerce product types.
 
 Everything that passes goes through an exclusion filter, which is yours:
 
@@ -47,8 +48,6 @@ Each field sent to PayPal passes through a filter. All six take `( string $value
 | `woocommerce_paypal_payments_store_sync_item_product_type` | Category list, as plain text               |
 
 Returning an empty string does not send a blank field. Most of these are required, and a product missing a required field is dropped from the batch and marked as processed, so it silently disappears from the catalog instead of syncing with a gap. See `SyncJob::has_complete_sync_data()` for the required set.
-
-Prices, SKU, and variant attributes have no filters.
 
 ## Variants
 

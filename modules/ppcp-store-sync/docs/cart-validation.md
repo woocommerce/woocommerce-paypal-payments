@@ -17,7 +17,7 @@ interface ValidatorInterface {
 }
 ```
 
-Return `null` or an empty array when everything is fine. `InventoryValidator` is the reference implementation: it shows the issue-building chain, a context object, and two resolution options in about fifty lines.
+Return `null` or an empty array when everything is fine. `InventoryValidator` is the reference implementation: it shows the issue-building chain, a context object, and two resolution options.
 
 Validators see the issues that earlier validators already reported, so you can skip work that is already covered. `InventoryValidator` opens with `has_issue_with_code( ErrorCode::INVENTORY_ISSUE )` and bails out for exactly that reason.
 
@@ -46,13 +46,10 @@ add_action(
 );
 ```
 
-The action fires once per request, just before the first validation. Built-in validators register on the same hook and therefore run first, in the order listed in `StoreSyncModule::CART_VALIDATION_SERVICES`.
+The action fires once per request, just before the first validation. Built-in validators register on the same hook and usually run first, in the order listed in `StoreSyncModule::CART_VALIDATION_SERVICES`.
 
-Two behaviors to know:
-
-Validators are stored **keyed by class name**. Registering a second instance of the same class replaces the first rather than adding it.
-
-Exceptions are **caught and logged**, then that validator is skipped. A validator that throws will not break the endpoint, but it also will not tell you it failed unless you read the log.
+1. Validators are stored **keyed by class name**. Registering a second instance of the same class replaces the first rather than adding it.
+2. Exceptions are **caught and logged**, then that validator is skipped. A validator that throws will not break the endpoint, but it also will not tell you it failed unless you read the log.
 
 ## Reporting an issue
 
@@ -79,7 +76,7 @@ Each of these is applied silently, so nothing warns you when content is lost:
 | `message`          | Truncated to 255 characters         |
 | `user_message`     | Truncated to 500 characters         |
 | Resolution options | Maximum 5; further ones are ignored |
-| Context objects    | Only the first is serialized         |
+| Context objects    | Only the first is serialized        |
 
 ## Adding a new issue type or resolution action
 

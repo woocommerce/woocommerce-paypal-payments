@@ -15,7 +15,7 @@ Three flows connect the store to PayPal. Two are outbound, driven by the store; 
    └───────────────┘                                └────────────────────┘
 ```
 
-**1. Onboarding** happens once. The store posts its identity to PayPal and stores the token it gets back. Until this succeeds, nothing else runs. See [architecture](architecture.md).
+**1. Onboarding** happens once. The store posts its identity to PayPal and, once PayPal accepts, keeps the token it sent as its registration record. No agent traffic arrives until this succeeds. See [architecture](architecture.md).
 
 **2. The product feed** is a cron job. Every few minutes the store selects a batch of products and pushes them, so agents know what is for sale. PayPal drops products it has not seen recently, so this repeats forever rather than completing once. See [product catalog](product-catalog.md).
 
