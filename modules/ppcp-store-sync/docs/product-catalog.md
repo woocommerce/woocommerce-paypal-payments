@@ -52,7 +52,7 @@ Prices, SKU, and variant attributes have no filters.
 
 ## Variants
 
-A variable product is never sent itself. Its purchasable variations are sent as individual items, grouped under the parent through `item_group_id`. Only the `color`, `size`, and `gender` attributes are recognised. See `ProductsPayload` for the assembly and `ProductDTO` for the wire format.
+A variable product is never sent itself. Its purchasable variations are sent as individual items, grouped under the parent through `item_group_id`. Only the `color`, `size`, and `gender` attributes are recognized. See `ProductsPayload` for the assembly and `ProductDTO` for the wire format.
 
 ## Forcing a re-sync
 

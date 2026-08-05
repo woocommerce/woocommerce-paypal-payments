@@ -79,7 +79,7 @@ Each of these is applied silently, so nothing warns you when content is lost:
 | `message`          | Truncated to 255 characters         |
 | `user_message`     | Truncated to 500 characters         |
 | Resolution options | Maximum 5; further ones are ignored |
-| Context objects    | Only the first is serialised        |
+| Context objects    | Only the first is serialized         |
 
 ## Adding a new issue type or resolution action
 
