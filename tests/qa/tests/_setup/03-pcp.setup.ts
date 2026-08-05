@@ -12,7 +12,7 @@ import {
 	gateways,
 } from '../../resources';
 
-const { payPal, payLater, venmo, acdc, bcdc, fastlane, googlepay, oxxo } = gateways;
+const { payPal, payLater, venmo, acdc, bcdc, fastlane, googlepay, oxxo, pui } = gateways;
 
 // =====================================================================
 // Layer 2 — PCP country: configureStore + installPcp + resetDb + connect
@@ -61,7 +61,18 @@ setup( 'setup:transaction:usa;', async ( { utils, pcpApi } ) => {
 		[ payLater.id ]: { id: payLater.id, enabled: true },
 		[ venmo.id ]: { id: venmo.id, enabled: true },
 		[ acdc.id ]: { id: acdc.id, enabled: true },
+		[ googlepay.id ]: { id: googlepay.id, enabled: true },
 		[ fastlane.id ]: { id: fastlane.id, enabled: false },
+	} );
+	await pcpApi.updatePcpStyling( {
+		cart: {
+			enabled: true,
+			methods: [ payPal.id, payLater.id, venmo.id, googlepay.id ],
+		},
+		product: {
+			enabled: true,
+			methods: [ payPal.id, payLater.id, venmo.id, googlepay.id ],
+		},
 	} );
 } );
 
@@ -77,24 +88,17 @@ setup( 'setup:transaction:mexico;', async ( { utils, pcpApi } ) => {
 	} );
 } );
 
-setup( 'setup:transaction:googlepay;', async ( { utils, pcpApi } ) => {
+setup( 'setup:transaction:germany;', async ( { utils, pcpApi } ) => {
 	await utils.configureStore( {
-		enableClassicPages: false,
-		customer: customers.usa,
+		enableClassicPages: true,
+		customer: customers.germany,
 	} );
-	await pcpApi.updatePcpPaymentMethods( {
-		[ acdc.id ]: { id: acdc.id, enabled: true },
-		[ googlepay.id ]: { id: googlepay.id, enabled: true },
-	} );
-} );
-
-// --- Refund ---
-
-setup( 'setup:refund;', async ( { utils, pcpApi } ) => {
-	await utils.configureStore( { customer: customers.usa } );
 	await pcpApi.updatePcpPaymentMethods( {
 		[ payPal.id ]: { id: payPal.id, enabled: true },
-		[ acdc.id ]: { id: acdc.id, enabled: true },
+		[ pui.id ]: { id: pui.id, enabled: true },
+		puiBrandName: 'PUI Test',
+		puiCustomerServiceInstructions: 'Test PUI',
+		puiLogoUrl: 'www.logo-test.com',
 	} );
 } );
 

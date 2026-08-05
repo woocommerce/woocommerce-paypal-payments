@@ -56,6 +56,33 @@ export const useStore = () => {
 	};
 };
 
+/**
+ * Checks whether enabling vaulting ("Save PayPal and Venmo") disables the Pay Later
+ * payment method.
+ *
+ * Derived from the setting dependencies the server attaches to the pay-later method;
+ * the dependency is absent when a whitelisted merchant opted into the
+ * pay-later-with-vaulting override.
+ *
+ * @return {{isReady: boolean, payLaterDependsOnVaulting: boolean}} Dependency state.
+ */
+export const usePayLaterVaultingDependency = () => {
+	const { select, useTransient, usePersistent } = useStoreData();
+	const [ isReady ] = useTransient( 'isReady' );
+	const [ payLater ] = usePersistent( 'pay-later' );
+
+	// Load persistent data from REST if not done yet.
+	if ( ! isReady ) {
+		select.persistentData();
+	}
+
+	return {
+		isReady,
+		payLaterDependsOnVaulting:
+			!! payLater?.depends_on_settings?.settings?.savePaypalAndVenmo,
+	};
+};
+
 export const usePaymentMethods = () => {
 	const { usePersistent } = useStoreData();
 

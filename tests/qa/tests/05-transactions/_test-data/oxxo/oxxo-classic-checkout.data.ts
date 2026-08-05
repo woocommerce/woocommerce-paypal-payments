@@ -16,19 +16,19 @@ const merchant = merchants.mexico;
 
 export const oxxoClassicCheckout: ShopOrder[] = [
 	{
-		// https://inpsyde.atlassian.net/browse/PCP-6324
-		title: 'PCP-6324 | Transaction - Classic checkout - OXXO - Default order @Critical',
+		title: 'PCP-1219 | Transaction - Classic checkout - OXXO - Mexico - Default order @Critical',
 		...orders.default,
 		payment: payments.oxxo,
 		customer: guest,
 		merchant,
+		orderStatus: 'processing',
 	},
 	{
-		// https://inpsyde.atlassian.net/browse/PCP-6325
-		title: 'PCP-6325 | Transaction - Classic checkout - OXXO - Order by customer',
+		title: 'PCP-2755 | Transaction - Classic checkout - OXXO - Mexico - Order by customer',
 		...orders.default,
 		payment: payments.oxxo,
 		customer,
 		merchant,
+		orderStatus: 'processing',
 	},
 ];

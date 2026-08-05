@@ -52,25 +52,20 @@ class CapturePayPalPayment {
 	/**
 	 * Creates PayPal order from the given PayPal/Venmo vault ID.
 	 *
+	 * The custom_id/invoice_id fields are not accepted as parameters here:
+	 * the PayPal Orders v2 API only reads them from inside a purchase
+	 * unit, never from the request root, so from_wc_order() populates
+	 * them directly on the purchase unit built above.
+	 *
 	 * @throws RuntimeException When request fails.
 	 */
 	public function create_order(
 		string $vault_id,
-		string $custom_id,
-		string $invoice_id,
 		WC_Order $wc_order,
 		string $payment_source_name = 'paypal'
 	): Order {
 		$intent = strtoupper( $this->settings_provider->payment_intent() ) === 'AUTHORIZE' ? 'AUTHORIZE' : 'CAPTURE';
-		$items  = array( $this->purchase_unit_factory->from_wc_cart( null, false, $wc_order->get_payment_method() ) );
-
-		// phpcs:disable WordPress.Security.NonceVerification
-		$pay_for_order = wc_clean( wp_unslash( $_GET['pay_for_order'] ?? '' ) );
-		$order_key     = wc_clean( wp_unslash( $_GET['key'] ?? '' ) );
-		// phpcs:enable
-		if ( $pay_for_order && $order_key === $wc_order->get_order_key() ) {
-			$items = array( $this->purchase_unit_factory->from_wc_order( $wc_order ) );
-		}
+		$items  = array( $this->purchase_unit_factory->from_wc_order( $wc_order ) );
 
 		$data = array(
 			'intent'         => $intent,
@@ -88,8 +83,6 @@ class CapturePayPalPayment {
 					),
 				),
 			),
-			'custom_id'      => $custom_id,
-			'invoice_id'     => $invoice_id,
 		);
 
 		$bearer = $this->bearer->bearer();
@@ -104,19 +97,57 @@ class CapturePayPalPayment {
 			'body'    => wp_json_encode( $data ),
 		);
 
-		$response = $this->request( $url, $args );
-		if ( $response instanceof WP_Error ) {
-			throw new RuntimeException( $response->get_error_message() );
-		}
-
-		$json        = json_decode( $response['body'] );
-		$status_code = (int) wp_remote_retrieve_response_code( $response );
-		if ( ! in_array( $status_code, array( 200, 201 ), true ) ) {
-			$error = new PayPalApiException( $json, $status_code );
-			$this->logger->warning( $error->getMessage() );
-			throw $error;
-		}
+		$json = $this->execute_order_request( $url, $args );
 
 		return $this->order_factory->from_paypal_response( $json );
+	}
+
+	/**
+	 * Executes the order creation request, retrying once on an incomplete response.
+	 *
+	 * PayPal's v2/checkout/orders endpoint intermittently returns a success status
+	 * with a response body missing the required id field. A single retry with a new
+	 * idempotency key recovers from this transient issue.
+	 *
+	 * @param string $url  The request URL.
+	 * @param array  $args The request arguments.
+	 * @return \stdClass Decoded response with a valid id.
+	 *
+	 * @throws RuntimeException When the response is incomplete after retry or PayPal returns a non-success status.
+	 */
+	private function execute_order_request( string $url, array $args ): \stdClass {
+		for ( $attempt = 0; $attempt < 2; $attempt++ ) {
+			if ( $attempt > 0 ) {
+				$this->logger->info( 'Retrying PayPal order creation after incomplete response.' );
+				$args['headers']['PayPal-Request-Id'] = uniqid( 'ppcp-', true );
+			}
+
+			$response = $this->request( $url, $args );
+			if ( $response instanceof WP_Error ) {
+				throw new RuntimeException( $response->get_error_message() );
+			}
+
+			$json        = json_decode( $response['body'] );
+			$status_code = (int) wp_remote_retrieve_response_code( $response );
+			if ( ! in_array( $status_code, array( 200, 201 ), true ) ) {
+				$error = new PayPalApiException( $json, $status_code );
+				$this->logger->warning( $error->getMessage() );
+				throw $error;
+			}
+
+			if ( $json instanceof \stdClass && isset( $json->id ) ) {
+				return $json;
+			}
+
+			$this->logger->warning(
+				'PayPal order response missing id.',
+				array(
+					'status_code'   => $status_code,
+					'response_body' => $response['body'],
+				)
+			);
+		}
+
+		throw new RuntimeException( 'PayPal order response missing id after retry.' );
 	}
 }

@@ -1,3 +1,4 @@
+export * from './apm-hosted-checkout';
 export * from './cart';
 export * from './checkout';
 export * from './classic-cart';

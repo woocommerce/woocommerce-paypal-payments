@@ -188,7 +188,6 @@ return array(
 			$container->get( 'googlepay.asset_getter' ),
 			$container->get( 'googlepay.sdk_url' ),
 			$container->get( 'ppcp.asset-version' ),
-			$container->get( 'wc-subscriptions.helper' ),
 			$container->get( 'settings.settings-provider' ),
 			$container->get( 'settings.environment' ),
 			$container->get( 'button.helper.context' )

@@ -14,7 +14,7 @@ test.beforeAll( async ( { utils, pcpApi } ) => {
 	);
 } );
 
-test( 'PCP-0000 | Settings - Pay Later Messaging - Default UI', async ( {
+test( 'PCP-4336 | Settings - Pay Later Messaging - Default UI', async ( {
 	utils,
 	payPalUi,
 	pcpPayLaterMessaging,
@@ -107,7 +107,7 @@ test( 'PCP-0000 | Settings - Pay Later Messaging - Default UI', async ( {
 	).not.toBeVisible();
 } );
 
-test( 'PCP-0000 | Settings - Pay Later Messaging - Disabled on all pages', async ( {
+test( 'PCP-4337 | Settings - Pay Later Messaging - Disabled on all pages', async ( {
 	utils,
 	payPalUi,
 	pcpPayLaterMessaging,

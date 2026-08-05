@@ -71,6 +71,7 @@ use WooCommerce\PayPalCommerce\Settings\Service\Migration\FastlaneSettingsMigrat
 use WooCommerce\PayPalCommerce\Settings\Service\OnboardingNotices;
 use WooCommerce\PayPalCommerce\Settings\Service\OnboardingUrlManager;
 use WooCommerce\PayPalCommerce\Settings\Service\SellerTypeResolver;
+use WooCommerce\PayPalCommerce\Settings\Service\MerchantDataResolver;
 use WooCommerce\PayPalCommerce\Settings\Service\PaymentMethodsEligibilityService;
 use WooCommerce\PayPalCommerce\Settings\Service\ScriptDataHandler;
 use WooCommerce\PayPalCommerce\Settings\Service\TodosEligibilityService;
@@ -88,7 +89,6 @@ use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\PayUponInvoice\Pay
 use WooCommerce\PayPalCommerce\PayLaterConfigurator\Endpoint\SaveConfig;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\ConnectionState;
-use WooCommerce\PayPalCommerce\Settings\Service\InternalRestService;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\MerchantDetails;
 
 return array(
@@ -390,12 +390,7 @@ return array(
 			$container->get( 'api.env.paypal-host' ),
 			$container->get( 'api.env.endpoint.login-seller' ),
 			$container->get( 'settings.connection-state' ),
-			$container->get( 'settings.service.rest-service' ),
-			$container->get( 'woocommerce.logger.woocommerce' )
-		);
-	},
-	'settings.service.rest-service'                       => static function ( ContainerInterface $container ): InternalRestService {
-		return new InternalRestService(
+			$container->get( 'api.factory.paypal-bearer' ),
 			$container->get( 'woocommerce.logger.woocommerce' )
 		);
 	},
@@ -463,6 +458,11 @@ return array(
 		$c->get( 'ppcp-local-apms.payment-methods' ),
 	),
 	'settings.service.seller-type-resolver'               => static fn(): SellerTypeResolver => new SellerTypeResolver(),
+	'settings.service.merchant-data-resolver'             => static fn( ContainerInterface $container ): MerchantDataResolver => new MerchantDataResolver(
+		$container->get( 'settings.data.general' ),
+		$container->get( 'api.factory.partners-endpoint' ),
+		$container->get( 'woocommerce.logger.woocommerce' )
+	),
 	'settings.service.data-migration.general-settings'    => static fn( ContainerInterface $c ): SettingsMigration => new SettingsMigration(
 		(array) get_option( 'woocommerce-ppcp-settings', array() ),
 		$c->get( 'settings.data.general' ),
@@ -501,7 +501,9 @@ return array(
 		);
 	},
 	'settings.data.definition.method_dependencies'        => static function ( ContainerInterface $container ): PaymentMethodsDependenciesDefinition {
-		return new PaymentMethodsDependenciesDefinition();
+		return new PaymentMethodsDependenciesDefinition(
+			$container->get( 'settings.settings-provider' )
+		);
 	},
 	'settings.service.pay_later_status'                   => static function ( ContainerInterface $container ): array {
 		$pay_later_endpoint = $container->get( 'settings.rest.pay_later_messaging' );
@@ -714,8 +716,8 @@ return array(
 			$container->get( 'settings.service.features_eligibilities' ),
 			$container->get( 'settings.data.general' ),
 			$merchant_capabilities,
-			$container->get( 'settings.data.settings' ),
-			$container->get( 'woocommerce.logger.woocommerce' )
+			$container->get( 'woocommerce.logger.woocommerce' ),
+			$container->get( 'settings.settings-provider' )
 		);
 	},
 	'settings.service.features_eligibilities'             => static function ( ContainerInterface $container ): FeaturesEligibilityService {

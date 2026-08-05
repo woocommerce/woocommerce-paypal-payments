@@ -1,6 +1,6 @@
 {
   "name": "woocommerce-paypal-payments",
-  "version": "4.1.1",
+  "version": "4.1.2",
   "description": "WooCommerce PayPal Payments",
   "repository": "https://github.com/woocommerce/woocommerce-paypal-payments",
   "license": "GPL-2.0",
@@ -48,9 +48,9 @@
     "e2e:test:shard:transaction-mexico:smoke": "npx playwright test --project \"shard:transaction-mexico\" --grep \"@Smoke\"",
     "e2e:test:shard:transaction-mexico:critical": "npx playwright test --project \"shard:transaction-mexico\" --grep \"@Critical\"",
 
-    "e2e:test:shard:transaction-googlepay": "npx playwright test --project \"shard:transaction-googlepay\"",
-    "e2e:test:shard:transaction-googlepay:smoke": "npx playwright test --project \"shard:transaction-googlepay\" --grep \"@Smoke\"",
-    "e2e:test:shard:transaction-googlepay:critical": "npx playwright test --project \"shard:transaction-googlepay\" --grep \"@Critical\"",
+    "e2e:test:shard:transaction-germany": "npx playwright test --project \"shard:transaction-germany\"",
+    "e2e:test:shard:transaction-germany:smoke": "npx playwright test --project \"shard:transaction-germany\" --grep \"@Smoke\"",
+    "e2e:test:shard:transaction-germany:critical": "npx playwright test --project \"shard:transaction-germany\" --grep \"@Critical\"",
 
     "e2e:test:shard:refund": "npx playwright test --project \"shard:refund\"",
     "e2e:test:shard:refund:smoke": "npx playwright test --project \"shard:refund\" --grep \"@Smoke\"",

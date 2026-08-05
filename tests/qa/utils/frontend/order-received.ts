@@ -4,6 +4,7 @@
 import {
 	OrderReceived as OrderReceivedBase,
 	expect,
+	formatMoney,
 } from '@inpsyde/playwright-utils/build';
 
 export class OrderReceived extends OrderReceivedBase {
@@ -12,8 +13,16 @@ export class OrderReceived extends OrderReceivedBase {
 		this.page.getByRole( 'link', { name: 'See OXXO voucher' } ).first();
 	seeOXXOVoucherButton_2 = () =>
 		this.page.getByRole( 'link', { name: 'See OXXO voucher' } ).last();
+	
+	detailsTotal = () =>
+		this.detailsRowWithHeader( 'Total:' )
+			.locator( 'td' )
+			.locator( 'span.woocommerce-Price-amount' )
+			.first(); // the td includes 2 'span.woocommerce-Price-amount' without distinction: for total and for tax
 
 	// Actions
+
+	// Assertions
 
 	/**
 	 * Asserts that
@@ -38,5 +47,24 @@ export class OrderReceived extends OrderReceivedBase {
 		}
 	};
 
-	// Assertions
+	/**
+	 * Asserts that received order total is equal to PayPal total
+	 * 
+	 * @param payPalTotal 
+	 * @param currency 
+	 */
+	assertTotalEqualsPayPalTotal = async (
+		payPalTotal: string,
+		currency: string = 'EUR',
+	) => {
+		await expect(
+			this.detailsTotal(),
+			'Assert received order total is equal to PayPal payment total'
+		).toHaveText(
+			await formatMoney(
+				Number( payPalTotal ),
+				currency
+			)
+		);
+	}
 }

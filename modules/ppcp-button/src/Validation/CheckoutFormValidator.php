@@ -60,9 +60,9 @@ class CheckoutFormValidator extends WC_Checkout {
 			$username = ! empty( $data['account_username'] ) ? $data['account_username'] : '';
 			$email    = $data['billing_email'] ?? '';
 
-			if ( email_exists( $email ) ) {
+			if ( email_exists( $email ) || ( $username && username_exists( sanitize_user( $username ) ) ) ) {
 				$errors->add(
-					'registration-error-email-exists',
+					'registration-error-account-exists',
 					apply_filters(
 						'woocommerce_registration_error_email_exists',
 						// phpcs:ignore WordPress.WP.I18n.TextDomainMismatch
@@ -72,21 +72,13 @@ class CheckoutFormValidator extends WC_Checkout {
 				);
 			}
 
-			if ( $username ) { // Empty username is already checked in validate_checkout, and it can be generated.
+			if ( $username ) {
 				$username = sanitize_user( $username );
 				if ( empty( $username ) || ! validate_username( $username ) ) {
 					$errors->add(
 						'registration-error-invalid-username',
 						// phpcs:ignore WordPress.WP.I18n.TextDomainMismatch
 						__( 'Please enter a valid account username.', 'woocommerce' )
-					);
-				}
-
-				if ( username_exists( $username ) ) {
-					$errors->add(
-						'registration-error-username-exists',
-						// phpcs:ignore WordPress.WP.I18n.TextDomainMismatch
-						__( 'An account is already registered with that username. Please choose another.', 'woocommerce' )
 					);
 				}
 			}

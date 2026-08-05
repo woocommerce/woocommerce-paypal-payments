@@ -1,11 +1,14 @@
 /**
  * External dependencies
  */
-import { updateDotenv } from '@inpsyde/playwright-utils/build';
+import {
+	updateDotenv,
+	WooCommerceApi,
+} from '@inpsyde/playwright-utils/build';
 /**
  * Internal dependencies
  */
-import { test as setup } from '..';
+import { test as setup, expect } from '..';
 import {
 	shopSettings,
 	shippingZones,
@@ -17,6 +20,7 @@ import {
 	subscriptionsPlugin,
 	disableWcSetupWizard,
 	disableWebhookVerificationPlugin,
+	negative12FeePlugin,
 } from '../../resources';
 
 const country = process.env.WC_DEFAULT_COUNTRY || 'usa';
@@ -57,7 +61,7 @@ export const setupWooCommerce = async () => {
 		);
 
 		setup(
-			'Setup Disable Webhook Verification plugin (inactive)',
+			'Setup Disable Webhook Verification plugin (active)',
 			async ( { plugins, requestUtils } ) => {
 				await installPluginResolveActiveState( {
 					requestUtils,
@@ -117,6 +121,20 @@ export const setupWooCommerce = async () => {
 			}
 		);
 	}
+
+	// Installed (inactive) in every environment — specs activate it themselves
+	// via requestUtils.activatePlugin/deactivatePlugin in their own beforeAll/afterAll.
+	setup(
+		'Setup Negative 12 Fee plugin (inactive)',
+		async ( { requestUtils, plugins } ) => {
+			await installPluginResolveActiveState( {
+				requestUtils,
+				plugins,
+				...negative12FeePlugin,
+				isActive: false,
+			} );
+		}
+	);
 
 	setup( 'Setup WooCommerce API keys', async ( { wooCommerceUtils } ) => {
 		if ( ! ( await wooCommerceUtils.apiKeysExist() ) ) {
@@ -215,4 +233,31 @@ export const setupWooCommerce = async () => {
 		await wooCommerceUtils.publishClassicCartPage();
 		await wooCommerceUtils.publishClassicCheckoutPage();
 	} );
+};
+
+export const waitForOrderStatus = async (
+	wooCommerceApi: WooCommerceApi,
+	orderId: number,
+	{
+		expectedStatus = 'processing',
+		timeout = 60_000,
+	}: { expectedStatus?: string; timeout?: number } = {}
+) => {
+	let order: WooCommerce.Order;
+
+	await expect
+		.poll(
+			async () => {
+				order = await wooCommerceApi.getOrder( orderId );
+				return order.status;
+			},
+			{
+				message: `Assert order #${ orderId } status is "${ expectedStatus }"`,
+				timeout,
+				intervals: [ 1_000, 2_500, 5_000, 10_000 ],
+			}
+		)
+		.toEqual( expectedStatus );
+
+	return order;
 };

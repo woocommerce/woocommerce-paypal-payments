@@ -29,7 +29,8 @@ return array(
 			$container->get( 'fraud-protection.asset_getter' ),
 			$container->get( 'ppcp.asset-version' ),
 			$container->get( 'woocommerce.logger.woocommerce' ),
-			$container->get( 'fraud-protection.recaptcha.rejection-counter' )
+			$container->get( 'fraud-protection.recaptcha.rejection-counter' ),
+			$container->get( 'wcgateway.settings.status' )
 		);
 	},
 	'fraud-protection.recaptcha.integration'          => static function (): RecaptchaIntegration {

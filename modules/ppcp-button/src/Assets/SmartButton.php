@@ -500,7 +500,7 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
 			add_action(
 				$this->mini_cart_button_renderer_hook(),
 				function () {
-					if ( $this->is_cart_price_total_zero() || $this->is_free_trial_cart() ) {
+					if ( $this->is_cart_price_total_zero() || $this->is_free_trial_cart() || ! $this->subscription_button_allowed() ) {
 						return;
 					}
 
@@ -536,7 +536,7 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
 			add_action(
 				$this->proceed_to_checkout_button_renderer_hook(),
 				function () use ( $enabled_on_cart ) {
-					if ( ! is_cart() || ! $enabled_on_cart || $this->is_free_trial_cart() || $this->is_cart_price_total_zero() || isset( reset( WC()->cart->cart_contents )['subscription_switch'] ) ) {
+					if ( ! is_cart() || ! $enabled_on_cart || $this->is_free_trial_cart() || $this->is_cart_price_total_zero() || ! $this->subscription_button_allowed() || isset( reset( WC()->cart->cart_contents )['subscription_switch'] ) ) {
 						return;
 					}
 
@@ -956,6 +956,18 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
 	}
 
 	/**
+	 * Whether the PayPal button is allowed for the current (subscription) cart.
+	 *
+	 * @return bool
+	 */
+	private function subscription_button_allowed(): bool {
+		return $this->subscription_helper->paypal_subscription_button_allowed(
+			$this->has_subscriptions() && $this->paypal_subscriptions_enabled(),
+			$this->can_save_vault_token()
+		);
+	}
+
+	/**
 	 * Retrieves the 3D Secure contingency settings.
 	 *
 	 * @return string
@@ -1111,7 +1123,9 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
 			'variable_paypal_subscription_variations' => $this->subscription_helper->variable_paypal_subscription_variations(),
 			'variable_paypal_subscription_variation_from_cart' => $this->subscription_helper->paypal_subscription_variation_from_cart(),
 			'subscription_product_allowed'            => $this->subscription_helper->checkout_subscription_product_allowed(),
+			'subscription_button_allowed'             => $this->subscription_button_allowed(),
 			'locations_with_subscription_product'     => $this->subscription_helper->locations_with_subscription_product(),
+			'subscriptions_accept_manual_renewals'    => $this->subscription_helper->accept_manual_renewals(),
 			'enforce_vault'                           => $this->has_subscriptions(),
 			'can_save_vault_token'                    => $this->can_save_vault_token(),
 			'is_free_trial_cart'                      => $is_free_trial_cart,

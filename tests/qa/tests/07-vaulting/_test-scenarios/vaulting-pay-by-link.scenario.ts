@@ -1,7 +1,7 @@
 /**
  * Internal dependencies
  */
-import { cards, payments, ShopOrder } from '../../../resources';
+import { cards, payments, PayPalPaymentDetails, ShopOrder } from '../../../resources';
 import { annotateVisitor, expect, test } from '../../../utils';
 
 const testSavePaymentMethod = ( testOrder: ShopOrder ) => {
@@ -154,36 +154,55 @@ const testVaultedPaymentMethod = ( testOrder: ShopOrder ) => {
 				payPalApi,
 				wooCommerceOrderEdit,
 			} ) => {
-				// Preconditions
-				await customerPaymentMethods.visit();
-				await customerPaymentMethods.savePaymentMethod( payment );
+				let order: WooCommerce.Order;
+				const { title: gatewayTitle } = payment.gateway;
+				
+				await test.step( `Precondition: save ${ gatewayTitle } payment method`, async () => {
+					await customerPaymentMethods.visit();
+					await customerPaymentMethods.savePaymentMethod( payment );
+				} );
 
-				// Make tested order:
-				const order =
-					await wooCommerceUtils.createApiOrder( testOrder );
+				await test.step( `Precondition: create order via API (dashboard)`, async () => {
+					order = await wooCommerceUtils.createApiOrder( testOrder );
+				} );
 
-				await payForOrder.visit( order.id, order.order_key );
-				await payForOrder.payPalUi.makePayment( { merchant, payment } );
-				await orderReceived.assertOrderDetails( testOrder );
+				await test.step( `Visit Pay for Order, make payment with ${ gatewayTitle }`, async () => {
+					await payForOrder.visit( order.id, order.order_key );
+					await payForOrder.payPalUi.makePayment( { merchant, payment } );
+				} );
 
-				const orderId = await orderReceived.getOrderNumber();
-				const { transaction_id: transactionId } =
-					await wooCommerceApi.getOrder( orderId );
-				const payPalFee = await payPalApi.getFee(
-					transactionId,
-					testOrder
-				);
-				const payPalPayout = await payPalApi.getPayout(
-					transactionId,
-					testOrder
-				);
-				const pcpData = { transactionId, payPalFee, payPalPayout };
+				let payPalPaymentDetails: PayPalPaymentDetails;
 
-				await wooCommerceOrderEdit.visit( orderId );
-				await wooCommerceOrderEdit.assertOrderDetails(
-					testOrder,
-					pcpData
-				);
+				await test.step( `Assert order received`, async () => {
+					await orderReceived.assertOrderDetails( testOrder );
+					await orderReceived.assertNoErrors();
+
+					const orderNumber = await orderReceived.getOrderNumber();
+					await expect(
+						order.id,
+						`Assert order ID (${ order.id }) matches order number on Order Received page`
+					).toEqual( orderNumber );				
+					
+					const transactionId =
+							( await wooCommerceApi.getOrder( order.id ) ).transaction_id;
+
+					payPalPaymentDetails = await payPalApi.getPayPalPaymentDetails(
+						transactionId,
+						testOrder,
+					);
+
+					if( payPalPaymentDetails.amount !== '0' ) { // can be 0 for free trial or free orders
+						await orderReceived.assertTotalEqualsPayPalTotal(
+							payPalPaymentDetails.amount,
+							testOrder.currency
+						);
+					}
+				} );
+
+				await test.step( `Assert details on order edit page`, async () => {
+					await wooCommerceOrderEdit.visit( order.id );
+					await wooCommerceOrderEdit.assertOrderDetails( testOrder, payPalPaymentDetails );
+				} );
 			}
 		);
 	} );

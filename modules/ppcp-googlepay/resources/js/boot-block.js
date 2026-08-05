@@ -111,8 +111,21 @@ const GooglePayComponent = ( { isEditing, buttonAttributes, onClick } ) => {
 	);
 };
 
+/**
+ * Google Pay doesn't support vaulting, so the only case where it's allowed on a
+ * subscription is paying to manually renew an existing one. Checked here so the express
+ * payment method isn't registered at all (no empty placeholder) when it can't be used.
+ */
+const isBlockedBySubscription = () => {
+	const locations = ppcpConfig?.locations_with_subscription_product;
+	if ( locations?.payorder ) {
+		return ! ppcpConfig?.subscriptions_accept_manual_renewals;
+	}
+	return !! locations?.cart;
+};
+
 const features = [ 'products' ];
-if ( buttonConfig?.is_enabled ) {
+if ( buttonConfig?.is_enabled && ! isBlockedBySubscription() ) {
 	registerExpressPaymentMethod( {
 		name: buttonData.id,
 		title: `PayPal - ${ buttonData.title }`,

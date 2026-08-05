@@ -95,6 +95,10 @@ class CartEndpoint {
 		);
 	}
 
+	/**
+	 * @throws \JsonException If cannot decode JSON from the response.
+	 * @throws Exception If response contains error code or has empty body.
+	 */
 	protected function perform_cart_request( string $path, array $args ): CartResponse {
 		$response = $this->request( $this->cart_endpoint_url( $path ), $args );
 
@@ -110,7 +114,20 @@ class CartEndpoint {
 			throw $error;
 		}
 
-		$json = json_decode( $response['body'], true );
+		$json = json_decode( $response['body'], true, 512, JSON_THROW_ON_ERROR );
+
+		if ( ! $json ) {
+			$error = new Exception( 'Failed to parse response: ' . $response['body'] );
+			$this->logger->warning(
+				$error->getMessage(),
+				array(
+					'args'     => $args,
+					'response' => $response,
+				)
+			);
+
+			throw $error;
+		}
 
 		$error_code    = $json['code'] ?? null;
 		$error_message = $json['message'] ?? null;
