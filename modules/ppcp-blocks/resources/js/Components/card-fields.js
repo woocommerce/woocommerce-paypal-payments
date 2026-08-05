@@ -1,4 +1,4 @@
-import { useEffect, useState } from '@wordpress/element';
+import { useEffect, useRef, useState } from '@wordpress/element';
 
 import {
 	PayPalScriptProvider,
@@ -28,20 +28,18 @@ export function CardFields( { config, eventRegistration, emitResponse } ) {
 		setCardFieldsForm( cardFieldsForm );
 	};
 
-	const getSavePayment = ( savePayment ) => {
-		localStorage.setItem( 'ppcp-save-card-payment', savePayment );
-	};
-
 	const hasSubscriptionProducts = cartHasSubscriptionProducts(
 		config.scriptData
 	);
-	useEffect( () => {
-		localStorage.removeItem( 'ppcp-save-card-payment' );
 
-		if ( hasSubscriptionProducts ) {
-			localStorage.setItem( 'ppcp-save-card-payment', 'true' );
-		}
-	}, [ hasSubscriptionProducts ] );
+	// A subscription always needs the card vaulted to pay its renewals; otherwise
+	// the buyer decides via the checkbox. Kept in a ref so that every submit reads
+	// the current value: an attempt that fails checkout validation must not change
+	// what the next attempt asks for.
+	const savePayment = useRef( hasSubscriptionProducts );
+	const getSavePayment = ( value ) => {
+		savePayment.current = value;
+	};
 
 	useEffect(
 		() =>
@@ -88,7 +86,7 @@ export function CardFields( { config, eventRegistration, emitResponse } ) {
 					createOrder={
 						config.scriptData.is_free_trial_cart
 							? undefined
-							: createOrder
+							: () => createOrder( savePayment.current )
 					}
 					onApprove={
 						config.scriptData.is_free_trial_cart
