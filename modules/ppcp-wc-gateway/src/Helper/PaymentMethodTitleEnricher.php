@@ -77,7 +77,20 @@ class PaymentMethodTitleEnricher {
 		}
 
 		$detail = $this->build_detail( $order );
-		if ( '' === $detail ) {
+
+		/**
+		 * The contextual detail appended to the payment method title.
+		 *
+		 * Also applied when the plugin found no detail, so an empty value can be
+		 * replaced with a custom one. Return an empty string to keep the title
+		 * unchanged without disabling enrichment globally.
+		 *
+		 * @param string   $detail The detail built from the order, or an empty string.
+		 * @param WC_Order $order  The order the title belongs to.
+		 */
+		$detail = (string) apply_filters( 'woocommerce_paypal_payments_payment_method_title_detail', $detail, $order );
+
+		if ( $detail === '' ) {
 			return $title;
 		}
 
@@ -86,7 +99,26 @@ class PaymentMethodTitleEnricher {
 			return $title;
 		}
 
-		return sprintf( '%1$s (%2$s)', $title, $detail );
+		$enriched = sprintf( '%1$s (%2$s)', $title, $detail );
+
+		/**
+		 * The payment method title after the detail was appended.
+		 *
+		 * Only applied when a detail is actually appended, never on the paths that
+		 * return the title unchanged.
+		 *
+		 * @param string   $enriched The assembled title, e.g. "PayPal (buyer@example.com)".
+		 * @param string   $title    The original payment method title.
+		 * @param string   $detail   The appended detail, already filtered.
+		 * @param WC_Order $order    The order the title belongs to.
+		 */
+		return (string) apply_filters(
+			'woocommerce_paypal_payments_enriched_payment_method_title',
+			$enriched,
+			$title,
+			$detail,
+			$order
+		);
 	}
 
 	/**
