@@ -50,7 +50,6 @@ function amountFromCartTotals( cartTotals ) {
 }
 
 if ( config && config.page_context && config.continuation ) {
-	// No express buttons and no SDK load — the order is already approved.
 	registerPaymentMethod( {
 		name: 'ppcp-gateway',
 		// The session's actual funding source, so the label cannot contradict

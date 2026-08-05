@@ -112,7 +112,6 @@ export function createMethodButton( {
 		return null;
 	}
 
-	// Pay Later requires the product details from eligibility.
 	if ( method === 'paylater' && ! payLaterDetails?.productCode ) {
 		return null;
 	}
@@ -174,7 +173,6 @@ export function renderButtons( {
 			continue;
 		}
 
-		// Insert only after full configuration.
 		wrapper.appendChild( button );
 		rendered.push( button );
 	}
