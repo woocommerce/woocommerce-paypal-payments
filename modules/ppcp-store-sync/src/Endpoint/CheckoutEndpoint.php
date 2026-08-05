@@ -43,6 +43,7 @@ class CheckoutEndpoint extends \WooCommerce\PayPalCommerce\StoreSync\Endpoint\Ag
      * The expected HTTP method.
      */
     protected const METHOD = 'POST';
+    protected const REQUIRED_SCOPES = array('cart', 'checkout');
     protected const ACTION_NAME_SUCCESS = 'woocommerce_paypal_payments_store_sync_checkout';
     protected const ACTION_NAME_ERROR = 'woocommerce_paypal_payments_store_sync_checkout_error';
     protected AgenticCheckoutProcessor $checkout_processor;
