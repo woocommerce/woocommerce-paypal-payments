@@ -18,10 +18,24 @@ import { handleError } from '../utils/errorHandler';
 
 // Element names per the SDK core's custom-element registry. The Pay Later
 // element carries its own localized label and takes no type attribute.
+// Each element reads its own border-radius custom property: the Venmo button
+// ignores the PayPal one, so the radius has to be set per funding source.
 const BUTTON_ELEMENTS = {
-	paypal: { tagName: 'paypal-button', type: 'pay' },
-	venmo: { tagName: 'venmo-button', type: 'pay' },
-	paylater: { tagName: 'paypal-pay-later-button', type: '' },
+	paypal: {
+		tagName: 'paypal-button',
+		type: 'pay',
+		radiusProperty: '--paypal-button-border-radius',
+	},
+	venmo: {
+		tagName: 'venmo-button',
+		type: 'pay',
+		radiusProperty: '--venmo-button-border-radius',
+	},
+	paylater: {
+		tagName: 'paypal-pay-later-button',
+		type: '',
+		radiusProperty: '--paypal-button-border-radius',
+	},
 };
 
 /**
@@ -30,17 +44,19 @@ const BUTTON_ELEMENTS = {
  * Components read their configuration when they connect, so every
  * attribute and property must be in place before insertion.
  *
- * @param {string}       tagName       - The web component tag.
- * @param {string}       type          - The button type attribute.
- * @param {Object}       styles        - Style config from ButtonStyleMapper.
- * @param {Object}       session       - The payment session.
- * @param {OrderCreator} createOrderFn - Returns the created order id.
- * @param {() => void}   [onClick]     - Called on click before the session starts.
+ * @param {string}       tagName        - The web component tag.
+ * @param {string}       type           - The button type attribute.
+ * @param {string}       radiusProperty - The element's border-radius custom property.
+ * @param {Object}       styles         - Style config from ButtonStyleMapper.
+ * @param {Object}       session        - The payment session.
+ * @param {OrderCreator} createOrderFn  - Returns the created order id.
+ * @param {() => void}   [onClick]      - Called on click before the session starts.
  * @return {HTMLElement} The configured button element.
  */
 function createButton(
 	tagName,
 	type,
+	radiusProperty,
 	styles,
 	session,
 	createOrderFn,
@@ -56,10 +72,7 @@ function createButton(
 	}
 
 	if ( styles.borderRadius ) {
-		button.style.setProperty(
-			'--paypal-button-border-radius',
-			styles.borderRadius
-		);
+		button.style.setProperty( radiusProperty, styles.borderRadius );
 	}
 
 	if ( styles.height ) {
@@ -119,6 +132,7 @@ export function createMethodButton( {
 	const button = createButton(
 		element.tagName,
 		element.type,
+		element.radiusProperty,
 		styles,
 		session,
 		createOrderFn,

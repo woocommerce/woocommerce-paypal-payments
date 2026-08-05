@@ -44,6 +44,36 @@ describe( 'createMethodButton', () => {
 		).toBe( '8px' );
 	} );
 
+	test( 'sets the border radius on the property each element actually reads', () => {
+		// The Venmo element ignores --paypal-button-border-radius, so a single
+		// shared property leaves Venmo square while the others round.
+		const venmo = createMethodButton( {
+			method: 'venmo',
+			styles: { borderRadius: '30px' },
+			session: {},
+			createOrderFn: noop,
+		} );
+
+		expect(
+			venmo.style.getPropertyValue( '--venmo-button-border-radius' )
+		).toBe( '30px' );
+		expect(
+			venmo.style.getPropertyValue( '--paypal-button-border-radius' )
+		).toBe( '' );
+
+		const payLater = createMethodButton( {
+			method: 'paylater',
+			styles: { borderRadius: '30px' },
+			session: {},
+			createOrderFn: noop,
+			payLaterDetails: { productCode: 'PAYLATER' },
+		} );
+
+		expect(
+			payLater.style.getPropertyValue( '--paypal-button-border-radius' )
+		).toBe( '30px' );
+	} );
+
 	test( 'returns null for pay later without product details', () => {
 		const button = createMethodButton( {
 			method: 'paylater',
