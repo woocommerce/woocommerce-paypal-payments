@@ -37,9 +37,6 @@ export async function onApprove( data ) {
 		} ),
 	} )
 		.then( ( response ) => response.json() )
-		.then( ( data ) => {
-			localStorage.removeItem( 'ppcp-save-card-payment' );
-		} )
 		.catch( ( err ) => {
 			console.error( err );
 		} );
