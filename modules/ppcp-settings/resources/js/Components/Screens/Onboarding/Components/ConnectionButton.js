@@ -3,7 +3,10 @@ import { useEffect, useCallback } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
 import classNames from 'classnames';
 import { OpenSignup } from '@ppcp-settings/Components/ReusableComponents/Icons';
-import { useHandleOnboardingButton } from '@ppcp-settings/hooks/useHandleConnections';
+import {
+	useHandleOnboardingButton,
+	setClickedEnvironment,
+} from '@ppcp-settings/hooks/useHandleConnections';
 import { OnboardingHooks } from '@ppcp-settings/data/onboarding/hooks';
 import BusyStateWrapper from '@ppcp-settings/Components/ReusableComponents/BusyStateWrapper';
 import { Notice } from '@ppcp-settings/Components/ReusableComponents/Elements';
@@ -72,6 +75,7 @@ const ConnectionButton = ( {
 	const {
 		onboardingUrl,
 		scriptLoaded,
+		isActiveEnvironment,
 		setCompleteHandler,
 		removeCompleteHandler,
 	} = useHandleOnboardingButton( isSandbox );
@@ -86,9 +90,41 @@ const ConnectionButton = ( {
 	} );
 	const environment = isSandbox ? 'sandbox' : 'production';
 
-	const handleButtonClick = useCallback( () => {
-		setConnectionButtonClicked( true );
-	}, [ setConnectionButtonClicked ] );
+	const handleButtonClick = useCallback(
+		( event ) => {
+			// Only the button matching the active environment is a real PayPal
+			// button; the other one is inert.
+			if ( ! isActiveEnvironment ) {
+				event.preventDefault();
+				return;
+			}
+
+			/**
+			 * partner.js wires the anchor to the minibrowser asynchronously and marks
+			 * it as ready by adding `data-secureWindowMsg` / `data-secureButtonMsg`.
+			 * Until then, a click would just follow the href and open the onboarding
+			 * page in a new browser tab - with no minibrowser and no
+			 * `onOnboardComplete` callback, so the connection is never saved. We
+			 * neutralize the click until the button is bound; the next click works.
+			 */
+			const anchor = event.currentTarget;
+			const isBoundToMiniBrowser =
+				!! anchor?.hasAttribute?.( 'data-securewindowmsg' ) ||
+				!! anchor?.hasAttribute?.( 'data-securebuttonmsg' );
+
+			if ( ! isBoundToMiniBrowser ) {
+				event.preventDefault();
+				return;
+			}
+
+			setConnectionButtonClicked( true );
+
+			// Record which environment the merchant clicked so the shared
+			// onOnboardComplete handler authenticates against the right account.
+			setClickedEnvironment( environment );
+		},
+		[ isActiveEnvironment, setConnectionButtonClicked, environment ]
+	);
 
 	// Reset button clicked state when onboardingUrl becomes available.
 	useEffect( () => {
@@ -100,7 +136,7 @@ const ConnectionButton = ( {
 	useEffect( () => {
 		if ( scriptLoaded && onboardingUrl ) {
 			window.PAYPAL.apps.Signup.render();
-			setCompleteHandler( environment );
+			setCompleteHandler();
 		}
 
 		return () => {
@@ -109,18 +145,17 @@ const ConnectionButton = ( {
 	}, [
 		scriptLoaded,
 		onboardingUrl,
-		environment,
 		setCompleteHandler,
 		removeCompleteHandler,
 	] );
 
 	return (
-		<BusyStateWrapper isBusy={ ! onboardingUrl }>
+		<BusyStateWrapper isBusy={ isActiveEnvironment && ! onboardingUrl }>
 			<ButtonOrPlaceholder
 				className={ buttonClassName }
 				variant={ variant }
 				showIcon={ showIcon }
-				href={ onboardingUrl }
+				href={ isActiveEnvironment ? onboardingUrl : undefined }
 				onClick={ handleButtonClick }
 			>
 				<span className="button-title">{ title }</span>

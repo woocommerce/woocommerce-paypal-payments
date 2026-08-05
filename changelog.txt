@@ -1,5 +1,34 @@
 *** Changelog ***
 
+= 4.1.2 - 2026-08-04 =
+* Enhancement - Advanced onboarding options for onboarding wizard #4496
+* Enhancement - Improved buyer-facing card decline reason display #4509
+* Enhancement - Add filter to allow Pay Later button and messaging when Vaulting is enabled #4508
+* Enhancement - Handle PayPal API address data returned as an array instead of an object #4516
+* Enhancement - Remove/Rework Cart Simulation #4473
+* Enhancement - Remove Pay with Crypto promotional pricing messaging #4540
+* Enhancement - Add filters to allow limiting of ingested/valid products #4547
+* Enhancement - Validators need extraction from CheckoutEndpoint #4370
+* Fix - invoice_id missing for existing customers paying with saved PayPal payment tokens #4541
+* Fix - Fractional WooCommerce quantities truncated to 0, causing invalid PayPal line items and checkout failures #4530
+* Fix - fraudnet.js: Uncaught ReferenceError PAYPAL is not defined on classic checkout when hosted_fields_loaded fires before fb.js loads #4520
+* Fix - Saved PayPal token in subscription change-payment flow moves active subscription to pending #4536
+* Fix - PHP warning in PayPal order tracking when WooCommerce Shipment Tracking sync reads non-array tracking metadata #4505
+* Fix - OXXO description is missing by default #4479
+* Fix - CHECKOUT.ORDER.APPROVED webhook fails with uncaught PayPalOrderMissingException causing HTTP 500 loop, pending orders and Apple Pay never captured #4534
+* Fix - Block Checkout "Sign up now" button label not replaced with "Proceed to PayPal" #4440
+* Fix - ppcp-local-alternative-payment-methods-css-gateway.css loads on every frontend page #4465
+* Fix - ACDC edit order page shows Processor Response 0000:Approved on edit order page #4478
+* Fix - Advanced Card Processing orders fail with "Order does not contain an id" error #4482
+* Fix - Mexico Enable Installments not visible on Overview tab in Features section #4461
+* Fix - Pay Later messaging tab merchant_identifier error showing until page reload when connecting manually #4459
+* Fix - Duplicated WooCommerce orders #4387
+* Fix - Google Pay / Apple Pay (Safari) button visible on PayPal gateway when Classic checkout removed from smart button location #4491
+* Fix - Manual renewal subscription from frontend block express checkout renders empty Apple Pay and Google Pay div #4497
+* Fix - Store Sync toggle missing when feature flag is active #4535
+* Fix - Inconsistent PayPal button behavior for subscriptions on cart #4542
+* Fix - Scope reCAPTCHA assets and markup to active PayPal payment locations #4548
+
 = 4.1.1 - 2026-07-07 =
 * Fix - Fix Pay upon Invoice gateway enqueued outside of checkout context with Block Mini Cart #4483
 * Fix - Too many requests to merchant-integrations API endpoint #4490

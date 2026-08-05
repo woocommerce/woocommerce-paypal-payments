@@ -10,6 +10,7 @@ use WooCommerce\PayPalCommerce\StoreSync\Merchant\MerchantMetadata;
 use WooCommerce\PayPalCommerce\StoreSync\Merchant\MerchantMetadataProvider;
 use WooCommerce\PayPalCommerce\TestCase;
 use WP_Error;
+use function Brain\Monkey\Actions\expectDone;
 use function Brain\Monkey\Functions\expect;
 use function Brain\Monkey\Functions\when;
 
@@ -145,6 +146,7 @@ class RegistrationServiceTest extends TestCase {
 	 * AND the webhook returns a failure response
 	 * THEN registration should fail with error
 	 * AND the registration token should not be saved
+	 * AND no local token should be deleted, since none exists to remove
 	 */
 	public function test_registration_fails_when_webhook_returns_error(): void {
 		$this->stub_merchant_metadata();
@@ -159,6 +161,7 @@ class RegistrationServiceTest extends TestCase {
 		$this->assertSame( 'registration_failed', $result->get_error_code() );
 		$this->assertSame( 'Invalid merchant data', $result->get_error_message() );
 		$this->assertFalse( $testee->was_token_saved );
+		$this->assertFalse( $testee->was_token_deleted );
 	}
 
 	/**
@@ -259,25 +262,62 @@ class RegistrationServiceTest extends TestCase {
 	/**
 	 * GIVEN a registered store
 	 * WHEN deregistering from PayPal Agentic Commerce
-	 * AND the webhook returns a failure response
-	 * THEN deregistration should fail with error
-	 * AND the store should still be considered registered
+	 * AND the endpoint rejects the deregistration (e.g. "store not found")
+	 * THEN the local registration token is still deleted, since the endpoint already
+	 *      considers the store gone
+	 * AND the deregistered action still fires
+	 * AND the store is no longer considered registered
 	 */
-	public function test_deregistration_fails_when_webhook_returns_error(): void {
+	public function test_deregistration_deletes_token_when_endpoint_rejects_it(): void {
 		$this->webhook_config->method( 'get_registration_uninstall_url' )
 			->willReturn( 'https://d-staging.joinhoney.com/webhooks/ws/uninstall' );
-		$this->stub_failed_webhook_response( 'Token not found' );
+		$this->stub_failed_webhook_response( 'store not found' );
 
 		$testee = $this->create_testable_service( true );
 
 		$this->assertTrue( $testee->is_registered(), 'Store should be registered before deregistration attempt' );
 
+		expectDone( 'woocommerce_paypal_payments_store_sync_deregistered' )->once();
+
+		$result = $testee->deregister();
+
+		$this->assertInstanceOf( RegistrationResult::class, $result );
+		$this->assertFalse( $result->success );
+		$this->assertTrue( $testee->was_token_deleted );
+		$this->assertFalse( $testee->is_registered(), 'Store should no longer be registered once the local token is removed' );
+	}
+
+	/**
+	 * GIVEN a registered store
+	 * WHEN deregistering from PayPal Agentic Commerce
+	 * AND the webhook request fails with a transport error
+	 * THEN the local registration token is still deleted (fire-and-forget)
+	 * AND the deregistered action still fires
+	 * AND the transport error is returned to the caller
+	 */
+	public function test_deregistration_deletes_token_on_transport_error(): void {
+		$this->webhook_config->method( 'get_registration_uninstall_url' )
+			->willReturn( 'https://d-staging.joinhoney.com/webhooks/ws/uninstall' );
+
+		$wp_error = new WP_Error( 'http_request_failed', 'Connection timeout' );
+
+		when( 'wp_remote_post' )->justReturn( $wp_error );
+		when( 'is_wp_error' )->alias(
+			function ( $thing ) {
+				return $thing instanceof WP_Error;
+			}
+		);
+
+		$testee = $this->create_testable_service( true );
+
+		expectDone( 'woocommerce_paypal_payments_store_sync_deregistered' )->once();
+
 		$result = $testee->deregister();
 
 		$this->assertInstanceOf( WP_Error::class, $result );
-		$this->assertSame( 'deregistration_failed', $result->get_error_code() );
-		$this->assertSame( 'Token not found', $result->get_error_message() );
-		$this->assertTrue( $testee->is_registered(), 'Store should still be registered after failed deregistration' );
+		$this->assertSame( 'webhook_request_failed', $result->get_error_code() );
+		$this->assertTrue( $testee->was_token_deleted );
+		$this->assertFalse( $testee->is_registered() );
 	}
 
 	/**

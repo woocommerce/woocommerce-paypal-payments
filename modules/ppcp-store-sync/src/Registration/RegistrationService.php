@@ -14,11 +14,10 @@ use WooCommerce\PayPalCommerce\StoreSync\Config\AgenticWebhookConfiguration;
 
 class RegistrationService {
 
-	private const REGISTRATION_TOKEN_KEY      = 'ppcp_agentic_registration_token';
-	private const ERROR_REGISTRATION_FAILED   = 'registration_failed';
-	private const ERROR_DEREGISTRATION_FAILED = 'deregistration_failed';
-	private const ERROR_WEBHOOK_REQUEST       = 'webhook_request_failed';
-	private const ERROR_WEBHOOK_RESPONSE      = 'webhook_response_failed';
+	private const REGISTRATION_TOKEN_KEY    = 'ppcp_agentic_registration_token';
+	private const ERROR_REGISTRATION_FAILED = 'registration_failed';
+	private const ERROR_WEBHOOK_REQUEST     = 'webhook_request_failed';
+	private const ERROR_WEBHOOK_RESPONSE    = 'webhook_response_failed';
 
 	private AgenticWebhookConfiguration $webhook_urls;
 	private MerchantMetadataProvider $metadata_provider;
@@ -69,7 +68,6 @@ class RegistrationService {
 
 			do_action( 'woocommerce_paypal_payments_store_sync_registered' );
 		} else {
-			$this->delete_registration_token();
 			$this->logger->error(
 				'Registration failed: Endpoint rejected registration',
 				array(
@@ -92,6 +90,12 @@ class RegistrationService {
 	/**
 	 * Deregister store from PayPal Agentic Commerce.
 	 *
+	 * Deregistration is fire-and-forget: the local token is always removed and the
+	 * deregistered action always fires, regardless of the endpoint's response. A
+	 * rejection (e.g. "store not found") means the store is already gone on the
+	 * endpoint's side, which is the desired outcome, not a reason to retry. Failures
+	 * are still logged.
+	 *
 	 * @return RegistrationResult|WP_Error|null Null if the store was not registered.
 	 */
 	public function deregister() {
@@ -111,11 +115,7 @@ class RegistrationService {
 					'error_message' => $result->get_error_message(),
 				)
 			);
-
-			return $result;
-		}
-
-		if ( ! $result->success ) {
+		} elseif ( ! $result->success ) {
 			$this->logger->error(
 				'Deregistration failed: Endpoint rejected deregistration',
 				array(
@@ -123,11 +123,6 @@ class RegistrationService {
 					'error'    => $result->error ?? 'Deregistration failed',
 					'message'  => $result->message,
 				)
-			);
-
-			return new WP_Error(
-				self::ERROR_DEREGISTRATION_FAILED,
-				$result->error ?? 'Deregistration failed'
 			);
 		}
 
