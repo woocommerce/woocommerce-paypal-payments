@@ -1,9 +1,13 @@
 /**
  * Static block-editor preview for a v6 express button.
  *
- * The editor must not load the SDK or hit the network (and only one PayPal
- * SDK may run per page), so this renders a labelled placeholder standing in
- * for the funding-source button.
+ * `edit` is a required property of registerExpressPaymentMethod, so this has
+ * to exist. It is a placeholder rather than a rendered button because v6 is
+ * not active in admin today, so nothing here is reachable: the editor still
+ * shows the v5 previews. v5 renders a real, merchant-styled button that
+ * follows the block's sizing controls, so matching it is part of v5
+ * retirement — createInstance() accepts a clientId instead of a client token,
+ * which is the path to doing so without a token round-trip.
  *
  * @package
  */
