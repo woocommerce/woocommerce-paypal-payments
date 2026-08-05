@@ -134,6 +134,28 @@ class SavePaymentMethodsModule implements ServiceModule, ExecutableModule {
 							if ( ! $save_payment_method ) {
 								return $data;
 							}
+						} elseif ( $payment_method === PayPalGateway::ID && $funding_source === 'apple_pay' ) {
+							if ( ! $settings_provider->save_paypal_and_venmo() ) {
+								return $data;
+							}
+
+							// Only vault Apple Pay when a subscription is being purchased.
+							// Apple guidelines forbid reusing Apple Pay for general returning-buyer
+							// checkout, so vaulting only serves merchant-initiated renewals.
+							$subscription_helper = $c->get( 'wc-subscriptions.helper' );
+							assert( $subscription_helper instanceof SubscriptionHelper );
+							if (
+								! $subscription_helper->cart_contains_subscription()
+								&& ! $subscription_helper->current_product_is_subscription()
+								&& ! $subscription_helper->order_pay_contains_subscription()
+							) {
+								return $data;
+							}
+
+							// Fall through: the generic merge below attaches the vault + customer
+							// attributes to the existing `apple_pay` payment_source key. Do not set
+							// usage_type/permit_multiple_payment_tokens, which are PayPal-wallet
+							// specific and not part of the Apple Pay save-during-purchase spec.
 						} elseif ( $payment_method === PayPalGateway::ID ) {
 							if ( ! $settings_provider->save_paypal_and_venmo() ) {
 								return $data;
