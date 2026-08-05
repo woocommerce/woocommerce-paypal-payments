@@ -58,10 +58,8 @@ class SdkV6Manager
      */
     public function enqueue(): void
     {
-        // The classic bootstrap renders into PHP-printed wrappers that do
-        // not exist on block pages; those are served by the block payment
-        // method script instead. v5 is still suppressed there (v6 owns the
-        // page) via should_load_on_current_page().
+        // The classic bootstrap renders into PHP-printed wrappers that do not
+        // exist on block pages, which the block payment method script serves.
         if (!$this->should_load_on_current_page() || $this->is_block_context()) {
             return;
         }
@@ -172,9 +170,7 @@ class SdkV6Manager
             'buyer_country' => $buyer_country,
             'locale' => str_replace('_', '-', get_locale()),
             'vaulting_enabled' => $this->vaulting_enabled,
-            // Drives the post-approval fork: with the final review enabled the
-            // buyer returns to checkout to confirm instead of the order being
-            // placed straight from the express flow.
+            // Drives the post-approval fork; see V6ExpressComponent.approve().
             'final_review' => $this->final_review_enabled,
             'ajax' => array('client_token' => array('endpoint' => \WC_AJAX::get_endpoint(ClientTokenEndpoint::ENDPOINT), 'nonce' => wp_create_nonce(ClientTokenEndpoint::nonce())), 'change_cart' => array('endpoint' => \WC_AJAX::get_endpoint(ChangeCartEndpoint::ENDPOINT), 'nonce' => wp_create_nonce(ChangeCartEndpoint::nonce())), 'create_order' => array('endpoint' => \WC_AJAX::get_endpoint(CreateOrderEndpoint::ENDPOINT), 'nonce' => wp_create_nonce(CreateOrderEndpoint::nonce())), 'approve_order' => array('endpoint' => \WC_AJAX::get_endpoint(ApproveOrderEndpoint::ENDPOINT), 'nonce' => wp_create_nonce(ApproveOrderEndpoint::nonce())), 'get_order' => array('endpoint' => \WC_AJAX::get_endpoint(GetOrderEndpoint::ENDPOINT), 'nonce' => wp_create_nonce(GetOrderEndpoint::nonce())), 'update_shipping' => array('endpoint' => \WC_AJAX::get_endpoint(UpdateShippingEndpoint::ENDPOINT), 'nonce' => wp_create_nonce(UpdateShippingEndpoint::nonce())), 'wc_store_api' => array('cart' => $store_api_base, 'select_shipping_rate' => $store_api_base . '/select-shipping-rate', 'update_customer' => $store_api_base . '/update-customer', 'nonce' => wp_create_nonce('wc_store_api'))),
             'urls' => array('checkout' => wc_get_checkout_url()),
