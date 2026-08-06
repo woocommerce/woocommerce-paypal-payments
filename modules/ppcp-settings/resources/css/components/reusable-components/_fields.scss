@@ -119,6 +119,16 @@
 			gap: 0;
 			margin: 0;
 		}
+
+		&.ppcp--has-error input {
+			border-color: var(--color-error);
+		}
+	}
+
+	.ppcp-r-control-error {
+		@include font(11, 16, 450);
+		margin: 4px 0 0;
+		color: var(--color-error);
 	}
 }
 
