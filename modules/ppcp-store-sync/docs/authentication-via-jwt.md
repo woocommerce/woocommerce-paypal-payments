@@ -1,9 +1,8 @@
-# JWT Authentication Flow
+# JWT authentication flow
 
 ## Overview
 
-The Agentic Commerce API uses JWT (JSON Web Tokens) for authenticating requests from PayPal's
-Commerce Platform. This document explains how JWT authentication works in our implementation.
+The Agentic Commerce API uses JWT (JSON Web Tokens) for authenticating requests from PayPal's Commerce Platform. This document explains how JWT authentication works in our implementation.
 
 ## What is a JWT?
 
@@ -17,7 +16,7 @@ A JWT is a compact, URL-safe token consisting of three Base64-encoded parts sepa
 - **Payload** - Claims/data (base64-decodable)
 - **Signature** - Cryptographic signature verifying token authenticity
 
-## Authentication Flow
+## Authentication flow
 
 ```
 1. Request arrives via the HTTP `Authorization` header
@@ -37,7 +36,7 @@ A JWT is a compact, URL-safe token consisting of three Base64-encoded parts sepa
 5. Request proceeds if authentication successful
 ```
 
-## Token Payload Structure
+## Token payload structure
 
 PayPal tokens contain these standard JWT claims:
 
@@ -53,9 +52,9 @@ PayPal tokens contain these standard JWT claims:
 }
 ```
 
-## Verification Steps
+## Verification steps
 
-### Automatic Verification (JWT::decode)
+### Automatic verification (JWT::decode)
 
 These are handled automatically by the Firebase JWT library:
 
@@ -63,7 +62,7 @@ These are handled automatically by the Firebase JWT library:
 - **Expiration (`exp`)** - Token must not be expired
 - **Not Before (`iat`)** - Token must be valid at current time
 
-### Business Rule Verification (verify_claims)
+### Business rule verification (verify_claims)
 
 Additional checks performed by our code:
 
@@ -71,9 +70,9 @@ Additional checks performed by our code:
 - **Scopes (`scope`)** - Must contain all required permissions for the endpoint
 - **Merchant ID (`external_id`)** - Must match the PayPal merchant ID configured on this WooCommerce store
 
-## Implementation Classes
+## Implementation classes
 
-### JwtAuthService
+### [JwtAuthService](https://github.com/woocommerce/woocommerce-paypal-payments/blob/dev/develop/modules/ppcp-store-sync/src/Auth/JwtAuthService.php)
 
 Handles token parsing and validation:
 
@@ -85,7 +84,7 @@ $token = $auth_service->get_token( $bearer_token );
 $result = $auth_service->verify_claims( $token, ['cart'] );
 ```
 
-### AgenticRestEndpoint
+### [AgenticRestEndpoint](https://github.com/woocommerce/woocommerce-paypal-payments/blob/dev/develop/modules/ppcp-store-sync/src/Endpoint/AgenticRestEndpoint.php)
 
 Base class for all agentic endpoints. Orchestrates authentication in `check_permission()`:
 
@@ -102,21 +101,17 @@ public function check_permission( WP_REST_Request $request ) {
 }
 ```
 
-### Endpoint Scope Requirements
+### Endpoint scope requirements
 
-Each endpoint can specify required scopes via a constant - the default scope is `array( 'cart' )`:
+An endpoint declares the scopes it needs through a constant, which the base class checks for every request:
 
 ```php
-class CreateCartEndpoint extends AgenticRestEndpoint {
-    protected const REQUIRED_SCOPES = array( 'cart' );
-}
-
 class CheckoutEndpoint extends AgenticRestEndpoint {
     protected const REQUIRED_SCOPES = array( 'cart', 'checkout' );
 }
 ```
 
-## Error Responses
+## Error responses
 
 | Error Code                | HTTP Status | Description                                |
 |---------------------------|-------------|--------------------------------------------|
@@ -129,24 +124,21 @@ class CheckoutEndpoint extends AgenticRestEndpoint {
 | `merchant_not_configured` | 500         | Merchant ID not configured on store        |
 | `key_unavailable`         | 503         | Could not retrieve PayPal public keys      |
 
-## Local Development
+## Local development
 
-The relaxed authentication service `SandboxAuthService` is a drop-in replacement to unlock REST
-endpoints on a local or dev environment without providing a cryptographically valid JWT token.
+The relaxed authentication service [`SandboxAuthService`](https://github.com/woocommerce/woocommerce-paypal-payments/blob/dev/develop/modules/ppcp-store-sync/src/Auth/SandboxAuthService.php) is a drop-in replacement to unlock REST endpoints on a local or dev environment without providing a cryptographically valid JWT token.
 
 This drop-in is automatically enabled when connected using a PayPal sandbox merchant.
 
-To simulate real production authentication as a sandbox merchant, the following flag can be used in
-`wp-config.php`:
+To simulate real production authentication as a sandbox merchant, the following flag can be used in `wp-config.php`:
 
 ```php
 define( 'PPCP_AGENTIC_FULL_AUTH', true );
 ```
 
-### Relaxed Rules
+### Relaxed rules
 
-The sandbox authentication mainly checks if the Authorization header and the JWT payload have a
-valid structure, and uses the expected issuer string.
+The sandbox authentication mainly checks if the Authorization header and the JWT payload have a valid structure, and uses the expected issuer string.
 
 | Feature                     | SandboxAuthService         | JwtAuthService                        |
 |-----------------------------|----------------------------|---------------------------------------|
@@ -173,7 +165,7 @@ valid structure, and uses the expected issuer string.
 | Malformed JSON       | ❌ Rejected         | ❌ Rejected                      |
 | Missing "Bearer"     | ❌ Rejected         | ❌ Rejected                      |
 
-### Security Notes
+### Security notes
 
 - Production environments **always** use full authentication
 - Sandbox mode cannot process real payments
