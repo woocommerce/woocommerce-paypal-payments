@@ -88,16 +88,24 @@ class StorePayPalCart
      */
     public function is_ready_for_payment(): bool
     {
-        // An empty cart cannot be paid.
-        if (empty($this->store_items)) {
-            return \false;
-        }
         // Any validation issue is a blocker that must be resolved before payment attempt.
         if (!$this->validation->is_empty()) {
             return \false;
         }
-        // Missing payment token, cart is not ready.
-        if (!$this->paypal_cart->payment_method()->token()) {
+        // An empty cart cannot be paid.
+        if (empty($this->store_items)) {
+            $this->validation->add_missing_field('items', 'Cannot pay cart: It is empty.');
+            return \false;
+        }
+        $method = $this->paypal_cart()->payment_method();
+        // Cart not reads: missing payment type (expected "paypal").
+        if (!$method->type()) {
+            $this->validation->add_missing_field('payment_method.type', 'Cannot pay cart: Payment type is not defined.');
+            return \false;
+        }
+        // Cart not reads: missing payment token.
+        if (!$method->token()) {
+            $this->validation->add_missing_field('payment_method.token', 'Cannot pay cart: PayPal order is missing.');
             return \false;
         }
         return \true;

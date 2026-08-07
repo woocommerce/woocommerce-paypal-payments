@@ -9,6 +9,7 @@ use WC_Order;
 use WC_Product;
 use WooCommerce\PayPalCommerce\Assets\AssetGetter;
 use WooCommerce\PayPalCommerce\FraudProtection\PersistentCounter;
+use WooCommerce\PayPalCommerce\WcGateway\Helper\SettingsStatus;
 use WP_Error;
 use WP_Post;
 class Recaptcha
@@ -32,6 +33,7 @@ class Recaptcha
     private string $asset_version;
     private LoggerInterface $logger;
     private PersistentCounter $rejection_counter;
+    private SettingsStatus $settings_status;
     private float $last_v3_score = 0;
     /**
      * @param RecaptchaIntegration $integration
@@ -40,8 +42,9 @@ class Recaptcha
      * @param string               $asset_version
      * @param LoggerInterface      $logger
      * @param PersistentCounter    $rejection_counter
+     * @param SettingsStatus       $settings_status
      */
-    public function __construct(\WooCommerce\PayPalCommerce\FraudProtection\Recaptcha\RecaptchaIntegration $integration, array $payment_methods, AssetGetter $asset_getter, string $asset_version, LoggerInterface $logger, PersistentCounter $rejection_counter)
+    public function __construct(\WooCommerce\PayPalCommerce\FraudProtection\Recaptcha\RecaptchaIntegration $integration, array $payment_methods, AssetGetter $asset_getter, string $asset_version, LoggerInterface $logger, PersistentCounter $rejection_counter, SettingsStatus $settings_status)
     {
         $this->integration = $integration;
         $this->payment_methods = $payment_methods;
@@ -49,6 +52,7 @@ class Recaptcha
         $this->asset_version = $asset_version;
         $this->logger = $logger;
         $this->rejection_counter = $rejection_counter;
+        $this->settings_status = $settings_status;
     }
     protected function should_use_recaptcha(): bool
     {
@@ -73,7 +77,7 @@ class Recaptcha
     }
     public function enqueue_scripts(): void
     {
-        if (!is_checkout() && !is_cart() && !is_product()) {
+        if (!$this->should_enqueue_for_current_location()) {
             return;
         }
         if (!$this->should_use_recaptcha()) {
@@ -93,7 +97,69 @@ class Recaptcha
         if (!$this->should_use_recaptcha()) {
             return '';
         }
+        if (!$this->should_enqueue_for_current_location()) {
+            return '';
+        }
         return '<div id="' . esc_attr(self::V2_CONTAINER_ID) . '" style="margin:20px 0;"></div>';
+    }
+    /**
+     * Returns the current page's smart button location key, or null when the
+     * current request is not one of the locations reCAPTCHA supports.
+     *
+     * Mirrors the location keys SmartButton uses via SettingsStatus. Checkout
+     * is split into classic vs. block/express since a merchant may enable
+     * PayPal for one but not the other.
+     */
+    private function current_smart_button_location(): ?string
+    {
+        if (is_product()) {
+            return 'product';
+        }
+        if (is_cart()) {
+            return 'cart';
+        }
+        if (is_checkout()) {
+            return has_block('woocommerce/checkout') ? 'checkout-block-express' : 'checkout';
+        }
+        return null;
+    }
+    /**
+     * Whether reCAPTCHA assets/markup are allowed to load for the current
+     * page, based on whether the merchant has PayPal enabled for this smart
+     * button location — the same gating SmartButton uses, so reCAPTCHA never
+     * loads where no PayPal button/gateway can actually be used.
+     */
+    private function should_enqueue_for_current_location(): bool
+    {
+        $location = $this->current_smart_button_location();
+        $enabled_for_location = null !== $location && $this->settings_status->is_smart_button_enabled_for_location($location);
+        $should_enqueue = $enabled_for_location || $this->has_protected_gateway_on_current_page();
+        /**
+         * Filters whether reCAPTCHA assets and markup should be enqueued or
+         * rendered for the current request.
+         *
+         * @param bool        $should_enqueue Whether reCAPTCHA should be enqueued.
+         * @param string|null $location       The detected smart button location, or null when none applies.
+         */
+        return (bool) apply_filters('woocommerce_paypal_payments_recaptcha_should_enqueue', $should_enqueue, $location);
+    }
+    /**
+     * True when a reCAPTCHA-protected gateway (ACDC card fields, AXO, card button,
+     * standard PayPal) is available on a checkout / order-pay / add-payment-method
+     * page — surfaces whose availability is independent of the smart-button location.
+     */
+    private function has_protected_gateway_on_current_page(): bool
+    {
+        if (!is_checkout() && !is_add_payment_method_page()) {
+            return \false;
+        }
+        $available = WC()->payment_gateways->get_available_payment_gateways();
+        foreach ($this->payment_methods as $id) {
+            if (isset($available[$id])) {
+                return \true;
+            }
+        }
+        return \false;
     }
     public function intercept_paypal_ajax(array $request_data): void
     {

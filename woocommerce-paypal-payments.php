@@ -1,22 +1,23 @@
 <?php
 
 /**
- * Plugin Name: WooCommerce PayPal Payments
- * Plugin URI:  https://woocommerce.com/products/woocommerce-paypal-payments/
- * Description: PayPal's latest complete payments processing solution. Accept PayPal, Pay Later, credit/debit cards, alternative digital wallets local payment types and bank accounts. Turn on only PayPal options or process a full suite of payment methods. Enable global transaction with extensive currency and country coverage.
- * Version:     4.1.1
- * Author:      PayPal
- * Author URI:  https://paypal.com/
- * License:     GPL-2.0
- * Requires PHP: 7.4
- * Requires Plugins: woocommerce
- * Requires at least: 6.5
- * WC requires at least: 9.6
- * WC tested up to: 10.9
- * Text Domain: woocommerce-paypal-payments
- *
- * @package WooCommerce\PayPalCommerce
- */
+* Plugin Name: WooCommerce PayPal Payments
+* Plugin URI:  https://woocommerce.com/products/woocommerce-paypal-payments/
+* Description: PayPal's latest complete payments processing solution. Accept PayPal, Pay Later, credit/debit cards, alternative digital wallets local payment types and bank accounts. Turn on only PayPal options or process a full suite of payment methods. Enable global transaction with extensive currency and country coverage.
+* Version: 4.1.2+pcp-6680-pay-pal-subscriptions-renewals-not-processing.98f5c01
+SHA: 98f5c019a40fd90e4c41ac47f904a1b842b1a632
+* Author:      PayPal
+* Author URI:  https://paypal.com/
+* License:     GPL-2.0
+* Requires PHP: 7.4
+* Requires Plugins: woocommerce
+* Requires at least: 6.5
+* WC requires at least: 9.6
+* WC tested up to: 10.9
+* Text Domain: woocommerce-paypal-payments
+*
+* @package WooCommerce\PayPalCommerce
+*/
 declare (strict_types=1);
 namespace WooCommerce\PayPalCommerce;
 
@@ -24,7 +25,7 @@ define('PAYPAL_API_URL', 'https://api-m.paypal.com');
 define('PAYPAL_URL', 'https://www.paypal.com');
 define('PAYPAL_SANDBOX_API_URL', 'https://api-m.sandbox.paypal.com');
 define('PAYPAL_SANDBOX_URL', 'https://www.sandbox.paypal.com');
-define('PAYPAL_INTEGRATION_DATE', '2026-06-11');
+define('PAYPAL_INTEGRATION_DATE', '2026-07-22');
 define('PPCP_PAYPAL_BN_CODE', 'Woo_PPCP');
 !defined('CONNECT_WOO_CLIENT_ID') && define('CONNECT_WOO_CLIENT_ID', 'AcCAsWta_JTL__OfpjspNyH7c1GGHH332fLwonA5CwX4Y10mhybRZmHLA0GdRbwKwjQIhpDQy0pluX_P');
 !defined('CONNECT_WOO_SANDBOX_CLIENT_ID') && define('CONNECT_WOO_SANDBOX_CLIENT_ID', 'AYmOHbt1VHg-OZ_oihPdzKEVbU3qg0qXonBcAztuzniQRaKE0w1Hr762cSFwd4n8wxOl-TCWohEa0XM_');

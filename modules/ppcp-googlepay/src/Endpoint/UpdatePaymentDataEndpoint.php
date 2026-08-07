@@ -138,11 +138,11 @@ class UpdatePaymentDataEndpoint
         }
         $customer->set_billing_postcode($payment_data['shippingAddress']['postalCode'] ?? '');
         $customer->set_billing_country($payment_data['shippingAddress']['countryCode'] ?? '');
-        $customer->set_billing_state('');
+        $customer->set_billing_state($payment_data['shippingAddress']['administrativeArea'] ?? '');
         $customer->set_billing_city($payment_data['shippingAddress']['locality'] ?? '');
         $customer->set_shipping_postcode($payment_data['shippingAddress']['postalCode'] ?? '');
         $customer->set_shipping_country($payment_data['shippingAddress']['countryCode'] ?? '');
-        $customer->set_shipping_state('');
+        $customer->set_shipping_state($payment_data['shippingAddress']['administrativeArea'] ?? '');
         $customer->set_shipping_city($payment_data['shippingAddress']['locality'] ?? '');
         // Save the data.
         $customer->save();

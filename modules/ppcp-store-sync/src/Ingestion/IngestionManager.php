@@ -23,7 +23,8 @@ class IngestionManager
     private MerchantMetadataProvider $metadata_provider;
     private LoggerInterface $logger;
     private ProductManager $product_manager;
-    public function __construct(IngestionConfiguration $configuration, \WooCommerce\PayPalCommerce\StoreSync\Ingestion\IngestionBatchProvider $batch_provider, AgenticWebhookConfiguration $webhook_urls, MerchantMetadataProvider $metadata_provider, LoggerInterface $logger, ProductManager $product_manager)
+    private \WooCommerce\PayPalCommerce\StoreSync\Ingestion\ProductFilter $product_filter;
+    public function __construct(IngestionConfiguration $configuration, \WooCommerce\PayPalCommerce\StoreSync\Ingestion\IngestionBatchProvider $batch_provider, AgenticWebhookConfiguration $webhook_urls, MerchantMetadataProvider $metadata_provider, LoggerInterface $logger, ProductManager $product_manager, \WooCommerce\PayPalCommerce\StoreSync\Ingestion\ProductFilter $product_filter)
     {
         $this->configuration = $configuration;
         $this->batch_provider = $batch_provider;
@@ -31,6 +32,7 @@ class IngestionManager
         $this->metadata_provider = $metadata_provider;
         $this->logger = $logger;
         $this->product_manager = $product_manager;
+        $this->product_filter = $product_filter;
     }
     /**
      * Initialize the ingestion manager by registering hooks and scheduling recurring sync.
@@ -50,6 +52,8 @@ class IngestionManager
         // Handle re-sync on product update.
         add_action('woocommerce_update_product', array($this, 'mark_product_for_sync'));
         add_action('woocommerce_product_set_stock', array($this, 'mark_product_for_sync'));
+        // Public fast path: release every parked product for immediate re-evaluation.
+        add_action('woocommerce_paypal_payments_store_sync_invalidate_eligibility', array($this->product_filter, 'invalidate_all'));
     }
     /**
      * Schedule the recurring sync action.
@@ -84,8 +88,8 @@ class IngestionManager
         // Get products needing sync using WooCommerce APIs.
         $product_ids = $this->batch_provider->get_batch();
         if (empty($product_ids)) {
+            $this->logger->info('[Sync] Empty batch - no products need syncing');
             return;
-            // Nothing to sync.
         }
         $sync_job = $this->create_new_sync_job($product_ids);
         $sync_job->execute();
@@ -103,8 +107,8 @@ class IngestionManager
         if (!$product) {
             return;
         }
-        $product->delete_meta_data('_ppcp_agentic_last_sync');
-        $product->save_meta_data();
+        // An edit may change eligibility or completeness: re-evaluate at first priority.
+        $this->product_filter->release($product);
     }
     /**
      * Creates a new SyncJob instance for the given product IDs.
@@ -115,6 +119,6 @@ class IngestionManager
     private function create_new_sync_job(array $product_ids): \WooCommerce\PayPalCommerce\StoreSync\Ingestion\SyncJob
     {
         $metadata = $this->metadata_provider->get_metadata();
-        return new \WooCommerce\PayPalCommerce\StoreSync\Ingestion\SyncJob($this->webhook_urls->get_product_ingestion_url(), $metadata->store_url, $product_ids, $this->logger, $this->product_manager);
+        return new \WooCommerce\PayPalCommerce\StoreSync\Ingestion\SyncJob($this->webhook_urls->get_product_ingestion_url(), $metadata->store_url, $product_ids, $this->logger, $this->product_manager, $this->product_filter);
     }
 }

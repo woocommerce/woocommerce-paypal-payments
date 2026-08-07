@@ -103,12 +103,10 @@ class ProductManager
         /**
          * Filters the product description for PayPal Agentic Commerce ingestion.
          *
-         * @since 3.4.0
-         *
          * @param string     $plain_text The plain text description.
          * @param WC_Product $product    The WooCommerce product object.
          */
-        return apply_filters('woocommerce_paypal_payments_agentic_commerce_item_description', $plain_text, $product);
+        return apply_filters('woocommerce_paypal_payments_store_sync_item_description', $plain_text, $product);
     }
     /**
      * @param WC_Product $product The WooCommerce product object.
@@ -119,12 +117,10 @@ class ProductManager
         /**
          * Filters the product title for PayPal Agentic Commerce ingestion.
          *
-         * @since 3.4.0
-         *
          * @param string     $title   The product title.
          * @param WC_Product $product The WooCommerce product object.
          */
-        return apply_filters('woocommerce_paypal_payments_agentic_commerce_item_title', $product->get_name(), $product);
+        return apply_filters('woocommerce_paypal_payments_store_sync_item_title', $product->get_name(), $product);
     }
     /**
      * @param WC_Product $product The WooCommerce product object.
@@ -135,12 +131,10 @@ class ProductManager
         /**
          * Filters the product link for PayPal Agentic Commerce ingestion.
          *
-         * @since 3.4.0
-         *
          * @param string     $link    The product permalink.
          * @param WC_Product $product The WooCommerce product object.
          */
-        return apply_filters('woocommerce_paypal_payments_agentic_commerce_item_link', $product->get_permalink(), $product);
+        return apply_filters('woocommerce_paypal_payments_store_sync_item_link', $product->get_permalink(), $product);
     }
     /**
      * @param WC_Product $product  The WooCommerce product object.
@@ -154,12 +148,10 @@ class ProductManager
         /**
          * Filters the product image URL for PayPal Agentic Commerce ingestion.
          *
-         * @since 3.4.0
-         *
          * @param string     $image_url The product image URL.
          * @param WC_Product $product   The WooCommerce product object.
          */
-        return apply_filters('woocommerce_paypal_payments_agentic_commerce_item_image', $image_url, $product);
+        return apply_filters('woocommerce_paypal_payments_store_sync_item_image', $image_url, $product);
     }
     /**
      * @param WC_Product $product The WooCommerce product object.
@@ -172,12 +164,10 @@ class ProductManager
         /**
          * Filters the product availability for PayPal Agentic Commerce usage.
          *
-         * @since 3.4.0
-         *
          * @param string     $availability The mapped availability status.
          * @param WC_Product $product      The WooCommerce product object.
          */
-        return apply_filters('woocommerce_paypal_payments_agentic_commerce_item_availability', $availability, $product);
+        return apply_filters('woocommerce_paypal_payments_store_sync_item_availability', $availability, $product);
     }
     /**
      * @param WC_Product $product The WooCommerce product object.
@@ -192,12 +182,10 @@ class ProductManager
         /**
          * Filters the product type for PayPal Agentic Commerce usage.
          *
-         * @since 3.4.0
-         *
          * @param string     $plain_text The plain text category list.
          * @param WC_Product $product    The WooCommerce product object.
          */
-        return apply_filters('woocommerce_paypal_payments_agentic_commerce_item_product_type', $plain_text, $product);
+        return apply_filters('woocommerce_paypal_payments_store_sync_item_product_type', $plain_text, $product);
     }
     /**
      * @param string|mixed $price WooCommerce uses strings, but any numeric value is accepted.

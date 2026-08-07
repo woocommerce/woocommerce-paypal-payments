@@ -87,8 +87,12 @@ class WcPaymentTokensModule implements ServiceModule, ExecutableModule
                     return $tokens;
                 }
                 $is_post = isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST';
-                // Exclude ApplePay tokens from payment pages.
-                if ((is_checkout() || is_cart() || is_product()) && !$is_post) {
+                // Exclude ApplePay tokens from payment pages, regardless of request method.
+                // Apple Pay tokens are only usable for merchant-initiated subscription renewals,
+                // never buyer-selectable at checkout. The classic checkout re-renders its payment
+                // fields via a POST `update_order_review` AJAX call, so a `! $is_post` guard would
+                // let the token leak back into the selectable saved-methods list.
+                if (is_checkout() || is_cart() || is_product()) {
                     foreach ($tokens as $index => $token) {
                         if ($token instanceof \WooCommerce\PayPalCommerce\WcPaymentTokens\PaymentTokenApplePay) {
                             unset($tokens[$index]);

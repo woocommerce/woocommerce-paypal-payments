@@ -413,6 +413,41 @@ class SettingsProvider
         return $this->settings_model->get_save_paypal_and_venmo();
     }
     /**
+     * Whether Pay Later may run alongside vaulting ("Save PayPal and Venmo").
+     *
+     * By default the plugin disables all Pay Later features when vaulting is
+     * active. PayPal-whitelisted merchants can return true from the filter below
+     * to bypass that restriction.
+     *
+     * @return bool True when Pay Later is allowed together with vaulting.
+     */
+    public function pay_later_with_vaulting_enabled(): bool
+    {
+        /**
+         * Filters whether Pay Later features may run while "Save PayPal and Venmo"
+         * (vaulting) is active.
+         *
+         * Intended for PayPal-whitelisted accounts that are allowed to offer Pay
+         * Later and Vaulting at the same time.
+         *
+         * @param bool $enabled Whether Pay Later is allowed alongside vaulting. Default false.
+         */
+        return (bool) apply_filters('woocommerce_paypal_payments_pay_later_with_vaulting', \false);
+    }
+    /**
+     * Whether Pay Later is currently disabled because of vaulting.
+     *
+     * Reflects the live, effective state: true only when vaulting ("Save PayPal and
+     * Venmo") is currently enabled AND the merchant has not opted into the override
+     * via {@see self::pay_later_with_vaulting_enabled()}.
+     *
+     * @return bool True when Pay Later features must be suppressed because of vaulting.
+     */
+    public function pay_later_disabled_by_vaulting(): bool
+    {
+        return $this->save_paypal_and_venmo() && !$this->pay_later_with_vaulting_enabled();
+    }
+    /**
      * Gets the instant payments only setting.
      *
      * @return bool True if instant payments only setting is enabled, false otherwise.

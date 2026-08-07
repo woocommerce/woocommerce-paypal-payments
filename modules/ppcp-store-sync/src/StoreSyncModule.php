@@ -17,6 +17,7 @@ use WooCommerce\PayPalCommerce\StoreSync\Endpoint\AgenticRestEndpoint;
 use WooCommerce\PayPalCommerce\StoreSync\Setting\AgenticSettingsModule;
 use WooCommerce\PayPalCommerce\StoreSync\Registration\RegistrationService;
 use WooCommerce\PayPalCommerce\StoreSync\Registration\RegistrationEligibility;
+use WooCommerce\PayPalCommerce\StoreSync\Registration\ReconciliationService;
 use WooCommerce\PayPalCommerce\StoreSync\Setting\AgenticSettingsDataModel;
 use WooCommerce\PayPalCommerce\StoreSync\CartValidation\CartValidationProcessor;
 use WooCommerce\PayPalCommerce\StoreSync\CartValidation\ValidatorInterface;
@@ -57,6 +58,8 @@ class StoreSyncModule implements ServiceModule, ExecutableModule
         assert($eligibility_check instanceof RegistrationEligibility);
         $ingestion_manager = $container->get('agentic.ingestion-manager');
         assert($ingestion_manager instanceof IngestionManager);
+        $reconciler = $container->get('agentic.registration.reconciler');
+        assert($reconciler instanceof ReconciliationService);
         // Settings extension always available (merchants need to see the toggle).
         $settings_module = $container->get('agentic.settings.module');
         assert($settings_module instanceof AgenticSettingsModule);
@@ -65,15 +68,18 @@ class StoreSyncModule implements ServiceModule, ExecutableModule
         $this->add_cleanup_actions($registration_handler, $ingestion_manager);
         // Sync eligibility cache on init (when WC is available).
         $this->sync_eligibility_cache($agentic_settings, $eligibility_check);
+        // Reconcile the registration state whenever the agentic settings are saved.
+        add_action('woocommerce_paypal_payments_settings_saved', static function ($model) use ($reconciler): void {
+            if (!$model instanceof AgenticSettingsDataModel) {
+                return;
+            }
+            $reconciler->reconcile();
+        });
         // Early exit if features should not be initialized.
         if (!$agentic_settings->should_initialize_features()) {
-            $this->ensure_deregistered($registration_handler);
             return \true;
         }
         // Feature is active and merchant is eligible: Initialize everything.
-        if ($this->should_auto_register()) {
-            $this->ensure_registered($registration_handler);
-        }
         // Public REST endpoints.
         add_action('rest_api_init', static function () use ($container): void {
             foreach (self::REST_ENDPOINT_SERVICES as $service_id) {
@@ -116,32 +122,5 @@ class StoreSyncModule implements ServiceModule, ExecutableModule
             $settings->set_eligible($eligibility_check->is_eligible());
             $settings->save();
         });
-    }
-    private function ensure_registered(RegistrationService $registration_service): void
-    {
-        if ($registration_service->is_registered()) {
-            return;
-        }
-        add_action('init', static fn() => $registration_service->register());
-    }
-    private function ensure_deregistered(RegistrationService $registration_service): void
-    {
-        if (!$registration_service->is_registered()) {
-            return;
-        }
-        add_action('init', static fn() => $registration_service->deregister());
-    }
-    /**
-     * Whether the auto-registration is enabled for this site.
-     *
-     * By default, the plugin automatically registers when the merchant is eligible and the feature
-     * is enabled. For testing or troubleshooting, this behavior can be disabled by adding the
-     * following constant to wp-config.php:
-     *
-     *   define( 'PPCP_AGENTIC_AUTO_REGISTER', false );
-     */
-    private function should_auto_register(): bool
-    {
-        return !defined('PPCP_AGENTIC_AUTO_REGISTER') || PPCP_AGENTIC_AUTO_REGISTER;
     }
 }

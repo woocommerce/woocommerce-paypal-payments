@@ -122,6 +122,15 @@ class IncomingWebhookEndpoint
      */
     public function verify_request(\WP_REST_Request $request): bool
     {
+        $content_type = $request->get_content_type();
+        if (!isset($content_type['value']) || 'application/json' !== $content_type['value']) {
+            $this->logger->error('Webhook request rejected: expected application/json content type.');
+            return \false;
+        }
+        // We only want to use the request body for retrieving the webhook parameters,
+        // so clear other sources of parameters so that we never fall back to them.
+        $request->set_query_params(array());
+        $request->set_url_params(array());
         if (!$this->verify_request) {
             return \true;
         }
@@ -163,6 +172,30 @@ class IncomingWebhookEndpoint
      * @return \WP_REST_Response
      */
     public function handle_request(\WP_REST_Request $request): \WP_REST_Response
+    {
+        try {
+            return $this->process_request($request);
+        } catch (\Throwable $exception) {
+            /**
+             * Catches any exception a handler's business logic might throw
+             * (not just the types it documents), so an unexpected error
+             * returns a graceful failure response instead of an uncaught
+             * fatal. Without this, PayPal would retry the webhook
+             * indefinitely since it never receives a response.
+             */
+            $this->logger->error(sprintf('Uncaught %s while handling incoming webhook: %s', get_class($exception), $exception->getMessage()));
+            return $this->failure_response();
+        }
+    }
+    /**
+     * Processes the request. Split out from handle_request() so the latter
+     * can wrap it in a single catch-all try/catch.
+     *
+     * @param \WP_REST_Request $request The request.
+     *
+     * @return \WP_REST_Response
+     */
+    private function process_request(\WP_REST_Request $request): \WP_REST_Response
     {
         $event = $this->event_from_request($request);
         $this->logger->debug(sprintf('Webhook %s received of type %s and by resource "%s"', $event->id(), $event->event_type(), $event->resource_type()));

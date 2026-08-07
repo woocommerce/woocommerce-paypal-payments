@@ -166,23 +166,62 @@ class FraudProcessorResponse
         return $messages[$this->cvv_code()] ?? sprintf('%s: Error', $this->cvv_code());
     }
     /**
-     * Returns the customer-facing decline message, including the processor response code when available.
+     * Returns the customer-facing decline message.
+     *
+     * Unlike get_response_code_message(), this avoids exposing raw processor
+     * codes or alarming language (e.g. "fraud", "stolen") to buyers.
      *
      * @return string
      */
     public function get_customer_decline_message(): string
     {
         if ($this->response_code()) {
-            return sprintf(
-                /* translators: %s - processor response code and description */
-                __('Payment declined by card processor: %s. Please use a different payment method or contact your bank.', 'woocommerce-paypal-payments'),
-                $this->get_response_code_message()
+            $message = sprintf(
+                /* translators: %s - a plain-language reason the payment was declined. */
+                __('Your payment could not be processed because %s Please try a different payment method or contact your bank for more information.', 'woocommerce-paypal-payments'),
+                $this->get_customer_response_code_message()
             );
+        } else {
+            $message = __('Payment provider declined the payment, please use a different payment method.', 'woocommerce-paypal-payments');
         }
-        return __('Payment provider declined the payment, please use a different payment method.', 'woocommerce-paypal-payments');
+        /**
+         * Filters the customer-facing message shown at checkout when a card payment is declined.
+         *
+         * Use this to customize the wording shown to buyers, e.g. to match your
+         * store's tone of voice or add store-specific support contact details.
+         *
+         * @param string                 $message The generated decline message.
+         * @param FraudProcessorResponse $fraud_processor_response The fraud processor response that triggered the decline.
+         */
+        return (string) apply_filters('woocommerce_paypal_payments_customer_decline_message', $message, $this);
+    }
+    /**
+     * Returns a plain-language, customer-facing reason for the processor response code.
+     *
+     * @return string
+     */
+    protected function get_customer_response_code_message(): string
+    {
+        if (!$this->response_code()) {
+            return '';
+        }
+        $default_message = __('your card was declined by your bank.', 'woocommerce-paypal-payments');
+        $messages = array('5120' => __('your card was declined due to insufficient funds.', 'woocommerce-paypal-payments'), '5400' => __('your card has expired.', 'woocommerce-paypal-payments'), '5930' => __('your card has not been activated.', 'woocommerce-paypal-payments'), '00N7' => __("the card's security code could not be verified.", 'woocommerce-paypal-payments'), '1382' => __("the card's security code could not be verified.", 'woocommerce-paypal-payments'), '5110' => __("the card's security code could not be verified.", 'woocommerce-paypal-payments'), '5130' => __('the PIN entered is incorrect.', 'woocommerce-paypal-payments'), '9600' => __('the PIN entered is incorrect.', 'woocommerce-paypal-payments'), '1300' => __('the card details could not be verified.', 'woocommerce-paypal-payments'), '1330' => __('the card details could not be verified.', 'woocommerce-paypal-payments'), '1335' => __('the card details could not be verified.', 'woocommerce-paypal-payments'), '10BR' => __('the additional card verification could not be completed.', 'woocommerce-paypal-payments'), '1384' => __('a similar transaction was already submitted recently.', 'woocommerce-paypal-payments'), '0100' => __('your bank flagged this payment for manual review.', 'woocommerce-paypal-payments'), '9530' => __('your bank flagged this payment for manual review.', 'woocommerce-paypal-payments'), '5140' => __('your card is no longer active.', 'woocommerce-paypal-payments'), '5200' => __('your card is no longer active.', 'woocommerce-paypal-payments'), '5170' => __('your card is currently blocked.', 'woocommerce-paypal-payments'), '6300' => __('your card is currently blocked.', 'woocommerce-paypal-payments'), '5150' => __('your bank was unable to approve this transaction.', 'woocommerce-paypal-payments'), '5160' => __('your bank was unable to approve this transaction.', 'woocommerce-paypal-payments'), '5180' => __('your bank was unable to approve this transaction.', 'woocommerce-paypal-payments'), '9500' => __('your bank was unable to approve this transaction.', 'woocommerce-paypal-payments'), '9510' => __('your bank was unable to approve this transaction.', 'woocommerce-paypal-payments'), '9520' => __('your bank was unable to approve this transaction.', 'woocommerce-paypal-payments'), '9540' => __('your bank was unable to approve this transaction.', 'woocommerce-paypal-payments'), '0390' => __('your bank declined this transaction.', 'woocommerce-paypal-payments'), '0500' => __('your bank declined this transaction.', 'woocommerce-paypal-payments'), '0580' => __('your bank declined this transaction.', 'woocommerce-paypal-payments'), '0890' => __('your bank is temporarily unavailable.', 'woocommerce-paypal-payments'), '0960' => __('your bank is temporarily unavailable.', 'woocommerce-paypal-payments'), '1370' => __('your bank is temporarily unavailable.', 'woocommerce-paypal-payments'), '5910' => __('your bank is temporarily unavailable.', 'woocommerce-paypal-payments'), '5920' => __('your bank is temporarily unavailable.', 'woocommerce-paypal-payments'), '9100' => __('the transaction could not be completed.', 'woocommerce-paypal-payments'), 'PCNF' => __('the transaction could not be completed.', 'woocommerce-paypal-payments'));
+        $message = $messages[$this->response_code()] ?? $default_message;
+        /**
+         * Filters the plain-language decline reason used inside the customer-facing decline message.
+         *
+         * @param string                 $message The decline reason shown to the customer.
+         * @param string                 $response_code The raw processor response code.
+         * @param FraudProcessorResponse $fraud_processor_response The fraud processor response.
+         */
+        return (string) apply_filters('woocommerce_paypal_payments_customer_decline_reason_message', $message, $this->response_code(), $this);
     }
     /**
      * Returns the human-readable description for the processor response code.
+     *
+     * Intended for merchant-facing use (e.g. order notes/logs) — includes the
+     * raw processor code and technical wording that should not be shown to buyers.
      *
      * @return string
      */

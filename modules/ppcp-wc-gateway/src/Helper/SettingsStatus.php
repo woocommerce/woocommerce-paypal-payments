@@ -24,6 +24,9 @@ class SettingsStatus
      */
     public function is_pay_later_messaging_enabled(): bool
     {
+        if ($this->settings_provider->pay_later_disabled_by_vaulting()) {
+            return \false;
+        }
         return $this->settings_provider->pay_later_messaging_enabled();
     }
     /**
@@ -51,6 +54,9 @@ class SettingsStatus
      */
     public function is_pay_later_button_enabled(): bool
     {
+        if ($this->settings_provider->pay_later_disabled_by_vaulting()) {
+            return \false;
+        }
         $pay_later_button_enabled = $this->settings_provider->pay_later_button_enabled();
         $selected_locations = $this->settings_provider->pay_later_button_locations();
         return $pay_later_button_enabled && !empty($selected_locations);
