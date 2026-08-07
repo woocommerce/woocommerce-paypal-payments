@@ -13,7 +13,6 @@ class RegistrationService
 {
     private const REGISTRATION_TOKEN_KEY = 'ppcp_agentic_registration_token';
     private const ERROR_REGISTRATION_FAILED = 'registration_failed';
-    private const ERROR_DEREGISTRATION_FAILED = 'deregistration_failed';
     private const ERROR_WEBHOOK_REQUEST = 'webhook_request_failed';
     private const ERROR_WEBHOOK_RESPONSE = 'webhook_response_failed';
     private AgenticWebhookConfiguration $webhook_urls;
@@ -45,7 +44,6 @@ class RegistrationService
             $this->save_registration_token($token);
             do_action('woocommerce_paypal_payments_store_sync_registered');
         } else {
-            $this->delete_registration_token();
             $this->logger->error('Registration failed: Endpoint rejected registration', array('endpoint' => $this->webhook_urls->get_registration_install_url(), 'error' => $result->error ?? 'Registration failed', 'message' => $result->message, 'payload' => $this->metadata_provider->get_metadata()));
             return new WP_Error(self::ERROR_REGISTRATION_FAILED, $result->error ?? 'Registration failed');
         }
@@ -53,6 +51,12 @@ class RegistrationService
     }
     /**
      * Deregister store from PayPal Agentic Commerce.
+     *
+     * Deregistration is fire-and-forget: the local token is always removed and the
+     * deregistered action always fires, regardless of the endpoint's response. A
+     * rejection (e.g. "store not found") means the store is already gone on the
+     * endpoint's side, which is the desired outcome, not a reason to retry. Failures
+     * are still logged.
      *
      * @return RegistrationResult|WP_Error|null Null if the store was not registered.
      */
@@ -65,11 +69,8 @@ class RegistrationService
         $result = $this->call_uninstallation_endpoint($token);
         if (is_wp_error($result)) {
             $this->logger->error('Deregistration failed: Endpoint returned error', array('endpoint' => $this->webhook_urls->get_registration_uninstall_url(), 'error_code' => $result->get_error_code(), 'error_message' => $result->get_error_message()));
-            return $result;
-        }
-        if (!$result->success) {
+        } elseif (!$result->success) {
             $this->logger->error('Deregistration failed: Endpoint rejected deregistration', array('endpoint' => $this->webhook_urls->get_registration_uninstall_url(), 'error' => $result->error ?? 'Deregistration failed', 'message' => $result->message));
-            return new WP_Error(self::ERROR_DEREGISTRATION_FAILED, $result->error ?? 'Deregistration failed');
         }
         $this->delete_registration_token();
         do_action('woocommerce_paypal_payments_store_sync_deregistered');
