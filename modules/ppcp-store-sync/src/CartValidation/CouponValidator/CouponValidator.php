@@ -249,7 +249,6 @@ class CouponValidator implements ValidatorInterface
          *
          * Allows coupon plugins to customize the user message for the AI agent.
          *
-         * @since 1.0.0
          * @param string         $issue_type The issue type (e.g., 'COUPON_EXPIRED').
          * @param string         $code       The coupon code.
          * @param WC_Coupon|null $wc_coupon  The WC_Coupon object (null if doesn't exist).
@@ -301,7 +300,6 @@ class CouponValidator implements ValidatorInterface
          * Allows coupon plugins to add or modify resolution options for the
          * AI agent.
          *
-         * @since 1.0.0
          * @param string         $issue_type  The issue type (e.g., 'COUPON_EXPIRED').
          * @param string         $code        The coupon code.
          * @param WC_Coupon|null $wc_coupon   The WC_Coupon object (null if doesn't exist).

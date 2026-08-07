@@ -79,9 +79,28 @@ class SettingsRestEndpoint extends \WooCommerce\PayPalCommerce\Settings\Endpoint
      */
     public function update_details(WP_REST_Request $request): WP_REST_Response
     {
-        $wp_data = $this->sanitize_for_wordpress($request->get_params(), $this->field_map);
+        $params = $request->get_params();
+        $invoice_prefix = $params['invoicePrefix'] ?? null;
+        if (is_string($invoice_prefix) && !$this->is_valid_invoice_prefix($invoice_prefix)) {
+            return $this->return_error(__('The invoice prefix may only contain letters, numbers, hyphens and underscores.', 'woocommerce-paypal-payments'));
+        }
+        $wp_data = $this->sanitize_for_wordpress($params, $this->field_map);
         $this->settings->from_array($wp_data);
         $this->settings->save();
         return $this->get_details();
+    }
+    /**
+     * Whether the given invoice prefix is safe to use.
+     *
+     * The prefix is an identity component of the IDs the plugin sends to PayPal,
+     * so it is restricted to characters that are safe in every consumer. An empty
+     * prefix is valid; callers fall back to a default.
+     *
+     * @param string $prefix The invoice prefix to check.
+     * @return bool
+     */
+    private function is_valid_invoice_prefix(string $prefix): bool
+    {
+        return (bool) preg_match('/^[A-Za-z0-9_-]*$/', $prefix);
     }
 }
