@@ -67,10 +67,21 @@ class CustomerRepository {
 	 * Unlike customer_id_for_user(), this never fabricates a local prefix-based
 	 * ID: PayPal does not recognize such IDs, so callers that pass the result to
 	 * the PayPal API should treat an empty string as "let PayPal assign one".
+	 *
+	 * `_ppcp_target_customer_id` holds the most recent ID PayPal assigned and so
+	 * takes precedence over `ppcp_customer_id`, matching how the rest of the
+	 * plugin resolves it. Reading only the latter would miss an ID PayPal has
+	 * already issued and have it create a second customer for the same user,
+	 * orphaning the tokens stored against the first.
 	 */
 	public function paypal_customer_id_for_user( int $user_id ): string {
 		if ( 0 === $user_id ) {
 			return '';
+		}
+
+		$customer_id = get_user_meta( $user_id, '_ppcp_target_customer_id', true );
+		if ( is_string( $customer_id ) && $customer_id ) {
+			return $customer_id;
 		}
 
 		$customer_id = get_user_meta( $user_id, 'ppcp_customer_id', true );
