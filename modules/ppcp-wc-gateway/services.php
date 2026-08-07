@@ -337,7 +337,7 @@ return array(
         return new FundingSourceRenderer($container->get('settings.settings-provider'), array_merge($container->get('wcgateway.all-funding-sources'), $container->get('wcgateway.extra-funding-sources')));
     },
     'wcgateway.payment-method-title-enricher' => static function (ContainerInterface $container): PaymentMethodTitleEnricher {
-        return new PaymentMethodTitleEnricher();
+        return new PaymentMethodTitleEnricher($container->get('wcgateway.asset_getter'));
     },
     'wcgateway.checkout-helper' => static function (ContainerInterface $container): CheckoutHelper {
         return new CheckoutHelper();

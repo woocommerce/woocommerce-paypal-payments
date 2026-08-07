@@ -21,7 +21,11 @@ class MockGateway extends \WC_Payment_Gateway
     {
         $this->id = \WooCommerce\PayPalCommerce\Compat\PPEC\PPECHelper::PPEC_GATEWAY_ID;
         $this->title = $title;
-        $this->method_title = $this->title;
+        // Deliberately no method_title or method_description: that combination is
+        // how WooCommerce recognises a gateway as a shell and keeps it out of the
+        // Payments settings screen, where this one has no business appearing. The
+        // title above still labels it on order and subscription screens. Setting
+        // either of them puts it back on the settings screen.
         $this->description = '';
         $this->supports = array('subscriptions', 'subscription_cancellation', 'subscription_suspension', 'subscription_reactivation', 'subscription_amount_changes', 'subscription_date_changes', 'subscription_payment_method_change', 'subscription_payment_method_change_customer', 'subscription_payment_method_change_admin', 'multiple_subscriptions');
     }

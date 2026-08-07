@@ -26,7 +26,10 @@ class BillingAgreementTokenConverter
     {
         try {
             $payment_source = new PaymentSource('token', (object) array('id' => $billing_agreement_id, 'type' => 'BILLING_AGREEMENT'));
-            $customer_id = $this->customer_repository->customer_id_for_user($user_id);
+            // Only a real PayPal customer ID is usable here; passing the local
+            // fallback ID would be rejected by the Vault API. An empty string
+            // lets PayPal assign a customer, whose ID is stored below.
+            $customer_id = $this->customer_repository->paypal_customer_id_for_user($user_id);
             $result = $this->payment_method_tokens_endpoint->create_payment_token($payment_source, $customer_id);
             if (empty($result->id)) {
                 $this->logger->error(sprintf('Vault token creation for Billing Agreement %s returned no token ID.', $billing_agreement_id));
