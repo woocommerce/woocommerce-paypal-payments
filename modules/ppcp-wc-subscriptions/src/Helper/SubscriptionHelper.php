@@ -75,6 +75,22 @@ class SubscriptionHelper {
 	}
 
 	/**
+	 * Whether the cart contains a subscription renewal payment (e.g., a customer manually
+	 * renewing a subscription), as opposed to a new subscription being purchased. WooCommerce
+	 * Subscriptions may route a manual renewal through the cart/Checkout block instead of the
+	 * classic order-pay endpoint, so this can't be inferred from the URL alone.
+	 *
+	 * @return bool
+	 */
+	public function cart_contains_renewal(): bool {
+		if ( ! $this->plugin_is_active() || ! function_exists( 'wcs_cart_contains_renewal' ) ) {
+			return false;
+		}
+
+		return (bool) wcs_cart_contains_renewal();
+	}
+
+	/**
 	 * Whether pay for order contains subscriptions.
 	 *
 	 * @return bool
@@ -146,16 +162,23 @@ class SubscriptionHelper {
 	 * @return bool
 	 */
 	public function need_subscription_intent( string $subscription_mode ): bool {
-		if ( $subscription_mode === 'subscriptions_api' ) {
-			if (
-				$this->current_product_is_subscription()
-				|| ( ( is_cart() || is_checkout() ) && $this->cart_contains_subscription() )
-			) {
-				return true;
-			}
+		if ( $subscription_mode !== 'subscriptions_api' ) {
+			return false;
 		}
 
-		return false;
+		if ( $this->current_product_is_subscription() ) {
+			// Manual renewals mean no PayPal subscription plan is required for
+			// this product, so the standard (non-subscription) checkout flow
+			// is used instead - the SDK must not be forced into subscription
+			// intent in that case.
+			if ( $this->accept_manual_renewals() && ! $this->paypal_subscription_id() ) {
+				return false;
+			}
+
+			return true;
+		}
+
+		return ( is_cart() || is_checkout() ) && $this->cart_contains_subscription();
 	}
 
 	/**
@@ -173,6 +196,33 @@ class SubscriptionHelper {
 		}
 
 		return true;
+	}
+
+	/**
+	 * Whether the PayPal button is allowed for the current (subscription) cart.
+	 *
+	 * This is the single, mode-aware rule shared by the classic cart, block cart
+	 * and mini-cart so the button is displayed (or hidden) consistently:
+	 * - A non-subscription cart is always allowed.
+	 * - In PayPal Subscriptions mode the product must be allowed
+	 *   (has a PayPal plan and the cart contains a single item).
+	 * - In vaulting mode a vault token must be savable.
+	 *
+	 * @param bool $is_paypal_subscription Whether PayPal Subscriptions mode applies.
+	 * @param bool $can_save_vault_token   Whether a vault token can be saved.
+	 * @return bool
+	 * @throws NotFoundException If setting is not found.
+	 */
+	public function paypal_subscription_button_allowed( bool $is_paypal_subscription, bool $can_save_vault_token ): bool {
+		if ( ! $this->cart_contains_subscription() ) {
+			return true;
+		}
+
+		if ( $is_paypal_subscription ) {
+			return $this->checkout_subscription_product_allowed();
+		}
+
+		return $can_save_vault_token;
 	}
 
 	/**
@@ -282,10 +332,12 @@ class SubscriptionHelper {
 	 * @return array
 	 */
 	public function locations_with_subscription_product(): array {
+		$cart_contains_renewal = $this->cart_contains_renewal();
+
 		return array(
 			'product'  => is_product() && $this->current_product_is_subscription(),
-			'payorder' => is_wc_endpoint_url( 'order-pay' ) && $this->order_pay_contains_subscription(),
-			'cart'     => $this->cart_contains_subscription(),
+			'payorder' => ( is_wc_endpoint_url( 'order-pay' ) && $this->order_pay_contains_subscription() ) || $cart_contains_renewal,
+			'cart'     => $this->cart_contains_subscription() && ! $cart_contains_renewal,
 		);
 	}
 

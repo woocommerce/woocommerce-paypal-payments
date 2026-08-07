@@ -88,6 +88,66 @@ class ItemFactoryTest extends TestCase
         $this->assertEquals(42, $item->unit_amount()->value());
     }
 
+    public function testFromCartFractionalQuantityIsNormalizedToOne()
+    {
+        $testee = new ItemFactory($this->currency);
+
+        $product = Mockery::mock(\WC_Product_Simple::class);
+        $product
+            ->expects('get_name')
+            ->andReturn('name');
+        $product
+            ->expects('get_description')
+            ->andReturn('description');
+        $product
+            ->expects('get_sku')
+            ->andReturn('sku');
+        $product
+            ->expects('is_virtual')
+            ->andReturn(false);
+        $items = [
+            [
+                'data' => $product,
+                'quantity' => 0.3,
+	            'line_subtotal' => 30.00,
+	            'line_total' => 30.00
+            ],
+        ];
+        $cart = Mockery::mock(\WC_Cart::class);
+        $cart
+            ->expects('get_cart_contents')
+            ->andReturn($items);
+
+	    when('get_woocommerce_currency')->justReturn('USD');
+
+	    expect('wp_strip_all_tags')->andReturnFirstArg();
+	    expect('strip_shortcodes')->andReturnFirstArg();
+
+        $woocommerce = Mockery::mock(\WooCommerce::class);
+        $session = Mockery::mock(\WC_Session::class);
+        when('WC')->justReturn($woocommerce);
+        $woocommerce->session = $session;
+        $session->shouldReceive('get')->andReturn([]);
+
+		when('wp_get_attachment_image_src')->justReturn('image_url');
+		$product
+			->expects('get_image_id')
+			->andReturn(1);
+		$product
+			->expects('get_permalink')
+			->andReturn('url');
+	    $product->shouldReceive('get_id')->andReturn(null);
+
+        $result = $testee->from_wc_cart($cart);
+
+        $item = current($result);
+        /**
+         * @var Item $item
+         */
+        $this->assertEquals(1, $item->quantity());
+        $this->assertEquals(30.00, $item->unit_amount()->value());
+    }
+
     public function testFromCartDigitalGood()
     {
         $testee = new ItemFactory($this->currency);
@@ -214,6 +274,71 @@ class ItemFactoryTest extends TestCase
         $this->assertEquals(1, $item->quantity());
         $this->assertEquals(Item::PHYSICAL_GOODS, $item->category());
         $this->assertEquals(1, $item->unit_amount()->value());
+    }
+
+    public function testFromWcOrderFractionalQuantityIsNormalizedToOne()
+    {
+        $testee = new ItemFactory($this->currency);
+
+        $product = Mockery::mock(\WC_Product::class);
+        $product
+            ->expects('get_description')
+            ->andReturn('description');
+        $product
+            ->expects('get_sku')
+            ->andReturn('sku');
+        $product
+            ->expects('is_virtual')
+            ->andReturn(false);
+
+		expect('wp_strip_all_tags')->andReturnFirstArg();
+		expect('strip_shortcodes')->andReturnFirstArg();
+
+		when('wp_get_attachment_image_src')->justReturn('image_url');
+		$product
+			->expects('get_image_id')
+			->andReturn(1);
+		$product
+			->expects('get_permalink')
+			->andReturn('url');
+
+        $item = Mockery::mock(\WC_Order_Item_Product::class);
+        $item
+            ->expects('get_product')
+            ->andReturn($product);
+		$item
+			->expects('get_name')
+			->andReturn('name');
+        $item
+            ->expects('get_quantity')
+            ->andReturn(0.3);
+
+        $order = Mockery::mock(\WC_Order::class);
+	    $order
+		    ->shouldReceive('get_currency')
+		    ->once()
+		    ->andReturn($this->currency->get());
+        $order
+            ->expects('get_items')
+            ->andReturn([$item]);
+        $order
+            ->expects('get_fees')
+            ->andReturn([]);
+        $order
+            ->shouldNotReceive('get_item_subtotal');
+
+	    $product->shouldReceive('get_id')->andReturn(123);
+	    $item->shouldReceive('get_subtotal')->andReturn(30.00);
+	    $item->shouldReceive('get_total')->andReturn(30.00);
+	    $item->shouldReceive('get_total_tax')->andReturn(0.00);
+
+        $result = $testee->from_wc_order($order);
+        $item = current($result);
+        /**
+         * @var Item $item
+         */
+        $this->assertEquals(1, $item->quantity());
+        $this->assertEquals(30.00, $item->unit_amount()->value());
     }
 
     public function testFromWcOrderDigitalGood()

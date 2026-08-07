@@ -47,6 +47,7 @@ import {
 	CustomerPaymentMethods,
 	CustomerSubscriptions,
 	ClassicPayForOrder,
+	ApmHostedCheckout,
 } from './frontend';
 
 export type BaseExtend = BaseExtendBase & {
@@ -87,6 +88,7 @@ export type BaseExtend = BaseExtendBase & {
 	customerAccount: CustomerAccount;
 	customerPaymentMethods: CustomerPaymentMethods;
 	customerSubscriptions: CustomerSubscriptions;
+	apmHostedCheckout: ApmHostedCheckout;
 
 	// Utils & preconditions
 	utils: Utils;
@@ -245,6 +247,9 @@ const test = base.extend< BaseExtend >( {
 	},
 	customerSubscriptions: async ( { visitorPage }, use ) => {
 		await use( new CustomerSubscriptions( { page: visitorPage } ) );
+	},
+	apmHostedCheckout: async ( { visitorPage }, use ) => {
+		await use( new ApmHostedCheckout( visitorPage ) );
 	},
 
 	// Utils & preconditions

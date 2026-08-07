@@ -16,25 +16,7 @@
 		text-align: center;
 	}
 
-	.components-base-control__field {
-		margin: 0 0 24px 0;
-	}
 
-	.manual-credentials-error {
-		@include font(11, 16, 450);
-		margin: -16px 0 24px;
-		color: var(--color-error);
-	}
-
-	.onboarding-advanced-options {
-		margin-top: 24px;
-		margin-bottom: 48px;
-		max-width: 800px;
-
-		.ppcp--toggler .ppcp--title-wrapper {
-			justify-content: center;
-		}
-	}
 }
 
 .ppcp-r-welcome-features {

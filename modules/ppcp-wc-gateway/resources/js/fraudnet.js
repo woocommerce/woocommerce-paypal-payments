@@ -51,10 +51,11 @@ window.addEventListener( 'load', function () {
 
 	document.addEventListener( 'hosted_fields_loaded', ( event ) => {
 		if (
-			PAYPAL.asyncData &&
-			typeof PAYPAL.asyncData.initAndCollect === 'function'
+			window.PAYPAL &&
+			window.PAYPAL.asyncData &&
+			typeof window.PAYPAL.asyncData.initAndCollect === 'function'
 		) {
-			PAYPAL.asyncData.initAndCollect();
+			window.PAYPAL.asyncData.initAndCollect();
 		}
 
 		_injectConfig();

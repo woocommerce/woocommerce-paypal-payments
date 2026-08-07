@@ -9,6 +9,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PaymentTokensEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\OrderStatus;
+use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 use WooCommerce\PayPalCommerce\Assets\AssetGetter;
 use WooCommerce\PayPalCommerce\Button\Helper\Context;
 use WooCommerce\PayPalCommerce\WcGateway\Endpoint\CapturePayPalPayment;
@@ -32,6 +33,7 @@ class WcGatewayTest extends TestCase
 {
 	private $isAdmin = false;
 	private $sessionHandler;
+	private $sessionOrder;
 	private $fundingSource = null;
 
 	private $funding_source_renderer;
@@ -49,6 +51,7 @@ class WcGatewayTest extends TestCase
 	private $wcPaymentTokens;
 	private $assetGetter;
 	private $context;
+	private $capturePayPalPayment;
 
 	public function setUp(): void {
 		parent::setUp();
@@ -83,11 +86,12 @@ class WcGatewayTest extends TestCase
 			->andReturnUsing(function () {
 				return $this->fundingSource;
 			});
-		$order = Mockery::mock(Order::class);
-		$order->shouldReceive('status')->andReturn(new OrderStatus(OrderStatus::APPROVED));
+		$this->sessionOrder = Mockery::mock(Order::class);
+		$this->sessionOrder->shouldReceive('status')->andReturn(new OrderStatus(OrderStatus::APPROVED));
 		$this->sessionHandler
 			->shouldReceive('order')
-			->andReturn($order);
+			->andReturn($this->sessionOrder)
+			->byDefault();
 
 		$this->settings->shouldReceive('has')->andReturnFalse();
 
@@ -97,6 +101,7 @@ class WcGatewayTest extends TestCase
 		$this->paymentTokensEndpoint = Mockery::mock(PaymentTokensEndpoint::class);
 		$this->wcPaymentTokens = Mockery::mock(WooCommercePaymentTokens::class);
 		$this->context = Mockery::mock(Context::class);
+		$this->capturePayPalPayment = Mockery::mock(CapturePayPalPayment::class);
 	}
 
 	private function createGateway()
@@ -119,9 +124,8 @@ class WcGatewayTest extends TestCase
 			$this->wcPaymentTokens,
 			$this->assetGetter,
 			false,
-			Mockery::mock(CapturePayPalPayment::class),
+			$this->capturePayPalPayment,
 			Mockery::mock(OrderEndpoint::class),
-			'WC-',
 			$this->context
 		);
 	}
@@ -146,9 +150,34 @@ class WcGatewayTest extends TestCase
 			$this->wcPaymentTokens,
 			$this->assetGetter,
 			false,
-			Mockery::mock(CapturePayPalPayment::class),
+			$this->capturePayPalPayment,
 			Mockery::mock(OrderEndpoint::class),
-			'WC-',
+			$this->context
+		);
+	}
+
+	private function createReturnUrlStubGateway(): PayPalGatewayReturnUrlStub
+	{
+		return new PayPalGatewayReturnUrlStub(
+			$this->funding_source_renderer,
+			$this->orderProcessor,
+			$this->settingsProvider,
+			$this->sessionHandler,
+			$this->refundProcessor,
+			$this->isConnected,
+			$this->transactionUrlProvider,
+			$this->subscriptionHelper,
+			$this->environment,
+			$this->logger,
+			$this->apiShopCountry,
+			static fn ($id) => 'checkoutnow=' . $id,
+			'Pay via PayPal',
+			$this->paymentTokensEndpoint,
+			$this->wcPaymentTokens,
+			$this->assetGetter,
+			false,
+			$this->capturePayPalPayment,
+			Mockery::mock(OrderEndpoint::class),
 			$this->context
 		);
 	}
@@ -384,6 +413,141 @@ class WcGatewayTest extends TestCase
 		$this->assertSame( 'failure', $result['result'] );
 	}
 
+	/**
+	 * GIVEN a capture attempt throws a PayPalApiException carrying a recoverable retry issue
+	 *   AND the retry attempt count is still below the give-up threshold
+	 *   AND a PayPal order is still present in the session to retry against
+	 * WHEN process_payment() handles the exception
+	 * THEN the order is NOT marked failed, since the retry is still recoverable
+	 *   AND an order note records the reason instead
+	 *   AND the customer is redirected back to PayPal to complete the action
+	 *
+	 * @dataProvider dataForRetryErrorIssue
+	 */
+	public function test_process_payment_keeps_order_pending_on_recoverable_retry_issue( string $issue, string $expectedMessage ): void {
+		$orderId = 1;
+		$wcOrder = Mockery::mock( \WC_Order::class );
+
+		$response          = new \stdClass();
+		$response->details = array( (object) array( 'issue' => $issue, 'description' => 'Additional action needed.' ) );
+		$exception         = new PayPalApiException( $response, 422 );
+
+		$this->orderProcessor->expects( 'process' )->andThrow( $exception );
+
+		$wcOrder->shouldNotReceive( 'update_status' );
+		$wcOrder->shouldReceive( 'add_order_note' )->once()->with( Mockery::pattern( '/' . preg_quote( $expectedMessage, '/' ) . '/' ) );
+
+		$this->sessionHandler->shouldReceive( 'increment_insufficient_funding_tries' )->once();
+		$this->sessionHandler->shouldReceive( 'insufficient_funding_tries' )->andReturn( 1 );
+		$this->sessionHandler->shouldNotReceive( 'destroy_session_data' );
+		$this->sessionOrder->shouldReceive( 'id' )->andReturn( 'PAYPAL-ORDER-ID' );
+
+		$testee = $this->createGateway();
+
+		expect( 'wc_get_order' )
+			->with( $orderId )
+			->andReturn( $wcOrder );
+
+		$result = $testee->process_payment( $orderId );
+
+		$this->assertEquals( 'success', $result['result'] );
+		$this->assertEquals( 'checkoutnow=PAYPAL-ORDER-ID', $result['redirect'] );
+	}
+
+	/**
+	 * GIVEN a capture attempt throws a PayPalApiException carrying a recoverable retry issue
+	 *   AND the retry attempt count has already reached the give-up threshold (3 attempts)
+	 * WHEN process_payment() handles the exception
+	 * THEN the order IS marked failed, since the retry is now considered exhausted
+	 *
+	 * @dataProvider dataForRetryErrorIssue
+	 */
+	public function test_process_payment_fails_order_when_retry_issue_retries_exhausted( string $issue, string $expectedMessage ): void {
+		$orderId = 1;
+		$wcOrder = Mockery::mock( \WC_Order::class );
+
+		$response          = new \stdClass();
+		$response->details = array( (object) array( 'issue' => $issue, 'description' => 'Additional action needed.' ) );
+		$exception         = new PayPalApiException( $response, 422 );
+
+		$this->orderProcessor->expects( 'process' )->andThrow( $exception );
+
+		$wcOrder->shouldReceive( 'update_status' )->once()->with( 'failed', Mockery::pattern( '/' . preg_quote( $expectedMessage, '/' ) . '/' ) );
+
+		$this->sessionHandler->shouldReceive( 'increment_insufficient_funding_tries' )->once();
+		$this->sessionHandler->shouldReceive( 'insufficient_funding_tries' )->andReturn( 3 );
+		$this->sessionHandler->shouldReceive( 'destroy_session_data' )->once();
+
+		$testee = $this->createGateway();
+
+		expect( 'wc_get_order' )
+			->with( $orderId )
+			->andReturn( $wcOrder );
+		when( 'wc_add_notice' )->justReturn( null );
+		when( 'wc_get_checkout_url' )->justReturn( 'http://example.com/checkout' );
+
+		$woocommerce = Mockery::mock( \WooCommerce::class );
+		$session     = Mockery::mock( \WC_Session::class );
+		$woocommerce->session = $session;
+		when( 'WC' )->justReturn( $woocommerce );
+		$session->shouldReceive( 'set' );
+
+		$result = $testee->process_payment( $orderId );
+
+		$this->assertEquals( 'failure', $result['result'] );
+	}
+
+	/**
+	 * GIVEN a capture attempt throws a PayPalApiException carrying a recoverable retry issue
+	 *   AND no PayPal order remains in the session to retry against (session expired)
+	 * WHEN process_payment() handles the exception
+	 * THEN the order IS marked failed, since there is no way left to recover this attempt
+	 *
+	 * @dataProvider dataForRetryErrorIssue
+	 */
+	public function test_process_payment_fails_order_when_retry_issue_session_order_missing( string $issue, string $expectedMessage ): void {
+		$orderId = 1;
+		$wcOrder = Mockery::mock( \WC_Order::class );
+
+		$response          = new \stdClass();
+		$response->details = array( (object) array( 'issue' => $issue, 'description' => 'Additional action needed.' ) );
+		$exception         = new PayPalApiException( $response, 422 );
+
+		$this->orderProcessor->expects( 'process' )->andThrow( $exception );
+
+		$wcOrder->shouldReceive( 'update_status' )->once()->with( 'failed', Mockery::pattern( '/' . preg_quote( $expectedMessage, '/' ) . '/' ) );
+
+		$this->sessionHandler->shouldReceive( 'increment_insufficient_funding_tries' )->once();
+		$this->sessionHandler->shouldReceive( 'insufficient_funding_tries' )->andReturn( 1 );
+		$this->sessionHandler->shouldReceive( 'order' )->andReturn( null );
+		$this->sessionHandler->shouldReceive( 'destroy_session_data' )->once();
+
+		$testee = $this->createGateway();
+
+		expect( 'wc_get_order' )
+			->with( $orderId )
+			->andReturn( $wcOrder );
+		when( 'wc_add_notice' )->justReturn( null );
+		when( 'wc_get_checkout_url' )->justReturn( 'http://example.com/checkout' );
+
+		$woocommerce = Mockery::mock( \WooCommerce::class );
+		$session     = Mockery::mock( \WC_Session::class );
+		$woocommerce->session = $session;
+		when( 'WC' )->justReturn( $woocommerce );
+		$session->shouldReceive( 'set' );
+
+		$result = $testee->process_payment( $orderId );
+
+		$this->assertEquals( 'failure', $result['result'] );
+	}
+
+	public function dataForRetryErrorIssue(): array {
+		return array(
+			'instrument declined'   => array( 'INSTRUMENT_DECLINED', 'Instrument declined.' ),
+			'payer action required' => array( 'PAYER_ACTION_REQUIRED', 'Payer action required, possibly overcharge.' ),
+		);
+	}
+
     /**
      * @dataProvider dataForFundingSource
      */
@@ -496,6 +660,97 @@ class WcGatewayTest extends TestCase
 
 		$this->assertSame( 0, $gateway->tokenization_script_call_count, 'tokenization_script() must not be called when vaulting is disabled' );
 		$this->assertSame( 0, $gateway->saved_payment_methods_call_count, 'saved_payment_methods() must not be called when vaulting is disabled' );
+	}
+
+	/**
+	 * @runInSeparateProcess
+	 * @preserveGlobalState disabled
+	 * @scenario Current user changes their subscription payment to a saved PayPal
+	 * token they own. The token must be attached to the order without attempting a
+	 * $0 capture (WC Subscriptions zeroes the order total during change-payment
+	 * requests, and PayPal rejects $0 create-order calls with
+	 * CANNOT_BE_ZERO_OR_NEGATIVE).
+	 */
+	public function test_process_payment_attaches_token_when_ownership_check_passes_for_change_payment(): void {
+		$orderId = 1;
+		$_POST['woocommerce_change_payment'] = '1';
+		$_POST['wc-ppcp-gateway-payment-token'] = '99';
+
+		$this->subscriptionHelper->shouldReceive('has_subscription')->with($orderId)->andReturn(true);
+		$this->subscriptionHelper->shouldReceive('is_subscription_change_payment')->andReturn(true);
+
+		$wcOrder = Mockery::mock(\WC_Order::class);
+		$wcOrder->shouldReceive('get_id')->andReturn($orderId);
+		$wcOrder->shouldReceive('get_meta')->andReturn('');
+		when('wc_get_order')->justReturn($wcOrder);
+
+		$tokens = Mockery::mock('alias:WC_Payment_Tokens');
+		$payment_token = Mockery::mock(\WC_Payment_Token::class);
+		$payment_token->shouldReceive('get_user_id')->andReturn(1);
+		$tokens->shouldReceive('get')->with(99)->andReturn($payment_token);
+
+		when('get_current_user_id')->justReturn(1);
+
+		$wcOrder->shouldReceive('add_payment_token')->once()->with($payment_token);
+		$wcOrder->shouldReceive('save')->once();
+		$this->sessionHandler->shouldReceive('destroy_session_data')->once();
+
+		$this->capturePayPalPayment->shouldNotReceive('create_order');
+
+		$result = $this->createReturnUrlStubGateway()->process_payment($orderId);
+
+		$this->assertEquals('success', $result['result']);
+	}
+
+	/**
+	 * @runInSeparateProcess
+	 * @preserveGlobalState disabled
+	 * @scenario Current user supplies a token id belonging to a different user while
+	 * changing their subscription payment. The token must not be attached, the
+	 * change must fail, and no $0 capture must be attempted either.
+	 */
+	public function test_process_payment_rejects_token_owned_by_different_user_during_change_payment(): void {
+		$orderId = 1;
+		$_POST['woocommerce_change_payment'] = '1';
+		$_POST['wc-ppcp-gateway-payment-token'] = '99';
+
+		$this->subscriptionHelper->shouldReceive('has_subscription')->with($orderId)->andReturn(true);
+		$this->subscriptionHelper->shouldReceive('is_subscription_change_payment')->andReturn(true);
+
+		$wcOrder = Mockery::mock(\WC_Order::class);
+		$wcOrder->shouldReceive('get_id')->andReturn($orderId);
+		$wcOrder->shouldReceive('get_meta')->andReturn('');
+		when('wc_get_order')->justReturn($wcOrder);
+
+		$tokens = Mockery::mock('alias:WC_Payment_Tokens');
+		$payment_token = Mockery::mock(\WC_Payment_Token::class);
+		$payment_token->shouldReceive('get_user_id')->andReturn(2);
+		$tokens->shouldReceive('get')->with(99)->andReturn($payment_token);
+
+		when('get_current_user_id')->justReturn(1);
+		when('wc_add_notice')->justReturn(null);
+		when('wc_get_checkout_url')->justReturn('http://example.test/checkout');
+
+		$wcOrder->shouldNotReceive('add_payment_token');
+		$wcOrder->shouldNotReceive('save');
+		$this->sessionHandler->shouldNotReceive('destroy_session_data');
+		$this->capturePayPalPayment->shouldNotReceive('create_order');
+
+		$result = $this->createReturnUrlStubGateway()->process_payment($orderId);
+
+		$this->assertEquals('failure', $result['result']);
+	}
+}
+
+/**
+ * Test double that returns a string return URL. The shared WC_Payment_Gateway
+ * stub returns the order object, which would violate the string type hint of
+ * PayPalGateway::add_payment_token_to_order().
+ */
+class PayPalGatewayReturnUrlStub extends PayPalGateway
+{
+	protected function get_return_url( $order = null ) {
+		return 'http://example.test/return';
 	}
 }
 

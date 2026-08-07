@@ -5,7 +5,7 @@ import { countTotals } from '@inpsyde/playwright-utils/build';
 /**
  * Internal dependencies
  */
-import { ShopOrder } from '../../../resources';
+import { PayPalPaymentDetails, ShopOrder } from '../../../resources';
 import { annotateVisitor, expect, test } from '../../../utils';
 
 export const testSubscriptionRenewal = ( testOrder: ShopOrder ) => {
@@ -33,125 +33,155 @@ export const testSubscriptionRenewal = ( testOrder: ShopOrder ) => {
 				wooCommerceOrderEdit,
 				wooCommerceSubscriptionEdit,
 			} ) => {
+				test.fixme(
+					products[ 0 ].name.includes( 'Free trial'),
+					'For free trial subscriptions the vaulting component is not displayed',
+				)
 				test.setTimeout( 2.5 * 60_000 );
-				// Precondition: purchase test subscription
-				await utils.fillVisitorsCart( products );
-				await classicCheckout.visit();
-				await classicCheckout.completeCheckoutDetails( testOrder );
-				await classicCheckout.payPalUi.makePayment( {
-					merchant,
-					payment,
+				const { title: gatewayTitle } = payment.gateway;
+				
+				await test.step( `Add product(s) to the cart`, async () => {
+					await utils.fillVisitorsCart( products );
 				} );
-				await orderReceived.assertOrderDetails( testOrder );
 
-				const orderId = await orderReceived.getOrderNumber();
-				const { transaction_id: transactionId } =
-					await wooCommerceApi.getOrder( orderId );
-				const subscriptionId =
-					await orderReceived.getSubscriptionNumber();
-				const subscriptionJson =
-					await wooCommerceApi.getSubscription( subscriptionId );
+				await test.step( `Visit Checkout, make payment with ${ gatewayTitle }`, async () => {
+					await classicCheckout.visit();
+					await classicCheckout.completeCheckoutDetails( testOrder );
+					await classicCheckout.payPalUi.makePayment( {
+						merchant,
+						payment,
+					} );
+				} );
+					
+				let orderId: number;
+				let subscriptionId: number;
+				let subscriptionJson: WooCommerce.Subscription;
+				let payPalPaymentDetails: PayPalPaymentDetails = {};
 
+				await test.step( `Assert order received`, async () => {
+					await orderReceived.assertOrderDetails( testOrder );
+					await orderReceived.assertNoErrors();
+
+					orderId = await orderReceived.getOrderNumber();				
+					const transactionId =
+						( await wooCommerceApi.getOrder( orderId ) ).transaction_id;
+					subscriptionId =
+						await orderReceived.getSubscriptionNumber();
+					subscriptionJson =
+						await wooCommerceApi.getSubscription( subscriptionId );
+
+					if (
+						! ( await pcpApi.isPayPalSubscription( subscriptionJson ) )
+					) {
+						payPalPaymentDetails = await payPalApi.getPayPalPaymentDetails(
+							transactionId,
+							testOrder,
+						);
+
+						if( payPalPaymentDetails.amount !== '0' ) { // can be 0 for free trial or free orders
+							await orderReceived.assertTotalEqualsPayPalTotal(
+								payPalPaymentDetails.amount,
+								testOrder.currency
+							);
+						}
+					}
+				} );
+
+				let relatedParentOrder;
+				let relatedSubscription;
+				let relatedRenewalOrders = [];
 				const total = await countTotals( testOrder );
 
-				const relatedParentOrder = {
-					id: orderId,
-					relationship: 'Parent Order',
-					status: 'Processing',
-					total: total.order,
-				};
-
-				const relatedSubscription = {
-					id: subscriptionId,
-					relationship: 'Subscription',
-					status: 'Active',
-					total: total.order,
-				};
-
-				let pcpData = {};
-				// TODO: clarify expected paypal data
-				if (
-					! ( await pcpApi.isPayPalSubscription( subscriptionJson ) )
-				) {
-					pcpData = {
-						transactionId,
-						payPalFee: await payPalApi.getFee(
-							transactionId,
-							testOrder
-						),
-						payPalPayout: await payPalApi.getPayout(
-							transactionId,
-							testOrder
-						),
-					};
-				}
-
-				await wooCommerceOrderEdit.visit( orderId );
-				await wooCommerceOrderEdit.assertOrderDetails(
-					testOrder,
-					pcpData
-				);
-				await wooCommerceOrderEdit.assertRelatedOrders(
-					[ relatedSubscription ],
-					currency
-				);
-
-				await wooCommerceSubscriptionEdit.visit( subscriptionId );
-				await wooCommerceSubscriptionEdit.assertSubscriptionDetails(
-					testOrder
-				);
-				await wooCommerceSubscriptionEdit.assertRelatedOrders(
-					[ relatedParentOrder ],
-					currency
-				);
-
-				// Subscription renewal
-				if ( await pcpApi.isPayPalSubscription( subscriptionJson ) ) {
-					await pcpApi.triggerPayPalSubscriptionRenewal(
-						subscriptionId
-					);
-				} else {
-					await wooCommerceSubscriptionEdit.triggerSubscriptionRenewal(
-						subscriptionId
-					);
-				}
-				const renewalOrderIds =
-					await wooCommerceApi.getSubscriptionRenewalOrderIds(
-						subscriptionId
-					);
-				await expect(
-					renewalOrderIds,
-					'Assert one renewal order is created'
-				).toHaveLength( 1 );
-
-				const relatedRenewalOrders = [];
-
-				for ( const renewalOrderId of renewalOrderIds ) {
-					relatedRenewalOrders.push( {
-						id: renewalOrderId,
-						relationship: 'Renewal Order',
+				await test.step( `Assert details on order edit page`, async () => {
+					relatedParentOrder = {
+						id: orderId,
+						relationship: 'Parent Order',
 						status: 'Processing',
 						total: total.order,
-					} );
-				}
+					};
 
-				await wooCommerceOrderEdit.visit( orderId );
-				await wooCommerceOrderEdit.assertRelatedOrders(
-					[ relatedSubscription, ...relatedRenewalOrders ],
-					currency
-				);
+					relatedSubscription = {
+						id: subscriptionId,
+						relationship: 'Subscription',
+						status: 'Active',
+						total: total.order,
+					};
 
-				await wooCommerceSubscriptionEdit.visit( subscriptionId );
-				await wooCommerceSubscriptionEdit.assertRelatedOrders(
-					[ relatedParentOrder, ...relatedRenewalOrders ],
-					currency
-				);
+					await wooCommerceOrderEdit.visit( orderId );
+					await wooCommerceOrderEdit.assertOrderDetails(
+						testOrder,
+						payPalPaymentDetails,
+					);
+					await wooCommerceOrderEdit.assertRelatedOrders(
+						[ relatedSubscription ],
+						currency
+					);
+				} );
 
-				await customerSubscriptions.visit( subscriptionId );
-				await customerSubscriptions.assertRelatedOrders(
-					[ relatedParentOrder, ...relatedRenewalOrders ],
-					currency
-				);
+				await test.step( `Assert details on subscription edit page`, async () => {
+					await wooCommerceSubscriptionEdit.visit( subscriptionId );
+					await wooCommerceSubscriptionEdit.assertSubscriptionDetails(
+						testOrder
+					);
+					await wooCommerceSubscriptionEdit.assertRelatedOrders(
+						[ relatedParentOrder ],
+						currency
+					);
+				} );
+
+				await test.step( `Subscription renewal`, async () => {
+					if ( await pcpApi.isPayPalSubscription( subscriptionJson ) ) {
+						await pcpApi.triggerPayPalSubscriptionRenewal(
+							subscriptionId
+						);
+					} else {
+						await wooCommerceSubscriptionEdit.triggerSubscriptionRenewal(
+							subscriptionId
+						);
+					}
+					const renewalOrderIds =
+						await wooCommerceApi.getSubscriptionRenewalOrderIds(
+							subscriptionId
+						);
+					await expect(
+						renewalOrderIds,
+						'Assert one renewal order is created'
+					).toHaveLength( 1 );
+
+
+					for ( const renewalOrderId of renewalOrderIds ) {
+						relatedRenewalOrders.push( {
+							id: renewalOrderId,
+							relationship: 'Renewal Order',
+							status: 'Processing',
+							total: total.order,
+						} );
+					}
+				} );
+
+				await test.step( `Assert related orders on order edit page`, async () => {
+					await wooCommerceOrderEdit.visit( orderId );
+					await wooCommerceOrderEdit.assertRelatedOrders(
+						[ relatedSubscription, ...relatedRenewalOrders ],
+						currency
+					);
+				} );
+
+				await test.step( `Assert related orders on subscription edit page`, async () => {
+					await wooCommerceSubscriptionEdit.visit( subscriptionId );
+					await wooCommerceSubscriptionEdit.assertRelatedOrders(
+						[ relatedParentOrder, ...relatedRenewalOrders ],
+						currency
+					);
+				} );
+
+				await test.step( `Assert related orders on customer subscription page`, async () => {
+					await customerSubscriptions.visit( subscriptionId );
+					await customerSubscriptions.assertRelatedOrders(
+						[ relatedParentOrder, ...relatedRenewalOrders ],
+						currency
+					);
+				} );
 			}
 		);
 	} );

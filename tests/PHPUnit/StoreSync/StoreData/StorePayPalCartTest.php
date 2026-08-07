@@ -292,6 +292,7 @@ class StorePayPalCartTest extends StoreSyncTestCase {
 	 */
 	public function test_is_ready_for_payment_true_when_all_conditions_met(): void {
 		$payment_method = Mockery::mock( PaymentMethod::class );
+		$payment_method->allows( 'type' )->andReturn( 'paypal' );
 		$payment_method->allows( 'token' )->andReturn( 'some-token' );
 		$paypal_cart    = $this->make_paypal_cart( array( 'payment_method' => $payment_method ) );
 		$schema         = $this->make_cart_item_schema( array( 'quantity' => 1 ) );
@@ -324,9 +325,11 @@ class StorePayPalCartTest extends StoreSyncTestCase {
 
 		if ( $has_payment_method ) {
 			$payment_method = Mockery::mock( PaymentMethod::class );
+			$payment_method->allows( 'type' )->andReturn( 'paypal' );
 			$payment_method->allows( 'token' )->andReturn( 'some-token' );
 		} else {
 			$payment_method = Mockery::mock( PaymentMethod::class );
+			$payment_method->allows( 'type' )->andReturn( 'paypal' );
 			$payment_method->allows( 'token' )->andReturn( null );
 		}
 		$paypal_cart    = $this->make_paypal_cart( array( 'payment_method' => $payment_method ) );

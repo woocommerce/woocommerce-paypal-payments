@@ -253,38 +253,55 @@ class SingleProductBootstrap {
 			PayPalCommerceGateway.data_client_id.has_subscriptions &&
 			PayPalCommerceGateway.data_client_id.paypal_subscriptions_enabled
 		) {
-			const buttonWrapper = document.getElementById(
-				'ppc-button-ppcp-gateway'
-			);
-			buttonWrapper.innerHTML = '';
-
 			const subscription_plan =
 				this.variations() !== null
 					? getPlanIdFromVariation( this.variations() )
 					: PayPalCommerceGateway.subscription_plan_id;
-			if ( ! subscription_plan ) {
+
+			// Manual renewals mean the merchant bills renewals themselves, so
+			// no PayPal subscription plan is required; fall through to the
+			// standard button below instead of leaving the wrapper empty.
+			const manualRenewalStandardCheckout =
+				! this.gateway.vaultingEnabled &&
+				this.gateway.manualRenewalEnabled === '1';
+
+			if ( ! subscription_plan && ! manualRenewalStandardCheckout ) {
 				return;
 			}
 
-			if ( this.subscriptionButtonsLoaded ) {
+			if ( subscription_plan ) {
+				if ( this.subscriptionButtonsLoaded ) {
+					return;
+				}
+
+				// Only clear the wrapper right before this render path
+				// actually uses it: the standard renderer below has its own
+				// isAlreadyRendered() guard, which clearing here would
+				// defeat on every re-render triggered by its own
+				// onButtonsInit callback, causing a destroy/recreate loop.
+				const buttonWrapper = document.getElementById(
+					'ppc-button-ppcp-gateway'
+				);
+				buttonWrapper.innerHTML = '';
+
+				loadPaypalJsScript(
+					{
+						clientId: PayPalCommerceGateway.client_id,
+						currency: PayPalCommerceGateway.currency,
+						intent: 'subscription',
+						vault: true,
+						disable_funding:
+							this.gateway.url_params[ 'disable-funding' ],
+					},
+					actionHandler.subscriptionsConfiguration(
+						subscription_plan
+					),
+					this.gateway.button.wrapper
+				);
+
+				this.subscriptionButtonsLoaded = true;
 				return;
 			}
-
-			loadPaypalJsScript(
-				{
-					clientId: PayPalCommerceGateway.client_id,
-					currency: PayPalCommerceGateway.currency,
-					intent: 'subscription',
-					vault: true,
-					disable_funding:
-						this.gateway.url_params[ 'disable-funding' ],
-				},
-				actionHandler.subscriptionsConfiguration( subscription_plan ),
-				this.gateway.button.wrapper
-			);
-
-			this.subscriptionButtonsLoaded = true;
-			return;
 		}
 
 		if (

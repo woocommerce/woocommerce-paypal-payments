@@ -4,13 +4,6 @@ import CheckoutActionHandler from '@ppcp-button/ActionHandler/CheckoutActionHand
 import TransactionInfo from '@ppcp-googlepay/Helper/TransactionInfo';
 
 class PayNowHandler extends BaseHandler {
-	validateContext() {
-		if ( this.ppcpConfig?.locations_with_subscription_product?.payorder ) {
-			return false;
-		}
-		return true;
-	}
-
 	transactionInfo() {
 		return new Promise( async ( resolve, reject ) => {
 			const data = this.ppcpConfig.pay_now;

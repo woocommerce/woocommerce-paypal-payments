@@ -29,7 +29,7 @@ const {
 } = require( '@ppcp-paylater-block/hooks/script-params' );
 
 const defaultConfig = {
-	vaultingEnabled: false,
+	payLaterDisabledByVaulting: false,
 	placementEnabled: true,
 	settingsUrl: '/wp-admin/settings',
 	payLaterSettingsUrl: '/wp-admin/paylater-settings',
@@ -128,7 +128,7 @@ test( 'does not show placeholder when PayPalMessages renders within 10 seconds',
 test( 'shows vaulting warning when vaulting is enabled', () => {
 	global.PcpCheckoutPayLaterBlock = {
 		...defaultConfig,
-		vaultingEnabled: true,
+		payLaterDisabledByVaulting: true,
 	};
 	useScriptParams.mockReturnValue( null );
 
