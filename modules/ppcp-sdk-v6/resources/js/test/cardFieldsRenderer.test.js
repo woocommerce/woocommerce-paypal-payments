@@ -269,6 +269,40 @@ describe( 'initCardFields', () => {
 		expect( addEventListenerSpy ).toHaveBeenCalledTimes( 1 );
 	} );
 
+	test( 'keeps the mounted session usable after an updated_checkout that changed nothing', async () => {
+		buildCheckoutDom( 'ppcp-credit-card-gateway' );
+		const firstSession = makeCardSession();
+		const secondSession = makeCardSession();
+		mockLoadSdkV6
+			.mockResolvedValueOnce( {
+				createCardFieldsOneTimePaymentSession: () => firstSession,
+			} )
+			.mockResolvedValueOnce( {
+				createCardFieldsOneTimePaymentSession: () => secondSession,
+			} );
+
+		await initCardFields( baseConfig() );
+		await flushPromises();
+		expect( firstSession.createCardFieldsComponent ).toHaveBeenCalledTimes(
+			3
+		);
+
+		// WC skips replacing an unchanged fragment, so the mounted fields and
+		// #place_order survive and the session must survive with them.
+		triggerBodyEvent( 'updated_checkout' );
+		await flushPromises();
+
+		mockCreateCardOrder.mockResolvedValue( { orderId: 'CARDORDER1' } );
+		mockApproveCardOrder.mockResolvedValue( undefined );
+
+		document.querySelector( '#place_order' ).click();
+		await flushPromises();
+
+		// The submitting session must be the one holding the buyer's fields.
+		expect( firstSession.submit ).toHaveBeenCalledWith( 'CARDORDER1' );
+		expect( secondSession.submit ).not.toHaveBeenCalled();
+	} );
+
 	test( 'lets the native click through untouched when a saved payment token is selected', async () => {
 		buildCheckoutDom( 'ppcp-credit-card-gateway' );
 		document.body.insertAdjacentHTML(

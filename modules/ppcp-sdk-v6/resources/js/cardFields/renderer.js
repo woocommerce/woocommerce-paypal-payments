@@ -216,8 +216,6 @@ export async function initCardFields( config ) {
 			return;
 		}
 
-		cardSessionPromise = null;
-
 		const placeOrderButton = document.querySelector( '#place_order' );
 		if (
 			! placeOrderButton ||
@@ -225,6 +223,10 @@ export async function initCardFields( config ) {
 		) {
 			return;
 		}
+
+		// Only once the DOM really was replaced: mountField() skips inputs a
+		// previous mount hid, so an earlier drop leaves a session with no fields.
+		cardSessionPromise = null;
 		boundPlaceOrderButton = placeOrderButton;
 		placeOrderButton.addEventListener( 'click', handleSubmit, true );
 
