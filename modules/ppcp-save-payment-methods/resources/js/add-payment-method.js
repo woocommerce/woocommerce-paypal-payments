@@ -130,7 +130,13 @@ export async function initializeScript( addPaymentMethodConfig ) {
 			`#ppc-button-${ PaymentMethods.PAYPAL }-save-payment-method`
 		);
 
-		if ( paypalButtonContainer ) {
+		// The v6 Web SDK renders the PayPal "save for later" button when it
+		// is active on this page (skip_paypal_button); the v5 card fields
+		// below keep loading regardless.
+		if (
+			paypalButtonContainer &&
+			! addPaymentMethodConfig.skip_paypal_button
+		) {
 			await paypal
 				.Buttons(
 					buttonConfiguration( addPaymentMethodConfig, errorHandler )

@@ -10,6 +10,7 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\SdkV6;
 
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
+use WooCommerce\PayPalCommerce\SdkV6\Assets\AddPaymentMethodManager;
 use WooCommerce\PayPalCommerce\SdkV6\Assets\SdkV6Manager;
 use WooCommerce\PayPalCommerce\SdkV6\Endpoint\ClientTokenEndpoint;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
@@ -51,6 +52,30 @@ class SdkV6Module implements ServiceModule, ExtendingModule, ExecutableModule {
 				assert( $manager instanceof SdkV6Manager );
 
 				$manager->enqueue();
+
+				$add_payment_method_manager = $c->get( 'sdk-v6.add-payment-method-manager' );
+				assert( $add_payment_method_manager instanceof AddPaymentMethodManager );
+
+				$add_payment_method_manager->enqueue();
+			}
+		);
+
+		// The v6 SDK renders the PayPal "save for later" button on the Add
+		// Payment Method page, so the v5 add-payment-method script must not
+		// also render it into the same container. The v5 card fields stay on
+		// v5 for now, so the v5 script keeps loading — only its PayPal button
+		// is suppressed. See the migration note in extensions.php.
+		add_filter(
+			'woocommerce_paypal_payments_add_payment_method_localized_script_data',
+			static function ( array $data ) use ( $c ): array {
+				$add_payment_method_manager = $c->get( 'sdk-v6.add-payment-method-manager' );
+				assert( $add_payment_method_manager instanceof AddPaymentMethodManager );
+
+				if ( $add_payment_method_manager->should_load_on_current_page() ) {
+					$data['skip_paypal_button'] = true;
+				}
+
+				return $data;
 			}
 		);
 

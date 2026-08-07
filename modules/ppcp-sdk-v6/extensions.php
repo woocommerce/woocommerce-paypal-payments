@@ -11,6 +11,7 @@ namespace WooCommerce\PayPalCommerce\SdkV6;
 
 use WooCommerce\PayPalCommerce\Button\Assets\DisabledSmartButton;
 use WooCommerce\PayPalCommerce\Button\Assets\SmartButtonInterface;
+use WooCommerce\PayPalCommerce\SdkV6\Assets\AddPaymentMethodManager;
 use WooCommerce\PayPalCommerce\SdkV6\Assets\SdkV6Manager;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 
@@ -37,6 +38,20 @@ return array(
 		assert( $manager instanceof SdkV6Manager );
 
 		if ( $manager->should_load_on_current_page() ) {
+			return new DisabledSmartButton();
+		}
+
+		// The Add Payment Method page is not one of the SdkV6Manager's
+		// button locations, but the v6 vault button loads there and would
+		// collide with the v5 SDK on the window.paypal global. Disable the
+		// v5 smart button there too when the v6 save button loads. The v5
+		// add-payment-method script still runs for the (deferred) card
+		// fields; it loads under its own data-namespace and does not touch
+		// window.paypal.
+		$add_payment_method_manager = $container->get( 'sdk-v6.add-payment-method-manager' );
+		assert( $add_payment_method_manager instanceof AddPaymentMethodManager );
+
+		if ( $add_payment_method_manager->should_load_on_current_page() ) {
 			return new DisabledSmartButton();
 		}
 

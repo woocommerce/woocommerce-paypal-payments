@@ -11,6 +11,7 @@ namespace WooCommerce\PayPalCommerce\SdkV6;
 
 use WooCommerce\PayPalCommerce\Assets\AssetGetter;
 use WooCommerce\PayPalCommerce\Assets\AssetGetterFactory;
+use WooCommerce\PayPalCommerce\SdkV6\Assets\AddPaymentMethodManager;
 use WooCommerce\PayPalCommerce\SdkV6\Assets\SdkV6Manager;
 use WooCommerce\PayPalCommerce\SdkV6\Endpoint\ClientTokenEndpoint;
 use WooCommerce\PayPalCommerce\SdkV6\Helper\ButtonStyleMapper;
@@ -19,20 +20,20 @@ use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 
 return array(
 
-	'sdk-v6.asset-getter'          => static function ( ContainerInterface $container ): AssetGetter {
+	'sdk-v6.asset-getter'               => static function ( ContainerInterface $container ): AssetGetter {
 		$factory = $container->get( 'assets.asset_getter_factory' );
 		assert( $factory instanceof AssetGetterFactory );
 
 		return $factory->for_module( 'ppcp-sdk-v6' );
 	},
 
-	'sdk-v6.button-style-mapper'   => static function ( ContainerInterface $container ): ButtonStyleMapper {
+	'sdk-v6.button-style-mapper'        => static function ( ContainerInterface $container ): ButtonStyleMapper {
 		return new ButtonStyleMapper(
 			$container->get( 'settings.settings-provider' )
 		);
 	},
 
-	'sdk-v6.manager'               => static function ( ContainerInterface $container ): SdkV6Manager {
+	'sdk-v6.manager'                    => static function ( ContainerInterface $container ): SdkV6Manager {
 		return new SdkV6Manager(
 			$container->get( 'sdk-v6.asset-getter' ),
 			$container->get( 'ppcp.asset-version' ),
@@ -45,7 +46,17 @@ return array(
 		);
 	},
 
-	'sdk-v6.endpoint.client-token' => static function ( ContainerInterface $container ): ClientTokenEndpoint {
+	'sdk-v6.add-payment-method-manager' => static function ( ContainerInterface $container ): AddPaymentMethodManager {
+		return new AddPaymentMethodManager(
+			$container->get( 'sdk-v6.asset-getter' ),
+			$container->get( 'ppcp.asset-version' ),
+			$container->get( 'settings.environment' ),
+			$container->get( 'button.helper.context' ),
+			$container->get( 'settings.settings-provider' )->save_paypal_and_venmo()
+		);
+	},
+
+	'sdk-v6.endpoint.client-token'      => static function ( ContainerInterface $container ): ClientTokenEndpoint {
 		return new ClientTokenEndpoint(
 			$container->get( 'order-endpoints.request-data' ),
 			$container->get( 'woocommerce.logger.woocommerce' ),
@@ -54,7 +65,7 @@ return array(
 		);
 	},
 
-	'sdk-v6.rate-limiter'          => static function ( ContainerInterface $container ): RateLimiter {
+	'sdk-v6.rate-limiter'               => static function ( ContainerInterface $container ): RateLimiter {
 		return new RateLimiter(
 			'ppcp_sdk_v6_rl_',
 			10,
