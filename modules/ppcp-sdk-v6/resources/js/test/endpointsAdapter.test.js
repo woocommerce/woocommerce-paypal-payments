@@ -150,7 +150,12 @@ describe( 'approveOrder', () => {
 			funding_source: 'paypal',
 			should_create_wc_order: true,
 		} );
-		expect( assign ).toHaveBeenCalledWith( '/checkout/' );
+		expect( assign.mock.calls[ 0 ][ 0 ] ).toContain( '/checkout/' );
+		// Cache-busted so a cached checkout cannot drop the buyer back
+		// into the express flow with an order already approved.
+		expect( assign.mock.calls[ 0 ][ 0 ] ).toContain(
+			'ppcp-continuation-redirect='
+		);
 	} );
 
 	test( 'redirects to order_received_url when the server creates the WC order (Pay Now)', async () => {
@@ -190,7 +195,12 @@ describe( 'approveOrder', () => {
 				should_create_wc_order: false,
 			}
 		);
-		expect( assign ).toHaveBeenCalledWith( '/checkout/' );
+		expect( assign.mock.calls[ 0 ][ 0 ] ).toContain( '/checkout/' );
+		// Cache-busted so a cached checkout cannot drop the buyer back
+		// into the express flow with an order already approved.
+		expect( assign.mock.calls[ 0 ][ 0 ] ).toContain(
+			'ppcp-continuation-redirect='
+		);
 	} );
 
 	test( 'does not request a WC order for Venmo when vaulting is enabled', async () => {
@@ -211,7 +221,12 @@ describe( 'approveOrder', () => {
 			funding_source: 'venmo',
 			should_create_wc_order: false,
 		} );
-		expect( assign ).toHaveBeenCalledWith( '/checkout/' );
+		expect( assign.mock.calls[ 0 ][ 0 ] ).toContain( '/checkout/' );
+		// Cache-busted so a cached checkout cannot drop the buyer back
+		// into the express flow with an order already approved.
+		expect( assign.mock.calls[ 0 ][ 0 ] ).toContain(
+			'ppcp-continuation-redirect='
+		);
 	} );
 
 	test( 'checkout context pins the PayPal gateway radio and submits the form', async () => {

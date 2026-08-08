@@ -14,9 +14,13 @@ use WooCommerce\PayPalCommerce\OrderEndpoints\Endpoint\UpdateShippingEndpoint;
 use WooCommerce\PayPalCommerce\OrderEndpoints\Endpoint\ApproveOrderEndpoint;
 use WooCommerce\PayPalCommerce\OrderEndpoints\Endpoint\ChangeCartEndpoint;
 use WooCommerce\PayPalCommerce\OrderEndpoints\Endpoint\CreateOrderEndpoint;
+use WooCommerce\PayPalCommerce\Button\Endpoint\GetOrderEndpoint;
 use WooCommerce\PayPalCommerce\Button\Helper\Context;
 use WooCommerce\PayPalCommerce\SdkV6\Endpoint\ClientTokenEndpoint;
 use WooCommerce\PayPalCommerce\SdkV6\Helper\ButtonStyleMapper;
+use WooCommerce\PayPalCommerce\Session\Cancellation\CancelController;
+use WooCommerce\PayPalCommerce\Session\Cancellation\CancelView;
+use WooCommerce\PayPalCommerce\Session\SessionHandler;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\CardPaymentsConfiguration;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
@@ -43,6 +47,9 @@ class SdkV6Manager {
 	private bool $should_handle_shipping;
 	private SettingsStatus $settings_status;
 	private Context $context;
+	private SessionHandler $session_handler;
+	private CancelView $cancel_view;
+	private bool $final_review_enabled;
 	private bool $vaulting_enabled;
 	private CardPaymentsConfiguration $card_payments_configuration;
 
@@ -54,6 +61,9 @@ class SdkV6Manager {
 		bool $should_handle_shipping,
 		SettingsStatus $settings_status,
 		Context $context,
+		SessionHandler $session_handler,
+		CancelView $cancel_view,
+		bool $final_review_enabled,
 		bool $vaulting_enabled,
 		CardPaymentsConfiguration $card_payments_configuration
 	) {
@@ -64,17 +74,17 @@ class SdkV6Manager {
 		$this->should_handle_shipping      = $should_handle_shipping;
 		$this->settings_status             = $settings_status;
 		$this->context                     = $context;
+		$this->session_handler             = $session_handler;
+		$this->cancel_view                 = $cancel_view;
+		$this->final_review_enabled        = $final_review_enabled;
 		$this->vaulting_enabled            = $vaulting_enabled;
 		$this->card_payments_configuration = $card_payments_configuration;
 	}
 
-	/**
-	 * Enqueues scripts/styles.
-	 *
-	 * @return void
-	 */
 	public function enqueue(): void {
-		if ( ! $this->should_load_on_current_page() ) {
+		// The classic bootstrap renders into PHP-printed wrappers that do not
+		// exist on block pages, which the block payment method script serves.
+		if ( ! $this->should_load_on_current_page() || $this->is_block_context() ) {
 			return;
 		}
 
@@ -119,20 +129,10 @@ class SdkV6Manager {
 		);
 	}
 
-	/**
-	 * Outputs the main button wrapper element.
-	 *
-	 * @return void
-	 */
 	public function render_wrapper(): void {
 		echo '<div class="ppc-button-wrapper"><div id="' . esc_attr( self::WRAPPER_ID ) . '"></div></div>';
 	}
 
-	/**
-	 * Outputs the mini-cart button wrapper element.
-	 *
-	 * @return void
-	 */
 	public function render_mini_cart_wrapper(): void {
 		echo '<p class="woocommerce-mini-cart__buttons buttons">';
 		echo '<span id="' . esc_attr( self::MINI_CART_WRAPPER_ID ) . '"></span>';
@@ -148,12 +148,10 @@ class SdkV6Manager {
 	 * widget can appear anywhere). The bootstrap only loads the SDK once
 	 * a button wrapper exists in the DOM.
 	 *
-	 * Also used to scope the v5 suppression: v5 must only be disabled on
-	 * pages where v6 loads (both SDKs claim window.paypal), and keep
-	 * running everywhere else (block cart/checkout, pay-now). That
-	 * scoping is migration-phase only — see extensions.php; at release
-	 * the suppression becomes unconditional and only the merchant
-	 * location-settings gating in this method remains meaningful.
+	 * Also scopes the v5 suppression: v5 is disabled on every page v6 owns
+	 * (both SDKs claim window.paypal) and keeps running on the pages v6 does
+	 * not own (pay-now, add-payment-method). Migration-phase only — see
+	 * extensions.php.
 	 *
 	 * Card fields (ACDC) are independent of the smart-button location: the
 	 * card gateway is a regular WC payment method that can be selectable
@@ -173,10 +171,9 @@ class SdkV6Manager {
 			return true;
 		}
 
-		// The mini-cart case only applies when the classic widget is in
-		// use; block-theme mini-carts are out of this module's scope, and
-		// loading (and suppressing v5) sitewide without a widget would
-		// break the v5-rendered block express buttons for nothing.
+		// Only when the classic widget is in use: loading (and suppressing v5)
+		// sitewide without a widget would break the v5-rendered block express
+		// buttons for nothing.
 		return $this->settings_status->is_smart_button_enabled_for_location( 'mini-cart' )
 			&& is_active_widget( false, false, 'woocommerce_widget_cart' );
 	}
@@ -184,9 +181,13 @@ class SdkV6Manager {
 	/**
 	 * The configuration data for the SDK v6 bootstrap script.
 	 *
+	 * Also consumed by the block payment method (V6PaymentMethod), which
+	 * exposes it under `wcSettings.paymentMethodData['ppcp-sdk-v6']` for the
+	 * React entry.
+	 *
 	 * @return array
 	 */
-	private function script_data(): array {
+	public function script_data(): array {
 		$base_url = $this->environment->is_sandbox()
 			? 'https://www.sandbox.paypal.com'
 			: 'https://www.paypal.com';
@@ -198,6 +199,11 @@ class SdkV6Manager {
 
 		$page_context = $this->get_page_context();
 
+		// Must stay in lockstep with ShippingPreferenceFactory, which marks only
+		// 'checkout' and 'pay-now' as fixed-address (SET_PROVIDED_ADDRESS, no
+		// callbacks needed). Every other context, 'checkout-block' included,
+		// gets GET_FROM_FILE, where PayPal offers the buyer's own addresses and
+		// the popup callbacks must stay attached to sync the choice back.
 		$shipping_enabled = $this->should_handle_shipping && 'checkout' !== $page_context;
 
 		$store_api_base = rtrim( rest_url( 'wc/store/v1/cart' ), '/' );
@@ -212,7 +218,7 @@ class SdkV6Manager {
 
 		$card_fields_enabled = 'checkout' === $page_context && $this->card_payments_configuration->is_acdc_enabled();
 
-		return array(
+		$data = array(
 			'sdk_url'           => $base_url . '/web-sdk/v6/core',
 			'page_context'      => $page_context,
 			'currency'          => get_woocommerce_currency(),
@@ -220,6 +226,8 @@ class SdkV6Manager {
 			'buyer_country'     => $buyer_country,
 			'locale'            => str_replace( '_', '-', get_locale() ),
 			'vaulting_enabled'  => $this->vaulting_enabled,
+			// Drives the post-approval fork; see V6ExpressComponent.approve().
+			'final_review'      => $this->final_review_enabled,
 			'ajax'              => array(
 				'client_token'    => array(
 					'endpoint' => \WC_AJAX::get_endpoint( ClientTokenEndpoint::ENDPOINT ),
@@ -236,6 +244,10 @@ class SdkV6Manager {
 				'approve_order'   => array(
 					'endpoint' => \WC_AJAX::get_endpoint( ApproveOrderEndpoint::ENDPOINT ),
 					'nonce'    => wp_create_nonce( ApproveOrderEndpoint::nonce() ),
+				),
+				'get_order'       => array(
+					'endpoint' => \WC_AJAX::get_endpoint( GetOrderEndpoint::ENDPOINT ),
+					'nonce'    => wp_create_nonce( GetOrderEndpoint::nonce() ),
 				),
 				'update_shipping' => array(
 					'endpoint' => \WC_AJAX::get_endpoint( UpdateShippingEndpoint::ENDPOINT ),
@@ -273,6 +285,60 @@ class SdkV6Manager {
 					'number' => '#' . self::CARD_FIELD_NUMBER_ID,
 					'expiry' => '#' . self::CARD_FIELD_EXPIRY_ID,
 					'cvv'    => '#' . self::CARD_FIELD_CVV_ID,
+				),
+			),
+		);
+
+		$continuation = $this->continuation_data();
+		if ( $continuation ) {
+			$data['continuation'] = $continuation;
+		}
+
+		return $data;
+	}
+
+	/**
+	 * Whether the buyer is returning from an approved PayPal order and should
+	 * see the order review instead of the express buttons.
+	 */
+	public function is_continuation(): bool {
+		return $this->context->is_paypal_continuation();
+	}
+
+	/**
+	 * The continuation payload, or null when there is no approved order.
+	 *
+	 * The cancel link is load-bearing: while an approved order sits in the
+	 * session the express buttons are suppressed everywhere, so it is the
+	 * buyer's only way out.
+	 *
+	 * @return array|null
+	 */
+	private function continuation_data(): ?array {
+		if ( ! $this->is_continuation() ) {
+			return null;
+		}
+
+		$order = $this->session_handler->order();
+		if ( ! $order ) {
+			return null;
+		}
+
+		$cancel_url = add_query_arg(
+			array( CancelController::NONCE => wp_create_nonce( CancelController::NONCE ) ),
+			wc_get_checkout_url()
+		);
+
+		return array(
+			'order_id'       => $order->id(),
+			'order'          => $order->to_array(),
+			// v5 reads this from a window global; carried in the payload here so
+			// the gateway is told which source approved the order.
+			'funding_source' => $this->session_handler->funding_source(),
+			'cancel'         => array(
+				'html' => $this->cancel_view->render_session_cancellation(
+					$cancel_url,
+					$this->session_handler->funding_source()
 				),
 			),
 		);
@@ -319,17 +385,35 @@ class SdkV6Manager {
 	 *
 	 * Resolves through the shared Context helper (which handles
 	 * classic-shortcode block pages) and narrows to the contexts this
-	 * module supports; block cart/checkout and pay-now are out of scope.
+	 * module supports: classic product/cart/checkout and block
+	 * cart/checkout. pay-now and the block editor stay out of scope.
 	 *
 	 * @return string
 	 */
 	private function get_page_context(): string {
 		$context = $this->context->context();
 
-		if ( in_array( $context, array( 'product', 'cart', 'checkout' ), true ) ) {
+		if ( in_array(
+			$context,
+			array( 'product', 'cart', 'checkout', 'cart-block', 'checkout-block' ),
+			true
+		) ) {
 			return $context;
 		}
 
 		return '';
+	}
+
+	/**
+	 * Whether the current page is a WooCommerce Blocks (React) page.
+	 *
+	 * @return bool
+	 */
+	public function is_block_context(): bool {
+		return in_array(
+			$this->get_page_context(),
+			array( 'cart-block', 'checkout-block' ),
+			true
+		);
 	}
 }

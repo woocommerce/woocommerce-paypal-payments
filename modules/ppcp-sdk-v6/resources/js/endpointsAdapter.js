@@ -11,6 +11,8 @@
 import SingleProductActionHandler from '@ppcp-button/ActionHandler/SingleProductActionHandler';
 import { payerData } from '@ppcp-button/Helper/PayerData';
 import { postJson } from './utils/api';
+import { minorUnitsToDecimal } from './utils/amount';
+import { continuationRedirectUrl } from './utils/continuation';
 
 /**
  * Navigation seam: window.location is not mockable under jsdom, so
@@ -99,18 +101,12 @@ export async function createOrder( config, context, fundingSource ) {
 }
 
 /**
- * Approves the order and continues the purchase.
- *
  * Mirrors the v5 flow (onApproveForContinue): should_create_wc_order is
- * requested like in v5 (except for Venmo with vaulting enabled), and the
- * server decides — with the Pay Now experience enabled it creates the WC
- * order right away and responds with order_received_url, skipping the
- * Order Review page. Otherwise the endpoint only stores the approved
- * order in the WC session and the buyer continues on checkout, where the
- * gateway processes the session order on Place Order (also the fallback
- * when order creation is not possible, e.g. a One-Touch approval without
- * a shipping option selected inside the popup). On classic checkout the
- * WC checkout form is submitted after approval instead.
+ * requested except for Venmo with vaulting, and the server decides. With the
+ * Pay Now experience it creates the WC order and responds with
+ * order_received_url; otherwise it only stores the approved order in the
+ * session and the gateway processes it on Place Order. On classic checkout
+ * the WC checkout form is submitted after approval instead.
  *
  * @param {Object} config        - The wc_ppcp_sdk_v6 config object.
  * @param {string} context       - The page context.
@@ -164,8 +160,46 @@ export async function approveOrder( config, context, fundingSource, orderId ) {
 		}
 	}
 
-	// Continuation: the buyer completes the order on the checkout page.
-	navigation.assign( config.urls.checkout );
+	// Continuation: the buyer completes the order on the checkout page. Cache-
+	// busted because a cached checkout would carry no continuation payload and
+	// show the express buttons again for an already-approved order.
+	navigation.assign( continuationRedirectUrl( config ) );
+}
+
+/**
+ * Fetches the full PayPal order (ppc-get-order).
+ *
+ * Used by the block express flow to read the buyer's PayPal address,
+ * which the v6 session onApprove does not provide.
+ *
+ * @param {Object} config  - The wc_ppcp_sdk_v6 config object.
+ * @param {string} orderId - The PayPal order ID.
+ * @return {Promise<Object>} The PayPal order (Orders v2 shape).
+ */
+export async function getOrder( config, orderId ) {
+	return postJson( config.ajax.get_order, {
+		order_id: orderId,
+	} );
+}
+
+/**
+ * Approves the order and stores it in the WC session without creating the
+ * WC order or redirecting.
+ *
+ * The block checkout submit creates the WC order through the gateway, so
+ * unlike the classic approveOrder this must not create it or navigate away.
+ *
+ * @param {Object} config        - The wc_ppcp_sdk_v6 config object.
+ * @param {string} fundingSource - The funding source used for payment.
+ * @param {string} orderId       - The PayPal order ID.
+ * @return {Promise<void>} Resolves when the order has been approved.
+ */
+export async function approveOrderInSession( config, fundingSource, orderId ) {
+	await postJson( config.ajax.approve_order, {
+		order_id: orderId,
+		funding_source: fundingSource,
+		should_create_wc_order: false,
+	} );
 }
 
 /**
@@ -252,14 +286,11 @@ export async function fetchCartTotal( config ) {
 			credentials: 'same-origin',
 		} );
 		const cart = await response.json();
-		const minorUnit = cart?.totals?.currency_minor_unit ?? 2;
-		const totalPrice = parseInt( cart?.totals?.total_price, 10 );
 
-		if ( isNaN( totalPrice ) ) {
-			return '';
-		}
-
-		return ( totalPrice / Math.pow( 10, minorUnit ) ).toFixed( minorUnit );
+		return minorUnitsToDecimal(
+			cart?.totals?.total_price,
+			cart?.totals?.currency_minor_unit
+		);
 	} catch ( error ) {
 		return '';
 	}

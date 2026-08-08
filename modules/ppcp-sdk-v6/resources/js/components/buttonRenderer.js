@@ -16,13 +16,26 @@ import { handleError } from '../utils/errorHandler';
  * Builds an OrderCreator for a funding source.
  */
 
-// Element names per the SDK core's custom-element registry (the shipped
-// core names the Pay Later element paypal-pay-later-button; it carries
-// its own localized label and takes no type attribute).
+// Element names per the SDK core's custom-element registry. The Pay Later
+// element carries its own localized label and takes no type attribute.
+// Each element reads its own border-radius custom property: the Venmo button
+// ignores the PayPal one, so the radius has to be set per funding source.
 const BUTTON_ELEMENTS = {
-	paypal: { tagName: 'paypal-button', type: 'pay' },
-	venmo: { tagName: 'venmo-button', type: 'pay' },
-	paylater: { tagName: 'paypal-pay-later-button', type: '' },
+	paypal: {
+		tagName: 'paypal-button',
+		type: 'pay',
+		radiusProperty: '--paypal-button-border-radius',
+	},
+	venmo: {
+		tagName: 'venmo-button',
+		type: 'pay',
+		radiusProperty: '--venmo-button-border-radius',
+	},
+	paylater: {
+		tagName: 'paypal-pay-later-button',
+		type: '',
+		radiusProperty: '--paypal-button-border-radius',
+	},
 };
 
 /**
@@ -31,14 +44,24 @@ const BUTTON_ELEMENTS = {
  * Components read their configuration when they connect, so every
  * attribute and property must be in place before insertion.
  *
- * @param {string}       tagName       - The web component tag.
- * @param {string}       type          - The button type attribute.
- * @param {Object}       styles        - Style config from ButtonStyleMapper.
- * @param {Object}       session       - The payment session.
- * @param {OrderCreator} createOrderFn - Returns the created order id.
+ * @param {string}       tagName        - The web component tag.
+ * @param {string}       type           - The button type attribute.
+ * @param {string}       radiusProperty - The element's border-radius custom property.
+ * @param {Object}       styles         - Style config from ButtonStyleMapper.
+ * @param {Object}       session        - The payment session.
+ * @param {OrderCreator} createOrderFn  - Returns the created order id.
+ * @param {() => void}   [onClick]      - Called on click before the session starts.
  * @return {HTMLElement} The configured button element.
  */
-function createButton( tagName, type, styles, session, createOrderFn ) {
+function createButton(
+	tagName,
+	type,
+	radiusProperty,
+	styles,
+	session,
+	createOrderFn,
+	onClick
+) {
 	const button = document.createElement( tagName );
 	if ( type ) {
 		button.setAttribute( 'type', type );
@@ -49,10 +72,7 @@ function createButton( tagName, type, styles, session, createOrderFn ) {
 	}
 
 	if ( styles.borderRadius ) {
-		button.style.setProperty(
-			'--paypal-button-border-radius',
-			styles.borderRadius
-		);
+		button.style.setProperty( radiusProperty, styles.borderRadius );
 	}
 
 	if ( styles.height ) {
@@ -61,6 +81,11 @@ function createButton( tagName, type, styles, session, createOrderFn ) {
 
 	button.addEventListener( 'click', async () => {
 		try {
+			// Blocks express uses this to set the active payment method;
+			// classic passes nothing.
+			if ( onClick ) {
+				onClick();
+			}
 			await session.start(
 				{ presentationMode: 'auto' },
 				createOrderFn()
@@ -69,6 +94,57 @@ function createButton( tagName, type, styles, session, createOrderFn ) {
 			handleError( error );
 		}
 	} );
+
+	return button;
+}
+
+/**
+ * Creates a fully configured button element for one funding method, not
+ * yet in the DOM. Returns null when the method is unknown or Pay Later
+ * lacks the product details it needs to render.
+ *
+ * @param {Object}       options                   - Button options.
+ * @param {string}       options.method            - The funding method (paypal, venmo, paylater).
+ * @param {Object}       options.styles            - Button styles for the current context.
+ * @param {Object}       options.session           - The payment session.
+ * @param {OrderCreator} options.createOrderFn     - Returns the created order id.
+ * @param {Object}       [options.payLaterDetails] - Pay Later product details.
+ * @param {() => void}   [options.onClick]         - Called on click before the session starts.
+ * @return {?HTMLElement} The configured button element, or null.
+ */
+export function createMethodButton( {
+	method,
+	styles,
+	session,
+	createOrderFn,
+	payLaterDetails,
+	onClick,
+} ) {
+	const element = BUTTON_ELEMENTS[ method ];
+	if ( ! element ) {
+		return null;
+	}
+
+	if ( method === 'paylater' && ! payLaterDetails?.productCode ) {
+		return null;
+	}
+
+	const button = createButton(
+		element.tagName,
+		element.type,
+		element.radiusProperty,
+		styles,
+		session,
+		createOrderFn,
+		onClick
+	);
+
+	if ( method === 'paylater' ) {
+		button.productCode = payLaterDetails.productCode;
+		if ( payLaterDetails.countryCode ) {
+			button.countryCode = payLaterDetails.countryCode;
+		}
+	}
 
 	return button;
 }
@@ -95,32 +171,22 @@ export function renderButtons( {
 
 	const rendered = [];
 
-	for ( const [ method, element ] of Object.entries( BUTTON_ELEMENTS ) ) {
+	for ( const method of Object.keys( BUTTON_ELEMENTS ) ) {
 		if ( ! sessions[ method ] ) {
 			continue;
 		}
 
-		// Pay Later requires the product details from eligibility.
-		if ( method === 'paylater' && ! payLaterDetails?.productCode ) {
+		const button = createMethodButton( {
+			method,
+			styles,
+			session: sessions[ method ],
+			createOrderFn: createOrderForFunding( method ),
+			payLaterDetails,
+		} );
+		if ( ! button ) {
 			continue;
 		}
 
-		const button = createButton(
-			element.tagName,
-			element.type,
-			styles,
-			sessions[ method ],
-			createOrderForFunding( method )
-		);
-
-		if ( method === 'paylater' ) {
-			button.productCode = payLaterDetails.productCode;
-			if ( payLaterDetails.countryCode ) {
-				button.countryCode = payLaterDetails.countryCode;
-			}
-		}
-
-		// Insert only after full configuration.
 		wrapper.appendChild( button );
 		rendered.push( button );
 	}

@@ -9,22 +9,7 @@
 
 import { updateShipping } from '../endpointsAdapter';
 import { postStoreApi } from '../utils/api';
-
-/**
- * Converts a PayPal v6 shipping address to WC format.
- *
- * @param {Object} address - The PayPal shipping address.
- * @return {Object} WC-formatted address fields.
- */
-function paypalAddressToWc( address = {} ) {
-	return {
-		country: address.countryCode || '',
-		// v6 uses Orders-v2 naming: adminArea1 = state, adminArea2 = city.
-		state: address.adminArea1 || address.state || '',
-		postcode: address.postalCode || '',
-		city: address.adminArea2 || address.city || '',
-	};
-}
+import { sdkShippingAddressToWc } from '../utils/sdkAddress';
 
 /**
  * Updates the WC customer shipping address via the Store API,
@@ -40,7 +25,7 @@ export async function handleShippingAddressChange( data, config ) {
 	const storeApi = config.ajax.wc_store_api;
 
 	await postStoreApi( storeApi, storeApi.update_customer, {
-		shipping_address: paypalAddressToWc( data.shippingAddress ),
+		shipping_address: sdkShippingAddressToWc( data.shippingAddress ),
 	} );
 
 	await updateShipping( config, data.orderId );

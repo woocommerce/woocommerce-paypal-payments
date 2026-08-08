@@ -12,10 +12,12 @@ namespace WooCommerce\PayPalCommerce\SdkV6;
 use WooCommerce\PayPalCommerce\Assets\AssetGetter;
 use WooCommerce\PayPalCommerce\Assets\AssetGetterFactory;
 use WooCommerce\PayPalCommerce\SdkV6\Assets\SdkV6Manager;
+use WooCommerce\PayPalCommerce\SdkV6\Blocks\V6PaymentMethod;
 use WooCommerce\PayPalCommerce\SdkV6\Endpoint\ClientTokenEndpoint;
 use WooCommerce\PayPalCommerce\SdkV6\Helper\ButtonStyleMapper;
 use WooCommerce\PayPalCommerce\SdkV6\Helper\RateLimiter;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
+use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 
 return array(
 
@@ -41,6 +43,11 @@ return array(
 			$container->get( 'order-endpoints.handle-shipping-in-paypal' ),
 			$container->get( 'wcgateway.settings.status' ),
 			$container->get( 'button.helper.context' ),
+			$container->get( 'session.handler' ),
+			$container->get( 'session.cancellation.view' ),
+			// Computed here rather than reusing blocks.settings.final_review_enabled
+			// so this module does not depend on the ppcp-blocks module it replaces.
+			! $container->get( 'settings.settings-provider' )->enable_pay_now(),
 			$container->get( 'settings.settings-provider' )->save_paypal_and_venmo(),
 			$container->get( 'wcgateway.configuration.card-configuration' )
 		);
@@ -60,6 +67,15 @@ return array(
 			'ppcp_sdk_v6_rl_',
 			10,
 			60
+		);
+	},
+
+	'sdk-v6.blocks.payment-method' => static function ( ContainerInterface $container ): V6PaymentMethod {
+		return new V6PaymentMethod(
+			$container->get( 'sdk-v6.manager' ),
+			$container->get( 'sdk-v6.asset-getter' ),
+			$container->get( 'ppcp.asset-version' ),
+			$container->get( 'wcgateway.paypal-gateway' )
 		);
 	},
 
