@@ -81,11 +81,6 @@ class SdkV6Manager {
 		$this->card_payments_configuration = $card_payments_configuration;
 	}
 
-	/**
-	 * Enqueues scripts/styles.
-	 *
-	 * @return void
-	 */
 	public function enqueue(): void {
 		// The classic bootstrap renders into PHP-printed wrappers that do not
 		// exist on block pages, which the block payment method script serves.
@@ -134,20 +129,10 @@ class SdkV6Manager {
 		);
 	}
 
-	/**
-	 * Outputs the main button wrapper element.
-	 *
-	 * @return void
-	 */
 	public function render_wrapper(): void {
 		echo '<div class="ppc-button-wrapper"><div id="' . esc_attr( self::WRAPPER_ID ) . '"></div></div>';
 	}
 
-	/**
-	 * Outputs the mini-cart button wrapper element.
-	 *
-	 * @return void
-	 */
 	public function render_mini_cart_wrapper(): void {
 		echo '<p class="woocommerce-mini-cart__buttons buttons">';
 		echo '<span id="' . esc_attr( self::MINI_CART_WRAPPER_ID ) . '"></span>';
