@@ -8,8 +8,10 @@
 declare (strict_types=1);
 namespace WooCommerce\PayPalCommerce\SdkV6;
 
+use Automattic\WooCommerce\Blocks\Payments\PaymentMethodRegistry;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
 use WooCommerce\PayPalCommerce\SdkV6\Assets\SdkV6Manager;
+use WooCommerce\PayPalCommerce\SdkV6\Blocks\V6PaymentMethod;
 use WooCommerce\PayPalCommerce\SdkV6\Endpoint\ClientTokenEndpoint;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExecutableModule;
@@ -51,8 +53,7 @@ class SdkV6Module implements ServiceModule, ExtendingModule, ExecutableModule
             assert($manager instanceof SdkV6Manager);
             $this->register_render_hooks($manager);
         });
-        // Store the created PayPal order in the WC session for v6 requests,
-        // so the shipping-update endpoint can validate order ownership in
+        // Lets the shipping-update endpoint validate order ownership in
         // non-checkout contexts (v5 only stores it for checkout).
         add_action('woocommerce_paypal_payments_create_order_endpoint_order_created', static function (Order $order, array $data) use ($c) {
             if (empty($data['save_order_in_session'])) {
@@ -62,6 +63,57 @@ class SdkV6Module implements ServiceModule, ExtendingModule, ExecutableModule
             assert($session_handler instanceof SessionHandler);
             $session_handler->replace_order($order);
         }, 10, 2);
+        // While an approved order sits in the session the buyer must not be able
+        // to pay by another means. v5's equivalent callback reads its suppressed
+        // script_data and never reports continuation on v6 pages.
+        if (function_exists('woocommerce_store_api_register_payment_requirements')) {
+            woocommerce_store_api_register_payment_requirements(array('data_callback' => static function () use ($c): array {
+                $manager = $c->get('sdk-v6.manager');
+                assert($manager instanceof SdkV6Manager);
+                return $manager->is_continuation() ? array('ppcp_continuation') : array();
+            }));
+        }
+        // v5's PayPalPaymentMethod stays registered (it provides the
+        // ppcp-gateway type and processing); on v6-owned block pages its
+        // script_data is empty so it registers no express buttons.
+        //
+        // Extends the v5 handoff (see extensions.php) to the other v5 PayPal
+        // block methods, which misbehave against v5's now-empty config: the
+        // Google Pay / Apple Pay boots throw during React render, tearing down
+        // the whole checkout block, and the Fastlane (AXO) field restoration
+        // can clobber the express submission. The wallets and card fields
+        // migrate under their own stories.
+        //
+        // The registration action fires on init (priority 5), before
+        // is_checkout()/is_cart() resolve, so the page context is unknown here;
+        // capture the registry and defer the suppression to wp_enqueue_scripts.
+        add_action('woocommerce_blocks_payment_method_type_registration', function (PaymentMethodRegistry $payment_method_registry) use ($c): void {
+            $payment_method_registry->register($c->get('sdk-v6.blocks.payment-method'));
+            add_action('wp_enqueue_scripts', function () use ($c, $payment_method_registry): void {
+                $manager = $c->get('sdk-v6.manager');
+                assert($manager instanceof SdkV6Manager);
+                if (!$manager->should_load_on_current_page() || !$manager->is_block_context()) {
+                    return;
+                }
+                // PayPal-owned block methods only; never third-party or
+                // core gateways.
+                $v5_methods = array('ppcp-googlepay', 'ppcp-applepay', 'ppcp-axo-gateway');
+                // v6 renders the order review under this name too, and
+                // registerPaymentMethod is a silent last-one-wins
+                // assignment, so leaving both registered would make the
+                // review surface depend on script order. Outside
+                // continuation v5's place-order method is left alone: it
+                // never loads the JS SDK, so it still works.
+                if ($manager->is_continuation()) {
+                    $v5_methods[] = 'ppcp-gateway';
+                }
+                foreach ($v5_methods as $method) {
+                    if ($payment_method_registry->is_registered($method)) {
+                        $payment_method_registry->unregister($method);
+                    }
+                }
+            }, 5);
+        });
         return \true;
     }
     /**

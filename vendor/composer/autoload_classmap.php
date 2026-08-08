@@ -343,6 +343,7 @@ return array(
     'WooCommerce\\PayPalCommerce\\SavePaymentMethods\\SavePaymentMethodsModule' => $baseDir . '/modules/ppcp-save-payment-methods/src/SavePaymentMethodsModule.php',
     'WooCommerce\\PayPalCommerce\\SavePaymentMethods\\Service\\PaymentMethodTokensChecker' => $baseDir . '/modules/ppcp-save-payment-methods/src/Service/PaymentMethodTokensChecker.php',
     'WooCommerce\\PayPalCommerce\\SdkV6\\Assets\\SdkV6Manager' => $baseDir . '/modules/ppcp-sdk-v6/src/Assets/SdkV6Manager.php',
+    'WooCommerce\\PayPalCommerce\\SdkV6\\Blocks\\V6PaymentMethod' => $baseDir . '/modules/ppcp-sdk-v6/src/Blocks/V6PaymentMethod.php',
     'WooCommerce\\PayPalCommerce\\SdkV6\\Endpoint\\ClientTokenEndpoint' => $baseDir . '/modules/ppcp-sdk-v6/src/Endpoint/ClientTokenEndpoint.php',
     'WooCommerce\\PayPalCommerce\\SdkV6\\Helper\\ButtonStyleMapper' => $baseDir . '/modules/ppcp-sdk-v6/src/Helper/ButtonStyleMapper.php',
     'WooCommerce\\PayPalCommerce\\SdkV6\\Helper\\RateLimiter' => $baseDir . '/modules/ppcp-sdk-v6/src/Helper/RateLimiter.php',
