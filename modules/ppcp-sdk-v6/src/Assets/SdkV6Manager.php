@@ -16,12 +16,22 @@ use WooCommerce\PayPalCommerce\OrderEndpoints\Endpoint\CreateOrderEndpoint;
 use WooCommerce\PayPalCommerce\Button\Helper\Context;
 use WooCommerce\PayPalCommerce\SdkV6\Endpoint\ClientTokenEndpoint;
 use WooCommerce\PayPalCommerce\SdkV6\Helper\ButtonStyleMapper;
+use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
+use WooCommerce\PayPalCommerce\WcGateway\Helper\CardPaymentsConfiguration;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\SettingsStatus;
 class SdkV6Manager
 {
     public const WRAPPER_ID = 'ppc-button-ppcp-gateway-v6';
     public const MINI_CART_WRAPPER_ID = 'ppc-button-minicart-v6';
+    // Existing WC credit-card-form field IDs (see CardFieldsModule's
+    // woocommerce_credit_card_form_fields filter and WC core's own
+    // card-number/expiry/cvc fields) that the v6 card fields mount into,
+    // replacing v5's paypal.CardFields()-rendered inputs in the same slots.
+    private const CARD_FIELD_NAME_ID = 'ppcp-credit-card-gateway-card-name';
+    private const CARD_FIELD_NUMBER_ID = 'ppcp-credit-card-gateway-card-number';
+    private const CARD_FIELD_EXPIRY_ID = 'ppcp-credit-card-gateway-card-expiry';
+    private const CARD_FIELD_CVV_ID = 'ppcp-credit-card-gateway-card-cvc';
     private AssetGetter $asset_getter;
     private string $version;
     private Environment $environment;
@@ -30,7 +40,8 @@ class SdkV6Manager
     private SettingsStatus $settings_status;
     private Context $context;
     private bool $vaulting_enabled;
-    public function __construct(AssetGetter $asset_getter, string $version, Environment $environment, ButtonStyleMapper $style_mapper, bool $should_handle_shipping, SettingsStatus $settings_status, Context $context, bool $vaulting_enabled = \false)
+    private CardPaymentsConfiguration $card_payments_configuration;
+    public function __construct(AssetGetter $asset_getter, string $version, Environment $environment, ButtonStyleMapper $style_mapper, bool $should_handle_shipping, SettingsStatus $settings_status, Context $context, bool $vaulting_enabled, CardPaymentsConfiguration $card_payments_configuration)
     {
         $this->asset_getter = $asset_getter;
         $this->version = $version;
@@ -40,6 +51,7 @@ class SdkV6Manager
         $this->settings_status = $settings_status;
         $this->context = $context;
         $this->vaulting_enabled = $vaulting_enabled;
+        $this->card_payments_configuration = $card_payments_configuration;
     }
     /**
      * Enqueues scripts/styles.
@@ -108,12 +120,21 @@ class SdkV6Manager
      * the suppression becomes unconditional and only the merchant
      * location-settings gating in this method remains meaningful.
      *
+     * Card fields (ACDC) are independent of the smart-button location: the
+     * card gateway is a regular WC payment method that can be selectable
+     * at checkout even when the wallet button is disabled there, so it
+     * gets its own OR'd condition rather than being folded into the
+     * location check above.
+     *
      * @return bool
      */
     public function should_load_on_current_page(): bool
     {
         $page_location = $this->get_page_context();
         if ($page_location && $this->settings_status->is_smart_button_enabled_for_location($page_location)) {
+            return \true;
+        }
+        if ('checkout' === $page_location && $this->card_payments_configuration->is_acdc_enabled()) {
             return \true;
         }
         // The mini-cart case only applies when the classic widget is in
@@ -144,7 +165,8 @@ class SdkV6Manager
         if ($this->settings_status->is_smart_button_enabled_for_location('mini-cart')) {
             $button_styles['mini-cart'] = $this->style_mapper->styles_for_context('mini-cart');
         }
-        return array('sdk_url' => $base_url . '/web-sdk/v6/core', 'page_context' => $page_context, 'currency' => get_woocommerce_currency(), 'amount' => $this->transaction_amount(), 'buyer_country' => $buyer_country, 'locale' => str_replace('_', '-', get_locale()), 'vaulting_enabled' => $this->vaulting_enabled, 'ajax' => array('client_token' => array('endpoint' => \WC_AJAX::get_endpoint(ClientTokenEndpoint::ENDPOINT), 'nonce' => wp_create_nonce(ClientTokenEndpoint::nonce())), 'change_cart' => array('endpoint' => \WC_AJAX::get_endpoint(ChangeCartEndpoint::ENDPOINT), 'nonce' => wp_create_nonce(ChangeCartEndpoint::nonce())), 'create_order' => array('endpoint' => \WC_AJAX::get_endpoint(CreateOrderEndpoint::ENDPOINT), 'nonce' => wp_create_nonce(CreateOrderEndpoint::nonce())), 'approve_order' => array('endpoint' => \WC_AJAX::get_endpoint(ApproveOrderEndpoint::ENDPOINT), 'nonce' => wp_create_nonce(ApproveOrderEndpoint::nonce())), 'update_shipping' => array('endpoint' => \WC_AJAX::get_endpoint(UpdateShippingEndpoint::ENDPOINT), 'nonce' => wp_create_nonce(UpdateShippingEndpoint::nonce())), 'wc_store_api' => array('cart' => $store_api_base, 'select_shipping_rate' => $store_api_base . '/select-shipping-rate', 'update_customer' => $store_api_base . '/update-customer', 'nonce' => wp_create_nonce('wc_store_api'))), 'urls' => array('checkout' => wc_get_checkout_url()), 'labels' => array('generic_error' => __('Something went wrong. Please try again or choose another payment source.', 'woocommerce-paypal-payments')), 'shipping' => array('handle_in_paypal' => $shipping_enabled, 'need_shipping' => $this->need_shipping()), 'button_styles' => $button_styles, 'wrapper' => '#' . self::WRAPPER_ID, 'mini_cart_wrapper' => '#' . self::MINI_CART_WRAPPER_ID);
+        $card_fields_enabled = 'checkout' === $page_context && $this->card_payments_configuration->is_acdc_enabled();
+        return array('sdk_url' => $base_url . '/web-sdk/v6/core', 'page_context' => $page_context, 'currency' => get_woocommerce_currency(), 'amount' => $this->transaction_amount(), 'buyer_country' => $buyer_country, 'locale' => str_replace('_', '-', get_locale()), 'vaulting_enabled' => $this->vaulting_enabled, 'ajax' => array('client_token' => array('endpoint' => \WC_AJAX::get_endpoint(ClientTokenEndpoint::ENDPOINT), 'nonce' => wp_create_nonce(ClientTokenEndpoint::nonce())), 'change_cart' => array('endpoint' => \WC_AJAX::get_endpoint(ChangeCartEndpoint::ENDPOINT), 'nonce' => wp_create_nonce(ChangeCartEndpoint::nonce())), 'create_order' => array('endpoint' => \WC_AJAX::get_endpoint(CreateOrderEndpoint::ENDPOINT), 'nonce' => wp_create_nonce(CreateOrderEndpoint::nonce())), 'approve_order' => array('endpoint' => \WC_AJAX::get_endpoint(ApproveOrderEndpoint::ENDPOINT), 'nonce' => wp_create_nonce(ApproveOrderEndpoint::nonce())), 'update_shipping' => array('endpoint' => \WC_AJAX::get_endpoint(UpdateShippingEndpoint::ENDPOINT), 'nonce' => wp_create_nonce(UpdateShippingEndpoint::nonce())), 'wc_store_api' => array('cart' => $store_api_base, 'select_shipping_rate' => $store_api_base . '/select-shipping-rate', 'update_customer' => $store_api_base . '/update-customer', 'nonce' => wp_create_nonce('wc_store_api'))), 'urls' => array('checkout' => wc_get_checkout_url()), 'labels' => array('generic_error' => __('Something went wrong. Please try again or choose another payment source.', 'woocommerce-paypal-payments')), 'shipping' => array('handle_in_paypal' => $shipping_enabled, 'need_shipping' => $this->need_shipping()), 'button_styles' => $button_styles, 'wrapper' => '#' . self::WRAPPER_ID, 'mini_cart_wrapper' => '#' . self::MINI_CART_WRAPPER_ID, 'card_fields' => array('enabled' => $card_fields_enabled, 'payment_method' => CreditCardGateway::ID, 'funding_source' => 'card', 'fields' => array('name' => '#' . self::CARD_FIELD_NAME_ID, 'number' => '#' . self::CARD_FIELD_NUMBER_ID, 'expiry' => '#' . self::CARD_FIELD_EXPIRY_ID, 'cvv' => '#' . self::CARD_FIELD_CVV_ID)));
     }
     /**
      * Whether the current cart needs shipping.

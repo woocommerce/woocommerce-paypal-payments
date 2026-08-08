@@ -22,7 +22,7 @@ return array('sdk-v6.asset-getter' => static function (ContainerInterface $conta
 }, 'sdk-v6.button-style-mapper' => static function (ContainerInterface $container): ButtonStyleMapper {
     return new ButtonStyleMapper($container->get('settings.settings-provider'));
 }, 'sdk-v6.manager' => static function (ContainerInterface $container): SdkV6Manager {
-    return new SdkV6Manager($container->get('sdk-v6.asset-getter'), $container->get('ppcp.asset-version'), $container->get('settings.environment'), $container->get('sdk-v6.button-style-mapper'), $container->get('order-endpoints.handle-shipping-in-paypal'), $container->get('wcgateway.settings.status'), $container->get('button.helper.context'), $container->get('settings.settings-provider')->save_paypal_and_venmo());
+    return new SdkV6Manager($container->get('sdk-v6.asset-getter'), $container->get('ppcp.asset-version'), $container->get('settings.environment'), $container->get('sdk-v6.button-style-mapper'), $container->get('order-endpoints.handle-shipping-in-paypal'), $container->get('wcgateway.settings.status'), $container->get('button.helper.context'), $container->get('settings.settings-provider')->save_paypal_and_venmo(), $container->get('wcgateway.configuration.card-configuration'));
 }, 'sdk-v6.endpoint.client-token' => static function (ContainerInterface $container): ClientTokenEndpoint {
     return new ClientTokenEndpoint($container->get('order-endpoints.request-data'), $container->get('woocommerce.logger.woocommerce'), $container->get('api.sdk-client-token'), $container->get('sdk-v6.rate-limiter'));
 }, 'sdk-v6.rate-limiter' => static function (ContainerInterface $container): RateLimiter {
