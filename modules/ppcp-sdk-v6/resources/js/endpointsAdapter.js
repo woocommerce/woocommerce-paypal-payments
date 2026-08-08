@@ -203,6 +203,64 @@ export async function approveOrderInSession( config, fundingSource, orderId ) {
 }
 
 /**
+ * Creates a PayPal order for the Advanced Card Fields (ACDC) checkout flow.
+ *
+ * Unlike createOrder(), this never sets save_order_in_session: at
+ * create-order time the order has no card attached yet, no 3D Secure
+ * decision exists, and the disabled-card-brand check hasn't run — storing
+ * it in the session this early would let the native checkout capture an
+ * unconfirmed, cardless order. approveCardOrder() is what stores the
+ * order in session, once those checks pass.
+ *
+ * @param {Object} config - The wc_ppcp_sdk_v6 config object.
+ * @return {Promise<{orderId: string}>} The created PayPal order id.
+ */
+export async function createCardOrder( config ) {
+	const body = {
+		context: 'checkout',
+		purchase_units: [],
+		payment_method: config.card_fields.payment_method,
+		funding_source: config.card_fields.funding_source,
+	};
+
+	const form = document.querySelector( 'form.checkout' );
+	if ( form ) {
+		body.form_encoded = new URLSearchParams(
+			new FormData( form )
+		).toString();
+		body.createaccount = !! form.querySelector( '#createaccount' )?.checked;
+	}
+
+	const payer = payerData();
+	if ( payer ) {
+		body.payer = payer;
+	}
+
+	const data = await postJson( config.ajax.create_order, body );
+
+	return { orderId: data.id };
+}
+
+/**
+ * Approves a card-fields order after the card session has confirmed it.
+ *
+ * Mirrors the v5 ACDC flow's card branch: the endpoint runs the
+ * disabled-card-brand and 3D Secure checks, then stores the confirmed
+ * order in the WC session so the native checkout submission (triggered
+ * right after this resolves) can capture it via the existing
+ * CreditCardGateway::process_payment() flow.
+ *
+ * @param {Object} config  - The wc_ppcp_sdk_v6 config object.
+ * @param {string} orderId - The PayPal order ID.
+ */
+export async function approveCardOrder( config, orderId ) {
+	await postJson( config.ajax.approve_order, {
+		order_id: orderId,
+		funding_source: config.card_fields.funding_source,
+	} );
+}
+
+/**
  * Patches the PayPal order with totals recalculated from the WC cart.
  *
  * @param {Object} config  - The wc_ppcp_sdk_v6 config object.

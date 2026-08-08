@@ -26,6 +26,8 @@ jest.mock( '../utils/api', () => ( {
 import {
 	createOrder,
 	approveOrder,
+	createCardOrder,
+	approveCardOrder,
 	fetchCartTotal,
 	navigation,
 } from '../endpointsAdapter';
@@ -39,6 +41,10 @@ const config = {
 		wc_store_api: { cart: '/wp-json/wc/store/v1/cart' },
 	},
 	urls: { checkout: '/checkout/' },
+	card_fields: {
+		payment_method: 'ppcp-credit-card-gateway',
+		funding_source: 'card',
+	},
 };
 
 afterEach( () => {
@@ -241,6 +247,64 @@ describe( 'approveOrder', () => {
 		expect( trigger ).toHaveBeenCalledWith( 'submit' );
 
 		delete global.jQuery;
+	} );
+} );
+
+describe( 'createCardOrder', () => {
+	test( 'sends the card payment method/funding source and never sets save_order_in_session', async () => {
+		document.body.innerHTML =
+			'<form class="checkout">' +
+			'<input name="billing_email" value="a@b.com" /></form>';
+		mockPayerData.mockReturnValueOnce( null );
+		postJson.mockResolvedValueOnce( { id: 'CARDORDER1' } );
+
+		const result = await createCardOrder( config );
+
+		expect( result ).toEqual( { orderId: 'CARDORDER1' } );
+		expect( postJson ).toHaveBeenCalledWith( config.ajax.create_order, {
+			context: 'checkout',
+			purchase_units: [],
+			payment_method: 'ppcp-credit-card-gateway',
+			funding_source: 'card',
+			form_encoded: 'billing_email=a%40b.com',
+			createaccount: false,
+		} );
+	} );
+
+	test( 'forwards the payer when available', async () => {
+		document.body.innerHTML = '<form class="checkout"></form>';
+		mockPayerData.mockReturnValueOnce( { email_address: 'a@b.com' } );
+		postJson.mockResolvedValueOnce( { id: 'CARDORDER2' } );
+
+		await createCardOrder( config );
+
+		expect( postJson ).toHaveBeenCalledWith(
+			config.ajax.create_order,
+			expect.objectContaining( { payer: { email_address: 'a@b.com' } } )
+		);
+	} );
+} );
+
+describe( 'approveCardOrder', () => {
+	test( 'posts the order id and card funding source', async () => {
+		postJson.mockResolvedValueOnce( {} );
+
+		await approveCardOrder( config, 'CARDORDER1' );
+
+		expect( postJson ).toHaveBeenCalledWith( config.ajax.approve_order, {
+			order_id: 'CARDORDER1',
+			funding_source: 'card',
+		} );
+	} );
+
+	test( 'propagates a rejected (declined/disabled-card/3DS) approval', async () => {
+		postJson.mockRejectedValueOnce(
+			new Error( 'Unfortunately, we do not accept this card.' )
+		);
+
+		await expect(
+			approveCardOrder( config, 'CARDORDER1' )
+		).rejects.toThrow( 'Unfortunately, we do not accept this card.' );
 	} );
 } );
 
