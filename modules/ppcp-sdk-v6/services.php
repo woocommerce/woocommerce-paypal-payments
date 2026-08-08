@@ -37,7 +37,8 @@ return array('sdk-v6.asset-getter' => static function (ContainerInterface $conta
         // Computed here rather than reusing blocks.settings.final_review_enabled
         // so this module does not depend on the ppcp-blocks module it replaces.
         !$container->get('settings.settings-provider')->enable_pay_now(),
-        $container->get('settings.settings-provider')->save_paypal_and_venmo()
+        $container->get('settings.settings-provider')->save_paypal_and_venmo(),
+        $container->get('wcgateway.configuration.card-configuration')
     );
 }, 'sdk-v6.endpoint.client-token' => static function (ContainerInterface $container): ClientTokenEndpoint {
     return new ClientTokenEndpoint($container->get('order-endpoints.request-data'), $container->get('woocommerce.logger.woocommerce'), $container->get('api.sdk-client-token'), $container->get('sdk-v6.rate-limiter'));
