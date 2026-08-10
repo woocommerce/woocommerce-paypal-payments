@@ -80,6 +80,12 @@ class SubscriptionsHandler {
 	 * @return array
 	 */
 	public function add_mock_ppec_gateway( $gateways ) {
+		// Registered unconditionally on purpose. This filter runs once, while the
+		// gateway list is built early in the request, so it cannot tell whether a
+		// renewal is about to run: gating it here left the gateway missing when
+		// Action Scheduler triggered the renewal, and the payment failed. The
+		// gateway is kept off the Payments settings screen by MockGateway
+		// presenting itself as a shell instead.
 		if ( ! isset( $gateways[ PPECHelper::PPEC_GATEWAY_ID ] ) ) {
 			$gateways[ PPECHelper::PPEC_GATEWAY_ID ] = $this->mock_gateway;
 		}

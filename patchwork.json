@@ -3,6 +3,7 @@
         "json_decode",
         "filter_input",
         "gmdate",
-        "strtotime"
+        "strtotime",
+        "time"
     ]
 }

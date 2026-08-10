@@ -28,6 +28,7 @@ use WooCommerce\PayPalCommerce\StoreSync\Endpoint\ReplaceCartEndpoint;
 use WooCommerce\PayPalCommerce\StoreSync\Endpoint\CheckoutEndpoint;
 use WooCommerce\PayPalCommerce\StoreSync\Ingestion\IngestionBatchProvider;
 use WooCommerce\PayPalCommerce\StoreSync\Ingestion\IngestionManager;
+use WooCommerce\PayPalCommerce\StoreSync\Ingestion\ProductFilter;
 use WooCommerce\PayPalCommerce\StoreSync\Response\ResponseFactory;
 use WooCommerce\PayPalCommerce\StoreSync\Session\AgenticSessionHandler;
 use WooCommerce\PayPalCommerce\StoreSync\Setting\AgenticSettingsEndpoint;
@@ -36,6 +37,7 @@ use WooCommerce\PayPalCommerce\StoreSync\Setting\AgenticSettingsModule;
 use WooCommerce\PayPalCommerce\StoreSync\Merchant\MerchantMetadataProvider;
 use WooCommerce\PayPalCommerce\StoreSync\Registration\RegistrationService;
 use WooCommerce\PayPalCommerce\StoreSync\Registration\RegistrationEligibility;
+use WooCommerce\PayPalCommerce\StoreSync\Registration\ReconciliationService;
 use WooCommerce\PayPalCommerce\StoreSync\Helper\AgenticCheckoutProcessor;
 use WooCommerce\PayPalCommerce\StoreSync\Helper\ShippingOptionsBuilder;
 use WooCommerce\PayPalCommerce\StoreSync\Helper\PayPalOrderManager;
@@ -105,6 +107,13 @@ return array(
 		return new RegistrationService(
 			$c->get( 'agentic.config.webhook_urls' ),
 			$c->get( 'agentic.merchant.provider' ),
+			$c->get( 'agentic.logger.default' )
+		);
+	},
+	'agentic.registration.reconciler'              => static function ( ContainerInterface $c ): ReconciliationService {
+		return new ReconciliationService(
+			$c->get( 'agentic.settings.model' ),
+			$c->get( 'agentic.registration.handler' ),
 			$c->get( 'agentic.logger.default' )
 		);
 	},
@@ -183,7 +192,7 @@ return array(
 	},
 	'agentic.validator.product'                    => static function ( ContainerInterface $c ): ProductValidator {
 		return new ProductValidator(
-			$c->get( 'agentic.config.ingestion' )
+			$c->get( 'agentic.ingestion.product-filter' )
 		);
 	},
 	'agentic.validator.price'                      => static function (): PriceValidator {
@@ -296,9 +305,15 @@ return array(
 	},
 
 	// Ingestion services.
+	'agentic.ingestion.product-filter'             => static function ( ContainerInterface $c ): ProductFilter {
+		return new ProductFilter(
+			$c->get( 'agentic.logger.ingestion' )
+		);
+	},
 	'agentic.ingestion-batch-provider'             => static function ( ContainerInterface $c ): IngestionBatchProvider {
 		return new IngestionBatchProvider(
-			$c->get( 'agentic.config.ingestion' )
+			$c->get( 'agentic.config.ingestion' ),
+			$c->get( 'agentic.ingestion.product-filter' )
 		);
 	},
 	'agentic.ingestion-manager'                    => static function ( ContainerInterface $c ): IngestionManager {
@@ -308,7 +323,8 @@ return array(
 			$c->get( 'agentic.config.webhook_urls' ),
 			$c->get( 'agentic.merchant.provider' ),
 			$c->get( 'agentic.logger.ingestion' ),
-			$c->get( 'agentic.helper.product-manager' )
+			$c->get( 'agentic.helper.product-manager' ),
+			$c->get( 'agentic.ingestion.product-filter' )
 		);
 	},
 

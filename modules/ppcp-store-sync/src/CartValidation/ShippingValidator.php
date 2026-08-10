@@ -292,8 +292,6 @@ class ShippingValidator implements ValidatorInterface {
 		 * Allows shipping plugins to indicate if a product requires signature on delivery,
 		 * which affects PO Box validation.
 		 *
-		 * @since 1.0.0
-		 *
 		 * @param bool       $requires_signature Whether signature is required (defaults to false).
 		 * @param WC_Product $product            The WooCommerce product object.
 		 * @param CartItem   $item               The cart item.

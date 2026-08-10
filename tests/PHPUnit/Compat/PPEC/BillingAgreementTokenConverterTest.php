@@ -55,7 +55,7 @@ class BillingAgreementTokenConverterTest extends TestCase
 		$vault_token_id       = 'vault-token-xyz';
 
 		$this->customer_repository
-			->shouldReceive('customer_id_for_user')
+			->shouldReceive('paypal_customer_id_for_user')
 			->with($user_id)
 			->andReturn($customer_id);
 
@@ -88,7 +88,7 @@ class BillingAgreementTokenConverterTest extends TestCase
 		$vault_token_id       = 'vault-token-xyz';
 
 		$this->customer_repository
-			->shouldReceive('customer_id_for_user')
+			->shouldReceive('paypal_customer_id_for_user')
 			->with($user_id)
 			->andReturn($customer_id);
 
@@ -106,6 +106,41 @@ class BillingAgreementTokenConverterTest extends TestCase
 		$this->assertSame($vault_token_id, $result);
 	}
 
+	public function testNonVaultedUserPassesEmptyCustomerId()
+	{
+		$billing_agreement_id = 'B-ABC123';
+		$user_id              = 42;
+		$vault_token_id       = 'vault-token-xyz';
+
+		// Never vaulted: no real PayPal customer ID.
+		$this->customer_repository
+			->shouldReceive('paypal_customer_id_for_user')
+			->with($user_id)
+			->andReturn('');
+
+		$api_result               = new stdClass();
+		$api_result->id           = $vault_token_id;
+		$api_result->customer     = new stdClass();
+		$api_result->customer->id = 'paypal-generated-id';
+
+		// PayPal must be called with an empty customer ID so it assigns one,
+		// never with a fabricated local ID.
+		$this->payment_method_tokens_endpoint
+			->shouldReceive('create_payment_token')
+			->with(Mockery::type(PaymentSource::class), '')
+			->andReturn($api_result);
+
+		expect('update_user_meta')
+			->once()
+			->with($user_id, '_ppcp_target_customer_id', 'paypal-generated-id');
+
+		$this->logger->shouldReceive('info')->once();
+
+		$result = $this->sut->convert($billing_agreement_id, $user_id);
+
+		$this->assertSame($vault_token_id, $result);
+	}
+
 	public function testApiFailureReturnsNull()
 	{
 		$billing_agreement_id = 'B-ABC123';
@@ -113,7 +148,7 @@ class BillingAgreementTokenConverterTest extends TestCase
 		$customer_id          = 'customer_42';
 
 		$this->customer_repository
-			->shouldReceive('customer_id_for_user')
+			->shouldReceive('paypal_customer_id_for_user')
 			->with($user_id)
 			->andReturn($customer_id);
 
@@ -134,7 +169,7 @@ class BillingAgreementTokenConverterTest extends TestCase
 		$user_id              = 42;
 
 		$this->customer_repository
-			->shouldReceive('customer_id_for_user')
+			->shouldReceive('paypal_customer_id_for_user')
 			->with($user_id)
 			->andThrow(new \Exception('Unexpected error'));
 

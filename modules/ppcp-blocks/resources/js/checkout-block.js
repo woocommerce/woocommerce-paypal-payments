@@ -5,9 +5,11 @@ import {
 import { __ } from '@wordpress/i18n';
 import {
 	cartHasSubscriptionProducts,
+	paypalPaymentMethodAllowed,
 	paypalSubscriptionButtonAllowed,
 } from './Helper/Subscription';
 import { loadPayPalScript } from '../../../ppcp-button/resources/js/modules/Helper/PayPalScriptLoading';
+import { initCartFragmentSync } from '../../../ppcp-button/resources/js/modules/Helper/CartFragmentSync';
 import BlockCheckoutMessagesBootstrap from './Bootstrap/BlockCheckoutMessagesBootstrap';
 import { PayPalComponent } from './Components/paypal';
 import { BlockEditorPayPalComponent } from './Components/block-editor-paypal';
@@ -19,9 +21,20 @@ const config = wc.wcSettings.getSetting( 'ppcp-gateway_data' );
 
 window.ppcpFundingSource = config.fundingSource;
 
+// Keep the classic header mini-cart count in sync with the block cart/checkout,
+// which mutate the Store API cart instead of firing WooCommerce's jQuery cart
+// fragment events. Idempotent with the same call in the button bundle.
+initCartFragmentSync();
+
 let paypalScriptPromise = null;
 
-const features = [ 'products' ];
+// Mirror the gateway's server-side (mode-aware) `supports` so WooCommerce Blocks
+// does not filter the PayPal method out when the cart requires a feature the
+// gateway actually supports — notably `multiple_subscriptions` when the cart holds
+// two or more subscriptions. Falls back to the previous hard-coded list.
+const features = Array.isArray( config.supportedFeatures )
+	? [ ...config.supportedFeatures ]
+	: [ 'products' ];
 let blockEnabled = true;
 
 if ( cartHasSubscriptionProducts( config.scriptData ) ) {
@@ -29,7 +42,9 @@ if ( cartHasSubscriptionProducts( config.scriptData ) ) {
 	// (shared rule used by the classic cart and mini-cart as well).
 	blockEnabled = paypalSubscriptionButtonAllowed( config.scriptData );
 
-	features.push( 'subscriptions' );
+	if ( ! Array.isArray( config.supportedFeatures ) ) {
+		features.push( 'subscriptions' );
+	}
 }
 
 if ( blockEnabled ) {
@@ -56,15 +71,8 @@ if ( blockEnabled ) {
 			),
 			placeOrderButtonLabel: config.placeOrderButtonText,
 			ariaLabel: config.title,
-			canMakePayment: ( cartData ) => {
-				// Free-trial subscriptions have a $0 total today but still
-				// require a payment method to be vaulted for future renewals.
-				if ( config.scriptData.is_free_trial_cart ) {
-					return true;
-				}
-				const total = cartData?.cartTotals?.total_price;
-				return parseInt( total ) > 0;
-			},
+			canMakePayment: ( cartData ) =>
+				paypalPaymentMethodAllowed( config.scriptData, cartData ),
 			supports: {
 				features,
 				showSavedCards: true,

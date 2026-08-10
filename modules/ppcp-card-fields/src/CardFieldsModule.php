@@ -181,11 +181,12 @@ class CardFieldsModule implements ServiceModule, ExecutableModule {
 				$validator = $c->get( 'card-fields.service.card-capture-validator' );
 				assert( $validator instanceof CardCaptureValidator );
 
-				if ( ! $validator->is_valid( $order ) ) {
+				$rejection_reason = $validator->rejection_reason( $order );
+				if ( $rejection_reason !== CardCaptureValidator::REASON_NONE ) {
 					$logger = $c->get( 'woocommerce.logger.woocommerce' );
 					assert( $logger instanceof LoggerInterface );
 
-					$logger->warning( "Could not capture order {$order->id()}" );
+					$logger->warning( "Could not capture order {$order->id()}: {$rejection_reason}" );
 
 					// Only set session flag if WC session exists (not in API/agentic context).
 					/**
@@ -199,9 +200,27 @@ class CardFieldsModule implements ServiceModule, ExecutableModule {
 						WC()->session->set( 'ppcp_delete_wc_order_on_payment_failure', true );
 					}
 
-					throw new DomainException( esc_html__( 'Could not capture the PayPal order.', 'woocommerce-paypal-payments' ) );
+					throw new DomainException( esc_html( self::capture_rejection_message( $rejection_reason ) ) );
 				}
 			}
 		);
+	}
+
+	/**
+	 * Returns a customer-friendly decline message for a capture rejection reason.
+	 *
+	 * @param string $reason One of the CardCaptureValidator::REASON_* constants.
+	 *
+	 * @return string
+	 */
+	private static function capture_rejection_message( string $reason ): string {
+		switch ( $reason ) {
+			case CardCaptureValidator::REASON_3DS_FAILED:
+				return __( 'This card could not be authorized. Please try a different payment method.', 'woocommerce-paypal-payments' );
+			case CardCaptureValidator::REASON_3DS_UNCLEAR:
+				return __( 'The 3D Secure validation could not be completed. Please try again or use another card.', 'woocommerce-paypal-payments' );
+			default:
+				return __( 'This payment could not be processed. Please try a different payment method.', 'woocommerce-paypal-payments' );
+		}
 	}
 }

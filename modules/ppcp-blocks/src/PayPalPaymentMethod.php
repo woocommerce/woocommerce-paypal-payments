@@ -259,6 +259,10 @@ class PayPalPaymentMethod extends AbstractPaymentMethodType {
 			'placeOrderButtonText'        => $this->place_order_button_text,
 			'placeOrderButtonDescription' => $this->place_order_button_description,
 			'enabledFundingSources'       => $funding_sources,
+			// The gateway's (mode-aware) supported features, so the block can
+			// declare them to WooCommerce Blocks and not be filtered out when the
+			// cart requires one (e.g. `multiple_subscriptions` for 2+ subscriptions).
+			'supportedFeatures'           => array_values( (array) $this->gateway->supports ),
 			'ajax'                        => array(
 				'update_shipping' => array(
 					'endpoint' => WC_AJAX::get_endpoint( UpdateShippingEndpoint::ENDPOINT ),

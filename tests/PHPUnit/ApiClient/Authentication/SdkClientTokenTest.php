@@ -11,6 +11,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\Cache;
 use WooCommerce\PayPalCommerce\TestCase;
 use function Brain\Monkey\Functions\expect;
+use function Brain\Monkey\Functions\when;
 
 class SdkClientTokenTest extends TestCase
 {
@@ -21,9 +22,15 @@ class SdkClientTokenTest extends TestCase
     private $rateLimiter;
     private $sut;
 
+    private const TEST_DOMAIN = 'shop.example.com';
+    private const TEST_CACHE_KEY = SdkClientToken::CACHE_KEY . '-' . self::TEST_DOMAIN;
+
     public function setUp(): void
     {
         parent::setUp();
+
+        when('home_url')->justReturn('https://' . self::TEST_DOMAIN);
+        when('wp_parse_url')->alias('parse_url');
 
         $this->host = 'https://example.com';
         $this->logger = Mockery::mock(LoggerInterface::class);
@@ -50,8 +57,8 @@ class SdkClientTokenTest extends TestCase
 
     public function testCachedTokenReturnedWithoutRequest()
     {
-        $this->cache->shouldReceive('has')->with(SdkClientToken::CACHE_KEY)->andReturn(true);
-        $this->cache->shouldReceive('get')->with(SdkClientToken::CACHE_KEY)->andReturn('cached-token');
+        $this->cache->shouldReceive('has')->with(self::TEST_CACHE_KEY)->andReturn(true);
+        $this->cache->shouldReceive('get')->with(self::TEST_CACHE_KEY)->andReturn('cached-token');
 
         expect('wp_remote_get')->never();
 
@@ -105,7 +112,7 @@ class SdkClientTokenTest extends TestCase
         $this->credentials->shouldReceive('credentials')->andReturn('Basic xxx');
         $this->rateLimiter->shouldReceive('retry_after_seconds')->andReturn(null);
         $this->rateLimiter->expects('clear')->with('sdk-client-token');
-        $this->cache->expects('set')->with(SdkClientToken::CACHE_KEY, 'tok', 3600);
+        $this->cache->expects('set')->with(self::TEST_CACHE_KEY, 'tok', 3600);
 
         $headers = $this->headers();
         expect('trailingslashit')->andReturn($this->host . '/');
@@ -124,7 +131,7 @@ class SdkClientTokenTest extends TestCase
         $this->rateLimiter->expects('clear')->with('sdk-client-token');
         // A blip that recovers on retry must NOT arm the cool-down.
         $this->rateLimiter->shouldNotReceive('register_failure');
-        $this->cache->expects('set')->with(SdkClientToken::CACHE_KEY, 'tok', 3600);
+        $this->cache->expects('set')->with(self::TEST_CACHE_KEY, 'tok', 3600);
 
         $headers = $this->headers();
         $wpError = Mockery::mock('WP_Error');

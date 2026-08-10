@@ -407,6 +407,7 @@ class ApplePayDataObjectHttp {
 		}
 		return array(
 			'city'     => $contact_info['locality'],
+			'state'    => $contact_info['administrativeArea'] ?? '',
 			'postcode' => $contact_info['postalCode'],
 			'country'  => strtoupper( $contact_info['countryCode'] ),
 		);
