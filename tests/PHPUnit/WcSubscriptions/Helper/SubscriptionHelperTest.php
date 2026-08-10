@@ -6,8 +6,10 @@ namespace WooCommerce\PayPalCommerce\WcSubscriptions\Helper;
 use Mockery;
 use WC_Order;
 use WC_Subscription;
+use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
 use WooCommerce\PayPalCommerce\TestCase;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
+use function Brain\Monkey\Filters\expectApplied;
 use function Brain\Monkey\Functions\when;
 
 class SubscriptionHelperTest extends TestCase
@@ -142,6 +144,81 @@ class SubscriptionHelperTest extends TestCase
 				'cart'     => true,
 			],
 			$helper->locations_with_subscription_product()
+		);
+	}
+
+	/**
+	 * GIVEN WooCommerce Subscriptions is not active
+	 * WHEN resolve_subscription_mode() is called
+	 * THEN it returns an empty string, since there is no subscriptions mode to resolve
+	 */
+	public function test_resolve_subscription_mode_returns_empty_string_when_plugin_not_active(): void {
+		$settings_provider = Mockery::mock( SettingsProvider::class );
+
+		$helper = Mockery::mock( SubscriptionHelper::class )->makePartial();
+		$helper->shouldReceive( 'plugin_is_active' )->andReturn( false );
+
+		$this->assertSame( '', $helper->resolve_subscription_mode( $settings_provider ) );
+	}
+
+	/**
+	 * GIVEN WooCommerce Subscriptions is active
+	 * AND the woocommerce_paypal_payments_subscription_mode_disabled filter forces the disabled mode
+	 * WHEN resolve_subscription_mode() is called
+	 * THEN it returns 'disable_paypal_subscriptions' regardless of manual renewals or vaulting settings
+	 */
+	public function test_resolve_subscription_mode_returns_disabled_when_forced_by_filter(): void {
+		expectApplied( 'woocommerce_paypal_payments_subscription_mode_disabled' )
+			->once()
+			->with( false )
+			->andReturn( true );
+
+		$settings_provider = Mockery::mock( SettingsProvider::class );
+
+		$helper = Mockery::mock( SubscriptionHelper::class )->makePartial();
+		$helper->shouldReceive( 'plugin_is_active' )->andReturn( true );
+
+		$this->assertSame(
+			SubscriptionHelper::SUBSCRIPTION_MODE_VALUE_DISABLED,
+			$helper->resolve_subscription_mode( $settings_provider )
+		);
+	}
+
+	/**
+	 * GIVEN WooCommerce Subscriptions is active and the disabled-mode filter is not applied
+	 * WHEN resolve_subscription_mode() is called
+	 * THEN a manual-renewal-only subscription with vaulting disabled resolves to
+	 *      'disable_paypal_subscriptions'
+	 * AND vaulting enabled resolves to 'vaulting_api'
+	 * AND vaulting disabled with automatic renewal required resolves to 'subscriptions_api'
+	 *
+	 * @dataProvider subscription_mode_provider
+	 */
+	public function test_resolve_subscription_mode_decides_between_disabled_vaulting_and_subscriptions_api(
+		bool $accept_manual_renewals,
+		bool $save_paypal_and_venmo,
+		string $expected_mode
+	): void {
+		expectApplied( 'woocommerce_paypal_payments_subscription_mode_disabled' )
+			->once()
+			->with( false )
+			->andReturn( false );
+
+		$settings_provider = Mockery::mock( SettingsProvider::class );
+		$settings_provider->allows( 'save_paypal_and_venmo' )->andReturn( $save_paypal_and_venmo );
+
+		$helper = Mockery::mock( SubscriptionHelper::class )->makePartial();
+		$helper->shouldReceive( 'plugin_is_active' )->andReturn( true );
+		$helper->shouldReceive( 'accept_manual_renewals' )->andReturn( $accept_manual_renewals );
+
+		$this->assertSame( $expected_mode, $helper->resolve_subscription_mode( $settings_provider ) );
+	}
+
+	public function subscription_mode_provider(): array {
+		return array(
+			'manual renewal accepted and vaulting disabled disables PayPal subscriptions' => array( true, false, SubscriptionHelper::SUBSCRIPTION_MODE_VALUE_DISABLED ),
+			'vaulting enabled resolves to vaulting API'                                    => array( false, true, SubscriptionHelper::SUBSCRIPTION_MODE_VALUE_VAULTING ),
+			'automatic renewal required and vaulting disabled keeps subscriptions API'     => array( false, false, SubscriptionHelper::SUBSCRIPTION_MODE_VALUE_SUBSCRIPTIONS ),
 		);
 	}
 

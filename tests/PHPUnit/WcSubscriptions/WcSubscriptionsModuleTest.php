@@ -9,8 +9,6 @@ use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
 use WooCommerce\PayPalCommerce\TestCase;
 use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
 
-use function Brain\Monkey\Filters\expectApplied;
-
 /**
  * @covers \WooCommerce\PayPalCommerce\WcSubscriptions\WcSubscriptionsModule
  */
@@ -25,28 +23,17 @@ class WcSubscriptionsModuleTest extends TestCase {
 	}
 
 	/**
-	 * @param bool   $accept_manual_renewals Value returned by SubscriptionHelper::accept_manual_renewals().
-	 * @param bool   $save_paypal_and_venmo  Value returned by SettingsProvider::save_paypal_and_venmo().
 	 * @return SettingsProvider|Mockery\MockInterface
 	 */
-	private function create_settings_provider( bool $save_paypal_and_venmo ) {
-		$settings_provider = Mockery::mock( SettingsProvider::class );
-		$settings_provider->allows( 'save_paypal_and_venmo' )->andReturn( $save_paypal_and_venmo );
-
-		return $settings_provider;
+	private function create_settings_provider() {
+		return Mockery::mock( SettingsProvider::class );
 	}
 
 	/**
-	 * @return SubscriptionHelper|Mockery\MockInterface
+	 * @param SettingsProvider  $settings_provider  The settings provider stub.
+	 * @param SubscriptionHelper $subscription_helper The subscription helper stub.
+	 * @return string
 	 */
-	private function create_subscription_helper( bool $accept_manual_renewals ) {
-		$subscription_helper = Mockery::mock( SubscriptionHelper::class );
-		$subscription_helper->allows( 'plugin_is_active' )->andReturn( true );
-		$subscription_helper->allows( 'accept_manual_renewals' )->andReturn( $accept_manual_renewals );
-
-		return $subscription_helper;
-	}
-
 	private function invoke_get_subscriptions_mode( SettingsProvider $settings_provider, SubscriptionHelper $subscription_helper ): string {
 		$method = ( new ReflectionClass( $this->testee ) )->getMethod( 'get_subscriptions_mode' );
 		$method->setAccessible( true );
@@ -55,49 +42,32 @@ class WcSubscriptionsModuleTest extends TestCase {
 	}
 
 	/**
-	 * @scenario Manual-renewal-only subscription, vaulting disabled
+	 * GIVEN a SubscriptionHelper that resolves the subscriptions mode for a given settings provider
+	 * WHEN get_subscriptions_mode() is called with that settings provider and helper
+	 * THEN it returns exactly the mode resolved by the helper
+	 * AND the helper's resolve_subscription_mode() received that same settings-provider instance,
+	 *     exactly once - proving the module delegates rather than re-implementing the decision
 	 *
-	 * Given WooCommerce Subscriptions "Accept Manual Renewals" is enabled
-	 * And vault/save-PayPal-and-Venmo is disabled
-	 * When get_subscriptions_mode() is called
-	 * Then it must return 'disable_paypal_subscriptions', not 'subscriptions_api',
-	 * so the cart is routed through the plain Orders API instead of requiring
-	 * a linked PayPal subscription plan.
+	 * @dataProvider subscription_mode_provider
 	 */
-	public function test_returns_disable_paypal_subscriptions_when_manual_renewal_accepted_and_vaulting_disabled(): void {
-		expectApplied( 'woocommerce_paypal_payments_subscription_mode_disabled' )
-			->once()
-			->with( false )
-			->andReturn( false );
+	public function test_get_subscriptions_mode_delegates_to_subscription_helper( string $resolved_mode ): void {
+		$settings_provider = $this->create_settings_provider();
 
-		$settings_provider    = $this->create_settings_provider( false );
-		$subscription_helper  = $this->create_subscription_helper( true );
+		$subscription_helper = Mockery::mock( SubscriptionHelper::class );
+		$subscription_helper->expects( 'resolve_subscription_mode' )
+			->once()
+			->with( $settings_provider )
+			->andReturn( $resolved_mode );
 
 		$result = $this->invoke_get_subscriptions_mode( $settings_provider, $subscription_helper );
 
-		$this->assertSame( 'disable_paypal_subscriptions', $result );
+		$this->assertSame( $resolved_mode, $result );
 	}
 
-	/**
-	 * @scenario Subscription requiring automatic renewal, vaulting disabled
-	 *
-	 * Given the subscription requires automatic renewals (manual renewals not accepted)
-	 * And vault/save-PayPal-and-Venmo is disabled
-	 * When get_subscriptions_mode() is called
-	 * Then it must still return 'subscriptions_api' — unchanged from current behaviour,
-	 * proving the manual-renewal fix does not regress the auto-renewal-required path.
-	 */
-	public function test_returns_subscriptions_api_when_auto_renewal_required_and_vaulting_disabled(): void {
-		expectApplied( 'woocommerce_paypal_payments_subscription_mode_disabled' )
-			->once()
-			->with( false )
-			->andReturn( false );
-
-		$settings_provider   = $this->create_settings_provider( false );
-		$subscription_helper = $this->create_subscription_helper( false );
-
-		$result = $this->invoke_get_subscriptions_mode( $settings_provider, $subscription_helper );
-
-		$this->assertSame( 'subscriptions_api', $result );
+	public function subscription_mode_provider(): array {
+		return array(
+			'helper resolves the disabled mode'       => array( SubscriptionHelper::SUBSCRIPTION_MODE_VALUE_DISABLED ),
+			'helper resolves the subscriptions API mode' => array( SubscriptionHelper::SUBSCRIPTION_MODE_VALUE_SUBSCRIPTIONS ),
+		);
 	}
 }

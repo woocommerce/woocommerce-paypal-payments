@@ -19,6 +19,7 @@ use WC_Subscription;
 use WC_Subscriptions;
 use WC_Subscriptions_Product;
 use WCS_Manual_Renewal_Manager;
+use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
 use WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException;
 use WP_Query;
 
@@ -222,6 +223,46 @@ class SubscriptionHelper {
 		}
 
 		return $can_save_vault_token;
+	}
+
+	/**
+	 * Resolves how a subscription checkout must be routed.
+	 *
+	 * This is the single deciding function for the subscriptions mode. Rules:
+	 * - WooCommerce Subscriptions inactive yields an empty string.
+	 * - The `woocommerce_paypal_payments_subscription_mode_disabled` filter forces the
+	 *   disabled mode.
+	 * - A manual-renewal-only subscription with vaulting disabled also resolves to the
+	 *   disabled mode: it needs a one-time charge, not a linked PayPal plan.
+	 * - Otherwise vaulting decides between the vaulting and PayPal Subscriptions APIs.
+	 *
+	 * @param SettingsProvider $settings_provider The settings provider.
+	 * @return string One of the SUBSCRIPTION_MODE_VALUE_* constants, or an empty string
+	 *                when WooCommerce Subscriptions is not active.
+	 */
+	public function resolve_subscription_mode( SettingsProvider $settings_provider ): string {
+		if ( ! $this->plugin_is_active() ) {
+			return '';
+		}
+
+		$subscription_mode_disabled = (bool) apply_filters(
+			'woocommerce_paypal_payments_subscription_mode_disabled',
+			false
+		);
+
+		if ( $subscription_mode_disabled ) {
+			return self::SUBSCRIPTION_MODE_VALUE_DISABLED;
+		}
+
+		$save_paypal_and_venmo = $settings_provider->save_paypal_and_venmo();
+
+		if ( $this->accept_manual_renewals() && ! $save_paypal_and_venmo ) {
+			return self::SUBSCRIPTION_MODE_VALUE_DISABLED;
+		}
+
+		return $save_paypal_and_venmo
+			? self::SUBSCRIPTION_MODE_VALUE_VAULTING
+			: self::SUBSCRIPTION_MODE_VALUE_SUBSCRIPTIONS;
 	}
 
 	/**
