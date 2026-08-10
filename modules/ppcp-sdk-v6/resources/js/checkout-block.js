@@ -144,17 +144,16 @@ if ( config && config.page_context && config.continuation ) {
 	}
 }
 
-// The Advanced Card Fields gateway is a regular (non-express) method that
-// coexists with the express buttons. It is skipped in continuation mode, where
-// the buyer has already approved a PayPal order and only the review shows.
+// Skipped in continuation mode, where the buyer has already approved a PayPal
+// order and only the review shows.
 if ( config?.card_fields?.enabled && ! config.continuation ) {
 	registerPaymentMethod( {
 		name: config.card_fields.payment_method,
 		label: createElement( 'div', null, config.card_fields.title ),
 		ariaLabel: config.card_fields.title,
 		content: createElement( V6CardFieldsComponent, { config } ),
-		// A static placeholder, not the live fields: v6 is not active in admin,
-		// so booting the SDK/session in the editor is neither needed nor safe.
+		// A static placeholder, not the live fields: the SDK does not boot in
+		// the block editor.
 		edit: createElement(
 			'div',
 			{ className: 'ppcp-sdk-v6-editor-preview' },
@@ -162,8 +161,6 @@ if ( config?.card_fields?.enabled && ! config.continuation ) {
 		),
 		canMakePayment: () => true,
 		supports: {
-			// Fresh-card one-time payments only (parity with the classic v6
-			// story); subscription/vaulting carts fall back to another method.
 			features: [ 'products' ],
 		},
 	} );

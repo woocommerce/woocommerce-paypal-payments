@@ -224,10 +224,9 @@ export async function createCardOrder( config, context = 'checkout' ) {
 		funding_source: config.card_fields.funding_source,
 	};
 
-	// Classic serializes the WC checkout form so the server can run the early
-	// checkout validation before creating the order (mirrors createOrder). Block
-	// checkout has no such form: its billing data flows through the Store API on
-	// submit, so nothing is serialized here.
+	// Only the classic checkout has a WC form to serialize, letting the server
+	// run its early validation before creating the order; other contexts submit
+	// their data separately.
 	if ( context === 'checkout' ) {
 		const form = document.querySelector( 'form.checkout' );
 		if ( form ) {

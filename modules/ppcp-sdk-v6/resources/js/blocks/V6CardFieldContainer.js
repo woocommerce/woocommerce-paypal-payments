@@ -1,10 +1,9 @@
 /**
- * Bridges one v6 card-fields Web Component into React.
+ * Renders one v6 card field into React.
  *
- * Like V6ButtonContainer, React renders an empty container and never
- * reconciles the SDK-owned subtree: the field element is appended
- * imperatively and removed on cleanup. The element is recreated only when the
- * session (or field type) changes, so ordinary re-renders leave it untouched.
+ * React owns an empty container and never reconciles the SDK-owned subtree:
+ * the field element is appended imperatively and removed on cleanup, and is
+ * recreated only when the session or field type changes.
  *
  * @package
  */
@@ -12,14 +11,21 @@
 import { createElement, useEffect, useRef } from '@wordpress/element';
 
 /**
- * @param {Object} props               - Component props.
- * @param {Object} props.session       - The v6 card-fields session.
- * @param {string} props.type          - The field type (number, expiry, cvv, name).
- * @param {Object} props.style         - The `style.input` object for the field.
- * @param {string} [props.placeholder] - The field placeholder text.
+ * @param {Object} props                  - Component props.
+ * @param {Object} props.session          - The v6 card-fields session.
+ * @param {string} props.type             - The field type (number, expiry, cvv, name).
+ * @param {Object} props.style            - The `style.input` object for the field.
+ * @param {string} [props.placeholder]    - The field placeholder text.
+ * @param {Object} [props.containerStyle] - Extra styles for the wrapper (e.g. flex sizing).
  * @return {Object} The container element.
  */
-export function V6CardFieldContainer( { session, type, style, placeholder } ) {
+export function V6CardFieldContainer( {
+	session,
+	type,
+	style,
+	placeholder,
+	containerStyle,
+} ) {
 	const containerRef = useRef( null );
 
 	useEffect( () => {
@@ -34,9 +40,12 @@ export function V6CardFieldContainer( { session, type, style, placeholder } ) {
 		}
 
 		const field = session.createCardFieldsComponent( options );
-		// v6 returns a bare element; let it fill the container, whose width the
-		// block form controls, so the field lines up with the other inputs.
+		// style.input only styles the inside of the element, so size its box here
+		// or it falls back to the SDK default (much taller than the form inputs).
 		field.style.width = '100%';
+		if ( style?.height ) {
+			field.style.height = style.height;
+		}
 		container.appendChild( field );
 
 		return () => {
@@ -50,5 +59,6 @@ export function V6CardFieldContainer( { session, type, style, placeholder } ) {
 	return createElement( 'div', {
 		ref: containerRef,
 		className: `ppcp-sdk-v6-card-field ppcp-sdk-v6-card-field--${ type }`,
+		style: containerStyle,
 	} );
 }

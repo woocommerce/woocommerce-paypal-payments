@@ -1,18 +1,10 @@
 /**
- * Advanced Card Fields (ACDC), v6 Web SDK — WooCommerce Blocks checkout.
+ * Advanced Card Fields for the WooCommerce Blocks checkout.
  *
- * The block counterpart to cardFields/renderer.js. It mounts the
- * number/expiry/CVV/name fields into React-rendered containers (rather than
- * the classic WC card-form inputs) and drives the submission through the
- * Blocks `onPaymentSetup` event (rather than intercepting a Place Order
- * click): a new card runs through the v6 card session (which also runs 3D
- * Secure automatically), the result is approved server-side, and the block
- * checkout submission then captures it via the existing
- * CreditCardGateway::process_payment().
- *
- * Scope: fresh card, one-time payment only. Saving a new card, paying with an
- * already-saved card, and the $0 free-trial variant are out of scope here, as
- * in the classic v6 story (PCP-5781).
+ * Mounts the number/expiry/CVV/name fields and drives submission through the
+ * Blocks `onPaymentSetup` event: the card session (which also runs 3D Secure)
+ * confirms the card, the order is approved server-side, and the checkout
+ * submit captures it through the card gateway.
  *
  * @package
  */
@@ -31,14 +23,13 @@ import { cardFieldStyles } from '../cardFields/cardFieldStyles';
 import { V6CardFieldContainer } from './V6CardFieldContainer';
 
 /**
- * Runs the card submission: create the order, run the card session (which
- * runs 3D Secure), approve it server-side, and report the outcome to the
- * Blocks checkout. On success the block submit captures the session-stored
- * order through the existing CreditCardGateway.
+ * Creates the order, confirms it through the card session (which runs 3D
+ * Secure), approves it, and maps the outcome to a Blocks onPaymentSetup
+ * response.
  *
  * @param {Object} args               - Arguments.
  * @param {Object} args.config        - The sdk-v6 config object.
- * @param {string} args.context       - The page context (checkout-block).
+ * @param {string} args.context       - The page context.
  * @param {Object} args.session       - The v6 card-fields session.
  * @param {Object} args.responseTypes - The Blocks response-type constants.
  * @return {Promise<Object>} A Blocks onPaymentSetup response object.
@@ -63,8 +54,8 @@ async function submitCardPayment( {
 		const { orderId } = await createCardOrder( config, context );
 		const result = await session.submit( orderId );
 
-		// The buyer closed the 3DS challenge or the popup. Blocks has no silent
-		// retry, so surface a neutral prompt rather than a hard failure.
+		// The buyer dismissed the 3DS challenge; prompt a retry rather than
+		// showing a payment error.
 		if ( result.state === 'canceled' ) {
 			return {
 				type: responseTypes.ERROR,
@@ -123,9 +114,8 @@ export function V6CardFieldsComponent( {
 	const [ inputStyle, setInputStyle ] = useState( null );
 	const referenceRef = useRef( null );
 
-	// One card session for the component's lifetime. The SDK cannot dispose a
-	// session, so this must not recreate on ordinary re-renders (config is a
-	// stable reference read once at module load).
+	// One card session for the component's lifetime: the SDK cannot dispose a
+	// session, so it must not be recreated on ordinary re-renders.
 	useEffect( () => {
 		let active = true;
 
@@ -145,17 +135,21 @@ export function V6CardFieldsComponent( {
 		};
 	}, [ config, context ] );
 
-	// The classic renderer reads the field styling off the WC input it replaces;
-	// block checkout has none, so a hidden reference input carrying the theme's
-	// input styling stands in as the style source.
+	// v6 returns unstyled field elements, so derive their styling from a real
+	// block text input on the page (accurate theme height/padding/border),
+	// falling back to a hidden reference input when none is found.
 	useEffect( () => {
-		if ( referenceRef.current ) {
-			setInputStyle( cardFieldStyles( referenceRef.current ) );
+		const source =
+			document.querySelector(
+				'.wc-block-components-text-input input'
+			) || referenceRef.current;
+		if ( source ) {
+			setInputStyle( cardFieldStyles( source ) );
 		}
 	}, [] );
 
-	// The session is read through a ref so onPaymentSetup always sees the current
-	// one without resubscribing when it arrives.
+	// Read through a ref so onPaymentSetup sees the current session without
+	// resubscribing when it arrives.
 	const sessionRef = useRef( null );
 	useEffect( () => {
 		sessionRef.current = session;
@@ -189,9 +183,12 @@ export function V6CardFieldsComponent( {
 
 	return createElement(
 		'div',
-		{ className: 'ppcp-sdk-v6-card-fields' },
-		// Off-screen (not display:none, or getComputedStyle returns nothing) so
-		// the field styling can be read from the theme's own input rules.
+		{
+			className: 'ppcp-sdk-v6-card-fields',
+			style: { display: 'flex', flexDirection: 'column', gap: '16px' },
+		},
+		// Off-screen rather than display:none, which would make getComputedStyle
+		// return nothing.
 		createElement( 'input', {
 			ref: referenceRef,
 			type: 'text',
@@ -230,7 +227,10 @@ export function V6CardFieldsComponent( {
 				} ),
 				createElement(
 					'div',
-					{ className: 'ppcp-sdk-v6-card-fields__row' },
+					{
+						className: 'ppcp-sdk-v6-card-fields__row',
+						style: { display: 'flex', gap: '16px' },
+					},
 					createElement( V6CardFieldContainer, {
 						session,
 						type: 'expiry',
@@ -239,12 +239,14 @@ export function V6CardFieldsComponent( {
 							'MM / YY',
 							'woocommerce-paypal-payments'
 						),
+						containerStyle: { flex: 1 },
 					} ),
 					createElement( V6CardFieldContainer, {
 						session,
 						type: 'cvv',
 						style: inputStyle,
 						placeholder: __( 'CVV', 'woocommerce-paypal-payments' ),
+						containerStyle: { flex: 1 },
 					} )
 				)
 			)

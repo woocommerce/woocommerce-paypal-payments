@@ -182,9 +182,8 @@ class SdkV6Manager {
 	/**
 	 * Whether the v6 Advanced Card Fields should render on the current page.
 	 *
-	 * Drives both the JS `card_fields.enabled` flag and the suppression of the
-	 * v5 card block on v6-owned block pages, so the two never disagree: the v5
-	 * card gateway must stay registered whenever v6 does not replace it.
+	 * Gates both the JS `card_fields.enabled` flag and the suppression of the
+	 * v5 card block, so a page never ends up with neither card option.
 	 *
 	 * @return bool
 	 */
@@ -295,10 +294,7 @@ class SdkV6Manager {
 				'enabled'        => $card_fields_enabled,
 				'payment_method' => CreditCardGateway::ID,
 				'funding_source' => 'card',
-				// The block registers its own card payment method, so it carries
-				// the label and name-field flag here: the v5 card block (which
-				// otherwise supplies ppcp-credit-card-gateway_data) is suppressed
-				// on v6-owned block pages.
+				// Label and name-field flag for the block's own card method.
 				'title'          => $this->card_payments_configuration->gateway_title(),
 				'name_field'     => 'yes' === $this->card_payments_configuration->show_name_on_card(),
 				'fields'         => array(
