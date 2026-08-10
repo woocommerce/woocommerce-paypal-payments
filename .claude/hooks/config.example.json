@@ -1,0 +1,6 @@
+{
+	"_comment": "Copy this file to config.local.json to disable individual hooks locally.",
+
+	"_info-php-review": "Disable the hooks that trigger a code review after editing PHP files.",
+	"php-review": true
+}

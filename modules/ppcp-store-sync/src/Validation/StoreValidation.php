@@ -21,7 +21,10 @@ class StoreValidation
     private array $issues = array();
     public function add(\WooCommerce\PayPalCommerce\StoreSync\Validation\ValidationIssue $issue): \WooCommerce\PayPalCommerce\StoreSync\Validation\ValidationIssue
     {
-        $this->issues[] = $issue;
+        // Prevent duplicate field-level issues.
+        if (!$issue->field() || !$this->has_issue($issue)) {
+            $this->issues[] = $issue;
+        }
         return $issue;
     }
     public function add_missing_field(string $field, string $user_message): \WooCommerce\PayPalCommerce\StoreSync\Validation\ValidationIssue
@@ -93,6 +96,18 @@ class StoreValidation
     public function has_pricing_issue(): bool
     {
         return $this->has_issue_with_code(ErrorCode::PRICING_ERROR);
+    }
+    /**
+     * Tests, whether an issue with the same type, code, and field value exists.
+     */
+    public function has_issue(\WooCommerce\PayPalCommerce\StoreSync\Validation\ValidationIssue $issue): bool
+    {
+        foreach ($this->issues as $known) {
+            if ($known->code() === $issue->code() && $known->type() === $issue->type() && $known->field() === $issue->field()) {
+                return \true;
+            }
+        }
+        return \false;
     }
     public function has_issue_for_field(string $field): bool
     {
