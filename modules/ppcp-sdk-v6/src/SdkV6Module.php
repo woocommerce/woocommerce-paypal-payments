@@ -143,6 +143,15 @@ class SdkV6Module implements ServiceModule, ExtendingModule, ExecutableModule {
 							'ppcp-axo-gateway',
 						);
 
+						// The v5 card block is suppressed only when v6 renders its
+						// own card method in its place; otherwise (e.g. only the
+						// wallets loaded v6, ACDC off) it must stay so cards remain
+						// payable. Both loading would double-register and boot the
+						// v5 hosted-fields SDK, which also claims window.paypal.
+						if ( $manager->is_card_fields_enabled() ) {
+							$v5_methods[] = 'ppcp-credit-card-gateway';
+						}
+
 						// v6 renders the order review under this name too, and
 						// registerPaymentMethod is a silent last-one-wins
 						// assignment, so leaving both registered would make the

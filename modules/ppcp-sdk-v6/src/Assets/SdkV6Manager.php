@@ -167,7 +167,8 @@ class SdkV6Manager {
 			return true;
 		}
 
-		if ( 'checkout' === $page_location && $this->card_payments_configuration->is_acdc_enabled() ) {
+		if ( in_array( $page_location, array( 'checkout', 'checkout-block' ), true )
+			&& $this->card_payments_configuration->is_acdc_enabled() ) {
 			return true;
 		}
 
@@ -176,6 +177,20 @@ class SdkV6Manager {
 		// buttons for nothing.
 		return $this->settings_status->is_smart_button_enabled_for_location( 'mini-cart' )
 			&& is_active_widget( false, false, 'woocommerce_widget_cart' );
+	}
+
+	/**
+	 * Whether the v6 Advanced Card Fields should render on the current page.
+	 *
+	 * Drives both the JS `card_fields.enabled` flag and the suppression of the
+	 * v5 card block on v6-owned block pages, so the two never disagree: the v5
+	 * card gateway must stay registered whenever v6 does not replace it.
+	 *
+	 * @return bool
+	 */
+	public function is_card_fields_enabled(): bool {
+		return in_array( $this->get_page_context(), array( 'checkout', 'checkout-block' ), true )
+			&& $this->card_payments_configuration->is_acdc_enabled();
 	}
 
 	/**
@@ -216,7 +231,7 @@ class SdkV6Manager {
 			$button_styles['mini-cart'] = $this->style_mapper->styles_for_context( 'mini-cart' );
 		}
 
-		$card_fields_enabled = 'checkout' === $page_context && $this->card_payments_configuration->is_acdc_enabled();
+		$card_fields_enabled = $this->is_card_fields_enabled();
 
 		$data = array(
 			'sdk_url'           => $base_url . '/web-sdk/v6/core',
@@ -280,6 +295,12 @@ class SdkV6Manager {
 				'enabled'        => $card_fields_enabled,
 				'payment_method' => CreditCardGateway::ID,
 				'funding_source' => 'card',
+				// The block registers its own card payment method, so it carries
+				// the label and name-field flag here: the v5 card block (which
+				// otherwise supplies ppcp-credit-card-gateway_data) is suppressed
+				// on v6-owned block pages.
+				'title'          => $this->card_payments_configuration->gateway_title(),
+				'name_field'     => 'yes' === $this->card_payments_configuration->show_name_on_card(),
 				'fields'         => array(
 					'name'   => '#' . self::CARD_FIELD_NAME_ID,
 					'number' => '#' . self::CARD_FIELD_NUMBER_ID,
