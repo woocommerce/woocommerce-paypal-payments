@@ -4,6 +4,8 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\SavePaymentMethods;
 
 use Mockery;
+use Psr\Log\LoggerInterface;
+use WooCommerce\PayPalCommerce\ApiClient\Authentication\UserIdToken;
 use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
 use WooCommerce\PayPalCommerce\TestCase;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
@@ -86,6 +88,84 @@ class SavePaymentMethodsModuleTest extends TestCase
 				),
 			),
 		);
+	}
+
+	/**
+	 * Runs the module, fires the deferred setup, and returns the captured localized script-data
+	 * filter so its behavior can be tested without rendering frontend assets.
+	 */
+	private function captured_localized_script_data_filter(): callable
+	{
+		$captured_setup  = null;
+		$captured_filter = null;
+
+		expectActionAdded('after_setup_theme')
+			->once()
+			->whenHappen(
+				static function ( $callback ) use ( &$captured_setup ) {
+					$captured_setup = $callback;
+				}
+			);
+
+		expectFilterAdded('woocommerce_paypal_payments_localized_script_data')
+			->once()
+			->whenHappen(
+				static function ( $callback ) use ( &$captured_filter ) {
+					$captured_filter = $callback;
+				}
+			);
+
+		( new SavePaymentMethodsModule() )->run( $this->container );
+
+		$this->assertIsCallable($captured_setup);
+		$captured_setup();
+		$this->assertIsCallable($captured_filter);
+
+		return $captured_filter;
+	}
+
+	/**
+	 * @scenario Mini Cart hydration on a non-cart page must not request a PayPal user ID token.
+	 */
+	public function testDoesNotAddIdTokenDuringMiniCartDataRequest(): void
+	{
+		when('doing_action')->justReturn(true);
+		when('is_cart')->justReturn(false);
+		when('has_block')->justReturn(false);
+
+		$this->settings->shouldReceive('save_paypal_and_venmo')->andReturn(true);
+		$this->settings->shouldReceive('save_card_details')->andReturn(false);
+		$this->container->shouldNotReceive('get')->with('api.user-id-token');
+
+		$filter = $this->captured_localized_script_data_filter();
+		$data   = array( 'marker' => true );
+
+		$this->assertSame($data, $filter($data));
+	}
+
+	/**
+	 * @scenario Full Cart data collection must retain the ID token required for vaulting.
+	 */
+	public function testAddsIdTokenDuringCartDataRequest(): void
+	{
+		when('doing_action')->justReturn(true);
+		when('is_cart')->justReturn(true);
+		when('is_user_logged_in')->justReturn(true);
+
+		$api = Mockery::mock(UserIdToken::class);
+		$api->shouldReceive('id_token')->once()->with('')->andReturn('user-id-token');
+
+		$this->settings->shouldReceive('save_paypal_and_venmo')->andReturn(true);
+		$this->settings->shouldReceive('save_card_details')->andReturn(false);
+		$this->container->shouldReceive('get')->with('api.user-id-token')->andReturn($api);
+		$this->container->shouldReceive('get')->with('woocommerce.logger.woocommerce')->andReturn(
+			Mockery::mock(LoggerInterface::class)
+		);
+
+		$filter = $this->captured_localized_script_data_filter();
+		$result = $filter(array());
+
+		$this->assertSame('user-id-token', $result['save_payment_methods']['id_token']);
 	}
 
 	/**

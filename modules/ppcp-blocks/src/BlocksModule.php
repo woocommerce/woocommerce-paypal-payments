@@ -12,7 +12,7 @@ namespace WooCommerce\PayPalCommerce\Blocks;
 use Automattic\WooCommerce\Blocks\Payments\PaymentMethodRegistry;
 use WooCommerce\PayPalCommerce\Assets\AssetGetter;
 use WooCommerce\PayPalCommerce\Blocks\Endpoint\UpdateShippingEndpoint;
-use WooCommerce\PayPalCommerce\Button\Assets\SmartButtonInterface;
+use WooCommerce\PayPalCommerce\Button\Helper\Context;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExecutableModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExtendingModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ModuleClassNameIdTrait;
@@ -76,14 +76,10 @@ class BlocksModule implements ServiceModule, ExtendingModule, ExecutableModule {
 		woocommerce_store_api_register_payment_requirements(
 			array(
 				'data_callback' => function () use ( $c ): array {
-					$smart_button = $c->get( 'button.smart-button' );
-					assert( $smart_button instanceof SmartButtonInterface );
+					$context = $c->get( 'button.helper.context' );
+					assert( $context instanceof Context );
 
-					if ( isset( $smart_button->script_data()['continuation'] ) ) {
-						return array( 'ppcp_continuation' );
-					}
-
-					return array();
+					return $context->is_paypal_continuation() ? array( 'ppcp_continuation' ) : array();
 				},
 			)
 		);
