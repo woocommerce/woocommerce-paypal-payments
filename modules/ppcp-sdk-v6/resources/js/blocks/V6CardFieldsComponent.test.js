@@ -1,28 +1,28 @@
 const mockLoadSdkV6 = jest.fn();
-jest.mock( '../../sdkLoader', () => ( {
+jest.mock( '../sdkLoader', () => ( {
 	loadSdkV6: ( ...args ) => mockLoadSdkV6( ...args ),
 } ) );
 
 const mockCreateCardOrder = jest.fn();
 const mockApproveCardOrder = jest.fn();
-jest.mock( '../../endpointsAdapter', () => ( {
+jest.mock( '../endpointsAdapter', () => ( {
 	createCardOrder: ( ...args ) => mockCreateCardOrder( ...args ),
 	approveCardOrder: ( ...args ) => mockApproveCardOrder( ...args ),
 } ) );
 
 const mockCardFieldStyles = jest.fn();
-jest.mock( '../../cardFields/cardFieldStyles', () => ( {
+jest.mock( '../cardFields/cardFieldStyles', () => ( {
 	cardFieldStyles: ( ...args ) => mockCardFieldStyles( ...args ),
 } ) );
 
 const mockCardFieldContainer = jest.fn( () => null );
-jest.mock( '../../blocks/V6CardFieldContainer', () => ( {
+jest.mock( './V6CardFieldContainer', () => ( {
 	V6CardFieldContainer: ( props ) => mockCardFieldContainer( props ),
 } ) );
 
 import { render, waitFor, act } from '@testing-library/react';
 import { createElement } from '@wordpress/element';
-import { V6CardFieldsComponent } from '../../blocks/V6CardFieldsComponent';
+import { V6CardFieldsComponent } from './V6CardFieldsComponent';
 
 function cardConfig( overrides = {} ) {
 	return {

@@ -19,7 +19,7 @@ jest.mock(
 	{ virtual: true }
 );
 
-jest.mock( '../utils/api', () => ( {
+jest.mock( './utils/api', () => ( {
 	postJson: jest.fn(),
 } ) );
 
@@ -30,8 +30,8 @@ import {
 	approveCardOrder,
 	fetchCartTotal,
 	navigation,
-} from '../endpointsAdapter';
-import { postJson } from '../utils/api';
+} from './endpointsAdapter';
+import { postJson } from './utils/api';
 
 const config = {
 	ajax: {

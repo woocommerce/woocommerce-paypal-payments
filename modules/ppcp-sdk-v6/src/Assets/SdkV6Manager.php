@@ -167,8 +167,7 @@ class SdkV6Manager {
 			return true;
 		}
 
-		if ( in_array( $page_location, array( 'checkout', 'checkout-block' ), true )
-			&& $this->card_payments_configuration->is_acdc_enabled() ) {
+		if ( $this->is_card_fields_enabled( $page_location ) ) {
 			return true;
 		}
 
@@ -180,15 +179,17 @@ class SdkV6Manager {
 	}
 
 	/**
-	 * Whether the v6 Advanced Card Fields should render on the current page.
+	 * Whether the v6 Advanced Card Fields should render on the given page.
 	 *
 	 * Gates both the JS `card_fields.enabled` flag and the suppression of the
 	 * v5 card block, so a page never ends up with neither card option.
 	 *
-	 * @return bool
+	 * @param string|null $location Page context to test; defaults to the current page.
 	 */
-	public function is_card_fields_enabled(): bool {
-		return in_array( $this->get_page_context(), array( 'checkout', 'checkout-block' ), true )
+	public function is_card_fields_enabled( ?string $location = null ): bool {
+		$location = $location ?? $this->get_page_context();
+
+		return in_array( $location, array( 'checkout', 'checkout-block' ), true )
 			&& $this->card_payments_configuration->is_acdc_enabled();
 	}
 
