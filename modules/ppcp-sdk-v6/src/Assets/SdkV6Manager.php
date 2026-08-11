@@ -129,13 +129,26 @@ class SdkV6Manager
         if ($page_location && $this->settings_status->is_smart_button_enabled_for_location($page_location)) {
             return \true;
         }
-        if ('checkout' === $page_location && $this->card_payments_configuration->is_acdc_enabled()) {
+        if ($this->is_card_fields_enabled($page_location)) {
             return \true;
         }
         // Only when the classic widget is in use: loading (and suppressing v5)
         // sitewide without a widget would break the v5-rendered block express
         // buttons for nothing.
         return $this->settings_status->is_smart_button_enabled_for_location('mini-cart') && is_active_widget(\false, \false, 'woocommerce_widget_cart');
+    }
+    /**
+     * Whether the v6 Advanced Card Fields should render on the given page.
+     *
+     * Gates both the JS `card_fields.enabled` flag and the suppression of the
+     * v5 card block, so a page never ends up with neither card option.
+     *
+     * @param string|null $location Page context to test; defaults to the current page.
+     */
+    public function is_card_fields_enabled(?string $location = null): bool
+    {
+        $location = $location ?? $this->get_page_context();
+        return in_array($location, array('checkout', 'checkout-block'), \true) && $this->card_payments_configuration->is_acdc_enabled();
     }
     /**
      * The configuration data for the SDK v6 bootstrap script.
@@ -168,7 +181,7 @@ class SdkV6Manager
         if ($this->settings_status->is_smart_button_enabled_for_location('mini-cart')) {
             $button_styles['mini-cart'] = $this->style_mapper->styles_for_context('mini-cart');
         }
-        $card_fields_enabled = 'checkout' === $page_context && $this->card_payments_configuration->is_acdc_enabled();
+        $card_fields_enabled = $this->is_card_fields_enabled();
         $data = array(
             'sdk_url' => $base_url . '/web-sdk/v6/core',
             'page_context' => $page_context,
@@ -186,7 +199,15 @@ class SdkV6Manager
             'button_styles' => $button_styles,
             'wrapper' => '#' . self::WRAPPER_ID,
             'mini_cart_wrapper' => '#' . self::MINI_CART_WRAPPER_ID,
-            'card_fields' => array('enabled' => $card_fields_enabled, 'payment_method' => CreditCardGateway::ID, 'funding_source' => 'card', 'fields' => array('name' => '#' . self::CARD_FIELD_NAME_ID, 'number' => '#' . self::CARD_FIELD_NUMBER_ID, 'expiry' => '#' . self::CARD_FIELD_EXPIRY_ID, 'cvv' => '#' . self::CARD_FIELD_CVV_ID)),
+            'card_fields' => array(
+                'enabled' => $card_fields_enabled,
+                'payment_method' => CreditCardGateway::ID,
+                'funding_source' => 'card',
+                // Label and name-field flag for the block's own card method.
+                'title' => $this->card_payments_configuration->gateway_title(),
+                'name_field' => 'yes' === $this->card_payments_configuration->show_name_on_card(),
+                'fields' => array('name' => '#' . self::CARD_FIELD_NAME_ID, 'number' => '#' . self::CARD_FIELD_NUMBER_ID, 'expiry' => '#' . self::CARD_FIELD_EXPIRY_ID, 'cvv' => '#' . self::CARD_FIELD_CVV_ID),
+            ),
         );
         $continuation = $this->continuation_data();
         if ($continuation) {

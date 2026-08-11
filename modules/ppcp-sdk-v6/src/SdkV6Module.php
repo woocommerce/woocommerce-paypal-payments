@@ -98,6 +98,12 @@ class SdkV6Module implements ServiceModule, ExtendingModule, ExecutableModule
                 // PayPal-owned block methods only; never third-party or
                 // core gateways.
                 $v5_methods = array('ppcp-googlepay', 'ppcp-applepay', 'ppcp-axo-gateway');
+                // Suppress the v5 card block only when v6 renders its own
+                // card method in its place, so cards stay payable when v6
+                // does not.
+                if ($manager->is_card_fields_enabled()) {
+                    $v5_methods[] = 'ppcp-credit-card-gateway';
+                }
                 // v6 renders the order review under this name too, and
                 // registerPaymentMethod is a silent last-one-wins
                 // assignment, so leaving both registered would make the
