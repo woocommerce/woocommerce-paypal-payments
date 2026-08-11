@@ -24,6 +24,7 @@ import { loadSdkV6 } from './sdkLoader';
 import { checkEligibility } from './eligibility';
 import { V6ExpressComponent } from './blocks/V6ExpressComponent';
 import { V6ContinuationComponent } from './blocks/V6ContinuationComponent';
+import { V6CardFieldsComponent } from './blocks/V6CardFieldsComponent';
 import { V6EditorPreview } from './blocks/V6EditorPreview';
 import { fundingSourceLabel } from './utils/fundingSources';
 import { minorUnitsToDecimal } from './utils/amount';
@@ -141,4 +142,26 @@ if ( config && config.page_context && config.continuation ) {
 			},
 		} );
 	}
+}
+
+// Skipped in continuation mode, where the buyer has already approved a PayPal
+// order and only the review shows.
+if ( config?.card_fields?.enabled && ! config.continuation ) {
+	registerPaymentMethod( {
+		name: config.card_fields.payment_method,
+		label: createElement( 'div', null, config.card_fields.title ),
+		ariaLabel: config.card_fields.title,
+		content: createElement( V6CardFieldsComponent, { config } ),
+		// A static placeholder, not the live fields: the SDK does not boot in
+		// the block editor.
+		edit: createElement(
+			'div',
+			{ className: 'ppcp-sdk-v6-editor-preview' },
+			config.card_fields.title
+		),
+		canMakePayment: () => true,
+		supports: {
+			features: [ 'products' ],
+		},
+	} );
 }

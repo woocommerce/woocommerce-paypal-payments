@@ -212,28 +212,35 @@ export async function approveOrderInSession( config, fundingSource, orderId ) {
  * unconfirmed, cardless order. approveCardOrder() is what stores the
  * order in session, once those checks pass.
  *
- * @param {Object} config - The wc_ppcp_sdk_v6 config object.
+ * @param {Object} config  - The wc_ppcp_sdk_v6 config object.
+ * @param {string} context - The page context (checkout or checkout-block).
  * @return {Promise<{orderId: string}>} The created PayPal order id.
  */
-export async function createCardOrder( config ) {
+export async function createCardOrder( config, context = 'checkout' ) {
 	const body = {
-		context: 'checkout',
+		context,
 		purchase_units: [],
 		payment_method: config.card_fields.payment_method,
 		funding_source: config.card_fields.funding_source,
 	};
 
-	const form = document.querySelector( 'form.checkout' );
-	if ( form ) {
-		body.form_encoded = new URLSearchParams(
-			new FormData( form )
-		).toString();
-		body.createaccount = !! form.querySelector( '#createaccount' )?.checked;
-	}
+	// Only the classic checkout has a WC form to serialize, letting the server
+	// run its early validation before creating the order; other contexts submit
+	// their data separately.
+	if ( context === 'checkout' ) {
+		const form = document.querySelector( 'form.checkout' );
+		if ( form ) {
+			body.form_encoded = new URLSearchParams(
+				new FormData( form )
+			).toString();
+			body.createaccount =
+				!! form.querySelector( '#createaccount' )?.checked;
+		}
 
-	const payer = payerData();
-	if ( payer ) {
-		body.payer = payer;
+		const payer = payerData();
+		if ( payer ) {
+			body.payer = payer;
+		}
 	}
 
 	const data = await postJson( config.ajax.create_order, body );

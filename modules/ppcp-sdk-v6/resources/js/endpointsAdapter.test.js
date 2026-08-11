@@ -19,7 +19,7 @@ jest.mock(
 	{ virtual: true }
 );
 
-jest.mock( '../utils/api', () => ( {
+jest.mock( './utils/api', () => ( {
 	postJson: jest.fn(),
 } ) );
 
@@ -30,8 +30,8 @@ import {
 	approveCardOrder,
 	fetchCartTotal,
 	navigation,
-} from '../endpointsAdapter';
-import { postJson } from '../utils/api';
+} from './endpointsAdapter';
+import { postJson } from './utils/api';
 
 const config = {
 	ajax: {
@@ -282,6 +282,38 @@ describe( 'createCardOrder', () => {
 			config.ajax.create_order,
 			expect.objectContaining( { payer: { email_address: 'a@b.com' } } )
 		);
+	} );
+
+	test( 'defaults to the checkout context when none is passed', async () => {
+		document.body.innerHTML = '<form class="checkout"></form>';
+		mockPayerData.mockReturnValueOnce( null );
+		postJson.mockResolvedValueOnce( { id: 'CARDORDER3' } );
+
+		await createCardOrder( config );
+
+		expect( postJson ).toHaveBeenCalledWith(
+			config.ajax.create_order,
+			expect.objectContaining( { context: 'checkout' } )
+		);
+	} );
+
+	test( 'the checkout-block context sends no classic-form data even with a checkout form present', async () => {
+		document.body.innerHTML =
+			'<form class="checkout">' +
+			'<input name="billing_email" value="a@b.com" />' +
+			'<input type="checkbox" id="createaccount" name="createaccount" checked /></form>';
+		mockPayerData.mockReturnValueOnce( { email_address: 'a@b.com' } );
+		postJson.mockResolvedValueOnce( { id: 'CARDORDER4' } );
+
+		const result = await createCardOrder( config, 'checkout-block' );
+
+		expect( result ).toEqual( { orderId: 'CARDORDER4' } );
+		expect( postJson ).toHaveBeenCalledWith( config.ajax.create_order, {
+			context: 'checkout-block',
+			purchase_units: [],
+			payment_method: 'ppcp-credit-card-gateway',
+			funding_source: 'card',
+		} );
 	} );
 } );
 
