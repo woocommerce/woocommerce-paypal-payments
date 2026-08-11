@@ -129,7 +129,7 @@ class SdkV6Manager
         if ($page_location && $this->settings_status->is_smart_button_enabled_for_location($page_location)) {
             return \true;
         }
-        if (in_array($page_location, array('checkout', 'checkout-block'), \true) && $this->card_payments_configuration->is_acdc_enabled()) {
+        if ($this->is_card_fields_enabled($page_location)) {
             return \true;
         }
         // Only when the classic widget is in use: loading (and suppressing v5)
@@ -138,16 +138,17 @@ class SdkV6Manager
         return $this->settings_status->is_smart_button_enabled_for_location('mini-cart') && is_active_widget(\false, \false, 'woocommerce_widget_cart');
     }
     /**
-     * Whether the v6 Advanced Card Fields should render on the current page.
+     * Whether the v6 Advanced Card Fields should render on the given page.
      *
      * Gates both the JS `card_fields.enabled` flag and the suppression of the
      * v5 card block, so a page never ends up with neither card option.
      *
-     * @return bool
+     * @param string|null $location Page context to test; defaults to the current page.
      */
-    public function is_card_fields_enabled(): bool
+    public function is_card_fields_enabled(?string $location = null): bool
     {
-        return in_array($this->get_page_context(), array('checkout', 'checkout-block'), \true) && $this->card_payments_configuration->is_acdc_enabled();
+        $location = $location ?? $this->get_page_context();
+        return in_array($location, array('checkout', 'checkout-block'), \true) && $this->card_payments_configuration->is_acdc_enabled();
     }
     /**
      * The configuration data for the SDK v6 bootstrap script.
