@@ -15,6 +15,7 @@ use WooCommerce\PayPalCommerce\SdkV6\Assets\SdkV6Manager;
 use WooCommerce\PayPalCommerce\SdkV6\Blocks\V6PaymentMethod;
 use WooCommerce\PayPalCommerce\SdkV6\Endpoint\ClientTokenEndpoint;
 use WooCommerce\PayPalCommerce\SdkV6\Helper\ButtonStyleMapper;
+use WooCommerce\PayPalCommerce\SdkV6\Helper\GooglePayConfig;
 use WooCommerce\PayPalCommerce\SdkV6\Helper\RateLimiter;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
@@ -30,6 +31,12 @@ return array(
 
 	'sdk-v6.button-style-mapper'   => static function ( ContainerInterface $container ): ButtonStyleMapper {
 		return new ButtonStyleMapper(
+			$container->get( 'settings.settings-provider' )
+		);
+	},
+
+	'sdk-v6.google-pay-config'     => static function ( ContainerInterface $container ): GooglePayConfig {
+		return new GooglePayConfig(
 			$container->get( 'settings.settings-provider' )
 		);
 	},
