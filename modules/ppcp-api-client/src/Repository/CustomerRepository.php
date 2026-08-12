@@ -16,6 +16,18 @@ class CustomerRepository {
 	const CLIENT_ID_MAX_LENGTH = 22;
 
 	/**
+	 * The prefix used for fabricated customer IDs when no invoice prefix is configured.
+	 *
+	 * Unlike the invoice ID, a customer ID is scoped to the PayPal merchant account
+	 * rather than the store, and it is persisted the first time a user is vaulted.
+	 * Without a prefix it would degrade to the bare WordPress user ID, so two stores
+	 * on one merchant account would fabricate the same ID for different people.
+	 *
+	 * @var string
+	 */
+	const FALLBACK_PREFIX = 'WC-';
+
+	/**
 	 * The prefix.
 	 *
 	 * @var string

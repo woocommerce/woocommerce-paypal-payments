@@ -235,6 +235,23 @@ class SettingsModelTest extends TestCase {
 	}
 
 	// ------------------------------------------------------------------
+	// No retroactive sanitization of already-stored invoice prefixes
+	// ------------------------------------------------------------------
+
+	/**
+	 * GIVEN an invoice prefix with spaces that was already persisted, e.g. via the legacy
+	 *       settings tab or a direct wp-cli write, before space-stripping validation existed
+	 * WHEN the settings model is loaded and the invoice prefix is read back
+	 * THEN the previously stored value survives unchanged, because set_invoice_prefix() only
+	 *      sanitizes on the next explicit write and load() does not retroactively re-sanitize
+	 */
+	public function test_stored_prefix_with_spaces_survives_round_trip(): void {
+		$model = $this->build_model_with( 'invoice_prefix', 'Old Store ' );
+
+		$this->assertSame( 'Old Store ', $model->get_invoice_prefix() );
+	}
+
+	// ------------------------------------------------------------------
 	// Shared data provider for the coercion test family
 	// ------------------------------------------------------------------
 

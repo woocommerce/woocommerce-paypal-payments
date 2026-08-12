@@ -136,6 +136,13 @@ return array(
 	'api.prefix'                                     => static function (): string {
 		return 'WC-';
 	},
+	/**
+	 * The prefix for fabricated vault customer IDs.
+	 */
+	'api.customer-prefix'                            => static function ( ContainerInterface $container ): string {
+		$prefix = $container->get( 'api.prefix' );
+		return $prefix ? $prefix : CustomerRepository::FALLBACK_PREFIX;
+	},
 	'api.bearer'                                     => static function ( ContainerInterface $container ): Bearer {
 		$is_connected = $container->get( 'settings.flag.is-connected' );
 
@@ -382,7 +389,7 @@ return array(
 		return new PayeeRepository( $merchant_email, $merchant_id );
 	},
 	'api.repository.customer'                        => static function ( ContainerInterface $container ): CustomerRepository {
-		$prefix           = $container->get( 'api.prefix' );
+		$prefix = $container->get( 'api.customer-prefix' );
 		return new CustomerRepository( $prefix );
 	},
 	'api.repository.order'                           => static function ( ContainerInterface $container ): OrderRepository {
