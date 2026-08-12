@@ -27,11 +27,12 @@ import { V6CardFieldContainer } from './V6CardFieldContainer';
  * Secure), approves it, and maps the outcome to a Blocks onPaymentSetup
  * response.
  *
- * @param {Object} args               - Arguments.
- * @param {Object} args.config        - The sdk-v6 config object.
- * @param {string} args.context       - The page context.
- * @param {Object} args.session       - The v6 card-fields session.
- * @param {Object} args.responseTypes - The Blocks response-type constants.
+ * @param {Object}  args                   - Arguments.
+ * @param {Object}  args.config            - The sdk-v6 config object.
+ * @param {string}  args.context           - The page context.
+ * @param {Object}  args.session           - The v6 card-fields session.
+ * @param {Object}  args.responseTypes     - The Blocks response-type constants.
+ * @param {boolean} args.savePaymentMethod - Whether to vault the card.
  * @return {Promise<Object>} A Blocks onPaymentSetup response object.
  */
 async function submitCardPayment( {
@@ -39,6 +40,7 @@ async function submitCardPayment( {
 	context,
 	session,
 	responseTypes,
+	savePaymentMethod,
 } ) {
 	if ( ! session ) {
 		return {
@@ -51,7 +53,11 @@ async function submitCardPayment( {
 	}
 
 	try {
-		const { orderId } = await createCardOrder( config, context );
+		const { orderId } = await createCardOrder(
+			config,
+			context,
+			savePaymentMethod
+		);
 		const result = await session.submit( orderId );
 
 		// The buyer dismissed the 3DS challenge; prompt a retry rather than
@@ -110,9 +116,17 @@ export function V6CardFieldsComponent( {
 	const methodId = config.card_fields.payment_method;
 	const hasNameField = Boolean( config.card_fields.name_field );
 
+	const isVaultingEnabled = Boolean( config.card_fields.is_vaulting_enabled );
+	const hasSubscriptions = Boolean( config.card_fields.has_subscriptions );
+
 	const [ session, setSession ] = useState( null );
 	const [ inputStyle, setInputStyle ] = useState( null );
 	const referenceRef = useRef( null );
+
+	// Whether to vault the card, read at submit time. Subscriptions force it on
+	// (the card must be saved to charge renewals); WC Blocks renders no native
+	// save checkbox for this gateway, so the one below drives this ref.
+	const savePaymentRef = useRef( hasSubscriptions );
 
 	// One card session for the component's lifetime: the SDK cannot dispose a
 	// session, so it must not be recreated on ordinary re-renders.
@@ -168,6 +182,7 @@ export function V6CardFieldsComponent( {
 				context,
 				session: sessionRef.current,
 				responseTypes,
+				savePaymentMethod: savePaymentRef.current,
 			} )
 		);
 	}, [
@@ -248,7 +263,34 @@ export function V6CardFieldsComponent( {
 						placeholder: __( 'CVV', 'woocommerce-paypal-payments' ),
 						containerStyle: { flex: 1 },
 					} )
-				)
+				),
+				isVaultingEnabled &&
+					createElement(
+						'label',
+						{
+							className: 'ppcp-sdk-v6-card-fields__save',
+							style: {
+								display: 'flex',
+								alignItems: 'center',
+								gap: '8px',
+							},
+						},
+						createElement( 'input', {
+							type: 'checkbox',
+							className:
+								'ppcp-sdk-v6-card-fields__save-checkbox',
+							defaultChecked: hasSubscriptions,
+							disabled: hasSubscriptions,
+							onChange: ( event ) => {
+								savePaymentRef.current = event.target.checked;
+							},
+						} ),
+						config.card_fields.save_card_text ||
+							__(
+								'Save your card',
+								'woocommerce-paypal-payments'
+							)
+					)
 			)
 	);
 }

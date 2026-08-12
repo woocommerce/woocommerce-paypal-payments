@@ -25,6 +25,7 @@ use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\CardPaymentsConfiguration;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\SettingsStatus;
+use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
 
 class SdkV6Manager {
 
@@ -52,6 +53,8 @@ class SdkV6Manager {
 	private bool $final_review_enabled;
 	private bool $vaulting_enabled;
 	private CardPaymentsConfiguration $card_payments_configuration;
+	private bool $card_vaulting_enabled;
+	private SubscriptionHelper $subscription_helper;
 
 	public function __construct(
 		AssetGetter $asset_getter,
@@ -65,7 +68,9 @@ class SdkV6Manager {
 		CancelView $cancel_view,
 		bool $final_review_enabled,
 		bool $vaulting_enabled,
-		CardPaymentsConfiguration $card_payments_configuration
+		CardPaymentsConfiguration $card_payments_configuration,
+		bool $card_vaulting_enabled,
+		SubscriptionHelper $subscription_helper
 	) {
 		$this->asset_getter                = $asset_getter;
 		$this->version                     = $version;
@@ -79,6 +84,8 @@ class SdkV6Manager {
 		$this->final_review_enabled        = $final_review_enabled;
 		$this->vaulting_enabled            = $vaulting_enabled;
 		$this->card_payments_configuration = $card_payments_configuration;
+		$this->card_vaulting_enabled       = $card_vaulting_enabled;
+		$this->subscription_helper         = $subscription_helper;
 	}
 
 	public function enqueue(): void {
@@ -292,13 +299,19 @@ class SdkV6Manager {
 			'wrapper'           => '#' . self::WRAPPER_ID,
 			'mini_cart_wrapper' => '#' . self::MINI_CART_WRAPPER_ID,
 			'card_fields'       => array(
-				'enabled'        => $card_fields_enabled,
-				'payment_method' => CreditCardGateway::ID,
-				'funding_source' => 'card',
+				'enabled'             => $card_fields_enabled,
+				'payment_method'      => CreditCardGateway::ID,
+				'funding_source'      => 'card',
 				// Label and name-field flag for the block's own card method.
-				'title'          => $this->card_payments_configuration->gateway_title(),
-				'name_field'     => 'yes' === $this->card_payments_configuration->show_name_on_card(),
-				'fields'         => array(
+				'title'               => $this->card_payments_configuration->gateway_title(),
+				'name_field'          => 'yes' === $this->card_payments_configuration->show_name_on_card(),
+				// Card "save during purchase" (vaulting). The block checkout has no
+				// native save checkbox, so V6CardFieldsComponent renders its own;
+				// the classic checkout reads WC's own tokenization checkbox instead.
+				'is_vaulting_enabled' => $this->card_vaulting_enabled,
+				'save_card_text'      => esc_html__( 'Save your card', 'woocommerce-paypal-payments' ),
+				'has_subscriptions'   => $this->subscription_helper->cart_contains_subscription(),
+				'fields'              => array(
 					'name'   => '#' . self::CARD_FIELD_NAME_ID,
 					'number' => '#' . self::CARD_FIELD_NUMBER_ID,
 					'expiry' => '#' . self::CARD_FIELD_EXPIRY_ID,

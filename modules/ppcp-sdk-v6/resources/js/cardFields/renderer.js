@@ -80,6 +80,19 @@ function isSavedTokenSelected() {
 }
 
 /**
+ * Whether the buyer opted to save the card during purchase, read from
+ * WooCommerce's native tokenization checkbox for the card gateway (the same
+ * checkbox v5's CheckoutActionHandler reads). Absent when vaulting is off.
+ *
+ * @return {boolean} True when the "save payment method" checkbox is checked.
+ */
+function shouldSavePaymentMethod() {
+	return !! document.querySelector(
+		'#wc-ppcp-credit-card-gateway-new-payment-method'
+	)?.checked;
+}
+
+/**
  * Whether the card gateway is the currently selected checkout payment method.
  *
  * @param {string} paymentMethod - The card gateway's payment method ID.
@@ -180,7 +193,11 @@ export async function initCardFields( config ) {
 
 		try {
 			const cardSession = await ensureCardSession();
-			const { orderId } = await createCardOrder( config );
+			const { orderId } = await createCardOrder(
+				config,
+				'checkout',
+				shouldSavePaymentMethod()
+			);
 			const result = await cardSession.submit( orderId );
 
 			// Buyer closed the 3DS challenge or the popup; let them retry.

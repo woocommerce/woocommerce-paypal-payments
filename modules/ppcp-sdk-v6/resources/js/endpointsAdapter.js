@@ -212,16 +212,22 @@ export async function approveOrderInSession( config, fundingSource, orderId ) {
  * unconfirmed, cardless order. approveCardOrder() is what stores the
  * order in session, once those checks pass.
  *
- * @param {Object} config  - The wc_ppcp_sdk_v6 config object.
- * @param {string} context - The page context (checkout or checkout-block).
+ * @param {Object}  config            - The wc_ppcp_sdk_v6 config object.
+ * @param {string}  context           - The page context (checkout or checkout-block).
+ * @param {boolean} savePaymentMethod - Whether to vault the card during purchase.
  * @return {Promise<{orderId: string}>} The created PayPal order id.
  */
-export async function createCardOrder( config, context = 'checkout' ) {
+export async function createCardOrder(
+	config,
+	context = 'checkout',
+	savePaymentMethod = false
+) {
 	const body = {
 		context,
 		purchase_units: [],
 		payment_method: config.card_fields.payment_method,
 		funding_source: config.card_fields.funding_source,
+		save_payment_method: savePaymentMethod,
 	};
 
 	// Only the classic checkout has a WC form to serialize, letting the server
