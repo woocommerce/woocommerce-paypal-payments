@@ -305,11 +305,12 @@ class SdkV6Manager {
 				// Label and name-field flag for the block's own card method.
 				'title'               => $this->card_payments_configuration->gateway_title(),
 				'name_field'          => 'yes' === $this->card_payments_configuration->show_name_on_card(),
-				// Card "save during purchase" (vaulting). The block checkout has no
-				// native save checkbox, so V6CardFieldsComponent renders its own;
-				// the classic checkout reads WC's own tokenization checkbox instead.
+				// Card "save during purchase" (vaulting). The block checkout uses
+				// WC Blocks' native save option (supports.showSaveOption, gated on
+				// is_vaulting_enabled); the classic checkout reads WC's own
+				// tokenization checkbox instead. has_subscriptions force-saves,
+				// since a subscription card must be vaulted for renewals.
 				'is_vaulting_enabled' => $this->card_vaulting_enabled,
-				'save_card_text'      => esc_html__( 'Save your card', 'woocommerce-paypal-payments' ),
 				'has_subscriptions'   => $this->subscription_helper->cart_contains_subscription(),
 				'fields'              => array(
 					'name'   => '#' . self::CARD_FIELD_NAME_ID,

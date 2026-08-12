@@ -117,7 +117,8 @@ describe( 'V6CardFieldsComponent', () => {
 
 		expect( mockCreateCardOrder ).toHaveBeenCalledWith(
 			cardConfig(),
-			'checkout-block'
+			'checkout-block',
+			false
 		);
 		expect( session.submit ).toHaveBeenCalledWith( 'ORDER1' );
 		expect( mockApproveCardOrder ).toHaveBeenCalledWith(
@@ -125,6 +126,72 @@ describe( 'V6CardFieldsComponent', () => {
 			'ORDER1'
 		);
 		expect( result ).toEqual( { type: 'success' } );
+	} );
+
+	test( 'passes savePaymentMethod true to createCardOrder when the buyer opts to save the card', async () => {
+		mockCreateCardOrder.mockResolvedValueOnce( { orderId: 'ORDER1' } );
+		session.submit.mockResolvedValueOnce( { state: 'succeeded' } );
+
+		renderComponent( { shouldSavePayment: true } );
+		await waitFor( () => expect( onPaymentSetup ).toHaveBeenCalled() );
+
+		await act( async () => {
+			await paymentSetupCb();
+		} );
+
+		expect( mockCreateCardOrder ).toHaveBeenCalledWith(
+			cardConfig(),
+			'checkout-block',
+			true
+		);
+	} );
+
+	test( 'forces savePaymentMethod true when the cart has subscriptions, even if the buyer did not opt in', async () => {
+		mockCreateCardOrder.mockResolvedValueOnce( { orderId: 'ORDER1' } );
+		session.submit.mockResolvedValueOnce( { state: 'succeeded' } );
+
+		renderComponent( {
+			shouldSavePayment: false,
+			config: cardConfig( {
+				card_fields: {
+					...cardConfig().card_fields,
+					has_subscriptions: true,
+				},
+			} ),
+		} );
+		await waitFor( () => expect( onPaymentSetup ).toHaveBeenCalled() );
+
+		await act( async () => {
+			await paymentSetupCb();
+		} );
+
+		expect( mockCreateCardOrder ).toHaveBeenCalledWith(
+			expect.objectContaining( {
+				card_fields: expect.objectContaining( {
+					has_subscriptions: true,
+				} ),
+			} ),
+			'checkout-block',
+			true
+		);
+	} );
+
+	test( 'passes savePaymentMethod false when the buyer does not opt in and there are no subscriptions', async () => {
+		mockCreateCardOrder.mockResolvedValueOnce( { orderId: 'ORDER1' } );
+		session.submit.mockResolvedValueOnce( { state: 'succeeded' } );
+
+		renderComponent( { shouldSavePayment: false } );
+		await waitFor( () => expect( onPaymentSetup ).toHaveBeenCalled() );
+
+		await act( async () => {
+			await paymentSetupCb();
+		} );
+
+		expect( mockCreateCardOrder ).toHaveBeenCalledWith(
+			cardConfig(),
+			'checkout-block',
+			false
+		);
 	} );
 
 	test( 'reports an error and skips approval when 3D Secure is canceled', async () => {

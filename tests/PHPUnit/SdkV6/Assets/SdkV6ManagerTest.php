@@ -14,6 +14,7 @@ use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\CardPaymentsConfiguration;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\SettingsStatus;
+use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
 use function Brain\Monkey\Functions\when;
 
 class SdkV6ManagerTest extends TestCase
@@ -26,6 +27,7 @@ class SdkV6ManagerTest extends TestCase
     private $session_handler;
     private $cancel_view;
     private $card_payments_configuration;
+    private $subscription_helper;
 
     public function setUp(): void
     {
@@ -39,9 +41,11 @@ class SdkV6ManagerTest extends TestCase
         $this->session_handler = Mockery::mock(SessionHandler::class);
         $this->cancel_view = Mockery::mock(CancelView::class);
         $this->card_payments_configuration = Mockery::mock(CardPaymentsConfiguration::class);
+        $this->subscription_helper = Mockery::mock(SubscriptionHelper::class);
+        $this->subscription_helper->shouldReceive('cart_contains_subscription')->andReturn(false)->byDefault();
     }
 
-    private function createTestee(): SdkV6Manager
+    private function createTestee(bool $card_vaulting_enabled = false): SdkV6Manager
     {
         return new SdkV6Manager(
             $this->asset_getter,
@@ -55,7 +59,9 @@ class SdkV6ManagerTest extends TestCase
             $this->cancel_view,
             false,
             false,
-            $this->card_payments_configuration
+            $this->card_payments_configuration,
+            $card_vaulting_enabled,
+            $this->subscription_helper
         );
     }
 
@@ -93,6 +99,8 @@ class SdkV6ManagerTest extends TestCase
      * WHEN the SDK bootstrap data is generated
      * THEN card_fields.enabled is true
      * AND the gateway title and name-field flag are carried into the payload
+     * AND is_vaulting_enabled reflects the card vaulting setting
+     * AND has_subscriptions reflects whether the cart contains a subscription
      *
      * @dataProvider script_data_card_fields_provider
      */
@@ -101,6 +109,8 @@ class SdkV6ManagerTest extends TestCase
         bool $acdc_enabled,
         string $gateway_title,
         string $show_name_on_card,
+        bool $card_vaulting_enabled,
+        bool $cart_contains_subscription,
         bool $expected_enabled,
         bool $expected_name_field
     ): void {
@@ -108,6 +118,7 @@ class SdkV6ManagerTest extends TestCase
         $this->card_payments_configuration->shouldReceive('is_acdc_enabled')->andReturn($acdc_enabled);
         $this->card_payments_configuration->shouldReceive('gateway_title')->andReturn($gateway_title);
         $this->card_payments_configuration->shouldReceive('show_name_on_card')->andReturn($show_name_on_card);
+        $this->subscription_helper->shouldReceive('cart_contains_subscription')->andReturn($cart_contains_subscription);
 
         $this->settings_status->shouldReceive('is_smart_button_enabled_for_location')->andReturn(false);
         $this->session_handler->shouldReceive('order')->andReturn(null);
@@ -130,29 +141,37 @@ class SdkV6ManagerTest extends TestCase
         when('wp_create_nonce')->justReturn('nonce');
         when('wc_get_checkout_url')->justReturn('https://example.com/checkout');
 
-        $testee = $this->createTestee();
+        $testee = $this->createTestee($card_vaulting_enabled);
         $data   = $testee->script_data();
 
         $this->assertSame($expected_enabled, $data['card_fields']['enabled']);
         $this->assertSame($gateway_title, $data['card_fields']['title']);
         $this->assertSame($expected_name_field, $data['card_fields']['name_field']);
         $this->assertSame(CreditCardGateway::ID, $data['card_fields']['payment_method']);
+        $this->assertSame($card_vaulting_enabled, $data['card_fields']['is_vaulting_enabled']);
+        $this->assertSame($cart_contains_subscription, $data['card_fields']['has_subscriptions']);
     }
 
     public function script_data_card_fields_provider(): array
     {
         return [
             'checkout-block with ACDC enabled and name field shown' => [
-                'checkout-block', true, 'Credit Card', 'yes', true, true,
+                'checkout-block', true, 'Credit Card', 'yes', false, false, true, true,
             ],
             'checkout-block with ACDC enabled and name field hidden' => [
-                'checkout-block', true, 'Credit Card', 'no', true, false,
+                'checkout-block', true, 'Credit Card', 'no', false, false, true, false,
             ],
             'checkout-block with ACDC disabled' => [
-                'checkout-block', false, 'Credit Card', 'yes', false, true,
+                'checkout-block', false, 'Credit Card', 'yes', false, false, false, true,
             ],
             'classic checkout with ACDC enabled' => [
-                'checkout', true, 'Credit Card', 'yes', true, true,
+                'checkout', true, 'Credit Card', 'yes', false, false, true, true,
+            ],
+            'checkout-block with card vaulting enabled' => [
+                'checkout-block', true, 'Credit Card', 'yes', true, false, true, true,
+            ],
+            'checkout-block with a subscription in the cart' => [
+                'checkout-block', true, 'Credit Card', 'yes', false, true, true, true,
             ],
         ];
     }

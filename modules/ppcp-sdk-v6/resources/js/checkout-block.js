@@ -162,6 +162,10 @@ if ( config?.card_fields?.enabled && ! config.continuation ) {
 		canMakePayment: () => true,
 		supports: {
 			features: [ 'products' ],
+			// WooCommerce Blocks renders its native "Save payment information…"
+			// checkbox and exposes the choice as the shouldSavePayment prop;
+			// only offered when card vaulting is enabled.
+			showSaveOption: Boolean( config.card_fields.is_vaulting_enabled ),
 		},
 	} );
 }

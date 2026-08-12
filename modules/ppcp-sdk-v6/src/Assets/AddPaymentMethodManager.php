@@ -64,8 +64,6 @@ class AddPaymentMethodManager {
 
 	/**
 	 * Enqueues the add-payment-method bootstrap script.
-	 *
-	 * @return void
 	 */
 	public function enqueue(): void {
 		if ( ! $this->should_load_on_current_page() ) {
@@ -106,8 +104,6 @@ class AddPaymentMethodManager {
 
 	/**
 	 * Whether the v6 save surfaces load on the current page.
-	 *
-	 * @return bool
 	 */
 	public function should_load_on_current_page(): bool {
 		return is_user_logged_in()
@@ -117,14 +113,18 @@ class AddPaymentMethodManager {
 
 	/**
 	 * The configuration data for the add-payment-method bootstrap script.
-	 *
-	 * @return array
 	 */
 	private function script_data(): array {
 		$base_url = $this->environment->is_sandbox()
 			? 'https://www.sandbox.paypal.com'
 			: 'https://www.paypal.com';
 
+		/**
+		 * Filters the 3DS/SCA contingency used when creating the card setup
+		 * token for the save-for-later flow.
+		 *
+		 * @param string $verification_method The default 3D Secure enum value.
+		 */
 		$verification_method = (string) apply_filters(
 			'woocommerce_paypal_payments_three_d_secure_contingency',
 			$this->settings_provider->three_d_secure_enum()
