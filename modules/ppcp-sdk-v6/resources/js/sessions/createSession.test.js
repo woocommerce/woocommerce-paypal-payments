@@ -5,7 +5,7 @@ jest.mock( '../endpointsAdapter', () => ( {
 
 const mockAddressChange = jest.fn();
 const mockOptionsChange = jest.fn();
-jest.mock( '../sessions/shippingHandler', () => ( {
+jest.mock( './shippingHandler', () => ( {
 	handleShippingAddressChange: ( ...args ) => mockAddressChange( ...args ),
 	handleShippingOptionsChange: ( ...args ) => mockOptionsChange( ...args ),
 } ) );
@@ -13,18 +13,24 @@ jest.mock( '../sessions/shippingHandler', () => ( {
 jest.mock( '../utils/api', () => ( { hasJQuery: () => false } ) );
 jest.mock( '../utils/errorHandler', () => ( { handleError: jest.fn() } ) );
 
-import { createSession } from '../sessions/createSession';
+import { createSession } from './createSession';
 
-// Captures the session config passed to the SDK factory so the built
-// handlers can be inspected.
+// Captures the session config and requested factory so the built handlers can be inspected.
 function fakeSdk() {
 	const capture = {};
+	const recordFactoryCall = ( factory ) => ( config ) => {
+		capture.factory = factory;
+		capture.config = config;
+		return { session: true };
+	};
 	return {
 		capture,
-		createPayPalOneTimePaymentSession: ( config ) => {
-			capture.config = config;
-			return { session: true };
-		},
+		createPayPalOneTimePaymentSession: recordFactoryCall(
+			'createPayPalOneTimePaymentSession'
+		),
+		createGooglePayOneTimePaymentSession: recordFactoryCall(
+			'createGooglePayOneTimePaymentSession'
+		),
 	};
 }
 
@@ -68,8 +74,7 @@ describe( 'createSession', () => {
 		const onShippingAddressChange = jest.fn();
 		const onShippingOptionsChange = jest.fn();
 
-		// shipping.handle_in_paypal is absent, so the classic path would
-		// attach nothing.
+		// shipping.handle_in_paypal is absent, so the classic path would attach nothing.
 		createSession( sdk, 'paypal', { shipping: {} }, 'checkout-block', {
 			onShippingAddressChange,
 			onShippingOptionsChange,
@@ -105,5 +110,43 @@ describe( 'createSession', () => {
 			{ any: true },
 			config
 		);
+	} );
+
+	describe( 'googlepay', () => {
+		test( 'is created through createGooglePayOneTimePaymentSession', () => {
+			const sdk = fakeSdk();
+
+			createSession( sdk, 'googlepay', { shipping: {} }, 'checkout' );
+
+			expect( sdk.capture.factory ).toBe(
+				'createGooglePayOneTimePaymentSession'
+			);
+		} );
+
+		test( 'the session config has no onApprove, but keeps onCancel and onError', () => {
+			const sdk = fakeSdk();
+
+			createSession( sdk, 'googlepay', { shipping: {} }, 'checkout' );
+
+			expect( sdk.capture.config.onApprove ).toBeUndefined();
+			expect( sdk.capture.config.onCancel ).toEqual( expect.any( Function ) );
+			expect( sdk.capture.config.onError ).toEqual( expect.any( Function ) );
+		} );
+
+		test( 'gets neither in-sheet shipping handler even when classic shipping-in-PayPal is enabled', () => {
+			const sdk = fakeSdk();
+			const config = {
+				shipping: { handle_in_paypal: true, need_shipping: true },
+			};
+
+			createSession( sdk, 'googlepay', config, 'product' );
+
+			expect(
+				sdk.capture.config.onShippingAddressChange
+			).toBeUndefined();
+			expect(
+				sdk.capture.config.onShippingOptionsChange
+			).toBeUndefined();
+		} );
 	} );
 } );

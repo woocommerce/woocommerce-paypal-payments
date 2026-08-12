@@ -1,9 +1,19 @@
-import { checkEligibility } from '../eligibility';
+import { checkEligibility } from './eligibility';
 
-function sdkWith( { eligible = [], details = null, detailsThrows = false } ) {
+function sdkWith( {
+	eligible = [],
+	details = null,
+	detailsThrows = false,
+	isEligibleThrowsFor = [],
+} ) {
 	return {
 		findEligibleMethods: jest.fn().mockResolvedValue( {
-			isEligible: ( method ) => eligible.includes( method ),
+			isEligible: ( method ) => {
+				if ( isEligibleThrowsFor.includes( method ) ) {
+					throw new Error( 'component not loaded' );
+				}
+				return eligible.includes( method );
+			},
 			getDetails: () => {
 				if ( detailsThrows ) {
 					throw new Error( 'unsupported region' );
@@ -67,5 +77,21 @@ describe( 'checkEligibility', () => {
 
 		expect( result.paylater ).toBe( true );
 		expect( result.payLaterDetails ).toBeNull();
+	} );
+
+	test( 'reports googlepay eligibility', async () => {
+		const sdk = sdkWith( { eligible: [ 'googlepay' ] } );
+
+		const result = await checkEligibility( sdk, { currencyCode: 'USD' } );
+
+		expect( result.googlepay ).toBe( true );
+	} );
+
+	test( 'resolves with googlepay false, instead of rejecting, when isEligible throws for googlepay', async () => {
+		const sdk = sdkWith( { isEligibleThrowsFor: [ 'googlepay' ] } );
+
+		const result = await checkEligibility( sdk, { currencyCode: 'USD' } );
+
+		expect( result.googlepay ).toBe( false );
 	} );
 } );
