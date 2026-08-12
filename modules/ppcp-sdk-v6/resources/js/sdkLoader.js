@@ -61,6 +61,9 @@ async function createInstance( config, context ) {
 	if ( config.card_fields?.enabled ) {
 		components.push( 'card-fields' );
 	}
+	if ( config.google_pay?.enabled ) {
+		components.push( 'googlepay-payments' );
+	}
 
 	const sdkInstance = await window.paypal.createInstance( {
 		clientToken: tokenData.client_token,

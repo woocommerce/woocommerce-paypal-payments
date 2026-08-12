@@ -5,6 +5,25 @@
  */
 
 /**
+ * Checks one method without letting a failure sink the whole check.
+ *
+ * Used for methods whose SDK component is only loaded on some pages: an
+ * eligibility lookup for an absent component must not reject and take every
+ * button down with it.
+ *
+ * @param {Object} methods - The findEligibleMethods result.
+ * @param {string} method  - The method to check.
+ * @return {boolean} Whether the method is eligible.
+ */
+function isEligibleSafely( methods, method ) {
+	try {
+		return methods.isEligible( method );
+	} catch ( e ) {
+		return false;
+	}
+}
+
+/**
  * Checks which payment methods are eligible.
  *
  * @param {Object} sdkInstance           - The PayPal SDK v6 instance.
@@ -32,6 +51,7 @@ export async function checkEligibility(
 		paypal: methods.isEligible( 'paypal' ),
 		venmo: methods.isEligible( 'venmo' ),
 		paylater: methods.isEligible( 'paylater' ),
+		googlepay: isEligibleSafely( methods, 'googlepay' ),
 		payLaterDetails: null,
 	};
 

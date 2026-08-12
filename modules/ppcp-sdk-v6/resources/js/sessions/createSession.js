@@ -1,5 +1,5 @@
 /**
- * Factory for v6 one-time payment sessions (PayPal, Venmo, Pay Later).
+ * Factory for v6 one-time payment sessions.
  *
  * @package
  */
@@ -16,7 +16,10 @@ const SESSION_FACTORIES = {
 	paypal: 'createPayPalOneTimePaymentSession',
 	venmo: 'createVenmoOneTimePaymentSession',
 	paylater: 'createPayLaterOneTimePaymentSession',
+	googlepay: 'createGooglePayOneTimePaymentSession',
 };
+
+const WALLET_METHODS = [ 'googlepay' ];
 
 /**
  * Refreshes the cart UI after an abandoned or failed session.
@@ -41,7 +44,7 @@ function refreshCartUi( context ) {
  * attach regardless of the classic shipping condition.
  *
  * @param {Object} sdkInstance - The PayPal SDK v6 instance.
- * @param {string} method      - The payment method (paypal, venmo, paylater).
+ * @param {string} method      - The payment method, a SESSION_FACTORIES key.
  * @param {Object} config      - The wc_ppcp_sdk_v6 config object.
  * @param {string} context     - The page context.
  * @param {Object} [handlers]  - Optional session callback overrides.
@@ -55,16 +58,6 @@ export function createSession(
 	handlers = {}
 ) {
 	const sessionConfig = {
-		onApprove:
-			handlers.onApprove ||
-			async function ( data ) {
-				try {
-					await approveOrder( config, context, method, data.orderId );
-				} catch ( error ) {
-					handleError( error );
-				}
-			},
-
 		onCancel: handlers.onCancel || ( () => refreshCartUi( context ) ),
 
 		onError:
@@ -74,6 +67,20 @@ export function createSession(
 				handleError( error );
 			} ),
 	};
+
+	// Wallet sheets close before the order exists, so wallet sessions have no
+	// onApprove: the wallet bridge drives create, confirm and approve itself.
+	if ( ! WALLET_METHODS.includes( method ) ) {
+		sessionConfig.onApprove =
+			handlers.onApprove ||
+			async function ( data ) {
+				try {
+					await approveOrder( config, context, method, data.orderId );
+				} catch ( error ) {
+					handleError( error );
+				}
+			};
+	}
 
 	// The default handlers post to the Store API directly, which desynchronises
 	// the React cart UI — block surfaces must supply their own or go without.
