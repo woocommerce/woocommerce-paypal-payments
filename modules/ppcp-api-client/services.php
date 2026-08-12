@@ -74,6 +74,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Helper\PartnerAttribution;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\PaymentLevelEligibility;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\PaymentLevelHelper;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\PurchaseUnitSanitizer;
+use WooCommerce\PayPalCommerce\ApiClient\Helper\ReturnUrlSecret;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\ReferenceTransactionStatus;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\ProductStatusResultCache;
 use WooCommerce\PayPalCommerce\ApiClient\Repository\CustomerRepository;
@@ -872,6 +873,9 @@ return array(
 		$cache                   = $container->get( 'api.paypal-bearer-cache' );
 		$purchase_unit_sanitizer = $container->get( 'api.helper.purchase-unit-sanitizer' );
 		return new OrderTransient( $cache, $purchase_unit_sanitizer );
+	},
+	'api.helper.return-url-secret'                   => static function ( ContainerInterface $container ): ReturnUrlSecret {
+		return new ReturnUrlSecret();
 	},
 	'api.helper.failure-registry'                    => static function ( ContainerInterface $container ): FailureRegistry {
 		$cache = new Cache( 'ppcp-paypal-api-status-cache' );

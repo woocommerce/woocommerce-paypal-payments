@@ -181,4 +181,58 @@ class ExperienceContextBuilderTest extends TestCase
 			ExperienceContext::CONTACT_PREFERENCE_UPDATE_CONTACT_INFO,
 		];
 	}
+
+	/**
+	 * Builds an ExperienceContextBuilder wired with a ReturnUrlSecret double.
+	 *
+	 * @param \Mockery\MockInterface $return_url_secret Double for ApiClient\Helper\ReturnUrlSecret.
+	 */
+	private function create_sut_with_return_url_secret($return_url_secret): ExperienceContextBuilder
+	{
+		return new ExperienceContextBuilder(
+			$this->settings,
+			$this->shipping_callback_url_factory,
+			$return_url_secret
+		);
+	}
+
+	/**
+	 * GIVEN a pending return-url secret issued by ReturnUrlSecret::issue_pending()
+	 * WHEN with_endpoint_return_urls() builds the WC-AJAX return URL
+	 * THEN the return URL carries a ppcp_return_nonce query argument
+	 * AND its value is exactly the secret that was issued
+	 *
+	 * @scenario The return URL that PayPal redirects the buyer back to must carry
+	 *           proof (a single-use secret) that the requester started the flow,
+	 *           closing the token-replay gap described in
+	 *           bug:wc-gateway:return-url-token-replay.
+	 * @covers \WooCommerce\PayPalCommerce\ApiClient\Factory\ExperienceContextBuilder::with_endpoint_return_urls
+	 */
+	public function test_endpoint_return_url_carries_the_issued_pending_nonce(): void
+	{
+		// Arrange
+		$issued_secret = 'pending-secret-2f9b6c1a';
+
+		$return_url_secret = Mockery::mock( \WooCommerce\PayPalCommerce\ApiClient\Helper\ReturnUrlSecret::class );
+		$return_url_secret->allows( 'issue_pending' )->andReturn( $issued_secret );
+
+		expect( 'home_url' )->andReturn( 'https://example.com/wc-ajax/ppc-return-url' );
+		expect( 'wc_get_checkout_url' )->andReturn( 'https://example.com/checkout' );
+		expect( 'add_query_arg' )->andReturnUsing( function ( $key, $value, $url ) {
+			$separator = strpos( $url, '?' ) === false ? '?' : '&';
+			return $url . $separator . $key . '=' . $value;
+		} );
+
+		$sut = $this->create_sut_with_return_url_secret( $return_url_secret );
+
+		// When
+		$result = $sut->with_endpoint_return_urls()->build();
+		$return_url = $result->to_array()['return_url'] ?? '';
+
+		// Then
+		$query = [];
+		parse_str( (string) parse_url( $return_url, PHP_URL_QUERY ), $query );
+
+		self::assertSame( $issued_secret, $query['ppcp_return_nonce'] ?? null );
+	}
 }

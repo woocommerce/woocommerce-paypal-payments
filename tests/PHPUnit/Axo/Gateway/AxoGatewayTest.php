@@ -283,4 +283,137 @@ class AxoGatewayTest extends TestCase
 		// Then — Mockery verifies logger->error() call in tearDown(); count it as an assertion
 		$this->addToAssertionCount( 1 );
 	}
+
+	/**
+	 * Builds an AxoGatewayTestable whose collaborators are all configurable per
+	 * test, so the 3DS redirect built inside process_payment()
+	 * can be inspected without disturbing the shared setUp() wiring.
+	 *
+	 *
+	 * @param \WooCommerce\PayPalCommerce\ApiClient\Entity\Order $paypal_order   Order returned by OrderEndpoint::create().
+	 * @param \Mockery\MockInterface                              $purchase_unit_factory
+	 * @param \Mockery\MockInterface                              $shipping_preference_factory
+	 * @param \Mockery\MockInterface                              $settings_model
+	 * @param \Mockery\MockInterface                              $experience_context_builder
+	 * @param \Mockery\MockInterface                              $return_url_secret
+	 */
+	private function create_gateway_for_process_payment(
+		\WooCommerce\PayPalCommerce\ApiClient\Entity\Order $paypal_order,
+		$purchase_unit_factory,
+		$shipping_preference_factory,
+		$settings_model,
+		$experience_context_builder,
+		$return_url_secret
+	): AxoGatewayTestable {
+		$order_endpoint = Mockery::mock( OrderEndpoint::class );
+		$order_endpoint->allows( 'create' )->andReturn( $paypal_order );
+
+		return new AxoGatewayTestable(
+			$this->dcc_configuration,
+			Mockery::mock( SessionHandler::class ),
+			$this->order_processor,
+			[],
+			$order_endpoint,
+			$purchase_unit_factory,
+			$shipping_preference_factory,
+			Mockery::mock( TransactionUrlProvider::class ),
+			Mockery::mock( Environment::class ),
+			$this->logger,
+			$experience_context_builder,
+			$settings_model,
+			$return_url_secret
+		);
+	}
+
+	/**
+	 * GIVEN a card payment that requires a 3D Secure challenge
+	 * AND a ReturnUrlSecret that binds a nonce to the newly created PayPal order id
+	 * WHEN process_payment() builds the 3DS redirect URL (AxoGateway.php:267-271)
+	 * THEN the redirect's embedded return URL carries the PayPal order id as "token"
+	 * AND it carries a "ppcp_return_nonce" argument equal to the value ReturnUrlSecret
+	 *     bound to that same PayPal order id
+	 *
+	 * @scenario Closes the token-replay gap: without a bound nonce, a leaked PayPal
+	 *           order id alone is enough to trigger a capture on someone else's
+	 *           order via the return URL (bug:wc-gateway:return-url-token-replay).
+	 * @covers \WooCommerce\PayPalCommerce\Axo\Gateway\AxoGateway::process_payment
+	 */
+	public function test_process_payment_redirect_url_carries_nonce_bound_to_paypal_order_when_3ds_required(): void
+	{
+		// Arrange
+		$wc_order = Mockery::mock( WC_Order::class );
+		$wc_order->shouldReceive( 'get_id' )->andReturn( 77 );
+
+		$payer_action_link = (object) [
+			'rel'  => 'payer-action',
+			'href' => 'https://paypal.example/payer-action',
+		];
+
+		$paypal_order = Mockery::mock( \WooCommerce\PayPalCommerce\ApiClient\Entity\Order::class );
+		$paypal_order->shouldReceive( 'id' )->andReturn( 'PAYPAL-ORDER-XYZ' );
+		$paypal_order->shouldReceive( 'links' )->andReturn( [ $payer_action_link ] );
+
+		$purchase_unit = Mockery::mock( PurchaseUnit::class );
+		$purchase_unit_factory = Mockery::mock( PurchaseUnitFactory::class );
+		$purchase_unit_factory->allows( 'from_wc_order' )->andReturn( $purchase_unit );
+
+		$shipping_preference_factory = Mockery::mock( ShippingPreferenceFactory::class );
+		$shipping_preference_factory->allows( 'from_state' )->andReturn( 'preference' );
+
+		$settings_model = Mockery::mock( SettingsModel::class );
+		$settings_model->allows( 'get_three_d_secure_enum' )->andReturn( '' );
+
+		$experience_context = Mockery::mock( \WooCommerce\PayPalCommerce\ApiClient\Entity\ExperienceContext::class );
+		$experience_context->allows( 'to_array' )->andReturn( [] );
+
+		$experience_context_builder = Mockery::mock( ExperienceContextBuilder::class );
+		$experience_context_builder->allows( 'with_endpoint_return_urls' )->andReturnSelf();
+		$experience_context_builder->allows( 'with_current_brand_name' )->andReturnSelf();
+		$experience_context_builder->allows( 'with_current_locale' )->andReturnSelf();
+		$experience_context_builder->allows( 'build' )->andReturn( $experience_context );
+
+		$return_url_secret = Mockery::mock( \WooCommerce\PayPalCommerce\ApiClient\Helper\ReturnUrlSecret::class );
+		$return_url_secret->allows( 'issue_for' )->with( 'PAYPAL-ORDER-XYZ' )->andReturn( 'bound-nonce-value' );
+
+		when( 'wc_get_order' )->justReturn( $wc_order );
+		when( 'wc_clean' )->alias( static fn( $value ) => $value );
+		when( 'wp_unslash' )->alias( static fn( $value ) => $value );
+		when( 'home_url' )->alias( static fn( string $path = '' ): string => 'https://example.com' . $path );
+		when( 'add_query_arg' )->alias( static function ( $key, $value, $url ): string {
+			// The production code already rawurlencode()s the redirect_uri value before
+			// calling add_query_arg(); this stub concatenates as-is, as WordPress does.
+			$separator = strpos( $url, '?' ) === false ? '?' : '&';
+			return $url . $separator . $key . '=' . $value;
+		} );
+
+		$_POST['axo_nonce'] = 'card-single-use-token';
+		unset( $_GET['token'] );
+
+		$sut = $this->create_gateway_for_process_payment(
+			$paypal_order,
+			$purchase_unit_factory,
+			$shipping_preference_factory,
+			$settings_model,
+			$experience_context_builder,
+			$return_url_secret
+		);
+
+		// When
+		$result = $sut->process_payment( 77 );
+
+		unset( $_POST['axo_nonce'] );
+
+		// Then
+		$this->assertSame( 'success', $result['result'] );
+
+		$redirect_query = [];
+		parse_str( (string) parse_url( $result['redirect'], PHP_URL_QUERY ), $redirect_query );
+
+		$inner_return_url = $redirect_query['redirect_uri'] ?? '';
+		$inner_query = [];
+		parse_str( (string) parse_url( $inner_return_url, PHP_URL_QUERY ), $inner_query );
+
+		$this->assertSame( 'PAYPAL-ORDER-XYZ', $inner_query['token'] ?? null );
+		$this->assertSame( 'bound-nonce-value', $inner_query['ppcp_return_nonce'] ?? null );
+	}
 }
