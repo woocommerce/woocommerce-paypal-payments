@@ -10,6 +10,8 @@ use WooCommerce\PayPalCommerce\Googlepay\GooglePayGateway;
 use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
 use WooCommerce\PayPalCommerce\Settings\DTO\LocationStylingDTO;
 use WooCommerce\PayPalCommerce\TestCase;
+use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
+use function Brain\Monkey\Functions\when;
 
 class GooglePayConfigTest extends TestCase {
 	use MockeryPHPUnitIntegration;
@@ -22,12 +24,63 @@ class GooglePayConfigTest extends TestCase {
 	public function setUp(): void {
 		parent::setUp();
 
+		// Satisfy should_render()'s wp_loaded guard; the guard test overrides this.
+		when( 'did_action' )->justReturn( 1 );
+
 		$this->provider = Mockery::mock( SettingsProvider::class );
-		$this->provider->shouldReceive( 'googlepay_button_language' )->andReturn( 'en' );
 	}
 
-	private function configFor(): GooglePayConfig {
-		return new GooglePayConfig( $this->provider );
+	private function configFor( ?SubscriptionHelper $subscription_helper = null, ?callable $is_available = null ): GooglePayConfig {
+		return new GooglePayConfig(
+			$this->provider,
+			$subscription_helper ?? Mockery::mock( SubscriptionHelper::class ),
+			$is_available ?? $this->failIfCalled()
+		);
+	}
+
+	private function subscriptions( bool $on_product, bool $in_cart ): SubscriptionHelper {
+		$helper = Mockery::mock( SubscriptionHelper::class );
+		$helper->shouldReceive( 'locations_with_subscription_product' )->andReturn(
+			array(
+				'product'  => $on_product,
+				'payorder' => false,
+				'cart'     => $in_cart,
+			)
+		);
+
+		return $helper;
+	}
+
+	private function buttonLanguage( string $language = 'en' ): void {
+		$this->provider->shouldReceive( 'googlepay_button_language' )->andReturn( $language );
+	}
+
+	private function noSubscriptions(): SubscriptionHelper {
+		return $this->subscriptions( false, false );
+	}
+
+	private function subscriptionInCart(): SubscriptionHelper {
+		return $this->subscriptions( false, true );
+	}
+
+	private function subscriptionOnProductPage(): SubscriptionHelper {
+		return $this->subscriptions( true, false );
+	}
+
+	private function available(): callable {
+		return static fn(): bool => true;
+	}
+
+	private function notAvailable(): callable {
+		return static fn(): bool => false;
+	}
+
+	private function failIfCalled(): callable {
+		return function (): bool {
+			$this->fail( 'The availability callable must not be invoked.' );
+
+			return false;
+		};
 	}
 
 	private function styling(
@@ -41,8 +94,8 @@ class GooglePayConfigTest extends TestCase {
 		return new LocationStylingDTO( $location, $enabled, $methods, $shape, $label, $color );
 	}
 
-	private function stylingEnabled(): LocationStylingDTO {
-		return $this->styling( 'checkout', true, array( GooglePayGateway::ID ), 'rect', 'pay', 'black' );
+	private function stylingEnabled( string $location = 'checkout' ): LocationStylingDTO {
+		return $this->styling( $location, true, array( GooglePayGateway::ID ), 'rect', 'pay', 'black' );
 	}
 
 	private function stylingDisabled(): LocationStylingDTO {
@@ -68,57 +121,169 @@ class GooglePayConfigTest extends TestCase {
 	/**
 	 * GIVEN the Google Pay gateway is disabled globally
 	 * WHEN checking whether it should render in a context
-	 * THEN it is reported as not enabled, regardless of the location's own styling
+	 * THEN it is reported as not rendering, regardless of the location's own styling
 	 */
-	public function testDisabledWhenGatewayIsOffGlobally(): void {
+	public function testNotRenderedWhenGatewayIsOffGlobally(): void {
 		$this->provider->shouldReceive( 'googlepay_enabled' )->andReturn( false );
-		$this->provider->shouldNotReceive( 'googlepay_styles' );
 
-		$this->assertFalse( $this->configFor()->enabled( 'checkout' ) );
+		$config = $this->configFor( $this->noSubscriptions(), $this->available() );
+
+		$this->assertFalse( $config->should_render( 'checkout' ) );
 	}
 
 	/**
 	 * GIVEN the gateway is on globally but the location's styling marks it disabled
 	 * WHEN checking whether it should render in that context
-	 * THEN it is reported as not enabled
+	 * THEN it is reported as not rendering
 	 */
-	public function testDisabledWhenLocationStylingIsDisabled(): void {
+	public function testNotRenderedWhenLocationStylingIsDisabled(): void {
 		$styling = $this->stylingDisabled();
 
 		$this->provider->shouldReceive( 'googlepay_enabled' )->andReturn( true );
 		$this->provider->shouldReceive( 'googlepay_styles' )->with( 'checkout' )->andReturn( $styling );
 
-		$this->assertFalse( $this->configFor()->enabled( 'checkout' ) );
+		$config = $this->configFor( $this->noSubscriptions(), $this->available() );
+
+		$this->assertFalse( $config->should_render( 'checkout' ) );
 	}
 
 	/**
 	 * GIVEN the gateway and location are enabled but Google Pay is not among the
 	 * location's active payment methods
 	 * WHEN checking whether it should render in that context
-	 * THEN it is reported as not enabled
+	 * THEN it is reported as not rendering
 	 */
-	public function testDisabledWhenGatewayIdMissingFromMethods(): void {
+	public function testNotRenderedWhenGatewayIdMissingFromMethods(): void {
 		$styling = $this->stylingWithoutGooglePayMethod();
 
 		$this->provider->shouldReceive( 'googlepay_enabled' )->andReturn( true );
 		$this->provider->shouldReceive( 'googlepay_styles' )->with( 'checkout' )->andReturn( $styling );
 
-		$this->assertFalse( $this->configFor()->enabled( 'checkout' ) );
+		$config = $this->configFor( $this->noSubscriptions(), $this->available() );
+
+		$this->assertFalse( $config->should_render( 'checkout' ) );
 	}
 
 	/**
-	 * GIVEN the gateway is on globally, the location is enabled, and Google Pay is
-	 * among the location's active payment methods
+	 * GIVEN every gate that controls rendering is satisfied
 	 * WHEN checking whether it should render in that context
-	 * THEN it is reported as enabled
+	 * THEN it is reported as rendering
 	 */
-	public function testEnabledWhenGloballyOnLocationOnAndMethodPresent(): void {
+	public function testRenderedWhenNothingBlocksIt(): void {
 		$styling = $this->stylingEnabled();
 
 		$this->provider->shouldReceive( 'googlepay_enabled' )->andReturn( true );
 		$this->provider->shouldReceive( 'googlepay_styles' )->with( 'checkout' )->andReturn( $styling );
 
-		$this->assertTrue( $this->configFor()->enabled( 'checkout' ) );
+		$config = $this->configFor( $this->noSubscriptions(), $this->available() );
+
+		$this->assertTrue( $config->should_render( 'checkout' ) );
+	}
+
+	/**
+	 * GIVEN the settings fully enable Google Pay for the location but the merchant
+	 * cannot currently offer Google Pay
+	 * WHEN checking whether it should render in that context
+	 * THEN it is reported as not rendering
+	 */
+	public function testNotRenderedWhenMerchantIsNotAvailable(): void {
+		$styling = $this->stylingEnabled();
+
+		$this->provider->shouldReceive( 'googlepay_enabled' )->andReturn( true );
+		$this->provider->shouldReceive( 'googlepay_styles' )->with( 'checkout' )->andReturn( $styling );
+
+		$config = $this->configFor( $this->noSubscriptions(), $this->notAvailable() );
+
+		$this->assertFalse( $config->should_render( 'checkout' ) );
+	}
+
+	/**
+	 * GIVEN the settings fully enable Google Pay and the merchant is available, but
+	 * there is a subscription product in the cart
+	 * WHEN checking whether it should render in the cart, checkout, or mini-cart
+	 * THEN it is reported as not rendering
+	 *
+	 * @dataProvider cartBackedContextProvider
+	 */
+	public function testNotRenderedWhenSubscriptionIsInCart( string $context ): void {
+		$styling = $this->stylingEnabled( $context );
+
+		$this->provider->shouldReceive( 'googlepay_enabled' )->andReturn( true );
+		$this->provider->shouldReceive( 'googlepay_styles' )->with( $context )->andReturn( $styling );
+
+		$config = $this->configFor( $this->subscriptionInCart(), $this->available() );
+
+		$this->assertFalse( $config->should_render( $context ) );
+	}
+
+	public function cartBackedContextProvider(): array {
+		return array(
+			'cart context'      => array( 'cart' ),
+			'checkout context'  => array( 'checkout' ),
+			'mini-cart context' => array( 'mini-cart' ),
+		);
+	}
+
+	/**
+	 * GIVEN the settings fully enable Google Pay and the merchant is available, but
+	 * the product page shows a subscription product
+	 * WHEN checking whether it should render on the product page
+	 * THEN it is reported as not rendering
+	 */
+	public function testNotRenderedWhenSubscriptionIsOnProductPage(): void {
+		$styling = $this->stylingEnabled( 'product' );
+
+		$this->provider->shouldReceive( 'googlepay_enabled' )->andReturn( true );
+		$this->provider->shouldReceive( 'googlepay_styles' )->with( 'product' )->andReturn( $styling );
+
+		$config = $this->configFor( $this->subscriptionOnProductPage(), $this->available() );
+
+		$this->assertFalse( $config->should_render( 'product' ) );
+	}
+
+	/**
+	 * GIVEN a subscription product is in the cart but the product page itself does
+	 * not show a subscription product
+	 * WHEN checking whether it should render on the product page
+	 * THEN it is reported as rendering
+	 */
+	public function testSubscriptionInCartDoesNotBlockProductPage(): void {
+		$styling = $this->stylingEnabled( 'product' );
+
+		$this->provider->shouldReceive( 'googlepay_enabled' )->andReturn( true );
+		$this->provider->shouldReceive( 'googlepay_styles' )->with( 'product' )->andReturn( $styling );
+
+		$config = $this->configFor( $this->subscriptionInCart(), $this->available() );
+
+		$this->assertTrue( $config->should_render( 'product' ) );
+	}
+
+	/**
+	 * GIVEN a subscription product is shown on the product page but the cart itself
+	 * does not contain a subscription product
+	 * WHEN checking whether it should render at checkout
+	 * THEN it is reported as rendering
+	 */
+	public function testSubscriptionOnProductPageDoesNotBlockCheckout(): void {
+		$styling = $this->stylingEnabled();
+
+		$this->provider->shouldReceive( 'googlepay_enabled' )->andReturn( true );
+		$this->provider->shouldReceive( 'googlepay_styles' )->with( 'checkout' )->andReturn( $styling );
+
+		$config = $this->configFor( $this->subscriptionOnProductPage(), $this->available() );
+
+		$this->assertTrue( $config->should_render( 'checkout' ) );
+	}
+
+	/**
+	 * GIVEN a merchant-availability callable
+	 * WHEN the config object is constructed and should_render() is not called
+	 * THEN the callable is never invoked
+	 */
+	public function testConstructionDoesNotInvokeAvailabilityCallable(): void {
+		$this->configFor( $this->noSubscriptions(), $this->failIfCalled() );
+
+		$this->addToAssertionCount( 1 );
 	}
 
 	/**
@@ -132,6 +297,7 @@ class GooglePayConfigTest extends TestCase {
 		$styling = $this->stylingWithColor( $inputColor );
 
 		$this->provider->shouldReceive( 'googlepay_styles' )->with( 'checkout' )->andReturn( $styling );
+		$this->buttonLanguage();
 
 		$styles = $this->configFor()->styles( 'checkout' );
 
@@ -158,6 +324,7 @@ class GooglePayConfigTest extends TestCase {
 		$styling = $this->stylingWithLabel( $inputLabel );
 
 		$this->provider->shouldReceive( 'googlepay_styles' )->with( 'checkout' )->andReturn( $styling );
+		$this->buttonLanguage();
 
 		$styles = $this->configFor()->styles( 'checkout' );
 
@@ -183,7 +350,7 @@ class GooglePayConfigTest extends TestCase {
 		$styling = $this->stylingEnabled();
 
 		$this->provider->shouldReceive( 'googlepay_styles' )->with( 'checkout' )->andReturn( $styling );
-		$this->provider->shouldReceive( 'googlepay_button_language' )->andReturn( $inputLanguage );
+		$this->buttonLanguage( $inputLanguage );
 
 		$styles = $this->configFor()->styles( 'checkout' );
 
@@ -209,6 +376,7 @@ class GooglePayConfigTest extends TestCase {
 		$styling = $this->stylingWithShape( $inputShape );
 
 		$this->provider->shouldReceive( 'googlepay_styles' )->with( 'checkout' )->andReturn( $styling );
+		$this->buttonLanguage();
 
 		$styles = $this->configFor()->styles( 'checkout' );
 
@@ -228,7 +396,7 @@ class GooglePayConfigTest extends TestCase {
 	/**
 	 * GIVEN the button label normalizes to the "buy" type
 	 * WHEN building the styles for a given page context
-	 * THEN "buy" is substituted with "pay" only for the mini cart, which is too narrow for the longer label
+	 * THEN "buy" is substituted with "pay" only for the mini cart
 	 *
 	 * @dataProvider buyTypeContextProvider
 	 */
@@ -236,6 +404,7 @@ class GooglePayConfigTest extends TestCase {
 		$styling = $this->stylingWithLabel( 'buynow', $context );
 
 		$this->provider->shouldReceive( 'googlepay_styles' )->with( $context )->andReturn( $styling );
+		$this->buttonLanguage();
 
 		$styles = $this->configFor()->styles( $context );
 
