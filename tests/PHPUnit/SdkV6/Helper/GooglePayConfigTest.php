@@ -287,6 +287,22 @@ class GooglePayConfigTest extends TestCase {
 	}
 
 	/**
+	 * GIVEN wp_loaded has not run yet
+	 * AND settings, availability and subscription state would otherwise allow rendering
+	 * WHEN checking whether Google Pay should render
+	 * THEN it is reported as not rendering
+	 * AND the merchant availability callable is never invoked
+	 */
+	public function testNotRenderedBeforeWpLoadedHasRun(): void {
+		when( 'did_action' )->justReturn( 0 );
+		when( '_doing_it_wrong' )->justReturn( null );
+
+		$config = $this->configFor( $this->noSubscriptions(), $this->failIfCalled() );
+
+		$this->assertFalse( $config->should_render( 'checkout' ) );
+	}
+
+	/**
 	 * GIVEN a location styling color from the admin settings
 	 * WHEN building the Google Pay button styles for a context
 	 * THEN the color is normalized to a value the Google button API accepts

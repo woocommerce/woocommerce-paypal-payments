@@ -48,6 +48,22 @@ class GooglePayConfig {
 	 * Whether Google Pay should render in the given page context.
 	 */
 	public function should_render( string $context ): bool {
+		// The product gate inspects the cart, which WooCommerce loads on
+		// wp_loaded. Called earlier it silently sees an empty cart and would
+		// wrongly report the wallet as supported, so refuse rather than guess.
+		if ( ! did_action( 'wp_loaded' ) ) {
+			_doing_it_wrong(
+				__METHOD__,
+				esc_html__(
+					'Google Pay availability cannot be determined before the wp_loaded action has run.',
+					'woocommerce-paypal-payments'
+				),
+				'4.1.3'
+			);
+
+			return false;
+		}
+
 		return $this->enabled_for_context( $context )
 			&& ( $this->is_available )()
 			&& $this->is_product_supported( $context );
