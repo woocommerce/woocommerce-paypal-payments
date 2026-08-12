@@ -34,3 +34,21 @@ export function loadScript( url ) {
 
 	return scriptPromises[ url ];
 }
+
+/**
+ * Loads Google's pay.js and verifies the Google Pay API global is usable.
+ *
+ * Unlike Apple Pay, whose component bundle loads Apple's SDK itself, the
+ * googlepay-payments bundle neither loads pay.js nor touches PaymentsClient:
+ * the merchant drives the Google button and payment sheet.
+ *
+ * @param {string} sdkUrl - The pay.js URL.
+ * @return {Promise<void>} Resolves once google.payments.api is available.
+ */
+export async function loadGoogleSdk( sdkUrl ) {
+	await loadScript( sdkUrl );
+
+	if ( ! window.google?.payments?.api?.PaymentsClient ) {
+		throw new Error( 'Google Pay global not found after script load.' );
+	}
+}
