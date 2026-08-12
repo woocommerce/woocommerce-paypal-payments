@@ -5,7 +5,7 @@
  * @package WooCommerce\PayPalCommerce\SdkV6\Assets
  */
 
-declare(strict_types=1);
+declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\SdkV6\Assets;
 
@@ -18,6 +18,7 @@ use WooCommerce\PayPalCommerce\Button\Endpoint\GetOrderEndpoint;
 use WooCommerce\PayPalCommerce\Button\Helper\Context;
 use WooCommerce\PayPalCommerce\SdkV6\Endpoint\ClientTokenEndpoint;
 use WooCommerce\PayPalCommerce\SdkV6\Helper\ButtonStyleMapper;
+use WooCommerce\PayPalCommerce\SdkV6\Helper\GooglePayConfig;
 use WooCommerce\PayPalCommerce\Session\Cancellation\CancelController;
 use WooCommerce\PayPalCommerce\Session\Cancellation\CancelView;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
@@ -52,6 +53,7 @@ class SdkV6Manager {
 	private bool $final_review_enabled;
 	private bool $vaulting_enabled;
 	private CardPaymentsConfiguration $card_payments_configuration;
+	private GooglePayConfig $google_pay_config;
 
 	public function __construct(
 		AssetGetter $asset_getter,
@@ -65,7 +67,8 @@ class SdkV6Manager {
 		CancelView $cancel_view,
 		bool $final_review_enabled,
 		bool $vaulting_enabled,
-		CardPaymentsConfiguration $card_payments_configuration
+		CardPaymentsConfiguration $card_payments_configuration,
+		GooglePayConfig $google_pay_config
 	) {
 		$this->asset_getter                = $asset_getter;
 		$this->version                     = $version;
@@ -79,6 +82,7 @@ class SdkV6Manager {
 		$this->final_review_enabled        = $final_review_enabled;
 		$this->vaulting_enabled            = $vaulting_enabled;
 		$this->card_payments_configuration = $card_payments_configuration;
+		$this->google_pay_config           = $google_pay_config;
 	}
 
 	public function enqueue(): void {
@@ -171,10 +175,15 @@ class SdkV6Manager {
 			return true;
 		}
 
+		if ( $page_location && $this->google_pay_config->should_render( $page_location ) ) {
+			return true;
+		}
+
 		// Only when the classic widget is in use: loading (and suppressing v5)
 		// sitewide without a widget would break the v5-rendered block express
 		// buttons for nothing.
-		return $this->settings_status->is_smart_button_enabled_for_location( 'mini-cart' )
+		return ( $this->settings_status->is_smart_button_enabled_for_location( 'mini-cart' )
+				|| $this->google_pay_config->should_render( 'mini-cart' ) )
 			&& is_active_widget( false, false, 'woocommerce_widget_cart' );
 	}
 
@@ -217,6 +226,14 @@ class SdkV6Manager {
 		}
 
 		$card_fields_enabled = 'checkout' === $page_context && $this->card_payments_configuration->is_acdc_enabled();
+
+		$google_pay_styles = array();
+		if ( $page_context && $this->google_pay_config->should_render( $page_context ) ) {
+			$google_pay_styles[ $page_context ] = $this->google_pay_config->styles( $page_context );
+		}
+		if ( $this->google_pay_config->should_render( 'mini-cart' ) ) {
+			$google_pay_styles['mini-cart'] = $this->google_pay_config->styles( 'mini-cart' );
+		}
 
 		$data = array(
 			'sdk_url'           => $base_url . '/web-sdk/v6/core',
@@ -287,6 +304,12 @@ class SdkV6Manager {
 					'cvv'    => '#' . self::CARD_FIELD_CVV_ID,
 				),
 			),
+			'google_pay'        => array(
+				'enabled'     => ! empty( $google_pay_styles ),
+				'sdk_url'     => 'https://pay.google.com/gp/p/js/pay.js',
+				'environment' => $this->environment->is_sandbox() ? 'TEST' : 'PRODUCTION',
+				'styles'      => $google_pay_styles,
+			),
 		);
 
 		$continuation = $this->continuation_data();
@@ -351,6 +374,7 @@ class SdkV6Manager {
 	 */
 	private function need_shipping(): bool {
 		$cart = WC()->cart;
+
 		return $cart && $cart->needs_shipping();
 	}
 
