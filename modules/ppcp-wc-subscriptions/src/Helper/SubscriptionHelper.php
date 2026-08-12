@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Helper class for the subscriptions. Contains methods to determine
  * whether the cart contains a subscription, the current product is
@@ -6,9 +7,7 @@
  *
  * @package WooCommerce\PayPalCommerce\WcSubscriptions\Helper
  */
-
-declare(strict_types=1);
-
+declare (strict_types=1);
 namespace WooCommerce\PayPalCommerce\WcSubscriptions\Helper;
 
 use WC_Order;
@@ -21,447 +20,385 @@ use WC_Subscriptions_Product;
 use WCS_Manual_Renewal_Manager;
 use WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException;
 use WP_Query;
-
 /**
  * Class SubscriptionHelper
  */
-class SubscriptionHelper {
-
-	public const SUBSCRIPTION_MODE_VALUE_VAULTING      = 'vaulting_api';
-	public const SUBSCRIPTION_MODE_VALUE_SUBSCRIPTIONS = 'subscriptions_api';
-	public const SUBSCRIPTION_MODE_VALUE_DISABLED      = 'disable_paypal_subscriptions';
-
-	/**
-	 * Whether the current product is a subscription.
-	 *
-	 * @return bool
-	 */
-	public function current_product_is_subscription(): bool {
-		if ( ! $this->plugin_is_active() ) {
-			return false;
-		}
-		$product = wc_get_product();
-		return $product && WC_Subscriptions_Product::is_subscription( $product );
-	}
-
-	/**
-	 * Whether the current cart contains subscriptions.
-	 *
-	 * @return bool
-	 */
-	public function cart_contains_subscription(): bool {
-		if ( ! $this->plugin_is_active() ) {
-			return false;
-		}
-		$cart = WC()->cart;
-		/**
-		 * Don't use `$cart->is_empty()` for checking for an empty cart.
-		 * This is maybe called so early that it can corrupt it because it loads it than from session
-		 */
-		if ( ! $cart || empty( $cart->cart_contents ) ) {
-			return false;
-		}
-
-		foreach ( $cart->get_cart() as $item ) {
-			if ( ! isset( $item['data'] ) || ! is_a( $item['data'], WC_Product::class ) ) {
-				continue;
-			}
-			if ( WC_Subscriptions_Product::is_subscription( $item['data'] ) ) {
-				return true;
-			}
-		}
-
-		return false;
-	}
-
-	/**
-	 * Whether the cart contains a subscription renewal payment (e.g., a customer manually
-	 * renewing a subscription), as opposed to a new subscription being purchased. WooCommerce
-	 * Subscriptions may route a manual renewal through the cart/Checkout block instead of the
-	 * classic order-pay endpoint, so this can't be inferred from the URL alone.
-	 *
-	 * @return bool
-	 */
-	public function cart_contains_renewal(): bool {
-		if ( ! $this->plugin_is_active() || ! function_exists( 'wcs_cart_contains_renewal' ) ) {
-			return false;
-		}
-
-		return (bool) wcs_cart_contains_renewal();
-	}
-
-	/**
-	 * Whether pay for order contains subscriptions.
-	 *
-	 * @return bool
-	 */
-	public function order_pay_contains_subscription(): bool {
-		if ( ! $this->plugin_is_active() || ! is_wc_endpoint_url( 'order-pay' ) ) {
-			return false;
-		}
-
-		global $wp;
-		$order_id = (int) $wp->query_vars['order-pay'];
-		if ( 0 === $order_id ) {
-			return false;
-		}
-
-		return $this->has_subscription( $order_id );
-	}
-
-	/**
-	 * Whether manual renewals are accepted.
-	 *
-	 * @return bool
-	 */
-	public function accept_manual_renewals(): bool {
-		if ( ! class_exists( WCS_Manual_Renewal_Manager::class ) ) {
-			return false;
-		}
-		return WCS_Manual_Renewal_Manager::is_manual_renewal_enabled();
-	}
-
-	/**
-	 * Whether the subscription plugin is active or not.
-	 *
-	 * @return bool
-	 */
-	public function plugin_is_active(): bool {
-
-		return class_exists( WC_Subscriptions::class ) && class_exists( WC_Subscriptions_Product::class );
-	}
-
-	/**
-	 * Checks if order contains subscription.
-	 *
-	 * @param  int $order_id The order Id.
-	 * @return boolean Whether order is a subscription or not.
-	 */
-	public function has_subscription( $order_id ): bool {
-		return ( function_exists( 'wcs_order_contains_subscription' ) && ( wcs_order_contains_subscription( $order_id ) || wcs_is_subscription( $order_id ) || wcs_order_contains_renewal( $order_id ) ) );
-	}
-
-	/**
-	 * Checks if page is pay for order and change subscription payment page.
-	 *
-	 * @return bool Whether page is change subscription or not.
-	 */
-	public function is_subscription_change_payment(): bool {
-		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
-		if ( ! isset( $_GET['pay_for_order'] ) || ! isset( $_GET['change_payment_method'] ) ) {
-			return false;
-		}
-
-		return true;
-	}
-
-	/**
-	 * Checks whether subscription needs subscription intent.
-	 *
-	 * @param string $subscription_mode The subscription mode.
-	 * @return bool
-	 */
-	public function need_subscription_intent( string $subscription_mode ): bool {
-		if ( $subscription_mode !== 'subscriptions_api' ) {
-			return false;
-		}
-
-		if ( $this->current_product_is_subscription() ) {
-			// Manual renewals mean no PayPal subscription plan is required for
-			// this product, so the standard (non-subscription) checkout flow
-			// is used instead - the SDK must not be forced into subscription
-			// intent in that case.
-			if ( $this->accept_manual_renewals() && ! $this->paypal_subscription_id() ) {
-				return false;
-			}
-
-			return true;
-		}
-
-		return ( is_cart() || is_checkout() ) && $this->cart_contains_subscription();
-	}
-
-	/**
-	 * Checks if subscription product is allowed.
-	 *
-	 * @return bool
-	 * @throws NotFoundException If setting is not found.
-	 */
-	public function checkout_subscription_product_allowed(): bool {
-		if (
-			! $this->paypal_subscription_id()
-			|| ! $this->cart_contains_only_one_item()
-		) {
-			return false;
-		}
-
-		return true;
-	}
-
-	/**
-	 * Whether the PayPal button is allowed for the current (subscription) cart.
-	 *
-	 * This is the single, mode-aware rule shared by the classic cart, block cart
-	 * and mini-cart so the button is displayed (or hidden) consistently:
-	 * - A non-subscription cart is always allowed.
-	 * - In PayPal Subscriptions mode the product must be allowed
-	 *   (has a PayPal plan and the cart contains a single item).
-	 * - In vaulting mode a vault token must be savable.
-	 *
-	 * @param bool $is_paypal_subscription Whether PayPal Subscriptions mode applies.
-	 * @param bool $can_save_vault_token   Whether a vault token can be saved.
-	 * @return bool
-	 * @throws NotFoundException If setting is not found.
-	 */
-	public function paypal_subscription_button_allowed( bool $is_paypal_subscription, bool $can_save_vault_token ): bool {
-		if ( ! $this->cart_contains_subscription() ) {
-			return true;
-		}
-
-		if ( $is_paypal_subscription ) {
-			return $this->checkout_subscription_product_allowed();
-		}
-
-		return $can_save_vault_token;
-	}
-
-	/**
-	 * Returns PayPal subscription plan id from WC subscription product.
-	 *
-	 * @return string
-	 */
-	public function paypal_subscription_id(): string {
-		if ( $this->current_product_is_subscription() ) {
-			$product = wc_get_product();
-			assert( $product instanceof WC_Product );
-
-			if ( $product->get_type() === 'subscription' && $product->meta_exists( 'ppcp_subscription_plan' ) ) {
-				return $product->get_meta( 'ppcp_subscription_plan' )['id'];
-			}
-		}
-
-		$cart = WC()->cart ?? null;
-		if ( ! $cart || $cart->is_empty() ) {
-			return '';
-		}
-		$items = $cart->get_cart_contents();
-		foreach ( $items as $item ) {
-			$product = wc_get_product( $item['product_id'] );
-			assert( $product instanceof WC_Product );
-
-			if ( $product->get_type() === 'subscription' && $product->meta_exists( 'ppcp_subscription_plan' ) ) {
-				return $product->get_meta( 'ppcp_subscription_plan' )['id'];
-			}
-
-			if ( $product->get_type() === 'variable-subscription' ) {
-				assert( $product instanceof WC_Product_Variable );
-
-				$product_variations = $product->get_available_variations();
-				foreach ( $product_variations as $variation ) {
-					/** @psalm-suppress UndefinedMethod */
-					$variation_product = wc_get_product( $variation['variation_id'] ) ?? '';
-					if ( $variation_product && $variation_product->meta_exists( 'ppcp_subscription_plan' ) ) {
-						return $variation_product->get_meta( 'ppcp_subscription_plan' )['id'];
-					}
-				}
-			}
-		}
-
-		return '';
-	}
-
-	/**
-	 * Returns variations for variable PayPal subscription product.
-	 *
-	 * @return array
-	 */
-	public function variable_paypal_subscription_variations(): array {
-		$variations = array();
-		if ( ! $this->current_product_is_subscription() ) {
-			return $variations;
-		}
-
-		$product = wc_get_product();
-		assert( $product instanceof WC_Product );
-		if ( $product->get_type() !== 'variable-subscription' ) {
-			return $variations;
-		}
-
-		$variation_ids = $product->get_children();
-		foreach ( $variation_ids as $id ) {
-			$product = wc_get_product( $id );
-			if ( ! ( $product instanceof WC_Product_Subscription_Variation ) ) {
-				continue;
-			}
-
-			$subscription_plan = $product->get_meta( 'ppcp_subscription_plan' ) ?? array();
-			$variations[]      = array(
-				'id'                => $product->get_id(),
-				'attributes'        => $product->get_attributes(),
-				'subscription_plan' => $subscription_plan['id'] ?? '',
-			);
-		}
-
-		return $variations;
-	}
-
-	/**
-	 * Checks if cart contains only one item.
-	 *
-	 * @return bool
-	 */
-	public function cart_contains_only_one_item(): bool {
-		if ( ! $this->plugin_is_active() ) {
-			return false;
-		}
-		$cart = WC()->cart;
-		if ( ! $cart || $cart->is_empty() ) {
-			return false;
-		}
-
-		if ( count( $cart->get_cart() ) > 1 ) {
-			return false;
-		}
-
-		return true;
-	}
-
-	/**
-	 * Returns the locations on the page which have subscription products.
-	 *
-	 * @return array
-	 */
-	public function locations_with_subscription_product(): array {
-		$cart_contains_renewal = $this->cart_contains_renewal();
-
-		return array(
-			'product'  => is_product() && $this->current_product_is_subscription(),
-			'payorder' => ( is_wc_endpoint_url( 'order-pay' ) && $this->order_pay_contains_subscription() ) || $cart_contains_renewal,
-			'cart'     => $this->cart_contains_subscription() && ! $cart_contains_renewal,
-		);
-	}
-
-	/**
-	 * Returns previous order transaction from the given subscription.
-	 *
-	 * @param WC_Subscription $subscription WooCommerce Subscription.
-	 * @param string          $vault_token_id Vault token id.
-	 * @return string
-	 */
-	public function previous_transaction( WC_Subscription $subscription, string $vault_token_id ): string {
-		$orders = $subscription->get_related_orders( 'ids', array( 'parent', 'renewal' ) );
-		if ( ! $orders || ! $vault_token_id ) {
-			return '';
-		}
-
-		// Sort orders by order ID descending.
-		rsort( $orders );
-		$current_order = wc_get_order( array_shift( $orders ) );
-		if ( ! $current_order instanceof WC_Order ) {
-			return '';
-		}
-
-		foreach ( $orders as $order_id ) {
-			$order = wc_get_order( $order_id );
-			if (
-				$order instanceof WC_Order
-				&& in_array( $order->get_status(), array( 'processing', 'completed' ), true )
-				&& $current_order->get_payment_method() === $order->get_payment_method()
-			) {
-				$transaction_id = $order->get_transaction_id();
-				$tokens         = $order->get_payment_tokens();
-				foreach ( $tokens as $token ) {
-					$wc_token = \WC_Payment_Tokens::get( $token );
-					if ( $transaction_id && $wc_token instanceof \WC_Payment_Token && $wc_token->get_token() === $vault_token_id ) {
-						return $transaction_id;
-					}
-				}
-			}
-		}
-
-		return '';
-	}
-
-	/**
-	 * Returns the variation subscription plan id from the cart.
-	 *
-	 * @return string
-	 */
-	public function paypal_subscription_variation_from_cart(): string {
-		$cart = WC()->cart ?? null;
-		if ( ! $cart || $cart->is_empty() ) {
-			return '';
-		}
-
-		$items = $cart->get_cart_contents();
-		foreach ( $items as $item ) {
-			$variation_id = $item['variation_id'] ?? 0;
-			if ( $variation_id ) {
-				$variation_product = wc_get_product( $variation_id ) ?? '';
-				if ( $variation_product && $variation_product->meta_exists( 'ppcp_subscription_plan' ) ) {
-					return $variation_product->get_meta( 'ppcp_subscription_plan' )['id'];
-				}
-			}
-		}
-
-		return '';
-	}
-
-	/**
-	 * Whether the cart contains a PayPal-subscription product (subscriptions_api mode).
-	 *
-	 * @return bool
-	 */
-	public function cart_contains_paypal_subscription_product(): bool {
-		if ( ! $this->plugin_is_active() ) {
-			return false;
-		}
-
-		$cart = WC()->cart;
-		if ( ! $cart || empty( $cart->cart_contents ) ) {
-			return false;
-		}
-
-		foreach ( $cart->get_cart() as $item ) {
-			if ( ! isset( $item['data'] ) || ! is_a( $item['data'], WC_Product::class ) ) {
-				continue;
-			}
-
-			$product = $item['data'];
-			if (
-				in_array( $product->get_type(), array( 'subscription', 'variable-subscription' ), true )
-				&& $product->get_meta( '_ppcp_enable_subscription_product', true ) === 'yes'
-			) {
-				return true;
-			}
-		}
-
-		return false;
-	}
-
-	/**
-	 * Checks if any subscription products exist.
-	 *
-	 * @return bool
-	 */
-	public function has_subscription_products(): bool {
-		// Query for subscription products.
-		$args = array(
-			'post_type'      => 'product',
-			'post_status'    => 'publish',
-			'posts_per_page' => 1,
-			// phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_tax_query
-			'tax_query'      => array(
-				array(
-					'taxonomy' => 'product_type',
-					'field'    => 'slug',
-					'terms'    => 'subscription',
-				),
-			),
-		);
-
-		$subscription_products = new WP_Query( $args );
-
-		return $subscription_products->have_posts();
-	}
+class SubscriptionHelper
+{
+    public const SUBSCRIPTION_MODE_VALUE_VAULTING = 'vaulting_api';
+    public const SUBSCRIPTION_MODE_VALUE_SUBSCRIPTIONS = 'subscriptions_api';
+    public const SUBSCRIPTION_MODE_VALUE_DISABLED = 'disable_paypal_subscriptions';
+    /**
+     * Whether the current product is a subscription.
+     *
+     * @return bool
+     */
+    public function current_product_is_subscription(): bool
+    {
+        if (!$this->plugin_is_active()) {
+            return \false;
+        }
+        $product = wc_get_product();
+        return $product && WC_Subscriptions_Product::is_subscription($product);
+    }
+    /**
+     * Whether the current cart contains subscriptions.
+     *
+     * @return bool
+     */
+    public function cart_contains_subscription(): bool
+    {
+        if (!$this->plugin_is_active()) {
+            return \false;
+        }
+        $cart = WC()->cart;
+        /**
+         * Don't use `$cart->is_empty()` for checking for an empty cart.
+         * This is maybe called so early that it can corrupt it because it loads it than from session
+         */
+        if (!$cart || empty($cart->cart_contents)) {
+            return \false;
+        }
+        foreach ($cart->get_cart() as $item) {
+            if (!isset($item['data']) || !is_a($item['data'], WC_Product::class)) {
+                continue;
+            }
+            if (WC_Subscriptions_Product::is_subscription($item['data'])) {
+                return \true;
+            }
+        }
+        return \false;
+    }
+    /**
+     * Whether the cart contains a subscription renewal payment (e.g., a customer manually
+     * renewing a subscription), as opposed to a new subscription being purchased. WooCommerce
+     * Subscriptions may route a manual renewal through the cart/Checkout block instead of the
+     * classic order-pay endpoint, so this can't be inferred from the URL alone.
+     *
+     * @return bool
+     */
+    public function cart_contains_renewal(): bool
+    {
+        if (!$this->plugin_is_active() || !function_exists('wcs_cart_contains_renewal')) {
+            return \false;
+        }
+        return (bool) wcs_cart_contains_renewal();
+    }
+    /**
+     * Whether pay for order contains subscriptions.
+     *
+     * @return bool
+     */
+    public function order_pay_contains_subscription(): bool
+    {
+        if (!$this->plugin_is_active() || !is_wc_endpoint_url('order-pay')) {
+            return \false;
+        }
+        global $wp;
+        $order_id = (int) $wp->query_vars['order-pay'];
+        if (0 === $order_id) {
+            return \false;
+        }
+        return $this->has_subscription($order_id);
+    }
+    /**
+     * Whether manual renewals are accepted.
+     *
+     * @return bool
+     */
+    public function accept_manual_renewals(): bool
+    {
+        if (!class_exists(WCS_Manual_Renewal_Manager::class)) {
+            return \false;
+        }
+        return WCS_Manual_Renewal_Manager::is_manual_renewal_enabled();
+    }
+    /**
+     * Whether the subscription plugin is active or not.
+     *
+     * @return bool
+     */
+    public function plugin_is_active(): bool
+    {
+        return class_exists(WC_Subscriptions::class) && class_exists(WC_Subscriptions_Product::class);
+    }
+    /**
+     * Checks if order contains subscription.
+     *
+     * @param  int $order_id The order Id.
+     * @return boolean Whether order is a subscription or not.
+     */
+    public function has_subscription($order_id): bool
+    {
+        return function_exists('wcs_order_contains_subscription') && (wcs_order_contains_subscription($order_id) || wcs_is_subscription($order_id) || wcs_order_contains_renewal($order_id));
+    }
+    /**
+     * Checks if page is pay for order and change subscription payment page.
+     *
+     * @return bool Whether page is change subscription or not.
+     */
+    public function is_subscription_change_payment(): bool
+    {
+        // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+        if (!isset($_GET['pay_for_order']) || !isset($_GET['change_payment_method'])) {
+            return \false;
+        }
+        return \true;
+    }
+    /**
+     * Checks whether subscription needs subscription intent.
+     *
+     * @param string $subscription_mode The subscription mode.
+     * @return bool
+     */
+    public function need_subscription_intent(string $subscription_mode): bool
+    {
+        if ($subscription_mode !== 'subscriptions_api') {
+            return \false;
+        }
+        if ($this->current_product_is_subscription()) {
+            // Manual renewals mean no PayPal subscription plan is required for
+            // this product, so the standard (non-subscription) checkout flow
+            // is used instead - the SDK must not be forced into subscription
+            // intent in that case.
+            if ($this->accept_manual_renewals() && !$this->paypal_subscription_id()) {
+                return \false;
+            }
+            return \true;
+        }
+        return (is_cart() || is_checkout()) && $this->cart_contains_subscription();
+    }
+    /**
+     * Checks if subscription product is allowed.
+     *
+     * @return bool
+     * @throws NotFoundException If setting is not found.
+     */
+    public function checkout_subscription_product_allowed(): bool
+    {
+        if (!$this->paypal_subscription_id() || !$this->cart_contains_only_one_item()) {
+            return \false;
+        }
+        return \true;
+    }
+    /**
+     * Whether the PayPal button is allowed for the current (subscription) cart.
+     *
+     * This is the single, mode-aware rule shared by the classic cart, block cart
+     * and mini-cart so the button is displayed (or hidden) consistently:
+     * - A non-subscription cart is always allowed.
+     * - In PayPal Subscriptions mode the product must be allowed
+     *   (has a PayPal plan and the cart contains a single item).
+     * - In vaulting mode a vault token must be savable.
+     *
+     * @param bool $is_paypal_subscription Whether PayPal Subscriptions mode applies.
+     * @param bool $can_save_vault_token   Whether a vault token can be saved.
+     * @return bool
+     * @throws NotFoundException If setting is not found.
+     */
+    public function paypal_subscription_button_allowed(bool $is_paypal_subscription, bool $can_save_vault_token): bool
+    {
+        if (!$this->cart_contains_subscription()) {
+            return \true;
+        }
+        if ($is_paypal_subscription) {
+            return $this->checkout_subscription_product_allowed();
+        }
+        return $can_save_vault_token;
+    }
+    /**
+     * Returns PayPal subscription plan id from WC subscription product.
+     *
+     * @return string
+     */
+    public function paypal_subscription_id(): string
+    {
+        if ($this->current_product_is_subscription()) {
+            $product = wc_get_product();
+            assert($product instanceof WC_Product);
+            if ($product->get_type() === 'subscription' && $product->meta_exists('ppcp_subscription_plan')) {
+                return $product->get_meta('ppcp_subscription_plan')['id'];
+            }
+        }
+        $cart = WC()->cart ?? null;
+        if (!$cart || $cart->is_empty()) {
+            return '';
+        }
+        $items = $cart->get_cart_contents();
+        foreach ($items as $item) {
+            $product = wc_get_product($item['product_id']);
+            assert($product instanceof WC_Product);
+            if ($product->get_type() === 'subscription' && $product->meta_exists('ppcp_subscription_plan')) {
+                return $product->get_meta('ppcp_subscription_plan')['id'];
+            }
+            if ($product->get_type() === 'variable-subscription') {
+                assert($product instanceof WC_Product_Variable);
+                $product_variations = $product->get_available_variations();
+                foreach ($product_variations as $variation) {
+                    /** @psalm-suppress UndefinedMethod */
+                    $variation_product = wc_get_product($variation['variation_id']) ?? '';
+                    if ($variation_product && $variation_product->meta_exists('ppcp_subscription_plan')) {
+                        return $variation_product->get_meta('ppcp_subscription_plan')['id'];
+                    }
+                }
+            }
+        }
+        return '';
+    }
+    /**
+     * Returns variations for variable PayPal subscription product.
+     *
+     * @return array
+     */
+    public function variable_paypal_subscription_variations(): array
+    {
+        $variations = array();
+        if (!$this->current_product_is_subscription()) {
+            return $variations;
+        }
+        $product = wc_get_product();
+        assert($product instanceof WC_Product);
+        if ($product->get_type() !== 'variable-subscription') {
+            return $variations;
+        }
+        $variation_ids = $product->get_children();
+        foreach ($variation_ids as $id) {
+            $product = wc_get_product($id);
+            if (!$product instanceof WC_Product_Subscription_Variation) {
+                continue;
+            }
+            $subscription_plan = $product->get_meta('ppcp_subscription_plan') ?? array();
+            $variations[] = array('id' => $product->get_id(), 'attributes' => $product->get_attributes(), 'subscription_plan' => $subscription_plan['id'] ?? '');
+        }
+        return $variations;
+    }
+    /**
+     * Checks if cart contains only one item.
+     *
+     * @return bool
+     */
+    public function cart_contains_only_one_item(): bool
+    {
+        if (!$this->plugin_is_active()) {
+            return \false;
+        }
+        $cart = WC()->cart;
+        if (!$cart || $cart->is_empty()) {
+            return \false;
+        }
+        if (count($cart->get_cart()) > 1) {
+            return \false;
+        }
+        return \true;
+    }
+    /**
+     * Returns the locations on the page which have subscription products.
+     *
+     * @return array
+     */
+    public function locations_with_subscription_product(): array
+    {
+        $cart_contains_renewal = $this->cart_contains_renewal();
+        return array('product' => is_product() && $this->current_product_is_subscription(), 'payorder' => is_wc_endpoint_url('order-pay') && $this->order_pay_contains_subscription() || $cart_contains_renewal, 'cart' => $this->cart_contains_subscription() && !$cart_contains_renewal);
+    }
+    /**
+     * Returns previous order transaction from the given subscription.
+     *
+     * @param WC_Subscription $subscription WooCommerce Subscription.
+     * @param string          $vault_token_id Vault token id.
+     * @return string
+     */
+    public function previous_transaction(WC_Subscription $subscription, string $vault_token_id): string
+    {
+        $orders = $subscription->get_related_orders('ids', array('parent', 'renewal'));
+        if (!$orders || !$vault_token_id) {
+            return '';
+        }
+        // Sort orders by order ID descending.
+        rsort($orders);
+        $current_order = wc_get_order(array_shift($orders));
+        if (!$current_order instanceof WC_Order) {
+            return '';
+        }
+        foreach ($orders as $order_id) {
+            $order = wc_get_order($order_id);
+            if ($order instanceof WC_Order && in_array($order->get_status(), array('processing', 'completed'), \true) && $current_order->get_payment_method() === $order->get_payment_method()) {
+                $transaction_id = $order->get_transaction_id();
+                $tokens = $order->get_payment_tokens();
+                foreach ($tokens as $token) {
+                    $wc_token = \WC_Payment_Tokens::get($token);
+                    if ($transaction_id && $wc_token instanceof \WC_Payment_Token && $wc_token->get_token() === $vault_token_id) {
+                        return $transaction_id;
+                    }
+                }
+            }
+        }
+        return '';
+    }
+    /**
+     * Returns the variation subscription plan id from the cart.
+     *
+     * @return string
+     */
+    public function paypal_subscription_variation_from_cart(): string
+    {
+        $cart = WC()->cart ?? null;
+        if (!$cart || $cart->is_empty()) {
+            return '';
+        }
+        $items = $cart->get_cart_contents();
+        foreach ($items as $item) {
+            $variation_id = $item['variation_id'] ?? 0;
+            if ($variation_id) {
+                $variation_product = wc_get_product($variation_id) ?? '';
+                if ($variation_product && $variation_product->meta_exists('ppcp_subscription_plan')) {
+                    return $variation_product->get_meta('ppcp_subscription_plan')['id'];
+                }
+            }
+        }
+        return '';
+    }
+    /**
+     * Whether the cart contains a PayPal-subscription product (subscriptions_api mode).
+     *
+     * @return bool
+     */
+    public function cart_contains_paypal_subscription_product(): bool
+    {
+        if (!$this->plugin_is_active()) {
+            return \false;
+        }
+        $cart = WC()->cart;
+        if (!$cart || empty($cart->cart_contents)) {
+            return \false;
+        }
+        foreach ($cart->get_cart() as $item) {
+            if (!isset($item['data']) || !is_a($item['data'], WC_Product::class)) {
+                continue;
+            }
+            $product = $item['data'];
+            if (in_array($product->get_type(), array('subscription', 'variable-subscription'), \true) && $product->get_meta('_ppcp_enable_subscription_product', \true) === 'yes') {
+                return \true;
+            }
+        }
+        return \false;
+    }
+    /**
+     * Checks if any subscription products exist.
+     *
+     * @return bool
+     */
+    public function has_subscription_products(): bool
+    {
+        // Query for subscription products.
+        $args = array(
+            'post_type' => 'product',
+            'post_status' => 'publish',
+            'posts_per_page' => 1,
+            // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_tax_query
+            'tax_query' => array(array('taxonomy' => 'product_type', 'field' => 'slug', 'terms' => 'subscription')),
+        );
+        $subscription_products = new WP_Query($args);
+        return $subscription_products->have_posts();
+    }
 }
