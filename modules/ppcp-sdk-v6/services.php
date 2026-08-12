@@ -36,8 +36,21 @@ return array(
 	},
 
 	'sdk-v6.google-pay-config'     => static function ( ContainerInterface $container ): GooglePayConfig {
+		$eligibility_check = static function () use ( $container ): bool {
+			// Google Pay module is not loaded, this wallet is unavailable.
+			if ( ! $container->has( 'googlepay.eligibility.check' ) || ! $container->has( 'googlepay.available' ) ) {
+				return false;
+			}
+
+			$is_eligible = $container->get( 'googlepay.eligibility.check' );
+
+			return $is_eligible() && $container->get( 'googlepay.available' );
+		};
+
 		return new GooglePayConfig(
-			$container->get( 'settings.settings-provider' )
+			$container->get( 'settings.settings-provider' ),
+			$container->get( 'wc-subscriptions.helper' ),
+			$eligibility_check
 		);
 	},
 
@@ -56,7 +69,8 @@ return array(
 			// so this module does not depend on the ppcp-blocks module it replaces.
 			! $container->get( 'settings.settings-provider' )->enable_pay_now(),
 			$container->get( 'settings.settings-provider' )->save_paypal_and_venmo(),
-			$container->get( 'wcgateway.configuration.card-configuration' )
+			$container->get( 'wcgateway.configuration.card-configuration' ),
+			$container->get( 'sdk-v6.google-pay-config' )
 		);
 	},
 

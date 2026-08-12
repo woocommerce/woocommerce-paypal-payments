@@ -12,6 +12,7 @@ namespace WooCommerce\PayPalCommerce\SdkV6\Helper;
 use WooCommerce\PayPalCommerce\Googlepay\GooglePayGateway;
 use WooCommerce\PayPalCommerce\Googlepay\Helper\PropertiesDictionary;
 use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
+use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
 
 class GooglePayConfig {
 
@@ -26,20 +27,36 @@ class GooglePayConfig {
 	private const DEFAULT_RADIUS = 24;
 
 	private SettingsProvider $settings_provider;
+	private SubscriptionHelper $subscription_helper;
 
-	public function __construct( SettingsProvider $settings_provider ) {
-		$this->settings_provider = $settings_provider;
+	/**
+	 * @var callable(): bool
+	 */
+	private $is_available;
+
+	public function __construct(
+		SettingsProvider $settings_provider,
+		SubscriptionHelper $subscription_helper,
+		callable $is_available
+	) {
+		$this->settings_provider   = $settings_provider;
+		$this->subscription_helper = $subscription_helper;
+		$this->is_available        = $is_available;
 	}
 
 	/**
-	 * Whether Google Pay should render in the given page context (product,
-	 * cart, checkout, mini-cart).
-	 *
-	 * Enablement is per-location: the gateway can be switched on globally yet
-	 * disabled for individual locations, so callers must pass the context they
-	 * are about to render into.
+	 * Whether Google Pay should render in the given page context.
 	 */
-	public function enabled( string $context ): bool {
+	public function should_render( string $context ): bool {
+		return $this->enabled_for_context( $context )
+			&& ( $this->is_available )()
+			&& $this->is_product_supported( $context );
+	}
+
+	/**
+	 * Whether GooglePay is enabled in settings for a given location.
+	 */
+	private function enabled_for_context( string $context ): bool {
 		if ( ! $this->settings_provider->googlepay_enabled() ) {
 			return false;
 		}
@@ -51,8 +68,24 @@ class GooglePayConfig {
 	}
 
 	/**
+	 * Whether the cart/context contains only supported products.
+	 * Google Pay cannot be offered for subscription (it has no vaulting).
+	 */
+	private function is_product_supported( string $context ): bool {
+		$contains_subscription = $this->subscription_helper->locations_with_subscription_product();
+
+		// Whether the currently displayed product is supported.
+		if ( 'product' === $context ) {
+			return false === ( $contains_subscription['product'] ?? false );
+		}
+
+		// All non-product pages only need to inspect the cart contents.
+		return false === ( $contains_subscription['cart'] ?? false );
+	}
+
+	/**
 	 * The Google Pay button styling for a page context (product, cart,
-	 * checkout, mini-cart).
+	 * checkout, mini-cart). Only meaningful where should_render() is true.
 	 *
 	 * @return array{color: string, type: string, language: string, borderRadius: int}
 	 */
