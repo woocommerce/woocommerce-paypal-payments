@@ -19,7 +19,7 @@ jest.mock(
 	{ virtual: true }
 );
 
-jest.mock( '../utils/api', () => ( {
+jest.mock( './utils/api', () => ( {
 	postJson: jest.fn(),
 } ) );
 
@@ -30,8 +30,8 @@ import {
 	approveCardOrder,
 	fetchCartTotal,
 	navigation,
-} from '../endpointsAdapter';
-import { postJson } from '../utils/api';
+} from './endpointsAdapter';
+import { postJson } from './utils/api';
 
 const config = {
 	ajax: {
@@ -51,6 +51,7 @@ afterEach( () => {
 	postJson.mockReset();
 	mockGetProducts.mockReset();
 	document.body.innerHTML = '';
+	jest.restoreAllMocks();
 } );
 
 describe( 'createOrder', () => {
@@ -134,14 +135,52 @@ describe( 'createOrder', () => {
 		).rejects.toThrow( 'Product form not found.' );
 		expect( postJson ).not.toHaveBeenCalled();
 	} );
+
+	test( 'product context with supplied purchase units skips change-cart', async () => {
+		const purchaseUnits = [ { reference_id: 'wallet' } ];
+		postJson.mockResolvedValueOnce( { id: 'PAYPAL4' } );
+
+		const result = await createOrder(
+			config,
+			'product',
+			'paypal',
+			purchaseUnits
+		);
+
+		expect( result ).toEqual( { orderId: 'PAYPAL4' } );
+		expect( postJson ).toHaveBeenCalledTimes( 1 );
+		expect( postJson ).toHaveBeenCalledWith( config.ajax.create_order, {
+			context: 'product',
+			purchase_units: purchaseUnits,
+			payment_method: 'ppcp-gateway',
+			funding_source: 'paypal',
+			save_order_in_session: 1,
+		} );
+	} );
+
+	test( 'product context with an explicit empty array of purchase units skips change-cart', async () => {
+		// The only test guarding this: a supplied [] must count as resolved
+		// rather than fall through to changeCart(), which a truthiness or
+		// .length check would get wrong. A non-empty array cannot catch it.
+		postJson.mockResolvedValueOnce( { id: 'PAYPAL5' } );
+
+		await createOrder( config, 'product', 'paypal', [] );
+
+		expect( postJson ).toHaveBeenCalledTimes( 1 );
+		expect( postJson ).toHaveBeenCalledWith(
+			config.ajax.create_order,
+			expect.objectContaining( { purchase_units: [] } )
+		);
+	} );
 } );
 
 describe( 'approveOrder', () => {
+	beforeEach( () => {
+		jest.spyOn( navigation, 'assign' ).mockImplementation( () => {} );
+	} );
+
 	test( 'product context requests should_create_wc_order and continues on checkout without order_received_url', async () => {
 		postJson.mockResolvedValueOnce( {} );
-		const assign = jest
-			.spyOn( navigation, 'assign' )
-			.mockImplementation( () => {} );
 
 		await approveOrder( config, 'product', 'paypal', 'ORDER1' );
 
@@ -150,10 +189,12 @@ describe( 'approveOrder', () => {
 			funding_source: 'paypal',
 			should_create_wc_order: true,
 		} );
-		expect( assign.mock.calls[ 0 ][ 0 ] ).toContain( '/checkout/' );
+		expect( navigation.assign.mock.calls[ 0 ][ 0 ] ).toContain(
+			'/checkout/'
+		);
 		// Cache-busted so a cached checkout cannot drop the buyer back
 		// into the express flow with an order already approved.
-		expect( assign.mock.calls[ 0 ][ 0 ] ).toContain(
+		expect( navigation.assign.mock.calls[ 0 ][ 0 ] ).toContain(
 			'ppcp-continuation-redirect='
 		);
 	} );
@@ -162,13 +203,10 @@ describe( 'approveOrder', () => {
 		postJson.mockResolvedValueOnce( {
 			order_received_url: '/checkout/order-received/123/?key=wc_abc',
 		} );
-		const assign = jest
-			.spyOn( navigation, 'assign' )
-			.mockImplementation( () => {} );
 
 		await approveOrder( config, 'product', 'paypal', 'ORDER1' );
 
-		expect( assign ).toHaveBeenCalledWith(
+		expect( navigation.assign ).toHaveBeenCalledWith(
 			'/checkout/order-received/123/?key=wc_abc'
 		);
 	} );
@@ -179,9 +217,6 @@ describe( 'approveOrder', () => {
 				new Error( 'No shipping method has been selected.' )
 			)
 			.mockResolvedValueOnce( {} );
-		const assign = jest
-			.spyOn( navigation, 'assign' )
-			.mockImplementation( () => {} );
 
 		await approveOrder( config, 'product', 'paypal', 'ORDER1' );
 
@@ -195,19 +230,18 @@ describe( 'approveOrder', () => {
 				should_create_wc_order: false,
 			}
 		);
-		expect( assign.mock.calls[ 0 ][ 0 ] ).toContain( '/checkout/' );
+		expect( navigation.assign.mock.calls[ 0 ][ 0 ] ).toContain(
+			'/checkout/'
+		);
 		// Cache-busted so a cached checkout cannot drop the buyer back
 		// into the express flow with an order already approved.
-		expect( assign.mock.calls[ 0 ][ 0 ] ).toContain(
+		expect( navigation.assign.mock.calls[ 0 ][ 0 ] ).toContain(
 			'ppcp-continuation-redirect='
 		);
 	} );
 
 	test( 'does not request a WC order for Venmo when vaulting is enabled', async () => {
 		postJson.mockResolvedValueOnce( {} );
-		const assign = jest
-			.spyOn( navigation, 'assign' )
-			.mockImplementation( () => {} );
 
 		await approveOrder(
 			{ ...config, vaulting_enabled: true },
@@ -221,10 +255,12 @@ describe( 'approveOrder', () => {
 			funding_source: 'venmo',
 			should_create_wc_order: false,
 		} );
-		expect( assign.mock.calls[ 0 ][ 0 ] ).toContain( '/checkout/' );
+		expect( navigation.assign.mock.calls[ 0 ][ 0 ] ).toContain(
+			'/checkout/'
+		);
 		// Cache-busted so a cached checkout cannot drop the buyer back
 		// into the express flow with an order already approved.
-		expect( assign.mock.calls[ 0 ][ 0 ] ).toContain(
+		expect( navigation.assign.mock.calls[ 0 ][ 0 ] ).toContain(
 			'ppcp-continuation-redirect='
 		);
 	} );
@@ -247,6 +283,134 @@ describe( 'approveOrder', () => {
 		expect( trigger ).toHaveBeenCalledWith( 'submit' );
 
 		delete global.jQuery;
+	} );
+
+	describe( 'contact handling', () => {
+		const contact = {
+			payer: { email_address: 'a@b.com' },
+			shippingAddress: { country_code: 'US' },
+		};
+
+		test( 'sends payer and shipping_address from the supplied contact', async () => {
+			postJson.mockResolvedValueOnce( {} );
+
+			await approveOrder(
+				config,
+				'product',
+				'paypal',
+				'ORDER1',
+				contact
+			);
+
+			expect( postJson ).toHaveBeenCalledWith(
+				config.ajax.approve_order,
+				{
+					order_id: 'ORDER1',
+					funding_source: 'paypal',
+					should_create_wc_order: true,
+					payer: contact.payer,
+					shipping_address: contact.shippingAddress,
+				}
+			);
+		} );
+
+		test.each( [
+			[
+				'only payer',
+				{ payer: { email_address: 'a@b.com' } },
+				{
+					order_id: 'ORDER1',
+					funding_source: 'paypal',
+					should_create_wc_order: true,
+					payer: { email_address: 'a@b.com' },
+				},
+			],
+			[
+				'only shipping_address',
+				{ shippingAddress: { country_code: 'US' } },
+				{
+					order_id: 'ORDER1',
+					funding_source: 'paypal',
+					should_create_wc_order: true,
+					shipping_address: { country_code: 'US' },
+				},
+			],
+			[
+				'neither',
+				undefined,
+				{
+					order_id: 'ORDER1',
+					funding_source: 'paypal',
+					should_create_wc_order: true,
+				},
+			],
+		] )(
+			'sends %s from the supplied contact',
+			async ( label, partialContact, expectedBody ) => {
+				postJson.mockResolvedValueOnce( {} );
+
+				await approveOrder(
+					config,
+					'product',
+					'paypal',
+					'ORDER1',
+					partialContact
+				);
+
+				expect( postJson ).toHaveBeenCalledWith(
+					config.ajax.approve_order,
+					expectedBody
+				);
+			}
+		);
+
+		test( 'omits the contact from the fallback retry after WC order creation fails', async () => {
+			postJson
+				.mockRejectedValueOnce(
+					new Error( 'No shipping method has been selected.' )
+				)
+				.mockResolvedValueOnce( {} );
+
+			await approveOrder(
+				config,
+				'product',
+				'paypal',
+				'ORDER1',
+				contact
+			);
+
+			expect( postJson ).toHaveBeenCalledTimes( 2 );
+			expect( postJson ).toHaveBeenNthCalledWith(
+				2,
+				config.ajax.approve_order,
+				{
+					order_id: 'ORDER1',
+					funding_source: 'paypal',
+					should_create_wc_order: false,
+				}
+			);
+		} );
+
+		test( 'omits the contact for Venmo when vaulting is enabled', async () => {
+			postJson.mockResolvedValueOnce( {} );
+
+			await approveOrder(
+				{ ...config, vaulting_enabled: true },
+				'product',
+				'venmo',
+				'ORDER1',
+				contact
+			);
+
+			expect( postJson ).toHaveBeenCalledWith(
+				config.ajax.approve_order,
+				{
+					order_id: 'ORDER1',
+					funding_source: 'venmo',
+					should_create_wc_order: false,
+				}
+			);
+		} );
 	} );
 } );
 
