@@ -50,9 +50,8 @@ function getProductsFromForm() {
 /**
  * Adds the viewed product to the cart (ppc-change-cart).
  *
- * Empties the cart first, so calling this twice is safe. The server validates
- * the product here, which is why the product context posts this before
- * anything shopper-visible opens.
+ * Empties the cart first, so a repeat call is safe. The server validates the
+ * product as part of this, so an invalid one fails before any order exists.
  *
  * @param {Object} config - The wc_ppcp_sdk_v6 config object.
  * @return {Promise<Object[]>} The resulting purchase units.
