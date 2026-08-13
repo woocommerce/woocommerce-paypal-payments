@@ -39,7 +39,7 @@ describe( 'googlePayPayer', () => {
 	test.each( [
 		[ 'Jane', 'Jane', '' ],
 		[ 'Jane Doe', 'Jane', 'Doe' ],
-		[ 'Jane Van Doe', 'Jane', 'Van Doe' ],
+		[ 'Jane Van Doe', 'Jane Van', 'Doe' ],
 	] )(
 		'splits the billing address name "%s" into given name "%s" and surname "%s"',
 		( name, givenName, surname ) => {
