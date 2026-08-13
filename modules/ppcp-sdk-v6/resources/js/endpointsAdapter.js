@@ -48,6 +48,22 @@ function getProductsFromForm() {
 }
 
 /**
+ * Adds the viewed product to the cart (ppc-change-cart).
+ *
+ * Empties the cart first, so calling this twice is safe. The server validates
+ * the product here, which is why the product context posts this before
+ * anything shopper-visible opens.
+ *
+ * @param {Object} config - The wc_ppcp_sdk_v6 config object.
+ * @return {Promise<Object[]>} The resulting purchase units.
+ */
+export async function changeCart( config ) {
+	return postJson( config.ajax.change_cart, {
+		products: getProductsFromForm(),
+	} );
+}
+
+/**
  * Creates a PayPal order via the existing WC AJAX endpoints.
  *
  * On product pages the viewed product is first added to the cart
@@ -55,22 +71,26 @@ function getProductsFromForm() {
  * are passed to ppc-create-order, which derives the product-context
  * return URL from them.
  *
- * @param {Object} config        - The wc_ppcp_sdk_v6 config object.
- * @param {string} context       - The page context.
- * @param {string} fundingSource - The funding source (paypal, venmo, paylater).
+ * @param {Object}   config          - The wc_ppcp_sdk_v6 config object.
+ * @param {string}   context         - The page context.
+ * @param {string}   fundingSource   - The funding source (paypal, venmo, paylater).
+ * @param {Object[]} [purchaseUnits] - Units the caller already resolved. Wallets
+ *                                     pass theirs so the cart is not changed twice.
  * @return {Promise<{orderId: string}>} The created PayPal order id.
  */
-export async function createOrder( config, context, fundingSource ) {
-	let purchaseUnits = [];
-	if ( context === 'product' ) {
-		purchaseUnits = await postJson( config.ajax.change_cart, {
-			products: getProductsFromForm(),
-		} );
-	}
+export async function createOrder(
+	config,
+	context,
+	fundingSource,
+	purchaseUnits
+) {
+	const units =
+		purchaseUnits ??
+		( context === 'product' ? await changeCart( config ) : [] );
 
 	const body = {
 		context,
-		purchase_units: purchaseUnits,
+		purchase_units: units,
 		payment_method: 'ppcp-gateway',
 		funding_source: fundingSource || 'paypal',
 		save_order_in_session: 1,
@@ -108,22 +128,44 @@ export async function createOrder( config, context, fundingSource ) {
  * session and the gateway processes it on Place Order. On classic checkout
  * the WC checkout form is submitted after approval instead.
  *
- * @param {Object} config        - The wc_ppcp_sdk_v6 config object.
- * @param {string} context       - The page context.
- * @param {string} fundingSource - The funding source used for payment.
- * @param {string} orderId       - The PayPal order ID.
+ * @param {Object} config                     - The wc_ppcp_sdk_v6 config object.
+ * @param {string} context                    - The page context.
+ * @param {string} fundingSource              - The funding source used for payment.
+ * @param {string} orderId                    - The PayPal order ID.
+ * @param {Object} [contact]                  - Buyer contact data from a wallet sheet.
+ * @param {Object} [contact.payer]            - The PayPal payer (Orders v2 shape).
+ * @param {Object} [contact.shippingAddress]  - The PayPal shipping address.
  */
-export async function approveOrder( config, context, fundingSource, orderId ) {
+export async function approveOrder(
+	config,
+	context,
+	fundingSource,
+	orderId,
+	contact = {}
+) {
 	const canCreateOrder =
 		! config.vaulting_enabled || fundingSource !== 'venmo';
 
+	const body = {
+		order_id: orderId,
+		funding_source: fundingSource,
+		should_create_wc_order: canCreateOrder,
+	};
+
+	// Only useful while this request creates the WC order: the retry below
+	// leaves that to the gateway, which reads the addresses off the WC session.
+	if ( canCreateOrder ) {
+		if ( contact.payer ) {
+			body.payer = contact.payer;
+		}
+		if ( contact.shippingAddress ) {
+			body.shipping_address = contact.shippingAddress;
+		}
+	}
+
 	let data;
 	try {
-		data = await postJson( config.ajax.approve_order, {
-			order_id: orderId,
-			funding_source: fundingSource,
-			should_create_wc_order: canCreateOrder,
-		} );
+		data = await postJson( config.ajax.approve_order, body );
 	} catch ( error ) {
 		if ( ! canCreateOrder ) {
 			throw error;
