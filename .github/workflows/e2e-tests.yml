@@ -84,7 +84,7 @@ jobs:
             SUFFIX=""
             [[ "$TEST_SUITE" != "all:parallel" ]] && SUFFIX=":${TEST_SUITE%:parallel}"
 
-            entry() { echo "{\"script\":\"e2e:test:shard:${1}${SUFFIX}\",\"name_suffix\":\" / ${1}\",\"artifact_name\":\"playwright-artifact-${1}\"}"; }
+            entry() { echo "{\"script\":\"e2e:test:shard:${1}${SUFFIX}\",\"name_suffix\":\" / ${1}\",\"artifact_name\":\"playwright-artifact-${1}\",\"slug\":\"${1}\"}"; }
 
             ITEMS=()
             for shard in "${SHARDS[@]}"; do
@@ -95,7 +95,7 @@ jobs:
             echo "matrix={\"include\":[${JOINED}]}" >> "$GITHUB_OUTPUT"
           else
             NAME="${TEST_SUITE#shard:}"
-            echo "matrix={\"include\":[{\"script\":\"e2e:test:${TEST_SUITE}\",\"name_suffix\":\" / ${NAME}\",\"artifact_name\":\"playwright-artifact-${NAME}\"}]}" >> "$GITHUB_OUTPUT"
+            echo "matrix={\"include\":[{\"script\":\"e2e:test:${TEST_SUITE}\",\"name_suffix\":\" / ${NAME}\",\"artifact_name\":\"playwright-artifact-${NAME}\",\"slug\":\"${NAME}\"}]}" >> "$GITHUB_OUTPUT"
           fi
 
   e2e-playwright:
@@ -106,7 +106,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix: ${{ fromJson(needs.resolve-playwright-matrix.outputs.matrix) }}
-    uses: inpsyde/reusable-workflows/.github/workflows/test-playwright.yml@main
+    uses: inpsyde/reusable-workflows/.github/workflows/test-playwright.yml@feature/ngrok-for-parallel-tests
     with:
       PLAYWRIGHT_SCRIPT: ${{ matrix.script }}
       PLAYWRIGHT_ARTIFACT_NAME: ${{ matrix.artifact_name }}
@@ -118,6 +118,7 @@ jobs:
       NODE_VERSION: 22
       PLAYWRIGHT_BROWSER_ARGS: 'chromium --with-deps'
       XRAY_TEST_EXEC_KEY: ${{ inputs.XRAY_TEST_EXEC_KEY }}
+      NGROK_ENABLED: ${{ contains(fromJson('["onboarding","transaction-usa","transaction-mexico","transaction-germany","refund","vaulting","subscription"]'), matrix.slug) }}
       PRE_SCRIPT: |
         # 1. Download and unzip the built plugin
         gh run download ${{ github.run_id }} -p "woocommerce-paypal-payments-*" -D tests/qa/resources/files
@@ -138,3 +139,4 @@ jobs:
       ENV_FILE_DATA: ${{ secrets.QA_ENV_FILE }}
       NPM_REGISTRY_TOKEN: ${{ secrets.DEPLOYBOT_GITHUB_TOKEN_PACKAGES }}
       COMPOSER_AUTH_JSON: ${{ secrets.COMPOSER_AUTH_JSON }}
+      NGROK_AUTH_TOKEN: ${{ secrets.NGROK_AUTH_TOKEN }}
