@@ -24,6 +24,7 @@ use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ModuleClassNameI
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ServiceModule;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\Webhook;
 use WooCommerce\PayPalCommerce\Webhooks\WebhookEventStorage;
 
 /**
@@ -136,6 +137,12 @@ class StatusReportModule implements ServiceModule, ExecutableModule {
 						'exported_label' => 'Webhook status',
 						'description'    => esc_html__( 'Whether we received webhooks successfully.', 'woocommerce-paypal-payments' ),
 						'value'          => $this->bool_to_html( ! $last_webhook_storage->is_empty() ),
+					),
+					array(
+						'label'          => esc_html__( 'Webhook delivery URL', 'woocommerce-paypal-payments' ),
+						'exported_label' => 'Webhook delivery URL',
+						'description'    => esc_html__( 'Whether PayPal delivers webhooks to this site or to a different host.', 'woocommerce-paypal-payments' ),
+						'value'          => $this->webhook_delivery_host_status( $c, $is_connected ),
 					),
 					array(
 						'label'          => esc_html__( 'PayPal Vault enabled', 'woocommerce-paypal-payments' ),
@@ -281,5 +288,76 @@ class StatusReportModule implements ServiceModule, ExecutableModule {
 		return $value
 			? '<mark class="yes"><span class="dashicons dashicons-yes"></span></mark>'
 			: '<mark class="no">&ndash;</mark>';
+	}
+
+	/**
+	 * Reports whether PayPal's registered webhook points at this site.
+	 *
+	 * Reads the live PayPal-side webhook list (not local state) and compares each
+	 * webhook's host against this site's host. When they differ, webhook events are
+	 * being delivered elsewhere - typically a staging or dev clone connected to the
+	 * same PayPal account - which the "Webhook status" row above cannot detect.
+	 *
+	 * @param ContainerInterface $c            The services container.
+	 * @param bool               $is_connected Whether onboarding is complete.
+	 * @return string
+	 */
+	private function webhook_delivery_host_status( ContainerInterface $c, bool $is_connected ): string {
+		if ( ! $is_connected ) {
+			return $this->bool_to_html( false );
+		}
+
+		try {
+			$webhooks = $c->get( 'webhook.status.registered-webhooks' );
+		} catch ( \Exception $exception ) {
+			return $this->bool_to_html( false );
+		}
+
+		if ( ! is_array( $webhooks ) || array() === $webhooks ) {
+			return $this->bool_to_html( false );
+		}
+
+		$site_host = $this->normalized_host( home_url() );
+
+		$foreign_hosts = array();
+		foreach ( $webhooks as $webhook ) {
+			if ( ! $webhook instanceof Webhook ) {
+				continue;
+			}
+
+			$webhook_host = $this->normalized_host( $webhook->url() );
+
+			if ( '' !== $webhook_host && $webhook_host === $site_host ) {
+				return $this->bool_to_html( true );
+			}
+
+			if ( '' !== $webhook_host ) {
+				$foreign_hosts[ $webhook_host ] = $webhook_host;
+			}
+		}
+
+		return sprintf(
+			'<mark class="error"><span class="dashicons dashicons-warning"></span> %s</mark>',
+			esc_html(
+				sprintf(
+					/* translators: 1: host(s) receiving the webhooks, 2: this site's host. */
+					__( 'Delivered to %1$s (this site: %2$s)', 'woocommerce-paypal-payments' ),
+					implode( ', ', $foreign_hosts ),
+					$site_host
+				)
+			)
+		);
+	}
+
+	/**
+	 * Extracts the lower-cased host from a URL, or an empty string when it cannot be parsed.
+	 *
+	 * @param string $url The URL to extract the host from.
+	 * @return string
+	 */
+	private function normalized_host( string $url ): string {
+		$host = wp_parse_url( $url, PHP_URL_HOST );
+
+		return is_string( $host ) ? strtolower( $host ) : '';
 	}
 }
