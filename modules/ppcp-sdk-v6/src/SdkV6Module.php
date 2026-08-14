@@ -230,6 +230,18 @@ class SdkV6Module implements ServiceModule, ExtendingModule, ExecutableModule {
 			add_action( $hook, static fn() => $manager->render_wrapper() );
 		}
 
+		if ( $places['pay-now'] ) {
+			/**
+			 * The action name that the PayPal buttons use for rendering on the pay-for-order page.
+			 * Shared with the v5 SmartButton so a single override relocates both stacks.
+			 */
+			$hook = (string) apply_filters(
+				'woocommerce_paypal_payments_pay_order_renderer_hook',
+				'woocommerce_pay_order_after_submit'
+			);
+			add_action( $hook, static fn() => $manager->render_wrapper(), 20 );
+		}
+
 		if ( $places['mini-cart'] ) {
 			/**
 			 * The action name that the PayPal buttons use for rendering in the mini-cart widget.

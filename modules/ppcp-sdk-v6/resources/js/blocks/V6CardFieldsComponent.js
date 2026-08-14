@@ -27,11 +27,13 @@ import { V6CardFieldContainer } from './V6CardFieldContainer';
  * Secure), approves it, and maps the outcome to a Blocks onPaymentSetup
  * response.
  *
- * @param {Object} args               - Arguments.
- * @param {Object} args.config        - The sdk-v6 config object.
- * @param {string} args.context       - The page context.
- * @param {Object} args.session       - The v6 card-fields session.
- * @param {Object} args.responseTypes - The Blocks response-type constants.
+ * @param {Object} args                - Arguments.
+ * @param {Object} args.config         - The sdk-v6 config object.
+ * @param {string} args.context        - The page context.
+ * @param {Object} args.session        - The v6 card-fields session.
+ * @param {Object} args.responseTypes  - The Blocks response-type constants.
+ * @param {string} args.cardName       - The cardholder name (v6 has no name field).
+ * @param {Object} [args.billingAddress] - Billing address for AVS/3D Secure.
  * @return {Promise<Object>} A Blocks onPaymentSetup response object.
  */
 async function submitCardPayment( {
@@ -39,6 +41,8 @@ async function submitCardPayment( {
 	context,
 	session,
 	responseTypes,
+	cardName,
+	billingAddress,
 } ) {
 	if ( ! session ) {
 		return {
@@ -51,8 +55,10 @@ async function submitCardPayment( {
 	}
 
 	try {
-		const { orderId } = await createCardOrder( config, context );
-		const result = await session.submit( orderId );
+		const { orderId } = await createCardOrder( config, context, cardName );
+		const result = billingAddress
+			? await session.submit( orderId, { billingAddress } )
+			: await session.submit( orderId );
 
 		// The buyer dismissed the 3DS challenge; prompt a retry rather than
 		// showing a payment error.
@@ -95,6 +101,7 @@ async function submitCardPayment( {
  * @param {Object} props.eventRegistration   - Blocks checkout event subscriptions.
  * @param {Object} props.emitResponse        - Blocks response-type constants.
  * @param {string} props.activePaymentMethod - The active payment method id.
+ * @param {Object} [props.billing]           - Blocks billing data (address, totals).
  * @return {?Object} The card fields element, or null before the session is ready.
  */
 export function V6CardFieldsComponent( {
@@ -102,6 +109,7 @@ export function V6CardFieldsComponent( {
 	eventRegistration,
 	emitResponse,
 	activePaymentMethod,
+	billing,
 } ) {
 	const { onPaymentSetup } = eventRegistration;
 	const { responseTypes } = emitResponse;
@@ -112,7 +120,32 @@ export function V6CardFieldsComponent( {
 
 	const [ session, setSession ] = useState( null );
 	const [ inputStyle, setInputStyle ] = useState( null );
+	const [ cardName, setCardName ] = useState( '' );
 	const referenceRef = useRef( null );
+
+	// Read through a ref so onPaymentSetup sees the latest name without
+	// resubscribing every keystroke.
+	const cardNameRef = useRef( '' );
+	useEffect( () => {
+		cardNameRef.current = cardName;
+	}, [ cardName ] );
+
+	// The v6 SDK uses the billing address for AVS / 3D Secure; read the live
+	// Blocks billing address through a ref so the submit sees it without
+	// resubscribing onPaymentSetup on every address change.
+	const billingRef = useRef( null );
+	useEffect( () => {
+		const address = billing?.billingAddress || billing?.billingData;
+		const postalCode = address?.postcode?.trim();
+		billingRef.current = postalCode
+			? {
+					postalCode,
+					...( address?.country
+						? { countryCode: address.country }
+						: {} ),
+			  }
+			: null;
+	}, [ billing ] );
 
 	// One card session for the component's lifetime: the SDK cannot dispose a
 	// session, so it must not be recreated on ordinary re-renders.
@@ -168,6 +201,8 @@ export function V6CardFieldsComponent( {
 				context,
 				session: sessionRef.current,
 				responseTypes,
+				cardName: cardNameRef.current?.trim() || '',
+				billingAddress: billingRef.current || undefined,
 			} )
 		);
 	}, [
@@ -206,16 +241,29 @@ export function V6CardFieldsComponent( {
 			createElement(
 				Fragment,
 				null,
+				// The v6 card-fields component set is number|expiry|cvv only, so
+				// the cardholder name is a plain input; its value is forwarded to
+				// create-order rather than confirmed through the card session.
 				hasNameField &&
-					createElement( V6CardFieldContainer, {
-						session,
-						type: 'name',
-						style: inputStyle,
-						placeholder: __(
-							'Cardholder name (optional)',
-							'woocommerce-paypal-payments'
-						),
-					} ),
+					createElement(
+						'div',
+						{
+							className:
+								'ppcp-sdk-v6-card-field ppcp-sdk-v6-card-field--name',
+						},
+						createElement( 'input', {
+							type: 'text',
+							className: 'input-text',
+							value: cardName,
+							onChange: ( event ) =>
+								setCardName( event.target.value ),
+							placeholder: __(
+								'Cardholder name (optional)',
+								'woocommerce-paypal-payments'
+							),
+							style: { width: '100%', ...inputStyle },
+						} )
+					),
 				createElement( V6CardFieldContainer, {
 					session,
 					type: 'number',

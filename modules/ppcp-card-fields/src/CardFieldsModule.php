@@ -104,10 +104,12 @@ class CardFieldsModule implements ServiceModule, ExecutableModule {
 						<input id="ppcp-credit-card-gateway-card-name" class="input-text wc-credit-card-form-card-expiry" type="text" placeholder="' . esc_attr__( 'Cardholder Name (optional)', 'woocommerce-paypal-payments' ) . '" name="ppcp-credit-card-gateway-card-name">
 					</p>';
 
-					// Moves new item to first position.
+					// Moves the cardholder-name field to the first position while
+					// preserving string keys (array_unshift would reindex them and
+					// break the card-number placeholder replacement below).
 					$new_field = $default_fields['card-name-field'];
 					unset( $default_fields['card-name-field'] );
-					array_unshift( $default_fields, $new_field );
+					$default_fields = array( 'card-name-field' => $new_field ) + $default_fields;
 				}
 
 				if ( apply_filters( 'woocommerce_paypal_payments_card_fields_translate_card_number', true ) ) {
@@ -129,7 +131,7 @@ class CardFieldsModule implements ServiceModule, ExecutableModule {
 
 		add_filter(
 			'ppcp_create_order_request_body_data',
-			function ( array $data, string $payment_method ) use ( $c ): array {
+			function ( array $data, string $payment_method, array $request_data = array() ) use ( $c ): array {
 				if ( ! $c->get( 'wcgateway.configuration.card-configuration' )->is_enabled() ) {
 					return $data;
 				}
@@ -166,12 +168,22 @@ class CardFieldsModule implements ServiceModule, ExecutableModule {
 					);
 				}
 
+				// The v6 card-fields component set is number|expiry|cvv only, so the
+				// cardholder name (when enabled) is submitted as a plain field and
+				// forwarded here as payment_source.card.name.
+				$card_name = isset( $request_data['card_name'] )
+					? substr( trim( (string) $request_data['card_name'] ), 0, 300 )
+					: '';
+				if ( $card_name !== '' ) {
+					$payment_source_data['name'] = $card_name;
+				}
+
 				$data['payment_source'] = array( 'card' => $payment_source_data );
 
 				return $data;
 			},
 			10,
-			2
+			3
 		);
 
 		// Validates if an order with card payment source can be captured.
