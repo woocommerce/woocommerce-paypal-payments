@@ -32,11 +32,13 @@ export const transactionsOnPayByLink = ( testOrder: ShopOrder ) => {
 				test.setTimeout( 3 * 60_000 ); // 3 minutes for PUI/OXXO async capture
 			}
 
-			// PUI/OXXO capture completion relies on an async PayPal webhook, which
-			// can't reach the ephemeral CI environment. In CI, skip waiting for it
-			// and finish the assertions with the order still in its synchronous,
-			// pre-capture status.
-			const skipCaptureWait = isAsyncCaptureGateway && !! process.env.CI;
+			// PUI/OXXO capture completion relies on an async PayPal webhook. This
+			// used to be unreachable from the ephemeral CI environment, so CI
+			// skipped waiting for it and finished assertions with the order still
+			// in its synchronous, pre-capture status. Webhooks now reach CI via
+			// the Cloudflare tunnel, so this restriction is no longer needed.
+			// const skipCaptureWait = isAsyncCaptureGateway && !! process.env.CI;
+			const skipCaptureWait = false;
 			const syncOrderStatus = gatewayTitle === 'OXXO' ? 'pending' : 'on-hold';
 
 			await test.step( `Precondition: create order via API (dashboard)`, async () => {
