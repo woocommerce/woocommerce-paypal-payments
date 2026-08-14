@@ -47,6 +47,10 @@ class WebhookRegistrarTest extends TestCase
 
 		when('wp_parse_url')->alias('parse_url');
 
+		// Default: no webhook was previously stored for this install; individual
+		// tests override this when exercising the stored-id matching path.
+		when('get_option')->justReturn([]);
+
 		$this->webhook_factory            = Mockery::mock(WebhookFactory::class);
 		$this->endpoint                   = Mockery::mock(WebhookEndpoint::class);
 		$this->incoming_webhook_endpoint  = Mockery::mock(IncomingWebhookEndpoint::class);
@@ -75,12 +79,13 @@ class WebhookRegistrarTest extends TestCase
 	}
 
 	/**
-	 * GIVEN a PayPal account with webhooks belonging to this site and to a different site
+	 * GIVEN a PayPal account with a webhook whose URL identity (host + path) matches this
+	 * site's incoming endpoint and another webhook registered for a completely different host
 	 * WHEN unregistering webhooks
-	 * THEN only the webhook whose host matches this site's incoming endpoint is deleted
+	 * THEN only the webhook matching this site's URL identity is deleted
 	 * AND a warning is logged for the foreign webhook that was skipped
 	 */
-	public function test_unregister_deletes_only_webhooks_belonging_to_this_site(): void
+	public function test_unregister_deletes_webhook_matching_full_url_identity_and_skips_foreign_host(): void
 	{
 		$this->incoming_webhook_endpoint->shouldReceive('url')
 			->andReturn('https://mysite.com/wp-json/paypal/v1/incoming');
@@ -90,15 +95,25 @@ class WebhookRegistrarTest extends TestCase
 
 		$this->endpoint->shouldReceive('list')->andReturn([$own_webhook, $foreign_webhook]);
 
-		$this->endpoint->shouldReceive('delete')->once()->with($own_webhook);
-		$this->endpoint->shouldNotReceive('delete')->with($foreign_webhook);
+		$deleted = [];
+		$this->endpoint->shouldReceive('delete')
+			->andReturnUsing(static function (Webhook $webhook) use (&$deleted): void {
+				$deleted[] = $webhook->id();
+			});
 
-		$this->logger->shouldReceive('warning')->once();
+		$logged_warnings = [];
+		$this->logger->shouldReceive('warning')
+			->andReturnUsing(static function (string $message) use (&$logged_warnings): void {
+				$logged_warnings[] = $message;
+			});
 
 		expect('delete_option')->once()->with(WebhookRegistrar::KEY);
 		$this->last_webhook_event_storage->shouldReceive('clear')->once();
 
 		$this->createRegistrar()->unregister();
+
+		$this->assertSame(['OWN'], $deleted);
+		$this->assertCount(1, $logged_warnings);
 	}
 
 	/**
@@ -114,12 +129,91 @@ class WebhookRegistrarTest extends TestCase
 		$webhook = new Webhook('https://mysite.com/wp-json/paypal/v1/incoming', [], 'OWN');
 
 		$this->endpoint->shouldReceive('list')->andReturn([$webhook]);
-		$this->endpoint->shouldReceive('delete')->once()->with($webhook);
+
+		$deleted = [];
+		$this->endpoint->shouldReceive('delete')
+			->andReturnUsing(static function (Webhook $webhook) use (&$deleted): void {
+				$deleted[] = $webhook->id();
+			});
 
 		expect('delete_option')->once();
 		$this->last_webhook_event_storage->shouldReceive('clear')->once();
 
 		$this->createRegistrar()->unregister();
+
+		$this->assertSame(['OWN'], $deleted);
+	}
+
+	/**
+	 * GIVEN a webhook registered on the same host as this site but under a different path
+	 * (e.g. a sibling shop in a subdirectory multisite)
+	 * WHEN unregistering webhooks
+	 * THEN the webhook is treated as belonging to a different install and is left in place
+	 * AND a warning is logged for the skipped webhook
+	 */
+	public function test_unregister_treats_same_host_different_path_as_foreign(): void
+	{
+		$this->incoming_webhook_endpoint->shouldReceive('url')
+			->andReturn('https://example.com/shop-a/wp-json/paypal/v1/incoming');
+
+		$sibling_webhook = new Webhook('https://example.com/shop-b/wp-json/paypal/v1/incoming', [], 'SIBLING');
+
+		$this->endpoint->shouldReceive('list')->andReturn([$sibling_webhook]);
+
+		$deleted = [];
+		$this->endpoint->shouldReceive('delete')
+			->andReturnUsing(static function (Webhook $webhook) use (&$deleted): void {
+				$deleted[] = $webhook->id();
+			});
+
+		$logged_warnings = [];
+		$this->logger->shouldReceive('warning')
+			->andReturnUsing(static function (string $message) use (&$logged_warnings): void {
+				$logged_warnings[] = $message;
+			});
+
+		expect('delete_option')->once();
+		$this->last_webhook_event_storage->shouldReceive('clear')->once();
+
+		$this->createRegistrar()->unregister();
+
+		$this->assertSame([], $deleted);
+		$this->assertCount(1, $logged_warnings);
+	}
+
+	/**
+	 * GIVEN this install previously stored the id of a webhook it registered, and that
+	 * webhook's host has since changed (e.g. an NGROK_HOST rotation or domain migration)
+	 * WHEN unregistering webhooks
+	 * THEN the webhook is still recognized as belonging to this install by its stored id
+	 * AND it is deleted even though its current host no longer matches this install's endpoint
+	 */
+	public function test_unregister_deletes_webhook_matched_by_stored_id_despite_host_change(): void
+	{
+		when('get_option')->justReturn([
+			'id'  => 'STORED_ID',
+			'url' => 'https://old-host.com/wp-json/paypal/v1/incoming',
+		]);
+
+		$this->incoming_webhook_endpoint->shouldReceive('url')
+			->andReturn('https://new-host.com/wp-json/paypal/v1/incoming');
+
+		$rotated_webhook = new Webhook('https://old-host.com/wp-json/paypal/v1/incoming', [], 'STORED_ID');
+
+		$this->endpoint->shouldReceive('list')->andReturn([$rotated_webhook]);
+
+		$deleted = [];
+		$this->endpoint->shouldReceive('delete')
+			->andReturnUsing(static function (Webhook $webhook) use (&$deleted): void {
+				$deleted[] = $webhook->id();
+			});
+
+		expect('delete_option')->once();
+		$this->last_webhook_event_storage->shouldReceive('clear')->once();
+
+		$this->createRegistrar()->unregister();
+
+		$this->assertSame(['STORED_ID'], $deleted);
 	}
 
 	/**
@@ -135,12 +229,19 @@ class WebhookRegistrarTest extends TestCase
 		$webhook = new Webhook('not-a-valid-url', [], 'BROKEN');
 
 		$this->endpoint->shouldReceive('list')->andReturn([$webhook]);
-		$this->endpoint->shouldNotReceive('delete');
+
+		$deleted = [];
+		$this->endpoint->shouldReceive('delete')
+			->andReturnUsing(static function (Webhook $webhook) use (&$deleted): void {
+				$deleted[] = $webhook->id();
+			});
 
 		expect('delete_option')->once();
 		$this->last_webhook_event_storage->shouldReceive('clear')->once();
 
 		$this->createRegistrar()->unregister();
+
+		$this->assertSame([], $deleted);
 	}
 
 	/**
@@ -157,10 +258,24 @@ class WebhookRegistrarTest extends TestCase
 		$this->endpoint->shouldReceive('list')->andThrow(new RuntimeException('API unavailable'));
 		$this->endpoint->shouldNotReceive('delete');
 
-		expect('delete_option')->once()->with(WebhookRegistrar::KEY);
-		$this->last_webhook_event_storage->shouldReceive('clear')->once();
+		$deleted_option = false;
+		expect('delete_option')->once()->with(WebhookRegistrar::KEY)
+			->andReturnUsing(static function () use (&$deleted_option) {
+				$deleted_option = true;
+				return true;
+			});
+
+		$storage_cleared = false;
+		$this->last_webhook_event_storage->shouldReceive('clear')
+			->once()
+			->andReturnUsing(static function () use (&$storage_cleared): void {
+				$storage_cleared = true;
+			});
 
 		$this->createRegistrar()->unregister();
+
+		$this->assertTrue($deleted_option, 'Expected the stored webhook option to be deleted.');
+		$this->assertTrue($storage_cleared, 'Expected the last webhook event storage to be cleared.');
 	}
 
 	/**
