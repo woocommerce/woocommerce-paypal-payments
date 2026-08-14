@@ -4,6 +4,8 @@
  * @package
  */
 
+import { FundingSources } from './utils/fundingSources';
+
 /**
  * Checks one method without letting a failure sink the whole check.
  *
@@ -48,16 +50,24 @@ export async function checkEligibility(
 	const methods = await sdkInstance.findEligibleMethods( eligibilityParams );
 
 	const result = {
-		paypal: methods.isEligible( 'paypal' ),
-		venmo: methods.isEligible( 'venmo' ),
-		paylater: methods.isEligible( 'paylater' ),
-		googlepay: isEligibleSafely( methods, 'googlepay' ),
+		[ FundingSources.PAYPAL ]: methods.isEligible( FundingSources.PAYPAL ),
+		[ FundingSources.VENMO ]: methods.isEligible( FundingSources.VENMO ),
+		[ FundingSources.PAYLATER ]: methods.isEligible(
+			FundingSources.PAYLATER
+		),
+		// Safe-checked because its component is only loaded on some pages.
+		[ FundingSources.GOOGLEPAY ]: isEligibleSafely(
+			methods,
+			FundingSources.GOOGLEPAY
+		),
 		payLaterDetails: null,
 	};
 
-	if ( result.paylater ) {
+	if ( result[ FundingSources.PAYLATER ] ) {
 		try {
-			result.payLaterDetails = methods.getDetails( 'paylater' );
+			result.payLaterDetails = methods.getDetails(
+				FundingSources.PAYLATER
+			);
 		} catch ( e ) {
 			// getDetails may not be available for all regions.
 		}

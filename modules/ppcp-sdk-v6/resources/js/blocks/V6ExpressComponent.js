@@ -16,6 +16,7 @@ import {
 	navigation,
 } from '../endpointsAdapter';
 import { continuationRedirectUrl } from '../utils/continuation';
+import { FundingSources } from '../utils/fundingSources';
 import { paypalOrderToWcAddresses } from './address';
 import { prefillFromPayPalOrder } from './prefillAddresses';
 import { buildBlocksShippingHandlers } from './blocksShippingHandlers';
@@ -139,7 +140,8 @@ export function V6ExpressComponent( {
 			// continuation payload only once the order is approved in session.
 			const requiresReview =
 				config.final_review ||
-				( fundingSource === 'venmo' && config.vaulting_enabled );
+				( fundingSource === FundingSources.VENMO &&
+					config.vaulting_enabled );
 
 			if ( requiresReview ) {
 				navigation.assign( continuationRedirectUrl( config ) );
@@ -195,7 +197,7 @@ export function V6ExpressComponent( {
 		// Attaching these tells the SDK to collect shipping, so needsShipping
 		// has to gate attachment rather than the handler body.
 		if (
-			method === 'paypal' &&
+			method === FundingSources.PAYPAL &&
 			needsShipping &&
 			config.shipping?.handle_in_paypal
 		) {
