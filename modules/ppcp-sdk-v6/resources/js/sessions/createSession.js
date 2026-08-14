@@ -11,15 +11,25 @@ import {
 } from './shippingHandler';
 import { hasJQuery } from '../utils/api';
 import { handleError } from '../utils/errorHandler';
+import { FundingSources } from '../utils/fundingSources';
+import { WALLET_METHODS } from '../wallets/walletRegistry';
 
 const SESSION_FACTORIES = {
-	paypal: 'createPayPalOneTimePaymentSession',
-	venmo: 'createVenmoOneTimePaymentSession',
-	paylater: 'createPayLaterOneTimePaymentSession',
-	googlepay: 'createGooglePayOneTimePaymentSession',
+	[ FundingSources.PAYPAL ]: 'createPayPalOneTimePaymentSession',
+	[ FundingSources.VENMO ]: 'createVenmoOneTimePaymentSession',
+	[ FundingSources.PAYLATER ]: 'createPayLaterOneTimePaymentSession',
+	[ FundingSources.GOOGLEPAY ]: 'createGooglePayOneTimePaymentSession',
 };
 
-const WALLET_METHODS = [ 'googlepay' ];
+/**
+ * The methods a session can be created for, and whose eligibility drives the
+ * redraw check in boot.js.
+ *
+ * Derived from the factory table so a method can never be requested without a
+ * factory to build it: calling a missing factory takes every button on the page
+ * down.
+ */
+export const SUPPORTED_METHODS = Object.keys( SESSION_FACTORIES );
 
 /**
  * Refreshes the cart UI after an abandoned or failed session.
@@ -88,7 +98,7 @@ export function createSession(
 		context === 'cart-block' || context === 'checkout-block';
 
 	const shouldHandleShipping =
-		method === 'paypal' &&
+		method === FundingSources.PAYPAL &&
 		! isBlockContext &&
 		config.shipping?.handle_in_paypal &&
 		( config.shipping?.need_shipping || context === 'product' );

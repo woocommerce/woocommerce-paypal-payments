@@ -13,7 +13,7 @@ jest.mock( './shippingHandler', () => ( {
 jest.mock( '../utils/api', () => ( { hasJQuery: () => false } ) );
 jest.mock( '../utils/errorHandler', () => ( { handleError: jest.fn() } ) );
 
-import { createSession } from './createSession';
+import { createSession, SUPPORTED_METHODS } from './createSession';
 
 // Captures the session config and requested factory so the built handlers can be inspected.
 function fakeSdk() {
@@ -38,6 +38,17 @@ beforeEach( () => {
 	mockApproveOrder.mockReset();
 	mockAddressChange.mockReset();
 	mockOptionsChange.mockReset();
+} );
+
+describe( 'SUPPORTED_METHODS', () => {
+	test( 'lists the methods a session factory exists for, driving the boot.js redraw check', () => {
+		expect( SUPPORTED_METHODS ).toEqual( [
+			'paypal',
+			'venmo',
+			'paylater',
+			'googlepay',
+		] );
+	} );
 } );
 
 describe( 'createSession', () => {

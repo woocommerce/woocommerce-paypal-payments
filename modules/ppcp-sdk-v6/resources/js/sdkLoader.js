@@ -6,6 +6,7 @@
 
 import { postJson } from './utils/api';
 import { loadScript } from './utils/scriptLoaders';
+import { walletSdkComponents } from './wallets/walletRegistry';
 
 let instancePromise = null;
 
@@ -61,9 +62,7 @@ async function createInstance( config, context ) {
 	if ( config.card_fields?.enabled ) {
 		components.push( 'card-fields' );
 	}
-	if ( config.google_pay?.enabled ) {
-		components.push( 'googlepay-payments' );
-	}
+	components.push( ...walletSdkComponents( config ) );
 
 	const sdkInstance = await window.paypal.createInstance( {
 		clientToken: tokenData.client_token,
