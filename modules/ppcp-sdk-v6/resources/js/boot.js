@@ -69,6 +69,7 @@ import { setErrorLabels } from './utils/errorHandler';
 	let amount = config.amount;
 	let eligibilityPromise = null;
 	const sessionPromises = {};
+	const renderPromises = {};
 
 	function ensureEligibility() {
 		if ( ! eligibilityPromise ) {
@@ -153,7 +154,7 @@ import { setErrorLabels } from './utils/errorHandler';
 	 *
 	 * @param {Object} target - The render target.
 	 */
-	async function render( target ) {
+	async function renderTarget( target ) {
 		const wrapper = document.querySelector( target.wrapperSelector );
 		if ( ! wrapper || wrapper.childElementCount > 0 ) {
 			return;
@@ -176,6 +177,33 @@ import { setErrorLabels } from './utils/errorHandler';
 			context: target.context,
 			sessions: map,
 		} );
+	}
+
+	/**
+	 * Queues a render for a target, so passes never overlap.
+	 *
+	 * The emptiness check in renderTarget() straddles an await, so two
+	 * overlapping passes would both pass it; the later one's renderButtons()
+	 * would then wipe the earlier one's wallet button while that render was
+	 * still in flight, leaving it to finish into a detached node.
+	 *
+	 * Each call still gets its own pass rather than sharing the in-flight one,
+	 * because refreshEligibility() blanks the wrapper before re-rendering and
+	 * must not be handed back a render that started before the flip. A pass
+	 * that finds the wrapper already populated returns immediately.
+	 *
+	 * @param {Object} target - The render target.
+	 * @return {Promise<void>} Resolves once this target's pass is done.
+	 */
+	function render( target ) {
+		const pending = renderPromises[ target.context ] || Promise.resolve();
+
+		// Swallowed so one failed pass does not block every later one.
+		renderPromises[ target.context ] = pending
+			.catch( () => {} )
+			.then( () => renderTarget( target ) );
+
+		return renderPromises[ target.context ];
 	}
 
 	function renderAll() {
