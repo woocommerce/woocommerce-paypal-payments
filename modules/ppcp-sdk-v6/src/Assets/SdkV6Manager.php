@@ -16,6 +16,7 @@ use WooCommerce\PayPalCommerce\OrderEndpoints\Endpoint\ChangeCartEndpoint;
 use WooCommerce\PayPalCommerce\OrderEndpoints\Endpoint\CreateOrderEndpoint;
 use WooCommerce\PayPalCommerce\Button\Endpoint\GetOrderEndpoint;
 use WooCommerce\PayPalCommerce\Button\Helper\Context;
+use WooCommerce\PayPalCommerce\Googlepay\GooglePayGateway;
 use WooCommerce\PayPalCommerce\SdkV6\Endpoint\ClientTokenEndpoint;
 use WooCommerce\PayPalCommerce\SdkV6\Helper\ButtonStyleMapper;
 use WooCommerce\PayPalCommerce\SdkV6\Helper\GooglePayConfig;
@@ -29,8 +30,9 @@ use WooCommerce\PayPalCommerce\WcGateway\Helper\SettingsStatus;
 
 class SdkV6Manager {
 
-	public const WRAPPER_ID           = 'ppc-button-ppcp-gateway-v6';
-	public const MINI_CART_WRAPPER_ID = 'ppc-button-minicart-v6';
+	public const WRAPPER_ID            = 'ppc-button-ppcp-gateway-v6';
+	public const MINI_CART_WRAPPER_ID  = 'ppc-button-minicart-v6';
+	public const GOOGLE_PAY_WRAPPER_ID = 'ppc-button-ppcp-googlepay-v6';
 
 	// Existing WC credit-card-form field IDs (see CardFieldsModule's
 	// woocommerce_credit_card_form_fields filter and WC core's own
@@ -54,6 +56,11 @@ class SdkV6Manager {
 	private bool $vaulting_enabled;
 	private CardPaymentsConfiguration $card_payments_configuration;
 	private GooglePayConfig $google_pay_config;
+
+	/**
+	 * Memoizes is_google_pay_gateway(), which walks every available gateway.
+	 */
+	private ?bool $is_google_pay_gateway = null;
 
 	public function __construct(
 		AssetGetter $asset_getter,
@@ -137,10 +144,67 @@ class SdkV6Manager {
 		echo '<div class="ppc-button-wrapper"><div id="' . esc_attr( self::WRAPPER_ID ) . '"></div></div>';
 	}
 
+	/**
+	 * Renders the Google Pay gateway container, hidden until eligible.
+	 *
+	 * On classic checkout Google Pay is its own payment-method row rather than
+	 * an express button, so its button needs a container next to the place-order
+	 * area instead of the shared express wrapper.
+	 *
+	 * The row starts hidden and the JS reveals it once Google confirms the buyer
+	 * can pay, because eligibility is only knowable client-side: a browser
+	 * without a saved card would otherwise be offered a row that cannot
+	 * complete. Same attribute shape as v5's GooglePayButton, which the v6 JS
+	 * removes the same way its PaymentButton did.
+	 *
+	 * @return void
+	 */
+	public function render_google_pay_gateway_wrapper(): void {
+		if ( ! $this->is_google_pay_gateway() ) {
+			return;
+		}
+		?>
+		<style data-hide-gateway='<?php echo esc_attr( GooglePayGateway::ID ); ?>'>
+			.wc_payment_method.payment_method_<?php echo esc_attr( GooglePayGateway::ID ); ?> {
+				display: none;
+			}
+		</style>
+		<div id="<?php echo esc_attr( self::GOOGLE_PAY_WRAPPER_ID ); ?>"></div>
+		<?php
+	}
+
 	public function render_mini_cart_wrapper(): void {
 		echo '<p class="woocommerce-mini-cart__buttons buttons">';
 		echo '<span id="' . esc_attr( self::MINI_CART_WRAPPER_ID ) . '"></span>';
 		echo '</p>';
+	}
+
+	/**
+	 * Whether Google Pay renders as its own payment-method row.
+	 *
+	 * True only on classic checkout with the gateway actually available: the
+	 * other contexts have no payment-method list, and the block checkout
+	 * registers its methods through the block registry instead. Mirrors v5's
+	 * is_wc_gateway_enabled (Googlepay\Assets\GooglePayButton).
+	 *
+	 * @return bool
+	 */
+	private function is_google_pay_gateway(): bool {
+		if ( null !== $this->is_google_pay_gateway ) {
+			return $this->is_google_pay_gateway;
+		}
+
+		if ( 'checkout' !== $this->get_page_context() || $this->is_block_context() ) {
+			return false;
+		}
+
+		// Memoized only past the context check: the gateway walk is the
+		// expensive part, and it repeats on every update_order_review.
+		$gateways = WC()->payment_gateways() ? WC()->payment_gateways()->get_available_payment_gateways() : array();
+
+		$this->is_google_pay_gateway = isset( $gateways[ GooglePayGateway::ID ] );
+
+		return $this->is_google_pay_gateway;
 	}
 
 	/**
@@ -309,6 +373,16 @@ class SdkV6Manager {
 				'sdk_url'     => 'https://pay.google.com/gp/p/js/pay.js',
 				'environment' => $this->environment->is_sandbox() ? 'TEST' : 'PRODUCTION',
 				'styles'      => $google_pay_styles,
+				// Present only on classic checkout, where a payment-method list
+				// exists: everywhere else Google Pay stays an express button, as
+				// in v5. Null rather than a flag plus two values the JS would
+				// have to pair up again.
+				'gateway'     => $this->is_google_pay_gateway()
+					? array(
+						'id'      => GooglePayGateway::ID,
+						'wrapper' => '#' . self::GOOGLE_PAY_WRAPPER_ID,
+					)
+					: null,
 			),
 		);
 
