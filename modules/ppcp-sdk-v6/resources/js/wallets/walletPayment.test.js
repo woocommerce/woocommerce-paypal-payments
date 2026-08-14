@@ -45,7 +45,8 @@ describe( 'payWithWallet()', () => {
 			args.context,
 			args.fundingSource,
 			'ORDER1',
-			args.contact
+			args.contact,
+			undefined
 		);
 	} );
 
@@ -63,10 +64,34 @@ describe( 'payWithWallet()', () => {
 				args.config,
 				args.context,
 				args.fundingSource,
-				purchaseUnits
+				purchaseUnits,
+				undefined
 			);
 		}
 	);
+
+	test( 'forwards a supplied paymentMethod to createOrder and ' +
+		'approveOrder', async () => {
+		const args = payArgs( { paymentMethod: 'ppcp-googlepay' } );
+
+		await payWithWallet( args );
+
+		expect( createOrder ).toHaveBeenCalledWith(
+			args.config,
+			args.context,
+			args.fundingSource,
+			args.purchaseUnits,
+			'ppcp-googlepay'
+		);
+		expect( approveOrder ).toHaveBeenCalledWith(
+			args.config,
+			args.context,
+			args.fundingSource,
+			'ORDER1',
+			args.contact,
+			'ppcp-googlepay'
+		);
+	} );
 
 	test.each( [
 		[ 'status APPROVED', { status: 'APPROVED' } ],

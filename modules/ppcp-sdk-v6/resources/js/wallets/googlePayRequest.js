@@ -54,7 +54,7 @@ export function buildPaymentDataRequest(
 	sessionConfig,
 	{ countryCode, currencyCode, total, requiresShipping = false }
 ) {
-	return {
+	const request = {
 		...API_VERSION,
 		allowedPaymentMethods: sessionConfig.allowedPaymentMethods,
 		merchantInfo: sessionConfig.merchantInfo,
@@ -65,10 +65,17 @@ export function buildPaymentDataRequest(
 			totalPrice: total,
 		},
 		emailRequired: true,
-		callbackIntents: requiresShipping
-			? [ 'SHIPPING_ADDRESS', 'SHIPPING_OPTION' ]
-			: [],
-		shippingAddressRequired: requiresShipping,
-		shippingOptionRequired: requiresShipping,
 	};
+
+	// Omitted rather than sent empty: Google pairs callbackIntents with the
+	// PaymentsClient's paymentDataCallbacks, and rejects loadPaymentData with
+	// "paymentDataCallbacks must be set" whenever the key is present at all,
+	// an empty array included. The shipping flags default to false.
+	if ( requiresShipping ) {
+		request.callbackIntents = [ 'SHIPPING_ADDRESS', 'SHIPPING_OPTION' ];
+		request.shippingAddressRequired = true;
+		request.shippingOptionRequired = true;
+	}
+
+	return request;
 }

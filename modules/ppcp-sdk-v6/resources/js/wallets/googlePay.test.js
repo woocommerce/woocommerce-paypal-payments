@@ -40,6 +40,13 @@ jest.mock( './googlePayRequest', () => ( {
 		mockBuildPaymentDataRequest( ...args ),
 } ) );
 
+const mockRevealGateway = jest.fn();
+const mockSyncGatewayVisibility = jest.fn();
+jest.mock( './gatewayPlacement', () => ( {
+	revealGateway: ( ...args ) => mockRevealGateway( ...args ),
+	syncGatewayVisibility: ( ...args ) => mockSyncGatewayVisibility( ...args ),
+} ) );
+
 const mockSpinnerBlock = jest.fn();
 const mockSpinnerUnblock = jest.fn();
 jest.mock(
@@ -100,8 +107,7 @@ const baseConfig = ( overrides = {} ) => ( {
 
 function makeSession() {
 	return {
-		getGooglePayConfig: jest.fn().mockResolvedValue( { raw: true } ),
-		formatConfigForPaymentRequest: jest.fn( () => sessionConfig ),
+		getGooglePayConfig: jest.fn().mockResolvedValue( sessionConfig ),
 	};
 }
 
@@ -110,7 +116,6 @@ let mockIsReadyToPay;
 let mockCreateButton;
 let mockLoadPaymentData;
 let createButtonOptions;
-let mockPaymentsClient;
 
 /**
  * Installs a fake window.google.payments.api.PaymentsClient that records
@@ -126,7 +131,7 @@ function installPaymentsClient() {
 	paymentsClientOptions = undefined;
 	createButtonOptions = undefined;
 
-	mockPaymentsClient = jest.fn( function ( options ) {
+	const mockPaymentsClient = jest.fn( function ( options ) {
 		paymentsClientOptions = options;
 		this.isReadyToPay = mockIsReadyToPay;
 		this.createButton = mockCreateButton;
@@ -160,7 +165,6 @@ async function render( overrides = {} ) {
 
 beforeEach( () => {
 	jest.clearAllMocks();
-	document.body.innerHTML = '';
 	mockHasJQuery.mockReturnValue( true );
 	mockLoadGoogleSdk.mockResolvedValue( undefined );
 	mockBuildReadyToPayRequest.mockReturnValue( 'READY_REQUEST' );
@@ -198,9 +202,12 @@ describe( 'renderGooglePay()', () => {
 	} );
 
 	test( 'checks readiness with the built request, built from ' +
-		'the formatted session config', async () => {
-		await render();
+		'the resolved session config', async () => {
+		const session = makeSession();
+		await render( { session } );
 
+		// A wrong Promise.all destructuring index would pass undefined
+		// here instead of the resolved Google Pay config.
 		expect( mockBuildReadyToPayRequest ).toHaveBeenCalledWith(
 			sessionConfig
 		);
@@ -245,6 +252,60 @@ describe( 'renderGooglePay()', () => {
 			);
 		}
 	);
+
+	test( 'falls back to defaults when styles are empty ' +
+		'strings, keeping borderRadius as configured', async () => {
+		// Settings leave these empty when unset; Google rejects
+		// an empty buttonLocale.
+		const config = baseConfig();
+		config.google_pay.styles.product = {
+			color: '',
+			type: '',
+			language: '',
+			borderRadius: 4,
+		};
+
+		await render( { config, context: 'product' } );
+
+		expect( createButtonOptions ).toEqual(
+			expect.objectContaining( {
+				buttonColor: 'black',
+				buttonType: 'pay',
+				buttonLocale: 'en',
+				buttonRadius: 4,
+			} )
+		);
+	} );
+} );
+
+describe( 'as its own payment-method row (gateway set)', () => {
+	const gateway = { id: 'ppcp-googlepay', wrapper: '#gateway-row' };
+
+	test( 'reveals and syncs the row once isReadyToPay resolves truthy', async () => {
+		await render( { gateway } );
+
+		expect( mockRevealGateway ).toHaveBeenCalledWith( 'ppcp-googlepay' );
+		expect( mockSyncGatewayVisibility ).toHaveBeenCalledWith(
+			'ppcp-googlepay',
+			'#gateway-row'
+		);
+	} );
+
+	test( 'never reveals or syncs on the express path', async () => {
+		await render();
+
+		expect( mockRevealGateway ).not.toHaveBeenCalled();
+		expect( mockSyncGatewayVisibility ).not.toHaveBeenCalled();
+	} );
+
+	test( 'never reveals or syncs an ineligible row', async () => {
+		mockIsReadyToPay.mockResolvedValue( { result: false } );
+
+		await render( { gateway } );
+
+		expect( mockRevealGateway ).not.toHaveBeenCalled();
+		expect( mockSyncGatewayVisibility ).not.toHaveBeenCalled();
+	} );
 } );
 
 describe( 'a click on the rendered button', () => {
@@ -316,6 +377,19 @@ describe( 'a click on the rendered button', () => {
 		} );
 	} );
 
+	test( 'pays with the configured gateway method when Google Pay is ' +
+		'its own row, so the endpoints do not fall back to the express default', async () => {
+		await render( {
+			gateway: { id: 'ppcp-googlepay', wrapper: '#gateway-row' },
+		} );
+
+		await createButtonOptions.onClick();
+
+		expect( mockPayWithWallet ).toHaveBeenCalledWith(
+			expect.objectContaining( { paymentMethod: 'ppcp-googlepay' } )
+		);
+	} );
+
 	test( 'never opens the sheet when resolving the total fails, ' +
 		'and reports the error', async () => {
 		mockResolveWalletTotal.mockRejectedValueOnce(
@@ -329,41 +403,64 @@ describe( 'a click on the rendered button', () => {
 		expect( mockHandleError ).toHaveBeenCalledTimes( 1 );
 	} );
 
-	test( 'stays silent when the sheet is canceled by the buyer', async () => {
-		mockLoadPaymentData.mockRejectedValueOnce( {
-			statusCode: 'CANCELED',
-		} );
-		await render();
+	test.each( [
+		[ 'a buyer cancelation', { statusCode: 'CANCELED' }, 0 ],
+		[ 'a sheet failure', new Error( 'sheet failed' ), 1 ],
+	] )(
+		'never pays after %s, reporting it the right number of times',
+		async ( _label, rejection, reportCount ) => {
+			mockLoadPaymentData.mockRejectedValueOnce( rejection );
+			await render();
 
-		await createButtonOptions.onClick();
+			await createButtonOptions.onClick();
 
-		expect( mockHandleError ).not.toHaveBeenCalled();
-		expect( mockPayWithWallet ).not.toHaveBeenCalled();
-	} );
+			expect( mockHandleError ).toHaveBeenCalledTimes( reportCount );
+			expect( mockPayWithWallet ).not.toHaveBeenCalled();
+		}
+	);
 
-	test( 'reports a sheet failure that is not a cancelation', async () => {
-		mockLoadPaymentData.mockRejectedValueOnce(
-			new Error( 'sheet failed' )
+	test( 'blocks the spinner only once the sheet has closed', async () => {
+		// spinner.block() must run after loadPaymentData resolves, or it
+		// would cover Google's own sheet while it is still open.
+		let resolveLoad;
+		mockLoadPaymentData.mockImplementationOnce(
+			() =>
+				new Promise( ( resolve ) => {
+					resolveLoad = resolve;
+				} )
 		);
 		await render();
 
-		await createButtonOptions.onClick();
+		const click = createButtonOptions.onClick();
+		await flushPromises();
 
-		expect( mockHandleError ).toHaveBeenCalledTimes( 1 );
+		expect( mockSpinnerBlock ).not.toHaveBeenCalled();
+
+		resolveLoad( paymentData );
+		await click;
+
+		expect( mockSpinnerBlock ).toHaveBeenCalled();
+		expect( mockSpinnerUnblock ).toHaveBeenCalled();
 	} );
 
-	test.each( [
-		[ 'a successful payment', false ],
-		[ 'a failed payment', true ],
-	] )( 'unblocks the spinner after %s', async ( _label, fails ) => {
-		if ( fails ) {
-			mockPayWithWallet.mockRejectedValueOnce( new Error( 'x' ) );
-		}
+	test( 'unblocks the spinner after a failed payment', async () => {
+		mockPayWithWallet.mockRejectedValueOnce( new Error( 'x' ) );
 		await render();
 
 		await createButtonOptions.onClick();
 
 		expect( mockSpinnerUnblock ).toHaveBeenCalled();
+	} );
+
+	test( 'still pays without a spinner when jQuery is absent', async () => {
+		mockHasJQuery.mockReturnValue( false );
+		await render();
+
+		await createButtonOptions.onClick();
+
+		expect( mockPayWithWallet ).toHaveBeenCalled();
+		expect( mockSpinnerBlock ).not.toHaveBeenCalled();
+		expect( mockSpinnerUnblock ).not.toHaveBeenCalled();
 	} );
 
 	test( 'drops a second click while the first is in flight, ' +

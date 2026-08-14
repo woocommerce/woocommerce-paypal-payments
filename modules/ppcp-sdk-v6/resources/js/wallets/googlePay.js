@@ -11,8 +11,10 @@
 
 import Spinner from '@ppcp-button/Helper/Spinner';
 import { hasJQuery } from '../utils/api';
+import { FundingSources } from '../utils/fundingSources';
 import { handleError } from '../utils/errorHandler';
 import { loadGoogleSdk } from '../utils/scriptLoaders';
+import { revealGateway, syncGatewayVisibility } from './gatewayPlacement';
 import {
 	buildPaymentDataRequest,
 	buildReadyToPayRequest,
@@ -29,25 +31,36 @@ import { resolveWalletTotal } from './walletTotal';
  * @param {Object} args.config  - The wc_ppcp_sdk_v6 config object.
  * @param {string} args.context - The page context.
  * @param {Object} args.session - The v6 Google Pay payment session.
+ * @param {?Object} [args.gateway] - The { id, wrapper } of the payment-method
+ *                                   row, when the wallet is its own gateway.
  * @return {Promise<void>} Resolves once the button is rendered, or skipped.
  */
-export async function renderGooglePay( { wrapper, config, context, session } ) {
-	// Claim the wrapper before the first await. boot.js skips wrappers that
-	// already have children, so a concurrent render no-ops instead of adding a
-	// second button, and an eligibility wipe landing mid-load leaves this
-	// filling a detached node. It also gives buttonSizeMode 'fill' its own
-	// block-level box rather than the wrapper it shares with the PayPal
-	// buttons.
+export async function renderGooglePay( {
+	wrapper,
+	config,
+	context,
+	session,
+	gateway,
+} ) {
+	// Own box, because buttonSizeMode 'fill' cannot share the wrapper with the
+	// PayPal buttons. Appended before the first await so boot.js's emptiness
+	// check skips a redundant later pass.
 	const container = document.createElement( 'div' );
 	wrapper.appendChild( container );
 
-	await loadGoogleSdk( config.google_pay.sdk_url );
-
-	// Sequential, not competing: the first fetches PayPal's config, the second
-	// shapes it into a Google request and throws when passed nothing.
-	const sessionConfig = session.formatConfigForPaymentRequest(
-		await session.getGooglePayConfig()
-	);
+	// Independent: fetching PayPal's config does not need Google's global,
+	// which is first required by the PaymentsClient below.
+	//
+	// Used as returned, without session.formatConfigForPaymentRequest(): that
+	// helper renames a parameters.supportedNetworks key that this config does
+	// not have, so it overwrites the correct allowedCardNetworks with
+	// undefined (and drops countryCode), which makes isReadyToPay throw
+	// DEVELOPER_ERROR. getGooglePayConfig() already returns a Google-shaped
+	// request config, as v5's config() does.
+	const [ , sessionConfig ] = await Promise.all( [
+		loadGoogleSdk( config.google_pay.sdk_url ),
+		session.getGooglePayConfig(),
+	] );
 
 	const client = new window.google.payments.api.PaymentsClient( {
 		environment: config.google_pay.environment,
@@ -57,9 +70,16 @@ export async function renderGooglePay( { wrapper, config, context, session } ) {
 		buildReadyToPayRequest( sessionConfig )
 	);
 	if ( ! result ) {
-		// Leave the wrapper empty again so a later render can retry.
+		// Leave the wrapper empty again so a later render can retry. As a
+		// gateway this also leaves the row hidden, which is the point of
+		// printing it hidden: an ineligible browser is never offered it.
 		container.remove();
 		return;
+	}
+
+	if ( gateway ) {
+		revealGateway( gateway.id );
+		syncGatewayVisibility( gateway.id, gateway.wrapper );
 	}
 
 	const spinner = hasJQuery() ? Spinner.fullPage() : null;
@@ -71,8 +91,7 @@ export async function renderGooglePay( { wrapper, config, context, session } ) {
 	 * @return {Promise<void>} Resolves once the payment finished or failed.
 	 */
 	async function pay() {
-		// Google fires onClick per tap and v5 guards nothing, so every tap
-		// there re-opens the sheet.
+		// Google fires onClick per tap, so a double tap opens two sheets.
 		if ( paying ) {
 			return;
 		}
@@ -94,15 +113,18 @@ export async function renderGooglePay( { wrapper, config, context, session } ) {
 				} )
 			);
 
-			// The sheet is closed by now, so nothing can be reported into it:
-			// failures below surface as WooCommerce notices behind a spinner.
+			// Only after the sheet closes, so it is not covered.
 			spinner?.block();
 
 			await payWithWallet( {
 				config,
 				context,
 				session,
-				fundingSource: 'googlepay',
+				fundingSource: FundingSources.GOOGLEPAY,
+				// Only when it is its own row: on the express path the order
+				// belongs to the PayPal gateway, as Venmo's and Pay Later's do,
+				// so this stays undefined and the endpoints apply that default.
+				paymentMethod: gateway?.id,
 				purchaseUnits,
 				confirmData: {
 					paymentMethodData: paymentData.paymentMethodData,
@@ -127,9 +149,12 @@ export async function renderGooglePay( { wrapper, config, context, session } ) {
 
 	container.appendChild(
 		client.createButton( {
-			buttonColor: styles.color,
-			buttonType: styles.type,
-			buttonLocale: styles.language,
+			// Defaults as in v5: the settings leave these empty when the
+			// merchant never picked a value, and Google rejects an empty
+			// buttonLocale.
+			buttonColor: styles.color || 'black',
+			buttonType: styles.type || 'pay',
+			buttonLocale: styles.language || 'en',
 			buttonRadius: styles.borderRadius,
 			buttonSizeMode: 'fill',
 			// The button only needs the base card method, as in v5.

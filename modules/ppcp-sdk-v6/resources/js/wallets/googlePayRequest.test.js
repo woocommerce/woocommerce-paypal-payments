@@ -66,15 +66,15 @@ describe( 'buildPaymentDataRequest()', () => {
 		).toBe( true );
 	} );
 
-	test( 'omits the shipping callback intents and flags when requiresShipping is omitted', () => {
+	test( 'does not include the shipping callback intents and flags when requiresShipping is omitted', () => {
 		const request = buildPaymentDataRequest(
 			sessionConfig(),
 			transaction()
 		);
 
-		expect( request.callbackIntents ).toEqual( [] );
-		expect( request.shippingAddressRequired ).toBe( false );
-		expect( request.shippingOptionRequired ).toBe( false );
+		expect( request ).not.toHaveProperty( 'callbackIntents' );
+		expect( request ).not.toHaveProperty( 'shippingAddressRequired' );
+		expect( request ).not.toHaveProperty( 'shippingOptionRequired' );
 	} );
 
 	test( 'requests the shipping address and option callbacks when shipping is requested', () => {

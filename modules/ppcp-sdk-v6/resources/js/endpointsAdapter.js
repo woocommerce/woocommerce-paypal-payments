@@ -11,6 +11,7 @@
 import SingleProductActionHandler from '@ppcp-button/ActionHandler/SingleProductActionHandler';
 import { payerData } from '@ppcp-button/Helper/PayerData';
 import { postJson } from './utils/api';
+import { FundingSources } from './utils/fundingSources';
 import { minorUnitsToDecimal } from './utils/amount';
 import { continuationRedirectUrl } from './utils/continuation';
 
@@ -75,13 +76,15 @@ export async function changeCart( config ) {
  * @param {string}   fundingSource   - The funding source (paypal, venmo, paylater).
  * @param {Object[]} [purchaseUnits] - Units the caller already resolved. Wallets
  *                                     pass theirs so the cart is not changed twice.
+ * @param {string}   [paymentMethod] - The WC gateway that processes the order.
  * @return {Promise<{orderId: string}>} The created PayPal order id.
  */
 export async function createOrder(
 	config,
 	context,
 	fundingSource,
-	purchaseUnits
+	purchaseUnits,
+	paymentMethod = 'ppcp-gateway'
 ) {
 	const units =
 		purchaseUnits ??
@@ -90,8 +93,8 @@ export async function createOrder(
 	const body = {
 		context,
 		purchase_units: units,
-		payment_method: 'ppcp-gateway',
-		funding_source: fundingSource || 'paypal',
+		payment_method: paymentMethod,
+		funding_source: fundingSource || FundingSources.PAYPAL,
 		save_order_in_session: 1,
 	};
 
@@ -134,16 +137,19 @@ export async function createOrder(
  * @param {Object} [contact]                  - Buyer contact data from a wallet sheet.
  * @param {Object} [contact.payer]            - The PayPal payer (Orders v2 shape).
  * @param {Object} [contact.shippingAddress]  - The PayPal shipping address.
+ * @param {string} [paymentMethod]            - The WC gateway that processes
+ *                                              the order.
  */
 export async function approveOrder(
 	config,
 	context,
 	fundingSource,
 	orderId,
-	contact = {}
+	contact = {},
+	paymentMethod = 'ppcp-gateway'
 ) {
 	const canCreateOrder =
-		! config.vaulting_enabled || fundingSource !== 'venmo';
+		! config.vaulting_enabled || fundingSource !== FundingSources.VENMO;
 
 	const body = {
 		order_id: orderId,
@@ -186,10 +192,13 @@ export async function approveOrder(
 	if ( context === 'checkout' && typeof jQuery !== 'undefined' ) {
 		const checkoutForm = jQuery( 'form.checkout' );
 		if ( checkoutForm.length ) {
-			// The approved order must be processed by the PayPal gateway,
-			// not whichever payment method radio happens to be checked.
+			// The approved order must be processed by the gateway that created
+			// it, not whichever payment method radio happens to be checked. On
+			// the express path that means switching to PayPal; where the wallet
+			// is its own gateway the buyer already selected it, so this is a
+			// no-op.
 			const gatewayRadio = document.querySelector(
-				'#payment_method_ppcp-gateway'
+				`#payment_method_${ paymentMethod }`
 			);
 			if ( gatewayRadio && ! gatewayRadio.checked ) {
 				gatewayRadio.checked = true;

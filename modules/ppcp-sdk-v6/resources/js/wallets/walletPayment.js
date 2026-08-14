@@ -23,6 +23,8 @@ import { createOrder, approveOrder } from '../endpointsAdapter';
  *                                        order id aside.
  * @param {Object}   args.contact       - The { payer, shippingAddress } to
  *                                        record on the WC order.
+ * @param {string}   [args.paymentMethod] - The WC gateway that processes the
+ *                                        order; defaults to the express one.
  * @return {Promise<void>} Resolves once the order is approved.
  * @throws {Error} When the wallet does not approve the order.
  */
@@ -34,6 +36,7 @@ export async function payWithWallet( {
 	purchaseUnits,
 	confirmData,
 	contact,
+	paymentMethod,
 } ) {
 	// The units come from the caller because it already resolved them for the
 	// sheet total; resolving again here would post ppc-change-cart twice.
@@ -41,7 +44,8 @@ export async function payWithWallet( {
 		config,
 		context,
 		fundingSource,
-		purchaseUnits
+		purchaseUnits,
+		paymentMethod
 	);
 
 	const result = await session.confirmOrder( { orderId, ...confirmData } );
@@ -62,5 +66,12 @@ export async function payWithWallet( {
 	}
 
 	// On success this redirects or submits the checkout form.
-	await approveOrder( config, context, fundingSource, orderId, contact );
+	await approveOrder(
+		config,
+		context,
+		fundingSource,
+		orderId,
+		contact,
+		paymentMethod
+	);
 }

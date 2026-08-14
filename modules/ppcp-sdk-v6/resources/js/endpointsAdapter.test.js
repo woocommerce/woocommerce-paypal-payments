@@ -158,6 +158,25 @@ describe( 'createOrder', () => {
 		} );
 	} );
 
+	test( 'sends a supplied paymentMethod as payment_method instead of ' +
+		'the express default', async () => {
+		const purchaseUnits = [ { reference_id: 'wallet' } ];
+		postJson.mockResolvedValueOnce( { id: 'PAYPAL6' } );
+
+		await createOrder(
+			config,
+			'cart',
+			'googlepay',
+			purchaseUnits,
+			'ppcp-googlepay'
+		);
+
+		expect( postJson ).toHaveBeenCalledWith(
+			config.ajax.create_order,
+			expect.objectContaining( { payment_method: 'ppcp-googlepay' } )
+		);
+	} );
+
 	test( 'product context with an explicit empty array of purchase units skips change-cart', async () => {
 		// The only test guarding this: a supplied [] must count as resolved
 		// rather than fall through to changeCart(), which a truthiness or
@@ -281,6 +300,64 @@ describe( 'approveOrder', () => {
 			document.querySelector( '#payment_method_ppcp-gateway' ).checked
 		).toBe( true );
 		expect( trigger ).toHaveBeenCalledWith( 'submit' );
+
+		delete global.jQuery;
+	} );
+
+	test( 'checkout context still switches an unrelated radio to PayPal ' +
+		'on the express path, leaving the buyer with the express gateway', async () => {
+		postJson.mockResolvedValueOnce( {} );
+		document.body.innerHTML =
+			'<form class="checkout">' +
+			'<input type="radio" id="payment_method_ppcp-gateway" />' +
+			'<input type="radio" id="payment_method_ppcp-googlepay" checked /></form>';
+		const radioTrigger = jest.fn();
+		const formTrigger = jest.fn();
+		global.jQuery = jest.fn( ( selector ) =>
+			typeof selector === 'string'
+				? { length: 1, trigger: formTrigger }
+				: { trigger: radioTrigger }
+		);
+
+		await approveOrder( config, 'checkout', 'paypal', 'ORDER2b' );
+
+		expect(
+			document.querySelector( '#payment_method_ppcp-gateway' ).checked
+		).toBe( true );
+		expect( radioTrigger ).toHaveBeenCalledWith( 'change' );
+		expect( formTrigger ).toHaveBeenCalledWith( 'submit' );
+
+		delete global.jQuery;
+	} );
+
+	test( 'checkout context leaves the buyer\'s own selection unchanged ' +
+		'when the wallet is its own gateway row', async () => {
+		postJson.mockResolvedValueOnce( {} );
+		document.body.innerHTML =
+			'<form class="checkout">' +
+			'<input type="radio" id="payment_method_ppcp-googlepay" checked /></form>';
+		const radioTrigger = jest.fn();
+		const formTrigger = jest.fn();
+		global.jQuery = jest.fn( ( selector ) =>
+			typeof selector === 'string'
+				? { length: 1, trigger: formTrigger }
+				: { trigger: radioTrigger }
+		);
+
+		await approveOrder(
+			config,
+			'checkout',
+			'googlepay',
+			'ORDER3',
+			{},
+			'ppcp-googlepay'
+		);
+
+		expect(
+			document.querySelector( '#payment_method_ppcp-googlepay' ).checked
+		).toBe( true );
+		expect( radioTrigger ).not.toHaveBeenCalled();
+		expect( formTrigger ).toHaveBeenCalledWith( 'submit' );
 
 		delete global.jQuery;
 	} );
