@@ -14,8 +14,13 @@
 
 import { loadSdkV6 } from './sdkLoader';
 import { checkEligibility } from './eligibility';
-import { createSession } from './sessions/createSession';
+import {
+	createSession,
+	SUPPORTED_METHODS as METHODS,
+} from './sessions/createSession';
 import { renderButtons } from './components/buttonRenderer';
+import { renderWallets } from './wallets/renderWallets';
+import { isWalletEnabled, WALLET_METHODS } from './wallets/walletRegistry';
 import { createOrder, fetchCartTotal } from './endpointsAdapter';
 import { initCardFields } from './cardFields/renderer';
 import { hasJQuery } from './utils/api';
@@ -108,15 +113,28 @@ import { setErrorLabels } from './utils/errorHandler';
 			payLaterDetails: eligibility.payLaterDetails,
 			map: {},
 		};
-		for ( const method of [ 'paypal', 'venmo', 'paylater' ] ) {
-			if ( eligibility[ method ] ) {
-				sessions.map[ method ] = createSession(
-					sdk,
-					method,
-					config,
-					context
-				);
+
+		for ( const method of METHODS ) {
+			if ( ! eligibility[ method ] ) {
+				continue;
 			}
+
+			// A wallet's SDK component is only requested when the wallet is
+			// enabled, so without it the session factory does not exist and
+			// calling it would take every button on the page down.
+			if (
+				WALLET_METHODS.includes( method ) &&
+				! isWalletEnabled( config, method )
+			) {
+				continue;
+			}
+
+			sessions.map[ method ] = createSession(
+				sdk,
+				method,
+				config,
+				context
+			);
 		}
 
 		return sessions;
@@ -129,6 +147,9 @@ import { setErrorLabels } from './utils/errorHandler';
 	 * pages without buttons never hit the token endpoint. Wrappers that
 	 * still contain buttons are left alone (WC AJAX updates that replace
 	 * the surrounding DOM deliver the wrapper empty again).
+	 *
+	 * Wallets render after renderButtons(), which empties the wrapper first,
+	 * and they append rather than replace.
 	 *
 	 * @param {Object} target - The render target.
 	 */
@@ -147,6 +168,13 @@ import { setErrorLabels } from './utils/errorHandler';
 			createOrderForFunding: ( fundingSource ) => () =>
 				createOrder( config, target.context, fundingSource ),
 			payLaterDetails,
+		} );
+
+		await renderWallets( {
+			wrapper,
+			config,
+			context: target.context,
+			sessions: map,
 		} );
 	}
 
@@ -176,10 +204,9 @@ import { setErrorLabels } from './utils/errorHandler';
 		eligibilityPromise = null;
 		const current = await ensureEligibility();
 
-		const methods = [ 'paypal', 'venmo', 'paylater' ];
 		const changed =
 			! previous ||
-			methods.some( ( m ) => previous[ m ] !== current[ m ] );
+			METHODS.some( ( m ) => previous[ m ] !== current[ m ] );
 
 		if ( changed ) {
 			for ( const key of Object.keys( sessionPromises ) ) {
