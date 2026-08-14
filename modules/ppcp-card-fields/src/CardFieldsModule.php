@@ -101,7 +101,7 @@ class CardFieldsModule implements ServiceModule, ExecutableModule {
 				if ( CreditCardGateway::ID === $id && $should_show_card_holder_name ) {
 					$default_fields['card-name-field'] = '<p class="form-row form-row-wide">
 						<label for="ppcp-credit-card-gateway-card-name">' . esc_attr__( 'Cardholder Name', 'woocommerce-paypal-payments' ) . '</label>
-						<input id="ppcp-credit-card-gateway-card-name" class="input-text wc-credit-card-form-card-expiry" type="text" placeholder="' . esc_attr__( 'Cardholder Name (optional)', 'woocommerce-paypal-payments' ) . '" name="ppcp-credit-card-gateway-card-name">
+						<input id="ppcp-credit-card-gateway-card-name" class="input-text" type="text" placeholder="' . esc_attr__( 'Cardholder Name (optional)', 'woocommerce-paypal-payments' ) . '" name="ppcp-credit-card-gateway-card-name">
 					</p>';
 
 					// Moves the cardholder-name field to the first position while

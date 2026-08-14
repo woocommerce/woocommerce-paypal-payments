@@ -49,7 +49,8 @@ return array(
 			// so this module does not depend on the ppcp-blocks module it replaces.
 			! $container->get( 'settings.settings-provider' )->enable_pay_now(),
 			$container->get( 'settings.settings-provider' )->save_paypal_and_venmo(),
-			$container->get( 'wcgateway.configuration.card-configuration' )
+			$container->get( 'wcgateway.configuration.card-configuration' ),
+			$container->get( 'wcgateway.credit-card-icons' )
 		);
 	},
 

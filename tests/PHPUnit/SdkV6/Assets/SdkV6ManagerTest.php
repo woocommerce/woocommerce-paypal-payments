@@ -41,7 +41,7 @@ class SdkV6ManagerTest extends TestCase
         $this->card_payments_configuration = Mockery::mock(CardPaymentsConfiguration::class);
     }
 
-    private function createTestee(bool $should_handle_shipping = false): SdkV6Manager
+    private function createTestee(bool $should_handle_shipping = false, array $credit_card_icons = []): SdkV6Manager
     {
         return new SdkV6Manager(
             $this->asset_getter,
@@ -55,7 +55,8 @@ class SdkV6ManagerTest extends TestCase
             $this->cancel_view,
             false,
             false,
-            $this->card_payments_configuration
+            $this->card_payments_configuration,
+            $credit_card_icons
         );
     }
 
@@ -300,6 +301,59 @@ class SdkV6ManagerTest extends TestCase
             ],
             'classic checkout with ACDC enabled' => [
                 'checkout', true, 'Credit Card', 'yes', true, true,
+            ],
+        ];
+    }
+
+    /**
+     * GIVEN the merchant has configured a set of credit-card brand icons to display
+     * WHEN the SDK bootstrap data is generated
+     * THEN each icon is mapped into the card_fields.card_icons payload with its id, alt text and src URL
+     * AND an empty icon configuration produces an empty card_icons list
+     *
+     * @dataProvider credit_card_icons_provider
+     */
+    public function testScriptDataCardFieldsIncludesCreditCardIcons(array $credit_card_icons, array $expected_card_icons): void
+    {
+        $this->context->shouldReceive('context')->andReturn('checkout-block');
+        $this->card_payments_configuration->shouldReceive('is_acdc_enabled')->andReturn(true);
+        $this->card_payments_configuration->shouldReceive('gateway_title')->andReturn('Credit Card');
+        $this->card_payments_configuration->shouldReceive('show_name_on_card')->andReturn('yes');
+
+        $this->settings_status->shouldReceive('is_smart_button_enabled_for_location')->andReturn(false);
+        $this->session_handler->shouldReceive('order')->andReturn(null);
+        $this->context->shouldReceive('is_paypal_continuation')->andReturn(false);
+        $this->environment->shouldReceive('is_sandbox')->andReturn(false);
+        $this->style_mapper->shouldReceive('styles_for_context')->andReturn([]);
+
+        when('WC')->justReturn((object) [
+            'customer' => null,
+            'cart'     => null,
+        ]);
+        when('wc_get_base_location')->justReturn(['country' => 'US']);
+        when('get_woocommerce_currency')->justReturn('USD');
+        when('get_locale')->justReturn('en_US');
+        when('is_product')->justReturn(false);
+        when('rest_url')->justReturn('https://example.com/wp-json/wc/store/v1/cart');
+        when('wp_create_nonce')->justReturn('nonce');
+        when('wc_get_checkout_url')->justReturn('https://example.com/checkout');
+
+        $testee = $this->createTestee(false, $credit_card_icons);
+        $data   = $testee->script_data();
+
+        $this->assertSame($expected_card_icons, $data['card_fields']['card_icons']);
+    }
+
+    public function credit_card_icons_provider(): array
+    {
+        return [
+            'configured icons are mapped to id, alt and src' => [
+                [['type' => 'visa', 'title' => 'Visa', 'url' => 'https://x/visa.svg']],
+                [['id' => 'visa', 'alt' => 'Visa', 'src' => 'https://x/visa.svg']],
+            ],
+            'no configured icons produces an empty list' => [
+                [],
+                [],
             ],
         ];
     }

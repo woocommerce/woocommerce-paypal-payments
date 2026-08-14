@@ -53,6 +53,13 @@ class SdkV6Manager {
 	private bool $vaulting_enabled;
 	private CardPaymentsConfiguration $card_payments_configuration;
 
+	/**
+	 * Card brand icons ({type, title, url}); empty when "Show logos" is off.
+	 *
+	 * @var array<int, array{type:string, title:string, url:string}>
+	 */
+	private array $credit_card_icons;
+
 	public function __construct(
 		AssetGetter $asset_getter,
 		string $version,
@@ -65,7 +72,8 @@ class SdkV6Manager {
 		CancelView $cancel_view,
 		bool $final_review_enabled,
 		bool $vaulting_enabled,
-		CardPaymentsConfiguration $card_payments_configuration
+		CardPaymentsConfiguration $card_payments_configuration,
+		array $credit_card_icons
 	) {
 		$this->asset_getter                = $asset_getter;
 		$this->version                     = $version;
@@ -79,6 +87,7 @@ class SdkV6Manager {
 		$this->final_review_enabled        = $final_review_enabled;
 		$this->vaulting_enabled            = $vaulting_enabled;
 		$this->card_payments_configuration = $card_payments_configuration;
+		$this->credit_card_icons           = $credit_card_icons;
 	}
 
 	public function enqueue(): void {
@@ -326,9 +335,21 @@ class SdkV6Manager {
 				'enabled'        => $card_fields_enabled,
 				'payment_method' => CreditCardGateway::ID,
 				'funding_source' => 'card',
-				// Label and name-field flag for the block's own card method.
+				// Label, name-field flag and card-brand logos for the block's own
+				// card method. card_icons is empty when "Show logos" is disabled
+				// (the credit-card-icons service already guards on the setting).
 				'title'          => $this->card_payments_configuration->gateway_title(),
 				'name_field'     => 'yes' === $this->card_payments_configuration->show_name_on_card(),
+				'card_icons'     => array_map(
+					static function ( array $icon ): array {
+						return array(
+							'id'  => $icon['type'],
+							'alt' => $icon['title'],
+							'src' => $icon['url'],
+						);
+					},
+					$this->credit_card_icons
+				),
 				'fields'         => array(
 					'name'   => '#' . self::CARD_FIELD_NAME_ID,
 					'number' => '#' . self::CARD_FIELD_NUMBER_ID,
