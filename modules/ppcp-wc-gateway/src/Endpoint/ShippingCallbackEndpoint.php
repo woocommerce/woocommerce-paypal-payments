@@ -159,16 +159,23 @@ class ShippingCallbackEndpoint {
 		return $url;
 	}
 
+	/**
+	 * Converts the PayPal address into the fields of the Store API customer endpoint.
+	 *
+	 * The callback payload contains no street lines, so those fields are omitted and the address
+	 * that is already stored for the customer remains unchanged.
+	 *
+	 * @param array<string, mixed> $address The shipping_address of the callback payload.
+	 * @return array<string, string>
+	 */
 	private function convert_address_to_wc( array $address ): array {
 		$country = (string) ( $address['country_code'] ?? '' );
 
 		return array(
-			'country'        => $country,
-			'state'          => $this->convert_state_to_wc( (string) ( $address['admin_area_1'] ?? '' ), $country ),
-			'city'           => (string) ( $address['admin_area_2'] ?? '' ),
-			'postcode'       => (string) ( $address['postal_code'] ?? '' ),
-			'address_line_1' => '',
-			'address_line_2' => '',
+			'country'  => $country,
+			'state'    => $this->convert_state_to_wc( (string) ( $address['admin_area_1'] ?? '' ), $country ),
+			'city'     => (string) ( $address['admin_area_2'] ?? '' ),
+			'postcode' => (string) ( $address['postal_code'] ?? '' ),
 		);
 	}
 
