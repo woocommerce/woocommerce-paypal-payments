@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\WcGateway\Endpoint;
 
+use Exception;
 use Mockery;
 use Psr\Log\NullLogger;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Amount;
@@ -406,6 +407,89 @@ class ShippingCallbackEndpointTest extends TestCase
 
 		$data = $response->get_data();
 		$this->assertSame( 'default', $data['purchase_units'][0]['reference_id'] );
+	}
+
+	/**
+	 * GIVEN the Store API rejects the customer address update (e.g. an invalid address field)
+	 * WHEN handle_request() calls update_customer()
+	 * THEN the exception does not escape as a fatal; a 422 ADDRESS_ERROR response is returned
+	 */
+	public function test_handle_request_returns_422_when_update_customer_fails(): void
+	{
+		$request = $this->build_request(
+			[
+				'id' => '5O190127TN364715T',
+			]
+		);
+
+		$this->cart_endpoint
+			->shouldReceive( 'update_customer' )
+			->once()
+			->andThrow( new Exception( 'cart/update-customer request return error: rest_invalid_param' ) );
+
+		$this->cart_endpoint->shouldNotReceive( 'select_shipping_rate' );
+
+		$response = $this->sut->handle_request( $request );
+
+		$this->assertSame( 422, $response->get_status() );
+		$this->assertSame( 'ADDRESS_ERROR', $response->get_data()['details'][0]['issue'] );
+	}
+
+	/**
+	 * GIVEN the Store API accepted the address but returned no shipping rates for it
+	 * WHEN handle_request() inspects the cart response
+	 * THEN a 422 ADDRESS_ERROR response is returned and no shipping rate is selected
+	 */
+	public function test_handle_request_returns_422_when_no_shipping_rates_found(): void
+	{
+		$request = $this->build_request(
+			[
+				'id' => '5O190127TN364715T',
+			]
+		);
+
+		$this->cart_endpoint
+			->shouldReceive( 'update_customer' )
+			->once()
+			->andReturn( $this->cart_response_with_rates( [] ) );
+
+		$this->cart_endpoint->shouldNotReceive( 'select_shipping_rate' );
+
+		$response = $this->sut->handle_request( $request );
+
+		$this->assertSame( 422, $response->get_status() );
+		$this->assertSame( 'ADDRESS_ERROR', $response->get_data()['details'][0]['issue'] );
+	}
+
+	/**
+	 * GIVEN the buyer picked a shipping option that the Store API then rejects
+	 * WHEN handle_request() calls select_shipping_rate()
+	 * THEN the exception does not escape as a fatal; a 422 METHOD_UNAVAILABLE response is returned
+	 */
+	public function test_handle_request_returns_422_when_select_shipping_rate_fails(): void
+	{
+		$request = $this->build_request(
+			[
+				'id'              => '5O190127TN364715T',
+				'shipping_option' => [ 'id' => 'flat_rate:2' ],
+			]
+		);
+
+		$this->cart_endpoint
+			->shouldReceive( 'update_customer' )
+			->once()
+			->andReturn( $this->cart_response_with_rates( [ $this->shipping_rate( 'flat_rate:1', 'Flat rate', 500 ) ] ) );
+
+		$this->cart_endpoint
+			->shouldReceive( 'select_shipping_rate' )
+			->once()
+			->with( 'wc-cart-token', 0, 'flat_rate:2' )
+			->andThrow( new Exception( 'cart/select-shipping-rate request return error: rest_invalid_param' ) );
+
+		$response = $this->sut->handle_request( $request );
+
+		$this->assertSame( 422, $response->get_status() );
+		$this->assertSame( 'METHOD_UNAVAILABLE', $response->get_data()['details'][0]['issue'] );
 	}
 
 	/**
