@@ -343,6 +343,72 @@ class ShippingCallbackEndpointTest extends TestCase
 	}
 
 	/**
+	 * GIVEN a callback payload with no shipping_address at all
+	 * WHEN handle_request() builds the address for the Store API
+	 * THEN an address of empty fields is forwarded instead of a fatal on a missing array key
+	 */
+	public function test_handle_request_defaults_shipping_address_when_missing(): void
+	{
+		$request = $this->build_request(
+			[
+				'id' => '5O190127TN364715T',
+			]
+		);
+
+		$this->cart_endpoint
+			->shouldReceive( 'update_customer' )
+			->once()
+			->with(
+				'wc-cart-token',
+				[
+					'shipping_address' => [
+						'country'  => '',
+						'state'    => '',
+						'city'     => '',
+						'postcode' => '',
+					],
+				]
+			)
+			->andReturn( $this->cart_response_with_rates( [ $this->shipping_rate( 'flat_rate:1', 'Flat rate', 500 ) ] ) );
+
+		$this->amount_factory
+			->shouldReceive( 'from_store_api_cart' )
+			->andReturn( Mockery::mock( Amount::class, [ 'to_array' => [] ] ) );
+
+		$response = $this->sut->handle_request( $request );
+
+		$this->assertSame( 200, $response->get_status() );
+	}
+
+	/**
+	 * GIVEN a callback payload with no purchase_units entry
+	 * WHEN handle_request() builds the success response
+	 * THEN the purchase unit falls back to the reference_id "default"
+	 */
+	public function test_handle_request_defaults_reference_id_when_purchase_units_missing(): void
+	{
+		$request = $this->build_request(
+			[
+				'id' => '5O190127TN364715T',
+			]
+		);
+
+		$this->cart_endpoint
+			->shouldReceive( 'update_customer' )
+			->once()
+			->andReturn( $this->cart_response_with_rates( [ $this->shipping_rate( 'flat_rate:1', 'Flat rate', 500 ) ] ) );
+
+		$this->amount_factory
+			->shouldReceive( 'from_store_api_cart' )
+			->andReturn( Mockery::mock( Amount::class, [ 'to_array' => [] ] ) );
+
+		$response = $this->sut->handle_request( $request );
+
+		$data = $response->get_data();
+		$this->assertSame( 'default', $data['purchase_units'][0]['reference_id'] );
+	}
+
+	/**
 	 * Builds a WP_REST_Request stub carrying the given decoded body params and a fixed
 	 * cart_token, the way the PayPal shipping callback sends them.
 	 */
