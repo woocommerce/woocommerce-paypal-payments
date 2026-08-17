@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\WcGateway\Endpoint;
 
+use Exception;
 use Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\ShippingOption;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\AmountFactory;
@@ -82,37 +83,39 @@ class ShippingCallbackEndpoint {
 		$this->logger->debug( 'Shipping callback received: ' . $request->get_body() );
 
 		$request_id = $request_data['id'];
-		$pu_id      = $request_data['purchase_units'][0]['reference_id'];
+		$pu_id      = $request_data['purchase_units'][0]['reference_id'] ?? 'default';
 
-		$address = $this->convert_address_to_wc( $request_data['shipping_address'] );
+		$address = $this->convert_address_to_wc( $request_data['shipping_address'] ?? array() );
 
-		$cart_response = $this->cart_endpoint->update_customer(
-			$cart_token,
-			array(
-				'shipping_address' => $address,
-			)
-		);
+		try {
+			$cart_response = $this->cart_endpoint->update_customer(
+				$cart_token,
+				array(
+					'shipping_address' => $address,
+				)
+			);
+		} catch ( Exception $exception ) {
+			$this->logger->warning( 'Shipping callback response: ADDRESS_ERROR (' . $exception->getMessage() . ').' );
+
+			return $this->error_response( 'ADDRESS_ERROR' );
+		}
 
 		if ( empty( $cart_response->cart()->shipping_rates() ) ) {
 			$this->logger->debug( 'Shipping callback response: ADDRESS_ERROR (no shipping rates found).' );
 
-			return new WP_REST_Response(
-				array(
-					'name'    => 'UNPROCESSABLE_ENTITY',
-					'details' => array(
-						array(
-							'issue' => 'ADDRESS_ERROR',
-						),
-					),
-				),
-				422
-			);
+			return $this->error_response( 'ADDRESS_ERROR' );
 		}
 
 		if ( isset( $request_data['shipping_option'] ) ) {
 			$selected_shipping_method_id = $request_data['shipping_option']['id'];
 
-			$cart_response = $this->cart_endpoint->select_shipping_rate( $cart_token, 0, $selected_shipping_method_id );
+			try {
+				$cart_response = $this->cart_endpoint->select_shipping_rate( $cart_token, 0, $selected_shipping_method_id );
+			} catch ( Exception $exception ) {
+				$this->logger->warning( 'Shipping callback response: METHOD_UNAVAILABLE (' . $exception->getMessage() . ').' );
+
+				return $this->error_response( 'METHOD_UNAVAILABLE' );
+			}
 		}
 
 		$cart = $cart_response->cart();
@@ -157,6 +160,25 @@ class ShippingCallbackEndpoint {
 		$url = rest_url( self::NAMESPACE . '/' . self::ROUTE );
 
 		return $url;
+	}
+
+	/**
+	 * Tells PayPal that the order cannot be updated for the requested address or shipping option.
+	 *
+	 * @param string $issue The PayPal issue, like ADDRESS_ERROR or METHOD_UNAVAILABLE.
+	 */
+	private function error_response( string $issue ): WP_REST_Response {
+		return new WP_REST_Response(
+			array(
+				'name'    => 'UNPROCESSABLE_ENTITY',
+				'details' => array(
+					array(
+						'issue' => $issue,
+					),
+				),
+			),
+			422
+		);
 	}
 
 	/**
