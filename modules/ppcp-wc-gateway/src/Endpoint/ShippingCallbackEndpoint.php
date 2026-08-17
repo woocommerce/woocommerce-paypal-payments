@@ -160,13 +160,51 @@ class ShippingCallbackEndpoint {
 	}
 
 	private function convert_address_to_wc( array $address ): array {
+		$country = (string) ( $address['country_code'] ?? '' );
+
 		return array(
-			'country'        => $address['country_code'] ?? '',
-			'state'          => $address['admin_area_1'] ?? '',
-			'city'           => $address['admin_area_2'] ?? '',
-			'postcode'       => $address['postal_code'] ?? '',
+			'country'        => $country,
+			'state'          => $this->convert_state_to_wc( (string) ( $address['admin_area_1'] ?? '' ), $country ),
+			'city'           => (string) ( $address['admin_area_2'] ?? '' ),
+			'postcode'       => (string) ( $address['postal_code'] ?? '' ),
 			'address_line_1' => '',
 			'address_line_2' => '',
 		);
+	}
+
+	/**
+	 * Converts the PayPal state into a state that WooCommerce accepts for the given country.
+	 *
+	 * PayPal sends regions that are not always part of the WooCommerce state list of the country,
+	 * and the Store API rejects the whole address in that case. Such states are dropped, so that
+	 * the shipping rates are calculated based on the remaining address fields.
+	 *
+	 * @param string $state The admin_area_1 of the callback payload, a state code or name.
+	 * @param string $country The 2-letter country code.
+	 */
+	private function convert_state_to_wc( string $state, string $country ): string {
+		if ( '' === $state || '' === $country ) {
+			return $state;
+		}
+
+		$states = array_filter( (array) WC()->countries->get_states( $country ) );
+		if ( ! $states ) {
+			return $state;
+		}
+
+		$state = wc_strtoupper( $state );
+
+		if ( in_array( $state, array_map( 'wc_strtoupper', array_keys( $states ) ), true ) ) {
+			return $state;
+		}
+
+		$code = array_search( $state, array_map( 'wc_strtoupper', $states ), true );
+		if ( false !== $code ) {
+			return (string) $code;
+		}
+
+		$this->logger->debug( sprintf( 'Shipping callback: dropped the state "%1$s", which is unknown in %2$s.', $state, $country ) );
+
+		return '';
 	}
 }
