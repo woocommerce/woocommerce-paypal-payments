@@ -25,7 +25,7 @@ import { hasJQuery } from '../utils/api';
  * Wallet rows registered so far, as method id to button-container selector.
  *
  * Also the set that decides "Place order": it is the wallet rows that replace it,
- * so membership is the question, mirroring v5's paypalButtonGatewayIds.
+ * so membership in this map is the question asked.
  */
 const walletRows = new Map();
 
@@ -131,15 +131,13 @@ function updateVisibility() {
 		setVisible( selector, methodId === selected );
 	}
 
-	// The express buttons pay for PayPal's row only. v5 hides them the same way
-	// (CheckoutBootstrap.updateUi), and without this they stay on screen offering
-	// a PayPal payment while a wallet row is selected.
+	// The express buttons pay for PayPal's row only; left showing, they offer a
+	// PayPal payment while a wallet row is selected.
 	setVisible( expressRow, PaymentMethods.PAYPAL === selected );
 
 	// Answered once for all rows, not per wallet: each wallet asking only "am I
 	// selected" meant the last one to run always won, so selecting the first
-	// wallet left "Place order" showing next to its button. v5 decides this the
-	// same way, from its whole paypalButtonGatewayIds set.
+	// wallet left "Place order" showing next to its button.
 	setVisible(
 		ORDER_BUTTON_SELECTOR,
 		! hasRenderedButton( rowContainer( selected ) )
