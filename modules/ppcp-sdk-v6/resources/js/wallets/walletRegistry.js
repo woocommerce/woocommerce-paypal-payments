@@ -15,6 +15,10 @@ const WALLETS = {
 		configKey: 'google_pay',
 		sdkComponent: 'googlepay-payments',
 	},
+	[ FundingSources.APPLEPAY ]: {
+		configKey: 'apple_pay',
+		sdkComponent: 'applepay-payments',
+	},
 };
 
 /**

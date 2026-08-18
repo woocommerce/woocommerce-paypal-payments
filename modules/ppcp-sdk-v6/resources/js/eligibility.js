@@ -55,10 +55,14 @@ export async function checkEligibility(
 		[ FundingSources.PAYLATER ]: methods.isEligible(
 			FundingSources.PAYLATER
 		),
-		// Safe-checked because its component is only loaded on some pages.
+		// Safe-checked because their components are only loaded on some pages.
 		[ FundingSources.GOOGLEPAY ]: isEligibleSafely(
 			methods,
 			FundingSources.GOOGLEPAY
+		),
+		[ FundingSources.APPLEPAY ]: isEligibleSafely(
+			methods,
+			FundingSources.APPLEPAY
 		),
 		payLaterDetails: null,
 	};

@@ -11,13 +11,16 @@
 
 /**
  * The values are the v6 SDK's own vocabulary (findEligibleMethods, the
- * create*OneTimePaymentSession factories) and are also what the WC AJAX
- * endpoints accept as funding_source, so they are fixed by both contracts
- * rather than free to rename.
+ * create*OneTimePaymentSession factories), which for every method but Apple Pay
+ * is also what the WC AJAX endpoints accept as funding_source, so they are fixed
+ * by both contracts rather than free to rename. Apple Pay is the exception: the
+ * endpoints know it as apple_pay, so its bridge names that value itself and these
+ * constants stay purely the SDK's vocabulary.
  */
 export const FundingSources = {
 	PAYPAL: 'paypal',
 	VENMO: 'venmo',
 	PAYLATER: 'paylater',
 	GOOGLEPAY: 'googlepay',
+	APPLEPAY: 'applepay',
 };

@@ -19,6 +19,7 @@ const SESSION_FACTORIES = {
 	[ FundingSources.VENMO ]: 'createVenmoOneTimePaymentSession',
 	[ FundingSources.PAYLATER ]: 'createPayLaterOneTimePaymentSession',
 	[ FundingSources.GOOGLEPAY ]: 'createGooglePayOneTimePaymentSession',
+	[ FundingSources.APPLEPAY ]: 'createApplePayOneTimePaymentSession',
 };
 
 /**

@@ -41,7 +41,8 @@ function googlePayAddress( data ) {
  */
 export function googlePayPayer( response ) {
 	const billing = response?.paymentMethodData?.info?.billingAddress;
-	// v5 threw here when billingAddress was absent.
+	// Defaulted rather than assumed present: a sheet that collects no billing
+	// address must not take the payment down with a TypeError.
 	const [ givenName, surname ] = splitFullName( billing?.name ?? '' );
 
 	return {
@@ -73,5 +74,88 @@ export function googlePayShippingAddress( response ) {
 			full_name: shipping?.name,
 		},
 		address: googlePayAddress( shipping ),
+	};
+}
+
+/**
+ * Maps an Apple Pay contact to the PayPal address shape.
+ *
+ * Absent fields stay undefined so JSON.stringify drops them. Apple splits the
+ * street over an addressLines array rather than into two named keys.
+ *
+ * @param {Object} contact - An Apple Pay contact (billingContact or shippingContact).
+ * @return {Object} The PayPal address.
+ */
+function applePayAddress( contact ) {
+	return {
+		country_code: contact?.countryCode,
+		address_line_1: contact?.addressLines?.[ 0 ],
+		address_line_2: contact?.addressLines?.[ 1 ],
+		admin_area_1: contact?.administrativeArea,
+		admin_area_2: contact?.locality,
+		postal_code: contact?.postalCode,
+	};
+}
+
+/**
+ * Joins an Apple contact's name parts, skipping whichever is absent.
+ *
+ * @param {Object} contact - An Apple Pay contact.
+ * @return {string|undefined} The full name, or undefined when it has no parts.
+ */
+function applePayFullName( contact ) {
+	const fullName = [ contact?.givenName, contact?.familyName ]
+		.filter( Boolean )
+		.join( ' ' );
+
+	return fullName || undefined;
+}
+
+/**
+ * Derives the PayPal payer from an authorized Apple Pay payment.
+ *
+ * Apple sends the name pre-split as givenName/familyName, so no splitting is
+ * needed. It never returns a billing email or phone, so those come off the
+ * shipping contact.
+ *
+ * @param {Object} payment - The ApplePayPayment from onpaymentauthorized.
+ * @return {Object} The PayPal payer.
+ */
+export function applePayPayer( payment ) {
+	const billing = payment?.billingContact;
+	const shipping = payment?.shippingContact;
+
+	return {
+		email_address: shipping?.emailAddress,
+		name: {
+			given_name: billing?.givenName,
+			surname: billing?.familyName,
+		},
+		address: applePayAddress( billing ),
+	};
+}
+
+/**
+ * Derives the PayPal shipping address from an authorized Apple Pay payment.
+ *
+ * Falls back to the billing contact: on classic checkout no postal address is
+ * requested in the sheet, and a physical-goods order still needs one.
+ *
+ * @param {Object} payment - The ApplePayPayment from onpaymentauthorized.
+ * @return {Object} The PayPal shipping address.
+ */
+export function applePayShippingAddress( payment ) {
+	// Only the postal half falls back: a shippingContact that carries just an
+	// email and phone (which is all the checkout sheet asks for) has no address
+	// to ship to, so the billing one stands in.
+	const shipping = payment?.shippingContact?.countryCode
+		? payment.shippingContact
+		: payment?.billingContact;
+
+	return {
+		name: {
+			full_name: applePayFullName( shipping ),
+		},
+		address: applePayAddress( shipping ),
 	};
 }
