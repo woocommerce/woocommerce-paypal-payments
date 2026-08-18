@@ -85,7 +85,11 @@ function resolveTarget( wrapper, gateway, context ) {
 async function renderWallet( method, { wrapper, config, context, sessions } ) {
 	const settings = walletConfig( config, method );
 	const session = sessions[ method ];
-	if ( ! settings?.enabled || ! session ) {
+
+	// `enabled` is true as soon as *any* context wants the wallet, so the
+	// per-context answer is whether PHP sent styles for this one. Gating on
+	// `enabled` put an unstyled button on every other target.
+	if ( ! session || ! settings?.styles?.[ context ] ) {
 		return;
 	}
 
