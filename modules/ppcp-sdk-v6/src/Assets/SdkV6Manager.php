@@ -69,18 +69,19 @@ class SdkV6Manager {
 	private bool $final_review_enabled;
 	private bool $vaulting_enabled;
 	private CardPaymentsConfiguration $card_payments_configuration;
-	private GooglePayConfig $google_pay_config;
+	/**
+	 * Kept alongside $wallets, which holds the same object as a WalletConfig:
+	 * display_name() exists only on the Apple subclass, so reaching it through
+	 * the base type would not type-check.
+	 */
 	private ApplePayConfig $apple_pay_config;
 
 	/**
-	 * Memoizes is_google_pay_gateway(), which walks every available gateway.
+	 * Every wallet this module places, in the order their rows are printed.
+	 *
+	 * @var WalletPlacement[]
 	 */
-	private ?bool $is_google_pay_gateway = null;
-
-	/**
-	 * Memoizes is_apple_pay_gateway(), which walks every available gateway.
-	 */
-	private ?bool $is_apple_pay_gateway = null;
+	private array $wallets;
 
 	public function __construct(
 		AssetGetter $asset_getter,
@@ -110,8 +111,33 @@ class SdkV6Manager {
 		$this->final_review_enabled        = $final_review_enabled;
 		$this->vaulting_enabled            = $vaulting_enabled;
 		$this->card_payments_configuration = $card_payments_configuration;
-		$this->google_pay_config           = $google_pay_config;
 		$this->apple_pay_config            = $apple_pay_config;
+
+		$this->wallets = array(
+			new WalletPlacement(
+				'google_pay',
+				GooglePayGateway::ID,
+				self::GOOGLE_PAY_WRAPPER_ID,
+				'https://pay.google.com/gp/p/js/pay.js',
+				$google_pay_config,
+				static function ( string $context ) use ( $google_pay_config ): array {
+					return $google_pay_config->styles( $context );
+				}
+			),
+			new WalletPlacement(
+				'apple_pay',
+				ApplePayGateway::ID,
+				self::APPLE_PAY_WRAPPER_ID,
+				// Loaded by the frontend rather than by the applepay-payments
+				// component, which only loads it for a session type this module does
+				// not use. It registers the <apple-pay-button> element.
+				'https://applepay.cdn-apple.com/jsapi/v1/apple-pay-sdk.js',
+				$apple_pay_config,
+				static function ( string $context ) use ( $apple_pay_config ): array {
+					return $apple_pay_config->styles( $context );
+				}
+			),
+		);
 	}
 
 	public function enqueue(): void {
@@ -167,50 +193,32 @@ class SdkV6Manager {
 	}
 
 	/**
-	 * Renders the Google Pay gateway container, hidden until eligible.
+	 * Renders each wallet's gateway container, hidden until eligible.
 	 *
-	 * On classic checkout Google Pay is its own payment-method row rather than
-	 * an express button, so its button needs a container next to the place-order
+	 * On classic checkout a wallet is its own payment-method row rather than an
+	 * express button, so its button needs a container next to the place-order
 	 * area instead of the shared express wrapper.
 	 *
-	 * The row starts hidden and the JS reveals it once Google confirms the buyer
-	 * can pay, because eligibility is only knowable client-side: a browser
-	 * without a saved card would otherwise be offered a row that cannot
-	 * complete. Same attribute shape as v5's GooglePayButton, which the v6 JS
-	 * removes the same way its PaymentButton did.
+	 * Every row starts hidden and the JS reveals it once the browser confirms the
+	 * buyer can pay, because eligibility is only knowable client-side: a browser
+	 * without a saved card, or without Apple Pay set up, would otherwise be
+	 * offered a row that cannot complete. Same attribute shape as v5's
+	 * GooglePayButton, which the v6 JS removes the same way its PaymentButton did.
 	 */
-	public function render_google_pay_gateway_wrapper(): void {
-		if ( ! $this->is_google_pay_gateway() ) {
-			return;
-		}
-		?>
-		<style data-hide-gateway='<?php echo esc_attr( GooglePayGateway::ID ); ?>'>
-			.wc_payment_method.payment_method_<?php echo esc_attr( GooglePayGateway::ID ); ?> {
-				display: none;
+	public function render_wallet_gateway_wrappers(): void {
+		foreach ( $this->wallets as $wallet ) {
+			if ( ! $this->is_wallet_gateway( $wallet ) ) {
+				continue;
 			}
-		</style>
-		<div id="<?php echo esc_attr( self::GOOGLE_PAY_WRAPPER_ID ); ?>"></div>
-		<?php
-	}
-
-	/**
-	 * Renders the Apple Pay gateway container, hidden until eligible.
-	 *
-	 * Whether the browser is an Apple one with Apple Pay set up is only knowable
-	 * client-side, so the row is printed hidden and the JS reveals it.
-	 */
-	public function render_apple_pay_gateway_wrapper(): void {
-		if ( ! $this->is_apple_pay_gateway() ) {
-			return;
+			?>
+			<style data-hide-gateway='<?php echo esc_attr( $wallet->gateway_id ); ?>'>
+				.wc_payment_method.payment_method_<?php echo esc_attr( $wallet->gateway_id ); ?> {
+					display: none;
+				}
+			</style>
+			<div id="<?php echo esc_attr( $wallet->wrapper_id ); ?>"></div>
+			<?php
 		}
-		?>
-		<style data-hide-gateway='<?php echo esc_attr( ApplePayGateway::ID ); ?>'>
-			.wc_payment_method.payment_method_<?php echo esc_attr( ApplePayGateway::ID ); ?> {
-				display: none;
-			}
-		</style>
-		<div id="<?php echo esc_attr( self::APPLE_PAY_WRAPPER_ID ); ?>"></div>
-		<?php
 	}
 
 	public function render_mini_cart_wrapper(): void {
@@ -220,53 +228,66 @@ class SdkV6Manager {
 	}
 
 	/**
-	 * Whether Google Pay renders as its own payment-method row.
+	 * Whether a wallet renders as its own payment-method row.
 	 *
 	 * True only on classic checkout with the gateway actually available: the
 	 * other contexts have no payment-method list, and the block checkout
 	 * registers its methods through the block registry instead.
+	 *
+	 * Only the gateway walk is memoized, never a refusal from the context check,
+	 * so a call made before the context resolves cannot poison the answer. The
+	 * memo spans one request, where this is asked twice per wallet: once to print
+	 * the row, once to build the script data.
 	 */
-	private function is_google_pay_gateway(): bool {
-		if ( null !== $this->is_google_pay_gateway ) {
-			return $this->is_google_pay_gateway;
+	private function is_wallet_gateway( WalletPlacement $wallet ): bool {
+		if ( null !== $wallet->is_gateway ) {
+			return $wallet->is_gateway;
 		}
 
 		if ( 'checkout' !== $this->get_page_context() || $this->is_block_context() ) {
 			return false;
 		}
 
-		// Memoized only past the context check: the gateway walk is the
-		// expensive part, and it repeats on every update_order_review.
 		$gateways = WC()->payment_gateways() ? WC()->payment_gateways()->get_available_payment_gateways() : array();
 
-		$this->is_google_pay_gateway = isset( $gateways[ GooglePayGateway::ID ] );
+		$wallet->is_gateway = isset( $gateways[ $wallet->gateway_id ] );
 
-		return $this->is_google_pay_gateway;
+		return $wallet->is_gateway;
 	}
 
 	/**
-	 * Whether Apple Pay renders as its own payment-method row.
+	 * The script data every wallet has, before its own keys are added.
 	 *
-	 * True only on classic checkout with the gateway actually available: the other
-	 * contexts have no payment-method list, and the block checkout registers its
-	 * methods through the block registry instead.
+	 * @param WalletPlacement $wallet       The wallet to describe.
+	 * @param string          $page_context The current context, empty off a button page.
+	 * @return array<string, mixed>
 	 */
-	private function is_apple_pay_gateway(): bool {
-		if ( null !== $this->is_apple_pay_gateway ) {
-			return $this->is_apple_pay_gateway;
+	private function wallet_script_data( WalletPlacement $wallet, string $page_context ): array {
+		// Styled per context rather than globally: `enabled` then follows from
+		// whether any context on this page wants the wallet at all.
+		$styles = array();
+		if ( $page_context && $wallet->config->should_render( $page_context ) ) {
+			$styles[ $page_context ] = $wallet->styles( $page_context );
+		}
+		if ( $wallet->config->should_render( 'mini-cart' ) ) {
+			$styles['mini-cart'] = $wallet->styles( 'mini-cart' );
 		}
 
-		if ( 'checkout' !== $this->get_page_context() || $this->is_block_context() ) {
-			return false;
-		}
-
-		// Memoized only past the context check: the gateway walk is the expensive
-		// part, and it repeats on every update_order_review.
-		$gateways = WC()->payment_gateways() ? WC()->payment_gateways()->get_available_payment_gateways() : array();
-
-		$this->is_apple_pay_gateway = isset( $gateways[ ApplePayGateway::ID ] );
-
-		return $this->is_apple_pay_gateway;
+		return array(
+			'enabled' => ! empty( $styles ),
+			'sdk_url' => $wallet->sdk_url,
+			'styles'  => $styles,
+			// Present only on classic checkout, where a payment-method list
+			// exists: everywhere else the wallet stays an express button, as in
+			// v5. Null rather than a flag plus two values the JS would have to
+			// pair up again.
+			'gateway' => $this->is_wallet_gateway( $wallet )
+				? array(
+					'id'      => $wallet->gateway_id,
+					'wrapper' => '#' . $wallet->wrapper_id,
+				)
+				: null,
+		);
 	}
 
 	/**
@@ -301,11 +322,7 @@ class SdkV6Manager {
 			return true;
 		}
 
-		if ( $page_location && $this->google_pay_config->should_render( $page_location ) ) {
-			return true;
-		}
-
-		if ( $page_location && $this->apple_pay_config->should_render( $page_location ) ) {
+		if ( $page_location && $this->any_wallet_renders( $page_location ) ) {
 			return true;
 		}
 
@@ -313,9 +330,21 @@ class SdkV6Manager {
 		// sitewide without a widget would break the v5-rendered block express
 		// buttons for nothing.
 		return ( $this->settings_status->is_smart_button_enabled_for_location( 'mini-cart' )
-				|| $this->google_pay_config->should_render( 'mini-cart' )
-				|| $this->apple_pay_config->should_render( 'mini-cart' ) )
+				|| $this->any_wallet_renders( 'mini-cart' ) )
 			&& is_active_widget( false, false, 'woocommerce_widget_cart' );
+	}
+
+	/**
+	 * Whether any wallet renders in the given context.
+	 */
+	private function any_wallet_renders( string $context ): bool {
+		foreach ( $this->wallets as $wallet ) {
+			if ( $wallet->config->should_render( $context ) ) {
+				return true;
+			}
+		}
+
+		return false;
 	}
 
 	/**
@@ -355,22 +384,6 @@ class SdkV6Manager {
 		}
 
 		$card_fields_enabled = 'checkout' === $page_context && $this->card_payments_configuration->is_acdc_enabled();
-
-		$google_pay_styles = array();
-		if ( $page_context && $this->google_pay_config->should_render( $page_context ) ) {
-			$google_pay_styles[ $page_context ] = $this->google_pay_config->styles( $page_context );
-		}
-		if ( $this->google_pay_config->should_render( 'mini-cart' ) ) {
-			$google_pay_styles['mini-cart'] = $this->google_pay_config->styles( 'mini-cart' );
-		}
-
-		$apple_pay_styles = array();
-		if ( $page_context && $this->apple_pay_config->should_render( $page_context ) ) {
-			$apple_pay_styles[ $page_context ] = $this->apple_pay_config->styles( $page_context );
-		}
-		if ( $this->apple_pay_config->should_render( 'mini-cart' ) ) {
-			$apple_pay_styles['mini-cart'] = $this->apple_pay_config->styles( 'mini-cart' );
-		}
 
 		$data = array(
 			'sdk_url'           => $base_url . '/web-sdk/v6/core',
@@ -446,48 +459,24 @@ class SdkV6Manager {
 					'cvv'    => '#' . self::CARD_FIELD_CVV_ID,
 				),
 			),
-			'google_pay'        => array(
-				'enabled'     => ! empty( $google_pay_styles ),
-				'sdk_url'     => 'https://pay.google.com/gp/p/js/pay.js',
-				'environment' => $this->environment->is_sandbox() ? 'TEST' : 'PRODUCTION',
-				'styles'      => $google_pay_styles,
-				// Present only on classic checkout, where a payment-method list
-				// exists: everywhere else Google Pay stays an express button, as
-				// in v5. Null rather than a flag plus two values the JS would
-				// have to pair up again.
-				'gateway'     => $this->is_google_pay_gateway()
-					? array(
-						'id'      => GooglePayGateway::ID,
-						'wrapper' => '#' . self::GOOGLE_PAY_WRAPPER_ID,
-					)
-					: null,
-			),
-			'apple_pay'         => array(
-				'enabled'      => ! empty( $apple_pay_styles ),
-				// Loaded by the frontend rather than by the applepay-payments
-				// component, which only loads it for a session type this module does
-				// not use. It registers the <apple-pay-button> element.
-				'sdk_url'      => 'https://applepay.cdn-apple.com/jsapi/v1/apple-pay-sdk.js',
-				// Labels the sheet total and identifies the merchant during
-				// validation.
-				'display_name' => $this->apple_pay_config->display_name(),
-				'styles'       => $apple_pay_styles,
-				// Present only on classic checkout, where the wallet is its own row.
-				'gateway'      => $this->is_apple_pay_gateway()
-					? array(
-						'id'      => ApplePayGateway::ID,
-						'wrapper' => '#' . self::APPLE_PAY_WRAPPER_ID,
-					)
-					: null,
-				// Where the frontend reports merchant validation, which keeps the
-				// admin "domain not validated" notice accurate. The Apple Pay
-				// module owns this admin-ajax action and dictates its nonce action.
-				'validation'   => array(
-					'endpoint' => admin_url( 'admin-ajax.php' ),
-					'action'   => PropertiesDictionary::VALIDATE,
-					'nonce'    => wp_create_nonce( PropertiesDictionary::NONCE_ACTION ),
-				),
-			),
+		);
+
+		foreach ( $this->wallets as $wallet ) {
+			$data[ $wallet->config_key ] = $this->wallet_script_data( $wallet, $page_context );
+		}
+
+		// The keys only one wallet has. Everything above this line is the shape
+		// every wallet shares.
+		$data['google_pay']['environment'] = $this->environment->is_sandbox() ? 'TEST' : 'PRODUCTION';
+		// Labels the sheet total and identifies the merchant during validation.
+		$data['apple_pay']['display_name'] = $this->apple_pay_config->display_name();
+		// Where the frontend reports merchant validation, which keeps the admin
+		// "domain not validated" notice accurate. The Apple Pay module owns this
+		// admin-ajax action and dictates its nonce action.
+		$data['apple_pay']['validation'] = array(
+			'endpoint' => admin_url( 'admin-ajax.php' ),
+			'action'   => PropertiesDictionary::VALIDATE,
+			'nonce'    => wp_create_nonce( PropertiesDictionary::NONCE_ACTION ),
 		);
 
 		$continuation = $this->continuation_data();

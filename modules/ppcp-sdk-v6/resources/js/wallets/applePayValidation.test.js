@@ -1,12 +1,10 @@
 import { recordDomainValidation } from './applePayValidation';
 
-const config = ( overrides = {} ) => ( {
-	apple_pay: {
-		validation: {
-			endpoint: 'https://shop.test/wc-ajax=ppc-validate-domain',
-			action: 'ppc-validate-domain',
-			nonce: 'a-nonce',
-		},
+const settings = ( overrides = {} ) => ( {
+	validation: {
+		endpoint: 'https://shop.test/wc-ajax=ppc-validate-domain',
+		action: 'ppc-validate-domain',
+		nonce: 'a-nonce',
 	},
 	...overrides,
 } );
@@ -25,18 +23,18 @@ afterEach( () => {
 describe( 'recordDomainValidation()', () => {
 	test.each( [
 		[
-			'config.apple_pay.validation.endpoint is missing',
-			{ apple_pay: {} },
+			'settings.validation.endpoint is missing',
+			settings( { validation: {} } ),
 		],
-		[ 'config.apple_pay is entirely absent', { apple_pay: undefined } ],
-	] )( 'does nothing when %s', async ( _label, overrides ) => {
-		await recordDomainValidation( config( overrides ), true );
+		[ 'settings is entirely absent', undefined ],
+	] )( 'does nothing when %s', async ( _label, subtree ) => {
+		await recordDomainValidation( subtree, true );
 
 		expect( global.fetch ).not.toHaveBeenCalled();
 	} );
 
 	test( 'POSTs a form-encoded body carrying the action, checkout nonce, and validation flag', async () => {
-		await recordDomainValidation( config(), true );
+		await recordDomainValidation( settings(), true );
 
 		const [ url, options ] = global.fetch.mock.calls[ 0 ];
 		expect( url ).toBe( 'https://shop.test/wc-ajax=ppc-validate-domain' );
@@ -55,7 +53,7 @@ describe( 'recordDomainValidation()', () => {
 	} );
 
 	test( 'sends the validation flag as a stringified false when validation failed', async () => {
-		await recordDomainValidation( config(), false );
+		await recordDomainValidation( settings(), false );
 
 		const body = new URLSearchParams(
 			global.fetch.mock.calls[ 0 ][ 1 ].body
@@ -67,7 +65,7 @@ describe( 'recordDomainValidation()', () => {
 		global.fetch.mockRejectedValueOnce( new Error( 'network down' ) );
 
 		await expect(
-			recordDomainValidation( config(), true )
+			recordDomainValidation( settings(), true )
 		).resolves.toBeUndefined();
 	} );
 } );

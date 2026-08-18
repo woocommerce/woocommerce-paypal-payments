@@ -8,7 +8,11 @@
  * @package
  */
 
-import { fetchCartTotal, simulateCart } from '../endpointsAdapter';
+import {
+	fetchCartTotal,
+	productForm,
+	simulateCart,
+} from '../endpointsAdapter';
 import { hasJQuery } from '../utils/api';
 
 /**
@@ -29,22 +33,6 @@ const REFRESH_DEBOUNCE_MS = 250;
  */
 let refreshActive = null;
 let listeningToProductForm = false;
-
-/**
- * The form whose fields change what the viewed product costs.
- *
- * Located the same way endpointsAdapter reads the products from it, so the two
- * cannot disagree about which form that is.
- *
- * @return {?HTMLElement} The form, or null when the page has none.
- */
-function productForm() {
-	const idElement =
-		document.querySelector( 'form [name="add-to-cart"]' ) ||
-		document.querySelector( 'form [name="product_id"]' );
-
-	return idElement?.closest( 'form' ) ?? null;
-}
 
 /**
  * Resolves the total the sheet must display, without side effects.

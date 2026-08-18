@@ -19,7 +19,6 @@ use WooCommerce\PayPalCommerce\Button\Assets\ButtonInterface;
 use WooCommerce\PayPalCommerce\Button\Assets\SmartButtonInterface;
 use WooCommerce\PayPalCommerce\Applepay\Helper\AvailabilityNotice;
 use WooCommerce\PayPalCommerce\Button\Helper\Context;
-use WooCommerce\PayPalCommerce\SdkV6\Assets\SdkV6Manager;
 use WooCommerce\PayPalCommerce\Settings\Data\Definition\FeaturesDefinition;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExecutableModule;
@@ -532,13 +531,12 @@ class ApplepayModule implements ServiceModule, ExecutableModule {
 	 * has() guard.
 	 */
 	private static function v6_owns_current_page( ContainerInterface $c ): bool {
-		if ( ! $c->has( 'sdk-v6.manager' ) ) {
+		if ( ! $c->has( 'sdk-v6.owns-current-page' ) ) {
 			return false;
 		}
 
-		$manager = $c->get( 'sdk-v6.manager' );
-		assert( $manager instanceof SdkV6Manager );
+		$owns_current_page = $c->get( 'sdk-v6.owns-current-page' );
 
-		return $manager->should_load_on_current_page();
+		return $owns_current_page();
 	}
 }

@@ -14,29 +14,24 @@
 
 import Spinner from '@ppcp-button/Helper/Spinner';
 import { hasJQuery } from '../utils/api';
+import { refreshCartUi } from '../utils/cartUi';
 import { handleError } from '../utils/errorHandler';
-import { loadAppleSdk } from '../utils/scriptLoaders';
-import { revealGateway, syncGatewayVisibility } from './gatewayPlacement';
+import { loadScript } from '../utils/scriptLoaders';
+import { revealWalletGateway } from './gatewayPlacement';
 import { APPLE_PAY_VERSION, buildApplePayRequest } from './applePayRequest';
 import { watchSheetTotal } from './applePaySheetTotal';
 import { recordDomainValidation } from './applePayValidation';
+import { walletButtonStyle } from './walletButtonStyle';
 import { applePayPayer, applePayShippingAddress } from './walletContacts';
 import { payWithWallet } from './walletPayment';
+import { walletConfig, walletFundingSource } from './walletRegistry';
 import { resolveWalletTotal } from './walletTotal';
-
-/**
- * The funding_source the WC AJAX endpoints know Apple Pay by.
- *
- * Not FundingSources.APPLEPAY ('applepay', the SDK's spelling): ApplepayModule's
- * ppcp_create_order_request_body_data filter matches this underscored form, and an
- * express-context order that misses it loses its payment_source.
- */
-const FUNDING_SOURCE = 'apple_pay';
 
 /**
  * Renders the Apple Pay button and wires its click to a payment.
  *
  * @param {Object}  args           - The render inputs.
+ * @param {string}  args.method    - The wallet's funding source.
  * @param {Object}  args.wrapper   - The button wrapper to render into.
  * @param {Object}  args.config    - The wc_ppcp_sdk_v6 config object.
  * @param {string}  args.context   - The page context.
@@ -46,6 +41,7 @@ const FUNDING_SOURCE = 'apple_pay';
  * @return {Promise<void>} Resolves once the button is rendered, or skipped.
  */
 export async function renderApplePay( {
+	method,
 	wrapper,
 	config,
 	context,
@@ -58,6 +54,8 @@ export async function renderApplePay( {
 		return;
 	}
 
+	const settings = walletConfig( config, method );
+
 	// Own box, appended before the first await so the wrapper is non-empty by the
 	// time boot.js checks it and skips a redundant second render pass.
 	const container = document.createElement( 'div' );
@@ -66,7 +64,12 @@ export async function renderApplePay( {
 	// Apple's SDK is only needed for the <apple-pay-button> element below, so it
 	// loads alongside PayPal's config rather than before it.
 	const [ , applePayConfig ] = await Promise.all( [
-		loadAppleSdk( config.apple_pay.sdk_url ),
+		// The applepay-payments bundle ships this URL but only loads it for its
+		// basic session, which presents its own sheet; the custom session this
+		// module drives does not, so the load is ours. No global to verify
+		// afterwards, unlike Google's: eligibility is the native
+		// window.ApplePaySession, checked above.
+		loadScript( settings.sdk_url ),
 		session.config(),
 	] );
 
@@ -83,14 +86,7 @@ export async function renderApplePay( {
 	const sessionConfig =
 		session.formatConfigForPaymentRequest( applePayConfig );
 
-	if ( gateway ) {
-		revealGateway( gateway.id );
-		syncGatewayVisibility( {
-			methodId: gateway.id,
-			wrapperSelector: gateway.wrapper,
-			expressSelector: config.wrapper,
-		} );
-	}
+	revealWalletGateway( gateway, config );
 
 	const sheetTotal = watchSheetTotal( config, context );
 	const spinner = hasJQuery() ? Spinner.fullPage() : null;
@@ -124,7 +120,7 @@ export async function renderApplePay( {
 			buildApplePayRequest( sessionConfig, {
 				currencyCode: config.currency,
 				total,
-				displayName: config.apple_pay.display_name,
+				displayName: settings.display_name,
 				context,
 			} )
 		);
@@ -142,23 +138,11 @@ export async function renderApplePay( {
 		appleSession.oncancel = () => {
 			paying = false;
 			spinner?.unblock();
-			refreshCartUi();
+			refreshCartUi( context );
 		};
 
 		// Presents the sheet, and only then asks for merchant validation.
 		appleSession.begin();
-	}
-
-	/**
-	 * Refreshes the mini-cart fragments after an abandoned sheet.
-	 *
-	 * On the product page authorizing adds the product to the real cart, so a
-	 * shopper who then dismisses the sheet must still see the cart they now have.
-	 */
-	function refreshCartUi() {
-		if ( context === 'product' && hasJQuery() ) {
-			jQuery( document.body ).trigger( 'wc_fragment_refresh' );
-		}
 	}
 
 	/**
@@ -172,15 +156,15 @@ export async function renderApplePay( {
 		try {
 			// Already decoded by the v6 session, so it goes straight to Apple.
 			const { merchantSession } = await session.validateMerchant( {
-				displayName: config.apple_pay.display_name,
+				displayName: settings.display_name,
 				validationUrl: event.validationURL,
 			} );
 
 			appleSession.completeMerchantValidation( merchantSession );
 
-			recordDomainValidation( config, true );
+			recordDomainValidation( settings, true );
 		} catch ( error ) {
-			recordDomainValidation( config, false );
+			recordDomainValidation( settings, false );
 
 			// Nothing can be paid without a validated merchant, and the usual
 			// cause (an unregistered domain) is not something the shopper can
@@ -215,7 +199,7 @@ export async function renderApplePay( {
 				config,
 				context,
 				session,
-				fundingSource: FUNDING_SOURCE,
+				fundingSource: walletFundingSource( method ),
 				// Undefined on the express path, where the order belongs to the
 				// PayPal gateway as Venmo's and Pay Later's do.
 				paymentMethod: gateway?.id,
@@ -244,12 +228,13 @@ export async function renderApplePay( {
 
 			paying = false;
 			spinner?.unblock();
-			refreshCartUi();
+			refreshCartUi( context );
 			handleError( error );
 		}
 	}
 
-	const styles = config.apple_pay.styles?.[ context ] || {};
+	// renderWallet() only reaches this bridge when PHP styled this context.
+	const styles = walletButtonStyle( settings.styles[ context ] );
 
 	container.appendChild( createButton( styles, config.button_height, pay ) );
 }
@@ -276,7 +261,7 @@ function isDeviceEligible() {
  * A custom element registered by Apple's SDK, not something the PayPal SDK
  * renders, so the styling is applied as attributes and custom properties.
  *
- * @param {Object}   styles  - The button styles for this context.
+ * @param {Object}   styles  - The resolved button styles for this context.
  * @param {string}   height  - The height every payment button shares.
  * @param {Function} onClick - The click handler.
  * @return {HTMLElement} The button element.
@@ -284,16 +269,13 @@ function isDeviceEligible() {
 function createButton( styles, height, onClick ) {
 	const button = document.createElement( 'apple-pay-button' );
 
-	// Defaulted because settings leave these empty until the merchant picks a value,
-	// and Apple renders nothing at all for an empty locale.
-	button.setAttribute( 'buttonstyle', styles.color || 'black' );
-	button.setAttribute( 'type', styles.type || 'pay' );
-	button.setAttribute( 'locale', styles.language || 'en' );
+	button.setAttribute( 'buttonstyle', styles.color );
+	button.setAttribute( 'type', styles.type );
+	button.setAttribute( 'locale', styles.language );
 
 	// Custom properties, not attributes: the element takes its size and shape from
 	// its shadow DOM. A height is set at all because Apple's intrinsic one is far
-	// shorter than the rest of the checkout controls. Undefaulted, unlike the
-	// attributes above, since PHP always sends both.
+	// shorter than the rest of the checkout controls.
 	button.style.setProperty( '--apple-pay-button-height', height );
 	button.style.setProperty(
 		'--apple-pay-button-border-radius',

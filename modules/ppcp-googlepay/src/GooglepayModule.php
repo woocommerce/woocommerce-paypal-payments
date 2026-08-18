@@ -18,7 +18,6 @@ use WooCommerce\PayPalCommerce\Button\Helper\Context;
 use WooCommerce\PayPalCommerce\Googlepay\Endpoint\UpdatePaymentDataEndpoint;
 use WooCommerce\PayPalCommerce\Googlepay\Helper\GoogleProductStatus;
 use WooCommerce\PayPalCommerce\Googlepay\Helper\AvailabilityNotice;
-use WooCommerce\PayPalCommerce\SdkV6\Assets\SdkV6Manager;
 use WooCommerce\PayPalCommerce\Settings\Data\Definition\FeaturesDefinition;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExecutableModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ModuleClassNameIdTrait;
@@ -388,13 +387,12 @@ class GooglepayModule implements ServiceModule, ExecutableModule {
 	 * @return bool
 	 */
 	private static function v6_owns_current_page( ContainerInterface $c ): bool {
-		if ( ! $c->has( 'sdk-v6.manager' ) ) {
+		if ( ! $c->has( 'sdk-v6.owns-current-page' ) ) {
 			return false;
 		}
 
-		$manager = $c->get( 'sdk-v6.manager' );
-		assert( $manager instanceof SdkV6Manager );
+		$owns_current_page = $c->get( 'sdk-v6.owns-current-page' );
 
-		return $manager->should_load_on_current_page();
+		return $owns_current_page();
 	}
 }

@@ -14,23 +14,35 @@
 import { splitFullName } from '../utils/name';
 
 /**
- * Maps a Google Pay address to the PayPal address shape.
+ * Maps a wallet address to the PayPal address shape.
  *
- * Absent fields stay undefined so JSON.stringify drops them, leaving the
- * request body identical to v5's.
+ * Both wallets name every field the same way bar the street, which they are asked
+ * for separately. Absent fields stay undefined so JSON.stringify drops them,
+ * leaving the request body identical to v5's.
+ *
+ * @param {Object}   source       - A wallet address or contact.
+ * @param {string[]} addressLines - Its street lines, most significant first.
+ * @return {Object} The PayPal address.
+ */
+function paypalAddress( source, addressLines ) {
+	return {
+		country_code: source?.countryCode,
+		address_line_1: addressLines?.[ 0 ],
+		address_line_2: addressLines?.[ 1 ],
+		admin_area_1: source?.administrativeArea,
+		admin_area_2: source?.locality,
+		postal_code: source?.postalCode,
+	};
+}
+
+/**
+ * Maps a Google Pay address to the PayPal address shape.
  *
  * @param {Object} data - A Google Pay address (billingAddress or shippingAddress).
  * @return {Object} The PayPal address.
  */
 function googlePayAddress( data ) {
-	return {
-		country_code: data?.countryCode,
-		address_line_1: data?.address1,
-		address_line_2: data?.address2,
-		admin_area_1: data?.administrativeArea,
-		admin_area_2: data?.locality,
-		postal_code: data?.postalCode,
-	};
+	return paypalAddress( data, [ data?.address1, data?.address2 ] );
 }
 
 /**
@@ -80,21 +92,11 @@ export function googlePayShippingAddress( response ) {
 /**
  * Maps an Apple Pay contact to the PayPal address shape.
  *
- * Absent fields stay undefined so JSON.stringify drops them. Apple splits the
- * street over an addressLines array rather than into two named keys.
- *
  * @param {Object} contact - An Apple Pay contact (billingContact or shippingContact).
  * @return {Object} The PayPal address.
  */
 function applePayAddress( contact ) {
-	return {
-		country_code: contact?.countryCode,
-		address_line_1: contact?.addressLines?.[ 0 ],
-		address_line_2: contact?.addressLines?.[ 1 ],
-		admin_area_1: contact?.administrativeArea,
-		admin_area_2: contact?.locality,
-		postal_code: contact?.postalCode,
-	};
+	return paypalAddress( contact, contact?.addressLines );
 }
 
 /**

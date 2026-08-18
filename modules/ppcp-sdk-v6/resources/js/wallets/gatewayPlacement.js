@@ -51,7 +51,7 @@ let listening = false;
  *
  * @param {string} methodId - The WC payment method id.
  */
-export function revealGateway( methodId ) {
+function revealGateway( methodId ) {
 	document
 		.querySelectorAll( `style[data-hide-gateway="${ methodId }"]` )
 		.forEach( ( style ) => style.remove() );
@@ -153,7 +153,7 @@ function updateVisibility() {
  * @param {?string} [args.expressSelector] - Selector of the express buttons'
  *                                           container, which PayPal's row owns.
  */
-export function syncGatewayVisibility( {
+function syncGatewayVisibility( {
 	methodId,
 	wrapperSelector,
 	expressSelector,
@@ -175,4 +175,27 @@ export function syncGatewayVisibility( {
 		'payment_method_selected updated_checkout',
 		updateVisibility
 	);
+}
+
+/**
+ * Places a wallet that is its own payment-method row, if it is one.
+ *
+ * The reveal and the exclusivity sync are one step for the bridges: a revealed row
+ * that nothing hid "Place order" for offers two routes to the same order. Does
+ * nothing in the express contexts, where the wallet has no row of its own.
+ *
+ * @param {?Object} gateway - The { id, wrapper } of the wallet's row.
+ * @param {Object}  config  - The wc_ppcp_sdk_v6 config object.
+ */
+export function revealWalletGateway( gateway, config ) {
+	if ( ! gateway ) {
+		return;
+	}
+
+	revealGateway( gateway.id );
+	syncGatewayVisibility( {
+		methodId: gateway.id,
+		wrapperSelector: gateway.wrapper,
+		expressSelector: config.wrapper,
+	} );
 }

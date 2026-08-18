@@ -1,4 +1,4 @@
-import { loadScript, loadGoogleSdk, loadAppleSdk } from './scriptLoaders';
+import { loadScript, loadGoogleSdk } from './scriptLoaders';
 
 afterEach( () => {
 	document.head.innerHTML = '';
@@ -80,24 +80,3 @@ describe( 'loadGoogleSdk', () => {
 	} );
 } );
 
-describe( 'loadAppleSdk', () => {
-	test( 'resolves once the script loads, without checking for any global', async () => {
-		const url = 'https://example.test/apple-pay-sdk.js';
-
-		const pending = loadAppleSdk( url );
-		document.head.querySelector( `script[src="${ url }"]` ).onload();
-
-		await expect( pending ).resolves.toBeUndefined();
-	} );
-
-	test( 'rejects when the script fails to load', async () => {
-		const url = 'https://example.test/apple-pay-sdk-failing.js';
-
-		const pending = loadAppleSdk( url );
-		document.head.querySelector( `script[src="${ url }"]` ).onerror();
-
-		await expect( pending ).rejects.toThrow(
-			`Failed to load script: ${ url }`
-		);
-	} );
-} );

@@ -239,8 +239,7 @@ class SdkV6Module implements ServiceModule, ExtendingModule, ExecutableModule {
 					// Their own containers, next to the express wrapper rather
 					// than inside it: as payment-method rows these wallets are
 					// shown and hidden by the buyer's gateway selection.
-					$manager->render_google_pay_gateway_wrapper();
-					$manager->render_apple_pay_gateway_wrapper();
+					$manager->render_wallet_gateway_wrappers();
 				}
 			);
 		}

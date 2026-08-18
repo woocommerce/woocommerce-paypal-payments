@@ -67,12 +67,13 @@ describe.each( walletCases )(
 			} );
 		}
 
-		test( 'renders with the wrapper, config, context, session and no gateway on the express path', async () => {
+		test( 'renders with the method, wrapper, config, context, session and no gateway on the express path', async () => {
 			const wallets = expressArgs();
 
 			await renderWallets( wallets );
 
 			expect( render ).toHaveBeenCalledWith( {
+				method: sessionKey,
 				wrapper: wallets.wrapper,
 				config: wallets.config,
 				context: wallets.context,

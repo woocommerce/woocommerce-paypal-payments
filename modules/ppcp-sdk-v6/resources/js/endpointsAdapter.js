@@ -25,6 +25,24 @@ export const navigation = {
 };
 
 /**
+ * The form describing the viewed product.
+ *
+ * Exported because the Apple Pay sheet total watches this same form for changes,
+ * and the two must not disagree about which one it is.
+ *
+ * @return {?HTMLElement} The form, or null when the page has none.
+ */
+export function productForm() {
+	// Classic themes render form.cart, block themes
+	// form.wc-block-add-to-cart-with-options; locate via the field.
+	const idElement =
+		document.querySelector( 'form [name="add-to-cart"]' ) ||
+		document.querySelector( 'form [name="product_id"]' );
+
+	return idElement?.closest( 'form' ) ?? null;
+}
+
+/**
  * Collects products from the single product form for ppc-change-cart.
  *
  * Reuses SingleProductActionHandler, which handles simple, variable, grouped and
@@ -34,12 +52,7 @@ export const navigation = {
  * @throws {Error} When the product form cannot be found.
  */
 function getProductsFromForm() {
-	// Classic themes render form.cart, block themes
-	// form.wc-block-add-to-cart-with-options; locate via the field.
-	const idElement =
-		document.querySelector( 'form [name="add-to-cart"]' ) ||
-		document.querySelector( 'form [name="product_id"]' );
-	const form = idElement?.closest( 'form' );
+	const form = productForm();
 	if ( ! form ) {
 		throw new Error( 'Product form not found.' );
 	}

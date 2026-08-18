@@ -103,6 +103,9 @@ async function renderWallet( method, { wrapper, config, context, sessions } ) {
 	}
 
 	await RENDERERS[ method ]( {
+		// Passed down so a bridge never has to name itself: the funding source
+		// and the config subtree both follow from it.
+		method,
 		wrapper: target,
 		config,
 		context,

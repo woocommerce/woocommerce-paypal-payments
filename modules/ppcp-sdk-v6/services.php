@@ -21,6 +21,29 @@ use WooCommerce\PayPalCommerce\SdkV6\Helper\GooglePayConfig;
 use WooCommerce\PayPalCommerce\SdkV6\Helper\RateLimiter;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 
+/**
+ * Builds a wallet's availability check from its own module's services.
+ *
+ * Reports false when that module is not loaded: its services are absent, so the
+ * wallet cannot be offered. Each wallet keeps its own guards: the two modules
+ * load independently.
+ *
+ * @param ContainerInterface $container The plugin container.
+ * @param string             $module    The wallet module's service prefix.
+ * @return callable(): bool
+ */
+$wallet_availability = static function ( ContainerInterface $container, string $module ): callable {
+	return static function () use ( $container, $module ): bool {
+		if ( ! $container->has( "$module.eligibility.check" ) || ! $container->has( "$module.available" ) ) {
+			return false;
+		}
+
+		$is_eligible = $container->get( "$module.eligibility.check" );
+
+		return $is_eligible() && $container->get( "$module.available" );
+	};
+};
+
 return array(
 
 	'sdk-v6.asset-getter'           => static function ( ContainerInterface $container ): AssetGetter {
@@ -36,42 +59,37 @@ return array(
 		);
 	},
 
-	'sdk-v6.google-pay-config'      => static function ( ContainerInterface $container ): GooglePayConfig {
-		$eligibility_check = static function () use ( $container ): bool {
-			// Google Pay module is not loaded, this wallet is unavailable.
-			if ( ! $container->has( 'googlepay.eligibility.check' ) || ! $container->has( 'googlepay.available' ) ) {
-				return false;
-			}
-
-			$is_eligible = $container->get( 'googlepay.eligibility.check' );
-
-			return $is_eligible() && $container->get( 'googlepay.available' );
-		};
-
+	'sdk-v6.google-pay-config'      => static function ( ContainerInterface $container ) use ( $wallet_availability ): GooglePayConfig {
 		return new GooglePayConfig(
 			$container->get( 'settings.settings-provider' ),
 			$container->get( 'wc-subscriptions.helper' ),
-			$eligibility_check
+			$wallet_availability( $container, 'googlepay' )
 		);
 	},
 
-	'sdk-v6.apple-pay-config'       => static function ( ContainerInterface $container ): ApplePayConfig {
-		$eligibility_check = static function () use ( $container ): bool {
-			// Apple Pay module is not loaded, this wallet is unavailable.
-			if ( ! $container->has( 'applepay.eligibility.check' ) || ! $container->has( 'applepay.available' ) ) {
-				return false;
-			}
-
-			$is_eligible = $container->get( 'applepay.eligibility.check' );
-
-			return $is_eligible() && $container->get( 'applepay.available' );
-		};
-
+	'sdk-v6.apple-pay-config'       => static function ( ContainerInterface $container ) use ( $wallet_availability ): ApplePayConfig {
 		return new ApplePayConfig(
 			$container->get( 'settings.settings-provider' ),
 			$container->get( 'wc-subscriptions.helper' ),
-			$eligibility_check
+			$wallet_availability( $container, 'applepay' )
 		);
+	},
+
+	/**
+	 * Whether this module renders the PayPal stack on the current page.
+	 *
+	 * A callable rather than a bool: the answer depends on the query, which is
+	 * unresolved while the container is being built. Exposed as a service so the
+	 * wallet modules can ask without naming SdkV6Manager, which their own
+	 * feature flags may leave unloaded.
+	 */
+	'sdk-v6.owns-current-page'      => static function ( ContainerInterface $container ): callable {
+		return static function () use ( $container ): bool {
+			$manager = $container->get( 'sdk-v6.manager' );
+			assert( $manager instanceof SdkV6Manager );
+
+			return $manager->should_load_on_current_page();
+		};
 	},
 
 	'sdk-v6.manager'                => static function ( ContainerInterface $container ): SdkV6Manager {

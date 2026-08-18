@@ -11,22 +11,24 @@
 
 import Spinner from '@ppcp-button/Helper/Spinner';
 import { hasJQuery } from '../utils/api';
-import { FundingSources } from '../utils/fundingSources';
 import { handleError } from '../utils/errorHandler';
 import { loadGoogleSdk } from '../utils/scriptLoaders';
-import { revealGateway, syncGatewayVisibility } from './gatewayPlacement';
+import { revealWalletGateway } from './gatewayPlacement';
 import {
 	buildPaymentDataRequest,
 	buildReadyToPayRequest,
 } from './googlePayRequest';
+import { walletButtonStyle } from './walletButtonStyle';
 import { googlePayPayer, googlePayShippingAddress } from './walletContacts';
 import { payWithWallet } from './walletPayment';
+import { walletConfig, walletFundingSource } from './walletRegistry';
 import { resolveWalletTotal } from './walletTotal';
 
 /**
  * Renders the Google Pay button and wires its click to a payment.
  *
  * @param {Object}  args           - The render inputs.
+ * @param {string}  args.method    - The wallet's funding source.
  * @param {Object}  args.wrapper   - The button wrapper to render into.
  * @param {Object}  args.config    - The wc_ppcp_sdk_v6 config object.
  * @param {string}  args.context   - The page context.
@@ -36,6 +38,7 @@ import { resolveWalletTotal } from './walletTotal';
  * @return {Promise<void>} Resolves once the button is rendered, or skipped.
  */
 export async function renderGooglePay( {
+	method,
 	wrapper,
 	config,
 	context,
@@ -46,6 +49,8 @@ export async function renderGooglePay( {
 	// PayPal buttons — and sizes the button to that box, so the shared height goes
 	// here. Appended before the first await so boot.js's emptiness check skips a
 	// redundant later pass.
+	const settings = walletConfig( config, method );
+
 	const container = document.createElement( 'div' );
 	container.style.height = config.button_height;
 	wrapper.appendChild( container );
@@ -60,12 +65,12 @@ export async function renderGooglePay( {
 	// DEVELOPER_ERROR. getGooglePayConfig() already returns a Google-shaped
 	// request config, as v5's config() does.
 	const [ , sessionConfig ] = await Promise.all( [
-		loadGoogleSdk( config.google_pay.sdk_url ),
+		loadGoogleSdk( settings.sdk_url ),
 		session.getGooglePayConfig(),
 	] );
 
 	const client = new window.google.payments.api.PaymentsClient( {
-		environment: config.google_pay.environment,
+		environment: settings.environment,
 	} );
 
 	const { result } = await client.isReadyToPay(
@@ -79,14 +84,7 @@ export async function renderGooglePay( {
 		return;
 	}
 
-	if ( gateway ) {
-		revealGateway( gateway.id );
-		syncGatewayVisibility( {
-			methodId: gateway.id,
-			wrapperSelector: gateway.wrapper,
-			expressSelector: config.wrapper,
-		} );
-	}
+	revealWalletGateway( gateway, config );
 
 	const spinner = hasJQuery() ? Spinner.fullPage() : null;
 	let paying = false;
@@ -126,7 +124,7 @@ export async function renderGooglePay( {
 				config,
 				context,
 				session,
-				fundingSource: FundingSources.GOOGLEPAY,
+				fundingSource: walletFundingSource( method ),
 				// Only when it is its own row: on the express path the order
 				// belongs to the PayPal gateway, as Venmo's and Pay Later's do,
 				// so this stays undefined and the endpoints apply that default.
@@ -151,16 +149,14 @@ export async function renderGooglePay( {
 		}
 	}
 
-	const styles = config.google_pay.styles?.[ context ] || {};
+	// renderWallet() only reaches this bridge when PHP styled this context.
+	const styles = walletButtonStyle( settings.styles[ context ] );
 
 	container.appendChild(
 		client.createButton( {
-			// Defaults as in v5: the settings leave these empty when the
-			// merchant never picked a value, and Google rejects an empty
-			// buttonLocale.
-			buttonColor: styles.color || 'black',
-			buttonType: styles.type || 'pay',
-			buttonLocale: styles.language || 'en',
+			buttonColor: styles.color,
+			buttonType: styles.type,
+			buttonLocale: styles.language,
 			buttonRadius: styles.borderRadius,
 			buttonSizeMode: 'fill',
 			// The button only needs the base card method, as in v5.

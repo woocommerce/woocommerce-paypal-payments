@@ -1,6 +1,6 @@
-const mockLoadAppleSdk = jest.fn();
+const mockLoadScript = jest.fn();
 jest.mock( '../utils/scriptLoaders', () => ( {
-	loadAppleSdk: ( ...args ) => mockLoadAppleSdk( ...args ),
+	loadScript: ( ...args ) => mockLoadScript( ...args ),
 } ) );
 
 const mockHasJQuery = jest.fn( () => true );
@@ -48,11 +48,9 @@ jest.mock( './applePayValidation', () => ( {
 		mockRecordDomainValidation( ...args ),
 } ) );
 
-const mockRevealGateway = jest.fn();
-const mockSyncGatewayVisibility = jest.fn();
+const mockRevealWalletGateway = jest.fn();
 jest.mock( './gatewayPlacement', () => ( {
-	revealGateway: ( ...args ) => mockRevealGateway( ...args ),
-	syncGatewayVisibility: ( ...args ) => mockSyncGatewayVisibility( ...args ),
+	revealWalletGateway: ( ...args ) => mockRevealWalletGateway( ...args ),
 } ) );
 
 const mockSpinnerBlock = jest.fn();
@@ -98,6 +96,12 @@ const baseConfig = ( overrides = {} ) => ( {
 				language: 'de',
 				borderRadius: '8px',
 			},
+			checkout: {
+				color: 'white',
+				type: 'pay',
+				language: 'de',
+				borderRadius: '8px',
+			},
 		},
 	},
 	currency: 'USD',
@@ -134,6 +138,7 @@ function makeSession( overrides = {} ) {
  */
 async function render( overrides = {} ) {
 	const args = {
+		method: 'applepay',
 		wrapper: document.createElement( 'div' ),
 		config: baseConfig(),
 		context: 'product',
@@ -180,7 +185,7 @@ let mockJQueryTrigger;
 beforeEach( () => {
 	jest.clearAllMocks();
 	mockHasJQuery.mockReturnValue( true );
-	mockLoadAppleSdk.mockResolvedValue( undefined );
+	mockLoadScript.mockResolvedValue( undefined );
 	mockBuildApplePayRequest.mockReturnValue( 'APPLE_REQUEST' );
 	mockWatchSheetTotal.mockReturnValue( { get: jest.fn( () => '12.34' ) } );
 	mockApplePayPayer.mockReturnValue( 'PAYER_SENTINEL' );
@@ -218,7 +223,7 @@ describe( 'renderApplePay()', () => {
 		const { wrapper } = await render( { session } );
 
 		expect( wrapper.childElementCount ).toBe( 0 );
-		expect( mockLoadAppleSdk ).not.toHaveBeenCalled();
+		expect( mockLoadScript ).not.toHaveBeenCalled();
 		expect( session.config ).not.toHaveBeenCalled();
 	} );
 
@@ -232,13 +237,14 @@ describe( 'renderApplePay()', () => {
 		expect( wrapper.childElementCount ).toBe( 0 );
 	} );
 
-	test( 'appends the button container before loadAppleSdk resolves', () => {
+	test( 'appends the button container before loadScript resolves', () => {
 		// Pins the load-bearing order: boot.js's emptiness check must see a
 		// child synchronously, before any await, so it never double-renders.
 		const wrapper = document.createElement( 'div' );
-		mockLoadAppleSdk.mockReturnValue( new Promise( () => {} ) );
+		mockLoadScript.mockReturnValue( new Promise( () => {} ) );
 
 		renderApplePay( {
+			method: 'applepay',
 			wrapper,
 			config: baseConfig(),
 			context: 'product',
@@ -285,25 +291,25 @@ describe( 'renderApplePay()', () => {
 } );
 
 describe( 'as its own payment-method row (gateway set)', () => {
-	test( 'reveals and syncs the row once eligible', async () => {
-		await render( { gateway } );
+	test( 'reveals the row once eligible', async () => {
+		const { config } = await render( { gateway } );
 
-		expect( mockRevealGateway ).toHaveBeenCalledWith( 'ppcp-applepay' );
-		expect( mockSyncGatewayVisibility ).toHaveBeenCalledWith( {
-			methodId: 'ppcp-applepay',
-			wrapperSelector: '#gateway-row',
-			expressSelector: '#express-wrapper',
-		} );
+		expect( mockRevealWalletGateway ).toHaveBeenCalledWith(
+			gateway,
+			config
+		);
 	} );
 
-	test( 'never reveals or syncs on the express path', async () => {
-		await render();
+	test( 'passes no gateway on the express path, so nothing is revealed', async () => {
+		const { config } = await render();
 
-		expect( mockRevealGateway ).not.toHaveBeenCalled();
-		expect( mockSyncGatewayVisibility ).not.toHaveBeenCalled();
+		expect( mockRevealWalletGateway ).toHaveBeenCalledWith(
+			undefined,
+			config
+		);
 	} );
 
-	test( 'never reveals or syncs a row the config vetoes', async () => {
+	test( 'never reveals a row the config vetoes', async () => {
 		const session = makeSession( {
 			config: jest
 				.fn()
@@ -312,8 +318,7 @@ describe( 'as its own payment-method row (gateway set)', () => {
 
 		await render( { gateway, session } );
 
-		expect( mockRevealGateway ).not.toHaveBeenCalled();
-		expect( mockSyncGatewayVisibility ).not.toHaveBeenCalled();
+		expect( mockRevealWalletGateway ).not.toHaveBeenCalled();
 	} );
 } );
 
@@ -484,7 +489,7 @@ describe( 'onvalidatemerchant', () => {
 			'MERCHANT_SESSION'
 		);
 		expect( mockRecordDomainValidation ).toHaveBeenCalledWith(
-			config,
+			config.apple_pay,
 			true
 		);
 	} );
@@ -506,7 +511,7 @@ describe( 'onvalidatemerchant', () => {
 
 		expect( appleSession.abort ).toHaveBeenCalledTimes( 1 );
 		expect( mockRecordDomainValidation ).toHaveBeenCalledWith(
-			config,
+			config.apple_pay,
 			false
 		);
 		expect( mockHandleError ).toHaveBeenCalledTimes( 1 );

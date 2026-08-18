@@ -40,11 +40,9 @@ jest.mock( './googlePayRequest', () => ( {
 		mockBuildPaymentDataRequest( ...args ),
 } ) );
 
-const mockRevealGateway = jest.fn();
-const mockSyncGatewayVisibility = jest.fn();
+const mockRevealWalletGateway = jest.fn();
 jest.mock( './gatewayPlacement', () => ( {
-	revealGateway: ( ...args ) => mockRevealGateway( ...args ),
-	syncGatewayVisibility: ( ...args ) => mockSyncGatewayVisibility( ...args ),
+	revealWalletGateway: ( ...args ) => mockRevealWalletGateway( ...args ),
 } ) );
 
 const mockSpinnerBlock = jest.fn();
@@ -153,6 +151,7 @@ function installPaymentsClient() {
  */
 async function render( overrides = {} ) {
 	const args = {
+		method: 'googlepay',
 		wrapper: document.createElement( 'div' ),
 		config: baseConfig(),
 		context: 'product',
@@ -182,6 +181,7 @@ describe( 'renderGooglePay()', () => {
 		mockLoadGoogleSdk.mockReturnValue( new Promise( () => {} ) );
 
 		renderGooglePay( {
+			method: 'googlepay',
 			wrapper,
 			config: baseConfig(),
 			context: 'product',
@@ -304,31 +304,30 @@ describe( 'renderGooglePay()', () => {
 describe( 'as its own payment-method row (gateway set)', () => {
 	const gateway = { id: 'ppcp-googlepay', wrapper: '#gateway-row' };
 
-	test( 'reveals and syncs the row once isReadyToPay resolves truthy', async () => {
-		await render( { gateway } );
+	test( 'reveals the row once isReadyToPay resolves truthy', async () => {
+		const { config } = await render( { gateway } );
 
-		expect( mockRevealGateway ).toHaveBeenCalledWith( 'ppcp-googlepay' );
-		expect( mockSyncGatewayVisibility ).toHaveBeenCalledWith( {
-			methodId: 'ppcp-googlepay',
-			wrapperSelector: '#gateway-row',
-			expressSelector: '#express-wrapper',
-		} );
+		expect( mockRevealWalletGateway ).toHaveBeenCalledWith(
+			gateway,
+			config
+		);
 	} );
 
-	test( 'never reveals or syncs on the express path', async () => {
-		await render();
+	test( 'passes no gateway on the express path, so nothing is revealed', async () => {
+		const { config } = await render();
 
-		expect( mockRevealGateway ).not.toHaveBeenCalled();
-		expect( mockSyncGatewayVisibility ).not.toHaveBeenCalled();
+		expect( mockRevealWalletGateway ).toHaveBeenCalledWith(
+			undefined,
+			config
+		);
 	} );
 
-	test( 'never reveals or syncs an ineligible row', async () => {
+	test( 'never reveals an ineligible row', async () => {
 		mockIsReadyToPay.mockResolvedValue( { result: false } );
 
 		await render( { gateway } );
 
-		expect( mockRevealGateway ).not.toHaveBeenCalled();
-		expect( mockSyncGatewayVisibility ).not.toHaveBeenCalled();
+		expect( mockRevealWalletGateway ).not.toHaveBeenCalled();
 	} );
 } );
 

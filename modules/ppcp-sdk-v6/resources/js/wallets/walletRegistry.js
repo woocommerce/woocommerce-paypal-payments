@@ -18,6 +18,9 @@ const WALLETS = {
 	[ FundingSources.APPLEPAY ]: {
 		configKey: 'apple_pay',
 		sdkComponent: 'applepay-payments',
+		// The only wallet with a second identity, hence the only entry that
+		// overrides the SDK's spelling.
+		fundingSource: 'apple_pay',
 	},
 };
 
@@ -25,6 +28,21 @@ const WALLETS = {
  * The funding sources that are wallets, as opposed to express buttons.
  */
 export const WALLET_METHODS = Object.keys( WALLETS );
+
+/**
+ * The funding_source the WC AJAX endpoints know a wallet by.
+ *
+ * The SDK's own spelling, unless the wallet answers to a second one:
+ * ApplepayModule's ppcp_create_order_request_body_data filter matches the
+ * underscored 'apple_pay', and an express-context order that misses it loses its
+ * payment_source.
+ *
+ * @param {string} method - The funding source, as the SDK spells it.
+ * @return {string} The spelling the endpoints expect.
+ */
+export function walletFundingSource( method ) {
+	return WALLETS[ method ]?.fundingSource ?? method;
+}
 
 /**
  * A wallet's config subtree, so callers do not name the key themselves.

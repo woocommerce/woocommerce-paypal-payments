@@ -51,21 +51,3 @@ export async function loadGoogleSdk( sdkUrl ) {
 		throw new Error( 'Google Pay global not found after script load.' );
 	}
 }
-
-/**
- * Loads Apple's SDK, which registers the <apple-pay-button> custom element.
- *
- * The applepay-payments bundle ships this URL but only loads it for its basic
- * session, which presents its own sheet; the custom session this module drives does
- * not, so the load is ours.
- *
- * Unlike loadGoogleSdk() this verifies no global: eligibility is decided by the
- * native window.ApplePaySession, which the caller checks. Only a failed load
- * rejects.
- *
- * @param {string} sdkUrl - The apple-pay-sdk.js URL.
- * @return {Promise<void>} Resolves once the script is loaded.
- */
-export async function loadAppleSdk( sdkUrl ) {
-	await loadScript( sdkUrl );
-}

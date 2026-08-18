@@ -11,10 +11,9 @@ namespace WooCommerce\PayPalCommerce\SdkV6\Helper;
 
 use WooCommerce\PayPalCommerce\Googlepay\GooglePayGateway;
 use WooCommerce\PayPalCommerce\Googlepay\Helper\PropertiesDictionary;
-use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
-use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
+use WooCommerce\PayPalCommerce\Settings\DTO\LocationStylingDTO;
 
-class GooglePayConfig {
+class GooglePayConfig extends WalletConfig {
 
 	/**
 	 * Google's buttonRadius expects an integer, not a CSS length.
@@ -26,79 +25,6 @@ class GooglePayConfig {
 
 	private const DEFAULT_RADIUS = 24;
 
-	private SettingsProvider $settings_provider;
-	private SubscriptionHelper $subscription_helper;
-
-	/**
-	 * @var callable(): bool
-	 */
-	private $is_available;
-
-	public function __construct(
-		SettingsProvider $settings_provider,
-		SubscriptionHelper $subscription_helper,
-		callable $is_available
-	) {
-		$this->settings_provider   = $settings_provider;
-		$this->subscription_helper = $subscription_helper;
-		$this->is_available        = $is_available;
-	}
-
-	/**
-	 * Whether Google Pay should render in the given page context.
-	 */
-	public function should_render( string $context ): bool {
-		// The product gate inspects the cart, which WooCommerce loads on
-		// wp_loaded. Called earlier it silently sees an empty cart and would
-		// wrongly report the wallet as supported, so refuse rather than guess.
-		if ( ! did_action( 'wp_loaded' ) ) {
-			_doing_it_wrong(
-				__METHOD__,
-				esc_html__(
-					'Google Pay availability cannot be determined before the wp_loaded action has run.',
-					'woocommerce-paypal-payments'
-				),
-				'4.1.3'
-			);
-
-			return false;
-		}
-
-		return $this->enabled_for_context( $context )
-			&& ( $this->is_available )()
-			&& $this->is_product_supported( $context );
-	}
-
-	/**
-	 * Whether GooglePay is enabled in settings for a given location.
-	 */
-	private function enabled_for_context( string $context ): bool {
-		if ( ! $this->settings_provider->googlepay_enabled() ) {
-			return false;
-		}
-
-		$styling = $this->settings_provider->googlepay_styles( $context );
-
-		return $styling->enabled
-			&& in_array( GooglePayGateway::ID, $styling->methods, true );
-	}
-
-	/**
-	 * Whether the cart/context contains only supported products.
-	 * Google Pay cannot be offered for subscription (it has no vaulting).
-	 */
-	private function is_product_supported( string $context ): bool {
-		$contains_subscription = $this->subscription_helper->locations_with_subscription_product();
-
-		// Whether the currently displayed product is supported.
-		if ( 'product' === $context ) {
-			return false === ( $contains_subscription['product'] ?? false );
-		}
-
-		// All non-product pages only need to inspect the cart contents.
-		return false === ( $contains_subscription['cart'] ?? false );
-	}
-
 	/**
 	 * The Google Pay button styling for a page context (product, cart,
 	 * checkout, mini-cart). Only meaningful where should_render() is true.
@@ -106,7 +32,7 @@ class GooglePayConfig {
 	 * @return array{color: string, type: string, language: string, borderRadius: int}
 	 */
 	public function styles( string $context ): array {
-		$styling = $this->settings_provider->googlepay_styles( $context );
+		$styling = $this->wallet_styles( $context );
 
 		// SettingsProvider runs these through the Google Pay module's mapping
 		// filters, but those only exist while that module is loaded. Mapping
@@ -125,5 +51,24 @@ class GooglePayConfig {
 			'language'     => PropertiesDictionary::map_language( $this->settings_provider->googlepay_button_language() ),
 			'borderRadius' => self::RADIUS_MAP[ $styling->shape ] ?? self::DEFAULT_RADIUS,
 		);
+	}
+
+	protected function too_early_notice(): string {
+		return esc_html__(
+			'Google Pay availability cannot be determined before the wp_loaded action has run.',
+			'woocommerce-paypal-payments'
+		);
+	}
+
+	protected function wallet_enabled(): bool {
+		return $this->settings_provider->googlepay_enabled();
+	}
+
+	protected function wallet_styles( string $context ): LocationStylingDTO {
+		return $this->settings_provider->googlepay_styles( $context );
+	}
+
+	protected function gateway_id(): string {
+		return GooglePayGateway::ID;
 	}
 }

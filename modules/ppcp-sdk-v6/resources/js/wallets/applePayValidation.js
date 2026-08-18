@@ -14,12 +14,12 @@
  * Never throws: this is bookkeeping for an admin notice, and a shopper mid-sheet
  * must not be shown an error because it failed.
  *
- * @param {Object}  config  - The wc_ppcp_sdk_v6 config object.
- * @param {boolean} isValid - Whether validateMerchant() succeeded.
+ * @param {Object}  settings - The Apple Pay config subtree.
+ * @param {boolean} isValid  - Whether validateMerchant() succeeded.
  * @return {Promise<void>} Resolves once reported, or once the attempt failed.
  */
-export async function recordDomainValidation( config, isValid ) {
-	const validation = config.apple_pay?.validation;
+export async function recordDomainValidation( settings, isValid ) {
+	const validation = settings?.validation;
 	if ( ! validation?.endpoint ) {
 		return;
 	}

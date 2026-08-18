@@ -5,6 +5,7 @@
  */
 
 import { FundingSources } from './utils/fundingSources';
+import { WALLET_METHODS } from './wallets/walletRegistry';
 
 /**
  * Checks one method without letting a failure sink the whole check.
@@ -55,17 +56,12 @@ export async function checkEligibility(
 		[ FundingSources.PAYLATER ]: methods.isEligible(
 			FundingSources.PAYLATER
 		),
-		// Safe-checked because their components are only loaded on some pages.
-		[ FundingSources.GOOGLEPAY ]: isEligibleSafely(
-			methods,
-			FundingSources.GOOGLEPAY
-		),
-		[ FundingSources.APPLEPAY ]: isEligibleSafely(
-			methods,
-			FundingSources.APPLEPAY
-		),
 		payLaterDetails: null,
 	};
+
+	for ( const method of WALLET_METHODS ) {
+		result[ method ] = isEligibleSafely( methods, method );
+	}
 
 	if ( result[ FundingSources.PAYLATER ] ) {
 		try {

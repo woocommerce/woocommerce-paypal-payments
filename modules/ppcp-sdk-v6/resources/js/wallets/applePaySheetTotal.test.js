@@ -8,6 +8,9 @@ const mockFetchCartTotal = jest.fn();
 jest.mock( '../endpointsAdapter', () => ( {
 	simulateCart: ( ...args ) => mockSimulateCart( ...args ),
 	fetchCartTotal: ( ...args ) => mockFetchCartTotal( ...args ),
+	// Not stubbed: it only reads the DOM the fixtures below build, and the
+	// selector pair it uses must live in one place.
+	productForm: jest.requireActual( '../endpointsAdapter' ).productForm,
 } ) );
 
 const mockHasJQuery = jest.fn( () => true );

@@ -9,7 +9,7 @@ import {
 	handleShippingAddressChange,
 	handleShippingOptionsChange,
 } from './shippingHandler';
-import { hasJQuery } from '../utils/api';
+import { refreshCartUi } from '../utils/cartUi';
 import { handleError } from '../utils/errorHandler';
 import { FundingSources } from '../utils/fundingSources';
 import { WALLET_METHODS } from '../wallets/walletRegistry';
@@ -31,20 +31,6 @@ const SESSION_FACTORIES = {
  * down.
  */
 export const SUPPORTED_METHODS = Object.keys( SESSION_FACTORIES );
-
-/**
- * Refreshes the cart UI after an abandoned or failed session.
- *
- * The button click added the product to the real cart, so the mini-cart
- * fragments must reflect that even when the buyer does not complete.
- *
- * @param {string} context - The page context.
- */
-function refreshCartUi( context ) {
-	if ( context === 'product' && hasJQuery() ) {
-		jQuery( document.body ).trigger( 'wc_fragment_refresh' );
-	}
-}
 
 /**
  * Creates a one-time payment session for the given method.
