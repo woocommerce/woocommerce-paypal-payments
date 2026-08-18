@@ -88,6 +88,24 @@ class RecaptchaTest extends TestCase {
 	}
 
 	/**
+	 * Stubs WC() with a session that reports a logged-in customer id and an empty cart.
+	 *
+	 * Giving verify_v3()/verify_v2() a customer id lets check_cached_verification() skip
+	 * its "no customer identifier" branch, which logs to the shared logger — keeping the
+	 * shared logger's only possible call site, for these tests, the one under test.
+	 */
+	private function stub_wc_session_and_cart(): void {
+		$session = Mockery::mock();
+		$session->shouldReceive( 'get_customer_id' )->andReturn( 42 );
+
+		$woocommerce          = Mockery::mock();
+		$woocommerce->session = $session;
+		$woocommerce->cart    = null;
+
+		when( 'WC' )->justReturn( $woocommerce );
+	}
+
+	/**
 	 * Stubs WC()->payment_gateways->get_available_payment_gateways() to return the given
 	 * gateway IDs as available, for has_protected_gateway_on_current_page() to check against.
 	 *
@@ -345,5 +363,79 @@ class RecaptchaTest extends TestCase {
 			'ppcp-recaptcha-v2-container',
 			$this->make_testee( $settings_status )->render_v2_container()
 		);
+	}
+
+	/**
+	 * Stubs the API request/response plumbing so a v3 verify call is rejected
+	 * (score/success below threshold), independent of which logger receives
+	 * the resulting rejection log entry.
+	 */
+	private function stub_rejected_v3_verification(): void {
+		when( 'is_wp_error' )->justReturn( false );
+		when( 'wp_remote_post' )->justReturn( array() );
+		when( 'wp_remote_retrieve_body' )->justReturn( json_encode( array( 'success' => false, 'score' => 0.1 ) ) );
+		when( 'apply_filters' )->returnArg( 2 );
+		when( 'wp_send_json_error' )->justReturn( null );
+		when( 'get_transient' )->justReturn( false );
+
+		$this->stub_wc_session_and_cart();
+	}
+
+	/**
+	 * GIVEN reCAPTCHA's "Log rejected attempts" setting is on
+	 * WHEN a v3 reCAPTCHA verification is rejected
+	 * THEN the rejection is written to the dedicated rejection logger
+	 * AND the shared, plugin-wide logger (which becomes a NullLogger unless the separate
+	 *     "Enable logging" setting is on) never receives any call
+	 * AND the logged context carries the request data and cart contents, but not a
+	 *     'source' key
+	 * AND the token, version and legacy 'g-recaptcha-response' fields are stripped from
+	 *     the logged request data.
+	 */
+	public function test_v3_rejection_logs_to_rejection_logger_with_sanitized_context_and_never_touches_shared_logger(): void {
+		$this->stub_rejected_v3_verification();
+
+		$settings_status = Mockery::mock( SettingsStatus::class );
+
+		// A bare mock with no stubbed methods: any unexpected call (e.g. to the shared
+		// logger) makes Mockery fail the test.
+		$shared_logger = Mockery::mock( LoggerInterface::class );
+
+		$rejection_counter = Mockery::mock( PersistentCounter::class );
+		$rejection_counter->shouldReceive( 'increment' )->once();
+
+		$captured_context = null;
+		$rejection_logger = Mockery::mock( LoggerInterface::class );
+		$rejection_logger->shouldReceive( 'debug' )->once()->andReturnUsing(
+			function ( string $message, array $context ) use ( &$captured_context ): void {
+				$captured_context = $context;
+			}
+		);
+
+		$testee = $this->make_testee(
+			$settings_status,
+			array(),
+			array( 'log_rejections' => 'yes' ),
+			$shared_logger,
+			$rejection_logger,
+			$rejection_counter
+		);
+
+		$testee->intercept_paypal_ajax(
+			array(
+				'ppcp_recaptcha_token'   => 'test-token',
+				'ppcp_recaptcha_version' => 'v3',
+				'g-recaptcha-response'   => 'legacy-token',
+				'order_id'               => 123,
+			)
+		);
+
+		$this->assertArrayHasKey( 'request', $captured_context );
+		$this->assertArrayHasKey( 'cart', $captured_context );
+		$this->assertArrayNotHasKey( 'source', $captured_context );
+		$this->assertArrayNotHasKey( 'ppcp_recaptcha_token', $captured_context['request'] );
+		$this->assertArrayNotHasKey( 'ppcp_recaptcha_version', $captured_context['request'] );
+		$this->assertArrayNotHasKey( 'g-recaptcha-response', $captured_context['request'] );
+		$this->assertSame( 123, $captured_context['request']['order_id'] );
 	}
 }
