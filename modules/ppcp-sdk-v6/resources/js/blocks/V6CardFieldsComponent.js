@@ -33,6 +33,8 @@ import { V6CardFieldContainer } from './V6CardFieldContainer';
  * @param {Object}  args.session           - The v6 card-fields session.
  * @param {Object}  args.responseTypes     - The Blocks response-type constants.
  * @param {boolean} args.savePaymentMethod - Whether to vault the card.
+ * @param {string} args.cardName       - The cardholder name (v6 has no name field).
+ * @param {Object} [args.billingAddress] - Billing address for AVS/3D Secure.
  * @return {Promise<Object>} A Blocks onPaymentSetup response object.
  */
 async function submitCardPayment( {
@@ -41,6 +43,8 @@ async function submitCardPayment( {
 	session,
 	responseTypes,
 	savePaymentMethod,
+	cardName,
+	billingAddress,
 } ) {
 	if ( ! session ) {
 		return {
@@ -58,7 +62,9 @@ async function submitCardPayment( {
 			context,
 			savePaymentMethod
 		);
-		const result = await session.submit( orderId );
+		const result = billingAddress
+			? await session.submit( orderId, { billingAddress } )
+			: await session.submit( orderId );
 
 		// The buyer dismissed the 3DS challenge; prompt a retry rather than
 		// showing a payment error.
@@ -102,6 +108,7 @@ async function submitCardPayment( {
  * @param {Object}  props.emitResponse        - Blocks response-type constants.
  * @param {string}  props.activePaymentMethod - The active payment method id.
  * @param {boolean} props.shouldSavePayment   - WC Blocks' native "save payment method" choice.
+ * @param {Object} [props.billing]           - Blocks billing data (address, totals).
  * @return {?Object} The card fields element, or null before the session is ready.
  */
 export function V6CardFieldsComponent( {
@@ -110,6 +117,7 @@ export function V6CardFieldsComponent( {
 	emitResponse,
 	activePaymentMethod,
 	shouldSavePayment,
+	billing,
 } ) {
 	const { onPaymentSetup } = eventRegistration;
 	const { responseTypes } = emitResponse;
@@ -122,6 +130,7 @@ export function V6CardFieldsComponent( {
 
 	const [ session, setSession ] = useState( null );
 	const [ inputStyle, setInputStyle ] = useState( null );
+	const [ cardName, setCardName ] = useState( '' );
 	const referenceRef = useRef( null );
 
 	// Whether to vault the card, read at submit time. The choice comes from WC
@@ -131,6 +140,30 @@ export function V6CardFieldsComponent( {
 	// latest value without resubscribing onPaymentSetup.
 	const savePaymentRef = useRef( false );
 	savePaymentRef.current = Boolean( shouldSavePayment ) || hasSubscriptions;
+
+	// Read through a ref so onPaymentSetup sees the latest name without
+	// resubscribing every keystroke.
+	const cardNameRef = useRef( '' );
+	useEffect( () => {
+		cardNameRef.current = cardName;
+	}, [ cardName ] );
+
+	// The v6 SDK uses the billing address for AVS / 3D Secure; read the live
+	// Blocks billing address through a ref so the submit sees it without
+	// resubscribing onPaymentSetup on every address change.
+	const billingRef = useRef( null );
+	useEffect( () => {
+		const address = billing?.billingAddress || billing?.billingData;
+		const postalCode = address?.postcode?.trim();
+		billingRef.current = postalCode
+			? {
+					postalCode,
+					...( address?.country
+						? { countryCode: address.country }
+						: {} ),
+			  }
+			: null;
+	}, [ billing ] );
 
 	// One card session for the component's lifetime: the SDK cannot dispose a
 	// session, so it must not be recreated on ordinary re-renders.
@@ -187,6 +220,9 @@ export function V6CardFieldsComponent( {
 				session: sessionRef.current,
 				responseTypes,
 				savePaymentMethod: savePaymentRef.current,
+				cardName: cardNameRef.current?.trim() || '',
+				// null when no billing address is available (see billingRef effect).
+				billingAddress: billingRef.current,
 			} )
 		);
 	}, [
@@ -225,16 +261,29 @@ export function V6CardFieldsComponent( {
 			createElement(
 				Fragment,
 				null,
+				// The v6 card-fields component set is number|expiry|cvv only, so
+				// the cardholder name is a plain input; its value is forwarded to
+				// create-order rather than confirmed through the card session.
 				hasNameField &&
-					createElement( V6CardFieldContainer, {
-						session,
-						type: 'name',
-						style: inputStyle,
-						placeholder: __(
-							'Cardholder name (optional)',
-							'woocommerce-paypal-payments'
-						),
-					} ),
+					createElement(
+						'div',
+						{
+							className:
+								'ppcp-sdk-v6-card-field ppcp-sdk-v6-card-field--name',
+						},
+						createElement( 'input', {
+							type: 'text',
+							className: 'input-text',
+							value: cardName,
+							onChange: ( event ) =>
+								setCardName( event.target.value ),
+							placeholder: __(
+								'Cardholder name (optional)',
+								'woocommerce-paypal-payments'
+							),
+							style: { width: '100%', ...inputStyle },
+						} )
+					),
 				createElement( V6CardFieldContainer, {
 					session,
 					type: 'number',

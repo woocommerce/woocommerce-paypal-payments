@@ -21,12 +21,14 @@ jest.mock( '../../sessions/createSession', () => ( {
 
 const mockGetOrder = jest.fn();
 const mockApproveInSession = jest.fn();
+const mockApproveOrder = jest.fn();
 const mockCreateOrder = jest.fn();
 const mockUpdateShipping = jest.fn();
 const mockAssign = jest.fn();
 jest.mock( '../../endpointsAdapter', () => ( {
 	getOrder: ( ...args ) => mockGetOrder( ...args ),
 	approveOrderInSession: ( ...args ) => mockApproveInSession( ...args ),
+	approveOrder: ( ...args ) => mockApproveOrder( ...args ),
 	createOrder: ( ...args ) => mockCreateOrder( ...args ),
 	updateShipping: ( ...args ) => mockUpdateShipping( ...args ),
 	navigation: { assign: ( ...args ) => mockAssign( ...args ) },
@@ -108,6 +110,7 @@ beforeEach( () => {
 	mockCreateSession.mockClear();
 	mockGetOrder.mockReset();
 	mockApproveInSession.mockReset().mockResolvedValue( undefined );
+	mockApproveOrder.mockReset().mockResolvedValue( undefined );
 	mockCreateOrder.mockReset();
 	mockButtonContainer.mockClear();
 	mockAssign.mockReset();
@@ -411,6 +414,32 @@ describe( 'V6ExpressComponent', () => {
 
 		expect( onSubmit ).toHaveBeenCalledTimes( 1 );
 		expect( mockAssign ).not.toHaveBeenCalled();
+	} );
+
+	test( 'on the cart block, Pay Now creates and captures the order server-side instead of submitting the checkout store', async () => {
+		mockGetOrder.mockResolvedValue( { id: 'PPORDER' } );
+		const onSubmit = jest.fn();
+
+		renderComponent( {
+			config: { ...config, page_context: 'cart-block' },
+			onSubmit,
+		} );
+		await waitFor( () => expect( mockCreateSession ).toHaveBeenCalled() );
+
+		await act( async () => {
+			await capturedHandlers.onApprove( { orderId: 'ORDER1' } );
+		} );
+
+		expect( mockApproveOrder ).toHaveBeenCalledWith(
+			{ ...config, page_context: 'cart-block' },
+			'cart-block',
+			'paypal',
+			'ORDER1'
+		);
+		// onSubmit would submit the checkout store from the cart and fail
+		// with "No payment method provided.".
+		expect( onSubmit ).not.toHaveBeenCalled();
+		expect( mockApproveInSession ).not.toHaveBeenCalled();
 	} );
 
 	test( 'a failed checkout after a Pay Now approval lands the buyer on the review page', async () => {

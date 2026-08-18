@@ -77,7 +77,9 @@ return array(
 			$container->has( 'save-payment-methods.eligible' )
 				&& $container->get( 'save-payment-methods.eligible' )
 				&& $settings_provider->save_card_details(),
-			$settings_provider
+			$settings_provider,
+			$container->get( 'wcgateway.configuration.card-configuration' ),
+			$container->get( 'wcgateway.credit-card-icons' )
 		);
 	},
 
