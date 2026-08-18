@@ -25,6 +25,42 @@ export const navigation = {
 };
 
 /**
+ * Submits the pay-for-order form after selecting the PayPal gateway, so the
+ * approved order is captured by the PayPal gateway (not whichever method radio
+ * happens to be checked) and WC issues the order-received redirect.
+ *
+ * @throws {Error} When jQuery or the pay-order form is unavailable.
+ */
+function submitPayOrderForm() {
+	if ( typeof jQuery === 'undefined' ) {
+		// eslint-disable-next-line no-console
+		console.error(
+			'[ppcp-sdk-v6] cannot submit pay-for-order: jQuery is unavailable on this page.'
+		);
+		throw new Error( 'Could not submit the order.' );
+	}
+
+	const form = jQuery( 'form#order_review' );
+	if ( ! form.length ) {
+		// eslint-disable-next-line no-console
+		console.error(
+			'[ppcp-sdk-v6] cannot submit pay-for-order: form#order_review was not found in the DOM.'
+		);
+		throw new Error( 'Order form not found.' );
+	}
+
+	const gatewayRadio = document.querySelector(
+		'#payment_method_ppcp-gateway'
+	);
+	if ( gatewayRadio && ! gatewayRadio.checked ) {
+		gatewayRadio.checked = true;
+		jQuery( gatewayRadio ).trigger( 'change' );
+	}
+
+	form.trigger( 'submit' );
+}
+
+/**
  * The form describing the viewed product.
  *
  * Exported because the Apple Pay sheet total watches this same form for changes,
@@ -132,6 +168,13 @@ export async function createOrder(
 		save_order_in_session: 1,
 	};
 
+	// Pay-for-order: the server builds the order from the existing WC order,
+	// identified by these, rather than from the cart.
+	if ( context === 'pay-now' && config.pay_now ) {
+		body.order_id = config.pay_now.order_id;
+		body.order_key = config.pay_now.order_key;
+	}
+
 	if ( context === 'checkout' ) {
 		// The serialized form lets the server run the early WC checkout
 		// validation before creating the order, so the buyer sees form errors
@@ -183,6 +226,17 @@ export async function approveOrder(
 	contact = {},
 	paymentMethod = 'ppcp-gateway'
 ) {
+	// Pay-for-order: the WC order already exists. Approve it into the session
+	// (never request WC-order creation — that would create a duplicate, since
+	// is_checkout() is false during this AJAX call) and submit the pay-order
+	// form so the PayPal gateway captures the existing order and redirects to
+	// the order-received page.
+	if ( context === 'pay-now' ) {
+		await approveOrderInSession( config, fundingSource, orderId );
+		submitPayOrderForm();
+		return;
+	}
+
 	const canCreateOrder =
 		! config.vaulting_enabled || fundingSource !== FundingSources.VENMO;
 
@@ -297,28 +351,56 @@ export async function approveOrderInSession( config, fundingSource, orderId ) {
  * unconfirmed, cardless order. approveCardOrder() is what stores the
  * order in session, once those checks pass.
  *
- * @param {Object} config - The wc_ppcp_sdk_v6 config object.
+ * @param {Object} config   - The wc_ppcp_sdk_v6 config object.
+ * @param {string} context  - The page context (checkout or checkout-block).
+ * @param {string} cardName - The cardholder name (v6 has no name field component).
+ * @param {boolean} savePaymentMethod - Whether to vault the card during purchase.
  * @return {Promise<{orderId: string}>} The created PayPal order id.
  */
-export async function createCardOrder( config ) {
+export async function createCardOrder(
+	config,
+	context = 'checkout',
+	cardName = '',
+    savePaymentMethod = false
+) {
 	const body = {
-		context: 'checkout',
+		context,
 		purchase_units: [],
 		payment_method: config.card_fields.payment_method,
 		funding_source: config.card_fields.funding_source,
+        save_payment_method: savePaymentMethod,
 	};
 
-	const form = document.querySelector( 'form.checkout' );
-	if ( form ) {
-		body.form_encoded = new URLSearchParams(
-			new FormData( form )
-		).toString();
-		body.createaccount = !! form.querySelector( '#createaccount' )?.checked;
+	// The v6 card-fields component set is number|expiry|cvv only, so the
+	// cardholder name is collected as a plain input and sent to the server,
+	// which sets it as payment_source.card.name on the order.
+	if ( cardName ) {
+		body.card_name = cardName;
 	}
 
-	const payer = payerData();
-	if ( payer ) {
-		body.payer = payer;
+	// Pay-for-order: the server builds the order from the existing WC order.
+	if ( context === 'pay-now' && config.pay_now ) {
+		body.order_id = config.pay_now.order_id;
+		body.order_key = config.pay_now.order_key;
+	}
+
+	// Only the classic checkout has a WC form to serialize, letting the server
+	// run its early validation before creating the order; other contexts submit
+	// their data separately.
+	if ( context === 'checkout' ) {
+		const form = document.querySelector( 'form.checkout' );
+		if ( form ) {
+			body.form_encoded = new URLSearchParams(
+				new FormData( form )
+			).toString();
+			body.createaccount =
+				!! form.querySelector( '#createaccount' )?.checked;
+		}
+
+		const payer = payerData();
+		if ( payer ) {
+			body.payer = payer;
+		}
 	}
 
 	const data = await postJson( config.ajax.create_order, body );

@@ -53,7 +53,6 @@ afterEach( () => {
 	postJson.mockReset();
 	mockGetProducts.mockReset();
 	document.body.innerHTML = '';
-	jest.restoreAllMocks();
 } );
 
 describe( 'createOrder', () => {
@@ -196,6 +195,26 @@ describe( 'createOrder', () => {
 			expect.objectContaining( { purchase_units: [] } )
 		);
 	} );
+
+	test( 'pay-now context identifies the existing WC order to build from', async () => {
+		postJson.mockResolvedValueOnce( { id: 'PAYPAL4' } );
+
+		await createOrder(
+			{ ...config, pay_now: { order_id: 123, order_key: 'wc_abc' } },
+			'pay-now',
+			'paypal'
+		);
+
+		expect( postJson ).toHaveBeenCalledWith( config.ajax.create_order, {
+			context: 'pay-now',
+			purchase_units: [],
+			payment_method: 'ppcp-gateway',
+			funding_source: 'paypal',
+			save_order_in_session: 1,
+			order_id: 123,
+			order_key: 'wc_abc',
+		} );
+	} );
 } );
 
 describe( 'simulateCart', () => {
@@ -233,8 +252,16 @@ describe( 'simulateCart', () => {
 } );
 
 describe( 'approveOrder', () => {
+	let navigationAssignSpy;
+
 	beforeEach( () => {
-		jest.spyOn( navigation, 'assign' ).mockImplementation( () => {} );
+		navigationAssignSpy = jest
+			.spyOn( navigation, 'assign' )
+			.mockImplementation( () => {} );
+	} );
+
+	afterEach( () => {
+		navigationAssignSpy.mockRestore();
 	} );
 
 	test( 'product context requests should_create_wc_order and continues on checkout without order_received_url', async () => {
@@ -535,6 +562,49 @@ describe( 'approveOrder', () => {
 			);
 		} );
 	} );
+
+	describe( 'pay-now context', () => {
+		test( 'approves the order in the session and submits the pay-order form, without creating a WC order', async () => {
+			postJson.mockResolvedValueOnce( {} );
+			document.body.innerHTML =
+				'<form id="order_review">' +
+				'<input type="radio" id="payment_method_ppcp-gateway" /></form>';
+			const trigger = jest.fn();
+			global.jQuery = jest.fn( ( selector ) =>
+				typeof selector === 'string'
+					? { length: 1, trigger }
+					: { trigger }
+			);
+
+			await approveOrder( config, 'pay-now', 'paypal', 'ORDER3' );
+
+			expect( postJson ).toHaveBeenCalledTimes( 1 );
+			expect( postJson ).toHaveBeenCalledWith( config.ajax.approve_order, {
+				order_id: 'ORDER3',
+				funding_source: 'paypal',
+				should_create_wc_order: false,
+			} );
+			expect(
+				document.querySelector( '#payment_method_ppcp-gateway' ).checked
+			).toBe( true );
+			expect( trigger ).toHaveBeenCalledWith( 'submit' );
+
+			delete global.jQuery;
+		} );
+
+		test( 'throws instead of falling through to the classic continuation when the pay-order form is missing', async () => {
+			postJson.mockResolvedValueOnce( {} );
+			document.body.innerHTML = '';
+			global.jQuery = jest.fn( () => ( { length: 0 } ) );
+
+			await expect(
+				approveOrder( config, 'pay-now', 'paypal', 'ORDER3' )
+			).rejects.toThrow( 'Order form not found.' );
+			expect( console ).toHaveErrored();
+
+			delete global.jQuery;
+		} );
+	} );
 } );
 
 describe( 'createCardOrder', () => {
@@ -553,9 +623,23 @@ describe( 'createCardOrder', () => {
 			purchase_units: [],
 			payment_method: 'ppcp-credit-card-gateway',
 			funding_source: 'card',
+			save_payment_method: false,
 			form_encoded: 'billing_email=a%40b.com',
 			createaccount: false,
 		} );
+	} );
+
+	test( 'sends save_payment_method true when the buyer opts to vault the card', async () => {
+		document.body.innerHTML = '<form class="checkout"></form>';
+		mockPayerData.mockReturnValueOnce( null );
+		postJson.mockResolvedValueOnce( { id: 'CARDORDER5' } );
+
+		await createCardOrder( config, 'checkout', '', true );
+
+		expect( postJson ).toHaveBeenCalledWith(
+			config.ajax.create_order,
+			expect.objectContaining( { save_payment_method: true } )
+		);
 	} );
 
 	test( 'forwards the payer when available', async () => {
@@ -569,6 +653,84 @@ describe( 'createCardOrder', () => {
 			config.ajax.create_order,
 			expect.objectContaining( { payer: { email_address: 'a@b.com' } } )
 		);
+	} );
+
+	test( 'defaults to the checkout context when none is passed', async () => {
+		document.body.innerHTML = '<form class="checkout"></form>';
+		mockPayerData.mockReturnValueOnce( null );
+		postJson.mockResolvedValueOnce( { id: 'CARDORDER3' } );
+
+		await createCardOrder( config );
+
+		expect( postJson ).toHaveBeenCalledWith(
+			config.ajax.create_order,
+			expect.objectContaining( { context: 'checkout' } )
+		);
+	} );
+
+	test( 'adds the cardholder name to the body when provided', async () => {
+		document.body.innerHTML = '<form class="checkout"></form>';
+		mockPayerData.mockReturnValueOnce( null );
+		postJson.mockResolvedValueOnce( { id: 'CARDORDER5' } );
+
+		await createCardOrder( config, 'checkout', 'Jane Doe' );
+
+		expect( postJson ).toHaveBeenCalledWith(
+			config.ajax.create_order,
+			expect.objectContaining( { card_name: 'Jane Doe' } )
+		);
+	} );
+
+	test( 'omits the cardholder name from the body when not provided', async () => {
+		document.body.innerHTML = '<form class="checkout"></form>';
+		mockPayerData.mockReturnValueOnce( null );
+		postJson.mockResolvedValueOnce( { id: 'CARDORDER6' } );
+
+		await createCardOrder( config );
+
+		expect( postJson ).toHaveBeenCalledWith(
+			config.ajax.create_order,
+			expect.not.objectContaining( { card_name: expect.anything() } )
+		);
+	} );
+
+	test( 'pay-now context identifies the existing WC order to build from', async () => {
+		postJson.mockResolvedValueOnce( { id: 'CARDORDER7' } );
+
+		await createCardOrder(
+			{ ...config, pay_now: { order_id: 456, order_key: 'wc_def' } },
+			'pay-now'
+		);
+
+		expect( postJson ).toHaveBeenCalledWith( config.ajax.create_order, {
+			context: 'pay-now',
+			purchase_units: [],
+			payment_method: 'ppcp-credit-card-gateway',
+			funding_source: 'card',
+			save_payment_method: false,
+			order_id: 456,
+			order_key: 'wc_def',
+		} );
+	} );
+
+	test( 'the checkout-block context sends no classic-form data even with a checkout form present', async () => {
+		document.body.innerHTML =
+			'<form class="checkout">' +
+			'<input name="billing_email" value="a@b.com" />' +
+			'<input type="checkbox" id="createaccount" name="createaccount" checked /></form>';
+		mockPayerData.mockReturnValueOnce( { email_address: 'a@b.com' } );
+		postJson.mockResolvedValueOnce( { id: 'CARDORDER4' } );
+
+		const result = await createCardOrder( config, 'checkout-block' );
+
+		expect( result ).toEqual( { orderId: 'CARDORDER4' } );
+		expect( postJson ).toHaveBeenCalledWith( config.ajax.create_order, {
+			context: 'checkout-block',
+			purchase_units: [],
+			payment_method: 'ppcp-credit-card-gateway',
+			funding_source: 'card',
+			save_payment_method: false,
+		} );
 	} );
 } );
 

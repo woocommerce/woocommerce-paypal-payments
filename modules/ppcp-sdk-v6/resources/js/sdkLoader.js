@@ -14,6 +14,7 @@ const PAGE_TYPE_MAP = {
 	product: 'product-details',
 	cart: 'cart',
 	checkout: 'checkout',
+	'pay-now': 'checkout',
 	'mini-cart': 'mini-cart',
 };
 

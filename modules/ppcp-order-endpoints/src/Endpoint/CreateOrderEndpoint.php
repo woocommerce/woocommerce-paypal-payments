@@ -308,8 +308,13 @@ class CreateOrderEndpoint implements EndpointInterface {
 				}
 
 				$order_key = $data['order_key'] ?? '';
+				// pay_for_order (not view_order) is the capability WooCommerce's own
+				// pay-for-order flow uses: it is granted for the order's owner and
+				// for guest orders (no customer), so paired with the secret order-key
+				// check it also allows guest checkouts. view_order is true only for the
+				// order's owner, so it rejected every guest order (customer_id 0).
 				//phpcs:ignore WordPress.WP.Capabilities.Unknown
-				if ( ! $wc_order->key_is_valid( $order_key ) || ! current_user_can( 'view_order', $data['order_id'] ) ) {
+				if ( ! $wc_order->key_is_valid( $order_key ) || ! current_user_can( 'pay_for_order', (int) $data['order_id'] ) ) {
 					wp_send_json_error(
 						array(
 							'name'    => 'invalid-request',

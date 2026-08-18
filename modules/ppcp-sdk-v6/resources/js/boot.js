@@ -25,6 +25,13 @@ import { createOrder, fetchCartTotal } from './endpointsAdapter';
 import { initCardFields } from './cardFields/renderer';
 import { hasJQuery } from './utils/api';
 import { setErrorLabels } from './utils/errorHandler';
+import { setVisible } from '@ppcp-button/Helper/Hiding';
+
+// The native WC submit button, labelled "Proceed to PayPal" for the PayPal
+// gateway. It is replaced by the v6 PayPal buttons while the PayPal gateway is
+// selected, but stays as the submit for cards and every other method.
+const PLACE_ORDER_SELECTOR = '#place_order';
+const PAYPAL_GATEWAY_ID = 'ppcp-gateway';
 
 ( function ( config ) {
 	'use strict';
@@ -253,9 +260,33 @@ import { setErrorLabels } from './utils/errorHandler';
 		renderAll();
 	}
 
+	/**
+	 * Hides the native WC "Proceed to PayPal" button while the PayPal gateway
+	 * is selected — the v6 PayPal buttons stand in for it — and restores it for
+	 * cards (whose flow submits through it) and every other method. Re-run on
+	 * updated_checkout / payment_method_selected because WC rebuilds the
+	 * #payment DOM (and this inline style) on each update.
+	 */
+	function syncPlaceOrderButton() {
+		if (
+			! hasJQuery() ||
+			! [ 'checkout', 'pay-now' ].includes( config.page_context )
+		) {
+			return;
+		}
+
+		const selected = document.querySelector(
+			'input[name="payment_method"]:checked'
+		)?.value;
+		const isPayPalGateway = selected === PAYPAL_GATEWAY_ID;
+
+		setVisible( PLACE_ORDER_SELECTOR, ! isPayPalGateway, true );
+	}
+
 	function initialRender() {
 		renderAll();
 		initCardFieldsSafely();
+		syncPlaceOrderButton();
 	}
 
 	if ( document.readyState === 'loading' ) {
@@ -269,6 +300,13 @@ import { setErrorLabels } from './utils/errorHandler';
 		jQuery( document.body ).on(
 			'updated_checkout wc_fragments_loaded wc_fragments_refreshed',
 			renderAll
+		);
+
+		// WC rebuilds #place_order on these too, and the selected method can
+		// change without a DOM rebuild, so re-sync the button on both.
+		jQuery( document.body ).on(
+			'updated_checkout payment_method_selected',
+			syncPlaceOrderButton
 		);
 
 		// Total-changing updates: eligibility must be re-checked too.

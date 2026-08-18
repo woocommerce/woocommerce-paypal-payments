@@ -24,6 +24,7 @@ import { loadSdkV6 } from './sdkLoader';
 import { checkEligibility } from './eligibility';
 import { V6ExpressComponent } from './blocks/V6ExpressComponent';
 import { V6ContinuationComponent } from './blocks/V6ContinuationComponent';
+import { V6CardFieldsComponent } from './blocks/V6CardFieldsComponent';
 import { V6EditorPreview } from './blocks/V6EditorPreview';
 import { FundingSources } from './utils/fundingSources';
 import { fundingSourceLabel } from './utils/fundingSourceLabel';
@@ -148,4 +149,62 @@ if ( config && config.page_context && config.continuation ) {
 			},
 		} );
 	}
+}
+
+/**
+ * The card method label: the gateway title plus the supported-card logos.
+ *
+ * PaymentMethodIcons comes off the `components` prop that WooCommerce Blocks
+ * injects into the label (not an import), matching the v5 block. card_icons is
+ * empty when "Show logos of supported cards" is disabled, so nothing renders.
+ *
+ * @param {Object} props            - Label props from the Blocks registry.
+ * @param {Object} props.components  - Blocks-provided label components.
+ * @return {Object} The label element.
+ */
+const CardFieldsLabel = ( { components } ) => {
+	const { PaymentMethodIcons } = components || {};
+	const icons = config.card_fields.card_icons || [];
+
+	return createElement(
+		'span',
+		{
+			style: {
+				display: 'flex',
+				alignItems: 'center',
+				justifyContent: 'space-between',
+				width: '100%',
+			},
+		},
+		createElement( 'span', null, config.card_fields.title ),
+		PaymentMethodIcons &&
+			icons.length > 0 &&
+			createElement( PaymentMethodIcons, { icons, align: 'right' } )
+	);
+};
+
+// Skipped in continuation mode, where the buyer has already approved a PayPal
+// order and only the review shows.
+if ( config?.card_fields?.enabled && ! config.continuation ) {
+	registerPaymentMethod( {
+		name: config.card_fields.payment_method,
+		label: createElement( CardFieldsLabel ),
+		ariaLabel: config.card_fields.title,
+		content: createElement( V6CardFieldsComponent, { config } ),
+		// A static placeholder, not the live fields: the SDK does not boot in
+		// the block editor.
+		edit: createElement(
+			'div',
+			{ className: 'ppcp-sdk-v6-editor-preview' },
+			config.card_fields.title
+		),
+		canMakePayment: () => true,
+		supports: {
+			features: [ 'products' ],
+			// WooCommerce Blocks renders its native "Save payment information…"
+			// checkbox and exposes the choice as the shouldSavePayment prop;
+			// only offered when card vaulting is enabled.
+			showSaveOption: Boolean( config.card_fields.is_vaulting_enabled ),
+		},
+	} );
 }

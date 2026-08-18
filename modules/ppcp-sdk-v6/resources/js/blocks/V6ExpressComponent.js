@@ -10,6 +10,7 @@ import { loadSdkV6 } from '../sdkLoader';
 import { checkEligibility } from '../eligibility';
 import { createSession } from '../sessions/createSession';
 import {
+	approveOrder,
 	approveOrderInSession,
 	createOrder,
 	getOrder,
@@ -131,8 +132,6 @@ export function V6ExpressComponent( {
 				await prefillFromPayPalOrder( order, { needsShipping } );
 			}
 
-			await approveOrderInSession( config, fundingSource, data.orderId );
-
 			setPaypalOrder( order );
 
 			// Venmo with vaulting always reviews, whatever the Pay Now setting.
@@ -144,9 +143,31 @@ export function V6ExpressComponent( {
 					config.vaulting_enabled );
 
 			if ( requiresReview ) {
+				await approveOrderInSession(
+					config,
+					fundingSource,
+					data.orderId
+				);
 				navigation.assign( continuationRedirectUrl( config ) );
 				return;
 			}
+
+			// Pay Now on the block CART: there is no checkout form to submit
+			// here, so create and capture the WC order server-side (mirroring
+			// the classic cart Pay Now flow) and land on the order-received
+			// page. Calling onSubmit() here would submit the checkout store
+			// from the cart and fail with "No payment method provided."
+			if ( context === 'cart-block' ) {
+				await approveOrder(
+					config,
+					context,
+					fundingSource,
+					data.orderId
+				);
+				return;
+			}
+
+			await approveOrderInSession( config, fundingSource, data.orderId );
 
 			continuationOnErrorRef.current = true;
 			onSubmit();

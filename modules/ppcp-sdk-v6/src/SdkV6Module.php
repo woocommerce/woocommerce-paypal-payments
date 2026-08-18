@@ -11,6 +11,7 @@ namespace WooCommerce\PayPalCommerce\SdkV6;
 
 use Automattic\WooCommerce\Blocks\Payments\PaymentMethodRegistry;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
+use WooCommerce\PayPalCommerce\SdkV6\Assets\AddPaymentMethodManager;
 use WooCommerce\PayPalCommerce\SdkV6\Assets\SdkV6Manager;
 use WooCommerce\PayPalCommerce\SdkV6\Endpoint\ClientTokenEndpoint;
 use WooCommerce\PayPalCommerce\SdkV6\Endpoint\SimulateCartEndpoint;
@@ -63,6 +64,26 @@ class SdkV6Module implements ServiceModule, ExtendingModule, ExecutableModule {
 				assert( $manager instanceof SdkV6Manager );
 
 				$manager->enqueue();
+
+				$add_payment_method_manager = $c->get( 'sdk-v6.add-payment-method-manager' );
+				assert( $add_payment_method_manager instanceof AddPaymentMethodManager );
+
+				$add_payment_method_manager->enqueue();
+			}
+		);
+
+		// v6 fully owns the Add Payment Method page when it loads (PayPal save
+		// button + card save fields), so the v5 add-payment-method script must
+		// not also run there. See the migration note in extensions.php.
+		add_filter(
+			'woocommerce_paypal_payments_render_add_payment_method_assets',
+			static function ( bool $render ) use ( $c ): bool {
+				$add_payment_method_manager = $c->get( 'sdk-v6.add-payment-method-manager' );
+				assert( $add_payment_method_manager instanceof AddPaymentMethodManager );
+
+				return $add_payment_method_manager->should_load_on_current_page()
+					? false
+					: $render;
 			}
 		);
 
@@ -157,6 +178,13 @@ class SdkV6Module implements ServiceModule, ExtendingModule, ExecutableModule {
 							'ppcp-axo-gateway',
 						);
 
+						// Suppress the v5 card block only when v6 renders its own
+						// card method in its place, so cards stay payable when v6
+						// does not.
+						if ( $manager->is_card_fields_enabled() ) {
+							$v5_methods[] = 'ppcp-credit-card-gateway';
+						}
+
 						// v6 renders the order review under this name too, and
 						// registerPaymentMethod is a silent last-one-wins
 						// assignment, so leaving both registered would make the
@@ -242,6 +270,18 @@ class SdkV6Module implements ServiceModule, ExtendingModule, ExecutableModule {
 					$manager->render_wallet_gateway_wrappers();
 				}
 			);
+		}
+
+		if ( $places['pay-now'] ) {
+			/**
+			 * The action name that the PayPal buttons use for rendering on the pay-for-order page.
+			 * Shared with the v5 SmartButton so a single override relocates both stacks.
+			 */
+			$hook = (string) apply_filters(
+				'woocommerce_paypal_payments_pay_order_renderer_hook',
+				'woocommerce_pay_order_after_submit'
+			);
+			add_action( $hook, static fn() => $manager->render_wrapper(), 20 );
 		}
 
 		if ( $places['mini-cart'] ) {
