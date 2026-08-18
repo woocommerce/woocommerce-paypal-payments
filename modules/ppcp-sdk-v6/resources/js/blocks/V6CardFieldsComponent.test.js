@@ -125,6 +125,7 @@ describe( 'V6CardFieldsComponent', () => {
 		expect( mockCreateCardOrder ).toHaveBeenCalledWith(
 			cardConfig(),
 			'checkout-block',
+			'',
 			false
 		);
 		expect( session.submit ).toHaveBeenCalledWith( 'ORDER1' );
@@ -149,6 +150,7 @@ describe( 'V6CardFieldsComponent', () => {
 		expect( mockCreateCardOrder ).toHaveBeenCalledWith(
 			cardConfig(),
 			'checkout-block',
+			'',
 			true
 		);
 	} );
@@ -179,6 +181,7 @@ describe( 'V6CardFieldsComponent', () => {
 				} ),
 			} ),
 			'checkout-block',
+			'',
 			true
 		);
 	} );
@@ -197,6 +200,7 @@ describe( 'V6CardFieldsComponent', () => {
 		expect( mockCreateCardOrder ).toHaveBeenCalledWith(
 			cardConfig(),
 			'checkout-block',
+			'',
 			false
 		);
 	} );
@@ -315,7 +319,8 @@ describe( 'V6CardFieldsComponent', () => {
 		expect( mockCreateCardOrder ).toHaveBeenCalledWith(
 			cardConfig(),
 			'checkout-block',
-			'Jane Doe'
+			'Jane Doe',
+			false
 		);
 	} );
 

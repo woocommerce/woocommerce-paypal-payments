@@ -340,7 +340,7 @@ describe( 'createCardOrder', () => {
 		mockPayerData.mockReturnValueOnce( null );
 		postJson.mockResolvedValueOnce( { id: 'CARDORDER5' } );
 
-		await createCardOrder( config, 'checkout', true );
+		await createCardOrder( config, 'checkout', '', true );
 
 		expect( postJson ).toHaveBeenCalledWith(
 			config.ajax.create_order,
@@ -413,6 +413,7 @@ describe( 'createCardOrder', () => {
 			purchase_units: [],
 			payment_method: 'ppcp-credit-card-gateway',
 			funding_source: 'card',
+			save_payment_method: false,
 			order_id: 456,
 			order_key: 'wc_def',
 		} );

@@ -406,11 +406,7 @@ describe( 'initCardFields', () => {
 		expect( mockCreateCardOrder ).toHaveBeenCalledWith(
 			baseConfig(),
 			'checkout',
-			''
-		);
-		expect( mockCreateCardOrder ).toHaveBeenCalledWith(
-			baseConfig(),
-			'checkout',
+			'',
 			false
 		);
 		expect( cardSession.submit ).toHaveBeenCalledWith( 'CARDORDER1' );
@@ -456,7 +452,8 @@ describe( 'initCardFields', () => {
 		expect( mockCreateCardOrder ).toHaveBeenCalledWith(
 			config,
 			'checkout',
-			'Jane Doe'
+			'Jane Doe',
+			false
 		);
 	} );
 
@@ -506,6 +503,7 @@ describe( 'initCardFields', () => {
 		expect( mockCreateCardOrder ).toHaveBeenCalledWith(
 			baseConfig(),
 			'checkout',
+			'',
 			true
 		);
 	} );
@@ -532,6 +530,7 @@ describe( 'initCardFields', () => {
 		expect( mockCreateCardOrder ).toHaveBeenCalledWith(
 			baseConfig(),
 			'checkout',
+			'',
 			false
 		);
 	} );

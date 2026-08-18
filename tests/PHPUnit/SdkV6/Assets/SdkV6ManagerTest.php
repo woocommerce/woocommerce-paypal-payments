@@ -27,7 +27,6 @@ class SdkV6ManagerTest extends TestCase
     private $session_handler;
     private $cancel_view;
     private $card_payments_configuration;
-	private $card_vaulting_enabled;
     private $subscription_helper;
 	private $credit_card_icons;
 
@@ -43,13 +42,12 @@ class SdkV6ManagerTest extends TestCase
         $this->session_handler = Mockery::mock(SessionHandler::class);
         $this->cancel_view = Mockery::mock(CancelView::class);
         $this->card_payments_configuration = Mockery::mock(CardPaymentsConfiguration::class);
-        $this->card_vaulting_enabled = true;
 		$this->subscription_helper = Mockery::mock(SubscriptionHelper::class);
         $this->subscription_helper->shouldReceive('cart_contains_subscription')->andReturn(false)->byDefault();
 		$this->credit_card_icons = [];
     }
 
-    private function createTestee(bool $should_handle_shipping = false, array $credit_card_icons = []): SdkV6Manager
+    private function createTestee(bool $should_handle_shipping = false, array $credit_card_icons = [], bool $card_vaulting_enabled = true): SdkV6Manager
     {
         return new SdkV6Manager(
             $this->asset_getter,
@@ -64,9 +62,9 @@ class SdkV6ManagerTest extends TestCase
             false,
             false,
             $this->card_payments_configuration,
-	        $this->card_vaulting_enabled,
+	        $card_vaulting_enabled,
 	        $this->subscription_helper,
-	        $this->credit_card_icons
+	        $credit_card_icons
         );
     }
 
@@ -293,7 +291,7 @@ class SdkV6ManagerTest extends TestCase
         when('wp_create_nonce')->justReturn('nonce');
         when('wc_get_checkout_url')->justReturn('https://example.com/checkout');
 
-        $testee = $this->createTestee($card_vaulting_enabled);
+        $testee = $this->createTestee(false, [], $card_vaulting_enabled);
         $data   = $testee->script_data();
 
         $this->assertSame($expected_enabled, $data['card_fields']['enabled']);

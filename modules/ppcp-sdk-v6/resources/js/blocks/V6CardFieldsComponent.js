@@ -60,6 +60,7 @@ async function submitCardPayment( {
 		const { orderId } = await createCardOrder(
 			config,
 			context,
+			cardName,
 			savePaymentMethod
 		);
 		const result = billingAddress
