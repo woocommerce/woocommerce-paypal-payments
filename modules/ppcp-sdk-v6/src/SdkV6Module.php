@@ -11,9 +11,7 @@ namespace WooCommerce\PayPalCommerce\SdkV6;
 
 use Automattic\WooCommerce\Blocks\Payments\PaymentMethodRegistry;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
-use WooCommerce\PayPalCommerce\Applepay\ApplePayGateway;
 use WooCommerce\PayPalCommerce\SdkV6\Assets\SdkV6Manager;
-use WooCommerce\PayPalCommerce\SdkV6\Blocks\V6PaymentMethod;
 use WooCommerce\PayPalCommerce\SdkV6\Endpoint\ClientTokenEndpoint;
 use WooCommerce\PayPalCommerce\SdkV6\Endpoint\SimulateCartEndpoint;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
@@ -118,41 +116,6 @@ class SdkV6Module implements ServiceModule, ExtendingModule, ExecutableModule {
 			);
 		}
 
-		// Classic counterpart to the block-method suppression below. Apple Pay
-		// only: on a v6-owned classic checkout its row is dead weight, and worse
-		// than absent. Its hide-until-eligible style is printed from a v5 render
-		// hook that DisabledSmartButton never fires, and the v5 JS that would
-		// remove that style once eligibility resolves no longer loads, so the
-		// row would sit there unhidden and non-functional in a browser that
-		// cannot pay with it. Drops out once its v6 button lands.
-		//
-		// Google Pay's row deliberately stays: v6 now owns it, printing its own
-		// hide-until-eligible style and revealing the row once Google confirms
-		// the buyer can pay (SdkV6Manager::render_google_pay_gateway_wrapper).
-		//
-		// Scoped to checkout so gateway lists on other pages are untouched.
-		// Pay-order keeps its v5 row: v6 does not own that page, so
-		// should_load_on_current_page() is false there.
-		add_filter(
-			'woocommerce_available_payment_gateways',
-			static function ( $gateways ) use ( $c ) {
-				if ( ! is_array( $gateways ) || ! is_checkout() ) {
-					return $gateways;
-				}
-
-				$manager = $c->get( 'sdk-v6.manager' );
-				assert( $manager instanceof SdkV6Manager );
-
-				if ( ! $manager->should_load_on_current_page() || $manager->is_block_context() ) {
-					return $gateways;
-				}
-
-				unset( $gateways[ ApplePayGateway::ID ] );
-
-				return $gateways;
-			}
-		);
-
 		// v5's PayPalPaymentMethod stays registered (it provides the
 		// ppcp-gateway type and processing); on v6-owned block pages its
 		// script_data is empty so it registers no express buttons.
@@ -163,6 +126,10 @@ class SdkV6Module implements ServiceModule, ExtendingModule, ExecutableModule {
 		// the whole checkout block, and the Fastlane (AXO) field restoration
 		// can clobber the express submission. The wallets and card fields
 		// migrate under their own stories.
+		//
+		// Classic checkout needs no equivalent: both wallet rows are v6-owned
+		// there, printing their own hide-until-eligible style and revealing the
+		// row once the browser confirms the shopper can pay.
 		//
 		// The registration action fires on init (priority 5), before
 		// is_checkout()/is_cart() resolve, so the page context is unknown here;
@@ -218,9 +185,6 @@ class SdkV6Module implements ServiceModule, ExtendingModule, ExecutableModule {
 	 *
 	 * Uses the same theme hooks as the v5 SmartButton so v6 buttons appear
 	 * in the same locations.
-	 *
-	 * @param SdkV6Manager $manager The SDK v6 manager.
-	 * @return void
 	 */
 	private function register_render_hooks( SdkV6Manager $manager ): void {
 		$places = $manager->determine_render_places();
@@ -272,11 +236,11 @@ class SdkV6Module implements ServiceModule, ExtendingModule, ExecutableModule {
 				static function () use ( $manager ): void {
 					$manager->render_wrapper();
 
-					// Its own container, next to the express wrapper rather than
-					// inside it: as a payment-method row Google Pay is shown and
-					// hidden by the buyer's gateway selection, independently of
-					// the express buttons.
+					// Their own containers, next to the express wrapper rather
+					// than inside it: as payment-method rows these wallets are
+					// shown and hidden by the buyer's gateway selection.
 					$manager->render_google_pay_gateway_wrapper();
+					$manager->render_apple_pay_gateway_wrapper();
 				}
 			);
 		}

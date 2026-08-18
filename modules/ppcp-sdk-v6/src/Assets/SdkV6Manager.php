@@ -9,6 +9,8 @@ declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\SdkV6\Assets;
 
+use WooCommerce\PayPalCommerce\Applepay\ApplePayGateway;
+use WooCommerce\PayPalCommerce\Applepay\Assets\PropertiesDictionary;
 use WooCommerce\PayPalCommerce\Assets\AssetGetter;
 use WooCommerce\PayPalCommerce\OrderEndpoints\Endpoint\UpdateShippingEndpoint;
 use WooCommerce\PayPalCommerce\OrderEndpoints\Endpoint\ApproveOrderEndpoint;
@@ -19,6 +21,7 @@ use WooCommerce\PayPalCommerce\Button\Helper\Context;
 use WooCommerce\PayPalCommerce\Googlepay\GooglePayGateway;
 use WooCommerce\PayPalCommerce\SdkV6\Endpoint\ClientTokenEndpoint;
 use WooCommerce\PayPalCommerce\SdkV6\Endpoint\SimulateCartEndpoint;
+use WooCommerce\PayPalCommerce\SdkV6\Helper\ApplePayConfig;
 use WooCommerce\PayPalCommerce\SdkV6\Helper\ButtonStyleMapper;
 use WooCommerce\PayPalCommerce\SdkV6\Helper\GooglePayConfig;
 use WooCommerce\PayPalCommerce\Session\Cancellation\CancelController;
@@ -34,6 +37,7 @@ class SdkV6Manager {
 	public const WRAPPER_ID            = 'ppc-button-ppcp-gateway-v6';
 	public const MINI_CART_WRAPPER_ID  = 'ppc-button-minicart-v6';
 	public const GOOGLE_PAY_WRAPPER_ID = 'ppc-button-ppcp-googlepay-v6';
+	public const APPLE_PAY_WRAPPER_ID  = 'ppc-button-ppcp-applepay-v6';
 
 	// Existing WC credit-card-form field IDs (see CardFieldsModule's
 	// woocommerce_credit_card_form_fields filter and WC core's own
@@ -57,11 +61,17 @@ class SdkV6Manager {
 	private bool $vaulting_enabled;
 	private CardPaymentsConfiguration $card_payments_configuration;
 	private GooglePayConfig $google_pay_config;
+	private ApplePayConfig $apple_pay_config;
 
 	/**
 	 * Memoizes is_google_pay_gateway(), which walks every available gateway.
 	 */
 	private ?bool $is_google_pay_gateway = null;
+
+	/**
+	 * Memoizes is_apple_pay_gateway(), which walks every available gateway.
+	 */
+	private ?bool $is_apple_pay_gateway = null;
 
 	public function __construct(
 		AssetGetter $asset_getter,
@@ -76,7 +86,8 @@ class SdkV6Manager {
 		bool $final_review_enabled,
 		bool $vaulting_enabled,
 		CardPaymentsConfiguration $card_payments_configuration,
-		GooglePayConfig $google_pay_config
+		GooglePayConfig $google_pay_config,
+		ApplePayConfig $apple_pay_config
 	) {
 		$this->asset_getter                = $asset_getter;
 		$this->version                     = $version;
@@ -91,6 +102,7 @@ class SdkV6Manager {
 		$this->vaulting_enabled            = $vaulting_enabled;
 		$this->card_payments_configuration = $card_payments_configuration;
 		$this->google_pay_config           = $google_pay_config;
+		$this->apple_pay_config            = $apple_pay_config;
 	}
 
 	public function enqueue(): void {
@@ -157,8 +169,6 @@ class SdkV6Manager {
 	 * without a saved card would otherwise be offered a row that cannot
 	 * complete. Same attribute shape as v5's GooglePayButton, which the v6 JS
 	 * removes the same way its PaymentButton did.
-	 *
-	 * @return void
 	 */
 	public function render_google_pay_gateway_wrapper(): void {
 		if ( ! $this->is_google_pay_gateway() ) {
@@ -174,6 +184,26 @@ class SdkV6Manager {
 		<?php
 	}
 
+	/**
+	 * Renders the Apple Pay gateway container, hidden until eligible.
+	 *
+	 * Whether the browser is an Apple one with Apple Pay set up is only knowable
+	 * client-side, so the row is printed hidden and the JS reveals it.
+	 */
+	public function render_apple_pay_gateway_wrapper(): void {
+		if ( ! $this->is_apple_pay_gateway() ) {
+			return;
+		}
+		?>
+		<style data-hide-gateway='<?php echo esc_attr( ApplePayGateway::ID ); ?>'>
+			.wc_payment_method.payment_method_<?php echo esc_attr( ApplePayGateway::ID ); ?> {
+				display: none;
+			}
+		</style>
+		<div id="<?php echo esc_attr( self::APPLE_PAY_WRAPPER_ID ); ?>"></div>
+		<?php
+	}
+
 	public function render_mini_cart_wrapper(): void {
 		echo '<p class="woocommerce-mini-cart__buttons buttons">';
 		echo '<span id="' . esc_attr( self::MINI_CART_WRAPPER_ID ) . '"></span>';
@@ -185,10 +215,7 @@ class SdkV6Manager {
 	 *
 	 * True only on classic checkout with the gateway actually available: the
 	 * other contexts have no payment-method list, and the block checkout
-	 * registers its methods through the block registry instead. Mirrors v5's
-	 * is_wc_gateway_enabled (Googlepay\Assets\GooglePayButton).
-	 *
-	 * @return bool
+	 * registers its methods through the block registry instead.
 	 */
 	private function is_google_pay_gateway(): bool {
 		if ( null !== $this->is_google_pay_gateway ) {
@@ -206,6 +233,31 @@ class SdkV6Manager {
 		$this->is_google_pay_gateway = isset( $gateways[ GooglePayGateway::ID ] );
 
 		return $this->is_google_pay_gateway;
+	}
+
+	/**
+	 * Whether Apple Pay renders as its own payment-method row.
+	 *
+	 * True only on classic checkout with the gateway actually available: the other
+	 * contexts have no payment-method list, and the block checkout registers its
+	 * methods through the block registry instead.
+	 */
+	private function is_apple_pay_gateway(): bool {
+		if ( null !== $this->is_apple_pay_gateway ) {
+			return $this->is_apple_pay_gateway;
+		}
+
+		if ( 'checkout' !== $this->get_page_context() || $this->is_block_context() ) {
+			return false;
+		}
+
+		// Memoized only past the context check: the gateway walk is the expensive
+		// part, and it repeats on every update_order_review.
+		$gateways = WC()->payment_gateways() ? WC()->payment_gateways()->get_available_payment_gateways() : array();
+
+		$this->is_apple_pay_gateway = isset( $gateways[ ApplePayGateway::ID ] );
+
+		return $this->is_apple_pay_gateway;
 	}
 
 	/**
@@ -244,11 +296,16 @@ class SdkV6Manager {
 			return true;
 		}
 
+		if ( $page_location && $this->apple_pay_config->should_render( $page_location ) ) {
+			return true;
+		}
+
 		// Only when the classic widget is in use: loading (and suppressing v5)
 		// sitewide without a widget would break the v5-rendered block express
 		// buttons for nothing.
 		return ( $this->settings_status->is_smart_button_enabled_for_location( 'mini-cart' )
-				|| $this->google_pay_config->should_render( 'mini-cart' ) )
+				|| $this->google_pay_config->should_render( 'mini-cart' )
+				|| $this->apple_pay_config->should_render( 'mini-cart' ) )
 			&& is_active_widget( false, false, 'woocommerce_widget_cart' );
 	}
 
@@ -258,8 +315,6 @@ class SdkV6Manager {
 	 * Also consumed by the block payment method (V6PaymentMethod), which
 	 * exposes it under `wcSettings.paymentMethodData['ppcp-sdk-v6']` for the
 	 * React entry.
-	 *
-	 * @return array
 	 */
 	public function script_data(): array {
 		$base_url = $this->environment->is_sandbox()
@@ -298,6 +353,14 @@ class SdkV6Manager {
 		}
 		if ( $this->google_pay_config->should_render( 'mini-cart' ) ) {
 			$google_pay_styles['mini-cart'] = $this->google_pay_config->styles( 'mini-cart' );
+		}
+
+		$apple_pay_styles = array();
+		if ( $page_context && $this->apple_pay_config->should_render( $page_context ) ) {
+			$apple_pay_styles[ $page_context ] = $this->apple_pay_config->styles( $page_context );
+		}
+		if ( $this->apple_pay_config->should_render( 'mini-cart' ) ) {
+			$apple_pay_styles['mini-cart'] = $this->apple_pay_config->styles( 'mini-cart' );
 		}
 
 		$data = array(
@@ -389,6 +452,32 @@ class SdkV6Manager {
 					)
 					: null,
 			),
+			'apple_pay'         => array(
+				'enabled'      => ! empty( $apple_pay_styles ),
+				// Loaded by the frontend rather than by the applepay-payments
+				// component, which only loads it for a session type this module does
+				// not use. It registers the <apple-pay-button> element.
+				'sdk_url'      => 'https://applepay.cdn-apple.com/jsapi/v1/apple-pay-sdk.js',
+				// Labels the sheet total and identifies the merchant during
+				// validation.
+				'display_name' => $this->apple_pay_config->display_name(),
+				'styles'       => $apple_pay_styles,
+				// Present only on classic checkout, where the wallet is its own row.
+				'gateway'      => $this->is_apple_pay_gateway()
+					? array(
+						'id'      => ApplePayGateway::ID,
+						'wrapper' => '#' . self::APPLE_PAY_WRAPPER_ID,
+					)
+					: null,
+				// Where the frontend reports merchant validation, which keeps the
+				// admin "domain not validated" notice accurate. The Apple Pay
+				// module owns this admin-ajax action and dictates its nonce action.
+				'validation'   => array(
+					'endpoint' => admin_url( 'admin-ajax.php' ),
+					'action'   => PropertiesDictionary::VALIDATE,
+					'nonce'    => wp_create_nonce( PropertiesDictionary::NONCE_ACTION ),
+				),
+			),
 		);
 
 		$continuation = $this->continuation_data();
@@ -413,8 +502,6 @@ class SdkV6Manager {
 	 * The cancel link is load-bearing: while an approved order sits in the
 	 * session the express buttons are suppressed everywhere, so it is the
 	 * buyer's only way out.
-	 *
-	 * @return array|null
 	 */
 	private function continuation_data(): ?array {
 		if ( ! $this->is_continuation() ) {
