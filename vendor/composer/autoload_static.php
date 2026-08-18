@@ -559,6 +559,7 @@ class ComposerStaticInit844a779aae516bed9e0beccea9d01fda
         'WooCommerce\\PayPalCommerce\\SavePaymentMethods\\Helper\\SavePaymentMethodsApplies' => __DIR__ . '/../..' . '/modules/ppcp-save-payment-methods/src/Helper/SavePaymentMethodsApplies.php',
         'WooCommerce\\PayPalCommerce\\SavePaymentMethods\\SavePaymentMethodsModule' => __DIR__ . '/../..' . '/modules/ppcp-save-payment-methods/src/SavePaymentMethodsModule.php',
         'WooCommerce\\PayPalCommerce\\SavePaymentMethods\\Service\\PaymentMethodTokensChecker' => __DIR__ . '/../..' . '/modules/ppcp-save-payment-methods/src/Service/PaymentMethodTokensChecker.php',
+        'WooCommerce\\PayPalCommerce\\SdkV6\\Assets\\AddPaymentMethodManager' => __DIR__ . '/../..' . '/modules/ppcp-sdk-v6/src/Assets/AddPaymentMethodManager.php',
         'WooCommerce\\PayPalCommerce\\SdkV6\\Assets\\SdkV6Manager' => __DIR__ . '/../..' . '/modules/ppcp-sdk-v6/src/Assets/SdkV6Manager.php',
         'WooCommerce\\PayPalCommerce\\SdkV6\\Assets\\WalletPlacement' => __DIR__ . '/../..' . '/modules/ppcp-sdk-v6/src/Assets/WalletPlacement.php',
         'WooCommerce\\PayPalCommerce\\SdkV6\\Blocks\\V6PaymentMethod' => __DIR__ . '/../..' . '/modules/ppcp-sdk-v6/src/Blocks/V6PaymentMethod.php',
