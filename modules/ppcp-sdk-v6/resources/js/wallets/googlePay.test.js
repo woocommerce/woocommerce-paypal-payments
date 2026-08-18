@@ -102,6 +102,8 @@ const baseConfig = ( overrides = {} ) => ( {
 	},
 	buyer_country: 'US',
 	currency: 'USD',
+	wrapper: '#express-wrapper',
+	button_height: '48px',
 	...overrides,
 } );
 
@@ -189,40 +191,58 @@ describe( 'renderGooglePay()', () => {
 		expect( wrapper.childElementCount ).toBe( 1 );
 	} );
 
-	test( 'constructs PaymentsClient with the config environment ' +
-		'and no paymentDataCallbacks', async () => {
-		const config = baseConfig();
-		config.google_pay.environment = 'PRODUCTION';
+	test( 'sizes the container from the shared button height, not a per-context one', async () => {
+		const config = baseConfig( { button_height: '55px' } );
 
-		await render( { config } );
+		const { wrapper } = await render( { config } );
+		const container = wrapper.firstElementChild;
 
-		expect( paymentsClientOptions ).toEqual( {
-			environment: 'PRODUCTION',
-		} );
+		expect( container.style.height ).toBe( '55px' );
 	} );
 
-	test( 'checks readiness with the built request, built from ' +
-		'the resolved session config', async () => {
-		const session = makeSession();
-		await render( { session } );
+	test(
+		'constructs PaymentsClient with the config environment ' +
+			'and no paymentDataCallbacks',
+		async () => {
+			const config = baseConfig();
+			config.google_pay.environment = 'PRODUCTION';
 
-		// A wrong Promise.all destructuring index would pass undefined
-		// here instead of the resolved Google Pay config.
-		expect( mockBuildReadyToPayRequest ).toHaveBeenCalledWith(
-			sessionConfig
-		);
-		expect( mockIsReadyToPay ).toHaveBeenCalledWith( 'READY_REQUEST' );
-	} );
+			await render( { config } );
 
-	test( 'renders no button and leaves the wrapper empty when ' +
-		'isReadyToPay resolves false', async () => {
-		mockIsReadyToPay.mockResolvedValue( { result: false } );
+			expect( paymentsClientOptions ).toEqual( {
+				environment: 'PRODUCTION',
+			} );
+		}
+	);
 
-		const { wrapper } = await render();
+	test(
+		'checks readiness with the built request, built from ' +
+			'the resolved session config',
+		async () => {
+			const session = makeSession();
+			await render( { session } );
 
-		expect( mockCreateButton ).not.toHaveBeenCalled();
-		expect( wrapper.childElementCount ).toBe( 0 );
-	} );
+			// A wrong Promise.all destructuring index would pass undefined
+			// here instead of the resolved Google Pay config.
+			expect( mockBuildReadyToPayRequest ).toHaveBeenCalledWith(
+				sessionConfig
+			);
+			expect( mockIsReadyToPay ).toHaveBeenCalledWith( 'READY_REQUEST' );
+		}
+	);
+
+	test(
+		'renders no button and leaves the wrapper empty when ' +
+			'isReadyToPay resolves false',
+		async () => {
+			mockIsReadyToPay.mockResolvedValue( { result: false } );
+
+			const { wrapper } = await render();
+
+			expect( mockCreateButton ).not.toHaveBeenCalled();
+			expect( wrapper.childElementCount ).toBe( 0 );
+		}
+	);
 
 	test.each( [
 		[
@@ -253,29 +273,32 @@ describe( 'renderGooglePay()', () => {
 		}
 	);
 
-	test( 'falls back to defaults when styles are empty ' +
-		'strings, keeping borderRadius as configured', async () => {
-		// Settings leave these empty when unset; Google rejects
-		// an empty buttonLocale.
-		const config = baseConfig();
-		config.google_pay.styles.product = {
-			color: '',
-			type: '',
-			language: '',
-			borderRadius: 4,
-		};
+	test(
+		'falls back to defaults when styles are empty ' +
+			'strings, keeping borderRadius as configured',
+		async () => {
+			// Settings leave these empty when unset; Google rejects
+			// an empty buttonLocale.
+			const config = baseConfig();
+			config.google_pay.styles.product = {
+				color: '',
+				type: '',
+				language: '',
+				borderRadius: 4,
+			};
 
-		await render( { config, context: 'product' } );
+			await render( { config, context: 'product' } );
 
-		expect( createButtonOptions ).toEqual(
-			expect.objectContaining( {
-				buttonColor: 'black',
-				buttonType: 'pay',
-				buttonLocale: 'en',
-				buttonRadius: 4,
-			} )
-		);
-	} );
+			expect( createButtonOptions ).toEqual(
+				expect.objectContaining( {
+					buttonColor: 'black',
+					buttonType: 'pay',
+					buttonLocale: 'en',
+					buttonRadius: 4,
+				} )
+			);
+		}
+	);
 } );
 
 describe( 'as its own payment-method row (gateway set)', () => {
@@ -285,10 +308,11 @@ describe( 'as its own payment-method row (gateway set)', () => {
 		await render( { gateway } );
 
 		expect( mockRevealGateway ).toHaveBeenCalledWith( 'ppcp-googlepay' );
-		expect( mockSyncGatewayVisibility ).toHaveBeenCalledWith(
-			'ppcp-googlepay',
-			'#gateway-row'
-		);
+		expect( mockSyncGatewayVisibility ).toHaveBeenCalledWith( {
+			methodId: 'ppcp-googlepay',
+			wrapperSelector: '#gateway-row',
+			expressSelector: '#express-wrapper',
+		} );
 	} );
 
 	test( 'never reveals or syncs on the express path', async () => {
@@ -326,32 +350,34 @@ describe( 'a click on the rendered button', () => {
 		mockGooglePayShippingAddress.mockReturnValue( 'SHIP_SENTINEL' );
 	} );
 
-	test( 'resolves the total, then opens the sheet with the ' +
-		'built payment data request', async () => {
-		const config = baseConfig();
-		await render( { config, context: 'cart' } );
+	test(
+		'resolves the total, then opens the sheet with the ' +
+			'built payment data request',
+		async () => {
+			const config = baseConfig();
+			await render( { config, context: 'cart' } );
 
-		await createButtonOptions.onClick();
+			await createButtonOptions.onClick();
 
-		expect( mockResolveWalletTotal ).toHaveBeenCalledWith(
-			config,
-			'cart'
-		);
-		expect( mockBuildPaymentDataRequest ).toHaveBeenCalledWith(
-			sessionConfig,
-			{
-				countryCode: config.buyer_country,
-				currencyCode: config.currency,
-				total: '12.34',
-			}
-		);
-		expect( mockLoadPaymentData ).toHaveBeenCalledWith(
-			'PAYMENT_DATA_REQUEST'
-		);
-	} );
+			expect( mockResolveWalletTotal ).toHaveBeenCalledWith(
+				config,
+				'cart'
+			);
+			expect( mockBuildPaymentDataRequest ).toHaveBeenCalledWith(
+				sessionConfig,
+				{
+					countryCode: config.buyer_country,
+					currencyCode: config.currency,
+					total: '12.34',
+				}
+			);
+			expect( mockLoadPaymentData ).toHaveBeenCalledWith(
+				'PAYMENT_DATA_REQUEST'
+			);
+		}
+	);
 
-	test( 'pays with the resolved units, confirm data and ' +
-		'mapped contact', async () => {
+	test( 'pays with the resolved units, confirm data and mapped contact', async () => {
 		const config = baseConfig();
 		const { session } = await render( { config, context: 'product' } );
 
@@ -377,31 +403,37 @@ describe( 'a click on the rendered button', () => {
 		} );
 	} );
 
-	test( 'pays with the configured gateway method when Google Pay is ' +
-		'its own row, so the endpoints do not fall back to the express default', async () => {
-		await render( {
-			gateway: { id: 'ppcp-googlepay', wrapper: '#gateway-row' },
-		} );
+	test(
+		'pays with the configured gateway method when Google Pay is ' +
+			'its own row, so the endpoints do not fall back to the express default',
+		async () => {
+			await render( {
+				gateway: { id: 'ppcp-googlepay', wrapper: '#gateway-row' },
+			} );
 
-		await createButtonOptions.onClick();
+			await createButtonOptions.onClick();
 
-		expect( mockPayWithWallet ).toHaveBeenCalledWith(
-			expect.objectContaining( { paymentMethod: 'ppcp-googlepay' } )
-		);
-	} );
+			expect( mockPayWithWallet ).toHaveBeenCalledWith(
+				expect.objectContaining( { paymentMethod: 'ppcp-googlepay' } )
+			);
+		}
+	);
 
-	test( 'never opens the sheet when resolving the total fails, ' +
-		'and reports the error', async () => {
-		mockResolveWalletTotal.mockRejectedValueOnce(
-			new Error( 'total failed' )
-		);
-		await render();
+	test(
+		'never opens the sheet when resolving the total fails, ' +
+			'and reports the error',
+		async () => {
+			mockResolveWalletTotal.mockRejectedValueOnce(
+				new Error( 'total failed' )
+			);
+			await render();
 
-		await createButtonOptions.onClick();
+			await createButtonOptions.onClick();
 
-		expect( mockLoadPaymentData ).not.toHaveBeenCalled();
-		expect( mockHandleError ).toHaveBeenCalledTimes( 1 );
-	} );
+			expect( mockLoadPaymentData ).not.toHaveBeenCalled();
+			expect( mockHandleError ).toHaveBeenCalledTimes( 1 );
+		}
+	);
 
 	test.each( [
 		[ 'a buyer cancelation', { statusCode: 'CANCELED' }, 0 ],
@@ -463,30 +495,33 @@ describe( 'a click on the rendered button', () => {
 		expect( mockSpinnerUnblock ).not.toHaveBeenCalled();
 	} );
 
-	test( 'drops a second click while the first is in flight, ' +
-		'then allows one after it settles', async () => {
-		// The in-flight guard must reset in `finally`, not latch permanently.
-		let resolveLoad;
-		mockLoadPaymentData.mockImplementationOnce(
-			() =>
-				new Promise( ( resolve ) => {
-					resolveLoad = resolve;
-				} )
-		);
-		await render();
+	test(
+		'drops a second click while the first is in flight, ' +
+			'then allows one after it settles',
+		async () => {
+			// The in-flight guard must reset in `finally`, not latch permanently.
+			let resolveLoad;
+			mockLoadPaymentData.mockImplementationOnce(
+				() =>
+					new Promise( ( resolve ) => {
+						resolveLoad = resolve;
+					} )
+			);
+			await render();
 
-		const firstClick = createButtonOptions.onClick();
-		createButtonOptions.onClick();
-		await flushPromises();
+			const firstClick = createButtonOptions.onClick();
+			createButtonOptions.onClick();
+			await flushPromises();
 
-		expect( mockLoadPaymentData ).toHaveBeenCalledTimes( 1 );
+			expect( mockLoadPaymentData ).toHaveBeenCalledTimes( 1 );
 
-		resolveLoad( paymentData );
-		await firstClick;
+			resolveLoad( paymentData );
+			await firstClick;
 
-		mockLoadPaymentData.mockResolvedValueOnce( paymentData );
-		await createButtonOptions.onClick();
+			mockLoadPaymentData.mockResolvedValueOnce( paymentData );
+			await createButtonOptions.onClick();
 
-		expect( mockLoadPaymentData ).toHaveBeenCalledTimes( 2 );
-	} );
+			expect( mockLoadPaymentData ).toHaveBeenCalledTimes( 2 );
+		}
+	);
 } );

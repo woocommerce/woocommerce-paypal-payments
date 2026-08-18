@@ -1,4 +1,9 @@
-import { googlePayPayer, googlePayShippingAddress } from './walletContacts';
+import {
+	googlePayPayer,
+	googlePayShippingAddress,
+	applePayPayer,
+	applePayShippingAddress,
+} from './walletContacts';
 
 const googlePayResponse = ( overrides = {} ) => ( {
 	email: 'jane@example.test',
@@ -107,5 +112,110 @@ describe( 'googlePayShippingAddress', () => {
 
 		expect( shipping.name.full_name ).toBeUndefined();
 		expect( shipping.address.country_code ).toBeUndefined();
+	} );
+} );
+
+const applePayPayment = ( overrides = {} ) => ( {
+	billingContact: {
+		givenName: 'Jane',
+		familyName: 'Doe',
+		countryCode: 'US',
+		addressLines: [ 'WooVille 12', 'Suite 4' ],
+		administrativeArea: 'IA',
+		locality: 'Des Moines',
+		postalCode: '12862',
+	},
+	shippingContact: {
+		emailAddress: 'jane@example.test',
+		givenName: 'Jane',
+		familyName: 'Doe',
+		countryCode: 'US',
+		addressLines: [ 'WooVille 12', 'Suite 4' ],
+		administrativeArea: 'IA',
+		locality: 'Des Moines',
+		postalCode: '12862',
+	},
+	...overrides,
+} );
+
+describe( 'applePayPayer', () => {
+	test( 'maps the billing contact address keys to the PayPal address keys', () => {
+		const { address } = applePayPayer( applePayPayment() );
+
+		expect( address.country_code ).toBe( 'US' );
+		expect( address.address_line_1 ).toBe( 'WooVille 12' );
+		expect( address.address_line_2 ).toBe( 'Suite 4' );
+		expect( address.admin_area_1 ).toBe( 'IA' );
+		expect( address.admin_area_2 ).toBe( 'Des Moines' );
+		expect( address.postal_code ).toBe( '12862' );
+	} );
+
+	test( 'takes given_name and surname straight from the billing contact, unsplit', () => {
+		const { name } = applePayPayer( applePayPayment() );
+
+		expect( name.given_name ).toBe( 'Jane' );
+		expect( name.surname ).toBe( 'Doe' );
+	} );
+
+	test( 'takes email_address from the shipping contact, because Apple never returns a billing email', () => {
+		const payer = applePayPayer( applePayPayment() );
+
+		expect( payer.email_address ).toBe( 'jane@example.test' );
+	} );
+
+	test( 'does not throw and leaves fields undefined when neither contact is present', () => {
+		expect( () => applePayPayer( {} ) ).not.toThrow();
+
+		const payer = applePayPayer( {} );
+
+		expect( payer.email_address ).toBeUndefined();
+		expect( payer.name.given_name ).toBeUndefined();
+		expect( payer.name.surname ).toBeUndefined();
+		expect( payer.address.country_code ).toBeUndefined();
+	} );
+} );
+
+describe( 'applePayShippingAddress', () => {
+	test( 'maps the shipping contact when it carries a countryCode', () => {
+		const shipping = applePayShippingAddress( applePayPayment() );
+
+		expect( shipping.name.full_name ).toBe( 'Jane Doe' );
+		expect( shipping.address.country_code ).toBe( 'US' );
+		expect( shipping.address.address_line_1 ).toBe( 'WooVille 12' );
+		expect( shipping.address.address_line_2 ).toBe( 'Suite 4' );
+		expect( shipping.address.admin_area_1 ).toBe( 'IA' );
+		expect( shipping.address.admin_area_2 ).toBe( 'Des Moines' );
+		expect( shipping.address.postal_code ).toBe( '12862' );
+	} );
+
+	test( 'falls back to the billing contact when the shipping contact has no countryCode, as on classic checkout', () => {
+		const shipping = applePayShippingAddress(
+			applePayPayment( {
+				shippingContact: { emailAddress: 'jane@example.test' },
+			} )
+		);
+
+		expect( shipping.address.country_code ).toBe( 'US' );
+		expect( shipping.address.address_line_1 ).toBe( 'WooVille 12' );
+		expect( shipping.name.full_name ).toBe( 'Jane Doe' );
+	} );
+
+	test( 'does not throw when neither contact is present', () => {
+		expect( () => applePayShippingAddress( {} ) ).not.toThrow();
+
+		const shipping = applePayShippingAddress( {} );
+
+		expect( shipping.name.full_name ).toBeUndefined();
+		expect( shipping.address.country_code ).toBeUndefined();
+	} );
+
+	test( 'omits the full name when the fallback billing contact has no name parts', () => {
+		const shipping = applePayShippingAddress( {
+			shippingContact: { emailAddress: 'jane@example.test' },
+			billingContact: { countryCode: 'US' },
+		} );
+
+		expect( shipping.name.full_name ).toBeUndefined();
+		expect( shipping.address.country_code ).toBe( 'US' );
 	} );
 } );

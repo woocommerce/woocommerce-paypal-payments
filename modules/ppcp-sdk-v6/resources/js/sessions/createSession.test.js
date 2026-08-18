@@ -31,6 +31,9 @@ function fakeSdk() {
 		createGooglePayOneTimePaymentSession: recordFactoryCall(
 			'createGooglePayOneTimePaymentSession'
 		),
+		createApplePayOneTimePaymentSession: recordFactoryCall(
+			'createApplePayOneTimePaymentSession'
+		),
 	};
 }
 
@@ -47,6 +50,7 @@ describe( 'SUPPORTED_METHODS', () => {
 			'venmo',
 			'paylater',
 			'googlepay',
+			'applepay',
 		] );
 	} );
 } );
@@ -123,25 +127,30 @@ describe( 'createSession', () => {
 		);
 	} );
 
-	describe( 'googlepay', () => {
-		test( 'is created through createGooglePayOneTimePaymentSession', () => {
+	describe.each( [
+		[ 'googlepay', 'createGooglePayOneTimePaymentSession' ],
+		[ 'applepay', 'createApplePayOneTimePaymentSession' ],
+	] )( '%s', ( method, factoryName ) => {
+		test( `is created through ${ factoryName }`, () => {
 			const sdk = fakeSdk();
 
-			createSession( sdk, 'googlepay', { shipping: {} }, 'checkout' );
+			createSession( sdk, method, { shipping: {} }, 'checkout' );
 
-			expect( sdk.capture.factory ).toBe(
-				'createGooglePayOneTimePaymentSession'
-			);
+			expect( sdk.capture.factory ).toBe( factoryName );
 		} );
 
 		test( 'the session config has no onApprove, but keeps onCancel and onError', () => {
 			const sdk = fakeSdk();
 
-			createSession( sdk, 'googlepay', { shipping: {} }, 'checkout' );
+			createSession( sdk, method, { shipping: {} }, 'checkout' );
 
 			expect( sdk.capture.config.onApprove ).toBeUndefined();
-			expect( sdk.capture.config.onCancel ).toEqual( expect.any( Function ) );
-			expect( sdk.capture.config.onError ).toEqual( expect.any( Function ) );
+			expect( sdk.capture.config.onCancel ).toEqual(
+				expect.any( Function )
+			);
+			expect( sdk.capture.config.onError ).toEqual(
+				expect.any( Function )
+			);
 		} );
 
 		test( 'gets neither in-sheet shipping handler even when classic shipping-in-PayPal is enabled', () => {
@@ -150,7 +159,7 @@ describe( 'createSession', () => {
 				shipping: { handle_in_paypal: true, need_shipping: true },
 			};
 
-			createSession( sdk, 'googlepay', config, 'product' );
+			createSession( sdk, method, config, 'product' );
 
 			expect(
 				sdk.capture.config.onShippingAddressChange

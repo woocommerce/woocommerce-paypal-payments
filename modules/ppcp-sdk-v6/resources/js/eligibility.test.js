@@ -94,4 +94,20 @@ describe( 'checkEligibility', () => {
 
 		expect( result.googlepay ).toBe( false );
 	} );
+
+	test( 'reports applepay eligibility', async () => {
+		const sdk = sdkWith( { eligible: [ 'applepay' ] } );
+
+		const result = await checkEligibility( sdk, { currencyCode: 'USD' } );
+
+		expect( result.applepay ).toBe( true );
+	} );
+
+	test( 'resolves with applepay false, instead of rejecting, when isEligible throws for applepay', async () => {
+		const sdk = sdkWith( { isEligibleThrowsFor: [ 'applepay' ] } );
+
+		const result = await checkEligibility( sdk, { currencyCode: 'USD' } );
+
+		expect( result.applepay ).toBe( false );
+	} );
 } );

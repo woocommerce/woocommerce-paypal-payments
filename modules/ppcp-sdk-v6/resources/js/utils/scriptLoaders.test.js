@@ -1,4 +1,4 @@
-import { loadScript, loadGoogleSdk } from './scriptLoaders';
+import { loadScript, loadGoogleSdk, loadAppleSdk } from './scriptLoaders';
 
 afterEach( () => {
 	document.head.innerHTML = '';
@@ -19,7 +19,9 @@ describe( 'loadScript', () => {
 
 		document.head.querySelector( `script[src="${ url }"]` ).onload();
 
-		return expect( Promise.all( [ first, second ] ) ).resolves.toBeDefined();
+		return expect(
+			Promise.all( [ first, second ] )
+		).resolves.toBeDefined();
 	} );
 
 	test( 'a failed load rejects awaiting callers, removes the tag and clears the cache', async () => {
@@ -58,7 +60,9 @@ describe( 'loadGoogleSdk', () => {
 		const url = 'https://example.test/pay.js';
 
 		const pending = loadGoogleSdk( url );
-		window.google = { payments: { api: { PaymentsClient: function () {} } } };
+		window.google = {
+			payments: { api: { PaymentsClient() {} } },
+		};
 		document.head.querySelector( `script[src="${ url }"]` ).onload();
 
 		await expect( pending ).resolves.toBeUndefined();
@@ -72,6 +76,28 @@ describe( 'loadGoogleSdk', () => {
 
 		await expect( pending ).rejects.toThrow(
 			'Google Pay global not found after script load.'
+		);
+	} );
+} );
+
+describe( 'loadAppleSdk', () => {
+	test( 'resolves once the script loads, without checking for any global', async () => {
+		const url = 'https://example.test/apple-pay-sdk.js';
+
+		const pending = loadAppleSdk( url );
+		document.head.querySelector( `script[src="${ url }"]` ).onload();
+
+		await expect( pending ).resolves.toBeUndefined();
+	} );
+
+	test( 'rejects when the script fails to load', async () => {
+		const url = 'https://example.test/apple-pay-sdk-failing.js';
+
+		const pending = loadAppleSdk( url );
+		document.head.querySelector( `script[src="${ url }"]` ).onerror();
+
+		await expect( pending ).rejects.toThrow(
+			`Failed to load script: ${ url }`
 		);
 	} );
 } );

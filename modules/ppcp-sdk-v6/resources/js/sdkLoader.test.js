@@ -52,6 +52,11 @@ describe( 'loadSdkV6', () => {
 			[ 'paypal-payments', 'venmo-payments', 'googlepay-payments' ],
 		],
 		[
+			'apple pay enabled',
+			{ apple_pay: { enabled: true } },
+			[ 'paypal-payments', 'venmo-payments', 'applepay-payments' ],
+		],
+		[
 			'card fields and google pay both enabled',
 			{ card_fields: { enabled: true }, google_pay: { enabled: true } },
 			[

@@ -1,4 +1,7 @@
-import { buildPaymentDataRequest } from './googlePayRequest';
+import {
+	buildPaymentDataRequest,
+	buildReadyToPayRequest,
+} from './googlePayRequest';
 
 const sessionConfig = ( overrides = {} ) => ( {
 	allowedPaymentMethods: [ { type: 'CARD' } ],
@@ -6,6 +9,34 @@ const sessionConfig = ( overrides = {} ) => ( {
 	merchantInfo: { merchantName: 'WooShop' },
 	tokenizationSpecification: { type: 'PAYMENT_GATEWAY' },
 	...overrides,
+} );
+
+describe( 'buildReadyToPayRequest()', () => {
+	test( 'hardcodes apiVersion 2 and apiVersionMinor 0 regardless of the session config', () => {
+		const request = buildReadyToPayRequest(
+			sessionConfig( { apiVersion: 99 } )
+		);
+
+		expect( request.apiVersion ).toBe( 2 );
+		expect( request.apiVersionMinor ).toBe( 0 );
+	} );
+
+	test( 'carries the allowedPaymentMethods over from the session config', () => {
+		const allowedPaymentMethods = [ { type: 'CARD' }, { type: 'PAYPAL' } ];
+
+		const request = buildReadyToPayRequest(
+			sessionConfig( { allowedPaymentMethods } )
+		);
+
+		expect( request.allowedPaymentMethods ).toBe( allowedPaymentMethods );
+	} );
+
+	test( 'omits merchantInfo and transactionInfo, unlike buildPaymentDataRequest', () => {
+		const request = buildReadyToPayRequest( sessionConfig() );
+
+		expect( request ).not.toHaveProperty( 'merchantInfo' );
+		expect( request ).not.toHaveProperty( 'transactionInfo' );
+	} );
 } );
 
 describe( 'buildPaymentDataRequest()', () => {

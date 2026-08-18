@@ -29,6 +29,7 @@ import {
 	createCardOrder,
 	approveCardOrder,
 	fetchCartTotal,
+	simulateCart,
 	navigation,
 } from './endpointsAdapter';
 import { postJson } from './utils/api';
@@ -38,6 +39,7 @@ const config = {
 		change_cart: { endpoint: '/cc', nonce: 'n-cc' },
 		create_order: { endpoint: '/co', nonce: 'n-co' },
 		approve_order: { endpoint: '/ao', nonce: 'n-ao' },
+		simulate_cart: { endpoint: '/sc', nonce: 'n-sc' },
 		wc_store_api: { cart: '/wp-json/wc/store/v1/cart' },
 	},
 	urls: { checkout: '/checkout/' },
@@ -158,24 +160,27 @@ describe( 'createOrder', () => {
 		} );
 	} );
 
-	test( 'sends a supplied paymentMethod as payment_method instead of ' +
-		'the express default', async () => {
-		const purchaseUnits = [ { reference_id: 'wallet' } ];
-		postJson.mockResolvedValueOnce( { id: 'PAYPAL6' } );
+	test(
+		'sends a supplied paymentMethod as payment_method instead of ' +
+			'the express default',
+		async () => {
+			const purchaseUnits = [ { reference_id: 'wallet' } ];
+			postJson.mockResolvedValueOnce( { id: 'PAYPAL6' } );
 
-		await createOrder(
-			config,
-			'cart',
-			'googlepay',
-			purchaseUnits,
-			'ppcp-googlepay'
-		);
+			await createOrder(
+				config,
+				'cart',
+				'googlepay',
+				purchaseUnits,
+				'ppcp-googlepay'
+			);
 
-		expect( postJson ).toHaveBeenCalledWith(
-			config.ajax.create_order,
-			expect.objectContaining( { payment_method: 'ppcp-googlepay' } )
-		);
-	} );
+			expect( postJson ).toHaveBeenCalledWith(
+				config.ajax.create_order,
+				expect.objectContaining( { payment_method: 'ppcp-googlepay' } )
+			);
+		}
+	);
 
 	test( 'product context with an explicit empty array of purchase units skips change-cart', async () => {
 		// The only test guarding this: a supplied [] must count as resolved
@@ -190,6 +195,40 @@ describe( 'createOrder', () => {
 			config.ajax.create_order,
 			expect.objectContaining( { purchase_units: [] } )
 		);
+	} );
+} );
+
+describe( 'simulateCart', () => {
+	test( 'posts the viewed product and returns the simulated total, without calling change_cart', async () => {
+		document.body.innerHTML =
+			'<form class="wc-block-add-to-cart-with-options">' +
+			'<input name="add-to-cart" value="1006" /></form>';
+		mockGetProducts.mockReturnValue( [
+			{ data: () => ( { id: 1006, quantity: 1, variations: [] } ) },
+		] );
+		postJson.mockResolvedValueOnce( {
+			total: '110.00',
+			currency_code: 'USD',
+		} );
+
+		const result = await simulateCart( config );
+
+		expect( result ).toEqual( { total: '110.00', currency_code: 'USD' } );
+		expect( postJson ).toHaveBeenCalledTimes( 1 );
+		expect( postJson ).toHaveBeenCalledWith( config.ajax.simulate_cart, {
+			products: [ { id: 1006, quantity: 1, variations: [] } ],
+		} );
+		expect( postJson ).not.toHaveBeenCalledWith(
+			config.ajax.change_cart,
+			expect.anything()
+		);
+	} );
+
+	test( 'fails clearly without a product form, leaving the real cart untouched', async () => {
+		await expect( simulateCart( config ) ).rejects.toThrow(
+			'Product form not found.'
+		);
+		expect( postJson ).not.toHaveBeenCalled();
 	} );
 } );
 
@@ -304,63 +343,70 @@ describe( 'approveOrder', () => {
 		delete global.jQuery;
 	} );
 
-	test( 'checkout context still switches an unrelated radio to PayPal ' +
-		'on the express path, leaving the buyer with the express gateway', async () => {
-		postJson.mockResolvedValueOnce( {} );
-		document.body.innerHTML =
-			'<form class="checkout">' +
-			'<input type="radio" id="payment_method_ppcp-gateway" />' +
-			'<input type="radio" id="payment_method_ppcp-googlepay" checked /></form>';
-		const radioTrigger = jest.fn();
-		const formTrigger = jest.fn();
-		global.jQuery = jest.fn( ( selector ) =>
-			typeof selector === 'string'
-				? { length: 1, trigger: formTrigger }
-				: { trigger: radioTrigger }
-		);
+	test(
+		'checkout context still switches an unrelated radio to PayPal ' +
+			'on the express path, leaving the buyer with the express gateway',
+		async () => {
+			postJson.mockResolvedValueOnce( {} );
+			document.body.innerHTML =
+				'<form class="checkout">' +
+				'<input type="radio" id="payment_method_ppcp-gateway" />' +
+				'<input type="radio" id="payment_method_ppcp-googlepay" checked /></form>';
+			const radioTrigger = jest.fn();
+			const formTrigger = jest.fn();
+			global.jQuery = jest.fn( ( selector ) =>
+				typeof selector === 'string'
+					? { length: 1, trigger: formTrigger }
+					: { trigger: radioTrigger }
+			);
 
-		await approveOrder( config, 'checkout', 'paypal', 'ORDER2b' );
+			await approveOrder( config, 'checkout', 'paypal', 'ORDER2b' );
 
-		expect(
-			document.querySelector( '#payment_method_ppcp-gateway' ).checked
-		).toBe( true );
-		expect( radioTrigger ).toHaveBeenCalledWith( 'change' );
-		expect( formTrigger ).toHaveBeenCalledWith( 'submit' );
+			expect(
+				document.querySelector( '#payment_method_ppcp-gateway' ).checked
+			).toBe( true );
+			expect( radioTrigger ).toHaveBeenCalledWith( 'change' );
+			expect( formTrigger ).toHaveBeenCalledWith( 'submit' );
 
-		delete global.jQuery;
-	} );
+			delete global.jQuery;
+		}
+	);
 
-	test( 'checkout context leaves the buyer\'s own selection unchanged ' +
-		'when the wallet is its own gateway row', async () => {
-		postJson.mockResolvedValueOnce( {} );
-		document.body.innerHTML =
-			'<form class="checkout">' +
-			'<input type="radio" id="payment_method_ppcp-googlepay" checked /></form>';
-		const radioTrigger = jest.fn();
-		const formTrigger = jest.fn();
-		global.jQuery = jest.fn( ( selector ) =>
-			typeof selector === 'string'
-				? { length: 1, trigger: formTrigger }
-				: { trigger: radioTrigger }
-		);
+	test(
+		"checkout context leaves the buyer's own selection unchanged " +
+			'when the wallet is its own gateway row',
+		async () => {
+			postJson.mockResolvedValueOnce( {} );
+			document.body.innerHTML =
+				'<form class="checkout">' +
+				'<input type="radio" id="payment_method_ppcp-googlepay" checked /></form>';
+			const radioTrigger = jest.fn();
+			const formTrigger = jest.fn();
+			global.jQuery = jest.fn( ( selector ) =>
+				typeof selector === 'string'
+					? { length: 1, trigger: formTrigger }
+					: { trigger: radioTrigger }
+			);
 
-		await approveOrder(
-			config,
-			'checkout',
-			'googlepay',
-			'ORDER3',
-			{},
-			'ppcp-googlepay'
-		);
+			await approveOrder(
+				config,
+				'checkout',
+				'googlepay',
+				'ORDER3',
+				{},
+				'ppcp-googlepay'
+			);
 
-		expect(
-			document.querySelector( '#payment_method_ppcp-googlepay' ).checked
-		).toBe( true );
-		expect( radioTrigger ).not.toHaveBeenCalled();
-		expect( formTrigger ).toHaveBeenCalledWith( 'submit' );
+			expect(
+				document.querySelector( '#payment_method_ppcp-googlepay' )
+					.checked
+			).toBe( true );
+			expect( radioTrigger ).not.toHaveBeenCalled();
+			expect( formTrigger ).toHaveBeenCalledWith( 'submit' );
 
-		delete global.jQuery;
-	} );
+			delete global.jQuery;
+		}
+	);
 
 	describe( 'contact handling', () => {
 		const contact = {

@@ -26,11 +26,7 @@ describe( 'resolveWalletTotal()', () => {
 				],
 				'19.99',
 			],
-			[
-				'3-decimal unit',
-				[ { amount: { value: '12.345' } } ],
-				'12.345',
-			],
+			[ '3-decimal unit', [ { amount: { value: '12.345' } } ], '12.345' ],
 			[ 'empty units', [], '' ],
 		] )(
 			'resolves the total and purchase units for %s',
