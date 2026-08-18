@@ -10,6 +10,7 @@ namespace WooCommerce\PayPalCommerce\SdkV6;
 
 use Automattic\WooCommerce\Blocks\Payments\PaymentMethodRegistry;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
+use WooCommerce\PayPalCommerce\SdkV6\Assets\AddPaymentMethodManager;
 use WooCommerce\PayPalCommerce\SdkV6\Assets\SdkV6Manager;
 use WooCommerce\PayPalCommerce\SdkV6\Blocks\V6PaymentMethod;
 use WooCommerce\PayPalCommerce\SdkV6\Endpoint\ClientTokenEndpoint;
@@ -44,6 +45,17 @@ class SdkV6Module implements ServiceModule, ExtendingModule, ExecutableModule
             $manager = $c->get('sdk-v6.manager');
             assert($manager instanceof SdkV6Manager);
             $manager->enqueue();
+            $add_payment_method_manager = $c->get('sdk-v6.add-payment-method-manager');
+            assert($add_payment_method_manager instanceof AddPaymentMethodManager);
+            $add_payment_method_manager->enqueue();
+        });
+        // v6 fully owns the Add Payment Method page when it loads (PayPal save
+        // button + card save fields), so the v5 add-payment-method script must
+        // not also run there. See the migration note in extensions.php.
+        add_filter('woocommerce_paypal_payments_render_add_payment_method_assets', static function (bool $render) use ($c): bool {
+            $add_payment_method_manager = $c->get('sdk-v6.add-payment-method-manager');
+            assert($add_payment_method_manager instanceof AddPaymentMethodManager);
+            return $add_payment_method_manager->should_load_on_current_page() ? \false : $render;
         });
         add_action('wp', function () use ($c) {
             if (is_admin()) {
