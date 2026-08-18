@@ -473,4 +473,38 @@ class RecaptchaTest extends TestCase {
 			)
 		);
 	}
+
+	/**
+	 * GIVEN reCAPTCHA's "Log rejected attempts" setting is on
+	 * WHEN a v2 (not v3) reCAPTCHA verification is rejected
+	 * THEN nothing is logged and the rejection counter does not increment, since only
+	 *      v3 rejections are logged.
+	 */
+	public function test_v2_rejection_never_invokes_rejection_logging(): void {
+		$this->stub_rejected_v3_verification();
+
+		$settings_status = Mockery::mock( SettingsStatus::class );
+
+		$rejection_counter = Mockery::mock( PersistentCounter::class );
+		$rejection_counter->shouldNotReceive( 'increment' );
+
+		$rejection_logger = Mockery::mock( LoggerInterface::class );
+		$rejection_logger->shouldNotReceive( 'debug' );
+
+		$testee = $this->make_testee(
+			$settings_status,
+			array(),
+			array( 'log_rejections' => 'yes' ),
+			null,
+			$rejection_logger,
+			$rejection_counter
+		);
+
+		$testee->intercept_paypal_ajax(
+			array(
+				'ppcp_recaptcha_token'   => 'test-token',
+				'ppcp_recaptcha_version' => 'v2',
+			)
+		);
+	}
 }
