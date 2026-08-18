@@ -60,9 +60,7 @@ return array('sdk-v6.asset-getter' => static function (ContainerInterface $conta
         // Guarded with has(): ppcp-save-payment-methods can be disabled
         // independently of the v6 flag (see ppcp-settings/services.php).
         $container->has('save-payment-methods.eligible') && $container->get('save-payment-methods.eligible') && $settings_provider->save_card_details(),
-        $settings_provider,
-        $container->get('wcgateway.configuration.card-configuration'),
-        $container->get('wcgateway.credit-card-icons')
+        $settings_provider
     );
 }, 'sdk-v6.endpoint.client-token' => static function (ContainerInterface $container): ClientTokenEndpoint {
     return new ClientTokenEndpoint($container->get('order-endpoints.request-data'), $container->get('woocommerce.logger.woocommerce'), $container->get('api.sdk-client-token'), $container->get('sdk-v6.rate-limiter'));
