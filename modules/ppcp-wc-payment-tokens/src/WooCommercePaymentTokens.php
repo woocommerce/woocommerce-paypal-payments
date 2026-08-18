@@ -257,6 +257,10 @@ class WooCommercePaymentTokens {
 			$customer_id = get_user_meta( $user_id, 'ppcp_customer_id', true );
 		}
 
+		if ( ! $customer_id ) {
+			return array();
+		}
+
 		try {
 			$customer_tokens = $this->payment_tokens_endpoint->payment_tokens_for_customer( $customer_id );
 		} catch ( RuntimeException $exception ) {

@@ -147,6 +147,77 @@ class SubscriptionHelperTest extends TestCase
 		);
 	}
 
+	public function testNeedSubscriptionIntentFalseWhenNotInSubscriptionsApiMode()
+	{
+		$helper = $this->partialSubscriptionHelperForIntent(true, false, '');
+
+		$this->assertFalse($helper->need_subscription_intent('vaulting_api'));
+	}
+
+	public function testNeedSubscriptionIntentTrueForSubscriptionProductWithConnectedPlan()
+	{
+		$helper = $this->partialSubscriptionHelperForIntent(true, true, 'PLAN-1');
+
+		$this->assertTrue($helper->need_subscription_intent('subscriptions_api'));
+	}
+
+	/**
+	 * @scenario Regression test for PCP-6696. A subscription product without a connected
+	 *           PayPal plan, with manual renewals enabled and vaulting disabled, must use
+	 *           the standard checkout flow - forcing subscription intent here made the SDK
+	 *           script incompatible with the standard button render that follows, since
+	 *           PayPal's SDK requires createSubscription whenever intent=subscription.
+	 */
+	public function testNeedSubscriptionIntentFalseForSubscriptionProductWithManualRenewalsAndNoPlan()
+	{
+		$helper = $this->partialSubscriptionHelperForIntent(true, true, '');
+
+		$this->assertFalse($helper->need_subscription_intent('subscriptions_api'));
+	}
+
+	public function testNeedSubscriptionIntentTrueForSubscriptionProductWithNoPlanAndNoManualRenewals()
+	{
+		$helper = $this->partialSubscriptionHelperForIntent(true, false, '');
+
+		$this->assertTrue($helper->need_subscription_intent('subscriptions_api'));
+	}
+
+	public function testNeedSubscriptionIntentTrueOnCartContainingSubscription()
+	{
+		when('is_cart')->justReturn(true);
+		when('is_checkout')->justReturn(false);
+		$helper = $this->partialSubscriptionHelperForIntent(false, false, '');
+		$helper->shouldReceive('cart_contains_subscription')->andReturn(true);
+
+		$this->assertTrue($helper->need_subscription_intent('subscriptions_api'));
+	}
+
+	public function testNeedSubscriptionIntentFalseWhenNotASubscriptionContext()
+	{
+		when('is_cart')->justReturn(false);
+		when('is_checkout')->justReturn(false);
+		$helper = $this->partialSubscriptionHelperForIntent(false, false, '');
+
+		$this->assertFalse($helper->need_subscription_intent('subscriptions_api'));
+	}
+
+	/**
+	 * Builds a partial mock of SubscriptionHelper so `need_subscription_intent()` runs for
+	 * real while the signals it reads from other methods on the same class are fixed.
+	 */
+	private function partialSubscriptionHelperForIntent(
+		bool $current_product_is_subscription,
+		bool $accept_manual_renewals,
+		string $paypal_subscription_id
+	): SubscriptionHelper {
+		$helper = Mockery::mock(SubscriptionHelper::class)->makePartial();
+		$helper->shouldReceive('current_product_is_subscription')->andReturn($current_product_is_subscription);
+		$helper->shouldReceive('accept_manual_renewals')->andReturn($accept_manual_renewals);
+		$helper->shouldReceive('paypal_subscription_id')->andReturn($paypal_subscription_id);
+
+		return $helper;
+	}
+
 	/**
 	 * GIVEN WooCommerce Subscriptions is not active
 	 * WHEN resolve_subscription_mode() is called

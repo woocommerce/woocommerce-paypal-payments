@@ -18,6 +18,30 @@ export const cartHasSubscriptionProducts = ( scriptData ) => {
 };
 
 /**
+ * Whether the PayPal payment method may be offered for the current cart totals.
+ *
+ * A zero-total cart usually needs no payment method, but a subscription cart does:
+ * the method is vaulted to pay the renewals. `is_free_trial_cart` is computed
+ * server-side while the page renders, so it misses a cart that only reaches a zero
+ * total afterwards (a coupon applied on the checkout itself); the cart shape is
+ * therefore checked as well.
+ *
+ * @param {Object} scriptData
+ * @param {Object} cartData   Live cart data passed to `canMakePayment`.
+ * @return {boolean} Whether the PayPal payment method may be displayed.
+ */
+export const paypalPaymentMethodAllowed = ( scriptData, cartData ) => {
+	if (
+		scriptData?.is_free_trial_cart ||
+		cartHasSubscriptionProducts( scriptData )
+	) {
+		return true;
+	}
+
+	return parseInt( cartData?.cartTotals?.total_price ) > 0;
+};
+
+/**
  * Whether the PayPal button is allowed for the current (subscription) cart.
  *
  * Single, mode-aware rule shared by the block cart, classic cart and mini-cart

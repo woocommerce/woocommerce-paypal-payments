@@ -23,7 +23,10 @@ class StoreValidation {
 	private array $issues = array();
 
 	public function add( ValidationIssue $issue ): ValidationIssue {
-		$this->issues[] = $issue;
+		// Prevent duplicate field-level issues.
+		if ( ! $issue->field() || ! $this->has_issue( $issue ) ) {
+			$this->issues[] = $issue;
+		}
 
 		return $issue;
 	}
@@ -105,6 +108,23 @@ class StoreValidation {
 
 	public function has_pricing_issue(): bool {
 		return $this->has_issue_with_code( ErrorCode::PRICING_ERROR );
+	}
+
+	/**
+	 * Tests, whether an issue with the same type, code, and field value exists.
+	 */
+	public function has_issue( ValidationIssue $issue ): bool {
+		foreach ( $this->issues as $known ) {
+			if (
+				$known->code() === $issue->code()
+				&& $known->type() === $issue->type()
+				&& $known->field() === $issue->field()
+			) {
+				return true;
+			}
+		}
+
+		return false;
 	}
 
 	public function has_issue_for_field( string $field ): bool {

@@ -159,6 +159,17 @@ class IncomingWebhookEndpoint {
 	 * @return bool
 	 */
 	public function verify_request( \WP_REST_Request $request ): bool {
+		$content_type = $request->get_content_type();
+		if ( ! isset( $content_type['value'] ) || 'application/json' !== $content_type['value'] ) {
+			$this->logger->error( 'Webhook request rejected: expected application/json content type.' );
+			return false;
+		}
+
+		// We only want to use the request body for retrieving the webhook parameters,
+		// so clear other sources of parameters so that we never fall back to them.
+		$request->set_query_params( array() );
+		$request->set_url_params( array() );
+
 		if ( ! $this->verify_request ) {
 			return true;
 		}
