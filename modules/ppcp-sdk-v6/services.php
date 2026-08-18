@@ -46,7 +46,8 @@ return array('sdk-v6.asset-getter' => static function (ContainerInterface $conta
         // has() because ppcp-save-payment-methods has its own feature flag
         // independent of the v6 flag (see ppcp-settings/services.php).
         $container->has('save-payment-methods.eligible') && $container->get('save-payment-methods.eligible') && $container->get('settings.settings-provider')->save_card_details(),
-        $container->get('wc-subscriptions.helper')
+        $container->get('wc-subscriptions.helper'),
+        $container->get('wcgateway.credit-card-icons')
     );
 }, 'sdk-v6.add-payment-method-manager' => static function (ContainerInterface $container): AddPaymentMethodManager {
     $settings_provider = $container->get('settings.settings-provider');
