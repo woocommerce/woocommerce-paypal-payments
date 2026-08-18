@@ -27,7 +27,9 @@ class SdkV6ManagerTest extends TestCase
     private $session_handler;
     private $cancel_view;
     private $card_payments_configuration;
+	private $card_vaulting_enabled;
     private $subscription_helper;
+	private $credit_card_icons;
 
     public function setUp(): void
     {
@@ -41,8 +43,10 @@ class SdkV6ManagerTest extends TestCase
         $this->session_handler = Mockery::mock(SessionHandler::class);
         $this->cancel_view = Mockery::mock(CancelView::class);
         $this->card_payments_configuration = Mockery::mock(CardPaymentsConfiguration::class);
-        $this->subscription_helper = Mockery::mock(SubscriptionHelper::class);
+        $this->card_vaulting_enabled = true;
+		$this->subscription_helper = Mockery::mock(SubscriptionHelper::class);
         $this->subscription_helper->shouldReceive('cart_contains_subscription')->andReturn(false)->byDefault();
+		$this->credit_card_icons = [];
     }
 
     private function createTestee(bool $should_handle_shipping = false, array $credit_card_icons = []): SdkV6Manager
@@ -60,9 +64,9 @@ class SdkV6ManagerTest extends TestCase
             false,
             false,
             $this->card_payments_configuration,
-            $credit_card_icons,
-	        $card_vaulting_enabled,
-	        $this->subscription_helper
+	        $this->card_vaulting_enabled,
+	        $this->subscription_helper,
+	        $this->credit_card_icons
         );
     }
 
