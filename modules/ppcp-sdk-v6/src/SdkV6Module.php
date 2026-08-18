@@ -15,6 +15,7 @@ use WooCommerce\PayPalCommerce\Applepay\ApplePayGateway;
 use WooCommerce\PayPalCommerce\SdkV6\Assets\SdkV6Manager;
 use WooCommerce\PayPalCommerce\SdkV6\Blocks\V6PaymentMethod;
 use WooCommerce\PayPalCommerce\SdkV6\Endpoint\ClientTokenEndpoint;
+use WooCommerce\PayPalCommerce\SdkV6\Endpoint\SimulateCartEndpoint;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExecutableModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExtendingModule;
@@ -42,6 +43,16 @@ class SdkV6Module implements ServiceModule, ExtendingModule, ExecutableModule {
 			static function () use ( $c ) {
 				$endpoint = $c->get( 'sdk-v6.endpoint.client-token' );
 				assert( $endpoint instanceof ClientTokenEndpoint );
+
+				$endpoint->handle_request();
+			}
+		);
+
+		add_action(
+			'wc_ajax_' . SimulateCartEndpoint::ENDPOINT,
+			static function () use ( $c ) {
+				$endpoint = $c->get( 'sdk-v6.endpoint.simulate-cart' );
+				assert( $endpoint instanceof SimulateCartEndpoint );
 
 				$endpoint->handle_request();
 			}

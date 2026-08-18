@@ -1,9 +1,10 @@
 /**
- * Adapter for the existing (v5) WC AJAX order endpoints.
+ * Adapter for the WC AJAX order endpoints this module shares with the classic
+ * button stack.
  *
- * All v6 knowledge of the v5 endpoint contract lives here:
- * ppc-change-cart, ppc-create-order, ppc-approve-order, ppc-update-shipping.
- * Keep the request/response shapes in sync with the endpoint contract tests.
+ * Every assumption about that contract lives here: ppc-change-cart,
+ * ppc-create-order, ppc-approve-order, ppc-update-shipping. Keep the
+ * request/response shapes in sync with the endpoint contract tests.
  *
  * @package
  */
@@ -26,8 +27,8 @@ export const navigation = {
 /**
  * Collects products from the single product form for ppc-change-cart.
  *
- * Reuses the v5 product collection, which handles simple, variable,
- * grouped and booking products plus extra third-party form fields.
+ * Reuses SingleProductActionHandler, which handles simple, variable, grouped and
+ * booking products plus extra third-party form fields.
  *
  * @return {Object[]} Products in the { id, quantity, variations, extra, booking } shape.
  * @throws {Error} When the product form cannot be found.
@@ -64,6 +65,26 @@ export async function changeCart( config ) {
 }
 
 /**
+ * Prices the viewed product without touching the cart (ppc-sdk-v6-simulate-cart).
+ *
+ * For totals that must be known before the shopper acts, which changeCart() cannot
+ * answer because it adds the product to the real cart.
+ *
+ * TODO (phase 3): product-page Pay Later eligibility still uses the localized
+ * config.amount, which is the cart total whenever the cart is not empty, and
+ * Google Pay still resolves its sheet total by mutating the cart on click. Both
+ * should read this instead.
+ *
+ * @param {Object} config - The wc_ppcp_sdk_v6 config object.
+ * @return {Promise<{total: string, currency_code: string}>} The simulated total.
+ */
+export async function simulateCart( config ) {
+	return postJson( config.ajax.simulate_cart, {
+		products: getProductsFromForm(),
+	} );
+}
+
+/**
  * Creates a PayPal order via the existing WC AJAX endpoints.
  *
  * On product pages the viewed product is first added to the cart
@@ -75,7 +96,7 @@ export async function changeCart( config ) {
  * @param {string}   context         - The page context.
  * @param {string}   fundingSource   - The funding source (paypal, venmo, paylater).
  * @param {Object[]} [purchaseUnits] - Units the caller already resolved. Wallets
- *                                     pass theirs so the cart is not changed twice.
+ *                                   pass theirs so the cart is not changed twice.
  * @param {string}   [paymentMethod] - The WC gateway that processes the order.
  * @return {Promise<{orderId: string}>} The created PayPal order id.
  */
@@ -99,9 +120,9 @@ export async function createOrder(
 	};
 
 	if ( context === 'checkout' ) {
-		// Mirrors the v5 CheckoutActionHandler: the serialized form lets
-		// the server run the early WC checkout validation before creating
-		// the order, so the buyer sees form errors before approving.
+		// The serialized form lets the server run the early WC checkout
+		// validation before creating the order, so the buyer sees form errors
+		// before approving.
 		const form = document.querySelector( 'form.checkout' );
 		if ( form ) {
 			body.form_encoded = new URLSearchParams(
@@ -123,22 +144,23 @@ export async function createOrder(
 }
 
 /**
- * Mirrors the v5 flow (onApproveForContinue): should_create_wc_order is
- * requested except for Venmo with vaulting, and the server decides. With the
- * Pay Now experience it creates the WC order and responds with
- * order_received_url; otherwise it only stores the approved order in the
- * session and the gateway processes it on Place Order. On classic checkout
- * the WC checkout form is submitted after approval instead.
+ * Reports an approved PayPal order and takes the buyer wherever it leads.
  *
- * @param {Object} config                     - The wc_ppcp_sdk_v6 config object.
- * @param {string} context                    - The page context.
- * @param {string} fundingSource              - The funding source used for payment.
- * @param {string} orderId                    - The PayPal order ID.
- * @param {Object} [contact]                  - Buyer contact data from a wallet sheet.
- * @param {Object} [contact.payer]            - The PayPal payer (Orders v2 shape).
- * @param {Object} [contact.shippingAddress]  - The PayPal shipping address.
- * @param {string} [paymentMethod]            - The WC gateway that processes
- *                                              the order.
+ * should_create_wc_order is requested except for Venmo with vaulting, and the
+ * server decides: with the Pay Now experience it creates the WC order and responds
+ * with order_received_url, otherwise it only stores the approved order in the
+ * session and the gateway processes it on Place Order. On classic checkout the WC
+ * checkout form is submitted after approval instead.
+ *
+ * @param {Object} config                    - The wc_ppcp_sdk_v6 config object.
+ * @param {string} context                   - The page context.
+ * @param {string} fundingSource             - The funding source used for payment.
+ * @param {string} orderId                   - The PayPal order ID.
+ * @param {Object} [contact]                 - Buyer contact data from a wallet sheet.
+ * @param {Object} [contact.payer]           - The PayPal payer (Orders v2 shape).
+ * @param {Object} [contact.shippingAddress] - The PayPal shipping address.
+ * @param {string} [paymentMethod]           - The WC gateway that processes
+ *                                           the order.
  */
 export async function approveOrder(
 	config,
@@ -294,8 +316,8 @@ export async function createCardOrder( config ) {
 /**
  * Approves a card-fields order after the card session has confirmed it.
  *
- * Mirrors the v5 ACDC flow's card branch: the endpoint runs the
- * disabled-card-brand and 3D Secure checks, then stores the confirmed
+ * The endpoint runs the disabled-card-brand and 3D Secure checks, then stores
+ * the confirmed
  * order in the WC session so the native checkout submission (triggered
  * right after this resolves) can capture it via the existing
  * CreditCardGateway::process_payment() flow.

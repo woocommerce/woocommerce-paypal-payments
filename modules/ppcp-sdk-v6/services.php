@@ -14,6 +14,7 @@ use WooCommerce\PayPalCommerce\Assets\AssetGetterFactory;
 use WooCommerce\PayPalCommerce\SdkV6\Assets\SdkV6Manager;
 use WooCommerce\PayPalCommerce\SdkV6\Blocks\V6PaymentMethod;
 use WooCommerce\PayPalCommerce\SdkV6\Endpoint\ClientTokenEndpoint;
+use WooCommerce\PayPalCommerce\SdkV6\Endpoint\SimulateCartEndpoint;
 use WooCommerce\PayPalCommerce\SdkV6\Helper\ButtonStyleMapper;
 use WooCommerce\PayPalCommerce\SdkV6\Helper\GooglePayConfig;
 use WooCommerce\PayPalCommerce\SdkV6\Helper\RateLimiter;
@@ -83,7 +84,16 @@ return array(
 		);
 	},
 
-	'sdk-v6.rate-limiter'          => static function ( ContainerInterface $container ): RateLimiter {
+	'sdk-v6.endpoint.simulate-cart' => static function ( ContainerInterface $container ): SimulateCartEndpoint {
+		return new SimulateCartEndpoint(
+			$container->get( 'order-endpoints.request-data' ),
+			$container->get( 'order-endpoints.helper.cart-products' ),
+			$container->get( 'button.helper.isolated-cart-simulator' ),
+			$container->get( 'woocommerce.logger.woocommerce' )
+		);
+	},
+
+	'sdk-v6.rate-limiter'           => static function (): RateLimiter {
 		return new RateLimiter(
 			'ppcp_sdk_v6_rl_',
 			10,
