@@ -16,38 +16,27 @@ import { GooglePayPopup } from './google-pay-popup';
 
 export class PayPalUiClassic extends PayPalUi {
 	// Locators
-	cartMenu = () => this.page.locator( '#site-header-cart' );
-	
 	payPalButtonsContainer = () =>
-		this.page.locator( '#ppc-button-ppcp-gateway' );
+		this.page.locator(
+			'#ppc-button-ppcp-gateway, #ppc-button-ppcp-gateway-v6'
+		);
 
 	googlePayGatewayContainer = () =>
 		this.page.locator( '#ppc-button-googlepay-container' );
-	payPalIframe = () =>
-		this.page.frameLocator( 'iframe[name^="__zoid__paypal_buttons__"]' );
-	payPalButtonsClassicContainer = () =>
-		this.payPalIframe().locator( '#buttons-container' );
-	fundingSourceButton = ( name ) =>
-		this.payPalIframe().locator( `[data-funding-source="${ name }"]` );
+	fundingSourceButton = ( name: string ) => {
+		switch ( name ) {
+			case 'paypal':
+				return this.payPalButton();
+			case 'paylater':
+				return this.payLaterButton();
+			case 'venmo':
+				return this.venmoButton();
+			default:
+				throw new Error( `Unsupported funding source: ${ name }` );
+		}
+	};
 
-	payPalButton = () => this.fundingSourceButton( 'paypal' );
-	payLaterButton = () => this.fundingSourceButton( 'paylater' );
-	sepaButton = () => this.fundingSourceButton( 'sepa' );
-	giropayButton = () => this.fundingSourceButton( 'giropay' );
-	sofortButton = () => this.fundingSourceButton( 'sofort' );
-	bcdcFundingSourceButton = () => this.fundingSourceButton( 'card' );
-	venmoButton = () => this.fundingSourceButton( 'venmo' );
 	googlePayButton = () => this.page.locator( '#gpay-button-online-api-id' );
-
-	fundingSourceButtonLabelText = ( name ) =>
-		this.fundingSourceButton( name ).locator( '.paypal-button-text' ); // additional text on paypal buttons
-	fundingSourceButtonPayLabel = ( name ) =>
-		this.fundingSourceButton( name ).locator( '.pay-label' ); // for example Pay Now when vaulting
-	fundingSourceButtonLabel = ( name ) =>
-		this.fundingSourceButton( name ).locator( '.label' ); // customer's email if Vaulting
-	iframePayPalButton = () => this.payPalIframe().locator( '.paypal-button' );
-	iframePayPalButtonText = () =>
-		this.payPalIframe().locator( '.paypal-button-text.true' );
 
 	fundingSourceGateway = ( name: Pcp.GatewayId ) =>
 		this.page.locator( `li.payment_method_${ name }` );
@@ -69,128 +58,18 @@ export class PayPalUiClassic extends PayPalUi {
 		this.fundingSourceGateway( 'ppcp-pay-upon-invoice-gateway' );
 	googlePayGateway = () => this.fundingSourceGateway( 'ppcp-googlepay' );
 
-	taglineText = () => this.payPalIframe().locator( '.paypal-button-tagline' );
-	payPalGatewayText = () =>
-		this.page.locator( '.payment_method_ppcp-gateway>label' );
-	payPalGatewayDescription = () =>
-		this.page.locator( '.payment_method_ppcp-gateway>p' );
-	acdcGatewayText = () =>
-		this.page.locator( '.payment_method_ppcp-credit-card-gateway>label' );
-
 	acdcCardNumberInput = () =>
-		this.page
-			.frameLocator( 'iframe[title="paypal_card_number_field"]' )
-			.locator( 'input.card-field-number ' );
+		this.page.locator( '#ppcp-credit-card-gateway-card-number' );
 	acdcCardExpirationInput = () =>
-		this.page
-			.frameLocator( 'iframe[title="paypal_card_expiry_field"]' )
-			.locator( 'input.card-field-expiry' );
+		this.page.locator( '#ppcp-credit-card-gateway-card-expiry' );
 	acdcCardCvvInput = () =>
-		this.page
-			.frameLocator( 'iframe[title="paypal_card_cvv_field"]' )
-			.locator( 'input.card-field-cvv' );
+		this.page.locator( '#ppcp-credit-card-gateway-card-cvc' );
 	addPaymentMethodButton = () => this.page.locator( '#place_order' );
 
-	payPalCardGatewayIframe = () =>
-		this.payPalIframe().frameLocator( 'iframe.zoid-visible' );
-	payPalCardGatewayCardNumberInput = () =>
-		this.payPalCardGatewayIframe().locator( '#credit-card-number' );
-	payPalCardGatewayCardExpirationInput = () =>
-		this.payPalCardGatewayIframe().locator( '#expiry-date' );
-	payPalCardGatewayCSCCode = () =>
-		this.payPalCardGatewayIframe().locator( '#credit-card-security' );
-	payPalCardGatewayBuyNowButton = () =>
-		this.payPalCardGatewayIframe().locator( '#submit-button' );
-	payPalCardGatewayPoweredByText = () =>
-		this.page
-			.frameLocator( 'iframe[name^="__zoid__paypal_buttons__"]' )
-			.locator( '.paypal-powered-by' )
-			.getByText( 'Powered by' );
-	payPalCardGatewayPoweredByLogo = () =>
-		this.page
-			.frameLocator( 'iframe[name^="__zoid__paypal_buttons__"]' )
-			.locator( '.paypal-powered-by .paypal-logo' );
-	payPalCardGatewayFirsNameField = () =>
-		this.payPalCardGatewayIframe().locator(
-			'[id="billingAddress.givenName"]'
-		);
-	payPalCardGatewayLastNameField = () =>
-		this.payPalCardGatewayIframe().locator(
-			'[id="billingAddress.familyName"]'
-		);
-	payPalCardGatewayStreetField = () =>
-		this.payPalCardGatewayIframe().locator( '[id="billingAddress.line1"]' );
-	payPalCardGatewayApartmentBuildingField = () =>
-		this.payPalCardGatewayIframe().locator( '[id="billingAddress.line2"]' );
-	payPalCardGatewayCityField = () =>
-		this.payPalCardGatewayIframe().locator( '[id="billingAddress.city"]' );
-	payPalCardGatewayStateField = () =>
-		this.payPalCardGatewayIframe().locator( '[id="billingAddress.state"]' );
-	payPalCardGatewayZipCodeField = () =>
-		this.payPalCardGatewayIframe().locator(
-			'[id="billingAddress.postcode"]'
-		);
-	payPalCardGatewayPhoneField = () =>
-		this.payPalCardGatewayIframe().locator( '[id="phone"]' );
-	payPalCardGatewayEmailField = () =>
-		this.payPalCardGatewayIframe().locator( '[id="email"]' );
-
-	miniCartButtonIframe = () =>
-		this.page.frameLocator( '#ppc-button-minicart .component-frame' );
 	miniCartButtonContainer = () =>
-		this.miniCartButtonIframe().locator( '#buttons-container' );
-	miniCartFundingSourceButton = ( name ) =>
-		this.miniCartButtonIframe().locator(
-			`[data-funding-source="${ name }"]`
-		);
-	miniCartIframePayPalButton = () =>
-		this.miniCartButtonIframe().locator( '.paypal-button' );
-	miniCartPayPalButton = () => this.miniCartFundingSourceButton( 'paypal' );
-
-	bcdcFundingSourceIframe = () =>
-		this.payPalIframe().frameLocator( 'iframe.zoid-visible' );
-	bcdcFundingSourceNumberInput = () =>
-		this.bcdcFundingSourceIframe().locator( '#credit-card-number' );
-	bcdcFundingSourceExpirationInput = () =>
-		this.bcdcFundingSourceIframe().locator( '#expiry-date' );
-	bcdcFundingSourceCSCInput = () =>
-		this.bcdcFundingSourceIframe().locator( '#credit-card-security' );
-	bcdcFundingSourceBuyNowButton = () =>
-		this.bcdcFundingSourceIframe().locator( '#submit-button' );
-	bcdcFundingSourceFirstNameInput = () =>
-		this.bcdcFundingSourceIframe().locator(
-			'[id="billingAddress.givenName"]'
-		);
-	bcdcFundingSourceLastNameInput = () =>
-		this.bcdcFundingSourceIframe().locator(
-			'[id="billingAddress.familyName"]'
-		);
-	bcdcFundingSourceStreetInput = () =>
-		this.bcdcFundingSourceIframe().locator( '[id="billingAddress.line1"]' );
-	bcdcFundingSourceApartmentInput = () =>
-		this.bcdcFundingSourceIframe().locator( '[id="billingAddress.line2"]' );
-	bcdcFundingSourceCityInput = () =>
-		this.bcdcFundingSourceIframe().locator( '[id="billingAddress.city"]' );
-	bcdcFundingSourceStateInput = () =>
-		this.bcdcFundingSourceIframe().locator( '[id="billingAddress.state"]' );
-	bcdcFundingSourceZipCodeInput = () =>
-		this.bcdcFundingSourceIframe().locator(
-			'[id="billingAddress.postcode"]'
-		);
-	bcdcFundingSourcePhoneInput = () =>
-		this.bcdcFundingSourceIframe().locator( '#phone' );
-	bcdcFundingSourceEmailInput = () =>
-		this.bcdcFundingSourceIframe().locator( '#email' );
-	bcdcFundingSourcePayNowButton = () =>
-		this.bcdcFundingSourceIframe().locator( '#submit-button' );
-	bcdcFundingSourceTagline = () =>
 		this.page
-			.frameLocator( 'iframe[name^="__zoid__paypal_buttons__"]' )
-			.locator( '.paypal-powered-by' );
-	bcdcFundingSourcePoweredByText = () =>
-		this.bcdcFundingSourceTagline().getByText( 'Powered by' );
-	bcdcFundingSourcePoweredByLogo = () =>
-		this.bcdcFundingSourceTagline().locator( '.paypal-logo' );
+			.locator( '#ppc-button-minicart-v6' )
+			.locator( 'paypal-button, venmo-button, paypal-pay-later-button' );
 
 	bcdcIframe = () =>
 		this.page.frameLocator(
@@ -206,16 +85,12 @@ export class PayPalUiClassic extends PayPalUi {
 		this.bcdcDetailsIframe().locator( '#expiry-date' );
 	bcdcCSCInput = () =>
 		this.bcdcDetailsIframe().locator( '#credit-card-security' );
-	bcdcBuyNowButton = () =>
-		this.bcdcDetailsIframe().locator( '#submit-button' );
 	bcdcFirstNameInput = () =>
 		this.bcdcDetailsIframe().locator( '[id="billingAddress.givenName"]' );
 	bcdcLastNameInput = () =>
 		this.bcdcDetailsIframe().locator( '[id="billingAddress.familyName"]' );
 	bcdcStreetInput = () =>
 		this.bcdcDetailsIframe().locator( '[id="billingAddress.line1"]' );
-	bcdcApartmentInput = () =>
-		this.bcdcDetailsIframe().locator( '[id="billingAddress.line2"]' );
 	bcdcCityInput = () =>
 		this.bcdcDetailsIframe().locator( '[id="billingAddress.city"]' );
 	bcdcCountryInput = () =>
@@ -228,21 +103,6 @@ export class PayPalUiClassic extends PayPalUi {
 	bcdcEmailInput = () => this.bcdcDetailsIframe().locator( '#email' );
 	bcdcPayNowButton = () =>
 		this.bcdcDetailsIframe().locator( '#submit-button' );
-	bcdcTagline = () =>
-		this.page
-			.frameLocator( 'iframe[name^="__zoid__paypal_buttons__"]' )
-			.locator( '.paypal-powered-by' );
-	bcdcPoweredByText = () => this.bcdcTagline().getByText( 'Powered by' );
-	bcdcPoweredByLogo = () => this.bcdcTagline().locator( '.paypal-logo' );
-
-	acdcCardsIcons = () =>
-		this.page.locator(
-			'.payment_method_ppcp-credit-card-gateway > label > img'
-		);
-	acdcStoredCredentialsText = () =>
-		this.page.locator(
-			'[id^="wc-ppcp-credit-card-gateway-payment-token-"] > label'
-		);
 	acdcSaveToAccountCheckbox = () =>
 		this.page.locator( '#wc-ppcp-credit-card-gateway-new-payment-method' );
 	acdcSavedCards = () =>
@@ -260,31 +120,6 @@ export class PayPalUiClassic extends PayPalUi {
 		this.puiGateway().locator( '#billing_birth_date' );
 	puiPhoneInput = () =>
 		this.puiGateway().locator( '#billing_phone' );
-	puiGatewayTitle = () =>
-		this.puiGateway().locator(
-			'label[for="payment_method_ppcp-pay-upon-invoice-gateway"]'
-		);
-	puiGatewayDescription = () =>
-		this.puiGateway().locator(
-			'div.payment_method_ppcp-pay-upon-invoice-gateway>p'
-		);
-
-	payPalSpinner = () =>
-		this.page.locator( '.ppc-button-wrapper .blockUI.blockOverlay' );
-
-	venmoOverlayIframe = () =>
-		this.page.frameLocator( '.venmo-checkout-sandbox-iframe' );
-	venmoOverlayContinueButton = () =>
-		this.venmoOverlayIframe().locator( '.venmo-checkout-continue' );
-
-	payPalButtonMoreOptions = () =>
-		this.payPalIframe().locator(
-			'.paypal-button-wallet-menu .menu-button, [aria-label="More options"]'
-		);
-	payPalMenuIframe = () =>
-		this.page.frameLocator( 'iframe[name^="__zoid__paypal_menu__"]' );
-	payWithDifferentAccountButton = () =>
-		this.payPalMenuIframe().getByText( 'Pay with a different account' );
 
 	fastlaneContinueButton = () =>
 		this.page.locator( '#ppcp-axo-billing-email-submit-button' );
@@ -299,16 +134,9 @@ export class PayPalUiClassic extends PayPalUi {
 			'li.payment_method_ppcp-axo-gateway label[for="payment_method_ppcp-axo-gateway"]'
 		);
 
-	usingVaultedPayPalAccountText = ( payPalEmail: string ) =>
-		this.page.getByText( `Using ${ payPalEmail } PayPal.` );
-
 	/** Host element with paypal-buttons-label-* and paypal-buttons-layout-* classes (product, cart, checkout). */
 	payPalButtonsHostElement = () =>
-		this.page.locator( '#ppc-button-ppcp-gateway .paypal-buttons' );
-
-	/** Host element for mini cart PayPal buttons. */
-	minicartPayPalButtonsHostElement = () =>
-		this.page.locator( '#ppc-button-minicart .paypal-buttons' );
+		this.payPalButtonsContainer().locator( '.paypal-buttons, paypal-button' );
 
 	// Actions
 
@@ -473,47 +301,6 @@ export class PayPalUiClassic extends PayPalUi {
 	};
 
 	/**
-	 * Completes payment with BCDC funding source (vaulting disabled)
-	 *
-	 * @param card
-	 */
-	completeBcdcFundingSourcePayment = async (
-		card: WooCommerce.CreditCard
-	) => {
-		await expect(
-			this.bcdcFundingSourceButton(),
-			'Assert BCDC funding source button is visible'
-		).toBeVisible();
-		await this.bcdcFundingSourceButton().click();
-
-		await expect(
-			this.bcdcFundingSourceNumberInput(),
-			'Assert BCDC funding source number input is visible'
-		).toBeVisible();
-		await this.bcdcFundingSourceNumberInput().fill( card.card_number );
-
-		await expect(
-			this.bcdcFundingSourceExpirationInput(),
-			'Assert BCDC funding source expiration input is visible'
-		).toBeVisible();
-		await this.bcdcFundingSourceExpirationInput().fill(
-			card.expiration_date
-		);
-
-		await expect(
-			this.bcdcFundingSourceCSCInput(),
-			'Assert BCDC funding source CSC input is visible'
-		).toBeVisible();
-		await this.bcdcFundingSourceCSCInput().fill( card.card_cvv );
-
-		await expect(
-			this.bcdcFundingSourcePayNowButton(),
-			'Assert BCDC funding source pay now button is visible'
-		).toBeVisible();
-		await this.bcdcFundingSourcePayNowButton().click();
-	};
-
-	/**
 	 * Completes payment with BCDC (vaulting disabled)
 	 *
 	 * @param card
@@ -673,10 +460,6 @@ export class PayPalUiClassic extends PayPalUi {
 					this.payPalButton(),
 					'Assert PayPal button is visible'
 				).toBeVisible();
-				// TODO: Confirm if PayPal button wallet view is supposed to be deprecated
-				// await expect
-				// 	.soft( this.payPalButtonMoreOptions() )
-				// 	.toBeVisible();
 				break;
 
 			case 'acdc':

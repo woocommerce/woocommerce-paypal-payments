@@ -49,29 +49,18 @@ export class PayPalUi {
 		this.page.locator(
 			'.wc-block-components-express-payment__event-buttons'
 		);
-	blockSmartButtonListItem = () =>
-		this.payPalButtonsBlockContainer().locator(
-			'li[id^="express-payment-method-"]'
-		);
-	payPalIframe = () =>
-		this.page.frameLocator(
-			// unified selector for My Account and checkout pages
-			'#express-payment-method-ppcp-gateway-paypal .component-frame'
-		);
 	payPalButton = () =>
-		this.payPalIframe().locator( `[data-funding-source="paypal"]` );
+		this.page.locator(
+			'#express-payment-method-ppcp-gateway-paypal paypal-button, #ppc-button-ppcp-gateway-v6 paypal-button'
+		);
 	payLaterButton = () =>
-		this.page
-			.frameLocator(
-				'#express-payment-method-ppcp-gateway-paylater .component-frame'
-			)
-			.locator( `[data-funding-source="paylater"]` );
+		this.page.locator(
+			'#express-payment-method-ppcp-gateway-paylater paypal-pay-later-button, #ppc-button-ppcp-gateway-v6 paypal-pay-later-button'
+		);
 	venmoButton = () =>
-		this.page
-			.frameLocator(
-				'#express-payment-method-ppcp-gateway-venmo .component-frame'
-			)
-			.locator( `[data-funding-source="venmo"]` );
+		this.page.locator(
+			'#express-payment-method-ppcp-gateway-venmo venmo-button, #ppc-button-ppcp-gateway-v6 venmo-button'
+		);
 
 	googlePayButton = () =>
 		this.page
@@ -87,22 +76,13 @@ export class PayPalUi {
 		this.page.locator(
 			'#radio-control-wc-payment-method-options-ppcp-gateway__label'
 		);
-	payPalButtonMoreOptions = () =>
-		this.payPalIframe().locator( '[aria-label="More options"]' );
 	payPalVaultedGateway = () =>
 		this.paymentOptionsContainers().filter( {
 			hasText: 'Saved token for ppcp-gateway',
 		} );
 	payPalVaultComponent = () =>
 		this.page.locator( '#ppcp-vault-component' );
-	payPalVaultIframe = () =>
-		this.payPalVaultComponent()
-			.frameLocator(
-				'iframe[name^="__zoid__paypal_saved_payment_methods"]'
-			);
 
-	payLaterMessageIframe = () =>
-		this.page.frameLocator( 'iframe[title^="PayPal Message"]' );
 	payLaterMessageContainer = () =>
 		this.page.locator( 'iframe[title^="PayPal Message"]' ).first();
 
@@ -207,7 +187,7 @@ export class PayPalUi {
 	/** Host element with paypal-buttons-label-* and paypal-buttons-layout-* classes (block cart/checkout). */
 	payPalButtonsHostElement = () =>
 		this.page.locator(
-			'#express-payment-method-ppcp-gateway-paypal .paypal-buttons'
+			'#express-payment-method-ppcp-gateway-paypal .paypal-buttons, #express-payment-method-ppcp-gateway-paypal paypal-button'
 		);
 	
 	puiGateway = () =>
@@ -389,11 +369,7 @@ export class PayPalUi {
 				break;
 
 			case 'card':
-				if ( gateway.id === 'ppcp-card-button-gateway' ) {
-					await this.completeBcdcPayment( payment.card, customer );
-					break;
-				}
-				await this.completeBcdcFundingSourcePayment( payment.card );
+				await this.completeBcdcPayment( payment.card, customer );
 				break;
 
 			case 'pay_upon_invoice':
@@ -676,13 +652,6 @@ export class PayPalUi {
 			`TODO: completeBcdcPayment for block pages ${ args.length }`
 		);
 
-	completeBcdcFundingSourcePayment = async ( ...args ) =>
-		console.log(
-			`TODO: completeBcdcFundingSourcePayment for block pages ${ args.length }`
-		);
-
-	
-
 	/**
 	 * Completes payment with Pay upon Invoice (vaulting disabled)
 	 *
@@ -771,10 +740,6 @@ export class PayPalUi {
 					this.payPalButton(),
 					'Assert PayPal button is visible'
 				).toBeVisible();
-				// TODO: Confirm if PayPal button wallet view is supposed to be deprecated
-				// await expect
-				// 	.soft( this.payPalButtonMoreOptions() )
-				// 	.toBeVisible();
 				break;
 
 			case 'acdc':

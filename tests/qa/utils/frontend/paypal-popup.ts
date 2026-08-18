@@ -62,18 +62,11 @@ export class PayPalPopup {
 			.or( this.page.getByRole( 'button', { name: /Link and Pay/ } ) )
 			// German PayPal consent page (pay/billing flow) uses "Zustimmen und weiter"
 			.or( this.page.getByRole( 'button', { name: /Zustimmen/ } ) );
-	payLaterSwitcher = () => this.page.getByTestId( 'paylater-tab' );
-	payLaterRadio = () =>
-		this.page.locator( 'label[for^="credit-offer"]' ).first();
 	venmoButton = () => this.page.locator( '.venmo-button-wrapper>button' );
-	saveAndContinueButton = () => this.page.getByTestId( 'consentButton' );
-	cancelLink = () => this.page.locator( '#cancelLink' );
 	loadSpinnerContainer = () => this.page.locator( '#preloaderSpinner' );
 	tryAgainLink = () => this.page.getByRole( 'link', { name: 'Try again' } );
 	payLaterIframe = () =>
 		this.page.locator( 'iframe[title="CAP"]' ).contentFrame();
-	loanAgreementCheckbox = () =>
-		this.payLaterIframe().locator( 'input[type="checkbox"]' ).first();
 	agreeAndApplyButton = () => this.payLaterIframe().getByTestId( 'apply' );
 	changeUserButton = () =>
 		this.page.locator( 'button[aria-label="Change user"]' );

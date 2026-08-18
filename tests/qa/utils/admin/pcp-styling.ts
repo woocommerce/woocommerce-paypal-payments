@@ -45,12 +45,8 @@ export class PcpStyling extends PcpAdminPage {
 		this.page.locator( '#inspector-select-control-0' );
 	enablePaymentMethodsOnLocationCheckbox = () =>
 		this.page.locator( '#inspector-checkbox-control-0' );
-	paymentMethodsCheckbox = ( label: Pcp.Admin.Styling.PaymentMethods ) =>
-		this.page.getByLabel( label );
 	buttonLayoutRadio = ( label: Pcp.Admin.Styling.ButtonLayout ) =>
 		this.page.getByLabel( label );
-	showTaglineBelowButtonsCheckbox = () =>
-		this.page.getByLabel( 'Show tagline below buttons' );
 	buttonShapeRadio = ( label: Pcp.Admin.Styling.ButtonShape ) =>
 		this.page.getByLabel( label );
 	buttonLabelSelectbox = () =>
