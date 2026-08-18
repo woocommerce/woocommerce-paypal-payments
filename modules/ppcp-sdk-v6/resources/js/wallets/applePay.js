@@ -251,7 +251,7 @@ export async function renderApplePay( {
 
 	const styles = config.apple_pay.styles?.[ context ] || {};
 
-	container.appendChild( createButton( styles, pay ) );
+	container.appendChild( createButton( styles, config.button_height, pay ) );
 }
 
 /**
@@ -274,13 +274,14 @@ function isDeviceEligible() {
  * Creates the <apple-pay-button> element.
  *
  * A custom element registered by Apple's SDK, not something the PayPal SDK
- * renders, so the styling is applied as attributes.
+ * renders, so the styling is applied as attributes and custom properties.
  *
  * @param {Object}   styles  - The button styles for this context.
+ * @param {string}   height  - The height every payment button shares.
  * @param {Function} onClick - The click handler.
  * @return {HTMLElement} The button element.
  */
-function createButton( styles, onClick ) {
+function createButton( styles, height, onClick ) {
 	const button = document.createElement( 'apple-pay-button' );
 
 	// Defaulted because settings leave these empty until the merchant picks a value,
@@ -289,12 +290,17 @@ function createButton( styles, onClick ) {
 	button.setAttribute( 'type', styles.type || 'pay' );
 	button.setAttribute( 'locale', styles.language || 'en' );
 
-	// Apple's default button is far shorter than the rest of the checkout controls.
-	// The element reads the custom property from its shadow DOM.
-	button.style.setProperty( '--apple-pay-button-height', '48px' );
-	button.style.setProperty( '--apple-pay-button-border-radius', '4px' );
+	// Custom properties, not attributes: the element takes its size and shape from
+	// its shadow DOM. A height is set at all because Apple's intrinsic one is far
+	// shorter than the rest of the checkout controls. Undefaulted, unlike the
+	// attributes above, since PHP always sends both.
+	button.style.setProperty( '--apple-pay-button-height', height );
+	button.style.setProperty(
+		'--apple-pay-button-border-radius',
+		styles.borderRadius
+	);
 	button.style.display = 'block';
-	button.style.height = '48px';
+	button.style.height = height;
 
 	button.addEventListener( 'click', ( event ) => {
 		event.preventDefault();

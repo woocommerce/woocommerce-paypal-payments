@@ -17,8 +17,10 @@ import { hasJQuery } from '../utils/api';
  * Kept short because the total cannot be re-read on click: a stale one is what the
  * shopper gets charged. Long enough to collapse the event burst a variation switch
  * fires, short enough that clicking straight after a change gets the new price.
+ * Debounced rather than throttled, which would price the burst's first event and
+ * so describe a variation the shopper has already moved away from.
  */
-const REFRESH_DEBOUNCE_MS = 400;
+const REFRESH_DEBOUNCE_MS = 250;
 
 /**
  * The form listeners are attached once per page, but every render pass creates a
@@ -101,16 +103,24 @@ function listenToProductForm( form ) {
  *
  * @param {Object} config  - The wc_ppcp_sdk_v6 config object.
  * @param {string} context - The page context.
- * @return {{get: Function, refresh: Function}} The reader and a manual refresh.
+ * @return {{get: Function}} The synchronously-readable total.
  */
 export function watchSheetTotal( config, context ) {
 	// Seeded so a click that beats the first resolve still has a number to show.
 	let total = config.amount || '';
 
+	// Refreshes overlap and can resolve out of order, letting a slow answer about
+	// an older variation overwrite a fresh one: the stale total the debounce
+	// exists to prevent.
+	let latestRequest = 0;
+
 	const refresh = async () => {
-		// Never overwritten by a failed lookup's empty string.
+		const request = ++latestRequest;
 		const resolved = await resolveSheetTotal( config, context );
-		if ( resolved ) {
+
+		// Never overwritten by a failed lookup's empty string, nor by a request
+		// that a newer one has already superseded.
+		if ( resolved && request === latestRequest ) {
 			total = resolved;
 		}
 
@@ -134,6 +144,5 @@ export function watchSheetTotal( config, context ) {
 
 	return {
 		get: () => total,
-		refresh,
 	};
 }

@@ -39,6 +39,15 @@ class SdkV6Manager {
 	public const GOOGLE_PAY_WRAPPER_ID = 'ppc-button-ppcp-googlepay-v6';
 	public const APPLE_PAY_WRAPPER_ID  = 'ppc-button-ppcp-applepay-v6';
 
+	/**
+	 * The height every payment button on the page renders at.
+	 *
+	 * Not a merchant setting: the styling DTOs carry no height (see
+	 * ButtonStyleMapper), and the buttons are meant to match each other. Hence one
+	 * value for all of them, rather than one per button type or context.
+	 */
+	public const PAYMENT_BUTTON_HEIGHT = '48px';
+
 	// Existing WC credit-card-form field IDs (see CardFieldsModule's
 	// woocommerce_credit_card_form_fields filter and WC core's own
 	// card-number/expiry/cvc fields) that the v6 card fields mount into,
@@ -423,6 +432,7 @@ class SdkV6Manager {
 				'need_shipping'    => $this->need_shipping(),
 			),
 			'button_styles'     => $button_styles,
+			'button_height'     => self::PAYMENT_BUTTON_HEIGHT,
 			'wrapper'           => '#' . self::WRAPPER_ID,
 			'mini_cart_wrapper' => '#' . self::MINI_CART_WRAPPER_ID,
 			'card_fields'       => array(

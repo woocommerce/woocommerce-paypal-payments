@@ -16,6 +16,16 @@ use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
 
 class ApplePayConfig {
 
+	/**
+	 * The <apple-pay-button> custom property expects a CSS length, not an integer.
+	 */
+	private const RADIUS_MAP = array(
+		'pill' => '24px',
+		'rect' => '4px',
+	);
+
+	private const DEFAULT_RADIUS = '24px';
+
 	private SettingsProvider $settings_provider;
 	private SubscriptionHelper $subscription_helper;
 
@@ -91,10 +101,7 @@ class ApplePayConfig {
 	 * The Apple Pay button styling for a page context (product, cart, checkout,
 	 * mini-cart). Only meaningful where should_render() is true.
 	 *
-	 * No borderRadius: the <apple-pay-button> element takes its shape from CSS
-	 * rather than from a request property.
-	 *
-	 * @return array{color: string, type: string, language: string}
+	 * @return array{color: string, type: string, language: string, borderRadius: string}
 	 */
 	public function styles( string $context ): array {
 		$styling = $this->settings_provider->applepay_styles( $context );
@@ -103,9 +110,10 @@ class ApplePayConfig {
 		// registers, which are absent when that module is not loaded. Mapping again
 		// is idempotent and keeps the values valid either way.
 		return array(
-			'color'    => PropertiesDictionary::map_color( $styling->color ),
-			'type'     => PropertiesDictionary::map_type( $styling->label ),
-			'language' => PropertiesDictionary::map_language( $this->settings_provider->applepay_button_language() ),
+			'color'        => PropertiesDictionary::map_color( $styling->color ),
+			'type'         => PropertiesDictionary::map_type( $styling->label ),
+			'language'     => PropertiesDictionary::map_language( $this->settings_provider->applepay_button_language() ),
+			'borderRadius' => self::RADIUS_MAP[ $styling->shape ] ?? self::DEFAULT_RADIUS,
 		);
 	}
 

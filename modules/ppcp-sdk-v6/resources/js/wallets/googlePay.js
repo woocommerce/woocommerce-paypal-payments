@@ -26,13 +26,13 @@ import { resolveWalletTotal } from './walletTotal';
 /**
  * Renders the Google Pay button and wires its click to a payment.
  *
- * @param {Object} args         - The render inputs.
- * @param {Object} args.wrapper - The button wrapper to render into.
- * @param {Object} args.config  - The wc_ppcp_sdk_v6 config object.
- * @param {string} args.context - The page context.
- * @param {Object} args.session - The v6 Google Pay payment session.
+ * @param {Object}  args           - The render inputs.
+ * @param {Object}  args.wrapper   - The button wrapper to render into.
+ * @param {Object}  args.config    - The wc_ppcp_sdk_v6 config object.
+ * @param {string}  args.context   - The page context.
+ * @param {Object}  args.session   - The v6 Google Pay payment session.
  * @param {?Object} [args.gateway] - The { id, wrapper } of the payment-method
- *                                   row, when the wallet is its own gateway.
+ *                                 row, when the wallet is its own gateway.
  * @return {Promise<void>} Resolves once the button is rendered, or skipped.
  */
 export async function renderGooglePay( {
@@ -43,9 +43,11 @@ export async function renderGooglePay( {
 	gateway,
 } ) {
 	// Own box, because buttonSizeMode 'fill' cannot share the wrapper with the
-	// PayPal buttons. Appended before the first await so boot.js's emptiness
-	// check skips a redundant later pass.
+	// PayPal buttons — and sizes the button to that box, so the shared height goes
+	// here. Appended before the first await so boot.js's emptiness check skips a
+	// redundant later pass.
 	const container = document.createElement( 'div' );
+	container.style.height = config.button_height;
 	wrapper.appendChild( container );
 
 	// Independent: fetching PayPal's config does not need Google's global,
