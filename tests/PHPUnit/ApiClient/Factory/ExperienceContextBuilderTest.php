@@ -235,4 +235,49 @@ class ExperienceContextBuilderTest extends TestCase
 
 		self::assertSame( $issued_secret, $query['ppcp_return_nonce'] ?? null );
 	}
+
+	/**
+	 * GIVEN a builder that already issued a pending endpoint-return-url nonce
+	 * WHEN with_custom_return_url() overrides the return URL later in the chain
+	 * THEN the resulting ExperienceContext return_url is exactly the custom URL,
+	 *      without a ppcp_return_nonce query argument
+	 * AND the previously issued pending secret is retracted via discard_pending()
+	 *
+	 * @scenario A caller that starts building an endpoint return URL but then
+	 *           overrides it with a custom return URL must not leave a pending
+	 *           secret dangling; ReturnUrlSecret::bind() would otherwise persist an
+	 *           orphaned nonce that no return URL ever carries.
+	 * @covers \WooCommerce\PayPalCommerce\ApiClient\Factory\ExperienceContextBuilder::with_custom_return_url
+	 */
+	public function test_custom_return_url_retracts_the_pending_endpoint_nonce(): void
+	{
+		// Arrange
+		$issued_secret = 'pending-secret-to-retract';
+
+		$return_url_secret = Mockery::mock( \WooCommerce\PayPalCommerce\ApiClient\Helper\ReturnUrlSecret::class );
+		$return_url_secret->allows( 'issue_pending' )->andReturn( $issued_secret );
+		$return_url_secret->expects( 'discard_pending' )->once()->with( $issued_secret );
+
+		expect( 'home_url' )->andReturn( 'https://example.com/wc-ajax/ppc-return-url' );
+		expect( 'wc_get_checkout_url' )->andReturn( 'https://example.com/checkout' );
+		expect( 'add_query_arg' )->andReturnUsing( function ( $key, $value, $url ) {
+			$separator = strpos( $url, '?' ) === false ? '?' : '&';
+			return $url . $separator . $key . '=' . $value;
+		} );
+
+		$sut = new ExperienceContextBuilder(
+			$this->settings,
+			$this->shipping_callback_url_factory,
+			$return_url_secret
+		);
+
+		// When
+		$result = $sut
+			->with_endpoint_return_urls()
+			->with_custom_return_url( 'https://example.com/custom' )
+			->build();
+
+		// Then
+		self::assertSame( 'https://example.com/custom', $result->to_array()['return_url'] ?? null );
+	}
 }

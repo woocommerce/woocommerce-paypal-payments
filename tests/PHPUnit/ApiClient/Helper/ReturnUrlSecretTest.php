@@ -212,4 +212,95 @@ class ReturnUrlSecretTest extends TestCase {
 			'transient absent' => array( false, false ),
 		);
 	}
+
+	/**
+	 * GIVEN a pending secret created by issue_pending()
+	 * WHEN discard_pending() is called with a value that does NOT match the pending secret
+	 * THEN the pending secret is kept
+	 * AND a following bind() still persists it
+	 */
+	public function test_discard_pending_keeps_a_non_matching_secret(): void {
+		// Arrange
+		when( 'wp_generate_password' )->justReturn( 'PENDING-TO-KEEP' );
+		expect( 'set_transient' )
+			->once()
+			->with( 'ppcp_ru_ORDER-X', 'PENDING-TO-KEEP', DAY_IN_SECONDS )
+			->andReturn( true );
+
+		$testee = new ReturnUrlSecret();
+		$testee->issue_pending();
+
+		// When
+		$testee->discard_pending( 'SOMETHING-ELSE' );
+		$testee->bind( 'ORDER-X' );
+
+		// Then: set_transient() must have been called exactly once (asserted above).
+		$this->addToAssertionCount( 1 );
+	}
+
+	/**
+	 * GIVEN a pending secret created by issue_pending()
+	 * WHEN discard_pending() is called with that exact secret
+	 * THEN the pending secret is cleared
+	 * AND a following bind() persists nothing, because there is no pending secret left
+	 */
+	public function test_discard_pending_clears_only_the_matching_secret(): void {
+		// Arrange
+		when( 'wp_generate_password' )->justReturn( 'PENDING-TO-DISCARD' );
+		expect( 'set_transient' )->never();
+
+		$testee = new ReturnUrlSecret();
+		$secret = $testee->issue_pending();
+
+		// When
+		$testee->discard_pending( $secret );
+		$testee->bind( 'ORDER-X' );
+
+		// Then
+		$this->addToAssertionCount( 1 );
+	}
+
+	/**
+	 * GIVEN a PayPal order id with a secret already bound to it
+	 * WHEN secret_for() is called
+	 * THEN it returns the bound secret
+	 * AND it writes no new transient, because the existing binding is reused
+	 */
+	public function test_secret_for_returns_the_bound_secret_without_writing(): void {
+		// Arrange
+		expect( 'get_transient' )->once()->with( 'ppcp_ru_ORDER-7' )->andReturn( 'ALREADY-BOUND' );
+		expect( 'set_transient' )->never();
+
+		$testee = new ReturnUrlSecret();
+
+		// When
+		$result = $testee->secret_for( 'ORDER-7' );
+
+		// Then
+		$this->assertSame( 'ALREADY-BOUND', $result );
+	}
+
+	/**
+	 * GIVEN a PayPal order id with no secret bound to it
+	 * WHEN secret_for() is called
+	 * THEN it generates a new secret and persists it under the order's key
+	 * AND it returns the generated secret
+	 */
+	public function test_secret_for_issues_and_binds_when_none_is_bound(): void {
+		// Arrange
+		when( 'get_transient' )->justReturn( false );
+		when( 'wp_generate_password' )->justReturn( 'FRESH' );
+		expect( 'set_transient' )
+			->once()
+			->with( 'ppcp_ru_ORDER-8', 'FRESH', DAY_IN_SECONDS )
+			->andReturn( true );
+
+		$testee = new ReturnUrlSecret();
+
+		// When
+		$result = $testee->secret_for( 'ORDER-8' );
+
+		// Then
+		$this->assertSame( 'FRESH', $result );
+	}
 }

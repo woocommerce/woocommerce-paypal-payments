@@ -133,16 +133,8 @@ class ReturnUrlEndpoint {
 		$wc_order    = null;
 
 		if ( $wc_order_id ) {
-			$found = wc_get_order( $wc_order_id );
-			if ( ! ( $found instanceof \WC_Order ) ) {
-				$this->logger->warning( "Return URL endpoint $token: WC order $wc_order_id not found." );
-
-				wc_add_notice( __( 'Order not found. Please try placing your order again.', 'woocommerce-paypal-payments' ), 'error' );
-				wp_safe_redirect( $this->get_checkout_url_with_error() );
-				exit();
-			}
-
-			$wc_order = $found;
+			$found    = wc_get_order( $wc_order_id );
+			$wc_order = $found instanceof \WC_Order ? $found : null;
 		}
 
 		// The token travels in a public URL, so it is not proof by itself. Refuse
@@ -151,6 +143,17 @@ class ReturnUrlEndpoint {
 		if ( ! $this->is_authorized_return( $wc_order, $token, $provided_nonce, $custom_id ) ) {
 			$this->logger->warning( "Return URL endpoint $token: return refused, no proof of origin." );
 			wc_add_notice( __( 'We could not confirm this payment session. Please try again.', 'woocommerce-paypal-payments' ), 'error' );
+			wp_safe_redirect( $this->get_checkout_url_with_error() );
+			exit();
+		}
+
+		// Reported only to a request that has proven its origin. Ahead of the test the
+		// distinct message would tell a stranger whether the WC order behind a guessed
+		// token still exists.
+		if ( $wc_order_id && ! $wc_order instanceof \WC_Order ) {
+			$this->logger->warning( "Return URL endpoint $token: WC order $wc_order_id not found." );
+
+			wc_add_notice( __( 'Order not found. Please try placing your order again.', 'woocommerce-paypal-payments' ), 'error' );
 			wp_safe_redirect( $this->get_checkout_url_with_error() );
 			exit();
 		}

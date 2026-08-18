@@ -67,6 +67,27 @@ class ReturnUrlSecret {
 	}
 
 	/**
+	 * Drops the pending secret, but only when it is the one the caller issued.
+	 *
+	 * A builder that hands out an endpoint return URL and then replaces that URL
+	 * with a custom one uses this to withdraw its secret, so that bind() keeps no
+	 * transient for a URL that the request payload does not carry. The comparison
+	 * makes the withdrawal safe: a caller can never drop a secret that a different
+	 * caller issued in the same request.
+	 *
+	 * @param string $secret The secret that the caller issued earlier.
+	 */
+	public function discard_pending( string $secret ): void {
+		if ( '' === $secret || '' === $this->pending_secret ) {
+			return;
+		}
+
+		if ( hash_equals( $this->pending_secret, $secret ) ) {
+			$this->pending_secret = '';
+		}
+	}
+
+	/**
 	 * Makes a secret for a PayPal order that already exists, and keeps it.
 	 *
 	 * @param string $paypal_order_id The PayPal order ID.
@@ -79,6 +100,25 @@ class ReturnUrlSecret {
 		$this->store( $paypal_order_id, $secret );
 
 		return $secret;
+	}
+
+	/**
+	 * Gives the secret of a PayPal order, and makes one when none is bound yet.
+	 *
+	 * A caller that builds a second return URL for an order which already carries a
+	 * secret uses this instead of issue_for(), so that both URLs hold the same proof
+	 * and the transient is written one time only.
+	 *
+	 * @param string $paypal_order_id The PayPal order ID.
+	 */
+	public function secret_for( string $paypal_order_id ): string {
+		$stored = get_transient( $this->key( $paypal_order_id ) );
+
+		if ( is_string( $stored ) && '' !== $stored ) {
+			return $stored;
+		}
+
+		return $this->issue_for( $paypal_order_id );
 	}
 
 	/**

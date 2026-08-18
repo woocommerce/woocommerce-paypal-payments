@@ -711,4 +711,117 @@ class ReturnUrlEndpointTest extends TestCase {
 			$this->assertSame( 'https://example.com/checkout', $redirected->url );
 		}
 	}
+
+	/**
+	 * GIVEN a token with a secret bound to it, a request whose ppcp_return_nonce does
+	 *       NOT match that secret, no session proof and no logged-in user
+	 * AND the WC order that the PayPal order's custom_id points to does not exist
+	 * WHEN handle_request() processes the return
+	 * THEN the notice shown to the requester is the same generic refusal used for any
+	 *      other unauthorized return: it names neither the WC order id nor "not found"
+	 * AND capture(), replace_order() and process_payment() are never called
+	 *
+	 * @scenario Before this fix, the "WC order not found" bail ran ahead of the
+	 *           authorization check, so an attacker probing arbitrary tokens could tell
+	 *           a real-but-unauthorized order apart from a made-up one by the notice
+	 *           text alone. The bail must not leak that information to a requester who
+	 *           holds no proof of origin.
+	 * @covers \WooCommerce\PayPalCommerce\WcGateway\Endpoint\ReturnUrlEndpoint::handle_request
+	 */
+	public function test_missing_wc_order_is_indistinguishable_from_refusal_without_proof(): void {
+		// Arrange
+		$_GET['token']             = 'TOKEN-MISSING-WC-ORDER';
+		$_GET['ppcp_return_nonce'] = 'WRONG-NONCE';
+
+		$order = $this->make_order( 'TOKEN-MISSING-WC-ORDER', OrderStatus::APPROVED, '150' );
+		$this->order_endpoint->shouldReceive( 'order' )->with( 'TOKEN-MISSING-WC-ORDER' )->andReturn( $order );
+		$this->order_endpoint->shouldReceive( 'capture' )->never();
+
+		expect( 'wc_get_order' )->with( 150 )->andReturn( false );
+
+		$this->return_url_secret->shouldReceive( 'verify' )
+			->once()
+			->with( 'TOKEN-MISSING-WC-ORDER', 'WRONG-NONCE' )
+			->andReturn( false );
+		$this->return_url_secret->shouldReceive( 'has_secret' )->with( 'TOKEN-MISSING-WC-ORDER' )->andReturn( true );
+
+		$this->session_handler->shouldReceive( 'order' )->andReturn( null );
+		$this->session_handler->shouldReceive( 'replace_order' )->never();
+
+		when( 'get_current_user_id' )->justReturn( 0 );
+
+		$this->gateway->shouldReceive( 'process_payment' )->never();
+
+		expect( 'wc_add_notice' )
+			->once()
+			->with(
+				Mockery::on( function ( string $message ): bool {
+					$lowered = strtolower( $message );
+					return strpos( $message, '150' ) === false
+						&& strpos( $lowered, 'not found' ) === false;
+				} ),
+				'error'
+			);
+
+		// When / Then
+		try {
+			$this->sut->handle_request();
+			$this->fail( 'Expected handle_request() to redirect.' );
+		} catch ( ReturnUrlRedirected $redirected ) {
+			$this->assertSame( 'https://example.com/checkout', $redirected->url );
+		}
+	}
+
+	/**
+	 * GIVEN a request whose ppcp_return_nonce matches the secret bound to the token
+	 * AND the WC order that the PayPal order's custom_id points to does not exist
+	 * WHEN handle_request() processes the return
+	 * THEN the requester sees the "Order not found" notice, naming the WC order id
+	 * AND the logger receives a warning naming the WC order id
+	 * AND capture(), replace_order() and process_payment() are never called, because
+	 *     there is no WC order to act on
+	 *
+	 * @scenario An authorized requester still deserves an accurate diagnostic when the
+	 *           WC order genuinely does not exist; only requesters without proof of
+	 *           origin get the generic refusal.
+	 * @covers \WooCommerce\PayPalCommerce\WcGateway\Endpoint\ReturnUrlEndpoint::handle_request
+	 */
+	public function test_authorized_return_still_reports_missing_wc_order(): void {
+		// Arrange
+		$_GET['token']             = 'TOKEN-AUTHORIZED-MISSING-WC-ORDER';
+		$_GET['ppcp_return_nonce'] = 'VALID-NONCE';
+
+		$order = $this->make_order( 'TOKEN-AUTHORIZED-MISSING-WC-ORDER', OrderStatus::APPROVED, '160' );
+		$this->order_endpoint->shouldReceive( 'order' )->with( 'TOKEN-AUTHORIZED-MISSING-WC-ORDER' )->andReturn( $order );
+		$this->order_endpoint->shouldReceive( 'capture' )->never();
+
+		expect( 'wc_get_order' )->with( 160 )->andReturn( false );
+
+		$this->return_url_secret->shouldReceive( 'verify' )
+			->once()
+			->with( 'TOKEN-AUTHORIZED-MISSING-WC-ORDER', 'VALID-NONCE' )
+			->andReturn( true );
+
+		$this->session_handler->shouldReceive( 'replace_order' )->never();
+
+		$this->gateway->shouldReceive( 'process_payment' )->never();
+
+		$this->logger->shouldReceive( 'warning' )
+			->once()
+			->with( Mockery::on( function ( string $message ): bool {
+				return strpos( $message, '160' ) !== false;
+			} ) );
+
+		expect( 'wc_add_notice' )
+			->once()
+			->with( 'Order not found. Please try placing your order again.', 'error' );
+
+		// When / Then
+		try {
+			$this->sut->handle_request();
+			$this->fail( 'Expected handle_request() to redirect.' );
+		} catch ( ReturnUrlRedirected $redirected ) {
+			$this->assertSame( 'https://example.com/checkout', $redirected->url );
+		}
+	}
 }

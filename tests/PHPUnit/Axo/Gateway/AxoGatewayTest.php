@@ -327,11 +327,12 @@ class AxoGatewayTest extends TestCase
 
 	/**
 	 * GIVEN a card payment that requires a 3D Secure challenge
-	 * AND a ReturnUrlSecret that binds a nonce to the newly created PayPal order id
+	 * AND a ReturnUrlSecret that reuses the secret already bound to the newly created
+	 *     PayPal order id (secret_for())
 	 * WHEN process_payment() builds the 3DS redirect URL (AxoGateway.php:267-271)
 	 * THEN the redirect's embedded return URL carries the PayPal order id as "token"
 	 * AND it carries a "ppcp_return_nonce" argument equal to the value ReturnUrlSecret
-	 *     bound to that same PayPal order id
+	 *     returned for that same PayPal order id
 	 *
 	 * @scenario Closes the token-replay gap: without a bound nonce, a leaked PayPal
 	 *           order id alone is enough to trigger a capture on someone else's
@@ -373,7 +374,7 @@ class AxoGatewayTest extends TestCase
 		$experience_context_builder->allows( 'build' )->andReturn( $experience_context );
 
 		$return_url_secret = Mockery::mock( \WooCommerce\PayPalCommerce\ApiClient\Helper\ReturnUrlSecret::class );
-		$return_url_secret->allows( 'issue_for' )->with( 'PAYPAL-ORDER-XYZ' )->andReturn( 'bound-nonce-value' );
+		$return_url_secret->allows( 'secret_for' )->with( 'PAYPAL-ORDER-XYZ' )->andReturn( 'bound-nonce-value' );
 
 		when( 'wc_get_order' )->justReturn( $wc_order );
 		when( 'wc_clean' )->alias( static fn( $value ) => $value );

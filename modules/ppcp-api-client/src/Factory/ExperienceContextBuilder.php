@@ -45,6 +45,16 @@ class ExperienceContextBuilder {
 	 */
 	private ?ReturnUrlSecret $return_url_secret;
 
+	/**
+	 * The secret that this builder put in its endpoint return URL, if it did.
+	 *
+	 * The builder is immutable, so the value travels with the clone that carries the
+	 * URL. A later call that replaces the return URL uses it to withdraw the secret.
+	 *
+	 * @var string
+	 */
+	private string $pending_return_url_secret = '';
+
 	public function __construct(
 		SettingsProvider $settings,
 		ShippingCallbackUrlFactory $shipping_callback_url_factory,
@@ -96,9 +106,13 @@ class ExperienceContextBuilder {
 		// compares. It does not depend on the WC session cookie, so a buyer who
 		// comes back in a different browser is still accepted.
 		if ( $this->return_url_secret instanceof ReturnUrlSecret ) {
+			$secret = $this->return_url_secret->issue_pending();
+
+			$builder->pending_return_url_secret = $secret;
+
 			$return_url = add_query_arg(
 				'ppcp_return_nonce',
-				$this->return_url_secret->issue_pending(),
+				$secret,
 				$return_url
 			);
 		}
@@ -134,6 +148,19 @@ class ExperienceContextBuilder {
 	 */
 	public function with_custom_return_url( string $url ): ExperienceContextBuilder {
 		$builder = clone $this;
+
+		// This URL replaces the endpoint return URL, so the secret that the endpoint
+		// URL carried is not in the request payload any more. Withdraw it, so that
+		// bind() keeps no transient that no return URL can present. Leaving it bound
+		// would also mask the migration period, because has_secret() would report a
+		// proof that no buyer is able to send.
+		if ( '' !== $builder->pending_return_url_secret ) {
+			if ( $this->return_url_secret instanceof ReturnUrlSecret ) {
+				$this->return_url_secret->discard_pending( $builder->pending_return_url_secret );
+			}
+
+			$builder->pending_return_url_secret = '';
+		}
 
 		$builder->experience_context = $builder->experience_context
 			->with_return_url( $url );

@@ -286,10 +286,13 @@ class AxoGateway extends WC_Payment_Gateway {
 
 				// This method builds the URL that the buyer comes back through, so
 				// the secret must be bound to this PayPal order. Without it
-				// ReturnUrlEndpoint refuses the return.
+				// ReturnUrlEndpoint refuses the return. build_order_data() already
+				// bound one for the experience context of the same order, so reuse it
+				// rather than issue a second: a new secret would replace the bound one
+				// and leave the return URL of the experience context without a proof.
 				$return_url = add_query_arg(
 					'ppcp_return_nonce',
-					$this->return_url_secret->issue_for( $order->id() ),
+					$this->return_url_secret->secret_for( $order->id() ),
 					$return_url
 				);
 
