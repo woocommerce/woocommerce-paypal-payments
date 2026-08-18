@@ -31,11 +31,19 @@ export const navigation = {
  */
 function submitPayOrderForm() {
 	if ( typeof jQuery === 'undefined' ) {
+		// eslint-disable-next-line no-console
+		console.error(
+			'[ppcp-sdk-v6] cannot submit pay-for-order: jQuery is unavailable on this page.'
+		);
 		throw new Error( 'Could not submit the order.' );
 	}
 
 	const form = jQuery( 'form#order_review' );
 	if ( ! form.length ) {
+		// eslint-disable-next-line no-console
+		console.error(
+			'[ppcp-sdk-v6] cannot submit pay-for-order: form#order_review was not found in the DOM.'
+		);
 		throw new Error( 'Order form not found.' );
 	}
 

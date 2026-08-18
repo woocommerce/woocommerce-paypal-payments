@@ -23,10 +23,10 @@ import { setErrorLabels } from './utils/errorHandler';
 import { setVisible } from '@ppcp-button/Helper/Hiding';
 
 // The native WC submit button, labelled "Proceed to PayPal" for the PayPal
-// gateway. It is replaced by the wallet buttons while the PayPal gateway is
+// gateway. It is replaced by the v6 PayPal buttons while the PayPal gateway is
 // selected, but stays as the submit for cards and every other method.
 const PLACE_ORDER_SELECTOR = '#place_order';
-const WALLET_GATEWAY_ID = 'ppcp-gateway';
+const PAYPAL_GATEWAY_ID = 'ppcp-gateway';
 
 ( function ( config ) {
 	'use strict';
@@ -206,11 +206,11 @@ const WALLET_GATEWAY_ID = 'ppcp-gateway';
 	}
 
 	/**
-	 * Hides the native WC "Proceed to PayPal" button while the PayPal wallet
-	 * gateway is selected — the v6 wallet buttons stand in for it — and
-	 * restores it for cards (whose flow submits through it) and every other
-	 * method. Re-run on updated_checkout / payment_method_selected because WC
-	 * rebuilds the #payment DOM (and this inline style) on each update.
+	 * Hides the native WC "Proceed to PayPal" button while the PayPal gateway
+	 * is selected — the v6 PayPal buttons stand in for it — and restores it for
+	 * cards (whose flow submits through it) and every other method. Re-run on
+	 * updated_checkout / payment_method_selected because WC rebuilds the
+	 * #payment DOM (and this inline style) on each update.
 	 */
 	function syncPlaceOrderButton() {
 		if (
@@ -223,9 +223,9 @@ const WALLET_GATEWAY_ID = 'ppcp-gateway';
 		const selected = document.querySelector(
 			'input[name="payment_method"]:checked'
 		)?.value;
-		const isWallet = selected === WALLET_GATEWAY_ID;
+		const isPayPalGateway = selected === PAYPAL_GATEWAY_ID;
 
-		setVisible( PLACE_ORDER_SELECTOR, ! isWallet, true );
+		setVisible( PLACE_ORDER_SELECTOR, ! isPayPalGateway, true );
 	}
 
 	function initialRender() {

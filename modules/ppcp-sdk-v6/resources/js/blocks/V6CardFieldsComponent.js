@@ -202,7 +202,8 @@ export function V6CardFieldsComponent( {
 				session: sessionRef.current,
 				responseTypes,
 				cardName: cardNameRef.current?.trim() || '',
-				billingAddress: billingRef.current || undefined,
+				// null when no billing address is available (see billingRef effect).
+				billingAddress: billingRef.current,
 			} )
 		);
 	}, [
