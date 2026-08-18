@@ -438,4 +438,39 @@ class RecaptchaTest extends TestCase {
 		$this->assertArrayNotHasKey( 'g-recaptcha-response', $captured_context['request'] );
 		$this->assertSame( 123, $captured_context['request']['order_id'] );
 	}
+
+	/**
+	 * GIVEN reCAPTCHA's "Log rejected attempts" setting is off
+	 * WHEN a v3 reCAPTCHA verification is rejected
+	 * THEN nothing is written to the rejection logger
+	 * AND the rejection counter still increments, since counting happens before the
+	 *     logging setting is checked.
+	 */
+	public function test_v3_rejection_does_not_log_when_log_rejections_disabled_but_still_increments_counter(): void {
+		$this->stub_rejected_v3_verification();
+
+		$settings_status = Mockery::mock( SettingsStatus::class );
+
+		$rejection_counter = Mockery::mock( PersistentCounter::class );
+		$rejection_counter->shouldReceive( 'increment' )->once();
+
+		$rejection_logger = Mockery::mock( LoggerInterface::class );
+		$rejection_logger->shouldNotReceive( 'debug' );
+
+		$testee = $this->make_testee(
+			$settings_status,
+			array(),
+			array( 'log_rejections' => 'no' ),
+			null,
+			$rejection_logger,
+			$rejection_counter
+		);
+
+		$testee->intercept_paypal_ajax(
+			array(
+				'ppcp_recaptcha_token'   => 'test-token',
+				'ppcp_recaptcha_version' => 'v3',
+			)
+		);
+	}
 }
