@@ -79,7 +79,11 @@ export async function renderGooglePay( {
 
 	if ( gateway ) {
 		revealGateway( gateway.id );
-		syncGatewayVisibility( gateway.id, gateway.wrapper );
+		syncGatewayVisibility( {
+			methodId: gateway.id,
+			wrapperSelector: gateway.wrapper,
+			expressSelector: config.wrapper,
+		} );
 	}
 
 	const spinner = hasJQuery() ? Spinner.fullPage() : null;
