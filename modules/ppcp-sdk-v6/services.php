@@ -53,8 +53,11 @@ return array(
 			$container->get( 'wcgateway.configuration.card-configuration' ),
 			// Card "save during purchase" eligibility, mirroring the v5 block
 			// card method (AdvancedCardPaymentMethod): reference-transaction
-			// eligible AND the "save card details" setting on.
-			$container->get( 'save-payment-methods.eligible' )
+			// eligible AND the "save card details" setting on. Guarded with
+			// has() because ppcp-save-payment-methods has its own feature flag
+			// independent of the v6 flag (see ppcp-settings/services.php).
+			$container->has( 'save-payment-methods.eligible' )
+				&& $container->get( 'save-payment-methods.eligible' )
 				&& $container->get( 'settings.settings-provider' )->save_card_details(),
 			$container->get( 'wc-subscriptions.helper' )
 		);
@@ -69,7 +72,10 @@ return array(
 			$container->get( 'settings.environment' ),
 			$container->get( 'button.helper.context' ),
 			$settings_provider->save_paypal_and_venmo(),
-			$container->get( 'save-payment-methods.eligible' )
+			// Guarded with has(): ppcp-save-payment-methods can be disabled
+			// independently of the v6 flag (see ppcp-settings/services.php).
+			$container->has( 'save-payment-methods.eligible' )
+				&& $container->get( 'save-payment-methods.eligible' )
 				&& $settings_provider->save_card_details(),
 			$settings_provider
 		);

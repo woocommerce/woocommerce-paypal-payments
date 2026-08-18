@@ -78,39 +78,50 @@ import { handleError, setErrorLabels } from './utils/errorHandler';
 	}
 
 	/**
-	 * Shows the PayPal button only when PayPal is the selected method; the WC
-	 * submit button drives the card save flow for the card method. Replaces
-	 * the visibility handling the (now-suppressed) v5 script used to do.
+	 * Shows the PayPal button only when PayPal is the selected method and a
+	 * button actually rendered; otherwise the WC submit button stays visible
+	 * (card save flow, or PayPal ineligible). Replaces the visibility handling
+	 * the (now-suppressed) v5 script used to do.
 	 */
 	function syncVisibility() {
 		const isPayPal =
 			getCurrentPaymentMethod() === PaymentMethods.PAYPAL;
-		setVisibleByClass( ORDER_BUTTON_SELECTOR, ! isPayPal, 'ppcp-hidden' );
-		setVisible( buttonSelector, isPayPal );
+		// Only hand the submit role to the PayPal button when one actually
+		// rendered; otherwise (PayPal ineligible / no wrapper) the buyer must
+		// keep the native submit control instead of being left with nothing.
+		const hasPayPalButton = Boolean(
+			document.querySelector( `${ buttonSelector } paypal-button` )
+		);
+		const usePayPalButton = isPayPal && hasPayPalButton;
+		setVisibleByClass(
+			ORDER_BUTTON_SELECTOR,
+			! usePayPalButton,
+			'ppcp-hidden'
+		);
+		setVisible( buttonSelector, usePayPalButton );
 	}
 
 	async function init() {
 		const wrapper = document.querySelector( buttonSelector );
-		if ( ! wrapper ) {
-			return;
-		}
 
 		const sdk = await loadSdkV6( config, 'checkout' );
 		const eligibility = await checkVaultEligibility( sdk, {
 			currencyCode: config.currency,
 		} );
 
-		if ( eligibility.paypal ) {
+		// Render the PayPal button only when both its wrapper is present and
+		// PayPal is eligible.
+		if ( wrapper && eligibility.paypal ) {
 			const session = createSavePayPalSession( sdk, config );
 			wrapper.innerHTML = '';
 			wrapper.appendChild( createPayPalButton( session ) );
 		}
 
+		// Card saving is independent of the PayPal wrapper; gate it only on
+		// card eligibility and the card fields being enabled.
 		if ( eligibility.card && config.card_fields?.enabled ) {
 			initCardSaveFields( config );
 		}
-
-		syncVisibility();
 	}
 
 	function setupListeners() {
@@ -132,7 +143,12 @@ import { handleError, setErrorLabels } from './utils/errorHandler';
 
 	function boot() {
 		setupListeners();
-		init().catch( ( error ) => handleError( error ) );
+		// Always sync visibility once init settles: even if init() rejects
+		// (SDK load, client token, eligibility) the page must not be left with
+		// unmounted fields and an inconsistent submit control.
+		init()
+			.catch( ( error ) => handleError( error ) )
+			.finally( syncVisibility );
 	}
 
 	if ( document.readyState === 'loading' ) {

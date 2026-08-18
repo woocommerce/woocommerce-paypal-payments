@@ -127,6 +127,11 @@ export function initCardSaveFields( config ) {
 		event.preventDefault();
 		event.stopImmediatePropagation();
 
+		// Latch before the first await: a second click must not create a
+		// second setup token and a second vaulted card. Stays true on the
+		// success path because the page navigates away.
+		submitting = true;
+
 		try {
 			const cardSession = await ensureCardSession();
 			const setupTokenId = await createCardSetupToken();
@@ -134,6 +139,7 @@ export function initCardSaveFields( config ) {
 
 			// Buyer dismissed the 3DS challenge; let them retry.
 			if ( result.state === 'canceled' ) {
+				submitting = false;
 				return;
 			}
 			if ( result.state !== 'succeeded' ) {
@@ -144,9 +150,9 @@ export function initCardSaveFields( config ) {
 				vault_setup_token: setupTokenId,
 			} );
 
-			submitting = true;
 			navigation.assign( config.payment_methods_page );
 		} catch ( error ) {
+			submitting = false;
 			handleError( error );
 		}
 	}
