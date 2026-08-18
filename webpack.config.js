@@ -70,7 +70,11 @@ const modulesAssets = {
 	],
 	'ppcp-paypal-subscriptions': [ 'js/paypal-subscription.js' ],
 	'ppcp-save-payment-methods': [ 'js/add-payment-method.js' ],
-	'ppcp-sdk-v6': [ 'js/boot.js', 'js/checkout-block.js' ],
+	'ppcp-sdk-v6': [
+		'js/boot.js',
+		'js/checkout-block.js',
+		'js/boot-add-payment-method.js',
+	],
 	'ppcp-settings': [ 'js/index.js', 'css/styles.scss' ],
 	'ppcp-wc-gateway': [
 		'js/common.js',

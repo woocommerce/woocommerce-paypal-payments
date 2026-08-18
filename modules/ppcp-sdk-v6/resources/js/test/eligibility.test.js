@@ -1,4 +1,4 @@
-import { checkEligibility } from '../eligibility';
+import { checkEligibility, checkVaultEligibility } from '../eligibility';
 
 function sdkWith( { eligible = [], details = null, detailsThrows = false } ) {
 	return {
@@ -67,5 +67,38 @@ describe( 'checkEligibility', () => {
 
 		expect( result.paylater ).toBe( true );
 		expect( result.payLaterDetails ).toBeNull();
+	} );
+} );
+
+describe( 'checkVaultEligibility', () => {
+	test( 'queries the vault-without-payment flow for the given currency', async () => {
+		const sdk = sdkWith( { eligible: [ 'paypal' ] } );
+
+		await checkVaultEligibility( sdk, { currencyCode: 'USD' } );
+
+		expect( sdk.findEligibleMethods ).toHaveBeenCalledWith( {
+			currencyCode: 'USD',
+			paymentFlow: 'VAULT_WITHOUT_PAYMENT',
+		} );
+	} );
+
+	test( 'maps paypal and advanced_cards eligibility onto paypal and card', async () => {
+		const sdk = sdkWith( { eligible: [ 'paypal', 'advanced_cards' ] } );
+
+		const result = await checkVaultEligibility( sdk, {
+			currencyCode: 'EUR',
+		} );
+
+		expect( result ).toEqual( { paypal: true, card: true } );
+	} );
+
+	test( 'reports methods as ineligible when the SDK excludes them', async () => {
+		const sdk = sdkWith( { eligible: [] } );
+
+		const result = await checkVaultEligibility( sdk, {
+			currencyCode: 'EUR',
+		} );
+
+		expect( result ).toEqual( { paypal: false, card: false } );
 	} );
 } );

@@ -269,18 +269,21 @@ export async function approveOrderInSession( config, fundingSource, orderId ) {
  * @param {Object} config   - The wc_ppcp_sdk_v6 config object.
  * @param {string} context  - The page context (checkout or checkout-block).
  * @param {string} cardName - The cardholder name (v6 has no name field component).
+ * @param {boolean} savePaymentMethod - Whether to vault the card during purchase.
  * @return {Promise<{orderId: string}>} The created PayPal order id.
  */
 export async function createCardOrder(
 	config,
 	context = 'checkout',
-	cardName = ''
+	cardName = '',
+    savePaymentMethod = false
 ) {
 	const body = {
 		context,
 		purchase_units: [],
 		payment_method: config.card_fields.payment_method,
 		funding_source: config.card_fields.funding_source,
+        save_payment_method: savePaymentMethod,
 	};
 
 	// The v6 card-fields component set is number|expiry|cvv only, so the

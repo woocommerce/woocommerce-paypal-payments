@@ -406,7 +406,8 @@ describe( 'initCardFields', () => {
 		expect( mockCreateCardOrder ).toHaveBeenCalledWith(
 			baseConfig(),
 			'checkout',
-			''
+			'',
+			false
 		);
 		expect( cardSession.submit ).toHaveBeenCalledWith( 'CARDORDER1' );
 		expect( mockApproveCardOrder ).toHaveBeenCalledWith(
@@ -451,7 +452,8 @@ describe( 'initCardFields', () => {
 		expect( mockCreateCardOrder ).toHaveBeenCalledWith(
 			config,
 			'checkout',
-			'Jane Doe'
+			'Jane Doe',
+			false
 		);
 	} );
 
@@ -477,6 +479,60 @@ describe( 'initCardFields', () => {
 		expect( cardSession.submit ).toHaveBeenCalledWith( 'CARDORDER1', {
 			billingAddress: { postalCode: '90001', countryCode: 'US' },
 		} );
+	} );
+
+	test( 'passes save_payment_method true to createCardOrder when the buyer checks the save-card box', async () => {
+		buildCheckoutDom( 'ppcp-credit-card-gateway' );
+		document.body.insertAdjacentHTML(
+			'beforeend',
+			'<input type="checkbox" id="wc-ppcp-credit-card-gateway-new-payment-method" checked />'
+		);
+		const cardSession = makeCardSession( { state: 'succeeded' } );
+		mockLoadSdkV6.mockResolvedValue( {
+			createCardFieldsOneTimePaymentSession: () => cardSession,
+		} );
+		mockCreateCardOrder.mockResolvedValue( { orderId: 'CARDORDER1' } );
+		mockApproveCardOrder.mockResolvedValue( undefined );
+
+		await initCardFields( baseConfig() );
+		await flushPromises();
+
+		document.querySelector( '#place_order' ).click();
+		await flushPromises();
+
+		expect( mockCreateCardOrder ).toHaveBeenCalledWith(
+			baseConfig(),
+			'checkout',
+			'',
+			true
+		);
+	} );
+
+	test( 'passes save_payment_method false to createCardOrder when the save-card box is unchecked', async () => {
+		buildCheckoutDom( 'ppcp-credit-card-gateway' );
+		document.body.insertAdjacentHTML(
+			'beforeend',
+			'<input type="checkbox" id="wc-ppcp-credit-card-gateway-new-payment-method" />'
+		);
+		const cardSession = makeCardSession( { state: 'succeeded' } );
+		mockLoadSdkV6.mockResolvedValue( {
+			createCardFieldsOneTimePaymentSession: () => cardSession,
+		} );
+		mockCreateCardOrder.mockResolvedValue( { orderId: 'CARDORDER1' } );
+		mockApproveCardOrder.mockResolvedValue( undefined );
+
+		await initCardFields( baseConfig() );
+		await flushPromises();
+
+		document.querySelector( '#place_order' ).click();
+		await flushPromises();
+
+		expect( mockCreateCardOrder ).toHaveBeenCalledWith(
+			baseConfig(),
+			'checkout',
+			'',
+			false
+		);
 	} );
 
 	test( 'a failed card session submit surfaces the error and does not click place_order again', async () => {

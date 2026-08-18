@@ -329,9 +329,23 @@ describe( 'createCardOrder', () => {
 			purchase_units: [],
 			payment_method: 'ppcp-credit-card-gateway',
 			funding_source: 'card',
+			save_payment_method: false,
 			form_encoded: 'billing_email=a%40b.com',
 			createaccount: false,
 		} );
+	} );
+
+	test( 'sends save_payment_method true when the buyer opts to vault the card', async () => {
+		document.body.innerHTML = '<form class="checkout"></form>';
+		mockPayerData.mockReturnValueOnce( null );
+		postJson.mockResolvedValueOnce( { id: 'CARDORDER5' } );
+
+		await createCardOrder( config, 'checkout', '', true );
+
+		expect( postJson ).toHaveBeenCalledWith(
+			config.ajax.create_order,
+			expect.objectContaining( { save_payment_method: true } )
+		);
 	} );
 
 	test( 'forwards the payer when available', async () => {
@@ -399,6 +413,7 @@ describe( 'createCardOrder', () => {
 			purchase_units: [],
 			payment_method: 'ppcp-credit-card-gateway',
 			funding_source: 'card',
+			save_payment_method: false,
 			order_id: 456,
 			order_key: 'wc_def',
 		} );
@@ -420,6 +435,7 @@ describe( 'createCardOrder', () => {
 			purchase_units: [],
 			payment_method: 'ppcp-credit-card-gateway',
 			funding_source: 'card',
+			save_payment_method: false,
 		} );
 	} );
 } );

@@ -25,6 +25,7 @@ use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\CardPaymentsConfiguration;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\SettingsStatus;
+use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
 
 class SdkV6Manager {
 
@@ -52,6 +53,8 @@ class SdkV6Manager {
 	private bool $final_review_enabled;
 	private bool $vaulting_enabled;
 	private CardPaymentsConfiguration $card_payments_configuration;
+	private bool $card_vaulting_enabled;
+	private SubscriptionHelper $subscription_helper;
 
 	/**
 	 * Card brand icons ({type, title, url}); empty when "Show logos" is off.
@@ -73,6 +76,8 @@ class SdkV6Manager {
 		bool $final_review_enabled,
 		bool $vaulting_enabled,
 		CardPaymentsConfiguration $card_payments_configuration,
+		bool $card_vaulting_enabled,
+		SubscriptionHelper $subscription_helper,
 		array $credit_card_icons
 	) {
 		$this->asset_getter                = $asset_getter;
@@ -87,6 +92,8 @@ class SdkV6Manager {
 		$this->final_review_enabled        = $final_review_enabled;
 		$this->vaulting_enabled            = $vaulting_enabled;
 		$this->card_payments_configuration = $card_payments_configuration;
+		$this->card_vaulting_enabled       = $card_vaulting_enabled;
+		$this->subscription_helper         = $subscription_helper;
 		$this->credit_card_icons           = $credit_card_icons;
 	}
 
@@ -340,6 +347,13 @@ class SdkV6Manager {
 				// (the credit-card-icons service already guards on the setting).
 				'title'          => $this->card_payments_configuration->gateway_title(),
 				'name_field'     => 'yes' === $this->card_payments_configuration->show_name_on_card(),
+				// Card "save during purchase" (vaulting). The block checkout uses
+				// WC Blocks' native save option (supports.showSaveOption, gated on
+				// is_vaulting_enabled); the classic checkout reads WC's own
+				// tokenization checkbox instead. has_subscriptions force-saves,
+				// since a subscription card must be vaulted for renewals.
+				'is_vaulting_enabled' => $this->card_vaulting_enabled,
+				'has_subscriptions'   => $this->subscription_helper->cart_contains_subscription(),
 				'card_icons'     => array_map(
 					static function ( array $icon ): array {
 						return array(
