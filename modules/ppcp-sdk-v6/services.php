@@ -42,13 +42,25 @@ return array('sdk-v6.asset-getter' => static function (ContainerInterface $conta
         $container->get('wcgateway.configuration.card-configuration'),
         // Card "save during purchase" eligibility, mirroring the v5 block
         // card method (AdvancedCardPaymentMethod): reference-transaction
-        // eligible AND the "save card details" setting on.
-        $container->get('save-payment-methods.eligible') && $container->get('settings.settings-provider')->save_card_details(),
+        // eligible AND the "save card details" setting on. Guarded with
+        // has() because ppcp-save-payment-methods has its own feature flag
+        // independent of the v6 flag (see ppcp-settings/services.php).
+        $container->has('save-payment-methods.eligible') && $container->get('save-payment-methods.eligible') && $container->get('settings.settings-provider')->save_card_details(),
         $container->get('wc-subscriptions.helper')
     );
 }, 'sdk-v6.add-payment-method-manager' => static function (ContainerInterface $container): AddPaymentMethodManager {
     $settings_provider = $container->get('settings.settings-provider');
-    return new AddPaymentMethodManager($container->get('sdk-v6.asset-getter'), $container->get('ppcp.asset-version'), $container->get('settings.environment'), $container->get('button.helper.context'), $settings_provider->save_paypal_and_venmo(), $container->get('save-payment-methods.eligible') && $settings_provider->save_card_details(), $settings_provider);
+    return new AddPaymentMethodManager(
+        $container->get('sdk-v6.asset-getter'),
+        $container->get('ppcp.asset-version'),
+        $container->get('settings.environment'),
+        $container->get('button.helper.context'),
+        $settings_provider->save_paypal_and_venmo(),
+        // Guarded with has(): ppcp-save-payment-methods can be disabled
+        // independently of the v6 flag (see ppcp-settings/services.php).
+        $container->has('save-payment-methods.eligible') && $container->get('save-payment-methods.eligible') && $settings_provider->save_card_details(),
+        $settings_provider
+    );
 }, 'sdk-v6.endpoint.client-token' => static function (ContainerInterface $container): ClientTokenEndpoint {
     return new ClientTokenEndpoint($container->get('order-endpoints.request-data'), $container->get('woocommerce.logger.woocommerce'), $container->get('api.sdk-client-token'), $container->get('sdk-v6.rate-limiter'));
 }, 'sdk-v6.rate-limiter' => static function (ContainerInterface $container): RateLimiter {
