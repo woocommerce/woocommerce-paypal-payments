@@ -39,23 +39,41 @@ class RecaptchaTest extends TestCase {
 	 * (valid v2/v3 keys, integration enabled), so tests only need to control
 	 * the location-gating logic under test.
 	 *
-	 * @param string[] $payment_methods The gateway IDs reCAPTCHA protects, mirroring the
-	 *                                  `fraud-protection.recaptcha.payment-methods` service.
+	 * @param string[]             $payment_methods  The gateway IDs reCAPTCHA protects, mirroring the
+	 *                                                `fraud-protection.recaptcha.payment-methods` service.
+	 * @param array                $option_overrides Overrides merged onto the default RecaptchaIntegration options,
+	 *                                                e.g. `['log_rejections' => 'yes']`.
+	 * @param LoggerInterface|null $logger           The shared, globally-gated logger. Defaults to a
+	 *                                                catch-all stub; pass a bare mock (no stubs) to assert
+	 *                                                it is never called.
+	 * @param LoggerInterface|null $rejection_logger  The reCAPTCHA-specific rejection logger, independent
+	 *                                                of the plugin-wide logging setting.
+	 * @param PersistentCounter|null $rejection_counter Tracks how many attempts were rejected.
 	 */
-	private function make_testee( SettingsStatus $settings_status, array $payment_methods = array() ): Recaptcha {
+	private function make_testee(
+		SettingsStatus $settings_status,
+		array $payment_methods = array(),
+		array $option_overrides = array(),
+		?LoggerInterface $logger = null,
+		?LoggerInterface $rejection_logger = null,
+		?PersistentCounter $rejection_counter = null
+	): Recaptcha {
+		$options = array_merge( $this->recaptcha_options, $option_overrides );
+
 		$integration = Mockery::mock( RecaptchaIntegration::class );
 		$integration->enabled = 'yes';
 		$integration->shouldReceive( 'get_option' )->andReturnUsing(
-			function ( string $key, $default = false ) {
-				return $this->recaptcha_options[ $key ] ?? $default;
+			function ( string $key, $default = false ) use ( $options ) {
+				return $options[ $key ] ?? $default;
 			}
 		);
 
 		$asset_getter = Mockery::mock( AssetGetter::class );
 		$asset_getter->shouldReceive( 'get_asset_url' )->andReturn( 'https://example.com/recaptcha-handler.js' );
 
-		$logger = Mockery::mock( LoggerInterface::class );
-		$rejection_counter = Mockery::mock( PersistentCounter::class );
+		$logger            = $logger ?? Mockery::mock( LoggerInterface::class )->shouldIgnoreMissing();
+		$rejection_logger  = $rejection_logger ?? Mockery::mock( LoggerInterface::class )->shouldIgnoreMissing();
+		$rejection_counter = $rejection_counter ?? Mockery::mock( PersistentCounter::class )->shouldIgnoreMissing();
 
 		return new Recaptcha(
 			$integration,
@@ -64,7 +82,8 @@ class RecaptchaTest extends TestCase {
 			'1.0.0',
 			$logger,
 			$rejection_counter,
-			$settings_status
+			$settings_status,
+			$rejection_logger
 		);
 	}
 
