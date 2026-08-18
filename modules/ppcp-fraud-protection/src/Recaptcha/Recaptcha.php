@@ -39,6 +39,13 @@ class Recaptcha {
 
 	private LoggerInterface $logger;
 
+	/**
+	 * Logs the rejected attempts, independently of the plugin-wide logging setting.
+	 *
+	 * @var LoggerInterface
+	 */
+	private LoggerInterface $rejection_logger;
+
 	private PersistentCounter $rejection_counter;
 
 	private SettingsStatus $settings_status;
@@ -53,6 +60,7 @@ class Recaptcha {
 	 * @param LoggerInterface      $logger
 	 * @param PersistentCounter    $rejection_counter
 	 * @param SettingsStatus       $settings_status
+	 * @param LoggerInterface      $rejection_logger Writes to the rejection log source.
 	 */
 	public function __construct(
 		RecaptchaIntegration $integration,
@@ -61,7 +69,8 @@ class Recaptcha {
 		string $asset_version,
 		LoggerInterface $logger,
 		PersistentCounter $rejection_counter,
-		SettingsStatus $settings_status
+		SettingsStatus $settings_status,
+		LoggerInterface $rejection_logger
 	) {
 
 		$this->integration       = $integration;
@@ -71,6 +80,7 @@ class Recaptcha {
 		$this->logger            = $logger;
 		$this->rejection_counter = $rejection_counter;
 		$this->settings_status   = $settings_status;
+		$this->rejection_logger  = $rejection_logger;
 	}
 
 	protected function should_use_recaptcha(): bool {
@@ -767,10 +777,9 @@ class Recaptcha {
 
 		$cart = $this->cart_contents();
 
-		$this->logger->debug(
+		$this->rejection_logger->debug(
 			"Rejected by v3 reCAPTCHA at {$endpoint_name} with score {$this->last_v3_score}, IP: {$ip}, User Agent: {$user_agent}.",
 			array(
-				'source'  => self::REJECTION_LOGGER_SOURCE,
 				'request' => $request_data,
 				'cart'    => $cart,
 			)
