@@ -52,16 +52,6 @@ class Recaptcha {
 
 	private float $last_v3_score = 0;
 
-	/**
-	 * @param RecaptchaIntegration $integration
-	 * @param string[]             $payment_methods The methods that require captcha.
-	 * @param AssetGetter          $asset_getter
-	 * @param string               $asset_version
-	 * @param LoggerInterface      $logger
-	 * @param PersistentCounter    $rejection_counter
-	 * @param SettingsStatus       $settings_status
-	 * @param LoggerInterface      $rejection_logger Writes to the rejection log source.
-	 */
 	public function __construct(
 		RecaptchaIntegration $integration,
 		array $payment_methods,
