@@ -81,16 +81,14 @@ class CardFieldsModule implements ServiceModule, ExecutableModule
                 assert($card_payments_configuration instanceof CardPaymentsConfiguration);
                 $should_show_card_holder_name = apply_filters('woocommerce_paypal_payments_enable_cardholder_name_field', $card_payments_configuration->show_name_on_card() === 'yes');
                 if (CreditCardGateway::ID === $id && $should_show_card_holder_name) {
-                    $default_fields['card-name-field'] = '<p class="form-row form-row-wide">
+                    $card_name_field = '<p class="form-row form-row-wide">
 						<label for="ppcp-credit-card-gateway-card-name">' . esc_attr__('Cardholder Name', 'woocommerce-paypal-payments') . '</label>
 						<input id="ppcp-credit-card-gateway-card-name" class="input-text" type="text" placeholder="' . esc_attr__('Cardholder Name (optional)', 'woocommerce-paypal-payments') . '" name="ppcp-credit-card-gateway-card-name">
 					</p>';
-                    // Moves the cardholder-name field to the first position while
-                    // preserving string keys (array_unshift would reindex them and
-                    // break the card-number placeholder replacement below).
-                    $new_field = $default_fields['card-name-field'];
-                    unset($default_fields['card-name-field']);
-                    $default_fields = array('card-name-field' => $new_field) + $default_fields;
+                    // Inject the cardholder-name field before all other fields.
+                    // array_merge keeps the string keys (array_unshift would reindex
+                    // them and break the card-number placeholder replacement below).
+                    $default_fields = array_merge(array('card-name-field' => $card_name_field), $default_fields);
                 }
                 if (apply_filters('woocommerce_paypal_payments_card_fields_translate_card_number', \true)) {
                     if (isset($default_fields['card-number-field'])) {
@@ -123,7 +121,8 @@ class CardFieldsModule implements ServiceModule, ExecutableModule
             // The v6 card-fields component set is number|expiry|cvv only, so the
             // cardholder name (when enabled) is submitted as a plain field and
             // forwarded here as payment_source.card.name.
-            $card_name = isset($request_data['card_name']) ? substr(trim((string) $request_data['card_name']), 0, 300) : '';
+            $card_name = (string) ($request_data['card_name'] ?? '');
+            $card_name = substr(trim($card_name), 0, 300);
             if ($card_name !== '') {
                 $payment_source_data['name'] = $card_name;
             }
