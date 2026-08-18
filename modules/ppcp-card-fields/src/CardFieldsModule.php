@@ -81,14 +81,14 @@ class CardFieldsModule implements ServiceModule, ExecutableModule
                 assert($card_payments_configuration instanceof CardPaymentsConfiguration);
                 $should_show_card_holder_name = apply_filters('woocommerce_paypal_payments_enable_cardholder_name_field', $card_payments_configuration->show_name_on_card() === 'yes');
                 if (CreditCardGateway::ID === $id && $should_show_card_holder_name) {
-                    $default_fields['card-name-field'] = '<p class="form-row form-row-wide">
+                    $card_name_field = '<p class="form-row form-row-wide">
 						<label for="ppcp-credit-card-gateway-card-name">' . esc_attr__('Cardholder Name', 'woocommerce-paypal-payments') . '</label>
-						<input id="ppcp-credit-card-gateway-card-name" class="input-text wc-credit-card-form-card-expiry" type="text" placeholder="' . esc_attr__('Cardholder Name (optional)', 'woocommerce-paypal-payments') . '" name="ppcp-credit-card-gateway-card-name">
+						<input id="ppcp-credit-card-gateway-card-name" class="input-text" type="text" placeholder="' . esc_attr__('Cardholder Name (optional)', 'woocommerce-paypal-payments') . '" name="ppcp-credit-card-gateway-card-name">
 					</p>';
-                    // Moves new item to first position.
-                    $new_field = $default_fields['card-name-field'];
-                    unset($default_fields['card-name-field']);
-                    array_unshift($default_fields, $new_field);
+                    // Inject the cardholder-name field before all other fields.
+                    // array_merge keeps the string keys (array_unshift would reindex
+                    // them and break the card-number placeholder replacement below).
+                    $default_fields = array_merge(array('card-name-field' => $card_name_field), $default_fields);
                 }
                 if (apply_filters('woocommerce_paypal_payments_card_fields_translate_card_number', \true)) {
                     if (isset($default_fields['card-number-field'])) {
@@ -101,7 +101,7 @@ class CardFieldsModule implements ServiceModule, ExecutableModule
             10,
             2
         );
-        add_filter('ppcp_create_order_request_body_data', function (array $data, string $payment_method) use ($c): array {
+        add_filter('ppcp_create_order_request_body_data', function (array $data, string $payment_method, array $request_data = array()) use ($c): array {
             if (!$c->get('wcgateway.configuration.card-configuration')->is_enabled()) {
                 return $data;
             }
@@ -118,9 +118,17 @@ class CardFieldsModule implements ServiceModule, ExecutableModule
             if ($three_d_secure_contingency === 'SCA_ALWAYS' || $three_d_secure_contingency === 'SCA_WHEN_REQUIRED') {
                 $payment_source_data['attributes'] = array('verification' => array('method' => $three_d_secure_contingency));
             }
+            // The v6 card-fields component set is number|expiry|cvv only, so the
+            // cardholder name (when enabled) is submitted as a plain field and
+            // forwarded here as payment_source.card.name.
+            $card_name = (string) ($request_data['card_name'] ?? '');
+            $card_name = substr(trim($card_name), 0, 300);
+            if ($card_name !== '') {
+                $payment_source_data['name'] = $card_name;
+            }
             $data['payment_source'] = array('card' => $payment_source_data);
             return $data;
-        }, 10, 2);
+        }, 10, 3);
         // Validates if an order with card payment source can be captured.
         add_action('woocommerce_paypal_payments_before_capture_order', function (Order $order) use ($c) {
             $validator = $c->get('card-fields.service.card-capture-validator');

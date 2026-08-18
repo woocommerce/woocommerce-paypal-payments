@@ -51,7 +51,13 @@ class SdkV6Manager
     private CardPaymentsConfiguration $card_payments_configuration;
     private bool $card_vaulting_enabled;
     private SubscriptionHelper $subscription_helper;
-    public function __construct(AssetGetter $asset_getter, string $version, Environment $environment, ButtonStyleMapper $style_mapper, bool $should_handle_shipping, SettingsStatus $settings_status, Context $context, SessionHandler $session_handler, CancelView $cancel_view, bool $final_review_enabled, bool $vaulting_enabled, CardPaymentsConfiguration $card_payments_configuration, bool $card_vaulting_enabled, SubscriptionHelper $subscription_helper)
+    /**
+     * Card brand icons ({type, title, url}); empty when "Show logos" is off.
+     *
+     * @var array<int, array{type:string, title:string, url:string}>
+     */
+    private array $credit_card_icons;
+    public function __construct(AssetGetter $asset_getter, string $version, Environment $environment, ButtonStyleMapper $style_mapper, bool $should_handle_shipping, SettingsStatus $settings_status, Context $context, SessionHandler $session_handler, CancelView $cancel_view, bool $final_review_enabled, bool $vaulting_enabled, CardPaymentsConfiguration $card_payments_configuration, bool $card_vaulting_enabled, SubscriptionHelper $subscription_helper, array $credit_card_icons)
     {
         $this->asset_getter = $asset_getter;
         $this->version = $version;
@@ -67,6 +73,7 @@ class SdkV6Manager
         $this->card_payments_configuration = $card_payments_configuration;
         $this->card_vaulting_enabled = $card_vaulting_enabled;
         $this->subscription_helper = $subscription_helper;
+        $this->credit_card_icons = $credit_card_icons;
     }
     public function enqueue(): void
     {
@@ -86,7 +93,7 @@ class SdkV6Manager
     /**
      * Determines which button locations should render on the current page.
      *
-     * @return array<string, bool> Location => enabled (product, cart, checkout, mini-cart).
+     * @return array<string, bool> Location => enabled (product, cart, checkout, pay-now, mini-cart).
      */
     public function determine_render_places(): array
     {
@@ -94,7 +101,30 @@ class SdkV6Manager
         // otherwise this only happens as a side effect of constructing the
         // (discarded) v5 SmartButton.
         $this->context->init_context();
-        return array('product' => $this->settings_status->is_smart_button_enabled_for_location('product'), 'cart' => $this->settings_status->is_smart_button_enabled_for_location('cart'), 'checkout' => $this->settings_status->is_smart_button_enabled_for_location('checkout'), 'mini-cart' => $this->settings_status->is_smart_button_enabled_for_location('mini-cart'));
+        // Free orders ($0 total, e.g. a 100%-off coupon or free trial) do not
+        // need payment, so the cart/checkout wallet buttons must not render —
+        // matching v5's is_cart_price_total_zero() suppression.
+        $needs_payment = $this->cart_needs_payment();
+        // pay-now is driven by the existing WC order, not the cart, so the
+        // zero-total cart guard does not apply. Its location normalizes to
+        // 'checkout' in SettingsStatus.
+        return array('product' => $this->settings_status->is_smart_button_enabled_for_location('product'), 'cart' => $needs_payment && $this->settings_status->is_smart_button_enabled_for_location('cart'), 'checkout' => $needs_payment && $this->settings_status->is_smart_button_enabled_for_location('checkout'), 'pay-now' => $this->settings_status->is_smart_button_enabled_for_location('pay-now'), 'mini-cart' => $needs_payment && $this->settings_status->is_smart_button_enabled_for_location('mini-cart'));
+    }
+    /**
+     * Whether the current cart still needs payment.
+     *
+     * Guards the wallet buttons against $0 / free orders (e.g. a full-value
+     * coupon or a free trial), where no payment method should be offered.
+     *
+     * @return bool
+     */
+    private function cart_needs_payment(): bool
+    {
+        $cart = WC()->cart;
+        if (!$cart) {
+            return \true;
+        }
+        return $cart->needs_payment();
     }
     public function render_wrapper(): void
     {
@@ -137,10 +167,15 @@ class SdkV6Manager
         if ($this->is_card_fields_enabled($page_location)) {
             return \true;
         }
-        // Only when the classic widget is in use: loading (and suppressing v5)
-        // sitewide without a widget would break the v5-rendered block express
-        // buttons for nothing.
-        return $this->settings_status->is_smart_button_enabled_for_location('mini-cart') && is_active_widget(\false, \false, 'woocommerce_widget_cart');
+        // Load sitewide whenever the mini-cart location is enabled, matching the
+        // v5 SmartButton (should_load_buttons()'s default branch). The mini-cart
+        // can appear on any page — as the classic "Cart" widget OR the block
+        // Mini-Cart in a block theme's header — and is_active_widget() only
+        // detects the classic widget, so gating on it dropped the SDK (and every
+        // mini-cart button, Venmo included) on shop/home pages that use the block
+        // Mini-Cart. boot.js always renders into the mini-cart wrapper when it is
+        // present, so loading sitewide keeps parity with v5.
+        return $this->settings_status->is_smart_button_enabled_for_location('mini-cart');
     }
     /**
      * Whether the v6 Advanced Card Fields should render on the given page.
@@ -153,7 +188,7 @@ class SdkV6Manager
     public function is_card_fields_enabled(?string $location = null): bool
     {
         $location = $location ?? $this->get_page_context();
-        return in_array($location, array('checkout', 'checkout-block'), \true) && $this->card_payments_configuration->is_acdc_enabled();
+        return in_array($location, array('checkout', 'checkout-block', 'pay-now'), \true) && $this->card_payments_configuration->is_acdc_enabled();
     }
     /**
      * The configuration data for the SDK v6 bootstrap script.
@@ -177,7 +212,7 @@ class SdkV6Manager
         // callbacks needed). Every other context, 'checkout-block' included,
         // gets GET_FROM_FILE, where PayPal offers the buyer's own addresses and
         // the popup callbacks must stay attached to sync the choice back.
-        $shipping_enabled = $this->should_handle_shipping && 'checkout' !== $page_context;
+        $shipping_enabled = $this->should_handle_shipping && !in_array($page_context, array('checkout', 'pay-now'), \true);
         $store_api_base = rtrim(rest_url('wc/store/v1/cart'), '/');
         $button_styles = array();
         if ($page_context) {
@@ -208,7 +243,9 @@ class SdkV6Manager
                 'enabled' => $card_fields_enabled,
                 'payment_method' => CreditCardGateway::ID,
                 'funding_source' => 'card',
-                // Label and name-field flag for the block's own card method.
+                // Label, name-field flag and card-brand logos for the block's own
+                // card method. card_icons is empty when "Show logos" is disabled
+                // (the credit-card-icons service already guards on the setting).
                 'title' => $this->card_payments_configuration->gateway_title(),
                 'name_field' => 'yes' === $this->card_payments_configuration->show_name_on_card(),
                 // Card "save during purchase" (vaulting). The block checkout uses
@@ -218,14 +255,69 @@ class SdkV6Manager
                 // since a subscription card must be vaulted for renewals.
                 'is_vaulting_enabled' => $this->card_vaulting_enabled,
                 'has_subscriptions' => $this->subscription_helper->cart_contains_subscription(),
+                'card_icons' => array_map(static function (array $icon): array {
+                    return array('id' => $icon['type'], 'alt' => $icon['title'], 'src' => $icon['url']);
+                }, $this->credit_card_icons),
                 'fields' => array('name' => '#' . self::CARD_FIELD_NAME_ID, 'number' => '#' . self::CARD_FIELD_NUMBER_ID, 'expiry' => '#' . self::CARD_FIELD_EXPIRY_ID, 'cvv' => '#' . self::CARD_FIELD_CVV_ID),
             ),
         );
+        // The pay-for-order page creates the PayPal order from an existing WC
+        // order (not the cart), so the front end must forward its identifiers to
+        // the create-order endpoint's from_wc_order branch.
+        if ('pay-now' === $page_context) {
+            $data['pay_now'] = array('order_id' => $this->order_pay_id(), 'order_key' => $this->order_pay_key());
+        }
         $continuation = $this->continuation_data();
         if ($continuation) {
             $data['continuation'] = $continuation;
         }
         return $data;
+    }
+    /**
+     * The WC order ID on the pay-for-order (order-pay) page, or 0.
+     *
+     * @return int
+     */
+    private function order_pay_id(): int
+    {
+        global $wp;
+        if (!isset($wp->query_vars['order-pay'])) {
+            return 0;
+        }
+        return absint($wp->query_vars['order-pay']);
+    }
+    /**
+     * The order key from the pay-for-order page URL, or empty string.
+     *
+     * @return string
+     */
+    private function order_pay_key(): string
+    {
+        // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+        $key = isset($_GET['key']) ? wc_clean(wp_unslash($_GET['key'])) : '';
+        return is_string($key) ? $key : '';
+    }
+    /**
+     * The WC order for the current pay-for-order page, validated against the
+     * URL order key, or null.
+     *
+     * @return \WC_Order|null
+     */
+    private function order_pay(): ?\WC_Order
+    {
+        $order_id = $this->order_pay_id();
+        if (!$order_id) {
+            return null;
+        }
+        $order = wc_get_order($order_id);
+        if (!$order instanceof \WC_Order) {
+            return null;
+        }
+        // Guard against reading another customer's order total from a crafted URL.
+        if (!hash_equals((string) $order->get_order_key(), $this->order_pay_key())) {
+            return null;
+        }
+        return $order;
     }
     /**
      * Whether the buyer is returning from an approved PayPal order and should
@@ -282,6 +374,15 @@ class SdkV6Manager
      */
     private function transaction_amount(): string
     {
+        // The pay-for-order page has no cart; the amount is the existing WC
+        // order's total, used for Pay Later eligibility.
+        if ('pay-now' === $this->get_page_context()) {
+            $order = $this->order_pay();
+            if ($order) {
+                return number_format((float) $order->get_total(), 2, '.', '');
+            }
+            return '';
+        }
         $cart = WC()->cart;
         if ($cart && !$cart->is_empty()) {
             return number_format((float) $cart->get_total('edit'), 2, '.', '');
@@ -302,15 +403,15 @@ class SdkV6Manager
      *
      * Resolves through the shared Context helper (which handles
      * classic-shortcode block pages) and narrows to the contexts this
-     * module supports: classic product/cart/checkout and block
-     * cart/checkout. pay-now and the block editor stay out of scope.
+     * module supports: classic product/cart/checkout/pay-now and block
+     * cart/checkout. The block editor stays out of scope.
      *
      * @return string
      */
     private function get_page_context(): string
     {
         $context = $this->context->context();
-        if (in_array($context, array('product', 'cart', 'checkout', 'cart-block', 'checkout-block'), \true)) {
+        if (in_array($context, array('product', 'cart', 'checkout', 'pay-now', 'cart-block', 'checkout-block'), \true)) {
             return $context;
         }
         return '';
