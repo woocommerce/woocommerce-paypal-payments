@@ -1,12 +1,16 @@
 /**
  * Advanced Card Fields (ACDC), v6 Web SDK — classic checkout.
  *
- * Mounts the number/expiry/CVV/name fields into the existing WC card-form
- * inputs (the same DOM slots v5's paypal.CardFields() used), and wires the
- * checkout submission: submitting a new card runs through the v6 card
- * session (which also runs 3D Secure automatically), the result is
- * approved server-side, and the native checkout submission is then let
- * through to capture it via the existing CreditCardGateway::process_payment().
+ * Mounts the number/expiry/CVV fields into the existing WC card-form inputs
+ * (the same DOM slots v5's paypal.CardFields() used), and wires the checkout
+ * submission: submitting a new card runs through the v6 card session (which
+ * also runs 3D Secure automatically), the result is approved server-side, and
+ * the native checkout submission is then let through to capture it via the
+ * existing CreditCardGateway::process_payment().
+ *
+ * The cardholder name has no v6 card-fields component (the SDK only accepts
+ * number|expiry|cvv), so the native WC cardholder-name input is left in place
+ * as a plain field and its value is forwarded to create-order instead.
  *
  * Scope: fresh card, one-time payment only. Saving a new card, paying with
  * an already-saved card, and the $0 free-trial variant are untouched
@@ -24,7 +28,7 @@ import { createCardOrder, approveCardOrder } from '../endpointsAdapter';
 import { hasJQuery } from '../utils/api';
 import { handleError } from '../utils/errorHandler';
 
-const FIELD_TYPES = [ 'number', 'expiry', 'cvv', 'name' ];
+const FIELD_TYPES = [ 'number', 'expiry', 'cvv' ];
 
 /**
  * Mounts a single card field into its existing WC input's place, hiding
@@ -40,7 +44,7 @@ const FIELD_TYPES = [ 'number', 'expiry', 'cvv', 'name' ];
  * the SDK's default (much taller than the form's inputs).
  *
  * @param {Object}      cardSession - The v6 card fields session.
- * @param {string}      fieldType   - number|expiry|cvv|name.
+ * @param {string}      fieldType   - number|expiry|cvv.
  * @param {HTMLElement} inputField  - The existing WC input to replace.
  */
 function mountField( cardSession, fieldType, inputField ) {
@@ -64,6 +68,33 @@ function mountField( cardSession, fieldType, inputField ) {
 	inputField.parentNode.appendChild( fieldElement );
 	hide( inputField, true );
 	inputField.hidden = true;
+}
+
+/**
+ * Reads the billing address from the classic checkout form for the card
+ * session submit. The v6 SDK uses it for AVS/3D Secure verification, so
+ * omitting it can make an otherwise-valid card fail authentication.
+ *
+ * @return {Object|undefined} A { billingAddress } options object, or undefined
+ *                            when no postal code is present (e.g. pay-for-order).
+ */
+function billingAddressForSubmit() {
+	const postalCode = document
+		.querySelector( '#billing_postcode' )
+		?.value?.trim();
+	if ( ! postalCode ) {
+		return undefined;
+	}
+
+	const billingAddress = { postalCode };
+	const countryCode = document
+		.querySelector( '#billing_country' )
+		?.value?.trim();
+	if ( countryCode ) {
+		billingAddress.countryCode = countryCode;
+	}
+
+	return { billingAddress };
 }
 
 /**
@@ -180,8 +211,17 @@ export async function initCardFields( config ) {
 
 		try {
 			const cardSession = await ensureCardSession();
-			const { orderId } = await createCardOrder( config );
-			const result = await cardSession.submit( orderId );
+			// The name has no v6 field component; read the plain WC input.
+			const cardName = getInputs().name?.value?.trim() || '';
+			const { orderId } = await createCardOrder(
+				config,
+				config.page_context || 'checkout',
+				cardName
+			);
+			const submitOptions = billingAddressForSubmit();
+			const result = submitOptions
+				? await cardSession.submit( orderId, submitOptions )
+				: await cardSession.submit( orderId );
 
 			// Buyer closed the 3DS challenge or the popup; let them retry.
 			if ( result.state === 'canceled' ) {

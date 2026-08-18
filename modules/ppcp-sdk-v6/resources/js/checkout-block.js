@@ -144,12 +144,44 @@ if ( config && config.page_context && config.continuation ) {
 	}
 }
 
+/**
+ * The card method label: the gateway title plus the supported-card logos.
+ *
+ * PaymentMethodIcons comes off the `components` prop that WooCommerce Blocks
+ * injects into the label (not an import), matching the v5 block. card_icons is
+ * empty when "Show logos of supported cards" is disabled, so nothing renders.
+ *
+ * @param {Object} props            - Label props from the Blocks registry.
+ * @param {Object} props.components  - Blocks-provided label components.
+ * @return {Object} The label element.
+ */
+const CardFieldsLabel = ( { components } ) => {
+	const { PaymentMethodIcons } = components || {};
+	const icons = config.card_fields.card_icons || [];
+
+	return createElement(
+		'span',
+		{
+			style: {
+				display: 'flex',
+				alignItems: 'center',
+				justifyContent: 'space-between',
+				width: '100%',
+			},
+		},
+		createElement( 'span', null, config.card_fields.title ),
+		PaymentMethodIcons &&
+			icons.length > 0 &&
+			createElement( PaymentMethodIcons, { icons, align: 'right' } )
+	);
+};
+
 // Skipped in continuation mode, where the buyer has already approved a PayPal
 // order and only the review shows.
 if ( config?.card_fields?.enabled && ! config.continuation ) {
 	registerPaymentMethod( {
 		name: config.card_fields.payment_method,
-		label: createElement( 'div', null, config.card_fields.title ),
+		label: createElement( CardFieldsLabel ),
 		ariaLabel: config.card_fields.title,
 		content: createElement( V6CardFieldsComponent, { config } ),
 		// A static placeholder, not the live fields: the SDK does not boot in

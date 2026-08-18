@@ -177,6 +177,44 @@ describe( 'initCardFields', () => {
 		}
 	} );
 
+	test( 'never mounts the name field even when fields.name points to a WC input, since v6 has no name field component', async () => {
+		buildCheckoutDom( 'ppcp-credit-card-gateway' );
+		document.body.insertAdjacentHTML(
+			'beforeend',
+			'<input id="ppcp-credit-card-gateway-card-name" value="Jane Doe" />'
+		);
+		const cardSession = makeCardSession();
+		mockLoadSdkV6.mockResolvedValue( {
+			createCardFieldsOneTimePaymentSession: () => cardSession,
+		} );
+
+		await initCardFields(
+			baseConfig( {
+				card_fields: {
+					...baseConfig().card_fields,
+					fields: {
+						...baseConfig().card_fields.fields,
+						name: '#ppcp-credit-card-gateway-card-name',
+					},
+				},
+			} )
+		);
+		await flushPromises();
+
+		expect(
+			cardSession.createCardFieldsComponent
+		).toHaveBeenCalledTimes( 3 );
+		expect(
+			cardSession.createCardFieldsComponent
+		).not.toHaveBeenCalledWith(
+			expect.objectContaining( { type: 'name' } )
+		);
+		const nameInput = document.querySelector(
+			'#ppcp-credit-card-gateway-card-name'
+		);
+		expect( nameInput.hidden ).toBe( false );
+	} );
+
 	test( "sizes the mounted field to the original input's own box, since style.input only styles what is inside it", async () => {
 		buildCheckoutDom( 'ppcp-credit-card-gateway' );
 		const numberInput = document.querySelector(
@@ -365,7 +403,11 @@ describe( 'initCardFields', () => {
 		// Flush the async submit chain (createCardOrder -> submit -> approveCardOrder).
 		await flushPromises();
 
-		expect( mockCreateCardOrder ).toHaveBeenCalledWith( baseConfig() );
+		expect( mockCreateCardOrder ).toHaveBeenCalledWith(
+			baseConfig(),
+			'checkout',
+			''
+		);
 		expect( cardSession.submit ).toHaveBeenCalledWith( 'CARDORDER1' );
 		expect( mockApproveCardOrder ).toHaveBeenCalledWith(
 			expect.anything(),
@@ -375,6 +417,66 @@ describe( 'initCardFields', () => {
 		// that second click through instead of re-intercepting it.
 		expect( nativeSubmits ).toBe( 1 );
 		expect( mockHandleError ).not.toHaveBeenCalled();
+	} );
+
+	test( 'forwards the cardholder name from the plain WC input to createCardOrder', async () => {
+		buildCheckoutDom( 'ppcp-credit-card-gateway' );
+		document.body.insertAdjacentHTML(
+			'beforeend',
+			'<input id="ppcp-credit-card-gateway-card-name" value="Jane Doe" />'
+		);
+		const cardSession = makeCardSession( { state: 'succeeded' } );
+		mockLoadSdkV6.mockResolvedValue( {
+			createCardFieldsOneTimePaymentSession: () => cardSession,
+		} );
+		mockCreateCardOrder.mockResolvedValue( { orderId: 'CARDORDER1' } );
+		mockApproveCardOrder.mockResolvedValue( undefined );
+
+		const config = baseConfig( {
+			card_fields: {
+				...baseConfig().card_fields,
+				fields: {
+					...baseConfig().card_fields.fields,
+					name: '#ppcp-credit-card-gateway-card-name',
+				},
+			},
+		} );
+
+		await initCardFields( config );
+		await flushPromises();
+
+		document.querySelector( '#place_order' ).click();
+		await flushPromises();
+
+		expect( mockCreateCardOrder ).toHaveBeenCalledWith(
+			config,
+			'checkout',
+			'Jane Doe'
+		);
+	} );
+
+	test( 'submits the card session with the billing address when the checkout form has a postcode', async () => {
+		buildCheckoutDom( 'ppcp-credit-card-gateway' );
+		document.body.insertAdjacentHTML(
+			'beforeend',
+			'<input id="billing_postcode" value="90001" /><input id="billing_country" value="US" />'
+		);
+		const cardSession = makeCardSession( { state: 'succeeded' } );
+		mockLoadSdkV6.mockResolvedValue( {
+			createCardFieldsOneTimePaymentSession: () => cardSession,
+		} );
+		mockCreateCardOrder.mockResolvedValue( { orderId: 'CARDORDER1' } );
+		mockApproveCardOrder.mockResolvedValue( undefined );
+
+		await initCardFields( baseConfig() );
+		await flushPromises();
+
+		document.querySelector( '#place_order' ).click();
+		await flushPromises();
+
+		expect( cardSession.submit ).toHaveBeenCalledWith( 'CARDORDER1', {
+			billingAddress: { postalCode: '90001', countryCode: 'US' },
+		} );
 	} );
 
 	test( 'a failed card session submit surfaces the error and does not click place_order again', async () => {

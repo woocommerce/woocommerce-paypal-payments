@@ -20,7 +20,14 @@ jest.mock( './V6CardFieldContainer', () => ( {
 	V6CardFieldContainer: ( props ) => mockCardFieldContainer( props ),
 } ) );
 
-import { render, waitFor, act } from '@testing-library/react';
+import {
+	render,
+	waitFor,
+	act,
+	screen,
+	fireEvent,
+} from '@testing-library/react';
+import '@testing-library/jest-dom';
 import { createElement } from '@wordpress/element';
 import { V6CardFieldsComponent } from './V6CardFieldsComponent';
 
@@ -117,7 +124,8 @@ describe( 'V6CardFieldsComponent', () => {
 
 		expect( mockCreateCardOrder ).toHaveBeenCalledWith(
 			cardConfig(),
-			'checkout-block'
+			'checkout-block',
+			''
 		);
 		expect( session.submit ).toHaveBeenCalledWith( 'ORDER1' );
 		expect( mockApproveCardOrder ).toHaveBeenCalledWith(
@@ -176,23 +184,28 @@ describe( 'V6CardFieldsComponent', () => {
 		expect( result ).toEqual( { type: 'error', message: 'nonce expired' } );
 	} );
 
-	test( 'renders the name field container when card_fields.name_field is enabled', async () => {
+	test( 'renders the cardholder name as a plain input, not a V6CardFieldContainer, when card_fields.name_field is enabled', async () => {
 		renderComponent();
 
 		await waitFor( () =>
 			expect( mockCardFieldContainer ).toHaveBeenCalled()
 		);
 
+		expect(
+			screen.getByPlaceholderText( 'Cardholder name (optional)' )
+		).toBeInTheDocument();
+
 		const types = mockCardFieldContainer.mock.calls.map(
 			( call ) => call[ 0 ].type
 		);
-		expect( types ).toContain( 'name' );
-		expect( types ).toContain( 'number' );
-		expect( types ).toContain( 'expiry' );
-		expect( types ).toContain( 'cvv' );
+		expect( types ).not.toContain( 'name' );
+		expect( types ).toEqual(
+			expect.arrayContaining( [ 'number', 'expiry', 'cvv' ] )
+		);
+		expect( mockCardFieldContainer ).toHaveBeenCalledTimes( 3 );
 	} );
 
-	test( 'does not render the name field container when card_fields.name_field is disabled', async () => {
+	test( 'does not render the name input when card_fields.name_field is disabled', async () => {
 		renderComponent( {
 			config: cardConfig( {
 				card_fields: {
@@ -206,10 +219,71 @@ describe( 'V6CardFieldsComponent', () => {
 			expect( mockCardFieldContainer ).toHaveBeenCalled()
 		);
 
+		expect(
+			screen.queryByPlaceholderText( 'Cardholder name (optional)' )
+		).not.toBeInTheDocument();
+
 		const types = mockCardFieldContainer.mock.calls.map(
 			( call ) => call[ 0 ].type
 		);
 		expect( types ).not.toContain( 'name' );
 		expect( types ).toContain( 'number' );
+	} );
+
+	test( 'forwards the typed cardholder name to createCardOrder on submit', async () => {
+		mockCreateCardOrder.mockResolvedValueOnce( { orderId: 'ORDER1' } );
+		session.submit.mockResolvedValueOnce( { state: 'succeeded' } );
+
+		renderComponent();
+		await waitFor( () => expect( onPaymentSetup ).toHaveBeenCalled() );
+
+		const nameInput = screen.getByPlaceholderText(
+			'Cardholder name (optional)'
+		);
+		fireEvent.change( nameInput, { target: { value: 'Jane Doe' } } );
+
+		await act( async () => {
+			await paymentSetupCb();
+		} );
+
+		expect( mockCreateCardOrder ).toHaveBeenCalledWith(
+			cardConfig(),
+			'checkout-block',
+			'Jane Doe'
+		);
+	} );
+
+	test( 'submits the session with the billing address derived from the Blocks billing prop', async () => {
+		mockCreateCardOrder.mockResolvedValueOnce( { orderId: 'ORDER1' } );
+		session.submit.mockResolvedValueOnce( { state: 'succeeded' } );
+
+		renderComponent( {
+			billing: {
+				billingAddress: { postcode: '90001', country: 'US' },
+			},
+		} );
+		await waitFor( () => expect( onPaymentSetup ).toHaveBeenCalled() );
+
+		await act( async () => {
+			await paymentSetupCb();
+		} );
+
+		expect( session.submit ).toHaveBeenCalledWith( 'ORDER1', {
+			billingAddress: { postalCode: '90001', countryCode: 'US' },
+		} );
+	} );
+
+	test( 'submits the session with no options when the Blocks billing prop has no postcode', async () => {
+		mockCreateCardOrder.mockResolvedValueOnce( { orderId: 'ORDER1' } );
+		session.submit.mockResolvedValueOnce( { state: 'succeeded' } );
+
+		renderComponent( { billing: { billingAddress: {} } } );
+		await waitFor( () => expect( onPaymentSetup ).toHaveBeenCalled() );
+
+		await act( async () => {
+			await paymentSetupCb();
+		} );
+
+		expect( session.submit ).toHaveBeenCalledWith( 'ORDER1' );
 	} );
 } );
