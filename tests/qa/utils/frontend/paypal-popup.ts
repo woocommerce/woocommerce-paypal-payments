@@ -270,36 +270,36 @@ export class PayPalPopup {
 	 */
 	completePayLaterPayment = async ( payPalAccount ) => {
 		await this.login( payPalAccount.email, payPalAccount.password );
-		// If the CAP iframe is not yet visible, we're on the Pay Later selection
-		// screen — click Continue to advance to the confirm details page.
-		// If the CAP iframe is already there, we can skip this step.
-		const capIframe = this.page.locator( 'iframe[title="CAP"]' );
-		const isCapVisible = await capIframe.isVisible().catch( () => false );
-		if ( ! isCapVisible ) {
-			await this.submitPaymentButton().click();
-		}
-		// Wait for the CAP iframe to be present and fully loaded.
-		await capIframe.waitFor( { state: 'visible', timeout: 30000 } );
-		// Click the loan agreement checkbox via JS eval to avoid contentFrame
-		// timing race that causes "Target page, context or browser has been closed".
-		await this.page.evaluate( () => {
-			const iframe = document.querySelector(
-				'iframe[title="CAP"]'
-			) as HTMLIFrameElement;
-			const checkbox = iframe?.contentDocument?.querySelector(
-				'input[type="checkbox"]'
-			) as HTMLInputElement;
-			if ( checkbox && ! checkbox.checked ) {
-				checkbox.click();
-			}
-		} );
-		// After checking the loan agreement checkbox, PayPal briefly shows a
-		// loading overlay inside the CAP iframe that intercepts pointer events.
-		await this.payLaterIframe()
-			.locator( '[data-testid="loading-overlay"]' )
-			.waitFor( { state: 'hidden', timeout: 15000 } )
-			.catch( () => {} ); // overlay may not always appear
-		await this.agreeAndApplyButton().click();
+		// // If the CAP iframe is not yet visible, we're on the Pay Later selection
+		// // screen — click Continue to advance to the confirm details page.
+		// // If the CAP iframe is already there, we can skip this step.
+		// const capIframe = this.page.locator( 'iframe[title="CAP"]' );
+		// const isCapVisible = await capIframe.isVisible().catch( () => false );
+		// if ( ! isCapVisible ) {
+		// 	await this.submitPaymentButton().click();
+		// }
+		// // Wait for the CAP iframe to be present and fully loaded.
+		// await capIframe.waitFor( { state: 'visible', timeout: 30000 } );
+		// // Click the loan agreement checkbox via JS eval to avoid contentFrame
+		// // timing race that causes "Target page, context or browser has been closed".
+		// await this.page.evaluate( () => {
+		// 	const iframe = document.querySelector(
+		// 		'iframe[title="CAP"]'
+		// 	) as HTMLIFrameElement;
+		// 	const checkbox = iframe?.contentDocument?.querySelector(
+		// 		'input[type="checkbox"]'
+		// 	) as HTMLInputElement;
+		// 	if ( checkbox && ! checkbox.checked ) {
+		// 		checkbox.click();
+		// 	}
+		// } );
+		// // After checking the loan agreement checkbox, PayPal briefly shows a
+		// // loading overlay inside the CAP iframe that intercepts pointer events.
+		// await this.payLaterIframe()
+		// 	.locator( '[data-testid="loading-overlay"]' )
+		// 	.waitFor( { state: 'hidden', timeout: 15000 } )
+		// 	.catch( () => {} ); // overlay may not always appear
+		// await this.agreeAndApplyButton().click();
 		await this.completePayment();
 	};
 
