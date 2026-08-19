@@ -11,6 +11,7 @@ namespace WooCommerce\PayPalCommerce\SdkV6;
 
 use WooCommerce\PayPalCommerce\Assets\AssetGetter;
 use WooCommerce\PayPalCommerce\Assets\AssetGetterFactory;
+use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
 use WooCommerce\PayPalCommerce\SdkV6\Assets\AddPaymentMethodManager;
 use WooCommerce\PayPalCommerce\SdkV6\Assets\SdkV6Manager;
 use WooCommerce\PayPalCommerce\SdkV6\Blocks\V6PaymentMethod;
@@ -94,6 +95,9 @@ return array(
 	},
 
 	'sdk-v6.manager'                    => static function ( ContainerInterface $container ): SdkV6Manager {
+		$settings_provider = $container->get( 'settings.settings-provider' );
+		assert( $settings_provider instanceof SettingsProvider );
+
 		return new SdkV6Manager(
 			$container->get( 'sdk-v6.asset-getter' ),
 			$container->get( 'ppcp.asset-version' ),
@@ -106,8 +110,8 @@ return array(
 			$container->get( 'session.cancellation.view' ),
 			// Computed here rather than reusing blocks.settings.final_review_enabled
 			// so this module does not depend on the ppcp-blocks module it replaces.
-			! $container->get( 'settings.settings-provider' )->enable_pay_now(),
-			$container->get( 'settings.settings-provider' )->save_paypal_and_venmo(),
+			! $settings_provider->enable_pay_now(),
+			$settings_provider->save_paypal_and_venmo(),
 			$container->get( 'wcgateway.configuration.card-configuration' ),
 			// Card "save during purchase" eligibility, mirroring the v5 block
 			// card method (AdvancedCardPaymentMethod): reference-transaction
@@ -116,10 +120,10 @@ return array(
 			// independent of the v6 flag (see ppcp-settings/services.php).
 			$container->has( 'save-payment-methods.eligible' )
 				&& $container->get( 'save-payment-methods.eligible' )
-				&& $container->get( 'settings.settings-provider' )->save_card_details(),
+				&& $settings_provider->save_card_details(),
 			$container->get( 'wc-subscriptions.helper' ),
 			$container->get( 'wcgateway.credit-card-icons' ),
-			$container->get( 'settings.settings-provider' )->merchant_country(),
+			$settings_provider->merchant_country(),
 			$container->get( 'sdk-v6.google-pay-config' ),
 			$container->get( 'sdk-v6.apple-pay-config' )
 		);
@@ -127,6 +131,7 @@ return array(
 
 	'sdk-v6.add-payment-method-manager' => static function ( ContainerInterface $container ): AddPaymentMethodManager {
 		$settings_provider = $container->get( 'settings.settings-provider' );
+		assert( $settings_provider instanceof SettingsProvider );
 
 		return new AddPaymentMethodManager(
 			$container->get( 'sdk-v6.asset-getter' ),
