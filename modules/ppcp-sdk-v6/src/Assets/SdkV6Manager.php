@@ -67,6 +67,7 @@ class SdkV6Manager
     private CardPaymentsConfiguration $card_payments_configuration;
     private bool $card_vaulting_enabled;
     private SubscriptionHelper $subscription_helper;
+    private string $merchant_country;
     /**
      * Card brand icons ({type, title, url}); empty when "Show logos" is off.
      *
@@ -85,7 +86,7 @@ class SdkV6Manager
      * @var WalletPlacement[]
      */
     private array $wallets;
-    public function __construct(AssetGetter $asset_getter, string $version, Environment $environment, ButtonStyleMapper $style_mapper, bool $should_handle_shipping, SettingsStatus $settings_status, Context $context, SessionHandler $session_handler, CancelView $cancel_view, bool $final_review_enabled, bool $vaulting_enabled, CardPaymentsConfiguration $card_payments_configuration, bool $card_vaulting_enabled, SubscriptionHelper $subscription_helper, array $credit_card_icons, GooglePayConfig $google_pay_config, ApplePayConfig $apple_pay_config)
+    public function __construct(AssetGetter $asset_getter, string $version, Environment $environment, ButtonStyleMapper $style_mapper, bool $should_handle_shipping, SettingsStatus $settings_status, Context $context, SessionHandler $session_handler, CancelView $cancel_view, bool $final_review_enabled, bool $vaulting_enabled, CardPaymentsConfiguration $card_payments_configuration, bool $card_vaulting_enabled, SubscriptionHelper $subscription_helper, array $credit_card_icons, string $merchant_country, GooglePayConfig $google_pay_config, ApplePayConfig $apple_pay_config)
     {
         $this->asset_getter = $asset_getter;
         $this->version = $version;
@@ -102,6 +103,7 @@ class SdkV6Manager
         $this->card_vaulting_enabled = $card_vaulting_enabled;
         $this->subscription_helper = $subscription_helper;
         $this->credit_card_icons = $credit_card_icons;
+        $this->merchant_country = $merchant_country;
         $this->apple_pay_config = $apple_pay_config;
         $this->wallets = array(new \WooCommerce\PayPalCommerce\SdkV6\Assets\WalletPlacement('google_pay', GooglePayGateway::ID, self::GOOGLE_PAY_WRAPPER_ID, 'https://pay.google.com/gp/p/js/pay.js', $google_pay_config, static function (string $context) use ($google_pay_config): array {
             return $google_pay_config->styles($context);
@@ -373,6 +375,7 @@ class SdkV6Manager
             'currency' => get_woocommerce_currency(),
             'amount' => $this->transaction_amount(),
             'buyer_country' => $buyer_country,
+            'merchant_country' => $this->merchant_country,
             'locale' => str_replace('_', '-', get_locale()),
             'vaulting_enabled' => $this->vaulting_enabled,
             // Drives the post-approval fork; see V6ExpressComponent.approve().

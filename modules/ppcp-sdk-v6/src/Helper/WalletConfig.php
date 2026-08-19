@@ -65,10 +65,14 @@ abstract class WalletConfig
     private function is_product_supported(string $context): bool
     {
         $contains_subscription = $this->subscription_helper->locations_with_subscription_product();
-        // The product page is judged by what it displays; every other page by the
-        // cart contents.
-        $location = 'product' === $context ? 'product' : 'cart';
-        return \false === ($contains_subscription[$location] ?? \false);
+        // The product page is judged by what it displays.
+        if ('product' === $context) {
+            return \false === ($contains_subscription['product'] ?? \false);
+        }
+        // Every other page by the cart, plus `payorder`: it is the only key that
+        // flags a renewal, and a renewal reaches classic checkout as well as the
+        // pay-for-order page.
+        return \false === ($contains_subscription['cart'] ?? \false) && \false === ($contains_subscription['payorder'] ?? \false);
     }
     /**
      * The whole translated notice for should_render() being called too early.
