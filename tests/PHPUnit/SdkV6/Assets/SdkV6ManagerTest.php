@@ -80,7 +80,7 @@ class SdkV6ManagerTest extends TestCase
         return $wc;
     }
 
-    private function createTestee(bool $should_handle_shipping = false, array $credit_card_icons = [], bool $card_vaulting_enabled = true): SdkV6Manager
+    private function createTestee(bool $should_handle_shipping = false, array $credit_card_icons = [], bool $card_vaulting_enabled = true, string $merchant_country = 'US'): SdkV6Manager
     {
         return new SdkV6Manager(
             $this->asset_getter,
@@ -98,6 +98,7 @@ class SdkV6ManagerTest extends TestCase
 	        $card_vaulting_enabled,
 	        $this->subscription_helper,
 	        $credit_card_icons,
+	        $merchant_country,
 	        $this->google_pay_config,
 	        $this->apple_pay_config
         );
@@ -273,6 +274,45 @@ class SdkV6ManagerTest extends TestCase
         );
         $this->assertSame('49.99', $data['amount']);
         $this->assertFalse($data['shipping']['handle_in_paypal']);
+    }
+
+    /**
+     * GIVEN a merchant whose PayPal processing country differs from the buyer's
+     *       billing country
+     * WHEN the SDK bootstrap data is generated
+     * THEN merchant_country carries the merchant's own country, not the buyer's,
+     *      since a wallet sheet states where the payment is processed
+     */
+    public function testScriptDataIncludesMerchantCountryIndependentOfBuyerCountry(): void
+    {
+        $this->context->shouldReceive('context')->andReturn('checkout');
+        $this->card_payments_configuration->shouldReceive('is_acdc_enabled')->andReturn(false);
+        $this->card_payments_configuration->shouldReceive('gateway_title')->andReturn('Credit Card');
+        $this->card_payments_configuration->shouldReceive('show_name_on_card')->andReturn('no');
+
+        $this->settings_status->shouldReceive('is_smart_button_enabled_for_location')->andReturn(false);
+        $this->session_handler->shouldReceive('order')->andReturn(null);
+        $this->context->shouldReceive('is_paypal_continuation')->andReturn(false);
+        $this->environment->shouldReceive('is_sandbox')->andReturn(false);
+        $this->style_mapper->shouldReceive('styles_for_context')->andReturn([]);
+
+        $wc = $this->create_wc_stub();
+        $wc->customer = Mockery::mock();
+        $wc->customer->shouldReceive('get_billing_country')->andReturn('DE');
+
+        when('WC')->justReturn($wc);
+        when('wc_get_base_location')->justReturn(['country' => 'US']);
+        when('get_woocommerce_currency')->justReturn('USD');
+        when('get_locale')->justReturn('en_US');
+        when('is_product')->justReturn(false);
+        when('rest_url')->justReturn('https://example.com/wp-json/wc/store/v1/cart');
+        when('wc_get_checkout_url')->justReturn('https://example.com/checkout');
+
+        $testee = $this->createTestee(false, [], true, 'FR');
+        $data   = $testee->script_data();
+
+        $this->assertSame('FR', $data['merchant_country']);
+        $this->assertSame('DE', $data['buyer_country']);
     }
 
     /**

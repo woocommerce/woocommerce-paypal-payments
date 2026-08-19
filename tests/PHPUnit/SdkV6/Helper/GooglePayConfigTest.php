@@ -38,12 +38,12 @@ class GooglePayConfigTest extends TestCase {
 		);
 	}
 
-	private function subscriptions( bool $on_product, bool $in_cart ): SubscriptionHelper {
+	private function subscriptions( bool $on_product, bool $in_cart, bool $at_payorder = false ): SubscriptionHelper {
 		$helper = Mockery::mock( SubscriptionHelper::class );
 		$helper->shouldReceive( 'locations_with_subscription_product' )->andReturn(
 			array(
 				'product'  => $on_product,
-				'payorder' => false,
+				'payorder' => $at_payorder,
 				'cart'     => $in_cart,
 			)
 		);
@@ -65,6 +65,13 @@ class GooglePayConfigTest extends TestCase {
 
 	private function subscriptionOnProductPage(): SubscriptionHelper {
 		return $this->subscriptions( true, false );
+	}
+
+	/**
+	 * A renewal, which only `payorder` flags: `cart` excludes renewals.
+	 */
+	private function subscriptionRenewal(): SubscriptionHelper {
+		return $this->subscriptions( false, false, true );
 	}
 
 	private function available(): callable {
@@ -239,6 +246,40 @@ class GooglePayConfigTest extends TestCase {
 		$config = $this->configFor( $this->subscriptionOnProductPage(), $this->available() );
 
 		$this->assertFalse( $config->should_render( 'product' ) );
+	}
+
+	/**
+	 * GIVEN the settings fully enable Google Pay and the merchant is available, but
+	 * the order being paid is a subscription renewal
+	 * WHEN checking whether it should render on the pay-for-order page
+	 * THEN it is reported as not rendering, because Google Pay has no vaulting
+	 */
+	public function testNotRenderedWhenPayOrderIsARenewal(): void {
+		$styling = $this->stylingEnabled( 'pay-now' );
+
+		$this->provider->shouldReceive( 'googlepay_enabled' )->andReturn( true );
+		$this->provider->shouldReceive( 'googlepay_styles' )->with( 'pay-now' )->andReturn( $styling );
+
+		$config = $this->configFor( $this->subscriptionRenewal(), $this->available() );
+
+		$this->assertFalse( $config->should_render( 'pay-now' ) );
+	}
+
+	/**
+	 * GIVEN the settings fully enable Google Pay and the merchant is available, but
+	 * the cart being checked out is a subscription renewal
+	 * WHEN checking whether it should render at classic checkout
+	 * THEN it is reported as not rendering, because Google Pay has no vaulting
+	 */
+	public function testNotRenderedWhenCheckoutHoldsARenewal(): void {
+		$styling = $this->stylingEnabled( 'checkout' );
+
+		$this->provider->shouldReceive( 'googlepay_enabled' )->andReturn( true );
+		$this->provider->shouldReceive( 'googlepay_styles' )->with( 'checkout' )->andReturn( $styling );
+
+		$config = $this->configFor( $this->subscriptionRenewal(), $this->available() );
+
+		$this->assertFalse( $config->should_render( 'checkout' ) );
 	}
 
 	/**
