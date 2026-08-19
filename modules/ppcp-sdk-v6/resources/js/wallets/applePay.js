@@ -115,34 +115,43 @@ export async function renderApplePay( {
 
 		paying = true;
 
-		const appleSession = new window.ApplePaySession(
-			APPLE_PAY_VERSION,
-			buildApplePayRequest( sessionConfig, {
-				currencyCode: config.currency,
-				total,
-				displayName: settings.display_name,
-				context,
-			} )
-		);
+		// Apple rejects a malformed request (currency, supportedNetworks) by
+		// throwing synchronously, so `paying` must be released here or the
+		// button would silently ignore every later tap.
+		try {
+			const appleSession = new window.ApplePaySession(
+				APPLE_PAY_VERSION,
+				buildApplePayRequest( sessionConfig, {
+					currencyCode: config.currency,
+					total,
+					displayName: settings.display_name,
+					context,
+				} )
+			);
 
-		appleSession.onvalidatemerchant = ( event ) => {
-			validateMerchant( appleSession, event );
-		};
+			appleSession.onvalidatemerchant = ( event ) => {
+				validateMerchant( appleSession, event );
+			};
 
-		appleSession.onpaymentauthorized = ( event ) => {
-			authorizePayment( appleSession, event );
-		};
+			appleSession.onpaymentauthorized = ( event ) => {
+				authorizePayment( appleSession, event );
+			};
 
-		// A dismissal is not a failure to report, but it must release `paying` or
-		// the button could never open a second sheet.
-		appleSession.oncancel = () => {
+			// A dismissal is not a failure to report, but it must release
+			// `paying` or the button could never open a second sheet.
+			appleSession.oncancel = () => {
+				paying = false;
+				spinner?.unblock();
+				refreshCartUi( context );
+			};
+
+			// Presents the sheet, and only then asks for merchant validation.
+			appleSession.begin();
+		} catch ( error ) {
 			paying = false;
 			spinner?.unblock();
-			refreshCartUi( context );
-		};
-
-		// Presents the sheet, and only then asks for merchant validation.
-		appleSession.begin();
+			handleError( error );
+		}
 	}
 
 	/**
@@ -188,8 +197,9 @@ export async function renderApplePay( {
 		spinner?.block();
 
 		try {
-			// This is what adds a viewed product to the real cart. Its total is
-			// discarded: the shopper must be charged what the sheet showed them.
+			// This is what adds a viewed product to the real cart, and its
+			// units price the order. Its total is ignored: the sheet total
+			// describes the same basket, via the simulate endpoint.
 			const { purchaseUnits } = await resolveWalletTotal(
 				config,
 				context

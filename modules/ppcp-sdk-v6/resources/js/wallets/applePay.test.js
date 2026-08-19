@@ -470,6 +470,27 @@ describe( 'a click on the rendered button', () => {
 
 		expect( ApplePaySessionMock ).toHaveBeenCalledTimes( 1 );
 	} );
+
+	test( 'reports the error and releases the guard when Apple rejects the request, so a second tap still opens a sheet', async () => {
+		// A bad currency or supportedNetworks makes the constructor throw
+		// synchronously, which would otherwise latch `paying` forever.
+		ApplePaySessionMock.mockImplementationOnce( () => {
+			throw new Error( 'bad supportedNetworks' );
+		} );
+		const { wrapper } = await render();
+		const button = wrapper.querySelector( 'apple-pay-button' );
+
+		button.click();
+
+		expect( mockHandleError ).toHaveBeenCalledWith( expect.any( Error ) );
+		expect( mockSpinnerUnblock ).toHaveBeenCalledTimes( 1 );
+
+		button.click();
+
+		expect( ApplePaySessionMock ).toHaveBeenCalledTimes( 2 );
+		const secondSession = ApplePaySessionMock.mock.instances[ 1 ];
+		expect( secondSession.begin ).toHaveBeenCalledTimes( 1 );
+	} );
 } );
 
 describe( 'onvalidatemerchant', () => {
