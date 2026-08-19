@@ -62,6 +62,7 @@ export const transactionsOnClassicCheckout = ( testOrder: ShopOrder ) => {
 
 				await waitForOrderStatus( wooCommerceApi, orderId, {
 					expectedStatus: orderStatus,
+					timeout: isAsyncCaptureGateway ? 3 * 60_000 : undefined,
 				} );
 				const transactionId =
 						( await wooCommerceApi.getOrder( orderId ) ).transaction_id;
