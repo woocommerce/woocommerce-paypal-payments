@@ -72,6 +72,7 @@ class SdkV6Manager {
 	private CardPaymentsConfiguration $card_payments_configuration;
 	private bool $card_vaulting_enabled;
 	private SubscriptionHelper $subscription_helper;
+	private string $merchant_country;
 
 	/**
 	 * Card brand icons ({type, title, url}); empty when "Show logos" is off.
@@ -110,6 +111,7 @@ class SdkV6Manager {
 		bool $card_vaulting_enabled,
 		SubscriptionHelper $subscription_helper,
 		array $credit_card_icons,
+		string $merchant_country,
 		GooglePayConfig $google_pay_config,
 		ApplePayConfig $apple_pay_config
 	) {
@@ -128,6 +130,7 @@ class SdkV6Manager {
 		$this->card_vaulting_enabled       = $card_vaulting_enabled;
 		$this->subscription_helper         = $subscription_helper;
 		$this->credit_card_icons           = $credit_card_icons;
+		$this->merchant_country            = $merchant_country;
 		$this->apple_pay_config            = $apple_pay_config;
 
 		$this->wallets = array(
@@ -454,6 +457,7 @@ class SdkV6Manager {
 			'currency'          => get_woocommerce_currency(),
 			'amount'            => $this->transaction_amount(),
 			'buyer_country'     => $buyer_country,
+			'merchant_country'  => $this->merchant_country,
 			'locale'            => str_replace( '_', '-', get_locale() ),
 			'vaulting_enabled'  => $this->vaulting_enabled,
 			// Drives the post-approval fork; see V6ExpressComponent.approve().
@@ -512,14 +516,14 @@ class SdkV6Manager {
 			'wrapper'           => '#' . self::WRAPPER_ID,
 			'mini_cart_wrapper' => '#' . self::MINI_CART_WRAPPER_ID,
 			'card_fields'       => array(
-				'enabled'        => $card_fields_enabled,
-				'payment_method' => CreditCardGateway::ID,
-				'funding_source' => 'card',
+				'enabled'             => $card_fields_enabled,
+				'payment_method'      => CreditCardGateway::ID,
+				'funding_source'      => 'card',
 				// Label, name-field flag and card-brand logos for the block's own
 				// card method. card_icons is empty when "Show logos" is disabled
 				// (the credit-card-icons service already guards on the setting).
-				'title'          => $this->card_payments_configuration->gateway_title(),
-				'name_field'     => 'yes' === $this->card_payments_configuration->show_name_on_card(),
+				'title'               => $this->card_payments_configuration->gateway_title(),
+				'name_field'          => 'yes' === $this->card_payments_configuration->show_name_on_card(),
 				// Card "save during purchase" (vaulting). The block checkout uses
 				// WC Blocks' native save option (supports.showSaveOption, gated on
 				// is_vaulting_enabled); the classic checkout reads WC's own
@@ -527,7 +531,7 @@ class SdkV6Manager {
 				// since a subscription card must be vaulted for renewals.
 				'is_vaulting_enabled' => $this->card_vaulting_enabled,
 				'has_subscriptions'   => $this->subscription_helper->cart_contains_subscription(),
-				'card_icons'     => array_map(
+				'card_icons'          => array_map(
 					static function ( array $icon ): array {
 						return array(
 							'id'  => $icon['type'],
@@ -537,7 +541,7 @@ class SdkV6Manager {
 					},
 					$this->credit_card_icons
 				),
-				'fields'         => array(
+				'fields'              => array(
 					'name'   => '#' . self::CARD_FIELD_NAME_ID,
 					'number' => '#' . self::CARD_FIELD_NUMBER_ID,
 					'expiry' => '#' . self::CARD_FIELD_EXPIRY_ID,

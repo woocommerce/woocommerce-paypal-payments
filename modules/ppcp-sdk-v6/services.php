@@ -119,6 +119,7 @@ return array(
 				&& $container->get( 'settings.settings-provider' )->save_card_details(),
 			$container->get( 'wc-subscriptions.helper' ),
 			$container->get( 'wcgateway.credit-card-icons' ),
+			$container->get( 'settings.settings-provider' )->merchant_country(),
 			$container->get( 'sdk-v6.google-pay-config' ),
 			$container->get( 'sdk-v6.apple-pay-config' )
 		);
