@@ -99,6 +99,7 @@ const baseConfig = ( overrides = {} ) => ( {
 		},
 	},
 	buyer_country: 'US',
+	merchant_country: 'DE',
 	currency: 'USD',
 	wrapper: '#express-wrapper',
 	button_height: '48px',
@@ -365,7 +366,7 @@ describe( 'a click on the rendered button', () => {
 			expect( mockBuildPaymentDataRequest ).toHaveBeenCalledWith(
 				sessionConfig,
 				{
-					countryCode: config.buyer_country,
+					countryCode: config.merchant_country,
 					currencyCode: config.currency,
 					total: '12.34',
 				}

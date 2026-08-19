@@ -111,7 +111,7 @@ export async function renderGooglePay( {
 
 			const paymentData = await client.loadPaymentData(
 				buildPaymentDataRequest( sessionConfig, {
-					countryCode: config.buyer_country,
+					countryCode: config.merchant_country,
 					currencyCode: config.currency,
 					total,
 				} )
