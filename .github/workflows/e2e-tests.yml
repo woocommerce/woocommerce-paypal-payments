@@ -118,7 +118,7 @@ jobs:
       NODE_VERSION: 22
       PLAYWRIGHT_BROWSER_ARGS: 'chromium --with-deps'
       XRAY_TEST_EXEC_KEY: ${{ inputs.XRAY_TEST_EXEC_KEY }}
-      NGROK_ENABLED: ${{ contains(fromJson('["onboarding","transaction-usa","transaction-mexico","transaction-germany","refund","vaulting","subscription"]'), matrix.slug) }}
+      NGROK_ENABLED: ${{ contains(fromJson('["transaction-usa","transaction-mexico","transaction-germany","refund","vaulting","subscription"]'), matrix.slug) }}
       NGROK_WILDCARD_DOMAIN: e2e.paypal.syde.wpinfra.cloud
       NGROK_SUBDOMAIN: ${{ matrix.slug }}-${{ github.run_id }}
       PRE_SCRIPT: |
