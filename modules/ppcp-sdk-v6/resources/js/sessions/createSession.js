@@ -1,5 +1,5 @@
 /**
- * Factory for v6 one-time payment sessions (PayPal, Venmo, Pay Later).
+ * Factory for v6 one-time payment sessions.
  *
  * @package
  */
@@ -9,28 +9,28 @@ import {
 	handleShippingAddressChange,
 	handleShippingOptionsChange,
 } from './shippingHandler';
-import { hasJQuery } from '../utils/api';
+import { refreshCartUi } from '../utils/cartUi';
 import { handleError } from '../utils/errorHandler';
+import { FundingSources } from '../utils/fundingSources';
+import { WALLET_METHODS } from '../wallets/walletRegistry';
 
 const SESSION_FACTORIES = {
-	paypal: 'createPayPalOneTimePaymentSession',
-	venmo: 'createVenmoOneTimePaymentSession',
-	paylater: 'createPayLaterOneTimePaymentSession',
+	[ FundingSources.PAYPAL ]: 'createPayPalOneTimePaymentSession',
+	[ FundingSources.VENMO ]: 'createVenmoOneTimePaymentSession',
+	[ FundingSources.PAYLATER ]: 'createPayLaterOneTimePaymentSession',
+	[ FundingSources.GOOGLEPAY ]: 'createGooglePayOneTimePaymentSession',
+	[ FundingSources.APPLEPAY ]: 'createApplePayOneTimePaymentSession',
 };
 
 /**
- * Refreshes the cart UI after an abandoned or failed session.
+ * The methods a session can be created for, and whose eligibility drives the
+ * redraw check in boot.js.
  *
- * The button click added the product to the real cart, so the mini-cart
- * fragments must reflect that even when the buyer does not complete.
- *
- * @param {string} context - The page context.
+ * Derived from the factory table so a method can never be requested without a
+ * factory to build it: calling a missing factory takes every button on the page
+ * down.
  */
-function refreshCartUi( context ) {
-	if ( context === 'product' && hasJQuery() ) {
-		jQuery( document.body ).trigger( 'wc_fragment_refresh' );
-	}
-}
+export const SUPPORTED_METHODS = Object.keys( SESSION_FACTORIES );
 
 /**
  * Creates a one-time payment session for the given method.
@@ -41,7 +41,7 @@ function refreshCartUi( context ) {
  * attach regardless of the classic shipping condition.
  *
  * @param {Object} sdkInstance - The PayPal SDK v6 instance.
- * @param {string} method      - The payment method (paypal, venmo, paylater).
+ * @param {string} method      - The payment method, a SESSION_FACTORIES key.
  * @param {Object} config      - The wc_ppcp_sdk_v6 config object.
  * @param {string} context     - The page context.
  * @param {Object} [handlers]  - Optional session callback overrides.
@@ -55,16 +55,6 @@ export function createSession(
 	handlers = {}
 ) {
 	const sessionConfig = {
-		onApprove:
-			handlers.onApprove ||
-			async function ( data ) {
-				try {
-					await approveOrder( config, context, method, data.orderId );
-				} catch ( error ) {
-					handleError( error );
-				}
-			},
-
 		onCancel: handlers.onCancel || ( () => refreshCartUi( context ) ),
 
 		onError:
@@ -75,13 +65,27 @@ export function createSession(
 			} ),
 	};
 
+	// Wallet sheets close before the order exists, so wallet sessions have no
+	// onApprove: the wallet bridge drives create, confirm and approve itself.
+	if ( ! WALLET_METHODS.includes( method ) ) {
+		sessionConfig.onApprove =
+			handlers.onApprove ||
+			async function ( data ) {
+				try {
+					await approveOrder( config, context, method, data.orderId );
+				} catch ( error ) {
+					handleError( error );
+				}
+			};
+	}
+
 	// The default handlers post to the Store API directly, which desynchronises
 	// the React cart UI — block surfaces must supply their own or go without.
 	const isBlockContext =
 		context === 'cart-block' || context === 'checkout-block';
 
 	const shouldHandleShipping =
-		method === 'paypal' &&
+		method === FundingSources.PAYPAL &&
 		! isBlockContext &&
 		config.shipping?.handle_in_paypal &&
 		( config.shipping?.need_shipping || context === 'product' );

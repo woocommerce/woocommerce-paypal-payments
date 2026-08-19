@@ -5,6 +5,7 @@
  */
 
 import { handleError } from '../utils/errorHandler';
+import { FundingSources } from '../utils/fundingSources';
 
 /**
  * @typedef {() => Promise<{orderId: string}>} OrderCreator
@@ -125,7 +126,10 @@ export function createMethodButton( {
 		return null;
 	}
 
-	if ( method === 'paylater' && ! payLaterDetails?.productCode ) {
+	if (
+		method === FundingSources.PAYLATER &&
+		! payLaterDetails?.productCode
+	) {
 		return null;
 	}
 
@@ -139,7 +143,7 @@ export function createMethodButton( {
 		onClick
 	);
 
-	if ( method === 'paylater' ) {
+	if ( method === FundingSources.PAYLATER ) {
 		button.productCode = payLaterDetails.productCode;
 		if ( payLaterDetails.countryCode ) {
 			button.countryCode = payLaterDetails.countryCode;

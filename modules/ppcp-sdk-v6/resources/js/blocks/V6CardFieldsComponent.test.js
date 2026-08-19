@@ -70,6 +70,21 @@ function renderComponent( overrides = {} ) {
 	);
 }
 
+// onPaymentSetup is registered on mount, before the session (which loads
+// asynchronously) lands in sessionRef. Waiting only for onPaymentSetup lets
+// paymentSetupCb() run ahead of the session, so submitCardPayment sees
+// sessionRef.current still null. The mocked V6CardFieldContainer only
+// receives the real session once it is set in state, so waiting for that
+// call proves sessionRef is actually populated.
+async function waitForSessionReady() {
+	await waitFor( () => expect( onPaymentSetup ).toHaveBeenCalled() );
+	await waitFor( () =>
+		expect( mockCardFieldContainer ).toHaveBeenCalledWith(
+			expect.objectContaining( { session } )
+		)
+	);
+}
+
 beforeEach( () => {
 	paymentSetupCb = null;
 	onPaymentSetup = jest.fn( ( cb ) => {
@@ -115,7 +130,7 @@ describe( 'V6CardFieldsComponent', () => {
 		session.submit.mockResolvedValueOnce( { state: 'succeeded' } );
 
 		renderComponent();
-		await waitFor( () => expect( onPaymentSetup ).toHaveBeenCalled() );
+		await waitForSessionReady();
 
 		let result;
 		await act( async () => {
@@ -141,7 +156,7 @@ describe( 'V6CardFieldsComponent', () => {
 		session.submit.mockResolvedValueOnce( { state: 'succeeded' } );
 
 		renderComponent( { shouldSavePayment: true } );
-		await waitFor( () => expect( onPaymentSetup ).toHaveBeenCalled() );
+		await waitForSessionReady();
 
 		await act( async () => {
 			await paymentSetupCb();
@@ -168,7 +183,7 @@ describe( 'V6CardFieldsComponent', () => {
 				},
 			} ),
 		} );
-		await waitFor( () => expect( onPaymentSetup ).toHaveBeenCalled() );
+		await waitForSessionReady();
 
 		await act( async () => {
 			await paymentSetupCb();
@@ -191,7 +206,7 @@ describe( 'V6CardFieldsComponent', () => {
 		session.submit.mockResolvedValueOnce( { state: 'succeeded' } );
 
 		renderComponent( { shouldSavePayment: false } );
-		await waitFor( () => expect( onPaymentSetup ).toHaveBeenCalled() );
+		await waitForSessionReady();
 
 		await act( async () => {
 			await paymentSetupCb();
@@ -210,7 +225,7 @@ describe( 'V6CardFieldsComponent', () => {
 		session.submit.mockResolvedValueOnce( { state: 'canceled' } );
 
 		renderComponent();
-		await waitFor( () => expect( onPaymentSetup ).toHaveBeenCalled() );
+		await waitForSessionReady();
 
 		let result;
 		await act( async () => {
@@ -227,7 +242,7 @@ describe( 'V6CardFieldsComponent', () => {
 		session.submit.mockResolvedValueOnce( { state: 'failed' } );
 
 		renderComponent();
-		await waitFor( () => expect( onPaymentSetup ).toHaveBeenCalled() );
+		await waitForSessionReady();
 
 		let result;
 		await act( async () => {
@@ -244,7 +259,7 @@ describe( 'V6CardFieldsComponent', () => {
 		);
 
 		renderComponent();
-		await waitFor( () => expect( onPaymentSetup ).toHaveBeenCalled() );
+		await waitForSessionReady();
 
 		let result;
 		await act( async () => {
@@ -305,7 +320,7 @@ describe( 'V6CardFieldsComponent', () => {
 		session.submit.mockResolvedValueOnce( { state: 'succeeded' } );
 
 		renderComponent();
-		await waitFor( () => expect( onPaymentSetup ).toHaveBeenCalled() );
+		await waitForSessionReady();
 
 		const nameInput = screen.getByPlaceholderText(
 			'Cardholder name (optional)'
@@ -333,7 +348,7 @@ describe( 'V6CardFieldsComponent', () => {
 				billingAddress: { postcode: '90001', country: 'US' },
 			},
 		} );
-		await waitFor( () => expect( onPaymentSetup ).toHaveBeenCalled() );
+		await waitForSessionReady();
 
 		await act( async () => {
 			await paymentSetupCb();
@@ -349,7 +364,7 @@ describe( 'V6CardFieldsComponent', () => {
 		session.submit.mockResolvedValueOnce( { state: 'succeeded' } );
 
 		renderComponent( { billing: { billingAddress: {} } } );
-		await waitFor( () => expect( onPaymentSetup ).toHaveBeenCalled() );
+		await waitForSessionReady();
 
 		await act( async () => {
 			await paymentSetupCb();

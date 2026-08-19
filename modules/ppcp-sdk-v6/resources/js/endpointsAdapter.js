@@ -1,9 +1,10 @@
 /**
- * Adapter for the existing (v5) WC AJAX order endpoints.
+ * Adapter for the WC AJAX order endpoints this module shares with the classic
+ * button stack.
  *
- * All v6 knowledge of the v5 endpoint contract lives here:
- * ppc-change-cart, ppc-create-order, ppc-approve-order, ppc-update-shipping.
- * Keep the request/response shapes in sync with the endpoint contract tests.
+ * Every assumption about that contract lives here: ppc-change-cart,
+ * ppc-create-order, ppc-approve-order, ppc-update-shipping. Keep the
+ * request/response shapes in sync with the endpoint contract tests.
  *
  * @package
  */
@@ -11,6 +12,7 @@
 import SingleProductActionHandler from '@ppcp-button/ActionHandler/SingleProductActionHandler';
 import { payerData } from '@ppcp-button/Helper/PayerData';
 import { postJson } from './utils/api';
+import { FundingSources } from './utils/fundingSources';
 import { minorUnitsToDecimal } from './utils/amount';
 import { continuationRedirectUrl } from './utils/continuation';
 
@@ -59,21 +61,34 @@ function submitPayOrderForm() {
 }
 
 /**
- * Collects products from the single product form for ppc-change-cart.
+ * The form describing the viewed product.
  *
- * Reuses the v5 product collection, which handles simple, variable,
- * grouped and booking products plus extra third-party form fields.
+ * Exported because the Apple Pay sheet total watches this same form for changes,
+ * and the two must not disagree about which one it is.
  *
- * @return {Object[]} Products in the { id, quantity, variations, extra, booking } shape.
- * @throws {Error} When the product form cannot be found.
+ * @return {?HTMLElement} The form, or null when the page has none.
  */
-function getProductsFromForm() {
+export function productForm() {
 	// Classic themes render form.cart, block themes
 	// form.wc-block-add-to-cart-with-options; locate via the field.
 	const idElement =
 		document.querySelector( 'form [name="add-to-cart"]' ) ||
 		document.querySelector( 'form [name="product_id"]' );
-	const form = idElement?.closest( 'form' );
+
+	return idElement?.closest( 'form' ) ?? null;
+}
+
+/**
+ * Collects products from the single product form for ppc-change-cart.
+ *
+ * Reuses SingleProductActionHandler, which handles simple, variable, grouped and
+ * booking products plus extra third-party form fields.
+ *
+ * @return {Object[]} Products in the { id, quantity, variations, extra, booking } shape.
+ * @throws {Error} When the product form cannot be found.
+ */
+function getProductsFromForm() {
+	const form = productForm();
 	if ( ! form ) {
 		throw new Error( 'Product form not found.' );
 	}
@@ -84,6 +99,41 @@ function getProductsFromForm() {
 }
 
 /**
+ * Adds the viewed product to the cart (ppc-change-cart).
+ *
+ * Empties the cart first, so a repeat call is safe. The server validates the
+ * product as part of this, so an invalid one fails before any order exists.
+ *
+ * @param {Object} config - The wc_ppcp_sdk_v6 config object.
+ * @return {Promise<Object[]>} The resulting purchase units.
+ */
+export async function changeCart( config ) {
+	return postJson( config.ajax.change_cart, {
+		products: getProductsFromForm(),
+	} );
+}
+
+/**
+ * Prices the viewed product without touching the cart (ppc-sdk-v6-simulate-cart).
+ *
+ * For totals that must be known before the shopper acts, which changeCart() cannot
+ * answer because it adds the product to the real cart.
+ *
+ * TODO (phase 3): product-page Pay Later eligibility still uses the localized
+ * config.amount, which is the cart total whenever the cart is not empty, and
+ * Google Pay still resolves its sheet total by mutating the cart on click. Both
+ * should read this instead.
+ *
+ * @param {Object} config - The wc_ppcp_sdk_v6 config object.
+ * @return {Promise<{total: string, currency_code: string}>} The simulated total.
+ */
+export async function simulateCart( config ) {
+	return postJson( config.ajax.simulate_cart, {
+		products: getProductsFromForm(),
+	} );
+}
+
+/**
  * Creates a PayPal order via the existing WC AJAX endpoints.
  *
  * On product pages the viewed product is first added to the cart
@@ -91,24 +141,30 @@ function getProductsFromForm() {
  * are passed to ppc-create-order, which derives the product-context
  * return URL from them.
  *
- * @param {Object} config        - The wc_ppcp_sdk_v6 config object.
- * @param {string} context       - The page context.
- * @param {string} fundingSource - The funding source (paypal, venmo, paylater).
+ * @param {Object}   config          - The wc_ppcp_sdk_v6 config object.
+ * @param {string}   context         - The page context.
+ * @param {string}   fundingSource   - The funding source (paypal, venmo, paylater).
+ * @param {Object[]} [purchaseUnits] - Units the caller already resolved. Wallets
+ *                                   pass theirs so the cart is not changed twice.
+ * @param {string}   [paymentMethod] - The WC gateway that processes the order.
  * @return {Promise<{orderId: string}>} The created PayPal order id.
  */
-export async function createOrder( config, context, fundingSource ) {
-	let purchaseUnits = [];
-	if ( context === 'product' ) {
-		purchaseUnits = await postJson( config.ajax.change_cart, {
-			products: getProductsFromForm(),
-		} );
-	}
+export async function createOrder(
+	config,
+	context,
+	fundingSource,
+	purchaseUnits,
+	paymentMethod = 'ppcp-gateway'
+) {
+	const units =
+		purchaseUnits ??
+		( context === 'product' ? await changeCart( config ) : [] );
 
 	const body = {
 		context,
-		purchase_units: purchaseUnits,
-		payment_method: 'ppcp-gateway',
-		funding_source: fundingSource || 'paypal',
+		purchase_units: units,
+		payment_method: paymentMethod,
+		funding_source: fundingSource || FundingSources.PAYPAL,
 		save_order_in_session: 1,
 	};
 
@@ -120,9 +176,9 @@ export async function createOrder( config, context, fundingSource ) {
 	}
 
 	if ( context === 'checkout' ) {
-		// Mirrors the v5 CheckoutActionHandler: the serialized form lets
-		// the server run the early WC checkout validation before creating
-		// the order, so the buyer sees form errors before approving.
+		// The serialized form lets the server run the early WC checkout
+		// validation before creating the order, so the buyer sees form errors
+		// before approving.
 		const form = document.querySelector( 'form.checkout' );
 		if ( form ) {
 			body.form_encoded = new URLSearchParams(
@@ -144,19 +200,32 @@ export async function createOrder( config, context, fundingSource ) {
 }
 
 /**
- * Mirrors the v5 flow (onApproveForContinue): should_create_wc_order is
- * requested except for Venmo with vaulting, and the server decides. With the
- * Pay Now experience it creates the WC order and responds with
- * order_received_url; otherwise it only stores the approved order in the
- * session and the gateway processes it on Place Order. On classic checkout
- * the WC checkout form is submitted after approval instead.
+ * Reports an approved PayPal order and takes the buyer wherever it leads.
  *
- * @param {Object} config        - The wc_ppcp_sdk_v6 config object.
- * @param {string} context       - The page context.
- * @param {string} fundingSource - The funding source used for payment.
- * @param {string} orderId       - The PayPal order ID.
+ * should_create_wc_order is requested except for Venmo with vaulting, and the
+ * server decides: with the Pay Now experience it creates the WC order and responds
+ * with order_received_url, otherwise it only stores the approved order in the
+ * session and the gateway processes it on Place Order. On classic checkout the WC
+ * checkout form is submitted after approval instead.
+ *
+ * @param {Object} config                    - The wc_ppcp_sdk_v6 config object.
+ * @param {string} context                   - The page context.
+ * @param {string} fundingSource             - The funding source used for payment.
+ * @param {string} orderId                   - The PayPal order ID.
+ * @param {Object} [contact]                 - Buyer contact data from a wallet sheet.
+ * @param {Object} [contact.payer]           - The PayPal payer (Orders v2 shape).
+ * @param {Object} [contact.shippingAddress] - The PayPal shipping address.
+ * @param {string} [paymentMethod]           - The WC gateway that processes
+ *                                           the order.
  */
-export async function approveOrder( config, context, fundingSource, orderId ) {
+export async function approveOrder(
+	config,
+	context,
+	fundingSource,
+	orderId,
+	contact = {},
+	paymentMethod = 'ppcp-gateway'
+) {
 	// Pay-for-order: the WC order already exists. Approve it into the session
 	// (never request WC-order creation — that would create a duplicate, since
 	// is_checkout() is false during this AJAX call) and submit the pay-order
@@ -169,15 +238,28 @@ export async function approveOrder( config, context, fundingSource, orderId ) {
 	}
 
 	const canCreateOrder =
-		! config.vaulting_enabled || fundingSource !== 'venmo';
+		! config.vaulting_enabled || fundingSource !== FundingSources.VENMO;
+
+	const body = {
+		order_id: orderId,
+		funding_source: fundingSource,
+		should_create_wc_order: canCreateOrder,
+	};
+
+	// Only useful while this request creates the WC order: the retry below
+	// leaves that to the gateway, which reads the addresses off the WC session.
+	if ( canCreateOrder ) {
+		if ( contact.payer ) {
+			body.payer = contact.payer;
+		}
+		if ( contact.shippingAddress ) {
+			body.shipping_address = contact.shippingAddress;
+		}
+	}
 
 	let data;
 	try {
-		data = await postJson( config.ajax.approve_order, {
-			order_id: orderId,
-			funding_source: fundingSource,
-			should_create_wc_order: canCreateOrder,
-		} );
+		data = await postJson( config.ajax.approve_order, body );
 	} catch ( error ) {
 		if ( ! canCreateOrder ) {
 			throw error;
@@ -199,10 +281,13 @@ export async function approveOrder( config, context, fundingSource, orderId ) {
 	if ( context === 'checkout' && typeof jQuery !== 'undefined' ) {
 		const checkoutForm = jQuery( 'form.checkout' );
 		if ( checkoutForm.length ) {
-			// The approved order must be processed by the PayPal gateway,
-			// not whichever payment method radio happens to be checked.
+			// The approved order must be processed by the gateway that created
+			// it, not whichever payment method radio happens to be checked. On
+			// the express path that means switching to PayPal; where the wallet
+			// is its own gateway the buyer already selected it, so this is a
+			// no-op.
 			const gatewayRadio = document.querySelector(
-				'#payment_method_ppcp-gateway'
+				`#payment_method_${ paymentMethod }`
 			);
 			if ( gatewayRadio && ! gatewayRadio.checked ) {
 				gatewayRadio.checked = true;
@@ -326,8 +411,8 @@ export async function createCardOrder(
 /**
  * Approves a card-fields order after the card session has confirmed it.
  *
- * Mirrors the v5 ACDC flow's card branch: the endpoint runs the
- * disabled-card-brand and 3D Secure checks, then stores the confirmed
+ * The endpoint runs the disabled-card-brand and 3D Secure checks, then stores
+ * the confirmed
  * order in the WC session so the native checkout submission (triggered
  * right after this resolves) can capture it via the existing
  * CreditCardGateway::process_payment() flow.

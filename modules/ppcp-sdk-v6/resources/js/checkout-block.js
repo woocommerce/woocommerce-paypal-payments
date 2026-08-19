@@ -26,10 +26,15 @@ import { V6ExpressComponent } from './blocks/V6ExpressComponent';
 import { V6ContinuationComponent } from './blocks/V6ContinuationComponent';
 import { V6CardFieldsComponent } from './blocks/V6CardFieldsComponent';
 import { V6EditorPreview } from './blocks/V6EditorPreview';
-import { fundingSourceLabel } from './utils/fundingSources';
+import { FundingSources } from './utils/fundingSources';
+import { fundingSourceLabel } from './utils/fundingSourceLabel';
 import { minorUnitsToDecimal } from './utils/amount';
 
-const FUNDING_SOURCES = [ 'paypal', 'venmo', 'paylater' ];
+const FUNDING_SOURCES = [
+	FundingSources.PAYPAL,
+	FundingSources.VENMO,
+	FundingSources.PAYLATER,
+];
 
 // get_payment_method_data() lands under the wcSettings `paymentMethodData`
 // container, keyed by the method's registered name (V6PaymentMethod::$name).
@@ -62,7 +67,9 @@ if ( config && config.page_context && config.continuation ) {
 		),
 		ariaLabel: fundingSourceLabel( config.continuation.funding_source ),
 		content: createElement( V6ContinuationComponent, { config } ),
-		edit: createElement( V6EditorPreview, { fundingSource: 'paypal' } ),
+		edit: createElement( V6EditorPreview, {
+			fundingSource: FundingSources.PAYPAL,
+		} ),
 		// Set explicitly so the button never reads "Proceed to PayPal", which
 		// would tell the buyer they are heading back to PayPal.
 		placeOrderButtonLabel: __(

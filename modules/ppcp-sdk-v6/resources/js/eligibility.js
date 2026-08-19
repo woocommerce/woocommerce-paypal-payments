@@ -4,6 +4,28 @@
  * @package
  */
 
+import { FundingSources } from './utils/fundingSources';
+import { WALLET_METHODS } from './wallets/walletRegistry';
+
+/**
+ * Checks one method without letting a failure sink the whole check.
+ *
+ * Used for methods whose SDK component is only loaded on some pages: an
+ * eligibility lookup for an absent component must not reject and take every
+ * button down with it.
+ *
+ * @param {Object} methods - The findEligibleMethods result.
+ * @param {string} method  - The method to check.
+ * @return {boolean} Whether the method is eligible.
+ */
+function isEligibleSafely( methods, method ) {
+	try {
+		return methods.isEligible( method );
+	} catch ( e ) {
+		return false;
+	}
+}
+
 /**
  * Checks which payment methods are eligible.
  *
@@ -29,15 +51,23 @@ export async function checkEligibility(
 	const methods = await sdkInstance.findEligibleMethods( eligibilityParams );
 
 	const result = {
-		paypal: methods.isEligible( 'paypal' ),
-		venmo: methods.isEligible( 'venmo' ),
-		paylater: methods.isEligible( 'paylater' ),
+		[ FundingSources.PAYPAL ]: methods.isEligible( FundingSources.PAYPAL ),
+		[ FundingSources.VENMO ]: methods.isEligible( FundingSources.VENMO ),
+		[ FundingSources.PAYLATER ]: methods.isEligible(
+			FundingSources.PAYLATER
+		),
 		payLaterDetails: null,
 	};
 
-	if ( result.paylater ) {
+	for ( const method of WALLET_METHODS ) {
+		result[ method ] = isEligibleSafely( methods, method );
+	}
+
+	if ( result[ FundingSources.PAYLATER ] ) {
 		try {
-			result.payLaterDetails = methods.getDetails( 'paylater' );
+			result.payLaterDetails = methods.getDetails(
+				FundingSources.PAYLATER
+			);
 		} catch ( e ) {
 			// getDetails may not be available for all regions.
 		}

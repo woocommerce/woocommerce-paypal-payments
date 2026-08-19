@@ -6,7 +6,9 @@ namespace WooCommerce\PayPalCommerce\SdkV6\Assets;
 use Mockery;
 use WooCommerce\PayPalCommerce\Assets\AssetGetter;
 use WooCommerce\PayPalCommerce\Button\Helper\Context;
+use WooCommerce\PayPalCommerce\SdkV6\Helper\ApplePayConfig;
 use WooCommerce\PayPalCommerce\SdkV6\Helper\ButtonStyleMapper;
+use WooCommerce\PayPalCommerce\SdkV6\Helper\GooglePayConfig;
 use WooCommerce\PayPalCommerce\Session\Cancellation\CancelView;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
 use WooCommerce\PayPalCommerce\TestCase;
@@ -29,6 +31,8 @@ class SdkV6ManagerTest extends TestCase
     private $card_payments_configuration;
     private $subscription_helper;
 	private $credit_card_icons;
+	private $google_pay_config;
+	private $apple_pay_config;
 
     public function setUp(): void
     {
@@ -45,9 +49,38 @@ class SdkV6ManagerTest extends TestCase
 		$this->subscription_helper = Mockery::mock(SubscriptionHelper::class);
         $this->subscription_helper->shouldReceive('cart_contains_subscription')->andReturn(false)->byDefault();
 		$this->credit_card_icons = [];
+
+		$this->google_pay_config = Mockery::mock(GooglePayConfig::class);
+		$this->google_pay_config->shouldReceive('should_render')->andReturn(false)->byDefault();
+
+		$this->apple_pay_config = Mockery::mock(ApplePayConfig::class);
+		$this->apple_pay_config->shouldReceive('should_render')->andReturn(false)->byDefault();
+		$this->apple_pay_config->shouldReceive('display_name')->andReturn('Test Store')->byDefault();
+
+		// Reached unconditionally by script_data()'s Apple Pay validation block.
+		when('admin_url')->justReturn('https://example.com/wp-admin/admin-ajax.php');
+		when('wp_create_nonce')->justReturn('nonce');
     }
 
-    private function createTestee(bool $should_handle_shipping = false, array $credit_card_icons = [], bool $card_vaulting_enabled = true): SdkV6Manager
+    /**
+     * A WC() stub carrying an empty cart/customer and a payment-gateways
+     * registry with no gateways available, matching the wallet defaults'
+     * "does not render" state used throughout this test.
+     */
+    private function create_wc_stub(): object
+    {
+        $payment_gateways = Mockery::mock();
+        $payment_gateways->shouldReceive('get_available_payment_gateways')->andReturn([])->byDefault();
+
+        $wc = Mockery::mock();
+        $wc->customer = null;
+        $wc->cart = null;
+        $wc->shouldReceive('payment_gateways')->andReturn($payment_gateways)->byDefault();
+
+        return $wc;
+    }
+
+    private function createTestee(bool $should_handle_shipping = false, array $credit_card_icons = [], bool $card_vaulting_enabled = true, string $merchant_country = 'US'): SdkV6Manager
     {
         return new SdkV6Manager(
             $this->asset_getter,
@@ -64,7 +97,10 @@ class SdkV6ManagerTest extends TestCase
             $this->card_payments_configuration,
 	        $card_vaulting_enabled,
 	        $this->subscription_helper,
-	        $credit_card_icons
+	        $credit_card_icons,
+	        $merchant_country,
+	        $this->google_pay_config,
+	        $this->apple_pay_config
         );
     }
 
@@ -220,17 +256,13 @@ class SdkV6ManagerTest extends TestCase
         $this->environment->shouldReceive('is_sandbox')->andReturn(false);
         $this->style_mapper->shouldReceive('styles_for_context')->andReturn([]);
 
-        when('WC')->justReturn((object) [
-            'customer' => null,
-            'cart'     => null,
-        ]);
+        when('WC')->justReturn($this->create_wc_stub());
         when('wc_get_order')->justReturn($order);
         when('wc_get_base_location')->justReturn(['country' => 'US']);
         when('get_woocommerce_currency')->justReturn('USD');
         when('get_locale')->justReturn('en_US');
         when('is_product')->justReturn(false);
         when('rest_url')->justReturn('https://example.com/wp-json/wc/store/v1/cart');
-        when('wp_create_nonce')->justReturn('nonce');
         when('wc_get_checkout_url')->justReturn('https://example.com/checkout');
 
         $testee = $this->createTestee(true);
@@ -242,6 +274,45 @@ class SdkV6ManagerTest extends TestCase
         );
         $this->assertSame('49.99', $data['amount']);
         $this->assertFalse($data['shipping']['handle_in_paypal']);
+    }
+
+    /**
+     * GIVEN a merchant whose PayPal processing country differs from the buyer's
+     *       billing country
+     * WHEN the SDK bootstrap data is generated
+     * THEN merchant_country carries the merchant's own country, not the buyer's,
+     *      since a wallet sheet states where the payment is processed
+     */
+    public function testScriptDataIncludesMerchantCountryIndependentOfBuyerCountry(): void
+    {
+        $this->context->shouldReceive('context')->andReturn('checkout');
+        $this->card_payments_configuration->shouldReceive('is_acdc_enabled')->andReturn(false);
+        $this->card_payments_configuration->shouldReceive('gateway_title')->andReturn('Credit Card');
+        $this->card_payments_configuration->shouldReceive('show_name_on_card')->andReturn('no');
+
+        $this->settings_status->shouldReceive('is_smart_button_enabled_for_location')->andReturn(false);
+        $this->session_handler->shouldReceive('order')->andReturn(null);
+        $this->context->shouldReceive('is_paypal_continuation')->andReturn(false);
+        $this->environment->shouldReceive('is_sandbox')->andReturn(false);
+        $this->style_mapper->shouldReceive('styles_for_context')->andReturn([]);
+
+        $wc = $this->create_wc_stub();
+        $wc->customer = Mockery::mock();
+        $wc->customer->shouldReceive('get_billing_country')->andReturn('DE');
+
+        when('WC')->justReturn($wc);
+        when('wc_get_base_location')->justReturn(['country' => 'US']);
+        when('get_woocommerce_currency')->justReturn('USD');
+        when('get_locale')->justReturn('en_US');
+        when('is_product')->justReturn(false);
+        when('rest_url')->justReturn('https://example.com/wp-json/wc/store/v1/cart');
+        when('wc_get_checkout_url')->justReturn('https://example.com/checkout');
+
+        $testee = $this->createTestee(false, [], true, 'FR');
+        $data   = $testee->script_data();
+
+        $this->assertSame('FR', $data['merchant_country']);
+        $this->assertSame('DE', $data['buyer_country']);
     }
 
     /**
@@ -279,16 +350,12 @@ class SdkV6ManagerTest extends TestCase
             'borderRadius' => '24px',
         ]);
 
-        when('WC')->justReturn((object) [
-            'customer' => null,
-            'cart'     => null,
-        ]);
+        when('WC')->justReturn($this->create_wc_stub());
         when('wc_get_base_location')->justReturn(['country' => 'US']);
         when('get_woocommerce_currency')->justReturn('USD');
         when('get_locale')->justReturn('en_US');
         when('is_product')->justReturn(false);
         when('rest_url')->justReturn('https://example.com/wp-json/wc/store/v1/cart');
-        when('wp_create_nonce')->justReturn('nonce');
         when('wc_get_checkout_url')->justReturn('https://example.com/checkout');
 
         $testee = $this->createTestee(false, [], $card_vaulting_enabled);
@@ -347,16 +414,12 @@ class SdkV6ManagerTest extends TestCase
         $this->environment->shouldReceive('is_sandbox')->andReturn(false);
         $this->style_mapper->shouldReceive('styles_for_context')->andReturn([]);
 
-        when('WC')->justReturn((object) [
-            'customer' => null,
-            'cart'     => null,
-        ]);
+        when('WC')->justReturn($this->create_wc_stub());
         when('wc_get_base_location')->justReturn(['country' => 'US']);
         when('get_woocommerce_currency')->justReturn('USD');
         when('get_locale')->justReturn('en_US');
         when('is_product')->justReturn(false);
         when('rest_url')->justReturn('https://example.com/wp-json/wc/store/v1/cart');
-        when('wp_create_nonce')->justReturn('nonce');
         when('wc_get_checkout_url')->justReturn('https://example.com/checkout');
 
         $testee = $this->createTestee(false, $credit_card_icons);

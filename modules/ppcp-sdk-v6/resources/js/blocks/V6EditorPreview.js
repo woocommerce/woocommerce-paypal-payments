@@ -14,7 +14,7 @@
 
 import { createElement } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
-import { fundingSourceLabel } from '../utils/fundingSources';
+import { fundingSourceLabel } from '../utils/fundingSourceLabel';
 
 /**
  * @param {Object} props               - Component props.

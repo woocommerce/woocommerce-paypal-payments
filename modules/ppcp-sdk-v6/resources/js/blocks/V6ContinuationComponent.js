@@ -9,6 +9,7 @@
 
 import { createElement, useEffect, useRef } from '@wordpress/element';
 import { prefillFromPayPalOrder } from './prefillAddresses';
+import { FundingSources } from '../utils/fundingSources';
 
 /**
  * @param {Object} props                    - Props from the Blocks registry.
@@ -58,7 +59,8 @@ export function V6ContinuationComponent( {
 				meta: {
 					paymentMethodData: {
 						paypal_order_id: continuation?.order_id,
-						funding_source: continuation?.funding_source || 'paypal',
+						funding_source: continuation?.funding_source ||
+							FundingSources.PAYPAL,
 					},
 				},
 			} ) ),

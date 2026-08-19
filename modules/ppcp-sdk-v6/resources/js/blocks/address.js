@@ -8,21 +8,7 @@
  * @package
  */
 
-/**
- * Splits a full name into first and last parts.
- *
- * @param {string} fullName - The full name.
- * @return {[string, string]} The first and last name.
- */
-function splitFullName( fullName ) {
-	fullName = fullName.trim();
-	if ( ! fullName.includes( ' ' ) ) {
-		return [ fullName, '' ];
-	}
-	const parts = fullName.split( ' ' );
-	const firstName = parts.shift();
-	return [ firstName, parts.join( ' ' ) ];
-}
+import { splitFullName } from '../utils/name';
 
 /**
  * Maps a PayPal API address (snake_case Orders v2 fields) to WC fields.

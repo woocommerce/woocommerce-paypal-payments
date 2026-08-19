@@ -11,14 +11,40 @@ namespace WooCommerce\PayPalCommerce\SdkV6;
 
 use WooCommerce\PayPalCommerce\Assets\AssetGetter;
 use WooCommerce\PayPalCommerce\Assets\AssetGetterFactory;
+use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
 use WooCommerce\PayPalCommerce\SdkV6\Assets\AddPaymentMethodManager;
 use WooCommerce\PayPalCommerce\SdkV6\Assets\SdkV6Manager;
 use WooCommerce\PayPalCommerce\SdkV6\Blocks\V6PaymentMethod;
 use WooCommerce\PayPalCommerce\SdkV6\Endpoint\ClientTokenEndpoint;
+use WooCommerce\PayPalCommerce\SdkV6\Endpoint\SimulateCartEndpoint;
+use WooCommerce\PayPalCommerce\SdkV6\Helper\ApplePayConfig;
 use WooCommerce\PayPalCommerce\SdkV6\Helper\ButtonStyleMapper;
+use WooCommerce\PayPalCommerce\SdkV6\Helper\GooglePayConfig;
 use WooCommerce\PayPalCommerce\SdkV6\Helper\RateLimiter;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
-use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
+
+/**
+ * Builds a wallet's availability check from its own module's services.
+ *
+ * Reports false when that module is not loaded: its services are absent, so the
+ * wallet cannot be offered. Each wallet keeps its own guards: the two modules
+ * load independently.
+ *
+ * @param ContainerInterface $container The plugin container.
+ * @param string             $module    The wallet module's service prefix.
+ * @return callable(): bool
+ */
+$wallet_availability = static function ( ContainerInterface $container, string $module ): callable {
+	return static function () use ( $container, $module ): bool {
+		if ( ! $container->has( "$module.eligibility.check" ) || ! $container->has( "$module.available" ) ) {
+			return false;
+		}
+
+		$is_eligible = $container->get( "$module.eligibility.check" );
+
+		return $is_eligible() && $container->get( "$module.available" );
+	};
+};
 
 return array(
 
@@ -35,7 +61,43 @@ return array(
 		);
 	},
 
+	'sdk-v6.google-pay-config'          => static function ( ContainerInterface $container ) use ( $wallet_availability ): GooglePayConfig {
+		return new GooglePayConfig(
+			$container->get( 'settings.settings-provider' ),
+			$container->get( 'wc-subscriptions.helper' ),
+			$wallet_availability( $container, 'googlepay' )
+		);
+	},
+
+	'sdk-v6.apple-pay-config'           => static function ( ContainerInterface $container ) use ( $wallet_availability ): ApplePayConfig {
+		return new ApplePayConfig(
+			$container->get( 'settings.settings-provider' ),
+			$container->get( 'wc-subscriptions.helper' ),
+			$wallet_availability( $container, 'applepay' )
+		);
+	},
+
+	/**
+	 * Whether this module renders the PayPal stack on the current page.
+	 *
+	 * A callable rather than a bool: the answer depends on the query, which is
+	 * unresolved while the container is being built. Exposed as a service so the
+	 * wallet modules can ask without naming SdkV6Manager, which their own
+	 * feature flags may leave unloaded.
+	 */
+	'sdk-v6.owns-current-page'          => static function ( ContainerInterface $container ): callable {
+		return static function () use ( $container ): bool {
+			$manager = $container->get( 'sdk-v6.manager' );
+			assert( $manager instanceof SdkV6Manager );
+
+			return $manager->should_load_on_current_page();
+		};
+	},
+
 	'sdk-v6.manager'                    => static function ( ContainerInterface $container ): SdkV6Manager {
+		$settings_provider = $container->get( 'settings.settings-provider' );
+		assert( $settings_provider instanceof SettingsProvider );
+
 		return new SdkV6Manager(
 			$container->get( 'sdk-v6.asset-getter' ),
 			$container->get( 'ppcp.asset-version' ),
@@ -48,8 +110,8 @@ return array(
 			$container->get( 'session.cancellation.view' ),
 			// Computed here rather than reusing blocks.settings.final_review_enabled
 			// so this module does not depend on the ppcp-blocks module it replaces.
-			! $container->get( 'settings.settings-provider' )->enable_pay_now(),
-			$container->get( 'settings.settings-provider' )->save_paypal_and_venmo(),
+			! $settings_provider->enable_pay_now(),
+			$settings_provider->save_paypal_and_venmo(),
 			$container->get( 'wcgateway.configuration.card-configuration' ),
 			// Card "save during purchase" eligibility, mirroring the v5 block
 			// card method (AdvancedCardPaymentMethod): reference-transaction
@@ -58,14 +120,18 @@ return array(
 			// independent of the v6 flag (see ppcp-settings/services.php).
 			$container->has( 'save-payment-methods.eligible' )
 				&& $container->get( 'save-payment-methods.eligible' )
-				&& $container->get( 'settings.settings-provider' )->save_card_details(),
+				&& $settings_provider->save_card_details(),
 			$container->get( 'wc-subscriptions.helper' ),
-			$container->get( 'wcgateway.credit-card-icons' )
+			$container->get( 'wcgateway.credit-card-icons' ),
+			$settings_provider->merchant_country(),
+			$container->get( 'sdk-v6.google-pay-config' ),
+			$container->get( 'sdk-v6.apple-pay-config' )
 		);
 	},
 
 	'sdk-v6.add-payment-method-manager' => static function ( ContainerInterface $container ): AddPaymentMethodManager {
 		$settings_provider = $container->get( 'settings.settings-provider' );
+		assert( $settings_provider instanceof SettingsProvider );
 
 		return new AddPaymentMethodManager(
 			$container->get( 'sdk-v6.asset-getter' ),
@@ -91,7 +157,16 @@ return array(
 		);
 	},
 
-	'sdk-v6.rate-limiter'               => static function ( ContainerInterface $container ): RateLimiter {
+	'sdk-v6.endpoint.simulate-cart'     => static function ( ContainerInterface $container ): SimulateCartEndpoint {
+		return new SimulateCartEndpoint(
+			$container->get( 'order-endpoints.request-data' ),
+			$container->get( 'order-endpoints.helper.cart-products' ),
+			$container->get( 'button.helper.isolated-cart-simulator' ),
+			$container->get( 'woocommerce.logger.woocommerce' )
+		);
+	},
+
+	'sdk-v6.rate-limiter'               => static function (): RateLimiter {
 		return new RateLimiter(
 			'ppcp_sdk_v6_rl_',
 			10,
