@@ -1,7 +1,11 @@
 /**
+ * External dependencies
+ */
+import { APIRequestContext } from '@playwright/test';
+/**
  * Internal dependencies
  */
-import { test as setup } from '../../utils';
+import { test as setup, expect, PcpApi } from '../../utils';
 import {
 	merchants,
 	storeConfigGermany,
@@ -14,11 +18,57 @@ import {
 
 const { payPal, payLater, venmo, acdc, bcdc, fastlane, googlepay, oxxo, pui } = gateways;
 
+/**
+ * In CI, confirms the webhook URL PayPal has on file was rewritten to the
+ * public ngrok host (via NGROK_HOST, see IncomingWebhookEndpoint::url())
+ * instead of the local site host, and that it's actually reachable. This
+ * catches a broken tunnel right after connect, instead of as a confusing
+ * multi-minute timeout deep in a transaction test.
+ *
+ * @param pcpApi  The PCP API client, used to read back the registered webhook URL.
+ * @param request The Playwright request context, used to probe the URL.
+ */
+const assertWebhookPubliclyReachable = async (
+	pcpApi: PcpApi,
+	request: APIRequestContext
+) => {
+	if ( ! process.env.CI ) {
+		return;
+	}
+
+	const { data } = await pcpApi.wcRequest( 'get', 'wc_paypal/webhooks' );
+	const webhookUrl = data?.url;
+
+	expect(
+		webhookUrl,
+		'Assert a webhook URL is registered with PayPal'
+	).toBeTruthy();
+
+	const registeredHost = new URL( webhookUrl ).hostname;
+	const localHost = new URL( process.env.WP_BASE_URL ).hostname;
+
+	expect(
+		registeredHost,
+		`Assert the registered webhook host (${ registeredHost }) was rewritten to the public ngrok host, not the local site host (${ localHost })`
+	).not.toEqual( localHost );
+
+	let isReachable = true;
+	try {
+		await request.get( webhookUrl, { timeout: 15_000 } );
+	} catch {
+		isReachable = false;
+	}
+	expect(
+		isReachable,
+		`Assert the registered webhook URL (${ webhookUrl }) is publicly reachable`
+	).toBeTruthy();
+};
+
 // =====================================================================
 // Layer 2 — PCP country: configureStore + installPcp + resetDb + connect
 // =====================================================================
 
-setup( 'setup:pcp:usa;', async ( { utils, pcpApi } ) => {
+setup( 'setup:pcp:usa;', async ( { utils, pcpApi, request } ) => {
 	await utils.configureStore( storeConfigUsa );
 	await utils.installAndActivatePcp();
 	await pcpApi.resetDb();
@@ -26,9 +76,10 @@ setup( 'setup:pcp:usa;', async ( { utils, pcpApi } ) => {
 		merchants.usa.client_id,
 		merchants.usa.client_secret
 	);
+	await assertWebhookPubliclyReachable( pcpApi, request );
 } );
 
-setup( 'setup:pcp:germany;', async ( { utils, pcpApi } ) => {
+setup( 'setup:pcp:germany;', async ( { utils, pcpApi, request } ) => {
 	await utils.configureStore( storeConfigGermany );
 	await utils.installAndActivatePcp();
 	await pcpApi.resetDb();
@@ -36,9 +87,10 @@ setup( 'setup:pcp:germany;', async ( { utils, pcpApi } ) => {
 		merchants.germany.client_id,
 		merchants.germany.client_secret
 	);
+	await assertWebhookPubliclyReachable( pcpApi, request );
 } );
 
-setup( 'setup:pcp:mexico;', async ( { utils, pcpApi } ) => {
+setup( 'setup:pcp:mexico;', async ( { utils, pcpApi, request } ) => {
 	await utils.configureStore( storeConfigMexico );
 	await utils.installAndActivatePcp();
 	await pcpApi.resetDb();
@@ -46,6 +98,7 @@ setup( 'setup:pcp:mexico;', async ( { utils, pcpApi } ) => {
 		merchants.mexico.client_id,
 		merchants.mexico.client_secret
 	);
+	await assertWebhookPubliclyReachable( pcpApi, request );
 } );
 
 // =====================================================================
@@ -104,7 +157,7 @@ setup( 'setup:transaction:germany;', async ( { utils, pcpApi } ) => {
 
 // --- Vaulting (re-connects with advanced merchant options) ---
 
-setup( 'setup:vaulting;', async ( { pcpApi } ) => {
+setup( 'setup:vaulting;', async ( { pcpApi, request } ) => {
 	await pcpApi.connectMerchant(
 		merchants.usa.client_id,
 		merchants.usa.client_secret,
@@ -113,6 +166,7 @@ setup( 'setup:vaulting;', async ( { pcpApi } ) => {
 			areOptionalPaymentMethodsEnabled: true,
 		}
 	);
+	await assertWebhookPubliclyReachable( pcpApi, request );
 	await pcpApi.updatePcpSettings( {
 		savePaypalAndVenmo: true,
 		saveCardDetails: true,
@@ -125,7 +179,7 @@ setup( 'setup:vaulting;', async ( { pcpApi } ) => {
 
 // --- Subscription (re-connects with advanced + subscription products) ---
 
-setup( 'setup:subscription;', async ( { utils, pcpApi } ) => {
+setup( 'setup:subscription;', async ( { utils, pcpApi, request } ) => {
 	await utils.configureStore( {
 		enableWpDebugging: false,
 		enableSubscriptionsPlugin: true,
@@ -140,6 +194,7 @@ setup( 'setup:subscription;', async ( { utils, pcpApi } ) => {
 			products: [ 'physical', 'virtual', 'subscriptions' ],
 		}
 	);
+	await assertWebhookPubliclyReachable( pcpApi, request );
 	await pcpApi.updatePcpSettings( {
 		savePaypalAndVenmo: true,
 		saveCardDetails: true,
