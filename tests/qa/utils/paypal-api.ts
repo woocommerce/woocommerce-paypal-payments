@@ -142,6 +142,71 @@ export class PayPalApi {
 	};
 
 	/**
+	 * Lists recent webhook events for the merchant's account
+	 * (GET /v1/notifications/webhooks-events). Temporary diagnostic for the
+	 * ngrok webhook-delivery investigation: confirms whether PayPal actually
+	 * generated an event at all, independent of whether the registered
+	 * webhook URL could receive it.
+	 *
+	 * @param merchant - { client_id: '...', client_secret: '...' }
+	 */
+	getWebhookEvents = async ( merchant: Pcp.Merchant ) => {
+		const token = await this.getAuthToken( merchant );
+		const response = await this.request.get(
+			`${ this.sandboxBaseUrl }/v1/notifications/webhooks-events`,
+			{
+				headers: {
+					Authorization: `Bearer ${ token }`,
+				},
+			}
+		);
+
+		if ( ! ( await response.ok() ) ) {
+			throw new Error(
+				`getWebhookEvents failed with status ${ await response.status() }: ${ await response.text() }`
+			);
+		}
+
+		const json = await response.json();
+		return json.events ?? [];
+	};
+
+	/**
+	 * Temporary diagnostic for the ngrok webhook-delivery investigation: logs
+	 * whether PayPal generated any webhooks-events referencing the given
+	 * resource id (e.g. a PayPal order id), regardless of whether the tunnel
+	 * could actually deliver a webhook for it. Logs rather than asserts,
+	 * since this is exploratory. Remove once the delivery question is settled.
+	 *
+	 * @param merchant   - { client_id: '...', client_secret: '...' }
+	 * @param resourceId PayPal order/capture/authorization id to look for.
+	 */
+	logWebhookEventsForResource = async (
+		merchant: Pcp.Merchant,
+		resourceId: string
+	) => {
+		try {
+			const events = await this.getWebhookEvents( merchant );
+			const matches = events.filter( ( event ) =>
+				JSON.stringify( event.resource ?? {} ).includes( resourceId )
+			);
+			console.log(
+				`[ngrok-diag] PayPal webhooks-events: ${ events.length } total, ${ matches.length } matching resource ${ resourceId }`
+			);
+			matches.forEach( ( event ) =>
+				console.log(
+					`[ngrok-diag]   event id=${ event.id } type=${ event.event_type } create_time=${ event.create_time }`
+				)
+			);
+		} catch ( error ) {
+			console.error(
+				'[ngrok-diag] Failed to fetch PayPal webhooks-events:',
+				error
+			);
+		}
+	};
+
+	/**
 	 * Gets PayPal order ID stored in WooCommerce meta_data
 	 *
 	 * @param wooCommerceOrderJson
