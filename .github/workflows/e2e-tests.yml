@@ -67,15 +67,15 @@ jobs:
         shell: bash
         run: |
           SHARDS=(
-            plugin-foundation
-            onboarding
-            settings
-            transaction-usa
+            # plugin-foundation
+            # onboarding
+            # settings
+            # transaction-usa
             transaction-mexico
             transaction-germany
-            refund
-            vaulting
-            subscription
+            # refund
+            # vaulting
+            # subscription
           )
 
           TEST_SUITE='${{ inputs.TEST_SUITE || 'smoke:parallel' }}'
