@@ -10,8 +10,7 @@
  * @package
  */
 
-import { cardFieldStyles } from './cardFieldStyles';
-import { hide } from '@ppcp-button/Helper/Hiding';
+import { mountField } from './mountField';
 import { getCurrentPaymentMethod } from '@ppcp-button/Helper/CheckoutMethodState';
 import { loadSdkV6 } from '../sdkLoader';
 import { postJson } from '../utils/api';
@@ -19,37 +18,6 @@ import { handleError } from '../utils/errorHandler';
 import { navigation } from '../utils/navigation';
 
 const FIELD_TYPES = [ 'number', 'expiry', 'cvv', 'name' ];
-
-/**
- * Mounts one v6 card field into its existing WC input's slot, hiding the
- * original (mirrors the classic renderer's mountField).
- *
- * @param {Object}      cardSession - The v6 card-fields save session.
- * @param {string}      fieldType   - number|expiry|cvv|name.
- * @param {HTMLElement} inputField  - The existing WC input to replace.
- */
-function mountField( cardSession, fieldType, inputField ) {
-	if ( ! inputField || inputField.hidden ) {
-		return;
-	}
-
-	const computed = window.getComputedStyle( inputField );
-	const options = {
-		type: fieldType,
-		style: { input: cardFieldStyles( inputField ) },
-	};
-	if ( inputField.getAttribute( 'placeholder' ) ) {
-		options.placeholder = inputField.getAttribute( 'placeholder' );
-	}
-
-	const fieldElement = cardSession.createCardFieldsComponent( options );
-	fieldElement.style.width = computed.width;
-	fieldElement.style.height = computed.height;
-
-	inputField.parentNode.appendChild( fieldElement );
-	hide( inputField, true );
-	inputField.hidden = true;
-}
 
 /**
  * Bootstraps the card "save for later" fields on the add-payment-method page.

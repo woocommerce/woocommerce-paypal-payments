@@ -20,8 +20,7 @@
  * @package
  */
 
-import { cardFieldStyles } from './cardFieldStyles';
-import { hide } from '@ppcp-button/Helper/Hiding';
+import { mountField } from './mountField';
 import Spinner from '@ppcp-button/Helper/Spinner';
 import { loadSdkV6 } from '../sdkLoader';
 import { createCardOrder, approveCardOrder } from '../endpointsAdapter';
@@ -29,46 +28,6 @@ import { hasJQuery } from '../utils/api';
 import { handleError } from '../utils/errorHandler';
 
 const FIELD_TYPES = [ 'number', 'expiry', 'cvv' ];
-
-/**
- * Mounts a single card field into its existing WC input's place, hiding
- * the original input (mirrors v5's Render.js placement/hiding).
- *
- * Unlike v5's paypal.CardFields(), which owns its container's layout via
- * its own .render() call, v6's createCardFieldsComponent() only returns a
- * plain HTMLElement — `style.input` styles what's inside it (font, color,
- * padding, ...), not the element's own box on this page. Theme rules
- * targeting the original `input` tag (e.g. `.input-wrapper input { height:
- * 100% }`) don't match this element, so its box has to be sized explicitly
- * from the original input's own rendered dimensions or it falls back to
- * the SDK's default (much taller than the form's inputs).
- *
- * @param {Object}      cardSession - The v6 card fields session.
- * @param {string}      fieldType   - number|expiry|cvv.
- * @param {HTMLElement} inputField  - The existing WC input to replace.
- */
-function mountField( cardSession, fieldType, inputField ) {
-	if ( ! inputField || inputField.hidden ) {
-		return;
-	}
-
-	const computed = window.getComputedStyle( inputField );
-	const options = {
-		type: fieldType,
-		style: { input: cardFieldStyles( inputField ) },
-	};
-	if ( inputField.getAttribute( 'placeholder' ) ) {
-		options.placeholder = inputField.getAttribute( 'placeholder' );
-	}
-
-	const fieldElement = cardSession.createCardFieldsComponent( options );
-	fieldElement.style.width = computed.width;
-	fieldElement.style.height = computed.height;
-
-	inputField.parentNode.appendChild( fieldElement );
-	hide( inputField, true );
-	inputField.hidden = true;
-}
 
 /**
  * Reads the billing address from the classic checkout form for the card
