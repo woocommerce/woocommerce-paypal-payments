@@ -29,7 +29,7 @@ export const transactionsOnPayByLink = ( testOrder: ShopOrder ) => {
 				gatewayTitle === 'Pay upon Invoice' || gatewayTitle === 'OXXO';
 
 			if ( isAsyncCaptureGateway ) {
-				test.setTimeout( 3 * 60_000 ); // 3 minutes for PUI/OXXO async capture
+				test.setTimeout( 5 * 60_000 ); // 3 minutes for PUI/OXXO async capture
 			}
 
 			// PUI/OXXO capture completion relies on an async PayPal webhook. CI now
@@ -66,7 +66,7 @@ export const transactionsOnPayByLink = ( testOrder: ShopOrder ) => {
 
 				await waitForOrderStatus( wooCommerceApi, order.id, {
 					expectedStatus: orderStatus,
-					timeout: isAsyncCaptureGateway ? 3 * 60_000 : undefined,
+					timeout: isAsyncCaptureGateway ? 5 * 60_000 : undefined,
 				} );
 				const transactionId =
 						( await wooCommerceApi.getOrder( order.id ) ).transaction_id;
