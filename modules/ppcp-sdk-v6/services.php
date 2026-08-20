@@ -19,6 +19,7 @@ use WooCommerce\PayPalCommerce\SdkV6\Endpoint\ClientTokenEndpoint;
 use WooCommerce\PayPalCommerce\SdkV6\Endpoint\SimulateCartEndpoint;
 use WooCommerce\PayPalCommerce\SdkV6\Helper\ApplePayConfig;
 use WooCommerce\PayPalCommerce\SdkV6\Helper\ButtonStyleMapper;
+use WooCommerce\PayPalCommerce\SdkV6\Helper\CardFieldStyles;
 use WooCommerce\PayPalCommerce\SdkV6\Helper\GooglePayConfig;
 use WooCommerce\PayPalCommerce\SdkV6\Helper\RateLimiter;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
@@ -92,6 +93,10 @@ return array(
 
 			return $manager->should_load_on_current_page();
 		};
+	},
+
+	'sdk-v6.card-field-styles'          => static function (): CardFieldStyles {
+		return new CardFieldStyles();
 	},
 
 	'sdk-v6.manager'                    => static function ( ContainerInterface $container ): SdkV6Manager {
