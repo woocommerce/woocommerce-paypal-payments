@@ -179,7 +179,8 @@ return array(
 			$container->get( 'sdk-v6.manager' ),
 			$container->get( 'sdk-v6.asset-getter' ),
 			$container->get( 'ppcp.asset-version' ),
-			$container->get( 'wcgateway.paypal-gateway' )
+			$container->get( 'wcgateway.paypal-gateway' ),
+			$container->get( 'wcgateway.credit-card-gateway' )
 		);
 	},
 

@@ -80,8 +80,13 @@ if ( config && config.page_context && config.continuation ) {
 		supports: {
 			// WooCommerce hides any method whose features do not cover every
 			// cart requirement, and v5's ppcp-gateway is unregistered here, so
-			// a missing feature leaves the buyer no way to pay or cancel.
-			features: [ 'products', 'subscriptions', 'ppcp_continuation' ],
+			// a missing feature leaves the buyer no way to pay or cancel. The
+			// gateway supports come from the server (subscription-aware);
+			// ppcp_continuation is always required in this branch.
+			features: [
+				...( config.supported_features || [ 'products' ] ),
+				'ppcp_continuation',
+			],
 		},
 	} );
 } else if ( config && config.page_context ) {
@@ -142,7 +147,9 @@ if ( config && config.page_context && config.continuation ) {
 				return Boolean( eligibility[ fundingSource ] );
 			},
 			supports: {
-				features: [ 'products' ],
+				// Server-provided gateway supports, so subscription carts do
+				// not filter the express buttons out (see continuation branch).
+				features: config.supported_features || [ 'products' ],
 				// Exposes the block's height and corner-radius controls, which
 				// arrive as the buttonAttributes prop.
 				style: [ 'height', 'borderRadius' ],
@@ -200,7 +207,9 @@ if ( config?.card_fields?.enabled && ! config.continuation ) {
 		),
 		canMakePayment: () => true,
 		supports: {
-			features: [ 'products' ],
+			// The credit-card gateway's supports from the server, so a
+			// subscription cart does not filter the card method out.
+			features: config.card_fields.supported_features || [ 'products' ],
 			// WooCommerce Blocks renders its native "Save payment information…"
 			// checkbox and exposes the choice as the shouldSavePayment prop;
 			// only offered when card vaulting is enabled.

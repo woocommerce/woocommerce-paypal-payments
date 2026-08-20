@@ -13,6 +13,7 @@ namespace WooCommerce\PayPalCommerce\SdkV6\Blocks;
 use Automattic\WooCommerce\Blocks\Payments\Integrations\AbstractPaymentMethodType;
 use WooCommerce\PayPalCommerce\Assets\AssetGetter;
 use WooCommerce\PayPalCommerce\SdkV6\Assets\SdkV6Manager;
+use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 
 /**
@@ -28,17 +29,20 @@ class V6PaymentMethod extends AbstractPaymentMethodType {
 	private AssetGetter $asset_getter;
 	private string $version;
 	private PayPalGateway $gateway;
+	private CreditCardGateway $card_gateway;
 
 	public function __construct(
 		SdkV6Manager $manager,
 		AssetGetter $asset_getter,
 		string $version,
-		PayPalGateway $gateway
+		PayPalGateway $gateway,
+		CreditCardGateway $card_gateway
 	) {
 		$this->manager      = $manager;
 		$this->asset_getter = $asset_getter;
 		$this->version      = $version;
 		$this->gateway      = $gateway;
+		$this->card_gateway = $card_gateway;
 	}
 
 	/**
@@ -79,13 +83,26 @@ class V6PaymentMethod extends AbstractPaymentMethodType {
 	}
 
 	public function get_payment_method_data() {
-		return array_merge(
+		$data = array_merge(
 			$this->manager->script_data(),
 			array(
-				'id'          => PayPalGateway::ID,
-				'title'       => $this->gateway->title,
-				'description' => $this->gateway->get_description(),
+				'id'                 => PayPalGateway::ID,
+				'title'              => $this->gateway->title,
+				'description'        => $this->gateway->get_description(),
+				// The gateway's (subscription-aware) supported features, so the
+				// block methods declare them to WooCommerce Blocks and are not
+				// filtered out when the cart requires one (e.g. `subscriptions`).
+				// Mirrors the v5 PayPalPaymentMethod::get_payment_method_data().
+				'supported_features' => array_values( (array) $this->gateway->supports ),
 			)
 		);
+
+		// The card method registers under the credit-card gateway, so it must
+		// advertise that gateway's own supports (independently vaulting-gated).
+		if ( isset( $data['card_fields'] ) && is_array( $data['card_fields'] ) ) {
+			$data['card_fields']['supported_features'] = array_values( (array) $this->card_gateway->supports );
+		}
+
+		return $data;
 	}
 }
