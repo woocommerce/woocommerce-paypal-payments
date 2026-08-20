@@ -23,6 +23,7 @@ use WooCommerce\PayPalCommerce\SdkV6\Endpoint\ClientTokenEndpoint;
 use WooCommerce\PayPalCommerce\SdkV6\Endpoint\SimulateCartEndpoint;
 use WooCommerce\PayPalCommerce\SdkV6\Helper\ApplePayConfig;
 use WooCommerce\PayPalCommerce\SdkV6\Helper\ButtonStyleMapper;
+use WooCommerce\PayPalCommerce\SdkV6\Helper\CardFieldStyles;
 use WooCommerce\PayPalCommerce\SdkV6\Helper\GooglePayConfig;
 use WooCommerce\PayPalCommerce\Session\Cancellation\CancelController;
 use WooCommerce\PayPalCommerce\Session\Cancellation\CancelView;
@@ -86,6 +87,8 @@ class SdkV6Manager {
 	 */
 	private ApplePayConfig $apple_pay_config;
 
+	private CardFieldStyles $card_field_styles;
+
 	/**
 	 * Every wallet this module places, in the order their rows are printed.
 	 *
@@ -119,7 +122,8 @@ class SdkV6Manager {
 		array $credit_card_icons,
 		string $merchant_country,
 		GooglePayConfig $google_pay_config,
-		ApplePayConfig $apple_pay_config
+		ApplePayConfig $apple_pay_config,
+		CardFieldStyles $card_field_styles
 	) {
 		$this->asset_getter                = $asset_getter;
 		$this->version                     = $version;
@@ -138,6 +142,7 @@ class SdkV6Manager {
 		$this->credit_card_icons           = $credit_card_icons;
 		$this->merchant_country            = $merchant_country;
 		$this->apple_pay_config            = $apple_pay_config;
+		$this->card_field_styles           = $card_field_styles;
 
 		$this->wallets = array(
 			new WalletPlacement(
@@ -610,6 +615,7 @@ class SdkV6Manager {
 					'expiry' => '#' . self::CARD_FIELD_EXPIRY_ID,
 					'cvv'    => '#' . self::CARD_FIELD_CVV_ID,
 				),
+				'styles'              => $this->card_field_styles->overrides(),
 			),
 			'card_button'       => array(
 				'enabled'        => $this->is_card_button_row(),

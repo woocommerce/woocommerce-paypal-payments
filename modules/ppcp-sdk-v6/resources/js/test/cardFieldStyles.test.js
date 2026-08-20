@@ -87,4 +87,23 @@ describe( 'hostedFieldTextStyles', () => {
 			} )
 		);
 	} );
+
+	test( 'lets a merchant override win over the computed style', () => {
+		const field = document.createElement( 'input' );
+		field.style.setProperty( 'color', 'rgb(1, 2, 3)' );
+		document.body.appendChild( field );
+
+		expect(
+			hostedFieldTextStyles( field, { color: 'rgb(9, 9, 9)' } )
+		).toEqual( expect.objectContaining( { color: 'rgb(9, 9, 9)' } ) );
+	} );
+
+	test( 'includes an override property the field itself has no computed value for', () => {
+		const field = document.createElement( 'input' );
+		document.body.appendChild( field );
+
+		expect(
+			hostedFieldTextStyles( field, { letterSpacing: '2px' } )
+		).toEqual( expect.objectContaining( { letterSpacing: '2px' } ) );
+	} );
 } );

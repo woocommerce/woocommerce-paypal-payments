@@ -29,7 +29,11 @@ export function initCardSaveFields( config ) {
 		return;
 	}
 
-	const { fields, payment_method: paymentMethod } = config.card_fields;
+	const {
+		fields,
+		payment_method: paymentMethod,
+		styles,
+	} = config.card_fields;
 	let cardSessionPromise = null;
 	let submitting = false;
 
@@ -51,7 +55,12 @@ export function initCardSaveFields( config ) {
 
 				for ( const fieldType of FIELD_TYPES ) {
 					if ( inputs[ fieldType ] ) {
-						mountField( cardSession, fieldType, inputs[ fieldType ] );
+						mountField(
+							cardSession,
+							fieldType,
+							inputs[ fieldType ],
+							styles
+						);
 					}
 				}
 

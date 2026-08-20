@@ -202,6 +202,7 @@ export function V6CardFieldsComponent( {
 	// elements this component renders itself (the cardholder-name input, and the
 	// hosted fields' own box), while textStyle is handed to the SDK and lands
 	// inside a PayPal iframe, where box decoration has no business.
+	const cardFieldOverrides = config.card_fields.styles;
 	useEffect( () => {
 		const source =
 			document.querySelector(
@@ -209,9 +210,9 @@ export function V6CardFieldsComponent( {
 			) || referenceRef.current;
 		if ( source ) {
 			setInputStyle( cardFieldStyles( source ) );
-			setTextStyle( hostedFieldTextStyles( source ) );
+			setTextStyle( hostedFieldTextStyles( source, cardFieldOverrides ) );
 		}
-	}, [] );
+	}, [ cardFieldOverrides ] );
 
 	const sessionRef = useLatestRef( session );
 

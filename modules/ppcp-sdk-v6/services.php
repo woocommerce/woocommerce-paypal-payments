@@ -130,7 +130,8 @@ return array(
 			$container->get( 'wcgateway.credit-card-icons' ),
 			$settings_provider->merchant_country(),
 			$container->get( 'sdk-v6.google-pay-config' ),
-			$container->get( 'sdk-v6.apple-pay-config' )
+			$container->get( 'sdk-v6.apple-pay-config' ),
+			$container->get( 'sdk-v6.card-field-styles' )
 		);
 	},
 
@@ -149,7 +150,8 @@ return array(
 			$container->has( 'save-payment-methods.eligible' )
 				&& $container->get( 'save-payment-methods.eligible' )
 				&& $settings_provider->save_card_details(),
-			$settings_provider
+			$settings_provider,
+			$container->get( 'sdk-v6.card-field-styles' )
 		);
 	},
 

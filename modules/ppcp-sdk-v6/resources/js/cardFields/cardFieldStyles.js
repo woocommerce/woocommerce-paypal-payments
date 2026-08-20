@@ -113,9 +113,10 @@ export function cardFieldStyles( field ) {
  * The text-only style set for the SDK's `style.input`, which reaches inside a
  * PayPal-hosted field.
  *
- * @param {HTMLElement} field - The existing WC input being replaced.
+ * @param {HTMLElement} field       - The existing WC input being replaced.
+ * @param {Object}      [overrides] - Merchant overrides from card_fields.styles.
  * @return {Object} The style object.
  */
-export function hostedFieldTextStyles( field ) {
-	return pickComputed( field, TEXT_PROPERTIES );
+export function hostedFieldTextStyles( field, overrides ) {
+	return { ...pickComputed( field, TEXT_PROPERTIES ), ...overrides };
 }

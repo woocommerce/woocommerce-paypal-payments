@@ -113,7 +113,11 @@ export async function initCardFields( config ) {
 		return;
 	}
 
-	const { fields, payment_method: paymentMethod } = config.card_fields;
+	const {
+		fields,
+		payment_method: paymentMethod,
+		styles,
+	} = config.card_fields;
 	const spinner = hasJQuery() ? Spinner.fullPage() : null;
 
 	let cardSessionPromise = null;
@@ -147,7 +151,8 @@ export async function initCardFields( config ) {
 						mountField(
 							cardSession,
 							fieldType,
-							inputs[ fieldType ]
+							inputs[ fieldType ],
+							styles
 						);
 					}
 				}

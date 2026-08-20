@@ -10,6 +10,7 @@ use WooCommerce\PayPalCommerce\Button\Helper\Context;
 use WooCommerce\PayPalCommerce\SavePaymentMethods\Endpoint\CreatePaymentToken;
 use WooCommerce\PayPalCommerce\SavePaymentMethods\Endpoint\CreateSetupToken;
 use WooCommerce\PayPalCommerce\SdkV6\Endpoint\ClientTokenEndpoint;
+use WooCommerce\PayPalCommerce\SdkV6\Helper\CardFieldStyles;
 use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
 use WooCommerce\PayPalCommerce\TestCase;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
@@ -22,6 +23,7 @@ class AddPaymentMethodManagerTest extends TestCase
     private $environment;
     private $context;
     private $settings_provider;
+    private $card_field_styles;
 
     public function setUp(): void
     {
@@ -31,6 +33,8 @@ class AddPaymentMethodManagerTest extends TestCase
         $this->environment = Mockery::mock(Environment::class);
         $this->context = Mockery::mock(Context::class);
         $this->settings_provider = Mockery::mock(SettingsProvider::class);
+        $this->card_field_styles = Mockery::mock(CardFieldStyles::class);
+        $this->card_field_styles->shouldReceive('overrides')->andReturn([])->byDefault();
     }
 
     private function createTestee(
@@ -44,7 +48,8 @@ class AddPaymentMethodManagerTest extends TestCase
             $this->context,
             $paypal_vaulting_enabled,
             $card_vaulting_enabled,
-            $this->settings_provider
+            $this->settings_provider,
+            $this->card_field_styles
         );
     }
 
@@ -89,6 +94,7 @@ class AddPaymentMethodManagerTest extends TestCase
      * WHEN the add-payment-method bootstrap script data is generated
      * THEN the button, card fields and ajax endpoint data reflect the constructor configuration
      * AND the verification method reflects the filtered 3D Secure setting
+     * AND the merchant's card field style overrides are carried into the payload
      *
      * @dataProvider script_data_provider
      */
@@ -110,6 +116,9 @@ class AddPaymentMethodManagerTest extends TestCase
         when('wc_get_account_endpoint_url')->justReturn('https://example.com/my-account/payment-methods');
         when('wp_create_nonce')->alias(static fn (string $action) => 'nonce-' . $action);
 
+        $card_field_styles = ['fontSize' => '18px'];
+        $this->card_field_styles->shouldReceive('overrides')->andReturn($card_field_styles);
+
         $testee = $this->createTestee(false, $card_vaulting_enabled);
         $data   = $this->invoke_script_data($testee);
 
@@ -118,6 +127,7 @@ class AddPaymentMethodManagerTest extends TestCase
 
         $this->assertSame($card_vaulting_enabled, $data['card_fields']['enabled']);
         $this->assertSame(CreditCardGateway::ID, $data['card_fields']['payment_method']);
+        $this->assertSame($card_field_styles, $data['card_fields']['styles']);
 
         $this->assertArrayHasKey('client_token', $data['ajax']);
         $this->assertArrayHasKey('create_setup_token', $data['ajax']);

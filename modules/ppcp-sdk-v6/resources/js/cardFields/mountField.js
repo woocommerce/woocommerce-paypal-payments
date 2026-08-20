@@ -21,11 +21,17 @@ import { hostedFieldTextStyles } from './cardFieldStyles';
  * width, which is not the width its column gives it — WooCommerce renders the
  * CVV input far narrower than the half-width column holding it.
  *
- * @param {Object}      cardSession - The v6 card fields session.
- * @param {string}      fieldType   - number|expiry|cvv|name.
- * @param {HTMLElement} inputField  - The existing WC input to replace.
+ * @param {Object}      cardSession      - The v6 card fields session.
+ * @param {string}      fieldType        - number|expiry|cvv|name.
+ * @param {HTMLElement} inputField       - The existing WC input to replace.
+ * @param {Object}      [styleOverrides] - Merchant overrides for the field text.
  */
-export function mountField( cardSession, fieldType, inputField ) {
+export function mountField(
+	cardSession,
+	fieldType,
+	inputField,
+	styleOverrides
+) {
 	if ( ! inputField || inputField.hidden ) {
 		return;
 	}
@@ -33,7 +39,7 @@ export function mountField( cardSession, fieldType, inputField ) {
 	const placeholder = inputField.getAttribute( 'placeholder' );
 	const options = {
 		type: fieldType,
-		style: { input: hostedFieldTextStyles( inputField ) },
+		style: { input: hostedFieldTextStyles( inputField, styleOverrides ) },
 	};
 	if ( placeholder ) {
 		options.placeholder = placeholder;

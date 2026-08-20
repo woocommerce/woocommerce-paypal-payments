@@ -10,6 +10,7 @@ use WooCommerce\PayPalCommerce\Button\Helper\Context;
 use WooCommerce\PayPalCommerce\Googlepay\GooglePayGateway;
 use WooCommerce\PayPalCommerce\SdkV6\Helper\ApplePayConfig;
 use WooCommerce\PayPalCommerce\SdkV6\Helper\ButtonStyleMapper;
+use WooCommerce\PayPalCommerce\SdkV6\Helper\CardFieldStyles;
 use WooCommerce\PayPalCommerce\SdkV6\Helper\GooglePayConfig;
 use WooCommerce\PayPalCommerce\Session\Cancellation\CancelView;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
@@ -36,6 +37,7 @@ class SdkV6ManagerTest extends TestCase
 	private $credit_card_icons;
 	private $google_pay_config;
 	private $apple_pay_config;
+	private $card_field_styles;
 
     public function setUp(): void
     {
@@ -62,6 +64,9 @@ class SdkV6ManagerTest extends TestCase
 		$this->apple_pay_config = Mockery::mock(ApplePayConfig::class);
 		$this->apple_pay_config->shouldReceive('should_render')->andReturn(false)->byDefault();
 		$this->apple_pay_config->shouldReceive('display_name')->andReturn('Test Store')->byDefault();
+
+		$this->card_field_styles = Mockery::mock(CardFieldStyles::class);
+		$this->card_field_styles->shouldReceive('overrides')->andReturn([])->byDefault();
 
 		// Reached unconditionally by script_data()'s Apple Pay validation block.
 		when('admin_url')->justReturn('https://example.com/wp-admin/admin-ajax.php');
@@ -106,7 +111,8 @@ class SdkV6ManagerTest extends TestCase
 	        $credit_card_icons,
 	        $merchant_country,
 	        $this->google_pay_config,
-	        $this->apple_pay_config
+	        $this->apple_pay_config,
+	        $this->card_field_styles
         );
     }
 
@@ -328,6 +334,7 @@ class SdkV6ManagerTest extends TestCase
      * AND the gateway title and name-field flag are carried into the payload
      * AND is_vaulting_enabled reflects the card vaulting setting
      * AND has_subscriptions reflects whether the cart contains a subscription
+     * AND the merchant's card field style overrides are carried into the payload
      *
      * @dataProvider script_data_card_fields_provider
      */
@@ -364,6 +371,9 @@ class SdkV6ManagerTest extends TestCase
         when('rest_url')->justReturn('https://example.com/wp-json/wc/store/v1/cart');
         when('wc_get_checkout_url')->justReturn('https://example.com/checkout');
 
+        $card_field_styles = ['fontSize' => '18px'];
+        $this->card_field_styles->shouldReceive('overrides')->andReturn($card_field_styles);
+
         $testee = $this->createTestee(false, [], $card_vaulting_enabled);
         $data   = $testee->script_data();
 
@@ -373,6 +383,7 @@ class SdkV6ManagerTest extends TestCase
         $this->assertSame(CreditCardGateway::ID, $data['card_fields']['payment_method']);
         $this->assertSame($card_vaulting_enabled, $data['card_fields']['is_vaulting_enabled']);
         $this->assertSame($cart_contains_subscription, $data['card_fields']['has_subscriptions']);
+        $this->assertSame($card_field_styles, $data['card_fields']['styles']);
     }
 
     public function script_data_card_fields_provider(): array

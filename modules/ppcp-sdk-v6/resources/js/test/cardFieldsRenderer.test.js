@@ -2,7 +2,8 @@ const mockHostedFieldTextStyles = jest.fn( () => ( {
 	color: 'rgb(0, 0, 0)',
 } ) );
 jest.mock( '../cardFields/cardFieldStyles', () => ( {
-	hostedFieldTextStyles: ( field ) => mockHostedFieldTextStyles( field ),
+	hostedFieldTextStyles: ( field, overrides ) =>
+		mockHostedFieldTextStyles( field, overrides ),
 } ) );
 
 const mockHide = jest.fn();
@@ -179,6 +180,27 @@ describe( 'initCardFields', () => {
 		}
 	} );
 
+	test( 'forwards config.card_fields.styles as merchant overrides for the hosted field text style', async () => {
+		buildCheckoutDom( 'ppcp-credit-card-gateway' );
+		const cardSession = makeCardSession();
+		mockLoadSdkV6.mockResolvedValue( {
+			createCardFieldsOneTimePaymentSession: () => cardSession,
+		} );
+		const styles = { fontSize: '20px' };
+
+		await initCardFields(
+			baseConfig( {
+				card_fields: { ...baseConfig().card_fields, styles },
+			} )
+		);
+		await flushPromises();
+
+		expect( mockHostedFieldTextStyles ).toHaveBeenCalledWith(
+			expect.anything(),
+			styles
+		);
+	} );
+
 	test( 'never mounts the name field even when fields.name points to a WC input, since v6 has no name field component', async () => {
 		buildCheckoutDom( 'ppcp-credit-card-gateway' );
 		document.body.insertAdjacentHTML(
@@ -203,9 +225,9 @@ describe( 'initCardFields', () => {
 		);
 		await flushPromises();
 
-		expect( cardSession.createCardFieldsComponent ).toHaveBeenCalledTimes(
-			3
-		);
+		expect(
+			cardSession.createCardFieldsComponent
+		).toHaveBeenCalledTimes( 3 );
 		expect(
 			cardSession.createCardFieldsComponent
 		).not.toHaveBeenCalledWith(
