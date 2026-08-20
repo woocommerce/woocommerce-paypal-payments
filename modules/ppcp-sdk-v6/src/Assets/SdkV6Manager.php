@@ -27,6 +27,7 @@ use WooCommerce\PayPalCommerce\SdkV6\Helper\GooglePayConfig;
 use WooCommerce\PayPalCommerce\Session\Cancellation\CancelController;
 use WooCommerce\PayPalCommerce\Session\Cancellation\CancelView;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
+use WooCommerce\PayPalCommerce\WcGateway\Gateway\CardButtonGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\CardPaymentsConfiguration;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
@@ -35,10 +36,11 @@ use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
 
 class SdkV6Manager {
 
-	public const WRAPPER_ID            = 'ppc-button-ppcp-gateway-v6';
-	public const MINI_CART_WRAPPER_ID  = 'ppc-button-minicart-v6';
-	public const GOOGLE_PAY_WRAPPER_ID = 'ppc-button-ppcp-googlepay-v6';
-	public const APPLE_PAY_WRAPPER_ID  = 'ppc-button-ppcp-applepay-v6';
+	public const WRAPPER_ID             = 'ppc-button-ppcp-gateway-v6';
+	public const MINI_CART_WRAPPER_ID   = 'ppc-button-minicart-v6';
+	public const GOOGLE_PAY_WRAPPER_ID  = 'ppc-button-ppcp-googlepay-v6';
+	public const APPLE_PAY_WRAPPER_ID   = 'ppc-button-ppcp-applepay-v6';
+	public const CARD_BUTTON_WRAPPER_ID = 'ppc-button-ppcp-card-button-gateway-v6';
 
 	/**
 	 * The height every payment button on the page renders at.
@@ -94,6 +96,14 @@ class SdkV6Manager {
 	 * @var WalletPlacement[]
 	 */
 	private array $wallets;
+
+	/**
+	 * Asked once to print the row and once to build the script data, and each
+	 * answer walks every available gateway.
+	 *
+	 * @var bool|null
+	 */
+	private ?bool $is_card_button_row = null;
 
 	public function __construct(
 		AssetGetter $asset_getter,
@@ -267,6 +277,28 @@ class SdkV6Manager {
 		}
 	}
 
+	/**
+	 * Renders the BCDC gateway container, hidden until the buyer is eligible.
+	 *
+	 * Same markup as the wallet rows, so gatewayPlacement.js reveals it with the
+	 * code it already has — and hidden first for the same reason: the SDK decides
+	 * card eligibility client-side, and a row whose button never rendered would
+	 * be a dead end.
+	 */
+	public function render_card_button_wrapper(): void {
+		if ( ! $this->is_card_button_row() ) {
+			return;
+		}
+		?>
+		<style data-hide-gateway='<?php echo esc_attr( CardButtonGateway::ID ); ?>'>
+			.wc_payment_method.payment_method_<?php echo esc_attr( CardButtonGateway::ID ); ?> {
+				display: none;
+			}
+		</style>
+		<div id="<?php echo esc_attr( self::CARD_BUTTON_WRAPPER_ID ); ?>"></div>
+		<?php
+	}
+
 	public function render_mini_cart_wrapper(): void {
 		echo '<p class="woocommerce-mini-cart__buttons buttons">';
 		echo '<span id="' . esc_attr( self::MINI_CART_WRAPPER_ID ) . '"></span>';
@@ -368,6 +400,14 @@ class SdkV6Manager {
 			return true;
 		}
 
+		// Settings-only, never is_card_button_row(): this runs early enough that
+		// resolving WC_Payment_Gateways would re-enter
+		// woocommerce_available_payment_gateways, which resolves DisableGateways
+		// from the container currently building this service.
+		if ( $this->is_card_button_enabled( $page_location ) ) {
+			return true;
+		}
+
 		if ( $page_location && $this->any_wallet_renders( $page_location ) ) {
 			return true;
 		}
@@ -397,6 +437,55 @@ class SdkV6Manager {
 
 		return in_array( $location, array( 'checkout', 'checkout-block', 'pay-now' ), true )
 			&& $this->card_payments_configuration->is_acdc_enabled();
+	}
+
+	/**
+	 * Whether BCDC is configured for this kind of page — not whether the row
+	 * prints here, which is is_card_button_row().
+	 *
+	 * Narrower than its ACDC counterpart: BCDC has no block checkout support.
+	 *
+	 * @param string|null $location Page context to test; defaults to the current page.
+	 */
+	public function is_card_button_enabled( ?string $location = null ): bool {
+		$location = $location ?? $this->get_page_context();
+
+		return in_array( $location, array( 'checkout', 'pay-now' ), true )
+			&& $this->card_payments_configuration->is_bcdc_enabled();
+	}
+
+	/**
+	 * Whether the BCDC button renders as its own payment-method row here.
+	 *
+	 * Asks the gateway list rather than re-deriving its policy, which already
+	 * covers the checkout button location being off, ACDC outside Mexico,
+	 * free-trial carts and zero-total carts.
+	 */
+	private function is_card_button_row(): bool {
+		if ( null !== $this->is_card_button_row ) {
+			return $this->is_card_button_row;
+		}
+
+		if ( ! $this->is_card_button_enabled() || $this->is_block_context() ) {
+			return false;
+		}
+
+		// No row for subscription carts: the v6 guest component has no
+		// equivalent of the SDK URL vault param v5 uses here, so the button
+		// would take a payment that can never renew. Not a dead end — without a
+		// button "Place order" stays visible, and CardButtonGateway falls back
+		// to PayPal's hosted card checkout.
+		if ( $this->subscription_helper->cart_contains_subscription() ) {
+			return false;
+		}
+
+		$gateways = WC()->payment_gateways() ? WC()->payment_gateways()->get_available_payment_gateways() : array();
+
+		// Only this answer is memoized: the gateway list is settled by the time
+		// anything asks, whereas the page context above may not be yet.
+		$this->is_card_button_row = isset( $gateways[ CardButtonGateway::ID ] );
+
+		return $this->is_card_button_row;
 	}
 
 	/**
@@ -506,6 +595,12 @@ class SdkV6Manager {
 					'Something went wrong. Please try again or choose another payment source.',
 					'woocommerce-paypal-payments'
 				),
+				// One string for every onWarn the SDK raises: its own codes are
+				// internal and untranslated, so they must not reach the buyer.
+				'card_declined' => __(
+					'The card could not be charged. Please check the details or try a different card.',
+					'woocommerce-paypal-payments'
+				),
 			),
 			'shipping'          => array(
 				'handle_in_paypal' => $shipping_enabled,
@@ -546,6 +641,19 @@ class SdkV6Manager {
 					'number' => '#' . self::CARD_FIELD_NUMBER_ID,
 					'expiry' => '#' . self::CARD_FIELD_EXPIRY_ID,
 					'cvv'    => '#' . self::CARD_FIELD_CVV_ID,
+				),
+			),
+			'card_button'       => array(
+				'enabled'        => $this->is_card_button_row(),
+				'payment_method' => CardButtonGateway::ID,
+				'funding_source' => 'card',
+				'wrapper'        => '#' . self::CARD_BUTTON_WRAPPER_ID,
+				// No colour: the element is black-only. Width is ours to set
+				// because it ships a fixed 225px, where v5 spanned the column.
+				'styles'         => array(
+					'borderRadius' => $this->style_mapper->styles_for_context( $page_context ?: 'checkout' )['borderRadius'],
+					'height'       => self::PAYMENT_BUTTON_HEIGHT,
+					'width'        => '100%',
 				),
 			),
 		);

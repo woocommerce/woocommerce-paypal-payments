@@ -4,14 +4,17 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\SdkV6\Assets;
 
 use Mockery;
+use WooCommerce\PayPalCommerce\Applepay\ApplePayGateway;
 use WooCommerce\PayPalCommerce\Assets\AssetGetter;
 use WooCommerce\PayPalCommerce\Button\Helper\Context;
+use WooCommerce\PayPalCommerce\Googlepay\GooglePayGateway;
 use WooCommerce\PayPalCommerce\SdkV6\Helper\ApplePayConfig;
 use WooCommerce\PayPalCommerce\SdkV6\Helper\ButtonStyleMapper;
 use WooCommerce\PayPalCommerce\SdkV6\Helper\GooglePayConfig;
 use WooCommerce\PayPalCommerce\Session\Cancellation\CancelView;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
 use WooCommerce\PayPalCommerce\TestCase;
+use WooCommerce\PayPalCommerce\WcGateway\Gateway\CardButtonGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\CardPaymentsConfiguration;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
@@ -46,6 +49,9 @@ class SdkV6ManagerTest extends TestCase
         $this->session_handler = Mockery::mock(SessionHandler::class);
         $this->cancel_view = Mockery::mock(CancelView::class);
         $this->card_payments_configuration = Mockery::mock(CardPaymentsConfiguration::class);
+		// Off by default like the wallets: script_data() reads it on every call,
+		// and most tests here exercise something other than the card button.
+		$this->card_payments_configuration->shouldReceive('is_bcdc_enabled')->andReturn(false)->byDefault();
 		$this->subscription_helper = Mockery::mock(SubscriptionHelper::class);
         $this->subscription_helper->shouldReceive('cart_contains_subscription')->andReturn(false)->byDefault();
 		$this->credit_card_icons = [];
@@ -63,14 +69,14 @@ class SdkV6ManagerTest extends TestCase
     }
 
     /**
-     * A WC() stub carrying an empty cart/customer and a payment-gateways
-     * registry with no gateways available, matching the wallet defaults'
-     * "does not render" state used throughout this test.
+     * A WC() stub with an empty cart/customer and a payment-gateways registry.
+     * Defaults to no gateways available, so a scenario that needs one (e.g.
+     * CardButtonGateway::ID) names it explicitly.
      */
-    private function create_wc_stub(): object
+    private function create_wc_stub(array $available_gateways = []): object
     {
         $payment_gateways = Mockery::mock();
-        $payment_gateways->shouldReceive('get_available_payment_gateways')->andReturn([])->byDefault();
+        $payment_gateways->shouldReceive('get_available_payment_gateways')->andReturn($available_gateways)->byDefault();
 
         $wc = Mockery::mock();
         $wc->customer = null;
@@ -440,5 +446,265 @@ class SdkV6ManagerTest extends TestCase
                 [],
             ],
         ];
+    }
+
+    /**
+     * GIVEN a page context and a BCDC (Basic Credit and Debit Cards) setting
+     * WHEN checking whether the v6 Basic Card button is enabled for that location
+     * THEN the result depends on both the page context and the BCDC setting
+     * AND checkout-block is never eligible, since BCDC has no block checkout support
+     *
+     * @dataProvider card_button_enablement_provider
+     */
+    public function testIsCardButtonEnabled(string $page_context, bool $bcdc_enabled, bool $expected): void
+    {
+        $this->context->shouldReceive('context')->andReturn($page_context);
+        $this->card_payments_configuration->shouldReceive('is_bcdc_enabled')->andReturn($bcdc_enabled);
+
+        $testee = $this->createTestee();
+
+        $this->assertSame($expected, $testee->is_card_button_enabled());
+    }
+
+    public function card_button_enablement_provider(): array
+    {
+        return [
+            'classic checkout with BCDC enabled renders the card button' => ['checkout', true, true],
+            'classic checkout with BCDC disabled does not render the card button' => ['checkout', false, false],
+            'pay-now with BCDC enabled renders the card button' => ['pay-now', true, true],
+            'pay-now with BCDC disabled does not render the card button' => ['pay-now', false, false],
+            'checkout-block is never eligible, even with BCDC enabled' => ['checkout-block', true, false],
+            'product page is never eligible for the card button' => ['product', true, false],
+            'cart page is never eligible for the card button' => ['cart', true, false],
+        ];
+    }
+
+    /**
+     * GIVEN BCDC configured for checkout/pay-now, with every smart-button
+     *       location and ACDC turned off
+     * WHEN checking whether the v6 SDK should load on the current page
+     * THEN the SDK loads on checkout and pay-now purely because BCDC is enabled there
+     * AND it does not load on product, cart or checkout-block, since BCDC has no
+     *     block checkout support and settings alone never enable it elsewhere
+     *
+     * @dataProvider should_load_for_card_button_provider
+     */
+    public function testShouldLoadOnCurrentPageForCardButton(string $page_context, bool $bcdc_enabled, bool $expected): void
+    {
+        $this->context->shouldReceive('context')->andReturn($page_context);
+        $this->card_payments_configuration->shouldReceive('is_acdc_enabled')->andReturn(false);
+        $this->card_payments_configuration->shouldReceive('is_bcdc_enabled')->andReturn($bcdc_enabled);
+        $this->settings_status->shouldReceive('is_smart_button_enabled_for_location')->andReturn(false);
+
+        $testee = $this->createTestee();
+
+        $this->assertSame($expected, $testee->should_load_on_current_page());
+    }
+
+    public function should_load_for_card_button_provider(): array
+    {
+        return [
+            'checkout with BCDC enabled loads the SDK' => ['checkout', true, true],
+            'pay-now with BCDC enabled loads the SDK' => ['pay-now', true, true],
+            'checkout with BCDC disabled does not load for the card button' => ['checkout', false, false],
+            'product page never loads for the card button' => ['product', true, false],
+            'cart page never loads for the card button' => ['cart', true, false],
+            'checkout-block never loads for the card button (no block support)' => ['checkout-block', true, false],
+        ];
+    }
+
+    /**
+     * GIVEN a checkout page where BCDC is enabled for the settings-only gate
+     * WHEN the SDK bootstrap data is generated
+     * THEN card_button.enabled is true only when the CardButtonGateway is also
+     *      among WooCommerce's available payment gateways
+     * AND it is false whenever the gateway is unavailable — the same signal
+     *     WooCommerce gives for ACDC-active-outside-Mexico, a free-trial cart,
+     *     or a zero-total cart, since each of those removes the gateway itself
+     * AND it is false for a cart containing a subscription, since BCDC is
+     *     withheld there regardless of gateway availability
+     *
+     * @dataProvider card_button_row_provider
+     */
+    public function testScriptDataCardButtonEnabled(bool $cart_contains_subscription, bool $gateway_available, bool $expected): void
+    {
+        $this->context->shouldReceive('context')->andReturn('checkout');
+        $this->card_payments_configuration->shouldReceive('is_acdc_enabled')->andReturn(false);
+        $this->card_payments_configuration->shouldReceive('is_bcdc_enabled')->andReturn(true);
+        $this->card_payments_configuration->shouldReceive('gateway_title')->andReturn('Credit Card');
+        $this->card_payments_configuration->shouldReceive('show_name_on_card')->andReturn('no');
+        $this->subscription_helper->shouldReceive('cart_contains_subscription')->andReturn($cart_contains_subscription);
+
+        $this->settings_status->shouldReceive('is_smart_button_enabled_for_location')->andReturn(false);
+        $this->session_handler->shouldReceive('order')->andReturn(null);
+        $this->context->shouldReceive('is_paypal_continuation')->andReturn(false);
+        $this->environment->shouldReceive('is_sandbox')->andReturn(false);
+        $this->style_mapper->shouldReceive('styles_for_context')->andReturn(['borderRadius' => '4px']);
+
+        when('WC')->justReturn($this->create_wc_stub($gateway_available ? [CardButtonGateway::ID => true] : []));
+        when('wc_get_base_location')->justReturn(['country' => 'US']);
+        when('get_woocommerce_currency')->justReturn('USD');
+        when('get_locale')->justReturn('en_US');
+        when('is_product')->justReturn(false);
+        when('rest_url')->justReturn('https://example.com/wp-json/wc/store/v1/cart');
+        when('wc_get_checkout_url')->justReturn('https://example.com/checkout');
+
+        $testee = $this->createTestee();
+        $data   = $testee->script_data();
+
+        $this->assertSame($expected, $data['card_button']['enabled']);
+    }
+
+    public function card_button_row_provider(): array
+    {
+        return [
+            'gateway available and no subscription renders the row' => [false, true, true],
+            'gateway unavailable never renders the row (ACDC-active, free trial, or zero-total cart)' => [false, false, false],
+            'subscription cart withholds the row even though the gateway is available' => [true, true, false],
+        ];
+    }
+
+    /**
+     * GIVEN BCDC enabled and the CardButtonGateway available at checkout
+     * WHEN the SDK bootstrap data is generated
+     * THEN the card_button payload carries the payment method id, funding source,
+     *      wrapper selector and button styling alongside its enabled flag
+     * AND the front-end labels include a card_declined message for the SDK to
+     *     show when a card is declined
+     */
+    public function testScriptDataCardButtonShapeAndCardDeclinedLabel(): void
+    {
+        $this->context->shouldReceive('context')->andReturn('checkout');
+        $this->card_payments_configuration->shouldReceive('is_acdc_enabled')->andReturn(false);
+        $this->card_payments_configuration->shouldReceive('is_bcdc_enabled')->andReturn(true);
+        $this->card_payments_configuration->shouldReceive('gateway_title')->andReturn('Credit Card');
+        $this->card_payments_configuration->shouldReceive('show_name_on_card')->andReturn('no');
+
+        $this->settings_status->shouldReceive('is_smart_button_enabled_for_location')->andReturn(false);
+        $this->session_handler->shouldReceive('order')->andReturn(null);
+        $this->context->shouldReceive('is_paypal_continuation')->andReturn(false);
+        $this->environment->shouldReceive('is_sandbox')->andReturn(false);
+        $this->style_mapper->shouldReceive('styles_for_context')->andReturn(['borderRadius' => '8px']);
+
+        when('WC')->justReturn($this->create_wc_stub([CardButtonGateway::ID => true]));
+        when('wc_get_base_location')->justReturn(['country' => 'US']);
+        when('get_woocommerce_currency')->justReturn('USD');
+        when('get_locale')->justReturn('en_US');
+        when('is_product')->justReturn(false);
+        when('rest_url')->justReturn('https://example.com/wp-json/wc/store/v1/cart');
+        when('wc_get_checkout_url')->justReturn('https://example.com/checkout');
+
+        $testee = $this->createTestee();
+        $data   = $testee->script_data();
+
+        $this->assertSame(CardButtonGateway::ID, $data['card_button']['payment_method']);
+        $this->assertSame('card', $data['card_button']['funding_source']);
+        $this->assertSame('#' . SdkV6Manager::CARD_BUTTON_WRAPPER_ID, $data['card_button']['wrapper']);
+        $this->assertSame(
+            [
+                'borderRadius' => '8px',
+                'height'       => SdkV6Manager::PAYMENT_BUTTON_HEIGHT,
+                'width'        => '100%',
+            ],
+            $data['card_button']['styles']
+        );
+        $this->assertSame(
+            'The card could not be charged. Please check the details or try a different card.',
+            $data['labels']['card_declined']
+        );
+    }
+
+    /**
+     * GIVEN the BCDC row is eligible to print (checkout, BCDC enabled, the
+     *       gateway available, no subscription in the cart)
+     * WHEN the card button wrapper is rendered
+     * THEN exactly one hide-style for the CardButtonGateway payment method
+     *      and one wrapper div with the BCDC wrapper id are printed
+     */
+    public function testRenderCardButtonWrapperPrintsHideStyleAndWrapperWhenRowApplies(): void
+    {
+        $this->context->shouldReceive('context')->andReturn('checkout');
+        $this->card_payments_configuration->shouldReceive('is_bcdc_enabled')->andReturn(true);
+        $this->subscription_helper->shouldReceive('cart_contains_subscription')->andReturn(false);
+
+        when('WC')->justReturn($this->create_wc_stub([CardButtonGateway::ID => true]));
+
+        $testee = $this->createTestee();
+
+        ob_start();
+        $testee->render_card_button_wrapper();
+        $output = ob_get_clean();
+
+        $this->assertSame(1, substr_count($output, "<style data-hide-gateway='" . CardButtonGateway::ID . "'>"));
+        $this->assertSame(1, substr_count($output, '<div id="' . SdkV6Manager::CARD_BUTTON_WRAPPER_ID . '"></div>'));
+        $this->assertStringContainsString('.wc_payment_method.payment_method_' . CardButtonGateway::ID, $output);
+    }
+
+    /**
+     * GIVEN a page where the BCDC row does not apply (BCDC disabled for the
+     *       current location)
+     * WHEN the card button wrapper is rendered
+     * THEN nothing is printed
+     */
+    public function testRenderCardButtonWrapperPrintsNothingWhenRowDoesNotApply(): void
+    {
+        $this->context->shouldReceive('context')->andReturn('checkout');
+        $this->card_payments_configuration->shouldReceive('is_bcdc_enabled')->andReturn(false);
+
+        $testee = $this->createTestee();
+
+        ob_start();
+        $testee->render_card_button_wrapper();
+        $output = ob_get_clean();
+
+        $this->assertSame('', $output);
+    }
+
+    /**
+     * GIVEN a buyer on the pay-for-order page, where wallets render as express
+     *       buttons rather than as payment-method rows
+     * WHEN the SDK bootstrap data is generated
+     * THEN each wallet's gateway subtree stays null, since is_wallet_gateway()
+     *      checks only for the 'checkout' context and pay-now was deliberately
+     *      not added when BCDC gained its own row support
+     */
+    public function testScriptDataWalletGatewayStaysNullOnPayNow(): void
+    {
+        global $wp;
+        $wp = (object) ['query_vars' => ['order-pay' => 123]];
+        $_GET['key'] = 'wc_order_abc123';
+
+        $order = Mockery::mock(\WC_Order::class);
+        $order->shouldReceive('get_order_key')->andReturn('wc_order_abc123');
+        $order->shouldReceive('get_total')->andReturn('49.99');
+
+        $this->context->shouldReceive('context')->andReturn('pay-now');
+        $this->card_payments_configuration->shouldReceive('is_acdc_enabled')->andReturn(false);
+        $this->card_payments_configuration->shouldReceive('gateway_title')->andReturn('Credit Card');
+        $this->card_payments_configuration->shouldReceive('show_name_on_card')->andReturn('no');
+
+        $this->settings_status->shouldReceive('is_smart_button_enabled_for_location')->andReturn(false);
+        $this->session_handler->shouldReceive('order')->andReturn(null);
+        $this->context->shouldReceive('is_paypal_continuation')->andReturn(false);
+        $this->environment->shouldReceive('is_sandbox')->andReturn(false);
+        $this->style_mapper->shouldReceive('styles_for_context')->andReturn([]);
+
+        when('WC')->justReturn($this->create_wc_stub([
+            GooglePayGateway::ID => true,
+            ApplePayGateway::ID  => true,
+        ]));
+        when('wc_get_order')->justReturn($order);
+        when('wc_get_base_location')->justReturn(['country' => 'US']);
+        when('get_woocommerce_currency')->justReturn('USD');
+        when('get_locale')->justReturn('en_US');
+        when('is_product')->justReturn(false);
+        when('rest_url')->justReturn('https://example.com/wp-json/wc/store/v1/cart');
+        when('wc_get_checkout_url')->justReturn('https://example.com/checkout');
+
+        $testee = $this->createTestee(true);
+        $data   = $testee->script_data();
+
+        $this->assertNull($data['google_pay']['gateway']);
+        $this->assertNull($data['apple_pay']['gateway']);
     }
 }

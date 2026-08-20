@@ -23,9 +23,10 @@ return array(
 	 * Add Payment Method page) every v5 surface consuming this service's
 	 * script_data() goes dark, including block card fields and the regular
 	 * block method: that is accepted migration-state breakage until their
-	 * own stories migrate them. On the pages v6 does not own (pay-now) the
-	 * v5 stack keeps running: the blocks, applepay, googlepay and axo
-	 * modules would break under a blanket disable.
+	 * own stories migrate them. Ownership is decided per page, not per stack:
+	 * pay-now is v6-owned only when ACDC card fields or the BCDC row render
+	 * there, since the blocks, applepay, googlepay and axo modules would break
+	 * under a blanket disable.
 	 *
 	 * The Add Payment Method page is v6-owned by the vaulting story: v6
 	 * renders the save button + card save fields there, so the v5
