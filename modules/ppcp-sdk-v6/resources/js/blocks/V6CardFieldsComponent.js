@@ -106,6 +106,19 @@ async function submitCardPayment( {
 }
 
 /**
+ * Keeps the latest value in a ref, so the onPaymentSetup callback can read it
+ * without resubscribing every time it changes.
+ *
+ * @param {*} value - The value to track.
+ * @return {Object} A ref holding the latest value.
+ */
+function useLatestRef( value ) {
+	const ref = useRef( value );
+	ref.current = value;
+	return ref;
+}
+
+/**
  * @param {Object}  props                     - Props from the Blocks payment method registry.
  * @param {Object}  props.config              - The localized sdk-v6 config.
  * @param {Object}  props.eventRegistration   - Blocks checkout event subscriptions.
@@ -138,37 +151,27 @@ export function V6CardFieldsComponent( {
 	const [ cardName, setCardName ] = useState( '' );
 	const referenceRef = useRef( null );
 
-	// Whether to vault the card, read at submit time. The choice comes from WC
-	// Blocks' native "Save payment information…" checkbox (shouldSavePayment
-	// prop, shown via supports.showSaveOption); a subscription cart forces it
-	// on since the card must be saved to charge renewals. A ref keeps the
-	// latest value without resubscribing onPaymentSetup.
-	const savePaymentRef = useRef( false );
-	savePaymentRef.current = Boolean( shouldSavePayment ) || hasSubscriptions;
+	// The choice comes from WC Blocks' native "Save payment information…"
+	// checkbox (shown via supports.showSaveOption); a subscription cart forces
+	// it on, since the card must be saved to charge renewals.
+	const savePaymentRef = useLatestRef(
+		Boolean( shouldSavePayment ) || hasSubscriptions
+	);
+	const cardNameRef = useLatestRef( cardName );
 
-	// Read through a ref so onPaymentSetup sees the latest name without
-	// resubscribing every keystroke.
-	const cardNameRef = useRef( '' );
-	useEffect( () => {
-		cardNameRef.current = cardName;
-	}, [ cardName ] );
-
-	// The v6 SDK uses the billing address for AVS / 3D Secure; read the live
-	// Blocks billing address through a ref so the submit sees it without
-	// resubscribing onPaymentSetup on every address change.
-	const billingRef = useRef( null );
-	useEffect( () => {
-		const address = billing?.billingAddress || billing?.billingData;
-		const postalCode = address?.postcode?.trim();
-		billingRef.current = postalCode
+	// The v6 SDK uses the billing address for AVS / 3D Secure.
+	const billingAddress = billing?.billingAddress || billing?.billingData;
+	const postalCode = billingAddress?.postcode?.trim();
+	const billingRef = useLatestRef(
+		postalCode
 			? {
 					postalCode,
-					...( address?.country
-						? { countryCode: address.country }
+					...( billingAddress?.country
+						? { countryCode: billingAddress.country }
 						: {} ),
 			  }
-			: null;
-	}, [ billing ] );
+			: null
+	);
 
 	// One card session for the component's lifetime: the SDK cannot dispose a
 	// session, so it must not be recreated on ordinary re-renders.
@@ -210,12 +213,7 @@ export function V6CardFieldsComponent( {
 		}
 	}, [] );
 
-	// Read through a ref so onPaymentSetup sees the current session without
-	// resubscribing when it arrives.
-	const sessionRef = useRef( null );
-	useEffect( () => {
-		sessionRef.current = session;
-	}, [ session ] );
+	const sessionRef = useLatestRef( session );
 
 	// onPaymentSetup fires for every registered method during checkout
 	// processing, so gate on the active one before running the card flow.
