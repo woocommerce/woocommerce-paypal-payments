@@ -19,7 +19,10 @@ import {
 import { __ } from '@wordpress/i18n';
 import { loadSdkV6 } from '../sdkLoader';
 import { createCardOrder, approveCardOrder } from '../endpointsAdapter';
-import { cardFieldStyles } from '../cardFields/cardFieldStyles';
+import {
+	cardFieldStyles,
+	hostedFieldTextStyles,
+} from '../cardFields/cardFieldStyles';
 import { V6CardFieldContainer } from './V6CardFieldContainer';
 
 /**
@@ -131,6 +134,7 @@ export function V6CardFieldsComponent( {
 
 	const [ session, setSession ] = useState( null );
 	const [ inputStyle, setInputStyle ] = useState( null );
+	const [ textStyle, setTextStyle ] = useState( null );
 	const [ cardName, setCardName ] = useState( '' );
 	const referenceRef = useRef( null );
 
@@ -190,6 +194,11 @@ export function V6CardFieldsComponent( {
 	// v6 returns unstyled field elements, so derive their styling from a real
 	// block text input on the page (accurate theme height/padding/border),
 	// falling back to a hidden reference input when none is found.
+	//
+	// Two objects, because they have different audiences: inputStyle describes
+	// elements this component renders itself (the cardholder-name input, and the
+	// hosted fields' own box), while textStyle is handed to the SDK and lands
+	// inside a PayPal iframe, where box decoration has no business.
 	useEffect( () => {
 		const source =
 			document.querySelector(
@@ -197,6 +206,7 @@ export function V6CardFieldsComponent( {
 			) || referenceRef.current;
 		if ( source ) {
 			setInputStyle( cardFieldStyles( source ) );
+			setTextStyle( hostedFieldTextStyles( source ) );
 		}
 	}, [] );
 
@@ -235,7 +245,7 @@ export function V6CardFieldsComponent( {
 		responseTypes,
 	] );
 
-	const fieldsReady = session && inputStyle;
+	const fieldsReady = session && inputStyle && textStyle;
 
 	return createElement(
 		'div',
@@ -288,7 +298,8 @@ export function V6CardFieldsComponent( {
 				createElement( V6CardFieldContainer, {
 					session,
 					type: 'number',
-					style: inputStyle,
+					style: textStyle,
+					height: inputStyle.height,
 					placeholder: __(
 						'Card number',
 						'woocommerce-paypal-payments'
@@ -303,7 +314,8 @@ export function V6CardFieldsComponent( {
 					createElement( V6CardFieldContainer, {
 						session,
 						type: 'expiry',
-						style: inputStyle,
+						style: textStyle,
+						height: inputStyle.height,
 						placeholder: __(
 							'MM / YY',
 							'woocommerce-paypal-payments'
@@ -313,7 +325,8 @@ export function V6CardFieldsComponent( {
 					createElement( V6CardFieldContainer, {
 						session,
 						type: 'cvv',
-						style: inputStyle,
+						style: textStyle,
+						height: inputStyle.height,
 						placeholder: __( 'CVV', 'woocommerce-paypal-payments' ),
 						containerStyle: { flex: 1 },
 					} )

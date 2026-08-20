@@ -11,8 +11,10 @@ jest.mock( '../endpointsAdapter', () => ( {
 } ) );
 
 const mockCardFieldStyles = jest.fn();
+const mockHostedFieldTextStyles = jest.fn();
 jest.mock( '../cardFields/cardFieldStyles', () => ( {
 	cardFieldStyles: ( ...args ) => mockCardFieldStyles( ...args ),
+	hostedFieldTextStyles: ( ...args ) => mockHostedFieldTextStyles( ...args ),
 } ) );
 
 const mockCardFieldContainer = jest.fn( () => null );
@@ -105,7 +107,12 @@ beforeEach( () => {
 	} );
 	mockCreateCardOrder.mockReset();
 	mockApproveCardOrder.mockReset().mockResolvedValue( undefined );
-	mockCardFieldStyles.mockReset().mockReturnValue( { color: 'rgb(0,0,0)' } );
+	mockCardFieldStyles
+		.mockReset()
+		.mockReturnValue( { color: 'rgb(0,0,0)', height: '40px' } );
+	mockHostedFieldTextStyles
+		.mockReset()
+		.mockReturnValue( { color: 'rgb(0,0,0)' } );
 	mockCardFieldContainer.mockClear();
 } );
 
@@ -267,6 +274,19 @@ describe( 'V6CardFieldsComponent', () => {
 		} );
 
 		expect( result ).toEqual( { type: 'error', message: 'nonce expired' } );
+	} );
+
+	test( "passes the reference input's height to each V6CardFieldContainer via its own height prop, not inside style", async () => {
+		renderComponent();
+
+		await waitFor( () =>
+			expect( mockCardFieldContainer ).toHaveBeenCalled()
+		);
+
+		for ( const call of mockCardFieldContainer.mock.calls ) {
+			expect( call[ 0 ].height ).toBe( '40px' );
+			expect( call[ 0 ].style ).not.toHaveProperty( 'height' );
+		}
 	} );
 
 	test( 'renders the cardholder name as a plain input, not a V6CardFieldContainer, when card_fields.name_field is enabled', async () => {
