@@ -1,6 +1,8 @@
-const mockCardFieldStyles = jest.fn( () => ( { color: 'rgb(0, 0, 0)' } ) );
+const mockHostedFieldTextStyles = jest.fn( () => ( {
+	color: 'rgb(0, 0, 0)',
+} ) );
 jest.mock( '../cardFields/cardFieldStyles', () => ( {
-	cardFieldStyles: ( field ) => mockCardFieldStyles( field ),
+	hostedFieldTextStyles: ( field ) => mockHostedFieldTextStyles( field ),
 } ) );
 
 const mockHide = jest.fn();
@@ -201,9 +203,9 @@ describe( 'initCardFields', () => {
 		);
 		await flushPromises();
 
-		expect(
-			cardSession.createCardFieldsComponent
-		).toHaveBeenCalledTimes( 3 );
+		expect( cardSession.createCardFieldsComponent ).toHaveBeenCalledTimes(
+			3
+		);
 		expect(
 			cardSession.createCardFieldsComponent
 		).not.toHaveBeenCalledWith(
@@ -215,7 +217,7 @@ describe( 'initCardFields', () => {
 		expect( nameInput.hidden ).toBe( false );
 	} );
 
-	test( "sizes the mounted field to the original input's own box, since style.input only styles what is inside it", async () => {
+	test( "sizes the mounted field's height to the original input's own box, since style.input only styles what is inside it, and fills the field's own column width", async () => {
 		buildCheckoutDom( 'ppcp-credit-card-gateway' );
 		const numberInput = document.querySelector(
 			'#ppcp-credit-card-gateway-card-number'
@@ -231,7 +233,7 @@ describe( 'initCardFields', () => {
 		await initCardFields( baseConfig() );
 		await flushPromises();
 
-		expect( numberInput.nextSibling.style.width ).toBe( '300px' );
+		expect( numberInput.nextSibling.style.width ).toBe( '100%' );
 		expect( numberInput.nextSibling.style.height ).toBe( '45px' );
 	} );
 

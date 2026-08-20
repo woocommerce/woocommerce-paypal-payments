@@ -1,6 +1,8 @@
-const mockCardFieldStyles = jest.fn( () => ( { color: 'rgb(0, 0, 0)' } ) );
+const mockHostedFieldTextStyles = jest.fn( () => ( {
+	color: 'rgb(0, 0, 0)',
+} ) );
 jest.mock( '../cardFields/cardFieldStyles', () => ( {
-	cardFieldStyles: ( field ) => mockCardFieldStyles( field ),
+	hostedFieldTextStyles: ( field ) => mockHostedFieldTextStyles( field ),
 } ) );
 
 const mockHide = jest.fn();

@@ -9,20 +9,17 @@
  */
 
 import { hide } from '@ppcp-button/Helper/Hiding';
-import { cardFieldStyles } from './cardFieldStyles';
+import { hostedFieldTextStyles } from './cardFieldStyles';
 
 /**
- * Replaces a WC card input with its hosted v6 field, hiding the original
- * (mirrors v5's Render.js placement/hiding).
+ * Replaces a WC card input with its hosted v6 field, hiding the original.
  *
- * Unlike v5's paypal.CardFields(), which owns its container's layout via its
- * own .render() call, v6's createCardFieldsComponent() only returns a plain
- * HTMLElement: `style.input` styles what's inside it (font, color, padding,
- * ...), not the element's own box on this page. Theme rules targeting the
- * original `input` tag (e.g. `.input-wrapper input { height: 100% }`) don't
- * match this element, so its box has to be sized explicitly from the original
- * input's own rendered dimensions or it falls back to the SDK's default (much
- * taller than the form's inputs).
+ * The element v6 returns is ours to size: `style.input` only reaches the text
+ * inside it, and theme rules targeting the `input` tag never match it, so
+ * without an explicit size it keeps the SDK default (much taller than the
+ * form's inputs). Width fills the parent rather than copying the input's own
+ * width, which is not the width its column gives it — WooCommerce renders the
+ * CVV input far narrower than the half-width column holding it.
  *
  * @param {Object}      cardSession - The v6 card fields session.
  * @param {string}      fieldType   - number|expiry|cvv|name.
@@ -33,18 +30,22 @@ export function mountField( cardSession, fieldType, inputField ) {
 		return;
 	}
 
-	const computed = window.getComputedStyle( inputField );
+	const placeholder = inputField.getAttribute( 'placeholder' );
 	const options = {
 		type: fieldType,
-		style: { input: cardFieldStyles( inputField ) },
+		style: { input: hostedFieldTextStyles( inputField ) },
 	};
-	if ( inputField.getAttribute( 'placeholder' ) ) {
-		options.placeholder = inputField.getAttribute( 'placeholder' );
+	if ( placeholder ) {
+		options.placeholder = placeholder;
 	}
 
 	const fieldElement = cardSession.createCardFieldsComponent( options );
-	fieldElement.style.width = computed.width;
-	fieldElement.style.height = computed.height;
+	fieldElement.classList.add(
+		'ppcp-sdk-v6-card-field',
+		`ppcp-sdk-v6-card-field--${ fieldType }`
+	);
+	fieldElement.style.width = '100%';
+	fieldElement.style.height = window.getComputedStyle( inputField ).height;
 
 	inputField.parentNode.appendChild( fieldElement );
 	hide( inputField, true );

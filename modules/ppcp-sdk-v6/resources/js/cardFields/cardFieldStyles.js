@@ -1,15 +1,31 @@
 /**
- * Computes the `style.input` object for the v6 card-fields component.
+ * Computes the style objects for the v6 card-fields component.
  *
- * Unlike v5's paypal.CardFields() (see CardFieldsHelper.js), the v6 SDK
- * takes camelCase JS style properties (fontSize, not font-family) and
- * supports a different, narrower property set (e.g. no vendor-prefixed
- * properties, but background/border/borderRadius/boxShadow/height are
- * allowed) — reusing the v5 helper as-is causes the SDK to log a
- * "css property is not supported" DevError per property and skip it.
+ * cardFieldStyles() describes an element on our own page, so the theme's full
+ * box belongs on it. hostedFieldTextStyles() is handed to the SDK as
+ * `style.input` and reaches text inside a PayPal-hosted iframe, where box
+ * decoration would paint a frame the theme never drew on this element — and
+ * would carry state the theme does not own, such as the `border-color:
+ * var(--wc-green)` WooCommerce puts on a validated row.
+ *
+ * The v6 SDK takes camelCase property names (fontSize, not font-size) and
+ * rejects vendor-prefixed ones, logging a "css property is not supported"
+ * DevError per property it skips.
  *
  * @package
  */
+
+/**
+ * Properties describing the field's frame rather than its text; never handed
+ * to the SDK.
+ */
+const BOX_PROPERTIES = [
+	'background',
+	'border',
+	'borderRadius',
+	'boxShadow',
+	'height',
+];
 
 const ALLOWED_PROPERTIES = [
 	'appearance',
@@ -46,12 +62,10 @@ const ALLOWED_PROPERTIES = [
 	'transition',
 ];
 
-/**
- * Converts a kebab-case CSS property name to camelCase.
- *
- * @param {string} property - The kebab-case property name.
- * @return {string} The camelCase property name.
- */
+const TEXT_PROPERTIES = ALLOWED_PROPERTIES.filter(
+	( property ) => ! BOX_PROPERTIES.includes( property )
+);
+
 function toCamelCase( property ) {
 	return property.replace( /-([a-z])/g, ( match, letter ) =>
 		letter.toUpperCase()
@@ -59,29 +73,49 @@ function toCamelCase( property ) {
 }
 
 /**
- * Reads the field's live computed styles and returns only the properties
- * the v6 card-fields component actually supports, camelCased.
+ * Reads the field's live computed styles and keeps only the listed properties,
+ * camelCased.
  *
- * @param {HTMLElement} field - The existing WC input being replaced.
- * @return {Object} The style object for the component's `style.input`.
+ * @param {HTMLElement} field      - The existing WC input being replaced.
+ * @param {string[]}    properties - The camelCase property names to keep.
+ * @return {Object} The style object.
  */
-export function cardFieldStyles( field ) {
+function pickComputed( field, properties ) {
 	const computed = window.getComputedStyle( field );
 	const styles = {};
 
 	for ( let i = 0; i < computed.length; i++ ) {
 		const property = computed[ i ];
 		const camelProperty = toCamelCase( property );
+		const value = computed.getPropertyValue( property );
 
-		if (
-			! ALLOWED_PROPERTIES.includes( camelProperty ) ||
-			! computed[ property ]
-		) {
+		if ( ! value || ! properties.includes( camelProperty ) ) {
 			continue;
 		}
 
-		styles[ camelProperty ] = '' + computed[ property ];
+		styles[ camelProperty ] = value;
 	}
 
 	return styles;
+}
+
+/**
+ * The full style set, box included, for elements this plugin owns and renders.
+ *
+ * @param {HTMLElement} field - The existing WC input being replaced.
+ * @return {Object} The style object.
+ */
+export function cardFieldStyles( field ) {
+	return pickComputed( field, ALLOWED_PROPERTIES );
+}
+
+/**
+ * The text-only style set for the SDK's `style.input`, which reaches inside a
+ * PayPal-hosted field.
+ *
+ * @param {HTMLElement} field - The existing WC input being replaced.
+ * @return {Object} The style object.
+ */
+export function hostedFieldTextStyles( field ) {
+	return pickComputed( field, TEXT_PROPERTIES );
 }
