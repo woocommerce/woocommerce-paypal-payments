@@ -85,15 +85,20 @@ class WebhookRegistrar {
 		$this->do_unregister();
 
 		// TEMPORARY diagnostic for the ngrok webhook-host investigation. Remove
-		// once the registered webhook host is confirmed correct in CI.
-		error_log( // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log -- temporary diagnostic.
+		// once the registered webhook host is confirmed correct in CI. Written
+		// to a plain file rather than error_log(), since PHP's error_log
+		// destination isn't guaranteed to land in the container's stdout/stderr
+		// stream that `wp-env logs` captures.
+		file_put_contents( // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- temporary diagnostic.
+			WP_CONTENT_DIR . '/ngrok-diag.log',
 			sprintf(
-				'[ngrok-diag] REGISTERING webhook: IncomingWebhookEndpoint::url()=%s rest_url(paypal/v1/incoming)=%s getenv(NGROK_HOST)=%s home_url()=%s',
+				"[ngrok-diag] REGISTERING webhook: IncomingWebhookEndpoint::url()=%s rest_url(paypal/v1/incoming)=%s getenv(NGROK_HOST)=%s home_url()=%s\n",
 				$this->incoming_webhook_endpoint->url(),
 				rest_url( 'paypal/v1/incoming' ),
 				var_export( getenv( 'NGROK_HOST' ), true ),
 				home_url()
-			)
+			),
+			FILE_APPEND
 		);
 
 		$webhook = $this->webhook_factory->for_url_and_events(
@@ -113,8 +118,10 @@ class WebhookRegistrar {
 			);
 
 			// TEMPORARY diagnostic for the ngrok webhook-host investigation.
-			error_log( // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log -- temporary diagnostic.
-				sprintf( '[ngrok-diag] REGISTERED webhook id=%s url=%s', $created->id(), $created->url() )
+			file_put_contents( // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- temporary diagnostic.
+				WP_CONTENT_DIR . '/ngrok-diag.log',
+				sprintf( "[ngrok-diag] REGISTERED webhook id=%s url=%s\n", $created->id(), $created->url() ),
+				FILE_APPEND
 			);
 
 			$this->last_webhook_event_storage->clear();
