@@ -128,15 +128,20 @@ class IncomingWebhookEndpoint
         // handle_request(), so it fires even if verification below rejects the request.
         // Uses $request->get_body()/get_json_params() (WP's own cached copy) rather
         // than a raw php://input read, since WP_REST_Server may have already
-        // consumed the input stream before this runs.
-        error_log(
-            // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log -- temporary diagnostic.
+        // consumed the input stream before this runs. Written to a plain file
+        // rather than error_log(), since PHP's error_log destination isn't
+        // guaranteed to land in the container's stdout/stderr stream that
+        // `wp-env logs` captures.
+        file_put_contents(
+            // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- temporary diagnostic.
+            WP_CONTENT_DIR . '/ngrok-diag.log',
             sprintf(
-                '[ngrok-diag] WEBHOOK POST RECEIVED: uri=%s event=%s',
+                "[ngrok-diag] WEBHOOK POST RECEIVED: uri=%s event=%s\n",
                 $_SERVER['REQUEST_URI'] ?? 'unknown',
                 // phpcs:ignore WordPress.Security.ValidatedSanitizedInput -- temporary diagnostic, logged only.
                 $request->get_json_params()['event_type'] ?? 'unknown'
-            )
+            ),
+            \FILE_APPEND
         );
         $content_type = $request->get_content_type();
         if (!isset($content_type['value']) || 'application/json' !== $content_type['value']) {
