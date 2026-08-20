@@ -11,7 +11,10 @@ jest.mock( './shippingHandler', () => ( {
 } ) );
 
 jest.mock( '../utils/api', () => ( { hasJQuery: () => false } ) );
-jest.mock( '../utils/errorHandler', () => ( { handleError: jest.fn() } ) );
+jest.mock( '../utils/errorHandler', () => ( {
+	handleError: jest.fn(),
+	handleWarning: jest.fn(),
+} ) );
 
 import { createSession, SUPPORTED_METHODS } from './createSession';
 
@@ -27,6 +30,12 @@ function fakeSdk() {
 		capture,
 		createPayPalOneTimePaymentSession: recordFactoryCall(
 			'createPayPalOneTimePaymentSession'
+		),
+		createVenmoOneTimePaymentSession: recordFactoryCall(
+			'createVenmoOneTimePaymentSession'
+		),
+		createPayLaterOneTimePaymentSession: recordFactoryCall(
+			'createPayLaterOneTimePaymentSession'
 		),
 		createGooglePayOneTimePaymentSession: recordFactoryCall(
 			'createGooglePayOneTimePaymentSession'

@@ -260,7 +260,7 @@ class SdkV6ManagerTest extends TestCase
         $this->session_handler->shouldReceive('order')->andReturn(null);
         $this->context->shouldReceive('is_paypal_continuation')->andReturn(false);
         $this->environment->shouldReceive('is_sandbox')->andReturn(false);
-        $this->style_mapper->shouldReceive('styles_for_context')->andReturn([]);
+        $this->style_mapper->shouldReceive('styles_for_context')->andReturn(['borderRadius' => '4px']);
 
         when('WC')->justReturn($this->create_wc_stub());
         when('wc_get_order')->justReturn($order);
@@ -300,7 +300,7 @@ class SdkV6ManagerTest extends TestCase
         $this->session_handler->shouldReceive('order')->andReturn(null);
         $this->context->shouldReceive('is_paypal_continuation')->andReturn(false);
         $this->environment->shouldReceive('is_sandbox')->andReturn(false);
-        $this->style_mapper->shouldReceive('styles_for_context')->andReturn([]);
+        $this->style_mapper->shouldReceive('styles_for_context')->andReturn(['borderRadius' => '4px']);
 
         $wc = $this->create_wc_stub();
         $wc->customer = Mockery::mock();
@@ -418,7 +418,7 @@ class SdkV6ManagerTest extends TestCase
         $this->session_handler->shouldReceive('order')->andReturn(null);
         $this->context->shouldReceive('is_paypal_continuation')->andReturn(false);
         $this->environment->shouldReceive('is_sandbox')->andReturn(false);
-        $this->style_mapper->shouldReceive('styles_for_context')->andReturn([]);
+        $this->style_mapper->shouldReceive('styles_for_context')->andReturn(['borderRadius' => '4px']);
 
         when('WC')->justReturn($this->create_wc_stub());
         when('wc_get_base_location')->justReturn(['country' => 'US']);
@@ -687,7 +687,7 @@ class SdkV6ManagerTest extends TestCase
         $this->session_handler->shouldReceive('order')->andReturn(null);
         $this->context->shouldReceive('is_paypal_continuation')->andReturn(false);
         $this->environment->shouldReceive('is_sandbox')->andReturn(false);
-        $this->style_mapper->shouldReceive('styles_for_context')->andReturn([]);
+        $this->style_mapper->shouldReceive('styles_for_context')->andReturn(['borderRadius' => '4px']);
 
         when('WC')->justReturn($this->create_wc_stub([
             GooglePayGateway::ID => true,
