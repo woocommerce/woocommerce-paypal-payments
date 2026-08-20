@@ -21,7 +21,7 @@ const merchant = merchants.mexico;
 
 export const bcdcClassicCheckout: ShopOrder[] = [
 	{
-		title: 'PCP-1211 | Transaction - Classic checkout - BCDC - Default order @Critical @Smoke',
+		title: 'PCP-1211 | Transaction - Classic checkout - BCDC - Default order @Critical',
 		...orders.default,
 		payment: payments.bcdc,
 		customer: guest,

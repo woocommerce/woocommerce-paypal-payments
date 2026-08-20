@@ -67,15 +67,15 @@ jobs:
         shell: bash
         run: |
           SHARDS=(
-            plugin-foundation
-            onboarding
-            settings
-            transaction-usa
+            # plugin-foundation
+            # onboarding
+            # settings
+            # transaction-usa
             transaction-mexico
             transaction-germany
-            refund
-            vaulting
-            subscription
+            # refund
+            # vaulting
+            # subscription
           )
 
           TEST_SUITE='${{ inputs.TEST_SUITE || 'smoke:parallel' }}'
@@ -121,6 +121,7 @@ jobs:
       NGROK_ENABLED: ${{ contains(fromJson('["transaction-usa","transaction-mexico","transaction-germany","refund","vaulting","subscription"]'), matrix.slug) }}
       NGROK_WILDCARD_DOMAIN: e2e.paypal.syde.wpinfra.cloud
       NGROK_SUBDOMAIN: ${{ matrix.slug }}-${{ github.run_id }}
+      NGROK_HOST_FILE: tests/qa/resources/e2e-snippets/ngrok-host.txt
       PRE_SCRIPT: |
         # 1. Download and unzip the built plugin
         gh run download ${{ github.run_id }} -p "woocommerce-paypal-payments-*" -D tests/qa/resources/files

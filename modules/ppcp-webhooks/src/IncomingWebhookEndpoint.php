@@ -159,6 +159,21 @@ class IncomingWebhookEndpoint {
 	 * @return bool
 	 */
 	public function verify_request( \WP_REST_Request $request ): bool {
+		// TEMPORARY diagnostic for the ngrok webhook-host investigation. Remove
+		// once webhook arrival is confirmed in CI. Placed here (the permission_callback,
+		// which WP dispatches before the route callback) rather than in
+		// handle_request(), so it fires even if verification below rejects the request.
+		// Uses $request->get_body()/get_json_params() (WP's own cached copy) rather
+		// than a raw php://input read, since WP_REST_Server may have already
+		// consumed the input stream before this runs.
+		error_log( // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log -- temporary diagnostic.
+			sprintf(
+				'[ngrok-diag] WEBHOOK POST RECEIVED: uri=%s event=%s',
+				$_SERVER['REQUEST_URI'] ?? 'unknown', // phpcs:ignore WordPress.Security.ValidatedSanitizedInput -- temporary diagnostic, logged only.
+				$request->get_json_params()['event_type'] ?? 'unknown'
+			)
+		);
+
 		$content_type = $request->get_content_type();
 		if ( ! isset( $content_type['value'] ) || 'application/json' !== $content_type['value'] ) {
 			$this->logger->error( 'Webhook request rejected: expected application/json content type.' );
