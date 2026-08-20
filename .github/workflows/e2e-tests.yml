@@ -106,7 +106,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix: ${{ fromJson(needs.resolve-playwright-matrix.outputs.matrix) }}
-    uses: inpsyde/reusable-workflows/.github/workflows/test-playwright.yml@dev/qa/wildcard-ngrok-for-parallel-tests
+    uses: inpsyde/reusable-workflows/.github/workflows/test-playwright.yml@main
     with:
       PLAYWRIGHT_SCRIPT: ${{ matrix.script }}
       PLAYWRIGHT_ARTIFACT_NAME: ${{ matrix.artifact_name }}
@@ -118,9 +118,10 @@ jobs:
       NODE_VERSION: 22
       PLAYWRIGHT_BROWSER_ARGS: 'chromium --with-deps'
       XRAY_TEST_EXEC_KEY: ${{ inputs.XRAY_TEST_EXEC_KEY }}
-      NGROK_ENABLED: ${{ contains(fromJson('["transaction-usa","transaction-mexico","transaction-germany","refund","vaulting","subscription"]'), matrix.slug) }}
-      NGROK_WILDCARD_DOMAIN: e2e.paypal.syde.wpinfra.cloud
-      NGROK_SUBDOMAIN: ${{ matrix.slug }}-${{ github.run_id }}
+      # NGROK_ENABLED: ${{ contains(fromJson('["transaction-usa","transaction-mexico","transaction-germany","refund","vaulting","subscription"]'), matrix.slug) }}
+      # NGROK_WILDCARD_DOMAIN: e2e.paypal.syde.wpinfra.cloud
+      # NGROK_SUBDOMAIN: ${{ matrix.slug }}-${{ github.run_id }}
+      NGROK_DOMAIN: ngrok-dev.paypal.syde.wpinfra.cloud
       PRE_SCRIPT: |
         # 1. Download and unzip the built plugin
         gh run download ${{ github.run_id }} -p "woocommerce-paypal-payments-*" -D tests/qa/resources/files
