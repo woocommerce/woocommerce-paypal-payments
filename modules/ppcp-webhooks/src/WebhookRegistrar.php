@@ -84,6 +84,18 @@ class WebhookRegistrar {
 	private function do_register(): bool {
 		$this->do_unregister();
 
+		// TEMPORARY diagnostic for the ngrok webhook-host investigation. Remove
+		// once the registered webhook host is confirmed correct in CI.
+		error_log( // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log -- temporary diagnostic.
+			sprintf(
+				'[ngrok-diag] IncomingWebhookEndpoint::url()=%s rest_url(paypal/v1/incoming)=%s getenv(NGROK_HOST)=%s home_url()=%s',
+				$this->incoming_webhook_endpoint->url(),
+				rest_url( 'paypal/v1/incoming' ),
+				var_export( getenv( 'NGROK_HOST' ), true ),
+				home_url()
+			)
+		);
+
 		$webhook = $this->webhook_factory->for_url_and_events(
 			$this->incoming_webhook_endpoint->url(),
 			$this->incoming_webhook_endpoint->handled_event_types()
