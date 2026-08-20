@@ -66,6 +66,11 @@ describe( 'loadSdkV6', () => {
 				'googlepay-payments',
 			],
 		],
+		[
+			'the card button enabled',
+			{ card_button: { enabled: true } },
+			[ 'paypal-payments', 'venmo-payments', 'paypal-guest-payments' ],
+		],
 	] )( 'requests %s', async ( label, overrides, expectedComponents ) => {
 		await loadSdkV6( baseConfig( overrides ), 'checkout' );
 
@@ -80,6 +85,19 @@ describe( 'loadSdkV6', () => {
 				card_fields: { enabled: false },
 				google_pay: { enabled: false },
 			} ),
+			'checkout'
+		);
+
+		expect( window.paypal.createInstance ).toHaveBeenCalledWith(
+			expect.objectContaining( {
+				components: [ 'paypal-payments', 'venmo-payments' ],
+			} )
+		);
+	} );
+
+	test( 'does not request paypal-guest-payments when the card button is explicitly disabled', async () => {
+		await loadSdkV6(
+			baseConfig( { card_button: { enabled: false } } ),
 			'checkout'
 		);
 

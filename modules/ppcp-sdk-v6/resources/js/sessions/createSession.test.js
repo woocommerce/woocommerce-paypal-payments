@@ -34,6 +34,9 @@ function fakeSdk() {
 		createApplePayOneTimePaymentSession: recordFactoryCall(
 			'createApplePayOneTimePaymentSession'
 		),
+		createPayPalGuestOneTimePaymentSession: recordFactoryCall(
+			'createPayPalGuestOneTimePaymentSession'
+		),
 	};
 }
 
@@ -51,12 +54,13 @@ describe( 'SUPPORTED_METHODS', () => {
 			'paylater',
 			'googlepay',
 			'applepay',
+			'card',
 		] );
 	} );
 } );
 
 describe( 'createSession', () => {
-	test( 'default onApprove routes to the classic approveOrder flow', async () => {
+	test( 'default onApprove routes to the classic approveOrder flow, passing no paymentMethod for paypal', async () => {
 		const sdk = fakeSdk();
 		const config = { shipping: {} };
 
@@ -67,7 +71,9 @@ describe( 'createSession', () => {
 			config,
 			'cart',
 			'paypal',
-			'ORDER1'
+			'ORDER1',
+			{},
+			undefined
 		);
 	} );
 
@@ -167,6 +173,83 @@ describe( 'createSession', () => {
 			expect(
 				sdk.capture.config.onShippingOptionsChange
 			).toBeUndefined();
+		} );
+	} );
+
+	describe( 'card', () => {
+		test( 'is created through createPayPalGuestOneTimePaymentSession', () => {
+			const sdk = fakeSdk();
+
+			createSession( sdk, 'card', { shipping: {} }, 'checkout' );
+
+			expect( sdk.capture.factory ).toBe(
+				'createPayPalGuestOneTimePaymentSession'
+			);
+		} );
+
+		test( 'gets onWarn and onComplete, unlike paypal and venmo', () => {
+			const sdk = fakeSdk();
+
+			createSession(
+				sdk,
+				'card',
+				{ shipping: {}, card_button: { payment_method: 'x' } },
+				'checkout'
+			);
+
+			expect( sdk.capture.config.onWarn ).toEqual( expect.any( Function ) );
+			expect( sdk.capture.config.onComplete ).toEqual(
+				expect.any( Function )
+			);
+		} );
+
+		test.each( [ 'paypal', 'venmo' ] )(
+			'%s gets neither onWarn nor onComplete',
+			( method ) => {
+				const sdk = fakeSdk();
+
+				createSession( sdk, method, { shipping: {} }, 'checkout' );
+
+				expect( sdk.capture.config.onWarn ).toBeUndefined();
+				expect( sdk.capture.config.onComplete ).toBeUndefined();
+			}
+		);
+
+		test( "onApprove forwards config.card_button.payment_method as approveOrder's paymentMethod", async () => {
+			const sdk = fakeSdk();
+			const config = {
+				shipping: {},
+				card_button: { payment_method: 'ppcp-card-button-gateway' },
+			};
+
+			createSession( sdk, 'card', config, 'checkout' );
+			await sdk.capture.config.onApprove( { orderId: 'ORDER1' } );
+
+			expect( mockApproveOrder ).toHaveBeenCalledWith(
+				config,
+				'checkout',
+				'card',
+				'ORDER1',
+				{},
+				'ppcp-card-button-gateway'
+			);
+		} );
+
+		test( "paypal's onApprove leaves approveOrder's paymentMethod undefined", async () => {
+			const sdk = fakeSdk();
+			const config = { shipping: {}, card_button: { payment_method: 'x' } };
+
+			createSession( sdk, 'paypal', config, 'checkout' );
+			await sdk.capture.config.onApprove( { orderId: 'ORDER2' } );
+
+			expect( mockApproveOrder ).toHaveBeenCalledWith(
+				config,
+				'checkout',
+				'paypal',
+				'ORDER2',
+				{},
+				undefined
+			);
 		} );
 	} );
 } );
