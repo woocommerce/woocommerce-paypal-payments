@@ -192,14 +192,12 @@ class SdkV6Manager {
 	/**
 	 * Determines which button locations should render on the current page.
 	 *
+	 * Expects Context::init_context() to have run, so that is_cart() and
+	 * is_checkout() resolve on classic-shortcode block pages.
+	 *
 	 * @return array<string, bool> Location => enabled (product, cart, checkout, pay-now, mini-cart).
 	 */
 	public function determine_render_places(): array {
-		// Activate is_cart()/is_checkout() on classic-shortcode block pages;
-		// otherwise this only happens as a side effect of constructing the
-		// (discarded) v5 SmartButton.
-		$this->context->init_context();
-
 		// Free orders ($0 total, e.g. a 100%-off coupon or free trial) do not
 		// need payment, so the cart/checkout wallet buttons must not render —
 		// matching v5's is_cart_price_total_zero() suppression.

@@ -11,6 +11,7 @@ namespace WooCommerce\PayPalCommerce\SdkV6;
 
 use Automattic\WooCommerce\Blocks\Payments\PaymentMethodRegistry;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
+use WooCommerce\PayPalCommerce\Button\Helper\Context;
 use WooCommerce\PayPalCommerce\SdkV6\Assets\AddPaymentMethodManager;
 use WooCommerce\PayPalCommerce\SdkV6\Assets\SdkV6Manager;
 use WooCommerce\PayPalCommerce\SdkV6\Endpoint\ClientTokenEndpoint;
@@ -93,6 +94,13 @@ class SdkV6Module implements ServiceModule, ExtendingModule, ExecutableModule {
 				if ( is_admin() ) {
 					return;
 				}
+
+				// Activates is_cart()/is_checkout() on classic-shortcode block
+				// pages. The hook registrars below resolve the page context, so this
+				// needs to run before.
+				$context = $c->get( 'button.helper.context' );
+				assert( $context instanceof Context );
+				$context->init_context();
 
 				$manager = $c->get( 'sdk-v6.manager' );
 				assert( $manager instanceof SdkV6Manager );

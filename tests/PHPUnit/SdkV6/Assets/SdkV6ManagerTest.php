@@ -152,11 +152,17 @@ class SdkV6ManagerTest extends TestCase
      * AND the product and pay-now locations render regardless of the cart's payment status,
      *     since pay-now is driven by an existing WC order rather than the cart
      *
+     * AND determine_render_places() does not call Context::init_context() itself — that
+     *     initialization now happens once in SdkV6Module's 'wp' callback, before both the
+     *     button and message hook registrars run, so neither registrar depends on the other
+     *     running first to trip it as a side effect. Reintroducing the call here would restore
+     *     that ordering coupling.
+     *
      * @dataProvider render_places_needs_payment_provider
      */
     public function testDetermineRenderPlacesGatedByCartNeedsPayment(?bool $cart_needs_payment, array $expected): void
     {
-        $this->context->shouldReceive('init_context')->once();
+        $this->context->shouldReceive('init_context')->never();
         $this->settings_status->shouldReceive('is_smart_button_enabled_for_location')->andReturn(true);
 
         if (null === $cart_needs_payment) {
