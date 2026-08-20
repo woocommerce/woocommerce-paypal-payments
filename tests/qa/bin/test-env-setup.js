@@ -4,7 +4,24 @@
  */
 const { execSync } = require( 'child_process' );
 
+// Baseline site URL for wp-env's home/siteurl DB options (not wp-config
+// constants — a constant would re-trigger the pre_option_home/siteurl
+// filters and permanently win over any later `wp option update`, including
+// the ngrok-enabled shards' own override in the reusable workflow). Must
+// stay in sync with the WP_BASE_URL baseline in .env.ci / .env.example.e2e:
+// non-ngrok shards and local dev navigate against that value, so WordPress's
+// own home/siteurl need to match it here.
+const baseUrl = process.env.WP_BASE_URL || 'http://mywp.site';
+
 const commands = [
+	{
+		description: 'Set home URL',
+		command: `wp-env run tests-cli -- wp option update home "${ baseUrl }"`,
+	},
+	{
+		description: 'Set site URL',
+		command: `wp-env run tests-cli -- wp option update siteurl "${ baseUrl }"`,
+	},
 	{
 		description: 'Install storefront theme',
 		command: 'wp-env run tests-cli -- wp theme install storefront',
