@@ -179,12 +179,20 @@ return array(
 	},
 
 	'sdk-v6.blocks.payment-method'      => static function ( ContainerInterface $container ): V6PaymentMethod {
+		// The saved-PayPal vault component lives in its own feature-flagged module,
+		// so its services may be absent; fall back to no saved-token support.
+		$has_vault = $container->has( 'vault-component.data' )
+			&& $container->has( 'vault-component.eligibility.check' );
+
 		return new V6PaymentMethod(
 			$container->get( 'sdk-v6.manager' ),
 			$container->get( 'sdk-v6.asset-getter' ),
 			$container->get( 'ppcp.asset-version' ),
 			$container->get( 'wcgateway.paypal-gateway' ),
-			$container->get( 'wcgateway.credit-card-gateway' )
+			$container->get( 'wcgateway.credit-card-gateway' ),
+			$has_vault ? $container->get( 'vault-component.data' ) : null,
+			$has_vault ? $container->get( 'vault-component.eligibility.check' ) : null,
+			$container->get( 'button.client_id' )
 		);
 	},
 

@@ -6,6 +6,9 @@ namespace WooCommerce\PayPalCommerce\VaultComponent;
 use WC_Order;
 use WC_Payment_Token;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
+use WooCommerce\PayPalCommerce\Assets\AssetGetter;
+use WooCommerce\PayPalCommerce\Assets\AssetGetterFactory;
+use WooCommerce\PayPalCommerce\Button\Assets\SmartButtonInterface;
 use WooCommerce\PayPalCommerce\WcPaymentTokens\PaymentTokenPayPal;
 use WooCommerce\PayPalCommerce\VaultComponent\Endpoint\CreateVaultOrderEndpoint;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExecutableModule;
@@ -13,6 +16,7 @@ use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ModuleClassNameI
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ServiceModule;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
+use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\FreeTrialSubscriptionHelper;
 
 class VaultComponentModule implements ServiceModule, ExecutableModule {
 	use ModuleClassNameIdTrait;
@@ -98,6 +102,83 @@ class VaultComponentModule implements ServiceModule, ExecutableModule {
 						return $data->add_localized_data( $localized_script_data );
 					}
 				);
+			}
+		);
+
+		// Standalone renderer for pages the SDK v6 stack owns, where the smart
+		// button (which carries the v5 vault renderer) is replaced by a no-op.
+		// Enqueued only when that renderer will not run, so the two never both
+		// render into #ppcp-vault-component.
+		add_action(
+			'wp_enqueue_scripts',
+			static function () use ( $c, $eligibility_check ) {
+				if ( ! is_checkout() || ! $eligibility_check() ) {
+					return;
+				}
+
+				$smart_button = $c->get( 'button.smart-button' );
+				assert( $smart_button instanceof SmartButtonInterface );
+
+				// The v5 stack is live here; it renders the vault component itself.
+				if ( $smart_button->should_load_ppcp_script() ) {
+					return;
+				}
+
+				$data = $c->get( 'vault-component.data' );
+				assert( $data instanceof VaultComponentData );
+
+				$vault_component = $data->add_localized_data( array() )['vault_component'] ?? null;
+				if ( ! $vault_component ) {
+					return;
+				}
+
+				$factory = $c->get( 'assets.asset_getter_factory' );
+				assert( $factory instanceof AssetGetterFactory );
+				$asset_getter = $factory->for_module( 'ppcp-vault-component' );
+				assert( $asset_getter instanceof AssetGetter );
+
+				$script_url = $asset_getter->get_asset_url( 'checkout.js' );
+				if ( ! $script_url ) {
+					return;
+				}
+
+				$version   = $c->get( 'ppcp.asset-version' );
+				$asset_php = $asset_getter->get_asset_php_path( 'checkout.js' );
+				$asset     = file_exists( $asset_php )
+					? require $asset_php
+					: array(
+						'dependencies' => array(),
+						'version'      => $version,
+					);
+
+				$free_trial = $c->get( 'wc-subscriptions.free-trial-subscription-helper' );
+				assert( $free_trial instanceof FreeTrialSubscriptionHelper );
+
+				wp_register_script(
+					'ppcp-vault-component',
+					$script_url,
+					array_merge( $asset['dependencies'], array( 'jquery' ) ),
+					$asset['version'],
+					true
+				);
+
+				wp_localize_script(
+					'ppcp-vault-component',
+					'ppcp_vault_component',
+					array(
+						'vault_component'    => $vault_component,
+						// The vault SDK (saved-payment-methods) is a v5 component that
+						// needs a client-id; v6 uses a client token, so source it here.
+						'url_params'         => array(
+							'client-id' => $c->get( 'button.client_id' ),
+						),
+						'script_attributes'  => (object) array(),
+						'is_free_trial_cart' => $free_trial->is_free_trial_cart(),
+						'gateway_id'         => PayPalGateway::ID,
+					)
+				);
+
+				wp_enqueue_script( 'ppcp-vault-component' );
 			}
 		);
 

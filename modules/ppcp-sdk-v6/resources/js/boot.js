@@ -312,11 +312,28 @@ const PAYPAL_GATEWAY_ID = 'ppcp-gateway';
 	}
 
 	/**
+	 * Whether a saved PayPal token (not "Use a new payment method") is selected.
+	 * Such a payment is charged via the native Place Order button — server-side, or
+	 * through the vault component's in-page approval where eligible — not the v6
+	 * express button, which would start a new PayPal flow instead.
+	 *
+	 * @return {boolean} True when a saved ppcp-gateway token is selected.
+	 */
+	function isSavedPayPalTokenSelected() {
+		const checked = document.querySelector(
+			'input[name="wc-ppcp-gateway-payment-token"]:checked'
+		);
+		return Boolean( checked && checked.value && checked.value !== 'new' );
+	}
+
+	/**
 	 * Hides the native WC "Proceed to PayPal" button while the PayPal gateway
-	 * is selected — the v6 PayPal buttons stand in for it — and restores it for
-	 * cards (whose flow submits through it) and every other method. Re-run on
-	 * updated_checkout / payment_method_selected because WC rebuilds the
-	 * #payment DOM (and this inline style) on each update.
+	 * is selected with a NEW payment method — the v6 PayPal buttons stand in for
+	 * it — and restores it for cards, saved PayPal tokens (charged via Place
+	 * Order), and every other method. The v6 express button is hidden for a saved
+	 * token so it does not compete with it. Re-run on updated_checkout /
+	 * payment_method_selected / token change because WC rebuilds the #payment DOM
+	 * (and this inline style) on each update.
 	 */
 	function syncPlaceOrderButton() {
 		if (
@@ -329,9 +346,13 @@ const PAYPAL_GATEWAY_ID = 'ppcp-gateway';
 		const selected = document.querySelector(
 			'input[name="payment_method"]:checked'
 		)?.value;
-		const isPayPalGateway = selected === PAYPAL_GATEWAY_ID;
+		const useExpress =
+			selected === PAYPAL_GATEWAY_ID && ! isSavedPayPalTokenSelected();
 
-		setVisible( PLACE_ORDER_SELECTOR, ! isPayPalGateway, true );
+		setVisible( PLACE_ORDER_SELECTOR, ! useExpress, true );
+		if ( config.wrapper ) {
+			setVisible( config.wrapper, useExpress );
+		}
 	}
 
 	function initialRender() {
@@ -357,6 +378,14 @@ const PAYPAL_GATEWAY_ID = 'ppcp-gateway';
 		// change without a DOM rebuild, so re-sync the button on both.
 		jQuery( document.body ).on(
 			'updated_checkout payment_method_selected',
+			syncPlaceOrderButton
+		);
+
+		// Switching between a saved PayPal token and "new" flips whether the
+		// express button or Place Order should show, without a DOM rebuild.
+		jQuery( document ).on(
+			'change',
+			'input[name="wc-ppcp-gateway-payment-token"]',
 			syncPlaceOrderButton
 		);
 

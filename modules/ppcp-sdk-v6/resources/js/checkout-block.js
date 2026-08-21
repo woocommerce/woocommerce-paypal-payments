@@ -26,6 +26,9 @@ import { V6ExpressComponent } from './blocks/V6ExpressComponent';
 import { V6ContinuationComponent } from './blocks/V6ContinuationComponent';
 import { V6CardFieldsComponent } from './blocks/V6CardFieldsComponent';
 import { V6EditorPreview } from './blocks/V6EditorPreview';
+// Reused as-is from the blocks module: renders the saved-PayPal vault approval
+// into the selected saved-token row (its own namespaced SDK, no v6 clash).
+import { PayPalSavedToken } from '@ppcp-blocks/Components/paypal-saved-token';
 import { FundingSources } from './utils/fundingSources';
 import { fundingSourceLabel } from './utils/fundingSourceLabel';
 import { minorUnitsToDecimal } from './utils/amount';
@@ -227,6 +230,54 @@ if ( config?.card_fields?.enabled && ! config.continuation ) {
 			showSaveOption:
 				Boolean( config.card_fields.is_vaulting_enabled ) &&
 				! config.card_fields.has_subscriptions,
+		},
+	} );
+}
+
+// Returning-buyer saved-PayPal selector. Registered as the regular ppcp-gateway
+// method (alongside the express ones) only when the buyer has an eligible saved
+// PayPal token, so WooCommerce Blocks renders its saved-token list and this
+// method supplies the in-row vault approval. New PayPal payments go through the
+// express button above, so this method exists for the saved token.
+if ( config?.vault_component?.is_eligible && ! config.continuation ) {
+	const vaultConfig = {
+		scriptData: {
+			vault_component: config.vault_component,
+			is_free_trial_cart: config.is_free_trial_cart,
+			client_id: config.vault_client_id,
+			script_attributes: config.script_attributes || {},
+		},
+	};
+
+	registerPaymentMethod( {
+		name: 'ppcp-gateway',
+		label: createElement(
+			'div',
+			null,
+			fundingSourceLabel( FundingSources.PAYPAL )
+		),
+		ariaLabel: fundingSourceLabel( FundingSources.PAYPAL ),
+		content: createElement(
+			'p',
+			{ className: 'ppcp-sdk-v6-saved-paypal-note' },
+			__(
+				'To pay with a different PayPal account, use the PayPal button at the top of the page.',
+				'woocommerce-paypal-payments'
+			)
+		),
+		edit: createElement( V6EditorPreview, {
+			fundingSource: FundingSources.PAYPAL,
+		} ),
+		// WooCommerce Blocks injects the selected token plus event props here.
+		savedTokenComponent: createElement( PayPalSavedToken, {
+			config: vaultConfig,
+		} ),
+		canMakePayment: () => true,
+		supports: {
+			features: config.supported_features || [ 'products' ],
+			// Renders WooCommerce Blocks' saved-token radio list for this gateway.
+			showSavedCards: true,
+			showSaveOption: false,
 		},
 	} );
 }
