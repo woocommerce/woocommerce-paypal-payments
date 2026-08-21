@@ -97,6 +97,9 @@ return array(
             $container->has('save-payment-methods.eligible') && $container->get('save-payment-methods.eligible') && $settings_provider->save_card_details(),
             $container->get('wc-subscriptions.helper'),
             $container->get('wc-subscriptions.free-trial-subscription-helper'),
+            // Same mode callable the v5 SmartButton uses; drives deferring native
+            // PayPal Subscriptions (subscriptions_api mode) back to the v5 stack.
+            $container->get('button.subscriptions-mode'),
             // Raw 3DS enum; the manager applies the contingency filter at enqueue
             // time so late-registered overrides still take effect.
             $settings_provider->three_d_secure_enum(),

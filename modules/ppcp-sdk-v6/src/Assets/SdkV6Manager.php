@@ -72,6 +72,13 @@ class SdkV6Manager
     private bool $card_vaulting_enabled;
     private SubscriptionHelper $subscription_helper;
     private FreeTrialSubscriptionHelper $free_trial_helper;
+    /**
+     * Resolves the current subscriptions mode ('subscriptions_api',
+     * 'vaulting_api', …). Native PayPal Subscriptions run in 'subscriptions_api'.
+     *
+     * @var callable():string
+     */
+    private $get_subscriptions_mode;
     private string $three_d_secure_contingency;
     private string $merchant_country;
     /**
@@ -92,7 +99,7 @@ class SdkV6Manager
      * @var WalletPlacement[]
      */
     private array $wallets;
-    public function __construct(AssetGetter $asset_getter, string $version, Environment $environment, ButtonStyleMapper $style_mapper, bool $should_handle_shipping, SettingsStatus $settings_status, Context $context, SessionHandler $session_handler, CancelView $cancel_view, bool $final_review_enabled, bool $vaulting_enabled, CardPaymentsConfiguration $card_payments_configuration, bool $card_vaulting_enabled, SubscriptionHelper $subscription_helper, FreeTrialSubscriptionHelper $free_trial_helper, string $three_d_secure_contingency, array $credit_card_icons, string $merchant_country, GooglePayConfig $google_pay_config, ApplePayConfig $apple_pay_config)
+    public function __construct(AssetGetter $asset_getter, string $version, Environment $environment, ButtonStyleMapper $style_mapper, bool $should_handle_shipping, SettingsStatus $settings_status, Context $context, SessionHandler $session_handler, CancelView $cancel_view, bool $final_review_enabled, bool $vaulting_enabled, CardPaymentsConfiguration $card_payments_configuration, bool $card_vaulting_enabled, SubscriptionHelper $subscription_helper, FreeTrialSubscriptionHelper $free_trial_helper, callable $get_subscriptions_mode, string $three_d_secure_contingency, array $credit_card_icons, string $merchant_country, GooglePayConfig $google_pay_config, ApplePayConfig $apple_pay_config)
     {
         $this->asset_getter = $asset_getter;
         $this->version = $version;
@@ -109,6 +116,7 @@ class SdkV6Manager
         $this->card_vaulting_enabled = $card_vaulting_enabled;
         $this->subscription_helper = $subscription_helper;
         $this->free_trial_helper = $free_trial_helper;
+        $this->get_subscriptions_mode = $get_subscriptions_mode;
         $this->three_d_secure_contingency = $three_d_secure_contingency;
         $this->credit_card_icons = $credit_card_icons;
         $this->merchant_country = $merchant_country;
@@ -151,6 +159,14 @@ class SdkV6Manager
      */
     public function determine_render_places(): array
     {
+        // Native PayPal Subscriptions defer to v5 (see should_load_on_current_page);
+        // print no v6 wrappers so the classic page hands off cleanly. These render
+        // hooks key on the smart-button locations rather than that method, so they
+        // need this guard explicitly. Every location is returned false (rather than
+        // an empty array) to keep the array shape callers index into.
+        if ($this->is_native_paypal_subscription_page()) {
+            return array('product' => \false, 'cart' => \false, 'checkout' => \false, 'pay-now' => \false, 'mini-cart' => \false);
+        }
         // Activate is_cart()/is_checkout() on classic-shortcode block pages;
         // otherwise this only happens as a side effect of constructing the
         // (discarded) v5 SmartButton.
@@ -302,6 +318,14 @@ class SdkV6Manager
      */
     public function should_load_on_current_page(): bool
     {
+        // Native PayPal Subscriptions (subscriptions_api mode) have no v6 path — v6
+        // can only carry a subscription by vaulting, which that mode disables. Hand
+        // the whole page back to the v5 stack, which creates the subscription via
+        // actions.subscription.create. Checked before every other gate so it also
+        // overrides the sitewide mini-cart fallback below.
+        if ($this->is_native_paypal_subscription_page()) {
+            return \false;
+        }
         $page_location = $this->get_page_context();
         if ($page_location && $this->settings_status->is_smart_button_enabled_for_location($page_location)) {
             return \true;
@@ -334,6 +358,19 @@ class SdkV6Manager
     {
         $location = $location ?? $this->get_page_context();
         return in_array($location, array('checkout', 'checkout-block', 'pay-now'), \true) && $this->card_payments_configuration->is_acdc_enabled();
+    }
+    /**
+     * Whether the current page involves a native PayPal Subscription that the v5
+     * stack must handle: subscriptions_api mode with a subscription in the current
+     * context. v6 has no native-subscription flow (it can only carry a subscription
+     * by vaulting, which this mode disables), so it defers the page to v5.
+     */
+    private function is_native_paypal_subscription_page(): bool
+    {
+        if (SubscriptionHelper::SUBSCRIPTION_MODE_VALUE_SUBSCRIPTIONS !== ($this->get_subscriptions_mode)()) {
+            return \false;
+        }
+        return $this->subscription_helper->current_product_is_subscription() || $this->subscription_helper->cart_contains_subscription() || $this->subscription_helper->order_pay_contains_subscription();
     }
     /**
      * Whether any wallet renders in the given context.
