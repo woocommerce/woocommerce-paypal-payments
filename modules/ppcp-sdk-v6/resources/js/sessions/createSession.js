@@ -84,11 +84,16 @@ export function createSession(
 	const isBlockContext =
 		context === 'cart-block' || context === 'checkout-block';
 
+	// Whether the PayPal popup should collect shipping details.
+	// Only happens when the context requires shipping details and these details
+	// cannot be entered on the current page.
+	// - block checkout/checkout have a shipping form.
+	// - pay-now can only pay an already finished order.
 	const shouldHandleShipping =
-		method === FundingSources.PAYPAL &&
+		Boolean( config.shipping?.in_context?.[ context ] ) &&
 		! isBlockContext &&
-		config.shipping?.handle_in_paypal &&
-		( config.shipping?.need_shipping || context === 'product' );
+		! [ 'checkout', 'pay-now' ].includes( context ) &&
+		method === FundingSources.PAYPAL;
 
 	// Rejections must propagate so the SDK is informed of the failure.
 	if ( handlers.onShippingAddressChange ) {

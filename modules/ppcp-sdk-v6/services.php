@@ -103,7 +103,6 @@ return array(
 			$container->get( 'ppcp.asset-version' ),
 			$container->get( 'settings.environment' ),
 			$container->get( 'sdk-v6.button-style-mapper' ),
-			$container->get( 'order-endpoints.handle-shipping-in-paypal' ),
 			$container->get( 'wcgateway.settings.status' ),
 			$container->get( 'button.helper.context' ),
 			$container->get( 'session.handler' ),

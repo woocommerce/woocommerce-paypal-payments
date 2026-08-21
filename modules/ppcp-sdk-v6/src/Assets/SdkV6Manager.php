@@ -9,6 +9,7 @@ declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\SdkV6\Assets;
 
+use WC_Product;
 use WooCommerce\PayPalCommerce\Applepay\ApplePayGateway;
 use WooCommerce\PayPalCommerce\Applepay\Assets\PropertiesDictionary;
 use WooCommerce\PayPalCommerce\Assets\AssetGetter;
@@ -62,7 +63,6 @@ class SdkV6Manager {
 	private string $version;
 	private Environment $environment;
 	private ButtonStyleMapper $style_mapper;
-	private bool $should_handle_shipping;
 	private SettingsStatus $settings_status;
 	private Context $context;
 	private SessionHandler $session_handler;
@@ -100,7 +100,6 @@ class SdkV6Manager {
 		string $version,
 		Environment $environment,
 		ButtonStyleMapper $style_mapper,
-		bool $should_handle_shipping,
 		SettingsStatus $settings_status,
 		Context $context,
 		SessionHandler $session_handler,
@@ -119,7 +118,6 @@ class SdkV6Manager {
 		$this->version                     = $version;
 		$this->environment                 = $environment;
 		$this->style_mapper                = $style_mapper;
-		$this->should_handle_shipping      = $should_handle_shipping;
 		$this->settings_status             = $settings_status;
 		$this->context                     = $context;
 		$this->session_handler             = $session_handler;
@@ -431,13 +429,7 @@ class SdkV6Manager {
 
 		$page_context = $this->get_page_context();
 
-		// Must stay in lockstep with ShippingPreferenceFactory, which marks only
-		// 'checkout' and 'pay-now' as fixed-address (SET_PROVIDED_ADDRESS, no
-		// callbacks needed). Every other context, 'checkout-block' included,
-		// gets GET_FROM_FILE, where PayPal offers the buyer's own addresses and
-		// the popup callbacks must stay attached to sync the choice back.
-		$shipping_enabled = $this->should_handle_shipping
-			&& ! in_array( $page_context, array( 'checkout', 'pay-now' ), true );
+		$shipping_contexts = $this->shipping_contexts( $page_context );
 
 		$store_api_base = rtrim( rest_url( 'wc/store/v1/cart' ), '/' );
 
@@ -502,14 +494,23 @@ class SdkV6Manager {
 				'checkout' => wc_get_checkout_url(),
 			),
 			'labels'            => array(
-				'generic_error' => __(
+				'generic_error'          => __(
 					'Something went wrong. Please try again or choose another payment source.',
 					'woocommerce-paypal-payments'
 				),
+				'shipping_unserviceable' => __(
+					'Cannot ship to the selected address.',
+					'woocommerce-paypal-payments'
+				),
+				// The Apple Pay sheet itemises the total with these.
+				'subtotal'               => __( 'Subtotal', 'woocommerce-paypal-payments' ),
+				'shipping'               => __( 'Shipping', 'woocommerce-paypal-payments' ),
+				'tax'                    => __( 'Tax', 'woocommerce-paypal-payments' ),
+				'discount'               => __( 'Discount', 'woocommerce-paypal-payments' ),
 			),
 			'shipping'          => array(
-				'handle_in_paypal' => $shipping_enabled,
-				'need_shipping'    => $this->need_shipping(),
+				'in_context' => $shipping_contexts,
+				'countries'  => $this->shipping_countries( $shipping_contexts ),
 			),
 			'button_styles'     => $button_styles,
 			'button_height'     => self::PAYMENT_BUTTON_HEIGHT,
@@ -684,14 +685,85 @@ class SdkV6Manager {
 	}
 
 	/**
-	 * Whether the current cart needs shipping.
+	 * Whether shipping details are collected, per context.
 	 *
+	 * One decision per context, shared by every surface that asks it: the PayPal
+	 * popup and the wallet payment sheets. A map rather than a single flag because
+	 * the mini-cart renders on any page, so two contexts can be live at once and
+	 * answer differently.
+	 *
+	 * @param string $page_context The context of the current page.
+	 * @return array<string, bool> Keyed by context.
+	 */
+	private function shipping_contexts( string $page_context ): array {
+		$contexts = array();
+
+		if ( $page_context ) {
+			$contexts[ $page_context ] = $this->shipping_for_context( $page_context );
+		}
+
+		$contexts['mini-cart'] = $this->shipping_for_context( 'mini-cart' );
+
+		return $contexts;
+	}
+
+	/**
+	 * Whether the given context collects a shipping address and shipping options.
+	 *
+	 * Not collected when the buyer gets another chance to choose it ("Pay Now"
+	 * disabled, so continuation mode ends on a final review), or when there is
+	 * nothing to ship.
+	 *
+	 * The product page judges the product rather than the cart, because the product
+	 * is what gets bought there: it is added to the cart on click, so the cart's
+	 * current contents describe a basket that is about to be replaced.
+	 *
+	 * @param string $context The context to judge.
 	 * @return bool
 	 */
-	private function need_shipping(): bool {
+	private function shipping_for_context( string $context ): bool {
+		if ( $this->final_review_enabled ) {
+			return false;
+		}
+
+		// Block surfaces read needsShipping live from the React cart and combine it
+		// with this value themselves, so answering with the cart as it stood when the
+		// page was built would gate them twice, on a snapshot that goes stale the
+		// moment the buyer edits the cart.
+		if ( in_array( $context, array( 'cart-block', 'checkout-block' ), true ) ) {
+			return true;
+		}
+
+		if ( 'product' === $context ) {
+			$product = wc_get_product();
+
+			return $product instanceof WC_Product
+				&& ! $product->is_virtual()
+				&& ! $product->is_downloadable();
+		}
+
 		$cart = WC()->cart;
 
 		return $cart && $cart->needs_shipping();
+	}
+
+	/**
+	 * The countries a payment sheet may offer, for Google Pay's address allow-list.
+	 *
+	 * Sent whole whenever any context collects shipping, as the classic integration
+	 * did, so the buyer can never select an address the store would reject.
+	 *
+	 * @param array<string, bool> $shipping_contexts The per-context map.
+	 * @return array<int, string> ISO-2 country codes.
+	 */
+	private function shipping_countries( array $shipping_contexts ): array {
+		if ( ! in_array( true, $shipping_contexts, true ) ) {
+			return array();
+		}
+
+		$countries = WC()->countries;
+
+		return $countries ? array_keys( $countries->get_shipping_countries() ) : array();
 	}
 
 	/**
@@ -709,6 +781,7 @@ class SdkV6Manager {
 			if ( $order ) {
 				return number_format( (float) $order->get_total(), 2, '.', '' );
 			}
+
 			return '';
 		}
 

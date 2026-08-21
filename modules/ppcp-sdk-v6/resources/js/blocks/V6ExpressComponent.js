@@ -220,7 +220,7 @@ export function V6ExpressComponent( {
 		if (
 			method === FundingSources.PAYPAL &&
 			needsShipping &&
-			config.shipping?.handle_in_paypal
+			config.shipping?.in_context?.[ context ]
 		) {
 			handlers.onShippingAddressChange = ( data ) =>
 				callbacksRef.current.shippingHandlers.onShippingAddressChange(
