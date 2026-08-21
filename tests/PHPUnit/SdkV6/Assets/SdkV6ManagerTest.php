@@ -6,6 +6,9 @@ namespace WooCommerce\PayPalCommerce\SdkV6\Assets;
 use Mockery;
 use WooCommerce\PayPalCommerce\Assets\AssetGetter;
 use WooCommerce\PayPalCommerce\Button\Helper\Context;
+use WooCommerce\PayPalCommerce\SavePaymentMethods\Endpoint\CreatePaymentToken;
+use WooCommerce\PayPalCommerce\SavePaymentMethods\Endpoint\CreatePaymentTokenForGuest;
+use WooCommerce\PayPalCommerce\SavePaymentMethods\Endpoint\CreateSetupToken;
 use WooCommerce\PayPalCommerce\SdkV6\Helper\ApplePayConfig;
 use WooCommerce\PayPalCommerce\SdkV6\Helper\ButtonStyleMapper;
 use WooCommerce\PayPalCommerce\SdkV6\Helper\GooglePayConfig;
@@ -16,6 +19,7 @@ use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\CardPaymentsConfiguration;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\SettingsStatus;
+use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\FreeTrialSubscriptionHelper;
 use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
 use function Brain\Monkey\Functions\when;
 
@@ -30,6 +34,7 @@ class SdkV6ManagerTest extends TestCase
     private $cancel_view;
     private $card_payments_configuration;
     private $subscription_helper;
+	private $free_trial_helper;
 	private $credit_card_icons;
 	private $google_pay_config;
 	private $apple_pay_config;
@@ -48,6 +53,8 @@ class SdkV6ManagerTest extends TestCase
         $this->card_payments_configuration = Mockery::mock(CardPaymentsConfiguration::class);
 		$this->subscription_helper = Mockery::mock(SubscriptionHelper::class);
         $this->subscription_helper->shouldReceive('cart_contains_subscription')->andReturn(false)->byDefault();
+		$this->free_trial_helper = Mockery::mock(FreeTrialSubscriptionHelper::class);
+		$this->free_trial_helper->shouldReceive('is_free_trial_cart')->andReturn(false)->byDefault();
 		$this->credit_card_icons = [];
 
 		$this->google_pay_config = Mockery::mock(GooglePayConfig::class);
@@ -60,6 +67,7 @@ class SdkV6ManagerTest extends TestCase
 		// Reached unconditionally by script_data()'s Apple Pay validation block.
 		when('admin_url')->justReturn('https://example.com/wp-admin/admin-ajax.php');
 		when('wp_create_nonce')->justReturn('nonce');
+		when('is_user_logged_in')->justReturn(false);
     }
 
     /**
@@ -80,7 +88,33 @@ class SdkV6ManagerTest extends TestCase
         return $wc;
     }
 
-    private function createTestee(bool $should_handle_shipping = false, array $credit_card_icons = [], bool $card_vaulting_enabled = true, string $merchant_country = 'US'): SdkV6Manager
+    /**
+     * Stubs the collaborators and WP functions that script_data() always
+     * touches, so a test only has to set up what it is actually verifying.
+     */
+    private function stub_common_script_data_dependencies(): void
+    {
+        $this->context->shouldReceive('context')->andReturn('checkout')->byDefault();
+        $this->card_payments_configuration->shouldReceive('is_acdc_enabled')->andReturn(false)->byDefault();
+        $this->card_payments_configuration->shouldReceive('gateway_title')->andReturn('Credit Card')->byDefault();
+        $this->card_payments_configuration->shouldReceive('show_name_on_card')->andReturn('no')->byDefault();
+
+        $this->settings_status->shouldReceive('is_smart_button_enabled_for_location')->andReturn(false)->byDefault();
+        $this->session_handler->shouldReceive('order')->andReturn(null)->byDefault();
+        $this->context->shouldReceive('is_paypal_continuation')->andReturn(false)->byDefault();
+        $this->environment->shouldReceive('is_sandbox')->andReturn(false)->byDefault();
+        $this->style_mapper->shouldReceive('styles_for_context')->andReturn([])->byDefault();
+
+        when('WC')->justReturn($this->create_wc_stub());
+        when('wc_get_base_location')->justReturn(['country' => 'US']);
+        when('get_woocommerce_currency')->justReturn('USD');
+        when('get_locale')->justReturn('en_US');
+        when('is_product')->justReturn(false);
+        when('rest_url')->justReturn('https://example.com/wp-json/wc/store/v1/cart');
+        when('wc_get_checkout_url')->justReturn('https://example.com/checkout');
+    }
+
+    private function createTestee(bool $should_handle_shipping = false, array $credit_card_icons = [], bool $card_vaulting_enabled = true, string $merchant_country = 'US', string $three_d_secure_contingency = 'SCA_WHEN_REQUIRED'): SdkV6Manager
     {
         return new SdkV6Manager(
             $this->asset_getter,
@@ -97,6 +131,8 @@ class SdkV6ManagerTest extends TestCase
             $this->card_payments_configuration,
 	        $card_vaulting_enabled,
 	        $this->subscription_helper,
+	        $this->free_trial_helper,
+	        $three_d_secure_contingency,
 	        $credit_card_icons,
 	        $merchant_country,
 	        $this->google_pay_config,
@@ -440,5 +476,127 @@ class SdkV6ManagerTest extends TestCase
                 [],
             ],
         ];
+    }
+
+    /**
+     * GIVEN a cart that may or may not be a free trial subscription (e.g. a $0
+     *       initial total from a trial period or delayed sync)
+     * WHEN the SDK bootstrap data is generated
+     * THEN is_free_trial_cart mirrors the free-trial helper's answer, so the
+     *      frontend knows whether to switch to the vault "save without
+     *      purchase" flow instead of creating a $0 PayPal order
+     *
+     * @dataProvider free_trial_cart_provider
+     */
+    public function testScriptDataReflectsFreeTrialCartState(bool $is_free_trial_cart): void
+    {
+        $this->stub_common_script_data_dependencies();
+        $this->free_trial_helper->shouldReceive('is_free_trial_cart')->andReturn($is_free_trial_cart);
+
+        $testee = $this->createTestee();
+        $data   = $testee->script_data();
+
+        $this->assertSame($is_free_trial_cart, $data['is_free_trial_cart']);
+    }
+
+    public function free_trial_cart_provider(): array
+    {
+        return [
+            'a free trial cart is reported as such' => [true],
+            'a regular cart is not reported as a free trial' => [false],
+        ];
+    }
+
+    /**
+     * GIVEN a buyer who may or may not have an active WordPress session
+     * WHEN the SDK bootstrap data is generated
+     * THEN user.is_logged mirrors whether the buyer is logged in, so the
+     *      free-trial save flow picks the logged-in create-payment-token
+     *      endpoint versus the guest one
+     *
+     * @dataProvider logged_in_state_provider
+     */
+    public function testScriptDataReflectsBuyerLoginState(bool $is_logged_in): void
+    {
+        $this->stub_common_script_data_dependencies();
+        when('is_user_logged_in')->justReturn($is_logged_in);
+
+        $testee = $this->createTestee();
+        $data   = $testee->script_data();
+
+        $this->assertSame($is_logged_in, $data['user']['is_logged']);
+    }
+
+    public function logged_in_state_provider(): array
+    {
+        return [
+            'a logged-in buyer is reported as logged in' => [true],
+            'a guest buyer is reported as not logged in' => [false],
+        ];
+    }
+
+    /**
+     * GIVEN a merchant-configured 3D Secure contingency for the free-trial
+     *       card-save (setup-token) flow
+     * WHEN the SDK bootstrap data is generated
+     * THEN verification_method carries the value produced by the
+     *      woocommerce_paypal_payments_three_d_secure_contingency filter,
+     *      matching the add-payment-method page's own filtering
+     */
+    public function testScriptDataAppliesThreeDSecureContingencyFilter(): void
+    {
+        $this->stub_common_script_data_dependencies();
+
+        when('apply_filters')->alias(
+            static function (string $filter, $value) {
+                if ('woocommerce_paypal_payments_three_d_secure_contingency' === $filter) {
+                    return 'SCA_ALWAYS';
+                }
+                return $value;
+            }
+        );
+
+        $testee = $this->createTestee(false, [], true, 'US', 'SCA_WHEN_REQUIRED');
+        $data   = $testee->script_data();
+
+        $this->assertSame('SCA_ALWAYS', $data['verification_method']);
+    }
+
+    /**
+     * GIVEN card vaulting available through the vault v3 "save without
+     *       purchase" endpoints
+     * WHEN the SDK bootstrap data is generated
+     * THEN the ajax payload carries the setup-token, logged-in
+     *      payment-token and guest payment-token endpoints and nonces the
+     *      free-trial checkout flow needs
+     */
+    public function testScriptDataIncludesFreeTrialVaultAjaxEndpoints(): void
+    {
+        $this->stub_common_script_data_dependencies();
+        when('wp_create_nonce')->alias(static fn (string $action) => 'nonce-' . $action);
+
+        $testee = $this->createTestee();
+        $data   = $testee->script_data();
+
+        $this->assertSame(CreateSetupToken::ENDPOINT, $data['ajax']['create_setup_token']['endpoint']);
+        $this->assertSame(
+            'nonce-' . CreateSetupToken::nonce(),
+            $data['ajax']['create_setup_token']['nonce']
+        );
+
+        $this->assertSame(CreatePaymentToken::ENDPOINT, $data['ajax']['create_payment_token']['endpoint']);
+        $this->assertSame(
+            'nonce-' . CreatePaymentToken::nonce(),
+            $data['ajax']['create_payment_token']['nonce']
+        );
+
+        $this->assertSame(
+            CreatePaymentTokenForGuest::ENDPOINT,
+            $data['ajax']['create_payment_token_for_guest']['endpoint']
+        );
+        $this->assertSame(
+            'nonce-' . CreatePaymentTokenForGuest::nonce(),
+            $data['ajax']['create_payment_token_for_guest']['nonce']
+        );
     }
 }

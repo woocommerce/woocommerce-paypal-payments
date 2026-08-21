@@ -22,8 +22,13 @@ import { renderButtons } from './components/buttonRenderer';
 import { renderWallets } from './wallets/renderWallets';
 import { isWalletEnabled, WALLET_METHODS } from './wallets/walletRegistry';
 import { createOrder, fetchCartTotal } from './endpointsAdapter';
+import {
+	createFreeTrialPayPalSession,
+	createVaultSetupToken,
+} from './sessions/freeTrialSave';
 import { initCardFields } from './cardFields/renderer';
 import { hasJQuery } from './utils/api';
+import { FundingSources } from './utils/fundingSources';
 import { setErrorLabels } from './utils/errorHandler';
 import { setVisible } from '@ppcp-button/Helper/Hiding';
 
@@ -41,6 +46,32 @@ const PAYPAL_GATEWAY_ID = 'ppcp-gateway';
 	}
 
 	setErrorLabels( config.labels );
+
+	// A $0 free-trial subscription is vaulted through the PayPal save flow on the
+	// checkout / pay-for-order pages (the only contexts with a form to submit
+	// afterwards); other contexts keep the ordinary button flow.
+	const FREE_TRIAL_CONTEXTS = [ 'checkout', 'pay-now' ];
+	function isFreeTrialSave( context ) {
+		return (
+			Boolean( config.is_free_trial_cart ) &&
+			FREE_TRIAL_CONTEXTS.includes( context )
+		);
+	}
+
+	/**
+	 * Submits the checkout (or pay-for-order) form after the free-trial save
+	 * flow has stored the token, so the gateway places the $0 order.
+	 */
+	function submitCheckoutForm() {
+		if ( hasJQuery() ) {
+			const form = jQuery( 'form.checkout, form#order_review' );
+			if ( form.length ) {
+				form.trigger( 'submit' );
+				return;
+			}
+		}
+		document.querySelector( PLACE_ORDER_SELECTOR )?.click();
+	}
 
 	/**
 	 * Advanced Card Fields (ACDC): independent of the button render loop
@@ -115,6 +146,22 @@ const PAYPAL_GATEWAY_ID = 'ppcp-gateway';
 	 */
 	async function createSessions( context ) {
 		const sdk = await loadSdkV6( config, sdkPageType );
+
+		// Free trial: only the PayPal save session, whose approval stores a token
+		// and submits the checkout form (see renderTarget's createOrderForFunding).
+		if ( isFreeTrialSave( context ) ) {
+			return {
+				payLaterDetails: null,
+				map: {
+					[ FundingSources.PAYPAL ]: createFreeTrialPayPalSession(
+						sdk,
+						config,
+						{ onComplete: submitCheckoutForm }
+					),
+				},
+			};
+		}
+
 		const eligibility = await ensureEligibility();
 
 		const sessions = {
@@ -173,8 +220,12 @@ const PAYPAL_GATEWAY_ID = 'ppcp-gateway';
 			wrapper,
 			sessions: map,
 			styles: config.button_styles[ target.context ] || {},
-			createOrderForFunding: ( fundingSource ) => () =>
-				createOrder( config, target.context, fundingSource ),
+			createOrderForFunding: ( fundingSource ) =>
+				isFreeTrialSave( target.context ) &&
+				fundingSource === FundingSources.PAYPAL
+					? // Free trial starts the save session with a setup token.
+					  () => createVaultSetupToken( config )
+					: () => createOrder( config, target.context, fundingSource ),
 			payLaterDetails,
 		} );
 

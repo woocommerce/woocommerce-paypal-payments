@@ -19,6 +19,9 @@ use WooCommerce\PayPalCommerce\OrderEndpoints\Endpoint\CreateOrderEndpoint;
 use WooCommerce\PayPalCommerce\Button\Endpoint\GetOrderEndpoint;
 use WooCommerce\PayPalCommerce\Button\Helper\Context;
 use WooCommerce\PayPalCommerce\Googlepay\GooglePayGateway;
+use WooCommerce\PayPalCommerce\SavePaymentMethods\Endpoint\CreatePaymentToken;
+use WooCommerce\PayPalCommerce\SavePaymentMethods\Endpoint\CreatePaymentTokenForGuest;
+use WooCommerce\PayPalCommerce\SavePaymentMethods\Endpoint\CreateSetupToken;
 use WooCommerce\PayPalCommerce\SdkV6\Endpoint\ClientTokenEndpoint;
 use WooCommerce\PayPalCommerce\SdkV6\Endpoint\SimulateCartEndpoint;
 use WooCommerce\PayPalCommerce\SdkV6\Helper\ApplePayConfig;
@@ -31,6 +34,7 @@ use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\CardPaymentsConfiguration;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\SettingsStatus;
+use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\FreeTrialSubscriptionHelper;
 use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
 
 class SdkV6Manager {
@@ -72,6 +76,8 @@ class SdkV6Manager {
 	private CardPaymentsConfiguration $card_payments_configuration;
 	private bool $card_vaulting_enabled;
 	private SubscriptionHelper $subscription_helper;
+	private FreeTrialSubscriptionHelper $free_trial_helper;
+	private string $three_d_secure_contingency;
 	private string $merchant_country;
 
 	/**
@@ -110,6 +116,8 @@ class SdkV6Manager {
 		CardPaymentsConfiguration $card_payments_configuration,
 		bool $card_vaulting_enabled,
 		SubscriptionHelper $subscription_helper,
+		FreeTrialSubscriptionHelper $free_trial_helper,
+		string $three_d_secure_contingency,
 		array $credit_card_icons,
 		string $merchant_country,
 		GooglePayConfig $google_pay_config,
@@ -129,6 +137,8 @@ class SdkV6Manager {
 		$this->card_payments_configuration = $card_payments_configuration;
 		$this->card_vaulting_enabled       = $card_vaulting_enabled;
 		$this->subscription_helper         = $subscription_helper;
+		$this->free_trial_helper           = $free_trial_helper;
+		$this->three_d_secure_contingency  = $three_d_secure_contingency;
 		$this->credit_card_icons           = $credit_card_icons;
 		$this->merchant_country            = $merchant_country;
 		$this->apple_pay_config            = $apple_pay_config;
@@ -462,6 +472,22 @@ class SdkV6Manager {
 			'vaulting_enabled'  => $this->vaulting_enabled,
 			// Drives the post-approval fork; see V6ExpressComponent.approve().
 			'final_review'      => $this->final_review_enabled,
+			// A subscription cart whose initial total is 0 (free trial, delayed
+			// sync or a 100% coupon). Such a cart must not create a $0 PayPal
+			// order: the frontend switches to the vault "save without purchase"
+			// flow instead, and the gateway places the $0 WC order server-side.
+			'is_free_trial_cart' => $this->free_trial_helper->is_free_trial_cart(),
+			// 3DS/SCA contingency for the card save (setup-token) flow used on a
+			// free-trial card checkout. Filtered like the add-payment-method page.
+			'verification_method' => (string) apply_filters(
+				'woocommerce_paypal_payments_three_d_secure_contingency',
+				$this->three_d_secure_contingency
+			),
+			// Whether the buyer is logged in, so the free-trial save flow picks the
+			// logged-in create-payment-token endpoint vs the guest one.
+			'user'              => array(
+				'is_logged' => is_user_logged_in(),
+			),
 			'ajax'              => array(
 				'client_token'    => array(
 					'endpoint' => \WC_AJAX::get_endpoint( ClientTokenEndpoint::ENDPOINT ),
@@ -490,6 +516,21 @@ class SdkV6Manager {
 				'update_shipping' => array(
 					'endpoint' => \WC_AJAX::get_endpoint( UpdateShippingEndpoint::ENDPOINT ),
 					'nonce'    => wp_create_nonce( UpdateShippingEndpoint::nonce() ),
+				),
+				// Vault v3 "save without purchase" endpoints, used by the
+				// free-trial checkout flow (see is_free_trial_cart). Registered as
+				// wc_ajax actions by ppcp-save-payment-methods when vaulting is on.
+				'create_setup_token' => array(
+					'endpoint' => \WC_AJAX::get_endpoint( CreateSetupToken::ENDPOINT ),
+					'nonce'    => wp_create_nonce( CreateSetupToken::nonce() ),
+				),
+				'create_payment_token' => array(
+					'endpoint' => \WC_AJAX::get_endpoint( CreatePaymentToken::ENDPOINT ),
+					'nonce'    => wp_create_nonce( CreatePaymentToken::nonce() ),
+				),
+				'create_payment_token_for_guest' => array(
+					'endpoint' => \WC_AJAX::get_endpoint( CreatePaymentTokenForGuest::ENDPOINT ),
+					'nonce'    => wp_create_nonce( CreatePaymentTokenForGuest::nonce() ),
 				),
 				'wc_store_api'    => array(
 					'cart'                 => $store_api_base,

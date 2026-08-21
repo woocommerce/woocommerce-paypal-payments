@@ -30,7 +30,7 @@ import { FundingSources } from './utils/fundingSources';
 import { fundingSourceLabel } from './utils/fundingSourceLabel';
 import { minorUnitsToDecimal } from './utils/amount';
 
-const FUNDING_SOURCES = [
+const ALL_FUNDING_SOURCES = [
 	FundingSources.PAYPAL,
 	FundingSources.VENMO,
 	FundingSources.PAYLATER,
@@ -41,6 +41,13 @@ const FUNDING_SOURCES = [
 const paymentMethodData =
 	window.wc?.wcSettings?.getSetting?.( 'paymentMethodData' ) || {};
 const config = paymentMethodData[ 'ppcp-sdk-v6' ];
+
+// A free-trial ($0) subscription is vaulted through the PayPal save flow, which
+// only PayPal offers; Venmo/Pay Later cannot save without a purchase, so they are
+// suppressed on a free-trial cart (mirrors the v5 blocks checkout).
+const FUNDING_SOURCES = config?.is_free_trial_cart
+	? [ FundingSources.PAYPAL ]
+	: ALL_FUNDING_SOURCES;
 
 /**
  * Derives a decimal amount string from the WC Blocks cart totals.

@@ -12,10 +12,10 @@
  * number|expiry|cvv), so the native WC cardholder-name input is left in place
  * as a plain field and its value is forwarded to create-order instead.
  *
- * Scope: fresh card, one-time payment only. Saving a new card, paying with
- * an already-saved card, and the $0 free-trial variant are untouched
- * here — this defers to the native submit whenever a saved token is
- * selected.
+ * Scope: fresh card, one-time payment, plus the $0 free-trial variant (a
+ * subscription cart with no initial charge), which saves the card via a setup
+ * token instead of creating an order. Paying with an already-saved card still
+ * defers to the native submit whenever a saved token is selected.
  *
  * @package
  */
@@ -25,6 +25,10 @@ import { hide } from '@ppcp-button/Helper/Hiding';
 import Spinner from '@ppcp-button/Helper/Spinner';
 import { loadSdkV6 } from '../sdkLoader';
 import { createCardOrder, approveCardOrder } from '../endpointsAdapter';
+import {
+	createCardSetupToken,
+	exchangeSetupToken,
+} from '../sessions/freeTrialSave';
 import { hasJQuery } from '../utils/api';
 import { handleError } from '../utils/errorHandler';
 
@@ -157,6 +161,10 @@ export async function initCardFields( config ) {
 	const { fields, payment_method: paymentMethod } = config.card_fields;
 	const spinner = hasJQuery() ? Spinner.fullPage() : null;
 
+	// A $0 free-trial subscription card is saved via a setup token (no order);
+	// the gateway places the $0 order on the native submit that follows.
+	const isFreeTrial = Boolean( config.is_free_trial_cart );
+
 	let cardSessionPromise = null;
 	let submitting = false;
 	let boundPlaceOrderButton = null;
@@ -181,7 +189,9 @@ export async function initCardFields( config ) {
 			cardSessionPromise = ( async () => {
 				const inputs = getInputs();
 				const sdk = await loadSdkV6( config, 'checkout' );
-				const cardSession = sdk.createCardFieldsOneTimePaymentSession();
+				const cardSession = isFreeTrial
+					? sdk.createCardFieldsSavePaymentSession()
+					: sdk.createCardFieldsOneTimePaymentSession();
 
 				for ( const fieldType of FIELD_TYPES ) {
 					if ( inputs[ fieldType ] ) {
@@ -224,6 +234,30 @@ export async function initCardFields( config ) {
 
 		try {
 			const cardSession = await ensureCardSession();
+			const submitOptions = billingAddressForSubmit();
+
+			// Free trial: confirm a setup token and store it; the native submit
+			// that follows lets the gateway place the $0 order against it.
+			if ( isFreeTrial ) {
+				const setupTokenId = await createCardSetupToken( config );
+				// The save session takes no billing-address option; it confirms
+				// the setup token, running 3D Secure when required.
+				const saveResult = await cardSession.submit( setupTokenId );
+
+				if ( saveResult.state === 'canceled' ) {
+					return;
+				}
+				if ( saveResult.state !== 'succeeded' ) {
+					throw new Error( 'Card could not be saved.' );
+				}
+
+				await exchangeSetupToken( config, setupTokenId, paymentMethod );
+
+				submitting = true;
+				event.target.click();
+				return;
+			}
+
 			// The name has no v6 field component; read the plain WC input.
 			const cardName = getInputs().name?.value?.trim() || '';
 			const { orderId } = await createCardOrder(
@@ -232,7 +266,6 @@ export async function initCardFields( config ) {
 				cardName,
                 shouldSavePaymentMethod(),
 			);
-			const submitOptions = billingAddressForSubmit();
 			const result = submitOptions
 				? await cardSession.submit( orderId, submitOptions )
 				: await cardSession.submit( orderId );

@@ -20,6 +20,13 @@ jest.mock( './V6CardFieldContainer', () => ( {
 	V6CardFieldContainer: ( props ) => mockCardFieldContainer( props ),
 } ) );
 
+const mockCreateCardSetupToken = jest.fn();
+const mockExchangeSetupToken = jest.fn();
+jest.mock( '../sessions/freeTrialSave', () => ( {
+	createCardSetupToken: ( ...args ) => mockCreateCardSetupToken( ...args ),
+	exchangeSetupToken: ( ...args ) => mockExchangeSetupToken( ...args ),
+} ) );
+
 import {
 	render,
 	waitFor,
@@ -102,11 +109,14 @@ beforeEach( () => {
 
 	mockLoadSdkV6.mockReset().mockResolvedValue( {
 		createCardFieldsOneTimePaymentSession: () => session,
+		createCardFieldsSavePaymentSession: () => session,
 	} );
 	mockCreateCardOrder.mockReset();
 	mockApproveCardOrder.mockReset().mockResolvedValue( undefined );
 	mockCardFieldStyles.mockReset().mockReturnValue( { color: 'rgb(0,0,0)' } );
 	mockCardFieldContainer.mockClear();
+	mockCreateCardSetupToken.mockReset();
+	mockExchangeSetupToken.mockReset();
 } );
 
 describe( 'V6CardFieldsComponent', () => {
@@ -371,5 +381,107 @@ describe( 'V6CardFieldsComponent', () => {
 		} );
 
 		expect( session.submit ).toHaveBeenCalledWith( 'ORDER1' );
+	} );
+
+	describe( 'free-trial ($0 subscription) cart', () => {
+		function freeTrialConfig( overrides = {} ) {
+			return cardConfig( { is_free_trial_cart: true, ...overrides } );
+		}
+
+		test( 'creates the card save session instead of the one-time session', async () => {
+			mockLoadSdkV6.mockResolvedValueOnce( {
+				createCardFieldsOneTimePaymentSession: jest.fn(
+					() => new Error( 'must not be called' )
+				),
+				createCardFieldsSavePaymentSession: () => session,
+			} );
+
+			renderComponent( { config: freeTrialConfig() } );
+			await waitForSessionReady();
+
+			expect( mockCardFieldContainer ).toHaveBeenCalledWith(
+				expect.objectContaining( { session } )
+			);
+		} );
+
+		test( 'a successful save exchanges the setup token instead of creating and approving an order', async () => {
+			mockCreateCardSetupToken.mockResolvedValueOnce( 'SETUP1' );
+			session.submit.mockResolvedValueOnce( { state: 'succeeded' } );
+
+			renderComponent( { config: freeTrialConfig() } );
+			await waitForSessionReady();
+
+			let result;
+			await act( async () => {
+				result = await paymentSetupCb();
+			} );
+
+			expect( mockCreateCardSetupToken ).toHaveBeenCalledWith(
+				freeTrialConfig()
+			);
+			expect( session.submit ).toHaveBeenCalledWith( 'SETUP1' );
+			expect( mockExchangeSetupToken ).toHaveBeenCalledWith(
+				freeTrialConfig(),
+				'SETUP1',
+				freeTrialConfig().card_fields.payment_method
+			);
+			expect( mockCreateCardOrder ).not.toHaveBeenCalled();
+			expect( mockApproveCardOrder ).not.toHaveBeenCalled();
+			expect( result ).toEqual( { type: 'success' } );
+		} );
+
+		test( 'reports an error and skips the exchange when 3D Secure is canceled', async () => {
+			mockCreateCardSetupToken.mockResolvedValueOnce( 'SETUP1' );
+			session.submit.mockResolvedValueOnce( { state: 'canceled' } );
+
+			renderComponent( { config: freeTrialConfig() } );
+			await waitForSessionReady();
+
+			let result;
+			await act( async () => {
+				result = await paymentSetupCb();
+			} );
+
+			expect( result.type ).toBe( 'error' );
+			expect( result.message ).toBeTruthy();
+			expect( mockExchangeSetupToken ).not.toHaveBeenCalled();
+		} );
+
+		test( 'reports an error and skips the exchange when the save session fails', async () => {
+			mockCreateCardSetupToken.mockResolvedValueOnce( 'SETUP1' );
+			session.submit.mockResolvedValueOnce( { state: 'failed' } );
+
+			renderComponent( { config: freeTrialConfig() } );
+			await waitForSessionReady();
+
+			let result;
+			await act( async () => {
+				result = await paymentSetupCb();
+			} );
+
+			expect( result.type ).toBe( 'error' );
+			expect( mockExchangeSetupToken ).not.toHaveBeenCalled();
+		} );
+
+		test( 'reports the thrown error message when the token exchange fails', async () => {
+			mockCreateCardSetupToken.mockResolvedValueOnce( 'SETUP1' );
+			session.submit.mockResolvedValueOnce( { state: 'succeeded' } );
+			mockExchangeSetupToken.mockRejectedValueOnce(
+				new Error( 'exchange failed' )
+			);
+
+			renderComponent( { config: freeTrialConfig() } );
+			await waitForSessionReady();
+
+			let result;
+			await act( async () => {
+				result = await paymentSetupCb();
+			} );
+
+			expect( result ).toEqual( {
+				type: 'error',
+				message: 'exchange failed',
+			} );
+		} );
 	} );
 } );

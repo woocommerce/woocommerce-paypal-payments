@@ -122,6 +122,10 @@ return array(
 				&& $container->get( 'save-payment-methods.eligible' )
 				&& $settings_provider->save_card_details(),
 			$container->get( 'wc-subscriptions.helper' ),
+			$container->get( 'wc-subscriptions.free-trial-subscription-helper' ),
+			// Raw 3DS enum; the manager applies the contingency filter at enqueue
+			// time so late-registered overrides still take effect.
+			$settings_provider->three_d_secure_enum(),
 			$container->get( 'wcgateway.credit-card-icons' ),
 			$settings_provider->merchant_country(),
 			$container->get( 'sdk-v6.google-pay-config' ),

@@ -48,6 +48,13 @@ jest.mock( '../utils/errorHandler', () => ( {
 	handleError: ( ...args ) => mockHandleError( ...args ),
 } ) );
 
+const mockCreateCardSetupToken = jest.fn();
+const mockExchangeSetupToken = jest.fn();
+jest.mock( '../sessions/freeTrialSave', () => ( {
+	createCardSetupToken: ( ...args ) => mockCreateCardSetupToken( ...args ),
+	exchangeSetupToken: ( ...args ) => mockExchangeSetupToken( ...args ),
+} ) );
+
 import { initCardFields } from '../cardFields/renderer';
 
 /**
@@ -122,6 +129,8 @@ function triggerBodyEvent( event ) {
 beforeEach( () => {
 	jest.clearAllMocks();
 	mockHasJQuery.mockReturnValue( true );
+	mockCreateCardSetupToken.mockReset();
+	mockExchangeSetupToken.mockReset();
 	bodyHandlers = {};
 	global.jQuery = jest.fn( () => ( {
 		on: ( event, handler ) => {
@@ -579,5 +588,106 @@ describe( 'initCardFields', () => {
 		expect( mockHandleError ).not.toHaveBeenCalled();
 		expect( mockApproveCardOrder ).not.toHaveBeenCalled();
 		expect( nativeSubmits ).toBe( 0 );
+	} );
+
+	describe( 'free-trial ($0 subscription) cart', () => {
+		function freeTrialConfig( overrides = {} ) {
+			return baseConfig( { is_free_trial_cart: true, ...overrides } );
+		}
+
+		test( 'mounts the fields from the card save session instead of the one-time session', async () => {
+			buildCheckoutDom( 'ppcp-credit-card-gateway' );
+			const cardSession = makeCardSession();
+			mockLoadSdkV6.mockResolvedValue( {
+				createCardFieldsSavePaymentSession: () => cardSession,
+			} );
+
+			await initCardFields( freeTrialConfig() );
+			await flushPromises();
+
+			expect( cardSession.createCardFieldsComponent ).toHaveBeenCalledTimes(
+				3
+			);
+		} );
+
+		test( 'a new-card submission creates a setup token, confirms it through the save session, exchanges it, then re-clicks place_order', async () => {
+			buildCheckoutDom( 'ppcp-credit-card-gateway' );
+			const cardSession = makeCardSession( { state: 'succeeded' } );
+			mockLoadSdkV6.mockResolvedValue( {
+				createCardFieldsSavePaymentSession: () => cardSession,
+			} );
+			mockCreateCardSetupToken.mockResolvedValue( 'SETUP1' );
+			mockExchangeSetupToken.mockResolvedValue( undefined );
+
+			await initCardFields( freeTrialConfig() );
+			await flushPromises();
+
+			const placeOrder = document.querySelector( '#place_order' );
+			let nativeSubmits = 0;
+			placeOrder.addEventListener( 'click', () => nativeSubmits++ );
+
+			placeOrder.click();
+			await flushPromises();
+
+			expect( mockCreateCardSetupToken ).toHaveBeenCalledWith(
+				freeTrialConfig()
+			);
+			expect( cardSession.submit ).toHaveBeenCalledWith( 'SETUP1' );
+			expect( mockExchangeSetupToken ).toHaveBeenCalledWith(
+				freeTrialConfig(),
+				'SETUP1',
+				'ppcp-credit-card-gateway'
+			);
+			expect( mockCreateCardOrder ).not.toHaveBeenCalled();
+			expect( mockApproveCardOrder ).not.toHaveBeenCalled();
+			expect( nativeSubmits ).toBe( 1 );
+			expect( mockHandleError ).not.toHaveBeenCalled();
+		} );
+
+		test( 'a canceled 3DS challenge on the save session is silent and does not re-click place_order', async () => {
+			buildCheckoutDom( 'ppcp-credit-card-gateway' );
+			const cardSession = makeCardSession( { state: 'canceled' } );
+			mockLoadSdkV6.mockResolvedValue( {
+				createCardFieldsSavePaymentSession: () => cardSession,
+			} );
+			mockCreateCardSetupToken.mockResolvedValue( 'SETUP1' );
+
+			await initCardFields( freeTrialConfig() );
+			await flushPromises();
+
+			const placeOrder = document.querySelector( '#place_order' );
+			let nativeSubmits = 0;
+			placeOrder.addEventListener( 'click', () => nativeSubmits++ );
+
+			placeOrder.click();
+			await flushPromises();
+
+			expect( mockExchangeSetupToken ).not.toHaveBeenCalled();
+			expect( mockHandleError ).not.toHaveBeenCalled();
+			expect( nativeSubmits ).toBe( 0 );
+		} );
+
+		test( 'a failed save session surfaces the error and does not re-click place_order', async () => {
+			buildCheckoutDom( 'ppcp-credit-card-gateway' );
+			const cardSession = makeCardSession( { state: 'failed' } );
+			mockLoadSdkV6.mockResolvedValue( {
+				createCardFieldsSavePaymentSession: () => cardSession,
+			} );
+			mockCreateCardSetupToken.mockResolvedValue( 'SETUP1' );
+
+			await initCardFields( freeTrialConfig() );
+			await flushPromises();
+
+			const placeOrder = document.querySelector( '#place_order' );
+			let nativeSubmits = 0;
+			placeOrder.addEventListener( 'click', () => nativeSubmits++ );
+
+			placeOrder.click();
+			await flushPromises();
+
+			expect( mockExchangeSetupToken ).not.toHaveBeenCalled();
+			expect( mockHandleError ).toHaveBeenCalled();
+			expect( nativeSubmits ).toBe( 0 );
+		} );
 	} );
 } );
