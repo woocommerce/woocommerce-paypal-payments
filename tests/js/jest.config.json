@@ -11,7 +11,10 @@
         "^@ppcp-card-fields/(.*)$": "<rootDir>/modules/ppcp-card-fields/resources/js/$1",
         "^@ppcp-paylater-block/(.*)$": "<rootDir>/modules/ppcp-paylater-block/resources/js/$1",
         "^@ppcp-googlepay/(.*)$": "<rootDir>/modules/ppcp-googlepay/resources/js/$1",
-        "^@ppcp-applepay/(.*)$": "<rootDir>/modules/ppcp-applepay/resources/js/$1"
+        "^@ppcp-applepay/(.*)$": "<rootDir>/modules/ppcp-applepay/resources/js/$1",
+        "^@ppcp-sdk-v6/(.*)$": "<rootDir>/modules/ppcp-sdk-v6/resources/js/$1",
+        "^@ppcp-axo/(.*)$": "<rootDir>/modules/ppcp-axo/resources/js/$1",
+        "^@ppcp-axo-block/(.*)$": "<rootDir>/modules/ppcp-axo-block/resources/js/$1"
     },
     "testPathIgnorePatterns": [
         "<rootDir>/tests/",
