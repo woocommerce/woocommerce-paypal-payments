@@ -53,6 +53,21 @@ jest.mock( './gatewayPlacement', () => ( {
 	revealWalletGateway: ( ...args ) => mockRevealWalletGateway( ...args ),
 } ) );
 
+const mockWalletShippingRequired = jest.fn( () => false );
+const mockCreateShippingController = jest.fn();
+jest.mock( './walletShipping', () => ( {
+	walletShippingRequired: ( ...args ) =>
+		mockWalletShippingRequired( ...args ),
+	createShippingController: ( ...args ) =>
+		mockCreateShippingController( ...args ),
+} ) );
+
+const mockAttachShippingHandlers = jest.fn();
+jest.mock( './applePayShipping', () => ( {
+	attachShippingHandlers: ( ...args ) =>
+		mockAttachShippingHandlers( ...args ),
+} ) );
+
 const mockSpinnerBlock = jest.fn();
 const mockSpinnerUnblock = jest.fn();
 jest.mock(
@@ -194,6 +209,8 @@ beforeEach( () => {
 		purchaseUnits: [ { amount: '12.34' } ],
 	} );
 	mockPayWithWallet.mockResolvedValue( undefined );
+	mockWalletShippingRequired.mockReturnValue( false );
+	mockCreateShippingController.mockReturnValue( { quote: jest.fn(), current: jest.fn() } );
 
 	ApplePaySessionMock = jest.fn( function () {
 		this.begin = jest.fn();
@@ -433,12 +450,47 @@ describe( 'a click on the rendered button', () => {
 				total: '42.00',
 				displayName: config.apple_pay.display_name,
 				context: 'checkout',
+				requiresShipping: false,
 			}
 		);
 		expect( ApplePaySessionMock ).toHaveBeenCalledWith(
 			4,
 			'APPLE_REQUEST'
 		);
+	} );
+
+	test( "forwards this context's shipping requirement into the request", async () => {
+		mockWalletShippingRequired.mockReturnValue( true );
+
+		const { wrapper } = await render( { context: 'cart' } );
+		wrapper.querySelector( 'apple-pay-button' ).click();
+
+		expect( mockBuildApplePayRequest ).toHaveBeenCalledWith(
+			'FORMATTED_CONFIG',
+			expect.objectContaining( { requiresShipping: true } )
+		);
+	} );
+
+	test( 'attaches the shipping handlers only when this context collects shipping', async () => {
+		mockWalletShippingRequired.mockReturnValue( true );
+
+		const { wrapper } = await render( { context: 'cart' } );
+		wrapper.querySelector( 'apple-pay-button' ).click();
+
+		const appleSession = ApplePaySessionMock.mock.instances[ 0 ];
+		expect( mockAttachShippingHandlers ).toHaveBeenCalledWith(
+			appleSession,
+			expect.objectContaining( { displayName: 'My Shop' } )
+		);
+	} );
+
+	test( 'never attaches the shipping handlers when this context collects no shipping', async () => {
+		mockWalletShippingRequired.mockReturnValue( false );
+
+		const { wrapper } = await render();
+		wrapper.querySelector( 'apple-pay-button' ).click();
+
+		expect( mockAttachShippingHandlers ).not.toHaveBeenCalled();
 	} );
 
 	test( 'refuses to open a sheet when no total has resolved yet', async () => {

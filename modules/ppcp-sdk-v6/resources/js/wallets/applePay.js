@@ -20,11 +20,16 @@ import { loadScript } from '../utils/scriptLoaders';
 import { revealWalletGateway } from './gatewayPlacement';
 import { APPLE_PAY_VERSION, buildApplePayRequest } from './applePayRequest';
 import { watchSheetTotal } from './applePaySheetTotal';
+import { attachShippingHandlers } from './applePayShipping';
 import { recordDomainValidation } from './applePayValidation';
 import { walletButtonStyle } from './walletButtonStyle';
 import { applePayPayer, applePayShippingAddress } from './walletContacts';
 import { payWithWallet } from './walletPayment';
 import { walletConfig, walletFundingSource } from './walletRegistry';
+import {
+	createShippingController,
+	walletShippingRequired,
+} from './walletShipping';
 import { resolveWalletTotal } from './walletTotal';
 
 /**
@@ -89,6 +94,8 @@ export async function renderApplePay( {
 	revealWalletGateway( gateway, config );
 
 	const sheetTotal = watchSheetTotal( config, context );
+	const requiresShipping = walletShippingRequired( config, context );
+	const shipping = createShippingController( { config } );
 	const spinner = hasJQuery() ? Spinner.fullPage() : null;
 	let paying = false;
 
@@ -126,8 +133,17 @@ export async function renderApplePay( {
 					total,
 					displayName: settings.display_name,
 					context,
+					requiresShipping,
 				} )
 			);
+
+			if ( requiresShipping ) {
+				attachShippingHandlers( appleSession, {
+					config,
+					displayName: settings.display_name,
+					shipping,
+				} );
+			}
 
 			appleSession.onvalidatemerchant = ( event ) => {
 				validateMerchant( appleSession, event );

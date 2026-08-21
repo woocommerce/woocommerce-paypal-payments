@@ -83,4 +83,21 @@ describe( 'buildApplePayRequest()', () => {
 			);
 		}
 	);
+
+	test( 'omits shippingType and shippingMethods when the sheet does not collect shipping', () => {
+		const request = buildApplePayRequest( sessionConfig(), transaction() );
+
+		expect( request ).not.toHaveProperty( 'shippingType' );
+		expect( request ).not.toHaveProperty( 'shippingMethods' );
+	} );
+
+	test( 'sets shippingType and an empty shippingMethods list when the sheet collects shipping, since the rates depend on an address not given yet', () => {
+		const request = buildApplePayRequest(
+			sessionConfig(),
+			transaction( { requiresShipping: true } )
+		);
+
+		expect( request.shippingType ).toBe( 'shipping' );
+		expect( request.shippingMethods ).toEqual( [] );
+	} );
 } );
