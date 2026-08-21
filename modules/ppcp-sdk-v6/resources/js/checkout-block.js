@@ -219,8 +219,14 @@ if ( config?.card_fields?.enabled && ! config.continuation ) {
 			features: config.card_fields.supported_features || [ 'products' ],
 			// WooCommerce Blocks renders its native "Save payment information…"
 			// checkbox and exposes the choice as the shouldSavePayment prop;
-			// only offered when card vaulting is enabled.
-			showSaveOption: Boolean( config.card_fields.is_vaulting_enabled ),
+			// only offered when card vaulting is enabled. Suppressed on a
+			// subscription cart, where the card must always be vaulted for
+			// renewals: the card component renders its own checked-and-disabled
+			// checkbox instead (the native one cannot be locked), matching the
+			// classic checkout.
+			showSaveOption:
+				Boolean( config.card_fields.is_vaulting_enabled ) &&
+				! config.card_fields.has_subscriptions,
 		},
 	} );
 }

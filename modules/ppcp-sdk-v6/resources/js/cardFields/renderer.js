@@ -128,6 +128,31 @@ function shouldSavePaymentMethod() {
 }
 
 /**
+ * Force-checks and disables the "Save to account" tokenization checkbox when the
+ * cart contains a subscription, so the card is always vaulted for renewals (the
+ * buyer cannot opt out). Mirrors v5's CardFieldsRenderer. No-op when vaulting is
+ * off (the checkbox is absent) or the cart has no subscription.
+ *
+ * @param {Object} config - The wc_ppcp_sdk_v6 config object.
+ */
+function forceSaveForSubscription( config ) {
+	if (
+		! config.card_fields?.has_subscriptions ||
+		! config.card_fields?.is_vaulting_enabled
+	) {
+		return;
+	}
+
+	const saveToAccount = document.querySelector(
+		'#wc-ppcp-credit-card-gateway-new-payment-method'
+	);
+	if ( saveToAccount ) {
+		saveToAccount.checked = true;
+		saveToAccount.disabled = true;
+	}
+}
+
+/**
  * Whether the card gateway is the currently selected checkout payment method.
  *
  * @param {string} paymentMethod - The card gateway's payment method ID.
@@ -303,6 +328,10 @@ export async function initCardFields( config ) {
 			return;
 		}
 
+		// Re-run on every DOM refresh: WC rebuilds the tokenization checkbox with
+		// the rest of #payment, so a single up-front call would not survive.
+		forceSaveForSubscription( config );
+
 		const placeOrderButton = document.querySelector( '#place_order' );
 		if (
 			! placeOrderButton ||
@@ -332,6 +361,9 @@ export async function initCardFields( config ) {
 		jQuery( document.body ).on( 'payment_method_selected', () => {
 			if ( isCardGatewaySelected( paymentMethod ) ) {
 				ensureCardSession().catch( handleError );
+				// The checkbox is only in the DOM once the card gateway's fields
+				// show, which selecting the method is what does.
+				forceSaveForSubscription( config );
 			}
 		} );
 	}

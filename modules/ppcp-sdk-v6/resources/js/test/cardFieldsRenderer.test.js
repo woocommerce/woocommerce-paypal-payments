@@ -690,4 +690,137 @@ describe( 'initCardFields', () => {
 			expect( nativeSubmits ).toBe( 0 );
 		} );
 	} );
+
+	describe( 'subscription cart (force-save the tokenization checkbox)', () => {
+		function subscriptionConfig( overrides = {} ) {
+			return baseConfig( {
+				card_fields: {
+					...baseConfig().card_fields,
+					has_subscriptions: true,
+					is_vaulting_enabled: true,
+					...overrides,
+				},
+			} );
+		}
+
+		test( 'checks and disables the save-to-account checkbox on attach when the cart has a subscription and vaulting is enabled', async () => {
+			buildCheckoutDom( 'ppcp-credit-card-gateway' );
+			document.body.insertAdjacentHTML(
+				'beforeend',
+				'<input type="checkbox" id="wc-ppcp-credit-card-gateway-new-payment-method" />'
+			);
+			mockLoadSdkV6.mockResolvedValue( {
+				createCardFieldsOneTimePaymentSession: () =>
+					makeCardSession(),
+			} );
+
+			await initCardFields( subscriptionConfig() );
+			await flushPromises();
+
+			const checkbox = document.querySelector(
+				'#wc-ppcp-credit-card-gateway-new-payment-method'
+			);
+			expect( checkbox.checked ).toBe( true );
+			expect( checkbox.disabled ).toBe( true );
+		} );
+
+		test( 'leaves the save-to-account checkbox untouched when the cart has no subscription', async () => {
+			buildCheckoutDom( 'ppcp-credit-card-gateway' );
+			document.body.insertAdjacentHTML(
+				'beforeend',
+				'<input type="checkbox" id="wc-ppcp-credit-card-gateway-new-payment-method" />'
+			);
+			mockLoadSdkV6.mockResolvedValue( {
+				createCardFieldsOneTimePaymentSession: () =>
+					makeCardSession(),
+			} );
+
+			await initCardFields(
+				subscriptionConfig( { has_subscriptions: false } )
+			);
+			await flushPromises();
+
+			const checkbox = document.querySelector(
+				'#wc-ppcp-credit-card-gateway-new-payment-method'
+			);
+			expect( checkbox.checked ).toBe( false );
+			expect( checkbox.disabled ).toBe( false );
+		} );
+
+		test( 'leaves the save-to-account checkbox untouched when vaulting is disabled', async () => {
+			buildCheckoutDom( 'ppcp-credit-card-gateway' );
+			document.body.insertAdjacentHTML(
+				'beforeend',
+				'<input type="checkbox" id="wc-ppcp-credit-card-gateway-new-payment-method" />'
+			);
+			mockLoadSdkV6.mockResolvedValue( {
+				createCardFieldsOneTimePaymentSession: () =>
+					makeCardSession(),
+			} );
+
+			await initCardFields(
+				subscriptionConfig( { is_vaulting_enabled: false } )
+			);
+			await flushPromises();
+
+			const checkbox = document.querySelector(
+				'#wc-ppcp-credit-card-gateway-new-payment-method'
+			);
+			expect( checkbox.checked ).toBe( false );
+			expect( checkbox.disabled ).toBe( false );
+		} );
+
+		test( 'is a no-op when the checkbox is absent from the DOM (vaulting off server-side)', async () => {
+			buildCheckoutDom( 'ppcp-credit-card-gateway' );
+			mockLoadSdkV6.mockResolvedValue( {
+				createCardFieldsOneTimePaymentSession: () =>
+					makeCardSession(),
+			} );
+
+			await expect(
+				initCardFields( subscriptionConfig() )
+			).resolves.not.toThrow();
+			await flushPromises();
+
+			expect(
+				document.querySelector(
+					'#wc-ppcp-credit-card-gateway-new-payment-method'
+				)
+			).toBeNull();
+		} );
+
+		test( 'force-checks the checkbox again when payment_method_selected fires with the card gateway now selected', async () => {
+			// The checkbox is only in the DOM once the card gateway's fields
+			// show, which selecting the method is what does; simulate that
+			// by starting on a different gateway with no checkbox present.
+			buildCheckoutDom( 'ppcp-gateway' );
+			mockLoadSdkV6.mockResolvedValue( {
+				createCardFieldsOneTimePaymentSession: () =>
+					makeCardSession(),
+			} );
+
+			await initCardFields( subscriptionConfig() );
+			await flushPromises();
+
+			document.querySelector(
+				'input[value="ppcp-gateway"]'
+			).checked = false;
+			document.querySelector(
+				'input[value="ppcp-credit-card-gateway"]'
+			).checked = true;
+			document.body.insertAdjacentHTML(
+				'beforeend',
+				'<input type="checkbox" id="wc-ppcp-credit-card-gateway-new-payment-method" />'
+			);
+
+			triggerBodyEvent( 'payment_method_selected' );
+			await flushPromises();
+
+			const checkbox = document.querySelector(
+				'#wc-ppcp-credit-card-gateway-new-payment-method'
+			);
+			expect( checkbox.checked ).toBe( true );
+			expect( checkbox.disabled ).toBe( true );
+		} );
+	} );
 } );

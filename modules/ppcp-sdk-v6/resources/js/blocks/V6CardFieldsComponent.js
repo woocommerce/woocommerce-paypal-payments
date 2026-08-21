@@ -217,6 +217,13 @@ export function V6CardFieldsComponent( {
 	const savePaymentRef = useRef( false );
 	savePaymentRef.current = Boolean( shouldSavePayment ) || hasSubscriptions;
 
+	// On a subscription cart the native "Save payment information…" option is
+	// suppressed (see checkout-block.js) and this component shows its own
+	// checked-and-disabled checkbox instead, since the card must always be
+	// vaulted for renewals and the native option cannot be locked.
+	const isVaultingEnabled = Boolean( config.card_fields.is_vaulting_enabled );
+	const showLockedSaveOption = hasSubscriptions && isVaultingEnabled;
+
 	// Read through a ref so onPaymentSetup sees the latest name without
 	// resubscribing every keystroke.
 	const cardNameRef = useRef( '' );
@@ -401,6 +408,40 @@ export function V6CardFieldsComponent( {
 						placeholder: __( 'CVV', 'woocommerce-paypal-payments' ),
 						containerStyle: { flex: 1 },
 					} )
+				)
+			),
+		// Subscription cart: a checked, disabled save option in place of the
+		// suppressed native one, so the buyer sees the card will be saved for
+		// renewals but cannot opt out (matches the classic checkout). A plain
+		// native checkbox, not WooCommerce's checkbox component, whose CSS hides
+		// the input in favour of an SVG mark this markup does not provide.
+		showLockedSaveOption &&
+			createElement(
+				'label',
+				{
+					className: 'ppcp-sdk-v6-card-fields__save',
+					htmlFor: 'ppcp-sdk-v6-save-payment-method',
+					style: {
+						display: 'flex',
+						alignItems: 'center',
+						gap: '8px',
+						cursor: 'default',
+					},
+				},
+				createElement( 'input', {
+					id: 'ppcp-sdk-v6-save-payment-method',
+					type: 'checkbox',
+					checked: true,
+					disabled: true,
+					readOnly: true,
+				} ),
+				createElement(
+					'span',
+					null,
+					__(
+						'Save payment information to my account for future purchases.',
+						'woocommerce-paypal-payments'
+					)
 				)
 			)
 	);

@@ -211,6 +211,54 @@ describe( 'V6CardFieldsComponent', () => {
 		);
 	} );
 
+	test( 'renders a checked, disabled locked save-option checkbox when the cart has subscriptions and vaulting is enabled', async () => {
+		renderComponent( {
+			config: cardConfig( {
+				card_fields: {
+					...cardConfig().card_fields,
+					has_subscriptions: true,
+					is_vaulting_enabled: true,
+				},
+			} ),
+		} );
+		await waitForSessionReady();
+
+		const checkbox = document.getElementById(
+			'ppcp-sdk-v6-save-payment-method'
+		);
+		expect( checkbox ).toBeInTheDocument();
+		expect( checkbox ).toBeChecked();
+		expect( checkbox ).toBeDisabled();
+	} );
+
+	test.each( [
+		[
+			'the cart has no subscriptions',
+			{ has_subscriptions: false, is_vaulting_enabled: true },
+		],
+		[
+			'vaulting is disabled',
+			{ has_subscriptions: true, is_vaulting_enabled: false },
+		],
+	] )(
+		'does not render the locked save-option checkbox when %s',
+		async ( _label, overrides ) => {
+			renderComponent( {
+				config: cardConfig( {
+					card_fields: {
+						...cardConfig().card_fields,
+						...overrides,
+					},
+				} ),
+			} );
+			await waitForSessionReady();
+
+			expect(
+				document.getElementById( 'ppcp-sdk-v6-save-payment-method' )
+			).not.toBeInTheDocument();
+		}
+	);
+
 	test( 'passes savePaymentMethod false when the buyer does not opt in and there are no subscriptions', async () => {
 		mockCreateCardOrder.mockResolvedValueOnce( { orderId: 'ORDER1' } );
 		session.submit.mockResolvedValueOnce( { state: 'succeeded' } );
