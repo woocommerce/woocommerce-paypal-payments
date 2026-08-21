@@ -4,7 +4,25 @@
  * @package
  */
 
-const scriptPromises = {};
+const CACHE_KEY = '__ppcpV6ScriptPromises';
+
+/**
+ * The per-URL load promises, shared across bundles.
+ *
+ * On window rather than in module scope because each webpack bundle gets its own
+ * copy of this module: a second bundle asking for the same URL would otherwise
+ * inject the tag again, and these SDKs register custom elements, which throws on
+ * the duplicate registration.
+ *
+ * @return {Object} The cache.
+ */
+function scriptPromiseCache() {
+	if ( ! window[ CACHE_KEY ] ) {
+		window[ CACHE_KEY ] = {};
+	}
+
+	return window[ CACHE_KEY ];
+}
 
 /**
  * Appends a script tag and resolves once it loaded.
@@ -17,6 +35,8 @@ const scriptPromises = {};
  * @return {Promise<void>} Resolves when the script is loaded.
  */
 export function loadScript( url ) {
+	const scriptPromises = scriptPromiseCache();
+
 	if ( ! scriptPromises[ url ] ) {
 		scriptPromises[ url ] = new Promise( ( resolve, reject ) => {
 			const script = document.createElement( 'script' );

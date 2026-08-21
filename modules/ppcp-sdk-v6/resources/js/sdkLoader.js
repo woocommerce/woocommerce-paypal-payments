@@ -8,7 +8,40 @@ import { postJson } from './utils/api';
 import { loadScript } from './utils/scriptLoaders';
 import { walletSdkComponents } from './wallets/walletRegistry';
 
-let instancePromise = null;
+const INSTANCE_KEY = '__ppcpV6InstancePromise';
+const METADATA_ID_KEY = '__ppcpV6ClientMetadataId';
+
+/**
+ * The in-flight instance promise, shared across bundles.
+ *
+ * On window rather than in module scope because each webpack bundle gets its own
+ * copy of this module: the ppcp-axo bundle asking for Fastlane must reuse the
+ * instance this module's own bootstrap created, or the SDK script loads twice and
+ * its custom elements fail to register a second time.
+ *
+ * @return {?Promise<Object>} The cached promise, or null.
+ */
+function cachedInstance() {
+	return window[ INSTANCE_KEY ] || null;
+}
+
+/**
+ * One client metadata id per page, shared across bundles.
+ *
+ * PayPal correlates it with the order for fraud checks, and createInstance
+ * rejects outright when the fastlane component is requested without it.
+ *
+ * @return {string} The id.
+ */
+function clientMetadataId() {
+	if ( ! window[ METADATA_ID_KEY ] ) {
+		window[ METADATA_ID_KEY ] =
+			window.crypto?.randomUUID?.() ||
+			`ppcp-${ Date.now() }-${ Math.random().toString( 16 ).slice( 2 ) }`;
+	}
+
+	return window[ METADATA_ID_KEY ];
+}
 
 const PAGE_TYPE_MAP = {
 	product: 'product-details',
@@ -30,16 +63,16 @@ const PAGE_TYPE_MAP = {
  * @return {Promise<Object>} The SDK instance.
  */
 export function loadSdkV6( config, context ) {
-	if ( ! instancePromise ) {
-		instancePromise = createInstance( config, context ).catch(
+	if ( ! cachedInstance() ) {
+		window[ INSTANCE_KEY ] = createInstance( config, context ).catch(
 			( error ) => {
-				instancePromise = null;
+				delete window[ INSTANCE_KEY ];
 				throw error;
 			}
 		);
 	}
 
-	return instancePromise;
+	return cachedInstance();
 }
 
 /**
@@ -63,6 +96,9 @@ async function createInstance( config, context ) {
 	if ( config.card_fields?.enabled ) {
 		components.push( 'card-fields' );
 	}
+	if ( config.fastlane?.enabled ) {
+		components.push( 'fastlane' );
+	}
 	components.push( ...walletSdkComponents( config ) );
 
 	const sdkInstance = await window.paypal.createInstance( {
@@ -70,6 +106,7 @@ async function createInstance( config, context ) {
 		components,
 		pageType: PAGE_TYPE_MAP[ context ] || 'checkout',
 		locale: config.locale,
+		clientMetadataId: clientMetadataId(),
 	} );
 
 	document.dispatchEvent(
