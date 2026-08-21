@@ -14,6 +14,27 @@
 import { splitFullName } from '../utils/name';
 
 /**
+ * Maps a wallet address to WC address fields, for pricing shipping.
+ *
+ * Only the four fields a shipping zone resolves from, which is all either sheet
+ * exposes before authorization: Apple redacts the street. The Store API merges
+ * partial addresses, so the omitted ones are not cleared.
+ *
+ * `administrativeArea` must land on `state`, or state-scoped zones stop matching.
+ *
+ * @param {Object} source - A wallet address or contact.
+ * @return {Object} WC address fields.
+ */
+export function walletAddressToWc( source ) {
+	return {
+		country: source?.countryCode || '',
+		state: source?.administrativeArea || '',
+		postcode: source?.postalCode || '',
+		city: source?.locality || '',
+	};
+}
+
+/**
  * Maps a wallet address to the PayPal address shape.
  *
  * Both wallets name every field the same way bar the street, which they are asked
@@ -53,8 +74,8 @@ function googlePayAddress( data ) {
  */
 export function googlePayPayer( response ) {
 	const billing = response?.paymentMethodData?.info?.billingAddress;
-	// Defaulted rather than assumed present: a sheet that collects no billing
-	// address must not take the payment down with a TypeError.
+	// splitFullName() trims, so a sheet without a billing address must not reach
+	// it undefined.
 	const [ givenName, surname ] = splitFullName( billing?.name ?? '' );
 
 	return {
@@ -70,8 +91,8 @@ export function googlePayPayer( response ) {
 /**
  * Derives the PayPal shipping address from a Google Pay payment response.
  *
- * Falls back to the billing address: with the shipping callbacks disabled the
- * sheet returns no shippingAddress, and a physical-goods order still needs one.
+ * Falls back to the billing address: where the sheet collects no shipping it
+ * returns no shippingAddress, and a physical-goods order still needs one.
  *
  * @param {Object} response - The Google Pay payment response.
  * @return {Object} The PayPal shipping address.
@@ -116,9 +137,8 @@ function applePayFullName( contact ) {
 /**
  * Derives the PayPal payer from an authorized Apple Pay payment.
  *
- * Apple sends the name pre-split as givenName/familyName, so no splitting is
- * needed. It never returns a billing email or phone, so those come off the
- * shipping contact.
+ * Apple never returns a billing email or phone, so those come off the shipping
+ * contact.
  *
  * @param {Object} payment - The ApplePayPayment from onpaymentauthorized.
  * @return {Object} The PayPal payer.
@@ -140,16 +160,14 @@ export function applePayPayer( payment ) {
 /**
  * Derives the PayPal shipping address from an authorized Apple Pay payment.
  *
- * Falls back to the billing contact: on classic checkout no postal address is
- * requested in the sheet, and a physical-goods order still needs one.
+ * Falls back to the billing contact when the shipping one carries no postal
+ * address, which is the classic checkout sheet: it asks only for an email and
+ * phone, and a physical-goods order still needs somewhere to ship.
  *
  * @param {Object} payment - The ApplePayPayment from onpaymentauthorized.
  * @return {Object} The PayPal shipping address.
  */
 export function applePayShippingAddress( payment ) {
-	// Only the postal half falls back: a shippingContact that carries just an
-	// email and phone (which is all the checkout sheet asks for) has no address
-	// to ship to, so the billing one stands in.
 	const shipping = payment?.shippingContact?.countryCode
 		? payment.shippingContact
 		: payment?.billingContact;

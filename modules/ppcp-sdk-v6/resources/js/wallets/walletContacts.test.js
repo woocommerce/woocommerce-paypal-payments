@@ -3,7 +3,45 @@ import {
 	googlePayShippingAddress,
 	applePayPayer,
 	applePayShippingAddress,
+	walletAddressToWc,
 } from './walletContacts';
+
+describe( 'walletAddressToWc()', () => {
+	test( 'maps countryCode/administrativeArea/postalCode/locality to WC address fields', () => {
+		expect(
+			walletAddressToWc( {
+				countryCode: 'US',
+				administrativeArea: 'CA',
+				postalCode: '94105',
+				locality: 'San Francisco',
+			} )
+		).toEqual( {
+			country: 'US',
+			state: 'CA',
+			postcode: '94105',
+			city: 'San Francisco',
+		} );
+	} );
+
+	test( 'defaults every field to an empty string when the source carries none of them', () => {
+		expect( walletAddressToWc( {} ) ).toEqual( {
+			country: '',
+			state: '',
+			postcode: '',
+			city: '',
+		} );
+	} );
+
+	test( 'does not throw and defaults every field when the source is absent', () => {
+		expect( () => walletAddressToWc( null ) ).not.toThrow();
+		expect( walletAddressToWc( undefined ) ).toEqual( {
+			country: '',
+			state: '',
+			postcode: '',
+			city: '',
+		} );
+	} );
+} );
 
 const googlePayResponse = ( overrides = {} ) => ( {
 	email: 'jane@example.test',
