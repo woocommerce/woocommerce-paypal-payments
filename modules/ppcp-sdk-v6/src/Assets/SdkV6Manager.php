@@ -710,9 +710,9 @@ class SdkV6Manager {
 	/**
 	 * Whether the given context collects a shipping address and shipping options.
 	 *
-	 * Not collected when the buyer gets another chance to choose it ("Pay Now"
-	 * disabled, so continuation mode ends on a final review), or when there is
-	 * nothing to ship.
+	 * Requires the "Pay Now" experience, which builds the WC order from the approved
+	 * PayPal order and the address collected during payment. Continuation mode ends
+	 * on a final review page instead, and that page collects shipping itself.
 	 *
 	 * The product page judges the product rather than the cart, because the product
 	 * is what gets bought there: it is added to the cart on click, so the cart's

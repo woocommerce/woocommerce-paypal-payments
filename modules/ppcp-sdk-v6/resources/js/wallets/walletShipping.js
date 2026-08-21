@@ -22,6 +22,10 @@ import { quoteFromCart } from './shippingQuote';
 /**
  * Whether the sheet in this context collects shipping.
  *
+ * Decided per context by PHP. Where it is true the sheet's address becomes the
+ * WC order's, because approveOrder() creates that order itself rather than
+ * submitting the form the page may carry.
+ *
  * @param {Object} config  - The wc_ppcp_sdk_v6 config object.
  * @param {string} context - The page context.
  * @return {boolean} True when the sheet must ask for an address.
