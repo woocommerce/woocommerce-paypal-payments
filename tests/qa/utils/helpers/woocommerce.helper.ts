@@ -21,6 +21,7 @@ import {
 	disableWcSetupWizard,
 	disableWebhookVerificationPlugin,
 	negative12FeePlugin,
+	pcpSdkV6Flag,
 } from '../../resources';
 
 const country = process.env.WC_DEFAULT_COUNTRY || 'usa';
@@ -78,6 +79,17 @@ export const setupWooCommerce = async () => {
 					requestUtils,
 					plugins,
 					...disableWcSetupWizard,
+				} );
+			}
+		);
+
+		setup(
+			'Setup PCP SDK v6 Feature Flag (active)',
+			async ( { requestUtils, plugins } ) => {
+				await installPluginResolveActiveState( {
+					requestUtils,
+					plugins,
+					...pcpSdkV6Flag,
 				} );
 			}
 		);
