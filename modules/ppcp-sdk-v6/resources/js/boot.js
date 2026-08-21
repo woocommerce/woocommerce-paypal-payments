@@ -14,12 +14,24 @@
 
 import { loadSdkV6 } from './sdkLoader';
 import { checkEligibility } from './eligibility';
-import { createSession } from './sessions/createSession';
+import {
+	createSession,
+	SUPPORTED_METHODS as METHODS,
+} from './sessions/createSession';
 import { renderButtons } from './components/buttonRenderer';
+import { renderWallets } from './wallets/renderWallets';
+import { isWalletEnabled, WALLET_METHODS } from './wallets/walletRegistry';
 import { createOrder, fetchCartTotal } from './endpointsAdapter';
 import { initCardFields } from './cardFields/renderer';
 import { hasJQuery } from './utils/api';
 import { setErrorLabels } from './utils/errorHandler';
+import { setVisible } from '@ppcp-button/Helper/Hiding';
+
+// The native WC submit button, labelled "Proceed to PayPal" for the PayPal
+// gateway. It is replaced by the v6 PayPal buttons while the PayPal gateway is
+// selected, but stays as the submit for cards and every other method.
+const PLACE_ORDER_SELECTOR = '#place_order';
+const PAYPAL_GATEWAY_ID = 'ppcp-gateway';
 
 ( function ( config ) {
 	'use strict';
@@ -64,6 +76,7 @@ import { setErrorLabels } from './utils/errorHandler';
 	let amount = config.amount;
 	let eligibilityPromise = null;
 	const sessionPromises = {};
+	const renderPromises = {};
 
 	function ensureEligibility() {
 		if ( ! eligibilityPromise ) {
@@ -108,15 +121,28 @@ import { setErrorLabels } from './utils/errorHandler';
 			payLaterDetails: eligibility.payLaterDetails,
 			map: {},
 		};
-		for ( const method of [ 'paypal', 'venmo', 'paylater' ] ) {
-			if ( eligibility[ method ] ) {
-				sessions.map[ method ] = createSession(
-					sdk,
-					method,
-					config,
-					context
-				);
+
+		for ( const method of METHODS ) {
+			if ( ! eligibility[ method ] ) {
+				continue;
 			}
+
+			// A wallet's SDK component is only requested when the wallet is
+			// enabled, so without it the session factory does not exist and
+			// calling it would take every button on the page down.
+			if (
+				WALLET_METHODS.includes( method ) &&
+				! isWalletEnabled( config, method )
+			) {
+				continue;
+			}
+
+			sessions.map[ method ] = createSession(
+				sdk,
+				method,
+				config,
+				context
+			);
 		}
 
 		return sessions;
@@ -130,9 +156,12 @@ import { setErrorLabels } from './utils/errorHandler';
 	 * still contain buttons are left alone (WC AJAX updates that replace
 	 * the surrounding DOM deliver the wrapper empty again).
 	 *
+	 * Wallets render after renderButtons(), which empties the wrapper first,
+	 * and they append rather than replace.
+	 *
 	 * @param {Object} target - The render target.
 	 */
-	async function render( target ) {
+	async function renderTarget( target ) {
 		const wrapper = document.querySelector( target.wrapperSelector );
 		if ( ! wrapper || wrapper.childElementCount > 0 ) {
 			return;
@@ -148,6 +177,40 @@ import { setErrorLabels } from './utils/errorHandler';
 				createOrder( config, target.context, fundingSource ),
 			payLaterDetails,
 		} );
+
+		await renderWallets( {
+			wrapper,
+			config,
+			context: target.context,
+			sessions: map,
+		} );
+	}
+
+	/**
+	 * Queues a render for a target, so passes never overlap.
+	 *
+	 * The emptiness check in renderTarget() straddles an await, so two
+	 * overlapping passes would both pass it; the later one's renderButtons()
+	 * would then wipe the earlier one's wallet button while that render was
+	 * still in flight, leaving it to finish into a detached node.
+	 *
+	 * Each call still gets its own pass rather than sharing the in-flight one,
+	 * because refreshEligibility() blanks the wrapper before re-rendering and
+	 * must not be handed back a render that started before the flip. A pass
+	 * that finds the wrapper already populated returns immediately.
+	 *
+	 * @param {Object} target - The render target.
+	 * @return {Promise<void>} Resolves once this target's pass is done.
+	 */
+	function render( target ) {
+		const pending = renderPromises[ target.context ] || Promise.resolve();
+
+		// Swallowed so one failed pass does not block every later one.
+		renderPromises[ target.context ] = pending
+			.catch( () => {} )
+			.then( () => renderTarget( target ) );
+
+		return renderPromises[ target.context ];
 	}
 
 	function renderAll() {
@@ -176,10 +239,9 @@ import { setErrorLabels } from './utils/errorHandler';
 		eligibilityPromise = null;
 		const current = await ensureEligibility();
 
-		const methods = [ 'paypal', 'venmo', 'paylater' ];
 		const changed =
 			! previous ||
-			methods.some( ( m ) => previous[ m ] !== current[ m ] );
+			METHODS.some( ( m ) => previous[ m ] !== current[ m ] );
 
 		if ( changed ) {
 			for ( const key of Object.keys( sessionPromises ) ) {
@@ -198,9 +260,33 @@ import { setErrorLabels } from './utils/errorHandler';
 		renderAll();
 	}
 
+	/**
+	 * Hides the native WC "Proceed to PayPal" button while the PayPal gateway
+	 * is selected — the v6 PayPal buttons stand in for it — and restores it for
+	 * cards (whose flow submits through it) and every other method. Re-run on
+	 * updated_checkout / payment_method_selected because WC rebuilds the
+	 * #payment DOM (and this inline style) on each update.
+	 */
+	function syncPlaceOrderButton() {
+		if (
+			! hasJQuery() ||
+			! [ 'checkout', 'pay-now' ].includes( config.page_context )
+		) {
+			return;
+		}
+
+		const selected = document.querySelector(
+			'input[name="payment_method"]:checked'
+		)?.value;
+		const isPayPalGateway = selected === PAYPAL_GATEWAY_ID;
+
+		setVisible( PLACE_ORDER_SELECTOR, ! isPayPalGateway, true );
+	}
+
 	function initialRender() {
 		renderAll();
 		initCardFieldsSafely();
+		syncPlaceOrderButton();
 	}
 
 	if ( document.readyState === 'loading' ) {
@@ -214,6 +300,13 @@ import { setErrorLabels } from './utils/errorHandler';
 		jQuery( document.body ).on(
 			'updated_checkout wc_fragments_loaded wc_fragments_refreshed',
 			renderAll
+		);
+
+		// WC rebuilds #place_order on these too, and the selected method can
+		// change without a DOM rebuild, so re-sync the button on both.
+		jQuery( document.body ).on(
+			'updated_checkout payment_method_selected',
+			syncPlaceOrderButton
 		);
 
 		// Total-changing updates: eligibility must be re-checked too.

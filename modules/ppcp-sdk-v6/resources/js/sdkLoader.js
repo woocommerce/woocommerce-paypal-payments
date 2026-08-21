@@ -5,45 +5,18 @@
  */
 
 import { postJson } from './utils/api';
+import { loadScript } from './utils/scriptLoaders';
+import { walletSdkComponents } from './wallets/walletRegistry';
 
-const scriptPromises = {};
 let instancePromise = null;
 
 const PAGE_TYPE_MAP = {
 	product: 'product-details',
 	cart: 'cart',
 	checkout: 'checkout',
+	'pay-now': 'checkout',
 	'mini-cart': 'mini-cart',
 };
-
-/**
- * Dynamically loads the PayPal SDK v6 core script.
- *
- * The load promise is cached per URL (not sniffed from the DOM) so a
- * failed load rejects every awaiting caller and clears the cache,
- * allowing a later retry to insert a fresh script tag.
- *
- * @param {string} sdkUrl - The SDK URL.
- * @return {Promise<void>} Resolves when the script is loaded.
- */
-function loadSdkScript( sdkUrl ) {
-	if ( ! scriptPromises[ sdkUrl ] ) {
-		scriptPromises[ sdkUrl ] = new Promise( ( resolve, reject ) => {
-			const script = document.createElement( 'script' );
-			script.src = sdkUrl;
-			script.async = true;
-			script.onload = resolve;
-			script.onerror = () => {
-				script.remove();
-				delete scriptPromises[ sdkUrl ];
-				reject( new Error( 'Failed to load PayPal SDK v6 script.' ) );
-			};
-			document.head.appendChild( script );
-		} );
-	}
-
-	return scriptPromises[ sdkUrl ];
-}
 
 /**
  * Loads the SDK script, fetches a client token and creates the instance.
@@ -78,7 +51,7 @@ export function loadSdkV6( config, context ) {
  */
 async function createInstance( config, context ) {
 	const [ , tokenData ] = await Promise.all( [
-		loadSdkScript( config.sdk_url ),
+		loadScript( config.sdk_url ),
 		postJson( config.ajax.client_token ),
 	] );
 
@@ -90,6 +63,7 @@ async function createInstance( config, context ) {
 	if ( config.card_fields?.enabled ) {
 		components.push( 'card-fields' );
 	}
+	components.push( ...walletSdkComponents( config ) );
 
 	const sdkInstance = await window.paypal.createInstance( {
 		clientToken: tokenData.client_token,

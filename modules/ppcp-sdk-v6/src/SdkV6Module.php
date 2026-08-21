@@ -11,9 +11,10 @@ namespace WooCommerce\PayPalCommerce\SdkV6;
 
 use Automattic\WooCommerce\Blocks\Payments\PaymentMethodRegistry;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
+use WooCommerce\PayPalCommerce\SdkV6\Assets\AddPaymentMethodManager;
 use WooCommerce\PayPalCommerce\SdkV6\Assets\SdkV6Manager;
-use WooCommerce\PayPalCommerce\SdkV6\Blocks\V6PaymentMethod;
 use WooCommerce\PayPalCommerce\SdkV6\Endpoint\ClientTokenEndpoint;
+use WooCommerce\PayPalCommerce\SdkV6\Endpoint\SimulateCartEndpoint;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExecutableModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExtendingModule;
@@ -47,12 +48,42 @@ class SdkV6Module implements ServiceModule, ExtendingModule, ExecutableModule {
 		);
 
 		add_action(
+			'wc_ajax_' . SimulateCartEndpoint::ENDPOINT,
+			static function () use ( $c ) {
+				$endpoint = $c->get( 'sdk-v6.endpoint.simulate-cart' );
+				assert( $endpoint instanceof SimulateCartEndpoint );
+
+				$endpoint->handle_request();
+			}
+		);
+
+		add_action(
 			'wp_enqueue_scripts',
 			static function () use ( $c ) {
 				$manager = $c->get( 'sdk-v6.manager' );
 				assert( $manager instanceof SdkV6Manager );
 
 				$manager->enqueue();
+
+				$add_payment_method_manager = $c->get( 'sdk-v6.add-payment-method-manager' );
+				assert( $add_payment_method_manager instanceof AddPaymentMethodManager );
+
+				$add_payment_method_manager->enqueue();
+			}
+		);
+
+		// v6 fully owns the Add Payment Method page when it loads (PayPal save
+		// button + card save fields), so the v5 add-payment-method script must
+		// not also run there. See the migration note in extensions.php.
+		add_filter(
+			'woocommerce_paypal_payments_render_add_payment_method_assets',
+			static function ( bool $render ) use ( $c ): bool {
+				$add_payment_method_manager = $c->get( 'sdk-v6.add-payment-method-manager' );
+				assert( $add_payment_method_manager instanceof AddPaymentMethodManager );
+
+				return $add_payment_method_manager->should_load_on_current_page()
+					? false
+					: $render;
 			}
 		);
 
@@ -117,6 +148,10 @@ class SdkV6Module implements ServiceModule, ExtendingModule, ExecutableModule {
 		// can clobber the express submission. The wallets and card fields
 		// migrate under their own stories.
 		//
+		// Classic checkout needs no equivalent: both wallet rows are v6-owned
+		// there, printing their own hide-until-eligible style and revealing the
+		// row once the browser confirms the shopper can pay.
+		//
 		// The registration action fires on init (priority 5), before
 		// is_checkout()/is_cart() resolve, so the page context is unknown here;
 		// capture the registry and defer the suppression to wp_enqueue_scripts.
@@ -178,9 +213,6 @@ class SdkV6Module implements ServiceModule, ExtendingModule, ExecutableModule {
 	 *
 	 * Uses the same theme hooks as the v5 SmartButton so v6 buttons appear
 	 * in the same locations.
-	 *
-	 * @param SdkV6Manager $manager The SDK v6 manager.
-	 * @return void
 	 */
 	private function register_render_hooks( SdkV6Manager $manager ): void {
 		$places = $manager->determine_render_places();
@@ -227,7 +259,29 @@ class SdkV6Module implements ServiceModule, ExtendingModule, ExecutableModule {
 				'woocommerce_paypal_payments_checkout_button_renderer_hook',
 				'woocommerce_review_order_after_payment'
 			);
-			add_action( $hook, static fn() => $manager->render_wrapper() );
+			add_action(
+				$hook,
+				static function () use ( $manager ): void {
+					$manager->render_wrapper();
+
+					// Their own containers, next to the express wrapper rather
+					// than inside it: as payment-method rows these wallets are
+					// shown and hidden by the buyer's gateway selection.
+					$manager->render_wallet_gateway_wrappers();
+				}
+			);
+		}
+
+		if ( $places['pay-now'] ) {
+			/**
+			 * The action name that the PayPal buttons use for rendering on the pay-for-order page.
+			 * Shared with the v5 SmartButton so a single override relocates both stacks.
+			 */
+			$hook = (string) apply_filters(
+				'woocommerce_paypal_payments_pay_order_renderer_hook',
+				'woocommerce_pay_order_after_submit'
+			);
+			add_action( $hook, static fn() => $manager->render_wrapper(), 20 );
 		}
 
 		if ( $places['mini-cart'] ) {

@@ -1,30 +1,26 @@
 /**
- * Funding-source display labels for the v6 express buttons.
+ * The funding sources the v6 stack knows about.
+ *
+ * Deliberately free of imports: boot.js is registered without script
+ * dependencies, so anything reachable from it must not pull in a wp-* global.
+ * The display labels, which need @wordpress/i18n, live in fundingSourceLabel.js
+ * and are only reachable from the block bundles.
  *
  * @package
  */
 
-import { __ } from '@wordpress/i18n';
-
 /**
- * The display label for a funding source.
- *
- * Resolved lazily rather than from a module-level map so the translation is
- * looked up after the i18n data is in place. PayPal and Venmo are brand
- * names and stay untranslated; 'Pay Later' is descriptive UI text.
- *
- * @param {string} fundingSource - The funding source (paypal, venmo, paylater).
- * @return {string} The label, falling back to PayPal for unknown sources.
+ * The values are the v6 SDK's own vocabulary (findEligibleMethods, the
+ * create*OneTimePaymentSession factories), which for every method but Apple Pay
+ * is also what the WC AJAX endpoints accept as funding_source, so they are fixed
+ * by both contracts rather than free to rename. Apple Pay is the exception: the
+ * endpoints know it as apple_pay, which walletRegistry.js maps, so these constants
+ * stay purely the SDK's vocabulary.
  */
-export function fundingSourceLabel( fundingSource ) {
-	switch ( fundingSource ) {
-		case 'venmo':
-			return 'Venmo';
-
-		case 'paylater':
-			return __( 'Pay Later', 'woocommerce-paypal-payments' );
-
-		default:
-			return 'PayPal';
-	}
-}
+export const FundingSources = {
+	PAYPAL: 'paypal',
+	VENMO: 'venmo',
+	PAYLATER: 'paylater',
+	GOOGLEPAY: 'googlepay',
+	APPLEPAY: 'applepay',
+};

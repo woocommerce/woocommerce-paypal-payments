@@ -26,10 +26,15 @@ import { V6ExpressComponent } from './blocks/V6ExpressComponent';
 import { V6ContinuationComponent } from './blocks/V6ContinuationComponent';
 import { V6CardFieldsComponent } from './blocks/V6CardFieldsComponent';
 import { V6EditorPreview } from './blocks/V6EditorPreview';
-import { fundingSourceLabel } from './utils/fundingSources';
+import { FundingSources } from './utils/fundingSources';
+import { fundingSourceLabel } from './utils/fundingSourceLabel';
 import { minorUnitsToDecimal } from './utils/amount';
 
-const FUNDING_SOURCES = [ 'paypal', 'venmo', 'paylater' ];
+const FUNDING_SOURCES = [
+	FundingSources.PAYPAL,
+	FundingSources.VENMO,
+	FundingSources.PAYLATER,
+];
 
 // get_payment_method_data() lands under the wcSettings `paymentMethodData`
 // container, keyed by the method's registered name (V6PaymentMethod::$name).
@@ -62,7 +67,9 @@ if ( config && config.page_context && config.continuation ) {
 		),
 		ariaLabel: fundingSourceLabel( config.continuation.funding_source ),
 		content: createElement( V6ContinuationComponent, { config } ),
-		edit: createElement( V6EditorPreview, { fundingSource: 'paypal' } ),
+		edit: createElement( V6EditorPreview, {
+			fundingSource: FundingSources.PAYPAL,
+		} ),
 		// Set explicitly so the button never reads "Proceed to PayPal", which
 		// would tell the buyer they are heading back to PayPal.
 		placeOrderButtonLabel: __(
@@ -144,12 +151,44 @@ if ( config && config.page_context && config.continuation ) {
 	}
 }
 
+/**
+ * The card method label: the gateway title plus the supported-card logos.
+ *
+ * PaymentMethodIcons comes off the `components` prop that WooCommerce Blocks
+ * injects into the label (not an import), matching the v5 block. card_icons is
+ * empty when "Show logos of supported cards" is disabled, so nothing renders.
+ *
+ * @param {Object} props            - Label props from the Blocks registry.
+ * @param {Object} props.components  - Blocks-provided label components.
+ * @return {Object} The label element.
+ */
+const CardFieldsLabel = ( { components } ) => {
+	const { PaymentMethodIcons } = components || {};
+	const icons = config.card_fields.card_icons || [];
+
+	return createElement(
+		'span',
+		{
+			style: {
+				display: 'flex',
+				alignItems: 'center',
+				justifyContent: 'space-between',
+				width: '100%',
+			},
+		},
+		createElement( 'span', null, config.card_fields.title ),
+		PaymentMethodIcons &&
+			icons.length > 0 &&
+			createElement( PaymentMethodIcons, { icons, align: 'right' } )
+	);
+};
+
 // Skipped in continuation mode, where the buyer has already approved a PayPal
 // order and only the review shows.
 if ( config?.card_fields?.enabled && ! config.continuation ) {
 	registerPaymentMethod( {
 		name: config.card_fields.payment_method,
-		label: createElement( 'div', null, config.card_fields.title ),
+		label: createElement( CardFieldsLabel ),
 		ariaLabel: config.card_fields.title,
 		content: createElement( V6CardFieldsComponent, { config } ),
 		// A static placeholder, not the live fields: the SDK does not boot in
@@ -162,6 +201,10 @@ if ( config?.card_fields?.enabled && ! config.continuation ) {
 		canMakePayment: () => true,
 		supports: {
 			features: [ 'products' ],
+			// WooCommerce Blocks renders its native "Save payment information…"
+			// checkbox and exposes the choice as the shouldSavePayment prop;
+			// only offered when card vaulting is enabled.
+			showSaveOption: Boolean( config.card_fields.is_vaulting_enabled ),
 		},
 	} );
 }
