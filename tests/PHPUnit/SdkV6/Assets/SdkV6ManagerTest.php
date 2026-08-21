@@ -53,6 +53,8 @@ class SdkV6ManagerTest extends TestCase
         $this->card_payments_configuration = Mockery::mock(CardPaymentsConfiguration::class);
 		$this->subscription_helper = Mockery::mock(SubscriptionHelper::class);
         $this->subscription_helper->shouldReceive('cart_contains_subscription')->andReturn(false)->byDefault();
+        $this->subscription_helper->shouldReceive('current_product_is_subscription')->andReturn(false)->byDefault();
+        $this->subscription_helper->shouldReceive('order_pay_contains_subscription')->andReturn(false)->byDefault();
 		$this->free_trial_helper = Mockery::mock(FreeTrialSubscriptionHelper::class);
 		$this->free_trial_helper->shouldReceive('is_free_trial_cart')->andReturn(false)->byDefault();
 		$this->credit_card_icons = [];
@@ -114,7 +116,7 @@ class SdkV6ManagerTest extends TestCase
         when('wc_get_checkout_url')->justReturn('https://example.com/checkout');
     }
 
-    private function createTestee(bool $should_handle_shipping = false, array $credit_card_icons = [], bool $card_vaulting_enabled = true, string $merchant_country = 'US', string $three_d_secure_contingency = 'SCA_WHEN_REQUIRED'): SdkV6Manager
+    private function createTestee(bool $should_handle_shipping = false, array $credit_card_icons = [], bool $card_vaulting_enabled = true, string $merchant_country = 'US', string $three_d_secure_contingency = 'SCA_WHEN_REQUIRED', ?callable $get_subscriptions_mode = null): SdkV6Manager
     {
         return new SdkV6Manager(
             $this->asset_getter,
@@ -132,6 +134,7 @@ class SdkV6ManagerTest extends TestCase
 	        $card_vaulting_enabled,
 	        $this->subscription_helper,
 	        $this->free_trial_helper,
+	        $get_subscriptions_mode ?? static fn (): string => SubscriptionHelper::SUBSCRIPTION_MODE_VALUE_VAULTING,
 	        $three_d_secure_contingency,
 	        $credit_card_icons,
 	        $merchant_country,
@@ -262,6 +265,112 @@ class SdkV6ManagerTest extends TestCase
         $testee = $this->createTestee();
 
         $this->assertFalse($testee->should_load_on_current_page());
+    }
+
+    /**
+     * GIVEN native PayPal Subscriptions mode is active and the cart carries a subscription
+     * WHEN checking whether the v6 SDK should load on the current page
+     * THEN the SDK does not load, even though a smart-button location would otherwise enable it,
+     *      because the whole page must defer to the v5 stack that can create the subscription
+     */
+    public function testShouldNotLoadWhenNativePayPalSubscriptionInCart(): void
+    {
+        $this->context->shouldReceive('context')->andReturn('checkout');
+        $this->card_payments_configuration->shouldReceive('is_acdc_enabled')->andReturn(false);
+        $this->settings_status->shouldReceive('is_smart_button_enabled_for_location')->andReturn(true);
+        $this->subscription_helper->shouldReceive('cart_contains_subscription')->andReturn(true);
+
+        $testee = $this->createTestee(
+            false,
+            [],
+            true,
+            'US',
+            'SCA_WHEN_REQUIRED',
+            static fn (): string => SubscriptionHelper::SUBSCRIPTION_MODE_VALUE_SUBSCRIPTIONS
+        );
+
+        $this->assertFalse($testee->should_load_on_current_page());
+    }
+
+    /**
+     * GIVEN native PayPal Subscriptions mode is active but no subscription is present in the
+     *      current product, cart or pay-for-order context
+     * WHEN checking whether the v6 SDK should load on the current page
+     * THEN the SDK follows the normal gating rather than being forced off, since there is no
+     *      native subscription for v5 to hand off
+     */
+    public function testShouldLoadWhenSubscriptionsModeActiveButNoSubscriptionPresent(): void
+    {
+        $this->context->shouldReceive('context')->andReturn('checkout');
+        $this->card_payments_configuration->shouldReceive('is_acdc_enabled')->andReturn(false);
+        $this->settings_status->shouldReceive('is_smart_button_enabled_for_location')->andReturn(true);
+
+        $testee = $this->createTestee(
+            false,
+            [],
+            true,
+            'US',
+            'SCA_WHEN_REQUIRED',
+            static fn (): string => SubscriptionHelper::SUBSCRIPTION_MODE_VALUE_SUBSCRIPTIONS
+        );
+
+        $this->assertTrue($testee->should_load_on_current_page());
+    }
+
+    /**
+     * GIVEN the merchant uses the vaulting subscriptions mode (not native PayPal Subscriptions)
+     *      and the cart carries a subscription
+     * WHEN checking whether the v6 SDK should load on the current page
+     * THEN the SDK is not forced off, since v6 can carry a vaulted subscription itself
+     */
+    public function testShouldLoadWhenVaultingModeWithSubscriptionInCart(): void
+    {
+        $this->context->shouldReceive('context')->andReturn('checkout');
+        $this->card_payments_configuration->shouldReceive('is_acdc_enabled')->andReturn(false);
+        $this->settings_status->shouldReceive('is_smart_button_enabled_for_location')->andReturn(true);
+        $this->subscription_helper->shouldReceive('cart_contains_subscription')->andReturn(true);
+
+        $testee = $this->createTestee(
+            false,
+            [],
+            true,
+            'US',
+            'SCA_WHEN_REQUIRED',
+            static fn (): string => SubscriptionHelper::SUBSCRIPTION_MODE_VALUE_VAULTING
+        );
+
+        $this->assertTrue($testee->should_load_on_current_page());
+    }
+
+    /**
+     * GIVEN native PayPal Subscriptions mode is active and the current product is a subscription
+     * WHEN determining which locations should render on the current page
+     * THEN no v6 button location renders, leaving the page entirely to the v5 stack
+     */
+    public function testDetermineRenderPlacesEmptyWhenNativePayPalSubscriptionProduct(): void
+    {
+        $this->context->shouldReceive('init_context')->never();
+        $this->subscription_helper->shouldReceive('current_product_is_subscription')->andReturn(true);
+
+        $testee = $this->createTestee(
+            false,
+            [],
+            true,
+            'US',
+            'SCA_WHEN_REQUIRED',
+            static fn (): string => SubscriptionHelper::SUBSCRIPTION_MODE_VALUE_SUBSCRIPTIONS
+        );
+
+        $this->assertSame(
+            [
+                'product'   => false,
+                'cart'      => false,
+                'checkout'  => false,
+                'pay-now'   => false,
+                'mini-cart' => false,
+            ],
+            $testee->determine_render_places()
+        );
     }
 
     /**
