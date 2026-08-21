@@ -63,6 +63,9 @@ async function createInstance( config, context ) {
 	if ( config.card_fields?.enabled ) {
 		components.push( 'card-fields' );
 	}
+	if ( config.fastlane?.enabled ) {
+		components.push( 'fastlane' );
+	}
 	components.push( ...walletSdkComponents( config ) );
 
 	const sdkInstance = await window.paypal.createInstance( {
