@@ -138,29 +138,24 @@ export class PayPalUi {
 			has: this.acdcGateway(),
 		} );
 	acdcCardholderNameInput = () =>
-		this.acdcContainer()
-			.frameLocator(
-				'[id^="zoid-paypal-card-name-field"] iframe[name^="__zoid__paypal_card_name_field__"]'
-			)
-			.locator( 'input.card-field-name' );
+		this.acdcContainer().locator(
+			'.ppcp-sdk-v6-card-field--name input'
+		);
 	acdcCardNumberInput = () =>
 		this.acdcContainer()
-			.frameLocator(
-				'[id^="zoid-paypal-card-number-field"] iframe[name^="__zoid__paypal_card_number_field__"]'
-			)
-			.locator( 'input.card-field-number' );
+			.locator( '.ppcp-sdk-v6-card-field--number' )
+			.frameLocator( 'iframe[title="Number PayPal Card Field"]' )
+			.locator( 'input' );
 	acdcCardExpirationInput = () =>
 		this.acdcContainer()
-			.frameLocator(
-				'[id^="zoid-paypal-card-expiry-field"] iframe[name^="__zoid__paypal_card_expiry_field__"]'
-			)
-			.locator( 'input.card-field-expiry' );
+			.locator( '.ppcp-sdk-v6-card-field--expiry' )
+			.frameLocator( 'iframe[title="Expiry PayPal Card Field"]' )
+			.locator( 'input' );
 	acdcCardCvvInput = () =>
 		this.acdcContainer()
-			.frameLocator(
-				'[id^="zoid-paypal-card-cvv-field"] iframe[name^="__zoid__paypal_card_cvv_field__"]'
-			)
-			.locator( 'input.card-field-cvv' );
+			.locator( '.ppcp-sdk-v6-card-field--cvv' )
+			.frameLocator( 'iframe[title="Cvv PayPal Card Field"]' )
+			.locator( 'input' );
 	acdcSaveToAccountCheckbox = () => this.page.locator( '#save' );
 	acdcSavedCard = ( card: WooCommerce.CreditCard ) =>
 		this.paymentOptionsContainers().filter( {

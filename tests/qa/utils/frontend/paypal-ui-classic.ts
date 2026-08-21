@@ -59,11 +59,17 @@ export class PayPalUiClassic extends PayPalUi {
 	googlePayGateway = () => this.fundingSourceGateway( 'ppcp-googlepay' );
 
 	acdcCardNumberInput = () =>
-		this.page.locator( '#ppcp-credit-card-gateway-card-number' );
+		this.page
+			.frameLocator( 'iframe[title="Number PayPal Card Field"]' )
+			.locator( 'input' );
 	acdcCardExpirationInput = () =>
-		this.page.locator( '#ppcp-credit-card-gateway-card-expiry' );
+		this.page
+			.frameLocator( 'iframe[title="Expiry PayPal Card Field"]' )
+			.locator( 'input' );
 	acdcCardCvvInput = () =>
-		this.page.locator( '#ppcp-credit-card-gateway-card-cvc' );
+		this.page
+			.frameLocator( 'iframe[title="Cvv PayPal Card Field"]' )
+			.locator( 'input' );
 	addPaymentMethodButton = () => this.page.locator( '#place_order' );
 
 	miniCartButtonContainer = () =>
