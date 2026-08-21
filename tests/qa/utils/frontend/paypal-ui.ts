@@ -51,7 +51,7 @@ export class PayPalUi {
 		);
 	payPalButton = () =>
 		this.page.locator(
-			'#express-payment-method-ppcp-gateway-paypal paypal-button, #ppc-button-ppcp-gateway-v6 paypal-button'
+			'#express-payment-method-ppcp-gateway-paypal paypal-button, #ppc-button-ppcp-gateway-v6 paypal-button, #ppc-button-ppcp-gateway-save-payment-method paypal-button'
 		);
 	payLaterButton = () =>
 		this.page.locator(
@@ -156,7 +156,10 @@ export class PayPalUi {
 			.locator( '.ppcp-sdk-v6-card-field--cvv' )
 			.frameLocator( 'iframe[title="Cvv PayPal Card Field"]' )
 			.locator( 'input' );
-	acdcSaveToAccountCheckbox = () => this.page.locator( '#save' );
+	acdcSaveToAccountCheckbox = () =>
+		this.acdcContainer().locator(
+			'.wc-block-components-payment-methods__save-card-info input[type="checkbox"]'
+		);
 	acdcSavedCard = ( card: WooCommerce.CreditCard ) =>
 		this.paymentOptionsContainers().filter( {
 			hasText: `${ card.card_type } ending in ${ getLast4CardDigits(
