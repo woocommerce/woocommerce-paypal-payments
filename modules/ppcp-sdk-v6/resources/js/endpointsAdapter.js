@@ -11,7 +11,7 @@
 
 import SingleProductActionHandler from '@ppcp-button/ActionHandler/SingleProductActionHandler';
 import { payerData } from '@ppcp-button/Helper/PayerData';
-import { postJson } from './utils/api';
+import { postJson, postStoreApi } from './utils/api';
 import { FundingSources } from './utils/fundingSources';
 import { minorUnitsToDecimal } from './utils/amount';
 import { continuationRedirectUrl } from './utils/continuation';
@@ -441,6 +441,24 @@ export async function updateShipping( config, orderId ) {
 }
 
 /**
+ * Fetches the current cart from the WC Store API.
+ *
+ * @param {Object} config - The wc_ppcp_sdk_v6 config object.
+ * @return {Promise<?Object>} The cart, or null when it could not be read.
+ */
+export async function fetchCart( config ) {
+	try {
+		const response = await fetch( config.ajax.wc_store_api.cart, {
+			credentials: 'same-origin',
+		} );
+
+		return await response.json();
+	} catch ( error ) {
+		return null;
+	}
+}
+
+/**
  * Fetches the current cart total from the WC Store API, for refreshing
  * amount-sensitive eligibility (Pay Later thresholds) after cart changes.
  *
@@ -448,17 +466,44 @@ export async function updateShipping( config, orderId ) {
  * @return {Promise<string>} The total as a decimal string, or '' on failure.
  */
 export async function fetchCartTotal( config ) {
-	try {
-		const response = await fetch( config.ajax.wc_store_api.cart, {
-			credentials: 'same-origin',
-		} );
-		const cart = await response.json();
+	const cart = await fetchCart( config );
 
-		return minorUnitsToDecimal(
-			cart?.totals?.total_price,
-			cart?.totals?.currency_minor_unit
-		);
-	} catch ( error ) {
-		return '';
-	}
+	return minorUnitsToDecimal(
+		cart?.totals?.total_price,
+		cart?.totals?.currency_minor_unit
+	);
+}
+
+/**
+ * Writes the shopper's shipping address to the WC customer.
+ *
+ * The Store API merges partial addresses server-side and answers with the
+ * recalculated cart, so the caller learns the new totals and rates from the
+ * same request.
+ *
+ * @param {Object} config  - The wc_ppcp_sdk_v6 config object.
+ * @param {Object} address - WC address fields.
+ * @return {Promise<?Object>} The recalculated cart.
+ */
+export async function updateCustomerAddress( config, address ) {
+	const storeApi = config.ajax.wc_store_api;
+
+	return postStoreApi( storeApi, storeApi.update_customer, {
+		shipping_address: address,
+	} );
+}
+
+/**
+ * Selects a shipping rate on the WC cart.
+ *
+ * @param {Object} config - The wc_ppcp_sdk_v6 config object.
+ * @param {string} rateId - The WC rate id, e.g. flat_rate:3.
+ * @return {Promise<?Object>} The recalculated cart.
+ */
+export async function selectShippingRate( config, rateId ) {
+	const storeApi = config.ajax.wc_store_api;
+
+	return postStoreApi( storeApi, storeApi.select_shipping_rate, {
+		rate_id: rateId,
+	} );
 }

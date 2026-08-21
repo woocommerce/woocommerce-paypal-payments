@@ -1,12 +1,18 @@
 jest.mock( '../endpointsAdapter', () => ( {
 	updateShipping: jest.fn().mockResolvedValue( undefined ),
+	updateCustomerAddress: jest.fn(),
+	selectShippingRate: jest.fn(),
 } ) );
 
 import {
 	handleShippingAddressChange,
 	handleShippingOptionsChange,
 } from '../sessions/shippingHandler';
-import { updateShipping } from '../endpointsAdapter';
+import {
+	updateShipping,
+	updateCustomerAddress,
+	selectShippingRate,
+} from '../endpointsAdapter';
 
 const config = {
 	ajax: {
@@ -19,13 +25,14 @@ const config = {
 	},
 };
 
-describe( 'handleShippingAddressChange', () => {
-	beforeEach( () => {
-		global.fetch = jest.fn().mockResolvedValue( { ok: true } );
-		updateShipping.mockClear();
-	} );
+beforeEach( () => {
+	updateShipping.mockClear();
+	updateCustomerAddress.mockClear().mockResolvedValue( {} );
+	selectShippingRate.mockClear().mockResolvedValue( {} );
+} );
 
-	test( 'maps v6 Orders-v2 address fields to WC state and city', async () => {
+describe( 'handleShippingAddressChange', () => {
+	test( 'maps v6 Orders-v2 address fields to WC state and city before patching the order', async () => {
 		// v6 payloads name these adminArea1/adminArea2 (not state/city);
 		// a wrong key silently posts empty fields and skews tax/shipping.
 		await handleShippingAddressChange(
@@ -41,10 +48,7 @@ describe( 'handleShippingAddressChange', () => {
 			config
 		);
 
-		const [ url, options ] = global.fetch.mock.calls[ 0 ];
-		expect( url ).toBe( config.ajax.wc_store_api.update_customer );
-		expect( options.headers.Nonce ).toBe( 'store-nonce' );
-		expect( JSON.parse( options.body ).shipping_address ).toEqual( {
+		expect( updateCustomerAddress ).toHaveBeenCalledWith( config, {
 			country: 'US',
 			state: 'CA',
 			postcode: '94105',
@@ -53,25 +57,20 @@ describe( 'handleShippingAddressChange', () => {
 		expect( updateShipping ).toHaveBeenCalledWith( config, 'ORDER1' );
 	} );
 
-	test( 'propagates Store API failures to the caller', async () => {
-		global.fetch = jest.fn().mockResolvedValue( { ok: false } );
+	test( 'propagates Store API failures to the caller, without patching the order', async () => {
+		updateCustomerAddress.mockRejectedValueOnce( new Error( 'down' ) );
 
 		await expect(
 			handleShippingAddressChange(
 				{ orderId: 'O', shippingAddress: {} },
 				config
 			)
-		).rejects.toThrow();
+		).rejects.toThrow( 'down' );
 		expect( updateShipping ).not.toHaveBeenCalled();
 	} );
 } );
 
 describe( 'handleShippingOptionsChange', () => {
-	beforeEach( () => {
-		global.fetch = jest.fn().mockResolvedValue( { ok: true } );
-		updateShipping.mockClear();
-	} );
-
 	test( 'selects the rate then patches the order', async () => {
 		await handleShippingOptionsChange(
 			{
@@ -81,18 +80,17 @@ describe( 'handleShippingOptionsChange', () => {
 			config
 		);
 
-		const [ url, options ] = global.fetch.mock.calls[ 0 ];
-		expect( url ).toBe( config.ajax.wc_store_api.select_shipping_rate );
-		expect( JSON.parse( options.body ) ).toEqual( {
-			rate_id: 'flat_rate:1',
-		} );
+		expect( selectShippingRate ).toHaveBeenCalledWith(
+			config,
+			'flat_rate:1'
+		);
 		expect( updateShipping ).toHaveBeenCalledWith( config, 'ORDER2' );
 	} );
 
 	test( 'skips rate selection without a selected option', async () => {
 		await handleShippingOptionsChange( { orderId: 'ORDER3' }, config );
 
-		expect( global.fetch ).not.toHaveBeenCalled();
+		expect( selectShippingRate ).not.toHaveBeenCalled();
 		expect( updateShipping ).toHaveBeenCalledWith( config, 'ORDER3' );
 	} );
 } );

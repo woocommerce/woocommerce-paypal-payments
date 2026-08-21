@@ -48,6 +48,7 @@ export async function postJson( { endpoint, nonce }, body = {} ) {
  * @param {Object} storeApi - The wc_store_api config (urls + nonce).
  * @param {string} url      - The endpoint URL.
  * @param {Object} body     - The request body.
+ * @return {Promise<Object|null>} The parsed response body, or null when it is not JSON.
  * @throws {Error} When the response is not OK.
  */
 export async function postStoreApi( storeApi, url, body ) {
@@ -61,9 +62,16 @@ export async function postStoreApi( storeApi, url, body ) {
 		body: JSON.stringify( body ),
 	} );
 
+	const json = await response.json().catch( () => null );
+
 	if ( ! response.ok ) {
-		throw new Error( 'Store API request failed.' );
+		const error = new Error( json?.message || 'Store API request failed.' );
+		error.isUserFacing = Boolean( json?.message );
+		error.code = json?.code;
+		throw error;
 	}
+
+	return json;
 }
 
 /**
