@@ -97,9 +97,11 @@ class SdkV6Module implements ServiceModule, ExtendingModule, ExecutableModule
         // Extends the v5 handoff (see extensions.php) to the other v5 PayPal
         // block methods, which misbehave against v5's now-empty config: the
         // Google Pay / Apple Pay boots throw during React render, tearing down
-        // the whole checkout block, and the Fastlane (AXO) field restoration
-        // can clobber the express submission. The wallets and card fields
-        // migrate under their own stories.
+        // the whole checkout block.
+        //
+        // Fastlane is the exception: v6 does not re-implement it, the ppcp-axo
+        // block method keeps rendering and only takes the SDK object from this
+        // module, so it stays registered wherever v6 can supply that object.
         //
         // Classic checkout needs no equivalent: both wallet rows are v6-owned
         // there, printing their own hide-until-eligible style and revealing the
@@ -118,7 +120,14 @@ class SdkV6Module implements ServiceModule, ExtendingModule, ExecutableModule
                 }
                 // PayPal-owned block methods only; never third-party or
                 // core gateways.
-                $v5_methods = array('ppcp-googlepay', 'ppcp-applepay', 'ppcp-axo-gateway');
+                $v5_methods = array('ppcp-googlepay', 'ppcp-applepay');
+                // The v5 Fastlane block method runs on the v6 SDK, so it
+                // is only suppressed where v6 cannot supply a Fastlane
+                // instance — otherwise the shopper would lose Fastlane
+                // with nothing rendering in its place.
+                if (!$manager->is_fastlane_enabled()) {
+                    $v5_methods[] = 'ppcp-axo-gateway';
+                }
                 // Suppress the v5 card block only when v6 renders its own
                 // card method in its place, so cards stay payable when v6
                 // does not.

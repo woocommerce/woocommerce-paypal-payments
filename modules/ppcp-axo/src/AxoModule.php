@@ -151,7 +151,11 @@ class AxoModule implements ServiceModule, ExecutableModule
                 assert($smart_button instanceof SmartButtonInterface);
                 $axo_applies = $c->get('axo.service.axo-applies');
                 assert($axo_applies instanceof AxoApplies);
-                if ($axo_applies->should_render_fastlane() && $smart_button->should_load_ppcp_script()) {
+                // v5's script gate is false on pages the v6 SDK owns, where
+                // the smart button is a DisabledSmartButton. Fastlane still
+                // renders there: only the SDK object comes from v6 now, so
+                // the assets must load either way.
+                if ($axo_applies->should_render_fastlane() && ($smart_button->should_load_ppcp_script() || self::v6_supplies_sdk($c))) {
                     $manager->enqueue();
                 }
             });
@@ -349,5 +353,19 @@ class AxoModule implements ServiceModule, ExecutableModule
         wp_register_script('wc-ppcp-paypal-insights-end-checkout', $asset_getter->get_asset_url('Insights/EndCheckoutTracker.js'), array('wp-plugins', 'wp-data', 'wp-element', 'wc-blocks-registry'), $asset_version, \true);
         wp_localize_script('wc-ppcp-paypal-insights-end-checkout', 'wc_ppcp_axo_insights_data', array_merge($insights_data, array('orderId' => $order_id, 'orderTotal' => (string) $order->get_total(), 'orderCurrency' => (string) $order->get_currency(), 'paymentMethod' => (string) $order->get_payment_method())));
         wp_enqueue_script('wc-ppcp-paypal-insights-end-checkout');
+    }
+    /**
+     * Whether the v6 SDK owns this page and supplies the Fastlane instance.
+     *
+     * The service is has()-guarded because the v6 module sits behind its own
+     * feature flag.
+     */
+    private static function v6_supplies_sdk(ContainerInterface $c): bool
+    {
+        if (!$c->has('sdk-v6.owns-current-page')) {
+            return \false;
+        }
+        $owns_current_page = $c->get('sdk-v6.owns-current-page');
+        return $owns_current_page();
     }
 }
