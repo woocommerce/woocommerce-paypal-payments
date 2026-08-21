@@ -45,6 +45,29 @@ jest.mock( './gatewayPlacement', () => ( {
 	revealWalletGateway: ( ...args ) => mockRevealWalletGateway( ...args ),
 } ) );
 
+const mockRefreshCartUi = jest.fn();
+jest.mock( '../utils/cartUi', () => ( {
+	refreshCartUi: ( ...args ) => mockRefreshCartUi( ...args ),
+} ) );
+
+const mockWalletShippingRequired = jest.fn( () => false );
+const mockWalletShippingCountries = jest.fn( () => [] );
+const mockCreateShippingController = jest.fn();
+jest.mock( './walletShipping', () => ( {
+	walletShippingRequired: ( ...args ) =>
+		mockWalletShippingRequired( ...args ),
+	walletShippingCountries: ( ...args ) =>
+		mockWalletShippingCountries( ...args ),
+	createShippingController: ( ...args ) =>
+		mockCreateShippingController( ...args ),
+} ) );
+
+const mockBuildPaymentDataCallbacks = jest.fn();
+jest.mock( './googlePayShipping', () => ( {
+	buildPaymentDataCallbacks: ( ...args ) =>
+		mockBuildPaymentDataCallbacks( ...args ),
+} ) );
+
 const mockSpinnerBlock = jest.fn();
 const mockSpinnerUnblock = jest.fn();
 jest.mock(
@@ -171,6 +194,13 @@ beforeEach( () => {
 	mockLoadGoogleSdk.mockResolvedValue( undefined );
 	mockBuildReadyToPayRequest.mockReturnValue( 'READY_REQUEST' );
 	mockBuildPaymentDataRequest.mockReturnValue( 'PAYMENT_DATA_REQUEST' );
+	mockWalletShippingRequired.mockReturnValue( false );
+	mockWalletShippingCountries.mockReturnValue( [] );
+	mockCreateShippingController.mockReturnValue( {
+		quote: jest.fn(),
+		current: jest.fn(),
+	} );
+	mockBuildPaymentDataCallbacks.mockReturnValue( 'PAYMENT_DATA_CALLBACKS' );
 	installPaymentsClient();
 } );
 
@@ -203,15 +233,39 @@ describe( 'renderGooglePay()', () => {
 
 	test(
 		'constructs PaymentsClient with the config environment ' +
-			'and no paymentDataCallbacks',
+			'and no paymentDataCallbacks when this context collects no shipping',
 		async () => {
 			const config = baseConfig();
 			config.google_pay.environment = 'PRODUCTION';
+			mockWalletShippingRequired.mockReturnValue( false );
 
 			await render( { config } );
 
 			expect( paymentsClientOptions ).toEqual( {
 				environment: 'PRODUCTION',
+			} );
+		}
+	);
+
+	test(
+		'constructs PaymentsClient with the built paymentDataCallbacks ' +
+			'when this context collects shipping, since Google rejects callbacks added later',
+		async () => {
+			const config = baseConfig();
+			mockWalletShippingRequired.mockReturnValue( true );
+
+			await render( { config, context: 'cart' } );
+
+			expect( mockBuildPaymentDataCallbacks ).toHaveBeenCalledWith(
+				expect.objectContaining( {
+					config,
+					currencyCode: config.currency,
+					countryCode: config.merchant_country,
+				} )
+			);
+			expect( paymentsClientOptions ).toEqual( {
+				environment: config.google_pay.environment,
+				paymentDataCallbacks: 'PAYMENT_DATA_CALLBACKS',
 			} );
 		}
 	);
@@ -369,6 +423,8 @@ describe( 'a click on the rendered button', () => {
 					countryCode: config.merchant_country,
 					currencyCode: config.currency,
 					total: '12.34',
+					requiresShipping: false,
+					countries: [],
 				}
 			);
 			expect( mockLoadPaymentData ).toHaveBeenCalledWith(
@@ -376,6 +432,23 @@ describe( 'a click on the rendered button', () => {
 			);
 		}
 	);
+
+	test( "forwards this context's shipping requirement and the store's shippable countries into the payment data request", async () => {
+		mockWalletShippingRequired.mockReturnValue( true );
+		mockWalletShippingCountries.mockReturnValue( [ 'US', 'CA' ] );
+		const config = baseConfig();
+
+		await render( { config, context: 'cart' } );
+		await createButtonOptions.onClick();
+
+		expect( mockBuildPaymentDataRequest ).toHaveBeenCalledWith(
+			sessionConfig,
+			expect.objectContaining( {
+				requiresShipping: true,
+				countries: [ 'US', 'CA' ],
+			} )
+		);
+	} );
 
 	test( 'pays with the resolved units, confirm data and mapped contact', async () => {
 		const config = baseConfig();
@@ -450,6 +523,26 @@ describe( 'a click on the rendered button', () => {
 			expect( mockPayWithWallet ).not.toHaveBeenCalled();
 		}
 	);
+
+	test( 'refreshes the cart UI after a cancelation when this context collected shipping, since the sheet already wrote it to the real cart', async () => {
+		mockWalletShippingRequired.mockReturnValue( true );
+		mockLoadPaymentData.mockRejectedValueOnce( { statusCode: 'CANCELED' } );
+
+		await render( { context: 'product' } );
+		await createButtonOptions.onClick();
+
+		expect( mockRefreshCartUi ).toHaveBeenCalledWith( 'product' );
+	} );
+
+	test( 'does not refresh the cart UI after a cancelation when this context never collected shipping', async () => {
+		mockWalletShippingRequired.mockReturnValue( false );
+		mockLoadPaymentData.mockRejectedValueOnce( { statusCode: 'CANCELED' } );
+
+		await render( { context: 'product' } );
+		await createButtonOptions.onClick();
+
+		expect( mockRefreshCartUi ).not.toHaveBeenCalled();
+	} );
 
 	test( 'blocks the spinner only once the sheet has closed', async () => {
 		// spinner.block() must run after loadPaymentData resolves, or it

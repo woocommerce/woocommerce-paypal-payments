@@ -121,4 +121,43 @@ describe( 'buildPaymentDataRequest()', () => {
 		expect( request.shippingAddressRequired ).toBe( true );
 		expect( request.shippingOptionRequired ).toBe( true );
 	} );
+
+	test( 'always requires a phone number when shipping is requested', () => {
+		const request = buildPaymentDataRequest(
+			sessionConfig(),
+			transaction( { requiresShipping: true } )
+		);
+
+		expect( request.shippingAddressParameters ).toEqual(
+			expect.objectContaining( { phoneNumberRequired: true } )
+		);
+	} );
+
+	test( 'restricts the shippable countries only when the store supplies a non-empty list', () => {
+		const restricted = buildPaymentDataRequest(
+			sessionConfig(),
+			transaction( { requiresShipping: true, countries: [ 'US', 'CA' ] } )
+		);
+		const unrestricted = buildPaymentDataRequest(
+			sessionConfig(),
+			transaction( { requiresShipping: true, countries: [] } )
+		);
+
+		expect( restricted.shippingAddressParameters.allowedCountryCodes ).toEqual(
+			[ 'US', 'CA' ]
+		);
+		expect(
+			unrestricted.shippingAddressParameters
+		).not.toHaveProperty( 'allowedCountryCodes' );
+	} );
+
+	test( 'omits the entire shipping block, including shippingAddressParameters, when shipping is not requested', () => {
+		const request = buildPaymentDataRequest(
+			sessionConfig(),
+			transaction( { countries: [ 'US' ] } )
+		);
+
+		expect( request ).not.toHaveProperty( 'shippingAddressParameters' );
+		expect( request ).not.toHaveProperty( 'callbackIntents' );
+	} );
 } );
