@@ -179,6 +179,18 @@ class VaultComponentModule implements ServiceModule, ExecutableModule {
 				);
 
 				wp_enqueue_script( 'ppcp-vault-component' );
+
+				// The button module's stylesheet (which lays the vault widget out
+				// inside the saved-token row so its iframe does not overlap the
+				// "Use a new payment method" option) is not enqueued under v6, so
+				// ship the same rules here.
+				wp_register_style( 'ppcp-vault-component', false, array(), $asset['version'] );
+				wp_enqueue_style( 'ppcp-vault-component' );
+				wp_add_inline_style(
+					'ppcp-vault-component',
+					'.woocommerce-SavedPaymentMethods-token:has(#ppcp-vault-component){display:flex;align-items:center;gap:8px;}'
+					. '.woocommerce-SavedPaymentMethods-token:has(#ppcp-vault-component) #ppcp-vault-component{flex:1;overflow:hidden;}'
+				);
 			}
 		);
 
