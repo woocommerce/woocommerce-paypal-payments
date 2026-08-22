@@ -84,6 +84,10 @@ class SavePaymentMethodsModule implements ServiceModule, ExecutableModule {
 				add_filter(
 					'woocommerce_paypal_payments_localized_script_data',
 					function ( array $localized_script_data ) use ( $c ) {
+						if ( $this->is_mini_cart_data_request() ) {
+							return $localized_script_data;
+						}
+
 						$subscriptions_helper = $c->get( 'wc-subscriptions.helper' );
 						assert( $subscriptions_helper instanceof SubscriptionHelper );
 						if ( ! is_user_logged_in() && ! $subscriptions_helper->cart_contains_subscription() ) {
@@ -490,6 +494,15 @@ class SavePaymentMethodsModule implements ServiceModule, ExecutableModule {
 		);
 
 		return true;
+	}
+
+	/**
+	 * Whether checkout payment data is being collected for a Mini Cart-only page.
+	 */
+	private function is_mini_cart_data_request(): bool {
+		return doing_action( 'woocommerce_blocks_cart_enqueue_data' )
+			&& ! is_cart()
+			&& ! has_block( 'woocommerce/cart' );
 	}
 
 	/**
