@@ -26,12 +26,15 @@ import { initCardFields } from './cardFields/renderer';
 import { hasJQuery } from './utils/api';
 import { setErrorLabels } from './utils/errorHandler';
 import { setVisible } from '@ppcp-button/Helper/Hiding';
+import { debounce } from '@ppcp-blocks/Helper/debounce';
 
 // The native WC submit button, labelled "Proceed to PayPal" for the PayPal
 // gateway. It is replaced by the v6 PayPal buttons while the PayPal gateway is
 // selected, but stays as the submit for cards and every other method.
 const PLACE_ORDER_SELECTOR = '#place_order';
 const PAYPAL_GATEWAY_ID = 'ppcp-gateway';
+
+const ELIGIBILITY_REFRESH_DEBOUNCE_MS = 300;
 
 ( function ( config ) {
 	'use strict';
@@ -74,6 +77,7 @@ const PAYPAL_GATEWAY_ID = 'ppcp-gateway';
 	const sdkPageType = config.page_context || 'mini-cart';
 
 	let amount = config.amount;
+	let refreshPromise = Promise.resolve();
 	let eligibilityPromise = null;
 	const sessionPromises = {};
 	const renderPromises = {};
@@ -261,6 +265,31 @@ const PAYPAL_GATEWAY_ID = 'ppcp-gateway';
 	}
 
 	/**
+	 * Serialises refreshEligibility() passes, same chain idiom as render().
+	 *
+	 * It is needed because the debounce coalesces events but cannot stop one pass
+     * starting while another awaits the network, and overlapping passes may leave the
+     * buttons on the older result.
+	 *
+	 * @return {Promise<void>} Resolves once this pass is done.
+	 */
+	function queueRefreshEligibility() {
+		refreshPromise = refreshPromise
+			.catch( () => {} )
+			.then( () => refreshEligibility() );
+
+		return refreshPromise.catch( ( error ) => {
+			// eslint-disable-next-line no-console
+			console.error( '[PPCP SDK v6]', error );
+		} );
+	}
+
+	const refreshEligibilityDebounced = debounce(
+		queueRefreshEligibility,
+		ELIGIBILITY_REFRESH_DEBOUNCE_MS
+	);
+
+	/**
 	 * Hides the native WC "Proceed to PayPal" button while the PayPal gateway
 	 * is selected — the v6 PayPal buttons stand in for it — and restores it for
 	 * cards (whose flow submits through it) and every other method. Re-run on
@@ -309,15 +338,11 @@ const PAYPAL_GATEWAY_ID = 'ppcp-gateway';
 			syncPlaceOrderButton
 		);
 
-		// Total-changing updates: eligibility must be re-checked too.
+		// Total-changing updates: eligibility must be re-checked too, and the
+		// message re-priced.
 		jQuery( document.body ).on(
-			'updated_cart_totals added_to_cart removed_from_cart',
-			() => {
-				refreshEligibility().catch( ( error ) => {
-					// eslint-disable-next-line no-console
-					console.error( '[PPCP SDK v6]', error );
-				} );
-			}
+			'updated_cart_totals added_to_cart removed_from_cart updated_checkout',
+			refreshEligibilityDebounced
 		);
 	}
 } )( window.wc_ppcp_sdk_v6 );
