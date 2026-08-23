@@ -75,11 +75,16 @@ class AddPaymentMethodManager {
 			return;
 		}
 
+		$asset = $this->asset_getter->get_asset_data(
+			'boot-add-payment-method.js',
+			$this->version
+		);
+
 		wp_register_script(
 			'wc-ppcp-sdk-v6-add-payment-method',
 			$script_url,
-			array(),
-			$this->version,
+			$asset['dependencies'],
+			$asset['version'],
 			true
 		);
 
