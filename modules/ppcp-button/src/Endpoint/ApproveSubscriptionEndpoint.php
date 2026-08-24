@@ -193,10 +193,15 @@ class ApproveSubscriptionEndpoint implements \WooCommerce\PayPalCommerce\Button\
         $order_payer_id = $payer ? $payer->payer_id() : '';
         // A native subscription's related order does not reliably expose a resolved
         // payer id at approval time, so an absent id on either side is treated as
-        // "cannot compare" rather than a failure — the subscription is already bound
-        // to this session by validate_subscription() (status + custom_id ownership +
-        // plan match). Only a present, differing payer (an order approved by another
-        // account) is rejected.
+        // "cannot compare" rather than a failure. Only a present, differing payer (an
+        // order approved by another account) is rejected.
+        //
+        // Security note: this binding is best-effort. The subscription itself is
+        // session-bound by validate_subscription() (status + custom_id ownership +
+        // plan match), but the order is bound to the subscriber only when both payer
+        // ids resolve here — validate_custom_id_ownership() returns early for an order
+        // whose custom_id lacks the CustomIds::CUSTOMER_ID_PREFIX, so such an order
+        // with an unresolved payer is not independently tied to the subscriber.
         if ('' === $subscriber_payer_id || '' === $order_payer_id) {
             return;
         }
