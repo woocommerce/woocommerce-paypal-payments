@@ -66,6 +66,11 @@ jest.mock( '../messages/renderer', () => ( {
 	updateMessagesAmount: ( ...args ) => mockUpdateMessagesAmount( ...args ),
 } ) );
 
+const mockWatchViewedTotal = jest.fn();
+jest.mock( '../utils/viewedTotal', () => ( {
+	watchViewedTotal: ( ...args ) => mockWatchViewedTotal( ...args ),
+} ) );
+
 const WRAPPER_SELECTOR = '#ppcp-button-checkout';
 const MINI_CART_WRAPPER_SELECTOR = '#ppcp-mini-cart-button';
 
@@ -156,6 +161,10 @@ beforeEach( () => {
 	mockInitMessages.mockResolvedValue( 0 );
 	mockRenderMessages.mockResolvedValue( 0 );
 	mockFetchCartTotal.mockResolvedValue( '120.00' );
+	mockWatchViewedTotal.mockReturnValue( {
+		get: () => '',
+		subscribe: () => () => {},
+	} );
 } );
 
 afterEach( () => {
@@ -256,7 +265,7 @@ describe( 'boot', () => {
 			expect( mockUpdateMessagesAmount ).toHaveBeenCalledWith( '120.00' );
 		} );
 
-		test( 'updateMessagesAmount is not called on a product page, since a product page keeps pricing the product', async () => {
+		test( 'updateMessagesAmount is not called from the cart-refresh path on a product page, since a product page prices via the watcher instead', async () => {
 			buildDom();
 			boot( baseConfig( { page_context: 'product' } ) );
 			await flush();
@@ -306,15 +315,37 @@ describe( 'boot', () => {
 		} );
 	} );
 
-	describe( 'found_variation event', () => {
-		test( 'a variation with a display_price re-prices the message', async () => {
+	describe( 'product-page total watcher', () => {
+		test( 'subscribes to the shared watcher on a product page and forwards its pushes to the message amount', async () => {
+			let notify;
+			mockWatchViewedTotal.mockReturnValue( {
+				get: () => '',
+				subscribe: ( callback ) => {
+					notify = callback;
+					return () => {};
+				},
+			} );
+
 			buildDom();
 			boot( baseConfig( { page_context: 'product' } ) );
 			await flush();
 
-			global.jQuery.trigger( 'found_variation', { display_price: 42 } );
+			expect( mockWatchViewedTotal ).toHaveBeenCalledWith(
+				expect.objectContaining( { page_context: 'product' } ),
+				'product'
+			);
 
-			expect( mockUpdateMessagesAmount ).toHaveBeenCalledWith( '42' );
+			notify( '42.00' );
+
+			expect( mockUpdateMessagesAmount ).toHaveBeenCalledWith( '42.00' );
+		} );
+
+		test( 'never subscribes to the watcher off a product page', async () => {
+			buildDom();
+			boot( baseConfig( { page_context: 'checkout' } ) );
+			await flush();
+
+			expect( mockWatchViewedTotal ).not.toHaveBeenCalled();
 		} );
 	} );
 } );

@@ -24,6 +24,7 @@ import { isWalletEnabled, WALLET_METHODS } from './wallets/walletRegistry';
 import { createOrder, fetchCartTotal } from './endpointsAdapter';
 import { initCardFields } from './cardFields/renderer';
 import { hasJQuery } from './utils/api';
+import { watchViewedTotal } from './utils/viewedTotal';
 import { setErrorLabels } from './utils/errorHandler';
 import { setVisible } from '@ppcp-button/Helper/Hiding';
 import { debounce } from '@ppcp-blocks/Helper/debounce';
@@ -329,10 +330,24 @@ const ELIGIBILITY_REFRESH_DEBOUNCE_MS = 300;
 		} );
 	}
 
+	/**
+	 * A product page prices the product on display, not the cart, so its
+	 * message tracks the product form — quantity and variation — through
+	 * the same watcher Apple Pay reads.
+	 */
+	function trackProductTotal() {
+		if ( 'product' !== config.page_context ) {
+			return;
+		}
+
+		watchViewedTotal( config, 'product' ).subscribe( updateMessagesAmount );
+	}
+
 	function initialRender() {
 		renderAll();
 		initCardFieldsSafely();
 		initMessagesSafely();
+		trackProductTotal();
 		syncPlaceOrderButton();
 	}
 
@@ -359,16 +374,6 @@ const ELIGIBILITY_REFRESH_DEBOUNCE_MS = 300;
 				} );
 			}
 		);
-
-		// The product page has no cart events; WooCommerce announces the
-		// selected variation instead. Quantity and add-on driven changes are
-		// not covered — v5 gets those from the ppc-simulate-cart endpoint,
-		// which is part of the v5 button bundle this page no longer loads.
-		jQuery( document.body ).on( 'found_variation', ( event, variation ) => {
-			if ( variation?.display_price ) {
-				updateMessagesAmount( String( variation.display_price ) );
-			}
-		} );
 
 		// WC rebuilds #place_order on these too, and the selected method can
 		// change without a DOM rebuild, so re-sync the button on both.
