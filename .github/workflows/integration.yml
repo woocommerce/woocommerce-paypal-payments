@@ -16,7 +16,7 @@ jobs:
       with:
         autostart: false
 
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@50fbc622fc4ef5163becd7fab6573eac35f8462e # v1
 
     - name: Setup Composer Auth
       env:
