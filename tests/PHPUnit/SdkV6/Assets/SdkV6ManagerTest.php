@@ -13,6 +13,8 @@ use WooCommerce\PayPalCommerce\SdkV6\Helper\ApplePayConfig;
 use WooCommerce\PayPalCommerce\SdkV6\Helper\ButtonStyleMapper;
 use WooCommerce\PayPalCommerce\SdkV6\Helper\FastlaneConfig;
 use WooCommerce\PayPalCommerce\SdkV6\Helper\GooglePayConfig;
+use WooCommerce\PayPalCommerce\SdkV6\Helper\MessagesEligibility;
+use WooCommerce\PayPalCommerce\SdkV6\Helper\MessageStyleMapper;
 use WooCommerce\PayPalCommerce\Session\Cancellation\CancelView;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
 use WooCommerce\PayPalCommerce\TestCase;
@@ -22,6 +24,9 @@ use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\SettingsStatus;
 use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\FreeTrialSubscriptionHelper;
 use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
+use function Brain\Monkey\Actions\expectDone;
+use function Brain\Monkey\Filters\expectApplied;
+use function Brain\Monkey\Functions\expect;
 use function Brain\Monkey\Functions\when;
 
 class SdkV6ManagerTest extends TestCase
@@ -37,6 +42,8 @@ class SdkV6ManagerTest extends TestCase
     private $subscription_helper;
 	private $free_trial_helper;
 	private $credit_card_icons;
+	private $message_style_mapper;
+	private $messages_eligibility;
 	private $google_pay_config;
 	private $apple_pay_config;
 	private $fastlane_config;
@@ -60,6 +67,22 @@ class SdkV6ManagerTest extends TestCase
 		$this->free_trial_helper = Mockery::mock(FreeTrialSubscriptionHelper::class);
 		$this->free_trial_helper->shouldReceive('is_free_trial_cart')->andReturn(false)->byDefault();
 		$this->credit_card_icons = [];
+
+		$this->message_style_mapper = Mockery::mock(MessageStyleMapper::class);
+		$this->message_style_mapper->shouldReceive('styles_for_location')->andReturn([
+			'logoType'     => 'WORDMARK',
+			'logoPosition' => 'LEFT',
+			'textColor'    => 'BLACK',
+			'fontSize'     => '',
+		])->byDefault();
+
+		$this->messages_eligibility = Mockery::mock(MessagesEligibility::class);
+		$this->messages_eligibility->shouldReceive('is_enabled_for_location')->andReturn(false)->byDefault();
+		$this->messages_eligibility->shouldReceive('is_hidden')->andReturn(false)->byDefault();
+
+		$this->context->shouldReceive('location')->andReturn('')->byDefault();
+
+		when('is_admin')->justReturn(false);
 
 		$this->google_pay_config = Mockery::mock(GooglePayConfig::class);
 		$this->google_pay_config->shouldReceive('should_render')->andReturn(false)->byDefault();
@@ -142,11 +165,36 @@ class SdkV6ManagerTest extends TestCase
 	        $get_subscriptions_mode ?? static fn (): string => SubscriptionHelper::SUBSCRIPTION_MODE_VALUE_VAULTING,
 	        $three_d_secure_contingency,
 	        $credit_card_icons,
+	        $this->message_style_mapper,
+	        $this->messages_eligibility,
 	        $merchant_country,
 	        $this->google_pay_config,
 	        $this->apple_pay_config,
 	        $this->fastlane_config
         );
+    }
+
+    private function stubScriptDataBaseline(string $page_context, string $location): void
+    {
+        $this->context->shouldReceive('context')->andReturn($page_context);
+        $this->context->shouldReceive('location')->andReturn($location);
+        $this->card_payments_configuration->shouldReceive('is_acdc_enabled')->andReturn(false);
+        $this->card_payments_configuration->shouldReceive('gateway_title')->andReturn('Credit Card');
+        $this->card_payments_configuration->shouldReceive('show_name_on_card')->andReturn('no');
+        $this->settings_status->shouldReceive('is_smart_button_enabled_for_location')->andReturn(false);
+        $this->session_handler->shouldReceive('order')->andReturn(null);
+        $this->context->shouldReceive('is_paypal_continuation')->andReturn(false);
+        $this->environment->shouldReceive('is_sandbox')->andReturn(false);
+        $this->style_mapper->shouldReceive('styles_for_context')->andReturn([]);
+
+        when('WC')->justReturn($this->create_wc_stub());
+        when('wc_get_base_location')->justReturn(['country' => 'US']);
+        when('get_woocommerce_currency')->justReturn('USD');
+        when('get_locale')->justReturn('en_US');
+        when('is_product')->justReturn(false);
+        when('rest_url')->justReturn('https://example.com/wp-json/wc/store/v1/cart');
+        when('wp_create_nonce')->justReturn('nonce');
+        when('wc_get_checkout_url')->justReturn('https://example.com/checkout');
     }
 
     public function tearDown(): void
@@ -197,11 +245,17 @@ class SdkV6ManagerTest extends TestCase
      * AND the product and pay-now locations render regardless of the cart's payment status,
      *     since pay-now is driven by an existing WC order rather than the cart
      *
+     * AND determine_render_places() does not call Context::init_context() itself — that
+     *     initialization now happens once in SdkV6Module's 'wp' callback, before both the
+     *     button and message hook registrars run, so neither registrar depends on the other
+     *     running first to trip it as a side effect. Reintroducing the call here would restore
+     *     that ordering coupling.
+     *
      * @dataProvider render_places_needs_payment_provider
      */
     public function testDetermineRenderPlacesGatedByCartNeedsPayment(?bool $cart_needs_payment, array $expected): void
     {
-        $this->context->shouldReceive('init_context')->once();
+        $this->context->shouldReceive('init_context')->never();
         $this->settings_status->shouldReceive('is_smart_button_enabled_for_location')->andReturn(true);
 
         if (null === $cart_needs_payment) {
@@ -256,17 +310,21 @@ class SdkV6ManagerTest extends TestCase
     }
 
     /**
-     * GIVEN the mini-cart smart button location is disabled and the page has no matching context
+     * GIVEN the mini-cart smart button location is disabled, the page has no matching
+     *       context, and Pay Later messaging is explicitly ineligible for the resolved
+     *       (empty) location
      * WHEN checking whether the v6 SDK should load on the current page
      * THEN the SDK does not load
      */
     public function testShouldNotLoadWhenMiniCartDisabledAndNoMatchingPageContext(): void
     {
         $this->context->shouldReceive('context')->andReturn('');
+        $this->context->shouldReceive('location')->andReturn('');
         $this->card_payments_configuration->shouldReceive('is_acdc_enabled')->andReturn(false);
         $this->settings_status->shouldReceive('is_smart_button_enabled_for_location')
             ->with('mini-cart')
             ->andReturn(false);
+        $this->messages_eligibility->shouldReceive('is_enabled_for_location')->with('')->andReturn(false);
 
         $testee = $this->createTestee();
 
@@ -593,6 +651,74 @@ class SdkV6ManagerTest extends TestCase
         ];
     }
 
+    // -------------------------------------------------------------------------
+    // should_load_on_current_page(): button, ACDC and messaging conditions
+    // -------------------------------------------------------------------------
+
+    /**
+     * GIVEN a WooCommerce Blocks cart or checkout page, where should_load_on_current_page()
+     *       is only allowed to answer for the payment-method surface (button locations and
+     *       ACDC), never for Pay Later messaging alone
+     * WHEN checking whether the v6 SDK should load a payment-method-owning surface,
+     *      once with Pay Later messaging eligible for the page and once with it ineligible
+     * THEN should_load_on_current_page() returns the same result either way
+     *
+     * Two callers narrow this predicate further with is_block_context():
+     * V6PaymentMethod::is_active() and the v5 block-method unregistration in SdkV6Module
+     * (`&& is_block_context()`). Both rely on seeing only the payment-method answer in
+     * block contexts. If this invariant ever breaks, v6 express buttons get registered on
+     * block pages where the merchant disabled them, and the v5 Google Pay, Apple Pay and
+     * Fastlane block methods get unregistered with no v6 replacement behind them.
+     *
+     * Context::location() is stubbed here (not just context()) so the messaging chain is
+     * genuinely exercised down to MessagesEligibility::is_enabled_for_location(), called
+     * with the normalized location — otherwise this reduces to false === false for a
+     * reason unrelated to block contexts.
+     *
+     * Block contexts are excluded from messaging by two independent mechanisms in
+     * production: should_load_messages()'s own is_block_context() early-out, and
+     * messages_render_hook() returning null for block locations (its switch has no block
+     * cases). This test only fails when BOTH are undone at once; removing either alone
+     * still leaves the other vetoing messaging, so it cannot pin one mechanism in
+     * isolation. That redundancy is deliberate today, but it is exactly what the future
+     * "make block messaging claim a page on its own" change would need to undo, and
+     * that change must revisit both should_load_messages() and messages_render_hook()
+     * together. testMessagesRenderHookReturnsNullForBlockLocations() pins the second
+     * mechanism (messages_render_hook()) on its own; the first (is_block_context()) has
+     * no standalone test — see that test's docblock for why.
+     *
+     * @dataProvider blockContextProvider
+     */
+    public function testShouldLoadOnCurrentPageInBlockContextsIsUnaffectedByMessagingEligibility(
+        string $page_context,
+        string $normalized_location
+    ): void {
+        $this->context->shouldReceive('context')->andReturn($page_context);
+        $this->context->shouldReceive('location')->andReturn($page_context);
+        $this->card_payments_configuration->shouldReceive('is_acdc_enabled')->andReturn(false);
+        $this->settings_status->shouldReceive('is_smart_button_enabled_for_location')->andReturn(false);
+
+        $this->messages_eligibility->shouldReceive('is_enabled_for_location')
+            ->with($normalized_location)
+            ->andReturn(true);
+        $withMessagingEnabled = $this->createTestee()->should_load_on_current_page();
+
+        $this->messages_eligibility->shouldReceive('is_enabled_for_location')
+            ->with($normalized_location)
+            ->andReturn(false);
+        $withMessagingDisabled = $this->createTestee()->should_load_on_current_page();
+
+        $this->assertSame($withMessagingEnabled, $withMessagingDisabled);
+    }
+
+    public function blockContextProvider(): array
+    {
+        return [
+            'cart block'     => ['cart-block', 'cart'],
+            'checkout block' => ['checkout-block', 'checkout'],
+        ];
+    }
+
     /**
      * GIVEN a page context on which Fastlane's own config would allow it to render
      * WHEN checking whether Fastlane is enabled for the current page
@@ -616,6 +742,571 @@ class SdkV6ManagerTest extends TestCase
             'FastlaneConfig allowing render enables Fastlane' => [true, true],
             'FastlaneConfig refusing render disables Fastlane' => [false, false],
         ];
+    }
+
+    /**
+     * GIVEN a page whose location has smart buttons enabled
+     * WHEN checking whether the v6 SDK should load on the current page, for any reason
+     * THEN it loads
+     */
+    public function testShouldLoadOnCurrentPageTrueWhenButtonLocationEnabled(): void
+    {
+        $this->context->shouldReceive('context')->andReturn('checkout');
+        $this->card_payments_configuration->shouldReceive('is_acdc_enabled')->andReturn(false);
+        $this->settings_status->shouldReceive('is_smart_button_enabled_for_location')->with('checkout')->andReturn(true);
+
+        $testee = $this->createTestee();
+
+        $this->assertTrue($testee->should_load_on_current_page());
+    }
+
+    /**
+     * GIVEN a classic checkout page with no smart button enabled anywhere, but Pay Later
+     *       messaging eligible on that page
+     * WHEN checking whether the v6 SDK should load on the current page
+     * THEN it still loads, purely to render the message
+     */
+    public function testShouldLoadOnCurrentPageTrueWhenOnlyMessagingIsEnabledOnAClassicPage(): void
+    {
+        $this->context->shouldReceive('context')->andReturn('checkout');
+        $this->context->shouldReceive('location')->andReturn('checkout');
+        $this->card_payments_configuration->shouldReceive('is_acdc_enabled')->andReturn(false);
+        $this->settings_status->shouldReceive('is_smart_button_enabled_for_location')->andReturn(false);
+        $this->messages_eligibility->shouldReceive('is_enabled_for_location')->with('checkout')->andReturn(true);
+
+        $testee = $this->createTestee();
+
+        $this->assertTrue($testee->should_load_on_current_page());
+    }
+
+    /**
+     * GIVEN a WooCommerce Blocks cart or checkout page, with Pay Later messaging eligible
+     * WHEN checking whether the v6 SDK should load on the current page
+     * THEN it does not load through the messaging path — block pages get the SDK through
+     *      the block payment method instead, gated on the button/ACDC conditions alone
+     *
+     * Context::location() is stubbed to the block location (not just context()) and
+     * MessagesEligibility::is_enabled_for_location() is stubbed to true for the
+     * normalized location, so the false result genuinely comes from the block-context
+     * exclusion rather than from an unstubbed location() defaulting to null/empty.
+     *
+     * This is a concrete instance of the invariant pinned by
+     * testShouldLoadOnCurrentPageInBlockContextsIsUnaffectedByMessagingEligibility()
+     * (messaging eligibility never changes the block-context answer); kept alongside it
+     * because it also documents the specific value (false) that answer takes, which the
+     * invariant test deliberately leaves unspecified. Like that test, it is only
+     * mutation-sensitive to should_load_messages()'s and messages_render_hook()'s block
+     * exclusions being removed together, not to either alone — see the redundancy note
+     * there.
+     *
+     * @dataProvider blockContextProvider
+     */
+    public function testShouldLoadOnCurrentPageFalseInBlockContextsEvenWhenMessagingEnabled(
+        string $page_context,
+        string $normalized_location
+    ): void {
+        $this->context->shouldReceive('context')->andReturn($page_context);
+        $this->context->shouldReceive('location')->andReturn($page_context);
+        $this->card_payments_configuration->shouldReceive('is_acdc_enabled')->andReturn(false);
+        $this->settings_status->shouldReceive('is_smart_button_enabled_for_location')->andReturn(false);
+        $this->messages_eligibility->shouldReceive('is_enabled_for_location')
+            ->with($normalized_location)
+            ->andReturn(true);
+
+        $testee = $this->createTestee();
+
+        $this->assertFalse($testee->should_load_on_current_page());
+    }
+
+    /**
+     * GIVEN a page whose location resolves to shop, home or no location at all
+     * WHEN checking whether the v6 SDK should load on the current page
+     * THEN it does not load — this module never places a message on these pages, so
+     *      messages_render_hook() returning null must veto the messaging-only claim
+     *
+     * @dataProvider unsupportedMessageLocationProvider
+     */
+    public function testShouldLoadOnCurrentPageFalseWhenMessagesRenderHookIsNull(string $location): void
+    {
+        $this->context->shouldReceive('context')->andReturn('');
+        $this->context->shouldReceive('location')->andReturn($location);
+        $this->card_payments_configuration->shouldReceive('is_acdc_enabled')->andReturn(false);
+        $this->settings_status->shouldReceive('is_smart_button_enabled_for_location')->andReturn(false);
+        $this->messages_eligibility->shouldReceive('is_enabled_for_location')->andReturn(true);
+
+        $testee = $this->createTestee();
+
+        $this->assertFalse($testee->should_load_on_current_page());
+    }
+
+    public function unsupportedMessageLocationProvider(): array
+    {
+        return [
+            'shop page'    => ['shop'],
+            'home page'    => ['home'],
+            'no location'  => [''],
+        ];
+    }
+
+    /**
+     * GIVEN a classic page in wp-admin, one where Pay Later messaging would otherwise be
+     *       eligible
+     * WHEN checking whether the v6 SDK should load on the current page
+     * THEN it does not load, even though nothing else would have vetoed messaging
+     *
+     * Messaging is stubbed eligible for the checkout location so the false result is not
+     * an accident of an unstubbed location() silently keeping messaging off.
+     *
+     * is_admin() is checked twice in production — once in should_load_messages() and
+     * again, independently, inside messages_enabled() — so this test is only
+     * mutation-sensitive to both checks being removed together, not to either alone.
+     * That duplication is real redundancy in the production code, not a test defect.
+     */
+    public function testShouldLoadOnCurrentPageFalseUnderIsAdmin(): void
+    {
+        when('is_admin')->justReturn(true);
+        $this->context->shouldReceive('context')->andReturn('checkout');
+        $this->context->shouldReceive('location')->andReturn('checkout');
+        $this->card_payments_configuration->shouldReceive('is_acdc_enabled')->andReturn(false);
+        $this->settings_status->shouldReceive('is_smart_button_enabled_for_location')->andReturn(false);
+        $this->messages_eligibility->shouldReceive('is_enabled_for_location')->with('checkout')->andReturn(true);
+
+        $testee = $this->createTestee();
+
+        $this->assertFalse($testee->should_load_on_current_page());
+    }
+
+    // -------------------------------------------------------------------------
+    // Block location normalization for the messaging eligibility lookup
+    // -------------------------------------------------------------------------
+
+    /**
+     * GIVEN the current page resolves to a block cart/checkout location, or to pay-now
+     * WHEN checking whether Pay Later messaging is enabled
+     * THEN MessagesEligibility::is_enabled_for_location() is called with the normalized
+     *      messaging-settings location, not the raw block/page location
+     *
+     * SettingsStatus::normalize_location() would turn 'checkout-block' into
+     * 'checkout-block-express', a location the messaging settings never contain, so
+     * skipping this normalization would silently disable messaging on block checkout.
+     *
+     * @dataProvider blockLocationNormalizationProvider
+     */
+    public function testMessagesEnabledNormalizesBlockLocationsForEligibilityLookup(string $raw_location, string $expected_location): void
+    {
+        $this->context->shouldReceive('location')->andReturn($raw_location);
+        $this->messages_eligibility
+            ->shouldReceive('is_enabled_for_location')
+            ->once()
+            ->with($expected_location)
+            ->andReturn(true);
+
+        $testee = $this->createTestee();
+
+        $this->assertTrue($testee->messages_enabled());
+    }
+
+    public function blockLocationNormalizationProvider(): array
+    {
+        return [
+            'checkout-block normalizes to checkout, not checkout-block-express' => ['checkout-block', 'checkout'],
+            'cart-block normalizes to cart'                                      => ['cart-block', 'cart'],
+            'pay-now normalizes to checkout'                                     => ['pay-now', 'checkout'],
+        ];
+    }
+
+    // -------------------------------------------------------------------------
+    // script_data()['messages']
+    // -------------------------------------------------------------------------
+
+    /**
+     * GIVEN Pay Later messaging is not enabled for the current page
+     * WHEN the SDK bootstrap data is generated
+     * THEN the messages payload still carries all six documented keys, with enabled: false
+     *      rather than the key being omitted — so the bootstrap can branch on it directly
+     */
+    public function testScriptDataMessagesShapeIncludesAllKeysEvenWhenDisabled(): void
+    {
+        $this->stubScriptDataBaseline('checkout', 'checkout');
+        $this->messages_eligibility->shouldReceive('is_enabled_for_location')->andReturn(false);
+        $this->messages_eligibility->shouldReceive('is_hidden')->with('checkout')->andReturn(false);
+        $this->message_style_mapper->shouldReceive('styles_for_location')->with('checkout')->andReturn([
+            'logoType' => 'WORDMARK', 'logoPosition' => 'LEFT', 'textColor' => 'BLACK', 'fontSize' => '',
+        ]);
+
+        $testee = $this->createTestee();
+        $data   = $testee->script_data();
+
+        $this->assertSame(
+            ['enabled', 'wrapper', 'is_hidden', 'amount', 'page_type', 'style'],
+            array_keys($data['messages'])
+        );
+        $this->assertFalse($data['messages']['enabled']);
+    }
+
+    // -------------------------------------------------------------------------
+    // messages_amount() — product-first, unlike transaction_amount()
+    // -------------------------------------------------------------------------
+
+    /**
+     * GIVEN a product page while the cart already holds other, different-priced items
+     * WHEN the SDK bootstrap data is generated
+     * THEN the Pay Later message prices the product being viewed, not the cart total
+     * AND the button-eligibility amount (transaction_amount) remains cart-first,
+     *     the opposite behaviour
+     */
+    public function testMessagesAmountIsProductFirstOnProductPageEvenWithNonEmptyCart(): void
+    {
+        $this->stubScriptDataBaseline('product', 'product');
+
+        $product = Mockery::mock(\WC_Product::class);
+        when('wc_get_product')->justReturn($product);
+        when('wc_get_price_including_tax')->justReturn(29.99);
+
+        $cart = Mockery::mock();
+        $cart->shouldReceive('is_empty')->andReturn(false);
+        $cart->shouldReceive('get_total')->with('edit')->andReturn('99.99');
+        $cart->shouldReceive('needs_shipping')->andReturn(false);
+        when('WC')->justReturn((object) ['customer' => null, 'cart' => $cart]);
+
+        $this->messages_eligibility->shouldReceive('is_enabled_for_location')->andReturn(false);
+        $this->messages_eligibility->shouldReceive('is_hidden')->andReturn(false);
+        $this->message_style_mapper->shouldReceive('styles_for_location')->andReturn([]);
+
+        $testee = $this->createTestee();
+        $data   = $testee->script_data();
+
+        $this->assertSame('29.99', $data['messages']['amount']);
+        $this->assertSame('99.99', $data['amount']);
+    }
+
+    /**
+     * GIVEN a buyer on the pay-for-order page for an existing WC order
+     * WHEN the SDK bootstrap data is generated
+     * THEN the Pay Later message prices the validated order total
+     */
+    public function testMessagesAmountUsesValidatedOrderTotalOnPayNowPage(): void
+    {
+        global $wp;
+        $wp = (object) ['query_vars' => ['order-pay' => 42]];
+        $_GET['key'] = 'order-key-abc';
+
+        $order = Mockery::mock(\WC_Order::class);
+        $order->shouldReceive('get_order_key')->andReturn('order-key-abc');
+        $order->shouldReceive('get_total')->andReturn('150.00');
+
+        $this->stubScriptDataBaseline('pay-now', 'pay-now');
+        when('wc_get_order')->justReturn($order);
+
+        $this->messages_eligibility->shouldReceive('is_enabled_for_location')->andReturn(false);
+        $this->messages_eligibility->shouldReceive('is_hidden')->andReturn(false);
+        $this->message_style_mapper->shouldReceive('styles_for_location')->andReturn([]);
+
+        $testee = $this->createTestee();
+        $data   = $testee->script_data();
+
+        $this->assertSame('150.00', $data['messages']['amount']);
+    }
+
+    /**
+     * GIVEN neither a product, a cart, nor a pay-for-order order is available
+     * WHEN the SDK bootstrap data is generated
+     * THEN the Pay Later message amount falls back to an empty string
+     */
+    public function testMessagesAmountFallsBackToEmptyStringWhenNothingIsAvailable(): void
+    {
+        $this->stubScriptDataBaseline('checkout', 'checkout');
+        when('wc_get_product')->justReturn(null);
+
+        $this->messages_eligibility->shouldReceive('is_enabled_for_location')->andReturn(false);
+        $this->messages_eligibility->shouldReceive('is_hidden')->andReturn(false);
+        $this->message_style_mapper->shouldReceive('styles_for_location')->andReturn([]);
+
+        $testee = $this->createTestee();
+        $data   = $testee->script_data();
+
+        $this->assertSame('', $data['messages']['amount']);
+    }
+
+    // -------------------------------------------------------------------------
+    // messages_render_hook()
+    // -------------------------------------------------------------------------
+
+    /**
+     * GIVEN a page location this module places a message on
+     * WHEN resolving the message render hook, with no merchant filter overriding it
+     * THEN the documented default hook name and priority are returned
+     *
+     * @dataProvider defaultMessagesRenderHookProvider
+     */
+    public function testMessagesRenderHookReturnsDocumentedDefaults(string $location, string $expected_name, int $expected_priority): void
+    {
+        $this->context->shouldReceive('location')->andReturn($location);
+
+        $testee = $this->createTestee();
+        $hook   = $testee->messages_render_hook();
+
+        $this->assertSame(['name' => $expected_name, 'priority' => $expected_priority], $hook);
+    }
+
+    public function defaultMessagesRenderHookProvider(): array
+    {
+        return [
+            'checkout' => ['checkout', 'woocommerce_review_order_before_payment', 10],
+            'cart'     => ['cart', 'woocommerce_proceed_to_checkout', 19],
+            'product'  => ['product', 'woocommerce_single_product_summary', 30],
+            'pay-now'  => ['pay-now', 'woocommerce_pay_order_before_submit', 10],
+        ];
+    }
+
+    /**
+     * GIVEN a location this module does not place a message on (shop, home, or none)
+     * WHEN resolving the message render hook
+     * THEN null is returned, so this module stays out of the way and leaves the page to v5
+     *
+     * @dataProvider unsupportedRenderHookLocationProvider
+     */
+    public function testMessagesRenderHookReturnsNullForPagesThisModuleDoesNotServe(string $location): void
+    {
+        $this->context->shouldReceive('location')->andReturn($location);
+
+        $testee = $this->createTestee();
+
+        $this->assertNull($testee->messages_render_hook());
+    }
+
+    public function unsupportedRenderHookLocationProvider(): array
+    {
+        return [
+            'shop'  => ['shop'],
+            'home'  => ['home'],
+            'empty' => [''],
+        ];
+    }
+
+    /**
+     * GIVEN the current page resolves to a block cart or checkout location
+     * WHEN resolving the message render hook
+     * THEN null is returned — the switch in messages_render_hook() has no case for
+     *      'cart-block' or 'checkout-block', so block pages never get a message wrapper
+     *      from this module
+     *
+     * This pins, on its own, the second of should_load_messages()'s two independent
+     * block exclusions (see should_load_on_current_page()'s docblock and
+     * testShouldLoadOnCurrentPageInBlockContextsIsUnaffectedByMessagingEligibility()).
+     * The first exclusion — should_load_messages()'s own is_block_context() early-out —
+     * has no equivalent standalone test here: any test of should_load_on_current_page()
+     * still routes through the real messages_render_hook(), so removing the
+     * is_block_context() check alone would still be masked by this second exclusion.
+     * Isolating it would require a testable subclass overriding messages_render_hook(),
+     * which is out of scope for this fix.
+     *
+     * @dataProvider blockContextProvider
+     */
+    public function testMessagesRenderHookReturnsNullForBlockLocations(string $location): void
+    {
+        $this->context->shouldReceive('location')->andReturn($location);
+
+        $testee = $this->createTestee();
+
+        $this->assertNull($testee->messages_render_hook());
+    }
+
+    /**
+     * GIVEN a merchant has overridden the per-location message renderer hook and priority
+     * WHEN resolving the message render hook
+     * THEN the overridden values are returned
+     * AND the pay-now location uses the 'pay_order' filter name segment, not 'pay-now'
+     *
+     * @dataProvider renderHookFilterProvider
+     */
+    public function testMessagesRenderHookIsOverriddenByPerLocationFilters(string $location, string $filter_segment): void
+    {
+        $this->context->shouldReceive('location')->andReturn($location);
+
+        expectApplied("woocommerce_paypal_payments_{$filter_segment}_messages_renderer_hook")
+            ->once()
+            ->andReturn('custom_hook');
+        expectApplied("woocommerce_paypal_payments_{$filter_segment}_messages_renderer_priority")
+            ->once()
+            ->andReturn(99);
+
+        $testee = $this->createTestee();
+        $hook   = $testee->messages_render_hook();
+
+        $this->assertSame(['name' => 'custom_hook', 'priority' => 99], $hook);
+    }
+
+    public function renderHookFilterProvider(): array
+    {
+        return [
+            'checkout uses the checkout filter segment'          => ['checkout', 'checkout'],
+            'cart uses the cart filter segment'                  => ['cart', 'cart'],
+            'product uses the product filter segment'            => ['product', 'product'],
+            'pay-now uses the pay_order filter segment, not pay-now' => ['pay-now', 'pay_order'],
+        ];
+    }
+
+    /**
+     * GIVEN the cart or product default message hook, with a merchant override of the
+     *       corresponding button relocation filter
+     * WHEN resolving the message render hook, with no messaging-specific hook override
+     * THEN the relocated button hook is used as the message hook's default, keeping the
+     *      message attached to a button the merchant moved
+     *
+     * @dataProvider relocatedButtonHookProvider
+     */
+    public function testMessagesRenderHookDefaultUsesRelocatedButtonHookFirst(string $location, string $relocation_filter, string $relocated_hook): void
+    {
+        $this->context->shouldReceive('location')->andReturn($location);
+
+        expectApplied($relocation_filter)->once()->andReturn($relocated_hook);
+
+        $testee = $this->createTestee();
+        $hook   = $testee->messages_render_hook();
+
+        $this->assertSame($relocated_hook, $hook['name']);
+    }
+
+    public function relocatedButtonHookProvider(): array
+    {
+        return [
+            'cart passes through the proceed-to-checkout button relocation filter first' => [
+                'cart', 'woocommerce_paypal_payments_proceed_to_checkout_button_renderer_hook', 'my_custom_proceed_hook',
+            ],
+            'product passes through the single-product button relocation filter first' => [
+                'product', 'woocommerce_paypal_payments_single_product_renderer_hook', 'my_custom_product_hook',
+            ],
+        ];
+    }
+
+    // -------------------------------------------------------------------------
+    // render_message_wrapper()
+    // -------------------------------------------------------------------------
+
+    /**
+     * GIVEN a page location this module places a message on
+     * WHEN the message wrapper is rendered
+     * THEN the .ppcp-messages wrapper is echoed between the location's
+     *      "before" and "after" actions, in that order
+     * AND the pay-now location uses the 'pay_order' action name segment, not 'pay-now'
+     *
+     * @dataProvider renderMessageWrapperProvider
+     */
+    public function testRenderMessageWrapperEchoesWrapperBetweenBeforeAndAfterActions(string $location, string $action_segment): void
+    {
+        $this->context->shouldReceive('location')->andReturn($location);
+
+        $order = [];
+        expectDone("ppcp_before_{$action_segment}_message_wrapper")
+            ->once()
+            ->whenHappen(function () use (&$order): void {
+                $order[] = 'before';
+            });
+        expectDone("ppcp_after_{$action_segment}_message_wrapper")
+            ->once()
+            ->whenHappen(function () use (&$order): void {
+                $order[] = 'after';
+            });
+
+        $testee = $this->createTestee();
+
+        ob_start();
+        $testee->render_message_wrapper();
+        $output = ob_get_clean();
+
+        $this->assertSame('<div class="ppcp-messages"></div>', $output);
+        $this->assertSame(['before', 'after'], $order);
+    }
+
+    public function renderMessageWrapperProvider(): array
+    {
+        return [
+            'checkout'                        => ['checkout', 'checkout'],
+            'cart'                             => ['cart', 'cart'],
+            'product'                          => ['product', 'product'],
+            'pay-now uses pay_order segment'  => ['pay-now', 'pay_order'],
+        ];
+    }
+
+    // -------------------------------------------------------------------------
+    // enqueue()
+    // -------------------------------------------------------------------------
+
+    /**
+     * GIVEN the v6 SDK should load on the current classic checkout page
+     * WHEN the bootstrap script is enqueued
+     * THEN it is registered with the dependencies and version webpack recorded for the
+     *      compiled bundle, not an empty dependency list and not just the plugin version.
+     */
+    public function testEnqueueRegistersScriptWithAssetDataDependenciesAndVersion(): void
+    {
+        $this->context->shouldReceive('context')->andReturn('checkout');
+        $this->context->shouldReceive('location')->andReturn('checkout');
+        $this->card_payments_configuration->shouldReceive('is_acdc_enabled')->andReturn(false);
+        $this->card_payments_configuration->shouldReceive('gateway_title')->andReturn('Credit Card');
+        $this->card_payments_configuration->shouldReceive('show_name_on_card')->andReturn('no');
+        $this->settings_status->shouldReceive('is_smart_button_enabled_for_location')
+            ->with('checkout')->andReturn(true);
+        $this->settings_status->shouldReceive('is_smart_button_enabled_for_location')
+            ->with('mini-cart')->andReturn(false);
+        $this->session_handler->shouldReceive('order')->andReturn(null);
+        $this->context->shouldReceive('is_paypal_continuation')->andReturn(false);
+        $this->environment->shouldReceive('is_sandbox')->andReturn(false);
+        $this->style_mapper->shouldReceive('styles_for_context')->andReturn([]);
+
+        when('WC')->justReturn($this->create_wc_stub());
+        when('wc_get_base_location')->justReturn(['country' => 'US']);
+        when('get_woocommerce_currency')->justReturn('USD');
+        when('get_locale')->justReturn('en_US');
+        when('is_product')->justReturn(false);
+        when('rest_url')->justReturn('https://example.com/wp-json/wc/store/v1/cart');
+        when('wc_get_checkout_url')->justReturn('https://example.com/checkout');
+
+        $this->asset_getter->shouldReceive('get_asset_url')
+            ->with('boot.js')
+            ->andReturn('https://example.com/assets/boot.js');
+        $this->asset_getter->shouldReceive('get_asset_data')
+            ->with('boot.js', '1.0.0')
+            ->andReturn(['dependencies' => ['wp-data'], 'version' => 'deadbeef']);
+
+        expect('wp_register_script')
+            ->once()
+            ->with(
+                'wc-ppcp-sdk-v6-boot',
+                'https://example.com/assets/boot.js',
+                ['wp-data'],
+                'deadbeef',
+                true
+            );
+        expect('wp_localize_script')->once();
+        expect('wp_enqueue_script')->once()->with('wc-ppcp-sdk-v6-boot');
+
+        $testee = $this->createTestee();
+        $testee->enqueue();
+
+        $this->addToAssertionCount(1);
+    }
+
+    /**
+     * GIVEN the v6 SDK does not load on the current page
+     * WHEN enqueue() is called
+     * THEN no script is registered — the method returns before touching the asset getter
+     */
+    public function testEnqueueDoesNothingWhenShouldNotLoadOnCurrentPage(): void
+    {
+        $this->context->shouldReceive('context')->andReturn('');
+        $this->context->shouldReceive('location')->andReturn('');
+        $this->card_payments_configuration->shouldReceive('is_acdc_enabled')->andReturn(false);
+        $this->settings_status->shouldReceive('is_smart_button_enabled_for_location')->andReturn(false);
+        $this->messages_eligibility->shouldReceive('is_enabled_for_location')->with('')->andReturn(false);
+
+        expect('wp_register_script')->never();
+
+        $testee = $this->createTestee();
+        $testee->enqueue();
+
+        $this->addToAssertionCount(1);
     }
 
     /**

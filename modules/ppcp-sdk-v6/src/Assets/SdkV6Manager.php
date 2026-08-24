@@ -28,6 +28,8 @@ use WooCommerce\PayPalCommerce\SdkV6\Helper\ApplePayConfig;
 use WooCommerce\PayPalCommerce\SdkV6\Helper\ButtonStyleMapper;
 use WooCommerce\PayPalCommerce\SdkV6\Helper\FastlaneConfig;
 use WooCommerce\PayPalCommerce\SdkV6\Helper\GooglePayConfig;
+use WooCommerce\PayPalCommerce\SdkV6\Helper\MessagesEligibility;
+use WooCommerce\PayPalCommerce\SdkV6\Helper\MessageStyleMapper;
 use WooCommerce\PayPalCommerce\Session\Cancellation\CancelController;
 use WooCommerce\PayPalCommerce\Session\Cancellation\CancelView;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
@@ -53,6 +55,10 @@ class SdkV6Manager {
 	 * value for all of them, rather than one per button type or context.
 	 */
 	public const PAYMENT_BUTTON_HEIGHT = '48px';
+
+	// The pay-for-order page has no pre-payment hook, so the message renders
+	// after the submit button and is relocated by SdkV6Module.
+	public const PAY_ORDER_MESSAGE_HOOK = 'woocommerce_pay_order_before_submit';
 
 	// Existing WC credit-card-form field IDs (see CardFieldsModule's
 	// woocommerce_credit_card_form_fields filter and WC core's own
@@ -88,6 +94,8 @@ class SdkV6Manager {
 	private $get_subscriptions_mode;
 
 	private string $three_d_secure_contingency;
+	private MessageStyleMapper $message_style_mapper;
+	private MessagesEligibility $messages_eligibility;
 	private string $merchant_country;
 
 	/**
@@ -132,6 +140,8 @@ class SdkV6Manager {
 		callable $get_subscriptions_mode,
 		string $three_d_secure_contingency,
 		array $credit_card_icons,
+		MessageStyleMapper $message_style_mapper,
+		MessagesEligibility $messages_eligibility,
 		string $merchant_country,
 		GooglePayConfig $google_pay_config,
 		ApplePayConfig $apple_pay_config,
@@ -155,6 +165,8 @@ class SdkV6Manager {
 		$this->get_subscriptions_mode      = $get_subscriptions_mode;
 		$this->three_d_secure_contingency  = $three_d_secure_contingency;
 		$this->credit_card_icons           = $credit_card_icons;
+		$this->message_style_mapper        = $message_style_mapper;
+		$this->messages_eligibility        = $messages_eligibility;
 		$this->merchant_country            = $merchant_country;
 		$this->apple_pay_config            = $apple_pay_config;
 		$this->fastlane_config             = $fastlane_config;
@@ -198,11 +210,13 @@ class SdkV6Manager {
 			return;
 		}
 
+		$asset = $this->asset_getter->get_asset_data( 'boot.js', $this->version );
+
 		wp_register_script(
 			'wc-ppcp-sdk-v6-boot',
 			$script_url,
-			array(),
-			$this->version,
+			$asset['dependencies'],
+			$asset['version'],
 			true
 		);
 
@@ -217,6 +231,9 @@ class SdkV6Manager {
 
 	/**
 	 * Determines which button locations should render on the current page.
+	 *
+	 * Expects Context::init_context() to have run, so that is_cart() and
+	 * is_checkout() resolve on classic-shortcode block pages.
 	 *
 	 * @return array<string, bool> Location => enabled (product, cart, checkout, pay-now, mini-cart).
 	 */
@@ -395,9 +412,8 @@ class SdkV6Manager {
 	 * card gateway is a regular WC payment method that can be selectable
 	 * at checkout even when the wallet button is disabled there, so it
 	 * gets its own OR'd condition rather than being folded into the
-	 * location check above.
-	 *
-	 * @return bool
+	 * location check above. Pay Later messaging is a third such condition:
+	 * it can claim a classic page where nothing else here would.
 	 */
 	public function should_load_on_current_page(): bool {
 		// Native PayPal Subscriptions (subscriptions_api mode) have no v6 path — v6
@@ -415,6 +431,10 @@ class SdkV6Manager {
 		}
 
 		if ( $this->is_card_fields_enabled( $page_location ) ) {
+			return true;
+		}
+
+		if ( $this->should_load_messages() ) {
 			return true;
 		}
 
@@ -503,6 +523,215 @@ class SdkV6Manager {
 	}
 
 	/**
+	 * Whether Pay Later messaging alone should pull the v6 SDK onto this page.
+	 *
+	 * Two exclusions:
+	 *
+	 * - Block contexts, where claiming the page for messaging alone may
+	 *   leave nothing rendering it.
+	 * - Pages this module will not actually paint. messages_render_hook()
+	 *   returns null for shop, home and the mini-cart fallback context, which
+	 *   stay with v5.
+	 */
+	private function should_load_messages(): bool {
+		if ( is_admin() || $this->is_block_context() ) {
+			return false;
+		}
+
+		return $this->messages_enabled() && null !== $this->messages_render_hook();
+	}
+
+	/**
+	 * Whether Pay Later messaging is enabled and eligible on this page.
+	 */
+	public function messages_enabled(): bool {
+		if ( is_admin() ) {
+			return false;
+		}
+
+		return $this->messages_eligibility->is_enabled_for_location(
+			$this->messages_settings_location()
+		);
+	}
+
+	/**
+	 * Maps the current page onto a Pay Later messaging settings location.
+	 *
+	 * The single normalization point for both the style and the eligibility
+	 * lookup. SettingsStatus::normalize_location() cannot be relied on here:
+	 * it is button-oriented and maps 'checkout-block' to
+	 * 'checkout-block-express', a location the messaging settings never
+	 * contain, so messaging would silently never enable on the block
+	 * checkout.
+	 *
+	 * Returns an empty string for shop, home and the mini-cart context, which
+	 * this module currently does not serve.
+	 */
+	private function messages_settings_location(): string {
+		switch ( $this->context->location() ) {
+			case 'product':
+				return 'product';
+			case 'cart':
+			case 'cart-block':
+				return 'cart';
+			case 'checkout':
+			case 'checkout-block':
+			case 'pay-now':
+				return 'checkout';
+			default:
+				return '';
+		}
+	}
+
+	/**
+	 * The v6 page-type attribute value for the current page.
+	 */
+	private function messages_page_type(): string {
+		switch ( $this->messages_settings_location() ) {
+			case 'product':
+				return 'product-details';
+			case 'cart':
+				return 'cart';
+			default:
+				return 'checkout';
+		}
+	}
+
+	/**
+	 * The amount the Pay Later message prices.
+	 *
+	 * Product-first, matching v5's message_values(): on a product page the
+	 * message must price the product the buyer is looking at, even when the
+	 * cart already holds other items. This is why transaction_amount() (which
+	 * is cart-first, because it feeds button eligibility) cannot be reused.
+	 */
+	private function messages_amount(): string {
+		if ( 'pay-now' === $this->get_page_context() ) {
+			$order = $this->order_pay();
+
+			return $order ? number_format( (float) $order->get_total(), 2, '.', '' ) : '';
+		}
+
+		// Scoped to the product location rather than probing wc_get_product()
+		// unconditionally the way v5 does: on a cart or checkout page a stray
+		// global $product — left behind by a theme loop or another plugin —
+		// would otherwise make the message price that product instead of the
+		// cart. The location check also covers the [product_page] shortcut,
+		// where is_product() is false but the context is still 'product'.
+		if ( 'product' === $this->messages_settings_location() ) {
+			$product = wc_get_product();
+			if ( $product instanceof \WC_Product ) {
+				return number_format( (float) wc_get_price_including_tax( $product ), 2, '.', '' );
+			}
+		}
+
+		$cart = WC()->cart;
+		if ( $cart ) {
+			return number_format( (float) $cart->get_total( 'edit' ), 2, '.', '' );
+		}
+
+		return '';
+	}
+
+	/**
+	 * The action hook the message wrapper renders on, or null when this
+	 * module does not place messages on the current page.
+	 *
+	 * Reuses the v5 filter names so a merchant override relocates both
+	 * stacks.
+	 *
+	 * @return array{name: string, priority: int}|null
+	 */
+	public function messages_render_hook(): ?array {
+		switch ( $this->context->location() ) {
+			case 'checkout':
+				return $this->message_hook( 'checkout', 'woocommerce_review_order_before_payment', 10 );
+			case 'cart':
+				/**
+				 * The action name that the PayPal buttons use for rendering next to the cart's Proceed to Checkout button.
+				 */
+				$cart_hook = (string) apply_filters(
+					'woocommerce_paypal_payments_proceed_to_checkout_button_renderer_hook',
+					'woocommerce_proceed_to_checkout'
+				);
+
+				return $this->message_hook( 'cart', $cart_hook, 19 );
+			case 'product':
+				/**
+				 * The action name that the PayPal buttons use for rendering on the single product page.
+				 */
+				$product_hook = (string) apply_filters(
+					'woocommerce_paypal_payments_single_product_renderer_hook',
+					'woocommerce_single_product_summary'
+				);
+
+				return $this->message_hook( 'product', $product_hook, 30 );
+			case 'pay-now':
+				return $this->message_hook( 'pay-now', self::PAY_ORDER_MESSAGE_HOOK, 10 );
+			default:
+				return null;
+		}
+	}
+
+	/**
+	 * Applies the per-location message hook and priority filters.
+	 *
+	 * @param string $location         The page location.
+	 * @param string $default_hook     The default action name.
+	 * @param int    $default_priority The default priority.
+	 * @return array{name: string, priority: int}
+	 */
+	private function message_hook( string $location, string $default_hook, int $default_priority ): array {
+		$location_hook = 'pay-now' === $location ? 'pay_order' : $location;
+
+		/**
+		 * The filter returning the action name that will be used for rendering Pay Later messages.
+		 */
+		$name = (string) apply_filters(
+			"woocommerce_paypal_payments_{$location_hook}_messages_renderer_hook",
+			$default_hook
+		);
+
+		/**
+		 * The filter returning the action priority that will be used for rendering Pay Later messages.
+		 */
+		$priority = (int) apply_filters(
+			"woocommerce_paypal_payments_{$location_hook}_messages_renderer_priority",
+			$default_priority
+		);
+
+		return array(
+			'name'     => $name,
+			'priority' => $priority,
+		);
+	}
+
+	/**
+	 * Prints the Pay Later message placeholder.
+	 *
+	 * Emits the same .ppcp-messages wrapper v5 emits rather than the
+	 * <paypal-message> element itself, so one JS mount path serves both these
+	 * wrappers and the Pay Later message blocks, and so theme and plugin CSS
+	 * keyed on the class keeps working.
+	 */
+	public function render_message_wrapper(): void {
+		$location      = $this->context->location();
+		$location_hook = 'pay-now' === $location ? 'pay_order' : $location;
+
+		/**
+		 * A hook executed before rendering of the PCP Pay Later messages wrapper.
+		 */
+		do_action( "ppcp_before_{$location_hook}_message_wrapper" );
+
+		echo '<div class="ppcp-messages"></div>';
+
+		/**
+		 * A hook executed after rendering of the PCP Pay Later messages wrapper.
+		 */
+		do_action( "ppcp_after_{$location_hook}_message_wrapper" );
+	}
+
+	/**
 	 * The configuration data for the SDK v6 bootstrap script.
 	 *
 	 * Also consumed by the block payment method (V6PaymentMethod), which
@@ -540,6 +769,8 @@ class SdkV6Manager {
 		}
 
 		$card_fields_enabled = $this->is_card_fields_enabled();
+
+		$messages_settings_location = $this->messages_settings_location();
 
 		$data = array(
 			'sdk_url'             => $base_url . '/web-sdk/v6/core',
@@ -682,6 +913,14 @@ class SdkV6Manager {
 				// The id as a literal, not AxoGateway::ID: ppcp-axo is behind its
 				// own feature flag, and SdkV6Module names it the same way.
 				'payment_method' => 'ppcp-axo-gateway',
+			),
+			'messages'          => array(
+				'enabled'   => $this->messages_enabled(),
+				'wrapper'   => '.ppcp-messages',
+				'is_hidden' => $this->messages_eligibility->is_hidden( $page_context ),
+				'amount'    => $this->messages_amount(),
+				'page_type' => $this->messages_page_type(),
+				'style'     => $this->message_style_mapper->styles_for_location( $messages_settings_location ),
 			),
 		);
 

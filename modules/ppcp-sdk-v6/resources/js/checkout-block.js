@@ -32,6 +32,8 @@ import { PayPalSavedToken } from '@ppcp-blocks/Components/paypal-saved-token';
 import { FundingSources } from './utils/fundingSources';
 import { fundingSourceLabel } from './utils/fundingSourceLabel';
 import { minorUnitsToDecimal } from './utils/amount';
+import { initMessages, updateMessagesAmount } from './messages/renderer';
+import { watchBlockCartTotal } from './messages/cartTotalWatcher';
 
 const ALL_FUNDING_SOURCES = [
 	FundingSources.PAYPAL,
@@ -280,4 +282,23 @@ if ( config?.vault_component?.is_eligible && ! config.continuation ) {
 			showSaveOption: false,
 		},
 	} );
+}
+
+/**
+ * Pay Later messages on the block cart and checkout.
+ *
+ * Done at module scope: messaging needs only the config and the DOM, not eligibility
+ * or a session. Skipped in continuation mode, where the buyer has approved an
+ * order and sees the review instead.
+ *
+ * Placeholders arrive with the React tree, so the body observer that
+ * initMessages() installs is what actually fills them.
+ */
+if ( config?.messages?.enabled && ! config.continuation ) {
+	initMessages( config, config.page_context ).catch( ( error ) => {
+		// eslint-disable-next-line no-console
+		console.error( '[ppcp-sdk-v6] messages', error );
+	} );
+
+	watchBlockCartTotal( updateMessagesAmount );
 }
