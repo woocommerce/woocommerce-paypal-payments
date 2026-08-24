@@ -542,69 +542,73 @@ class SdkV6Manager {
 		$card_fields_enabled = $this->is_card_fields_enabled();
 
 		$data = array(
-			'sdk_url'           => $base_url . '/web-sdk/v6/core',
-			'page_context'      => $page_context,
-			'currency'          => get_woocommerce_currency(),
-			'amount'            => $this->transaction_amount(),
-			'buyer_country'     => $buyer_country,
-			'merchant_country'  => $this->merchant_country,
-			'locale'            => str_replace( '_', '-', get_locale() ),
-			'vaulting_enabled'  => $this->vaulting_enabled,
+			'sdk_url'             => $base_url . '/web-sdk/v6/core',
+			'page_context'        => $page_context,
+			'currency'            => get_woocommerce_currency(),
+			'amount'              => $this->transaction_amount(),
+			'buyer_country'       => $buyer_country,
+			'merchant_country'    => $this->merchant_country,
+			'locale'              => str_replace( '_', '-', get_locale() ),
+			'vaulting_enabled'    => $this->vaulting_enabled,
 			// Drives the post-approval fork; see V6ExpressComponent.approve().
-			'final_review'      => $this->final_review_enabled,
+			'final_review'        => $this->final_review_enabled,
 			// A subscription cart whose initial total is 0 (free trial, delayed
 			// sync or a 100% coupon). Such a cart must not create a $0 PayPal
 			// order: the frontend switches to the vault "save without purchase"
 			// flow instead, and the gateway places the $0 WC order server-side.
-			'is_free_trial_cart' => $this->free_trial_helper->is_free_trial_cart(),
-			// 3DS/SCA contingency for the card save (setup-token) flow used on a
-			// free-trial card checkout. Filtered like the add-payment-method page.
+			'is_free_trial_cart'  => $this->free_trial_helper->is_free_trial_cart(),
+			/**
+			 * 3DS/SCA contingency for the card save (setup-token) flow used on a
+			 * free-trial card checkout. Filtered like the add-payment-method page.
+			 *
+			 * @param string $three_d_secure_contingency The default 3D Secure enum value.
+			 */
 			'verification_method' => (string) apply_filters(
 				'woocommerce_paypal_payments_three_d_secure_contingency',
 				$this->three_d_secure_contingency
 			),
 			// Whether the buyer is logged in, so the free-trial save flow picks the
 			// logged-in create-payment-token endpoint vs the guest one.
-			'user'              => array(
+			'user'                => array(
 				'is_logged' => is_user_logged_in(),
 			),
-			'ajax'              => array(
-				'client_token'    => array(
+			'ajax'                => array(
+				'client_token'                   => array(
 					'endpoint' => \WC_AJAX::get_endpoint( ClientTokenEndpoint::ENDPOINT ),
 					'nonce'    => wp_create_nonce( ClientTokenEndpoint::nonce() ),
 				),
-				'change_cart'     => array(
+				'change_cart'                    => array(
 					'endpoint' => \WC_AJAX::get_endpoint( ChangeCartEndpoint::ENDPOINT ),
 					'nonce'    => wp_create_nonce( ChangeCartEndpoint::nonce() ),
 				),
-				'simulate_cart'   => array(
+				'simulate_cart'                  => array(
 					'endpoint' => \WC_AJAX::get_endpoint( SimulateCartEndpoint::ENDPOINT ),
 					'nonce'    => wp_create_nonce( SimulateCartEndpoint::nonce() ),
 				),
-				'create_order'    => array(
+				'create_order'                   => array(
 					'endpoint' => \WC_AJAX::get_endpoint( CreateOrderEndpoint::ENDPOINT ),
 					'nonce'    => wp_create_nonce( CreateOrderEndpoint::nonce() ),
 				),
-				'approve_order'   => array(
+				'approve_order'                  => array(
 					'endpoint' => \WC_AJAX::get_endpoint( ApproveOrderEndpoint::ENDPOINT ),
 					'nonce'    => wp_create_nonce( ApproveOrderEndpoint::nonce() ),
 				),
-				'get_order'       => array(
+				'get_order'                      => array(
 					'endpoint' => \WC_AJAX::get_endpoint( GetOrderEndpoint::ENDPOINT ),
 					'nonce'    => wp_create_nonce( GetOrderEndpoint::nonce() ),
 				),
-				'update_shipping' => array(
+				'update_shipping'                => array(
 					'endpoint' => \WC_AJAX::get_endpoint( UpdateShippingEndpoint::ENDPOINT ),
 					'nonce'    => wp_create_nonce( UpdateShippingEndpoint::nonce() ),
 				),
 				// Vault v3 "save without purchase" endpoints, used by the
 				// free-trial checkout flow (see is_free_trial_cart). Registered as
 				// wc_ajax actions by ppcp-save-payment-methods when vaulting is on.
-				'create_setup_token' => array(
+				'create_setup_token'             => array(
 					'endpoint' => \WC_AJAX::get_endpoint( CreateSetupToken::ENDPOINT ),
 					'nonce'    => wp_create_nonce( CreateSetupToken::nonce() ),
 				),
-				'create_payment_token' => array(
+				'create_payment_token'           => array(
 					'endpoint' => \WC_AJAX::get_endpoint( CreatePaymentToken::ENDPOINT ),
 					'nonce'    => wp_create_nonce( CreatePaymentToken::nonce() ),
 				),
@@ -612,31 +616,31 @@ class SdkV6Manager {
 					'endpoint' => \WC_AJAX::get_endpoint( CreatePaymentTokenForGuest::ENDPOINT ),
 					'nonce'    => wp_create_nonce( CreatePaymentTokenForGuest::nonce() ),
 				),
-				'wc_store_api'    => array(
+				'wc_store_api'                   => array(
 					'cart'                 => $store_api_base,
 					'select_shipping_rate' => $store_api_base . '/select-shipping-rate',
 					'update_customer'      => $store_api_base . '/update-customer',
 					'nonce'                => wp_create_nonce( 'wc_store_api' ),
 				),
 			),
-			'urls'              => array(
+			'urls'                => array(
 				'checkout' => wc_get_checkout_url(),
 			),
-			'labels'            => array(
+			'labels'              => array(
 				'generic_error' => __(
 					'Something went wrong. Please try again or choose another payment source.',
 					'woocommerce-paypal-payments'
 				),
 			),
-			'shipping'          => array(
+			'shipping'            => array(
 				'handle_in_paypal' => $shipping_enabled,
 				'need_shipping'    => $this->need_shipping(),
 			),
-			'button_styles'     => $button_styles,
-			'button_height'     => self::PAYMENT_BUTTON_HEIGHT,
-			'wrapper'           => '#' . self::WRAPPER_ID,
-			'mini_cart_wrapper' => '#' . self::MINI_CART_WRAPPER_ID,
-			'card_fields'       => array(
+			'button_styles'       => $button_styles,
+			'button_height'       => self::PAYMENT_BUTTON_HEIGHT,
+			'wrapper'             => '#' . self::WRAPPER_ID,
+			'mini_cart_wrapper'   => '#' . self::MINI_CART_WRAPPER_ID,
+			'card_fields'         => array(
 				'enabled'             => $card_fields_enabled,
 				'payment_method'      => CreditCardGateway::ID,
 				'funding_source'      => 'card',
@@ -673,7 +677,7 @@ class SdkV6Manager {
 			// setting and localize it as wc_ppcp_axo; this flag tells sdkLoader
 			// to request the component their connection then reads off the
 			// shared SDK instance.
-			'fastlane'          => array(
+			'fastlane'            => array(
 				'enabled'        => $this->is_fastlane_enabled( $page_context ),
 				// The id as a literal, not AxoGateway::ID: ppcp-axo is behind its
 				// own feature flag, and SdkV6Module names it the same way.
