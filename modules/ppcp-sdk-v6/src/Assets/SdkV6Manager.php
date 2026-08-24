@@ -253,11 +253,6 @@ class SdkV6Manager {
 			);
 		}
 
-		// Activate is_cart()/is_checkout() on classic-shortcode block pages;
-		// otherwise this only happens as a side effect of constructing the
-		// (discarded) v5 SmartButton.
-		$this->context->init_context();
-
 		// Free orders ($0 total, e.g. a 100%-off coupon or free trial) do not
 		// need payment, so the cart/checkout wallet buttons must not render —
 		// matching v5's is_cart_price_total_zero() suppression.

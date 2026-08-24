@@ -276,7 +276,7 @@ export async function initCardFields( config ) {
 					throw new Error( 'Card could not be saved.' );
 				}
 
-				await exchangeSetupToken( config, setupTokenId, paymentMethod );
+				await exchangeSetupToken( config, setupTokenId );
 
 				submitting = true;
 				event.target.click();

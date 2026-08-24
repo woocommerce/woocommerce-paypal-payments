@@ -635,8 +635,7 @@ describe( 'initCardFields', () => {
 			expect( cardSession.submit ).toHaveBeenCalledWith( 'SETUP1' );
 			expect( mockExchangeSetupToken ).toHaveBeenCalledWith(
 				freeTrialConfig(),
-				'SETUP1',
-				'ppcp-credit-card-gateway'
+				'SETUP1'
 			);
 			expect( mockCreateCardOrder ).not.toHaveBeenCalled();
 			expect( mockApproveCardOrder ).not.toHaveBeenCalled();

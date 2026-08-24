@@ -63,26 +63,7 @@ describe( 'createCardSetupToken', () => {
 } );
 
 describe( 'exchangeSetupToken', () => {
-	test( 'posts to the logged-in endpoint with the payment method and free-trial flag when the buyer is logged in', async () => {
-		mockPostJson.mockResolvedValueOnce( {} );
-
-		await exchangeSetupToken(
-			baseConfig(),
-			'SETUP1',
-			'ppcp-gateway'
-		);
-
-		expect( mockPostJson ).toHaveBeenCalledWith(
-			baseConfig().ajax.create_payment_token,
-			{
-				vault_setup_token: 'SETUP1',
-				is_free_trial_cart: '1',
-				payment_method: 'ppcp-gateway',
-			}
-		);
-	} );
-
-	test( 'omits the payment method when none is given', async () => {
+	test( 'posts to the logged-in endpoint with the free-trial flag when the buyer is logged in', async () => {
 		mockPostJson.mockResolvedValueOnce( {} );
 
 		await exchangeSetupToken( baseConfig(), 'SETUP1' );
@@ -118,8 +99,7 @@ describe( 'exchangeSetupToken', () => {
 
 		await exchangeSetupToken(
 			baseConfig( { user: { is_logged: false } } ),
-			'SETUP1',
-			'ppcp-gateway'
+			'SETUP1'
 		);
 
 		expect( mockPostJson ).toHaveBeenCalledWith(

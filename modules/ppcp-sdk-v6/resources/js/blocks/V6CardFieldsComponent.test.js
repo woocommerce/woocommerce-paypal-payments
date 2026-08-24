@@ -470,8 +470,7 @@ describe( 'V6CardFieldsComponent', () => {
 			expect( session.submit ).toHaveBeenCalledWith( 'SETUP1' );
 			expect( mockExchangeSetupToken ).toHaveBeenCalledWith(
 				freeTrialConfig(),
-				'SETUP1',
-				freeTrialConfig().card_fields.payment_method
+				'SETUP1'
 			);
 			expect( mockCreateCardOrder ).not.toHaveBeenCalled();
 			expect( mockApproveCardOrder ).not.toHaveBeenCalled();

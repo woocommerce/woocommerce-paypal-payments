@@ -156,11 +156,7 @@ async function submitCardSave( { config, session, responseTypes } ) {
 			};
 		}
 
-		await exchangeSetupToken(
-			config,
-			setupTokenId,
-			config.card_fields.payment_method
-		);
+		await exchangeSetupToken( config, setupTokenId );
 
 		return { type: responseTypes.SUCCESS };
 	} catch ( error ) {

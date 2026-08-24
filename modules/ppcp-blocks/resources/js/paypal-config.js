@@ -273,12 +273,13 @@ export const handleApproveSubscription = async (
 			throw new Error( config.scriptData.labels.error.generic );
 		}
 
-		// A native PayPal subscription is already created and approved at this point,
-		// so there is no separate order to review or capture: complete the checkout
-		// directly instead of routing through the order-review continuation. This
-		// matches the classic checkout, whose subscription onApprove submits the
-		// order without a final-review step, and avoids leaving the buyer on the
-		// continuation page when final review is enabled.
+		// Native PayPal subscriptions always complete directly here, bypassing the
+		// order-review continuation. Unlike a one-time order, the subscription is
+		// already created and approved at this point and there is no capturable order
+		// to review, so routing through the continuation leaves the buyer unable to
+		// finish. This intentionally overrides "Require final confirmation" for native
+		// subscriptions on block checkout, matching the classic checkout (whose
+		// subscription onApprove submits the order without a final-review step).
 		setGotoContinuationOnError( true );
 		onSubmit();
 	} catch ( err ) {

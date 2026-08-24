@@ -89,11 +89,10 @@ import VaultRenderer from '@ppcp-button/Renderer/VaultRenderer';
 
 	function init() {
 		if ( typeof jQuery !== 'undefined' ) {
+			// onUpdatedCheckout already re-runs updateUi, so updateUi only needs
+			// binding to the events onUpdatedCheckout does not cover.
 			jQuery( document.body ).on( 'updated_checkout', onUpdatedCheckout );
-			jQuery( document.body ).on(
-				'updated_checkout payment_method_selected',
-				updateUi
-			);
+			jQuery( document.body ).on( 'payment_method_selected', updateUi );
 			jQuery( document ).on(
 				'change',
 				'input[name="wc-ppcp-gateway-payment-token"]',

@@ -7,6 +7,7 @@ use Mockery;
 use WooCommerce\PayPalCommerce\Assets\AssetGetter;
 use WooCommerce\PayPalCommerce\SdkV6\Assets\SdkV6Manager;
 use WooCommerce\PayPalCommerce\TestCase;
+use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use function Brain\Monkey\Functions\expect;
 
@@ -15,6 +16,7 @@ class V6PaymentMethodTest extends TestCase
     private $manager;
     private $asset_getter;
     private $gateway;
+    private $card_gateway;
 
     public function setUp(): void
     {
@@ -23,6 +25,7 @@ class V6PaymentMethodTest extends TestCase
         $this->manager      = Mockery::mock(SdkV6Manager::class);
         $this->asset_getter = Mockery::mock(AssetGetter::class);
         $this->gateway      = Mockery::mock(PayPalGateway::class);
+        $this->card_gateway = Mockery::mock(CreditCardGateway::class);
     }
 
     private function createTestee(): V6PaymentMethod
@@ -31,7 +34,11 @@ class V6PaymentMethodTest extends TestCase
             $this->manager,
             $this->asset_getter,
             '1.0.0',
-            $this->gateway
+            $this->gateway,
+            $this->card_gateway,
+            null,
+            null,
+            ''
         );
     }
 

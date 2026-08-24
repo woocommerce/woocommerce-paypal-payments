@@ -58,19 +58,14 @@ export async function createCardSetupToken( config ) {
  *
  * @param {Object} config          - The wc_ppcp_sdk_v6 config object.
  * @param {string} vaultSetupToken - The approved Vault v3 setup token id.
- * @param {string} [paymentMethod] - The WC gateway the token belongs to.
  * @return {Promise<void>} Resolves once the token has been stored.
  */
-export async function exchangeSetupToken( config, vaultSetupToken, paymentMethod ) {
+export async function exchangeSetupToken( config, vaultSetupToken ) {
 	if ( config.user?.is_logged ) {
-		const body = {
+		await postJson( config.ajax.create_payment_token, {
 			vault_setup_token: vaultSetupToken,
 			is_free_trial_cart: config.is_free_trial_cart ? '1' : '',
-		};
-		if ( paymentMethod ) {
-			body.payment_method = paymentMethod;
-		}
-		await postJson( config.ajax.create_payment_token, body );
+		} );
 		return;
 	}
 
