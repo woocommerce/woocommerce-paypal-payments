@@ -11,6 +11,7 @@ use WooCommerce\PayPalCommerce\SavePaymentMethods\Endpoint\CreatePaymentTokenFor
 use WooCommerce\PayPalCommerce\SavePaymentMethods\Endpoint\CreateSetupToken;
 use WooCommerce\PayPalCommerce\SdkV6\Helper\ApplePayConfig;
 use WooCommerce\PayPalCommerce\SdkV6\Helper\ButtonStyleMapper;
+use WooCommerce\PayPalCommerce\SdkV6\Helper\FastlaneConfig;
 use WooCommerce\PayPalCommerce\SdkV6\Helper\GooglePayConfig;
 use WooCommerce\PayPalCommerce\Session\Cancellation\CancelView;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
@@ -38,6 +39,7 @@ class SdkV6ManagerTest extends TestCase
 	private $credit_card_icons;
 	private $google_pay_config;
 	private $apple_pay_config;
+	private $fastlane_config;
 
     public function setUp(): void
     {
@@ -65,6 +67,9 @@ class SdkV6ManagerTest extends TestCase
 		$this->apple_pay_config = Mockery::mock(ApplePayConfig::class);
 		$this->apple_pay_config->shouldReceive('should_render')->andReturn(false)->byDefault();
 		$this->apple_pay_config->shouldReceive('display_name')->andReturn('Test Store')->byDefault();
+
+		$this->fastlane_config = Mockery::mock(FastlaneConfig::class);
+		$this->fastlane_config->shouldReceive('should_render')->andReturn(false)->byDefault();
 
 		// Reached unconditionally by script_data()'s Apple Pay validation block.
 		when('admin_url')->justReturn('https://example.com/wp-admin/admin-ajax.php');
@@ -139,7 +144,8 @@ class SdkV6ManagerTest extends TestCase
 	        $credit_card_icons,
 	        $merchant_country,
 	        $this->google_pay_config,
-	        $this->apple_pay_config
+	        $this->apple_pay_config,
+	        $this->fastlane_config
         );
     }
 
@@ -585,6 +591,88 @@ class SdkV6ManagerTest extends TestCase
                 [],
             ],
         ];
+    }
+
+    /**
+     * GIVEN a page context on which Fastlane's own config would allow it to render
+     * WHEN checking whether Fastlane is enabled for the current page
+     * THEN the answer follows FastlaneConfig::should_render() for that context
+     *
+     * @dataProvider fastlane_enablement_provider
+     */
+    public function testIsFastlaneEnabledDelegatesToFastlaneConfig(bool $should_render, bool $expected): void
+    {
+        $this->context->shouldReceive('context')->andReturn('checkout');
+        $this->fastlane_config->shouldReceive('should_render')->with('checkout')->andReturn($should_render);
+
+        $testee = $this->createTestee();
+
+        $this->assertSame($expected, $testee->is_fastlane_enabled());
+    }
+
+    public function fastlane_enablement_provider(): array
+    {
+        return [
+            'FastlaneConfig allowing render enables Fastlane' => [true, true],
+            'FastlaneConfig refusing render disables Fastlane' => [false, false],
+        ];
+    }
+
+    /**
+     * GIVEN the current page resolves to no supported page context (e.g. the shop
+     *       or home page)
+     * WHEN checking whether Fastlane is enabled for the current page
+     * THEN it is reported as disabled without asking FastlaneConfig, since there is
+     *      no context to evaluate
+     */
+    public function testIsFastlaneEnabledGuardsAgainstEmptyPageContext(): void
+    {
+        $this->context->shouldReceive('context')->andReturn('');
+        $this->fastlane_config->shouldReceive('should_render')->never();
+
+        $testee = $this->createTestee();
+
+        $this->assertFalse($testee->is_fastlane_enabled());
+    }
+
+    /**
+     * GIVEN Fastlane's own configuration allows or refuses it for the current page
+     * WHEN the SDK bootstrap data is generated
+     * THEN the fastlane subtree carries a matching enabled flag and the ppcp-axo
+     *      gateway id the ppcp-axo modules register under
+     *
+     * @dataProvider fastlane_enablement_provider
+     */
+    public function testScriptDataIncludesFastlaneSubtree(bool $should_render, bool $expected_enabled): void
+    {
+        $this->context->shouldReceive('context')->andReturn('checkout');
+        $this->fastlane_config->shouldReceive('should_render')->with('checkout')->andReturn($should_render);
+
+        $this->card_payments_configuration->shouldReceive('is_acdc_enabled')->andReturn(false);
+        $this->card_payments_configuration->shouldReceive('gateway_title')->andReturn('Credit Card');
+        $this->card_payments_configuration->shouldReceive('show_name_on_card')->andReturn('no');
+
+        $this->settings_status->shouldReceive('is_smart_button_enabled_for_location')->andReturn(false);
+        $this->session_handler->shouldReceive('order')->andReturn(null);
+        $this->context->shouldReceive('is_paypal_continuation')->andReturn(false);
+        $this->environment->shouldReceive('is_sandbox')->andReturn(false);
+        $this->style_mapper->shouldReceive('styles_for_context')->andReturn([]);
+
+        when('WC')->justReturn($this->create_wc_stub());
+        when('wc_get_base_location')->justReturn(['country' => 'US']);
+        when('get_woocommerce_currency')->justReturn('USD');
+        when('get_locale')->justReturn('en_US');
+        when('is_product')->justReturn(false);
+        when('rest_url')->justReturn('https://example.com/wp-json/wc/store/v1/cart');
+        when('wc_get_checkout_url')->justReturn('https://example.com/checkout');
+
+        $testee = $this->createTestee();
+        $data   = $testee->script_data();
+
+        $this->assertSame(
+            ['enabled' => $expected_enabled, 'payment_method' => 'ppcp-axo-gateway'],
+            $data['fastlane']
+        );
     }
 
     /**

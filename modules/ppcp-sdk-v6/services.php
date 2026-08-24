@@ -19,22 +19,23 @@ use WooCommerce\PayPalCommerce\SdkV6\Endpoint\ClientTokenEndpoint;
 use WooCommerce\PayPalCommerce\SdkV6\Endpoint\SimulateCartEndpoint;
 use WooCommerce\PayPalCommerce\SdkV6\Helper\ApplePayConfig;
 use WooCommerce\PayPalCommerce\SdkV6\Helper\ButtonStyleMapper;
+use WooCommerce\PayPalCommerce\SdkV6\Helper\FastlaneConfig;
 use WooCommerce\PayPalCommerce\SdkV6\Helper\GooglePayConfig;
 use WooCommerce\PayPalCommerce\SdkV6\Helper\RateLimiter;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 
 /**
- * Builds a wallet's availability check from its own module's services.
+ * Builds a payment method's availability check from its own module's services.
  *
  * Reports false when that module is not loaded: its services are absent, so the
- * wallet cannot be offered. Each wallet keeps its own guards: the two modules
- * load independently.
+ * method cannot be offered. Each method keeps its own guards, since the modules
+ * load independently behind their own feature flags.
  *
  * @param ContainerInterface $container The plugin container.
- * @param string             $module    The wallet module's service prefix.
+ * @param string             $module    The owning module's service prefix.
  * @return callable(): bool
  */
-$wallet_availability = static function ( ContainerInterface $container, string $module ): callable {
+$module_availability = static function ( ContainerInterface $container, string $module ): callable {
 	return static function () use ( $container, $module ): bool {
 		if ( ! $container->has( "$module.eligibility.check" ) || ! $container->has( "$module.available" ) ) {
 			return false;
@@ -61,19 +62,31 @@ return array(
 		);
 	},
 
-	'sdk-v6.google-pay-config'          => static function ( ContainerInterface $container ) use ( $wallet_availability ): GooglePayConfig {
+	'sdk-v6.google-pay-config'          => static function ( ContainerInterface $container ) use ( $module_availability ): GooglePayConfig {
 		return new GooglePayConfig(
 			$container->get( 'settings.settings-provider' ),
 			$container->get( 'wc-subscriptions.helper' ),
-			$wallet_availability( $container, 'googlepay' )
+			$module_availability( $container, 'googlepay' )
 		);
 	},
 
-	'sdk-v6.apple-pay-config'           => static function ( ContainerInterface $container ) use ( $wallet_availability ): ApplePayConfig {
+	'sdk-v6.apple-pay-config'           => static function ( ContainerInterface $container ) use ( $module_availability ): ApplePayConfig {
 		return new ApplePayConfig(
 			$container->get( 'settings.settings-provider' ),
 			$container->get( 'wc-subscriptions.helper' ),
-			$wallet_availability( $container, 'applepay' )
+			$module_availability( $container, 'applepay' )
+		);
+	},
+
+	/**
+	 * Fastlane keeps its UI in the ppcp-axo modules; this only decides whether
+	 * the SDK requests the fastlane component on the current page.
+	 */
+	'sdk-v6.fastlane-config'            => static function ( ContainerInterface $container ) use ( $module_availability ): FastlaneConfig {
+		return new FastlaneConfig(
+			$container->get( 'wcgateway.configuration.card-configuration' ),
+			$container->get( 'wc-subscriptions.helper' ),
+			$module_availability( $container, 'axo' )
 		);
 	},
 
@@ -132,7 +145,8 @@ return array(
 			$container->get( 'wcgateway.credit-card-icons' ),
 			$settings_provider->merchant_country(),
 			$container->get( 'sdk-v6.google-pay-config' ),
-			$container->get( 'sdk-v6.apple-pay-config' )
+			$container->get( 'sdk-v6.apple-pay-config' ),
+			$container->get( 'sdk-v6.fastlane-config' )
 		);
 	},
 
