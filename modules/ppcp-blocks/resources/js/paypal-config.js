@@ -273,12 +273,14 @@ export const handleApproveSubscription = async (
 			throw new Error( config.scriptData.labels.error.generic );
 		}
 
-		if ( ! shouldskipFinalConfirmation() ) {
-			location.href = getCheckoutRedirectUrl();
-		} else {
-			setGotoContinuationOnError( true );
-			onSubmit();
-		}
+		// A native PayPal subscription is already created and approved at this point,
+		// so there is no separate order to review or capture: complete the checkout
+		// directly instead of routing through the order-review continuation. This
+		// matches the classic checkout, whose subscription onApprove submits the
+		// order without a final-review step, and avoids leaving the buyer on the
+		// continuation page when final review is enabled.
+		setGotoContinuationOnError( true );
+		onSubmit();
 	} catch ( err ) {
 		console.error( err );
 
