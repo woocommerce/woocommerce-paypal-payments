@@ -454,8 +454,12 @@ class SdkV6Manager
             // order: the frontend switches to the vault "save without purchase"
             // flow instead, and the gateway places the $0 WC order server-side.
             'is_free_trial_cart' => $this->free_trial_helper->is_free_trial_cart(),
-            // 3DS/SCA contingency for the card save (setup-token) flow used on a
-            // free-trial card checkout. Filtered like the add-payment-method page.
+            /**
+             * 3DS/SCA contingency for the card save (setup-token) flow used on a
+             * free-trial card checkout. Filtered like the add-payment-method page.
+             *
+             * @param string $three_d_secure_contingency The default 3D Secure enum value.
+             */
             'verification_method' => (string) apply_filters('woocommerce_paypal_payments_three_d_secure_contingency', $this->three_d_secure_contingency),
             // Whether the buyer is logged in, so the free-trial save flow picks the
             // logged-in create-payment-token endpoint vs the guest one.
