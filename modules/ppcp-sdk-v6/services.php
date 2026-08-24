@@ -21,6 +21,8 @@ use WooCommerce\PayPalCommerce\SdkV6\Helper\ApplePayConfig;
 use WooCommerce\PayPalCommerce\SdkV6\Helper\ButtonStyleMapper;
 use WooCommerce\PayPalCommerce\SdkV6\Helper\FastlaneConfig;
 use WooCommerce\PayPalCommerce\SdkV6\Helper\GooglePayConfig;
+use WooCommerce\PayPalCommerce\SdkV6\Helper\MessagesEligibility;
+use WooCommerce\PayPalCommerce\SdkV6\Helper\MessageStyleMapper;
 use WooCommerce\PayPalCommerce\SdkV6\Helper\RateLimiter;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 
@@ -91,7 +93,10 @@ return array(
 	},
 
 	/**
-	 * Whether this module renders the PayPal stack on the current page.
+	 * Whether the PayPal v6 SDK loads on the current page.
+	 *
+	 * Callers use this to decide whether to stand down and not load a second (v5)
+	 * PayPal SDK against window.paypal.
 	 *
 	 * A callable rather than a bool: the answer depends on the query, which is
 	 * unresolved while the container is being built. Exposed as a service so the
@@ -105,6 +110,21 @@ return array(
 
 			return $manager->should_load_on_current_page();
 		};
+	},
+
+	'sdk-v6.message-style-mapper'       => static function ( ContainerInterface $container ): MessageStyleMapper {
+		return new MessageStyleMapper(
+			$container->get( 'settings.settings-provider' )
+		);
+	},
+
+	'sdk-v6.messages-eligibility'       => static function ( ContainerInterface $container ): MessagesEligibility {
+		return new MessagesEligibility(
+			$container->get( 'settings.settings-provider' ),
+			$container->get( 'wcgateway.settings.status' ),
+			$container->get( 'button.helper.messages-apply' ),
+			$container->get( 'wc-subscriptions.free-trial-subscription-helper' )
+		);
 	},
 
 	'sdk-v6.manager'                    => static function ( ContainerInterface $container ): SdkV6Manager {
@@ -136,6 +156,8 @@ return array(
 				&& $settings_provider->save_card_details(),
 			$container->get( 'wc-subscriptions.helper' ),
 			$container->get( 'wcgateway.credit-card-icons' ),
+			$container->get( 'sdk-v6.message-style-mapper' ),
+			$container->get( 'sdk-v6.messages-eligibility' ),
 			$settings_provider->merchant_country(),
 			$container->get( 'sdk-v6.google-pay-config' ),
 			$container->get( 'sdk-v6.apple-pay-config' ),
