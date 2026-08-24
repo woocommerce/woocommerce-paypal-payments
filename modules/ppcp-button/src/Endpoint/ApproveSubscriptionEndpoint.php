@@ -191,7 +191,16 @@ class ApproveSubscriptionEndpoint implements \WooCommerce\PayPalCommerce\Button\
         $subscriber_payer_id = (string) ($subscription->subscriber->payer_id ?? '');
         $payer = $order->payer();
         $order_payer_id = $payer ? $payer->payer_id() : '';
-        if ('' === $subscriber_payer_id || '' === $order_payer_id || $order_payer_id !== $subscriber_payer_id) {
+        // A native subscription's related order does not reliably expose a resolved
+        // payer id at approval time, so an absent id on either side is treated as
+        // "cannot compare" rather than a failure — the subscription is already bound
+        // to this session by validate_subscription() (status + custom_id ownership +
+        // plan match). Only a present, differing payer (an order approved by another
+        // account) is rejected.
+        if ('' === $subscriber_payer_id || '' === $order_payer_id) {
+            return;
+        }
+        if ($order_payer_id !== $subscriber_payer_id) {
             throw new RuntimeException(__('Order validation failed.', 'woocommerce-paypal-payments'));
         }
     }

@@ -567,6 +567,7 @@ class ComposerStaticInit844a779aae516bed9e0beccea9d01fda
         'WooCommerce\\PayPalCommerce\\SdkV6\\Endpoint\\SimulateCartEndpoint' => __DIR__ . '/../..' . '/modules/ppcp-sdk-v6/src/Endpoint/SimulateCartEndpoint.php',
         'WooCommerce\\PayPalCommerce\\SdkV6\\Helper\\ApplePayConfig' => __DIR__ . '/../..' . '/modules/ppcp-sdk-v6/src/Helper/ApplePayConfig.php',
         'WooCommerce\\PayPalCommerce\\SdkV6\\Helper\\ButtonStyleMapper' => __DIR__ . '/../..' . '/modules/ppcp-sdk-v6/src/Helper/ButtonStyleMapper.php',
+        'WooCommerce\\PayPalCommerce\\SdkV6\\Helper\\FastlaneConfig' => __DIR__ . '/../..' . '/modules/ppcp-sdk-v6/src/Helper/FastlaneConfig.php',
         'WooCommerce\\PayPalCommerce\\SdkV6\\Helper\\GooglePayConfig' => __DIR__ . '/../..' . '/modules/ppcp-sdk-v6/src/Helper/GooglePayConfig.php',
         'WooCommerce\\PayPalCommerce\\SdkV6\\Helper\\RateLimiter' => __DIR__ . '/../..' . '/modules/ppcp-sdk-v6/src/Helper/RateLimiter.php',
         'WooCommerce\\PayPalCommerce\\SdkV6\\Helper\\WalletConfig' => __DIR__ . '/../..' . '/modules/ppcp-sdk-v6/src/Helper/WalletConfig.php',
