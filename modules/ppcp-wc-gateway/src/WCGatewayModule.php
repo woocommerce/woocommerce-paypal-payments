@@ -947,7 +947,7 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
 	 */
 	private function register_block_express_payment_method_handler( ContainerInterface $c ): void {
 		// Request-scoped guard for the save listener below: the ID of the WC order this request
-		// routed through PayPal, zero when no such switch happened.Documented in
+		// routed through PayPal, zero when no such switch happened. Documented in
 		// tests/integration/PHPUnit/WcGateway/BlockExpressPaymentMethodHandlerTest.php.
 		$marked_order_id = 0;
 
