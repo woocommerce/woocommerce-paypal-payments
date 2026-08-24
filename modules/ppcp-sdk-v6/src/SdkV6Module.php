@@ -10,6 +10,7 @@ namespace WooCommerce\PayPalCommerce\SdkV6;
 
 use Automattic\WooCommerce\Blocks\Payments\PaymentMethodRegistry;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
+use WooCommerce\PayPalCommerce\Button\Helper\Context;
 use WooCommerce\PayPalCommerce\SdkV6\Assets\AddPaymentMethodManager;
 use WooCommerce\PayPalCommerce\SdkV6\Assets\SdkV6Manager;
 use WooCommerce\PayPalCommerce\SdkV6\Endpoint\ClientTokenEndpoint;
@@ -66,9 +67,16 @@ class SdkV6Module implements ServiceModule, ExtendingModule, ExecutableModule
             if (is_admin()) {
                 return;
             }
+            // Activates is_cart()/is_checkout() on classic-shortcode block
+            // pages. The hook registrars below resolve the page context, so this
+            // needs to run before.
+            $context = $c->get('button.helper.context');
+            assert($context instanceof Context);
+            $context->init_context();
             $manager = $c->get('sdk-v6.manager');
             assert($manager instanceof SdkV6Manager);
             $this->register_render_hooks($manager);
+            $this->register_message_hooks($manager);
         });
         // Lets the shipping-update endpoint validate order ownership in
         // non-checkout contexts (v5 only stores it for checkout).
@@ -151,6 +159,49 @@ class SdkV6Module implements ServiceModule, ExtendingModule, ExecutableModule
             }, 5);
         });
         return \true;
+    }
+    /**
+     * Registers the hook that outputs the Pay Later message wrapper.
+     */
+    private function register_message_hooks(SdkV6Manager $manager): void
+    {
+        if (!$manager->should_load_on_current_page() || !$manager->messages_enabled()) {
+            return;
+        }
+        $hook = $manager->messages_render_hook();
+        if (!$hook) {
+            return;
+        }
+        add_action($hook['name'], static fn() => $manager->render_message_wrapper(), $hook['priority']);
+        $this->maybe_relocate_pay_order_message($hook['name']);
+    }
+    /**
+     * Moves the pay-for-order message above the payment methods.
+     *
+     * The pay-for-order page has no equivalent of
+     * woocommerce_review_order_before_payment, so the wrapper is printed after
+     * the submit button and relocated in the browser.
+     *
+     * @param string $hook_name The hook the wrapper was registered on.
+     */
+    private function maybe_relocate_pay_order_message(string $hook_name): void
+    {
+        if (SdkV6Manager::PAY_ORDER_MESSAGE_HOOK !== $hook_name) {
+            return;
+        }
+        /**
+         * The filter returning true if Pay Later messages should be displayed before payment methods
+         * on the pay for order page, like in checkout.
+         */
+        if (!apply_filters('woocommerce_paypal_payments_put_pay_order_messages_before_payment_methods', \true)) {
+            return;
+        }
+        add_action('ppcp_after_pay_order_message_wrapper', static function () {
+            echo '
+<script>
+document.querySelector("#payment").before(document.querySelector(".ppcp-messages"))
+</script>';
+        });
     }
     /**
      * Registers the render hooks that output the button wrapper elements.

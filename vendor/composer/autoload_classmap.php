@@ -352,6 +352,8 @@ return array(
     'WooCommerce\\PayPalCommerce\\SdkV6\\Helper\\ButtonStyleMapper' => $baseDir . '/modules/ppcp-sdk-v6/src/Helper/ButtonStyleMapper.php',
     'WooCommerce\\PayPalCommerce\\SdkV6\\Helper\\FastlaneConfig' => $baseDir . '/modules/ppcp-sdk-v6/src/Helper/FastlaneConfig.php',
     'WooCommerce\\PayPalCommerce\\SdkV6\\Helper\\GooglePayConfig' => $baseDir . '/modules/ppcp-sdk-v6/src/Helper/GooglePayConfig.php',
+    'WooCommerce\\PayPalCommerce\\SdkV6\\Helper\\MessageStyleMapper' => $baseDir . '/modules/ppcp-sdk-v6/src/Helper/MessageStyleMapper.php',
+    'WooCommerce\\PayPalCommerce\\SdkV6\\Helper\\MessagesEligibility' => $baseDir . '/modules/ppcp-sdk-v6/src/Helper/MessagesEligibility.php',
     'WooCommerce\\PayPalCommerce\\SdkV6\\Helper\\RateLimiter' => $baseDir . '/modules/ppcp-sdk-v6/src/Helper/RateLimiter.php',
     'WooCommerce\\PayPalCommerce\\SdkV6\\Helper\\WalletConfig' => $baseDir . '/modules/ppcp-sdk-v6/src/Helper/WalletConfig.php',
     'WooCommerce\\PayPalCommerce\\SdkV6\\SdkV6Module' => $baseDir . '/modules/ppcp-sdk-v6/src/SdkV6Module.php',
