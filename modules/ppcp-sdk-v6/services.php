@@ -80,7 +80,10 @@ return array(
 	},
 
 	/**
-	 * Whether this module renders the PayPal stack on the current page.
+	 * Whether the PayPal v6 SDK loads on the current page.
+	 *
+	 * Callers use this to decide whether to stand down and not load a second (v5)
+	 * PayPal SDK against window.paypal.
 	 *
 	 * A callable rather than a bool: the answer depends on the query, which is
 	 * unresolved while the container is being built. Exposed as a service so the
