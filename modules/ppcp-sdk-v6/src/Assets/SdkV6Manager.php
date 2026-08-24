@@ -22,6 +22,7 @@ use WooCommerce\PayPalCommerce\SdkV6\Endpoint\ClientTokenEndpoint;
 use WooCommerce\PayPalCommerce\SdkV6\Endpoint\SimulateCartEndpoint;
 use WooCommerce\PayPalCommerce\SdkV6\Helper\ApplePayConfig;
 use WooCommerce\PayPalCommerce\SdkV6\Helper\ButtonStyleMapper;
+use WooCommerce\PayPalCommerce\SdkV6\Helper\FastlaneConfig;
 use WooCommerce\PayPalCommerce\SdkV6\Helper\GooglePayConfig;
 use WooCommerce\PayPalCommerce\SdkV6\Helper\MessagesEligibility;
 use WooCommerce\PayPalCommerce\SdkV6\Helper\MessageStyleMapper;
@@ -87,13 +88,14 @@ class SdkV6Manager
      * the base type would not type-check.
      */
     private ApplePayConfig $apple_pay_config;
+    private FastlaneConfig $fastlane_config;
     /**
      * Every wallet this module places, in the order their rows are printed.
      *
      * @var WalletPlacement[]
      */
     private array $wallets;
-    public function __construct(AssetGetter $asset_getter, string $version, Environment $environment, ButtonStyleMapper $style_mapper, bool $should_handle_shipping, SettingsStatus $settings_status, Context $context, SessionHandler $session_handler, CancelView $cancel_view, bool $final_review_enabled, bool $vaulting_enabled, CardPaymentsConfiguration $card_payments_configuration, bool $card_vaulting_enabled, SubscriptionHelper $subscription_helper, array $credit_card_icons, MessageStyleMapper $message_style_mapper, MessagesEligibility $messages_eligibility, string $merchant_country, GooglePayConfig $google_pay_config, ApplePayConfig $apple_pay_config)
+    public function __construct(AssetGetter $asset_getter, string $version, Environment $environment, ButtonStyleMapper $style_mapper, bool $should_handle_shipping, SettingsStatus $settings_status, Context $context, SessionHandler $session_handler, CancelView $cancel_view, bool $final_review_enabled, bool $vaulting_enabled, CardPaymentsConfiguration $card_payments_configuration, bool $card_vaulting_enabled, SubscriptionHelper $subscription_helper, array $credit_card_icons, MessageStyleMapper $message_style_mapper, MessagesEligibility $messages_eligibility, string $merchant_country, GooglePayConfig $google_pay_config, ApplePayConfig $apple_pay_config, FastlaneConfig $fastlane_config)
     {
         $this->asset_getter = $asset_getter;
         $this->version = $version;
@@ -114,6 +116,7 @@ class SdkV6Manager
         $this->messages_eligibility = $messages_eligibility;
         $this->merchant_country = $merchant_country;
         $this->apple_pay_config = $apple_pay_config;
+        $this->fastlane_config = $fastlane_config;
         $this->wallets = array(new \WooCommerce\PayPalCommerce\SdkV6\Assets\WalletPlacement('google_pay', GooglePayGateway::ID, self::GOOGLE_PAY_WRAPPER_ID, 'https://pay.google.com/gp/p/js/pay.js', $google_pay_config, static function (string $context) use ($google_pay_config): array {
             return $google_pay_config->styles($context);
         }), new \WooCommerce\PayPalCommerce\SdkV6\Assets\WalletPlacement(
@@ -315,6 +318,9 @@ class SdkV6Manager
         if ($page_location && $this->any_wallet_renders($page_location)) {
             return \true;
         }
+        if ($this->is_fastlane_enabled($page_location)) {
+            return \true;
+        }
         // Load sitewide whenever the mini-cart location is enabled, matching the
         // v5 SmartButton (should_load_buttons()'s default branch). The mini-cart
         // can appear on any page — as the classic "Cart" widget OR the block
@@ -337,6 +343,24 @@ class SdkV6Manager
     {
         $location = $location ?? $this->get_page_context();
         return in_array($location, array('checkout', 'checkout-block', 'pay-now'), \true) && $this->card_payments_configuration->is_acdc_enabled();
+    }
+    /**
+     * Whether Fastlane runs on the given page under the v6 SDK.
+     *
+     * This module does not render Fastlane itself: the ppcp-axo modules keep
+     * their UI and only take the SDK object from here, so this gates the
+     * `fastlane` component request and the v5 Fastlane block method staying
+     * registered.
+     *
+     * @param string|null $location Page context to test; defaults to the current page.
+     */
+    public function is_fastlane_enabled(?string $location = null): bool
+    {
+        $location = $location ?? $this->get_page_context();
+        if (!$location) {
+            return \false;
+        }
+        return $this->fastlane_config->should_render($location);
     }
     /**
      * Whether any wallet renders in the given context.
@@ -598,6 +622,16 @@ class SdkV6Manager
                     return array('id' => $icon['type'], 'alt' => $icon['title'], 'src' => $icon['url']);
                 }, $this->credit_card_icons),
                 'fields' => array('name' => '#' . self::CARD_FIELD_NAME_ID, 'number' => '#' . self::CARD_FIELD_NUMBER_ID, 'expiry' => '#' . self::CARD_FIELD_EXPIRY_ID, 'cvv' => '#' . self::CARD_FIELD_CVV_ID),
+            ),
+            // Enablement only. The ppcp-axo modules own every other Fastlane
+            // setting and localize it as wc_ppcp_axo; this flag tells sdkLoader
+            // to request the component their connection then reads off the
+            // shared SDK instance.
+            'fastlane' => array(
+                'enabled' => $this->is_fastlane_enabled($page_context),
+                // The id as a literal, not AxoGateway::ID: ppcp-axo is behind its
+                // own feature flag, and SdkV6Module names it the same way.
+                'payment_method' => 'ppcp-axo-gateway',
             ),
             'messages' => array('enabled' => $this->messages_enabled(), 'wrapper' => '.ppcp-messages', 'is_hidden' => $this->messages_eligibility->is_hidden($page_context), 'amount' => $this->messages_amount(), 'page_type' => $this->messages_page_type(), 'style' => $this->message_style_mapper->styles_for_location($messages_settings_location)),
         );
