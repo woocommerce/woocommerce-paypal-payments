@@ -1,5 +1,5 @@
 <?php
 
 namespace {
-    return array('dependencies' => array('wc-blocks-registry', 'wp-element', 'wp-i18n'), 'version' => '7ed5c2b51591392490b5');
+    return array('dependencies' => array('wc-blocks-registry', 'wp-data', 'wp-element', 'wp-i18n'), 'version' => 'e36cbb71c114f438ec53');
 }

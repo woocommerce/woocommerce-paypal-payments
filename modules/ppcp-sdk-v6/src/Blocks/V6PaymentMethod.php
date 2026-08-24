@@ -49,8 +49,7 @@ class V6PaymentMethod extends AbstractPaymentMethodType
             return array();
         }
         $handle = 'wc-ppcp-sdk-v6-blocks';
-        $asset_php = $this->asset_getter->get_asset_php_path('checkout-block.js');
-        $asset = file_exists($asset_php) ? require $asset_php : array('dependencies' => array(), 'version' => $this->version);
+        $asset = $this->asset_getter->get_asset_data('checkout-block.js', $this->version);
         wp_register_script($handle, $script_url, $asset['dependencies'], $asset['version'], \true);
         return array($handle);
     }
