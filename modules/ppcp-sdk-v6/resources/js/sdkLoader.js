@@ -64,6 +64,9 @@ async function createInstance( config, context ) {
 		components.push( 'card-fields' );
 	}
 	components.push( ...walletSdkComponents( config ) );
+	if ( config.messages?.enabled ) {
+		components.push( 'paypal-messages' );
+	}
 
 	const sdkInstance = await window.paypal.createInstance( {
 		clientToken: tokenData.client_token,

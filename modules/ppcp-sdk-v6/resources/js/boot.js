@@ -27,6 +27,11 @@ import { hasJQuery } from './utils/api';
 import { setErrorLabels } from './utils/errorHandler';
 import { setVisible } from '@ppcp-button/Helper/Hiding';
 import { debounce } from '@ppcp-blocks/Helper/debounce';
+import {
+	initMessages,
+	renderMessages,
+	updateMessagesAmount,
+} from './messages/renderer';
 
 // The native WC submit button, labelled "Proceed to PayPal" for the PayPal
 // gateway. It is replaced by the v6 PayPal buttons while the PayPal gateway is
@@ -75,6 +80,8 @@ const ELIGIBILITY_REFRESH_DEBOUNCE_MS = 300;
 	} );
 
 	const sdkPageType = config.page_context || 'mini-cart';
+
+	const messagesFollowCartTotal = 'product' !== config.page_context;
 
 	let amount = config.amount;
 	let refreshPromise = Promise.resolve();
@@ -240,6 +247,9 @@ const ELIGIBILITY_REFRESH_DEBOUNCE_MS = 300;
 			: null;
 
 		amount = ( await fetchCartTotal( config ) ) || amount;
+		if ( messagesFollowCartTotal ) {
+			updateMessagesAmount( amount );
+		}
 		eligibilityPromise = null;
 		const current = await ensureEligibility();
 
@@ -312,9 +322,17 @@ const ELIGIBILITY_REFRESH_DEBOUNCE_MS = 300;
 		setVisible( PLACE_ORDER_SELECTOR, ! isPayPalGateway, true );
 	}
 
+	function initMessagesSafely() {
+		initMessages( config, sdkPageType ).catch( ( error ) => {
+			// eslint-disable-next-line no-console
+			console.error( '[PPCP SDK v6]', error );
+		} );
+	}
+
 	function initialRender() {
 		renderAll();
 		initCardFieldsSafely();
+		initMessagesSafely();
 		syncPlaceOrderButton();
 	}
 
@@ -328,8 +346,29 @@ const ELIGIBILITY_REFRESH_DEBOUNCE_MS = 300;
 		// DOM-replacing updates: wrappers arrive empty and need re-rendering.
 		jQuery( document.body ).on(
 			'updated_checkout wc_fragments_loaded wc_fragments_refreshed',
-			renderAll
+			() => {
+				renderAll();
+
+				// Messages are a separate pass: they target every
+				// .ppcp-messages placeholder rather than the button
+				// wrappers, and must survive refreshEligibility()'s wrapper
+				// blanking.
+				renderMessages( config, sdkPageType ).catch( ( error ) => {
+					// eslint-disable-next-line no-console
+					console.error( '[PPCP SDK v6]', error );
+				} );
+			}
 		);
+
+		// The product page has no cart events; WooCommerce announces the
+		// selected variation instead. Quantity and add-on driven changes are
+		// not covered — v5 gets those from the ppc-simulate-cart endpoint,
+		// which is part of the v5 button bundle this page no longer loads.
+		jQuery( document.body ).on( 'found_variation', ( event, variation ) => {
+			if ( variation?.display_price ) {
+				updateMessagesAmount( String( variation.display_price ) );
+			}
+		} );
 
 		// WC rebuilds #place_order on these too, and the selected method can
 		// change without a DOM rebuild, so re-sync the button on both.

@@ -89,4 +89,76 @@ describe( 'loadSdkV6', () => {
 			} )
 		);
 	} );
+
+	test( 'requests paypal-messages only when config.messages.enabled is true', async () => {
+		await loadSdkV6(
+			baseConfig( { messages: { enabled: true } } ),
+			'product'
+		);
+
+		expect( window.paypal.createInstance ).toHaveBeenCalledWith(
+			expect.objectContaining( {
+				components: expect.arrayContaining( [ 'paypal-messages' ] ),
+			} )
+		);
+	} );
+
+	test( 'omits paypal-messages when config.messages.enabled is false', async () => {
+		await loadSdkV6(
+			baseConfig( { messages: { enabled: false } } ),
+			'product'
+		);
+
+		expect( window.paypal.createInstance ).toHaveBeenCalledWith(
+			expect.objectContaining( {
+				components: expect.not.arrayContaining( [
+					'paypal-messages',
+				] ),
+			} )
+		);
+	} );
+
+	test( 'requests card-fields regardless of the messages setting', async () => {
+		await loadSdkV6(
+			baseConfig( {
+				card_fields: { enabled: true },
+				messages: { enabled: true },
+			} ),
+			'checkout'
+		);
+
+		expect( window.paypal.createInstance ).toHaveBeenCalledWith(
+			expect.objectContaining( {
+				components: expect.arrayContaining( [
+					'card-fields',
+					'paypal-messages',
+				] ),
+			} )
+		);
+	} );
+
+	test( 'shares one instance across concurrent callers: one createInstance call and one client-token fetch', async () => {
+		const config = baseConfig();
+
+		const first = loadSdkV6( config, 'cart' );
+		const second = loadSdkV6( config, 'checkout' );
+
+		const [ firstSdk, secondSdk ] = await Promise.all( [ first, second ] );
+
+		expect( firstSdk ).toBe( secondSdk );
+		expect( window.paypal.createInstance ).toHaveBeenCalledTimes( 1 );
+		expect( mockPostJson ).toHaveBeenCalledTimes( 1 );
+	} );
+
+	test( 'uses the page type of the first caller for the shared instance', async () => {
+		const config = baseConfig();
+
+		const first = loadSdkV6( config, 'cart' );
+		const second = loadSdkV6( config, 'checkout' );
+		await Promise.all( [ first, second ] );
+
+		expect( window.paypal.createInstance ).toHaveBeenCalledWith(
+			expect.objectContaining( { pageType: 'cart' } )
+		);
+	} );
 } );
