@@ -6,7 +6,6 @@ namespace WooCommerce\PayPalCommerce\VaultComponent;
 use WC_Order;
 use WC_Payment_Token;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
-use WooCommerce\PayPalCommerce\Assets\AssetGetter;
 use WooCommerce\PayPalCommerce\Assets\AssetGetterFactory;
 use WooCommerce\PayPalCommerce\Button\Assets\SmartButtonInterface;
 use WooCommerce\PayPalCommerce\WcPaymentTokens\PaymentTokenPayPal;
@@ -135,7 +134,6 @@ class VaultComponentModule implements ServiceModule, ExecutableModule {
 				$factory = $c->get( 'assets.asset_getter_factory' );
 				assert( $factory instanceof AssetGetterFactory );
 				$asset_getter = $factory->for_module( 'ppcp-vault-component' );
-				assert( $asset_getter instanceof AssetGetter );
 
 				$script_url = $asset_getter->get_asset_url( 'checkout.js' );
 				if ( ! $script_url ) {
