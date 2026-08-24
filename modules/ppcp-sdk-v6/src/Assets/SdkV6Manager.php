@@ -23,6 +23,7 @@ use WooCommerce\PayPalCommerce\SdkV6\Endpoint\ClientTokenEndpoint;
 use WooCommerce\PayPalCommerce\SdkV6\Endpoint\SimulateCartEndpoint;
 use WooCommerce\PayPalCommerce\SdkV6\Helper\ApplePayConfig;
 use WooCommerce\PayPalCommerce\SdkV6\Helper\ButtonStyleMapper;
+use WooCommerce\PayPalCommerce\SdkV6\Helper\FastlaneConfig;
 use WooCommerce\PayPalCommerce\SdkV6\Helper\GooglePayConfig;
 use WooCommerce\PayPalCommerce\SdkV6\Helper\MessagesEligibility;
 use WooCommerce\PayPalCommerce\SdkV6\Helper\MessageStyleMapper;
@@ -96,6 +97,8 @@ class SdkV6Manager {
 	 */
 	private ApplePayConfig $apple_pay_config;
 
+	private FastlaneConfig $fastlane_config;
+
 	/**
 	 * Every wallet this module places, in the order their rows are printed.
 	 *
@@ -123,7 +126,8 @@ class SdkV6Manager {
 		MessagesEligibility $messages_eligibility,
 		string $merchant_country,
 		GooglePayConfig $google_pay_config,
-		ApplePayConfig $apple_pay_config
+		ApplePayConfig $apple_pay_config,
+		FastlaneConfig $fastlane_config
 	) {
 		$this->asset_getter                = $asset_getter;
 		$this->version                     = $version;
@@ -144,6 +148,7 @@ class SdkV6Manager {
 		$this->messages_eligibility        = $messages_eligibility;
 		$this->merchant_country            = $merchant_country;
 		$this->apple_pay_config            = $apple_pay_config;
+		$this->fastlane_config             = $fastlane_config;
 
 		$this->wallets = array(
 			new WalletPlacement(
@@ -387,6 +392,10 @@ class SdkV6Manager {
 			return true;
 		}
 
+		if ( $this->is_fastlane_enabled( $page_location ) ) {
+			return true;
+		}
+
 		// Load sitewide whenever the mini-cart location is enabled, matching the
 		// v5 SmartButton (should_load_buttons()'s default branch). The mini-cart
 		// can appear on any page — as the classic "Cart" widget OR the block
@@ -412,6 +421,26 @@ class SdkV6Manager {
 
 		return in_array( $location, array( 'checkout', 'checkout-block', 'pay-now' ), true )
 			&& $this->card_payments_configuration->is_acdc_enabled();
+	}
+
+	/**
+	 * Whether Fastlane runs on the given page under the v6 SDK.
+	 *
+	 * This module does not render Fastlane itself: the ppcp-axo modules keep
+	 * their UI and only take the SDK object from here, so this gates the
+	 * `fastlane` component request and the v5 Fastlane block method staying
+	 * registered.
+	 *
+	 * @param string|null $location Page context to test; defaults to the current page.
+	 */
+	public function is_fastlane_enabled( ?string $location = null ): bool {
+		$location = $location ?? $this->get_page_context();
+
+		if ( ! $location ) {
+			return false;
+		}
+
+		return $this->fastlane_config->should_render( $location );
 	}
 
 	/**
@@ -773,6 +802,16 @@ class SdkV6Manager {
 					'expiry' => '#' . self::CARD_FIELD_EXPIRY_ID,
 					'cvv'    => '#' . self::CARD_FIELD_CVV_ID,
 				),
+			),
+			// Enablement only. The ppcp-axo modules own every other Fastlane
+			// setting and localize it as wc_ppcp_axo; this flag tells sdkLoader
+			// to request the component their connection then reads off the
+			// shared SDK instance.
+			'fastlane'          => array(
+				'enabled'        => $this->is_fastlane_enabled( $page_context ),
+				// The id as a literal, not AxoGateway::ID: ppcp-axo is behind its
+				// own feature flag, and SdkV6Module names it the same way.
+				'payment_method' => 'ppcp-axo-gateway',
 			),
 			'messages'          => array(
 				'enabled'   => $this->messages_enabled(),

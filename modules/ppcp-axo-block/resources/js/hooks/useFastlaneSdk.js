@@ -56,7 +56,9 @@ const useFastlaneSdk = ( namespace, axoConfig, ppcpConfig ) => {
 
 				// Connect to Fastlane with locale, style options, and allowed card brands
 				await fastlane.connect( {
-					locale: configRef.current.ppcpConfig.locale,
+					// Absent on v6-owned pages, where v5's config global does
+					// not exist; createInstance carries the locale there.
+					locale: configRef.current.ppcpConfig?.locale,
 					styles: styleOptions,
 					cardOptions: {
 						allowedBrands: cardOptions,
