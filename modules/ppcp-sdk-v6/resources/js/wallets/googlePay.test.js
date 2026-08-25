@@ -25,10 +25,21 @@ jest.mock( './walletPayment', () => ( {
 
 const mockGooglePayPayer = jest.fn();
 const mockGooglePayShippingAddress = jest.fn();
+const mockGooglePayWcShippingAddress = jest.fn();
+const mockGooglePayWcBillingAddress = jest.fn();
 jest.mock( './walletContacts', () => ( {
 	googlePayPayer: ( ...args ) => mockGooglePayPayer( ...args ),
 	googlePayShippingAddress: ( ...args ) =>
 		mockGooglePayShippingAddress( ...args ),
+	googlePayWcShippingAddress: ( ...args ) =>
+		mockGooglePayWcShippingAddress( ...args ),
+	googlePayWcBillingAddress: ( ...args ) =>
+		mockGooglePayWcBillingAddress( ...args ),
+} ) );
+
+const mockReleaseWalletShipping = jest.fn();
+jest.mock( '../endpointsAdapter', () => ( {
+	releaseWalletShipping: ( ...args ) => mockReleaseWalletShipping( ...args ),
 } ) );
 
 const mockBuildReadyToPayRequest = jest.fn();
@@ -140,6 +151,7 @@ let mockIsReadyToPay;
 let mockCreateButton;
 let mockLoadPaymentData;
 let createButtonOptions;
+let shippingController;
 
 /**
  * Installs a fake window.google.payments.api.PaymentsClient that records
@@ -196,11 +208,14 @@ beforeEach( () => {
 	mockBuildPaymentDataRequest.mockReturnValue( 'PAYMENT_DATA_REQUEST' );
 	mockWalletShippingRequired.mockReturnValue( false );
 	mockWalletShippingCountries.mockReturnValue( [] );
-	mockCreateShippingController.mockReturnValue( {
+	shippingController = {
 		quote: jest.fn(),
 		current: jest.fn(),
-	} );
+		commit: jest.fn(),
+	};
+	mockCreateShippingController.mockReturnValue( shippingController );
 	mockBuildPaymentDataCallbacks.mockReturnValue( 'PAYMENT_DATA_CALLBACKS' );
+	mockReleaseWalletShipping.mockResolvedValue( undefined );
 	installPaymentsClient();
 } );
 
@@ -402,6 +417,8 @@ describe( 'a click on the rendered button', () => {
 		mockLoadPaymentData.mockResolvedValue( paymentData );
 		mockGooglePayPayer.mockReturnValue( 'PAYER_SENTINEL' );
 		mockGooglePayShippingAddress.mockReturnValue( 'SHIP_SENTINEL' );
+		mockGooglePayWcShippingAddress.mockReturnValue( 'WC_SHIP_SENTINEL' );
+		mockGooglePayWcBillingAddress.mockReturnValue( 'WC_BILLING_SENTINEL' );
 	} );
 
 	test(
@@ -472,8 +489,82 @@ describe( 'a click on the rendered button', () => {
 			contact: {
 				payer: 'PAYER_SENTINEL',
 				shippingAddress: 'SHIP_SENTINEL',
+				shippingRateId: undefined,
 			},
 		} );
+	} );
+
+	test( "carries the selected rate's id into the contact, when this context collects shipping", async () => {
+		mockWalletShippingRequired.mockReturnValue( true );
+		shippingController.commit.mockResolvedValue( {
+			selectedId: 'flat_rate:2',
+			total: '12.34',
+		} );
+		shippingController.current.mockReturnValue( {
+			selectedId: 'flat_rate:2',
+		} );
+
+		await render( { context: 'cart' } );
+		await createButtonOptions.onClick();
+
+		expect( mockPayWithWallet ).toHaveBeenCalledWith(
+			expect.objectContaining( {
+				contact: expect.objectContaining( {
+					shippingRateId: 'flat_rate:2',
+				} ),
+			} )
+		);
+	} );
+
+	test( 'commits the mapped WC shipping and billing addresses before paying, when this context requires shipping', async () => {
+		mockWalletShippingRequired.mockReturnValue( true );
+		const config = baseConfig();
+		const callOrder = [];
+		shippingController.commit.mockImplementationOnce( async () => {
+			callOrder.push( 'commit' );
+			return { selectedId: null, total: '12.34' };
+		} );
+		mockPayWithWallet.mockImplementationOnce( async () => {
+			callOrder.push( 'payWithWallet' );
+		} );
+
+		await render( { config, context: 'cart' } );
+		await createButtonOptions.onClick();
+
+		expect( mockGooglePayWcShippingAddress ).toHaveBeenCalledWith(
+			paymentData
+		);
+		expect( mockGooglePayWcBillingAddress ).toHaveBeenCalledWith(
+			paymentData
+		);
+		expect( shippingController.commit ).toHaveBeenCalledWith(
+			'WC_SHIP_SENTINEL',
+			'WC_BILLING_SENTINEL'
+		);
+		expect( callOrder ).toEqual( [ 'commit', 'payWithWallet' ] );
+	} );
+
+	test( 'never commits a shipping address when this context requires no shipping', async () => {
+		mockWalletShippingRequired.mockReturnValue( false );
+		await render( { context: 'product' } );
+
+		await createButtonOptions.onClick();
+
+		expect( shippingController.commit ).not.toHaveBeenCalled();
+		expect( mockPayWithWallet ).toHaveBeenCalled();
+	} );
+
+	test( 'never pays when the committed shipping price no longer matches what the sheet showed', async () => {
+		mockWalletShippingRequired.mockReturnValue( true );
+		shippingController.commit.mockRejectedValueOnce(
+			new Error( 'Shipping price changed after authorization' )
+		);
+
+		await render( { context: 'cart' } );
+		await createButtonOptions.onClick();
+
+		expect( mockPayWithWallet ).not.toHaveBeenCalled();
+		expect( mockHandleError ).toHaveBeenCalledTimes( 1 );
 	} );
 
 	test(
@@ -524,24 +615,40 @@ describe( 'a click on the rendered button', () => {
 		}
 	);
 
-	test( 'refreshes the cart UI after a cancelation when this context collected shipping, since the sheet already wrote it to the real cart', async () => {
+	test( 'refreshes the cart UI and releases the held shipping rate after a cancelation when this context collected shipping, since the sheet already wrote it to the real cart', async () => {
 		mockWalletShippingRequired.mockReturnValue( true );
 		mockLoadPaymentData.mockRejectedValueOnce( { statusCode: 'CANCELED' } );
+		const config = baseConfig();
 
-		await render( { context: 'product' } );
+		await render( { config, context: 'product' } );
 		await createButtonOptions.onClick();
 
+		expect( mockReleaseWalletShipping ).toHaveBeenCalledWith( config );
 		expect( mockRefreshCartUi ).toHaveBeenCalledWith( 'product' );
 	} );
 
-	test( 'does not refresh the cart UI after a cancelation when this context never collected shipping', async () => {
+	test( 'does not refresh the cart UI or release shipping after a cancelation when this context never collected shipping', async () => {
 		mockWalletShippingRequired.mockReturnValue( false );
 		mockLoadPaymentData.mockRejectedValueOnce( { statusCode: 'CANCELED' } );
 
 		await render( { context: 'product' } );
 		await createButtonOptions.onClick();
 
+		expect( mockReleaseWalletShipping ).not.toHaveBeenCalled();
 		expect( mockRefreshCartUi ).not.toHaveBeenCalled();
+	} );
+
+	test( 'does not let a failed shipping release surface an error on cancelation', async () => {
+		mockWalletShippingRequired.mockReturnValue( true );
+		mockLoadPaymentData.mockRejectedValueOnce( { statusCode: 'CANCELED' } );
+		mockReleaseWalletShipping.mockRejectedValueOnce(
+			new Error( 'release failed' )
+		);
+
+		await render( { context: 'product' } );
+
+		await expect( createButtonOptions.onClick() ).resolves.toBeUndefined();
+		expect( mockHandleError ).not.toHaveBeenCalled();
 	} );
 
 	test( 'blocks the spinner only once the sheet has closed', async () => {

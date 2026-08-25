@@ -27,6 +27,32 @@ export function buildReadyToPayRequest( sessionConfig ) {
 }
 
 /**
+ * The card method with a complete billing address requested.
+ *
+ * Google's default is a MIN address: a name, a country and a postal code. A store
+ * taxing on the billing address needs the state too.
+ *
+ * Cloned rather than mutated: the same config object also renders the button.
+ *
+ * @param {Object[]} allowedPaymentMethods - The session config's methods.
+ * @return {Object[]} The methods, card billing address requested.
+ */
+function withBillingAddress( allowedPaymentMethods ) {
+	return allowedPaymentMethods.map( ( method ) =>
+		method?.type === 'CARD'
+			? {
+					...method,
+					parameters: {
+						...method.parameters,
+						billingAddressRequired: true,
+						billingAddressParameters: { format: 'FULL' },
+					},
+			  }
+			: method
+	);
+}
+
+/**
  * Builds the loadPaymentData request that opens the payment sheet.
  *
  * With shipping on, the PaymentsClient must also carry an onPaymentDataChanged
@@ -57,7 +83,9 @@ export function buildPaymentDataRequest(
 ) {
 	const request = {
 		...API_VERSION,
-		allowedPaymentMethods: sessionConfig.allowedPaymentMethods,
+		allowedPaymentMethods: withBillingAddress(
+			sessionConfig.allowedPaymentMethods
+		),
 		merchantInfo: sessionConfig.merchantInfo,
 		transactionInfo: {
 			countryCode,

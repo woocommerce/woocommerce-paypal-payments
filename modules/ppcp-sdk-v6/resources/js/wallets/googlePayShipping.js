@@ -87,18 +87,17 @@ export function buildPaymentDataCallbacks( {
 			let quote;
 
 			try {
-				// Priced without an option first: which options exist
-				// depends on the address just picked.
-				quote = await shipping.quote( { address } );
-
-				const rateId = resolveOptionId(
-					quote,
-					paymentData.shippingOptionData?.id
-				);
-
-				if ( rateId && rateId !== quote.selectedId ) {
-					quote = await shipping.quote( { address, rateId } );
-				}
+				// One request for both, so the options and the total describe the
+				// same cart. Resolved against the previous quote, since the new
+				// destination's options are not known yet; the endpoint answers
+				// with the rate it actually applied.
+				quote = await shipping.quote( {
+					address,
+					rateId: resolveOptionId(
+						shipping.current(),
+						paymentData.shippingOptionData?.id
+					),
+				} );
 			} catch ( error ) {
 				// Rethrown so Google keeps the sheet open on its own message;
 				// a toast would be hidden behind the sheet anyway.

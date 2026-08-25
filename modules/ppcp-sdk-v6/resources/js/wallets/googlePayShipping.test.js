@@ -26,8 +26,11 @@ const paymentData = ( overrides = {} ) => ( {
 	...overrides,
 } );
 
-function makeShipping( implementation ) {
-	return { quote: jest.fn( implementation ) };
+function makeShipping( implementation, current = null ) {
+	return {
+		quote: jest.fn( implementation ),
+		current: jest.fn( () => current ),
+	};
 }
 
 function callbacks( { shipping, currencyCode = 'USD', countryCode = 'US', overrideConfig } ) {
@@ -61,37 +64,35 @@ describe( 'buildPaymentDataCallbacks().onPaymentDataChanged()', () => {
 		} );
 	} );
 
-	test( 're-quotes with the resolved rate when the shopper picked an option other than the default', async () => {
-		const answers = [
-			quote( { selectedId: 'flat_rate:1' } ),
-			quote( { selectedId: 'flat_rate:2', total: '20.00' } ),
-		];
-		const shipping = makeShipping( async () => answers.shift() );
+	test( "prices the address against the sheet's picked option, resolved from the previous quote", async () => {
+		const shipping = makeShipping(
+			async () => quote( { selectedId: 'flat_rate:2', total: '20.00' } ),
+			quote()
+		);
 
 		const result = await callbacks( { shipping } )(
 			paymentData( { shippingOptionData: { id: 'flat_rate:2' } } )
 		);
 
-		expect( shipping.quote ).toHaveBeenCalledTimes( 2 );
-		expect( shipping.quote ).toHaveBeenNthCalledWith(
-			2,
+		expect( shipping.quote ).toHaveBeenCalledTimes( 1 );
+		expect( shipping.quote ).toHaveBeenCalledWith(
 			expect.objectContaining( { rateId: 'flat_rate:2' } )
 		);
 		expect( result.newTransactionInfo.totalPrice ).toBe( '20.00' );
 	} );
 
-	test( 'does not re-quote when the requested option already matches the quote', async () => {
-		const shipping = makeShipping( async () => quote() );
+	test( "falls back to the previous quote's selected rate when the sheet reports no option", async () => {
+		const shipping = makeShipping( async () => quote(), quote() );
 
-		await callbacks( { shipping } )(
-			paymentData( { shippingOptionData: { id: 'flat_rate:1' } } )
+		await callbacks( { shipping } )( paymentData() );
+
+		expect( shipping.quote ).toHaveBeenCalledWith(
+			expect.objectContaining( { rateId: 'flat_rate:1' } )
 		);
-
-		expect( shipping.quote ).toHaveBeenCalledTimes( 1 );
 	} );
 
-	test( "treats Google's unselected sentinel as no request, and does not re-quote", async () => {
-		const shipping = makeShipping( async () => quote() );
+	test( "treats Google's unselected sentinel as no request, falling back to the previous selection", async () => {
+		const shipping = makeShipping( async () => quote(), quote() );
 
 		await callbacks( { shipping } )(
 			paymentData( {
@@ -99,7 +100,9 @@ describe( 'buildPaymentDataCallbacks().onPaymentDataChanged()', () => {
 			} )
 		);
 
-		expect( shipping.quote ).toHaveBeenCalledTimes( 1 );
+		expect( shipping.quote ).toHaveBeenCalledWith(
+			expect.objectContaining( { rateId: 'flat_rate:1' } )
+		);
 	} );
 
 	test( 'answers with SHIPPING_ADDRESS_UNSERVICEABLE when the address has no shippable options', async () => {
