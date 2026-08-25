@@ -21,6 +21,7 @@ return static function ( string $root_dir ): iterable {
 		( require "$modules_dir/ppcp-admin-notices/module.php" )(),
 		( require "$modules_dir/ppcp-api-client/module.php" )(),
 		( require "$modules_dir/ppcp-compat/module.php" )(),
+		( require "$modules_dir/ppcp-order-endpoints/module.php" )(),
 		( require "$modules_dir/ppcp-button/module.php" )(),
 		( require "$modules_dir/ppcp-session/module.php" )(),
 		( require "$modules_dir/ppcp-status-report/module.php" )(),
