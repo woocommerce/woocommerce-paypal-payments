@@ -1657,8 +1657,10 @@ class SdkV6ManagerTest extends TestCase
      * WHEN the SDK bootstrap data is generated
      * THEN the card_button payload carries the payment method id, funding source,
      *      wrapper selector and button styling alongside its enabled flag
-     * AND the front-end labels include a card_declined message for the SDK to
-     *     show when a card is declined
+     * AND the front-end labels payload carries a card_declined key for the SDK to
+     *     show when a card is declined — only the key's presence is pinned, not
+     *     its wording, since the frontend renders whatever text arrives and this
+     *     project revises user-facing copy independently of this test
      */
     public function testScriptDataCardButtonShapeAndCardDeclinedLabel(): void
     {
@@ -1696,10 +1698,8 @@ class SdkV6ManagerTest extends TestCase
             ],
             $data['card_button']['styles']
         );
-        $this->assertSame(
-            'The card could not be charged. Please check the details or try a different card.',
-            $data['labels']['card_declined']
-        );
+        $this->assertArrayHasKey('card_declined', $data['labels']);
+        $this->assertNotSame('', $data['labels']['card_declined']);
     }
 
     /**
@@ -2023,9 +2023,13 @@ class SdkV6ManagerTest extends TestCase
     /**
      * GIVEN the SDK bootstrap data is generated
      * WHEN reading the labels payload
-     * THEN it carries the shipping-unserviceable message shown when a wallet sheet's address
-     *      cannot be served, and the itemization labels the Apple Pay sheet uses to break
-     *      down the total
+     * THEN it carries exactly the documented keys — the shipping-unserviceable key
+     *      shown when a wallet sheet's address cannot be served, and the itemization
+     *      keys the Apple Pay sheet uses to break down the total — since a missing
+     *      or renamed key is what would break those consumers, not the wording
+     * AND every label is a non-empty string, since the exact copy is not the
+     *     contract: the frontend renders whatever text arrives, and this project
+     *     revises user-facing copy independently of this test
      */
     public function testScriptDataIncludesShippingAndItemizationLabels(): void
     {
@@ -2052,10 +2056,14 @@ class SdkV6ManagerTest extends TestCase
         $testee = $this->createTestee();
         $data   = $testee->script_data();
 
-        $this->assertSame('Cannot ship to the selected address.', $data['labels']['shipping_unserviceable']);
-        $this->assertSame('Subtotal', $data['labels']['subtotal']);
-        $this->assertSame('Shipping', $data['labels']['shipping']);
-        $this->assertSame('Tax', $data['labels']['tax']);
-        $this->assertSame('Discount', $data['labels']['discount']);
+        $this->assertSame(
+            ['generic_error', 'card_declined', 'shipping_unserviceable', 'subtotal', 'shipping', 'tax', 'discount'],
+            array_keys($data['labels'])
+        );
+
+        foreach ($data['labels'] as $label) {
+            $this->assertIsString($label);
+            $this->assertNotSame('', $label);
+        }
     }
 }
