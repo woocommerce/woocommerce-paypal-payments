@@ -6,6 +6,7 @@ namespace WooCommerce\PayPalCommerce\Button\Helper;
 use Exception;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Log\LoggerInterface;
 use WC_Cart;
+use WooCommerce\PayPalCommerce\OrderEndpoints\Helper\CartProductsHelper;
 /**
  * Fallback calculator for complex product types (bookings, bundles, composites) that
  * need WooCommerce's full cart engine to compute accurate totals.
@@ -15,9 +16,9 @@ use WC_Cart;
  */
 class IsolatedCartSimulator
 {
-    private \WooCommerce\PayPalCommerce\Button\Helper\CartProductsHelper $cart_products;
+    private CartProductsHelper $cart_products;
     private LoggerInterface $logger;
-    public function __construct(\WooCommerce\PayPalCommerce\Button\Helper\CartProductsHelper $cart_products, LoggerInterface $logger)
+    public function __construct(CartProductsHelper $cart_products, LoggerInterface $logger)
     {
         $this->cart_products = $cart_products;
         $this->logger = $logger;

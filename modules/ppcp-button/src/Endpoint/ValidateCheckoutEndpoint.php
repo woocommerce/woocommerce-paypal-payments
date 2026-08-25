@@ -13,6 +13,7 @@ use Throwable;
 use WooCommerce\PayPalCommerce\Button\Exception\NonceValidationException;
 use WooCommerce\PayPalCommerce\Button\Exception\ValidationException;
 use WooCommerce\PayPalCommerce\Button\Validation\CheckoutFormValidator;
+use WooCommerce\PayPalCommerce\OrderEndpoints\Endpoint\RequestData;
 /**
  * Class ValidateCheckoutEndpoint.
  */
@@ -44,7 +45,7 @@ class ValidateCheckoutEndpoint implements \WooCommerce\PayPalCommerce\Button\End
      * @param CheckoutFormValidator $checkout_form_validator    The CheckoutFormValidator.
      * @param LoggerInterface       $logger The logger.
      */
-    public function __construct(\WooCommerce\PayPalCommerce\Button\Endpoint\RequestData $request_data, CheckoutFormValidator $checkout_form_validator, LoggerInterface $logger)
+    public function __construct(RequestData $request_data, CheckoutFormValidator $checkout_form_validator, LoggerInterface $logger)
     {
         $this->request_data = $request_data;
         $this->checkout_form_validator = $checkout_form_validator;
