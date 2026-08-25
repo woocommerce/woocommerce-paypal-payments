@@ -20,7 +20,7 @@ jobs:
     steps:
       - name: Create weekly tag and release
         id: create_release
-        uses: actions/github-script@v7
+        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
@@ -86,7 +86,7 @@ jobs:
     needs: [create-tag, build]
     steps:
       - name: Download artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:
           name: woocommerce-paypal-payments-${{ needs.create-tag.outputs.weekly_tag }}
           path: ./artifacts
@@ -97,7 +97,7 @@ jobs:
           zip -r ./woocommerce-paypal-payments-${{ needs.create-tag.outputs.weekly_tag }}.zip ./woocommerce-paypal-payments
 
       - name: Upload to release
-        uses: actions/upload-release-asset@v1
+        uses: actions/upload-release-asset@e8f9f06c4b078e705bd2ea027f0926603fc9b4d5 # v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
@@ -116,7 +116,7 @@ jobs:
       actions: write
     steps:
       - name: Trigger E2E workflow
-        uses: actions/github-script@v7
+        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
@@ -138,7 +138,7 @@ jobs:
     steps:
       - name: Send success message to Slack
         if: needs.deploy.result == 'success'
-        uses: slackapi/slack-github-action@v2.1.1
+        uses: slackapi/slack-github-action@91efab103c0de0a537f72a35f6b8cda0ee76bf0a # v2.1.1
         with:
           webhook: ${{ secrets.WEEKLY_RELEASE_SLACK_HOOK }}
           webhook-type: webhook-trigger
@@ -148,7 +148,7 @@ jobs:
 
       - name: Send failure message to Slack
         if: needs.deploy.result == 'failure' || needs.build.result == 'failure' || needs.create-tag.result == 'failure'
-        uses: slackapi/slack-github-action@v2.1.1
+        uses: slackapi/slack-github-action@91efab103c0de0a537f72a35f6b8cda0ee76bf0a # v2.1.1
         with:
           webhook: ${{ secrets.WEEKLY_RELEASE_SLACK_HOOK }}
           webhook-type: webhook-trigger
