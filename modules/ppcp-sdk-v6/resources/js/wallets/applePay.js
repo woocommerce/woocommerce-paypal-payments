@@ -13,6 +13,7 @@
  */
 
 import Spinner from '@ppcp-button/Helper/Spinner';
+import { releaseWalletShipping } from '../endpointsAdapter';
 import { hasJQuery } from '../utils/api';
 import { refreshCartUi } from '../utils/cartUi';
 import { handleError } from '../utils/errorHandler';
@@ -20,10 +21,15 @@ import { loadScript } from '../utils/scriptLoaders';
 import { revealWalletGateway } from './gatewayPlacement';
 import { APPLE_PAY_VERSION, buildApplePayRequest } from './applePayRequest';
 import { watchSheetTotal } from './applePaySheetTotal';
-import { attachShippingHandlers } from './applePayShipping';
+import { applePayFailure, attachShippingHandlers } from './applePayShipping';
 import { recordDomainValidation } from './applePayValidation';
 import { walletButtonStyle } from './walletButtonStyle';
-import { applePayPayer, applePayShippingAddress } from './walletContacts';
+import {
+	applePayPayer,
+	applePayShippingAddress,
+	applePayWcBillingAddress,
+	applePayWcShippingAddress,
+} from './walletContacts';
 import { payWithWallet } from './walletPayment';
 import { walletConfig, walletFundingSource } from './walletRegistry';
 import {
@@ -154,10 +160,16 @@ export async function renderApplePay( {
 			};
 
 			// A dismissal is not a failure to report, but it must release
-			// `paying` or the button could never open a second sheet.
+			// `paying` or the button could never open a second sheet. It also
+			// drops the rate this sheet pinned server-side.
 			appleSession.oncancel = () => {
 				paying = false;
 				spinner?.unblock();
+
+				if ( requiresShipping ) {
+					releaseWalletShipping( config ).catch( () => {} );
+				}
+
 				refreshCartUi( context );
 			};
 
@@ -221,6 +233,16 @@ export async function renderApplePay( {
 				context
 			);
 
+			// Before the order exists, because the order is built from the WC
+			// customer rather than from the address posted with the approval.
+			// Throws rather than charge a total the sheet never showed.
+			if ( requiresShipping ) {
+				await shipping.commit(
+					applePayWcShippingAddress( event.payment ),
+					applePayWcBillingAddress( event.payment )
+				);
+			}
+
 			await payWithWallet( {
 				config,
 				context,
@@ -238,6 +260,7 @@ export async function renderApplePay( {
 				contact: {
 					payer: applePayPayer( event.payment ),
 					shippingAddress: applePayShippingAddress( event.payment ),
+					shippingRateId: shipping.current()?.selectedId,
 				},
 			} );
 
@@ -247,9 +270,9 @@ export async function renderApplePay( {
 				window.ApplePaySession.STATUS_SUCCESS
 			);
 		} catch ( error ) {
-			// How Apple shows the shopper that the payment failed.
+			// Apple still has the sheet up, so it can tell the shopper why.
 			appleSession.completePayment(
-				window.ApplePaySession.STATUS_FAILURE
+				applePayFailure( error, window.ApplePaySession.STATUS_FAILURE )
 			);
 
 			paying = false;

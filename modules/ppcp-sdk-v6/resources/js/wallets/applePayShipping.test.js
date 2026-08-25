@@ -1,4 +1,5 @@
 import {
+	applePayFailure,
 	applePayShippingUpdate,
 	applePayUnserviceableUpdate,
 	attachShippingHandlers,
@@ -178,6 +179,52 @@ describe( 'applePayUnserviceableUpdate()', () => {
 		} );
 
 		expect( update.errors ).toEqual( [] );
+	} );
+} );
+
+describe( 'applePayFailure()', () => {
+	afterEach( () => {
+		delete window.ApplePayError;
+	} );
+
+	test( 'reports only the status when the error is not marked user-facing', () => {
+		const result = applePayFailure(
+			new Error( 'Internal failure' ),
+			'STATUS_FAILURE'
+		);
+
+		expect( result ).toEqual( { status: 'STATUS_FAILURE' } );
+	} );
+
+	test( 'adds an ApplePayError carrying the message when the error is user-facing', () => {
+		window.ApplePayError = function ( code, field, message ) {
+			this.code = code;
+			this.field = field;
+			this.message = message;
+		};
+		const error = new Error( 'This card is not supported.' );
+		error.isUserFacing = true;
+
+		const result = applePayFailure( error, 'STATUS_FAILURE' );
+
+		expect( result.status ).toBe( 'STATUS_FAILURE' );
+		expect( result.errors ).toHaveLength( 1 );
+		expect( result.errors[ 0 ] ).toMatchObject( {
+			code: 'unknown',
+			message: 'This card is not supported.',
+		} );
+	} );
+
+	test( 'reports only the status for a user-facing error when ApplePayError is unavailable, as outside a live session', () => {
+		const error = new Error( 'This card is not supported.' );
+		error.isUserFacing = true;
+
+		expect( () =>
+			applePayFailure( error, 'STATUS_FAILURE' )
+		).not.toThrow();
+		expect( applePayFailure( error, 'STATUS_FAILURE' ) ).toEqual( {
+			status: 'STATUS_FAILURE',
+		} );
 	} );
 } );
 

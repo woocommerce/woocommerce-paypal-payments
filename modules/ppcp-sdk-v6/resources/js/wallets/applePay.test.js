@@ -25,10 +25,16 @@ jest.mock( './walletPayment', () => ( {
 
 const mockApplePayPayer = jest.fn();
 const mockApplePayShippingAddress = jest.fn();
+const mockApplePayWcShippingAddress = jest.fn();
+const mockApplePayWcBillingAddress = jest.fn();
 jest.mock( './walletContacts', () => ( {
 	applePayPayer: ( ...args ) => mockApplePayPayer( ...args ),
 	applePayShippingAddress: ( ...args ) =>
 		mockApplePayShippingAddress( ...args ),
+	applePayWcShippingAddress: ( ...args ) =>
+		mockApplePayWcShippingAddress( ...args ),
+	applePayWcBillingAddress: ( ...args ) =>
+		mockApplePayWcBillingAddress( ...args ),
 } ) );
 
 const mockBuildApplePayRequest = jest.fn();
@@ -63,9 +69,11 @@ jest.mock( './walletShipping', () => ( {
 } ) );
 
 const mockAttachShippingHandlers = jest.fn();
+const mockApplePayFailure = jest.fn();
 jest.mock( './applePayShipping', () => ( {
 	attachShippingHandlers: ( ...args ) =>
 		mockAttachShippingHandlers( ...args ),
+	applePayFailure: ( ...args ) => mockApplePayFailure( ...args ),
 } ) );
 
 const mockSpinnerBlock = jest.fn();
@@ -196,6 +204,7 @@ const paymentEvent = {
 
 let ApplePaySessionMock;
 let mockJQueryTrigger;
+let shippingController;
 
 beforeEach( () => {
 	jest.clearAllMocks();
@@ -205,6 +214,17 @@ beforeEach( () => {
 	mockWatchSheetTotal.mockReturnValue( { get: jest.fn( () => '12.34' ) } );
 	mockApplePayPayer.mockReturnValue( 'PAYER_SENTINEL' );
 	mockApplePayShippingAddress.mockReturnValue( 'SHIP_SENTINEL' );
+	mockApplePayWcShippingAddress.mockReturnValue( 'WC_SHIP_SENTINEL' );
+	mockApplePayWcBillingAddress.mockReturnValue( 'WC_BILLING_SENTINEL' );
+	mockApplePayFailure.mockImplementation( ( error, status ) => ( {
+		status,
+	} ) );
+	shippingController = {
+		quote: jest.fn(),
+		current: jest.fn(),
+		commit: jest.fn(),
+	};
+	mockCreateShippingController.mockReturnValue( shippingController );
 	mockResolveWalletTotal.mockResolvedValue( {
 		purchaseUnits: [ { amount: '12.34' } ],
 	} );
@@ -634,11 +654,91 @@ describe( 'onpaymentauthorized', () => {
 			contact: {
 				payer: 'PAYER_SENTINEL',
 				shippingAddress: 'SHIP_SENTINEL',
+				shippingRateId: undefined,
 			},
 		} );
 		expect( appleSession.completePayment ).toHaveBeenCalledWith(
 			'STATUS_SUCCESS'
 		);
+	} );
+
+	test( "carries the selected rate's id into the contact, when this context collects shipping", async () => {
+		mockWalletShippingRequired.mockReturnValue( true );
+		shippingController.commit.mockResolvedValue( {
+			selectedId: 'flat_rate:2',
+			total: '12.34',
+		} );
+		shippingController.current.mockReturnValue( {
+			selectedId: 'flat_rate:2',
+		} );
+		const { appleSession } = await clickAndGetSession();
+
+		appleSession.onpaymentauthorized( paymentEvent );
+		await flushPromises();
+
+		expect( mockPayWithWallet ).toHaveBeenCalledWith(
+			expect.objectContaining( {
+				contact: expect.objectContaining( {
+					shippingRateId: 'flat_rate:2',
+				} ),
+			} )
+		);
+	} );
+
+	test( 'commits the mapped WC shipping and billing addresses before paying, when this context requires shipping', async () => {
+		mockWalletShippingRequired.mockReturnValue( true );
+		const config = baseConfig();
+		const callOrder = [];
+		shippingController.commit.mockImplementationOnce( async () => {
+			callOrder.push( 'commit' );
+			return { selectedId: null, total: '12.34' };
+		} );
+		mockPayWithWallet.mockImplementationOnce( async () => {
+			callOrder.push( 'payWithWallet' );
+		} );
+		const { appleSession } = await clickAndGetSession( { config } );
+
+		appleSession.onpaymentauthorized( paymentEvent );
+		await flushPromises();
+
+		expect( mockApplePayWcShippingAddress ).toHaveBeenCalledWith(
+			paymentEvent.payment
+		);
+		expect( mockApplePayWcBillingAddress ).toHaveBeenCalledWith(
+			paymentEvent.payment
+		);
+		expect( shippingController.commit ).toHaveBeenCalledWith(
+			'WC_SHIP_SENTINEL',
+			'WC_BILLING_SENTINEL'
+		);
+		expect( callOrder ).toEqual( [ 'commit', 'payWithWallet' ] );
+	} );
+
+	test( 'never commits a shipping address when this context requires no shipping', async () => {
+		mockWalletShippingRequired.mockReturnValue( false );
+		const { appleSession } = await clickAndGetSession();
+
+		appleSession.onpaymentauthorized( paymentEvent );
+		await flushPromises();
+
+		expect( shippingController.commit ).not.toHaveBeenCalled();
+		expect( mockPayWithWallet ).toHaveBeenCalled();
+	} );
+
+	test( 'never pays when the committed shipping price no longer matches what the sheet showed', async () => {
+		mockWalletShippingRequired.mockReturnValue( true );
+		shippingController.commit.mockRejectedValueOnce(
+			new Error( 'Shipping price changed after authorization' )
+		);
+		const { appleSession } = await clickAndGetSession();
+
+		appleSession.onpaymentauthorized( paymentEvent );
+		await flushPromises();
+
+		expect( mockPayWithWallet ).not.toHaveBeenCalled();
+		expect( appleSession.completePayment ).toHaveBeenCalledWith( {
+			status: 'STATUS_FAILURE',
+		} );
 	} );
 
 	test( 'pays with the configured gateway id when Apple Pay is its own row', async () => {
@@ -729,5 +829,44 @@ describe( 'oncancel', () => {
 
 		expect( () => appleSession.oncancel() ).not.toThrow();
 		expect( mockJQueryTrigger ).not.toHaveBeenCalled();
+	} );
+
+	test( 'releases the held wallet shipping rate when this context collected shipping, since the sheet already wrote it to the real cart', async () => {
+		mockWalletShippingRequired.mockReturnValue( true );
+		const config = baseConfig();
+		const { appleSession } = await clickAndGetSession( {
+			config,
+			context: 'product',
+		} );
+
+		appleSession.oncancel();
+
+		expect( mockReleaseWalletShipping ).toHaveBeenCalledWith( config );
+	} );
+
+	test( 'never releases wallet shipping when this context collected none', async () => {
+		mockWalletShippingRequired.mockReturnValue( false );
+		const { appleSession } = await clickAndGetSession( {
+			context: 'product',
+		} );
+
+		appleSession.oncancel();
+
+		expect( mockReleaseWalletShipping ).not.toHaveBeenCalled();
+	} );
+
+	test( 'does not let a failed shipping release surface an error', async () => {
+		mockWalletShippingRequired.mockReturnValue( true );
+		mockReleaseWalletShipping.mockRejectedValueOnce(
+			new Error( 'release failed' )
+		);
+		const { appleSession } = await clickAndGetSession( {
+			context: 'product',
+		} );
+
+		expect( () => appleSession.oncancel() ).not.toThrow();
+		await flushPromises();
+
+		expect( mockHandleError ).not.toHaveBeenCalled();
 	} );
 } );

@@ -136,6 +136,29 @@ export function applePayUnserviceableUpdate(
 }
 
 /**
+ * Builds the authorization result that reports a failure to the open sheet.
+ *
+ * Only a message the server marked shopper-facing is passed through; anything
+ * else is internal, and Apple's own wording serves better.
+ *
+ * @param {Error}  error  - What went wrong.
+ * @param {number} status - ApplePaySession.STATUS_FAILURE.
+ * @return {Object} The ApplePayPaymentAuthorizationResult.
+ */
+export function applePayFailure( error, status ) {
+	const result = { status };
+
+	// ApplePayError is only defined inside a live session.
+	if ( error?.isUserFacing && typeof window.ApplePayError === 'function' ) {
+		result.errors = [
+			new window.ApplePayError( 'unknown', undefined, error.message ),
+		];
+	}
+
+	return result;
+}
+
+/**
  * Wires an ApplePaySession's shipping callbacks to the shared controller.
  *
  * @param {Object} appleSession     - The live ApplePaySession.
