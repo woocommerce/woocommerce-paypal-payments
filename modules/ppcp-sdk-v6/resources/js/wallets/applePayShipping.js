@@ -161,15 +161,17 @@ export function applePayFailure( error, status ) {
 /**
  * Wires an ApplePaySession's shipping callbacks to the shared controller.
  *
- * @param {Object} appleSession     - The live ApplePaySession.
- * @param {Object} args             - The wiring inputs.
- * @param {Object} args.config      - The wc_ppcp_sdk_v6 config object.
- * @param {string} args.displayName - The shop name.
- * @param {Object} args.shipping    - The shared shipping controller.
+ * @param {Object}   appleSession     - The live ApplePaySession.
+ * @param {Object}   args             - The wiring inputs.
+ * @param {Object}   args.config      - The wc_ppcp_sdk_v6 config object.
+ * @param {string}   args.displayName - The shop name.
+ * @param {Object}   args.shipping    - The shared shipping controller.
+ * @param {?Promise} [args.cartReady] - Settles once the cart holds what is being
+ *                                    bought; nothing may be priced before then.
  */
 export function attachShippingHandlers(
 	appleSession,
-	{ config, displayName, shipping }
+	{ config, displayName, shipping, cartReady = null }
 ) {
 	const labels = {
 		subtotal: config.labels?.subtotal ?? 'Subtotal',
@@ -191,6 +193,9 @@ export function attachShippingHandlers(
 	 */
 	async function respond( complete, selection ) {
 		try {
+			// An empty cart offers no rates, so it would reject every address.
+			await cartReady;
+
 			const quote = await shipping.quote( selection );
 
 			if ( ! quote.options.length ) {

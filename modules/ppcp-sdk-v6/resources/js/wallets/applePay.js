@@ -101,6 +101,15 @@ export async function renderApplePay( {
 	let paying = false;
 
 	/**
+	 * The cart holding what is being bought, resolved once per sheet.
+	 *
+	 * On the product page this is what adds the viewed product, and an empty cart
+	 * offers no rates for the sheet to show. Started rather than awaited at click
+	 * time, because Safari refuses to present a sheet after an await.
+	 */
+	let cartReady = null;
+
+	/**
 	 * Opens the payment sheet and pays with what it returns.
 	 *
 	 * Deliberately not async: everything up to begin() must run in the same task
@@ -122,6 +131,11 @@ export async function renderApplePay( {
 		}
 
 		paying = true;
+
+		cartReady = resolveWalletTotal( config, context );
+
+		// Claimed here so a rejection nothing has awaited yet stays handled.
+		cartReady.catch( () => {} );
 
 		const request = buildApplePayRequest( applePayConfig, {
 			// Stands in when PayPal's config carries no country of its own.
@@ -146,6 +160,7 @@ export async function renderApplePay( {
 					config,
 					displayName: settings.display_name,
 					shipping,
+					cartReady,
 				} );
 			}
 
@@ -223,17 +238,13 @@ export async function renderApplePay( {
 		spinner?.block();
 
 		try {
-			// This is what adds a viewed product to the real cart, and its
-			// units price the order. Its total is ignored: the sheet total
-			// describes the same basket, via the simulate endpoint.
-			const { purchaseUnits } = await resolveWalletTotal(
-				config,
-				context
-			);
+			// Its units price the order; its total is ignored, because the sheet
+			// already described the same basket via the simulate endpoint.
+			const { purchaseUnits } = await cartReady;
 
-			// Before the order exists, because the order is built from the WC
-			// customer rather than from the address posted with the approval.
-			// Throws rather than charge a total the sheet never showed.
+			// Before the order exists, because it is built from the WC customer
+			// rather than the address posted with the approval. Throws rather
+			// than charge a total the sheet never showed.
 			if ( requiresShipping ) {
 				await shipping.commit(
 					applePayWcShippingAddress( event.payment ),
