@@ -261,10 +261,12 @@ export async function renderApplePay( {
 				// PayPal gateway as Venmo's and Pay Later's do.
 				paymentMethod: gateway?.id,
 				purchaseUnits,
+				// No shippingContact: an express order is created with
+				// GET_FROM_FILE (see ShippingPreferenceFactory), and supplying an
+				// address for one fails with APPROVE_APPLE_PAY_VALIDATION_ERROR.
 				confirmData: {
 					token: event.payment.token,
 					billingContact: event.payment.billingContact,
-					shippingContact: event.payment.shippingContact,
 				},
 				contact: {
 					payer: applePayPayer( event.payment ),

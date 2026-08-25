@@ -644,10 +644,10 @@ describe( 'onpaymentauthorized', () => {
 			fundingSource: 'apple_pay',
 			paymentMethod: undefined,
 			purchaseUnits: [ { amount: '12.34' } ],
+			// No shippingContact: PayPal refuses one for a GET_FROM_FILE order.
 			confirmData: {
 				token: paymentEvent.payment.token,
 				billingContact: paymentEvent.payment.billingContact,
-				shippingContact: paymentEvent.payment.shippingContact,
 			},
 			contact: {
 				payer: 'PAYER_SENTINEL',
