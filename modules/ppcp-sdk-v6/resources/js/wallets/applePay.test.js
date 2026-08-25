@@ -37,6 +37,11 @@ jest.mock( './walletContacts', () => ( {
 		mockApplePayWcBillingAddress( ...args ),
 } ) );
 
+const mockReleaseWalletShipping = jest.fn();
+jest.mock( '../endpointsAdapter', () => ( {
+	releaseWalletShipping: ( ...args ) => mockReleaseWalletShipping( ...args ),
+} ) );
+
 const mockBuildApplePayRequest = jest.fn();
 jest.mock( './applePayRequest', () => ( {
 	APPLE_PAY_VERSION: 4,
@@ -216,6 +221,12 @@ beforeEach( () => {
 	mockApplePayShippingAddress.mockReturnValue( 'SHIP_SENTINEL' );
 	mockApplePayWcShippingAddress.mockReturnValue( 'WC_SHIP_SENTINEL' );
 	mockApplePayWcBillingAddress.mockReturnValue( 'WC_BILLING_SENTINEL' );
+	mockReleaseWalletShipping.mockResolvedValue( undefined );
+	mockResolveWalletTotal.mockResolvedValue( {
+		purchaseUnits: [ { amount: '12.34' } ],
+	} );
+	mockPayWithWallet.mockResolvedValue( undefined );
+	mockWalletShippingRequired.mockReturnValue( false );
 	mockApplePayFailure.mockImplementation( ( error, status ) => ( {
 		status,
 	} ) );
@@ -225,12 +236,6 @@ beforeEach( () => {
 		commit: jest.fn(),
 	};
 	mockCreateShippingController.mockReturnValue( shippingController );
-	mockResolveWalletTotal.mockResolvedValue( {
-		purchaseUnits: [ { amount: '12.34' } ],
-	} );
-	mockPayWithWallet.mockResolvedValue( undefined );
-	mockWalletShippingRequired.mockReturnValue( false );
-	mockCreateShippingController.mockReturnValue( { quote: jest.fn(), current: jest.fn() } );
 
 	ApplePaySessionMock = jest.fn( function () {
 		this.begin = jest.fn();
@@ -768,9 +773,9 @@ describe( 'onpaymentauthorized', () => {
 		appleSession.onpaymentauthorized( paymentEvent );
 		await flushPromises();
 
-		expect( appleSession.completePayment ).toHaveBeenCalledWith(
-			'STATUS_FAILURE'
-		);
+		expect( appleSession.completePayment ).toHaveBeenCalledWith( {
+			status: 'STATUS_FAILURE',
+		} );
 		expect( mockSpinnerUnblock ).toHaveBeenCalledTimes( 1 );
 		expect( mockJQueryTrigger ).toHaveBeenCalledWith(
 			'wc_fragment_refresh'
