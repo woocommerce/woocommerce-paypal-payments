@@ -521,8 +521,10 @@ class SdkV6Manager {
 		// equivalent of the SDK URL vault param v5 uses here, so the button
 		// would take a payment that can never renew. Not a dead end — without a
 		// button "Place order" stays visible, and CardButtonGateway falls back
-		// to PayPal's hosted card checkout.
-		if ( $this->subscription_helper->cart_contains_subscription() ) {
+		// to PayPal's hosted card checkout. order_pay_contains_subscription()
+		// covers pay-for-order, where the cart is empty.
+		if ( $this->subscription_helper->cart_contains_subscription()
+			|| $this->subscription_helper->order_pay_contains_subscription() ) {
 			return false;
 		}
 
