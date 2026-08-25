@@ -115,6 +115,13 @@ return array(
             // independent of the v6 flag (see ppcp-settings/services.php).
             $container->has('save-payment-methods.eligible') && $container->get('save-payment-methods.eligible') && $settings_provider->save_card_details(),
             $container->get('wc-subscriptions.helper'),
+            $container->get('wc-subscriptions.free-trial-subscription-helper'),
+            // Same mode callable the v5 SmartButton uses; drives deferring native
+            // PayPal Subscriptions (subscriptions_api mode) back to the v5 stack.
+            $container->get('button.subscriptions-mode'),
+            // Raw 3DS enum; the manager applies the contingency filter at enqueue
+            // time so late-registered overrides still take effect.
+            $settings_provider->three_d_secure_enum(),
             $container->get('wcgateway.credit-card-icons'),
             $container->get('sdk-v6.message-style-mapper'),
             $container->get('sdk-v6.messages-eligibility'),
@@ -149,6 +156,9 @@ return array(
         return new RateLimiter('ppcp_sdk_v6_rl_', 10, 60);
     },
     'sdk-v6.blocks.payment-method' => static function (ContainerInterface $container): V6PaymentMethod {
-        return new V6PaymentMethod($container->get('sdk-v6.manager'), $container->get('sdk-v6.asset-getter'), $container->get('ppcp.asset-version'), $container->get('wcgateway.paypal-gateway'));
+        // The saved-PayPal vault component lives in its own feature-flagged module,
+        // so its services may be absent; fall back to no saved-token support.
+        $has_vault = $container->has('vault-component.data') && $container->has('vault-component.eligibility.check');
+        return new V6PaymentMethod($container->get('sdk-v6.manager'), $container->get('sdk-v6.asset-getter'), $container->get('ppcp.asset-version'), $container->get('wcgateway.paypal-gateway'), $container->get('wcgateway.credit-card-gateway'), $has_vault ? $container->get('vault-component.data') : null, $has_vault ? $container->get('vault-component.eligibility.check') : null, $container->get('button.client_id'));
     },
 );
