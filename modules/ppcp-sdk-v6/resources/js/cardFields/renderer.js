@@ -12,63 +12,26 @@
  * number|expiry|cvv), so the native WC cardholder-name input is left in place
  * as a plain field and its value is forwarded to create-order instead.
  *
- * Scope: fresh card, one-time payment only. Saving a new card, paying with
- * an already-saved card, and the $0 free-trial variant are untouched
- * here — this defers to the native submit whenever a saved token is
- * selected.
+ * Scope: fresh card, one-time payment, plus the $0 free-trial variant (a
+ * subscription cart with no initial charge), which saves the card via a setup
+ * token instead of creating an order. Paying with an already-saved card still
+ * defers to the native submit whenever a saved token is selected.
  *
  * @package
  */
 
-import { cardFieldStyles } from './cardFieldStyles';
-import { hide } from '@ppcp-button/Helper/Hiding';
+import { mountField } from './mountField';
 import Spinner from '@ppcp-button/Helper/Spinner';
 import { loadSdkV6 } from '../sdkLoader';
 import { createCardOrder, approveCardOrder } from '../endpointsAdapter';
+import {
+	createCardSetupToken,
+	exchangeSetupToken,
+} from '../sessions/freeTrialSave';
 import { hasJQuery } from '../utils/api';
 import { handleError } from '../utils/errorHandler';
 
 const FIELD_TYPES = [ 'number', 'expiry', 'cvv' ];
-
-/**
- * Mounts a single card field into its existing WC input's place, hiding
- * the original input (mirrors v5's Render.js placement/hiding).
- *
- * Unlike v5's paypal.CardFields(), which owns its container's layout via
- * its own .render() call, v6's createCardFieldsComponent() only returns a
- * plain HTMLElement — `style.input` styles what's inside it (font, color,
- * padding, ...), not the element's own box on this page. Theme rules
- * targeting the original `input` tag (e.g. `.input-wrapper input { height:
- * 100% }`) don't match this element, so its box has to be sized explicitly
- * from the original input's own rendered dimensions or it falls back to
- * the SDK's default (much taller than the form's inputs).
- *
- * @param {Object}      cardSession - The v6 card fields session.
- * @param {string}      fieldType   - number|expiry|cvv.
- * @param {HTMLElement} inputField  - The existing WC input to replace.
- */
-function mountField( cardSession, fieldType, inputField ) {
-	if ( ! inputField || inputField.hidden ) {
-		return;
-	}
-
-	const computed = window.getComputedStyle( inputField );
-	const options = {
-		type: fieldType,
-		style: { input: cardFieldStyles( inputField ) },
-	};
-	if ( inputField.getAttribute( 'placeholder' ) ) {
-		options.placeholder = inputField.getAttribute( 'placeholder' );
-	}
-
-	const fieldElement = cardSession.createCardFieldsComponent( options );
-	fieldElement.style.width = computed.width;
-	fieldElement.style.height = computed.height;
-
-	inputField.parentNode.appendChild( fieldElement );
-	hide( inputField, true );
-	inputField.hidden = true;
-}
 
 /**
  * Reads the billing address from the classic checkout form for the card
@@ -124,6 +87,31 @@ function shouldSavePaymentMethod() {
 }
 
 /**
+ * Force-checks and disables the "Save to account" tokenization checkbox when the
+ * cart contains a subscription, so the card is always vaulted for renewals (the
+ * buyer cannot opt out). Mirrors v5's CardFieldsRenderer. No-op when vaulting is
+ * off (the checkbox is absent) or the cart has no subscription.
+ *
+ * @param {Object} config - The wc_ppcp_sdk_v6 config object.
+ */
+function forceSaveForSubscription( config ) {
+	if (
+		! config.card_fields?.has_subscriptions ||
+		! config.card_fields?.is_vaulting_enabled
+	) {
+		return;
+	}
+
+	const saveToAccount = document.querySelector(
+		'#wc-ppcp-credit-card-gateway-new-payment-method'
+	);
+	if ( saveToAccount ) {
+		saveToAccount.checked = true;
+		saveToAccount.disabled = true;
+	}
+}
+
+/**
  * Whether the card gateway is the currently selected checkout payment method.
  *
  * @param {string} paymentMethod - The card gateway's payment method ID.
@@ -154,8 +142,16 @@ export async function initCardFields( config ) {
 		return;
 	}
 
-	const { fields, payment_method: paymentMethod } = config.card_fields;
+	const {
+		fields,
+		payment_method: paymentMethod,
+		styles,
+	} = config.card_fields;
 	const spinner = hasJQuery() ? Spinner.fullPage() : null;
+
+	// A $0 free-trial subscription card is saved via a setup token (no order);
+	// the gateway places the $0 order on the native submit that follows.
+	const isFreeTrial = Boolean( config.is_free_trial_cart );
 
 	let cardSessionPromise = null;
 	let submitting = false;
@@ -181,14 +177,17 @@ export async function initCardFields( config ) {
 			cardSessionPromise = ( async () => {
 				const inputs = getInputs();
 				const sdk = await loadSdkV6( config, 'checkout' );
-				const cardSession = sdk.createCardFieldsOneTimePaymentSession();
+				const cardSession = isFreeTrial
+					? sdk.createCardFieldsSavePaymentSession()
+					: sdk.createCardFieldsOneTimePaymentSession();
 
 				for ( const fieldType of FIELD_TYPES ) {
 					if ( inputs[ fieldType ] ) {
 						mountField(
 							cardSession,
 							fieldType,
-							inputs[ fieldType ]
+							inputs[ fieldType ],
+							styles
 						);
 					}
 				}
@@ -224,6 +223,30 @@ export async function initCardFields( config ) {
 
 		try {
 			const cardSession = await ensureCardSession();
+			const submitOptions = billingAddressForSubmit();
+
+			// Free trial: confirm a setup token and store it; the native submit
+			// that follows lets the gateway place the $0 order against it.
+			if ( isFreeTrial ) {
+				const setupTokenId = await createCardSetupToken( config );
+				// The save session takes no billing-address option; it confirms
+				// the setup token, running 3D Secure when required.
+				const saveResult = await cardSession.submit( setupTokenId );
+
+				if ( saveResult.state === 'canceled' ) {
+					return;
+				}
+				if ( saveResult.state !== 'succeeded' ) {
+					throw new Error( 'Card could not be saved.' );
+				}
+
+				await exchangeSetupToken( config, setupTokenId );
+
+				submitting = true;
+				event.target.click();
+				return;
+			}
+
 			// The name has no v6 field component; read the plain WC input.
 			const cardName = getInputs().name?.value?.trim() || '';
 			const { orderId } = await createCardOrder(
@@ -232,7 +255,6 @@ export async function initCardFields( config ) {
 				cardName,
                 shouldSavePaymentMethod(),
 			);
-			const submitOptions = billingAddressForSubmit();
 			const result = submitOptions
 				? await cardSession.submit( orderId, submitOptions )
 				: await cardSession.submit( orderId );
@@ -270,6 +292,10 @@ export async function initCardFields( config ) {
 			return;
 		}
 
+		// Re-run on every DOM refresh: WC rebuilds the tokenization checkbox with
+		// the rest of #payment, so a single up-front call would not survive.
+		forceSaveForSubscription( config );
+
 		const placeOrderButton = document.querySelector( '#place_order' );
 		if (
 			! placeOrderButton ||
@@ -299,6 +325,9 @@ export async function initCardFields( config ) {
 		jQuery( document.body ).on( 'payment_method_selected', () => {
 			if ( isCardGatewaySelected( paymentMethod ) ) {
 				ensureCardSession().catch( handleError );
+				// The checkbox is only in the DOM once the card gateway's fields
+				// show, which selecting the method is what does.
+				forceSaveForSubscription( config );
 			}
 		} );
 	}

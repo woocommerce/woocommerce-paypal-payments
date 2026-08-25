@@ -10,6 +10,10 @@ import { loadSdkV6 } from '../sdkLoader';
 import { checkEligibility } from '../eligibility';
 import { createSession } from '../sessions/createSession';
 import {
+	createFreeTrialPayPalSession,
+	createVaultSetupToken,
+} from '../sessions/freeTrialSave';
+import {
 	approveOrder,
 	approveOrderInSession,
 	createOrder,
@@ -74,6 +78,14 @@ export function V6ExpressComponent( {
 	const method = fundingSource;
 	const context = config.page_context;
 	const methodId = `ppcp-gateway-${ fundingSource }`;
+
+	// A $0 free-trial subscription is vaulted through the PayPal save flow rather
+	// than a one-time order: the buyer approves a setup token, it is exchanged for
+	// a stored token, and the Blocks checkout submit places the $0 WC order. Only
+	// PayPal is offered on such carts (see checkout-block.js), so guard on it.
+	const isFreeTrial =
+		Boolean( config.is_free_trial_cart ) &&
+		fundingSource === FundingSources.PAYPAL;
 
 	const [ sdk, setSdk ] = useState( null );
 	const [ eligibility, setEligibility ] = useState( null );
@@ -191,6 +203,9 @@ export function V6ExpressComponent( {
 					onClose();
 				}
 			},
+			// Free trial: the token is already stored, so just submit the Blocks
+			// checkout — the gateway places the $0 order server-side.
+			onFreeTrialComplete: () => onSubmit(),
 			shippingHandlers: buildBlocksShippingHandlers(
 				config,
 				shippingData
@@ -206,6 +221,19 @@ export function V6ExpressComponent( {
 
 	useEffect( () => {
 		if ( ! sdk ) {
+			return undefined;
+		}
+
+		// Free trial: a save session whose onApprove exchanges the setup token
+		// and then submits the Blocks checkout to place the $0 order. None of the
+		// one-time order/shipping/review wiring below applies.
+		if ( isFreeTrial ) {
+			setSession(
+				createFreeTrialPayPalSession( sdk, config, {
+					onComplete: () => callbacksRef.current.onFreeTrialComplete(),
+					onError: ( error ) => callbacksRef.current.onError( error ),
+				} )
+			);
 			return undefined;
 		}
 
@@ -236,7 +264,7 @@ export function V6ExpressComponent( {
 
 		// No teardown: the SDK cannot dispose a session, so every extra
 		// dependency here abandons one and remounts the button. Keep it narrow.
-	}, [ sdk, method, needsShipping, config, context ] );
+	}, [ sdk, method, needsShipping, config, context, isFreeTrial ] );
 
 	useEffect( () => {
 		if ( activePaymentMethod !== methodId ) {
@@ -325,7 +353,11 @@ export function V6ExpressComponent( {
 		method,
 		session,
 		styles,
-		createOrderFn: () => createOrder( config, context, fundingSource ),
+		// Free trial starts the save session with a setup token instead of an
+		// order; both resolve to the shape session.start() expects.
+		createOrderFn: isFreeTrial
+			? () => createVaultSetupToken( config )
+			: () => createOrder( config, context, fundingSource ),
 		payLaterDetails: eligibility?.payLaterDetails,
 		onClick,
 	} );

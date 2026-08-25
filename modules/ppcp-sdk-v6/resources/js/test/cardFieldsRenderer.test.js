@@ -1,6 +1,9 @@
-const mockCardFieldStyles = jest.fn( () => ( { color: 'rgb(0, 0, 0)' } ) );
+const mockHostedFieldTextStyles = jest.fn( () => ( {
+	color: 'rgb(0, 0, 0)',
+} ) );
 jest.mock( '../cardFields/cardFieldStyles', () => ( {
-	cardFieldStyles: ( field ) => mockCardFieldStyles( field ),
+	hostedFieldTextStyles: ( field, overrides ) =>
+		mockHostedFieldTextStyles( field, overrides ),
 } ) );
 
 const mockHide = jest.fn();
@@ -46,6 +49,13 @@ jest.mock( '../utils/api', () => ( {
 const mockHandleError = jest.fn();
 jest.mock( '../utils/errorHandler', () => ( {
 	handleError: ( ...args ) => mockHandleError( ...args ),
+} ) );
+
+const mockCreateCardSetupToken = jest.fn();
+const mockExchangeSetupToken = jest.fn();
+jest.mock( '../sessions/freeTrialSave', () => ( {
+	createCardSetupToken: ( ...args ) => mockCreateCardSetupToken( ...args ),
+	exchangeSetupToken: ( ...args ) => mockExchangeSetupToken( ...args ),
 } ) );
 
 import { initCardFields } from '../cardFields/renderer';
@@ -122,6 +132,8 @@ function triggerBodyEvent( event ) {
 beforeEach( () => {
 	jest.clearAllMocks();
 	mockHasJQuery.mockReturnValue( true );
+	mockCreateCardSetupToken.mockReset();
+	mockExchangeSetupToken.mockReset();
 	bodyHandlers = {};
 	global.jQuery = jest.fn( () => ( {
 		on: ( event, handler ) => {
@@ -177,6 +189,27 @@ describe( 'initCardFields', () => {
 		}
 	} );
 
+	test( 'forwards config.card_fields.styles as merchant overrides for the hosted field text style', async () => {
+		buildCheckoutDom( 'ppcp-credit-card-gateway' );
+		const cardSession = makeCardSession();
+		mockLoadSdkV6.mockResolvedValue( {
+			createCardFieldsOneTimePaymentSession: () => cardSession,
+		} );
+		const styles = { fontSize: '20px' };
+
+		await initCardFields(
+			baseConfig( {
+				card_fields: { ...baseConfig().card_fields, styles },
+			} )
+		);
+		await flushPromises();
+
+		expect( mockHostedFieldTextStyles ).toHaveBeenCalledWith(
+			expect.anything(),
+			styles
+		);
+	} );
+
 	test( 'never mounts the name field even when fields.name points to a WC input, since v6 has no name field component', async () => {
 		buildCheckoutDom( 'ppcp-credit-card-gateway' );
 		document.body.insertAdjacentHTML(
@@ -215,7 +248,7 @@ describe( 'initCardFields', () => {
 		expect( nameInput.hidden ).toBe( false );
 	} );
 
-	test( "sizes the mounted field to the original input's own box, since style.input only styles what is inside it", async () => {
+	test( "sizes the mounted field's height to the original input's own box, since style.input only styles what is inside it, and fills the field's own column width", async () => {
 		buildCheckoutDom( 'ppcp-credit-card-gateway' );
 		const numberInput = document.querySelector(
 			'#ppcp-credit-card-gateway-card-number'
@@ -231,7 +264,7 @@ describe( 'initCardFields', () => {
 		await initCardFields( baseConfig() );
 		await flushPromises();
 
-		expect( numberInput.nextSibling.style.width ).toBe( '300px' );
+		expect( numberInput.nextSibling.style.width ).toBe( '100%' );
 		expect( numberInput.nextSibling.style.height ).toBe( '45px' );
 	} );
 
@@ -579,5 +612,238 @@ describe( 'initCardFields', () => {
 		expect( mockHandleError ).not.toHaveBeenCalled();
 		expect( mockApproveCardOrder ).not.toHaveBeenCalled();
 		expect( nativeSubmits ).toBe( 0 );
+	} );
+
+	describe( 'free-trial ($0 subscription) cart', () => {
+		function freeTrialConfig( overrides = {} ) {
+			return baseConfig( { is_free_trial_cart: true, ...overrides } );
+		}
+
+		test( 'mounts the fields from the card save session instead of the one-time session', async () => {
+			buildCheckoutDom( 'ppcp-credit-card-gateway' );
+			const cardSession = makeCardSession();
+			mockLoadSdkV6.mockResolvedValue( {
+				createCardFieldsSavePaymentSession: () => cardSession,
+			} );
+
+			await initCardFields( freeTrialConfig() );
+			await flushPromises();
+
+			expect( cardSession.createCardFieldsComponent ).toHaveBeenCalledTimes(
+				3
+			);
+		} );
+
+		test( 'a new-card submission creates a setup token, confirms it through the save session, exchanges it, then re-clicks place_order', async () => {
+			buildCheckoutDom( 'ppcp-credit-card-gateway' );
+			const cardSession = makeCardSession( { state: 'succeeded' } );
+			mockLoadSdkV6.mockResolvedValue( {
+				createCardFieldsSavePaymentSession: () => cardSession,
+			} );
+			mockCreateCardSetupToken.mockResolvedValue( 'SETUP1' );
+			mockExchangeSetupToken.mockResolvedValue( undefined );
+
+			await initCardFields( freeTrialConfig() );
+			await flushPromises();
+
+			const placeOrder = document.querySelector( '#place_order' );
+			let nativeSubmits = 0;
+			placeOrder.addEventListener( 'click', () => nativeSubmits++ );
+
+			placeOrder.click();
+			await flushPromises();
+
+			expect( mockCreateCardSetupToken ).toHaveBeenCalledWith(
+				freeTrialConfig()
+			);
+			expect( cardSession.submit ).toHaveBeenCalledWith( 'SETUP1' );
+			expect( mockExchangeSetupToken ).toHaveBeenCalledWith(
+				freeTrialConfig(),
+				'SETUP1'
+			);
+			expect( mockCreateCardOrder ).not.toHaveBeenCalled();
+			expect( mockApproveCardOrder ).not.toHaveBeenCalled();
+			expect( nativeSubmits ).toBe( 1 );
+			expect( mockHandleError ).not.toHaveBeenCalled();
+		} );
+
+		test( 'a canceled 3DS challenge on the save session is silent and does not re-click place_order', async () => {
+			buildCheckoutDom( 'ppcp-credit-card-gateway' );
+			const cardSession = makeCardSession( { state: 'canceled' } );
+			mockLoadSdkV6.mockResolvedValue( {
+				createCardFieldsSavePaymentSession: () => cardSession,
+			} );
+			mockCreateCardSetupToken.mockResolvedValue( 'SETUP1' );
+
+			await initCardFields( freeTrialConfig() );
+			await flushPromises();
+
+			const placeOrder = document.querySelector( '#place_order' );
+			let nativeSubmits = 0;
+			placeOrder.addEventListener( 'click', () => nativeSubmits++ );
+
+			placeOrder.click();
+			await flushPromises();
+
+			expect( mockExchangeSetupToken ).not.toHaveBeenCalled();
+			expect( mockHandleError ).not.toHaveBeenCalled();
+			expect( nativeSubmits ).toBe( 0 );
+		} );
+
+		test( 'a failed save session surfaces the error and does not re-click place_order', async () => {
+			buildCheckoutDom( 'ppcp-credit-card-gateway' );
+			const cardSession = makeCardSession( { state: 'failed' } );
+			mockLoadSdkV6.mockResolvedValue( {
+				createCardFieldsSavePaymentSession: () => cardSession,
+			} );
+			mockCreateCardSetupToken.mockResolvedValue( 'SETUP1' );
+
+			await initCardFields( freeTrialConfig() );
+			await flushPromises();
+
+			const placeOrder = document.querySelector( '#place_order' );
+			let nativeSubmits = 0;
+			placeOrder.addEventListener( 'click', () => nativeSubmits++ );
+
+			placeOrder.click();
+			await flushPromises();
+
+			expect( mockExchangeSetupToken ).not.toHaveBeenCalled();
+			expect( mockHandleError ).toHaveBeenCalled();
+			expect( nativeSubmits ).toBe( 0 );
+		} );
+	} );
+
+	describe( 'subscription cart (force-save the tokenization checkbox)', () => {
+		function subscriptionConfig( overrides = {} ) {
+			return baseConfig( {
+				card_fields: {
+					...baseConfig().card_fields,
+					has_subscriptions: true,
+					is_vaulting_enabled: true,
+					...overrides,
+				},
+			} );
+		}
+
+		test( 'checks and disables the save-to-account checkbox on attach when the cart has a subscription and vaulting is enabled', async () => {
+			buildCheckoutDom( 'ppcp-credit-card-gateway' );
+			document.body.insertAdjacentHTML(
+				'beforeend',
+				'<input type="checkbox" id="wc-ppcp-credit-card-gateway-new-payment-method" />'
+			);
+			mockLoadSdkV6.mockResolvedValue( {
+				createCardFieldsOneTimePaymentSession: () =>
+					makeCardSession(),
+			} );
+
+			await initCardFields( subscriptionConfig() );
+			await flushPromises();
+
+			const checkbox = document.querySelector(
+				'#wc-ppcp-credit-card-gateway-new-payment-method'
+			);
+			expect( checkbox.checked ).toBe( true );
+			expect( checkbox.disabled ).toBe( true );
+		} );
+
+		test( 'leaves the save-to-account checkbox untouched when the cart has no subscription', async () => {
+			buildCheckoutDom( 'ppcp-credit-card-gateway' );
+			document.body.insertAdjacentHTML(
+				'beforeend',
+				'<input type="checkbox" id="wc-ppcp-credit-card-gateway-new-payment-method" />'
+			);
+			mockLoadSdkV6.mockResolvedValue( {
+				createCardFieldsOneTimePaymentSession: () =>
+					makeCardSession(),
+			} );
+
+			await initCardFields(
+				subscriptionConfig( { has_subscriptions: false } )
+			);
+			await flushPromises();
+
+			const checkbox = document.querySelector(
+				'#wc-ppcp-credit-card-gateway-new-payment-method'
+			);
+			expect( checkbox.checked ).toBe( false );
+			expect( checkbox.disabled ).toBe( false );
+		} );
+
+		test( 'leaves the save-to-account checkbox untouched when vaulting is disabled', async () => {
+			buildCheckoutDom( 'ppcp-credit-card-gateway' );
+			document.body.insertAdjacentHTML(
+				'beforeend',
+				'<input type="checkbox" id="wc-ppcp-credit-card-gateway-new-payment-method" />'
+			);
+			mockLoadSdkV6.mockResolvedValue( {
+				createCardFieldsOneTimePaymentSession: () =>
+					makeCardSession(),
+			} );
+
+			await initCardFields(
+				subscriptionConfig( { is_vaulting_enabled: false } )
+			);
+			await flushPromises();
+
+			const checkbox = document.querySelector(
+				'#wc-ppcp-credit-card-gateway-new-payment-method'
+			);
+			expect( checkbox.checked ).toBe( false );
+			expect( checkbox.disabled ).toBe( false );
+		} );
+
+		test( 'is a no-op when the checkbox is absent from the DOM (vaulting off server-side)', async () => {
+			buildCheckoutDom( 'ppcp-credit-card-gateway' );
+			mockLoadSdkV6.mockResolvedValue( {
+				createCardFieldsOneTimePaymentSession: () =>
+					makeCardSession(),
+			} );
+
+			await expect(
+				initCardFields( subscriptionConfig() )
+			).resolves.not.toThrow();
+			await flushPromises();
+
+			expect(
+				document.querySelector(
+					'#wc-ppcp-credit-card-gateway-new-payment-method'
+				)
+			).toBeNull();
+		} );
+
+		test( 'force-checks the checkbox again when payment_method_selected fires with the card gateway now selected', async () => {
+			// The checkbox is only in the DOM once the card gateway's fields
+			// show, which selecting the method is what does; simulate that
+			// by starting on a different gateway with no checkbox present.
+			buildCheckoutDom( 'ppcp-gateway' );
+			mockLoadSdkV6.mockResolvedValue( {
+				createCardFieldsOneTimePaymentSession: () =>
+					makeCardSession(),
+			} );
+
+			await initCardFields( subscriptionConfig() );
+			await flushPromises();
+
+			document.querySelector(
+				'input[value="ppcp-gateway"]'
+			).checked = false;
+			document.querySelector(
+				'input[value="ppcp-credit-card-gateway"]'
+			).checked = true;
+			document.body.insertAdjacentHTML(
+				'beforeend',
+				'<input type="checkbox" id="wc-ppcp-credit-card-gateway-new-payment-method" />'
+			);
+
+			triggerBodyEvent( 'payment_method_selected' );
+			await flushPromises();
+
+			const checkbox = document.querySelector(
+				'#wc-ppcp-credit-card-gateway-new-payment-method'
+			);
+			expect( checkbox.checked ).toBe( true );
+			expect( checkbox.disabled ).toBe( true );
+		} );
 	} );
 } );

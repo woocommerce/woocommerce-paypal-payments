@@ -45,6 +45,20 @@ jest.mock( '../../blocks/blocksShippingHandlers', () => ( {
 		mockBuildShippingHandlers( ...args ),
 } ) );
 
+let capturedSaveSessionHandlers = null;
+const mockCreateFreeTrialPayPalSession = jest.fn(
+	( sdk, config, handlers ) => {
+		capturedSaveSessionHandlers = handlers;
+		return { fake: 'save-session' };
+	}
+);
+const mockCreateVaultSetupToken = jest.fn();
+jest.mock( '../../sessions/freeTrialSave', () => ( {
+	createFreeTrialPayPalSession: ( ...args ) =>
+		mockCreateFreeTrialPayPalSession( ...args ),
+	createVaultSetupToken: ( ...args ) => mockCreateVaultSetupToken( ...args ),
+} ) );
+
 import { render, waitFor, act } from '@testing-library/react';
 import { createElement } from '@wordpress/element';
 import { V6ExpressComponent } from '../../blocks/V6ExpressComponent';
@@ -118,6 +132,9 @@ beforeEach( () => {
 		onShippingAddressChange: jest.fn(),
 		onShippingOptionsChange: jest.fn(),
 	} );
+	capturedSaveSessionHandlers = null;
+	mockCreateFreeTrialPayPalSession.mockClear();
+	mockCreateVaultSetupToken.mockReset();
 
 	onPaymentSetup = jest.fn( ( cb ) => {
 		paymentSetupCb = cb;
@@ -640,5 +657,103 @@ describe( 'V6ExpressComponent', () => {
 
 		expect( second ).toHaveBeenCalledTimes( 1 );
 		expect( first ).not.toHaveBeenCalled();
+	} );
+
+	describe( 'free-trial ($0 subscription) cart', () => {
+		test( 'creates the save session instead of a one-time session for the paypal button', async () => {
+			renderComponent( {
+				config: { ...config, is_free_trial_cart: true },
+				fundingSource: 'paypal',
+			} );
+
+			await waitFor( () =>
+				expect( mockCreateFreeTrialPayPalSession ).toHaveBeenCalled()
+			);
+
+			expect( mockCreateSession ).not.toHaveBeenCalled();
+			expect( mockButtonContainer ).toHaveBeenCalled();
+			const props = mockButtonContainer.mock.calls.at( -1 )[ 0 ];
+			expect( props.session ).toEqual( { fake: 'save-session' } );
+		} );
+
+		test( "the button's createOrderFn requests a vault setup token instead of a paypal order", async () => {
+			renderComponent( {
+				config: { ...config, is_free_trial_cart: true },
+				fundingSource: 'paypal',
+			} );
+			await waitFor( () =>
+				expect( mockButtonContainer ).toHaveBeenCalled()
+			);
+
+			const props = mockButtonContainer.mock.calls.at( -1 )[ 0 ];
+			props.createOrderFn();
+
+			expect( mockCreateVaultSetupToken ).toHaveBeenCalledWith( {
+				...config,
+				is_free_trial_cart: true,
+			} );
+			expect( mockCreateOrder ).not.toHaveBeenCalled();
+		} );
+
+		test( 'submits the Blocks checkout once the exchanged setup token completes', async () => {
+			const onSubmit = jest.fn();
+
+			renderComponent( {
+				config: { ...config, is_free_trial_cart: true },
+				fundingSource: 'paypal',
+				onSubmit,
+			} );
+			await waitFor( () =>
+				expect( mockCreateFreeTrialPayPalSession ).toHaveBeenCalled()
+			);
+
+			capturedSaveSessionHandlers.onComplete();
+
+			expect( onSubmit ).toHaveBeenCalledTimes( 1 );
+		} );
+
+		test( 'releases the express UI through onError when the token exchange fails', async () => {
+			const onError = jest.fn();
+			const onClose = jest.fn();
+
+			renderComponent( {
+				config: { ...config, is_free_trial_cart: true },
+				fundingSource: 'paypal',
+				onError,
+				onClose,
+			} );
+			await waitFor( () =>
+				expect( mockCreateFreeTrialPayPalSession ).toHaveBeenCalled()
+			);
+
+			capturedSaveSessionHandlers.onError( new Error( 'exchange failed' ) );
+
+			expect( onError ).toHaveBeenCalledWith( 'exchange failed' );
+			expect( onClose ).toHaveBeenCalledTimes( 1 );
+		} );
+
+		test( 'creates the ordinary one-time session for a non-paypal funding source, even on a free-trial cart', async () => {
+			renderComponent( {
+				config: { ...config, is_free_trial_cart: true },
+				fundingSource: 'venmo',
+				activePaymentMethod: 'ppcp-gateway-venmo',
+			} );
+
+			await waitFor( () => expect( mockCreateSession ).toHaveBeenCalled() );
+
+			expect( mockCreateFreeTrialPayPalSession ).not.toHaveBeenCalled();
+		} );
+
+		test( 'creates the ordinary one-time session when the cart is not a free trial', async () => {
+			renderComponent();
+
+			await waitFor( () => expect( mockCreateSession ).toHaveBeenCalled() );
+
+			expect( mockCreateFreeTrialPayPalSession ).not.toHaveBeenCalled();
+			const props = mockButtonContainer.mock.calls.at( -1 )[ 0 ];
+			props.createOrderFn();
+			expect( mockCreateOrder ).toHaveBeenCalled();
+			expect( mockCreateVaultSetupToken ).not.toHaveBeenCalled();
+		} );
 	} );
 } );

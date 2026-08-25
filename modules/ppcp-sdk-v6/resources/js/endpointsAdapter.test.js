@@ -339,6 +339,25 @@ describe( 'approveOrder', () => {
 		);
 	} );
 
+	test( 'never requests a WC order for the card button, regardless of vaulting', async () => {
+		postJson.mockResolvedValueOnce( {} );
+
+		await approveOrder(
+			{ ...config, vaulting_enabled: true },
+			'product',
+			'card',
+			'ORDER1',
+			{},
+			'ppcp-card-button-gateway'
+		);
+
+		expect( postJson ).toHaveBeenCalledWith( config.ajax.approve_order, {
+			order_id: 'ORDER1',
+			funding_source: 'card',
+			should_create_wc_order: false,
+		} );
+	} );
+
 	test( 'does not request a WC order for Venmo when vaulting is enabled', async () => {
 		postJson.mockResolvedValueOnce( {} );
 
@@ -600,6 +619,39 @@ describe( 'approveOrder', () => {
 			} );
 			expect(
 				document.querySelector( '#payment_method_ppcp-gateway' ).checked
+			).toBe( true );
+			expect( trigger ).toHaveBeenCalledWith( 'submit' );
+
+			delete global.jQuery;
+		} );
+
+		test( "ticks the card button gateway's own radio, not the default PayPal gateway selector", async () => {
+			postJson.mockResolvedValueOnce( {} );
+			// No #payment_method_ppcp-gateway element exists, so a fallback to
+			// the default selector would leave the radio unticked.
+			document.body.innerHTML =
+				'<form id="order_review">' +
+				'<input type="radio" id="payment_method_ppcp-card-button-gateway" /></form>';
+			const trigger = jest.fn();
+			global.jQuery = jest.fn( ( selector ) =>
+				typeof selector === 'string'
+					? { length: 1, trigger }
+					: { trigger }
+			);
+
+			await approveOrder(
+				config,
+				'pay-now',
+				'card',
+				'ORDER3',
+				{},
+				'ppcp-card-button-gateway'
+			);
+
+			expect(
+				document.querySelector(
+					'#payment_method_ppcp-card-button-gateway'
+				).checked
 			).toBe( true );
 			expect( trigger ).toHaveBeenCalledWith( 'submit' );
 

@@ -291,7 +291,13 @@ describe( 'watchSheetTotal()', () => {
 			expect( mockSimulateCart ).toHaveBeenCalledTimes( 1 );
 		} );
 
-		test( "a form change refreshes whichever watcher is current, leaving an earlier render's watcher untouched", async () => {
+		// Sharing is deliberate, not a regression: Apple Pay and Pay Later
+		// messaging both watch the same 'product' context, and a shopper who
+		// changes quantity or variation must not have the two surfaces report
+		// different totals for the one product they are looking at. A watcher
+		// obtained by an earlier render is not a frozen snapshot — it reads
+		// the same context state a later render's watcher does.
+		test( 'a form change refreshes the total shared by every watcher on the context, so none of them disagrees with another', async () => {
 			const form = renderProductForm();
 			mockSimulateCart
 				.mockResolvedValueOnce( { total: '10.00' } )
@@ -303,12 +309,15 @@ describe( 'watchSheetTotal()', () => {
 			const secondWatcher = watchSheetTotal( config(), 'product' );
 			await flushPromises();
 
+			expect( firstWatcher.get() ).toBe( '20.00' );
+			expect( secondWatcher.get() ).toBe( '20.00' );
+
 			form.dispatchEvent( new Event( 'change' ) );
 			await jest.advanceTimersByTimeAsync( DEBOUNCE_MS );
 			await flushPromises();
 
+			expect( firstWatcher.get() ).toBe( '40.00' );
 			expect( secondWatcher.get() ).toBe( '40.00' );
-			expect( firstWatcher.get() ).toBe( '10.00' );
 		} );
 	} );
 } );

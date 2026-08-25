@@ -197,6 +197,42 @@ class ApproveSubscriptionEndpointTest extends TestCase
 	}
 
 	/**
+	 * GIVEN a valid subscription whose subscriber has a resolved payer id
+	 * WHEN the order fetched for the same order_id has no resolved payer id yet
+	 * THEN the order is still approved, because an absent payer id on the order cannot
+	 *      be compared and the subscription is already bound to this session
+	 */
+	public function test_order_with_empty_payer_id_is_still_approved(): void
+	{
+		$session_id   = 'shopper-session';
+		$subscription = $this->subscription( $session_id, 'PAYER-A' );
+
+		// The order's payer id is not resolved yet, but the order is bound to this session.
+		$order = $this->order_with_payer( '', 'pcp_customer_' . $session_id );
+
+		$this->request_data->shouldReceive( 'read_request' )
+			->with( ApproveSubscriptionEndpoint::nonce() )
+			->andReturn(
+				array(
+					'order_id'        => 'VALID-ORDER',
+					'subscription_id' => 'SUB-1',
+				)
+			);
+		$this->billing_subscriptions->shouldReceive( 'subscription' )->with( 'SUB-1' )->andReturn( $subscription );
+		$this->subscription_helper->shouldReceive( 'paypal_subscription_variation_from_cart' )->andReturn( '' );
+		$this->subscription_helper->shouldReceive( 'paypal_subscription_id' )->andReturn( 'PLAN-1' );
+		$this->order_endpoint->shouldReceive( 'order' )->with( 'VALID-ORDER' )->andReturn( $order );
+		$this->session_handler->shouldReceive( 'replace_order' )->once()->with( $order );
+		$this->context->shouldReceive( 'is_checkout' )->andReturn( true );
+
+		$this->mock_wc_session( $session_id );
+		expect( 'wp_send_json_success' )->once();
+		expect( 'wp_send_json_error' )->never();
+
+		$this->sut->handle_request();
+	}
+
+	/**
 	 * Builds a PayPal subscription stdClass bound to the given session and subscriber.
 	 */
 	private function subscription( string $session_id, string $payer_id ): \stdClass
