@@ -24,6 +24,7 @@ use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ModuleClassNameI
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ServiceModule;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\Webhook;
 use WooCommerce\PayPalCommerce\Webhooks\WebhookEventStorage;
 
 /**
@@ -31,6 +32,11 @@ use WooCommerce\PayPalCommerce\Webhooks\WebhookEventStorage;
  */
 class StatusReportModule implements ServiceModule, ExecutableModule {
 	use ModuleClassNameIdTrait;
+
+	/**
+	 * Transient key caching the live PayPal-side registered webhooks for the status page.
+	 */
+	private const REGISTERED_WEBHOOKS_TRANSIENT = 'ppcp-status-registered-webhooks';
 
 	/**
 	 * {@inheritDoc}
@@ -136,6 +142,12 @@ class StatusReportModule implements ServiceModule, ExecutableModule {
 						'exported_label' => 'Webhook status',
 						'description'    => esc_html__( 'Whether we received webhooks successfully.', 'woocommerce-paypal-payments' ),
 						'value'          => $this->bool_to_html( ! $last_webhook_storage->is_empty() ),
+					),
+					array(
+						'label'          => esc_html__( 'Webhook delivery host', 'woocommerce-paypal-payments' ),
+						'exported_label' => 'Webhook delivery host',
+						'description'    => esc_html__( 'Whether PayPal delivers webhooks to this site or to a different host.', 'woocommerce-paypal-payments' ),
+						'value'          => $this->webhook_delivery_host_status( $this->registered_webhooks( $c, $is_connected ) ),
 					),
 					array(
 						'label'          => esc_html__( 'PayPal Vault enabled', 'woocommerce-paypal-payments' ),
@@ -281,5 +293,103 @@ class StatusReportModule implements ServiceModule, ExecutableModule {
 		return $value
 			? '<mark class="yes"><span class="dashicons dashicons-yes"></span></mark>'
 			: '<mark class="no">&ndash;</mark>';
+	}
+
+	/**
+	 * Fetches the live PayPal-side registered webhooks, cached behind a short transient.
+	 *
+	 * The 'webhook.status.registered-webhooks' factory is non-shared and performs a live
+	 * PayPal API call on every resolution, so the result is cached briefly to avoid an
+	 * extra request each time the status page is rendered. Any failure degrades to an
+	 * empty list so the status page never fatals.
+	 *
+	 * @param ContainerInterface $c            The services container.
+	 * @param bool               $is_connected Whether onboarding is complete.
+	 * @return Webhook[]
+	 */
+	private function registered_webhooks( ContainerInterface $c, bool $is_connected ): array {
+		if ( ! $is_connected ) {
+			return array();
+		}
+
+		$cached = get_transient( self::REGISTERED_WEBHOOKS_TRANSIENT );
+		if ( is_array( $cached ) ) {
+			return $cached;
+		}
+
+		try {
+			$webhooks = $c->get( 'webhook.status.registered-webhooks' );
+		} catch ( \Throwable $exception ) {
+			return array();
+		}
+
+		$webhooks = is_array( $webhooks )
+			? array_values( array_filter( $webhooks, fn( $webhook ) => $webhook instanceof Webhook ) )
+			: array();
+
+		set_transient( self::REGISTERED_WEBHOOKS_TRANSIENT, $webhooks, 5 * MINUTE_IN_SECONDS );
+
+		return $webhooks;
+	}
+
+	/**
+	 * Reports whether PayPal's registered webhook points at this site.
+	 *
+	 * Compares each registered webhook's host against this site's host. When they
+	 * differ, webhook events are being delivered elsewhere - typically a staging or dev
+	 * clone connected to the same PayPal account - which the "Webhook status" row above
+	 * cannot detect.
+	 *
+	 * @param Webhook[] $registered_webhooks The live PayPal-side registered webhooks.
+	 * @return string
+	 */
+	private function webhook_delivery_host_status( array $registered_webhooks ): string {
+		$site_host = $this->normalized_host( home_url() );
+
+		$foreign_hosts = array();
+		foreach ( $registered_webhooks as $webhook ) {
+			if ( ! $webhook instanceof Webhook ) {
+				continue;
+			}
+
+			$webhook_host = $this->normalized_host( $webhook->url() );
+			if ( '' === $webhook_host ) {
+				continue;
+			}
+
+			if ( $webhook_host === $site_host ) {
+				return $this->bool_to_html( true );
+			}
+
+			$foreign_hosts[ $webhook_host ] = $webhook_host;
+		}
+
+		if ( array() === $foreign_hosts ) {
+			return $this->bool_to_html( false );
+		}
+
+		return sprintf(
+			'<mark class="error"><span class="dashicons dashicons-warning"></span> %s</mark>',
+			esc_html(
+				sprintf(
+					/* translators: 1: host(s) receiving the webhooks, 2: this site's host. */
+					__( 'Delivered to %1$s (this site: %2$s)', 'woocommerce-paypal-payments' ),
+					implode( ', ', $foreign_hosts ),
+					$site_host
+				)
+			)
+		);
+	}
+
+	/**
+	 * Extracts the lower-cased host from a URL, or an empty string when it cannot be parsed.
+	 *
+	 * @param string $url The URL to extract the host from.
+	 * @return string
+	 */
+	private function normalized_host( string $url ): string {
+		$host = wp_parse_url( $url, PHP_URL_HOST );
+
+		return is_string( $host ) ? strtolower( $host ) : '';
 	}
 }
