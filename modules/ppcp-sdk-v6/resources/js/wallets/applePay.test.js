@@ -139,7 +139,7 @@ const baseConfig = ( overrides = {} ) => ( {
 } );
 
 const applePayConfig = ( overrides = {} ) => ( {
-	merchantCountry: 'US',
+	countryCode: 'US',
 	merchantCapabilities: [ 'supports3DS' ],
 	supportedNetworks: [ 'visa' ],
 	...overrides,
@@ -148,9 +148,6 @@ const applePayConfig = ( overrides = {} ) => ( {
 function makeSession( overrides = {} ) {
 	return {
 		config: jest.fn().mockResolvedValue( applePayConfig() ),
-		formatConfigForPaymentRequest: jest
-			.fn()
-			.mockReturnValue( 'FORMATTED_CONFIG' ),
 		validateMerchant: jest
 			.fn()
 			.mockResolvedValue( { merchantSession: 'MERCHANT_SESSION' } ),
@@ -294,19 +291,6 @@ describe( 'renderApplePay()', () => {
 		} );
 
 		expect( wrapper.childElementCount ).toBe( 1 );
-	} );
-
-	test( 'asks the session to translate the resolved config for the payment request', async () => {
-		const config = applePayConfig( { merchantCountry: 'DE' } );
-		const session = makeSession( {
-			config: jest.fn().mockResolvedValue( config ),
-		} );
-
-		await render( { session } );
-
-		expect( session.formatConfigForPaymentRequest ).toHaveBeenCalledWith(
-			config
-		);
 	} );
 
 	test( 'renders nothing when the config explicitly sets isEligible to false', async () => {
@@ -460,21 +444,30 @@ describe( 'a click on the rendered button', () => {
 		expect( appleSession.begin ).toHaveBeenCalledTimes( 1 );
 	} );
 
-	test( 'builds the request from the version, the formatted config and the resolved total', async () => {
-		const config = baseConfig();
+	test( 'builds the request from the version, the resolved Apple Pay config and the resolved total', async () => {
+		const config = baseConfig( { merchant_country: 'DE' } );
+		const resolvedConfig = applePayConfig();
+		const session = makeSession( {
+			config: jest.fn().mockResolvedValue( resolvedConfig ),
+		} );
 		const sheetTotal = { get: jest.fn( () => '42.00' ) };
 		mockWatchSheetTotal.mockReturnValue( sheetTotal );
 
-		const { wrapper } = await render( { config, context: 'checkout' } );
+		const { wrapper } = await render( {
+			config,
+			context: 'checkout',
+			session,
+		} );
 		wrapper.querySelector( 'apple-pay-button' ).click();
 
 		expect( mockBuildApplePayRequest ).toHaveBeenCalledWith(
-			'FORMATTED_CONFIG',
+			resolvedConfig,
 			{
+				// The builder decides which country wins; see its own suite.
+				countryCode: config.merchant_country,
 				currencyCode: config.currency,
 				total: '42.00',
 				displayName: config.apple_pay.display_name,
-				context: 'checkout',
 				requiresShipping: false,
 			}
 		);
@@ -491,7 +484,7 @@ describe( 'a click on the rendered button', () => {
 		wrapper.querySelector( 'apple-pay-button' ).click();
 
 		expect( mockBuildApplePayRequest ).toHaveBeenCalledWith(
-			'FORMATTED_CONFIG',
+			expect.anything(),
 			expect.objectContaining( { requiresShipping: true } )
 		);
 	} );

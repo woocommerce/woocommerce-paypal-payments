@@ -10,31 +10,36 @@ export const APPLE_PAY_VERSION = 4;
 /**
  * Builds the ApplePayPaymentRequest.
  *
- * On classic checkout the shopper already typed an address into the WC form, so
- * the sheet does not ask for it a second time. Apple never returns a billing email
+ * The postal address is asked for only where the sheet prices shipping with it;
+ * everywhere else the page already holds one. Apple never returns a billing email
  * or phone, hence postalAddress alone for billing — walletContacts.js backfills the
  * email from the shipping contact.
  *
- * @param {Object}  sessionConfig                  - The v6 session config, as returned
- *                                                   by formatConfigForPaymentRequest().
+ * Built from PayPal's Apple Pay config exactly as it arrives, never from
+ * formatConfigForPaymentRequest(): that helper lowercases the merchant
+ * capabilities, and ApplePayMerchantCapability is a case-sensitive enum, so
+ * "supports3ds" makes the session constructor throw before any sheet appears.
+ * v5 reads the raw config for the same three fields.
+ *
+ * @param {Object}  applePayConfig                 - PayPal's Apple Pay config, as
+ *                                                   returned by session.config().
  * @param {Object}  transaction                    - What the shopper is about to pay.
+ * @param {string}  transaction.countryCode        - The merchant's country.
  * @param {string}  transaction.currencyCode       - The shop currency.
  * @param {string}  transaction.total              - The total as a decimal string.
  * @param {string}  transaction.displayName        - The shop name, labelling the total.
- * @param {string}  transaction.context            - The page context.
  * @param {boolean} [transaction.requiresShipping] - Whether to collect shipping
  *                                                   in the sheet.
  * @return {Object} The ApplePayPaymentRequest.
  */
 export function buildApplePayRequest(
-	sessionConfig,
-	{ currencyCode, total, displayName, context, requiresShipping = false }
+	applePayConfig,
+	{ countryCode, currencyCode, total, displayName, requiresShipping = false }
 ) {
 	const request = {
-		// The session config calls this one merchantCountry.
-		countryCode: sessionConfig.merchantCountry,
-		merchantCapabilities: sessionConfig.merchantCapabilities,
-		supportedNetworks: sessionConfig.supportedNetworks,
+		countryCode: applePayConfig.countryCode || countryCode,
+		merchantCapabilities: applePayConfig.merchantCapabilities,
+		supportedNetworks: applePayConfig.supportedNetworks,
 		currencyCode,
 		total: {
 			label: displayName,
@@ -42,10 +47,9 @@ export function buildApplePayRequest(
 			amount: total,
 		},
 		requiredBillingContactFields: [ 'postalAddress' ],
-		requiredShippingContactFields:
-			'checkout' === context
-				? [ 'email', 'phone' ]
-				: [ 'postalAddress', 'email', 'phone' ],
+		requiredShippingContactFields: requiresShipping
+			? [ 'postalAddress', 'email', 'phone' ]
+			: [ 'email', 'phone' ],
 	};
 
 	if ( requiresShipping ) {

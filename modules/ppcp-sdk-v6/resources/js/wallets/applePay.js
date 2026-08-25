@@ -92,11 +92,6 @@ export async function renderApplePay( {
 		return;
 	}
 
-	// Lowercases the networks and camelCases the capabilities into the spellings
-	// Apple's payment request expects.
-	const sessionConfig =
-		session.formatConfigForPaymentRequest( applePayConfig );
-
 	revealWalletGateway( gateway, config );
 
 	const sheetTotal = watchSheetTotal( config, context );
@@ -128,19 +123,22 @@ export async function renderApplePay( {
 
 		paying = true;
 
+		const request = buildApplePayRequest( applePayConfig, {
+			// Stands in when PayPal's config carries no country of its own.
+			countryCode: config.merchant_country,
+			currencyCode: config.currency,
+			total,
+			displayName: settings.display_name,
+			requiresShipping,
+		} );
+
 		// Apple rejects a malformed request (currency, supportedNetworks) by
 		// throwing synchronously, so `paying` must be released here or the
 		// button would silently ignore every later tap.
 		try {
 			const appleSession = new window.ApplePaySession(
 				APPLE_PAY_VERSION,
-				buildApplePayRequest( sessionConfig, {
-					currencyCode: config.currency,
-					total,
-					displayName: settings.display_name,
-					context,
-					requiresShipping,
-				} )
+				request
 			);
 
 			if ( requiresShipping ) {
