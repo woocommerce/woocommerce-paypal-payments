@@ -404,7 +404,14 @@ class SdkV6Module implements ServiceModule, ExtendingModule, ExecutableModule {
 				'woocommerce_paypal_payments_pay_order_renderer_hook',
 				'woocommerce_pay_order_after_submit'
 			);
-			add_action( $hook, static fn() => $manager->render_wrapper(), 20 );
+			add_action(
+				$hook,
+				static function () use ( $manager ): void {
+					$manager->render_wrapper();
+					$manager->render_wallet_gateway_wrappers();
+				},
+				20
+			);
 		}
 
 		if ( $places['mini-cart'] ) {

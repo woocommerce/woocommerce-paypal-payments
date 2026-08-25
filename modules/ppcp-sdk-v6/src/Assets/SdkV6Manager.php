@@ -51,6 +51,11 @@ class SdkV6Manager {
 	 */
 	public const PAYMENT_BUTTON_HEIGHT = '48px';
 
+	/**
+	 * The contexts that print a payment-method radio list a wallet can own a row in.
+	 */
+	private const CONTEXTS_WITH_GATEWAY_ROWS = array( 'checkout', 'pay-now' );
+
 	// Existing WC credit-card-form field IDs (see CardFieldsModule's
 	// woocommerce_credit_card_form_fields filter and WC core's own
 	// card-number/expiry/cvc fields) that the v6 card fields mount into,
@@ -275,9 +280,7 @@ class SdkV6Manager {
 	/**
 	 * Whether a wallet renders as its own payment-method row.
 	 *
-	 * True only on classic checkout with the gateway actually available: the
-	 * other contexts have no payment-method list, and the block checkout
-	 * registers its methods through the block registry instead.
+	 * True only where there is a list to join and the gateway is available there.
 	 *
 	 * Only the gateway walk is memoized, never a refusal from the context check,
 	 * so a call made before the context resolves cannot poison the answer. The
@@ -289,7 +292,7 @@ class SdkV6Manager {
 			return $wallet->is_gateway;
 		}
 
-		if ( 'checkout' !== $this->get_page_context() || $this->is_block_context() ) {
+		if ( ! in_array( $this->get_page_context(), self::CONTEXTS_WITH_GATEWAY_ROWS, true ) || $this->is_block_context() ) {
 			return false;
 		}
 
