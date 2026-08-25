@@ -28,7 +28,17 @@ So everything the sheet shows is taxed on the **shipping** address. The billing 
 
 We chose to let WooCommerce price the order normally and reconcile afterwards, rather than force the wallet's billing country onto the order. Anyone tempted by the other route should know it was considered and rejected.
 
-## What happens when the real tax differs
+### Which stores this affects
+
+Only one of WooCommerce's three tax settings is affected. [`record_tax_basis()`](https://github.com/woocommerce/woocommerce-paypal-payments/blob/dev/develop/modules/ppcp-sdk-v6/src/Endpoint/WalletShippingEndpoint.php) returns early unless the store taxes on billing, because in the other two cases the sheet already has everything the calculation needs.
+
+| `woocommerce_tax_based_on`                     | Wallet impact                                                              |
+|------------------------------------------------|----------------------------------------------------------------------------|
+| Customer shipping address                      | None. The sheet collects that address, so the first quote is already right |
+| Customer billing address (WooCommerce default) | Estimated from the shipping address, then reconciled at authorization      |
+| Shop base address                              | None. The basis never depends on the buyer                                 |
+
+### What happens when the real tax differs
 
 At authorization [`commit()`](https://github.com/woocommerce/woocommerce-paypal-payments/blob/dev/develop/modules/ppcp-sdk-v6/resources/js/wallets/walletShipping.js) re-prices the payment on the addresses the order will actually use, and sends along the total the sheet displayed. [`WalletShippingEndpoint`](https://github.com/woocommerce/woocommerce-paypal-payments/blob/dev/develop/modules/ppcp-sdk-v6/src/Endpoint/WalletShippingEndpoint.php) compares them, so there is nothing in the browser to bypass.
 
@@ -46,15 +56,15 @@ The refusal message leads with the fact that no money moved:
 
 **The refusal is self-correcting.** [`RecordedTaxBasis`](https://github.com/woocommerce/woocommerce-paypal-payments/blob/dev/develop/modules/ppcp-sdk-v6/src/Helper/RecordedTaxBasis.php) is written before the payment is refused, so the next attempt's very first quote is priced on the real billing basis and the sheet shows the correct total from the start. A buyer who retries is expected to succeed, and support can say "try once more" with confidence.
 
-## Feedback on a reduced total
+### Feedback on a reduced total
 
 A payment that came out lower than quoted leaves a trail in two places, both from [`RecordedQuote`](https://github.com/woocommerce/woocommerce-paypal-payments/blob/dev/develop/modules/ppcp-sdk-v6/src/Helper/RecordedQuote.php).
 
-The merchant gets a private order note, and the sheet's total is kept in order meta `_ppcp_wallet_quoted_total`:
+**The merchant** gets a private order note, and the sheet's total is kept in order meta `_ppcp_wallet_quoted_total`:
 
 > The wallet payment sheet showed €52.10 and this order totals €48.30. The sheet estimated tax from the shipping address; the final amount uses the card's billing address.
 
-The buyer gets a sentence appended to the order-received text:
+**The buyer** gets a sentence appended to the order-received text:
 
 > You saved €3.80. We estimated €52.10 at checkout, but the tax for your billing address is lower, so your actual charge is €48.30.
 
@@ -93,3 +103,7 @@ A recorded decision must never affect anything but the wallet payment that creat
 | `resources/js/wallets/walletContacts.js`    | Wallet contacts mapped to WooCommerce address fields     |
 | `resources/js/wallets/applePayShipping.js`  | Apple sheet protocol only                                |
 | `resources/js/wallets/googlePayShipping.js` | Google sheet protocol only                               |
+
+---
+
+Related: [Wallets (Overview)](wallets.md)
