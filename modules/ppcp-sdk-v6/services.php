@@ -17,10 +17,14 @@ use WooCommerce\PayPalCommerce\SdkV6\Assets\SdkV6Manager;
 use WooCommerce\PayPalCommerce\SdkV6\Blocks\V6PaymentMethod;
 use WooCommerce\PayPalCommerce\SdkV6\Endpoint\ClientTokenEndpoint;
 use WooCommerce\PayPalCommerce\SdkV6\Endpoint\SimulateCartEndpoint;
+use WooCommerce\PayPalCommerce\SdkV6\Endpoint\WalletShippingEndpoint;
 use WooCommerce\PayPalCommerce\SdkV6\Helper\ApplePayConfig;
 use WooCommerce\PayPalCommerce\SdkV6\Helper\ButtonStyleMapper;
+use WooCommerce\PayPalCommerce\SdkV6\Helper\RecordedShippingRate;
 use WooCommerce\PayPalCommerce\SdkV6\Helper\GooglePayConfig;
 use WooCommerce\PayPalCommerce\SdkV6\Helper\RateLimiter;
+use WooCommerce\PayPalCommerce\SdkV6\Helper\RecordedQuote;
+use WooCommerce\PayPalCommerce\SdkV6\Helper\RecordedTaxBasis;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 
 /**
@@ -161,6 +165,29 @@ return array(
 			$container->get( 'order-endpoints.request-data' ),
 			$container->get( 'order-endpoints.helper.cart-products' ),
 			$container->get( 'button.helper.isolated-cart-simulator' ),
+			$container->get( 'woocommerce.logger.woocommerce' )
+		);
+	},
+
+	'sdk-v6.recorded-shipping-rate'     => static function (): RecordedShippingRate {
+		return new RecordedShippingRate();
+	},
+
+	'sdk-v6.recorded-tax-basis'         => static function (): RecordedTaxBasis {
+		return new RecordedTaxBasis();
+	},
+
+	'sdk-v6.recorded-quote'             => static function (): RecordedQuote {
+		return new RecordedQuote();
+	},
+
+	'sdk-v6.endpoint.wallet-shipping'   => static function ( ContainerInterface $container ): WalletShippingEndpoint {
+		return new WalletShippingEndpoint(
+			$container->get( 'order-endpoints.request-data' ),
+			$container->get( 'api.factory.amount' ),
+			$container->get( 'sdk-v6.recorded-shipping-rate' ),
+			$container->get( 'sdk-v6.recorded-tax-basis' ),
+			$container->get( 'sdk-v6.recorded-quote' ),
 			$container->get( 'woocommerce.logger.woocommerce' )
 		);
 	},

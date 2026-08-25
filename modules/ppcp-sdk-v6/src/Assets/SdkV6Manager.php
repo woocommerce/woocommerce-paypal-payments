@@ -22,6 +22,7 @@ use WooCommerce\PayPalCommerce\Button\Helper\Context;
 use WooCommerce\PayPalCommerce\Googlepay\GooglePayGateway;
 use WooCommerce\PayPalCommerce\SdkV6\Endpoint\ClientTokenEndpoint;
 use WooCommerce\PayPalCommerce\SdkV6\Endpoint\SimulateCartEndpoint;
+use WooCommerce\PayPalCommerce\SdkV6\Endpoint\WalletShippingEndpoint;
 use WooCommerce\PayPalCommerce\SdkV6\Helper\ApplePayConfig;
 use WooCommerce\PayPalCommerce\SdkV6\Helper\ButtonStyleMapper;
 use WooCommerce\PayPalCommerce\SdkV6\Helper\GooglePayConfig;
@@ -466,6 +467,10 @@ class SdkV6Manager {
 				'simulate_cart'   => array(
 					'endpoint' => \WC_AJAX::get_endpoint( SimulateCartEndpoint::ENDPOINT ),
 					'nonce'    => wp_create_nonce( SimulateCartEndpoint::nonce() ),
+				),
+				'wallet_shipping' => array(
+					'endpoint' => \WC_AJAX::get_endpoint( WalletShippingEndpoint::ENDPOINT ),
+					'nonce'    => wp_create_nonce( WalletShippingEndpoint::nonce() ),
 				),
 				'create_order'    => array(
 					'endpoint' => \WC_AJAX::get_endpoint( CreateOrderEndpoint::ENDPOINT ),

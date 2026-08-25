@@ -15,6 +15,7 @@ use WooCommerce\PayPalCommerce\SdkV6\Assets\AddPaymentMethodManager;
 use WooCommerce\PayPalCommerce\SdkV6\Assets\SdkV6Manager;
 use WooCommerce\PayPalCommerce\SdkV6\Endpoint\ClientTokenEndpoint;
 use WooCommerce\PayPalCommerce\SdkV6\Endpoint\SimulateCartEndpoint;
+use WooCommerce\PayPalCommerce\SdkV6\Endpoint\WalletShippingEndpoint;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExecutableModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExtendingModule;
@@ -52,6 +53,16 @@ class SdkV6Module implements ServiceModule, ExtendingModule, ExecutableModule {
 			static function () use ( $c ) {
 				$endpoint = $c->get( 'sdk-v6.endpoint.simulate-cart' );
 				assert( $endpoint instanceof SimulateCartEndpoint );
+
+				$endpoint->handle_request();
+			}
+		);
+
+		add_action(
+			'wc_ajax_' . WalletShippingEndpoint::ENDPOINT,
+			static function () use ( $c ) {
+				$endpoint = $c->get( 'sdk-v6.endpoint.wallet-shipping' );
+				assert( $endpoint instanceof WalletShippingEndpoint );
 
 				$endpoint->handle_request();
 			}
