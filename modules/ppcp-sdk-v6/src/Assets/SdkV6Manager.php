@@ -19,12 +19,18 @@ use WooCommerce\PayPalCommerce\OrderEndpoints\Endpoint\CreateOrderEndpoint;
 use WooCommerce\PayPalCommerce\Button\Endpoint\GetOrderEndpoint;
 use WooCommerce\PayPalCommerce\Button\Helper\Context;
 use WooCommerce\PayPalCommerce\Googlepay\GooglePayGateway;
+use WooCommerce\PayPalCommerce\SavePaymentMethods\Endpoint\CreatePaymentToken;
+use WooCommerce\PayPalCommerce\SavePaymentMethods\Endpoint\CreatePaymentTokenForGuest;
+use WooCommerce\PayPalCommerce\SavePaymentMethods\Endpoint\CreateSetupToken;
 use WooCommerce\PayPalCommerce\SdkV6\Endpoint\ClientTokenEndpoint;
 use WooCommerce\PayPalCommerce\SdkV6\Endpoint\SimulateCartEndpoint;
 use WooCommerce\PayPalCommerce\SdkV6\Helper\ApplePayConfig;
 use WooCommerce\PayPalCommerce\SdkV6\Helper\ButtonStyleMapper;
 use WooCommerce\PayPalCommerce\SdkV6\Helper\CardFieldStyles;
+use WooCommerce\PayPalCommerce\SdkV6\Helper\FastlaneConfig;
 use WooCommerce\PayPalCommerce\SdkV6\Helper\GooglePayConfig;
+use WooCommerce\PayPalCommerce\SdkV6\Helper\MessagesEligibility;
+use WooCommerce\PayPalCommerce\SdkV6\Helper\MessageStyleMapper;
 use WooCommerce\PayPalCommerce\Session\Cancellation\CancelController;
 use WooCommerce\PayPalCommerce\Session\Cancellation\CancelView;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
@@ -33,6 +39,7 @@ use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\CardPaymentsConfiguration;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\SettingsStatus;
+use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\FreeTrialSubscriptionHelper;
 use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
 
 class SdkV6Manager {
@@ -50,6 +57,10 @@ class SdkV6Manager {
 	 * DTOs carry no height of their own (see ButtonStyleMapper).
 	 */
 	public const PAYMENT_BUTTON_HEIGHT = '48px';
+
+	// The pay-for-order page has no pre-payment hook, so the message renders
+	// after the submit button and is relocated by SdkV6Module.
+	public const PAY_ORDER_MESSAGE_HOOK = 'woocommerce_pay_order_before_submit';
 
 	// Existing WC credit-card-form field IDs the v6 card fields mount into; see
 	// CardFieldsModule's woocommerce_credit_card_form_fields filter.
@@ -72,6 +83,19 @@ class SdkV6Manager {
 	private CardPaymentsConfiguration $card_payments_configuration;
 	private bool $card_vaulting_enabled;
 	private SubscriptionHelper $subscription_helper;
+	private FreeTrialSubscriptionHelper $free_trial_helper;
+
+	/**
+	 * Resolves the current subscriptions mode ('subscriptions_api',
+	 * 'vaulting_api', …). Native PayPal Subscriptions run in 'subscriptions_api'.
+	 *
+	 * @var callable():string
+	 */
+	private $get_subscriptions_mode;
+
+	private string $three_d_secure_contingency;
+	private MessageStyleMapper $message_style_mapper;
+	private MessagesEligibility $messages_eligibility;
 	private string $merchant_country;
 
 	/**
@@ -87,6 +111,7 @@ class SdkV6Manager {
 	 */
 	private ApplePayConfig $apple_pay_config;
 
+	private FastlaneConfig $fastlane_config;
 	private CardFieldStyles $card_field_styles;
 
 	/**
@@ -119,10 +144,16 @@ class SdkV6Manager {
 		CardPaymentsConfiguration $card_payments_configuration,
 		bool $card_vaulting_enabled,
 		SubscriptionHelper $subscription_helper,
+		FreeTrialSubscriptionHelper $free_trial_helper,
+		callable $get_subscriptions_mode,
+		string $three_d_secure_contingency,
 		array $credit_card_icons,
+		MessageStyleMapper $message_style_mapper,
+		MessagesEligibility $messages_eligibility,
 		string $merchant_country,
 		GooglePayConfig $google_pay_config,
 		ApplePayConfig $apple_pay_config,
+		FastlaneConfig $fastlane_config,
 		CardFieldStyles $card_field_styles
 	) {
 		$this->asset_getter                = $asset_getter;
@@ -139,9 +170,15 @@ class SdkV6Manager {
 		$this->card_payments_configuration = $card_payments_configuration;
 		$this->card_vaulting_enabled       = $card_vaulting_enabled;
 		$this->subscription_helper         = $subscription_helper;
+		$this->free_trial_helper           = $free_trial_helper;
+		$this->get_subscriptions_mode      = $get_subscriptions_mode;
+		$this->three_d_secure_contingency  = $three_d_secure_contingency;
 		$this->credit_card_icons           = $credit_card_icons;
+		$this->message_style_mapper        = $message_style_mapper;
+		$this->messages_eligibility        = $messages_eligibility;
 		$this->merchant_country            = $merchant_country;
 		$this->apple_pay_config            = $apple_pay_config;
+		$this->fastlane_config             = $fastlane_config;
 		$this->card_field_styles           = $card_field_styles;
 
 		$this->wallets = array(
@@ -186,11 +223,13 @@ class SdkV6Manager {
 			return;
 		}
 
+		$asset = $this->asset_getter->get_asset_data( 'boot.js', $this->version );
+
 		wp_register_script(
 			'wc-ppcp-sdk-v6-boot',
 			$script_url,
-			array(),
-			$this->version,
+			$asset['dependencies'],
+			$asset['version'],
 			true
 		);
 
@@ -206,13 +245,26 @@ class SdkV6Manager {
 	/**
 	 * Determines which button locations should render on the current page.
 	 *
+	 * Expects Context::init_context() to have run, so that is_cart() and
+	 * is_checkout() resolve on classic-shortcode block pages.
+	 *
 	 * @return array<string, bool> Location => enabled (product, cart, checkout, pay-now, mini-cart).
 	 */
 	public function determine_render_places(): array {
-		// Activates is_cart()/is_checkout() on classic-shortcode block pages,
-		// which otherwise only happens as a side effect of constructing the
-		// (discarded) v5 SmartButton.
-		$this->context->init_context();
+		// Native PayPal Subscriptions defer to v5 (see should_load_on_current_page);
+		// print no v6 wrappers so the classic page hands off cleanly. These render
+		// hooks key on the smart-button locations rather than that method, so they
+		// need this guard explicitly. Every location is returned false (rather than
+		// an empty array) to keep the array shape callers index into.
+		if ( $this->is_native_paypal_subscription_page() ) {
+			return array(
+				'product'   => false,
+				'cart'      => false,
+				'checkout'  => false,
+				'pay-now'   => false,
+				'mini-cart' => false,
+			);
+		}
 
 		$needs_payment = $this->cart_needs_payment();
 
@@ -368,9 +420,20 @@ class SdkV6Manager {
 	 *
 	 * Each card surface gets its own OR'd condition rather than folding into the
 	 * location check, because a card gateway is a regular WC payment method that
-	 * can be selectable at checkout with the smart button disabled there.
+	 * can be selectable at checkout with the smart button disabled there. Pay
+	 * Later messaging is another such condition: it can claim a classic page
+	 * where nothing else here would.
 	 */
 	public function should_load_on_current_page(): bool {
+		// Native PayPal Subscriptions (subscriptions_api mode) have no v6 path — v6
+		// can only carry a subscription by vaulting, which that mode disables. Hand
+		// the whole page back to the v5 stack, which creates the subscription via
+		// actions.subscription.create. Checked before every other gate so it also
+		// overrides the sitewide mini-cart fallback below.
+		if ( $this->is_native_paypal_subscription_page() ) {
+			return false;
+		}
+
 		$page_location = $this->get_page_context();
 		if ( $page_location && $this->settings_status->is_smart_button_enabled_for_location( $page_location ) ) {
 			return true;
@@ -388,7 +451,15 @@ class SdkV6Manager {
 			return true;
 		}
 
+		if ( $this->should_load_messages() ) {
+			return true;
+		}
+
 		if ( $page_location && $this->any_wallet_renders( $page_location ) ) {
+			return true;
+		}
+
+		if ( $this->is_fastlane_enabled( $page_location ) ) {
 			return true;
 		}
 
@@ -465,6 +536,42 @@ class SdkV6Manager {
 	}
 
 	/**
+	 * Whether the current page involves a native PayPal Subscription that the v5
+	 * stack must handle: subscriptions_api mode with a subscription in the current
+	 * context. v6 has no native-subscription flow (it can only carry a subscription
+	 * by vaulting, which this mode disables), so it defers the page to v5.
+	 */
+	private function is_native_paypal_subscription_page(): bool {
+		if ( SubscriptionHelper::SUBSCRIPTION_MODE_VALUE_SUBSCRIPTIONS !== ( $this->get_subscriptions_mode )() ) {
+			return false;
+		}
+
+		return $this->subscription_helper->current_product_is_subscription()
+			|| $this->subscription_helper->cart_contains_subscription()
+			|| $this->subscription_helper->order_pay_contains_subscription();
+	}
+
+	/**
+	 * Whether Fastlane runs on the given page under the v6 SDK.
+	 *
+	 * This module does not render Fastlane itself: the ppcp-axo modules keep
+	 * their UI and only take the SDK object from here, so this gates the
+	 * `fastlane` component request and the v5 Fastlane block method staying
+	 * registered.
+	 *
+	 * @param string|null $location Page context to test; defaults to the current page.
+	 */
+	public function is_fastlane_enabled( ?string $location = null ): bool {
+		$location = $location ?? $this->get_page_context();
+
+		if ( ! $location ) {
+			return false;
+		}
+
+		return $this->fastlane_config->should_render( $location );
+	}
+
+	/**
 	 * Whether any wallet renders in the given context.
 	 */
 	private function any_wallet_renders( string $context ): bool {
@@ -475,6 +582,215 @@ class SdkV6Manager {
 		}
 
 		return false;
+	}
+
+	/**
+	 * Whether Pay Later messaging alone should pull the v6 SDK onto this page.
+	 *
+	 * Two exclusions:
+	 *
+	 * - Block contexts, where claiming the page for messaging alone may
+	 *   leave nothing rendering it.
+	 * - Pages this module will not actually paint. messages_render_hook()
+	 *   returns null for shop, home and the mini-cart fallback context, which
+	 *   stay with v5.
+	 */
+	private function should_load_messages(): bool {
+		if ( is_admin() || $this->is_block_context() ) {
+			return false;
+		}
+
+		return $this->messages_enabled() && null !== $this->messages_render_hook();
+	}
+
+	/**
+	 * Whether Pay Later messaging is enabled and eligible on this page.
+	 */
+	public function messages_enabled(): bool {
+		if ( is_admin() ) {
+			return false;
+		}
+
+		return $this->messages_eligibility->is_enabled_for_location(
+			$this->messages_settings_location()
+		);
+	}
+
+	/**
+	 * Maps the current page onto a Pay Later messaging settings location.
+	 *
+	 * The single normalization point for both the style and the eligibility
+	 * lookup. SettingsStatus::normalize_location() cannot be relied on here:
+	 * it is button-oriented and maps 'checkout-block' to
+	 * 'checkout-block-express', a location the messaging settings never
+	 * contain, so messaging would silently never enable on the block
+	 * checkout.
+	 *
+	 * Returns an empty string for shop, home and the mini-cart context, which
+	 * this module currently does not serve.
+	 */
+	private function messages_settings_location(): string {
+		switch ( $this->context->location() ) {
+			case 'product':
+				return 'product';
+			case 'cart':
+			case 'cart-block':
+				return 'cart';
+			case 'checkout':
+			case 'checkout-block':
+			case 'pay-now':
+				return 'checkout';
+			default:
+				return '';
+		}
+	}
+
+	/**
+	 * The v6 page-type attribute value for the current page.
+	 */
+	private function messages_page_type(): string {
+		switch ( $this->messages_settings_location() ) {
+			case 'product':
+				return 'product-details';
+			case 'cart':
+				return 'cart';
+			default:
+				return 'checkout';
+		}
+	}
+
+	/**
+	 * The amount the Pay Later message prices.
+	 *
+	 * Product-first, matching v5's message_values(): on a product page the
+	 * message must price the product the buyer is looking at, even when the
+	 * cart already holds other items. This is why transaction_amount() (which
+	 * is cart-first, because it feeds button eligibility) cannot be reused.
+	 */
+	private function messages_amount(): string {
+		if ( 'pay-now' === $this->get_page_context() ) {
+			$order = $this->order_pay();
+
+			return $order ? number_format( (float) $order->get_total(), 2, '.', '' ) : '';
+		}
+
+		// Scoped to the product location rather than probing wc_get_product()
+		// unconditionally the way v5 does: on a cart or checkout page a stray
+		// global $product — left behind by a theme loop or another plugin —
+		// would otherwise make the message price that product instead of the
+		// cart. The location check also covers the [product_page] shortcut,
+		// where is_product() is false but the context is still 'product'.
+		if ( 'product' === $this->messages_settings_location() ) {
+			$product = wc_get_product();
+			if ( $product instanceof \WC_Product ) {
+				return number_format( (float) wc_get_price_including_tax( $product ), 2, '.', '' );
+			}
+		}
+
+		$cart = WC()->cart;
+		if ( $cart ) {
+			return number_format( (float) $cart->get_total( 'edit' ), 2, '.', '' );
+		}
+
+		return '';
+	}
+
+	/**
+	 * The action hook the message wrapper renders on, or null when this
+	 * module does not place messages on the current page.
+	 *
+	 * Reuses the v5 filter names so a merchant override relocates both
+	 * stacks.
+	 *
+	 * @return array{name: string, priority: int}|null
+	 */
+	public function messages_render_hook(): ?array {
+		switch ( $this->context->location() ) {
+			case 'checkout':
+				return $this->message_hook( 'checkout', 'woocommerce_review_order_before_payment', 10 );
+			case 'cart':
+				/**
+				 * The action name that the PayPal buttons use for rendering next to the cart's Proceed to Checkout button.
+				 */
+				$cart_hook = (string) apply_filters(
+					'woocommerce_paypal_payments_proceed_to_checkout_button_renderer_hook',
+					'woocommerce_proceed_to_checkout'
+				);
+
+				return $this->message_hook( 'cart', $cart_hook, 19 );
+			case 'product':
+				/**
+				 * The action name that the PayPal buttons use for rendering on the single product page.
+				 */
+				$product_hook = (string) apply_filters(
+					'woocommerce_paypal_payments_single_product_renderer_hook',
+					'woocommerce_single_product_summary'
+				);
+
+				return $this->message_hook( 'product', $product_hook, 30 );
+			case 'pay-now':
+				return $this->message_hook( 'pay-now', self::PAY_ORDER_MESSAGE_HOOK, 10 );
+			default:
+				return null;
+		}
+	}
+
+	/**
+	 * Applies the per-location message hook and priority filters.
+	 *
+	 * @param string $location         The page location.
+	 * @param string $default_hook     The default action name.
+	 * @param int    $default_priority The default priority.
+	 * @return array{name: string, priority: int}
+	 */
+	private function message_hook( string $location, string $default_hook, int $default_priority ): array {
+		$location_hook = 'pay-now' === $location ? 'pay_order' : $location;
+
+		/**
+		 * The filter returning the action name that will be used for rendering Pay Later messages.
+		 */
+		$name = (string) apply_filters(
+			"woocommerce_paypal_payments_{$location_hook}_messages_renderer_hook",
+			$default_hook
+		);
+
+		/**
+		 * The filter returning the action priority that will be used for rendering Pay Later messages.
+		 */
+		$priority = (int) apply_filters(
+			"woocommerce_paypal_payments_{$location_hook}_messages_renderer_priority",
+			$default_priority
+		);
+
+		return array(
+			'name'     => $name,
+			'priority' => $priority,
+		);
+	}
+
+	/**
+	 * Prints the Pay Later message placeholder.
+	 *
+	 * Emits the same .ppcp-messages wrapper v5 emits rather than the
+	 * <paypal-message> element itself, so one JS mount path serves both these
+	 * wrappers and the Pay Later message blocks, and so theme and plugin CSS
+	 * keyed on the class keeps working.
+	 */
+	public function render_message_wrapper(): void {
+		$location      = $this->context->location();
+		$location_hook = 'pay-now' === $location ? 'pay_order' : $location;
+
+		/**
+		 * A hook executed before rendering of the PCP Pay Later messages wrapper.
+		 */
+		do_action( "ppcp_before_{$location_hook}_message_wrapper" );
+
+		echo '<div class="ppcp-messages"></div>';
+
+		/**
+		 * A hook executed after rendering of the PCP Pay Later messages wrapper.
+		 */
+		do_action( "ppcp_after_{$location_hook}_message_wrapper" );
 	}
 
 	/**
@@ -515,57 +831,94 @@ class SdkV6Manager {
 
 		$card_fields_enabled = $this->is_card_fields_enabled();
 
+		$messages_settings_location = $this->messages_settings_location();
+
 		$data = array(
-			'sdk_url'           => $base_url . '/web-sdk/v6/core',
-			'page_context'      => $page_context,
-			'currency'          => get_woocommerce_currency(),
-			'amount'            => $this->transaction_amount(),
-			'buyer_country'     => $buyer_country,
-			'merchant_country'  => $this->merchant_country,
-			'locale'            => str_replace( '_', '-', get_locale() ),
-			'vaulting_enabled'  => $this->vaulting_enabled,
+			'sdk_url'             => $base_url . '/web-sdk/v6/core',
+			'page_context'        => $page_context,
+			'currency'            => get_woocommerce_currency(),
+			'amount'              => $this->transaction_amount(),
+			'buyer_country'       => $buyer_country,
+			'merchant_country'    => $this->merchant_country,
+			'locale'              => str_replace( '_', '-', get_locale() ),
+			'vaulting_enabled'    => $this->vaulting_enabled,
 			// Drives the post-approval fork; see V6ExpressComponent.approve().
-			'final_review'      => $this->final_review_enabled,
-			'ajax'              => array(
-				'client_token'    => array(
+			'final_review'        => $this->final_review_enabled,
+			// A subscription cart whose initial total is 0 (free trial, delayed
+			// sync or a 100% coupon). Such a cart must not create a $0 PayPal
+			// order: the frontend switches to the vault "save without purchase"
+			// flow instead, and the gateway places the $0 WC order server-side.
+			'is_free_trial_cart'  => $this->free_trial_helper->is_free_trial_cart(),
+			/**
+			 * 3DS/SCA contingency for the card save (setup-token) flow used on a
+			 * free-trial card checkout. Filtered like the add-payment-method page.
+			 *
+			 * @param string $three_d_secure_contingency The default 3D Secure enum value.
+			 */
+			'verification_method' => (string) apply_filters(
+				'woocommerce_paypal_payments_three_d_secure_contingency',
+				$this->three_d_secure_contingency
+			),
+			// Whether the buyer is logged in, so the free-trial save flow picks the
+			// logged-in create-payment-token endpoint vs the guest one.
+			'user'                => array(
+				'is_logged' => is_user_logged_in(),
+			),
+			'ajax'                => array(
+				'client_token'                   => array(
 					'endpoint' => \WC_AJAX::get_endpoint( ClientTokenEndpoint::ENDPOINT ),
 					'nonce'    => wp_create_nonce( ClientTokenEndpoint::nonce() ),
 				),
-				'change_cart'     => array(
+				'change_cart'                    => array(
 					'endpoint' => \WC_AJAX::get_endpoint( ChangeCartEndpoint::ENDPOINT ),
 					'nonce'    => wp_create_nonce( ChangeCartEndpoint::nonce() ),
 				),
-				'simulate_cart'   => array(
+				'simulate_cart'                  => array(
 					'endpoint' => \WC_AJAX::get_endpoint( SimulateCartEndpoint::ENDPOINT ),
 					'nonce'    => wp_create_nonce( SimulateCartEndpoint::nonce() ),
 				),
-				'create_order'    => array(
+				'create_order'                   => array(
 					'endpoint' => \WC_AJAX::get_endpoint( CreateOrderEndpoint::ENDPOINT ),
 					'nonce'    => wp_create_nonce( CreateOrderEndpoint::nonce() ),
 				),
-				'approve_order'   => array(
+				'approve_order'                  => array(
 					'endpoint' => \WC_AJAX::get_endpoint( ApproveOrderEndpoint::ENDPOINT ),
 					'nonce'    => wp_create_nonce( ApproveOrderEndpoint::nonce() ),
 				),
-				'get_order'       => array(
+				'get_order'                      => array(
 					'endpoint' => \WC_AJAX::get_endpoint( GetOrderEndpoint::ENDPOINT ),
 					'nonce'    => wp_create_nonce( GetOrderEndpoint::nonce() ),
 				),
-				'update_shipping' => array(
+				'update_shipping'                => array(
 					'endpoint' => \WC_AJAX::get_endpoint( UpdateShippingEndpoint::ENDPOINT ),
 					'nonce'    => wp_create_nonce( UpdateShippingEndpoint::nonce() ),
 				),
-				'wc_store_api'    => array(
+				// Vault v3 "save without purchase" endpoints, used by the
+				// free-trial checkout flow (see is_free_trial_cart). Registered as
+				// wc_ajax actions by ppcp-save-payment-methods when vaulting is on.
+				'create_setup_token'             => array(
+					'endpoint' => \WC_AJAX::get_endpoint( CreateSetupToken::ENDPOINT ),
+					'nonce'    => wp_create_nonce( CreateSetupToken::nonce() ),
+				),
+				'create_payment_token'           => array(
+					'endpoint' => \WC_AJAX::get_endpoint( CreatePaymentToken::ENDPOINT ),
+					'nonce'    => wp_create_nonce( CreatePaymentToken::nonce() ),
+				),
+				'create_payment_token_for_guest' => array(
+					'endpoint' => \WC_AJAX::get_endpoint( CreatePaymentTokenForGuest::ENDPOINT ),
+					'nonce'    => wp_create_nonce( CreatePaymentTokenForGuest::nonce() ),
+				),
+				'wc_store_api'                   => array(
 					'cart'                 => $store_api_base,
 					'select_shipping_rate' => $store_api_base . '/select-shipping-rate',
 					'update_customer'      => $store_api_base . '/update-customer',
 					'nonce'                => wp_create_nonce( 'wc_store_api' ),
 				),
 			),
-			'urls'              => array(
+			'urls'                => array(
 				'checkout' => wc_get_checkout_url(),
 			),
-			'labels'            => array(
+			'labels'              => array(
 				'generic_error' => __(
 					'Something went wrong. Please try again or choose another payment source.',
 					'woocommerce-paypal-payments'
@@ -577,15 +930,15 @@ class SdkV6Manager {
 					'woocommerce-paypal-payments'
 				),
 			),
-			'shipping'          => array(
+			'shipping'            => array(
 				'handle_in_paypal' => $shipping_enabled,
 				'need_shipping'    => $this->need_shipping(),
 			),
-			'button_styles'     => $button_styles,
-			'button_height'     => self::PAYMENT_BUTTON_HEIGHT,
-			'wrapper'           => '#' . self::WRAPPER_ID,
-			'mini_cart_wrapper' => '#' . self::MINI_CART_WRAPPER_ID,
-			'card_fields'       => array(
+			'button_styles'       => $button_styles,
+			'button_height'       => self::PAYMENT_BUTTON_HEIGHT,
+			'wrapper'             => '#' . self::WRAPPER_ID,
+			'mini_cart_wrapper'   => '#' . self::MINI_CART_WRAPPER_ID,
+			'card_fields'         => array(
 				'enabled'             => $card_fields_enabled,
 				'payment_method'      => CreditCardGateway::ID,
 				'funding_source'      => 'card',
@@ -629,6 +982,24 @@ class SdkV6Manager {
 					'height'       => self::PAYMENT_BUTTON_HEIGHT,
 					'width'        => '100%',
 				),
+			),
+			// Enablement only. The ppcp-axo modules own every other Fastlane
+			// setting and localize it as wc_ppcp_axo; this flag tells sdkLoader
+			// to request the component their connection then reads off the
+			// shared SDK instance.
+			'fastlane'            => array(
+				'enabled'        => $this->is_fastlane_enabled( $page_context ),
+				// The id as a literal, not AxoGateway::ID: ppcp-axo is behind its
+				// own feature flag, and SdkV6Module names it the same way.
+				'payment_method' => 'ppcp-axo-gateway',
+			),
+			'messages'          => array(
+				'enabled'   => $this->messages_enabled(),
+				'wrapper'   => '.ppcp-messages',
+				'is_hidden' => $this->messages_eligibility->is_hidden( $page_context ),
+				'amount'    => $this->messages_amount(),
+				'page_type' => $this->messages_page_type(),
+				'style'     => $this->message_style_mapper->styles_for_location( $messages_settings_location ),
 			),
 		);
 

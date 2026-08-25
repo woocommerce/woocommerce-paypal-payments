@@ -20,22 +20,25 @@ use WooCommerce\PayPalCommerce\SdkV6\Endpoint\SimulateCartEndpoint;
 use WooCommerce\PayPalCommerce\SdkV6\Helper\ApplePayConfig;
 use WooCommerce\PayPalCommerce\SdkV6\Helper\ButtonStyleMapper;
 use WooCommerce\PayPalCommerce\SdkV6\Helper\CardFieldStyles;
+use WooCommerce\PayPalCommerce\SdkV6\Helper\FastlaneConfig;
 use WooCommerce\PayPalCommerce\SdkV6\Helper\GooglePayConfig;
+use WooCommerce\PayPalCommerce\SdkV6\Helper\MessagesEligibility;
+use WooCommerce\PayPalCommerce\SdkV6\Helper\MessageStyleMapper;
 use WooCommerce\PayPalCommerce\SdkV6\Helper\RateLimiter;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 
 /**
- * Builds a wallet's availability check from its own module's services.
+ * Builds a payment method's availability check from its own module's services.
  *
  * Reports false when that module is not loaded: its services are absent, so the
- * wallet cannot be offered. Each wallet keeps its own guards: the two modules
- * load independently.
+ * method cannot be offered. Each method keeps its own guards, since the modules
+ * load independently behind their own feature flags.
  *
  * @param ContainerInterface $container The plugin container.
- * @param string             $module    The wallet module's service prefix.
+ * @param string             $module    The owning module's service prefix.
  * @return callable(): bool
  */
-$wallet_availability = static function ( ContainerInterface $container, string $module ): callable {
+$module_availability = static function ( ContainerInterface $container, string $module ): callable {
 	return static function () use ( $container, $module ): bool {
 		if ( ! $container->has( "$module.eligibility.check" ) || ! $container->has( "$module.available" ) ) {
 			return false;
@@ -62,24 +65,39 @@ return array(
 		);
 	},
 
-	'sdk-v6.google-pay-config'          => static function ( ContainerInterface $container ) use ( $wallet_availability ): GooglePayConfig {
+	'sdk-v6.google-pay-config'          => static function ( ContainerInterface $container ) use ( $module_availability ): GooglePayConfig {
 		return new GooglePayConfig(
 			$container->get( 'settings.settings-provider' ),
 			$container->get( 'wc-subscriptions.helper' ),
-			$wallet_availability( $container, 'googlepay' )
+			$module_availability( $container, 'googlepay' )
 		);
 	},
 
-	'sdk-v6.apple-pay-config'           => static function ( ContainerInterface $container ) use ( $wallet_availability ): ApplePayConfig {
+	'sdk-v6.apple-pay-config'           => static function ( ContainerInterface $container ) use ( $module_availability ): ApplePayConfig {
 		return new ApplePayConfig(
 			$container->get( 'settings.settings-provider' ),
 			$container->get( 'wc-subscriptions.helper' ),
-			$wallet_availability( $container, 'applepay' )
+			$module_availability( $container, 'applepay' )
 		);
 	},
 
 	/**
-	 * Whether this module renders the PayPal stack on the current page.
+	 * Fastlane keeps its UI in the ppcp-axo modules; this only decides whether
+	 * the SDK requests the fastlane component on the current page.
+	 */
+	'sdk-v6.fastlane-config'            => static function ( ContainerInterface $container ) use ( $module_availability ): FastlaneConfig {
+		return new FastlaneConfig(
+			$container->get( 'wcgateway.configuration.card-configuration' ),
+			$container->get( 'wc-subscriptions.helper' ),
+			$module_availability( $container, 'axo' )
+		);
+	},
+
+	/**
+	 * Whether the PayPal v6 SDK loads on the current page.
+	 *
+	 * Callers use this to decide whether to stand down and not load a second (v5)
+	 * PayPal SDK against window.paypal.
 	 *
 	 * A callable rather than a bool: the answer depends on the query, which is
 	 * unresolved while the container is being built. Exposed as a service so the
@@ -97,6 +115,21 @@ return array(
 
 	'sdk-v6.card-field-styles'          => static function (): CardFieldStyles {
 		return new CardFieldStyles();
+	},
+
+	'sdk-v6.message-style-mapper'       => static function ( ContainerInterface $container ): MessageStyleMapper {
+		return new MessageStyleMapper(
+			$container->get( 'settings.settings-provider' )
+		);
+	},
+
+	'sdk-v6.messages-eligibility'       => static function ( ContainerInterface $container ): MessagesEligibility {
+		return new MessagesEligibility(
+			$container->get( 'settings.settings-provider' ),
+			$container->get( 'wcgateway.settings.status' ),
+			$container->get( 'button.helper.messages-apply' ),
+			$container->get( 'wc-subscriptions.free-trial-subscription-helper' )
+		);
 	},
 
 	'sdk-v6.manager'                    => static function ( ContainerInterface $container ): SdkV6Manager {
@@ -127,10 +160,20 @@ return array(
 				&& $container->get( 'save-payment-methods.eligible' )
 				&& $settings_provider->save_card_details(),
 			$container->get( 'wc-subscriptions.helper' ),
+			$container->get( 'wc-subscriptions.free-trial-subscription-helper' ),
+			// Same mode callable the v5 SmartButton uses; drives deferring native
+			// PayPal Subscriptions (subscriptions_api mode) back to the v5 stack.
+			$container->get( 'button.subscriptions-mode' ),
+			// Raw 3DS enum; the manager applies the contingency filter at enqueue
+			// time so late-registered overrides still take effect.
+			$settings_provider->three_d_secure_enum(),
 			$container->get( 'wcgateway.credit-card-icons' ),
+			$container->get( 'sdk-v6.message-style-mapper' ),
+			$container->get( 'sdk-v6.messages-eligibility' ),
 			$settings_provider->merchant_country(),
 			$container->get( 'sdk-v6.google-pay-config' ),
 			$container->get( 'sdk-v6.apple-pay-config' ),
+			$container->get( 'sdk-v6.fastlane-config' ),
 			$container->get( 'sdk-v6.card-field-styles' )
 		);
 	},
@@ -182,11 +225,20 @@ return array(
 	},
 
 	'sdk-v6.blocks.payment-method'      => static function ( ContainerInterface $container ): V6PaymentMethod {
+		// The saved-PayPal vault component lives in its own feature-flagged module,
+		// so its services may be absent; fall back to no saved-token support.
+		$has_vault = $container->has( 'vault-component.data' )
+			&& $container->has( 'vault-component.eligibility.check' );
+
 		return new V6PaymentMethod(
 			$container->get( 'sdk-v6.manager' ),
 			$container->get( 'sdk-v6.asset-getter' ),
 			$container->get( 'ppcp.asset-version' ),
-			$container->get( 'wcgateway.paypal-gateway' )
+			$container->get( 'wcgateway.paypal-gateway' ),
+			$container->get( 'wcgateway.credit-card-gateway' ),
+			$has_vault ? $container->get( 'vault-component.data' ) : null,
+			$has_vault ? $container->get( 'vault-component.eligibility.check' ) : null,
+			$container->get( 'button.client_id' )
 		);
 	},
 

@@ -26,11 +26,16 @@ import { V6ExpressComponent } from './blocks/V6ExpressComponent';
 import { V6ContinuationComponent } from './blocks/V6ContinuationComponent';
 import { V6CardFieldsComponent } from './blocks/V6CardFieldsComponent';
 import { V6EditorPreview } from './blocks/V6EditorPreview';
+// Reused as-is from the blocks module: renders the saved-PayPal vault approval
+// into the selected saved-token row (its own namespaced SDK, no v6 clash).
+import { PayPalSavedToken } from '@ppcp-blocks/Components/paypal-saved-token';
 import { FundingSources } from './utils/fundingSources';
 import { fundingSourceLabel } from './utils/fundingSourceLabel';
 import { minorUnitsToDecimal } from './utils/amount';
+import { initMessages, updateMessagesAmount } from './messages/renderer';
+import { watchBlockCartTotal } from './messages/cartTotalWatcher';
 
-const FUNDING_SOURCES = [
+const ALL_FUNDING_SOURCES = [
 	FundingSources.PAYPAL,
 	FundingSources.VENMO,
 	FundingSources.PAYLATER,
@@ -41,6 +46,13 @@ const FUNDING_SOURCES = [
 const paymentMethodData =
 	window.wc?.wcSettings?.getSetting?.( 'paymentMethodData' ) || {};
 const config = paymentMethodData[ 'ppcp-sdk-v6' ];
+
+// A free-trial ($0) subscription is vaulted through the PayPal save flow, which
+// only PayPal offers; Venmo/Pay Later cannot save without a purchase, so they are
+// suppressed on a free-trial cart (mirrors the v5 blocks checkout).
+const FUNDING_SOURCES = config?.is_free_trial_cart
+	? [ FundingSources.PAYPAL ]
+	: ALL_FUNDING_SOURCES;
 
 /**
  * Derives a decimal amount string from the WC Blocks cart totals.
@@ -80,8 +92,13 @@ if ( config && config.page_context && config.continuation ) {
 		supports: {
 			// WooCommerce hides any method whose features do not cover every
 			// cart requirement, and v5's ppcp-gateway is unregistered here, so
-			// a missing feature leaves the buyer no way to pay or cancel.
-			features: [ 'products', 'subscriptions', 'ppcp_continuation' ],
+			// a missing feature leaves the buyer no way to pay or cancel. The
+			// gateway supports come from the server (subscription-aware);
+			// ppcp_continuation is always required in this branch.
+			features: [
+				...( config.supported_features || [ 'products' ] ),
+				'ppcp_continuation',
+			],
 		},
 	} );
 } else if ( config && config.page_context ) {
@@ -142,7 +159,9 @@ if ( config && config.page_context && config.continuation ) {
 				return Boolean( eligibility[ fundingSource ] );
 			},
 			supports: {
-				features: [ 'products' ],
+				// Server-provided gateway supports, so subscription carts do
+				// not filter the express buttons out (see continuation branch).
+				features: config.supported_features || [ 'products' ],
 				// Exposes the block's height and corner-radius controls, which
 				// arrive as the buttonAttributes prop.
 				style: [ 'height', 'borderRadius' ],
@@ -200,11 +219,86 @@ if ( config?.card_fields?.enabled && ! config.continuation ) {
 		),
 		canMakePayment: () => true,
 		supports: {
-			features: [ 'products' ],
+			// The credit-card gateway's supports from the server, so a
+			// subscription cart does not filter the card method out.
+			features: config.card_fields.supported_features || [ 'products' ],
 			// WooCommerce Blocks renders its native "Save payment information…"
 			// checkbox and exposes the choice as the shouldSavePayment prop;
-			// only offered when card vaulting is enabled.
-			showSaveOption: Boolean( config.card_fields.is_vaulting_enabled ),
+			// only offered when card vaulting is enabled. Suppressed on a
+			// subscription cart, where the card must always be vaulted for
+			// renewals: the card component renders its own checked-and-disabled
+			// checkbox instead (the native one cannot be locked), matching the
+			// classic checkout.
+			showSaveOption:
+				Boolean( config.card_fields.is_vaulting_enabled ) &&
+				! config.card_fields.has_subscriptions,
 		},
 	} );
+}
+
+// Returning-buyer saved-PayPal selector. Registered as the regular ppcp-gateway
+// method (alongside the express ones) only when the buyer has an eligible saved
+// PayPal token, so WooCommerce Blocks renders its saved-token list and this
+// method supplies the in-row vault approval. New PayPal payments go through the
+// express button above, so this method exists for the saved token.
+if ( config?.vault_component?.is_eligible && ! config.continuation ) {
+	const vaultConfig = {
+		scriptData: {
+			vault_component: config.vault_component,
+			is_free_trial_cart: config.is_free_trial_cart,
+			client_id: config.vault_client_id,
+			script_attributes: config.script_attributes || {},
+		},
+	};
+
+	registerPaymentMethod( {
+		name: 'ppcp-gateway',
+		label: createElement(
+			'div',
+			null,
+			fundingSourceLabel( FundingSources.PAYPAL )
+		),
+		ariaLabel: fundingSourceLabel( FundingSources.PAYPAL ),
+		content: createElement(
+			'p',
+			{ className: 'ppcp-sdk-v6-saved-paypal-note' },
+			__(
+				'To pay with a different PayPal account, use the PayPal button at the top of the page.',
+				'woocommerce-paypal-payments'
+			)
+		),
+		edit: createElement( V6EditorPreview, {
+			fundingSource: FundingSources.PAYPAL,
+		} ),
+		// WooCommerce Blocks injects the selected token plus event props here.
+		savedTokenComponent: createElement( PayPalSavedToken, {
+			config: vaultConfig,
+		} ),
+		canMakePayment: () => true,
+		supports: {
+			features: config.supported_features || [ 'products' ],
+			// Renders WooCommerce Blocks' saved-token radio list for this gateway.
+			showSavedCards: true,
+			showSaveOption: false,
+		},
+	} );
+}
+
+/**
+ * Pay Later messages on the block cart and checkout.
+ *
+ * Done at module scope: messaging needs only the config and the DOM, not eligibility
+ * or a session. Skipped in continuation mode, where the buyer has approved an
+ * order and sees the review instead.
+ *
+ * Placeholders arrive with the React tree, so the body observer that
+ * initMessages() installs is what actually fills them.
+ */
+if ( config?.messages?.enabled && ! config.continuation ) {
+	initMessages( config, config.page_context ).catch( ( error ) => {
+		// eslint-disable-next-line no-console
+		console.error( '[ppcp-sdk-v6] messages', error );
+	} );
+
+	watchBlockCartTotal( updateMessagesAmount );
 }
