@@ -17,6 +17,7 @@ require_once TESTS_ROOT_DIR . '/stubs/WC_Session_Handler.php';
 require_once TESTS_ROOT_DIR . '/stubs/Task.php';
 require_once TESTS_ROOT_DIR . '/stubs/DefaultPaymentGateways.php';
 require_once TESTS_ROOT_DIR . '/stubs/NoteTraits.php';
+require_once TESTS_ROOT_DIR . '/stubs/Note.php';
 require_once TESTS_ROOT_DIR . '/stubs/AbstractPaymentMethodType.php';
 require_once TESTS_ROOT_DIR . '/stubs/ProductStatus.php';
 require_once TESTS_ROOT_DIR . '/stubs/ProductType.php';
