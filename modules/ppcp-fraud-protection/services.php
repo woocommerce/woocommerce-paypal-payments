@@ -26,7 +26,7 @@ return array('fraud-protection.asset_getter' => static function (ContainerInterf
     return new \WooCommerce\PayPalCommerce\FraudProtection\PersistentCounter(Recaptcha::REJECTION_COUNTER_OPTION);
 }, 'fraud-protection.wc-tasks.recaptcha-task-config' => static function (ContainerInterface $container): array {
     $recaptcha_settings = get_option('woocommerce_ppcp-recaptcha_settings', array());
-    if (isset($recaptcha_settings['enabled']) && 'yes' === $recaptcha_settings['enabled']) {
+    if (wc_string_to_bool($recaptcha_settings['enabled'] ?? 'no')) {
         return array();
     }
     return array(array('id' => 'ppcp-recaptcha-protection-task', 'title' => __('Enable required fraud protection for PayPal Payments', 'woocommerce-paypal-payments'), 'description' => __('Help protect your store and maintain compliance.', 'woocommerce-paypal-payments'), 'redirect_url' => admin_url('admin.php?page=wc-settings&tab=integration&section=ppcp-recaptcha')));

@@ -327,7 +327,7 @@ return array(
         );
         $is_working_capital_eligible = $container->get('settings.data.general')->get_merchant_country() === 'US' && $settings_model->get_stay_updated();
         $recaptcha_settings = get_option('woocommerce_ppcp-recaptcha_settings', array());
-        $is_recaptcha_enabled = isset($recaptcha_settings['enabled']) && 'yes' === $recaptcha_settings['enabled'];
+        $is_recaptcha_enabled = wc_string_to_bool($recaptcha_settings['enabled'] ?? 'no');
         /**
          * Initializes TodosEligibilityService with eligibility conditions for various PayPal features.
          * Each parameter determines whether a specific feature should be shown in the Things To Do list.
