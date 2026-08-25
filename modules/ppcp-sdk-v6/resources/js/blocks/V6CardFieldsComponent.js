@@ -23,7 +23,10 @@ import {
 	createCardSetupToken,
 	exchangeSetupToken,
 } from '../sessions/freeTrialSave';
-import { cardFieldStyles } from '../cardFields/cardFieldStyles';
+import {
+	cardFieldStyles,
+	hostedFieldTextStyles,
+} from '../cardFields/cardFieldStyles';
 import { V6CardFieldContainer } from './V6CardFieldContainer';
 
 /**
@@ -104,6 +107,19 @@ async function submitCardPayment( {
 				__( 'Card payment failed.', 'woocommerce-paypal-payments' ),
 		};
 	}
+}
+
+/**
+ * Keeps the latest value in a ref, so the onPaymentSetup callback can read it
+ * without resubscribing every time it changes.
+ *
+ * @param {*} value - The value to track.
+ * @return {Object} A ref holding the latest value.
+ */
+function useLatestRef( value ) {
+	const ref = useRef( value );
+	ref.current = value;
+	return ref;
 }
 
 /**
@@ -202,16 +218,17 @@ export function V6CardFieldsComponent( {
 
 	const [ session, setSession ] = useState( null );
 	const [ inputStyle, setInputStyle ] = useState( null );
+	const [ textStyle, setTextStyle ] = useState( null );
 	const [ cardName, setCardName ] = useState( '' );
 	const referenceRef = useRef( null );
 
-	// Whether to vault the card, read at submit time. The choice comes from WC
-	// Blocks' native "Save payment information…" checkbox (shouldSavePayment
-	// prop, shown via supports.showSaveOption); a subscription cart forces it
-	// on since the card must be saved to charge renewals. A ref keeps the
-	// latest value without resubscribing onPaymentSetup.
-	const savePaymentRef = useRef( false );
-	savePaymentRef.current = Boolean( shouldSavePayment ) || hasSubscriptions;
+	// The choice comes from WC Blocks' native "Save payment information…"
+	// checkbox (shown via supports.showSaveOption); a subscription cart forces
+	// it on, since the card must be saved to charge renewals.
+	const savePaymentRef = useLatestRef(
+		Boolean( shouldSavePayment ) || hasSubscriptions
+	);
+	const cardNameRef = useLatestRef( cardName );
 
 	// On a subscription cart the native "Save payment information…" option is
 	// suppressed (see checkout-block.js) and this component shows its own
@@ -220,29 +237,19 @@ export function V6CardFieldsComponent( {
 	const isVaultingEnabled = Boolean( config.card_fields.is_vaulting_enabled );
 	const showLockedSaveOption = hasSubscriptions && isVaultingEnabled;
 
-	// Read through a ref so onPaymentSetup sees the latest name without
-	// resubscribing every keystroke.
-	const cardNameRef = useRef( '' );
-	useEffect( () => {
-		cardNameRef.current = cardName;
-	}, [ cardName ] );
-
-	// The v6 SDK uses the billing address for AVS / 3D Secure; read the live
-	// Blocks billing address through a ref so the submit sees it without
-	// resubscribing onPaymentSetup on every address change.
-	const billingRef = useRef( null );
-	useEffect( () => {
-		const address = billing?.billingAddress || billing?.billingData;
-		const postalCode = address?.postcode?.trim();
-		billingRef.current = postalCode
+	// The v6 SDK uses the billing address for AVS / 3D Secure.
+	const billingAddress = billing?.billingAddress || billing?.billingData;
+	const postalCode = billingAddress?.postcode?.trim();
+	const billingRef = useLatestRef(
+		postalCode
 			? {
 					postalCode,
-					...( address?.country
-						? { countryCode: address.country }
+					...( billingAddress?.country
+						? { countryCode: billingAddress.country }
 						: {} ),
 			  }
-			: null;
-	}, [ billing ] );
+			: null
+	);
 
 	// One card session for the component's lifetime: the SDK cannot dispose a
 	// session, so it must not be recreated on ordinary re-renders.
@@ -270,6 +277,12 @@ export function V6CardFieldsComponent( {
 	// v6 returns unstyled field elements, so derive their styling from a real
 	// block text input on the page (accurate theme height/padding/border),
 	// falling back to a hidden reference input when none is found.
+	//
+	// Two objects, because they have different audiences: inputStyle describes
+	// elements this component renders itself (the cardholder-name input, and the
+	// hosted fields' own box), while textStyle is handed to the SDK and lands
+	// inside a PayPal iframe, where box decoration has no business.
+	const cardFieldOverrides = config.card_fields.styles;
 	useEffect( () => {
 		const source =
 			document.querySelector(
@@ -277,15 +290,11 @@ export function V6CardFieldsComponent( {
 			) || referenceRef.current;
 		if ( source ) {
 			setInputStyle( cardFieldStyles( source ) );
+			setTextStyle( hostedFieldTextStyles( source, cardFieldOverrides ) );
 		}
-	}, [] );
+	}, [ cardFieldOverrides ] );
 
-	// Read through a ref so onPaymentSetup sees the current session without
-	// resubscribing when it arrives.
-	const sessionRef = useRef( null );
-	useEffect( () => {
-		sessionRef.current = session;
-	}, [ session ] );
+	const sessionRef = useLatestRef( session );
 
 	// onPaymentSetup fires for every registered method during checkout
 	// processing, so gate on the active one before running the card flow.
@@ -322,7 +331,7 @@ export function V6CardFieldsComponent( {
 		isFreeTrial,
 	] );
 
-	const fieldsReady = session && inputStyle;
+	const fieldsReady = session && inputStyle && textStyle;
 
 	return createElement(
 		'div',
@@ -375,7 +384,8 @@ export function V6CardFieldsComponent( {
 				createElement( V6CardFieldContainer, {
 					session,
 					type: 'number',
-					style: inputStyle,
+					style: textStyle,
+					height: inputStyle.height,
 					placeholder: __(
 						'Card number',
 						'woocommerce-paypal-payments'
@@ -390,7 +400,8 @@ export function V6CardFieldsComponent( {
 					createElement( V6CardFieldContainer, {
 						session,
 						type: 'expiry',
-						style: inputStyle,
+						style: textStyle,
+						height: inputStyle.height,
 						placeholder: __(
 							'MM / YY',
 							'woocommerce-paypal-payments'
@@ -400,7 +411,8 @@ export function V6CardFieldsComponent( {
 					createElement( V6CardFieldContainer, {
 						session,
 						type: 'cvv',
-						style: inputStyle,
+						style: textStyle,
+						height: inputStyle.height,
 						placeholder: __( 'CVV', 'woocommerce-paypal-payments' ),
 						containerStyle: { flex: 1 },
 					} )

@@ -10,7 +10,7 @@ import {
 	handleShippingOptionsChange,
 } from './shippingHandler';
 import { refreshCartUi } from '../utils/cartUi';
-import { handleError } from '../utils/errorHandler';
+import { handleError, handleWarning } from '../utils/errorHandler';
 import { FundingSources } from '../utils/fundingSources';
 import { WALLET_METHODS } from '../wallets/walletRegistry';
 
@@ -20,6 +20,7 @@ const SESSION_FACTORIES = {
 	[ FundingSources.PAYLATER ]: 'createPayLaterOneTimePaymentSession',
 	[ FundingSources.GOOGLEPAY ]: 'createGooglePayOneTimePaymentSession',
 	[ FundingSources.APPLEPAY ]: 'createApplePayOneTimePaymentSession',
+	[ FundingSources.CARD ]: 'createPayPalGuestOneTimePaymentSession',
 };
 
 /**
@@ -68,14 +69,42 @@ export function createSession(
 	// Wallet sheets close before the order exists, so wallet sessions have no
 	// onApprove: the wallet bridge drives create, confirm and approve itself.
 	if ( ! WALLET_METHODS.includes( method ) ) {
+		// Undefined leaves every other method on approveOrder's default gateway.
+		const paymentMethod =
+			method === FundingSources.CARD
+				? config.card_button?.payment_method
+				: undefined;
+
 		sessionConfig.onApprove =
 			handlers.onApprove ||
 			async function ( data ) {
 				try {
-					await approveOrder( config, context, method, data.orderId );
+					await approveOrder(
+						config,
+						context,
+						method,
+						data.orderId,
+						{},
+						paymentMethod
+					);
 				} catch ( error ) {
 					handleError( error );
 				}
+			};
+	}
+
+	// Card-only: the other factories' tolerance for unknown option keys is
+	// unverified, while the guest session documents both handlers.
+	if ( method === FundingSources.CARD ) {
+		sessionConfig.onWarn = handlers.onWarn || handleWarning;
+
+		// Fires after onApprove, which has already submitted the checkout form.
+		// Kept as a log so nothing here can start a second submission.
+		sessionConfig.onComplete =
+			handlers.onComplete ||
+			function () {
+				// eslint-disable-next-line no-console
+				console.debug( '[PPCP SDK v6] guest card payment complete' );
 			};
 	}
 

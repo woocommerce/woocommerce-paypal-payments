@@ -26,6 +26,7 @@ use WooCommerce\PayPalCommerce\SdkV6\Endpoint\ClientTokenEndpoint;
 use WooCommerce\PayPalCommerce\SdkV6\Endpoint\SimulateCartEndpoint;
 use WooCommerce\PayPalCommerce\SdkV6\Helper\ApplePayConfig;
 use WooCommerce\PayPalCommerce\SdkV6\Helper\ButtonStyleMapper;
+use WooCommerce\PayPalCommerce\SdkV6\Helper\CardFieldStyles;
 use WooCommerce\PayPalCommerce\SdkV6\Helper\FastlaneConfig;
 use WooCommerce\PayPalCommerce\SdkV6\Helper\GooglePayConfig;
 use WooCommerce\PayPalCommerce\SdkV6\Helper\MessagesEligibility;
@@ -33,6 +34,7 @@ use WooCommerce\PayPalCommerce\SdkV6\Helper\MessageStyleMapper;
 use WooCommerce\PayPalCommerce\Session\Cancellation\CancelController;
 use WooCommerce\PayPalCommerce\Session\Cancellation\CancelView;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
+use WooCommerce\PayPalCommerce\WcGateway\Gateway\CardButtonGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\CardPaymentsConfiguration;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
@@ -42,17 +44,17 @@ use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
 
 class SdkV6Manager {
 
-	public const WRAPPER_ID            = 'ppc-button-ppcp-gateway-v6';
-	public const MINI_CART_WRAPPER_ID  = 'ppc-button-minicart-v6';
-	public const GOOGLE_PAY_WRAPPER_ID = 'ppc-button-ppcp-googlepay-v6';
-	public const APPLE_PAY_WRAPPER_ID  = 'ppc-button-ppcp-applepay-v6';
+	public const WRAPPER_ID             = 'ppc-button-ppcp-gateway-v6';
+	public const MINI_CART_WRAPPER_ID   = 'ppc-button-minicart-v6';
+	public const GOOGLE_PAY_WRAPPER_ID  = 'ppc-button-ppcp-googlepay-v6';
+	public const APPLE_PAY_WRAPPER_ID   = 'ppc-button-ppcp-applepay-v6';
+	public const CARD_BUTTON_WRAPPER_ID = 'ppc-button-ppcp-card-button-gateway-v6';
 
 	/**
 	 * The height every payment button on the page renders at.
 	 *
-	 * Not a merchant setting: the styling DTOs carry no height (see
-	 * ButtonStyleMapper), and the buttons are meant to match each other. Hence one
-	 * value for all of them, rather than one per button type or context.
+	 * One value for all of them: the buttons are meant to match, and the styling
+	 * DTOs carry no height of their own (see ButtonStyleMapper).
 	 */
 	public const PAYMENT_BUTTON_HEIGHT = '48px';
 
@@ -60,10 +62,8 @@ class SdkV6Manager {
 	// after the submit button and is relocated by SdkV6Module.
 	public const PAY_ORDER_MESSAGE_HOOK = 'woocommerce_pay_order_before_submit';
 
-	// Existing WC credit-card-form field IDs (see CardFieldsModule's
-	// woocommerce_credit_card_form_fields filter and WC core's own
-	// card-number/expiry/cvc fields) that the v6 card fields mount into,
-	// replacing v5's paypal.CardFields()-rendered inputs in the same slots.
+	// Existing WC credit-card-form field IDs the v6 card fields mount into; see
+	// CardFieldsModule's woocommerce_credit_card_form_fields filter.
 	private const CARD_FIELD_NAME_ID   = 'ppcp-credit-card-gateway-card-name';
 	private const CARD_FIELD_NUMBER_ID = 'ppcp-credit-card-gateway-card-number';
 	private const CARD_FIELD_EXPIRY_ID = 'ppcp-credit-card-gateway-card-expiry';
@@ -106,13 +106,13 @@ class SdkV6Manager {
 	private array $credit_card_icons;
 
 	/**
-	 * Kept alongside $wallets, which holds the same object as a WalletConfig:
-	 * display_name() exists only on the Apple subclass, so reaching it through
-	 * the base type would not type-check.
+	 * The same object $wallets holds, kept under its own type because
+	 * display_name() exists only on the Apple subclass.
 	 */
 	private ApplePayConfig $apple_pay_config;
 
 	private FastlaneConfig $fastlane_config;
+	private CardFieldStyles $card_field_styles;
 
 	/**
 	 * Every wallet this module places, in the order their rows are printed.
@@ -120,6 +120,14 @@ class SdkV6Manager {
 	 * @var WalletPlacement[]
 	 */
 	private array $wallets;
+
+	/**
+	 * Memoizes is_card_button_row(), asked once per request to print the row and
+	 * once to build the script data.
+	 *
+	 * @var bool|null
+	 */
+	private ?bool $is_card_button_row = null;
 
 	public function __construct(
 		AssetGetter $asset_getter,
@@ -145,7 +153,8 @@ class SdkV6Manager {
 		string $merchant_country,
 		GooglePayConfig $google_pay_config,
 		ApplePayConfig $apple_pay_config,
-		FastlaneConfig $fastlane_config
+		FastlaneConfig $fastlane_config,
+		CardFieldStyles $card_field_styles
 	) {
 		$this->asset_getter                = $asset_getter;
 		$this->version                     = $version;
@@ -170,6 +179,7 @@ class SdkV6Manager {
 		$this->merchant_country            = $merchant_country;
 		$this->apple_pay_config            = $apple_pay_config;
 		$this->fastlane_config             = $fastlane_config;
+		$this->card_field_styles           = $card_field_styles;
 
 		$this->wallets = array(
 			new WalletPlacement(
@@ -198,6 +208,9 @@ class SdkV6Manager {
 		);
 	}
 
+	/**
+	 * Registers, localizes and enqueues the classic bootstrap script.
+	 */
 	public function enqueue(): void {
 		// The classic bootstrap renders into PHP-printed wrappers that do not
 		// exist on block pages, which the block payment method script serves.
@@ -253,14 +266,10 @@ class SdkV6Manager {
 			);
 		}
 
-		// Free orders ($0 total, e.g. a 100%-off coupon or free trial) do not
-		// need payment, so the cart/checkout wallet buttons must not render —
-		// matching v5's is_cart_price_total_zero() suppression.
 		$needs_payment = $this->cart_needs_payment();
 
-		// pay-now is driven by the existing WC order, not the cart, so the
-		// zero-total cart guard does not apply. Its location normalizes to
-		// 'checkout' in SettingsStatus.
+		// pay-now is driven by the existing WC order rather than the cart, so
+		// the zero-total guard does not apply to it.
 		return array(
 			'product'   => $this->settings_status->is_smart_button_enabled_for_location( 'product' ),
 			'cart'      => $needs_payment && $this->settings_status->is_smart_button_enabled_for_location( 'cart' ),
@@ -273,10 +282,8 @@ class SdkV6Manager {
 	/**
 	 * Whether the current cart still needs payment.
 	 *
-	 * Guards the wallet buttons against $0 / free orders (e.g. a full-value
-	 * coupon or a free trial), where no payment method should be offered.
-	 *
-	 * @return bool
+	 * Keeps buttons off $0 orders (a full-value coupon, a free trial), where no
+	 * payment method should be offered at all.
 	 */
 	private function cart_needs_payment(): bool {
 		$cart = WC()->cart;
@@ -287,39 +294,58 @@ class SdkV6Manager {
 		return $cart->needs_payment();
 	}
 
+	/**
+	 * Renders the shared express-button wrapper.
+	 */
 	public function render_wrapper(): void {
 		echo '<div class="ppc-button-wrapper"><div id="' . esc_attr( self::WRAPPER_ID ) . '"></div></div>';
 	}
 
 	/**
-	 * Renders each wallet's gateway container, hidden until eligible.
+	 * Renders a payment method's own button container, hidden until eligible.
 	 *
-	 * On classic checkout a wallet is its own payment-method row rather than an
-	 * express button, so its button needs a container next to the place-order
-	 * area instead of the shared express wrapper.
+	 * On classic checkout these methods are payment-method rows rather than
+	 * express buttons, so each needs a container by the place-order area instead
+	 * of the shared express wrapper.
 	 *
-	 * Every row starts hidden and the JS reveals it once the browser confirms the
-	 * buyer can pay, because eligibility is only knowable client-side: a browser
-	 * without a saved card, or without Apple Pay set up, would otherwise be
-	 * offered a row that cannot complete. Same attribute shape as v5's
-	 * GooglePayButton, which the v6 JS removes the same way its PaymentButton did.
+	 * The row starts hidden and gatewayPlacement.js reveals it once the browser
+	 * confirms the buyer can pay: eligibility is only knowable client-side, and a
+	 * row whose button never rendered would be a dead end.
+	 */
+	private function render_gateway_wrapper( string $gateway_id, string $wrapper_id ): void {
+		?>
+		<style data-hide-gateway='<?php echo esc_attr( $gateway_id ); ?>'>
+			.wc_payment_method.payment_method_<?php echo esc_attr( $gateway_id ); ?> {
+				display: none;
+			}
+		</style>
+		<div id="<?php echo esc_attr( $wrapper_id ); ?>"></div>
+		<?php
+	}
+
+	/**
+	 * Renders a gateway row for every wallet that has one on this page.
 	 */
 	public function render_wallet_gateway_wrappers(): void {
 		foreach ( $this->wallets as $wallet ) {
-			if ( ! $this->is_wallet_gateway( $wallet ) ) {
-				continue;
+			if ( $this->is_wallet_gateway( $wallet ) ) {
+				$this->render_gateway_wrapper( $wallet->gateway_id, $wallet->wrapper_id );
 			}
-			?>
-			<style data-hide-gateway='<?php echo esc_attr( $wallet->gateway_id ); ?>'>
-				.wc_payment_method.payment_method_<?php echo esc_attr( $wallet->gateway_id ); ?> {
-					display: none;
-				}
-			</style>
-			<div id="<?php echo esc_attr( $wallet->wrapper_id ); ?>"></div>
-			<?php
 		}
 	}
 
+	/**
+	 * Renders the BCDC gateway row, when it belongs on this page.
+	 */
+	public function render_card_button_wrapper(): void {
+		if ( $this->is_card_button_row() ) {
+			$this->render_gateway_wrapper( CardButtonGateway::ID, self::CARD_BUTTON_WRAPPER_ID );
+		}
+	}
+
+	/**
+	 * Renders the mini-cart button wrapper.
+	 */
 	public function render_mini_cart_wrapper(): void {
 		echo '<p class="woocommerce-mini-cart__buttons buttons">';
 		echo '<span id="' . esc_attr( self::MINI_CART_WRAPPER_ID ) . '"></span>';
@@ -334,9 +360,7 @@ class SdkV6Manager {
 	 * registers its methods through the block registry instead.
 	 *
 	 * Only the gateway walk is memoized, never a refusal from the context check,
-	 * so a call made before the context resolves cannot poison the answer. The
-	 * memo spans one request, where this is asked twice per wallet: once to print
-	 * the row, once to build the script data.
+	 * so a call made before the context resolves cannot poison the answer.
 	 */
 	private function is_wallet_gateway( WalletPlacement $wallet ): bool {
 		if ( null !== $wallet->is_gateway ) {
@@ -362,8 +386,8 @@ class SdkV6Manager {
 	 * @return array<string, mixed>
 	 */
 	private function wallet_script_data( WalletPlacement $wallet, string $page_context ): array {
-		// Styled per context rather than globally: `enabled` then follows from
-		// whether any context on this page wants the wallet at all.
+		// Styled per context, so `enabled` follows from whether any context on
+		// this page wants the wallet at all.
 		$styles = array();
 		if ( $page_context && $wallet->config->should_render( $page_context ) ) {
 			$styles[ $page_context ] = $wallet->styles( $page_context );
@@ -377,9 +401,8 @@ class SdkV6Manager {
 			'sdk_url' => $wallet->sdk_url,
 			'styles'  => $styles,
 			// Present only on classic checkout, where a payment-method list
-			// exists: everywhere else the wallet stays an express button, as in
-			// v5. Null rather than a flag plus two values the JS would have to
-			// pair up again.
+			// exists; elsewhere the wallet stays an express button. Null rather
+			// than a flag plus two values the JS would have to pair up again.
 			'gateway' => $this->is_wallet_gateway( $wallet )
 				? array(
 					'id'      => $wallet->gateway_id,
@@ -392,23 +415,14 @@ class SdkV6Manager {
 	/**
 	 * Whether the v6 SDK loads on the current page.
 	 *
-	 * Follows the v5 SmartButton gating: each WC page type requires its
-	 * location to be enabled in the button settings, and an enabled
-	 * mini-cart location enqueues on every page (the classic mini-cart
-	 * widget can appear anywhere). The bootstrap only loads the SDK once
-	 * a button wrapper exists in the DOM.
+	 * Also scopes the v5 suppression, since both SDKs claim window.paypal: v5 is
+	 * disabled on exactly the pages this returns true for. See extensions.php.
 	 *
-	 * Also scopes the v5 suppression: v5 is disabled on every page v6 owns
-	 * (both SDKs claim window.paypal) and keeps running on the pages v6 does
-	 * not own (pay-now, add-payment-method). Migration-phase only — see
-	 * extensions.php.
-	 *
-	 * Card fields (ACDC) are independent of the smart-button location: the
-	 * card gateway is a regular WC payment method that can be selectable
-	 * at checkout even when the wallet button is disabled there, so it
-	 * gets its own OR'd condition rather than being folded into the
-	 * location check above. Pay Later messaging is a third such condition:
-	 * it can claim a classic page where nothing else here would.
+	 * Each card surface gets its own OR'd condition rather than folding into the
+	 * location check, because a card gateway is a regular WC payment method that
+	 * can be selectable at checkout with the smart button disabled there. Pay
+	 * Later messaging is another such condition: it can claim a classic page
+	 * where nothing else here would.
 	 */
 	public function should_load_on_current_page(): bool {
 		// Native PayPal Subscriptions (subscriptions_api mode) have no v6 path — v6
@@ -429,6 +443,14 @@ class SdkV6Manager {
 			return true;
 		}
 
+		// Settings-only, never is_card_button_row(): this runs early enough that
+		// resolving WC_Payment_Gateways would re-enter
+		// woocommerce_available_payment_gateways, which resolves DisableGateways
+		// from the container currently building this service.
+		if ( $this->is_card_button_enabled( $page_location ) ) {
+			return true;
+		}
+
 		if ( $this->should_load_messages() ) {
 			return true;
 		}
@@ -441,14 +463,10 @@ class SdkV6Manager {
 			return true;
 		}
 
-		// Load sitewide whenever the mini-cart location is enabled, matching the
-		// v5 SmartButton (should_load_buttons()'s default branch). The mini-cart
-		// can appear on any page — as the classic "Cart" widget OR the block
-		// Mini-Cart in a block theme's header — and is_active_widget() only
-		// detects the classic widget, so gating on it dropped the SDK (and every
-		// mini-cart button, Venmo included) on shop/home pages that use the block
-		// Mini-Cart. boot.js always renders into the mini-cart wrapper when it is
-		// present, so loading sitewide keeps parity with v5.
+		// Sitewide, because the mini-cart can appear on any page as either the
+		// classic "Cart" widget or the block Mini-Cart, and is_active_widget()
+		// only detects the classic one. boot.js renders into the mini-cart
+		// wrapper only where that wrapper exists.
 		return $this->settings_status->is_smart_button_enabled_for_location( 'mini-cart' )
 			|| $this->any_wallet_renders( 'mini-cart' );
 	}
@@ -456,8 +474,8 @@ class SdkV6Manager {
 	/**
 	 * Whether the v6 Advanced Card Fields should render on the given page.
 	 *
-	 * Gates both the JS `card_fields.enabled` flag and the suppression of the
-	 * v5 card block, so a page never ends up with neither card option.
+	 * Gates both the JS `card_fields.enabled` flag and the v5 card block's
+	 * suppression, so a page never ends up with neither card option.
 	 *
 	 * @param string|null $location Page context to test; defaults to the current page.
 	 */
@@ -466,6 +484,57 @@ class SdkV6Manager {
 
 		return in_array( $location, array( 'checkout', 'checkout-block', 'pay-now' ), true )
 			&& $this->card_payments_configuration->is_acdc_enabled();
+	}
+
+	/**
+	 * Whether BCDC is configured for this kind of page — not whether the row
+	 * prints here, which is is_card_button_row().
+	 *
+	 * Narrower than its ACDC counterpart: BCDC has no block checkout support.
+	 *
+	 * @param string|null $location Page context to test; defaults to the current page.
+	 */
+	public function is_card_button_enabled( ?string $location = null ): bool {
+		$location = $location ?? $this->get_page_context();
+
+		return in_array( $location, array( 'checkout', 'pay-now' ), true )
+			&& $this->card_payments_configuration->is_bcdc_enabled();
+	}
+
+	/**
+	 * Whether the BCDC button renders as its own payment-method row here.
+	 *
+	 * Asks the gateway list rather than re-deriving its policy, which already
+	 * covers the checkout button location being off, ACDC outside Mexico,
+	 * free-trial carts and zero-total carts.
+	 */
+	private function is_card_button_row(): bool {
+		if ( null !== $this->is_card_button_row ) {
+			return $this->is_card_button_row;
+		}
+
+		if ( ! $this->is_card_button_enabled() || $this->is_block_context() ) {
+			return false;
+		}
+
+		// No row for subscription carts: the v6 guest component has no
+		// equivalent of the SDK URL vault param v5 uses here, so the button
+		// would take a payment that can never renew. Not a dead end — without a
+		// button "Place order" stays visible, and CardButtonGateway falls back
+		// to PayPal's hosted card checkout. order_pay_contains_subscription()
+		// covers pay-for-order, where the cart is empty.
+		if ( $this->subscription_helper->cart_contains_subscription()
+			|| $this->subscription_helper->order_pay_contains_subscription() ) {
+			return false;
+		}
+
+		$gateways = WC()->payment_gateways() ? WC()->payment_gateways()->get_available_payment_gateways() : array();
+
+		// Only this answer is memoized: the gateway list is settled by the time
+		// anything asks, whereas the page context above may not be yet.
+		$this->is_card_button_row = isset( $gateways[ CardButtonGateway::ID ] );
+
+		return $this->is_card_button_row;
 	}
 
 	/**
@@ -745,11 +814,10 @@ class SdkV6Manager {
 
 		$page_context = $this->get_page_context();
 
-		// Must stay in lockstep with ShippingPreferenceFactory, which marks only
-		// 'checkout' and 'pay-now' as fixed-address (SET_PROVIDED_ADDRESS, no
-		// callbacks needed). Every other context, 'checkout-block' included,
-		// gets GET_FROM_FILE, where PayPal offers the buyer's own addresses and
-		// the popup callbacks must stay attached to sync the choice back.
+		// In lockstep with ShippingPreferenceFactory: only 'checkout' and
+		// 'pay-now' are fixed-address (SET_PROVIDED_ADDRESS, no callbacks).
+		// Every other context gets GET_FROM_FILE, where PayPal offers the
+		// buyer's own addresses and the callbacks sync the choice back.
 		$shipping_enabled = $this->should_handle_shipping
 			&& ! in_array( $page_context, array( 'checkout', 'pay-now' ), true );
 
@@ -857,6 +925,12 @@ class SdkV6Manager {
 					'Something went wrong. Please try again or choose another payment source.',
 					'woocommerce-paypal-payments'
 				),
+				// One string for every onWarn the SDK raises: its own codes are
+				// internal and untranslated, so they must not reach the buyer.
+				'card_declined' => __(
+					'The card could not be charged. Please check the details or try a different card.',
+					'woocommerce-paypal-payments'
+				),
 			),
 			'shipping'            => array(
 				'handle_in_paypal' => $shipping_enabled,
@@ -870,16 +944,14 @@ class SdkV6Manager {
 				'enabled'             => $card_fields_enabled,
 				'payment_method'      => CreditCardGateway::ID,
 				'funding_source'      => 'card',
-				// Label, name-field flag and card-brand logos for the block's own
-				// card method. card_icons is empty when "Show logos" is disabled
-				// (the credit-card-icons service already guards on the setting).
+				// Label, name-field flag and logos for the block's own card
+				// method; card_icons is empty when "Show logos" is off.
 				'title'               => $this->card_payments_configuration->gateway_title(),
 				'name_field'          => 'yes' === $this->card_payments_configuration->show_name_on_card(),
-				// Card "save during purchase" (vaulting). The block checkout uses
-				// WC Blocks' native save option (supports.showSaveOption, gated on
-				// is_vaulting_enabled); the classic checkout reads WC's own
-				// tokenization checkbox instead. has_subscriptions force-saves,
-				// since a subscription card must be vaulted for renewals.
+				// Card "save during purchase". The block checkout gates WC Blocks'
+				// native save option on this; classic reads WC's own tokenization
+				// checkbox. A subscription force-saves, since its card must be
+				// vaulted to renew.
 				'is_vaulting_enabled' => $this->card_vaulting_enabled,
 				'has_subscriptions'   => $this->subscription_helper->cart_contains_subscription(),
 				'card_icons'          => array_map(
@@ -897,6 +969,20 @@ class SdkV6Manager {
 					'number' => '#' . self::CARD_FIELD_NUMBER_ID,
 					'expiry' => '#' . self::CARD_FIELD_EXPIRY_ID,
 					'cvv'    => '#' . self::CARD_FIELD_CVV_ID,
+				),
+				'styles'              => $this->card_field_styles->overrides(),
+			),
+			'card_button'       => array(
+				'enabled'        => $this->is_card_button_row(),
+				'payment_method' => CardButtonGateway::ID,
+				'funding_source' => 'card',
+				'wrapper'        => '#' . self::CARD_BUTTON_WRAPPER_ID,
+				// No colour: the element is black-only. Width is ours to set
+				// because it ships a fixed 225px, where v5 spanned the column.
+				'styles'         => array(
+					'borderRadius' => $this->style_mapper->styles_for_context( $page_context ?: 'checkout' )['borderRadius'],
+					'height'       => self::PAYMENT_BUTTON_HEIGHT,
+					'width'        => '100%',
 				),
 			),
 			// Enablement only. The ppcp-axo modules own every other Fastlane
@@ -923,23 +1009,22 @@ class SdkV6Manager {
 			$data[ $wallet->config_key ] = $this->wallet_script_data( $wallet, $page_context );
 		}
 
-		// The keys only one wallet has. Everything above this line is the shape
-		// every wallet shares.
+		// The keys only one wallet has; everything above is the shared shape.
 		$data['google_pay']['environment'] = $this->environment->is_sandbox() ? 'TEST' : 'PRODUCTION';
 		// Labels the sheet total and identifies the merchant during validation.
 		$data['apple_pay']['display_name'] = $this->apple_pay_config->display_name();
-		// Where the frontend reports merchant validation, which keeps the admin
+		// Where the frontend reports merchant validation, keeping the admin
 		// "domain not validated" notice accurate. The Apple Pay module owns this
-		// admin-ajax action and dictates its nonce action.
+		// action and dictates its nonce.
 		$data['apple_pay']['validation'] = array(
 			'endpoint' => admin_url( 'admin-ajax.php' ),
 			'action'   => PropertiesDictionary::VALIDATE,
 			'nonce'    => wp_create_nonce( PropertiesDictionary::NONCE_ACTION ),
 		);
 
-		// The pay-for-order page creates the PayPal order from an existing WC
-		// order (not the cart), so the front end must forward its identifiers to
-		// the create-order endpoint's from_wc_order branch.
+		// The pay-for-order page builds the PayPal order from an existing WC
+		// order rather than the cart, so its identifiers must reach the
+		// create-order endpoint's from_wc_order branch.
 		if ( 'pay-now' === $page_context ) {
 			$data['pay_now'] = array(
 				'order_id'  => $this->order_pay_id(),
@@ -957,8 +1042,6 @@ class SdkV6Manager {
 
 	/**
 	 * The WC order ID on the pay-for-order (order-pay) page, or 0.
-	 *
-	 * @return int
 	 */
 	private function order_pay_id(): int {
 		global $wp;
@@ -972,8 +1055,6 @@ class SdkV6Manager {
 
 	/**
 	 * The order key from the pay-for-order page URL, or empty string.
-	 *
-	 * @return string
 	 */
 	private function order_pay_key(): string {
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
@@ -985,8 +1066,6 @@ class SdkV6Manager {
 	/**
 	 * The WC order for the current pay-for-order page, validated against the
 	 * URL order key, or null.
-	 *
-	 * @return \WC_Order|null
 	 */
 	private function order_pay(): ?\WC_Order {
 		$order_id = $this->order_pay_id();
@@ -999,7 +1078,7 @@ class SdkV6Manager {
 			return null;
 		}
 
-		// Guard against reading another customer's order total from a crafted URL.
+		// Stops a crafted URL from reading another customer's order total.
 		if ( ! hash_equals( (string) $order->get_order_key(), $this->order_pay_key() ) ) {
 			return null;
 		}
@@ -1040,8 +1119,8 @@ class SdkV6Manager {
 		return array(
 			'order_id'       => $order->id(),
 			'order'          => $order->to_array(),
-			// v5 reads this from a window global; carried in the payload here so
-			// the gateway is told which source approved the order.
+			// Carried in the payload rather than a window global, so the gateway
+			// is told which source approved the order.
 			'funding_source' => $this->session_handler->funding_source(),
 			'cancel'         => array(
 				'html' => $this->cancel_view->render_session_cancellation(
@@ -1054,8 +1133,6 @@ class SdkV6Manager {
 
 	/**
 	 * Whether the current cart needs shipping.
-	 *
-	 * @return bool
 	 */
 	private function need_shipping(): bool {
 		$cart = WC()->cart;
@@ -1064,15 +1141,13 @@ class SdkV6Manager {
 	}
 
 	/**
-	 * Returns the expected transaction amount for eligibility checks
-	 * (affects Pay Later thresholds): the cart total, or the product
-	 * price on product pages while the cart is empty.
+	 * The amount eligibility is checked against, which moves Pay Later
+	 * thresholds: the cart total, or the product price while the cart is empty.
 	 *
-	 * @return string The amount as a decimal string, or empty when unknown.
+	 * @return string A decimal string, or empty when unknown.
 	 */
 	private function transaction_amount(): string {
-		// The pay-for-order page has no cart; the amount is the existing WC
-		// order's total, used for Pay Later eligibility.
+		// The pay-for-order page has no cart; its order carries the total.
 		if ( 'pay-now' === $this->get_page_context() ) {
 			$order = $this->order_pay();
 			if ( $order ) {
@@ -1100,14 +1175,11 @@ class SdkV6Manager {
 	}
 
 	/**
-	 * Returns the page context for the current WC page.
+	 * The page context for the current WC page, or empty off a supported page.
 	 *
-	 * Resolves through the shared Context helper (which handles
-	 * classic-shortcode block pages) and narrows to the contexts this
-	 * module supports: classic product/cart/checkout/pay-now and block
-	 * cart/checkout. The block editor stays out of scope.
-	 *
-	 * @return string
+	 * Resolves through the shared Context helper, which handles
+	 * classic-shortcode block pages, then narrows to the contexts this module
+	 * supports. The block editor stays out of scope.
 	 */
 	private function get_page_context(): string {
 		$context = $this->context->context();
@@ -1125,8 +1197,6 @@ class SdkV6Manager {
 
 	/**
 	 * Whether the current page is a WooCommerce Blocks (React) page.
-	 *
-	 * @return bool
 	 */
 	public function is_block_context(): bool {
 		return in_array(

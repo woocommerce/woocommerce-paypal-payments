@@ -71,6 +71,11 @@ describe( 'loadSdkV6', () => {
 			],
 		],
 		[
+			'the card button enabled',
+			{ card_button: { enabled: true } },
+			[ 'paypal-payments', 'venmo-payments', 'paypal-guest-payments' ],
+		],
+		[
 			'fastlane enabled',
 			{ fastlane: { enabled: true } },
 			[ 'paypal-payments', 'venmo-payments', 'fastlane' ],
@@ -115,6 +120,19 @@ describe( 'loadSdkV6', () => {
 				google_pay: { enabled: false },
 				fastlane: { enabled: false },
 			} ),
+			'checkout'
+		);
+
+		expect( window.paypal.createInstance ).toHaveBeenCalledWith(
+			expect.objectContaining( {
+				components: [ 'paypal-payments', 'venmo-payments' ],
+			} )
+		);
+	} );
+
+	test( 'does not request paypal-guest-payments when the card button is explicitly disabled', async () => {
+		await loadSdkV6(
+			baseConfig( { card_button: { enabled: false } } ),
 			'checkout'
 		);
 

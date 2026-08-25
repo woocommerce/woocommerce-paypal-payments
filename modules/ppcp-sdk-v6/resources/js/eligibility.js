@@ -57,6 +57,12 @@ export async function checkEligibility(
 			FundingSources.PAYLATER
 		),
 		payLaterDetails: null,
+		// Safe rather than direct: paypal-guest-payments is only requested where
+		// the card button renders, so elsewhere the component is absent.
+		[ FundingSources.CARD ]: isEligibleSafely(
+			methods,
+			FundingSources.CARD
+		),
 	};
 
 	for ( const method of WALLET_METHODS ) {

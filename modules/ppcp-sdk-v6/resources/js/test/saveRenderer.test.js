@@ -1,6 +1,9 @@
-const mockCardFieldStyles = jest.fn( () => ( { color: 'rgb(0, 0, 0)' } ) );
+const mockHostedFieldTextStyles = jest.fn( () => ( {
+	color: 'rgb(0, 0, 0)',
+} ) );
 jest.mock( '../cardFields/cardFieldStyles', () => ( {
-	cardFieldStyles: ( field ) => mockCardFieldStyles( field ),
+	hostedFieldTextStyles: ( field, overrides ) =>
+		mockHostedFieldTextStyles( field, overrides ),
 } ) );
 
 const mockHide = jest.fn();
@@ -106,6 +109,26 @@ describe( 'initCardSaveFields', () => {
 		initCardSaveFields( baseConfig( { card_fields: { enabled: false } } ) );
 
 		expect( mockLoadSdkV6 ).not.toHaveBeenCalled();
+	} );
+
+	test( 'forwards config.card_fields.styles as merchant overrides for the hosted field text style', async () => {
+		buildAddPaymentMethodDom();
+		mockLoadSdkV6.mockResolvedValue( {
+			createCardFieldsSavePaymentSession: () => makeCardSession(),
+		} );
+		const styles = { fontSize: '20px' };
+
+		initCardSaveFields(
+			baseConfig( {
+				card_fields: { ...baseConfig().card_fields, styles },
+			} )
+		);
+		await flushPromises();
+
+		expect( mockHostedFieldTextStyles ).toHaveBeenCalledWith(
+			expect.anything(),
+			styles
+		);
 	} );
 
 	test( 'a successful submission creates the setup token, submits the card session, exchanges it, and redirects', async () => {

@@ -16,6 +16,9 @@ import { FundingSources } from './utils/fundingSources';
 import { minorUnitsToDecimal } from './utils/amount';
 import { continuationRedirectUrl } from './utils/continuation';
 
+// The gateway that processes an order unless a caller names another one.
+const DEFAULT_PAYMENT_METHOD = 'ppcp-gateway';
+
 /**
  * Navigation seam: window.location is not mockable under jsdom, so
  * redirects go through this indirection to stay unit-testable.
@@ -25,13 +28,14 @@ export const navigation = {
 };
 
 /**
- * Submits the pay-for-order form after selecting the PayPal gateway, so the
- * approved order is captured by the PayPal gateway (not whichever method radio
+ * Submits the pay-for-order form after selecting the paying gateway, so the
+ * approved order is captured by that gateway (not whichever method radio
  * happens to be checked) and WC issues the order-received redirect.
  *
+ * @param {string} paymentMethod - The WC gateway that processes the order.
  * @throws {Error} When jQuery or the pay-order form is unavailable.
  */
-function submitPayOrderForm() {
+function submitPayOrderForm( paymentMethod = DEFAULT_PAYMENT_METHOD ) {
 	if ( typeof jQuery === 'undefined' ) {
 		// eslint-disable-next-line no-console
 		console.error(
@@ -50,7 +54,7 @@ function submitPayOrderForm() {
 	}
 
 	const gatewayRadio = document.querySelector(
-		'#payment_method_ppcp-gateway'
+		`#payment_method_${ paymentMethod }`
 	);
 	if ( gatewayRadio && ! gatewayRadio.checked ) {
 		gatewayRadio.checked = true;
@@ -154,7 +158,7 @@ export async function createOrder(
 	context,
 	fundingSource,
 	purchaseUnits,
-	paymentMethod = 'ppcp-gateway'
+	paymentMethod = DEFAULT_PAYMENT_METHOD
 ) {
 	const units =
 		purchaseUnits ??
@@ -202,11 +206,11 @@ export async function createOrder(
 /**
  * Reports an approved PayPal order and takes the buyer wherever it leads.
  *
- * should_create_wc_order is requested except for Venmo with vaulting, and the
- * server decides: with the Pay Now experience it creates the WC order and responds
- * with order_received_url, otherwise it only stores the approved order in the
- * session and the gateway processes it on Place Order. On classic checkout the WC
- * checkout form is submitted after approval instead.
+ * should_create_wc_order is requested except for the card button and for Venmo
+ * with vaulting, and the server decides: with the Pay Now experience it creates
+ * the WC order and responds with order_received_url, otherwise it only stores the
+ * approved order in the session and the gateway processes it on Place Order. On
+ * classic checkout the WC checkout form is submitted after approval instead.
  *
  * @param {Object} config                    - The wc_ppcp_sdk_v6 config object.
  * @param {string} context                   - The page context.
@@ -224,21 +228,27 @@ export async function approveOrder(
 	fundingSource,
 	orderId,
 	contact = {},
-	paymentMethod = 'ppcp-gateway'
+	paymentMethod = DEFAULT_PAYMENT_METHOD
 ) {
 	// Pay-for-order: the WC order already exists. Approve it into the session
 	// (never request WC-order creation — that would create a duplicate, since
 	// is_checkout() is false during this AJAX call) and submit the pay-order
-	// form so the PayPal gateway captures the existing order and redirects to
+	// form so the paying gateway captures the existing order and redirects to
 	// the order-received page.
 	if ( context === 'pay-now' ) {
 		await approveOrderInSession( config, fundingSource, orderId );
-		submitPayOrderForm();
+		submitPayOrderForm( paymentMethod );
 		return;
 	}
 
+	// Never for the card button: ApproveOrderEndpoint would run
+	// PayPalGateway::process_payment() and pin chosen_payment_method to the
+	// PayPal gateway, so CardButtonGateway::process_payment() is never reached.
+	// False routes us through the classic form submit below instead.
 	const canCreateOrder =
-		! config.vaulting_enabled || fundingSource !== FundingSources.VENMO;
+		fundingSource !== FundingSources.CARD &&
+		( ! config.vaulting_enabled ||
+			fundingSource !== FundingSources.VENMO );
 
 	const body = {
 		order_id: orderId,

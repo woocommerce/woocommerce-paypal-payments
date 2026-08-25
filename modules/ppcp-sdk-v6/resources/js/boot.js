@@ -21,15 +21,16 @@ import {
 import { renderButtons } from './components/buttonRenderer';
 import { renderWallets } from './wallets/renderWallets';
 import { isWalletEnabled, WALLET_METHODS } from './wallets/walletRegistry';
+import { FundingSources } from './utils/fundingSources';
 import { createOrder, fetchCartTotal } from './endpointsAdapter';
 import {
 	createFreeTrialPayPalSession,
 	createVaultSetupToken,
 } from './sessions/freeTrialSave';
 import { initCardFields } from './cardFields/renderer';
+import { initCardButton } from './cardButton/renderCardButton';
 import { hasJQuery } from './utils/api';
 import { watchViewedTotal } from './utils/viewedTotal';
-import { FundingSources } from './utils/fundingSources';
 import { setErrorLabels } from './utils/errorHandler';
 import { setVisible } from '@ppcp-button/Helper/Hiding';
 import { debounce } from '@ppcp-blocks/Helper/debounce';
@@ -91,6 +92,18 @@ const ELIGIBILITY_REFRESH_DEBOUNCE_MS = 300;
 	 */
 	function initCardFieldsSafely() {
 		initCardFields( config ).catch( ( error ) => {
+			// eslint-disable-next-line no-console
+			console.error( '[PPCP SDK v6]', error );
+		} );
+	}
+
+	/**
+	 * Renders on its own pass, not via renderTarget(): with the checkout smart
+	 * button switched off there is no express wrapper to draw into, and BCDC
+	 * can still be on.
+	 */
+	function initCardButtonSafely() {
+		initCardButton( config, ensureSessions ).catch( ( error ) => {
 			// eslint-disable-next-line no-console
 			console.error( '[PPCP SDK v6]', error );
 		} );
@@ -192,6 +205,15 @@ const ELIGIBILITY_REFRESH_DEBOUNCE_MS = 300;
 			if (
 				WALLET_METHODS.includes( method ) &&
 				! isWalletEnabled( config, method )
+			) {
+				continue;
+			}
+
+			// Same reason as the wallets: paypal-guest-payments is only
+			// requested where the card button renders.
+			if (
+				method === FundingSources.CARD &&
+				! config.card_button?.enabled
 			) {
 				continue;
 			}
@@ -418,6 +440,7 @@ const ELIGIBILITY_REFRESH_DEBOUNCE_MS = 300;
 	function initialRender() {
 		renderAll();
 		initCardFieldsSafely();
+		initCardButtonSafely();
 		initMessagesSafely();
 		trackProductTotal();
 		syncPlaceOrderButton();
@@ -446,6 +469,10 @@ const ELIGIBILITY_REFRESH_DEBOUNCE_MS = 300;
 				} );
 			}
 		);
+
+		// The same DOM replacement rebuilds the card button's row and restores
+		// the hide-style PHP printed, so it needs rendering and revealing again.
+		jQuery( document.body ).on( 'updated_checkout', initCardButtonSafely );
 
 		// WC rebuilds #place_order on these too, and the selected method can
 		// change without a DOM rebuild, so re-sync the button on both.

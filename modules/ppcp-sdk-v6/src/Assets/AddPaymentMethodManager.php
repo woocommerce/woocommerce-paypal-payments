@@ -21,6 +21,7 @@ use WooCommerce\PayPalCommerce\Button\Helper\Context;
 use WooCommerce\PayPalCommerce\SavePaymentMethods\Endpoint\CreatePaymentToken;
 use WooCommerce\PayPalCommerce\SavePaymentMethods\Endpoint\CreateSetupToken;
 use WooCommerce\PayPalCommerce\SdkV6\Endpoint\ClientTokenEndpoint;
+use WooCommerce\PayPalCommerce\SdkV6\Helper\CardFieldStyles;
 use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
@@ -44,6 +45,8 @@ class AddPaymentMethodManager {
 	private bool $card_vaulting_enabled;
 	private SettingsProvider $settings_provider;
 
+	private CardFieldStyles $card_field_styles;
+
 	public function __construct(
 		AssetGetter $asset_getter,
 		string $version,
@@ -51,7 +54,8 @@ class AddPaymentMethodManager {
 		Context $context,
 		bool $paypal_vaulting_enabled,
 		bool $card_vaulting_enabled,
-		SettingsProvider $settings_provider
+		SettingsProvider $settings_provider,
+		CardFieldStyles $card_field_styles
 	) {
 		$this->asset_getter            = $asset_getter;
 		$this->version                 = $version;
@@ -60,6 +64,7 @@ class AddPaymentMethodManager {
 		$this->paypal_vaulting_enabled = $paypal_vaulting_enabled;
 		$this->card_vaulting_enabled   = $card_vaulting_enabled;
 		$this->settings_provider       = $settings_provider;
+		$this->card_field_styles       = $card_field_styles;
 	}
 
 	/**
@@ -155,6 +160,7 @@ class AddPaymentMethodManager {
 					'expiry' => '#' . self::CARD_FIELD_EXPIRY_ID,
 					'cvv'    => '#' . self::CARD_FIELD_CVV_ID,
 				),
+				'styles'         => $this->card_field_styles->overrides(),
 			),
 			'ajax'                 => array(
 				'client_token'         => array(

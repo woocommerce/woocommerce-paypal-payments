@@ -96,6 +96,10 @@ async function createInstance( config, context ) {
 	if ( config.card_fields?.enabled ) {
 		components.push( 'card-fields' );
 	}
+	// The basic card button lives in its own component, not in paypal-payments.
+	if ( config.card_button?.enabled ) {
+		components.push( 'paypal-guest-payments' );
+	}
 	if ( config.fastlane?.enabled ) {
 		components.push( 'fastlane' );
 	}

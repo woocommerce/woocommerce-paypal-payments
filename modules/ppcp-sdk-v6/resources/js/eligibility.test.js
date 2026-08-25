@@ -110,6 +110,22 @@ describe( 'checkEligibility', () => {
 
 		expect( result.applepay ).toBe( false );
 	} );
+
+	test( 'reports card eligibility', async () => {
+		const sdk = sdkWith( { eligible: [ 'card' ] } );
+
+		const result = await checkEligibility( sdk, { currencyCode: 'USD' } );
+
+		expect( result.card ).toBe( true );
+	} );
+
+	test( 'resolves with card false, instead of rejecting, when isEligible throws for card', async () => {
+		const sdk = sdkWith( { isEligibleThrowsFor: [ 'card' ] } );
+
+		const result = await checkEligibility( sdk, { currencyCode: 'USD' } );
+
+		expect( result.card ).toBe( false );
+	} );
 } );
 
 describe( 'checkVaultEligibility', () => {

@@ -20,7 +20,7 @@ jest.mock( './api', () => ( {
 } ) );
 
 import ErrorHandler from '@ppcp-button/ErrorHandler';
-import { setErrorLabels, handleError } from './errorHandler';
+import { setErrorLabels, handleError, handleWarning } from './errorHandler';
 
 beforeEach( () => {
 	jest.clearAllMocks();
@@ -154,5 +154,36 @@ describe( 'handleError', () => {
 
 		expect( () => handleError( { refresh: true } ) ).not.toThrow();
 		expect( console ).toHaveErrored();
+	} );
+} );
+
+describe( 'handleWarning', () => {
+	test( 'logs only, showing nothing, when no card_declined label is configured', () => {
+		handleWarning( { code: 'INSTRUMENT_DECLINED' } );
+
+		expect( mockMessage ).not.toHaveBeenCalled();
+		expect( mockClear ).not.toHaveBeenCalled();
+		expect( console ).toHaveWarned();
+	} );
+
+	test( 'shows the translated card_declined message when configured', () => {
+		setErrorLabels( {
+			generic_error: 'Something went wrong.',
+			card_declined: 'Your card was declined.',
+		} );
+
+		handleWarning( { code: 'INSTRUMENT_DECLINED' } );
+
+		expect( mockMessage ).toHaveBeenCalledWith( 'Your card was declined.' );
+		expect( console ).toHaveWarned();
+	} );
+
+	test( 'leaves existing notices alone, unlike handleError', () => {
+		setErrorLabels( { card_declined: 'Your card was declined.' } );
+
+		handleWarning( { code: 'INSTRUMENT_DECLINED' } );
+
+		expect( mockClear ).not.toHaveBeenCalled();
+		expect( console ).toHaveWarned();
 	} );
 } );

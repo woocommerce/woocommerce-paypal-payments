@@ -11,6 +11,9 @@
  * wrapper belong to no single wallet, so two wallets deciding independently would
  * each undo the other's answer.
  *
+ * Nothing here is wallet-specific despite the directory — the Basic Card button
+ * (BCDC) uses the same seam. The wallet naming is historical.
+ *
  * @package
  */
 
