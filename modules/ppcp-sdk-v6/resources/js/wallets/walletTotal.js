@@ -33,6 +33,16 @@ export async function resolveWalletTotal( config, context ) {
 		};
 	}
 
+	if ( context === 'pay-now' ) {
+		// An existing order is being paid, priced server-side from the order itself.
+		// The cart holds an unrelated basket, so asking it would show a price this
+		// page cannot charge.
+		return {
+			total: config.amount,
+			purchaseUnits: [],
+		};
+	}
+
 	return {
 		// fetchCartTotal returns '' when the Store API call fails; the
 		// localized amount is the page's own total.

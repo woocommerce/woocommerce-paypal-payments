@@ -731,6 +731,13 @@ class SdkV6Manager {
 			return false;
 		}
 
+		// Both pages already own the address and the total the order will use, so
+		// the wallet only authorizes what the page shows. This prevents conflicting
+		// addresses/details between checkout form and payment sheet.
+		if ( in_array( $context, array( 'checkout', 'pay-now' ), true ) ) {
+			return false;
+		}
+
 		// Block surfaces read needsShipping live from the React cart and combine it
 		// with this value themselves, so answering with the cart as it stood when the
 		// page was built would gate them twice, on a snapshot that goes stale the

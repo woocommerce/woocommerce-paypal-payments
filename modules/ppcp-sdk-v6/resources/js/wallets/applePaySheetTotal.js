@@ -97,6 +97,14 @@ export function watchSheetTotal( config, context ) {
 	// Seeded so a click that beats the first resolve still has a number to show.
 	let total = config.amount || '';
 
+	// An existing order is being paid, so the localized amount is that order's
+	// total and nothing on this page can change it.
+	if ( context === 'pay-now' ) {
+		return {
+			get: () => total,
+		};
+	}
+
 	// Refreshes overlap and can resolve out of order, letting a slow answer about
 	// an older variation overwrite a fresh one: the stale total the debounce
 	// exists to prevent.

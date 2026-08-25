@@ -103,6 +103,23 @@ describe( 'watchSheetTotal()', () => {
 		expect( mockSimulateCart ).not.toHaveBeenCalled();
 	} );
 
+	describe( 'on the pay-now context', () => {
+		test( 'returns the configured amount without resolving or refreshing from the cart', async () => {
+			const watcher = watchSheetTotal(
+				config( { amount: '42.00' } ),
+				'pay-now'
+			);
+
+			expect( watcher.get() ).toBe( '42.00' );
+
+			await flushPromises();
+
+			expect( watcher.get() ).toBe( '42.00' );
+			expect( mockSimulateCart ).not.toHaveBeenCalled();
+			expect( mockFetchCartTotal ).not.toHaveBeenCalled();
+		} );
+	} );
+
 	test( 'does not throw when the page has no product form', async () => {
 		mockSimulateCart.mockResolvedValueOnce( { total: '' } );
 

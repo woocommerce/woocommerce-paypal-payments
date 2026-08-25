@@ -51,6 +51,22 @@ describe( 'resolveWalletTotal()', () => {
 		} );
 	} );
 
+	describe( 'on the pay-now context', () => {
+		test( 'returns the configured amount with empty purchase units, without asking the cart', async () => {
+			const result = await resolveWalletTotal(
+				config( { amount: '42.00' } ),
+				'pay-now'
+			);
+
+			expect( result ).toEqual( {
+				total: '42.00',
+				purchaseUnits: [],
+			} );
+			expect( changeCart ).not.toHaveBeenCalled();
+			expect( fetchCartTotal ).not.toHaveBeenCalled();
+		} );
+	} );
+
 	describe( 'on a non-product context (cart, checkout, or unset)', () => {
 		test.each( [
 			[ 'a normal value', '19.99', '19.99' ],

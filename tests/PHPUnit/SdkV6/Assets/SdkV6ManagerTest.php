@@ -468,11 +468,14 @@ class SdkV6ManagerTest extends TestCase
      * THEN shipping.in_context reports, per context, whether that page should collect a
      *      shipping address and offer shipping options for every surface that consumes it
      *      (the PayPal popup, wallet sheets, and block express buttons): a final-review page
-     *      always disables it; the block cart/checkout contexts enable it unconditionally,
-     *      since the block components already gate on their own live cart state; the product
-     *      page is decided solely by the viewed product being physical and non-downloadable;
-     *      and every other context (cart, checkout, pay-now) falls back to whether the cart
-     *      needs shipping at all
+     *      always disables it; classic checkout and the pay-for-order page always disable it
+     *      too, since checkout builds the WC order from its own posted address/shipping fields
+     *      and the pay-for-order page pays an order already priced from itself, so neither page
+     *      can let a wallet sheet collect a destination or total the order can't use; the block
+     *      cart/checkout contexts enable it unconditionally, since the block components already
+     *      gate on their own live cart state; the product page is decided solely by the viewed
+     *      product being physical and non-downloadable; and every remaining context (cart) falls
+     *      back to whether the cart needs shipping at all
      * AND the mini-cart entry is always present alongside the current page's own entry,
      *     since the mini-cart can render on any page independently of it
      *
@@ -533,11 +536,19 @@ class SdkV6ManagerTest extends TestCase
                 true, 'cart', true, 'none',
                 ['cart' => false, 'mini-cart' => false],
             ],
-            'classic checkout collects shipping when the cart needs it' => [
+            'classic checkout never collects shipping even when the cart needs it' => [
                 false, 'checkout', true, 'none',
-                ['checkout' => true, 'mini-cart' => true],
+                ['checkout' => false, 'mini-cart' => true],
             ],
-            'pay-now falls out via the cart having nothing to ship, not a hardcoded exclusion' => [
+            'classic checkout stays disabled when the cart needs no shipping either' => [
+                false, 'checkout', false, 'none',
+                ['checkout' => false, 'mini-cart' => false],
+            ],
+            'the pay-for-order page never collects shipping even when the cart needs it' => [
+                false, 'pay-now', true, 'none',
+                ['pay-now' => false, 'mini-cart' => true],
+            ],
+            'the pay-for-order page stays disabled when the cart needs no shipping either' => [
                 false, 'pay-now', false, 'none',
                 ['pay-now' => false, 'mini-cart' => false],
             ],
