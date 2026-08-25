@@ -19,6 +19,9 @@ use WooCommerce\PayPalCommerce\OrderEndpoints\Endpoint\CreateOrderEndpoint;
 use WooCommerce\PayPalCommerce\Button\Endpoint\GetOrderEndpoint;
 use WooCommerce\PayPalCommerce\Button\Helper\Context;
 use WooCommerce\PayPalCommerce\Googlepay\GooglePayGateway;
+use WooCommerce\PayPalCommerce\SavePaymentMethods\Endpoint\CreatePaymentToken;
+use WooCommerce\PayPalCommerce\SavePaymentMethods\Endpoint\CreatePaymentTokenForGuest;
+use WooCommerce\PayPalCommerce\SavePaymentMethods\Endpoint\CreateSetupToken;
 use WooCommerce\PayPalCommerce\SdkV6\Endpoint\ClientTokenEndpoint;
 use WooCommerce\PayPalCommerce\SdkV6\Endpoint\SimulateCartEndpoint;
 use WooCommerce\PayPalCommerce\SdkV6\Helper\ApplePayConfig;
@@ -34,6 +37,7 @@ use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\CardPaymentsConfiguration;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\SettingsStatus;
+use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\FreeTrialSubscriptionHelper;
 use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
 
 class SdkV6Manager {
@@ -79,6 +83,17 @@ class SdkV6Manager {
 	private CardPaymentsConfiguration $card_payments_configuration;
 	private bool $card_vaulting_enabled;
 	private SubscriptionHelper $subscription_helper;
+	private FreeTrialSubscriptionHelper $free_trial_helper;
+
+	/**
+	 * Resolves the current subscriptions mode ('subscriptions_api',
+	 * 'vaulting_api', …). Native PayPal Subscriptions run in 'subscriptions_api'.
+	 *
+	 * @var callable():string
+	 */
+	private $get_subscriptions_mode;
+
+	private string $three_d_secure_contingency;
 	private MessageStyleMapper $message_style_mapper;
 	private MessagesEligibility $messages_eligibility;
 	private string $merchant_country;
@@ -121,6 +136,9 @@ class SdkV6Manager {
 		CardPaymentsConfiguration $card_payments_configuration,
 		bool $card_vaulting_enabled,
 		SubscriptionHelper $subscription_helper,
+		FreeTrialSubscriptionHelper $free_trial_helper,
+		callable $get_subscriptions_mode,
+		string $three_d_secure_contingency,
 		array $credit_card_icons,
 		MessageStyleMapper $message_style_mapper,
 		MessagesEligibility $messages_eligibility,
@@ -143,6 +161,9 @@ class SdkV6Manager {
 		$this->card_payments_configuration = $card_payments_configuration;
 		$this->card_vaulting_enabled       = $card_vaulting_enabled;
 		$this->subscription_helper         = $subscription_helper;
+		$this->free_trial_helper           = $free_trial_helper;
+		$this->get_subscriptions_mode      = $get_subscriptions_mode;
+		$this->three_d_secure_contingency  = $three_d_secure_contingency;
 		$this->credit_card_icons           = $credit_card_icons;
 		$this->message_style_mapper        = $message_style_mapper;
 		$this->messages_eligibility        = $messages_eligibility;
@@ -217,6 +238,21 @@ class SdkV6Manager {
 	 * @return array<string, bool> Location => enabled (product, cart, checkout, pay-now, mini-cart).
 	 */
 	public function determine_render_places(): array {
+		// Native PayPal Subscriptions defer to v5 (see should_load_on_current_page);
+		// print no v6 wrappers so the classic page hands off cleanly. These render
+		// hooks key on the smart-button locations rather than that method, so they
+		// need this guard explicitly. Every location is returned false (rather than
+		// an empty array) to keep the array shape callers index into.
+		if ( $this->is_native_paypal_subscription_page() ) {
+			return array(
+				'product'   => false,
+				'cart'      => false,
+				'checkout'  => false,
+				'pay-now'   => false,
+				'mini-cart' => false,
+			);
+		}
+
 		// Free orders ($0 total, e.g. a 100%-off coupon or free trial) do not
 		// need payment, so the cart/checkout wallet buttons must not render —
 		// matching v5's is_cart_price_total_zero() suppression.
@@ -375,6 +411,15 @@ class SdkV6Manager {
 	 * it can claim a classic page where nothing else here would.
 	 */
 	public function should_load_on_current_page(): bool {
+		// Native PayPal Subscriptions (subscriptions_api mode) have no v6 path — v6
+		// can only carry a subscription by vaulting, which that mode disables. Hand
+		// the whole page back to the v5 stack, which creates the subscription via
+		// actions.subscription.create. Checked before every other gate so it also
+		// overrides the sitewide mini-cart fallback below.
+		if ( $this->is_native_paypal_subscription_page() ) {
+			return false;
+		}
+
 		$page_location = $this->get_page_context();
 		if ( $page_location && $this->settings_status->is_smart_button_enabled_for_location( $page_location ) ) {
 			return true;
@@ -421,6 +466,22 @@ class SdkV6Manager {
 
 		return in_array( $location, array( 'checkout', 'checkout-block', 'pay-now' ), true )
 			&& $this->card_payments_configuration->is_acdc_enabled();
+	}
+
+	/**
+	 * Whether the current page involves a native PayPal Subscription that the v5
+	 * stack must handle: subscriptions_api mode with a subscription in the current
+	 * context. v6 has no native-subscription flow (it can only carry a subscription
+	 * by vaulting, which this mode disables), so it defers the page to v5.
+	 */
+	private function is_native_paypal_subscription_page(): bool {
+		if ( SubscriptionHelper::SUBSCRIPTION_MODE_VALUE_SUBSCRIPTIONS !== ( $this->get_subscriptions_mode )() ) {
+			return false;
+		}
+
+		return $this->subscription_helper->current_product_is_subscription()
+			|| $this->subscription_helper->cart_contains_subscription()
+			|| $this->subscription_helper->order_pay_contains_subscription();
 	}
 
 	/**
@@ -707,70 +768,105 @@ class SdkV6Manager {
 		$messages_settings_location = $this->messages_settings_location();
 
 		$data = array(
-			'sdk_url'           => $base_url . '/web-sdk/v6/core',
-			'page_context'      => $page_context,
-			'currency'          => get_woocommerce_currency(),
-			'amount'            => $this->transaction_amount(),
-			'buyer_country'     => $buyer_country,
-			'merchant_country'  => $this->merchant_country,
-			'locale'            => str_replace( '_', '-', get_locale() ),
-			'vaulting_enabled'  => $this->vaulting_enabled,
+			'sdk_url'             => $base_url . '/web-sdk/v6/core',
+			'page_context'        => $page_context,
+			'currency'            => get_woocommerce_currency(),
+			'amount'              => $this->transaction_amount(),
+			'buyer_country'       => $buyer_country,
+			'merchant_country'    => $this->merchant_country,
+			'locale'              => str_replace( '_', '-', get_locale() ),
+			'vaulting_enabled'    => $this->vaulting_enabled,
 			// Drives the post-approval fork; see V6ExpressComponent.approve().
-			'final_review'      => $this->final_review_enabled,
-			'ajax'              => array(
-				'client_token'    => array(
+			'final_review'        => $this->final_review_enabled,
+			// A subscription cart whose initial total is 0 (free trial, delayed
+			// sync or a 100% coupon). Such a cart must not create a $0 PayPal
+			// order: the frontend switches to the vault "save without purchase"
+			// flow instead, and the gateway places the $0 WC order server-side.
+			'is_free_trial_cart'  => $this->free_trial_helper->is_free_trial_cart(),
+			/**
+			 * 3DS/SCA contingency for the card save (setup-token) flow used on a
+			 * free-trial card checkout. Filtered like the add-payment-method page.
+			 *
+			 * @param string $three_d_secure_contingency The default 3D Secure enum value.
+			 */
+			'verification_method' => (string) apply_filters(
+				'woocommerce_paypal_payments_three_d_secure_contingency',
+				$this->three_d_secure_contingency
+			),
+			// Whether the buyer is logged in, so the free-trial save flow picks the
+			// logged-in create-payment-token endpoint vs the guest one.
+			'user'                => array(
+				'is_logged' => is_user_logged_in(),
+			),
+			'ajax'                => array(
+				'client_token'                   => array(
 					'endpoint' => \WC_AJAX::get_endpoint( ClientTokenEndpoint::ENDPOINT ),
 					'nonce'    => wp_create_nonce( ClientTokenEndpoint::nonce() ),
 				),
-				'change_cart'     => array(
+				'change_cart'                    => array(
 					'endpoint' => \WC_AJAX::get_endpoint( ChangeCartEndpoint::ENDPOINT ),
 					'nonce'    => wp_create_nonce( ChangeCartEndpoint::nonce() ),
 				),
-				'simulate_cart'   => array(
+				'simulate_cart'                  => array(
 					'endpoint' => \WC_AJAX::get_endpoint( SimulateCartEndpoint::ENDPOINT ),
 					'nonce'    => wp_create_nonce( SimulateCartEndpoint::nonce() ),
 				),
-				'create_order'    => array(
+				'create_order'                   => array(
 					'endpoint' => \WC_AJAX::get_endpoint( CreateOrderEndpoint::ENDPOINT ),
 					'nonce'    => wp_create_nonce( CreateOrderEndpoint::nonce() ),
 				),
-				'approve_order'   => array(
+				'approve_order'                  => array(
 					'endpoint' => \WC_AJAX::get_endpoint( ApproveOrderEndpoint::ENDPOINT ),
 					'nonce'    => wp_create_nonce( ApproveOrderEndpoint::nonce() ),
 				),
-				'get_order'       => array(
+				'get_order'                      => array(
 					'endpoint' => \WC_AJAX::get_endpoint( GetOrderEndpoint::ENDPOINT ),
 					'nonce'    => wp_create_nonce( GetOrderEndpoint::nonce() ),
 				),
-				'update_shipping' => array(
+				'update_shipping'                => array(
 					'endpoint' => \WC_AJAX::get_endpoint( UpdateShippingEndpoint::ENDPOINT ),
 					'nonce'    => wp_create_nonce( UpdateShippingEndpoint::nonce() ),
 				),
-				'wc_store_api'    => array(
+				// Vault v3 "save without purchase" endpoints, used by the
+				// free-trial checkout flow (see is_free_trial_cart). Registered as
+				// wc_ajax actions by ppcp-save-payment-methods when vaulting is on.
+				'create_setup_token'             => array(
+					'endpoint' => \WC_AJAX::get_endpoint( CreateSetupToken::ENDPOINT ),
+					'nonce'    => wp_create_nonce( CreateSetupToken::nonce() ),
+				),
+				'create_payment_token'           => array(
+					'endpoint' => \WC_AJAX::get_endpoint( CreatePaymentToken::ENDPOINT ),
+					'nonce'    => wp_create_nonce( CreatePaymentToken::nonce() ),
+				),
+				'create_payment_token_for_guest' => array(
+					'endpoint' => \WC_AJAX::get_endpoint( CreatePaymentTokenForGuest::ENDPOINT ),
+					'nonce'    => wp_create_nonce( CreatePaymentTokenForGuest::nonce() ),
+				),
+				'wc_store_api'                   => array(
 					'cart'                 => $store_api_base,
 					'select_shipping_rate' => $store_api_base . '/select-shipping-rate',
 					'update_customer'      => $store_api_base . '/update-customer',
 					'nonce'                => wp_create_nonce( 'wc_store_api' ),
 				),
 			),
-			'urls'              => array(
+			'urls'                => array(
 				'checkout' => wc_get_checkout_url(),
 			),
-			'labels'            => array(
+			'labels'              => array(
 				'generic_error' => __(
 					'Something went wrong. Please try again or choose another payment source.',
 					'woocommerce-paypal-payments'
 				),
 			),
-			'shipping'          => array(
+			'shipping'            => array(
 				'handle_in_paypal' => $shipping_enabled,
 				'need_shipping'    => $this->need_shipping(),
 			),
-			'button_styles'     => $button_styles,
-			'button_height'     => self::PAYMENT_BUTTON_HEIGHT,
-			'wrapper'           => '#' . self::WRAPPER_ID,
-			'mini_cart_wrapper' => '#' . self::MINI_CART_WRAPPER_ID,
-			'card_fields'       => array(
+			'button_styles'       => $button_styles,
+			'button_height'       => self::PAYMENT_BUTTON_HEIGHT,
+			'wrapper'             => '#' . self::WRAPPER_ID,
+			'mini_cart_wrapper'   => '#' . self::MINI_CART_WRAPPER_ID,
+			'card_fields'         => array(
 				'enabled'             => $card_fields_enabled,
 				'payment_method'      => CreditCardGateway::ID,
 				'funding_source'      => 'card',
@@ -807,7 +903,7 @@ class SdkV6Manager {
 			// setting and localize it as wc_ppcp_axo; this flag tells sdkLoader
 			// to request the component their connection then reads off the
 			// shared SDK instance.
-			'fastlane'          => array(
+			'fastlane'            => array(
 				'enabled'        => $this->is_fastlane_enabled( $page_context ),
 				// The id as a literal, not AxoGateway::ID: ppcp-axo is behind its
 				// own feature flag, and SdkV6Module names it the same way.

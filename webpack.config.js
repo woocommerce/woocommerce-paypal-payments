@@ -85,6 +85,7 @@ const modulesAssets = {
 		'css/common.scss',
 	],
 	'ppcp-store-sync': [ 'js/settings.js', 'css/style.scss' ],
+	'ppcp-vault-component': [ 'js/checkout.js' ],
 };
 
 const entries = {};
