@@ -1,144 +1,63 @@
-import { quoteFromCart, resolveOptionId } from './shippingQuote';
+import { quoteFromResponse, resolveOptionId } from './shippingQuote';
 
-const cart = ( overrides = {} ) => ( {
-	needs_shipping: true,
-	totals: {
-		total_price: '11050',
-		total_shipping: '500',
-		total_items: '10000',
-		total_tax: '550',
-		total_discount: '0',
-		currency_minor_unit: 2,
-	},
-	shipping_rates: [
-		{
-			shipping_rates: [
-				{
-					rate_id: 'flat_rate:1',
-					name: 'Flat rate',
-					price: '500',
-					currency_minor_unit: 2,
-					selected: true,
-				},
-				{
-					rate_id: 'flat_rate:2',
-					name: 'Express',
-					price: '1500',
-					currency_minor_unit: 2,
-					selected: false,
-				},
+describe( 'quoteFromResponse()', () => {
+	const response = ( overrides = {} ) => ( {
+		total: '110.50',
+		shipping_fee: '5.00',
+		subtotal: '100.00',
+		tax: '5.50',
+		discount: '0.00',
+		needs_shipping: true,
+		selected_rate_id: 'flat_rate:1',
+		options: [ { id: 'flat_rate:1', label: 'Flat rate', cost: '5.00' } ],
+		...overrides,
+	} );
+
+	test( 'maps the snake_case endpoint fields onto the camelCase quote shape', () => {
+		expect( quoteFromResponse( response() ) ).toEqual( {
+			total: '110.50',
+			shippingFee: '5.00',
+			subtotal: '100.00',
+			tax: '5.50',
+			discount: '0.00',
+			needsShipping: true,
+			selectedId: 'flat_rate:1',
+			options: [
+				{ id: 'flat_rate:1', label: 'Flat rate', cost: '5.00' },
 			],
-		},
-	],
-	...overrides,
-} );
-
-describe( 'quoteFromCart()', () => {
-	test( 'normalises the Store API totals into decimal strings', () => {
-		const quote = quoteFromCart( cart() );
-
-		expect( quote.total ).toBe( '110.50' );
-		expect( quote.shippingFee ).toBe( '5.00' );
-		expect( quote.subtotal ).toBe( '100.00' );
-		expect( quote.tax ).toBe( '5.50' );
-		expect( quote.discount ).toBe( '0.00' );
+		} );
 	} );
 
-	test( 'carries needsShipping straight from the cart', () => {
-		expect( quoteFromCart( cart( { needs_shipping: true } ) ).needsShipping ).toBe(
-			true
-		);
+	test.each( [
+		[ 'null', null ],
+		[ 'an empty string', '' ],
+		[ 'undefined', undefined ],
+	] )(
+		'reports selectedId as null when selected_rate_id is %s',
+		( label, selectedRateId ) => {
+			expect(
+				quoteFromResponse(
+					response( { selected_rate_id: selectedRateId } )
+				).selectedId
+			).toBeNull();
+		}
+	);
+
+	test( 'defaults options to an empty list when the response carries none', () => {
 		expect(
-			quoteFromCart( cart( { needs_shipping: false } ) ).needsShipping
-		).toBe( false );
+			quoteFromResponse( response( { options: undefined } ) ).options
+		).toEqual( [] );
 	} );
 
-	test( 'maps the first package rates to options, each with its own exponent', () => {
-		const quote = quoteFromCart(
-			cart( {
-				shipping_rates: [
-					{
-						shipping_rates: [
-							{
-								rate_id: 'flat_rate:1',
-								name: 'Flat rate',
-								price: '500',
-								currency_minor_unit: 3,
-								selected: true,
-							},
-						],
-					},
-				],
-			} )
-		);
+	test( 'does not throw and returns empty totals/options for a null response', () => {
+		expect( () => quoteFromResponse( null ) ).not.toThrow();
 
-		expect( quote.options ).toEqual( [
-			{ id: 'flat_rate:1', label: 'Flat rate', cost: '0.500' },
-		] );
-	} );
-
-	test( 'reports the selected rate id, or null when nothing is selected', () => {
-		expect( quoteFromCart( cart() ).selectedId ).toBe( 'flat_rate:1' );
-
-		const noneSelected = cart();
-		noneSelected.shipping_rates[ 0 ].shipping_rates.forEach(
-			( rate ) => ( rate.selected = false )
-		);
-		expect( quoteFromCart( noneSelected ).selectedId ).toBeNull();
-	} );
-
-	test( 'reads only the first shipping package when there is more than one', () => {
-		const quote = quoteFromCart(
-			cart( {
-				shipping_rates: [
-					{
-						shipping_rates: [
-							{
-								rate_id: 'flat_rate:1',
-								name: 'Flat rate',
-								price: '500',
-								currency_minor_unit: 2,
-								selected: true,
-							},
-						],
-					},
-					{
-						shipping_rates: [
-							{
-								rate_id: 'flat_rate:9',
-								name: 'Second package rate',
-								price: '900',
-								currency_minor_unit: 2,
-								selected: false,
-							},
-						],
-					},
-				],
-			} )
-		);
-
-		expect( quote.options ).toEqual( [
-			{ id: 'flat_rate:1', label: 'Flat rate', cost: '5.00' },
-		] );
-		expect( console ).toHaveWarned();
-	} );
-
-	test( 'does not throw and returns empty totals/options for a null cart', () => {
-		expect( () => quoteFromCart( null ) ).not.toThrow();
-
-		const quote = quoteFromCart( null );
+		const quote = quoteFromResponse( null );
 
 		expect( quote.total ).toBe( '' );
 		expect( quote.needsShipping ).toBe( false );
 		expect( quote.selectedId ).toBeNull();
 		expect( quote.options ).toEqual( [] );
-	} );
-
-	test( 'returns no options when the cart has no shipping packages', () => {
-		const quote = quoteFromCart( cart( { shipping_rates: [] } ) );
-
-		expect( quote.options ).toEqual( [] );
-		expect( quote.selectedId ).toBeNull();
 	} );
 } );
 

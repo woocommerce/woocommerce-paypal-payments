@@ -1,11 +1,8 @@
 /**
- * Normalises the WC Store API cart into the one shipping shape every wallet
- * adapter reads.
+ * Normalises a shipping quote into the one shape every wallet adapter reads.
  *
  * @package
  */
-
-import { minorUnitsToDecimal } from '../utils/amount';
 
 // What Google sends as the option id before the shopper has picked one.
 const GOOGLE_UNSELECTED = 'shipping_option_unselected';
@@ -29,57 +26,25 @@ const GOOGLE_UNSELECTED = 'shipping_option_unselected';
  * @property {ShippingOption[]} options       - The rates the shopper may pick.
  */
 
-let warnedAboutPackages = false;
-
 /**
- * Normalises a WC Store API cart into a quote.
+ * Normalises the wallet-shipping endpoint's response into a quote.
  *
- * Store API amounts are minor-unit integers carrying their own exponent, so a
- * plain divide by 100 would break 3-decimal currencies.
+ * Every figure is already a decimal string at the shop's precision, and the total
+ * is the one the purchase unit will carry, so nothing is recomputed here.
  *
- * Only the first shipping package is read: neither pay sheet can express a
- * per-package choice; PayPal does not support this either.
- *
- * @param {?Object} cart - The Store API cart response.
+ * @param {?Object} data - The ppc-sdk-v6-wallet-shipping response.
  * @return {ShippingQuote} The normalised quote.
  */
-export function quoteFromCart( cart ) {
-	const totals = cart?.totals ?? {};
-	const minorUnit = totals.currency_minor_unit;
-	const toDecimal = ( value ) => minorUnitsToDecimal( value, minorUnit );
-
-	const packages = Array.isArray( cart?.shipping_rates )
-		? cart.shipping_rates
-		: [];
-
-	if ( packages.length > 1 && ! warnedAboutPackages ) {
-		warnedAboutPackages = true;
-		// eslint-disable-next-line no-console
-		console.warn(
-			'[PPCP SDK v6] the cart has more than one shipping package; the payment sheet shows the first only.'
-		);
-	}
-
-	const rates = packages[ 0 ]?.shipping_rates ?? [];
-
-	const options = rates.map( ( rate ) => ( {
-		id: String( rate.rate_id ?? '' ),
-		label: String( rate.name ?? '' ),
-		// Each rate carries its own exponent, which need not match the cart's.
-		cost: minorUnitsToDecimal( rate.price, rate.currency_minor_unit ),
-	} ) );
-
-	const selected = rates.find( ( rate ) => rate.selected );
-
+export function quoteFromResponse( data ) {
 	return {
-		total: toDecimal( totals.total_price ),
-		shippingFee: toDecimal( totals.total_shipping ),
-		subtotal: toDecimal( totals.total_items ),
-		tax: toDecimal( totals.total_tax ),
-		discount: toDecimal( totals.total_discount ),
-		needsShipping: Boolean( cart?.needs_shipping ),
-		selectedId: selected ? String( selected.rate_id ) : null,
-		options,
+		total: data?.total ?? '',
+		shippingFee: data?.shipping_fee ?? '',
+		subtotal: data?.subtotal ?? '',
+		tax: data?.tax ?? '',
+		discount: data?.discount ?? '',
+		needsShipping: Boolean( data?.needs_shipping ),
+		selectedId: data?.selected_rate_id || null,
+		options: Array.isArray( data?.options ) ? data.options : [],
 	};
 }
 

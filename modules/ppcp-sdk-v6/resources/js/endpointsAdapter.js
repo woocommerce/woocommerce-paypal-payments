@@ -294,6 +294,8 @@ export async function approveOrder(
 				jQuery( gatewayRadio ).trigger( 'change' );
 			}
 
+			selectShippingMethodInForm( contact.shippingRateId );
+
 			checkoutForm.trigger( 'submit' );
 			return;
 		}
@@ -491,6 +493,85 @@ export async function updateCustomerAddress( config, address ) {
 	return postStoreApi( storeApi, storeApi.update_customer, {
 		shipping_address: address,
 	} );
+}
+
+/**
+ * Points the checkout form's shipping-method field at the sheet's rate.
+ *
+ * The form submits its own shipping_method, and that beats the session. Assigned
+ * rather than clicked: a click fires update_checkout, which posts the form's own
+ * address back over the one the sheet just set.
+ *
+ * @param {?string} rateId - The WC rate id, e.g. flat_rate:3.
+ */
+function selectShippingMethodInForm( rateId ) {
+	if ( ! rateId ) {
+		return;
+	}
+
+	const input = document.querySelector(
+		`input[name^="shipping_method"][value="${ rateId.replace(
+			/"/g,
+			''
+		) }"]`
+	);
+
+	if ( input ) {
+		input.checked = true;
+	}
+}
+
+/**
+ * Prices the cart for an address and rate chosen in a wallet payment sheet.
+ *
+ * One request, because WooCommerce re-picks the shipping method on every
+ * recalculation, so setting the destination and the rate separately loses the
+ * shopper's choice. Its total is the one ppc-create-order will charge.
+ *
+ * @param {Object}  config                  - The wc_ppcp_sdk_v6 config object.
+ * @param {Object}  args                    - The selection.
+ * @param {Object}  args.address            - WC shipping address fields, as
+ *                                            complete as known.
+ * @param {?string} [args.rateId]           - The rate the sheet selected.
+ * @param {?Object} [args.billingAddress]   - The card's WC billing address, once
+ *                                            authorization reveals it. Omitted
+ *                                            leaves the customer's own untouched.
+ * @param {?string} [args.expectedTotal]    - The total the sheet displayed. The
+ *                                            server refuses a higher one rather
+ *                                            than charge it.
+ * @return {Promise<Object>} The quote.
+ */
+export async function quoteWalletShipping(
+	config,
+	{ address, rateId = null, billingAddress = null, expectedTotal = null }
+) {
+	const body = {
+		address,
+		rate_id: rateId ?? '',
+	};
+
+	if ( billingAddress ) {
+		body.billing_address = billingAddress;
+	}
+
+	if ( expectedTotal ) {
+		body.expected_total = expectedTotal;
+	}
+
+	return postJson( config.ajax.wallet_shipping, body );
+}
+
+/**
+ * Drops the server-side hold on the sheet's chosen rate.
+ *
+ * Called when the sheet closes without paying, so the shopper's own rate choices
+ * apply again on the page behind it.
+ *
+ * @param {Object} config - The wc_ppcp_sdk_v6 config object.
+ * @return {Promise<?Object>} The endpoint's acknowledgement.
+ */
+export async function releaseWalletShipping( config ) {
+	return postJson( config.ajax.wallet_shipping, { release: true } );
 }
 
 /**

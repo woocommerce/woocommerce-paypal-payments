@@ -33,6 +33,8 @@ import {
 	fetchCartTotal,
 	simulateCart,
 	updateCustomerAddress,
+	quoteWalletShipping,
+	releaseWalletShipping,
 	selectShippingRate,
 	navigation,
 } from './endpointsAdapter';
@@ -51,6 +53,7 @@ const config = {
 				'/wp-json/wc/store/v1/cart/select-shipping-rate',
 			nonce: 'store-nonce',
 		},
+		wallet_shipping: { endpoint: '/ws', nonce: 'n-ws' },
 	},
 	urls: { checkout: '/checkout/' },
 	card_fields: {
@@ -815,7 +818,7 @@ describe( 'fetchCart', () => {
 } );
 
 describe( 'updateCustomerAddress', () => {
-	test( 'posts the address to the Store API and returns the recalculated cart', async () => {
+	test( 'posts the address as shipping only to the Store API and returns the recalculated cart', async () => {
 		const cart = { totals: { total_price: '1100' } };
 		postStoreApi.mockResolvedValueOnce( cart );
 
@@ -828,6 +831,121 @@ describe( 'updateCustomerAddress', () => {
 			config.ajax.wc_store_api.update_customer,
 			{ shipping_address: address }
 		);
+	} );
+
+	test( 'never sends a billing_address', async () => {
+		postStoreApi.mockResolvedValueOnce( {} );
+
+		await updateCustomerAddress( config, { country: 'US' } );
+
+		expect( postStoreApi ).toHaveBeenCalledWith(
+			config.ajax.wc_store_api,
+			config.ajax.wc_store_api.update_customer,
+			expect.not.objectContaining( { billing_address: expect.anything() } )
+		);
+	} );
+} );
+
+describe( 'quoteWalletShipping', () => {
+	test.each( [
+		[ 'a rate id is selected', 'flat_rate:1', 'flat_rate:1' ],
+		[ 'no rateId is passed', undefined, '' ],
+		[ 'rateId is explicitly null', null, '' ],
+	] )( 'posts the address and rate_id when %s', async ( label, rateId, expectedRateId ) => {
+		const quote = { total: '110.00' };
+		postJson.mockResolvedValueOnce( quote );
+		const address = { country: 'US', state: 'CA' };
+
+		const result = await quoteWalletShipping( config, { address, rateId } );
+
+		expect( result ).toEqual( quote );
+		expect( postJson ).toHaveBeenCalledWith( config.ajax.wallet_shipping, {
+			address,
+			rate_id: expectedRateId,
+		} );
+	} );
+
+	test( 'includes billing_address in the posted body when one is given', async () => {
+		postJson.mockResolvedValueOnce( { total: '110.00' } );
+		const address = { country: 'US', state: 'CA' };
+		const billingAddress = { country: 'US', state: 'NY' };
+
+		await quoteWalletShipping( config, { address, billingAddress } );
+
+		expect( postJson ).toHaveBeenCalledWith( config.ajax.wallet_shipping, {
+			address,
+			rate_id: '',
+			billing_address: billingAddress,
+		} );
+	} );
+
+	test.each( [
+		[ 'billingAddress is null', null ],
+		[ 'billingAddress is not passed', undefined ],
+	] )(
+		'omits billing_address entirely when %s, so the endpoint leaves the customer\'s own untouched',
+		async ( label, billingAddress ) => {
+			postJson.mockResolvedValueOnce( { total: '110.00' } );
+			const address = { country: 'US', state: 'CA' };
+
+			await quoteWalletShipping( config, { address, billingAddress } );
+
+			expect( postJson ).toHaveBeenCalledWith(
+				config.ajax.wallet_shipping,
+				expect.not.objectContaining( {
+					billing_address: expect.anything(),
+				} )
+			);
+		}
+	);
+
+	test( 'includes expected_total in the posted body when one is given', async () => {
+		postJson.mockResolvedValueOnce( { total: '110.00' } );
+		const address = { country: 'US', state: 'CA' };
+
+		await quoteWalletShipping( config, {
+			address,
+			expectedTotal: '110.00',
+		} );
+
+		expect( postJson ).toHaveBeenCalledWith( config.ajax.wallet_shipping, {
+			address,
+			rate_id: '',
+			expected_total: '110.00',
+		} );
+	} );
+
+	test.each( [
+		[ 'expectedTotal is null', null ],
+		[ 'expectedTotal is not passed', undefined ],
+	] )(
+		'omits expected_total entirely when %s, leaving the server to charge whatever it prices',
+		async ( label, expectedTotal ) => {
+			postJson.mockResolvedValueOnce( { total: '110.00' } );
+			const address = { country: 'US', state: 'CA' };
+
+			await quoteWalletShipping( config, { address, expectedTotal } );
+
+			expect( postJson ).toHaveBeenCalledWith(
+				config.ajax.wallet_shipping,
+				expect.not.objectContaining( {
+					expected_total: expect.anything(),
+				} )
+			);
+		}
+	);
+} );
+
+describe( 'releaseWalletShipping', () => {
+	test( 'posts a release flag to the wallet-shipping endpoint', async () => {
+		postJson.mockResolvedValueOnce( { released: true } );
+
+		const result = await releaseWalletShipping( config );
+
+		expect( result ).toEqual( { released: true } );
+		expect( postJson ).toHaveBeenCalledWith( config.ajax.wallet_shipping, {
+			release: true,
+		} );
 	} );
 } );
 

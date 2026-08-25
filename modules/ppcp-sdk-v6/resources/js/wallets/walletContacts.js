@@ -35,6 +35,99 @@ export function walletAddressToWc( source ) {
 }
 
 /**
+ * Maps an authorized wallet address to complete WC address fields.
+ *
+ * The street and the recipient are known only once the buyer authorizes. Writing
+ * them completes the customer record, which is what PurchaseUnitFactory sends to
+ * PayPal: an incomplete one is dropped (no street, no city or no postcode), and a
+ * stale one would ship the order to whatever address WooCommerce already held.
+ *
+ * @param {Object}   source         - A wallet address or contact.
+ * @param {string[]} addressLines   - Its street lines, most significant first.
+ * @param {string}   [fullName]     - The recipient, as the wallet spells it.
+ * @return {Object} WC address fields.
+ */
+function walletAddressToWcComplete( source, addressLines, fullName ) {
+	const [ firstName, lastName ] = splitFullName( fullName ?? '' );
+
+	return {
+		...walletAddressToWc( source ),
+		address_1: addressLines?.[ 0 ] || '',
+		address_2: addressLines?.[ 1 ] || '',
+		first_name: firstName,
+		last_name: lastName,
+	};
+}
+
+/**
+ * The complete WC shipping address from a Google Pay payment response.
+ *
+ * @param {Object} response - The Google Pay payment response.
+ * @return {Object} WC address fields.
+ */
+export function googlePayWcShippingAddress( response ) {
+	const shipping = response?.shippingAddress;
+
+	return walletAddressToWcComplete(
+		shipping,
+		[ shipping?.address1, shipping?.address2 ],
+		shipping?.name
+	);
+}
+
+/**
+ * The complete WC billing address from a Google Pay payment response.
+ *
+ * The card's own billing address, which is what the order is created with. Known
+ * only at authorization, so the sheet's own quotes cannot price against it: send
+ * it with the final quote and the cart then taxes on the basis the order will.
+ *
+ * @param {Object} response - The Google Pay payment response.
+ * @return {Object} WC address fields.
+ */
+export function googlePayWcBillingAddress( response ) {
+	const billing = response?.paymentMethodData?.info?.billingAddress;
+
+	return walletAddressToWcComplete(
+		billing,
+		[ billing?.address1, billing?.address2 ],
+		billing?.name
+	);
+}
+
+/**
+ * The complete WC shipping address from an authorized Apple Pay payment.
+ *
+ * @param {Object} payment - The ApplePayPayment from onpaymentauthorized.
+ * @return {Object} WC address fields.
+ */
+export function applePayWcShippingAddress( payment ) {
+	const shipping = payment?.shippingContact;
+
+	return walletAddressToWcComplete(
+		shipping,
+		shipping?.addressLines,
+		applePayFullName( shipping )
+	);
+}
+
+/**
+ * The complete WC billing address from an authorized Apple Pay payment.
+ *
+ * @param {Object} payment - The ApplePayPayment from onpaymentauthorized.
+ * @return {Object} WC address fields.
+ */
+export function applePayWcBillingAddress( payment ) {
+	const billing = payment?.billingContact;
+
+	return walletAddressToWcComplete(
+		billing,
+		billing?.addressLines,
+		applePayFullName( billing )
+	);
+}
+
+/**
  * Maps a wallet address to the PayPal address shape.
  *
  * Both wallets name every field the same way bar the street, which they are asked

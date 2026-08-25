@@ -1,15 +1,11 @@
-const mockUpdateCustomerAddress = jest.fn();
-const mockSelectShippingRate = jest.fn();
-const mockFetchCart = jest.fn();
+const mockQuoteWalletShipping = jest.fn();
 jest.mock( '../endpointsAdapter', () => ( {
-	updateCustomerAddress: ( ...args ) => mockUpdateCustomerAddress( ...args ),
-	selectShippingRate: ( ...args ) => mockSelectShippingRate( ...args ),
-	fetchCart: ( ...args ) => mockFetchCart( ...args ),
+	quoteWalletShipping: ( ...args ) => mockQuoteWalletShipping( ...args ),
 } ) );
 
-const mockQuoteFromCart = jest.fn();
+const mockQuoteFromResponse = jest.fn();
 jest.mock( './shippingQuote', () => ( {
-	quoteFromCart: ( ...args ) => mockQuoteFromCart( ...args ),
+	quoteFromResponse: ( ...args ) => mockQuoteFromResponse( ...args ),
 } ) );
 
 import {
@@ -64,144 +60,233 @@ describe( 'walletShippingCountries()', () => {
 } );
 
 describe( 'createShippingController()', () => {
-	const address = { country: 'US', state: 'CA', postcode: '94105', city: 'SF' };
-	const cartAfterAddress = { totals: {} };
-	const cartAfterRate = { totals: {}, rate: true };
-	const priced = { total: '10.00', options: [ { id: 'flat_rate:1' } ] };
+	const address = {
+		country: 'US',
+		state: 'CA',
+		postcode: '94105',
+		city: 'SF',
+	};
+	const response = { total: '10.00' };
+	const priced = { total: '10.00', selectedId: null, options: [] };
 
-	test( 'current() is null before any quote has resolved', () => {
-		expect( createShippingController( { config: config() } ).current() ).toBeNull();
-	} );
-
-	test( 'writes the address when it carries a country, and quotes off the recalculated cart', async () => {
-		mockUpdateCustomerAddress.mockResolvedValue( cartAfterAddress );
-		mockQuoteFromCart.mockReturnValue( priced );
-
-		const controller = createShippingController( { config: config() } );
-		const result = await controller.quote( { address } );
-
-		expect( mockUpdateCustomerAddress ).toHaveBeenCalledWith(
-			config(),
-			address
-		);
-		expect( mockFetchCart ).not.toHaveBeenCalled();
-		expect( mockSelectShippingRate ).not.toHaveBeenCalled();
-		expect( mockQuoteFromCart ).toHaveBeenCalledWith( cartAfterAddress );
-		expect( result ).toEqual( priced );
-		expect( controller.current() ).toEqual( priced );
-	} );
-
-	test( 'reads the cart instead of writing when the address carries no country, as when the sheet opens with nothing selected yet', async () => {
-		const cart = { totals: {} };
-		mockFetchCart.mockResolvedValue( cart );
-		mockQuoteFromCart.mockReturnValue( priced );
-
-		const controller = createShippingController( { config: config() } );
-		const result = await controller.quote( {
-			address: { country: '', state: '', postcode: '', city: '' },
+	describe( 'quote()', () => {
+		test( 'current() is null before any quote has resolved', () => {
+			expect(
+				createShippingController( { config: config() } ).current()
+			).toBeNull();
 		} );
 
-		expect( mockFetchCart ).toHaveBeenCalledWith( config() );
-		expect( mockUpdateCustomerAddress ).not.toHaveBeenCalled();
-		expect( mockQuoteFromCart ).toHaveBeenCalledWith( cart );
-		expect( result ).toEqual( priced );
-	} );
+		test( 'prices the address and rate in a single request and keeps the result as the current answer', async () => {
+			mockQuoteWalletShipping.mockResolvedValue( response );
+			mockQuoteFromResponse.mockReturnValue( priced );
 
-	test( 'still selects the rate after reading the cart when a country-less selection carries one', async () => {
-		const cart = { totals: {} };
-		mockFetchCart.mockResolvedValue( cart );
-		mockSelectShippingRate.mockResolvedValue( cartAfterRate );
-		mockQuoteFromCart.mockReturnValue( priced );
+			const controller = createShippingController( { config: config() } );
+			const result = await controller.quote( {
+				address,
+				rateId: 'flat_rate:1',
+			} );
 
-		const controller = createShippingController( { config: config() } );
-		const result = await controller.quote( {
-			address: { country: '' },
-			rateId: 'flat_rate:1',
+			expect( mockQuoteWalletShipping ).toHaveBeenCalledTimes( 1 );
+			expect( mockQuoteWalletShipping ).toHaveBeenCalledWith( config(), {
+				address,
+				rateId: 'flat_rate:1',
+				billingAddress: null,
+					expectedTotal: null,
+			} );
+			expect( mockQuoteFromResponse ).toHaveBeenCalledWith( response );
+			expect( result ).toEqual( priced );
+			expect( controller.current() ).toEqual( priced );
 		} );
 
-		expect( mockFetchCart ).toHaveBeenCalledWith( config() );
-		expect( mockUpdateCustomerAddress ).not.toHaveBeenCalled();
-		expect( mockSelectShippingRate ).toHaveBeenCalledWith(
-			config(),
-			'flat_rate:1'
-		);
-		expect( mockQuoteFromCart ).toHaveBeenCalledWith( cartAfterRate );
-		expect( result ).toEqual( priced );
-	} );
+		test( 'defaults rateId to null when the selection carries none', async () => {
+			mockQuoteWalletShipping.mockResolvedValue( response );
+			mockQuoteFromResponse.mockReturnValue( priced );
 
-	test( 'selects the rate after the address, and quotes off the rate response', async () => {
-		mockUpdateCustomerAddress.mockResolvedValue( cartAfterAddress );
-		mockSelectShippingRate.mockResolvedValue( cartAfterRate );
-		mockQuoteFromCart.mockReturnValue( priced );
+			const controller = createShippingController( { config: config() } );
+			await controller.quote( { address } );
 
-		const controller = createShippingController( { config: config() } );
-		const result = await controller.quote( {
-			address,
-			rateId: 'flat_rate:1',
+			expect( mockQuoteWalletShipping ).toHaveBeenCalledWith( config(), {
+				address,
+				rateId: null,
+				billingAddress: null,
+					expectedTotal: null,
+			} );
 		} );
 
-		expect( mockUpdateCustomerAddress ).toHaveBeenCalledWith(
-			config(),
-			address
-		);
-		expect( mockSelectShippingRate ).toHaveBeenCalledWith(
-			config(),
-			'flat_rate:1'
-		);
-		expect( mockQuoteFromCart ).toHaveBeenCalledWith( cartAfterRate );
-		expect( result ).toEqual( priced );
+		test( 'a rejected selection rejects, but does not poison later selections', async () => {
+			mockQuoteWalletShipping
+				.mockRejectedValueOnce( new Error( 'Endpoint down' ) )
+				.mockResolvedValueOnce( response );
+			mockQuoteFromResponse.mockReturnValue( priced );
+
+			const controller = createShippingController( { config: config() } );
+
+			await expect( controller.quote( { address } ) ).rejects.toThrow(
+				'Endpoint down'
+			);
+
+			const second = await controller.quote( { address } );
+
+			expect( second ).toEqual( priced );
+			expect( mockQuoteWalletShipping ).toHaveBeenCalledTimes( 2 );
+		} );
+
+		test( 'writes only the last of several selections made before any of them settles', async () => {
+			mockQuoteWalletShipping.mockResolvedValue( response );
+			mockQuoteFromResponse.mockReturnValue( priced );
+
+			const controller = createShippingController( { config: config() } );
+
+			const first = controller.quote( {
+				address: { ...address, country: 'US' },
+			} );
+			const second = controller.quote( {
+				address: { ...address, country: 'DE' },
+			} );
+			const third = controller.quote( {
+				address: { ...address, country: 'FR' },
+			} );
+
+			await Promise.allSettled( [ first, second, third ] );
+
+			expect( mockQuoteWalletShipping ).toHaveBeenCalledTimes( 1 );
+			expect( mockQuoteWalletShipping ).toHaveBeenCalledWith(
+				config(),
+				expect.objectContaining( {
+					address: expect.objectContaining( { country: 'FR' } ),
+				} )
+			);
+			await expect( third ).resolves.toEqual( priced );
+		} );
+
+		test( 'a superseded selection rejects with the generic message when nothing has been priced yet', async () => {
+			mockQuoteWalletShipping.mockResolvedValue( response );
+			mockQuoteFromResponse.mockReturnValue( priced );
+
+			const controller = createShippingController( { config: config() } );
+
+			const first = controller.quote( {
+				address: { ...address, country: 'US' },
+			} );
+			const second = controller.quote( {
+				address: { ...address, country: 'FR' },
+			} );
+
+			await expect( first ).rejects.toThrow(
+				'Shipping could not be priced.'
+			);
+			await expect( second ).resolves.toEqual( priced );
+		} );
 	} );
 
-	test( 'a rejected selection rejects, but does not poison later selections', async () => {
-		mockUpdateCustomerAddress
-			.mockRejectedValueOnce( new Error( 'Store API down' ) )
-			.mockResolvedValueOnce( cartAfterAddress );
-		mockQuoteFromCart.mockReturnValue( priced );
+	describe( 'commit()', () => {
+		test( 'resolves with the committed quote', async () => {
+			mockQuoteWalletShipping.mockResolvedValue( response );
+			mockQuoteFromResponse
+				.mockReturnValueOnce( { total: '10.00', selectedId: 'flat_rate:1' } )
+				.mockReturnValueOnce( { total: '10.00', selectedId: 'flat_rate:1' } );
 
-		const controller = createShippingController( { config: config() } );
+			const controller = createShippingController( { config: config() } );
+			await controller.quote( { address, rateId: 'flat_rate:1' } );
 
-		await expect( controller.quote( { address } ) ).rejects.toThrow(
-			'Store API down'
-		);
+			const committed = await controller.commit( address );
 
-		const second = await controller.quote( { address } );
+			expect( committed ).toEqual( {
+				total: '10.00',
+				selectedId: 'flat_rate:1',
+			} );
+		} );
 
-		expect( second ).toEqual( priced );
-		expect( mockUpdateCustomerAddress ).toHaveBeenCalledTimes( 2 );
-	} );
+		test( "quotes with the complete address, the previous quote's selected rate, and the previously displayed total as expectedTotal", async () => {
+			mockQuoteWalletShipping.mockResolvedValue( response );
+			mockQuoteFromResponse
+				.mockReturnValueOnce( { total: '10.00', selectedId: 'flat_rate:9' } )
+				.mockReturnValueOnce( { total: '10.00', selectedId: 'flat_rate:9' } );
 
-	test( 'writes only the last of several selections made before any of them settles', async () => {
-		mockUpdateCustomerAddress.mockResolvedValue( cartAfterAddress );
-		mockQuoteFromCart.mockReturnValue( priced );
+			const controller = createShippingController( { config: config() } );
+			await controller.quote( { address, rateId: 'flat_rate:9' } );
 
-		const controller = createShippingController( { config: config() } );
+			await controller.commit( address );
 
-		const first = controller.quote( { address: { country: 'US' } } );
-		const second = controller.quote( { address: { country: 'DE' } } );
-		const third = controller.quote( { address: { country: 'FR' } } );
+			expect( mockQuoteWalletShipping ).toHaveBeenLastCalledWith(
+				config(),
+				{
+					address,
+					rateId: 'flat_rate:9',
+					billingAddress: address,
+					expectedTotal: '10.00',
+				}
+			);
+		} );
 
-		await Promise.allSettled( [ first, second, third ] );
+		test( 'sends the shipping address as the billing address when the given one carries no country', async () => {
+			mockQuoteWalletShipping.mockResolvedValue( response );
+			mockQuoteFromResponse
+				.mockReturnValueOnce( { total: '10.00', selectedId: 'flat_rate:1' } )
+				.mockReturnValueOnce( { total: '10.00', selectedId: 'flat_rate:1' } );
+			const billingAddressWithNoCountry = { state: 'NY' };
 
-		expect( mockUpdateCustomerAddress ).toHaveBeenCalledTimes( 1 );
-		expect( mockUpdateCustomerAddress ).toHaveBeenCalledWith(
-			config(),
-			{ country: 'FR' }
-		);
-		await expect( third ).resolves.toEqual( priced );
-	} );
+			const controller = createShippingController( { config: config() } );
+			await controller.quote( { address, rateId: 'flat_rate:1' } );
 
-	test( 'a superseded selection rejects with the generic message when nothing has been priced yet', async () => {
-		mockUpdateCustomerAddress.mockResolvedValue( cartAfterAddress );
-		mockQuoteFromCart.mockReturnValue( priced );
+			await controller.commit( address, billingAddressWithNoCountry );
 
-		const controller = createShippingController( { config: config() } );
+			expect( mockQuoteWalletShipping ).toHaveBeenLastCalledWith(
+				config(),
+				expect.objectContaining( { billingAddress: address } )
+			);
+		} );
 
-		const first = controller.quote( { address: { country: 'US' } } );
-		const second = controller.quote( { address: { country: 'FR' } } );
+		test( 'forwards the billing address to the quote when authorization revealed one', async () => {
+			mockQuoteWalletShipping.mockResolvedValue( response );
+			mockQuoteFromResponse
+				.mockReturnValueOnce( { total: '10.00', selectedId: 'flat_rate:1' } )
+				.mockReturnValueOnce( { total: '10.00', selectedId: 'flat_rate:1' } );
+			const billingAddress = { ...address, state: 'NY' };
 
-		await expect( first ).rejects.toThrow(
-			'Shipping could not be priced.'
-		);
-		await expect( second ).resolves.toEqual( priced );
+			const controller = createShippingController( { config: config() } );
+			await controller.quote( { address, rateId: 'flat_rate:1' } );
+
+			await controller.commit( address, billingAddress );
+
+			expect( mockQuoteWalletShipping ).toHaveBeenLastCalledWith(
+				config(),
+				expect.objectContaining( { billingAddress } )
+			);
+		} );
+
+		test( 'propagates a rejection from the endpoint, so a total higher than the sheet displayed never charges the shopper', async () => {
+			mockQuoteWalletShipping
+				.mockResolvedValueOnce( response )
+				.mockRejectedValueOnce(
+					new Error( 'Shipping price changed after authorization' )
+				);
+			mockQuoteFromResponse.mockReturnValueOnce( {
+				total: '10.00',
+				selectedId: 'flat_rate:1',
+			} );
+
+			const controller = createShippingController( { config: config() } );
+			await controller.quote( { address, rateId: 'flat_rate:1' } );
+
+			await expect( controller.commit( address ) ).rejects.toThrow(
+				'Shipping price changed after authorization'
+			);
+		} );
+
+		test( 'does not throw when there is no previous quote to compare against', async () => {
+			mockQuoteWalletShipping.mockResolvedValue( response );
+			mockQuoteFromResponse.mockReturnValue( {
+				total: '10.00',
+				selectedId: null,
+			} );
+
+			const controller = createShippingController( { config: config() } );
+
+			await expect( controller.commit( address ) ).resolves.toEqual( {
+				total: '10.00',
+				selectedId: null,
+			} );
+		} );
 	} );
 } );
