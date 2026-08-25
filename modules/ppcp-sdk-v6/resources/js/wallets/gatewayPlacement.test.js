@@ -328,6 +328,34 @@ describe( 'revealWalletGateway()', () => {
 		);
 
 		test(
+			"selecting the card button's row hides the wallet " +
+				'container, the express wrapper and "Place order", while ' +
+				"showing the card row's own button",
+			() => {
+				document.body.innerHTML =
+					'<div id="wallet-wrapper"><button></button></div>' +
+					'<div id="card-button-wrapper"><button></button></div>' +
+					'<div id="express-wrapper"></div>' +
+					'<div id="place_order"></div>';
+
+				reveal( { expressSelector: '#express-wrapper' } );
+				reveal( {
+					methodId: 'ppcp-card-button-gateway',
+					wrapperSelector: '#card-button-wrapper',
+				} );
+				mockGetCurrentPaymentMethod.mockReturnValue(
+					'ppcp-card-button-gateway'
+				);
+				jQuery( document.body ).trigger( 'payment_method_selected' );
+
+				expect( displayOf( '#wallet-wrapper' ) ).toBe( 'none' );
+				expect( displayOf( '#express-wrapper' ) ).toBe( 'none' );
+				expect( displayOf( '#place_order' ) ).toBe( 'none' );
+				expect( displayOf( '#card-button-wrapper' ) ).toBe( '' );
+			}
+		);
+
+		test(
 			'restyles freshly-inserted elements after a checkout ' +
 				'update replaces the order-review DOM',
 			() => {

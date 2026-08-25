@@ -21,17 +21,32 @@ import {
 import { renderButtons } from './components/buttonRenderer';
 import { renderWallets } from './wallets/renderWallets';
 import { isWalletEnabled, WALLET_METHODS } from './wallets/walletRegistry';
+import { FundingSources } from './utils/fundingSources';
 import { createOrder, fetchCartTotal } from './endpointsAdapter';
+import {
+	createFreeTrialPayPalSession,
+	createVaultSetupToken,
+} from './sessions/freeTrialSave';
 import { initCardFields } from './cardFields/renderer';
+import { initCardButton } from './cardButton/renderCardButton';
 import { hasJQuery } from './utils/api';
+import { watchViewedTotal } from './utils/viewedTotal';
 import { setErrorLabels } from './utils/errorHandler';
 import { setVisible } from '@ppcp-button/Helper/Hiding';
+import { debounce } from '@ppcp-blocks/Helper/debounce';
+import {
+	initMessages,
+	renderMessages,
+	updateMessagesAmount,
+} from './messages/renderer';
 
 // The native WC submit button, labelled "Proceed to PayPal" for the PayPal
 // gateway. It is replaced by the v6 PayPal buttons while the PayPal gateway is
 // selected, but stays as the submit for cards and every other method.
 const PLACE_ORDER_SELECTOR = '#place_order';
 const PAYPAL_GATEWAY_ID = 'ppcp-gateway';
+
+const ELIGIBILITY_REFRESH_DEBOUNCE_MS = 300;
 
 ( function ( config ) {
 	'use strict';
@@ -42,6 +57,32 @@ const PAYPAL_GATEWAY_ID = 'ppcp-gateway';
 
 	setErrorLabels( config.labels );
 
+	// A $0 free-trial subscription is vaulted through the PayPal save flow on the
+	// checkout / pay-for-order pages (the only contexts with a form to submit
+	// afterwards); other contexts keep the ordinary button flow.
+	const FREE_TRIAL_CONTEXTS = [ 'checkout', 'pay-now' ];
+	function isFreeTrialSave( context ) {
+		return (
+			Boolean( config.is_free_trial_cart ) &&
+			FREE_TRIAL_CONTEXTS.includes( context )
+		);
+	}
+
+	/**
+	 * Submits the checkout (or pay-for-order) form after the free-trial save
+	 * flow has stored the token, so the gateway places the $0 order.
+	 */
+	function submitCheckoutForm() {
+		if ( hasJQuery() ) {
+			const form = jQuery( 'form.checkout, form#order_review' );
+			if ( form.length ) {
+				form.trigger( 'submit' );
+				return;
+			}
+		}
+		document.querySelector( PLACE_ORDER_SELECTOR )?.click();
+	}
+
 	/**
 	 * Advanced Card Fields (ACDC): independent of the button render loop
 	 * below — it mounts into the existing WC card-form inputs rather than
@@ -51,6 +92,18 @@ const PAYPAL_GATEWAY_ID = 'ppcp-gateway';
 	 */
 	function initCardFieldsSafely() {
 		initCardFields( config ).catch( ( error ) => {
+			// eslint-disable-next-line no-console
+			console.error( '[PPCP SDK v6]', error );
+		} );
+	}
+
+	/**
+	 * Renders on its own pass, not via renderTarget(): with the checkout smart
+	 * button switched off there is no express wrapper to draw into, and BCDC
+	 * can still be on.
+	 */
+	function initCardButtonSafely() {
+		initCardButton( config, ensureSessions ).catch( ( error ) => {
 			// eslint-disable-next-line no-console
 			console.error( '[PPCP SDK v6]', error );
 		} );
@@ -73,7 +126,10 @@ const PAYPAL_GATEWAY_ID = 'ppcp-gateway';
 
 	const sdkPageType = config.page_context || 'mini-cart';
 
+	const messagesFollowCartTotal = 'product' !== config.page_context;
+
 	let amount = config.amount;
+	let refreshPromise = Promise.resolve();
 	let eligibilityPromise = null;
 	const sessionPromises = {};
 	const renderPromises = {};
@@ -115,6 +171,22 @@ const PAYPAL_GATEWAY_ID = 'ppcp-gateway';
 	 */
 	async function createSessions( context ) {
 		const sdk = await loadSdkV6( config, sdkPageType );
+
+		// Free trial: only the PayPal save session, whose approval stores a token
+		// and submits the checkout form (see renderTarget's createOrderForFunding).
+		if ( isFreeTrialSave( context ) ) {
+			return {
+				payLaterDetails: null,
+				map: {
+					[ FundingSources.PAYPAL ]: createFreeTrialPayPalSession(
+						sdk,
+						config,
+						{ onComplete: submitCheckoutForm }
+					),
+				},
+			};
+		}
+
 		const eligibility = await ensureEligibility();
 
 		const sessions = {
@@ -133,6 +205,15 @@ const PAYPAL_GATEWAY_ID = 'ppcp-gateway';
 			if (
 				WALLET_METHODS.includes( method ) &&
 				! isWalletEnabled( config, method )
+			) {
+				continue;
+			}
+
+			// Same reason as the wallets: paypal-guest-payments is only
+			// requested where the card button renders.
+			if (
+				method === FundingSources.CARD &&
+				! config.card_button?.enabled
 			) {
 				continue;
 			}
@@ -173,8 +254,12 @@ const PAYPAL_GATEWAY_ID = 'ppcp-gateway';
 			wrapper,
 			sessions: map,
 			styles: config.button_styles[ target.context ] || {},
-			createOrderForFunding: ( fundingSource ) => () =>
-				createOrder( config, target.context, fundingSource ),
+			createOrderForFunding: ( fundingSource ) =>
+				isFreeTrialSave( target.context ) &&
+				fundingSource === FundingSources.PAYPAL
+					? // Free trial starts the save session with a setup token.
+					  () => createVaultSetupToken( config )
+					: () => createOrder( config, target.context, fundingSource ),
 			payLaterDetails,
 		} );
 
@@ -236,6 +321,9 @@ const PAYPAL_GATEWAY_ID = 'ppcp-gateway';
 			: null;
 
 		amount = ( await fetchCartTotal( config ) ) || amount;
+		if ( messagesFollowCartTotal ) {
+			updateMessagesAmount( amount );
+		}
 		eligibilityPromise = null;
 		const current = await ensureEligibility();
 
@@ -261,11 +349,53 @@ const PAYPAL_GATEWAY_ID = 'ppcp-gateway';
 	}
 
 	/**
+	 * Whether a saved PayPal token (not "Use a new payment method") is selected.
+	 * Such a payment is charged via the native Place Order button — server-side, or
+	 * through the vault component's in-page approval where eligible — not the v6
+	 * express button, which would start a new PayPal flow instead.
+	 *
+	 * @return {boolean} True when a saved ppcp-gateway token is selected.
+	 */
+	function isSavedPayPalTokenSelected() {
+		const checked = document.querySelector(
+			'input[name="wc-ppcp-gateway-payment-token"]:checked'
+		);
+		return Boolean( checked && checked.value && checked.value !== 'new' );
+	}
+
+	/**
+	 * Serialises refreshEligibility() passes, same chain idiom as render().
+	 *
+	 * It is needed because the debounce coalesces events but cannot stop one pass
+     * starting while another awaits the network, and overlapping passes may leave the
+     * buttons on the older result.
+	 *
+	 * @return {Promise<void>} Resolves once this pass is done.
+	 */
+	function queueRefreshEligibility() {
+		refreshPromise = refreshPromise
+			.catch( () => {} )
+			.then( () => refreshEligibility() );
+
+		return refreshPromise.catch( ( error ) => {
+			// eslint-disable-next-line no-console
+			console.error( '[PPCP SDK v6]', error );
+		} );
+	}
+
+	const refreshEligibilityDebounced = debounce(
+		queueRefreshEligibility,
+		ELIGIBILITY_REFRESH_DEBOUNCE_MS
+	);
+
+	/**
 	 * Hides the native WC "Proceed to PayPal" button while the PayPal gateway
-	 * is selected — the v6 PayPal buttons stand in for it — and restores it for
-	 * cards (whose flow submits through it) and every other method. Re-run on
-	 * updated_checkout / payment_method_selected because WC rebuilds the
-	 * #payment DOM (and this inline style) on each update.
+	 * is selected with a NEW payment method — the v6 PayPal buttons stand in for
+	 * it — and restores it for cards, saved PayPal tokens (charged via Place
+	 * Order), and every other method. The v6 express button is hidden for a saved
+	 * token so it does not compete with it. Re-run on updated_checkout /
+	 * payment_method_selected / token change because WC rebuilds the #payment DOM
+	 * (and this inline style) on each update.
 	 */
 	function syncPlaceOrderButton() {
 		if (
@@ -278,14 +408,41 @@ const PAYPAL_GATEWAY_ID = 'ppcp-gateway';
 		const selected = document.querySelector(
 			'input[name="payment_method"]:checked'
 		)?.value;
-		const isPayPalGateway = selected === PAYPAL_GATEWAY_ID;
+		const useExpress =
+			selected === PAYPAL_GATEWAY_ID && ! isSavedPayPalTokenSelected();
 
-		setVisible( PLACE_ORDER_SELECTOR, ! isPayPalGateway, true );
+		setVisible( PLACE_ORDER_SELECTOR, ! useExpress, true );
+		if ( config.wrapper ) {
+			setVisible( config.wrapper, useExpress );
+		}
+	}
+
+	function initMessagesSafely() {
+		initMessages( config, sdkPageType ).catch( ( error ) => {
+			// eslint-disable-next-line no-console
+			console.error( '[PPCP SDK v6]', error );
+		} );
+	}
+
+	/**
+	 * A product page prices the product on display, not the cart, so its
+	 * message tracks the product form — quantity and variation — through
+	 * the same watcher Apple Pay reads.
+	 */
+	function trackProductTotal() {
+		if ( 'product' !== config.page_context ) {
+			return;
+		}
+
+		watchViewedTotal( config, 'product' ).subscribe( updateMessagesAmount );
 	}
 
 	function initialRender() {
 		renderAll();
 		initCardFieldsSafely();
+		initCardButtonSafely();
+		initMessagesSafely();
+		trackProductTotal();
 		syncPlaceOrderButton();
 	}
 
@@ -299,8 +456,23 @@ const PAYPAL_GATEWAY_ID = 'ppcp-gateway';
 		// DOM-replacing updates: wrappers arrive empty and need re-rendering.
 		jQuery( document.body ).on(
 			'updated_checkout wc_fragments_loaded wc_fragments_refreshed',
-			renderAll
+			() => {
+				renderAll();
+
+				// Messages are a separate pass: they target every
+				// .ppcp-messages placeholder rather than the button
+				// wrappers, and must survive refreshEligibility()'s wrapper
+				// blanking.
+				renderMessages( config, sdkPageType ).catch( ( error ) => {
+					// eslint-disable-next-line no-console
+					console.error( '[PPCP SDK v6]', error );
+				} );
+			}
 		);
+
+		// The same DOM replacement rebuilds the card button's row and restores
+		// the hide-style PHP printed, so it needs rendering and revealing again.
+		jQuery( document.body ).on( 'updated_checkout', initCardButtonSafely );
 
 		// WC rebuilds #place_order on these too, and the selected method can
 		// change without a DOM rebuild, so re-sync the button on both.
@@ -309,15 +481,19 @@ const PAYPAL_GATEWAY_ID = 'ppcp-gateway';
 			syncPlaceOrderButton
 		);
 
-		// Total-changing updates: eligibility must be re-checked too.
+		// Switching between a saved PayPal token and "new" flips whether the
+		// express button or Place Order should show, without a DOM rebuild.
+		jQuery( document ).on(
+			'change',
+			'input[name="wc-ppcp-gateway-payment-token"]',
+			syncPlaceOrderButton
+		);
+
+		// Total-changing updates: eligibility must be re-checked too, and the
+		// message re-priced.
 		jQuery( document.body ).on(
-			'updated_cart_totals added_to_cart removed_from_cart',
-			() => {
-				refreshEligibility().catch( ( error ) => {
-					// eslint-disable-next-line no-console
-					console.error( '[PPCP SDK v6]', error );
-				} );
-			}
+			'updated_cart_totals added_to_cart removed_from_cart updated_checkout',
+			refreshEligibilityDebounced
 		);
 	}
 } )( window.wc_ppcp_sdk_v6 );

@@ -67,3 +67,32 @@ export function handleError( error ) {
 		handler.genericError();
 	}
 }
+
+/**
+ * Handles a recoverable payment problem: a card decline or a validation failure
+ * the buyer can correct.
+ *
+ * Deliberately does less than handleError(): the buyer is still in the SDK's
+ * card form and can retry, so nothing here refreshes the cart, navigates, or
+ * tears the button down. Existing notices survive too — clearing them would
+ * wipe WooCommerce's own validation messages.
+ *
+ * @param {Object} warning - The warning object, with code, name and message.
+ */
+export function handleWarning( warning ) {
+	// eslint-disable-next-line no-console
+	console.warn( '[PPCP SDK v6]', warning );
+
+	if ( ! errorLabels.card_declined ) {
+		return;
+	}
+
+	const wrapper =
+		document.querySelector( '.woocommerce-notices-wrapper' ) ||
+		document.querySelector( '.woocommerce' ) ||
+		document.body;
+
+	new ErrorHandler( errorLabels.generic_error || '', wrapper ).message(
+		errorLabels.card_declined
+	);
+}

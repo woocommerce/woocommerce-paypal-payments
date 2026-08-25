@@ -19,18 +19,23 @@ return array(
 	/**
 	 * Both SDKs claim the window.paypal global, so the v5 smart-button
 	 * script must not load on pages where the v6 SDK loads. On pages v6
-	 * owns (classic product/cart/checkout, block cart/checkout, and the
-	 * Add Payment Method page) every v5 surface consuming this service's
+	 * owns (classic product/cart/checkout/pay-now, block cart/checkout, and
+	 * the Add Payment Method page) every v5 surface consuming this service's
 	 * script_data() goes dark, including block card fields and the regular
 	 * block method: that is accepted migration-state breakage until their
-	 * own stories migrate them. On the pages v6 does not own (pay-now) the
-	 * v5 stack keeps running: the blocks, applepay, googlepay and axo
-	 * modules would break under a blanket disable.
+	 * own stories migrate them. Ownership is decided per page, not per stack:
+	 * pay-now is v6-owned only when ACDC card fields or the BCDC row render
+	 * there, since the blocks, applepay, googlepay and axo modules would break
+	 * under a blanket disable.
 	 *
 	 * The Add Payment Method page is v6-owned by the vaulting story: v6
 	 * renders the save button + card save fields there, so the v5
 	 * add-payment-method script is suppressed too (SavePaymentMethodsModule,
 	 * via woocommerce_paypal_payments_render_add_payment_method_assets).
+	 *
+	 * Pay Later messaging counts towards ownership too, so a classic page
+	 * with messaging enabled and no button hands over as well — see
+	 * SdkV6Manager::should_load_on_current_page().
 	 *
 	 * MIGRATION-PHASE ONLY: this per-page handoff exists so the site and
 	 * the test suites stay fully functional while the v6 migration

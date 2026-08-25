@@ -10,10 +10,12 @@ use WooCommerce\PayPalCommerce\Button\Helper\Context;
 use WooCommerce\PayPalCommerce\SavePaymentMethods\Endpoint\CreatePaymentToken;
 use WooCommerce\PayPalCommerce\SavePaymentMethods\Endpoint\CreateSetupToken;
 use WooCommerce\PayPalCommerce\SdkV6\Endpoint\ClientTokenEndpoint;
+use WooCommerce\PayPalCommerce\SdkV6\Helper\CardFieldStyles;
 use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
 use WooCommerce\PayPalCommerce\TestCase;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
+use function Brain\Monkey\Functions\expect;
 use function Brain\Monkey\Functions\when;
 
 class AddPaymentMethodManagerTest extends TestCase
@@ -22,6 +24,7 @@ class AddPaymentMethodManagerTest extends TestCase
     private $environment;
     private $context;
     private $settings_provider;
+    private $card_field_styles;
 
     public function setUp(): void
     {
@@ -31,6 +34,8 @@ class AddPaymentMethodManagerTest extends TestCase
         $this->environment = Mockery::mock(Environment::class);
         $this->context = Mockery::mock(Context::class);
         $this->settings_provider = Mockery::mock(SettingsProvider::class);
+        $this->card_field_styles = Mockery::mock(CardFieldStyles::class);
+        $this->card_field_styles->shouldReceive('overrides')->andReturn([])->byDefault();
     }
 
     private function createTestee(
@@ -44,7 +49,8 @@ class AddPaymentMethodManagerTest extends TestCase
             $this->context,
             $paypal_vaulting_enabled,
             $card_vaulting_enabled,
-            $this->settings_provider
+            $this->settings_provider,
+            $this->card_field_styles
         );
     }
 
@@ -89,6 +95,7 @@ class AddPaymentMethodManagerTest extends TestCase
      * WHEN the add-payment-method bootstrap script data is generated
      * THEN the button, card fields and ajax endpoint data reflect the constructor configuration
      * AND the verification method reflects the filtered 3D Secure setting
+     * AND the merchant's card field style overrides are carried into the payload
      *
      * @dataProvider script_data_provider
      */
@@ -110,6 +117,9 @@ class AddPaymentMethodManagerTest extends TestCase
         when('wc_get_account_endpoint_url')->justReturn('https://example.com/my-account/payment-methods');
         when('wp_create_nonce')->alias(static fn (string $action) => 'nonce-' . $action);
 
+        $card_field_styles = ['fontSize' => '18px'];
+        $this->card_field_styles->shouldReceive('overrides')->andReturn($card_field_styles);
+
         $testee = $this->createTestee(false, $card_vaulting_enabled);
         $data   = $this->invoke_script_data($testee);
 
@@ -118,6 +128,7 @@ class AddPaymentMethodManagerTest extends TestCase
 
         $this->assertSame($card_vaulting_enabled, $data['card_fields']['enabled']);
         $this->assertSame(CreditCardGateway::ID, $data['card_fields']['payment_method']);
+        $this->assertSame($card_field_styles, $data['card_fields']['styles']);
 
         $this->assertArrayHasKey('client_token', $data['ajax']);
         $this->assertArrayHasKey('create_setup_token', $data['ajax']);
@@ -171,5 +182,73 @@ class AddPaymentMethodManagerTest extends TestCase
         $method->setAccessible(true);
 
         return $method->invoke($testee);
+    }
+
+    // -------------------------------------------------------------------------
+    // enqueue()
+    // -------------------------------------------------------------------------
+
+    /**
+     * GIVEN a logged-in buyer with vaulting enabled on the add-payment-method page
+     * WHEN the bootstrap script is enqueued
+     * THEN it is registered with the dependencies and version webpack recorded for the
+     *      compiled bundle, not an empty dependency list and not just the plugin version.
+     */
+    public function testEnqueueRegistersScriptWithAssetDataDependenciesAndVersion(): void
+    {
+        when('is_user_logged_in')->justReturn(true);
+        $this->context->shouldReceive('is_add_payment_method_page')->andReturn(true);
+
+        $this->environment->shouldReceive('is_sandbox')->andReturn(false);
+        $this->settings_provider->shouldReceive('three_d_secure_enum')->andReturn('SCA_ALWAYS');
+        when('apply_filters')->alias(static fn (string $filter, $value) => $value);
+        when('get_woocommerce_currency')->justReturn('USD');
+        when('get_locale')->justReturn('en_US');
+        when('wc_get_account_endpoint_url')->justReturn('https://example.com/my-account/payment-methods');
+        when('wp_create_nonce')->justReturn('nonce');
+        when('wp_register_style')->justReturn(true);
+        when('wp_enqueue_style')->justReturn(null);
+        when('wp_add_inline_style')->justReturn(null);
+
+        $this->asset_getter->shouldReceive('get_asset_url')
+            ->with('boot-add-payment-method.js')
+            ->andReturn('https://example.com/assets/boot-add-payment-method.js');
+        $this->asset_getter->shouldReceive('get_asset_data')
+            ->with('boot-add-payment-method.js', '1.0.0')
+            ->andReturn(['dependencies' => ['wp-data'], 'version' => 'deadbeef']);
+
+        expect('wp_register_script')
+            ->once()
+            ->with(
+                'wc-ppcp-sdk-v6-add-payment-method',
+                'https://example.com/assets/boot-add-payment-method.js',
+                ['wp-data'],
+                'deadbeef',
+                true
+            );
+        expect('wp_localize_script')->once();
+        expect('wp_enqueue_script')->once()->with('wc-ppcp-sdk-v6-add-payment-method');
+
+        $testee = $this->createTestee(true, true);
+        $testee->enqueue();
+
+        $this->addToAssertionCount(1);
+    }
+
+    /**
+     * GIVEN the add-payment-method surfaces should not load on the current page
+     * WHEN enqueue() is called
+     * THEN no script is registered — the method returns before touching the asset getter
+     */
+    public function testEnqueueDoesNothingWhenShouldNotLoadOnCurrentPage(): void
+    {
+        when('is_user_logged_in')->justReturn(false);
+
+        expect('wp_register_script')->never();
+
+        $testee = $this->createTestee(true, true);
+        $testee->enqueue();
+
+        $this->addToAssertionCount(1);
     }
 }

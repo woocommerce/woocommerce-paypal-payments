@@ -11,13 +11,22 @@ jest.mock( '../endpointsAdapter', () => ( {
 } ) );
 
 const mockCardFieldStyles = jest.fn();
+const mockHostedFieldTextStyles = jest.fn();
 jest.mock( '../cardFields/cardFieldStyles', () => ( {
 	cardFieldStyles: ( ...args ) => mockCardFieldStyles( ...args ),
+	hostedFieldTextStyles: ( ...args ) => mockHostedFieldTextStyles( ...args ),
 } ) );
 
 const mockCardFieldContainer = jest.fn( () => null );
 jest.mock( './V6CardFieldContainer', () => ( {
 	V6CardFieldContainer: ( props ) => mockCardFieldContainer( props ),
+} ) );
+
+const mockCreateCardSetupToken = jest.fn();
+const mockExchangeSetupToken = jest.fn();
+jest.mock( '../sessions/freeTrialSave', () => ( {
+	createCardSetupToken: ( ...args ) => mockCreateCardSetupToken( ...args ),
+	exchangeSetupToken: ( ...args ) => mockExchangeSetupToken( ...args ),
 } ) );
 
 import {
@@ -102,11 +111,19 @@ beforeEach( () => {
 
 	mockLoadSdkV6.mockReset().mockResolvedValue( {
 		createCardFieldsOneTimePaymentSession: () => session,
+		createCardFieldsSavePaymentSession: () => session,
 	} );
 	mockCreateCardOrder.mockReset();
 	mockApproveCardOrder.mockReset().mockResolvedValue( undefined );
-	mockCardFieldStyles.mockReset().mockReturnValue( { color: 'rgb(0,0,0)' } );
+	mockCardFieldStyles
+		.mockReset()
+		.mockReturnValue( { color: 'rgb(0,0,0)', height: '40px' } );
+	mockHostedFieldTextStyles
+		.mockReset()
+		.mockReturnValue( { color: 'rgb(0,0,0)' } );
 	mockCardFieldContainer.mockClear();
+	mockCreateCardSetupToken.mockReset();
+	mockExchangeSetupToken.mockReset();
 } );
 
 describe( 'V6CardFieldsComponent', () => {
@@ -201,6 +218,54 @@ describe( 'V6CardFieldsComponent', () => {
 		);
 	} );
 
+	test( 'renders a checked, disabled locked save-option checkbox when the cart has subscriptions and vaulting is enabled', async () => {
+		renderComponent( {
+			config: cardConfig( {
+				card_fields: {
+					...cardConfig().card_fields,
+					has_subscriptions: true,
+					is_vaulting_enabled: true,
+				},
+			} ),
+		} );
+		await waitForSessionReady();
+
+		const checkbox = document.getElementById(
+			'ppcp-sdk-v6-save-payment-method'
+		);
+		expect( checkbox ).toBeInTheDocument();
+		expect( checkbox ).toBeChecked();
+		expect( checkbox ).toBeDisabled();
+	} );
+
+	test.each( [
+		[
+			'the cart has no subscriptions',
+			{ has_subscriptions: false, is_vaulting_enabled: true },
+		],
+		[
+			'vaulting is disabled',
+			{ has_subscriptions: true, is_vaulting_enabled: false },
+		],
+	] )(
+		'does not render the locked save-option checkbox when %s',
+		async ( _label, overrides ) => {
+			renderComponent( {
+				config: cardConfig( {
+					card_fields: {
+						...cardConfig().card_fields,
+						...overrides,
+					},
+				} ),
+			} );
+			await waitForSessionReady();
+
+			expect(
+				document.getElementById( 'ppcp-sdk-v6-save-payment-method' )
+			).not.toBeInTheDocument();
+		}
+	);
+
 	test( 'passes savePaymentMethod false when the buyer does not opt in and there are no subscriptions', async () => {
 		mockCreateCardOrder.mockResolvedValueOnce( { orderId: 'ORDER1' } );
 		session.submit.mockResolvedValueOnce( { state: 'succeeded' } );
@@ -267,6 +332,19 @@ describe( 'V6CardFieldsComponent', () => {
 		} );
 
 		expect( result ).toEqual( { type: 'error', message: 'nonce expired' } );
+	} );
+
+	test( "passes the reference input's height to each V6CardFieldContainer via its own height prop, not inside style", async () => {
+		renderComponent();
+
+		await waitFor( () =>
+			expect( mockCardFieldContainer ).toHaveBeenCalled()
+		);
+
+		for ( const call of mockCardFieldContainer.mock.calls ) {
+			expect( call[ 0 ].height ).toBe( '40px' );
+			expect( call[ 0 ].style ).not.toHaveProperty( 'height' );
+		}
 	} );
 
 	test( 'renders the cardholder name as a plain input, not a V6CardFieldContainer, when card_fields.name_field is enabled', async () => {
@@ -371,5 +449,106 @@ describe( 'V6CardFieldsComponent', () => {
 		} );
 
 		expect( session.submit ).toHaveBeenCalledWith( 'ORDER1' );
+	} );
+
+	describe( 'free-trial ($0 subscription) cart', () => {
+		function freeTrialConfig( overrides = {} ) {
+			return cardConfig( { is_free_trial_cart: true, ...overrides } );
+		}
+
+		test( 'creates the card save session instead of the one-time session', async () => {
+			mockLoadSdkV6.mockResolvedValueOnce( {
+				createCardFieldsOneTimePaymentSession: jest.fn(
+					() => new Error( 'must not be called' )
+				),
+				createCardFieldsSavePaymentSession: () => session,
+			} );
+
+			renderComponent( { config: freeTrialConfig() } );
+			await waitForSessionReady();
+
+			expect( mockCardFieldContainer ).toHaveBeenCalledWith(
+				expect.objectContaining( { session } )
+			);
+		} );
+
+		test( 'a successful save exchanges the setup token instead of creating and approving an order', async () => {
+			mockCreateCardSetupToken.mockResolvedValueOnce( 'SETUP1' );
+			session.submit.mockResolvedValueOnce( { state: 'succeeded' } );
+
+			renderComponent( { config: freeTrialConfig() } );
+			await waitForSessionReady();
+
+			let result;
+			await act( async () => {
+				result = await paymentSetupCb();
+			} );
+
+			expect( mockCreateCardSetupToken ).toHaveBeenCalledWith(
+				freeTrialConfig()
+			);
+			expect( session.submit ).toHaveBeenCalledWith( 'SETUP1' );
+			expect( mockExchangeSetupToken ).toHaveBeenCalledWith(
+				freeTrialConfig(),
+				'SETUP1'
+			);
+			expect( mockCreateCardOrder ).not.toHaveBeenCalled();
+			expect( mockApproveCardOrder ).not.toHaveBeenCalled();
+			expect( result ).toEqual( { type: 'success' } );
+		} );
+
+		test( 'reports an error and skips the exchange when 3D Secure is canceled', async () => {
+			mockCreateCardSetupToken.mockResolvedValueOnce( 'SETUP1' );
+			session.submit.mockResolvedValueOnce( { state: 'canceled' } );
+
+			renderComponent( { config: freeTrialConfig() } );
+			await waitForSessionReady();
+
+			let result;
+			await act( async () => {
+				result = await paymentSetupCb();
+			} );
+
+			expect( result.type ).toBe( 'error' );
+			expect( result.message ).toBeTruthy();
+			expect( mockExchangeSetupToken ).not.toHaveBeenCalled();
+		} );
+
+		test( 'reports an error and skips the exchange when the save session fails', async () => {
+			mockCreateCardSetupToken.mockResolvedValueOnce( 'SETUP1' );
+			session.submit.mockResolvedValueOnce( { state: 'failed' } );
+
+			renderComponent( { config: freeTrialConfig() } );
+			await waitForSessionReady();
+
+			let result;
+			await act( async () => {
+				result = await paymentSetupCb();
+			} );
+
+			expect( result.type ).toBe( 'error' );
+			expect( mockExchangeSetupToken ).not.toHaveBeenCalled();
+		} );
+
+		test( 'reports the thrown error message when the token exchange fails', async () => {
+			mockCreateCardSetupToken.mockResolvedValueOnce( 'SETUP1' );
+			session.submit.mockResolvedValueOnce( { state: 'succeeded' } );
+			mockExchangeSetupToken.mockRejectedValueOnce(
+				new Error( 'exchange failed' )
+			);
+
+			renderComponent( { config: freeTrialConfig() } );
+			await waitForSessionReady();
+
+			let result;
+			await act( async () => {
+				result = await paymentSetupCb();
+			} );
+
+			expect( result ).toEqual( {
+				type: 'error',
+				message: 'exchange failed',
+			} );
+		} );
 	} );
 } );

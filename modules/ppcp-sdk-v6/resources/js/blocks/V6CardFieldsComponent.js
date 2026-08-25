@@ -19,7 +19,14 @@ import {
 import { __ } from '@wordpress/i18n';
 import { loadSdkV6 } from '../sdkLoader';
 import { createCardOrder, approveCardOrder } from '../endpointsAdapter';
-import { cardFieldStyles } from '../cardFields/cardFieldStyles';
+import {
+	createCardSetupToken,
+	exchangeSetupToken,
+} from '../sessions/freeTrialSave';
+import {
+	cardFieldStyles,
+	hostedFieldTextStyles,
+} from '../cardFields/cardFieldStyles';
 import { V6CardFieldContainer } from './V6CardFieldContainer';
 
 /**
@@ -103,6 +110,82 @@ async function submitCardPayment( {
 }
 
 /**
+ * Keeps the latest value in a ref, so the onPaymentSetup callback can read it
+ * without resubscribing every time it changes.
+ *
+ * @param {*} value - The value to track.
+ * @return {Object} A ref holding the latest value.
+ */
+function useLatestRef( value ) {
+	const ref = useRef( value );
+	ref.current = value;
+	return ref;
+}
+
+/**
+ * Free-trial ($0) card checkout: save the card without a purchase.
+ *
+ * Creates a card setup token, confirms it through the save session (running 3D
+ * Secure when required), and exchanges it for a stored token. The $0 WC order is
+ * then placed by the card gateway's zero-total short-circuit on submit.
+ *
+ * @param {Object} args               - Arguments.
+ * @param {Object} args.config        - The sdk-v6 config object.
+ * @param {Object} args.session       - The v6 card-fields save session.
+ * @param {Object} args.responseTypes - The Blocks response-type constants.
+ * @return {Promise<Object>} A Blocks onPaymentSetup response object.
+ */
+async function submitCardSave( { config, session, responseTypes } ) {
+	if ( ! session ) {
+		return {
+			type: responseTypes.ERROR,
+			message: __(
+				'The card form is not ready yet. Please try again.',
+				'woocommerce-paypal-payments'
+			),
+		};
+	}
+
+	try {
+		const setupTokenId = await createCardSetupToken( config );
+		// The save session confirms the setup token (running 3D Secure when the
+		// store's contingency requires it); it takes no billing-address option.
+		const result = await session.submit( setupTokenId );
+
+		if ( result.state === 'canceled' ) {
+			return {
+				type: responseTypes.ERROR,
+				message: __(
+					'Card authentication was not completed. Please try again.',
+					'woocommerce-paypal-payments'
+				),
+			};
+		}
+
+		if ( result.state !== 'succeeded' ) {
+			return {
+				type: responseTypes.ERROR,
+				message: __(
+					'Card could not be saved.',
+					'woocommerce-paypal-payments'
+				),
+			};
+		}
+
+		await exchangeSetupToken( config, setupTokenId );
+
+		return { type: responseTypes.SUCCESS };
+	} catch ( error ) {
+		return {
+			type: responseTypes.ERROR,
+			message:
+				error?.message ||
+				__( 'Card could not be saved.', 'woocommerce-paypal-payments' ),
+		};
+	}
+}
+
+/**
  * @param {Object}  props                     - Props from the Blocks payment method registry.
  * @param {Object}  props.config              - The localized sdk-v6 config.
  * @param {Object}  props.eventRegistration   - Blocks checkout event subscriptions.
@@ -129,42 +212,44 @@ export function V6CardFieldsComponent( {
 
 	const hasSubscriptions = Boolean( config.card_fields.has_subscriptions );
 
+	// A $0 free-trial subscription card is vaulted through the save session (no
+	// purchase); the gateway places the $0 order on submit.
+	const isFreeTrial = Boolean( config.is_free_trial_cart );
+
 	const [ session, setSession ] = useState( null );
 	const [ inputStyle, setInputStyle ] = useState( null );
+	const [ textStyle, setTextStyle ] = useState( null );
 	const [ cardName, setCardName ] = useState( '' );
 	const referenceRef = useRef( null );
 
-	// Whether to vault the card, read at submit time. The choice comes from WC
-	// Blocks' native "Save payment information…" checkbox (shouldSavePayment
-	// prop, shown via supports.showSaveOption); a subscription cart forces it
-	// on since the card must be saved to charge renewals. A ref keeps the
-	// latest value without resubscribing onPaymentSetup.
-	const savePaymentRef = useRef( false );
-	savePaymentRef.current = Boolean( shouldSavePayment ) || hasSubscriptions;
+	// The choice comes from WC Blocks' native "Save payment information…"
+	// checkbox (shown via supports.showSaveOption); a subscription cart forces
+	// it on, since the card must be saved to charge renewals.
+	const savePaymentRef = useLatestRef(
+		Boolean( shouldSavePayment ) || hasSubscriptions
+	);
+	const cardNameRef = useLatestRef( cardName );
 
-	// Read through a ref so onPaymentSetup sees the latest name without
-	// resubscribing every keystroke.
-	const cardNameRef = useRef( '' );
-	useEffect( () => {
-		cardNameRef.current = cardName;
-	}, [ cardName ] );
+	// On a subscription cart the native "Save payment information…" option is
+	// suppressed (see checkout-block.js) and this component shows its own
+	// checked-and-disabled checkbox instead, since the card must always be
+	// vaulted for renewals and the native option cannot be locked.
+	const isVaultingEnabled = Boolean( config.card_fields.is_vaulting_enabled );
+	const showLockedSaveOption = hasSubscriptions && isVaultingEnabled;
 
-	// The v6 SDK uses the billing address for AVS / 3D Secure; read the live
-	// Blocks billing address through a ref so the submit sees it without
-	// resubscribing onPaymentSetup on every address change.
-	const billingRef = useRef( null );
-	useEffect( () => {
-		const address = billing?.billingAddress || billing?.billingData;
-		const postalCode = address?.postcode?.trim();
-		billingRef.current = postalCode
+	// The v6 SDK uses the billing address for AVS / 3D Secure.
+	const billingAddress = billing?.billingAddress || billing?.billingData;
+	const postalCode = billingAddress?.postcode?.trim();
+	const billingRef = useLatestRef(
+		postalCode
 			? {
 					postalCode,
-					...( address?.country
-						? { countryCode: address.country }
+					...( billingAddress?.country
+						? { countryCode: billingAddress.country }
 						: {} ),
 			  }
-			: null;
-	}, [ billing ] );
+			: null
+	);
 
 	// One card session for the component's lifetime: the SDK cannot dispose a
 	// session, so it must not be recreated on ordinary re-renders.
@@ -173,7 +258,9 @@ export function V6CardFieldsComponent( {
 
 		( async () => {
 			const sdk = await loadSdkV6( config, context );
-			const cardSession = sdk.createCardFieldsOneTimePaymentSession();
+			const cardSession = isFreeTrial
+				? sdk.createCardFieldsSavePaymentSession()
+				: sdk.createCardFieldsOneTimePaymentSession();
 			if ( active ) {
 				setSession( cardSession );
 			}
@@ -185,11 +272,17 @@ export function V6CardFieldsComponent( {
 		return () => {
 			active = false;
 		};
-	}, [ config, context ] );
+	}, [ config, context, isFreeTrial ] );
 
 	// v6 returns unstyled field elements, so derive their styling from a real
 	// block text input on the page (accurate theme height/padding/border),
 	// falling back to a hidden reference input when none is found.
+	//
+	// Two objects, because they have different audiences: inputStyle describes
+	// elements this component renders itself (the cardholder-name input, and the
+	// hosted fields' own box), while textStyle is handed to the SDK and lands
+	// inside a PayPal iframe, where box decoration has no business.
+	const cardFieldOverrides = config.card_fields.styles;
 	useEffect( () => {
 		const source =
 			document.querySelector(
@@ -197,15 +290,11 @@ export function V6CardFieldsComponent( {
 			) || referenceRef.current;
 		if ( source ) {
 			setInputStyle( cardFieldStyles( source ) );
+			setTextStyle( hostedFieldTextStyles( source, cardFieldOverrides ) );
 		}
-	}, [] );
+	}, [ cardFieldOverrides ] );
 
-	// Read through a ref so onPaymentSetup sees the current session without
-	// resubscribing when it arrives.
-	const sessionRef = useRef( null );
-	useEffect( () => {
-		sessionRef.current = session;
-	}, [ session ] );
+	const sessionRef = useLatestRef( session );
 
 	// onPaymentSetup fires for every registered method during checkout
 	// processing, so gate on the active one before running the card flow.
@@ -215,16 +304,22 @@ export function V6CardFieldsComponent( {
 		}
 
 		return onPaymentSetup( () =>
-			submitCardPayment( {
-				config,
-				context,
-				session: sessionRef.current,
-				responseTypes,
-				savePaymentMethod: savePaymentRef.current,
-				cardName: cardNameRef.current?.trim() || '',
-				// null when no billing address is available (see billingRef effect).
-				billingAddress: billingRef.current,
-			} )
+			isFreeTrial
+				? submitCardSave( {
+						config,
+						session: sessionRef.current,
+						responseTypes,
+				  } )
+				: submitCardPayment( {
+						config,
+						context,
+						session: sessionRef.current,
+						responseTypes,
+						savePaymentMethod: savePaymentRef.current,
+						cardName: cardNameRef.current?.trim() || '',
+						// null when no billing address is available.
+						billingAddress: billingRef.current,
+				  } )
 		);
 	}, [
 		onPaymentSetup,
@@ -233,9 +328,10 @@ export function V6CardFieldsComponent( {
 		config,
 		context,
 		responseTypes,
+		isFreeTrial,
 	] );
 
-	const fieldsReady = session && inputStyle;
+	const fieldsReady = session && inputStyle && textStyle;
 
 	return createElement(
 		'div',
@@ -288,7 +384,8 @@ export function V6CardFieldsComponent( {
 				createElement( V6CardFieldContainer, {
 					session,
 					type: 'number',
-					style: inputStyle,
+					style: textStyle,
+					height: inputStyle.height,
 					placeholder: __(
 						'Card number',
 						'woocommerce-paypal-payments'
@@ -303,7 +400,8 @@ export function V6CardFieldsComponent( {
 					createElement( V6CardFieldContainer, {
 						session,
 						type: 'expiry',
-						style: inputStyle,
+						style: textStyle,
+						height: inputStyle.height,
 						placeholder: __(
 							'MM / YY',
 							'woocommerce-paypal-payments'
@@ -313,10 +411,45 @@ export function V6CardFieldsComponent( {
 					createElement( V6CardFieldContainer, {
 						session,
 						type: 'cvv',
-						style: inputStyle,
+						style: textStyle,
+						height: inputStyle.height,
 						placeholder: __( 'CVV', 'woocommerce-paypal-payments' ),
 						containerStyle: { flex: 1 },
 					} )
+				)
+			),
+		// Subscription cart: a checked, disabled save option in place of the
+		// suppressed native one, so the buyer sees the card will be saved for
+		// renewals but cannot opt out (matches the classic checkout). A plain
+		// native checkbox, not WooCommerce's checkbox component, whose CSS hides
+		// the input in favour of an SVG mark this markup does not provide.
+		showLockedSaveOption &&
+			createElement(
+				'label',
+				{
+					className: 'ppcp-sdk-v6-card-fields__save',
+					htmlFor: 'ppcp-sdk-v6-save-payment-method',
+					style: {
+						display: 'flex',
+						alignItems: 'center',
+						gap: '8px',
+						cursor: 'default',
+					},
+				},
+				createElement( 'input', {
+					id: 'ppcp-sdk-v6-save-payment-method',
+					type: 'checkbox',
+					checked: true,
+					disabled: true,
+					readOnly: true,
+				} ),
+				createElement(
+					'span',
+					null,
+					__(
+						'Save payment information to my account for future purchases.',
+						'woocommerce-paypal-payments'
+					)
 				)
 			)
 	);

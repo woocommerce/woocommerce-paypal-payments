@@ -131,15 +131,31 @@ class WooCommerceOrderCreator {
 	 * @psalm-suppress InvalidScalarArgument
 	 */
 	protected function configure_line_items( WC_Order $wc_order, CartData $cart_data, ?Payer $payer, ?Shipping $shipping ): void {
-		foreach ( $cart_data->items() as $cart_item ) {
+		foreach ( $cart_data->items() as $cart_item_key => $cart_item ) {
 			$product_id           = $cart_item['product_id'] ?? 0;
 			$variation_id         = $cart_item['variation_id'] ?? 0;
 			$quantity             = $cart_item['quantity'] ?? 0;
 			$variation_attributes = $cart_item['variation'];
 
-			$item = new WC_Order_Item_Product();
+			/**
+			 * Filters the order line item object, mirroring WooCommerce Core so plugins
+			 * can swap the item class before it is populated.
+			 *
+			 * @param WC_Order_Item_Product $item          The order line item.
+			 * @param string                $cart_item_key The cart item hash key.
+			 * @param array                 $cart_item     The cart item data.
+			 * @param WC_Order              $wc_order      The order being built.
+			 */
+			$item = apply_filters(
+				'woocommerce_checkout_create_order_line_item_object',
+				new WC_Order_Item_Product(),
+				$cart_item_key,
+				$cart_item,
+				$wc_order
+			);
 			$item->set_product_id( $product_id );
 			$item->set_quantity( $quantity );
+			$item->set_order( $wc_order );
 
 			if ( isset( $cart_item['bundled_by'] ) ) {
 				$item->add_meta_data( '_bundled_by', $cart_item['bundled_by'], true );
@@ -194,6 +210,18 @@ class WooCommerceOrderCreator {
 				$subscription->calculate_totals();
 				$subscription->payment_complete_for_order( $wc_order );
 			}
+
+			/**
+			 * Fires the standard WooCommerce line item action so third-party plugins
+			 * (e.g. Subscriptions, Gift Cards, Product Add-ons) can augment the order
+			 * item with data they stored on the cart item.
+			 *
+			 * @param WC_Order_Item_Product $item          The order line item.
+			 * @param string                $cart_item_key The cart item hash key.
+			 * @param array                 $cart_item     The cart item data.
+			 * @param WC_Order              $wc_order      The order being built.
+			 */
+			do_action( 'woocommerce_checkout_create_order_line_item', $item, $cart_item_key, $cart_item, $wc_order );
 
 			$wc_order->add_item( $item );
 		}
