@@ -161,6 +161,15 @@ define( 'PPCP_PAYPAL_BN_CODE', 'Woo_PPCP' );
 					if ( $installed_plugin_version !== $current_plugin_version ) {
 						update_option( 'woocommerce-ppcp-version', $current_plugin_version );
 
+						// Set once: fresh installs opt into the SDK v6 default, existing
+						// stores stay on v5. Guarded so it is never recomputed later.
+						if ( false === get_option( 'woocommerce-ppcp-sdk-v6-eligible', false ) ) {
+							update_option(
+								'woocommerce-ppcp-sdk-v6-eligible',
+								$installed_plugin_version ? 'no' : 'yes'
+							);
+						}
+
 						/**
 						 * The hook fired when the plugin is installed or updated.
 						 */

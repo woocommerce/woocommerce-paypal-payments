@@ -105,6 +105,7 @@ return static function ( string $root_dir ): iterable {
 	if ( apply_filters(
 		'woocommerce.feature-flags.woocommerce_paypal_payments.sdk_v6_enabled',
 		getenv( 'PCP_SDK_V6_ENABLED' ) === '1'
+			|| 'yes' === get_option( 'woocommerce-ppcp-sdk-v6-eligible' )
 	) ) {
 		$modules[] = ( require "$modules_dir/ppcp-sdk-v6/module.php" )();
 	}
