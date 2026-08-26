@@ -124,6 +124,11 @@ if ( config && config.page_context && config.continuation ) {
 							'[ppcp-sdk-v6] eligibility check failed',
 							error
 						);
+
+						// Cleared, so the next update refetches instead of
+						// reusing a failure that hides every express button.
+						cached = { amount: null, eligibility: null };
+
 						return {};
 					} ),
 			};
