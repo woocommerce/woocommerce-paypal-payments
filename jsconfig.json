@@ -21,6 +21,7 @@
             "@ppcp-paypal-subscriptions/*": [ "modules/ppcp-paypal-subscriptions/resources/js/*" ],
             "@ppcp-save-payment-methods/*": [ "modules/ppcp-save-payment-methods/resources/js/*" ],
             "@ppcp-settings/*": [ "modules/ppcp-settings/resources/js/*" ],
+            "@ppcp-test/*": [ "tests/js/*" ],
             "@ppcp-uninstall/*": [ "modules/ppcp-uninstall/resources/js/*" ],
             "@ppcp-wc-gateway/*": [ "modules/ppcp-wc-gateway/resources/js/*" ],
             "@ppcp-webhooks/*": [ "modules/ppcp-webhooks/resources/js/*" ]
