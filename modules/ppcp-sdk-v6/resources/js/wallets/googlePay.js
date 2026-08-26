@@ -37,6 +37,10 @@ import {
 } from './methodShipping';
 import { resolveContextTotal } from './contextTotal';
 
+// The element Google sizes, inside the wrapper createButton() hands back when
+// buttonSizeMode is 'fill'. Without that mode it is the returned node itself.
+const GOOGLE_BUTTON_SELECTOR = '.gpay-card-info-container';
+
 /**
  * Renders the Google Pay button and wires its click to a payment.
  *
@@ -198,16 +202,24 @@ export async function renderGooglePay( {
 	// renderMethod() only reaches this bridge when PHP styled this context.
 	const styles = walletButtonStyle( settings.styles[ context ] );
 
-	container.appendChild(
-		client.createButton( {
-			buttonColor: styles.color,
-			buttonType: styles.type,
-			buttonLocale: styles.language,
-			buttonRadius: styles.borderRadius,
-			buttonSizeMode: 'fill',
-			// The button only needs the base card method, as in v5.
-			allowedPaymentMethods: [ sessionConfig.allowedPaymentMethods[ 0 ] ],
-			onClick: pay,
-		} )
-	);
+	const button = client.createButton( {
+		buttonColor: styles.color,
+		buttonType: styles.type,
+		buttonLocale: styles.language,
+		buttonRadius: styles.borderRadius,
+		buttonSizeMode: 'fill',
+		// The button only needs the base card method, as in v5.
+		allowedPaymentMethods: [ sessionConfig.allowedPaymentMethods[ 0 ] ],
+		onClick: pay,
+	} );
+
+	// 'fill' widens the button to its container, but Google's own min-width of
+	// 240px wins and overflows a narrow column. Inline, so it beats the
+	// stylesheet; Google's 90px floor still applies.
+	const sized = button.matches?.( GOOGLE_BUTTON_SELECTOR )
+		? button
+		: button.querySelector?.( GOOGLE_BUTTON_SELECTOR );
+	sized?.style.setProperty( 'min-width', '0' );
+
+	container.appendChild( button );
 }

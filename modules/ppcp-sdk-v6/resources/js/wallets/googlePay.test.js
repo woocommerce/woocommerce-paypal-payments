@@ -371,6 +371,81 @@ describe( 'renderGooglePay()', () => {
 	);
 } );
 
+describe( 'sizing the button createButton() returns', () => {
+	test.each( [
+		[
+			'a wrapper containing the card-info element',
+			() => {
+				const wrapper = document.createElement( 'div' );
+				const cardInfo = document.createElement( 'div' );
+				cardInfo.className = 'gpay-card-info-container';
+				wrapper.appendChild( cardInfo );
+				return { button: wrapper, sized: cardInfo };
+			},
+		],
+		[
+			'the card-info element itself',
+			() => {
+				const cardInfo = document.createElement( 'div' );
+				cardInfo.className = 'gpay-card-info-container';
+				return { button: cardInfo, sized: cardInfo };
+			},
+		],
+	] )(
+		'relaxes min-width to 0 on the card-info element when createButton() returns %s',
+		async ( _label, build ) => {
+			const { button, sized } = build();
+			mockCreateButton.mockImplementation( () => button );
+
+			await render();
+
+			expect( sized.style.getPropertyValue( 'min-width' ) ).toBe( '0' );
+		}
+	);
+
+	test.each( [
+		[
+			'a wrapper containing the card-info element',
+			() => {
+				const wrapper = document.createElement( 'div' );
+				const cardInfo = document.createElement( 'div' );
+				cardInfo.className = 'gpay-card-info-container';
+				wrapper.appendChild( cardInfo );
+				return wrapper;
+			},
+		],
+		[
+			'the card-info element itself',
+			() => {
+				const cardInfo = document.createElement( 'div' );
+				cardInfo.className = 'gpay-card-info-container';
+				return cardInfo;
+			},
+		],
+	] )(
+		'still appends the returned node to the button container when it is %s',
+		async ( _label, build ) => {
+			const button = build();
+			mockCreateButton.mockImplementation( () => button );
+
+			const { wrapper } = await render();
+			const container = wrapper.firstElementChild;
+
+			expect( container.contains( button ) ).toBe( true );
+		}
+	);
+
+	test( 'does not throw and still appends the button when it has no card-info element', async () => {
+		const button = document.createElement( 'div' );
+		mockCreateButton.mockImplementation( () => button );
+
+		const { wrapper } = await render();
+		const container = wrapper.firstElementChild;
+
+		expect( container.contains( button ) ).toBe( true );
+	} );
+} );
+
 describe( 'as its own payment-method row (gateway set)', () => {
 	const gateway = { id: 'ppcp-googlepay', wrapper: '#gateway-row' };
 
