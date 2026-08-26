@@ -271,6 +271,37 @@ describe( 'V6WalletComponent', () => {
 		} );
 	} );
 
+	describe( 'sheetContacts', () => {
+		test( 'reads the billing and shipping address live, reflecting a change made after mount', async () => {
+			// Same `config` reference reused below, for the reason noted above.
+			const props = baseProps( {
+				billing: { billingAddress: { country: 'US', city: 'SF' } },
+			} );
+			const { rerender } = render(
+				createElement( V6WalletComponent, props )
+			);
+			await waitFor( () =>
+				expect( mockWalletContainer ).toHaveBeenCalled()
+			);
+
+			const { overrides } = latestContainerProps();
+			expect( overrides.sheetContacts.get().billing.locality ).toBe(
+				'SF'
+			);
+
+			rerender(
+				createElement( V6WalletComponent, {
+					...props,
+					billing: { billingAddress: { country: 'US', city: 'LA' } },
+				} )
+			);
+
+			expect( overrides.sheetContacts.get().billing.locality ).toBe(
+				'LA'
+			);
+		} );
+	} );
+
 	describe( 'onRenderFailed', () => {
 		test( 'does not hide the button, and retries with a growing rebuildKey until MAX_RENDER_ATTEMPTS is reached', async () => {
 			renderComponent();

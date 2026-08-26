@@ -90,6 +90,8 @@ function resolveTarget( wrapper, gateway, context ) {
  * - `height`, `borderRadius`: sizing that beats the merchant's settings.
  * - `requiresShipping`: replaces the per-context answer PHP sent.
  * - `sheetTotal`: a `{ get() }` reader for Apple Pay, which cannot await one.
+ * - `sheetContacts`: a `{ get() }` reader over `{ billing, shipping }` Apple
+ *   contacts, prefilling the sheet with an address the surface already has.
  * - `isObsolete()`: asked after each await; the surface has torn this render
  *   down, so stop and leave nothing behind.
  * - `onClick()`: the shopper opened the sheet.

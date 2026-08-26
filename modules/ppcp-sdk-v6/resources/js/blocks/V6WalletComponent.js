@@ -14,6 +14,7 @@ import { createSession } from '../sessions/createSession';
 import { minorUnitsToDecimal } from '../utils/amount';
 import { refreshCartUi } from '../utils/cartUi';
 import { methodShippingRequired } from '../wallets/methodShipping';
+import { wcAddressToApplePay } from '../wallets/walletContacts';
 import { V6BridgeContainer } from './V6BridgeContainer';
 
 // A render can fail on the way to the button, so the row is dropped only after
@@ -96,6 +97,17 @@ export function V6WalletComponent( {
 	}, [ total ] );
 
 	const sheetTotalRef = useRef( { get: () => totalRef.current } );
+
+	// Apple only: Google's PaymentDataRequest has no equivalent field.
+	const contactsRef = useRef( {} );
+	useEffect( () => {
+		contactsRef.current = {
+			billing: wcAddressToApplePay( billing?.billingAddress ),
+			shipping: wcAddressToApplePay( shippingData?.shippingAddress ),
+		};
+	} );
+
+	const sheetContactsRef = useRef( { get: () => contactsRef.current } );
 
 	// Whether the sheet asks the shopper for shipping details.
 	const requiresShipping =
@@ -215,6 +227,7 @@ export function V6WalletComponent( {
 			borderRadius: buttonAttributes?.borderRadius,
 			requiresShipping,
 			sheetTotal: sheetTotalRef.current,
+			sheetContacts: sheetContactsRef.current,
 			onClick: () => {
 				setPaying( true );
 

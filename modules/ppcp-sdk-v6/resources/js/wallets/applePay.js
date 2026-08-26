@@ -107,6 +107,9 @@ export async function renderApplePay( {
 
 	// Synchronous either way: Safari refuses a sheet opened after an await.
 	const sheetTotal = overrides.sheetTotal ?? watchSheetTotal( config, context );
+
+	// Without contacts the sheet opens on the shopper's own default.
+	const sheetContacts = overrides.sheetContacts ?? { get: () => ( {} ) };
 	const requiresShipping =
 		overrides.requiresShipping ?? methodShippingRequired( config, context );
 	const shipping = createShippingController( { config } );
@@ -153,6 +156,9 @@ export async function renderApplePay( {
 		// Claimed here so a rejection nothing has awaited yet stays handled.
 		cartReady.catch( () => {} );
 
+		// Read at click time, so a late address edit still reaches the sheet.
+		const contacts = sheetContacts.get();
+
 		const request = buildApplePayRequest( applePayConfig, {
 			// Stands in when PayPal's config carries no country of its own.
 			countryCode: config.merchant_country,
@@ -160,6 +166,8 @@ export async function renderApplePay( {
 			total,
 			displayName: settings.display_name,
 			requiresShipping,
+			shippingContact: contacts.shipping,
+			billingContact: contacts.billing,
 		} );
 
 		// Apple rejects a malformed request (currency, supportedNetworks) by

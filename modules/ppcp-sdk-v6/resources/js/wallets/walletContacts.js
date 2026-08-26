@@ -272,3 +272,36 @@ export function applePayShippingAddress( payment ) {
 		address: applePayAddress( shipping ),
 	};
 }
+
+/**
+ * The opposite direction to everything above, for prefilling a sheet with an
+ * address the shopper already gave the store.
+ *
+ * @param {Object} address - A WC address (Store API customer data shape).
+ * @return {Object|undefined} The contact, or undefined without a country.
+ */
+export function wcAddressToApplePay( address ) {
+	// Apple silently drops a contact it cannot resolve to a region.
+	if ( ! address?.country ) {
+		return undefined;
+	}
+
+	const contact = {
+		countryCode: address.country,
+		administrativeArea: address.state || '',
+		postalCode: address.postcode || '',
+		locality: address.city || '',
+		addressLines: [ address.address_1, address.address_2 ].filter( Boolean ),
+		givenName: address.first_name || '',
+		familyName: address.last_name || '',
+	};
+
+	if ( address.email ) {
+		contact.emailAddress = address.email;
+	}
+	if ( address.phone ) {
+		contact.phoneNumber = address.phone;
+	}
+
+	return contact;
+}
