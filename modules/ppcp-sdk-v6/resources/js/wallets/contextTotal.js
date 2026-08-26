@@ -21,7 +21,7 @@ import { changeCart, fetchCartTotal } from '../endpointsAdapter';
  * @param {string} context - The page context.
  * @return {Promise<{total: string, purchaseUnits: Object[]}>} Total and units.
  */
-export async function resolveWalletTotal( config, context ) {
+export async function resolveContextTotal( config, context ) {
 	if ( context === 'product' ) {
 		// The viewed product is not in the cart yet, so the cart total cannot
 		// answer this.

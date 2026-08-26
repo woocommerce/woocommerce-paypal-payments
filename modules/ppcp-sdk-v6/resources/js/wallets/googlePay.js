@@ -10,7 +10,7 @@
  */
 
 import Spinner from '@ppcp-button/Helper/Spinner';
-import { releaseWalletShipping } from '../endpointsAdapter';
+import { releaseCartShipping } from '../endpointsAdapter';
 import { hasJQuery } from '../utils/api';
 import { refreshCartUi } from '../utils/cartUi';
 import { handleError } from '../utils/errorHandler';
@@ -28,14 +28,14 @@ import {
 	googlePayWcBillingAddress,
 	googlePayWcShippingAddress,
 } from './walletContacts';
-import { payWithWallet } from './walletPayment';
-import { walletConfig, walletFundingSource } from './walletRegistry';
+import { payWithSession } from './sessionPayment';
+import { methodConfig, methodFundingSource } from './methodRegistry';
 import {
 	createShippingController,
-	walletShippingCountries,
-	walletShippingRequired,
-} from './walletShipping';
-import { resolveWalletTotal } from './walletTotal';
+	methodShippingCountries,
+	methodShippingRequired,
+} from './methodShipping';
+import { resolveContextTotal } from './contextTotal';
 
 /**
  * Renders the Google Pay button and wires its click to a payment.
@@ -62,7 +62,7 @@ export async function renderGooglePay( {
 	// PayPal buttons — and sizes the button to that box, so the shared height goes
 	// here. Appended before the first await so boot.js's emptiness check skips a
 	// redundant later pass.
-	const settings = walletConfig( config, method );
+	const settings = methodConfig( config, method );
 
 	const container = document.createElement( 'div' );
 	container.style.height = config.button_height;
@@ -82,7 +82,7 @@ export async function renderGooglePay( {
 		session.getGooglePayConfig(),
 	] );
 
-	const requiresShipping = walletShippingRequired( config, context );
+	const requiresShipping = methodShippingRequired( config, context );
 	const shipping = createShippingController( { config } );
 
 	const clientOptions = { environment: settings.environment };
@@ -131,7 +131,7 @@ export async function renderGooglePay( {
 		try {
 			// Resolved before the sheet opens: the sheet must display the same
 			// total that createOrder() then charges.
-			const { total, purchaseUnits } = await resolveWalletTotal(
+			const { total, purchaseUnits } = await resolveContextTotal(
 				config,
 				context
 			);
@@ -142,7 +142,7 @@ export async function renderGooglePay( {
 					currencyCode: config.currency,
 					total,
 					requiresShipping,
-					countries: walletShippingCountries( config ),
+					countries: methodShippingCountries( config ),
 				} )
 			);
 
@@ -159,11 +159,11 @@ export async function renderGooglePay( {
 				);
 			}
 
-			await payWithWallet( {
+			await payWithSession( {
 				config,
 				context,
 				session,
-				fundingSource: walletFundingSource( method ),
+				fundingSource: methodFundingSource( method ),
 				// Only when it is its own row: on the express path the order
 				// belongs to the PayPal gateway, as Venmo's and Pay Later's do,
 				// so this stays undefined and the endpoints apply that default.
@@ -183,7 +183,7 @@ export async function renderGooglePay( {
 			// shipping has already written to the real cart and pinned its rate.
 			if ( error?.statusCode === 'CANCELED' ) {
 				if ( requiresShipping ) {
-					await releaseWalletShipping( config ).catch( () => {} );
+					await releaseCartShipping( config ).catch( () => {} );
 					refreshCartUi( context );
 				}
 			} else {
@@ -195,7 +195,7 @@ export async function renderGooglePay( {
 		}
 	}
 
-	// renderWallet() only reaches this bridge when PHP styled this context.
+	// renderMethod() only reaches this bridge when PHP styled this context.
 	const styles = walletButtonStyle( settings.styles[ context ] );
 
 	container.appendChild(

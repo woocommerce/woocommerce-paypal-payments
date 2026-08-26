@@ -27,7 +27,7 @@ const WALLETS = {
 /**
  * The funding sources that are wallets, as opposed to express buttons.
  */
-export const WALLET_METHODS = Object.keys( WALLETS );
+export const MERCHANT_PRESENTED_METHODS = Object.keys( WALLETS );
 
 /**
  * The funding_source the WC AJAX endpoints know a wallet by.
@@ -40,7 +40,7 @@ export const WALLET_METHODS = Object.keys( WALLETS );
  * @param {string} method - The funding source, as the SDK spells it.
  * @return {string} The spelling the endpoints expect.
  */
-export function walletFundingSource( method ) {
+export function methodFundingSource( method ) {
 	return WALLETS[ method ]?.fundingSource ?? method;
 }
 
@@ -51,7 +51,7 @@ export function walletFundingSource( method ) {
  * @param {string} method - The funding source to look up.
  * @return {Object|undefined} The subtree, or undefined when absent.
  */
-export function walletConfig( config, method ) {
+export function methodConfig( config, method ) {
 	const wallet = WALLETS[ method ];
 
 	return wallet ? config[ wallet.configKey ] : undefined;
@@ -64,8 +64,8 @@ export function walletConfig( config, method ) {
  * @param {string} method - The funding source to check.
  * @return {boolean} False for anything that is not an enabled wallet.
  */
-export function isWalletEnabled( config, method ) {
-	return !! walletConfig( config, method )?.enabled;
+export function isMethodEnabled( config, method ) {
+	return !! methodConfig( config, method )?.enabled;
 }
 
 /**
@@ -78,8 +78,8 @@ export function isWalletEnabled( config, method ) {
  * @param {Object} config - The wc_ppcp_sdk_v6 config object.
  * @return {string[]} The component names to pass to createInstance().
  */
-export function walletSdkComponents( config ) {
-	return WALLET_METHODS.filter( ( method ) =>
-		isWalletEnabled( config, method )
+export function methodSdkComponents( config ) {
+	return MERCHANT_PRESENTED_METHODS.filter( ( method ) =>
+		isMethodEnabled( config, method )
 	).map( ( method ) => WALLETS[ method ].sdkComponent );
 }

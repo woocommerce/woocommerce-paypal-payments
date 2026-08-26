@@ -5,7 +5,7 @@
  */
 
 import { FundingSources } from './utils/fundingSources';
-import { WALLET_METHODS } from './wallets/walletRegistry';
+import { MERCHANT_PRESENTED_METHODS } from './wallets/methodRegistry';
 
 /**
  * Checks one method without letting a failure sink the whole check.
@@ -65,7 +65,7 @@ export async function checkEligibility(
 		),
 	};
 
-	for ( const method of WALLET_METHODS ) {
+	for ( const method of MERCHANT_PRESENTED_METHODS ) {
 		result[ method ] = isEligibleSafely( methods, method );
 	}
 

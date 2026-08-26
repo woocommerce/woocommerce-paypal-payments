@@ -12,7 +12,7 @@ import {
 import { refreshCartUi } from '../utils/cartUi';
 import { handleError, handleWarning } from '../utils/errorHandler';
 import { FundingSources } from '../utils/fundingSources';
-import { WALLET_METHODS } from '../wallets/walletRegistry';
+import { MERCHANT_PRESENTED_METHODS } from '../wallets/methodRegistry';
 
 const SESSION_FACTORIES = {
 	[ FundingSources.PAYPAL ]: 'createPayPalOneTimePaymentSession',
@@ -81,7 +81,7 @@ export function createSession(
 
 	// Wallet sheets close before the order exists, so wallet sessions have no
 	// onApprove: the wallet bridge drives create, confirm and approve itself.
-	if ( ! WALLET_METHODS.includes( method ) ) {
+	if ( ! MERCHANT_PRESENTED_METHODS.includes( method ) ) {
 		// Undefined leaves every other method on approveOrder's default gateway.
 		const paymentMethod =
 			method === FundingSources.CARD

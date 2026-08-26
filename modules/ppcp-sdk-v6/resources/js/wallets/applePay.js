@@ -13,7 +13,7 @@
  */
 
 import Spinner from '@ppcp-button/Helper/Spinner';
-import { releaseWalletShipping } from '../endpointsAdapter';
+import { releaseCartShipping } from '../endpointsAdapter';
 import { hasJQuery } from '../utils/api';
 import { refreshCartUi } from '../utils/cartUi';
 import { handleError } from '../utils/errorHandler';
@@ -30,13 +30,13 @@ import {
 	applePayWcBillingAddress,
 	applePayWcShippingAddress,
 } from './walletContacts';
-import { payWithWallet } from './walletPayment';
-import { walletConfig, walletFundingSource } from './walletRegistry';
+import { payWithSession } from './sessionPayment';
+import { methodConfig, methodFundingSource } from './methodRegistry';
 import {
 	createShippingController,
-	walletShippingRequired,
-} from './walletShipping';
-import { resolveWalletTotal } from './walletTotal';
+	methodShippingRequired,
+} from './methodShipping';
+import { resolveContextTotal } from './contextTotal';
 
 /**
  * Renders the Apple Pay button and wires its click to a payment.
@@ -65,7 +65,7 @@ export async function renderApplePay( {
 		return;
 	}
 
-	const settings = walletConfig( config, method );
+	const settings = methodConfig( config, method );
 
 	// Own box, appended before the first await so the wrapper is non-empty by the
 	// time boot.js checks it and skips a redundant second render pass.
@@ -95,7 +95,7 @@ export async function renderApplePay( {
 	revealWalletGateway( gateway, config );
 
 	const sheetTotal = watchSheetTotal( config, context );
-	const requiresShipping = walletShippingRequired( config, context );
+	const requiresShipping = methodShippingRequired( config, context );
 	const shipping = createShippingController( { config } );
 	const spinner = hasJQuery() ? Spinner.fullPage() : null;
 	let paying = false;
@@ -132,7 +132,7 @@ export async function renderApplePay( {
 
 		paying = true;
 
-		cartReady = resolveWalletTotal( config, context );
+		cartReady = resolveContextTotal( config, context );
 
 		// Claimed here so a rejection nothing has awaited yet stays handled.
 		cartReady.catch( () => {} );
@@ -180,7 +180,7 @@ export async function renderApplePay( {
 				spinner?.unblock();
 
 				if ( requiresShipping ) {
-					releaseWalletShipping( config ).catch( () => {} );
+					releaseCartShipping( config ).catch( () => {} );
 				}
 
 				refreshCartUi( context );
@@ -234,7 +234,7 @@ export async function renderApplePay( {
 	 */
 	async function authorizePayment( appleSession, event ) {
 		// Blocked while the sheet is still up, so no idle page shows in the moment
-		// between the sheet closing and payWithWallet's redirect.
+		// between the sheet closing and payWithSession's redirect.
 		spinner?.block();
 
 		try {
@@ -252,11 +252,11 @@ export async function renderApplePay( {
 				);
 			}
 
-			await payWithWallet( {
+			await payWithSession( {
 				config,
 				context,
 				session,
-				fundingSource: walletFundingSource( method ),
+				fundingSource: methodFundingSource( method ),
 				// Undefined on the express path, where the order belongs to the
 				// PayPal gateway as Venmo's and Pay Later's do.
 				paymentMethod: gateway?.id,
@@ -275,7 +275,7 @@ export async function renderApplePay( {
 				},
 			} );
 
-			// Dismisses the sheet. The spinner stays up: payWithWallet has
+			// Dismisses the sheet. The spinner stays up: payWithSession has
 			// already started the redirect or submitted the checkout form.
 			appleSession.completePayment(
 				window.ApplePaySession.STATUS_SUCCESS
@@ -293,7 +293,7 @@ export async function renderApplePay( {
 		}
 	}
 
-	// renderWallet() only reaches this bridge when PHP styled this context.
+	// renderMethod() only reaches this bridge when PHP styled this context.
 	const styles = walletButtonStyle( settings.styles[ context ] );
 
 	container.appendChild( createButton( styles, config.button_height, pay ) );

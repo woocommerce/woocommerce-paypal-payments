@@ -20,7 +20,7 @@ use WooCommerce\PayPalCommerce\SdkV6\Assets\AddPaymentMethodManager;
 use WooCommerce\PayPalCommerce\SdkV6\Assets\SdkV6Manager;
 use WooCommerce\PayPalCommerce\SdkV6\Endpoint\ClientTokenEndpoint;
 use WooCommerce\PayPalCommerce\SdkV6\Endpoint\SimulateCartEndpoint;
-use WooCommerce\PayPalCommerce\SdkV6\Endpoint\WalletShippingEndpoint;
+use WooCommerce\PayPalCommerce\SdkV6\Endpoint\CartQuoteEndpoint;
 use WooCommerce\PayPalCommerce\SdkV6\Helper\RecordedShippingRate;
 use WooCommerce\PayPalCommerce\SdkV6\Helper\RecordedQuote;
 use WooCommerce\PayPalCommerce\SdkV6\Helper\RecordedTaxBasis;
@@ -67,16 +67,16 @@ class SdkV6Module implements ServiceModule, ExtendingModule, ExecutableModule {
 		);
 
 		add_action(
-			'wc_ajax_' . WalletShippingEndpoint::ENDPOINT,
+			'wc_ajax_' . CartQuoteEndpoint::ENDPOINT,
 			static function () use ( $c ) {
 				$endpoint = $c->get( 'sdk-v6.endpoint.wallet-shipping' );
-				assert( $endpoint instanceof WalletShippingEndpoint );
+				assert( $endpoint instanceof CartQuoteEndpoint );
 
 				$endpoint->handle_request();
 			}
 		);
 
-		$this->register_wallet_payment_records( $c );
+		$this->register_session_records( $c );
 
 		add_action(
 			'wp_enqueue_scripts',
@@ -251,11 +251,11 @@ class SdkV6Module implements ServiceModule, ExtendingModule, ExecutableModule {
 	 *
 	 * @param ContainerInterface $c The plugin container.
 	 */
-	private function register_wallet_payment_records( ContainerInterface $c ): void {
+	private function register_session_records( ContainerInterface $c ): void {
 		// Only where a payment is being priced. Elsewhere these would act on a record
 		// an abandoned sheet left behind, overriding a rate the shopper clicks or
 		// taxing them against the wallet's address.
-		if ( $this->prices_a_wallet_payment() ) {
+		if ( $this->prices_a_merchant_presented_payment() ) {
 			add_filter(
 				'woocommerce_shipping_chosen_method',
 				static function ( $default, $rates = array() ) use ( $c ) {
@@ -333,14 +333,14 @@ class SdkV6Module implements ServiceModule, ExtendingModule, ExecutableModule {
 	 * shown or charged. Anything else, an ordinary page view included, must be left
 	 * to price the cart the shopper sees.
 	 */
-	private function prices_a_wallet_payment(): bool {
+	private function prices_a_merchant_presented_payment(): bool {
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended,WordPress.Security.ValidatedSanitizedInput.MissingUnslash -- Reading which endpoint is being served, not acting on input; sanitize_key() drops any slashes along with everything outside [a-z0-9_-].
 		$action = is_string( $_GET['wc-ajax'] ?? null ) ? sanitize_key( $_GET['wc-ajax'] ) : '';
 
 		return in_array(
 			$action,
 			array(
-				WalletShippingEndpoint::ENDPOINT,
+				CartQuoteEndpoint::ENDPOINT,
 				ChangeCartEndpoint::ENDPOINT,
 				CreateOrderEndpoint::ENDPOINT,
 				ApproveOrderEndpoint::ENDPOINT,
@@ -463,7 +463,7 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
 					// Their own containers, next to the express wrapper rather
 					// than inside it: as payment-method rows these wallets are
 					// shown and hidden by the buyer's gateway selection.
-					$manager->render_wallet_gateway_wrappers();
+					$manager->render_gateway_wrappers();
 				}
 			);
 		}
@@ -481,7 +481,7 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
 				$hook,
 				static function () use ( $manager ): void {
 					$manager->render_wrapper();
-					$manager->render_wallet_gateway_wrappers();
+					$manager->render_gateway_wrappers();
 				},
 				20
 			);

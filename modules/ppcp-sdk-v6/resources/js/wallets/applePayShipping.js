@@ -2,7 +2,7 @@
  * Apple Pay's in-sheet shipping callbacks.
  *
  * Translates between Apple's ApplePaySession protocol and the shared shipping
- * quote; everything about pricing lives in walletShipping.js.
+ * quote; everything about pricing lives in methodShipping.js.
  *
  * @package
  */

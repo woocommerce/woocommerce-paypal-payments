@@ -14,13 +14,13 @@ jest.mock( '../utils/errorHandler', () => ( {
 } ) );
 
 const mockResolveWalletTotal = jest.fn();
-jest.mock( './walletTotal', () => ( {
-	resolveWalletTotal: ( ...args ) => mockResolveWalletTotal( ...args ),
+jest.mock( './contextTotal', () => ( {
+	resolveContextTotal: ( ...args ) => mockResolveWalletTotal( ...args ),
 } ) );
 
 const mockPayWithWallet = jest.fn();
-jest.mock( './walletPayment', () => ( {
-	payWithWallet: ( ...args ) => mockPayWithWallet( ...args ),
+jest.mock( './sessionPayment', () => ( {
+	payWithSession: ( ...args ) => mockPayWithWallet( ...args ),
 } ) );
 
 const mockGooglePayPayer = jest.fn();
@@ -39,7 +39,7 @@ jest.mock( './walletContacts', () => ( {
 
 const mockReleaseWalletShipping = jest.fn();
 jest.mock( '../endpointsAdapter', () => ( {
-	releaseWalletShipping: ( ...args ) => mockReleaseWalletShipping( ...args ),
+	releaseCartShipping: ( ...args ) => mockReleaseWalletShipping( ...args ),
 } ) );
 
 const mockBuildReadyToPayRequest = jest.fn();
@@ -64,10 +64,10 @@ jest.mock( '../utils/cartUi', () => ( {
 const mockWalletShippingRequired = jest.fn( () => false );
 const mockWalletShippingCountries = jest.fn( () => [] );
 const mockCreateShippingController = jest.fn();
-jest.mock( './walletShipping', () => ( {
-	walletShippingRequired: ( ...args ) =>
+jest.mock( './methodShipping', () => ( {
+	methodShippingRequired: ( ...args ) =>
 		mockWalletShippingRequired( ...args ),
-	walletShippingCountries: ( ...args ) =>
+	methodShippingCountries: ( ...args ) =>
 		mockWalletShippingCountries( ...args ),
 	createShippingController: ( ...args ) =>
 		mockCreateShippingController( ...args ),
@@ -525,7 +525,7 @@ describe( 'a click on the rendered button', () => {
 			return { selectedId: null, total: '12.34' };
 		} );
 		mockPayWithWallet.mockImplementationOnce( async () => {
-			callOrder.push( 'payWithWallet' );
+			callOrder.push( 'payWithSession' );
 		} );
 
 		await render( { config, context: 'cart' } );
@@ -541,7 +541,7 @@ describe( 'a click on the rendered button', () => {
 			'WC_SHIP_SENTINEL',
 			'WC_BILLING_SENTINEL'
 		);
-		expect( callOrder ).toEqual( [ 'commit', 'payWithWallet' ] );
+		expect( callOrder ).toEqual( [ 'commit', 'payWithSession' ] );
 	} );
 
 	test( 'never commits a shipping address when this context requires no shipping', async () => {

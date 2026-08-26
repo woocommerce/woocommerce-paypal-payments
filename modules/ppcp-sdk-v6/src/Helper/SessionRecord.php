@@ -13,7 +13,7 @@ declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\SdkV6\Helper;
 
-abstract class WalletPaymentRecord {
+abstract class SessionRecord {
 
 	protected const SESSION_KEY = '';
 

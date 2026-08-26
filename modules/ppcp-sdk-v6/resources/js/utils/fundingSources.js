@@ -14,7 +14,7 @@
  * create*OneTimePaymentSession factories), which for every method but Apple Pay
  * is also what the WC AJAX endpoints accept as funding_source, so they are fixed
  * by both contracts rather than free to rename. Apple Pay is the exception: the
- * endpoints know it as apple_pay, which walletRegistry.js maps, so these constants
+ * endpoints know it as apple_pay, which methodRegistry.js maps, so these constants
  * stay purely the SDK's vocabulary.
  */
 export const FundingSources = {

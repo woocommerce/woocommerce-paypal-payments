@@ -49,7 +49,7 @@ function confirmedStatus( result ) {
  * @return {Promise<void>} Resolves once the order is approved.
  * @throws {Error} When the wallet does not approve the order.
  */
-export async function payWithWallet( {
+export async function payWithSession( {
 	config,
 	context,
 	session,

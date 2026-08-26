@@ -13,7 +13,7 @@ use WooCommerce\PayPalCommerce\Applepay\ApplePayGateway;
 use WooCommerce\PayPalCommerce\Applepay\Assets\PropertiesDictionary;
 use WooCommerce\PayPalCommerce\Settings\DTO\LocationStylingDTO;
 
-class ApplePayConfig extends WalletConfig {
+class ApplePayConfig extends MethodRenderGate {
 
 	/**
 	 * The <apple-pay-button> custom property expects a CSS length, not an integer.
@@ -32,7 +32,7 @@ class ApplePayConfig extends WalletConfig {
 	 * @return array{color: string, type: string, language: string, borderRadius: string}
 	 */
 	public function styles( string $context ): array {
-		$styling = $this->wallet_styles( $context );
+		$styling = $this->method_styles( $context );
 
 		// SettingsProvider maps these through filters the Apple Pay module
 		// registers, which are absent when that module is not loaded. Mapping again
@@ -59,11 +59,11 @@ class ApplePayConfig extends WalletConfig {
 		);
 	}
 
-	protected function wallet_enabled(): bool {
+	protected function method_enabled(): bool {
 		return $this->settings_provider->applepay_enabled();
 	}
 
-	protected function wallet_styles( string $context ): LocationStylingDTO {
+	protected function method_styles( string $context ): LocationStylingDTO {
 		return $this->settings_provider->applepay_styles( $context );
 	}
 

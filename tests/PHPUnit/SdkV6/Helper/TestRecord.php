@@ -5,10 +5,10 @@ declare( strict_types = 1 );
 namespace WooCommerce\PayPalCommerce\SdkV6\Helper;
 
 /**
- * Exposes WalletPaymentRecord's protected storage API, so the shared behaviour can
+ * Exposes SessionRecord's protected storage API, so the shared behaviour can
  * be exercised without standing in for any one of the real records.
  */
-class TestRecord extends WalletPaymentRecord {
+class TestRecord extends SessionRecord {
 
 	public const KEY = 'ppcp_test_record';
 

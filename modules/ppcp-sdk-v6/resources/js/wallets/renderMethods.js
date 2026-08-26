@@ -7,12 +7,12 @@
 import { FundingSources } from '../utils/fundingSources';
 import { renderGooglePay } from './googlePay';
 import { renderApplePay } from './applePay';
-import { walletConfig } from './walletRegistry';
+import { methodConfig } from './methodRegistry';
 
 /**
  * The render function for each wallet.
  *
- * Kept out of walletRegistry.js, which holds the rest of the wallet description:
+ * Kept out of methodRegistry.js, which holds the rest of the wallet description:
  * boot.js and sdkLoader.js read that module long before anything renders, so it
  * stays import-free rather than dragging a bridge in behind it.
  */
@@ -41,10 +41,10 @@ const CONTEXTS_WITH_GATEWAY_ROWS = [ 'checkout', 'pay-now' ];
  * @param {Object} args.sessions - The payment sessions, keyed by method.
  * @return {Promise<void>} Resolves once the wallets have rendered.
  */
-export async function renderWallets( { wrapper, config, context, sessions } ) {
+export async function renderMethods( { wrapper, config, context, sessions } ) {
 	await Promise.all(
 		Object.keys( RENDERERS ).map( ( method ) =>
-			renderWallet( method, { wrapper, config, context, sessions } )
+			renderMethod( method, { wrapper, config, context, sessions } )
 		)
 	);
 }
@@ -83,11 +83,11 @@ function resolveTarget( wrapper, gateway, context ) {
  * Renders one wallet, if it is switched on and has a session.
  *
  * @param {string} method - The wallet's funding source.
- * @param {Object} args   - The render inputs, as for renderWallets().
+ * @param {Object} args   - The render inputs, as for renderMethods().
  * @return {Promise<void>} Resolves once rendered, or skipped.
  */
-async function renderWallet( method, { wrapper, config, context, sessions } ) {
-	const settings = walletConfig( config, method );
+async function renderMethod( method, { wrapper, config, context, sessions } ) {
+	const settings = methodConfig( config, method );
 	const session = sessions[ method ];
 
 	// `enabled` is true as soon as *any* context wants the wallet, so the

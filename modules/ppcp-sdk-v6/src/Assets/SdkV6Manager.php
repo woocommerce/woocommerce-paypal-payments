@@ -25,7 +25,7 @@ use WooCommerce\PayPalCommerce\SavePaymentMethods\Endpoint\CreatePaymentTokenFor
 use WooCommerce\PayPalCommerce\SavePaymentMethods\Endpoint\CreateSetupToken;
 use WooCommerce\PayPalCommerce\SdkV6\Endpoint\ClientTokenEndpoint;
 use WooCommerce\PayPalCommerce\SdkV6\Endpoint\SimulateCartEndpoint;
-use WooCommerce\PayPalCommerce\SdkV6\Endpoint\WalletShippingEndpoint;
+use WooCommerce\PayPalCommerce\SdkV6\Endpoint\CartQuoteEndpoint;
 use WooCommerce\PayPalCommerce\SdkV6\Helper\ApplePayConfig;
 use WooCommerce\PayPalCommerce\SdkV6\Helper\ButtonStyleMapper;
 use WooCommerce\PayPalCommerce\SdkV6\Helper\CardFieldStyles;
@@ -65,7 +65,7 @@ class SdkV6Manager {
 	public const PAY_ORDER_MESSAGE_HOOK = 'woocommerce_pay_order_before_submit';
 
 	/**
-	 * The contexts that print a payment-method radio list a wallet can own a row in.
+	 * The contexts that print a payment-method radio list a method can own a row in.
 	 */
 	private const CONTEXTS_WITH_GATEWAY_ROWS = array( 'checkout', 'pay-now' );
 
@@ -112,7 +112,7 @@ class SdkV6Manager {
 	private array $credit_card_icons;
 
 	/**
-	 * The same object $wallets holds, kept under its own type because
+	 * The same object $placements holds, kept under its own type because
 	 * display_name() exists only on the Apple subclass.
 	 */
 	private ApplePayConfig $apple_pay_config;
@@ -121,11 +121,11 @@ class SdkV6Manager {
 	private CardFieldStyles $card_field_styles;
 
 	/**
-	 * Every wallet this module places, in the order their rows are printed.
+	 * Every method this module places, in the order their rows are printed.
 	 *
-	 * @var WalletPlacement[]
+	 * @var MethodPlacement[]
 	 */
-	private array $wallets;
+	private array $placements;
 
 	/**
 	 * Memoizes is_card_button_row(), asked once per request to print the row and
@@ -185,8 +185,8 @@ class SdkV6Manager {
 		$this->fastlane_config             = $fastlane_config;
 		$this->card_field_styles           = $card_field_styles;
 
-		$this->wallets = array(
-			new WalletPlacement(
+		$this->placements = array(
+			new MethodPlacement(
 				'google_pay',
 				GooglePayGateway::ID,
 				self::GOOGLE_PAY_WRAPPER_ID,
@@ -196,7 +196,7 @@ class SdkV6Manager {
 					return $google_pay_config->styles( $context );
 				}
 			),
-			new WalletPlacement(
+			new MethodPlacement(
 				'apple_pay',
 				ApplePayGateway::ID,
 				self::APPLE_PAY_WRAPPER_ID,
@@ -328,12 +328,12 @@ class SdkV6Manager {
 	}
 
 	/**
-	 * Renders a gateway row for every wallet that has one on this page.
+	 * Renders a gateway row for every method that has one on this page.
 	 */
-	public function render_wallet_gateway_wrappers(): void {
-		foreach ( $this->wallets as $wallet ) {
-			if ( $this->is_wallet_gateway( $wallet ) ) {
-				$this->render_gateway_wrapper( $wallet->gateway_id, $wallet->wrapper_id );
+	public function render_gateway_wrappers(): void {
+		foreach ( $this->placements as $placement ) {
+			if ( $this->is_method_gateway( $placement ) ) {
+				$this->render_gateway_wrapper( $placement->gateway_id, $placement->wrapper_id );
 			}
 		}
 	}
@@ -357,16 +357,16 @@ class SdkV6Manager {
 	}
 
 	/**
-	 * Whether a wallet renders as its own payment-method row.
+	 * Whether a method renders as its own payment-method row.
 	 *
 	 * True only where there is a list to join and the gateway is available there.
 	 *
 	 * Only the gateway walk is memoized, never a refusal from the context check,
 	 * so a call made before the context resolves cannot poison the answer.
 	 */
-	private function is_wallet_gateway( WalletPlacement $wallet ): bool {
-		if ( null !== $wallet->is_gateway ) {
-			return $wallet->is_gateway;
+	private function is_method_gateway( MethodPlacement $placement ): bool {
+		if ( null !== $placement->is_gateway ) {
+			return $placement->is_gateway;
 		}
 
 		if ( ! in_array( $this->get_page_context(), self::CONTEXTS_WITH_GATEWAY_ROWS, true ) || $this->is_block_context() ) {
@@ -375,40 +375,40 @@ class SdkV6Manager {
 
 		$gateways = WC()->payment_gateways() ? WC()->payment_gateways()->get_available_payment_gateways() : array();
 
-		$wallet->is_gateway = isset( $gateways[ $wallet->gateway_id ] );
+		$placement->is_gateway = isset( $gateways[ $placement->gateway_id ] );
 
-		return $wallet->is_gateway;
+		return $placement->is_gateway;
 	}
 
 	/**
-	 * The script data every wallet has, before its own keys are added.
+	 * The script data every placement has, before its own keys are added.
 	 *
-	 * @param WalletPlacement $wallet       The wallet to describe.
+	 * @param MethodPlacement $placement       The placement to describe.
 	 * @param string          $page_context The current context, empty off a button page.
 	 * @return array<string, mixed>
 	 */
-	private function wallet_script_data( WalletPlacement $wallet, string $page_context ): array {
+	private function placement_script_data( MethodPlacement $placement, string $page_context ): array {
 		// Styled per context, so `enabled` follows from whether any context on
-		// this page wants the wallet at all.
+		// this page wants the method at all.
 		$styles = array();
-		if ( $page_context && $wallet->config->should_render( $page_context ) ) {
-			$styles[ $page_context ] = $wallet->styles( $page_context );
+		if ( $page_context && $placement->config->should_render( $page_context ) ) {
+			$styles[ $page_context ] = $placement->styles( $page_context );
 		}
-		if ( $wallet->config->should_render( 'mini-cart' ) ) {
-			$styles['mini-cart'] = $wallet->styles( 'mini-cart' );
+		if ( $placement->config->should_render( 'mini-cart' ) ) {
+			$styles['mini-cart'] = $placement->styles( 'mini-cart' );
 		}
 
 		return array(
 			'enabled' => ! empty( $styles ),
-			'sdk_url' => $wallet->sdk_url,
+			'sdk_url' => $placement->sdk_url,
 			'styles'  => $styles,
 			// Present only on classic checkout, where a payment-method list
-			// exists; elsewhere the wallet stays an express button. Null rather
+			// exists; elsewhere the method stays an express button. Null rather
 			// than a flag plus two values the JS would have to pair up again.
-			'gateway' => $this->is_wallet_gateway( $wallet )
+			'gateway' => $this->is_method_gateway( $placement )
 				? array(
-					'id'      => $wallet->gateway_id,
-					'wrapper' => '#' . $wallet->wrapper_id,
+					'id'      => $placement->gateway_id,
+					'wrapper' => '#' . $placement->wrapper_id,
 				)
 				: null,
 		);
@@ -457,7 +457,7 @@ class SdkV6Manager {
 			return true;
 		}
 
-		if ( $page_location && $this->any_wallet_renders( $page_location ) ) {
+		if ( $page_location && $this->any_placement_renders( $page_location ) ) {
 			return true;
 		}
 
@@ -470,7 +470,7 @@ class SdkV6Manager {
 		// only detects the classic one. boot.js renders into the mini-cart
 		// wrapper only where that wrapper exists.
 		return $this->settings_status->is_smart_button_enabled_for_location( 'mini-cart' )
-			|| $this->any_wallet_renders( 'mini-cart' );
+			|| $this->any_placement_renders( 'mini-cart' );
 	}
 
 	/**
@@ -576,11 +576,11 @@ class SdkV6Manager {
 	}
 
 	/**
-	 * Whether any wallet renders in the given context.
+	 * Whether any method renders in the given context.
 	 */
-	private function any_wallet_renders( string $context ): bool {
-		foreach ( $this->wallets as $wallet ) {
-			if ( $wallet->config->should_render( $context ) ) {
+	private function any_placement_renders( string $context ): bool {
+		foreach ( $this->placements as $placement ) {
+			if ( $placement->config->should_render( $context ) ) {
 				return true;
 			}
 		}
@@ -877,8 +877,8 @@ class SdkV6Manager {
 					'nonce'    => wp_create_nonce( SimulateCartEndpoint::nonce() ),
 				),
 				'wallet_shipping'                => array(
-					'endpoint' => \WC_AJAX::get_endpoint( WalletShippingEndpoint::ENDPOINT ),
-					'nonce'    => wp_create_nonce( WalletShippingEndpoint::nonce() ),
+					'endpoint' => \WC_AJAX::get_endpoint( CartQuoteEndpoint::ENDPOINT ),
+					'nonce'    => wp_create_nonce( CartQuoteEndpoint::nonce() ),
 				),
 				'create_order'                   => array(
 					'endpoint' => \WC_AJAX::get_endpoint( CreateOrderEndpoint::ENDPOINT ),
@@ -982,7 +982,7 @@ class SdkV6Manager {
 				),
 				'styles'              => $this->card_field_styles->overrides(),
 			),
-			'card_button'       => array(
+			'card_button'         => array(
 				'enabled'        => $this->is_card_button_row(),
 				'payment_method' => CardButtonGateway::ID,
 				'funding_source' => 'card',
@@ -1005,7 +1005,7 @@ class SdkV6Manager {
 				// own feature flag, and SdkV6Module names it the same way.
 				'payment_method' => 'ppcp-axo-gateway',
 			),
-			'messages'          => array(
+			'messages'            => array(
 				'enabled'   => $this->messages_enabled(),
 				'wrapper'   => '.ppcp-messages',
 				'is_hidden' => $this->messages_eligibility->is_hidden( $page_context ),
@@ -1015,8 +1015,8 @@ class SdkV6Manager {
 			),
 		);
 
-		foreach ( $this->wallets as $wallet ) {
-			$data[ $wallet->config_key ] = $this->wallet_script_data( $wallet, $page_context );
+		foreach ( $this->placements as $placement ) {
+			$data[ $placement->config_key ] = $this->placement_script_data( $placement, $page_context );
 		}
 
 		// The keys only one wallet has; everything above is the shared shape.
