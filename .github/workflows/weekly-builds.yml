@@ -69,7 +69,7 @@ jobs:
     if: github.repository_owner == 'woocommerce'
     name: Build package
     needs: create-tag
-    uses: inpsyde/reusable-workflows/.github/workflows/build-and-distribute.yml@main
+    uses: inpsyde/reusable-workflows/.github/workflows/build-and-distribute.yml@e37849e94ffc3e8b7aaae853471815e1b74f99e8 # pinning PR #278
     secrets:
       GITHUB_USER_EMAIL: ${{ secrets.DEPLOYBOT_EMAIL }}
       GITHUB_USER_NAME: ${{ secrets.DEPLOYBOT_USER }}
