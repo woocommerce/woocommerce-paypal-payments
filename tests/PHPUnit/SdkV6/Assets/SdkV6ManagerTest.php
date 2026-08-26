@@ -62,12 +62,13 @@ class SdkV6ManagerTest extends TestCase
         $this->environment = Mockery::mock(Environment::class);
         $this->style_mapper = Mockery::mock(ButtonStyleMapper::class);
         $this->settings_status = Mockery::mock(SettingsStatus::class);
+        // script_data() asks for this on every resolved page context.
+        $this->settings_status->shouldReceive('is_pay_later_button_enabled_for_location')->andReturn(false)->byDefault();
         $this->context = Mockery::mock(Context::class);
         $this->session_handler = Mockery::mock(SessionHandler::class);
         $this->cancel_view = Mockery::mock(CancelView::class);
         $this->card_payments_configuration = Mockery::mock(CardPaymentsConfiguration::class);
-		// Off by default like the wallets: script_data() reads it on every call,
-		// and most tests here exercise something other than the card button.
+		// script_data() reads this on every call.
 		$this->card_payments_configuration->shouldReceive('is_bcdc_enabled')->andReturn(false)->byDefault();
 		$this->subscription_helper = Mockery::mock(SubscriptionHelper::class);
         $this->subscription_helper->shouldReceive('cart_contains_subscription')->andReturn(false)->byDefault();
@@ -145,6 +146,8 @@ class SdkV6ManagerTest extends TestCase
         $product = Mockery::mock(\WC_Product::class);
         $product->shouldReceive('is_virtual')->andReturn($is_virtual);
         $product->shouldReceive('is_downloadable')->andReturn($is_downloadable);
+        // pay_later_product_context() reads the price on every product page.
+        $product->shouldReceive('get_price')->with('raw')->andReturn('10.00')->byDefault();
 
         return $product;
     }

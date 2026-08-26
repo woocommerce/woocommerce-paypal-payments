@@ -261,6 +261,9 @@ const ELIGIBILITY_REFRESH_DEBOUNCE_MS = 300;
 					  () => createVaultSetupToken( config )
 					: () => createOrder( config, target.context, fundingSource ),
 			payLaterDetails,
+			payLaterEnabled: Boolean(
+				config.pay_later_button?.[ target.context ]
+			),
 		} );
 
 		await renderMethods( {

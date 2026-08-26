@@ -908,6 +908,66 @@ class SdkV6Manager {
 	}
 
 	/**
+	 * Whether the Pay Later button belongs in a location.
+	 *
+	 * Mirrors SmartButton::is_pay_later_button_enabled_for_location(). v5 hid
+	 * the button through the SDK URL's disable-funding, which has no v6
+	 * equivalent, so the decision travels to the renderer instead.
+	 *
+	 * @param string $location The button location.
+	 * @return bool Whether the button may render.
+	 */
+	private function is_pay_later_button_enabled( string $location ): bool {
+		return $this->is_pay_later_filter_enabled( $location )
+			&& $this->settings_status->is_pay_later_button_enabled_for_location( $location );
+	}
+
+	/**
+	 * Whether the filters v5 fires allow Pay Later in a location.
+	 *
+	 * @param string $location The button location.
+	 * @return bool Whether the filters allow the button.
+	 */
+	private function is_pay_later_filter_enabled( string $location ): bool {
+		if ( 'product' === $location ) {
+			/**
+			 * Allows to decide if the button should be disabled for a given product.
+			 */
+			return ! apply_filters(
+				'woocommerce_paypal_payments_product_buttons_paylater_disabled',
+				false,
+				$this->pay_later_product_context()
+			);
+		}
+
+		/**
+		 * Allows to decide if the button should be disabled on a given context.
+		 */
+		return ! apply_filters(
+			'woocommerce_paypal_payments_buttons_paylater_disabled',
+			false,
+			$location
+		);
+	}
+
+	/**
+	 * The context data the product filter receives, as v5 assembles it.
+	 *
+	 * @return array{product?: \WC_Product, order_total?: float}
+	 */
+	private function pay_later_product_context(): array {
+		$product = wc_get_product();
+		if ( ! $product ) {
+			return array();
+		}
+
+		return array(
+			'product'     => $product,
+			'order_total' => (float) $product->get_price( 'raw' ),
+		);
+	}
+
+	/**
 	 * The configuration data for the SDK v6 bootstrap script.
 	 *
 	 * Also consumed by the block payment method (V6PaymentMethod), which
@@ -930,12 +990,15 @@ class SdkV6Manager {
 
 		$store_api_base = rtrim( rest_url( 'wc/store/v1/cart' ), '/' );
 
-		$button_styles = array();
+		$button_styles    = array();
+		$pay_later_button = array();
 		if ( $page_context ) {
-			$button_styles[ $page_context ] = $this->button_styles( $page_context );
+			$button_styles[ $page_context ]    = $this->button_styles( $page_context );
+			$pay_later_button[ $page_context ] = $this->is_pay_later_button_enabled( $page_context );
 		}
 		if ( $this->settings_status->is_smart_button_enabled_for_location( 'mini-cart' ) ) {
-			$button_styles['mini-cart'] = $this->button_styles( 'mini-cart' );
+			$button_styles['mini-cart']    = $this->button_styles( 'mini-cart' );
+			$pay_later_button['mini-cart'] = $this->is_pay_later_button_enabled( 'mini-cart' );
 		}
 
 		$card_fields_enabled = $this->is_card_fields_enabled();
@@ -1057,6 +1120,7 @@ class SdkV6Manager {
 				'countries'  => $this->shipping_countries( $shipping_contexts ),
 			),
 			'button_styles'       => $button_styles,
+			'pay_later_button'    => $pay_later_button,
 			'button_height'       => self::PAYMENT_BUTTON_HEIGHT,
 			'wrapper'             => '#' . self::WRAPPER_ID,
 			'mini_cart_wrapper'   => '#' . self::MINI_CART_WRAPPER_ID,
