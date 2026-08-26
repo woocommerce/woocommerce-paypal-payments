@@ -371,6 +371,50 @@ describe( 'renderGooglePay()', () => {
 	);
 } );
 
+describe( 'obsolescence', () => {
+	test( 'removes its own container and never calls isReadyToPay when overrides.isObsolete() answers true right after the initial awaits, without calling onUnavailable', async () => {
+		const onUnavailable = jest.fn();
+
+		const { wrapper } = await render( {
+			overrides: { isObsolete: () => true, onUnavailable },
+		} );
+
+		expect( wrapper.childElementCount ).toBe( 0 );
+		expect( mockIsReadyToPay ).not.toHaveBeenCalled();
+		expect( onUnavailable ).not.toHaveBeenCalled();
+		expect( mockRevealWalletGateway ).not.toHaveBeenCalled();
+	} );
+
+	test( 'removes its own container and renders no button when overrides.isObsolete() turns true only once isReadyToPay has resolved, without calling onUnavailable', async () => {
+		let calls = 0;
+		const onUnavailable = jest.fn();
+
+		const { wrapper } = await render( {
+			overrides: {
+				isObsolete: () => {
+					calls += 1;
+					return calls > 1;
+				},
+				onUnavailable,
+			},
+		} );
+
+		expect( mockIsReadyToPay ).toHaveBeenCalled();
+		expect( mockCreateButton ).not.toHaveBeenCalled();
+		expect( wrapper.childElementCount ).toBe( 0 );
+		expect( onUnavailable ).not.toHaveBeenCalled();
+	} );
+
+	test( 'still renders the button when overrides.isObsolete() answers false throughout', async () => {
+		const { wrapper } = await render( {
+			overrides: { isObsolete: () => false },
+		} );
+
+		expect( wrapper.childElementCount ).toBe( 1 );
+		expect( mockCreateButton ).toHaveBeenCalled();
+	} );
+} );
+
 describe( 'sizing the button createButton() returns', () => {
 	test.each( [
 		[
@@ -799,4 +843,84 @@ describe( 'a click on the rendered button', () => {
 			expect( mockLoadPaymentData ).toHaveBeenCalledTimes( 2 );
 		}
 	);
+} );
+
+describe( 'surface overrides', () => {
+	beforeEach( () => {
+		mockResolveWalletTotal.mockResolvedValue( {
+			total: '12.34',
+			purchaseUnits: [ { amount: { value: '12.34' } } ],
+		} );
+		mockLoadPaymentData.mockResolvedValue( {
+			paymentMethodData: { type: 'CARD', tokenizationData: {} },
+		} );
+	} );
+
+	test( 'a height override wins over the shared button height', async () => {
+		const { wrapper } = await render( {
+			config: baseConfig( { button_height: '48px' } ),
+			overrides: { height: '30px' },
+		} );
+
+		expect( wrapper.firstElementChild.style.height ).toBe( '30px' );
+	} );
+
+	test( 'a borderRadius override replaces the settings style', async () => {
+		await render( { overrides: { borderRadius: 12 } } );
+
+		expect( createButtonOptions.buttonRadius ).toBe( 12 );
+	} );
+
+	test( 'a requiresShipping override replaces the per-context answer sent by PHP', async () => {
+		mockWalletShippingRequired.mockReturnValue( false );
+
+		await render( { overrides: { requiresShipping: true } } );
+		await createButtonOptions.onClick();
+
+		expect( mockBuildPaymentDataRequest ).toHaveBeenCalledWith(
+			expect.anything(),
+			expect.objectContaining( { requiresShipping: true } )
+		);
+	} );
+
+	test( 'onClick fires when the button is tapped', async () => {
+		const onClick = jest.fn();
+
+		await render( { overrides: { onClick } } );
+		await createButtonOptions.onClick();
+
+		expect( onClick ).toHaveBeenCalledTimes( 1 );
+	} );
+
+	test( 'onUnavailable fires instead of rendering when isReadyToPay resolves false', async () => {
+		mockIsReadyToPay.mockResolvedValue( { result: false } );
+		const onUnavailable = jest.fn();
+
+		await render( { overrides: { onUnavailable } } );
+
+		expect( onUnavailable ).toHaveBeenCalledTimes( 1 );
+		expect( mockCreateButton ).not.toHaveBeenCalled();
+	} );
+
+	test( 'onSheetClosed fires after the sheet closes without paying', async () => {
+		mockLoadPaymentData.mockRejectedValueOnce( { statusCode: 'CANCELED' } );
+		const onSheetClosed = jest.fn();
+
+		await render( { overrides: { onSheetClosed } } );
+		await createButtonOptions.onClick();
+
+		expect( onSheetClosed ).toHaveBeenCalledTimes( 1 );
+	} );
+
+	test( 'omitting overrides entirely leaves the existing behavior unchanged', async () => {
+		const { wrapper } = await render();
+
+		expect( wrapper.firstElementChild.style.height ).toBe( '48px' );
+
+		await createButtonOptions.onClick();
+		expect( mockBuildPaymentDataRequest ).toHaveBeenCalledWith(
+			expect.anything(),
+			expect.objectContaining( { requiresShipping: false } )
+		);
+	} );
 } );

@@ -8,7 +8,7 @@ jest.mock( './applePay', () => ( {
 
 import { renderGooglePay } from './googlePay';
 import { renderApplePay } from './applePay';
-import { renderMethods } from './renderMethods';
+import { renderMethods, renderMethodInto } from './renderMethods';
 
 const args = ( overrides = {} ) => ( {
 	wrapper: {},
@@ -246,5 +246,66 @@ describe( 'renderMethods() across wallets', () => {
 		await expect( renderMethods( wallets ) ).rejects.toThrow( 'boom' );
 
 		expect( renderApplePay ).toHaveBeenCalled();
+	} );
+} );
+
+describe( 'renderMethodInto()', () => {
+	test( 'dispatches Google Pay to renderGooglePay with the given wrapper and overrides', async () => {
+		const wrapper = document.createElement( 'div' );
+		const overrides = { height: '48px', onClick: jest.fn() };
+
+		await renderMethodInto( 'googlepay', {
+			wrapper,
+			config: { google_pay: {} },
+			context: 'checkout-block',
+			session: { fake: 'session' },
+			overrides,
+		} );
+
+		expect( renderGooglePay ).toHaveBeenCalledWith( {
+			method: 'googlepay',
+			wrapper,
+			config: { google_pay: {} },
+			context: 'checkout-block',
+			session: { fake: 'session' },
+			overrides,
+		} );
+		expect( renderApplePay ).not.toHaveBeenCalled();
+	} );
+
+	test( 'dispatches Apple Pay to renderApplePay with the given wrapper and overrides', async () => {
+		const wrapper = document.createElement( 'div' );
+		const overrides = { requiresShipping: true };
+
+		await renderMethodInto( 'applepay', {
+			wrapper,
+			config: { apple_pay: {} },
+			context: 'checkout-block',
+			session: { fake: 'session' },
+			overrides,
+		} );
+
+		expect( renderApplePay ).toHaveBeenCalledWith( {
+			method: 'applepay',
+			wrapper,
+			config: { apple_pay: {} },
+			context: 'checkout-block',
+			session: { fake: 'session' },
+			overrides,
+		} );
+		expect( renderGooglePay ).not.toHaveBeenCalled();
+	} );
+
+	test( 'does nothing for a funding source that is not a wallet', async () => {
+		await renderMethodInto( 'paypal', {
+			wrapper: document.createElement( 'div' ),
+			config: {},
+			context: 'checkout-block',
+			session: {},
+			overrides: {},
+		} );
+
+		expect( renderGooglePay ).not.toHaveBeenCalled();
+		expect( renderApplePay ).not.toHaveBeenCalled();
 	} );
 } );

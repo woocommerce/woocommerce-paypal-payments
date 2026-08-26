@@ -19,6 +19,7 @@ import { refreshCartUi } from '../utils/cartUi';
 import { handleError } from '../utils/errorHandler';
 import { loadScript } from '../utils/scriptLoaders';
 import { revealWalletGateway } from './gatewayPlacement';
+import { renderIsObsolete } from './renderOverrides';
 import { APPLE_PAY_VERSION, buildApplePayRequest } from './applePayRequest';
 import { watchSheetTotal } from './applePaySheetTotal';
 import { applePayFailure, attachShippingHandlers } from './applePayShipping';
@@ -41,14 +42,16 @@ import { resolveContextTotal } from './contextTotal';
 /**
  * Renders the Apple Pay button and wires its click to a payment.
  *
- * @param {Object}  args           - The render inputs.
- * @param {string}  args.method    - The wallet's funding source.
- * @param {Object}  args.wrapper   - The button wrapper to render into.
- * @param {Object}  args.config    - The wc_ppcp_sdk_v6 config object.
- * @param {string}  args.context   - The page context.
- * @param {Object}  args.session   - The v6 Apple Pay payment session.
- * @param {?Object} [args.gateway] - The { id, wrapper } of the payment-method
- *                                 row, when the wallet is its own gateway.
+ * @param {Object}  args             - The render inputs.
+ * @param {string}  args.method      - The wallet's funding source.
+ * @param {Object}  args.wrapper     - The button wrapper to render into.
+ * @param {Object}  args.config      - The wc_ppcp_sdk_v6 config object.
+ * @param {string}  args.context     - The page context.
+ * @param {Object}  args.session     - The v6 Apple Pay payment session.
+ * @param {?Object} [args.gateway]   - The { id, wrapper } of the payment-method
+ *                                   row, when the wallet is its own gateway.
+ * @param {Object}  [args.overrides] - Surface-specific overrides, as described
+ *                                   by renderMethodInto().
  * @return {Promise<void>} Resolves once the button is rendered, or skipped.
  */
 export async function renderApplePay( {
@@ -58,10 +61,12 @@ export async function renderApplePay( {
 	context,
 	session,
 	gateway,
+	overrides = {},
 } ) {
 	// Answers off a native global, before anything is fetched: an incapable browser
 	// loads no SDK and leaves the DOM untouched, so the gateway row stays hidden.
 	if ( ! isDeviceEligible() ) {
+		overrides.onUnavailable?.();
 		return;
 	}
 
@@ -84,18 +89,26 @@ export async function renderApplePay( {
 		session.config(),
 	] );
 
+	if ( renderIsObsolete( overrides ) ) {
+		container.remove();
+		return;
+	}
+
 	// The narrow client-side veto: merchant capability and product status are
 	// already gated by ApplePayConfig server-side. Only an explicit refusal counts,
 	// so an absent field never withholds the button from every shopper.
 	if ( false === applePayConfig?.isEligible ) {
 		container.remove();
+		overrides.onUnavailable?.();
 		return;
 	}
 
 	revealWalletGateway( gateway, config );
 
-	const sheetTotal = watchSheetTotal( config, context );
-	const requiresShipping = methodShippingRequired( config, context );
+	// Synchronous either way: Safari refuses a sheet opened after an await.
+	const sheetTotal = overrides.sheetTotal ?? watchSheetTotal( config, context );
+	const requiresShipping =
+		overrides.requiresShipping ?? methodShippingRequired( config, context );
 	const shipping = createShippingController( { config } );
 	const spinner = hasJQuery() ? Spinner.fullPage() : null;
 	let paying = false;
@@ -131,6 +144,9 @@ export async function renderApplePay( {
 		}
 
 		paying = true;
+
+		// Claims the surface's express UI; onSheetClosed() releases it again.
+		overrides.onClick?.();
 
 		cartReady = resolveContextTotal( config, context );
 
@@ -184,6 +200,7 @@ export async function renderApplePay( {
 				}
 
 				refreshCartUi( context );
+				overrides.onSheetClosed?.();
 			};
 
 			// Presents the sheet, and only then asks for merchant validation.
@@ -192,6 +209,7 @@ export async function renderApplePay( {
 			paying = false;
 			spinner?.unblock();
 			handleError( error );
+			overrides.onSheetClosed?.();
 		}
 	}
 
@@ -222,6 +240,7 @@ export async function renderApplePay( {
 			paying = false;
 			appleSession.abort();
 			handleError( error );
+			overrides.onSheetClosed?.();
 		}
 	}
 
@@ -290,13 +309,21 @@ export async function renderApplePay( {
 			spinner?.unblock();
 			refreshCartUi( context );
 			handleError( error );
+			overrides.onSheetClosed?.();
 		}
 	}
 
 	// renderMethod() only reaches this bridge when PHP styled this context.
 	const styles = walletButtonStyle( settings.styles[ context ] );
 
-	container.appendChild( createButton( styles, config.button_height, pay ) );
+	// The block sizing controls arrive unitless; Apple wants a CSS length.
+	if ( overrides.borderRadius !== undefined ) {
+		styles.borderRadius = `${ Number( overrides.borderRadius ) }px`;
+	}
+
+	container.appendChild(
+		createButton( styles, overrides.height || config.button_height, pay )
+	);
 }
 
 /**

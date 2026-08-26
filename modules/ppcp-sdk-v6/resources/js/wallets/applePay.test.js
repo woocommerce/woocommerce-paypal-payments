@@ -316,6 +316,28 @@ describe( 'renderApplePay()', () => {
 	} );
 } );
 
+describe( 'obsolescence', () => {
+	test( 'removes its own container and renders no button when overrides.isObsolete() answers true after the initial awaits, without calling onUnavailable', async () => {
+		const onUnavailable = jest.fn();
+
+		const { wrapper } = await render( {
+			overrides: { isObsolete: () => true, onUnavailable },
+		} );
+
+		expect( wrapper.childElementCount ).toBe( 0 );
+		expect( onUnavailable ).not.toHaveBeenCalled();
+		expect( mockRevealWalletGateway ).not.toHaveBeenCalled();
+	} );
+
+	test( 'still renders the button when overrides.isObsolete() answers false', async () => {
+		const { wrapper } = await render( {
+			overrides: { isObsolete: () => false },
+		} );
+
+		expect( wrapper.querySelector( 'apple-pay-button' ) ).not.toBeNull();
+	} );
+} );
+
 describe( 'as its own payment-method row (gateway set)', () => {
 	test( 'reveals the row once eligible', async () => {
 		const { config } = await render( { gateway } );
@@ -560,6 +582,108 @@ describe( 'a click on the rendered button', () => {
 		expect( ApplePaySessionMock ).toHaveBeenCalledTimes( 2 );
 		const secondSession = ApplePaySessionMock.mock.instances[ 1 ];
 		expect( secondSession.begin ).toHaveBeenCalledTimes( 1 );
+	} );
+} );
+
+describe( 'surface overrides', () => {
+	test( 'a height override wins over the shared button height', async () => {
+		const { wrapper } = await render( {
+			config: baseConfig( { button_height: '48px' } ),
+			overrides: { height: '30px' },
+		} );
+		const button = wrapper.querySelector( 'apple-pay-button' );
+
+		expect(
+			button.style.getPropertyValue( '--apple-pay-button-height' )
+		).toBe( '30px' );
+		expect( button.style.height ).toBe( '30px' );
+	} );
+
+	test( 'a borderRadius override becomes a unitless-to-px CSS length, replacing the settings style', async () => {
+		const { wrapper } = await render( { overrides: { borderRadius: 12 } } );
+		const button = wrapper.querySelector( 'apple-pay-button' );
+
+		expect(
+			button.style.getPropertyValue( '--apple-pay-button-border-radius' )
+		).toBe( '12px' );
+	} );
+
+	test( 'a requiresShipping override replaces the per-context answer sent by PHP', async () => {
+		mockWalletShippingRequired.mockReturnValue( false );
+
+		const { wrapper } = await render( {
+			overrides: { requiresShipping: true },
+		} );
+		wrapper.querySelector( 'apple-pay-button' ).click();
+
+		expect( mockBuildApplePayRequest ).toHaveBeenCalledWith(
+			expect.anything(),
+			expect.objectContaining( { requiresShipping: true } )
+		);
+		const appleSession = ApplePaySessionMock.mock.instances[ 0 ];
+		expect( mockAttachShippingHandlers ).toHaveBeenCalledWith(
+			appleSession,
+			expect.anything()
+		);
+	} );
+
+	test( 'a sheetTotal override is read instead of the default watched total', async () => {
+		const sheetTotal = { get: jest.fn( () => '99.00' ) };
+
+		const { wrapper } = await render( { overrides: { sheetTotal } } );
+		wrapper.querySelector( 'apple-pay-button' ).click();
+
+		expect( mockWatchSheetTotal ).not.toHaveBeenCalled();
+		expect( mockBuildApplePayRequest ).toHaveBeenCalledWith(
+			expect.anything(),
+			expect.objectContaining( { total: '99.00' } )
+		);
+	} );
+
+	test( 'onClick fires when the button is tapped', async () => {
+		const onClick = jest.fn();
+
+		const { wrapper } = await render( { overrides: { onClick } } );
+		wrapper.querySelector( 'apple-pay-button' ).click();
+
+		expect( onClick ).toHaveBeenCalledTimes( 1 );
+	} );
+
+	test( 'onUnavailable fires instead of onSheetClosed when the device is ineligible', async () => {
+		ApplePaySessionMock.canMakePayments = jest.fn( () => false );
+		const onUnavailable = jest.fn();
+		const onSheetClosed = jest.fn();
+
+		await render( { overrides: { onUnavailable, onSheetClosed } } );
+
+		expect( onUnavailable ).toHaveBeenCalledTimes( 1 );
+		expect( onSheetClosed ).not.toHaveBeenCalled();
+	} );
+
+	test( 'onSheetClosed fires when the sheet is dismissed without paying', async () => {
+		const onSheetClosed = jest.fn();
+
+		const { appleSession } = await clickAndGetSession( {
+			overrides: { onSheetClosed },
+		} );
+		appleSession.oncancel();
+
+		expect( onSheetClosed ).toHaveBeenCalledTimes( 1 );
+	} );
+
+	test( 'omitting overrides entirely leaves the existing behavior unchanged', async () => {
+		const { wrapper } = await render();
+		const button = wrapper.querySelector( 'apple-pay-button' );
+
+		expect(
+			button.style.getPropertyValue( '--apple-pay-button-height' )
+		).toBe( '48px' );
+
+		button.click();
+		expect( mockBuildApplePayRequest ).toHaveBeenCalledWith(
+			expect.anything(),
+			expect.objectContaining( { requiresShipping: false } )
+		);
 	} );
 } );
 

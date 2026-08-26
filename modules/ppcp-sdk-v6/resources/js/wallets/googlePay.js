@@ -16,6 +16,7 @@ import { refreshCartUi } from '../utils/cartUi';
 import { handleError } from '../utils/errorHandler';
 import { loadGoogleSdk } from '../utils/scriptLoaders';
 import { revealWalletGateway } from './gatewayPlacement';
+import { renderIsObsolete } from './renderOverrides';
 import {
 	buildPaymentDataRequest,
 	buildReadyToPayRequest,
@@ -44,14 +45,16 @@ const GOOGLE_BUTTON_SELECTOR = '.gpay-card-info-container';
 /**
  * Renders the Google Pay button and wires its click to a payment.
  *
- * @param {Object}  args           - The render inputs.
- * @param {string}  args.method    - The wallet's funding source.
- * @param {Object}  args.wrapper   - The button wrapper to render into.
- * @param {Object}  args.config    - The wc_ppcp_sdk_v6 config object.
- * @param {string}  args.context   - The page context.
- * @param {Object}  args.session   - The v6 Google Pay payment session.
- * @param {?Object} [args.gateway] - The { id, wrapper } of the payment-method
- *                                 row, when the wallet is its own gateway.
+ * @param {Object}  args             - The render inputs.
+ * @param {string}  args.method      - The wallet's funding source.
+ * @param {Object}  args.wrapper     - The button wrapper to render into.
+ * @param {Object}  args.config      - The wc_ppcp_sdk_v6 config object.
+ * @param {string}  args.context     - The page context.
+ * @param {Object}  args.session     - The v6 Google Pay payment session.
+ * @param {?Object} [args.gateway]   - The { id, wrapper } of the payment-method
+ *                                   row, when the wallet is its own gateway.
+ * @param {Object}  [args.overrides] - Surface-specific overrides, as described
+ *                                   by renderMethodInto().
  * @return {Promise<void>} Resolves once the button is rendered, or skipped.
  */
 export async function renderGooglePay( {
@@ -61,6 +64,7 @@ export async function renderGooglePay( {
 	context,
 	session,
 	gateway,
+	overrides = {},
 } ) {
 	// Own box, because buttonSizeMode 'fill' cannot share the wrapper with the
 	// PayPal buttons — and sizes the button to that box, so the shared height goes
@@ -69,7 +73,7 @@ export async function renderGooglePay( {
 	const settings = methodConfig( config, method );
 
 	const container = document.createElement( 'div' );
-	container.style.height = config.button_height;
+	container.style.height = overrides.height || config.button_height;
 	wrapper.appendChild( container );
 
 	// Independent: fetching PayPal's config does not need Google's global,
@@ -86,7 +90,13 @@ export async function renderGooglePay( {
 		session.getGooglePayConfig(),
 	] );
 
-	const requiresShipping = methodShippingRequired( config, context );
+	if ( renderIsObsolete( overrides ) ) {
+		container.remove();
+		return;
+	}
+
+	const requiresShipping =
+		overrides.requiresShipping ?? methodShippingRequired( config, context );
 	const shipping = createShippingController( { config } );
 
 	const clientOptions = { environment: settings.environment };
@@ -107,11 +117,17 @@ export async function renderGooglePay( {
 	const { result } = await client.isReadyToPay(
 		buildReadyToPayRequest( sessionConfig )
 	);
+	if ( renderIsObsolete( overrides ) ) {
+		container.remove();
+		return;
+	}
+
 	if ( ! result ) {
 		// Leave the wrapper empty again so a later render can retry. As a
 		// gateway this also leaves the row hidden, which is the point of
 		// printing it hidden: an ineligible browser is never offered it.
 		container.remove();
+		overrides.onUnavailable?.();
 		return;
 	}
 
@@ -131,6 +147,9 @@ export async function renderGooglePay( {
 			return;
 		}
 		paying = true;
+
+		// Claims the surface's express UI; onSheetClosed() releases it again.
+		overrides.onClick?.();
 
 		try {
 			// Resolved before the sheet opens: the sheet must display the same
@@ -193,6 +212,10 @@ export async function renderGooglePay( {
 			} else {
 				handleError( error );
 			}
+
+			// Only here, not in `finally`: a successful payment has already
+			// started the redirect.
+			overrides.onSheetClosed?.();
 		} finally {
 			paying = false;
 			spinner?.unblock();
@@ -202,20 +225,26 @@ export async function renderGooglePay( {
 	// renderMethod() only reaches this bridge when PHP styled this context.
 	const styles = walletButtonStyle( settings.styles[ context ] );
 
+	// Google's buttonRadius is an integer, where the block control is unitless.
+	const borderRadius =
+		overrides.borderRadius === undefined
+			? styles.borderRadius
+			: Number( overrides.borderRadius );
+
 	const button = client.createButton( {
 		buttonColor: styles.color,
 		buttonType: styles.type,
 		buttonLocale: styles.language,
-		buttonRadius: styles.borderRadius,
+		buttonRadius: borderRadius,
 		buttonSizeMode: 'fill',
-		// The button only needs the base card method, as in v5.
+		// createButton() styles from one method; the request carries them all.
 		allowedPaymentMethods: [ sessionConfig.allowedPaymentMethods[ 0 ] ],
 		onClick: pay,
 	} );
 
-	// 'fill' widens the button to its container, but Google's own min-width of
-	// 240px wins and overflows a narrow column. Inline, so it beats the
-	// stylesheet; Google's 90px floor still applies.
+	// 'fill' widens the button to its container, but Google's own min-width
+	// overflows a narrow column such as the blocks express row. Set inline so
+	// it beats their stylesheet.
 	const sized = button.matches?.( GOOGLE_BUTTON_SELECTOR )
 		? button
 		: button.querySelector?.( GOOGLE_BUTTON_SELECTOR );
