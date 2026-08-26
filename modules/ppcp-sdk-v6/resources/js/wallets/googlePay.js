@@ -10,7 +10,9 @@
  */
 
 import Spinner from '@ppcp-button/Helper/Spinner';
+import { releaseWalletShipping } from '../endpointsAdapter';
 import { hasJQuery } from '../utils/api';
+import { refreshCartUi } from '../utils/cartUi';
 import { handleError } from '../utils/errorHandler';
 import { loadGoogleSdk } from '../utils/scriptLoaders';
 import { revealWalletGateway } from './gatewayPlacement';
@@ -18,10 +20,21 @@ import {
 	buildPaymentDataRequest,
 	buildReadyToPayRequest,
 } from './googlePayRequest';
+import { buildPaymentDataCallbacks } from './googlePayShipping';
 import { walletButtonStyle } from './walletButtonStyle';
-import { googlePayPayer, googlePayShippingAddress } from './walletContacts';
+import {
+	googlePayPayer,
+	googlePayShippingAddress,
+	googlePayWcBillingAddress,
+	googlePayWcShippingAddress,
+} from './walletContacts';
 import { payWithWallet } from './walletPayment';
 import { walletConfig, walletFundingSource } from './walletRegistry';
+import {
+	createShippingController,
+	walletShippingCountries,
+	walletShippingRequired,
+} from './walletShipping';
 import { resolveWalletTotal } from './walletTotal';
 
 /**
@@ -69,9 +82,23 @@ export async function renderGooglePay( {
 		session.getGooglePayConfig(),
 	] );
 
-	const client = new window.google.payments.api.PaymentsClient( {
-		environment: settings.environment,
-	} );
+	const requiresShipping = walletShippingRequired( config, context );
+	const shipping = createShippingController( { config } );
+
+	const clientOptions = { environment: settings.environment };
+
+	if ( requiresShipping ) {
+		clientOptions.paymentDataCallbacks = buildPaymentDataCallbacks( {
+			config,
+			currencyCode: config.currency,
+			countryCode: config.merchant_country,
+			shipping,
+		} );
+	}
+
+	const client = new window.google.payments.api.PaymentsClient(
+		clientOptions
+	);
 
 	const { result } = await client.isReadyToPay(
 		buildReadyToPayRequest( sessionConfig )
@@ -114,11 +141,23 @@ export async function renderGooglePay( {
 					countryCode: config.merchant_country,
 					currencyCode: config.currency,
 					total,
+					requiresShipping,
+					countries: walletShippingCountries( config ),
 				} )
 			);
 
 			// Only after the sheet closes, so it is not covered.
 			spinner?.block();
+
+			// Before the order exists, because it is built from the WC customer
+			// rather than the address posted with the approval. Throws rather
+			// than charge a total the sheet never showed.
+			if ( requiresShipping ) {
+				await shipping.commit(
+					googlePayWcShippingAddress( paymentData ),
+					googlePayWcBillingAddress( paymentData )
+				);
+			}
 
 			await payWithWallet( {
 				config,
@@ -136,11 +175,18 @@ export async function renderGooglePay( {
 				contact: {
 					payer: googlePayPayer( paymentData ),
 					shippingAddress: googlePayShippingAddress( paymentData ),
+					shippingRateId: shipping.current()?.selectedId,
 				},
 			} );
 		} catch ( error ) {
-			// The buyer dismissing the sheet is not a failure to report.
-			if ( error?.statusCode !== 'CANCELED' ) {
+			// A dismissed sheet is not a failure to report, but one that priced
+			// shipping has already written to the real cart and pinned its rate.
+			if ( error?.statusCode === 'CANCELED' ) {
+				if ( requiresShipping ) {
+					await releaseWalletShipping( config ).catch( () => {} );
+					refreshCartUi( context );
+				}
+			} else {
 				handleError( error );
 			}
 		} finally {

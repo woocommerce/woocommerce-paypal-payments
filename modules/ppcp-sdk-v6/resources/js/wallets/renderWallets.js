@@ -21,6 +21,10 @@ const RENDERERS = {
 	[ FundingSources.APPLEPAY ]: renderApplePay,
 };
 
+// The pages that print a payment-method list a wallet can own a row in. PHP
+// mirrors this and already refuses a gateway elsewhere.
+const CONTEXTS_WITH_GATEWAY_ROWS = [ 'checkout', 'pay-now' ];
+
 /**
  * Renders every wallet that is switched on and has somewhere to render.
  *
@@ -58,9 +62,9 @@ function resolveTarget( wrapper, gateway, context ) {
 		return wrapper;
 	}
 
-	// One row, one button: the mini-cart target would otherwise resolve the same
-	// container and render a second one into it.
-	if ( 'checkout' !== context ) {
+	// One row, one button: on a page with rows, the mini-cart target would
+	// otherwise resolve the same container and render a second button into it.
+	if ( ! CONTEXTS_WITH_GATEWAY_ROWS.includes( context ) ) {
 		return null;
 	}
 

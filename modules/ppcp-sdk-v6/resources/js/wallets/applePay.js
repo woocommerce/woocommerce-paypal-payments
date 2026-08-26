@@ -13,6 +13,7 @@
  */
 
 import Spinner from '@ppcp-button/Helper/Spinner';
+import { releaseWalletShipping } from '../endpointsAdapter';
 import { hasJQuery } from '../utils/api';
 import { refreshCartUi } from '../utils/cartUi';
 import { handleError } from '../utils/errorHandler';
@@ -20,11 +21,21 @@ import { loadScript } from '../utils/scriptLoaders';
 import { revealWalletGateway } from './gatewayPlacement';
 import { APPLE_PAY_VERSION, buildApplePayRequest } from './applePayRequest';
 import { watchSheetTotal } from './applePaySheetTotal';
+import { applePayFailure, attachShippingHandlers } from './applePayShipping';
 import { recordDomainValidation } from './applePayValidation';
 import { walletButtonStyle } from './walletButtonStyle';
-import { applePayPayer, applePayShippingAddress } from './walletContacts';
+import {
+	applePayPayer,
+	applePayShippingAddress,
+	applePayWcBillingAddress,
+	applePayWcShippingAddress,
+} from './walletContacts';
 import { payWithWallet } from './walletPayment';
 import { walletConfig, walletFundingSource } from './walletRegistry';
+import {
+	createShippingController,
+	walletShippingRequired,
+} from './walletShipping';
 import { resolveWalletTotal } from './walletTotal';
 
 /**
@@ -81,16 +92,22 @@ export async function renderApplePay( {
 		return;
 	}
 
-	// Lowercases the networks and camelCases the capabilities into the spellings
-	// Apple's payment request expects.
-	const sessionConfig =
-		session.formatConfigForPaymentRequest( applePayConfig );
-
 	revealWalletGateway( gateway, config );
 
 	const sheetTotal = watchSheetTotal( config, context );
+	const requiresShipping = walletShippingRequired( config, context );
+	const shipping = createShippingController( { config } );
 	const spinner = hasJQuery() ? Spinner.fullPage() : null;
 	let paying = false;
+
+	/**
+	 * The cart holding what is being bought, resolved once per sheet.
+	 *
+	 * On the product page this is what adds the viewed product, and an empty cart
+	 * offers no rates for the sheet to show. Started rather than awaited at click
+	 * time, because Safari refuses to present a sheet after an await.
+	 */
+	let cartReady = null;
 
 	/**
 	 * Opens the payment sheet and pays with what it returns.
@@ -115,19 +132,37 @@ export async function renderApplePay( {
 
 		paying = true;
 
+		cartReady = resolveWalletTotal( config, context );
+
+		// Claimed here so a rejection nothing has awaited yet stays handled.
+		cartReady.catch( () => {} );
+
+		const request = buildApplePayRequest( applePayConfig, {
+			// Stands in when PayPal's config carries no country of its own.
+			countryCode: config.merchant_country,
+			currencyCode: config.currency,
+			total,
+			displayName: settings.display_name,
+			requiresShipping,
+		} );
+
 		// Apple rejects a malformed request (currency, supportedNetworks) by
 		// throwing synchronously, so `paying` must be released here or the
 		// button would silently ignore every later tap.
 		try {
 			const appleSession = new window.ApplePaySession(
 				APPLE_PAY_VERSION,
-				buildApplePayRequest( sessionConfig, {
-					currencyCode: config.currency,
-					total,
-					displayName: settings.display_name,
-					context,
-				} )
+				request
 			);
+
+			if ( requiresShipping ) {
+				attachShippingHandlers( appleSession, {
+					config,
+					displayName: settings.display_name,
+					shipping,
+					cartReady,
+				} );
+			}
 
 			appleSession.onvalidatemerchant = ( event ) => {
 				validateMerchant( appleSession, event );
@@ -138,10 +173,16 @@ export async function renderApplePay( {
 			};
 
 			// A dismissal is not a failure to report, but it must release
-			// `paying` or the button could never open a second sheet.
+			// `paying` or the button could never open a second sheet. It also
+			// drops the rate this sheet pinned server-side.
 			appleSession.oncancel = () => {
 				paying = false;
 				spinner?.unblock();
+
+				if ( requiresShipping ) {
+					releaseWalletShipping( config ).catch( () => {} );
+				}
+
 				refreshCartUi( context );
 			};
 
@@ -197,13 +238,19 @@ export async function renderApplePay( {
 		spinner?.block();
 
 		try {
-			// This is what adds a viewed product to the real cart, and its
-			// units price the order. Its total is ignored: the sheet total
-			// describes the same basket, via the simulate endpoint.
-			const { purchaseUnits } = await resolveWalletTotal(
-				config,
-				context
-			);
+			// Its units price the order; its total is ignored, because the sheet
+			// already described the same basket via the simulate endpoint.
+			const { purchaseUnits } = await cartReady;
+
+			// Before the order exists, because it is built from the WC customer
+			// rather than the address posted with the approval. Throws rather
+			// than charge a total the sheet never showed.
+			if ( requiresShipping ) {
+				await shipping.commit(
+					applePayWcShippingAddress( event.payment ),
+					applePayWcBillingAddress( event.payment )
+				);
+			}
 
 			await payWithWallet( {
 				config,
@@ -214,14 +261,17 @@ export async function renderApplePay( {
 				// PayPal gateway as Venmo's and Pay Later's do.
 				paymentMethod: gateway?.id,
 				purchaseUnits,
+				// No shippingContact: an express order is created with
+				// GET_FROM_FILE (see ShippingPreferenceFactory), and supplying an
+				// address for one fails with APPROVE_APPLE_PAY_VALIDATION_ERROR.
 				confirmData: {
 					token: event.payment.token,
 					billingContact: event.payment.billingContact,
-					shippingContact: event.payment.shippingContact,
 				},
 				contact: {
 					payer: applePayPayer( event.payment ),
 					shippingAddress: applePayShippingAddress( event.payment ),
+					shippingRateId: shipping.current()?.selectedId,
 				},
 			} );
 
@@ -231,9 +281,9 @@ export async function renderApplePay( {
 				window.ApplePaySession.STATUS_SUCCESS
 			);
 		} catch ( error ) {
-			// How Apple shows the shopper that the payment failed.
+			// Apple still has the sheet up, so it can tell the shopper why.
 			appleSession.completePayment(
-				window.ApplePaySession.STATUS_FAILURE
+				applePayFailure( error, window.ApplePaySession.STATUS_FAILURE )
 			);
 
 			paying = false;

@@ -121,4 +121,94 @@ describe( 'buildPaymentDataRequest()', () => {
 		expect( request.shippingAddressRequired ).toBe( true );
 		expect( request.shippingOptionRequired ).toBe( true );
 	} );
+
+	test( 'always requires a phone number when shipping is requested', () => {
+		const request = buildPaymentDataRequest(
+			sessionConfig(),
+			transaction( { requiresShipping: true } )
+		);
+
+		expect( request.shippingAddressParameters ).toEqual(
+			expect.objectContaining( { phoneNumberRequired: true } )
+		);
+	} );
+
+	test( 'restricts the shippable countries only when the store supplies a non-empty list', () => {
+		const restricted = buildPaymentDataRequest(
+			sessionConfig(),
+			transaction( { requiresShipping: true, countries: [ 'US', 'CA' ] } )
+		);
+		const unrestricted = buildPaymentDataRequest(
+			sessionConfig(),
+			transaction( { requiresShipping: true, countries: [] } )
+		);
+
+		expect( restricted.shippingAddressParameters.allowedCountryCodes ).toEqual(
+			[ 'US', 'CA' ]
+		);
+		expect(
+			unrestricted.shippingAddressParameters
+		).not.toHaveProperty( 'allowedCountryCodes' );
+	} );
+
+	test( 'omits the entire shipping block, including shippingAddressParameters, when shipping is not requested', () => {
+		const request = buildPaymentDataRequest(
+			sessionConfig(),
+			transaction( { countries: [ 'US' ] } )
+		);
+
+		expect( request ).not.toHaveProperty( 'shippingAddressParameters' );
+		expect( request ).not.toHaveProperty( 'callbackIntents' );
+	} );
+
+	test( 'requests a full billing address on the card payment method, keeping its other parameters', () => {
+		const allowedPaymentMethods = [
+			{
+				type: 'CARD',
+				parameters: { allowedCardNetworks: [ 'VISA', 'MASTERCARD' ] },
+			},
+		];
+
+		const request = buildPaymentDataRequest(
+			sessionConfig( { allowedPaymentMethods } ),
+			transaction()
+		);
+
+		expect( request.allowedPaymentMethods[ 0 ] ).toEqual( {
+			type: 'CARD',
+			parameters: {
+				allowedCardNetworks: [ 'VISA', 'MASTERCARD' ],
+				billingAddressRequired: true,
+				billingAddressParameters: { format: 'FULL' },
+			},
+		} );
+	} );
+
+	test( 'leaves non-card payment methods untouched', () => {
+		const allowedPaymentMethods = [
+			{ type: 'PAYPAL', parameters: { purchase_context: {} } },
+		];
+
+		const request = buildPaymentDataRequest(
+			sessionConfig( { allowedPaymentMethods } ),
+			transaction()
+		);
+
+		expect( request.allowedPaymentMethods[ 0 ] ).toEqual(
+			allowedPaymentMethods[ 0 ]
+		);
+	} );
+
+	test( 'does not mutate the session config allowedPaymentMethods, since the same object also renders the button', () => {
+		const allowedPaymentMethods = [
+			{ type: 'CARD', parameters: { allowedCardNetworks: [ 'VISA' ] } },
+		];
+		const config = sessionConfig( { allowedPaymentMethods } );
+
+		buildPaymentDataRequest( config, transaction() );
+
+		expect( config.allowedPaymentMethods ).toEqual( [
+			{ type: 'CARD', parameters: { allowedCardNetworks: [ 'VISA' ] } },
+		] );
+	} );
 } );

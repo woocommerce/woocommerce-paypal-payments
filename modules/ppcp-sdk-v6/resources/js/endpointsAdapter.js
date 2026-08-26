@@ -11,7 +11,7 @@
 
 import SingleProductActionHandler from '@ppcp-button/ActionHandler/SingleProductActionHandler';
 import { payerData } from '@ppcp-button/Helper/PayerData';
-import { postJson } from './utils/api';
+import { postJson, postStoreApi } from './utils/api';
 import { FundingSources } from './utils/fundingSources';
 import { minorUnitsToDecimal } from './utils/amount';
 import { continuationRedirectUrl } from './utils/continuation';
@@ -304,6 +304,8 @@ export async function approveOrder(
 				jQuery( gatewayRadio ).trigger( 'change' );
 			}
 
+			selectShippingMethodInForm( contact.shippingRateId );
+
 			checkoutForm.trigger( 'submit' );
 			return;
 		}
@@ -451,6 +453,24 @@ export async function updateShipping( config, orderId ) {
 }
 
 /**
+ * Fetches the current cart from the WC Store API.
+ *
+ * @param {Object} config - The wc_ppcp_sdk_v6 config object.
+ * @return {Promise<?Object>} The cart, or null when it could not be read.
+ */
+export async function fetchCart( config ) {
+	try {
+		const response = await fetch( config.ajax.wc_store_api.cart, {
+			credentials: 'same-origin',
+		} );
+
+		return await response.json();
+	} catch ( error ) {
+		return null;
+	}
+}
+
+/**
  * Fetches the current cart total from the WC Store API, for refreshing
  * amount-sensitive eligibility (Pay Later thresholds) after cart changes.
  *
@@ -458,17 +478,123 @@ export async function updateShipping( config, orderId ) {
  * @return {Promise<string>} The total as a decimal string, or '' on failure.
  */
 export async function fetchCartTotal( config ) {
-	try {
-		const response = await fetch( config.ajax.wc_store_api.cart, {
-			credentials: 'same-origin',
-		} );
-		const cart = await response.json();
+	const cart = await fetchCart( config );
 
-		return minorUnitsToDecimal(
-			cart?.totals?.total_price,
-			cart?.totals?.currency_minor_unit
-		);
-	} catch ( error ) {
-		return '';
+	return minorUnitsToDecimal(
+		cart?.totals?.total_price,
+		cart?.totals?.currency_minor_unit
+	);
+}
+
+/**
+ * Writes the shopper's shipping address to the WC customer.
+ *
+ * The Store API merges partial addresses server-side and answers with the
+ * recalculated cart, so the caller learns the new totals and rates from the
+ * same request.
+ *
+ * @param {Object} config  - The wc_ppcp_sdk_v6 config object.
+ * @param {Object} address - WC address fields.
+ * @return {Promise<?Object>} The recalculated cart.
+ */
+export async function updateCustomerAddress( config, address ) {
+	const storeApi = config.ajax.wc_store_api;
+
+	return postStoreApi( storeApi, storeApi.update_customer, {
+		shipping_address: address,
+	} );
+}
+
+/**
+ * Points the checkout form's shipping-method field at the sheet's rate.
+ *
+ * The form submits its own shipping_method, and that beats the session. Assigned
+ * rather than clicked: a click fires update_checkout, which posts the form's own
+ * address back over the one the sheet just set.
+ *
+ * @param {?string} rateId - The WC rate id, e.g. flat_rate:3.
+ */
+function selectShippingMethodInForm( rateId ) {
+	if ( ! rateId ) {
+		return;
 	}
+
+	const input = document.querySelector(
+		`input[name^="shipping_method"][value="${ rateId.replace(
+			/"/g,
+			''
+		) }"]`
+	);
+
+	if ( input ) {
+		input.checked = true;
+	}
+}
+
+/**
+ * Prices the cart for an address and rate chosen in a wallet payment sheet.
+ *
+ * One request, because WooCommerce re-picks the shipping method on every
+ * recalculation, so setting the destination and the rate separately loses the
+ * shopper's choice. Its total is the one ppc-create-order will charge.
+ *
+ * @param {Object}  config                  - The wc_ppcp_sdk_v6 config object.
+ * @param {Object}  args                    - The selection.
+ * @param {Object}  args.address            - WC shipping address fields, as
+ *                                            complete as known.
+ * @param {?string} [args.rateId]           - The rate the sheet selected.
+ * @param {?Object} [args.billingAddress]   - The card's WC billing address, once
+ *                                            authorization reveals it. Omitted
+ *                                            leaves the customer's own untouched.
+ * @param {?string} [args.expectedTotal]    - The total the sheet displayed. The
+ *                                            server refuses a higher one rather
+ *                                            than charge it.
+ * @return {Promise<Object>} The quote.
+ */
+export async function quoteWalletShipping(
+	config,
+	{ address, rateId = null, billingAddress = null, expectedTotal = null }
+) {
+	const body = {
+		address,
+		rate_id: rateId ?? '',
+	};
+
+	if ( billingAddress ) {
+		body.billing_address = billingAddress;
+	}
+
+	if ( expectedTotal ) {
+		body.expected_total = expectedTotal;
+	}
+
+	return postJson( config.ajax.wallet_shipping, body );
+}
+
+/**
+ * Drops the server-side hold on the sheet's chosen rate.
+ *
+ * Called when the sheet closes without paying, so the shopper's own rate choices
+ * apply again on the page behind it.
+ *
+ * @param {Object} config - The wc_ppcp_sdk_v6 config object.
+ * @return {Promise<?Object>} The endpoint's acknowledgement.
+ */
+export async function releaseWalletShipping( config ) {
+	return postJson( config.ajax.wallet_shipping, { release: true } );
+}
+
+/**
+ * Selects a shipping rate on the WC cart.
+ *
+ * @param {Object} config - The wc_ppcp_sdk_v6 config object.
+ * @param {string} rateId - The WC rate id, e.g. flat_rate:3.
+ * @return {Promise<?Object>} The recalculated cart.
+ */
+export async function selectShippingRate( config, rateId ) {
+	const storeApi = config.ajax.wc_store_api;
+
+	return postStoreApi( storeApi, storeApi.select_shipping_rate, {
+		rate_id: rateId,
+	} );
 }

@@ -69,7 +69,7 @@ const config = {
 	buyer_country: 'US',
 	amount: '50.00',
 	button_styles: { 'checkout-block': {} },
-	shipping: { handle_in_paypal: false, need_shipping: false },
+	shipping: { in_context: { 'checkout-block': false } },
 	ajax: {
 		get_order: { endpoint: '', nonce: '' },
 		approve_order: { endpoint: '', nonce: '' },
@@ -568,7 +568,7 @@ describe( 'V6ExpressComponent', () => {
 		const props = {
 			config: {
 				...config,
-				shipping: { handle_in_paypal: true, need_shipping: true },
+				shipping: { in_context: { 'checkout-block': true } },
 			},
 			fundingSource: 'paypal',
 			onClick: jest.fn(),
@@ -617,7 +617,7 @@ describe( 'V6ExpressComponent', () => {
 		const props = {
 			config: {
 				...config,
-				shipping: { handle_in_paypal: true, need_shipping: true },
+				shipping: { in_context: { 'checkout-block': true } },
 			},
 			fundingSource: 'paypal',
 			onClick: jest.fn(),

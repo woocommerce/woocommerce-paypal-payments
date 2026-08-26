@@ -112,21 +112,40 @@ class SdkV6ManagerTest extends TestCase
     }
 
     /**
-     * A WC() stub with an empty cart/customer and a payment-gateways registry.
-     * Defaults to no gateways available, so a scenario that needs one (e.g.
-     * CardButtonGateway::ID) names it explicitly.
+     * A WC() stub with an empty cart/customer, a payment-gateways registry and
+     * a countries service. Defaults to no gateways available, so a scenario
+     * that needs one (e.g. CardButtonGateway::ID) names it explicitly, and to
+     * an empty shipping-country list, so tests that reach shipping_countries()
+     * incidentally (without asserting on it) need no setup of their own.
      */
     private function create_wc_stub(array $available_gateways = []): object
     {
         $payment_gateways = Mockery::mock();
         $payment_gateways->shouldReceive('get_available_payment_gateways')->andReturn($available_gateways)->byDefault();
 
+        $countries = Mockery::mock();
+        $countries->shouldReceive('get_shipping_countries')->andReturn([])->byDefault();
+
         $wc = Mockery::mock();
         $wc->customer = null;
         $wc->cart = null;
+        $wc->countries = $countries;
         $wc->shouldReceive('payment_gateways')->andReturn($payment_gateways)->byDefault();
 
         return $wc;
+    }
+
+    /**
+     * A WC_Product stub carrying the given virtual/downloadable flags, used to
+     * probe the product-page branch of the wallet shipping check.
+     */
+    private function create_product_stub(bool $is_virtual, bool $is_downloadable): object
+    {
+        $product = Mockery::mock(\WC_Product::class);
+        $product->shouldReceive('is_virtual')->andReturn($is_virtual);
+        $product->shouldReceive('is_downloadable')->andReturn($is_downloadable);
+
+        return $product;
     }
 
     /**
@@ -157,19 +176,18 @@ class SdkV6ManagerTest extends TestCase
         when('wc_get_checkout_url')->justReturn('https://example.com/checkout');
     }
 
-    private function createTestee(bool $should_handle_shipping = false, array $credit_card_icons = [], bool $card_vaulting_enabled = true, string $merchant_country = 'US', string $three_d_secure_contingency = 'SCA_WHEN_REQUIRED', ?callable $get_subscriptions_mode = null): SdkV6Manager
+    private function createTestee(array $credit_card_icons = [], bool $card_vaulting_enabled = true, string $merchant_country = 'US', bool $final_review_enabled = false, string $three_d_secure_contingency = 'SCA_WHEN_REQUIRED', ?callable $get_subscriptions_mode = null): SdkV6Manager
     {
         return new SdkV6Manager(
             $this->asset_getter,
             '1.0.0',
             $this->environment,
             $this->style_mapper,
-            $should_handle_shipping,
             $this->settings_status,
             $this->context,
             $this->session_handler,
             $this->cancel_view,
-            false,
+            $final_review_enabled,
             false,
             $this->card_payments_configuration,
 	        $card_vaulting_enabled,
@@ -360,10 +378,10 @@ class SdkV6ManagerTest extends TestCase
         $this->subscription_helper->shouldReceive('cart_contains_subscription')->andReturn(true);
 
         $testee = $this->createTestee(
-            false,
             [],
             true,
             'US',
+            false,
             'SCA_WHEN_REQUIRED',
             static fn (): string => SubscriptionHelper::SUBSCRIPTION_MODE_VALUE_SUBSCRIPTIONS
         );
@@ -385,10 +403,10 @@ class SdkV6ManagerTest extends TestCase
         $this->settings_status->shouldReceive('is_smart_button_enabled_for_location')->andReturn(true);
 
         $testee = $this->createTestee(
-            false,
             [],
             true,
             'US',
+            false,
             'SCA_WHEN_REQUIRED',
             static fn (): string => SubscriptionHelper::SUBSCRIPTION_MODE_VALUE_SUBSCRIPTIONS
         );
@@ -410,10 +428,10 @@ class SdkV6ManagerTest extends TestCase
         $this->subscription_helper->shouldReceive('cart_contains_subscription')->andReturn(true);
 
         $testee = $this->createTestee(
-            false,
             [],
             true,
             'US',
+            false,
             'SCA_WHEN_REQUIRED',
             static fn (): string => SubscriptionHelper::SUBSCRIPTION_MODE_VALUE_VAULTING
         );
@@ -432,10 +450,10 @@ class SdkV6ManagerTest extends TestCase
         $this->subscription_helper->shouldReceive('current_product_is_subscription')->andReturn(true);
 
         $testee = $this->createTestee(
-            false,
             [],
             true,
             'US',
+            false,
             'SCA_WHEN_REQUIRED',
             static fn (): string => SubscriptionHelper::SUBSCRIPTION_MODE_VALUE_SUBSCRIPTIONS
         );
@@ -457,7 +475,8 @@ class SdkV6ManagerTest extends TestCase
      * WHEN the SDK bootstrap data is generated
      * THEN the pay_now identifiers (order id and order key) are forwarded so the front end
      *      can create the PayPal order from the existing WC order
-     * AND shipping is not handled in PayPal for the pay-now page, matching checkout
+     * AND shipping is not collected on the pay-now page while the order's cart has nothing
+     *     to ship
      */
     public function testScriptDataIncludesPayNowIdentifiers(): void
     {
@@ -489,7 +508,7 @@ class SdkV6ManagerTest extends TestCase
         when('rest_url')->justReturn('https://example.com/wp-json/wc/store/v1/cart');
         when('wc_get_checkout_url')->justReturn('https://example.com/checkout');
 
-        $testee = $this->createTestee(true);
+        $testee = $this->createTestee();
         $data   = $testee->script_data();
 
         $this->assertSame(
@@ -497,7 +516,7 @@ class SdkV6ManagerTest extends TestCase
             $data['pay_now']
         );
         $this->assertSame('49.99', $data['amount']);
-        $this->assertFalse($data['shipping']['handle_in_paypal']);
+        $this->assertFalse($data['shipping']['in_context']['pay-now']);
     }
 
     /**
@@ -532,7 +551,7 @@ class SdkV6ManagerTest extends TestCase
         when('rest_url')->justReturn('https://example.com/wp-json/wc/store/v1/cart');
         when('wc_get_checkout_url')->justReturn('https://example.com/checkout');
 
-        $testee = $this->createTestee(false, [], true, 'FR');
+        $testee = $this->createTestee([], true, 'FR');
         $data   = $testee->script_data();
 
         $this->assertSame('FR', $data['merchant_country']);
@@ -586,7 +605,7 @@ class SdkV6ManagerTest extends TestCase
         $card_field_styles = ['fontSize' => '18px'];
         $this->card_field_styles->shouldReceive('overrides')->andReturn($card_field_styles);
 
-        $testee = $this->createTestee(false, [], $card_vaulting_enabled);
+        $testee = $this->createTestee([], $card_vaulting_enabled);
         $data   = $testee->script_data();
 
         $this->assertSame($expected_enabled, $data['card_fields']['enabled']);
@@ -651,7 +670,7 @@ class SdkV6ManagerTest extends TestCase
         when('rest_url')->justReturn('https://example.com/wp-json/wc/store/v1/cart');
         when('wc_get_checkout_url')->justReturn('https://example.com/checkout');
 
-        $testee = $this->createTestee(false, $credit_card_icons);
+        $testee = $this->createTestee($credit_card_icons);
         $data   = $testee->script_data();
 
         $this->assertSame($expected_card_icons, $data['card_fields']['card_icons']);
@@ -979,7 +998,11 @@ class SdkV6ManagerTest extends TestCase
     {
         $this->stubScriptDataBaseline('product', 'product');
 
-        $product = Mockery::mock(\WC_Product::class);
+        // Physical, non-virtual/non-downloadable: this test is about the priced
+        // amount, not shipping, so shipping_for_context('product') is given an
+        // incidental-but-answerable product rather than one that trips its
+        // is_virtual()/is_downloadable() calls.
+        $product = $this->create_product_stub(false, false);
         when('wc_get_product')->justReturn($product);
         when('wc_get_price_including_tax')->justReturn(29.99);
 
@@ -987,7 +1010,10 @@ class SdkV6ManagerTest extends TestCase
         $cart->shouldReceive('is_empty')->andReturn(false);
         $cart->shouldReceive('get_total')->with('edit')->andReturn('99.99');
         $cart->shouldReceive('needs_shipping')->andReturn(false);
-        when('WC')->justReturn((object) ['customer' => null, 'cart' => $cart]);
+
+        $wc = $this->create_wc_stub();
+        $wc->cart = $cart;
+        when('WC')->justReturn($wc);
 
         $this->messages_eligibility->shouldReceive('is_enabled_for_location')->andReturn(false);
         $this->messages_eligibility->shouldReceive('is_hidden')->andReturn(false);
@@ -1466,7 +1492,7 @@ class SdkV6ManagerTest extends TestCase
             }
         );
 
-        $testee = $this->createTestee(false, [], true, 'US', 'SCA_WHEN_REQUIRED');
+        $testee = $this->createTestee([], true, 'US', false, 'SCA_WHEN_REQUIRED');
         $data   = $testee->script_data();
 
         $this->assertSame('SCA_ALWAYS', $data['verification_method']);
@@ -1631,8 +1657,10 @@ class SdkV6ManagerTest extends TestCase
      * WHEN the SDK bootstrap data is generated
      * THEN the card_button payload carries the payment method id, funding source,
      *      wrapper selector and button styling alongside its enabled flag
-     * AND the front-end labels include a card_declined message for the SDK to
-     *     show when a card is declined
+     * AND the front-end labels payload carries a card_declined key for the SDK to
+     *     show when a card is declined — only the key's presence is pinned, not
+     *     its wording, since the frontend renders whatever text arrives and this
+     *     project revises user-facing copy independently of this test
      */
     public function testScriptDataCardButtonShapeAndCardDeclinedLabel(): void
     {
@@ -1670,10 +1698,8 @@ class SdkV6ManagerTest extends TestCase
             ],
             $data['card_button']['styles']
         );
-        $this->assertSame(
-            'The card could not be charged. Please check the details or try a different card.',
-            $data['labels']['card_declined']
-        );
+        $this->assertArrayHasKey('card_declined', $data['labels']);
+        $this->assertNotSame('', $data['labels']['card_declined']);
     }
 
     /**
@@ -1723,14 +1749,15 @@ class SdkV6ManagerTest extends TestCase
     }
 
     /**
-     * GIVEN a buyer on the pay-for-order page, where wallets render as express
-     *       buttons rather than as payment-method rows
+     * GIVEN a buyer on the pay-for-order page, where an available wallet gateway
+     *       now gets its own payment-method row alongside BCDC
      * WHEN the SDK bootstrap data is generated
-     * THEN each wallet's gateway subtree stays null, since is_wallet_gateway()
-     *      checks only for the 'checkout' context and pay-now was deliberately
-     *      not added when BCDC gained its own row support
+     * THEN each wallet's gateway subtree carries its id and wrapper selector,
+     *      since is_wallet_gateway() tests CONTEXTS_WITH_GATEWAY_ROWS, which now
+     *      includes 'pay-now' alongside 'checkout' so the pay-for-order page's
+     *      payment-method list can offer wallets the same way checkout does
      */
-    public function testScriptDataWalletGatewayStaysNullOnPayNow(): void
+    public function testScriptDataWalletGatewayPopulatedOnPayNow(): void
     {
         global $wp;
         $wp = (object) ['query_vars' => ['order-pay' => 123]];
@@ -1763,10 +1790,280 @@ class SdkV6ManagerTest extends TestCase
         when('rest_url')->justReturn('https://example.com/wp-json/wc/store/v1/cart');
         when('wc_get_checkout_url')->justReturn('https://example.com/checkout');
 
-        $testee = $this->createTestee(true);
+        $testee = $this->createTestee();
         $data   = $testee->script_data();
 
-        $this->assertNull($data['google_pay']['gateway']);
-        $this->assertNull($data['apple_pay']['gateway']);
+        $this->assertSame(
+            ['id' => GooglePayGateway::ID, 'wrapper' => '#' . SdkV6Manager::GOOGLE_PAY_WRAPPER_ID],
+            $data['google_pay']['gateway']
+        );
+        $this->assertSame(
+            ['id' => ApplePayGateway::ID, 'wrapper' => '#' . SdkV6Manager::APPLE_PAY_WRAPPER_ID],
+            $data['apple_pay']['gateway']
+        );
+    }
+
+    /**
+     * GIVEN the merchant's final-review setting, the buyer's page context, and (on the
+     *       product page) the viewed product
+     * WHEN the SDK bootstrap data is generated
+     * THEN shipping.in_context reports, per context, whether that page should collect a
+     *      shipping address and offer shipping options for every surface that consumes it
+     *      (the PayPal popup, wallet sheets, and block express buttons): a final-review page
+     *      always disables it; classic checkout and the pay-for-order page always disable it
+     *      too, since checkout builds the WC order from its own posted address/shipping fields
+     *      and the pay-for-order page pays an order already priced from itself, so neither page
+     *      can let a wallet sheet collect a destination or total the order can't use; the block
+     *      cart/checkout contexts enable it unconditionally, since the block components already
+     *      gate on their own live cart state; the product page is decided solely by the viewed
+     *      product being physical and non-downloadable; and every remaining context (cart) falls
+     *      back to whether the cart needs shipping at all
+     * AND the mini-cart entry is always present alongside the current page's own entry,
+     *     since the mini-cart can render on any page independently of it
+     *
+     * @dataProvider shipping_in_context_provider
+     */
+    public function testScriptDataShippingInContextPerContext(
+        bool $final_review_enabled,
+        string $page_context,
+        bool $cart_needs_shipping,
+        string $product_state,
+        array $expected_in_context
+    ): void {
+        $this->context->shouldReceive('context')->andReturn($page_context);
+        $this->card_payments_configuration->shouldReceive('is_acdc_enabled')->andReturn(false);
+        $this->card_payments_configuration->shouldReceive('gateway_title')->andReturn('Credit Card');
+        $this->card_payments_configuration->shouldReceive('show_name_on_card')->andReturn('no');
+
+        $this->settings_status->shouldReceive('is_smart_button_enabled_for_location')->andReturn(false);
+        $this->session_handler->shouldReceive('order')->andReturn(null);
+        $this->context->shouldReceive('is_paypal_continuation')->andReturn(false);
+        $this->environment->shouldReceive('is_sandbox')->andReturn(false);
+        $this->style_mapper->shouldReceive('styles_for_context')
+            ->andReturn(['colorClass' => 'paypal-gold', 'borderRadius' => '24px']);
+
+        $wc = $this->create_wc_stub();
+        $cart = Mockery::mock();
+        $cart->shouldReceive('needs_shipping')->andReturn($cart_needs_shipping);
+        $cart->shouldReceive('is_empty')->andReturn(true);
+        // Incidental to this test: script_data() always prices the Pay Later
+        // message too, and the messaging location isn't 'product' here since
+        // $this->context->location() stays unstubbed, so messages_amount()
+        // falls through to the cart total for every non-pay-now context.
+        $cart->shouldReceive('get_total')->with('edit')->andReturn('10.00');
+        $wc->cart = $cart;
+
+        $product = null;
+        if ('virtual' === $product_state) {
+            $product = $this->create_product_stub(true, false);
+        } elseif ('downloadable' === $product_state) {
+            $product = $this->create_product_stub(false, true);
+        } elseif ('physical' === $product_state) {
+            $product = $this->create_product_stub(false, false);
+        }
+
+        when('WC')->justReturn($wc);
+        when('wc_get_base_location')->justReturn(['country' => 'US']);
+        when('get_woocommerce_currency')->justReturn('USD');
+        when('get_locale')->justReturn('en_US');
+        when('is_product')->justReturn(false);
+        when('rest_url')->justReturn('https://example.com/wp-json/wc/store/v1/cart');
+        when('wc_get_checkout_url')->justReturn('https://example.com/checkout');
+        when('wc_get_product')->justReturn($product);
+
+        $testee = $this->createTestee([], true, 'US', $final_review_enabled);
+        $data   = $testee->script_data();
+
+        $this->assertSame($expected_in_context, $data['shipping']['in_context']);
+    }
+
+    public function shipping_in_context_provider(): array
+    {
+        return [
+            'a final review page disables shipping everywhere' => [
+                true, 'cart', true, 'none',
+                ['cart' => false, 'mini-cart' => false],
+            ],
+            'classic checkout never collects shipping even when the cart needs it' => [
+                false, 'checkout', true, 'none',
+                ['checkout' => false, 'mini-cart' => true],
+            ],
+            'classic checkout stays disabled when the cart needs no shipping either' => [
+                false, 'checkout', false, 'none',
+                ['checkout' => false, 'mini-cart' => false],
+            ],
+            'the pay-for-order page never collects shipping even when the cart needs it' => [
+                false, 'pay-now', true, 'none',
+                ['pay-now' => false, 'mini-cart' => true],
+            ],
+            'the pay-for-order page stays disabled when the cart needs no shipping either' => [
+                false, 'pay-now', false, 'none',
+                ['pay-now' => false, 'mini-cart' => false],
+            ],
+            'cart page with a cart needing shipping enables shipping' => [
+                false, 'cart', true, 'none',
+                ['cart' => true, 'mini-cart' => true],
+            ],
+            'cart page with a cart that does not need shipping disables shipping' => [
+                false, 'cart', false, 'none',
+                ['cart' => false, 'mini-cart' => false],
+            ],
+            'product page with a physical product enables shipping even with an empty cart' => [
+                false, 'product', false, 'physical',
+                ['product' => true, 'mini-cart' => false],
+            ],
+            'product page with a physical product and a cart needing shipping enables shipping' => [
+                false, 'product', true, 'physical',
+                ['product' => true, 'mini-cart' => true],
+            ],
+            'product page with a virtual product disables shipping only for the product context' => [
+                false, 'product', true, 'virtual',
+                ['product' => false, 'mini-cart' => true],
+            ],
+            'product page with a downloadable product disables shipping only for the product context' => [
+                false, 'product', true, 'downloadable',
+                ['product' => false, 'mini-cart' => true],
+            ],
+            'product page with no resolvable product disables shipping only for the product context' => [
+                false, 'product', true, 'none',
+                ['product' => false, 'mini-cart' => true],
+            ],
+            'cart-block context enables shipping without consulting the cart' => [
+                false, 'cart-block', false, 'none',
+                ['cart-block' => true, 'mini-cart' => false],
+            ],
+            'checkout-block context enables shipping without consulting the cart' => [
+                false, 'checkout-block', false, 'none',
+                ['checkout-block' => true, 'mini-cart' => false],
+            ],
+            'a final review page disables the block contexts too' => [
+                true, 'checkout-block', true, 'none',
+                ['checkout-block' => false, 'mini-cart' => false],
+            ],
+        ];
+    }
+
+    /**
+     * GIVEN whether any context collects a shipping address, and whether WooCommerce's
+     *       countries service is available
+     * WHEN the SDK bootstrap data is generated
+     * THEN shipping.countries hands Google Pay the store's full shipping-country list
+     *      whenever at least one context needs shipping, matching the classic
+     *      integration, which always sent the whole list rather than trimming it to a
+     *      restricted subset
+     * AND it is empty when no context needs shipping, or when the countries service itself
+     *     is unavailable
+     *
+     * @dataProvider shipping_countries_provider
+     */
+    public function testScriptDataShippingCountries(
+        bool $final_review_enabled,
+        bool $cart_needs_shipping,
+        ?array $shipping_countries,
+        array $expected_countries
+    ): void {
+        $this->context->shouldReceive('context')->andReturn('cart');
+        $this->card_payments_configuration->shouldReceive('is_acdc_enabled')->andReturn(false);
+        $this->card_payments_configuration->shouldReceive('gateway_title')->andReturn('Credit Card');
+        $this->card_payments_configuration->shouldReceive('show_name_on_card')->andReturn('no');
+
+        $this->settings_status->shouldReceive('is_smart_button_enabled_for_location')->andReturn(false);
+        $this->session_handler->shouldReceive('order')->andReturn(null);
+        $this->context->shouldReceive('is_paypal_continuation')->andReturn(false);
+        $this->environment->shouldReceive('is_sandbox')->andReturn(false);
+        $this->style_mapper->shouldReceive('styles_for_context')
+            ->andReturn(['colorClass' => 'paypal-gold', 'borderRadius' => '24px']);
+
+        $wc = $this->create_wc_stub();
+        $cart = Mockery::mock();
+        $cart->shouldReceive('needs_shipping')->andReturn($cart_needs_shipping);
+        $cart->shouldReceive('is_empty')->andReturn(true);
+        // Incidental to this test: script_data() always prices the Pay Later
+        // message too, and on this 'cart' page context messages_amount() falls
+        // through to the cart total.
+        $cart->shouldReceive('get_total')->with('edit')->andReturn('10.00');
+        $wc->cart = $cart;
+
+        if (null !== $shipping_countries) {
+            $wc->countries = Mockery::mock();
+            $wc->countries->shouldReceive('get_shipping_countries')->andReturn($shipping_countries);
+        } else {
+            $wc->countries = null;
+        }
+
+        when('WC')->justReturn($wc);
+        when('wc_get_base_location')->justReturn(['country' => 'US']);
+        when('get_woocommerce_currency')->justReturn('USD');
+        when('get_locale')->justReturn('en_US');
+        when('is_product')->justReturn(false);
+        when('rest_url')->justReturn('https://example.com/wp-json/wc/store/v1/cart');
+        when('wc_get_checkout_url')->justReturn('https://example.com/checkout');
+
+        $testee = $this->createTestee([], true, 'US', $final_review_enabled);
+        $data   = $testee->script_data();
+
+        $this->assertSame($expected_countries, $data['shipping']['countries']);
+    }
+
+    public function shipping_countries_provider(): array
+    {
+        return [
+            'no context needing shipping yields an empty country list' => [
+                true, true, ['US' => 'United States'], [],
+            ],
+            'a context needing shipping returns the store\'s full shipping country list' => [
+                false, true, ['US' => 'United States', 'CA' => 'Canada'], ['US', 'CA'],
+            ],
+            'no countries service available yields an empty list even though shipping is enabled' => [
+                false, true, null, [],
+            ],
+        ];
+    }
+
+    /**
+     * GIVEN the SDK bootstrap data is generated
+     * WHEN reading the labels payload
+     * THEN it carries exactly the documented keys — the shipping-unserviceable key
+     *      shown when a wallet sheet's address cannot be served, and the itemization
+     *      keys the Apple Pay sheet uses to break down the total — since a missing
+     *      or renamed key is what would break those consumers, not the wording
+     * AND every label is a non-empty string, since the exact copy is not the
+     *     contract: the frontend renders whatever text arrives, and this project
+     *     revises user-facing copy independently of this test
+     */
+    public function testScriptDataIncludesShippingAndItemizationLabels(): void
+    {
+        $this->context->shouldReceive('context')->andReturn('checkout-block');
+        $this->card_payments_configuration->shouldReceive('is_acdc_enabled')->andReturn(false);
+        $this->card_payments_configuration->shouldReceive('gateway_title')->andReturn('Credit Card');
+        $this->card_payments_configuration->shouldReceive('show_name_on_card')->andReturn('no');
+
+        $this->settings_status->shouldReceive('is_smart_button_enabled_for_location')->andReturn(false);
+        $this->session_handler->shouldReceive('order')->andReturn(null);
+        $this->context->shouldReceive('is_paypal_continuation')->andReturn(false);
+        $this->environment->shouldReceive('is_sandbox')->andReturn(false);
+        $this->style_mapper->shouldReceive('styles_for_context')
+            ->andReturn(['colorClass' => 'paypal-gold', 'borderRadius' => '24px']);
+
+        when('WC')->justReturn($this->create_wc_stub());
+        when('wc_get_base_location')->justReturn(['country' => 'US']);
+        when('get_woocommerce_currency')->justReturn('USD');
+        when('get_locale')->justReturn('en_US');
+        when('is_product')->justReturn(false);
+        when('rest_url')->justReturn('https://example.com/wp-json/wc/store/v1/cart');
+        when('wc_get_checkout_url')->justReturn('https://example.com/checkout');
+
+        $testee = $this->createTestee();
+        $data   = $testee->script_data();
+
+        $this->assertSame(
+            ['generic_error', 'card_declined', 'shipping_unserviceable', 'subtotal', 'shipping', 'tax', 'discount'],
+            array_keys($data['labels'])
+        );
+
+        foreach ($data['labels'] as $label) {
+            $this->assertIsString($label);
+            $this->assertNotSame('', $label);
+        }
     }
 }

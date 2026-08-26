@@ -7,8 +7,11 @@
  * @package
  */
 
-import { updateShipping } from '../endpointsAdapter';
-import { postStoreApi } from '../utils/api';
+import {
+	selectShippingRate,
+	updateCustomerAddress,
+	updateShipping,
+} from '../endpointsAdapter';
 import { sdkShippingAddressToWc } from '../utils/sdkAddress';
 
 /**
@@ -22,11 +25,10 @@ import { sdkShippingAddressToWc } from '../utils/sdkAddress';
  * @param {Object} config - The wc_ppcp_sdk_v6 config object.
  */
 export async function handleShippingAddressChange( data, config ) {
-	const storeApi = config.ajax.wc_store_api;
-
-	await postStoreApi( storeApi, storeApi.update_customer, {
-		shipping_address: sdkShippingAddressToWc( data.shippingAddress ),
-	} );
+	await updateCustomerAddress(
+		config,
+		sdkShippingAddressToWc( data.shippingAddress )
+	);
 
 	await updateShipping( config, data.orderId );
 }
@@ -39,13 +41,10 @@ export async function handleShippingAddressChange( data, config ) {
  * @param {Object} config - The wc_ppcp_sdk_v6 config object.
  */
 export async function handleShippingOptionsChange( data, config ) {
-	const storeApi = config.ajax.wc_store_api;
 	const rateId = data.selectedShippingOption?.id;
 
 	if ( rateId ) {
-		await postStoreApi( storeApi, storeApi.select_shipping_rate, {
-			rate_id: rateId,
-		} );
+		await selectShippingRate( config, rateId );
 	}
 
 	await updateShipping( config, data.orderId );
