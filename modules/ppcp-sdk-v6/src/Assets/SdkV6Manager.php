@@ -121,6 +121,19 @@ class SdkV6Manager
      * @var bool|null
      */
     private ?bool $is_card_button_row = null;
+    /**
+     * Memoizes available_gateways(), which every placement asks twice.
+     *
+     * @var array<string, WC_Payment_Gateway>|null
+     */
+    private ?array $available_gateways = null;
+    /**
+     * Memoizes should_load_on_current_page(), asked by every surface that
+     * stands down for v6.
+     *
+     * @var bool|null
+     */
+    private ?bool $should_load = null;
     public function __construct(AssetGetter $asset_getter, string $version, Environment $environment, ButtonStyleMapper $style_mapper, SettingsStatus $settings_status, Context $context, SessionHandler $session_handler, CancelView $cancel_view, bool $final_review_enabled, bool $vaulting_enabled, CardPaymentsConfiguration $card_payments_configuration, bool $card_vaulting_enabled, SubscriptionHelper $subscription_helper, FreeTrialSubscriptionHelper $free_trial_helper, callable $get_subscriptions_mode, string $three_d_secure_contingency, array $credit_card_icons, MessageStyleMapper $message_style_mapper, MessagesEligibility $messages_eligibility, string $merchant_country, GooglePayConfig $google_pay_config, ApplePayConfig $apple_pay_config, FastlaneConfig $fastlane_config, CardFieldStyles $card_field_styles)
     {
         $this->asset_getter = $asset_getter;
@@ -308,11 +321,19 @@ class SdkV6Manager
      */
     private function available_gateways(): array
     {
+        if (null !== $this->available_gateways) {
+            return $this->available_gateways;
+        }
         if (!function_exists('WC')) {
             return array();
         }
         $gateways = WC()->payment_gateways();
-        return $gateways ? $gateways->get_available_payment_gateways() : array();
+        // Not memoized, so an early caller cannot pin an empty list.
+        if (!$gateways) {
+            return array();
+        }
+        $this->available_gateways = $gateways->get_available_payment_gateways();
+        return $this->available_gateways;
     }
     /**
      * The script data every placement has, before its own keys are added.
@@ -378,6 +399,22 @@ class SdkV6Manager
      * where nothing else here would.
      */
     public function should_load_on_current_page(): bool
+    {
+        if (null !== $this->should_load) {
+            return $this->should_load;
+        }
+        $should_load = $this->resolve_should_load();
+        // Memoized only after Context::init_context() ran on `wp`; before that
+        // is_cart()/is_checkout() have not resolved.
+        if (did_action('wp')) {
+            $this->should_load = $should_load;
+        }
+        return $should_load;
+    }
+    /**
+     * The uncached answer for should_load_on_current_page().
+     */
+    private function resolve_should_load(): bool
     {
         // Native PayPal Subscriptions (subscriptions_api mode) have no v6 path: v6
         // can only carry a subscription by vaulting, which that mode disables. Hand
@@ -466,10 +503,8 @@ class SdkV6Manager
         if ($this->subscription_helper->cart_contains_subscription() || $this->subscription_helper->order_pay_contains_subscription()) {
             return \false;
         }
-        $gateways = WC()->payment_gateways() ? WC()->payment_gateways()->get_available_payment_gateways() : array();
-        // Only this answer is memoized: the gateway list is settled by the time
-        // anything asks, whereas the page context above may not be yet.
-        $this->is_card_button_row = isset($gateways[CardButtonGateway::ID]);
+        // Memoized only from here on, for the reason is_method_gateway() gives.
+        $this->is_card_button_row = isset($this->available_gateways()[CardButtonGateway::ID]);
         return $this->is_card_button_row;
     }
     /**
