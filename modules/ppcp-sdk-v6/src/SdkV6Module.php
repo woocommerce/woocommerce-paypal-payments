@@ -10,6 +10,7 @@ namespace WooCommerce\PayPalCommerce\SdkV6;
 
 use Automattic\WooCommerce\Blocks\Payments\PaymentMethodRegistry;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
+use WooCommerce\PayPalCommerce\Button\Helper\Context;
 use WooCommerce\PayPalCommerce\SdkV6\Assets\AddPaymentMethodManager;
 use WooCommerce\PayPalCommerce\SdkV6\Assets\SdkV6Manager;
 use WooCommerce\PayPalCommerce\SdkV6\Endpoint\ClientTokenEndpoint;
@@ -66,9 +67,16 @@ class SdkV6Module implements ServiceModule, ExtendingModule, ExecutableModule
             if (is_admin()) {
                 return;
             }
+            // Activates is_cart()/is_checkout() on classic-shortcode block
+            // pages. The hook registrars below resolve the page context, so this
+            // needs to run before.
+            $context = $c->get('button.helper.context');
+            assert($context instanceof Context);
+            $context->init_context();
             $manager = $c->get('sdk-v6.manager');
             assert($manager instanceof SdkV6Manager);
             $this->register_render_hooks($manager);
+            $this->register_message_hooks($manager);
         });
         // Lets the shipping-update endpoint validate order ownership in
         // non-checkout contexts (v5 only stores it for checkout).
@@ -97,9 +105,11 @@ class SdkV6Module implements ServiceModule, ExtendingModule, ExecutableModule
         // Extends the v5 handoff (see extensions.php) to the other v5 PayPal
         // block methods, which misbehave against v5's now-empty config: the
         // Google Pay / Apple Pay boots throw during React render, tearing down
-        // the whole checkout block, and the Fastlane (AXO) field restoration
-        // can clobber the express submission. The wallets and card fields
-        // migrate under their own stories.
+        // the whole checkout block.
+        //
+        // Fastlane is the exception: v6 does not re-implement it, the ppcp-axo
+        // block method keeps rendering and only takes the SDK object from this
+        // module, so it stays registered wherever v6 can supply that object.
         //
         // Classic checkout needs no equivalent: both wallet rows are v6-owned
         // there, printing their own hide-until-eligible style and revealing the
@@ -118,7 +128,14 @@ class SdkV6Module implements ServiceModule, ExtendingModule, ExecutableModule
                 }
                 // PayPal-owned block methods only; never third-party or
                 // core gateways.
-                $v5_methods = array('ppcp-googlepay', 'ppcp-applepay', 'ppcp-axo-gateway');
+                $v5_methods = array('ppcp-googlepay', 'ppcp-applepay');
+                // The v5 Fastlane block method runs on the v6 SDK, so it
+                // is only suppressed where v6 cannot supply a Fastlane
+                // instance — otherwise the shopper would lose Fastlane
+                // with nothing rendering in its place.
+                if (!$manager->is_fastlane_enabled()) {
+                    $v5_methods[] = 'ppcp-axo-gateway';
+                }
                 // Suppress the v5 card block only when v6 renders its own
                 // card method in its place, so cards stay payable when v6
                 // does not.
@@ -142,6 +159,49 @@ class SdkV6Module implements ServiceModule, ExtendingModule, ExecutableModule
             }, 5);
         });
         return \true;
+    }
+    /**
+     * Registers the hook that outputs the Pay Later message wrapper.
+     */
+    private function register_message_hooks(SdkV6Manager $manager): void
+    {
+        if (!$manager->should_load_on_current_page() || !$manager->messages_enabled()) {
+            return;
+        }
+        $hook = $manager->messages_render_hook();
+        if (!$hook) {
+            return;
+        }
+        add_action($hook['name'], static fn() => $manager->render_message_wrapper(), $hook['priority']);
+        $this->maybe_relocate_pay_order_message($hook['name']);
+    }
+    /**
+     * Moves the pay-for-order message above the payment methods.
+     *
+     * The pay-for-order page has no equivalent of
+     * woocommerce_review_order_before_payment, so the wrapper is printed after
+     * the submit button and relocated in the browser.
+     *
+     * @param string $hook_name The hook the wrapper was registered on.
+     */
+    private function maybe_relocate_pay_order_message(string $hook_name): void
+    {
+        if (SdkV6Manager::PAY_ORDER_MESSAGE_HOOK !== $hook_name) {
+            return;
+        }
+        /**
+         * The filter returning true if Pay Later messages should be displayed before payment methods
+         * on the pay for order page, like in checkout.
+         */
+        if (!apply_filters('woocommerce_paypal_payments_put_pay_order_messages_before_payment_methods', \true)) {
+            return;
+        }
+        add_action('ppcp_after_pay_order_message_wrapper', static function () {
+            echo '
+<script>
+document.querySelector("#payment").before(document.querySelector(".ppcp-messages"))
+</script>';
+        });
     }
     /**
      * Registers the render hooks that output the button wrapper elements.
@@ -195,6 +255,22 @@ class SdkV6Module implements ServiceModule, ExtendingModule, ExecutableModule
             $hook = (string) apply_filters('woocommerce_paypal_payments_pay_order_renderer_hook', 'woocommerce_pay_order_after_submit');
             add_action($hook, static fn() => $manager->render_wrapper(), 20);
         }
+        // Registered outside the $places branches on purpose: those keys are the
+        // express button's location settings, whereas a BCDC row is a
+        // gateway-availability question. DisableGateways couples the two today,
+        // but relying on that coincidence would break once it stops being true.
+        /**
+         * The action name that the PayPal buttons use for rendering on the checkout page.
+         * Shared with the v5 SmartButton so a single override relocates both stacks.
+         */
+        $hook = (string) apply_filters('woocommerce_paypal_payments_checkout_button_renderer_hook', 'woocommerce_review_order_after_payment');
+        add_action($hook, static fn() => $manager->render_card_button_wrapper());
+        /**
+         * The action name that the PayPal buttons use for rendering on the pay-for-order page.
+         * Shared with the v5 SmartButton so a single override relocates both stacks.
+         */
+        $hook = (string) apply_filters('woocommerce_paypal_payments_pay_order_renderer_hook', 'woocommerce_pay_order_after_submit');
+        add_action($hook, static fn() => $manager->render_card_button_wrapper(), 20);
         if ($places['mini-cart']) {
             /**
              * The action name that the PayPal buttons use for rendering in the mini-cart widget.
