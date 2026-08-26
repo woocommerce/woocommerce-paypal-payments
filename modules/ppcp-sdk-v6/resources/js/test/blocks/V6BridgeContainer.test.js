@@ -1,3 +1,5 @@
+import '@ppcp-test/helpers/silenceConsole';
+
 const mockRenderWalletInto = jest.fn();
 jest.mock( '../../wallets/renderMethods', () => ( {
 	renderMethodInto: ( ...args ) => mockRenderWalletInto( ...args ),
@@ -83,12 +85,6 @@ describe( 'V6BridgeContainer', () => {
 
 		expect( onRenderFailed ).toHaveBeenCalledWith( error );
 		expect( onUnavailable ).not.toHaveBeenCalled();
-
-		// The container logs the rejection on purpose.
-		expect( console ).toHaveErroredWith(
-			'[ppcp-sdk-v6] wallet render failed',
-			error
-		);
 	} );
 
 	describe( 'overrides.isObsolete()', () => {

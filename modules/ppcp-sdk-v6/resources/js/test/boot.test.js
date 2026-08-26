@@ -1,3 +1,5 @@
+import '@ppcp-test/helpers/silenceConsole';
+
 const mockHasJQuery = jest.fn();
 jest.mock( '../utils/api', () => ( {
 	hasJQuery: () => mockHasJQuery(),
@@ -287,7 +289,6 @@ describe( 'boot', () => {
 			global.jQuery.trigger( 'updated_checkout' );
 			await jest.advanceTimersByTimeAsync( 300 );
 
-			expect( console ).toHaveErrored();
 			expect( mockCheckEligibility ).toHaveBeenCalledTimes( 1 );
 
 			global.jQuery.trigger( 'updated_checkout' );

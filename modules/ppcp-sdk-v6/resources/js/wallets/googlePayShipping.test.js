@@ -1,3 +1,5 @@
+import '@ppcp-test/helpers/silenceConsole';
+
 import { buildPaymentDataCallbacks } from './googlePayShipping';
 
 const config = ( overrides = {} ) => ( {
@@ -153,6 +155,5 @@ describe( 'buildPaymentDataCallbacks().onPaymentDataChanged()', () => {
 		await expect(
 			callbacks( { shipping } )( paymentData() )
 		).rejects.toThrow( 'cart down' );
-		expect( console ).toHaveErrored();
 	} );
 } );

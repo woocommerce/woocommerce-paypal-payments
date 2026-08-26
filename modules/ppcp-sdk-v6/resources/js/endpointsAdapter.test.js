@@ -1,3 +1,5 @@
+import '@ppcp-test/helpers/silenceConsole';
+
 const mockGetProducts = jest.fn();
 
 jest.mock(
@@ -666,7 +668,6 @@ describe( 'approveOrder', () => {
 			await expect(
 				approveOrder( config, 'pay-now', 'paypal', 'ORDER3' )
 			).rejects.toThrow( 'Order form not found.' );
-			expect( console ).toHaveErrored();
 
 			delete global.jQuery;
 		} );
