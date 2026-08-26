@@ -184,7 +184,7 @@ test( 'PCP-4318 | Settings - US - Onboarding - Connect with business account, al
 test.describe( () => {
 	for ( const testData of onboardingCheckoutComparison ) {
 		const { testKey, country, wooCommerceGeneralSettings } = testData;
-		test( `${ testKey } | Settings - ${ country } - Onboarding - Compare initial onboarding page (right part) with expanded checkout screen`, async ( {
+		test( `${ testKey } | Settings - ${ country } - Onboarding - Compare initial onboarding page (right part) with expanded checkout screen @Critical`, async ( {
 			pcpOnboarding,
 			wooCommerceApi,
 		} ) => {
