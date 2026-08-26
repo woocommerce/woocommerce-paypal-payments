@@ -894,6 +894,20 @@ class SdkV6Manager {
 	}
 
 	/**
+	 * The button styles for one context, carrying the height every button in
+	 * the express stack shares.
+	 *
+	 * @param string $context The page context.
+	 * @return array{colorClass: string, borderRadius: string, height: string}
+	 */
+	private function button_styles( string $context ): array {
+		return array_merge(
+			$this->style_mapper->styles_for_context( $context ),
+			array( 'height' => self::PAYMENT_BUTTON_HEIGHT )
+		);
+	}
+
+	/**
 	 * The configuration data for the SDK v6 bootstrap script.
 	 *
 	 * Also consumed by the block payment method (V6PaymentMethod), which
@@ -918,10 +932,10 @@ class SdkV6Manager {
 
 		$button_styles = array();
 		if ( $page_context ) {
-			$button_styles[ $page_context ] = $this->style_mapper->styles_for_context( $page_context );
+			$button_styles[ $page_context ] = $this->button_styles( $page_context );
 		}
 		if ( $this->settings_status->is_smart_button_enabled_for_location( 'mini-cart' ) ) {
-			$button_styles['mini-cart'] = $this->style_mapper->styles_for_context( 'mini-cart' );
+			$button_styles['mini-cart'] = $this->button_styles( 'mini-cart' );
 		}
 
 		$card_fields_enabled = $this->is_card_fields_enabled();
