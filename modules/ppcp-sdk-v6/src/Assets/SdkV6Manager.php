@@ -260,6 +260,16 @@ class SdkV6Manager {
 		);
 
 		wp_enqueue_script( 'wc-ppcp-sdk-v6-boot' );
+
+		// Lays out the express buttons inside the wrappers render_wrapper()
+		// prints. Classic pages only; block pages return at the top of this
+		// method and style their containers from the block bundle.
+		wp_enqueue_style(
+			'wc-ppcp-sdk-v6-gateway',
+			$this->asset_getter->get_asset_url( 'gateway.css' ),
+			array(),
+			$this->asset_getter->get_asset_data( 'gateway.css', $this->version )['version']
+		);
 	}
 
 	/**

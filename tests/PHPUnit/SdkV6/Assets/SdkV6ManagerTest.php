@@ -1317,6 +1317,12 @@ class SdkV6ManagerTest extends TestCase
         $this->asset_getter->shouldReceive('get_asset_data')
             ->with('boot.js', '1.0.0')
             ->andReturn(['dependencies' => ['wp-data'], 'version' => 'deadbeef']);
+        $this->asset_getter->shouldReceive('get_asset_url')
+            ->with('gateway.css')
+            ->andReturn('https://example.com/assets/gateway.css');
+        $this->asset_getter->shouldReceive('get_asset_data')
+            ->with('gateway.css', '1.0.0')
+            ->andReturn(['dependencies' => [], 'version' => 'cafebabe']);
 
         expect('wp_register_script')
             ->once()
@@ -1329,6 +1335,14 @@ class SdkV6ManagerTest extends TestCase
             );
         expect('wp_localize_script')->once();
         expect('wp_enqueue_script')->once()->with('wc-ppcp-sdk-v6-boot');
+        expect('wp_enqueue_style')
+            ->once()
+            ->with(
+                'wc-ppcp-sdk-v6-gateway',
+                'https://example.com/assets/gateway.css',
+                [],
+                'cafebabe'
+            );
 
         $testee = $this->createTestee();
         $testee->enqueue();
