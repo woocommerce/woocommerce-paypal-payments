@@ -13,7 +13,7 @@ import { loadSdkV6 } from '../sdkLoader';
 import { createSession } from '../sessions/createSession';
 import { minorUnitsToDecimal } from '../utils/amount';
 import { refreshCartUi } from '../utils/cartUi';
-import { methodShippingRequired } from '../wallets/methodShipping';
+import { methodShippingRequired } from '../methods/methodShipping';
 import { wcAddressToApplePay } from '../wallets/walletContacts';
 import { V6BridgeContainer } from './V6BridgeContainer';
 

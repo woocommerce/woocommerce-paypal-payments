@@ -5,7 +5,7 @@
  */
 
 import { FundingSources } from './utils/fundingSources';
-import { MERCHANT_PRESENTED_METHODS } from './wallets/methodRegistry';
+import { MERCHANT_PRESENTED_METHODS } from './methods/methodRegistry';
 
 /**
  * Checks one method without letting a failure sink the whole check.

@@ -15,28 +15,28 @@ import { hasJQuery } from '../utils/api';
 import { refreshCartUi } from '../utils/cartUi';
 import { handleError } from '../utils/errorHandler';
 import { loadGoogleSdk } from '../utils/scriptLoaders';
-import { revealWalletGateway } from './gatewayPlacement';
-import { renderIsObsolete } from './renderOverrides';
+import { revealMethodGateway } from '../methods/gatewayPlacement';
+import { renderIsObsolete } from '../methods/renderOverrides';
 import {
 	buildPaymentDataRequest,
 	buildReadyToPayRequest,
 } from './googlePayRequest';
 import { buildPaymentDataCallbacks } from './googlePayShipping';
-import { walletButtonStyle } from './walletButtonStyle';
+import { buttonStyle } from '../methods/buttonStyle';
 import {
 	googlePayPayer,
 	googlePayShippingAddress,
 	googlePayWcBillingAddress,
 	googlePayWcShippingAddress,
 } from './walletContacts';
-import { payWithSession } from './sessionPayment';
-import { methodConfig, methodFundingSource } from './methodRegistry';
+import { payWithSession } from '../methods/sessionPayment';
+import { methodConfig, methodFundingSource } from '../methods/methodRegistry';
 import {
 	createShippingController,
 	methodShippingCountries,
 	methodShippingRequired,
-} from './methodShipping';
-import { resolveContextTotal } from './contextTotal';
+} from '../methods/methodShipping';
+import { resolveContextTotal } from '../methods/contextTotal';
 
 // The element Google sizes, inside the wrapper createButton() hands back when
 // buttonSizeMode is 'fill'. Without that mode it is the returned node itself.
@@ -131,7 +131,7 @@ export async function renderGooglePay( {
 		return;
 	}
 
-	revealWalletGateway( gateway, config );
+	revealMethodGateway( gateway, config );
 
 	const spinner = hasJQuery() ? Spinner.fullPage() : null;
 	let paying = false;
@@ -223,7 +223,7 @@ export async function renderGooglePay( {
 	}
 
 	// renderMethod() only reaches this bridge when PHP styled this context.
-	const styles = walletButtonStyle( settings.styles[ context ] );
+	const styles = buttonStyle( settings.styles[ context ] );
 
 	// Google's buttonRadius is an integer, where the block control is unitless.
 	const borderRadius =

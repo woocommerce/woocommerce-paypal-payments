@@ -19,7 +19,7 @@ Condition 3 and 4 cause wallet buttons to appear with a short delay after loadin
 
 Two placements, decided by the page rather than by the wallet:
 
-- **A payment-method row of its own**, on classic checkout and pay for order. The row is printed hidden and revealed once the browser confirms it can pay, and while it is selected the wallet button stands in for "Place order". [`gatewayPlacement`](https://github.com/woocommerce/woocommerce-paypal-payments/blob/dev/develop/modules/ppcp-sdk-v6/resources/js/wallets/gatewayPlacement.js) keeps those controls mutually exclusive.
+- **A payment-method row of its own**, on classic checkout and pay for order. The row is printed hidden and revealed once the browser confirms it can pay, and while it is selected the wallet button stands in for "Place order". [`gatewayPlacement`](https://github.com/woocommerce/woocommerce-paypal-payments/blob/dev/develop/modules/ppcp-sdk-v6/resources/js/methods/gatewayPlacement.js) keeps those controls mutually exclusive.
 - **An express button**, everywhere else: product page, cart, mini cart, and the express area of the cart and checkout blocks.
 
 On the block surfaces the wallet is a WooCommerce Blocks express payment method, registered in [`checkout-block.js`](https://github.com/woocommerce/woocommerce-paypal-payments/blob/dev/develop/modules/ppcp-sdk-v6/resources/js/checkout-block.js) under the wallet's own gateway id, which is also the name a merchant's saved arrangement of the express buttons refers to. React owns the container and nothing else: [`V6BridgeContainer`](https://github.com/woocommerce/woocommerce-paypal-payments/blob/dev/develop/modules/ppcp-sdk-v6/resources/js/blocks/V6BridgeContainer.js) hands an empty element to the same bridge the classic pages use, so there is one Apple Pay implementation and one Google Pay implementation rather than a second pair for blocks.
@@ -54,7 +54,7 @@ flowchart TD
     class NoOpen,Closed,Rejected,Failed exit
 ```
 
-The shipping callbacks fire once per address or shipping-option change, so the middle of the diagram repeats as often as the buyer edits the sheet. The three numbered steps are [the store's own](https://github.com/woocommerce/woocommerce-paypal-payments/blob/dev/develop/modules/ppcp-sdk-v6/resources/js/wallets/sessionPayment.js). Only the last one creates anything in WooCommerce, which is why a failure before it leaves no order behind. The sheet's own state differs by wallet: Apple keeps it open until the outcome is reported back, while Google's closes the moment the buyer authorizes.
+The shipping callbacks fire once per address or shipping-option change, so the middle of the diagram repeats as often as the buyer edits the sheet. The three numbered steps are [the store's own](https://github.com/woocommerce/woocommerce-paypal-payments/blob/dev/develop/modules/ppcp-sdk-v6/resources/js/methods/sessionPayment.js). Only the last one creates anything in WooCommerce, which is why a failure before it leaves no order behind. The sheet's own state differs by wallet: Apple keeps it open until the outcome is reported back, while Google's closes the moment the buyer authorizes.
 
 Cancelling is not a failure. The sheet closes, the payment records are released, and the page is left as it was.
 

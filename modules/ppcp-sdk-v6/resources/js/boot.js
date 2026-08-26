@@ -19,8 +19,8 @@ import {
 	SUPPORTED_METHODS as METHODS,
 } from './sessions/createSession';
 import { renderButtons } from './components/buttonRenderer';
-import { renderMethods } from './wallets/renderMethods';
-import { isMethodEnabled, MERCHANT_PRESENTED_METHODS } from './wallets/methodRegistry';
+import { renderMethods } from './methods/renderMethods';
+import { isMethodEnabled, MERCHANT_PRESENTED_METHODS } from './methods/methodRegistry';
 import { FundingSources } from './utils/fundingSources';
 import { createOrder, fetchCartTotal } from './endpointsAdapter';
 import {

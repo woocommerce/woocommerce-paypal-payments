@@ -37,12 +37,12 @@ jest.mock( '../components/buttonRenderer', () => ( {
 } ) );
 
 const mockRenderWallets = jest.fn();
-jest.mock( '../wallets/renderMethods', () => ( {
+jest.mock( '../methods/renderMethods', () => ( {
 	renderMethods: ( ...args ) => mockRenderWallets( ...args ),
 } ) );
 
 const mockIsWalletEnabled = jest.fn();
-jest.mock( '../wallets/methodRegistry', () => ( {
+jest.mock( '../methods/methodRegistry', () => ( {
 	isMethodEnabled: ( ...args ) => mockIsWalletEnabled( ...args ),
 	MERCHANT_PRESENTED_METHODS: [],
 } ) );

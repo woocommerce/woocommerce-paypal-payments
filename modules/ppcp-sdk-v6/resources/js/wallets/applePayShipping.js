@@ -7,7 +7,7 @@
  * @package
  */
 
-import { resolveOptionId } from './shippingQuote';
+import { resolveOptionId } from '../methods/shippingQuote';
 import { walletAddressToWc } from './walletContacts';
 
 /**

@@ -1,8 +1,9 @@
 /**
- * The wallets the v6 stack can render, and how each one is configured.
+ * The merchant-presented methods the v6 stack can render, and how each one is
+ * configured.
  *
- * One entry per wallet: the config subtree PHP fills in, and the SDK component
- * its session factory lives in. Everything that has to answer "is this wallet
+ * One entry per method: the config subtree PHP fills in, and the SDK component
+ * its session factory lives in. Everything that has to answer "is this method
  * enabled" reads it from here, rather than reaching for a config key directly.
  *
  * @package

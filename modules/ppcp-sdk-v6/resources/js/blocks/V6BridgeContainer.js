@@ -9,7 +9,7 @@
  */
 
 import { createElement, useEffect, useRef } from '@wordpress/element';
-import { renderMethodInto } from '../wallets/renderMethods';
+import { renderMethodInto } from '../methods/renderMethods';
 
 /**
  * Mounts one wallet button into a container div.

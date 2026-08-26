@@ -1,12 +1,12 @@
 /**
- * The single seam boot.js calls to render wallet buttons.
+ * The single seam boot.js calls to render a method's button.
  *
  * @package
  */
 
 import { FundingSources } from '../utils/fundingSources';
-import { renderGooglePay } from './googlePay';
-import { renderApplePay } from './applePay';
+import { renderGooglePay } from '../wallets/googlePay';
+import { renderApplePay } from '../wallets/applePay';
 import { methodConfig } from './methodRegistry';
 
 /**

@@ -38,7 +38,7 @@ import {
 	methodConfig,
 	methodGatewayId,
 	MERCHANT_PRESENTED_METHODS,
-} from './wallets/methodRegistry';
+} from './methods/methodRegistry';
 import { isDeviceEligible } from './wallets/applePay';
 import { initMessages, updateMessagesAmount } from './messages/renderer';
 import { watchBlockCartTotal } from './messages/cartTotalWatcher';

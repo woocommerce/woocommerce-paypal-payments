@@ -6,7 +6,7 @@ Context for contributors and for debugging. Both wallets behave identically here
 
 ## Who owns the shipping address
 
-Only one surface may collect the shipping address for a payment. Where the page already collects it, the wallet does not, and the sheet only authorizes what the page displays. [`SdkV6Manager::shipping_for_context()`](https://github.com/woocommerce/woocommerce-paypal-payments/blob/dev/develop/modules/ppcp-sdk-v6/src/Assets/SdkV6Manager.php) decides per context, and the answer reaches the browser as `shipping.in_context`, which [`methodShippingRequired()`](https://github.com/woocommerce/woocommerce-paypal-payments/blob/dev/develop/modules/ppcp-sdk-v6/resources/js/wallets/methodShipping.js) reads.
+Only one surface may collect the shipping address for a payment. Where the page already collects it, the wallet does not, and the sheet only authorizes what the page displays. [`SdkV6Manager::shipping_for_context()`](https://github.com/woocommerce/woocommerce-paypal-payments/blob/dev/develop/modules/ppcp-sdk-v6/src/Assets/SdkV6Manager.php) decides per context, and the answer reaches the browser as `shipping.in_context`, which [`methodShippingRequired()`](https://github.com/woocommerce/woocommerce-paypal-payments/blob/dev/develop/modules/ppcp-sdk-v6/resources/js/methods/methodShipping.js) reads.
 
 | Context                                 | Sheet collects shipping                       | Why                                              |
 |-----------------------------------------|-----------------------------------------------|--------------------------------------------------|
@@ -40,7 +40,7 @@ Only one of WooCommerce's three tax settings is affected. [`record_tax_basis()`]
 
 ### What happens when the real tax differs
 
-At authorization [`commit()`](https://github.com/woocommerce/woocommerce-paypal-payments/blob/dev/develop/modules/ppcp-sdk-v6/resources/js/wallets/methodShipping.js) re-prices the payment on the addresses the order will actually use, and sends along the total the sheet displayed. [`CartQuoteEndpoint`](https://github.com/woocommerce/woocommerce-paypal-payments/blob/dev/develop/modules/ppcp-sdk-v6/src/Endpoint/CartQuoteEndpoint.php) compares them, so there is nothing in the browser to bypass.
+At authorization [`commit()`](https://github.com/woocommerce/woocommerce-paypal-payments/blob/dev/develop/modules/ppcp-sdk-v6/resources/js/methods/methodShipping.js) re-prices the payment on the addresses the order will actually use, and sends along the total the sheet displayed. [`CartQuoteEndpoint`](https://github.com/woocommerce/woocommerce-paypal-payments/blob/dev/develop/modules/ppcp-sdk-v6/src/Endpoint/CartQuoteEndpoint.php) compares them, so there is nothing in the browser to bypass.
 
 | Real total            | Outcome  | What the buyer sees                                               |
 |-----------------------|----------|-------------------------------------------------------------------|
@@ -85,7 +85,7 @@ A recorded decision must never affect anything but the wallet payment that creat
 
 - An address with no rates is reported against the address field. The sheet stays open with the last total that priced, so the buyer can correct it.
 - A sheet that cannot price what it is about to charge is aborted rather than degraded. No stale total is charged.
-- Rapid address or rate changes are chained rather than raced by [`createShippingController()`](https://github.com/woocommerce/woocommerce-paypal-payments/blob/dev/develop/modules/ppcp-sdk-v6/resources/js/wallets/methodShipping.js), so the buyer always ends on the total for their newest choice.
+- Rapid address or rate changes are chained rather than raced by [`createShippingController()`](https://github.com/woocommerce/woocommerce-paypal-payments/blob/dev/develop/modules/ppcp-sdk-v6/resources/js/methods/methodShipping.js), so the buyer always ends on the total for their newest choice.
 - Apple presents the first shipping method in the list as the chosen one, so [`applePayShipping`](https://github.com/woocommerce/woocommerce-paypal-payments/blob/dev/develop/modules/ppcp-sdk-v6/resources/js/wallets/applePayShipping.js) moves the selected rate to the front.
 - Google renders no price beside a shipping option, so [`googlePayShipping`](https://github.com/woocommerce/woocommerce-paypal-payments/blob/dev/develop/modules/ppcp-sdk-v6/resources/js/wallets/googlePayShipping.js) writes each option's cost into its description.
 
@@ -98,8 +98,8 @@ A recorded decision must never affect anything but the wallet payment that creat
 | `src/Helper/RecordedShippingRate.php`       | The rate the buyer picked in the sheet                   |
 | `src/Helper/RecordedTaxBasis.php`           | The address tax is calculated from                       |
 | `src/Helper/RecordedQuote.php`              | The sheet's total, the order note, the buyer's message   |
-| `resources/js/wallets/methodShipping.js`    | Wallet-agnostic quoting, and the commit at authorization |
-| `resources/js/wallets/shippingQuote.js`     | The quote shape both sheets are built from               |
+| `resources/js/methods/methodShipping.js`    | Method-agnostic quoting, and the commit at authorization |
+| `resources/js/methods/shippingQuote.js`     | The quote shape both sheets are built from               |
 | `resources/js/wallets/walletContacts.js`    | Wallet contacts mapped to WooCommerce address fields     |
 | `resources/js/wallets/applePayShipping.js`  | Apple sheet protocol only                                |
 | `resources/js/wallets/googlePayShipping.js` | Google sheet protocol only                               |

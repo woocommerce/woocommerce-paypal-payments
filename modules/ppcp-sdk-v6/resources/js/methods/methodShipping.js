@@ -1,5 +1,5 @@
 /**
- * Quoting shipping for an open wallet payment sheet.
+ * Quoting shipping for an open payment sheet.
  *
  * The sheet asks mid-payment, before any PayPal order exists, so it cannot use the
  * popup's handlers in sessions/shippingHandler.js: those patch an order that is not

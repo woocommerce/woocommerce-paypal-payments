@@ -1,13 +1,13 @@
-jest.mock( './googlePay', () => ( {
+jest.mock( '../wallets/googlePay', () => ( {
 	renderGooglePay: jest.fn(),
 } ) );
 
-jest.mock( './applePay', () => ( {
+jest.mock( '../wallets/applePay', () => ( {
 	renderApplePay: jest.fn(),
 } ) );
 
-import { renderGooglePay } from './googlePay';
-import { renderApplePay } from './applePay';
+import { renderGooglePay } from '../wallets/googlePay';
+import { renderApplePay } from '../wallets/applePay';
 import { renderMethods, renderMethodInto } from './renderMethods';
 
 const args = ( overrides = {} ) => ( {

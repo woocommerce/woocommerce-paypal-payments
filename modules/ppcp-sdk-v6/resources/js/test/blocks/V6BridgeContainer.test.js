@@ -1,7 +1,7 @@
 import '@ppcp-test/helpers/silenceConsole';
 
 const mockRenderWalletInto = jest.fn();
-jest.mock( '../../wallets/renderMethods', () => ( {
+jest.mock( '../../methods/renderMethods', () => ( {
 	renderMethodInto: ( ...args ) => mockRenderWalletInto( ...args ),
 } ) );
 

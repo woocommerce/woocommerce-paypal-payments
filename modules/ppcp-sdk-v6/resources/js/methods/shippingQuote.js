@@ -1,5 +1,5 @@
 /**
- * Normalises a shipping quote into the one shape every wallet adapter reads.
+ * Normalises a shipping quote into the one shape every sheet adapter reads.
  *
  * @package
  */

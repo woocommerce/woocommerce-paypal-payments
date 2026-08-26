@@ -12,7 +12,7 @@ import {
 import { refreshCartUi } from '../utils/cartUi';
 import { handleError, handleWarning } from '../utils/errorHandler';
 import { FundingSources } from '../utils/fundingSources';
-import { MERCHANT_PRESENTED_METHODS } from '../wallets/methodRegistry';
+import { MERCHANT_PRESENTED_METHODS } from '../methods/methodRegistry';
 
 const SESSION_FACTORIES = {
 	[ FundingSources.PAYPAL ]: 'createPayPalOneTimePaymentSession',

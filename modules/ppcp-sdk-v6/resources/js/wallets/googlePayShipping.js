@@ -7,7 +7,7 @@
  * @package
  */
 
-import { resolveOptionId } from './shippingQuote';
+import { resolveOptionId } from '../methods/shippingQuote';
 import { walletAddressToWc } from './walletContacts';
 
 // Google rejects newShippingOptionParameters on a SHIPPING_OPTION trigger: the

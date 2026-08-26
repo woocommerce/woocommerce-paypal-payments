@@ -11,7 +11,7 @@
 import { createOrder } from '../endpointsAdapter';
 import { handleError } from '../utils/errorHandler';
 import { FundingSources } from '../utils/fundingSources';
-import { revealWalletGateway } from '../wallets/gatewayPlacement';
+import { revealMethodGateway } from '../methods/gatewayPlacement';
 
 /**
  * The event the SDK's card button dispatches on click. Documented contract; a
@@ -131,7 +131,7 @@ export async function initCardButton( config, ensureSessions ) {
 
 	// After insertion, so the row counts as rendered when the placement logic
 	// decides what to do with "Place order".
-	revealWalletGateway(
+	revealMethodGateway(
 		{
 			id: config.card_button.payment_method,
 			wrapper: config.card_button.wrapper,

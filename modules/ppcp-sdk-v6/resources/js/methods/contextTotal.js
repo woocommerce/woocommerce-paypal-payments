@@ -1,7 +1,7 @@
 /**
- * Resolves the amount a wallet sheet must display.
+ * Resolves the amount a payment sheet must display.
  *
- * Wallet-agnostic, so a second wallet can reuse it. DOM-free: the product form
+ * Method-agnostic, so any sheet can reuse it. DOM-free: the product form
  * lives behind endpointsAdapter.
  *
  * @package

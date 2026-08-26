@@ -6,7 +6,7 @@
 
 import { postJson } from './utils/api';
 import { loadScript } from './utils/scriptLoaders';
-import { methodSdkComponents } from './wallets/methodRegistry';
+import { methodSdkComponents } from './methods/methodRegistry';
 
 const INSTANCE_KEY = '__ppcpV6InstancePromise';
 const METADATA_ID_KEY = '__ppcpV6ClientMetadataId';

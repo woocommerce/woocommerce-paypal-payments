@@ -14,12 +14,12 @@ jest.mock( '../utils/errorHandler', () => ( {
 } ) );
 
 const mockResolveWalletTotal = jest.fn();
-jest.mock( './contextTotal', () => ( {
+jest.mock( '../methods/contextTotal', () => ( {
 	resolveContextTotal: ( ...args ) => mockResolveWalletTotal( ...args ),
 } ) );
 
 const mockPayWithWallet = jest.fn();
-jest.mock( './sessionPayment', () => ( {
+jest.mock( '../methods/sessionPayment', () => ( {
 	payWithSession: ( ...args ) => mockPayWithWallet( ...args ),
 } ) );
 
@@ -52,8 +52,8 @@ jest.mock( './googlePayRequest', () => ( {
 } ) );
 
 const mockRevealWalletGateway = jest.fn();
-jest.mock( './gatewayPlacement', () => ( {
-	revealWalletGateway: ( ...args ) => mockRevealWalletGateway( ...args ),
+jest.mock( '../methods/gatewayPlacement', () => ( {
+	revealMethodGateway: ( ...args ) => mockRevealWalletGateway( ...args ),
 } ) );
 
 const mockRefreshCartUi = jest.fn();
@@ -64,7 +64,7 @@ jest.mock( '../utils/cartUi', () => ( {
 const mockWalletShippingRequired = jest.fn( () => false );
 const mockWalletShippingCountries = jest.fn( () => [] );
 const mockCreateShippingController = jest.fn();
-jest.mock( './methodShipping', () => ( {
+jest.mock( '../methods/methodShipping', () => ( {
 	methodShippingRequired: ( ...args ) =>
 		mockWalletShippingRequired( ...args ),
 	methodShippingCountries: ( ...args ) =>

@@ -18,26 +18,26 @@ import { hasJQuery } from '../utils/api';
 import { refreshCartUi } from '../utils/cartUi';
 import { handleError } from '../utils/errorHandler';
 import { loadScript } from '../utils/scriptLoaders';
-import { revealWalletGateway } from './gatewayPlacement';
-import { renderIsObsolete } from './renderOverrides';
+import { revealMethodGateway } from '../methods/gatewayPlacement';
+import { renderIsObsolete } from '../methods/renderOverrides';
 import { APPLE_PAY_VERSION, buildApplePayRequest } from './applePayRequest';
 import { watchSheetTotal } from './applePaySheetTotal';
 import { applePayFailure, attachShippingHandlers } from './applePayShipping';
 import { recordDomainValidation } from './applePayValidation';
-import { walletButtonStyle } from './walletButtonStyle';
+import { buttonStyle } from '../methods/buttonStyle';
 import {
 	applePayPayer,
 	applePayShippingAddress,
 	applePayWcBillingAddress,
 	applePayWcShippingAddress,
 } from './walletContacts';
-import { payWithSession } from './sessionPayment';
-import { methodConfig, methodFundingSource } from './methodRegistry';
+import { payWithSession } from '../methods/sessionPayment';
+import { methodConfig, methodFundingSource } from '../methods/methodRegistry';
 import {
 	createShippingController,
 	methodShippingRequired,
-} from './methodShipping';
-import { resolveContextTotal } from './contextTotal';
+} from '../methods/methodShipping';
+import { resolveContextTotal } from '../methods/contextTotal';
 
 /**
  * Renders the Apple Pay button and wires its click to a payment.
@@ -103,7 +103,7 @@ export async function renderApplePay( {
 		return;
 	}
 
-	revealWalletGateway( gateway, config );
+	revealMethodGateway( gateway, config );
 
 	// Synchronous either way: Safari refuses a sheet opened after an await.
 	const sheetTotal = overrides.sheetTotal ?? watchSheetTotal( config, context );
@@ -322,7 +322,7 @@ export async function renderApplePay( {
 	}
 
 	// renderMethod() only reaches this bridge when PHP styled this context.
-	const styles = walletButtonStyle( settings.styles[ context ] );
+	const styles = buttonStyle( settings.styles[ context ] );
 
 	// The block sizing controls arrive unitless; Apple wants a CSS length.
 	if ( overrides.borderRadius !== undefined ) {
