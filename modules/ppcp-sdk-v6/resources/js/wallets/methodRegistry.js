@@ -14,10 +14,12 @@ const WALLETS = {
 	[ FundingSources.GOOGLEPAY ]: {
 		configKey: 'google_pay',
 		sdkComponent: 'googlepay-payments',
+		gatewayId: 'ppcp-googlepay',
 	},
 	[ FundingSources.APPLEPAY ]: {
 		configKey: 'apple_pay',
 		sdkComponent: 'applepay-payments',
+		gatewayId: 'ppcp-applepay',
 		// The only wallet with a second identity, hence the only entry that
 		// overrides the SDK's spelling.
 		fundingSource: 'apple_pay',
@@ -42,6 +44,18 @@ export const MERCHANT_PRESENTED_METHODS = Object.keys( WALLETS );
  */
 export function methodFundingSource( method ) {
 	return WALLETS[ method ]?.fundingSource ?? method;
+}
+
+/**
+ * The id of the WooCommerce gateway that owns a wallet.
+ *
+ * Also the name its WooCommerce Blocks payment method registers under.
+ *
+ * @param {string} method - The funding source to look up.
+ * @return {string|undefined} The gateway id, or undefined for a non-wallet.
+ */
+export function methodGatewayId( method ) {
+	return WALLETS[ method ]?.gatewayId;
 }
 
 /**

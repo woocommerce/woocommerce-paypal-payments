@@ -334,7 +334,7 @@ export async function renderApplePay( {
  *
  * @return {boolean} False on anything that is not a capable Apple browser.
  */
-function isDeviceEligible() {
+export function isDeviceEligible() {
 	try {
 		return !! window.ApplePaySession?.canMakePayments();
 	} catch ( error ) {

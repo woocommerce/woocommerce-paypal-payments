@@ -49,6 +49,8 @@ const PAGE_TYPE_MAP = {
 	checkout: 'checkout',
 	'pay-now': 'checkout',
 	'mini-cart': 'mini-cart',
+	'cart-block': 'cart',
+	'checkout-block': 'checkout',
 };
 
 /**
