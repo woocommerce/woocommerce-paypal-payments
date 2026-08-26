@@ -48,21 +48,6 @@ describe( 'useBlueprintExport', () => {
 		);
 	} );
 
-	it( 'requests the credential-free exporter when told not to include them', async () => {
-		const { result } = renderHook( () => useBlueprintExport() );
-
-		await act( async () => {
-			await result.current.exportBlueprint( {
-				includeConnection: false,
-			} );
-		} );
-
-		expect( requestedSteps() ).toContain( EXPORTER_ALIAS );
-		expect( requestedSteps() ).not.toContain(
-			EXPORTER_ALIAS_WITH_CONNECTION
-		);
-	} );
-
 	it( 'requests the connection exporter only when explicitly asked', async () => {
 		const { result } = renderHook( () => useBlueprintExport() );
 

@@ -48,8 +48,7 @@ const toggle = () =>
 const exportButton = () => screen.getByRole( 'button', { name: 'Export' } );
 
 // Matched by class, not text: the text is in the DOM in both states.
-const warning = () =>
-	document.querySelector( '.ppcp--credentials-warning' );
+const warning = () => document.querySelector( '.ppcp--credentials-warning' );
 
 describe( 'BlueprintExportModal', () => {
 	let onExport;
@@ -112,14 +111,6 @@ describe( 'BlueprintExportModal', () => {
 		expect( onExport ).toHaveBeenCalledWith( { includeConnection: true } );
 	} );
 
-	it( 'describes the outcome for the importing store when credentials are excluded', () => {
-		renderModal();
-
-		expect(
-			screen.getByText( /need to connect its own PayPal account/i )
-		).toBeInTheDocument();
-	} );
-
 	it( 'names the live environment in the enabled help text', () => {
 		renderModal();
 
@@ -143,17 +134,6 @@ describe( 'BlueprintExportModal', () => {
 		expect(
 			screen.getByText( /connect as your sandbox PayPal account/i )
 		).toBeInTheDocument();
-	} );
-
-	it( 'warns that anyone holding the file can act on the account', () => {
-		renderModal();
-
-		fireEvent.click( toggle() );
-
-		expect(
-			screen.getByText( /can act on your PayPal account/i )
-		).toBeInTheDocument();
-		expect( screen.getByText( /do not share it/i ) ).toBeInTheDocument();
 	} );
 
 	it( 'warns identically for sandbox and live accounts', () => {

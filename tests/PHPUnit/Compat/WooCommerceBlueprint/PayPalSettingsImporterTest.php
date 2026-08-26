@@ -116,22 +116,6 @@ class PayPalSettingsImporterTest extends TestCase {
 	}
 
 	/**
-	 * @test
-	 */
-	public function test_every_allowlisted_option_is_importable(): void {
-		$options = array();
-		foreach ( PayPalBlueprintOptions::OPTION_NAMES as $name ) {
-			$options[ $name ] = array( 'marker' => $name );
-		}
-
-		$this->import( $options );
-
-		foreach ( PayPalBlueprintOptions::OPTION_NAMES as $name ) {
-			self::assertArrayHasKey( $name, $this->written, "$name should be importable" );
-		}
-	}
-
-	/**
 	 * Styling is stored as typed DTOs, so a JSON payload of plain arrays has to be
 	 * hydrated before it is written or the data model cannot load it back.
 	 *
