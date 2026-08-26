@@ -90,19 +90,25 @@ export class PayPalUiClassic extends PayPalUi {
 
 	acdcCardNumberInput = () =>
 		sdkVersion() === 'v5'
-			? this.page.locator( '#ppcp-credit-card-gateway-card-number' )
+			? this.page
+					.frameLocator( 'iframe[title="paypal_card_number_field"]' )
+					.locator( 'input' )
 			: this.page
 					.frameLocator( 'iframe[title="Number PayPal Card Field"]' )
 					.locator( 'input' );
 	acdcCardExpirationInput = () =>
 		sdkVersion() === 'v5'
-			? this.page.locator( '#ppcp-credit-card-gateway-card-expiry' )
+			? this.page
+					.frameLocator( 'iframe[title="paypal_card_expiry_field"]' )
+					.locator( 'input' )
 			: this.page
 					.frameLocator( 'iframe[title="Expiry PayPal Card Field"]' )
 					.locator( 'input' );
 	acdcCardCvvInput = () =>
 		sdkVersion() === 'v5'
-			? this.page.locator( '#ppcp-credit-card-gateway-card-cvc' )
+			? this.page
+					.frameLocator( 'iframe[title="paypal_card_cvv_field"]' )
+					.locator( 'input' )
 			: this.page
 					.frameLocator( 'iframe[title="Cvv PayPal Card Field"]' )
 					.locator( 'input' );
