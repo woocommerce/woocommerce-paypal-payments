@@ -34,12 +34,16 @@ class ApplePayConfig extends MethodRenderGate {
 	public function styles( string $context ): array {
 		$styling = $this->method_styles( $context );
 
+		$type = $this->is_express_row( $context )
+			? 'plain'
+			: PropertiesDictionary::map_type( $styling->label );
+
 		// SettingsProvider maps these through filters the Apple Pay module
 		// registers, which are absent when that module is not loaded. Mapping again
 		// is idempotent and keeps the values valid either way.
 		return array(
 			'color'        => PropertiesDictionary::map_color( $styling->color ),
-			'type'         => PropertiesDictionary::map_type( $styling->label ),
+			'type'         => $type,
 			'language'     => PropertiesDictionary::map_language( $this->settings_provider->applepay_button_language() ),
 			'borderRadius' => self::RADIUS_MAP[ $styling->shape ] ?? self::DEFAULT_RADIUS,
 		);

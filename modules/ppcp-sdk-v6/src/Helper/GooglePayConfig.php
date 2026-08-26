@@ -45,6 +45,10 @@ class GooglePayConfig extends MethodRenderGate {
 			$type = 'pay';
 		}
 
+		if ( $this->is_express_row( $context ) ) {
+			$type = 'plain';
+		}
+
 		return array(
 			'color'        => PropertiesDictionary::map_color( $styling->color ),
 			'type'         => $type,

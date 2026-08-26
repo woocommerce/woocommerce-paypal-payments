@@ -117,8 +117,8 @@ class ApplePayConfigTest extends TestCase {
 		return $this->styling( 'checkout', true, array(), 'rect', 'pay', $color );
 	}
 
-	private function stylingWithLabel( string $label ): LocationStylingDTO {
-		return $this->styling( 'checkout', true, array(), 'rect', $label, 'black' );
+	private function stylingWithLabel( string $label, string $location = 'checkout' ): LocationStylingDTO {
+		return $this->styling( $location, true, array(), 'rect', $label, 'black' );
 	}
 
 	private function stylingWithShape( string $shape ): LocationStylingDTO {
@@ -462,5 +462,89 @@ class ApplePayConfigTest extends TestCase {
 		when( 'get_bloginfo' )->justReturn( 'My Test Shop' );
 
 		$this->assertSame( 'My Test Shop', $this->configFor()->display_name() );
+	}
+
+	/**
+	 * GIVEN a WooCommerce Blocks express row context, where every wallet's button
+	 * shares one row
+	 * WHEN building the Apple Pay button styles, whatever label the merchant configured
+	 * THEN the type is forced to "plain" because a labelled button would be clipped
+	 *
+	 * @dataProvider expressRowContextAndLabelProvider
+	 */
+	public function testExpressRowForcesPlainType( string $context, string $label ): void {
+		$styling = $this->stylingWithLabel( $label, $context );
+
+		$this->provider->shouldReceive( 'applepay_styles' )->with( $context )->andReturn( $styling );
+		$this->buttonLanguage();
+
+		$styles = $this->configFor()->styles( $context );
+
+		$this->assertSame( 'plain', $styles['type'] );
+	}
+
+	public function expressRowContextAndLabelProvider(): array {
+		return array(
+			'cart-block with checkout label'     => array( 'cart-block', 'checkout' ),
+			'cart-block with buy label'          => array( 'cart-block', 'buynow' ),
+			'cart-block with pay label'          => array( 'cart-block', 'pay' ),
+			'checkout-block with checkout label' => array( 'checkout-block', 'checkout' ),
+			'checkout-block with buy label'      => array( 'checkout-block', 'buynow' ),
+			'checkout-block with pay label'      => array( 'checkout-block', 'pay' ),
+		);
+	}
+
+	/**
+	 * GIVEN a page context that is not part of the WooCommerce Blocks express row
+	 * WHEN building the Apple Pay button styles
+	 * THEN the merchant's configured label is mapped as usual
+	 *
+	 * @dataProvider nonExpressRowContextLabelProvider
+	 */
+	public function testNonExpressRowStillMapsLabel( string $context, string $label, string $expectedType ): void {
+		$styling = $this->stylingWithLabel( $label, $context );
+
+		$this->provider->shouldReceive( 'applepay_styles' )->with( $context )->andReturn( $styling );
+		$this->buttonLanguage();
+
+		$styles = $this->configFor()->styles( $context );
+
+		$this->assertSame( $expectedType, $styles['type'] );
+	}
+
+	public function nonExpressRowContextLabelProvider(): array {
+		return array(
+			'checkout context with checkout label' => array( 'checkout', 'checkout', 'check-out' ),
+			'checkout context with buy label'      => array( 'checkout', 'buynow', 'buy' ),
+			'product context with checkout label'  => array( 'product', 'checkout', 'check-out' ),
+			'product context with buy label'       => array( 'product', 'buynow', 'buy' ),
+		);
+	}
+
+	/**
+	 * GIVEN the express row context forces the button type to "plain"
+	 * WHEN building the Apple Pay button styles
+	 * THEN the color, language and border radius still reflect the merchant's settings
+	 *
+	 * @dataProvider expressRowContextProvider
+	 */
+	public function testExpressRowKeepsOtherStylesUnchanged( string $context ): void {
+		$styling = $this->styling( $context, true, array(), 'pill', 'buynow', 'gold' );
+
+		$this->provider->shouldReceive( 'applepay_styles' )->with( $context )->andReturn( $styling );
+		$this->buttonLanguage( 'en_US' );
+
+		$styles = $this->configFor()->styles( $context );
+
+		$this->assertSame( 'black', $styles['color'] );
+		$this->assertSame( 'en-US', $styles['language'] );
+		$this->assertSame( '24px', $styles['borderRadius'] );
+	}
+
+	public function expressRowContextProvider(): array {
+		return array(
+			'cart-block context'     => array( 'cart-block' ),
+			'checkout-block context' => array( 'checkout-block' ),
+		);
 	}
 }

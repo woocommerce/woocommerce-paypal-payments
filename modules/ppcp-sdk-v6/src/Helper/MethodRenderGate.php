@@ -64,6 +64,16 @@ abstract class MethodRenderGate {
 	}
 
 	/**
+	 * Whether the context shows every express method side by side in one row.
+	 *
+	 * Each button gets a fraction of that row, too narrow for a wallet's labelled
+	 * variant ("Pay with Google Pay") to fit.
+	 */
+	protected function is_express_row( string $context ): bool {
+		return in_array( $context, array( 'cart-block', 'checkout-block' ), true );
+	}
+
+	/**
 	 * Whether the wallet is enabled in settings for a given location.
 	 */
 	private function enabled_for_context( string $context ): bool {
