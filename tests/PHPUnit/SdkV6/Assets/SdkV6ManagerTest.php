@@ -28,6 +28,7 @@ use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\SettingsStatus;
 use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\FreeTrialSubscriptionHelper;
 use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
+use WC_Payment_Gateway;
 use function Brain\Monkey\Actions\expectDone;
 use function Brain\Monkey\Filters\expectApplied;
 use function Brain\Monkey\Functions\expect;
@@ -1753,7 +1754,7 @@ class SdkV6ManagerTest extends TestCase
      *       now gets its own payment-method row alongside BCDC
      * WHEN the SDK bootstrap data is generated
      * THEN each wallet's gateway subtree carries its id and wrapper selector,
-     *      since is_wallet_gateway() tests CONTEXTS_WITH_GATEWAY_ROWS, which now
+     *      since is_method_gateway() tests CONTEXTS_WITH_GATEWAY_ROWS, which now
      *      includes 'pay-now' alongside 'checkout' so the pay-for-order page's
      *      payment-method list can offer wallets the same way checkout does
      */
@@ -1801,6 +1802,96 @@ class SdkV6ManagerTest extends TestCase
             ['id' => ApplePayGateway::ID, 'wrapper' => '#' . SdkV6Manager::APPLE_PAY_WRAPPER_ID],
             $data['apple_pay']['gateway']
         );
+    }
+
+    // -------------------------------------------------------------------------
+    // script_data()[wallet]['supported_features']
+    // -------------------------------------------------------------------------
+
+    /**
+     * GIVEN a wallet's own gateway is available, declaring its own supports list
+     * WHEN the SDK bootstrap data is generated
+     * THEN supported_features carries that gateway's supports, never a borrowed
+     *      list, which is what keeps the wallet off a cart it cannot pay for
+     *
+     * @dataProvider wallet_supported_features_present_provider
+     */
+    public function testScriptDataWalletSupportedFeaturesReflectsOwnGatewayWhenAvailable(
+        string $wallet_key,
+        string $gateway_id,
+        array $gateway_supports
+    ): void {
+        $this->stubScriptDataBaseline('checkout', 'checkout');
+
+        $gateway = new WC_Payment_Gateway();
+        $gateway->supports = $gateway_supports;
+
+        when('WC')->justReturn($this->create_wc_stub([$gateway_id => $gateway]));
+
+        $testee = $this->createTestee();
+        $data   = $testee->script_data();
+
+        $this->assertSame($gateway_supports, $data[$wallet_key]['supported_features']);
+    }
+
+    public function wallet_supported_features_present_provider(): array
+    {
+        return [
+            'Apple Pay carries its own gateway supports' => ['apple_pay', ApplePayGateway::ID, ['products']],
+            'Google Pay carries its own gateway supports, including subscriptions when vaulting is on' => [
+                'google_pay', GooglePayGateway::ID, ['products', 'subscriptions'],
+            ],
+        ];
+    }
+
+    /**
+     * GIVEN a wallet's gateway is unavailable, its v5 module not being loaded
+     * WHEN the SDK bootstrap data is generated
+     * THEN supported_features falls back to ['products'], offering the wallet on
+     *      no more carts than a registered gateway would
+     *
+     * @dataProvider wallet_supported_features_absent_provider
+     */
+    public function testScriptDataWalletSupportedFeaturesFallsBackWhenGatewayAbsent(string $wallet_key): void
+    {
+        $this->stubScriptDataBaseline('checkout', 'checkout');
+
+        when('WC')->justReturn($this->create_wc_stub([]));
+
+        $testee = $this->createTestee();
+        $data   = $testee->script_data();
+
+        $this->assertSame(['products'], $data[$wallet_key]['supported_features']);
+    }
+
+    public function wallet_supported_features_absent_provider(): array
+    {
+        return [
+            'Apple Pay falls back to products alone when its gateway is unavailable'  => ['apple_pay'],
+            'Google Pay falls back to products alone when its gateway is unavailable' => ['google_pay'],
+        ];
+    }
+
+    /**
+     * GIVEN Apple Pay's gateway is available and Google Pay's is not
+     * WHEN the SDK bootstrap data is generated
+     * THEN each wallet resolves its own supported_features in the same call,
+     *      rather than the two sharing one answer
+     */
+    public function testScriptDataWalletSupportedFeaturesResolvedIndependentlyPerWallet(): void
+    {
+        $this->stubScriptDataBaseline('checkout', 'checkout');
+
+        $apple_pay_gateway = new WC_Payment_Gateway();
+        $apple_pay_gateway->supports = ['products', 'subscriptions'];
+
+        when('WC')->justReturn($this->create_wc_stub([ApplePayGateway::ID => $apple_pay_gateway]));
+
+        $testee = $this->createTestee();
+        $data   = $testee->script_data();
+
+        $this->assertSame(['products', 'subscriptions'], $data['apple_pay']['supported_features']);
+        $this->assertSame(['products'], $data['google_pay']['supported_features']);
     }
 
     /**

@@ -9,6 +9,7 @@ declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\SdkV6\Assets;
 
+use WC_Payment_Gateway;
 use WC_Product;
 use WooCommerce\PayPalCommerce\Applepay\ApplePayGateway;
 use WooCommerce\PayPalCommerce\Applepay\Assets\PropertiesDictionary;
@@ -373,11 +374,24 @@ class SdkV6Manager {
 			return false;
 		}
 
-		$gateways = WC()->payment_gateways() ? WC()->payment_gateways()->get_available_payment_gateways() : array();
-
-		$placement->is_gateway = isset( $gateways[ $placement->gateway_id ] );
+		$placement->is_gateway = isset( $this->available_gateways()[ $placement->gateway_id ] );
 
 		return $placement->is_gateway;
+	}
+
+	/**
+	 * The gateways WooCommerce offers for the current cart, keyed by id.
+	 *
+	 * @return array<string, WC_Payment_Gateway>
+	 */
+	private function available_gateways(): array {
+		if ( ! function_exists( 'WC' ) ) {
+			return array();
+		}
+
+		$gateways = WC()->payment_gateways();
+
+		return $gateways ? $gateways->get_available_payment_gateways() : array();
 	}
 
 	/**
@@ -398,20 +412,50 @@ class SdkV6Manager {
 			$styles['mini-cart'] = $placement->styles( 'mini-cart' );
 		}
 
+		// supported_features: this method's own gateway, never PayPal's. A
+		// borrowed vaulting list would offer the method on a subscription cart
+		// it cannot pay for.
 		return array(
-			'enabled' => ! empty( $styles ),
-			'sdk_url' => $placement->sdk_url,
-			'styles'  => $styles,
-			// Present only on classic checkout, where a payment-method list
-			// exists; elsewhere the method stays an express button. Null rather
-			// than a flag plus two values the JS would have to pair up again.
-			'gateway' => $this->is_method_gateway( $placement )
-				? array(
-					'id'      => $placement->gateway_id,
-					'wrapper' => '#' . $placement->wrapper_id,
-				)
-				: null,
+			'enabled'            => ! empty( $styles ),
+			'sdk_url'            => $placement->sdk_url,
+			'styles'             => $styles,
+			'supported_features' => $this->gateway_supports( $placement->gateway_id ),
+			'gateway'            => $this->gateway_row( $placement ),
 		);
+	}
+
+	/**
+	 * The payment-method row this method occupies, or null for an express button
+	 * rendered outside any payment-method list.
+	 *
+	 * @return array{id: string, wrapper: string}|null
+	 */
+	private function gateway_row( MethodPlacement $placement ): ?array {
+		if ( ! $this->is_method_gateway( $placement ) ) {
+			return null;
+		}
+
+		return array(
+			'id'      => $placement->gateway_id,
+			'wrapper' => '#' . $placement->wrapper_id,
+		);
+	}
+
+	/**
+	 * The gateway's own supports list, or `array( 'products' )` when the gateway
+	 * is unavailable — the narrowest list, so the method is hidden rather than
+	 * offered on a cart it cannot pay for.
+	 *
+	 * @return string[]
+	 */
+	private function gateway_supports( string $gateway_id ): array {
+		$gateway = $this->available_gateways()[ $gateway_id ] ?? null;
+
+		if ( ! $gateway instanceof WC_Payment_Gateway ) {
+			return array( 'products' );
+		}
+
+		return array_values( (array) $gateway->supports );
 	}
 
 	/**
