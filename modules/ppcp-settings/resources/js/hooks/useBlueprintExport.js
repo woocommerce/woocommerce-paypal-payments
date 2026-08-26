@@ -6,6 +6,25 @@ import apiFetch from '@wordpress/api-fetch';
 import { downloadBlob } from '@wordpress/blob';
 
 /**
+ * Exporter alias producing a Blueprint without any connection credentials.
+ *
+ * Mirrors PayPalSettingsExporter::ALIAS.
+ *
+ * @type {string}
+ */
+export const EXPORTER_ALIAS = 'paypalSettings';
+
+/**
+ * Exporter alias producing a Blueprint that includes the connection credentials.
+ *
+ * Mirrors PayPalSettingsExporter::ALIAS_WITH_CONNECTION. A separate exporter
+ * because Blueprint lets the client choose aliases, not exporter behaviour.
+ *
+ * @type {string}
+ */
+export const EXPORTER_ALIAS_WITH_CONNECTION = 'paypalSettingsWithConnection';
+
+/**
  * Generates a timestamp string for filenames.
  *
  * @return {string} Formatted timestamp (YYYY-MM-DDTHH-MM-SS)
@@ -26,8 +45,13 @@ export const useBlueprintExport = () => {
 
 	/**
 	 * Exports PayPal settings as a WooCommerce Blueprint file.
+	 *
+	 * Credentials are excluded unless explicitly requested.
+	 *
+	 * @param {Object}  [options]                          Export options.
+	 * @param {boolean} [options.includeConnection =false] Include the connection credentials.
 	 */
-	const exportBlueprint = async () => {
+	const exportBlueprint = async ( { includeConnection = false } = {} ) => {
 		setIsExporting( true );
 
 		try {
@@ -36,7 +60,12 @@ export const useBlueprintExport = () => {
 				method: 'POST',
 				data: {
 					steps: {
-						settings: [ 'paypalSettings', 'wcPaymentGateways' ],
+						settings: [
+							includeConnection
+								? EXPORTER_ALIAS_WITH_CONNECTION
+								: EXPORTER_ALIAS,
+							'wcPaymentGateways',
+						],
 					},
 				},
 			} );
