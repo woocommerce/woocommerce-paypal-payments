@@ -143,6 +143,14 @@ class SdkV6Manager {
 	 */
 	private ?array $available_gateways = null;
 
+	/**
+	 * Memoizes should_load_on_current_page(), asked by every surface that
+	 * stands down for v6.
+	 *
+	 * @var bool|null
+	 */
+	private ?bool $should_load = null;
+
 	public function __construct(
 		AssetGetter $asset_getter,
 		string $version,
@@ -489,6 +497,25 @@ class SdkV6Manager {
 	 * where nothing else here would.
 	 */
 	public function should_load_on_current_page(): bool {
+		if ( null !== $this->should_load ) {
+			return $this->should_load;
+		}
+
+		$should_load = $this->resolve_should_load();
+
+		// Memoized only after Context::init_context() ran on `wp`; before that
+		// is_cart()/is_checkout() have not resolved.
+		if ( did_action( 'wp' ) ) {
+			$this->should_load = $should_load;
+		}
+
+		return $should_load;
+	}
+
+	/**
+	 * The uncached answer for should_load_on_current_page().
+	 */
+	private function resolve_should_load(): bool {
 		// Native PayPal Subscriptions (subscriptions_api mode) have no v6 path: v6
 		// can only carry a subscription by vaulting, which that mode disables. Hand
 		// the whole page back to the v5 stack, which creates the subscription via
