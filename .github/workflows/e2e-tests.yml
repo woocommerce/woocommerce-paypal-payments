@@ -31,6 +31,14 @@ on:
         required: false
         default: ''
         type: string
+      SDK_VERSION:
+        description: 'PayPal JS SDK version to test'
+        required: true
+        default: 'v6'
+        type: choice
+        options:
+          - v6
+          - v5
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.workflow_run.head_branch || github.ref }}
@@ -80,11 +88,16 @@ jobs:
 
           TEST_SUITE='${{ inputs.TEST_SUITE || 'smoke:parallel' }}'
 
+          # Default to v6 so automatic (workflow_run) triggers, which carry no
+          # inputs, keep today's behavior. Always suffix names/artifacts with
+          # the version so it's visible per job/shard which one ran.
+          SDK_VERSION='${{ inputs.SDK_VERSION || 'v6' }}'
+
           if [[ "$TEST_SUITE" == *':parallel' ]]; then
             SUFFIX=""
             [[ "$TEST_SUITE" != "all:parallel" ]] && SUFFIX=":${TEST_SUITE%:parallel}"
 
-            entry() { echo "{\"script\":\"e2e:test:shard:${1}${SUFFIX}\",\"name_suffix\":\" / ${1}\",\"artifact_name\":\"playwright-artifact-${1}\"}"; }
+            entry() { echo "{\"script\":\"e2e:test:shard:${1}${SUFFIX}\",\"name_suffix\":\" / ${1} / ${SDK_VERSION}\",\"artifact_name\":\"playwright-artifact-${1}-${SDK_VERSION}\",\"sdk_version\":\"${SDK_VERSION}\"}"; }
 
             ITEMS=()
             for shard in "${SHARDS[@]}"; do
@@ -95,7 +108,7 @@ jobs:
             echo "matrix={\"include\":[${JOINED}]}" >> "$GITHUB_OUTPUT"
           else
             NAME="${TEST_SUITE#shard:}"
-            echo "matrix={\"include\":[{\"script\":\"e2e:test:${TEST_SUITE}\",\"name_suffix\":\" / ${NAME}\",\"artifact_name\":\"playwright-artifact-${NAME}\"}]}" >> "$GITHUB_OUTPUT"
+            echo "matrix={\"include\":[{\"script\":\"e2e:test:${TEST_SUITE}\",\"name_suffix\":\" / ${NAME} / ${SDK_VERSION}\",\"artifact_name\":\"playwright-artifact-${NAME}-${SDK_VERSION}\",\"sdk_version\":\"${SDK_VERSION}\"}]}" >> "$GITHUB_OUTPUT"
           fi
 
   e2e-playwright:
@@ -119,6 +132,11 @@ jobs:
       PLAYWRIGHT_BROWSER_ARGS: 'chromium --with-deps'
       XRAY_TEST_EXEC_KEY: ${{ inputs.XRAY_TEST_EXEC_KEY }}
       PRE_SCRIPT: |
+        # 0. Record which SDK version this matrix job tests. playwright.config.ts
+        # loads .env.ci via dotenv, so this reaches process.env.PCP_JS_SDK_VERSION
+        # for both the WP-side flag toggle and the page objects' locators.
+        echo "PCP_JS_SDK_VERSION=${{ matrix.sdk_version }}" >> .env.ci
+
         # 1. Download and unzip the built plugin
         gh run download ${{ github.run_id }} -p "woocommerce-paypal-payments-*" -D tests/qa/resources/files
         (

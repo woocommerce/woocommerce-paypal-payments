@@ -17,6 +17,7 @@ import { ApmHostedCheckout } from './apm-hosted-checkout';
 // TODO: get resolution about OXXO voucher popup
 // import { OxxoVoucherPopup } from './oxxo-voucher-popup';
 import { PayPalApi } from '../paypal-api';
+import { sdkVersion } from '../helpers/sdk-version.helper';
 
 /**
  * Class for common dashboard locators, actions, assertions
@@ -49,18 +50,37 @@ export class PayPalUi {
 		this.page.locator(
 			'.wc-block-components-express-payment__event-buttons'
 		);
+	/** v5 (legacy): unified zoid iframe for My Account and checkout pages. */
+	payPalIframeV5 = () =>
+		this.page.frameLocator(
+			'#express-payment-method-ppcp-gateway-paypal .component-frame'
+		);
 	payPalButton = () =>
-		this.page.locator(
-			'#express-payment-method-ppcp-gateway-paypal paypal-button, #ppc-button-ppcp-gateway-v6 paypal-button, #ppc-button-ppcp-gateway-save-payment-method paypal-button'
-		);
+		sdkVersion() === 'v5'
+			? this.payPalIframeV5().locator( '[data-funding-source="paypal"]' )
+			: this.page.locator(
+					'#express-payment-method-ppcp-gateway-paypal paypal-button, #ppc-button-ppcp-gateway-v6 paypal-button, #ppc-button-ppcp-gateway-save-payment-method paypal-button'
+			  );
 	payLaterButton = () =>
-		this.page.locator(
-			'#express-payment-method-ppcp-gateway-paylater paypal-pay-later-button, #ppc-button-ppcp-gateway-v6 paypal-pay-later-button'
-		);
+		sdkVersion() === 'v5'
+			? this.page
+					.frameLocator(
+						'#express-payment-method-ppcp-gateway-paylater .component-frame'
+					)
+					.locator( '[data-funding-source="paylater"]' )
+			: this.page.locator(
+					'#express-payment-method-ppcp-gateway-paylater paypal-pay-later-button, #ppc-button-ppcp-gateway-v6 paypal-pay-later-button'
+			  );
 	venmoButton = () =>
-		this.page.locator(
-			'#express-payment-method-ppcp-gateway-venmo venmo-button, #ppc-button-ppcp-gateway-v6 venmo-button'
-		);
+		sdkVersion() === 'v5'
+			? this.page
+					.frameLocator(
+						'#express-payment-method-ppcp-gateway-venmo .component-frame'
+					)
+					.locator( '[data-funding-source="venmo"]' )
+			: this.page.locator(
+					'#express-payment-method-ppcp-gateway-venmo venmo-button, #ppc-button-ppcp-gateway-v6 venmo-button'
+			  );
 
 	googlePayButton = () =>
 		this.page
@@ -138,24 +158,48 @@ export class PayPalUi {
 			has: this.acdcGateway(),
 		} );
 	acdcCardholderNameInput = () =>
-		this.acdcContainer().locator(
-			'.ppcp-sdk-v6-card-field--name input'
-		);
+		sdkVersion() === 'v5'
+			? this.acdcContainer()
+					.frameLocator(
+						'[id^="zoid-paypal-card-name-field"] iframe[name^="__zoid__paypal_card_name_field__"]'
+					)
+					.locator( 'input.card-field-name' )
+			: this.acdcContainer().locator(
+					'.ppcp-sdk-v6-card-field--name input'
+			  );
 	acdcCardNumberInput = () =>
-		this.acdcContainer()
-			.locator( '.ppcp-sdk-v6-card-field--number' )
-			.frameLocator( 'iframe[title="Number PayPal Card Field"]' )
-			.locator( 'input' );
+		sdkVersion() === 'v5'
+			? this.acdcContainer()
+					.frameLocator(
+						'[id^="zoid-paypal-card-number-field"] iframe[name^="__zoid__paypal_card_number_field__"]'
+					)
+					.locator( 'input.card-field-number' )
+			: this.acdcContainer()
+					.locator( '.ppcp-sdk-v6-card-field--number' )
+					.frameLocator( 'iframe[title="Number PayPal Card Field"]' )
+					.locator( 'input' );
 	acdcCardExpirationInput = () =>
-		this.acdcContainer()
-			.locator( '.ppcp-sdk-v6-card-field--expiry' )
-			.frameLocator( 'iframe[title="Expiry PayPal Card Field"]' )
-			.locator( 'input' );
+		sdkVersion() === 'v5'
+			? this.acdcContainer()
+					.frameLocator(
+						'[id^="zoid-paypal-card-expiry-field"] iframe[name^="__zoid__paypal_card_expiry_field__"]'
+					)
+					.locator( 'input.card-field-expiry' )
+			: this.acdcContainer()
+					.locator( '.ppcp-sdk-v6-card-field--expiry' )
+					.frameLocator( 'iframe[title="Expiry PayPal Card Field"]' )
+					.locator( 'input' );
 	acdcCardCvvInput = () =>
-		this.acdcContainer()
-			.locator( '.ppcp-sdk-v6-card-field--cvv' )
-			.frameLocator( 'iframe[title="Cvv PayPal Card Field"]' )
-			.locator( 'input' );
+		sdkVersion() === 'v5'
+			? this.acdcContainer()
+					.frameLocator(
+						'[id^="zoid-paypal-card-cvv-field"] iframe[name^="__zoid__paypal_card_cvv_field__"]'
+					)
+					.locator( 'input.card-field-cvv' )
+			: this.acdcContainer()
+					.locator( '.ppcp-sdk-v6-card-field--cvv' )
+					.frameLocator( 'iframe[title="Cvv PayPal Card Field"]' )
+					.locator( 'input' );
 	acdcSaveToAccountCheckbox = () =>
 		this.acdcContainer().locator(
 			'.wc-block-components-payment-methods__save-card-info input[type="checkbox"]'

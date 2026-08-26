@@ -23,6 +23,7 @@ import {
 	negative12FeePlugin,
 	pcpSdkV6Flag,
 } from '../../resources';
+import { sdkVersion } from './sdk-version.helper';
 
 const country = process.env.WC_DEFAULT_COUNTRY || 'usa';
 
@@ -44,6 +45,22 @@ const installPluginResolveActiveState = async ( {
 };
 
 export const setupWooCommerce = async () => {
+	// Unlike the setup below, this is a plain REST call (requestUtils.activatePlugin),
+	// not something wp-env's own bootstrap provisions - it must run in every
+	// environment, CI included, or the SDK version under test silently stays
+	// whatever the site's active_plugins state happened to already be.
+	setup(
+		`Setup PCP SDK v6 Feature Flag (${ sdkVersion() })`,
+		async ( { requestUtils, plugins } ) => {
+			await installPluginResolveActiveState( {
+				requestUtils,
+				plugins,
+				...pcpSdkV6Flag,
+				isActive: sdkVersion() === 'v6',
+			} );
+		}
+	);
+
 	// In CI wp-env is used and following setup is already done by wp-env, so skip it in CI to save time
 	if ( ! process.env.CI ) {
 		setup( 'Setup Permalinks', async ( { requestUtils } ) => {
@@ -79,17 +96,6 @@ export const setupWooCommerce = async () => {
 					requestUtils,
 					plugins,
 					...disableWcSetupWizard,
-				} );
-			}
-		);
-
-		setup(
-			'Setup PCP SDK v6 Feature Flag (active)',
-			async ( { requestUtils, plugins } ) => {
-				await installPluginResolveActiveState( {
-					requestUtils,
-					plugins,
-					...pcpSdkV6Flag,
 				} );
 			}
 		);

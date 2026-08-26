@@ -9,6 +9,7 @@ import { Pcp, ShopOrder } from '../../resources';
 import { PayPalPopup } from './paypal-popup';
 import { PayPalUi } from './paypal-ui';
 import { GooglePayPopup } from './google-pay-popup';
+import { sdkVersion } from '../helpers/sdk-version.helper';
 
 /**
  * Class for common dashboard locators, actions, assertions
@@ -23,7 +24,17 @@ export class PayPalUiClassic extends PayPalUi {
 
 	googlePayGatewayContainer = () =>
 		this.page.locator( '#ppc-button-googlepay-container' );
+
+	/** v5 (legacy): unified zoid iframe wrapping every funding-source button. */
+	payPalIframeV5 = () =>
+		this.page.frameLocator( 'iframe[name^="__zoid__paypal_buttons__"]' );
+
 	fundingSourceButton = ( name: string ) => {
+		if ( sdkVersion() === 'v5' ) {
+			return this.payPalIframeV5().locator(
+				`[data-funding-source="${ name }"]`
+			);
+		}
 		switch ( name ) {
 			case 'paypal':
 				return this.payPalButton();
@@ -35,6 +46,25 @@ export class PayPalUiClassic extends PayPalUi {
 				throw new Error( `Unsupported funding source: ${ name }` );
 		}
 	};
+
+	payPalButton = () =>
+		sdkVersion() === 'v5'
+			? this.fundingSourceButton( 'paypal' )
+			: this.page.locator(
+					'#express-payment-method-ppcp-gateway-paypal paypal-button, #ppc-button-ppcp-gateway-v6 paypal-button, #ppc-button-ppcp-gateway-save-payment-method paypal-button'
+			  );
+	payLaterButton = () =>
+		sdkVersion() === 'v5'
+			? this.fundingSourceButton( 'paylater' )
+			: this.page.locator(
+					'#express-payment-method-ppcp-gateway-paylater paypal-pay-later-button, #ppc-button-ppcp-gateway-v6 paypal-pay-later-button'
+			  );
+	venmoButton = () =>
+		sdkVersion() === 'v5'
+			? this.fundingSourceButton( 'venmo' )
+			: this.page.locator(
+					'#express-payment-method-ppcp-gateway-venmo venmo-button, #ppc-button-ppcp-gateway-v6 venmo-button'
+			  );
 
 	googlePayButton = () => this.page.locator( '#gpay-button-online-api-id' );
 
@@ -59,32 +89,52 @@ export class PayPalUiClassic extends PayPalUi {
 	googlePayGateway = () => this.fundingSourceGateway( 'ppcp-googlepay' );
 
 	acdcCardNumberInput = () =>
-		this.page
-			.frameLocator( 'iframe[title="Number PayPal Card Field"]' )
-			.locator( 'input' );
+		sdkVersion() === 'v5'
+			? this.page.locator( '#ppcp-credit-card-gateway-card-number' )
+			: this.page
+					.frameLocator( 'iframe[title="Number PayPal Card Field"]' )
+					.locator( 'input' );
 	acdcCardExpirationInput = () =>
-		this.page
-			.frameLocator( 'iframe[title="Expiry PayPal Card Field"]' )
-			.locator( 'input' );
+		sdkVersion() === 'v5'
+			? this.page.locator( '#ppcp-credit-card-gateway-card-expiry' )
+			: this.page
+					.frameLocator( 'iframe[title="Expiry PayPal Card Field"]' )
+					.locator( 'input' );
 	acdcCardCvvInput = () =>
-		this.page
-			.frameLocator( 'iframe[title="Cvv PayPal Card Field"]' )
-			.locator( 'input' );
+		sdkVersion() === 'v5'
+			? this.page.locator( '#ppcp-credit-card-gateway-card-cvc' )
+			: this.page
+					.frameLocator( 'iframe[title="Cvv PayPal Card Field"]' )
+					.locator( 'input' );
 	addPaymentMethodButton = () => this.page.locator( '#place_order' );
 
 	miniCartButtonContainer = () =>
 		this.page
-			.locator( '#ppc-button-minicart-v6' )
-			.locator( 'paypal-button, venmo-button, paypal-pay-later-button' );
+			.locator( '#ppc-button-minicart, #ppc-button-minicart-v6' )
+			.locator(
+				'paypal-button, venmo-button, paypal-pay-later-button, .paypal-button, [data-funding-source]'
+			);
 
-	bcdcIframe = () =>
+	/** v5 (legacy): outer zoid iframe wrapping the BCDC button. */
+	bcdcIframeV5 = () =>
 		this.page.frameLocator(
 			'#ppc-button-ppcp-card-button-gateway .component-frame'
 		);
 	bcdcButton = () =>
-		this.bcdcIframe().locator( `[data-funding-source="card"]` );
+		sdkVersion() === 'v5'
+			? this.bcdcIframeV5().locator( `[data-funding-source="card"]` )
+			: this.page.locator(
+					'#ppc-button-ppcp-card-button-gateway-v6 paypal-basic-card-button'
+			  );
+	/**
+	 * v6 branch is a best-effort guess: PayPal's own hosted card-detail modal
+	 * is rendered by the remotely-loaded v6 web SDK and isn't visible in this
+	 * repo's source. Verify against a live v6 BCDC checkout before relying on it.
+	 */
 	bcdcDetailsIframe = () =>
-		this.bcdcIframe().frameLocator( 'iframe.zoid-visible' );
+		sdkVersion() === 'v5'
+			? this.bcdcIframeV5().frameLocator( 'iframe.zoid-visible' )
+			: this.page.frameLocator( 'iframe.zoid-visible' );
 	bcdcNumberInput = () =>
 		this.bcdcDetailsIframe().locator( '#credit-card-number' );
 	bcdcExpirationInput = () =>
