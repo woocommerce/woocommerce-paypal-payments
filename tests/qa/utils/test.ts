@@ -5,12 +5,11 @@ import fs from 'fs';
 import {
 	APIRequestContext,
 	Page,
-	VideoMode,
-	ViewportSize,
 } from '@playwright/test';
 import {
 	test as base,
 	expect,
+	shouldRecordScreencast,
 	WooCommerceApi,
 	BaseExtend as BaseExtendBase,
 } from '@inpsyde/playwright-utils/build';
@@ -118,19 +117,27 @@ const test = base.extend< BaseExtend >( {
 		} );
 		const page = await context.newPage();
 
-		if ( recordVideoOptions ) {
+		const record = shouldRecordScreencast( recordVideoOptions, testInfo );
+
+		if ( record ) {
+			// Recording size must match the viewport exactly - a mismatch crops the video.
+			const size = recordVideoOptions.size ?? page.viewportSize() ?? undefined;
+			if ( size ) {
+				await page.setViewportSize( size );
+			}
 			await page.screencast.start( {
 				...recordVideoOptions,
-				path: testInfo.outputPath( 'video-visitor.webm' ),
+				...( size ? { size } : {} ),
+				path: testInfo.outputPath( 'video-visitorPage.webm' ),
 			} );
 		}
 
 		await use( page );
 
-		if ( recordVideoOptions ) {
+		if ( record ) {
 			await page.screencast.stop();
-			await testInfo.attach( 'video', {
-				path: testInfo.outputPath( 'video-visitor.webm' ),
+			await testInfo.attach( 'video-visitorPage', {
+				path: testInfo.outputPath( 'video-visitorPage.webm' ),
 				contentType: 'video/webm',
 			} );
 		}

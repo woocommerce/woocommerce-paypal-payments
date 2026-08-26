@@ -81,24 +81,16 @@ export default defineConfig< BaseExtend >( {
 
 		trace: process.env.CI
 			? 'off'
-			: 'retain-on-failure', //process.env.CI ? 'off' : 'on-first-retry',//'on',//
+			: { mode: 'retain-on-failure', screenshots: false, snapshots: true, sources: true },
 
 		screenshot: {
 			mode: 'only-on-failure',
 			fullPage: true, // Captures entire scrollable page
 		},
 
-		video: process.env.CI
-			? 'off'
-			: {
-					mode: 'retain-on-failure', //'on',//
-					size: viewportSize,
-			  },
-
 		recordVideoOptions: process.env.CI
 			? undefined
 			: {
-				mode: 'retain-on-failure',
 				size: viewportSize,
 			},
 
