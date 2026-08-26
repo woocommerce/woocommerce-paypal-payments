@@ -16,7 +16,8 @@ use Automattic\WooCommerce\Blueprint\Steps\Step;
  *
  * Registered twice, as the default connection-free export and as the opt-in one.
  * Two instances rather than one configurable export because Blueprint gives
- * exporters no per-request context: choosing an alias is the only lever the UI has.
+ * exporters no per-request context: choosing an alias is the only lever a caller
+ * has, whether that is the settings UI, WP-CLI or a direct REST request.
  */
 class PayPalSettingsExporter implements StepExporter, HasAlias
 {
