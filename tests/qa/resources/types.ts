@@ -9,6 +9,7 @@ export type ShopConfig = {
 	};
 	customer?: WooCommerce.CreateCustomer; // Registered customer to be created
 	products?: WooCommerce.CreateProduct[]; // Products to be created if not existing
+	isPayNowEnabled?: boolean; // Is Pay Now Experience option enabled in PCP Settings > Payment Methods
 };
 
 export type PayPalAccount = {
@@ -73,6 +74,10 @@ export namespace Pcp {
 			| 'no-3d-secure'
 			| 'only-required-3d-secure'
 			| 'always-3d-secure';
+		puiBrandName?: string;
+		puiCustomerServiceInstructions?: string;
+		puiLogoUrl?: string;
+		showCardLogos?: boolean;
 	};
 
 	export type Gateway = WooCommerce.PaymentGateway &
@@ -98,9 +103,11 @@ export namespace Pcp {
 		card?: WooCommerce.CreditCard;
 		isVaulted?: boolean;
 		birthDate?: string;
+		phone?: string;
 		useNotVaultedAccount?: PayPalAccount;
 		isAuthorized?: boolean;
 		saveToAccount?: boolean;
+		isFreeTrialSubscription?: boolean; // cart total is 0 (free trial or 100% coupon) - PayPal renders the saved-token radio instead of the vault component, see FreeTrialSubscriptionHelper::is_free_trial_cart()
 	};
 
 	export namespace Api {
@@ -134,7 +141,7 @@ export namespace Pcp {
 				| 'amex'
 				| 'jcb'
 				| 'diners-club'
-			 )[];
+			)[];
 			enableLogging?: boolean;
 			enablePayNow?: boolean;
 			invoicePrefix?: string;
@@ -144,6 +151,65 @@ export namespace Pcp {
 			softDescriptor?: string;
 			subtotalAdjustment?: string;
 		};
+
+		export namespace Styling {
+			// Top-level styling keys (camelCase) — addresses each location's config
+			export type LocationPageKey =
+				| 'cart'
+				| 'classicCheckout'
+				| 'expressCheckout'
+				| 'miniCart'
+				| 'product';
+
+			// Value echoed in the `location` field of a styling block (snake_case)
+			export type LocationPageSlug =
+				| 'cart'
+				| 'classic_checkout'
+				| 'express_checkout'
+				| 'mini_cart'
+				| 'product';
+
+			// API value of Admin.Styling.ButtonLayout
+			export type ButtonLayout = 'vertical' | 'horizontal';
+
+			// API value of Admin.Styling.ButtonShape
+			export type ButtonShape = 'rect' | 'pill';
+
+			// API value of Admin.Styling.ButtonLabel
+			// 'paypal' = PayPal, 'checkout' = Checkout, 'buynow' = PayPal Buy Now, 'pay' = Pay with PayPal
+			export type ButtonLabel = 'paypal' | 'checkout' | 'buynow' | 'pay';
+
+			// API value of Admin.Styling.ButtonColor
+			export type ButtonColor =
+				| 'gold'
+				| 'blue'
+				| 'silver'
+				| 'black'
+				| 'white';
+
+			// Per-location styling block (mirrors Admin.Styling.Config)
+			export type LocationPageConfig = {
+				enabled?: boolean;
+				methods?: Extract <
+					GatewayId,
+					| 'ppcp-gateway'
+					| 'pay-later'
+					| 'venmo'
+					| 'ppcp-googlepay'
+					| 'ppcp-applepay'
+				>[];
+				label?: ButtonLabel;
+				shape?: ButtonShape;
+				color?: ButtonColor;
+				location?: LocationPageSlug;
+				layout?: ButtonLayout;
+				tagline?: boolean;
+			};
+
+			export type Settings = Partial <
+				Record < LocationPageKey, LocationPageConfig >
+			>;
+		}
 	}
 
 	export namespace Admin {
@@ -184,7 +250,7 @@ export namespace Pcp {
 		};
 
 		export namespace Styling {
-			export type Location =
+			export type LocationPage =
 				| 'Cart'
 				| 'Classic Checkout'
 				| 'Express Checkout'
@@ -216,8 +282,8 @@ export namespace Pcp {
 				| 'Black'
 				| 'White';
 
-			export type Config = {
-				location?: Location;
+			export type LocationPageConfig = {
+				location?: LocationPage;
 				enablePaymentMethodsInLocation?: boolean;
 				paymentMethods?: PaymentMethods;
 				buttonLayout?: ButtonLayout;
@@ -294,8 +360,17 @@ export namespace Pcp {
 			merchant?: Merchant;
 			paymentMethods?: Gateway[];
 			settings?: Settings;
-			styling?: Styling.Config;
+			styling?: Styling.LocationPageConfig;
 			payLaterMessaging?: Plm.Config;
 		};
 	}
 }
+
+export type PayPalPaymentDetails = {
+	transactionId?: string;
+	currency?: string;
+	amount?: string;
+	grossAmount?: string;
+	payPalFee?: string;
+	netAmount?: string;
+};

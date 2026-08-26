@@ -12,7 +12,7 @@ namespace WooCommerce\PayPalCommerce\Blocks;
 use Automattic\WooCommerce\Blocks\Payments\Integrations\AbstractPaymentMethodType;
 use WC_AJAX;
 use WooCommerce\PayPalCommerce\Assets\AssetGetter;
-use WooCommerce\PayPalCommerce\Blocks\Endpoint\UpdateShippingEndpoint;
+use WooCommerce\PayPalCommerce\OrderEndpoints\Endpoint\UpdateShippingEndpoint;
 use WooCommerce\PayPalCommerce\Button\Assets\SmartButtonInterface;
 use WooCommerce\PayPalCommerce\Session\Cancellation\CancelController;
 use WooCommerce\PayPalCommerce\Session\Cancellation\CancelView;
@@ -238,7 +238,7 @@ class PayPalPaymentMethod extends AbstractPaymentMethodType {
 		$smart_buttons_enabled = ! $this->use_place_order
 			&& $this->settings_status->is_smart_button_enabled_for_location( $script_data['context'] ?? 'block-checkout' );
 		$place_order_enabled   = ( $this->use_place_order || $this->add_place_order_method )
-			&& ! $this->subscription_helper->cart_contains_subscription();
+			&& ( ! $this->subscription_helper->cart_contains_subscription() || ( $script_data['can_save_vault_token'] ?? false ) );
 		$cart                  = WC()->cart;
 
 		return array(
@@ -259,6 +259,10 @@ class PayPalPaymentMethod extends AbstractPaymentMethodType {
 			'placeOrderButtonText'        => $this->place_order_button_text,
 			'placeOrderButtonDescription' => $this->place_order_button_description,
 			'enabledFundingSources'       => $funding_sources,
+			// The gateway's (mode-aware) supported features, so the block can
+			// declare them to WooCommerce Blocks and not be filtered out when the
+			// cart requires one (e.g. `multiple_subscriptions` for 2+ subscriptions).
+			'supportedFeatures'           => array_values( (array) $this->gateway->supports ),
 			'ajax'                        => array(
 				'update_shipping' => array(
 					'endpoint' => WC_AJAX::get_endpoint( UpdateShippingEndpoint::ENDPOINT ),

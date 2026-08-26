@@ -11,7 +11,7 @@ namespace WooCommerce\PayPalCommerce\Blocks;
 
 use WooCommerce\PayPalCommerce\Assets\AssetGetter;
 use WooCommerce\PayPalCommerce\Assets\AssetGetterFactory;
-use WooCommerce\PayPalCommerce\Blocks\Endpoint\UpdateShippingEndpoint;
+use WooCommerce\PayPalCommerce\OrderEndpoints\Endpoint\UpdateShippingEndpoint;
 use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\Button\Assets\SmartButtonInterface;
@@ -54,7 +54,9 @@ return array(
 			},
 			$container->get( 'settings.settings-provider' ),
 			$container->get( 'wcgateway.configuration.card-configuration' ),
-			$container->get( 'save-payment-methods.eligible' )
+			$container->get( 'save-payment-methods.eligible' ),
+			$container->get( 'settings.data.payment' ),
+			$container->get( 'wcgateway.credit-card-icons' )
 		);
 	},
 	'blocks.settings.final_review_enabled' => static function ( ContainerInterface $container ): bool {
@@ -65,12 +67,7 @@ return array(
 	},
 
 	'blocks.endpoint.update-shipping'      => static function ( ContainerInterface $container ): UpdateShippingEndpoint {
-		return new UpdateShippingEndpoint(
-			$container->get( 'button.request-data' ),
-			$container->get( 'api.endpoint.order' ),
-			$container->get( 'api.factory.purchase-unit' ),
-			$container->get( 'woocommerce.logger.woocommerce' )
-		);
+		return $container->get( 'order-endpoints.endpoint.update-shipping' );
 	},
 
 	'blocks.add-place-order-method'        => function ( ContainerInterface $container ): bool {

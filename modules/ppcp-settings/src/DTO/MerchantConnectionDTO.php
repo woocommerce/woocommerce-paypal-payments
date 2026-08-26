@@ -88,11 +88,11 @@ class MerchantConnectionDTO {
 		string $seller_type = SellerTypeEnum::UNKNOWN
 	) {
 		$this->is_sandbox       = $is_sandbox;
-		$this->client_id        = $client_id;
-		$this->client_secret    = $client_secret;
-		$this->merchant_id      = $merchant_id;
-		$this->merchant_email   = $merchant_email;
-		$this->merchant_country = $merchant_country;
-		$this->seller_type      = $seller_type;
+		$this->client_id        = trim( $client_id );
+		$this->client_secret    = trim( $client_secret );
+		$this->merchant_id      = trim( $merchant_id );
+		$this->merchant_email   = trim( $merchant_email );
+		$this->merchant_country = trim( $merchant_country );
+		$this->seller_type      = trim( $seller_type );
 	}
 }

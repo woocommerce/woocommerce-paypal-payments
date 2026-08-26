@@ -99,15 +99,18 @@ class CardFieldsModule implements ServiceModule, ExecutableModule {
 				$should_show_card_holder_name = apply_filters( 'woocommerce_paypal_payments_enable_cardholder_name_field', $card_payments_configuration->show_name_on_card() === 'yes' );
 
 				if ( CreditCardGateway::ID === $id && $should_show_card_holder_name ) {
-					$default_fields['card-name-field'] = '<p class="form-row form-row-wide">
+					$card_name_field = '<p class="form-row form-row-wide">
 						<label for="ppcp-credit-card-gateway-card-name">' . esc_attr__( 'Cardholder Name', 'woocommerce-paypal-payments' ) . '</label>
-						<input id="ppcp-credit-card-gateway-card-name" class="input-text wc-credit-card-form-card-expiry" type="text" placeholder="' . esc_attr__( 'Cardholder Name (optional)', 'woocommerce-paypal-payments' ) . '" name="ppcp-credit-card-gateway-card-name">
+						<input id="ppcp-credit-card-gateway-card-name" class="input-text" type="text" placeholder="' . esc_attr__( 'Cardholder Name (optional)', 'woocommerce-paypal-payments' ) . '" name="ppcp-credit-card-gateway-card-name">
 					</p>';
 
-					// Moves new item to first position.
-					$new_field = $default_fields['card-name-field'];
-					unset( $default_fields['card-name-field'] );
-					array_unshift( $default_fields, $new_field );
+					// Inject the cardholder-name field before all other fields.
+					// array_merge keeps the string keys (array_unshift would reindex
+					// them and break the card-number placeholder replacement below).
+					$default_fields = array_merge(
+						array( 'card-name-field' => $card_name_field ),
+						$default_fields
+					);
 				}
 
 				if ( apply_filters( 'woocommerce_paypal_payments_card_fields_translate_card_number', true ) ) {
@@ -129,7 +132,7 @@ class CardFieldsModule implements ServiceModule, ExecutableModule {
 
 		add_filter(
 			'ppcp_create_order_request_body_data',
-			function ( array $data, string $payment_method ) use ( $c ): array {
+			function ( array $data, string $payment_method, array $request_data = array() ) use ( $c ): array {
 				if ( ! $c->get( 'wcgateway.configuration.card-configuration' )->is_enabled() ) {
 					return $data;
 				}
@@ -166,12 +169,21 @@ class CardFieldsModule implements ServiceModule, ExecutableModule {
 					);
 				}
 
+				// The v6 card-fields component set is number|expiry|cvv only, so the
+				// cardholder name (when enabled) is submitted as a plain field and
+				// forwarded here as payment_source.card.name.
+				$card_name = (string) ( $request_data['card_name'] ?? '' );
+				$card_name = substr( trim( $card_name ), 0, 300 );
+				if ( $card_name !== '' ) {
+					$payment_source_data['name'] = $card_name;
+				}
+
 				$data['payment_source'] = array( 'card' => $payment_source_data );
 
 				return $data;
 			},
 			10,
-			2
+			3
 		);
 
 		// Validates if an order with card payment source can be captured.
@@ -181,20 +193,46 @@ class CardFieldsModule implements ServiceModule, ExecutableModule {
 				$validator = $c->get( 'card-fields.service.card-capture-validator' );
 				assert( $validator instanceof CardCaptureValidator );
 
-				if ( ! $validator->is_valid( $order ) ) {
+				$rejection_reason = $validator->rejection_reason( $order );
+				if ( $rejection_reason !== CardCaptureValidator::REASON_NONE ) {
 					$logger = $c->get( 'woocommerce.logger.woocommerce' );
 					assert( $logger instanceof LoggerInterface );
 
-					$logger->warning( "Could not capture order {$order->id()}" );
+					$logger->warning( "Could not capture order {$order->id()}: {$rejection_reason}" );
 
-					if ( apply_filters( 'woocommerce_paypal_payments_force_delete_wc_order_on_failed_capture', true ) ) {
-						// Add delete order flag in WC session to force delete on process payment failure handler.
+					// Only set session flag if WC session exists (not in API/agentic context).
+					/**
+					 * Fires to add a delete order flag in WC session.
+					 */
+					if ( apply_filters( 'woocommerce_paypal_payments_force_delete_wc_order_on_failed_capture', true )
+						&& function_exists( 'WC' ) && WC()->session instanceof \WC_Session ) {
+						/**
+						 * Add delete order flag in WC session to force delete on process payment failure handler.
+						 */
 						WC()->session->set( 'ppcp_delete_wc_order_on_payment_failure', true );
 					}
 
-					throw new DomainException( esc_html__( 'Could not capture the PayPal order.', 'woocommerce-paypal-payments' ) );
+					throw new DomainException( esc_html( self::capture_rejection_message( $rejection_reason ) ) );
 				}
 			}
 		);
+	}
+
+	/**
+	 * Returns a customer-friendly decline message for a capture rejection reason.
+	 *
+	 * @param string $reason One of the CardCaptureValidator::REASON_* constants.
+	 *
+	 * @return string
+	 */
+	private static function capture_rejection_message( string $reason ): string {
+		switch ( $reason ) {
+			case CardCaptureValidator::REASON_3DS_FAILED:
+				return __( 'This card could not be authorized. Please try a different payment method.', 'woocommerce-paypal-payments' );
+			case CardCaptureValidator::REASON_3DS_UNCLEAR:
+				return __( 'The 3D Secure validation could not be completed. Please try again or use another card.', 'woocommerce-paypal-payments' );
+			default:
+				return __( 'This payment could not be processed. Please try a different payment method.', 'woocommerce-paypal-payments' );
+		}
 	}
 }

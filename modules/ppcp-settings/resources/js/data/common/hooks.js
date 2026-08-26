@@ -228,6 +228,21 @@ export const useActiveModal = () => {
 	return { activeModal, setActiveModal };
 };
 
+/**
+ * Access to the one-shot, server-queued onboarding notices.
+ *
+ * @return {{ notices: Array<{type: string, message: string}>, clear: Function }}
+ *         The pending notices and a callback to clear them once displayed.
+ */
+export const useOnboardingNotices = () => {
+	const { useTransient } = useStoreData();
+	const [ notices, setNotices ] = useTransient( 'onboardingNotices' );
+
+	const clear = useCallback( () => setNotices( [] ), [ setNotices ] );
+
+	return { notices: notices || [], clear };
+};
+
 /*
  * Busy state management hooks
  */

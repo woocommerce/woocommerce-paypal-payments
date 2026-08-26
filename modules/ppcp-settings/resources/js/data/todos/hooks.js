@@ -38,7 +38,7 @@ const useStoreData = () => {
 
 const useHooks = () => {
 	const { dispatch, select } = useStoreData();
-	const { fetchTodos, setDismissedTodos, setCompletedTodos } = dispatch;
+	const { fetchTodos, addDismissedTodo, setCompletedTodos } = dispatch;
 
 	// Get todos data from store
 	const todos = select.getTodos();
@@ -47,12 +47,7 @@ const useHooks = () => {
 
 	const dismissedSet = new Set( dismissedTodos );
 
-	const dismissTodo = async ( todoId ) => {
-		if ( ! dismissedSet.has( todoId ) ) {
-			const newDismissedTodos = [ ...dismissedTodos, todoId ];
-			await setDismissedTodos( newDismissedTodos );
-		}
-	};
+	const dismissTodo = ( todoId ) => addDismissedTodo( todoId );
 
 	const setTodoCompleted = async ( todoId, isCompleted ) => {
 		let newCompletedTodos;

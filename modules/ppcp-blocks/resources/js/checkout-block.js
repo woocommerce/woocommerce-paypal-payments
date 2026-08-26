@@ -5,52 +5,46 @@ import {
 import { __ } from '@wordpress/i18n';
 import {
 	cartHasSubscriptionProducts,
-	isPayPalSubscription,
+	paypalPaymentMethodAllowed,
+	paypalSubscriptionButtonAllowed,
 } from './Helper/Subscription';
 import { loadPayPalScript } from '../../../ppcp-button/resources/js/modules/Helper/PayPalScriptLoading';
+import { initCartFragmentSync } from '../../../ppcp-button/resources/js/modules/Helper/CartFragmentSync';
 import BlockCheckoutMessagesBootstrap from './Bootstrap/BlockCheckoutMessagesBootstrap';
 import { PayPalComponent } from './Components/paypal';
 import { BlockEditorPayPalComponent } from './Components/block-editor-paypal';
 import { PaypalLabel } from './Components/paypal-label';
 import { PayPalPlaceOrderContent } from './Components/paypal-place-order-content';
+import { PayPalSavedToken } from './Components/paypal-saved-token';
 const namespace = 'ppcpBlocksPaypalExpressButtons';
 const config = wc.wcSettings.getSetting( 'ppcp-gateway_data' );
 
 window.ppcpFundingSource = config.fundingSource;
 
+// Keep the classic header mini-cart count in sync with the block cart/checkout,
+// which mutate the Store API cart instead of firing WooCommerce's jQuery cart
+// fragment events. Idempotent with the same call in the button bundle.
+initCartFragmentSync();
+
 let paypalScriptPromise = null;
 
-const features = [ 'products' ];
+// Mirror the gateway's server-side (mode-aware) `supports` so WooCommerce Blocks
+// does not filter the PayPal method out when the cart requires a feature the
+// gateway actually supports — notably `multiple_subscriptions` when the cart holds
+// two or more subscriptions. Falls back to the previous hard-coded list.
+const features = Array.isArray( config.supportedFeatures )
+	? [ ...config.supportedFeatures ]
+	: [ 'products' ];
 let blockEnabled = true;
 
 if ( cartHasSubscriptionProducts( config.scriptData ) ) {
-	// Don't show buttons on block cart page if user is not logged in and cart contains free trial product
-	if (
-		! config.scriptData.user.is_logged &&
-		config.scriptData.context === 'cart-block' &&
-		cartHasSubscriptionProducts( config.scriptData ) &&
-		config.scriptData.is_free_trial_cart
-	) {
-		blockEnabled = false;
-	}
+	// Show the button only for subscription carts PayPal can process
+	// (shared rule used by the classic cart and mini-cart as well).
+	blockEnabled = paypalSubscriptionButtonAllowed( config.scriptData );
 
-	// Don't render if vaulting disabled and is in vault subscription mode
-	if (
-		! isPayPalSubscription( config.scriptData ) &&
-		! config.scriptData.can_save_vault_token
-	) {
-		blockEnabled = false;
+	if ( ! Array.isArray( config.supportedFeatures ) ) {
+		features.push( 'subscriptions' );
 	}
-
-	// Don't render buttons if in subscription mode and product not associated with a PayPal subscription
-	if (
-		isPayPalSubscription( config.scriptData ) &&
-		! config.scriptData.subscription_product_allowed
-	) {
-		blockEnabled = false;
-	}
-
-	features.push( 'subscriptions' );
 }
 
 if ( blockEnabled ) {
@@ -60,12 +54,14 @@ if ( blockEnabled ) {
 			label: <PaypalLabel config={ config } />,
 			content: (
 				<PayPalPlaceOrderContent
+					config={ config }
 					description={ config.description }
 					placeOrderButtonDescription={
 						config.placeOrderButtonDescription
 					}
 				/>
 			),
+			savedTokenComponent: <PayPalSavedToken config={ config } />,
 			edit: (
 				<div
 					dangerouslySetInnerHTML={ {
@@ -75,13 +71,22 @@ if ( blockEnabled ) {
 			),
 			placeOrderButtonLabel: config.placeOrderButtonText,
 			ariaLabel: config.title,
-			canMakePayment: ( cartData ) => {
-				const total = cartData?.cartTotals?.total_price;
-				return parseInt( total ) > 0;
-			},
+			canMakePayment: ( cartData ) =>
+				paypalPaymentMethodAllowed( config.scriptData, cartData ),
 			supports: {
 				features,
 				showSavedCards: true,
+			},
+		} );
+
+		const { registerCheckoutFilters } = window.wc.blocksCheckout;
+		registerCheckoutFilters( config.id, {
+			placeOrderButtonLabel: ( value ) => {
+				const store = window.wp?.data?.select( 'wc/store/payment' );
+				if ( store?.getActivePaymentMethod() === config.id ) {
+					return config.placeOrderButtonText;
+				}
+				return value;
 			},
 		} );
 	}

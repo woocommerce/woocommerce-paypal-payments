@@ -20,6 +20,7 @@ use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
+use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
 
 /**
  * Class WcPaymentTokensModule
@@ -94,14 +95,39 @@ class WcPaymentTokensModule implements ServiceModule, ExecutableModule {
 
 				$is_post = isset( $_SERVER['REQUEST_METHOD'] ) && $_SERVER['REQUEST_METHOD'] === 'POST';
 
-				// Exclude ApplePay tokens from payment pages.
-				if (
-					( is_checkout() || is_cart() || is_product() )
-					&& ! $is_post // Don't check on POST so we have all payment methods on form submissions.
-				) {
+				// Exclude ApplePay tokens from payment pages, regardless of request method.
+				// Apple Pay tokens are only usable for merchant-initiated subscription renewals,
+				// never buyer-selectable at checkout. The classic checkout re-renders its payment
+				// fields via a POST `update_order_review` AJAX call, so a `! $is_post` guard would
+				// let the token leak back into the selectable saved-methods list.
+				if ( is_checkout() || is_cart() || is_product() ) {
 					foreach ( $tokens as $index => $token ) {
 						if ( $token instanceof PaymentTokenApplePay ) {
 							unset( $tokens[ $index ] );
+						}
+					}
+				}
+
+				// Exclude CC tokens when cart has a PayPal subscription product the CC gateway cannot support.
+				$payment_gateways = WC()->payment_gateways;
+				if (
+					( is_checkout() || is_cart() || is_product() )
+					&& ! $is_post
+					&& $container->has( 'wc-subscriptions.helper' )
+					&& ! is_null( $payment_gateways )
+				) {
+					$subscription_helper = $container->get( 'wc-subscriptions.helper' );
+					if (
+						$subscription_helper instanceof SubscriptionHelper
+						&& $subscription_helper->cart_contains_paypal_subscription_product()
+					) {
+						$cc_gateway = $payment_gateways->payment_gateways()[ CreditCardGateway::ID ] ?? null;
+						if ( $cc_gateway && ! in_array( 'subscriptions', $cc_gateway->supports, true ) ) {
+							foreach ( $tokens as $index => $token ) {
+								if ( $token->get_gateway_id() === CreditCardGateway::ID ) {
+									unset( $tokens[ $index ] );
+								}
+							}
 						}
 					}
 				}

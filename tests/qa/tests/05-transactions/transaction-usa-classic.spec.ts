@@ -2,61 +2,35 @@
  * Internal dependencies
  */
 import { test } from '../../utils';
-import {
-	merchants,
-	storeConfigUsa,
-	gateways,
-	taxSettings,
-	customers,
-} from '../../resources';
-import {
-	transactionsOnClassicCart,
-	transactionsOnClassicCheckout,
-	transactionsOnClassicProduct,
-} from './_test-scenarios';
-import {
-	venmoClassicCartUsa,
-	venmoClassicCheckoutUsa,
-	venmoClassicProductUsa,
-} from './_test-data/venmo';
+import { customers, gateways, negative12FeePlugin, taxSettings } from '../../resources';
+import { transactionsOnClassicCheckout } from './_test-scenarios';
 import {
 	payPalClassicCheckout,
 	payPalClassicCheckoutExcludingTax,
 	payPalClassicCheckoutIntentAuthorized,
+	payPalClassicCheckoutNegativeFee,
 } from './_test-data/paypal';
 import {
 	payLaterClassicCheckout,
 	payLaterClassicCheckoutExcludingTax,
 	payLaterClassicCheckoutIntentAuthorized,
+	payLaterClassicCheckoutNegativeFee,
 } from './_test-data/pay-later';
 import {
 	acdcClassicCheckout,
 	acdcClassicCheckoutIntentAuthorized,
 	acdcClassicCheckoutExcludingTax,
 	acdcClassicCheckout3ds,
+	acdcClassicCheckoutNegativeFee,
 } from './_test-data/acdc';
 import { fastlaneClassicCheckout } from './_test-data/fastlane';
 
-const { payPal, payLater, venmo, acdc, fastlane } = gateways;
+const { fastlane } = gateways;
 
-test.beforeAll( async ( { utils, pcpApi, wooCommerceApi } ) => {
+test.beforeAll( async ( { utils } ) => {
 	await utils.configureStore( {
-		...storeConfigUsa,
 		enableClassicPages: true,
 		customer: customers.usa,
-	} );
-	await utils.installAndActivatePcp();
-	await pcpApi.resetDb();
-	await pcpApi.connectMerchant(
-		merchants.usa.client_id,
-		merchants.usa.client_secret
-	);
-	await pcpApi.updatePcpPaymentMethods( {
-		[ payPal.id ]: { id: payPal.id, enabled: true },
-		[ payLater.id ]: { id: payLater.id, enabled: true },
-		[ venmo.id ]: { id: venmo.id, enabled: true },
-		[ acdc.id ]: { id: acdc.id, enabled: true },
-		[ fastlane.id ]: { id: fastlane.id, enabled: false },
 	} );
 } );
 
@@ -172,5 +146,31 @@ test.describe( () => {
 		await pcpApi.updatePcpPaymentMethods( {
 			[ fastlane.id ]: { id: fastlane.id, enabled: false },
 		} );
+	} );
+} );
+
+/**
+ * Negative fee snippet
+ */
+
+test.describe( () => {
+	test.beforeAll( async ( { requestUtils } ) => {
+		await requestUtils.activatePlugin( negative12FeePlugin.slug );
+	} );
+
+	for ( const testOrder of payPalClassicCheckoutNegativeFee ) {
+		transactionsOnClassicCheckout( testOrder );
+	}
+
+	for ( const testOrder of payLaterClassicCheckoutNegativeFee ) {
+		transactionsOnClassicCheckout( testOrder );
+	}
+
+	for ( const testOrder of acdcClassicCheckoutNegativeFee ) {
+		transactionsOnClassicCheckout( testOrder );
+	}
+
+	test.afterAll( async ( { requestUtils } ) => {
+		await requestUtils.deactivatePlugin( negative12FeePlugin.slug );
 	} );
 } );

@@ -186,6 +186,32 @@ class PayerFactoryTest extends TestCase
     }
 
     /**
+     * PayPal sometimes serializes an empty payer address as a JSON array
+     * (`[]`) instead of an object (`{}`), which previously fataled with
+     * "AddressFactory::from_paypal_response(): Argument #1 ($data) must be
+     * of type stdClass, array given" because PayerFactory passed the
+     * decoded array straight through without normalizing it.
+     */
+    public function testFromPayPalResponseWithArrayAddressDoesNotFatal()
+    {
+        $data = (object)[
+            'address' => [],
+            'name' => (object)[
+                'given_name' => 'given_name',
+                'surname' => 'surname',
+            ],
+            'email_address' => 'email_address',
+            'payer_id' => 'payer_id',
+        ];
+
+        $testee = new PayerFactory(new AddressFactory());
+        $payer = $testee->from_paypal_response($data);
+
+        $this->assertInstanceOf(Address::class, $payer->address());
+        $this->assertEquals('', $payer->address()->country_code());
+    }
+
+    /**
      * @dataProvider dataForTestFromPayPalResponse
      */
     public function testFromPayPalResponse($data)
@@ -201,7 +227,7 @@ class PayerFactoryTest extends TestCase
         $this->assertEquals($data->payer_id, $payer->payer_id());
         $this->assertEquals($data->name->given_name, $payer->name()->given_name());
         $this->assertEquals($data->name->surname, $payer->name()->surname());
-        if (isset($data->phone)) {
+        if (isset($data->phone->phone_number->national_number)) {
             $this->assertEquals($data->phone->phone_type, $payer->phone()->type());
             $this->assertEquals($data->phone->phone_number->national_number, $payer->phone()->phone()->national_number());
         } else {
@@ -262,6 +288,28 @@ class PayerFactoryTest extends TestCase
                     'payer_id' => 'payer_id',
                 ],
             ],
+            'phone_with_null_national_number' => [
+                (object)[
+                    'address' => new \stdClass(),
+                    'name' => (object)[
+                        'given_name' => 'given_name',
+                        'surname' => 'surname',
+                    ],
+                    'phone' => (object)[
+                        'phone_type' => 'HOME',
+                        'phone_number' => (object)[
+                            'national_number' => null,
+                        ],
+                    ],
+                    'tax_info' => (object)[
+                        'tax_id' => 'tax_id',
+                        'tax_id_type' => 'BR_CPF',
+                    ],
+                    'birth_date' => '1970-01-01',
+                    'email_address' => 'email_address',
+                    'payer_id' => 'payer_id',
+                ],
+            ],
             'no_tax_info' => [
                 (object)[
                     'address' => new \stdClass(),
@@ -276,6 +324,17 @@ class PayerFactoryTest extends TestCase
                         ],
                     ],
                     'birth_date' => '1970-01-01',
+                    'email_address' => 'email_address',
+                    'payer_id' => 'payer_id',
+                ],
+            ],
+            'empty_array_address' => [
+                (object)[
+                    'address' => [],
+                    'name' => (object)[
+                        'given_name' => 'given_name',
+                        'surname' => 'surname',
+                    ],
                     'email_address' => 'email_address',
                     'payer_id' => 'payer_id',
                 ],

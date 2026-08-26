@@ -10,8 +10,9 @@ namespace WooCommerce\PayPalCommerce;
 use WooCommerce\PayPalCommerce\PayLaterBlock\PayLaterBlockModule;
 use WooCommerce\PayPalCommerce\PayLaterWCBlocks\PayLaterWCBlocksModule;
 use WooCommerce\PayPalCommerce\PayLaterConfigurator\PayLaterConfiguratorModule;
+use WooCommerce\PayPalCommerce\Settings\SettingsModule;
 
-return function ( string $root_dir ): iterable {
+return static function ( string $root_dir ): iterable {
 	$modules_dir = "$root_dir/modules";
 
 	$modules = array(
@@ -20,6 +21,7 @@ return function ( string $root_dir ): iterable {
 		( require "$modules_dir/ppcp-admin-notices/module.php" )(),
 		( require "$modules_dir/ppcp-api-client/module.php" )(),
 		( require "$modules_dir/ppcp-compat/module.php" )(),
+		( require "$modules_dir/ppcp-order-endpoints/module.php" )(),
 		( require "$modules_dir/ppcp-button/module.php" )(),
 		( require "$modules_dir/ppcp-session/module.php" )(),
 		( require "$modules_dir/ppcp-status-report/module.php" )(),
@@ -34,6 +36,7 @@ return function ( string $root_dir ): iterable {
 		( require "$modules_dir/ppcp-local-alternative-payment-methods/module.php" )(),
 		( require "$modules_dir/ppcp-settings/module.php" )(),
 		( require "$modules_dir/ppcp-fraud-protection/module.php" )(),
+		( require "$modules_dir/ppcp-abilities/module.php" )(),
 	);
 	// phpcs:disable WordPress.NamingConventions.ValidHookName.UseUnderscores
 
@@ -83,6 +86,27 @@ return function ( string $root_dir ): iterable {
 	) ) {
 		$modules[] = ( require "$modules_dir/ppcp-axo/module.php" )();
 		$modules[] = ( require "$modules_dir/ppcp-axo-block/module.php" )();
+	}
+
+	if ( apply_filters(
+		'woocommerce.feature-flags.woocommerce_paypal_payments.vault_component_enabled',
+		getenv( 'PCP_VAULT_COMPONENT_ENABLED' ) !== '0'
+	) ) {
+		$modules[] = ( require "$modules_dir/ppcp-vault-component/module.php" )();
+	}
+
+	if ( apply_filters(
+		'woocommerce.feature-flags.woocommerce_paypal_payments.store_sync_enabled',
+		getenv( 'PCP_STORE_SYNC_ENABLED' ) === '1'
+	) ) {
+		$modules[] = ( require "$modules_dir/ppcp-store-sync/module.php" )();
+	}
+
+	if ( apply_filters(
+		'woocommerce.feature-flags.woocommerce_paypal_payments.sdk_v6_enabled',
+		getenv( 'PCP_SDK_V6_ENABLED' ) === '1'
+	) ) {
+		$modules[] = ( require "$modules_dir/ppcp-sdk-v6/module.php" )();
 	}
 
 	return $modules;

@@ -1,6 +1,6 @@
 <?php
 
-declare(strict_types=1);
+declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\Assets;
 
@@ -31,6 +31,7 @@ class AssetGetter {
 	 */
 	public function get_asset_url( string $asset_name ): string {
 		$compiled_name = $this->get_compiled_asset_name( $asset_name );
+
 		return $this->base_plugin_url . 'assets/' . $compiled_name;
 	}
 
@@ -42,7 +43,34 @@ class AssetGetter {
 	public function get_asset_php_path( string $asset_name ): string {
 		$compiled_name = $this->get_compiled_asset_name( $asset_name );
 		$without_ext   = pathinfo( $compiled_name, PATHINFO_FILENAME );
+
 		return trailingslashit( $this->plugin_folder_path ) . 'assets/' . "$without_ext.asset.php";
+	}
+
+	/**
+	 * Returns the dependencies and version webpack generated for a compiled asset.
+	 *
+	 * Use this over hardcoding an empty dependency list. The WP dependency-extraction
+	 * webpack plugin rewrites `@wordpress/*` imports to `window.wp.*` globals and
+	 * records the matching script handles here.
+	 * Registering without them may cause failure in some cases depending on the page and environment.
+	 *
+	 * The version is a content hash, so it also busts caches on rebuild where
+	 * the plugin version would not.
+	 *
+	 * @param string $asset_name       The asset name like 'index.js'.
+	 * @param string $fallback_version Version to use when the file is absent.
+	 * @return array{dependencies: string[], version: string}
+	 */
+	public function get_asset_data( string $asset_name, string $fallback_version ): array {
+		$path = $this->get_asset_php_path( $asset_name );
+
+		$asset = file_exists( $path ) ? require $path : array();
+
+		return array(
+			'dependencies' => is_array( $asset['dependencies'] ?? null ) ? $asset['dependencies'] : array(),
+			'version'      => is_string( $asset['version'] ?? null ) ? $asset['version'] : $fallback_version,
+		);
 	}
 
 	/**
@@ -52,6 +80,10 @@ class AssetGetter {
 	 */
 	public function get_static_asset_url( string $asset_name ): string {
 		return $this->base_plugin_url . "modules/{$this->module_name}/assets/$asset_name";
+	}
+
+	public function get_asset_handle( string $suffix ): string {
+		return "{$this->module_name}-$suffix";
 	}
 
 	protected function get_compiled_asset_name( string $asset_name ): string {

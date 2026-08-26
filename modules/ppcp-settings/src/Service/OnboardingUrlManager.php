@@ -62,6 +62,24 @@ class OnboardingUrlManager {
 	}
 
 	/**
+	 * Returns the seller nonce stored for the given token without deleting the token.
+	 *
+	 * @param string $token   The token to look up.
+	 * @param int    $user_id User ID who generated the token.
+	 *
+	 * @return string The seller nonce, or empty string if not found.
+	 */
+	public function get_seller_nonce_for_token( string $token, int $user_id ): string {
+		$onboarding_url = OnboardingUrl::make_from_token( $this->cache, $token, $user_id );
+
+		if ( $onboarding_url === false || ! $onboarding_url->load() ) {
+			return '';
+		}
+
+		return $onboarding_url->seller_nonce();
+	}
+
+	/**
 	 * Validates the authentication token; if it's valid, the token is instantly
 	 * invalidated (deleted), so it cannot be validated again.
 	 *

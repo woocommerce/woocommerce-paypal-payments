@@ -306,7 +306,7 @@ class SettingsModel extends AbstractDataModel {
 	 * @return bool True if authorize only is enabled, false otherwise.
 	 */
 	public function get_authorize_only(): bool {
-		return $this->data['authorize_only'];
+		return $this->sanitizer->sanitize_bool( $this->data['authorize_only'] ?? false );
 	}
 
 	/**
@@ -324,7 +324,7 @@ class SettingsModel extends AbstractDataModel {
 	 * @return bool True if capturing virtual orders is enabled, false otherwise.
 	 */
 	public function get_capture_virtual_orders(): bool {
-		return $this->data['capture_virtual_orders'];
+		return $this->sanitizer->sanitize_bool( $this->data['capture_virtual_orders'] ?? false );
 	}
 
 	/**
@@ -342,7 +342,9 @@ class SettingsModel extends AbstractDataModel {
 	 * @return bool True if saving PayPal and Venmo is enabled, false otherwise.
 	 */
 	public function get_save_paypal_and_venmo(): bool {
-		return $this->data[ FeaturesDefinition::FEATURE_SAVE_PAYPAL_AND_VENMO ];
+		return $this->sanitizer->sanitize_bool(
+			$this->data[ FeaturesDefinition::FEATURE_SAVE_PAYPAL_AND_VENMO ] ?? false
+		);
 	}
 
 	/**
@@ -360,7 +362,7 @@ class SettingsModel extends AbstractDataModel {
 	 * @return bool True if instant payments only setting is enabled, false otherwise.
 	 */
 	public function get_instant_payments_only(): bool {
-		return $this->data['instant_payments_only'] ?? false;
+		return $this->sanitizer->sanitize_bool( $this->data['instant_payments_only'] ?? false );
 	}
 
 	/**
@@ -378,7 +380,7 @@ class SettingsModel extends AbstractDataModel {
 	 * @return bool True if the contact module feature is enabled, false otherwise.
 	 */
 	public function get_enable_contact_module(): bool {
-		return $this->data['enable_contact_module'];
+		return $this->sanitizer->sanitize_bool( $this->data['enable_contact_module'] ?? true );
 	}
 
 	/**
@@ -396,7 +398,7 @@ class SettingsModel extends AbstractDataModel {
 	 * @return bool True if saving card details is enabled, false otherwise.
 	 */
 	public function get_save_card_details(): bool {
-		return $this->data['save_card_details'];
+		return $this->sanitizer->sanitize_bool( $this->data['save_card_details'] ?? false );
 	}
 
 	/**
@@ -414,7 +416,7 @@ class SettingsModel extends AbstractDataModel {
 	 * @return bool True if Pay Now is enabled, false otherwise.
 	 */
 	public function get_enable_pay_now(): bool {
-		return $this->data['enable_pay_now'];
+		return $this->sanitizer->sanitize_bool( $this->data['enable_pay_now'] ?? false );
 	}
 
 	/**
@@ -432,7 +434,7 @@ class SettingsModel extends AbstractDataModel {
 	 * @return bool True if logging is enabled, false otherwise.
 	 */
 	public function get_enable_logging(): bool {
-		return $this->data['enable_logging'];
+		return $this->sanitizer->sanitize_bool( $this->data['enable_logging'] ?? false );
 	}
 
 	/**
@@ -492,7 +494,7 @@ class SettingsModel extends AbstractDataModel {
 	 * @return bool True if Stay Updated is enabled, false otherwise.
 	 */
 	public function get_stay_updated(): bool {
-		return $this->data['stay_updated'];
+		return $this->sanitizer->sanitize_bool( $this->data['stay_updated'] ?? true );
 	}
 
 	/**
@@ -510,7 +512,7 @@ class SettingsModel extends AbstractDataModel {
 	 * @return bool
 	 */
 	public function get_payment_level_processing(): bool {
-		return (bool) $this->data['payment_level_processing'];
+		return $this->sanitizer->sanitize_bool( $this->data['payment_level_processing'] ?? true );
 	}
 
 	/**

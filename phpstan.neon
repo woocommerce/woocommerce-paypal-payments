@@ -12,6 +12,9 @@ parameters:
         - stubs/shiptastic.php
         - stubs/wc-bookings.php
         - stubs/wpcli.php
+        - stubs/wc-blueprint.php
+        - stubs/abilities.php
+        - stubs/product-customizations.php
         - vendor/inpsyde/wp-stubs-versions/latest.php
         - vendor/php-stubs/woocommerce-stubs/woocommerce-stubs.php
     paths:

@@ -47,6 +47,7 @@ import {
 	CustomerPaymentMethods,
 	CustomerSubscriptions,
 	ClassicPayForOrder,
+	ApmHostedCheckout,
 } from './frontend';
 
 export type BaseExtend = BaseExtendBase & {
@@ -83,6 +84,7 @@ export type BaseExtend = BaseExtendBase & {
 	customerAccount: CustomerAccount;
 	customerPaymentMethods: CustomerPaymentMethods;
 	customerSubscriptions: CustomerSubscriptions;
+	apmHostedCheckout: ApmHostedCheckout;
 
 	// Utils & preconditions
 	utils: Utils;
@@ -95,7 +97,11 @@ const test = base.extend< BaseExtend >( {
 	pcpApi: async ( { request, requestUtils }, use ) => {
 		await use( new PcpApi( { request, requestUtils } ) );
 	},
-	visitorPage: async ( { browser, recordVideoOptions, httpCredentials }, use, testInfo ) => {
+	visitorPage: async (
+		{ browser, recordVideoOptions, httpCredentials },
+		use,
+		testInfo
+	) => {
 		// check if visitor is specified in test otherwise use guest
 		const storageStateName =
 			testInfo.annotations?.find( ( el ) => el.type === 'visitor' )
@@ -173,9 +179,7 @@ const test = base.extend< BaseExtend >( {
 		await use( new WooCommerceOrderEdit( { page } ) );
 	},
 	wooCommerceSubscriptionEdit: async ( { page, requestUtils }, use ) => {
-		await use(
-			new WooCommerceSubscriptionEdit( { page, requestUtils } )
-		);
+		await use( new WooCommerceSubscriptionEdit( { page, requestUtils } ) );
 	},
 
 	// WooCommerce front end
@@ -237,6 +241,9 @@ const test = base.extend< BaseExtend >( {
 	},
 	customerSubscriptions: async ( { visitorPage }, use ) => {
 		await use( new CustomerSubscriptions( { page: visitorPage } ) );
+	},
+	apmHostedCheckout: async ( { visitorPage }, use ) => {
+		await use( new ApmHostedCheckout( visitorPage ) );
 	},
 
 	// Utils & preconditions

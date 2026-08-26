@@ -1,6 +1,7 @@
 import classNames from 'classnames';
 
 import { Content } from './Elements';
+import { useScrollTarget } from '@ppcp-settings/hooks/useScrollHighlight';
 
 /**
  * Renders a settings card.
@@ -22,10 +23,15 @@ const SettingsCard = ( {
 	children,
 	contentContainer = true,
 } ) => {
-	const cardClassNames = classNames( 'ppcp-r-settings-card', className );
+	const { ref, isHighlighted } = useScrollTarget( id );
+
+	const cardClassNames = classNames( 'ppcp-r-settings-card', className, {
+		'ppcp-highlight': isHighlighted,
+	} );
 	const cardProps = {
 		className: cardClassNames,
 		id,
+		...( id && { ref } ),
 	};
 
 	const titleId = id ? `${ id }-title` : undefined;

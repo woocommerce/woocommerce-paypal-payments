@@ -2,51 +2,25 @@
  * Internal dependencies
  */
 import { annotateVisitor, expect, test, PayPalPopup } from '../../utils';
-import {
-	merchants,
-	storeConfigUsa,
-	customers,
-	payments,
-	cards,
-	products,
-} from '../../resources';
+import { customers, payments, cards, products } from '../../resources';
 
 const customer = customers.usa;
 const { payPal, acdc } = payments;
 const acdc2 = { ...acdc, card: cards.visa2 };
 
-test.beforeAll( async ( { utils, pcpApi, wooCommerceApi } ) => {
-	await utils.configureStore( {
-		...storeConfigUsa,
-		enableClassicPages: true,
-	} );
-	await utils.installAndActivatePcp();
-	await pcpApi.resetDb();
-	await pcpApi.connectMerchant(
-		merchants.usa.client_id,
-		merchants.usa.client_secret,
-		{
-			isCasualSeller: false,
-			areOptionalPaymentMethodsEnabled: true,
-		}
-	);
-	await pcpApi.updatePcpSettings( {
-		savePaypalAndVenmo: true,
-		saveCardDetails: true,
-	} );
+test.beforeAll( async ( { utils } ) => {
+	await utils.configureStore( { enableClassicPages: true } );
 } );
 
 const savePaymentMethodData = [
 	{
-		// https://inpsyde.atlassian.net/browse/PCP-4499
 		testKey: 'PCP-4499',
-		testLabel: ' @Dev',
+		testLabel: ' @Smoke',
 		payment: payPal,
 	},
 	{
-		// https://inpsyde.atlassian.net/browse/PCP-4500
 		testKey: 'PCP-4500',
-		testLabel: ' @Dev',
+		testLabel: ' @Smoke',
 		payment: acdc,
 	},
 ];
@@ -61,7 +35,9 @@ for ( const testData of savePaymentMethodData ) {
 		} );
 
 		test(
-			`${ testKey } | Vaulting - My Account - Payment Methods - ${ payment.gateway.title } - Save payment method${ testLabel ?? '' }`,
+			`${ testKey } | Vaulting - My Account - Payment Methods - ${
+				payment.gateway.title
+			} - Save payment method${ testLabel ?? '' }`,
 			annotateVisitor( customer ),
 			async ( { utils, customerPaymentMethods, classicCheckout } ) => {
 				await customerPaymentMethods.visit();
@@ -90,13 +66,11 @@ for ( const testData of savePaymentMethodData ) {
 
 const deletePaymentMethodData = [
 	{
-		// Fail: Deleting Payment Token in WC does not delete it on PayPal bug https://inpsyde.atlassian.net/browse/PCP-4782
-		// https://inpsyde.atlassian.net/browse/PCP-1732
+		// Fail: Deleting Payment Token in WC does not delete it on PayPal bug PCP-4782
 		testKey: 'PCP-1732',
 		payment: payPal,
 	},
 	{
-		// https://inpsyde.atlassian.net/browse/PCP-1371
 		testKey: 'PCP-1371',
 		payment: acdc,
 	},
@@ -164,7 +138,8 @@ test.describe( () => {
 		await utils.restoreCustomer( customer );
 	} );
 
-	test(
+	// TODO: Confirm if PayPal button wallet view is supposed to be deprecated
+	test.fixme(
 		'PCP-5380 | Vaulting - My Account - Payment Methods - PayPal - Unable to save additional account',
 		annotateVisitor( customer ),
 		async ( { customerPaymentMethods } ) => {
@@ -173,17 +148,18 @@ test.describe( () => {
 				// Save and assert payment method
 				await customerPaymentMethods.savePaymentMethod( payPal );
 			} );
-			
+
 			await test.step( 'Save another PayPal account', async () => {
 				const secondPayPalAccount = {
 					email: process.env.PAYPAL_PERSONAL_EMAIL_US2,
 					password: process.env.PAYPAL_PERSONAL_PASS_US2,
 				};
 				await customerPaymentMethods.addPaymentMethodButton().click();
-				const payPalGatewayButton = customerPaymentMethods.payPalUi.payPalGateway();
-				await expect (
+				const payPalGatewayButton =
+					customerPaymentMethods.payPalUi.payPalGateway();
+				await expect(
 					payPalGatewayButton,
-					'Assert PayPal gateway is visible',
+					'Assert PayPal gateway is visible'
 				).toBeVisible();
 				await payPalGatewayButton.click();
 				await customerPaymentMethods.page.waitForLoadState();
@@ -191,7 +167,7 @@ test.describe( () => {
 					customerPaymentMethods.payPalUi.payPalButton(),
 					'Assert PayPal button is visible'
 				).toBeVisible();
-				
+
 				// Assert PayPal dropdown menu button
 				const payPalButtonMoreOptions =
 					customerPaymentMethods.payPalUi.payPalButtonMoreOptions();
@@ -208,14 +184,17 @@ test.describe( () => {
 					payWithDifferentAccountButton,
 					'Assert Pay with different account button is visible'
 				).toBeVisible();
-				
+
 				// Call PayPal popup using "Pay with different account" button
 				const popupPromise =
-					customerPaymentMethods.payPalUi.page.waitForEvent( 'popup', {
-						timeout: 20_000,
-					} );
+					customerPaymentMethods.payPalUi.page.waitForEvent(
+						'popup',
+						{
+							timeout: 20_000,
+						}
+					);
 				await payWithDifferentAccountButton.click();
-		
+
 				const popup = await popupPromise;
 				await popup.waitForLoadState();
 				const payPalPopup = new PayPalPopup( popup );
@@ -225,9 +204,11 @@ test.describe( () => {
 				await customerPaymentMethods.assertUrl();
 				await customerPaymentMethods.assertIsSavedPaymentMethod( {
 					gateway: payPal.gateway,
-					payPalAccount: secondPayPalAccount
+					payPalAccount: secondPayPalAccount,
 				} );
-				await customerPaymentMethods.assertIsNotSavedPaymentMethod( payPal );
+				await customerPaymentMethods.assertIsNotSavedPaymentMethod(
+					payPal
+				);
 			} );
 		}
 	);

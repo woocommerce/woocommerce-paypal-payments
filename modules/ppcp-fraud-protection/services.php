@@ -29,7 +29,8 @@ return array(
 			$container->get( 'fraud-protection.asset_getter' ),
 			$container->get( 'ppcp.asset-version' ),
 			$container->get( 'woocommerce.logger.woocommerce' ),
-			$container->get( 'fraud-protection.recaptcha.rejection-counter' )
+			$container->get( 'fraud-protection.recaptcha.rejection-counter' ),
+			$container->get( 'wcgateway.settings.status' )
 		);
 	},
 	'fraud-protection.recaptcha.integration'          => static function (): RecaptchaIntegration {
@@ -53,7 +54,7 @@ return array(
 	},
 	'fraud-protection.wc-tasks.recaptcha-task-config' => static function ( ContainerInterface $container ): array {
 		$recaptcha_settings = get_option( 'woocommerce_ppcp-recaptcha_settings', array() );
-		if ( isset( $recaptcha_settings['enabled'] ) && 'yes' === $recaptcha_settings['enabled'] ) {
+		if ( wc_string_to_bool( $recaptcha_settings['enabled'] ?? 'no' ) ) {
 			return array();
 		}
 

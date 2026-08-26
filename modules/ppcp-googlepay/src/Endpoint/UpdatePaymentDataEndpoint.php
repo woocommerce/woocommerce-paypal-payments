@@ -12,7 +12,7 @@ namespace WooCommerce\PayPalCommerce\Googlepay\Endpoint;
 use Psr\Log\LoggerInterface;
 use Throwable;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Money;
-use WooCommerce\PayPalCommerce\Button\Endpoint\RequestData;
+use WooCommerce\PayPalCommerce\OrderEndpoints\Endpoint\RequestData;
 use WooCommerce\PayPalCommerce\Button\Exception\NonceValidationException;
 use WooCommerce\PayPalCommerce\Button\Exception\RuntimeException;
 
@@ -188,12 +188,12 @@ class UpdatePaymentDataEndpoint {
 
 		$customer->set_billing_postcode( $payment_data['shippingAddress']['postalCode'] ?? '' );
 		$customer->set_billing_country( $payment_data['shippingAddress']['countryCode'] ?? '' );
-		$customer->set_billing_state( '' );
+		$customer->set_billing_state( $payment_data['shippingAddress']['administrativeArea'] ?? '' );
 		$customer->set_billing_city( $payment_data['shippingAddress']['locality'] ?? '' );
 
 		$customer->set_shipping_postcode( $payment_data['shippingAddress']['postalCode'] ?? '' );
 		$customer->set_shipping_country( $payment_data['shippingAddress']['countryCode'] ?? '' );
-		$customer->set_shipping_state( '' );
+		$customer->set_shipping_state( $payment_data['shippingAddress']['administrativeArea'] ?? '' );
 		$customer->set_shipping_city( $payment_data['shippingAddress']['locality'] ?? '' );
 
 		// Save the data.

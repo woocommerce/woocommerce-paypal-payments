@@ -16,21 +16,22 @@ use WC_Payment_Tokens;
 use WC_Product;
 use WC_Product_Variable;
 use WC_Product_Variation;
+use WC_Session_Handler;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Money;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PayerFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\CurrencyGetter;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\DccApplies;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\PartnerAttribution;
 use WooCommerce\PayPalCommerce\Assets\AssetGetter;
-use WooCommerce\PayPalCommerce\Blocks\Endpoint\UpdateShippingEndpoint;
-use WooCommerce\PayPalCommerce\Button\Endpoint\ApproveOrderEndpoint;
+use WooCommerce\PayPalCommerce\OrderEndpoints\Endpoint\UpdateShippingEndpoint;
+use WooCommerce\PayPalCommerce\OrderEndpoints\Endpoint\ApproveOrderEndpoint;
 use WooCommerce\PayPalCommerce\Button\Endpoint\ApproveSubscriptionEndpoint;
 use WooCommerce\PayPalCommerce\Button\Endpoint\CartScriptParamsEndpoint;
-use WooCommerce\PayPalCommerce\Button\Endpoint\ChangeCartEndpoint;
-use WooCommerce\PayPalCommerce\Button\Endpoint\CreateOrderEndpoint;
+use WooCommerce\PayPalCommerce\OrderEndpoints\Endpoint\ChangeCartEndpoint;
+use WooCommerce\PayPalCommerce\OrderEndpoints\Endpoint\CreateOrderEndpoint;
 use WooCommerce\PayPalCommerce\Button\Endpoint\DataClientIdEndpoint;
 use WooCommerce\PayPalCommerce\Button\Endpoint\GetOrderEndpoint;
-use WooCommerce\PayPalCommerce\Button\Endpoint\RequestData;
+use WooCommerce\PayPalCommerce\OrderEndpoints\Endpoint\RequestData;
 use WooCommerce\PayPalCommerce\Button\Endpoint\SaveCheckoutFormEndpoint;
 use WooCommerce\PayPalCommerce\Button\Endpoint\SimulateCartEndpoint;
 use WooCommerce\PayPalCommerce\Button\Endpoint\ValidateCheckoutEndpoint;
@@ -53,6 +54,7 @@ use WooCommerce\PayPalCommerce\WcGateway\Helper\SettingsStatus;
 use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
 use WooCommerce\PayPalCommerce\WcSubscriptions\FreeTrialHandlerTrait;
 use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
+use WooCommerce\PayPalCommerce\Webhooks\CustomIds;
 
 /**
  * Class SmartButton
@@ -498,7 +500,7 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
 			add_action(
 				$this->mini_cart_button_renderer_hook(),
 				function () {
-					if ( $this->is_cart_price_total_zero() || $this->is_free_trial_cart() ) {
+					if ( $this->is_cart_price_total_zero() || $this->is_free_trial_cart() || ! $this->subscription_button_allowed() ) {
 						return;
 					}
 
@@ -534,7 +536,7 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
 			add_action(
 				$this->proceed_to_checkout_button_renderer_hook(),
 				function () use ( $enabled_on_cart ) {
-					if ( ! is_cart() || ! $enabled_on_cart || $this->is_free_trial_cart() || $this->is_cart_price_total_zero() || isset( reset( WC()->cart->cart_contents )['subscription_switch'] ) ) {
+					if ( ! is_cart() || ! $enabled_on_cart || $this->is_free_trial_cart() || $this->is_cart_price_total_zero() || ! $this->subscription_button_allowed() || isset( reset( WC()->cart->cart_contents )['subscription_switch'] ) ) {
 						return;
 					}
 
@@ -954,6 +956,18 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
 	}
 
 	/**
+	 * Whether the PayPal button is allowed for the current (subscription) cart.
+	 *
+	 * @return bool
+	 */
+	private function subscription_button_allowed(): bool {
+		return $this->subscription_helper->paypal_subscription_button_allowed(
+			$this->has_subscriptions() && $this->paypal_subscriptions_enabled(),
+			$this->can_save_vault_token()
+		);
+	}
+
+	/**
 	 * Retrieves the 3D Secure contingency settings.
 	 *
 	 * @return string
@@ -995,6 +1009,26 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
 	 *
 	 * @return array
 	 */
+	/**
+	 * The session-bound custom_id used to tie a PayPal subscription/order to the
+	 * current shopper. Mirrors the value stamped on cart orders by
+	 * PurchaseUnitFactory::from_wc_cart(); both must stay in sync so that
+	 * ApproveSubscriptionEndpoint can validate ownership on approval.
+	 *
+	 * @return string
+	 */
+	private function subscription_custom_id(): string {
+		$session = WC()->session;
+		if ( $session instanceof WC_Session_Handler ) {
+			$session_id = $session->get_customer_unique_id();
+			if ( $session_id ) {
+				return CustomIds::CUSTOMER_ID_PREFIX . $session_id;
+			}
+		}
+
+		return '';
+	}
+
 	public function script_data(): array {
 		$is_free_trial_cart = $this->is_free_trial_cart();
 		$is_acdc_enabled    = $this->dcc_configuration->is_acdc_enabled();
@@ -1085,10 +1119,13 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
 			),
 			'cart_contains_subscription'              => $this->subscription_helper->cart_contains_subscription(),
 			'subscription_plan_id'                    => $this->subscription_helper->paypal_subscription_id(),
+			'subscription_custom_id'                  => $this->subscription_custom_id(),
 			'variable_paypal_subscription_variations' => $this->subscription_helper->variable_paypal_subscription_variations(),
 			'variable_paypal_subscription_variation_from_cart' => $this->subscription_helper->paypal_subscription_variation_from_cart(),
 			'subscription_product_allowed'            => $this->subscription_helper->checkout_subscription_product_allowed(),
+			'subscription_button_allowed'             => $this->subscription_button_allowed(),
 			'locations_with_subscription_product'     => $this->subscription_helper->locations_with_subscription_product(),
+			'subscriptions_accept_manual_renewals'    => $this->subscription_helper->accept_manual_renewals(),
 			'enforce_vault'                           => $this->has_subscriptions(),
 			'can_save_vault_token'                    => $this->can_save_vault_token(),
 			'is_free_trial_cart'                      => $is_free_trial_cart,

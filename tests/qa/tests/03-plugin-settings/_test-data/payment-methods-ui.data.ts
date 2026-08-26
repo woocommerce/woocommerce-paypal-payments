@@ -21,9 +21,8 @@ export type PaymentMethodsUiTestData = {
 
 const defaultUi: PaymentMethodsUiTestData[] = [
 	{
-		// https://inpsyde.atlassian.net/browse/PCP-6228
 		testKey: 'PCP-6228',
-		testLabel: ' @Critical @Dev',
+		testLabel: ' @Critical @Smoke',
 		country: 'usa',
 		expectedGatewayCount: 15,
 		expectedGroupCounts: {

@@ -17,26 +17,25 @@ const merchant = merchants.usa;
 
 const vaultingGuest: ShopOrder[] = [
 	{
-		// https://inpsyde.atlassian.net/browse/PCP-4895
-		title: 'PCP-4895 | Vaulting subscription - Transaction - Checkout - PayPal - Order by guest @Critical @Smoke @Dev',
+		title: 'PCP-4895 | Vaulting subscription - Transaction - Checkout - PayPal - Order by guest @Critical @Smoke',
 		...orders.default,
 		payment: payments.payPal,
 		merchant,
 		customer: guest,
 		products: [ products.subscription100 ],
 	},
+	// TODO: add test for Vaulting subscription + 100% coupon
 	{
 		// https://inpsyde.atlassian.net/browse/PCP-4897
-		title: 'PCP-4897 | Vaulting subscription - Transaction - Checkout - PayPal - Free trial order by guest',
+		title: 'PCP-4897 | Vaulting subscription - Transaction - Checkout - PayPal - Free trial order by guest @Smoke',
 		...orders.default,
-		payment: payments.payPal,
+		payment: { ...payments.payPal, isFreeTrialSubscription: true },
 		merchant,
 		customer: guest,
 		products: [ products.subscriptionFreeTrial ],
 	},
 	{
-		// https://inpsyde.atlassian.net/browse/PCP-4896
-		title: 'PCP-4896 | Vaulting subscription - Transaction - Checkout - ACDC - Order by guest @Critical @Dev',
+		title: 'PCP-4896 | Vaulting subscription - Transaction - Checkout - ACDC - Order by guest @Critical @Smoke',
 		...orders.default,
 		payment: payments.acdc,
 		merchant,
@@ -44,7 +43,6 @@ const vaultingGuest: ShopOrder[] = [
 		products: [ products.subscription100 ],
 	},
 	{
-		// https://inpsyde.atlassian.net/browse/PCP-3555
 		title: 'PCP-3555 | Vaulting subscription - Transaction - Checkout - ACDC - Free trial order by guest',
 		...orders.default,
 		payment: payments.acdc,
@@ -56,7 +54,6 @@ const vaultingGuest: ShopOrder[] = [
 
 const vaultingCustomer: ShopOrder[] = [
 	{
-		// https://inpsyde.atlassian.net/browse/PCP-2570
 		title: 'PCP-2570 | Vaulting subscription - Transaction - Checkout - PayPal - Order by customer @Critical',
 		...orders.default,
 		payment: payments.payPal,
@@ -65,17 +62,15 @@ const vaultingCustomer: ShopOrder[] = [
 		products: [ products.subscription100 ],
 	},
 	{
-		// https://inpsyde.atlassian.net/browse/PCP-4899
 		title: 'PCP-4899 | Vaulting subscription - Transaction - Checkout - PayPal - Free trial order by customer',
 		...orders.default,
-		payment: payments.payPal,
+		payment: { ...payments.payPal, isFreeTrialSubscription: true },
 		merchant,
 		customer,
 		products: [ products.subscriptionFreeTrial ],
 	},
 	{
-		// https://inpsyde.atlassian.net/browse/PCP-4898
-		title: 'PCP-4898 | Vaulting subscription - Transaction - Checkout - ACDC - Order by customer @Critical @Smoke',
+		title: 'PCP-4898 | Vaulting subscription - Transaction - Checkout - ACDC - Order by customer @Critical',
 		...orders.default,
 		payment: payments.acdc,
 		merchant,
@@ -83,7 +78,6 @@ const vaultingCustomer: ShopOrder[] = [
 		products: [ products.subscription100 ],
 	},
 	{
-		// https://inpsyde.atlassian.net/browse/PCP-3554
 		title: 'PCP-3554 | Vaulting subscription - Transaction - Checkout - ACDC - Free trial order by customer',
 		...orders.default,
 		payment: payments.acdc,
@@ -95,7 +89,6 @@ const vaultingCustomer: ShopOrder[] = [
 
 const payPalGuest: ShopOrder[] = [
 	{
-		// https://inpsyde.atlassian.net/browse/PCP-2574
 		title: 'PCP-2574 | PayPal subscription - Transaction - Checkout - Order by guest @Critical',
 		...orders.default,
 		payment: {
@@ -107,7 +100,6 @@ const payPalGuest: ShopOrder[] = [
 		products: [ products.subscriptionPayPal ],
 	},
 	{
-		// https://inpsyde.atlassian.net/browse/PCP-4900
 		title: 'PCP-4900 | PayPal subscription - Transaction - Checkout - Free trial order by guest',
 		...orders.default,
 		payment: {
@@ -122,7 +114,6 @@ const payPalGuest: ShopOrder[] = [
 
 const payPalCustomer: ShopOrder[] = [
 	{
-		// https://inpsyde.atlassian.net/browse/PCP-2576
 		title: 'PCP-2576 | PayPal subscription - Transaction - Checkout - Order by customer @Critical',
 		...orders.default,
 		payment: {
@@ -134,7 +125,6 @@ const payPalCustomer: ShopOrder[] = [
 		products: [ products.subscriptionPayPal ],
 	},
 	{
-		// https://inpsyde.atlassian.net/browse/PCP-4901
 		title: 'PCP-4901 | PayPal subscription - Transaction - Checkout - Free trial order by customer',
 		...orders.default,
 		payment: {

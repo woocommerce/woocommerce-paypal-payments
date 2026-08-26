@@ -2,12 +2,7 @@
  * Internal dependencies
  */
 import { expect, test } from '../../utils';
-import {
-	merchants,
-	storeConfigDefault,
-	Pcp,
-	products,
-} from '../../resources';
+import { merchants, storeConfigDefault, Pcp, products } from '../../resources';
 
 // 'Mini Cart' skipped: minicart buttons unreliable in test env
 const LOCATIONS: Pcp.Admin.Styling.Location[] = [
@@ -27,55 +22,73 @@ test.beforeAll( async ( { utils, pcpApi } ) => {
 	);
 } );
 
-test(
-	'PCP-0000 | Settings - Styling - Default UI',
-	async ( {
-		utils,
-		pcpStyling,
-		product,
-		classicCart,
-		checkout,
-		classicCheckout,
-	} ) => {
-		const simpleProduct = products.simple100;
+test( 'PCP-4747 | Settings - US- Styling - Default UI', async ( {
+	utils,
+	pcpStyling,
+	product,
+	classicCart,
+	checkout,
+	classicCheckout,
+} ) => {
+	const simpleProduct = products.simple100;
 
-		await pcpStyling.visit();
+	await pcpStyling.visit();
+	await expect(
+		pcpStyling.configContainer(),
+		'Assert styling config container is visible'
+	).toBeVisible();
+	await expect(
+		pcpStyling.locationSelectbox(),
+		'Assert styling location selectbox is visible'
+	).toBeVisible();
+
+	await utils.fillVisitorsCart( [ simpleProduct ] );
+
+	for ( const location of LOCATIONS ) {
+		await pcpStyling.locationSelectbox().selectOption( location );
 		await expect(
 			pcpStyling.configContainer(),
-			'Assert styling config container is visible'
-		).toBeVisible();
-		await expect(
-			pcpStyling.locationSelectbox(),
-			'Assert styling location selectbox is visible'
+			`Assert styling config is visible for location ${ location }`
 		).toBeVisible();
 
-		await utils.fillVisitorsCart( [ simpleProduct ] );
+		await pcpStyling.enablePaymentMethodsOnLocationCheckbox().check();
+		await pcpStyling.assertPreviewHasPayPalButtons();
+		await pcpStyling.saveChanges();
 
-		for ( const location of LOCATIONS ) {
-			await pcpStyling.locationSelectbox().selectOption( location );
-			await expect(
-				pcpStyling.configContainer(),
-				`Assert styling config is visible for location ${ location }`
-			).toBeVisible();
-
-			await pcpStyling.enablePaymentMethodsOnLocationCheckbox().check();
-			await pcpStyling.assertPreviewHasPayPalButtons();
-			await pcpStyling.saveChanges();
-
-			await assertPayPalButtonsVisibleOnLiveSite( location, {
-				product,
-				classicCart,
-				checkout,
-				classicCheckout,
-				simpleProduct,
-			} );
-		}
+		await assertPayPalButtonsVisibleOnLiveSite( location, {
+			product,
+			classicCart,
+			checkout,
+			classicCheckout,
+			simpleProduct,
+		} );
 	}
-);
+} );
 
 /**
  * Asserts PayPal buttons are visible on the live site for the given location.
  * Uses standard/default appearance (no label or layout assertions).
+ * @param location
+ * @param ctx
+ * @param ctx.product
+ * @param ctx.product.visit
+ * @param ctx.product.payPalUi
+ * @param ctx.product.payPalUi.assertPayPalButtonsGatewayVisibleWithContent
+ * @param ctx.classicCart
+ * @param ctx.classicCart.visit
+ * @param ctx.classicCart.payPalUi
+ * @param ctx.classicCart.payPalUi.assertPayPalButtonsGatewayVisibleWithContent
+ * @param ctx.checkout
+ * @param ctx.checkout.visit
+ * @param ctx.checkout.payPalUi
+ * @param ctx.checkout.payPalUi.assertPayPalButtonsBlockVisibleWithContent
+ * @param ctx.classicCheckout
+ * @param ctx.classicCheckout.visit
+ * @param ctx.classicCheckout.paymentOption
+ * @param ctx.classicCheckout.payPalUi
+ * @param ctx.classicCheckout.payPalUi.assertPayPalButtonsGatewayVisibleWithContent
+ * @param ctx.simpleProduct
+ * @param ctx.simpleProduct.slug
  */
 async function assertPayPalButtonsVisibleOnLiveSite(
 	location: Pcp.Admin.Styling.Location,

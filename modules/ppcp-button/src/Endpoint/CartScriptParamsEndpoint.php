@@ -88,15 +88,26 @@ class CartScriptParamsEndpoint implements EndpointInterface {
 			$currency_code     = get_woocommerce_currency();
 
 			$response = array(
-				'url_params'    => $script_data['url_params'],
-				'button'        => $script_data['button'],
-				'messages'      => $script_data['messages'],
-				'amount'        => WC()->cart->get_total( 'raw' ),
+				'url_params'                          => $script_data['url_params'],
+				'button'                              => $script_data['button'],
+				'messages'                            => $script_data['messages'],
+				'amount'                              => WC()->cart->get_total( 'raw' ),
 
-				'total'         => $total,
-				'total_str'     => ( new Money( $total, $currency_code ) )->value_str(),
-				'currency_code' => $currency_code,
-				'country_code'  => $shop_country_code,
+				// Recomputed against the current cart so the client can re-route the
+				// button to the save-without-purchase flow when a coupon turns a
+				// subscription cart into a $0 total after the page has loaded.
+				'is_free_trial_cart'                  => (bool) ( $script_data['is_free_trial_cart'] ?? false ),
+
+				// Recomputed against the current cart so the client can hide the
+				// button when a cart change makes the subscription cart one that
+				// PayPal cannot process (e.g. a second subscription is removed/added).
+				'subscription_button_allowed'         => (bool) ( $script_data['subscription_button_allowed'] ?? true ),
+				'locations_with_subscription_product' => $script_data['locations_with_subscription_product'] ?? array(),
+
+				'total'                               => $total,
+				'total_str'                           => ( new Money( $total, $currency_code ) )->value_str(),
+				'currency_code'                       => $currency_code,
+				'country_code'                        => $shop_country_code,
 			);
 
 			if ( $include_shipping ) {

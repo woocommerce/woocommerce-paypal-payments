@@ -15,7 +15,7 @@ use WC_Cart;
 use WooCommerce\PayPalCommerce\Applepay\ApplePayGateway;
 use WooCommerce\PayPalCommerce\Assets\AssetGetter;
 use WooCommerce\PayPalCommerce\Button\Assets\ButtonInterface;
-use WooCommerce\PayPalCommerce\Button\Helper\CartProductsHelper;
+use WooCommerce\PayPalCommerce\OrderEndpoints\Helper\CartProductsHelper;
 use WooCommerce\PayPalCommerce\Button\Helper\Context;
 use WooCommerce\PayPalCommerce\Settings\Data\PaymentSettings;
 use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
@@ -179,6 +179,23 @@ class ApplePayButton implements ButtonInterface {
 						array(
 							'errorCode' => 'addressUnserviceable',
 							'message'   => __( 'Error processing cart', 'woocommerce-paypal-payments' ),
+						),
+					)
+				);
+				return;
+			}
+			if ( isset( $payment_details['shippingMethods'] )
+				&& is_array( $payment_details['shippingMethods'] )
+				&& empty( $payment_details['shippingMethods'] )
+			) {
+				$this->response_templates->response_with_data_errors(
+					array(
+						array(
+							'errorCode' => 'addressUnserviceable',
+							'message'   => __(
+								'No shipping methods are available for your address.',
+								'woocommerce-paypal-payments'
+							),
 						),
 					)
 				);
@@ -449,6 +466,9 @@ class ApplePayButton implements ButtonInterface {
 		WC()->customer->set_shipping_country(
 			$address['country'] ?? $shop_country_code
 		);
+		WC()->customer->set_shipping_state(
+			$address['state'] ?? ''
+		);
 		WC()->customer->set_billing_country(
 			$address['country'] ?? $shop_country_code
 		);
@@ -529,7 +549,7 @@ class ApplePayButton implements ButtonInterface {
 		$packages[0]['contents_cost']            = $total;
 		$packages[0]['applied_coupons']          = WC()->session->applied_coupon;
 		$packages[0]['destination']['country']   = $customer_address['country'] ?? '';
-		$packages[0]['destination']['state']     = '';
+		$packages[0]['destination']['state']     = $customer_address['state'] ?? '';
 		$packages[0]['destination']['postcode']  = $customer_address['postcode'] ?? '';
 		$packages[0]['destination']['city']      = $customer_address['city'] ?? '';
 		$packages[0]['destination']['address']   = '';
@@ -957,8 +977,11 @@ class ApplePayButton implements ButtonInterface {
 			return false;
 		}
 
-		$methods = $this->settings_provider->button_styling( $this->context->context() )->methods;
+		$styling = $this->settings_provider->button_styling( $this->context->context() );
+		if ( ! $styling->enabled ) {
+			return false;
+		}
 
-		return in_array( ApplePayGateway::ID, $methods, true );
+		return in_array( ApplePayGateway::ID, $styling->methods, true );
 	}
 }

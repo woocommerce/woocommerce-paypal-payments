@@ -73,13 +73,6 @@ class PWCPaymentMethod extends AbstractPaymentMethodType {
 			true
 		);
 
-		wp_enqueue_style(
-			'ppcp-pwc-payment-method',
-			$this->asset_getter->get_asset_url( 'gateway.css' ),
-			array(),
-			$this->version
-		);
-
 		return array( 'ppcp-pwc-payment-method' );
 	}
 

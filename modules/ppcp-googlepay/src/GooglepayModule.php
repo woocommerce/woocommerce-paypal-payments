@@ -106,8 +106,14 @@ class GooglepayModule implements ServiceModule, ExecutableModule {
 						 * Checkout page, but no PPCP scripts were loaded. Most likely in continuation mode.
 						 * Need to enqueue some Google Pay scripts to populate the billing form with details
 						 * provided by Google Pay.
+						 *
+						 * Unless the v6 SDK owns this page. There, "no PPCP scripts" is the
+						 * normal state rather than continuation, and v6 renders Google Pay
+						 * itself: enqueuing here too would run this stack against an empty
+						 * config and let both SDKs claim window.paypal. Migration-phase
+						 * guard, see ppcp-sdk-v6/extensions.php.
 						 */
-						if ( is_checkout() ) {
+						if ( is_checkout() && ! self::v6_owns_current_page( $c ) ) {
 							$button->enqueue();
 						}
 
@@ -235,9 +241,9 @@ class GooglepayModule implements ServiceModule, ExecutableModule {
 				$settings = $c->get( 'settings.settings-provider' );
 				assert( $settings instanceof SettingsProvider );
 
-				$page_methods = $settings->button_styling( $current_context )->methods;
+				$styling = $settings->button_styling( $current_context );
 
-				if ( ! in_array( GooglePayGateway::ID, $page_methods, true ) ) {
+				if ( ! $styling->enabled || ! in_array( GooglePayGateway::ID, $styling->methods, true ) ) {
 					unset( $methods[ GooglePayGateway::ID ] );
 				}
 
@@ -246,9 +252,24 @@ class GooglepayModule implements ServiceModule, ExecutableModule {
 		);
 
 		add_action(
-			'woocommerce_review_order_after_submit',
-			function () {
-				echo '<div id="ppc-button-' . esc_attr( GooglePayGateway::ID ) . '"></div>';
+			'wp',
+			static function () use ( $c ) {
+				// v6 prints its own Google Pay container on the pages it owns;
+				// two containers would race for the same button.
+				if ( self::v6_owns_current_page( $c ) ) {
+					return;
+				}
+
+				$checkout_hook = (string) apply_filters(
+					'woocommerce_paypal_payments_checkout_button_renderer_hook',
+					'woocommerce_review_order_after_payment'
+				);
+				add_action(
+					$checkout_hook,
+					static function () {
+						echo '<div id="ppc-button-' . esc_attr( GooglePayGateway::ID ) . '"></div>';
+					}
+				);
 			}
 		);
 
@@ -354,5 +375,24 @@ class GooglepayModule implements ServiceModule, ExecutableModule {
 		);
 
 		return true;
+	}
+
+	/**
+	 * Whether the SDK v6 module renders the PayPal stack on the current page.
+	 *
+	 * That module is feature-flagged and may not be loaded at all, hence the
+	 * has() guard.
+	 *
+	 * @param ContainerInterface $c The container.
+	 * @return bool
+	 */
+	private static function v6_owns_current_page( ContainerInterface $c ): bool {
+		if ( ! $c->has( 'sdk-v6.owns-current-page' ) ) {
+			return false;
+		}
+
+		$owns_current_page = $c->get( 'sdk-v6.owns-current-page' );
+
+		return $owns_current_page();
 	}
 }

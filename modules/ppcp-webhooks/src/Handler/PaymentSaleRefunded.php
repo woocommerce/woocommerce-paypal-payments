@@ -104,6 +104,12 @@ class PaymentSaleRefunded implements RequestHandler {
 		}
 
 		foreach ( $wc_orders as $wc_order ) {
+			$already_added_refunds = $this->get_refunds_meta( $wc_order );
+			if ( in_array( $refund_id, $already_added_refunds, true ) ) {
+				$this->logger->info( "Refund {$refund_id} is already handled." );
+				continue;
+			}
+
 			$refund = wc_create_refund(
 				array(
 					'order_id' => $wc_order->get_id(),

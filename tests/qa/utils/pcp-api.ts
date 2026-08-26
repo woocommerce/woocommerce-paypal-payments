@@ -128,6 +128,19 @@ export class PcpApi extends WooCommerceApiBase {
 		return response;
 	};
 
+	/**
+	 * Updates Settings tab via REST API.
+	 *
+	 * @param data
+	 */
+	updatePcpStyling = async ( data: Pcp.Api.Styling.Settings ) => {
+		const response = await this.wcRequest( 'post', `wc_paypal/styling`, {
+			...data,
+			_locale: 'user',
+		} );
+		return response;
+	};
+
 	isPayPalSubscription( subscription: WooCommerce.Subscription ): boolean {
 		return !! subscription?.meta_data?.some(
 			( meta ) => meta.key === 'ppcp_subscription'
@@ -148,17 +161,17 @@ export class PcpApi extends WooCommerceApiBase {
 
 		return subscriptionMeta.value;
 	};
-	
+
 	/**
 	 * Get number of Subscription renewals
-	 * 
+	 *
 	 * @param subscriptionId
 	 */
 	getSubscriptionRenewalCount = async ( subscriptionId: number ) => {
 		const subscription = await this.getSubscription( subscriptionId );
 		const subscriptionMeta = subscription.meta_data.find(
-				meta => meta.key === '_subscription_renewal_order_ids_cache'
-			);
+			( meta ) => meta.key === '_subscription_renewal_order_ids_cache'
+		);
 		return subscriptionMeta?.value?.length ?? 0;
 	};
 
@@ -170,13 +183,11 @@ export class PcpApi extends WooCommerceApiBase {
 	 * @param subscriptionId
 	 */
 	triggerPayPalSubscriptionRenewal = async ( subscriptionId: number ) => {
-		const initialRenewalCount = await this.getSubscriptionRenewalCount(
-			subscriptionId
-		);
+		const initialRenewalCount =
+			await this.getSubscriptionRenewalCount( subscriptionId );
 
-		const billingId = await this.getPayPalSubscriptionBillingId(
-			subscriptionId
-		);
+		const billingId =
+			await this.getPayPalSubscriptionBillingId( subscriptionId );
 
 		const data = {
 			id: 'NOT-IMPORTANT',
@@ -198,21 +209,18 @@ export class PcpApi extends WooCommerceApiBase {
 				{ data }
 			);
 
-			expect.soft(
-				response.ok(),
-				`Assert PayPal Subscription Renewal request (${ i }) to be OK`
-			).toBeTruthy();
+			expect
+				.soft(
+					response.ok(),
+					`Assert PayPal Subscription Renewal request (${ i }) to be OK`
+				)
+				.toBeTruthy();
 
 			// Retry up to 10 seconds to detect if the renewal was triggered,
 			// avoiding sending a duplicate webhook while the first is still processing.
-			for (
-				let retry = 0;
-				retry < 10 && ! isRenewalTriggered;
-				retry++
-			) {
-				const renewalCount = await this.getSubscriptionRenewalCount(
-					subscriptionId
-				);
+			for ( let retry = 0; retry < 10 && ! isRenewalTriggered; retry++ ) {
+				const renewalCount =
+					await this.getSubscriptionRenewalCount( subscriptionId );
 				isRenewalTriggered = renewalCount > initialRenewalCount;
 				if ( ! isRenewalTriggered ) {
 					await new Promise( ( resolve ) =>
@@ -222,10 +230,12 @@ export class PcpApi extends WooCommerceApiBase {
 			}
 		}
 
-		expect.soft(
-			isRenewalTriggered,
-			'Assert PayPal Subscription Renewal is triggered'
-		).toBeTruthy();
+		expect
+			.soft(
+				isRenewalTriggered,
+				'Assert PayPal Subscription Renewal is triggered'
+			)
+			.toBeTruthy();
 
 		return isRenewalTriggered;
 	};

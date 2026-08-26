@@ -18,12 +18,7 @@ import {
 	ClassicCheckout,
 	OrderReceived,
 } from './frontend';
-import {
-	subscriptionsPlugin,
-	pcpPlugin,
-	ShopOrder,
-	ShopConfig,
-} from '../resources';
+import { subscriptionsPlugin, pcpPlugin, ShopConfig } from '../resources';
 import { getCustomerStorageStateName } from './helpers/';
 import urls from './urls';
 
@@ -98,9 +93,8 @@ export class Utils {
 	 * @param products
 	 */
 	fillVisitorsCart = async ( products: WooCommerce.CreateProduct[] ) => {
-		const cartProducts = await this.wooCommerceUtils.createCartProducts(
-			products
-		);
+		const cartProducts =
+			await this.wooCommerceUtils.createCartProducts( products );
 		await this.visitorWooCommerceApi.clearCart();
 		await this.visitorWooCommerceApi.addProductsToCart( cartProducts );
 	};
@@ -193,7 +187,10 @@ export class Utils {
 		}
 
 		if ( enableWpDebugging === false ) {
-			await this.cli.setWpConst( { WP_DEBUG: false, SCRIPT_DEBUG: false } );
+			await this.cli.setWpConst( {
+				WP_DEBUG: false,
+				SCRIPT_DEBUG: false,
+			} );
 		}
 
 		if ( enableClassicPages === true ) {

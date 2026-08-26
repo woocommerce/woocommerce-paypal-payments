@@ -16,8 +16,7 @@ const currency = process.env.WC_DEFAULT_CURRENCY;
 
 const vaultingRenewal: ShopOrder[] = [
 	{
-		// https://inpsyde.atlassian.net/browse/PCP-2505
-		title: 'PCP-2505 | Vaulting subscription - PayPal - Order renewal @Critical @Smoke @Dev',
+		title: 'PCP-2505 | Vaulting subscription - PayPal - Order renewal @Critical @Smoke',
 		...orders.default,
 		payment: payments.payPal,
 		merchant,
@@ -26,8 +25,7 @@ const vaultingRenewal: ShopOrder[] = [
 		currency,
 	},
 	{
-		// https://inpsyde.atlassian.net/browse/PCP-2514
-		title: 'PCP-2514 | Vaulting subscription - ACDC - Order renewal @Critical @Smoke @Dev',
+		title: 'PCP-2514 | Vaulting subscription - ACDC - Order renewal @Critical @Smoke',
 		...orders.default,
 		payment: payments.acdc,
 		merchant,
@@ -39,17 +37,15 @@ const vaultingRenewal: ShopOrder[] = [
 
 const vaultingFreeTrialRenewal: ShopOrder[] = [
 	{
-		// https://inpsyde.atlassian.net/browse/PCP-4913
 		title: 'PCP-4913 | Vaulting subscription - PayPal - Free trial order renewal',
 		...orders.default,
-		payment: payments.payPal,
+		payment: { ...payments.payPal, isFreeTrialSubscription: true },
 		merchant,
 		customer,
 		products: [ products.subscriptionFreeTrial ],
 		currency,
 	},
 	{
-		// https://inpsyde.atlassian.net/browse/PCP-4914
 		title: 'PCP-4914 | Vaulting subscription - ACDC - Free trial order renewal',
 		...orders.default,
 		payment: payments.acdc,
@@ -62,8 +58,7 @@ const vaultingFreeTrialRenewal: ShopOrder[] = [
 
 const payPalRenewal: ShopOrder[] = [
 	{
-		// https://inpsyde.atlassian.net/browse/PCP-2048
-		title: 'PCP-2048 | PayPal subscription - Order renewal @Critical @Smoke',
+		title: 'PCP-2048 | PayPal subscription - Order renewal @Critical',
 		...orders.default,
 		payment: payments.payPal,
 		merchant,
@@ -75,7 +70,6 @@ const payPalRenewal: ShopOrder[] = [
 
 const payPalFreeTrialRenewal: ShopOrder[] = [
 	{
-		// https://inpsyde.atlassian.net/browse/PCP-4915
 		title: 'PCP-4915 | PayPal subscription - Free trial order renewal',
 		...orders.default,
 		payment: payments.payPal,

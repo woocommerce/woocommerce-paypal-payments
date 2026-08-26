@@ -271,7 +271,7 @@ const oxxo: Pcp.Gateway = {
 	enabled: false,
 };
 
-const payUponInvoice: Pcp.Gateway = {
+const pui: Pcp.Gateway = {
 	shortcut: 'pay_upon_invoice',
 	country: 'germany',
 	currency: 'EUR',
@@ -324,6 +324,6 @@ export const gateways = {
 	trustly,
 	multibanco,
 	oxxo,
-	payUponInvoice,
+	pui,
 	bcdc,
 };

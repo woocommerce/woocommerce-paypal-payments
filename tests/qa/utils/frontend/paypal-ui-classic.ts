@@ -5,9 +5,10 @@ import { expect, getLast4CardDigits } from '@inpsyde/playwright-utils/build';
 /**
  * Internal dependencies
  */
-import { Pcp } from '../../resources';
+import { Pcp, ShopOrder } from '../../resources';
 import { PayPalPopup } from './paypal-popup';
 import { PayPalUi } from './paypal-ui';
+import { GooglePayPopup } from './google-pay-popup';
 
 /**
  * Class for common dashboard locators, actions, assertions
@@ -16,12 +17,14 @@ import { PayPalUi } from './paypal-ui';
 export class PayPalUiClassic extends PayPalUi {
 	// Locators
 	cartMenu = () => this.page.locator( '#site-header-cart' );
+	
+	payPalButtonsContainer = () =>
+		this.page.locator( '#ppc-button-ppcp-gateway' );
 
+	googlePayGatewayContainer = () =>
+		this.page.locator( '#ppc-button-googlepay-container' );
 	payPalIframe = () =>
-		this.page.frameLocator(
-			// unified selector for My Account and checkout pages
-			'[id^="ppc-button-ppcp-gateway"] iframe[name^="__zoid__paypal_buttons__"]'
-		);
+		this.page.frameLocator( 'iframe[name^="__zoid__paypal_buttons__"]' );
 	payPalButtonsClassicContainer = () =>
 		this.payPalIframe().locator( '#buttons-container' );
 	fundingSourceButton = ( name ) =>
@@ -32,8 +35,9 @@ export class PayPalUiClassic extends PayPalUi {
 	sepaButton = () => this.fundingSourceButton( 'sepa' );
 	giropayButton = () => this.fundingSourceButton( 'giropay' );
 	sofortButton = () => this.fundingSourceButton( 'sofort' );
-	debitOrCreditCardButton = () => this.fundingSourceButton( 'card' );
+	bcdcFundingSourceButton = () => this.fundingSourceButton( 'card' );
 	venmoButton = () => this.fundingSourceButton( 'venmo' );
+	googlePayButton = () => this.page.locator( '#gpay-button-online-api-id' );
 
 	fundingSourceButtonLabelText = ( name ) =>
 		this.fundingSourceButton( name ).locator( '.paypal-button-text' ); // additional text on paypal buttons
@@ -45,17 +49,25 @@ export class PayPalUiClassic extends PayPalUi {
 	iframePayPalButtonText = () =>
 		this.payPalIframe().locator( '.paypal-button-text.true' );
 
-	payPalGateway = () => this.page.locator( 'li.payment_method_ppcp-gateway' );
+	fundingSourceGateway = ( name: Pcp.GatewayId ) =>
+		this.page.locator( `li.payment_method_${ name }` );
+	payPalGateway = () => this.fundingSourceGateway( 'ppcp-gateway' );
+	payPalVaultedPaymentMethodRadio = () =>
+		this.page.locator(
+			'input[id^="wc-ppcp-gateway-payment-token-"]:not([id="wc-ppcp-gateway-payment-token-new"])'
+		);
+	payPalNewPaymentMethodRadio = () =>
+		this.page.locator( 'input#wc-ppcp-gateway-payment-token-new' );
+
 	acdcGateway = () =>
-		this.page.locator( 'li.payment_method_ppcp-credit-card-gateway' );
-	debitCreditCardsGateway = () =>
-		this.page.locator( 'li.payment_method_ppcp-credit-card-gateway' );
-	standardCardButtonGateway = () =>
-		this.page.locator( 'li.payment_method_ppcp-card-button-gateway' );
+		this.fundingSourceGateway( 'ppcp-credit-card-gateway' );
+	bcdcGateway = () =>
+		this.fundingSourceGateway( 'ppcp-card-button-gateway' );
 	oxxoGateway = () =>
-		this.page.locator( 'li.payment_method_ppcp-oxxo-gateway' );
-	payUponInvoiceGateway = () =>
-		this.page.locator( 'li.payment_method_ppcp-pay-upon-invoice-gateway' );
+		this.fundingSourceGateway( 'ppcp-oxxo-gateway' );
+	puiGateway = () =>
+		this.fundingSourceGateway( 'ppcp-pay-upon-invoice-gateway' );
+	googlePayGateway = () => this.fundingSourceGateway( 'ppcp-googlepay' );
 
 	taglineText = () => this.payPalIframe().locator( '.paypal-button-tagline' );
 	payPalGatewayText = () =>
@@ -135,113 +147,93 @@ export class PayPalUiClassic extends PayPalUi {
 		this.miniCartButtonIframe().locator( '.paypal-button' );
 	miniCartPayPalButton = () => this.miniCartFundingSourceButton( 'paypal' );
 
-	debitOrCreditCardIframe = () =>
+	bcdcFundingSourceIframe = () =>
 		this.payPalIframe().frameLocator( 'iframe.zoid-visible' );
-	debitOrCreditCardNumberInput = () =>
-		this.debitOrCreditCardIframe().locator( '#credit-card-number' );
-	debitOrCreditCardExpirationInput = () =>
-		this.debitOrCreditCardIframe().locator( '#expiry-date' );
-	debitOrCreditCardCSCInput = () =>
-		this.debitOrCreditCardIframe().locator( '#credit-card-security' );
-	debitOrCreditCardBuyNowButton = () =>
-		this.debitOrCreditCardIframe().locator( '#submit-button' );
-	debitOrCreditCardFirstNameInput = () =>
-		this.debitOrCreditCardIframe().locator(
+	bcdcFundingSourceNumberInput = () =>
+		this.bcdcFundingSourceIframe().locator( '#credit-card-number' );
+	bcdcFundingSourceExpirationInput = () =>
+		this.bcdcFundingSourceIframe().locator( '#expiry-date' );
+	bcdcFundingSourceCSCInput = () =>
+		this.bcdcFundingSourceIframe().locator( '#credit-card-security' );
+	bcdcFundingSourceBuyNowButton = () =>
+		this.bcdcFundingSourceIframe().locator( '#submit-button' );
+	bcdcFundingSourceFirstNameInput = () =>
+		this.bcdcFundingSourceIframe().locator(
 			'[id="billingAddress.givenName"]'
 		);
-	debitOrCreditCardLastNameInput = () =>
-		this.debitOrCreditCardIframe().locator(
+	bcdcFundingSourceLastNameInput = () =>
+		this.bcdcFundingSourceIframe().locator(
 			'[id="billingAddress.familyName"]'
 		);
-	debitOrCreditCardStreetInput = () =>
-		this.debitOrCreditCardIframe().locator( '[id="billingAddress.line1"]' );
-	debitOrCreditCardApartmentInput = () =>
-		this.debitOrCreditCardIframe().locator( '[id="billingAddress.line2"]' );
-	debitOrCreditCardCityInput = () =>
-		this.debitOrCreditCardIframe().locator( '[id="billingAddress.city"]' );
-	debitOrCreditCardStateInput = () =>
-		this.debitOrCreditCardIframe().locator( '[id="billingAddress.state"]' );
-	debitOrCreditCardZipCodeInput = () =>
-		this.debitOrCreditCardIframe().locator(
+	bcdcFundingSourceStreetInput = () =>
+		this.bcdcFundingSourceIframe().locator( '[id="billingAddress.line1"]' );
+	bcdcFundingSourceApartmentInput = () =>
+		this.bcdcFundingSourceIframe().locator( '[id="billingAddress.line2"]' );
+	bcdcFundingSourceCityInput = () =>
+		this.bcdcFundingSourceIframe().locator( '[id="billingAddress.city"]' );
+	bcdcFundingSourceStateInput = () =>
+		this.bcdcFundingSourceIframe().locator( '[id="billingAddress.state"]' );
+	bcdcFundingSourceZipCodeInput = () =>
+		this.bcdcFundingSourceIframe().locator(
 			'[id="billingAddress.postcode"]'
 		);
-	debitOrCreditCardPhoneInput = () =>
-		this.debitOrCreditCardIframe().locator( '#phone' );
-	debitOrCreditCardEmailInput = () =>
-		this.debitOrCreditCardIframe().locator( '#email' );
-	debitOrCreditCardPayNowButton = () =>
-		this.debitOrCreditCardIframe().locator( '#submit-button' );
-	debitOrCreditCardTagline = () =>
+	bcdcFundingSourcePhoneInput = () =>
+		this.bcdcFundingSourceIframe().locator( '#phone' );
+	bcdcFundingSourceEmailInput = () =>
+		this.bcdcFundingSourceIframe().locator( '#email' );
+	bcdcFundingSourcePayNowButton = () =>
+		this.bcdcFundingSourceIframe().locator( '#submit-button' );
+	bcdcFundingSourceTagline = () =>
 		this.page
 			.frameLocator( 'iframe[name^="__zoid__paypal_buttons__"]' )
 			.locator( '.paypal-powered-by' );
-	debitOrCreditCardPoweredByText = () =>
-		this.debitOrCreditCardTagline().getByText( 'Powered by' );
-	debitOrCreditCardPoweredByLogo = () =>
-		this.debitOrCreditCardTagline().locator( '.paypal-logo' );
+	bcdcFundingSourcePoweredByText = () =>
+		this.bcdcFundingSourceTagline().getByText( 'Powered by' );
+	bcdcFundingSourcePoweredByLogo = () =>
+		this.bcdcFundingSourceTagline().locator( '.paypal-logo' );
 
-	standardCardButtonIframe = () =>
+	bcdcIframe = () =>
 		this.page.frameLocator(
 			'#ppc-button-ppcp-card-button-gateway .component-frame'
 		);
-	standardCardButton = () =>
-		this.standardCardButtonIframe().locator(
-			`[data-funding-source="card"]`
-		);
-	standardCardButtonDetailsIframe = () =>
-		this.standardCardButtonIframe().frameLocator( 'iframe.zoid-visible' );
-	standardCardButtonNumberInput = () =>
-		this.standardCardButtonDetailsIframe().locator( '#credit-card-number' );
-	standardCardButtonExpirationInput = () =>
-		this.standardCardButtonDetailsIframe().locator( '#expiry-date' );
-	standardCardButtonCSCInput = () =>
-		this.standardCardButtonDetailsIframe().locator(
-			'#credit-card-security'
-		);
-	standardCardButtonBuyNowButton = () =>
-		this.standardCardButtonDetailsIframe().locator( '#submit-button' );
-	standardCardButtonFirstNameInput = () =>
-		this.standardCardButtonDetailsIframe().locator(
-			'[id="billingAddress.givenName"]'
-		);
-	standardCardButtonLastNameInput = () =>
-		this.standardCardButtonDetailsIframe().locator(
-			'[id="billingAddress.familyName"]'
-		);
-	standardCardButtonStreetInput = () =>
-		this.standardCardButtonDetailsIframe().locator(
-			'[id="billingAddress.line1"]'
-		);
-	standardCardButtonApartmentInput = () =>
-		this.standardCardButtonDetailsIframe().locator(
-			'[id="billingAddress.line2"]'
-		);
-	standardCardButtonCityInput = () =>
-		this.standardCardButtonDetailsIframe().locator(
-			'[id="billingAddress.city"]'
-		);
-	standardCardButtonStateInput = () =>
-		this.standardCardButtonDetailsIframe().locator(
-			'[id="billingAddress.state"]'
-		);
-	standardCardButtonZipCodeInput = () =>
-		this.standardCardButtonDetailsIframe().locator(
-			'[id="billingAddress.postcode"]'
-		);
-	standardCardButtonPhoneInput = () =>
-		this.standardCardButtonDetailsIframe().locator( '#phone' );
-	standardCardButtonEmailInput = () =>
-		this.standardCardButtonDetailsIframe().locator( '#email' );
-	standardCardButtonPayNowButton = () =>
-		this.standardCardButtonDetailsIframe().locator( '#submit-button' );
-	standardCardButtonTagline = () =>
+	bcdcButton = () =>
+		this.bcdcIframe().locator( `[data-funding-source="card"]` );
+	bcdcDetailsIframe = () =>
+		this.bcdcIframe().frameLocator( 'iframe.zoid-visible' );
+	bcdcNumberInput = () =>
+		this.bcdcDetailsIframe().locator( '#credit-card-number' );
+	bcdcExpirationInput = () =>
+		this.bcdcDetailsIframe().locator( '#expiry-date' );
+	bcdcCSCInput = () =>
+		this.bcdcDetailsIframe().locator( '#credit-card-security' );
+	bcdcBuyNowButton = () =>
+		this.bcdcDetailsIframe().locator( '#submit-button' );
+	bcdcFirstNameInput = () =>
+		this.bcdcDetailsIframe().locator( '[id="billingAddress.givenName"]' );
+	bcdcLastNameInput = () =>
+		this.bcdcDetailsIframe().locator( '[id="billingAddress.familyName"]' );
+	bcdcStreetInput = () =>
+		this.bcdcDetailsIframe().locator( '[id="billingAddress.line1"]' );
+	bcdcApartmentInput = () =>
+		this.bcdcDetailsIframe().locator( '[id="billingAddress.line2"]' );
+	bcdcCityInput = () =>
+		this.bcdcDetailsIframe().locator( '[id="billingAddress.city"]' );
+	bcdcCountryInput = () =>
+		this.bcdcDetailsIframe().locator( '[id="billingAddress.country"]' );
+	bcdcStateInput = () =>
+		this.bcdcDetailsIframe().locator( '[id="billingAddress.state"]' );
+	bcdcZipCodeInput = () =>
+		this.bcdcDetailsIframe().locator( '[id="billingAddress.postcode"]' );
+	bcdcPhoneInput = () => this.bcdcDetailsIframe().locator( '#phone' );
+	bcdcEmailInput = () => this.bcdcDetailsIframe().locator( '#email' );
+	bcdcPayNowButton = () =>
+		this.bcdcDetailsIframe().locator( '#submit-button' );
+	bcdcTagline = () =>
 		this.page
 			.frameLocator( 'iframe[name^="__zoid__paypal_buttons__"]' )
 			.locator( '.paypal-powered-by' );
-	standardCardButtonPoweredByText = () =>
-		this.standardCardButtonTagline().getByText( 'Powered by' );
-	standardCardButtonPoweredByLogo = () =>
-		this.standardCardButtonTagline().locator( '.paypal-logo' );
+	bcdcPoweredByText = () => this.bcdcTagline().getByText( 'Powered by' );
+	bcdcPoweredByLogo = () => this.bcdcTagline().locator( '.paypal-logo' );
 
 	acdcCardsIcons = () =>
 		this.page.locator(
@@ -249,7 +241,7 @@ export class PayPalUiClassic extends PayPalUi {
 		);
 	acdcStoredCredentialsText = () =>
 		this.page.locator(
-			'#wc-ppcp-credit-card-gateway-payment-token-3 > label'
+			'[id^="wc-ppcp-credit-card-gateway-payment-token-"] > label'
 		);
 	acdcSaveToAccountCheckbox = () =>
 		this.page.locator( '#wc-ppcp-credit-card-gateway-new-payment-method' );
@@ -264,14 +256,16 @@ export class PayPalUiClassic extends PayPalUi {
 	acdcUseNewPaymentRadio = () =>
 		this.page.locator( '.woocommerce-SavedPaymentMethods-new > input' );
 
-	payUponInvoiceBirthDateInput = () =>
-		this.page.locator( '#billing_birth_date' );
-	payUponInvoiceGatewayTitle = () =>
-		this.page.locator(
+	puiBirthDateInput = () =>
+		this.puiGateway().locator( '#billing_birth_date' );
+	puiPhoneInput = () =>
+		this.puiGateway().locator( '#billing_phone' );
+	puiGatewayTitle = () =>
+		this.puiGateway().locator(
 			'label[for="payment_method_ppcp-pay-upon-invoice-gateway"]'
 		);
-	payUponInvoiceGatewayDescription = () =>
-		this.payUponInvoiceGateway().locator(
+	puiGatewayDescription = () =>
+		this.puiGateway().locator(
 			'div.payment_method_ppcp-pay-upon-invoice-gateway>p'
 		);
 
@@ -324,10 +318,10 @@ export class PayPalUiClassic extends PayPalUi {
 	 */
 	async openPayPalPopup(): Promise< PayPalPopup > {
 		// Select gateway if not on classic-cart page
-		if ( ! this.page.url().includes( 'classic-cart' ) ) {
-			await expect (
+		if ( this.isClassicCheckoutPage() || this.isPayForOrderPage() ) {
+			await expect(
 				this.payPalGateway(),
-				'Assert PayPal gateway is visible',
+				'Assert PayPal gateway is visible'
 			).toBeVisible();
 			await this.payPalGateway().click();
 		}
@@ -340,10 +334,54 @@ export class PayPalUiClassic extends PayPalUi {
 	 */
 	async openPayLaterPopup(): Promise< PayPalPopup > {
 		// Select gateway if not on classic-cart page
-		if ( ! this.page.url().includes( 'classic-cart' ) ) {
+		if ( this.isClassicCheckoutPage() || this.isPayForOrderPage() ) {
+			await expect(
+				this.payPalGateway(),
+				'Assert PayPal gateway is visible'
+			).toBeVisible();
 			await this.payPalGateway().click();
 		}
 		return await super.openPayLaterPopup();
+	}
+	
+	/**
+	 * Clicks Google Pay button to open the TEST environment popup
+	 */
+	openGooglePayPopup = async (): Promise< GooglePayPopup > => {
+		if ( this.isClassicCheckoutPage() || this.isPayForOrderPage() ) {
+			await expect(
+				this.googlePayGateway(),
+				'Assert Google Pay gateway is visible'
+			).toBeVisible();
+			await this.googlePayGateway().click();
+		}
+		await expect(
+			this.googlePayButton(),
+			'Assert Google Pay button is visible'
+		).toBeVisible();
+		const popupPromise = this.page.waitForEvent( 'popup', {
+			timeout: 20 * 1000,
+		} );
+		await this.googlePayButton().click();
+
+		const popup = await popupPromise;
+		await popup.waitForLoadState();
+		return new GooglePayPopup( popup );
+	};
+
+	/**
+	 * Completes payment with vaulted PayPal account
+	 */
+	async completePayPalVaultedPayment( payment: Pcp.Payment ) {
+		// On classic checkout, pay for order pages
+		if ( this.isClassicCheckoutPage() || this.isPayForOrderPage() ) {
+			await this.assertVaultedPaymentMethodIsDisplayed( payment );
+			await this.payPalVaultedPaymentMethodRadio().click();
+			await this.submitOrder();
+			return;
+		}
+		// On classic cart, product pages
+		return super.completePayPalVaultedPayment( payment );
 	}
 
 	/**
@@ -435,181 +473,283 @@ export class PayPalUiClassic extends PayPalUi {
 	};
 
 	/**
-	 * Completes payment with OXXO (vaulting disabled)
-	 */
-	completeOXXOPayment = async () => {
-		await expect(
-			this.oxxoGateway(),
-			'Assert OXXO gateway is visible'
-		).toBeVisible();
-		await this.oxxoGateway().click();
-		await expect(
-			this.page.getByText(
-				'OXXO allows you to pay bills and online purchases in-store with cash.'
-			),
-			'Assert OXXO description is visible'
-		).toBeVisible();
-
-		const popupPromise = this.page.waitForEvent( 'popup', {
-			timeout: 20 * 1000,
-		} );
-		await this.submitOrder();
-		const popup = await popupPromise;
-		const paypal = new PayPalPopup( popup );
-
-		await expect(
-			paypal.page.getByText( 'Successful Payment', { exact: true } ),
-			'Assert OXXO successful payment message is visible in PayPal popup'
-		).toBeVisible();
-
-		await popup.close();
-	};
-
-	/**
-	 * Completes payment with Debit Or Credit Card (vaulting disabled)
+	 * Completes payment with BCDC funding source (vaulting disabled)
 	 *
 	 * @param card
 	 */
-	completeDebitOrCreditCardPayment = async (
+	completeBcdcFundingSourcePayment = async (
 		card: WooCommerce.CreditCard
 	) => {
 		await expect(
-			this.debitOrCreditCardButton(),
-			'Assert debit or credit card button is visible'
+			this.bcdcFundingSourceButton(),
+			'Assert BCDC funding source button is visible'
 		).toBeVisible();
-		await this.debitOrCreditCardButton().click();
+		await this.bcdcFundingSourceButton().click();
 
 		await expect(
-			this.debitOrCreditCardNumberInput(),
-			'Assert debit or credit card number input is visible'
+			this.bcdcFundingSourceNumberInput(),
+			'Assert BCDC funding source number input is visible'
 		).toBeVisible();
-		await this.debitOrCreditCardNumberInput().fill( card.card_number );
+		await this.bcdcFundingSourceNumberInput().fill( card.card_number );
 
 		await expect(
-			this.debitOrCreditCardExpirationInput(),
-			'Assert debit or credit card expiration input is visible'
+			this.bcdcFundingSourceExpirationInput(),
+			'Assert BCDC funding source expiration input is visible'
 		).toBeVisible();
-		await this.debitOrCreditCardExpirationInput().fill(
+		await this.bcdcFundingSourceExpirationInput().fill(
 			card.expiration_date
 		);
 
 		await expect(
-			this.debitOrCreditCardCSCInput(),
-			'Assert debit or credit card CSC input is visible'
+			this.bcdcFundingSourceCSCInput(),
+			'Assert BCDC funding source CSC input is visible'
 		).toBeVisible();
-		await this.debitOrCreditCardCSCInput().fill( card.card_cvv );
+		await this.bcdcFundingSourceCSCInput().fill( card.card_cvv );
 
 		await expect(
-			this.debitOrCreditCardPayNowButton(),
-			'Assert debit or credit card pay now button is visible'
+			this.bcdcFundingSourcePayNowButton(),
+			'Assert BCDC funding source pay now button is visible'
 		).toBeVisible();
-		await this.debitOrCreditCardPayNowButton().click();
+		await this.bcdcFundingSourcePayNowButton().click();
 	};
 
 	/**
-	 * Completes payment with Standard Card Button (vaulting disabled)
+	 * Completes payment with BCDC (vaulting disabled)
 	 *
 	 * @param card
+	 * @param customer
 	 */
-	completeStandardCardButtonPayment = async (
-		card: WooCommerce.CreditCard
+	completeBcdcPayment = async (
+		card: WooCommerce.CreditCard,
+		customer?: ShopOrder[ 'customer' ]
 	) => {
 		await expect(
-			this.standardCardButtonGateway(),
-			'Assert standard card button gateway is visible'
+			this.bcdcGateway(),
+			'Assert BCDC gateway is visible'
 		).toBeVisible();
-		await this.standardCardButtonGateway().click();
+		await this.bcdcGateway().click();
 
 		await expect(
-			this.standardCardButton(),
-			'Assert standard card button is visible'
+			this.bcdcButton(),
+			'Assert BCDC button is visible'
 		).toBeVisible();
-		await this.standardCardButton().click();
+		await this.bcdcButton().click();
 
 		await expect(
-			this.standardCardButtonNumberInput(),
-			'Assert standard card button number input is visible'
+			this.bcdcNumberInput(),
+			'Assert BCDC number input is visible'
 		).toBeVisible();
-		await this.standardCardButtonNumberInput().fill( card.card_number );
+		await this.bcdcNumberInput().fill( card.card_number );
 
 		await expect(
-			this.standardCardButtonExpirationInput(),
-			'Assert standard card button expiration input is visible'
+			this.bcdcExpirationInput(),
+			'Assert BCDC expiration input is visible'
 		).toBeVisible();
-		await this.standardCardButtonExpirationInput().fill(
-			card.expiration_date
-		);
+		await this.bcdcExpirationInput().fill( card.expiration_date );
 
 		await expect(
-			this.standardCardButtonCSCInput(),
-			'Assert standard card button CSC input is visible'
+			this.bcdcCSCInput(),
+			'Assert BCDC CSC input is visible'
 		).toBeVisible();
-		await this.standardCardButtonCSCInput().fill( card.card_cvv );
+		await this.bcdcCSCInput().fill( card.card_cvv );
+
+		// Latin America (Mexico) uses minimal mode: PayPal shows its own billing form inside the modal.
+		const firstNameInput = this.bcdcFirstNameInput();
+		if ( ( await firstNameInput.isVisible() ) && customer?.billing ) {
+			const { billing } = customer;
+			const countryInput = this.bcdcCountryInput();
+			const stateInput = this.bcdcStateInput();
+			await stateInput.waitFor( { state: 'visible', timeout: 30000 } );
+
+			if ( billing.country ) {
+				await countryInput.selectOption(
+					{ value: billing.country },
+					{ force: true }
+				);
+			}
+
+			await firstNameInput.fill( billing.first_name );
+			await this.bcdcLastNameInput().fill( billing.last_name );
+			await this.bcdcStreetInput().fill( billing.address_1 );
+			await this.bcdcCityInput().fill( billing.city );
+			await this.bcdcZipCodeInput().fill( billing.postcode );
+			if ( billing.email ) {
+				const emailInput = this.bcdcEmailInput();
+				if ( await emailInput.isVisible() ) {
+					await emailInput.fill( billing.email );
+				}
+			}
+			if ( billing.phone ) {
+				const phoneInput = this.bcdcPhoneInput();
+				if ( await phoneInput.isVisible() ) {
+					await phoneInput.fill( billing.phone );
+				}
+			}
+
+			const stateOptions = await stateInput.evaluate(
+				( el: HTMLSelectElement ) =>
+					el.tagName.toLowerCase() === 'select'
+						? Array.from( el.options )
+								.filter( ( o ) => o.value )
+								.map( ( o ) => ( { v: o.value, t: o.text } ) )
+						: []
+			);
+			const stateCode = billing.state?.trim() ?? '';
+			if ( stateOptions.length > 0 ) {
+				const match =
+					stateOptions.find( ( o ) => o.v === stateCode ) ||
+					stateOptions.find( ( o ) =>
+						o.t.toLowerCase().includes( stateCode.toLowerCase() )
+					) ||
+					stateOptions[ 0 ];
+				await stateInput.selectOption(
+					{ value: match.v },
+					{ force: true }
+				);
+			} else if ( stateCode ) {
+				await stateInput.fill( stateCode );
+			}
+		}
 
 		await expect(
-			this.standardCardButtonPayNowButton(),
-			'Assert standard card button pay now button is visible'
+			this.bcdcPayNowButton(),
+			'Assert BCDC pay now button is visible'
 		).toBeVisible();
-		await this.standardCardButtonPayNowButton().click();
-	};
-
-	/**
-	 * Completes payment with Pay upon Invoice (vaulting disabled)
-	 *
-	 * @param birthDate
-	 */
-	completePayUponInvoicePayment = async ( birthDate: string ) => {
-		await expect(
-			this.payUponInvoiceGateway(),
-			'Assert pay upon invoice gateway is visible'
-		).toBeVisible();
-		await this.payUponInvoiceGateway().click();
-
-		await expect(
-			this.payUponInvoiceBirthDateInput(),
-			'Assert pay upon invoice birth date input is visible'
-		).toBeVisible();
-		await this.payUponInvoiceBirthDateInput().click();
-		await this.page.keyboard.type( birthDate ); // Trick to properly fill date
-
-		await this.submitOrder();
-	};
-
-	addCardPaymentMethod = async ( payment: Pcp.Payment ) => {
-		const { card } = payment;
-		await expect(
-			this.debitCreditCardsGateway(),
-			'Assert debit credit cards gateway is visible'
-		).toBeVisible();
-		await this.debitCreditCardsGateway().click();
-
-		await expect(
-			this.acdcCardNumberInput(),
-			'Assert ACDC card number input is visible'
-		).toBeVisible();
-		await this.acdcCardNumberInput().fill( card.card_number );
-
-		await expect(
-			this.acdcCardExpirationInput(),
-			'Assert ACDC card expiration input is visible'
-		).toBeVisible();
-		await this.acdcCardExpirationInput().click();
-		await this.page.keyboard.type( card.expiration_date ); // Trick to properly fill date
-
-		await expect(
-			this.acdcCardCvvInput(),
-			'Assert ACDC card CVV input is visible'
-		).toBeVisible();
-		await this.acdcCardCvvInput().fill( card.card_cvv );
-
-		await expect(
-			this.addPaymentMethodButton(),
-			'Assert add payment method button is visible'
-		).toBeVisible();
-		await this.addPaymentMethodButton().click();
+		await this.bcdcPayNowButton().click();
 	};
 
 	// Assertions
+
+	/**
+	 * Asserts the saved payment method is visible
+	 *
+	 * @param payment
+	 */
+	assertVaultedPaymentMethodIsDisplayed = async ( payment: Pcp.Payment ) => {
+		const { gateway, card } = payment;
+		switch ( gateway.shortcut ) {
+			case 'paypal':
+				if ( this.isClassicCheckoutPage() || this.isPayForOrderPage() ) {
+					// On Classic checkout, Pay for order pages
+					await expect(
+						this.payPalGateway(),
+						'Assert PayPal gateway is visible',
+					).toBeVisible();
+					await this.payPalGateway().click( { position: { x: 10, y: 10 } } );
+
+					await expect(
+						this.payPalButtonsContainer(),
+						'Assert PayPal buttons are NOT visible',
+					).not.toBeVisible();
+
+					if ( ! payment.isFreeTrialSubscription ) {
+						// Free trial cart: PayPal doesn't render the vault component
+						// (see FreeTrialSubscriptionHelper::is_free_trial_cart()), only
+						// the plain saved-token radio.
+						await expect(
+							this.payPalVaultComponent(),
+							'Assert PayPal vault component is visible',
+						).toBeVisible();
+					}
+
+					await expect(
+						this.payPalVaultedPaymentMethodRadio(),
+						'Assert vaulted PayPal radio button is visible',
+					).toBeVisible();
+
+					await expect(
+						this.payPalNewPaymentMethodRadio(),
+						'Assert new PayPal payment method radio button is visible',
+					).toBeVisible();
+					
+					await expect(
+						this.placeOrderButton(),
+						'Assert Place Order button is visible',
+					).toBeVisible();
+					break;
+				}
+				// On classic cart, product pages:
+				await expect(
+					this.payPalButton(),
+					'Assert PayPal button is visible'
+				).toBeVisible();
+				// TODO: Confirm if PayPal button wallet view is supposed to be deprecated
+				// await expect
+				// 	.soft( this.payPalButtonMoreOptions() )
+				// 	.toBeVisible();
+				break;
+
+			case 'acdc':
+				await expect(
+					this.acdcGateway(),
+					'Assert ACDC gateway is visible',
+				).toBeVisible();
+				await this.acdcGateway().click();
+
+				await expect(
+					this.acdcSavedCard( card ),
+					'Assert ACDC saved card is visible'
+				).toBeVisible();
+				break;
+		}
+	};
+
+	/**
+	 * Asserts the saved payment method is not visible
+	 *
+	 * @param payment
+	 */
+	assertVaultedPaymentMethodIsNotDisplayed = async (
+		payment: Pcp.Payment
+	) => {
+		switch ( payment.gateway.shortcut ) {
+			case 'paypal':
+				await expect(
+					this.payPalGateway(),
+					'Assert PayPal gateway is visible',
+				).toBeVisible();
+				await this.payPalGateway().click();
+
+				await expect(
+					this.payPalVaultComponent(),
+					'Assert PayPal vault component is NOT visible',
+				).not.toBeVisible();
+
+				await expect(
+					this.payPalVaultedPaymentMethodRadio(),
+					'Assert vaulted PayPal radio button is NOT visible',
+				).not.toBeVisible();
+
+				await expect(
+					this.payPalNewPaymentMethodRadio(),
+					'Assert new PayPal payment method radio button is NOT visible',
+				).not.toBeVisible();
+
+				await expect(
+					this.payPalButtonsContainer(),
+					'Assert PayPal buttons are visible',
+				).toBeVisible();
+				
+				await expect(
+					this.placeOrderButton(),
+					'Assert Place Order button is NOT visible',
+				).not.toBeVisible();
+				break;
+
+			case 'acdc':
+				await expect(
+					this.acdcGateway(),
+					'Assert ACDC gateway is visible',
+				).toBeVisible();
+				await this.acdcGateway().click();
+
+				await expect(
+					this.acdcSavedCard( payment.card ),
+					'Assert ACDC saved card is NOT visible'
+				).not.toBeVisible();
+				break;
+		}
+	};
 
 	/**
 	 * Asserts PayPal buttons gateway container is visible and contains PayPal button (product, classic cart, classic checkout).
@@ -623,63 +763,5 @@ export class PayPalUiClassic extends PayPalUi {
 			this.payPalButton(),
 			'Assert PayPal button is visible'
 		).toBeVisible();
-	};
-
-	/**
-	 * Asserts PayPal buttons have the given label (pay, checkout, buynow, paypal).
-	 *
-	 * @param label   - Expected label value
-	 * @param context - 'gateway' for product/cart/checkout, 'minicart' for mini cart
-	 */
-	assertPayPalButtonsHaveLabel = async (
-		label: 'pay' | 'checkout' | 'buynow' | 'paypal',
-		context: 'gateway' | 'minicart' = 'gateway'
-	) => {
-		const host =
-			context === 'minicart'
-				? this.minicartPayPalButtonsHostElement()
-				: this.payPalButtonsHostElement();
-		await expect(
-			host,
-			`Assert PayPal buttons have label ${ label }`
-		).toHaveClass( new RegExp( `paypal-buttons-label-${ label }` ) );
-	};
-
-	/**
-	 * Asserts PayPal buttons have the given layout (vertical, horizontal).
-	 *
-	 * @param layout  - Expected layout value
-	 * @param context - 'gateway' for product/cart/checkout, 'minicart' for mini cart
-	 */
-	assertPayPalButtonsHaveLayout = async (
-		layout: 'vertical' | 'horizontal',
-		context: 'gateway' | 'minicart' = 'gateway'
-	) => {
-		const host =
-			context === 'minicart'
-				? this.minicartPayPalButtonsHostElement()
-				: this.payPalButtonsHostElement();
-		await expect(
-			host,
-			`Assert PayPal buttons have layout ${ layout }`
-		).toHaveClass( new RegExp( `paypal-buttons-layout-${ layout }` ) );
-	};
-
-	/**
-	 * Asserts PayPal buttons are not visible.
-	 *
-	 * @param context - 'gateway' for product/cart/checkout, 'minicart' for mini cart
-	 */
-	assertPayPalButtonsNotVisible = async (
-		context: 'gateway' | 'minicart' = 'gateway'
-	) => {
-		const selector =
-			context === 'minicart'
-				? '#ppc-button-minicart .paypal-buttons'
-				: '#ppc-button-ppcp-gateway .paypal-buttons';
-		await expect(
-			this.page.locator( selector ),
-			`Assert PayPal buttons (${ context }) are not visible`
-		).toBeHidden();
 	};
 }

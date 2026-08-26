@@ -1,22 +1,47 @@
+# Do not track private authentication details
+auth.json
+.npmrc
+.env*
+
+# Exclude runtime artifacts by file types
+*.cache
+*.bak
+*.log
+*.zip
+.DS_Store
+
+# Ignore IDE settings
+/.idea/
+.vscode
+
 /vendor/
 /build/
-/.idea/
 node_modules
-.phpunit.result.cache
-phpunit.xml.dist.bak
-yarn-error.log
 modules/*/vendor/*
 modules/*/assets/*
 !modules/ppcp-wc-gateway/assets/images
-*.zip
 !tests/qa/resources/files/*.zip
 !tests/qa-legacy-ui/resources/files/*.zip
-.env
-.env.integration
-auth.json
-.DS_Store
-tests/.DS_Store
+!.env.example*
 .composer_compiled_assets
 /coverage/
-assets
+/assets
+!modules/ppcp-local-alternative-payment-methods/assets/images
 tests/inc/inpsyde/
+
+# Track Claude Code configuration.
+!.claude
+
+# Ignore all kind of local files - settings.local.json, CLAUDE.local.md, skill.local/
+*.local.*
+**/*.local/
+
+# QA and tests
+playwright-utils
+playwright-report*
+snapshots
+storage-states
+test-results
+/tests/qa/resources/files/woocommerce-paypal-payments*.zip
+/tests/qa/resources/files/woocommerce-subscriptions*.zip
+.google-session.json

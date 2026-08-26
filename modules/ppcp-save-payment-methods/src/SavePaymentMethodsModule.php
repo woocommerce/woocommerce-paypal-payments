@@ -134,6 +134,28 @@ class SavePaymentMethodsModule implements ServiceModule, ExecutableModule {
 							if ( ! $save_payment_method ) {
 								return $data;
 							}
+						} elseif ( $payment_method === PayPalGateway::ID && $funding_source === 'apple_pay' ) {
+							if ( ! $settings_provider->save_paypal_and_venmo() ) {
+								return $data;
+							}
+
+							// Only vault Apple Pay when a subscription is being purchased.
+							// Apple guidelines forbid reusing Apple Pay for general returning-buyer
+							// checkout, so vaulting only serves merchant-initiated renewals.
+							$subscription_helper = $c->get( 'wc-subscriptions.helper' );
+							assert( $subscription_helper instanceof SubscriptionHelper );
+							if (
+								! $subscription_helper->cart_contains_subscription()
+								&& ! $subscription_helper->current_product_is_subscription()
+								&& ! $subscription_helper->order_pay_contains_subscription()
+							) {
+								return $data;
+							}
+
+							// Fall through: the generic merge below attaches the vault + customer
+							// attributes to the existing `apple_pay` payment_source key. Do not set
+							// usage_type/permit_multiple_payment_tokens, which are PayPal-wallet
+							// specific and not part of the Apple Pay save-during-purchase spec.
 						} elseif ( $payment_method === PayPalGateway::ID ) {
 							if ( ! $settings_provider->save_paypal_and_venmo() ) {
 								return $data;
@@ -217,6 +239,17 @@ class SavePaymentMethodsModule implements ServiceModule, ExecutableModule {
 												$token_id
 											);
 											break;
+										case 'card':
+											$wc_payment_tokens->create_payment_token_card(
+												$wc_order->get_customer_id(),
+												(object) array(
+													'id' => $token_id,
+													'payment_source' => (object) array(
+														'card' => $payment_source->properties(),
+													),
+												)
+											);
+											break;
 										case 'paypal':
 										default:
 											$wc_payment_tokens->create_payment_token_paypal(
@@ -259,6 +292,18 @@ class SavePaymentMethodsModule implements ServiceModule, ExecutableModule {
 							return;
 						}
 
+						/**
+						 * Whether to render the v5 add-payment-method assets. The
+						 * v6 SDK module returns false here when it owns the page
+						 * (its own save button + card fields), so the two stacks
+						 * do not both render into the same container.
+						 *
+						 * @param bool $render Whether to enqueue the v5 assets.
+						 */
+						if ( ! apply_filters( 'woocommerce_paypal_payments_render_add_payment_method_assets', true ) ) {
+							return;
+						}
+
 						$asset_getter = $c->get( 'save-payment-methods.asset_getter' );
 						assert( $asset_getter instanceof AssetGetter );
 
@@ -293,45 +338,60 @@ class SavePaymentMethodsModule implements ServiceModule, ExecutableModule {
 							$change_payment_method                      = wc_clean( wp_unslash( $_GET['change_payment_method'] ?? '' ) );
 							$is_subscription_change_payment_method_page = $context->is_subscription_change_payment_method_page();
 
+							$add_payment_method_data = array(
+								'client_id'               => $c->get( 'button.client_id' ),
+								'merchant_id'             => $c->get( 'api.merchant_id' ),
+								'id_token'                => $id_token,
+								'payment_methods_page'    => wc_get_account_endpoint_url( 'payment-methods' ),
+								'view_subscriptions_page' => wc_get_account_endpoint_url( 'view-subscription' ),
+								'is_subscription_change_payment_page' => $is_subscription_change_payment_method_page,
+								'subscription_id_to_change_payment' => $is_subscription_change_payment_method_page ? (int) $change_payment_method : 0,
+								'error_message'           => __( 'Could not save payment method.', 'woocommerce-paypal-payments' ),
+								'verification_method'     => $verification_method,
+								'script_attributes'       => (object) array(),
+								'user'                    => array(
+									'is_logged' => is_user_logged_in(),
+								),
+								'ajax'                    => array(
+									'create_setup_token'   => array(
+										'endpoint' => \WC_AJAX::get_endpoint( CreateSetupToken::ENDPOINT ),
+										'nonce'    => wp_create_nonce( CreateSetupToken::nonce() ),
+									),
+									'create_payment_token' => array(
+										'endpoint' => \WC_AJAX::get_endpoint( CreatePaymentToken::ENDPOINT ),
+										'nonce'    => wp_create_nonce( CreatePaymentToken::nonce() ),
+									),
+									'subscription_change_payment_method' => array(
+										'endpoint' => \WC_AJAX::get_endpoint( SubscriptionChangePaymentMethod::ENDPOINT ),
+										'nonce'    => wp_create_nonce( SubscriptionChangePaymentMethod::nonce() ),
+									),
+								),
+								'labels'                  => array(
+									'error' => array(
+										'generic' => __(
+											'Something went wrong. Please try again or choose another payment source.',
+											'woocommerce-paypal-payments'
+										),
+									),
+								),
+							);
+
+							/**
+							 * Filters the data localized for the Add Payment Method / Subscription
+							 * Change Payment Method pages. Mirrors the equivalent filter for the
+							 * checkout (`woocommerce_paypal_payments_localized_script_data`) so
+							 * stage overrides (e.g. `script_attributes.sdkBaseUrl`) can be applied
+							 * without touching the module.
+							 */
+							$add_payment_method_data = apply_filters(
+								'woocommerce_paypal_payments_add_payment_method_localized_script_data',
+								$add_payment_method_data
+							);
+
 							wp_localize_script(
 								'ppcp-add-payment-method',
 								'ppcp_add_payment_method',
-								array(
-									'client_id'            => $c->get( 'button.client_id' ),
-									'merchant_id'          => $c->get( 'api.merchant_id' ),
-									'id_token'             => $id_token,
-									'payment_methods_page' => wc_get_account_endpoint_url( 'payment-methods' ),
-									'view_subscriptions_page' => wc_get_account_endpoint_url( 'view-subscription' ),
-									'is_subscription_change_payment_page' => $is_subscription_change_payment_method_page,
-									'subscription_id_to_change_payment' => $is_subscription_change_payment_method_page ? (int) $change_payment_method : 0,
-									'error_message'        => __( 'Could not save payment method.', 'woocommerce-paypal-payments' ),
-									'verification_method'  => $verification_method,
-									'user'                 => array(
-										'is_logged' => is_user_logged_in(),
-									),
-									'ajax'                 => array(
-										'create_setup_token'   => array(
-											'endpoint' => \WC_AJAX::get_endpoint( CreateSetupToken::ENDPOINT ),
-											'nonce'    => wp_create_nonce( CreateSetupToken::nonce() ),
-										),
-										'create_payment_token' => array(
-											'endpoint' => \WC_AJAX::get_endpoint( CreatePaymentToken::ENDPOINT ),
-											'nonce'    => wp_create_nonce( CreatePaymentToken::nonce() ),
-										),
-										'subscription_change_payment_method' => array(
-											'endpoint' => \WC_AJAX::get_endpoint( SubscriptionChangePaymentMethod::ENDPOINT ),
-											'nonce'    => wp_create_nonce( SubscriptionChangePaymentMethod::nonce() ),
-										),
-									),
-									'labels'               => array(
-										'error' => array(
-											'generic' => __(
-												'Something went wrong. Please try again or choose another payment source.',
-												'woocommerce-paypal-payments'
-											),
-										),
-									),
-								)
+								$add_payment_method_data
 							);
 						} catch ( RuntimeException $exception ) {
 							$logger = $c->get( 'woocommerce.logger.woocommerce' );

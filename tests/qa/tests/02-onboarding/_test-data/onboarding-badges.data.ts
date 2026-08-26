@@ -5,7 +5,7 @@
  */
 export const expectedBadgeByCountry: Record<
 	string,
-	{ checkout: number; fixedFee: Record<string, number> }
+	{ checkout: number; fixedFee: Record< string, number > }
 > = {
 	US: {
 		checkout: 3.49,
@@ -42,7 +42,7 @@ export const expectedBadgeByCountry: Record<
 };
 
 /** WooCommerce country code (or base) -> country key in expectedBadgeByCountry */
-const wooCommerceToBadgeCountry: Record<string, string> = {
+const wooCommerceToBadgeCountry: Record< string, string > = {
 	US: 'US',
 	'US:SC': 'US',
 	GB: 'GB',
@@ -63,6 +63,8 @@ const wooCommerceToBadgeCountry: Record<string, string> = {
 /**
  * Returns expected badge percentage and formatted fixed fee for a country/currency.
  * Format matches formatPrice in ppcp-settings (prefix + amount + suffix).
+ * @param wooCommerceCountryCode
+ * @param currency
  */
 export function getExpectedBadgeValues(
 	wooCommerceCountryCode: string,
@@ -79,13 +81,11 @@ export function getExpectedBadgeValues(
 	}
 	const fixedAmount = data.fixedFee[ currency ];
 	if ( fixedAmount === undefined ) {
-		throw new Error(
-			`No fixed fee for ${ countryKey } / ${ currency }`
-		);
+		throw new Error( `No fixed fee for ${ countryKey } / ${ currency }` );
 	}
 	const percentage = data.checkout.toFixed( 2 );
 	const amountStr = fixedAmount.toFixed( 2 );
-	const currencyFormats: Record<string, string> = {
+	const currencyFormats: Record< string, string > = {
 		USD: `$${ amountStr } USD`,
 		CAD: `$${ amountStr } CAD`,
 		AUD: `$${ amountStr } AUD`,

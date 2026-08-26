@@ -70,9 +70,13 @@ const FeatureSettingsBlock = ( { title, description, ...props } ) => {
 							type,
 							text,
 							onClick,
+							target,
 						} = buttonData;
 
 						const buttonUrl = getButtonUrl( buttonData );
+
+						const buttonTarget =
+							target === false ? undefined : '_blank';
 
 						return (
 							<Button
@@ -81,7 +85,7 @@ const FeatureSettingsBlock = ( { title, description, ...props } ) => {
 								variant={ type }
 								isBusy={ actionProps.isBusy }
 								href={ buttonUrl }
-								target={ buttonUrl ? '_blank' : undefined }
+								target={ buttonTarget }
 								onClick={ ! buttonUrl ? onClick : undefined }
 							>
 								{ text }

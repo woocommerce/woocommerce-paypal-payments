@@ -15,6 +15,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Entity\Authorization;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\AuthorizationStatus;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Capture;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\CaptureStatus;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\FraudProcessorResponse;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Money;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Payments;
@@ -257,6 +258,56 @@ class AuthorizedPaymentsProcessorTest extends TestCase
 
 	private function createAuthorization(string $id, string $status): Authorization {
 		return new Authorization($id, new AuthorizationStatus($status), null);
+	}
+
+	public function testCaptureAuthorizedPaymentDeclinedWithFraudResponseCodePassesCodeToStatusNote(): void
+	{
+		$this->orderEndpoint->shouldReceive('order')->andReturn($this->paypalOrder);
+
+		$fraud   = new FraudProcessorResponse(null, null, '9500');
+		$capture = Mockery::mock(Capture::class);
+		$capture->shouldReceive('id')->andReturn($this->captureId);
+		$capture->shouldReceive('status')->andReturn(new CaptureStatus(CaptureStatus::DECLINED));
+		$capture->shouldReceive('fraud_processor_response')->andReturn($fraud);
+
+		$this->paymentsEndpoint
+			->expects('capture')
+			->with($this->authorizationId, equalTo(new Money($this->amount, $this->currency)))
+			->andReturn($capture);
+
+		$this->wcOrder
+			->shouldReceive('update_status')
+			->once()
+			->with('failed', Mockery::on(function (string $note): bool {
+				return strpos($note, '9500: Suspected Fraud') !== false;
+			}));
+		$this->wcOrder->shouldNotReceive('add_order_note');
+
+		$this->expectException(RuntimeException::class);
+		$this->expectExceptionMessageMatches('/your bank was unable to approve this transaction/');
+		$this->testee->capture_authorized_payment($this->wcOrder);
+	}
+
+	public function testCaptureAuthorizedPaymentDeclinedWithoutFraudCodeThrowsGenericMessage(): void
+	{
+		$this->orderEndpoint->shouldReceive('order')->andReturn($this->paypalOrder);
+
+		$capture = Mockery::mock(Capture::class);
+		$capture->shouldReceive('id')->andReturn($this->captureId);
+		$capture->shouldReceive('status')->andReturn(new CaptureStatus(CaptureStatus::DECLINED));
+		$capture->shouldReceive('fraud_processor_response')->andReturn(null);
+
+		$this->paymentsEndpoint
+			->expects('capture')
+			->with($this->authorizationId, equalTo(new Money($this->amount, $this->currency)))
+			->andReturn($capture);
+
+		$this->wcOrder->shouldReceive('update_status')->with('failed', 'Could not capture the payment.');
+		$this->wcOrder->shouldNotReceive('add_order_note');
+
+		$this->expectException(RuntimeException::class);
+		$this->expectExceptionMessage('Payment provider declined the payment, please use a different payment method.');
+		$this->testee->capture_authorized_payment($this->wcOrder);
 	}
 
 	private function createCapture(string $id, string $status): Capture {
