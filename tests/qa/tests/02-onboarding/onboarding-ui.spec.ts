@@ -289,7 +289,7 @@ test.describe( () => {
 		wooCommerceApi,
 		pcpOnboarding,
 	} ) => {
-		wooCommerceApi.updateGeneralSettings( {
+		await wooCommerceApi.updateGeneralSettings( {
 			woocommerce_default_country: 'RS:RS00',
 			woocommerce_currency: 'EUR',
 		} );
