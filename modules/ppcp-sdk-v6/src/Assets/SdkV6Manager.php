@@ -136,6 +136,13 @@ class SdkV6Manager {
 	 */
 	private ?bool $is_card_button_row = null;
 
+	/**
+	 * Memoizes available_gateways(), which every placement asks twice.
+	 *
+	 * @var array<string, WC_Payment_Gateway>|null
+	 */
+	private ?array $available_gateways = null;
+
 	public function __construct(
 		AssetGetter $asset_getter,
 		string $version,
@@ -385,13 +392,24 @@ class SdkV6Manager {
 	 * @return array<string, WC_Payment_Gateway>
 	 */
 	private function available_gateways(): array {
+		if ( null !== $this->available_gateways ) {
+			return $this->available_gateways;
+		}
+
 		if ( ! function_exists( 'WC' ) ) {
 			return array();
 		}
 
 		$gateways = WC()->payment_gateways();
 
-		return $gateways ? $gateways->get_available_payment_gateways() : array();
+		// Not memoized, so an early caller cannot pin an empty list.
+		if ( ! $gateways ) {
+			return array();
+		}
+
+		$this->available_gateways = $gateways->get_available_payment_gateways();
+
+		return $this->available_gateways;
 	}
 
 	/**
@@ -574,11 +592,8 @@ class SdkV6Manager {
 			return false;
 		}
 
-		$gateways = WC()->payment_gateways() ? WC()->payment_gateways()->get_available_payment_gateways() : array();
-
-		// Only this answer is memoized: the gateway list is settled by the time
-		// anything asks, whereas the page context above may not be yet.
-		$this->is_card_button_row = isset( $gateways[ CardButtonGateway::ID ] );
+		// Memoized only from here on, for the reason is_method_gateway() gives.
+		$this->is_card_button_row = isset( $this->available_gateways()[ CardButtonGateway::ID ] );
 
 		return $this->is_card_button_row;
 	}
