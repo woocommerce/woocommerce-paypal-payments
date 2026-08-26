@@ -76,23 +76,10 @@ class PayPalSettingsExporter implements StepExporter, HasAlias
                 $paypal_options[$option_name] = $value;
             }
         }
-        if (!$this->includes_connection()) {
+        if (!$this->include_connection) {
             $paypal_options = $this->sanitizer->sanitize($paypal_options);
         }
         return new \WooCommerce\PayPalCommerce\Compat\WooCommerceBlueprint\SetPayPalSettings($paypal_options);
-    }
-    /**
-     * Whether the resulting export carries the merchant's connection details.
-     *
-     * Filter 'woocommerce_paypal_payments_blueprint_export_connection_details' for
-     * automated environments with no merchant present to make the choice. Returning
-     * true makes every export from this store include the connection details.
-     *
-     * @return bool
-     */
-    private function includes_connection(): bool
-    {
-        return (bool) apply_filters('woocommerce_paypal_payments_blueprint_export_connection_details', $this->include_connection);
     }
     /**
      * Get step name.
