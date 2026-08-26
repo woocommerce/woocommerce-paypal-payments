@@ -12,9 +12,16 @@ const BlueprintExportImport = () => {
 	const { blueprint } = data();
 	const { exportBlueprint, isExporting } = useBlueprintExport();
 	const { isConnected } = CommonHooks.useMerchant();
-	const { isOpen, setIsOpen } = useToggleState( 'blueprint-export' );
+	const { isReady } = CommonHooks.useStore();
+	// No id: opening the dialog from the URL would skip the isConnected branch.
+	const { isOpen, setIsOpen } = useToggleState();
 
 	const handleExportClick = useCallback( () => {
+		// isConnected defaults to false until the merchant resolves.
+		if ( ! isReady ) {
+			return;
+		}
+
 		// Nothing to opt in to while disconnected.
 		if ( ! isConnected ) {
 			exportBlueprint();
@@ -22,7 +29,7 @@ const BlueprintExportImport = () => {
 		}
 
 		setIsOpen( true );
-	}, [ isConnected, exportBlueprint, setIsOpen ] );
+	}, [ isReady, isConnected, exportBlueprint, setIsOpen ] );
 
 	const handleCancel = useCallback( () => {
 		setIsOpen( false );
@@ -52,7 +59,7 @@ const BlueprintExportImport = () => {
 					'woocommerce-paypal-payments'
 				) }
 				actionProps={ {
-					isBusy: isExporting,
+					isBusy: isExporting || ! isReady,
 					buttons: [
 						{
 							text: __( 'Export', 'woocommerce-paypal-payments' ),
