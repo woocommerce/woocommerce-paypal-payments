@@ -8,6 +8,7 @@
 declare (strict_types=1);
 namespace WooCommerce\PayPalCommerce\SdkV6\Assets;
 
+use WC_Product;
 use WooCommerce\PayPalCommerce\Applepay\ApplePayGateway;
 use WooCommerce\PayPalCommerce\Applepay\Assets\PropertiesDictionary;
 use WooCommerce\PayPalCommerce\Assets\AssetGetter;
@@ -23,6 +24,7 @@ use WooCommerce\PayPalCommerce\SavePaymentMethods\Endpoint\CreatePaymentTokenFor
 use WooCommerce\PayPalCommerce\SavePaymentMethods\Endpoint\CreateSetupToken;
 use WooCommerce\PayPalCommerce\SdkV6\Endpoint\ClientTokenEndpoint;
 use WooCommerce\PayPalCommerce\SdkV6\Endpoint\SimulateCartEndpoint;
+use WooCommerce\PayPalCommerce\SdkV6\Endpoint\WalletShippingEndpoint;
 use WooCommerce\PayPalCommerce\SdkV6\Helper\ApplePayConfig;
 use WooCommerce\PayPalCommerce\SdkV6\Helper\ButtonStyleMapper;
 use WooCommerce\PayPalCommerce\SdkV6\Helper\CardFieldStyles;
@@ -57,6 +59,10 @@ class SdkV6Manager
     // The pay-for-order page has no pre-payment hook, so the message renders
     // after the submit button and is relocated by SdkV6Module.
     public const PAY_ORDER_MESSAGE_HOOK = 'woocommerce_pay_order_before_submit';
+    /**
+     * The contexts that print a payment-method radio list a wallet can own a row in.
+     */
+    private const CONTEXTS_WITH_GATEWAY_ROWS = array('checkout', 'pay-now');
     // Existing WC credit-card-form field IDs the v6 card fields mount into; see
     // CardFieldsModule's woocommerce_credit_card_form_fields filter.
     private const CARD_FIELD_NAME_ID = 'ppcp-credit-card-gateway-card-name';
@@ -67,7 +73,6 @@ class SdkV6Manager
     private string $version;
     private Environment $environment;
     private ButtonStyleMapper $style_mapper;
-    private bool $should_handle_shipping;
     private SettingsStatus $settings_status;
     private Context $context;
     private SessionHandler $session_handler;
@@ -115,13 +120,12 @@ class SdkV6Manager
      * @var bool|null
      */
     private ?bool $is_card_button_row = null;
-    public function __construct(AssetGetter $asset_getter, string $version, Environment $environment, ButtonStyleMapper $style_mapper, bool $should_handle_shipping, SettingsStatus $settings_status, Context $context, SessionHandler $session_handler, CancelView $cancel_view, bool $final_review_enabled, bool $vaulting_enabled, CardPaymentsConfiguration $card_payments_configuration, bool $card_vaulting_enabled, SubscriptionHelper $subscription_helper, FreeTrialSubscriptionHelper $free_trial_helper, callable $get_subscriptions_mode, string $three_d_secure_contingency, array $credit_card_icons, MessageStyleMapper $message_style_mapper, MessagesEligibility $messages_eligibility, string $merchant_country, GooglePayConfig $google_pay_config, ApplePayConfig $apple_pay_config, FastlaneConfig $fastlane_config, CardFieldStyles $card_field_styles)
+    public function __construct(AssetGetter $asset_getter, string $version, Environment $environment, ButtonStyleMapper $style_mapper, SettingsStatus $settings_status, Context $context, SessionHandler $session_handler, CancelView $cancel_view, bool $final_review_enabled, bool $vaulting_enabled, CardPaymentsConfiguration $card_payments_configuration, bool $card_vaulting_enabled, SubscriptionHelper $subscription_helper, FreeTrialSubscriptionHelper $free_trial_helper, callable $get_subscriptions_mode, string $three_d_secure_contingency, array $credit_card_icons, MessageStyleMapper $message_style_mapper, MessagesEligibility $messages_eligibility, string $merchant_country, GooglePayConfig $google_pay_config, ApplePayConfig $apple_pay_config, FastlaneConfig $fastlane_config, CardFieldStyles $card_field_styles)
     {
         $this->asset_getter = $asset_getter;
         $this->version = $version;
         $this->environment = $environment;
         $this->style_mapper = $style_mapper;
-        $this->should_handle_shipping = $should_handle_shipping;
         $this->settings_status = $settings_status;
         $this->context = $context;
         $this->session_handler = $session_handler;
@@ -280,9 +284,7 @@ class SdkV6Manager
     /**
      * Whether a wallet renders as its own payment-method row.
      *
-     * True only on classic checkout with the gateway actually available: the
-     * other contexts have no payment-method list, and the block checkout
-     * registers its methods through the block registry instead.
+     * True only where there is a list to join and the gateway is available there.
      *
      * Only the gateway walk is memoized, never a refusal from the context check,
      * so a call made before the context resolves cannot poison the answer.
@@ -292,7 +294,7 @@ class SdkV6Manager
         if (null !== $wallet->is_gateway) {
             return $wallet->is_gateway;
         }
-        if ('checkout' !== $this->get_page_context() || $this->is_block_context()) {
+        if (!in_array($this->get_page_context(), self::CONTEXTS_WITH_GATEWAY_ROWS, \true) || $this->is_block_context()) {
             return \false;
         }
         $gateways = WC()->payment_gateways() ? WC()->payment_gateways()->get_available_payment_gateways() : array();
@@ -670,11 +672,7 @@ class SdkV6Manager
             $buyer_country = wc_get_base_location()['country'] ?? '';
         }
         $page_context = $this->get_page_context();
-        // In lockstep with ShippingPreferenceFactory: only 'checkout' and
-        // 'pay-now' are fixed-address (SET_PROVIDED_ADDRESS, no callbacks).
-        // Every other context gets GET_FROM_FILE, where PayPal offers the
-        // buyer's own addresses and the callbacks sync the choice back.
-        $shipping_enabled = $this->should_handle_shipping && !in_array($page_context, array('checkout', 'pay-now'), \true);
+        $shipping_contexts = $this->shipping_contexts($page_context);
         $store_api_base = rtrim(rest_url('wc/store/v1/cart'), '/');
         $button_styles = array();
         if ($page_context) {
@@ -715,6 +713,7 @@ class SdkV6Manager
                 'client_token' => array('endpoint' => \WC_AJAX::get_endpoint(ClientTokenEndpoint::ENDPOINT), 'nonce' => wp_create_nonce(ClientTokenEndpoint::nonce())),
                 'change_cart' => array('endpoint' => \WC_AJAX::get_endpoint(ChangeCartEndpoint::ENDPOINT), 'nonce' => wp_create_nonce(ChangeCartEndpoint::nonce())),
                 'simulate_cart' => array('endpoint' => \WC_AJAX::get_endpoint(SimulateCartEndpoint::ENDPOINT), 'nonce' => wp_create_nonce(SimulateCartEndpoint::nonce())),
+                'wallet_shipping' => array('endpoint' => \WC_AJAX::get_endpoint(WalletShippingEndpoint::ENDPOINT), 'nonce' => wp_create_nonce(WalletShippingEndpoint::nonce())),
                 'create_order' => array('endpoint' => \WC_AJAX::get_endpoint(CreateOrderEndpoint::ENDPOINT), 'nonce' => wp_create_nonce(CreateOrderEndpoint::nonce())),
                 'approve_order' => array('endpoint' => \WC_AJAX::get_endpoint(ApproveOrderEndpoint::ENDPOINT), 'nonce' => wp_create_nonce(ApproveOrderEndpoint::nonce())),
                 'get_order' => array('endpoint' => \WC_AJAX::get_endpoint(GetOrderEndpoint::ENDPOINT), 'nonce' => wp_create_nonce(GetOrderEndpoint::nonce())),
@@ -733,8 +732,14 @@ class SdkV6Manager
                 // One string for every onWarn the SDK raises: its own codes are
                 // internal and untranslated, so they must not reach the buyer.
                 'card_declined' => __('The card could not be charged. Please check the details or try a different card.', 'woocommerce-paypal-payments'),
+                'shipping_unserviceable' => __('Cannot ship to the selected address.', 'woocommerce-paypal-payments'),
+                // The Apple Pay sheet itemises the total with these.
+                'subtotal' => __('Subtotal', 'woocommerce-paypal-payments'),
+                'shipping' => __('Shipping', 'woocommerce-paypal-payments'),
+                'tax' => __('Tax', 'woocommerce-paypal-payments'),
+                'discount' => __('Discount', 'woocommerce-paypal-payments'),
             ),
-            'shipping' => array('handle_in_paypal' => $shipping_enabled, 'need_shipping' => $this->need_shipping()),
+            'shipping' => array('in_context' => $shipping_contexts, 'countries' => $this->shipping_countries($shipping_contexts)),
             'button_styles' => $button_styles,
             'button_height' => self::PAYMENT_BUTTON_HEIGHT,
             'wrapper' => '#' . self::WRAPPER_ID,
@@ -878,12 +883,80 @@ class SdkV6Manager
         );
     }
     /**
-     * Whether the current cart needs shipping.
+     * Whether shipping details are collected, per context.
+     *
+     * One decision per context, shared by every surface that asks it: the PayPal
+     * popup and the wallet payment sheets. A map rather than a single flag because
+     * the mini-cart renders on any page, so two contexts can be live at once and
+     * answer differently.
+     *
+     * @param string $page_context The context of the current page.
+     * @return array<string, bool> Keyed by context.
      */
-    private function need_shipping(): bool
+    private function shipping_contexts(string $page_context): array
     {
+        $contexts = array();
+        if ($page_context) {
+            $contexts[$page_context] = $this->shipping_for_context($page_context);
+        }
+        $contexts['mini-cart'] = $this->shipping_for_context('mini-cart');
+        return $contexts;
+    }
+    /**
+     * Whether the given context collects a shipping address and shipping options.
+     *
+     * Requires the "Pay Now" experience, which builds the WC order from the approved
+     * PayPal order and the address collected during payment. Continuation mode ends
+     * on a final review page instead, and that page collects shipping itself.
+     *
+     * The product page judges the product rather than the cart, because the product
+     * is what gets bought there: it is added to the cart on click, so the cart's
+     * current contents describe a basket that is about to be replaced.
+     *
+     * @param string $context The context to judge.
+     * @return bool
+     */
+    private function shipping_for_context(string $context): bool
+    {
+        if ($this->final_review_enabled) {
+            return \false;
+        }
+        // Both pages already own the address and the total the order will use, so
+        // the wallet only authorizes what the page shows. This prevents conflicting
+        // addresses/details between checkout form and payment sheet.
+        if (in_array($context, array('checkout', 'pay-now'), \true)) {
+            return \false;
+        }
+        // Block surfaces read needsShipping live from the React cart and combine it
+        // with this value themselves, so answering with the cart as it stood when the
+        // page was built would gate them twice, on a snapshot that goes stale the
+        // moment the buyer edits the cart.
+        if (in_array($context, array('cart-block', 'checkout-block'), \true)) {
+            return \true;
+        }
+        if ('product' === $context) {
+            $product = wc_get_product();
+            return $product instanceof WC_Product && !$product->is_virtual() && !$product->is_downloadable();
+        }
         $cart = WC()->cart;
         return $cart && $cart->needs_shipping();
+    }
+    /**
+     * The countries a payment sheet may offer, for Google Pay's address allow-list.
+     *
+     * Sent whole whenever any context collects shipping, as the classic integration
+     * did, so the buyer can never select an address the store would reject.
+     *
+     * @param array<string, bool> $shipping_contexts The per-context map.
+     * @return array<int, string> ISO-2 country codes.
+     */
+    private function shipping_countries(array $shipping_contexts): array
+    {
+        if (!in_array(\true, $shipping_contexts, \true)) {
+            return array();
+        }
+        $countries = WC()->countries;
+        return $countries ? array_keys($countries->get_shipping_countries()) : array();
     }
     /**
      * The amount eligibility is checked against, which moves Pay Later
