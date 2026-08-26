@@ -15,10 +15,13 @@ import { methodConfig } from './methodRegistry';
  * Kept out of methodRegistry.js, which holds the rest of the wallet description:
  * boot.js and sdkLoader.js read that module long before anything renders, so it
  * stays import-free rather than dragging a bridge in behind it.
+ *
+ * Key order is stack order: each bridge appends its container before its first
+ * await, so the wallets land in the order started here.
  */
 const RENDERERS = {
-	[ FundingSources.GOOGLEPAY ]: renderGooglePay,
 	[ FundingSources.APPLEPAY ]: renderApplePay,
+	[ FundingSources.GOOGLEPAY ]: renderGooglePay,
 };
 
 // The pages that print a payment-method list a wallet can own a row in. PHP
