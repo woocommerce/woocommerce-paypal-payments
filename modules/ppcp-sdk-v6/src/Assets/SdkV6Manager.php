@@ -443,8 +443,8 @@ class SdkV6Manager {
 
 	/**
 	 * The gateway's own supports list, or `array( 'products' )` when the gateway
-	 * is unavailable — the narrowest list, so the method is hidden rather than
-	 * offered on a cart it cannot pay for.
+	 * is unavailable. The narrowest list hides the method rather than offering
+	 * it on a cart it cannot pay for.
 	 *
 	 * @return string[]
 	 */
@@ -471,7 +471,7 @@ class SdkV6Manager {
 	 * where nothing else here would.
 	 */
 	public function should_load_on_current_page(): bool {
-		// Native PayPal Subscriptions (subscriptions_api mode) have no v6 path — v6
+		// Native PayPal Subscriptions (subscriptions_api mode) have no v6 path: v6
 		// can only carry a subscription by vaulting, which that mode disables. Hand
 		// the whole page back to the v5 stack, which creates the subscription via
 		// actions.subscription.create. Checked before every other gate so it also
@@ -533,7 +533,7 @@ class SdkV6Manager {
 	}
 
 	/**
-	 * Whether BCDC is configured for this kind of page — not whether the row
+	 * Whether BCDC is configured for this kind of page, not whether the row
 	 * prints here, which is is_card_button_row().
 	 *
 	 * Narrower than its ACDC counterpart: BCDC has no block checkout support.
@@ -565,7 +565,7 @@ class SdkV6Manager {
 
 		// No row for subscription carts: the v6 guest component has no
 		// equivalent of the SDK URL vault param v5 uses here, so the button
-		// would take a payment that can never renew. Not a dead end — without a
+		// would take a payment that can never renew. Not a dead end: without a
 		// button "Place order" stays visible, and CardButtonGateway falls back
 		// to PayPal's hosted card checkout. order_pay_contains_subscription()
 		// covers pay-for-order, where the cart is empty.
@@ -724,7 +724,7 @@ class SdkV6Manager {
 
 		// Scoped to the product location rather than probing wc_get_product()
 		// unconditionally the way v5 does: on a cart or checkout page a stray
-		// global $product — left behind by a theme loop or another plugin —
+		// global $product, left behind by a theme loop or another plugin,
 		// would otherwise make the message price that product instead of the
 		// cart. The location check also covers the [product_page] shortcut,
 		// where is_product() is false but the context is still 'product'.

@@ -170,76 +170,60 @@ class SdkV6Module implements ServiceModule, ExtendingModule, ExecutableModule {
 		// ppcp-gateway type and processing); on v6-owned block pages its
 		// script_data is empty so it registers no express buttons.
 		//
-		// Extends the v5 handoff (see extensions.php) to the other v5 PayPal
-		// block methods, which misbehave against v5's now-empty config: the
-		// Google Pay / Apple Pay boots throw during React render, tearing down
-		// the whole checkout block.
+		// The other v5 PayPal block methods misbehave against that empty config:
+		// the Google Pay and Apple Pay boots throw during React render, tearing
+		// down the whole checkout block.
 		//
-		// Fastlane is the exception: v6 does not re-implement it, the ppcp-axo
-		// block method keeps rendering and only takes the SDK object from this
-		// module, so it stays registered wherever v6 can supply that object.
-		//
-		// Classic checkout needs no equivalent: both wallet rows are v6-owned
-		// there, printing their own hide-until-eligible style and revealing the
-		// row once the browser confirms the shopper can pay.
-		//
-		// The registration action fires on init (priority 5), before
-		// is_checkout()/is_cart() resolve, so the page context is unknown here;
-		// capture the registry and defer the suppression to wp_enqueue_scripts.
+		// This action fires on init, before is_checkout()/is_cart() resolve, so
+		// the suppression is deferred to two later hooks that run once the page
+		// context is known. The editor needs its own because editing a Cart or
+		// Checkout page is a block context too. Unregistering twice is a no-op.
 		add_action(
 			'woocommerce_blocks_payment_method_type_registration',
 			function ( PaymentMethodRegistry $payment_method_registry ) use ( $c ): void {
 				$payment_method_registry->register( $c->get( 'sdk-v6.blocks.payment-method' ) );
 
-				add_action(
-					'wp_enqueue_scripts',
-					function () use ( $c, $payment_method_registry ): void {
-						$manager = $c->get( 'sdk-v6.manager' );
-						assert( $manager instanceof SdkV6Manager );
+				$suppress_v5_methods = function () use ( $c, $payment_method_registry ): void {
+					$manager = $c->get( 'sdk-v6.manager' );
+					assert( $manager instanceof SdkV6Manager );
 
-						if ( ! $manager->should_load_on_current_page() || ! $manager->is_block_context() ) {
-							return;
-						}
+					if ( ! $manager->should_load_on_current_page() || ! $manager->is_block_context() ) {
+						return;
+					}
 
-						// PayPal-owned block methods only; never third-party or
-						// core gateways.
-						$v5_methods = array(
-							'ppcp-googlepay',
-							'ppcp-applepay',
-						);
+					$v5_methods = array(
+						'ppcp-googlepay',
+						'ppcp-applepay',
+					);
 
-						// The v5 Fastlane block method runs on the v6 SDK, so it
-						// is only suppressed where v6 cannot supply a Fastlane
-						// instance — otherwise the shopper would lose Fastlane
-						// with nothing rendering in its place.
-						if ( ! $manager->is_fastlane_enabled() ) {
-							$v5_methods[] = 'ppcp-axo-gateway';
-						}
+					// v6 does not re-implement Fastlane, so the v5 method is
+					// dropped only where v6 cannot supply the SDK object it
+					// runs on.
+					if ( ! $manager->is_fastlane_enabled() ) {
+						$v5_methods[] = 'ppcp-axo-gateway';
+					}
 
-						// Suppress the v5 card block only when v6 renders its own
-						// card method in its place, so cards stay payable when v6
-						// does not.
-						if ( $manager->is_card_fields_enabled() ) {
-							$v5_methods[] = 'ppcp-credit-card-gateway';
-						}
+					// Only when v6 renders a card method in its place, so cards
+					// stay payable otherwise.
+					if ( $manager->is_card_fields_enabled() ) {
+						$v5_methods[] = 'ppcp-credit-card-gateway';
+					}
 
-						// v6 renders the order review under this name too, and
-						// registerPaymentMethod is a silent last-one-wins
-						// assignment, so leaving both registered would make the
-						// review surface depend on script order. Outside
-						// continuation v5's place-order method is left alone: it
-						// never loads the JS SDK, so it still works.
-						if ( $manager->is_continuation() ) {
-							$v5_methods[] = 'ppcp-gateway';
+					// registerPaymentMethod silently takes the last registration,
+					// so leaving both would make the review depend on script
+					// order. Outside continuation v5's method loads no JS SDK.
+					if ( $manager->is_continuation() ) {
+						$v5_methods[] = 'ppcp-gateway';
+					}
+					foreach ( $v5_methods as $method ) {
+						if ( $payment_method_registry->is_registered( $method ) ) {
+							$payment_method_registry->unregister( $method );
 						}
-						foreach ( $v5_methods as $method ) {
-							if ( $payment_method_registry->is_registered( $method ) ) {
-								$payment_method_registry->unregister( $method );
-							}
-						}
-					},
-					5
-				);
+					}
+				};
+
+				add_action( 'wp_enqueue_scripts', $suppress_v5_methods, 5 );
+				add_action( 'enqueue_block_editor_assets', $suppress_v5_methods, 5 );
 			}
 		);
 
