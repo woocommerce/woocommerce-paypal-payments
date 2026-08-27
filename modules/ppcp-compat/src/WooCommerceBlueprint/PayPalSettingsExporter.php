@@ -112,11 +112,15 @@ class PayPalSettingsExporter implements StepExporter, HasAlias
     /**
      * Return the description used in the frontend.
      *
+     * Blueprint surfaces outside this plugin render only the label and this
+     * description, so the opt-in variant states the risk here rather than relying
+     * on the plugin's own confirmation dialog.
+     *
      * @return string
      */
     public function get_description(): string
     {
-        return $this->include_connection ? __('Exports PayPal Payments settings together with the connection credentials of the connected account.', 'woocommerce-paypal-payments') : __('Exports PayPal Payments settings and configuration options, without any connection credentials.', 'woocommerce-paypal-payments');
+        return $this->include_connection ? __('Exports PayPal Payments settings together with the connection credentials of the connected account. The file will contain your client ID and client secret in plain text, so store it securely and do not share it.', 'woocommerce-paypal-payments') : __('Exports PayPal Payments settings and configuration options, without any connection credentials.', 'woocommerce-paypal-payments');
     }
     /**
      * Check if user has capability to export PayPal settings.
