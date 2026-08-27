@@ -187,6 +187,65 @@ class PayPalSettingsImporterTest extends TestCase {
 	}
 
 	/**
+	 * Options are written whole rather than merged, so a settings-only payload
+	 * would otherwise blank the credentials of a store that is already connected.
+	 *
+	 * @test
+	 */
+	public function test_a_settings_only_import_leaves_an_existing_connection_alone(): void {
+		$this->written['woocommerce-ppcp-data-common']     = array(
+			'client_id'          => 'TARGET-ID',
+			'client_secret'      => 'TARGET-SECRET',
+			'merchant_connected' => true,
+		);
+		$this->written['woocommerce-ppcp-data-onboarding'] = array(
+			'completed'  => true,
+			'setup_done' => true,
+		);
+
+		$this->import(
+			array(
+				'woocommerce-ppcp-data-common'     => array(
+					'client_id'          => '',
+					'client_secret'      => '',
+					'merchant_connected' => false,
+				),
+				'woocommerce-ppcp-data-onboarding' => array(
+					'completed'  => false,
+					'setup_done' => true,
+				),
+			)
+		);
+
+		self::assertSame( 'TARGET-ID', $this->written['woocommerce-ppcp-data-common']['client_id'] );
+		self::assertSame( 'TARGET-SECRET', $this->written['woocommerce-ppcp-data-common']['client_secret'] );
+		self::assertTrue( $this->written['woocommerce-ppcp-data-common']['merchant_connected'] );
+		self::assertTrue( $this->written['woocommerce-ppcp-data-onboarding']['completed'] );
+	}
+
+	/**
+	 * @test
+	 */
+	public function test_an_opt_in_import_replaces_the_existing_connection(): void {
+		$this->written['woocommerce-ppcp-data-common'] = array(
+			'client_id'     => 'TARGET-ID',
+			'client_secret' => 'TARGET-SECRET',
+		);
+
+		$this->import(
+			array(
+				'woocommerce-ppcp-data-common' => array(
+					'client_id'     => 'SOURCE-ID',
+					'client_secret' => 'SOURCE-SECRET',
+				),
+			)
+		);
+
+		self::assertSame( 'SOURCE-ID', $this->written['woocommerce-ppcp-data-common']['client_id'] );
+		self::assertSame( 'SOURCE-SECRET', $this->written['woocommerce-ppcp-data-common']['client_secret'] );
+	}
+
+	/**
 	 * @test
 	 */
 	public function test_a_payload_without_options_is_rejected(): void {
