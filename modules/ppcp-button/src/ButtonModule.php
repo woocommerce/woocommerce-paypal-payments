@@ -21,7 +21,6 @@ use WooCommerce\PayPalCommerce\Button\Endpoint\GetOrderEndpoint;
 use WooCommerce\PayPalCommerce\Button\Endpoint\SaveCheckoutFormEndpoint;
 use WooCommerce\PayPalCommerce\Button\Endpoint\SimulateCartEndpoint;
 use WooCommerce\PayPalCommerce\Button\Endpoint\ValidateCheckoutEndpoint;
-use WooCommerce\PayPalCommerce\Button\Helper\Context;
 use WooCommerce\PayPalCommerce\OrderEndpoints\Helper\EarlyOrderHandler;
 use WooCommerce\PayPalCommerce\OrderEndpoints\Helper\WooCommerceOrderCreator;
 use WooCommerce\PayPalCommerce\Button\Session\CartDataTransientStorage;
@@ -36,12 +35,6 @@ use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
  */
 class ButtonModule implements ServiceModule, ExecutableModule {
 	use ModuleClassNameIdTrait;
-
-	/**
-	 * Storage key carrying the buyer's pending submit across the reload that a
-	 * return from PayPal triggers. Must match ResumeFlowHelper.AUTO_SUBMIT_KEY.
-	 */
-	private const SUBMIT_AFTER_RETURN_KEY = 'ppcpSubmitAfterReturn';
 
 	/**
 	 * {@inheritDoc}
@@ -81,60 +74,6 @@ class ButtonModule implements ServiceModule, ExecutableModule {
 					$smart_button->enqueue();
 				}
 			}
-		);
-
-		add_action(
-			'wp_enqueue_scripts',
-			static function () use ( $c ) {
-				$context = $c->get( 'button.helper.context' );
-				assert( $context instanceof Context );
-
-				if ( ! $context->is_checkout() ) {
-					return;
-				}
-
-				/*
-				 * Replays the buyer's submit after a return from PayPal.
-				 *
-				 * onApproveForPayNow reloads the checkout on a return so the billing
-				 * fields can be restored from the payer, which costs the buyer the tap
-				 * they already made. The smart button script does not load once an
-				 * approved order is in the session, so the replay is printed here
-				 * instead, attached to WooCommerce's own checkout script: that runs
-				 * before its ready handler fires the first update, so the listener is
-				 * bound in time.
-				 *
-				 * Printed on every checkout rather than only where an approved order is
-				 * detected: the stored flag is the real gate, it is only ever written on
-				 * the return path, and keying on a second condition would silently do
-				 * nothing wherever that condition disagreed.
-				 *
-				 * The flag is written by ResumeFlowHelper.markSubmitAfterReturn() and is
-				 * cleared before use, so this can fire at most once per return. If the
-				 * checkout does not validate — most likely an unticked terms box, which
-				 * is not ours to tick — the buyer simply confirms by hand.
-				 */
-				wp_add_inline_script(
-					'wc-checkout',
-					sprintf(
-						'( function () {
-	var key = %s;
-	try {
-		if ( window.sessionStorage.getItem( key ) !== "1" ) { return; }
-		window.sessionStorage.removeItem( key );
-	} catch ( e ) { return; }
-	jQuery( document.body ).one( "updated_checkout", function () {
-		var button = document.querySelector( "#place_order" );
-		if ( button ) { button.click(); }
-	} );
-} )();',
-						wp_json_encode( self::SUBMIT_AFTER_RETURN_KEY )
-					)
-				);
-			},
-			// After WooCommerce has registered wc-checkout, or the inline script
-			// would attach to nothing and silently never run.
-			20
 		);
 
 		add_filter(
