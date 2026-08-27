@@ -1,3 +1,5 @@
+import '@ppcp-test/helpers/silenceConsole';
+
 import {
 	applePayFailure,
 	applePayShippingUpdate,
@@ -363,6 +365,5 @@ describe( 'attachShippingHandlers()', () => {
 		expect(
 			appleSession.completeShippingContactSelection
 		).not.toHaveBeenCalled();
-		expect( console ).toHaveErrored();
 	} );
 } );

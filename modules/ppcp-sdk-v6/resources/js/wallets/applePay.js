@@ -13,42 +13,45 @@
  */
 
 import Spinner from '@ppcp-button/Helper/Spinner';
-import { releaseWalletShipping } from '../endpointsAdapter';
+import { releaseCartShipping } from '../endpointsAdapter';
 import { hasJQuery } from '../utils/api';
 import { refreshCartUi } from '../utils/cartUi';
 import { handleError } from '../utils/errorHandler';
 import { loadScript } from '../utils/scriptLoaders';
-import { revealWalletGateway } from './gatewayPlacement';
+import { revealMethodGateway } from '../methods/gatewayPlacement';
+import { renderIsObsolete } from '../methods/renderOverrides';
 import { APPLE_PAY_VERSION, buildApplePayRequest } from './applePayRequest';
 import { watchSheetTotal } from './applePaySheetTotal';
 import { applePayFailure, attachShippingHandlers } from './applePayShipping';
 import { recordDomainValidation } from './applePayValidation';
-import { walletButtonStyle } from './walletButtonStyle';
+import { buttonStyle } from '../methods/buttonStyle';
 import {
 	applePayPayer,
 	applePayShippingAddress,
 	applePayWcBillingAddress,
 	applePayWcShippingAddress,
 } from './walletContacts';
-import { payWithWallet } from './walletPayment';
-import { walletConfig, walletFundingSource } from './walletRegistry';
+import { payWithSession } from '../methods/sessionPayment';
+import { methodConfig, methodFundingSource } from '../methods/methodRegistry';
 import {
 	createShippingController,
-	walletShippingRequired,
-} from './walletShipping';
-import { resolveWalletTotal } from './walletTotal';
+	methodShippingRequired,
+} from '../methods/methodShipping';
+import { resolveContextTotal } from '../methods/contextTotal';
 
 /**
  * Renders the Apple Pay button and wires its click to a payment.
  *
- * @param {Object}  args           - The render inputs.
- * @param {string}  args.method    - The wallet's funding source.
- * @param {Object}  args.wrapper   - The button wrapper to render into.
- * @param {Object}  args.config    - The wc_ppcp_sdk_v6 config object.
- * @param {string}  args.context   - The page context.
- * @param {Object}  args.session   - The v6 Apple Pay payment session.
- * @param {?Object} [args.gateway] - The { id, wrapper } of the payment-method
- *                                 row, when the wallet is its own gateway.
+ * @param {Object}  args             - The render inputs.
+ * @param {string}  args.method      - The wallet's funding source.
+ * @param {Object}  args.wrapper     - The button wrapper to render into.
+ * @param {Object}  args.config      - The wc_ppcp_sdk_v6 config object.
+ * @param {string}  args.context     - The page context.
+ * @param {Object}  args.session     - The v6 Apple Pay payment session.
+ * @param {?Object} [args.gateway]   - The { id, wrapper } of the payment-method
+ *                                   row, when the wallet is its own gateway.
+ * @param {Object}  [args.overrides] - Surface-specific overrides, as described
+ *                                   by renderMethodInto().
  * @return {Promise<void>} Resolves once the button is rendered, or skipped.
  */
 export async function renderApplePay( {
@@ -58,14 +61,16 @@ export async function renderApplePay( {
 	context,
 	session,
 	gateway,
+	overrides = {},
 } ) {
 	// Answers off a native global, before anything is fetched: an incapable browser
 	// loads no SDK and leaves the DOM untouched, so the gateway row stays hidden.
 	if ( ! isDeviceEligible() ) {
+		overrides.onUnavailable?.();
 		return;
 	}
 
-	const settings = walletConfig( config, method );
+	const settings = methodConfig( config, method );
 
 	// Own box, appended before the first await so the wrapper is non-empty by the
 	// time boot.js checks it and skips a redundant second render pass.
@@ -84,18 +89,29 @@ export async function renderApplePay( {
 		session.config(),
 	] );
 
+	if ( renderIsObsolete( overrides ) ) {
+		container.remove();
+		return;
+	}
+
 	// The narrow client-side veto: merchant capability and product status are
 	// already gated by ApplePayConfig server-side. Only an explicit refusal counts,
 	// so an absent field never withholds the button from every shopper.
 	if ( false === applePayConfig?.isEligible ) {
 		container.remove();
+		overrides.onUnavailable?.();
 		return;
 	}
 
-	revealWalletGateway( gateway, config );
+	revealMethodGateway( gateway, config );
 
-	const sheetTotal = watchSheetTotal( config, context );
-	const requiresShipping = walletShippingRequired( config, context );
+	// Synchronous either way: Safari refuses a sheet opened after an await.
+	const sheetTotal = overrides.sheetTotal ?? watchSheetTotal( config, context );
+
+	// Without contacts the sheet opens on the shopper's own default.
+	const sheetContacts = overrides.sheetContacts ?? { get: () => ( {} ) };
+	const requiresShipping =
+		overrides.requiresShipping ?? methodShippingRequired( config, context );
 	const shipping = createShippingController( { config } );
 	const spinner = hasJQuery() ? Spinner.fullPage() : null;
 	let paying = false;
@@ -132,10 +148,16 @@ export async function renderApplePay( {
 
 		paying = true;
 
-		cartReady = resolveWalletTotal( config, context );
+		// Claims the surface's express UI; onSheetClosed() releases it again.
+		overrides.onClick?.();
+
+		cartReady = resolveContextTotal( config, context );
 
 		// Claimed here so a rejection nothing has awaited yet stays handled.
 		cartReady.catch( () => {} );
+
+		// Read at click time, so a late address edit still reaches the sheet.
+		const contacts = sheetContacts.get();
 
 		const request = buildApplePayRequest( applePayConfig, {
 			// Stands in when PayPal's config carries no country of its own.
@@ -144,6 +166,8 @@ export async function renderApplePay( {
 			total,
 			displayName: settings.display_name,
 			requiresShipping,
+			shippingContact: contacts.shipping,
+			billingContact: contacts.billing,
 		} );
 
 		// Apple rejects a malformed request (currency, supportedNetworks) by
@@ -180,10 +204,11 @@ export async function renderApplePay( {
 				spinner?.unblock();
 
 				if ( requiresShipping ) {
-					releaseWalletShipping( config ).catch( () => {} );
+					releaseCartShipping( config ).catch( () => {} );
 				}
 
 				refreshCartUi( context );
+				overrides.onSheetClosed?.();
 			};
 
 			// Presents the sheet, and only then asks for merchant validation.
@@ -192,6 +217,7 @@ export async function renderApplePay( {
 			paying = false;
 			spinner?.unblock();
 			handleError( error );
+			overrides.onSheetClosed?.();
 		}
 	}
 
@@ -222,6 +248,7 @@ export async function renderApplePay( {
 			paying = false;
 			appleSession.abort();
 			handleError( error );
+			overrides.onSheetClosed?.();
 		}
 	}
 
@@ -234,7 +261,7 @@ export async function renderApplePay( {
 	 */
 	async function authorizePayment( appleSession, event ) {
 		// Blocked while the sheet is still up, so no idle page shows in the moment
-		// between the sheet closing and payWithWallet's redirect.
+		// between the sheet closing and payWithSession's redirect.
 		spinner?.block();
 
 		try {
@@ -252,11 +279,11 @@ export async function renderApplePay( {
 				);
 			}
 
-			await payWithWallet( {
+			await payWithSession( {
 				config,
 				context,
 				session,
-				fundingSource: walletFundingSource( method ),
+				fundingSource: methodFundingSource( method ),
 				// Undefined on the express path, where the order belongs to the
 				// PayPal gateway as Venmo's and Pay Later's do.
 				paymentMethod: gateway?.id,
@@ -275,7 +302,7 @@ export async function renderApplePay( {
 				},
 			} );
 
-			// Dismisses the sheet. The spinner stays up: payWithWallet has
+			// Dismisses the sheet. The spinner stays up: payWithSession has
 			// already started the redirect or submitted the checkout form.
 			appleSession.completePayment(
 				window.ApplePaySession.STATUS_SUCCESS
@@ -290,13 +317,21 @@ export async function renderApplePay( {
 			spinner?.unblock();
 			refreshCartUi( context );
 			handleError( error );
+			overrides.onSheetClosed?.();
 		}
 	}
 
-	// renderWallet() only reaches this bridge when PHP styled this context.
-	const styles = walletButtonStyle( settings.styles[ context ] );
+	// renderMethod() only reaches this bridge when PHP styled this context.
+	const styles = buttonStyle( settings.styles[ context ] );
 
-	container.appendChild( createButton( styles, config.button_height, pay ) );
+	// The block sizing controls arrive unitless; Apple wants a CSS length.
+	if ( overrides.borderRadius !== undefined ) {
+		styles.borderRadius = `${ Number( overrides.borderRadius ) }px`;
+	}
+
+	container.appendChild(
+		createButton( styles, overrides.height || config.button_height, pay )
+	);
 }
 
 /**
@@ -307,7 +342,7 @@ export async function renderApplePay( {
  *
  * @return {boolean} False on anything that is not a capable Apple browser.
  */
-function isDeviceEligible() {
+export function isDeviceEligible() {
 	try {
 		return !! window.ApplePaySession?.canMakePayments();
 	} catch ( error ) {

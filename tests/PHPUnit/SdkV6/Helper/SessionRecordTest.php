@@ -15,7 +15,7 @@ use function Brain\Monkey\Functions\when;
  * Expiry is exercised by seeding the session directly, because time() cannot be
  * redefined in this suite.
  */
-class WalletPaymentRecordTest extends TestCase {
+class SessionRecordTest extends TestCase {
 	use MockeryPHPUnitIntegration;
 	use StubsWcSession;
 

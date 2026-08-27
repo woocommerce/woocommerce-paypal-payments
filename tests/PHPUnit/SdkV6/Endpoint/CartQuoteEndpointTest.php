@@ -20,7 +20,7 @@ use WooCommerce\PayPalCommerce\TestCase;
 use function Brain\Monkey\Functions\when;
 use function Brain\Monkey\Functions\expect;
 
-class WalletShippingEndpointTest extends TestCase {
+class CartQuoteEndpointTest extends TestCase {
 	use MockeryPHPUnitIntegration;
 	use StubsWcSession;
 
@@ -40,7 +40,7 @@ class WalletShippingEndpointTest extends TestCase {
 
 	private RecordedQuote $recorded_quote;
 
-	private WalletShippingEndpoint $sut;
+	private CartQuoteEndpoint $sut;
 
 	/**
 	 * @var array<string, mixed>
@@ -71,7 +71,7 @@ class WalletShippingEndpointTest extends TestCase {
 			}
 		);
 
-		$this->sut = new WalletShippingEndpoint(
+		$this->sut = new CartQuoteEndpoint(
 			$this->request_data,
 			$this->amount_factory,
 			$this->recorded_rate,
@@ -141,7 +141,7 @@ class WalletShippingEndpointTest extends TestCase {
 
 	private function stub_request( array $data ): void {
 		$this->request_data->shouldReceive( 'read_request' )
-			->with( WalletShippingEndpoint::nonce() )
+			->with( CartQuoteEndpoint::nonce() )
 			->andReturn( $data );
 	}
 

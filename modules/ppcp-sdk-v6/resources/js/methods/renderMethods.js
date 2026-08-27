@@ -1,18 +1,18 @@
 /**
- * The single seam boot.js calls to render wallet buttons.
+ * The single seam boot.js calls to render a method's button.
  *
  * @package
  */
 
 import { FundingSources } from '../utils/fundingSources';
-import { renderGooglePay } from './googlePay';
-import { renderApplePay } from './applePay';
-import { walletConfig } from './walletRegistry';
+import { renderGooglePay } from '../wallets/googlePay';
+import { renderApplePay } from '../wallets/applePay';
+import { methodConfig } from './methodRegistry';
 
 /**
  * The render function for each wallet.
  *
- * Kept out of walletRegistry.js, which holds the rest of the wallet description:
+ * Kept out of methodRegistry.js, which holds the rest of the wallet description:
  * boot.js and sdkLoader.js read that module long before anything renders, so it
  * stays import-free rather than dragging a bridge in behind it.
  */
@@ -41,10 +41,10 @@ const CONTEXTS_WITH_GATEWAY_ROWS = [ 'checkout', 'pay-now' ];
  * @param {Object} args.sessions - The payment sessions, keyed by method.
  * @return {Promise<void>} Resolves once the wallets have rendered.
  */
-export async function renderWallets( { wrapper, config, context, sessions } ) {
+export async function renderMethods( { wrapper, config, context, sessions } ) {
 	await Promise.all(
 		Object.keys( RENDERERS ).map( ( method ) =>
-			renderWallet( method, { wrapper, config, context, sessions } )
+			renderMethod( method, { wrapper, config, context, sessions } )
 		)
 	);
 }
@@ -80,14 +80,67 @@ function resolveTarget( wrapper, gateway, context ) {
 }
 
 /**
+ * Renders one method into an element the caller already owns.
+ *
+ * For surfaces that place the button themselves rather than letting
+ * resolveTarget() find it, such as a framework owning its own container.
+ *
+ * `overrides` is how such a surface tells a bridge what it knows better:
+ *
+ * - `height`, `borderRadius`: sizing that beats the merchant's settings.
+ * - `requiresShipping`: replaces the per-context answer PHP sent.
+ * - `sheetTotal`: a `{ get() }` reader for Apple Pay, which cannot await one.
+ * - `sheetContacts`: a `{ get() }` reader over `{ billing, shipping }` Apple
+ *   contacts, prefilling the sheet with an address the surface already has.
+ * - `isObsolete()`: asked after each await; the surface has torn this render
+ *   down, so stop and leave nothing behind.
+ * - `onClick()`: the shopper opened the sheet.
+ * - `onUnavailable()`: the method decided not to render, so nothing will appear.
+ * - `onSheetClosed()`: the sheet closed without paying.
+ * - `onRenderFailed( error )`: raised by the surface's container when this
+ *   function rejects, never by a bridge.
+ *
+ * @param {string}  method           - The wallet's funding source.
+ * @param {Object}  args             - The render inputs.
+ * @param {Object}  args.wrapper     - The element to render into.
+ * @param {Object}  args.config      - The wc_ppcp_sdk_v6 config object.
+ * @param {string}  args.context     - The page context.
+ * @param {Object}  args.session     - The wallet's payment session.
+ * @param {?Object} [args.gateway]   - The { id, wrapper } of the payment-method
+ *                                   row, when the wallet is its own gateway.
+ * @param {Object}  [args.overrides] - Surface-specific overrides, as above.
+ * @return {Promise<void>} Resolves once the wallet has rendered, or skipped.
+ */
+export async function renderMethodInto(
+	method,
+	{ wrapper, config, context, session, gateway, overrides }
+) {
+	const render = RENDERERS[ method ];
+	if ( ! render ) {
+		return;
+	}
+
+	// Bridges read their own funding source from `method`.
+	await render( {
+		method,
+		wrapper,
+		config,
+		context,
+		session,
+		gateway,
+		overrides,
+	} );
+}
+
+/**
  * Renders one wallet, if it is switched on and has a session.
  *
  * @param {string} method - The wallet's funding source.
- * @param {Object} args   - The render inputs, as for renderWallets().
+ * @param {Object} args   - The render inputs, as for renderMethods().
  * @return {Promise<void>} Resolves once rendered, or skipped.
  */
-async function renderWallet( method, { wrapper, config, context, sessions } ) {
-	const settings = walletConfig( config, method );
+async function renderMethod( method, { wrapper, config, context, sessions } ) {
+	const settings = methodConfig( config, method );
 	const session = sessions[ method ];
 
 	// `enabled` is true as soon as *any* context wants the wallet, so the
@@ -106,10 +159,7 @@ async function renderWallet( method, { wrapper, config, context, sessions } ) {
 		return;
 	}
 
-	await RENDERERS[ method ]( {
-		// Passed down so a bridge never has to name itself: the funding source
-		// and the config subtree both follow from it.
-		method,
+	await renderMethodInto( method, {
 		wrapper: target,
 		config,
 		context,

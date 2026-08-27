@@ -1,5 +1,5 @@
 /**
- * Quoting shipping for an open wallet payment sheet.
+ * Quoting shipping for an open payment sheet.
  *
  * The sheet asks mid-payment, before any PayPal order exists, so it cannot use the
  * popup's handlers in sessions/shippingHandler.js: those patch an order that is not
@@ -12,7 +12,7 @@
  * @package
  */
 
-import { quoteWalletShipping } from '../endpointsAdapter';
+import { quoteCartShipping } from '../endpointsAdapter';
 import { quoteFromResponse } from './shippingQuote';
 
 /**
@@ -26,7 +26,7 @@ import { quoteFromResponse } from './shippingQuote';
  * @param {string} context - The page context.
  * @return {boolean} True when the sheet must ask for an address.
  */
-export function walletShippingRequired( config, context ) {
+export function methodShippingRequired( config, context ) {
 	return Boolean( config.shipping?.in_context?.[ context ] );
 }
 
@@ -36,7 +36,7 @@ export function walletShippingRequired( config, context ) {
  * @param {Object} config - The wc_ppcp_sdk_v6 config object.
  * @return {string[]} ISO-2 country codes.
  */
-export function walletShippingCountries( config ) {
+export function methodShippingCountries( config ) {
 	return config.shipping?.countries ?? [];
 }
 
@@ -86,7 +86,7 @@ export function createShippingController( { config } ) {
 			}
 
 			lastQuote = quoteFromResponse(
-				await quoteWalletShipping( config, {
+				await quoteCartShipping( config, {
 					address,
 					rateId,
 					billingAddress,

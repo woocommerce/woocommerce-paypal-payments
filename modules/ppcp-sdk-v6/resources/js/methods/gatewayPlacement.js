@@ -1,18 +1,15 @@
 /**
- * Placement concerns for wallets that are their own payment-method row.
+ * Placement concerns for a method that is its own payment-method row.
  *
- * On classic checkout Google Pay and Apple Pay are gateways rather than express
- * buttons, so each row starts hidden until the browser proves it can pay, and its
- * button takes the place of "Place order" while that row is selected. Kept out of
- * the wallet bridges so those files stay about their wallet.
+ * On classic checkout Google Pay, Apple Pay and the Basic Card button are
+ * gateways rather than express buttons, so each row starts hidden until it
+ * proves it can pay, and its button takes the place of "Place order" while that
+ * row is selected.
  *
  * Visibility is decided here for all of them at once rather than by each bridge
  * for itself, because the elements are shared: "Place order" and the express
- * wrapper belong to no single wallet, so two wallets deciding independently would
- * each undo the other's answer.
- *
- * Nothing here is wallet-specific despite the directory — the Basic Card button
- * (BCDC) uses the same seam. The wallet naming is historical.
+ * wrapper belong to no single method, so two deciding independently would each
+ * undo the other's answer.
  *
  * @package
  */
@@ -190,7 +187,7 @@ function syncGatewayVisibility( {
  * @param {?Object} gateway - The { id, wrapper } of the wallet's row.
  * @param {Object}  config  - The wc_ppcp_sdk_v6 config object.
  */
-export function revealWalletGateway( gateway, config ) {
+export function revealMethodGateway( gateway, config ) {
 	if ( ! gateway ) {
 		return;
 	}

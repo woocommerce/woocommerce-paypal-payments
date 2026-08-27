@@ -114,5 +114,48 @@ describe( 'buildApplePayRequest()', () => {
 		expect( request.shippingType ).toBe( 'shipping' );
 		expect( request.shippingMethods ).toEqual( [] );
 	} );
+
+	describe( 'the initial shippingContact and billingContact selection', () => {
+		const shippingContact = { countryCode: 'US' };
+		const billingContact = { countryCode: 'DE' };
+
+		test( 'sets both contacts on the request when both are given and shipping is required', () => {
+			const request = buildApplePayRequest(
+				applePayConfig(),
+				transaction( {
+					requiresShipping: true,
+					shippingContact,
+					billingContact,
+				} )
+			);
+
+			expect( request.shippingContact ).toBe( shippingContact );
+			expect( request.billingContact ).toBe( billingContact );
+		} );
+
+		test( 'omits shippingContact when requiresShipping is false, even when one is given', () => {
+			const request = buildApplePayRequest(
+				applePayConfig(),
+				transaction( {
+					requiresShipping: false,
+					shippingContact,
+					billingContact,
+				} )
+			);
+
+			expect( request ).not.toHaveProperty( 'shippingContact' );
+			expect( request.billingContact ).toBe( billingContact );
+		} );
+
+		test( 'omits both contact keys entirely when neither is given', () => {
+			const request = buildApplePayRequest(
+				applePayConfig(),
+				transaction( { requiresShipping: true } )
+			);
+
+			expect( request ).not.toHaveProperty( 'shippingContact' );
+			expect( request ).not.toHaveProperty( 'billingContact' );
+		} );
+	} );
 } );
 

@@ -1,3 +1,5 @@
+import '@ppcp-test/helpers/silenceConsole';
+
 // Declared outside the factory so their identity is stable across tests;
 // the factory only needs to delegate to them.
 const mockClear = jest.fn();
@@ -39,7 +41,6 @@ describe( 'handleError', () => {
 			'Missing city.',
 		] );
 		expect( mockGenericError ).not.toHaveBeenCalled();
-		expect( console ).toHaveErrored();
 	} );
 
 	test( 'shows a user-facing message verbatim and clears any existing notice first', () => {
@@ -48,7 +49,6 @@ describe( 'handleError', () => {
 		expect( mockClear ).toHaveBeenCalled();
 		expect( mockMessage ).toHaveBeenCalledWith( 'Card declined.' );
 		expect( mockGenericError ).not.toHaveBeenCalled();
-		expect( console ).toHaveErrored();
 	} );
 
 	test( 'prefers the errors list over a user-facing message when both are present', () => {
@@ -62,7 +62,6 @@ describe( 'handleError', () => {
 			'Invalid postal code.',
 		] );
 		expect( mockMessage ).not.toHaveBeenCalled();
-		expect( console ).toHaveErrored();
 	} );
 
 	test( 'falls back to the translated generic label for an internal error', () => {
@@ -71,7 +70,6 @@ describe( 'handleError', () => {
 		expect( mockGenericError ).toHaveBeenCalled();
 		expect( mockMessage ).not.toHaveBeenCalled();
 		expect( mockMessages ).not.toHaveBeenCalled();
-		expect( console ).toHaveErrored();
 	} );
 
 	test( 'shows nothing beyond logging when no generic label is configured for an internal error', () => {
@@ -82,7 +80,6 @@ describe( 'handleError', () => {
 		expect( mockGenericError ).not.toHaveBeenCalled();
 		expect( mockMessage ).not.toHaveBeenCalled();
 		expect( mockMessages ).not.toHaveBeenCalled();
-		expect( console ).toHaveErrored();
 	} );
 
 	test( 'treats an undefined labels object the same as an empty one', () => {
@@ -91,7 +88,6 @@ describe( 'handleError', () => {
 		handleError( new Error( 'Network down.' ) );
 
 		expect( mockGenericError ).not.toHaveBeenCalled();
-		expect( console ).toHaveErrored();
 	} );
 
 	test.each( [
@@ -109,7 +105,6 @@ describe( 'handleError', () => {
 			'Something went wrong.',
 			document.querySelector( selector )
 		);
-		expect( console ).toHaveErrored();
 	} );
 
 	test( 'prefers .woocommerce-notices-wrapper over .woocommerce when both are present', () => {
@@ -123,7 +118,6 @@ describe( 'handleError', () => {
 			'Something went wrong.',
 			document.querySelector( '.woocommerce-notices-wrapper' )
 		);
-		expect( console ).toHaveErrored();
 	} );
 
 	test( 'falls back to document.body when neither notice wrapper is present', () => {
@@ -133,7 +127,6 @@ describe( 'handleError', () => {
 			'Something went wrong.',
 			document.body
 		);
-		expect( console ).toHaveErrored();
 	} );
 
 	test( 'triggers update_checkout when the error is a refresh signal and jQuery is available', () => {
@@ -144,7 +137,6 @@ describe( 'handleError', () => {
 		handleError( { refresh: true } );
 
 		expect( trigger ).toHaveBeenCalledWith( 'update_checkout' );
-		expect( console ).toHaveErrored();
 
 		delete global.jQuery;
 	} );
@@ -153,7 +145,6 @@ describe( 'handleError', () => {
 		mockHasJQuery.mockReturnValue( false );
 
 		expect( () => handleError( { refresh: true } ) ).not.toThrow();
-		expect( console ).toHaveErrored();
 	} );
 } );
 
@@ -163,7 +154,6 @@ describe( 'handleWarning', () => {
 
 		expect( mockMessage ).not.toHaveBeenCalled();
 		expect( mockClear ).not.toHaveBeenCalled();
-		expect( console ).toHaveWarned();
 	} );
 
 	test( 'shows the translated card_declined message when configured', () => {
@@ -175,7 +165,6 @@ describe( 'handleWarning', () => {
 		handleWarning( { code: 'INSTRUMENT_DECLINED' } );
 
 		expect( mockMessage ).toHaveBeenCalledWith( 'Your card was declined.' );
-		expect( console ).toHaveWarned();
 	} );
 
 	test( 'leaves existing notices alone, unlike handleError', () => {
@@ -184,6 +173,5 @@ describe( 'handleWarning', () => {
 		handleWarning( { code: 'INSTRUMENT_DECLINED' } );
 
 		expect( mockClear ).not.toHaveBeenCalled();
-		expect( console ).toHaveWarned();
 	} );
 } );

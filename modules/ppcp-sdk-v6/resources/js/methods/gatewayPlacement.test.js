@@ -14,7 +14,7 @@ jest.mock( '../utils/api', () => ( {
 
 // The module keeps its registered wallet rows and listener flag at module
 // scope, so each test needs a fresh module instance.
-let revealWalletGateway;
+let revealMethodGateway;
 
 beforeEach( () => {
 	jest.resetModules();
@@ -27,11 +27,11 @@ beforeEach( () => {
 	jQuery( document.body ).off();
 	document.body.innerHTML = '';
 	global.jQuery = jQuery;
-	( { revealWalletGateway } = require( './gatewayPlacement' ) );
+	( { revealMethodGateway } = require( './gatewayPlacement' ) );
 } );
 
 /**
- * Calls revealWalletGateway() with the common googlepay/#wallet-wrapper
+ * Calls revealMethodGateway() with the common googlepay/#wallet-wrapper
  * defaults, so each test states only what it overrides.
  *
  * @param {Object} [overrides] - Overrides for methodId/wrapperSelector/expressSelector.
@@ -44,7 +44,7 @@ function reveal( overrides = {} ) {
 		expressSelector,
 	} = overrides;
 
-	revealWalletGateway(
+	revealMethodGateway(
 		{ id: methodId, wrapper: wrapperSelector },
 		{ wrapper: expressSelector }
 	);
@@ -60,7 +60,7 @@ function displayOf( selector ) {
 	return document.querySelector( selector ).style.display;
 }
 
-describe( 'revealWalletGateway()', () => {
+describe( 'revealMethodGateway()', () => {
 	describe( 'revealing the payment-method row', () => {
 		test( 'removes only the hide-gateway style tag for this method', () => {
 			document.body.innerHTML =
@@ -112,7 +112,7 @@ describe( 'revealWalletGateway()', () => {
 					'<style data-hide-gateway="googlepay"></style>' +
 					'<div id="place_order" style="display: none"></div>';
 
-				revealWalletGateway( null, { wrapper: '#express-wrapper' } );
+				revealMethodGateway( null, { wrapper: '#express-wrapper' } );
 
 				expect(
 					document.querySelector(

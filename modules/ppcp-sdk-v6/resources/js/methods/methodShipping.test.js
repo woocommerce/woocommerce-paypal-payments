@@ -1,6 +1,6 @@
 const mockQuoteWalletShipping = jest.fn();
 jest.mock( '../endpointsAdapter', () => ( {
-	quoteWalletShipping: ( ...args ) => mockQuoteWalletShipping( ...args ),
+	quoteCartShipping: ( ...args ) => mockQuoteWalletShipping( ...args ),
 } ) );
 
 const mockQuoteFromResponse = jest.fn();
@@ -10,9 +10,9 @@ jest.mock( './shippingQuote', () => ( {
 
 import {
 	createShippingController,
-	walletShippingCountries,
-	walletShippingRequired,
-} from './walletShipping';
+	methodShippingCountries,
+	methodShippingRequired,
+} from './methodShipping';
 
 const config = ( overrides = {} ) => ( {
 	shipping: {
@@ -26,23 +26,23 @@ beforeEach( () => {
 	jest.clearAllMocks();
 } );
 
-describe( 'walletShippingRequired()', () => {
+describe( 'methodShippingRequired()', () => {
 	test.each( [
 		[ 'checkout', true ],
 		[ 'product', false ],
 		[ 'cart', false ],
 	] )( 'reports %s as required: %s', ( context, expected ) => {
-		expect( walletShippingRequired( config(), context ) ).toBe( expected );
+		expect( methodShippingRequired( config(), context ) ).toBe( expected );
 	} );
 
 	test( 'is false when the config carries no shipping section at all', () => {
-		expect( walletShippingRequired( {}, 'checkout' ) ).toBe( false );
+		expect( methodShippingRequired( {}, 'checkout' ) ).toBe( false );
 	} );
 } );
 
-describe( 'walletShippingCountries()', () => {
+describe( 'methodShippingCountries()', () => {
 	test( 'returns the configured countries', () => {
-		expect( walletShippingCountries( config() ) ).toEqual( [
+		expect( methodShippingCountries( config() ) ).toEqual( [
 			'US',
 			'DE',
 		] );
@@ -50,12 +50,12 @@ describe( 'walletShippingCountries()', () => {
 
 	test( 'returns an empty list when the store does not restrict countries', () => {
 		expect(
-			walletShippingCountries( config( { shipping: {} } ) )
+			methodShippingCountries( config( { shipping: {} } ) )
 		).toEqual( [] );
 	} );
 
 	test( 'returns an empty list when the config carries no shipping section at all', () => {
-		expect( walletShippingCountries( {} ) ).toEqual( [] );
+		expect( methodShippingCountries( {} ) ).toEqual( [] );
 	} );
 } );
 

@@ -13,7 +13,7 @@ declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\SdkV6\Helper;
 
-class RecordedShippingRate extends WalletPaymentRecord {
+class RecordedShippingRate extends SessionRecord {
 
 	protected const SESSION_KEY = 'ppcp_wallet_chosen_rate';
 

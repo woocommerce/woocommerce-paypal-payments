@@ -9,8 +9,8 @@ jest.mock( '../utils/errorHandler', () => ( {
 } ) );
 
 const mockRevealWalletGateway = jest.fn();
-jest.mock( '../wallets/gatewayPlacement', () => ( {
-	revealWalletGateway: ( ...args ) => mockRevealWalletGateway( ...args ),
+jest.mock( '../methods/gatewayPlacement', () => ( {
+	revealMethodGateway: ( ...args ) => mockRevealWalletGateway( ...args ),
 } ) );
 
 import { initCardButton } from './renderCardButton';

@@ -551,7 +551,7 @@ function selectShippingMethodInForm( rateId ) {
  *                                            than charge it.
  * @return {Promise<Object>} The quote.
  */
-export async function quoteWalletShipping(
+export async function quoteCartShipping(
 	config,
 	{ address, rateId = null, billingAddress = null, expectedTotal = null }
 ) {
@@ -580,7 +580,7 @@ export async function quoteWalletShipping(
  * @param {Object} config - The wc_ppcp_sdk_v6 config object.
  * @return {Promise<?Object>} The endpoint's acknowledgement.
  */
-export async function releaseWalletShipping( config ) {
+export async function releaseCartShipping( config ) {
 	return postJson( config.ajax.wallet_shipping, { release: true } );
 }
 

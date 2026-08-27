@@ -1,14 +1,14 @@
-jest.mock( './googlePay', () => ( {
+jest.mock( '../wallets/googlePay', () => ( {
 	renderGooglePay: jest.fn(),
 } ) );
 
-jest.mock( './applePay', () => ( {
+jest.mock( '../wallets/applePay', () => ( {
 	renderApplePay: jest.fn(),
 } ) );
 
-import { renderGooglePay } from './googlePay';
-import { renderApplePay } from './applePay';
-import { renderWallets } from './renderWallets';
+import { renderGooglePay } from '../wallets/googlePay';
+import { renderApplePay } from '../wallets/applePay';
+import { renderMethods, renderMethodInto } from './renderMethods';
 
 const args = ( overrides = {} ) => ( {
 	wrapper: {},
@@ -70,7 +70,7 @@ describe.each( walletCases )(
 		test( 'renders with the method, wrapper, config, context, session and no gateway on the express path', async () => {
 			const wallets = expressArgs();
 
-			await renderWallets( wallets );
+			await renderMethods( wallets );
 
 			expect( render ).toHaveBeenCalledWith( {
 				method: sessionKey,
@@ -94,7 +94,7 @@ describe.each( walletCases )(
 			],
 			[ 'the session is missing', expressArgs( { sessions: {} } ) ],
 		] )( 'does not render when %s', async ( _label, wallets ) => {
-			await renderWallets( wallets );
+			await renderMethods( wallets );
 
 			expect( render ).not.toHaveBeenCalled();
 		} );
@@ -105,7 +105,7 @@ describe.each( walletCases )(
 			) }"></div>`;
 			const wallets = gatewayArgs();
 
-			await renderWallets( wallets );
+			await renderMethods( wallets );
 
 			expect( render ).toHaveBeenCalledWith(
 				expect.objectContaining( {
@@ -118,7 +118,7 @@ describe.each( walletCases )(
 		test( 'does not render, and does not touch the express wrapper, when the gateway container is not in the DOM', async () => {
 			const wallets = gatewayArgs();
 
-			await renderWallets( wallets );
+			await renderMethods( wallets );
 
 			expect( render ).not.toHaveBeenCalled();
 		} );
@@ -133,7 +133,7 @@ describe.each( walletCases )(
 				) }"></div>`;
 				const wallets = gatewayArgs( { context: 'cart' } );
 
-				await renderWallets( wallets );
+				await renderMethods( wallets );
 
 				expect( render ).not.toHaveBeenCalled();
 			}
@@ -145,7 +145,7 @@ describe.each( walletCases )(
 			) }"><span></span></div>`;
 			const wallets = gatewayArgs();
 
-			await renderWallets( wallets );
+			await renderMethods( wallets );
 
 			expect( render ).not.toHaveBeenCalled();
 		} );
@@ -160,7 +160,7 @@ describe.each( walletCases )(
 					sessions: { [ sessionKey ]: {} },
 				} );
 
-				await renderWallets( wallets );
+				await renderMethods( wallets );
 
 				expect( render ).not.toHaveBeenCalled();
 			}
@@ -173,14 +173,14 @@ describe.each( walletCases )(
 				sessions: { [ sessionKey ]: {} },
 			} );
 
-			await renderWallets( wallets );
+			await renderMethods( wallets );
 
 			expect( render ).toHaveBeenCalled();
 		} );
 	}
 );
 
-describe( 'renderWallets() across wallets', () => {
+describe( 'renderMethods() across wallets', () => {
 	test( 'renders both wallets in a single pass, each into its own gateway container', async () => {
 		document.body.innerHTML =
 			'<div id="googlepay-row"></div><div id="applepay-row"></div>';
@@ -202,7 +202,7 @@ describe( 'renderWallets() across wallets', () => {
 			sessions: { googlepay: {}, applepay: {} },
 		} );
 
-		await renderWallets( wallets );
+		await renderMethods( wallets );
 
 		expect( renderGooglePay ).toHaveBeenCalledWith(
 			expect.objectContaining( {
@@ -225,7 +225,7 @@ describe( 'renderWallets() across wallets', () => {
 			sessions: { googlepay: {}, applepay: {} },
 		} );
 
-		await renderWallets( wallets );
+		await renderMethods( wallets );
 
 		expect( renderGooglePay ).toHaveBeenCalled();
 		expect( renderApplePay ).not.toHaveBeenCalled();
@@ -243,8 +243,69 @@ describe( 'renderWallets() across wallets', () => {
 			sessions: { googlepay: {}, applepay: {} },
 		} );
 
-		await expect( renderWallets( wallets ) ).rejects.toThrow( 'boom' );
+		await expect( renderMethods( wallets ) ).rejects.toThrow( 'boom' );
 
 		expect( renderApplePay ).toHaveBeenCalled();
+	} );
+} );
+
+describe( 'renderMethodInto()', () => {
+	test( 'dispatches Google Pay to renderGooglePay with the given wrapper and overrides', async () => {
+		const wrapper = document.createElement( 'div' );
+		const overrides = { height: '48px', onClick: jest.fn() };
+
+		await renderMethodInto( 'googlepay', {
+			wrapper,
+			config: { google_pay: {} },
+			context: 'checkout-block',
+			session: { fake: 'session' },
+			overrides,
+		} );
+
+		expect( renderGooglePay ).toHaveBeenCalledWith( {
+			method: 'googlepay',
+			wrapper,
+			config: { google_pay: {} },
+			context: 'checkout-block',
+			session: { fake: 'session' },
+			overrides,
+		} );
+		expect( renderApplePay ).not.toHaveBeenCalled();
+	} );
+
+	test( 'dispatches Apple Pay to renderApplePay with the given wrapper and overrides', async () => {
+		const wrapper = document.createElement( 'div' );
+		const overrides = { requiresShipping: true };
+
+		await renderMethodInto( 'applepay', {
+			wrapper,
+			config: { apple_pay: {} },
+			context: 'checkout-block',
+			session: { fake: 'session' },
+			overrides,
+		} );
+
+		expect( renderApplePay ).toHaveBeenCalledWith( {
+			method: 'applepay',
+			wrapper,
+			config: { apple_pay: {} },
+			context: 'checkout-block',
+			session: { fake: 'session' },
+			overrides,
+		} );
+		expect( renderGooglePay ).not.toHaveBeenCalled();
+	} );
+
+	test( 'does nothing for a funding source that is not a wallet', async () => {
+		await renderMethodInto( 'paypal', {
+			wrapper: document.createElement( 'div' ),
+			config: {},
+			context: 'checkout-block',
+			session: {},
+			overrides: {},
+		} );
+
+		expect( renderGooglePay ).not.toHaveBeenCalled();
+		expect( renderApplePay ).not.toHaveBeenCalled();
 	} );
 } );

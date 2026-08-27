@@ -17,7 +17,7 @@ use WooCommerce\PayPalCommerce\SdkV6\Assets\SdkV6Manager;
 use WooCommerce\PayPalCommerce\SdkV6\Blocks\V6PaymentMethod;
 use WooCommerce\PayPalCommerce\SdkV6\Endpoint\ClientTokenEndpoint;
 use WooCommerce\PayPalCommerce\SdkV6\Endpoint\SimulateCartEndpoint;
-use WooCommerce\PayPalCommerce\SdkV6\Endpoint\WalletShippingEndpoint;
+use WooCommerce\PayPalCommerce\SdkV6\Endpoint\CartQuoteEndpoint;
 use WooCommerce\PayPalCommerce\SdkV6\Helper\ApplePayConfig;
 use WooCommerce\PayPalCommerce\SdkV6\Helper\ButtonStyleMapper;
 use WooCommerce\PayPalCommerce\SdkV6\Helper\CardFieldStyles;
@@ -231,8 +231,8 @@ return array(
 		return new RecordedQuote();
 	},
 
-	'sdk-v6.endpoint.wallet-shipping'   => static function ( ContainerInterface $container ): WalletShippingEndpoint {
-		return new WalletShippingEndpoint(
+	'sdk-v6.endpoint.wallet-shipping'   => static function ( ContainerInterface $container ): CartQuoteEndpoint {
+		return new CartQuoteEndpoint(
 			$container->get( 'order-endpoints.request-data' ),
 			$container->get( 'api.factory.amount' ),
 			$container->get( 'sdk-v6.recorded-shipping-rate' ),

@@ -19,7 +19,7 @@ use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
 use WooCommerce\PayPalCommerce\Settings\DTO\LocationStylingDTO;
 use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
 
-abstract class WalletConfig {
+abstract class MethodRenderGate {
 
 	protected SettingsProvider $settings_provider;
 	private SubscriptionHelper $subscription_helper;
@@ -64,14 +64,24 @@ abstract class WalletConfig {
 	}
 
 	/**
+	 * Whether the context shows every express method side by side in one row.
+	 *
+	 * Each button gets a fraction of that row, too narrow for a wallet's labelled
+	 * variant ("Pay with Google Pay") to fit.
+	 */
+	protected function is_express_row( string $context ): bool {
+		return in_array( $context, array( 'cart-block', 'checkout-block' ), true );
+	}
+
+	/**
 	 * Whether the wallet is enabled in settings for a given location.
 	 */
 	private function enabled_for_context( string $context ): bool {
-		if ( ! $this->wallet_enabled() ) {
+		if ( ! $this->method_enabled() ) {
 			return false;
 		}
 
-		$styling = $this->wallet_styles( $context );
+		$styling = $this->method_styles( $context );
 
 		return $styling->enabled
 			&& in_array( $this->gateway_id(), $styling->methods, true );
@@ -104,9 +114,9 @@ abstract class WalletConfig {
 	 */
 	abstract protected function too_early_notice(): string;
 
-	abstract protected function wallet_enabled(): bool;
+	abstract protected function method_enabled(): bool;
 
-	abstract protected function wallet_styles( string $context ): LocationStylingDTO;
+	abstract protected function method_styles( string $context ): LocationStylingDTO;
 
 	abstract protected function gateway_id(): string;
 }

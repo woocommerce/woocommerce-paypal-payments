@@ -2,12 +2,12 @@
  * Google Pay's in-sheet shipping callback.
  *
  * Translates between Google's paymentDataCallbacks protocol and the shared
- * shipping quote; everything about pricing lives in walletShipping.js.
+ * shipping quote; everything about pricing lives in methodShipping.js.
  *
  * @package
  */
 
-import { resolveOptionId } from './shippingQuote';
+import { resolveOptionId } from '../methods/shippingQuote';
 import { walletAddressToWc } from './walletContacts';
 
 // Google rejects newShippingOptionParameters on a SHIPPING_OPTION trigger: the

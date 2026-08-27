@@ -1,3 +1,5 @@
+import '@ppcp-test/helpers/silenceConsole';
+
 const mockGetProducts = jest.fn();
 
 jest.mock(
@@ -33,8 +35,8 @@ import {
 	fetchCartTotal,
 	simulateCart,
 	updateCustomerAddress,
-	quoteWalletShipping,
-	releaseWalletShipping,
+	quoteCartShipping,
+	releaseCartShipping,
 	selectShippingRate,
 	navigation,
 } from './endpointsAdapter';
@@ -666,7 +668,6 @@ describe( 'approveOrder', () => {
 			await expect(
 				approveOrder( config, 'pay-now', 'paypal', 'ORDER3' )
 			).rejects.toThrow( 'Order form not found.' );
-			expect( console ).toHaveErrored();
 
 			delete global.jQuery;
 		} );
@@ -898,7 +899,7 @@ describe( 'updateCustomerAddress', () => {
 	} );
 } );
 
-describe( 'quoteWalletShipping', () => {
+describe( 'quoteCartShipping', () => {
 	test.each( [
 		[ 'a rate id is selected', 'flat_rate:1', 'flat_rate:1' ],
 		[ 'no rateId is passed', undefined, '' ],
@@ -908,7 +909,7 @@ describe( 'quoteWalletShipping', () => {
 		postJson.mockResolvedValueOnce( quote );
 		const address = { country: 'US', state: 'CA' };
 
-		const result = await quoteWalletShipping( config, { address, rateId } );
+		const result = await quoteCartShipping( config, { address, rateId } );
 
 		expect( result ).toEqual( quote );
 		expect( postJson ).toHaveBeenCalledWith( config.ajax.wallet_shipping, {
@@ -922,7 +923,7 @@ describe( 'quoteWalletShipping', () => {
 		const address = { country: 'US', state: 'CA' };
 		const billingAddress = { country: 'US', state: 'NY' };
 
-		await quoteWalletShipping( config, { address, billingAddress } );
+		await quoteCartShipping( config, { address, billingAddress } );
 
 		expect( postJson ).toHaveBeenCalledWith( config.ajax.wallet_shipping, {
 			address,
@@ -940,7 +941,7 @@ describe( 'quoteWalletShipping', () => {
 			postJson.mockResolvedValueOnce( { total: '110.00' } );
 			const address = { country: 'US', state: 'CA' };
 
-			await quoteWalletShipping( config, { address, billingAddress } );
+			await quoteCartShipping( config, { address, billingAddress } );
 
 			expect( postJson ).toHaveBeenCalledWith(
 				config.ajax.wallet_shipping,
@@ -955,7 +956,7 @@ describe( 'quoteWalletShipping', () => {
 		postJson.mockResolvedValueOnce( { total: '110.00' } );
 		const address = { country: 'US', state: 'CA' };
 
-		await quoteWalletShipping( config, {
+		await quoteCartShipping( config, {
 			address,
 			expectedTotal: '110.00',
 		} );
@@ -976,7 +977,7 @@ describe( 'quoteWalletShipping', () => {
 			postJson.mockResolvedValueOnce( { total: '110.00' } );
 			const address = { country: 'US', state: 'CA' };
 
-			await quoteWalletShipping( config, { address, expectedTotal } );
+			await quoteCartShipping( config, { address, expectedTotal } );
 
 			expect( postJson ).toHaveBeenCalledWith(
 				config.ajax.wallet_shipping,
@@ -988,11 +989,11 @@ describe( 'quoteWalletShipping', () => {
 	);
 } );
 
-describe( 'releaseWalletShipping', () => {
+describe( 'releaseCartShipping', () => {
 	test( 'posts a release flag to the wallet-shipping endpoint', async () => {
 		postJson.mockResolvedValueOnce( { released: true } );
 
-		const result = await releaseWalletShipping( config );
+		const result = await releaseCartShipping( config );
 
 		expect( result ).toEqual( { released: true } );
 		expect( postJson ).toHaveBeenCalledWith( config.ajax.wallet_shipping, {

@@ -30,11 +30,23 @@ export const APPLE_PAY_VERSION = 4;
  * @param {string}  transaction.displayName        - The shop name, labelling the total.
  * @param {boolean} [transaction.requiresShipping] - Whether to collect shipping
  *                                                   in the sheet.
+ * @param {Object}  [transaction.shippingContact]  - Shipping contact to
+ *                                                   preselect.
+ * @param {Object}  [transaction.billingContact]   - Billing contact to
+ *                                                   preselect.
  * @return {Object} The ApplePayPaymentRequest.
  */
 export function buildApplePayRequest(
 	applePayConfig,
-	{ countryCode, currencyCode, total, displayName, requiresShipping = false }
+	{
+		countryCode,
+		currencyCode,
+		total,
+		displayName,
+		requiresShipping = false,
+		shippingContact,
+		billingContact,
+	}
 ) {
 	const request = {
 		countryCode: applePayConfig.countryCode || countryCode,
@@ -51,6 +63,15 @@ export function buildApplePayRequest(
 			? [ 'postalAddress', 'email', 'phone' ]
 			: [ 'email', 'phone' ],
 	};
+
+	// An initial selection only; the shipping callbacks still price whatever
+	// the shopper picks.
+	if ( billingContact ) {
+		request.billingContact = billingContact;
+	}
+	if ( requiresShipping && shippingContact ) {
+		request.shippingContact = shippingContact;
+	}
 
 	if ( requiresShipping ) {
 		request.shippingType = 'shipping';
