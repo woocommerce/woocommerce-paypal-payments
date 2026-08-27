@@ -92,7 +92,9 @@ const BlueprintExportModal = ( { onExport, onCancel } ) => {
 				aria-hidden={ ! includeConnection }
 			>
 				<div className="ppcp--content">
-					<span className="ppcp--warning-body">
+					{ /* Announced on reveal; the toggle's help text states the
+					     outcome, not the risk. */ }
+					<span className="ppcp--warning-body" role="alert">
 						{ credentialsWarning() }
 					</span>
 				</div>
