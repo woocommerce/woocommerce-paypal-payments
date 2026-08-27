@@ -462,6 +462,7 @@ class ComposerStaticInit844a779aae516bed9e0beccea9d01fda
         'WooCommerce\\PayPalCommerce\\Compat\\PluginDetector\\PluginDetector' => __DIR__ . '/../..' . '/modules/ppcp-compat/src/PluginDetector/PluginDetector.php',
         'WooCommerce\\PayPalCommerce\\Compat\\PluginDetector\\ProductCustomizationDetector' => __DIR__ . '/../..' . '/modules/ppcp-compat/src/PluginDetector/ProductCustomizationDetector.php',
         'WooCommerce\\PayPalCommerce\\Compat\\WcGiftCardsCompat' => __DIR__ . '/../..' . '/modules/ppcp-compat/src/WcGiftCardsCompat.php',
+        'WooCommerce\\PayPalCommerce\\Compat\\WooCommerceBlueprint\\ConnectionDataSanitizer' => __DIR__ . '/../..' . '/modules/ppcp-compat/src/WooCommerceBlueprint/ConnectionDataSanitizer.php',
         'WooCommerce\\PayPalCommerce\\Compat\\WooCommerceBlueprint\\PayPalBlueprintBootstrap' => __DIR__ . '/../..' . '/modules/ppcp-compat/src/WooCommerceBlueprint/PayPalBlueprintBootstrap.php',
         'WooCommerce\\PayPalCommerce\\Compat\\WooCommerceBlueprint\\PayPalBlueprintOptions' => __DIR__ . '/../..' . '/modules/ppcp-compat/src/WooCommerceBlueprint/PayPalBlueprintOptions.php',
         'WooCommerce\\PayPalCommerce\\Compat\\WooCommerceBlueprint\\PayPalSettingsExporter' => __DIR__ . '/../..' . '/modules/ppcp-compat/src/WooCommerceBlueprint/PayPalSettingsExporter.php',

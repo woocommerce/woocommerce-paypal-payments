@@ -245,6 +245,7 @@ return array(
     'WooCommerce\\PayPalCommerce\\Compat\\PluginDetector\\PluginDetector' => $baseDir . '/modules/ppcp-compat/src/PluginDetector/PluginDetector.php',
     'WooCommerce\\PayPalCommerce\\Compat\\PluginDetector\\ProductCustomizationDetector' => $baseDir . '/modules/ppcp-compat/src/PluginDetector/ProductCustomizationDetector.php',
     'WooCommerce\\PayPalCommerce\\Compat\\WcGiftCardsCompat' => $baseDir . '/modules/ppcp-compat/src/WcGiftCardsCompat.php',
+    'WooCommerce\\PayPalCommerce\\Compat\\WooCommerceBlueprint\\ConnectionDataSanitizer' => $baseDir . '/modules/ppcp-compat/src/WooCommerceBlueprint/ConnectionDataSanitizer.php',
     'WooCommerce\\PayPalCommerce\\Compat\\WooCommerceBlueprint\\PayPalBlueprintBootstrap' => $baseDir . '/modules/ppcp-compat/src/WooCommerceBlueprint/PayPalBlueprintBootstrap.php',
     'WooCommerce\\PayPalCommerce\\Compat\\WooCommerceBlueprint\\PayPalBlueprintOptions' => $baseDir . '/modules/ppcp-compat/src/WooCommerceBlueprint/PayPalBlueprintOptions.php',
     'WooCommerce\\PayPalCommerce\\Compat\\WooCommerceBlueprint\\PayPalSettingsExporter' => $baseDir . '/modules/ppcp-compat/src/WooCommerceBlueprint/PayPalSettingsExporter.php',
