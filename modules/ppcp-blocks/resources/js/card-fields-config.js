@@ -1,9 +1,12 @@
+import { payerData } from './Helper/PayerData';
+
 /**
  * @param {boolean} savePaymentMethod Whether to vault the card for later payments.
  * @return {Promise<string>} The created PayPal order ID.
  */
 export async function createOrder( savePaymentMethod = false ) {
 	const config = wc.wcSettings.getSetting( 'ppcp-credit-card-gateway_data' );
+	const payer = payerData();
 
 	return fetch( config.scriptData.ajax.create_order.endpoint, {
 		method: 'POST',
@@ -15,6 +18,8 @@ export async function createOrder( savePaymentMethod = false ) {
 			context: config.scriptData.context,
 			payment_method: 'ppcp-credit-card-gateway',
 			save_payment_method: savePaymentMethod,
+			// Omitted when the shopper has given no email; see payerData().
+			...( payer && { payer } ),
 		} ),
 	} )
 		.then( ( response ) => response.json() )
