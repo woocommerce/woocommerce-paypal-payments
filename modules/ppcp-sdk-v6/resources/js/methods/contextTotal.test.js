@@ -4,7 +4,7 @@ jest.mock( '../endpointsAdapter', () => ( {
 } ) );
 
 import { changeCart, fetchCartTotal } from '../endpointsAdapter';
-import { resolveWalletTotal } from './walletTotal';
+import { resolveContextTotal } from './contextTotal';
 
 const config = ( overrides = {} ) => ( {
 	amount: '10.00',
@@ -15,7 +15,7 @@ beforeEach( () => {
 	jest.clearAllMocks();
 } );
 
-describe( 'resolveWalletTotal()', () => {
+describe( 'resolveContextTotal()', () => {
 	describe( 'on the product context', () => {
 		test.each( [
 			[
@@ -33,7 +33,7 @@ describe( 'resolveWalletTotal()', () => {
 			async ( _label, purchaseUnits, total ) => {
 				changeCart.mockResolvedValueOnce( purchaseUnits );
 
-				const result = await resolveWalletTotal( config(), 'product' );
+				const result = await resolveContextTotal( config(), 'product' );
 
 				expect( result ).toEqual( { total, purchaseUnits } );
 			}
@@ -44,9 +44,25 @@ describe( 'resolveWalletTotal()', () => {
 				{ amount: { value: '19.99' } },
 			] );
 
-			await resolveWalletTotal( config(), 'product' );
+			await resolveContextTotal( config(), 'product' );
 
 			expect( changeCart ).toHaveBeenCalledTimes( 1 );
+			expect( fetchCartTotal ).not.toHaveBeenCalled();
+		} );
+	} );
+
+	describe( 'on the pay-now context', () => {
+		test( 'returns the configured amount with empty purchase units, without asking the cart', async () => {
+			const result = await resolveContextTotal(
+				config( { amount: '42.00' } ),
+				'pay-now'
+			);
+
+			expect( result ).toEqual( {
+				total: '42.00',
+				purchaseUnits: [],
+			} );
+			expect( changeCart ).not.toHaveBeenCalled();
 			expect( fetchCartTotal ).not.toHaveBeenCalled();
 		} );
 	} );
@@ -61,7 +77,7 @@ describe( 'resolveWalletTotal()', () => {
 			async ( _label, fetched, total ) => {
 				fetchCartTotal.mockResolvedValueOnce( fetched );
 
-				const result = await resolveWalletTotal( config(), 'cart' );
+				const result = await resolveContextTotal( config(), 'cart' );
 
 				expect( result ).toEqual( { total, purchaseUnits: [] } );
 			}
@@ -70,7 +86,7 @@ describe( 'resolveWalletTotal()', () => {
 		test( 'calls fetchCartTotal and never changeCart, so the shopper cart is not rebuilt on a non-product page', async () => {
 			fetchCartTotal.mockResolvedValueOnce( '19.99' );
 
-			await resolveWalletTotal( config(), 'cart' );
+			await resolveContextTotal( config(), 'cart' );
 
 			expect( fetchCartTotal ).toHaveBeenCalledTimes( 1 );
 			expect( changeCart ).not.toHaveBeenCalled();

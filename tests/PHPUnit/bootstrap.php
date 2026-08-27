@@ -35,6 +35,7 @@ require_once TESTS_ROOT_DIR . '/stubs/AbilityDefinition.php';
 require_once TESTS_ROOT_DIR . '/stubs/StepExporter.php';
 require_once TESTS_ROOT_DIR . '/stubs/HasAlias.php';
 require_once TESTS_ROOT_DIR . '/stubs/StepProcessor.php';
+require_once TESTS_ROOT_DIR . '/stubs/StepProcessorResult.php';
 require_once TESTS_ROOT_DIR . '/stubs/Step.php';
 
 Hamcrest\Util::registerGlobalFunctions();

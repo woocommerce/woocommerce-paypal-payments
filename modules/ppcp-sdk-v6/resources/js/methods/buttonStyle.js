@@ -1,5 +1,5 @@
 /**
- * The button styling both wallets resolve the same way.
+ * The button styling every method resolves the same way.
  *
  * @package
  */
@@ -13,7 +13,7 @@
  * @param {Object} styles - The wallet's styles for this context.
  * @return {Object} The resolved { color, type, language, borderRadius }.
  */
-export function walletButtonStyle( styles ) {
+export function buttonStyle( styles ) {
 	return {
 		color: styles.color || 'black',
 		type: styles.type || 'pay',

@@ -6,7 +6,7 @@
 
 import { postJson } from './utils/api';
 import { loadScript } from './utils/scriptLoaders';
-import { walletSdkComponents } from './wallets/walletRegistry';
+import { methodSdkComponents } from './methods/methodRegistry';
 
 const INSTANCE_KEY = '__ppcpV6InstancePromise';
 const METADATA_ID_KEY = '__ppcpV6ClientMetadataId';
@@ -49,6 +49,8 @@ const PAGE_TYPE_MAP = {
 	checkout: 'checkout',
 	'pay-now': 'checkout',
 	'mini-cart': 'mini-cart',
+	'cart-block': 'cart',
+	'checkout-block': 'checkout',
 };
 
 /**
@@ -103,7 +105,7 @@ async function createInstance( config, context ) {
 	if ( config.fastlane?.enabled ) {
 		components.push( 'fastlane' );
 	}
-	components.push( ...walletSdkComponents( config ) );
+	components.push( ...methodSdkComponents( config ) );
 	if ( config.messages?.enabled ) {
 		components.push( 'paypal-messages' );
 	}

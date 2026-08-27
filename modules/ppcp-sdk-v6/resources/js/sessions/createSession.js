@@ -12,7 +12,7 @@ import {
 import { refreshCartUi } from '../utils/cartUi';
 import { handleError, handleWarning } from '../utils/errorHandler';
 import { FundingSources } from '../utils/fundingSources';
-import { WALLET_METHODS } from '../wallets/walletRegistry';
+import { MERCHANT_PRESENTED_METHODS } from '../methods/methodRegistry';
 
 const SESSION_FACTORIES = {
 	[ FundingSources.PAYPAL ]: 'createPayPalOneTimePaymentSession',
@@ -32,6 +32,19 @@ const SESSION_FACTORIES = {
  * down.
  */
 export const SUPPORTED_METHODS = Object.keys( SESSION_FACTORIES );
+
+// Wallet sessions are merchant-presented, so the SDK shows no popup and these
+// callbacks never fire; wallets collect shipping in their own sheet instead.
+const SHIPPING_POPUP_METHODS = [ FundingSources.PAYPAL ];
+
+// Contexts where the buyer enters shipping on the page: checkout has the form,
+// pay-now pays an order that is already addressed.
+const CONTEXTS_WITH_PAGE_SHIPPING = [ 'checkout', 'pay-now' ];
+
+// Blocks collect shipping through the Blocks data store instead
+// (blocks/blocksShippingHandlers.js); the defaults below post to the Store API
+// and would desynchronise the React cart UI.
+const CONTEXTS_WITH_OWN_SHIPPING_HANDLERS = [ 'cart-block', 'checkout-block' ];
 
 /**
  * Creates a one-time payment session for the given method.
@@ -68,7 +81,7 @@ export function createSession(
 
 	// Wallet sheets close before the order exists, so wallet sessions have no
 	// onApprove: the wallet bridge drives create, confirm and approve itself.
-	if ( ! WALLET_METHODS.includes( method ) ) {
+	if ( ! MERCHANT_PRESENTED_METHODS.includes( method ) ) {
 		// Undefined leaves every other method on approveOrder's default gateway.
 		const paymentMethod =
 			method === FundingSources.CARD
@@ -108,22 +121,20 @@ export function createSession(
 			};
 	}
 
-	// The default handlers post to the Store API directly, which desynchronises
-	// the React cart UI — block surfaces must supply their own or go without.
-	const isBlockContext =
-		context === 'cart-block' || context === 'checkout-block';
+	const collectsShipping =
+		SHIPPING_POPUP_METHODS.includes( method ) &&
+		! CONTEXTS_WITH_PAGE_SHIPPING.includes( context ) &&
+		Boolean( config.shipping?.in_context?.[ context ] );
 
-	const shouldHandleShipping =
-		method === FundingSources.PAYPAL &&
-		! isBlockContext &&
-		config.shipping?.handle_in_paypal &&
-		( config.shipping?.need_shipping || context === 'product' );
+	const useDefaultHandlers =
+		collectsShipping &&
+		! CONTEXTS_WITH_OWN_SHIPPING_HANDLERS.includes( context );
 
 	// Rejections must propagate so the SDK is informed of the failure.
 	if ( handlers.onShippingAddressChange ) {
 		sessionConfig.onShippingAddressChange =
 			handlers.onShippingAddressChange;
-	} else if ( shouldHandleShipping ) {
+	} else if ( useDefaultHandlers ) {
 		sessionConfig.onShippingAddressChange = ( data ) =>
 			handleShippingAddressChange( data, config );
 	}
@@ -131,7 +142,7 @@ export function createSession(
 	if ( handlers.onShippingOptionsChange ) {
 		sessionConfig.onShippingOptionsChange =
 			handlers.onShippingOptionsChange;
-	} else if ( shouldHandleShipping ) {
+	} else if ( useDefaultHandlers ) {
 		sessionConfig.onShippingOptionsChange = ( data ) =>
 			handleShippingOptionsChange( data, config );
 	}

@@ -6,6 +6,8 @@
 
 import { hasJQuery } from './api';
 
+const BLOCK_CONTEXTS = [ 'cart-block', 'checkout-block' ];
+
 /**
  * Refreshes the cart UI after an abandoned or failed session.
  *
@@ -15,6 +17,14 @@ import { hasJQuery } from './api';
  * @param {string} context - The page context.
  */
 export function refreshCartUi( context ) {
+	if ( BLOCK_CONTEXTS.includes( context ) ) {
+		// Re-read rather than patch: the server already holds the fixed cart.
+		window.wp?.data
+			?.dispatch?.( 'wc/store/cart' )
+			?.invalidateResolutionForStore?.();
+		return;
+	}
+
 	if ( context === 'product' && hasJQuery() ) {
 		jQuery( document.body ).trigger( 'wc_fragment_refresh' );
 	}

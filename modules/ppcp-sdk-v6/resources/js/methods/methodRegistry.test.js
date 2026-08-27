@@ -1,17 +1,17 @@
 import {
-	WALLET_METHODS,
-	walletConfig,
-	isWalletEnabled,
-	walletSdkComponents,
-} from './walletRegistry';
+	MERCHANT_PRESENTED_METHODS,
+	methodConfig,
+	isMethodEnabled,
+	methodSdkComponents,
+} from './methodRegistry';
 
-describe( 'WALLET_METHODS', () => {
+describe( 'MERCHANT_PRESENTED_METHODS', () => {
 	test( 'lists googlepay and applepay as the wallet funding sources', () => {
-		expect( WALLET_METHODS ).toEqual( [ 'googlepay', 'applepay' ] );
+		expect( MERCHANT_PRESENTED_METHODS ).toEqual( [ 'googlepay', 'applepay' ] );
 	} );
 } );
 
-describe( 'walletConfig()', () => {
+describe( 'methodConfig()', () => {
 	test.each( [
 		[
 			'the google_pay subtree for the googlepay method',
@@ -26,29 +26,29 @@ describe( 'walletConfig()', () => {
 			'apple_pay',
 		],
 	] )( 'returns %s', ( _label, config, method, key ) => {
-		expect( walletConfig( config, method ) ).toBe( config[ key ] );
+		expect( methodConfig( config, method ) ).toBe( config[ key ] );
 	} );
 
 	test.each( [ 'googlepay', 'applepay' ] )(
 		'returns undefined when the config has no subtree for %s',
 		( method ) => {
-			expect( walletConfig( {}, method ) ).toBeUndefined();
+			expect( methodConfig( {}, method ) ).toBeUndefined();
 		}
 	);
 
 	test( 'returns undefined for a method that is not a wallet', () => {
 		expect(
-			walletConfig( { google_pay: { enabled: true } }, 'paypal' )
+			methodConfig( { google_pay: { enabled: true } }, 'paypal' )
 		).toBeUndefined();
 	} );
 } );
 
-describe( 'isWalletEnabled()', () => {
+describe( 'isMethodEnabled()', () => {
 	test.each( [
 		[ 'googlepay', { google_pay: { enabled: true } } ],
 		[ 'applepay', { apple_pay: { enabled: true } } ],
 	] )( 'is true when %s has enabled set', ( method, config ) => {
-		expect( isWalletEnabled( config, method ) ).toBe( true );
+		expect( isMethodEnabled( config, method ) ).toBe( true );
 	} );
 
 	test.each( [
@@ -70,11 +70,11 @@ describe( 'isWalletEnabled()', () => {
 			'paypal',
 		],
 	] )( 'is false when %s', ( _label, config, method ) => {
-		expect( isWalletEnabled( config, method ) ).toBe( false );
+		expect( isMethodEnabled( config, method ) ).toBe( false );
 	} );
 } );
 
-describe( 'walletSdkComponents()', () => {
+describe( 'methodSdkComponents()', () => {
 	test.each( [
 		[
 			'only Google Pay is enabled',
@@ -97,7 +97,7 @@ describe( 'walletSdkComponents()', () => {
 	] )(
 		'returns the matching components when %s',
 		( _label, config, expected ) => {
-			expect( walletSdkComponents( config ) ).toEqual( expected );
+			expect( methodSdkComponents( config ) ).toEqual( expected );
 		}
 	);
 
@@ -105,6 +105,6 @@ describe( 'walletSdkComponents()', () => {
 		[ 'Google Pay is disabled', { google_pay: { enabled: false } } ],
 		[ 'the config has no google_pay subtree', {} ],
 	] )( 'returns an empty list when %s', ( _label, config ) => {
-		expect( walletSdkComponents( config ) ).toEqual( [] );
+		expect( methodSdkComponents( config ) ).toEqual( [] );
 	} );
 } );

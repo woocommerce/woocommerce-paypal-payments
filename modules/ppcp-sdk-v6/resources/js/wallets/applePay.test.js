@@ -14,21 +14,32 @@ jest.mock( '../utils/errorHandler', () => ( {
 } ) );
 
 const mockResolveWalletTotal = jest.fn();
-jest.mock( './walletTotal', () => ( {
-	resolveWalletTotal: ( ...args ) => mockResolveWalletTotal( ...args ),
+jest.mock( '../methods/contextTotal', () => ( {
+	resolveContextTotal: ( ...args ) => mockResolveWalletTotal( ...args ),
 } ) );
 
 const mockPayWithWallet = jest.fn();
-jest.mock( './walletPayment', () => ( {
-	payWithWallet: ( ...args ) => mockPayWithWallet( ...args ),
+jest.mock( '../methods/sessionPayment', () => ( {
+	payWithSession: ( ...args ) => mockPayWithWallet( ...args ),
 } ) );
 
 const mockApplePayPayer = jest.fn();
 const mockApplePayShippingAddress = jest.fn();
+const mockApplePayWcShippingAddress = jest.fn();
+const mockApplePayWcBillingAddress = jest.fn();
 jest.mock( './walletContacts', () => ( {
 	applePayPayer: ( ...args ) => mockApplePayPayer( ...args ),
 	applePayShippingAddress: ( ...args ) =>
 		mockApplePayShippingAddress( ...args ),
+	applePayWcShippingAddress: ( ...args ) =>
+		mockApplePayWcShippingAddress( ...args ),
+	applePayWcBillingAddress: ( ...args ) =>
+		mockApplePayWcBillingAddress( ...args ),
+} ) );
+
+const mockReleaseWalletShipping = jest.fn();
+jest.mock( '../endpointsAdapter', () => ( {
+	releaseCartShipping: ( ...args ) => mockReleaseWalletShipping( ...args ),
 } ) );
 
 const mockBuildApplePayRequest = jest.fn();
@@ -49,8 +60,25 @@ jest.mock( './applePayValidation', () => ( {
 } ) );
 
 const mockRevealWalletGateway = jest.fn();
-jest.mock( './gatewayPlacement', () => ( {
-	revealWalletGateway: ( ...args ) => mockRevealWalletGateway( ...args ),
+jest.mock( '../methods/gatewayPlacement', () => ( {
+	revealMethodGateway: ( ...args ) => mockRevealWalletGateway( ...args ),
+} ) );
+
+const mockWalletShippingRequired = jest.fn( () => false );
+const mockCreateShippingController = jest.fn();
+jest.mock( '../methods/methodShipping', () => ( {
+	methodShippingRequired: ( ...args ) =>
+		mockWalletShippingRequired( ...args ),
+	createShippingController: ( ...args ) =>
+		mockCreateShippingController( ...args ),
+} ) );
+
+const mockAttachShippingHandlers = jest.fn();
+const mockApplePayFailure = jest.fn();
+jest.mock( './applePayShipping', () => ( {
+	attachShippingHandlers: ( ...args ) =>
+		mockAttachShippingHandlers( ...args ),
+	applePayFailure: ( ...args ) => mockApplePayFailure( ...args ),
 } ) );
 
 const mockSpinnerBlock = jest.fn();
@@ -111,7 +139,7 @@ const baseConfig = ( overrides = {} ) => ( {
 } );
 
 const applePayConfig = ( overrides = {} ) => ( {
-	merchantCountry: 'US',
+	countryCode: 'US',
 	merchantCapabilities: [ 'supports3DS' ],
 	supportedNetworks: [ 'visa' ],
 	...overrides,
@@ -120,9 +148,6 @@ const applePayConfig = ( overrides = {} ) => ( {
 function makeSession( overrides = {} ) {
 	return {
 		config: jest.fn().mockResolvedValue( applePayConfig() ),
-		formatConfigForPaymentRequest: jest
-			.fn()
-			.mockReturnValue( 'FORMATTED_CONFIG' ),
 		validateMerchant: jest
 			.fn()
 			.mockResolvedValue( { merchantSession: 'MERCHANT_SESSION' } ),
@@ -181,6 +206,7 @@ const paymentEvent = {
 
 let ApplePaySessionMock;
 let mockJQueryTrigger;
+let shippingController;
 
 beforeEach( () => {
 	jest.clearAllMocks();
@@ -190,10 +216,23 @@ beforeEach( () => {
 	mockWatchSheetTotal.mockReturnValue( { get: jest.fn( () => '12.34' ) } );
 	mockApplePayPayer.mockReturnValue( 'PAYER_SENTINEL' );
 	mockApplePayShippingAddress.mockReturnValue( 'SHIP_SENTINEL' );
+	mockApplePayWcShippingAddress.mockReturnValue( 'WC_SHIP_SENTINEL' );
+	mockApplePayWcBillingAddress.mockReturnValue( 'WC_BILLING_SENTINEL' );
+	mockReleaseWalletShipping.mockResolvedValue( undefined );
 	mockResolveWalletTotal.mockResolvedValue( {
 		purchaseUnits: [ { amount: '12.34' } ],
 	} );
 	mockPayWithWallet.mockResolvedValue( undefined );
+	mockWalletShippingRequired.mockReturnValue( false );
+	mockApplePayFailure.mockImplementation( ( error, status ) => ( {
+		status,
+	} ) );
+	shippingController = {
+		quote: jest.fn(),
+		current: jest.fn(),
+		commit: jest.fn(),
+	};
+	mockCreateShippingController.mockReturnValue( shippingController );
 
 	ApplePaySessionMock = jest.fn( function () {
 		this.begin = jest.fn();
@@ -254,19 +293,6 @@ describe( 'renderApplePay()', () => {
 		expect( wrapper.childElementCount ).toBe( 1 );
 	} );
 
-	test( 'asks the session to translate the resolved config for the payment request', async () => {
-		const config = applePayConfig( { merchantCountry: 'DE' } );
-		const session = makeSession( {
-			config: jest.fn().mockResolvedValue( config ),
-		} );
-
-		await render( { session } );
-
-		expect( session.formatConfigForPaymentRequest ).toHaveBeenCalledWith(
-			config
-		);
-	} );
-
 	test( 'renders nothing when the config explicitly sets isEligible to false', async () => {
 		const session = makeSession( {
 			config: jest
@@ -285,6 +311,28 @@ describe( 'renderApplePay()', () => {
 		} );
 
 		const { wrapper } = await render( { session } );
+
+		expect( wrapper.querySelector( 'apple-pay-button' ) ).not.toBeNull();
+	} );
+} );
+
+describe( 'obsolescence', () => {
+	test( 'removes its own container and renders no button when overrides.isObsolete() answers true after the initial awaits, without calling onUnavailable', async () => {
+		const onUnavailable = jest.fn();
+
+		const { wrapper } = await render( {
+			overrides: { isObsolete: () => true, onUnavailable },
+		} );
+
+		expect( wrapper.childElementCount ).toBe( 0 );
+		expect( onUnavailable ).not.toHaveBeenCalled();
+		expect( mockRevealWalletGateway ).not.toHaveBeenCalled();
+	} );
+
+	test( 'still renders the button when overrides.isObsolete() answers false', async () => {
+		const { wrapper } = await render( {
+			overrides: { isObsolete: () => false },
+		} );
 
 		expect( wrapper.querySelector( 'apple-pay-button' ) ).not.toBeNull();
 	} );
@@ -418,27 +466,71 @@ describe( 'a click on the rendered button', () => {
 		expect( appleSession.begin ).toHaveBeenCalledTimes( 1 );
 	} );
 
-	test( 'builds the request from the version, the formatted config and the resolved total', async () => {
-		const config = baseConfig();
+	test( 'builds the request from the version, the resolved Apple Pay config and the resolved total', async () => {
+		const config = baseConfig( { merchant_country: 'DE' } );
+		const resolvedConfig = applePayConfig();
+		const session = makeSession( {
+			config: jest.fn().mockResolvedValue( resolvedConfig ),
+		} );
 		const sheetTotal = { get: jest.fn( () => '42.00' ) };
 		mockWatchSheetTotal.mockReturnValue( sheetTotal );
 
-		const { wrapper } = await render( { config, context: 'checkout' } );
+		const { wrapper } = await render( {
+			config,
+			context: 'checkout',
+			session,
+		} );
 		wrapper.querySelector( 'apple-pay-button' ).click();
 
 		expect( mockBuildApplePayRequest ).toHaveBeenCalledWith(
-			'FORMATTED_CONFIG',
+			resolvedConfig,
 			{
+				// The builder decides which country wins; see its own suite.
+				countryCode: config.merchant_country,
 				currencyCode: config.currency,
 				total: '42.00',
 				displayName: config.apple_pay.display_name,
-				context: 'checkout',
+				requiresShipping: false,
 			}
 		);
 		expect( ApplePaySessionMock ).toHaveBeenCalledWith(
 			4,
 			'APPLE_REQUEST'
 		);
+	} );
+
+	test( "forwards this context's shipping requirement into the request", async () => {
+		mockWalletShippingRequired.mockReturnValue( true );
+
+		const { wrapper } = await render( { context: 'cart' } );
+		wrapper.querySelector( 'apple-pay-button' ).click();
+
+		expect( mockBuildApplePayRequest ).toHaveBeenCalledWith(
+			expect.anything(),
+			expect.objectContaining( { requiresShipping: true } )
+		);
+	} );
+
+	test( 'attaches the shipping handlers only when this context collects shipping', async () => {
+		mockWalletShippingRequired.mockReturnValue( true );
+
+		const { wrapper } = await render( { context: 'cart' } );
+		wrapper.querySelector( 'apple-pay-button' ).click();
+
+		const appleSession = ApplePaySessionMock.mock.instances[ 0 ];
+		expect( mockAttachShippingHandlers ).toHaveBeenCalledWith(
+			appleSession,
+			expect.objectContaining( { displayName: 'My Shop' } )
+		);
+	} );
+
+	test( 'never attaches the shipping handlers when this context collects no shipping', async () => {
+		mockWalletShippingRequired.mockReturnValue( false );
+
+		const { wrapper } = await render();
+		wrapper.querySelector( 'apple-pay-button' ).click();
+
+		expect( mockAttachShippingHandlers ).not.toHaveBeenCalled();
 	} );
 
 	test( 'refuses to open a sheet when no total has resolved yet', async () => {
@@ -490,6 +582,108 @@ describe( 'a click on the rendered button', () => {
 		expect( ApplePaySessionMock ).toHaveBeenCalledTimes( 2 );
 		const secondSession = ApplePaySessionMock.mock.instances[ 1 ];
 		expect( secondSession.begin ).toHaveBeenCalledTimes( 1 );
+	} );
+} );
+
+describe( 'surface overrides', () => {
+	test( 'a height override wins over the shared button height', async () => {
+		const { wrapper } = await render( {
+			config: baseConfig( { button_height: '48px' } ),
+			overrides: { height: '30px' },
+		} );
+		const button = wrapper.querySelector( 'apple-pay-button' );
+
+		expect(
+			button.style.getPropertyValue( '--apple-pay-button-height' )
+		).toBe( '30px' );
+		expect( button.style.height ).toBe( '30px' );
+	} );
+
+	test( 'a borderRadius override becomes a unitless-to-px CSS length, replacing the settings style', async () => {
+		const { wrapper } = await render( { overrides: { borderRadius: 12 } } );
+		const button = wrapper.querySelector( 'apple-pay-button' );
+
+		expect(
+			button.style.getPropertyValue( '--apple-pay-button-border-radius' )
+		).toBe( '12px' );
+	} );
+
+	test( 'a requiresShipping override replaces the per-context answer sent by PHP', async () => {
+		mockWalletShippingRequired.mockReturnValue( false );
+
+		const { wrapper } = await render( {
+			overrides: { requiresShipping: true },
+		} );
+		wrapper.querySelector( 'apple-pay-button' ).click();
+
+		expect( mockBuildApplePayRequest ).toHaveBeenCalledWith(
+			expect.anything(),
+			expect.objectContaining( { requiresShipping: true } )
+		);
+		const appleSession = ApplePaySessionMock.mock.instances[ 0 ];
+		expect( mockAttachShippingHandlers ).toHaveBeenCalledWith(
+			appleSession,
+			expect.anything()
+		);
+	} );
+
+	test( 'a sheetTotal override is read instead of the default watched total', async () => {
+		const sheetTotal = { get: jest.fn( () => '99.00' ) };
+
+		const { wrapper } = await render( { overrides: { sheetTotal } } );
+		wrapper.querySelector( 'apple-pay-button' ).click();
+
+		expect( mockWatchSheetTotal ).not.toHaveBeenCalled();
+		expect( mockBuildApplePayRequest ).toHaveBeenCalledWith(
+			expect.anything(),
+			expect.objectContaining( { total: '99.00' } )
+		);
+	} );
+
+	test( 'onClick fires when the button is tapped', async () => {
+		const onClick = jest.fn();
+
+		const { wrapper } = await render( { overrides: { onClick } } );
+		wrapper.querySelector( 'apple-pay-button' ).click();
+
+		expect( onClick ).toHaveBeenCalledTimes( 1 );
+	} );
+
+	test( 'onUnavailable fires instead of onSheetClosed when the device is ineligible', async () => {
+		ApplePaySessionMock.canMakePayments = jest.fn( () => false );
+		const onUnavailable = jest.fn();
+		const onSheetClosed = jest.fn();
+
+		await render( { overrides: { onUnavailable, onSheetClosed } } );
+
+		expect( onUnavailable ).toHaveBeenCalledTimes( 1 );
+		expect( onSheetClosed ).not.toHaveBeenCalled();
+	} );
+
+	test( 'onSheetClosed fires when the sheet is dismissed without paying', async () => {
+		const onSheetClosed = jest.fn();
+
+		const { appleSession } = await clickAndGetSession( {
+			overrides: { onSheetClosed },
+		} );
+		appleSession.oncancel();
+
+		expect( onSheetClosed ).toHaveBeenCalledTimes( 1 );
+	} );
+
+	test( 'omitting overrides entirely leaves the existing behavior unchanged', async () => {
+		const { wrapper } = await render();
+		const button = wrapper.querySelector( 'apple-pay-button' );
+
+		expect(
+			button.style.getPropertyValue( '--apple-pay-button-height' )
+		).toBe( '48px' );
+
+		button.click();
+		expect( mockBuildApplePayRequest ).toHaveBeenCalledWith(
+			expect.anything(),
+			expect.objectContaining( { requiresShipping: false } )
+		);
 	} );
 } );
 
@@ -574,19 +768,99 @@ describe( 'onpaymentauthorized', () => {
 			fundingSource: 'apple_pay',
 			paymentMethod: undefined,
 			purchaseUnits: [ { amount: '12.34' } ],
+			// No shippingContact: PayPal refuses one for a GET_FROM_FILE order.
 			confirmData: {
 				token: paymentEvent.payment.token,
 				billingContact: paymentEvent.payment.billingContact,
-				shippingContact: paymentEvent.payment.shippingContact,
 			},
 			contact: {
 				payer: 'PAYER_SENTINEL',
 				shippingAddress: 'SHIP_SENTINEL',
+				shippingRateId: undefined,
 			},
 		} );
 		expect( appleSession.completePayment ).toHaveBeenCalledWith(
 			'STATUS_SUCCESS'
 		);
+	} );
+
+	test( "carries the selected rate's id into the contact, when this context collects shipping", async () => {
+		mockWalletShippingRequired.mockReturnValue( true );
+		shippingController.commit.mockResolvedValue( {
+			selectedId: 'flat_rate:2',
+			total: '12.34',
+		} );
+		shippingController.current.mockReturnValue( {
+			selectedId: 'flat_rate:2',
+		} );
+		const { appleSession } = await clickAndGetSession();
+
+		appleSession.onpaymentauthorized( paymentEvent );
+		await flushPromises();
+
+		expect( mockPayWithWallet ).toHaveBeenCalledWith(
+			expect.objectContaining( {
+				contact: expect.objectContaining( {
+					shippingRateId: 'flat_rate:2',
+				} ),
+			} )
+		);
+	} );
+
+	test( 'commits the mapped WC shipping and billing addresses before paying, when this context requires shipping', async () => {
+		mockWalletShippingRequired.mockReturnValue( true );
+		const config = baseConfig();
+		const callOrder = [];
+		shippingController.commit.mockImplementationOnce( async () => {
+			callOrder.push( 'commit' );
+			return { selectedId: null, total: '12.34' };
+		} );
+		mockPayWithWallet.mockImplementationOnce( async () => {
+			callOrder.push( 'payWithSession' );
+		} );
+		const { appleSession } = await clickAndGetSession( { config } );
+
+		appleSession.onpaymentauthorized( paymentEvent );
+		await flushPromises();
+
+		expect( mockApplePayWcShippingAddress ).toHaveBeenCalledWith(
+			paymentEvent.payment
+		);
+		expect( mockApplePayWcBillingAddress ).toHaveBeenCalledWith(
+			paymentEvent.payment
+		);
+		expect( shippingController.commit ).toHaveBeenCalledWith(
+			'WC_SHIP_SENTINEL',
+			'WC_BILLING_SENTINEL'
+		);
+		expect( callOrder ).toEqual( [ 'commit', 'payWithSession' ] );
+	} );
+
+	test( 'never commits a shipping address when this context requires no shipping', async () => {
+		mockWalletShippingRequired.mockReturnValue( false );
+		const { appleSession } = await clickAndGetSession();
+
+		appleSession.onpaymentauthorized( paymentEvent );
+		await flushPromises();
+
+		expect( shippingController.commit ).not.toHaveBeenCalled();
+		expect( mockPayWithWallet ).toHaveBeenCalled();
+	} );
+
+	test( 'never pays when the committed shipping price no longer matches what the sheet showed', async () => {
+		mockWalletShippingRequired.mockReturnValue( true );
+		shippingController.commit.mockRejectedValueOnce(
+			new Error( 'Shipping price changed after authorization' )
+		);
+		const { appleSession } = await clickAndGetSession();
+
+		appleSession.onpaymentauthorized( paymentEvent );
+		await flushPromises();
+
+		expect( mockPayWithWallet ).not.toHaveBeenCalled();
+		expect( appleSession.completePayment ).toHaveBeenCalledWith( {
+			status: 'STATUS_FAILURE',
+		} );
 	} );
 
 	test( 'pays with the configured gateway id when Apple Pay is its own row', async () => {
@@ -616,9 +890,9 @@ describe( 'onpaymentauthorized', () => {
 		appleSession.onpaymentauthorized( paymentEvent );
 		await flushPromises();
 
-		expect( appleSession.completePayment ).toHaveBeenCalledWith(
-			'STATUS_FAILURE'
-		);
+		expect( appleSession.completePayment ).toHaveBeenCalledWith( {
+			status: 'STATUS_FAILURE',
+		} );
 		expect( mockSpinnerUnblock ).toHaveBeenCalledTimes( 1 );
 		expect( mockJQueryTrigger ).toHaveBeenCalledWith(
 			'wc_fragment_refresh'
@@ -677,5 +951,44 @@ describe( 'oncancel', () => {
 
 		expect( () => appleSession.oncancel() ).not.toThrow();
 		expect( mockJQueryTrigger ).not.toHaveBeenCalled();
+	} );
+
+	test( 'releases the held wallet shipping rate when this context collected shipping, since the sheet already wrote it to the real cart', async () => {
+		mockWalletShippingRequired.mockReturnValue( true );
+		const config = baseConfig();
+		const { appleSession } = await clickAndGetSession( {
+			config,
+			context: 'product',
+		} );
+
+		appleSession.oncancel();
+
+		expect( mockReleaseWalletShipping ).toHaveBeenCalledWith( config );
+	} );
+
+	test( 'never releases wallet shipping when this context collected none', async () => {
+		mockWalletShippingRequired.mockReturnValue( false );
+		const { appleSession } = await clickAndGetSession( {
+			context: 'product',
+		} );
+
+		appleSession.oncancel();
+
+		expect( mockReleaseWalletShipping ).not.toHaveBeenCalled();
+	} );
+
+	test( 'does not let a failed shipping release surface an error', async () => {
+		mockWalletShippingRequired.mockReturnValue( true );
+		mockReleaseWalletShipping.mockRejectedValueOnce(
+			new Error( 'release failed' )
+		);
+		const { appleSession } = await clickAndGetSession( {
+			context: 'product',
+		} );
+
+		expect( () => appleSession.oncancel() ).not.toThrow();
+		await flushPromises();
+
+		expect( mockHandleError ).not.toHaveBeenCalled();
 	} );
 } );

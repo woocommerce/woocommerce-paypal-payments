@@ -13,7 +13,7 @@ use WooCommerce\PayPalCommerce\Googlepay\GooglePayGateway;
 use WooCommerce\PayPalCommerce\Googlepay\Helper\PropertiesDictionary;
 use WooCommerce\PayPalCommerce\Settings\DTO\LocationStylingDTO;
 
-class GooglePayConfig extends WalletConfig {
+class GooglePayConfig extends MethodRenderGate {
 
 	/**
 	 * Google's buttonRadius expects an integer, not a CSS length.
@@ -32,7 +32,7 @@ class GooglePayConfig extends WalletConfig {
 	 * @return array{color: string, type: string, language: string, borderRadius: int}
 	 */
 	public function styles( string $context ): array {
-		$styling = $this->wallet_styles( $context );
+		$styling = $this->method_styles( $context );
 
 		// SettingsProvider runs these through the Google Pay module's mapping
 		// filters, but those only exist while that module is loaded. Mapping
@@ -43,6 +43,10 @@ class GooglePayConfig extends WalletConfig {
 		// substitution.
 		if ( 'mini-cart' === $context && 'buy' === $type ) {
 			$type = 'pay';
+		}
+
+		if ( $this->is_express_row( $context ) ) {
+			$type = 'plain';
 		}
 
 		return array(
@@ -60,11 +64,11 @@ class GooglePayConfig extends WalletConfig {
 		);
 	}
 
-	protected function wallet_enabled(): bool {
+	protected function method_enabled(): bool {
 		return $this->settings_provider->googlepay_enabled();
 	}
 
-	protected function wallet_styles( string $context ): LocationStylingDTO {
+	protected function method_styles( string $context ): LocationStylingDTO {
 		return $this->settings_provider->googlepay_styles( $context );
 	}
 

@@ -19,8 +19,8 @@ import {
 	SUPPORTED_METHODS as METHODS,
 } from './sessions/createSession';
 import { renderButtons } from './components/buttonRenderer';
-import { renderWallets } from './wallets/renderWallets';
-import { isWalletEnabled, WALLET_METHODS } from './wallets/walletRegistry';
+import { renderMethods } from './methods/renderMethods';
+import { isMethodEnabled, MERCHANT_PRESENTED_METHODS } from './methods/methodRegistry';
 import { FundingSources } from './utils/fundingSources';
 import { createOrder, fetchCartTotal } from './endpointsAdapter';
 import {
@@ -203,8 +203,8 @@ const ELIGIBILITY_REFRESH_DEBOUNCE_MS = 300;
 			// enabled, so without it the session factory does not exist and
 			// calling it would take every button on the page down.
 			if (
-				WALLET_METHODS.includes( method ) &&
-				! isWalletEnabled( config, method )
+				MERCHANT_PRESENTED_METHODS.includes( method ) &&
+				! isMethodEnabled( config, method )
 			) {
 				continue;
 			}
@@ -261,9 +261,12 @@ const ELIGIBILITY_REFRESH_DEBOUNCE_MS = 300;
 					  () => createVaultSetupToken( config )
 					: () => createOrder( config, target.context, fundingSource ),
 			payLaterDetails,
+			payLaterEnabled: Boolean(
+				config.pay_later_button?.[ target.context ]
+			),
 		} );
 
-		await renderWallets( {
+		await renderMethods( {
 			wrapper,
 			config,
 			context: target.context,

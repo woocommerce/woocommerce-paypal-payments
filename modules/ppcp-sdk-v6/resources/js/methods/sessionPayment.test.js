@@ -4,7 +4,7 @@ jest.mock( '../endpointsAdapter', () => ( {
 } ) );
 
 import { createOrder, approveOrder } from '../endpointsAdapter';
-import { payWithWallet } from './walletPayment';
+import { payWithSession } from './sessionPayment';
 
 const config = { ajax: {} };
 
@@ -29,12 +29,12 @@ beforeEach( () => {
 	createOrder.mockResolvedValue( { orderId: 'ORDER1' } );
 } );
 
-describe( 'payWithWallet()', () => {
+describe( 'payWithSession()', () => {
 	test( 'confirms with the created order id, then approves it', async () => {
 		const session = makeSession();
 		const args = payArgs( { session } );
 
-		await payWithWallet( args );
+		await payWithSession( args );
 
 		expect( session.confirmOrder ).toHaveBeenCalledWith( {
 			orderId: 'ORDER1',
@@ -58,7 +58,7 @@ describe( 'payWithWallet()', () => {
 		async ( _label, purchaseUnits ) => {
 			const args = payArgs( { purchaseUnits } );
 
-			await payWithWallet( args );
+			await payWithSession( args );
 
 			expect( createOrder ).toHaveBeenCalledWith(
 				args.config,
@@ -76,7 +76,7 @@ describe( 'payWithWallet()', () => {
 		async () => {
 			const args = payArgs( { paymentMethod: 'ppcp-googlepay' } );
 
-			await payWithWallet( args );
+			await payWithSession( args );
 
 			expect( createOrder ).toHaveBeenCalledWith(
 				args.config,
@@ -109,7 +109,7 @@ describe( 'payWithWallet()', () => {
 			const session = makeSession( confirmResult );
 			const args = payArgs( { session } );
 
-			await payWithWallet( args );
+			await payWithSession( args );
 
 			expect( session.initiatePayerAction ).not.toHaveBeenCalled();
 			expect( approveOrder ).toHaveBeenCalled();
@@ -128,7 +128,7 @@ describe( 'payWithWallet()', () => {
 			const session = makeSession( confirmResult );
 			const args = payArgs( { session } );
 
-			await payWithWallet( args );
+			await payWithSession( args );
 
 			expect( session.initiatePayerAction ).toHaveBeenCalledWith( {
 				orderId: 'ORDER1',
@@ -148,7 +148,7 @@ describe( 'payWithWallet()', () => {
 			const session = makeSession( confirmResult );
 			const args = payArgs( { session } );
 
-			await expect( payWithWallet( args ) ).rejects.toThrow(
+			await expect( payWithSession( args ) ).rejects.toThrow(
 				'Wallet payment was not approved.'
 			);
 			expect( approveOrder ).not.toHaveBeenCalled();
@@ -162,7 +162,7 @@ describe( 'payWithWallet()', () => {
 		);
 		const args = payArgs( { session } );
 
-		await expect( payWithWallet( args ) ).rejects.toThrow(
+		await expect( payWithSession( args ) ).rejects.toThrow(
 			'confirm failed'
 		);
 		expect( approveOrder ).not.toHaveBeenCalled();
@@ -175,7 +175,7 @@ describe( 'payWithWallet()', () => {
 		);
 		const args = payArgs( { session } );
 
-		await expect( payWithWallet( args ) ).rejects.toThrow(
+		await expect( payWithSession( args ) ).rejects.toThrow(
 			'payer action failed'
 		);
 		expect( approveOrder ).not.toHaveBeenCalled();

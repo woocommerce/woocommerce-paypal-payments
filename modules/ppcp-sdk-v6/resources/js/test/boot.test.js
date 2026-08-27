@@ -1,3 +1,5 @@
+import '@ppcp-test/helpers/silenceConsole';
+
 const mockHasJQuery = jest.fn();
 jest.mock( '../utils/api', () => ( {
 	hasJQuery: () => mockHasJQuery(),
@@ -35,14 +37,14 @@ jest.mock( '../components/buttonRenderer', () => ( {
 } ) );
 
 const mockRenderWallets = jest.fn();
-jest.mock( '../wallets/renderWallets', () => ( {
-	renderWallets: ( ...args ) => mockRenderWallets( ...args ),
+jest.mock( '../methods/renderMethods', () => ( {
+	renderMethods: ( ...args ) => mockRenderWallets( ...args ),
 } ) );
 
 const mockIsWalletEnabled = jest.fn();
-jest.mock( '../wallets/walletRegistry', () => ( {
-	isWalletEnabled: ( ...args ) => mockIsWalletEnabled( ...args ),
-	WALLET_METHODS: [],
+jest.mock( '../methods/methodRegistry', () => ( {
+	isMethodEnabled: ( ...args ) => mockIsWalletEnabled( ...args ),
+	MERCHANT_PRESENTED_METHODS: [],
 } ) );
 
 const mockCreateOrder = jest.fn();
@@ -287,7 +289,6 @@ describe( 'boot', () => {
 			global.jQuery.trigger( 'updated_checkout' );
 			await jest.advanceTimersByTimeAsync( 300 );
 
-			expect( console ).toHaveErrored();
 			expect( mockCheckEligibility ).toHaveBeenCalledTimes( 1 );
 
 			global.jQuery.trigger( 'updated_checkout' );

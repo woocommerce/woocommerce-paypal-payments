@@ -104,7 +104,7 @@ describe( 'createSession', () => {
 		const onShippingAddressChange = jest.fn();
 		const onShippingOptionsChange = jest.fn();
 
-		// shipping.handle_in_paypal is absent, so the classic path would attach nothing.
+		// shipping.in_context has no entry for this context, so the classic path would attach nothing.
 		createSession( sdk, 'paypal', { shipping: {} }, 'checkout-block', {
 			onShippingAddressChange,
 			onShippingOptionsChange,
@@ -127,10 +127,10 @@ describe( 'createSession', () => {
 		expect( sdk.capture.config.onShippingOptionsChange ).toBeUndefined();
 	} );
 
-	test( 'classic default attaches the fetch-based shipping handlers when enabled', async () => {
+	test( 'classic default attaches the fetch-based shipping handlers when the context collects shipping', async () => {
 		const sdk = fakeSdk();
 		const config = {
-			shipping: { handle_in_paypal: true, need_shipping: true },
+			shipping: { in_context: { cart: true } },
 		};
 
 		createSession( sdk, 'paypal', config, 'cart' );
@@ -141,6 +141,25 @@ describe( 'createSession', () => {
 			config
 		);
 	} );
+
+	test.each( [ 'checkout', 'pay-now' ] )(
+		'no popup shipping handlers on %s even when the context collects shipping, because PayPal is given a fixed address there',
+		( context ) => {
+			const sdk = fakeSdk();
+			const config = {
+				shipping: { in_context: { [ context ]: true } },
+			};
+
+			createSession( sdk, 'paypal', config, context );
+
+			expect(
+				sdk.capture.config.onShippingAddressChange
+			).toBeUndefined();
+			expect(
+				sdk.capture.config.onShippingOptionsChange
+			).toBeUndefined();
+		}
+	);
 
 	describe.each( [
 		[ 'googlepay', 'createGooglePayOneTimePaymentSession' ],
@@ -168,10 +187,10 @@ describe( 'createSession', () => {
 			);
 		} );
 
-		test( 'gets neither in-sheet shipping handler even when classic shipping-in-PayPal is enabled', () => {
+		test( 'gets neither in-sheet shipping handler even when the context collects shipping', () => {
 			const sdk = fakeSdk();
 			const config = {
-				shipping: { handle_in_paypal: true, need_shipping: true },
+				shipping: { in_context: { product: true } },
 			};
 
 			createSession( sdk, method, config, 'product' );

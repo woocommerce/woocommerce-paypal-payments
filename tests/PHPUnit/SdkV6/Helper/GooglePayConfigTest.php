@@ -474,4 +474,115 @@ class GooglePayConfigTest extends TestCase {
 			'other contexts keep buy type'       => array( 'checkout', 'buy' ),
 		);
 	}
+
+	/**
+	 * GIVEN a WooCommerce Blocks express row context, where every wallet's button
+	 * shares one row
+	 * WHEN building the Google Pay button styles, whatever label the merchant configured
+	 * THEN the type is forced to "plain" because a labelled button would be clipped
+	 *
+	 * @dataProvider expressRowContextAndLabelProvider
+	 */
+	public function testExpressRowForcesPlainType( string $context, string $label ): void {
+		$styling = $this->stylingWithLabel( $label, $context );
+
+		$this->provider->shouldReceive( 'googlepay_styles' )->with( $context )->andReturn( $styling );
+		$this->buttonLanguage();
+
+		$styles = $this->configFor()->styles( $context );
+
+		$this->assertSame( 'plain', $styles['type'] );
+	}
+
+	public function expressRowContextAndLabelProvider(): array {
+		return array(
+			'cart-block with buy label'        => array( 'cart-block', 'buynow' ),
+			'cart-block with pay label'        => array( 'cart-block', 'pay' ),
+			'cart-block with paypal label'     => array( 'cart-block', 'paypal' ),
+			'checkout-block with buy label'    => array( 'checkout-block', 'buynow' ),
+			'checkout-block with pay label'    => array( 'checkout-block', 'pay' ),
+			'checkout-block with paypal label' => array( 'checkout-block', 'paypal' ),
+		);
+	}
+
+	/**
+	 * GIVEN a page context that is not part of the WooCommerce Blocks express row
+	 * WHEN building the Google Pay button styles
+	 * THEN the merchant's configured label is mapped as usual
+	 *
+	 * @dataProvider nonExpressRowContextLabelProvider
+	 */
+	public function testNonExpressRowStillMapsLabel( string $context, string $label, string $expectedType ): void {
+		$styling = $this->stylingWithLabel( $label, $context );
+
+		$this->provider->shouldReceive( 'googlepay_styles' )->with( $context )->andReturn( $styling );
+		$this->buttonLanguage();
+
+		$styles = $this->configFor()->styles( $context );
+
+		$this->assertSame( $expectedType, $styles['type'] );
+	}
+
+	public function nonExpressRowContextLabelProvider(): array {
+		return array(
+			'checkout context with buy label'    => array( 'checkout', 'buynow', 'buy' ),
+			'checkout context with paypal label' => array( 'checkout', 'paypal', 'plain' ),
+			'product context with buy label'     => array( 'product', 'buynow', 'buy' ),
+			'product context with pay label'     => array( 'product', 'pay', 'pay' ),
+		);
+	}
+
+	/**
+	 * GIVEN the button label normalizes to the "buy" type
+	 * WHEN building styles for the mini cart versus a block express row
+	 * THEN the mini cart still substitutes "pay", unaffected by the express row
+	 * handling, which forces "plain" instead
+	 *
+	 * @dataProvider miniCartAndExpressRowProvider
+	 */
+	public function testMiniCartSubstitutionIsUnaffectedByExpressRowHandling( string $context, string $expectedType ): void {
+		$styling = $this->stylingWithLabel( 'buynow', $context );
+
+		$this->provider->shouldReceive( 'googlepay_styles' )->with( $context )->andReturn( $styling );
+		$this->buttonLanguage();
+
+		$styles = $this->configFor()->styles( $context );
+
+		$this->assertSame( $expectedType, $styles['type'] );
+	}
+
+	public function miniCartAndExpressRowProvider(): array {
+		return array(
+			'mini cart still substitutes buy with pay' => array( 'mini-cart', 'pay' ),
+			'cart-block forces plain instead'          => array( 'cart-block', 'plain' ),
+			'checkout-block forces plain instead'      => array( 'checkout-block', 'plain' ),
+		);
+	}
+
+	/**
+	 * GIVEN the express row context forces the button type to "plain"
+	 * WHEN building the Google Pay button styles
+	 * THEN the color, language and border radius still reflect the merchant's settings
+	 *
+	 * @dataProvider expressRowContextProvider
+	 */
+	public function testExpressRowKeepsOtherStylesUnchanged( string $context ): void {
+		$styling = $this->styling( $context, true, array(), 'pill', 'buynow', 'gold' );
+
+		$this->provider->shouldReceive( 'googlepay_styles' )->with( $context )->andReturn( $styling );
+		$this->buttonLanguage( 'en_US' );
+
+		$styles = $this->configFor()->styles( $context );
+
+		$this->assertSame( 'black', $styles['color'] );
+		$this->assertSame( 'en', $styles['language'] );
+		$this->assertSame( 24, $styles['borderRadius'] );
+	}
+
+	public function expressRowContextProvider(): array {
+		return array(
+			'cart-block context'     => array( 'cart-block' ),
+			'checkout-block context' => array( 'checkout-block' ),
+		);
+	}
 }

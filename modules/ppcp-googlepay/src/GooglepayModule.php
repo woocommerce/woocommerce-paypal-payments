@@ -58,6 +58,16 @@ class GooglepayModule implements ServiceModule, ExecutableModule {
 		add_action(
 			'init',
 			static function () use ( $c ) {
+				/*
+				 * Everything below renders notices, assets and buttons, none of
+				 * which a cron request can use, while resolving availability costs
+				 * a merchant-integrations API call. The payment gateway itself is
+				 * registered elsewhere, so skipping this leaves order processing
+				 * during cron untouched.
+				 */
+				if ( wp_doing_cron() ) {
+					return;
+				}
 
 				// Check if the module is applicable, correct country, currency, ... etc.
 				if ( ! $c->get( 'googlepay.eligible' ) ) {

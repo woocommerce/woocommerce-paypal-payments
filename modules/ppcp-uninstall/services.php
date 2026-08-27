@@ -30,6 +30,7 @@ return array(
 			'woocommerce_' . PayUponInvoiceGateway::ID . '_settings',
 			'woocommerce_' . CardButtonGateway::ID . '_settings',
 			'woocommerce-ppcp-version',
+			'woocommerce-ppcp-sdk-v6-eligible',
 			WebhookSimulation::OPTION_ID,
 			WebhookRegistrar::KEY,
 			'ppcp_payment_tokens_migration_initialized',

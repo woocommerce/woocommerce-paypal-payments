@@ -19,5 +19,14 @@ import { watchViewedTotal } from '../utils/viewedTotal';
  * @return {{get: Function}} The synchronously-readable total.
  */
 export function watchSheetTotal( config, context ) {
+	// An existing order is being paid, so the localized amount is that order's
+	// total and nothing on this page can change it. The shared watcher prices
+	// the cart, which is not what this page charges.
+	if ( context === 'pay-now' ) {
+		const total = config.amount || '';
+
+		return { get: () => total };
+	}
+
 	return { get: watchViewedTotal( config, context ).get };
 }

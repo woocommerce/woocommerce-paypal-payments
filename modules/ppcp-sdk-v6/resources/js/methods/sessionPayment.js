@@ -1,8 +1,9 @@
 /**
- * Drives the create, confirm and approve sequence for a wallet payment.
+ * Drives the create, confirm and approve sequence for a merchant-presented
+ * payment.
  *
- * The wallet-specific parts (confirmOrder payload, mapped contact) arrive as
- * arguments, so Apple Pay can reuse the sequence. DOM-free: failures throw
+ * The method-specific parts (confirmOrder payload, mapped contact) arrive as
+ * arguments, so every method reuses the sequence. DOM-free: failures throw
  * and the caller reports them.
  *
  * @package
@@ -49,7 +50,7 @@ function confirmedStatus( result ) {
  * @return {Promise<void>} Resolves once the order is approved.
  * @throws {Error} When the wallet does not approve the order.
  */
-export async function payWithWallet( {
+export async function payWithSession( {
 	config,
 	context,
 	session,

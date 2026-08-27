@@ -1,9 +1,52 @@
 import {
 	googlePayPayer,
 	googlePayShippingAddress,
+	googlePayWcShippingAddress,
+	googlePayWcBillingAddress,
 	applePayPayer,
 	applePayShippingAddress,
+	applePayWcShippingAddress,
+	applePayWcBillingAddress,
+	walletAddressToWc,
+	wcAddressToApplePay,
 } from './walletContacts';
+
+describe( 'walletAddressToWc()', () => {
+	test( 'maps countryCode/administrativeArea/postalCode/locality to WC address fields', () => {
+		expect(
+			walletAddressToWc( {
+				countryCode: 'US',
+				administrativeArea: 'CA',
+				postalCode: '94105',
+				locality: 'San Francisco',
+			} )
+		).toEqual( {
+			country: 'US',
+			state: 'CA',
+			postcode: '94105',
+			city: 'San Francisco',
+		} );
+	} );
+
+	test( 'defaults every field to an empty string when the source carries none of them', () => {
+		expect( walletAddressToWc( {} ) ).toEqual( {
+			country: '',
+			state: '',
+			postcode: '',
+			city: '',
+		} );
+	} );
+
+	test( 'does not throw and defaults every field when the source is absent', () => {
+		expect( () => walletAddressToWc( null ) ).not.toThrow();
+		expect( walletAddressToWc( undefined ) ).toEqual( {
+			country: '',
+			state: '',
+			postcode: '',
+			city: '',
+		} );
+	} );
+} );
 
 const googlePayResponse = ( overrides = {} ) => ( {
 	email: 'jane@example.test',
@@ -115,6 +158,100 @@ describe( 'googlePayShippingAddress', () => {
 	} );
 } );
 
+describe( 'googlePayWcShippingAddress', () => {
+	test( 'maps the shippingAddress to complete WC fields, including administrativeArea to state', () => {
+		const address = googlePayWcShippingAddress( {
+			shippingAddress: {
+				name: 'Jane Van Doe',
+				countryCode: 'US',
+				address1: 'WooVille 12',
+				address2: 'Suite 4',
+				administrativeArea: 'IA',
+				locality: 'Des Moines',
+				postalCode: '12862',
+			},
+		} );
+
+		expect( address ).toEqual( {
+			country: 'US',
+			state: 'IA',
+			postcode: '12862',
+			city: 'Des Moines',
+			address_1: 'WooVille 12',
+			address_2: 'Suite 4',
+			first_name: 'Jane Van',
+			last_name: 'Doe',
+		} );
+	} );
+
+	test( 'defaults every field to an empty string when shippingAddress is absent', () => {
+		expect( googlePayWcShippingAddress( {} ) ).toEqual( {
+			country: '',
+			state: '',
+			postcode: '',
+			city: '',
+			address_1: '',
+			address_2: '',
+			first_name: '',
+			last_name: '',
+		} );
+	} );
+
+	test( 'does not throw when the response is absent', () => {
+		expect( () => googlePayWcShippingAddress( null ) ).not.toThrow();
+		expect( () => googlePayWcShippingAddress( undefined ) ).not.toThrow();
+	} );
+} );
+
+describe( 'googlePayWcBillingAddress', () => {
+	test( 'maps the billing address to complete WC fields, including administrativeArea to state', () => {
+		const address = googlePayWcBillingAddress( {
+			paymentMethodData: {
+				info: {
+					billingAddress: {
+						name: 'Jane Van Doe',
+						countryCode: 'US',
+						address1: 'WooVille 12',
+						address2: 'Suite 4',
+						administrativeArea: 'IA',
+						locality: 'Des Moines',
+						postalCode: '12862',
+					},
+				},
+			},
+		} );
+
+		expect( address ).toEqual( {
+			country: 'US',
+			state: 'IA',
+			postcode: '12862',
+			city: 'Des Moines',
+			address_1: 'WooVille 12',
+			address_2: 'Suite 4',
+			first_name: 'Jane Van',
+			last_name: 'Doe',
+		} );
+	} );
+
+	test( 'defaults every field to an empty string when the wallet returns no billing address', () => {
+		expect( googlePayWcBillingAddress( {} ) ).toEqual( {
+			country: '',
+			state: '',
+			postcode: '',
+			city: '',
+			address_1: '',
+			address_2: '',
+			first_name: '',
+			last_name: '',
+		} );
+	} );
+
+	test( 'does not throw when the response is absent', () => {
+		expect( () => googlePayWcBillingAddress( null ) ).not.toThrow();
+		expect( () => googlePayWcBillingAddress( undefined ) ).not.toThrow();
+	} );
+} );
+
 const applePayPayment = ( overrides = {} ) => ( {
 	billingContact: {
 		givenName: 'Jane',
@@ -217,5 +354,176 @@ describe( 'applePayShippingAddress', () => {
 
 		expect( shipping.name.full_name ).toBeUndefined();
 		expect( shipping.address.country_code ).toBe( 'US' );
+	} );
+} );
+
+describe( 'applePayWcShippingAddress', () => {
+	test( 'maps the shippingContact to complete WC fields, including administrativeArea to state', () => {
+		const address = applePayWcShippingAddress( {
+			shippingContact: {
+				givenName: 'Jane',
+				familyName: 'Doe',
+				countryCode: 'US',
+				addressLines: [ 'WooVille 12', 'Suite 4' ],
+				administrativeArea: 'IA',
+				locality: 'Des Moines',
+				postalCode: '12862',
+			},
+		} );
+
+		expect( address ).toEqual( {
+			country: 'US',
+			state: 'IA',
+			postcode: '12862',
+			city: 'Des Moines',
+			address_1: 'WooVille 12',
+			address_2: 'Suite 4',
+			first_name: 'Jane',
+			last_name: 'Doe',
+		} );
+	} );
+
+	test( 'defaults every field to an empty string when shippingContact is absent', () => {
+		expect( applePayWcShippingAddress( {} ) ).toEqual( {
+			country: '',
+			state: '',
+			postcode: '',
+			city: '',
+			address_1: '',
+			address_2: '',
+			first_name: '',
+			last_name: '',
+		} );
+	} );
+
+	test( 'does not throw when the payment is absent', () => {
+		expect( () => applePayWcShippingAddress( null ) ).not.toThrow();
+		expect( () => applePayWcShippingAddress( undefined ) ).not.toThrow();
+	} );
+} );
+
+describe( 'applePayWcBillingAddress', () => {
+	test( 'maps the billingContact to complete WC fields, including administrativeArea to state', () => {
+		const address = applePayWcBillingAddress( {
+			billingContact: {
+				givenName: 'Jane',
+				familyName: 'Doe',
+				countryCode: 'US',
+				addressLines: [ 'WooVille 12', 'Suite 4' ],
+				administrativeArea: 'IA',
+				locality: 'Des Moines',
+				postalCode: '12862',
+			},
+		} );
+
+		expect( address ).toEqual( {
+			country: 'US',
+			state: 'IA',
+			postcode: '12862',
+			city: 'Des Moines',
+			address_1: 'WooVille 12',
+			address_2: 'Suite 4',
+			first_name: 'Jane',
+			last_name: 'Doe',
+		} );
+	} );
+
+	test( 'defaults every field to an empty string when the wallet returns no billing contact', () => {
+		expect( applePayWcBillingAddress( {} ) ).toEqual( {
+			country: '',
+			state: '',
+			postcode: '',
+			city: '',
+			address_1: '',
+			address_2: '',
+			first_name: '',
+			last_name: '',
+		} );
+	} );
+
+	test( 'does not throw when the payment is absent', () => {
+		expect( () => applePayWcBillingAddress( null ) ).not.toThrow();
+		expect( () => applePayWcBillingAddress( undefined ) ).not.toThrow();
+	} );
+} );
+
+const wcAddress = ( overrides = {} ) => ( {
+	country: 'US',
+	state: 'IA',
+	postcode: '12862',
+	city: 'Des Moines',
+	address_1: 'WooVille 12',
+	address_2: 'Suite 4',
+	first_name: 'Jane',
+	last_name: 'Doe',
+	...overrides,
+} );
+
+describe( 'wcAddressToApplePay()', () => {
+	test.each( [
+		[ undefined ],
+		[ null ],
+		[ {} ],
+		[ { country: '' } ],
+	] )( 'returns undefined when the address has no country (%j)', ( address ) => {
+		expect( wcAddressToApplePay( address ) ).toBeUndefined();
+	} );
+
+	test( 'maps country/state/postcode/city to countryCode/administrativeArea/postalCode/locality', () => {
+		const contact = wcAddressToApplePay( wcAddress() );
+
+		expect( contact.countryCode ).toBe( 'US' );
+		expect( contact.administrativeArea ).toBe( 'IA' );
+		expect( contact.postalCode ).toBe( '12862' );
+		expect( contact.locality ).toBe( 'Des Moines' );
+	} );
+
+	test( 'maps first_name/last_name to givenName/familyName', () => {
+		const contact = wcAddressToApplePay( wcAddress() );
+
+		expect( contact.givenName ).toBe( 'Jane' );
+		expect( contact.familyName ).toBe( 'Doe' );
+	} );
+
+	test( 'puts address_1 and address_2 into addressLines, in order', () => {
+		const contact = wcAddressToApplePay( wcAddress() );
+
+		expect( contact.addressLines ).toEqual( [
+			'WooVille 12',
+			'Suite 4',
+		] );
+	} );
+
+	test( 'skips an empty address_2 in addressLines rather than keeping an empty entry', () => {
+		const contact = wcAddressToApplePay(
+			wcAddress( { address_2: '' } )
+		);
+
+		expect( contact.addressLines ).toEqual( [ 'WooVille 12' ] );
+	} );
+
+	test( 'includes emailAddress and phoneNumber only when the address carries them', () => {
+		const withoutContact = wcAddressToApplePay( wcAddress() );
+
+		expect( withoutContact ).not.toHaveProperty( 'emailAddress' );
+		expect( withoutContact ).not.toHaveProperty( 'phoneNumber' );
+
+		const withContact = wcAddressToApplePay(
+			wcAddress( { email: 'jane@example.test', phone: '555-0100' } )
+		);
+
+		expect( withContact.emailAddress ).toBe( 'jane@example.test' );
+		expect( withContact.phoneNumber ).toBe( '555-0100' );
+	} );
+
+	test( 'defaults state/postcode/city and name parts to empty strings when absent', () => {
+		const contact = wcAddressToApplePay( { country: 'US' } );
+
+		expect( contact.administrativeArea ).toBe( '' );
+		expect( contact.postalCode ).toBe( '' );
+		expect( contact.locality ).toBe( '' );
+		expect( contact.givenName ).toBe( '' );
+		expect( contact.familyName ).toBe( '' );
+		expect( contact.addressLines ).toEqual( [] );
 	} );
 } );
