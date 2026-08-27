@@ -355,6 +355,16 @@ class CreateOrderEndpoint implements EndpointInterface {
 
 			if ( isset( $data['form'] ) ) {
 				$this->form = $data['form'];
+
+				/*
+				 * Persist it here as well as in the save-checkout-form endpoint.
+				 * Both run for the same click, and the session is written whole
+				 * rather than per field, so whichever request finishes last
+				 * overwrites the other's contribution. Storing the form from the
+				 * request that also stores the order keeps the two together, so a
+				 * shopper returning from PayPal still finds what they typed.
+				 */
+				$this->session_handler->replace_checkout_form( $this->form );
 			}
 
 			if ( $this->early_validation_enabled
