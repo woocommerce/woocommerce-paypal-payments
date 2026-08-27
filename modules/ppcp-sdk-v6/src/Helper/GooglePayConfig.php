@@ -11,7 +11,7 @@ namespace WooCommerce\PayPalCommerce\SdkV6\Helper;
 use WooCommerce\PayPalCommerce\Googlepay\GooglePayGateway;
 use WooCommerce\PayPalCommerce\Googlepay\Helper\PropertiesDictionary;
 use WooCommerce\PayPalCommerce\Settings\DTO\LocationStylingDTO;
-class GooglePayConfig extends \WooCommerce\PayPalCommerce\SdkV6\Helper\WalletConfig
+class GooglePayConfig extends \WooCommerce\PayPalCommerce\SdkV6\Helper\MethodRenderGate
 {
     /**
      * Google's buttonRadius expects an integer, not a CSS length.
@@ -26,7 +26,7 @@ class GooglePayConfig extends \WooCommerce\PayPalCommerce\SdkV6\Helper\WalletCon
      */
     public function styles(string $context): array
     {
-        $styling = $this->wallet_styles($context);
+        $styling = $this->method_styles($context);
         // SettingsProvider runs these through the Google Pay module's mapping
         // filters, but those only exist while that module is loaded. Mapping
         // here as well is idempotent and keeps the values valid either way.
@@ -36,17 +36,20 @@ class GooglePayConfig extends \WooCommerce\PayPalCommerce\SdkV6\Helper\WalletCon
         if ('mini-cart' === $context && 'buy' === $type) {
             $type = 'pay';
         }
+        if ($this->is_express_row($context)) {
+            $type = 'plain';
+        }
         return array('color' => PropertiesDictionary::map_color($styling->color), 'type' => $type, 'language' => PropertiesDictionary::map_language($this->settings_provider->googlepay_button_language()), 'borderRadius' => self::RADIUS_MAP[$styling->shape] ?? self::DEFAULT_RADIUS);
     }
     protected function too_early_notice(): string
     {
         return esc_html__('Google Pay availability cannot be determined before the wp_loaded action has run.', 'woocommerce-paypal-payments');
     }
-    protected function wallet_enabled(): bool
+    protected function method_enabled(): bool
     {
         return $this->settings_provider->googlepay_enabled();
     }
-    protected function wallet_styles(string $context): LocationStylingDTO
+    protected function method_styles(string $context): LocationStylingDTO
     {
         return $this->settings_provider->googlepay_styles($context);
     }

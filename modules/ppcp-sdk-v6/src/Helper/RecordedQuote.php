@@ -3,7 +3,7 @@
 /**
  * The difference between the total a wallet sheet quoted and the one charged.
  *
- * A sheet quotes tax against the shipping address, and WalletShippingEndpoint
+ * A sheet quotes tax against the shipping address, and CartQuoteEndpoint
  * re-prices against the card's real one and refuses an increase, so what can remain
  * is a decrease. Charging less than the sheet showed is still a surprise, so the
  * quote is noted on the order and explained to the shopper.
@@ -14,7 +14,7 @@ declare (strict_types=1);
 namespace WooCommerce\PayPalCommerce\SdkV6\Helper;
 
 use WC_Order;
-class RecordedQuote extends \WooCommerce\PayPalCommerce\SdkV6\Helper\WalletPaymentRecord
+class RecordedQuote extends \WooCommerce\PayPalCommerce\SdkV6\Helper\SessionRecord
 {
     protected const SESSION_KEY = 'ppcp_wallet_quoted_total';
     public const ORDER_META_KEY = '_ppcp_wallet_quoted_total';

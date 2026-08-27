@@ -19,7 +19,7 @@ declare (strict_types=1);
 namespace WooCommerce\PayPalCommerce\SdkV6\Helper;
 
 use WC_Customer;
-class RecordedTaxBasis extends \WooCommerce\PayPalCommerce\SdkV6\Helper\WalletPaymentRecord
+class RecordedTaxBasis extends \WooCommerce\PayPalCommerce\SdkV6\Helper\SessionRecord
 {
     protected const SESSION_KEY = 'ppcp_wallet_tax_basis';
     /**

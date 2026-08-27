@@ -25,7 +25,7 @@ use WooCommerce\PayPalCommerce\OrderEndpoints\Endpoint\RequestData;
 use WooCommerce\PayPalCommerce\SdkV6\Helper\RecordedShippingRate;
 use WooCommerce\PayPalCommerce\SdkV6\Helper\RecordedQuote;
 use WooCommerce\PayPalCommerce\SdkV6\Helper\RecordedTaxBasis;
-class WalletShippingEndpoint extends AbstractCartEndpoint
+class CartQuoteEndpoint extends AbstractCartEndpoint
 {
     public const ENDPOINT = 'ppc-sdk-v6-wallet-shipping';
     private AmountFactory $amount_factory;
