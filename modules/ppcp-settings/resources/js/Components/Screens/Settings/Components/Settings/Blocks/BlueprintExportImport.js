@@ -66,6 +66,7 @@ const BlueprintExportImport = () => {
 							type: 'secondary',
 							class: 'small-button',
 							onClick: handleExportClick,
+							disabled: ! isReady,
 						},
 						{
 							text: __( 'Import', 'woocommerce-paypal-payments' ),
