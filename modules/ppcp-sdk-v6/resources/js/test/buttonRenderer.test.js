@@ -134,4 +134,49 @@ describe( 'renderButtons', () => {
 
 		document.body.removeChild( wrapper );
 	} );
+
+	test( 'skips the pay later button when payLaterEnabled is not set, even with a valid session and product details', () => {
+		const wrapper = document.createElement( 'div' );
+		document.body.appendChild( wrapper );
+
+		const rendered = renderButtons( {
+			wrapper,
+			sessions: { paypal: {}, paylater: {} },
+			styles: {},
+			createOrderForFunding: () => noop,
+			payLaterDetails: { productCode: 'PAYLATER' },
+		} );
+
+		expect(
+			wrapper.querySelector( 'paypal-pay-later-button' )
+		).toBeNull();
+		expect(
+			rendered.some( ( el ) => el.tagName === 'PAYPAL-PAY-LATER-BUTTON' )
+		).toBe( false );
+
+		document.body.removeChild( wrapper );
+	} );
+
+	test( 'renders the pay later button when payLaterEnabled is true and product details are present', () => {
+		const wrapper = document.createElement( 'div' );
+		document.body.appendChild( wrapper );
+
+		const rendered = renderButtons( {
+			wrapper,
+			sessions: { paypal: {}, paylater: {} },
+			styles: {},
+			createOrderForFunding: () => noop,
+			payLaterDetails: { productCode: 'PAYLATER' },
+			payLaterEnabled: true,
+		} );
+
+		expect(
+			wrapper.querySelector( 'paypal-pay-later-button' )
+		).not.toBeNull();
+		expect(
+			rendered.some( ( el ) => el.tagName === 'PAYPAL-PAY-LATER-BUTTON' )
+		).toBe( true );
+
+		document.body.removeChild( wrapper );
+	} );
 } );

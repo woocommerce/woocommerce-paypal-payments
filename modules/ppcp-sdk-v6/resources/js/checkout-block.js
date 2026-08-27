@@ -78,9 +78,16 @@ setErrorLabels( config?.labels );
 // A free-trial ($0) subscription is vaulted through the PayPal save flow, which
 // only PayPal offers; Venmo/Pay Later cannot save without a purchase, so they are
 // suppressed on a free-trial cart (mirrors the v5 blocks checkout).
+//
+// Pay Later carries a per-context merchant setting on top of eligibility;
+// renderButtons() applies the same flag for the classic stack.
 const FUNDING_SOURCES = config?.is_free_trial_cart
 	? [ FundingSources.PAYPAL ]
-	: ALL_FUNDING_SOURCES;
+	: ALL_FUNDING_SOURCES.filter(
+			( fundingSource ) =>
+				fundingSource !== FundingSources.PAYLATER ||
+				Boolean( config?.pay_later_button?.[ config.page_context ] )
+	  );
 
 /**
  * Derives a decimal amount string from the WC Blocks cart totals.

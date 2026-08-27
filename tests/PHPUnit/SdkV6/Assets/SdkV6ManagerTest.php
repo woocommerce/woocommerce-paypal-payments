@@ -62,12 +62,13 @@ class SdkV6ManagerTest extends TestCase
         $this->environment = Mockery::mock(Environment::class);
         $this->style_mapper = Mockery::mock(ButtonStyleMapper::class);
         $this->settings_status = Mockery::mock(SettingsStatus::class);
+        // script_data() asks for this on every resolved page context.
+        $this->settings_status->shouldReceive('is_pay_later_button_enabled_for_location')->andReturn(false)->byDefault();
         $this->context = Mockery::mock(Context::class);
         $this->session_handler = Mockery::mock(SessionHandler::class);
         $this->cancel_view = Mockery::mock(CancelView::class);
         $this->card_payments_configuration = Mockery::mock(CardPaymentsConfiguration::class);
-		// Off by default like the wallets: script_data() reads it on every call,
-		// and most tests here exercise something other than the card button.
+		// script_data() reads this on every call.
 		$this->card_payments_configuration->shouldReceive('is_bcdc_enabled')->andReturn(false)->byDefault();
 		$this->subscription_helper = Mockery::mock(SubscriptionHelper::class);
         $this->subscription_helper->shouldReceive('cart_contains_subscription')->andReturn(false)->byDefault();
@@ -145,6 +146,8 @@ class SdkV6ManagerTest extends TestCase
         $product = Mockery::mock(\WC_Product::class);
         $product->shouldReceive('is_virtual')->andReturn($is_virtual);
         $product->shouldReceive('is_downloadable')->andReturn($is_downloadable);
+        // pay_later_product_context() reads the price on every product page.
+        $product->shouldReceive('get_price')->with('raw')->andReturn('10.00')->byDefault();
 
         return $product;
     }
@@ -1317,6 +1320,12 @@ class SdkV6ManagerTest extends TestCase
         $this->asset_getter->shouldReceive('get_asset_data')
             ->with('boot.js', '1.0.0')
             ->andReturn(['dependencies' => ['wp-data'], 'version' => 'deadbeef']);
+        $this->asset_getter->shouldReceive('get_asset_url')
+            ->with('gateway.css')
+            ->andReturn('https://example.com/assets/gateway.css');
+        $this->asset_getter->shouldReceive('get_asset_data')
+            ->with('gateway.css', '1.0.0')
+            ->andReturn(['dependencies' => [], 'version' => 'cafebabe']);
 
         expect('wp_register_script')
             ->once()
@@ -1329,6 +1338,14 @@ class SdkV6ManagerTest extends TestCase
             );
         expect('wp_localize_script')->once();
         expect('wp_enqueue_script')->once()->with('wc-ppcp-sdk-v6-boot');
+        expect('wp_enqueue_style')
+            ->once()
+            ->with(
+                'wc-ppcp-sdk-v6-gateway',
+                'https://example.com/assets/gateway.css',
+                [],
+                'cafebabe'
+            );
 
         $testee = $this->createTestee();
         $testee->enqueue();
