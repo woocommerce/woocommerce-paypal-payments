@@ -3,11 +3,16 @@ import {
 	paypalSubscriptionToWcAddresses,
 } from './Helper/Address';
 import { shouldEnableAppSwitch } from './Components/paypal';
+import { payerData } from './Helper/PayerData';
 
 export const createOrder = async ( data, config, onError, onClose ) => {
 	try {
+		const payer = payerData();
+
 		const requestBody = {
 			nonce: config.scriptData.ajax.create_order.nonce,
+			// Omitted when the shopper has given no email; see payerData().
+			...( payer && { payer } ),
 			bn_code: '',
 			context: config.scriptData.context,
 			payment_method: 'ppcp-gateway',
