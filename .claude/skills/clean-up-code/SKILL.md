@@ -32,7 +32,7 @@ Carefully review the defined code scope and make sure it's easy to understand. I
 - No em dashes
 - Terse, compact, skimmable
 - No hedging, no process notes, only evergreen content
-- Generalize rather than listing mutliple options to reduce maintenance overhead
+- Generalize rather than listing multiple options to reduce maintenance overhead
 
 ## Approved Cleanup
 
@@ -40,7 +40,7 @@ You have the following permissions:
 
 - Remove as many comments as possible
 - Only add absolute minimal code comments to clarify a truly ambiguous or unclear parts; focus on explaining WHY this code exists
-- Rename symbold to make them self explanatory when this helps to remove a comment
+- Rename symbols to make them self explanatory when this helps to remove a comment
 - Justify every comment that already exists; remove comments that are not needed, shorten comments that are too verbose
 - Resolve smart-code into maintainable code so it does not need documentation
 

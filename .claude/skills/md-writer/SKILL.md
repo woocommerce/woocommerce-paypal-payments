@@ -21,7 +21,7 @@ Markdown documentation should provide context and an overview over the code, it 
 ## Linebreaks
 
 NEVER add a soft-wrap that breaks text based on a character limit.
-Only use line breaks for functional purposes: Separate list elements, start a new paragram, etc.
+Only use line breaks for functional purposes: Separate list elements, start a new paragraph, etc.
 
 ## Empty lines
 
