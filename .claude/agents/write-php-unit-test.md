@@ -1,6 +1,6 @@
 ---
-name: unit-test-writer
-description: PHPUnit test writer for WordPress/WooCommerce PHP code. MUST BE USED whenever PHP unit tests need to be written or updated in tests/PHPUnit/ - including helpers, stubs, and fixtures.
+name: write-php-unit-test
+description: PHPUnit test writer for WordPress/WooCommerce PHP code. MUST BE USED whenever PHP unit tests need to be written or updated - including helpers, stubs, and fixtures.
 color: orange
 model: sonnet
 effort: medium

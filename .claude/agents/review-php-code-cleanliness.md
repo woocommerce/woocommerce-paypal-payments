@@ -1,5 +1,5 @@
 ---
-name: php-review
+name: review-php-code-cleanliness
 description: Read-only reviewer for PHP code cleanliness a linter cannot catch. Returns findings; never edits. Dispatch with exactly `review CHANGES in <file>` (git-diff hunks only, after writing or editing) or `review FULL <file>` (the entire file); no other context needed.
 color: cyan
 model: haiku

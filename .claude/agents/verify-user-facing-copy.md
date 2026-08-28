@@ -1,5 +1,5 @@
 ---
-name: copy-editor
+name: verify-user-facing-copy
 description: Canonicalizes user-facing UI copy (buttons, headings, messages, tooltips, notices) to the plugin's guidelines - sentence case, brand capitalization, concision. Read-only. Dispatch whenever writing or changing a user-facing string.
 color: purple
 model: haiku

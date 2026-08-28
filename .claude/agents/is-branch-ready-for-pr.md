@@ -1,5 +1,5 @@
 ---
-name: pr-readiness
+name: is-branch-ready-for-pr
 description: Only invoked from the /pr-readiness skill. Do not use otherwise.
 color: pink
 model: sonnet
