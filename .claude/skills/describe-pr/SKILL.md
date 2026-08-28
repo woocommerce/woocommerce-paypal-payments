@@ -1,8 +1,9 @@
 ---
 name: describe-pr
-description: Draft a standardized, reviewer-focused pull request description and - only after explicit approval - update the PR. Optional first argument is a PR number (defaults to the current branch's open PR). Optional argument is a Jira issue ID (e.g. ABC-123).
-argument-hint: "[PR-number] [JIRA-ID]"
-invocation: user
+description: Draft a standardized, reviewer-focused pull request description and - only after explicit approval - update the PR. Optional argument is a Jira issue ID (e.g. ABC-123) and a local upstream branch for the diff (e.g. dev/develop).
+argument-hint: "[JIRA-ID] [Upstream-Branch]"
+allowed-tools: Read, Grep, Glob, Write, Bash(gh pr view:*), Bash(gh pr edit:*), Bash(gh pr create:*), Bash(git diff:*), Bash(git log:*)
+disable-model-invocation: true
 ---
 
 You help the user write a helpful, standardized PR title and description and, **only after their final and explicit approval**, update the pull request via `gh pr edit`.

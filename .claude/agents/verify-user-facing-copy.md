@@ -5,7 +5,6 @@ color: purple
 model: haiku
 background: true
 tools: Read, Grep
-disallowedTools: Write, Edit, Glob, Bash, PowerShell, NotebookEdit, WebFetch, WebSearch, Skill, ToolSearch, EnterWorktree, ExitWorktree, Monitor, TaskStop, TodoWrite, SendMessage
 ---
 
 You canonicalize user-facing copy for the plugin. The calling agent has the feature context and

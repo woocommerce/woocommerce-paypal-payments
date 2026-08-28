@@ -2,7 +2,8 @@
 name: review-branch-before-pr
 description: Run a PR readiness check on the current branch before opening or finalizing a pull request. Optional first argument is a Jira issue ID (e.g. ABC-123). Optional second argument is a base branch name.
 argument-hint: "[JIRA-ID] [base-branch]"
-invocation: user
+allowed-tools: Read, Grep, Glob, Agent, Bash(git symbolic-ref:*), Bash(git rev-parse:*), Bash(git diff:*), Bash(git log:*)
+disable-model-invocation: true
 ---
 
 You dispatch the `is-branch-ready-for-pr` sub-agent to review the current branch. You do NOT perform the review yourself - your job is to gather context and hand it off.

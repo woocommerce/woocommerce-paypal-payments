@@ -4,8 +4,7 @@ description: Runs the project's tests and linters (PHP unit, JS unit, integratio
 color: orange
 model: haiku
 background: true
-tools: Read, Glob, Grep, Bash(ddev npm run *)
-disallowedTools: Edit, Write, NotebookEdit, WebFetch, WebSearch, Skill, ToolSearch, EnterWorktree, ExitWorktree, Monitor, TaskStop, TodoWrite, SendMessage
+tools: Read, Glob, Grep, Bash
 ---
 
 Run the specified test suite, evaluate the output and respond only with a crisp summary.

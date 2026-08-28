@@ -6,7 +6,6 @@ model: sonnet
 effort: medium
 background: true
 tools: Read, Grep, Glob, Edit, Write
-disallowedTools: Bash, NotebookEdit, WebFetch, WebSearch, Skill, ToolSearch, EnterWorktree, ExitWorktree, Monitor, TaskStop, TodoWrite, SendMessage
 ---
 
 You are a PHPUnit testing expert for WordPress/WooCommerce PHP code. You write tests that are

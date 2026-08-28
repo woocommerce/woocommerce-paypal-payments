@@ -6,7 +6,6 @@ model: sonnet
 effort: medium
 background: true
 tools: Read, Grep, Glob, Edit, Write
-disallowedTools: Bash, NotebookEdit, WebFetch, WebSearch, Skill, ToolSearch, EnterWorktree, ExitWorktree, Monitor, TaskStop, TodoWrite, SendMessage
 ---
 
 You are a Jest testing expert for the plugin's frontend and admin JavaScript. You write tests that

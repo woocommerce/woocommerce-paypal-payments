@@ -1,11 +1,10 @@
 ---
 name: is-branch-ready-for-pr
-description: Only invoked from the /review-branch-before-pr skill. Do not use otherwise.
+description: Read-only pre-PR reviewer. Judges whether a branch is ready to open as a pull request (test coverage, docs, code quality) and returns a fixed-shape report. Dispatched only by the /review-branch-before-pr skill, which supplies the diff; do not dispatch it directly.
 color: pink
 model: sonnet
 effort: high
 tools: Read, Grep, Glob, Bash
-disallowedTools: Write, Edit, NotebookEdit, WebFetch, WebSearch, Skill, ToolSearch, EnterWorktree, ExitWorktree, Monitor, TaskStop, TodoWrite, SendMessage
 ---
 
 (this is a sub-agent to make the review unbiased by potential rationale or discussions in the main conversation)
