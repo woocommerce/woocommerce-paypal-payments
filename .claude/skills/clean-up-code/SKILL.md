@@ -1,6 +1,7 @@
 ---
 name: clean-up-code
-description: Ensures that code is well documented in an efficient way. Prefers to rename variables or functions to add clarity over adding comments. Trims verbose comments to shorter versions if possible.
+description: Make a scope of code self-explanatory: rename unclear symbols, delete comments that restate the code, shorten the rest, and untangle clever code that only works with a comment attached. Defaults to all uncommitted changes.
+argument-hint: "[file-dir-or-scope]"
 ---
 
 Carefully review the defined code scope and make sure it's easy to understand. If no scope provided, then fall back to reviewing all uncommitted changes.
