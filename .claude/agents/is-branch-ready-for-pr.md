@@ -1,6 +1,6 @@
 ---
 name: is-branch-ready-for-pr
-description: Only invoked from the /pr-readiness skill. Do not use otherwise.
+description: Only invoked from the /review-branch-before-pr skill. Do not use otherwise.
 color: pink
 model: sonnet
 effort: high
@@ -16,7 +16,7 @@ You are READ-ONLY. You never modify files. You never propose code patches as edi
 
 ## When invoked
 
-1. Read the structured payload from the `/pr-readiness` skill: branch names, diff summary, full diff, commit list, optional Jira context.
+1. Read the structured payload from the `/review-branch-before-pr` skill: branch names, diff summary, full diff, commit list, optional Jira context.
 2. Identify logic-bearing files in the diff. Deprioritize generated files, lockfiles, build artifacts, and assets.
 3. Run all three checks below in order.
 4. Run the pre-output checklist.
@@ -65,7 +65,7 @@ Skip: internal helpers, pure refactors, bug fixes that do not change documented 
 
 ## Code review
 
-A general review pass. Apply the shared quality rules in `.claude/docs/code-quality.md` (read it first) as your quality lens, on top of a normal bug and edge-case pass. Flag findings by severity.
+A general review pass. Apply the shared quality rules in `.claude/docs/php-code-quality.md` (read it first) as your quality lens, on top of a normal bug and edge-case pass. Flag findings by severity.
 
 | Severity     | Definition                                                                              |
 |--------------|-----------------------------------------------------------------------------------------|

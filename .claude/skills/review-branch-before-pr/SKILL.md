@@ -5,11 +5,11 @@ argument-hint: "[JIRA-ID] [base-branch]"
 invocation: user
 ---
 
-You dispatch the `pr-readiness` sub-agent to review the current branch. You do NOT perform the review yourself — your job is to gather context and hand it off.
+You dispatch the `is-branch-ready-for-pr` sub-agent to review the current branch. You do NOT perform the review yourself - your job is to gather context and hand it off.
 
 ## Argument Parsing
 
-Arguments after `/pr-readiness`:
+Arguments after `/review-branch-before-pr`:
 - An identifier matching `[A-Z]+-\d+` is a Jira issue ID.
 - Any other argument is treated as the base branch name.
 
@@ -44,7 +44,7 @@ If the fetch fails, mention it in a single line and continue without Jira contex
 
 ### 4. Dispatch Agent
 
-Invoke the `pr-readiness` sub-agent via the Task tool. Pass a single structured payload following this template:
+Invoke the `is-branch-ready-for-pr` sub-agent via the Task tool. Pass a single structured payload following this template:
 
 ````payload-template
 Branch: {current} → {base}

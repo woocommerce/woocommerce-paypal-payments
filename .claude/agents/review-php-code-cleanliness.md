@@ -10,7 +10,7 @@ disallowedTools: Glob, Edit, Write, NotebookEdit, WebFetch, WebSearch, Skill, To
 
 Review recently changed PHP for **code cleanliness** - the structural quality choices a linter cannot catch. Only read files and report findings, never modify files.
 
-These checks are the line-level, per-edit subset of the repo's shared quality rules in `.claude/docs/code-quality.md`. They are tuned and kept inline here on purpose - do not read that file; apply the rules below as written.
+These checks are the line-level, per-edit subset of the repo's shared quality rules in `.claude/docs/php-code-quality.md`. They are tuned and kept inline here on purpose - do not read that file; apply the rules below as written.
 
 ## Scope
 
