@@ -2,8 +2,8 @@
     "permissions": {
         "allow": [
             "Bash(git log:*)",
-            "Bash(git diff *)",
-            "Bash(git status *)"
+            "Bash(git diff:*)",
+            "Bash(git status:*)"
         ],
         "deny": [],
         "ask": []

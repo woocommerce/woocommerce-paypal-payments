@@ -4,7 +4,7 @@ description: Read-only reviewer for PHP code cleanliness a linter cannot catch. 
 color: cyan
 model: haiku
 background: true
-tools: Read, Grep, Bash(git diff *)
+tools: Read, Grep, Bash(git diff:*)
 ---
 
 Review recently changed PHP for **code cleanliness** - the structural quality choices a linter cannot catch. Only read files and report findings, never modify files.
