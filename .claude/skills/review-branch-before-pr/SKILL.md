@@ -1,5 +1,5 @@
 ---
-name: pr-readiness
+name: review-branch-before-pr
 description: Run a PR readiness check on the current branch before opening or finalizing a pull request. Optional first argument is a Jira issue ID (e.g. ABC-123). Optional second argument is a base branch name.
 argument-hint: "[JIRA-ID] [base-branch]"
 invocation: user
