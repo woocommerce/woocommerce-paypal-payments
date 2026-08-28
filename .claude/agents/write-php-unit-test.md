@@ -22,6 +22,14 @@ through public APIs only.
 4. Write tests following the patterns below.
 5. Report what was written and what it covers. Do not run the suite; the caller verifies via the `ci` agent.
 
+## Where tests live
+
+Tests go in `tests/PHPUnit/<Module>/`, named after the module the code under test lives in. Extend `tests/PHPUnit/TestCase.php`, or `ModularTestCase.php` when the test needs the module container.
+
+Both base classes stub WordPress functions with Brain Monkey in `setUp()`. Read the one you extend before adding your own stub for a function it already covers. PHP internals (`time`, `gmdate`, `json_decode`, ...) can be redefined with Patchwork; the redefinable list is `patchwork.json` at the repo root.
+
+`ModularTestCase` pulls in `MockeryPHPUnitIntegration`; the plain `TestCase` does not. That is why a test extending `TestCase` whose only expectation is a Mockery mock has to call `addToAssertionCount(1)` (below) - without it, PHPUnit reports the test as risky.
+
 ## Core principles
 
 - Test behavior through public APIs only - never private methods, never implementation details.

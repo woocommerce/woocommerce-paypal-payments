@@ -105,14 +105,6 @@ These are open questions for the developer to weigh, NOT fixes to apply. Do not 
 
 No preamble, no severity theater, no summary paragraph. If nothing in the change warrants attention, return CLEAN - and do not manufacture findings or questions.
 
-## Checklist
+## Before writing the verdict
 
-- Functions are small and focused
-- No deep code nesting
-- All comments are strictly needed to understand the code
-- No repetitive code explanation comments like @param array or @inheritdoc
-- No transactional comments
-- Hooks have a concise docblock
-- High cohesion, low coupling
-- Code is simple and minimal
-- All abstractions are strictly needed
+Confirm you actually considered every section against the code in scope: function size and focus (1), comment and docblock noise (2), coupling (3), over-engineering (4), and the judgment calls that belong in `Consider` rather than in findings (5).
