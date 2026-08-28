@@ -4,12 +4,12 @@ on: [push]
 
 jobs:
   coding-standards-analysis-php:
-    uses: inpsyde/reusable-workflows/.github/workflows/coding-standards-php.yml@main
+    uses: inpsyde/reusable-workflows/.github/workflows/coding-standards-php.yml@e37849e94ffc3e8b7aaae853471815e1b74f99e8 # pinning PR #278
     with:
       PHP_VERSION: '8.0'
       PHPCS_ARGS: '--report-full --runtime-set ignore_warnings_on_exit 1'
   static-code-analysis-php:
-    uses: inpsyde/reusable-workflows/.github/workflows/static-analysis-php.yml@main
+    uses: inpsyde/reusable-workflows/.github/workflows/static-analysis-php.yml@e37849e94ffc3e8b7aaae853471815e1b74f99e8 # pinning PR #278
     with:
       PHP_VERSION: '8.0'
       PHPSTAN_ARGS: '--no-progress --memory-limit=2G'
@@ -17,7 +17,7 @@ jobs:
     strategy:
       matrix:
         php: ['7.4', '8.0', '8.1', '8.2', '8.3', '8.4']
-    uses: inpsyde/reusable-workflows/.github/workflows/tests-unit-php.yml@main
+    uses: inpsyde/reusable-workflows/.github/workflows/tests-unit-php.yml@e37849e94ffc3e8b7aaae853471815e1b74f99e8 # pinning PR #278
     with:
       PHPUNIT_ARGS: ''
       PHP_VERSION: ${{ matrix.php }}
