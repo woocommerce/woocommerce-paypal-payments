@@ -42,7 +42,7 @@ jobs:
     if: >-
       github.event_name == 'workflow_dispatch' ||
       (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success')
-    uses: inpsyde/reusable-workflows/.github/workflows/build-and-distribute.yml@64f8f3a974b508dfa76ea278b748228c6ffed1b6 # pinning PR #278
+    uses: inpsyde/reusable-workflows/.github/workflows/build-and-distribute.yml@4a700901a67a357918707df71312b51535f27238 # pinning PR #278
     secrets:
       GITHUB_USER_EMAIL: ${{ secrets.DEPLOYBOT_EMAIL }}
       GITHUB_USER_NAME: ${{ secrets.DEPLOYBOT_USER }}
@@ -107,7 +107,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix: ${{ fromJson(needs.resolve-playwright-matrix.outputs.matrix) }}
-    uses: inpsyde/reusable-workflows/.github/workflows/test-playwright.yml@5b71d7808b2b74ffb0fddb90a2b2a1a6601138e2 # dev/qa/wildcard-ngrok-for-parallel-tests
+    uses: inpsyde/reusable-workflows/.github/workflows/test-playwright.yml@4a700901a67a357918707df71312b51535f27238 # dev/qa/wildcard-ngrok-for-parallel-tests
     with:
       PLAYWRIGHT_SCRIPT: ${{ matrix.script }}
       PLAYWRIGHT_ARTIFACT_NAME: ${{ matrix.artifact_name }}
