@@ -90,6 +90,17 @@ const FUNDING_SOURCES = config?.is_free_trial_cart
 	  );
 
 /**
+ * Blocks drops a method whose features miss a cart requirement, so a method
+ * that declares none is unusable everywhere; 'products' is the minimum claim.
+ *
+ * @param {string[]} [features] - The processing gateway's features.
+ * @return {string[]} The features to declare, never empty.
+ */
+function gatewayFeatures( features ) {
+	return features || [ 'products' ];
+}
+
+/**
  * Derives a decimal amount string from the WC Blocks cart totals.
  *
  * @param {Object} cartTotals - The canMakePayment cartTotals (minor units).
@@ -125,13 +136,10 @@ if ( config && config.page_context && config.continuation ) {
 		),
 		canMakePayment: () => true,
 		supports: {
-			// WooCommerce hides any method whose features do not cover every
-			// cart requirement, and v5's ppcp-gateway is unregistered here, so
-			// a missing feature leaves the buyer no way to pay or cancel. The
-			// gateway supports come from the server (subscription-aware);
-			// ppcp_continuation is always required in this branch.
+			// v5's ppcp-gateway is unregistered here, so a dropped method
+			// leaves the buyer no way to pay or cancel.
 			features: [
-				...( config.supported_features || [ 'products' ] ),
+				...gatewayFeatures( config.supported_features ),
 				'ppcp_continuation',
 			],
 		},
@@ -203,9 +211,9 @@ if ( config && config.page_context && config.continuation ) {
 			 * paymentMethodId: Clears the gateway from the editor's
 			 *   "incompatible with block-based checkout" list.
 			 * gatewayId: Links to the gateway's settings.
-			 * supports.features: Blocks drops a method whose features miss a
-			 *   cart requirement, which is what keeps the wallets off a
-			 *   subscription cart.
+			 * supports.features: ppcp_continuation is declared up front
+			 *   because approving in the wallet sheet raises that cart
+			 *   requirement mid-flow, after the method is chosen.
 			 * supports.style: Exposes the block's height/borderRadius controls.
 			 */
 			name,
@@ -228,17 +236,8 @@ if ( config && config.page_context && config.continuation ) {
 				return Boolean( eligibility[ fundingSource ] );
 			},
 			supports: {
-				// ppcp_continuation is the cart requirement that appears the
-				// moment an approved order reaches the session, which happens
-				// while this method is mid-flow: the buyer approves in the
-				// sheet, the express handler stores the order and submits the
-				// Blocks checkout. Without the feature WooCommerce withdraws
-				// every method that lacks it, this one included, and the
-				// checkout POST goes out with no payment_method at all. The
-				// method holding the approved order is the one entitled to
-				// continue with it, so it declares the requirement it raised.
 				features: [
-					...( features || [ 'products' ] ),
+					...gatewayFeatures( features ),
 					'ppcp_continuation',
 				],
 				style: [ 'height', 'borderRadius' ],
@@ -342,9 +341,7 @@ if ( config?.card_fields?.enabled && ! config.continuation ) {
 		),
 		canMakePayment: () => true,
 		supports: {
-			// The credit-card gateway's supports from the server, so a
-			// subscription cart does not filter the card method out.
-			features: config.card_fields.supported_features || [ 'products' ],
+			features: gatewayFeatures( config.card_fields.supported_features ),
 			// WooCommerce Blocks renders its native "Save payment information…"
 			// checkbox and exposes the choice as the shouldSavePayment prop;
 			// only offered when card vaulting is enabled. Suppressed on a
@@ -399,7 +396,7 @@ if ( config?.vault_component?.is_eligible && ! config.continuation ) {
 		} ),
 		canMakePayment: () => true,
 		supports: {
-			features: config.supported_features || [ 'products' ],
+			features: gatewayFeatures( config.supported_features ),
 			// Renders WooCommerce Blocks' saved-token radio list for this gateway.
 			showSavedCards: true,
 			showSaveOption: false,
