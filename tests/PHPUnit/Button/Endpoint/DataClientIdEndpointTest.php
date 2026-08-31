@@ -12,6 +12,7 @@ use Mockery;
 use WooCommerce\WooCommerce\Logging\Logger\NullLogger;
 use function Brain\Monkey\Functions\when;
 use function Brain\Monkey\Functions\expect;
+use WooCommerce\PayPalCommerce\OrderEndpoints\Endpoint\RequestData;
 
 class DataClientIdEndpointTest extends TestCase
 {

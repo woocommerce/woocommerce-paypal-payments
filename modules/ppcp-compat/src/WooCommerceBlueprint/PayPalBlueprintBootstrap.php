@@ -15,11 +15,18 @@ namespace WooCommerce\PayPalCommerce\Compat\WooCommerceBlueprint;
 class PayPalBlueprintBootstrap {
 
 	/**
-	 * PayPal Settings Exporter instance.
+	 * PayPal Settings Exporter instance, without connection details.
 	 *
 	 * @var PayPalSettingsExporter
 	 */
 	private PayPalSettingsExporter $exporter;
+
+	/**
+	 * PayPal Settings Exporter instance, including connection details.
+	 *
+	 * @var PayPalSettingsExporter
+	 */
+	private PayPalSettingsExporter $exporter_with_connection;
 
 	/**
 	 * PayPal Settings Importer instance.
@@ -31,15 +38,18 @@ class PayPalBlueprintBootstrap {
 	/**
 	 * Constructor.
 	 *
-	 * @param PayPalSettingsExporter $exporter PayPal settings exporter.
-	 * @param PayPalSettingsImporter $importer PayPal settings importer.
+	 * @param PayPalSettingsExporter $exporter                 Default exporter, without connection details.
+	 * @param PayPalSettingsExporter $exporter_with_connection Opt-in exporter, including connection details.
+	 * @param PayPalSettingsImporter $importer                 PayPal settings importer.
 	 */
 	public function __construct(
 		PayPalSettingsExporter $exporter,
+		PayPalSettingsExporter $exporter_with_connection,
 		PayPalSettingsImporter $importer
 	) {
-		$this->exporter = $exporter;
-		$this->importer = $importer;
+		$this->exporter                 = $exporter;
+		$this->exporter_with_connection = $exporter_with_connection;
+		$this->importer                 = $importer;
 	}
 
 	/**
@@ -69,6 +79,7 @@ class PayPalBlueprintBootstrap {
 	 */
 	public function register_exporters( array $exporters ): array {
 		$exporters[] = $this->exporter;
+		$exporters[] = $this->exporter_with_connection;
 		return $exporters;
 	}
 

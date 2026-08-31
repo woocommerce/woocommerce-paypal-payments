@@ -70,7 +70,12 @@ const modulesAssets = {
 	],
 	'ppcp-paypal-subscriptions': [ 'js/paypal-subscription.js' ],
 	'ppcp-save-payment-methods': [ 'js/add-payment-method.js' ],
-	'ppcp-sdk-v6': [ 'js/boot.js' ],
+	'ppcp-sdk-v6': [
+		'js/boot.js',
+		'js/checkout-block.js',
+		'js/boot-add-payment-method.js',
+		'css/gateway.scss',
+	],
 	'ppcp-settings': [ 'js/index.js', 'css/styles.scss' ],
 	'ppcp-wc-gateway': [
 		'js/common.js',
@@ -81,6 +86,7 @@ const modulesAssets = {
 		'css/common.scss',
 	],
 	'ppcp-store-sync': [ 'js/settings.js', 'css/style.scss' ],
+	'ppcp-vault-component': [ 'js/checkout.js' ],
 };
 
 const entries = {};

@@ -12,6 +12,7 @@ use WooCommerce\PayPalCommerce\Button\Validation\CheckoutFormValidator;
 use WooCommerce\PayPalCommerce\TestCase;
 use function Brain\Monkey\Functions\expect;
 use function Brain\Monkey\Functions\when;
+use WooCommerce\PayPalCommerce\OrderEndpoints\Endpoint\RequestData;
 
 class ValidateCheckoutEndpointTest extends TestCase
 {

@@ -15,6 +15,7 @@ permissions: {}
 jobs:
   fetch_build:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     if: github.repository == 'woocommerce/woocommerce-paypal-payments'
     permissions:
       actions: read
@@ -23,7 +24,7 @@ jobs:
       plugin_version: ${{ steps.version.outputs.plugin_version }}
       has_build: ${{ steps.fetch.outputs.has_build }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
       - name: Set plugin version and artifact name
         id: version
@@ -37,7 +38,7 @@ jobs:
 
       - name: Wait for and download Build and distribute artifact
         id: fetch
-        uses: actions/github-script@v7
+        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7
         with:
           script: |
             const fs = require('fs');
@@ -135,7 +136,7 @@ jobs:
 
       - name: Re-upload artifact for Playground
         if: steps.fetch.outputs.has_build == 'true'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: ${{ steps.version.outputs.artifact_name }}
           path: /tmp/plugin-build
@@ -143,16 +144,17 @@ jobs:
   playground_demo:
     name: Comment on PR with Playground details
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     needs: fetch_build
     if: needs.fetch_build.outputs.has_build == 'true'
     permissions:
       issues: write
       pull-requests: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
       - name: Create or update PR playground comment
-        uses: actions/github-script@v7
+        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7
         with:
           script: |
             const script = require('./.github/scripts/playground-comment.js');
