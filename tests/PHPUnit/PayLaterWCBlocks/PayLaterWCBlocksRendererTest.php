@@ -11,13 +11,7 @@ use WooCommerce\PayPalCommerce\WcGateway\Helper\SettingsStatus;
 use function Brain\Monkey\Functions\when;
 
 /**
- * PCP-6829: the configured layout (here coming from the renderer's own
- * constructor config, not block attributes) is coerced to 'text' only when v6
- * actually owns the current page ('sdk-v6.owns-current-page' resolves true) -
- * because v6's messaging web component only styles text messages. Where v6
- * stands down (module absent, or present but not owning this particular page)
- * the v5 smart button renders the page instead and can still draw a flex
- * banner, so the renderer must keep rendering exactly as v5 always has.
+ * @covers \WooCommerce\PayPalCommerce\PayLaterWCBlocks\PayLaterWCBlocksRenderer
  */
 class PayLaterWCBlocksRendererTest extends TestCase
 {
@@ -144,10 +138,6 @@ class PayLaterWCBlocksRendererTest extends TestCase
      * WHEN the cart Pay Later placement, configured with a flex layout, is rendered
      * THEN it keeps rendering as a flex message with its flex style attributes - v5
      *      can still draw the configured banner on a page it owns
-     *
-     * This is the regression the fix in PayLaterWCBlocksModule::v6_owns_current_page()
-     * addresses: gating on "is the v6 module loaded" alone (rather than "does v6 own
-     * this page") downgraded a merchant's flex banner to text on pages v5 renders.
      */
     public function testKeepsFlexLayoutWhenV6ModuleIsLoadedButDoesNotOwnTheCurrentPage(): void
     {

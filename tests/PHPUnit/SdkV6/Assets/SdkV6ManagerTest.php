@@ -900,12 +900,6 @@ class SdkV6ManagerTest extends TestCase
      *      messages_render_hook() returning null does not veto it here, unlike the
      *      counterpart test where no such block is present
      *
-     * did_action('wp') and a $GLOBALS['post'] instance are both required by
-     * has_paylater_block() before it inspects the page for the block at all; without
-     * either, the page reads as "not resolved yet" and this test would pass for the
-     * wrong reason (an unresolved has_paylater_block() rather than a genuinely present
-     * one) - see has_paylater_block()'s own doc comment.
-     *
      * @dataProvider unsupportedMessageLocationProvider
      */
     public function testShouldLoadOnCurrentPageTrueWhenPayLaterBlockSitsOnAnUnsupportedMessageLocation(string $location): void
