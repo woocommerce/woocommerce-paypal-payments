@@ -3,10 +3,10 @@
 /**
  * The endpoint to create an PayPal order.
  *
- * @package WooCommerce\PayPalCommerce\Button\Endpoint
+ * @package WooCommerce\PayPalCommerce\OrderEndpoints\Endpoint
  */
 declare (strict_types=1);
-namespace WooCommerce\PayPalCommerce\Button\Endpoint;
+namespace WooCommerce\PayPalCommerce\OrderEndpoints\Endpoint;
 
 use Exception;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Log\LoggerInterface;
@@ -33,7 +33,7 @@ use WooCommerce\PayPalCommerce\Button\Exception\ValidationException;
 use WooCommerce\PayPalCommerce\Button\Session\CartDataFactory;
 use WooCommerce\PayPalCommerce\Button\Session\CartDataTransientStorage;
 use WooCommerce\PayPalCommerce\Button\Validation\CheckoutFormValidator;
-use WooCommerce\PayPalCommerce\Button\Helper\EarlyOrderHandler;
+use WooCommerce\PayPalCommerce\OrderEndpoints\Helper\EarlyOrderHandler;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
 use WooCommerce\PayPalCommerce\WcSubscriptions\FreeTrialHandlerTrait;
 use WooCommerce\PayPalCommerce\WcGateway\CardBillingMode;
@@ -42,10 +42,11 @@ use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\ContactPreferenceFactory;
+use WooCommerce\PayPalCommerce\Button\Endpoint\EndpointInterface;
 /**
  * Class CreateOrderEndpoint
  */
-class CreateOrderEndpoint implements \WooCommerce\PayPalCommerce\Button\Endpoint\EndpointInterface
+class CreateOrderEndpoint implements EndpointInterface
 {
     use FreeTrialHandlerTrait;
     const ENDPOINT = 'ppc-create-order';
@@ -193,7 +194,7 @@ class CreateOrderEndpoint implements \WooCommerce\PayPalCommerce\Button\Endpoint
      * @param string[]                  $funding_sources_without_redirect The sources that do not cause issues about redirecting (on mobile, ...) and sometimes not returning back.
      * @param LoggerInterface           $logger The logger.
      */
-    public function __construct(\WooCommerce\PayPalCommerce\Button\Endpoint\RequestData $request_data, PurchaseUnitFactory $purchase_unit_factory, ShippingPreferenceFactory $shipping_preference_factory, ReturnUrlFactory $return_url_factory, ContactPreferenceFactory $contact_preference_factory, ExperienceContextBuilder $experience_context_builder, OrderEndpoint $order_endpoint, PayerFactory $payer_factory, SessionHandler $session_handler, SettingsProvider $settings_provider, EarlyOrderHandler $early_order_handler, CartDataFactory $cart_data_factory, CartDataTransientStorage $cart_data_transient_storage, bool $registration_needed, string $card_billing_data_mode, bool $early_validation_enabled, array $pay_now_contexts, bool $handle_shipping_in_paypal, bool $server_side_shipping_callback_enabled, array $funding_sources_without_redirect, LoggerInterface $logger)
+    public function __construct(\WooCommerce\PayPalCommerce\OrderEndpoints\Endpoint\RequestData $request_data, PurchaseUnitFactory $purchase_unit_factory, ShippingPreferenceFactory $shipping_preference_factory, ReturnUrlFactory $return_url_factory, ContactPreferenceFactory $contact_preference_factory, ExperienceContextBuilder $experience_context_builder, OrderEndpoint $order_endpoint, PayerFactory $payer_factory, SessionHandler $session_handler, SettingsProvider $settings_provider, EarlyOrderHandler $early_order_handler, CartDataFactory $cart_data_factory, CartDataTransientStorage $cart_data_transient_storage, bool $registration_needed, string $card_billing_data_mode, bool $early_validation_enabled, array $pay_now_contexts, bool $handle_shipping_in_paypal, bool $server_side_shipping_callback_enabled, array $funding_sources_without_redirect, LoggerInterface $logger)
     {
         $this->request_data = $request_data;
         $this->purchase_unit_factory = $purchase_unit_factory;
@@ -246,8 +247,13 @@ class CreateOrderEndpoint implements \WooCommerce\PayPalCommerce\Button\Endpoint
                     wp_send_json_error(array('name' => 'order-not-found', 'message' => __('Order not found', 'woocommerce-paypal-payments'), 'code' => 0, 'details' => array()));
                 }
                 $order_key = $data['order_key'] ?? '';
+                // pay_for_order (not view_order) is the capability WooCommerce's own
+                // pay-for-order flow uses: it is granted for the order's owner and
+                // for guest orders (no customer), so paired with the secret order-key
+                // check it also allows guest checkouts. view_order is true only for the
+                // order's owner, so it rejected every guest order (customer_id 0).
                 //phpcs:ignore WordPress.WP.Capabilities.Unknown
-                if (!$wc_order->key_is_valid($order_key) || !current_user_can('view_order', $data['order_id'])) {
+                if (!$wc_order->key_is_valid($order_key) || !current_user_can('pay_for_order', (int) $data['order_id'])) {
                     wp_send_json_error(array('name' => 'invalid-request', 'message' => __('You cannot pay for this order. Contact the shop for assistance.', 'woocommerce-paypal-payments'), 'code' => 0, 'details' => array()));
                 }
                 $this->purchase_unit = $this->purchase_unit_factory->from_wc_order($wc_order, $payment_method);
@@ -266,6 +272,15 @@ class CreateOrderEndpoint implements \WooCommerce\PayPalCommerce\Button\Endpoint
             $this->set_bn_code($data);
             if (isset($data['form'])) {
                 $this->form = $data['form'];
+                /*
+                 * Persist it here as well as in the save-checkout-form endpoint.
+                 * Both run for the same click, and the session is written whole
+                 * rather than per field, so whichever request finishes last
+                 * overwrites the other's contribution. Storing the form from the
+                 * request that also stores the order keeps the two together, so a
+                 * shopper returning from PayPal still finds what they typed.
+                 */
+                $this->session_handler->replace_checkout_form($this->form);
             }
             if ($this->early_validation_enabled && $this->form && 'checkout' === $data['context'] && in_array($payment_method, array(PayPalGateway::ID, CardButtonGateway::ID, CreditCardGateway::ID), \true)) {
                 $this->validate_form($this->form);
@@ -279,6 +294,16 @@ class CreateOrderEndpoint implements \WooCommerce\PayPalCommerce\Button\Endpoint
                 $this->logger->error('Order creation failed: ' . $exception->getMessage());
                 throw $exception;
             }
+            /**
+             * Fires after the PayPal order has been created via the create-order endpoint.
+             *
+             * Unlike woocommerce_paypal_payments_paypal_order_created (fired for
+             * every API order creation), this action also receives the request data.
+             *
+             * @param Order $order The created PayPal order.
+             * @param array $data The request data.
+             */
+            do_action('woocommerce_paypal_payments_create_order_endpoint_order_created', $order, $data);
             if ('checkout' === $data['context']) {
                 if ($payment_method === PayPalGateway::ID && !in_array($funding_source, $this->funding_sources_without_redirect, \true)) {
                     $this->session_handler->replace_order($order);

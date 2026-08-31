@@ -3,19 +3,20 @@
 /**
  * Abstract class for cart Endpoints.
  *
- * @package WooCommerce\PayPalCommerce\Button\Endpoint
+ * @package WooCommerce\PayPalCommerce\OrderEndpoints\Endpoint
  */
-namespace WooCommerce\PayPalCommerce\Button\Endpoint;
+namespace WooCommerce\PayPalCommerce\OrderEndpoints\Endpoint;
 
 use Exception;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 use WooCommerce\PayPalCommerce\Button\Exception\NonceValidationException;
-use WooCommerce\PayPalCommerce\Button\Helper\CartProductsHelper;
+use WooCommerce\PayPalCommerce\OrderEndpoints\Helper\CartProductsHelper;
+use WooCommerce\PayPalCommerce\Button\Endpoint\EndpointInterface;
 /**
  * Abstract Class AbstractCartEndpoint
  */
-abstract class AbstractCartEndpoint implements \WooCommerce\PayPalCommerce\Button\Endpoint\EndpointInterface
+abstract class AbstractCartEndpoint implements EndpointInterface
 {
     const ENDPOINT = '';
     /**

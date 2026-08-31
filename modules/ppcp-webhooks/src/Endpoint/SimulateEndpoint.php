@@ -9,7 +9,7 @@ declare (strict_types=1);
 namespace WooCommerce\PayPalCommerce\Webhooks\Endpoint;
 
 use Exception;
-use WooCommerce\PayPalCommerce\Button\Endpoint\RequestData;
+use WooCommerce\PayPalCommerce\OrderEndpoints\Endpoint\RequestData;
 use WooCommerce\PayPalCommerce\Button\Exception\NonceValidationException;
 use WooCommerce\PayPalCommerce\Webhooks\Status\WebhookSimulation;
 /**

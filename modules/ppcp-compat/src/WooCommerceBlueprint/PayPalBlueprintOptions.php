@@ -27,8 +27,10 @@ class PayPalBlueprintOptions
         'woocommerce-ppcp-data-styling',
         'woocommerce-ppcp-data-fastlane',
         'woocommerce-ppcp-data-paylater-messaging',
-        // Merchant state flags.
-        'woocommerce-ppcp-is-new-merchant',
+        /*
+         * 'woocommerce-ppcp-is-new-merchant' is deliberately excluded: importing it
+         * as truthy makes MigrationManager permanently skip the legacy migrations.
+         */
         // Individual payment method settings (gateway titles/descriptions).
         'woocommerce_venmo_settings',
         'woocommerce_pay-later_settings',

@@ -10,7 +10,7 @@ namespace WooCommerce\PayPalCommerce\Blocks;
 
 use WooCommerce\PayPalCommerce\Assets\AssetGetter;
 use WooCommerce\PayPalCommerce\Assets\AssetGetterFactory;
-use WooCommerce\PayPalCommerce\Blocks\Endpoint\UpdateShippingEndpoint;
+use WooCommerce\PayPalCommerce\OrderEndpoints\Endpoint\UpdateShippingEndpoint;
 use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\Button\Assets\SmartButtonInterface;
@@ -31,7 +31,7 @@ return array('blocks.asset_getter' => static function (ContainerInterface $conta
     assert($settings_provider instanceof SettingsProvider);
     return !$settings_provider->enable_pay_now();
 }, 'blocks.endpoint.update-shipping' => static function (ContainerInterface $container): UpdateShippingEndpoint {
-    return new UpdateShippingEndpoint($container->get('button.request-data'), $container->get('api.endpoint.order'), $container->get('api.factory.purchase-unit'), $container->get('session.handler'), $container->get('woocommerce.logger.woocommerce'));
+    return $container->get('order-endpoints.endpoint.update-shipping');
 }, 'blocks.add-place-order-method' => function (ContainerInterface $container): bool {
     /**
      * Whether to create a non-express method with the standard "Place order" button redirecting to PayPal.
