@@ -186,7 +186,7 @@ class ReturnUrlEndpoint
      * Tells whether the request gives proof that it comes from the checkout flow
      * that made this PayPal order.
      *
-     * Four proofs are accepted. The first one that holds ends the test, so a proof
+     * Several proofs are accepted. The first one that holds ends the test, so a proof
      * that costs more is only used when a cheaper one does not apply.
      *
      * @param \WC_Order|null $wc_order       The WC order, when the custom_id gives one.
