@@ -90,6 +90,16 @@ class WebhookRegistrar
             $this->logger->info('Webhooks subscribed.');
             return \true;
         } catch (RuntimeException $error) {
+            // TEMPORARY diagnostic for the ngrok webhook-host investigation. Remove
+            // alongside the REGISTERING/REGISTERED lines above. Without this, a
+            // failed create() only ever reaches the WC logger, which isn't
+            // captured anywhere in the CI diagnostics.
+            file_put_contents(
+                // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- temporary diagnostic.
+                WP_CONTENT_DIR . '/ngrok-diag.log',
+                sprintf("[ngrok-diag] CREATE FAILED: %s\n", $error->getMessage()),
+                \FILE_APPEND
+            );
             $this->logger->error('Failed to subscribe webhooks: ' . $error->getMessage());
             return \false;
         }
