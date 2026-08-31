@@ -148,7 +148,7 @@ abstract class ProductStatus
     {
         if (null === self::$seller_status) {
             // Check API failure registry to prevent multiple failed API requests.
-            if ($this->api_failure_registry->has_failure_in_timeframe(\WooCommerce\PayPalCommerce\ApiClient\Helper\FailureRegistry::SELLER_STATUS_KEY, PartnersEndpoint::SELLER_STATUS_CACHE_TTL)) {
+            if ($this->api_failure_registry->has_failure_in_timeframe(\WooCommerce\PayPalCommerce\ApiClient\Helper\FailureRegistry::SELLER_STATUS_KEY, PartnersEndpoint::SELLER_STATUS_FAILURE_BACKOFF)) {
                 throw new RuntimeException('Timeout for re-check not reached yet');
             }
             // Request seller status via PayPal API, might throw an Exception.

@@ -52,10 +52,8 @@ class ReturnUrlEndpoint
     protected $logger;
     /**
      * Verifies the single-use secret that the return URL carries.
-     *
-     * @var ReturnUrlSecret
      */
-    protected $return_url_secret;
+    protected ReturnUrlSecret $return_url_secret;
     /**
      * The one-day period, after the correction is installed, in which a return for
      * a PayPal order that carries no secret is still accepted.
@@ -107,9 +105,6 @@ class ReturnUrlEndpoint
             wp_safe_redirect($this->get_checkout_url_with_error());
             exit;
         }
-        // The WC order is resolved here, and not after the 3D Secure block, because
-        // the authorization test below needs it. Each operation that changes data
-        // stays behind that test.
         $custom_id = (string) $order->purchase_units()[0]->custom_id();
         $wc_order_id = (int) $custom_id;
         $wc_order = null;
@@ -117,9 +112,8 @@ class ReturnUrlEndpoint
             $found = wc_get_order($wc_order_id);
             $wc_order = $found instanceof \WC_Order ? $found : null;
         }
-        // The token travels in a public URL, so it is not proof by itself. Refuse
-        // before the capture, before the session is changed, and before the payment
-        // is processed.
+        // The token travels in a public URL, so it is not proof by itself.
+        // Check the request before performing any operations with the order.
         if (!$this->is_authorized_return($wc_order, $token, $provided_nonce, $custom_id)) {
             $this->logger->warning("Return URL endpoint {$token}: return refused, no proof of origin.");
             wc_add_notice(__('We could not confirm this payment session. Please try again.', 'woocommerce-paypal-payments'), 'error');
@@ -199,8 +193,6 @@ class ReturnUrlEndpoint
      * @param string         $token          The PayPal order ID from the request.
      * @param string         $provided_nonce The secret from the request.
      * @param string         $custom_id      The custom_id of the first purchase unit.
-     *
-     * @return bool
      */
     private function is_authorized_return(?\WC_Order $wc_order, string $token, string $provided_nonce, string $custom_id): bool
     {

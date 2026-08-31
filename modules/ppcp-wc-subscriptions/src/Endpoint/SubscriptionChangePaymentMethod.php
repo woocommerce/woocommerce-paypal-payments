@@ -12,7 +12,7 @@ use Exception;
 use WC_Order;
 use WC_Payment_Tokens;
 use WooCommerce\PayPalCommerce\Button\Endpoint\EndpointInterface;
-use WooCommerce\PayPalCommerce\Button\Endpoint\RequestData;
+use WooCommerce\PayPalCommerce\OrderEndpoints\Endpoint\RequestData;
 use WooCommerce\PayPalCommerce\Button\Exception\NonceValidationException;
 /**
  * Class SubscriptionChangePaymentMethod

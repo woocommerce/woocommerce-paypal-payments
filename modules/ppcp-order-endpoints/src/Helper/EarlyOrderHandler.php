@@ -3,10 +3,10 @@
 /**
  * Handles the Early Order logic, when we need to create the WC_Order by ourselves.
  *
- * @package WooCommerce\PayPalCommerce\Button\Helper
+ * @package WooCommerce\PayPalCommerce\OrderEndpoints\Helper
  */
 declare (strict_types=1);
-namespace WooCommerce\PayPalCommerce\Button\Helper;
+namespace WooCommerce\PayPalCommerce\OrderEndpoints\Helper;
 
 use RuntimeException;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;

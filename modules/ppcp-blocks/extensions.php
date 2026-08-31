@@ -15,12 +15,12 @@ return array('wcgateway.button.locations' => function (array $locations, Contain
     unset($locations['checkout-block-express']);
     unset($locations['cart-block']);
     return $locations;
-}, 'button.pay-now-contexts' => function (array $contexts, ContainerInterface $container): array {
+}, 'order-endpoints.pay-now-contexts' => function (array $contexts, ContainerInterface $container): array {
     if (!$container->get('blocks.settings.final_review_enabled')) {
         $contexts[] = 'checkout-block';
         $contexts[] = 'cart-block';
     }
     return $contexts;
-}, 'button.handle-shipping-in-paypal' => function (bool $previous, ContainerInterface $container): bool {
+}, 'order-endpoints.handle-shipping-in-paypal' => function (bool $previous, ContainerInterface $container): bool {
     return !$container->get('blocks.settings.final_review_enabled');
 });

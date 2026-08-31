@@ -7,14 +7,16 @@ use Exception;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\Button\Assets\SmartButton;
 use WooCommerce\PayPalCommerce\Button\Assets\SmartButtonInterface;
-use WooCommerce\PayPalCommerce\Button\Helper\CartProductsHelper;
+use WooCommerce\PayPalCommerce\OrderEndpoints\Helper\CartProductsHelper;
 use WooCommerce\PayPalCommerce\Button\Helper\IsolatedCartSimulator;
-class SimulateCartEndpoint extends \WooCommerce\PayPalCommerce\Button\Endpoint\AbstractCartEndpoint
+use WooCommerce\PayPalCommerce\OrderEndpoints\Endpoint\RequestData;
+use WooCommerce\PayPalCommerce\OrderEndpoints\Endpoint\AbstractCartEndpoint;
+class SimulateCartEndpoint extends AbstractCartEndpoint
 {
     const ENDPOINT = 'ppc-simulate-cart';
     private SmartButtonInterface $smart_button;
     private IsolatedCartSimulator $cart_simulator;
-    public function __construct(SmartButtonInterface $smart_button, \WooCommerce\PayPalCommerce\Button\Endpoint\RequestData $request_data, CartProductsHelper $cart_products, IsolatedCartSimulator $cart_simulator, LoggerInterface $logger)
+    public function __construct(SmartButtonInterface $smart_button, RequestData $request_data, CartProductsHelper $cart_products, IsolatedCartSimulator $cart_simulator, LoggerInterface $logger)
     {
         $this->smart_button = $smart_button;
         $this->request_data = $request_data;

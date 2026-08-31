@@ -8,8 +8,6 @@
  * and is kept server side against the PayPal order ID. It therefore does not
  * depend on the WC session cookie, on a login, or on the browser that the buyer
  * comes back in.
- *
- * @package WooCommerce\PayPalCommerce\ApiClient\Helper
  */
 declare (strict_types=1);
 namespace WooCommerce\PayPalCommerce\ApiClient\Helper;
@@ -27,17 +25,13 @@ class ReturnUrlSecret
     /**
      * The secret that was handed to a return URL but is not yet bound to a
      * PayPal order, because the order did not exist when the URL was built.
-     *
-     * @var string
      */
-    private $pending_secret = '';
+    private string $pending_secret = '';
     /**
      * Makes a secret for a return URL whose PayPal order does not exist yet.
      *
      * The caller puts the value in the URL. bind() attaches it to the order as
      * soon as PayPal returns the new order ID.
-     *
-     * @return string
      */
     public function issue_pending(): string
     {
@@ -84,8 +78,6 @@ class ReturnUrlSecret
      * Makes a secret for a PayPal order that already exists, and keeps it.
      *
      * @param string $paypal_order_id The PayPal order ID.
-     *
-     * @return string
      */
     public function issue_for(string $paypal_order_id): string
     {
@@ -115,8 +107,6 @@ class ReturnUrlSecret
      *
      * @param string $paypal_order_id The PayPal order ID.
      * @param string $candidate       The value that the request carries.
-     *
-     * @return bool
      */
     public function verify(string $paypal_order_id, string $candidate): bool
     {
@@ -145,8 +135,6 @@ class ReturnUrlSecret
      * this version of the plugin did not create.
      *
      * @param string $paypal_order_id The PayPal order ID.
-     *
-     * @return bool
      */
     public function has_secret(string $paypal_order_id): bool
     {

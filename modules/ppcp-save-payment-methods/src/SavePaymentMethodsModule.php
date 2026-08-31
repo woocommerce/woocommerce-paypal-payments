@@ -195,6 +195,17 @@ class SavePaymentMethodsModule implements ServiceModule, ExecutableModule
                 if (!is_user_logged_in() || !($context->is_add_payment_method_page() || $context->is_subscription_change_payment_method_page())) {
                     return;
                 }
+                /**
+                 * Whether to render the v5 add-payment-method assets. The
+                 * v6 SDK module returns false here when it owns the page
+                 * (its own save button + card fields), so the two stacks
+                 * do not both render into the same container.
+                 *
+                 * @param bool $render Whether to enqueue the v5 assets.
+                 */
+                if (!apply_filters('woocommerce_paypal_payments_render_add_payment_method_assets', \true)) {
+                    return;
+                }
                 $asset_getter = $c->get('save-payment-methods.asset_getter');
                 assert($asset_getter instanceof AssetGetter);
                 wp_enqueue_script('ppcp-add-payment-method', $asset_getter->get_asset_url('add-payment-method.js'), array('jquery'), $c->get('ppcp.asset-version'), \true);
