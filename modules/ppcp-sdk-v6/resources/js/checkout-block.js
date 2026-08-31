@@ -228,7 +228,19 @@ if ( config && config.page_context && config.continuation ) {
 				return Boolean( eligibility[ fundingSource ] );
 			},
 			supports: {
-				features: features || [ 'products' ],
+				// ppcp_continuation is the cart requirement that appears the
+				// moment an approved order reaches the session, which happens
+				// while this method is mid-flow: the buyer approves in the
+				// sheet, the express handler stores the order and submits the
+				// Blocks checkout. Without the feature WooCommerce withdraws
+				// every method that lacks it, this one included, and the
+				// checkout POST goes out with no payment_method at all. The
+				// method holding the approved order is the one entitled to
+				// continue with it, so it declares the requirement it raised.
+				features: [
+					...( features || [ 'products' ] ),
+					'ppcp_continuation',
+				],
 				style: [ 'height', 'borderRadius' ],
 			},
 		} );
