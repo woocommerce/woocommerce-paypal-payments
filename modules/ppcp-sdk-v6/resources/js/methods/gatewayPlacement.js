@@ -16,6 +16,7 @@
 
 import {
 	getCurrentPaymentMethod,
+	isSavedPayPalTokenSelected,
 	ORDER_BUTTON_SELECTOR,
 	PaymentMethods,
 } from '@ppcp-button/Helper/CheckoutMethodState';
@@ -94,7 +95,14 @@ function rowContainer( methodId ) {
 		return walletRows.get( methodId );
 	}
 
-	return PaymentMethods.PAYPAL === methodId ? expressRow : null;
+	// PayPal's express buttons stand in for "Place order" only for a NEW payment.
+	// A saved PayPal token is completed through the vault component and "Place
+	// order", so its row offers no express button and keeps "Place order".
+	if ( PaymentMethods.PAYPAL === methodId ) {
+		return isSavedPayPalTokenSelected() ? null : expressRow;
+	}
+
+	return null;
 }
 
 /**
@@ -132,8 +140,13 @@ function updateVisibility() {
 	}
 
 	// The express buttons pay for PayPal's row only; left showing, they offer a
-	// PayPal payment while a wallet row is selected.
-	setVisible( expressRow, PaymentMethods.PAYPAL === selected );
+	// PayPal payment while a wallet row is selected. A selected saved PayPal token
+	// is paid through the vault component and "Place order", so the express buttons
+	// hide for it too, the same as for any other non-PayPal row.
+	setVisible(
+		expressRow,
+		PaymentMethods.PAYPAL === selected && ! isSavedPayPalTokenSelected()
+	);
 
 	// Answered once for all rows, not per wallet: each wallet asking only "am I
 	// selected" meant the last one to run always won, so selecting the first
@@ -173,6 +186,15 @@ function syncGatewayVisibility( {
 
 	jQuery( document.body ).on(
 		'payment_method_selected updated_checkout',
+		updateVisibility
+	);
+
+	// Switching between a saved PayPal token and "Use a new payment method" flips
+	// whether the express buttons or "Place order" should show, without a DOM
+	// rebuild, so re-run on that change too.
+	jQuery( document ).on(
+		'change',
+		'input[name="wc-ppcp-gateway-payment-token"]',
 		updateVisibility
 	);
 }
