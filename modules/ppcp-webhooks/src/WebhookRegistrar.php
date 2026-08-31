@@ -167,6 +167,16 @@ class WebhookRegistrar {
 
 		try {
 			$webhooks = $this->endpoint->list();
+
+			// TEMPORARY diagnostic for the ngrok webhook-host investigation. Remove
+			// alongside the other [ngrok-diag] lines. Confirms whether list() (GET)
+			// succeeds on the same host/bearer where create() (POST) 404s.
+			file_put_contents( // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- temporary diagnostic.
+				WP_CONTENT_DIR . '/ngrok-diag.log',
+				sprintf( "[ngrok-diag] LIST OK: count=%d\n", count( $webhooks ) ),
+				FILE_APPEND
+			);
+
 			foreach ( $webhooks as $webhook ) {
 				if ( ! $this->is_own_webhook( $webhook, $own_identity, $stored_id ) ) {
 					$this->logger->warning(
@@ -182,6 +192,19 @@ class WebhookRegistrar {
 				}
 			}
 		} catch ( RuntimeException $error ) {
+			// TEMPORARY diagnostic for the ngrok webhook-host investigation. Remove
+			// alongside the other [ngrok-diag] lines.
+			file_put_contents( // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- temporary diagnostic.
+				WP_CONTENT_DIR . '/ngrok-diag.log',
+				sprintf(
+					"[ngrok-diag] LIST FAILED: class=%s status=%s message=%s\n",
+					get_class( $error ),
+					$error instanceof PayPalApiException ? (string) $error->status_code() : 'n/a',
+					$error->getMessage()
+				),
+				FILE_APPEND
+			);
+
 			$this->logger->error( 'Failed to delete webhooks: ' . $error->getMessage() );
 		}
 
