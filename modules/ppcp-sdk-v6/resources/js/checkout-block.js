@@ -192,8 +192,10 @@ if ( config && config.page_context && config.continuation ) {
 	 *                                          button.
 	 * @param {Function} [args.isDeviceCapable] - Synchronous capability check,
 	 *                                          asked before eligibility.
-	 * @param {string[]} [args.features]        - What the processing gateway
-	 *                                          supports; defaults to PayPal's.
+	 * @param {string[]} args.features          - What the processing gateway
+	 *                                          supports. Deliberately without
+	 *                                          a default, so a wallet cannot
+	 *                                          inherit PayPal's list.
 	 */
 	const registerExpress = ( {
 		name,
@@ -201,7 +203,7 @@ if ( config && config.page_context && config.continuation ) {
 		fundingSource,
 		content,
 		isDeviceCapable,
-		features = config.supported_features,
+		features,
 	} ) => {
 		const label = fundingSourceLabel( fundingSource );
 
@@ -254,6 +256,7 @@ if ( config && config.page_context && config.continuation ) {
 				config,
 				fundingSource,
 			} ),
+			features: config.supported_features,
 		} );
 	}
 
