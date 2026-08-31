@@ -432,11 +432,9 @@ return array(
 			$container->get( 'api.helpers.paymentLevelEligibility' ),
 			$check_override(),
 			$container->get( 'settings.service.agentic-beta-eligibility' ),
-			// The sdk-v6 module registers its services only behind its own
-			// feature flag, so its presence in the container is what "v6 is
-			// active" means. has() does not instantiate the service. Per-page
-			// ownership is not the question here: this is one admin screen
-			// configuring every storefront page.
+			// The module registers its services only behind its feature flag, so
+			// presence means v6 is active; has() does not instantiate it. Per-page
+			// ownership is moot: one admin screen configures every page.
 			$container->has( 'sdk-v6.owns-current-page' )
 		);
 	},

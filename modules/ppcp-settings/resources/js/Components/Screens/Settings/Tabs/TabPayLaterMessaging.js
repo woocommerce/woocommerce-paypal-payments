@@ -17,10 +17,8 @@ const TabPayLaterMessaging = () => {
 
 	useEffect( () => {
 		if ( window.merchantConfigurators && PcpPayLaterConfigurator ) {
-			// The shop and home placements are offered as banners only, which
-			// the v6 messaging component cannot render — and v6 serves neither
-			// location at all, so a configuration made here would produce
-			// nothing on the storefront. Withhold them rather than collect it.
+			// Shop and home are banner-only and v6 serves neither, so a
+			// configuration here would render nothing.
 			const isSdkV6Active = !! PcpPayLaterConfigurator.isSdkV6Active;
 			const placements = [ 'cart', 'checkout', 'product' ];
 
@@ -48,9 +46,7 @@ const TabPayLaterMessaging = () => {
 					setProduct( data.config.product );
 					setCustom_placement( data.config.custom_placement );
 
-					// Only when they were offered: a withheld placement has no
-					// value to save, and writing undefined would discard the
-					// stored configuration a v5 store may still be using.
+					// Writing undefined would discard a v5 store's stored config.
 					if ( data.config.shop ) {
 						setShop( data.config.shop );
 					}

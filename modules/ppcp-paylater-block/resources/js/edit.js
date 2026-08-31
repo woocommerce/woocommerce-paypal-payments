@@ -20,11 +20,7 @@ export default function Edit( { attributes, clientId, setAttributes } ) {
 		id,
 	} = attributes;
 
-	// The v6 messaging component styles text messages only, so the banner
-	// controls are withheld and the preview follows the text layout. The stored
-	// attribute is left untouched: turning the feature flag back off must
-	// restore the merchant's banner, and the block's own default is still
-	// `flex`, which Gutenberg omits from the markup when it matches.
+	// v6 styles text only; the stored attribute stays, so flag-off restores it.
 	const isSdkV6Active = !! PcpPayLaterBlock.isSdkV6Active;
 	const effectiveLayout = isSdkV6Active ? 'text' : layout;
 	const isFlex = effectiveLayout === 'flex';

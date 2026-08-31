@@ -31,8 +31,7 @@ class ScriptDataHandler {
 	private AgenticBetaBannerEligibility $agentic_beta_banner_eligibility;
 
 	/**
-	 * Whether the SDK v6 module is loaded. Optional and defaulted, so existing
-	 * callers constructing this class keep working.
+	 * Whether the SDK v6 module is loaded. Defaulted for existing callers.
 	 */
 	private bool $is_sdk_v6_active;
 
@@ -223,8 +222,7 @@ class ScriptDataHandler {
 				'merchantClientId' => $this->settings_provider->merchant_data()->client_id,
 				'partnerClientId'  => $this->merchant_id,
 				'bnCode'           => $this->partner_attribution->get_bn_code(),
-				// v6 serves neither the shop nor the home placement, and styles
-				// text messages only, so the configurator offers less there.
+				// v6 serves neither shop nor home and styles text only.
 				'isSdkV6Active'    => $this->is_sdk_v6_active,
 			);
 		}
