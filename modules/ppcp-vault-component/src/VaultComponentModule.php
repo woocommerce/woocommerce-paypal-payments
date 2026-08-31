@@ -56,11 +56,21 @@ class VaultComponentModule implements ServiceModule, ExecutableModule {
 		$vault_injected = false;
 		add_filter(
 			'woocommerce_payment_gateway_get_saved_payment_method_option_html',
-			static function ( string $html, WC_Payment_Token $token, $gateway ) use ( &$vault_injected, $eligibility_check ): string {
+			static function ( string $html, WC_Payment_Token $token, $gateway ) use ( &$vault_injected, $eligibility_check, $c ): string {
 				if ( $vault_injected || PayPalGateway::ID !== $gateway->id || ! $token instanceof PaymentTokenPayPal ) {
 					return $html;
 				}
 				if ( ! $eligibility_check() ) {
+					return $html;
+				}
+				$free_trial_helper = $c->get( 'wc-subscriptions.free-trial-subscription-helper' );
+				assert( $free_trial_helper instanceof FreeTrialSubscriptionHelper );
+
+				// A zero-total free-trial cart uses the save-without-purchase flow, so the
+				// order-based vault overlay never renders here (see checkout.js). Leave the
+				// native saved-token label visible and skip the empty container so the buyer
+				// can still select the already-saved PayPal token.
+				if ( $free_trial_helper->is_free_trial_cart() ) {
 					return $html;
 				}
 				$vault_injected = true;
