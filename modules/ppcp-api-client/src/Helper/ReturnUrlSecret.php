@@ -7,8 +7,6 @@
  * and is kept server side against the PayPal order ID. It therefore does not
  * depend on the WC session cookie, on a login, or on the browser that the buyer
  * comes back in.
- *
- * @package WooCommerce\PayPalCommerce\ApiClient\Helper
  */
 
 declare(strict_types=1);
