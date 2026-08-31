@@ -6,6 +6,7 @@ namespace WooCommerce\PayPalCommerce\Webhooks;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\WebhookEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Webhook;
+use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\WebhookFactory;
 use WooCommerce\PayPalCommerce\Webhooks\Status\WebhookSimulation;
@@ -97,7 +98,7 @@ class WebhookRegistrar
             file_put_contents(
                 // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- temporary diagnostic.
                 WP_CONTENT_DIR . '/ngrok-diag.log',
-                sprintf("[ngrok-diag] CREATE FAILED: %s\n", $error->getMessage()),
+                sprintf("[ngrok-diag] CREATE FAILED: class=%s status=%s message=%s\n", get_class($error), $error instanceof PayPalApiException ? (string) $error->status_code() : 'n/a', $error->getMessage()),
                 \FILE_APPEND
             );
             $this->logger->error('Failed to subscribe webhooks: ' . $error->getMessage());
