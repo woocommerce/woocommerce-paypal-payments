@@ -59,10 +59,8 @@ class ReturnUrlEndpoint {
 
 	/**
 	 * Verifies the single-use secret that the return URL carries.
-	 *
-	 * @var ReturnUrlSecret
 	 */
-	protected $return_url_secret;
+	protected ReturnUrlSecret $return_url_secret;
 
 	/**
 	 * The one-day period, after the correction is installed, in which a return for

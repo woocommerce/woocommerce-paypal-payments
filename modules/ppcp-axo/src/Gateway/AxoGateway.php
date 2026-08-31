@@ -129,10 +129,8 @@ class AxoGateway extends WC_Payment_Gateway {
 
 	/**
 	 * Issues the single-use secret that the 3DS return URL carries.
-	 *
-	 * @var ReturnUrlSecret
 	 */
-	protected $return_url_secret;
+	protected ReturnUrlSecret $return_url_secret;
 
 	/**
 	 * @param CardPaymentsConfiguration $dcc_configuration           The DCC Gateway configuration.

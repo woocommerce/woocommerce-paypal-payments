@@ -40,8 +40,6 @@ class ExperienceContextBuilder {
 	 *
 	 * Optional, so that a caller which builds no endpoint return URL keeps
 	 * working with the two-argument constructor.
-	 *
-	 * @var ReturnUrlSecret|null
 	 */
 	private ?ReturnUrlSecret $return_url_secret;
 
@@ -50,8 +48,6 @@ class ExperienceContextBuilder {
 	 *
 	 * The builder is immutable, so the value travels with the clone that carries the
 	 * URL. A later call that replaces the return URL uses it to withdraw the secret.
-	 *
-	 * @var string
 	 */
 	private string $pending_return_url_secret = '';
 
