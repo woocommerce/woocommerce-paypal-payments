@@ -581,9 +581,8 @@ class SdkV6Manager
         if (!$this->messages_enabled()) {
             return \false;
         }
-        // The Pay Later block prints its own `.ppcp-messages` placeholder, which
-        // the renderer's body observer picks up, so it needs no render hook of
-        // ours. Every other location gets its wrapper from one.
+        // The Pay Later block prints its own `.ppcp-messages` placeholder, so it
+        // needs no hook.
         return null !== $this->messages_render_hook() || $this->has_paylater_block();
     }
     /**
@@ -606,10 +605,8 @@ class SdkV6Manager
      * contain, so messaging would silently never enable on the block
      * checkout.
      *
-     * Falls back to 'custom_placement' where the Pay Later block sits, so a
-     * block on an arbitrary page is served even though the page itself is not
-     * a messaging location. Returns an empty string for shop, home and the
-     * mini-cart context, which this module currently does not serve.
+     * Falls back to 'custom_placement' where a Pay Later block sits. Empty for
+     * shop, home and mini-cart, which this module does not serve.
      */
     private function messages_settings_location(): string
     {
@@ -630,20 +627,17 @@ class SdkV6Manager
     /**
      * Whether an enabled Pay Later block sits on the page being rendered.
      *
-     * Mirrors the v5 SmartButton's `$has_paylater_block`, which is what lets a
-     * custom placement carry messaging onto a page that is not itself a
-     * messaging location.
+     * Mirrors the v5 SmartButton's `$has_paylater_block`, which is what carries
+     * messaging onto pages that are not themselves messaging locations.
      */
     private function has_paylater_block(): bool
     {
         if (null !== $this->has_paylater_block) {
             return $this->has_paylater_block;
         }
-        // has_block() reads the $post global, which only a queried singular
-        // request sets. On archives, REST, cron and webhook requests there is
-        // nothing to inspect, and asking before `wp` would inspect whatever
-        // $post happened to be left over. Neither is memoized: the answer is
-        // "not resolved yet", not "no block".
+        // has_block() reads $post, which only a queried singular request sets —
+        // not archives, REST, cron or webhooks, and before `wp` it holds whatever
+        // was left over. Left unmemoized: "not resolved yet" is not "no block".
         if (!did_action('wp') || !($GLOBALS['post'] ?? null) instanceof WP_Post) {
             return \false;
         }
@@ -661,9 +655,8 @@ class SdkV6Manager
             case 'cart':
                 return 'cart';
             case 'custom_placement':
-                // A custom placement sits on a page this module cannot classify,
-                // so it gets the neutral page type. A block that names its own
-                // placement overrides this per placeholder (see pageTypeFor()).
+                // Unclassifiable page, so the neutral 'home' type. A block naming
+                // its own placement overrides this per placeholder (pageTypeFor()).
                 return 'home';
             default:
                 return 'checkout';

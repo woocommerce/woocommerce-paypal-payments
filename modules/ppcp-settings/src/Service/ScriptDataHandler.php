@@ -29,8 +29,7 @@ class ScriptDataHandler
     private bool $is_bcdc_override_flag_enabled;
     private AgenticBetaBannerEligibility $agentic_beta_banner_eligibility;
     /**
-     * Whether the SDK v6 module is loaded. Optional and defaulted, so existing
-     * callers constructing this class keep working.
+     * Whether the SDK v6 module is loaded. Defaulted for existing callers.
      */
     private bool $is_sdk_v6_active;
     public function __construct(AssetGetter $asset_getter, bool $paylater_is_available, string $store_country, string $merchant_id, array $button_language_choices, PartnerAttribution $partner_attribution, SettingsProvider $settings_provider, PaymentLevelEligibility $payment_level_eligibility, bool $is_bcdc_override_flag_enabled, AgenticBetaBannerEligibility $agentic_beta_banner_eligibility, bool $is_sdk_v6_active = \false)
@@ -107,8 +106,7 @@ class ScriptDataHandler
                 'merchantClientId' => $this->settings_provider->merchant_data()->client_id,
                 'partnerClientId' => $this->merchant_id,
                 'bnCode' => $this->partner_attribution->get_bn_code(),
-                // v6 serves neither the shop nor the home placement, and styles
-                // text messages only, so the configurator offers less there.
+                // v6 serves neither shop nor home and styles text only.
                 'isSdkV6Active' => $this->is_sdk_v6_active,
             );
         }

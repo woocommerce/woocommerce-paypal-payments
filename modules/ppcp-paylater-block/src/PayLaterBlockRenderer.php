@@ -34,12 +34,8 @@ class PayLaterBlockRenderer
             $processor = new \WP_HTML_Tag_Processor($html);
             if ($processor->next_tag('div')) {
                 $layout = $attributes['layout'] ?? 'text';
-                // v6 messaging styles text only; coerced rather than migrated, so
-                // the attribute survives the flag being turned back off. The flex
-                // branch emits no `data-pp-style-logo-type`, which the v6 renderer
-                // keys on, so the block would silently inherit the location styles.
-                // Asks per page, not per site: where v6 stands down the v5 stack
-                // renders this block and can still draw the banner.
+                // Coerced, not migrated, so flag-off restores the banner. The flex
+                // branch omits `data-pp-style-logo-type`, which v6 keys on.
                 if (\WooCommerce\PayPalCommerce\PayLaterBlock\PayLaterBlockModule::v6_owns_current_page($c)) {
                     $layout = 'text';
                 }

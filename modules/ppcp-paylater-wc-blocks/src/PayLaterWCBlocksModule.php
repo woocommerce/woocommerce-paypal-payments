@@ -70,12 +70,8 @@ class PayLaterWCBlocksModule implements ServiceModule, ExecutableModule
     /**
      * Whether the SDK v6 stack is rendering the current page.
      *
-     * Ownership is decided per page, not per site: where v6 stands down the v5
-     * smart button renders the page instead, and v5 can still draw a banner. The
-     * service is absent altogether when the module is behind its feature flag.
-     *
-     * Mirrors GooglepayModule::v6_owns_current_page(). Public because
-     * PayLaterWCBlocksRenderer asks the same question at render time.
+     * Per page, not per site: where v6 stands down, v5 can still draw a banner.
+     * Mirrors GooglepayModule::v6_owns_current_page().
      *
      * @param ContainerInterface $c The container.
      */
@@ -129,10 +125,8 @@ class PayLaterWCBlocksModule implements ServiceModule, ExecutableModule
                 'placementEnabled' => self::is_placement_enabled($c->get('wcgateway.settings.status'), 'cart'),
                 'payLaterSettingsUrl' => admin_url('admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway'),
                 'underTotalsPlacementEnabled' => self::is_under_cart_totals_placement_enabled(),
-                // Keeps the editor preview honest: v6 renders this
-                // placement as text whatever the settings say. Asks whether
-                // the module is loaded rather than whether it owns a page,
-                // since the editor has no storefront page to own.
+                // Module loaded, not page ownership: the editor has no page
+                // to own.
                 'isSdkV6Active' => $c->has('sdk-v6.owns-current-page'),
             ));
             $script_handle = 'ppcp-checkout-paylater-block';
@@ -144,10 +138,8 @@ class PayLaterWCBlocksModule implements ServiceModule, ExecutableModule
                 'payLaterDisabledByVaulting' => $settings_provider->pay_later_disabled_by_vaulting(),
                 'placementEnabled' => self::is_placement_enabled($c->get('wcgateway.settings.status'), 'checkout'),
                 'payLaterSettingsUrl' => admin_url('admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway'),
-                // Keeps the editor preview honest: v6 renders this
-                // placement as text whatever the settings say. Asks whether
-                // the module is loaded rather than whether it owns a page,
-                // since the editor has no storefront page to own.
+                // Module loaded, not page ownership: the editor has no page
+                // to own.
                 'isSdkV6Active' => $c->has('sdk-v6.owns-current-page'),
             ));
         }, 20);

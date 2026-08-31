@@ -47,12 +47,8 @@ class PayLaterBlockModule implements ServiceModule, ExecutableModule
     /**
      * Whether the SDK v6 stack is rendering the current page.
      *
-     * Ownership is decided per page, not per site: where v6 stands down the v5
-     * smart button renders the page instead, and v5 can still draw a banner. The
-     * service is absent altogether when the module is behind its feature flag.
-     *
-     * Mirrors GooglepayModule::v6_owns_current_page(). Public because
-     * PayLaterBlockRenderer asks the same question at render time.
+     * Per page, not per site: where v6 stands down, v5 can still draw a banner.
+     * Mirrors GooglepayModule::v6_owns_current_page().
      *
      * @param ContainerInterface $c The container.
      */
@@ -94,11 +90,8 @@ class PayLaterBlockModule implements ServiceModule, ExecutableModule
                 'payLaterDisabledByVaulting' => $settings_provider->pay_later_disabled_by_vaulting(),
                 'placementEnabled' => self::is_block_enabled($c->get('wcgateway.settings.status')),
                 'payLaterSettingsUrl' => admin_url('admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway'),
-                // The v6 messaging component styles text messages only, so
-                // the editor hides the banner controls. Deliberately asks
-                // whether the module is loaded, not whether it owns a page:
-                // the editor configures every page from one admin screen,
-                // where per-page ownership is meaningless.
+                // Module loaded, not page ownership: the editor has no page
+                // to own.
                 'isSdkV6Active' => $c->has('sdk-v6.owns-current-page'),
             ));
             wp_register_style('ppcp-paylater-block-style', $asset_getter->get_asset_url('edit.css'), array(), $c->get('ppcp.asset-version'));
