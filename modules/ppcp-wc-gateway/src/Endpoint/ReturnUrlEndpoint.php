@@ -123,9 +123,6 @@ class ReturnUrlEndpoint {
 			exit();
 		}
 
-		// The WC order is resolved here, and not after the 3D Secure block, because
-		// the authorization test below needs it. Each operation that changes data
-		// stays behind that test.
 		$custom_id   = (string) $order->purchase_units()[0]->custom_id();
 		$wc_order_id = (int) $custom_id;
 		$wc_order    = null;
@@ -135,9 +132,8 @@ class ReturnUrlEndpoint {
 			$wc_order = $found instanceof \WC_Order ? $found : null;
 		}
 
-		// The token travels in a public URL, so it is not proof by itself. Refuse
-		// before the capture, before the session is changed, and before the payment
-		// is processed.
+		// The token travels in a public URL, so it is not proof by itself.
+		// Check the request before performing any operations with the order.
 		if ( ! $this->is_authorized_return( $wc_order, $token, $provided_nonce, $custom_id ) ) {
 			$this->logger->warning( "Return URL endpoint $token: return refused, no proof of origin." );
 			wc_add_notice( __( 'We could not confirm this payment session. Please try again.', 'woocommerce-paypal-payments' ), 'error' );
@@ -230,15 +226,13 @@ class ReturnUrlEndpoint {
 	 * Tells whether the request gives proof that it comes from the checkout flow
 	 * that made this PayPal order.
 	 *
-	 * Four proofs are accepted. The first one that holds ends the test, so a proof
+	 * Several proofs are accepted. The first one that holds ends the test, so a proof
 	 * that costs more is only used when a cheaper one does not apply.
 	 *
 	 * @param \WC_Order|null $wc_order       The WC order, when the custom_id gives one.
 	 * @param string         $token          The PayPal order ID from the request.
 	 * @param string         $provided_nonce The secret from the request.
 	 * @param string         $custom_id      The custom_id of the first purchase unit.
-	 *
-	 * @return bool
 	 */
 	private function is_authorized_return( ?\WC_Order $wc_order, string $token, string $provided_nonce, string $custom_id ): bool {
 		// Proof A — the secret that this shop put in the return URL.
