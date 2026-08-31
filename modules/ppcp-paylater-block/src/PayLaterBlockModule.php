@@ -1,12 +1,11 @@
 <?php
+
 /**
  * The Pay Later block module.
  *
  * @package WooCommerce\PayPalCommerce\PayLaterBlock
  */
-
-declare(strict_types=1);
-
+declare (strict_types=1);
 namespace WooCommerce\PayPalCommerce\PayLaterBlock;
 
 use WooCommerce\PayPalCommerce\Assets\AssetGetter;
@@ -18,141 +17,104 @@ use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ServiceModule;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\SettingsStatus;
 use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
-
 /**
  * Class PayLaterBlockModule
  */
-class PayLaterBlockModule implements ServiceModule, ExecutableModule {
-	use ModuleClassNameIdTrait;
-
-	/**
-	 * Returns whether the block module should be loaded.
-	 */
-	public static function is_module_loading_required(): bool {
-		return apply_filters(
-			// phpcs:ignore WordPress.NamingConventions.ValidHookName.UseUnderscores
-			'woocommerce.feature-flags.woocommerce_paypal_payments.paylater_block_enabled',
-			getenv( 'PCP_PAYLATER_BLOCK' ) !== '0'
-		);
-	}
-
-	/**
-	 * Returns whether the block is enabled.
-	 *
-	 * @param SettingsStatus $settings_status The Settings status helper.
-	 * @return bool true if the block is enabled, otherwise false.
-	 */
-	public static function is_block_enabled( SettingsStatus $settings_status ): bool {
-		return self::is_module_loading_required() && $settings_status->is_pay_later_messaging_enabled_for_location( 'custom_placement' );
-	}
-
-	/**
-	 * Whether the SDK v6 stack is rendering the current page.
-	 *
-	 * Ownership is decided per page, not per site: where v6 stands down the v5
-	 * smart button renders the page instead, and v5 can still draw a banner. The
-	 * service is absent altogether when the module is behind its feature flag.
-	 *
-	 * Mirrors GooglepayModule::v6_owns_current_page(). Public because
-	 * PayLaterBlockRenderer asks the same question at render time.
-	 *
-	 * @param ContainerInterface $c The container.
-	 */
-	public static function v6_owns_current_page( ContainerInterface $c ): bool {
-		if ( ! $c->has( 'sdk-v6.owns-current-page' ) ) {
-			return false;
-		}
-
-		$owns_current_page = $c->get( 'sdk-v6.owns-current-page' );
-
-		return $owns_current_page();
-	}
-
-	/**
-	 * {@inheritDoc}
-	 */
-	public function services(): array {
-		return require __DIR__ . '/../services.php';
-	}
-
-	/**
-	 * {@inheritDoc}
-	 */
-	public function run( ContainerInterface $c ): bool {
-		$messages_apply = $c->get( 'button.helper.messages-apply' );
-		assert( $messages_apply instanceof MessagesApply );
-
-		if ( ! $messages_apply->for_country() ) {
-			return true;
-		}
-
-		add_action(
-			'init',
-			function () use ( $c ): void {
-				$settings_provider = $c->get( 'settings.settings-provider' );
-				assert( $settings_provider instanceof SettingsProvider );
-
-				$asset_getter = $c->get( 'paylater-block.asset_getter' );
-				assert( $asset_getter instanceof AssetGetter );
-
-				$script_handle = 'ppcp-paylater-block';
-				wp_register_script(
-					$script_handle,
-					$asset_getter->get_asset_url( 'paylater-block.js' ),
-					array(),
-					$c->get( 'ppcp.asset-version' ),
-					true
-				);
-				wp_localize_script(
-					$script_handle,
-					'PcpPayLaterBlock',
-					array(
-						'ajax'                       => array(
-							'cart_script_params' => array(
-								'endpoint' => \WC_AJAX::get_endpoint( CartScriptParamsEndpoint::ENDPOINT ),
-							),
-						),
-						'settingsUrl'                => admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway' ),
-						'payLaterDisabledByVaulting' => $settings_provider->pay_later_disabled_by_vaulting(),
-						'placementEnabled'           => self::is_block_enabled( $c->get( 'wcgateway.settings.status' ) ),
-						'payLaterSettingsUrl'        => admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway' ),
-						// The v6 messaging component styles text messages only, so
-						// the editor hides the banner controls. Deliberately asks
-						// whether the module is loaded, not whether it owns a page:
-						// the editor configures every page from one admin screen,
-						// where per-page ownership is meaningless.
-						'isSdkV6Active'              => $c->has( 'sdk-v6.owns-current-page' ),
-					)
-				);
-
-				wp_register_style(
-					'ppcp-paylater-block-style',
-					$asset_getter->get_asset_url( 'edit.css' ),
-					array(),
-					$c->get( 'ppcp.asset-version' )
-				);
-
-				register_block_type(
-					$c->get( 'ppcp.path-to-plugin-folder' ) . 'modules/ppcp-paylater-block/',
-					array(
-						'render_callback' => function ( array $attributes ) use ( $c ) {
-							$renderer = $c->get( 'paylater-block.renderer' );
-							ob_start();
-							// phpcs:ignore -- No need to escape it, the PayLaterBlockRenderer class is responsible for escaping.
-							echo $renderer->render(
-								// phpcs:ignore
-								$attributes,
-								// phpcs:ignore
-								$c
-							);
-							return ob_get_clean();
-						},
-					)
-				);
-			},
-			20
-		);
-
-		return true;
-	}
+class PayLaterBlockModule implements ServiceModule, ExecutableModule
+{
+    use ModuleClassNameIdTrait;
+    /**
+     * Returns whether the block module should be loaded.
+     */
+    public static function is_module_loading_required(): bool
+    {
+        return apply_filters(
+            // phpcs:ignore WordPress.NamingConventions.ValidHookName.UseUnderscores
+            'woocommerce.feature-flags.woocommerce_paypal_payments.paylater_block_enabled',
+            getenv('PCP_PAYLATER_BLOCK') !== '0'
+        );
+    }
+    /**
+     * Returns whether the block is enabled.
+     *
+     * @param SettingsStatus $settings_status The Settings status helper.
+     * @return bool true if the block is enabled, otherwise false.
+     */
+    public static function is_block_enabled(SettingsStatus $settings_status): bool
+    {
+        return self::is_module_loading_required() && $settings_status->is_pay_later_messaging_enabled_for_location('custom_placement');
+    }
+    /**
+     * Whether the SDK v6 stack is rendering the current page.
+     *
+     * Ownership is decided per page, not per site: where v6 stands down the v5
+     * smart button renders the page instead, and v5 can still draw a banner. The
+     * service is absent altogether when the module is behind its feature flag.
+     *
+     * Mirrors GooglepayModule::v6_owns_current_page(). Public because
+     * PayLaterBlockRenderer asks the same question at render time.
+     *
+     * @param ContainerInterface $c The container.
+     */
+    public static function v6_owns_current_page(ContainerInterface $c): bool
+    {
+        if (!$c->has('sdk-v6.owns-current-page')) {
+            return \false;
+        }
+        $owns_current_page = $c->get('sdk-v6.owns-current-page');
+        return $owns_current_page();
+    }
+    /**
+     * {@inheritDoc}
+     */
+    public function services(): array
+    {
+        return require __DIR__ . '/../services.php';
+    }
+    /**
+     * {@inheritDoc}
+     */
+    public function run(ContainerInterface $c): bool
+    {
+        $messages_apply = $c->get('button.helper.messages-apply');
+        assert($messages_apply instanceof MessagesApply);
+        if (!$messages_apply->for_country()) {
+            return \true;
+        }
+        add_action('init', function () use ($c): void {
+            $settings_provider = $c->get('settings.settings-provider');
+            assert($settings_provider instanceof SettingsProvider);
+            $asset_getter = $c->get('paylater-block.asset_getter');
+            assert($asset_getter instanceof AssetGetter);
+            $script_handle = 'ppcp-paylater-block';
+            wp_register_script($script_handle, $asset_getter->get_asset_url('paylater-block.js'), array(), $c->get('ppcp.asset-version'), \true);
+            wp_localize_script($script_handle, 'PcpPayLaterBlock', array(
+                'ajax' => array('cart_script_params' => array('endpoint' => \WC_AJAX::get_endpoint(CartScriptParamsEndpoint::ENDPOINT))),
+                'settingsUrl' => admin_url('admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway'),
+                'payLaterDisabledByVaulting' => $settings_provider->pay_later_disabled_by_vaulting(),
+                'placementEnabled' => self::is_block_enabled($c->get('wcgateway.settings.status')),
+                'payLaterSettingsUrl' => admin_url('admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway'),
+                // The v6 messaging component styles text messages only, so
+                // the editor hides the banner controls. Deliberately asks
+                // whether the module is loaded, not whether it owns a page:
+                // the editor configures every page from one admin screen,
+                // where per-page ownership is meaningless.
+                'isSdkV6Active' => $c->has('sdk-v6.owns-current-page'),
+            ));
+            wp_register_style('ppcp-paylater-block-style', $asset_getter->get_asset_url('edit.css'), array(), $c->get('ppcp.asset-version'));
+            register_block_type($c->get('ppcp.path-to-plugin-folder') . 'modules/ppcp-paylater-block/', array('render_callback' => function (array $attributes) use ($c) {
+                $renderer = $c->get('paylater-block.renderer');
+                ob_start();
+                // phpcs:ignore -- No need to escape it, the PayLaterBlockRenderer class is responsible for escaping.
+                echo $renderer->render(
+                    // phpcs:ignore
+                    $attributes,
+                    // phpcs:ignore
+                    $c
+                );
+                return ob_get_clean();
+            }));
+        }, 20);
+        return \true;
+    }
 }
