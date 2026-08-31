@@ -12,7 +12,7 @@ namespace WooCommerce\PayPalCommerce\Blocks;
 use Automattic\WooCommerce\Blocks\Payments\Integrations\AbstractPaymentMethodType;
 use WC_AJAX;
 use WooCommerce\PayPalCommerce\Assets\AssetGetter;
-use WooCommerce\PayPalCommerce\Blocks\Endpoint\UpdateShippingEndpoint;
+use WooCommerce\PayPalCommerce\OrderEndpoints\Endpoint\UpdateShippingEndpoint;
 use WooCommerce\PayPalCommerce\Button\Assets\SmartButtonInterface;
 use WooCommerce\PayPalCommerce\Session\Cancellation\CancelController;
 use WooCommerce\PayPalCommerce\Session\Cancellation\CancelView;
@@ -238,7 +238,7 @@ class PayPalPaymentMethod extends AbstractPaymentMethodType {
 		$smart_buttons_enabled = ! $this->use_place_order
 			&& $this->settings_status->is_smart_button_enabled_for_location( $script_data['context'] ?? 'block-checkout' );
 		$place_order_enabled   = ( $this->use_place_order || $this->add_place_order_method )
-			&& ( ! $this->subscription_helper->cart_contains_subscription() || $script_data['can_save_vault_token'] );
+			&& ( ! $this->subscription_helper->cart_contains_subscription() || ( $script_data['can_save_vault_token'] ?? false ) );
 		$cart                  = WC()->cart;
 
 		return array(
