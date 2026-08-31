@@ -26,17 +26,23 @@ export default function Edit( { attributes, clientId, setAttributes } ) {
 
 	const checkoutConfig = PcpCheckoutPayLaterBlock.config.checkout;
 
-	// Dynamically setting previewStyle based on the layout attribute
+	// Dynamically setting previewStyle based on the layout attribute. Under v6
+	// the storefront renders this placement as text whatever the settings say
+	// (see PayLaterWCBlocksRenderer), so the preview follows.
+	const layout = PcpCheckoutPayLaterBlock.isSdkV6Active
+		? 'text'
+		: checkoutConfig.layout;
+
 	let previewStyle = {};
-	if ( checkoutConfig.layout === 'flex' ) {
+	if ( layout === 'flex' ) {
 		previewStyle = {
-			layout: checkoutConfig.layout,
+			layout,
 			color: checkoutConfig.color,
 			ratio: checkoutConfig.ratio,
 		};
 	} else {
 		previewStyle = {
-			layout: checkoutConfig.layout,
+			layout,
 			logo: {
 				position: checkoutConfig[ 'logo-position' ],
 				type: checkoutConfig[ 'logo-type' ],

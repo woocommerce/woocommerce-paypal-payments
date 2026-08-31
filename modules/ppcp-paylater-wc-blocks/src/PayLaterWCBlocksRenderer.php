@@ -110,7 +110,18 @@ class PayLaterWCBlocksRenderer {
 				$processor->set_attribute( 'class', 'ppcp-messages' );
 				$processor->set_attribute( 'data-partner-attribution-id', $bn_code );
 
-				if ( $this->layout === 'flex' ) {
+				// The v6 messaging component styles text messages only, so a
+				// banner-configured location renders as text. Coerced here rather
+				// than migrated, so the stored setting survives the feature flag
+				// being turned back off. See PayLaterBlockRenderer for why the
+				// flex branch cannot simply be left to the frontend. Asks per page,
+				// not per site: where v6 stands down the v5 stack renders this
+				// placement and can still draw the banner.
+				$layout = PayLaterWCBlocksModule::v6_owns_current_page( $c )
+					? 'text'
+					: $this->layout;
+
+				if ( 'flex' === $layout ) {
 					$processor->set_attribute( 'data-pp-style-layout', 'flex' );
 					$processor->set_attribute( 'data-pp-style-color', esc_attr( $this->flex_color ) );
 					$processor->set_attribute( 'data-pp-style-ratio', esc_attr( $this->flex_ratio ) );

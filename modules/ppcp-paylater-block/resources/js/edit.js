@@ -19,7 +19,15 @@ export default function Edit( { attributes, clientId, setAttributes } ) {
 		placement,
 		id,
 	} = attributes;
-	const isFlex = layout === 'flex';
+
+	// The v6 messaging component styles text messages only, so the banner
+	// controls are withheld and the preview follows the text layout. The stored
+	// attribute is left untouched: turning the feature flag back off must
+	// restore the merchant's banner, and the block's own default is still
+	// `flex`, which Gutenberg omits from the markup when it matches.
+	const isSdkV6Active = !! PcpPayLaterBlock.isSdkV6Active;
+	const effectiveLayout = isSdkV6Active ? 'text' : layout;
+	const isFlex = effectiveLayout === 'flex';
 
 	const [ loaded, setLoaded ] = useState( false );
 	const timedOut = usePreviewTimeout( loaded );
@@ -36,7 +44,7 @@ export default function Edit( { attributes, clientId, setAttributes } ) {
 	}
 
 	const previewStyle = {
-		layout,
+		layout: effectiveLayout,
 		logo: {
 			position,
 			type: logo,
@@ -180,29 +188,34 @@ export default function Edit( { attributes, clientId, setAttributes } ) {
 				<PanelBody
 					title={ __( 'Settings', 'woocommerce-paypal-payments' ) }
 				>
-					<SelectControl
-						label={ __( 'Layout', 'woocommerce-paypal-payments' ) }
-						options={ [
-							{
-								label: __(
-									'Text',
-									'woocommerce-paypal-payments'
-								),
-								value: 'text',
-							},
-							{
-								label: __(
-									'Banner',
-									'woocommerce-paypal-payments'
-								),
-								value: 'flex',
-							},
-						] }
-						value={ layout }
-						onChange={ ( value ) =>
-							setAttributes( { layout: value } )
-						}
-					/>
+					{ ! isSdkV6Active && (
+						<SelectControl
+							label={ __(
+								'Layout',
+								'woocommerce-paypal-payments'
+							) }
+							options={ [
+								{
+									label: __(
+										'Text',
+										'woocommerce-paypal-payments'
+									),
+									value: 'text',
+								},
+								{
+									label: __(
+										'Banner',
+										'woocommerce-paypal-payments'
+									),
+									value: 'flex',
+								},
+							] }
+							value={ layout }
+							onChange={ ( value ) =>
+								setAttributes( { layout: value } )
+							}
+						/>
+					) }
 					{ ! isFlex && (
 						<SelectControl
 							label={ __(

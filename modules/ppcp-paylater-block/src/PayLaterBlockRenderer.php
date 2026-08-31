@@ -41,6 +41,16 @@ class PayLaterBlockRenderer {
 			if ( $processor->next_tag( 'div' ) ) {
 				$layout = $attributes['layout'] ?? 'text';
 
+				// v6 messaging styles text only; coerced rather than migrated, so
+				// the attribute survives the flag being turned back off. The flex
+				// branch emits no `data-pp-style-logo-type`, which the v6 renderer
+				// keys on, so the block would silently inherit the location styles.
+				// Asks per page, not per site: where v6 stands down the v5 stack
+				// renders this block and can still draw the banner.
+				if ( PayLaterBlockModule::v6_owns_current_page( $c ) ) {
+					$layout = 'text';
+				}
+
 				if ( 'flex' === $layout ) {
 					$processor->set_attribute( 'data-pp-style-layout', 'flex' );
 					$processor->set_attribute( 'data-pp-style-color', esc_attr( $attributes['flexColor'] ?? '' ) );
