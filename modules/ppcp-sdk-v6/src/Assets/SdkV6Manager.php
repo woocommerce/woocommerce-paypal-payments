@@ -1044,7 +1044,12 @@ class SdkV6Manager {
 			$pay_later_button['mini-cart'] = $this->is_pay_later_button_enabled( 'mini-cart' );
 		}
 
-		$card_fields_enabled = $this->is_card_fields_enabled();
+		// Fastlane replaces the standalone ACDC card row when it renders (guest,
+		// non-subscription checkout), matching the v5 advanced-card block guard.
+		// Scoped to this JS flag only: is_card_fields_enabled() still gates the v5
+		// card block's suppression, so a page keeps exactly one card option.
+		$card_fields_enabled = $this->is_card_fields_enabled()
+			&& ! $this->is_fastlane_enabled();
 
 		$messages_settings_location = $this->messages_settings_location();
 
