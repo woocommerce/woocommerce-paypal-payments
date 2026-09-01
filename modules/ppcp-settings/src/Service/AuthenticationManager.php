@@ -391,6 +391,18 @@ class AuthenticationManager
             $this->logger->info('Merchant successfully connected to PayPal');
             // Update the connection status and set the environment flags.
             $this->connection_state->connect($connection->is_sandbox);
+            // TEMPORARY diagnostic for the ngrok webhook-host investigation. Remove
+            // alongside the other [ngrok-diag] lines. Logs the object ids so this
+            // can be directly compared against the "api.host decision" line
+            // logged later in the same request, to confirm whether webhook
+            // registration ends up reading a different (stale) ConnectionState/
+            // Environment instance than the one just mutated here.
+            file_put_contents(
+                // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- temporary diagnostic.
+                WP_CONTENT_DIR . '/ngrok-diag.log',
+                sprintf("[ngrok-diag] connect() done: is_sandbox=%s is_connected=%s connection_state_obj=%d environment_obj=%d\n", var_export($connection->is_sandbox, \true), var_export($this->connection_state->is_connected(), \true), spl_object_id($this->connection_state), spl_object_id($this->connection_state->get_environment())),
+                \FILE_APPEND
+            );
             /**
              * Request to flush caches before authenticating the merchant, to
              * ensure the new merchant does not use stale data from previous
