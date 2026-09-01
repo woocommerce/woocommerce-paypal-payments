@@ -6,7 +6,7 @@ import { customers, payments, cards, products } from '../../resources';
 
 const customer = customers.usa;
 const { payPal, acdc } = payments;
-const acdc2 = { ...acdc, card: cards.visa2 };
+const acdc2 = { ...acdc, card: cards.visa };
 
 test.beforeAll( async ( { utils } ) => {
 	await utils.configureStore( { enableClassicPages: true } );
