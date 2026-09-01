@@ -11,6 +11,7 @@ namespace WooCommerce\PayPalCommerce\SdkV6\Assets;
 
 use WC_Payment_Gateway;
 use WC_Product;
+use WP_Post;
 use WooCommerce\PayPalCommerce\Applepay\ApplePayGateway;
 use WooCommerce\PayPalCommerce\Applepay\Assets\PropertiesDictionary;
 use WooCommerce\PayPalCommerce\Assets\AssetGetter;
@@ -21,6 +22,7 @@ use WooCommerce\PayPalCommerce\OrderEndpoints\Endpoint\CreateOrderEndpoint;
 use WooCommerce\PayPalCommerce\Button\Endpoint\GetOrderEndpoint;
 use WooCommerce\PayPalCommerce\Button\Helper\Context;
 use WooCommerce\PayPalCommerce\Googlepay\GooglePayGateway;
+use WooCommerce\PayPalCommerce\PayLaterBlock\PayLaterBlockModule;
 use WooCommerce\PayPalCommerce\SavePaymentMethods\Endpoint\CreatePaymentToken;
 use WooCommerce\PayPalCommerce\SavePaymentMethods\Endpoint\CreatePaymentTokenForGuest;
 use WooCommerce\PayPalCommerce\SavePaymentMethods\Endpoint\CreateSetupToken;
@@ -150,6 +152,13 @@ class SdkV6Manager {
 	 * @var bool|null
 	 */
 	private ?bool $should_load = null;
+
+	/**
+	 * Memoizes has_paylater_block(), which the messaging gates ask repeatedly.
+	 *
+	 * @var bool|null
+	 */
+	private ?bool $has_paylater_block = null;
 
 	public function __construct(
 		AssetGetter $asset_getter,
@@ -700,7 +709,13 @@ class SdkV6Manager {
 			return false;
 		}
 
-		return $this->messages_enabled() && null !== $this->messages_render_hook();
+		if ( ! $this->messages_enabled() ) {
+			return false;
+		}
+
+		// The Pay Later block prints its own `.ppcp-messages` placeholder, so it
+		// needs no hook.
+		return null !== $this->messages_render_hook() || $this->has_paylater_block();
 	}
 
 	/**
@@ -726,8 +741,8 @@ class SdkV6Manager {
 	 * contain, so messaging would silently never enable on the block
 	 * checkout.
 	 *
-	 * Returns an empty string for shop, home and the mini-cart context, which
-	 * this module currently does not serve.
+	 * Falls back to 'custom_placement' where a Pay Later block sits. Empty for
+	 * shop, home and mini-cart, which this module does not serve.
 	 */
 	private function messages_settings_location(): string {
 		switch ( $this->context->location() ) {
@@ -741,8 +756,32 @@ class SdkV6Manager {
 			case 'pay-now':
 				return 'checkout';
 			default:
-				return '';
+				return $this->has_paylater_block() ? 'custom_placement' : '';
 		}
+	}
+
+	/**
+	 * Whether an enabled Pay Later block sits on the page being rendered.
+	 *
+	 * Mirrors the v5 SmartButton's `$has_paylater_block`, which is what carries
+	 * messaging onto pages that are not themselves messaging locations.
+	 */
+	private function has_paylater_block(): bool {
+		if ( null !== $this->has_paylater_block ) {
+			return $this->has_paylater_block;
+		}
+
+		// has_block() reads $post, which only a queried singular request sets —
+		// not archives, REST, cron or webhooks, and before `wp` it holds whatever
+		// was left over. Left unmemoized: "not resolved yet" is not "no block".
+		if ( ! did_action( 'wp' ) || ! ( $GLOBALS['post'] ?? null ) instanceof WP_Post ) {
+			return false;
+		}
+
+		$this->has_paylater_block = PayLaterBlockModule::is_block_enabled( $this->settings_status )
+			&& has_block( 'woocommerce-paypal-payments/paylater-messages' );
+
+		return $this->has_paylater_block;
 	}
 
 	/**
@@ -754,6 +793,10 @@ class SdkV6Manager {
 				return 'product-details';
 			case 'cart':
 				return 'cart';
+			case 'custom_placement':
+				// Unclassifiable page, so the neutral 'home' type. A block naming
+				// its own placement overrides this per placeholder (pageTypeFor()).
+				return 'home';
 			default:
 				return 'checkout';
 		}

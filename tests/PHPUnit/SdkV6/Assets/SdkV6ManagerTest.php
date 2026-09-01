@@ -239,6 +239,7 @@ class SdkV6ManagerTest extends TestCase
         global $wp;
         $wp = null;
         unset($_GET['key']);
+        unset($GLOBALS['post']);
 
         parent::tearDown();
     }
@@ -889,6 +890,72 @@ class SdkV6ManagerTest extends TestCase
             'home page'    => ['home'],
             'no location'  => [''],
         ];
+    }
+
+    /**
+     * GIVEN a page location this module does not otherwise place a message on (shop,
+     *       home, or none), but an enabled Pay Later block sits on that exact page
+     * WHEN checking whether the v6 SDK should load on the current page
+     * THEN it loads anyway - the block prints its own `.ppcp-messages` placeholder, so
+     *      messages_render_hook() returning null does not veto it here, unlike the
+     *      counterpart test where no such block is present
+     *
+     * @dataProvider unsupportedMessageLocationProvider
+     */
+    public function testShouldLoadOnCurrentPageTrueWhenPayLaterBlockSitsOnAnUnsupportedMessageLocation(string $location): void
+    {
+        $this->context->shouldReceive('context')->andReturn('');
+        $this->context->shouldReceive('location')->andReturn($location);
+        $this->card_payments_configuration->shouldReceive('is_acdc_enabled')->andReturn(false);
+        $this->settings_status->shouldReceive('is_smart_button_enabled_for_location')->andReturn(false);
+        $this->settings_status->shouldReceive('is_pay_later_messaging_enabled_for_location')
+            ->with('custom_placement')
+            ->andReturn(true);
+        $this->messages_eligibility->shouldReceive('is_enabled_for_location')
+            ->with('custom_placement')
+            ->andReturn(true);
+
+        when('did_action')->justReturn(true);
+        when('has_block')->justReturn(true);
+        $GLOBALS['post'] = new \WP_Post();
+
+        $testee = $this->createTestee();
+
+        $this->assertTrue($testee->should_load_on_current_page());
+    }
+
+    /**
+     * GIVEN a page location this module does not otherwise place a message on, and no
+     *       Pay Later block is present on the page (has_block() reports false)
+     * WHEN checking whether the v6 SDK should load on the current page
+     * THEN it does not load - an eligible-but-blockless custom placement is not enough,
+     *      distinguishing this from the block-present case above
+     *
+     * @dataProvider unsupportedMessageLocationProvider
+     */
+    public function testShouldLoadOnCurrentPageFalseWhenNoPayLaterBlockSitsOnAnUnsupportedMessageLocation(string $location): void
+    {
+        $this->context->shouldReceive('context')->andReturn('');
+        $this->context->shouldReceive('location')->andReturn($location);
+        $this->card_payments_configuration->shouldReceive('is_acdc_enabled')->andReturn(false);
+        $this->settings_status->shouldReceive('is_smart_button_enabled_for_location')->andReturn(false);
+        $this->settings_status->shouldReceive('is_pay_later_messaging_enabled_for_location')
+            ->with('custom_placement')
+            ->andReturn(true);
+        // No block present, so has_paylater_block() resolves false and
+        // messages_settings_location() falls back to the empty location, not
+        // 'custom_placement' - the eligibility lookup below reflects that.
+        $this->messages_eligibility->shouldReceive('is_enabled_for_location')
+            ->with('')
+            ->andReturn(true);
+
+        when('did_action')->justReturn(true);
+        when('has_block')->justReturn(false);
+        $GLOBALS['post'] = new \WP_Post();
+
+        $testee = $this->createTestee();
+
+        $this->assertFalse($testee->should_load_on_current_page());
     }
 
     /**
