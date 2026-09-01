@@ -73,7 +73,10 @@ describe( 'isFreeTrialCart()', () => {
 		'a vaulting cart with a live amount of %p resolves to %s regardless of is_free_trial_cart',
 		( amount, expected ) => {
 			expect(
-				isFreeTrialCart( vaultingCart( { is_free_trial_cart: true } ), amount )
+				isFreeTrialCart(
+					vaultingCart( { is_free_trial_cart: true } ),
+					amount
+				)
 			).toBe( expected );
 			expect(
 				isFreeTrialCart(
@@ -96,7 +99,7 @@ describe( 'isFreeTrialCart()', () => {
 		expect( isFreeTrialCart( config, '49.00' ) ).toBe( false );
 	} );
 
-	test( 'an unparseable amount falls back to is_free_trial_cart', () => {
+	test( 'an unparsable amount falls back to is_free_trial_cart', () => {
 		const config = vaultingCart( { is_free_trial_cart: true } );
 
 		expect( isFreeTrialCart( config, 'not-a-number' ) ).toBe( true );
