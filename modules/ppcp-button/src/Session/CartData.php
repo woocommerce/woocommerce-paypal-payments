@@ -20,6 +20,13 @@ class CartData {
 	 */
 	protected array $coupons;
 
+	/**
+	 * The cart fees, each normalized to an array as in CartDataFactory.
+	 *
+	 * @var array<string, array<string, mixed>>
+	 */
+	protected array $fees = array();
+
 	protected bool $needs_shipping;
 
 	protected int $user_id;
@@ -36,19 +43,22 @@ class CartData {
 	 * @param bool                                $needs_shipping
 	 * @param int                                 $user_id
 	 * @param string                              $cart_hash
+	 * @param array<string, array<string, mixed>> $fees Optional, so existing callers keep working.
 	 */
 	public function __construct(
 		array $items,
 		array $coupons,
 		bool $needs_shipping,
 		int $user_id,
-		string $cart_hash
+		string $cart_hash,
+		array $fees = array()
 	) {
 		$this->items          = $items;
 		$this->coupons        = $coupons;
 		$this->needs_shipping = $needs_shipping;
 		$this->user_id        = $user_id;
 		$this->cart_hash      = $cart_hash;
+		$this->fees           = $fees;
 	}
 
 	/**
@@ -81,6 +91,15 @@ class CartData {
 		return $this->coupons;
 	}
 
+	/**
+	 * The cart fees, each normalized to an array as in CartDataFactory.
+	 *
+	 * @return array<string, array<string, mixed>>
+	 */
+	public function fees(): array {
+		return $this->fees;
+	}
+
 	public function needs_shipping(): bool {
 		return $this->needs_shipping;
 	}
@@ -111,27 +130,29 @@ class CartData {
 
 	public function to_array(): array {
 		return array(
-			'items'                => $this->items,
-			'coupons'              => $this->coupons,
-			'needs_shipping'       => $this->needs_shipping,
-			'user_id'              => $this->user_id,
-			'cart_hash'            => $this->cart_hash,
-			'paypal_order_id'      => $this->paypal_order_id,
-			'session_customer_id'  => $this->session_customer_id,
+			'items'               => $this->items,
+			'coupons'             => $this->coupons,
+			'fees'                => $this->fees,
+			'needs_shipping'      => $this->needs_shipping,
+			'user_id'             => $this->user_id,
+			'cart_hash'           => $this->cart_hash,
+			'paypal_order_id'     => $this->paypal_order_id,
+			'session_customer_id' => $this->session_customer_id,
 		);
 	}
 
 	public static function from_array( array $data, ?string $key = null ): CartData {
-		$cart_data                       = new CartData(
+		$cart_data                      = new CartData(
 			$data['items'] ?? array(),
 			$data['coupons'] ?? array(),
 			(bool) ( $data['needs_shipping'] ?? false ),
 			(int) ( $data['user_id'] ?? 0 ),
-			$data['cart_hash'] ?? ''
+			$data['cart_hash'] ?? '',
+			$data['fees'] ?? array()
 		);
-		$cart_data->paypal_order_id      = $data['paypal_order_id'] ?? null;
-		$cart_data->session_customer_id  = $data['session_customer_id'] ?? null;
-		$cart_data->key                  = $key;
+		$cart_data->paypal_order_id     = $data['paypal_order_id'] ?? null;
+		$cart_data->session_customer_id = $data['session_customer_id'] ?? null;
+		$cart_data->key                 = $key;
 		return $cart_data;
 	}
 }
