@@ -96,6 +96,25 @@ return array(
 		$environment = $container->get( 'settings.environment' );
 		assert( $environment instanceof Environment );
 
+		// TEMPORARY diagnostic for the ngrok webhook-host investigation. Remove
+		// alongside the other [ngrok-diag] lines. The webhook create()/list()
+		// calls were observed hitting the *production* (non-sandbox) WooCommerce
+		// connect proxy right after a sandbox connect() — this logs the inputs
+		// to this exact branch, plus the raw persisted option, to see whether
+		// the mismatch is in-memory (stale/duplicate object graph) or a
+		// persistence-timing issue.
+		file_put_contents( // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- temporary diagnostic.
+			WP_CONTENT_DIR . '/ngrok-diag.log',
+			sprintf(
+				"[ngrok-diag] api.host decision: is_sandbox=%s is_connected=%s environment_obj=%d option.sandbox_merchant=%s\n",
+				var_export( $environment->is_sandbox(), true ),
+				var_export( $container->get( 'settings.flag.is-connected' ), true ),
+				spl_object_id( $environment ),
+				var_export( get_option( 'woocommerce-ppcp-data-common' )['sandbox_merchant'] ?? 'MISSING', true )
+			),
+			FILE_APPEND
+		);
+
 		if ( $environment->is_sandbox() ) {
 			return (string) $container->get( 'api.sandbox-host' );
 		}
