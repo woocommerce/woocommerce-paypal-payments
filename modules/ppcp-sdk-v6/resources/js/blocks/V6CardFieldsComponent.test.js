@@ -61,6 +61,9 @@ function cardConfig( overrides = {} ) {
 
 let onPaymentSetup;
 let paymentSetupCb;
+let onCheckoutValidation;
+let checkoutValidationCb;
+let hasValidationErrors;
 let eventRegistration;
 let session;
 const emitResponse = {
@@ -94,13 +97,37 @@ async function waitForSessionReady() {
 	);
 }
 
+async function waitForCheckoutValidationReady() {
+	await waitFor( () => expect( checkoutValidationCb ).not.toBeNull() );
+}
+
 beforeEach( () => {
 	paymentSetupCb = null;
 	onPaymentSetup = jest.fn( ( cb ) => {
 		paymentSetupCb = cb;
 		return () => {};
 	} );
-	eventRegistration = { onPaymentSetup };
+	checkoutValidationCb = null;
+	onCheckoutValidation = jest.fn( ( cb ) => {
+		checkoutValidationCb = cb;
+		return () => {};
+	} );
+	eventRegistration = { onPaymentSetup, onCheckoutValidation };
+
+	hasValidationErrors = false;
+	global.wp = {
+		data: {
+			select: ( store ) => {
+				if ( store === 'wc/store/validation' ) {
+					return {
+						hasValidationErrors: () => hasValidationErrors,
+					};
+				}
+
+				return {};
+			},
+		},
+	};
 
 	session = {
 		createCardFieldsComponent: jest.fn( () =>
@@ -140,6 +167,76 @@ describe( 'V6CardFieldsComponent', () => {
 			expect( mockCardFieldContainer ).toHaveBeenCalled()
 		);
 		expect( onPaymentSetup ).not.toHaveBeenCalled();
+	} );
+
+	test( 'does not subscribe to onCheckoutValidation when a different payment method is active', async () => {
+		renderComponent( { activePaymentMethod: 'ppcp-gateway-paypal' } );
+
+		await waitFor( () =>
+			expect( mockCardFieldContainer ).toHaveBeenCalled()
+		);
+		expect( onCheckoutValidation ).not.toHaveBeenCalled();
+	} );
+
+	test( 'renders and still subscribes to onPaymentSetup when the Blocks registry supplies no onCheckoutValidation', async () => {
+		renderComponent( { eventRegistration: { onPaymentSetup } } );
+
+		await waitForSessionReady();
+
+		expect( onPaymentSetup ).toHaveBeenCalled();
+	} );
+
+	test( 'a pending checkout validation error blocks the card submission before an order is created', async () => {
+		renderComponent();
+		await waitForSessionReady();
+
+		hasValidationErrors = true;
+
+		let result;
+		await act( async () => {
+			result = await paymentSetupCb();
+		} );
+
+		expect( mockCreateCardOrder ).not.toHaveBeenCalled();
+		expect( session.submit ).not.toHaveBeenCalled();
+		expect( mockApproveCardOrder ).not.toHaveBeenCalled();
+		expect( result.type ).toBe( 'error' );
+	} );
+
+	describe( 'onCheckoutValidation observer', () => {
+		test( 'returns a bare error response when the form is invalid', async () => {
+			renderComponent();
+			await waitForCheckoutValidationReady();
+
+			hasValidationErrors = true;
+
+			expect( checkoutValidationCb() ).toEqual( { type: 'error' } );
+		} );
+
+		test( 'returns true when the form is valid', async () => {
+			renderComponent();
+			await waitForCheckoutValidationReady();
+
+			expect( checkoutValidationCb() ).toBe( true );
+		} );
+
+		test( 'a form that passes validation and then turns invalid before payment setup still blocks order creation', async () => {
+			renderComponent();
+			await waitForSessionReady();
+			await waitForCheckoutValidationReady();
+
+			expect( checkoutValidationCb() ).toBe( true );
+
+			hasValidationErrors = true;
+
+			let result;
+			await act( async () => {
+				result = await paymentSetupCb();
+			} );
+
+			expect( mockCreateCardOrder ).not.toHaveBeenCalled();
+			expect( result.type ).toBe( 'error' );
+		} );
 	} );
 
 	test( 'a successful submission creates the order, submits the session, approves it, and reports success', async () => {
@@ -470,6 +567,22 @@ describe( 'V6CardFieldsComponent', () => {
 			expect( mockCardFieldContainer ).toHaveBeenCalledWith(
 				expect.objectContaining( { session } )
 			);
+		} );
+
+		test( 'a pending checkout validation error blocks the card save before a setup token is created', async () => {
+			renderComponent( { config: freeTrialConfig() } );
+			await waitForSessionReady();
+
+			hasValidationErrors = true;
+
+			let result;
+			await act( async () => {
+				result = await paymentSetupCb();
+			} );
+
+			expect( mockCreateCardSetupToken ).not.toHaveBeenCalled();
+			expect( mockExchangeSetupToken ).not.toHaveBeenCalled();
+			expect( result.type ).toBe( 'error' );
 		} );
 
 		test( 'a successful save exchanges the setup token instead of creating and approving an order', async () => {

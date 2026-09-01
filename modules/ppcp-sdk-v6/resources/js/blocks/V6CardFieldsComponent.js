@@ -30,6 +30,12 @@ import {
 import { V6CardFieldContainer } from './V6CardFieldContainer';
 import { amountFromBilling } from '../utils/amount';
 import { isFreeTrialCart } from '../utils/freeTrial';
+import { hasCheckoutValidationErrors } from './checkoutValidation';
+
+const CHECKOUT_FIELDS_NOT_VALID_MESSAGE = __(
+	'Please complete all required checkout fields before continuing with payment.',
+	'woocommerce-paypal-payments'
+);
 
 /**
  * Creates the order, confirms it through the card session (which runs 3D
@@ -205,7 +211,7 @@ export function V6CardFieldsComponent( {
 	shouldSavePayment,
 	billing,
 } ) {
-	const { onPaymentSetup } = eventRegistration;
+	const { onPaymentSetup, onCheckoutValidation } = eventRegistration;
 	const { responseTypes } = emitResponse;
 
 	const context = config.page_context;
@@ -282,9 +288,8 @@ export function V6CardFieldsComponent( {
 	const cardFieldOverrides = config.card_fields.styles;
 	useEffect( () => {
 		const source =
-			document.querySelector(
-				'.wc-block-components-text-input input'
-			) || referenceRef.current;
+			document.querySelector( '.wc-block-components-text-input input' ) ||
+			referenceRef.current;
 		if ( source ) {
 			setInputStyle( cardFieldStyles( source ) );
 			setTextStyle( hostedFieldTextStyles( source, cardFieldOverrides ) );
@@ -300,8 +305,17 @@ export function V6CardFieldsComponent( {
 			return undefined;
 		}
 
-		return onPaymentSetup( () =>
-			isFreeTrial
+		return onPaymentSetup( () => {
+			// The onCheckoutValidation check ran earlier and its verdict can go
+			// stale, so re-check right before calling PayPal.
+			if ( hasCheckoutValidationErrors() ) {
+				return {
+					type: responseTypes.ERROR,
+					message: CHECKOUT_FIELDS_NOT_VALID_MESSAGE,
+				};
+			}
+
+			return isFreeTrial
 				? submitCardSave( {
 						config,
 						session: sessionRef.current,
@@ -316,8 +330,8 @@ export function V6CardFieldsComponent( {
 						cardName: cardNameRef.current?.trim() || '',
 						// null when no billing address is available.
 						billingAddress: billingRef.current,
-				  } )
-		);
+				  } );
+		} );
 	}, [
 		onPaymentSetup,
 		activePaymentMethod,
@@ -327,6 +341,32 @@ export function V6CardFieldsComponent( {
 		responseTypes,
 		isFreeTrial,
 	] );
+
+	// WooCommerce reaches payment processing with required fields still empty (its
+	// own validation observer returns a non-response for plain field errors), so
+	// without this check the card flow creates a PayPal order and runs 3D Secure
+	// against an invalid form.
+	//
+	// Gated on the active method because this is a global event.
+    // For other methods like express PayPal or Venmo checkout an invalid form
+    // can be ok, since PayPal returns the address.
+	useEffect( () => {
+		if (
+			activePaymentMethod !== methodId ||
+			typeof onCheckoutValidation !== 'function'
+		) {
+			return undefined;
+		}
+
+		return onCheckoutValidation( () => {
+			if ( hasCheckoutValidationErrors() ) {
+				// No message since WooCommerce shows the field errors itself.
+				return { type: responseTypes.ERROR };
+			}
+
+			return true;
+		} );
+	}, [ onCheckoutValidation, activePaymentMethod, methodId, responseTypes ] );
 
 	const fieldsReady = session && inputStyle && textStyle;
 

@@ -240,6 +240,7 @@ class SdkV6ManagerTest extends TestCase
         global $wp;
         $wp = null;
         unset($_GET['key']);
+        unset($GLOBALS['post']);
 
         parent::tearDown();
     }
@@ -566,7 +567,7 @@ class SdkV6ManagerTest extends TestCase
     /**
      * GIVEN a checkout block page with Advanced Card Fields enabled for the merchant
      * WHEN the SDK bootstrap data is generated
-     * THEN card_fields.enabled is true
+     * THEN card_fields.enabled is true, unless Fastlane renders on the same page
      * AND the gateway title and name-field flag are carried into the payload
      * AND is_vaulting_enabled reflects the card vaulting setting
      * AND has_subscriptions reflects whether the cart contains a subscription
@@ -581,6 +582,7 @@ class SdkV6ManagerTest extends TestCase
         string $show_name_on_card,
         bool $card_vaulting_enabled,
         bool $cart_contains_subscription,
+        bool $fastlane_renders,
         bool $expected_enabled,
         bool $expected_name_field
     ): void {
@@ -589,6 +591,7 @@ class SdkV6ManagerTest extends TestCase
         $this->card_payments_configuration->shouldReceive('gateway_title')->andReturn($gateway_title);
         $this->card_payments_configuration->shouldReceive('show_name_on_card')->andReturn($show_name_on_card);
         $this->subscription_helper->shouldReceive('cart_contains_subscription')->andReturn($cart_contains_subscription);
+        $this->fastlane_config->shouldReceive('should_render')->andReturn($fastlane_renders);
 
         $this->settings_status->shouldReceive('is_smart_button_enabled_for_location')->andReturn(false);
         $this->session_handler->shouldReceive('order')->andReturn(null);
@@ -626,22 +629,31 @@ class SdkV6ManagerTest extends TestCase
     {
         return [
             'checkout-block with ACDC enabled and name field shown' => [
-                'checkout-block', true, 'Credit Card', 'yes', false, false, true, true,
+                'checkout-block', true, 'Credit Card', 'yes', false, false, false, true, true,
             ],
             'checkout-block with ACDC enabled and name field hidden' => [
-                'checkout-block', true, 'Credit Card', 'no', false, false, true, false,
+                'checkout-block', true, 'Credit Card', 'no', false, false, false, true, false,
             ],
             'checkout-block with ACDC disabled' => [
-                'checkout-block', false, 'Credit Card', 'yes', false, false, false, true,
+                'checkout-block', false, 'Credit Card', 'yes', false, false, false, false, true,
             ],
             'classic checkout with ACDC enabled' => [
-                'checkout', true, 'Credit Card', 'yes', false, false, true, true,
+                'checkout', true, 'Credit Card', 'yes', false, false, false, true, true,
             ],
             'checkout-block with card vaulting enabled' => [
-                'checkout-block', true, 'Credit Card', 'yes', true, false, true, true,
+                'checkout-block', true, 'Credit Card', 'yes', true, false, false, true, true,
             ],
             'checkout-block with a subscription in the cart' => [
-                'checkout-block', true, 'Credit Card', 'yes', false, true, true, true,
+                'checkout-block', true, 'Credit Card', 'yes', false, true, false, true, true,
+            ],
+            'checkout-block with ACDC enabled but Fastlane renders' => [
+                'checkout-block', true, 'Credit Card', 'yes', false, false, true, false, true,
+            ],
+            'classic checkout with ACDC enabled but Fastlane renders' => [
+                'checkout', true, 'Credit Card', 'yes', false, false, true, false, true,
+            ],
+            'checkout-block with ACDC disabled and Fastlane renders' => [
+                'checkout-block', false, 'Credit Card', 'yes', false, false, true, false, true,
             ],
         ];
     }
@@ -890,6 +902,72 @@ class SdkV6ManagerTest extends TestCase
             'home page'    => ['home'],
             'no location'  => [''],
         ];
+    }
+
+    /**
+     * GIVEN a page location this module does not otherwise place a message on (shop,
+     *       home, or none), but an enabled Pay Later block sits on that exact page
+     * WHEN checking whether the v6 SDK should load on the current page
+     * THEN it loads anyway - the block prints its own `.ppcp-messages` placeholder, so
+     *      messages_render_hook() returning null does not veto it here, unlike the
+     *      counterpart test where no such block is present
+     *
+     * @dataProvider unsupportedMessageLocationProvider
+     */
+    public function testShouldLoadOnCurrentPageTrueWhenPayLaterBlockSitsOnAnUnsupportedMessageLocation(string $location): void
+    {
+        $this->context->shouldReceive('context')->andReturn('');
+        $this->context->shouldReceive('location')->andReturn($location);
+        $this->card_payments_configuration->shouldReceive('is_acdc_enabled')->andReturn(false);
+        $this->settings_status->shouldReceive('is_smart_button_enabled_for_location')->andReturn(false);
+        $this->settings_status->shouldReceive('is_pay_later_messaging_enabled_for_location')
+            ->with('custom_placement')
+            ->andReturn(true);
+        $this->messages_eligibility->shouldReceive('is_enabled_for_location')
+            ->with('custom_placement')
+            ->andReturn(true);
+
+        when('did_action')->justReturn(true);
+        when('has_block')->justReturn(true);
+        $GLOBALS['post'] = new \WP_Post();
+
+        $testee = $this->createTestee();
+
+        $this->assertTrue($testee->should_load_on_current_page());
+    }
+
+    /**
+     * GIVEN a page location this module does not otherwise place a message on, and no
+     *       Pay Later block is present on the page (has_block() reports false)
+     * WHEN checking whether the v6 SDK should load on the current page
+     * THEN it does not load - an eligible-but-blockless custom placement is not enough,
+     *      distinguishing this from the block-present case above
+     *
+     * @dataProvider unsupportedMessageLocationProvider
+     */
+    public function testShouldLoadOnCurrentPageFalseWhenNoPayLaterBlockSitsOnAnUnsupportedMessageLocation(string $location): void
+    {
+        $this->context->shouldReceive('context')->andReturn('');
+        $this->context->shouldReceive('location')->andReturn($location);
+        $this->card_payments_configuration->shouldReceive('is_acdc_enabled')->andReturn(false);
+        $this->settings_status->shouldReceive('is_smart_button_enabled_for_location')->andReturn(false);
+        $this->settings_status->shouldReceive('is_pay_later_messaging_enabled_for_location')
+            ->with('custom_placement')
+            ->andReturn(true);
+        // No block present, so has_paylater_block() resolves false and
+        // messages_settings_location() falls back to the empty location, not
+        // 'custom_placement' - the eligibility lookup below reflects that.
+        $this->messages_eligibility->shouldReceive('is_enabled_for_location')
+            ->with('')
+            ->andReturn(true);
+
+        when('did_action')->justReturn(true);
+        when('has_block')->justReturn(false);
+        $GLOBALS['post'] = new \WP_Post();
+
+        $testee = $this->createTestee();
+
+        $this->assertFalse($testee->should_load_on_current_page());
     }
 
     /**

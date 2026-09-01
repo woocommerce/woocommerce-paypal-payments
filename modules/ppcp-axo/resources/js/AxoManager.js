@@ -8,6 +8,7 @@ import ButtonStateManager from './ButtonStateManager';
 import PayPalInsights from './Insights/PayPalInsights';
 import { disable, enable } from '@ppcp-button/Helper/ButtonDisabler';
 import { getCurrentPaymentMethod } from '@ppcp-button/Helper/CheckoutMethodState';
+import { fastlaneSdkV6Config } from '@ppcp-sdk-v6/utils/config';
 
 /**
  * Internal customer details.
@@ -319,7 +320,14 @@ class AxoManager {
 		this.el.watermarkContainer.hide();
 
 		if ( scenario.defaultSubmitButton ) {
-			this.el.defaultSubmitButton.show();
+			// On v6 pages the SDK owns #place_order for every non-AXO gateway
+			// (it hides it for PayPal express/wallets and shows it otherwise), so
+			// re-showing it here would clobber that hide - jQuery .show() strips the
+			// inline `display:none !important` the v6 code sets. AXO still hides it
+			// in the else branch when the Fastlane gateway itself is selected.
+			if ( ! fastlaneSdkV6Config() ) {
+				this.el.defaultSubmitButton.show();
+			}
 			this.el.billingEmailSubmitButton.hide();
 		} else {
 			this.el.defaultSubmitButton.hide();

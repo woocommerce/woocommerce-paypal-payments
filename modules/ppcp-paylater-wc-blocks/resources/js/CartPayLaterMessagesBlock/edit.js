@@ -26,17 +26,21 @@ export default function Edit( { attributes, clientId, setAttributes } ) {
 
 	const cartConfig = PcpCartPayLaterBlock.config.cart;
 
-	// Dynamically setting previewStyle based on the layout attribute
+	// v6 renders this as text regardless of settings, so the preview follows.
+	const layout = PcpCartPayLaterBlock.isSdkV6Active
+		? 'text'
+		: cartConfig.layout;
+
 	let previewStyle = {};
-	if ( cartConfig.layout === 'flex' ) {
+	if ( layout === 'flex' ) {
 		previewStyle = {
-			layout: cartConfig.layout,
+			layout,
 			color: cartConfig.color,
 			ratio: cartConfig.ratio,
 		};
 	} else {
 		previewStyle = {
-			layout: cartConfig.layout,
+			layout,
 			logo: {
 				position: cartConfig[ 'logo-position' ],
 				type: cartConfig[ 'logo-type' ],

@@ -37,5 +37,7 @@ require_once TESTS_ROOT_DIR . '/stubs/HasAlias.php';
 require_once TESTS_ROOT_DIR . '/stubs/StepProcessor.php';
 require_once TESTS_ROOT_DIR . '/stubs/StepProcessorResult.php';
 require_once TESTS_ROOT_DIR . '/stubs/Step.php';
+require_once TESTS_ROOT_DIR . '/stubs/WP_Post.php';
+require_once TESTS_ROOT_DIR . '/stubs/WP_HTML_Tag_Processor.php';
 
 Hamcrest\Util::registerGlobalFunctions();

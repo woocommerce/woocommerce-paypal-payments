@@ -59,10 +59,6 @@ const modulesAssets = {
 		'css/order-edit-page.scss',
 	],
 	'ppcp-paylater-block': [ 'js/paylater-block.js', 'css/edit.scss' ],
-	'ppcp-paylater-configurator': [
-		'js/paylater-configurator.js',
-		'css/paylater-configurator.scss',
-	],
 	'ppcp-paylater-wc-blocks': [
 		'js/CartPayLaterMessagesBlock/cart-paylater-block.js',
 		'js/CartPayLaterMessagesBlock/cart-paylater-block-inserter.js',
