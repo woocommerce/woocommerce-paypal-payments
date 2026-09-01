@@ -29,7 +29,6 @@ use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PartnersEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PaymentMethodTokensEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PaymentsEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PaymentTokensEndpoint;
-use WooCommerce\PayPalCommerce\ApiClient\Endpoint\WebhookEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\AddressFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\AmountFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\AuthorizationFactory;
@@ -92,16 +91,6 @@ use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
 
 return array(
-	'api.host'                                       => static function ( ContainerInterface $container ): string {
-		$environment = $container->get( 'settings.environment' );
-		assert( $environment instanceof Environment );
-
-		if ( $environment->is_sandbox() ) {
-			return (string) $container->get( 'api.sandbox-host' );
-		}
-
-		return (string) $container->get( 'api.production-host' );
-	},
 	'api.paypal-host'                                => function ( ContainerInterface $container ): string {
 		return PAYPAL_API_URL;
 	},
@@ -209,16 +198,6 @@ return array(
 		return new PaymentTokensEndpoint(
 			$container->get( 'api.host' ),
 			$container->get( 'api.bearer' ),
-			$container->get( 'woocommerce.logger.woocommerce' )
-		);
-	},
-	'api.endpoint.webhook'                           => static function ( ContainerInterface $container ): WebhookEndpoint {
-
-		return new WebhookEndpoint(
-			$container->get( 'api.host' ),
-			$container->get( 'api.bearer' ),
-			$container->get( 'api.factory.webhook' ),
-			$container->get( 'api.factory.webhook-event' ),
 			$container->get( 'woocommerce.logger.woocommerce' )
 		);
 	},
