@@ -95,6 +95,16 @@ class WebhookEndpoint
         $json = json_decode($response['body']);
         $status_code = (int) wp_remote_retrieve_response_code($response);
         if (201 !== $status_code) {
+            // TEMPORARY diagnostic for the ngrok webhook-host investigation. Remove
+            // alongside the other [ngrok-diag] lines. Confirms the exact URL/host
+            // hit, since a wrong api.host (e.g. production instead of sandbox)
+            // would 404 identically to the symptom already observed.
+            file_put_contents(
+                // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- temporary diagnostic.
+                WP_CONTENT_DIR . '/ngrok-diag.log',
+                sprintf("[ngrok-diag] CREATE url=%s status=%d\n", $url, $status_code),
+                \FILE_APPEND
+            );
             throw new PayPalApiException($json, $status_code);
         }
         $hook = $this->webhook_factory->from_paypal_response($json);
@@ -119,6 +129,14 @@ class WebhookEndpoint
         $json = json_decode($response['body']);
         $status_code = (int) wp_remote_retrieve_response_code($response);
         if (200 !== $status_code) {
+            // TEMPORARY diagnostic for the ngrok webhook-host investigation. Remove
+            // alongside the other [ngrok-diag] lines.
+            file_put_contents(
+                // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- temporary diagnostic.
+                WP_CONTENT_DIR . '/ngrok-diag.log',
+                sprintf("[ngrok-diag] LIST url=%s status=%d\n", $url, $status_code),
+                \FILE_APPEND
+            );
             throw new PayPalApiException($json, $status_code);
         }
         return array_map(array($this->webhook_factory, 'from_paypal_response'), $json->webhooks);
