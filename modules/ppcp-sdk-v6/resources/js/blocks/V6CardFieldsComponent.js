@@ -28,6 +28,8 @@ import {
 	hostedFieldTextStyles,
 } from '../cardFields/cardFieldStyles';
 import { V6CardFieldContainer } from './V6CardFieldContainer';
+import { amountFromBilling } from '../utils/amount';
+import { isFreeTrialCart } from '../utils/freeTrial';
 
 /**
  * Creates the order, confirms it through the card session (which runs 3D
@@ -210,11 +212,11 @@ export function V6CardFieldsComponent( {
 	const methodId = config.card_fields.payment_method;
 	const hasNameField = Boolean( config.card_fields.name_field );
 
-	const hasSubscriptions = Boolean( config.card_fields.has_subscriptions );
+	const hasSubscriptions = Boolean( config.has_subscriptions );
 
-	// A $0 free-trial subscription card is vaulted through the save session (no
-	// purchase); the gateway places the $0 order on submit.
-	const isFreeTrial = Boolean( config.is_free_trial_cart );
+	// A $0 free-trial subscription card is vaulted through the save session; the
+	// gateway places the $0 order on submit.
+	const isFreeTrial = isFreeTrialCart( config, amountFromBilling( billing ) );
 
 	const [ session, setSession ] = useState( null );
 	const [ inputStyle, setInputStyle ] = useState( null );
@@ -230,10 +232,8 @@ export function V6CardFieldsComponent( {
 	);
 	const cardNameRef = useLatestRef( cardName );
 
-	// On a subscription cart the native "Save payment information…" option is
-	// suppressed (see checkout-block.js) and this component shows its own
-	// checked-and-disabled checkbox instead, since the card must always be
-	// vaulted for renewals and the native option cannot be locked.
+	// The native save option is suppressed on a subscription cart (see
+	// checkout-block.js), which shows this component's own locked checkbox.
 	const isVaultingEnabled = Boolean( config.card_fields.is_vaulting_enabled );
 	const showLockedSaveOption = hasSubscriptions && isVaultingEnabled;
 
@@ -274,14 +274,11 @@ export function V6CardFieldsComponent( {
 		};
 	}, [ config, context, isFreeTrial ] );
 
-	// v6 returns unstyled field elements, so derive their styling from a real
-	// block text input on the page (accurate theme height/padding/border),
-	// falling back to a hidden reference input when none is found.
-	//
-	// Two objects, because they have different audiences: inputStyle describes
-	// elements this component renders itself (the cardholder-name input, and the
-	// hosted fields' own box), while textStyle is handed to the SDK and lands
-	// inside a PayPal iframe, where box decoration has no business.
+	// v6 returns unstyled field elements, so their styling is derived from a real
+	// block text input on the page, or a hidden reference input when there is
+	// none. Two objects: inputStyle is for elements this component renders, while
+	// textStyle goes to the SDK and lands inside a PayPal iframe, where box
+	// decoration has no business.
 	const cardFieldOverrides = config.card_fields.styles;
 	useEffect( () => {
 		const source =
@@ -358,9 +355,8 @@ export function V6CardFieldsComponent( {
 			createElement(
 				Fragment,
 				null,
-				// The v6 card-fields component set is number|expiry|cvv only, so
-				// the cardholder name is a plain input; its value is forwarded to
-				// create-order rather than confirmed through the card session.
+				// The SDK has no name component, so this is a plain input whose
+				// value is forwarded to create-order.
 				hasNameField &&
 					createElement(
 						'div',
@@ -419,10 +415,9 @@ export function V6CardFieldsComponent( {
 				)
 			),
 		// Subscription cart: a checked, disabled save option in place of the
-		// suppressed native one, so the buyer sees the card will be saved for
-		// renewals but cannot opt out (matches the classic checkout). A plain
-		// native checkbox, not WooCommerce's checkbox component, whose CSS hides
-		// the input in favour of an SVG mark this markup does not provide.
+		// suppressed native one, so the buyer cannot opt out. A plain input, not
+		// WooCommerce's checkbox component, whose CSS hides the input in favour
+		// of an SVG mark this markup does not provide.
 		showLockedSaveOption &&
 			createElement(
 				'label',

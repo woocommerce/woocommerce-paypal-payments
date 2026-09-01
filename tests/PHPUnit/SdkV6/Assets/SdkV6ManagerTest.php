@@ -76,6 +76,7 @@ class SdkV6ManagerTest extends TestCase
         $this->subscription_helper->shouldReceive('order_pay_contains_subscription')->andReturn(false)->byDefault();
 		$this->free_trial_helper = Mockery::mock(FreeTrialSubscriptionHelper::class);
 		$this->free_trial_helper->shouldReceive('is_free_trial_cart')->andReturn(false)->byDefault();
+		$this->free_trial_helper->shouldReceive('cart_requires_vaulting')->andReturn(false)->byDefault();
 		$this->credit_card_icons = [];
 
 		$this->message_style_mapper = Mockery::mock(MessageStyleMapper::class);
@@ -617,7 +618,7 @@ class SdkV6ManagerTest extends TestCase
         $this->assertSame($expected_name_field, $data['card_fields']['name_field']);
         $this->assertSame(CreditCardGateway::ID, $data['card_fields']['payment_method']);
         $this->assertSame($card_vaulting_enabled, $data['card_fields']['is_vaulting_enabled']);
-        $this->assertSame($cart_contains_subscription, $data['card_fields']['has_subscriptions']);
+        $this->assertSame($cart_contains_subscription, $data['has_subscriptions']);
         $this->assertSame($card_field_styles, $data['card_fields']['styles']);
     }
 
@@ -1458,6 +1459,37 @@ class SdkV6ManagerTest extends TestCase
         return [
             'a free trial cart is reported as such' => [true],
             'a regular cart is not reported as a free trial' => [false],
+        ];
+    }
+
+    /**
+     * GIVEN a cart that may or may not hold a subscription paid from a vaulted
+     *       payment method rather than billed by PayPal against a plan
+     * WHEN the SDK bootstrap data is generated
+     * THEN cart_needs_vaulting mirrors the helper's cart_requires_vaulting(),
+     *      independently of is_free_trial_cart, so the frontend can re-answer
+     *      the free-trial question against a live total after a coupon changes it
+     *
+     * @dataProvider cart_requires_vaulting_provider
+     */
+    public function testScriptDataReflectsCartRequiresVaultingIndependentlyOfTotal(bool $cart_requires_vaulting): void
+    {
+        $this->stub_common_script_data_dependencies();
+        $this->free_trial_helper->shouldReceive('cart_requires_vaulting')->andReturn($cart_requires_vaulting);
+        // The total-dependent flag must not influence cart_needs_vaulting.
+        $this->free_trial_helper->shouldReceive('is_free_trial_cart')->andReturn(false);
+
+        $testee = $this->createTestee();
+        $data   = $testee->script_data();
+
+        $this->assertSame($cart_requires_vaulting, $data['cart_needs_vaulting']);
+    }
+
+    public function cart_requires_vaulting_provider(): array
+    {
+        return [
+            'a cart requiring vaulting is reported as such' => [true],
+            'a cart not requiring vaulting is reported as such' => [false],
         ];
     }
 

@@ -616,7 +616,11 @@ describe( 'initCardFields', () => {
 
 	describe( 'free-trial ($0 subscription) cart', () => {
 		function freeTrialConfig( overrides = {} ) {
-			return baseConfig( { is_free_trial_cart: true, ...overrides } );
+			return baseConfig( {
+				cart_needs_vaulting: true,
+				is_free_trial_cart: true,
+				...overrides,
+			} );
 		}
 
 		test( 'mounts the fields from the card save session instead of the one-time session', async () => {
@@ -714,14 +718,52 @@ describe( 'initCardFields', () => {
 		} );
 	} );
 
+	describe( 'live total read through the getTotal getter', () => {
+		test( 'a total dropping to zero after mount routes the submit to the setup-token path', async () => {
+			buildCheckoutDom( 'ppcp-credit-card-gateway' );
+			let currentTotal = '49.00';
+			const cardSession = makeCardSession( { state: 'succeeded' } );
+			mockLoadSdkV6.mockResolvedValue( {
+				createCardFieldsOneTimePaymentSession: () => cardSession,
+			} );
+			mockCreateCardSetupToken.mockResolvedValue( 'SETUP1' );
+			mockExchangeSetupToken.mockResolvedValue( undefined );
+
+			await initCardFields(
+				baseConfig( {
+					cart_needs_vaulting: true,
+					is_free_trial_cart: false,
+				} ),
+				() => currentTotal
+			);
+			await flushPromises();
+
+			// A coupon applied after mount drops the cart to $0.
+			currentTotal = '0.00';
+
+			document.querySelector( '#place_order' ).click();
+			await flushPromises();
+
+			expect( mockCreateCardSetupToken ).toHaveBeenCalled();
+			expect( cardSession.submit ).toHaveBeenCalledWith( 'SETUP1' );
+			expect( mockExchangeSetupToken ).toHaveBeenCalledWith(
+				expect.anything(),
+				'SETUP1'
+			);
+			expect( mockCreateCardOrder ).not.toHaveBeenCalled();
+		} );
+	} );
+
 	describe( 'subscription cart (force-save the tokenization checkbox)', () => {
-		function subscriptionConfig( overrides = {} ) {
+		function subscriptionConfig( {
+			has_subscriptions = true,
+			is_vaulting_enabled = true,
+		} = {} ) {
 			return baseConfig( {
+				has_subscriptions,
 				card_fields: {
 					...baseConfig().card_fields,
-					has_subscriptions: true,
-					is_vaulting_enabled: true,
-					...overrides,
+					is_vaulting_enabled,
 				},
 			} );
 		}

@@ -194,10 +194,7 @@ describe( 'V6CardFieldsComponent', () => {
 		renderComponent( {
 			shouldSavePayment: false,
 			config: cardConfig( {
-				card_fields: {
-					...cardConfig().card_fields,
-					has_subscriptions: true,
-				},
+				has_subscriptions: true,
 			} ),
 		} );
 		await waitForSessionReady();
@@ -208,9 +205,7 @@ describe( 'V6CardFieldsComponent', () => {
 
 		expect( mockCreateCardOrder ).toHaveBeenCalledWith(
 			expect.objectContaining( {
-				card_fields: expect.objectContaining( {
-					has_subscriptions: true,
-				} ),
+				has_subscriptions: true,
 			} ),
 			'checkout-block',
 			'',
@@ -221,9 +216,9 @@ describe( 'V6CardFieldsComponent', () => {
 	test( 'renders a checked, disabled locked save-option checkbox when the cart has subscriptions and vaulting is enabled', async () => {
 		renderComponent( {
 			config: cardConfig( {
+				has_subscriptions: true,
 				card_fields: {
 					...cardConfig().card_fields,
-					has_subscriptions: true,
 					is_vaulting_enabled: true,
 				},
 			} ),
@@ -249,12 +244,13 @@ describe( 'V6CardFieldsComponent', () => {
 		],
 	] )(
 		'does not render the locked save-option checkbox when %s',
-		async ( _label, overrides ) => {
+		async ( _label, { has_subscriptions, is_vaulting_enabled } ) => {
 			renderComponent( {
 				config: cardConfig( {
+					has_subscriptions,
 					card_fields: {
 						...cardConfig().card_fields,
-						...overrides,
+						is_vaulting_enabled,
 					},
 				} ),
 			} );
@@ -453,7 +449,11 @@ describe( 'V6CardFieldsComponent', () => {
 
 	describe( 'free-trial ($0 subscription) cart', () => {
 		function freeTrialConfig( overrides = {} ) {
-			return cardConfig( { is_free_trial_cart: true, ...overrides } );
+			return cardConfig( {
+				cart_needs_vaulting: true,
+				is_free_trial_cart: true,
+				...overrides,
+			} );
 		}
 
 		test( 'creates the card save session instead of the one-time session', async () => {
