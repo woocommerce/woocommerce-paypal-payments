@@ -21,7 +21,7 @@ import {
 	disableWcSetupWizard,
 	disableWebhookVerificationPlugin,
 	negative12FeePlugin,
-	pcpSdkV6Flag,
+	pcpSdkVersionFlag,
 } from '../../resources';
 import { sdkVersion } from './sdk-version.helper';
 
@@ -33,8 +33,9 @@ const installPluginResolveActiveState = async ( {
 	slug,
 	zipFilePath,
 	isActive = true,
+	forceReinstall = false,
 } ) => {
-	if ( ! ( await requestUtils.isPluginInstalled( slug ) ) ) {
+	if ( forceReinstall || ! ( await requestUtils.isPluginInstalled( slug ) ) ) {
 		await plugins.installPluginFromFile( zipFilePath );
 	}
 	if ( isActive ) {
@@ -49,14 +50,28 @@ export const setupWooCommerce = async () => {
 	// not something wp-env's own bootstrap provisions - it must run in every
 	// environment, CI included, or the SDK version under test silently stays
 	// whatever the site's active_plugins state happened to already be.
+	//
+	// The flag plugin stays active on both v5 and v6 runs now and is switched via its own
+	// REST endpoint (POST /pcp-qa/v1/sdk-v6) instead of WP activation state. Some hosting
+	// environments hardcode PCP_SDK_V6_ENABLED=1 server-side; the old activate-to-force-v6/
+	// deactivate-to-fall-back design had no way to override that — deactivating only removed
+	// the override, it never forced v5. forceReinstall keeps a stale copy of this plugin
+	// (from before this endpoint existed) from silently sticking around on an environment
+	// where it was installed previously.
 	setup(
-		`Setup PCP SDK v6 Feature Flag (${ sdkVersion() })`,
+		`Setup PCP SDK Version Flag (${ sdkVersion() })`,
 		async ( { requestUtils, plugins } ) => {
 			await installPluginResolveActiveState( {
 				requestUtils,
 				plugins,
-				...pcpSdkV6Flag,
-				isActive: sdkVersion() === 'v6',
+				...pcpSdkVersionFlag,
+				isActive: true,
+				forceReinstall: true,
+			} );
+			await requestUtils.rest( {
+				method: 'POST',
+				path: '/pcp-qa/v1/sdk-v6',
+				data: { enabled: sdkVersion() === 'v6' },
 			} );
 		}
 	);
