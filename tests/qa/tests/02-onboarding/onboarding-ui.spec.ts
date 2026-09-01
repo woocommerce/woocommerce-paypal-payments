@@ -11,6 +11,10 @@ test.beforeAll( async ( { utils, pcpApi } ) => {
 	await pcpApi.resetDb();
 } );
 
+test.beforeEach( async ( { pcpApi } ) => {
+	await pcpApi.resetDb();
+} );
+
 for ( const country of defaultUiTestData ) {
 	test( `${ country.testSummary }`, async ( {
 		pcpOnboarding,
