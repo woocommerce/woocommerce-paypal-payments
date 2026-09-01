@@ -13,8 +13,14 @@ jest.mock(
 	{ virtual: true }
 );
 
-jest.mock( '../sdkLoader', () => ( { loadSdkV6: jest.fn() } ) );
-jest.mock( '../eligibility', () => ( { checkEligibility: jest.fn() } ) );
+const mockLoadSdkV6 = jest.fn();
+jest.mock( '../sdkLoader', () => ( {
+	loadSdkV6: ( ...args ) => mockLoadSdkV6( ...args ),
+} ) );
+const mockCheckEligibility = jest.fn();
+jest.mock( '../eligibility', () => ( {
+	checkEligibility: ( ...args ) => mockCheckEligibility( ...args ),
+} ) );
 jest.mock( '../utils/errorHandler', () => ( { setErrorLabels: jest.fn() } ) );
 jest.mock( '../blocks/V6ExpressComponent', () => ( {
 	V6ExpressComponent: () => null,
@@ -166,5 +172,42 @@ describe( 'checkout-block', () => {
 				'ppcp_continuation',
 			] );
 		} );
+	} );
+
+	describe( 'PayPal express canMakePayment()', () => {
+		const cartTotals = { total_price: '0', currency_minor_unit: 2 };
+
+		test( 'resolves to true on a free-trial cart without checking eligibility', async () => {
+			loadCheckoutBlock( baseConfig( { is_free_trial_cart: true } ) );
+
+			const { canMakePayment } = expressCallFor( 'ppcp-gateway-paypal' );
+
+			await expect( canMakePayment( { cartTotals } ) ).resolves.toBe(
+				true
+			);
+			expect( mockLoadSdkV6 ).not.toHaveBeenCalled();
+			expect( mockCheckEligibility ).not.toHaveBeenCalled();
+		} );
+
+		test.each( [
+			[ { paypal: true }, true ],
+			[ { paypal: false }, false ],
+		] )(
+			'on a non-free-trial cart, resolves to %s when eligibility reports %s',
+			async ( eligibility, expected ) => {
+				mockLoadSdkV6.mockResolvedValue( {} );
+				mockCheckEligibility.mockResolvedValue( eligibility );
+				loadCheckoutBlock( baseConfig() );
+
+				const { canMakePayment } = expressCallFor(
+					'ppcp-gateway-paypal'
+				);
+
+				await expect(
+					canMakePayment( { cartTotals } )
+				).resolves.toBe( expected );
+				expect( mockCheckEligibility ).toHaveBeenCalled();
+			}
+		);
 	} );
 } );

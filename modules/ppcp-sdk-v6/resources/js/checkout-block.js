@@ -232,6 +232,15 @@ if ( config && config.page_context && config.continuation ) {
 					return false;
 				}
 
+				// A $0 free-trial subscription is vaulted through the PayPal
+				// save flow (see V6ExpressComponent), which the amount-based
+				// eligibility check would reject for a zero amount. Only PayPal
+				// is offered on such carts (see FUNDING_SOURCES above), so guard
+				// on it; mirrors boot.js, which bypasses eligibility too.
+				if ( config.is_free_trial_cart ) {
+					return fundingSource === FundingSources.PAYPAL;
+				}
+
 				const amount =
 					amountFromCartTotals( cartTotals ) || config.amount;
 				const eligibility = await getEligibility( amount );
