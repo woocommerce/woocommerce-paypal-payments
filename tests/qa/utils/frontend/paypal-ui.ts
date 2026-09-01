@@ -201,9 +201,7 @@ export class PayPalUi {
 					.frameLocator( 'iframe[title="Cvv PayPal Card Field"]' )
 					.locator( 'input' );
 	acdcSaveToAccountCheckbox = () =>
-		this.acdcContainer().locator(
-			'.wc-block-components-payment-methods__save-card-info input[type="checkbox"]'
-		);
+		this.acdcContainer().locator( 'input[type="checkbox"]' );
 	acdcSavedCard = ( card: WooCommerce.CreditCard ) =>
 		this.paymentOptionsContainers().filter( {
 			hasText: `${ card.card_type } ending in ${ getLast4CardDigits(
@@ -375,6 +373,11 @@ export class PayPalUi {
 				popup = await this.openPayPalPopup();
 				// pay with given PayPal account
 				await popup.completePayPalPayment( payPalAccount );
+				// PayPal popap occasionally shows "Try again" error need to assert the hang
+				await expect(
+					this.page,
+					'Assert redirected to order received page after PayPal payment'
+				).toHaveURL( /order-received/, { timeout: 30_000 } );
 				break;
 
 			case 'paylater':
