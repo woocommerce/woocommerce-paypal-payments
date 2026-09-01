@@ -67,8 +67,9 @@ function expressDescription( label ) {
 }
 
 // The gateway that processes every method registered here; also the name the
-// regular PayPal row registers under.
-const PAYPAL_GATEWAY_ID = 'ppcp-gateway';
+// regular PayPal row registers under. Undefined when v6 does not run on this
+// page, where nothing below registers anything either.
+const PAYPAL_GATEWAY_ID = config?.id;
 
 const ALL_FUNDING_SOURCES = [
 	FundingSources.PAYPAL,

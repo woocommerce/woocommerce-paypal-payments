@@ -54,6 +54,7 @@ jest.mock( '../messages/cartTotalWatcher', () => ( {
  * express registration loop reaches every funding source.
  */
 const baseConfig = ( overrides = {} ) => ( {
+	id: 'ppcp-gateway',
 	page_context: 'checkout',
 	supported_features: [ 'products', 'subscriptions' ],
 	pay_later_button: { checkout: true },
@@ -190,6 +191,14 @@ describe( 'checkout-block', () => {
 				'products',
 				'ppcp_continuation',
 			] );
+		} );
+
+		test( 'ppcp-gateway-paypal processes through the gateway id the server supplied', () => {
+			loadCheckoutBlock( baseConfig( { id: 'ppcp-gateway-custom' } ) );
+
+			expect( expressCallFor( 'ppcp-gateway-paypal' ).gatewayId ).toBe(
+				'ppcp-gateway-custom'
+			);
 		} );
 	} );
 
@@ -382,6 +391,18 @@ describe( 'checkout-block', () => {
 					} )
 				).toBe( true );
 			} );
+		} );
+
+		test( 'registers the regular row under the gateway id the server supplied, not the literal ppcp-gateway', () => {
+			loadCheckoutBlock(
+				baseConfig( {
+					id: 'ppcp-gateway-custom',
+					place_order: { enabled: true, text: 'Complete order' },
+				} )
+			);
+
+			expect( regularCallFor( 'ppcp-gateway' ) ).toBeUndefined();
+			expect( regularCallFor( 'ppcp-gateway-custom' ) ).toBeDefined();
 		} );
 
 		test( 'does not register ppcp-gateway when neither the place-order row nor vault eligibility apply', () => {
