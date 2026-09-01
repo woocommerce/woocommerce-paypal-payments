@@ -63,34 +63,15 @@ describe( 'createCardSetupToken', () => {
 } );
 
 describe( 'exchangeSetupToken', () => {
-	test( 'posts to the logged-in endpoint with the free-trial flag when the buyer is logged in', async () => {
+	test( 'posts to the logged-in endpoint with only the setup token when the buyer is logged in', async () => {
 		mockPostJson.mockResolvedValueOnce( {} );
 
 		await exchangeSetupToken( baseConfig(), 'SETUP1' );
 
+		// The endpoint asks the cart itself whether this is a free trial.
 		expect( mockPostJson ).toHaveBeenCalledWith(
 			baseConfig().ajax.create_payment_token,
-			{
-				vault_setup_token: 'SETUP1',
-				is_free_trial_cart: '1',
-			}
-		);
-	} );
-
-	test( 'sends an empty free-trial flag when the cart is not a free trial', async () => {
-		mockPostJson.mockResolvedValueOnce( {} );
-
-		await exchangeSetupToken(
-			baseConfig( { is_free_trial_cart: false } ),
-			'SETUP1'
-		);
-
-		expect( mockPostJson ).toHaveBeenCalledWith(
-			baseConfig().ajax.create_payment_token,
-			{
-				vault_setup_token: 'SETUP1',
-				is_free_trial_cart: '',
-			}
+			{ vault_setup_token: 'SETUP1' }
 		);
 	} );
 

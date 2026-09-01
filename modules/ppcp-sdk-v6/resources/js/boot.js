@@ -32,6 +32,7 @@ import { initCardButton } from './cardButton/renderCardButton';
 import { hasJQuery } from './utils/api';
 import { watchViewedTotal } from './utils/viewedTotal';
 import { setErrorLabels } from './utils/errorHandler';
+import { isFreeTrialCart } from './utils/freeTrial';
 import { setVisible } from '@ppcp-button/Helper/Hiding';
 import { debounce } from '@ppcp-blocks/Helper/debounce';
 import {
@@ -40,9 +41,8 @@ import {
 	updateMessagesAmount,
 } from './messages/renderer';
 
-// The native WC submit button, labelled "Proceed to PayPal" for the PayPal
-// gateway. It is replaced by the v6 PayPal buttons while the PayPal gateway is
-// selected, but stays as the submit for cards and every other method.
+// The native WC submit button, replaced by the v6 buttons while the PayPal
+// gateway is selected and left as the submit for every other method.
 const PLACE_ORDER_SELECTOR = '#place_order';
 const PAYPAL_GATEWAY_ID = 'ppcp-gateway';
 
@@ -57,13 +57,12 @@ const ELIGIBILITY_REFRESH_DEBOUNCE_MS = 300;
 
 	setErrorLabels( config.labels );
 
-	// A $0 free-trial subscription is vaulted through the PayPal save flow on the
-	// checkout / pay-for-order pages (the only contexts with a form to submit
-	// afterwards); other contexts keep the ordinary button flow.
+	// A $0 free-trial subscription is vaulted through the PayPal save flow, which
+	// needs a form to submit afterwards.
 	const FREE_TRIAL_CONTEXTS = [ 'checkout', 'pay-now' ];
 	function isFreeTrialSave( context ) {
 		return (
-			Boolean( config.is_free_trial_cart ) &&
+			isFreeTrialCart( config, amount ) &&
 			FREE_TRIAL_CONTEXTS.includes( context )
 		);
 	}
@@ -84,14 +83,12 @@ const ELIGIBILITY_REFRESH_DEBOUNCE_MS = 300;
 	}
 
 	/**
-	 * Advanced Card Fields (ACDC): independent of the button render loop
-	 * below — it mounts into the existing WC card-form inputs rather than
-	 * a button wrapper, and only actually does anything when the card
-	 * gateway is enabled on this (checkout) page. Deferred the same way
-	 * as renderAll(), since it also queries checkout-form DOM elements.
+	 * Advanced Card Fields (ACDC): mounts into the existing WC card-form inputs
+	 * rather than a button wrapper, so it runs outside the render loop below.
+	 * Deferred like renderAll(), since it also queries checkout-form DOM.
 	 */
 	function initCardFieldsSafely() {
-		initCardFields( config ).catch( ( error ) => {
+		initCardFields( config, () => amount ).catch( ( error ) => {
 			// eslint-disable-next-line no-console
 			console.error( '[PPCP SDK v6]', error );
 		} );
@@ -109,9 +106,8 @@ const ELIGIBILITY_REFRESH_DEBOUNCE_MS = 300;
 		} );
 	}
 
-	// The page-context and mini-cart wrappers are independent render
-	// targets; PHP only prints wrappers for enabled locations, so target
-	// selection is gated by wrapper presence at render time.
+	// PHP only prints wrappers for enabled locations, so targets are selected by
+	// wrapper presence at render time.
 	const targets = [];
 	if ( config.page_context ) {
 		targets.push( {
@@ -323,6 +319,9 @@ const ELIGIBILITY_REFRESH_DEBOUNCE_MS = 300;
 			? await eligibilityPromise.catch( () => null )
 			: null;
 
+		// Read before the new total lands, to compare against it below.
+		const wasFreeTrial = isFreeTrialCart( config, amount );
+
 		amount = ( await fetchCartTotal( config ) ) || amount;
 		if ( messagesFollowCartTotal ) {
 			updateMessagesAmount( amount );
@@ -330,8 +329,15 @@ const ELIGIBILITY_REFRESH_DEBOUNCE_MS = 300;
 		eligibilityPromise = null;
 		const current = await ensureEligibility();
 
+		// The buttons capture the free-trial choice (order vs setup token) in their
+		// session, so a total crossing zero needs a redraw even when the eligible
+		// set is identical.
+		const freeTrialChanged =
+			wasFreeTrial !== isFreeTrialCart( config, amount );
+
 		const changed =
 			! previous ||
+			freeTrialChanged ||
 			METHODS.some( ( m ) => previous[ m ] !== current[ m ] );
 
 		if ( changed ) {
@@ -462,10 +468,8 @@ const ELIGIBILITY_REFRESH_DEBOUNCE_MS = 300;
 			() => {
 				renderAll();
 
-				// Messages are a separate pass: they target every
-				// .ppcp-messages placeholder rather than the button
-				// wrappers, and must survive refreshEligibility()'s wrapper
-				// blanking.
+				// A separate pass: messages target .ppcp-messages placeholders,
+				// not the button wrappers refreshEligibility() blanks.
 				renderMessages( config, sdkPageType ).catch( ( error ) => {
 					// eslint-disable-next-line no-console
 					console.error( '[PPCP SDK v6]', error );

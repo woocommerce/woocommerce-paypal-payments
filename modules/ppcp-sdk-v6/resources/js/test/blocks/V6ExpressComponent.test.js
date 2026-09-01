@@ -659,10 +659,17 @@ describe( 'V6ExpressComponent', () => {
 		expect( first ).not.toHaveBeenCalled();
 	} );
 
+	// The zero total in each config below is what routes the button to the save
+	// flow; the flags alone do not.
 	describe( 'free-trial ($0 subscription) cart', () => {
 		test( 'creates the save session instead of a one-time session for the paypal button', async () => {
 			renderComponent( {
-				config: { ...config, is_free_trial_cart: true },
+				config: {
+					...config,
+					amount: '0.00',
+					cart_needs_vaulting: true,
+					is_free_trial_cart: true,
+				},
 				fundingSource: 'paypal',
 			} );
 
@@ -678,7 +685,12 @@ describe( 'V6ExpressComponent', () => {
 
 		test( "the button's createOrderFn requests a vault setup token instead of a paypal order", async () => {
 			renderComponent( {
-				config: { ...config, is_free_trial_cart: true },
+				config: {
+					...config,
+					amount: '0.00',
+					cart_needs_vaulting: true,
+					is_free_trial_cart: true,
+				},
 				fundingSource: 'paypal',
 			} );
 			await waitFor( () =>
@@ -690,6 +702,8 @@ describe( 'V6ExpressComponent', () => {
 
 			expect( mockCreateVaultSetupToken ).toHaveBeenCalledWith( {
 				...config,
+				amount: '0.00',
+				cart_needs_vaulting: true,
 				is_free_trial_cart: true,
 			} );
 			expect( mockCreateOrder ).not.toHaveBeenCalled();
@@ -699,7 +713,12 @@ describe( 'V6ExpressComponent', () => {
 			const onSubmit = jest.fn();
 
 			renderComponent( {
-				config: { ...config, is_free_trial_cart: true },
+				config: {
+					...config,
+					amount: '0.00',
+					cart_needs_vaulting: true,
+					is_free_trial_cart: true,
+				},
 				fundingSource: 'paypal',
 				onSubmit,
 			} );
@@ -717,7 +736,12 @@ describe( 'V6ExpressComponent', () => {
 			const onClose = jest.fn();
 
 			renderComponent( {
-				config: { ...config, is_free_trial_cart: true },
+				config: {
+					...config,
+					amount: '0.00',
+					cart_needs_vaulting: true,
+					is_free_trial_cart: true,
+				},
 				fundingSource: 'paypal',
 				onError,
 				onClose,
@@ -734,7 +758,12 @@ describe( 'V6ExpressComponent', () => {
 
 		test( 'creates the ordinary one-time session for a non-paypal funding source, even on a free-trial cart', async () => {
 			renderComponent( {
-				config: { ...config, is_free_trial_cart: true },
+				config: {
+					...config,
+					amount: '0.00',
+					cart_needs_vaulting: true,
+					is_free_trial_cart: true,
+				},
 				fundingSource: 'venmo',
 				activePaymentMethod: 'ppcp-gateway-venmo',
 			} );
