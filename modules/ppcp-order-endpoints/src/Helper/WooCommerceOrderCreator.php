@@ -15,6 +15,7 @@ use WC_Cart;
 use WC_Customer;
 use WC_Data_Exception;
 use WC_Order;
+use WC_Order_Item_Fee;
 use WC_Order_Item_Product;
 use WC_Order_Item_Shipping;
 use WC_Product;
@@ -110,6 +111,7 @@ class WooCommerceOrderCreator {
 			$this->configure_payment_source( $wc_order );
 			$this->configure_customer( $wc_order, $cart_data );
 			$this->configure_line_items( $wc_order, $cart_data, $payer, $shipping );
+			$this->configure_fees( $wc_order, $cart_data );
 			$this->configure_addresses( $wc_order, $payer, $shipping, $cart_data->needs_shipping() );
 			$this->configure_coupons( $wc_order, $cart_data->coupons() );
 
@@ -222,6 +224,44 @@ class WooCommerceOrderCreator {
 			 * @param WC_Order              $wc_order      The order being built.
 			 */
 			do_action( 'woocommerce_checkout_create_order_line_item', $item, $cart_item_key, $cart_item, $wc_order );
+
+			$wc_order->add_item( $item );
+		}
+	}
+
+	/**
+	 * Copies the cart fees onto the order, mirroring WC_Checkout::create_order_fee_lines().
+	 *
+	 * Without this the order is built from line items, shipping and coupons alone, so a
+	 * cart fee is dropped and the order total no longer matches the amount the buyer
+	 * approved: it is charged short by a surcharge, or over by a negative fee.
+	 */
+	protected function configure_fees( WC_Order $wc_order, CartData $cart_data ): void {
+		foreach ( $cart_data->fees() as $fee_key => $fee ) {
+			$taxable = (bool) ( $fee['taxable'] ?? false );
+
+			$item = new WC_Order_Item_Fee();
+			$item->set_name( (string) ( $fee['name'] ?? '' ) );
+			$item->set_amount( (string) ( $fee['amount'] ?? 0 ) );
+			$item->set_total( (string) ( $fee['total'] ?? 0 ) );
+
+			/**
+			 * The totals are recalculated once the order is assembled, so a fee the cart
+			 * left untaxed has to say so here; the item defaults to taxable otherwise.
+			 */
+			$item->set_tax_status( $taxable ? 'taxable' : 'none' );
+			$item->set_tax_class( $taxable ? (string) ( $fee['tax_class'] ?? '' ) : '' );
+
+			/**
+			 * Fires the standard WooCommerce fee item action so third-party plugins can
+			 * augment the item. The fee is passed as an object, as WooCommerce passes it.
+			 *
+			 * @param WC_Order_Item_Fee $item     The order fee item.
+			 * @param string|int        $fee_key  The fee key.
+			 * @param object            $fee      The cart fee.
+			 * @param WC_Order          $wc_order The order being built.
+			 */
+			do_action( 'woocommerce_checkout_create_order_fee_item', $item, $fee_key, (object) $fee, $wc_order );
 
 			$wc_order->add_item( $item );
 		}
