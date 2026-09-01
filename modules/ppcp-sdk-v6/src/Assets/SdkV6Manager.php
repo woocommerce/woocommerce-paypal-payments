@@ -10,6 +10,7 @@ namespace WooCommerce\PayPalCommerce\SdkV6\Assets;
 
 use WC_Payment_Gateway;
 use WC_Product;
+use WP_Post;
 use WooCommerce\PayPalCommerce\Applepay\ApplePayGateway;
 use WooCommerce\PayPalCommerce\Applepay\Assets\PropertiesDictionary;
 use WooCommerce\PayPalCommerce\Assets\AssetGetter;
@@ -20,6 +21,7 @@ use WooCommerce\PayPalCommerce\OrderEndpoints\Endpoint\CreateOrderEndpoint;
 use WooCommerce\PayPalCommerce\Button\Endpoint\GetOrderEndpoint;
 use WooCommerce\PayPalCommerce\Button\Helper\Context;
 use WooCommerce\PayPalCommerce\Googlepay\GooglePayGateway;
+use WooCommerce\PayPalCommerce\PayLaterBlock\PayLaterBlockModule;
 use WooCommerce\PayPalCommerce\SavePaymentMethods\Endpoint\CreatePaymentToken;
 use WooCommerce\PayPalCommerce\SavePaymentMethods\Endpoint\CreatePaymentTokenForGuest;
 use WooCommerce\PayPalCommerce\SavePaymentMethods\Endpoint\CreateSetupToken;
@@ -134,6 +136,12 @@ class SdkV6Manager
      * @var bool|null
      */
     private ?bool $should_load = null;
+    /**
+     * Memoizes has_paylater_block(), which the messaging gates ask repeatedly.
+     *
+     * @var bool|null
+     */
+    private ?bool $has_paylater_block = null;
     public function __construct(AssetGetter $asset_getter, string $version, Environment $environment, ButtonStyleMapper $style_mapper, SettingsStatus $settings_status, Context $context, SessionHandler $session_handler, CancelView $cancel_view, bool $final_review_enabled, bool $vaulting_enabled, CardPaymentsConfiguration $card_payments_configuration, bool $card_vaulting_enabled, SubscriptionHelper $subscription_helper, FreeTrialSubscriptionHelper $free_trial_helper, callable $get_subscriptions_mode, string $three_d_secure_contingency, array $credit_card_icons, MessageStyleMapper $message_style_mapper, MessagesEligibility $messages_eligibility, string $merchant_country, GooglePayConfig $google_pay_config, ApplePayConfig $apple_pay_config, FastlaneConfig $fastlane_config, CardFieldStyles $card_field_styles)
     {
         $this->asset_getter = $asset_getter;
@@ -570,7 +578,12 @@ class SdkV6Manager
         if (is_admin() || $this->is_block_context()) {
             return \false;
         }
-        return $this->messages_enabled() && null !== $this->messages_render_hook();
+        if (!$this->messages_enabled()) {
+            return \false;
+        }
+        // The Pay Later block prints its own `.ppcp-messages` placeholder, so it
+        // needs no hook.
+        return null !== $this->messages_render_hook() || $this->has_paylater_block();
     }
     /**
      * Whether Pay Later messaging is enabled and eligible on this page.
@@ -592,8 +605,8 @@ class SdkV6Manager
      * contain, so messaging would silently never enable on the block
      * checkout.
      *
-     * Returns an empty string for shop, home and the mini-cart context, which
-     * this module currently does not serve.
+     * Falls back to 'custom_placement' where a Pay Later block sits. Empty for
+     * shop, home and mini-cart, which this module does not serve.
      */
     private function messages_settings_location(): string
     {
@@ -608,8 +621,28 @@ class SdkV6Manager
             case 'pay-now':
                 return 'checkout';
             default:
-                return '';
+                return $this->has_paylater_block() ? 'custom_placement' : '';
         }
+    }
+    /**
+     * Whether an enabled Pay Later block sits on the page being rendered.
+     *
+     * Mirrors the v5 SmartButton's `$has_paylater_block`, which is what carries
+     * messaging onto pages that are not themselves messaging locations.
+     */
+    private function has_paylater_block(): bool
+    {
+        if (null !== $this->has_paylater_block) {
+            return $this->has_paylater_block;
+        }
+        // has_block() reads $post, which only a queried singular request sets —
+        // not archives, REST, cron or webhooks, and before `wp` it holds whatever
+        // was left over. Left unmemoized: "not resolved yet" is not "no block".
+        if (!did_action('wp') || !($GLOBALS['post'] ?? null) instanceof WP_Post) {
+            return \false;
+        }
+        $this->has_paylater_block = PayLaterBlockModule::is_block_enabled($this->settings_status) && has_block('woocommerce-paypal-payments/paylater-messages');
+        return $this->has_paylater_block;
     }
     /**
      * The v6 page-type attribute value for the current page.
@@ -621,6 +654,10 @@ class SdkV6Manager
                 return 'product-details';
             case 'cart':
                 return 'cart';
+            case 'custom_placement':
+                // Unclassifiable page, so the neutral 'home' type. A block naming
+                // its own placement overrides this per placeholder (pageTypeFor()).
+                return 'home';
             default:
                 return 'checkout';
         }
@@ -816,7 +853,11 @@ class SdkV6Manager
             $button_styles['mini-cart'] = $this->button_styles('mini-cart');
             $pay_later_button['mini-cart'] = $this->is_pay_later_button_enabled('mini-cart');
         }
-        $card_fields_enabled = $this->is_card_fields_enabled();
+        // Fastlane replaces the standalone ACDC card row when it renders (guest,
+        // non-subscription checkout), matching the v5 advanced-card block guard.
+        // Scoped to this JS flag only: is_card_fields_enabled() still gates the v5
+        // card block's suppression, so a page keeps exactly one card option.
+        $card_fields_enabled = $this->is_card_fields_enabled() && !$this->is_fastlane_enabled();
         $messages_settings_location = $this->messages_settings_location();
         /*
          * - final_review: drives the post-approval fork; see V6ExpressComponent.approve().

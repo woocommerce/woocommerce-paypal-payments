@@ -45,6 +45,22 @@ class PayLaterBlockModule implements ServiceModule, ExecutableModule
         return self::is_module_loading_required() && $settings_status->is_pay_later_messaging_enabled_for_location('custom_placement');
     }
     /**
+     * Whether the SDK v6 stack is rendering the current page.
+     *
+     * Per page, not per site: where v6 stands down, v5 can still draw a banner.
+     * Mirrors GooglepayModule::v6_owns_current_page().
+     *
+     * @param ContainerInterface $c The container.
+     */
+    public static function v6_owns_current_page(ContainerInterface $c): bool
+    {
+        if (!$c->has('sdk-v6.owns-current-page')) {
+            return \false;
+        }
+        $owns_current_page = $c->get('sdk-v6.owns-current-page');
+        return $owns_current_page();
+    }
+    /**
      * {@inheritDoc}
      */
     public function services(): array
@@ -68,7 +84,16 @@ class PayLaterBlockModule implements ServiceModule, ExecutableModule
             assert($asset_getter instanceof AssetGetter);
             $script_handle = 'ppcp-paylater-block';
             wp_register_script($script_handle, $asset_getter->get_asset_url('paylater-block.js'), array(), $c->get('ppcp.asset-version'), \true);
-            wp_localize_script($script_handle, 'PcpPayLaterBlock', array('ajax' => array('cart_script_params' => array('endpoint' => \WC_AJAX::get_endpoint(CartScriptParamsEndpoint::ENDPOINT))), 'settingsUrl' => admin_url('admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway'), 'payLaterDisabledByVaulting' => $settings_provider->pay_later_disabled_by_vaulting(), 'placementEnabled' => self::is_block_enabled($c->get('wcgateway.settings.status')), 'payLaterSettingsUrl' => admin_url('admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway')));
+            wp_localize_script($script_handle, 'PcpPayLaterBlock', array(
+                'ajax' => array('cart_script_params' => array('endpoint' => \WC_AJAX::get_endpoint(CartScriptParamsEndpoint::ENDPOINT))),
+                'settingsUrl' => admin_url('admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway'),
+                'payLaterDisabledByVaulting' => $settings_provider->pay_later_disabled_by_vaulting(),
+                'placementEnabled' => self::is_block_enabled($c->get('wcgateway.settings.status')),
+                'payLaterSettingsUrl' => admin_url('admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway'),
+                // Module loaded, not page ownership: the editor has no page
+                // to own.
+                'isSdkV6Active' => $c->has('sdk-v6.owns-current-page'),
+            ));
             wp_register_style('ppcp-paylater-block-style', $asset_getter->get_asset_url('edit.css'), array(), $c->get('ppcp.asset-version'));
             register_block_type($c->get('ppcp.path-to-plugin-folder') . 'modules/ppcp-paylater-block/', array('render_callback' => function (array $attributes) use ($c) {
                 $renderer = $c->get('paylater-block.renderer');
