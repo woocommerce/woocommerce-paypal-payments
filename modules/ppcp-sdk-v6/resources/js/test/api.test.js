@@ -7,6 +7,7 @@ describe( 'postJson', () => {
 
 	test( 'posts the nonce merged with the body and returns data', async () => {
 		global.fetch = jest.fn().mockResolvedValue( {
+			clone: () => ( { text: async () => '' } ),
 			json: async () => ( { success: true, data: { id: 'ABC' } } ),
 		} );
 
@@ -27,6 +28,8 @@ describe( 'postJson', () => {
 
 	test( 'marks server-provided messages as user facing', async () => {
 		global.fetch = jest.fn().mockResolvedValue( {
+			status: 400,
+			clone: () => ( { text: async () => '' } ),
 			json: async () => ( {
 				success: false,
 				data: { message: 'Übersetzter Fehler' },
@@ -38,11 +41,14 @@ describe( 'postJson', () => {
 		).rejects.toMatchObject( {
 			message: 'Übersetzter Fehler',
 			isUserFacing: true,
+			status: 400,
+			endpoint: '/e',
 		} );
 	} );
 
 	test( 'does not mark message-less failures as user facing', async () => {
 		global.fetch = jest.fn().mockResolvedValue( {
+			clone: () => ( { text: async () => '' } ),
 			json: async () => ( { success: false } ),
 		} );
 
@@ -51,6 +57,65 @@ describe( 'postJson', () => {
 		).rejects.toMatchObject( {
 			isUserFacing: false,
 		} );
+	} );
+
+	test( 'forwards the errors list and refresh flag from a validation failure', async () => {
+		global.fetch = jest.fn().mockResolvedValue( {
+			clone: () => ( { text: async () => '' } ),
+			json: async () => ( {
+				success: false,
+				data: {
+					message: 'Session expired.',
+					errors: [ 'Session expired.' ],
+					refresh: true,
+				},
+			} ),
+		} );
+
+		await expect(
+			postJson( { endpoint: '/e', nonce: 'n' } )
+		).rejects.toMatchObject( {
+			errors: [ 'Session expired.' ],
+			refresh: true,
+		} );
+	} );
+
+	test( 'throws with status, endpoint and a body snippet when the response is not JSON', async () => {
+		const snapshot = { text: async () => 'a'.repeat( 250 ) };
+		global.fetch = jest.fn().mockResolvedValue( {
+			status: 500,
+			clone: () => snapshot,
+			json: async () => {
+				throw new SyntaxError( 'Unexpected token' );
+			},
+		} );
+
+		await expect(
+			postJson( { endpoint: '/e', nonce: 'n' } )
+		).rejects.toMatchObject( {
+			message: 'Endpoint returned no usable JSON (HTTP 500).',
+			status: 500,
+			endpoint: '/e',
+			bodySnippet: 'a'.repeat( 200 ),
+		} );
+	} );
+
+	test( 'falls back to an empty body snippet when reading the clone fails', async () => {
+		global.fetch = jest.fn().mockResolvedValue( {
+			status: 500,
+			clone: () => ( {
+				text: async () => {
+					throw new Error( 'stream locked' );
+				},
+			} ),
+			json: async () => {
+				throw new SyntaxError( 'Unexpected token' );
+			},
+		} );
+
+		await expect(
+			postJson( { endpoint: '/e', nonce: 'n' } )
+		).rejects.toMatchObject( { bodySnippet: '' } );
 	} );
 } );
 
