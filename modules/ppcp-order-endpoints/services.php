@@ -1,8 +1,6 @@
 <?php
 /**
  * The order endpoints module services.
- *
- * @package WooCommerce\PayPalCommerce\OrderEndpoints
  */
 
 declare(strict_types=1);
@@ -13,6 +11,7 @@ use WooCommerce\PayPalCommerce\Button\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\OrderEndpoints\Endpoint\ApproveOrderEndpoint;
 use WooCommerce\PayPalCommerce\OrderEndpoints\Endpoint\ChangeCartEndpoint;
 use WooCommerce\PayPalCommerce\OrderEndpoints\Endpoint\CreateOrderEndpoint;
+use WooCommerce\PayPalCommerce\OrderEndpoints\Endpoint\FrontendLogEndpoint;
 use WooCommerce\PayPalCommerce\OrderEndpoints\Endpoint\RequestData;
 use WooCommerce\PayPalCommerce\OrderEndpoints\Endpoint\UpdateShippingEndpoint;
 use WooCommerce\PayPalCommerce\OrderEndpoints\Helper\CartProductsHelper;
@@ -21,10 +20,10 @@ use WooCommerce\PayPalCommerce\OrderEndpoints\Helper\WooCommerceOrderCreator;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 
 return array(
-	'order-endpoints.request-data'                => static function ( ContainerInterface $container ): RequestData {
+	'order-endpoints.request-data'                         => static function ( ContainerInterface $container ): RequestData {
 		return new RequestData();
 	},
-	'order-endpoints.endpoint.change-cart'        => static function ( ContainerInterface $container ): ChangeCartEndpoint {
+	'order-endpoints.endpoint.change-cart'                 => static function ( ContainerInterface $container ): ChangeCartEndpoint {
 		if ( ! \WC()->cart ) {
 			throw new RuntimeException( 'cant initialize endpoint at this moment' );
 		}
@@ -36,7 +35,7 @@ return array(
 		$logger                = $container->get( 'woocommerce.logger.woocommerce' );
 		return new ChangeCartEndpoint( $cart, $shipping, $request_data, $purchase_unit_factory, $cart_products, $logger );
 	},
-	'order-endpoints.endpoint.create-order'       => static function ( ContainerInterface $container ): CreateOrderEndpoint {
+	'order-endpoints.endpoint.create-order'                => static function ( ContainerInterface $container ): CreateOrderEndpoint {
 		$request_data          = $container->get( 'order-endpoints.request-data' );
 		$purchase_unit_factory = $container->get( 'api.factory.purchase-unit' );
 		$order_endpoint        = $container->get( 'api.endpoint.order' );
@@ -70,7 +69,7 @@ return array(
 			$logger
 		);
 	},
-	'order-endpoints.endpoint.approve-order'      => static function ( ContainerInterface $container ): ApproveOrderEndpoint {
+	'order-endpoints.endpoint.approve-order'               => static function ( ContainerInterface $container ): ApproveOrderEndpoint {
 		$request_data         = $container->get( 'order-endpoints.request-data' );
 		$order_endpoint       = $container->get( 'api.endpoint.order' );
 		$session_handler      = $container->get( 'session.handler' );
@@ -101,7 +100,7 @@ return array(
 			$context
 		);
 	},
-	'order-endpoints.endpoint.update-shipping'    => static function ( ContainerInterface $container ): UpdateShippingEndpoint {
+	'order-endpoints.endpoint.update-shipping'             => static function ( ContainerInterface $container ): UpdateShippingEndpoint {
 		return new UpdateShippingEndpoint(
 			$container->get( 'order-endpoints.request-data' ),
 			$container->get( 'api.endpoint.order' ),
@@ -110,13 +109,19 @@ return array(
 			$container->get( 'woocommerce.logger.woocommerce' )
 		);
 	},
-	'order-endpoints.is-logged-in'                => static function ( ContainerInterface $container ): bool {
+	'order-endpoints.endpoint.frontend-log'                => static function ( ContainerInterface $container ): FrontendLogEndpoint {
+		return new FrontendLogEndpoint(
+			$container->get( 'order-endpoints.request-data' ),
+			$container->get( 'woocommerce.logger.woocommerce' )
+		);
+	},
+	'order-endpoints.is-logged-in'                         => static function ( ContainerInterface $container ): bool {
 		return is_user_logged_in();
 	},
-	'order-endpoints.registration-required'       => static function ( ContainerInterface $container ): bool {
+	'order-endpoints.registration-required'                => static function ( ContainerInterface $container ): bool {
 		return WC()->checkout()->is_registration_required();
 	},
-	'order-endpoints.current-user-must-register'  => static function ( ContainerInterface $container ): bool {
+	'order-endpoints.current-user-must-register'           => static function ( ContainerInterface $container ): bool {
 		return ! $container->get( 'order-endpoints.is-logged-in' ) &&
 			$container->get( 'order-endpoints.registration-required' );
 	},
@@ -128,7 +133,7 @@ return array(
 		 */
 		return (bool) apply_filters( 'woocommerce_paypal_payments_early_wc_checkout_validation_enabled', true );
 	},
-	'order-endpoints.pay-now-contexts'            => static function ( ContainerInterface $container ): array {
+	'order-endpoints.pay-now-contexts'                     => static function ( ContainerInterface $container ): array {
 		$defaults = array( 'checkout', 'pay-now' );
 
 		if ( $container->get( 'order-endpoints.handle-shipping-in-paypal' ) ) {
@@ -142,21 +147,21 @@ return array(
 	 * If true, the shipping methods are sent to PayPal allowing the customer to select it inside the popup.
 	 * May result in slower popup performance, additional loading.
 	 */
-	'order-endpoints.handle-shipping-in-paypal'   => static function ( ContainerInterface $container ): bool {
+	'order-endpoints.handle-shipping-in-paypal'            => static function ( ContainerInterface $container ): bool {
 		return ! $container->get( 'blocks.settings.final_review_enabled' );
 	},
-	'order-endpoints.helper.cart-products'        => static function ( ContainerInterface $container ): CartProductsHelper {
+	'order-endpoints.helper.cart-products'                 => static function ( ContainerInterface $container ): CartProductsHelper {
 		$data_store = \WC_Data_Store::load( 'product' );
 		return new CartProductsHelper( $data_store );
 	},
-	'order-endpoints.helper.early-order-handler'  => static function ( ContainerInterface $container ): EarlyOrderHandler {
+	'order-endpoints.helper.early-order-handler'           => static function ( ContainerInterface $container ): EarlyOrderHandler {
 		return new EarlyOrderHandler(
 			$container->get( 'settings.flag.is-connected' ),
 			$container->get( 'wcgateway.order-processor' ),
 			$container->get( 'session.handler' )
 		);
 	},
-	'order-endpoints.helper.wc-order-creator'     => static function ( ContainerInterface $container ): WooCommerceOrderCreator {
+	'order-endpoints.helper.wc-order-creator'              => static function ( ContainerInterface $container ): WooCommerceOrderCreator {
 		return new WooCommerceOrderCreator(
 			$container->get( 'wcgateway.funding-source.renderer' ),
 			$container->get( 'session.handler' ),
